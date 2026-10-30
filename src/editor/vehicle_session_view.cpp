@@ -1089,16 +1089,18 @@ auto parts_view(const session& state) -> ec::screen_view {
         const auto checks = state.drive();
         auto check_list = ec::list(
             {.id = check_id,
-             .rows =
-                 checks | std::views::transform([](const drive_check& entry) {
-                     return ec::row{
-                         .id = "check:" + entry.key,
-                         .label = entry.text,
-                         .selectable = false,
-                         .mark = game_client::interaction_mark{
-                             .glyph = entry.ok ? "✓" : "✗", .color = entry.ok ? "green" : "red"}};
-                 })
-                 | std::ranges::to<std::vector>(),
+             .rows = checks | std::views::transform([](const drive_check& entry) {
+                         return ec::row{
+                             .id = "check:" + entry.key,
+                             .label = entry.text,
+                             .selectable = false,
+                             .columns = {
+                                 {.key = "ok",
+                                  .label = _("OK"),
+                                  .value = entry.ok ? "✓" : "✗",
+                                  .color = entry.ok ? "light_green" : "light_red"}}};
+                     })
+                   | std::ranges::to<std::vector>(),
              .selection = "none"});
         for (const auto& entry : checks) {
             if (state.live || entry.fix == drive_fix::none) { continue; }

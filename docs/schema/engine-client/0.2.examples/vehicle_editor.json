@@ -1065,6 +1065,107 @@
               }
             },
             {
+              "id": "vehicle:check",
+              "kind": "list",
+              "label": "Ready to drive",
+              "slot": "tools",
+              "columns": [
+                {
+                  "key": "ok",
+                  "label": "OK"
+                }
+              ],
+              "rows": [
+                {
+                  "id": "check:wheels",
+                  "label": "It stands on its wheels.",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "ok",
+                      "label": "OK",
+                      "value": "✓",
+                      "color": "light_green"
+                    }
+                  ]
+                },
+                {
+                  "id": "check:steering",
+                  "label": "Its wheels steer.",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "ok",
+                      "label": "OK",
+                      "value": "✓",
+                      "color": "light_green"
+                    }
+                  ]
+                },
+                {
+                  "id": "check:engine",
+                  "label": "It has an engine.",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "ok",
+                      "label": "OK",
+                      "value": "✓",
+                      "color": "light_green"
+                    }
+                  ]
+                },
+                {
+                  "id": "check:controls",
+                  "label": "A seat has controls to drive it from.",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "ok",
+                      "label": "OK",
+                      "value": "✓",
+                      "color": "light_green"
+                    }
+                  ]
+                },
+                {
+                  "id": "check:power",
+                  "label": "The engine can move it.",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "ok",
+                      "label": "OK",
+                      "value": "✓",
+                      "color": "light_green"
+                    }
+                  ]
+                }
+              ],
+              "total": 5,
+              "selection": "none"
+            },
+            {
               "id": "vehicle:performance",
               "kind": "panel",
               "label": "Performance",
@@ -1263,34 +1364,6 @@
                     }
                   },
                   {
-                    "id": "vpart:wide_headlight",
-                    "label": "wide angle headlight",
-                    "description": "",
-                    "denial": "",
-                    "enabled": true,
-                    "selectable": true,
-                    "selected": false,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "wide_headlight"
-                      }
-                    ],
-                    "look": {
-                      "kind": "vehicle_part",
-                      "id": "wide_headlight",
-                      "glyph": "*",
-                      "color": "c_white",
-                      "name": "wide angle headlight",
-                      "tile": "vp_wide_headlight",
-                      "looks_like": [
-                        "vp_headlight"
-                      ],
-                      "subtile": "center"
-                    }
-                  },
-                  {
                     "id": "vpart:wide_headlight_reinforced",
                     "label": "reinforced wide-angle headlight",
                     "description": "",
@@ -1314,6 +1387,34 @@
                       "tile": "vp_wide_headlight_reinforced",
                       "looks_like": [
                         "vp_wide_headlight",
+                        "vp_headlight"
+                      ],
+                      "subtile": "center"
+                    }
+                  },
+                  {
+                    "id": "vpart:wide_headlight",
+                    "label": "wide angle headlight",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "wide_headlight"
+                      }
+                    ],
+                    "look": {
+                      "kind": "vehicle_part",
+                      "id": "wide_headlight",
+                      "glyph": "*",
+                      "color": "c_white",
+                      "name": "wide angle headlight",
+                      "tile": "vp_wide_headlight",
+                      "looks_like": [
                         "vp_headlight"
                       ],
                       "subtile": "center"
@@ -2877,19 +2978,113 @@
               }
             },
             {
+              "id": "vehicle:check",
+              "kind": "list",
+              "label": "Ready to drive",
+              "slot": "tools",
+              "columns": [
+                {
+                  "key": "ok",
+                  "label": "OK"
+                }
+              ],
+              "rows": [
+                {
+                  "id": "check:wheels",
+                  "label": "It stands on its wheels.",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "ok",
+                      "label": "OK",
+                      "value": "✓",
+                      "color": "light_green"
+                    }
+                  ]
+                },
+                {
+                  "id": "check:steering",
+                  "label": "Its wheels steer.",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "ok",
+                      "label": "OK",
+                      "value": "✓",
+                      "color": "light_green"
+                    }
+                  ]
+                },
+                {
+                  "id": "check:engine",
+                  "label": "It has an engine.",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "ok",
+                      "label": "OK",
+                      "value": "✓",
+                      "color": "light_green"
+                    }
+                  ]
+                },
+                {
+                  "id": "check:controls",
+                  "label": "A seat has controls to drive it from.",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "ok",
+                      "label": "OK",
+                      "value": "✓",
+                      "color": "light_green"
+                    }
+                  ]
+                },
+                {
+                  "id": "check:power",
+                  "label": "The engine is too weak to move it.",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "ok",
+                      "label": "OK",
+                      "value": "✗",
+                      "color": "light_red"
+                    }
+                  ]
+                }
+              ],
+              "total": 5,
+              "selection": "none"
+            },
+            {
               "id": "vehicle:performance",
               "kind": "panel",
               "label": "Performance",
               "slot": "inspector",
               "title": "",
               "stats": [
-                {
-                  "key": "speed",
-                  "label": "Safe/Top speed",
-                  "value": "0",
-                  "max": "0",
-                  "unit": "km/h"
-                },
                 {
                   "key": "power",
                   "label": "Engine power",
@@ -3075,34 +3270,6 @@
                     }
                   },
                   {
-                    "id": "vpart:wide_headlight",
-                    "label": "wide angle headlight",
-                    "description": "",
-                    "denial": "",
-                    "enabled": true,
-                    "selectable": true,
-                    "selected": false,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "wide_headlight"
-                      }
-                    ],
-                    "look": {
-                      "kind": "vehicle_part",
-                      "id": "wide_headlight",
-                      "glyph": "*",
-                      "color": "c_white",
-                      "name": "wide angle headlight",
-                      "tile": "vp_wide_headlight",
-                      "looks_like": [
-                        "vp_headlight"
-                      ],
-                      "subtile": "center"
-                    }
-                  },
-                  {
                     "id": "vpart:wide_headlight_reinforced",
                     "label": "reinforced wide-angle headlight",
                     "description": "",
@@ -3126,6 +3293,34 @@
                       "tile": "vp_wide_headlight_reinforced",
                       "looks_like": [
                         "vp_wide_headlight",
+                        "vp_headlight"
+                      ],
+                      "subtile": "center"
+                    }
+                  },
+                  {
+                    "id": "vpart:wide_headlight",
+                    "label": "wide angle headlight",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "wide_headlight"
+                      }
+                    ],
+                    "look": {
+                      "kind": "vehicle_part",
+                      "id": "wide_headlight",
+                      "glyph": "*",
+                      "color": "c_white",
+                      "name": "wide angle headlight",
+                      "tile": "vp_wide_headlight",
+                      "looks_like": [
                         "vp_headlight"
                       ],
                       "subtile": "center"
