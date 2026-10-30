@@ -266,7 +266,7 @@ struct new_mapgen {
     std::string path;
     /// The id of the overmap terrain, of the chunk or of the palette.
     std::string om_terrain;
-    std::string fill = "t_floor";
+    std::string fill = "t_grass";
     /// `mapgen`, `nested`, `palette`, `special` or `building`.
     std::string kind = "mapgen";
     /// The side of a nested chunk, in squares.

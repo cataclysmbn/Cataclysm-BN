@@ -399,7 +399,10 @@ auto run_editor_session() -> void {
             if (row == "kind") {
                 // An untouched fill follows the kind between terrains and overmap terrains.
                 const auto fill_of = [](const std::string& kind) {
-                    return kind == "special" || kind == "building" ? "field" : "t_floor";
+                    return kind == "special" || kind == "building" ? "field"
+                         : kind == "mapgen"
+                             ? "t_grass"
+                             : "t_floor";
                 };
                 if (state.made.fill == fill_of(state.made.kind)) {
                     state.made.fill = fill_of(text);

@@ -2345,8 +2345,10 @@ TEST_CASE(
                 CHECK(body<ec::grid_body>(part(screen, "editor:canvas")).cells.size() == 576);
                 CHECK(cell(screen, 23, 23).glyph == ".");
                 const auto& legend = body<ec::list_body>(part(screen, "editor:legend")).rows;
-                REQUIRE(legend.size() == 1);
+                // Dirt is no floor, so a wooden floor comes along for the rooms.
+                REQUIRE(legend.size() == 2);
                 CHECK(column_value(legend[0], "terrain") == "dirt");
+                CHECK(column_value(legend[1], "terrain") == "wooden floor");
                 CHECK(body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty());
                 CHECK(saved(screen) == "Yes");
                 // The form starts over for the next file: its path is the next free file of the
@@ -2489,7 +2491,7 @@ TEST_CASE(
     editor::run_editor_session();
     CHECK(step == 9);
     const auto written = nlohmann::ordered_json::parse(read_file(made));
-    CHECK(written[0]["object"]["fill_ter"] == "t_floor");
+    CHECK(written[0]["object"]["fill_ter"] == "t_grass");
     CHECK(written[0]["object"]["furniture"]["b"] == "f_bed");
 }
 

@@ -209,6 +209,13 @@ auto free_symbol(
     return found == wanted.end() ? std::nullopt : std::optional(*found);
 }
 
+/// Whether the terrain `id` is a floor a roof stands on.
+auto is_indoor_floor(const std::string& id) -> bool {
+    const auto terrain = ter_str_id(id);
+    return terrain.is_valid() && terrain->has_flag(TFLAG_FLAT)
+        && terrain->has_flag(TFLAG_SUPPORTS_ROOF);
+}
+
 /// The symbol of `legend` that maps a floor under a roof alone and that `grid` uses most; none
 /// when no symbol maps one.
 auto indoor_floor(const std::vector<legend_symbol>& legend, const symbol_grid& grid)
@@ -216,9 +223,7 @@ auto indoor_floor(const std::vector<legend_symbol>& legend, const symbol_grid& g
     const auto floor = [](const legend_symbol& entry) {
         if (entry.lines.size() != 1 || entry.lines.front().layer != "terrain") { return false; }
         const auto value = nlohmann::ordered_json::parse(entry.lines.front().value, nullptr, false);
-        if (!value.is_string()) { return false; }
-        const auto id = ter_str_id(value.get<std::string>());
-        return id.is_valid() && id->has_flag(TFLAG_FLAT) && id->has_flag(TFLAG_SUPPORTS_ROOF);
+        return value.is_string() && is_indoor_floor(value.get<std::string>());
     };
     const auto uses = [&](const legend_symbol& entry) {
         return std::ranges::count(grid | std::views::join, entry.symbol);
@@ -489,6 +494,8 @@ auto create_mapgen(const new_mapgen& made) -> std::expected<void, std::string> {
     }
     const auto rows = std::vector<std::string>(side, std::string(side, '.'));
     auto object = nlohmann::ordered_json{{"rows", rows}, {"terrain", {{".", made.fill}}}};
+    // A map outdoors keeps a floor at hand for the rooms built on it.
+    if (!nested && !is_indoor_floor(made.fill)) { object["terrain"]["_"] = "t_floor"; }
     // A chunk keeps the map under a symbol nothing maps; a mapgen fills it, so a new symbol needs
     // no terrain of its own.
     if (nested) {
