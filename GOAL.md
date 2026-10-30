@@ -255,6 +255,6 @@ btw added low priority objective
 # Beta Test Checklist
 
 - [x] make tests faster
-- [x] Fully functional map editor
+- [ ] Fully functional map editor
 - [ ] Fully functional vehicle editor
 - [ ] 2d client that has good UI
