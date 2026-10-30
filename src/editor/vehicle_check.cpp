@@ -232,7 +232,8 @@ auto fixed_design(
     }
     auto& veh = *built.blueprint;
     // The blueprint holds the parts in the order the prototype lists them when it installed each.
-    const auto listed = veh.part_count() == static_cast<int>(design_parts(prototype).size());
+    const auto design = design_parts(prototype);
+    const auto listed = veh.part_count() == static_cast<int>(design.size());
     const auto unlisted = [] {
         return std::unexpected(std::string(
             _("The game skipped a part of this prototype; fix what it reports first.")));
@@ -288,8 +289,11 @@ auto fixed_design(
             }
             const auto fuel = *liquid_fuel(veh.part_info(*engine));
             if (!listed) { return unlisted(); }
-            const auto tanks = parts_where(veh, [](const vehicle_part& part) {
-                return part.is_tank();
+            // The tanks that hold nothing yet; one of another liquid keeps it.
+            const auto tanks = parts_where(veh, [&](const vehicle_part& part) {
+                const auto& entry = prototype[nlohmann::ordered_json::json_pointer(
+                    design[veh.index_of_part(&part)].pointer)];
+                return part.is_tank() && !(entry.is_object() && entry.contains("fuel"));
             });
             if (tanks.empty()) {
                 const auto* const tank = most_installed(catalog, [](const vpart_info& part) {
