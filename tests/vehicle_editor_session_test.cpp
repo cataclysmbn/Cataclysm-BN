@@ -5572,8 +5572,9 @@ TEST_CASE(
     const auto fixed = [&](const ec::screen_view& screen, const std::string& key) {
         CHECK(drive_ok(screen, key));
         CHECK_FALSE(has_affordance(screen, "vehicle:fix:" + key));
-        // A fix is one step.
+        // A fix is one step, and the status says what it did.
         CHECK(steps_done(screen) == done + 1);
+        CHECK(said(screen) == step_at(screen) + ".");
         CHECK(notice_of(screen).empty());
     };
     const auto steps = std::vector<walk_step>{
@@ -5624,6 +5625,115 @@ TEST_CASE(
                 CHECK(entry.columns.at(0).value == "✓");
             }
             CHECK(performance_has(screen, "speed"));
+            return act("QUIT");
+        },
+    };
+    CHECK(walk(steps) == steps.size());
+}
+
+TEST_CASE(
+    "the vehicle editor's test drive seats the avatar at the controls, and the editor comes back "
+    "to the design",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    editor::reset_editor_session();
+    clear_map();
+    auto& you = get_avatar();
+    const auto start = you.bub_pos();
+    const auto restore = on_out_of_scope([&] {
+        if (you.in_vehicle) { get_map().unboard_vehicle(you.bub_pos()); }
+        you.controlling_vehicle = false;
+        you.cancel_activity();
+        clear_vehicles();
+        you.setpos(start);
+        const auto path = editor::prototype_file("car");
+        const auto json = nlohmann::ordered_json::parse(read_file(*path));
+        const auto found = std::ranges::find(json, "car", [](const auto& entry) {
+            return entry.value("id", "");
+        });
+        REQUIRE(editor::apply_design(found->dump()).has_value());
+        editor::reset_editor_session();
+    });
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                // Nothing to drive yet.
+                CHECK_FALSE(has_affordance(screen, "vehicle:test_drive"));
+                return invoke("vehicle:filter", {.text = "car"});
+            case 1:
+                return invoke("vehicle:open", {.row = "prototype:car"});
+            case 2: {
+                const auto& drive = affordance(screen, "vehicle:test_drive");
+                CHECK(drive.label == "Test drive");
+                CHECK(drive.enabled);
+                CHECK(drive.group == "World");
+                CHECK(drive.keys == std::vector<std::string>{"F6"});
+                // The button stands under the checks it follows from.
+                CHECK(std::ranges::contains(
+                    part(screen, "vehicle:check").affordances, std::string("vehicle:test_drive")));
+                return invoke("vehicle:test_drive");
+            }
+            default:
+                FAIL("the vehicle editor stayed open after the test drive began");
+                return act("QUIT");
+        }
+    });
+    // It leaves for the world to drive.
+    CHECK(editor::run_vehicle_editor());
+    CHECK(step == 3);
+    CHECK(you.in_vehicle);
+    CHECK(you.controlling_vehicle);
+    const auto seat = get_map().veh_at(you.bub_pos());
+    REQUIRE(seat);
+    CHECK(seat->vehicle().name == "Car");
+    CHECK(seat->part_with_feature(VPFLAG_CONTROLS, true));
+    CHECK(seat->part_with_feature(VPFLAG_BOARDABLE, true));
+
+    // The editor key opens the vehicle editor, the design still open.
+    auto kinds = std::vector<std::string>{};
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        kinds.push_back(screen.kind);
+        CHECK(has_affordance(screen, "vehicle:test_drive"));
+        return act("QUIT");
+    });
+    editor::run_editor_session();
+    CHECK(kinds == std::vector<std::string>{"vehicle_editor"});
+}
+
+TEST_CASE(
+    "the vehicle editor's test drive waits until the design is ready to drive",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto mods = my_mod_folder{};
+    const auto steps = std::vector<walk_step>{
+        [](const auto&) { return invoke("vehicle:new", {.text = "Kart"}); },
+        [](const auto& screen) {
+            const auto& drive = affordance(screen, "vehicle:test_drive");
+            CHECK_FALSE(drive.enabled);
+            CHECK(drive.denial == "It is not ready to drive yet: see Ready to drive.");
+            return invoke("vehicle:test_drive");
+        },
+        [](const auto& screen) {
+            // Still in the editor, with nothing spawned.
+            CHECK(screen.kind == "vehicle_editor");
+            CHECK(get_map().get_vehicles().empty());
+            return act("QUIT");
+        },
+    };
+    clear_map();
+    CHECK(walk(steps) == steps.size());
+}
+
+TEST_CASE("the vehicle editor's start page shows a New vehicle button", "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto steps = std::vector<walk_step>{
+        [](const auto& screen) {
+            CHECK(std::ranges::contains(
+                part(screen, "vehicle:sources").affordances, std::string("vehicle:new")));
+            CHECK(affordance(screen, "vehicle:new").label == "New vehicle");
             return act("QUIT");
         },
     };
