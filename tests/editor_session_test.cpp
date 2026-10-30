@@ -8270,4 +8270,50 @@ TEST_CASE(
     editor::reset_editor_session();
 }
 
+TEST_CASE("painting furniture again where it stands changes nothing", "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    auto symbols = std::size_t{0};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:catalog_kind", {.row = "catalog:furniture"}); },
+        [](const auto&) { return invoke("editor:catalog_filter", {.text = "f_chair"}); },
+        [](const auto&) { return invoke("editor:catalog_pick", {.row = "entry:f_chair"}); },
+        [](const auto&) { return square_at(3, 3); },
+        [&](const auto& screen) {
+            CHECK(cell(screen, 3, 3).label == "wooden floor; chair");
+            symbols = rows_in(screen, "editor:legend").size();
+            return square_at(3, 3);
+        },
+        [&](const auto& screen) {
+            CHECK(told(screen).empty());
+            CHECK(cell(screen, 3, 3).label == "wooden floor; chair");
+            CHECK(rows_in(screen, "editor:legend").size() == symbols);
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    editor::reset_editor_session();
+}
+
+TEST_CASE("a cut inside walls leaves the ground, not the walls", "[editor_session]") {
+    const auto guard = screen_guard{};
+    auto rows = nlohmann::ordered_json::array();
+    for (auto row = 0; row < 24; ++row) { rows.push_back(std::string(24, row < 16 ? '#' : '.')); }
+    const auto file = mod_file{
+        {{"rows", rows}, {"terrain", {{".", "t_grass"}, {"#", "t_brick_wall"}}}}};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:tool", {.row = "tool:select"}); },
+        [](const auto&) { return square_at(3, 3); },
+        [](const auto&) { return square_at(5, 4); },
+        [](const auto&) { return invoke("editor:cut"); },
+        [](const auto& screen) {
+            CHECK(told(screen).empty());
+            CHECK(cell(screen, 4, 4).label == "grass");
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    editor::reset_editor_session();
+}
+
 #endif // CATA_MCP
