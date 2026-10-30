@@ -63,6 +63,9 @@ auto kept_session = std::optional<session>{};
 auto first = std::optional<recent_document>{};
 /// When the turns the editor lets pass began, while they pass.
 auto advancing = std::optional<time_point>{};
+/// Whether the vehicle editor the next visit opens was opened from the map editor, which closing
+/// it goes back to.
+auto map_under_vehicle = false;
 /// How far south of the stamped square testing puts the avatar.
 constexpr auto test_distance = 2;
 /// How far from where testing wants the avatar it looks for ground to stand on.
@@ -243,6 +246,7 @@ auto reset_editor_session() -> void {
     kept_session.reset();
     first.reset();
     advancing.reset();
+    map_under_vehicle = false;
     allow_editor_this_session(false);
 }
 
@@ -262,9 +266,14 @@ auto reopens_after_waiting() -> bool {
 auto run_editor_session() -> void {
     const auto opening = std::exchange(first, std::nullopt);
     if (opening && opening->editor == "vehicle") {
-        if (!run_vehicle_editor(opening->name)) { end_editor_game(); }
-        return;
+        if (run_vehicle_editor(opening->name)) { return; }
+        if (!std::exchange(map_under_vehicle, false)) {
+            end_editor_game();
+            return;
+        }
     }
+    // Opened by itself, the map editor stands under no vehicle editor any more.
+    map_under_vehicle = false;
     auto ctxt = input_context("EDITOR");
     ctxt.register_action("QUIT");
     ctxt.register_action("HELP_KEYBINDINGS");
@@ -394,7 +403,10 @@ auto run_editor_session() -> void {
         } else if (id == browser_page_id) {
             state.browser_page = static_cast<std::size_t>(invoked->args.count.value_or(0));
         } else if (id == vehicle_id) {
-            if (run_vehicle_editor()) { return; }
+            if (run_vehicle_editor()) {
+                map_under_vehicle = true;
+                return;
+            }
         } else if (id == new_set_id) {
             const auto text = invoked->args.text.value_or("");
             if (row == "kind") {
