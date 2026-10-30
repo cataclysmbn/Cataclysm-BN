@@ -380,10 +380,12 @@ auto session::drive() const -> std::vector<drive_check> {
             return veh->cpart(index).ammo_current();
         });
     }
-    // The blueprint holds the parts in the order the prototype lists them, without their fuel.
+    // The blueprint holds the parts in the order the prototype lists them, without their fuel,
+    // when it installed each.
     const auto design = design_parts(prototype());
+    const auto listed = veh->part_count() == static_cast<int>(design.size());
     return drive_checks(*veh, [&](const int index) {
-        if (index < 0 || static_cast<std::size_t>(index) >= design.size()) {
+        if (!listed || index < 0 || static_cast<std::size_t>(index) >= design.size()) {
             return itype_id::NULL_ID();
         }
         const auto at = nlohmann::ordered_json::json_pointer(design[index].pointer);

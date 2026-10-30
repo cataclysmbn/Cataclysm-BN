@@ -231,6 +231,12 @@ auto fixed_design(
             _("The game cannot build this prototype; fix what it reports first."));
     }
     auto& veh = *built.blueprint;
+    // The blueprint holds the parts in the order the prototype lists them when it installed each.
+    const auto listed = veh.part_count() == static_cast<int>(design_parts(prototype).size());
+    const auto unlisted = [] {
+        return std::unexpected(std::string(
+            _("The game skipped a part of this prototype; fix what it reports first.")));
+    };
     const auto pasted =
         [&](const paste_install& paste) -> std::expected<nlohmann::ordered_json, std::string> {
         return paste_parts(prototype, &veh, paste)
@@ -257,6 +263,7 @@ auto fixed_design(
             return pasted(with_prerequisites(catalog, veh, corners(veh), wheel->get_id()));
         }
         case drive_fix::steer_front: {
+            if (!listed) { return unlisted(); }
             auto next = prototype;
             const auto hubs = front_hubs(catalog, veh);
             if (hubs.empty()) { return std::unexpected(_("No front wheel has a hub to steer.")); }
@@ -280,6 +287,7 @@ auto fixed_design(
                 return std::unexpected(_("No engine burns a liquid fuel."));
             }
             const auto fuel = *liquid_fuel(veh.part_info(*engine));
+            if (!listed) { return unlisted(); }
             const auto tanks = parts_where(veh, [](const vehicle_part& part) {
                 return part.is_tank();
             });
