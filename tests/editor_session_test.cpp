@@ -8218,4 +8218,56 @@ TEST_CASE("a cut leaves the ground most of the rows stand on", "[editor_session]
     editor::reset_editor_session();
 }
 
+TEST_CASE(
+    "painting over a symbol a palette and the mapgen both map keeps what both place",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    {
+        auto rows = nlohmann::ordered_json::array();
+        for (auto row = 0; row < 24; ++row) { rows.push_back(std::string(24, '.')); }
+        const auto entries = nlohmann::ordered_json::array(
+            {{{"type", "palette"},
+              {"id", "editor_session_test_lawn"},
+              {"terrain", {{".", "t_grass"}}},
+              {"items", {{".", {{"item", "tools_home"}}}}}},
+             {{"type", "mapgen"},
+              {"method", "json"},
+              {"om_terrain", "house_04"},
+              {"object",
+               {{"palettes", nlohmann::ordered_json::array({"editor_session_test_lawn"})},
+                {"rows", rows},
+                {"terrain", {{".", "t_floor"}}},
+                {"items", {{".", {{"item", "kitchen"}}}}}}}}});
+        auto out = std::ofstream(file.path, std::ios::binary | std::ios::trunc);
+        out << format_json(entries.dump()).value();
+    }
+    auto symbols = std::size_t{0};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:object", {.row = "object:1"}); },
+        [&](const auto& screen) {
+            symbols = rows_in(screen, "editor:legend").size();
+            return invoke("editor:catalog_kind", {.row = "catalog:furniture"});
+        },
+        [](const auto&) { return invoke("editor:catalog_filter", {.text = "f_chair"}); },
+        [](const auto&) { return invoke("editor:catalog_pick", {.row = "entry:f_chair"}); },
+        [](const auto&) { return square_at(3, 3); },
+        [](const auto&) { return square_at(6, 6); },
+        [&](const auto& screen) {
+            CHECK(told(screen).empty());
+            // The mapgen's terrain is laid over the palette's; both item groups are placed.
+            const auto label = cell(screen, 3, 3).label;
+            CHECK(label.starts_with("wooden floor; chair; "));
+            CHECK_FALSE(label.contains("grass"));
+            CHECK(label.contains("tools_home"));
+            CHECK(label.contains("kitchen"));
+            CHECK(cell(screen, 6, 6).glyph == cell(screen, 3, 3).glyph);
+            CHECK(rows_in(screen, "editor:legend").size() == symbols + 1);
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    editor::reset_editor_session();
+}
+
 #endif // CATA_MCP
