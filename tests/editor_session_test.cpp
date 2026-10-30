@@ -8086,4 +8086,36 @@ TEST_CASE(
     editor::reset_editor_session();
 }
 
+TEST_CASE(
+    "a new map stands on grass and has a wooden floor for its rooms",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    // Removes the folder the new file goes in.
+    const auto folder = mod_file{};
+    const auto made = folder.path.parent_path() / "yard.json";
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) {
+            return invoke("editor:new_set", {.row = "path", .text = made.string()});
+        },
+        [](const auto&) {
+            return invoke("editor:new_set", {.row = "om_terrain", .text = "house_04"});
+        },
+        [](const auto&) { return invoke("editor:new_apply"); },
+        [](const auto& screen) {
+            CHECK(cell(screen, 0, 0).label == "grass");
+            const auto& legend = body<ec::list_body>(part(screen, "editor:legend")).rows;
+            REQUIRE(legend.size() == 2);
+            const auto floor =
+                std::ranges::find(legend, std::string("wooden floor"), [](const auto& row) {
+                    return column_value(row, "terrain");
+                });
+            REQUIRE(floor != legend.end());
+            CHECK(stat_of(screen, "inside").ends_with(" wooden floor"));
+            CHECK(body<ec::list_body>(part(screen, "editor:diagnostics")).rows.empty());
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    editor::reset_editor_session();
+}
+
 #endif // CATA_MCP
