@@ -3201,10 +3201,10 @@ TEST_CASE(
             case 8:
                 return invoke("vehicle:mount", {.row = "mount:0,0"});
             case 9:
-                // A part another must hold up names that part and what to do.
-                CHECK(notice_of(screen).contains("wheel hub assembly"));
-                CHECK(notice_of(screen).ends_with("install one here first."));
-                CHECK(status(screen).empty());
+                // A part another must hold up brings that part, and says so.
+                CHECK(notice_of(screen).empty());
+                CHECK(status(screen).starts_with("Installed wheel hub assembly"));
+                CHECK(status(screen).ends_with(" and wheel at 0,0."));
                 return act("QUIT");
             default:
                 return answer("Leave without saving");
@@ -5443,6 +5443,189 @@ TEST_CASE(
             return invoke("vehicle:done");
         },
         [](const auto&) { return act("QUIT"); },
+    };
+    CHECK(walk(steps) == steps.size());
+}
+
+namespace {
+/// The check `key` of the Ready to drive list.
+auto drive_row(const ec::screen_view& screen, const std::string& key) -> const ec::row& {
+    return row(screen, "vehicle:check", "check:" + key);
+}
+auto drive_ok(const ec::screen_view& screen, const std::string& key) -> bool {
+    const auto& mark = drive_row(screen, key).mark;
+    REQUIRE(mark.has_value());
+    return mark->glyph == "✓";
+}
+auto performance_has(const ec::screen_view& screen, const std::string& key) -> bool {
+    return std::ranges::contains(
+        body<ec::panel_body>(part(screen, "vehicle:performance")).stats, key, &ec::panel_stat::key);
+}
+} // namespace
+
+TEST_CASE(
+    "the vehicle editor's wheel on a bare frame brings its hub, steerable at the front, as one step",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto mods = my_mod_folder{};
+    auto done = std::size_t{0};
+    const auto steps = std::vector<walk_step>{
+        [](const auto&) { return invoke("vehicle:new", {.text = "Kart"}); },
+        [](const auto&) { return invoke("vehicle:tool_rect_filled"); },
+        [](const auto&) { return mount_at(-2, -1); },
+        [](const auto&) { return mount_at(2, 1); },
+        [](const auto&) { return invoke("vehicle:part_filter", {.text = "wheel"}); },
+        [](const auto&) { return invoke("vehicle:choose", {.row = "vpart:wheel"}); },
+        [](const auto&) { return invoke("vehicle:tool_install"); },
+        [](const auto&) { return mount_at(2, -1); },
+        [&](const auto& screen) {
+            // The wheel shows its size.
+            CHECK(cell(screen, "mount:2,-1").label.contains(", wheel hub assembly (steerable), "));
+            CHECK(cell(screen, "mount:2,-1").label.ends_with(" wheel"));
+            CHECK(step_at(screen) == "Install wheel hub assembly (steerable) and wheel at 2,-1");
+            CHECK(said(screen) == "Installed wheel hub assembly (steerable) and wheel at 2,-1.");
+            CHECK(notice_of(screen).empty());
+            done = steps_done(screen);
+            return mount_at(-2, 1);
+        },
+        [&](const auto& screen) {
+            // Behind the middle, the hub does not steer.
+            CHECK(cell(screen, "mount:-2,1").label.contains(", wheel hub assembly, "));
+            CHECK(steps_done(screen) == done + 1);
+            return invoke("vehicle:undo");
+        },
+        [](const auto& screen) {
+            // One undo takes the wheel and its hub.
+            CHECK(cell(screen, "mount:-2,1").label.find("wheel") == std::string::npos);
+            return act("QUIT");
+        },
+    };
+    CHECK(walk(steps) == steps.size());
+}
+
+TEST_CASE(
+    "the vehicle editor's part search puts the part named so first, then the most used",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto mods = my_mod_folder{};
+    const auto first = [](const ec::screen_view& screen) {
+        const auto& found = rows(screen, "vehicle:parts");
+        REQUIRE_FALSE(found.empty());
+        return found.front().label;
+    };
+    const auto steps = std::vector<walk_step>{
+        [](const auto&) { return invoke("vehicle:new", {.text = "Kart"}); },
+        [](const auto&) { return invoke("vehicle:part_filter", {.text = "wheel"}); },
+        [&](const auto& screen) {
+            CHECK(first(screen) == "wheel");
+            return invoke("vehicle:part_filter", {.text = "tank"});
+        },
+        [&](const auto& screen) {
+            CHECK(first(screen) == "vehicle tank (60L)");
+            return invoke("vehicle:part_filter", {.text = "door"});
+        },
+        [&](const auto& screen) {
+            CHECK(first(screen) == "door");
+            return act("QUIT");
+        },
+    };
+    CHECK(walk(steps) == steps.size());
+}
+
+TEST_CASE(
+    "the vehicle editor names the fuel it set in the history and the status", "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto mods = my_mod_folder{};
+    const auto steps = std::vector<walk_step>{
+        [](const auto&) { return invoke("vehicle:new", {.text = "Tanker"}); },
+        [](const auto&) { return invoke("vehicle:part_filter", {.text = "tank"}); },
+        [](const auto&) { return invoke("vehicle:choose", {.row = "vpart:tank"}); },
+        [](const auto&) { return mount_at(0, 0); },
+        [](const auto&) { return invoke("vehicle:part_set", {.row = "fuel", .text = "diesel"}); },
+        [](const auto& screen) {
+            CHECK(step_at(screen) == "Set fuel of vehicle tank (60L) to diesel");
+            CHECK(said(screen) == "Set fuel of vehicle tank (60L) to diesel.");
+            return invoke("vehicle:part_set", {.row = "fuel", .text = ""});
+        },
+        [](const auto& screen) {
+            CHECK(step_at(screen) == "Empty vehicle tank (60L)");
+            return act("QUIT");
+        },
+    };
+    CHECK(walk(steps) == steps.size());
+}
+
+TEST_CASE(
+    "the vehicle editor checks a design is ready to drive and fixes each check with a click",
+    "[editor_vehicle][editor_vehicle_check]") {
+    const auto guard = screen_guard{};
+    const auto mods = my_mod_folder{};
+    auto done = std::size_t{0};
+    const auto fix = [&](const ec::screen_view& screen, const std::string& key) {
+        CHECK_FALSE(drive_ok(screen, key));
+        const auto id = "vehicle:fix:" + key;
+        CHECK(affordance(screen, id).enabled);
+        CHECK(std::ranges::contains(part(screen, "vehicle:check").affordances, id));
+        done = steps_done(screen);
+        return invoke(id);
+    };
+    const auto fixed = [&](const ec::screen_view& screen, const std::string& key) {
+        CHECK(drive_ok(screen, key));
+        CHECK_FALSE(has_affordance(screen, "vehicle:fix:" + key));
+        // A fix is one step.
+        CHECK(steps_done(screen) == done + 1);
+        CHECK(notice_of(screen).empty());
+    };
+    const auto steps = std::vector<walk_step>{
+        [](const auto&) { return invoke("vehicle:new", {.text = "Go kart"}); },
+        [](const auto& screen) {
+            CHECK(slot_of(screen, "vehicle:check") == "tools");
+            CHECK_FALSE(drive_ok(screen, "wheels"));
+            CHECK(drive_row(screen, "wheels").label == "It has no wheels.");
+            // No speed until it can drive.
+            CHECK_FALSE(performance_has(screen, "speed"));
+            return invoke("vehicle:tool_rect_filled");
+        },
+        [](const auto&) { return mount_at(-2, -1); },
+        [](const auto&) { return mount_at(2, 1); },
+        [&](const auto& screen) { return fix(screen, "wheels"); },
+        [&](const auto& screen) {
+            fixed(screen, "wheels");
+            CHECK(step_at(screen) == "Add wheels at the corners");
+            CHECK(drive_ok(screen, "steering"));
+            return fix(screen, "engine");
+        },
+        [&](const auto& screen) {
+            // Choosing an engine is the player's: the palette shows them, the pencil in hand.
+            const auto& groups = body<ec::tabs_body>(part(screen, "vehicle:part_groups")).tabs;
+            const auto shown = std::ranges::find(groups, true, &ec::tab_entry::selected);
+            REQUIRE(shown != groups.end());
+            CHECK(shown->label == "Engines & motors");
+            CHECK(picked_tool(screen) == "canvas_tool:install");
+            return invoke("vehicle:choose", {.row = "vpart:diesel_engine_i6"});
+        },
+        [](const auto&) { return mount_at(1, 0); },
+        [&](const auto& screen) {
+            CHECK(drive_ok(screen, "engine"));
+            return fix(screen, "fuel");
+        },
+        [&](const auto& screen) {
+            fixed(screen, "fuel");
+            return fix(screen, "battery");
+        },
+        [&](const auto& screen) {
+            fixed(screen, "battery");
+            return fix(screen, "controls");
+        },
+        [&](const auto& screen) {
+            fixed(screen, "controls");
+            for (const auto& entry : rows(screen, "vehicle:check")) {
+                INFO(entry.label);
+                CHECK(entry.mark->glyph == "✓");
+            }
+            CHECK(performance_has(screen, "speed"));
+            return act("QUIT");
+        },
     };
     CHECK(walk(steps) == steps.size());
 }
