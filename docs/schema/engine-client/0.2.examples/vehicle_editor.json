@@ -101,7 +101,12 @@
                   "vehicle:filter",
                   "vehicle:page"
                 ],
-                "columns": [],
+                "columns": [
+                  {
+                    "key": "id",
+                    "label": "ID"
+                  }
+                ],
                 "rows": [
                   {
                     "id": "prototype:bicycle",
@@ -111,7 +116,13 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": []
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "bicycle"
+                      }
+                    ]
                   },
                   {
                     "id": "prototype:bicycle_electric",
@@ -121,7 +132,13 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": []
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "bicycle_electric"
+                      }
+                    ]
                   },
                   {
                     "id": "prototype:bicycle_plastic",
@@ -131,7 +148,13 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": []
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "bicycle_plastic"
+                      }
+                    ]
                   },
                   {
                     "id": "prototype:bicycle_carbon",
@@ -141,7 +164,13 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": []
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "bicycle_carbon"
+                      }
+                    ]
                   },
                   {
                     "id": "prototype:bicycle_dirt",
@@ -151,7 +180,13 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": []
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "bicycle_dirt"
+                      }
+                    ]
                   }
                 ],
                 "total": 5,
@@ -203,7 +238,7 @@
           },
           {
             "id": "vehicle:advanced",
-            "label": "Show advanced settings",
+            "label": "Hide advanced settings",
             "keys": [],
             "enabled": true,
             "description": "Shows ids, JSON and the settings that need them, in both editors.",
@@ -343,7 +378,12 @@
                   "vehicle:filter",
                   "vehicle:page"
                 ],
-                "columns": [],
+                "columns": [
+                  {
+                    "key": "id",
+                    "label": "ID"
+                  }
+                ],
                 "rows": [
                   {
                     "id": "prototype:bicycle",
@@ -353,7 +393,13 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": true,
-                    "columns": []
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "bicycle"
+                      }
+                    ]
                   },
                   {
                     "id": "prototype:bicycle_electric",
@@ -363,7 +409,13 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": []
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "bicycle_electric"
+                      }
+                    ]
                   },
                   {
                     "id": "prototype:bicycle_plastic",
@@ -373,7 +425,13 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": []
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "bicycle_plastic"
+                      }
+                    ]
                   },
                   {
                     "id": "prototype:bicycle_carbon",
@@ -383,7 +441,13 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": []
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "bicycle_carbon"
+                      }
+                    ]
                   },
                   {
                     "id": "prototype:bicycle_dirt",
@@ -393,7 +457,13 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": []
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "bicycle_dirt"
+                      }
+                    ]
                   }
                 ],
                 "total": 5,
@@ -879,6 +949,13 @@
                   "selected": false,
                   "enabled": true,
                   "hotkey": "5"
+                },
+                {
+                  "id": "tool:json",
+                  "label": "Raw JSON",
+                  "selected": false,
+                  "enabled": true,
+                  "hotkey": "6"
                 }
               ],
               "select": "vehicle:tool",
@@ -1216,7 +1293,12 @@
                   "vehicle:part_filter",
                   "vehicle:part_page"
                 ],
-                "columns": [],
+                "columns": [
+                  {
+                    "key": "id",
+                    "label": "ID"
+                  }
+                ],
                 "rows": [
                   {
                     "id": "vpart:headlight",
@@ -1226,7 +1308,13 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": [],
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "headlight"
+                      }
+                    ],
                     "look": {
                       "kind": "vehicle_part",
                       "id": "headlight",
@@ -1245,7 +1333,13 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": [],
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "headlight_reinforced"
+                      }
+                    ],
                     "look": {
                       "kind": "vehicle_part",
                       "id": "headlight_reinforced",
@@ -1267,7 +1361,13 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": [],
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "motorcycle_headlight"
+                      }
+                    ],
                     "look": {
                       "kind": "vehicle_part",
                       "id": "motorcycle_headlight",
@@ -1286,7 +1386,13 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": [],
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "wide_headlight_reinforced"
+                      }
+                    ],
                     "look": {
                       "kind": "vehicle_part",
                       "id": "wide_headlight_reinforced",
@@ -1309,7 +1415,13 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": [],
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "wide_headlight"
+                      }
+                    ],
                     "look": {
                       "kind": "vehicle_part",
                       "id": "wide_headlight",
@@ -1668,7 +1780,7 @@
           },
           {
             "id": "vehicle:advanced",
-            "label": "Show advanced settings",
+            "label": "Hide advanced settings",
             "keys": [],
             "enabled": true,
             "description": "Shows ids, JSON and the settings that need them, in both editors.",
@@ -1740,6 +1852,16 @@
             "label": "Test spawn",
             "keys": [
               "5"
+            ],
+            "enabled": true,
+            "expect": "screen",
+            "group": "View"
+          },
+          {
+            "id": "vehicle:show:json",
+            "label": "Raw JSON",
+            "keys": [
+              "6"
             ],
             "enabled": true,
             "expect": "screen",
@@ -2101,7 +2223,13 @@
         "enabled": true,
         "selectable": true,
         "selected": false,
-        "columns": [],
+        "columns": [
+          {
+            "key": "id",
+            "label": "ID",
+            "value": "xlframe_vertical"
+          }
+        ],
         "look": {
           "kind": "vehicle_part",
           "id": "xlframe_vertical",
@@ -3167,7 +3295,12 @@
                   "vehicle:part_filter",
                   "vehicle:part_page"
                 ],
-                "columns": [],
+                "columns": [
+                  {
+                    "key": "id",
+                    "label": "ID"
+                  }
+                ],
                 "rows": [
                   {
                     "id": "vpart:headlight",
@@ -3177,7 +3310,13 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": true,
-                    "columns": [],
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "headlight"
+                      }
+                    ],
                     "look": {
                       "kind": "vehicle_part",
                       "id": "headlight",
@@ -3196,7 +3335,13 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": [],
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "headlight_reinforced"
+                      }
+                    ],
                     "look": {
                       "kind": "vehicle_part",
                       "id": "headlight_reinforced",
@@ -3218,7 +3363,13 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": [],
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "motorcycle_headlight"
+                      }
+                    ],
                     "look": {
                       "kind": "vehicle_part",
                       "id": "motorcycle_headlight",
@@ -3237,7 +3388,13 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": [],
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "wide_headlight_reinforced"
+                      }
+                    ],
                     "look": {
                       "kind": "vehicle_part",
                       "id": "wide_headlight_reinforced",
@@ -3260,7 +3417,13 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": [],
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "wide_headlight"
+                      }
+                    ],
                     "look": {
                       "kind": "vehicle_part",
                       "id": "wide_headlight",
@@ -3552,7 +3715,7 @@
           },
           {
             "id": "vehicle:advanced",
-            "label": "Show advanced settings",
+            "label": "Hide advanced settings",
             "keys": [],
             "enabled": true,
             "description": "Shows ids, JSON and the settings that need them, in both editors.",

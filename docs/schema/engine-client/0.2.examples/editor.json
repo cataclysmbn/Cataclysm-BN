@@ -724,7 +724,7 @@
           },
           {
             "id": "editor:advanced",
-            "label": "Show advanced settings",
+            "label": "Hide advanced settings",
             "keys": [],
             "enabled": true,
             "description": "Shows ids, JSON and the settings that need them, in both editors.",
@@ -1458,6 +1458,10 @@
                 {
                   "key": "terrain",
                   "label": "Terrain"
+                },
+                {
+                  "key": "id",
+                  "label": "ID"
                 }
               ],
               "rows": [
@@ -1479,6 +1483,11 @@
                       "key": "terrain",
                       "label": "Terrain",
                       "value": "plastered wooden wall"
+                    },
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "t_wall"
                     }
                   ],
                   "look": {
@@ -1510,6 +1519,11 @@
                       "key": "terrain",
                       "label": "Terrain",
                       "value": "wooden floor"
+                    },
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "t_floor"
                     }
                   ],
                   "look": {
@@ -1735,6 +1749,32 @@
                 }
               ],
               "submit": "editor:place_apply"
+            },
+            {
+              "id": "editor:field",
+              "kind": "form",
+              "label": "JSON value",
+              "affordances": [
+                "editor:field_set",
+                "editor:field_apply"
+              ],
+              "slot": "inspector",
+              "fields": [
+                {
+                  "id": "pointer",
+                  "label": "Pointer",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "id": "value",
+                  "label": "Value",
+                  "value": "",
+                  "type": "text",
+                  "multiline": true
+                }
+              ],
+              "submit": "editor:field_apply"
             },
             {
               "id": "editor:mapping",
@@ -1966,6 +2006,10 @@
                 ],
                 "columns": [
                   {
+                    "key": "id",
+                    "label": "ID"
+                  },
+                  {
                     "key": "mod",
                     "label": "Mod"
                   }
@@ -1980,6 +2024,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_adobe_brick_floor"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -2008,6 +2057,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_adobe_brick_floor_noroof"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -2034,6 +2088,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_adobe_brick_wall"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -2064,6 +2123,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_adobe_brick_wall_halfway"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -2092,6 +2156,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_airbridge_metal"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -2119,6 +2188,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_airbridge_wood"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -2145,6 +2219,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_alluvial_deposit"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -2175,6 +2254,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_atm"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -2199,6 +2283,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_backboard"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -2228,6 +2317,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_backboard_in"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -2256,6 +2350,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_ballistic_door_glass_c"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -2288,6 +2387,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_ballistic_door_glass_o"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -2318,6 +2422,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_ballistic_glass"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -2346,6 +2455,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bark_wall_broken"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -2370,6 +2484,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bark_wall_chipped"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -2397,6 +2516,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_barkfloor"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -2420,6 +2544,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_barndoor"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -2446,6 +2575,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bars"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -2471,6 +2605,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bog_iron"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -2500,6 +2639,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bramble_door_c"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -2527,6 +2671,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bramble_door_o"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -2551,6 +2700,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_brick_wall"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -2578,6 +2732,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_brick_wall_halfway"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -2602,6 +2761,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bridge"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -2630,6 +2794,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_buffer_stop"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -2653,6 +2822,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulk_tank"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -2683,6 +2857,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulkhead_floor"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -2709,6 +2888,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulkhead_floor_underwater"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -2737,6 +2921,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulkhead_floor_underwater_no_roof"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -2763,6 +2952,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulkhead_roof"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -2794,6 +2988,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_fp"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -2821,6 +3020,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_industrial"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -2850,6 +3054,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_military"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -2874,6 +3083,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_reader_broken"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -2900,6 +3114,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_robofac"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -2925,6 +3144,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_science"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -2949,6 +3173,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_concrete"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -2977,6 +3206,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_green"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -3003,6 +3237,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_metal"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -3032,6 +3271,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_purple"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -3059,6 +3303,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_red"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -3082,6 +3331,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_yellow"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -3110,6 +3364,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_centrifuge"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -3134,6 +3393,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chainfence"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -3160,6 +3424,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chainfence_posts"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -3184,6 +3453,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chaingate_c"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -3210,6 +3484,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chaingate_l"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -3235,6 +3514,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chaingate_o"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -3259,6 +3543,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chickenwire_fence"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -3286,6 +3575,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chickenwire_fence_post"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -4132,7 +4426,7 @@
           },
           {
             "id": "editor:advanced",
-            "label": "Show advanced settings",
+            "label": "Hide advanced settings",
             "keys": [],
             "enabled": true,
             "description": "Shows ids, JSON and the settings that need them, in both editors.",
@@ -4460,6 +4754,26 @@
           {
             "id": "editor:place_apply",
             "label": "Add placement",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:field_set",
+            "label": "Value",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:field"
+              },
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:field_apply",
+            "label": "Set",
             "keys": [],
             "enabled": true,
             "expect": "screen"
@@ -5264,6 +5578,10 @@
                 {
                   "key": "terrain",
                   "label": "Terrain"
+                },
+                {
+                  "key": "id",
+                  "label": "ID"
                 }
               ],
               "rows": [
@@ -5285,6 +5603,11 @@
                       "key": "terrain",
                       "label": "Terrain",
                       "value": "plastered wooden wall"
+                    },
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "t_wall"
                     }
                   ],
                   "look": {
@@ -5316,6 +5639,11 @@
                       "key": "terrain",
                       "label": "Terrain",
                       "value": "wooden floor"
+                    },
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "t_floor"
                     }
                   ],
                   "look": {
@@ -5345,6 +5673,11 @@
                       "key": "terrain",
                       "label": "Terrain",
                       "value": "dirt"
+                    },
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "t_dirt"
                     }
                   ],
                   "look": {
@@ -5570,6 +5903,32 @@
                 }
               ],
               "submit": "editor:place_apply"
+            },
+            {
+              "id": "editor:field",
+              "kind": "form",
+              "label": "JSON value",
+              "affordances": [
+                "editor:field_set",
+                "editor:field_apply"
+              ],
+              "slot": "inspector",
+              "fields": [
+                {
+                  "id": "pointer",
+                  "label": "Pointer",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "id": "value",
+                  "label": "Value",
+                  "value": "",
+                  "type": "text",
+                  "multiline": true
+                }
+              ],
+              "submit": "editor:field_apply"
             },
             {
               "id": "editor:mapping",
@@ -5801,6 +6160,10 @@
                 ],
                 "columns": [
                   {
+                    "key": "id",
+                    "label": "ID"
+                  },
+                  {
                     "key": "mod",
                     "label": "Mod"
                   }
@@ -5815,6 +6178,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_adobe_brick_floor"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -5843,6 +6211,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_adobe_brick_floor_noroof"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -5869,6 +6242,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_adobe_brick_wall"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -5899,6 +6277,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_adobe_brick_wall_halfway"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -5927,6 +6310,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_airbridge_metal"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -5954,6 +6342,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_airbridge_wood"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -5980,6 +6373,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_alluvial_deposit"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -6010,6 +6408,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_atm"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -6034,6 +6437,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_backboard"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -6063,6 +6471,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_backboard_in"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -6091,6 +6504,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_ballistic_door_glass_c"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -6123,6 +6541,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_ballistic_door_glass_o"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -6153,6 +6576,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_ballistic_glass"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -6181,6 +6609,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bark_wall_broken"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -6205,6 +6638,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bark_wall_chipped"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -6232,6 +6670,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_barkfloor"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -6255,6 +6698,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_barndoor"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -6281,6 +6729,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bars"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -6306,6 +6759,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bog_iron"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -6335,6 +6793,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bramble_door_c"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -6362,6 +6825,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bramble_door_o"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -6386,6 +6854,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_brick_wall"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -6413,6 +6886,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_brick_wall_halfway"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -6437,6 +6915,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bridge"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -6465,6 +6948,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_buffer_stop"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -6488,6 +6976,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulk_tank"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -6518,6 +7011,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulkhead_floor"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -6544,6 +7042,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulkhead_floor_underwater"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -6572,6 +7075,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulkhead_floor_underwater_no_roof"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -6598,6 +7106,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulkhead_roof"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -6629,6 +7142,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_fp"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -6656,6 +7174,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_industrial"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -6685,6 +7208,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_military"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -6709,6 +7237,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_reader_broken"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -6735,6 +7268,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_robofac"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -6760,6 +7298,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_science"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -6784,6 +7327,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_concrete"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -6812,6 +7360,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_green"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -6838,6 +7391,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_metal"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -6867,6 +7425,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_purple"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -6894,6 +7457,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_red"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -6917,6 +7485,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_yellow"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -6945,6 +7518,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_centrifuge"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -6969,6 +7547,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chainfence"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -6995,6 +7578,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chainfence_posts"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -7019,6 +7607,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chaingate_c"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -7045,6 +7638,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chaingate_l"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -7070,6 +7668,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chaingate_o"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -7094,6 +7697,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chickenwire_fence"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -7121,6 +7729,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chickenwire_fence_post"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -7972,7 +8585,7 @@
           },
           {
             "id": "editor:advanced",
-            "label": "Show advanced settings",
+            "label": "Hide advanced settings",
             "keys": [],
             "enabled": true,
             "description": "Shows ids, JSON and the settings that need them, in both editors.",
@@ -8300,6 +8913,26 @@
           {
             "id": "editor:place_apply",
             "label": "Add placement",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:field_set",
+            "label": "Value",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:field"
+              },
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:field_apply",
+            "label": "Set",
             "keys": [],
             "enabled": true,
             "expect": "screen"
@@ -8961,6 +9594,10 @@
                 {
                   "key": "terrain",
                   "label": "Terrain"
+                },
+                {
+                  "key": "id",
+                  "label": "ID"
                 }
               ],
               "rows": [
@@ -8977,6 +9614,11 @@
                       "key": "terrain",
                       "label": "Terrain",
                       "value": "plastered wooden wall"
+                    },
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "t_wall"
                     }
                   ],
                   "look": {
@@ -9003,6 +9645,11 @@
                       "key": "terrain",
                       "label": "Terrain",
                       "value": "wooden floor"
+                    },
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "t_floor"
                     }
                   ],
                   "look": {
@@ -9255,6 +9902,32 @@
               "submit": "editor:place_apply"
             },
             {
+              "id": "editor:field",
+              "kind": "form",
+              "label": "JSON value",
+              "affordances": [
+                "editor:field_set",
+                "editor:field_apply"
+              ],
+              "slot": "inspector",
+              "fields": [
+                {
+                  "id": "pointer",
+                  "label": "Pointer",
+                  "value": "/object/place_monster/0",
+                  "type": "text"
+                },
+                {
+                  "id": "value",
+                  "label": "Value",
+                  "value": "{\"monster\":\"mon_zombie\",\"x\":1,\"y\":2}",
+                  "type": "text",
+                  "multiline": true
+                }
+              ],
+              "submit": "editor:field_apply"
+            },
+            {
               "id": "editor:mapping",
               "kind": "form",
               "label": "Mapping",
@@ -9484,6 +10157,10 @@
                 ],
                 "columns": [
                   {
+                    "key": "id",
+                    "label": "ID"
+                  },
+                  {
                     "key": "mod",
                     "label": "Mod"
                   }
@@ -9498,6 +10175,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_adobe_brick_floor"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -9526,6 +10208,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_adobe_brick_floor_noroof"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -9552,6 +10239,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_adobe_brick_wall"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -9582,6 +10274,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_adobe_brick_wall_halfway"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -9610,6 +10307,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_airbridge_metal"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -9637,6 +10339,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_airbridge_wood"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -9663,6 +10370,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_alluvial_deposit"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -9693,6 +10405,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_atm"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -9717,6 +10434,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_backboard"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -9746,6 +10468,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_backboard_in"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -9774,6 +10501,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_ballistic_door_glass_c"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -9806,6 +10538,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_ballistic_door_glass_o"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -9836,6 +10573,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_ballistic_glass"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -9864,6 +10606,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bark_wall_broken"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -9888,6 +10635,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bark_wall_chipped"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -9915,6 +10667,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_barkfloor"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -9938,6 +10695,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_barndoor"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -9964,6 +10726,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bars"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -9989,6 +10756,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bog_iron"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -10018,6 +10790,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bramble_door_c"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -10045,6 +10822,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bramble_door_o"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -10069,6 +10851,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_brick_wall"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -10096,6 +10883,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_brick_wall_halfway"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -10120,6 +10912,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bridge"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -10148,6 +10945,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_buffer_stop"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -10171,6 +10973,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulk_tank"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -10201,6 +11008,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulkhead_floor"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -10227,6 +11039,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulkhead_floor_underwater"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -10255,6 +11072,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulkhead_floor_underwater_no_roof"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -10281,6 +11103,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulkhead_roof"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -10312,6 +11139,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_fp"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -10339,6 +11171,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_industrial"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -10368,6 +11205,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_military"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -10392,6 +11234,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_reader_broken"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -10418,6 +11265,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_robofac"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -10443,6 +11295,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_science"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -10467,6 +11324,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_concrete"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -10495,6 +11357,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_green"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -10521,6 +11388,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_metal"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -10550,6 +11422,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_purple"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -10577,6 +11454,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_red"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -10600,6 +11482,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_yellow"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -10628,6 +11515,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_centrifuge"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -10652,6 +11544,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chainfence"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -10678,6 +11575,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chainfence_posts"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -10702,6 +11604,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chaingate_c"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -10728,6 +11635,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chaingate_l"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -10753,6 +11665,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chaingate_o"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -10777,6 +11694,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chickenwire_fence"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -10804,6 +11726,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chickenwire_fence_post"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -11655,7 +12582,7 @@
           },
           {
             "id": "editor:advanced",
-            "label": "Show advanced settings",
+            "label": "Hide advanced settings",
             "keys": [],
             "enabled": true,
             "description": "Shows ids, JSON and the settings that need them, in both editors.",
@@ -12003,6 +12930,26 @@
           {
             "id": "editor:place_apply",
             "label": "Add placement",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:field_set",
+            "label": "Value",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:field"
+              },
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:field_apply",
+            "label": "Set",
             "keys": [],
             "enabled": true,
             "expect": "screen"
@@ -17990,6 +18937,10 @@
                 {
                   "key": "terrain",
                   "label": "Terrain"
+                },
+                {
+                  "key": "id",
+                  "label": "ID"
                 }
               ],
               "rows": [
@@ -18006,6 +18957,11 @@
                       "key": "terrain",
                       "label": "Terrain",
                       "value": "plastered wooden wall"
+                    },
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "t_wall"
                     }
                   ],
                   "look": {
@@ -18032,6 +18988,11 @@
                       "key": "terrain",
                       "label": "Terrain",
                       "value": "parameter floor"
+                    },
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": ""
                     }
                   ]
                 }
@@ -18249,6 +19210,32 @@
                 }
               ],
               "submit": "editor:place_apply"
+            },
+            {
+              "id": "editor:field",
+              "kind": "form",
+              "label": "JSON value",
+              "affordances": [
+                "editor:field_set",
+                "editor:field_apply"
+              ],
+              "slot": "inspector",
+              "fields": [
+                {
+                  "id": "pointer",
+                  "label": "Pointer",
+                  "value": "/object/place_monster/0",
+                  "type": "text"
+                },
+                {
+                  "id": "value",
+                  "label": "Value",
+                  "value": "{\"monster\":\"mon_zombie\",\"x\":2,\"y\":2}",
+                  "type": "text",
+                  "multiline": true
+                }
+              ],
+              "submit": "editor:field_apply"
             },
             {
               "id": "editor:mapping",
@@ -18480,6 +19467,10 @@
                 ],
                 "columns": [
                   {
+                    "key": "id",
+                    "label": "ID"
+                  },
+                  {
                     "key": "mod",
                     "label": "Mod"
                   }
@@ -18494,6 +19485,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_adobe_brick_floor"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -18522,6 +19518,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_adobe_brick_floor_noroof"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -18548,6 +19549,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_adobe_brick_wall"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -18578,6 +19584,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_adobe_brick_wall_halfway"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -18606,6 +19617,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_airbridge_metal"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -18633,6 +19649,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_airbridge_wood"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -18659,6 +19680,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_alluvial_deposit"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -18689,6 +19715,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_atm"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -18713,6 +19744,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_backboard"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -18742,6 +19778,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_backboard_in"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -18770,6 +19811,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_ballistic_door_glass_c"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -18802,6 +19848,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_ballistic_door_glass_o"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -18832,6 +19883,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_ballistic_glass"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -18860,6 +19916,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bark_wall_broken"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -18884,6 +19945,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bark_wall_chipped"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -18911,6 +19977,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_barkfloor"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -18934,6 +20005,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_barndoor"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -18960,6 +20036,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bars"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -18985,6 +20066,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bog_iron"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -19014,6 +20100,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bramble_door_c"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -19041,6 +20132,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bramble_door_o"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -19065,6 +20161,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_brick_wall"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -19092,6 +20193,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_brick_wall_halfway"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -19116,6 +20222,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bridge"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -19144,6 +20255,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_buffer_stop"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -19167,6 +20283,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulk_tank"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -19197,6 +20318,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulkhead_floor"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -19223,6 +20349,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulkhead_floor_underwater"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -19251,6 +20382,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulkhead_floor_underwater_no_roof"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -19277,6 +20413,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_bulkhead_roof"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -19308,6 +20449,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_fp"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -19335,6 +20481,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_industrial"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -19364,6 +20515,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_military"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -19388,6 +20544,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_reader_broken"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -19414,6 +20575,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_robofac"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -19439,6 +20605,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_card_science"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -19463,6 +20634,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_concrete"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -19491,6 +20667,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_green"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -19517,6 +20698,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_metal"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -19546,6 +20732,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_purple"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -19573,6 +20764,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_red"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -19596,6 +20792,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_carpet_yellow"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -19624,6 +20825,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_centrifuge"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -19648,6 +20854,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chainfence"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -19674,6 +20885,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chainfence_posts"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -19698,6 +20914,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chaingate_c"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -19724,6 +20945,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chaingate_l"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -19749,6 +20975,11 @@
                     "selected": false,
                     "columns": [
                       {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chaingate_o"
+                      },
+                      {
                         "key": "mod",
                         "label": "Mod",
                         "value": "bn"
@@ -19773,6 +21004,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chickenwire_fence"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -19800,6 +21036,11 @@
                     "selectable": true,
                     "selected": false,
                     "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "t_chickenwire_fence_post"
+                      },
                       {
                         "key": "mod",
                         "label": "Mod",
@@ -26870,6 +28111,10 @@
               "slot": "inspector",
               "columns": [
                 {
+                  "key": "id",
+                  "label": "ID"
+                },
+                {
                   "key": "chance",
                   "label": "Chance"
                 },
@@ -26888,6 +28133,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "flashlight"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -26910,6 +28160,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "bottle_glass"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "12%"
@@ -26930,6 +28185,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "circsaw_off"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -26952,6 +28212,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "screwdriver_set"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "10%"
@@ -26972,6 +28237,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "ax"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -26994,6 +28264,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "heavy_flashlight"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "8%"
@@ -27014,6 +28289,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "rigid_plastic_sheet"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -27036,6 +28316,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "spray_can"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "8%"
@@ -27056,6 +28341,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "squeeze_tube"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -27078,6 +28368,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "brick"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "6%"
@@ -27098,6 +28393,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "metal_tank_little"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -27120,6 +28420,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "nail"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "6%"
@@ -27140,6 +28445,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "sandpaper"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -27162,6 +28472,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "saw"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "6%"
@@ -27182,6 +28497,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "tempered_glass_sheet"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -27204,6 +28524,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "wire"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "6%"
@@ -27224,6 +28549,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "box_large"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -27246,6 +28576,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "bucket"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "4%"
@@ -27266,6 +28601,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "chain"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -27288,6 +28628,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "cordless_drill"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "4%"
@@ -27308,6 +28653,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "cu_pipe"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -27330,6 +28680,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "duct_tape"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "4%"
@@ -27350,6 +28705,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "funnel"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -27372,6 +28732,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "hacksaw"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "4%"
@@ -27392,6 +28757,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "hammer"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -27414,6 +28784,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "hand_drill"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "4%"
@@ -27434,6 +28809,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "hoe"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -27456,6 +28836,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "hose"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "4%"
@@ -27476,6 +28861,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "mask_filter"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -27498,6 +28888,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "metal_smoother"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "4%"
@@ -27518,6 +28913,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "pipe"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -27540,6 +28940,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "plastic_sheet"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "4%"
@@ -27560,6 +28965,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "screen_mesh"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -27582,6 +28992,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "weldtank"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "4%"
@@ -27602,6 +29017,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "wrench"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -27624,6 +29044,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "xacto"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "4%"
@@ -27644,6 +29069,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "battery_charger"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -27666,6 +29096,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "boots_steel"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "2%"
@@ -27686,6 +29121,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "box_medium"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -27708,6 +29148,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "brick_kiln"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "2%"
@@ -27728,6 +29173,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "clamp"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -27750,6 +29200,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "con_mix"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "2%"
@@ -27770,6 +29225,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "crowbar"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -27792,6 +29252,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "dehydrator"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "2%"
@@ -27812,6 +29277,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "ear_plugs"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -27834,6 +29304,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "elec_chainsaw_off"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "2%"
@@ -27854,6 +29329,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "elec_jackhammer"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -27876,6 +29356,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "gloves_leather"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "2%"
@@ -27896,6 +29381,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "gloves_work"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -27918,6 +29408,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "hat_hard"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "2%"
@@ -27938,6 +29433,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "hdframe"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -27960,6 +29460,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "jerrycan"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "2%"
@@ -27980,6 +29485,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "jumper_cable"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -28002,6 +29512,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "light_disposable_cell"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "2%"
@@ -28022,6 +29537,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "magnifying_glass"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -28044,6 +29564,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "mask_dust"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "2%"
@@ -28064,6 +29589,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "medium_battery_cell"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -28086,6 +29616,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "nailgun"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "2%"
@@ -28106,6 +29641,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "permanent_marker"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -28128,6 +29668,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "pickaxe"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "2%"
@@ -28148,6 +29693,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "pitchfork"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -28170,6 +29720,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "pliers"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "2%"
@@ -28190,6 +29745,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "polisher"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -28212,6 +29772,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "pressurized_tank_chem"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "2%"
@@ -28232,6 +29797,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "rope_30"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -28254,6 +29824,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "screwdriver"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "2%"
@@ -28274,6 +29849,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "shovel"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -28296,6 +29876,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "sickle"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "2%"
@@ -28316,6 +29901,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "soda_machine"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -28338,6 +29928,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "solar_cell"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "2%"
@@ -28358,6 +29953,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "tool_belt"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -28380,6 +29980,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "voltmeter"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "2%"
@@ -28401,6 +30006,11 @@
                   "selected": false,
                   "columns": [
                     {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "wearable_light"
+                    },
+                    {
                       "key": "chance",
                       "label": "Chance",
                       "value": "2%"
@@ -28421,6 +30031,11 @@
                   "selectable": true,
                   "selected": false,
                   "columns": [
+                    {
+                      "key": "id",
+                      "label": "ID",
+                      "value": "wire_barbed"
+                    },
                     {
                       "key": "chance",
                       "label": "Chance",
@@ -29262,7 +30877,7 @@
           },
           {
             "id": "editor:advanced",
-            "label": "Show advanced settings",
+            "label": "Hide advanced settings",
             "keys": [],
             "enabled": true,
             "description": "Shows ids, JSON and the settings that need them, in both editors.",
@@ -29595,6 +31210,26 @@
           {
             "id": "editor:place_apply",
             "label": "Add placement",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "editor:field_set",
+            "label": "Value",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editor:field"
+              },
+              "text": {}
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "editor:field_apply",
+            "label": "Set",
             "keys": [],
             "enabled": true,
             "expect": "screen"

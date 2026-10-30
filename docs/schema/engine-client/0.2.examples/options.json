@@ -2397,8 +2397,8 @@
                       {
                         "key": "value",
                         "label": "Value",
-                        "value": "False",
-                        "color": "c_light_red"
+                        "value": "True",
+                        "color": "c_light_green"
                       }
                     ]
                   },
