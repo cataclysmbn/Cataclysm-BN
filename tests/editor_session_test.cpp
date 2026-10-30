@@ -8160,4 +8160,62 @@ TEST_CASE(
     editor::reset_editor_session();
 }
 
+TEST_CASE(
+    "a wide room of furniture keeps the floor under all its walls, and the floor drawn again "
+    "takes the furniture away",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:catalog_kind", {.row = "catalog:furniture"}); },
+        [](const auto&) { return invoke("editor:catalog_filter", {.text = "f_counter"}); },
+        [](const auto&) { return invoke("editor:catalog_pick", {.row = "entry:f_counter"}); },
+        [](const auto&) { return invoke("editor:tool", {.row = "tool:room"}); },
+        [](const auto&) { return invoke("editor:brush", {.count = 2}); },
+        [](const auto&) { return square_at(3, 3); },
+        [](const auto&) { return square_at(12, 10); },
+        [](const auto& screen) {
+            CHECK(told(screen).empty());
+            // The outer and the inner ring of the wide walls, and the room's inside.
+            CHECK(cell(screen, 3, 3).label == "wooden floor; counter");
+            CHECK(cell(screen, 4, 4).label == "wooden floor; counter");
+            CHECK(cell(screen, 12, 10).label == "wooden floor; counter");
+            CHECK(cell(screen, 8, 7).label == "wooden floor");
+            return invoke("editor:symbol", {.row = "symbol:."});
+        },
+        [](const auto&) { return invoke("editor:tool", {.row = "tool:point"}); },
+        [](const auto&) { return invoke("editor:brush", {.count = 1}); },
+        [](const auto&) { return square_at(3, 3); },
+        [](const auto& screen) {
+            CHECK(cell(screen, 3, 3).glyph == ".");
+            CHECK(cell(screen, 3, 3).label == "wooden floor");
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    editor::reset_editor_session();
+}
+
+TEST_CASE("a cut leaves the ground most of the rows stand on", "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{{{"terrain", {{".", "t_grass"}, {"_", "t_floor"}}}}};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto& screen) {
+            // The room's inside is the floor, though grass is what the rows hold.
+            CHECK(stat_of(screen, "inside").ends_with(" wooden floor"));
+            return invoke("editor:tool", {.row = "tool:select"});
+        },
+        [](const auto&) { return square_at(3, 3); },
+        [](const auto&) { return square_at(5, 4); },
+        [](const auto&) { return invoke("editor:cut"); },
+        [](const auto& screen) {
+            CHECK(told(screen).empty());
+            CHECK(cell(screen, 4, 4).label == "grass");
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    editor::reset_editor_session();
+}
+
 #endif // CATA_MCP
