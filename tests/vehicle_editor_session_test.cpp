@@ -5740,4 +5740,32 @@ TEST_CASE("the vehicle editor's start page shows a New vehicle button", "[editor
     CHECK(walk(steps) == steps.size());
 }
 
+TEST_CASE("the vehicle editor's frames join the ones installed beside them", "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto mods = my_mod_folder{};
+    const auto steps = std::vector<walk_step>{
+        // A new vehicle starts on a frame at 0,0 with a frame in hand.
+        [](const auto&) { return invoke("vehicle:new", {.text = "Kart"}); },
+        [](const auto&) { return mount_at(1, 0); },
+        [](const auto& screen) {
+            // Its step names the frame installed, not the one that took a new shape beside it.
+            CHECK(step_at(screen) == "Install frame at 1,0");
+            return mount_at(0, 1);
+        },
+        [](const auto&) { return invoke("vehicle:save"); },
+    };
+    CHECK(walk(steps) == steps.size());
+    const auto saved = nlohmann::ordered_json::parse(read_file(mods.path / "kart.json"))[0];
+    const auto parts = editor::design_parts(saved);
+    const auto at = [&](const point& mount) {
+        const auto found = std::ranges::find(parts, mount, &editor::design_part::mount);
+        REQUIRE(found != parts.end());
+        return found->part;
+    };
+    // Its front and its right: the corner joining them.
+    CHECK(at({0, 0}).ends_with("_sw"));
+    CHECK(at({1, 0}).ends_with("_vertical"));
+    CHECK(at({0, 1}).ends_with("_horizontal"));
+}
+
 #endif // CATA_MCP
