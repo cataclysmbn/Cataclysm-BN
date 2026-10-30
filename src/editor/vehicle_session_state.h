@@ -53,6 +53,9 @@ inline constexpr auto copy_mounts_id = "vehicle:copy_mounts";
 inline constexpr auto copy_settings_id = "vehicle:copy_settings";
 inline constexpr auto paste_settings_id = "vehicle:paste_settings";
 inline constexpr auto cut_mounts_id = "vehicle:cut_mounts";
+inline constexpr auto clip_turn_id = "vehicle:clip_turn";
+inline constexpr auto clip_flip_sides_id = "vehicle:clip_flip_sides";
+inline constexpr auto clip_flip_ends_id = "vehicle:clip_flip_ends";
 inline constexpr auto marked_kinds_id = "vehicle:marked_kinds";
 inline constexpr auto replace_kind_id = "vehicle:replace_kind";
 inline constexpr auto delete_kind_id = "vehicle:delete_kind";
@@ -133,10 +136,11 @@ struct live_step {
 };
 
 /// A mount of what was copied: where it lies from the north-west corner of the copy, and its
-/// parts in the order they were installed.
+/// parts in the order they were installed, as the prototype's entries name them with their
+/// settings.
 struct clip_mount {
     point offset;
-    std::vector<std::string> parts;
+    std::vector<nlohmann::ordered_json> parts;
 };
 
 /// What a click on a mount of the grid does, the affordance that picks it and its keys, as the

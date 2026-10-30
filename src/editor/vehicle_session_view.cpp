@@ -819,6 +819,17 @@ auto parts_view(const session& state) -> ec::screen_view {
              "Copies the parts on the marked squares, or on the picked one, and "
              "removes them."),
          .keys = {"CTRL+X"}}));
+    // The copy turns and flips, as Factorio's blueprint in hand.
+    const auto clip_action = [&](const ec::invoke_options& options) {
+        auto shown = options;
+        shown.enabled = !state.clip.empty();
+        shown.denial = nothing_copied;
+        affordances.push_back(ec::invoke_affordance(shown));
+    };
+    clip_action({.id = clip_turn_id, .label = _("Turn copy"), .keys = {"R"}});
+    clip_action({.id = clip_flip_sides_id, .label = _("Flip copy left and right"), .keys = {"F"}});
+    clip_action(
+        {.id = clip_flip_ends_id, .label = _("Flip copy front and back"), .keys = {"CTRL+F"}});
     // With squares marked, the Delete key deletes them, else the picked part.
     affordances.push_back(ec::invoke_affordance(
         {.id = delete_mounts_id,
@@ -1361,14 +1372,33 @@ auto session_view(const session& state) -> ec::screen_view {
     const auto world = std::string(_("World"));
     auto view = parts_view(state);
     auto groups = std::map<std::string, std::string, std::less<>>{
-        {new_id, file},          {save_id, file},          {save_as_id, file},
-        {undo_id, edit},         {redo_id, edit},          {remove_id, edit},
-        {earlier_id, edit},      {later_id, edit},         {copy_mounts_id, edit},
-        {cut_mounts_id, edit},   {delete_mounts_id, edit}, {mirror_sides_id, edit},
-        {mirror_ends_id, edit},  {copy_settings_id, edit}, {paste_settings_id, edit},
-        {view_cw_id, view_menu}, {view_ccw_id, view_menu}, {advanced_id, view_menu},
-        {spawn_id, world},       {test_drive_id, world},   {turn_cw_id, world},
-        {turn_ccw_id, world},    {paste_id, world},        {done_id, world}};
+        {new_id, file},
+        {save_id, file},
+        {save_as_id, file},
+        {undo_id, edit},
+        {redo_id, edit},
+        {remove_id, edit},
+        {earlier_id, edit},
+        {later_id, edit},
+        {copy_mounts_id, edit},
+        {cut_mounts_id, edit},
+        {delete_mounts_id, edit},
+        {mirror_sides_id, edit},
+        {mirror_ends_id, edit},
+        {copy_settings_id, edit},
+        {paste_settings_id, edit},
+        {clip_turn_id, edit},
+        {clip_flip_sides_id, edit},
+        {clip_flip_ends_id, edit},
+        {view_cw_id, view_menu},
+        {view_ccw_id, view_menu},
+        {advanced_id, view_menu},
+        {spawn_id, world},
+        {test_drive_id, world},
+        {turn_cw_id, world},
+        {turn_ccw_id, world},
+        {paste_id, world},
+        {done_id, world}};
     for (const auto& entry : canvas_tools) { groups.emplace(entry.affordance, edit); }
     for (const auto& entry : view.affordances) {
         if (entry.id.starts_with(show_prefix)) { groups.emplace(entry.id, view_menu); }

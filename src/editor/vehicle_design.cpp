@@ -974,6 +974,32 @@ auto remove_part(
     return redrawn(std::move(next));
 }
 
+auto entry_part(const nlohmann::ordered_json& entry) -> std::string {
+    return entry.is_object() ? entry.value("part", "") : entry.get<std::string>();
+}
+
+auto given_members(
+    const nlohmann::ordered_json& before, const nlohmann::ordered_json& after,
+    const std::vector<placed_entry>& placed) -> nlohmann::ordered_json {
+    // How many of each part each mount had, so the parts beyond them are the new ones.
+    auto had = std::map<std::pair<point, std::string>, int>{};
+    for (const auto& entry : design_parts(before)) { ++had[{entry.mount, entry.part}]; }
+    auto left = placed;
+    auto next = after;
+    for (const auto& entry : design_parts(after)) {
+        if (had[{entry.mount, entry.part}]-- > 0 || entry.from_palette) { continue; }
+        const auto found = std::ranges::find_if(left, [&](const placed_entry& place) {
+            return place.mount == entry.mount && entry_part(place.entry) == entry.part;
+        });
+        if (found == left.end()) { continue; }
+        if (found->entry.is_object()) {
+            next[nlohmann::ordered_json::json_pointer(entry.pointer)] = found->entry;
+        }
+        left.erase(found);
+    }
+    return next;
+}
+
 auto set_part_member(const nlohmann::ordered_json& prototype, const part_member& change)
     -> std::expected<nlohmann::ordered_json, std::string> {
     const auto parts = design_parts(prototype);

@@ -897,23 +897,40 @@ struct editing: session {
         pick_top();
     }
 
-    /// The parts on the marked mounts, by mount in install order; none, with a notice that says
-    /// so, when they have none.
+    /// The parts on the marked mounts, by mount in install order, with the settings the design
+    /// gives them; none, with a notice that says so, when they have none.
     auto marked_clip() -> std::optional<std::vector<clip_mount>> {
         const auto* const veh = shown_vehicle();
         const auto marked = marked_mounts();
+        const auto design = live ? std::vector<design_part>{} : design_parts(prototype());
         auto taken = std::vector<clip_mount>{};
         for (const auto& at : marked) {
             const auto here =
                 veh ? veh->parts_at_relative(tripoint_mnt_veh(at.x, at.y, 0), false)
                     : std::vector<int>{};
             if (here.empty()) { continue; }
-            taken.push_back(
-                {.offset = at - marked.front(),
-                 .parts = here | std::views::transform([&](const int index) {
-                              return veh->part_info(index).get_id().str();
-                          })
-                        | std::ranges::to<std::vector>()});
+            auto parts =
+                here | std::views::transform([&](const int index) {
+                    return nlohmann::ordered_json(veh->part_info(index).get_id().str());
+                })
+                | std::ranges::to<std::vector>();
+            // The design's entries of the mount, when they are the parts the vehicle shows.
+            const auto entries =
+                design
+                | std::views::filter([&](const design_part& entry) { return entry.mount == at; })
+                | std::ranges::to<std::vector>();
+            if (entries.size() == parts.size()
+                && std::ranges::equal(
+                    entries, parts, {},
+                    [](const design_part& entry) { return entry.from_palette ? "" : entry.part; },
+                    [](const nlohmann::ordered_json& part) { return part.get<std::string>(); })) {
+                parts =
+                    entries | std::views::transform([&](const design_part& entry) {
+                        return prototype()[nlohmann::ordered_json::json_pointer(entry.pointer)];
+                    })
+                    | std::ranges::to<std::vector>();
+            }
+            taken.push_back({.offset = at - marked.front(), .parts = std::move(parts)});
         }
         if (taken.empty()) {
             notice = selection ? _("The selection has no part to copy.")
@@ -977,17 +994,25 @@ struct editing: session {
         cursor = at;
         tool_tab = "mount";
         auto paste = paste_install{};
+        auto placed = std::vector<placed_entry>{};
         for (const auto& [offset, parts] : clip) {
             for (auto layer = std::size_t{0}; layer < parts.size(); ++layer) {
                 if (paste.layers.size() <= layer) { paste.layers.emplace_back(); }
-                paste.layers[layer].push_back({.mount = at + offset, .part = parts[layer]});
+                paste.layers[layer].push_back(
+                    {.mount = at + offset, .part = entry_part(parts[layer])});
+                placed.push_back({.mount = at + offset, .entry = parts[layer]});
             }
         }
         const auto tally = change_parts(
             _("Paste"),
             {.design =
                  [&](const nlohmann::ordered_json& from) {
-                     return paste_parts(from, built.blueprint.get(), paste);
+                     // The parts keep the settings they had, such as a tank's fuel.
+                     return paste_parts(from, built.blueprint.get(), paste)
+                         .transform([&](stroke_design done) {
+                             done.prototype = given_members(from, done.prototype, placed);
+                             return done;
+                         });
                  },
              .live = [&](vehicle& veh) { return paste_live_parts(veh, paste); },
              .nothing = _("Copy or cut squares first.")});
@@ -998,6 +1023,28 @@ struct editing: session {
                  + refused_parts(*tally);
         }
         pick_top();
+    }
+
+    /// Moves each mount of the clip to where `moved` takes its offset, its north-west corner
+    /// again at none, and says what it did.
+    auto reshape_clip(const std::function<auto(const point&)->point>& moved, const char* const what)
+        -> void {
+        if (clip.empty()) {
+            notice = _("Copy or cut squares first.");
+            return;
+        }
+        for (auto& mount : clip) { mount.offset = moved(mount.offset); }
+        const auto low = point(
+            std::ranges::min(
+                clip
+                | std::views::transform([](const clip_mount& mount) { return mount.offset.x; })),
+            std::ranges::min(
+                clip
+                | std::views::transform([](const clip_mount& mount) { return mount.offset.y; })));
+        for (auto& mount : clip) { mount.offset -= low; }
+        // Frames and armour join their new neighbours once pasted.
+        said = what;
+        take_tool("paste");
     }
 
     /// The design's parts on the marked mounts of the kind `kind`, last first.
@@ -2000,6 +2047,17 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
             state.end_stroke();
         } else if (id == copy_mounts_id) {
             state.copy_mounts();
+        } else if (id == clip_turn_id) {
+            state.reshape_clip(
+                [](const point& at) { return point(-at.y, at.x); }, _("Turned the copy."));
+        } else if (id == clip_flip_sides_id) {
+            state.reshape_clip(
+                [](const point& at) { return point(at.x, -at.y); },
+                _("Flipped the copy left and right."));
+        } else if (id == clip_flip_ends_id) {
+            state.reshape_clip(
+                [](const point& at) { return point(-at.x, at.y); },
+                _("Flipped the copy front and back."));
         } else if (id == cut_mounts_id || id == delete_mounts_id) {
             state.delete_mounts(id == cut_mounts_id);
         } else if (id == remove_id) {

@@ -143,6 +143,22 @@ struct part_member {
     std::optional<nlohmann::ordered_json> value = std::nullopt;
 };
 
+/// A part a paste installs as its entry in a prototype has it: its id alone, or an object with
+/// its `part` and the members set on it, such as a tank's fuel.
+struct placed_entry {
+    point mount;
+    nlohmann::ordered_json entry;
+};
+
+/// The id of the part a prototype's entry names.
+auto entry_part(const nlohmann::ordered_json& entry) -> std::string;
+
+/// `after` with the members of each of `placed` on the part of its mount and id that `before`
+/// lacks, as a paste of them leaves it.
+auto given_members(
+    const nlohmann::ordered_json& before, const nlohmann::ordered_json& after,
+    const std::vector<placed_entry>& placed) -> nlohmann::ordered_json;
+
 /// The prototype with the member of a part set or removed: a part named by its id alone becomes
 /// an object, and one left with its id alone is named by it again; the error says why the game
 /// would not load it.
