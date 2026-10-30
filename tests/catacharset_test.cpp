@@ -30,6 +30,7 @@ TEST_CASE("utf8_display_split", "[catacharset][i18n]") {
 TEST_CASE("base64", "[catacharset]") {
     CHECK(base64_encode("hello") == "#aGVsbG8=");
     CHECK(base64_decode("#aGVsbG8=") == "hello");
+    CHECK(base64_decode(base64_encode("")).empty());
 }
 
 TEST_CASE("utf8_to_wstr", "[catacharset][i18n]") {

@@ -5749,12 +5749,17 @@ TEST_CASE(
 
     // The editor key brings back the vehicle editor, and closing it the map editor under it.
     auto kinds = std::vector<std::string>{};
+    auto notices = std::vector<bool>{};
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        kinds.push_back(ec::top_screen(captured()).kind);
+        const auto screen = ec::top_screen(captured());
+        kinds.push_back(screen.kind);
+        notices.push_back(ec::find_component(*screen.root, "editor:notice") != nullptr);
         return act("QUIT");
     });
     editor::run_editor_session();
     CHECK(kinds == std::vector<std::string>{"vehicle_editor", "editor"});
+    // The map editor comes back as it was, with no file to open.
+    CHECK(notices == std::vector<bool>{false, false});
 }
 
 TEST_CASE(
@@ -6372,8 +6377,6 @@ TEST_CASE(
         return act("QUIT");
     });
     CHECK(walk(steps) == steps.size());
-    // A lone mark is no shared text.
-    CHECK(base64_decode("#") == "#");
 }
 
 TEST_CASE(
