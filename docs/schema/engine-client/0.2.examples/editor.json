@@ -85,7 +85,7 @@
                   "id": "fill",
                   "label": "Terrain",
                   "description": "The terrain of every square, and under any symbol that maps none.",
-                  "value": "t_floor",
+                  "value": "t_grass",
                   "type": "text",
                   "required": true
                 },
@@ -1028,7 +1028,7 @@
                 {
                   "key": "inside",
                   "label": "Inside",
-                  "value": "# plastered wooden wall"
+                  "value": ". wooden floor"
                 },
                 {
                   "key": "brush",
@@ -3630,7 +3630,7 @@
                   "id": "fill",
                   "label": "Terrain",
                   "description": "The terrain of every square, and under any symbol that maps none.",
-                  "value": "t_floor",
+                  "value": "t_grass",
                   "type": "text",
                   "required": true
                 },
@@ -5098,7 +5098,7 @@
                 {
                   "key": "inside",
                   "label": "Inside",
-                  "value": "# plastered wooden wall"
+                  "value": ". wooden floor"
                 },
                 {
                   "key": "brush",
@@ -5526,7 +5526,22 @@
                     },
                     "label": "place_monster"
                   }
-                ]
+                ],
+                "span": {
+                  "shape": "rect",
+                  "size": 1,
+                  "from": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "to": {
+                    "x": 3,
+                    "y": 3
+                  },
+                  "looks": [
+                    2
+                  ]
+                }
               }
             },
             {
@@ -7760,7 +7775,7 @@
                   "id": "fill",
                   "label": "Terrain",
                   "description": "The terrain of every square, and under any symbol that maps none.",
-                  "value": "t_floor",
+                  "value": "t_grass",
                   "type": "text",
                   "required": true
                 },
@@ -9097,7 +9112,7 @@
                 {
                   "key": "inside",
                   "label": "Inside",
-                  "value": "# plastered wooden wall"
+                  "value": ". wooden floor"
                 },
                 {
                   "key": "brush",
@@ -9522,7 +9537,22 @@
                     "label": "place_monster",
                     "selected": true
                   }
-                ]
+                ],
+                "span": {
+                  "shape": "rect",
+                  "size": 1,
+                  "from": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "to": {
+                    "x": 3,
+                    "y": 3
+                  },
+                  "looks": [
+                    0
+                  ]
+                }
               }
             },
             {
@@ -11733,7 +11763,7 @@
                   "id": "fill",
                   "label": "Terrain",
                   "description": "The terrain of every square, and under any symbol that maps none.",
-                  "value": "t_floor",
+                  "value": "t_grass",
                   "type": "text",
                   "required": true
                 },
@@ -13454,7 +13484,7 @@
                 {
                   "key": "inside",
                   "label": "Inside",
-                  "value": "# plastered wooden wall"
+                  "value": ". parameter floor"
                 },
                 {
                   "key": "brush",
@@ -30019,7 +30049,7 @@
                   "id": "fill",
                   "label": "Terrain",
                   "description": "The terrain of every square, and under any symbol that maps none.",
-                  "value": "t_floor",
+                  "value": "t_grass",
                   "type": "text",
                   "required": true
                 },

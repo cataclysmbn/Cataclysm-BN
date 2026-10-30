@@ -3553,7 +3553,7 @@
                   "id": "fill",
                   "label": "Terrain",
                   "description": "The terrain of every square, and under any symbol that maps none.",
-                  "value": "t_floor",
+                  "value": "t_grass",
                   "type": "text",
                   "required": true
                 },

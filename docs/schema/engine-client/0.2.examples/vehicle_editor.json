@@ -124,22 +124,6 @@
                     ]
                   },
                   {
-                    "id": "prototype:bicycle_carbon",
-                    "label": "Carbon Fiber Bicycle",
-                    "description": "",
-                    "denial": "",
-                    "enabled": true,
-                    "selectable": true,
-                    "selected": false,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "bicycle_carbon"
-                      }
-                    ]
-                  },
-                  {
                     "id": "prototype:bicycle_electric",
                     "label": "Electric Bicycle",
                     "description": "",
@@ -168,6 +152,22 @@
                         "key": "id",
                         "label": "ID",
                         "value": "bicycle_plastic"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "prototype:bicycle_carbon",
+                    "label": "Carbon Fiber Bicycle",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "bicycle_carbon"
                       }
                     ]
                   },
@@ -392,22 +392,6 @@
                     ]
                   },
                   {
-                    "id": "prototype:bicycle_carbon",
-                    "label": "Carbon Fiber Bicycle",
-                    "description": "",
-                    "denial": "",
-                    "enabled": true,
-                    "selectable": true,
-                    "selected": false,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "bicycle_carbon"
-                      }
-                    ]
-                  },
-                  {
                     "id": "prototype:bicycle_electric",
                     "label": "Electric Bicycle",
                     "description": "",
@@ -436,6 +420,22 @@
                         "key": "id",
                         "label": "ID",
                         "value": "bicycle_plastic"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "prototype:bicycle_carbon",
+                    "label": "Carbon Fiber Bicycle",
+                    "description": "",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": [
+                      {
+                        "key": "id",
+                        "label": "ID",
+                        "value": "bicycle_carbon"
                       }
                     ]
                   },
