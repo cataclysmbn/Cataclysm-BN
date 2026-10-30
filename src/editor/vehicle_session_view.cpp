@@ -1167,16 +1167,9 @@ auto parts_view(const session& state) -> ec::screen_view {
              .rows =
                  std::views::enumerate(state.library) | std::views::transform([](const auto& entry) {
                      const auto& [index, piece] = entry;
-                     const auto mounts =
-                         piece.data.value("mounts", nlohmann::ordered_json::array());
-                     const auto first =
-                         mounts.is_array() && !mounts.empty()
-                             ? mounts[0].value("parts", nlohmann::ordered_json::array())
-                             : nlohmann::ordered_json::array();
+                     const auto clip = clip_of(piece.data);
                      const auto part =
-                         first.is_array() && !first.empty()
-                             ? vpart_id(entry_part(first[0]))
-                             : vpart_id::NULL_ID();
+                         clip.empty() ? vpart_id::NULL_ID() : vpart_id(entry_part(clip[0].parts[0]));
                      return ec::row{
                          .id = index_row("piece", static_cast<std::size_t>(index)),
                          .label = piece.name,

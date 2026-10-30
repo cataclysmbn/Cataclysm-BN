@@ -152,6 +152,61 @@ TEST_CASE(
     fixed(tankless, "fuel");
 }
 
+TEST_CASE(
+    "a diesel kart's tank of another liquid keeps it, and the fix fills a free tank",
+    "[editor_vehicle_check]") {
+    const auto water = ordered_json{{"part", "tank"}, {"fuel", "water"}};
+    const auto fuels = [](const ordered_json& prototype) {
+        return editor::design_parts(prototype)
+             | std::views::filter([](const editor::design_part& part) {
+                   return part.part == "tank";
+               })
+             | std::views::transform([&](const editor::design_part& part) {
+                   const auto& entry = prototype[ordered_json::json_pointer(part.pointer)];
+                   return entry.is_object() ? entry.value("fuel", "") : std::string{};
+               })
+             | std::ranges::to<std::vector>();
+    };
+    // Only a tank of water: a tank of diesel comes beside it.
+    const auto watered = kart({{.at = {-1, 0}, .parts = {"frame_vertical", water}}});
+    CHECK(check_of(checks_of(watered), "fuel").text == "No tank holds diesel for the engine.");
+    auto next = fixed(watered, "fuel");
+    CHECK(next["parts"][6]["parts"][1] == water);
+    auto filled = fuels(next);
+    std::ranges::sort(filled);
+    CHECK(filled == std::vector<std::string>{"diesel", "water"});
+
+    // A tank of water and an empty one: the empty one takes diesel.
+    const auto mixed = kart(
+        {{.at = {-1, 0}, .parts = {"frame_vertical", water}},
+         {.at = {-1, 1}, .parts = {"frame_vertical", "tank"}}});
+    next = fixed(mixed, "fuel");
+    CHECK(fuels(next) == std::vector<std::string>{"water", "diesel"});
+}
+
+TEST_CASE(
+    "a kart the game skips a part of refuses the fixes that need its parts in order",
+    "[editor_vehicle_check]") {
+    const auto catalog = editor::read_part_catalog();
+    // The unknown part comes first, so each part the game installs is one entry earlier.
+    const auto skipped = kart(
+        {{.at = {-2, -1},
+          .parts = {"no_such_part", "frame_vertical", "wheel_mount_medium", "wheel"}},
+         {.at = {2, -1}, .parts = {"frame_vertical", "wheel_mount_medium", "wheel"}},
+         {.at = {2, 1}, .parts = {"frame_vertical", "wheel_mount_medium", "wheel"}},
+         {.at = {-1, 0}, .parts = {"frame_vertical", "tank"}}});
+    const auto built = editor::build_design(skipped.dump());
+    REQUIRE(built.blueprint);
+    REQUIRE(built.blueprint->part_count() + 1
+            == static_cast<int>(editor::design_parts(skipped).size()));
+    for (const auto fix : {editor::drive_fix::steer_front, editor::drive_fix::fill_tanks}) {
+        const auto next = editor::fixed_design(skipped, catalog, fix);
+        REQUIRE_FALSE(next.has_value());
+        CHECK(next.error()
+              == "The game skipped a part of this prototype; fix what it reports first.");
+    }
+}
+
 TEST_CASE("a diesel kart with no battery gets one", "[editor_vehicle_check]") {
     const auto flat = kart({{.at = {1, 1}, .parts = frame}});
     CHECK(check_of(checks_of(flat), "battery").text == "The engine needs a battery to start.");

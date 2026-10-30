@@ -1,5 +1,6 @@
 #pragma once
 
+#include <expected>
 #include <nlohmann/json.hpp>
 #include <optional>
 #include <string>
@@ -18,8 +19,10 @@ struct library_piece {
 auto library_file(const std::string& kind) -> std::string;
 /// The pieces of `kind` in the order they were saved; none when the file is missing or unreadable.
 auto library_pieces(const std::string& kind) -> std::vector<library_piece>;
-/// Keeps `piece` among those of `kind`, in place of one of its name.
-auto keep_piece(const std::string& kind, const library_piece& piece) -> void;
+/// Keeps `piece` among those of `kind`, in place of one of its name; the error says why the file
+/// stays as it was.
+auto keep_piece(const std::string& kind, const library_piece& piece)
+    -> std::expected<void, std::string>;
 
 /// `data` of `kind` as text to share, which `piece_of_text` reads back.
 auto piece_text(const std::string& kind, const nlohmann::ordered_json& data) -> std::string;

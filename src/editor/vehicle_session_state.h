@@ -152,6 +152,9 @@ struct clip_mount {
 
 /// The clip as the library and text keep it, which the Paste tool takes again.
 auto clip_json(const std::vector<clip_mount>& clip) -> nlohmann::ordered_json;
+/// The clip `clip_json` made of `data`, without the mounts in another shape and the parts the
+/// game does not know; empty for other data, as a hand edit or other text leaves.
+auto clip_of(const nlohmann::ordered_json& data) -> std::vector<clip_mount>;
 
 /// What a click on a mount of the grid does, the affordance that picks it and its keys, as the
 /// map editor's tools have them; a tool that draws the part in hand has the shape it draws, which

@@ -2,6 +2,7 @@
 
 #    include "avatar.h"
 #    include "cata_utility.h"
+#    include "catacharset.h"
 #    include "catch/catch.hpp"
 #    include "client_input.h"
 #    include "client_interaction.h"
@@ -6258,6 +6259,151 @@ TEST_CASE("the vehicle editor deletes only the armour of the marked squares", "[
         REQUIRE(entries.size() == 1);
         CHECK(entry_id(entries.front()).starts_with("frame"));
     }
+}
+
+TEST_CASE(
+    "the vehicle editor's copied settings and parts leave their old mount behind",
+    "[editor_vehicle]") {
+    const auto library = library_guard{};
+    const auto guard = screen_guard{};
+    const auto mods = my_mod_folder{};
+    // A tank listed by itself with its mount, and one listed in its mount's parts.
+    const auto parts = std::string(
+        R"([{"x":0,"y":0,"part":"frame_vertical"},{"x":1,"y":0,"part":"frame_vertical"},)"
+        R"({"x":0,"y":0,"part":"tank","fuel":"diesel"},{"x":1,"y":0,"parts":["tank"]}])");
+    const auto steps = std::vector<walk_step>{
+        [](const auto&) { return invoke("vehicle:new", {.text = "Flat"}); },
+        [](const auto&) { return invoke("vehicle:show:json"); },
+        [](const auto&) {
+            return invoke("vehicle:field_set", {.row = "pointer", .text = "/parts"});
+        },
+        [&](const auto&) { return invoke("vehicle:field_set", {.row = "value", .text = parts}); },
+        [](const auto&) { return invoke("vehicle:field_apply"); },
+        [](const auto& screen) {
+            CHECK(messages(screen).empty());
+            return invoke("vehicle:tool_select");
+        },
+        [](const auto&) { return invoke("vehicle:show:mount"); },
+        [](const auto&) { return mount_at(0, 0); },
+        [](const auto&) { return invoke("vehicle:copy_settings"); },
+        [](const auto&) { return mount_at(1, 0); },
+        [](const auto&) { return invoke("vehicle:paste_settings"); },
+        [](const auto& screen) {
+            CHECK(notice_of(screen).empty());
+            CHECK(messages(screen).empty());
+            return invoke("vehicle:part_set", {.row = "fuel", .text = "gasoline"});
+        },
+        [](const auto&) { return invoke("vehicle:copy_settings"); },
+        [](const auto&) { return mount_at(0, 0); },
+        [](const auto&) { return invoke("vehicle:paste_settings"); },
+        [](const auto& screen) {
+            CHECK(notice_of(screen).empty());
+            CHECK(messages(screen).empty());
+            return invoke("vehicle:copy_mounts");
+        },
+        [](const auto&) { return invoke("vehicle:library_save", {.text = "Flat tank"}); },
+        [](const auto&) { return invoke("vehicle:tool_paste"); },
+        [](const auto&) { return mount_at(0, 1); },
+        [](const auto& screen) {
+            CHECK(said(screen) == "Pasted 2 parts.");
+            CHECK(messages(screen).empty());
+            return invoke("vehicle:save");
+        },
+    };
+    CHECK(walk(steps) == steps.size());
+    const auto tank_at = [&](const point& at) {
+        const auto entries = saved_entries(mods, "flat.json", at);
+        const auto found = std::ranges::find(entries, std::string("tank"), entry_id);
+        REQUIRE(found != entries.end());
+        REQUIRE(found->is_object());
+        return *found;
+    };
+    // Each tank stays on its mount with the fuel pasted on it.
+    CHECK(tank_at({0, 0}).value("fuel", "") == "gasoline");
+    CHECK(tank_at({1, 0}) == nlohmann::ordered_json{{"part", "tank"}, {"fuel", "gasoline"}});
+    CHECK(tank_at({0, 1}) == nlohmann::ordered_json{{"part", "tank"}, {"fuel", "gasoline"}});
+    // The library keeps the parts without the mount they were copied from.
+    const auto pieces = editor::library_pieces("vehicle");
+    REQUIRE(pieces.size() == 1);
+    CHECK(pieces[0].data["mounts"][0]["parts"]
+          == nlohmann::ordered_json::parse(
+              R"(["frame_vertical",{"part":"tank","fuel":"gasoline"}])"));
+}
+
+TEST_CASE(
+    "the vehicle editor lists only the library's pieces it can paste and refuses malformed text",
+    "[editor_vehicle]") {
+    const auto library = library_guard{};
+    const auto guard = screen_guard{};
+    const auto mods = my_mod_folder{};
+    std::filesystem::create_directories(PATH_INFO::config_dir());
+    std::ofstream(editor::library_file("vehicle"), std::ios::binary)
+        << R"([{"name":"Number","data":5},{"name":"Number mounts","data":{"mounts":5}},)"
+           R"({"name":"Number mount","data":{"mounts":[5]}},)"
+           R"({"name":"Number part","data":{"mounts":[{"x":0,"y":0,"parts":[{"part":5},7]}]}},)"
+           R"({"name":"Frame","data":{"mounts":[{"x":0,"y":0,"parts":["frame_vertical"]}]}}])";
+    const auto shared = [](const std::string& json) { return base64_encode(json); };
+    const auto deep = std::string(200000, '[') + std::string(200000, ']');
+    const auto texts = std::vector<std::string>{
+        "#",
+        shared(R"({"kind":5,"data":{}})"),
+        shared(R"({"kind":"vehicle","data":5})"),
+        shared(R"({"kind":"vehicle","data":{"mounts":[{"x":0,"y":0,"parts":[{"part":5}]}]}})"),
+        shared(R"({"kind":"vehicle","data":)" + deep + "}"),
+    };
+    auto steps = std::vector<walk_step>{
+        [](const auto&) { return invoke("vehicle:new", {.text = "Shelf"}); },
+        [](const auto& screen) {
+            const auto& listed = rows(screen, "vehicle:library");
+            REQUIRE(listed.size() == 1);
+            CHECK(listed[0].label == "Frame");
+            return invoke("vehicle:show_clip_text");
+        },
+    };
+    for (const auto& text : texts) {
+        steps.push_back([=](const auto&) { return invoke("vehicle:paste_text", {.text = text}); });
+        steps.push_back([](const auto& screen) {
+            CHECK(notice_of(screen) == "That text holds no vehicle parts.");
+            return invoke("vehicle:library_take", {.row = "piece:0"});
+        });
+    }
+    steps.push_back([](const auto& screen) {
+        CHECK(said(screen) == "Click where Frame goes.");
+        return act("QUIT");
+    });
+    CHECK(walk(steps) == steps.size());
+    // A lone mark is no shared text.
+    CHECK(base64_decode("#") == "#");
+}
+
+TEST_CASE(
+    "the vehicle editor keeps a library file it cannot read and says so", "[editor_vehicle]") {
+    const auto library = library_guard{};
+    const auto guard = screen_guard{};
+    const auto mods = my_mod_folder{};
+    std::filesystem::create_directories(PATH_INFO::config_dir());
+    const auto edited = std::string(R"([{"name":"Cab row","data":{"mounts":[]},)");
+    std::ofstream(editor::library_file("vehicle"), std::ios::binary) << edited;
+    auto steps = then(row_with_tank("Cab", 1), marking({0, 0}, {1, 0}));
+    steps = then(
+        steps,
+        {[](const auto&) { return invoke("vehicle:copy_mounts"); },
+         [](const auto&) { return invoke("vehicle:library_save", {.text = "Tank"}); },
+         [](const auto& screen) {
+             CHECK(notice_of(screen).contains("cannot read"));
+             CHECK(said(screen) != "Saved Tank to the library.");
+             return act("QUIT");
+         }});
+    CHECK(walk(steps) == steps.size());
+    CHECK(read_file(editor::library_file("vehicle")) == edited);
+    // A piece in another shape stays when the file can be read.
+    std::ofstream(editor::library_file("vehicle"), std::ios::binary | std::ios::trunc)
+        << R"([{"name":5}])";
+    CHECK(editor::keep_piece(
+              "vehicle", {.name = "Tank", .data = {{"mounts", nlohmann::ordered_json::array()}}})
+              .has_value());
+    CHECK(nlohmann::ordered_json::parse(read_file(editor::library_file("vehicle")))
+          == nlohmann::ordered_json::parse(R"([{"name":5},{"name":"Tank","data":{"mounts":[]}}])"));
 }
 
 #endif // CATA_MCP

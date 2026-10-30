@@ -116,13 +116,7 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "bicycle"
-                      }
-                    ]
+                    "columns": []
                   },
                   {
                     "id": "prototype:bicycle_electric",
@@ -164,13 +158,7 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "bicycle_carbon"
-                      }
-                    ]
+                    "columns": []
                   },
                   {
                     "id": "prototype:bicycle_dirt",
@@ -393,13 +381,7 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": true,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "bicycle"
-                      }
-                    ]
+                    "columns": []
                   },
                   {
                     "id": "prototype:bicycle_electric",
@@ -441,13 +423,7 @@
                     "enabled": true,
                     "selectable": true,
                     "selected": false,
-                    "columns": [
-                      {
-                        "key": "id",
-                        "label": "ID",
-                        "value": "bicycle_carbon"
-                      }
-                    ]
+                    "columns": []
                   },
                   {
                     "id": "prototype:bicycle_dirt",

@@ -200,6 +200,13 @@ auto copied_vehicle_file() -> std::filesystem::path {
     return std::filesystem::path(PATH_INFO::user_dir()) / "vehicle_copy.json";
 }
 
+/// The library's pieces that hold vehicle parts to paste.
+auto vehicle_library() -> std::vector<library_piece> {
+    auto pieces = library_pieces("vehicle");
+    std::erase_if(pieces, [](const library_piece& piece) { return clip_of(piece.data).empty(); });
+    return pieces;
+}
+
 } // namespace
 
 auto clip_json(const std::vector<clip_mount>& clip) -> nlohmann::ordered_json {
@@ -208,6 +215,34 @@ auto clip_json(const std::vector<clip_mount>& clip) -> nlohmann::ordered_json {
         mounts.push_back({{"x", offset.x}, {"y", offset.y}, {"parts", parts}});
     }
     return {{"mounts", mounts}};
+}
+
+auto clip_of(const nlohmann::ordered_json& data) -> std::vector<clip_mount> {
+    auto taken = std::vector<clip_mount>{};
+    const auto mounts =
+        data.is_object() ? data.value("mounts", nlohmann::ordered_json()) : nlohmann::ordered_json();
+    for (const auto& mount : mounts.is_array() ? mounts : nlohmann::ordered_json::array()) {
+        const auto parts =
+            mount.is_object()
+                ? mount.value("parts", nlohmann::ordered_json())
+                : nlohmann::ordered_json();
+        if (!parts.is_array() || !mount.value("x", nlohmann::ordered_json()).is_number_integer()
+            || !mount.value("y", nlohmann::ordered_json()).is_number_integer()) {
+            continue;
+        }
+        auto kept =
+            parts | std::views::filter([](const nlohmann::ordered_json& part) {
+                const auto id = entry_part(part);
+                return !id.empty() && vpart_id(id).is_valid();
+            })
+            | std::views::transform(unmounted_entry) | std::ranges::to<std::vector>();
+        if (!kept.empty()) {
+            taken.push_back(
+                {.offset = {mount["x"].get<int>(), mount["y"].get<int>()},
+                 .parts = std::move(kept)});
+        }
+    }
+    return taken;
 }
 
 auto frame_around(const std::vector<point>& points, const int margin) -> mount_frame {
@@ -345,10 +380,12 @@ auto session::drive() const -> std::vector<drive_check> {
             return veh->cpart(index).ammo_current();
         });
     }
-    // The blueprint holds the parts in the order the prototype lists them, without their fuel.
+    // The blueprint holds the parts in the order the prototype lists them, without their fuel,
+    // when it installed each.
     const auto design = design_parts(prototype());
+    const auto listed = veh->part_count() == static_cast<int>(design.size());
     return drive_checks(*veh, [&](const int index) {
-        if (index < 0 || static_cast<std::size_t>(index) >= design.size()) {
+        if (!listed || index < 0 || static_cast<std::size_t>(index) >= design.size()) {
             return itype_id::NULL_ID();
         }
         const auto at = nlohmann::ordered_json::json_pointer(design[index].pointer);
@@ -922,7 +959,8 @@ struct editing: session {
                     return nlohmann::ordered_json(veh->part_info(index).get_id().str());
                 })
                 | std::ranges::to<std::vector>();
-            // The design's entries of the mount, when they are the parts the vehicle shows.
+            // The design's entries of the mount, when they are the parts the vehicle shows, without
+            // the mount they are listed on.
             const auto entries =
                 design
                 | std::views::filter([&](const design_part& entry) { return entry.mount == at; })
@@ -934,7 +972,8 @@ struct editing: session {
                     [](const nlohmann::ordered_json& part) { return part.get<std::string>(); })) {
                 parts =
                     entries | std::views::transform([&](const design_part& entry) {
-                        return prototype()[nlohmann::ordered_json::json_pointer(entry.pointer)];
+                        return unmounted_entry(
+                            prototype()[nlohmann::ordered_json::json_pointer(entry.pointer)]);
                     })
                     | std::ranges::to<std::vector>();
             }
@@ -1057,29 +1096,7 @@ struct editing: session {
 
     /// Takes what `clip_json` made as the clip, with Paste in hand; whether it held parts.
     auto take_clip(const nlohmann::ordered_json& data) -> bool {
-        auto taken = std::vector<clip_mount>{};
-        const auto mounts = data.value("mounts", nlohmann::ordered_json::array());
-        for (const auto& mount : mounts.is_array() ? mounts : nlohmann::ordered_json::array()) {
-            const auto parts =
-                mount.is_object()
-                    ? mount.value("parts", nlohmann::ordered_json())
-                    : nlohmann::ordered_json();
-            if (!parts.is_array() || !mount.value("x", nlohmann::ordered_json()).is_number_integer()
-                || !mount.value("y", nlohmann::ordered_json()).is_number_integer()) {
-                continue;
-            }
-            auto kept =
-                parts | std::views::filter([](const nlohmann::ordered_json& part) {
-                    return (part.is_string() || part.is_object())
-                        && vpart_id(entry_part(part)).is_valid();
-                })
-                | std::ranges::to<std::vector>();
-            if (!kept.empty()) {
-                taken.push_back(
-                    {.offset = {mount["x"].get<int>(), mount["y"].get<int>()},
-                     .parts = std::move(kept)});
-            }
-        }
+        auto taken = clip_of(data);
         if (taken.empty()) { return false; }
         clip = std::move(taken);
         take_tool("paste");
@@ -1096,8 +1113,12 @@ struct editing: session {
             notice = _("Give the piece a name.");
             return;
         }
-        keep_piece("vehicle", {.name = name, .data = clip_json(clip)});
-        library = library_pieces("vehicle");
+        if (const auto kept = keep_piece("vehicle", {.name = name, .data = clip_json(clip)});
+            !kept) {
+            notice = kept.error();
+            return;
+        }
+        library = vehicle_library();
         //~ %s is the name the player gave a piece kept in the vehicle editor's library.
         said = string_format(_("Saved %s to the library."), name);
     }
@@ -1437,8 +1458,8 @@ struct editing: session {
             return;
         }
         const auto design = design_parts(prototype());
-        const auto& entry =
-            prototype()[nlohmann::ordered_json::json_pointer(design[*index].pointer)];
+        const auto entry = unmounted_entry(
+            prototype()[nlohmann::ordered_json::json_pointer(design[*index].pointer)]);
         auto members = entry.is_object() ? entry : nlohmann::ordered_json::object();
         members.erase("part");
         const auto name = part_name(design[*index].part);
@@ -1461,7 +1482,9 @@ struct editing: session {
         }
         auto next = prototype();
         for (const auto target : setting_targets(*index)) {
-            const auto& entry = next[nlohmann::ordered_json::json_pointer(design[target].pointer)];
+            // Its mount stays as it is.
+            const auto entry = unmounted_entry(
+                next[nlohmann::ordered_json::json_pointer(design[target].pointer)]);
             auto keys = std::set<std::string>{};
             if (entry.is_object()) {
                 for (const auto& [key, value] : entry.items()) { keys.insert(key); }
@@ -2030,7 +2053,7 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
     state.notice.clear();
     state.said.clear();
     state.catalog = read_part_catalog();
-    state.library = library_pieces("vehicle");
+    state.library = vehicle_library();
     if (!prototype.empty()) { state.open(prototype); }
     const auto screen = ec::screen_scope(
         ctxt, "vehicle_editor",
