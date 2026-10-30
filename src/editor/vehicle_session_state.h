@@ -74,6 +74,7 @@ inline constexpr auto export_id = "vehicle:export";
 inline constexpr auto spawn_form_id = "vehicle:spawn_form";
 inline constexpr auto spawn_set_id = "vehicle:spawn_set";
 inline constexpr auto spawn_id = "vehicle:spawn";
+inline constexpr auto test_drive_id = "vehicle:test_drive";
 inline constexpr auto copy_id = "vehicle:copy";
 inline constexpr auto paste_id = "vehicle:paste";
 inline constexpr auto edit_id = "vehicle:edit";

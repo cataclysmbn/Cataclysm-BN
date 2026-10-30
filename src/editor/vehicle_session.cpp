@@ -3,6 +3,7 @@
 #include "avatar.h"
 #include "editor/catalog.h"
 #include "editor/document.h"
+#include "editor/editor_session.h"
 #include "editor/history_label.h"
 #include "editor/mapgen_stroke.h"
 #include "editor/recent_documents.h"
@@ -14,12 +15,14 @@
 #include "engine_client_part_type.h"
 #include "engine_client_vehicle_look.h"
 #include "engine_client_world.h"
+#include "game.h"
 #include "input.h"
 #include "item.h"
 #include "item_group.h"
 #include "json_formatter.h"
 #include "line.h"
 #include "map/map.h"
+#include "messages.h"
 #include "path_info.h"
 #include "string_formatter.h"
 #include "string_utils.h"
@@ -29,6 +32,7 @@
 #include "vehicle/vehicle.h"
 #include "vehicle/vehicle_part.h"
 #include "vehicle/vpart_position.h"
+#include "vehicle/vpart_range.h"
 
 #include <algorithm>
 #include <array>
@@ -1566,12 +1570,13 @@ struct editing: session {
         }
     }
 
-    /// Puts the design in the game in place of its prototype and spawns it east of the avatar.
-    auto spawn() -> void {
+    /// Puts the design in the game in place of its prototype and spawns it east of the avatar;
+    /// the vehicle spawned, none when it could not.
+    auto spawn() -> vehicle* {
         const auto applied = apply_design(prototype().dump());
         if (!applied) {
             notice = applied.error();
-            return;
+            return nullptr;
         }
         const auto spawned = place_clear(
             tripoint_rel_ms(spawn_distance, 0, 0),
@@ -1584,12 +1589,45 @@ struct editing: session {
             });
         if (!spawned) {
             notice = spawned.error();
-            return;
+            return nullptr;
         }
         //~ %s says where the vehicle spawned.
         said = string_format(
             _("%s Vehicles > World > Edit in place changes it where it stands."),
             placed_sentence(false, **spawned));
+        return *spawned;
+    }
+
+    /// Spawns the design as Spawn does and seats the avatar at its controls, its engines
+    /// starting, for the editor key to bring the editor back with the design open; whether it
+    /// did.
+    auto test_drive() -> bool {
+        if (!ready_to_drive(drive())) { return false; }
+        auto* const veh = spawn();
+        if (!veh) { return false; }
+        auto& here = get_map();
+        auto seat = std::optional<tripoint_bub_ms>{};
+        for (const vpart_reference& part : veh->get_avail_parts(VPFLAG_CONTROLS)) {
+            if (here.veh_at(part.pos()).part_with_feature(VPFLAG_BOARDABLE, true)) {
+                seat = part.pos();
+                break;
+            }
+        }
+        if (!seat) {
+            here.destroy_vehicle(veh);
+            notice = _("No seat has controls to drive it from.");
+            return false;
+        }
+        auto& you = get_avatar();
+        veh->set_owner(you);
+        // Stepping onto the seat boards it.
+        g->place_player(*seat);
+        if (!you.in_vehicle) { here.board_vehicle(*seat, &you); }
+        veh->start_engines(true);
+        open_vehicle_editor_first();
+        //~ %s is the vehicle the editor's test drive put the avatar in.
+        add_msg(_("Test driving the %s: the editor key brings you back to its design."), veh->name);
+        return true;
     }
 
     auto set_spawning(const std::string& field, const std::string& text) -> void {
@@ -1854,6 +1892,8 @@ auto run_vehicle_editor(const std::string& prototype) -> bool {
             state.set_spawning(row, text);
         } else if (id == spawn_id) {
             state.spawn();
+        } else if (id == test_drive_id) {
+            if (state.test_drive()) { return true; }
         } else if (id.starts_with(fix_prefix)) {
             state.fix_drive(id.substr(fix_prefix.size()));
         }

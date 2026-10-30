@@ -1111,6 +1111,21 @@ auto parts_view(const session& state) -> ec::screen_view {
             check_list.affordances.push_back(id);
             affordances.push_back(ec::invoke_affordance({.id = id, .label = entry.action}));
         }
+        if (!state.live) {
+            const auto ready = ready_to_drive(checks);
+            check_list.affordances.push_back(test_drive_id);
+            affordances.push_back(ec::invoke_affordance(
+                {.id = test_drive_id,
+                 .label = _("Test drive"),
+                 .description = _(
+                     "Spawns the design east of you and seats you at its controls; the editor "
+                     "key brings you back to it."),
+                 .keys = {"F6"},
+                 .enabled = ready,
+                 .denial =
+                     ready ? std::string{}
+                           : std::string(_("It is not ready to drive yet: see Ready to drive."))}));
+        }
         parts.push_back(std::move(check_list));
         auto stats = design_stats(*veh);
         if (!ready_to_drive(checks)) {
@@ -1291,8 +1306,8 @@ auto session_view(const session& state) -> ec::screen_view {
         {earlier_id, edit},     {later_id, edit},         {copy_mounts_id, edit},
         {cut_mounts_id, edit},  {delete_mounts_id, edit}, {mirror_sides_id, edit},
         {mirror_ends_id, edit}, {view_cw_id, view_menu},  {view_ccw_id, view_menu},
-        {spawn_id, world},      {turn_cw_id, world},      {turn_ccw_id, world},
-        {paste_id, world},      {done_id, world}};
+        {spawn_id, world},      {test_drive_id, world},   {turn_cw_id, world},
+        {turn_ccw_id, world},   {paste_id, world},        {done_id, world}};
     for (const auto& entry : canvas_tools) { groups.emplace(entry.affordance, edit); }
     for (const auto& entry : view.affordances) {
         if (entry.id.starts_with(show_prefix)) { groups.emplace(entry.id, view_menu); }
