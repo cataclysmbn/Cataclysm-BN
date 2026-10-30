@@ -1324,6 +1324,9 @@ auto session::layered(const held_mapping& brush, const std::vector<std::string>&
         if (lines.empty()) { continue; }
         lines.push_back({.layer = brush.layer, .value = brush.value.dump()});
         const auto wanted = places(lines);
+        // Drawn again with what it places already, a square is drawn over whole: a floor drawn on
+        // a table on that floor takes the table away.
+        if (wanted == places(found->lines)) { continue; }
         const auto same = [&](const legend_symbol& entry) { return places(entry.lines) == wanted; };
         if (const auto mapped = std::ranges::find_if(legend, same); mapped != legend.end()) {
             inks.over[old] = mapped->symbol;
