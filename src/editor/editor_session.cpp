@@ -279,7 +279,7 @@ auto run_editor_session() -> void {
     ctxt.register_action("HELP_KEYBINDINGS");
     auto& state = kept_session ? *kept_session : kept_session.emplace();
     state.notice.clear();
-    if (opening) { state.open(opening->name); }
+    if (opening && opening->editor != "vehicle") { state.open(opening->name); }
     const auto screen = ec::screen_scope(
         ctxt, "editor",
         {.role = "workspace",
