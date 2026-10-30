@@ -637,29 +637,62 @@ struct editing: session {
         return made ? std::optional(tally) : std::nullopt;
     }
 
-    /// Installs the part in hand on `squares` as one step, and says how it went.
+    /// Installs the part in hand on `squares` as one step, each after the part it needs on its
+    /// square first, as a wheel its hub, and says how it went.
     auto install_stroke(const std::vector<point>& squares) -> void {
+        const auto* const veh = shown_vehicle();
+        auto paste = paste_install{.layers = {{}, {}}};
+        // The names of what goes on, the parts needed first leading, each once.
+        auto names = std::vector<std::string>{};
+        for (const auto& at : squares) {
+            const auto first =
+                veh ? prerequisite_of(catalog, *veh, {.mount = at, .part = brush}) : std::nullopt;
+            if (first) {
+                paste.layers[0].push_back({.mount = at, .part = first->str()});
+                if (!std::ranges::contains(names, (*first)->name())) {
+                    names.push_back((*first)->name());
+                }
+            }
+            paste.layers[1].push_back({.mount = at, .part = brush});
+        }
         const auto name = part_name(brush);
-        const auto install = stroke_install{.mounts = squares, .part = brush};
+        names.push_back(name);
+        const auto together = named_together(names);
+        // How many squares have the part in hand, to tell how many the stroke gave it.
+        const auto holding = [&] {
+            const auto* const shown = shown_vehicle();
+            return shown
+                     ? std::ranges::count_if(
+                           squares,
+                           [&](const point& at) {
+                               return std::ranges::any_of(
+                                   shown->parts_at_relative(tripoint_mnt_veh(at.x, at.y, 0), false),
+                                   [&](const int index) {
+                                       return shown->part_info(index).get_id().str() == brush;
+                                   });
+                           })
+                     : 0;
+        };
+        const auto held_before = holding();
         // The step of the vehicle edited in place names what the stroke installed, known once it
         // ran.
         auto label = std::string{};
         const auto named = [&](const stroke_tally& done) {
             label =
                 squares.size() == 1
-                    ? at_mount(_("Install %s at %d,%d"), name)
+                    ? at_mount(_("Install %s at %d,%d"), together)
                     //~ A step of the vehicle editor that installed one part on many mounts:
                     //~ its name and how many.
-                    : string_format(_("Install %1$s ×%2$d"), name, done.done);
+                    : string_format(_("Install %1$s ×%2$d"), together, holding() - held_before);
             return done;
         };
         const auto tally = change_parts(
             label,
             {.design =
                  [&](const nlohmann::ordered_json& from) {
-                     return install_parts(from, built.blueprint.get(), install);
+                     return paste_parts(from, built.blueprint.get(), paste);
                  },
-             .live = [&](vehicle& veh) { return install_live_parts(veh, install).transform(named); },
+             .live = [&](vehicle& veh) { return paste_live_parts(veh, paste).transform(named); },
              // Every square has the part already.
              .nothing = squares.size() == 1
                           ? string_format(_("This mount already has %s."), name)
@@ -671,16 +704,16 @@ struct editing: session {
         if (squares.size() == 1) {
             said = tank
                      //~ What the vehicle editor did: the part's name and the mount it is on.
-                     ? at_mount(_("Installed %s at %d,%d. Set its fuel under Fuel."), name)
+                     ? at_mount(_("Installed %s at %d,%d. Set its fuel under Fuel."), together)
                      //~ What the vehicle editor did: the part's name and the mount it is on.
-                     : at_mount(_("Installed %s at %d,%d."), name);
+                     : at_mount(_("Installed %s at %d,%d."), together);
             return;
         }
+        const auto given = static_cast<int>(holding() - held_before);
         //~ What a stroke of the vehicle editor did: the part's name and how many squares took it.
         said = string_format(
-            vgettext("Installed %1$s on %2$d square.", "Installed %1$s on %2$d squares.",
-                     tally->done),
-            name, tally->done);
+            vgettext("Installed %1$s on %2$d square.", "Installed %1$s on %2$d squares.", given),
+            together, given);
         if (tally->refused > 0) {
             //~ How many squares of a stroke would not take the part, and why the first would not.
             said +=

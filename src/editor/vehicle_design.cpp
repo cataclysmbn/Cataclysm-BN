@@ -1238,6 +1238,13 @@ auto item_spawn_name(const nlohmann::ordered_json& entry) -> std::string {
     return join(names, ", ");
 }
 
+auto named_together(const std::vector<std::string>& names) -> std::string {
+    if (names.size() < 2) { return names.empty() ? std::string{} : names.front(); }
+    const auto head = join(std::vector(names.begin(), names.end() - 1), ", ");
+    //~ The last two of a list of names, such as "wheel hub assembly and wheel".
+    return string_format(_("%1$s and %2$s"), head, names.back());
+}
+
 auto design_step_label(const document_edit& edit) -> std::string {
     if (!edit.before.is_object() || !edit.after.is_object()) { return step_label(edit); }
     const auto before = mounted(edit.before);
@@ -1251,6 +1258,21 @@ auto design_step_label(const document_edit& edit) -> std::string {
         return at_mount(_("Remove %s at %d,%d"), part_name(removed[0].part), removed[0].mount);
     }
     if (!installed.empty() && removed.empty()) {
+        // The same parts on each mount, in the order they went on, as a wheel and its hub.
+        auto stacks = std::map<point, std::vector<std::string>>{};
+        for (const auto& entry : installed) {
+            stacks[entry.mount].push_back(part_name(entry.part));
+        }
+        const auto& first = stacks.begin()->second;
+        if (first.size() > 1
+            && std::ranges::all_of(stacks | std::views::values, [&](const auto& names) {
+                   return names == first;
+               })) {
+            return stacks.size() == 1
+                     ? at_mount(_("Install %s at %d,%d"), named_together(first),
+                                stacks.begin()->first)
+                     : string_format(_("Install %1$s ×%2$d"), named_together(first), stacks.size());
+        }
         const auto names = part_names(installed);
         if (names.size() == 1) {
             //~ A step of the vehicle editor that installed one part on many mounts: its name and
@@ -1431,11 +1453,74 @@ auto read_part_catalog() -> part_catalog {
     return {
         .kinds = std::move(kinds),
         .tank_fuels = std::move(fuels),
-        .frame = frames.empty()
-                   ? std::nullopt
-                   : std::optional(std::ranges::max_element(frames, {}, [](const auto& entry) {
-                                       return entry.second;
-                                   })->first)};
+        .frame =
+            frames.empty()
+                ? std::nullopt
+                : std::optional(
+                      std::ranges::
+                          max_element(frames, {}, [](const auto& entry) { return entry.second; })
+                              ->first),
+        .uses = std::move(uses)};
+}
+
+auto most_installed(
+    const part_catalog& catalog, const std::function<auto(const vpart_info&)->bool>& wanted)
+    -> const vpart_info* {
+    const auto candidates =
+        vpart_info::get_all() | std::views::filter([&](const vpart_info& part) {
+            return !part.has_flag("NOINSTALL") && wanted(part);
+        })
+        | std::views::transform([](const vpart_info& part) { return &part; })
+        | std::ranges::to<std::vector>();
+    if (candidates.empty()) { return nullptr; }
+    const auto uses = [&](const vpart_info* part) {
+        const auto found = catalog.uses.find(part->get_id());
+        return found == catalog.uses.end() ? 0 : found->second;
+    };
+    // The first of the most installed, in the game's order.
+    return *std::ranges::max_element(candidates, [&](const vpart_info* a, const vpart_info* b) {
+        return uses(a) < uses(b);
+    });
+}
+
+auto in_front_half(const vehicle& veh, const point& at) -> bool {
+    const auto stacks = mount_stacks(veh);
+    if (stacks.empty()) { return false; }
+    const auto [low, high] = std::ranges::minmax(
+        stacks | std::views::keys | std::views::transform(&point::x));
+    return at.x * 2 > low + high;
+}
+
+auto prerequisite_of(const part_catalog& catalog, const vehicle& veh, const part_install& install)
+    -> std::optional<vpart_id> {
+    const auto id = vpart_id(install.part);
+    if (!id.is_valid()) { return std::nullopt; }
+    const auto here =
+        veh.parts_at_relative(tripoint_mnt_veh(install.mount.x, install.mount.y, 0), false);
+    const auto missing =
+        id->get_flags() | std::views::transform([](const std::string& flag) {
+            return json_flag::get(flag).requires_flag();
+        })
+        | std::views::filter([&](const std::string& needed) {
+              return !needed.empty() && std::ranges::none_of(here, [&](const int index) {
+                  return veh.part_info(index).has_flag(needed);
+              });
+          })
+        | std::ranges::to<std::vector>();
+    if (missing.empty()) { return std::nullopt; }
+    const auto& needed = missing.front();
+    const auto front = in_front_half(veh, install.mount);
+    const auto refusal = [&](const vpart_info& part) {
+        return mount_refusal(veh, install.mount, part.get_id());
+    };
+    const auto fits = [&](const vpart_info& part) {
+        return part.has_flag(needed) && !refusal(part);
+    };
+    const auto* chosen = most_installed(catalog, [&](const vpart_info& part) {
+        return part.has_flag("STEERABLE") == front && fits(part);
+    });
+    if (!chosen) { chosen = most_installed(catalog, fits); }
+    return chosen ? std::optional(chosen->get_id()) : std::nullopt;
 }
 
 auto part_catalog::shapes_of(const vpart_id& id) const -> std::vector<const vpart_info*> {

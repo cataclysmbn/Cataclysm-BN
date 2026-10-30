@@ -244,6 +244,9 @@ auto mount_looks(const vehicle& veh, std::vector<int> here, int facing)
 /// a group by its id.
 auto item_spawn_name(const nlohmann::ordered_json& entry) -> std::string;
 
+/// `names` as a sentence lists them: "a", "a and b", "a, b and c".
+auto named_together(const std::vector<std::string>& names) -> std::string;
+
 /// What an edit of a prototype did, in a designer's words: the part installed, removed, reordered
 /// or set and its mount, or the item spawn added or removed; else what `step_label` says.
 auto design_step_label(const document_edit& edit) -> std::string;
@@ -286,11 +289,29 @@ struct part_catalog {
     /// The frame the game's prototypes install most, which a new design starts with; none when
     /// they install none.
     std::optional<vpart_id> frame;
+    /// How many of each part the game's prototypes install.
+    std::map<vpart_id, int> uses;
     /// The shapes of the part `id`, as its kind has them; none for a part the game lacks.
     auto shapes_of(const vpart_id& id) const -> std::vector<const vpart_info*>;
 };
 
 auto read_part_catalog() -> part_catalog;
+
+/// Of the game's parts that `wanted` takes and a designer can install, the one its prototypes
+/// install most; none when there is none.
+auto most_installed(
+    const part_catalog& catalog, const std::function<auto(const vpart_info&)->bool>& wanted)
+    -> const vpart_info*;
+
+/// Whether the mount `at` lies in the front half of the vehicle's mounts, east of its middle.
+auto in_front_half(const vehicle& veh, const point& at) -> bool;
+
+/// The part that the part of `install` needs on its mount of `veh` before it goes on there, as a
+/// wheel needs its hub: the one the game's prototypes install most of those the game would mount
+/// there, steerable in the front half of the vehicle and not behind it when there are both; none
+/// when it needs none, or none would go on.
+auto prerequisite_of(const part_catalog& catalog, const vehicle& veh, const part_install& install)
+    -> std::optional<vpart_id>;
 
 /// The names of `parts` as a list of them shows them: a name two of them share is followed by
 /// what tells their ids apart.
