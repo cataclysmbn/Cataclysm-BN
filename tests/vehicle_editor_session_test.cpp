@@ -12,6 +12,7 @@
 #    include "cursesport.h"
 #    include "editor/editor_access.h"
 #    include "editor/editor_session.h"
+#    include "editor/library.h"
 #    include "editor/recent_documents.h"
 #    include "editor/vehicle_design.h"
 #    include "editor/vehicle_session.h"
@@ -5937,6 +5938,279 @@ TEST_CASE(
     CHECK(walk(steps) == steps.size());
     // The choice is the player's, kept for the next time either editor opens.
     CHECK(get_option<bool>("EDITOR_ADVANCED"));
+}
+
+namespace {
+/// The entries the saved `name` of my_mod has on the mount `at`.
+auto saved_entries(const my_mod_folder& mods, const std::string& name, const point& at)
+    -> std::vector<nlohmann::ordered_json> {
+    const auto saved = nlohmann::ordered_json::parse(read_file(mods.path / name))[0];
+    return editor::design_parts(saved)
+         | std::views::filter([&](const editor::design_part& part) { return part.mount == at; })
+         | std::views::transform([&](const editor::design_part& part) {
+               return saved[nlohmann::ordered_json::json_pointer(part.pointer)];
+           })
+         | std::ranges::to<std::vector>();
+}
+auto entry_id(const nlohmann::ordered_json& entry) -> std::string {
+    return entry.is_object() ? entry.value("part", "") : entry.get<std::string>();
+}
+/// The steps that mark the mounts from `from` to `to` with a drag of the Select tool.
+auto marking(const point& from, const point& to) -> std::vector<walk_step> {
+    return {
+        [](const auto&) { return invoke("vehicle:tool_select"); },
+        [](const auto&) { return invoke("vehicle:stroke_begin"); },
+        [=](const auto&) { return mount_at(from.x, from.y); },
+        [=](const auto&) { return mount_at(to.x, to.y); },
+        [](const auto&) { return invoke("vehicle:stroke_end"); }};
+}
+/// Steps that start a design of frames from 0,0 to `end` along its front, a tank of diesel
+/// on the last.
+auto row_with_tank(const std::string& name, const int end) -> std::vector<walk_step> {
+    return {
+        [=](const auto&) { return invoke("vehicle:new", {.text = name}); },
+        [](const auto&) { return invoke("vehicle:tool_rect_filled"); },
+        [](const auto&) { return mount_at(0, 0); },
+        [=](const auto&) { return mount_at(end, 0); },
+        [](const auto&) { return invoke("vehicle:part_filter", {.text = "tank"}); },
+        [](const auto&) { return invoke("vehicle:choose", {.row = "vpart:tank"}); },
+        [](const auto&) { return invoke("vehicle:tool_install"); },
+        [=](const auto&) { return mount_at(end, 0); },
+        [](const auto&) { return invoke("vehicle:part_set", {.row = "fuel", .text = "diesel"}); },
+    };
+}
+auto stamp_offsets(const ec::screen_view& screen) -> std::vector<std::string> {
+    auto shown =
+        canvas(screen).stamp | std::views::transform([](const ec::grid_point& offset) {
+            return string_format("%d,%d", offset.x, offset.y);
+        })
+        | std::ranges::to<std::vector>();
+    std::ranges::sort(shown);
+    return shown;
+}
+/// Keeps the vehicle library of the test empty before and after it.
+struct library_guard {
+    library_guard() { std::filesystem::remove(editor::library_file("vehicle")); }
+    ~library_guard() { std::filesystem::remove(editor::library_file("vehicle")); }
+    library_guard(const library_guard&) = delete;
+    auto operator=(const library_guard&) -> library_guard& = delete;
+};
+auto then(std::vector<walk_step> steps, const std::vector<walk_step>& more)
+    -> std::vector<walk_step> {
+    std::ranges::copy(more, std::back_inserter(steps));
+    return steps;
+}
+} // namespace
+
+TEST_CASE(
+    "the vehicle editor's turned and flipped copy pastes with joined frames and kept fuel",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto mods = my_mod_folder{};
+    auto steps = then(row_with_tank("Cab", 2), marking({0, 0}, {2, 0}));
+    steps = then(
+        steps,
+        {[](const auto&) { return invoke("vehicle:copy_mounts"); },
+         [](const auto& screen) {
+             CHECK(affordance(screen, "vehicle:clip_turn").keys == std::vector<std::string>{"R"});
+             CHECK(affordance(screen, "vehicle:clip_turn").group == "Edit");
+             return invoke("vehicle:clip_turn");
+         },
+         [](const auto& screen) {
+             CHECK(said(screen) == "Turned the copy.");
+             // The Paste tool is in hand, its ghost turned across the vehicle.
+             CHECK(stamp_offsets(screen) == std::vector<std::string>{"0,0", "0,1", "0,2"});
+             return mount_at(0, 1);
+         },
+         [](const auto& screen) {
+             CHECK(said(screen) == "Pasted 4 parts.");
+             return invoke("vehicle:clip_flip_sides");
+         },
+         [](const auto& screen) {
+             CHECK(said(screen) == "Flipped the copy left and right.");
+             return mount_at(-1, 1);
+         },
+         [](const auto&) { return invoke("vehicle:save"); }});
+    CHECK(walk(steps) == steps.size());
+    // The tank went to the end the turn took it, still full of diesel; the flip took it to the
+    // other end.
+    const auto tank_at = [&](const point& at) {
+        const auto entries = saved_entries(mods, "cab.json", at);
+        const auto found = std::ranges::find(entries, std::string("tank"), entry_id);
+        return found != entries.end() && found->is_object() ? found->value("fuel", "") : "";
+    };
+    CHECK(tank_at({0, 3}) == "diesel");
+    CHECK(tank_at({-1, 1}) == "diesel");
+    CHECK(tank_at({0, 1}).empty());
+    // The pasted frames join their new neighbours instead of keeping the copied shape.
+    const auto corner = saved_entries(mods, "cab.json", {0, 3});
+    REQUIRE_FALSE(corner.empty());
+    CHECK(entry_id(corner.front()) != "frame_vertical");
+}
+
+TEST_CASE("the vehicle editor's library keeps a copy for the next vehicle", "[editor_vehicle]") {
+    const auto library = library_guard{};
+    const auto mods = my_mod_folder{};
+    {
+        const auto guard = screen_guard{};
+        auto steps = then(row_with_tank("Cab", 1), marking({0, 0}, {1, 0}));
+        steps = then(
+            steps,
+            {[](const auto& screen) {
+                 // Nothing is copied to save yet.
+                 CHECK_FALSE(affordance(screen, "vehicle:library_save").enabled);
+                 return invoke("vehicle:copy_mounts");
+             },
+             [](const auto&) { return invoke("vehicle:library_save", {.text = "Cab row"}); },
+             [](const auto& screen) {
+                 CHECK(said(screen) == "Saved Cab row to the library.");
+                 CHECK(rows(screen, "vehicle:library").front().label == "Cab row");
+                 return invoke("vehicle:save");
+             }});
+        CHECK(walk(steps) == steps.size());
+    }
+    // The editor starts again, as in another game.
+    const auto guard = screen_guard{};
+    const auto steps = std::vector<walk_step>{
+        [](const auto&) { return invoke("vehicle:new", {.text = "Second"}); },
+        [](const auto& screen) {
+            CHECK(rows(screen, "vehicle:library").front().label == "Cab row");
+            return invoke("vehicle:library_take", {.row = "piece:0"});
+        },
+        [](const auto& screen) {
+            CHECK(said(screen) == "Click where Cab row goes.");
+            CHECK(stamp_offsets(screen) == std::vector<std::string>{"0,0", "1,0"});
+            return mount_at(0, 1);
+        },
+        [](const auto&) { return invoke("vehicle:save"); },
+    };
+    CHECK(walk(steps) == steps.size());
+    const auto entries = saved_entries(mods, "second.json", {1, 1});
+    const auto tank = std::ranges::find(entries, std::string("tank"), entry_id);
+    REQUIRE(tank != entries.end());
+    CHECK(tank->value("fuel", "") == "diesel");
+}
+
+TEST_CASE("the vehicle editor shares a copy as text and takes it back", "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto mods = my_mod_folder{};
+    auto shared = std::string{};
+    auto steps = then(row_with_tank("Cab", 1), marking({0, 0}, {1, 0}));
+    steps = then(
+        steps,
+        {[](const auto&) { return invoke("vehicle:copy_mounts"); },
+         [](const auto&) { return invoke("vehicle:show_clip_text"); },
+         [&](const auto& screen) {
+             const auto& fields = body<ec::form_body>(part(screen, "vehicle:clip_text")).fields;
+             REQUIRE(fields.size() == 1);
+             shared = fields[0].value;
+             CHECK_FALSE(shared.empty());
+             return invoke("vehicle:paste_text", {.text = "not a vehicle"});
+         },
+         [](const auto& screen) {
+             CHECK(notice_of(screen) == "That text holds no vehicle parts.");
+             return invoke("vehicle:clip_flip_ends");
+         },
+         [&](const auto&) { return invoke("vehicle:paste_text", {.text = shared}); },
+         [](const auto& screen) {
+             CHECK(said(screen) == "Click where the parts go.");
+             CHECK(ec::find_component(*screen.root, "vehicle:clip_text") == nullptr);
+             return mount_at(0, 1);
+         },
+         [](const auto&) { return invoke("vehicle:save"); }});
+    CHECK(walk(steps) == steps.size());
+    // The text held the copy before the flip.
+    const auto entries = saved_entries(mods, "cab.json", {1, 1});
+    CHECK(std::ranges::contains(entries, std::string("tank"), entry_id));
+}
+
+TEST_CASE(
+    "the vehicle editor replaces the frames of the marked squares and keeps their parts",
+    "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto mods = my_mod_folder{};
+    const auto frame_row = [](const ec::screen_view& screen) {
+        const auto& listed = rows(screen, "vehicle:marked_kinds");
+        const auto found = std::ranges::find(listed, std::string("frame ×6"), &ec::row::label);
+        REQUIRE(found != listed.end());
+        return found->id;
+    };
+    auto steps = std::vector<walk_step>{
+        [](const auto&) { return invoke("vehicle:new", {.text = "Plank"}); },
+        [](const auto&) { return invoke("vehicle:tool_rect_filled"); },
+        [](const auto&) { return mount_at(0, 0); },
+        [](const auto&) { return mount_at(2, 1); },
+        [](const auto&) { return invoke("vehicle:part_filter", {.text = "tank"}); },
+        [](const auto&) { return invoke("vehicle:choose", {.row = "vpart:tank"}); },
+        [](const auto&) { return invoke("vehicle:tool_install"); },
+        [](const auto&) { return mount_at(1, 0); },
+    };
+    steps = then(steps, marking({0, 0}, {2, 1}));
+    steps = then(
+        steps,
+        {[&](const auto& screen) {
+             CHECK(rows(screen, "vehicle:marked_kinds").size() == 2);
+             return invoke("vehicle:part_filter", {.text = "heavy duty frame"});
+         },
+         [](const auto& screen) {
+             const auto& listed = rows(screen, "vehicle:parts");
+             const auto found = std::ranges::find_if(listed, [](const ec::row& entry) {
+                 return entry.label.starts_with("heavy duty frame");
+             });
+             REQUIRE(found != listed.end());
+             return invoke("vehicle:choose", {.row = found->id});
+         },
+         [&](const auto& screen) {
+             CHECK(affordance(screen, "vehicle:replace_kind").label
+                   == "Replace with heavy duty frame");
+             return invoke("vehicle:replace_kind", {.row = frame_row(screen)});
+         },
+         [](const auto& screen) {
+             CHECK(notice_of(screen).empty());
+             CHECK(said(screen) == "Replaced frame ×6 with heavy duty frame.");
+             CHECK(step_at(screen) == "Replace");
+             return invoke("vehicle:save");
+         }});
+    CHECK(walk(steps) == steps.size());
+    for (const auto& at : std::vector<point>{{0, 0}, {1, 0}, {2, 0}, {0, 1}, {1, 1}, {2, 1}}) {
+        INFO(at.to_string());
+        const auto entries = saved_entries(mods, "plank.json", at);
+        REQUIRE_FALSE(entries.empty());
+        CHECK(entry_id(entries.front()).starts_with("hdframe"));
+    }
+    CHECK(std::ranges::contains(
+        saved_entries(mods, "plank.json", {1, 0}), std::string("tank"), entry_id));
+}
+
+TEST_CASE("the vehicle editor deletes only the armour of the marked squares", "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto mods = my_mod_folder{};
+    auto steps = std::vector<walk_step>{
+        [](const auto&) { return invoke("vehicle:new", {.text = "Shield"}); },
+        [](const auto&) { return invoke("vehicle:tool_rect_filled"); },
+        [](const auto&) { return mount_at(0, 0); },
+        [](const auto&) { return mount_at(1, 0); },
+        [](const auto&) { return invoke("vehicle:part_filter", {.text = "wooden armor"}); },
+        [](const auto&) { return invoke("vehicle:choose", {.row = "vpart:plating_wood"}); },
+        [](const auto&) { return invoke("vehicle:tool_rect_filled"); },
+        [](const auto&) { return mount_at(0, 0); },
+        [](const auto&) { return mount_at(1, 0); },
+    };
+    steps = then(steps, marking({0, 0}, {1, 0}));
+    steps = then(
+        steps,
+        {[](const auto&) { return invoke("vehicle:delete_kind", {.row = "kind:plating_wood"}); },
+         [](const auto& screen) {
+             CHECK(said(screen) == "Deleted 2 parts.");
+             CHECK(step_at(screen) == "Delete");
+             return invoke("vehicle:save");
+         }});
+    CHECK(walk(steps) == steps.size());
+    for (const auto& at : std::vector<point>{{0, 0}, {1, 0}}) {
+        const auto entries = saved_entries(mods, "shield.json", at);
+        REQUIRE(entries.size() == 1);
+        CHECK(entry_id(entries.front()).starts_with("frame"));
+    }
 }
 
 #endif // CATA_MCP
