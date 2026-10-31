@@ -414,7 +414,8 @@
     "name": { "str": "light wooden wheel mount" },
     "description": "A piece of wood with holes suitable for a bike or motorbike wheel.",
     "copy-from": "wheel_mount_light",
-    "material": [ "wood" ]
+    "material": [ "wood" ],
+    "proportional": { "weight": 2, "volume": 2 }
   },
   {
     "id": "makeshift_sled_runners_item",
