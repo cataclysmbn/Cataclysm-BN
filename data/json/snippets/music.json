@@ -67,7 +67,7 @@
       "British",
       "Continental",
       "tropical",
-      "island",
+      { "text": { "ctxt": "music genre adjective", "str": "island" } },
       "New York",
       "Hollywood",
       "Trans-Pacific",
