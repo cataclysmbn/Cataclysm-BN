@@ -127,7 +127,7 @@ class avatar : public player
         void memorize_terrain_tile( const tripoint_abs_ms &pos, const std::string &ter, int subtile,
                                     int rotation );
         /** Returns memorized base terrain tile in given location */
-        memorized_terrain_tile get_terrain_tile( const tripoint_abs_ms &p ) const;
+        auto get_terrain_tile( const tripoint_abs_ms &p ) const -> const memorized_terrain_tile &; // *NOPAD*
         /** Memorizes a given tile in curses mode; finalize_terrain_memory_curses needs to be called after it */
         void memorize_symbol( const tripoint_abs_ms &pos, int symbol );
         /** Returns last stored map tile in given location in curses mode */

@@ -173,7 +173,7 @@ class map_memory
          * Returns memorized base terrain tile.
          * @param pos tile position, in global ms coords.
          */
-        memorized_terrain_tile get_terrain_tile( const tripoint_abs_ms &pos );
+        auto get_terrain_tile( const tripoint_abs_ms &pos ) -> const memorized_terrain_tile &; // *NOPAD*
 
         /**
          * For autodrive use only.

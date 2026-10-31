@@ -5144,8 +5144,8 @@ auto get_map_memory_of_at( const tripoint_bub_ms &p ) -> std::optional<memorized
         return std::nullopt;
     }
 
-    const memorized_terrain_tile t = g->u.get_memorized_tile( bub_to_abs( p ) );
-    if( !string_id<T>( t.tile ).is_valid() ) {
+    const auto &t = g->u.get_memorized_tile( bub_to_abs( p ) );
+    if( t.tile.empty() || !string_id<T>( t.tile ).is_valid() ) {
         return std::nullopt;
     }
 
@@ -5160,8 +5160,7 @@ std::optional<memorized_terrain_tile>
         return std::nullopt;
     }
 
-    const memorized_terrain_tile t = g->u.get_memorized_tile( bub_to_abs( tripoint_bub_ms(
-                                         p ) ) );
+    const auto &t = g->u.get_memorized_tile( bub_to_abs( tripoint_bub_ms( p ) ) );
     if( !t.tile.starts_with( "vp_" ) ) {
         return std::nullopt;
     }
@@ -5195,8 +5194,7 @@ std::optional<memorized_terrain_tile>
     if( !g->u.should_show_map_memory() ) {
         return std::nullopt;
     }
-    const memorized_terrain_tile t = g->u.get_terrain_tile( bub_to_abs( tripoint_bub_ms(
-                                         p ) ) );
+    const auto &t = g->u.get_terrain_tile( bub_to_abs( tripoint_bub_ms( p ) ) );
     if( t.tile.empty() ) {
         return std::nullopt;
     }
