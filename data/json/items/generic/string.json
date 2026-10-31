@@ -113,7 +113,8 @@
     "name": { "str": "long plastic rope" },
     "description": "A 30-foot (or about 9 m) length of plastic or nylon rope.  Useful for keeping yourself safe from falls.",
     "proportional": { "price": 0.5 },
-    "material": [ "plastic" ]
+    "material": [ "plastic" ],
+    "flags": [ "BUTCHERY_ROPE" ]
   },
   {
     "id": "vine_6",
