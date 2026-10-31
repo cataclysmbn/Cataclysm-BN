@@ -98,6 +98,7 @@
 #include "text_snippets.h"
 #include "translations.h"
 #include "trap.h"
+#include "trap_hunting.h"
 #include "type_id.h"
 #include "vehicle/veh_type.h"
 #include "vehicle/vehicle_group.h"
@@ -339,6 +340,8 @@ void DynamicDataLoader::initialize()
         requirement_data::load_requirement( jo );
     } );
     add( "trap", &trap::load_trap );
+    add( "hunting_habitat", &hunting_habitat::load_hunting_habitat );
+    add( "hunting_bait", &hunting_bait::load_hunting_bait );
 
     add( "AMMO", []( const JsonObject & jo, const std::string & src ) {
         item_controller->load_ammo( jo, src );
@@ -682,6 +685,8 @@ void DynamicDataLoader::unload_data()
     ter_furn_transform::reset_all();
     to_cbc_migration::reset();
     trap::reset();
+    hunting_habitat::reset();
+    hunting_bait::reset();
     unload_talk_topics();
     VehicleGroup::reset();
     VehiclePalette::reset();
@@ -748,6 +753,8 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
             { _( "Vehicle parts" ), &vpart_info::finalize_all },
             { _( "Vehicle Groupss" ), &VehicleGroup::finalize },
             { _( "Traps" ), &trap::finalize },
+            { _( "Hunting habitats" ), &hunting_habitat::finalize },
+            { _( "Hunting baits" ), &hunting_bait::finalize },
             { _( "Terrain" ), &set_ter_ids },
             { _( "Furniture" ), &finalize_furn },
             { _( "Overmap land use codes" ), &overmap_land_use_codes::finalize },
@@ -862,6 +869,8 @@ void DynamicDataLoader::check_consistency( loading_ui &ui )
             { _( "Regional settings" ), &check_regional_settings },
             { _( "Ammunition types" ), &ammunition_type::check_consistency },
             { _( "Traps" ), &trap::check_consistency },
+            { _( "Hunting habitats" ), &hunting_habitat::check_consistency },
+            { _( "Hunting baits" ), &hunting_bait::check_consistency },
             { _( "Bionics" ), &bionic_data::check_consistency },
             { _( "Gates" ), &gates::check },
             { _( "NPC classes" ), &npc_class::check_consistency },

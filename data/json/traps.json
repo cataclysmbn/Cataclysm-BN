@@ -152,6 +152,7 @@
     "//": "trigger_items isn't needed for this action, since trap behavior is tied to the target freeing themselves.",
     "remove_on_trigger": true,
     "drops": [ "beartrap" ],
+    "hunting": { "min_size": "SMALL", "max_size": "LARGE", "efficiency": 0.8 },
     "vehicle_data": {
       "damage": 300,
       "sound_volume": "38 dB",
@@ -176,6 +177,7 @@
     "//": "trigger_items isn't needed for this action, since trap behavior is tied to the target freeing themselves.",
     "remove_on_trigger": true,
     "drops": [ "beartrap" ],
+    "hunting": { "min_size": "SMALL", "max_size": "LARGE", "efficiency": 0.8 },
     "vehicle_data": {
       "damage": 300,
       "sound_volume": "38 dB",
@@ -185,6 +187,20 @@
       "remove_trap": true,
       "spawn_items": [ "beartrap" ]
     }
+  },
+  {
+    "type": "trap",
+    "id": "tr_hunting_snare",
+    "name": "hunting snare",
+    "color": "brown",
+    "symbol": "^",
+    "visibility": 3,
+    "avoidance": 0,
+    "difficulty": 0,
+    "benign": true,
+    "action": "none",
+    "drops": [ "hunting_snare" ],
+    "hunting": { "min_size": "TINY", "max_size": "SMALL", "efficiency": 1.0 }
   },
   {
     "type": "trap",
@@ -745,5 +761,16 @@
     "drops": [ "tarp_raincatcher" ],
     "benign": true,
     "funnel_radius": 360
+  },
+  {
+    "type": "trap",
+    "id": "tr_debug_hunting",
+    "copy-from": "tr_beartrap",
+    "name": "debug hunting trap",
+    "color": "pink",
+    "action": "none",
+    "drops": [ "debug_hunting_trap" ],
+    "vehicle_data": { "remove_trap": true, "spawn_items": [ "debug_hunting_trap" ] },
+    "hunting": { "min_size": "TINY", "max_size": "HUGE", "efficiency": 100000.0 }
   }
 ]
