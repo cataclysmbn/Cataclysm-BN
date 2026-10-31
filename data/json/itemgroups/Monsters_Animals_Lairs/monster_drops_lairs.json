@@ -327,6 +327,7 @@
       { "item": "bot_grenade_hack", "prob": 1 },
       { "item": "bot_flashbang_hack", "prob": 1 },
       { "item": "bot_gasbomb_hack", "prob": 1 },
+      { "item": "combat_drone_item", "prob": 3 },
       { "group": "used_UPS", "prob": 5 },
       { "item": "adv_UPS_off", "prob": 3, "charges": [ 0, 2000 ] },
       { "item": "bio_power_storage", "prob": 10 },

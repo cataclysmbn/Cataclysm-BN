@@ -460,5 +460,24 @@
       "moves": 0
     },
     "flags": [ "ALLOWS_REMOTE_USE", "DESTROY_ON_DECHARGE" ]
+  },
+  {
+    "id": "combat_drone_item",
+    "copy-from": "delivery_drone_item",
+    "type": "TOOL",
+    "name": { "str": "combat drone" },
+    "description": "This is a remote-controlled drone designed for military use.  Autonomous kamikaze bots have increasingly supplanted disposable explosive drones, but reusable drones like this one still see occasional use for dropping small munitions on precision targets.  Activate it to deploy, you'll need a vehicle remote controller to operate it.",
+    "weight": "15230 g",
+    "volume": "8 L",
+    "price": "10 kUSD",
+    "price_postapoc": "40 USD",
+    "material": "carbon_fiber",
+    "use_action": {
+      "type": "unfold_vehicle",
+      "vehicle_name": "combat_drone",
+      "unfold_msg": "You lay the drone down on the ground.",
+      "full_battery": true,
+      "moves": 0
+    }
   }
 ]
