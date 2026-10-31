@@ -2198,7 +2198,9 @@ auto map::obstacle_name(const tripoint_bub_ms& p) -> std::string {
 auto map::has_furn(const tripoint_bub_ms& p) const -> bool { return furn(p) != f_null; }
 
 auto map::furn(const tripoint_bub_ms& p) const -> furn_id {
-    if (get_mapbuffer().is_outside_pocket_dimension_bounds(map_local_to_abs(*this, p))) {
+    if (const auto& buf = get_mapbuffer();
+        buf.has_dimension_bounds()
+        && buf.is_outside_pocket_dimension_bounds(map_local_to_abs(*this, p))) {
         return f_null;
     }
 
@@ -2349,8 +2351,10 @@ auto map::furnname(const tripoint_bub_ms& p) -> std::string {
  */
 auto map::ter(const tripoint_bub_ms& p) const -> ter_id {
     // Check dimension bounds first - out-of-bounds areas show boundary terrain
-    if (get_mapbuffer().is_outside_pocket_dimension_bounds(map_local_to_abs(*this, p))) {
-        return get_mapbuffer().get_boundary_terrain();
+    if (const auto& buf = get_mapbuffer();
+        buf.has_dimension_bounds()
+        && buf.is_outside_pocket_dimension_bounds(map_local_to_abs(*this, p))) {
+        return buf.get_boundary_terrain();
     }
 
     point_sm_ms l;
@@ -6624,8 +6628,14 @@ void map::drawsq(
 
 // a check to see if the lower floor needs to be rendered in tiles
 auto map::dont_draw_lower_floor(const tripoint_bub_ms& p) -> bool {
-    return p.z() <= -OVERMAP_DEPTH
-        || !(has_flag(TFLAG_NO_FLOOR, p) || has_flag(TFLAG_Z_TRANSPARENT, p));
+    if (p.z() <= -OVERMAP_DEPTH) { return true; }
+    auto l = point_sm_ms{};
+    const auto* const current_submap = get_submap_at(p, l);
+    if (current_submap == nullptr) { return true; }
+    const auto& terrain = current_submap->get_ter(l).obj();
+    if (terrain.has_flag(TFLAG_NO_FLOOR) || terrain.has_flag(TFLAG_Z_TRANSPARENT)) { return false; }
+    const auto& furniture = current_submap->get_furn(l).obj();
+    return !(furniture.has_flag(TFLAG_NO_FLOOR) || furniture.has_flag(TFLAG_Z_TRANSPARENT));
 }
 
 auto map::draw_maptile(
@@ -8946,11 +8956,17 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
 
 auto map::get_submap_at(const tripoint_bub_ms& p) const -> submap* {
     if (inbounds(p)) {
+        if (const auto view =
+                active_submaps_.get_submap_view(point_rel_sm(p.x() / SEEX, p.y() / SEEY), p.z())) {
+            return const_cast<submap*>(&view->get_submap());
+        }
         const auto abs_sm_pos =
             map_local_to_abs(*this, tripoint_bub_sm(p.x() / SEEX, p.y() / SEEY, p.z()));
         return get_mapbuffer().lookup_submap_in_memory(abs_sm_pos);
     }
-    if (get_mapbuffer().is_outside_pocket_dimension_bounds(map_local_to_abs(*this, p))) {
+    auto& buf = get_mapbuffer();
+    if (buf.has_dimension_bounds()
+        && buf.is_outside_pocket_dimension_bounds(map_local_to_abs(*this, p))) {
         // Outside dimension bounds — genuinely invalid position.
         return nullptr;
     }
@@ -8959,16 +8975,20 @@ auto map::get_submap_at(const tripoint_bub_ms& p) const -> submap* {
     const tripoint_abs_sm abs_sm_pos(
         abs_sub.x() + divide_round_to_minus_infinity(p.x(), SEEX),
         abs_sub.y() + divide_round_to_minus_infinity(p.y(), SEEY), p.z());
-    return get_mapbuffer().lookup_submap_in_memory(abs_sm_pos);
+    return buf.lookup_submap_in_memory(abs_sm_pos);
 }
 
 auto map::get_submap_at(const tripoint_bub_ms& p, point_sm_ms& offset_p) const -> submap* {
+    if (p.x() >= 0 && p.y() >= 0) {
+        offset_p = point_sm_ms(point(p.x() % SEEX, p.y() % SEEY));
+        return get_submap_at(p);
+    }
     // Use floor-division so that negative local coords (out-of-bubble) give the
     // correct submap-local offset in [0, SEEX) rather than a negative value.
-    const int smx = divide_round_to_minus_infinity(p.x(), SEEX);
-    const int smy = divide_round_to_minus_infinity(p.y(), SEEY);
+    const auto smx = divide_round_to_minus_infinity(p.x(), SEEX);
+    const auto smy = divide_round_to_minus_infinity(p.y(), SEEY);
     offset_p = point_sm_ms(point(p.x() - smx * SEEX, p.y() - smy * SEEY));
-    return get_submap_at(tripoint_bub_ms(p));
+    return get_submap_at(p);
 }
 
 void map::draw_line_ter(const ter_id& type, const tripoint_bub_ms& p1, const tripoint_bub_ms& p2) {
