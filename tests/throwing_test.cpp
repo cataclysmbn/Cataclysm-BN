@@ -34,7 +34,9 @@
 
 TEST_CASE("throwing distance test", "[throwing], [balance]") {
     clear_all_state();
-    const standard_npc thrower("Thrower", tripoint_bub_ms(60, 60, 0), {}, 4, 10, 10, 10, 10);
+    const auto thrower_pos_abs = test_origin;
+    const auto thrower_pos = abs_to_bub(thrower_pos_abs);
+    const standard_npc thrower("Thrower", thrower_pos, {}, 4, 10, 10, 10, 10);
     item& grenade = *item::spawn_temporary("grenade");
     CHECK(thrower.throw_range(grenade) >= 30);
     CHECK(thrower.throw_range(grenade) <= 35);
@@ -42,10 +44,10 @@ TEST_CASE("throwing distance test", "[throwing], [balance]") {
 
 TEST_CASE("throwing heavier items scales with strength", "[throwing], [balance]") {
     clear_all_state();
-    const auto weak_thrower =
-        standard_npc("WeakThrower", tripoint_bub_ms(60, 60, 0), {}, 4, 8, 10, 10, 10);
-    const auto strong_thrower =
-        standard_npc("StrongThrower", tripoint_bub_ms(60, 60, 0), {}, 4, 14, 10, 10, 10);
+    const auto thrower_pos_abs = test_origin;
+    const auto thrower_pos = abs_to_bub(thrower_pos_abs);
+    const auto weak_thrower = standard_npc("WeakThrower", thrower_pos, {}, 4, 8, 10, 10, 10);
+    const auto strong_thrower = standard_npc("StrongThrower", thrower_pos, {}, 4, 14, 10, 10, 10);
     item& bronze_anvil = *item::spawn_temporary("anvil_bronze");
 
     CHECK(weak_thrower.throw_range(bronze_anvil) < strong_thrower.throw_range(bronze_anvil));
@@ -146,8 +148,10 @@ TEST_CASE("flung creatures only trigger landing traps if they cannot fly", "[thr
     clear_map();
 
     auto& here = g->m;
-    const auto start = g->u.bub_pos() + tripoint_east;
-    const auto landing = start + tripoint_east;
+    const auto start_abs = test_origin + tripoint_rel_ms(1, 0, 0);
+    const auto landing_abs = start_abs + tripoint_rel_ms(1, 0, 0);
+    const auto start = abs_to_bub(start_abs);
+    const auto landing = abs_to_bub(landing_abs);
     const auto beartrap = trap_str_id("tr_beartrap");
     const auto effect_beartrap = efftype_id("beartrap");
 
@@ -160,7 +164,7 @@ TEST_CASE("flung creatures only trigger landing traps if they cannot fly", "[thr
 
         g->fling_creature(&zombie, coord_to_angle(start, landing), 10.0f);
 
-        CHECK(zombie.bub_pos() == landing);
+        CHECK(zombie.abs_pos() == landing_abs);
         CHECK(zombie.has_effect(effect_beartrap));
     }
 
@@ -170,22 +174,26 @@ TEST_CASE("flung creatures only trigger landing traps if they cannot fly", "[thr
 
         g->fling_creature(&bat, coord_to_angle(start, landing), 10.0f);
 
-        CHECK(bat.bub_pos() == landing);
+        CHECK(bat.abs_pos() == landing_abs);
         CHECK_FALSE(bat.has_effect(effect_beartrap));
     }
 }
 
 TEST_CASE("flung creatures take damage when they slam into a wall", "[throwing][impact]") {
     clear_all_state();
-    g->u.setpos(tripoint_bub_ms{10, 10, 0});
+    g->u.setpos(test_origin + tripoint_rel_ms(10, 10, 0));
     // Moving the avatar can load submaps outside the previously cleared area.
     clear_map();
 
     auto& here = g->m;
-    const auto source = tripoint_bub_ms{40, 30, 0};
-    const auto target = tripoint_bub_ms{41, 30, 0};
-    const auto landing = tripoint_bub_ms{42, 30, 0};
-    const auto wall = tripoint_bub_ms{43, 30, 0};
+    const auto source_abs = test_origin + tripoint_rel_ms(40, 30, 0);
+    const auto target_abs = source_abs + tripoint_rel_ms(1, 0, 0);
+    const auto landing_abs = target_abs + tripoint_rel_ms(1, 0, 0);
+    const auto wall_abs = landing_abs + tripoint_rel_ms(1, 0, 0);
+    const auto source = abs_to_bub(source_abs);
+    const auto target = abs_to_bub(target_abs);
+    const auto landing = abs_to_bub(landing_abs);
+    const auto wall = abs_to_bub(wall_abs);
 
     here.ter_set(source, ter_id("t_floor"));
     here.ter_set(target, ter_id("t_floor"));
@@ -199,7 +207,7 @@ TEST_CASE("flung creatures take damage when they slam into a wall", "[throwing][
 
     g->fling_creature(&zombie, coord_to_angle(source, target), 30.0f);
 
-    CHECK(zombie.bub_pos() == landing);
+    CHECK(zombie.abs_pos() == landing_abs);
     CHECK(zombie.get_hp() < hp_before);
 }
 
@@ -211,8 +219,11 @@ TEST_CASE("flung creatures stop at the reality bubble edge", "[throwing][bubble]
     const auto bubble_mapsize = 2 * g_reality_bubble_size + 3;
     const auto bubble_edge_x = SEEX * bubble_mapsize - 1;
     const auto bubble_mid_y = SEEY * bubble_mapsize / 2;
-    const auto start = tripoint_bub_ms{bubble_edge_x - 1, bubble_mid_y, 0};
-    const auto edge = tripoint_bub_ms{bubble_edge_x, bubble_mid_y, 0};
+    const auto bubble_origin_abs = tripoint_abs_ms(project_to<coords::ms>(here.get_abs_sub()), 0);
+    const auto start_abs = bubble_origin_abs + tripoint_rel_ms(bubble_edge_x - 1, bubble_mid_y, 0);
+    const auto edge_abs = bubble_origin_abs + tripoint_rel_ms(bubble_edge_x, bubble_mid_y, 0);
+    const auto start = abs_to_bub(start_abs);
+    const auto edge = abs_to_bub(edge_abs);
 
     here.ter_set(start, ter_id("t_floor"));
     here.ter_set(edge, ter_id("t_floor"));
@@ -222,7 +233,7 @@ TEST_CASE("flung creatures stop at the reality bubble edge", "[throwing][bubble]
 
     g->fling_creature(&zombie, coord_to_angle(start, start + tripoint_east), 30.0f);
 
-    CHECK(zombie.bub_pos() == edge);
+    CHECK(zombie.abs_pos() == edge_abs);
 }
 
 struct throw_test_data {
@@ -247,7 +258,7 @@ static auto operator<<(std::ostream& stream, const throw_test_pstats& pstats)
 
 static const skill_id skill_throw = skill_id("throw");
 
-static void reset_player(player& p, const throw_test_pstats& pstats, const tripoint_bub_ms& pos) {
+static void reset_player(player& p, const throw_test_pstats& pstats, const tripoint_abs_ms& pos) {
     clear_character(p);
     CHECK(!p.in_vehicle);
     p.setpos(pos);
@@ -276,7 +287,7 @@ static void test_throwing_player_versus(
     player& p, const std::string& mon_id, const std::string& throw_id, const int range,
     const throw_test_pstats& pstats, const epsilon_threshold& hit_thresh,
     const epsilon_threshold& dmg_thresh) {
-    const auto player_start = tripoint_bub_ms(g_half_mapsize_x, g_half_mapsize_y, 0);
+    const auto player_start = test_origin + tripoint_rel_ms(g_half_mapsize_x, g_half_mapsize_y, 0);
     const auto monster_start = player_start + tripoint_rel_ms(range, 0, 0);
     bool hit_thresh_met = false;
     bool dmg_thresh_met = false;
@@ -289,7 +300,7 @@ static void test_throwing_player_versus(
         p.set_stamina(p.get_stamina_max());
         detached_ptr<item> det = item::spawn(throw_id);
         item& it = *det;
-        monster& mon = spawn_test_monster(mon_id, monster_start);
+        monster& mon = spawn_test_monster(mon_id, abs_to_bub(monster_start));
         mon.set_moves(0);
 
         double actual_hit_chance = ranged::hit_chance(
@@ -308,7 +319,7 @@ static void test_throwing_player_versus(
         }
 
         dealt_projectile_attack atk =
-            ranged::throw_item(p, mon.bub_pos(), std::move(det), std::nullopt);
+            ranged::throw_item(p, abs_to_bub(mon.abs_pos()), std::move(det), std::nullopt);
         data.hits.add(atk.hit_critter != nullptr);
         data.dmg.add(atk.dealt_dam.total_damage());
 

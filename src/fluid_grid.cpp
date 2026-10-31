@@ -147,7 +147,7 @@ auto transformer_last_run_at( const tripoint_abs_ms &p ) -> time_point
     auto target_pos = point_sm_ms{};
     std::tie( target_sm, target_pos ) = project_remain<coords::sm>( p );
     auto *target_submap = MAPBUFFER_REGISTRY.get(
-                              get_map().get_bound_dimension() ).lookup_submap( target_sm );
+                              get_map().get_bound_dimension() ).load_submap_from_storage( target_sm );
     if( target_submap == nullptr ) {
         return calendar::start_of_cataclysm;
     }
@@ -166,7 +166,7 @@ auto set_transformer_last_run_at( const tripoint_abs_ms &p, time_point t ) -> vo
     auto target_pos = point_sm_ms{};
     std::tie( target_sm, target_pos ) = project_remain<coords::sm>( p );
     auto *target_submap = MAPBUFFER_REGISTRY.get(
-                              get_map().get_bound_dimension() ).lookup_submap( target_sm );
+                              get_map().get_bound_dimension() ).load_submap_from_storage( target_sm );
     if( target_submap == nullptr ) {
         return;
     }
@@ -180,7 +180,7 @@ auto clear_transformer_last_run_at( const tripoint_abs_ms &p ) -> void
     auto target_pos = point_sm_ms{};
     std::tie( target_sm, target_pos ) = project_remain<coords::sm>( p );
     auto *target_submap = MAPBUFFER_REGISTRY.get(
-                              get_map().get_bound_dimension() ).lookup_submap( target_sm );
+                              get_map().get_bound_dimension() ).load_submap_from_storage( target_sm );
     if( target_submap == nullptr ) {
         return;
     }
@@ -284,7 +284,7 @@ auto collect_transformers( const std::set<tripoint_abs_omt> &grid,
 
     auto transformers = std::vector<transformer_instance> {};
     std::ranges::for_each( submap_positions, [&]( const tripoint_abs_sm & sm_coord ) {
-        auto *sm = mb.lookup_submap( sm_coord );
+        auto *sm = mb.load_submap_from_storage( sm_coord );
         if( sm == nullptr ) {
             return;
         }
@@ -320,7 +320,7 @@ auto tank_capacity_at( mapbuffer &mb, const tripoint_abs_ms &p ) -> std::optiona
     auto target_sm = tripoint_abs_sm{};
     auto target_pos = point_sm_ms{};
     std::tie( target_sm, target_pos ) = project_remain<coords::sm>( p );
-    auto *target_submap = mb.lookup_submap( target_sm );
+    auto *target_submap = mb.load_submap_from_storage( target_sm );
     if( target_submap == nullptr ) {
         return std::nullopt;
     }
@@ -334,7 +334,7 @@ auto has_transformer_at( mapbuffer &mb, const tripoint_abs_ms &p ) -> bool
     auto target_sm = tripoint_abs_sm{};
     auto target_pos = point_sm_ms{};
     std::tie( target_sm, target_pos ) = project_remain<coords::sm>( p );
-    auto *target_submap = mb.lookup_submap( target_sm );
+    auto *target_submap = mb.load_submap_from_storage( target_sm );
     if( target_submap == nullptr ) {
         return false;
     }
@@ -539,7 +539,7 @@ auto submap_has_transformer( const tripoint_abs_sm &sm_coord, mapbuffer &mb ) ->
         return iter->second;
     }
 
-    auto *sm = mb.lookup_submap( sm_coord );
+    auto *sm = mb.load_submap_from_storage( sm_coord );
     if( sm == nullptr ) {
         cache.emplace( sm_coord, false );
         return false;
@@ -663,7 +663,7 @@ auto submap_tank_cache_at( const tripoint_abs_sm &sm_coord,
         return iter->second;
     }
 
-    auto *sm = mb.lookup_submap( sm_coord );
+    auto *sm = mb.load_submap_from_storage( sm_coord );
     if( sm == nullptr ) {
         return submap_tank_cache_entry{};
     }
@@ -811,7 +811,7 @@ auto assign_autofill_tanks_for_grid( const std::set<tripoint_abs_omt> &grid, map
         if( needed <= 0_ml ) {
             return;
         }
-        auto *sm = mb.lookup_submap( sm_coord );
+        auto *sm = mb.load_submap_from_storage( sm_coord );
         if( sm == nullptr ) {
             return;
         }
@@ -911,7 +911,7 @@ auto remove_tank_storage( fluid_grid::liquid_storage_state &state,
     auto sm_pos = tripoint_abs_sm{};
     auto local_pos = point_sm_ms{};
     std::tie( sm_pos, local_pos ) = project_remain<coords::sm>( p );
-    const auto *sm = mb.lookup_submap( sm_pos );
+    const auto *sm = mb.load_submap_from_storage( sm_pos );
     if( sm == nullptr ) {
         return removed;
     }
@@ -1153,7 +1153,7 @@ class fluid_storage_grid
                 if( needed <= 0_ml ) {
                     return;
                 }
-                auto *sm = mb.lookup_submap( sm_coord );
+                auto *sm = mb.load_submap_from_storage( sm_coord );
                 if( sm == nullptr ) {
                     return;
                 }
@@ -1339,7 +1339,7 @@ class fluid_grid_tracker
             auto target_sm = tripoint_abs_sm{};
             auto target_pos = point_sm_ms{};
             std::tie( target_sm, target_pos ) = project_remain<coords::sm>( p );
-            auto *target_submap = mb->lookup_submap( target_sm );
+            auto *target_submap = mb->load_submap_from_storage( target_sm );
             if( target_submap == nullptr ) {
                 return false;
             }
@@ -1518,7 +1518,7 @@ auto seed_liquid_charges_for_mapgen( const seed_liquid_mapgen_opts &options )
     auto &state = storage[omc.local];
     auto &mbuf = *options.map_buffer;
     const auto is_transient_mapgen =
-        mbuf.lookup_submap( project_to<coords::sm>( options.p ) ) == nullptr;
+        mbuf.load_submap_from_storage( project_to<coords::sm>( options.p ) ) == nullptr;
     const auto tank_count = is_transient_mapgen ? 1 : tank_count_for_grid( grid, mbuf );
     if( !is_transient_mapgen ) {
         state.capacity = calculate_capacity_for_grid( grid, mbuf );
@@ -1847,7 +1847,7 @@ auto assign_tank_liquid( const tripoint_abs_ms &p, const itype_id &liquid_type )
     auto sm_pos = tripoint_abs_sm{};
     auto local_pos = point_sm_ms{};
     std::tie( sm_pos, local_pos ) = project_remain<coords::sm>( p );
-    auto *sm = mbuf.lookup_submap( sm_pos );
+    auto *sm = mbuf.load_submap_from_storage( sm_pos );
     if( sm == nullptr ) {
         return false;
     }
@@ -1874,7 +1874,7 @@ auto set_tank_assigned_liquid( const tripoint_abs_ms &p, const itype_id &liquid_
     auto sm_pos = tripoint_abs_sm{};
     auto local_pos = point_sm_ms{};
     std::tie( sm_pos, local_pos ) = project_remain<coords::sm>( p );
-    auto *sm = mbuf.lookup_submap( sm_pos );
+    auto *sm = mbuf.load_submap_from_storage( sm_pos );
     if( sm == nullptr ) {
         return false;
     }
@@ -1899,7 +1899,7 @@ auto unassign_tank_liquid( const tripoint_abs_ms &p ) -> bool
     auto sm_pos = tripoint_abs_sm{};
     auto local_pos = point_sm_ms{};
     std::tie( sm_pos, local_pos ) = project_remain<coords::sm>( p );
-    auto *sm = mbuf.lookup_submap( sm_pos );
+    auto *sm = mbuf.load_submap_from_storage( sm_pos );
     if( sm == nullptr ) {
         return false;
     }
@@ -1938,7 +1938,7 @@ auto set_fixture_assigned_liquid( const tripoint_abs_ms &p, const itype_id &liqu
     auto sm_pos = tripoint_abs_sm{};
     auto local_pos = point_sm_ms{};
     std::tie( sm_pos, local_pos ) = project_remain<coords::sm>( p );
-    auto *sm = mbuf.lookup_submap( sm_pos );
+    auto *sm = mbuf.load_submap_from_storage( sm_pos );
     if( sm == nullptr ) {
         return false;
     }
@@ -1964,7 +1964,7 @@ auto unassign_fixture_liquid( const tripoint_abs_ms &p ) -> bool
     auto sm_pos = tripoint_abs_sm{};
     auto local_pos = point_sm_ms{};
     std::tie( sm_pos, local_pos ) = project_remain<coords::sm>( p );
-    auto *sm = mbuf.lookup_submap( sm_pos );
+    auto *sm = mbuf.load_submap_from_storage( sm_pos );
     if( sm == nullptr ) {
         return false;
     }
@@ -1989,7 +1989,7 @@ auto on_structure_changed( const tripoint_abs_ms &p ) -> void
     auto &mbuf = MAPBUFFER_REGISTRY.get( get_map().get_bound_dimension() );
     // Mapgen mutates temporary submaps before they are committed to the mapbuffer.
     // Ignore those transient updates so we don't cache zero-capacity grids.
-    if( mbuf.lookup_submap( sm_pos ) == nullptr ) {
+    if( mbuf.load_submap_from_storage( sm_pos ) == nullptr ) {
         return;
     }
 
@@ -2029,7 +2029,7 @@ auto on_tank_removed( const tripoint_abs_ms &p ) -> void
     auto target_sm = tripoint_abs_sm{};
     auto target_pos = point_sm_ms{};
     std::tie( target_sm, target_pos ) = project_remain<coords::sm>( p );
-    auto *target_submap = mbuf.lookup_submap( target_sm );
+    auto *target_submap = mbuf.load_submap_from_storage( target_sm );
     if( target_submap == nullptr ) {
         return;
     }

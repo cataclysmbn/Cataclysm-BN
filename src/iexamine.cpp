@@ -1413,7 +1413,11 @@ void iexamine::chainfence( player &p, const tripoint_bub_ms &examp )
     if( p.in_vehicle ) {
         here.unboard_vehicle( p.bub_pos() );
     }
-    p.setpos( examp );
+    if( &p == &g->u ) {
+        g->set_player_position( bub_to_abs( examp ) );
+    } else {
+        p.set_internal_position( bub_to_abs( examp ) );
+    }
 }
 
 /**
@@ -1441,7 +1445,11 @@ void iexamine::bars( player &p, const tripoint_bub_ms &examp )
     }
     p.moves -= to_turns<int>( 2_seconds );
     add_msg( _( "You slide right between the bars." ) );
-    p.setpos( examp );
+    if( &p == &g->u ) {
+        g->set_player_position( bub_to_abs( examp ) );
+    } else {
+        p.set_internal_position( bub_to_abs( examp ) );
+    }
 }
 
 void iexamine::deployed_furniture( player &p, const tripoint_bub_ms &pos )
@@ -3850,7 +3858,7 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
             auto target_pos = point_sm_ms{};
             std::tie( target_sm, target_pos ) = project_remain<coords::sm>( pos_abs_ms );
             auto *target_submap = MAPBUFFER_REGISTRY.get(
-                                      get_map().get_bound_dimension() ).lookup_submap( target_sm );
+                                      get_map().get_bound_dimension() ).load_submap_from_storage( target_sm );
             if( target_submap == nullptr )
             {
                 return 0;
@@ -3916,7 +3924,7 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
                 auto target_pos = point_sm_ms{};
                 std::tie( target_sm, target_pos ) = project_remain<coords::sm>( pos_abs_ms );
                 auto *target_submap = MAPBUFFER_REGISTRY.get(
-                                          get_map().get_bound_dimension() ).lookup_submap( target_sm );
+                                          get_map().get_bound_dimension() ).load_submap_from_storage( target_sm );
                 if( target_submap == nullptr ) {
                     return;
                 }
@@ -4980,7 +4988,7 @@ auto iexamine::fluid_grid_fixture( player &p, const tripoint_bub_ms &examp ) -> 
     auto target_pos = point_sm_ms{};
     std::tie( target_sm, target_pos ) = project_remain<coords::sm>( pos_abs_ms );
     auto *target_submap = MAPBUFFER_REGISTRY.get(
-                              get_map().get_bound_dimension() ).lookup_submap( target_sm );
+                              get_map().get_bound_dimension() ).load_submap_from_storage( target_sm );
     if( target_submap == nullptr ) {
         return;
     }
@@ -5916,7 +5924,7 @@ auto jump_over_tile_can_land_on_ledge( mapbuffer &buffer,
                                        const tripoint_abs_ms &landing_tile ) -> bool
 {
     const auto tile_reader = buffer.make_abs_tile_reader();
-    const auto landing = tile_reader.get_tile( landing_tile );
+    const auto landing = tile_reader.tile_at( landing_tile );
     if( !landing ) {
         return false;
     }
@@ -6200,7 +6208,11 @@ auto iexamine::jump_over_tile( player &p, const tripoint_bub_ms &examp ) -> bool
         add_msg( m_info, _( "You leap across." ) );
         maybe_cut_from_sharp_jump_terrain( p, here, jumped_tile );
     }
-    p.setpos( jump_state.dest );
+    if( &p == &g->u ) {
+        g->set_player_position( jump_state.dest );
+    } else {
+        p.set_internal_position( jump_state.dest );
+    }
     if( stumbled ) {
         add_msg( m_bad, _( "You misjudge the leap past %s and crash to the ground." ),
                  jumped_obstacle_name );
@@ -6225,7 +6237,7 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp_bub )
     }
     auto &buffer = p.get_mapbuffer();
     const auto tile_reader = buffer.make_abs_tile_reader();
-    const auto player_tile = tile_reader.get_tile( p.abs_pos() );
+    const auto player_tile = tile_reader.tile_at( p.abs_pos() );
     if( player_tile && player_tile->get_ter() == t_open_air &&
         !character_funcs::can_fly( p ) ) {
         auto where = p.abs_pos();
@@ -6233,7 +6245,7 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp_bub )
 
         // Keep going down until we find a tile that is NOT open air
         while( true ) {
-            const auto below_tile = tile_reader.get_tile( below );
+            const auto below_tile = tile_reader.tile_at( below );
             if( !below_tile || below_tile->get_ter() != t_open_air ||
                 !buffer.valid_move( where, below, { .flying = true } ) ) {
                 break;
@@ -6257,7 +6269,7 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp_bub )
     //if the tile below has a grappling hook, you can pull it up
     auto below_rope = examp;
     below_rope.z()--;
-    const auto below_rope_tile = tile_reader.get_tile( below_rope );
+    const auto below_rope_tile = tile_reader.tile_at( below_rope );
     std::optional<std::string> below_rope_name;
     if( below_rope_tile && below_rope_tile->get_furn_t().has_flag( "REMOVE_FROM_ABOVE" ) ) {
         below_rope_name = below_rope_tile->get_furn().obj().name();
@@ -6350,7 +6362,11 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp_bub )
             }
 
             p.moves -= to_moves<int>( 1_seconds + 1_seconds * fall_mod );
-            p.setpos( examp );
+            if( &p == &g->u ) {
+                g->set_player_position( examp );
+            } else {
+                p.set_internal_position( examp );
+            }
 
             if( climb_cost > 0 || rng_float( 0.8, 1.0 ) > fall_mod ) {
                 // One tile of falling less (possibly zero)
@@ -6375,7 +6391,7 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp_bub )
             auto success = false;
             for( const auto i : std::views::iota( 2, range + 1 ) ) {
                 //break at the first non empty space encountered
-                const auto tile = tile_reader.get_tile( p.abs_pos() + dir * i );
+                const auto tile = tile_reader.tile_at( p.abs_pos() + dir * i );
                 if( !tile || tile->get_ter() != t_open_air ) {
                     success_range = i;
                     success = true;
@@ -8246,7 +8262,7 @@ void iexamine::power_portal( player &p, const tripoint_bub_ms &examp )
     tripoint_abs_sm sm_abs;
     point_sm_ms sm_pt;
     std::tie( sm_abs, sm_pt ) = project_remain<coords::sm>( abs_pos );
-    submap *sm = MAPBUFFER_REGISTRY.get( local_dim ).lookup_submap( sm_abs );
+    submap *sm = MAPBUFFER_REGISTRY.get( local_dim ).load_submap_from_storage( sm_abs );
     if( sm == nullptr ) {
         add_msg( m_bad, _( "The portal is in an unloaded submap." ) );
         return;
@@ -8349,7 +8365,7 @@ void iexamine::power_portal( player &p, const tripoint_bub_ms &examp )
                 point_sm_ms rem_sm_pt;
                 std::tie( rem_sm_abs, rem_sm_pt ) = project_remain<coords::sm>( target_pos );
                 auto &remote_mb = MAPBUFFER_REGISTRY.get( target_dim );
-                submap *rem_sm = remote_mb.lookup_submap( rem_sm_abs );
+                submap *rem_sm = remote_mb.load_submap_from_storage( rem_sm_abs );
                 if( rem_sm != nullptr ) {
                     const auto rem_it = rem_sm->active_furniture.find( rem_sm_pt );
                     if( rem_it != rem_sm->active_furniture.end() ) {
@@ -8400,7 +8416,7 @@ void iexamine::power_portal( player &p, const tripoint_bub_ms &examp )
                 tripoint_abs_sm rem_sm_abs;
                 point_sm_ms rem_sm_pt;
                 std::tie( rem_sm_abs, rem_sm_pt ) = project_remain<coords::sm>( old_target_pos );
-                submap *rem_sm = MAPBUFFER_REGISTRY.get( old_target_dim_id ).lookup_submap( rem_sm_abs );
+                submap *rem_sm = MAPBUFFER_REGISTRY.get( old_target_dim_id ).load_submap_from_storage( rem_sm_abs );
                 if( rem_sm != nullptr ) {
                     const auto rem_it = rem_sm->active_furniture.find( rem_sm_pt );
                     if( rem_it != rem_sm->active_furniture.end() ) {
@@ -8520,7 +8536,11 @@ void iexamine::portal( player &p, const tripoint_bub_ms &examp )
 
     g->travel_to_dimension( pt->target_dim_id, wt_id, std::nullopt, dest_sm );
 
-    p.setpos( pt->target_pos );
+    if( &p == &g->u ) {
+        g->set_player_position( pt->target_pos );
+    } else {
+        p.set_internal_position( pt->target_pos );
+    }
 }
 
 void iexamine::migo_nerve_cluster( player &p, const tripoint_bub_ms &examp )

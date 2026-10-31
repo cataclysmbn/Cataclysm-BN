@@ -44,11 +44,13 @@ static auto fire_shell_at_target(
     clear_all_state();
     rng_set_engine_seed(seed);
 
-    const auto shooter_pos = tripoint_bub_ms(60, 60, 0);
-    const auto target_pos = tripoint_bub_ms(62, 60, 0);
+    const auto target_abs = test_origin + tripoint_rel_ms(2, 0, 0);
     auto& target = get_player_character();
     target.set_body();
-    target.setpos(target_pos);
+    target.setpos(target_abs);
+    const auto target_pos = target.bub_pos();
+    const auto shooter_pos_abs = target_abs - tripoint_rel_ms(2, 0, 0);
+    const auto shooter_pos = abs_to_bub(shooter_pos_abs);
     target.worn.clear();
     target.set_dodge_bonus(-100.0f);
     for (const auto& armor_id : armor_ids) { target.worn.push_back(item::spawn(armor_id)); }
@@ -170,22 +172,23 @@ static void shape_coverage_vs_distance_no_obstacle(
 TEST_CASE("expected shape coverage mass test", "[shape]") {
     clear_all_state();
     cone_factory c(15_degrees, 10.0);
-    const tripoint_bub_ms origin(60, 60, 0);
+    const auto origin = bub_test_origin();
     for (const tripoint_bub_ms& end : points_in_radius<tripoint_bub_ms>(origin, 5)) {
         shape_coverage_vs_distance_no_obstacle(c, origin, end);
     }
 
     // Hard case
+    const auto hard_case_origin = origin + tripoint_rel_ms(5, 5, 0);
     shape_coverage_vs_distance_no_obstacle(
-        c, {65, 65, 0}, tripoint_bub_ms{65, 65, 0} + point_rel_ms(2, 1));
+        c, hard_case_origin, hard_case_origin + point_rel_ms(2, 1));
 }
 
 TEST_CASE("expected shape coverage without obstacles", "[shape]") {
     clear_all_state();
     cone_factory c(22.5_degrees, 10.0);
-    const tripoint_bub_ms origin(60, 60, 0);
+    const auto origin = bub_test_origin();
     const tripoint_rel_ms offset(5, 5, 0);
-    const tripoint_bub_ms end = origin + offset;
+    const auto end = origin + offset;
     std::shared_ptr<shape> s = c.create(rl_vec3d(origin), rl_vec3d(end));
     auto cov = ranged::expected_coverage(*s, get_map(), 3);
 
@@ -198,12 +201,12 @@ TEST_CASE("expected shape coverage without obstacles", "[shape]") {
 TEST_CASE("expected shape coverage through windows", "[shape]") {
     clear_all_state();
     cone_factory c(22.5_degrees, 10.0);
-    const tripoint_bub_ms origin(60, 60, 0);
+    const auto origin = bub_test_origin();
     const tripoint_rel_ms offset(5, 0, 0);
-    const tripoint_bub_ms end = origin + offset;
+    const auto end = origin + offset;
     map& here = get_map();
     for (int wall_offset = -10; wall_offset <= 10; wall_offset++) {
-        here.ter_set(tripoint_bub_ms(62, 60 + wall_offset, 0), ter_id("test_t_window"));
+        here.ter_set(origin + tripoint_rel_ms(2, wall_offset, 0), ter_id("test_t_window"));
     }
 
     std::shared_ptr<shape> s = c.create(rl_vec3d(origin), rl_vec3d(end));
@@ -220,10 +223,10 @@ TEST_CASE("shaped attacks apply trail ammo effects", "[ranged][projectile]") {
 
     map& here = get_map();
     auto& attacker = get_player_character();
-    const auto origin = tripoint_bub_ms(60, 60, 0);
+    attacker.setpos(test_origin);
+    const auto origin = abs_to_bub(test_origin);
     const auto target = origin + 5 * point_east;
     attacker.set_body();
-    attacker.setpos(origin);
 
     const auto shape_factory = cone_factory(15_degrees, 6.0);
     const auto attack_shape = shape_factory.create(rl_vec3d(origin), rl_vec3d(target));
@@ -268,11 +271,13 @@ TEST_CASE(
     clear_all_state();
     rng_set_engine_seed(deterministic_rng_seeds.front());
 
-    const auto shooter_pos = tripoint_bub_ms(60, 60, 0);
-    const auto target_pos = tripoint_bub_ms(62, 60, 0);
+    const auto target_abs = test_origin + tripoint_rel_ms(2, 0, 0);
     auto& target = get_player_character();
     target.set_body();
-    target.setpos(target_pos);
+    target.setpos(target_abs);
+    const auto target_pos = target.bub_pos();
+    const auto shooter_pos_abs = target_abs - tripoint_rel_ms(2, 0, 0);
+    const auto shooter_pos = abs_to_bub(shooter_pos_abs);
     target.worn.clear();
     target.set_dodge_bonus(-100.0f);
     REQUIRE(g->critter_at<avatar>(target_pos) != nullptr);

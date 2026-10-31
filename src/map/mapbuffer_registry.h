@@ -118,7 +118,7 @@ extern mapbuffer_registry MAPBUFFER_REGISTRY;
 #define MAPBUFFER (MAPBUFFER_REGISTRY.primary())
 
 // Active-dimension macro — resolves to the currently active dimension's mapbuffer.
-// *** RENDERING ONLY *** — must NOT be used for gameplay logic.
-// Gameplay code should use MAPBUFFER_REGISTRY.get(dim_id) with an explicit dimension.
+// *** RENDERING / BUBBLE MECHANIC ONLY *** — must NOT be used for standard gameplay logic.
+// Code should preferentially use MAPBUFFER_REGISTRY.get(dim_id) with an explicit dimension.
 // NOLINTNEXTLINE(cata-text-style)
 #define ACTIVE_MAPBUFFER (MAPBUFFER_REGISTRY.active())

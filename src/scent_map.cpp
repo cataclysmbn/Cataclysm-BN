@@ -63,7 +63,7 @@ auto scent_map::raw_scent_at( int x, int y, int z ) const -> int
     const int gx = divide_round_to_minus_infinity( x, SEEX );
     const int gy = divide_round_to_minus_infinity( y, SEEY );
     const tripoint_abs_sm abs_sm( m_.get_abs_sub().x() + gx, m_.get_abs_sub().y() + gy, z );
-    const auto *sm = MAPBUFFER_REGISTRY.get( m_.get_bound_dimension() ).lookup_submap_in_memory(
+    const auto *sm = MAPBUFFER_REGISTRY.get( m_.get_bound_dimension() ).find_resident_submap(
                          abs_sm );
     return sm ? sm->scent_values[x - gx * SEEX][y - gy * SEEY] : 0;
 }
@@ -73,7 +73,7 @@ auto scent_map::raw_scent_set( int x, int y, int z, int value ) -> void
     const int gx = divide_round_to_minus_infinity( x, SEEX );
     const int gy = divide_round_to_minus_infinity( y, SEEY );
     const tripoint_abs_sm abs_sm( m_.get_abs_sub().x() + gx, m_.get_abs_sub().y() + gy, z );
-    auto *sm = MAPBUFFER_REGISTRY.get( m_.get_bound_dimension() ).lookup_submap_in_memory( abs_sm );
+    auto *sm = MAPBUFFER_REGISTRY.get( m_.get_bound_dimension() ).find_resident_submap( abs_sm );
     if( sm ) {
         sm->scent_values[x - gx * SEEX][y - gy * SEEY] = value;
         if( value > 0 ) {
@@ -116,7 +116,7 @@ void scent_map::decay()
             if( std::abs( abs_sm.z() - levz ) > SCENT_MAP_Z_REACH ) {
                 return false;
             }
-            auto *sm = buf.lookup_submap_in_memory( abs_sm );
+            auto *sm = buf.find_resident_submap( abs_sm );
             if( !sm || sm->is_uniform ) {
                 return true;
             }
@@ -202,7 +202,7 @@ bool scent_map::inbounds( const tripoint_bub_ms &p ) const
     // Check bound dimension's mapbuffer — any loaded submap is accessible.
     const auto local_sm = project_to<coords::sm>( p );
     const auto abs_sm = map_local_to_abs( m_, local_sm );
-    return MAPBUFFER_REGISTRY.get( m_.get_bound_dimension() ).lookup_submap_in_memory(
+    return MAPBUFFER_REGISTRY.get( m_.get_bound_dimension() ).find_resident_submap(
                abs_sm ) != nullptr;
 }
 
@@ -286,7 +286,7 @@ void scent_map::update( const tripoint_bub_ms &center, map &m )
         for( int smy = init_sm_y_min; smy <= init_sm_y_max; ++smy ) {
             const tripoint_abs_sm abs_sm( abs_sub_base.x() + smx, abs_sub_base.y() + smy, cz );
             const auto *sm = MAPBUFFER_REGISTRY.get( m_.get_bound_dimension() )
-                             .lookup_submap_in_memory( abs_sm );
+                             .find_resident_submap( abs_sm );
             if( !sm ) {
                 continue;
             }
@@ -435,7 +435,7 @@ void scent_map::update( const tripoint_bub_ms &center, map &m )
         for( int smy = wb_sm_y_min; smy <= wb_sm_y_max; ++smy ) {
             const tripoint_abs_sm abs_sm( abs_sub_base.x() + smx, abs_sub_base.y() + smy, cz );
             auto *sm = MAPBUFFER_REGISTRY.get( m_.get_bound_dimension() )
-                       .lookup_submap_in_memory( abs_sm );
+                       .find_resident_submap( abs_sm );
             if( !sm ) {
                 continue;
             }

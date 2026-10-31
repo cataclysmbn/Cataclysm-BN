@@ -2696,7 +2696,7 @@ bool Creature::is_loaded() const
     if( buffer == nullptr ) {
         return false;
     }
-    return buffer->lookup_submap_in_memory( project_to<coords::sm>( abs_pos() ) ) != nullptr;
+    return buffer->find_resident_submap( project_to<coords::sm>( abs_pos() ) ) != nullptr;
 }
 
 bool Creature::is_simulated() const

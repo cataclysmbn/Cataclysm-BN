@@ -4,6 +4,7 @@
 #include "game_constants.h"
 #include "item.h"
 #include "item_factory.h"
+#include "map_helpers.h"
 #include "monattack.h"
 #include "monster.h"
 #include "npc.h"
@@ -15,7 +16,7 @@
 #include <sstream>
 #include <string>
 
-static const tripoint_bub_ms dude_pos(g_half_mapsize_x, g_half_mapsize_y, 0);
+static auto dude_pos() -> tripoint_bub_ms { return bub_test_origin(); }
 
 static auto find_weapons() -> std::vector<const itype*> {
     std::vector<const itype*> result;
@@ -48,7 +49,7 @@ TEST_CASE("Weak character using melee weapons against a brute", "[.][melee][bala
     auto weapons = find_weapons();
 
     SECTION("8/8/8/8, no skills") {
-        standard_npc dude("TestCharacter", dude_pos, {}, 0, 8, 8, 8, 8);
+        standard_npc dude("TestCharacter", dude_pos(), {}, 0, 8, 8, 8, 8);
         print_stats(dude, weapons, zed);
     }
 }
@@ -58,7 +59,7 @@ TEST_CASE("Average character using melee weapons against a hulk", "[.][melee][ba
     auto weapons = find_weapons();
 
     SECTION("12/10/8/8, 3 in all skills") {
-        standard_npc dude("TestCharacter", dude_pos, {}, 3, 12, 10, 8, 8);
+        standard_npc dude("TestCharacter", dude_pos(), {}, 3, 12, 10, 8, 8);
         print_stats(dude, weapons, zed);
     }
 }
@@ -68,7 +69,7 @@ TEST_CASE("Strong character using melee weapons against a kevlar zombie", "[.][m
     auto weapons = find_weapons();
 
     SECTION("12/10/8/8, 3 in all skills") {
-        standard_npc dude("TestCharacter", dude_pos, {}, 3, 12, 10, 8, 8);
+        standard_npc dude("TestCharacter", dude_pos(), {}, 3, 12, 10, 8, 8);
         print_stats(dude, weapons, zed);
     }
 }

@@ -36,11 +36,11 @@ TEST_CASE(
 
     // Build an 11x11 flammable interior at z=0 with a roof one tile larger at z=1,
     // so the 3x3-above check marks every interior tile as "inside".
-    for (int x = 54; x <= 66; ++x) {
-        for (int y = 54; y <= 66; ++y) {
-            here.ter_set(tripoint_bub_ms(x, y, 1), floor_roof);
-            if (x >= 55 && x <= 65 && y >= 55 && y <= 65) {
-                here.ter_set(tripoint_bub_ms(x, y, 0), floor_primitive);
+    for (int x = -6; x <= 6; ++x) {
+        for (int y = -6; y <= 6; ++y) {
+            here.ter_set(bub_test_origin(1) + tripoint_rel_ms(x, y, 0), floor_roof);
+            if (x >= -5 && x <= 5 && y >= -5 && y <= 5) {
+                here.ter_set(bub_test_origin() + tripoint_rel_ms(x, y, 0), floor_primitive);
             }
         }
     }
@@ -48,14 +48,14 @@ TEST_CASE(
     here.build_map_cache(0, true);
 
     // Place the avatar inside the building.
-    const tripoint_bub_ms center(60, 60, 0);
-    get_avatar().setpos(center);
+    get_avatar().setpos(test_origin);
 
     // Preconditions: a flammable interior tile, inside, beyond burn()'s safe radius (3).
-    const tripoint_bub_ms interior_far(64, 60, 0);
-    REQUIRE_FALSE(here.is_outside(interior_far));
-    REQUIRE(
-        (here.has_flag("FLAMMABLE", interior_far) || here.has_flag("FLAMMABLE_ASH", interior_far)));
+    const auto interior_far_abs = test_origin + tripoint_rel_ms(4, 0, 0);
+    REQUIRE_FALSE(here.is_outside(abs_to_bub(interior_far_abs)));
+    REQUIRE((
+        here.has_flag("FLAMMABLE", abs_to_bub(interior_far_abs))
+        || here.has_flag("FLAMMABLE_ASH", abs_to_bub(interior_far_abs))));
 
     // bad_day passes the player's OMT to burn().
     const tripoint_abs_omt omtstart = project_to<coords::omt>(get_avatar().abs_pos());
@@ -64,8 +64,9 @@ TEST_CASE(
     sl.burn(omtstart, /*count=*/3, /*rad=*/3);
 
     int fires = 0;
-    for (const tripoint_bub_ms& p :
-         here.points_in_rectangle(tripoint_bub_ms(55, 55, 0), tripoint_bub_ms(65, 65, 0))) {
+    for (const tripoint_bub_ms& p : here.points_in_rectangle(
+             abs_to_bub(test_origin + tripoint_rel_ms(-5, -5, 0)),
+             abs_to_bub(test_origin + tripoint_rel_ms(5, 5, 0)))) {
         if (here.get_field(p, fd_fire) != nullptr) { ++fires; }
     }
     INFO("fd_fire fields placed inside the building: " << fires);

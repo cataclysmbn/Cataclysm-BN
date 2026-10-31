@@ -91,7 +91,7 @@ TEST_CASE(
     prepare_fixed_window_wait(duration);
     const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
 
-    const auto item_pos = g->u.bub_pos() + point_east;
+    const auto item_pos = abs_to_bub(g->u.abs_pos() + tripoint_rel_ms::east());
     auto timer = item::spawn("gasbomb_act");
     timer->activate();
     REQUIRE(timer->has_explicit_turn_timer());
@@ -100,8 +100,8 @@ TEST_CASE(
     g->m.add_item(item_pos, std::move(timer));
     REQUIRE(g->m.i_at(item_pos).size() == 1);
 
-    spawn_test_monster("mon_zombie", g->u.bub_pos() + tripoint_rel_ms(30, 0, 0));
-    auto& talker = spawn_npc(g->u.bub_pos() + point(5, 0), "test_talker");
+    spawn_test_monster("mon_zombie", abs_to_bub(g->u.abs_pos() + tripoint_rel_ms(30, 0, 0)));
+    auto& talker = spawn_npc(abs_to_bub(g->u.abs_pos() + tripoint_rel_ms(5, 0, 0)), "test_talker");
     talker.mission = NPC_MISSION_SHOPKEEP;
 
     const auto start_turn = calendar::turn;
@@ -148,14 +148,15 @@ TEST_CASE(
 
     SECTION("active fire in simulated submap") {
         expect_fixed_window_skip_blocked_by([] {
-            g->m.add_field(g->u.bub_pos() + point_east, fd_fire, 1);
+            g->m.add_field(abs_to_bub(g->u.abs_pos() + tripoint_rel_ms::east()), fd_fire, 1);
         });
     }
 
     SECTION("relevant vehicle") {
         expect_fixed_window_skip_blocked_by([] {
-            auto* veh =
-                g->m.add_vehicle(vproto_id("car"), g->u.bub_pos() + tripoint_east, 0_degrees, 0, 0);
+            auto* veh = g->m.add_vehicle(
+                vproto_id("car"), abs_to_bub(g->u.abs_pos() + tripoint_rel_ms::east()), 0_degrees,
+                0, 0);
             REQUIRE(veh != nullptr);
             veh->is_following = true;
         });

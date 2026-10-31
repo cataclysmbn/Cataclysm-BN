@@ -40,6 +40,10 @@ using move_statistics = statistics<int>;
 
 namespace {
 
+auto movement_fixture_map_origin_abs() -> tripoint_abs_ms {
+    return tripoint_abs_ms(project_to<coords::ms>(get_map().get_abs_sub()), 0);
+}
+
 auto count_items_at(const tripoint_bub_ms& pos, const itype_id& type) -> int {
     return std::ranges::count_if(get_map().i_at(pos), [&type](const auto* it) {
         return it->typeId() == type;
@@ -61,14 +65,15 @@ TEST_CASE("extended monster death drops append to inherited drops", "[monster][d
     auto& here = get_map();
     build_test_map(ter_id("t_floor"));
 
-    const auto monster_pos = tripoint_bub_ms(60, 60, 0);
-    here.i_clear(monster_pos);
+    const auto monster_pos_abs = test_origin;
+    here.i_clear(abs_to_bub(monster_pos_abs));
 
-    auto& test_monster = spawn_test_monster("mon_test_death_drops_append", monster_pos);
+    auto& test_monster =
+        spawn_test_monster("mon_test_death_drops_append", abs_to_bub(monster_pos_abs));
     test_monster.drop_items_on_death();
 
-    CHECK(count_items_at(monster_pos, itype_id("rock")) == 1);
-    CHECK(count_items_at(monster_pos, itype_id("stick")) == 1);
+    CHECK(count_items_at(abs_to_bub(monster_pos_abs), itype_id("rock")) == 1);
+    CHECK(count_items_at(abs_to_bub(monster_pos_abs), itype_id("stick")) == 1);
 }
 
 TEST_CASE("empty top-level monster death drops replace inherited drops", "[monster][death_drops]") {
@@ -78,13 +83,14 @@ TEST_CASE("empty top-level monster death drops replace inherited drops", "[monst
     auto& here = get_map();
     build_test_map(ter_id("t_floor"));
 
-    const auto monster_pos = tripoint_bub_ms(60, 60, 0);
-    here.i_clear(monster_pos);
+    const auto monster_pos_abs = test_origin;
+    here.i_clear(abs_to_bub(monster_pos_abs));
 
-    auto& test_monster = spawn_test_monster("mon_test_death_drops_clear", monster_pos);
+    auto& test_monster =
+        spawn_test_monster("mon_test_death_drops_clear", abs_to_bub(monster_pos_abs));
     test_monster.drop_items_on_death();
 
-    CHECK(here.i_at(monster_pos).empty());
+    CHECK(here.i_at(abs_to_bub(monster_pos_abs)).empty());
 }
 
 TEST_CASE("hallucination_monsters_do_not_open_real_doors", "[monster][hallucination]") {
@@ -93,16 +99,17 @@ TEST_CASE("hallucination_monsters_do_not_open_real_doors", "[monster][hallucinat
     auto& here = get_map();
     build_test_map(ter_id("t_floor"));
 
-    const auto monster_pos = tripoint_bub_ms(60, 60, 0);
-    const auto door_pos = tripoint_bub_ms(61, 60, 0);
-    REQUIRE(here.ter_set(door_pos, ter_id("t_door_c")));
+    const auto monster_pos_abs = test_origin;
+    const auto door_pos_abs = monster_pos_abs + tripoint_rel_ms::east();
+    REQUIRE(here.ter_set(abs_to_bub(door_pos_abs), ter_id("t_door_c")));
 
-    auto& hallucination = spawn_test_monster("mon_zombie_scientist", monster_pos);
+    auto& hallucination = spawn_test_monster("mon_zombie_scientist", abs_to_bub(monster_pos_abs));
     hallucination.hallucination = true;
     REQUIRE(hallucination.is_hallucination());
-    hallucination.execute_action({.kind = monster_action_kind::open_door, .dest = door_pos});
+    hallucination.execute_action(
+        {.kind = monster_action_kind::open_door, .dest = abs_to_bub(door_pos_abs)});
 
-    CHECK(here.ter(door_pos) == ter_id("t_door_c"));
+    CHECK(here.ter(abs_to_bub(door_pos_abs)) == ter_id("t_door_c"));
 }
 
 TEST_CASE("hallucination_electric_field_does_not_ignite_items", "[monster][hallucination]") {
@@ -111,16 +118,16 @@ TEST_CASE("hallucination_electric_field_does_not_ignite_items", "[monster][hallu
     auto& here = get_map();
     build_test_map(ter_id("t_pavement"));
 
-    const auto monster_pos = tripoint_bub_ms(60, 60, 0);
-    const auto fuel_pos = tripoint_bub_ms(61, 60, 0);
-    here.add_item_or_charges(fuel_pos, item::spawn("gasoline"));
+    const auto monster_pos_abs = test_origin;
+    const auto fuel_pos_abs = monster_pos_abs + tripoint_rel_ms::east();
+    here.add_item_or_charges(abs_to_bub(fuel_pos_abs), item::spawn("gasoline"));
 
-    auto& hallucination = spawn_test_monster("mon_zombie_nullfield", monster_pos);
+    auto& hallucination = spawn_test_monster("mon_zombie_nullfield", abs_to_bub(monster_pos_abs));
     hallucination.hallucination = true;
     REQUIRE(hallucination.is_hallucination());
     hallucination.process_turn();
 
-    CHECK(here.get_field(fuel_pos, fd_fire) == nullptr);
+    CHECK(here.get_field(abs_to_bub(fuel_pos_abs), fd_fire) == nullptr);
 }
 
 TEST_CASE(
@@ -167,6 +174,7 @@ TEST_CASE(
 
 TEST_CASE("MONSTER_SPEED scales monster move credit", "[monster][speed]") {
     clear_all_state();
+    move_player_out_of_the_way();
 
     const auto global_speed_percent = 50;
     const auto monster_speed_percent = 66;
@@ -175,7 +183,7 @@ TEST_CASE("MONSTER_SPEED scales monster move credit", "[monster][speed]") {
     const auto monster_speed_option =
         override_option("MONSTER_SPEED", std::to_string(monster_speed_percent));
 
-    auto& test_monster = spawn_test_monster("mon_zombie", tripoint_bub_ms::zero());
+    auto& test_monster = spawn_test_monster("mon_zombie", bub_test_origin());
     const auto base_speed = test_monster.get_speed_base();
     const auto monster_tick_factor = action_time_scale::monster_tick_action_factor();
     REQUIRE(base_speed == test_monster.type->speed);
@@ -201,7 +209,7 @@ TEST_CASE("monster ammo slots accept configured alternate ammo items", "[monster
     clear_all_state();
     move_player_out_of_the_way();
 
-    auto& test_monster = spawn_test_monster("mon_test_ammo_variants", tripoint_bub_ms(60, 60, 0));
+    auto& test_monster = spawn_test_monster("mon_test_ammo_variants", bub_test_origin());
 
     CHECK(test_monster.ammo_slot_items(itype_id("9mmfmj"))
           == std::vector<itype_id>({itype_id("9mmfmj"), itype_id("9mm")}));
@@ -221,7 +229,7 @@ TEST_CASE(
     clear_all_state();
     move_player_out_of_the_way();
 
-    auto& test_monster = spawn_test_monster("mon_test_gun_ammo_compat", tripoint_bub_ms(60, 60, 0));
+    auto& test_monster = spawn_test_monster("mon_test_gun_ammo_compat", bub_test_origin());
     const auto slot_items = test_monster.ammo_slot_items(itype_id("9mmfmj"));
 
     CHECK(std::ranges::contains(slot_items, itype_id("9mmfmj")));
@@ -230,14 +238,14 @@ TEST_CASE(
 }
 
 static auto moves_to_destination(
-    const std::string& monster_type, const tripoint_bub_ms& start, const tripoint_bub_ms& end)
-    -> int {
+    const std::string& monster_type, const tripoint_abs_ms& start_abs,
+    const tripoint_abs_ms& end_abs) -> int {
     clear_creatures();
     REQUIRE(g->num_creatures() == 1); // the player
-    monster& test_monster = spawn_test_monster(monster_type, start);
+    monster& test_monster = spawn_test_monster(monster_type, abs_to_bub(start_abs));
     // Get it riled up and give it a goal.
     test_monster.anger = 100;
-    test_monster.set_dest(end);
+    test_monster.set_dest(abs_to_bub(end_abs));
     test_monster.set_moves(0);
     const int monster_speed = test_monster.get_speed();
     int moves_spent = 0;
@@ -263,7 +271,7 @@ struct track {
     char participant;
     int moves;
     int distance;
-    tripoint_bub_ms location;
+    tripoint_abs_ms location;
 };
 
 static auto operator<<(std::ostream& os, track const& value) -> std::ostream& { // *NOPAD*
@@ -290,12 +298,12 @@ static auto can_catch_player(
     std::vector<detached_ptr<item>> temp;
     while (test_player.takeoff(test_player.i_at(-2), &temp));
 
-    const tripoint_bub_ms center{65, 65, 0};
-    test_player.setpos(center);
+    const auto center_abs = movement_fixture_map_origin_abs() + tripoint_rel_ms(65, 65, 0);
+    test_player.setpos(center_abs);
     test_player.set_moves(0);
     // Give the player a head start.
-    const auto monster_start = test_player.bub_pos() + (direction_of_flight * -10);
-    monster& test_monster = spawn_test_monster(monster_type, monster_start);
+    const auto monster_start_abs = center_abs + (direction_of_flight * -10);
+    monster& test_monster = spawn_test_monster(monster_type, abs_to_bub(monster_start_abs));
     // Get it riled up and give it a goal.
     test_monster.anger = 100;
     test_monster.set_dest(test_player.bub_pos());
@@ -307,22 +315,22 @@ static auto can_catch_player(
     for (int turn = 0; turn < 1000; ++turn) {
         test_player.mod_moves(target_speed);
         while (test_player.moves >= 0) {
-            test_player.setpos(test_player.bub_pos() + direction_of_flight);
+            test_player.setpos(test_player.abs_pos() + direction_of_flight);
             if (test_player.bub_pos().x() < SEEX * int(MAPSIZE / 2)
                 || test_player.bub_pos().y() < SEEY * int(MAPSIZE / 2)
                 || test_player.bub_pos().x() >= SEEX * (1 + int(MAPSIZE / 2))
                 || test_player.bub_pos().y() >= SEEY * (1 + int(MAPSIZE / 2))) {
-                auto offset = center - test_player.bub_pos();
-                test_player.setpos(center);
-                test_monster.setpos(test_monster.bub_pos() + offset);
+                const auto offset = center_abs - test_player.abs_pos();
+                test_player.setpos(center_abs);
+                test_monster.setpos(test_monster.abs_pos() + offset);
                 // Verify that only the player and one monster are present.
                 REQUIRE(g->num_creatures() == 2);
             }
             const int move_cost = get_map().combined_movecost(
                 test_player.bub_pos(), test_player.bub_pos() + direction_of_flight, nullptr, 0);
             tracker.push_back(
-                {'p', move_cost, rl_dist(test_monster.bub_pos(), test_player.bub_pos()),
-                 test_player.bub_pos()});
+                {'p', move_cost, rl_dist(test_monster.abs_pos(), test_player.abs_pos()),
+                 test_player.abs_pos()});
             test_player.mod_moves(-move_cost);
         }
         get_map().clear_traps();
@@ -333,7 +341,7 @@ static auto can_catch_player(
             test_monster.move();
             tracker.push_back(
                 {'m', moves_before - test_monster.moves,
-                 rl_dist(test_monster.bub_pos(), test_player.bub_pos()), test_monster.bub_pos()});
+                 rl_dist(test_monster.abs_pos(), test_player.abs_pos()), test_monster.abs_pos()});
             if (rl_dist(test_monster.bub_pos(), test_player.bub_pos()) == 1) {
                 INFO(tracker);
                 clear_map();
@@ -352,16 +360,18 @@ static auto can_catch_player(
 // Verify that the named monster has the expected effective speed, not reduced
 // due to wasted motion from shambling.
 static void check_shamble_speed(
-    const std::string& monster_type, const tripoint_bub_ms& destination) {
+    const std::string& monster_type, const tripoint_rel_ms& destination_offset) {
     // Scale the scaling factor based on the ratio of diagonal to cardinal steps.
-    const float slope = get_normalized_angle(point_zero, destination.raw().xy());
+    const float slope = get_normalized_angle(point_zero, destination_offset.raw().xy());
     const float diagonal_multiplier = 1.0 + (get_option<bool>("CIRCLEDIST") ? (slope * 0.41) : 0.0);
-    INFO(monster_type << " " << destination);
+    INFO(monster_type << " " << destination_offset);
     // Wandering makes things nondeterministic, so look at the distribution rather than a target
     // number.
     move_statistics move_stats;
+    const auto origin_abs = movement_fixture_map_origin_abs();
     for (int i = 0; i < 10; ++i) {
-        move_stats.add(moves_to_destination(monster_type, tripoint_bub_ms::zero(), destination));
+        move_stats.add(
+            moves_to_destination(monster_type, origin_abs, origin_abs + destination_offset));
         if ((move_stats.avg() / (10000.0 * diagonal_multiplier)) == Approx(1.0).epsilon(0.02)) {
             break;
         }
@@ -401,7 +411,10 @@ static void test_moves_to_squares(const std::string& monster_type, const bool wr
                 turns_at_angle[angle * 100].new_type();
                 turns_at_slope[slope].new_type();
                 for (int i = 0; i < 5; ++i) {
-                    const int moves = moves_to_destination(monster_type, {50, 50, 0}, {x, y, 0});
+                    const int moves = moves_to_destination(
+                        monster_type,
+                        movement_fixture_map_origin_abs() + tripoint_rel_ms(50, 50, 0),
+                        movement_fixture_map_origin_abs() + tripoint_rel_ms(x, y, 0));
                     const int adjusted_moves = moves / (diagonal_multiplier * distance);
                     turns_at_distance[distance].add(adjusted_moves);
                     turns_at_angle[angle * 100].add(adjusted_moves);
@@ -446,11 +459,15 @@ static void test_moves_to_squares(const std::string& monster_type, const bool wr
 static void monster_check() {
     const float diagonal_multiplier = (get_option<bool>("CIRCLEDIST") ? 1.41 : 1.0);
     // Have a monster walk some distance in a direction and measure how long it takes.
-    float vert_move = moves_to_destination("mon_pig", tripoint_bub_ms::zero(), {100, 0, 0});
+    const auto origin_abs = movement_fixture_map_origin_abs();
+    float vert_move =
+        moves_to_destination("mon_pig", origin_abs, origin_abs + tripoint_rel_ms(100, 0, 0));
     CHECK((vert_move / 10000.0) == Approx(1.0));
-    int horiz_move = moves_to_destination("mon_pig", tripoint_bub_ms::zero(), {0, 100, 0});
+    int horiz_move =
+        moves_to_destination("mon_pig", origin_abs, origin_abs + tripoint_rel_ms(0, 100, 0));
     CHECK((horiz_move / 10000.0) == Approx(1.0));
-    int diag_move = moves_to_destination("mon_pig", tripoint_bub_ms::zero(), {100, 100, 0});
+    int diag_move =
+        moves_to_destination("mon_pig", origin_abs, origin_abs + tripoint_rel_ms(100, 100, 0));
     CHECK((diag_move / (10000.0 * diagonal_multiplier)) == Approx(1.0).epsilon(0.05));
 
     check_shamble_speed("mon_pig", {100, 0, 0});
@@ -522,18 +539,19 @@ TEST_CASE("monster_speed_trig", "[speed][.][!mayfail]") {
 TEST_CASE("monster_move_through_vehicle_holes", "[.][monster]") {
     clear_all_state();
     move_player_out_of_the_way();
-    tripoint_bub_ms origin(60, 60, 0);
+    const auto origin_abs = test_origin;
 
-    get_map().add_vehicle(vproto_id("apc"), origin, -45_degrees, 0, 0);
+    get_map().add_vehicle(vproto_id("apc"), abs_to_bub(origin_abs), -45_degrees, 0, 0);
 
-    tripoint_bub_ms mon_origin = origin + tripoint_rel_ms(-2, 1, 0);
-    monster& zombie = spawn_test_monster("mon_zombie", mon_origin);
-    zombie.move_to(mon_origin + tripoint_north_west, false, false, 0.0f);
+    const auto mon_origin_abs = origin_abs + tripoint_rel_ms(-2, 1, 0);
+    monster& zombie = spawn_test_monster("mon_zombie", abs_to_bub(mon_origin_abs));
+    zombie.move_to(abs_to_bub(mon_origin_abs + tripoint_rel_ms::north_west()), false, false, 0.0f);
 
-    const monster* m = g->critter_at<monster>(mon_origin);
+    const monster* m = g->critter_at<monster>(abs_to_bub(mon_origin_abs));
     CHECK(m != nullptr);
 
-    const monster* m2 = g->critter_at<monster>(mon_origin + tripoint_north_west);
+    const monster* m2 = g->critter_at<monster>(
+        abs_to_bub(mon_origin_abs + tripoint_rel_ms::north_west()));
     CHECK(m2 == nullptr);
 }
 
@@ -543,28 +561,31 @@ TEST_CASE("monster_vertical_melee_respects_floors", "[monster][z-level]") {
 
     avatar& you = get_avatar();
     auto& here = get_map();
-    const auto avatar_pos = tripoint_bub_ms{60, 60, 2};
-    const auto zombie_pos = tripoint_bub_ms{60, 60, 1};
-    you.setpos(avatar_pos);
+    const auto avatar_abs = test_origin_at_z(2);
+    here.ter_set(abs_to_map_local(here, avatar_abs), ter_id("t_floor"));
+    here.ter_set(abs_to_map_local(here, avatar_abs + tripoint_rel_ms::below()), ter_id("t_floor"));
+    you.setpos(avatar_abs);
+    const auto zombie_abs = avatar_abs + tripoint_rel_ms::below();
+    here.ter_set(abs_to_bub(avatar_abs), ter_id("t_open_air"));
 
-    monster& grabber = spawn_test_monster("mon_zombie_grabber", zombie_pos);
+    monster& grabber = spawn_test_monster("mon_zombie_grabber", abs_to_bub(zombie_abs));
 
     SECTION("open air does not block vertical melee") {
-        CHECK_FALSE(here.floor_between(zombie_pos, avatar_pos));
+        CHECK_FALSE(here.floor_between(abs_to_bub(zombie_abs), abs_to_bub(avatar_abs)));
         CHECK(grabber.attack_at(you.bub_pos()));
     }
 
     SECTION("terrain floors block vertical melee") {
-        here.ter_set(avatar_pos, ter_id("t_floor"));
+        here.ter_set(abs_to_bub(avatar_abs), ter_id("t_floor"));
 
-        CHECK(here.floor_between(zombie_pos, avatar_pos));
+        CHECK(here.floor_between(abs_to_bub(zombie_abs), abs_to_bub(avatar_abs)));
         CHECK_FALSE(grabber.attack_at(you.bub_pos()));
     }
 
     SECTION("vehicle floors block vertical melee") {
         const vpart_id vpart_frame_vertical("frame_vertical");
         const vpart_id vpart_seat("seat");
-        auto* veh = here.add_vehicle(vproto_id("none"), avatar_pos, 0_degrees, 0, 0);
+        auto* veh = here.add_vehicle(vproto_id("none"), abs_to_bub(avatar_abs), 0_degrees, 0, 0);
 
         REQUIRE(veh != nullptr);
         veh->install_part(tripoint_mnt_veh::zero(), vpart_frame_vertical);
@@ -575,16 +596,16 @@ TEST_CASE("monster_vertical_melee_respects_floors", "[monster][z-level]") {
     }
 
     SECTION("grabber below player on blimp cannot attack through the floor") {
-        auto* blimp = here.add_vehicle(vproto_id("blimp"), avatar_pos, 0_degrees, 0, 0);
+        auto* blimp = here.add_vehicle(vproto_id("blimp"), abs_to_bub(avatar_abs), 0_degrees, 0, 0);
 
         REQUIRE(blimp != nullptr);
         const auto cockpit_part =
             blimp->part_with_feature(tripoint_mnt_veh::zero(), "BOARDABLE", true);
         REQUIRE(cockpit_part != -1);
 
-        const auto blimp_tile = blimp->bub_part_location(cockpit_part);
-        you.setpos(blimp_tile);
-        grabber.setpos(blimp_tile + tripoint_below);
+        const auto blimp_tile_abs = blimp->abs_part_location(cockpit_part);
+        you.setpos(blimp_tile_abs);
+        grabber.setpos(blimp_tile_abs + tripoint_rel_ms::below());
 
         CHECK(here.veh_at(you.bub_pos()).part_with_feature("BOARDABLE", true).has_value());
         CHECK_FALSE(grabber.attack_at(you.bub_pos()));
@@ -596,31 +617,31 @@ TEST_CASE("physical_clear_path_respects_vehicle_floors", "[map][z-level]") {
     clear_map();
 
     auto& here = get_map();
-    const auto lower_pos = tripoint_bub_ms{60, 60, 1};
-    const auto upper_pos = tripoint_bub_ms{60, 60, 2};
+    const auto lower_pos_abs = test_origin_at_z(1);
+    const auto upper_pos_abs = test_origin_at_z(2);
 
     SECTION("open air does not block physical paths") {
         CHECK(map_funcs::physical_clear_path({
             .m = here,
-            .from = lower_pos,
-            .to = upper_pos,
+            .from = abs_to_bub(lower_pos_abs),
+            .to = abs_to_bub(upper_pos_abs),
             .require_clear_path = false,
         }));
     }
 
     SECTION("terrain floors block physical paths") {
-        here.ter_set(upper_pos, ter_id("t_floor"));
+        here.ter_set(abs_to_bub(upper_pos_abs), ter_id("t_floor"));
 
         CHECK_FALSE(map_funcs::physical_clear_path({
             .m = here,
-            .from = lower_pos,
-            .to = upper_pos,
+            .from = abs_to_bub(lower_pos_abs),
+            .to = abs_to_bub(upper_pos_abs),
             .require_clear_path = false,
         }));
     }
 
     SECTION("vehicle floors block physical paths") {
-        auto* veh = here.add_vehicle(vproto_id("none"), upper_pos, 0_degrees, 0, 0);
+        auto* veh = here.add_vehicle(vproto_id("none"), abs_to_bub(upper_pos_abs), 0_degrees, 0, 0);
 
         REQUIRE(veh != nullptr);
         veh->install_part(tripoint_mnt_veh::zero(), vpart_id("frame_vertical"));
@@ -629,46 +650,48 @@ TEST_CASE("physical_clear_path_respects_vehicle_floors", "[map][z-level]") {
 
         CHECK_FALSE(map_funcs::physical_clear_path({
             .m = here,
-            .from = lower_pos,
-            .to = upper_pos,
+            .from = abs_to_bub(lower_pos_abs),
+            .to = abs_to_bub(upper_pos_abs),
             .require_clear_path = false,
         }));
     }
 
     SECTION("vehicle obstacles block physical paths") {
-        const auto obstacle_pos = tripoint_bub_ms{61, 60, 2};
-        auto* veh = here.add_vehicle(vproto_id("none"), obstacle_pos, 0_degrees, 0, 0);
+        const auto obstacle_pos_abs = test_origin_at_z(2) + tripoint_rel_ms::east();
+        auto* veh =
+            here.add_vehicle(vproto_id("none"), abs_to_bub(obstacle_pos_abs), 0_degrees, 0, 0);
 
         REQUIRE(veh != nullptr);
         veh->install_part(tripoint_mnt_veh::zero(), vpart_id("frame_vertical"));
         veh->install_part(tripoint_mnt_veh::zero(), vpart_id("windshield"));
         here.add_vehicle_to_cache(veh);
 
-        CHECK(here.veh_at(obstacle_pos).obstacle_at_part().has_value());
+        CHECK(here.veh_at(abs_to_bub(obstacle_pos_abs)).obstacle_at_part().has_value());
         CHECK_FALSE(map_funcs::physical_clear_path({
             .m = here,
-            .from = obstacle_pos + tripoint_west,
-            .to = obstacle_pos + tripoint_east,
+            .from = abs_to_bub(obstacle_pos_abs + tripoint_rel_ms::west()),
+            .to = abs_to_bub(obstacle_pos_abs + tripoint_rel_ms::east()),
             .require_clear_path = false,
         }));
     }
 
     SECTION("lower-z paths cannot enter helicopter cabins through open air") {
-        const auto helicopter_pos = tripoint_bub_ms{60, 60, 2};
-        auto* const helicopter =
-            here.add_vehicle(vproto_id("2seater2"), helicopter_pos, 0_degrees, 0, 0);
+        const auto helicopter_pos_abs = test_origin_at_z(2);
+        auto* const helicopter = here.add_vehicle(
+            vproto_id("2seater2"), abs_to_bub(helicopter_pos_abs), 0_degrees, 0, 0);
 
         REQUIRE(helicopter != nullptr);
         const auto seat_part =
             helicopter->part_with_feature(tripoint_mnt_veh::zero(), "SEAT", true);
         REQUIRE(seat_part != -1);
-        const auto seat_pos = helicopter->bub_part_location(seat_part);
+        const auto seat_pos_abs = helicopter->abs_part_location(seat_part);
 
-        CHECK(here.veh_at(seat_pos)->is_inside());
+        CHECK(here.veh_at(abs_to_bub(seat_pos_abs))->is_inside());
         CHECK_FALSE(map_funcs::physical_clear_path({
             .m = here,
-            .from = seat_pos + tripoint_below + tripoint_east * 4,
-            .to = seat_pos,
+            .from = abs_to_bub(
+                seat_pos_abs + tripoint_rel_ms::below() + tripoint_rel_ms::east() * 4),
+            .to = abs_to_bub(seat_pos_abs),
             .require_clear_path = false,
         }));
     }
@@ -680,27 +703,28 @@ TEST_CASE("zombie_technician_pull_through_helicopter_windshield_is_blocked", "[m
 
     avatar& you = get_avatar();
     auto& here = get_map();
-    const auto helicopter_pos = tripoint_bub_ms{60, 60, 2};
+    const auto helicopter_abs = test_origin_at_z(2);
     const auto pipe_id = itype_id("pipe");
-    auto* const helicopter =
-        here.add_vehicle(vproto_id("2seater2"), helicopter_pos, 0_degrees, 0, 0);
+    auto* const helicopter = here.add_vehicle(
+        vproto_id("2seater2"), abs_to_map_local(here, helicopter_abs), 0_degrees, 0, 0);
 
     REQUIRE(helicopter != nullptr);
     const auto seat_part = helicopter->part_with_feature(tripoint_mnt_veh::zero(), "SEAT", true);
     REQUIRE(seat_part != -1);
-    const auto seat_pos = helicopter->bub_part_location(seat_part);
-    const auto windshield_pos = seat_pos + tripoint_east;
-    const auto technician_pos = windshield_pos + tripoint_east;
+    const auto seat_abs = helicopter->abs_part_location(seat_part);
 
+    const auto windshield_pos = abs_to_map_local(here, seat_abs + tripoint_rel_ms::east());
     REQUIRE(here.veh_at(windshield_pos).obstacle_at_part().has_value());
-    you.setpos(seat_pos);
+    you.setpos(seat_abs);
+    const auto technician_pos_abs = seat_abs + tripoint_rel_ms(2, 0, 0);
     you.str_cur = 4;
     you.remove_primary_weapon();
     you.wield(item::spawn(pipe_id));
     REQUIRE(you.primary_weapon().typeId() == pipe_id);
 
-    monster& technician = spawn_test_monster("mon_zombie_technician", technician_pos);
-    technician.set_goal(you.bub_pos());
+    monster& technician =
+        spawn_test_monster("mon_zombie_technician", abs_to_bub(technician_pos_abs));
+    technician.set_goal(abs_to_bub(seat_abs));
     REQUIRE(technician.sees(you));
 
     CHECK_FALSE(mattack::pull_metal_weapon(&technician));
@@ -722,18 +746,22 @@ TEST_CASE("zombie_technician_pull_uses_physical_clear_path", "[monster][z-level]
 
     avatar& you = get_avatar();
     auto& here = get_map();
-    const auto target_pos = tripoint_bub_ms{60, 60, 2};
-    const auto technician_pos = target_pos + tripoint_below;
+    const auto target_abs = test_origin_at_z(2);
     const auto flaregun_id = itype_id("flaregun");
 
-    you.setpos(target_pos);
+    here.ter_set(abs_to_map_local(here, target_abs), ter_id("t_floor"));
+    you.setpos(target_abs);
+    here.ter_set(abs_to_bub(target_abs), ter_id("t_open_air"));
+    const auto technician_pos_abs = target_abs + tripoint_rel_ms::below();
+    here.ter_set(abs_to_bub(technician_pos_abs), ter_id("t_floor"));
     you.str_cur = 4;
     you.remove_primary_weapon();
     you.wield(item::spawn(flaregun_id));
     REQUIRE(you.primary_weapon().typeId() == flaregun_id);
 
-    monster& technician = spawn_test_monster("mon_zombie_technician", technician_pos);
-    technician.set_goal(you.bub_pos());
+    monster& technician =
+        spawn_test_monster("mon_zombie_technician", abs_to_bub(technician_pos_abs));
+    technician.set_goal(abs_to_bub(target_abs));
 
     SECTION("open air allows metal pulls") {
         CHECK(mattack::pull_metal_weapon(&technician));
@@ -741,7 +769,7 @@ TEST_CASE("zombie_technician_pull_uses_physical_clear_path", "[monster][z-level]
     }
 
     SECTION("vehicle floors block metal pulls") {
-        auto* veh = here.add_vehicle(vproto_id("none"), target_pos, 0_degrees, 0, 0);
+        auto* veh = here.add_vehicle(vproto_id("none"), abs_to_bub(target_abs), 0_degrees, 0, 0);
 
         REQUIRE(veh != nullptr);
         veh->install_part(tripoint_mnt_veh::zero(), vpart_id("frame_vertical"));

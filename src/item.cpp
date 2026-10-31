@@ -822,8 +822,8 @@ auto item::prepare_for_location_removal() -> void
         storage_temperature = vehicle_loc->storage_temperature();
     } else if( where() == item_location_type::map ) {
         auto &buffer = MAPBUFFER_REGISTRY.get( loc->get_dimension( this ) );
-        const auto tile = buffer.get_abs_tile( loc->abs_pos( this ), {
-            .mode = mapbuffer_lookup_mode::resident_only,
+        const auto tile = buffer.resolve_abs_tile( loc->abs_pos( this ), {
+            .policy = mapbuffer_lookup_policy::resident_only,
         } );
         if( tile ) {
             const auto &furn = tile->get_furn_t();
@@ -11424,7 +11424,7 @@ detached_ptr<item> item::process_internal( detached_ptr<item> &&self, player *ca
         if( !self && removed_snapshot ) {
             MAPBUFFER_REGISTRY.get( here.get_bound_dimension() ).handle_rotten_away_item(
             map_local_to_abs( here, pos ), *removed_snapshot, {
-                .mode = mapbuffer_lookup_mode::resident_only,
+                .policy = mapbuffer_lookup_policy::resident_only,
             } );
         }
     }

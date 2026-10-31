@@ -2,6 +2,7 @@
 #include "catch/catch.hpp"
 #include "coordinates.h"
 #include "enums.h"
+#include "map_helpers.h"
 #include "npc.h"
 #include "state_helpers.h"
 
@@ -25,7 +26,7 @@ static void update_body_for(Character& dude, time_duration time) {
 
 TEST_CASE("must_sleep_8_hours", "[fatigue]") {
     clear_all_state();
-    standard_npc dude("sleeper", tripoint_bub_ms::north_west());
+    standard_npc dude("sleeper", bub_test_origin() + tripoint_rel_ms::north_west());
     dude.set_fatigue(0);
     WHEN("The character is active for 16 hours") {
         update_body_for(dude, 16_hours);
@@ -46,7 +47,7 @@ TEST_CASE("must_sleep_8_hours", "[fatigue]") {
 
 TEST_CASE("sleep_deprivation_rate", "[fatigue]") {
     clear_all_state();
-    standard_npc dude("sleeper", tripoint_bub_ms::north_west());
+    standard_npc dude("sleeper", bub_test_origin() + tripoint_rel_ms::north_west());
     dude.set_fatigue(0);
     dude.set_sleep_deprivation(0);
     WHEN("The character is active for 18 hours") {

@@ -3,6 +3,7 @@
 #include "cata_utility.h"
 #include "catch/catch.hpp"
 #include "game.h"
+#include "map_helpers.h"
 #include "options_helpers.h"
 #include "sounds.h"
 #include "state_helpers.h"
@@ -16,37 +17,43 @@
 
 namespace {
 struct sound_direction_case {
-    tripoint_bub_ms listener;
+    tripoint_abs_ms listener;
     uint8_t expected;
     const char* label;
 };
 } // namespace
 
 TEST_CASE("sound_direction_index_matches_compass_directions", "[sound]") {
-    const auto source = tripoint_bub_ms(60, 60, 0);
+    const auto source = test_origin;
     const auto cases = std::array<sound_direction_case, 12>{{
-        {tripoint_bub_ms(50, 50, 0), SDI_NW, "northwest"},
-        {tripoint_bub_ms(60, 50, 0), SDI_N, "north"},
-        {tripoint_bub_ms(70, 50, 0), SDI_NE, "northeast"},
-        {tripoint_bub_ms(70, 60, 0), SDI_E, "east"},
-        {tripoint_bub_ms(70, 70, 0), SDI_SE, "southeast"},
-        {tripoint_bub_ms(60, 70, 0), SDI_S, "south"},
-        {tripoint_bub_ms(50, 70, 0), SDI_SW, "southwest"},
-        {tripoint_bub_ms(50, 60, 0), SDI_W, "west"},
-        {tripoint_bub_ms(70, 59, 0), SDI_E, "slightly north of east"},
-        {tripoint_bub_ms(70, 61, 0), SDI_E, "slightly south of east"},
-        {tripoint_bub_ms(50, 59, 0), SDI_W, "slightly north of west"},
-        {tripoint_bub_ms(50, 61, 0), SDI_W, "slightly south of west"},
+        {source + tripoint_rel_ms(-10, -10, 0), SDI_NW, "northwest"},
+        {source + tripoint_rel_ms(0, -10, 0), SDI_N, "north"},
+        {source + tripoint_rel_ms(10, -10, 0), SDI_NE, "northeast"},
+        {source + tripoint_rel_ms(10, 0, 0), SDI_E, "east"},
+        {source + tripoint_rel_ms(10, 10, 0), SDI_SE, "southeast"},
+        {source + tripoint_rel_ms(0, 10, 0), SDI_S, "south"},
+        {source + tripoint_rel_ms(-10, 10, 0), SDI_SW, "southwest"},
+        {source + tripoint_rel_ms(-10, 0, 0), SDI_W, "west"},
+        {source + tripoint_rel_ms(10, -1, 0), SDI_E, "slightly north of east"},
+        {source + tripoint_rel_ms(10, 1, 0), SDI_E, "slightly south of east"},
+        {source + tripoint_rel_ms(-10, -1, 0), SDI_W, "slightly north of west"},
+        {source + tripoint_rel_ms(-10, 1, 0), SDI_W, "slightly south of west"},
     }};
 
     for (const auto& test_case : cases) {
         CAPTURE(test_case.label);
-        CHECK(sounds::direction_index_to_sound_source(source, test_case.listener)
-              == test_case.expected);
+        CHECK(
+            sounds::
+                direction_index_to_sound_source(abs_to_bub(source), abs_to_bub(test_case.listener))
+            == test_case.expected);
     }
 
-    CHECK(sounds::direction_index_to_sound_source(source, tripoint_bub_ms(60, 60, -1)) == SDI_DOWN);
-    CHECK(sounds::direction_index_to_sound_source(source, tripoint_bub_ms(60, 60, 1)) == SDI_UP);
+    CHECK(sounds::direction_index_to_sound_source(
+              abs_to_bub(source), abs_to_bub(source + tripoint_rel_ms::below()))
+          == SDI_DOWN);
+    CHECK(sounds::direction_index_to_sound_source(
+              abs_to_bub(source), abs_to_bub(source + tripoint_rel_ms::above()))
+          == SDI_UP);
 }
 
 TEST_CASE("sound_filter_key_distinguishes_noise_fear", "[sound]") {
@@ -73,10 +80,13 @@ TEST_CASE("queued_sounds_outside_resized_map_are_discarded", "[sound][resize]") 
     });
     sounds::reset_sounds();
     here.resize(13);
-    const auto sources = std::array{
-        tripoint_bub_ms(108, 0, 5), tripoint_bub_ms(0, 108, 5), tripoint_bub_ms(146, 40, 5),
-        tripoint_bub_ms(107, 107, 5), tripoint_bub_ms(0, 0, 5)};
-    for (const auto& source : sources) {
+    const auto map_origin_abs = tripoint_abs_ms(project_to<coords::ms>(here.get_abs_sub()), 0);
+    const auto sources_abs = std::array{
+        map_origin_abs + tripoint_rel_ms(108, 0, 5), map_origin_abs + tripoint_rel_ms(0, 108, 5),
+        map_origin_abs + tripoint_rel_ms(146, 40, 5), map_origin_abs + tripoint_rel_ms(107, 107, 5),
+        map_origin_abs + tripoint_rel_ms(0, 0, 5)};
+    for (const auto& source_abs : sources_abs) {
+        const auto source = abs_to_map_local(here, source_abs);
         REQUIRE(here.inbounds(source));
         sounds::sound(
             {.volume = 50,
@@ -91,8 +101,8 @@ TEST_CASE("queued_sounds_outside_resized_map_are_discarded", "[sound][resize]") 
 
     const auto& instances = here.m_sound_cache.sound_instances;
     REQUIRE(instances.size() == 2);
-    CHECK(instances[0].origin == sources[3]);
-    CHECK(instances[1].origin == sources[4]);
+    CHECK(map_local_to_abs(here, instances[0].origin) == sources_abs[3]);
+    CHECK(map_local_to_abs(here, instances[1].origin) == sources_abs[4]);
     here.batch_flood_fill_sounds();
     CHECK(instances.size() == 2);
 }
@@ -115,12 +125,13 @@ TEST_CASE("sounds_keep_absolute_positions_when_reality_bubble_resizes", "[sound]
     });
     const auto larger_bubble = override_option("REALITY_BUBBLE_SIZE", "5");
     g->on_options_changed();
-    you.setpos(map_local_to_abs(here, tripoint_bub_ms(72, 72, 0)));
+    const auto map_origin_abs = tripoint_abs_ms(project_to<coords::ms>(here.get_abs_sub()), 0);
+    you.setpos(map_origin_abs + tripoint_rel_ms(72, 72, 0));
     here.build_map_cache(0);
     sounds::reset_sounds();
 
-    const auto cached_source = tripoint_bub_ms(80, 80, 0);
-    const auto cached_absolute = map_local_to_abs(here, cached_source);
+    const auto cached_absolute = map_origin_abs + tripoint_rel_ms(80, 80, 0);
+    const auto cached_source = abs_to_bub(cached_absolute);
     sounds::sound(
         {.volume = 50,
          .origin = cached_source,
@@ -134,17 +145,17 @@ TEST_CASE("sounds_keep_absolute_positions_when_reality_bubble_resizes", "[sound]
     here.m_sound_cache.sound_list_filtered[sound_filter_key()] = {0};
 
     const auto retained_sources = std::array{
-        tripoint_bub_ms(24, 24, 0), tripoint_bub_ms(131, 24, 0), tripoint_bub_ms(24, 131, 0),
-        tripoint_bub_ms(131, 131, 0)};
+        map_origin_abs + tripoint_rel_ms(24, 24, 0), map_origin_abs + tripoint_rel_ms(131, 24, 0),
+        map_origin_abs + tripoint_rel_ms(24, 131, 0),
+        map_origin_abs + tripoint_rel_ms(131, 131, 0)};
     const auto discarded_sources = std::array{
-        tripoint_bub_ms(23, 80, 0), tripoint_bub_ms(132, 80, 0), tripoint_bub_ms(80, 23, 0),
-        tripoint_bub_ms(80, 132, 0)};
+        map_origin_abs + tripoint_rel_ms(23, 80, 0), map_origin_abs + tripoint_rel_ms(132, 80, 0),
+        map_origin_abs + tripoint_rel_ms(80, 23, 0), map_origin_abs + tripoint_rel_ms(80, 132, 0)};
     auto retained_absolute = std::vector<tripoint_abs_ms>{cached_absolute};
-    for (const auto& source : retained_sources) {
-        retained_absolute.push_back(map_local_to_abs(here, source));
-    }
+    for (const auto& source_abs : retained_sources) { retained_absolute.push_back(source_abs); }
     for (const auto& sources : {retained_sources, discarded_sources}) {
-        for (const auto& source : sources) {
+        for (const auto& source_abs : sources) {
+            const auto source = abs_to_bub(source_abs);
             sounds::sound(
                 {.volume = 50,
                  .origin = source,

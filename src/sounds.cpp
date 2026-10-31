@@ -1731,7 +1731,7 @@ bool map::build_absorption_cache( const int zlev )
         for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
 
             const auto sm_pos = tripoint_bub_sm( smx, smy, zlev );
-            auto *cur_submap = get_mapbuffer().lookup_submap_in_memory(
+            auto *cur_submap = get_mapbuffer().find_resident_submap(
                                    map_local_to_abs( *this, sm_pos ) );
             const auto sm_offset = project_to<coords::ms>( sm_pos );
 

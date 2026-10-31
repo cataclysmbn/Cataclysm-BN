@@ -44,6 +44,10 @@ struct active_bionic_scanner_benchmark_fixture {
     std::size_t nearby_item_count = 0;
 };
 
+auto scanner_test_pos(const tripoint_rel_ms& offset = tripoint_rel_ms::zero()) -> tripoint_bub_ms {
+    return abs_to_bub(get_avatar().abs_pos() + offset);
+}
+
 auto add_nearby_bionic_scanner_benchmark_items(
     map& here, const tripoint_bub_ms& center, const active_bionic_scanner_benchmark_options& opts)
     -> std::size_t {
@@ -82,12 +86,13 @@ auto make_active_bionic_scanner_benchmark_fixture(
     avatar& you, const active_bionic_scanner_benchmark_options& opts)
     -> active_bionic_scanner_benchmark_fixture {
     auto& here = get_map();
-    g->place_player(tripoint_bub_ms(60, 60, 0));
+    g->u.setpos(test_origin);
     set_time(calendar::turn_zero + 12_hours);
     you.recalc_sight_limits();
 
-    const auto item_count = add_nearby_bionic_scanner_benchmark_items(here, you.bub_pos(), opts);
-    const auto corpse_pos = you.bub_pos() + tripoint_east;
+    const auto item_count =
+        add_nearby_bionic_scanner_benchmark_items(here, scanner_test_pos(), opts);
+    const auto corpse_pos = scanner_test_pos(tripoint_rel_ms::east());
     auto* const corpse_ptr = add_bionic_scanner_benchmark_corpse(here, corpse_pos);
     REQUIRE(you.sees(corpse_pos));
 
@@ -102,8 +107,8 @@ auto make_active_bionic_scanner_benchmark_fixture(
     REQUIRE(scanner_ptr->is_active());
     REQUIRE(scanner_ptr->needs_processing());
 
-    here.build_map_cache(you.bub_pos().z());
-    here.update_visibility_cache(you.bub_pos().z());
+    here.build_map_cache(scanner_test_pos().z());
+    here.update_visibility_cache(scanner_test_pos().z());
 
     return active_bionic_scanner_benchmark_fixture{
         .you = &you,
@@ -123,11 +128,11 @@ TEST_CASE("bionic_scanner_on_ground_marks_corpses_with_cbms", "[iuse][bionic_sca
     auto& you = get_avatar();
     const auto restore_avatar_id = restore_bionic_scanner_avatar_id(you);
     auto& here = get_map();
-    g->place_player(tripoint_bub_ms(60, 60, 0));
+    g->u.setpos(test_origin);
     set_time(calendar::turn_zero + 12_hours);
     you.recalc_sight_limits();
 
-    const auto corpse_pos = you.bub_pos() + tripoint_east;
+    const auto corpse_pos = scanner_test_pos(tripoint_rel_ms::east());
     REQUIRE(you.sees(corpse_pos));
     auto corpse = item::make_corpse(mtype_id("mon_zombie_soldier"), calendar::turn, "");
     corpse->add_component(item::spawn("bio_power_storage", calendar::turn));
@@ -144,7 +149,7 @@ TEST_CASE("bionic_scanner_on_ground_marks_corpses_with_cbms", "[iuse][bionic_sca
     const auto* const scanner_ptr = scanner.get();
     const auto charges_before = scanner_ptr->ammo_remaining();
     REQUIRE(charges_before > 0);
-    REQUIRE_FALSE(here.add_item_or_charges(you.bub_pos(), std::move(scanner), false));
+    REQUIRE_FALSE(here.add_item_or_charges(scanner_test_pos(), std::move(scanner), false));
 
     here.process_items();
 
@@ -164,11 +169,11 @@ TEST_CASE(
     auto& you = get_avatar();
     const auto restore_avatar_id = restore_bionic_scanner_avatar_id(you);
     auto& here = get_map();
-    g->place_player(tripoint_bub_ms(60, 60, 0));
+    g->u.setpos(test_origin);
     set_time(calendar::turn_zero + 12_hours);
     you.recalc_sight_limits();
 
-    const auto corpse_pos = you.bub_pos() + tripoint_east;
+    const auto corpse_pos = scanner_test_pos(tripoint_rel_ms::east());
     REQUIRE(you.sees(corpse_pos));
     auto corpse = item::make_corpse(mtype_id("mon_zombie_soldier"), calendar::turn, "");
     corpse->add_component(item::spawn("bio_power_storage", calendar::turn));
@@ -188,7 +193,7 @@ TEST_CASE(
     backpack->put_in(std::move(scanner));
     REQUIRE(backpack->needs_processing());
     REQUIRE(backpack->processing_speed() == 1);
-    REQUIRE_FALSE(here.add_item_or_charges(you.bub_pos(), std::move(backpack), false));
+    REQUIRE_FALSE(here.add_item_or_charges(scanner_test_pos(), std::move(backpack), false));
 
     here.process_items();
 
@@ -205,11 +210,11 @@ TEST_CASE("bionic_scanner_inside_container_marks_corpses_with_cbms", "[iuse][bio
     auto& you = get_avatar();
     const auto restore_avatar_id = restore_bionic_scanner_avatar_id(you);
     auto& here = get_map();
-    g->place_player(tripoint_bub_ms(60, 60, 0));
+    g->u.setpos(test_origin);
     set_time(calendar::turn_zero + 12_hours);
     you.recalc_sight_limits();
 
-    const auto corpse_pos = you.bub_pos() + tripoint_east;
+    const auto corpse_pos = scanner_test_pos(tripoint_rel_ms::east());
     REQUIRE(you.sees(corpse_pos));
     auto corpse = item::make_corpse(mtype_id("mon_zombie_soldier"), calendar::turn, "");
     corpse->add_component(item::spawn("bio_power_storage", calendar::turn));
@@ -246,11 +251,11 @@ TEST_CASE("bionic_scanner_consumes_charge_for_each_scanned_corpse", "[iuse][bion
     auto& you = get_avatar();
     const auto restore_avatar_id = restore_bionic_scanner_avatar_id(you);
     auto& here = get_map();
-    g->place_player(tripoint_bub_ms(60, 60, 0));
+    g->u.setpos(test_origin);
     set_time(calendar::turn_zero + 12_hours);
     you.recalc_sight_limits();
 
-    const auto corpse_pos = you.bub_pos() + tripoint_east;
+    const auto corpse_pos = scanner_test_pos(tripoint_rel_ms::east());
     REQUIRE(you.sees(corpse_pos));
     auto corpse_ptrs = std::vector<item*>{};
     for (auto i = 0; i < 50; ++i) {
@@ -286,7 +291,7 @@ TEST_CASE("bionic_scanner_marks_new_corpse_after_activation", "[iuse][bionic_sca
     auto& you = get_avatar();
     const auto restore_avatar_id = restore_bionic_scanner_avatar_id(you);
     auto& here = get_map();
-    g->place_player(tripoint_bub_ms(60, 60, 0));
+    g->u.setpos(test_origin);
     set_time(calendar::turn_zero + 12_hours);
     you.recalc_sight_limits();
 
@@ -302,7 +307,7 @@ TEST_CASE("bionic_scanner_marks_new_corpse_after_activation", "[iuse][bionic_sca
     you.process_items();
     CHECK(scanner_ptr->ammo_remaining() == charges_before);
 
-    const auto corpse_pos = you.bub_pos() + tripoint_east;
+    const auto corpse_pos = scanner_test_pos(tripoint_rel_ms::east());
     REQUIRE(you.sees(corpse_pos));
     auto corpse = item::make_corpse(mtype_id("mon_zombie_technician"), calendar::turn, "");
     corpse->add_component(item::spawn("bio_electrosense", calendar::turn));
@@ -328,11 +333,11 @@ TEST_CASE(
     auto& you = get_avatar();
     const auto restore_avatar_id = restore_bionic_scanner_avatar_id(you);
     auto& here = get_map();
-    g->place_player(tripoint_bub_ms(60, 60, 0));
+    g->u.setpos(test_origin);
     set_time(calendar::turn_zero + 12_hours);
     you.recalc_sight_limits();
 
-    const auto corpse_pos = you.bub_pos() + tripoint_east;
+    const auto corpse_pos = scanner_test_pos(tripoint_rel_ms::east());
     REQUIRE(you.sees(corpse_pos));
     auto corpse_ptrs = std::vector<item*>{};
     for (auto i = 0; i < 2; ++i) {
@@ -347,7 +352,7 @@ TEST_CASE(
     auto scanner = item::spawn("bionic_scanner_on", calendar::turn);
     scanner->ammo_set(itype_id("battery"), 1);
     scanner->activate();
-    REQUIRE_FALSE(here.add_item_or_charges(you.bub_pos(), std::move(scanner), false));
+    REQUIRE_FALSE(here.add_item_or_charges(scanner_test_pos(), std::move(scanner), false));
 
     here.process_items();
 
@@ -374,11 +379,11 @@ TEST_CASE("bionic_scanner_updates_same_monster_corpse_pile_display", "[iuse][bio
     auto& you = get_avatar();
     const auto restore_avatar_id = restore_bionic_scanner_avatar_id(you);
     auto& here = get_map();
-    g->place_player(tripoint_bub_ms(60, 60, 0));
+    g->u.setpos(test_origin);
     set_time(calendar::turn_zero + 12_hours);
     you.recalc_sight_limits();
 
-    const auto corpse_pos = you.bub_pos();
+    const auto corpse_pos = scanner_test_pos();
     REQUIRE(you.sees(corpse_pos));
     auto cbm_corpse = item::make_corpse(mtype_id("mon_zombie_technician"), calendar::turn, "");
     cbm_corpse->add_component(item::spawn("bio_electrosense", calendar::turn));
@@ -425,11 +430,11 @@ TEST_CASE(
     auto& you = get_avatar();
     const auto restore_avatar_id = restore_bionic_scanner_avatar_id(you);
     auto& here = get_map();
-    g->place_player(tripoint_bub_ms(60, 60, 0));
+    g->u.setpos(test_origin);
     set_time(calendar::turn_zero + 12_hours);
     you.recalc_sight_limits();
 
-    const auto corpse_pos = you.bub_pos() + tripoint_south;
+    const auto corpse_pos = scanner_test_pos(tripoint_rel_ms::south());
     REQUIRE(you.sees(corpse_pos));
     auto solar_corpse = item::make_corpse(mtype_id("mon_zombie_electric"), calendar::turn, "");
     solar_corpse->add_component(item::spawn("bn_bio_solar", calendar::turn));
@@ -484,11 +489,11 @@ TEST_CASE(
     auto& you = get_avatar();
     const auto restore_avatar_id = restore_bionic_scanner_avatar_id(you);
     auto& here = get_map();
-    g->place_player(tripoint_bub_ms(60, 60, 0));
+    g->u.setpos(test_origin);
     set_time(calendar::turn_zero + 12_hours);
     you.recalc_sight_limits();
 
-    const auto corpse_pos = you.bub_pos() + tripoint_south;
+    const auto corpse_pos = scanner_test_pos(tripoint_rel_ms::south());
     REQUIRE(you.sees(corpse_pos));
     auto one_storage_corpse =
         item::make_corpse(mtype_id("mon_zombie_electric"), calendar::turn, "");
@@ -584,11 +589,11 @@ TEST_CASE("bionic_scanner_inside_worn_container_marks_corpse_stack", "[iuse][bio
     auto& you = get_avatar();
     const auto restore_avatar_id = restore_bionic_scanner_avatar_id(you);
     auto& here = get_map();
-    g->place_player(tripoint_bub_ms(60, 60, 0));
+    g->u.setpos(test_origin);
     set_time(calendar::turn_zero + 12_hours);
     you.recalc_sight_limits();
 
-    const auto corpse_pos = you.bub_pos() + tripoint_east;
+    const auto corpse_pos = scanner_test_pos(tripoint_rel_ms::east());
     REQUIRE(you.sees(corpse_pos));
     auto corpse_ptrs = std::vector<item*>{};
     for (auto i = 0; i < 10; ++i) {
@@ -607,13 +612,13 @@ TEST_CASE("bionic_scanner_inside_worn_container_marks_corpse_stack", "[iuse][bio
     backpack->put_in(std::move(scanner));
     REQUIRE_FALSE(you.wear_item(std::move(backpack), false));
 
-    REQUIRE(scanner_ptr->type->invoke(you, *scanner_ptr, you.bub_pos()) == 0);
+    REQUIRE(scanner_ptr->type->invoke(you, *scanner_ptr, scanner_test_pos()) == 0);
     REQUIRE(scanner_ptr->typeId() == itype_id("bionic_scanner_on"));
     REQUIRE(scanner_ptr->is_active());
     REQUIRE(scanner_ptr->needs_processing());
     REQUIRE(backpack_ptr->needs_processing());
-    here.build_map_cache(you.bub_pos().z());
-    here.update_visibility_cache(you.bub_pos().z());
+    here.build_map_cache(scanner_test_pos().z());
+    here.update_visibility_cache(scanner_test_pos().z());
     REQUIRE(you.sees(corpse_pos));
 
     you.process_items();

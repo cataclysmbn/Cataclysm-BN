@@ -28,7 +28,7 @@ TEST_CASE("npc_book_activity_safe_reference_cleanup", "[npc][safe_reference]") {
     const auto cleanup = on_out_of_scope([] { clear_all_state(); });
 
     // Spawn an NPC and give it a book to read.
-    npc& reader = spawn_npc(tripoint_bub_ms(60, 60, 0), "test_talker");
+    npc& reader = spawn_npc(bub_test_origin(), "test_talker");
     detached_ptr<item> det = item::spawn("novel_western");
     item& book = *det;
     reader.i_add(std::move(det));

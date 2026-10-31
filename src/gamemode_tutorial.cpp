@@ -150,7 +150,7 @@ bool tutorial_game::init()
     you.set_skill_level( skill_melee, 5 );
     g->load_map( project_to<coords::sm>( lp_abs.xy() ) );
     const auto z = you.bub_pos().z();
-    you.setpos( tripoint_bub_ms( 2, 4, z ) );
+    you.set_internal_position( map_local_to_abs( g->m, tripoint_bub_ms( 2, 4, z ) ) );
     return true;
 }
 
