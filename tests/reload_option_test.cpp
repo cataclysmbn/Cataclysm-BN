@@ -44,6 +44,10 @@ TEST_CASE("revolver_reload_option", "[reload],[reload_option],[gun]") {
     CHECK(gun_speedloader_option.qty() == 1);
     gun_speedloader_option.qty(INT_MAX);
     CHECK(gun_speedloader_option.qty() == speedloader.ammo_capacity());
+
+    speedloader.ammo_set(itype_id("38_special"), 3);
+    gun_speedloader_option.qty(INT_MAX);
+    CHECK(gun_speedloader_option.qty() == 3);
 }
 
 TEST_CASE("magazine_reload_option", "[reload],[reload_option],[gun]") {
@@ -137,6 +141,39 @@ TEST_CASE("canteen_reload_option", "[reload],[reload_option],[liquid]") {
     CHECK(canteen_option.qty() == 2);
 }
 
+TEST_CASE("cardboard_box_stores_a_water_bottle_as_an_item", "[reload],[reload_option],[liquid]") {
+    avatar who;
+    who.set_body();
+    const auto birthday = calendar::start_of_cataclysm;
+
+    auto& box = who.i_add(item::spawn("box_large", birthday));
+    auto& bottle = who.i_add(item::spawn("bottle_plastic", birthday));
+    bottle.fill_with(item::spawn("water_clean", birthday, 2), 2);
+
+    const auto option = item_reload_option(&who, &box, &box, bottle);
+    CHECK(option.qty() == 1);
+    CHECK(box.reload(who, bottle, option.qty()));
+    REQUIRE(box.contents.num_item_stacks() == 1);
+    CHECK(box.contents.front().typeId() == itype_id("bottle_plastic"));
+    CHECK(box.contents.front().contents.front().typeId() == itype_id("water_clean"));
+}
+
+TEST_CASE(
+    "reload_respects_nested_container_storage_volume", "[reload],[reload_option],[container]") {
+    avatar who;
+    who.set_body();
+    const auto birthday = calendar::start_of_cataclysm;
+
+    auto& bowl = who.i_add(item::spawn("bowl_plastic", birthday));
+    auto& bag = who.i_add(item::spawn("bag_zipper_small", birthday));
+
+    const auto option = item_reload_option(&who, &bowl, &bowl, bag);
+    CHECK(bag.volume() < bowl.get_container_capacity());
+    CHECK(bag.volume_for_storage() > bowl.get_container_capacity());
+    CHECK(option.qty() == 0);
+    CHECK_FALSE(bowl.reload(who, bag, 1));
+}
+
 TEST_CASE("reload_empty_option_value_initialization", "[reload][reload_option]") {
     const auto option = item_reload_option();
 
@@ -185,5 +222,17 @@ TEST_CASE("reload_quantity_respects_the_limiting_resource", "[reload][reload_opt
         CHECK(who.charges_of(itype_id("ammolink308")) == 3);
         CHECK(ammo.charges == 10);
         CHECK(belt.ammo_remaining() == 0);
+    }
+
+    SECTION("a full magazine has no remaining reload capacity") {
+        auto& magazine = who.i_add(item::spawn("glockmag", birthday, 0));
+        magazine.ammo_set(itype_id("9mm"), magazine.ammo_capacity());
+        auto& ammo = who.i_add(item::spawn("9mm", birthday, 3));
+
+        auto option = item_reload_option(&who, &magazine, &magazine, ammo);
+        option.qty(0);
+        CHECK(option.qty() == 0);
+        option.qty(INT_MAX);
+        CHECK(option.qty() == 0);
     }
 }
