@@ -1,0 +1,32 @@
+[
+  {
+    "type": "npc_class",
+    "id": "NC_TEST_DESCRIPTION",
+    "copy-from": "NC_NONE",
+    "name": "Biography test character",
+    "job_description": "I test character biographies.",
+    "description": "They once repaired radios for a living.",
+    "common": false
+  },
+  {
+    "type": "npc",
+    "id": "test_character_description",
+    "name_unique": "Biography Tester",
+    "description": { "ctxt": "NPC biography", "str": "Before the Cataclysm, they kept the town's radio station running." },
+    "class": "NC_TEST_DESCRIPTION",
+    "attitude": 0,
+    "mission": 0,
+    "chat": "TALK_DONE",
+    "faction": "tacoma_commune"
+  },
+  {
+    "type": "npc",
+    "id": "test_character_description_fallback",
+    "name_unique": "Biography Fallback Tester",
+    "class": "NC_TEST_DESCRIPTION",
+    "attitude": 0,
+    "mission": 0,
+    "chat": "TALK_DONE",
+    "faction": "tacoma_commune"
+  }
+]

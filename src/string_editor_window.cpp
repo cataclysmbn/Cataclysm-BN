@@ -366,6 +366,7 @@ string_editor_window::string_editor_window(
     const string_editor_window_options &options )
     : string_editor_window( create_window, text )
 {
+    _highlight_lua = options.highlight_lua;
     _show_line_numbers = options.show_line_numbers;
     _line_number_min_width = options.line_number_min_width;
 }
@@ -419,7 +420,11 @@ void string_editor_window::print_editor( ui_adaptor &ui )
                 format_line_number( line_number, line_number_width )
             );
         }
-        print_syntax_line( _win, point( content_x, y ), line.str );
+        if( _highlight_lua ) {
+            print_syntax_line( _win, point( content_x, y ), line.str );
+        } else {
+            mvwprintz( _win, point( content_x, y ), c_light_gray, "%s", line.str );
+        }
         if( !_ime_preview_range && i == _cursor_display.y ) {
             uint32_t c_cursor = 0;
             const char *src = line.str.c_str();

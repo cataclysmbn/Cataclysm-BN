@@ -1253,7 +1253,7 @@ class npc : public player
         // #############   VALUES   ################
         activity_id current_activity_id = activity_id::NULL_ID();
         npc_class_id myclass; // What's our archetype?
-        // A temp variable used to inform the game which npc json to use as a template
+        /// NPC template ID, retained in saves to resolve authored character descriptions.
         std::string idz;
         // A temp variable used to link to the correct mission
         std::vector<mission_type_id> miss_ids;
@@ -1425,6 +1425,8 @@ class npc_template
         std::unique_ptr<npc> guy;
         translation name_unique;
         translation name_suffix;
+        /// Optional biography shown when examining this character.
+        translation description;
         enum class gender {
             random,
             male,
