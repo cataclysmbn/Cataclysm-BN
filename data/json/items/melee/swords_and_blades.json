@@ -1816,7 +1816,6 @@
     "color": "light_gray",
     "ammo": "battery",
     "charges_per_use": 1,
-    "qualities": [ [ "AXE", 4 ] ],
     "crafting_speed_modifier": 1.25,
     "use_action": {
       "type": "transform",
@@ -1843,7 +1842,7 @@
     "power_draw": 170000,
     "charges_per_use": 0,
     "revert_to": "e_combatsaw_off",
-    "qualities": [ [ "BUTCHER", -120 ] ],
+    "qualities": [ [ "AXE", 4 ], [ "BUTCHER", -120 ] ],
     "revert_msg": "Your combat chainsaw goes quiet",
     "use_action": { "type": "transform", "target": "e_combatsaw_off", "msg": "You turn off the combat chainsaw." },
     "flags": [
