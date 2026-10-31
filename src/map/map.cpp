@@ -2369,6 +2369,7 @@ auto map::ter_vars(const tripoint_bub_ms& p) const -> data_vars::data_set* {
 
     point_sm_ms l;
     const auto sm = get_submap_at(tripoint_bub_ms(p), l);
+    if (sm == nullptr) { return nullptr; }
     return &sm->get_ter_vars(l);
 }
 
@@ -2378,6 +2379,7 @@ auto map::furn_vars(const tripoint_bub_ms& p) const -> data_vars::data_set* {
 
     point_sm_ms l;
     const auto sm = get_submap_at(tripoint_bub_ms(p), l);
+    if (sm == nullptr) { return nullptr; }
     return &sm->get_furn_vars(l);
 }
 

@@ -2579,16 +2579,24 @@ std::pair<std::string, bool> tileset::get_tint_controller( const std::string &ti
 
 const color_tint_pair *tileset::get_tint( const std::string &tint_id )
 {
-    if( tints.contains( tint_id ) ) {
-        return &tints[tint_id];
+    if( tints.empty() ) {
+        return nullptr;
+    }
+    const auto it = tints.find( tint_id );
+    if( it != tints.end() ) {
+        return &it->second;
     }
     return nullptr;
 }
 
 bool tileset::try_get_tint( const std::string &tint_id, color_tint_pair &tint )
 {
-    if( tints.contains( tint_id ) ) {
-        tint = tints[tint_id];
+    if( tints.empty() ) {
+        return false;
+    }
+    const auto it = tints.find( tint_id );
+    if( it != tints.end() ) {
+        tint = it->second;
         return true;
     }
     return false;
@@ -5241,12 +5249,13 @@ bool cata_tiles::draw_block( const tripoint_bub_ms &p, SDL_Color color, int scal
 bool cata_tiles::draw_terrain( const tripoint_bub_ms &p, const lit_level ll, int &height_3d,
                                const bool ( &invisible )[5], int z_drop )
 {
-    map &here = get_map();
-    const auto override = terrain_override.find( p );
-    const bool overridden = override != terrain_override.end();
-    bool neighborhood_overridden = overridden;
-    if( !neighborhood_overridden ) {
-        for( point dir : neighborhood ) {
+    auto &here = get_map();
+    const auto has_overrides = !terrain_override.empty();
+    const auto override = has_overrides ? terrain_override.find( p ) : terrain_override.end();
+    const auto overridden = override != terrain_override.end();
+    auto neighborhood_overridden = overridden;
+    if( has_overrides && !neighborhood_overridden ) {
+        for( const auto dir : neighborhood ) {
             if( terrain_override.contains( p + dir ) ) {
                 neighborhood_overridden = true;
                 break;
@@ -5254,14 +5263,28 @@ bool cata_tiles::draw_terrain( const tripoint_bub_ms &p, const lit_level ll, int
         }
     }
 
-    const ter_id &t = here.ter( p );
-    const auto [bgCol, fgCol] = get_terrain_color( t.obj(), here, p );
+    const auto &t = here.ter( p );
 
     // first memorize the actual terrain
     if( t && !invisible[0] ) {
-        int subtile = 0;
-        int rotation = 0;
-        int connect_group = 0;
+        const auto &tname = t.id().str();
+        if( t == t_open_air && !neighborhood_overridden ) {
+            if( here.check_seen_cache( p ) ) {
+                g->u.clear_memorized_tile( bub_to_abs( p ) );
+            }
+            if( tileset_ptr && tileset_ptr->find_tile_type( tname ) ) {
+                const auto [bgCol, fgCol] = get_terrain_color( t.obj(), here, p );
+                const auto tile = tile_search_params{ tname, C_TERRAIN, empty_string, 0, 0 };
+                return draw_from_id_string(
+                           tile, p, bgCol, fgCol,
+                           ll, true, z_drop, false, height_3d );
+            }
+            return true;
+        }
+
+        auto subtile = 0;
+        auto rotation = 0;
+        auto connect_group = 0;
         if( t.obj().connects( connect_group ) ) {
             get_connect_values( p, subtile, rotation, connect_group, {} );
             // re-memorize previously seen terrain in case new connections have been seen
@@ -5270,7 +5293,6 @@ bool cata_tiles::draw_terrain( const tripoint_bub_ms &p, const lit_level ll, int
             get_terrain_orientation( p, rotation, subtile, {}, invisible );
             // do something to get other terrain orientation values
         }
-        const std::string &tname = t.id().str();
         if( here.check_seen_cache( p ) ) {
             if( !t->has_flag( TFLAG_NO_MEMORY ) && !t->has_flag( TFLAG_Z_TRANSPARENT ) ) {
                 g->u.memorize_tile( bub_to_abs( p ), tname, subtile, rotation );
@@ -5281,19 +5303,7 @@ bool cata_tiles::draw_terrain( const tripoint_bub_ms &p, const lit_level ll, int
         }
         // draw the actual terrain if there's no override
         if( !neighborhood_overridden ) {
-            // Open air is used for holes / sky. Drawing a cyan marker here can bleed through
-            // semi-transparent sprites (e.g. explosion smoke) and look like stuck artifacts.
-            // If a tileset provides an explicit tile for it, use that; otherwise draw nothing.
-            if( t == t_open_air ) {
-                if( tileset_ptr && tileset_ptr->find_tile_type( tname ) ) {
-                    const auto tile = tile_search_params{ tname, C_TERRAIN, empty_string, 0, 0 };
-                    return draw_from_id_string(
-                               tile, p, bgCol, fgCol,
-                               ll, true, z_drop, false, height_3d );
-                }
-                return true;
-            }
-
+            const auto [bgCol, fgCol] = get_terrain_color( t.obj(), here, p );
             const auto tile = tile_search_params{ .id = tname, .category = C_TERRAIN, .subcategory = empty_string, .subtile = subtile, .rota = rotation };
             return draw_from_id_string(
                        tile, p, bgCol, fgCol,
@@ -5302,24 +5312,25 @@ bool cata_tiles::draw_terrain( const tripoint_bub_ms &p, const lit_level ll, int
     }
     if( invisible[0] ? overridden : neighborhood_overridden ) {
         // and then draw the override terrain
-        const ter_id &t2 = overridden ? override->second : t;
+        const auto &t2 = overridden ? override->second : t;
         if( t2 ) {
             // both the current and neighboring overrides may change the appearance
             // of the tile, so always re-calculate it.
-            int subtile = 0;
-            int rotation = 0;
-            int connect_group = 0;
+            auto subtile = 0;
+            auto rotation = 0;
+            auto connect_group = 0;
             if( t2.obj().connects( connect_group ) ) {
                 get_connect_values( p, subtile, rotation, connect_group, terrain_override );
             } else {
                 get_terrain_orientation( p, rotation, subtile, terrain_override, invisible );
             }
-            const std::string &tname = t2.id().str();
+            const auto &tname = t2.id().str();
             // tile overrides are never memorized
             // tile overrides are always shown with full visibility
-            const lit_level lit = overridden ? lit_level::LIT : ll;
-            const bool nv = !overridden;
-            const tile_search_params tile { tname, C_TERRAIN, empty_string, subtile, rotation };
+            const auto lit = overridden ? lit_level::LIT : ll;
+            const auto nv = !overridden;
+            const auto [bgCol, fgCol] = get_terrain_color( t.obj(), here, p );
+            const auto tile = tile_search_params{ tname, C_TERRAIN, empty_string, subtile, rotation };
             return draw_from_id_string(
                        tile, p, bgCol, fgCol,
                        lit, nv, z_drop, false, height_3d );
@@ -5328,8 +5339,9 @@ bool cata_tiles::draw_terrain( const tripoint_bub_ms &p, const lit_level ll, int
         // try drawing memory if invisible and not overridden
         const auto ret = get_ter_memory_at( p );
         if( ret.has_value() ) {
-            const auto& [tile_id, subtile, rotation] = ret.value();
-            const tile_search_params tile { tile_id, C_TERRAIN, empty_string, subtile, rotation };
+            const auto &[tile_id, subtile, rotation] = ret.value();
+            const auto [bgCol, fgCol] = get_terrain_color( t.obj(), here, p );
+            const auto tile = tile_search_params{ tile_id, C_TERRAIN, empty_string, subtile, rotation };
             return draw_from_id_string(
                        tile, p, bgCol, fgCol,
                        lit_level::MEMORIZED, true, z_drop, false, height_3d );
@@ -5341,21 +5353,24 @@ bool cata_tiles::draw_terrain( const tripoint_bub_ms &p, const lit_level ll, int
 bool cata_tiles::draw_furniture( const tripoint_bub_ms &p, const lit_level ll, int &height_3d,
                                  const bool ( &invisible )[5], int z_drop )
 {
-    const auto override = furniture_override.find( p );
-    const bool overridden = override != furniture_override.end();
-    bool neighborhood_overridden = overridden;
-    if( !neighborhood_overridden ) {
-        for( point dir : neighborhood ) {
+    const auto has_overrides = !furniture_override.empty();
+    const auto override = has_overrides ? furniture_override.find( p ) : furniture_override.end();
+    const auto overridden = override != furniture_override.end();
+    const auto &here = get_map();
+    const auto &f = here.furn( p );
+    if( !f && !overridden && !invisible[0] ) {
+        return false;
+    }
+
+    auto neighborhood_overridden = overridden;
+    if( has_overrides && !neighborhood_overridden ) {
+        for( const auto dir : neighborhood ) {
             if( furniture_override.contains( p + dir ) ) {
                 neighborhood_overridden = true;
                 break;
             }
         }
     }
-
-    const map &here = get_map();
-    const furn_id &f = here.furn( p );
-    const auto [bgCol, fgCol] = get_furniture_color( f.obj(), here, p );
 
     // first memorize the actual furniture
     if( f && !invisible[0] ) {
@@ -5365,23 +5380,24 @@ bool cata_tiles::draw_furniture( const tripoint_bub_ms &p, const lit_level ll, i
             static_cast<int>( here.furn( p + point_west ) ),
             static_cast<int>( here.furn( p + point_north ) )
         };
-        int subtile = 0;
-        int rotation = 0;
+        auto subtile = 0;
+        auto rotation = 0;
 
-        int connect_group = 0;
+        auto connect_group = 0;
         if( f.obj().connects( connect_group ) ) {
             get_furn_connect_values( p, subtile, rotation, connect_group, {} );
         } else {
             get_tile_values_with_ter( p, f.to_i(), neighborhood, subtile, rotation );
         }
 
-        const std::string &fname = f.id().str();
+        const auto &fname = f.id().str();
         if( here.check_seen_cache( p ) ) {
             g->u.memorize_tile( bub_to_abs( p ), fname, subtile, rotation );
         }
         // draw the actual furniture if there's no override
         if( !neighborhood_overridden ) {
-            const tile_search_params tile { fname, C_FURNITURE, empty_string, subtile, rotation};
+            const auto [bgCol, fgCol] = get_furniture_color( f.obj(), here, p );
+            const auto tile = tile_search_params{ fname, C_FURNITURE, empty_string, subtile, rotation };
             return draw_from_id_string(
                        tile, p, bgCol, fgCol,
                        ll, true, z_drop, false, height_3d );
@@ -5389,7 +5405,7 @@ bool cata_tiles::draw_furniture( const tripoint_bub_ms &p, const lit_level ll, i
     }
     if( invisible[0] ? overridden : neighborhood_overridden ) {
         // and then draw the override furniture
-        const furn_id &f2 = overridden ? override->second : f;
+        const auto &f2 = overridden ? override->second : f;
         if( f2 ) {
             // both the current and neighboring overrides may change the appearance
             // of the tile, so always re-calculate it.
@@ -5404,10 +5420,10 @@ bool cata_tiles::draw_furniture( const tripoint_bub_ms &p, const lit_level ll, i
                 static_cast<int>( furn( p + point_west, invisible[3] ) ),
                 static_cast<int>( furn( p + point_north, invisible[4] ) )
             };
-            int subtile = 0;
-            int rotation = 0;
+            auto subtile = 0;
+            auto rotation = 0;
 
-            int connect_group = 0;
+            auto connect_group = 0;
             if( f.obj().connects( connect_group ) ) {
                 get_furn_connect_values( p, subtile, rotation, connect_group, {} );
             } else {
@@ -5415,12 +5431,13 @@ bool cata_tiles::draw_furniture( const tripoint_bub_ms &p, const lit_level ll, i
             }
 
             get_tile_values( f2.to_i(), neighborhood, subtile, rotation );
-            const std::string &fname = f2.id().str();
+            const auto &fname = f2.id().str();
             // tile overrides are never memorized
             // tile overrides are always shown with full visibility
-            const lit_level lit = overridden ? lit_level::LIT : ll;
-            const bool nv = !overridden;
-            const tile_search_params tile { fname, C_FURNITURE, empty_string, subtile, rotation };
+            const auto lit = overridden ? lit_level::LIT : ll;
+            const auto nv = !overridden;
+            const auto [bgCol, fgCol] = get_furniture_color( f.obj(), here, p );
+            const auto tile = tile_search_params{ fname, C_FURNITURE, empty_string, subtile, rotation };
             return draw_from_id_string(
                        tile, p, bgCol, fgCol,
                        lit, nv, z_drop, false, height_3d );
@@ -5429,8 +5446,9 @@ bool cata_tiles::draw_furniture( const tripoint_bub_ms &p, const lit_level ll, i
         // try drawing memory if invisible and not overridden
         const auto ret = get_furn_memory_at( p );
         if( ret.has_value() ) {
-            const auto& [tile_id, subtile, rotation] = ret.value();
-            const tile_search_params tile { tile_id, C_FURNITURE, empty_string, subtile, rotation };
+            const auto &[tile_id, subtile, rotation] = ret.value();
+            const auto [bgCol, fgCol] = get_furniture_color( f.obj(), here, p );
+            const auto tile = tile_search_params{ tile_id, C_FURNITURE, empty_string, subtile, rotation };
             return draw_from_id_string(
                        tile, p, bgCol, fgCol,
                        lit_level::MEMORIZED, true, z_drop, false, height_3d );
@@ -5442,22 +5460,25 @@ bool cata_tiles::draw_furniture( const tripoint_bub_ms &p, const lit_level ll, i
 bool cata_tiles::draw_trap( const tripoint_bub_ms &p, const lit_level ll, int &height_3d,
                             const bool ( &invisible )[5], int z_drop )
 {
-    const auto override = trap_override.find( p );
-    const bool overridden = override != trap_override.end();
-    bool neighborhood_overridden = overridden;
-    if( !neighborhood_overridden ) {
-        for( point dir : neighborhood ) {
+    const auto has_overrides = !trap_override.empty();
+    const auto override = has_overrides ? trap_override.find( p ) : trap_override.end();
+    const auto overridden = override != trap_override.end();
+    auto &here = get_map();
+    const auto &tr = here.tr_at( p );
+    const auto &tr_id = tr.loadid;
+    if( !tr_id && !overridden && !invisible[0] ) {
+        return false;
+    }
+
+    auto neighborhood_overridden = overridden;
+    if( has_overrides && !neighborhood_overridden ) {
+        for( const auto dir : neighborhood ) {
             if( trap_override.contains( p + dir ) ) {
                 neighborhood_overridden = true;
                 break;
             }
         }
     }
-
-    map &here = get_map();
-    const trap &tr = here.tr_at( p );
-    const trap_id &tr_id = tr.loadid;
-    auto [bgCol, fgCol] = get_trap_color( tr, here, p );
 
     // first memorize the actual trap
     if( tr_id && !invisible[0] && tr_id.obj().can_see( p, g->u ) ) {
@@ -5467,16 +5488,17 @@ bool cata_tiles::draw_trap( const tripoint_bub_ms &p, const lit_level ll, int &h
             static_cast<int>( here.tr_at( p + point_west ).loadid ),
             static_cast<int>( here.tr_at( p + point_north ).loadid )
         };
-        int subtile = 0;
-        int rotation = 0;
+        auto subtile = 0;
+        auto rotation = 0;
         get_tile_values( tr_id.to_i(), neighborhood, subtile, rotation );
-        const std::string trname = tr_id.id().str();
+        const auto trname = tr_id.id().str();
         if( here.check_seen_cache( p ) && tr_id != tr_ledge ) {
             g->u.memorize_tile( bub_to_abs( p ), trname, subtile, rotation );
         }
         // draw the actual trap if there's no override
         if( !neighborhood_overridden ) {
-            const tile_search_params tile { trname, C_TRAP, empty_string, subtile, rotation };
+            const auto [bgCol, fgCol] = get_trap_color( tr, here, p );
+            const auto tile = tile_search_params{ trname, C_TRAP, empty_string, subtile, rotation };
             return draw_from_id_string(
                        tile, p, bgCol, fgCol,
                        ll, true, z_drop, false, height_3d );
@@ -5484,7 +5506,7 @@ bool cata_tiles::draw_trap( const tripoint_bub_ms &p, const lit_level ll, int &h
     }
     if( overridden || ( !invisible[0] && neighborhood_overridden && tr_id.obj().can_see( p, g->u ) ) ) {
         // and then draw the override trap
-        const trap_id &tr2 = overridden ? override->second : tr_id;
+        const auto &tr2 = overridden ? override->second : tr_id;
         if( tr2 ) {
             // both the current and neighboring overrides may change the appearance
             // of the tile, so always re-calculate it.
@@ -5499,15 +5521,16 @@ bool cata_tiles::draw_trap( const tripoint_bub_ms &p, const lit_level ll, int &h
                 static_cast<int>( tr_at( p + point_west, invisible[3] ) ),
                 static_cast<int>( tr_at( p + point_north, invisible[4] ) )
             };
-            int subtile = 0;
-            int rotation = 0;
+            auto subtile = 0;
+            auto rotation = 0;
             get_tile_values( tr2.to_i(), neighborhood, subtile, rotation );
-            const std::string &trname = tr2.id().str();
+            const auto &trname = tr2.id().str();
             // tile overrides are never memorized
             // tile overrides are always shown with full visibility
-            const lit_level lit = overridden ? lit_level::LIT : ll;
-            const bool nv = !overridden;
-            const tile_search_params tile { trname, C_TRAP, empty_string, subtile, rotation };
+            const auto lit = overridden ? lit_level::LIT : ll;
+            const auto nv = !overridden;
+            const auto [bgCol, fgCol] = get_trap_color( tr, here, p );
+            const auto tile = tile_search_params{ trname, C_TRAP, empty_string, subtile, rotation };
             return draw_from_id_string(
                        tile, p, bgCol, fgCol,
                        lit, nv, z_drop, false, height_3d );
@@ -5516,8 +5539,9 @@ bool cata_tiles::draw_trap( const tripoint_bub_ms &p, const lit_level ll, int &h
         // try drawing memory if invisible and not overridden
         const auto ret = get_trap_memory_at( p );
         if( ret.has_value() ) {
-            const auto& [tile_id, subtile, rotation] = ret.value();
-            const tile_search_params tile2 { tile_id, C_TRAP, empty_string, subtile, rotation };
+            const auto &[tile_id, subtile, rotation] = ret.value();
+            const auto [bgCol, fgCol] = get_trap_color( tr, here, p );
+            const auto tile2 = tile_search_params{ tile_id, C_TRAP, empty_string, subtile, rotation };
             return draw_from_id_string(
                        tile2, p, bgCol, fgCol,
                        lit_level::MEMORIZED, true, z_drop, false, height_3d );
@@ -5529,17 +5553,18 @@ bool cata_tiles::draw_trap( const tripoint_bub_ms &p, const lit_level ll, int &h
 bool cata_tiles::draw_graffiti( const tripoint_bub_ms &p, const lit_level ll, int &height_3d,
                                 const bool ( &invisible )[5], int z_drop )
 {
-    const auto override = graffiti_override.find( p );
-    const bool overridden = override != graffiti_override.end();
+    const auto has_overrides = !graffiti_override.empty();
+    const auto override = has_overrides ? graffiti_override.find( p ) : graffiti_override.end();
+    const auto overridden = override != graffiti_override.end();
     if( overridden ? !override->second : ( invisible[0] ||
                                            !get_map().has_graffiti_at( p ) ) ) {
         return false;
     }
-    const lit_level lit = overridden ? lit_level::LIT : ll;
+    const auto lit = overridden ? lit_level::LIT : ll;
 
     const auto [bgCol, fgCol] = get_graffiti_color( get_map(), p );
 
-    const tile_search_params tile { "graffiti", C_NONE, empty_string, 0, 0 };
+    const auto tile = tile_search_params{ "graffiti", C_NONE, empty_string, 0, 0 };
     return draw_from_id_string(
                tile, p,  bgCol, fgCol,
                lit, false, z_drop, false, height_3d );
@@ -7191,12 +7216,17 @@ void cata_tiles::init_light()
 void cata_tiles::get_terrain_orientation( const tripoint_bub_ms &p, int &rota, int &subtile,
         const std::map<tripoint_bub_ms, ter_id> &ter_override, const bool ( &invisible )[5] )
 {
-    map &here = get_map();
-    const bool overridden = ter_override.contains( p );
+    auto &here = get_map();
+    const auto has_overrides = !ter_override.empty();
+    const auto overridden = has_overrides && ter_override.contains( p );
     const auto ter = [&]( const tripoint_bub_ms & q, const bool invis ) -> ter_id {
-        const auto override = ter_override.find( q );
-        return override != ter_override.end() ? override->second :
-        ( !overridden || !invis ) ? here.ter( q ) : t_null;
+        if( has_overrides ) {
+            const auto override = ter_override.find( q );
+            if( override != ter_override.end() ) {
+                return override->second;
+            }
+        }
+        return ( !overridden || !invis ) ? here.ter( q ) : t_null;
     };
 
     // get terrain at x,y
