@@ -1,8 +1,11 @@
 #include "../src/map/map.h"
 #include "../src/vehicle/vpart_position.h"
+#include "auto_pickup.h"
 #include "catch/catch.hpp"
 #include "game.h"
 #include "item.h"
+#include "item_factory.h"
+#include "itype.h"
 #include "pickup.h"
 #include "state_helpers.h"
 #include "type_id.h"
@@ -61,4 +64,16 @@ TEST_CASE("nearby pickup finds adjacent vehicle cargo", "[pickup][vehicle]") {
     CHECK_FALSE(pickup_items.has_ground_items);
     CHECK(pickup_items.items.size() == 1);
     CHECK(count_pickup_items(pickup_items, itype_id("jeans")) == 1);
+}
+
+TEST_CASE("autopickup_pure_material_filter", "[pickup][auto_pickup]") {
+    clear_all_state();
+    CHECK(
+        auto_pickup::autopickup_item_function(*item::spawn_temporary("scrap_copper"), "M:copper"));
+    CHECK_FALSE(auto_pickup::autopickup_item_function(*item::spawn_temporary("cable"), "M:copper"));
+    for (const auto* type : item_controller->all()) {
+        if (!auto_pickup::test_pattern_function(*type, "M:copper")) { continue; }
+        CAPTURE(type->get_id().str());
+        CHECK_FALSE(type->materials.empty());
+    }
 }

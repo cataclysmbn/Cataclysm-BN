@@ -40,6 +40,11 @@ std::function<bool( const item & )> basic_item_filter( std::string filter )
                     return lcmatch( mat->name(), filter );
                 } );
             };
+        case 'M':
+            return [filter]( const item & i ) {
+                return !i.made_of().empty() && std::ranges::all_of( i.made_of(),
+                [&filter]( const material_id & mat ) { return lcmatch( mat->name(), filter ); } );
+            };
         // qualities
         case 'q':
             return [filter]( const item & i ) {
@@ -115,13 +120,8 @@ std::function<bool( const itype & )> basic_itype_filter( std::string filter )
             };
         case 'M':
             return [filter]( const itype & i ) {
-                bool pure_material = true;
-                for( auto &mat : i.materials ) {
-                    if( !lcmatch( mat->name(), filter ) ) {
-                        pure_material = false;
-                    }
-                }
-                return pure_material;
+                return !i.materials.empty() && std::ranges::all_of( i.materials,
+                [&filter]( const material_id & mat ) { return lcmatch( mat->name(), filter ); } );
             };
         // qualities
         case 'q':
@@ -208,6 +208,11 @@ std::function<bool( const item & )> wildcard_item_filter( std::string filter )
                     return wildcard_match( mat->name(), filter );
                 } );
             };
+        case 'M':
+            return [filter]( const item & i ) {
+                return !i.made_of().empty() && std::ranges::all_of( i.made_of(),
+                [&filter]( const material_id & mat ) { return wildcard_match( mat->name(), filter ); } );
+            };
         // qualities
         case 'q':
             return [filter]( const item & i ) {
@@ -285,13 +290,8 @@ std::function<bool( const itype & )> wildcard_itype_filter( std::string filter )
             };
         case 'M':
             return [filter]( const itype & i ) {
-                bool pure_material = true;
-                for( auto &mat : i.materials ) {
-                    if( !wildcard_match( mat->name(), filter ) ) {
-                        pure_material = false;
-                    }
-                }
-                return pure_material;
+                return !i.materials.empty() && std::ranges::all_of( i.materials,
+                [&filter]( const material_id & mat ) { return wildcard_match( mat->name(), filter ); } );
             };
         // qualities
         case 'q':
