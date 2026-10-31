@@ -3614,8 +3614,10 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                         }
                     }
 
-                    const auto low_override = draw_below_override.find( pos );
-                    const bool low_overridden = low_override != draw_below_override.end();
+                    const auto has_low_overrides = !draw_below_override.empty();
+                    const auto low_override = has_low_overrides ? draw_below_override.find( pos ) :
+                                              draw_below_override.end();
+                    const auto low_overridden = low_override != draw_below_override.end();
                     if( low_overridden ? !low_override->second :
                         ( in_map_bounds && ( here.dont_draw_lower_floor( pos ) || stop_on_memory ) )
                         || ( !in_map_bounds && ( has_memory || pos.z() <= 0 ) ) ) {
@@ -3664,10 +3666,10 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                                 if( has_draw_override( pos ) || has_memory ) {
                                     invisible[0] = true;
                                 }
-                                for( int cz = pos.z(); !invisible[0] && cz <= -center.z(); cz++ ) {
-                                    const Creature *critter = g->critter_at( { pos.xy(), cz }, true );
+                                for( auto cz = pos.z(); !invisible[0] && cz <= center.z(); cz++ ) {
+                                    const auto *critter = g->critter_at( { pos.xy(), cz }, true );
                                     if( critter ) {
-                                        enchantment_vision_id vision = g->u.sees_with_specials( *critter );
+                                        const auto vision = g->u.sees_with_specials( *critter );
                                         if( vision.is_valid() && !vision.is_null() ) {
                                             if( !vision->use_normal_mon_tile() ) {
                                                 invisible[0] = true;
@@ -3792,17 +3794,22 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                         if( p.pos.z() > z ) {
                             continue;
                         }
-                        for( const zlevel_layer &f : zlevel_drawing_layers ) {
-                            if( here.inbounds( p.pos ) && z != p.pos.z() ) {
-                                const auto z_ll = ch.inbounds( { p.pos.x(), p.pos.y() } )
-                                                  ? ch.visibility_cache[ch.idx( p.pos.x(), p.pos.y() )]
-                                                  : lit_level::BLANK;
+                        if( z != p.pos.z() ) {
+                            if( !here.inbounds( p.pos ) ) {
+                                continue;
+                            }
+                            const auto z_ll = ch.inbounds( { p.pos.x(), p.pos.y() } )
+                                              ? ch.visibility_cache[ch.idx( p.pos.x(), p.pos.y() )]
+                                              : lit_level::BLANK;
+                            const bool ( invis )[5] = { false, false, false, false, false };
+                            for( const zlevel_layer &f : zlevel_drawing_layers ) {
                                 if( !f.hide_unseen || z_ll != lit_level::BLANK ) {
-                                    const bool ( invis )[5] = {false, false, false, false, false};
-                                    ( this->*( f.function ) )( { p.pos.xy(), z}, z_ll, p.height_3d, invis, center.z() - z );
+                                    ( this->*( f.function ) )( { p.pos.xy(), z }, z_ll, p.height_3d, invis, center.z() - z );
                                 }
-                            } else {
-                                ( this->*( f.function ) )( { p.pos.xy(), z}, p.ll, p.height_3d, p.invisible, center.z() - z );
+                            }
+                        } else {
+                            for( const zlevel_layer &f : zlevel_drawing_layers ) {
+                                ( this->*( f.function ) )( { p.pos.xy(), z }, p.ll, p.height_3d, p.invisible, center.z() - z );
                             }
                         }
                     }
@@ -3821,18 +3828,20 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
         }
 
         // display number of monsters to spawn in mapgen preview
-        for( const tile_render_info &p : draw_points ) {
-            const auto mon_override = monster_override.find( p.pos );
-            if( mon_override != monster_override.end() ) {
-                const int count = std::get<1>( mon_override->second );
-                const bool more = std::get<2>( mon_override->second );
-                if( count > 1 || more ) {
-                    std::string text = "x" + std::to_string( count );
-                    if( more ) {
-                        text += "+";
+        if( !monster_override.empty() ) {
+            for( const tile_render_info &p : draw_points ) {
+                const auto mon_override = monster_override.find( p.pos );
+                if( mon_override != monster_override.end() ) {
+                    const auto count = std::get<1>( mon_override->second );
+                    const auto more = std::get<2>( mon_override->second );
+                    if( count > 1 || more ) {
+                        auto text = "x" + std::to_string( count );
+                        if( more ) {
+                            text += "+";
+                        }
+                        overlay_strings.emplace( player_to_screen( p.pos.xy() ) + point( tile_width / 2, 0 ),
+                                                 formatted_text( text, catacurses::red, direction::NORTH ) );
                     }
-                    overlay_strings.emplace( player_to_screen( p.pos.xy() ) + point( tile_width / 2, 0 ),
-                                             formatted_text( text, catacurses::red, direction::NORTH ) );
                 }
             }
         }
@@ -5576,22 +5585,27 @@ bool cata_tiles::draw_field_or_item( const tripoint_bub_ms &p, const lit_level l
     if( z_drop > OVERMAP_HEIGHT + OVERMAP_DEPTH ) {
         return false;
     }
-    const auto fld_override = field_override.find( p );
-    const bool fld_overridden = fld_override != field_override.end();
-    map &here = get_map();
-    const field_type_id &fld = fld_overridden ?
-                               fld_override->second : here.field_at( p ).displayed_field_type();
+    const auto has_fld_overrides = !field_override.empty();
+    const auto fld_override = has_fld_overrides ? field_override.find( p ) : field_override.end();
+    const auto fld_overridden = fld_override != field_override.end();
+    auto &here = get_map();
+    const auto &fld = fld_overridden ?
+                      fld_override->second : here.field_at( p ).displayed_field_type();
 
-    bool ret_draw_field = false;
-    bool ret_draw_items = false;
+    auto ret_draw_field = false;
+    auto ret_draw_items = false;
     if( ( fld_overridden || !invisible[0] ) && fld.obj().display_field ) {
-        const lit_level lit = fld_overridden ? lit_level::LIT : ll;
-        const bool nv = !fld_overridden;
+        const auto lit = fld_overridden ? lit_level::LIT : ll;
+        const auto nv = !fld_overridden;
 
         auto field_at = [&]( const tripoint_bub_ms & q, const bool invis ) -> field_type_id {
-            const auto it = field_override.find( q );
-            return it != field_override.end() ? it->second :
-            ( !fld_overridden || !invis ) ? here.field_at( q ).displayed_field_type() : fd_null;
+            if( has_fld_overrides ) {
+                const auto it = field_override.find( q );
+                if( it != field_override.end() ) {
+                    return it->second;
+                }
+            }
+            return ( !fld_overridden || !invis ) ? here.field_at( q ).displayed_field_type() : fd_null;
         };
         // for rotation information
         const int neighborhood[4] = {
@@ -5601,20 +5615,21 @@ bool cata_tiles::draw_field_or_item( const tripoint_bub_ms &p, const lit_level l
             static_cast<int>( field_at( p + point_north, invisible[4] ) )
         };
 
-        int subtile = 0;
-        int rotation = 0;
+        auto subtile = 0;
+        auto rotation = 0;
         get_tile_values( fld.to_i(), neighborhood, subtile, rotation );
 
         const auto [bgCol, fgCol] = get_field_color( here.field_at( p ), here, p );
 
-        const tile_search_params tile { fld.id().str(), C_FIELD, empty_string, subtile, rotation };
+        const auto tile = tile_search_params{ fld.id().str(), C_FIELD, empty_string, subtile, rotation };
         ret_draw_field = draw_from_id_string(
                              tile, p, bgCol, fgCol,
                              lit, nv, z_drop, false );
     }
     if( fld.obj().display_items ) {
-        const auto it_override = item_override.find( p );
-        const bool it_overridden = it_override != item_override.end();
+        const auto has_it_overrides = !item_override.empty();
+        const auto it_override = has_it_overrides ? item_override.find( p ) : item_override.end();
+        const auto it_overridden = it_override != item_override.end();
 
         tint_config bgCol;
         tint_config fgCol;
@@ -5697,11 +5712,15 @@ bool cata_tiles::draw_field_or_item( const tripoint_bub_ms &p, const lit_level l
 bool cata_tiles::draw_vpart( const tripoint_bub_ms &p, lit_level ll, int &height_3d,
                              const bool ( &invisible )[5], int z_drop )
 {
-    const auto override = vpart_override.find( p );
-    const bool overridden = override != vpart_override.end();
-    map &here = get_map();
+    const auto has_overrides = !vpart_override.empty();
+    const auto override = has_overrides ? vpart_override.find( p ) : vpart_override.end();
+    const auto overridden = override != vpart_override.end();
+    auto &here = get_map();
     // first memorize the actual vpart
-    const optional_vpart_position vp = here.veh_at( p );
+    const auto vp = here.veh_at( p );
+    if( !vp && !overridden && !invisible[0] && !here.has_rope_at( p ) ) {
+        return false;
+    }
 
     auto [bgCol, fgCol] = get_vpart_color( vp, here, p );
 
@@ -5939,7 +5958,8 @@ bool cata_tiles::draw_critter_at( const tripoint_bub_ms &p, lit_level ll, int &h
     bool is_player;
     bool sees_player;
     Attitude attitude;
-    const auto override = monster_override.find( p );
+    const auto has_overrides = !monster_override.empty();
+    const auto override = has_overrides ? monster_override.find( p ) : monster_override.end();
     if( override != monster_override.end() ) {
         const mtype_id id = std::get<0>( override->second );
         if( !id ) {
@@ -6109,9 +6129,16 @@ bool cata_tiles::draw_zone_mark( const tripoint_bub_ms &p, lit_level ll, int &he
 bool cata_tiles::draw_zombie_revival_indicators( const tripoint_bub_ms &pos, const lit_level /*ll*/,
         int &/*height_3d*/, const bool ( &invisible )[5], int z_drop )
 {
-    map &here = get_map();
-    if( tileset_ptr->find_tile_type( ZOMBIE_REVIVAL_INDICATOR ) && !invisible[0] &&
-        !item_override.contains( pos ) && here.could_see_items( tripoint_bub_ms( pos ), g->u ) ) {
+    if( invisible[0] ) {
+        return false;
+    }
+    auto &here = get_map();
+    if( !here.has_items( pos ) ) {
+        return false;
+    }
+    if( tileset_ptr->find_tile_type( ZOMBIE_REVIVAL_INDICATOR ) &&
+        ( item_override.empty() || !item_override.contains( pos ) ) &&
+        here.could_see_items( tripoint_bub_ms( pos ), g->u ) ) {
         for( auto &i : here.i_at( tripoint_bub_ms( pos ) ) ) {
             if( i->is_corpse() ) {
                 if( i->can_revive() || ( i->get_mtype()->zombify_into && !i->has_flag( flag_PULPED ) ) ) {

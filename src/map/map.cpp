@@ -9365,10 +9365,10 @@ auto map::get_creatures_in_radius(const tripoint_bub_ms& center, size_t radius, 
 }
 
 auto map::has_rope_at(tripoint_bub_ms pt) const -> bool {
-    if (cached_veh_rope.contains(pt)) {
-        auto veh_pair = get_rope_at(pt);
-        vehicle* veh = veh_pair.first;
-        int veh_part = veh_pair.second;
+    if (cached_veh_rope.empty()) { return false; }
+    const auto it = cached_veh_rope.find(pt);
+    if (it != cached_veh_rope.end()) {
+        const auto [veh, veh_part] = it->second;
         return veh->part(veh_part).info().ladder_length() >= veh->bub_ms_location().z() - pt.z();
     }
     return false;
