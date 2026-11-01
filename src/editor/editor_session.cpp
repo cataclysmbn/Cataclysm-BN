@@ -467,6 +467,8 @@ auto run_editor_session() -> void {
             } else {
                 state.notice = made.error();
             }
+        } else if (id == advanced_id) {
+            set_advanced_mode(!advanced_mode());
         } else if (!state.doc) {
             keep();
             continue;
@@ -528,8 +530,6 @@ auto run_editor_session() -> void {
             state.copy();
         } else if (id == cut_id && state.selected) {
             state.cut();
-        } else if (id == advanced_id) {
-            set_advanced_mode(!advanced_mode());
         } else if (id == rotate_id || id == flip_x_id || id == flip_y_id) {
             const auto size = state.clip_size_now();
             for (auto& entry : state.clip_placed) {

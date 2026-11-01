@@ -1630,7 +1630,8 @@ auto layout(const session& state) -> workspace_layout {
     return {
         .slots =
             {{tools_id, {.slot = "canvas"}},
-             {legend_id, {.slot = "palette", .label = _("Legend")}},
+             // The card goes beside the catalog that fills it, in the legend's room.
+             {legend_id, {.slot = "palette", .label = _("Legend"), .collapsed = state.on_card()}},
              // Picking from the catalog maps what it draws; the form renames a symbol by hand.
              {mapping_id, {.slot = "palette", .label = _("Mapping"), .collapsed = true}},
              {catalog_kinds_id, {.slot = "palette", .label = _("Catalog")}},
@@ -1652,7 +1653,10 @@ auto layout(const session& state) -> workspace_layout {
              {"editor:document", {.slot = "status"}},
              {field_id, {.slot = "inspector", .label = _("JSON value")}},
              {move_id, {.slot = "inspector", .label = _("Placement position")}},
-             {place_id, {.slot = "inspector", .label = _("New placement"), .collapsed = !placing}},
+             {place_id,
+              {.slot = state.on_card() ? "palette" : "inspector",
+               .label = _("New placement"),
+               .collapsed = !placing}},
              {pins_id, {.slot = "inspector", .label = _("Pinned choices")}},
              {rotation_id, {.slot = "inspector", .label = _("Preview facing")}},
              {connection_id, {.slot = "inspector", .label = _("Connect tool")}},
