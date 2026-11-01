@@ -1125,7 +1125,7 @@ auto simple_new_file_form(const session& state) -> ec::component {
          .required = true},
         {.id = "kind",
          .label = _("What it is"),
-         .value = made.kind,
+         .value = named.kind,
          .type = "select",
          .options = {{.id = "mapgen", .label = _("A building or place")},
                      {.id = "nested", .label = _("A piece to reuse in maps")}}},
@@ -1138,7 +1138,7 @@ auto simple_new_file_form(const session& state) -> ec::component {
     if (folder == "new") {
         fields.push_back({.id = "mod_name", .label = _("Mod name"), .value = made.mod_name});
     }
-    if (made.kind == "nested") {
+    if (named.kind == "nested") {
         fields.push_back(
             {.id = "size",
              .label = _("Chunk size"),

@@ -547,8 +547,11 @@ auto free_new_path() -> std::string {
 }
 
 auto new_mod_folder(const new_mapgen& made) -> std::string {
-    if (!made.mod.empty()) { return made.mod; }
     const auto mods = player_mods();
+    // A mod removed since it was chosen gives way to a new one.
+    if (made.mod == "new" || std::ranges::contains(mods, made.mod, &player_mod::folder)) {
+        return made.mod;
+    }
     for (const auto& recent : recent_documents()) {
         if (recent.editor != "map") { continue; }
         const auto folder = mod_folder_name(recent.name);
@@ -568,13 +571,18 @@ auto named_new(const new_mapgen& made) -> new_mapgen {
     }
     // The game's ids stay its own: a second house would be a variant of the game's.
     const auto chunks = nested_mapgen_ids();
-    const auto base = id_of_words(made.name);
+    // A name in letters no id holds still names a map.
+    const auto words = id_of_words(made.name);
+    const auto base = made.name.empty() ? std::string{} : words.empty() ? "my_map" : words;
+    // A town places a special of the id in place of the terrain.
     const auto id = base.empty() ? std::string{} : free_name(base, [&](const std::string& name) {
         return std::filesystem::exists(mods / folder / (name + ".json"))
-            || oter_type_str_id(name).is_valid() || palette_id(name).is_valid()
-            || std::ranges::contains(chunks, name);
+            || oter_type_str_id(name).is_valid() || overmap_special_id(name).is_valid()
+            || palette_id(name).is_valid() || std::ranges::contains(chunks, name);
     });
     auto named = made;
+    // Simple mode makes no kind but these.
+    named.kind = made.kind == "nested" ? "nested" : "mapgen";
     named.path = id.empty() ? std::string{} : (mods / folder / (id + ".json")).string();
     named.om_terrain = id;
     return named;
