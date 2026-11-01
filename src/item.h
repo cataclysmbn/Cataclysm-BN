@@ -1897,10 +1897,11 @@ class item : public location_visitable<item>, public game_object<item>
          * or similar.
          */
         bool is_power_armor() const;
-        /**
-         * Whether this is a armor plate item.
-         */
-        bool is_armor_plate() const;
+
+        bool requires_slots() const;
+        std::map<flag_id, int> get_provided_slots() const;
+        std::map<flag_id, int> get_required_slots() const;
+
         /**
          * If this is an armor item, return its armor data. You should probably not use this function,
          * use the various functions above (like @ref get_storage) to access armor data directly.

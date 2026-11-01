@@ -2832,8 +2832,8 @@ void options_manager::add_options_world_default()
        );
 
     add( "VEHICLE_DAMAGE", world_default, translate_marker( "Vehicle damage scaling factor" ),
-         translate_marker( "A scaling factor that determines how damaged vehicles are." ),
-         0.0, 10.0, 1, 0.1
+         translate_marker( "A scaling factor that determines how damaged vehicles are.  0 disables damage, 1 is the default, and 4 wrecks every damaged vehicle." ),
+         0.0, 4.0, 1, 0.1
        );
 
     add( "VEHICLE_LOCKS", world_default, translate_marker( "Vehicle door locks" ),
@@ -2863,6 +2863,11 @@ void options_manager::add_options_world_default()
     add( "CARRION_SPAWNRATE", world_default, translate_marker( "Carrion spawn rate scaling factor" ),
          translate_marker( "A scaling factor that determines how often creatures spawn from rotting material." ),
          0.0, 10.0, 1.0, 0.01, COPT_NO_HIDE
+       );
+
+    add( "ROT_RATE", world_default, translate_marker( "Food spoilage rate scaling factor" ),
+         translate_marker( "A scaling factor that determines how fast food and corpses spoil.  A higher number means faster spoilage.  Set to 0.00 to stop spoilage." ),
+         0.0, 100.0, 1.0, 0.05, COPT_NO_HIDE
        );
 
     add( "NPC_DENSITY", world_default, translate_marker( "NPC spawn rate scaling factor" ),

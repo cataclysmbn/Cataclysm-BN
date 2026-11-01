@@ -973,8 +973,19 @@
     "description": "Something in those heavily processed foods doesn't agree with you.  It's possible for you to eat them, but you will suffer morale penalties and obtain less nutrition from them.",
     "starting_trait": true,
     "cancels": [ "PROJUNK" ],
+    "changes_to": [ "ANTIJUNK2" ],
     "vitamins_absorb_multi": [ [ "junk", [ [ "vitA", 0 ], [ "vitB", 0 ], [ "vitC", 0 ], [ "calcium", 0 ], [ "iron", 0 ] ] ] ],
     "category": [ "BEAST", "RAPTOR", "ALPHA", "ELFA", "RABBIT" ]
+  },
+  {
+    "type": "mutation",
+    "id": "ANTIJUNK2",
+    "name": { "str": "Natural Omnivore" },
+    "points": 2,
+    "description": "You embody your omnivorous nature!  You are able to eat almost anything considered normal human food, with the exception of heavily processed foods.",
+    "cancels": [ "ANTIWHEAT", "MEATARIAN", "ANTIFRUIT", "LACTOSE", "VEGETARIAN" ],
+    "threshreq": [ "THRESH_ALPHA" ],
+    "category": [ "ALPHA" ]
   },
   {
     "type": "mutation",

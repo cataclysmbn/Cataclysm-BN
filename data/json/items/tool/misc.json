@@ -159,7 +159,7 @@
     "color": "light_gray",
     "techniques": [ "SPIN", "WRAP" ],
     "qualities": [ [ "COOK", 1 ] ],
-    "flags": [ "DURABLE_MELEE", "NONCONDUCTIVE", "ALLOWS_REMOTE_USE" ],
+    "flags": [ "DURABLE_MELEE", "NONCONDUCTIVE", "ALLOWS_REMOTE_USE", "BUTCHERY_ROPE" ],
     "use_action": { "type": "deploy_furn", "furn_type": "f_rope_up" }
   },
   {

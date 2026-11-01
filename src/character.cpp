@@ -3600,21 +3600,33 @@ ret_val<bool> Character::can_wear( const item &it, bool with_equip_change ) cons
         }
     }
 
-    if( it.is_armor_plate() ) {
-        if( is_wearing_plate_carrier() == 0 ) {
-            return ret_val<bool>::make_failure(
-                       _( "Can't wear armor plates without a compatible plate carrier!" ) );
-        }
+    if( it.requires_slots() ) {
+        std::map<flag_id, int> remaining_required_slots = it.get_required_slots();
+        bool had_conflict = false;
         for( auto &i : worn ) {
-            int plates = 0;
-            if( i->has_flag( flag_ARMOR_PLATE ) ) {
-                plates += 1;
+            for( const auto &flag : remaining_required_slots | std::views::keys ) {
+                const std::map<flag_id, int> has_slots = i->get_provided_slots();
+                if( has_slots.contains( flag ) ) {
+                    remaining_required_slots[flag] -= has_slots.at( flag );
+                }
+                if( i->requires_slots() ) {
+                    const std::map<flag_id, int> &used_slots = i->get_required_slots();
+                    if( used_slots.contains( flag ) ) {
+                        remaining_required_slots[flag] += used_slots.at( flag );
+                        had_conflict = true;
+                    }
+                }
             }
-            if( it.has_flag( flag_ARMOR_PLATE ) && ( is_wearing_plate_carrier() == 0 ) ) {
-                return ret_val<bool>::make_failure(
-                           _( "Can't wear armor plates without a compatible plate carrier!" ) );
-            } else if( ( plates >= is_wearing_plate_carrier() ) && it.has_flag( flag_ARMOR_PLATE ) ) {
-                return ret_val<bool>::make_failure( _( "Can't wear more armor plates than worn plate carriers!" ) );
+        }
+        for( const auto &rem : remaining_required_slots | std::views::values ) {
+            if( rem > 0 ) {
+                if( had_conflict ) {
+                    return ret_val<bool>::make_failure(
+                               _( "Can't wear more mounted armor pieces then compatible mount spots!" ) );
+                } else {
+                    return ret_val<bool>::make_failure(
+                               _( "Can't wear mounted armor pieces without a compatible mount!" ) );
+                }
             }
         }
     }
@@ -4865,17 +4877,6 @@ bool Character::is_wearing_active_optcloak() const
         }
     }
     return false;
-}
-
-int Character::is_wearing_plate_carrier() const
-{
-    int result = 0;
-    for( auto &elem : worn ) {
-        if( elem->has_flag( flag_PLATE_CARRIER ) ) {
-            result += 1;
-        }
-    }
-    return result;
 }
 
 bool Character::in_climate_control()

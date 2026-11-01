@@ -257,5 +257,12 @@
       [ "crt_pelletgun", 10 ],
       [ "crt_pelletsniper", 10 ]
     ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_BANDIT_LEADER_cutting",
+    "subtype": "distribution",
+    "ammo": 100,
+    "entries": [ { "item": "blade_crt", "prob": 1 } ]
   }
 ]

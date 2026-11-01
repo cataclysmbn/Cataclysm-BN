@@ -2278,12 +2278,8 @@ int iuse::note_bionics( player *p, item *it, bool t, const tripoint_bub_ms &pos 
         if( charges ) {
             p->add_msg_if_player( m_bad, "Your %s doesn't have enough power for the %s", it->tname(),
                                   corpse->display_name().c_str() );
-            if( !p->has_enough_charges( *it, false ) ) {
-                no_charges = true;
-                break;
-            } else {
-                continue;
-            }
+            no_charges = true;
+            break;
         }
 
         corpse->set_var( "bionics_scanned_by", p->getID().get_value() );

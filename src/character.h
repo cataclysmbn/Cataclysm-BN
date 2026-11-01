@@ -98,6 +98,20 @@ DEFAULT_HOTKEYS( "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ
 
 using recipe_filter = std::function<bool( const recipe &r )>;
 
+/**
+ * Nutrition overrides requested by Lua consume callbacks
+ * (see `lua_iconsume_actor` and the `on_character_try_consume` hook).
+ * A nullopt member means "use the value computed from the item".
+ */
+struct consume_overrides {
+    std::optional<int> kcal;
+    std::optional<int> thirst;
+    std::optional<int> fun;
+    std::optional<int> fun_max;
+    /** Skips the human-flesh (cannibalism) consequence check in will_eat. */
+    bool skip_cannibalism = false;
+};
+
 enum vision_modes {
     DEBUG_NIGHTVISION,
     NV_GOGGLES,
@@ -569,8 +583,6 @@ class Character : public Creature, public location_visitable<Character>
         bool is_wearing_active_power_armor() const;
         /** Returns true if the player is wearing an active optical cloak */
         bool is_wearing_active_optcloak() const;
-        /** Returns 0 if the player is not wearing a plate carrier, otherwise returns the number of plate carriers the player is wearing */
-        int is_wearing_plate_carrier() const;
 
         /** Returns true if the player is in a climate controlled area or armor */
         bool in_climate_control();
@@ -2165,8 +2177,11 @@ class Character : public Creature, public location_visitable<Character>
         /**
          * Same as @ref can_eat, but takes consequences into account.
          * Asks about them if @param interactive is true, refuses otherwise.
+         * Consequences are computed with @param overrides applied, if given
+         * (see the Lua consume callbacks).
          */
-        ret_val<edible_rating> will_eat( const item &food, bool interactive = false ) const;
+        ret_val<edible_rating> will_eat( const item &food, bool interactive = false,
+        const consume_overrides &overrides = {} ) const;
         /** Determine character's capability of recharging their CBMs. */
         bool can_feed_furnace_with( const item &it ) const;
         rechargeable_cbm get_cbm_rechargeable_with( const item &it ) const;
@@ -2190,7 +2205,7 @@ class Character : public Creature, public location_visitable<Character>
         /** Used to apply health modifications from food and medication **/
         void modify_health( const islot_comestible &comest );
         /** Handles the effects of consuming an item */
-        bool consume_effects( item &food );
+        bool consume_effects( item &food, const consume_overrides &overrides = {} );
         /** Check character's capability of consumption overall */
         bool can_consume( const item &it ) const;
         /** True if the character has enough skill (in cooking or survival) to estimate time to rot */
@@ -2232,7 +2247,7 @@ class Character : public Creature, public location_visitable<Character>
          * depending on choice of ingredients */
         std::pair<nutrients, nutrients> compute_nutrient_range(
             const item &, const recipe_id &,
-        const cata::flat_set<flag_id> &extra_flags = {} ) const;
+            const cata::flat_set<flag_id> &extra_flags = {} ) const;
         /** Same, but across arbitrary recipes */
         std::pair<nutrients, nutrients> compute_nutrient_range(
             const itype_id &, const cata::flat_set<flag_id> &extra_flags = {} ) const;
@@ -2272,7 +2287,7 @@ class Character : public Creature, public location_visitable<Character>
         /** Ensures persistent morale effects are up-to-date */
         void apply_persistent_morale();
         /** Used to apply morale modifications from food and medication **/
-        void modify_morale( item &food, int nutr = 0 );
+        void modify_morale( item &food, int nutr = 0, const consume_overrides &overrides = {} );
         // Modified by traits, &c
         int get_morale_level() const;
         void add_morale( const morale_type &type, int bonus, int max_bonus = 0,

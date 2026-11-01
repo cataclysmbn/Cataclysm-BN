@@ -415,8 +415,8 @@
   {
     "type": "item_group",
     "subtype": "collection",
-    "id": "tankmod_army_mags_m9",
-    "entries": [ { "item": "m9mag", "ammo-item": "9mm", "charges": 15 }, { "item": "m9mag", "ammo-item": "9mm", "charges": 15 } ]
+    "id": "army_mags_m9",
+    "entries": [ { "item": "m9mag", "ammo-item": "9mmfmj", "charges": 15 }, { "item": "m9mag", "ammo-item": "9mmfmj", "charges": 15 } ]
   },
   {
     "type": "item_group",
@@ -449,8 +449,8 @@
     "subtype": "collection",
     "id": "army_mags_m17",
     "entries": [
-      { "item": "p320mag_17rd_9x19mm", "ammo-item": "9mm", "charges": 17 },
-      { "item": "p320mag_17rd_9x19mm", "ammo-item": "9mm", "charges": 17 }
+      { "item": "p320mag_17rd_9x19mm", "ammo-item": "9mmfmj", "charges": 17 },
+      { "item": "p320mag_17rd_9x19mm", "ammo-item": "9mmfmj", "charges": 17 }
     ]
   },
   {
@@ -458,6 +458,12 @@
     "subtype": "collection",
     "id": "army_mags_m4",
     "entries": [ { "item": "stanag30", "ammo-item": "556", "charges": 30 }, { "item": "stanag30", "ammo-item": "556", "charges": 30 } ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "mags_ar15",
+    "entries": [ { "item": "stanag30", "ammo-item": "223", "charges": 30 }, { "item": "stanag30", "ammo-item": "223", "charges": 30 } ]
   },
   {
     "type": "item_group",
@@ -474,7 +480,10 @@
     "type": "item_group",
     "subtype": "collection",
     "id": "army_mags_mp5",
-    "entries": [ { "item": "mp5mag", "ammo-item": "9mm", "charges": 30 }, { "item": "mp5mag", "ammo-item": "9mm", "charges": 30 } ]
+    "entries": [
+      { "item": "mp5mag", "ammo-item": "9mmfmj", "charges": 30 },
+      { "item": "mp5mag", "ammo-item": "9mmfmj", "charges": 30 }
+    ]
   },
   {
     "type": "item_group",
@@ -575,29 +584,32 @@
   {
     "type": "item_group",
     "subtype": "collection",
-    "id": "army_mags_usp9",
+    "id": "police_mags_usp45",
     "entries": [
-      { "item": "usp9mag", "ammo-item": "9mmfmj", "charges": 15 },
-      { "item": "usp9mag", "ammo-item": "9mmfmj", "charges": 15 }
+      { "item": "usp45mag", "ammo-item": "45_jhp", "charges": 12 },
+      { "item": "usp45mag", "ammo-item": "45_jhp", "charges": 12 }
     ]
   },
   {
     "type": "item_group",
     "subtype": "collection",
-    "id": "army_mags_glock17",
+    "id": "police_mags_usp9",
+    "entries": [ { "item": "usp9mag", "ammo-item": "9mm", "charges": 15 }, { "item": "usp9mag", "ammo-item": "9mm", "charges": 15 } ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "police_mags_glock17",
     "entries": [
-      { "item": "glock17_22", "ammo-item": "9mmfmj", "charges": 22 },
-      { "item": "glock17_22", "ammo-item": "9mmfmj", "charges": 22 }
+      { "item": "glock17_22", "ammo-item": "9mmP", "charges": 22 },
+      { "item": "glock17_22", "ammo-item": "9mmP", "charges": 22 }
     ]
   },
   {
     "type": "item_group",
     "subtype": "collection",
     "id": "mags_glock19",
-    "entries": [
-      { "item": "glockmag", "ammo-item": "9mmfmj", "charges": 15 },
-      { "item": "glockmag", "ammo-item": "9mmfmj", "charges": 15 }
-    ]
+    "entries": [ { "item": "glockmag", "ammo-item": "9mm", "charges": 15 }, { "item": "glockmag", "ammo-item": "9mm", "charges": 15 } ]
   },
   {
     "type": "item_group",
@@ -2135,8 +2147,13 @@
           { "item": "e_tool", "container-item": "webbing_belt" },
           { "item": "knife_combat", "container-item": "sheath" },
           { "item": "grenadebandolier", "contents-item": [ "grenade", "grenade" ] },
-          { "item": "m249", "ammo-item": "556", "charges": 200, "contents-item": [ "shoulder_strap", "acog_scope" ] },
-          { "item": "m17", "ammo-item": "9mm", "charges": 17, "container-item": "holster" }
+          {
+            "item": "m249",
+            "ammo-item": "556_incendiary",
+            "charges": 200,
+            "contents-item": [ "shoulder_strap", "acog_scope" ]
+          },
+          { "item": "m17", "ammo-item": "9mmfmj", "charges": 17, "container-item": "holster" }
         ]
       },
       "male": [ "boxer_shorts" ],
@@ -2247,7 +2264,7 @@
             "charges": 20,
             "contents-item": [ "rifle_scope", "shoulder_strap", "bipod" ]
           },
-          { "item": "m17", "ammo-item": "9mm", "charges": 17, "container-item": "holster" }
+          { "item": "m17", "ammo-item": "9mmfmj", "charges": 17, "container-item": "holster" }
         ]
       },
       "male": [ "boxer_shorts" ],
@@ -2431,7 +2448,7 @@
           },
           {
             "item": "hk_mp5sd",
-            "ammo-item": "9mm",
+            "ammo-item": "9mmfmj",
             "charges": 30,
             "contents-item": [ "shoulder_strap", "holo_sight", "rail_laser_sight", "adjustable_stock", "pistol_grip" ]
           }
@@ -2470,7 +2487,6 @@
           "webbing_belt",
           "canteen",
           "wetsuit_hood",
-          "dragonskin",
           "tac_helmet",
           "wetsuit_gloves",
           "socks",
@@ -2483,10 +2499,10 @@
         "entries": [
           { "group": "charged_two_way_radio" },
           { "item": "diveknife", "container-item": "wristsheath" },
-          { "item": "chestrig", "contents-group": "army_mags_mp5" },
+          { "item": "dragonskin", "contents-group": "army_mags_mp5" },
           {
             "item": "hk_mp5sd",
-            "ammo-item": "9mm",
+            "ammo-item": "9mmfmj",
             "charges": 30,
             "contents-item": [ "shoulder_strap", "holo_sight", "rail_laser_sight", "adjustable_stock", "pistol_grip", "waterproof_gunmod" ]
           }
@@ -2541,8 +2557,8 @@
           { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
           { "item": "knife_combat", "container-item": "sheath" },
           { "item": "light_battery_cell", "charges": 100, "container-item": "electrohack" },
-          { "item": "m9", "ammo-item": "9mm", "charges": 15, "container-item": "holster" },
-          { "item": "legpouch_large", "contents-group": "mags_m9_security" }
+          { "item": "m9", "ammo-item": "9mmfmj", "charges": 15, "container-item": "holster" },
+          { "item": "legpouch_large", "contents-group": "army_mags_m9" }
         ]
       },
       "male": [ "boxer_shorts" ],
@@ -2671,7 +2687,7 @@
         ],
         "entries": [
           { "item": "knife_combat", "container-item": "sheath" },
-          { "item": "m17", "ammo-item": "9mm", "container-item": "holster", "charges": 17 },
+          { "item": "m17", "ammo-item": "9mmfmj", "container-item": "holster", "charges": 17 },
           { "item": "legpouch_large", "contents-group": "army_mags_m17" },
           { "item": "huge_atomic_battery_cell", "charges": [ 10000, 25000 ] }
         ]
@@ -2726,7 +2742,7 @@
         ],
         "entries": [
           { "item": "knife_combat", "container-item": "sheath" },
-          { "item": "m17", "ammo-item": "9mm", "container-item": "holster", "charges": 17 },
+          { "item": "m17", "ammo-item": "9mmfmj", "container-item": "holster", "charges": 17 },
           { "item": "legpouch_large", "contents-group": "army_mags_m17" },
           { "item": "huge_atomic_battery_cell", "charges": [ 10000, 25000 ] }
         ]
@@ -2862,19 +2878,20 @@
     "items": {
       "both": {
         "items": [
-          "suit",
-          "bowhat",
+          "tank_top",
+          "pants_cargo",
+          "bandana_head",
           "socks",
-          "dress_shoes",
+          "lowtops",
           "smart_phone",
-          "knit_scarf",
+          "bandana",
           "cig",
           "switchblade",
           "mag_porn",
           "sunglasses",
           "sf_watch",
           "ring_signet",
-          "gold_necklace",
+          "gold_chain",
           "gold_dental_grill"
         ],
         "entries": [
@@ -3404,8 +3421,8 @@
         "entries": [
           { "group": "charged_two_way_radio" },
           { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
-          { "item": "usp_45", "ammo-item": "45_acp", "charges": 12, "container-item": "holster" },
-          { "item": "legpouch_large", "contents-group": "army_mags_usp45" },
+          { "item": "usp_45", "ammo-item": "45_jhp", "charges": 12, "container-item": "holster" },
+          { "item": "legpouch_large", "contents-group": "police_mags_usp45" },
           { "group": "charged_tazer" }
         ]
       },
@@ -3492,8 +3509,8 @@
           { "group": "charged_two_way_radio" },
           { "group": "charged_flashlight" },
           { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
-          { "item": "usp_45", "ammo-item": "45_acp", "charges": 12, "container-item": "holster" },
-          { "item": "legpouch_large", "contents-group": "army_mags_usp45" },
+          { "item": "usp_45", "ammo-item": "45_jhp", "charges": 12, "container-item": "holster" },
+          { "item": "legpouch_large", "contents-group": "police_mags_usp45" },
           { "group": "charged_tazer" }
         ]
       },
@@ -3620,12 +3637,12 @@
         ],
         "entries": [
           { "group": "charged_headseat", "custom-flags": [ "no_auto_equip" ] },
-          { "item": "tacvest", "contents-group": [ "army_mags_m4", "army_mags_usp9" ] },
+          { "item": "tacvest", "contents-group": [ "mags_ar15", "police_mags_usp9" ] },
           { "item": "grenadebandolier", "contents-item": [ "flashbang", "gasbomb" ] },
           { "item": "usp_9mm", "ammo-item": "9mm", "charges": 15, "container-item": "holster" },
           {
             "item": "ar15",
-            "ammo-item": "556",
+            "ammo-item": "223",
             "charges": 30,
             "contents-item": [ "shoulder_strap", "holo_sight", "rail_laser_sight" ]
           }
@@ -3673,10 +3690,10 @@
           { "group": "charged_headseat", "custom-flags": [ "no_auto_equip" ] },
           { "item": "bandolier_shotgun", "contents-group": "bandolier_swat_cqc1" },
           { "item": "bandolier_shotgun", "contents-group": "bandolier_swat_cqc2" },
-          { "item": "legpouch_large", "contents-group": "army_mags_usp9" },
+          { "item": "legpouch_large", "contents-group": "police_mags_usp9" },
           {
             "item": "usp_9mm",
-            "ammo-item": "9mmfmj",
+            "ammo-item": "9mm",
             "charges": 15,
             "container-item": "holster",
             "contents-item": "pistol_lanyard"
@@ -3725,14 +3742,14 @@
           { "group": "charged_two_way_radio" },
           {
             "item": "usp_45",
-            "ammo-item": "45_acp",
+            "ammo-item": "45_jhp",
             "charges": 12,
             "container-item": "holster",
             "contents-item": "pistol_lanyard"
           },
-          { "item": "legpouch_large", "contents-group": "army_mags_usp45" },
-          { "item": "762_51", "charges": 20 },
-          { "item": "M24", "ammo-item": "762_51", "charges": 20, "container-item": "back_holster" }
+          { "item": "legpouch_large", "contents-group": "police_mags_usp45" },
+          { "item": "308", "charges": 20 },
+          { "item": "M24", "ammo-item": "308", "charges": 20, "container-item": "back_holster" }
         ]
       },
       "male": [ "boxer_shorts" ],
@@ -3778,12 +3795,12 @@
           { "group": "charged_two_way_radio" },
           {
             "item": "usp_45",
-            "ammo-item": "45_acp",
+            "ammo-item": "45_jhp",
             "charges": 12,
             "container-item": "holster",
             "contents-item": "pistol_lanyard"
           },
-          { "item": "legpouch_large", "contents-group": "army_mags_usp45" },
+          { "item": "legpouch_large", "contents-group": "police_mags_usp45" },
           { "item": "tonfa", "container-item": "police_belt" },
           { "group": "charged_tazer" }
         ]
@@ -4456,7 +4473,7 @@
         "entries": [
           { "group": "charged_two_way_radio" },
           { "item": "glock_18c", "ammo-item": "9mmP", "container-item": "holster" },
-          { "item": "tacvest", "contents-group": "army_mags_glock17" }
+          { "item": "tacvest", "contents-group": "police_mags_glock17" }
         ]
       },
       "male": [ "boxer_shorts" ],
@@ -7687,9 +7704,9 @@
     "skills": [ { "level": 1, "name": "speech" }, { "level": 3, "name": "driving" } ],
     "vehicle": "car_sports",
     "items": {
-      "both": { "items": [ "gold_watch", "water_mineral", "smart_phone", "money_bundle", "cig", "ref_lighter" ] },
-      "male": [ "boxer_shorts", "pants", "dress_shoes", "polo_shirt", "socks" ],
-      "female": [ "tank_top", "bra", "panties", "skirt", "heels", "jacket_leather", "stockings" ]
+      "both": { "items": [ "water_mineral", "smart_phone", "money_bundle", "advanced_ecig" ] },
+      "male": [ "boxer_shorts", "pants", "slippers", "tank_top", "socks", "gold_chain", "hat_ball", "gold_watch" ],
+      "female": [ "tshirt_cropped", "bra", "panties", "hot_pants", "sneakers", "socks", "silver_bracelet", "purse", "silver_necklace" ]
     },
     "npcs": [ "NC_PROF_FRAT", "NC_PROF_FRAT" ]
   },
@@ -7729,7 +7746,7 @@
         "entries": [
           { "group": "charged_headseat", "custom-flags": [ "no_auto_equip" ] },
           { "item": "goggles_nv", "custom-flags": [ "no_auto_equip" ] },
-          { "item": "m17", "ammo-item": "9mm", "container-item": "holster", "charges": 17 },
+          { "item": "m17", "ammo-item": "9mmfmj", "container-item": "holster", "charges": 17 },
           { "item": "chestrig", "contents-group": "army_mags_m17" }
         ]
       },
@@ -7784,7 +7801,7 @@
         "entries": [
           { "item": "mil_scouter", "charges": 200 },
           { "group": "charged_headseat", "custom-flags": [ "no_auto_equip" ] },
-          { "item": "m17", "ammo-item": "9mm", "container-item": "holster", "charges": 17 },
+          { "item": "m17", "ammo-item": "9mmfmj", "container-item": "holster", "charges": 17 },
           { "item": "chestrig", "contents-group": "army_mags_m17" }
         ]
       },
@@ -8008,8 +8025,8 @@
         "entries": [
           { "group": "charged_two_way_radio" },
           { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
-          { "item": "usp_45", "ammo-item": "45_acp", "charges": 12, "container-item": "holster" },
-          { "item": "legpouch_large", "contents-group": "army_mags_usp45" },
+          { "item": "usp_45", "ammo-item": "45_jhp", "charges": 12, "container-item": "holster" },
+          { "item": "legpouch_large", "contents-group": "police_mags_usp45" },
           {
             "item": "light_battery_cell",
             "ammo-item": "battery",
@@ -8708,7 +8725,7 @@
           { "item": "e_tool", "container-item": "webbing_belt" },
           { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
           { "item": "flamethrower", "charges": 3000, "custom-flags": [ "auto_wield" ] },
-          { "item": "m17", "ammo-item": "9mm", "container-item": "holster", "charges": 17 },
+          { "item": "m17", "ammo-item": "9mmfmj", "container-item": "holster", "charges": 17 },
           { "item": "legpouch_large", "contents-group": "army_mags_m17" },
           { "item": "knife_combat", "container-item": "sheath" }
         ]
@@ -8754,7 +8771,7 @@
           { "item": "cigar", "count": 2 },
           { "item": "id_military" },
           { "item": "water_clean", "container-item": "canteen" },
-          { "item": "m17", "ammo-item": "9mm", "container-item": "holster", "charges": 17 },
+          { "item": "m17", "ammo-item": "9mmfmj", "container-item": "holster", "charges": 17 },
           { "item": "legpouch_large", "contents-group": "army_mags_m17" },
           { "item": "militarymap" },
           { "item": "pen" }
@@ -9064,10 +9081,10 @@
         ],
         "entries": [
           { "group": "charged_two_way_radio" },
-          { "item": "legpouch_large", "contents-group": "tankmod_army_mags_m9" },
+          { "item": "legpouch_large", "contents-group": "army_mags_m9" },
           { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
           { "item": "knife_combat", "container-item": "sheath" },
-          { "item": "m9", "ammo-item": "9mm", "charges": 15, "container-item": "holster" }
+          { "item": "m9", "ammo-item": "9mmfmj", "charges": 15, "container-item": "holster" }
         ]
       },
       "male": [ "boxer_shorts" ],
@@ -9109,10 +9126,10 @@
         ],
         "entries": [
           { "group": "charged_two_way_radio" },
-          { "item": "legpouch_large", "contents-group": "tankmod_army_mags_m9" },
+          { "item": "legpouch_large", "contents-group": "army_mags_m9" },
           { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
           { "item": "knife_combat", "container-item": "sheath" },
-          { "item": "m9", "ammo-item": "9mm", "charges": 15, "container-item": "holster" }
+          { "item": "m9", "ammo-item": "9mmfmj", "charges": 15, "container-item": "holster" }
         ]
       },
       "male": [ "boxer_shorts" ],
@@ -9351,6 +9368,62 @@
       },
       "male": [ "briefs" ],
       "female": [ "bra", "panties" ]
+    }
+  },
+  {
+    "type": "profession",
+    "id": "marsoc",
+    "name": "Marine CSO",
+    "//": "Overtly meant to evoke a certain space marine's classic depiction, description also alludes to the intro as given in the original game's instruction manual",
+    "description": "After an altercation with your superior officer you were sent stateside, with nothing to look forward to but a long career guarding some corporation's radioactive waste storage.  Instead you were deployed as part of the initial response to the Cataclysm, tasked with holding the perimeter while the rest of your squad forged ahead.  Hours of gunfire and screaming later, the radio's finally gone silent.  It's up to you now…",
+    "age": { "min": 20, "max": 40 },
+    "points": 8,
+    "traits": [ "PROF_MILITARY" ],
+    "skills": [
+      { "level": 4, "name": "swimming" },
+      { "level": 3, "name": "firstaid" },
+      { "level": 7, "name": "gun" },
+      { "level": 7, "name": "shotgun" },
+      { "level": 7, "name": "rifle" },
+      { "level": 4, "name": "pistol" },
+      { "level": 5, "name": "unarmed" },
+      { "level": 5, "name": "stabbing" },
+      { "level": 5, "name": "melee" },
+      { "level": 5, "name": "dodge" },
+      { "level": 3, "name": "throw" },
+      { "level": 4, "name": "survival" }
+    ],
+    "items": {
+      "both": {
+        "items": [
+          "pants_army",
+          "tshirt",
+          "tac_fullhelmet",
+          "gloves_liner",
+          "gloves_tactical",
+          "socks",
+          "boots_combat",
+          "holster",
+          "elbow_pads",
+          "knee_pads",
+          "wristwatch",
+          "canteen",
+          "rucksack",
+          "knuckle_brass"
+        ],
+        "entries": [
+          { "group": "charged_two_way_radio" },
+          { "item": "dragonskin", "contents-group": "army_mags_m9" },
+          { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
+          { "item": "e_tool", "container-item": "webbing_belt" },
+          { "item": "knife_combat", "container-item": "sheath" },
+          { "item": "grenadebandolier", "contents-item": [ "grenade", "grenade" ] },
+          { "item": "m9", "ammo-item": "9mmfmj", "charges": 15, "custom-flags": [ "auto_wield" ] },
+          { "item": "9mmfmj", "charges": 5 }
+        ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "boy_shorts", "sports_bra" ]
     }
   }
 ]

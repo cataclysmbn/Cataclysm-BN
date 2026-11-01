@@ -342,6 +342,7 @@ void init_global_state_tables( lua_state &state, const std::vector<mod_id> &modl
     gt["iwearable_functions"] = lua.create_table();
     gt["iequippable_functions"] = lua.create_table();
     gt["istate_functions"] = lua.create_table();
+    gt["iconsume_functions"] = lua.create_table();
     gt["imelee_functions"] = lua.create_table();
     gt["iranged_functions"] = lua.create_table();
     gt["itrap_functions"] = lua.create_table();
@@ -785,6 +786,7 @@ void reg_lua_icallback_actors( lua_state &state, Item_factory &ifactory )
     const sol::table iwearable_funcs = lua.globals()["game"]["iwearable_functions"];
     const sol::table iequippable_funcs = lua.globals()["game"]["iequippable_functions"];
     const sol::table istate_funcs = lua.globals()["game"]["istate_functions"];
+    const sol::table iconsume_funcs = lua.globals()["game"]["iconsume_functions"];
     const sol::table imelee_funcs = lua.globals()["game"]["imelee_functions"];
     const sol::table iranged_funcs = lua.globals()["game"]["iranged_functions"];
     const sol::table itrap_funcs = lua.globals()["game"]["itrap_functions"];
@@ -943,6 +945,28 @@ void reg_lua_icallback_actors( lua_state &state, Item_factory &ifactory )
                 break;
             }
             ++it;
+        }
+    }
+
+    // --- iconsume registration ---
+    {
+        for( const auto &ref : iconsume_funcs ) {
+            std::string key;
+            try {
+                key = ref.first.as<std::string>();
+                if( ref.second.get_type() != sol::type::table ) {
+                    throw std::runtime_error( "iconsume entry must be a table" );
+                }
+                const auto tbl = ref.second.as<sol::table>();
+                auto on_try_consume = tbl.get_or<sol::function>( "on_try_consume", sol::lua_nil );
+                ifactory.add_iconsume_actor(
+                    itype_id( key ),
+                    std::make_unique<lua_iconsume_actor>(
+                        key, std::move( on_try_consume ) ) );
+            } catch( std::runtime_error &e ) {
+                debugmsg( "Failed to extract iconsume_functions k='%s': %s", key, e.what() );
+                break;
+            }
         }
     }
 

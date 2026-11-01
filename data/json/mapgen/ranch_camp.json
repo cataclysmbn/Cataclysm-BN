@@ -1057,6 +1057,12 @@
   {
     "type": "mapgen",
     "method": "json",
+    "om_terrain": "ranch_camp_52_z1",
+    "object": { "fill_ter": "t_open_air" }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
     "om_terrain": "ranch_camp_58_z1",
     "object": { "fill_ter": "t_open_air" }
   },

@@ -3373,7 +3373,8 @@
       "mon_feral_blackops_boss_commander",
       "mon_feral_blackops_boss_bioop",
       "mon_feral_blackops_boss_technician",
-      "mon_feral_blackops_boss_sniper"
+      "mon_feral_blackops_boss_sniper",
+      "mon_feral_swat_boss_cloaker"
     ],
     "sound": "\"We call this a difficulty tweak!\"",
     "volume": 70

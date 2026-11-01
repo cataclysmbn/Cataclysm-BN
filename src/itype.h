@@ -39,6 +39,7 @@ class lua_iwieldable_actor;
 class lua_iwearable_actor;
 class lua_iequippable_actor;
 class lua_istate_actor;
+class lua_iconsume_actor;
 class lua_imelee_actor;
 class lua_iranged_actor;
 class lua_itrap_actor;
@@ -329,6 +330,11 @@ struct islot_armor {
     std::vector<std::string> valid_mods;
     // Layer, encumbrance and coverage information.
     std::vector<armor_portion_data> data;
+
+    // NOTE: Theoretically this will one day become clothing modifications
+    // Today is not that day, but this will set a suitable framework
+    std::map<flag_id, int> provides_slot;
+    std::map<flag_id, int> consumes_slot;
 };
 
 struct islot_pet_armor {
@@ -1016,6 +1022,7 @@ struct itype {
         const lua_iwearable_actor *iwearable_callbacks = nullptr;
         const lua_iequippable_actor *iequippable_callbacks = nullptr;
         const lua_istate_actor *istate_callbacks = nullptr;
+        const lua_iconsume_actor *iconsume_callbacks = nullptr;
         const lua_imelee_actor *imelee_callbacks = nullptr;
         const lua_iranged_actor *iranged_callbacks = nullptr;
         const lua_itrap_actor *itrap_callbacks = nullptr;

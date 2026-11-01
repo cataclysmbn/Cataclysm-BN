@@ -10,6 +10,7 @@
 #include "item.h"
 #include "itype.h"
 #include "map_helpers.h"
+#include "options_helpers.h"
 #include "requirements.h"
 #include "rot.h"
 #include "state_helpers.h"
@@ -279,6 +280,88 @@ TEST_CASE("Rate of rotting") {
         // In freezer and in preserving container still should be no rot
         CHECK(sealed_item->get_rot() == 0_turns);
         CHECK(freeze_item->get_rot() == 0_turns);
+    }
+}
+
+TEST_CASE("ROT_RATE option scales food rot", "[item][rot][options]") {
+    clear_all_state();
+    calendar::turn = calendar::start_of_cataclysm + 1_minutes;
+    auto weather = weather_manager();
+    set_map_temperature(weather, 18_c);
+    ensure_no_temperature_mods(tripoint_bub_ms::zero());
+    REQUIRE(weather.get_temperature(tripoint_abs_ms::zero()) == 18_c);
+
+    const auto rot_after_20_minutes = [&](const std::string& rate) {
+        const auto scale = override_option("ROT_RATE", rate);
+        const auto start = calendar::turn;
+        auto food = item::spawn("meat_cooked");
+        food = item::process(
+            std::move(food), nullptr, tripoint_bub_ms::zero(), false, temperature_flag::TEMP_NORMAL,
+            weather, 1);
+        calendar::turn += 20_minutes;
+        food = item::process(
+            std::move(food), nullptr, tripoint_bub_ms::zero(), false, temperature_flag::TEMP_NORMAL,
+            weather, 1);
+        calendar::turn = start;
+        return to_turns<int>(food->get_rot());
+    };
+
+    SECTION("default rate rots in real time") {
+        CHECK(rot_after_20_minutes("1.0") == Approx(to_turns<int>(20_minutes)).epsilon(0.01));
+    }
+    SECTION("doubled rate rots twice as fast") {
+        CHECK(rot_after_20_minutes("2.0") == Approx(to_turns<int>(40_minutes)).epsilon(0.01));
+    }
+    SECTION("halved rate rots half as fast") {
+        CHECK(rot_after_20_minutes("0.5") == Approx(to_turns<int>(10_minutes)).epsilon(0.01));
+    }
+    SECTION("zero rate stops rot") { CHECK(rot_after_20_minutes("0.0") == 0); }
+}
+
+TEST_CASE("ROT_RATE option scales field dressed corpse rot", "[item][rot][options]") {
+    clear_all_state();
+    calendar::turn = calendar::start_of_cataclysm + 1_minutes;
+    auto weather = weather_manager();
+    set_map_temperature(weather, 18_c);
+    ensure_no_temperature_mods(tripoint_bub_ms::zero());
+
+    const auto rot_after_20_minutes = [&](const std::string& rate) {
+        const auto scale = override_option("ROT_RATE", rate);
+        const auto start = calendar::turn;
+        auto corpse = item::make_corpse(mtype_id("mon_zombie"), calendar::turn, "");
+        corpse->set_flag(flag_id("FIELD_DRESS"));
+        corpse = item::process(
+            std::move(corpse), nullptr, tripoint_bub_ms::zero(), false,
+            temperature_flag::TEMP_NORMAL, weather, 1);
+        calendar::turn += 20_minutes;
+        corpse = item::process(
+            std::move(corpse), nullptr, tripoint_bub_ms::zero(), false,
+            temperature_flag::TEMP_NORMAL, weather, 1);
+        calendar::turn = start;
+        return to_turns<int>(corpse->get_rot());
+    };
+
+    SECTION("field dressing slows rot to 0.75 of the configured rate") {
+        CHECK(rot_after_20_minutes("2.0") == Approx(to_turns<int>(30_minutes)).epsilon(0.01));
+    }
+    SECTION("zero rate stops field dressed corpse rot") { CHECK(rot_after_20_minutes("0.0") == 0); }
+}
+
+TEST_CASE("ROT_RATE option scales remaining freshness estimate", "[item][rot][options]") {
+    clear_all_state();
+    const auto food = item::spawn("meat_cooked");
+    const auto normal = food->minimum_freshness_duration(temperature_flag::TEMP_NORMAL);
+    REQUIRE(normal < calendar::INDEFINITELY_LONG_DURATION);
+
+    SECTION("doubled rate halves the remaining time") {
+        const auto scale = override_option("ROT_RATE", "2.0");
+        CHECK(to_turns<int>(food->minimum_freshness_duration(temperature_flag::TEMP_NORMAL))
+              == Approx(to_turns<int>(normal) / 2.0).epsilon(0.01));
+    }
+    SECTION("zero rate never spoils") {
+        const auto scale = override_option("ROT_RATE", "0.0");
+        CHECK(food->minimum_freshness_duration(temperature_flag::TEMP_NORMAL)
+              == calendar::INDEFINITELY_LONG_DURATION);
     }
 }
 

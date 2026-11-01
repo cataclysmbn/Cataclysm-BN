@@ -227,7 +227,12 @@
           { "id": [ "ballistic_vest_heavy", "overlay_wielded_ballistic_vest_heavy" ], "fg": 172 },
           { "id": "overlay_male_worn_ballistic_vest_heavy", "fg": 173 },
           { "id": "overlay_female_worn_ballistic_vest_heavy", "fg": 174 },
-          { "id": "mon_feral_fpf_boss", "fg": 175, "bg": 30 }
+          { "id": "mon_feral_fpf_boss", "fg": 175, "bg": 30 },
+          { "id": [ "tshirt_cropped", "overlay_wielded_tshirt_cropped" ], "fg": 176 },
+          { "id": "overlay_female_worn_tshirt_cropped", "fg": 177 },
+          { "id": "overlay_male_worn_tshirt_cropped", "fg": 178 },
+          { "id": [ "gold_chain", "overlay_wielded_gold_chain" ], "fg": 179 },
+          { "id": "overlay_worn_gold_chain", "fg": 180 }
         ],
         "sprite_width": 32,
         "sprite_height": 32

@@ -112,9 +112,9 @@
           },
           {
             "distribution": [
-              { "item": "null", "prob": 75 },
-              { "item": "scrap_ballistic_plate", "prob": 50 },
-              { "item": "ceramic_ballistic_plate", "prob": 25 }
+              { "item": "null", "prob": 50 },
+              { "item": "scrap_ballistic_plate", "prob": 25 },
+              { "item": "steel_ballistic_plate", "prob": 25 }
             ]
           }
         ],

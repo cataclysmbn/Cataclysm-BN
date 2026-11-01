@@ -8,6 +8,7 @@
 #include "damage.h"
 #include "debug.h"
 #include "item.h"
+#include "itype.h"
 #include "monster.h"
 #include "player.h"
 #include "recipe.h"
@@ -410,6 +411,65 @@ void lua_istate_actor::call_on_puff( Character &who, item &it ) const
     } catch( std::runtime_error &e ) {
         debugmsg( "Failed to run istate on_puff for '%s': %s", item_id, e.what() );
     }
+}
+
+// --- lua_iconsume_actor ---
+
+lua_iconsume_actor::lua_iconsume_actor( const std::string &item_id,
+                                        sol::protected_function &&on_try_consume )
+    : lua_icallback_actor_base( item_id ),
+      on_try_consume_func( std::move( on_try_consume ) ) {}
+
+auto lua_iconsume_actor::call_on_try_consume( Character &who, item &it,
+        consume_overrides &overrides ) const -> bool
+{
+    if( on_try_consume_func == sol::lua_nil ) {
+        return true;
+    }
+    const auto base_kcal = who.compute_effective_nutrients( it ).kcal;
+    const auto base_thirst = it.get_comestible()->quench;
+    try {
+        sol::state_view lua( on_try_consume_func.lua_state() );
+        auto params = lua.create_table();
+        params["char"] = &who;
+        params["item"] = &it;
+        params["nutrition"] = base_kcal;
+        params["thirst"] = base_thirst;
+        const auto fun = who.fun_for( it );
+        params["fun"] = fun.first;
+        params["fun_max"] = fun.second;
+        params["skip_cannibalism"] = false;
+        sol::protected_function_result res = on_try_consume_func( params );
+        check_func_result( res );
+
+        // Read back values the callback may have overridden.
+        if( params.get_or( "nutrition", base_kcal ) != base_kcal ) {
+            overrides.kcal = params.get<int>( "nutrition" );
+        }
+        if( params.get_or( "thirst", base_thirst ) != base_thirst ) {
+            overrides.thirst = params.get<int>( "thirst" );
+        }
+        if( params.get_or( "fun", fun.first ) != fun.first ) {
+            overrides.fun = params.get<int>( "fun" );
+        }
+        if( params.get_or( "fun_max", fun.second ) != fun.second ) {
+            overrides.fun_max = params.get<int>( "fun_max" );
+        }
+        if( params.get_or( "skip_cannibalism", false ) ) {
+            overrides.skip_cannibalism = true;
+        }
+
+        const auto ret = res.get<sol::object>();
+        if( ret.is<bool>() ) {
+            return ret.as<bool>();
+        } else if( ret.is<sol::table>() ) {
+            return ret.as<sol::table>().get_or( "allowed", true );
+        }
+        return true;
+    } catch( std::runtime_error &e ) {
+        debugmsg( "Failed to run iconsume on_try_consume for '%s': %s", item_id, e.what() );
+    }
+    return true;
 }
 
 // --- lua_imelee_actor ---

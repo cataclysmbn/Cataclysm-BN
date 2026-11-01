@@ -183,6 +183,8 @@ Armor can be defined like this:
 "resistance": { "cut": 0, "bullet": 1000 }, // If set, overrides usual resistance calculation. Values are for undamaged item, thickness affects scaling with damage - 1 thickness means no reduction from damage, 2 means it's halved on first damage, 10 means each level of damage decreases armor by 10%
 "hearing_protection": 0,    // How much does this armor dampen sound hear by the wearer, in dB spl. 0 - 191. This will make all sounds harder to hear for the wearer, including deafening sounds. At a hearing_ability multiplier of one, heard sounds of 120dB+ can deafen the player, with guaranteed temporary deafness at 140dB+. Use this instead of the "DEAF" or "PARTIAL_DEAF" flags. ~40 dB spl total protection will protect against most gunfire, 80 will protect against almost any sound. Cumulative with other items with this quality.
 "adv_hearing_protection": 0 // How much does this armor dampen deafening sounds heard by the wearer, in dB spl. 0 - 191. This will reduce the damaging volume of deafening sounds by its given amount without dampening other sounds.  Cumulative with other items with this quality.
+"provided_slots": [ { "id": "INSERT_FLAG_ID_HERE", "amount": 1 } ] // Flag id to provide for wearing requirements
+"consumed_slots": [ { "id": "INSERT_FLAG_ID_HERE", "amount": 1 } ] // Flag id to require for wearing requirements, automatically is this with 1 if there is one such instance.
 ```
 
 Alternately, every item (book, tool, gun, even food) can be used as armor if it has armor_data:

@@ -105,6 +105,7 @@
       [ "tank_top", 20 ],
       [ "halter_top", 20 ],
       [ "camisole", 20 ],
+      [ "tshirt_cropped", 20 ],
       [ "dress", 10 ],
       [ "sundress", 10 ],
       [ "corset", 5 ]
@@ -297,7 +298,7 @@
       [ "vest", 10 ],
       [ "vest_leather", 5 ],
       [ "kevlar", 10 ],
-      [ "ballistic_vest_esapi", 5 ],
+      { "group": "standard_ballistic_vests_and_plates", "prob": 5 },
       [ "waistcoat", 5 ],
       [ "flotation_vest", 5 ],
       [ "flotation_vest_sandbag", 5 ],

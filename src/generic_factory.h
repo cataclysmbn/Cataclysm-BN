@@ -249,6 +249,7 @@ class generic_factory
                     jo.throw_error( string_format( "cannot specify both '%s' and '%s'/'%s'",
                                                    abstract_member_name, id_member_name, legacy_id_member_name ) );
                 }
+                assign_src( def, src );
                 def.load( jo, src );
                 abstracts[jo.get_string( abstract_member_name )] = def;
             }

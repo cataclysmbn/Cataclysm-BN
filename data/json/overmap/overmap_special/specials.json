@@ -783,6 +783,21 @@
   },
   {
     "type": "overmap_special",
+    "id": "mil_barracks",
+    "overmaps": [
+      { "point": [ 0, 0, 0 ], "overmap": "mil_barracks_north" },
+      { "point": [ 0, 0, 1 ], "overmap": "mil_barracks_roof_north" },
+      { "point": [ 0, 1, 0 ], "overmap": "mil_barracks_parking_north" },
+      { "point": [ 0, 1, 1 ], "overmap": "mil_barracks_roof_2_north" }
+    ],
+    "connections": [ { "point": [ 0, 2, 0 ], "from": [ 0, 1, 0 ], "connection": "local_road" } ],
+    "locations": [ "field", "forest" ],
+    "city_distance": [ 0, 10 ],
+    "occurrences": [ 35, 100 ],
+    "flags": [ "MILITARY", "UNIQUE", "ELECTRIC_GRID" ]
+  },
+  {
+    "type": "overmap_special",
     "id": "Missile Silo",
     "overmaps": [
       { "point": [ 0, 0, 0 ], "overmap": "silo" },
@@ -2058,6 +2073,7 @@
       { "point": [ 5, 5, 0 ], "overmap": "ranch_camp_51_north" },
       { "point": [ 5, 5, 1 ], "overmap": "ranch_camp_51_z1_north" },
       { "point": [ 6, 5, 0 ], "overmap": "ranch_camp_52_north" },
+      { "point": [ 6, 5, 1 ], "overmap": "ranch_camp_52_z1_north" },
       { "point": [ 7, 5, 0 ], "overmap": "ranch_camp_53_north" },
       { "point": [ 8, 5, 0 ], "overmap": "ranch_camp_54_north" },
       { "point": [ 0, 6, 0 ], "overmap": "ranch_camp_55_north" },
