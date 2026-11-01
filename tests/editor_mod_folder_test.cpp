@@ -196,3 +196,32 @@ TEST_CASE(
     CHECK(std::ranges::contains(reopened, mod_id("editor_world_mods_own")));
     CHECK(editor::editor_world_mods({mod_id("gone")}) == opened);
 }
+
+TEST_CASE(
+    "an editor world leaves out a mod of the player's that needs another core than the game's",
+    "[editor_session][editor_vehicle]") {
+    const auto mods = std::filesystem::path(PATH_INFO::user_moddir());
+    const auto core = mods / "editor_world_mods_core";
+    const auto needy = mods / "editor_world_mods_needy";
+    const auto forget = [&] {
+        std::filesystem::remove_all(core);
+        std::filesystem::remove_all(needy);
+        world_generator->get_mod_manager().refresh_mod_list();
+    };
+    forget();
+    const auto cleanup = on_out_of_scope(forget);
+    std::filesystem::create_directories(core);
+    std::ofstream(core / "modinfo.json")
+        << R"([{"type":"MOD_INFO","id":"editor_world_mods_core","name":"Core",)"
+           R"("category":"content","core":true}])";
+    std::filesystem::create_directories(needy);
+    std::ofstream(needy / "modinfo.json")
+        << R"([{"type":"MOD_INFO","id":"editor_world_mods_needy","name":"Needy",)"
+           R"("category":"content","dependencies":["editor_world_mods_core"]}])";
+    world_generator->get_mod_manager().refresh_mod_list();
+    const auto defaults = world_generator->get_mod_manager().get_default_mods();
+    // Adding it would put its core in place of the game's and drop the default mods.
+    const auto opened = editor::editor_world_mods({});
+    CHECK(std::ranges::equal(opened | std::views::take(defaults.size()), defaults));
+    CHECK_FALSE(std::ranges::contains(opened, mod_id("editor_world_mods_needy")));
+}
