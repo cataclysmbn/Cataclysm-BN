@@ -1,6 +1,7 @@
 #include "editor/mapgen_legend_edit.h"
 
 #include "editor/document.h"
+#include "editor/session_file.h"
 
 namespace editor {
 
@@ -10,7 +11,7 @@ auto set_legend(document& doc, const legend_edit& edit) -> std::expected<void, s
     }
     const auto& value = doc.objects()[edit.object].value;
     // A palette maps its symbols itself; a mapgen in its object.
-    const auto palette = value.value("type", "") == "palette";
+    const auto palette = text_at(value, "type") == "palette";
     if (!palette && (!value.contains("object") || !value["object"].is_object())) {
         return std::unexpected(std::string("the entry has no object"));
     }

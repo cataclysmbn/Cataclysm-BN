@@ -40,6 +40,12 @@ auto make_mod_of(const std::filesystem::path& path, const std::string& name = {}
 auto id_of_words(std::string_view words) -> std::string;
 /// `id` as words: underscores as spaces, the first letter upper case.
 auto words_of_id(std::string_view id) -> std::string;
+/// The text at `key` of the JSON `value`, else empty: a file may hold any value there.
+template <typename Json> auto text_at(const Json& value, const std::string& key) -> std::string {
+    return value.is_object() && value.contains(key) && value[key].is_string()
+             ? value[key].template get<std::string>()
+             : std::string{};
+}
 /// What the editors call the file at `path`: the name of its first entry and of its mod for a file
 /// of the player's mods, else its path.
 auto document_title(const std::filesystem::path& path) -> std::string;

@@ -1462,7 +1462,7 @@ auto special_canvas(const session& state) -> ec::component {
 namespace {
 /// What kind of entry `value` is, in words; empty for one the editor does not name.
 auto entry_kind(const nlohmann::ordered_json& value) -> std::string {
-    const auto type = value.is_object() ? value.value("type", "") : std::string{};
+    const auto type = text_at(value, "type");
     if (type == "mapgen") {
         return value.contains("nested_mapgen_id") ? _("Nested chunk")
              : value.contains("update_mapgen_id")

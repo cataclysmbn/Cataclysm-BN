@@ -5,6 +5,7 @@
 #include "editor/history_label.h"
 #include "editor/mapgen_check.h"
 #include "editor/recent_documents.h"
+#include "editor/session_file.h"
 #include "engine_client_vehicle_look.h"
 #include "flag.h"
 #include "fstream_utils.h"
@@ -91,8 +92,7 @@ auto defines(const std::filesystem::path& path, const std::string& id) -> bool {
     }
     const auto json = nlohmann::ordered_json::parse(text, nullptr, false);
     const auto names = [&](const nlohmann::ordered_json& value) {
-        return value.is_object() && value.value("type", "") == "vehicle"
-            && value.value("id", "") == id;
+        return text_at(value, "type") == "vehicle" && text_at(value, "id") == id;
     };
     return json.is_array() ? std::ranges::any_of(json, names) : names(json);
 }
@@ -1384,7 +1384,7 @@ auto design_step_label(const document_edit& edit) -> std::string {
     const auto fuel_of = [](const nlohmann::ordered_json& prototype, const design_part& entry) {
         const auto at = nlohmann::ordered_json::json_pointer(entry.pointer);
         const auto part = prototype.contains(at) ? prototype[at] : nlohmann::ordered_json();
-        return part.is_object() ? part.value("fuel", "") : std::string{};
+        return text_at(part, "fuel");
     };
     if (before == after && !changed.empty()) {
         const auto name = part_name(changed[0].part);

@@ -70,20 +70,19 @@ namespace ec = engine_client;
 namespace {
 
 auto is_json_mapgen(const nlohmann::ordered_json& value) -> bool {
-    return value.is_object() && value.value("type", "") == "mapgen"
-        && value.value("method", "") == "json";
+    return text_at(value, "type") == "mapgen" && text_at(value, "method") == "json";
 }
 
 /// The built-in or Lua mapgen an entry names, where `path` holds it from byte `begin`; none
 /// for any other entry.
 auto code_mapgen_in(const nlohmann::ordered_json& value, const std::string& path, std::size_t begin)
     -> std::optional<code_mapgen> {
-    if (!value.is_object() || value.value("type", "") != "mapgen") { return std::nullopt; }
-    const auto method = value.value("method", "");
+    if (text_at(value, "type") != "mapgen") { return std::nullopt; }
+    const auto method = text_at(value, "method");
     const auto name =
-        method == "builtin" ? value.value("name", "")
+        method == "builtin" ? text_at(value, "name")
         : method == "lua"
-            ? value.value("luamethod", "")
+            ? text_at(value, "luamethod")
             : std::string{};
     if (name.empty()) { return std::nullopt; }
     return code_mapgen{
@@ -94,11 +93,11 @@ auto code_mapgen_in(const nlohmann::ordered_json& value, const std::string& path
 }
 
 auto is_oter(const nlohmann::ordered_json& value) -> bool {
-    return value.is_object() && value.value("type", "") == "overmap_terrain";
+    return text_at(value, "type") == "overmap_terrain";
 }
 
 auto is_palette(const nlohmann::ordered_json& value) -> bool {
-    return value.is_object() && value.value("type", "") == "palette";
+    return text_at(value, "type") == "palette";
 }
 
 /// Whether a mapping places what a mapgen parameter says, which only that mapgen has.
@@ -628,20 +627,20 @@ auto read_appearance(const std::filesystem::path& path, const std::string& id) -
     const auto read = nlohmann::json::parse(in, nullptr, false);
     if (!read.is_array() || read.empty() || !read[0].is_object()) { return {}; }
     const auto& entry = read[0];
+    namespace ranges = std::ranges;
     const auto nearest = [](const auto& rate_of, const int value) {
-        return std::
-            ranges::
-                min(often_rates, {}, [&](const often_rate& rate) {
-                    return std::abs(std::invoke(rate_of, rate) - value);
-                }).often;
+        const auto distance = [&](const often_rate& rate) {
+            return std::abs(std::invoke(rate_of, rate) - value);
+        };
+        return ranges::min(often_rates, {}, distance).often;
     };
     const auto houses = nlohmann::json::json_pointer("/city/houses/" + id);
-    if (entry.value("type", "") == "region_overlay" && entry.contains(houses)
+    if (text_at(entry, "type") == "region_overlay" && entry.contains(houses)
         && entry[houses].is_number_integer()) {
         return {.where = "town", .often = nearest(&often_rate::weight, entry[houses].get<int>())};
     }
     const auto most = nlohmann::json::json_pointer("/occurrences/1");
-    if (entry.value("type", "") == "overmap_special" && entry.contains(most)
+    if (text_at(entry, "type") == "overmap_special" && entry.contains(most)
         && entry[most].is_number_integer()) {
         return {.where = "country", .often = nearest(&often_rate::most, entry[most].get<int>())};
     }
@@ -1273,7 +1272,7 @@ auto session::open(const std::string& name) -> void {
 auto session::palette_taken(const std::string& name) const -> bool {
     return palette_id(name).is_valid()
         || std::ranges::any_of(doc->objects(), [&](const document_object& entry) {
-               return is_palette(entry.value) && entry.value.value("id", "") == name;
+               return is_palette(entry.value) && text_at(entry.value, "id") == name;
            });
 }
 

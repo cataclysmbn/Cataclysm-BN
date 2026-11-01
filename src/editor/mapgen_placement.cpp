@@ -2,6 +2,7 @@
 
 #include "editor/document.h"
 #include "editor/mapgen_check.h"
+#include "editor/session_file.h"
 #include "editor/special_grid.h"
 
 #include <algorithm>
@@ -32,7 +33,7 @@ auto written(const placement_range& range) -> ordered_json {
 
 /// What the game's loader of `value`'s type says of it.
 auto texts(const ordered_json& value) -> std::vector<std::string> {
-    const auto type = value.is_object() ? value.value("type", "") : std::string{};
+    const auto type = text_at(value, "type");
     const auto text = value.dump();
     const auto messages =
         type == "overmap_special" || type == "city_building" ? check_special(text)

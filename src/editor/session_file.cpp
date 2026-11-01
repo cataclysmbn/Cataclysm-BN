@@ -85,7 +85,7 @@ auto mod_info_of(const std::filesystem::path& path) -> std::optional<nlohmann::j
         if (!in) { continue; }
         const auto read = nlohmann::json::parse(in, nullptr, false);
         for (const auto& entry : read.is_array() ? read : nlohmann::json::array({read})) {
-            if (entry.is_object() && entry.value("type", "") == "MOD_INFO" && entry.contains("id")
+            if (text_at(entry, "type") == "MOD_INFO" && entry.contains("id")
                 && entry["id"].is_string()) {
                 return entry;
             }
@@ -107,8 +107,8 @@ auto entry_name(const std::filesystem::path& path) -> std::string {
     const auto read = nlohmann::json::parse(in, nullptr, false);
     const auto entries = read.is_array() ? read : nlohmann::json::array({read});
     for (const auto& entry : entries) {
-        if (entry.is_object() && entry.value("type", "") == "overmap_terrain"
-            && entry.contains("name") && entry["name"].is_string()) {
+        if (text_at(entry, "type") == "overmap_terrain" && entry.contains("name")
+            && entry["name"].is_string()) {
             return entry["name"].get<std::string>();
         }
     }

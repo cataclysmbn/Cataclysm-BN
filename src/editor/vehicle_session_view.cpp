@@ -622,7 +622,7 @@ auto parts_view(const session& state) -> ec::screen_view {
                                     .id = "prototype:" + entry.id,
                                     .label = entry.name,
                                     .selected =
-                                        state.doc && state.prototype().value("id", "") == entry.id,
+                                        state.doc && text_at(state.prototype(), "id") == entry.id,
                                     .columns = id_column(entry.id)};
                             })
                             | std::ranges::to<std::vector>(),
@@ -735,7 +735,9 @@ auto parts_view(const session& state) -> ec::screen_view {
     parts.push_back(ec::panel(
         {.id = state.live ? "vehicle:live" : "vehicle:document",
          .title = state.live ? state.live->name
-                             : state.prototype().value("name", state.prototype().value("id", "")),
+                : text_at(state.prototype(), "name").empty()
+                    ? text_at(state.prototype(), "id")
+                    : text_at(state.prototype(), "name"),
          .stats = std::move(status)}));
     if (!state.live && !state.built.messages.empty()) {
         auto problems =
@@ -1016,14 +1018,14 @@ auto parts_view(const session& state) -> ec::screen_view {
         if (tab == "part") { return std::move(*part_form(state)); }
         if (tab == "vehicle") {
             auto fields = std::vector<ec::form_field>{
-                {.id = "name", .label = _("Name"), .value = state.prototype().value("name", "")}};
+                {.id = "name", .label = _("Name"), .value = text_at(state.prototype(), "name")}};
             if (advanced_mode()) {
                 fields.push_back(
-                    {.id = "id", .label = _("ID"), .value = state.prototype().value("id", "")});
+                    {.id = "id", .label = _("ID"), .value = text_at(state.prototype(), "id")});
                 fields.push_back(
                     {.id = "color_palette",
                      .label = _("Colour palette"),
-                     .value = state.prototype().value("color_palette", "")});
+                     .value = text_at(state.prototype(), "color_palette")});
                 fields.push_back(
                     {.id = "flags",
                      .label = _("Flags"),
@@ -1396,9 +1398,8 @@ auto parts_view(const session& state) -> ec::screen_view {
         affordances.push_back(ec::invoke_affordance(
             {.id = save_as_id,
              .label = _("Save as"),
-             .args =
-                 {.text = ec::
-                      text_shape{.initial = state.suggested(state.prototype().value("id", ""))}},
+             .args = {.text = ec::
+                          text_shape{.initial = state.suggested(text_at(state.prototype(), "id"))}},
              .keys = {"F12"}}));
     }
     return {

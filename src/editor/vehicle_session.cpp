@@ -429,7 +429,7 @@ struct editing: session {
             notice = string_format(_("No data file of the loaded mods defines %s."), id);
             return;
         }
-        if (doc && doc->path() == *path && prototype().value("id", "") == id) {
+        if (doc && doc->path() == *path && text_at(prototype(), "id") == id) {
             // It is open already, with whatever it has unsaved.
             live = nullptr;
             return;
@@ -446,8 +446,7 @@ struct editing: session {
         }
         const auto& objects = opened->objects();
         const auto found = std::ranges::find_if(objects, [&](const document_object& entry) {
-            return entry.value.is_object() && entry.value.value("type", "") == "vehicle"
-                && entry.value.value("id", "") == id;
+            return text_at(entry.value, "type") == "vehicle" && text_at(entry.value, "id") == id;
         });
         if (found == objects.end()) {
             notice = string_format(_("No data file of the loaded mods defines %s."), id);
@@ -478,7 +477,7 @@ struct editing: session {
         if (!std::filesystem::exists(doc->path())) { return; }
         remember_document(
             {.editor = "vehicle",
-             .name = prototype().value("id", ""),
+             .name = text_at(prototype(), "id"),
              .mods = mods_for(doc->path())});
     }
 
@@ -493,7 +492,7 @@ struct editing: session {
         const auto kept_pointer = field_pointer;
         const auto kept_tool = canvas_tool;
         const auto path = doc->path();
-        const auto id = prototype().value("id", "");
+        const auto id = text_at(prototype(), "id");
         open_file(path, id);
         if (!notice.empty()) {
             // Nothing is edited, so a file that lost the prototype closes it.
@@ -1305,7 +1304,7 @@ struct editing: session {
                 field_pointer);
             return;
         }
-        if (!next.is_object() || next.value("type", "") != "vehicle" || !next.contains("id")) {
+        if (text_at(next, "type") != "vehicle" || !next.contains("id")) {
             notice = _("A prototype keeps its type and id.");
             return;
         }
@@ -1821,7 +1820,7 @@ struct editing: session {
         const auto needed = frame_around({around.low, around.high, cursor}, 0);
         // Undo puts the vehicle edited in place back as a new one, which is still the same.
         const auto shown =
-            live ? std::string("live") : doc->path().string() + "#" + prototype().value("id", "");
+            live ? std::string("live") : doc->path().string() + "#" + text_at(prototype(), "id");
         if (shown == framed) {
             frame = frame_around({frame.low, frame.high, needed.low, needed.high}, 0);
             return;
@@ -2021,7 +2020,7 @@ auto footprint(const session& state) -> session_footprint {
     const auto steps = state.live || state.doc ? state.history() : history_steps{};
     return {
         .design =
-            state.doc ? state.doc->path().string() + "#" + state.prototype().value("id", "") : "",
+            state.doc ? state.doc->path().string() + "#" + text_at(state.prototype(), "id") : "",
         .steps = steps.labels.size(),
         .depth = steps.depth,
         .saved = steps.saved,
