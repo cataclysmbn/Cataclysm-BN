@@ -268,13 +268,7 @@
       },
       {
         "distribution": [
-          {
-            "collection": [
-              { "item": "american_flag", "prob": 70 },
-              { "item": "beret", "prob": 33 }
-            ],
-            "prob": 10
-          },
+          { "collection": [ { "item": "american_flag", "prob": 70 }, { "item": "beret", "prob": 33 } ], "prob": 10 },
           {
             "collection": [
               { "item": "ceramic_mug", "prob": 50 },

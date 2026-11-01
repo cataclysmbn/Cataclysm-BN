@@ -1,6 +1,7 @@
 [
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "//": "Top two rows, townhouses and road.",
     "om_terrain": [
       [
@@ -144,7 +145,8 @@
     "object": { "mapgensize": [ 1, 1 ], "place_fields": [ { "field": "fd_web", "x": 0, "y": 0, "intensity": 1 } ] }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "//": "Basement level for townhouses, top row .",
     "om_terrain": [
       [
@@ -265,7 +267,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "//": "Second floor level for townhouses, top two rows.",
     "om_terrain": [
       [
@@ -394,7 +397,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "//": "roof level for townhouses.",
     "om_terrain": [
       [
@@ -440,7 +444,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "//": "Left side, duplexes and road.",
     "om_terrain": [
       [ "retirement_community_15", "retirement_community_16" ],
@@ -576,7 +581,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "//": "Left side, duplexes basement.",
     "om_terrain": [ [ "retirement_community_b_15" ], [ "retirement_community_b_19" ], [ "retirement_community_b_23" ] ],
     "object": {
@@ -699,7 +705,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "//": "Left side, duplexes second floor.",
     "om_terrain": [ [ "retirement_community_2f_15" ], [ "retirement_community_2f_19" ], [ "retirement_community_2f_23" ] ],
     "object": {
@@ -816,7 +823,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "//": "Left side, duplexes roof.",
     "om_terrain": [ [ "retirement_community_3f_15" ], [ "retirement_community_3f_19" ], [ "retirement_community_3f_23" ] ],
     "object": {
@@ -900,7 +908,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "//": "Right side, road and homes.",
     "om_terrain": [
       [ "retirement_community_17", "retirement_community_18" ],
@@ -1048,7 +1057,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "//": "Right side, home basements.",
     "om_terrain": [ [ "retirement_community_b_18" ], [ "retirement_community_b_22" ], [ "retirement_community_b_26" ] ],
     "object": {
@@ -1168,7 +1178,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "//": "Right side, second floor of homes.",
     "om_terrain": [ [ "retirement_community_2f_18" ], [ "retirement_community_2f_22" ], [ "retirement_community_2f_26" ] ],
     "object": {
@@ -1296,7 +1307,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "//": "Right side, roof of homes.",
     "om_terrain": [ [ "retirement_community_3f_18" ], [ "retirement_community_3f_22" ], [ "retirement_community_3f_26" ] ],
     "object": {
@@ -1380,7 +1392,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "//": "Bottom two rows, road and community/administration buildings.",
     "om_terrain": [
       [
@@ -1510,7 +1523,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "//": "Bottom two rows, roof of community/administration buildings.",
     "om_terrain": [
       [
@@ -1590,7 +1604,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "//": "Basement of admin building.",
     "om_terrain": [ [ "retirement_community_b_37", "retirement_community_b_38" ] ],
     "object": {
@@ -1634,7 +1649,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "//": "Central park.",
     "om_terrain": [
       [ "retirement_community_park_1", "retirement_community_park_2", "retirement_community_park_3" ],
@@ -1749,7 +1765,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "//": "Central park, 2nd floor.",
     "om_terrain": [ [ "retirement_community_park_2f_2" ], [ "retirement_community_park_2f_5" ] ],
     "object": {
@@ -1809,7 +1826,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "//": "Park basement level.",
     "om_terrain": [
       [ "retirement_community_park_b_1", "retirement_community_park_b_2", "retirement_community_park_b_3" ],
@@ -1897,7 +1915,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "om_terrain": [ "retirement_community_road" ],
     "object": {
       "fill_ter": "t_pavement",
@@ -1933,7 +1952,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "om_terrain": [ "retirement_community_sewer" ],
     "object": {
       "fill_ter": "t_rock",
@@ -1964,7 +1984,7 @@
         "        |o-~~-o|        "
       ],
       "palettes": [ "sewers" ],
-      "terrain": { "<": "t_ladder_up" },
+      "terrain": { "<": "t_ladder_up" }
     }
   },
   {
@@ -2004,27 +2024,18 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "ret_comm_office",
     "object": {
       "mapgensize": [ 1, 1 ],
-      "place_computers": [
-        {
-          "x": 0,
-          "y": 0,
-          "name": "Shady Hills Corporation: Community Manager"
-        }
-      ]
+      "place_computers": [ { "x": 0, "y": 0, "name": "Shady Hills Corporation: Community Manager" } ]
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "ret_comm_home",
-    "object": {
-      "mapgensize": [ 1, 1 ],
-      "place_computers": [
-        { "x": 0, "y": 0, "name": "Welcome to MY PC" }
-      ]
-    }
+    "object": { "mapgensize": [ 1, 1 ], "place_computers": [ { "x": 0, "y": 0, "name": "Welcome to MY PC" } ] }
   }
 ]

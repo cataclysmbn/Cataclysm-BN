@@ -293,5 +293,5 @@
     "id": [ "s_lot_no_sidewalk" ],
     "copy-from": "s_lot",
     "delete": { "flags": [ "SIDEWALK", "NO_ROTATE" ] }
-  },
+  }
 ]
