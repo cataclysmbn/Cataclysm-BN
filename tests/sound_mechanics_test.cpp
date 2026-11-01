@@ -116,11 +116,23 @@ TEST_CASE("sounds_keep_absolute_positions_when_reality_bubble_resizes", "[sound]
     auto& here = get_map();
     auto& you = get_avatar();
     const auto original_position = you.abs_pos();
+    const auto original_map_origin = here.get_abs_sub();
     const auto cleanup = on_out_of_scope([&]() {
         sounds::reset_sounds();
         sounds::clear_floodfill_que(true);
-        g->on_options_changed();
+        // Re-applying a bubble size re-centers the map on the player, so restore
+        // the player position first.  Drive the resize machinery through the
+        // initial global bubble state (REALITY_BUBBLE_SIZE 4 matches the
+        // g_reality_bubble_size/g_mapsize globals the test process starts with),
+        // then restore the initial map window so tests sharing this process see
+        // the same map origin and scale as at process start.
         you.setpos(original_position);
+        {
+            const auto initial_bubble = override_option("REALITY_BUBBLE_SIZE", "4");
+            g->on_options_changed();
+        }
+        here.resize(MAPSIZE);
+        here.load(original_map_origin, false);
         clear_all_state();
     });
     const auto larger_bubble = override_option("REALITY_BUBBLE_SIZE", "5");

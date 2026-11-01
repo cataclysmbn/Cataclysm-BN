@@ -850,6 +850,21 @@
     "flags": [ "FANCY" ]
   },
   {
+    "id": "gold_chain",
+    "type": "ARMOR",
+    "name": { "str": "gold chain necklace" },
+    "looks_like": "gold_necklace",
+    "description": "A shiny, small chain made of tiny links of gold, worn around the neck as jewelery.  You can wear it if you like, but it won't provide any effects.",
+    "weight": "5 g",
+    "volume": "50 ml",
+    "price": "200 USD",
+    "price_postapoc": "50 cent",
+    "material": [ "gold" ],
+    "symbol": "[",
+    "color": "yellow",
+    "flags": [ "FANCY" ]
+  },
+  {
     "id": "gold_ring",
     "type": "ARMOR",
     "name": { "str": "gold ring" },

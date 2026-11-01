@@ -14,6 +14,7 @@ class Creature;
 class item;
 class monster;
 struct bionic;
+struct consume_overrides;
 struct dealt_damage_instance;
 struct tripoint;
 
@@ -138,6 +139,27 @@ class lua_istate_actor : public lua_icallback_actor_base
         void call_on_pickup( Character &who, item &it ) const;
         void call_on_puff( Character &who, item &it ) const;
         bool call_on_drop( Character &who, item &it, const tripoint_bub_ms &pos ) const;
+};
+
+/** Lua callbacks for consuming a specific item type. */
+class lua_iconsume_actor : public lua_icallback_actor_base
+{
+    private:
+        sol::protected_function on_try_consume_func;
+
+    public:
+        lua_iconsume_actor( const std::string &item_id,
+                            sol::protected_function &&on_try_consume );
+
+        /**
+         * Runs the on_try_consume callback for the item being consumed.
+         * Values modified in the Lua params table are written into @p overrides
+         * and applied instead of the ones computed from the item.
+         * Returns false to interrupt the rest of the consume function
+         * (the item is left alone unless the callback changed it).
+         */
+        auto call_on_try_consume( Character &who, item &it,
+                                  consume_overrides &overrides ) const -> bool;
 };
 
 /** Lua callbacks for melee combat events. */

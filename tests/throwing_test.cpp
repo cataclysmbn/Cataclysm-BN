@@ -20,8 +20,10 @@
 #include "player_helpers.h"
 #include "projectile.h"
 #include "ranged.h"
+#include "rng.h"
 #include "state_helpers.h"
 #include "test_statistics.h"
+#include "trap.h"
 #include "type_id.h"
 #include "vehicle/vehicle_throw.h"
 
@@ -145,7 +147,14 @@ TEST_CASE("lighter flung creatures are worse at breaking obstacles", "[throwing]
 
 TEST_CASE("flung creatures only trigger landing traps if they cannot fly", "[throwing][trap]") {
     clear_all_state();
+    // Use a fixed player position so the test is independent of whatever
+    // position prior tests in the same process left the avatar at.
+    g->u.setpos(test_origin + tripoint_rel_ms(10, 10, 0));
+    // Moving the avatar can load submaps outside the previously cleared area.
     clear_map();
+    // Deterministic seed: fling_creature consumes RNG, and the test outcome
+    // depends on the RNG state inherited from prior tests in the same process.
+    rng_set_engine_seed(1U);
 
     auto& here = g->m;
     const auto start_abs = test_origin + tripoint_rel_ms(1, 0, 0);
@@ -158,6 +167,7 @@ TEST_CASE("flung creatures only trigger landing traps if they cannot fly", "[thr
     here.ter_set(start, ter_id("t_floor"));
     here.ter_set(landing, ter_id("t_floor"));
     here.trap_set(landing, beartrap);
+    REQUIRE_FALSE(here.tr_at(landing).is_null());
 
     SECTION("non-flying creatures land on traps") {
         auto& zombie = spawn_test_monster("mon_zombie", start);
@@ -165,6 +175,8 @@ TEST_CASE("flung creatures only trigger landing traps if they cannot fly", "[thr
         g->fling_creature(&zombie, coord_to_angle(start, landing), 10.0f);
 
         CHECK(zombie.abs_pos() == landing_abs);
+        // Beartraps have remove_on_trigger: true, so a triggered trap is gone.
+        CHECK(here.tr_at(landing).is_null());
         CHECK(zombie.has_effect(effect_beartrap));
     }
 
@@ -175,6 +187,8 @@ TEST_CASE("flung creatures only trigger landing traps if they cannot fly", "[thr
         g->fling_creature(&bat, coord_to_angle(start, landing), 10.0f);
 
         CHECK(bat.abs_pos() == landing_abs);
+        // Flying creatures recover and don't trigger the trap.
+        CHECK_FALSE(here.tr_at(landing).is_null());
         CHECK_FALSE(bat.has_effect(effect_beartrap));
     }
 }
