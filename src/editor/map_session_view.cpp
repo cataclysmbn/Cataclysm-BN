@@ -1592,10 +1592,13 @@ auto drawing_affordances(const session& state) -> std::vector<ec::affordance> {
              .label = _("Move placement"),
              .args = {.row = ec::row_shape{.component_id = canvas_id}, .text = ec::text_shape{}}}));
     }
-    stroke_affordances(
-        affordances,
-        state.current->kind == shape_kind::point
-            || state.current->region == region_use::placements);
+    stroke_affordances(affordances, state.current->kind == shape_kind::point);
+    // A placement's drag has no beginning of its own; only its end is shared with a stroke's.
+    if (state.current->kind != shape_kind::point
+        && state.current->region == region_use::placements) {
+        affordances.push_back(
+            ec::invoke_affordance({.id = stroke_end_id, .label = _("End stroke")}));
+    }
     affordances.push_back(ec::invoke_affordance(
         {.id = extract_palette_id,
          .label = _("Extract legend to palette"),
