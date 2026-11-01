@@ -171,6 +171,10 @@ auto drive_checks(const vehicle& veh, const std::function<auto(int)->itype_id>& 
             return part.is_tank() && std::ranges::contains(fuels, held(veh.index_of_part(&part)));
         });
         const auto name = item::nname(fuels.front());
+        const auto free_tank =
+            !parts_where(veh, [&](const vehicle_part& part) {
+                 return part.is_tank() && held(veh.index_of_part(&part)).is_null();
+             }).empty();
         checks.push_back(check(
             "fuel", !fueled.empty(),
             fueled.empty()
@@ -179,8 +183,11 @@ auto drive_checks(const vehicle& veh, const std::function<auto(int)->itype_id>& 
                 //~ %s is the fuel a vehicle's engine burns, such as diesel.
                 : string_format(_("A tank holds %s for the engine."), name),
             drive_fix::fill_tanks,
-            //~ %s is the fuel a vehicle's engine burns, such as diesel.
-            string_format(_("Fill the tanks with %s"), name)));
+            free_tank
+                //~ %s is the fuel a vehicle's engine burns, such as diesel.
+                ? string_format(_("Fill the tanks with %s"), name)
+                //~ %s is the fuel a vehicle's engine burns, such as diesel.
+                : string_format(_("Add a tank of %s"), name)));
     }
     const auto starts = std::ranges::any_of(engines, [&](const int index) {
         const auto& part = veh.cpart(index);
