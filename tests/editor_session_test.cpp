@@ -8695,15 +8695,20 @@ TEST_CASE(
     std::filesystem::create_directories(folder);
     std::ofstream(folder / "modinfo.json")
         << R"([{"type":"MOD_INFO","id":"editor_place4_mod","name":"Place mod"}])";
-    // The overmap terrain a countryside placement names, or none when it is refused.
+    // The overmap terrain a countryside placement names, after the entries `before` of its file,
+    // or none when it is refused.
+    const auto with =
+        [&](const std::string& name, const std::string& before, const std::string& terrain) {
+            const auto path = folder / (name + ".json");
+            std::ofstream(path) << "[" << before << R"({"type":"overmap_terrain","id":")" << name
+                                << R"(","name":"A",)" << terrain << "}]";
+            if (!me::write_appearance(path, name, {.where = "country"})) { return std::string{}; }
+            return nlohmann::ordered_json::parse(read_file(
+                me::placement_file(path)))[0]["overmaps"][0]["overmap"]
+                .get<std::string>();
+        };
     const auto placed = [&](const std::string& name, const std::string& terrain) {
-        const auto path = folder / (name + ".json");
-        std::ofstream(path) << R"([{"type":"overmap_terrain","id":")" << name << R"(","name":"A",)"
-                            << terrain << "}]";
-        if (!me::write_appearance(path, name, {.where = "country"})) { return std::string{}; }
-        return nlohmann::ordered_json::parse(read_file(
-            me::placement_file(path)))[0]["overmaps"][0]["overmap"]
-            .get<std::string>();
+        return with(name, "", terrain);
     };
     // Its own flags replace those of the terrain it copies.
     CHECK(placed("own_flags", R"("copy-from":"omt_obsolete","flags":["SIDEWALK"])")
@@ -8725,6 +8730,33 @@ TEST_CASE(
     CHECK(me::read_appearance(shed, "own_flags").where == "test");
     CHECK_FALSE(me::write_appearance(shed, "own_flags", {.where = "town"}));
     CHECK(read_file(me::placement_file(shed)) == own);
+    // A copy of a terrain of the same file takes the flags the game loads for it.
+    const auto lot = R"({"type":"overmap_terrain","abstract":"my_lot","flags":["NO_ROTATE"]},)";
+    CHECK(with("lot_copy", lot, R"("copy-from":"my_lot")") == "lot_copy");
+    CHECK(with("lot_turned", lot, R"("copy-from":"my_lot","delete":{"flags":["NO_ROTATE"]})")
+          == "lot_turned_north");
+    const auto lane = R"({"type":"overmap_terrain","id":"my_lane","copy-from":"road"},)";
+    CHECK(with("lane_copy", lane, R"("copy-from":"my_lane")").empty());
+    // Only the special the editor writes reads as a place in the countryside.
+    const auto barn = folder / "barn_hut.json";
+    std::ofstream(barn) << R"([{"type":"overmap_terrain","id":"barn_hut","name":"A"}])";
+    REQUIRE(me::write_appearance(barn, "barn_hut", {.where = "country"}));
+    const auto written = nlohmann::ordered_json::parse(read_file(me::placement_file(barn)));
+    REQUIRE(me::read_appearance(barn, "barn_hut").where == "country");
+    const auto read_as = [&](const nlohmann::ordered_json& changed) {
+        std::ofstream(me::placement_file(barn), std::ios::trunc) << changed.dump();
+        return me::read_appearance(barn, "barn_hut").where;
+    };
+    auto renamed = written;
+    renamed[0].erase("rotate");
+    renamed[0]["flags"] = nlohmann::ordered_json::array({"UNIQUE"});
+    CHECK(read_as(renamed) == "test");
+    auto added = written;
+    added[0]["flags"] = nlohmann::ordered_json::array({"UNIQUE"});
+    CHECK(read_as(added) == "test");
+    auto two = written;
+    two[0]["overmaps"].push_back(two[0]["overmaps"][0]);
+    CHECK(read_as(two) == "test");
 }
 
 #endif // CATA_MCP
