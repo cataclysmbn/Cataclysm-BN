@@ -9433,6 +9433,109 @@ TEST_CASE("the paste tool outlines the squares the copy lands on", "[editor_sess
     editor::reset_editor_session();
 }
 
+TEST_CASE("making a chunk of the marked squares puts it where they were", "[editor_session]") {
+    auto rows = nlohmann::ordered_json::array();
+    for (auto row = 0; row < 24; ++row) { rows.push_back(std::string(24, '.')); }
+    rows[1] = ".#+#" + std::string(20, '.');
+    rows[2] = ".CCC" + std::string(20, '.');
+    const auto file = mod_file{
+        {{"rows", rows},
+         {"terrain", {{".", "t_floor"}, {"#", "t_wall"}, {"+", "t_door_c"}, {"C", "t_floor"}}},
+         {"furniture", {{"C", "f_counter"}}},
+         {"place_items", {{{"item", "tools_home"}, {"x", 2}, {"y", 2}, {"chance", 100}}}}},
+        "made.json"};
+    const auto guard = screen_guard{};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto& screen) {
+            CHECK_FALSE(affordance(screen, "editor:make_chunk").enabled);
+            return invoke("editor:tool", {.row = "tool:select"});
+        },
+        [](const auto&) { return square_at(1, 1); },
+        [](const auto&) { return square_at(3, 2); },
+        [](const auto&) { return invoke("editor:make_chunk", {.text = "My Bath"}); },
+        [](const auto& screen) {
+            CHECK(told(screen).empty());
+            CHECK(faded_cells(screen).size() == 6);
+            // It is in hand to place again, its footprint on the pointer.
+            CHECK(body<ec::grid_body>(part(screen, "editor:canvas")).stamp.size() == 6);
+            return square_at(10, 10);
+        },
+        [](const auto& screen) {
+            CHECK(told(screen).empty());
+            CHECK(faded_cells(screen).size() == 12);
+            return invoke("editor:catalog_kind", {.row = "catalog:nested_mapgen"});
+        },
+        [](const auto& screen) {
+            CHECK(has_row(screen, "editor:catalog", "entry:my_bath"));
+            return invoke("editor:save");
+        },
+        [](const auto&) { return act("QUIT"); }};
+    CHECK(walk_map(walk) == walk.size());
+    editor::reset_editor_session();
+    const auto saved = nlohmann::ordered_json::parse(read_file(file.path));
+    const auto chunk = std::ranges::find_if(saved, [](const auto& entry) {
+        return entry.contains("nested_mapgen_id");
+    });
+    REQUIRE(chunk != saved.end());
+    CHECK((*chunk)["nested_mapgen_id"] == "my_bath");
+    const auto& made = (*chunk)["object"];
+    CHECK(made["mapgensize"] == nlohmann::ordered_json::array({3, 2}));
+    CHECK(made["rows"] == nlohmann::ordered_json::array({"#+#", "CCC"}));
+    CHECK(made["terrain"]["#"] == "t_wall");
+    CHECK(made["furniture"]["C"] == "f_counter");
+    REQUIRE(made["place_items"].size() == 1);
+    CHECK(made["place_items"][0]["x"] == 1);
+    CHECK(made["place_items"][0]["y"] == 1);
+    const auto& map = saved[0]["object"];
+    CHECK(map["rows"][1].get<std::string>().starts_with("...."));
+    CHECK(map["rows"][2].get<std::string>().starts_with("...."));
+    CHECK(map["place_nested"][0]["chunks"] == nlohmann::ordered_json::array({"my_bath"}));
+    CHECK(map["place_nested"][0]["x"] == 1);
+    CHECK(map["place_nested"][0]["y"] == 1);
+    CHECK_FALSE(map.contains("place_items"));
+}
+
+TEST_CASE("one undo takes back a chunk made of the marked squares", "[editor_session]") {
+    const auto file = walled_file();
+    const auto guard = screen_guard{};
+    auto walk = std::vector<map_step>{[&](const auto&) {
+        return invoke("editor:open", {.text = file.path.string()});
+    }};
+    std::ranges::copy(mark_wall_row(), std::back_inserter(walk));
+    walk.push_back([](const auto&) { return invoke("editor:make_chunk", {.text = "Wall"}); });
+    walk.push_back([](const auto&) { return invoke("editor:undo"); });
+    walk.push_back([](const auto& screen) {
+        CHECK(faded_cells(screen).empty());
+        return invoke("editor:save");
+    });
+    walk.push_back([](const auto&) { return act("QUIT"); });
+    CHECK(walk_map(walk) == walk.size());
+    editor::reset_editor_session();
+    const auto saved = nlohmann::ordered_json::parse(read_file(file.path));
+    CHECK(saved.size() == 1);
+    CHECK(saved[0]["object"]["rows"][1].get<std::string>().starts_with("#+##"));
+}
+
+TEST_CASE("a chunk's name that the game or the file holds gets a free id", "[editor_session]") {
+    const auto file = walled_file();
+    const auto guard = screen_guard{};
+    auto walk = std::vector<map_step>{[&](const auto&) {
+        return invoke("editor:open", {.text = file.path.string()});
+    }};
+    std::ranges::copy(mark_wall_row(), std::back_inserter(walk));
+    walk.push_back([](const auto&) {
+        return invoke("editor:make_chunk", {.text = "bunker_suicide"});
+    });
+    walk.push_back([](const auto&) { return invoke("editor:save"); });
+    walk.push_back([](const auto&) { return act("QUIT"); });
+    CHECK(walk_map(walk) == walk.size());
+    editor::reset_editor_session();
+    const auto saved = nlohmann::ordered_json::parse(read_file(file.path));
+    REQUIRE(saved.size() == 2);
+    CHECK(saved[1]["nested_mapgen_id"] != "bunker_suicide");
+}
+
 TEST_CASE("the placement card shows only on the placements tool", "[editor_session]") {
     const auto guard = screen_guard{};
     const auto simple = override_option("EDITOR_ADVANCED", "false");
