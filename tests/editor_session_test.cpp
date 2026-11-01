@@ -8517,4 +8517,22 @@ TEST_CASE(
     editor::reset_editor_session();
 }
 
+TEST_CASE("the editors name a map whose files hold values of the wrong kind", "[editor_session]") {
+    const auto folder = std::filesystem::path(PATH_INFO::user_moddir()) / "editor_odd_mod";
+    const auto forget = [&] { std::filesystem::remove_all(folder); };
+    forget();
+    const auto cleanup = on_out_of_scope(forget);
+    std::filesystem::create_directories(folder);
+    std::ofstream(folder / "modinfo.json")
+        << R"([{"type":1},{"type":"MOD_INFO","id":"editor_odd_mod","name":"Odd mod"}])";
+    std::ofstream(folder / "shed.json")
+        << R"([{"type":1,"name":2},)"
+           R"({"type":"overmap_terrain","id":"editor_odd_shed","name":"Shed"},)"
+           R"({"type":"mapgen","method":"json","om_terrain":"editor_odd_shed","object":{}}])";
+    CHECK(editor::document_title(folder / "shed.json") == "Shed (Odd mod)");
+    const auto doc = editor::document::open(folder / "shed.json");
+    REQUIRE(doc);
+    CHECK(editor::map_editor::named_building(*doc) == "editor_odd_shed");
+}
+
 #endif // CATA_MCP
