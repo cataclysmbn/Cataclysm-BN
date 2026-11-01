@@ -74,7 +74,7 @@
   {
     "type": "ammunition_type",
     "id": "shot",
-    "name": "shot",
+    "name": "12x70mm",
     "default": "shot_00"
   },
   {
