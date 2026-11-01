@@ -197,7 +197,7 @@ inline const auto tools = std::array{
     tool{.id = "tool:pick", .kind = std::nullopt, .hotkey = "i"},
     tool{.id = "tool:select", .spans = true, .region = region_use::select, .hotkey = "s"},
     tool{.id = "tool:paste", .region = region_use::paste, .hotkey = "v"},
-    tool{.id = "tool:placements", .region = region_use::placements, .hotkey = "p"},
+    tool{.id = "tool:placements", .spans = true, .region = region_use::placements, .hotkey = "p"},
 };
 
 /// The tools of an overmap special's canvas: open a square's mapgen, draw squares with the terrain
@@ -254,6 +254,10 @@ inline const auto catalog_uses = std::array{
         .listed = true},
 };
 
+
+/// The `place_*` array the card of the placements tool puts an entry of `use` in; none for a tab
+/// it has no card for.
+auto card_kind(const catalog_use& use) -> std::optional<std::string>;
 
 /// A special the editor placed in the world.
 struct placed_special {
@@ -466,6 +470,13 @@ struct session {
     std::string place_x = "0";
     std::string place_y = "0";
     std::string place_value;
+    /// What the card of the placements tool places: the id and name the catalog picked, and how
+    /// the player set it.
+    std::string place_what;
+    std::string place_what_name;
+    std::string place_chance = "100";
+    std::string place_count = "1";
+    std::string place_facing = "0";
     /// What the field form sets: a pointer into the entry and a value as JSON or bare text; an
     /// empty value removes it.
     std::string field_pointer;
@@ -671,6 +682,14 @@ struct session {
 
     /// Adds what the add form names and picks it.
     auto add_placed() -> void;
+    /// Adds what the card names on the squares marked, which it uses up, and picks it.
+    auto add_typed() -> void;
+    /// Whether the placements tool is in hand in Simple mode, where it shows the card.
+    auto on_card() const -> bool;
+    /// Shows the tab of `use`, each tab keeping its own search.
+    auto show_catalog(const catalog_use& use) -> void;
+    /// Shows a tab the card places while it shows one it does not.
+    auto show_card_catalog() -> void;
 
     auto delete_picked() -> void;
 

@@ -5,6 +5,7 @@
 #include "color.h"
 #include "editor/catalog.h"
 #include "editor/document.h"
+#include "editor/editor_mode.h"
 #include "editor/history_label.h"
 #include "editor/json_pointer.h"
 #include "editor/json_read.h"
@@ -1216,6 +1217,7 @@ auto session::reload() -> void {
         unforced = current;
         current = &*std::ranges::find(tools, region_use::placements, &tool::region);
         anchor.reset();
+        show_card_catalog();
     } else if (on_mapgen() && has_rows() && unforced != nullptr) {
         current = std::exchange(unforced, nullptr);
         anchor.reset();
@@ -1995,6 +1997,59 @@ auto session::add_placed() -> void {
     if (!found.empty()) { pick(found.front()); }
 }
 
+auto session::add_typed() -> void {
+    const auto number = [](const std::string& text, const int fallback) {
+        auto value = fallback;
+        std::from_chars(text.data(), text.data() + text.size(), value);
+        return value;
+    };
+    place_value =
+        typed_value(
+            {.kind = place_kind,
+             .what = place_what,
+             .chance = number(place_chance, 100),
+             .count = number(place_count, 1),
+             .facing = number(place_facing, 0)})
+            .dump();
+    add_placed();
+    if (notice.empty()) {
+        selected.reset();
+        anchor.reset();
+    }
+}
+
+auto card_kind(const catalog_use& use) -> std::optional<std::string> {
+    switch (use.kind) {
+        case catalog_kind::item_group:
+        case catalog_kind::monster_group:
+        case catalog_kind::vehicle:
+        case catalog_kind::npc_template:
+        case catalog_kind::nested_mapgen:
+            return std::string("place_") + use.layer;
+        default:
+            return std::nullopt;
+    }
+}
+
+auto session::on_card() const -> bool {
+    return !advanced_mode() && current->region == region_use::placements;
+}
+
+auto session::show_catalog(const catalog_use& use) -> void {
+    catalog_searches[catalog->id] = {.filter = catalog_filter, .page = catalog_page};
+    catalog = &use;
+    const auto kept = catalog_searches[use.id];
+    catalog_filter = kept.filter;
+    catalog_page = kept.page;
+}
+
+auto session::show_card_catalog() -> void {
+    if (!on_card() || card_kind(*catalog)) { return; }
+    show_catalog(*std::ranges::find_if(catalog_uses, [](const catalog_use& use) {
+        return card_kind(use).has_value();
+    }));
+}
+
 auto session::delete_picked() -> void {
     const auto removed =
         remove_placement(*doc, {.object = object, .kind = picked->kind, .index = picked->index});
@@ -2142,7 +2197,20 @@ auto session::paint(const point& at) -> void {
         return;
     }
     const auto grid = symbols_of(*doc, object);
-    if (current->region == region_use::select) {
+    if (current->region == region_use::placements && !anchor) {
+        // The one listed last is drawn on top.
+        const auto placed = placements_of(*doc, object);
+        const auto found =
+            std::ranges::find_if(placed | std::views::reverse, [&](const auto& entry) {
+                return entry.x.min <= at.x && at.x <= entry.x.max && entry.y.min <= at.y
+                    && at.y <= entry.y.max;
+            });
+        if (found != std::ranges::rend(placed)) {
+            pick(*found);
+            return;
+        }
+    }
+    if (current->region == region_use::select || current->region == region_use::placements) {
         // What was counted over the squares marked before no longer stands.
         loot.reset();
         selected = anchor ? std::optional(selection{.from = *anchor, .to = at}) : std::nullopt;
@@ -2159,23 +2227,6 @@ auto session::paint(const point& at) -> void {
     }
     if (current->region == region_use::paste) {
         paste_at(at);
-        return;
-    }
-    if (current->region == region_use::placements) {
-        // The one listed last is drawn on top.
-        const auto placed = placements_of(*doc, object);
-        const auto found =
-            std::ranges::find_if(placed | std::views::reverse, [&](const auto& entry) {
-                return entry.x.min <= at.x && at.x <= entry.x.max && entry.y.min <= at.y
-                    && at.y <= entry.y.max;
-            });
-        if (found != std::ranges::rend(placed)) {
-            pick(*found);
-        } else {
-            status = _(
-                "No placement here. Mark squares with the Select tool, then add one under New "
-                "placement.");
-        }
         return;
     }
     if (!current->kind) {

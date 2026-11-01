@@ -2228,7 +2228,7 @@ TEST_CASE(
             case 2:
                 CHECK(body<ec::grid_body>(part(screen, "editor:canvas")).region_drag
                       == "editor:placement_span");
-                CHECK(body<ec::grid_body>(part(screen, "editor:canvas")).drag.empty());
+                CHECK(body<ec::grid_body>(part(screen, "editor:canvas")).drag == "span");
                 CHECK(wire_part(state, "editor:canvas")["region_drag"] == "editor:placement_span");
                 CHECK_FALSE(std::ranges::contains(
                     part(screen, "editor:canvas").affordances,
@@ -7612,10 +7612,7 @@ TEST_CASE(
     editor::reset_editor_session();
 }
 
-TEST_CASE(
-    "the placements tool says what to do on an empty square, and the new placement form names "
-    "its kinds",
-    "[editor_session]") {
+TEST_CASE("the new placement form names its kinds", "[editor_session]") {
     const auto guard = screen_guard{};
     const auto file = mod_file{{{"fill_ter", "t_floor"}}};
     const auto field = [](const ec::screen_view& screen, const std::string& id) {
@@ -7629,9 +7626,6 @@ TEST_CASE(
         [](const auto&) { return invoke("editor:tool", {.row = "tool:placements"}); },
         [](const auto&) { return square_at(5, 5); },
         [&](const auto& screen) {
-            CHECK(said(screen)
-                  == "No placement here. Mark squares with the Select tool, then add one under "
-                     "New placement.");
             const auto kind = field(screen, "kind");
             const auto option = [&](const std::string& id) {
                 const auto found = std::ranges::find(kind.options, id, &ec::form_option::id);

@@ -224,7 +224,9 @@ auto footprint(const session& state) -> session_footprint {
             state.place_value,     state.field_pointer,
             state.field_value,     state.mapping_symbol,
             state.mapping_layer,   state.mapping_value,
-            state.special_terrain, state.special_connection}};
+            state.special_terrain, state.special_connection,
+            state.place_chance,    state.place_count,
+            state.place_facing,    state.place_what}};
 }
 
 } // namespace
@@ -506,6 +508,11 @@ auto run_editor_session() -> void {
                 state.unforced = nullptr;
                 state.current = &*found;
                 state.anchor.reset();
+                state.show_card_catalog();
+                if (state.on_card()) {
+                    state.status = _(
+                        "Drag over squares, then pick what goes there from the catalog.");
+                }
             }
         } else if (id == symbol_id) {
             state.pick_symbol(std::string(row_rest(row, "symbol").value_or("")));
@@ -564,13 +571,20 @@ auto run_editor_session() -> void {
             state.delete_picked();
         } else if (id == place_set_id) {
             const auto text = invoked->args.text.value_or("");
-            (row == "kind" ? state.place_kind
-             : row == "x"  ? state.place_x
-             : row == "y"
-                 ? state.place_y
+            (row == "kind"     ? state.place_kind
+             : row == "x"      ? state.place_x
+             : row == "y"      ? state.place_y
+             : row == "chance" ? state.place_chance
+             : row == "count"  ? state.place_count
+             : row == "facing"
+                 ? state.place_facing
                  : state.place_value) = text;
         } else if (id == place_apply_id) {
-            state.add_placed();
+            if (state.on_card()) {
+                state.add_typed();
+            } else {
+                state.add_placed();
+            }
         } else if (id == field_set_id) {
             (row == "pointer" ? state.field_pointer : state.field_value) =
                 invoked->args.text.value_or("");
@@ -585,15 +599,7 @@ auto run_editor_session() -> void {
             const auto found = std::ranges::find_if(catalog_uses, [&](const catalog_use& use) {
                 return row == std::string("catalog:") + use.id;
             });
-            if (found != catalog_uses.end()) {
-                // Each tab keeps its own search.
-                state.catalog_searches[state.catalog->id] =
-                    {.filter = state.catalog_filter, .page = state.catalog_page};
-                state.catalog = &*found;
-                const auto kept = state.catalog_searches[found->id];
-                state.catalog_filter = kept.filter;
-                state.catalog_page = kept.page;
-            }
+            if (found != catalog_uses.end()) { state.show_catalog(*found); }
         } else if (id == catalog_filter_id) {
             state.catalog_filter = invoked->args.text.value_or("");
             state.catalog_page = 0;
@@ -606,6 +612,10 @@ auto run_editor_session() -> void {
             });
             if (found != entries.end() && state.on_special()) {
                 state.special_terrain = found->id;
+            } else if (found != entries.end() && state.on_card() && card_kind(*state.catalog)) {
+                state.place_kind = *card_kind(*state.catalog);
+                state.place_what = found->id;
+                state.place_what_name = catalog_row_label(*found);
             } else if (found != entries.end() && state.has_rows()) {
                 state.take(*state.catalog, found->id, catalog_row_label(*found));
             } else if (found != entries.end()) {

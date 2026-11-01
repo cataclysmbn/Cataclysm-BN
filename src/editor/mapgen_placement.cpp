@@ -168,6 +168,28 @@ auto set_field(document& doc, const field_edit& edit) -> std::expected<void, std
     return doc.edit(edit.object, patch);
 }
 
-auto typed_value(const typed_placement& /*typed*/) -> nlohmann::ordered_json { return {}; }
+auto typed_value(const typed_placement& typed) -> nlohmann::ordered_json {
+    auto value = nlohmann::ordered_json::object();
+    if (typed.kind == "place_items") {
+        value["item"] = typed.what;
+        value["chance"] = typed.chance;
+    } else if (typed.kind == "place_monsters") {
+        value["monster"] = typed.what;
+        // The game reads it as one in that many.
+        value["chance"] = 100 / std::max(typed.chance, 1);
+    } else if (typed.kind == "place_vehicles") {
+        value["vehicle"] = typed.what;
+        value["chance"] = typed.chance;
+        value["rotation"] = typed.facing;
+    } else if (typed.kind == "place_npcs") {
+        value["class"] = typed.what;
+    } else if (typed.kind == "place_nested") {
+        value["chunks"] = nlohmann::ordered_json::array({typed.what});
+    }
+    if (typed.count > 1 && (typed.kind == "place_items" || typed.kind == "place_monsters")) {
+        value["repeat"] = typed.count;
+    }
+    return value;
+}
 
 } // namespace editor

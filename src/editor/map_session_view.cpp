@@ -57,6 +57,8 @@ namespace {
 
 namespace ec = engine_client;
 
+auto placement_name(const placement& entry) -> std::string;
+
 /// `columns` after the column of a row's id, which advanced mode alone shows.
 auto with_id(const std::string& id, std::vector<game_client::interaction_column> columns)
     -> std::vector<game_client::interaction_column> {
@@ -435,7 +437,7 @@ auto canvas(const session& state) -> ec::component {
                   .id = placement_row(entry),
                   .from = {entry.x.min + shift.x, entry.y.min + shift.y},
                   .to = {entry.x.max + shift.x, entry.y.max + shift.y},
-                  .label = entry.kind,
+                  .label = advanced_mode() ? entry.kind : placement_name(entry),
                   .selected = state.picked && placement_row(*state.picked) == placement_row(entry)};
           })
         | std::ranges::to<std::vector>();
@@ -513,6 +515,20 @@ auto canvas(const session& state) -> ec::component {
             .span = span}};
 }
 
+/// What a placement places by name, else its kind.
+auto placement_name(const placement& entry) -> std::string {
+    const auto layer = std::string_view(entry.kind).substr(std::string_view("place_").size());
+    const auto use = std::ranges::find_if(catalog_uses, [&](const catalog_use& each) {
+        return each.layer == layer && each.key && entry.value.contains(each.key);
+    });
+    const auto names =
+        use == catalog_uses.end()
+            ? std::string{}
+            : legend_value(layer, nlohmann::ordered_json{{use->key, entry.value[use->key]}}.dump())
+                  .names;
+    return names.empty() ? legend_layer_label(layer) : names;
+}
+
 /// What a placement places, a `key: value` for each member: a string as it reads, anything else as
 /// JSON.
 auto placement_text(const nlohmann::ordered_json& what) -> std::string {
@@ -525,10 +541,17 @@ auto placement_text(const nlohmann::ordered_json& what) -> std::string {
          | std::views::join_with(std::string{", "}) | std::ranges::to<std::string>();
 }
 
-/// A row per placement: where it lands, and what it places.
+/// A row per placement: where it lands, and what it places; in Simple mode what it places by name.
 auto placement_rows(const session& state) -> std::vector<ec::row> {
     return placements_of(*state.doc, state.object)
          | std::views::transform([](const placement& entry) {
+               if (!advanced_mode()) {
+                   return ec::row{
+                       .id = placement_row(entry),
+                       .label = placement_name(entry),
+                       .description = legend_layer_label(
+                           std::string_view(entry.kind).substr(std::string_view("place_").size()))};
+               }
                auto what = entry.value;
                what.erase("x");
                what.erase("y");
@@ -814,10 +837,81 @@ auto placement_value_hint(const std::string_view kind) -> std::string {
     return _("Its members other than x and y, as a JSON object.");
 }
 
+/// The card that adds a placement: the squares the tool dragged, what the catalog picked, and only
+/// what that kind takes.
+auto placement_card(
+    const session& state, std::vector<ec::component>& parts,
+    std::vector<ec::affordance>& affordances) -> void {
+    if (state.picked) {
+        affordances.push_back(
+            ec::invoke_affordance({.id = placement_delete_id, .label = _("Delete placement")}));
+    }
+    const auto& kind = state.place_kind;
+    auto fields = std::vector<ec::form_field>{};
+    if (kind == "place_items" || kind == "place_monsters" || kind == "place_vehicles") {
+        fields.push_back(
+            {.id = "chance",
+             .label = _("Chance"),
+             .value = state.place_chance,
+             .type = "select",
+             .options =
+                 {{.id = "100", .label = _("Always")},
+                  {.id = "50", .label = _("Often")},
+                  {.id = "25", .label = _("Sometimes")},
+                  {.id = "10", .label = _("Rarely")}}});
+    }
+    if (kind == "place_items" || kind == "place_monsters") {
+        fields.push_back(
+            {.id = "count",
+             .label = _("How many times"),
+             .value = state.place_count,
+             .type = "integer",
+             .min = 1,
+             .max = 20});
+    }
+    if (kind == "place_vehicles") {
+        fields.push_back(
+            {.id = "facing",
+             .label = _("Facing"),
+             .value = state.place_facing,
+             .type = "select",
+             .options =
+                 {{.id = "0", .label = _("East")},
+                  {.id = "90", .label = _("South")},
+                  {.id = "180", .label = _("West")},
+                  {.id = "270", .label = _("North")}}});
+    }
+    parts.push_back(ec::component{
+        .id = place_id,
+        .affordances = {place_set_id, place_apply_id},
+        .body = ec::form_body{.fields = std::move(fields), .submit = place_apply_id}});
+    affordances.push_back(ec::invoke_affordance(
+        {.id = place_set_id,
+         .label = _("Value"),
+         .args = {.row = ec::row_shape{.component_id = place_id}, .text = ec::text_shape{}}}));
+    const auto denial =
+        !state.selected ? std::string(_("Drag over the squares on the map first."))
+        : state.place_what.empty()
+            ? std::string(_("Pick what goes there from the catalog first."))
+            : std::string{};
+    affordances.push_back(ec::invoke_affordance(
+        {.id = place_apply_id,
+         //~ %s is what the placement places.
+         .label = state.place_what.empty()
+                    ? std::string(_("Add placement"))
+                    : string_format(_("Add %s"), state.place_what_name),
+         .enabled = denial.empty(),
+         .denial = denial}));
+}
+
 /// The forms that move the picked placement and add one.
 auto placement_forms(
     const session& state, std::vector<ec::component>& parts,
     std::vector<ec::affordance>& affordances) -> void {
+    if (!advanced_mode()) {
+        placement_card(state, parts, affordances);
+        return;
+    }
     if (state.picked) {
         parts.push_back(ec::component{
             .id = move_id,
@@ -941,7 +1035,10 @@ auto mapping_parts(
     const auto found = state.catalog_entries();
     parts.push_back(ec::tabs(
         {.id = catalog_kinds_id,
-         .tabs = catalog_uses | std::views::transform([&](const catalog_use& use) {
+         .tabs = catalog_uses | std::views::filter([&](const catalog_use& use) {
+                     return !state.on_card() || card_kind(use).has_value();
+                 })
+               | std::views::transform([&](const catalog_use& use) {
                      return ec::tab_entry{
                          .id = std::string("catalog:") + use.id,
                          .label = catalog_label(use),
