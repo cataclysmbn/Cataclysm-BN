@@ -8636,4 +8636,11 @@ TEST_CASE(
     CHECK(me::read_appearance(barn, "editor_place2_barn").where == "town");
 }
 
+TEST_CASE("the editors read a whole number of the wrong kind as none", "[editor_session]") {
+    const auto entry = nlohmann::ordered_json::parse(R"({"x":"1","y":2})");
+    CHECK(editor::int_at(entry, "x", 0) == 0);
+    CHECK(editor::int_at(entry, "y", 0) == 2);
+    CHECK(editor::int_at(nlohmann::ordered_json::array(), "x", 7) == 7);
+}
+
 #endif // CATA_MCP
