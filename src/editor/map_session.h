@@ -416,6 +416,16 @@ struct layered_ink {
     std::vector<legend_symbol> added;
 };
 
+/// A nested chunk the entry places, read from the open file or the game's data.
+struct chunk_source {
+    nlohmann::ordered_json entry;
+    std::vector<legend_symbol> legend;
+    symbol_grid squares;
+    point size;
+    /// Whether the open file holds it, so that an edit can change it.
+    bool in_file = false;
+};
+
 /// What a piece of the library holds.
 struct map_piece {
     symbol_grid squares;
@@ -478,6 +488,8 @@ struct session {
     std::vector<placement> clip_placed;
     /// What the copied symbols place, as the entry they were copied from maps them.
     std::map<std::string, std::vector<legend_line>> clip_legend;
+    /// The chunks the entry places or has in hand; none for one with no JSON to read.
+    std::map<std::string, std::optional<chunk_source>> chunks;
     /// The pieces kept to paste in any file, which hold squares.
     std::vector<library_piece> library;
     /// Whether the form that shares the clip as text shows.
@@ -704,6 +716,10 @@ struct session {
     /// Pastes the clip's symbols and placements with its top-left square at `at`, as one undo step.
     auto paste_at(const point& at) -> void;
 
+    /// Reads the chunks the entry places or has in hand.
+    auto read_chunks() -> void;
+    /// The chunk a drawing tool has in hand; none for anything else.
+    auto chunk_in_hand() const -> const chunk_source*;
     /// Whether the list of what the marked squares hold shows: while squares are marked, and on
     /// the select tool, where nothing marked stands for every square.
     auto shows_marked() const -> bool;

@@ -16,6 +16,10 @@ struct mapgen_source {
 /// direction; none when it has no JSON mapgen, or none the game read from a file.
 auto mapgen_source_of(const std::string& mapgen_id) -> std::optional<mapgen_source>;
 
+/// The source of the first JSON the game registered for the nested chunk `id`; none when it has
+/// none it read from a file.
+auto nested_mapgen_source_of(const std::string& id) -> std::optional<mapgen_source>;
+
 /// A mapgen the game runs as code rather than draws from JSON.
 struct code_mapgen {
     /// `builtin` for a C++ function of the game, `lua` for a Lua one.

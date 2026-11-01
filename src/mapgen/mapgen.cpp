@@ -6783,6 +6783,19 @@ auto editor::mapgen_source_of(const std::string& mapgen_id) -> std::optional<map
         .path = *json->source_location().path, .offset = json->source_location().offset};
 }
 
+auto editor::nested_mapgen_source_of(const std::string& id) -> std::optional<mapgen_source> {
+    const auto found = nested_mapgen.find(id);
+    if (found == nested_mapgen.end()) { return std::nullopt; }
+    for (const auto& function : found->second) {
+        const auto* const json = dynamic_cast<const mapgen_function_json_base*>(function.obj.get());
+        if (json != nullptr && json->source_location().path) {
+            return mapgen_source{
+                .path = *json->source_location().path, .offset = json->source_location().offset};
+        }
+    }
+    return std::nullopt;
+}
+
 auto editor::source_line(const std::string& path, const int offset) -> std::string {
     const auto text = read_entire_file(path);
     const auto end = std::min(static_cast<std::size_t>(std::max(offset, 0)), text.size());

@@ -391,6 +391,54 @@ auto tool_label(const tool& value) -> std::string {
 }
 
 namespace {
+/// Whether `value` is the nested chunk `id`.
+auto is_chunk(const nlohmann::ordered_json& value, const std::string& id) -> bool {
+    return is_json_mapgen(value) && value.contains("nested_mapgen_id")
+        && std::ranges::contains(entry_ids(value), id);
+}
+
+/// The chunk the mapgen entry `value` makes.
+auto chunk_of(const nlohmann::ordered_json& value, const bool in_file) -> chunk_source {
+    const auto& inner = value.contains("object") ? value["object"] : value;
+    auto squares = symbol_grid{};
+    if (inner.contains("rows") && inner["rows"].is_array()) {
+        for (const auto& row : inner["rows"]) {
+            squares.push_back(
+                row.is_string()
+                    ? utf8_display_split(row.get<std::string>())
+                    : std::vector<std::string>{});
+        }
+    }
+    const auto sized =
+        inner.contains("mapgensize") && inner["mapgensize"].is_array()
+        && inner["mapgensize"].size() == 2 && inner["mapgensize"][0].is_number_integer()
+        && inner["mapgensize"][1].is_number_integer();
+    const auto size =
+        sized ? point(inner["mapgensize"][0].get<int>(), inner["mapgensize"][1].get<int>())
+        : squares.empty()
+            ? point_zero
+            : point(static_cast<int>(squares.front().size()), static_cast<int>(squares.size()));
+    return {
+        .entry = value,
+        .legend = mapgen_legend(value.dump()).value_or(std::vector<legend_symbol>{}),
+        .squares = std::move(squares),
+        .size = size,
+        .in_file = in_file};
+}
+
+/// The chunk `id` as the game's data writes it; none when it has no JSON the game read from a file.
+auto game_chunk(const std::string& id) -> std::optional<chunk_source> {
+    const auto source = nested_mapgen_source_of(id);
+    if (!source) { return std::nullopt; }
+    auto in = std::ifstream(source->path, std::ios::binary);
+    const auto read = nlohmann::ordered_json::parse(in, nullptr, false);
+    if (!read.is_array()) { return std::nullopt; }
+    const auto found = std::ranges::find_if(read, [&](const auto& entry) {
+        return is_chunk(entry, id);
+    });
+    return found == read.end() ? std::nullopt : std::optional(chunk_of(*found, false));
+}
+
 /// Writes `to` on the marked squares, or all if none are, that hold `from`.
 auto write_marked(session& state, const std::string& from, const std::string& to)
     -> std::expected<void, std::string> {
@@ -1283,6 +1331,7 @@ auto session::reload() -> void {
     const auto read = mapgen_legend(text);
     legend = read.value_or(std::vector<legend_symbol>{});
     legend_error = read ? std::string{} : read.error();
+    read_chunks();
     reload_levels();
     diagnostics =
         check_mapgen(text) | std::views::transform([&](const auto& message) {
@@ -1571,6 +1620,7 @@ auto session::take(const catalog_use& use, const std::string& id, const std::str
         return;
     }
     held = held_mapping{.symbol = *free, .layer = use.layer, .value = value, .name = name};
+    read_chunks();
     symbol = *free;
     mapping_symbol = *free;
     mapping_layer = use.layer;
@@ -1921,6 +1971,53 @@ auto session::copy() -> void {
         *doc, object,
         {.x = {.min = low.x, .max = low.x + size.columns - 1},
          .y = {.min = low.y, .max = low.y + size.rows - 1}});
+}
+
+auto session::read_chunks() -> void {
+    std::erase_if(chunks, [](const auto& entry) { return entry.second && entry.second->in_file; });
+    auto wanted = std::set<std::string>{};
+    const auto want = [&](const nlohmann::ordered_json& value) {
+        if (const auto id = first_named("nested", value)) { wanted.insert(*id); }
+    };
+    for (const auto& entry : legend) {
+        for (const auto& line : entry.lines) {
+            if (line.layer == "nested") {
+                want(nlohmann::ordered_json::parse(line.value, nullptr, false));
+            }
+        }
+    }
+    for (const auto& entry : placements_of(*doc, object)) {
+        if (entry.kind == "place_nested") { want(entry.value); }
+    }
+    if (held && held->layer == "nested") { want(held->value); }
+    for (const auto& id : wanted) {
+        const auto& objects = doc->objects();
+        const auto own = std::ranges::find_if(objects, [&](const auto& entry) {
+            return is_chunk(entry.value, id);
+        });
+        if (own != objects.end()) {
+            chunks[id] = chunk_of(own->value, true);
+        } else if (!chunks.contains(id)) {
+            chunks[id] = game_chunk(id);
+        }
+    }
+}
+
+auto session::chunk_in_hand() const -> const chunk_source* {
+    if (!current->kind) { return nullptr; }
+    const auto entry = std::ranges::find(legend, symbol, &legend_symbol::symbol);
+    const auto line =
+        entry == legend.end()
+            ? std::vector<legend_line>::const_iterator{}
+            : std::ranges::find(entry->lines, std::string("nested"), &legend_line::layer);
+    const auto id =
+        entry != legend.end() && line != entry->lines.end()
+            ? first_named("nested", nlohmann::ordered_json::parse(line->value, nullptr, false))
+        : held && held->symbol == symbol && held->layer == "nested"
+            ? first_named("nested", held->value)
+            : std::nullopt;
+    const auto found = id ? chunks.find(*id) : chunks.end();
+    return found != chunks.end() && found->second ? &*found->second : nullptr;
 }
 
 auto session::shows_marked() const -> bool {

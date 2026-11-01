@@ -336,6 +336,47 @@ auto faded_squares(const session& state, ec::look_palette& palette)
             }
         }
     }
+    // A chunk the entry places shows over the squares it lands on, as far as the rows go.
+    auto chunk_looks =
+        std::map<std::string, std::map<std::string, std::vector<engine_client::look>>>{};
+    const auto draw_chunk = [&](const std::optional<std::string>& id, const point& origin) {
+        const auto found = id ? state.chunks.find(*id) : state.chunks.end();
+        if (found == state.chunks.end() || !found->second) { return; }
+        const auto& chunk = *found->second;
+        if (!chunk_looks.contains(*id)) {
+            chunk_looks[*id] = symbol_looks(chunk.entry, chunk.legend);
+        }
+        for (const auto& [dy, row] : chunk.squares | std::views::enumerate) {
+            for (const auto& [dx, glyph] : row | std::views::enumerate) {
+                const auto at = origin + point(static_cast<int>(dx), static_cast<int>(dy));
+                const auto look = chunk_looks[*id].find(glyph);
+                if (symbol_at(grid, at).empty() || look == chunk_looks[*id].end()
+                    || look->second.empty()) {
+                    continue;
+                }
+                result[at] = {.glyph = glyph, .looks = palette.indexes(look->second)};
+            }
+        }
+    };
+    for (const auto& entry : state.legend) {
+        const auto line =
+            std::ranges::find(entry.lines, std::string("nested"), &legend_line::layer);
+        if (line == entry.lines.end()) { continue; }
+        const auto id =
+            first_named("nested", nlohmann::ordered_json::parse(line->value, nullptr, false));
+        for (const auto& [y, row] : grid | std::views::enumerate) {
+            for (const auto& [x, glyph] : row | std::views::enumerate) {
+                if (glyph == entry.symbol) {
+                    draw_chunk(id, point(static_cast<int>(x), static_cast<int>(y)));
+                }
+            }
+        }
+    }
+    for (const auto& entry : placements_of(*state.doc, state.object)) {
+        if (entry.kind == "place_nested") {
+            draw_chunk(first_named("nested", entry.value), point(entry.x.min, entry.y.min));
+        }
+    }
     return result;
 }
 
@@ -377,6 +418,25 @@ auto neighbour_cells(const session& state, const point& size, ec::look_palette& 
         }
     }
     return result;
+}
+
+/// The squares of the rectangle `size`, as offsets from its top-left one.
+auto squares_within(const point& size) -> std::vector<ec::grid_point> {
+    auto squares = std::vector<ec::grid_point>{};
+    for (auto y = 0; y < size.y; ++y) {
+        for (auto x = 0; x < size.x; ++x) { squares.push_back({x, y}); }
+    }
+    return squares;
+}
+
+/// Where the copy on the paste tool, or the chunk in hand, lands from the square under the pointer.
+auto stamp_of(const session& state) -> std::vector<ec::grid_point> {
+    if (state.current->region == region_use::paste) {
+        const auto size = state.clip_size_now();
+        return squares_within(point(size.columns, size.rows));
+    }
+    const auto* const chunk = state.chunk_in_hand();
+    return chunk ? squares_within(chunk->size) : std::vector<ec::grid_point>{};
 }
 
 auto canvas(const session& state) -> ec::component {
@@ -513,6 +573,7 @@ auto canvas(const session& state) -> ec::component {
                        : ec::grid_point{},
             .regions = regions,
             .region_drag = drags ? placement_span_id : "",
+            .stamp = stamp_of(state),
             .span = span}};
 }
 
