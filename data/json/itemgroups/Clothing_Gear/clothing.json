@@ -1052,6 +1052,7 @@
     "type": "item_group",
     "items": [
       [ "gold_necklace", 50 ],
+      [ "gold_chain", 50 ],
       [ "citrine_gold_pendant_necklace", 50 ],
       [ "diamond_gold_pendant_necklace", 50 ],
       [ "emerald_gold_pendant_necklace", 50 ],
@@ -1291,7 +1292,7 @@
     "type": "item_group",
     "id": "shirts_summer_womens",
     "subtype": "distribution",
-    "entries": [ { "item": "camisole", "prob": 5 }, { "item": "halter_top", "prob": 5 } ]
+    "entries": [ { "item": "camisole", "prob": 5 }, { "item": "halter_top", "prob": 5 }, { "item": "tshirt_cropped", "prob": 10 } ]
   },
   {
     "type": "item_group",
@@ -1489,6 +1490,7 @@
       [ "survnote", 1 ],
       [ "b_shorts", 15 ],
       [ "halter_top", 30 ],
+      [ "tshirt_cropped", 60 ],
       [ "linuxtshirt", 10 ],
       [ "kilt", 5 ],
       [ "nanoskirt", 10 ],
@@ -1594,6 +1596,7 @@
       [ "collarpin", 5 ],
       [ "postman_shirt", 5 ],
       [ "halter_top", 50 ],
+      [ "tshirt_cropped", 60 ],
       [ "linuxtshirt", 10 ],
       [ "sleeveless_tunic", 5 ],
       [ "poncho", 20 ]
@@ -2033,6 +2036,7 @@
       { "item": "maid_dress", "prob": 3 },
       { "item": "maid_hat", "prob": 3 },
       { "item": "halter_top", "prob": 50 },
+      { "item": "tshirt_cropped", "prob": 30 },
       { "item": "linuxtshirt", "prob": 20 },
       { "item": "kilt", "prob": 5 },
       { "item": "nanoskirt", "prob": 10 },
@@ -2938,6 +2942,7 @@
       [ "jersey", 40 ],
       [ "maid_dress", 3 ],
       [ "halter_top", 50 ],
+      [ "tshirt_cropped", 30 ],
       [ "linuxtshirt", 20 ],
       [ "kilt", 5 ],
       [ "nanoskirt", 10 ],
@@ -3135,14 +3140,14 @@
     "type": "item_group",
     "//": "womens shirts",
     "subtype": "distribution",
-    "items": [ { "item": "halter_top", "prob": 30 } ]
+    "items": [ { "item": "halter_top", "prob": 30 }, { "item": "tshirt_cropped", "prob": 50 } ]
   },
   {
     "id": "shirts_female",
     "type": "item_group",
     "//": "womens shirts + unisex shirts",
     "subtype": "distribution",
-    "items": [ { "group": "shirts_unisex", "prob": 200 }, { "item": "halter_top", "prob": 30 } ]
+    "items": [ { "group": "shirts_unisex", "prob": 200 }, { "item": "halter_top", "prob": 30 }, { "item": "tshirt_cropped", "prob": 50 } ]
   },
   {
     "id": "underwear_unisex",
@@ -3668,6 +3673,7 @@
       { "item": "copper_necklace", "prob": 60, "count": [ 1, 2 ] },
       { "item": "silver_necklace", "prob": 40, "count": [ 1, 2 ] },
       { "item": "gold_necklace", "prob": 20, "count": [ 1, 2 ] },
+      { "item": "gold_chain", "prob": 40, "count": [ 1, 2 ] },
       { "item": "platinum_necklace", "prob": 10, "count": [ 1, 2 ] },
       { "item": "copper_locket", "prob": 60, "count": [ 1, 2 ] },
       { "item": "silver_locket", "prob": 40, "count": [ 1, 2 ] },
