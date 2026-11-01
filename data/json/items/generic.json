@@ -1225,6 +1225,23 @@
   },
   {
     "type": "GENERIC",
+    "id": "broken_handy_hauler",
+    "symbol": ",",
+    "color": "light_green",
+    "name": { "str": "broken handy hauler" },
+    "category": "scrap_electronics",
+    "description": "A broken handy hauler, its stubby legs folded uselessly under its cargo frame.  Only useful for parts now.",
+    "price": "5 USD",
+    "price_postapoc": "10 cent",
+    "material": [ "steel", "plastic" ],
+    "weight": "30 kg",
+    "volume": "40 L",
+    "bashing": 4,
+    "to_hit": -3,
+    "flags": [ "TRADER_AVOID", "NO_REPAIR" ]
+  },
+  {
+    "type": "GENERIC",
     "id": "broken_nursebot_defective",
     "name": { "str": "broken nurse bot" },
     "copy-from": "broken_nursebot"

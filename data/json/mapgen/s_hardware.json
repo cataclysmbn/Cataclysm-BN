@@ -6,6 +6,7 @@
     "weight": 300,
     "object": {
       "fill_ter": "t_floor",
+      "place_item": [ { "item": "bot_handy_hauler", "x": [ 7, 18 ], "y": [ 16, 16 ], "chance": 5 } ],
       "rows": [
         "_______________________'",
         "________________________",
@@ -132,6 +133,7 @@
     "om_terrain": [ "s_hardware_1" ],
     "object": {
       "fill_ter": "t_floor",
+      "place_item": [ { "item": "bot_handy_hauler", "x": [ 7, 20 ], "y": [ 15, 15 ], "chance": 5 } ],
       "rows": [
         "ppppp        ~~        `",
         "ppppp|||---||++||---||| ",
@@ -275,6 +277,7 @@
     "weight": 300,
     "object": {
       "fill_ter": "t_floor",
+      "place_item": [ { "item": "bot_handy_hauler", "x": [ 9, 20 ], "y": [ 2, 3 ], "chance": 5 } ],
       "rows": [
         "~~~~~~~~~~~~~~~~~~~~~~~'",
         " w^^^ww||=||:|||:|||:|| ",
@@ -411,6 +414,7 @@
     "weight": 500,
     "object": {
       "fill_ter": "t_floor",
+      "place_item": [ { "item": "bot_handy_hauler", "x": [ 9, 14 ], "y": [ 19, 19 ], "chance": 5 } ],
       "rows": [
         "~~~~~~~~~~~~~~~~~~~~~~~'",
         "~~~wwwwwwwww^^wwwwwww~~~",
