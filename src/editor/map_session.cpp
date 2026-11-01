@@ -516,15 +516,14 @@ auto create_mapgen(const new_mapgen& made) -> std::expected<void, std::string> {
           {"method", "json"},
           {nested ? "nested_mapgen_id" : "om_terrain", made.om_terrain},
           {"object", object}}});
-    // A named map is a building of its own, as the overmap shows it.
+    // A named map is a building of its own, as the overmap shows it; the map comes first, as the
+    // editor opens the first entry.
     if (!nested && !made.name.empty()) {
-        entries.insert(
-            entries.begin(),
-            nlohmann::ordered_json{
-                {"type", "overmap_terrain"},
-                {"id", made.om_terrain},
-                {"copy-from", "generic_city_building"},
-                {"name", made.name}});
+        entries.push_back(nlohmann::ordered_json{
+            {"type", "overmap_terrain"},
+            {"id", made.om_terrain},
+            {"copy-from", "generic_city_building"},
+            {"name", made.name}});
     }
     return write_new_file(made.path, entries, new_mod_name(made));
 }
