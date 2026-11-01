@@ -606,8 +606,8 @@ const auto often_rates = std::array{
 /// How an overmap terrain faces: turned four ways, one way, or drawn as a line.
 enum class facing { turns, fixed, line };
 
-/// The flags `key` of `value` names, one or a list.
-auto flag_names(const nlohmann::json& value, const char* key) -> std::set<std::string> {
+/// The names `key` of `value` holds, one or a list.
+auto names_at(const nlohmann::json& value, const char* key) -> std::set<std::string> {
     auto found = std::set<std::string>{};
     if (!value.is_object() || !value.contains(key)) { return found; }
     const auto& flags = value[key];
@@ -621,13 +621,18 @@ auto flag_names(const nlohmann::json& value, const char* key) -> std::set<std::s
 /// up to `depth` copies deep, else as it loaded the game's terrain.
 auto loaded_flags(const nlohmann::json& entries, const std::string& id, const int depth)
     -> std::set<std::string> {
-    const auto found = std::ranges::find_if(entries, [&](const nlohmann::json& entry) {
-        return text_at(entry, "type") == "overmap_terrain"
-            && (text_at(entry, "id") == id || text_at(entry, "abstract") == id);
-    });
+    // The entry whose `key`, one id or a list, names `id`.
+    const auto named = [&](const char* key) {
+        return std::ranges::find_if(entries, [&](const nlohmann::json& entry) {
+            return text_at(entry, "type") == "overmap_terrain" && names_at(entry, key).contains(id);
+        });
+    };
+    const auto loaded = oter_type_str_id(id);
+    // As the game copies: a real terrain, then an abstract one.
+    const auto real = named("id");
+    const auto found = real != entries.end() || loaded.is_valid() ? real : named("abstract");
     if (found == entries.end() || depth == 0) {
         // The game has a terrain of the empty id: no copy-from names none.
-        const auto loaded = oter_type_str_id(id);
         auto flags = std::set<std::string>{};
         if (id.empty() || !loaded.is_valid()) { return flags; }
         if (loaded->has_flag(oter_flags::line_drawing)) { flags.insert("LINEAR"); }
@@ -635,14 +640,13 @@ auto loaded_flags(const nlohmann::json& entries, const std::string& id, const in
         return flags;
     }
     const auto& entry = *found;
-    if (entry.contains("flags")) { return flag_names(entry, "flags"); }
+    if (entry.contains("flags")) { return names_at(entry, "flags"); }
     const auto from = text_at(entry, "copy-from");
     if (from.empty()) { return {}; }
-    // A copy of its own id copies the game's terrain.
-    auto flags = loaded_flags(from == id ? nlohmann::json::array() : entries, from, depth - 1);
-    if (entry.contains("extend")) { flags.insert_range(flag_names(entry["extend"], "flags")); }
+    auto flags = loaded_flags(entries, from, depth - 1);
+    if (entry.contains("extend")) { flags.insert_range(names_at(entry["extend"], "flags")); }
     if (entry.contains("delete")) {
-        std::ranges::for_each(flag_names(entry["delete"], "flags"), [&](const std::string& flag) {
+        std::ranges::for_each(names_at(entry["delete"], "flags"), [&](const std::string& flag) {
             flags.erase(flag);
         });
     }

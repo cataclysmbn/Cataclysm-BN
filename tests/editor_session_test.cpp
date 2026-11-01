@@ -8792,7 +8792,8 @@ TEST_CASE(
     const auto shadow = R"({"type":"overmap_terrain","abstract":"s_gas","flags":["NO_ROTATE"]},)";
     CHECK(with("gas_copy", shadow, R"("copy-from":"s_gas")") == "gas_copy_north");
     // A copy of its own id copies the game's; a loop of copies ends.
-    CHECK(placed("self_copy", R"("copy-from":"self_copy")") == "self_copy_north");
+    REQUIRE_FALSE(oter_type_str_id("omt_obsolete")->is_rotatable());
+    CHECK(placed("omt_obsolete", R"("copy-from":"omt_obsolete")") == "omt_obsolete");
     const auto loop = R"({"type":"overmap_terrain","id":"loop_b","copy-from":"loop_a"},)";
     CHECK(with("loop_a", loop, R"("copy-from":"loop_b")") == "loop_a_north");
     // Only the special the editor writes reads as a place in the countryside.
