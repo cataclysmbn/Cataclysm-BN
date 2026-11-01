@@ -20,8 +20,11 @@
 
 #include <algorithm>
 #include <iterator>
+#include <ranges>
 #include <set>
 #include <string>
+#include <utility>
+#include <vector>
 
 auto cata::detail::reg_types( sol::state &lua ) -> void
 {
@@ -50,169 +53,60 @@ auto cata::detail::reg_types( sol::state &lua ) -> void
         DOC( "Point cost of the scenario." );
         luna::set_prop( ut, "point_cost", []( const UT_CLASS & x ) -> int { return x.point_cost(); } );
         DOC( "Traits forced by the scenario, granted for free during character creation." );
-        luna::set_prop( ut, "forced_traits", []( const UT_CLASS & x,
-        sol::this_state lua_this ) -> sol::table {
-            sol::state_view lua( lua_this );
-            auto out = lua.create_table();
-            auto idx = size_t { 0 };
-            for( const trait_id &tr : x.get_locked_traits() )
-            {
-                out[idx + 1] = tr;
-                idx += 1;
-            }
-            return out;
+        luna::set_fx( ut, "forced_traits", []( const UT_CLASS & x ) -> std::vector<trait_id> {
+            return std::ranges::to<std::vector<trait_id>>( x.get_locked_traits() );
         } );
         DOC( "Allowed traits, empty meaning all starting traits are allowed." );
-        luna::set_prop( ut, "allowed_traits", []( const UT_CLASS & x,
-        sol::this_state lua_this ) -> sol::table {
-            sol::state_view lua( lua_this );
-            auto out = lua.create_table();
-            auto idx = size_t { 0 };
-            for( const trait_id &tr : x.allowed_traits() )
-            {
-                out[idx + 1] = tr;
-                idx += 1;
-            }
-            return out;
+        luna::set_fx( ut, "allowed_traits", []( const UT_CLASS & x ) -> std::vector<trait_id> {
+            return x.allowed_traits() | std::ranges::to<std::vector<trait_id>>();
         } );
         DOC( "Traits forbidden in this scenario." );
-        luna::set_prop( ut, "forbidden_traits", []( const UT_CLASS & x,
-        sol::this_state lua_this ) -> sol::table {
-            sol::state_view lua( lua_this );
-            auto out = lua.create_table();
-            auto idx = size_t { 0 };
-            for( const trait_id &tr : x.forbidden_traits() )
-            {
-                out[idx + 1] = tr;
-                idx += 1;
-            }
-            return out;
+        luna::set_fx( ut, "forbidden_traits", []( const UT_CLASS & x ) -> std::vector<trait_id> {
+            return x.forbidden_traits() | std::ranges::to<std::vector<trait_id>>();
         } );
         DOC( "Bionics forced by the scenario." );
-        luna::set_prop( ut, "forced_bionics", []( const UT_CLASS & x,
-        sol::this_state lua_this ) -> sol::table {
-            sol::state_view lua( lua_this );
-            auto out = lua.create_table();
-            auto idx = size_t { 0 };
-            for( const bionic_id &bio : x.get_locked_bionics() )
-            {
-                out[idx + 1] = bio;
-                idx += 1;
-            }
-            return out;
+        luna::set_fx( ut, "forced_bionics", []( const UT_CLASS & x ) -> std::vector<bionic_id> {
+            return std::ranges::to<std::vector<bionic_id>>( x.get_locked_bionics() );
         } );
         DOC( "Allowed bionics, empty meaning all starting bionics are allowed." );
-        luna::set_prop( ut, "allowed_bionics", []( const UT_CLASS & x,
-        sol::this_state lua_this ) -> sol::table {
-            sol::state_view lua( lua_this );
-            auto out = lua.create_table();
-            auto idx = size_t { 0 };
-            for( const bionic_id &bio : x.allowed_bionics() )
-            {
-                out[idx + 1] = bio;
-                idx += 1;
-            }
-            return out;
+        luna::set_fx( ut, "allowed_bionics", []( const UT_CLASS & x ) -> std::vector<bionic_id> {
+            return x.allowed_bionics() | std::ranges::to<std::vector<bionic_id>>();
         } );
         DOC( "Bionics forbidden in this scenario." );
-        luna::set_prop( ut, "forbidden_bionics", []( const UT_CLASS & x,
-        sol::this_state lua_this ) -> sol::table {
-            sol::state_view lua( lua_this );
-            auto out = lua.create_table();
-            auto idx = size_t { 0 };
-            for( const bionic_id &bio : x.forbidden_bionics() )
-            {
-                out[idx + 1] = bio;
-                idx += 1;
-            }
-            return out;
+        luna::set_fx( ut, "forbidden_bionics", []( const UT_CLASS & x ) -> std::vector<bionic_id> {
+            return x.forbidden_bionics() | std::ranges::to<std::vector<bionic_id>>();
         } );
         DOC( "Spells forced by the scenario." );
-        luna::set_prop( ut, "forced_spells", []( const UT_CLASS & x,
-        sol::this_state lua_this ) -> sol::table {
-            sol::state_view lua( lua_this );
-            auto out = lua.create_table();
-            auto idx = size_t { 0 };
-            for( const spell_id &sp : x.forced_spells() )
-            {
-                out[idx + 1] = sp;
-                idx += 1;
-            }
-            return out;
+        luna::set_fx( ut, "forced_spells", []( const UT_CLASS & x ) -> std::vector<spell_id> {
+            return x.forced_spells() | std::ranges::to<std::vector<spell_id>>();
         } );
         DOC( "Allowed spells, empty meaning all starting spells are allowed." );
-        luna::set_prop( ut, "allowed_spells", []( const UT_CLASS & x,
-        sol::this_state lua_this ) -> sol::table {
-            sol::state_view lua( lua_this );
-            auto out = lua.create_table();
-            auto idx = size_t { 0 };
-            for( const spell_id &sp : x.allowed_spells() )
-            {
-                out[idx + 1] = sp;
-                idx += 1;
-            }
-            return out;
+        luna::set_fx( ut, "allowed_spells", []( const UT_CLASS & x ) -> std::vector<spell_id> {
+            return x.allowed_spells() | std::ranges::to<std::vector<spell_id>>();
         } );
         DOC( "Spells forbidden in this scenario." );
-        luna::set_prop( ut, "forbidden_spells", []( const UT_CLASS & x,
-        sol::this_state lua_this ) -> sol::table {
-            sol::state_view lua( lua_this );
-            auto out = lua.create_table();
-            auto idx = size_t { 0 };
-            for( const spell_id &sp : x.forbidden_spells() )
-            {
-                out[idx + 1] = sp;
-                idx += 1;
-            }
-            return out;
+        luna::set_fx( ut, "forbidden_spells", []( const UT_CLASS & x ) -> std::vector<spell_id> {
+            return x.forbidden_spells() | std::ranges::to<std::vector<spell_id>>();
         } );
         DOC( "Perks forced by the scenario." );
-        luna::set_prop( ut, "perks", []( const UT_CLASS & x, sol::this_state lua_this ) -> sol::table {
-            sol::state_view lua( lua_this );
-            auto out = lua.create_table();
-            auto idx = size_t { 0 };
-            for( const perk_id &perk : x.get_perks() )
-            {
-                out[idx + 1] = perk;
-                idx += 1;
-            }
-            return out;
+        luna::set_fx( ut, "perks", []( const UT_CLASS & x ) -> std::vector<perk_id> {
+            return std::ranges::to<std::vector<perk_id>>( x.get_perks() );
         } );
         DOC( "Mission types assigned at the start of the game." );
-        luna::set_prop( ut, "missions", []( const UT_CLASS & x, sol::this_state lua_this ) -> sol::table {
-            sol::state_view lua( lua_this );
-            auto out = lua.create_table();
-            auto idx = size_t { 0 };
-            for( const mission_type_id &mission : x.missions() )
-            {
-                out[idx + 1] = mission;
-                idx += 1;
-            }
-            return out;
+        luna::set_fx( ut, "missions", []( const UT_CLASS & x ) -> std::vector<mission_type_id> {
+            return x.missions() | std::ranges::to<std::vector<mission_type_id>>();
         } );
         DOC( "All scenario flags, e.g. \"FIRE_START\"." );
-        luna::set_prop( ut, "get_flags", []( const UT_CLASS & x, sol::this_state lua_this ) -> sol::table {
-            sol::state_view lua( lua_this );
-            auto out = lua.create_table();
-            auto idx = size_t { 0 };
-            for( const std::string &flag : x.get_flags() )
-            {
-                out[idx + 1] = flag;
-                idx += 1;
-            }
-            return out;
+        luna::set_fx( ut, "get_flags", []( const UT_CLASS & x ) -> std::vector<std::string> {
+            return x.get_flags() | std::ranges::to<std::vector<std::string>>();
         } );
         DOC( "Returns true if the scenario has the given flag." );
         luna::set_fx( ut, "has_flag", &UT_CLASS::has_flag );
         DOC( "String ids of the starting locations allowed by this scenario." );
-        luna::set_prop( ut, "allowed_start_locations", []( const UT_CLASS & x ) ->
-        std::vector<std::string> {
-            auto out = std::vector<std::string> {};
-            for( const start_location_id &loc : x.allowed_start_locations() )
-            {
-                out.push_back( loc.str() );
-            }
-            return out;
+        luna::set_fx( ut, "allowed_start_locations", []( const UT_CLASS & x ) -> std::vector<std::string> {
+            return x.allowed_start_locations()
+            | std::views::transform( []( const start_location_id & loc ) { return loc.str(); } )
+            | std::ranges::to<std::vector<std::string>>();
         } );
         DOC( "String id of the starting vehicle, or an empty string if the scenario has none." );
         luna::set_prop( ut, "starting_vehicle",
@@ -223,13 +117,11 @@ auto cata::detail::reg_types( sol::state &lua ) -> void
         luna::set_prop( ut, "map_extra",
                         []( const UT_CLASS & x ) -> std::string { return x.get_map_extra().str(); } );
         DOC( "String ids of professions permitted by this scenario." );
-        luna::set_prop( ut, "permitted_professions", []( const UT_CLASS & x ) -> std::vector<std::string> {
-            auto out = std::vector<std::string> {};
-            for( const profession_id &prof : x.permitted_professions() )
-            {
-                out.push_back( prof.str() );
-            }
-            return out;
+        luna::set_fx( ut, "permitted_professions", []( const UT_CLASS & x ) -> std::vector<std::string> {
+            const auto profs = x.permitted_professions();
+            return profs
+            | std::views::transform( []( const profession_id & prof ) { return prof.str(); } )
+            | std::ranges::to<std::vector<std::string>>();
         } );
         DOC( "Returns true if the scenario is blacklisted." );
         luna::set_prop( ut, "is_blacklisted", []( const UT_CLASS & x ) -> bool { return x.scen_is_blacklisted(); } );
@@ -255,18 +147,10 @@ auto cata::detail::reg_types( sol::state &lua ) -> void
         luna::set_prop( ut, "forbids_spells", []( const UT_CLASS & x ) -> bool { return x.forbids_spells(); } );
         DOC( "Returns true if the given start location is allowed by this scenario." );
         luna::set_fx( ut, "allowed_start", &UT_CLASS::allowed_start );
-        DOC( "Monster groups surrounding the start: array of { group = string, chance = float }." );
-        luna::set_prop( ut, "surround_groups", []( const UT_CLASS & x,
-        sol::this_state lua_this ) -> sol::table {
-            sol::state_view lua( lua_this );
-            auto out = lua.create_table();
-            auto idx = size_t { 0 };
-            for( const auto &[group, chance] : x.surround_groups() )
-            {
-                out[idx + 1] = lua.create_table_with( "group", group.str(), "chance", chance );
-                idx += 1;
-            }
-            return out;
+        DOC( "Monster groups surrounding the start: array of (mongroup_id, chance) pairs." );
+        luna::set_fx( ut, "surround_groups",
+        []( const UT_CLASS & x ) -> std::vector<std::pair<mongroup_id, float>> {
+            return x.surround_groups() | std::ranges::to<std::vector<std::pair<mongroup_id, float>>>();
         } );
     }
 #undef UT_CLASS
