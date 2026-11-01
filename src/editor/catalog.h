@@ -60,6 +60,8 @@ struct catalog_page {
 };
 
 auto search_catalog(const catalog_query& query) -> catalog_page;
+/// A group's id as words: `GROUP_ZOMBIE` is `Zombie`.
+auto group_name(std::string_view id) -> std::string;
 /// The items of the group `group`, those it gives most often first; none for no such group.
 auto likely_items(const item_group_id& group) -> std::vector<const itype*>;
 /// The contents of the JSON strings of `text`, escapes left as written, in order.

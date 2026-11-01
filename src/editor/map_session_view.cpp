@@ -24,6 +24,7 @@
 #include "engine_client_world.h"
 #include "game.h"
 #include "item.h"
+#include "itype.h"
 #include "map/mapdata.h"
 #include "map_perception.h"
 #include "output.h"
@@ -960,6 +961,16 @@ auto placement_forms(
 }
 
 /// The legend form and the catalog that fills it.
+/// What the item group `id` mostly gives, by name.
+auto group_examples(const std::string& id) -> std::string {
+    const auto names =
+        likely_items(item_group_id(id)) | std::views::take(4)
+        | std::views::transform([](const itype* type) { return type->nname(1); })
+        | std::views::join_with(std::string_view(", ")) | std::ranges::to<std::string>();
+    //~ %s lists a few items, separated by commas.
+    return names.empty() ? std::string{} : string_format(_("Such as %s"), names);
+}
+
 /// The catalog's page of `found`, with the affordances that filter, page and pick it.
 auto catalog_list(
     const session& state, const catalog_page& found, std::vector<ec::affordance>& affordances)
@@ -991,6 +1002,8 @@ auto catalog_list(
                      .selected = held,
                      .columns =
                          with_id(entry.id, {{.key = "mod", .label = _("Mod"), .value = entry.mod}}),
+                     .description =
+                         kind == catalog_kind::item_group ? group_examples(entry.id) : std::string{},
                      .look = catalog_look(kind, entry.id)};
              })
              | std::ranges::to<std::vector>(),

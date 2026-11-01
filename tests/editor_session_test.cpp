@@ -1018,7 +1018,7 @@ TEST_CASE(
                 CHECK(column(screen, "symbol:.", "terrain") == "Terrain=dirt, grass");
                 CHECK(column(screen, "symbol:.", "id") == "ID=t_dirt, t_grass");
                 CHECK(column(screen, "symbol:#", "terrain") == "Terrain=dirt x3, grass");
-                CHECK(column(screen, "symbol:#", "items") == "Item groups=SUS_tools");
+                CHECK(column(screen, "symbol:#", "items") == "Item groups=Sus tools");
                 CHECK(column(screen, "symbol:#", "id") == "ID=t_dirt, t_grass, SUS_tools");
                 CHECK(column(screen, "symbol:C", "furniture") == "Furniture=chair");
                 // Every row has the same columns: the flag first, the ids last.
@@ -2061,7 +2061,7 @@ TEST_CASE(
                 CHECK(placed(screen)[2].value == "monster: mon_zombie, chance: 50");
                 // A member set on a placement changes the placement, though the patch adds it.
                 CHECK(body<ec::list_body>(part(screen, "editor:history")).rows.back().label
-                      == "Change place monster");
+                      == "Change Monsters");
                 return invoke("editor:field_set", {.row = "value", .text = R"("fifty")"});
             case 12:
                 return invoke("editor:field_apply");
@@ -8105,9 +8105,9 @@ TEST_CASE(
             // Things to find go on the counter without taking it, and on the bare floor below it.
             CHECK(told(screen).empty());
             CHECK(cell(screen, 3, 3).label.starts_with("wooden floor; counter; "));
-            CHECK(cell(screen, 3, 3).label.contains("kitchen"));
+            CHECK(cell(screen, 3, 3).label.contains("Kitchen"));
             CHECK(cell(screen, 3, 4).label.starts_with("wooden floor; "));
-            CHECK(cell(screen, 3, 4).label.contains("kitchen"));
+            CHECK(cell(screen, 3, 4).label.contains("Kitchen"));
             CHECK_FALSE(cell(screen, 3, 4).label.contains("counter"));
             CHECK(cell(screen, 5, 3).label == "wooden floor; counter");
             return invoke("editor:catalog_kind", {.row = "catalog:terrain"});
@@ -8300,8 +8300,8 @@ TEST_CASE(
             const auto label = cell(screen, 3, 3).label;
             CHECK(label.starts_with("wooden floor; chair; "));
             CHECK_FALSE(label.contains("grass"));
-            CHECK(label.contains("tools_home"));
-            CHECK(label.contains("kitchen"));
+            CHECK(label.contains("Tools home"));
+            CHECK(label.contains("Kitchen"));
             CHECK(cell(screen, 6, 6).glyph == cell(screen, 3, 3).glyph);
             CHECK(rows_in(screen, "editor:legend").size() == symbols + 1);
             return act("QUIT");

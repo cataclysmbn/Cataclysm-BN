@@ -1,5 +1,6 @@
 #include "editor/mapgen_legend_text.h"
 
+#include "editor/catalog.h"
 #include "item.h"
 #include "map/field_type.h"
 #include "map/mapdata.h"
@@ -110,6 +111,7 @@ auto name_of(const std::string_view layer, const std::string& id) -> std::string
         }
         if (layer == "monster" && mtype_id(id).is_valid()) { return mtype_id(id)->nname(); }
         if (layer == "vehicles" && vproto_id(id).is_valid()) { return _(vproto_id(id)->name); }
+        if (layer == "items" || layer == "monsters") { return group_name(id); }
         return std::nullopt;
     }();
     return named.value_or(id);

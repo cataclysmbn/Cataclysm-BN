@@ -311,12 +311,9 @@ auto layer_look(const std::string_view layer, const std::string& id)
         return world::item_appearance(*item::spawn_temporary(itype_id(id), calendar::turn));
     }
     if (layer == "items" && item_group::group_is_defined(item_group_id(id))) {
-        const auto possible = item_group::every_possible_item_from(item_group_id(id));
-        if (possible.empty()) { return std::nullopt; }
-        const auto* const first = std::ranges::min(possible, {}, [](const itype* type) {
-            return type->get_id().str();
-        });
-        return layer_look("item", first->get_id().str());
+        // The look of what it mostly gives.
+        const auto likely = likely_items(item_group_id(id));
+        return likely.empty() ? std::nullopt : layer_look("item", likely.front()->get_id().str());
     }
     if (layer == "monster" && mtype_id(id).is_valid()) { return creature(mtype_id(id).obj()); }
     if (layer == "monsters" && MonsterGroupManager::isValidMonsterGroup(mongroup_id(id))) {

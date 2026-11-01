@@ -204,12 +204,12 @@ TEST_CASE("a history step names what it did to the object", "[editor_document]")
     // An entry added to a list, or taken from it, is an addition or a removal, not a change.
     CHECK(
         editor::step_label(edited(R"([{"op":"add","path":"/object/place_monster/-","value":{}}])"))
-        == "Add place monster");
+        == "Add Monsters");
     CHECK(editor::step_label(edited(R"([{"op":"remove","path":"/object/place_monster/0"}])"))
-          == "Remove place monster");
+          == "Remove Monsters");
     CHECK(editor::step_label(
               edited(R"([{"op":"add","path":"/object/place_monster/0/chance","value":5}])"))
-          == "Change place monster");
+          == "Change Monsters");
     CHECK(
         editor::step_label(edited(R"([{"op":"add","path":"/object/terrain/#","value":"t_wall"}])"))
         == "Add terrain #");

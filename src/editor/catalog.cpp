@@ -1,7 +1,9 @@
 #include "editor/catalog.h"
 
+#include "editor/session_file.h"
 #include "filesystem.h"
 #include "item_factory.h"
+#include "item_group.h"
 #include "itype.h"
 #include "map/field_type.h"
 #include "map/mapdata.h"
@@ -34,10 +36,56 @@ template <typename Source> auto mod_of(const Source& src) -> std::string {
     return src.empty() ? std::string{} : src.back().second.str();
 }
 
+/// How much of a group's giving reaches an entry, and how many groups deep it may still go.
+struct group_reach {
+    double share = 1.0;
+    int depth = 0;
+};
+
+/// Adds to `shares` how often `data` gives each item.
+auto gather_shares(
+    const Item_spawn_data& data, const group_reach& reach, std::map<const itype*, double>& shares)
+    -> void {
+    if (reach.depth == 0) { return; }
+    if (const auto* const single = dynamic_cast<const Single_item_creator*>(&data)) {
+        if (single->type == Single_item_creator::S_ITEM) {
+            if (itype_id(single->id).is_valid()) {
+                shares[&itype_id(single->id).obj()] += reach.share;
+            }
+        } else if (single->type == Single_item_creator::S_ITEM_GROUP) {
+            const auto* const named = item_controller->get_group(item_group_id(single->id));
+            if (named != nullptr) {
+                gather_shares(*named, {.share = reach.share, .depth = reach.depth - 1}, shares);
+            }
+        }
+        return;
+    }
+    const auto* const group = dynamic_cast<const Item_group*>(&data);
+    if (group == nullptr) { return; }
+    const auto& entries = group->get_items();
+    // A distribution's entries share it by weight; a collection's each have a chance in 100.
+    const auto whole =
+        group->type == Item_group::G_DISTRIBUTION
+            ? std::ranges::fold_left(
+                  entries, 0,
+                  [](const int sum, const auto& entry) { return sum + entry->probability; })
+            : 100;
+    for (const auto& entry : entries) {
+        gather_shares(
+            *entry,
+            {.share = reach.share * entry->probability / std::max(whole, 1),
+             .depth = reach.depth - 1},
+            shares);
+    }
+}
+
 auto entries_of(const catalog_kind kind) -> std::vector<catalog_entry> {
     using namespace std::views;
     namespace ranges = std::ranges;
     const auto unnamed = [](const std::string& id) { return catalog_entry{.id = id, .name = id}; };
+    const auto grouped = [](const std::string& id) {
+        return catalog_entry{.id = id, .name = group_name(id)};
+    };
     switch (kind) {
         case catalog_kind::terrain:
             return ter_t::get_all() | transform([](const ter_t& ter) {
@@ -72,7 +120,7 @@ auto entries_of(const catalog_kind kind) -> std::vector<catalog_entry> {
                  | ranges::to<std::vector>();
         case catalog_kind::item_group:
             return item_controller->get_all_group_names()
-                 | transform([&](const item_group_id& id) { return unnamed(id.str()); })
+                 | transform([&](const item_group_id& id) { return grouped(id.str()); })
                  | ranges::to<std::vector>();
         case catalog_kind::monster:
             return MonsterGenerator::generator().get_all_mtypes()
@@ -83,7 +131,7 @@ auto entries_of(const catalog_kind kind) -> std::vector<catalog_entry> {
                  | ranges::to<std::vector>();
         case catalog_kind::monster_group:
             return MonsterGroupManager::get_all_group_ids()
-                 | transform([&](const mongroup_id& id) { return unnamed(id.str()); })
+                 | transform([&](const mongroup_id& id) { return grouped(id.str()); })
                  | ranges::to<std::vector>();
         case catalog_kind::vehicle:
             return vehicle_prototype::get_all() | transform([](const vproto_id& id) {
@@ -229,6 +277,27 @@ auto search_catalog(const catalog_query& query) -> catalog_page {
             .total = total};
 }
 
-auto likely_items(const item_group_id& /*group*/) -> std::vector<const itype*> { return {}; }
+auto group_name(const std::string_view id) -> std::string {
+    auto lower = std::string(id);
+    std::ranges::transform(lower, lower.begin(), [](const unsigned char letter) {
+        return static_cast<char>(std::tolower(letter));
+    });
+    return words_of_id(
+        lower.starts_with("group_") ? std::string_view(lower).substr(6) : std::string_view(lower));
+}
+
+auto likely_items(const item_group_id& group) -> std::vector<const itype*> {
+    const auto* const data = item_controller->get_group(group);
+    if (data == nullptr) { return {}; }
+    auto shares = std::map<const itype*, double>{};
+    gather_shares(*data, {.share = 1.0, .depth = 16}, shares);
+    auto items = shares | std::views::keys | std::ranges::to<std::vector>();
+    std::ranges::sort(items, [&](const itype* const a, const itype* const b) {
+        return shares[a] != shares[b]
+                 ? shares[a] > shares[b]
+                 : a->get_id().str() < b->get_id().str();
+    });
+    return items;
+}
 
 } // namespace editor

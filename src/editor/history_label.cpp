@@ -1,5 +1,6 @@
 #include "editor/history_label.h"
 
+#include "editor/mapgen_legend_text.h"
 #include "editor/row_id.h"
 #include "string_formatter.h"
 #include "translations.h"
@@ -24,6 +25,8 @@ auto step_label(const document_edit& edit) -> std::string {
         return token == "-" || token.find_first_not_of("0123456789") == std::string::npos;
     };
     auto words = tokens.empty() ? std::string{} : tokens.front();
+    // A placement reads as what it places.
+    if (words.starts_with("place_")) { words = legend_layer_label(words.substr(6)); }
     std::ranges::replace(words, '_', ' ');
     if (!tokens.empty()) { member /= tokens.front(); }
     if (tokens.size() > 1 && !index(tokens[1])) {
