@@ -3147,7 +3147,11 @@
     "type": "item_group",
     "//": "womens shirts + unisex shirts",
     "subtype": "distribution",
-    "items": [ { "group": "shirts_unisex", "prob": 200 }, { "item": "halter_top", "prob": 30 }, { "item": "tshirt_cropped", "prob": 50 } ]
+    "items": [
+      { "group": "shirts_unisex", "prob": 200 },
+      { "item": "halter_top", "prob": 30 },
+      { "item": "tshirt_cropped", "prob": 50 }
+    ]
   },
   {
     "id": "underwear_unisex",
