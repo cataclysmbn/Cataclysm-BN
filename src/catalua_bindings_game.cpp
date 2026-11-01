@@ -21,6 +21,7 @@
 #include "messages.h"
 #include "monster.h"
 #include "npc.h"
+#include "options.h"
 #include "overmap/overmapbuffer.h"
 #include "sol/forward.hpp"
 #include "sol/sol.hpp"
@@ -861,6 +862,22 @@ void cata::detail::reg_game_api( sol::state &lua )
 
             check_func_result( res );
         } );
+    } );
+
+    luna::set_fx( lib, "get_option", []( std::string name ) -> std::string {
+        return get_option<std::string>( name );
+    } );
+
+    luna::set_fx( lib, "get_option_bool", []( std::string name ) -> bool {
+        return get_option<bool>( name );
+    } );
+
+    luna::set_fx( lib, "get_option_int", []( std::string name ) -> int {
+        return get_option<int>( name );
+    } );
+
+    luna::set_fx( lib, "get_option_float", []( std::string name ) -> float {
+        return get_option<float>( name );
     } );
 
     reg_game_api_creature_queries( lib );
