@@ -22,6 +22,7 @@
 #include "monster.h"
 #include "npc.h"
 #include "overmap/overmapbuffer.h"
+#include "scenario.h"
 #include "sol/forward.hpp"
 #include "sol/sol.hpp"
 #include "units_temperature.h"
@@ -495,6 +496,8 @@ void cata::detail::reg_game_api( sol::state &lua )
 
     luna::set_fx( lib, "get_avatar", &get_avatar );
     luna::set_fx( lib, "get_map", &get_map );
+    DOC( "Returns the scenario the current game started with, or nil if no game is active." );
+    luna::set_fx( lib, "get_scenario", []() -> const scenario * { return get_scenario(); } );
     luna::set_fx( lib, "bub_to_abs",
                   sol::overload(
                       []( const tripoint_bub_ms & p ) -> tripoint_abs_ms { return bub_to_abs( p ); },

@@ -71,6 +71,7 @@ class player;
 class perk;
 class query_popup;
 class recipe;
+class scenario;
 class Skill;
 class SkillLevel;
 class SkillLevelMap;
@@ -278,6 +279,7 @@ LUNA_ID( mutation_branch, "MutationBranch" )
 LUNA_ID( mutation_category_trait, "MutationCategoryTrait" )
 LUNA_ID( oter_t, "Oter" )
 LUNA_ID( recipe, "Recipe" )
+LUNA_ID( scenario, "Scenario" )
 LUNA_ID( Skill, "Skill" )
 LUNA_ID( species_type, "SpeciesType" )
 LUNA_ID( spell_type, "SpellType" )
