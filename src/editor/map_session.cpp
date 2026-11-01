@@ -391,6 +391,43 @@ auto tool_label(const tool& value) -> std::string {
 }
 
 namespace {
+/// Writes `to` on the marked squares, or all if none are, that hold `from`.
+auto write_marked(session& state, const std::string& from, const std::string& to)
+    -> std::expected<void, std::string> {
+    const auto grid = symbols_of(*state.doc, state.object);
+    const auto low =
+        state.selected
+            ? point(std::max(std::min(state.selected->from.x, state.selected->to.x), 0),
+                    std::max(std::min(state.selected->from.y, state.selected->to.y), 0))
+            : point_zero;
+    auto squares =
+        state.selected ? copy_region(grid, state.selected->from, state.selected->to) : grid;
+    for (auto& glyph : squares | std::views::join) {
+        if (glyph == from) { glyph = to; }
+    }
+    return paste(*state.doc, {.object = state.object, .clip = squares, .at = low})
+        .transform([](std::size_t /*changed*/) {});
+}
+
+/// Maps the symbols `inks` adds to the legend of entry `object`.
+auto map_added(document& doc, const std::size_t object, const layered_ink& inks)
+    -> std::expected<void, std::string> {
+    auto mapped = std::expected<void, std::string>{};
+    for (const auto& added : inks.added) {
+        for (const auto& line : added.lines) {
+            mapped = mapped.and_then([&] {
+                return set_legend(
+                    doc,
+                    {.object = object,
+                     .layer = line.layer,
+                     .symbol = added.symbol,
+                     .value = nlohmann::ordered_json::parse(line.value, nullptr, false)});
+            });
+        }
+    }
+    return mapped;
+}
+
 /// The library's pieces that hold squares to paste.
 auto map_library() -> std::vector<library_piece> {
     auto pieces = library_pieces("map");
@@ -1886,6 +1923,73 @@ auto session::copy() -> void {
          .y = {.min = low.y, .max = low.y + size.rows - 1}});
 }
 
+auto session::shows_marked() const -> bool {
+    return on_mapgen() && has_rows() && current->region != region_use::placements
+        && (selected || current->region == region_use::select);
+}
+
+auto session::marked_symbols() const -> std::vector<std::pair<std::string, int>> {
+    const auto grid = symbols_of(*doc, object);
+    const auto squares = selected ? copy_region(grid, selected->from, selected->to) : grid;
+    auto counts = std::vector<std::pair<std::string, int>>{};
+    for (const auto& glyph : squares | std::views::join) {
+        const auto found = std::ranges::find(counts, glyph, &std::pair<std::string, int>::first);
+        if (found == counts.end()) {
+            counts.emplace_back(glyph, 1);
+        } else {
+            ++found->second;
+        }
+    }
+    return counts;
+}
+
+auto session::replace_marked(const std::string& from) -> void {
+    const auto hand = in_hand();
+    const auto inks = hand ? layered(*hand, {from}) : layered_ink{};
+    if (!inks) {
+        notice = inks.error();
+        return;
+    }
+    const auto over = inks->over.find(from);
+    const auto direct = over == inks->over.end();
+    const auto maps =
+        direct && held && held->symbol == symbol
+        && !std::ranges::contains(legend, symbol, &legend_symbol::symbol);
+    if (direct && !(maps && held->layer == "terrain")) {
+        if (const auto refused = bare(symbol, true)) {
+            notice = *refused;
+            return;
+        }
+    }
+    doc->begin_group(false, _("Replace"));
+    const auto depth = doc->depth();
+    auto done =
+        maps ? set_legend(
+                   *doc,
+                   {.object = object, .layer = held->layer, .symbol = symbol, .value = held->value})
+             : std::expected<void, std::string>{};
+    done = done.and_then([&] { return map_added(*doc, object, *inks); });
+    done = done.and_then([&] { return write_marked(*this, from, direct ? symbol : over->second); });
+    doc->end_group();
+    if (!done && doc->depth() > depth) { doc->undo(); }
+    notice = done ? "" : done.error();
+    reload();
+}
+
+auto session::delete_marked(const std::string& from) -> void {
+    const auto ground =
+        most_used_floor(legend, symbols_of(*doc, object), false).value_or(room_fill);
+    if (const auto refused = bare(ground, true)) {
+        notice = *refused;
+        return;
+    }
+    doc->begin_group(false, _("Delete"));
+    const auto done = write_marked(*this, from, ground);
+    doc->end_group();
+    notice = done ? "" : done.error();
+    reload();
+}
+
 auto map_piece_of(const nlohmann::ordered_json& data) -> std::optional<map_piece> {
     try {
         auto piece = map_piece{.squares = data.at("squares").get<symbol_grid>()};
@@ -2414,18 +2518,7 @@ auto session::paint(const point& at) -> void {
                   *doc,
                   {.object = object, .layer = held->layer, .symbol = symbol, .value = held->value})
             : std::expected<void, std::string>{};
-    for (const auto& added : inks->added) {
-        for (const auto& line : added.lines) {
-            mapped = mapped.and_then([&] {
-                return set_legend(
-                    *doc,
-                    {.object = object,
-                     .layer = line.layer,
-                     .symbol = added.symbol,
-                     .value = nlohmann::ordered_json::parse(line.value, nullptr, false)});
-            });
-        }
-    }
+    mapped = mapped.and_then([&] { return map_added(*doc, object, *inks); });
     const auto drawn = mapped.and_then([&] {
         return stroke(
             *doc,

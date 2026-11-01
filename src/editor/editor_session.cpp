@@ -531,6 +531,10 @@ auto run_editor_session() -> void {
             state.copy();
         } else if (id == cut_id && state.selected) {
             state.cut();
+        } else if (id == replace_symbol_id) {
+            state.replace_marked(std::string(row_rest(row, "symbol").value_or("")));
+        } else if (id == delete_symbol_id) {
+            state.delete_marked(std::string(row_rest(row, "symbol").value_or("")));
         } else if (id == library_save_id) {
             state.save_to_library(invoked->args.text.value_or(""));
         } else if (id == library_take_id) {

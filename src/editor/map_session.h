@@ -101,6 +101,9 @@ inline constexpr auto library_take_id = "editor:library_take";
 inline constexpr auto clip_text_id = "editor:clip_text";
 inline constexpr auto show_clip_text_id = "editor:show_clip_text";
 inline constexpr auto paste_text_id = "editor:paste_text";
+inline constexpr auto marked_symbols_id = "editor:marked_symbols";
+inline constexpr auto replace_symbol_id = "editor:replace_symbol";
+inline constexpr auto delete_symbol_id = "editor:delete_symbol";
 inline constexpr auto rotate_id = "editor:rotate";
 inline constexpr auto cut_id = "editor:cut";
 inline constexpr auto flip_x_id = "editor:flip_x";
@@ -700,6 +703,18 @@ struct session {
 
     /// Pastes the clip's symbols and placements with its top-left square at `at`, as one undo step.
     auto paste_at(const point& at) -> void;
+
+    /// Whether the list of what the marked squares hold shows: while squares are marked, and on
+    /// the select tool, where nothing marked stands for every square.
+    auto shows_marked() const -> bool;
+    /// The symbols on the marked squares, or all if none are, in reading order with their counts.
+    auto marked_symbols() const -> std::vector<std::pair<std::string, int>>;
+    /// Puts what is in hand on the marked squares, or all if none are, that hold `from`, as one
+    /// undo step, as a drawing there would.
+    auto replace_marked(const std::string& from) -> void;
+    /// Leaves the ground a cut would on the marked squares, or all if none are, that hold `from`,
+    /// as one undo step.
+    auto delete_marked(const std::string& from) -> void;
 
     /// The clip as a piece to keep or share.
     auto clip_piece() const -> nlohmann::ordered_json;

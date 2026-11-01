@@ -943,6 +943,37 @@ auto library_parts(
              .args = row_of(library_id),
              .role = "select"}));
     }
+    // What the squares hold, to replace or delete all of one at once, as Factorio's upgrade and
+    // deconstruction planners.
+    if (state.shows_marked()) {
+        const auto looks = symbol_looks(object, state.legend);
+        parts.push_back(ec::list(
+            {.id = marked_symbols_id,
+             .rows =
+                 state.marked_symbols() | std::views::transform([&](const auto& entry) {
+                     const auto& [glyph, count] = entry;
+                     const auto look = looks.find(glyph);
+                     return ec::row{
+                         .id = "symbol:" + glyph,
+                         //~ What squares hold and how many of them there are.
+                         .label = string_format(_("%1$s ×%2$d"), state.symbol_name(glyph), count),
+                         .look = look != looks.end() && !look->second.empty()
+                                   ? std::optional(look->second.back())
+                                   : std::nullopt};
+                 })
+                 | std::ranges::to<std::vector>(),
+             .selection = "single"}));
+        parts.back().affordances = {replace_symbol_id, delete_symbol_id};
+        affordances.push_back(ec::invoke_affordance(
+            {.id = replace_symbol_id,
+             //~ %s is what the squares of the row get in its place, such as a brick wall.
+             .label = string_format(_("Replace with %s"), state.symbol_name(state.symbol)),
+             .args = row_of(marked_symbols_id)}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = delete_symbol_id,
+             .label = _("Delete all of these"),
+             .args = row_of(marked_symbols_id)}));
+    }
     if (state.clip_text_shown) {
         parts.push_back(
             {.id = clip_text_id,
@@ -1744,6 +1775,8 @@ auto layout(const session& state) -> workspace_layout {
                .label = _("New placement"),
                .collapsed = !placing}},
              {library_id, {.slot = "palette", .label = _("Library"), .collapsed = true}},
+             {marked_symbols_id,
+              {.slot = "palette", .label = state.selected ? _("Marked squares") : _("All squares")}},
              {clip_text_id, {.slot = "inspector", .label = _("Copy as text")}},
              {pins_id, {.slot = "inspector", .label = _("Pinned choices")}},
              {rotation_id, {.slot = "inspector", .label = _("Preview facing")}},

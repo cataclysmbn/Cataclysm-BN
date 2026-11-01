@@ -9211,7 +9211,9 @@ TEST_CASE(
         CHECK(marked[0].label.ends_with(" ×3"));
         CHECK(marked[1].id == "symbol:+");
         CHECK(marked[1].label.ends_with(" ×1"));
-        // Nothing the catalog gave is in hand; what the legend picked is the floor.
+        return invoke("editor:catalog_filter", {.text = "t_wall_wood"});
+    });
+    walk.push_back([](const auto&) {
         return invoke("editor:catalog_pick", {.row = "entry:t_wall_wood"});
     });
     walk.push_back([](const auto& screen) {
@@ -9289,6 +9291,7 @@ TEST_CASE("replacing the terrain under a counter keeps the counter", "[editor_se
     const auto guard = screen_guard{};
     const auto walk = std::vector<map_step>{
         [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:catalog_filter", {.text = "t_dirt"}); },
         [](const auto&) { return invoke("editor:catalog_pick", {.row = "entry:t_dirt"}); },
         [](const auto&) { return invoke("editor:tool", {.row = "tool:select"}); },
         [](const auto&) { return invoke("editor:replace_symbol", {.row = "symbol:C"}); },
