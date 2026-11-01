@@ -8987,4 +8987,110 @@ TEST_CASE(
     CHECK(walk_map(walk) == walk.size());
 }
 
+TEST_CASE("the placement card stays off an entry it does not place on", "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto simple = override_option("EDITOR_ADVANCED", "false");
+    const auto base = mod_file{{{"fill_ter", "t_floor"}}};
+    const auto path = base.path.parent_path() / "with_palette.json";
+    auto entries = nlohmann::ordered_json::parse(base.text);
+    entries.push_back({{"type", "palette"}, {"id", "editor_card_palette"}});
+    std::ofstream(path) << entries.dump();
+    const auto cleanup = on_out_of_scope([&] { std::filesystem::remove(path); });
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = path.string()}); },
+        [](const auto&) { return invoke("editor:tool", {.row = "tool:placements"}); },
+        [](const auto&) { return invoke("editor:object", {.row = "object:1"}); },
+        [](const auto& screen) {
+            const auto& kinds = body<ec::tabs_body>(part(screen, "editor:catalog_kinds")).tabs;
+            CHECK(std::ranges::contains(kinds, std::string("catalog:terrain"), &ec::tab_entry::id));
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+}
+
+TEST_CASE("the advanced toggle shows the placement card on a tab it places", "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{{{"fill_ter", "t_floor"}}};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:tool", {.row = "tool:placements"}); },
+        [](const auto&) { return invoke("editor:catalog_kind", {.row = "catalog:terrain"}); },
+        [](const auto&) { return invoke("editor:advanced"); },
+        [](const auto& screen) {
+            const auto& kinds = body<ec::tabs_body>(part(screen, "editor:catalog_kinds")).tabs;
+            CHECK(std::ranges::contains(kinds, true, &ec::tab_entry::selected));
+            return invoke("editor:advanced");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+}
+
+TEST_CASE(
+    "a click with the placements tool marks its square and leaves the next click free",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto simple = override_option("EDITOR_ADVANCED", "false");
+    const auto file = mod_file{
+        {{"fill_ter", "t_floor"},
+         {"place_monster",
+          nlohmann::ordered_json::array({{{"monster", "mon_zombie"}, {"x", 3}, {"y", 3}}})}}};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:tool", {.row = "tool:placements"}); },
+        [](const auto& screen) {
+            CHECK(
+                body<ec::grid_body>(part(screen, "editor:canvas")).drag_end == "editor:stroke_end");
+            return square_at(7, 1);
+        },
+        [](const auto&) { return invoke("editor:stroke_end"); },
+        [](const auto& screen) {
+            CHECK(affordance(screen, "editor:place_apply").denial
+                  == "Pick what goes there from the catalog first.");
+            return square_at(3, 3);
+        },
+        [](const auto& screen) {
+            CHECK(has_affordance(screen, "editor:placement_delete"));
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+}
+
+TEST_CASE(
+    "the placement card writes its own pick on the squares marked, whatever the advanced form "
+    "holds",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto simple = override_option("EDITOR_ADVANCED", "false");
+    const auto file = mod_file{{{"fill_ter", "t_floor"}}};
+    const auto other = mod_file{{{"fill_ter", "t_floor"}}, "other.json"};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:tool", {.row = "tool:placements"}); },
+        [](const auto&) { return square_at(2, 3); }, [](const auto&) { return square_at(4, 6); },
+        [](const auto&) { return invoke("editor:catalog_filter", {.text = "livingroom"}); },
+        [](const auto&) { return invoke("editor:catalog_pick", {.row = "entry:livingroom"}); },
+        [](const auto&) { return invoke("editor:advanced"); },
+        [](const auto&) {
+            return invoke("editor:place_set", {.row = "kind", .text = "place_toilets"});
+        },
+        [](const auto&) { return invoke("editor:place_set", {.row = "x", .text = "1"}); },
+        [](const auto&) { return invoke("editor:advanced"); },
+        [](const auto&) { return invoke("editor:place_apply"); },
+        [](const auto&) { return invoke("editor:save"); },
+        // Another file starts with nothing picked.
+        [&](const auto&) { return invoke("editor:open", {.text = other.path.string()}); },
+        [](const auto&) { return square_at(2, 3); }, [](const auto&) { return square_at(4, 6); },
+        [](const auto& screen) {
+            CHECK(affordance(screen, "editor:place_apply").denial
+                  == "Pick what goes there from the catalog first.");
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    const auto entry = nlohmann::ordered_json::parse(read_file(file.path))[0];
+    REQUIRE(entry["object"].contains("place_items"));
+    CHECK_FALSE(entry["object"].contains("place_toilets"));
+    const auto& placed = entry["object"]["place_items"][0];
+    CHECK(placed["item"] == "livingroom");
+    CHECK(placed["x"] == nlohmann::ordered_json::array({2, 4}));
+}
+
 #endif // CATA_MCP
