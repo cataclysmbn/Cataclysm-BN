@@ -424,8 +424,11 @@ auto run_editor_session() -> void {
             (row == "path"         ? state.made.path
              : row == "om_terrain" ? state.made.om_terrain
              : row == "kind"       ? state.made.kind
-             : row == "size"
-                 ? state.made.size
+             : row == "size"       ? state.made.size
+             : row == "name"       ? state.made.name
+             : row == "mod"        ? state.made.mod
+             : row == "mod_name"
+                 ? state.made.mod_name
                  : state.made.fill) = text;
         } else if (id == new_folder_id) {
             const auto mods = std::filesystem::path(PATH_INFO::user_moddir());
@@ -435,6 +438,20 @@ auto run_editor_session() -> void {
             state.made.path = (mods / folder / "new_mapgen.json").string();
             //~ %s is the name of a new folder in the player's mods.
             state.status = string_format(_("The new file goes in a new mod folder, %s."), folder);
+        } else if (id == new_apply_id && !advanced_mode()) {
+            // Simple mode names the file and its ids after the name the player gave.
+            const auto named = named_new(state.made);
+            const auto made =
+                named.path.empty()
+                    ? std::expected<void, std::string>(std::unexpected(_("Give it a name first.")))
+                    : create_mapgen(named);
+            if (made) {
+                state.made.mod = mod_folder_name(named.path).value_or("");
+                state.made.name.clear();
+                state.open(named.path);
+            } else {
+                state.notice = made.error();
+            }
         } else if (id == new_apply_id) {
             auto named = state.made;
             named.om_terrain = new_entry_id(named);

@@ -8,6 +8,7 @@
 #include "ui.h"
 
 #include <algorithm>
+#include <cctype>
 #include <fstream>
 #include <functional>
 #include <iterator>
@@ -76,7 +77,97 @@ auto is_mod_id(const std::string& name) -> bool {
     return !name.empty() && std::ranges::all_of(name, is_id_char);
 }
 
+/// The MOD_INFO entry of the mod whose folder in the player's mods holds the file at `path`; none
+/// outside every mod.
+auto mod_info_of(const std::filesystem::path& path) -> std::optional<nlohmann::json> {
+    for (const auto& folder : mod_folders(path)) {
+        auto in = std::ifstream(folder / "modinfo.json", std::ios::binary);
+        if (!in) { continue; }
+        const auto read = nlohmann::json::parse(in, nullptr, false);
+        for (const auto& entry : read.is_array() ? read : nlohmann::json::array({read})) {
+            if (entry.is_object() && entry.value("type", "") == "MOD_INFO" && entry.contains("id")
+                && entry["id"].is_string()) {
+                return entry;
+            }
+        }
+    }
+    return std::nullopt;
+}
+
+/// The name of the mod of the MOD_INFO entry `info`, else its id.
+auto mod_name(const nlohmann::json& info) -> std::string {
+    return info.contains("name") && info["name"].is_string()
+             ? info["name"].get<std::string>()
+             : info["id"].get<std::string>();
+}
+
+/// The name of the first entry of the file at `path`: its overmap terrain's, else its id in words.
+auto entry_name(const std::filesystem::path& path) -> std::string {
+    auto in = std::ifstream(path, std::ios::binary);
+    const auto read = nlohmann::json::parse(in, nullptr, false);
+    const auto entries = read.is_array() ? read : nlohmann::json::array({read});
+    for (const auto& entry : entries) {
+        if (entry.is_object() && entry.value("type", "") == "overmap_terrain"
+            && entry.contains("name") && entry["name"].is_string()) {
+            return entry["name"].get<std::string>();
+        }
+    }
+    for (const auto& entry : entries) {
+        for (const auto* const key : {"om_terrain", "nested_mapgen_id", "id"}) {
+            if (!entry.is_object() || !entry.contains(key)) { continue; }
+            const auto& id =
+                entry[key].is_array() && !entry[key].empty() ? entry[key][0] : entry[key];
+            if (id.is_string()) { return words_of_id(id.get<std::string>()); }
+        }
+    }
+    return words_of_id(path.stem().string());
+}
+
 } // namespace
+
+auto id_of_words(const std::string_view words) -> std::string {
+    auto id = std::string{};
+    for (const auto c : words) {
+        const auto letter = static_cast<unsigned char>(c);
+        if (std::isalnum(letter)) {
+            id += static_cast<char>(std::tolower(letter));
+        } else if (!id.empty() && id.back() != '_') {
+            id += '_';
+        }
+    }
+    while (!id.empty() && id.back() == '_') { id.pop_back(); }
+    return id;
+}
+
+auto words_of_id(const std::string_view id) -> std::string {
+    auto words = std::string(id);
+    std::ranges::replace(words, '_', ' ');
+    if (!words.empty()) {
+        words.front() = static_cast<char>(std::toupper(static_cast<unsigned char>(words.front())));
+    }
+    return words;
+}
+
+auto document_title(const std::filesystem::path& path) -> std::string {
+    const auto info = mod_info_of(path);
+    if (!info) { return shown_path(path); }
+    //~ %1$s is the name of a map, %2$s the name of the mod that holds it.
+    return string_format(_("%1$s (%2$s)"), entry_name(path), mod_name(*info));
+}
+
+auto player_mods() -> std::vector<player_mod> {
+    auto mods = std::vector<player_mod>{};
+    auto error = std::error_code{};
+    for (const auto& entry : std::filesystem::directory_iterator(PATH_INFO::user_moddir(), error)) {
+        if (!entry.is_directory(error)) { continue; }
+        // The file need not be there: its folders name the mod.
+        if (const auto info = mod_info_of(entry.path() / "modinfo.json")) {
+            mods.push_back({.folder = entry.path().filename().string(), .name = mod_name(*info)});
+        }
+    }
+    std::ranges::sort(mods, {}, &player_mod::name);
+    return mods;
+}
 
 auto inside(const std::filesystem::path& path, const std::string& root) -> bool {
     auto error = std::error_code{};
@@ -110,18 +201,8 @@ auto mod_folder_name(const std::filesystem::path& path) -> std::optional<std::st
 }
 
 auto mod_of(const std::filesystem::path& path) -> std::optional<mod_id> {
-    for (const auto& folder : mod_folders(path)) {
-        auto in = std::ifstream(folder / "modinfo.json", std::ios::binary);
-        if (!in) { continue; }
-        const auto read = nlohmann::json::parse(in, nullptr, false);
-        for (const auto& entry : read.is_array() ? read : nlohmann::json::array({read})) {
-            if (entry.is_object() && entry.value("type", "") == "MOD_INFO" && entry.contains("id")
-                && entry["id"].is_string()) {
-                return mod_id(entry["id"].get<std::string>());
-            }
-        }
-    }
-    return std::nullopt;
+    const auto info = mod_info_of(path);
+    return info ? std::optional(mod_id((*info)["id"].get<std::string>())) : std::nullopt;
 }
 
 auto check_mod_folder(const std::filesystem::path& path) -> std::expected<void, std::string> {
@@ -150,14 +231,15 @@ auto check_mod_folder(const std::filesystem::path& path) -> std::expected<void, 
         name, suggestion));
 }
 
-auto make_mod_of(const std::filesystem::path& path) -> std::expected<void, std::string> {
+auto make_mod_of(const std::filesystem::path& path, const std::string& name)
+    -> std::expected<void, std::string> {
     const auto folders = mod_folders(path);
     if (folders.empty() || in_a_mod(folders)) { return {}; }
-    const auto name = folders.front().filename().string();
+    const auto id = folders.front().filename().string();
     const auto info = nlohmann::ordered_json::array(
         {{{"type", "MOD_INFO"},
-          {"id", name},
-          {"name", name},
+          {"id", id},
+          {"name", name.empty() ? id : name},
           {"category", "content"},
           {"dependencies", {mod_management::get_default_core_content_pack().str()}}}});
     auto out = std::ofstream(folders.front() / "modinfo.json", std::ios::binary);

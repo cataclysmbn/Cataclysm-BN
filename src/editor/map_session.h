@@ -272,6 +272,14 @@ struct new_mapgen {
     std::string kind = "mapgen";
     /// The side of a nested chunk, in squares.
     std::string size = "4";
+    /// The name the player gave it, which Simple mode names its file and ids after; a mapgen's
+    /// overmap terrain takes it.
+    std::string name;
+    /// The folder of the player's mods it goes in, `new` for a new mod, or empty for the mod of
+    /// the map the editor opened last.
+    std::string mod;
+    /// The name of the new mod.
+    std::string mod_name = "My mod";
 };
 
 /// Squares of the live world: the north-west one and how many east and south.
@@ -327,9 +335,11 @@ auto range_text(const placement_range& range) -> std::string;
 auto placement_row(const placement& entry) -> std::string;
 /// Whether a new file can be written at `made`; the error says why not.
 auto check_new_path(const std::string& made) -> std::expected<void, std::string>;
-/// Writes `entries` as the new file `made`; the error says why it was not written.
-auto write_new_file(const std::string& made, const nlohmann::ordered_json& entries)
-    -> std::expected<void, std::string>;
+/// Writes `entries` as the new file `made`, its folder a mod named `mod_name` unless a mod holds
+/// it; the error says why it was not written.
+auto write_new_file(
+    const std::string& made, const nlohmann::ordered_json& entries,
+    const std::string& mod_name = {}) -> std::expected<void, std::string>;
 /// Writes `made`'s file; the error says why it was not written.
 auto create_mapgen(const new_mapgen& made) -> std::expected<void, std::string>;
 /// The id the new file's entry takes: the one typed, else the file's name in snake_case.
@@ -337,6 +347,12 @@ auto new_entry_id(const new_mapgen& made) -> std::string;
 /// The path the new mapgen form suggests: the first `new_mapgen.json`, `new_mapgen_2.json` and on
 /// that the my_mod folder of the player's mods lacks.
 auto free_new_path() -> std::string;
+/// The folder of the player's mods `made` goes in, `new` for a new mod: the one chosen, else the
+/// mod of the last map the editor opened when it is of the player's mods.
+auto new_mod_folder(const new_mapgen& made) -> std::string;
+/// `made` as Simple mode makes it, named after its name: its file in its mod's folder, a new one
+/// named after the new mod's name, and its id that of the file; no id the game has.
+auto named_new(const new_mapgen& made) -> new_mapgen;
 
 /// The search a catalog tab keeps while another tab is shown.
 struct catalog_search {

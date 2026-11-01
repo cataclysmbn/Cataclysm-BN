@@ -399,6 +399,12 @@ auto names_in(const nlohmann::ordered_json& name) -> std::vector<std::string> {
     return name | std::views::transform(names_in) | std::views::join
          | std::ranges::to<std::vector>();
 }
+
+/// The name of the mod a new file makes of its folder: the one the player gave in Simple mode,
+/// else that of the folder.
+auto new_mod_name(const new_mapgen& made) -> std::string {
+    return made.name.empty() ? std::string{} : made.mod_name;
+}
 } // namespace
 
 auto entry_ids(const nlohmann::ordered_json& value) -> std::vector<std::string> {
@@ -427,7 +433,8 @@ auto check_new_path(const std::string& made) -> std::expected<void, std::string>
     return check_mod_folder(path);
 }
 
-auto write_new_file(const std::string& made, const nlohmann::ordered_json& entries)
+auto write_new_file(
+    const std::string& made, const nlohmann::ordered_json& entries, const std::string& mod_name)
     -> std::expected<void, std::string> {
     const auto path = std::filesystem::path(made);
     auto error = std::error_code{};
@@ -435,7 +442,7 @@ auto write_new_file(const std::string& made, const nlohmann::ordered_json& entri
     auto out = std::ofstream(path, std::ios::binary);
     out << format_json(entries.dump()).value_or(entries.dump(2));
     if (error || !out.flush()) { return std::unexpected(_("The file could not be written.")); }
-    return make_mod_of(path);
+    return make_mod_of(path, mod_name);
 }
 
 auto create_mapgen(const new_mapgen& made) -> std::expected<void, std::string> {
@@ -468,7 +475,7 @@ auto create_mapgen(const new_mapgen& made) -> std::expected<void, std::string> {
             {"overmaps", {{{"point", {0, 0, 0}}, {"overmap", made.fill}}}},
             {"locations", {"land"}}};
         if (made.kind == "special") { entry["occurrences"] = {0, 1}; }
-        return write_new_file(made.path, nlohmann::ordered_json::array({entry}));
+        return write_new_file(made.path, nlohmann::ordered_json::array({entry}), new_mod_name(made));
     }
     if (!ter_str_id(made.fill).is_valid()) {
         return std::unexpected(string_format(_("%s is no terrain."), made.fill));
@@ -481,7 +488,8 @@ auto create_mapgen(const new_mapgen& made) -> std::expected<void, std::string> {
         return write_new_file(
             made.path,
             nlohmann::ordered_json::array(
-                {{{"type", "palette"}, {"id", made.om_terrain}, {"terrain", {{".", made.fill}}}}}));
+                {{{"type", "palette"}, {"id", made.om_terrain}, {"terrain", {{".", made.fill}}}}}),
+            new_mod_name(made));
     }
     const auto nested = made.kind == "nested";
     auto side = 24;
@@ -504,28 +512,27 @@ auto create_mapgen(const new_mapgen& made) -> std::expected<void, std::string> {
     } else {
         object["fill_ter"] = made.fill;
     }
-    const auto entry = nlohmann::ordered_json::array(
+    auto entries = nlohmann::ordered_json::array(
         {{{"type", "mapgen"},
           {"method", "json"},
           {nested ? "nested_mapgen_id" : "om_terrain", made.om_terrain},
           {"object", object}}});
-    return write_new_file(made.path, entry);
+    // A named map is a building of its own, as the overmap shows it.
+    if (!nested && !made.name.empty()) {
+        entries.insert(
+            entries.begin(),
+            nlohmann::ordered_json{
+                {"type", "overmap_terrain"},
+                {"id", made.om_terrain},
+                {"copy-from", "generic_city_building"},
+                {"name", made.name}});
+    }
+    return write_new_file(made.path, entries, new_mod_name(made));
 }
 
 auto new_entry_id(const new_mapgen& made) -> std::string {
     if (!made.om_terrain.empty()) { return made.om_terrain; }
-    // Words of the file's name, lower case, joined by single underscores.
-    auto id = std::string{};
-    for (const auto c : std::filesystem::path(made.path).stem().string()) {
-        const auto letter = static_cast<unsigned char>(c);
-        if (std::isalnum(letter)) {
-            id += static_cast<char>(std::tolower(letter));
-        } else if (!id.empty() && id.back() != '_') {
-            id += '_';
-        }
-    }
-    while (!id.empty() && id.back() == '_') { id.pop_back(); }
-    return id;
+    return id_of_words(std::filesystem::path(made.path).stem().string());
 }
 
 auto free_new_path() -> std::string {
@@ -538,6 +545,40 @@ auto free_new_path() -> std::string {
                          })
                + ".json"))
         .string();
+}
+
+auto new_mod_folder(const new_mapgen& made) -> std::string {
+    if (!made.mod.empty()) { return made.mod; }
+    const auto mods = player_mods();
+    for (const auto& recent : recent_documents()) {
+        if (recent.editor != "map") { continue; }
+        const auto folder = mod_folder_name(recent.name);
+        if (folder && std::ranges::contains(mods, *folder, &player_mod::folder)) { return *folder; }
+    }
+    return "new";
+}
+
+auto named_new(const new_mapgen& made) -> new_mapgen {
+    const auto mods = std::filesystem::path(PATH_INFO::user_moddir());
+    auto folder = new_mod_folder(made);
+    if (folder == "new") {
+        const auto base = id_of_words(made.mod_name);
+        folder = free_name(base.empty() ? "my_mod" : base, [&](const std::string& name) {
+            return std::filesystem::exists(mods / name) || mod_id(name).is_valid();
+        });
+    }
+    // The game's ids stay its own: a second house would be a variant of the game's.
+    const auto chunks = nested_mapgen_ids();
+    const auto base = id_of_words(made.name);
+    const auto id = base.empty() ? std::string{} : free_name(base, [&](const std::string& name) {
+        return std::filesystem::exists(mods / folder / (name + ".json"))
+            || oter_type_str_id(name).is_valid() || palette_id(name).is_valid()
+            || std::ranges::contains(chunks, name);
+    });
+    auto named = made;
+    named.path = id.empty() ? std::string{} : (mods / folder / (id + ".json")).string();
+    named.om_terrain = id;
+    return named;
 }
 
 auto range_text(const placement_range& range) -> std::string {

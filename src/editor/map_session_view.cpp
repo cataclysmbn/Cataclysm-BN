@@ -1098,8 +1098,61 @@ auto game_parts(
     }
 }
 
+/// The form that creates a new file in Simple mode: names, from which its file and ids follow.
+auto simple_new_file_form(const session& state) -> ec::component {
+    const auto& made = state.made;
+    const auto named = named_new(made);
+    const auto folder = new_mod_folder(made);
+    auto mods =
+        player_mods() | std::views::transform([](const player_mod& mod) {
+            return ec::form_option{.id = mod.folder, .label = mod.name};
+        })
+        | std::ranges::to<std::vector>();
+    mods.push_back({.id = "new", .label = _("New mod")});
+    auto fields = std::vector<ec::form_field>{
+        {.id = "name",
+         .label = _("Name"),
+         .description =
+             named.path.empty()
+                 ? _("What the new map is called.")
+                 //~ %s is the file a new map is saved in, inside the player's mods.
+                 : string_format(_("Saved as %s."), mods_path(named.path)),
+         .value = made.name,
+         .required = true},
+        {.id = "kind",
+         .label = _("What it is"),
+         .value = made.kind,
+         .type = "select",
+         .options = {{.id = "mapgen", .label = _("A building or place")},
+                     {.id = "nested", .label = _("A piece to reuse in maps")}}},
+        {.id = "mod",
+         .label = _("Mod"),
+         .description = _("The mod that holds it, which a world loads."),
+         .value = folder,
+         .type = "select",
+         .options = std::move(mods)}};
+    if (folder == "new") {
+        fields.push_back({.id = "mod_name", .label = _("Mod name"), .value = made.mod_name});
+    }
+    if (made.kind == "nested") {
+        fields.push_back(
+            {.id = "size",
+             .label = _("Chunk size"),
+             .description = _("The side of a nested chunk, in squares."),
+             .value = made.size,
+             .type = "integer",
+             .min = 1,
+             .max = max_chunk});
+    }
+    return ec::component{
+        .id = new_id,
+        .affordances = {new_set_id, new_apply_id},
+        .body = ec::form_body{.fields = std::move(fields), .submit = new_apply_id}};
+}
+
 /// The form that creates a new file.
 auto new_file_form(const session& state) -> ec::component {
+    if (!advanced_mode()) { return simple_new_file_form(state); }
     const auto& kind = state.made.kind;
     const auto special = kind == "special" || kind == "building";
     auto form = ec::component{
@@ -1499,7 +1552,7 @@ auto layout(const session& state) -> workspace_layout {
              // With nothing open, making a mapgen comes first.
              {new_id,
               {.slot = opened ? "inspector" : "canvas",
-               .label = _("New mapgen file"),
+               .label = advanced_mode() ? _("New mapgen file") : _("New map"),
                .collapsed = opened}},
              {export_options_id, {.slot = "inspector", .label = _("Export")}},
              {import_form_id,
@@ -1635,7 +1688,7 @@ auto session_view(const session& state) -> ec::screen_view {
         const auto& doc = *state.doc;
         parts.push_back(ec::panel(
             {.id = "editor:document",
-             .title = shown_path(doc.path()),
+             .title = advanced_mode() ? shown_path(doc.path()) : document_title(doc.path()),
              .stats = document_stats(state)}));
         const auto entries = state.entries();
         parts.push_back(ec::list(
@@ -1853,10 +1906,12 @@ auto session_view(const session& state) -> ec::screen_view {
         if (!recent.empty()) {
             parts.push_back(ec::list(
                 {.id = recent_id,
-                 .rows = recent | std::views::transform([](const recent_document& entry) {
-                             return ec::row{.id = "file:" + entry.name, .label = entry.name};
-                         })
-                       | std::ranges::to<std::vector>(),
+                 .rows =
+                     recent | std::views::transform([](const recent_document& entry) {
+                         return ec::
+                             row{.id = "file:" + entry.name, .label = document_title(entry.name)};
+                     })
+                     | std::ranges::to<std::vector>(),
                  .selection = "single",
                  .activate = recent_open_id}));
             affordances.push_back(ec::invoke_affordance(

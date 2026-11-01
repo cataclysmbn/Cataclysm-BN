@@ -11,6 +11,7 @@
 #include "distraction_manager.h"
 #include "editor/editor_session.h"
 #include "editor/recent_documents.h"
+#include "editor/session_file.h"
 #include "engine_client_component.h"
 #include "enums.h"
 #include "filesystem.h"
@@ -611,7 +612,8 @@ void main_menu::init_strings()
             const auto mods = recent.mods | std::views::transform( []( const mod_id & mod ) {
                 return mod.is_valid() ? mod->name() : mod.str();
             } ) | std::ranges::to<std::vector>();
-            vEditorSubItems.emplace_back( recent.name );
+            vEditorSubItems.emplace_back( recent.editor == "map" ? editor::document_title( recent.name ) :
+                                          recent.name );
             vEditorIds.emplace_back( string_format( "recent:%d", index ) );
             vEditorHints.emplace_back( string_format( recent.editor == "vehicle"
                                        ? _( "Open it in the vehicle editor with %s." )

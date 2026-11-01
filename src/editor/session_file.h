@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <functional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace editor {
@@ -30,9 +31,25 @@ auto mod_of(const std::filesystem::path& path) -> std::optional<mod_id>;
 /// Whether the file at `path` may make its folder of the player's mods a mod: refused, with what to
 /// tell the player, when that folder's name is no mod id or another mod's, or a mod lies below it.
 auto check_mod_folder(const std::filesystem::path& path) -> std::expected<void, std::string>;
-/// Makes the folder of the player's mods that holds the file at `path` a mod of that folder's
-/// name, unless a mod holds it already; the error is what to tell the player.
-auto make_mod_of(const std::filesystem::path& path) -> std::expected<void, std::string>;
+/// Makes the folder of the player's mods that holds the file at `path` a mod whose id is that
+/// folder's name and whose name is `name`, else the id, unless a mod holds it already; the error
+/// is what to tell the player.
+auto make_mod_of(const std::filesystem::path& path, const std::string& name = {})
+    -> std::expected<void, std::string>;
+/// `words` as an id: its letters and digits in lower case, the rest as single underscores.
+auto id_of_words(std::string_view words) -> std::string;
+/// `id` as words: underscores as spaces, the first letter upper case.
+auto words_of_id(std::string_view id) -> std::string;
+/// What the editors call the file at `path`: the name of its first entry and of its mod for a file
+/// of the player's mods, else its path.
+auto document_title(const std::filesystem::path& path) -> std::string;
+/// A mod at the top of the player's mods: its folder and its name.
+struct player_mod {
+    std::string folder;
+    std::string name;
+};
+/// The mods at the top of the player's mods, by name.
+auto player_mods() -> std::vector<player_mod>;
 /// `base`, else `base_2`, `base_3` and on: the first name not `taken`.
 auto free_name(const std::string& base, const std::function<bool(const std::string&)>& taken)
     -> std::string;
