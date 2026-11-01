@@ -9309,6 +9309,130 @@ TEST_CASE("replacing the terrain under a counter keeps the counter", "[editor_se
     CHECK(object["furniture"][symbol] == "f_counter");
 }
 
+namespace {
+
+/// A mapgen, and in the same file a 4x4 chunk of counters; `object` is merged into the mapgen's.
+auto chunk_file(const nlohmann::ordered_json& extra) -> mod_file {
+    const auto file = mod_file{extra, "chunked.json"};
+    auto entries = nlohmann::ordered_json::parse(file.text);
+    entries.push_back(
+        {{"type", "mapgen"},
+         {"method", "json"},
+         {"nested_mapgen_id", "editor_test_counters"},
+         {"object",
+          {{"mapgensize", {4, 4}},
+           {"rows", {"CCCC", "CCCC", "CCCC", "CCCC"}},
+           {"terrain", {{"C", "t_floor"}}},
+           {"furniture", {{"C", "f_counter"}}}}}});
+    std::ofstream(file.path) << entries.dump();
+    return file;
+}
+
+auto faded_cells(const ec::screen_view& screen) -> std::vector<ec::grid_point> {
+    return body<ec::grid_body>(part(screen, "editor:canvas")).cells
+         | std::views::filter(&ec::grid_cell::faded) | std::views::transform(&ec::grid_cell::at)
+         | std::ranges::to<std::vector>();
+}
+
+} // namespace
+
+TEST_CASE("a placed 4x4 chunk draws 16 faded squares from where it lands", "[editor_session]") {
+    const auto file = chunk_file(
+        {{"place_nested",
+          {{{"chunks", nlohmann::ordered_json::array({"editor_test_counters"})},
+            {"x", 2},
+            {"y", 3}}}}});
+    const auto guard = screen_guard{};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto& screen) {
+            const auto faded = faded_cells(screen);
+            CHECK(faded.size() == 16);
+            CHECK(std::ranges::contains(faded, ec::grid_point{2, 3}));
+            CHECK(std::ranges::contains(faded, ec::grid_point{5, 6}));
+            CHECK_FALSE(std::ranges::contains(faded, ec::grid_point{6, 6}));
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    editor::reset_editor_session();
+}
+
+TEST_CASE(
+    "a chunk a symbol places shows on its square and its footprint in hand", "[editor_session]") {
+    auto rows = nlohmann::ordered_json::array();
+    for (auto row = 0; row < 24; ++row) { rows.push_back(std::string(24, '.')); }
+    rows[22] = std::string(22, '.') + "N.";
+    const auto file = chunk_file(
+        {{"rows", rows},
+         {"terrain", {{".", "t_floor"}, {"N", "t_floor"}}},
+         {"nested",
+          {{"N", {{"chunks", nlohmann::ordered_json::array({"editor_test_counters"})}}}}}});
+    const auto guard = screen_guard{};
+    const auto stamp = [](const ec::screen_view& screen) {
+        return body<ec::grid_body>(part(screen, "editor:canvas")).stamp;
+    };
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [&](const auto& screen) {
+            // The chunk runs past the edge of the rows, where nothing is drawn.
+            const auto faded = faded_cells(screen);
+            CHECK(faded.size() == 4);
+            CHECK(std::ranges::contains(faded, ec::grid_point{23, 23}));
+            CHECK(stamp(screen).empty());
+            return invoke("editor:symbol", {.row = "symbol:N"});
+        },
+        [&](const auto& screen) {
+            CHECK(stamp(screen).size() == 16);
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    editor::reset_editor_session();
+}
+
+TEST_CASE("the footprint of a chunk from the game's data shows in hand", "[editor_session]") {
+    const auto file = mod_file{};
+    const auto guard = screen_guard{};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:catalog_kind", {.row = "catalog:nested_mapgen"}); },
+        [](const auto&) { return invoke("editor:catalog_filter", {.text = "bunker_suicide"}); },
+        [](const auto&) { return invoke("editor:catalog_pick", {.row = "entry:bunker_suicide"}); },
+        [](const auto& screen) {
+            CHECK(body<ec::grid_body>(part(screen, "editor:canvas")).stamp.size() == 4);
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    editor::reset_editor_session();
+}
+
+TEST_CASE("the paste tool outlines the squares the copy lands on", "[editor_session]") {
+    const auto file = mod_file{};
+    const auto guard = screen_guard{};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:tool", {.row = "tool:select"}); },
+        [](const auto&) { return square_at(1, 1); },
+        [](const auto&) { return square_at(3, 2); },
+        [](const auto&) { return invoke("editor:copy"); },
+        [](const auto& screen) {
+            CHECK(body<ec::grid_body>(part(screen, "editor:canvas")).stamp.empty());
+            return invoke("editor:tool", {.row = "tool:paste"});
+        },
+        [](const auto& screen) {
+            const auto stamp = body<ec::grid_body>(part(screen, "editor:canvas")).stamp;
+            CHECK(stamp.size() == 6);
+            CHECK(std::ranges::contains(stamp, ec::grid_point{2, 1}));
+            return invoke("editor:rotate");
+        },
+        [](const auto& screen) {
+            const auto stamp = body<ec::grid_body>(part(screen, "editor:canvas")).stamp;
+            CHECK(std::ranges::contains(stamp, ec::grid_point{1, 2}));
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    editor::reset_editor_session();
+}
+
 TEST_CASE("the placement card shows only on the placements tool", "[editor_session]") {
     const auto guard = screen_guard{};
     const auto simple = override_option("EDITOR_ADVANCED", "false");
