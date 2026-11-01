@@ -13,6 +13,7 @@
 #    include "cursesport.h"
 #    include "debug_menu.h"
 #    include "editor/editor_session.h"
+#    include "editor/json_read.h"
 #    include "editor/map_session.h"
 #    include "editor/mapgen_levels.h"
 #    include "editor/mapgen_preview.h"
@@ -8588,6 +8589,51 @@ TEST_CASE(
     CHECK_FALSE(editor::map_editor::write_appearance(shed, "editor_place_shed", {.where = "town"}));
     CHECK_FALSE(editor::map_editor::write_appearance(shed, "editor_place_shed", {.where = "test"}));
     CHECK(read_file(editor::map_editor::placement_file(shed)) == other);
+}
+
+TEST_CASE(
+    "where a building appears keeps another building's placement and finds an inherited "
+    "unturned terrain",
+    "[editor_session]") {
+    namespace me = editor::map_editor;
+    const auto folder = std::filesystem::path(PATH_INFO::user_moddir()) / "editor_place2_mod";
+    const auto forget = [&] { std::filesystem::remove_all(folder); };
+    forget();
+    const auto cleanup = on_out_of_scope(forget);
+    std::filesystem::create_directories(folder);
+    std::ofstream(folder / "modinfo.json")
+        << R"([{"type":"MOD_INFO","id":"editor_place2_mod","name":"Place mod"}])";
+    const auto shed = folder / "shed.json";
+    std::ofstream(shed)
+        << R"([{"type":"mapgen","method":"json","om_terrain":"editor_place2_shed","object":{}},)"
+           R"({"type":"overmap_terrain","id":"editor_place2_shed","name":"Shed",)"
+           R"("copy-from":"omt_obsolete"}])";
+    const auto barn = folder / "barn.json";
+    std::ofstream(barn)
+        << R"([{"type":"mapgen","method":"json","om_terrain":"editor_place2_barn","object":{}},)"
+           R"({"type":"overmap_terrain","id":"editor_place2_barn","name":"Barn",)"
+           R"("extend":{"flags":["NO_ROTATE"]}}])";
+    const auto overmap = [](const std::filesystem::path& path) {
+        return nlohmann::ordered_json::parse(
+            read_file(me::placement_file(path)))[0]["overmaps"][0]["overmap"];
+    };
+    // A terrain that never turns, by the one it copies or by what it adds, is placed as it is.
+    REQUIRE(me::write_appearance(shed, "editor_place2_shed", {.where = "country"}));
+    CHECK(overmap(shed) == "editor_place2_shed");
+    REQUIRE(me::write_appearance(barn, "editor_place2_barn", {.where = "country"}));
+    CHECK(overmap(barn) == "editor_place2_barn");
+    // The special of another building where the placement goes stays.
+    const auto other =
+        R"([{"type":"overmap_special","id":"someone_else","overmaps":[],"occurrences":[0,3]}])";
+    std::ofstream(me::placement_file(shed), std::ios::trunc) << other;
+    CHECK(me::read_appearance(shed, "editor_place2_shed").where == "test");
+    CHECK_FALSE(me::write_appearance(shed, "editor_place2_shed", {.where = "town"}));
+    CHECK_FALSE(me::write_appearance(shed, "editor_place2_shed", {.where = "test"}));
+    CHECK(read_file(me::placement_file(shed)) == other);
+    // An empty file, as a failed write would leave, is the editor's to fill.
+    std::ofstream(me::placement_file(barn), std::ios::trunc).flush();
+    CHECK(me::write_appearance(barn, "editor_place2_barn", {.where = "town"}));
+    CHECK(me::read_appearance(barn, "editor_place2_barn").where == "town");
 }
 
 #endif // CATA_MCP
