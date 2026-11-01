@@ -101,18 +101,18 @@ class scenario
         bool is_forbidden_trait( const trait_id &trait ) const;
 
         /** Read access to the JSON-defined trait/bionic/spell lists, for UI and Lua. */
-        const std::set<trait_id> &allowed_traits() const;
-        const std::set<trait_id> &forbidden_traits() const;
-        const std::set<bionic_id> &allowed_bionics() const;
-        const std::set<bionic_id> &forbidden_bionics() const;
-        const std::set<spell_id> &allowed_spells() const;
-        const std::set<spell_id> &forbidden_spells() const;
-        const std::set<spell_id> &forced_spells() const;
-        const std::set<std::string> &get_flags() const;
-        const std::vector<start_location_id> &allowed_start_locations() const;
+        auto allowed_traits() const -> const std::set<trait_id> &;
+        auto forbidden_traits() const -> const std::set<trait_id> &;
+        auto allowed_bionics() const -> const std::set<bionic_id> &;
+        auto forbidden_bionics() const -> const std::set<bionic_id> &;
+        auto allowed_spells() const -> const std::set<spell_id> &;
+        auto forbidden_spells() const -> const std::set<spell_id> &;
+        auto forced_spells() const -> const std::set<spell_id> &;
+        auto get_flags() const -> const std::set<std::string> &;
+        auto allowed_start_locations() const -> const std::vector<start_location_id> &;
 
         bool bionicquery( const bionic_id &bionic ) const;
-        std::set<bionic_id> get_locked_bionics() const;
+        auto get_locked_bionics() const -> std::set<bionic_id>;
         bool is_locked_bionic( const bionic_id &bionic ) const;
         bool is_forbidden_bionic( const bionic_id &bionic ) const;
         bool forbids_bionics() const;

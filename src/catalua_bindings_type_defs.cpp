@@ -44,6 +44,7 @@ auto cata::detail::reg_types( sol::state &lua ) -> void
         luna::set_prop( ut, "str_id", []( const UT_CLASS & x ) -> string_id<scenario> { return x.ident(); } );
         DOC( "String id of the scenario, e.g. \"evacuee\". Useful for equality checks." );
         luna::set_prop( ut, "id", []( const UT_CLASS & x ) -> std::string { return x.ident().str(); } );
+        DOC( "The scenario's id as a plain string." );
         DOC( "Display name of the scenario for the given gender (true = male)." );
         luna::set_fx( ut, "name", &UT_CLASS::gender_appropriate_name );
         DOC( "Description of the scenario for the given gender (true = male)." );
