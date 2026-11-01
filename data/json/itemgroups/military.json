@@ -485,6 +485,7 @@
       { "item": "shoulder_strap", "prob": 10 },
       { "item": "bot_manhack", "prob": 1 },
       { "item": "bot_grenade_hack", "prob": 1 },
+      { "item": "combat_drone_item", "prob": 2 },
       { "item": "l-stick", "prob": 1 },
       { "item": "mil_gps_device", "prob": 5, "charges-min": 10, "charges-max": 95 },
       { "item": "chem_hexamine", "prob": 5 },
@@ -817,7 +818,8 @@
       [ "bot_turret_antimateriel", 1 ],
       [ "bot_turret_mark19", 1 ],
       [ "bot_turret_medium", 10 ],
-      [ "bot_turret_searchlight", 10 ]
+      [ "bot_turret_searchlight", 10 ],
+      { "collection": [ { "item": "combat_drone_item" }, { "item": "remotevehcontrol", "prob": 50 } ], "prob": 10 }
     ]
   },
   {

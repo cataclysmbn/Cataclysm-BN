@@ -153,6 +153,7 @@
     "ammo": "battery",
     "charges_per_use": 1,
     "turns_per_charge": 10,
+    "revert_to": "remotevehcontrol",
     "use_action": "REMOTEVEH",
     "magazines": [ [ "battery", [ "light_battery_cell", "light_minus_battery_cell" ] ] ],
     "magazine_well": "250 ml"
