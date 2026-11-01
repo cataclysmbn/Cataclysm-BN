@@ -47,10 +47,6 @@ namespace {
 
 constexpr auto design_source = "editor";
 
-auto int_of(const nlohmann::ordered_json& value, const char* key) -> int {
-    return value.contains(key) && value[key].is_number_integer() ? value[key].get<int>() : 0;
-}
-
 /// The part a `parts` value names: a part id, or an object with a `part` member.
 auto part_named(const nlohmann::ordered_json& value) -> std::string {
     if (value.is_string()) { return value.get<std::string>(); }
@@ -104,10 +100,10 @@ auto design_parts(const nlohmann::ordered_json& prototype) -> std::vector<design
     if (prototype.contains("blueprint") && prototype.contains("palette")
         && prototype["blueprint"].is_array() && prototype["palette"].is_object()) {
         const auto& origin = prototype.value("blueprint_origin", nlohmann::ordered_json::object());
-        auto y = -int_of(origin, "y");
+        auto y = -int_at(origin, "y", 0);
         for (const auto& row : prototype["blueprint"]) {
-            auto x = -int_of(origin, "x");
-            for (const auto symbol : row.get<std::string>()) {
+            auto x = -int_at(origin, "x", 0);
+            for (const auto symbol : row.is_string() ? row.get<std::string>() : std::string{}) {
                 const auto key = std::string(1, symbol);
                 if (prototype["palette"].contains(key)) {
                     for (const auto& [index, part] :
@@ -126,7 +122,7 @@ auto design_parts(const nlohmann::ordered_json& prototype) -> std::vector<design
     }
     if (!prototype.contains("parts") || !prototype["parts"].is_array()) { return result; }
     for (const auto& [index, entry] : prototype["parts"] | std::views::enumerate) {
-        const auto mount = point(int_of(entry, "x"), int_of(entry, "y"));
+        const auto mount = point(int_at(entry, "x", 0), int_at(entry, "y", 0));
         if (entry.contains("part")) {
             result.push_back(
                 {.mount = mount,
@@ -269,7 +265,7 @@ auto place_vehicle_state(const std::string& state, const tripoint_bub_ms& at)
     const auto in_the_way = std::unexpected(_("Something is in the way of the vehicle there."));
     auto& here = get_map();
     auto* const copy = here.add_vehicle(
-        vproto_id("none"), at, units::from_degrees(int_of(saved, "faceDir")), 0, 0, false);
+        vproto_id("none"), at, units::from_degrees(int_at(saved, "faceDir", 0)), 0, 0, false);
     if (copy == nullptr) { return in_the_way; }
     // The copy keeps the place, world and clock it was placed in.
     const auto own = nlohmann::ordered_json::parse(serialize(*copy));
@@ -654,8 +650,8 @@ auto append_parts(nlohmann::ordered_json& prototype, const std::vector<part_inst
     auto listed = std::map<point, std::size_t>{};
     for (auto index = std::size_t{0}; index < parts.size(); ++index) {
         const auto& entry = parts[index];
-        if (int_of(entry, "z") == 0 && entry.contains("parts") && entry["parts"].is_array()) {
-            listed[point(int_of(entry, "x"), int_of(entry, "y"))] = index;
+        if (int_at(entry, "z", 0) == 0 && entry.contains("parts") && entry["parts"].is_array()) {
+            listed[point(int_at(entry, "x", 0), int_at(entry, "y", 0))] = index;
         }
     }
     for (const auto& install : installs) {
