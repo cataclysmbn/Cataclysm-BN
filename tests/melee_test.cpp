@@ -87,7 +87,7 @@ static void check_near(float prob, const float expected, const float tolerance) 
 
 static const int num_iters = 10000;
 
-static auto dude_pos() -> tripoint_bub_ms { return bub_test_origin(); }
+static auto dude_pos() -> tripoint_abs_ms { return test_origin; }
 
 TEST_CASE("Character attacking a zombie", "[.melee]") {
     monster zed(mtype_id("mon_zombie"));
@@ -237,7 +237,7 @@ TEST_CASE("stunning techniques stun regardless of knockback", "[melee][martial_a
     dude.setpos(dude_pos());
 
     const auto check_stuns = [&dude, &effect_stunned](const matec_id& tec) {
-        auto& target = spawn_test_monster("mon_zombie", dude_pos() + tripoint_rel_ms::east());
+        auto& target = spawn_test_monster("mon_zombie", abs_to_bub( dude_pos() + tripoint_rel_ms::east() ) );
         REQUIRE(tec->stun_dur > 0);
         REQUIRE_FALSE(target.has_effect(effect_stunned));
 

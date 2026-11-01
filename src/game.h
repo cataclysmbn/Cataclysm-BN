@@ -682,7 +682,7 @@ class game : public submap_load_listener
          * Move the active player and realign the loaded map without applying movement effects.
          *
          * This is the shared position transition for normal movement paths and public player
-         * relocation.  It also synchronizes a mounted creature.  Callers that need
+         * relocation. It also unmounts if mounted. Callers that need
          * teleport-specific cleanup must use player::setpos().
          */
         auto set_player_position( const tripoint_abs_ms &destination ) -> point_rel_sm;

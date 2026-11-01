@@ -54,7 +54,7 @@ void teleporter_list::deactivate_teleporter(
 
 // returns the first valid teleport location near a teleporter
 static auto find_valid_teleporters_omt(const tripoint_abs_omt& omt_pt)
-    -> std::optional<tripoint_omt_ms> {
+    -> std::optional<point_omt_ms> {
     // this is the top left hand square of the global absolute coordinate
     // of the overmap terrain we want to try to teleport to.
     // an OMT is SEEX * SEEY in size
@@ -72,8 +72,8 @@ static auto find_valid_teleporters_omt(const tripoint_abs_omt& omt_pt)
             auto furn = submap_view->tile(submap_map_square).get_furn();
             if (furn.is_valid()) {
                 if (furn->has_flag("TRANSLOCATOR")) {
-                    return tripoint_omt_ms(
-                        project_combine(submap_tile, submap_map_square), omt_pt.z());
+                    return point_omt_ms(
+                        project_combine(submap_tile, submap_map_square));
                 }
             }
         }
@@ -83,15 +83,12 @@ static auto find_valid_teleporters_omt(const tripoint_abs_omt& omt_pt)
 
 auto teleporter_list::place_avatar_overmap(Character& you, const tripoint_abs_omt& omt_pt) const
     -> bool {
-    std::optional<tripoint_omt_ms> omt_dest = find_valid_teleporters_omt(omt_pt);
+    std::optional<point_omt_ms> omt_dest = find_valid_teleporters_omt(omt_pt);
     if (!omt_dest) { return false; }
-    // WARN: Legacy hack here
-    // Dont know how to do it any better though
-    const auto local_dest = tripoint_bub_ms(
-        omt_dest->x() + g_half_mapsize_x, omt_dest->y() + g_half_mapsize_y, omt_dest->z());
+    const auto abs_dest = project_combine(omt_pt, *omt_dest);
     you.add_effect(efftype_id("ignore_fall_damage"), 1_seconds, bodypart_str_id::NULL_ID(), 0, true);
     g->place_player_overmap(omt_pt);
-    g->set_player_position(bub_to_abs(local_dest));
+    g->set_player_position(abs_dest);
     return true;
 }
 

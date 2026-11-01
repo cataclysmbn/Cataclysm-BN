@@ -48,15 +48,13 @@ static auto fire_shell_at_target(
     auto& target = get_player_character();
     target.set_body();
     target.setpos(target_abs);
-    const auto target_pos = target.bub_pos();
     const auto shooter_pos_abs = target_abs - tripoint_rel_ms(2, 0, 0);
-    const auto shooter_pos = abs_to_bub(shooter_pos_abs);
     target.worn.clear();
     target.set_dodge_bonus(-100.0f);
     for (const auto& armor_id : armor_ids) { target.worn.push_back(item::spawn(armor_id)); }
-    REQUIRE(g->critter_at<avatar>(target_pos) != nullptr);
+    REQUIRE(g->critter_at<avatar>(abs_to_bub( target_abs )) != nullptr);
 
-    auto shooter = standard_npc("shooter", shooter_pos);
+    auto shooter = standard_npc("shooter", shooter_pos_abs);
     shooter.set_skill_level(skill_gun, 10);
     shooter.set_skill_level(skill_shotgun, 10);
 
@@ -69,7 +67,7 @@ static auto fire_shell_at_target(
     REQUIRE(gun->ammo_data()->ammo->shot->count > 1);
     REQUIRE_FALSE(ranged::get_shape_factory(*gun).has_value());
     REQUIRE(ranged::get_target_shape_factory(*gun).has_value());
-    REQUIRE(gun->gun_range() >= rl_dist(shooter_pos, target_pos));
+    REQUIRE(gun->gun_range() >= rl_dist(shooter_pos_abs, target_abs));
 
     const auto pellet_count = gun->ammo_data()->ammo->shot->count;
     const auto target_hp_total_before = target.get_hp();
@@ -79,7 +77,8 @@ static auto fire_shell_at_target(
     for (const auto _ : std::views::iota(0, shells_to_fire * pellet_count)) {
         (void)_;
         auto probe = make_direct_gun_projectile(shooter.primary_weapon());
-        projectile_attack(probe, shooter_pos, target_pos, dispersion_sources{}, &shooter,
+        projectile_attack(probe, abs_to_bub( shooter_pos_abs ), abs_to_bub( target_abs ),
+                          dispersion_sources{}, &shooter,
                           &shooter.primary_weapon(), nullptr, true);
     }
     return target_hp_total_before - target.get_hp();
@@ -275,14 +274,12 @@ TEST_CASE(
     auto& target = get_player_character();
     target.set_body();
     target.setpos(target_abs);
-    const auto target_pos = target.bub_pos();
     const auto shooter_pos_abs = target_abs - tripoint_rel_ms(2, 0, 0);
-    const auto shooter_pos = abs_to_bub(shooter_pos_abs);
     target.worn.clear();
     target.set_dodge_bonus(-100.0f);
-    REQUIRE(g->critter_at<avatar>(target_pos) != nullptr);
+    REQUIRE(g->critter_at<avatar>(abs_to_bub( target_abs )) != nullptr);
 
-    auto shooter = standard_npc("shooter", shooter_pos);
+    auto shooter = standard_npc("shooter", shooter_pos_abs);
     set_time(calendar::turn_zero + 12_hours);
     shooter.set_skill_level(skill_gun, 10);
     shooter.set_skill_level(skill_shotgun, 10);
@@ -293,10 +290,11 @@ TEST_CASE(
 
     auto probe = make_direct_gun_projectile(shooter.primary_weapon());
     const auto probe_attack = projectile_attack(
-        probe, shooter_pos, target_pos, dispersion_sources{}, &shooter, &shooter.primary_weapon(),
+        probe, abs_to_bub( shooter_pos_abs ), abs_to_bub( target_abs ), dispersion_sources{},
+        &shooter, &shooter.primary_weapon(),
         nullptr, true);
 
     CHECK(probe_attack.hit_critter != nullptr);
     CHECK(probe_attack.dealt_dam.total_damage() > 0);
-    CHECK(probe_attack.end_point != target_pos);
+    CHECK(probe_attack.end_point != abs_to_bub( target_abs ));
 }

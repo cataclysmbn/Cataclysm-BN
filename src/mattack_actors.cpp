@@ -859,7 +859,7 @@ void gun_actor::shoot( monster &z, const tripoint_bub_ms &target, const gun_mode
         return;
     }
 
-    standard_npc tmp( _( "The " ) + z.name(), z.bub_pos(), {}, 8,
+    standard_npc tmp( _( "The " ) + z.name(), z.abs_pos(), {}, 8,
                       fake_str, fake_dex, fake_int, fake_per );
     tmp.set_fake( true );
     if( z.friendly ) {

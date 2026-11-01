@@ -188,16 +188,32 @@ npc::npc()
     character_funcs::normalize( *this );
 }
 
+namespace {
+
+auto standard_npc_abs_position( const tripoint_bub_ms &pos ) -> tripoint_abs_ms
+{
+    const auto map_local_pos = ( pos == tripoint_bub_ms::min() )
+                               ? tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, 0 )
+                               : pos;
+    return map_local_to_abs( get_map(), map_local_pos );
+}
+
+} // namespace
+
 standard_npc::standard_npc( const std::string &name, const tripoint_bub_ms &pos,
+                            const std::vector<std::string> &clothing,
+                            int sk_lvl, int s_str, int s_dex, int s_int, int s_per )
+    : standard_npc( name, standard_npc_abs_position( pos ), clothing, sk_lvl, s_str, s_dex, s_int,
+                    s_per )
+{
+}
+
+standard_npc::standard_npc( const std::string &name, const tripoint_abs_ms &pos,
                             const std::vector<std::string> &clothing,
                             int sk_lvl, int s_str, int s_dex, int s_int, int s_per )
 {
     this->name = name;
-    // Resolve tripoint_min sentinel to the runtime bubble center.
-    const auto map_local_pos = ( pos == tripoint_bub_ms::min() )
-                               ? tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, 0 )
-                               : pos;
-    position = map_local_to_abs( get_map(), map_local_pos );
+    position = pos;
 
     str_cur = std::max( s_str, 0 );
     str_max = std::max( s_str, 0 );

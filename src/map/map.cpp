@@ -1835,9 +1835,8 @@ void map::board_vehicle(const tripoint_bub_ms& pos, Character* who) {
 
     auto vp = veh_at(pos).part_with_feature(VPFLAG_BOARDABLE, true);
     if (!vp) {
-        const auto abs_pos = map_local_to_abs(*this, pos);
         vp = get_mapbuffer()
-                 .veh_at(abs_pos,
+                 .veh_at(bub_to_abs(pos),
                          {
                              .policy = mapbuffer_lookup_policy::resident_only,
                          })
@@ -1859,7 +1858,7 @@ void map::board_vehicle(const tripoint_bub_ms& pos, Character* who) {
     vp->vehicle().invalidate_mass();
 
     if (player* const passenger = who->as_player(); passenger == &g->u) {
-        g->set_player_position(map_local_to_abs(*this, pos));
+        g->set_player_position(bub_to_abs(pos));
     } else {
         who->setpos(pos);
     }

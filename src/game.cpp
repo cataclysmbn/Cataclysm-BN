@@ -15620,6 +15620,9 @@ auto game::set_player_position( const tripoint_abs_ms &destination ) -> point_re
 
     const auto old_submap = project_to<coords::sm>( old_position );
     const auto new_submap = project_to<coords::sm>( destination );
+    if( u.is_mounted() ) {
+        u.dismount();
+    }
     u.set_internal_position( destination );
 
     auto submap_shift = point_rel_sm::zero();
@@ -15628,9 +15631,6 @@ auto game::set_player_position( const tripoint_abs_ms &destination ) -> point_re
     }
     if( old_position.z() != destination.z() ) {
         vertical_shift( old_position.z(), destination.z() );
-    }
-    if( u.is_mounted() ) {
-        u.mounted_creature->setpos( destination );
     }
     return submap_shift;
 }

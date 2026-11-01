@@ -16,7 +16,7 @@
 #include <sstream>
 #include <string>
 
-static auto dude_pos() -> tripoint_bub_ms { return bub_test_origin(); }
+static auto dude_pos() -> tripoint_abs_ms { return test_origin; }
 
 static auto find_weapons() -> std::vector<const itype*> {
     std::vector<const itype*> result;

@@ -37,8 +37,7 @@
 TEST_CASE("throwing distance test", "[throwing], [balance]") {
     clear_all_state();
     const auto thrower_pos_abs = test_origin;
-    const auto thrower_pos = abs_to_bub(thrower_pos_abs);
-    const standard_npc thrower("Thrower", thrower_pos, {}, 4, 10, 10, 10, 10);
+    const standard_npc thrower("Thrower", thrower_pos_abs, {}, 4, 10, 10, 10, 10);
     item& grenade = *item::spawn_temporary("grenade");
     CHECK(thrower.throw_range(grenade) >= 30);
     CHECK(thrower.throw_range(grenade) <= 35);
@@ -47,9 +46,8 @@ TEST_CASE("throwing distance test", "[throwing], [balance]") {
 TEST_CASE("throwing heavier items scales with strength", "[throwing], [balance]") {
     clear_all_state();
     const auto thrower_pos_abs = test_origin;
-    const auto thrower_pos = abs_to_bub(thrower_pos_abs);
-    const auto weak_thrower = standard_npc("WeakThrower", thrower_pos, {}, 4, 8, 10, 10, 10);
-    const auto strong_thrower = standard_npc("StrongThrower", thrower_pos, {}, 4, 14, 10, 10, 10);
+    const auto weak_thrower = standard_npc("WeakThrower", thrower_pos_abs, {}, 4, 8, 10, 10, 10);
+    const auto strong_thrower = standard_npc("StrongThrower", thrower_pos_abs, {}, 4, 14, 10, 10, 10);
     item& bronze_anvil = *item::spawn_temporary("anvil_bronze");
 
     CHECK(weak_thrower.throw_range(bronze_anvil) < strong_thrower.throw_range(bronze_anvil));

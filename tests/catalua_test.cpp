@@ -691,8 +691,7 @@ TEST_CASE(
     });
 
     you.clear_bionics();
-    const auto follower_abs_pos = test_origin + tripoint_rel_ms(45, 30, 0);
-    npc& follower = spawn_npc(abs_to_bub(follower_abs_pos), "test_talker");
+    npc& follower = spawn_npc(bub_test_origin() + tripoint_rel_ms(45, 30, 0), "test_talker");
     follower.set_fac(faction_id("your_followers"));
     follower.set_attitude(NPCATT_FOLLOW);
     follower.clear_bionics();
