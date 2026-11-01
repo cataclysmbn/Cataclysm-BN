@@ -7,6 +7,7 @@
 #include "editor/document.h"
 #include "editor/history_label.h"
 #include "editor/json_pointer.h"
+#include "editor/json_read.h"
 #include "editor/mapgen_check.h"
 #include "editor/mapgen_legend.h"
 #include "editor/mapgen_legend_edit.h"

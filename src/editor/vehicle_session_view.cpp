@@ -4,6 +4,7 @@
 #include "editor/document.h"
 #include "editor/editor_mode.h"
 #include "editor/history_label.h"
+#include "editor/json_read.h"
 #include "editor/mapgen_stroke.h"
 #include "editor/row_id.h"
 #include "editor/session_file.h"

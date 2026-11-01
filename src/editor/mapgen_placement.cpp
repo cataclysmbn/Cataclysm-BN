@@ -1,8 +1,8 @@
 #include "editor/mapgen_placement.h"
 
 #include "editor/document.h"
+#include "editor/json_read.h"
 #include "editor/mapgen_check.h"
-#include "editor/session_file.h"
 #include "editor/special_grid.h"
 
 #include <algorithm>

@@ -1,7 +1,7 @@
 #include "editor/mapgen_legend_edit.h"
 
 #include "editor/document.h"
-#include "editor/session_file.h"
+#include "editor/json_read.h"
 
 namespace editor {
 

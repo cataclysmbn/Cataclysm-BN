@@ -4,6 +4,7 @@
 #include "editor/editor_access.h"
 #include "editor/editor_mode.h"
 #include "editor/history_label.h"
+#include "editor/json_read.h"
 #include "editor/map_session.h"
 #include "editor/mapgen_check.h"
 #include "editor/mapgen_legend.h"

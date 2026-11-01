@@ -1,5 +1,6 @@
 #include "editor/session_file.h"
 
+#include "editor/json_read.h"
 #include "json_formatter.h"
 #include "mod_manager.h"
 #include "path_info.h"

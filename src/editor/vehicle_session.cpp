@@ -6,6 +6,7 @@
 #include "editor/editor_mode.h"
 #include "editor/editor_session.h"
 #include "editor/history_label.h"
+#include "editor/json_read.h"
 #include "editor/mapgen_stroke.h"
 #include "editor/recent_documents.h"
 #include "editor/row_id.h"
