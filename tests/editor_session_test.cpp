@@ -8963,4 +8963,28 @@ TEST_CASE(
     CHECK(walk_map(walk) == walk.size());
 }
 
+TEST_CASE(
+    "the start page of the map editor follows the advanced settings toggle", "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto simple = override_option("EDITOR_ADVANCED", "false");
+    const auto has_path = [](const ec::screen_view& screen) {
+        const auto& fields = body<ec::form_body>(part(screen, "editor:new")).fields;
+        return std::ranges::contains(fields, std::string("path"), &ec::form_field::id);
+    };
+    const auto walk = std::vector<map_step>{
+        [&](const auto& screen) {
+            CHECK_FALSE(has_path(screen));
+            return invoke("editor:advanced");
+        },
+        [&](const auto& screen) {
+            CHECK(has_path(screen));
+            return invoke("editor:advanced");
+        },
+        [&](const auto& screen) {
+            CHECK_FALSE(has_path(screen));
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+}
+
 #endif // CATA_MCP
