@@ -1629,4 +1629,3 @@ if not state.project_name:
 write_pot(state.po_entries, output_pot_file_name, state.project_name)
 
 # done.
-
