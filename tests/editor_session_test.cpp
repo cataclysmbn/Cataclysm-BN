@@ -8401,6 +8401,8 @@ TEST_CASE(
             CHECK(told(screen).empty());
             CHECK(body<ec::panel_body>(part(screen, "editor:document")).title
                   == "My house (My first mod)");
+            // The map opens on its squares, ready to draw on.
+            CHECK_FALSE(body<ec::grid_body>(part(screen, "editor:canvas")).cells.empty());
             // The next new map goes in the same mod, under a name of its own.
             REQUIRE(new_field(screen, "mod") != nullptr);
             CHECK(new_field(screen, "mod")->value == "my_first_mod");
@@ -8420,10 +8422,10 @@ TEST_CASE(
     const auto written = nlohmann::ordered_json::parse(read_file(folder / "my_house.json"));
     // The overmap terrain names the map, as the overmap shows it.
     REQUIRE(written.size() == 2);
-    CHECK(written[0]["type"] == "overmap_terrain");
-    CHECK(written[0]["id"] == "my_house");
-    CHECK(written[0]["name"] == "My house");
-    CHECK(written[1]["om_terrain"] == "my_house");
+    CHECK(written[0]["om_terrain"] == "my_house");
+    CHECK(written[1]["type"] == "overmap_terrain");
+    CHECK(written[1]["id"] == "my_house");
+    CHECK(written[1]["name"] == "My house");
 }
 
 TEST_CASE(
