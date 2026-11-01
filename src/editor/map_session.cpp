@@ -602,27 +602,41 @@ const auto often_rates = std::array{
     often_rate{.often = "sometimes", .weight = 50, .fewest = 0, .most = 3},
     often_rate{.often = "often", .weight = 150, .fewest = 1, .most = 5}};
 
-/// Whether the overmap terrain `id` of the file at `path` turns: as the game loaded it, else as
-/// the file says, by its flags, the flags it adds or the terrain it copies.
-auto turns(const std::filesystem::path& path, const std::string& id) -> bool {
-    if (const auto loaded = oter_type_str_id(id); loaded.is_valid()) {
-        return loaded->is_rotatable();
-    }
-    const auto unturned = [](const nlohmann::json& value) {
-        return value.is_object() && value.contains("flags") && value["flags"].is_array()
-            && std::ranges::contains(value["flags"], nlohmann::json("NO_ROTATE"));
+/// How an overmap terrain faces: turned four ways, one way, or drawn as a line.
+enum class facing { turns, fixed, line };
+
+auto facing_of(const oter_type_str_id& loaded) -> facing {
+    return loaded->has_flag(oter_flags::line_drawing) ? facing::line
+         : loaded->is_rotatable()
+             ? facing::turns
+             : facing::fixed;
+}
+
+/// How the overmap terrain `id` of the file at `path` faces: as the file the player edits says,
+/// by its flags, the flags it adds or the terrain it copies, else as the game loaded it.
+auto facing_in(const std::filesystem::path& path, const std::string& id) -> facing {
+    const auto flagged = [](const nlohmann::json& value) -> std::optional<facing> {
+        if (!value.is_object() || !value.contains("flags") || !value["flags"].is_array()) {
+            return std::nullopt;
+        }
+        const auto& flags = value["flags"];
+        if (std::ranges::contains(flags, nlohmann::json("LINEAR"))) { return facing::line; }
+        if (std::ranges::contains(flags, nlohmann::json("NO_ROTATE"))) { return facing::fixed; }
+        return std::nullopt;
     };
     auto in = std::ifstream(path, std::ios::binary);
     const auto read = nlohmann::json::parse(in, nullptr, false);
     for (const auto& entry : read.is_array() ? read : nlohmann::json::array({read})) {
         if (text_at(entry, "type") != "overmap_terrain" || text_at(entry, "id") != id) { continue; }
-        if (unturned(entry) || (entry.contains("extend") && unturned(entry["extend"]))) {
-            return false;
+        if (const auto own = flagged(entry)) { return *own; }
+        if (const auto added = entry.contains("extend") ? flagged(entry["extend"]) : std::nullopt) {
+            return *added;
         }
         const auto copied = oter_type_str_id(text_at(entry, "copy-from"));
-        return !copied.is_valid() || copied->is_rotatable();
+        return copied.is_valid() ? facing_of(copied) : facing::turns;
     }
-    return true;
+    const auto loaded = oter_type_str_id(id);
+    return loaded.is_valid() ? facing_of(loaded) : facing::turns;
 }
 } // namespace
 
@@ -666,10 +680,16 @@ auto read_appearance(const std::filesystem::path& path, const std::string& id) -
         };
         return ranges::min(often_rates, {}, distance).often;
     };
-    const auto houses = nlohmann::json::json_pointer("/city/houses/" + id);
-    if (text_at(entry, "type") == "region_overlay" && entry.contains(houses)
-        && entry[houses].is_number_integer()) {
-        return {.where = "town", .often = nearest(&often_rate::weight, entry[houses].get<int>())};
+    // A town list that adds this house alone, to every region.
+    const auto only = [](const nlohmann::json& value, const std::string& key) {
+        return value.is_object() && value.size() == 1 && value.contains(key);
+    };
+    if (text_at(entry, "type") == "region_overlay" && entry.size() == 3 && entry.contains("regions")
+        && entry["regions"] == nlohmann::json::array({"all"})
+        && only(entry.value("city", nlohmann::json()), "houses")
+        && only(entry["city"]["houses"], id) && entry["city"]["houses"][id].is_number_integer()) {
+        return {.where = "town",
+                .often = nearest(&often_rate::weight, entry["city"]["houses"][id].get<int>())};
     }
     const auto most = nlohmann::json::json_pointer("/occurrences/1");
     if (text_at(entry, "type") == "overmap_special" && text_at(entry, "id") == id
@@ -685,7 +705,7 @@ auto write_appearance(
     const auto file = placement_file(path);
     // An empty file is one the editor failed to write.
     auto error = std::error_code{};
-    if (std::filesystem::exists(file) && std::filesystem::file_size(file, error) > 0
+    if (std::filesystem::exists(file, error) && std::filesystem::file_size(file, error) > 0
         && read_appearance(path, id).where == "test") {
         //~ %s is a file beside a map, which would say where new worlds place it.
         return std::unexpected(
@@ -698,8 +718,13 @@ auto write_appearance(
     }
     const auto found = std::ranges::find(often_rates, placed.often, &often_rate::often);
     const auto& rate = found == often_rates.end() ? often_rates[1] : *found;
-    // A rotating terrain is placed by its north facing.
-    const auto turned = turns(path, id);
+    // A rotating terrain is placed by its north facing; a line has no square of its own.
+    const auto faces = facing_in(path, id);
+    if (faces == facing::line) {
+        return std::unexpected(
+            _("A terrain drawn as a line, such as a road, has no square to place."));
+    }
+    const auto turned = faces == facing::turns;
     const auto entry =
         placed.where == "town"
             ? nlohmann::ordered_json{{"type", "region_overlay"},
@@ -725,7 +750,11 @@ auto write_appearance(
         }
     }
     std::filesystem::rename(written, file, error);
-    if (error) { return std::unexpected(_("The placement file could not be written.")); }
+    if (error) {
+        auto left = std::error_code{};
+        std::filesystem::remove(written, left);
+        return std::unexpected(_("The placement file could not be written."));
+    }
     return {};
 }
 
