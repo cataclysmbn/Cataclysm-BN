@@ -8737,6 +8737,25 @@ TEST_CASE(
           == "lot_turned_north");
     const auto lane = R"({"type":"overmap_terrain","id":"my_lane","copy-from":"road"},)";
     CHECK(with("lane_copy", lane, R"("copy-from":"my_lane")").empty());
+    // An entry of a list of ids defines each of them.
+    const auto lots = R"({"type":"overmap_terrain","id":["lot_a","lot_b"],"flags":"NO_ROTATE"},)";
+    CHECK(with("lots_copy", lots, R"("copy-from":"lot_b")") == "lots_copy");
+    const auto listed = folder / "listed.json";
+    std::ofstream(listed)
+        << R"([{"type":"overmap_terrain","id":["listed","listed_2"],"name":"A","flags":"NO_ROTATE"}])";
+    REQUIRE(me::write_appearance(listed, "listed", {.where = "country"}));
+    CHECK(nlohmann::ordered_json::parse(
+              read_file(me::placement_file(listed)))[0]["overmaps"][0]["overmap"]
+          == "listed");
+    // A real terrain is copied before an abstract one of the same id.
+    REQUIRE(oter_type_str_id("s_gas").is_valid());
+    REQUIRE(oter_type_str_id("s_gas")->is_rotatable());
+    const auto shadow = R"({"type":"overmap_terrain","abstract":"s_gas","flags":["NO_ROTATE"]},)";
+    CHECK(with("gas_copy", shadow, R"("copy-from":"s_gas")") == "gas_copy_north");
+    // A copy of its own id copies the game's; a loop of copies ends.
+    CHECK(placed("self_copy", R"("copy-from":"self_copy")") == "self_copy_north");
+    const auto loop = R"({"type":"overmap_terrain","id":"loop_b","copy-from":"loop_a"},)";
+    CHECK(with("loop_a", loop, R"("copy-from":"loop_b")") == "loop_a_north");
     // Only the special the editor writes reads as a place in the countryside.
     const auto barn = folder / "barn_hut.json";
     std::ofstream(barn) << R"([{"type":"overmap_terrain","id":"barn_hut","name":"A"}])";
