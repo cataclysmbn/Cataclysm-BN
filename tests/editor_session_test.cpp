@@ -8535,4 +8535,24 @@ TEST_CASE("the editors name a map whose files hold values of the wrong kind", "[
     CHECK(editor::map_editor::named_building(*doc) == "editor_odd_shed");
 }
 
+TEST_CASE(
+    "a new map in Simple mode takes no id the game has, and a name in any letters",
+    "[editor_session]") {
+    auto made = editor::map_editor::
+        new_mapgen{.name = "Cargoship", .mod = "new", .mod_name = "Editor id mod"};
+    // The game has a special of that id, which a town would place instead of the map.
+    CHECK(editor::map_editor::named_new(made).om_terrain == "cargoship_2");
+    // A name in letters no id holds still names a map.
+    made.name = "우리 집";
+    CHECK(editor::map_editor::named_new(made).om_terrain == "my_map");
+    // A kind only Advanced mode offers makes a building or place here.
+    made.kind = "special";
+    CHECK(editor::map_editor::named_new(made).kind == "mapgen");
+    made.kind = "nested";
+    CHECK(editor::map_editor::named_new(made).kind == "nested");
+    // A mod removed since it was chosen gives way to a new one.
+    made.mod = "editor_gone_mod";
+    CHECK(editor::map_editor::new_mod_folder(made) == "new");
+}
+
 #endif // CATA_MCP
