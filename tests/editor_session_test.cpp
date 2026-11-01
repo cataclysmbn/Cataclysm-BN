@@ -14,6 +14,7 @@
 #    include "debug_menu.h"
 #    include "editor/editor_session.h"
 #    include "editor/json_read.h"
+#    include "editor/library.h"
 #    include "editor/map_session.h"
 #    include "editor/mapgen_levels.h"
 #    include "editor/mapgen_preview.h"
@@ -9006,6 +9007,162 @@ TEST_CASE("the placement card stays off an entry it does not place on", "[editor
             return act("QUIT");
         }};
     CHECK(walk_map(walk) == walk.size());
+}
+
+namespace {
+
+struct map_library_guard {
+    map_library_guard() { std::filesystem::remove(editor::library_file("map")); }
+    ~map_library_guard() { std::filesystem::remove(editor::library_file("map")); }
+};
+
+/// A file whose row 1 holds counters at x 1 and 2, with an item placement on the first.
+auto bench_file() -> mod_file {
+    auto rows = nlohmann::ordered_json::array();
+    for (auto row = 0; row < 24; ++row) { rows.push_back(std::string(24, '.')); }
+    rows[1] = ".CC" + std::string(21, '.');
+    return mod_file{
+        {{"rows", rows},
+         {"furniture", {{"C", "f_counter"}}},
+         {"place_items", {{{"item", "tools_home"}, {"x", 1}, {"y", 1}, {"chance", 100}}}}},
+        "bench.json"};
+}
+
+} // namespace
+
+TEST_CASE("the map editor's library keeps a copy for another file", "[editor_session]") {
+    const auto library = map_library_guard{};
+    const auto from = bench_file();
+    {
+        const auto guard = screen_guard{};
+        const auto walk = std::vector<map_step>{
+            [&](const auto&) { return invoke("editor:open", {.text = from.path.string()}); },
+            [](const auto& screen) {
+                CHECK_FALSE(affordance(screen, "editor:library_save").enabled);
+                return invoke("editor:tool", {.row = "tool:select"});
+            },
+            [](const auto&) { return square_at(1, 1); },
+            [](const auto&) { return square_at(2, 1); },
+            [](const auto&) { return invoke("editor:copy"); },
+            [](const auto&) { return invoke("editor:library_save", {.text = "Bench"}); },
+            [](const auto& screen) {
+                CHECK(said(screen) == "Saved Bench to the library.");
+                CHECK(rows_in(screen, "editor:library").front().label == "Bench");
+                CHECK(rows_in(screen, "editor:library").front().look.has_value());
+                return act("QUIT");
+            }};
+        CHECK(walk_map(walk) == walk.size());
+        editor::reset_editor_session();
+    }
+    // The editor starts again, on a file that maps none of it.
+    const auto to = mod_file{};
+    const auto guard = screen_guard{};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = to.path.string()}); },
+        [](const auto& screen) {
+            CHECK(rows_in(screen, "editor:library").front().label == "Bench");
+            return invoke("editor:library_take", {.row = "piece:0"});
+        },
+        [](const auto& screen) {
+            CHECK(said(screen) == "Click where Bench goes.");
+            const auto& tools = body<ec::tabs_body>(part(screen, "editor:tools")).tabs;
+            CHECK(std::ranges::find(tools, true, &ec::tab_entry::selected)->id == "tool:paste");
+            return square_at(5, 6);
+        },
+        [](const auto&) { return invoke("editor:save"); }, [](const auto&) { return act("QUIT"); }};
+    CHECK(walk_map(walk) == walk.size());
+    editor::reset_editor_session();
+    const auto saved = nlohmann::ordered_json::parse(read_file(to.path))[0]["object"];
+    CHECK(saved["rows"][6].get<std::string>().substr(5, 2) == "CC");
+    CHECK(saved["furniture"]["C"] == "f_counter");
+    REQUIRE(saved["place_items"].size() == 1);
+    CHECK(saved["place_items"][0]["x"] == 5);
+    CHECK(saved["place_items"][0]["y"] == 6);
+}
+
+TEST_CASE("the map editor shares a copy as text and refuses other text", "[editor_session]") {
+    const auto library = map_library_guard{};
+    const auto from = bench_file();
+    const auto to = mod_file{};
+    const auto guard = screen_guard{};
+    auto shared = std::string{};
+    const auto valid = nlohmann::ordered_json{
+        {"squares", {{"C"}}}, {"legend", nlohmann::ordered_json::object()}, {"placed", {}}};
+    const auto refused = [](const nlohmann::ordered_json& data) {
+        return map_step{[=](const auto&) {
+            return invoke("editor:paste_text", {.text = editor::piece_text("map", data)});
+        }};
+    };
+    const auto refused_notice = [](const auto& screen) {
+        CHECK(told(screen) == "That text holds no map squares.");
+        return invoke("editor:paste_text", {.text = "not a map"});
+    };
+    auto uneven = valid;
+    uneven["squares"] = {{"C", "C"}, {"C"}};
+    auto wide = valid;
+    wide["squares"] = {{"CC"}};
+    auto unknown = valid;
+    unknown["placed"] = {
+        {{"kind", "place_nothing"},
+         {"x", {0, 0}},
+         {"y", {0, 0}},
+         {"value", nlohmann::ordered_json::object()}}};
+    auto wrong_type = valid;
+    wrong_type["legend"] = 3;
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = from.path.string()}); },
+        [](const auto&) { return invoke("editor:tool", {.row = "tool:select"}); },
+        [](const auto&) { return square_at(1, 1); },
+        [](const auto&) { return square_at(2, 1); },
+        [](const auto&) { return invoke("editor:copy"); },
+        [](const auto&) { return invoke("editor:show_clip_text"); },
+        [&](const auto& screen) {
+            const auto form = body<ec::form_body>(part(screen, "editor:clip_text"));
+            shared = form.fields.front().value;
+            CHECK_FALSE(shared.empty());
+            return invoke("editor:open", {.text = to.path.string()});
+        },
+        [](const auto&) { return invoke("editor:paste_text", {.text = "not a map"}); },
+        refused(uneven),
+        refused_notice,
+        refused(wide),
+        refused_notice,
+        refused(unknown),
+        refused_notice,
+        refused(wrong_type),
+        refused_notice,
+        [&](const auto& screen) {
+            CHECK(told(screen) == "That text holds no map squares.");
+            return invoke("editor:paste_text", {.text = shared});
+        },
+        [](const auto& screen) {
+            CHECK(said(screen) == "Click where the squares go.");
+            CHECK_FALSE(ec::find_component(*screen.root, "editor:clip_text"));
+            return square_at(5, 6);
+        },
+        [](const auto&) { return invoke("editor:save"); },
+        [](const auto&) { return act("QUIT"); }};
+    CHECK(walk_map(walk) == walk.size());
+    editor::reset_editor_session();
+    const auto saved = nlohmann::ordered_json::parse(read_file(to.path))[0]["object"];
+    CHECK(saved["rows"][6].get<std::string>().substr(5, 2) == "CC");
+    CHECK(saved["furniture"]["C"] == "f_counter");
+}
+
+TEST_CASE("the map editor's library skips a piece in another shape", "[editor_session]") {
+    const auto library = map_library_guard{};
+    const auto file = mod_file{};
+    std::ofstream(editor::library_file("map"), std::ios::binary)
+        << R"([{"name":"Broken","data":{"squares":3}}])";
+    const auto guard = screen_guard{};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto& screen) {
+            CHECK_FALSE(ec::find_component(*screen.root, "editor:library"));
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    editor::reset_editor_session();
 }
 
 TEST_CASE("the placement card shows only on the placements tool", "[editor_session]") {
