@@ -45,6 +45,8 @@ struct catalog_query {
     std::string filter = {};
     /// Keeps only what this mod last defined; empty keeps all.
     std::string mod = {};
+    /// Ids to list beside what the game loaded, such as chunks of the open file.
+    std::vector<std::string> extra = {};
     std::size_t page = 0;
     std::size_t page_size = 50;
 };

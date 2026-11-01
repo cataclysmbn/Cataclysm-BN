@@ -535,6 +535,8 @@ auto run_editor_session() -> void {
             state.replace_marked(std::string(row_rest(row, "symbol").value_or("")));
         } else if (id == delete_symbol_id) {
             state.delete_marked(std::string(row_rest(row, "symbol").value_or("")));
+        } else if (id == make_chunk_id) {
+            state.make_chunk(invoked->args.text.value_or(""));
         } else if (id == library_save_id) {
             state.save_to_library(invoked->args.text.value_or(""));
         } else if (id == library_take_id) {

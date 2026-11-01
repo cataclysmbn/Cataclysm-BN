@@ -141,7 +141,7 @@ auto entries_of(const catalog_kind kind) -> std::vector<catalog_entry> {
         case catalog_kind::npc_template:
             return npc_template_ids() | transform(unnamed) | ranges::to<std::vector>();
         case catalog_kind::nested_mapgen:
-            return nested_mapgen_ids() | transform(unnamed) | ranges::to<std::vector>();
+            return nested_mapgen_ids() | transform(grouped) | ranges::to<std::vector>();
         case catalog_kind::palette:
             return palette_ids() | transform(unnamed) | ranges::to<std::vector>();
         case catalog_kind::overmap_terrain:
@@ -225,12 +225,17 @@ auto search_catalog(const catalog_query& query) -> catalog_page {
         int rank;
         catalog_entry entry;
     };
+    auto listed = entries_of(query.kind);
+    for (const auto& id : query.extra) {
+        if (!ranges::contains(listed, id, &catalog_entry::id)) {
+            listed.push_back({.id = id, .name = group_name(id)});
+        }
+    }
     auto ranked =
-        entries_of(query.kind) | std::views::filter(matches)
-        | std::views::transform([&](catalog_entry entry) {
-              const auto at = rank(entry);
-              return ranked_entry{.rank = at, .entry = std::move(entry)};
-          })
+        listed | std::views::filter(matches) | std::views::transform([&](catalog_entry entry) {
+            const auto at = rank(entry);
+            return ranked_entry{.rank = at, .entry = std::move(entry)};
+        })
         | ranges::to<std::vector>();
     // Among names that match alike, the game's own come before a mod's, and what its data names
     // most, then the shortest name, first; unsearched, all go by id.

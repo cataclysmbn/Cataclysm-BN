@@ -1549,6 +1549,13 @@ auto drawing_affordances(const session& state) -> std::vector<ec::affordance> {
          .enabled = state.selected.has_value(),
          .denial = unmarked}));
     affordances.push_back(ec::invoke_affordance(
+        {.id = make_chunk_id,
+         .label = _("Make reusable chunk"),
+         .description = _("Turns the marked squares into one piece you can place many times."),
+         .enabled = state.selected.has_value(),
+         .denial = unmarked,
+         .args = {.text = ec::text_shape{.initial = _("My chunk")}}}));
+    affordances.push_back(ec::invoke_affordance(
         {.id = library_save_id,
          .label = _("Save copy to library"),
          .description = _("Keeps the copy under Library for any map you make."),
@@ -1862,6 +1869,7 @@ auto layout(const session& state) -> workspace_layout {
              {redo_id, edit},
              {copy_id, edit},
              {cut_id, edit},
+             {make_chunk_id, edit},
              {library_save_id, edit},
              {show_clip_text_id, edit},
              {rotate_id, edit},

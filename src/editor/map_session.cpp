@@ -391,6 +391,17 @@ auto tool_label(const tool& value) -> std::string {
 }
 
 namespace {
+/// The ids of the nested chunks the open file holds.
+auto file_chunks(const document& doc) -> std::vector<std::string> {
+    auto ids = std::vector<std::string>{};
+    for (const auto& entry : doc.objects()) {
+        if (is_json_mapgen(entry.value) && entry.value.contains("nested_mapgen_id")) {
+            std::ranges::copy(entry_ids(entry.value), std::back_inserter(ids));
+        }
+    }
+    return ids;
+}
+
 /// Whether `value` is the nested chunk `id`.
 auto is_chunk(const nlohmann::ordered_json& value, const std::string& id) -> bool {
     return is_json_mapgen(value) && value.contains("nested_mapgen_id")
@@ -1054,6 +1065,9 @@ auto session::catalog_entries() const -> editor::catalog_page {
     return search_catalog(
         {.kind = on_special() ? catalog_kind::overmap_terrain : catalog->kind,
          .filter = catalog_filter,
+         .extra = doc && !on_special() && catalog->kind == catalog_kind::nested_mapgen
+                    ? file_chunks(*doc)
+                    : std::vector<std::string>{},
          .page = catalog_page,
          .page_size = page_size});
 }
@@ -2060,6 +2074,7 @@ auto session::replace_marked(const std::string& from) -> void {
     }
     doc->begin_group(false, _("Replace"));
     const auto depth = doc->depth();
+    const auto stand_ins = file_stand_ins(stand_in_texts());
     auto done =
         maps ? set_legend(
                    *doc,
@@ -2181,6 +2196,110 @@ auto session::paste_text(const std::string& text) -> void {
     status = _("Click where the squares go.");
 }
 
+auto session::make_chunk(const std::string& name) -> void {
+    if (!selected || !on_mapgen() || !has_rows()) { return; }
+    if (name.empty()) {
+        notice = _("Give the chunk a name.");
+        return;
+    }
+    const auto ground =
+        most_used_floor(legend, symbols_of(*doc, object), false).value_or(room_fill);
+    if (const auto refused = bare(ground, true)) {
+        notice = *refused;
+        return;
+    }
+    copy();
+    const auto reading =
+        std::ranges::any_of(clip_legend | std::views::values, [](const auto& lines) {
+            return std::ranges::any_of(lines, [](const legend_line& line) {
+                return reads_parameter(nlohmann::ordered_json::parse(line.value, nullptr, false));
+            });
+        });
+    if (reading) {
+        notice = _("The marked squares read the entry's parameters, which a chunk does not have.");
+        return;
+    }
+    const auto game_chunks = nested_mapgen_ids();
+    const auto own_chunks = file_chunks(*doc);
+    const auto words = id_of_words(name);
+    const auto id = free_name(words.empty() ? "my_chunk" : words, [&](const std::string& taken) {
+        return std::ranges::contains(game_chunks, taken)
+            || std::ranges::contains(own_chunks, taken);
+    });
+    const auto size = clip_size_now();
+    auto inner = nlohmann::ordered_json{
+        {"mapgensize", {size.columns, size.rows}},
+        {"rows",
+         clip | std::views::transform([](const std::vector<std::string>& row) {
+             return row | std::views::join | std::ranges::to<std::string>();
+         }) | std::ranges::to<std::vector>()}};
+    for (const auto& [glyph, lines] : clip_legend) {
+        for (const auto& line : lines) {
+            const auto parsed = nlohmann::ordered_json::parse(line.value, nullptr, false);
+            inner[line.layer][glyph] =
+                parsed.is_discarded() ? nlohmann::ordered_json(line.value) : parsed;
+        }
+    }
+    for (const auto& entry : clip_placed) {
+        const auto range = [](const placement_range& at) {
+            return at.min == at.max
+                     ? nlohmann::ordered_json(at.min)
+                     : nlohmann::ordered_json::array({at.min, at.max});
+        };
+        auto value = entry.value;
+        value["x"] = range(entry.x);
+        value["y"] = range(entry.y);
+        inner[entry.kind].push_back(value);
+    }
+    const auto low =
+        point(std::max(std::min(selected->from.x, selected->to.x), 0),
+              std::max(std::min(selected->from.y, selected->to.y), 0));
+    doc->begin_group(true, _("Make chunk"));
+    const auto depth = doc->depth();
+    auto done =
+        doc->add(
+               {{"type", "mapgen"}, {"method", "json"}, {"nested_mapgen_id", id}, {"object", inner}})
+            .transform([](std::size_t /*added*/) {});
+    done = done.and_then([&] { return clear_copied(ground); });
+    done = done.and_then([&] {
+        const auto stand_ins = file_stand_ins(stand_in_texts());
+        return add_placement(
+            *doc,
+            {.object = object,
+             .kind = "place_nested",
+             .x = {.min = low.x, .max = low.x},
+             .y = {.min = low.y, .max = low.y},
+             .value = {{"chunks", nlohmann::ordered_json::array({id})}}});
+    });
+    doc->end_group();
+    if (!done && doc->depth() > depth) { doc->undo(); }
+    notice = done ? "" : done.error();
+    reload();
+    if (!done) { return; }
+    selected.reset();
+    take(*std::ranges::find(catalog_uses, catalog_kind::nested_mapgen, &catalog_use::kind), id,
+         name);
+    current = tools.data();
+    anchor.reset();
+}
+
+auto session::clear_copied(const std::string& ground) -> std::expected<void, std::string> {
+    const auto filled = stroke(
+        *doc,
+        {.object = object,
+         .drawn = {.kind = shape_kind::rect_filled, .from = selected->from, .to = selected->to},
+         .symbol = ground});
+    if (!filled) { return std::unexpected(filled.error()); }
+    // Later entries go first, so the indices of the earlier ones still hold.
+    auto removed = std::expected<void, std::string>{};
+    for (const auto& entry : clip_placed | std::views::reverse) {
+        if (!removed) { break; }
+        removed =
+            remove_placement(*doc, {.object = object, .kind = entry.kind, .index = entry.index});
+    }
+    return removed;
+}
+
 auto session::cut() -> void {
     // What is cut away leaves the ground most of the rows stand on.
     const auto ground =
@@ -2191,20 +2310,9 @@ auto session::cut() -> void {
     }
     copy();
     doc->begin_group(false, _("Cut"));
-    const auto filled = stroke(
-        *doc,
-        {.object = object,
-         .drawn = {.kind = shape_kind::rect_filled, .from = selected->from, .to = selected->to},
-         .symbol = ground});
-    // Later entries go first, so the indices of the earlier ones still hold.
-    auto removed = std::expected<void, std::string>{};
-    for (const auto& entry : clip_placed | std::views::reverse) {
-        if (!removed) { break; }
-        removed =
-            remove_placement(*doc, {.object = object, .kind = entry.kind, .index = entry.index});
-    }
+    const auto cleared = clear_copied(ground);
     doc->end_group();
-    notice = !filled ? filled.error() : !removed ? removed.error() : "";
+    notice = cleared ? "" : cleared.error();
     reload();
 }
 
@@ -2302,6 +2410,7 @@ auto session::add_placed() -> void {
         place_value.empty()
             ? nlohmann::ordered_json::object()
             : nlohmann::ordered_json::parse(place_value, nullptr, false);
+    const auto stand_ins = file_stand_ins(stand_in_texts());
     const auto added = add_placement(
         *doc, {.object = object, .kind = place_kind, .x = *x, .y = *y, .value = value});
     if (!added) {
@@ -2609,6 +2718,7 @@ auto session::paint(const point& at) -> void {
     const auto grouped =
         ((maps && direct) || !inks->added.empty() || !title.empty()) && !doc->grouping();
     if (grouped) { doc->begin_group(false, title); }
+    const auto stand_ins = file_stand_ins(stand_in_texts());
     auto mapped =
         maps && direct
             ? set_legend(

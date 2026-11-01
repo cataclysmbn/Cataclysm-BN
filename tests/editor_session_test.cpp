@@ -9466,6 +9466,7 @@ TEST_CASE("making a chunk of the marked squares puts it where they were", "[edit
             CHECK(faded_cells(screen).size() == 12);
             return invoke("editor:catalog_kind", {.row = "catalog:nested_mapgen"});
         },
+        [](const auto&) { return invoke("editor:catalog_filter", {.text = "my_bath"}); },
         [](const auto& screen) {
             CHECK(has_row(screen, "editor:catalog", "entry:my_bath"));
             return invoke("editor:save");

@@ -104,6 +104,7 @@ inline constexpr auto paste_text_id = "editor:paste_text";
 inline constexpr auto marked_symbols_id = "editor:marked_symbols";
 inline constexpr auto replace_symbol_id = "editor:replace_symbol";
 inline constexpr auto delete_symbol_id = "editor:delete_symbol";
+inline constexpr auto make_chunk_id = "editor:make_chunk";
 inline constexpr auto rotate_id = "editor:rotate";
 inline constexpr auto cut_id = "editor:cut";
 inline constexpr auto flip_x_id = "editor:flip_x";
@@ -709,6 +710,9 @@ struct session {
     /// Copies the selection's symbols and the placements wholly inside it.
     auto copy() -> void;
 
+    /// Leaves `ground` on the selection and removes the placements copied.
+    auto clear_copied(const std::string& ground) -> std::expected<void, std::string>;
+
     /// Copies the selection, then leaves the inside symbol on it and removes the placements
     /// copied, as one undo step.
     auto cut() -> void;
@@ -720,6 +724,9 @@ struct session {
     auto read_chunks() -> void;
     /// The chunk a drawing tool has in hand; none for anything else.
     auto chunk_in_hand() const -> const chunk_source*;
+    /// Turns the marked squares into a nested chunk of the file named after `name`, places it there
+    /// and takes it in hand, as one undo step.
+    auto make_chunk(const std::string& name) -> void;
     /// Whether the list of what the marked squares hold shows: while squares are marked, and on
     /// the select tool, where nothing marked stands for every square.
     auto shows_marked() const -> bool;
