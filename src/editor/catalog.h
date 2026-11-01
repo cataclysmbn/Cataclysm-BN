@@ -1,9 +1,13 @@
 #pragma once
 
+#include "type_id.h"
+
 #include <cstddef>
 #include <string>
 #include <string_view>
 #include <vector>
+
+struct itype;
 
 namespace editor {
 
@@ -56,6 +60,8 @@ struct catalog_page {
 };
 
 auto search_catalog(const catalog_query& query) -> catalog_page;
+/// The items of the group `group`, those it gives most often first; none for no such group.
+auto likely_items(const item_group_id& group) -> std::vector<const itype*>;
 /// The contents of the JSON strings of `text`, escapes left as written, in order.
 auto quoted_strings(std::string_view text) -> std::vector<std::string_view>;
 

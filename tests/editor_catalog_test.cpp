@@ -1,5 +1,6 @@
 #include "catch/catch.hpp"
 #include "editor/catalog.h"
+#include "itype.h"
 
 #include <algorithm>
 #include <cctype>
@@ -148,4 +149,26 @@ TEST_CASE("the strings of a JSON text are read past escaped quotes", "[editor_ca
     CHECK(editor::quoted_strings(text)
           == std::vector<
               std::string_view>{"name", R"(a \"quoted\" word)", "id", "t_floor", "x", R"(\\)"});
+}
+
+TEST_CASE(
+    "the catalog names groups in words and knows what a group mostly holds", "[editor_catalog]") {
+    const auto named = [](const editor::catalog_kind kind, const std::string& id) {
+        const auto entries = editor::search_catalog({.kind = kind, .filter = id}).entries;
+        const auto found = std::ranges::find(entries, id, &editor::catalog_entry::id);
+        REQUIRE(found != entries.end());
+        return found->name;
+    };
+    CHECK(named(editor::catalog_kind::item_group, "livingroom") == "Livingroom");
+    CHECK(named(editor::catalog_kind::monster_group, "GROUP_ZOMBIE") == "Zombie");
+
+    const auto likely = editor::likely_items(item_group_id("livingroom"));
+    const auto at = [&](const std::string& id) {
+        return std::ranges::find(likely, itype_id(id), &itype::get_id);
+    };
+    // The list's order of the entries the group gives more often.
+    REQUIRE(at("television") != likely.end());
+    REQUIRE(at("clock") != likely.end());
+    CHECK(at("television") < at("clock"));
+    CHECK(editor::likely_items(item_group_id("no_such_group")).empty());
 }

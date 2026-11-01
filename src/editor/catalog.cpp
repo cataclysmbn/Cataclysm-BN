@@ -229,4 +229,6 @@ auto search_catalog(const catalog_query& query) -> catalog_page {
             .total = total};
 }
 
+auto likely_items(const item_group_id& /*group*/) -> std::vector<const itype*> { return {}; }
+
 } // namespace editor
