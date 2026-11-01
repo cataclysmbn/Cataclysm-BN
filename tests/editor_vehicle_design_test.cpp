@@ -689,3 +689,15 @@ TEST_CASE(
     std::ranges::sort(sorted);
     CHECK(std::ranges::adjacent_find(sorted) == sorted.end());
 }
+
+TEST_CASE(
+    "a vehicle design reads rows and positions of the wrong kind as none", "[editor_vehicle]") {
+    const auto prototype = nlohmann::ordered_json::parse(
+        R"({"type":"vehicle","id":"editor_odd","parts":[{"x":"1","y":2,"part":"frame"}],)"
+        R"("blueprint":[3,"#"],"palette":{"#":["frame"]},"blueprint_origin":{"x":"a"}})");
+    const auto parts = editor::design_parts(prototype);
+    // A row that is no text holds no part, and its line still counts.
+    REQUIRE(parts.size() == 2);
+    CHECK(parts[0].mount == point(0, 1));
+    CHECK(parts[1].mount == point(0, 2));
+}
