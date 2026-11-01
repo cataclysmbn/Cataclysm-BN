@@ -847,6 +847,7 @@ auto placement_card(
         affordances.push_back(
             ec::invoke_affordance({.id = placement_delete_id, .label = _("Delete placement")}));
     }
+    if (!state.on_card()) { return; }
     const auto& kind = state.place_what_kind;
     auto fields = std::vector<ec::form_field>{};
     if (kind == "place_items" || kind == "place_monsters" || kind == "place_vehicles") {
