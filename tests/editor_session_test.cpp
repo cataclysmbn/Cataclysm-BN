@@ -18,6 +18,7 @@
 #    include "editor/mapgen_preview.h"
 #    include "editor/mapgen_source.h"
 #    include "editor/recent_documents.h"
+#    include "editor/session_file.h"
 #    include "editor/special_grid.h"
 #    include "editor/vehicle_session.h"
 #    include "editor_heading_names.h"
@@ -8352,6 +8353,101 @@ TEST_CASE("the map editor in Simple mode shows no ids or JSON", "[editor_session
     // The choice is the player's, kept for the next time either editor opens.
     CHECK(get_option<bool>("EDITOR_ADVANCED"));
     editor::reset_editor_session();
+}
+
+namespace {
+/// The field `id` of the new-file form; none when the form hides it.
+auto new_field(const ec::screen_view& screen, const std::string& id) -> const ec::form_field* {
+    const auto& fields = body<ec::form_body>(part(screen, "editor:new")).fields;
+    const auto found = std::ranges::find(fields, id, &ec::form_field::id);
+    return found == fields.end() ? nullptr : &*found;
+}
+} // namespace
+
+TEST_CASE(
+    "a new map in Simple mode takes a name and a mod name and goes in a new mod of that name",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto simple = override_option("EDITOR_ADVANCED", "false");
+    const auto folder = std::filesystem::path(PATH_INFO::user_moddir()) / "my_first_mod";
+    const auto forget = [&] {
+        std::filesystem::remove_all(folder);
+        std::filesystem::remove(editor::recent_documents_file());
+    };
+    forget();
+    const auto cleanup = on_out_of_scope(forget);
+    const auto walk = std::vector<map_step>{
+        [&](const auto& screen) {
+            // Nothing to type but names: the file and its ids follow them.
+            for (const auto* const hidden : {"path", "om_terrain", "fill"}) {
+                INFO(hidden);
+                CHECK(new_field(screen, hidden) == nullptr);
+            }
+            REQUIRE(new_field(screen, "mod") != nullptr);
+            CHECK(new_field(screen, "mod")->value == "new");
+            CHECK(new_field(screen, "mod_name") != nullptr);
+            REQUIRE(new_field(screen, "name") != nullptr);
+            CHECK(new_field(screen, "name")->required);
+            return invoke("editor:new_set", {.row = "name", .text = "My house"});
+        },
+        [](const auto&) {
+            return invoke("editor:new_set", {.row = "mod_name", .text = "My first mod"});
+        },
+        [](const auto& screen) {
+            CHECK(new_field(screen, "name")->description.contains("my_first_mod/my_house.json"));
+            return invoke("editor:new_apply");
+        },
+        [](const auto& screen) {
+            CHECK(told(screen).empty());
+            CHECK(body<ec::panel_body>(part(screen, "editor:document")).title
+                  == "My house (My first mod)");
+            // The next new map goes in the same mod, under a name of its own.
+            REQUIRE(new_field(screen, "mod") != nullptr);
+            CHECK(new_field(screen, "mod")->value == "my_first_mod");
+            CHECK(new_field(screen, "mod_name") == nullptr);
+            CHECK(new_field(screen, "name")->value.empty());
+            return invoke("editor:new_set", {.row = "name", .text = "My house"});
+        },
+        [](const auto& screen) {
+            CHECK(new_field(screen, "name")->description.contains("my_first_mod/my_house_2.json"));
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    editor::reset_editor_session();
+    const auto info = nlohmann::ordered_json::parse(read_file(folder / "modinfo.json"));
+    CHECK(info[0]["id"] == "my_first_mod");
+    CHECK(info[0]["name"] == "My first mod");
+    const auto written = nlohmann::ordered_json::parse(read_file(folder / "my_house.json"));
+    // The overmap terrain names the map, as the overmap shows it.
+    REQUIRE(written.size() == 2);
+    CHECK(written[0]["type"] == "overmap_terrain");
+    CHECK(written[0]["id"] == "my_house");
+    CHECK(written[0]["name"] == "My house");
+    CHECK(written[1]["om_terrain"] == "my_house");
+}
+
+TEST_CASE(
+    "the editors name a map of the player's mods by its name and its mod, and a game file by its "
+    "path",
+    "[editor_session]") {
+    const auto folder = std::filesystem::path(PATH_INFO::user_moddir()) / "editor_title_mod";
+    const auto forget = [&] { std::filesystem::remove_all(folder); };
+    forget();
+    const auto cleanup = on_out_of_scope(forget);
+    std::filesystem::create_directories(folder);
+    std::ofstream(folder / "modinfo.json")
+        << R"([{"type":"MOD_INFO","id":"editor_title_mod","name":"Grandma's mod"}])";
+    std::ofstream(folder / "shed.json")
+        << R"([{"type":"overmap_terrain","id":"editor_title_shed","name":"Garden shed"},)"
+           R"({"type":"mapgen","method":"json","om_terrain":"editor_title_shed","object":{}}])";
+    std::ofstream(folder / "piece.json")
+        << R"([{"type":"mapgen","method":"json","nested_mapgen_id":"flower_bed","object":{}}])";
+    CHECK(editor::document_title(folder / "shed.json") == "Garden shed (Grandma's mod)");
+    // A chunk has no name of its own: its id in words stands for one.
+    CHECK(editor::document_title(folder / "piece.json") == "Flower bed (Grandma's mod)");
+    const auto game =
+        std::filesystem::path(PATH_INFO::datadir()) / "json/mapgen/house/house01.json";
+    CHECK(editor::document_title(game) == "data/json/mapgen/house/house01.json");
 }
 
 #endif // CATA_MCP
