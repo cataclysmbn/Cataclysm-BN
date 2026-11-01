@@ -602,22 +602,27 @@ const auto often_rates = std::array{
     often_rate{.often = "sometimes", .weight = 50, .fewest = 0, .most = 3},
     often_rate{.often = "often", .weight = 150, .fewest = 1, .most = 5}};
 
-/// The flags of the overmap terrain `id` of the file at `path`.
-auto oter_flags(const std::filesystem::path& path, const std::string& id)
-    -> std::vector<std::string> {
+/// Whether the overmap terrain `id` of the file at `path` turns: as the game loaded it, else as
+/// the file says, by its flags, the flags it adds or the terrain it copies.
+auto turns(const std::filesystem::path& path, const std::string& id) -> bool {
+    if (const auto loaded = oter_type_str_id(id); loaded.is_valid()) {
+        return loaded->is_rotatable();
+    }
+    const auto unturned = [](const nlohmann::json& value) {
+        return value.is_object() && value.contains("flags") && value["flags"].is_array()
+            && std::ranges::contains(value["flags"], nlohmann::json("NO_ROTATE"));
+    };
     auto in = std::ifstream(path, std::ios::binary);
     const auto read = nlohmann::json::parse(in, nullptr, false);
     for (const auto& entry : read.is_array() ? read : nlohmann::json::array({read})) {
-        if (text_at(entry, "type") == "overmap_terrain" && text_at(entry, "id") == id
-            && entry.contains("flags") && entry["flags"].is_array()) {
-            return entry["flags"] | std::views::filter(&nlohmann::json::is_string)
-                 | std::views::transform([](const auto& flag) {
-                       return flag.template get<std::string>();
-                   })
-                 | std::ranges::to<std::vector>();
+        if (text_at(entry, "type") != "overmap_terrain" || text_at(entry, "id") != id) { continue; }
+        if (unturned(entry) || (entry.contains("extend") && unturned(entry["extend"]))) {
+            return false;
         }
+        const auto copied = oter_type_str_id(text_at(entry, "copy-from"));
+        return !copied.is_valid() || copied->is_rotatable();
     }
-    return {};
+    return true;
 }
 } // namespace
 
@@ -651,7 +656,8 @@ auto placement_file(const std::filesystem::path& path) -> std::filesystem::path 
 auto read_appearance(const std::filesystem::path& path, const std::string& id) -> appearance {
     auto in = std::ifstream(placement_file(path), std::ios::binary);
     const auto read = nlohmann::json::parse(in, nullptr, false);
-    if (!read.is_array() || read.empty() || !read[0].is_object()) { return {}; }
+    // Only the file the editor writes: one entry, of this building.
+    if (!read.is_array() || read.size() != 1) { return {}; }
     const auto& entry = read[0];
     namespace ranges = std::ranges;
     const auto nearest = [](const auto& rate_of, const int value) {
@@ -666,8 +672,8 @@ auto read_appearance(const std::filesystem::path& path, const std::string& id) -
         return {.where = "town", .often = nearest(&often_rate::weight, entry[houses].get<int>())};
     }
     const auto most = nlohmann::json::json_pointer("/occurrences/1");
-    if (text_at(entry, "type") == "overmap_special" && entry.contains(most)
-        && entry[most].is_number_integer()) {
+    if (text_at(entry, "type") == "overmap_special" && text_at(entry, "id") == id
+        && entry.contains(most) && entry[most].is_number_integer()) {
         return {.where = "country", .often = nearest(&often_rate::most, entry[most].get<int>())};
     }
     return {};
@@ -677,13 +683,15 @@ auto write_appearance(
     const std::filesystem::path& path, const std::string& id, const appearance& placed)
     -> std::expected<void, std::string> {
     const auto file = placement_file(path);
-    if (std::filesystem::exists(file) && read_appearance(path, id).where == "test") {
+    // An empty file is one the editor failed to write.
+    auto error = std::error_code{};
+    if (std::filesystem::exists(file) && std::filesystem::file_size(file, error) > 0
+        && read_appearance(path, id).where == "test") {
         //~ %s is a file beside a map, which would say where new worlds place it.
         return std::unexpected(
             string_format(_("%s holds something else; rename it first."), mods_path(file)));
     }
     if (placed.where == "test") {
-        auto error = std::error_code{};
         std::filesystem::remove(file, error);
         if (error) { return std::unexpected(_("The placement file could not be removed.")); }
         return {};
@@ -691,7 +699,7 @@ auto write_appearance(
     const auto found = std::ranges::find(often_rates, placed.often, &often_rate::often);
     const auto& rate = found == often_rates.end() ? often_rates[1] : *found;
     // A rotating terrain is placed by its north facing.
-    const auto turns = !std::ranges::contains(oter_flags(path, id), "NO_ROTATE");
+    const auto turned = turns(path, id);
     const auto entry =
         placed.where == "town"
             ? nlohmann::ordered_json{{"type", "region_overlay"},
@@ -700,15 +708,24 @@ auto write_appearance(
             : nlohmann::ordered_json{
                   {"type", "overmap_special"},
                   {"id", id},
-                  {"overmaps", {{{"point", {0, 0, 0}}, {"overmap", turns ? id + "_north" : id}}}},
+                  {"overmaps", {{{"point", {0, 0, 0}}, {"overmap", turned ? id + "_north" : id}}}},
                   {"locations", {"field"}},
                   {"city_distance", {3, -1}},
                   {"occurrences", {rate.fewest, rate.most}},
-                  {"rotate", turns}};
+                  {"rotate", turned}};
     const auto entries = nlohmann::ordered_json::array({entry});
-    auto out = std::ofstream(file, std::ios::binary | std::ios::trunc);
-    out << format_json(entries.dump()).value_or(entries.dump(2));
-    if (!out.flush()) { return std::unexpected(_("The placement file could not be written.")); }
+    // Written beside it first, so a failed write leaves the old file whole.
+    const auto written = std::filesystem::path(file.string() + ".new");
+    {
+        auto out = std::ofstream(written, std::ios::binary | std::ios::trunc);
+        out << format_json(entries.dump()).value_or(entries.dump(2));
+        if (!out.flush()) {
+            std::filesystem::remove(written, error);
+            return std::unexpected(_("The placement file could not be written."));
+        }
+    }
+    std::filesystem::rename(written, file, error);
+    if (error) { return std::unexpected(_("The placement file could not be written.")); }
     return {};
 }
 
