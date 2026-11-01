@@ -8612,7 +8612,7 @@ TEST_CASE(
     std::ofstream(barn)
         << R"([{"type":"mapgen","method":"json","om_terrain":"editor_place2_barn","object":{}},)"
            R"({"type":"overmap_terrain","id":"editor_place2_barn","name":"Barn",)"
-           R"("extend":{"flags":["NO_ROTATE"]}}])";
+           R"("copy-from":"emptyresidentiallot","extend":{"flags":["NO_ROTATE"]}}])";
     const auto overmap = [](const std::filesystem::path& path) {
         return nlohmann::ordered_json::parse(
             read_file(me::placement_file(path)))[0]["overmaps"][0]["overmap"];

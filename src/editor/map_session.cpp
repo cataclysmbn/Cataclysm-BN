@@ -58,6 +58,7 @@
 #include <map>
 #include <optional>
 #include <ranges>
+#include <set>
 #include <span>
 #include <string>
 #include <string_view>
@@ -612,28 +613,45 @@ auto facing_of(const oter_type_str_id& loaded) -> facing {
              : facing::fixed;
 }
 
-/// How the overmap terrain `id` of the file at `path` faces: as the file the player edits says,
-/// by its flags, the flags it adds or the terrain it copies, else as the game loaded it.
+/// How the overmap terrain `id` of the file at `path` faces, as the game loads its flags from the
+/// file the player edits: its own flags alone, else those of the terrain it copies with the flags
+/// it adds and deletes; else as the game loaded it.
 auto facing_in(const std::filesystem::path& path, const std::string& id) -> facing {
-    const auto flagged = [](const nlohmann::json& value) -> std::optional<facing> {
-        if (!value.is_object() || !value.contains("flags") || !value["flags"].is_array()) {
-            return std::nullopt;
+    // The flags `key` of `value` names, one or a list.
+    const auto names = [](const nlohmann::json& value, const char* key) {
+        auto found = std::set<std::string>{};
+        if (!value.is_object() || !value.contains(key)) { return found; }
+        const auto& flags = value[key];
+        for (const auto& flag : flags.is_array() ? flags : nlohmann::json::array({flags})) {
+            if (flag.is_string()) { found.insert(flag.get<std::string>()); }
         }
-        const auto& flags = value["flags"];
-        if (std::ranges::contains(flags, nlohmann::json("LINEAR"))) { return facing::line; }
-        if (std::ranges::contains(flags, nlohmann::json("NO_ROTATE"))) { return facing::fixed; }
-        return std::nullopt;
+        return found;
+    };
+    const auto facing_by = [](const std::set<std::string>& flags) {
+        return flags.contains("LINEAR") ? facing::line
+             : flags.contains("NO_ROTATE")
+                 ? facing::fixed
+                 : facing::turns;
     };
     auto in = std::ifstream(path, std::ios::binary);
     const auto read = nlohmann::json::parse(in, nullptr, false);
     for (const auto& entry : read.is_array() ? read : nlohmann::json::array({read})) {
         if (text_at(entry, "type") != "overmap_terrain" || text_at(entry, "id") != id) { continue; }
-        if (const auto own = flagged(entry)) { return *own; }
-        if (const auto added = entry.contains("extend") ? flagged(entry["extend"]) : std::nullopt) {
-            return *added;
+        if (entry.contains("flags")) { return facing_by(names(entry, "flags")); }
+        // The game has a terrain of the empty id: no copy-from names none.
+        const auto from = text_at(entry, "copy-from");
+        const auto copied = oter_type_str_id(from);
+        if (from.empty() || !copied.is_valid()) { return facing::turns; }
+        auto flags = std::set<std::string>{};
+        if (copied->has_flag(oter_flags::line_drawing)) { flags.insert("LINEAR"); }
+        if (copied->has_flag(oter_flags::no_rotate)) { flags.insert("NO_ROTATE"); }
+        if (entry.contains("extend")) { flags.insert_range(names(entry["extend"], "flags")); }
+        if (entry.contains("delete")) {
+            std::ranges::for_each(names(entry["delete"], "flags"), [&](const std::string& flag) {
+                flags.erase(flag);
+            });
         }
-        const auto copied = oter_type_str_id(text_at(entry, "copy-from"));
-        return copied.is_valid() ? facing_of(copied) : facing::turns;
+        return facing_by(flags);
     }
     const auto loaded = oter_type_str_id(id);
     return loaded.is_valid() ? facing_of(loaded) : facing::turns;
@@ -692,8 +710,11 @@ auto read_appearance(const std::filesystem::path& path, const std::string& id) -
                 .often = nearest(&often_rate::weight, entry["city"]["houses"][id].get<int>())};
     }
     const auto most = nlohmann::json::json_pointer("/occurrences/1");
+    // The special the editor writes: one square, its seven members.
     if (text_at(entry, "type") == "overmap_special" && text_at(entry, "id") == id
-        && entry.contains(most) && entry[most].is_number_integer()) {
+        && entry.size() == 7 && entry.contains("overmaps") && entry["overmaps"].is_array()
+        && entry["overmaps"].size() == 1 && entry.contains(most)
+        && entry[most].is_number_integer()) {
         return {.where = "country", .often = nearest(&often_rate::most, entry[most].get<int>())};
     }
     return {};
