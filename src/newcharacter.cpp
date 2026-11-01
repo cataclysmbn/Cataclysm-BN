@@ -29,6 +29,7 @@
 #   include "cata_tiles.h"
 #endif
 #include "character.h"
+#include "character_description.h"
 #include "character_martial_arts.h"
 #include "color.h"
 #include "cursesdef.h"
@@ -3518,7 +3519,8 @@ namespace char_creation
 enum description_selector {
     NAME,
     HEIGHT,
-    AGE
+    AGE,
+    DESCRIPTION
 };
 
 static void draw_height( const catacurses::window &w_height, const avatar &you,
@@ -3566,6 +3568,7 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
     catacurses::window w_guide;
     catacurses::window w_height;
     catacurses::window w_age;
+    auto w_description = catacurses::window{};
 
 #if defined(TILES)
     character_preview_window character_preview;
@@ -3586,6 +3589,7 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
 
         // Row 2
         w_age = catacurses::newwin( 1, 12, point( 80, 6 ) );
+        w_description = catacurses::newwin( 1, std::max( 1, TERMX - 48 ), point( 46, 7 ) );
 
         // Big Row
         w_stats = catacurses::newwin( 6, 20, point( 2, 9 ) );
@@ -3853,7 +3857,7 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
 
         fold_and_print( w_guide, point( 0, getmaxy( w_guide ) - 4 ), ( TERMX / 2 ), c_light_gray,
                         _( "Press <color_light_green>%s</color> or <color_light_green>%s</color> "
-                           "to cycle through name, height, and age." ),
+                           "to cycle through name, height, age, and description." ),
                         ctxt.get_desc( "LEFT" ),
                         ctxt.get_desc( "RIGHT" ) );
 
@@ -3917,6 +3921,16 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
 
         char_creation::draw_age( w_age, you, current_selector == char_creation::AGE );
         char_creation::draw_height( w_height, you, current_selector == char_creation::HEIGHT );
+
+        werase( w_description );
+        const auto description = get_character_description( you );
+        const auto description_preview = description.empty() ?
+                                         _( "No description.  Press confirm to edit." ) :
+                                         replace_all( description, "\n", " " );
+        trim_and_print( w_description, point_zero, getmaxx( w_description ),
+                        current_selector == char_creation::DESCRIPTION ? h_light_gray : c_light_gray,
+                        _( "Description: %s" ), colorize( description_preview, c_dark_gray ) );
+        wnoutrefresh( w_description );
 
         const std::string location_prompt = string_format(
                                                 _( "Press <color_light_green>%s</color> to select location." ),
@@ -4175,12 +4189,18 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
                     current_selector = char_creation::AGE;
                     break;
                 case char_creation::AGE:
+                    current_selector = char_creation::DESCRIPTION;
+                    break;
+                case char_creation::DESCRIPTION:
                     current_selector = char_creation::NAME;
                     break;
             }
         } else if( action == "LEFT" ) {
             switch( current_selector ) {
                 case char_creation::NAME:
+                    current_selector = char_creation::DESCRIPTION;
+                    break;
+                case char_creation::DESCRIPTION:
                     current_selector = char_creation::AGE;
                     break;
                 case char_creation::HEIGHT:
@@ -4259,10 +4279,13 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
             }
         } else if( action == "CONFIRM" &&
                    // Don't edit names when sharing maps
-                   !MAP_SHARING::isSharing() ) {
+                   ( current_selector != char_creation::NAME || !MAP_SHARING::isSharing() ) ) {
 
             string_input_popup popup;
             switch( current_selector ) {
+                case char_creation::DESCRIPTION:
+                    edit_character_description( you );
+                    break;
                 case char_creation::NAME: {
                     popup.title( _( "Enter name.  Cancel to delete all." ) )
                     .text( you.name )

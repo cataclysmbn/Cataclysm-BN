@@ -17,6 +17,7 @@
 #include "catalua_icallback_actor.h"
 #include "catalua_sol.h"
 #include "character_encumbrance.h"
+#include "character_description.h"
 #include "character_functions.h"
 #include "character_martial_arts.h"
 #include "character_stat.h"
@@ -7954,6 +7955,9 @@ std::string Character::extended_description() const
     }
 
     ss += "\n--\n";
+    if( const auto description = get_character_description( *this ); !description.empty() ) {
+        ss += colorize( description, c_dark_gray ) + "\n--\n";
+    }
 
     const std::vector<bodypart_id> &bps = get_all_body_parts( true );
     // Find length of bp names, to align
@@ -12312,8 +12316,8 @@ auto Character::print_info( const catacurses::window &w, int vStart, int vLines,
         mvwprintz( w, point( column + bar_max_width - 1 - i, vStart ), c_white, "." );
     }
     const int name_column = column + bar_max_width + 1;
-    mvwprintz( w, point( name_column, vStart ), basic_symbol_color(), _( "You (%s)" ), name );
-    int line = vStart + 1;
+    mvwprintz( w, point( name_column, vStart ), basic_symbol_color(), _( "%s (You)" ), name );
+    auto line = vStart + 1;
     const auto description_parts = short_description_parts();
     for( size_t idx = 1; idx < description_parts.size(); ++idx ) {
         const auto &part = description_parts[idx];
@@ -12327,6 +12331,12 @@ auto Character::print_info( const catacurses::window &w, int vStart, int vLines,
             }
             trim_and_print( w, point( column, line++ ), iWidth, c_light_gray, part_line );
         }
+    }
+    for( const auto &description_line : foldstring( get_character_description( *this ), iWidth ) ) {
+        if( line >= last_line ) {
+            break;
+        }
+        trim_and_print( w, point( column, line++ ), iWidth, c_dark_gray, "%s", description_line );
     }
     return line;
 }

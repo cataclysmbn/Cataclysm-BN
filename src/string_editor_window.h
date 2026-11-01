@@ -47,6 +47,7 @@ class string_editor_window
 
         std::unique_ptr<input_context> ctxt;
 
+        bool _highlight_lua = true;
         bool _show_line_numbers = false;
         int _line_number_min_width = 2;
         int _line_number_width = 0;
@@ -55,6 +56,8 @@ class string_editor_window
         struct string_editor_window_options {
             bool show_line_numbers = false;
             int line_number_min_width = 2;
+            /// Enable Lua syntax colors; disable when editing prose.
+            bool highlight_lua = true;
         };
 
         string_editor_window( const std::function<catacurses::window()> &create_window,

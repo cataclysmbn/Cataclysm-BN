@@ -1591,6 +1591,8 @@ void npc::load( const JsonObject &data )
 {
     player::load( data );
 
+    idz = data.get_string( "template_id", "" );
+
     int misstmp = 0;
     int classtmp = 0;
     int atttmp = 0;
@@ -1836,6 +1838,7 @@ void npc::serialize( JsonOut &json ) const
 void npc::store( JsonOut &json ) const
 {
     player::store( json );
+    json.member( "template_id", idz );
 
     json.member( "marked_for_death", marked_for_death );
     json.member( "dead", dead );
