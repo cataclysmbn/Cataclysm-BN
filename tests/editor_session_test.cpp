@@ -9165,6 +9165,147 @@ TEST_CASE("the map editor's library skips a piece in another shape", "[editor_se
     editor::reset_editor_session();
 }
 
+namespace {
+
+/// A file with a wall and door on row 1 and a wall on row 5, on a floor.
+auto walled_file() -> mod_file {
+    auto rows = nlohmann::ordered_json::array();
+    for (auto row = 0; row < 24; ++row) { rows.push_back(std::string(24, '.')); }
+    rows[1] = "#+##" + std::string(20, '.');
+    rows[5] = "####" + std::string(20, '.');
+    return mod_file{
+        {{"rows", rows},
+         {"terrain", {{".", "t_floor"}, {"#", "t_wall"}, {"+", "t_door_c"}}},
+         {"furniture", {{"C", "f_counter"}}}},
+        "walled.json"};
+}
+
+auto saved_rows(const mod_file& file) -> std::vector<std::string> {
+    return nlohmann::ordered_json::parse(read_file(file.path))[0]["object"]["rows"]
+        .get<std::vector<std::string>>();
+}
+
+auto mark_wall_row() -> std::vector<map_step> {
+    return {[](const auto&) { return invoke("editor:tool", {.row = "tool:select"}); },
+            [](const auto&) { return square_at(0, 1); },
+            [](const auto&) { return square_at(3, 1); }};
+}
+
+} // namespace
+
+TEST_CASE(
+    "replacing a wall in the marked squares keeps the door and other rows", "[editor_session]") {
+    const auto file = walled_file();
+    const auto guard = screen_guard{};
+    auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto& screen) {
+            CHECK_FALSE(ec::find_component(*screen.root, "editor:marked_symbols"));
+            return invoke("editor:tool", {.row = "tool:select"});
+        }};
+    std::ranges::copy(mark_wall_row(), std::back_inserter(walk));
+    walk.push_back([](const auto& screen) {
+        const auto marked = rows_in(screen, "editor:marked_symbols");
+        REQUIRE(marked.size() == 2);
+        CHECK(marked[0].id == "symbol:#");
+        CHECK(marked[0].label.ends_with(" ×3"));
+        CHECK(marked[1].id == "symbol:+");
+        CHECK(marked[1].label.ends_with(" ×1"));
+        // Nothing the catalog gave is in hand; what the legend picked is the floor.
+        return invoke("editor:catalog_pick", {.row = "entry:t_wall_wood"});
+    });
+    walk.push_back([](const auto& screen) {
+        CHECK(has_row(screen, "editor:marked_symbols", "symbol:#"));
+        return invoke("editor:replace_symbol", {.row = "symbol:#"});
+    });
+    walk.push_back([](const auto& screen) {
+        CHECK(told(screen).empty());
+        return invoke("editor:save");
+    });
+    walk.push_back([](const auto&) { return act("QUIT"); });
+    CHECK(walk_map(walk) == walk.size());
+    editor::reset_editor_session();
+    const auto rows = saved_rows(file);
+    CHECK(rows[1][0] != '#');
+    CHECK(rows[1][1] == '+');
+    CHECK(rows[1][2] == rows[1][0]);
+    CHECK(rows[1][3] == rows[1][0]);
+    CHECK(rows[5].starts_with("####"));
+    const auto object = nlohmann::ordered_json::parse(read_file(file.path))[0]["object"];
+    CHECK(object["terrain"][std::string(1, rows[1][0])] == "t_wall_wood");
+}
+
+TEST_CASE("the select tool with nothing marked replaces a symbol everywhere", "[editor_session]") {
+    const auto file = walled_file();
+    const auto guard = screen_guard{};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:symbol", {.row = "symbol:."}); },
+        [](const auto&) { return invoke("editor:tool", {.row = "tool:select"}); },
+        [](const auto&) { return invoke("editor:replace_symbol", {.row = "symbol:#"}); },
+        [](const auto& screen) {
+            CHECK(told(screen).empty());
+            CHECK_FALSE(has_row(screen, "editor:marked_symbols", "symbol:#"));
+            return invoke("editor:save");
+        },
+        [](const auto&) { return act("QUIT"); }};
+    CHECK(walk_map(walk) == walk.size());
+    editor::reset_editor_session();
+    const auto rows = saved_rows(file);
+    CHECK(rows[1].starts_with(".+.."));
+    CHECK(rows[5].starts_with("...."));
+}
+
+TEST_CASE("deleting a symbol leaves the ground on the marked squares alone", "[editor_session]") {
+    const auto file = walled_file();
+    const auto guard = screen_guard{};
+    auto walk = std::vector<map_step>{[&](const auto&) {
+        return invoke("editor:open", {.text = file.path.string()});
+    }};
+    std::ranges::copy(mark_wall_row(), std::back_inserter(walk));
+    walk.push_back([](const auto&) { return invoke("editor:delete_symbol", {.row = "symbol:#"}); });
+    walk.push_back([](const auto&) { return invoke("editor:save"); });
+    walk.push_back([](const auto&) { return invoke("editor:undo"); });
+    walk.push_back([](const auto& screen) {
+        CHECK(has_row(screen, "editor:marked_symbols", "symbol:#"));
+        return act("QUIT");
+    });
+    CHECK(walk_map(walk) == walk.size());
+    editor::reset_editor_session();
+    const auto rows = saved_rows(file);
+    CHECK(rows[1].starts_with(".+.."));
+    CHECK(rows[5].starts_with("####"));
+}
+
+TEST_CASE("replacing the terrain under a counter keeps the counter", "[editor_session]") {
+    auto rows = nlohmann::ordered_json::array();
+    for (auto row = 0; row < 24; ++row) { rows.push_back(std::string(24, '.')); }
+    rows[2] = "CC" + std::string(22, '.');
+    const auto file = mod_file{
+        {{"rows", rows},
+         {"terrain", {{".", "t_floor"}, {"C", "t_floor"}}},
+         {"furniture", {{"C", "f_counter"}}}},
+        "counter.json"};
+    const auto guard = screen_guard{};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:catalog_pick", {.row = "entry:t_dirt"}); },
+        [](const auto&) { return invoke("editor:tool", {.row = "tool:select"}); },
+        [](const auto&) { return invoke("editor:replace_symbol", {.row = "symbol:C"}); },
+        [](const auto& screen) {
+            CHECK(told(screen).empty());
+            return invoke("editor:save");
+        },
+        [](const auto&) { return act("QUIT"); }};
+    CHECK(walk_map(walk) == walk.size());
+    editor::reset_editor_session();
+    const auto object = nlohmann::ordered_json::parse(read_file(file.path))[0]["object"];
+    const auto symbol = std::string(1, object["rows"][2].get<std::string>()[0]);
+    CHECK(symbol != "C");
+    CHECK(object["terrain"][symbol] == "t_dirt");
+    CHECK(object["furniture"][symbol] == "f_counter");
+}
+
 TEST_CASE("the placement card shows only on the placements tool", "[editor_session]") {
     const auto guard = screen_guard{};
     const auto simple = override_option("EDITOR_ADVANCED", "false");
