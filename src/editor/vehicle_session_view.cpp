@@ -124,10 +124,24 @@ auto parts_palette(const session& state) -> part_page_entries {
     const auto group = state.shown_group();
     auto found = std::vector<const vpart_info*>{};
     if (state.part_filter.empty()) {
-        found =
+        auto shown =
             kinds
             | std::views::filter([&](const part_kind& kind) { return kind.category == group; })
-            | std::views::transform([](const part_kind& kind) { return kind.shapes.front(); })
+            | std::views::transform([](const part_kind& kind) { return &kind; })
+            | std::ranges::to<std::vector>();
+        // What most of the game's vehicles install first, and by name among equals.
+        std::ranges::stable_sort(shown, {}, [&](const part_kind* const kind) {
+            auto uses = 0;
+            for (const auto* const shape : kind->shapes) {
+                const auto counted = state.catalog.vehicles.find(shape->get_id());
+                if (counted != state.catalog.vehicles.end()) { uses += counted->second; }
+            }
+            return -uses;
+        });
+        found =
+            shown | std::views::transform([](const part_kind* const kind) {
+                return kind->shapes.front();
+            })
             | std::ranges::to<std::vector>();
     } else {
         struct ranked {
@@ -621,7 +635,11 @@ auto parts_view(const session& state) -> ec::screen_view {
                             found.entries | std::views::transform([&](const catalog_entry& entry) {
                                 return ec::row{
                                     .id = "prototype:" + entry.id,
-                                    .label = entry.name,
+                                    // Advanced mode's id column tells them apart already.
+                                    .label =
+                                        advanced_mode() || entry.distinct.empty()
+                                            ? entry.name
+                                            : string_format("%s (%s)", entry.name, entry.distinct),
                                     .selected =
                                         state.doc && text_at(state.prototype(), "id") == entry.id,
                                     .columns = id_column(entry.id)};
