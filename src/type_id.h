@@ -20,6 +20,9 @@ struct body_part_type;
 using bodypart_id = int_id<body_part_type>;
 using bodypart_str_id = string_id<body_part_type>;
 
+class character_resource;
+using character_resource_id = string_id<character_resource>;
+
 struct construction_category;
 using construction_category_id = string_id<construction_category>;
 

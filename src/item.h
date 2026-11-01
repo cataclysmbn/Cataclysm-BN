@@ -2035,6 +2035,26 @@ class item : public location_visitable<item>, public game_object<item>
          */
         int ammo_consume( int qty, const tripoint_bub_ms &pos );
 
+        /**
+         * Check if an external resource is used at all
+         * @return if there is an external resource to use
+         */
+        bool uses_external_resource() const;
+        /**
+         * Check if the specified amount of character resources is available to be drained by the item
+         * @param ch character to check resources
+         * @param qty quantity that should be consume
+         * @return weather anything was consumed ( external consumption is all or nothing )
+         */
+        bool has_external_resource( const Character &ch, int qty ) const;
+        /**
+         * Consume the specified amount of charges, from character resources drained by the item
+         * @param ch character to drain resources from
+         * @param qty quantity that should be consume
+         * @return weather anything was consumed ( external consumption is all or nothing )
+         */
+        bool consume_external_resource( Character &ch, int qty );
+
         /** Specific ammo data, returns nullptr if item is neither ammo nor loaded with any */
         const itype *ammo_data() const;
         /** Specific ammo type, returns "null" if item is neither ammo nor loaded with any */
@@ -2310,6 +2330,7 @@ class item : public location_visitable<item>, public game_object<item>
         time_point birthday() const;
         void set_birthday( const time_point &bday );
         void handle_pickup_ownership( Character &c );
+        std::map<character_resource_id, int> get_gun_resources_used() const;
         int get_gun_ups_drain() const;
         void validate_ownership() const;
         inline void set_old_owner( const faction_id &temp_owner ) {

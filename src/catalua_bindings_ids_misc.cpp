@@ -1,4 +1,5 @@
 #include "catalua_bindings_ids_common.h"
+#include "character_resource.h"
 #include "enchantments/enchantment_flag.h"
 #include "enchantments/enchantment_value.h"
 #include "fault.h"
@@ -24,4 +25,5 @@ auto cata::detail::reg_game_ids_misc( sol::state &lua ) -> void
     reg_id<enchantment_value, false>( lua );
     reg_id<enchantment_flag, false>( lua );
     reg_id<perk, false>( lua );
+    reg_id<character_resource, false>( lua );
 }
