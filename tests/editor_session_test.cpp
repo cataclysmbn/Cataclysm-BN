@@ -8456,7 +8456,7 @@ TEST_CASE(
     const auto guard = screen_guard{};
     const auto simple = override_option("EDITOR_ADVANCED", "false");
     const auto folder = std::filesystem::path(PATH_INFO::user_moddir()) / "my_first_mod";
-    const auto placement = folder / "my_house_placement.json";
+    const auto placement = folder / "my_house.placement.json";
     const auto forget = [&] {
         std::filesystem::remove_all(folder);
         std::filesystem::remove(editor::recent_documents_file());
@@ -8553,6 +8553,39 @@ TEST_CASE(
     // A mod removed since it was chosen gives way to a new one.
     made.mod = "editor_gone_mod";
     CHECK(editor::map_editor::new_mod_folder(made) == "new");
+}
+
+TEST_CASE(
+    "where a building appears is set only in the player's mods, over no file of another kind",
+    "[editor_session]") {
+    const auto game = editor::document::open(
+        std::filesystem::path(PATH_INFO::datadir()) / "json/mapgen/commercial_airport.json");
+    REQUIRE(game);
+    CHECK_FALSE(editor::map_editor::named_building(*game));
+    const auto folder = std::filesystem::path(PATH_INFO::user_moddir()) / "editor_place_mod";
+    const auto forget = [&] { std::filesystem::remove_all(folder); };
+    forget();
+    const auto cleanup = on_out_of_scope(forget);
+    std::filesystem::create_directories(folder);
+    std::ofstream(folder / "modinfo.json")
+        << R"([{"type":"MOD_INFO","id":"editor_place_mod","name":"Place mod"}])";
+    const auto shed = folder / "shed.json";
+    std::ofstream(shed)
+        << R"([{"type":"overmap_terrain","id":"editor_place_shed","name":"Shed",)"
+           R"("flags":["NO_ROTATE"]},)"
+           R"({"type":"mapgen","method":"json","om_terrain":"editor_place_shed","object":{}}])";
+    // A terrain that never turns is placed as it is.
+    REQUIRE(editor::map_editor::write_appearance(shed, "editor_place_shed", {.where = "country"}));
+    const auto special = nlohmann::ordered_json::parse(
+        read_file(editor::map_editor::placement_file(shed)));
+    CHECK(special[0]["overmaps"][0]["overmap"] == "editor_place_shed");
+    CHECK(special[0]["rotate"] == false);
+    // A file of another kind where the placement goes stays.
+    const auto other = R"([{"type":"mapgen","method":"json","om_terrain":"x","object":{}}])";
+    std::ofstream(editor::map_editor::placement_file(shed), std::ios::trunc) << other;
+    CHECK_FALSE(editor::map_editor::write_appearance(shed, "editor_place_shed", {.where = "town"}));
+    CHECK_FALSE(editor::map_editor::write_appearance(shed, "editor_place_shed", {.where = "test"}));
+    CHECK(read_file(editor::map_editor::placement_file(shed)) == other);
 }
 
 #endif // CATA_MCP
