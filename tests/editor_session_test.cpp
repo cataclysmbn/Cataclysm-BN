@@ -1084,6 +1084,45 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "the editor names the kind of entries of a file that share a name",
+    "[editor_session][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto folder = std::filesystem::path(PATH_INFO::user_moddir()) / "editor_kinds_mod";
+    const auto forget = [&] { std::filesystem::remove_all(folder); };
+    forget();
+    const auto cleanup = on_out_of_scope(forget);
+    std::filesystem::create_directories(folder);
+    const auto path = folder / "shed.json";
+    std::ofstream(path)
+        << R"([{"type":"mapgen","method":"json","om_terrain":"shed","object":{"fill_ter":"t_grass",)"
+           R"("rows":[]}},{"type":"overmap_terrain","id":"shed","name":"Shed"}])";
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ec::top_screen(captured());
+        switch (step++) {
+            case 0:
+                return invoke("editor:open", {.text = path.string()});
+            case 1: {
+                const auto labels =
+                    body<ec::list_body>(part(screen, "editor:objects")).rows
+                    | std::views::transform(&ec::row::label) | std::ranges::to<std::vector>();
+                CHECK(labels
+                      == std::vector<
+                          std::string>{"shed (Overmap terrain mapgen)", "shed (Overmap terrain)"});
+                return act("QUIT");
+            }
+            default:
+                FAIL("the editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+
+    editor::run_editor_session();
+    CHECK(step == 2);
+}
+
+TEST_CASE(
     "the editor names an entry of a list of overmap terrains by those terrains",
     "[editor_session][engine_client_component]") {
     const auto guard = screen_guard{};
