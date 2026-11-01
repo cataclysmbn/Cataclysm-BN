@@ -1502,10 +1502,16 @@ auto entry_rows(const session& state, const std::vector<std::size_t>& entries)
                const auto& [index, named] = entry;
                const auto same = std::ranges::count(names, named);
                const auto place = std::ranges::count(names | std::views::take(at + 1), named);
+               // Entries of another kind with the name, such as a map's overmap terrain.
+               const auto shared = std::ranges::count(names, named.name, &named_entry::name);
+               const auto name =
+                   shared > same
+                       //~ An entry's name, then its kind.
+                       ? string_format(_("%1$s (%2$s)"), named.name, named.kind)
+                       : named.name;
                return ec::row{
                    .id = index_row("object", index),
-                   .label = same > 1 ? string_format(_("%s (%d of %d)"), named.name, place, same)
-                                     : named.name,
+                   .label = same > 1 ? string_format(_("%s (%d of %d)"), name, place, same) : name,
                    .description = named.kind,
                    .selected = index == state.object};
            })

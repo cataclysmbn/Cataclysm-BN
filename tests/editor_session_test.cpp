@@ -1095,6 +1095,7 @@ TEST_CASE(
     const auto path = folder / "shed.json";
     std::ofstream(path)
         << R"([{"type":"mapgen","method":"json","om_terrain":"shed","object":{"fill_ter":"t_grass",)"
+           R"("rows":[]}},{"type":"mapgen","method":"json","om_terrain":"shed","object":{"fill_ter":"t_grass",)"
            R"("rows":[]}},{"type":"overmap_terrain","id":"shed","name":"Shed"}])";
     auto step = 0;
 
@@ -1107,9 +1108,11 @@ TEST_CASE(
                 const auto labels =
                     body<ec::list_body>(part(screen, "editor:objects")).rows
                     | std::views::transform(&ec::row::label) | std::ranges::to<std::vector>();
-                CHECK(labels
-                      == std::vector<
-                          std::string>{"shed (Overmap terrain mapgen)", "shed (Overmap terrain)"});
+                CHECK(
+                    labels
+                    == std::vector<std::string>{
+                        "shed (Overmap terrain mapgen) (1 of 2)",
+                        "shed (Overmap terrain mapgen) (2 of 2)", "shed (Overmap terrain)"});
                 return act("QUIT");
             }
             default:
@@ -6376,9 +6379,9 @@ TEST_CASE(
                 REQUIRE(rows.size() == 3);
                 CHECK(rows[0].description == "Overmap terrain mapgen");
                 // A chunk and the update mapgen of its name are two entries, not two of one.
-                CHECK(rows[1].label == "editor_test_chunk");
+                CHECK(rows[1].label == "editor_test_chunk (Nested chunk)");
                 CHECK(rows[1].description == "Nested chunk");
-                CHECK(rows[2].label == "editor_test_chunk");
+                CHECK(rows[2].label == "editor_test_chunk (Update mapgen)");
                 CHECK(rows[2].description == "Update mapgen");
                 return act("QUIT");
             }
