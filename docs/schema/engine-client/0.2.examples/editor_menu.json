@@ -119,9 +119,19 @@
                     "selectable": true,
                     "selected": false,
                     "columns": []
+                  },
+                  {
+                    "id": "editor:mods",
+                    "label": "Choose mods",
+                    "description": "Choose the mods of the editor world, then open the map editor in it.",
+                    "denial": "",
+                    "enabled": true,
+                    "selectable": true,
+                    "selected": false,
+                    "columns": []
                   }
                 ],
-                "total": 3,
+                "total": 4,
                 "selection": "single",
                 "activate": "menu:entry"
               }
@@ -1094,21 +1104,25 @@
       }
     },
     {
-      "name": "map editor started from the main menu with the chosen mods, request",
+      "name": "map editor started from the main menu with the player's mods, request",
       "def": "submit_params",
       "value": {
         "epoch": "epoch-1",
         "expect": {
-          "screen_id": "screen:5"
+          "boundary_id": "boundary:1",
+          "revision": "4"
         },
         "operation": {
           "kind": "invoke",
-          "affordance_id": "YES"
+          "affordance_id": "menu:entry",
+          "args": {
+            "row": "editor:map"
+          }
         }
       }
     },
     {
-      "name": "map editor started from the main menu with the chosen mods, receipt",
+      "name": "map editor started from the main menu with the player's mods, receipt",
       "def": "submit_result",
       "value": {
         "epoch": "epoch-1",
@@ -1118,7 +1132,7 @@
       }
     },
     {
-      "name": "map editor started from the main menu with the chosen mods, validated",
+      "name": "map editor started from the main menu with the player's mods, validated",
       "def": "command_notification",
       "value": {
         "epoch": "epoch-1",
@@ -1128,7 +1142,7 @@
       }
     },
     {
-      "name": "map editor started from the main menu with the chosen mods, executing",
+      "name": "map editor started from the main menu with the player's mods, executing",
       "def": "command_notification",
       "value": {
         "epoch": "epoch-1",
@@ -1138,7 +1152,7 @@
       }
     },
     {
-      "name": "map editor started from the main menu with the chosen mods, interrupted",
+      "name": "map editor started from the main menu with the player's mods, interrupted",
       "def": "command_notification",
       "value": {
         "epoch": "epoch-1",
@@ -1153,7 +1167,7 @@
       "name": "map editor of the main menu with a document open",
       "def": "screen",
       "value": {
-        "screen_id": "screen:6",
+        "screen_id": "screen:4",
         "role": "workspace",
         "kind": "editor",
         "title": "Map Editor",
@@ -4860,7 +4874,7 @@
       "value": {
         "epoch": "epoch-2",
         "expect": {
-          "screen_id": "screen:6"
+          "screen_id": "screen:4"
         },
         "operation": {
           "kind": "invoke",

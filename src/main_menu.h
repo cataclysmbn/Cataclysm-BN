@@ -69,8 +69,8 @@ class main_menu
         /// Starts the game mode in its own world, made the first time; whether it started. The editor's
         /// world has the mods given.
         auto start_special_game( special_game_type type, const std::vector<mod_id> &mods = {} ) -> bool;
-        /// The Editor tab's entry `id`: the mod list and then a map or vehicle editor world, or a save to
-        /// open in editor mode; whether the editor started.
+        /// The Editor tab's entry `id`: a map or vehicle editor world with the player's mods, the mod
+        /// list first for `mods`, or a save to open in editor mode; whether the editor started.
         auto editor_tab( const std::string &id ) -> bool;
         auto open_save_in_editor() -> bool;
         /// Loads `save` of `world` and, in editor mode, opens the editor on it at the first input.

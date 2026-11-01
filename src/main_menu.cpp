@@ -10,6 +10,7 @@
 #include "debug.h"
 #include "distraction_manager.h"
 #include "editor/editor_session.h"
+#include "editor/recent_documents.h"
 #include "engine_client_component.h"
 #include "enums.h"
 #include "filesystem.h"
@@ -601,6 +602,10 @@ void main_menu::init_strings()
         vEditorIds.emplace_back( "save" );
         vEditorHints.emplace_back(
             _( "Open a saved game in the editor, with the character where the save left it." ) );
+        vEditorSubItems.emplace_back( pgettext( "Main Menu|Editor", "Choose mods" ) );
+        vEditorIds.emplace_back( "mods" );
+        vEditorHints.emplace_back(
+            _( "Choose the mods of the editor world, then open the map editor in it." ) );
         // The documents the editors opened, newest first, with the mods they were opened with.
         for( const auto &[index, recent] : editor::recent_documents() | std::views::enumerate ) {
             const auto mods = recent.mods | std::views::transform( []( const mod_id & mod ) {
@@ -1208,16 +1213,12 @@ auto main_menu::editor_tab( const std::string &id ) -> bool
     auto index = std::size_t{ 0 };
     const auto reopened = std::sscanf( id.c_str(), "recent:%zu", &index ) == 1 && index < recent.size()
                           ? std::optional( recent[index] ) : std::nullopt;
-    // A document whose mods are all gone starts from the default mods, as the editors do.
-    const auto kept = reopened
-                      ? reopened->mods | std::views::filter( &mod_id::is_valid ) | std::ranges::to<std::vector>()
-                      : std::vector<mod_id> {};
-    const auto initial = kept.empty() ? world_generator->get_mod_manager().get_default_mods() : kept;
-    const auto mods = world_generator->pick_mods( initial, {
+    const auto initial = editor::editor_world_mods( reopened ? reopened->mods : std::vector<mod_id> {} );
+    const auto mods = id == "mods" ? world_generator->pick_mods( initial, {
         .question = _( "Open the editor with these mods?" ),
         .heading = _( "Turn on the mod that holds your files, then press Esc." ),
         .yes_first = true
-    } );
+    } ) : std::optional( initial );
     if( !mods || !start_special_game( special_game_type::EDITOR, *mods ) ) {
         return false;
     }

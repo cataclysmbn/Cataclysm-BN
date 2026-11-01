@@ -36,12 +36,13 @@ export const editorMenu: Scenario = {
         "editor:map",
         "editor:vehicle",
         "editor:save",
+        "editor:mods",
       ])
       rec.accept("title screen on the editor tab", "screen", tab)
 
-      // The mod list comes first; leaving it and answering no returns to the menu with no world.
+      // Choose mods shows the mod list; leaving it and answering no returns to the menu with no world.
       assertEquals(
-        (await engine.invoke("menu:entry", { row: "editor:map" })).stages.at(-1),
+        (await engine.invoke("menu:entry", { row: "editor:mods" })).stages.at(-1),
         "completed",
       )
       assertEquals(engine.top().kind, "world_creation")
@@ -50,13 +51,9 @@ export const editorMenu: Scenario = {
       assertEquals((await engine.invoke("NO")).stages.at(-1), "completed")
       assertEquals(engine.top().kind, "main_menu")
 
-      assertEquals(
-        (await engine.invoke("menu:entry", { row: "editor:map" })).stages.at(-1),
-        "completed",
-      )
-      assertEquals((await engine.invoke("QUIT")).stages.at(-1), "completed")
-      const started = await engine.invoke("YES")
-      rec.command("map editor started from the main menu with the chosen mods", started)
+      // The map editor opens at once with the player's mods.
+      const started = await engine.invoke("menu:entry", { row: "editor:map" })
+      rec.command("map editor started from the main menu with the player's mods", started)
       await engine.follow(() => engine.stale)
       await engine.subscribe()
       // No character is made: the editor is the whole view of the new world.

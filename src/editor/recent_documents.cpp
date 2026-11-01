@@ -75,4 +75,20 @@ auto mods_for(const std::filesystem::path& path) -> std::vector<mod_id> {
     return mods;
 }
 
+auto editor_world_mods(const std::vector<mod_id>& initial) -> std::vector<mod_id> {
+    auto& manager = world_generator->get_mod_manager();
+    const auto kept =
+        initial | std::views::filter(&mod_id::is_valid) | std::ranges::to<std::vector>();
+    auto mods = kept.empty() ? manager.get_default_mods() : kept;
+    auto ui = mod_ui(manager);
+    for (const auto& mod : manager.all_mods()) {
+        if (!mod->obsolete && !mod->core && inside(mod->path_full, PATH_INFO::user_moddir())) {
+            // A core would replace the game; one on the list already, in conflict or with a
+            // dependency problem is refused.
+            ui.try_add(mod, mods);
+        }
+    }
+    return mods;
+}
+
 } // namespace editor

@@ -35,5 +35,9 @@ auto loaded_mods() -> std::vector<mod_id>;
 /// `loaded_mods`, and last the mod whose folder holds the file at `path`, so that opening it
 /// again loads the mod.
 auto mods_for(const std::filesystem::path& path) -> std::vector<mod_id>;
+/// The mods an editor world opens with: those of `initial` still there, or the default mods
+/// when none is, then every mod of the player's mods with its dependencies, so that the
+/// player's files load without a choice. A mod that conflicts or misses a dependency stays off.
+auto editor_world_mods(const std::vector<mod_id>& initial) -> std::vector<mod_id>;
 
 } // namespace editor
