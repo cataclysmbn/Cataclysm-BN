@@ -1,5 +1,6 @@
 #include "editor/recent_documents.h"
 
+#include "dependency_tree.h"
 #include "editor/session_file.h"
 #include "mod_manager.h"
 #include "path_info.h"
@@ -81,10 +82,17 @@ auto editor_world_mods(const std::vector<mod_id>& initial) -> std::vector<mod_id
         initial | std::views::filter(&mod_id::is_valid) | std::ranges::to<std::vector>();
     auto mods = kept.empty() ? manager.get_default_mods() : kept;
     auto ui = mod_ui(manager);
+    // A core, or a mod needing a core the list lacks, would replace the game's and its mods.
+    const auto needs_other_core = [&](const mod_id& mod) {
+        return std::ranges::any_of(
+            manager.get_tree().get_dependencies_of_X_as_strings(mod), [&](const mod_id& needed) {
+                return needed.is_valid() && needed->core && !std::ranges::contains(mods, needed);
+            });
+    };
     for (const auto& mod : manager.all_mods()) {
-        if (!mod->obsolete && !mod->core && inside(mod->path_full, PATH_INFO::user_moddir())) {
-            // A core would replace the game; one on the list already, in conflict or with a
-            // dependency problem is refused.
+        if (!mod->obsolete && !mod->core && inside(mod->path_full, PATH_INFO::user_moddir())
+            && !needs_other_core(mod)) {
+            // One on the list already, in conflict or with a dependency problem is refused.
             ui.try_add(mod, mods);
         }
     }
