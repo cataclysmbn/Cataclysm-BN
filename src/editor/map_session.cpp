@@ -601,33 +601,51 @@ const auto often_rates = std::array{
     often_rate{.often = "rare", .weight = 10, .fewest = 0, .most = 1},
     often_rate{.often = "sometimes", .weight = 50, .fewest = 0, .most = 3},
     often_rate{.often = "often", .weight = 150, .fewest = 1, .most = 5}};
+
+/// The flags of the overmap terrain `id` of the file at `path`.
+auto oter_flags(const std::filesystem::path& path, const std::string& id)
+    -> std::vector<std::string> {
+    auto in = std::ifstream(path, std::ios::binary);
+    const auto read = nlohmann::json::parse(in, nullptr, false);
+    for (const auto& entry : read.is_array() ? read : nlohmann::json::array({read})) {
+        if (text_at(entry, "type") == "overmap_terrain" && text_at(entry, "id") == id
+            && entry.contains("flags") && entry["flags"].is_array()) {
+            return entry["flags"] | std::views::filter(&nlohmann::json::is_string)
+                 | std::views::transform([](const auto& flag) {
+                       return flag.template get<std::string>();
+                   })
+                 | std::ranges::to<std::vector>();
+        }
+    }
+    return {};
+}
 } // namespace
 
 auto named_building(const document& doc) -> std::optional<std::string> {
-    // A file may hold values that are no objects, which name no type.
-    const auto type_of = [](const nlohmann::ordered_json& value) {
-        return value.is_object() ? value.value("type", "") : std::string{};
-    };
+    using namespace std::views;
+    namespace ranges = std::ranges;
+    // The game's files stay as they are: every world loads them.
+    if (!is_mod_file(doc.path())) { return std::nullopt; }
     const auto made =
-        doc.objects() | std::views::transform(&document_object::value)
-        | std::views::filter([&](const auto& value) {
-              return type_of(value) == "mapgen" && value.contains("om_terrain");
-          })
-        | std::views::transform([](const auto& value) { return entry_ids(value); })
-        | std::views::join | std::ranges::to<std::vector>();
-    for (const auto& object : doc.objects()) {
-        const auto& value = object.value;
-        if (type_of(value) == "overmap_terrain" && value.contains("id") && value["id"].is_string()
-            && value.contains("name")
-            && std::ranges::contains(made, value["id"].get<std::string>())) {
-            return value["id"].get<std::string>();
-        }
-    }
-    return std::nullopt;
+        doc.objects() | transform(&document_object::value) | filter([](const auto& value) {
+            return text_at(value, "type") == "mapgen" && value.contains("om_terrain");
+        })
+        | transform(&entry_ids) | std::views::join | ranges::to<std::vector>();
+    const auto ids =
+        doc.objects() | transform(&document_object::value) | filter([](const auto& value) {
+            return text_at(value, "type") == "overmap_terrain" && value.contains("name");
+        })
+        | transform([](const auto& value) { return text_at(value, "id"); })
+        | ranges::to<std::vector>();
+    const auto found = ranges::find_if(ids, [&](const std::string& id) {
+        return !id.empty() && ranges::contains(made, id);
+    });
+    return found == ids.end() ? std::nullopt : std::optional(*found);
 }
 
 auto placement_file(const std::filesystem::path& path) -> std::filesystem::path {
-    return path.parent_path() / (path.stem().string() + "_placement.json");
+    // A dot keeps it from the file of any map, whose id names it.
+    return path.parent_path() / (path.stem().string() + ".placement.json");
 }
 
 auto read_appearance(const std::filesystem::path& path, const std::string& id) -> appearance {
@@ -659,6 +677,11 @@ auto write_appearance(
     const std::filesystem::path& path, const std::string& id, const appearance& placed)
     -> std::expected<void, std::string> {
     const auto file = placement_file(path);
+    if (std::filesystem::exists(file) && read_appearance(path, id).where == "test") {
+        //~ %s is a file beside a map, which would say where new worlds place it.
+        return std::unexpected(
+            string_format(_("%s holds something else; rename it first."), mods_path(file)));
+    }
     if (placed.where == "test") {
         auto error = std::error_code{};
         std::filesystem::remove(file, error);
@@ -668,6 +691,7 @@ auto write_appearance(
     const auto found = std::ranges::find(often_rates, placed.often, &often_rate::often);
     const auto& rate = found == often_rates.end() ? often_rates[1] : *found;
     // A rotating terrain is placed by its north facing.
+    const auto turns = !std::ranges::contains(oter_flags(path, id), "NO_ROTATE");
     const auto entry =
         placed.where == "town"
             ? nlohmann::ordered_json{{"type", "region_overlay"},
@@ -676,11 +700,11 @@ auto write_appearance(
             : nlohmann::ordered_json{
                   {"type", "overmap_special"},
                   {"id", id},
-                  {"overmaps", {{{"point", {0, 0, 0}}, {"overmap", id + "_north"}}}},
+                  {"overmaps", {{{"point", {0, 0, 0}}, {"overmap", turns ? id + "_north" : id}}}},
                   {"locations", {"field"}},
                   {"city_distance", {3, -1}},
                   {"occurrences", {rate.fewest, rate.most}},
-                  {"rotate", true}};
+                  {"rotate", turns}};
     const auto entries = nlohmann::ordered_json::array({entry});
     auto out = std::ofstream(file, std::ios::binary | std::ios::trunc);
     out << format_json(entries.dump()).value_or(entries.dump(2));
