@@ -302,7 +302,7 @@
             "collection": [
               { "item": "dog_whistle", "prob": 50 },
               { "item": "dog_whistle_wood", "prob": 25 },
-              { "item": "leather_harness_dog", "prob": 50 },
+              { "item": "leather_armor_small_quadruped", "prob": 50 },
               { "item": "bone", "prob": 50 }
             ],
             "prob": 15
