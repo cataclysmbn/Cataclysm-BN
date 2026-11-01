@@ -85,6 +85,8 @@ public:
     /// Whether a group begun is not ended yet.
     auto grouping() const -> bool { return grouping_; }
     auto undo() -> bool;
+    /// Takes back the last step for good, leaving nothing to redo; for a step that failed halfway.
+    auto abandon() -> void;
     auto redo() -> bool;
     auto can_undo() const -> bool { return !done_.empty(); }
     auto can_redo() const -> bool { return !undone_.empty(); }

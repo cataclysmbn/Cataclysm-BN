@@ -391,6 +391,30 @@ auto tool_label(const tool& value) -> std::string {
 }
 
 namespace {
+/// The lines of a layer a palette and the mapgen both map, as one line placing the same: terrain
+/// and furniture laid last stand, the other layers place each.
+auto merged_lines(const std::vector<legend_line>& lines) -> std::vector<legend_line> {
+    constexpr auto laid_last = std::array<std::string_view, 3>{"terrain", "furniture", "traps"};
+    auto one = std::vector<legend_line>{};
+    for (const auto& line : lines) {
+        const auto found = std::ranges::find(one, line.layer, &legend_line::layer);
+        if (found == one.end()) {
+            one.push_back({.layer = line.layer, .value = line.value});
+        } else if (std::ranges::contains(laid_last, line.layer)) {
+            found->value = line.value;
+        } else {
+            const auto listed = [](const std::string& text) {
+                const auto value = nlohmann::ordered_json::parse(text, nullptr, false);
+                return value.is_array() ? value : nlohmann::ordered_json::array({value});
+            };
+            auto both = listed(found->value);
+            for (const auto& value : listed(line.value)) { both.push_back(value); }
+            found->value = both.dump();
+        }
+    }
+    return one;
+}
+
 /// The ids of the nested chunks the open file holds.
 auto file_chunks(const document& doc) -> std::vector<std::string> {
     auto ids = std::vector<std::string>{};
@@ -425,7 +449,8 @@ auto chunk_of(const nlohmann::ordered_json& value, const bool in_file) -> chunk_
         && inner["mapgensize"].size() == 2 && inner["mapgensize"][0].is_number_integer()
         && inner["mapgensize"][1].is_number_integer();
     const auto size =
-        sized ? point(inner["mapgensize"][0].get<int>(), inner["mapgensize"][1].get<int>())
+        sized ? point(std::clamp(inner["mapgensize"][0].get<int>(), 0, OMAPX),
+                      std::clamp(inner["mapgensize"][1].get<int>(), 0, OMAPX))
         : squares.empty()
             ? point_zero
             : point(static_cast<int>(squares.front().size()), static_cast<int>(squares.size()));
@@ -1345,6 +1370,14 @@ auto session::reload() -> void {
     const auto read = mapgen_legend(text);
     legend = read.value_or(std::vector<legend_symbol>{});
     legend_error = read ? std::string{} : read.error();
+    // A chunk in hand that an undo took away is in hand no more.
+    if (held && held->layer == "nested" && held->symbol == symbol) {
+        const auto id = first_named("nested", held->value);
+        if (!id || !std::ranges::contains(nested_mapgen_ids(), *id)) {
+            held.reset();
+            symbol = room_fill;
+        }
+    }
     read_chunks();
     reload_levels();
     diagnostics =
@@ -1634,7 +1667,10 @@ auto session::take(const catalog_use& use, const std::string& id, const std::str
         return;
     }
     held = held_mapping{.symbol = *free, .layer = use.layer, .value = value, .name = name};
-    read_chunks();
+    {
+        const auto stand_ins = file_stand_ins(stand_in_texts());
+        read_chunks();
+    }
     symbol = *free;
     mapping_symbol = *free;
     mapping_layer = use.layer;
@@ -1652,10 +1688,12 @@ auto session::symbol_name(const std::string& glyph) const -> std::string {
     const auto on = [&](const char* const layer) {
         return std::ranges::find(lines | std::views::reverse, layer, &legend_line::layer);
     };
+    const auto nested = on("nested");
     const auto furniture = on("furniture");
     const auto terrain = on("terrain");
     const auto& top =
-        furniture != lines.rend() ? *furniture
+        nested != lines.rend()      ? *nested
+        : furniture != lines.rend() ? *furniture
         : terrain != lines.rend()
             ? *terrain
             : lines.front();
@@ -1702,29 +1740,6 @@ auto session::layered(const held_mapping& brush, const std::vector<std::string>&
         std::ranges::sort(key);
         return key;
     };
-    // The lines of a layer a palette and the mapgen both map, as one line placing the same: terrain
-    // and furniture laid last stand, the other layers place each.
-    constexpr auto laid_last = std::array<std::string_view, 3>{"terrain", "furniture", "traps"};
-    const auto merged = [&](const std::vector<legend_line>& lines) {
-        auto one = std::vector<legend_line>{};
-        for (const auto& line : lines) {
-            const auto found = std::ranges::find(one, line.layer, &legend_line::layer);
-            if (found == one.end()) {
-                one.push_back({.layer = line.layer, .value = line.value});
-            } else if (std::ranges::contains(laid_last, line.layer)) {
-                found->value = line.value;
-            } else {
-                const auto listed = [](const std::string& text) {
-                    const auto value = nlohmann::ordered_json::parse(text, nullptr, false);
-                    return value.is_array() ? value : nlohmann::ordered_json::array({value});
-                };
-                auto both = listed(found->value);
-                for (const auto& value : listed(line.value)) { both.push_back(value); }
-                found->value = both.dump();
-            }
-        }
-        return one;
-    };
     auto taken = taken_symbols();
     taken.push_back(brush.symbol);
     auto inks = layered_ink{};
@@ -1741,16 +1756,16 @@ auto session::layered(const held_mapping& brush, const std::vector<std::string>&
             | std::ranges::to<std::vector>();
         if (lines.empty()) { continue; }
         lines.push_back({.layer = brush.layer, .value = brush.value.dump()});
-        lines = merged(lines);
+        lines = merged_lines(lines);
         const auto wanted = places(lines);
         // Drawn again with what it places already, a square is drawn over whole by terrain, so a
         // floor drawn on a table on that floor takes the table away, and kept by the rest.
-        if (wanted == places(merged(found->lines))) {
+        if (wanted == places(merged_lines(found->lines))) {
             if (brush.layer != "terrain") { inks.over[old] = old; }
             continue;
         }
         const auto same = [&](const legend_symbol& entry) {
-            return places(merged(entry.lines)) == wanted;
+            return places(merged_lines(entry.lines)) == wanted;
         };
         if (const auto mapped = std::ranges::find_if(legend, same); mapped != legend.end()) {
             inks.over[old] = mapped->symbol;
@@ -2083,7 +2098,7 @@ auto session::replace_marked(const std::string& from) -> void {
     done = done.and_then([&] { return map_added(*doc, object, *inks); });
     done = done.and_then([&] { return write_marked(*this, from, direct ? symbol : over->second); });
     doc->end_group();
-    if (!done && doc->depth() > depth) { doc->undo(); }
+    if (!done && doc->depth() > depth) { doc->abandon(); }
     notice = done ? "" : done.error();
     reload();
 }
@@ -2114,9 +2129,10 @@ auto map_piece_of(const nlohmann::ordered_json& data) -> std::optional<map_piece
         if (width == 0 || !std::ranges::all_of(piece.squares, one_square)) { return std::nullopt; }
         for (const auto& [glyph, lines] : data.at("legend").items()) {
             for (const auto& line : lines) {
+                const auto layer = line.at("layer").get<std::string>();
+                if (!std::ranges::contains(legend_layers, layer)) { return std::nullopt; }
                 piece.legend[glyph].push_back(
-                    {.layer = line.at("layer").get<std::string>(),
-                     .value = line.at("value").get<std::string>()});
+                    {.layer = layer, .value = line.at("value").get<std::string>()});
             }
         }
         for (const auto& entry : data.at("placed")) {
@@ -2209,12 +2225,19 @@ auto session::make_chunk(const std::string& name) -> void {
         return;
     }
     copy();
+    if (clip.empty()) { return; }
     const auto reading =
-        std::ranges::any_of(clip_legend | std::views::values, [](const auto& lines) {
-            return std::ranges::any_of(lines, [](const legend_line& line) {
-                return reads_parameter(nlohmann::ordered_json::parse(line.value, nullptr, false));
-            });
-        });
+        std::ranges::any_of(
+            clip_legend | std::views::values,
+            [](const auto& lines) {
+                return std::ranges::any_of(lines, [](const legend_line& line) {
+                    return reads_parameter(
+                        nlohmann::ordered_json::parse(line.value, nullptr, false));
+                });
+            })
+        || std::ranges::any_of(clip_placed, [](const placement& entry) {
+               return reads_parameter(entry.value);
+           });
     if (reading) {
         notice = _("The marked squares read the entry's parameters, which a chunk does not have.");
         return;
@@ -2234,7 +2257,7 @@ auto session::make_chunk(const std::string& name) -> void {
              return row | std::views::join | std::ranges::to<std::string>();
          }) | std::ranges::to<std::vector>()}};
     for (const auto& [glyph, lines] : clip_legend) {
-        for (const auto& line : lines) {
+        for (const auto& line : merged_lines(lines)) {
             const auto parsed = nlohmann::ordered_json::parse(line.value, nullptr, false);
             inner[line.layer][glyph] =
                 parsed.is_discarded() ? nlohmann::ordered_json(line.value) : parsed;
@@ -2272,7 +2295,7 @@ auto session::make_chunk(const std::string& name) -> void {
              .value = {{"chunks", nlohmann::ordered_json::array({id})}}});
     });
     doc->end_group();
-    if (!done && doc->depth() > depth) { doc->undo(); }
+    if (!done && doc->depth() > depth) { doc->abandon(); }
     notice = done ? "" : done.error();
     reload();
     if (!done) { return; }
@@ -2362,6 +2385,7 @@ auto session::paste_at(const point& at) -> void {
     }
     doc->begin_group(false, _("Paste"));
     const auto depth = doc->depth();
+    const auto stand_ins = file_stand_ins(stand_in_texts());
     auto done = std::expected<void, std::string>{};
     for (const auto& [glyph, line] : brought) {
         if (!done) { break; }
@@ -2388,7 +2412,7 @@ auto session::paste_at(const point& at) -> void {
              .value = entry.value});
     }
     doc->end_group();
-    if (!done && doc->depth() > depth) { doc->undo(); }
+    if (!done && doc->depth() > depth) { doc->abandon(); }
     notice =
         !done ? done.error()
         : kept.empty()

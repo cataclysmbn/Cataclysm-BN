@@ -239,6 +239,10 @@ auto document::undo() -> bool {
     return true;
 }
 
+auto document::abandon() -> void {
+    if (undo()) { undone_.pop_back(); }
+}
+
 auto document::redo() -> bool {
     if (undone_.empty()) { return false; }
     end_group();
