@@ -391,6 +391,27 @@ auto tool_label(const tool& value) -> std::string {
 }
 
 namespace {
+/// The library's pieces that hold squares to paste.
+auto map_library() -> std::vector<library_piece> {
+    auto pieces = library_pieces("map");
+    std::erase_if(pieces, [](const library_piece& piece) {
+        return !map_piece_of(piece.data).has_value();
+    });
+    return pieces;
+}
+
+/// Puts the piece `data` holds in hand with the paste tool, unless the entry has no squares.
+auto take_piece(session& state, const nlohmann::ordered_json& data) -> bool {
+    auto piece = map_piece_of(data);
+    if (!piece || (state.on_mapgen() && !state.has_rows())) { return false; }
+    state.clip = std::move(piece->squares);
+    state.clip_legend = std::move(piece->legend);
+    state.clip_placed = std::move(piece->placed);
+    state.current = &*std::ranges::find(tools, region_use::paste, &tool::region);
+    state.anchor.reset();
+    return true;
+}
+
 /// The names in a name or a list of them, nested as a mapgen of several overmap squares has it.
 auto names_in(const nlohmann::ordered_json& name) -> std::vector<std::string> {
     if (name.is_string()) { return {name.get<std::string>()}; }
@@ -1347,6 +1368,7 @@ auto session::leave() -> bool {
 }
 
 auto session::open(const std::string& name) -> void {
+    library = map_library();
     const auto path = std::filesystem::path(name);
     if (!editable_place(path)) {
         notice = string_format(_("%s is no data file of the game or of your mods."), name);
@@ -1862,6 +1884,100 @@ auto session::copy() -> void {
         *doc, object,
         {.x = {.min = low.x, .max = low.x + size.columns - 1},
          .y = {.min = low.y, .max = low.y + size.rows - 1}});
+}
+
+auto map_piece_of(const nlohmann::ordered_json& data) -> std::optional<map_piece> {
+    try {
+        auto piece = map_piece{.squares = data.at("squares").get<symbol_grid>()};
+        const auto width = piece.squares.empty() ? 0 : piece.squares.front().size();
+        const auto one_square = [&](const std::vector<std::string>& row) {
+            return row.size() == width && std::ranges::all_of(row, [](const std::string& symbol) {
+                       return utf8_display_split(symbol).size() == 1;
+                   });
+        };
+        if (width == 0 || !std::ranges::all_of(piece.squares, one_square)) { return std::nullopt; }
+        for (const auto& [glyph, lines] : data.at("legend").items()) {
+            for (const auto& line : lines) {
+                piece.legend[glyph].push_back(
+                    {.layer = line.at("layer").get<std::string>(),
+                     .value = line.at("value").get<std::string>()});
+            }
+        }
+        for (const auto& entry : data.at("placed")) {
+            const auto kind = entry.at("kind").get<std::string>();
+            if (!std::ranges::contains(placement_kinds, kind)) { return std::nullopt; }
+            const auto x = entry.at("x").get<std::array<int, 2>>();
+            const auto y = entry.at("y").get<std::array<int, 2>>();
+            piece.placed.push_back(
+                {.kind = kind,
+                 .x = {.min = x[0], .max = x[1]},
+                 .y = {.min = y[0], .max = y[1]},
+                 .value = entry.at("value")});
+        }
+        return piece;
+    } catch (const nlohmann::ordered_json::exception&) { return std::nullopt; }
+}
+
+auto session::clip_piece() const -> nlohmann::ordered_json {
+    auto legend_json = nlohmann::ordered_json::object();
+    for (const auto& [glyph, lines] : clip_legend) {
+        legend_json[glyph] =
+            lines | std::views::transform([](const legend_line& line) {
+                return nlohmann::ordered_json{{"layer", line.layer}, {"value", line.value}};
+            })
+            | std::ranges::to<std::vector>();
+    }
+    auto placed = nlohmann::ordered_json::array();
+    for (const auto& entry : clip_placed) {
+        placed.push_back(
+            {{"kind", entry.kind},
+             {"x", std::array{entry.x.min, entry.x.max}},
+             {"y", std::array{entry.y.min, entry.y.max}},
+             {"value", entry.value}});
+    }
+    return {{"squares", clip}, {"legend", legend_json}, {"placed", placed}};
+}
+
+auto session::save_to_library(const std::string& name) -> void {
+    if (clip.empty()) {
+        notice = _("Copy or cut squares first.");
+        return;
+    }
+    if (name.empty()) {
+        notice = _("Give the piece a name.");
+        return;
+    }
+    if (const auto kept = keep_piece("map", {.name = name, .data = clip_piece()}); !kept) {
+        notice = kept.error();
+        return;
+    }
+    library = map_library();
+    //~ %s is the name the player gave a piece kept in the map editor's library.
+    status = string_format(_("Saved %s to the library."), name);
+}
+
+auto session::take_from_library(const std::size_t index) -> void {
+    if (index >= library.size()) { return; }
+    if (!take_piece(*this, library[index].data)) {
+        notice = _("This entry has no squares to paste on.");
+        return;
+    }
+    //~ %s is the name of a piece kept in the map editor's library.
+    status = string_format(_("Click where %s goes."), library[index].name);
+}
+
+auto session::paste_text(const std::string& text) -> void {
+    const auto data = piece_of_text("map", text);
+    if (!data || !map_piece_of(*data)) {
+        notice = _("That text holds no map squares.");
+        return;
+    }
+    if (!take_piece(*this, *data)) {
+        notice = _("This entry has no squares to paste on.");
+        return;
+    }
+    clip_text_shown = false;
+    status = _("Click where the squares go.");
 }
 
 auto session::cut() -> void {

@@ -1185,7 +1185,10 @@ auto parts_view(const session& state) -> ec::screen_view {
              .selection = "single",
              .activate = library_take_id}));
         affordances.push_back(ec::invoke_affordance(
-            {.id = library_take_id, .label = _("Take"), .args = row_of(library_id)}));
+            {.id = library_take_id,
+             .label = _("Take"),
+             .args = row_of(library_id),
+             .role = "select"}));
     }
     if (state.clip_text_shown) {
         parts.push_back(

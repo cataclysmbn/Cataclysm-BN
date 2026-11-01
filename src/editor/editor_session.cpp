@@ -531,6 +531,14 @@ auto run_editor_session() -> void {
             state.copy();
         } else if (id == cut_id && state.selected) {
             state.cut();
+        } else if (id == library_save_id) {
+            state.save_to_library(invoked->args.text.value_or(""));
+        } else if (id == library_take_id) {
+            if (const auto index = row_index(row, "piece")) { state.take_from_library(*index); }
+        } else if (id == show_clip_text_id) {
+            state.clip_text_shown = !state.clip_text_shown;
+        } else if (id == paste_text_id) {
+            state.paste_text(invoked->args.text.value_or(""));
         } else if (id == rotate_id || id == flip_x_id || id == flip_y_id) {
             const auto size = state.clip_size_now();
             for (auto& entry : state.clip_placed) {

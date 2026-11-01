@@ -2,6 +2,7 @@
 
 #include "editor/catalog.h"
 #include "editor/document.h"
+#include "editor/library.h"
 #include "editor/mapgen_legend.h"
 #include "editor/mapgen_levels.h"
 #include "editor/mapgen_placement.h"
@@ -94,6 +95,12 @@ inline constexpr auto import_set_id = "editor:import_set";
 inline constexpr auto import_form_id = "editor:import_form";
 inline constexpr auto advance_id = "editor:advance";
 inline constexpr auto copy_id = "editor:copy";
+inline constexpr auto library_id = "editor:library";
+inline constexpr auto library_save_id = "editor:library_save";
+inline constexpr auto library_take_id = "editor:library_take";
+inline constexpr auto clip_text_id = "editor:clip_text";
+inline constexpr auto show_clip_text_id = "editor:show_clip_text";
+inline constexpr auto paste_text_id = "editor:paste_text";
 inline constexpr auto rotate_id = "editor:rotate";
 inline constexpr auto cut_id = "editor:cut";
 inline constexpr auto flip_x_id = "editor:flip_x";
@@ -406,6 +413,15 @@ struct layered_ink {
     std::vector<legend_symbol> added;
 };
 
+/// What a piece of the library holds.
+struct map_piece {
+    symbol_grid squares;
+    std::map<std::string, std::vector<legend_line>> legend;
+    std::vector<placement> placed;
+};
+/// The piece `data` holds; none for data in another shape, as hand edits and shared text can be.
+auto map_piece_of(const nlohmann::ordered_json& data) -> std::optional<map_piece>;
+
 struct session {
     std::optional<document> doc = std::nullopt;
     /// How many times a file was opened, or read again, so far.
@@ -459,6 +475,10 @@ struct session {
     std::vector<placement> clip_placed;
     /// What the copied symbols place, as the entry they were copied from maps them.
     std::map<std::string, std::vector<legend_line>> clip_legend;
+    /// The pieces kept to paste in any file, which hold squares.
+    std::vector<library_piece> library;
+    /// Whether the form that shares the clip as text shows.
+    bool clip_text_shown = false;
     /// The square a placement or a diagnostic that was picked names.
     std::optional<point> focus = std::nullopt;
     /// The placement picked last, which the move form moves.
@@ -680,6 +700,15 @@ struct session {
 
     /// Pastes the clip's symbols and placements with its top-left square at `at`, as one undo step.
     auto paste_at(const point& at) -> void;
+
+    /// The clip as a piece to keep or share.
+    auto clip_piece() const -> nlohmann::ordered_json;
+    /// Keeps the clip in the library as `name`.
+    auto save_to_library(const std::string& name) -> void;
+    /// Takes the library's piece `index` in hand with the paste tool.
+    auto take_from_library(std::size_t index) -> void;
+    /// Takes the piece shared as `text` in hand with the paste tool.
+    auto paste_text(const std::string& text) -> void;
 
     /// Adds what the add form names and picks it.
     auto add_placed() -> void;

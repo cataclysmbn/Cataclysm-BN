@@ -906,6 +906,64 @@ auto placement_card(
          .denial = denial}));
 }
 
+/// The pieces kept to paste again and the form that shares the copy as text.
+auto library_parts(
+    const session& state, std::vector<ec::component>& parts,
+    std::vector<ec::affordance>& affordances) -> void {
+    const auto& object = state.doc->objects()[state.object].value;
+    if (!state.library.empty()) {
+        parts.push_back(ec::list(
+            {.id = library_id,
+             .rows = std::views::enumerate(state.library)
+                   | std::views::transform([&](const auto& entry) {
+                         const auto& [index, piece] = entry;
+                         const auto read = map_piece_of(piece.data);
+                         const auto glyph = read->squares.front().front();
+                         const auto lines = read->legend.find(glyph);
+                         const auto looks = symbol_looks(
+                             object,
+                             {legend_symbol{
+                                 .symbol = glyph,
+                                 .lines = lines == read->legend.end()
+                                            ? std::vector<legend_line>{}
+                                            : lines->second}});
+                         return ec::row{
+                             .id = index_row("piece", static_cast<std::size_t>(index)),
+                             .label = piece.name,
+                             .look = looks.contains(glyph) && !looks.at(glyph).empty()
+                                       ? std::optional(looks.at(glyph).back())
+                                       : std::nullopt};
+                     })
+                   | std::ranges::to<std::vector>(),
+             .selection = "single",
+             .activate = library_take_id}));
+        affordances.push_back(ec::invoke_affordance(
+            {.id = library_take_id,
+             .label = _("Take"),
+             .args = row_of(library_id),
+             .role = "select"}));
+    }
+    if (state.clip_text_shown) {
+        parts.push_back(
+            {.id = clip_text_id,
+             .affordances = {paste_text_id},
+             .body = ec::form_body{
+                 .fields =
+                     {{.id = "text",
+                       .label = _("Text"),
+                       .description = _("Copy this to share the copy; paste shared text here."),
+                       .value = state.clip.empty() ? std::string{}
+                                                   : piece_text("map", state.clip_piece()),
+                       .multiline = true}},
+                 .submit = paste_text_id}});
+        affordances.push_back(ec::invoke_affordance(
+            {.id = paste_text_id,
+             .label = _("Paste text"),
+             .args =
+                 {.row = ec::row_shape{.component_id = clip_text_id}, .text = ec::text_shape{}}}));
+    }
+}
+
 /// The forms that move the picked placement and add one.
 auto placement_forms(
     const session& state, std::vector<ec::component>& parts,
@@ -1399,6 +1457,17 @@ auto drawing_affordances(const session& state) -> std::vector<ec::affordance> {
          .enabled = state.selected.has_value(),
          .denial = unmarked}));
     affordances.push_back(ec::invoke_affordance(
+        {.id = library_save_id,
+         .label = _("Save copy to library"),
+         .description = _("Keeps the copy under Library for any map you make."),
+         .enabled = !state.clip.empty(),
+         .denial = unclipped,
+         .args = {.text = ec::text_shape{.initial = _("My piece")}}}));
+    affordances.push_back(ec::invoke_affordance(
+        {.id = show_clip_text_id,
+         .label = _("Copy or paste as text"),
+         .description = _("Shows the copy as text to share, and takes text someone shared.")}));
+    affordances.push_back(ec::invoke_affordance(
         {.id = rotate_id,
          .label = _("Rotate"),
          .keys = {"z"},
@@ -1674,6 +1743,8 @@ auto layout(const session& state) -> workspace_layout {
               {.slot = state.on_card() ? "palette" : "inspector",
                .label = _("New placement"),
                .collapsed = !placing}},
+             {library_id, {.slot = "palette", .label = _("Library"), .collapsed = true}},
+             {clip_text_id, {.slot = "inspector", .label = _("Copy as text")}},
              {pins_id, {.slot = "inspector", .label = _("Pinned choices")}},
              {rotation_id, {.slot = "inspector", .label = _("Preview facing")}},
              {connection_id, {.slot = "inspector", .label = _("Connect tool")}},
@@ -1697,6 +1768,8 @@ auto layout(const session& state) -> workspace_layout {
              {redo_id, edit},
              {copy_id, edit},
              {cut_id, edit},
+             {library_save_id, edit},
+             {show_clip_text_id, edit},
              {rotate_id, edit},
              {flip_x_id, edit},
              {flip_y_id, edit},
@@ -1995,7 +2068,10 @@ auto session_view(const session& state) -> ec::screen_view {
                 affordances.push_back(ec::invoke_affordance(
                     {.id = placement_id, .label = _("Show"), .args = row_of(placements_id)}));
             }
-            if (state.on_mapgen()) { placement_forms(state, parts, affordances); }
+            if (state.on_mapgen()) {
+                placement_forms(state, parts, affordances);
+                library_parts(state, parts, affordances);
+            }
             // The JSON value form is for modders who know the game's files.
             if (advanced_mode()) {
                 parts.push_back(ec::component{
