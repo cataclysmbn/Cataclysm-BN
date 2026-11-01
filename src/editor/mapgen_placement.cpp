@@ -168,4 +168,6 @@ auto set_field(document& doc, const field_edit& edit) -> std::expected<void, std
     return doc.edit(edit.object, patch);
 }
 
+auto typed_value(const typed_placement& /*typed*/) -> nlohmann::ordered_json { return {}; }
+
 } // namespace editor

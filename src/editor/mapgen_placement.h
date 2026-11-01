@@ -128,4 +128,19 @@ struct field_edit {
 /// it did not say before; the error names what it says.
 auto set_field(document& doc, const field_edit& edit) -> std::expected<void, std::string>;
 
+/// What a placement of the card takes: what the catalog picked and how the player set it.
+struct typed_placement {
+    /// The `place_*` array.
+    std::string kind;
+    std::string what;
+    /// In percent.
+    int chance = 100;
+    int count = 1;
+    /// A vehicle's, in degrees.
+    int facing = 0;
+};
+
+/// The members other than `x` and `y` the game reads for `typed`.
+auto typed_value(const typed_placement& typed) -> nlohmann::ordered_json;
+
 } // namespace editor

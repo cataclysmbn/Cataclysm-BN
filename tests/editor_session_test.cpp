@@ -8821,4 +8821,152 @@ TEST_CASE(
     CHECK(read_as(two) == "test");
 }
 
+TEST_CASE("a placement of the card writes what the game reads of its kind", "[editor_session]") {
+    using editor::typed_value;
+    CHECK(typed_value({.kind = "place_items", .what = "livingroom", .chance = 50, .count = 3})
+          == nlohmann::ordered_json{{"item", "livingroom"}, {"chance", 50}, {"repeat", 3}});
+    CHECK(typed_value({.kind = "place_items", .what = "livingroom"})
+          == nlohmann::ordered_json{{"item", "livingroom"}, {"chance", 100}});
+    // The game reads a monster group's chance as one in that many.
+    CHECK(typed_value({.kind = "place_monsters", .what = "GROUP_ZOMBIE", .chance = 25})
+          == nlohmann::ordered_json{{"monster", "GROUP_ZOMBIE"}, {"chance", 4}});
+    CHECK(typed_value({.kind = "place_monsters", .what = "GROUP_ZOMBIE"})
+          == nlohmann::ordered_json{{"monster", "GROUP_ZOMBIE"}, {"chance", 1}});
+    CHECK(
+        typed_value({.kind = "place_vehicles", .what = "city_vehicles", .chance = 10, .facing = 90})
+        == nlohmann::ordered_json{{"vehicle", "city_vehicles"}, {"chance", 10}, {"rotation", 90}});
+    CHECK(typed_value({.kind = "place_npcs", .what = "thug", .chance = 10, .count = 3})
+          == nlohmann::ordered_json{{"class", "thug"}});
+    CHECK(typed_value({.kind = "place_nested", .what = "chunk", .chance = 10, .count = 3})
+          == nlohmann::ordered_json{{"chunks", nlohmann::ordered_json::array({"chunk"})}});
+}
+
+TEST_CASE(
+    "in Simple mode a placement takes the squares dragged and what the catalog picks",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto simple = override_option("EDITOR_ADVANCED", "false");
+    const auto file = mod_file{{{"fill_ter", "t_floor"}}};
+    const auto fields = [](const ec::screen_view& screen) {
+        return body<ec::form_body>(part(screen, "editor:place")).fields
+             | std::views::transform(&ec::form_field::id) | std::ranges::to<std::vector>();
+    };
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:tool", {.row = "tool:placements"}); },
+        [&](const auto& screen) {
+            // Only what the tool places, on a tab of it.
+            const auto& kinds = body<ec::tabs_body>(part(screen, "editor:catalog_kinds")).tabs;
+            const auto tabs =
+                kinds | std::views::transform(&ec::tab_entry::id) | std::ranges::to<std::vector>();
+            CHECK(
+                tabs
+                == std::vector<std::string>{
+                    "catalog:item_group", "catalog:monster_group", "catalog:vehicle",
+                    "catalog:npc_template", "catalog:nested_mapgen"});
+            CHECK(kinds.front().selected);
+            CHECK(fields(screen) == std::vector<std::string>{"chance", "count"});
+            CHECK_FALSE(affordance(screen, "editor:place_apply").enabled);
+            CHECK(affordance(screen, "editor:place_apply").denial
+                  == "Drag over the squares on the map first.");
+            return square_at(2, 3);
+        },
+        [](const auto&) { return square_at(4, 6); },
+        [](const auto&) { return invoke("editor:catalog_filter", {.text = "livingroom"}); },
+        [](const auto& screen) {
+            CHECK(affordance(screen, "editor:place_apply").denial
+                  == "Pick what goes there from the catalog first.");
+            return invoke("editor:catalog_pick", {.row = "entry:livingroom"});
+        },
+        [](const auto& screen) {
+            const auto& placing = affordance(screen, "editor:place_apply");
+            CHECK(placing.enabled);
+            CHECK(placing.label.starts_with("Add "));
+            CHECK(placing.label != "Add placement");
+            return invoke("editor:place_set", {.row = "chance", .text = "50"});
+        },
+        [](const auto&) { return invoke("editor:place_set", {.row = "count", .text = "3"}); },
+        [](const auto&) { return invoke("editor:place_apply"); },
+        [](const auto& screen) {
+            const auto& placed = rows_in(screen, "editor:placements");
+            REQUIRE(placed.size() == 1);
+            CHECK(placed[0].label != "place_items");
+            CHECK(placed[0].columns.empty());
+            // The squares are used: the next one needs its own.
+            CHECK_FALSE(affordance(screen, "editor:place_apply").enabled);
+            return invoke("editor:save");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    const auto entry = nlohmann::ordered_json::parse(read_file(file.path))[0];
+    const auto& placed = entry["object"]["place_items"][0];
+    CHECK(placed["item"] == "livingroom");
+    CHECK(placed["chance"] == 50);
+    CHECK(placed["repeat"] == 3);
+    CHECK(placed["x"] == nlohmann::ordered_json::array({2, 4}));
+    CHECK(placed["y"] == nlohmann::ordered_json::array({3, 6}));
+}
+
+TEST_CASE(
+    "in Simple mode the card asks what a vehicle, a person and a chunk take", "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto simple = override_option("EDITOR_ADVANCED", "false");
+    const auto file = mod_file{{{"fill_ter", "t_floor"}}};
+    const auto fields = [](const ec::screen_view& screen) {
+        return body<ec::form_body>(part(screen, "editor:place")).fields
+             | std::views::transform(&ec::form_field::id) | std::ranges::to<std::vector>();
+    };
+    const auto first = [](const ec::screen_view& screen) {
+        return invoke("editor:catalog_pick", {.row = rows_in(screen, "editor:catalog").front().id});
+    };
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:tool", {.row = "tool:placements"}); },
+        [](const auto&) { return invoke("editor:catalog_kind", {.row = "catalog:vehicle"}); },
+        first,
+        [&](const auto& screen) {
+            CHECK(fields(screen) == std::vector<std::string>{"chance", "facing"});
+            return invoke("editor:catalog_kind", {.row = "catalog:npc_template"});
+        },
+        first,
+        [&](const auto& screen) {
+            CHECK(fields(screen).empty());
+            return invoke("editor:catalog_kind", {.row = "catalog:nested_mapgen"});
+        },
+        first,
+        [&](const auto& screen) {
+            CHECK(fields(screen).empty());
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+}
+
+TEST_CASE(
+    "the placements tool marks squares it is used on, and picks the placement on them",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto file = mod_file{
+        {{"fill_ter", "t_floor"},
+         {"place_monster",
+          nlohmann::ordered_json::array({{{"monster", "mon_zombie"}, {"x", 5}, {"y", 5}}})}}};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:tool", {.row = "tool:placements"}); },
+        [](const auto&) { return square_at(5, 5); },
+        [](const auto& screen) {
+            CHECK(has_affordance(screen, "editor:placement_delete"));
+            return square_at(10, 10);
+        },
+        [](const auto&) { return square_at(12, 11); },
+        [](const auto& screen) {
+            const auto& fields = body<ec::form_body>(part(screen, "editor:place")).fields;
+            const auto value = [&](const std::string& id) {
+                return std::ranges::find(fields, id, &ec::form_field::id)->value;
+            };
+            CHECK(value("x") == "10-12");
+            CHECK(value("y") == "10-11");
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+}
+
 #endif // CATA_MCP
