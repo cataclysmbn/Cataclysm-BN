@@ -468,6 +468,20 @@ auto run_editor_session() -> void {
         } else if (!state.doc) {
             keep();
             continue;
+        } else if (id == appears_set_id) {
+            const auto text = invoked->args.text.value_or("");
+            const auto known =
+                row == "where"
+                    ? std::ranges::contains(std::array{"test", "town", "country"}, text)
+                    : std::ranges::contains(std::array{"rare", "sometimes", "often"}, text);
+            if (const auto building = named_building(*state.doc); building && known) {
+                auto placed = read_appearance(state.doc->path(), *building);
+                (row == "where" ? placed.where : placed.often) = text;
+                if (const auto written = write_appearance(state.doc->path(), *building, placed);
+                    !written) {
+                    state.notice = written.error();
+                }
+            }
         } else if (id == object_id) {
             if (const auto index = row_index(row, "object")) { state.show_object(*index); }
         } else if (id == level_up_id || id == level_down_id) {

@@ -581,6 +581,119 @@ auto named_new(const new_mapgen& made) -> new_mapgen {
     return named;
 }
 
+namespace {
+/// A town's share of a building among its houses, as the game's own houses have about 50.
+struct often_rate {
+    std::string often;
+    int weight;
+    /// How many a new overmap has in its fields, at least and at most.
+    int fewest;
+    int most;
+};
+const auto often_rates = std::array{
+    often_rate{.often = "rare", .weight = 10, .fewest = 0, .most = 1},
+    often_rate{.often = "sometimes", .weight = 50, .fewest = 0, .most = 3},
+    often_rate{.often = "often", .weight = 150, .fewest = 1, .most = 5}};
+} // namespace
+
+auto named_building(const document& doc) -> std::optional<std::string> {
+    // A file may hold values that are no objects, which name no type.
+    const auto type_of = [](const nlohmann::ordered_json& value) {
+        return value.is_object() ? value.value("type", "") : std::string{};
+    };
+    const auto made =
+        doc.objects() | std::views::transform(&document_object::value)
+        | std::views::filter([&](const auto& value) {
+              return type_of(value) == "mapgen" && value.contains("om_terrain");
+          })
+        | std::views::transform([](const auto& value) { return entry_ids(value); })
+        | std::views::join | std::ranges::to<std::vector>();
+    for (const auto& object : doc.objects()) {
+        const auto& value = object.value;
+        if (type_of(value) == "overmap_terrain" && value.contains("id") && value["id"].is_string()
+            && value.contains("name")
+            && std::ranges::contains(made, value["id"].get<std::string>())) {
+            return value["id"].get<std::string>();
+        }
+    }
+    return std::nullopt;
+}
+
+auto placement_file(const std::filesystem::path& path) -> std::filesystem::path {
+    return path.parent_path() / (path.stem().string() + "_placement.json");
+}
+
+auto read_appearance(const std::filesystem::path& path, const std::string& id) -> appearance {
+    auto in = std::ifstream(placement_file(path), std::ios::binary);
+    const auto read = nlohmann::json::parse(in, nullptr, false);
+    if (!read.is_array() || read.empty() || !read[0].is_object()) { return {}; }
+    const auto& entry = read[0];
+    const auto nearest = [](const auto& rate_of, const int value) {
+        return std::
+            ranges::
+                min(often_rates, {}, [&](const often_rate& rate) {
+                    return std::abs(std::invoke(rate_of, rate) - value);
+                }).often;
+    };
+    const auto houses = nlohmann::json::json_pointer("/city/houses/" + id);
+    if (entry.value("type", "") == "region_overlay" && entry.contains(houses)
+        && entry[houses].is_number_integer()) {
+        return {.where = "town", .often = nearest(&often_rate::weight, entry[houses].get<int>())};
+    }
+    const auto most = nlohmann::json::json_pointer("/occurrences/1");
+    if (entry.value("type", "") == "overmap_special" && entry.contains(most)
+        && entry[most].is_number_integer()) {
+        return {.where = "country", .often = nearest(&often_rate::most, entry[most].get<int>())};
+    }
+    return {};
+}
+
+auto write_appearance(
+    const std::filesystem::path& path, const std::string& id, const appearance& placed)
+    -> std::expected<void, std::string> {
+    const auto file = placement_file(path);
+    if (placed.where == "test") {
+        auto error = std::error_code{};
+        std::filesystem::remove(file, error);
+        if (error) { return std::unexpected(_("The placement file could not be removed.")); }
+        return {};
+    }
+    const auto found = std::ranges::find(often_rates, placed.often, &often_rate::often);
+    const auto& rate = found == often_rates.end() ? often_rates[1] : *found;
+    // A rotating terrain is placed by its north facing.
+    const auto entry =
+        placed.where == "town"
+            ? nlohmann::ordered_json{{"type", "region_overlay"},
+                                     {"regions", {"all"}},
+                                     {"city", {{"houses", {{id, rate.weight}}}}}}
+            : nlohmann::ordered_json{
+                  {"type", "overmap_special"},
+                  {"id", id},
+                  {"overmaps", {{{"point", {0, 0, 0}}, {"overmap", id + "_north"}}}},
+                  {"locations", {"field"}},
+                  {"city_distance", {3, -1}},
+                  {"occurrences", {rate.fewest, rate.most}},
+                  {"rotate", true}};
+    const auto entries = nlohmann::ordered_json::array({entry});
+    auto out = std::ofstream(file, std::ios::binary | std::ios::trunc);
+    out << format_json(entries.dump()).value_or(entries.dump(2));
+    if (!out.flush()) { return std::unexpected(_("The placement file could not be written.")); }
+    return {};
+}
+
+auto appearance_text(const appearance& placed) -> std::string {
+    const auto often =
+        placed.often == "rare" ? _("rarely")
+        : placed.often == "often"
+            ? _("often")
+            : _("sometimes");
+    return placed.where == "town"
+             //~ %s says how often: rarely, sometimes or often.
+             ? string_format(_("In towns, %s"), often)
+             //~ %s says how often: rarely, sometimes or often.
+             : string_format(_("In the countryside, %s"), often);
+}
+
 auto range_text(const placement_range& range) -> std::string {
     return range.min == range.max
              ? std::to_string(range.min)

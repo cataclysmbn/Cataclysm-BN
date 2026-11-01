@@ -77,6 +77,8 @@ inline constexpr auto place_set_id = "editor:place_set";
 inline constexpr auto place_apply_id = "editor:place_apply";
 inline constexpr auto field_id = "editor:field";
 inline constexpr auto advanced_id = "editor:advanced";
+inline constexpr auto appears_id = "editor:appears";
+inline constexpr auto appears_set_id = "editor:appears_set";
 inline constexpr auto field_set_id = "editor:field_set";
 inline constexpr auto field_apply_id = "editor:field_apply";
 inline constexpr auto inside_id = "editor:inside";
@@ -353,6 +355,30 @@ auto new_mod_folder(const new_mapgen& made) -> std::string;
 /// `made` as Simple mode makes it, named after its name: its file in its mod's folder, a new one
 /// named after the new mod's name, and its id that of the file; no id the game has.
 auto named_new(const new_mapgen& made) -> new_mapgen;
+
+/// Where new worlds place a building of the player's.
+struct appearance {
+    /// `test` (only where World > Test stamps it), `town` or `country`.
+    std::string where = "test";
+    /// `rare`, `sometimes` or `often`.
+    std::string often = "sometimes";
+    auto operator==(const appearance&) const -> bool = default; // *NOPAD*
+};
+/// The overmap terrain of `doc` that names a building of its own: one with a name that a mapgen
+/// of `doc` makes.
+auto named_building(const document& doc) -> std::optional<std::string>;
+/// The file beside `path` that places its building `id` in new worlds.
+auto placement_file(const std::filesystem::path& path) -> std::filesystem::path;
+/// Where new worlds place the building `id` of the file at `path`, as its placement file says.
+auto read_appearance(const std::filesystem::path& path, const std::string& id) -> appearance;
+/// Writes the placement file of the building `id` of the file at `path`: a region overlay among
+/// the houses of towns, an overmap special in fields, or none for `test`; the error says why it
+/// was not written.
+auto write_appearance(
+    const std::filesystem::path& path, const std::string& id, const appearance& placed)
+    -> std::expected<void, std::string>;
+/// What the status line says of where new worlds place a building.
+auto appearance_text(const appearance& placed) -> std::string;
 
 /// The search a catalog tab keeps while another tab is shown.
 struct catalog_search {

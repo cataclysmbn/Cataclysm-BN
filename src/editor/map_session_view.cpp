@@ -700,8 +700,12 @@ auto document_stats(const session& state) -> std::vector<ec::panel_stat> {
     };
     const auto registered =
         number("weight", 1000) > 0 && !(entry.contains("disabled") && entry["disabled"] == true);
-    if (registered && entry.contains("om_terrain")
-        && !std::ranges::all_of(entry_ids(entry), &terrain_placed)) {
+    const auto building = named_building(doc);
+    const auto placed = building ? read_appearance(doc.path(), *building) : appearance{};
+    if (placed.where != "test") {
+        stats.push_back({.key = "placed", .label = _("Appears"), .value = appearance_text(placed)});
+    } else if (registered && entry.contains("om_terrain")
+               && !std::ranges::all_of(entry_ids(entry), &terrain_placed)) {
         stats.push_back(
             {.key = "placed",
              .label = _("Placed by"),
@@ -1529,6 +1533,7 @@ auto layout(const session& state) -> workspace_layout {
              {catalog_id, {.slot = "palette", .label = _("Catalog")}},
              {file_id, {.slot = "outline", .label = _("File path"), .collapsed = opened}},
              {objects_id, {.slot = "outline", .label = _("Entries")}},
+             {appears_id, {.slot = "outline", .label = _("In worlds")}},
              {placements_id,
               {.slot = "outline", .label = _("Placed by this entry"), .collapsed = !placed}},
              {terrains_id, {.slot = "outline", .label = _("Mapgens")}},
@@ -1690,6 +1695,39 @@ auto session_view(const session& state) -> ec::screen_view {
             {.id = "editor:document",
              .title = advanced_mode() ? shown_path(doc.path()) : document_title(doc.path()),
              .stats = document_stats(state)}));
+        if (const auto building = named_building(doc)) {
+            const auto placed = read_appearance(doc.path(), *building);
+            auto fields = std::vector<ec::form_field>{
+                {.id = "where",
+                 .label = _("Where it appears"),
+                 .description = _("Where new worlds with its mod place it."),
+                 .value = placed.where,
+                 .type = "select",
+                 .options =
+                     {{.id = "test", .label = _("Only when I test it")},
+                      {.id = "town", .label = _("In towns")},
+                      {.id = "country", .label = _("In the countryside")}}}};
+            if (placed.where != "test") {
+                fields.push_back(
+                    {.id = "often",
+                     .label = _("How often"),
+                     .value = placed.often,
+                     .type = "select",
+                     .options =
+                         {{.id = "rare", .label = _("Rarely")},
+                          {.id = "sometimes", .label = _("Sometimes")},
+                          {.id = "often", .label = _("Often")}}});
+            }
+            parts.push_back(ec::component{
+                .id = appears_id,
+                .affordances = {appears_set_id},
+                .body = ec::form_body{.fields = std::move(fields)}});
+            affordances.push_back(ec::invoke_affordance(
+                {.id = appears_set_id,
+                 .label = _("Where it appears"),
+                 .args = {.row = ec::row_shape{.component_id = appears_id},
+                          .text = ec::text_shape{}}}));
+        }
         const auto entries = state.entries();
         parts.push_back(ec::list(
             {.id = objects_id,
