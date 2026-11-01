@@ -2878,19 +2878,20 @@
     "items": {
       "both": {
         "items": [
-          "suit",
-          "bowhat",
+          "tank_top",
+          "pants_cargo",
+          "bandana_head",
           "socks",
-          "dress_shoes",
+          "lowtops",
           "smart_phone",
-          "knit_scarf",
+          "bandana",
           "cig",
           "switchblade",
           "mag_porn",
           "sunglasses",
           "sf_watch",
           "ring_signet",
-          "gold_necklace",
+          "gold_chain",
           "gold_dental_grill"
         ],
         "entries": [
@@ -7703,9 +7704,9 @@
     "skills": [ { "level": 1, "name": "speech" }, { "level": 3, "name": "driving" } ],
     "vehicle": "car_sports",
     "items": {
-      "both": { "items": [ "gold_watch", "water_mineral", "smart_phone", "money_bundle", "cig", "ref_lighter" ] },
-      "male": [ "boxer_shorts", "pants", "dress_shoes", "polo_shirt", "socks" ],
-      "female": [ "tank_top", "bra", "panties", "skirt", "heels", "jacket_leather", "stockings" ]
+      "both": { "items": [ "water_mineral", "smart_phone", "money_bundle", "advanced_ecig" ] },
+      "male": [ "boxer_shorts", "pants", "slippers", "tank_top", "socks", "gold_chain", "hat_ball", "gold_watch" ],
+      "female": [ "tshirt_cropped", "bra", "panties", "hot_pants", "sneakers", "socks", "silver_bracelet", "purse", "silver_necklace" ]
     },
     "npcs": [ "NC_PROF_FRAT", "NC_PROF_FRAT" ]
   },
