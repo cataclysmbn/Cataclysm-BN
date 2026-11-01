@@ -3,6 +3,7 @@
 #include "catch/catch.hpp"
 #include "flag.h"
 #include "game.h"
+#include "hsv_color.h"
 #include "item.h"
 #include "itype.h"
 #include "options_helpers.h"
@@ -317,4 +318,14 @@ TEST_CASE("weapon fouling", "[item][tname][fouling][dirt]") {
             }
         }
     }
+}
+
+TEST_CASE("spray can tname shows paint color", "[item][tname][paint]") {
+    clear_all_state();
+    item can("spray_can");
+    const auto red = RGBColor(255, 0, 0, 255);
+
+    CHECK(can.tname().find(red.friendly_name()) == std::string::npos);
+    can.set_var<RGBColor>("PAINT_COLOR", red);
+    CHECK(can.tname().find("(" + red.friendly_name() + ")") != std::string::npos);
 }
