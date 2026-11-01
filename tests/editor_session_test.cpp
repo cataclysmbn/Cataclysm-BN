@@ -9008,6 +9008,24 @@ TEST_CASE("the placement card stays off an entry it does not place on", "[editor
     CHECK(walk_map(walk) == walk.size());
 }
 
+TEST_CASE("the placement card shows only on the placements tool", "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto simple = override_option("EDITOR_ADVANCED", "false");
+    const auto file = mod_file{{{"fill_ter", "t_floor"}}};
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = file.path.string()}); },
+        [](const auto&) { return invoke("editor:tool", {.row = "tool:select"}); },
+        [](const auto& screen) {
+            CHECK_FALSE(has_affordance(screen, "editor:place_apply"));
+            return invoke("editor:tool", {.row = "tool:placements"});
+        },
+        [](const auto& screen) {
+            CHECK(has_affordance(screen, "editor:place_apply"));
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+}
+
 TEST_CASE("the advanced toggle shows the placement card on a tab it places", "[editor_session]") {
     const auto guard = screen_guard{};
     const auto file = mod_file{{{"fill_ter", "t_floor"}}};
