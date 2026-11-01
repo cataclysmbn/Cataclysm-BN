@@ -9,23 +9,19 @@
 #include "vpart_range.h"
 
 #include <algorithm>
-#include <ranges>
 
 namespace {
 
 using refs = std::vector<const vehicle_part*>;
 
 auto grouped_refs(const class vehicle& v) -> std::vector<refs> {
-    using namespace std::views;
-    auto part_group = std::vector<refs>{};
-    auto locations_checked = std::set<tripoint_mnt_veh>{};
+    std::vector<refs> part_group;
+    std::set<tripoint_mnt_veh> locations_checked;
     for (const auto& p : v.get_all_parts()) {
-        if (p.part().removed || locations_checked.contains(p.mount())) { continue; }
+        if (locations_checked.contains(p.mount())) { continue; }
         locations_checked.insert(p.mount());
-        part_group.push_back(
-            v.parts_at_relative(p.mount(), false)
-            | transform([&v](const auto index) { return &v.cpart(index); })
-            | std::ranges::to<refs>());
+        auto parts = v.get_parts_at(v.mount_to_bubble(p.mount()), "", part_status_flag::any);
+        part_group.emplace_back(parts);
     }
     return part_group;
 }

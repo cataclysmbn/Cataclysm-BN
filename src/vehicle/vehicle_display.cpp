@@ -286,7 +286,7 @@ void vehicle::print_vparts_descs(
      */
     start_at = std::max(0, std::min(start_at, start_limit));
     if (start_at) {
-        msg += std::string("<color_yellow>") + "<  " + _("More parts here…") + "</color>\n";
+        msg += std::string("<color_yellow>") + "^  " + _("More parts here…") + "</color>\n";
         lines += 1;
     }
     for (size_t i = start_at; i < pl.size(); i++) {
@@ -312,7 +312,7 @@ void vehicle::print_vparts_descs(
             lines += new_lines;
             start_limit = start_at;
         } else {
-            msg += std::string("<color_yellow>") + _("More parts here…") + "  >" + "</color>\n";
+            msg += std::string("<color_yellow>") + _("More parts here…") + "  V" + "</color>\n";
             start_limit = i;
             break;
         }

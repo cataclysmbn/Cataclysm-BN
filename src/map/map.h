@@ -84,6 +84,11 @@ class vpart_reference;
 struct mongroup;
 struct projectile;
 struct veh_collision;
+struct vehicle_vehicle_collision_options {
+    vehicle& target;
+    const std::vector<veh_collision>& collisions;
+    bool vertical;
+};
 
 template <typename T> class visitable;
 
@@ -1002,6 +1007,11 @@ public:
         const vehicle* ignored_vehicle = nullptr, int modifier = 0, bool flying = false,
         bool via_ramp = false) const -> int;
 
+    /// Ramp height change for a horizontal step from the source's local deck/contact level.
+    auto ramp_offset(const tripoint_bub_ms& from, const tripoint_bub_ms& to) const -> int;
+    auto ramp_offset(const optional_vpart_position& source, const tripoint_bub_ms& pos) const
+        -> int;
+
     /**
      * Returns true if a creature could walk from `from` to `to` in one step.
      * That is, if the tiles are adjacent and either on the same z-level or connected
@@ -1184,9 +1194,10 @@ public:
 
     // Executes vehicle-vehicle collision based on vehicle::collision results
     // Returns impulse of the executed collision
-    // If vector contains collisions with vehicles other than veh2, they will be ignored
-    auto vehicle_vehicle_collision(
-        vehicle& veh, vehicle& veh2, const std::vector<veh_collision>& collisions) -> float;
+    // Contacts with vehicles other than options.target are ignored. Axis is the movement axis,
+    // never inferred from the vehicles' owning submap levels.
+    auto vehicle_vehicle_collision(vehicle& veh, const vehicle_vehicle_collision_options& options)
+        -> float;
     // Throws vehicle passengers about the vehicle, possibly out of it
     // Returns change in vehicle orientation due to lost control
     auto shake_vehicle(vehicle& veh, int velocity_before, units::angle direction) -> units::angle;
@@ -1904,16 +1915,20 @@ private:
 public:
     // Returns true if there is a physical floor at p (tile has no TFLAG_NO_FLOOR).
     // Returns false for out-of-bounds z or missing submap.
-    auto has_floor(const tripoint_bub_ms& p, bool visible_only = false) const -> bool;
+    auto has_floor(const tripoint_bub_ms& p, bool visible_only = false, bool terrain_only = false)
+        const -> bool;
 
     /** Checks if there's a floor between the two tiles. They must be at most 1 tile away from each
      * other in any dimension. If they're not at the same xy coord there must be floor on both of
      * the relevant tiles
      */
-    auto floor_between(const tripoint_bub_ms& first, const tripoint_bub_ms& second) const -> bool;
+    auto floor_between(
+        const tripoint_bub_ms& first, const tripoint_bub_ms& second,
+        bool vehicle_only = false) const -> bool;
 
     /** Does this tile support vehicles and furniture above it */
-    auto supports_above(const tripoint_bub_ms& p) const -> bool;
+    auto supports_above(const tripoint_bub_ms& p, const vehicle* ignored_vehicle = nullptr) const
+        -> bool;
     auto has_floor_or_support(const tripoint_bub_ms& p) const -> bool;
 
     /**

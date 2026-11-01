@@ -48,6 +48,7 @@
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vehicle_selector.h"
+#include "vehicle_stairs.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
 #include "wheel_dimensions.h"
@@ -253,6 +254,8 @@ veh_interact::veh_interact(vehicle& veh, tripoint_mnt_veh p)
     main_context.register_action("FILTER");
     main_context.register_action("ZOOM_IN");
     main_context.register_action("ZOOM_OUT");
+    gameplay_context.register_action("LEVEL_UP");
+    gameplay_context.register_action("LEVEL_DOWN");
     main_context.register_action("ANY_INPUT");
 
     count_durability();
@@ -271,8 +274,9 @@ void veh_interact::allocate_windows() {
 
     const int mode_h = 1;
     const int name_h = 1;
+    const auto stair_h = stair_status_text.empty() ? 0 : 2;
 
-    page_size = grid_h - (mode_h + stats_h + name_h) - 2;
+    page_size = grid_h - (mode_h + stats_h + 1 + name_h + stair_h) - 2;
 
     const int pane_y = grid.y + mode_h + 1;
 
@@ -286,10 +290,13 @@ void veh_interact::allocate_windows() {
 #else
     const int disp_h = page_size * 0.45;
 #endif
-    const int parts_h = page_size - disp_h;
-    const int parts_y = pane_y + disp_h;
+    const auto deck_h = 4;
+    const auto preview_h = std::min(std::max(3, disp_h - deck_h + 2), page_size - deck_h - 1);
+    const int parts_h = std::max(1, page_size - preview_h - deck_h);
+    const int parts_y = pane_y + deck_h + preview_h;
 
-    const int name_y = pane_y + page_size + 1;
+    const auto stair_y = pane_y + page_size + 1;
+    const int name_y = stair_y + stair_h;
     const int stats_y = name_y + name_h;
 
     const int list_x = grid.x + disp_w + 1;
@@ -306,10 +313,14 @@ void veh_interact::allocate_windows() {
     w_border = catacurses::newwin(TERMY, TERMX, point_zero);
     w_mode = catacurses::newwin(mode_h, grid_w, grid);
     w_msg = catacurses::newwin(page_size, pane_w, point(msg_x, pane_y));
-    w_disp = catacurses::newwin(disp_h, disp_w, point(grid.x, pane_y));
+    w_deck = catacurses::newwin(deck_h, disp_w, point(grid.x, pane_y));
+    w_stairs =
+        stair_h > 0 ? catacurses::newwin(stair_h, grid_w, point(grid.x, stair_y))
+                    : catacurses::window{};
+    w_disp = catacurses::newwin(preview_h, disp_w, point(grid.x, pane_y + deck_h));
     w_parts = catacurses::newwin(parts_h, disp_w, point(grid.x, parts_y));
     w_list = catacurses::newwin(page_size, pane_w, point(list_x, pane_y));
-    w_stats = catacurses::newwin(stats_h, grid_w, point(grid.x, stats_y));
+    w_stats = catacurses::newwin(stats_h + 1, grid_w, point(grid.x, stats_y));
     w_name = catacurses::newwin(name_h, grid_w, point(grid.x, name_y));
     w_details = catacurses::newwin(details_h, details_w, point(details_x, details_y));
 }
@@ -367,6 +378,7 @@ auto veh_interact::create_or_get_ui_adaptor() -> shared_ptr_fast<ui_adaptor> {
             display_grid();
             display_name();
             display_stats();
+            display_deck_controls();
             display_veh();
 
             werase(w_parts);
@@ -397,6 +409,38 @@ auto veh_interact::create_or_get_ui_adaptor() -> shared_ptr_fast<ui_adaptor> {
     return current_ui;
 }
 
+auto veh_interact::display_deck_controls() -> void {
+    werase(w_deck);
+    const auto width = getmaxx(w_deck);
+    trim_and_print(
+        w_deck, point_zero, width, c_white, _("Deck %+d (gameplay keys)"), vehicle_cursor.z());
+    trim_and_print(w_deck, point(0, 1), width, c_light_gray, _("Up [%s]"),
+                   gameplay_context.get_desc("LEVEL_UP"));
+    trim_and_print(w_deck, point(0, 2), width, c_light_gray, _("Down [%s]"),
+                   gameplay_context.get_desc("LEVEL_DOWN"));
+    const auto has_lower_deck = !veh->all_standalone_parts(vehicle_cursor.z() - 1).empty();
+    trim_and_print(
+        w_deck, point(0, 3), width, c_dark_gray,
+        has_lower_deck
+            ? string_format(_("Below %+d: reference only"), vehicle_cursor.z() - 1)
+            : _("Below: no reference"));
+    if (w_stairs) {
+        werase(w_stairs);
+        if (stair_status_dual) {
+            // Reserve one row per direction so a long failure cannot hide the usable exit.
+            const auto lines = string_split(stair_status_text, '\n');
+            for (auto row = 0; row < static_cast<int>(lines.size()) && row < getmaxy(w_stairs);
+                 ++row) {
+                trim_and_print(w_stairs, point(0, row), getmaxx(w_stairs), c_white, lines[row]);
+            }
+        } else {
+            fold_and_print(w_stairs, point_zero, getmaxx(w_stairs), c_white, stair_status_text);
+        }
+    }
+    wnoutrefresh(w_deck);
+    if (w_stairs) { wnoutrefresh(w_stairs); }
+}
+
 void veh_interact::hide_ui(const bool hide) {
     if (hide != ui_hidden) {
         ui_hidden = hide;
@@ -420,11 +464,24 @@ void veh_interact::do_main_loop() {
     while (!finish) {
         calc_overview();
         ui_manager::redraw();
-        const std::string action = main_context.handle_input();
+        std::string action = main_context.handle_input();
         msg.reset();
-        if (const std::optional<tripoint_rel_ms> vec = main_context.get_direction(action)) {
+        const auto& event = main_context.get_raw_input();
+        const auto& gameplay_action = gameplay_context.input_to_action(event);
+        if (gameplay_action == "LEVEL_UP" || gameplay_action == "LEVEL_DOWN") {
+            action = gameplay_action;
+        }
+        if (action == "LEVEL_UP" || action == "LEVEL_DOWN") {
+            const auto delta = action == "LEVEL_UP" ? 1 : -1;
+            const auto old_z = vehicle_cursor.z();
+            move_cursor(tripoint_rel_veh(0, 0, delta));
+            if (vehicle_cursor.z() == old_z) {
+                msg = _(
+                    "Deck limit reached: occupied decks plus one extension, within world bounds.");
+            }
+        } else if (const std::optional<tripoint_rel_ms> vec = main_context.get_direction(action)) {
             const point_rel_veh vehicle_delta = vec->xy().rotate(1).reinterpret_as<point_rel_veh>();
-            move_cursor(tripoint_rel_veh(vehicle_delta, vec->z()));
+            move_cursor(tripoint_rel_veh(vehicle_delta, 0));
         } else if (action == "QUIT") {
             finish = true;
         } else if (action == "INSTALL") {
@@ -903,13 +960,29 @@ static void sort_uilist_entries_by_line_drawing(std::vector<uilist_entry>& shape
 void veh_interact::do_install() {
     task_reason reason = cant_do('i');
 
+    auto level_hint = std::optional<std::string>{};
+    if (veh->part_count() != 0) {
+        if (vehicle_cursor.z() > veh->min_mount_z()) {
+            level_hint = _(
+                "Wheels and flotation parts can only be installed on the vehicle's lowest level.");
+        } else if (vehicle_cursor.z() < veh->min_mount_z()) {
+            if (!veh->get_any_parts("FLOATS").empty()) {
+                level_hint = _("New parts cannot be installed below existing flotation.");
+            } else if (!veh->get_any_parts("WHEEL").empty()) {
+                level_hint = _("New parts cannot be installed below existing wheels.");
+            }
+        }
+    }
+
     if (reason == INVALID_TARGET) {
         msg = _("Cannot install any part here.");
+        if (level_hint) { *msg += " " + *level_hint; }
         return;
     }
 
     restore_on_out_of_scope<std::optional<std::string>> prev_title(title);
     title = _("Choose new part to install here:");
+    if (level_hint) { *title += " " + *level_hint; }
 
     restore_on_out_of_scope<std::unique_ptr<install_info_t>> prev_install_info(
         std::move(install_info));
@@ -1596,6 +1669,7 @@ void veh_interact::calc_overview() {
 
 void veh_interact::display_overview() {
     werase(w_list);
+    const auto show_decks = vehicle_has_local_height(*veh);
     std::string last;
     int y = 0;
     if (overview_offset) {
@@ -1623,10 +1697,12 @@ void veh_interact::display_overview() {
 
         // print part name
         nc_color col = overview_opts[idx].hotkey ? c_white : c_dark_gray;
+        const auto name =
+            show_decks ? string_format(_("[%+d] %s"), pt.mount.z(), pt.name()) : pt.name();
         trim_and_print(
             w_list, point(1, y), getmaxx(w_list) - 1, highlighted ? hilite(col) : col,
             "<color_dark_gray>%c </color>%s",
-            overview_opts[idx].hotkey ? overview_opts[idx].hotkey : ' ', pt.name());
+            overview_opts[idx].hotkey ? overview_opts[idx].hotkey : ' ', name);
 
         // print extra columns (if any)
         overview_opts[idx].details(pt, w_list, y);
@@ -2125,9 +2201,16 @@ auto veh_interact::can_potentially_install(const vpart_info& vpart) -> bool {
  * @param dstart_at How far to change the start position for vehicle part descriptions
  */
 void veh_interact::move_cursor(tripoint_rel_veh d, int dstart_at) {
+    namespace ranges = std::ranges;
     const auto& here = get_map();
 
+    const auto old_z = vehicle_cursor.z();
     vehicle_cursor += d;
+    const auto origin_z = veh->mount_to_bubble(vehicle_cursor, true).z() - vehicle_cursor.z();
+    const auto min_z = std::max(veh->min_mount_z() - 1, -OVERMAP_DEPTH - origin_z);
+    const auto max_z = std::min(veh->max_mount_z() + 1, OVERMAP_HEIGHT - origin_z);
+    vehicle_cursor.z() = min_z <= max_z ? std::clamp(vehicle_cursor.z(), min_z, max_z) : old_z;
+    d.z() = vehicle_cursor.z() - old_z;
     if (d != tripoint_rel_veh::zero()) {
         start_limit = 0;
         parts_list_offset = 0;
@@ -2138,13 +2221,15 @@ void veh_interact::move_cursor(tripoint_rel_veh d, int dstart_at) {
     // Update the current active component index to the new position.
     cpart = veh->part_displayed_at(vehicle_cursor);
     const auto vehp = veh->mount_to_bubble(vehicle_cursor);
-    const bool has_critter = g->critter_at(vehp);
-    bool obstruct = here.impassable_ter_furn(vehp);
-    const optional_vpart_position ovp = here.veh_at(vehp);
+    const auto in_world = vehp.z() >= -OVERMAP_DEPTH && vehp.z() <= OVERMAP_HEIGHT;
+    const bool has_critter = in_world && g->critter_at(vehp);
+    bool obstruct = !in_world || here.impassable_ter_furn(vehp);
+    const optional_vpart_position ovp =
+        in_world ? here.veh_at(vehp) : optional_vpart_position(std::nullopt);
     if (ovp && &ovp->vehicle() != veh) { obstruct = true; }
     // Set obstruction if object is mountable to stop vehicles being built in windows, on tables
     // etc.
-    if (here.has_flag(flag_MOUNTABLE, vehp)) {
+    if (in_world && here.has_flag(flag_MOUNTABLE, vehp)) {
         obstruct = true;
         // Sanity check that vehicle part is not over a passable but mountable piece of terrain
         if (ovp && &ovp->vehicle() == veh) { obstruct = false; }
@@ -2183,7 +2268,43 @@ void veh_interact::move_cursor(tripoint_rel_veh d, int dstart_at) {
     }
 
     /* Update the lifting quality to be the that is available for this newly selected tile */
-    cache_tool_availability_update_lifting(vehp);
+    if (in_world) { cache_tool_availability_update_lifting(vehp); }
+
+    const auto had_stairs = !stair_status_text.empty();
+    stair_status_text.clear();
+    stair_status_dual = false;
+    for (const auto index : parts_here) {
+        const auto& part = veh->cpart(index);
+        const auto up = part.info().has_flag("VEHICLE_STAIRS_UP");
+        const auto down = part.info().has_flag("VEHICLE_STAIRS_DOWN");
+        if (part.removed || (!up && !down)) { continue; }
+        stair_status_dual = up && down;
+        for (const auto direction : {1, -1}) {
+            const auto ascending = direction > 0;
+            if ((ascending && !up) || (!ascending && !down)) { continue; }
+            const auto probe =
+                vehicle_stair_at(here.get_mapbuffer(), veh->abs_part_location(part), direction);
+            const auto available = probe && probe->has_value();
+            const auto status =
+                available
+                    ? _("Ready for use.")
+                    : vehicle_step_failure_message(
+                          probe ? vehicle_step_failure::unavailable : probe.error());
+            const auto label =
+                stair_status_dual
+                    ? (ascending ? _("Up: %s") : _("Down: %s"))
+                    : (ascending ? _("Stairs up: %s") : _("Stairs down: %s"));
+            auto line = string_format(label, status);
+            if (stair_status_dual) {
+                // Only the separator we insert may consume a row, even in translated messages.
+                ranges::replace(line, '\n', ' ');
+            }
+            if (!stair_status_text.empty()) { stair_status_text += '\n'; }
+            stair_status_text += colorize(line, available ? c_light_green : c_yellow);
+        }
+        break;
+    }
+    if (w_disp && had_stairs != !stair_status_text.empty()) { allocate_windows(); }
 }
 
 void veh_interact::display_grid() {
@@ -2285,8 +2406,16 @@ void veh_interact::display_veh() {
         mvwputch(w_disp, point(x, h_size.y), c_dark_gray, LINE_OXOX);
     }
 
+    auto reference_here = false;
+    for (const auto index : veh->all_standalone_parts(vehicle_cursor.z() - 1)) {
+        const auto& part = veh->cpart(index);
+        if (!veh->parts_at_relative(part.mount + tripoint_above, false).empty()) { continue; }
+        const auto q = (part.mount.xy() - vehicle_cursor.xy()).rotate(3);
+        if (q == point_rel_veh::zero()) { reference_here = true; }
+        mvwputch(w_disp, h_size + q.raw(), c_dark_gray, ':');
+    }
     // Iterate over structural parts so we only hit each square once
-    std::vector<int> structural_parts = veh->all_standalone_parts();
+    std::vector<int> structural_parts = veh->all_standalone_parts(vehicle_cursor.z());
     for (auto& structural_part : structural_parts) {
         const int p = structural_part;
         const auto part_direction = normalize(
@@ -2309,18 +2438,20 @@ void veh_interact::display_veh() {
     const auto vehp = veh->mount_to_bubble(vehicle_cursor);
 
     const auto& here = get_map();
-    bool obstruct = here.impassable_ter_furn(vehp);
-    const optional_vpart_position ovp = here.veh_at(vehp);
+    const auto in_world = vehp.z() >= -OVERMAP_DEPTH && vehp.z() <= OVERMAP_HEIGHT;
+    bool obstruct = !in_world || here.impassable_ter_furn(vehp);
+    const optional_vpart_position ovp =
+        in_world ? here.veh_at(vehp) : optional_vpart_position(std::nullopt);
     if (ovp && &ovp->vehicle() != veh) { obstruct = true; }
     // Set obstruction if object is mountable to stop vehicles being built in windows, on tables
     // etc.
-    if (here.has_flag(flag_MOUNTABLE, vehp)) {
+    if (in_world && here.has_flag(flag_MOUNTABLE, vehp)) {
         obstruct = true;
         // Sanity check that vehicle part is not over a passable but mountable piece of terrain
         if (ovp && &ovp->vehicle() == veh) { obstruct = false; }
     }
-    nc_color col = cpart >= 0 ? veh->part_color(cpart) : c_black;
-    auto sym = static_cast<int>(' ');
+    nc_color col = cpart >= 0 ? veh->part_color(cpart) : reference_here ? c_dark_gray : c_black;
+    auto sym = static_cast<int>(reference_here ? ':' : ' ');
     if (cpart >= 0) {
         const auto part_direction = normalize(
             270_degrees + veh->part_display_direction(cpart) - veh->face.dir());
@@ -2400,6 +2531,7 @@ static auto wheel_state_description(const vehicle& veh) -> std::string {
  */
 void veh_interact::display_stats() const {
     werase(w_stats);
+    const auto stability = veh->stability();
 
     // see exec()
     const int extraw = ((TERMX - FULL_SCREEN_WIDTH) / 4) * 2;
@@ -2470,11 +2602,12 @@ void veh_interact::display_stats() const {
                    vel_to_int(veh->aircraft_acceleration(false, !veh->engine_on)),
                    velocity_units(VU_VEHICLE));
     } else {
+        const auto ground_factor = vehicle_ground_stability_multiplier(stability);
         if (is_ground) {
             print_stat(
                 _("Safe/Top Speed: <color_light_green>%3d</color>/<color_light_red>%3d</color> %s"),
-                vel_to_int(veh->safe_ground_velocity(false, !veh->engine_on)),
-                vel_to_int(veh->max_ground_velocity(false, !veh->engine_on)),
+                vel_to_int(veh->safe_ground_velocity(false, !veh->engine_on) * ground_factor),
+                vel_to_int(veh->max_ground_velocity(false, !veh->engine_on) * ground_factor),
                 velocity_units(VU_VEHICLE));
             // TODO: extract accelerations units to its own function
             print_stat(
@@ -2488,8 +2621,8 @@ void veh_interact::display_stats() const {
         if (is_boat) {
             print_stat(
                 _("Water Safe/Top Speed: <color_light_green>%3d</color>/<color_light_red>%3d</color> %s"),
-                vel_to_int(veh->safe_water_velocity(false, !veh->engine_on)),
-                vel_to_int(veh->max_water_velocity(false, !veh->engine_on)),
+                vel_to_int(veh->safe_water_velocity(false, !veh->engine_on) * ground_factor),
+                vel_to_int(veh->max_water_velocity(false, !veh->engine_on) * ground_factor),
                 velocity_units(VU_VEHICLE));
             // TODO: extract accelerations units to its own function
             print_stat(
@@ -2601,6 +2734,11 @@ void veh_interact::display_stats() const {
     veh->print_fuel_indicators(
         w_stats, point(x[i], fuel_gauge_start_y), fuel_index, true, (x[i] + 10 < getmaxx(w_stats)),
         (x[i] + 10 < getmaxx(w_stats)));
+
+    fold_and_print(
+        w_stats, point(1, stats_h), second_column - 2, c_light_gray,
+        _("Stability: <color_light_blue>%d</color>%%"),
+        static_cast<int>(std::lround(stability * 100)));
 
     if (install_info) {
         const int details_w = getmaxx(w_details);

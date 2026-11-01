@@ -1161,16 +1161,22 @@ void vehicle::drive_to_local_target(const tripoint_abs_ms& target, bool follow_p
     // Check the tileray in the direction we need to head towards.
     std::set<point_abs_ms> points_to_check = immediate_path(angle);
     bool stop = false;
-    for (auto pt_elem : points_to_check) {
+    const auto heights =
+        parts | std::views::filter([](const auto& p) { return !p.removed; })
+        | std::views::transform([](const auto& p) { return p.mount.z(); })
+        | std::ranges::to<std::set>();
+    for (const auto [pt_elem, z] : std::views::cartesian_product(points_to_check, heights)) {
         auto elem = abs_to_bub(pt_elem);
         if (stop) { break; }
-        const optional_vpart_position ovp = g->m.veh_at(tripoint_bub_ms(elem, abs_sm_pos.z()));
-        if (g->m.impassable_ter_furn(tripoint_bub_ms(elem, abs_sm_pos.z()))
+        const auto pos = tripoint_bub_ms(elem, abs_sm_pos.z() + z);
+        const optional_vpart_position ovp = g->m.veh_at(pos);
+        if (g->m.impassable_ter_furn(pos)
+            || (z != *heights.begin() && g->m.has_floor(pos, false, true))
             || (ovp && &ovp->vehicle() != this)) {
             stop = true;
             break;
         }
-        if (elem == g->u.bub_pos().xy()) {
+        if (pos == g->u.bub_pos()) {
             if (follow_protocol || g->u.in_vehicle) {
                 continue;
             } else {
@@ -1179,15 +1185,15 @@ void vehicle::drive_to_local_target(const tripoint_abs_ms& target, bool follow_p
             }
         }
         bool its_a_pet = false;
-        if (g->critter_at(tripoint_bub_ms(elem, abs_sm_pos.z()))) {
-            npc* guy = g->critter_at<npc>(tripoint_bub_ms(elem, abs_sm_pos.z()));
+        if (g->critter_at(pos)) {
+            npc* guy = g->critter_at<npc>(pos);
             if (guy && !guy->in_vehicle) {
                 stop = true;
                 break;
             }
             for (const auto& p : parts) {
                 monster* mon = get_pet(index_of_part(&p));
-                if (mon && mon->bub_pos().xy() == elem) {
+                if (mon && mon->bub_pos() == pos) {
                     its_a_pet = true;
                     break;
                 }
@@ -1718,6 +1724,20 @@ auto vehicle::is_structural_part_removed() const -> bool {
     return false;
 }
 
+namespace {
+
+auto is_vertical_frame(const vpart_info& part) -> bool {
+    return part.location == "structure" && !part.has_flag("PROTRUSION")
+        && !part.has_flag(VPFLAG_EXTENDABLE);
+}
+
+auto is_vertical_frame(const vehicle_part& part) -> bool {
+    return !part.removed && !part.has_flag(vehicle_part::carried_flag)
+        && is_vertical_frame(part.info());
+}
+
+} // namespace
+
 /**
  * Returns whether or not the vehicle part with the given id can be mounted in
  * the specified square.
@@ -1732,6 +1752,24 @@ auto vehicle::can_mount(const tripoint_mnt_veh& dp, const vpart_id& id) const ->
     // It also has to be a real part, not the null part
     const vpart_info& part = id.obj();
     if (part.has_flag("NOINSTALL")) { return false; }
+    auto& here = get_map();
+    if (here.get_mapbuffer().has_loaded_vehicle(this)
+        && (dp.z() != 0 || vehicle_has_local_height(*this))
+        && !here.inbounds_z(mount_to_bubble(dp, true).z())) {
+        return false;
+    }
+    if (!parts.empty()) {
+        for (const auto flag : {"FLOATS", "WHEEL"}) {
+            if (dp.z() > mount_min.z() && part.has_flag(flag)) { return false; }
+            if (dp.z() < mount_min.z() && !get_any_parts(flag).empty()) { return false; }
+        }
+    }
+
+    for (const auto& other : parts) {
+        if (other.removed || other.mount.xy() != dp.xy() || other.mount.z() == dp.z()) { continue; }
+        const auto& lower = other.mount.z() < dp.z() ? other.info() : part;
+        if (lower.has_flag(VPFLAG_ROOF) || lower.location == "on_roof") { return false; }
+    }
 
     const std::vector<int> parts_in_square = parts_at_relative(dp, false);
 
@@ -1792,9 +1830,19 @@ auto vehicle::can_mount(const tripoint_mnt_veh& dp, const vpart_id& id) const ->
     // All parts after the first must be installed on or next to an existing part
     // the exception is when a single tile only structural object is being repaired
     if (!parts.empty()) {
+        const auto vertical_support =
+            is_vertical_frame(part)
+            && std::ranges::
+                any_of(std::array{tripoint_above, tripoint_below}, [&](const auto offset) {
+                    return std::ranges::
+                        any_of(parts_at_relative(dp + offset, false), [&](const auto index) {
+                            return is_vertical_frame(parts[index]);
+                        });
+                });
         if (!is_structural_part_removed() && !has_structural_part(dp)
             && !has_structural_part(dp + point_east) && !has_structural_part(dp + point_south)
-            && !has_structural_part(dp + point_west) && !has_structural_part(dp + point_north)) {
+            && !has_structural_part(dp + point_west) && !has_structural_part(dp + point_north)
+            && !vertical_support) {
             return false;
         }
     }
@@ -1936,13 +1984,16 @@ auto vehicle::can_unmount(const int p, std::string& reason) const -> bool {
             // First, find all the squares connected to the one we're removing
             std::vector<const vehicle_part*> connected_parts;
 
-            for (int i = 0; i < 4; i++) {
-                const auto next =
-                    parts[p].mount
-                    + point_rel_veh(i < 2 ? (i == 0 ? -1 : 1) : 0, i < 2 ? 0 : (i == 2 ? -1 : 1));
+            for (const auto offset : six_cardinal_directions) {
+                const auto next = parts[p].mount + offset;
                 std::vector<int> parts_over_there = parts_at_relative(next, false);
                 // Ignore empty squares
                 if (!parts_over_there.empty()) {
+                    if (offset.z != 0
+                        && (!is_vertical_frame(parts[p])
+                            || !is_vertical_frame(parts[parts_over_there[0]]))) {
+                        continue;
+                    }
                     // Just need one part from the square to track the x/y
                     connected_parts.push_back(&parts[parts_over_there[0]]);
                 }
@@ -1999,8 +2050,14 @@ auto vehicle::is_connected(
         discovered.pop_front();
         auto current = current_part.mount;
 
-        for (point offset : four_adjacent_offsets) {
+        for (const auto offset : six_cardinal_directions) {
             auto next = current + offset;
+            std::vector<int> parts_there = parts_at_relative(next, true);
+            if (offset.z != 0
+                && (parts_there.empty() || !is_vertical_frame(current_part)
+                    || !is_vertical_frame(parts[parts_there[0]]))) {
+                continue;
+            }
 
             if (next == target) {
                 // Success!
@@ -2009,8 +2066,6 @@ auto vehicle::is_connected(
                 // There might be a path, but we're not allowed to go that way
                 continue;
             }
-
-            std::vector<int> parts_there = parts_at_relative(next, true);
 
             if (!parts_there.empty() && !parts[parts_there[0]].removed
                 && (part_info(parts_there[0]).location == "structure"
@@ -2116,6 +2171,12 @@ auto vehicle::install_part(const tripoint_mnt_veh& dp, vehicle_part&& new_part) 
 
 auto vehicle::try_to_rack_nearby_vehicle(const std::vector<std::vector<int>>& list_of_racks)
     -> bool {
+    if (vehicle_has_local_height(*this)) {
+        add_msg(
+            m_warning,
+            _("Vehicles with nonzero local deck height cannot load or be loaded on bike racks yet."));
+        return false;
+    }
     for (const auto& this_bike_rack : list_of_racks) {
         std::vector<vehicle*> carry_vehs;
         carry_vehs.assign(4, nullptr);
@@ -2134,6 +2195,12 @@ auto vehicle::try_to_rack_nearby_vehicle(const std::vector<std::vector<int>>& li
                 } else if (test_veh != carry_vehs[i]) {
                     carry_vehs[i] = test_veh;
                     partial_matches[i].clear();
+                }
+                if (vehicle_has_local_height(*test_veh)) {
+                    add_msg(
+                        m_warning,
+                        _("Vehicles with nonzero local deck height cannot load or be loaded on bike racks yet."));
+                    return false;
                 }
                 partial_matches[i].insert(search_pos);
                 if (partial_matches[i] == test_veh->get_points()) {
@@ -2359,11 +2426,11 @@ auto vehicle::remove_part(const int p, RemovePartHandler& handler) -> bool {
     // if a windshield is removed (usually destroyed) also remove curtains
     // attached to it.
     if (remove_dependent_part("WINDOW", "CURTAIN") || part_flag(p, VPFLAG_OPAQUE)) {
-        handler.set_transparency_cache_dirty(abs_sm_pos.z());
+        handler.set_transparency_cache_dirty(part_loc.z());
     }
 
     if (part_flag(p, VPFLAG_ROOF) || part_flag(p, VPFLAG_OPAQUE)) {
-        handler.set_floor_cache_dirty(abs_sm_pos.z() + 1);
+        handler.set_floor_cache_dirty(part_loc.z() + 1);
     }
 
     remove_dependent_part("SEAT", "SEATBELT");
@@ -2605,7 +2672,6 @@ auto vehicle::remove_carried_vehicle(const std::vector<int>& carried_parts) -> b
     return success;
 }
 
-// split the current vehicle into up to 3 new vehicles that do not connect to each other
 auto vehicle::find_and_split_vehicles(int exclude) -> bool {
     std::vector<int> valid_parts = all_parts_at_location(part_location_structure);
     std::set<int> checked_parts;
@@ -2613,7 +2679,7 @@ auto vehicle::find_and_split_vehicles(int exclude) -> bool {
 
     std::vector<std::vector<int>> all_vehicles;
 
-    for (size_t cnt = 0; cnt < 4; cnt++) {
+    for (size_t cnt = 0;; cnt++) {
         int test_part = -1;
         for (auto p : valid_parts) {
             if (parts[p].removed) { continue; }
@@ -2644,13 +2710,18 @@ auto vehicle::find_and_split_vehicles(int exclude) -> bool {
             if (checked_parts.contains(test_part)) { continue; }
             for (auto p : test_set.second) { veh_parts.push_back(p); }
             checked_parts.insert(test_part);
-            for (point offset : four_adjacent_offsets) {
+            for (const auto offset : six_cardinal_directions) {
                 const tripoint_mnt_veh& dp = parts[test_part].mount + offset;
                 std::vector<int> all_neighbor_parts = parts_at_relative(dp, true);
                 int neighbor_struct_part = -1;
                 for (int p : all_neighbor_parts) {
                     if (parts[p].removed) { continue; }
                     if (part_info(p).location == part_location_structure) {
+                        if (offset.z != 0
+                            && (!is_vertical_frame(parts[test_part])
+                                || !is_vertical_frame(parts[p]))) {
+                            continue;
+                        }
                         neighbor_struct_part = p;
                         break;
                     }
@@ -2728,6 +2799,17 @@ auto vehicle::split_vehicles(
             }
             nvp = abs_to_map_local(g->m, abs_part_location(parts[split_part0]));
             mnt_offset = parts[split_part0].mount;
+            const auto flotation_level = min_mount_z();
+            if (split_mounts.empty() && vehicle_has_local_height(*this)
+                && std::ranges::any_of(split_parts, [this, flotation_level](const auto part) {
+                       return !parts[part].removed && parts[part].mount.z() == flotation_level
+                           && parts[part].info().has_flag("FLOATS");
+                   })) {
+                // Retain the boat's terrain-following reference. Moving it to an upper deck
+                // would resample ramps at the wrong world height and flatten the fragment.
+                nvp.z() -= mnt_offset.z();
+                mnt_offset.z() = 0;
+            }
             new_vehicle = g->m.add_vehicle(vproto_id("none"), nvp, face.dir());
             if (new_vehicle == nullptr) {
                 // the split part was out of the map bounds.
@@ -3197,12 +3279,12 @@ auto vehicle::get_enabled_parts(const vpart_bitflags feature) const
  * a extendable protusion part
  * @return A list of indices to all parts with the structure location or otherwise standalone
  */
-auto vehicle::all_standalone_parts() const -> std::vector<int> {
+auto vehicle::all_standalone_parts(const std::optional<int> z) const -> std::vector<int> {
     std::vector<int> parts_found;
     for (size_t part_index = 0; part_index < parts.size(); ++part_index) {
         if ((part_info(part_index).location == part_location_structure
              || part_info(part_index).has_flag(VPFLAG_EXTENDABLE))
-            && !parts[part_index].removed) {
+            && !parts[part_index].removed && (!z || parts[part_index].mount.z() == *z)) {
             parts_found.push_back(part_index);
         }
     }
@@ -3271,7 +3353,7 @@ auto vehicle::find_lines_of_parts(int part, const std::string& flag)
     auto target = parts[part].mount;
     for (const vpart_reference& vp : possible_parts) {
         if (vp.part().is_unavailable() || !vp.has_feature("MULTISQUARE")
-            || vp.info().get_id() != part_id) {
+            || vp.info().get_id() != part_id || vp.mount().z() != target.z()) {
             continue;
         }
         if (vp.mount().x() == target.x()) { x_parts.push_back(vp.part_index()); }
@@ -3400,7 +3482,7 @@ auto vehicle::part_displayed_at(const tripoint_mnt_veh& dp) const -> int {
         std::vector<int> psg_parts = boarded_parts();
         in_vehicle = false;
         for (auto& psg_part : psg_parts) {
-            if (get_passenger(psg_part) == &g->u) {
+            if (get_passenger(psg_part) == &g->u && parts[psg_part].mount.z() == dp.z()) {
                 in_vehicle = true;
                 break;
             }
@@ -3478,8 +3560,32 @@ void vehicle::coord_translate_reverse(
     q = rotate_to_local(dir, pivot, p);
 }
 
-auto vehicle::mount_to_bubble(const tripoint_mnt_veh& mount) const -> tripoint_bub_ms {
-    return bub_ms_location() + rotate_to_world(pivot_rotation[0], pivot_anchor[0], mount);
+auto vehicle::mount_to_bubble(const tripoint_mnt_veh& mount, const bool terrain) const
+    -> tripoint_bub_ms {
+    auto pos = bub_ms_location() + rotate_to_world(pivot_rotation[0], pivot_anchor[0], mount);
+    if (!terrain) { return pos; }
+    for (const auto& part : parts) {
+        if (!part.removed && part.mount.xy() == mount.xy()) {
+            pos.z() += part.z_terrain[0];
+            return pos;
+        }
+    }
+    auto& here = get_map();
+    if (here.get_mapbuffer().has_loaded_vehicle(this)) {
+        auto line = bub_ms_location();
+        while (true) {
+            line.z() +=
+                here.has_flag(TFLAG_RAMP_UP, line) ? 1
+                : here.has_flag(TFLAG_RAMP_DOWN, line)
+                    ? -1
+                    : 0;
+            if (line.xy() == pos.xy()) { break; }
+            line.x() += (pos.x() > line.x()) - (pos.x() < line.x());
+            line.y() += (pos.y() > line.y()) - (pos.y() < line.y());
+        }
+        pos.z() = line.z() + mount.z();
+    }
+    return pos;
 }
 
 auto vehicle::mount_to_bubble(const tripoint_mnt_veh& mount, const tripoint_rel_veh& offset) const
@@ -3522,7 +3628,7 @@ auto vehicle::rotate_to_local(
 
     float skew = std::trunc(result.x * rotation_info[increment].gradient);
     result.y -= static_cast<int>(skew);
-    result += pivot.xy().raw();
+    result += pivot.raw();
 
     return tripoint_mnt_veh(result);
 }
@@ -3554,7 +3660,7 @@ void vehicle::precalc_mounts(int idir, units::angle dir, const tripoint_mnt_veh&
             p.precalc[idir] = q->second;
         }
     }
-    pivot_anchor[idir] = tripoint_mnt_veh(pivot.xy(), 0);
+    pivot_anchor[idir] = pivot;
     pivot_rotation[idir] = dir;
 }
 
@@ -3599,6 +3705,7 @@ auto vehicle::allowed_light(const tripoint_mnt_veh& from, const tripoint_mnt_veh
 }
 
 auto vehicle::allowed_move(const tripoint_mnt_veh& from, const tripoint_mnt_veh& to) const -> bool {
+    if (from.z() != to.z()) { return false; }
     return check_rotated_intervening(from, to, [](const vehicle* veh, const tripoint_mnt_veh& p) {
         return (veh->obstacle_at_position(p) == -1);
     });
@@ -3713,8 +3820,7 @@ auto vehicle::pivot_displacement() const -> tripoint_rel_ms {
     // the vehicle.
 
     // rotate the old pivot point around the new pivot point with the old rotation angle
-    return tripoint_rel_ms(
-        rotate_to_world(pivot_rotation[0], pivot_anchor[1], pivot_anchor[0]).xy(), 0);
+    return rotate_to_world(pivot_rotation[0], pivot_anchor[1], pivot_anchor[0]);
 }
 
 auto vehicle::fuel_left(const itype_id& ftype, bool recurse) const -> int {
@@ -4683,10 +4789,16 @@ static constexpr double water_density = 1000.0; // kg/m^3
 
 auto vehicle::coeff_water_drag() const -> double {
     if (!coeff_water_dirty) { return coefficient_water_resistance; }
+    const auto waterline = min_mount_z();
+    const auto off_waterline = [this, waterline](const auto index) {
+        return parts[index].mount.z() != waterline;
+    };
     std::vector<int> hull_indices = all_parts_at_location(part_location_under);
+    std::erase_if(hull_indices, off_waterline);
     double hull_coverage;
     if (hull_indices.empty() && !floating.empty()) {
         hull_indices = all_parts_at_location(part_location_structure);
+        std::erase_if(hull_indices, off_waterline);
     }
     if (hull_indices.empty()) {
         hull_coverage = 0;
@@ -4934,9 +5046,45 @@ auto vehicle::handle_potential_theft(avatar& you, bool check_only, bool prompt) 
     return true;
 }
 
+auto vehicle::stability() const -> double {
+    // Nominal decks, not terrain offsets: a whole vehicle at mount.z == 1 is still planar.
+    if (mount_min.z() == mount_max.z()) { return 1.0; }
+
+    const auto wheels = get_avail_parts(VPFLAG_WHEEL);
+    const auto first_wheel = wheels.begin();
+    if (first_wheel == wheels.end()) { return 0.0; }
+    const auto wheel_z = first_wheel->mount().z();
+    auto min_mount = first_wheel->mount().xy();
+    auto max_mount = min_mount;
+    for (const auto& vp : wheels) {
+        const auto mount = vp.mount();
+        min_mount.x() = std::min(min_mount.x(), mount.x());
+        min_mount.y() = std::min(min_mount.y(), mount.y());
+        max_mount.x() = std::max(max_mount.x(), mount.x());
+        max_mount.y() = std::max(max_mount.y(), mount.y());
+    }
+
+    const auto mass = units::to_milligram(total_mass());
+    if (mass <= 0) { return 1.0; }
+    // Falling uses four metres per vertical level; local XY distances are metres.
+    const auto height = 4.0 * std::max(0.0, mass_z_moment / mass - wheel_z);
+    if (height <= 0.0) { return 1.0; }
+    const auto span = std::
+        min(static_cast<double>(max_mount.x()) - min_mount.x(),
+            static_cast<double>(max_mount.y()) - min_mount.y());
+    return std::clamp(span / (2.0 * height), 0.0, 1.0);
+}
+
+auto vehicle_has_local_height(const vehicle& veh) -> bool {
+    namespace ranges = std::ranges;
+    return ranges::any_of(veh.get_all_parts(), [](const auto& vp) {
+        return !vp.part().removed && vp.mount().z() != 0;
+    });
+}
+
 auto vehicle::balanced_wheel_config() const -> bool {
-    auto min = point_mnt_veh(point_max);
-    auto max = point_mnt_veh(point_min);
+    auto min = tripoint_mnt_veh(tripoint_max);
+    auto max = tripoint_mnt_veh(tripoint_min);
     // find the bounding box of the wheels
     for (auto& w : wheelcache) {
         const auto& pt = parts[w].mount;
@@ -4944,11 +5092,13 @@ auto vehicle::balanced_wheel_config() const -> bool {
         min.y() = std::min(min.y(), pt.y());
         max.x() = std::max(max.x(), pt.x());
         max.y() = std::max(max.y(), pt.y());
+        min.z() = std::min(min.z(), pt.z());
+        max.z() = std::max(max.z(), pt.z());
     }
 
     // Check center of mass inside support of wheels (roughly)
-    const auto support = inclusive_rectangle<point_mnt_veh>(min, max);
-    return support.contains(local_center_of_mass().xy());
+    const inclusive_cuboid<tripoint_mnt_veh> support(min, max);
+    return support.contains(tripoint_mnt_veh(local_center_of_mass().xy(), min.z()));
 }
 
 auto vehicle::valid_wheel_config() const -> bool {
@@ -6145,8 +6295,10 @@ void vehicle::refresh() {
 
     mount_min.x() = 123;
     mount_min.y() = 123;
+    mount_min.z() = INT_MAX;
     mount_max.x() = -123;
     mount_max.y() = -123;
+    mount_max.z() = INT_MIN;
 
     bool refresh_done = false;
 
@@ -6161,8 +6313,10 @@ void vehicle::refresh() {
         const auto pt = vp.mount();
         mount_min.x() = std::min(mount_min.x(), pt.x());
         mount_min.y() = std::min(mount_min.y(), pt.y());
+        mount_min.z() = std::min(mount_min.z(), pt.z());
         mount_max.x() = std::max(mount_max.x(), pt.x());
         mount_max.y() = std::max(mount_max.y(), pt.y());
+        mount_max.z() = std::max(mount_max.z(), pt.z());
 
         // This will keep the parts at point pt sorted
         std::vector<int>::iterator vii = std::lower_bound(
@@ -6262,7 +6416,7 @@ void vehicle::refresh_pivot() const {
 
     if (wheelcache.empty() || !valid_wheel_config()) {
         // No usable wheels, use CoM (dragging)
-        pivot_cache = tripoint_mnt_veh(local_center_of_mass().xy(), 0);
+        pivot_cache = local_center_of_mass();
         return;
     }
 
@@ -6348,11 +6502,10 @@ void vehicle::refresh_pivot() const {
     if (xc_denominator < 0.1 || yc_denominator < 0.1) {
         debugmsg("vehicle::refresh_pivot had a bad weight: xc=%.3f/%.3f yc=%.3f/%.3f", xc_numerator,
                  xc_denominator, yc_numerator, yc_denominator);
-        pivot_cache = tripoint_mnt_veh(local_center_of_mass().xy(), 0);
+        pivot_cache = local_center_of_mass();
     } else {
         pivot_cache.x() = std::round(xc_numerator / xc_denominator);
         pivot_cache.y() = std::round(yc_numerator / yc_denominator);
-        pivot_cache.z() = 0;
     }
 }
 
@@ -6683,7 +6836,9 @@ void vehicle::refresh_insides() {
         if (vp.part().removed) { continue; }
         /* If there's no roof, or there is a roof but it's broken, it's outside.
          * (Use short-circuiting && so broken frames don't screw this up) */
-        if (!(part_with_feature(p, "ROOF", true) >= 0 && vp.part().is_available())) {
+        if (!((part_with_feature(p, "ROOF", true) >= 0
+               || avail_part_with_feature(vp.mount() + tripoint_above, "BOARDABLE", true) >= 0)
+              && vp.part().is_available())) {
             vp.part().inside = false;
             continue;
         }
@@ -6695,7 +6850,8 @@ void vehicle::refresh_insides() {
             auto near_mount = parts[p].mount + offset;
             std::vector<int> parts_n3ar = parts_at_relative(near_mount, true);
             // if we aren't covered from sides, the roof at p won't save us
-            bool cover = false;
+            bool cover =
+                avail_part_with_feature(near_mount + tripoint_above, "BOARDABLE", true) >= 0;
             for (auto& j : parts_n3ar) {
                 // another roof -- cover
                 if (part_flag(j, "ROOF") && parts[j].is_available()) {
@@ -6863,25 +7019,30 @@ void vehicle::damage_all(int dmg1, int dmg2, damage_type type, const tripoint_mn
     }
 }
 
-/// Rebase local XY and both yaw anchors without changing deck heights or world placement.
-void vehicle::shift_parts(const tripoint_rel_veh& delta) {
-    const auto horizontal_delta = tripoint_rel_veh(delta.xy(), 0);
-    for (auto& elem : parts) { elem.mount -= horizontal_delta; }
+/**
+ * Shifts all parts of the vehicle by the given amounts, and then shifts the
+ * vehicle itself in the opposite direction. The end result is that the vehicle
+ * appears to have not moved. Useful for re-zeroing a vehicle to ensure that a
+ * (0, 0) part is always present.
+ * @param delta How much to shift along each axis
+ * Only XY components of delta are applied; local deck heights are preserved.
+ */
+void vehicle::shift_parts(tripoint_rel_veh delta) {
+    delta.z() = 0;
+    for (auto& elem : parts) { elem.mount -= delta; }
 
     decltype(labels) new_labels;
-    for (auto& l : labels) { new_labels.insert(label(l - horizontal_delta, l.text)); }
+    for (auto& l : labels) { new_labels.insert(label(l - delta, l.text)); }
     labels = new_labels;
 
     decltype(loot_zones) new_zones;
-    for (auto const& z : loot_zones) { new_zones.emplace(z.first - horizontal_delta, z.second); }
+    for (auto const& z : loot_zones) { new_zones.emplace(z.first - delta, z.second); }
     loot_zones = new_zones;
 
-    for (auto& anchor : pivot_anchor) {
-        anchor = tripoint_mnt_veh(anchor.xy() - horizontal_delta.xy(), 0);
-    }
+    pivot_anchor[0] -= delta;
     refresh();
     // Need to also update the map after this
-    if (attached) { g->m.reset_vehicle_cache(); }
+    g->m.reset_vehicle_cache();
 }
 
 /**
@@ -6890,9 +7051,8 @@ void vehicle::shift_parts(const tripoint_rel_veh& delta) {
  * @return bool true if the shift was needed.
  */
 auto vehicle::shift_if_needed() -> bool {
-    if (std::ranges::any_of(parts, [](const auto& part) {
-            return !part.removed && part.mount.xy() == point_mnt_veh::zero();
-        })) {
+    std::vector<int> vehicle_origin = parts_at_relative(tripoint_mnt_veh::zero(), true);
+    if (!vehicle_origin.empty() && !parts[vehicle_origin[0]].removed) {
         // Shifting is not needed.
         return false;
     }
@@ -7072,7 +7232,7 @@ auto vehicle::damage_direct(int p, int dmg, damage_type type) -> int {
     // If auto-driving and damage happens, bail out
     if (is_autodriving) { stop_autodriving(); }
     here.set_memory_seen_cache_dirty(bub_part_location(p));
-    here.set_vehicle_cache_dirty(abs_sm_pos.z());
+    here.set_vehicle_cache_dirty(bub_part_location(p).z());
     if (parts[p].is_broken()) { return break_off(p, dmg); }
 
     int tsh = std::min(20, part_info(p).durability / 10);
@@ -7439,6 +7599,7 @@ void vehicle::calc_mass_center(bool use_precalc) const {
     units::quantity<float, units::mass::unit_type> xf;
     units::quantity<float, units::mass::unit_type> yf;
     units::mass m_total = 0_gram;
+    mass_z_moment = 0.0;
     for (const vpart_reference& vp : get_all_parts()) {
         const size_t i = vp.part_index();
         if (vp.part().removed) { continue; }
@@ -7460,6 +7621,7 @@ void vehicle::calc_mass_center(bool use_precalc) const {
             // Sometimes flag is wrongly set, don't crash!
             m_part += p != nullptr ? p->get_weight() : 0_gram;
         }
+        mass_z_moment += static_cast<double>(units::to_milligram(m_part)) * vp.mount().z();
 
         if (use_precalc) {
             xf += vp.part().precalc[0].x() * m_part;

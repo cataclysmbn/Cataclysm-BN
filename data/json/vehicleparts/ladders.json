@@ -23,5 +23,105 @@
     "damage_modifier": 80,
     "breaks_into": [ { "item": "string_6", "count": [ 10, 20 ] } ],
     "damage_reduction": { "bash": 10 }
+  },
+  {
+    "id": "vehicle_ladder",
+    "type": "vehicle_part",
+    "name": { "str": "vehicle ladder" },
+    "description": "A steel ladder connecting adjacent vehicle decks.  Stack ladders in the same column to climb up or down.  Each ladder needs a sound frame and a roof-free mount.  Can be used while the vehicle is moving.",
+    "item": "vehicle_ladder",
+    "location": "center",
+    "symbol": "H",
+    "color": "light_gray",
+    "broken_symbol": "#",
+    "broken_color": "light_gray",
+    "looks_like": "t_ladder_up_down",
+    "durability": 400,
+    "damage_reduction": { "all": 52 },
+    "breaks_into": "ig_vp_frame",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "20 m", "using": [ [ "welding_standard", 10 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "10 m", "using": "vehicle_weld_removal" },
+      "repair": { "skills": [ [ "mechanics", 1 ] ], "time": "5 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
+    },
+    "flags": [ "AISLE", "BOARDABLE", "VEHICLE_STAIRS_UP", "VEHICLE_STAIRS_DOWN" ]
+  },
+  {
+    "id": "vehicle_ladder_wood",
+    "type": "vehicle_part",
+    "name": { "str": "wooden vehicle ladder" },
+    "description": "A wooden ladder connecting adjacent vehicle decks.  Stack ladders in the same column to climb up or down.  Each ladder needs a sound frame and a roof-free mount.  Can be used while the vehicle is moving.",
+    "item": "vehicle_ladder_wood",
+    "location": "center",
+    "symbol": "H",
+    "color": "brown",
+    "broken_symbol": "#",
+    "broken_color": "brown",
+    "looks_like": "t_ladder_up_down",
+    "durability": 150,
+    "damage_reduction": { "all": 52 },
+    "breaks_into": [ { "item": "splinter", "count": [ 7, 9 ] }, { "item": "nail", "charges": [ 5, 10 ] } ],
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 0 ] ], "time": "30 m", "using": [ [ "vehicle_nail_install", 20 ] ] },
+      "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "15 m", "using": [ [ "vehicle_nail_removal", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 2 ] ],
+        "time": "30 m",
+        "using": [ [ "nail_any_adhesive", 2 ], [ "wood_structural_small", 1 ] ]
+      }
+    },
+    "flags": [ "AISLE", "BOARDABLE", "VEHICLE_STAIRS_UP", "VEHICLE_STAIRS_DOWN" ]
+  },
+  {
+    "id": "vehicle_stairs",
+    "type": "vehicle_part",
+    "name": { "str": "vehicle stairs" },
+    "description": "A compact steel stair flight.  Install a stair landing at the same position on the deck immediately above to connect the decks.  Both endpoints need sound frames, and the lower stairs must not have a roof.  Can be used while the vehicle is moving.",
+    "item": "vehicle_stairs",
+    "location": "center",
+    "symbol": "<",
+    "color": "white",
+    "broken_symbol": "#",
+    "broken_color": "light_gray",
+    "looks_like": "t_stairs_up",
+    "durability": 400,
+    "damage_reduction": { "all": 28 },
+    "breaks_into": "ig_vp_sheet_metal",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "qualities": [ { "id": "SAW_M", "level": 1 } ] },
+      "repair": {
+        "skills": [ [ "mechanics", 2 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_small_metal", 3 ] ]
+      }
+    },
+    "flags": [ "AISLE", "BOARDABLE", "VEHICLE_STAIRS_UP" ]
+  },
+  {
+    "id": "vehicle_stair_landing",
+    "type": "vehicle_part",
+    "name": { "str": "vehicle stair landing" },
+    "description": "A supported steel landing for vehicle stairs.  Install stairs at the same position on the deck immediately below to connect the decks.  The landing remains a solid floor for support and protection between decks.  Can be used while the vehicle is moving.",
+    "item": "vehicle_stairs",
+    "location": "center",
+    "symbol": ">",
+    "color": "white",
+    "broken_symbol": "#",
+    "broken_color": "light_gray",
+    "looks_like": "t_stairs_down",
+    "durability": 400,
+    "damage_reduction": { "all": 28 },
+    "breaks_into": "ig_vp_sheet_metal",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "qualities": [ { "id": "SAW_M", "level": 1 } ] },
+      "repair": {
+        "skills": [ [ "mechanics", 2 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_small_metal", 3 ] ]
+      }
+    },
+    "flags": [ "AISLE", "BOARDABLE", "VEHICLE_STAIRS_DOWN" ]
   }
 ]

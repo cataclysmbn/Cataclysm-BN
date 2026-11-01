@@ -1695,8 +1695,8 @@ void vehicle::open_or_close(const int part_index, const bool opening) {
     parts[part_index].open = opening;
     insides_dirty = true;
     map& here = get_map();
-    here.set_transparency_cache_dirty(abs_sm_pos.z());
     const auto part_location = mount_to_bubble(parts[part_index].mount);
+    here.set_transparency_cache_dirty(part_location.z());
     here.set_seen_cache_dirty(part_location);
     here.set_vehicle_cache_dirty(part_location.z());
     const int dist = rl_dist(get_player_character().bub_pos(), part_location);
@@ -2149,7 +2149,9 @@ void vehicle::interact_with(const tripoint_bub_ms& pos, int interact_part) {
             return;
         }
         case EXAMINE: {
-            g->exam_vehicle(*this);
+            auto cursor = tripoint_mnt_veh::zero();
+            if (vehicle_has_local_height(*this)) { cursor = parts[interact_part].mount; }
+            g->exam_vehicle(*this, cursor);
             return;
         }
         case TRACK: {

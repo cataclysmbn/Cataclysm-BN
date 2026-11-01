@@ -67,8 +67,7 @@ across map-square, submap, and overmap scales. World positions lie in the range
 
 Each vehicle has a world reference position and a horizontal steering pivot expressed in local
 mount coordinates. Neither must coincide with an installed part. Replacing a destroyed local
-origin column rebases mount XY and the steering anchors together; it does not change deck heights
-or move the surviving parts in the world.
+origin column rebases mount XY without changing local deck heights.
 
 - **Vehicle / mount** coordinates (`tripoint_mnt_veh`) describe permanent local geometry. Local X
   is forward/backward, Y is left/right, and Z identifies height relative to the vehicle's vertical
@@ -96,8 +95,7 @@ offset, so terrain deformation does not change their local deck separation.
 `precalc[0]` and `precalc[1]` remain XY offsets for current and proposed placement. The corresponding
 terrain offsets are stored separately; they must not be confused with permanent local mount z or
 with part drawing `z_order`. The saved `mount_dz` is local geometry, while `z_offset` is terrain
-placement. Three-dimensional coordinates alone do not establish full multi-deck gameplay support;
-see the [implementation plan](../design/multi_z_vehicles.md).
+placement.
 
 ## Point types
 

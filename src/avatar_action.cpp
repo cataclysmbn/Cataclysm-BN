@@ -398,10 +398,10 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
     };
 
     bool via_ramp = false;
-    if( m.has_flag( TFLAG_RAMP_UP, dest_loc ) ) {
+    if( m.ramp_offset( you.bub_pos(), dest_loc ) > 0 ) {
         dest_loc.z() += 1;
         via_ramp = true;
-    } else if( m.has_flag( TFLAG_RAMP_DOWN, dest_loc ) || can_use_ladder() ) {
+    } else if( m.ramp_offset( you.bub_pos(), dest_loc ) < 0 || can_use_ladder() ) {
         dest_loc.z() -= 1;
         via_ramp = true;
     }

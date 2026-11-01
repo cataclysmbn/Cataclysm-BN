@@ -7,6 +7,7 @@
 #    include "game.h"
 #    include "map/map.h"
 #    include "output.h"
+#    include "sdl_utils.h"
 #    include "sdltiles.h"
 #    include "units_utility.h"
 #    include "veh_type.h"
@@ -193,11 +194,27 @@ void vehicle_preview_window::display(
 
     // Set SDL clip rectangle to prevent drawing outside the window bounds
     const SDL_Renderer_Ptr& renderer = get_sdl_renderer();
+    constexpr auto flags = sdl_render_state_flags::draw_color;
+    const auto state = sdl_save_render_state<flags>(renderer.get());
     SDL_Rect clip_rect = {win_left, win_top, win_width, win_height};
     SDL_SetRenderClipRect(renderer.get(), &clip_rect);
 
+    SDL_SetRenderDrawColor(renderer.get(), 72, 72, 72, 255);
+    for (const auto index : veh.all_standalone_parts(cursor.z() - 1)) {
+        const auto& part = veh.cpart(index);
+        if (!veh.parts_at_relative(part.mount + tripoint_above, false).empty()) { continue; }
+        const auto q = (part.mount.xy() - cursor.xy()).rotate(3);
+        const auto pixel = center_px + point(q.x() * tile_w, q.y() * tile_h);
+        const auto outline = SDL_FRect{
+            .x = static_cast<float>(pixel.x + 1),
+            .y = static_cast<float>(pixel.y + 1),
+            .w = static_cast<float>(std::max(1, tile_w - 2)),
+            .h = static_cast<float>(std::max(1, tile_h - 2))};
+        SDL_RenderRect(renderer.get(), &outline);
+    }
+
     // Get all parts that should be displayed (one per tile)
-    const std::vector<int> structural_parts = veh.all_standalone_parts();
+    const std::vector<int> structural_parts = veh.all_standalone_parts(cursor.z());
 
     // Track which positions need highlighting
     std::vector<point> highlight_positions;
@@ -233,6 +250,7 @@ void vehicle_preview_window::display(
 
     // Clear the clip rectangle
     SDL_SetRenderClipRect(renderer.get(), nullptr);
+    sdl_restore_render_state(renderer.get(), state);
 }
 
 vehicle_preview_window::~vehicle_preview_window() { clear(); }

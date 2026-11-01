@@ -101,7 +101,6 @@
 #include <algorithm>
 #include <array>
 #include <bitset>
-#include <charconv>
 #include <climits>
 #include <cstdint>
 #include <cstdlib>
@@ -117,7 +116,6 @@
 #include <span>
 #include <sstream>
 #include <stack>
-#include <system_error>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -2996,49 +2994,6 @@ void item::serialize( JsonOut &json ) const
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ///// vehicle.h
 
-namespace
-{
-
-struct saved_integer_options {
-    std::string name;
-    std::optional<int> fallback = std::nullopt;
-    int min;
-    int max;
-};
-
-auto read_saved_integer( const JsonObject &data, const saved_integer_options &opts ) -> int
-{
-    if( opts.fallback && !data.has_member( opts.name ) ) {
-        return *opts.fallback;
-    }
-    auto &raw = *data.get_raw( opts.name );
-    if( !raw.test_number() ) {
-        data.throw_error( opts.name + " must be a JSON integer", opts.name );
-    }
-    const auto start = raw.tell();
-    raw.skip_number();
-    auto token = raw.substr( start, raw.tell() - start );
-    // skip_number() also consumes trailing whitespace and a possible comma.
-    token = token.substr( 0, token.find_first_of( " \t\r\n," ) );
-
-    // These new fields have no legacy decimal or exponent forms to preserve.
-    auto value = 0;
-    const auto end = token.data() + token.size();
-    const auto parsed = std::from_chars( token.data(), end, value );
-    const auto first_digit = token.starts_with( '-' ) ? size_t{ 1 } :
-                             size_t{ 0 };
-    if( parsed.ec != std::errc() || parsed.ptr != end ||
-        ( token.size() > first_digit + 1 && token[first_digit] == '0' ) ) {
-        data.throw_error( opts.name + " must be a JSON integer without leading zeros", opts.name );
-    }
-    if( value < opts.min || value > opts.max ) {
-        data.throw_error( opts.name + " out of range", opts.name );
-    }
-    return value;
-}
-
-} // namespace
-
 /*
  * vehicle_part
  */
@@ -3118,10 +3073,7 @@ void vehicle_part::deserialize( JsonIn &jsin )
 
     data.read( "mount_dx", mount.x() );
     data.read( "mount_dy", mount.y() );
-    const auto max_mount_dz = 2 * ( OVERMAP_DEPTH + OVERMAP_HEIGHT );
-    mount.z() = read_saved_integer( data, { .name = "mount_dz", .fallback = 0,
-                                            .min = -max_mount_dz, .max = max_mount_dz
-                                          } );
+    data.read( "mount_dz", mount.z() );
     data.read( "open", open );
     int direction_int;
     data.read( "direction", direction_int );
