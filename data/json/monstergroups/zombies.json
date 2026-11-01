@@ -933,7 +933,7 @@
     "type": "monstergroup",
     "default": "mon_zombie",
     "monsters": [
-      { "monster": "mon_zombie", "freq": 360, "cost_multiplier": 0 },
+      { "monster": "mon_zombie_nurse", "freq": 360, "cost_multiplier": 0 },
       { "monster": "mon_zombie_fat", "freq": 150, "cost_multiplier": 0 },
       { "monster": "mon_zombie_runner", "freq": 65, "cost_multiplier": 0 },
       { "monster": "mon_zombie_rot", "freq": 105, "pack_size": [ 2, 2 ], "cost_multiplier": 0 },
