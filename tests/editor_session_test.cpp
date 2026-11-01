@@ -8684,4 +8684,47 @@ TEST_CASE(
     CHECK(me::read_appearance(odd, "odd~id/x").where == "town");
 }
 
+TEST_CASE(
+    "where a building appears reads a terrain's facing as the game loads its flags",
+    "[editor_session]") {
+    namespace me = editor::map_editor;
+    const auto folder = std::filesystem::path(PATH_INFO::user_moddir()) / "editor_place4_mod";
+    const auto forget = [&] { std::filesystem::remove_all(folder); };
+    forget();
+    const auto cleanup = on_out_of_scope(forget);
+    std::filesystem::create_directories(folder);
+    std::ofstream(folder / "modinfo.json")
+        << R"([{"type":"MOD_INFO","id":"editor_place4_mod","name":"Place mod"}])";
+    // The overmap terrain a countryside placement names, or none when it is refused.
+    const auto placed = [&](const std::string& name, const std::string& terrain) {
+        const auto path = folder / (name + ".json");
+        std::ofstream(path) << R"([{"type":"overmap_terrain","id":")" << name << R"(","name":"A",)"
+                            << terrain << "}]";
+        if (!me::write_appearance(path, name, {.where = "country"})) { return std::string{}; }
+        return nlohmann::ordered_json::parse(read_file(
+            me::placement_file(path)))[0]["overmaps"][0]["overmap"]
+            .get<std::string>();
+    };
+    // Its own flags replace those of the terrain it copies.
+    CHECK(placed("own_flags", R"("copy-from":"omt_obsolete","flags":["SIDEWALK"])")
+          == "own_flags_north");
+    CHECK(placed("own_text", R"("flags":"NO_ROTATE")") == "own_text");
+    CHECK(placed("deleted", R"("copy-from":"omt_obsolete","delete":{"flags":["NO_ROTATE"]})")
+          == "deleted_north");
+    // Added flags count only on a copy.
+    CHECK(placed("added_alone", R"("extend":{"flags":["NO_ROTATE"]})") == "added_alone_north");
+    // A copy of a road is drawn as a line.
+    CHECK(placed("road_copy", R"("copy-from":"road")").empty());
+    // A special the player changed is the player's.
+    const auto shed = folder / "own_flags.json";
+    const auto own =
+        R"([{"type":"overmap_special","id":"own_flags","overmaps":[)"
+        R"({"point":[0,0,0],"overmap":"own_flags_north"},)"
+        R"({"point":[1,0,0],"overmap":"own_flags_north"}],"occurrences":[0,3]}])";
+    std::ofstream(me::placement_file(shed), std::ios::trunc) << own;
+    CHECK(me::read_appearance(shed, "own_flags").where == "test");
+    CHECK_FALSE(me::write_appearance(shed, "own_flags", {.where = "town"}));
+    CHECK(read_file(me::placement_file(shed)) == own);
+}
+
 #endif // CATA_MCP
