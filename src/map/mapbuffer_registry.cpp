@@ -17,6 +17,9 @@ mapbuffer_registry::mapbuffer_registry() {
 }
 
 auto mapbuffer_registry::get(const dimension_id& dim_id) -> mapbuffer& {
+    if (const auto first = buffers_.begin(); first != buffers_.end() && first->first == dim_id) {
+        return *first->second;
+    }
     auto it = buffers_.find(dim_id);
     if (it == buffers_.end()) {
         auto result = buffers_.emplace(dim_id, std::make_unique<mapbuffer>());
@@ -28,11 +31,17 @@ auto mapbuffer_registry::get(const dimension_id& dim_id) -> mapbuffer& {
 }
 
 auto mapbuffer_registry::find(const dimension_id& dim_id) -> mapbuffer* {
+    if (const auto first = buffers_.begin(); first != buffers_.end() && first->first == dim_id) {
+        return first->second.get();
+    }
     const auto it = buffers_.find(dim_id);
     return it == buffers_.end() ? nullptr : it->second.get();
 }
 
 auto mapbuffer_registry::find(const dimension_id& dim_id) const -> const mapbuffer* {
+    if (const auto first = buffers_.begin(); first != buffers_.end() && first->first == dim_id) {
+        return first->second.get();
+    }
     const auto it = buffers_.find(dim_id);
     return it == buffers_.end() ? nullptr : it->second.get();
 }
