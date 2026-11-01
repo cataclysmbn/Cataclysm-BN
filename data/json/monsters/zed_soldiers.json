@@ -256,9 +256,9 @@
     "melee_dice_sides": 6,
     "melee_cut": 0,
     "dodge": 1,
-    "//": "Ballistic resist in between an empty ballistic vest and one with scrap plates, because it hasn't finished integrating the armor into itself.",
-    "armor_bash": 14,
-    "armor_cut": 34,
+    "//": "Armor values 75% that of a lamellar ballistic vest, because it hasn't finished integrating the armor into itself.",
+    "armor_bash": 18,
+    "armor_cut": 23,
     "armor_bullet": 53,
     "vision_day": 30,
     "vision_night": 5,
@@ -306,9 +306,9 @@
     "melee_dice_sides": 6,
     "melee_cut": 0,
     "dodge": 1,
-    "//": "Ballistic resist matches armor value of ballistic vest with mild steel or superalloy plates.",
-    "armor_bash": 18,
-    "armor_cut": 45,
+    "//": "Matches armor value of lamellar ballistic vest.",
+    "armor_bash": 24,
+    "armor_cut": 30,
     "armor_bullet": 70,
     "vision_day": 30,
     "vision_night": 5,
@@ -361,7 +361,7 @@
     "melee_damage": [ { "damage_type": "bash", "amount": 10, "armor_penetration": 10 } ],
     "melee_cut": 0,
     "dodge": 1,
-    "//": "Ballistic resist matches armor value of a ballistic vest with hard-steel or dragonskin plates.",
+    "//": "Ballistic resist matches armor value of a ballistic vest with hard-steel plates.",
     "armor_bash": 30,
     "armor_cut": 56,
     "armor_bullet": 90,
@@ -805,3 +805,4 @@
     ]
   }
 ]
+
