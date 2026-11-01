@@ -1,9 +1,13 @@
 #include "cata_utility.h"
 #include "catch/catch.hpp"
 #include "editor/map_session.h"
+#include "editor/recent_documents.h"
 #include "editor/session_file.h"
+#include "mod_manager.h"
 #include "path_info.h"
+#include "worldfactory.h"
 
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <nlohmann/json.hpp>
@@ -148,4 +152,47 @@ TEST_CASE(
     const auto cleanup = on_out_of_scope(forget);
     std::filesystem::permissions(top / "locked", std::filesystem::perms::none);
     CHECK(editor::map_editor::check_new_path((top / "house.json").string()));
+}
+
+TEST_CASE(
+    "an editor world opens with every mod of the player's mods after the mods it starts from",
+    "[editor_session][editor_vehicle]") {
+    const auto mods = std::filesystem::path(PATH_INFO::user_moddir());
+    const auto own = mods / "editor_world_mods_own";
+    const auto old = mods / "editor_world_mods_old";
+    const auto forget = [&] {
+        std::filesystem::remove_all(own);
+        std::filesystem::remove_all(old);
+        world_generator->get_mod_manager().refresh_mod_list();
+    };
+    forget();
+    const auto cleanup = on_out_of_scope(forget);
+    std::filesystem::create_directories(own);
+    std::ofstream(own / "modinfo.json")
+        << R"([{"type":"MOD_INFO","id":"editor_world_mods_own","name":"Own",)"
+           R"("category":"content","dependencies":["bn","desertpack"]}])";
+    std::filesystem::create_directories(old);
+    std::ofstream(old / "modinfo.json")
+        << R"([{"type":"MOD_INFO","id":"editor_world_mods_old","name":"Old",)"
+           R"("category":"content","dependencies":["bn"],"obsolete":true}])";
+    world_generator->get_mod_manager().refresh_mod_list();
+    const auto defaults = world_generator->get_mod_manager().get_default_mods();
+    const auto opened = editor::editor_world_mods({});
+    REQUIRE(opened.size() >= defaults.size());
+    CHECK(std::ranges::equal(opened | std::views::take(defaults.size()), defaults));
+    const auto own_at = std::ranges::find(opened, mod_id("editor_world_mods_own"));
+    const auto needed = std::ranges::find(opened, mod_id("desertpack"));
+    REQUIRE(own_at != opened.end());
+    REQUIRE(needed != opened.end());
+    CHECK(needed < own_at);
+    // An obsolete mod starts no new world.
+    CHECK_FALSE(std::ranges::contains(opened, mod_id("editor_world_mods_old")));
+    // A document's mods come first; none of them left starts from the default mods.
+    const auto core = mod_management::get_default_core_content_pack();
+    const auto reopened = editor::editor_world_mods({core, mod_id("gone")});
+    REQUIRE_FALSE(reopened.empty());
+    CHECK(reopened.front() == core);
+    CHECK_FALSE(std::ranges::contains(reopened, mod_id("gone")));
+    CHECK(std::ranges::contains(reopened, mod_id("editor_world_mods_own")));
+    CHECK(editor::editor_world_mods({mod_id("gone")}) == opened);
 }

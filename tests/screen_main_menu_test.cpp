@@ -189,7 +189,7 @@ TEST_CASE(
                     CHECK(shown->id == "editor");
                     CHECK(shown->label == "Editor");
                     const auto& rows = body<ec::list_body>(content).rows;
-                    REQUIRE(rows.size() == 3);
+                    REQUIRE(rows.size() == 4);
                     CHECK(rows[0].id == "editor:map");
                     CHECK(rows[0].label == "Map editor");
                     CHECK_FALSE(rows[0].description.empty());
@@ -199,6 +199,9 @@ TEST_CASE(
                     CHECK(rows[2].id == "editor:save");
                     CHECK(rows[2].label == "Load save");
                     CHECK_FALSE(rows[2].description.empty());
+                    CHECK(rows[3].id == "editor:mods");
+                    CHECK(rows[3].label == "Choose mods");
+                    CHECK_FALSE(rows[3].description.empty());
                     CHECK(find(top, "menu:entry") != nullptr);
                     return invoke_event(top, "menu:tab", {.row = "quit"});
                 }
@@ -224,64 +227,35 @@ TEST_CASE(
     const auto guard = screen_guard{};
     const auto core = mod_management::get_default_core_content_pack();
     const auto house = std::string("data/json/mapgen/house/house01.json");
-    // A document whose mods are all gone starts the picker from the default mods.
     editor::remember_document({.editor = "vehicle", .name = "bicycle", .mods = {mod_id("gone")}});
     editor::remember_document(
         {.editor = "map", .name = house, .mods = {core, mod_id("desertpack")}});
     auto stage = 0;
-    open_stack(
-        [&] { main_menu{}.opening_screen(); },
-        [&](const auto& /*snapshot*/, const auto& top) {
-            switch (stage++) {
-                case 0:
-                    return invoke_event(top, "menu:tab", {.row = "editor"});
-                case 1: {
-                    const auto [banner, tabs, content] = parts_of(top);
-                    const auto& rows = body<ec::list_body>(content).rows;
-                    REQUIRE(rows.size() == 5);
-                    // The newest first, after the editors and the saves.
-                    CHECK(rows[3].id == "editor:recent:0");
-                    CHECK(rows[3].label == house);
-                    CHECK(rows[3].description.contains(mod_id("desertpack")->name()));
-                    CHECK(rows[4].id == "editor:recent:1");
-                    CHECK(rows[4].label == "bicycle");
-                    return invoke_event(top, "menu:entry", {.row = "editor:recent:0"});
-                }
-                case 2: {
-                    // The mod picker starts from the mods the document was opened with.
-                    REQUIRE(top.context == "MODMANAGER_DIALOG");
-                    const auto* const active =
-                        ec::find_component(*top.root, "worldgen:mods:active:rows");
-                    REQUIRE(active != nullptr);
-                    const auto& rows = body<ec::list_body>(*active).rows;
-                    CHECK(std::ranges::contains(rows, "active:desertpack", &ec::row::id));
-                    return run_action("QUIT");
-                }
-                case 3:
-                case 6:
-                    CHECK(top.context == "YESNO");
-                    return run_action("NO");
-                case 4:
-                    return invoke_event(top, "menu:entry", {.row = "editor:recent:1"});
-                case 5: {
-                    REQUIRE(top.context == "MODMANAGER_DIALOG");
-                    const auto* const active =
-                        ec::find_component(*top.root, "worldgen:mods:active:rows");
-                    REQUIRE(active != nullptr);
-                    CHECK(std::ranges::contains(
-                        body<ec::list_body>(*active).rows, "active:" + core.str(), &ec::row::id));
-                    return run_action("QUIT");
-                }
-                case 7:
-                    return invoke_event(top, "menu:tab", {.row = "quit"});
-                case 8:
-                    return run_action("YES");
-                default:
-                    FAIL("unexpected extra screen " << top.context);
-            }
-            return input_event{};
-        });
-    CHECK(stage == 9);
+    open_stack([&] { main_menu{}.opening_screen(); },
+               [&](const auto& /*snapshot*/, const auto& top) {
+                   switch (stage++) {
+                       case 0:
+                           return invoke_event(top, "menu:tab", {.row = "editor"});
+                       case 1: {
+                           const auto [banner, tabs, content] = parts_of(top);
+                           const auto& rows = body<ec::list_body>(content).rows;
+                           REQUIRE(rows.size() == 6);
+                           // The newest first, after the editors, the saves and the mods.
+                           CHECK(rows[4].id == "editor:recent:0");
+                           CHECK(rows[4].label == house);
+                           CHECK(rows[4].description.contains(mod_id("desertpack")->name()));
+                           CHECK(rows[5].id == "editor:recent:1");
+                           CHECK(rows[5].label == "bicycle");
+                           return invoke_event(top, "menu:tab", {.row = "quit"});
+                       }
+                       case 2:
+                           return run_action("YES");
+                       default:
+                           FAIL("unexpected extra screen " << top.context);
+                   }
+                   return input_event{};
+               });
+    CHECK(stage == 3);
     CHECK_FALSE(world_generator->has_world("EDITOR"));
 }
 
@@ -326,7 +300,7 @@ TEST_CASE(
                 case 0:
                     return invoke_event(top, "menu:tab", {.row = "editor"});
                 case 1:
-                    return invoke_event(top, "menu:entry", {.row = "editor:map"});
+                    return invoke_event(top, "menu:entry", {.row = "editor:mods"});
                 case 2: {
                     // The game's own mod list comes first, with the mods of the default list
                     // active.
@@ -457,7 +431,7 @@ TEST_CASE(
                 case 0:
                     return invoke_event(top, "menu:tab", {.row = "editor"});
                 case 1:
-                    return invoke_event(top, "menu:entry", {.row = "editor:vehicle"});
+                    return invoke_event(top, "menu:entry", {.row = "editor:mods"});
                 case 2: {
                     REQUIRE(top.context == "MODMANAGER_DIALOG");
                     const auto* const header =
@@ -497,13 +471,11 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "the main menu reopens a document of a mod the editor made after the game started with that "
-    "mod",
+    "the editor's mod picker has a mod the editor made after the game started turned on",
     "[client][interaction][mcp][screens][main_menu][editor][editor_vehicle]") {
     clear_all_state();
     const auto folder = std::filesystem::path(PATH_INFO::user_moddir()) / "vehicle_editor_reopen";
     const auto forget = [&] {
-        std::filesystem::remove(editor::recent_documents_file());
         std::filesystem::remove_all(folder);
         world_generator->get_mod_manager().refresh_mod_list();
     };
@@ -516,9 +488,6 @@ TEST_CASE(
            R"("category":"content","dependencies":["bn"]}])";
     std::ofstream(folder / "kart.json")
         << R"([{"type":"vehicle","id":"kart","name":"kart","parts":[]}])";
-    const auto core = mod_management::get_default_core_content_pack();
-    editor::remember_document(
-        {.editor = "vehicle", .name = "kart", .mods = {core, mod_id("vehicle_editor_reopen")}});
     const auto restore = menu_restore{};
     const auto guard = screen_guard{};
     auto stage = 0;
@@ -528,7 +497,7 @@ TEST_CASE(
                        case 0:
                            return invoke_event(top, "menu:tab", {.row = "editor"});
                        case 1:
-                           return invoke_event(top, "menu:entry", {.row = "editor:recent:0"});
+                           return invoke_event(top, "menu:entry", {.row = "editor:mods"});
                        case 2: {
                            REQUIRE(top.context == "MODMANAGER_DIALOG");
                            const auto* const active =
