@@ -282,7 +282,8 @@ void avatar::memorize_terrain_tile( const tripoint_abs_ms &pos, const std::strin
     player_map_memory->memorize_terrain_tile( pos, ter, subtile, rotation );
 }
 
-auto avatar::get_terrain_tile( const tripoint_abs_ms &pos ) const -> const memorized_terrain_tile & // *NOPAD*
+auto avatar::get_terrain_tile( const tripoint_abs_ms &pos ) const -> const memorized_terrain_tile
+& // *NOPAD*
 {
     return player_map_memory->get_terrain_tile( pos );
 }

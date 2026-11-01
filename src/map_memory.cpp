@@ -90,7 +90,8 @@ void map_memory::memorize_terrain_tile( const tripoint_abs_ms &pos, const std::s
     sm.set_terrain_tile( p.remainder, memorized_terrain_tile{ ter, subtile, rotation } );
 }
 
-auto map_memory::get_terrain_tile( const tripoint_abs_ms &pos ) -> const memorized_terrain_tile & // *NOPAD*
+auto map_memory::get_terrain_tile( const tripoint_abs_ms &pos ) -> const memorized_terrain_tile
+& // *NOPAD*
 {
     const auto p = project_remain<coords::sm>( pos );
     const auto &sm = get_submap( p.quotient_tripoint );

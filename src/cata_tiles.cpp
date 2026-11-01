@@ -5597,7 +5597,8 @@ bool cata_tiles::draw_field_or_item( const tripoint_bub_ms &p, const lit_level l
         const auto nv = !fld_overridden;
 
         auto field_at = [&]( const tripoint_bub_ms & q, const bool invis ) -> field_type_id {
-            if( has_fld_overrides ) {
+            if( has_fld_overrides )
+            {
                 const auto it = field_override.find( q );
                 if( it != field_override.end() ) {
                     return it->second;
@@ -7245,7 +7246,8 @@ void cata_tiles::get_terrain_orientation( const tripoint_bub_ms &p, int &rota, i
     const auto has_overrides = !ter_override.empty();
     const auto overridden = has_overrides && ter_override.contains( p );
     const auto ter = [&]( const tripoint_bub_ms & q, const bool invis ) -> ter_id {
-        if( has_overrides ) {
+        if( has_overrides )
+        {
             const auto override = ter_override.find( q );
             if( override != ter_override.end() ) {
                 return override->second;
