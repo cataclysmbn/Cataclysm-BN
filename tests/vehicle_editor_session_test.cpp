@@ -6409,4 +6409,64 @@ TEST_CASE(
           == nlohmann::ordered_json::parse(R"([{"name":5},{"name":"Tank","data":{"mounts":[]}}])"));
 }
 
+TEST_CASE("a part category opens on what the game's vehicles install most", "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto steps = std::vector<walk_step>{
+        [](const auto&) { return invoke("vehicle:open", {.row = "prototype:bicycle"}); },
+        [](const auto& screen) {
+            const auto& tabs = body<ec::tabs_body>(part(screen, "vehicle:part_groups")).tabs;
+            const auto fuel = std::ranges::find(tabs, "Fuel & batteries", &ec::tab_entry::label);
+            REQUIRE(fuel != tabs.end());
+            return invoke("vehicle:part_group", {.row = fuel->id});
+        },
+        [](const auto& screen) {
+            const auto ids =
+                rows(screen, "vehicle:parts") | std::views::transform(&ec::row::id)
+                | std::ranges::to<std::vector>();
+            const auto tank = std::ranges::find(ids, "vpart:tank");
+            REQUIRE(tank != ids.end());
+            CHECK(tank < std::ranges::find(ids, "vpart:external_tank"));
+            return act("QUIT");
+        }};
+    CHECK(walk(steps) == steps.size());
+}
+
+TEST_CASE(
+    "prototypes of one name keep plain names beside Advanced mode's ids", "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto steps = std::vector<walk_step>{
+        [](const auto&) { return invoke("vehicle:filter", {.text = "Small helicopter"}); },
+        [](const auto& screen) {
+            const auto& listed = rows(screen, "vehicle:prototypes");
+            REQUIRE(listed.size() > 1);
+            CHECK(std::ranges::count(listed, std::string("Small helicopter"), &ec::row::label) > 1);
+            return act("QUIT");
+        }};
+    CHECK(walk(steps) == steps.size());
+}
+
+TEST_CASE("prototypes of one name read apart in the list", "[editor_vehicle]") {
+    const auto guard = screen_guard{};
+    const auto simple = override_option("EDITOR_ADVANCED", "false");
+    const auto steps = std::vector<walk_step>{
+        [](const auto&) { return invoke("vehicle:filter", {.text = "Small helicopter"}); },
+        [](const auto& screen) {
+            auto labels =
+                rows(screen, "vehicle:prototypes") | std::views::transform(&ec::row::label)
+                | std::ranges::to<std::vector>();
+            REQUIRE(labels.size() > 1);
+            CHECK(std::ranges::all_of(labels, [](const std::string& label) {
+                return label.starts_with("Small helicopter (");
+            }));
+            std::ranges::sort(labels);
+            CHECK(std::ranges::adjacent_find(labels) == labels.end());
+            return invoke("vehicle:filter", {.text = "bicycle"});
+        },
+        [](const auto& screen) {
+            CHECK(row(screen, "vehicle:prototypes", "prototype:bicycle").label == "Bicycle");
+            return act("QUIT");
+        }};
+    CHECK(walk(steps) == steps.size());
+}
+
 #endif // CATA_MCP

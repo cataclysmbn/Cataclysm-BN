@@ -2231,6 +2231,9 @@ TEST_CASE(
                       == "editor:placement_span");
                 CHECK(body<ec::grid_body>(part(screen, "editor:canvas")).drag == "span");
                 CHECK(wire_part(state, "editor:canvas")["region_drag"] == "editor:placement_span");
+                // Nothing begins a stroke here, so no button offers one.
+                CHECK_FALSE(std::ranges::contains(
+                    screen.affordances, std::string("editor:stroke_begin"), &ec::affordance::id));
                 CHECK_FALSE(std::ranges::contains(
                     part(screen, "editor:canvas").affordances,
                     std::string("editor:placement_span")));

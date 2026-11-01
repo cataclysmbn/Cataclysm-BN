@@ -149,6 +149,7 @@ TEST_CASE(
     // With no tank at all, one comes, full of diesel.
     const auto tankless = kart({{.at = {-1, 0}, .parts = frame}});
     CHECK_FALSE(check_of(checks_of(tankless), "fuel").ok);
+    CHECK(check_of(checks_of(tankless), "fuel").action == "Add a tank of diesel");
     fixed(tankless, "fuel");
 }
 
