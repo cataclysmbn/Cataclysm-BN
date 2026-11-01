@@ -469,6 +469,7 @@ auto run_editor_session() -> void {
             }
         } else if (id == advanced_id) {
             set_advanced_mode(!advanced_mode());
+            state.show_card_catalog();
         } else if (!state.doc) {
             keep();
             continue;
@@ -552,7 +553,12 @@ auto run_editor_session() -> void {
         } else if (id == stroke_begin_id) {
             state.doc->begin_group();
         } else if (id == stroke_end_id) {
-            state.doc->end_group();
+            // A click of the placements tool marks its one square.
+            if (state.current->region != region_use::placements) {
+                state.doc->end_group();
+            } else if (state.anchor) {
+                state.paint(*state.anchor);
+            }
         } else if (id == extract_palette_id) {
             state.extract_palette(invoked->args.text.value_or(""));
         } else if (id == undo_id || id == redo_id) {
@@ -613,7 +619,7 @@ auto run_editor_session() -> void {
             if (found != entries.end() && state.on_special()) {
                 state.special_terrain = found->id;
             } else if (found != entries.end() && state.on_card() && card_kind(*state.catalog)) {
-                state.place_kind = *card_kind(*state.catalog);
+                state.place_what_kind = *card_kind(*state.catalog);
                 state.place_what = found->id;
                 state.place_what_name = catalog_row_label(*found);
             } else if (found != entries.end() && state.has_rows()) {

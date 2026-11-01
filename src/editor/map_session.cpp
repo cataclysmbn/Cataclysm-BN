@@ -1147,6 +1147,8 @@ auto session::open_square(const point& at) -> void {
 auto session::show_object(const std::size_t index) -> void {
     object = index;
     held.reset();
+    place_what.clear();
+    place_what_name.clear();
     special_level = ground_level(special_levels(doc->objects()[index].value));
     anchor.reset();
     selected.reset();
@@ -1357,6 +1359,8 @@ auto session::open(const std::string& name) -> void {
     }
     doc = std::move(*opened);
     held.reset();
+    place_what.clear();
+    place_what_name.clear();
     refresh_file(path);
     ++openings;
     remember_document({.editor = "map", .name = path.generic_string(), .mods = mods_for(path)});
@@ -2000,9 +2004,16 @@ auto session::add_typed() -> void {
         std::from_chars(text.data(), text.data() + text.size(), value);
         return value;
     };
+    place_kind = place_what_kind;
+    place_x = range_text(
+        {.min = std::min(selected->from.x, selected->to.x),
+         .max = std::max(selected->from.x, selected->to.x)});
+    place_y = range_text(
+        {.min = std::min(selected->from.y, selected->to.y),
+         .max = std::max(selected->from.y, selected->to.y)});
     place_value =
         typed_value(
-            {.kind = place_kind,
+            {.kind = place_what_kind,
              .what = place_what,
              .chance = number(place_chance, 100),
              .count = number(place_count, 1),
@@ -2029,7 +2040,7 @@ auto card_kind(const catalog_use& use) -> std::optional<std::string> {
 }
 
 auto session::on_card() const -> bool {
-    return !advanced_mode() && current->region == region_use::placements;
+    return on_mapgen() && !advanced_mode() && current->region == region_use::placements;
 }
 
 auto session::show_catalog(const catalog_use& use) -> void {

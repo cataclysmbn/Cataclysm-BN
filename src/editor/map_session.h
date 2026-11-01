@@ -470,8 +470,9 @@ struct session {
     std::string place_x = "0";
     std::string place_y = "0";
     std::string place_value;
-    /// What the card of the placements tool places: the id and name the catalog picked, and how
-    /// the player set it.
+    /// What the card of the placements tool places: the array, id and name the catalog picked,
+    /// and how the player set it.
+    std::string place_what_kind = "place_items";
     std::string place_what;
     std::string place_what_name;
     std::string place_chance = "100";

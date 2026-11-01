@@ -507,7 +507,7 @@ auto canvas(const session& state) -> ec::component {
                       ? "trail"
                       : "",
             .drag_begin = state.current->kind == shape_kind::point ? stroke_begin_id : "",
-            .drag_end = state.current->kind == shape_kind::point ? stroke_end_id : "",
+            .drag_end = state.current->kind == shape_kind::point || drags ? stroke_end_id : "",
             .block = object.contains("om_terrain")
                        ? ec::grid_point{SEEX * 2, SEEY * 2}
                        : ec::grid_point{},
@@ -847,7 +847,7 @@ auto placement_card(
         affordances.push_back(
             ec::invoke_affordance({.id = placement_delete_id, .label = _("Delete placement")}));
     }
-    const auto& kind = state.place_kind;
+    const auto& kind = state.place_what_kind;
     auto fields = std::vector<ec::form_field>{};
     if (kind == "place_items" || kind == "place_monsters" || kind == "place_vehicles") {
         fields.push_back(
@@ -1423,7 +1423,10 @@ auto drawing_affordances(const session& state) -> std::vector<ec::affordance> {
              .label = _("Move placement"),
              .args = {.row = ec::row_shape{.component_id = canvas_id}, .text = ec::text_shape{}}}));
     }
-    stroke_affordances(affordances, state.current->kind == shape_kind::point);
+    stroke_affordances(
+        affordances,
+        state.current->kind == shape_kind::point
+            || state.current->region == region_use::placements);
     affordances.push_back(ec::invoke_affordance(
         {.id = extract_palette_id,
          .label = _("Extract legend to palette"),
