@@ -1053,7 +1053,7 @@ auto parts_view(const session& state) -> ec::screen_view {
                                  .columns = {
                                      {.key = "chance",
                                       .label = _("Chance %"),
-                                      .value = std::to_string(entry.value("chance", 0)),
+                                      .value = std::to_string(int_at(entry, "chance", 0)),
                                       .color = ""}}};
                          })
                        | std::ranges::to<std::vector>(),

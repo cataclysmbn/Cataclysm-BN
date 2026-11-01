@@ -1427,7 +1427,7 @@ auto design_step_label(const document_edit& edit) -> std::string {
     const auto spawned = added(spawns(edit.before), spawns(edit.after));
     const auto taken = added(spawns(edit.after), spawns(edit.before));
     const auto spawn_at = [](const nlohmann::ordered_json& entry) {
-        return point(entry.value("x", 0), entry.value("y", 0));
+        return point(int_at(entry, "x", 0), int_at(entry, "y", 0));
     };
     if (spawned.size() == 1 && taken.empty()) {
         return at_mount(_("Add %s at %d,%d"), item_spawn_name(spawned[0]), spawn_at(spawned[0]));

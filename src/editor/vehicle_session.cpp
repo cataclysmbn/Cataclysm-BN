@@ -367,8 +367,8 @@ auto session::item_spawns() const -> std::vector<std::size_t> {
     if (!items.is_array()) { return {}; }
     return std::views::iota(std::size_t{0}, items.size())
          | std::views::filter([&](const std::size_t index) {
-               return items[index].value("x", 0) == cursor.x
-                   && items[index].value("y", 0) == cursor.y;
+               return int_at(items[index], "x", 0) == cursor.x
+                   && int_at(items[index], "y", 0) == cursor.y;
            })
          | std::ranges::to<std::vector>();
 }
@@ -1741,8 +1741,8 @@ struct editing: session {
         for (auto& square : stroke_erased) { square -= moved; }
         if (!live_stroke) { return; }
         for (auto& entry : live_stroke_before["parts"]) {
-            entry["x"] = entry.value("x", 0) - moved.x;
-            entry["y"] = entry.value("y", 0) - moved.y;
+            entry["x"] = int_at(entry, "x", 0) - moved.x;
+            entry["y"] = int_at(entry, "y", 0) - moved.y;
         }
     }
 
