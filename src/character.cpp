@@ -95,6 +95,7 @@
 #include "thread_pool.h"
 #include "translations.h"
 #include "trap.h"
+#include "trap_hunting.h"
 #include "type_id.h"
 #include "ui.h"
 #include "ui_manager.h"
@@ -2788,6 +2789,13 @@ item &Character::i_add( detached_ptr<item> &&it, bool should_stack )
 {
     itype_id item_type_id = it->typeId();
     last_item = item_type_id;
+
+    // Bait taken off a hunting trap without its examine menu; strip the tags before stacking.
+    if( trap_hunting::has_bait_tags( *it ) ) {
+        trap_hunting::release_bait( *it );
+        add_msg_if_player( m_warning,
+                           _( "You take away the bait.  No animal is foolish enough to wander into an empty trap." ) );
+    }
 
     if( it->is_food() || it->is_ammo() || it->is_gun() || it->is_armor() ||
         it->is_book() || it->is_tool() || it->is_melee() || it->is_food_container() ) {
