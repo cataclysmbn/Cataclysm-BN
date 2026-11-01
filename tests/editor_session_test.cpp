@@ -8643,4 +8643,45 @@ TEST_CASE("the editors read a whole number of the wrong kind as none", "[editor_
     CHECK(editor::int_at(nlohmann::ordered_json::array(), "x", 7) == 7);
 }
 
+TEST_CASE(
+    "where a building appears follows the file over the game, refuses a line terrain and keeps "
+    "a town list of other houses",
+    "[editor_session]") {
+    namespace me = editor::map_editor;
+    const auto folder = std::filesystem::path(PATH_INFO::user_moddir()) / "editor_place3_mod";
+    const auto forget = [&] { std::filesystem::remove_all(folder); };
+    forget();
+    const auto cleanup = on_out_of_scope(forget);
+    std::filesystem::create_directories(folder);
+    std::ofstream(folder / "modinfo.json")
+        << R"([{"type":"MOD_INFO","id":"editor_place3_mod","name":"Place mod"}])";
+    // The game turns its empty lot; the file the player edits says it no longer does.
+    const auto house = folder / "house.json";
+    std::ofstream(house) << R"([{"type":"overmap_terrain","id":"emptyresidentiallot","name":"Lot",)"
+                            R"("flags":["NO_ROTATE"]}])";
+    REQUIRE(me::write_appearance(house, "emptyresidentiallot", {.where = "country"}));
+    const auto special = nlohmann::ordered_json::parse(read_file(me::placement_file(house)));
+    CHECK(special[0]["overmaps"][0]["overmap"] == "emptyresidentiallot");
+    CHECK(special[0]["rotate"] == false);
+    // A terrain drawn as a line has no square of its own to place.
+    const auto road = folder / "road.json";
+    std::ofstream(road) << R"([{"type":"overmap_terrain","id":"editor_place3_road","name":"Road",)"
+                           R"("flags":["LINEAR"]}])";
+    CHECK_FALSE(me::write_appearance(road, "editor_place3_road", {.where = "country"}));
+    CHECK_FALSE(std::filesystem::exists(me::placement_file(road)));
+    // A town list that adds other houses too is the player's.
+    const auto shed = folder / "shed.json";
+    const auto houses =
+        R"([{"type":"region_overlay","regions":["all"],)"
+        R"("city":{"houses":{"editor_place3_shed":50,"other_house":10}}}])";
+    std::ofstream(me::placement_file(shed)) << houses;
+    CHECK(me::read_appearance(shed, "editor_place3_shed").where == "test");
+    CHECK_FALSE(me::write_appearance(shed, "editor_place3_shed", {.where = "town"}));
+    CHECK(read_file(me::placement_file(shed)) == houses);
+    // An id of any letters names its house.
+    const auto odd = folder / "odd.json";
+    REQUIRE(me::write_appearance(odd, "odd~id/x", {.where = "town"}));
+    CHECK(me::read_appearance(odd, "odd~id/x").where == "town");
+}
+
 #endif // CATA_MCP
