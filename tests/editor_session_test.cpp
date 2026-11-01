@@ -8450,4 +8450,71 @@ TEST_CASE(
     CHECK(editor::document_title(game) == "data/json/mapgen/house/house01.json");
 }
 
+TEST_CASE(
+    "a named building set to appear in towns or the countryside writes where the game places it",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto simple = override_option("EDITOR_ADVANCED", "false");
+    const auto folder = std::filesystem::path(PATH_INFO::user_moddir()) / "my_first_mod";
+    const auto placement = folder / "my_house_placement.json";
+    const auto forget = [&] {
+        std::filesystem::remove_all(folder);
+        std::filesystem::remove(editor::recent_documents_file());
+    };
+    forget();
+    const auto cleanup = on_out_of_scope(forget);
+    const auto where = [](const ec::screen_view& screen, const std::string& id) {
+        const auto& fields = body<ec::form_body>(part(screen, "editor:appears")).fields;
+        const auto found = std::ranges::find(fields, id, &ec::form_field::id);
+        return found == fields.end() ? std::string{} : found->value;
+    };
+    const auto written = [&] { return nlohmann::ordered_json::parse(read_file(placement)); };
+    const auto walk = std::vector<map_step>{
+        [](const auto&) { return invoke("editor:new_set", {.row = "name", .text = "My house"}); },
+        [](const auto&) {
+            return invoke("editor:new_set", {.row = "mod_name", .text = "My first mod"});
+        },
+        [](const auto&) { return invoke("editor:new_apply"); },
+        [&](const auto& screen) {
+            // A new building shows up only where it is tested, until the player says otherwise.
+            CHECK(where(screen, "where") == "test");
+            CHECK(where(screen, "often").empty());
+            CHECK_FALSE(std::filesystem::exists(placement));
+            return invoke("editor:appears_set", {.row = "where", .text = "town"});
+        },
+        [&](const auto& screen) {
+            CHECK(where(screen, "where") == "town");
+            CHECK(where(screen, "often") == "sometimes");
+            const auto overlay = written();
+            REQUIRE(overlay.size() == 1);
+            CHECK(overlay[0]["type"] == "region_overlay");
+            CHECK(overlay[0]["regions"] == nlohmann::ordered_json::array({"all"}));
+            CHECK(overlay[0]["city"]["houses"]["my_house"] == 50);
+            CHECK(stat_of(screen, "placed") == "In towns, sometimes");
+            return invoke("editor:appears_set", {.row = "often", .text = "often"});
+        },
+        [&](const auto&) {
+            CHECK(written()[0]["city"]["houses"]["my_house"] == 150);
+            return invoke("editor:appears_set", {.row = "where", .text = "country"});
+        },
+        [&](const auto& screen) {
+            const auto special = written();
+            REQUIRE(special.size() == 1);
+            CHECK(special[0]["type"] == "overmap_special");
+            CHECK(special[0]["id"] == "my_house");
+            CHECK(special[0]["overmaps"][0]["overmap"] == "my_house_north");
+            CHECK(special[0]["locations"] == nlohmann::ordered_json::array({"field"}));
+            CHECK(special[0]["occurrences"] == nlohmann::ordered_json::array({1, 5}));
+            CHECK(stat_of(screen, "placed") == "In the countryside, often");
+            return invoke("editor:appears_set", {.row = "where", .text = "test"});
+        },
+        [&](const auto& screen) {
+            CHECK_FALSE(std::filesystem::exists(placement));
+            CHECK(where(screen, "where") == "test");
+            return act("QUIT");
+        }};
+    CHECK(walk_map(walk) == walk.size());
+    editor::reset_editor_session();
+}
+
 #endif // CATA_MCP
