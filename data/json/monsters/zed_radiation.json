@@ -7,10 +7,9 @@
     "type": "MONSTER",
     "name": { "str": "glowing zombie" },
     "description": "An eerie glow emanates from this zombie's charred flesh, melted scraps of some sort of protective suit clinging to its body.",
-    "armor_fire": 5,
     "luminance": 8,
     "regenerates": 1,
-    "regeneration_modifiers": [ { "effect": "corroding", "base_mod": -1 } ],
+    "regeneration_modifiers": [ { "effect": "corroding", "base_mod": -1 }, { "effect": "onfire", "base_mod": -1 } ],
     "special_attacks": [ { "type": "bite", "cooldown": 5 }, [ "GRAB", 7 ], [ "scratch", 20 ] ],
     "death_drops": "radiation_zombie_death_drops",
     "fungalize_into": "mon_zombie_fungus",
@@ -40,7 +39,6 @@
     ],
     "proportional": { "hp": 1.5, "armor_bash": 1.5, "armor_cut": 1.5, "armor_bullet": 1.5, "luminance": 3, "regenerates": 5 },
     "relative": { "speed": 20, "dodge": 1, "melee_dice": -1, "melee_dice_sides": 3, "melee_cut": 5 },
-    "extend": { "flags": [ "FIREPROOF" ] },
     "delete": { "upgrades": { "half_life": 14, "into": "mon_zombie_radiation_2" } }
   },
   {
