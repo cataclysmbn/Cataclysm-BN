@@ -59,7 +59,7 @@
     "melee_dice_sides": 8,
     "melee_cut": 10,
     "dodge": 1,
-    "//": "Based on material values of heavy bone, though with bash and ballistic resist swapped to encourage shooting them instead of using bash damage against everything.",
+    "//2": "Based on material values of heavy bone, though with bash and ballistic resist swapped to encourage shooting them instead of using bash damage against everything.",
     "armor_bash": 40,
     "armor_cut": 50,
     "armor_bullet": 30,
