@@ -149,8 +149,14 @@ TEST_CASE(
             continue;
         }
         ++shared;
-        // The first of them, what the game uses most, keeps the plain name.
-        CHECK((entry.id != twins.front() || entry.distinct.empty()));
+        // One of them alone keeps the plain name.
+        CHECK(
+            std::ranges::count_if(
+                found.entries,
+                [&](const editor::catalog_entry& other) {
+                    return other.name == entry.name && other.distinct.empty();
+                })
+            == 1);
         // The suffix is what follows the start every twin's id shares, without separators,
         // so it never repeats the whole id shown beside it.
         CHECK(entry.distinct != entry.id);

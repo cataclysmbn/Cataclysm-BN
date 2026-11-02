@@ -8410,6 +8410,35 @@ TEST_CASE("the map editor in Simple mode shows no ids or JSON", "[editor_session
     editor::reset_editor_session();
 }
 
+TEST_CASE(
+    "saving the game's own file in Simple mode writes a copy in the player's mods",
+    "[editor_session]") {
+    const auto guard = screen_guard{};
+    const auto simple = override_option("EDITOR_ADVANCED", "false");
+    const auto original =
+        std::filesystem::path(PATH_INFO::datadir()) / "json" / "zz_simple_save.json";
+    const auto copy =
+        std::filesystem::path(PATH_INFO::user_moddir()) / "my_mod" / "zz_simple_save.json";
+    const auto text = std::string(
+        R"([{"type":"mapgen","method":"json","om_terrain":"zz_simple_save","object":{"fill_ter":"t_grass","rows":["."]}}])");
+    {
+        auto out = std::ofstream(original, std::ios::binary);
+        out << text;
+    }
+    const auto cleanup = on_out_of_scope([&] {
+        std::filesystem::remove(original);
+        std::filesystem::remove_all(copy.parent_path());
+        editor::reset_editor_session();
+    });
+    const auto walk = std::vector<map_step>{
+        [&](const auto&) { return invoke("editor:open", {.text = original.string()}); },
+        [](const auto&) { return invoke("editor:save"); }, [](const auto&) { return act("QUIT"); }};
+    CHECK(walk_map(walk) == walk.size());
+    CHECK(std::filesystem::exists(copy));
+    auto in = std::ifstream(original, std::ios::binary);
+    CHECK(std::string(std::istreambuf_iterator<char>(in), {}) == text);
+}
+
 namespace {
 /// The field `id` of the new-file form; none when the form hides it.
 auto new_field(const ec::screen_view& screen, const std::string& id) -> const ec::form_field* {
