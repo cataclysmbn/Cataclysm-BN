@@ -3370,6 +3370,7 @@ TEST_CASE(
                 const auto& rows = body<ec::list_body>(part(screen, "editor:browser")).rows;
                 REQUIRE(rows.size() == 1);
                 CHECK(rows[0].id == "file:" + file.path.generic_string());
+                CHECK(rows[0].label.starts_with("editor_session_test/"));
                 return act("QUIT");
             }
             default:

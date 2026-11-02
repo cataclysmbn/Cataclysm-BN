@@ -1491,17 +1491,16 @@ auto browser_list(const session& state, const std::vector<browser_entry>& listed
     const auto data = std::filesystem::path(PATH_INFO::datadir());
     return ec::list(
         {.id = browser_id,
-         .rows =
-             shown | std::views::transform([&](const browser_entry& entry) {
-                 const auto& path = entry.path;
-                 return ec::row{
-                     .id = "file:" + path.generic_string(),
-                     .label =
-                         (inside(path, PATH_INFO::datadir()) ? path.lexically_relative(data) : path)
-                             .generic_string(),
-                     .description = join(entry.matched, ", ")};
-             })
-             | std::ranges::to<std::vector>(),
+         .rows = shown | std::views::transform([&](const browser_entry& entry) {
+                     const auto& path = entry.path;
+                     return ec::row{
+                         .id = "file:" + path.generic_string(),
+                         .label = inside(path, PATH_INFO::datadir())
+                                    ? path.lexically_relative(data).generic_string()
+                                    : mods_path(path),
+                         .description = join(entry.matched, ", ")};
+                 })
+               | std::ranges::to<std::vector>(),
          .total = listed.size(),
          .offset = state.browser_page * page_size,
          .selection = "single",
