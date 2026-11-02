@@ -238,17 +238,15 @@ auto search_catalog(const catalog_query& query) -> catalog_page {
         })
         | ranges::to<std::vector>();
     // Among names that match alike, the game's own come before a mod's, and what its data names
-    // most, then the shortest name, first; unsearched, all go by id.
+    // most, then the shortest name, first.
     const auto core = mod_management::get_default_core_content_pack().str();
-    const auto& uses =
-        query.filter.empty() ? std::unordered_map<std::string, int>{} : uses_in_data();
+    const auto& uses = uses_in_data();
     ranges::sort(ranked, {}, [&](const ranked_entry& found) {
         const auto& [id, name, mod, distinct] = found.entry;
         const auto used = uses.find(id);
         return std::tuple(
-            found.rank, !query.filter.empty() && !mod.empty() && mod != core,
-            used == uses.end() ? 0 : -used->second, query.filter.empty() ? 0 : name.size(),
-            std::string_view(id));
+            found.rank, !mod.empty() && mod != core, used == uses.end() ? 0 : -used->second,
+            name.size(), std::string_view(id));
     });
     auto found = ranked | std::views::transform(&ranked_entry::entry) | ranges::to<std::vector>();
     // Entries of one name are told apart by the rest of their ids after the start all of them

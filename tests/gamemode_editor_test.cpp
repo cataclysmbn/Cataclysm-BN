@@ -105,6 +105,8 @@ TEST_CASE(
             == 1;
     };
     REQUIRE_FALSE(has_sand());
+    // The avatar's clothes point at item types the reload replaces.
+    clear_all_state();
     auto* const original = world_generator->active_world->info;
     auto* const made =
         world_generator->make_new_world(special_game_type::EDITOR, {mod_id("desertpack")});
