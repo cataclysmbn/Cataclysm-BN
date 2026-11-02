@@ -349,6 +349,7 @@
     "volume": "350 ml",
     "price": "7 USD",
     "price_postapoc": "1 USD",
+    "ascii_picture": "hammer",
     "to_hit": -1,
     "bashing": 9,
     "material": [ "steel", "wood" ],
