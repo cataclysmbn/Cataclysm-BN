@@ -138,7 +138,7 @@
     "melee_dice_sides": 8,
     "melee_cut": 15,
     "grab_strength": 4,
-    "//": "Based on material resists of heavy bone but with bash and ballistic resist swapped, idea is make it a melee-focused counterpart to kelvar hulks."
+    "//": "Based on material resists of heavy bone but with bash and ballistic resist swapped, idea is make it a melee-focused counterpart to kelvar hulks.",
     "armor_bash": 60,
     "armor_cut": 75,
     "armor_bullet": 45,

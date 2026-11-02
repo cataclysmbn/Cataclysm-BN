@@ -36,7 +36,7 @@
     "melee_dice_sides": 8,
     "melee_cut": 10,
     "dodge": 2,
-    "//": "Based off skeletal brute, but allowed to have higher stab resist because he's a literal skeleton."
+    "//": "Based off skeletal brute, but allowed to have higher stab resist because he's a literal skeleton.",
     "armor_bash": 40,
     "armor_cut": 50,
     "armor_stab": 50,
