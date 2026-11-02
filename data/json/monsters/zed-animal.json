@@ -100,6 +100,7 @@
     "dodge": 3,
     "armor_bash": 10,
     "armor_cut": 15,
+    "armor_stab": 15,
     "armor_bullet": 10,
     "armor_acid": 3,
     "vision_night": 3,
