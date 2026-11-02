@@ -1757,3 +1757,15 @@ TEST_CASE("clear_all_state_keeps_map_simulated_after_direct_map_load", "[map]") 
     CHECK(submap_loader
               .is_simulated(dim, here.get_abs_sub() + point_rel_sm(last_submap, last_submap)));
 }
+
+TEST_CASE("clear_all_state_removes_fields_above_ground", "[map]") {
+    clear_all_state();
+    auto& here = get_map();
+    const auto above_ground = tripoint_bub_ms(60, 60, 1);
+    here.add_field(above_ground, field_type_id("fd_fire"), 1);
+    REQUIRE(here.field_at(above_ground).field_count() == 1);
+
+    clear_all_state();
+
+    CHECK(here.field_at(above_ground).field_count() == 0);
+}
