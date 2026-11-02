@@ -1905,13 +1905,19 @@ auto layout(const session& state) -> workspace_layout {
 } // namespace
 
 auto session_view(const session& state) -> ec::screen_view {
-    auto affordances = std::vector<ec::affordance>{ec::invoke_affordance(
-        {.id = open_id, .label = _("Open"), .args = {.text = ec::text_shape{.field_id = path_id}}})};
+    auto affordances = std::vector<ec::affordance>{};
+    // Typed paths are for modders who know the game's files; the lists open what Simple mode needs.
+    if (advanced_mode()) {
+        affordances.push_back(ec::invoke_affordance(
+            {.id = open_id,
+             .label = _("Open"),
+             .args = {.text = ec::text_shape{.field_id = path_id}}}));
+    }
     affordances.push_back(ec::invoke_affordance(
         {.id = advanced_id,
          .label = advanced_mode() ? _("Hide advanced settings") : _("Show advanced settings"),
          .description = _("Shows ids, JSON and the settings that need them, in both editors.")}));
-    if (state.doc) {
+    if (state.doc && advanced_mode()) {
         affordances.push_back(ec::invoke_affordance(
             {.id = save_as_id,
              .label = _("Save as"),
@@ -1927,17 +1933,20 @@ auto session_view(const session& state) -> ec::screen_view {
                         .label = _("Path"),
                         .value = state.doc ? state.doc->path().generic_string() : ""}},
             .submit = open_id}});
+    if (!advanced_mode()) { parts.clear(); }
     affordances.push_back(ec::invoke_affordance(
         {.id = new_set_id,
          .label = _("New file"),
          .args = {.row = ec::row_shape{.component_id = new_id}, .text = ec::text_shape{}}}));
     affordances.push_back(ec::invoke_affordance({.id = new_apply_id, .label = _("Create")}));
-    affordances.push_back(ec::invoke_affordance(
-        {.id = new_folder_id,
-         .label = _("New mod folder"),
-         .description = _(
-             "Puts the new file in a mod folder of its own; creating the file makes the "
-             "folder a mod.")}));
+    if (advanced_mode()) {
+        affordances.push_back(ec::invoke_affordance(
+            {.id = new_folder_id,
+             .label = _("New mod folder"),
+             .description = _(
+                 "Puts the new file in a mod folder of its own; creating the file makes the "
+                 "folder a mod.")}));
+    }
     affordances.push_back(ec::invoke_affordance(
         {.id = open_oter_id,
          .label = _("Open overmap terrain"),
