@@ -1150,14 +1150,14 @@ auto catalog_list(
                  return ec::row{
                      .id = "entry:" + entry.id,
                      .label = catalog_row_label(entry),
+                     .description =
+                         kind == catalog_kind::item_group ? group_examples(entry.id) : std::string{},
                      .selected = held,
                      .columns =
                          advanced_mode()
                              ? with_id(entry.id,
                                        {{.key = "mod", .label = _("Mod"), .value = entry.mod}})
                              : std::vector<game_client::interaction_column>{},
-                     .description =
-                         kind == catalog_kind::item_group ? group_examples(entry.id) : std::string{},
                      .look = catalog_look(kind, entry.id)};
              })
              | std::ranges::to<std::vector>(),
@@ -1554,16 +1554,16 @@ auto drawing_affordances(const session& state) -> std::vector<ec::affordance> {
         {.id = make_chunk_id,
          .label = _("Make reusable chunk"),
          .description = _("Turns the marked squares into one piece you can place many times."),
+         .args = {.text = ec::text_shape{.initial = _("My chunk")}},
          .enabled = state.selected.has_value(),
-         .denial = unmarked,
-         .args = {.text = ec::text_shape{.initial = _("My chunk")}}}));
+         .denial = unmarked}));
     affordances.push_back(ec::invoke_affordance(
         {.id = library_save_id,
          .label = _("Save copy to library"),
          .description = _("Keeps the copy under Library for any map you make."),
+         .args = {.text = ec::text_shape{.initial = _("My piece")}},
          .enabled = !state.clip.empty(),
-         .denial = unclipped,
-         .args = {.text = ec::text_shape{.initial = _("My piece")}}}));
+         .denial = unclipped}));
     affordances.push_back(ec::invoke_affordance(
         {.id = show_clip_text_id,
          .label = _("Copy or paste as text"),

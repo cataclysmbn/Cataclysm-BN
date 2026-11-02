@@ -288,11 +288,11 @@ auto make_pane( const pane_options &opts ) -> pane_view
         }
         rows.push_back( {
             .id = ids[position],
-            .hotkey = position >= opts.offset && position - opts.offset < opts.hotkeys.size() ?
-            std::string( 1, opts.hotkeys[position - opts.offset] ) : std::string{},
             .label = candidate.display_name() + ( off_person ? " (" + candidate.describe_location( &g->u ) + ")" : std::string{} ),
             // What the native examine shows, for the row the cursor is on; the rows left are many and long.
             .description = opts.cursor == position ? remove_color_tags( candidate.info_string( { .mode = iteminfo_mode::observation } ) ) : std::string{},
+            .hotkey = position >= opts.offset && position - opts.offset < opts.hotkeys.size() ?
+            std::string( 1, opts.hotkeys[position - opts.offset] ) : std::string{},
             .selected = picked > 0,
             .columns = {
                 { .key = "qty", .label = _( "amt" ), .value = available > 1 ? string_format( "%d", available ) : std::string{} },

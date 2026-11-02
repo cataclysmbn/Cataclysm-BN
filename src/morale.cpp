@@ -869,9 +869,10 @@ void player_morale::display( int focus_eq, int pain_penalty, int fatigue_cap )
         const auto add_section = [&]( const std::string & id, const std::string & caption, const int total,
         const std::vector<morale_point> &section, const bool reversed ) {
             rows.push_back( {
-                .id = "morale:" + id, .label = caption, .header = true,
+                .id = "morale:" + id, .label = caption,
                 .columns = { { .key = "value", .label = _( "Value" ), .value = signed_or_dash( total ) } },
                 .color = string_from_color( effect_color( effect_of( total, false ) ) ),
+                .header = true,
             } );
             for( const morale_point &mp : section ) {
                 const int percent = mp.get_percent_contribution();
