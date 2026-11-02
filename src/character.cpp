@@ -11441,6 +11441,14 @@ std::vector<item *> Character::all_items( bool need_charges ) const
     } );
 }
 
+auto Character::get_items_if( const std::vector<std::function<bool( const item & )>> &filters )
+const -> std::vector<item *>
+{
+    return items_with( [&filters]( const item & it ) {
+        return std::ranges::all_of( filters, [&it]( const auto & filter ) { return filter( it ); } );
+    } );
+}
+
 bool Character::has_charges( const itype_id &it, int quantity,
                              const std::function<bool( const item & )> &filter ) const
 {

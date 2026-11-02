@@ -801,6 +801,33 @@ TEST_CASE("lua_nearby_omt_creature_queries_return_active_creatures", "[lua][crea
     CHECK(test_data.get<bool>("found_expected_monster"));
 }
 
+TEST_CASE("lua_character_get_items_if_filters_items", "[lua][character][item]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    auto lua = make_lua_state();
+
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    auto& player = get_avatar();
+    player.i_add(item::spawn("bread"));
+    player.i_add(item::spawn("apple"));
+    player.wear_item(item::spawn("tshirt"), false);
+    player.wield(item::spawn("rock"));
+    test_data["character"] = &player;
+
+    run_lua_test_script(lua, "character_get_items_if_test.lua");
+
+    // all_count covers inventory + worn + wielded; the type filters pin the worn and wielded items.
+    CHECK(test_data.get<int>("all_count") == 4);
+    CHECK(test_data.get<int>("food_count") == 2);
+    CHECK(test_data.get<int>("food_category_count") == 2);
+    CHECK(test_data.get<int>("wielded_rock_count") == 1);
+    CHECK(test_data.get<int>("worn_tshirt_count") == 1);
+    CHECK(test_data.get<int>("flag_count") == 1);
+    CHECK(test_data.get<int>("combined_count") == 2);
+}
+
 TEST_CASE("lua_npc_move_to_binding_moves_real_npc", "[lua][npc]") {
     clear_all_state();
     auto lua = make_lua_state();

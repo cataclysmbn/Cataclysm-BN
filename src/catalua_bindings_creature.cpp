@@ -8,6 +8,7 @@
 #include "catalua_bindings_utils.h"
 #include "catalua_coord.h"
 #include "catalua_impl.h"
+#include "catalua_item_filters.h"
 #include "catalua_log.h"
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
@@ -1173,6 +1174,16 @@ void cata::detail::reg_character( sol::state &lua )
 
         DOC( "Filters items" );
         luna::set_fx( ut, "items_with", &Character::items_with );
+
+        DOC( "Returns items from the inventory, wielded and worn, matching every given filter as an array of Item.  " );
+        DOC( "Takes a table where each key is a filter; unknown keys show a debug message and are ignored. Available filters:  " );
+        DOC( "* `category` (string or string[]): Item category id is one of these, e.g. \"food\".  " );
+        DOC( "* `type` (ItemTypeId or ItemTypeId[]): Item type is one of these.  " );
+        DOC( "* `is_food` (boolean): Whether the item is food.  " );
+        DOC( "* `flags` (FlagId or FlagId[]): Item has at least one of these flags." );
+        luna::set_fx( ut, "get_items_if", []( const UT_CLASS & c, sol::table filters ) -> std::vector<item *> {
+            return c.get_items_if( item_filters_from_lua( filters ) );
+        } );
 
         DOC( "DEPRECATED: use remove_item instead" );
         luna::set_fx( ut, "inv_remove_item", &Character::inv_remove_item );
