@@ -26,8 +26,9 @@
     "looks_like": "mon_charred_nightmare",
     "type": "MONSTER",
     "name": { "str": "radioactive husk" },
-    "description": "This creature looks more like a blackened, burnt corpse than a zombie, roiling fumes of faintly glowing gas spilling out from between half-exposed ribs and a bright radioactive glow shining from within.",
-    "emit_fields": [ { "emit_id": "emit_nuke_stream", "delay": "1 s" } ],
+    "description": "This creature looks more like a blackened, burnt corpse than a zombie, roiling fumes of toxic gas spilling out from between half-exposed ribs and a bright radioactive glow shining from within.",
+    "//": "Todo: replace with nuke gas if we rig it so tile radiation decays over time.",
+    "emit_fields": [ { "emit_id": "emit_toxic_stream_small", "delay": "1 s" } ],
     "special_attacks": [
       {
         "type": "bite",
