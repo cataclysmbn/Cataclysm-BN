@@ -2,7 +2,6 @@
   {
     "id": "mon_zombie_radiation_1",
     "copy-from": "mon_zombie_hazmat",
-    "//": "Defined explicitly instead of inherited because hazmat zeds have into_group evolution and this doesn't.",
     "looks_like": "mon_irradiated_wanderer_1",
     "type": "MONSTER",
     "name": { "str": "glowing zombie" },
