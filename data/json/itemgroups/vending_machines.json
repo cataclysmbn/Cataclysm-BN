@@ -425,9 +425,9 @@
     "type": "item_group",
     "id": "vending_items_genemod",
     "items": [
-      { "group": "genome_drive_mutant_kitten_prism", "prob": 100 },
-      { "group": "genome_drive_cat_void_kitten", "prob": 100 },
-      { "group": "genome_drive_black_rat", "prob": 100 }
+      { "item": "genome_drive_mutant_kitten_prism", "prob": 100 },
+      { "item": "genome_drive_cat_void_kitten", "prob": 100 },
+      { "item": "genome_drive_black_rat", "prob": 100 }
     ]
   },
   {
