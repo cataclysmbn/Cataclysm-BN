@@ -1874,7 +1874,7 @@
   },
   {
     "type": "item_group",
-    "id": "mon_zombie_thorny_death_drops",
+    "id": "radiation_zombie_death_drops",
     "//": "Adds to existing group",
     "subtype": "collection",
     "entries": [

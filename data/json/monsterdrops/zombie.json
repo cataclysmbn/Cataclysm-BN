@@ -148,11 +148,10 @@
       { "group": "hazmat_eyes", "damage": [ 1, 4 ], "prob": 80 },
       {
         "distribution": [
-          { "item": "nuclear_waste", "prob": 25 },
+          { "item": "nuclear_waste", "prob": 50 },
           { "item": "nuclear_fuel", "prob": 15 },
           { "item": "cobalt_60", "prob": 10 },
-          { "item": "mininuke", "prob": 25, "damage": [ 1, 4 ] },
-          { "item": "atomic_butterchurn", "prob": 5, "damage": [ 1, 4 ] },
+          { "item": "mininuke", "prob": 5, "damage": [ 1, 4 ] },
           { "item": "atomic_coffeepot", "prob": 5, "damage": [ 1, 4 ] },
           { "item": "atomic_light", "prob": 5, "damage": [ 1, 4 ] },
           { "item": "knife_heat", "prob": 5, "damage": [ 1, 4 ] },
