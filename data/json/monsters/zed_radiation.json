@@ -15,8 +15,8 @@
     "death_drops": "radiation_zombie_death_drops",
     "fungalize_into": "mon_zombie_fungus",
     "upgrades": { "half_life": 14, "into": "mon_zombie_radiation_2" },
-    "proportional": { "hp": 2, "armor_bash": 2, "armor_cut": 2, "armor_bullet": 2 },
-    "relative": { "speed": 20, "dodge": 1, "melee_skill": 1, "melee_dice": 1, "melee_dice_sides": 1 },
+    "proportional": { "hp": 1.25, "armor_bash": 2, "armor_cut": 2, "armor_bullet": 2 },
+    "relative": { "speed": 15, "dodge": 1, "melee_skill": 1, "melee_dice": 1 },
     "extend": { "flags": [ "IRRADIATED" ] },
     "delete": { "flags": [ "NO_FUNG_DMG" ] }
   },
