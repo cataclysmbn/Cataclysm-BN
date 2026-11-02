@@ -735,8 +735,10 @@ auto parts_view(const session& state) -> ec::screen_view {
     // The status line: the vehicle, its file, whether it is saved, and the picked mount.
     auto status = std::vector<ec::panel_stat>{};
     if (!state.live) {
-        status.push_back(
-            {.key = "file", .label = _("File"), .value = shown_path(state.doc->path())});
+        if (advanced_mode()) {
+            status.push_back(
+                {.key = "file", .label = _("File"), .value = shown_path(state.doc->path())});
+        }
         // Whether the document is dirty renders all of it.
         const auto dirty = state.doc->dirty();
         status.push_back(
@@ -1417,12 +1419,15 @@ auto parts_view(const session& state) -> ec::screen_view {
         std::ranges::
             move(history_affordances(doc, {.undo = undo_id, .redo = redo_id, .save = save_id}),
                  std::back_inserter(affordances));
-        affordances.push_back(ec::invoke_affordance(
-            {.id = save_as_id,
-             .label = _("Save as"),
-             .args = {.text = ec::
+        if (advanced_mode()) {
+            affordances.push_back(ec::invoke_affordance(
+                {.id = save_as_id,
+                 .label = _("Save as"),
+                 .args =
+                     {.text = ec::
                           text_shape{.initial = state.suggested(text_at(state.prototype(), "id"))}},
-             .keys = {"F12"}}));
+                 .keys = {"F12"}}));
+        }
     }
     return {
         .title = _("Vehicle Editor"),
