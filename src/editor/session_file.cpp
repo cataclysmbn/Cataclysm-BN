@@ -1,5 +1,6 @@
 #include "editor/session_file.h"
 
+#include "editor/editor_mode.h"
 #include "editor/json_read.h"
 #include "json_formatter.h"
 #include "mod_manager.h"
@@ -268,6 +269,16 @@ auto changed_on_disk_notice(const document& doc) -> std::string {
 }
 
 auto save_document(document& doc) -> std::expected<void, std::string> {
+    // Simple mode has no Save as: an edit of the game's own file goes in a copy in the player's
+    // mods.
+    if (!advanced_mode() && inside(doc.path(), PATH_INFO::datadir())) {
+        const auto mods = std::filesystem::path(PATH_INFO::user_moddir());
+        const auto name =
+            free_name("my_mod/" + doc.path().stem().string(), [&](const std::string& each) {
+                return std::filesystem::exists(mods / (each + ".json"));
+            });
+        return save_document_as(doc, mods / (name + ".json"));
+    }
     // A file already there keeps its folder: refusing would only lose the edit.
     if (std::filesystem::exists(doc.path())) {
         return told(doc.save()).and_then([&] {

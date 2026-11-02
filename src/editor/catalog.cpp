@@ -25,7 +25,6 @@
 #include <map>
 #include <optional>
 #include <ranges>
-#include <set>
 #include <string_view>
 #include <tuple>
 #include <unordered_map>
@@ -251,8 +250,8 @@ auto search_catalog(const catalog_query& query) -> catalog_page {
     });
     auto found = ranked | std::views::transform(&ranked_entry::entry) | ranges::to<std::vector>();
     // Entries of one name are told apart by the rest of their ids after the start all of them
-    // share, which is the start the first and last of those ids share. The first found, what
-    // the game uses most, keeps the plain name.
+    // share, which is the start the first and last of those ids share. The one that is all of that
+    // start, else the first found, what the game uses most, keeps the plain name.
     struct id_bounds {
         std::string first;
         std::string last;
@@ -266,14 +265,24 @@ auto search_catalog(const catalog_query& query) -> catalog_page {
             at->second.last = std::max(at->second.last, entry.id);
         }
     }
-    auto named = std::set<std::string>{};
-    for (auto& entry : found) {
+    const auto rest_of = [&](const catalog_entry& entry) {
         const auto& [first, last] = bounds.at(entry.name);
-        if (named.insert(entry.name).second) { continue; }
         const auto shared = ranges::mismatch(first, last).in1 - first.begin();
-        const auto rest = std::string_view(entry.id).substr(shared);
+        const auto rest = std::string_view(entry.id).substr(
+            first == last ? entry.id.size() : shared);
         const auto from = rest.find_first_not_of('_');
-        entry.distinct = from == std::string_view::npos ? "" : std::string(rest.substr(from));
+        return from == std::string_view::npos ? std::string{} : std::string(rest.substr(from));
+    };
+    auto plain = std::map<std::string, std::string>{};
+    for (const auto& entry : found) {
+        if (rest_of(entry).empty()) {
+            plain[entry.name] = entry.id;
+        } else {
+            plain.try_emplace(entry.name, entry.id);
+        }
+    }
+    for (auto& entry : found) {
+        if (plain.at(entry.name) != entry.id) { entry.distinct = rest_of(entry); }
     }
     const auto total = found.size();
     const auto begin = std::min(query.page * query.page_size, total);
