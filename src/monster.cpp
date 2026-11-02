@@ -2583,6 +2583,13 @@ void monster::melee_attack( Creature &target, float accuracy )
             add_msg( m_bad, _( "Something hits your %s." ),
                      bp_hit->accusative.translated() );
         }
+        // Deal radiation damage, bypass immunity since we broke through armor
+        if( has_flag( MF_IRRADIATED ) ) {
+            Character *ch = target.as_character();
+            if( ch != nullptr ) {
+                ch->irradiate( damage.total_damage(), true );
+            }
+        }
     } else {
         // No damage dealt
         if( u_see_me ) {
@@ -2611,6 +2618,13 @@ void monster::melee_attack( Creature &target, float accuracy )
             //~ 1$s is bodypart name in accusative, 2$s is armor name.
             add_msg( _( "Something hits your %1$s, but your %2$s protects you." ),
                      bp_hit->accusative.translated(), target.skin_name() );
+        }
+        // Radiation damage, armor negated attack so check if we're wearing radiation protection
+        if( has_flag( MF_IRRADIATED ) ) {
+            Character *ch = target.as_character();
+            if( ch != nullptr ) {
+                ch->irradiate( damage.total_damage(), false );
+            }
         }
     }
 

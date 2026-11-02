@@ -430,5 +430,13 @@
     "field": "fd_fog_kraken",
     "intensity": 3,
     "qty": 200
+  },
+  {
+    "id": "emit_nuke_stream",
+    "type": "emit",
+    "//": "Steady stream of radioactive gas",
+    "field": "fd_nuke_gas",
+    "intensity": 2,
+    "qty": 3
   }
 ]
