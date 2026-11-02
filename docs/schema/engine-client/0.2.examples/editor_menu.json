@@ -1974,7 +1974,7 @@
                   },
                   {
                     "id": "entry:t_thconc_floor",
-                    "label": "concrete floor (floor)",
+                    "label": "concrete floor",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -2061,7 +2061,7 @@
                   },
                   {
                     "id": "entry:t_linoleum_gray",
-                    "label": "linoleum tile (gray)",
+                    "label": "linoleum tile",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -2119,7 +2119,7 @@
                   },
                   {
                     "id": "entry:t_flat_roof",
-                    "label": "flat roof (flat_roof)",
+                    "label": "flat roof",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -2185,7 +2185,7 @@
                   },
                   {
                     "id": "entry:t_door_c",
-                    "label": "closed wood door (c)",
+                    "label": "closed wood door",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -2370,7 +2370,7 @@
                   },
                   {
                     "id": "entry:t_open_air",
-                    "label": "open air (open_air)",
+                    "label": "open air",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -2431,7 +2431,7 @@
                   },
                   {
                     "id": "entry:t_region_groundcover_urban",
-                    "label": "this should never actually show up, it's a pseudo terrain (groundcover_urban)",
+                    "label": "this should never actually show up, it's a pseudo terrain",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -2489,7 +2489,7 @@
                   },
                   {
                     "id": "entry:t_metal_floor",
-                    "label": "metal floor (metal_floor)",
+                    "label": "metal floor",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -2797,7 +2797,7 @@
                   },
                   {
                     "id": "entry:t_door_glass_c",
-                    "label": "closed glass door (c)",
+                    "label": "closed glass door",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -2953,7 +2953,7 @@
                   },
                   {
                     "id": "entry:t_door_metal_locked",
-                    "label": "closed metal door (locked)",
+                    "label": "closed metal door",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -3148,7 +3148,7 @@
                   },
                   {
                     "id": "entry:t_water_sh",
-                    "label": "shallow water (water_sh)",
+                    "label": "shallow water",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -3243,7 +3243,7 @@
                   },
                   {
                     "id": "entry:t_stairs_up",
-                    "label": "stairs (up)",
+                    "label": "stairs",
                     "description": "",
                     "denial": "",
                     "enabled": true,
@@ -3427,7 +3427,7 @@
                   },
                   {
                     "id": "entry:t_wall_metal",
-                    "label": "metal wall (wall_metal)",
+                    "label": "metal wall",
                     "description": "",
                     "denial": "",
                     "enabled": true,

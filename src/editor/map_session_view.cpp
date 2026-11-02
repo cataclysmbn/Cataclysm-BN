@@ -1152,7 +1152,10 @@ auto catalog_list(
                      .label = catalog_row_label(entry),
                      .selected = held,
                      .columns =
-                         with_id(entry.id, {{.key = "mod", .label = _("Mod"), .value = entry.mod}}),
+                         advanced_mode()
+                             ? with_id(entry.id,
+                                       {{.key = "mod", .label = _("Mod"), .value = entry.mod}})
+                             : std::vector<game_client::interaction_column>{},
                      .description =
                          kind == catalog_kind::item_group ? group_examples(entry.id) : std::string{},
                      .look = catalog_look(kind, entry.id)};
@@ -2031,14 +2034,20 @@ auto session_view(const session& state) -> ec::screen_view {
                           .text = ec::text_shape{}}}));
         }
         const auto entries = state.entries();
-        parts.push_back(ec::list(
-            {.id = objects_id,
-             .rows = entry_rows(state, entries),
-             .selection = "single",
-             .activate = object_id,
-             .empty = _("The file holds no entry.")}));
-        affordances.push_back(ec::invoke_affordance(
-            {.id = object_id, .label = _("Edit"), .args = row_of(objects_id)}));
+        // One map and what places it leave nothing to choose between.
+        const auto lone_map =
+            !advanced_mode() && state.on_mapgen()
+            && (entries.size() == 1 || (entries.size() == 2 && named_building(doc)));
+        if (!lone_map) {
+            parts.push_back(ec::list(
+                {.id = objects_id,
+                 .rows = entry_rows(state, entries),
+                 .selection = "single",
+                 .activate = object_id,
+                 .empty = _("The file holds no entry.")}));
+            affordances.push_back(ec::invoke_affordance(
+                {.id = object_id, .label = _("Edit"), .args = row_of(objects_id)}));
+        }
         std::ranges::
             move(history_affordances(doc, {.undo = undo_id, .redo = redo_id, .save = save_id}),
                  std::back_inserter(affordances));

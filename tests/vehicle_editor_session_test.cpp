@@ -6455,8 +6455,9 @@ TEST_CASE("prototypes of one name read apart in the list", "[editor_vehicle]") {
                 rows(screen, "vehicle:prototypes") | std::views::transform(&ec::row::label)
                 | std::ranges::to<std::vector>();
             REQUIRE(labels.size() > 1);
+            CHECK(std::ranges::count(labels, std::string("Small helicopter")) == 1);
             CHECK(std::ranges::all_of(labels, [](const std::string& label) {
-                return label.starts_with("Small helicopter (");
+                return label == "Small helicopter" || label.starts_with("Small helicopter (");
             }));
             std::ranges::sort(labels);
             CHECK(std::ranges::adjacent_find(labels) == labels.end());
