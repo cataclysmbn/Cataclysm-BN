@@ -74,7 +74,7 @@
   {
     "type": "ammunition_type",
     "id": "shot",
-    "name": "12x70mm",
+    "name": "12 gauge shot",
     "default": "shot_00"
   },
   {
