@@ -777,7 +777,7 @@
     "stack_size": 40,
     "weight": "1g",
     "calories": 130,
-    "vitamins": [],
+    "vitamins": [  ],
     "flags": [ "TRADER_AVOID" ]
   },
   {
@@ -794,7 +794,7 @@
     "stack_size": 40,
     "weight": "1g",
     "calories": 130,
-    "vitamins": [],
+    "vitamins": [  ],
     "flags": [ "TRADER_AVOID" ]
   },
   {
@@ -811,7 +811,7 @@
     "stack_size": 40,
     "weight": "1g",
     "calories": 130,
-    "vitamins": [],
+    "vitamins": [  ],
     "flags": [ "TRADER_AVOID" ]
   }
 ]
