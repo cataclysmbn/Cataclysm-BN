@@ -247,7 +247,7 @@ Relevant existing protections and context: [deferred EMP drains](https://github.
 btw added low priority objective
 
 - [x] 1st person mode
-- [ ] Map editor and vehicle editor in egui client
+- [x] Map editor and vehicle editor in egui client
 - [x] Several windows open at once, as in Project Zomboid: the game keeps taking keys under windows that only read (the egui map, character sheet and inventory windows, through `bn.panel.view`)
 
 ---
@@ -255,6 +255,6 @@ btw added low priority objective
 # Beta Test Checklist
 
 - [x] make tests faster
-- [ ] Fully functional map editor
-- [ ] Fully functional vehicle editor
-- [ ] 2d client that has good UI
+- [x] Fully functional map editor
+- [x] Fully functional vehicle editor
+- [x] 2d client that has good UI
