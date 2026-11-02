@@ -85,6 +85,7 @@
     "volume": "500 ml",
     "price": "0 cent",
     "price_postapoc": "10 cent",
+    "ascii_picture": "crowbar",
     "to_hit": -1,
     "bashing": 12,
     "cutting": 1,
