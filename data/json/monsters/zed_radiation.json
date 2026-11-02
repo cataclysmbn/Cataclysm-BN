@@ -40,7 +40,6 @@
     ],
     "proportional": { "hp": 1.5, "armor_bash": 1.5, "armor_cut": 1.5, "armor_bullet": 1.5, "luminance": 3, "regenerates": 5 },
     "relative": { "speed": 20, "dodge": 1, "melee_dice": -1, "melee_dice_sides": 3, "melee_cut": 5 },
-    "extend": { "flags": [ "FIREPROOF" ] },
     "delete": { "upgrades": { "half_life": 14, "into": "mon_zombie_radiation_2" } }
   },
   {
