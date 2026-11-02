@@ -12,7 +12,9 @@ on:
 
 env:
   VCPKG_BINARY_SOURCES: "default"
-  EXPECTED_NIGHTLY_ASSET_COUNT: 15
+  # Each bundle, a no-soundpack one for Windows and both macOS, and the Windows PDB.
+  EXPECTED_NIGHTLY_ASSET_COUNT: 8
+  CLIENT_REPOSITORY: scarf005/bn-client-egui
 
 jobs:
   metadata:
@@ -23,6 +25,7 @@ jobs:
       previous_tag_name: ${{ steps.env_vars.outputs.previous_tag_name }}
       previous_tag_sha: ${{ steps.env_vars.outputs.previous_tag_sha }}
       source_sha: ${{ steps.env_vars.outputs.source_sha }}
+      client_sha: ${{ steps.env_vars.outputs.client_sha }}
       changelog_fetch_depth: ${{ steps.env_vars.outputs.changelog_fetch_depth }}
     steps:
       - uses: actions/checkout@v4
@@ -60,15 +63,26 @@ jobs:
           COMMITS=$(gh api "repos/${GITHUB_REPOSITORY}/compare/${PREVIOUS_TAG_NAME}...${SOURCE_SHA}" --jq .total_commits)
           CHANGELOG_FETCH_DEPTH=$((COMMITS + 1))
 
+          released_client() { gh release view "$1" --json body --jq .body 2>/dev/null | sed -n "s|.*$CLIENT_REPOSITORY/commit/\([0-9a-f]\{40\}\).*|\1|p"; }
+          CLIENT_SHA=$(released_client "$TAG_NAME")
+          CLIENT_SHA=${CLIENT_SHA:-$(gh api "repos/$CLIENT_REPOSITORY/commits/main" --jq .sha)}
+          if [ "$CLIENT_SHA" != "$(released_client "$PREVIOUS_TAG_NAME")" ]; then
+            CHANGES=$((COMMITS + 1))
+          else
+            CHANGES=$COMMITS
+          fi
+
           echo "commits since $PREVIOUS_TAG_NAME: $COMMITS" >> "$GITHUB_STEP_SUMMARY"
           echo "source commit: $SOURCE_SHA" >> "$GITHUB_STEP_SUMMARY"
+          echo "client commit: $CLIENT_SHA" >> "$GITHUB_STEP_SUMMARY"
           echo "changelog fetch depth: $CHANGELOG_FETCH_DEPTH" >> "$GITHUB_STEP_SUMMARY"
 
-          echo "count=$COMMITS" >> "$GITHUB_OUTPUT"
+          echo "count=$CHANGES" >> "$GITHUB_OUTPUT"
           echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
           echo "previous_tag_name=$PREVIOUS_TAG_NAME" >> "$GITHUB_OUTPUT"
           echo "previous_tag_sha=$PREVIOUS_TAG_SHA" >> "$GITHUB_OUTPUT"
           echo "source_sha=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
+          echo "client_sha=$CLIENT_SHA" >> "$GITHUB_OUTPUT"
           echo "changelog_fetch_depth=$CHANGELOG_FETCH_DEPTH" >> "$GITHUB_OUTPUT"
 
   release:
@@ -76,7 +90,7 @@ jobs:
     name: Create Release
     runs-on: ubuntu-slim
 
-    if: github.event_name == 'workflow_dispatch' || fromJson(needs.metadata.outputs.count) > 0
+    if: fromJson(needs.metadata.outputs.count) > 0
     outputs:
       upload_assets: ${{ steps.asset_check.outputs.upload_assets }}
 
@@ -123,6 +137,10 @@ jobs:
           release_body="$RUNNER_TEMP/release-body.md"
           cat "${{ steps.build_changelog.outputs.path }}" > "$release_body"
           echo >> "$release_body"
+          echo "To play, run \`cataclysm-bn.exe\` on Windows or \`cataclysm-bn\` on Linux, or open \`Cataclysm.app\` on macOS." >> "$release_body"
+          echo >> "$release_body"
+          echo "Client commit: https://github.com/$CLIENT_REPOSITORY/commit/${{ needs.metadata.outputs.client_sha }}" >> "$release_body"
+          echo >> "$release_body"
           echo "These are the outputs for the build of commit [${{ needs.metadata.outputs.source_sha }}](https://github.com/${{ github.repository }}/commit/${{ needs.metadata.outputs.source_sha }})" >> "$release_body"
 
           gh release create "${{ needs.metadata.outputs.tag_name }}" \
@@ -164,4 +182,12 @@ jobs:
       checkout-ref: ${{ needs.metadata.outputs.tag_name }}
       upload-to-release: true
       release-tag: ${{ needs.metadata.outputs.tag_name }}
+      client-ref: ${{ needs.metadata.outputs.client_sha }}
+      matrix-json: |
+        [
+          { "name": "Windows MSVC", "platform": "windows", "artifact": "windows-tiles-x64-msvc", "os": "windows-2022", "arch": "x64", "tiles": true, "sound": true, "ext": "zip", "content-type": "application/zip" },
+          { "name": "Linux Tiles", "platform": "linux", "artifact": "linux-tiles-x64", "os": "ubuntu-latest", "tiles": true, "sound": true, "ext": "tar.gz", "content-type": "application/gzip" },
+          { "name": "macOS Tiles", "platform": "macos", "artifact": "osx-tiles-x64", "os": "macos-15-intel", "preset": "osx-tiles-x64-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
+          { "name": "macOS Tiles ARM", "platform": "macos", "artifact": "osx-tiles-arm", "os": "macos-15", "preset": "osx-tiles-arm-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage" }
+        ]
     secrets: inherit

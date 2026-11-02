@@ -84,6 +84,11 @@ on:
         required: false
         type: string
         default: ""
+      client-ref:
+        description: "Commit of scarf005/bn-client-egui to bundle as what the player starts (empty for none)"
+        required: false
+        type: string
+        default: ""
     secrets:
       KEYSTORE:
         required: false
@@ -332,7 +337,7 @@ jobs:
       - name: Install build dependencies (mac)
         if: runner.os == 'macOS'
         run: |
-          HOMEBREW_NO_AUTO_UPDATE=yes HOMEBREW_NO_INSTALL_CLEANUP=yes brew install sdl3 sdl3_image sdl3_ttf sdl3_mixer gettext parallel astyle sqlite3 zlib ncurses flac pkg-config dylibbundler
+          HOMEBREW_NO_AUTO_UPDATE=yes HOMEBREW_NO_INSTALL_CLEANUP=yes brew install llvm sdl3 sdl3_image sdl3_ttf sdl3_mixer gettext parallel astyle sqlite3 zlib ncurses flac pkg-config dylibbundler
           python3 -m venv ./venv
           source ./venv/bin/activate
           pip3 install mac_alias==2.2.0 dmgbuild==1.6.1 biplist polib luaparser
@@ -348,6 +353,17 @@ jobs:
           cmake: true
           ninja: true
           setup-cpp: false
+
+      - name: Use LLVM's compiler and libc++ (mac)
+        if: runner.os == 'macOS'
+        run: |
+          # Apple's libc++ lacks C++23 ranges the game uses: build with LLVM's and link it into the game, players have no Homebrew.
+          llvm=$(brew --prefix llvm)
+          echo "CC=$llvm/bin/clang" >> "$GITHUB_ENV"
+          echo "CXX=$llvm/bin/clang++" >> "$GITHUB_ENV"
+          echo "CXXFLAGS=-D_LIBCPP_DISABLE_AVAILABILITY -include $GITHUB_WORKSPACE/src/libcxx_enumerate.h" >> "$GITHUB_ENV"
+          # Exporting only main keeps dyld from mixing these C++ symbols with those of the system libc++ that macOS frameworks load.
+          echo "LDFLAGS=-nostdlib++ $llvm/lib/c++/libc++.a $llvm/lib/c++/libc++abi.a -Wl,-exported_symbol,_main" >> "$GITHUB_ENV"
 
       - name: Setup ccache (mac)
         if: runner.os == 'macOS'
@@ -428,11 +444,47 @@ jobs:
         continue-on-error: ${{ inputs.mode == 'ci' }}
         run: deno run --allow-read --allow-write --allow-net build-scripts/bundle-registry-mods.ts ${{ (((matrix.platform == 'windows' || matrix.platform == 'macos' || (matrix.platform == 'android' && inputs.upload-to-release)) && matrix.tiles == true && matrix.sound == true) || format('{0}', matrix.sound) == 'false') && '--exclude-package-type soundpack' || '' }}
 
+      - name: Check out the client
+        if: inputs.client-ref != ''
+        uses: actions/checkout@v4
+        with:
+          repository: scarf005/bn-client-egui
+          ref: ${{ inputs.client-ref }}
+          path: client-src
+
+      - name: Install Rust
+        if: inputs.client-ref != ''
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache the client's crates
+        if: inputs.client-ref != ''
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: client-src
+
+      - name: Install client build dependencies (Linux)
+        if: inputs.client-ref != '' && runner.os == 'Linux'
+        run: sudo apt-get install -y libasound2-dev
+
+      - name: Build the client
+        if: inputs.client-ref != ''
+        env:
+          RUSTFLAGS: ${{ runner.os == 'Windows' && '-C target-feature=+crt-static' || '' }}
+        run: cargo build --release --locked --manifest-path client-src/Cargo.toml -p bn-client-egui
+
       - name: Create distribution package (Linux)
         if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none') && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
         run: |
           mkdir -p lang/mo
           cmake --install build --prefix cataclysmbn-${{ inputs.version-label }}
+          if [ "${{ inputs.client-ref }}" != "" ]; then
+            dist="cataclysmbn-${{ inputs.version-label }}"
+            rm "$dist/cataclysm-bn-mcp" "$dist/cataclysm-bn-tiles"
+            mv "$dist/cataclysm-bn" "$dist/cataclysm-bn-tiles"
+            cp client-src/target/release/bn-client-egui "$dist/cataclysm-bn"
+            cp client-src/LICENSE "$dist/LICENSE-client.txt"
+            ln -sf cataclysm-bn "$dist/cataclysm-launcher"
+          fi
           tar -czvf cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.tar.gz \
             cataclysmbn-${{ inputs.version-label }}
 
@@ -497,6 +549,7 @@ jobs:
             "-DLOCALIZE=$localize" `
             -DTILES=True `
             -DSOUND=True `
+            "-DMCP=${{ inputs.client-ref != '' && 'ON' || 'OFF' }}" `
             "-DTESTS=$tests" `
             "-DRELEASE=$release" `
             -DJSON_FORMAT=OFF `
@@ -532,13 +585,22 @@ jobs:
         if: runner.os == 'Windows' && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
         run: |
           $dist = "cataclysmbn-${{ inputs.version-label }}"
+          function Add-Client {
+            if ("${{ inputs.client-ref }}" -ne "") {
+              Copy-Item -Force client-src/target/release/bn-client-egui.exe $dist/cataclysm-bn.exe
+              Remove-Item $dist/cataclysm-bn-mcp.exe
+              Copy-Item -Force client-src/LICENSE $dist/LICENSE-client.txt
+            }
+          }
           Remove-Item -Recurse -Force $dist -ErrorAction SilentlyContinue
           New-Item -ItemType Directory -Force lang/mo
           cmake --install out/build/windows-tiles-sounds-x64-msvc --prefix $dist --config Release
+          Add-Client
           if ("${{ matrix.tiles }}" -eq "true" -and "${{ matrix.sound }}" -eq "true" -and "${{ inputs.bundle-registry-mods }}" -eq "true") {
             Compress-Archive -Force -Path $dist/* -DestinationPath cbn-${{ matrix.artifact }}-no-soundpack-${{ inputs.version-label }}.zip
             deno run --allow-read --allow-write --allow-net build-scripts/bundle-registry-mods.ts
             cmake --install out/build/windows-tiles-sounds-x64-msvc --prefix $dist --config Release
+            Add-Client
           }
           Compress-Archive -Force -Path $dist/* -DestinationPath cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.zip
 
@@ -581,6 +643,15 @@ jobs:
           configurePreset: ${{ matrix.preset }}
           configurePresetAdditionalArgs: ${{ inputs.run-tests && '["-DCATA_FORMAT_TARGETS=OFF", "-DTESTS=ON"]' || '["-DCATA_FORMAT_TARGETS=OFF"]' }}
           buildPreset: ${{ matrix.preset }}
+
+      - name: Put the client in the app (macOS)
+        if: runner.os == 'macOS' && inputs.client-ref != '' && inputs.package-artifacts
+        run: |
+          cp client-src/target/release/bn-client-egui Cataclysm.app/Contents/Resources/bn-client
+          cp client-src/LICENSE Cataclysm.app/Contents/Resources/LICENSE-client.txt
+          dmg=$(echo CataclysmBN-*.dmg)
+          rm "$dmg"
+          dmgbuild -s build-data/osx/dmgsettings.py "Cataclysm BN" "$dmg"
 
       - name: Create distribution package with soundpacks (macOS)
         if: runner.os == 'macOS' && matrix.tiles == true && matrix.sound == true && inputs.bundle-registry-mods && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
@@ -824,6 +895,20 @@ jobs:
           name: ${{ inputs.artifact-label != '' && format('{0}-{1}', matrix.artifact, inputs.artifact-label) || matrix.artifact }}
           path: ${{ runner.os == 'Windows' && format('cataclysmbn-{0}/', inputs.version-label) || format('cbn-{0}-{1}.{2}', matrix.artifact, inputs.version-label, matrix.ext) }}
           if-no-files-found: error
+
+      - name: Play a new game on the bundled engine
+        if: inputs.client-ref != '' && inputs.package-artifacts
+        shell: bash
+        env:
+          # With no language to go by, the first start asks for one first; macOS goes by AppleLanguages.
+          LANG: en_US.UTF-8
+          BN_ENGINE: ${{ github.workspace }}/${{ runner.os == 'macOS' && 'Cataclysm.app/Contents/Resources/cataclysm-bn-tiles' || format('cataclysmbn-{0}/cataclysm-bn-tiles{1}', inputs.version-label, runner.os == 'Windows' && '.exe' || '') }}
+          RUSTFLAGS: ${{ runner.os == 'Windows' && '-C target-feature=+crt-static' || '' }}
+          # Git Bash has its own link.exe, first on PATH.
+          CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER: ${{ env.VCToolsInstallDir }}bin/Hostx64/x64/link.exe
+        run: |
+          if [ "$RUNNER_OS" = macOS ]; then defaults write -g AppleLanguages -array en-US; fi
+          cargo test --release --locked --manifest-path client-src/Cargo.toml -p bn-client-core --test it live_engine_message_log -- --ignored
 
       - name: Upload to release
         if: inputs.upload-to-release
