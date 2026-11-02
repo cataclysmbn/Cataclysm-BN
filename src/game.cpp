@@ -592,6 +592,7 @@ void game_ui::init_ui()
         FULL_SCREEN_HEIGHT = 24;
     }
 #endif
+    reinitialize_framebuffer();
 }
 
 void game::toggle_fullscreen()

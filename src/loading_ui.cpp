@@ -473,7 +473,9 @@ loading_ui::loading_ui( bool display )
 loading_ui::~loading_ui()
 {
 #if defined( TILES )
-    clear_sdl_display_buffer_before_redraw();
+    if( menu != nullptr ) {
+        clear_sdl_display_buffer_before_redraw();
+    }
 #endif
 }
 
