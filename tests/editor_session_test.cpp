@@ -8379,6 +8379,11 @@ TEST_CASE("the map editor in Simple mode shows no ids or JSON", "[editor_session
         [&](const auto& screen) {
             CHECK(ids(rows_in(screen, "editor:legend")) == 0);
             CHECK(ids(rows_in(screen, "editor:catalog")) == 0);
+            CHECK(std::ranges::none_of(rows_in(screen, "editor:catalog"), [](const ec::row& entry) {
+                return std::ranges::contains(
+                    entry.columns, std::string("mod"), &game_client::interaction_column::key);
+            }));
+            CHECK(ec::find_component(*screen.root, "editor:objects") == nullptr);
             CHECK_FALSE(json(screen));
             CHECK(affordance(screen, "editor:advanced").group == "View");
             CHECK(affordance(screen, "editor:advanced").label == "Show advanced settings");
@@ -8387,6 +8392,7 @@ TEST_CASE("the map editor in Simple mode shows no ids or JSON", "[editor_session
         [&](const auto& screen) {
             CHECK(ids(rows_in(screen, "editor:legend")) > 0);
             CHECK(ids(rows_in(screen, "editor:catalog")) > 0);
+            CHECK(ec::find_component(*screen.root, "editor:objects") != nullptr);
             CHECK(json(screen));
             CHECK(affordance(screen, "editor:advanced").label == "Hide advanced settings");
             return act("QUIT");
