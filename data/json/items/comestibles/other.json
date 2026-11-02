@@ -775,7 +775,10 @@
     "addiction_type": "caffeine",
     "volume": "50 ml",
     "stack_size": 40,
-    "weight": "1g"
+    "weight": "1g",
+    "calories": 130,
+    "vitamins": [],
+    "flags": [ "TRADER_AVOID" ]
   },
   {
     "type": "COMESTIBLE",
@@ -789,7 +792,10 @@
     "addiction_type": "caffeine",
     "volume": "50 ml",
     "stack_size": 40,
-    "weight": "1g"
+    "weight": "1g",
+    "calories": 130,
+    "vitamins": [],
+    "flags": [ "TRADER_AVOID" ]
   },
   {
     "type": "COMESTIBLE",
@@ -803,6 +809,9 @@
     "addiction_type": "caffeine",
     "volume": "50 ml",
     "stack_size": 40,
-    "weight": "1g"
+    "weight": "1g",
+    "calories": 130,
+    "vitamins": [],
+    "flags": [ "TRADER_AVOID" ]
   }
 ]
