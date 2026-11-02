@@ -1736,3 +1736,24 @@ TEST_CASE("flammable_fields_can_be_ignited", "[map][field][fire]") {
     CHECK(fire->get_field_intensity() == std::max(2, intensity));
     CHECK(fire->get_field_age() == -10_minutes * intensity);
 }
+
+TEST_CASE("clear_all_state_keeps_map_simulated_after_direct_map_load", "[map]") {
+    clear_all_state();
+    auto& here = get_map();
+    const auto original_origin = here.get_abs_sub();
+    const auto dim = here.get_bound_dimension();
+    const auto cleanup = on_out_of_scope([&]() {
+        here.load(original_origin, false);
+        clear_all_state();
+    });
+    g->load_map(original_origin);
+    here.load(original_origin + point_rel_sm(g_mapsize, 0), false);
+    REQUIRE_FALSE(submap_loader.is_simulated(dim, here.get_abs_sub()));
+
+    clear_all_state();
+
+    const auto last_submap = here.getmapsize() - 1;
+    CHECK(submap_loader.is_simulated(dim, here.get_abs_sub()));
+    CHECK(submap_loader
+              .is_simulated(dim, here.get_abs_sub() + point_rel_sm(last_submap, last_submap)));
+}
