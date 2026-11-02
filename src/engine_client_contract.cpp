@@ -30,10 +30,10 @@ namespace engine_client
 {
 namespace
 {
-static_assert( std::is_nothrow_assignable_v < std::optional<command_request> &,
-               command_request && > );
-static_assert( std::is_nothrow_assignable_v < std::optional<command_result> &,
-               command_result && > );
+static_assert( std::is_nothrow_move_constructible_v<command_request> &&
+               std::is_nothrow_move_assignable_v<command_request> );
+static_assert( std::is_nothrow_move_constructible_v<command_result> &&
+               std::is_nothrow_move_assignable_v<command_result> );
 static_assert( std::is_nothrow_constructible_v < std::expected<command_result, error>,
                command_result && > );
 static_assert( std::is_nothrow_constructible_v < std::expected<input_event, error>,
