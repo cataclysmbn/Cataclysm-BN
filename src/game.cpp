@@ -4308,8 +4308,6 @@ bool game::load( const save_t &name )
 
     cata::load_world_lua_state( get_active_world(), "lua_state.json" );
 
-    cata::run_on_game_load_hooks( *DynamicDataLoader::get_instance().lua );
-
     // Build caches once so any immediate post-load draws don't use uninitialized lighting/visibility,
     // then re-invalidate so the first real in-game draw rebuilds everything again.
     m.invalidate_map_cache( get_levz() );
