@@ -5974,6 +5974,10 @@ TEST_CASE(
         [&](const auto& screen) {
             CHECK(ids(rows(screen, "vehicle:parts")) == 0);
             CHECK_FALSE(has_affordance(screen, "vehicle:show:json"));
+            // Nothing shows or asks for a path.
+            CHECK_FALSE(has_affordance(screen, "vehicle:save_as"));
+            const auto& stats = body<ec::panel_body>(part(screen, "vehicle:document")).stats;
+            CHECK_FALSE(std::ranges::contains(stats, std::string("file"), &ec::panel_stat::key));
             return invoke("vehicle:show:vehicle");
         },
         [&](const auto& screen) {
