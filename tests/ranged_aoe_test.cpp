@@ -52,7 +52,7 @@ static auto fire_shell_at_target(
     target.worn.clear();
     target.set_dodge_bonus(-100.0f);
     for (const auto& armor_id : armor_ids) { target.worn.push_back(item::spawn(armor_id)); }
-    REQUIRE(g->critter_at<avatar>(abs_to_bub( target_abs )) != nullptr);
+    REQUIRE(g->critter_at<avatar>(abs_to_bub(target_abs)) != nullptr);
 
     auto shooter = standard_npc("shooter", shooter_pos_abs);
     shooter.set_skill_level(skill_gun, 10);
@@ -77,9 +77,8 @@ static auto fire_shell_at_target(
     for (const auto _ : std::views::iota(0, shells_to_fire * pellet_count)) {
         (void)_;
         auto probe = make_direct_gun_projectile(shooter.primary_weapon());
-        projectile_attack(probe, abs_to_bub( shooter_pos_abs ), abs_to_bub( target_abs ),
-                          dispersion_sources{}, &shooter,
-                          &shooter.primary_weapon(), nullptr, true);
+        projectile_attack(probe, abs_to_bub(shooter_pos_abs), abs_to_bub(target_abs),
+                          dispersion_sources{}, &shooter, &shooter.primary_weapon(), nullptr, true);
     }
     return target_hp_total_before - target.get_hp();
 }
@@ -277,7 +276,7 @@ TEST_CASE(
     const auto shooter_pos_abs = target_abs - tripoint_rel_ms(2, 0, 0);
     target.worn.clear();
     target.set_dodge_bonus(-100.0f);
-    REQUIRE(g->critter_at<avatar>(abs_to_bub( target_abs )) != nullptr);
+    REQUIRE(g->critter_at<avatar>(abs_to_bub(target_abs)) != nullptr);
 
     auto shooter = standard_npc("shooter", shooter_pos_abs);
     set_time(calendar::turn_zero + 12_hours);
@@ -290,11 +289,10 @@ TEST_CASE(
 
     auto probe = make_direct_gun_projectile(shooter.primary_weapon());
     const auto probe_attack = projectile_attack(
-        probe, abs_to_bub( shooter_pos_abs ), abs_to_bub( target_abs ), dispersion_sources{},
-        &shooter, &shooter.primary_weapon(),
-        nullptr, true);
+        probe, abs_to_bub(shooter_pos_abs), abs_to_bub(target_abs), dispersion_sources{}, &shooter,
+        &shooter.primary_weapon(), nullptr, true);
 
     CHECK(probe_attack.hit_critter != nullptr);
     CHECK(probe_attack.dealt_dam.total_damage() > 0);
-    CHECK(probe_attack.end_point != abs_to_bub( target_abs ));
+    CHECK(probe_attack.end_point != abs_to_bub(target_abs));
 }

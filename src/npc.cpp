@@ -188,7 +188,8 @@ npc::npc()
     character_funcs::normalize( *this );
 }
 
-namespace {
+namespace
+{
 
 auto standard_npc_abs_position( const tripoint_bub_ms &pos ) -> tripoint_abs_ms
 {

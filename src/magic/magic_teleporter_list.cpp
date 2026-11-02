@@ -72,8 +72,7 @@ static auto find_valid_teleporters_omt(const tripoint_abs_omt& omt_pt)
             auto furn = submap_view->tile(submap_map_square).get_furn();
             if (furn.is_valid()) {
                 if (furn->has_flag("TRANSLOCATOR")) {
-                    return point_omt_ms(
-                        project_combine(submap_tile, submap_map_square));
+                    return point_omt_ms(project_combine(submap_tile, submap_map_square));
                 }
             }
         }

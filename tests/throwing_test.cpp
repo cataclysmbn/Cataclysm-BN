@@ -47,7 +47,8 @@ TEST_CASE("throwing heavier items scales with strength", "[throwing], [balance]"
     clear_all_state();
     const auto thrower_pos_abs = test_origin;
     const auto weak_thrower = standard_npc("WeakThrower", thrower_pos_abs, {}, 4, 8, 10, 10, 10);
-    const auto strong_thrower = standard_npc("StrongThrower", thrower_pos_abs, {}, 4, 14, 10, 10, 10);
+    const auto strong_thrower =
+        standard_npc("StrongThrower", thrower_pos_abs, {}, 4, 14, 10, 10, 10);
     item& bronze_anvil = *item::spawn_temporary("anvil_bronze");
 
     CHECK(weak_thrower.throw_range(bronze_anvil) < strong_thrower.throw_range(bronze_anvil));
