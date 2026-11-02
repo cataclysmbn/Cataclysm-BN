@@ -1,6 +1,7 @@
 #include "../src/map/map.h"
 #include "../src/vehicle/vehicle_part.h"
 #include "../src/vehicle/vpart_position.h"
+#include "avatar.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
 #include "character.h"
@@ -54,7 +55,7 @@ static void full_map_test(
     const ter_id t_open_air("t_open_air");
 
     Character& player_character = get_player_character();
-    g->place_player(tripoint_bub_ms(60, 60, 0));
+    g->u.setpos(test_origin);
     get_weather().weather_id = weather_type_id("clear");
     g->reset_light_level();
 
@@ -616,9 +617,9 @@ TEST_CASE("vision_see_out_of_vehicle", "[shadowcasting][vision]") {
         {
             "66666666666666666",
             "66666666666666666",
-            "66666666661166666",
-            "66666666441666666",
-            "66666666411666666",
+            "66666666661116666",
+            "66666666441166666",
+            "66666666411116666",
             "66666661111466666",
             "66666661114466666",
             "66666666666666666",

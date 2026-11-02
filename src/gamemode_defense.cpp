@@ -300,9 +300,10 @@ void defense_game::init_map()
     // For this mode assume we always want overmap zero.
     tripoint_abs_omt abs_defloc_pos = project_combine( point_abs_om(), defloc_pos );
     g->load_map( project_to<coords::sm>( abs_defloc_pos.xy() ) );
-    Character &player_character = get_player_character();
+    auto &player_character = get_avatar();
     const int z = player_character.bub_pos().z();
-    player_character.setpos( tripoint_bub_ms( SEEX, SEEY, z ) );
+    player_character.set_internal_position( map_local_to_abs( g->m,
+                                            tripoint_bub_ms( SEEX, SEEY, z ) ) );
 
     monster *const generator = g->place_critter_around(
                                    mtype_id( "mon_generator" ), g->u.bub_pos(), 2 );

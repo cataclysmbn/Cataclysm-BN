@@ -56,8 +56,6 @@ static void wield_check_internal(
 static void do_test(const bool generating_cases) {
     player& dummy = get_avatar();
     map& m = get_map();
-    const auto spot = dummy.bub_pos();
-
     dummy.worn.clear();
     dummy.reset_encumbrance();
     wield_check_inv(
@@ -66,8 +64,8 @@ static void do_test(const bool generating_cases) {
                     item::spawn("aspirin", calendar::start_of_cataclysm, 1), 100);
     wield_check_inv("Wielding combat knife from inventory while unencumbered", dummy,
                     item::spawn("knife_combat"), 125);
-    wield_check_floor("Wielding metal tank from outside inventory while unencumbered", spot, dummy,
-                      item::spawn("metal_tank"), 300);
+    wield_check_floor("Wielding metal tank from outside inventory while unencumbered",
+                      bub_test_origin(), dummy, item::spawn("metal_tank"), 300);
     dummy.worn.clear();
     dummy.worn.push_back(item::spawn("gloves_work"));
     dummy.reset_encumbrance();
@@ -77,8 +75,8 @@ static void do_test(const bool generating_cases) {
                     item::spawn("aspirin", calendar::start_of_cataclysm, 1), 120);
     wield_check_inv("Wielding combat knife from inventory while wearing work gloves", dummy,
                     item::spawn("knife_combat"), 150);
-    wield_check_floor("Wielding metal tank from outside inventory while wearing work gloves", spot,
-                      dummy, item::spawn("metal_tank"), 340);
+    wield_check_floor("Wielding metal tank from outside inventory while wearing work gloves",
+                      bub_test_origin(), dummy, item::spawn("metal_tank"), 340);
     dummy.worn.clear();
     dummy.worn.push_back(item::spawn("boxing_gloves"));
     dummy.reset_encumbrance();
@@ -89,7 +87,7 @@ static void do_test(const bool generating_cases) {
     wield_check_inv("Wielding combat knife from inventory while wearing boxing gloves", dummy,
                     item::spawn("knife_combat"), 200);
     wield_check_floor("Wielding metal tank from outside inventory while wearing boxing gloves",
-                      spot, dummy, item::spawn("metal_tank"), 400);
+                      bub_test_origin(), dummy, item::spawn("metal_tank"), 400);
 }
 
 TEST_CASE("Wield time test", "[wield]") {

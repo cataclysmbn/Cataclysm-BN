@@ -355,7 +355,7 @@ scoped_map_context::~scoped_map_context() noexcept { tl_map_context = prev_; }
 
 auto resident_item_lookup() -> mapbuffer_lookup_options {
     return {
-        .mode = mapbuffer_lookup_mode::resident_only,
+        .policy = mapbuffer_lookup_policy::resident_only,
     };
 }
 
@@ -364,7 +364,7 @@ auto can_delegate_item_mutation_to_mapbuffer(
     if (sm == nullptr || g == nullptr || &get_map() != &m) { return false; }
 
     return MAPBUFFER_REGISTRY.get(m.get_bound_dimension())
-               .lookup_submap_in_memory(project_to<coords::sm>(p))
+               .find_resident_submap(project_to<coords::sm>(p))
         == sm;
 }
 
@@ -479,7 +479,7 @@ auto map::refresh_active_submap_view() -> void {
     active_submaps_ = mapbuffer_bounds_view(
         get_mapbuffer(), abs_sub, abs_sub + point_rel_sm(my_MAPSIZE, my_MAPSIZE),
         {
-            .mode = mapbuffer_lookup_mode::resident_only,
+            .policy = mapbuffer_lookup_policy::resident_only,
         });
 }
 
@@ -503,7 +503,7 @@ auto map::validate_active_submap_view_complete(const char* context) const -> voi
 
     for (const auto p : bubble_submaps()) {
         const auto local = point_rel_sm(p.x(), p.y());
-        if (active_submaps_.get_submap_view(local, p.z())) { continue; }
+        if (active_submaps_.submap_view_at(local, p.z())) { continue; }
         const auto missing = map_local_to_abs(*this, p);
         debugmsg("map active bounds view incomplete after %s; missing submap %s in dimension '%s'",
                  context, missing.to_string(), bound_dimension_.c_str());
@@ -524,13 +524,13 @@ void map::on_submap_loaded(const tripoint_abs_sm& p, const dimension_id& dim_id)
     if (dim_id != bound_dimension_) { return; }
 
     // Submap lookup shared by vehicle fixup, active-item tracking, and cache update.
-    submap* sm = MAPBUFFER_REGISTRY.get(dim_id).lookup_submap_in_memory(p);
+    submap* sm = MAPBUFFER_REGISTRY.get(dim_id).find_resident_submap(p);
 
     if (sm != nullptr && !sm->vehicles.empty()) {
         MAPBUFFER_REGISTRY.get(dim_id).refresh_vehicle_registry_for_submap(
             p,
             {
-                .mode = mapbuffer_lookup_mode::resident_only,
+                .policy = mapbuffer_lookup_policy::resident_only,
             });
     }
 
@@ -560,7 +560,7 @@ void map::on_submap_unloaded(const tripoint_abs_sm& pos, const dimension_id& dim
     // border-preloaded submaps that were never in the simulation set should not be
     // touched (their last_touched reflects their real generate-or-load time).
     if (submap_loader.is_in_simulated_set(dim_id, pos)) {
-        submap* sm = MAPBUFFER_REGISTRY.get(dim_id).lookup_submap_in_memory(pos);
+        submap* sm = MAPBUFFER_REGISTRY.get(dim_id).find_resident_submap(pos);
         if (sm) { sm->last_touched = calendar::turn; }
     }
 
@@ -968,7 +968,7 @@ auto map::detach_vehicle(vehicle* veh) -> std::unique_ptr<vehicle> {
         if (passenger) { unboard_vehicle(part, passenger); }
     }
     veh->invalidate_towing(true);
-    submap* current_submap = get_mapbuffer().lookup_submap_in_memory(veh->abs_sm_pos);
+    submap* current_submap = get_mapbuffer().find_resident_submap(veh->abs_sm_pos);
     if (current_submap == nullptr) {
         debugmsg("detach_vehicle can't find submap!  name=%s, submap:%d,%d,%d", veh->name,
                  veh->abs_sm_pos.x(), veh->abs_sm_pos.y(), veh->abs_sm_pos.z());
@@ -1775,9 +1775,9 @@ auto map::get_vehicles(const tripoint_bub_sm& start, const tripoint_bub_sm& end)
 
     for (const auto sm_pos : tripoint_range<tripoint_bub_sm>(chunk_start, chunk_end)) {
         const auto view =
-            active_submaps_.get_submap_view(point_rel_sm(sm_pos.x(), sm_pos.y()), sm_pos.z());
+            active_submaps_.submap_view_at(point_rel_sm(sm_pos.x(), sm_pos.y()), sm_pos.z());
         if (!view) { continue; }
-        const submap* current_submap = &view->get_submap();
+        const submap* current_submap = &view->submap_ref();
         for (const auto& elem : current_submap->vehicles) {
             auto w = wrapped_vehicle{};
             w.v = elem.get();
@@ -1835,11 +1835,10 @@ void map::board_vehicle(const tripoint_bub_ms& pos, Character* who) {
 
     auto vp = veh_at(pos).part_with_feature(VPFLAG_BOARDABLE, true);
     if (!vp) {
-        const auto abs_pos = map_local_to_abs(*this, pos);
         vp = get_mapbuffer()
-                 .veh_at(abs_pos,
+                 .veh_at(bub_to_abs(pos),
                          {
-                             .mode = mapbuffer_lookup_mode::resident_only,
+                             .policy = mapbuffer_lookup_policy::resident_only,
                          })
                  .part_with_feature(VPFLAG_BOARDABLE, true);
     }
@@ -1858,7 +1857,11 @@ void map::board_vehicle(const tripoint_bub_ms& pos, Character* who) {
     vp->part().passenger_id = who->getID();
     vp->vehicle().invalidate_mass();
 
-    who->setpos(pos);
+    if (player* const passenger = who->as_player(); passenger == &g->u) {
+        g->set_player_position(bub_to_abs(pos));
+    } else {
+        who->setpos(pos);
+    }
     who->in_vehicle = true;
 }
 
@@ -1901,12 +1904,12 @@ auto map::displace_vehicle(vehicle& veh, const tripoint_rel_ms& dp) -> bool {
     const bool sm_shift = veh.abs_sm_pos != dest_proj.quotient_tripoint;
 
     submap* const src_submap =
-        sm_shift ? MAPBUFFER_REGISTRY.get(bound_dimension_).lookup_submap_in_memory(veh.abs_sm_pos)
+        sm_shift ? MAPBUFFER_REGISTRY.get(bound_dimension_).find_resident_submap(veh.abs_sm_pos)
                  : nullptr;
     submap* const dst_submap =
         sm_shift
             ? MAPBUFFER_REGISTRY.get(bound_dimension_)
-                  .lookup_submap_in_memory(dest_proj.quotient_tripoint)
+                  .find_resident_submap(dest_proj.quotient_tripoint)
             : nullptr;
 
     std::set<int> smzs;
@@ -2001,7 +2004,11 @@ auto map::displace_vehicle(vehicle& veh, const tripoint_rel_ms& dp) -> bool {
                 z_change = psgp.z() != part_pos.z();
             }
 
-            psg->setpos(psgp);
+            if (player* const passenger = psg->as_player(); passenger == &g->u) {
+                g->set_player_position(map_local_to_abs(*this, psgp));
+            } else {
+                psg->setpos(psgp);
+            }
             r.moved = true;
         }
     }
@@ -3280,7 +3287,7 @@ void map::decay_fields_and_scent(const time_duration& amount) {
     for (const auto p : bubble_submaps()) {
         level_cache& smz_cache = get_cache(p.z());
         const auto abs_sm = map_local_to_abs(*this, p);
-        const auto cur_submap = get_mapbuffer().lookup_submap_in_memory(abs_sm);
+        const auto cur_submap = get_mapbuffer().find_resident_submap(abs_sm);
         if (cur_submap == nullptr) { continue; }
         int to_proc = cur_submap->field_count;
         if (to_proc < 1) {
@@ -4981,7 +4988,7 @@ auto map::i_rem(const tripoint_bub_ms& p, map_stack::const_iterator it, detached
     const auto removed_emissive = (*it)->is_emissive();
     current_submap->update_lum_rem(l, **it);
     if (removed_emissive) {
-        get_mapbuffer().refresh_luminous_item_submap_index(
+        get_mapbuffer().refresh_luminous_tile_submap_index(
             project_to<coords::sm>(abs_pos), resident_item_lookup());
         invalidate_lightmap_caches();
     }
@@ -5009,7 +5016,7 @@ auto map::i_rem(const tripoint_bub_ms& p, item* it) -> detached_ptr<item> {
     const auto removed_emissive = it->is_emissive();
     current_submap->update_lum_rem(l, *it);
     if (removed_emissive) {
-        get_mapbuffer().refresh_luminous_item_submap_index(
+        get_mapbuffer().refresh_luminous_tile_submap_index(
             project_to<coords::sm>(abs_pos), resident_item_lookup());
         invalidate_lightmap_caches();
     }
@@ -5037,7 +5044,7 @@ auto map::i_clear(const tripoint_bub_ms& p) -> std::vector<detached_ptr<item>> {
     const auto had_luminance = current_submap->get_lum(l) != 0;
     current_submap->set_lum(l, 0);
     if (had_luminance) {
-        get_mapbuffer().refresh_luminous_item_submap_index(
+        get_mapbuffer().refresh_luminous_tile_submap_index(
             project_to<coords::sm>(abs_pos), resident_item_lookup());
         invalidate_lightmap_caches();
     }
@@ -5284,7 +5291,7 @@ void map::add_item(const tripoint_bub_ms& p, detached_ptr<item>&& new_item) {
     const auto adds_luminance = new_item->is_emissive();
     current_submap->update_lum_add(l, *new_item);
     if (adds_luminance) {
-        get_mapbuffer().refresh_luminous_item_submap_index(
+        get_mapbuffer().refresh_luminous_tile_submap_index(
             project_to<coords::sm>(abs_pos), resident_item_lookup());
         invalidate_lightmap_caches();
     }
@@ -5415,7 +5422,7 @@ void map::update_lum(item& loc, bool add) {
     } else {
         current_submap->update_lum_rem(l, *target);
     }
-    get_mapbuffer().refresh_luminous_item_submap_index(
+    get_mapbuffer().refresh_luminous_tile_submap_index(
         project_to<coords::sm>(abs_pos), resident_item_lookup());
     invalidate_lightmap_caches();
 }
@@ -5488,7 +5495,7 @@ auto map::check_submap_active_item_consistency() -> std::vector<tripoint_abs_sm>
     // shift performance but never registered in submaps_with_active_items.
     const auto& active_item_submaps = get_mapbuffer().get_submaps_with_active_items();
     for (const auto& view : active_submaps_.submaps()) {
-        const submap& sm = view.get_submap();
+        const submap& sm = view.submap_ref();
         if (sm.active_items.empty()) { continue; }
         if (!active_item_submaps.contains(sm.position())) { result.push_back(sm.position()); }
     }
@@ -5496,7 +5503,7 @@ auto map::check_submap_active_item_consistency() -> std::vector<tripoint_abs_sm>
     // Direction 2: every entry in the set should point to a loaded submap with active items.
     mapbuffer& buf = get_mapbuffer();
     for (const tripoint_abs_sm& p : active_item_submaps) {
-        submap* s = buf.lookup_submap_in_memory(p);
+        submap* s = buf.find_resident_submap(p);
         if (s == nullptr || s->active_items.empty()) { result.push_back(p); }
     }
 
@@ -5518,7 +5525,7 @@ void map::process_items(int turns) {
         std::set<submap*> veh_submaps;
         for (int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; ++z) {
             for (vehicle* veh : get_cache(z).vehicle_list) {
-                submap* sm = get_mapbuffer().lookup_submap_in_memory(veh->abs_sm_pos);
+                submap* sm = get_mapbuffer().find_resident_submap(veh->abs_sm_pos);
                 if (sm != nullptr) { veh_submaps.insert(sm); }
             }
         }
@@ -5552,7 +5559,7 @@ void map::process_items(int turns) {
                 continue;
             }
             const auto local_pos = abs_to_map_local(*this, abs_pos);
-            submap* const current_submap = get_mapbuffer().lookup_submap_in_memory(abs_pos);
+            submap* const current_submap = get_mapbuffer().find_resident_submap(abs_pos);
             if (current_submap == nullptr) { continue; }
             if (!current_submap->active_items.empty()) {
                 {
@@ -7393,8 +7400,8 @@ void map::shift_vehicle_z(vehicle& veh, int z_shift) {
     dirty_vertical_vehicle_caches(dst.z());
     dirty_vertical_vehicle_caches(dst.z() + 1);
 
-    submap* src_submap = get_mapbuffer().lookup_submap_in_memory(src);
-    submap* dst_submap = get_mapbuffer().lookup_submap_in_memory(dst);
+    submap* src_submap = get_mapbuffer().find_resident_submap(src);
+    submap* dst_submap = get_mapbuffer().find_resident_submap(dst);
 
     int our_i = -1;
     for (size_t i = 0; i < src_submap->vehicles.size(); i++) {
@@ -7696,7 +7703,7 @@ void map::shift(const point_rel_sm& sp) {
                             && gridy + sp.y() >= 0 && gridy + sp.y() < my_MAPSIZE) {
                             const auto grid_pos = tripoint_bub_sm{gridx, gridy, gridz};
                             update_vehicle_list(
-                                get_mapbuffer().lookup_submap_in_memory(
+                                get_mapbuffer().find_resident_submap(
                                     map_local_to_abs(*this, grid_pos)),
                                 gridz);
                         } else {
@@ -7768,7 +7775,7 @@ void map::loadn(const tripoint_bub_sm& grid, const bool update_vehicles, const b
     // most pocket-dimension submaps are out-of-bounds.
     if (get_mapbuffer().is_outside_pocket_dimension_bounds(tripoint_abs_sm(grid_abs_sub))) {
         mapbuffer& dim_buf = get_mapbuffer();
-        submap* bsub = dim_buf.lookup_submap_in_memory(grid_abs_sub);
+        submap* bsub = dim_buf.find_resident_submap(grid_abs_sub);
         // Diagnostic: log boundary submap creation for dimension debugging
         if (bsub == nullptr) {
             add_msg(m_debug, "[DIM-DIAG] loadn: creating boundary submap at (%d,%d,%d)",
@@ -7778,7 +7785,7 @@ void map::loadn(const tripoint_bub_sm& grid, const bool update_vehicles, const b
             sm->set_all_ter(get_mapbuffer().get_boundary_terrain());
             sm->last_touched = calendar::turn;
             dim_buf.add_submap(grid_abs_sub, sm);
-            bsub = dim_buf.lookup_submap_in_memory(grid_abs_sub);
+            bsub = dim_buf.find_resident_submap(grid_abs_sub);
         }
         return;
     }
@@ -7788,7 +7795,7 @@ void map::loadn(const tripoint_bub_sm& grid, const bool update_vehicles, const b
     auto* tmpsub = static_cast<submap*>(nullptr);
     {
         ZoneScopedN("loadn_lookup");
-        tmpsub = get_mapbuffer().lookup_submap(grid_abs_sub);
+        tmpsub = get_mapbuffer().load_submap_from_storage(grid_abs_sub);
     }
     // Diagnostic: log in-bounds submap loading for dimension transition debugging
     if (get_mapbuffer().has_dimension_bounds()) {
@@ -7809,7 +7816,7 @@ void map::loadn(const tripoint_bub_sm& grid, const bool update_vehicles, const b
 
         {
             ZoneScopedN("loadn_generate_lookup");
-            tmpsub = get_mapbuffer().lookup_submap(grid_abs_sub);
+            tmpsub = get_mapbuffer().load_submap_from_storage(grid_abs_sub);
         }
         if (tmpsub == nullptr) {
             debugmsg("failed to generate a submap at %s", grid_abs_sub.to_string());
@@ -7922,11 +7929,11 @@ void map::spawn_monsters_submap_group(
     };
 
     // If the submap is uniform, we can skip many checks
-    const auto current_submap = active_submaps_.get_submap_view(map_local_to_abs(*this, gp));
+    const auto current_submap = active_submaps_.submap_view_at(map_local_to_abs(*this, gp));
     if (!current_submap) { return; }
     bool ignore_terrain_checks = false;
     bool ignore_inside_checks = false;
-    if (current_submap->get_submap().is_uniform) {
+    if (current_submap->submap_ref().is_uniform) {
         const tripoint_bub_ms upper_left{SEEX * gp.x(), SEEY * gp.y(), gp.z()};
         if (!allow_on_terrain(upper_left) || (!ignore_inside_checks && !is_outside(upper_left))) {
             const auto glp = map_local_to_abs(*this, gp);
@@ -8022,7 +8029,7 @@ void map::spawn_monsters_submap(const tripoint_bub_sm& gp, bool ignore_sight) {
     auto groups = get_overmapbuffer(bound_dimension_).groups_at(map_local_to_abs(*this, gp));
     for (auto& mgp : groups) { spawn_monsters_submap_group(gp, *mgp, ignore_sight); }
 
-    submap* const current_submap = get_mapbuffer().lookup_submap_in_memory(
+    submap* const current_submap = get_mapbuffer().find_resident_submap(
         map_local_to_abs(*this, gp));
     if (current_submap == nullptr) { return; }
     const auto gp_ms = project_to<coords::ms>(gp);
@@ -8215,7 +8222,7 @@ void map::build_outside_cache(const int zlev) {
         std::fill(ch.sheltered_cache.begin(), ch.sheltered_cache.end(), false);
         for (const auto p : flat_bubble_submaps()) {
             const auto sm_pos = tripoint_bub_sm(p, zlev);
-            auto* sm = get_mapbuffer().lookup_submap_in_memory(map_local_to_abs(*this, sm_pos));
+            auto* sm = get_mapbuffer().find_resident_submap(map_local_to_abs(*this, sm_pos));
             if (sm) {
                 std::ranges::fill(std::span(&sm->outside_cache[0][0], SEEX * SEEY), true);
                 sm->outside_dirty = false;
@@ -8245,7 +8252,7 @@ void map::build_outside_cache(const int zlev) {
                 continue;
             }
             const auto sm_pos = tripoint_bub_sm(smx, smy, zlev);
-            auto* cur_submap = get_mapbuffer().lookup_submap_in_memory(
+            auto* cur_submap = get_mapbuffer().find_resident_submap(
                 map_local_to_abs(*this, sm_pos));
             if (cur_submap == nullptr) { continue; }
             cur_submap->rebuild_outside_cache(above, sm_pos);
@@ -8281,7 +8288,7 @@ void map::build_obstacle_cache(
         for (int smy = min_submap.y(); smy <= max_submap.y(); ++smy) {
             const auto gridp = tripoint_bub_sm(smx, smy, start.z());
             const auto view =
-                active_submaps_.get_submap_view(point_rel_sm(gridp.x(), gridp.y()), gridp.z());
+                active_submaps_.submap_view_at(point_rel_sm(gridp.x(), gridp.y()), gridp.z());
             if (!view) {
                 for (const auto sm_ms : submap_tiles()) {
                     const auto ms_pos = project_combine(gridp, sm_ms);
@@ -8289,7 +8296,7 @@ void map::build_obstacle_cache(
                 }
                 continue;
             }
-            const submap& cur_submap = view->get_submap();
+            const submap& cur_submap = view->submap_ref();
 
             // TODO: Init indices to prevent iterating over unused submap sections.
             for (const auto sm_ms : submap_tiles()) {
@@ -8341,8 +8348,7 @@ auto map::build_floor_cache(const int zlev) -> bool {
             continue;
         }
         const auto sm_pos = tripoint_bub_sm(p, zlev);
-        submap* cur_submap = get_mapbuffer().lookup_submap_in_memory(
-            map_local_to_abs(*this, sm_pos));
+        submap* cur_submap = get_mapbuffer().find_resident_submap(map_local_to_abs(*this, sm_pos));
         if (cur_submap == nullptr) {
             // Null expected for circle corners and bounded-dimension edges.
             continue;
@@ -8382,7 +8388,7 @@ void map::update_suspension_cache(const int& z) {
     std::list<point_abs_ms>& suspension_cache = ch.suspension_cache;
     if (!ch.suspension_cache_initialized) {
         for (const auto& view : active_submaps_.submaps(z)) {
-            const submap& cur_submap = view.get_submap();
+            const submap& cur_submap = view.submap_ref();
             const auto abs_sm = view.abs_pos().xy();
             for (const auto sm_ms : submap_tiles()) {
                 const ter_t& terrain = cur_submap.get_ter(sm_ms).obj();
@@ -8948,7 +8954,7 @@ auto map::get_submap_at(const tripoint_bub_ms& p) const -> submap* {
     if (inbounds(p)) {
         const auto abs_sm_pos =
             map_local_to_abs(*this, tripoint_bub_sm(p.x() / SEEX, p.y() / SEEY, p.z()));
-        return get_mapbuffer().lookup_submap_in_memory(abs_sm_pos);
+        return get_mapbuffer().find_resident_submap(abs_sm_pos);
     }
     if (get_mapbuffer().is_outside_pocket_dimension_bounds(map_local_to_abs(*this, p))) {
         // Outside dimension bounds — genuinely invalid position.
@@ -8959,7 +8965,7 @@ auto map::get_submap_at(const tripoint_bub_ms& p) const -> submap* {
     const tripoint_abs_sm abs_sm_pos(
         abs_sub.x() + divide_round_to_minus_infinity(p.x(), SEEX),
         abs_sub.y() + divide_round_to_minus_infinity(p.y(), SEEY), p.z());
-    return get_mapbuffer().lookup_submap_in_memory(abs_sm_pos);
+    return get_mapbuffer().find_resident_submap(abs_sm_pos);
 }
 
 auto map::get_submap_at(const tripoint_bub_ms& p, point_sm_ms& offset_p) const -> submap* {
@@ -9145,13 +9151,13 @@ auto map::function_over(const tripoint_bub_ms& start, const tripoint_bub_ms& end
         for (const auto smp : submap_range) {
             if (skip_zlevel) { break; }
             const auto sm_pos = tripoint_bub_sm(smp, z);
-            const auto view = active_submaps_.get_submap_view(point_rel_sm(smp.x(), smp.y()), z);
+            const auto view = active_submaps_.submap_view_at(point_rel_sm(smp.x(), smp.y()), z);
             if (!view) {
                 // This can happen in pocket dimensions where out-of-bounds
                 // submaps are intentionally set to null.
                 continue;
             }
-            const submap& cur_submap = view->get_submap();
+            const submap& cur_submap = view->submap_ref();
             const auto sm_ms_min = project_remain<coords::sm>(min).remainder;
             const auto sm_ms_max = project_remain<coords::sm>(max).remainder;
 
@@ -9572,7 +9578,7 @@ auto map::current_lightmap_source_signature() -> std::size_t {
 
     for (const auto& view : active_submaps_.submaps()) {
         const auto grid = abs_to_bub(view.abs_pos());
-        const submap& sm = view.get_submap();
+        const submap& sm = view.submap_ref();
         if (sm.is_uniform) { continue; }
         for (const auto local : sm.field_cache) {
             const auto& curfield = sm.get_field(local);
@@ -9593,12 +9599,12 @@ auto map::current_lightmap_source_signature() -> std::size_t {
         }
     }
 
-    const auto& luminous_item_submaps = get_mapbuffer().get_submaps_with_luminous_items();
-    for (const tripoint_abs_sm& abs_pos : luminous_item_submaps) {
+    const auto& luminous_tile_submaps = get_mapbuffer().get_submaps_with_luminous_tiles();
+    for (const tripoint_abs_sm& abs_pos : luminous_tile_submaps) {
         if (!contains_abs_sm(abs_pos) || !submap_loader.is_simulated(bound_dimension_, abs_pos)) {
             continue;
         }
-        const submap* const sm_ptr = get_mapbuffer().lookup_submap_in_memory(abs_pos);
+        const submap* const sm_ptr = get_mapbuffer().find_resident_submap(abs_pos);
         if (sm_ptr == nullptr) { continue; }
         const submap& sm = *sm_ptr;
         for (const auto sm_ms : submap_tiles()) {
@@ -9797,7 +9803,7 @@ auto map::calc_max_populated_zlev() -> int {
         const auto submaps = active_submaps_.submaps(zlev);
         if (submaps.size() != expected_submaps
             || std::ranges::any_of(submaps, [](const mapbuffer_abs_submap_view& view) {
-                   return !view.get_submap().is_uniform;
+                   return !view.submap_ref().is_uniform;
                })) {
             max_z = zlev;
         }

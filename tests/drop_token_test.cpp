@@ -307,7 +307,6 @@ TEST_CASE("full backpack drop", "[activity][drop_token]") {
 
 TEST_CASE("full backpack pickup", "[drop_token]") {
     clear_all_state();
-    constexpr tripoint_bub_ms pos = tripoint_bub_ms(60, 60, 0);
     avatar& dummy = get_avatar();
     item& an_item = *item::spawn_temporary("bottle_glass");
     item& backpack = *item::spawn_temporary("backpack");
@@ -321,18 +320,18 @@ TEST_CASE("full backpack pickup", "[drop_token]") {
     GIVEN("a backpack full of items lying on a ground tile") {
         detached_ptr<item> bp = item::spawn(backpack);
         item& parent = *bp;
-        here.add_item(pos, std::move(bp));
+        here.add_item(bub_test_origin(), std::move(bp));
         *parent.drop_token = token_provider.make_next(calendar::turn);
         for (units::volume remaining_storage = backpack.get_storage();
              remaining_storage > an_item.volume(); remaining_storage -= an_item.volume()) {
             detached_ptr<item> det = item::spawn(an_item);
             item& child = *det;
-            here.add_item(pos, std::move(det));
+            here.add_item(bub_test_origin(), std::move(det));
             *child.drop_token = token_provider.make_next(calendar::turn);
             child.drop_token->parent_number = parent.drop_token->drop_number;
         }
 
-        map_stack stack = here.i_at(pos);
+        map_stack stack = here.i_at(bub_test_origin());
         REQUIRE(stack.size() > 2);
         for (const item* const& it : stack) {
             REQUIRE(it->drop_token->turn == parent.drop_token->turn);
@@ -350,7 +349,7 @@ TEST_CASE("full backpack pickup", "[drop_token]") {
 
             std::vector<item*> target_locations;
             std::vector<int> quantities;
-            map_cursor mc(pos);
+            map_cursor mc(bub_test_origin());
             for (item*& it : stack) {
                 target_locations.push_back(it);
                 quantities.push_back(0);

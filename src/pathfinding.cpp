@@ -89,13 +89,13 @@ struct pathfinding_tile {
 
 auto pathfinding_lookup_options() -> mapbuffer_lookup_options
 {
-    return { .mode = mapbuffer_lookup_mode::simulated_only };
+    return { .policy = mapbuffer_lookup_policy::simulated_only };
 }
 
 auto get_pathfinding_tile( const mapbuffer_abs_tile_reader &reader, const tripoint_abs_ms &pos )
 -> std::optional<pathfinding_tile>
 {
-    const auto tile = reader.get_tile_with_vehicle( pos );
+    const auto tile = reader.tile_with_vehicle_at( pos );
     if( !tile ) {
         return std::nullopt;
     }
@@ -113,7 +113,7 @@ auto get_pathfinding_tile( const mapbuffer_abs_tile_reader &reader, const tripoi
 auto passable_ter_furn_at( const mapbuffer_abs_tile_reader &reader,
                            const tripoint_abs_ms &pos ) -> bool
 {
-    const auto tile = reader.get_tile( pos );
+    const auto tile = reader.tile_at( pos );
     if( !tile ) {
         return false;
     }
@@ -392,7 +392,7 @@ void Pathfinding::update_z_caches( bool update_open_air )
         for( const tripoint_bub_ms &cur : here.points_on_zlevel( z ) ) {
             const auto bubble_pos = tripoint_bub_ms( cur );
             const auto abs_pos = map_local_to_abs( here, bubble_pos );
-            const auto cur_tile = tile_reader.get_tile( abs_pos );
+            const auto cur_tile = tile_reader.tile_at( abs_pos );
             if( !cur_tile ) {
                 continue;
             }
@@ -440,7 +440,7 @@ void Pathfinding::update_z_caches( bool update_open_air )
                 // closest_points_first will ensure stairs above us directly will be hit first
                 const auto above_us_abs = abs_pos + tripoint_rel_ms::above();
                 for( const auto &maybe_stairs_abs : closest_points_first( above_us_abs, 10 ) ) {
-                    const auto maybe_stairs_tile = tile_reader.get_tile( maybe_stairs_abs );
+                    const auto maybe_stairs_tile = tile_reader.tile_at( maybe_stairs_abs );
                     if( !maybe_stairs_tile ) {
                         continue;
                     }
@@ -467,7 +467,7 @@ void Pathfinding::update_z_caches( bool update_open_air )
                 // closest_points_first will ensure stairs below us directly will be hit first
                 const auto below_us_abs = abs_pos + tripoint_rel_ms::below();
                 for( const tripoint_abs_ms &maybe_stairs_abs : closest_points_first( below_us_abs, 10 ) ) {
-                    const auto maybe_stairs_tile = tile_reader.get_tile( maybe_stairs_abs );
+                    const auto maybe_stairs_tile = tile_reader.tile_at( maybe_stairs_abs );
                     if( !maybe_stairs_tile ) {
                         continue;
                     }
@@ -656,7 +656,7 @@ Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
         }
 
         const tripoint_abs_ms next_point_with_z = tripoint_abs_ms( next_point, this->z );
-        const auto next_tile = tile_reader.get_tile_with_vehicle( next_point_with_z );
+        const auto next_tile = tile_reader.tile_with_vehicle_at( next_point_with_z );
         const auto next_vp = next_tile ? next_tile->vehicle_part() :
                              optional_vpart_position( std::nullopt );
         const auto *next_vehicle = next_vp ? &next_vp->vehicle() : nullptr;

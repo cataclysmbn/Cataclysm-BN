@@ -103,7 +103,7 @@ TEST_CASE("food in freezer", "[item][tname][freezer]") {
     clear_all_state();
 
     auto& here = get_map();
-    const auto pos = get_avatar().bub_pos();
+    const auto pos = abs_to_bub(get_avatar().abs_pos());
     here.furn_set(pos, furn_str_id("f_freezer_on"));
     here.add_item(pos, item::spawn("mushroom"));
 

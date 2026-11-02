@@ -30,7 +30,8 @@ static void set_map_temperature(weather_manager& weather, units::temperature new
     weather.clear_temp_cache();
 }
 
-static void ensure_no_temperature_mods(tripoint_bub_ms location) {
+static void ensure_no_temperature_mods(const tripoint_abs_ms& location_abs) {
+    const auto location = abs_to_bub(location_abs);
     REQUIRE(get_heat_radiation(location, false) == 0);
     REQUIRE(get_convection_temperature(location) == 0);
     REQUIRE(get_map().get_temperature(location) == 0);
@@ -39,7 +40,7 @@ static void ensure_no_temperature_mods(tripoint_bub_ms location) {
 struct vehicle_storage_fixture {
     vehicle* veh = nullptr;
     int part_index = -1;
-    tripoint_bub_ms pos;
+    tripoint_abs_ms pos;
 };
 
 static auto make_storage(const vpart_id& storage_part, const bool enabled)
@@ -49,7 +50,8 @@ static auto make_storage(const vpart_id& storage_part, const bool enabled)
     set_map_temperature(get_weather(), 18_c);
 
     auto& here = get_map();
-    const auto vehicle_pos = tripoint_bub_ms(60, 60, 0);
+    const auto vehicle_pos_abs = test_origin;
+    const auto vehicle_pos = abs_to_bub(vehicle_pos_abs);
     here.set_temperature(vehicle_pos, 100);
     auto* veh = here.add_vehicle(vproto_id("none"), vehicle_pos, 0_degrees, 0, 0);
     REQUIRE(veh != nullptr);
@@ -60,7 +62,7 @@ static auto make_storage(const vpart_id& storage_part, const bool enabled)
     here.add_vehicle_to_cache(veh);
     here.build_map_cache(vehicle_pos.z(), true);
 
-    return {.veh = veh, .part_index = part_index, .pos = vehicle_pos};
+    return {.veh = veh, .part_index = part_index, .pos = vehicle_pos_abs};
 }
 
 static auto add_food_to_vehicle_part(vehicle& veh, const int part_index, const itype_id& food_type)
@@ -229,17 +231,17 @@ TEST_CASE("Rate of rotting") {
         detached_ptr<item> sealed_item = item::in_its_container(item::spawn("offal_canned"));
 
         set_map_temperature(weather, 18_c);
-        ensure_no_temperature_mods(tripoint_bub_ms::zero());
+        ensure_no_temperature_mods(test_origin);
         REQUIRE(weather.get_temperature(tripoint_abs_ms::zero()) == 18_c);
 
         normal_item = item::process(
-            std::move(normal_item), nullptr, tripoint_bub_ms::zero(), false,
+            std::move(normal_item), nullptr, bub_test_origin(), false,
             temperature_flag::TEMP_NORMAL, weather, 1);
         sealed_item = item::process(
-            std::move(sealed_item), nullptr, tripoint_bub_ms::zero(), false,
+            std::move(sealed_item), nullptr, bub_test_origin(), false,
             temperature_flag::TEMP_NORMAL, weather, 1);
         freeze_item = item::process(
-            std::move(freeze_item), nullptr, tripoint_bub_ms::zero(), false,
+            std::move(freeze_item), nullptr, bub_test_origin(), false,
             temperature_flag::TEMP_NORMAL, weather, 1);
 
         // Item should exist with no rot when it is brand new
@@ -251,13 +253,13 @@ TEST_CASE("Rate of rotting") {
 
         calendar::turn += 20_minutes;
         normal_item = item::process(
-            std::move(normal_item), nullptr, tripoint_bub_ms::zero(), false,
+            std::move(normal_item), nullptr, bub_test_origin(), false,
             temperature_flag::TEMP_NORMAL, weather, 1);
         sealed_item = item::process(
-            std::move(sealed_item), nullptr, tripoint_bub_ms::zero(), false,
+            std::move(sealed_item), nullptr, bub_test_origin(), false,
             temperature_flag::TEMP_NORMAL, weather, 1);
         freeze_item = item::process(
-            std::move(freeze_item), nullptr, tripoint_bub_ms::zero(), false,
+            std::move(freeze_item), nullptr, bub_test_origin(), false,
             temperature_flag::TEMP_FREEZER, weather, 1);
 
         // After 20 minutes the normal item should have 20 minutes of rot
@@ -272,10 +274,10 @@ TEST_CASE("Rate of rotting") {
         // TODO: Check >1 hour normal processing as well - can't be "simply done" because of weather
         // globals
         sealed_item = item::process(
-            std::move(sealed_item), nullptr, tripoint_bub_ms::zero(), false,
+            std::move(sealed_item), nullptr, bub_test_origin(), false,
             temperature_flag::TEMP_NORMAL, weather, 1);
         freeze_item = item::process(
-            std::move(freeze_item), nullptr, tripoint_bub_ms::zero(), false,
+            std::move(freeze_item), nullptr, bub_test_origin(), false,
             temperature_flag::TEMP_FREEZER, weather, 1);
         // In freezer and in preserving container still should be no rot
         CHECK(sealed_item->get_rot() == 0_turns);
@@ -288,7 +290,7 @@ TEST_CASE("ROT_RATE option scales food rot", "[item][rot][options]") {
     calendar::turn = calendar::start_of_cataclysm + 1_minutes;
     auto weather = weather_manager();
     set_map_temperature(weather, 18_c);
-    ensure_no_temperature_mods(tripoint_bub_ms::zero());
+    ensure_no_temperature_mods(tripoint_abs_ms::zero());
     REQUIRE(weather.get_temperature(tripoint_abs_ms::zero()) == 18_c);
 
     const auto rot_after_20_minutes = [&](const std::string& rate) {
@@ -323,7 +325,7 @@ TEST_CASE("ROT_RATE option scales field dressed corpse rot", "[item][rot][option
     calendar::turn = calendar::start_of_cataclysm + 1_minutes;
     auto weather = weather_manager();
     set_map_temperature(weather, 18_c);
-    ensure_no_temperature_mods(tripoint_bub_ms::zero());
+    ensure_no_temperature_mods(tripoint_abs_ms::zero());
 
     const auto rot_after_20_minutes = [&](const std::string& rate) {
         const auto scale = override_option("ROT_RATE", rate);
@@ -493,8 +495,8 @@ TEST_CASE("Preserving containers stop contained food rot") {
 
         calendar::turn += 25_hours;
         outer = item::process(
-            std::move(outer), nullptr, tripoint_bub_ms::zero(), false,
-            temperature_flag::TEMP_NORMAL, get_weather(), 1);
+            std::move(outer), nullptr, bub_test_origin(), false, temperature_flag::TEMP_NORMAL,
+            get_weather(), 1);
 
         namespace ranges = std::ranges;
         using namespace std::views;
@@ -520,39 +522,37 @@ TEST_CASE("Items rot away") {
 
         // Process item once to set all of its values.
         test_item = item::process(
-            std::move(test_item), nullptr, tripoint_bub_ms::zero(), false,
-            temperature_flag::TEMP_HEATER, weather, 1);
+            std::move(test_item), nullptr, bub_test_origin(), false, temperature_flag::TEMP_HEATER,
+            weather, 1);
 
         // Set rot to >2 days and process again. process_rot should destroy the item.
         calendar::turn += 20_minutes;
         test_item->mod_rot(4_days);
         test_item = item::process_rot(
-            std::move(test_item), false, tripoint_bub_ms::zero(), nullptr,
-            temperature_flag::TEMP_HEATER, weather);
+            std::move(test_item), false, bub_test_origin(), nullptr, temperature_flag::TEMP_HEATER,
+            weather);
         CHECK(!test_item);
     }
 
     SECTION("Item on map rots away") {
         weather_manager weather;
-        const tripoint_bub_ms loc;
-
         if (calendar::turn <= calendar::start_of_cataclysm) {
             calendar::turn = calendar::start_of_cataclysm + 1_minutes;
         }
 
         detached_ptr<item> test_item = item::process(
-            item::spawn("meat_cooked"), nullptr, tripoint_bub_ms::zero(), false,
+            item::spawn("meat_cooked"), nullptr, bub_test_origin(), false,
             temperature_flag::TEMP_HEATER, weather, 1);
         map& m = get_map();
-        m.add_item_or_charges(loc, std::move(test_item), false);
+        m.add_item_or_charges(bub_test_origin(), std::move(test_item), false);
 
-        REQUIRE(m.i_at(loc).size() == 1);
+        REQUIRE(m.i_at(bub_test_origin()).size() == 1);
 
         calendar::turn += 20_minutes;
-        m.i_at(loc).only_item().mod_rot(7_days);
+        m.i_at(bub_test_origin()).only_item().mod_rot(7_days);
         m.process_items();
 
-        CHECK(m.i_at(loc).empty());
+        CHECK(m.i_at(bub_test_origin()).empty());
     }
 }
 
@@ -567,10 +567,15 @@ TEST_CASE("Items don't rot away on map load if in a freezer") {
     constexpr tripoint_abs_sm test_location = tripoint_abs_sm(100, 100, 0);
     m.load(test_location.xy(), false);
 
-    const tripoint_bub_ms freezer_pnt = {13, 13, 0};
-    const tripoint_bub_ms powered_freezer_pnt = {14, 13, 0};
-    const tripoint_bub_ms sealed_pnt = {15, 13, 0};
-    const tripoint_bub_ms normal_pnt = {16, 13, 0};
+    const auto map_origin_abs = tripoint_abs_ms(project_to<coords::ms>(m.get_abs_sub()), 0);
+    const auto freezer_pnt_abs = map_origin_abs + tripoint_rel_ms(13, 13, 0);
+    const auto powered_freezer_pnt_abs = map_origin_abs + tripoint_rel_ms(14, 13, 0);
+    const auto sealed_pnt_abs = map_origin_abs + tripoint_rel_ms(15, 13, 0);
+    const auto normal_pnt_abs = map_origin_abs + tripoint_rel_ms(16, 13, 0);
+    const auto freezer_pnt = abs_to_map_local(m, freezer_pnt_abs);
+    const auto powered_freezer_pnt = abs_to_map_local(m, powered_freezer_pnt_abs);
+    const auto sealed_pnt = abs_to_map_local(m, sealed_pnt_abs);
+    const auto normal_pnt = abs_to_map_local(m, normal_pnt_abs);
     m.furn_set(freezer_pnt, f_atomic_freezer);
     m.furn_set(powered_freezer_pnt, f_test_minifreezer_on);
     m.furn_set(sealed_pnt, furn_str_id::NULL_ID());
@@ -718,13 +723,14 @@ TEST_CASE("Vehicle storage temperature controls food rot") {
 
         calendar::turn += 20_days;
 
-        auto cargo = get_map().veh_at(fixture.pos).part_with_feature("CARGO", true);
+        auto cargo = get_map().veh_at(abs_to_bub(fixture.pos)).part_with_feature("CARGO", true);
         REQUIRE(cargo.has_value());
         REQUIRE(static_cast<int>(cargo->part_index()) == fixture.part_index);
 
         auto quantity = 1;
         auto components = get_map().use_amount(
-            fixture.pos, PICKUP_RANGE, itype_id("sauce_red"), quantity, return_true<item>);
+            abs_to_bub(fixture.pos), PICKUP_RANGE, itype_id("sauce_red"), quantity,
+            return_true<item>);
 
         REQUIRE(quantity == 0);
         REQUIRE(components.size() == 1);
@@ -763,7 +769,8 @@ TEST_CASE("Vehicle storage temperature controls food rot") {
 
         auto quantity = 1;
         auto components = get_map().use_amount(
-            fixture.pos, PICKUP_RANGE, itype_id("sashimi"), quantity, return_true<item>);
+            abs_to_bub(fixture.pos), PICKUP_RANGE, itype_id("sashimi"), quantity,
+            return_true<item>);
 
         REQUIRE(quantity == 0);
         REQUIRE(components.size() == 1);
@@ -779,7 +786,7 @@ TEST_CASE("Vehicle storage temperature controls food rot") {
 
         auto quantity = 1;
         auto components = get_map().use_amount(
-            fixture.pos, PICKUP_RANGE, itype_id("meat"), quantity, return_true<item>);
+            abs_to_bub(fixture.pos), PICKUP_RANGE, itype_id("meat"), quantity, return_true<item>);
         REQUIRE(quantity == 0);
         REQUIRE(components.size() == 1);
 
@@ -800,7 +807,8 @@ TEST_CASE("Vehicle storage temperature controls food rot") {
 
         auto quantity = 1;
         auto components = get_map().use_amount(
-            fixture.pos, PICKUP_RANGE, itype_id("sashimi"), quantity, return_true<item>);
+            abs_to_bub(fixture.pos), PICKUP_RANGE, itype_id("sashimi"), quantity,
+            return_true<item>);
 
         REQUIRE(quantity == 0);
         REQUIRE(components.size() == 1);
@@ -815,8 +823,8 @@ TEST_CASE("Vehicle storage temperature controls food rot") {
         calendar::turn += 20_days;
 
         auto quantity = 1;
-        auto components =
-            get_map().use_charges(fixture.pos, 0, itype_id("bread"), quantity, return_true<item>);
+        auto components = get_map().use_charges(
+            abs_to_bub(fixture.pos), 0, itype_id("bread"), quantity, return_true<item>);
 
         REQUIRE(quantity == 0);
         REQUIRE(components.size() == 1);
@@ -837,8 +845,8 @@ TEST_CASE("Vehicle storage temperature controls food rot") {
         calendar::turn += 24_hours;
 
         auto quantity = 1;
-        auto components =
-            get_map().use_charges(fixture.pos, 0, itype_id("bread"), quantity, return_true<item>);
+        auto components = get_map().use_charges(
+            abs_to_bub(fixture.pos), 0, itype_id("bread"), quantity, return_true<item>);
 
         REQUIRE(quantity == 0);
         REQUIRE(components.size() == 1);
@@ -874,11 +882,10 @@ TEST_CASE("Contained item keeps parent location while temporarily detached") {
 
 TEST_CASE("Sealed containers keep rotten nested contents on location removal", "[item][rot]") {
     prepare_map_storage_test();
-    const auto pos = tripoint_bub_ms(60, 60, 0);
-    get_map().set_temperature(pos, 100);
-    get_map().add_item(pos, make_sealed_carton_with_rotten_nested_sashimi());
+    get_map().set_temperature(bub_test_origin(), 100);
+    get_map().add_item(bub_test_origin(), make_sealed_carton_with_rotten_nested_sashimi());
 
-    auto items = get_map().i_at(pos);
+    auto items = get_map().i_at(bub_test_origin());
     REQUIRE(items.size() == 1);
     auto* carried = move_to_inventory_with_attempt_detach(items.only_item());
     REQUIRE(carried != nullptr);
@@ -891,14 +898,13 @@ TEST_CASE("Sealed containers keep rotten nested contents on location removal", "
 TEST_CASE("Map powered fridge and freezer furniture controls food rot") {
     SECTION("powered freezer furniture preserves food") {
         prepare_map_storage_test();
-        const auto pos = tripoint_bub_ms(60, 60, 0);
-        get_map().set_temperature(pos, 100);
-        get_map().furn_set(pos, f_test_minifreezer_on);
-        add_sashimi_to_map(pos);
+        get_map().set_temperature(bub_test_origin(), 100);
+        get_map().furn_set(bub_test_origin(), f_test_minifreezer_on);
+        add_sashimi_to_map(bub_test_origin());
 
         process_storage_for(25_hours);
 
-        auto items = get_map().i_at(pos);
+        auto items = get_map().i_at(bub_test_origin());
         REQUIRE(items.size() == 1);
         CHECK(items.only_item().get_rot() == 0_turns);
         CHECK(!items.only_item().rotten());
@@ -906,14 +912,13 @@ TEST_CASE("Map powered fridge and freezer furniture controls food rot") {
 
     SECTION("powered fridge furniture partially protects food") {
         prepare_map_storage_test();
-        const auto pos = tripoint_bub_ms(60, 60, 0);
-        get_map().set_temperature(pos, 100);
-        get_map().furn_set(pos, f_test_fridge_on);
-        add_sashimi_to_map(pos);
+        get_map().set_temperature(bub_test_origin(), 100);
+        get_map().furn_set(bub_test_origin(), f_test_fridge_on);
+        add_sashimi_to_map(bub_test_origin());
 
         process_storage_for(24_hours);
 
-        auto items = get_map().i_at(pos);
+        auto items = get_map().i_at(bub_test_origin());
         REQUIRE(items.size() == 1);
         CHECK(items.only_item().get_relative_rot() > 0.0);
         CHECK(items.only_item().get_relative_rot() < 1.0);
@@ -921,14 +926,13 @@ TEST_CASE("Map powered fridge and freezer furniture controls food rot") {
 
     SECTION("powered freezer furniture keeps food fresh when removed after missed processing") {
         prepare_map_storage_test();
-        const auto pos = tripoint_bub_ms(60, 60, 0);
-        get_map().set_temperature(pos, 100);
-        get_map().furn_set(pos, f_test_minifreezer_on);
-        add_sashimi_to_map(pos);
+        get_map().set_temperature(bub_test_origin(), 100);
+        get_map().furn_set(bub_test_origin(), f_test_minifreezer_on);
+        add_sashimi_to_map(bub_test_origin());
 
         calendar::turn += 21_days;
 
-        auto items = get_map().i_at(pos);
+        auto items = get_map().i_at(bub_test_origin());
         REQUIRE(items.size() == 1);
         auto* carried = move_to_inventory_with_attempt_detach(items.only_item());
 
@@ -939,14 +943,13 @@ TEST_CASE("Map powered fridge and freezer furniture controls food rot") {
 
     SECTION("powered freezer furniture keeps nested food fresh after missed processing") {
         prepare_map_storage_test();
-        const auto pos = tripoint_bub_ms(60, 60, 0);
-        get_map().set_temperature(pos, 100);
-        get_map().furn_set(pos, f_test_minifreezer_on);
-        add_backpack_with_sashimi_to_map(pos);
+        get_map().set_temperature(bub_test_origin(), 100);
+        get_map().furn_set(bub_test_origin(), f_test_minifreezer_on);
+        add_backpack_with_sashimi_to_map(bub_test_origin());
 
         calendar::turn += 21_days;
 
-        auto items = get_map().i_at(pos);
+        auto items = get_map().i_at(bub_test_origin());
         REQUIRE(items.size() == 1);
         auto* carried = move_to_inventory_with_attempt_detach(items.only_item());
         REQUIRE(carried != nullptr);
@@ -958,16 +961,15 @@ TEST_CASE("Map powered fridge and freezer furniture controls food rot") {
 
     SECTION("powered freezer furniture keeps whole food fresh when consumed for crafting") {
         prepare_map_storage_test();
-        const auto pos = tripoint_bub_ms(60, 60, 0);
-        get_map().set_temperature(pos, 100);
-        get_map().furn_set(pos, f_test_minifreezer_on);
-        add_sashimi_to_map(pos);
+        get_map().set_temperature(bub_test_origin(), 100);
+        get_map().furn_set(bub_test_origin(), f_test_minifreezer_on);
+        add_sashimi_to_map(bub_test_origin());
 
         calendar::turn += 21_days;
 
         auto quantity = 1;
         auto components = get_map().use_amount(
-            pos, PICKUP_RANGE, itype_id("sashimi"), quantity, return_true<item>);
+            bub_test_origin(), PICKUP_RANGE, itype_id("sashimi"), quantity, return_true<item>);
 
         REQUIRE(quantity == 0);
         REQUIRE(components.size() == 1);
@@ -977,16 +979,15 @@ TEST_CASE("Map powered fridge and freezer furniture controls food rot") {
 
     SECTION("powered fridge furniture catches up whole food rot when consumed for crafting") {
         prepare_map_storage_test();
-        const auto pos = tripoint_bub_ms(60, 60, 0);
-        get_map().set_temperature(pos, 100);
-        get_map().furn_set(pos, f_test_fridge_on);
-        add_sashimi_to_map(pos);
+        get_map().set_temperature(bub_test_origin(), 100);
+        get_map().furn_set(bub_test_origin(), f_test_fridge_on);
+        add_sashimi_to_map(bub_test_origin());
 
         calendar::turn += 24_hours;
 
         auto quantity = 1;
         auto components = get_map().use_amount(
-            pos, PICKUP_RANGE, itype_id("sashimi"), quantity, return_true<item>);
+            bub_test_origin(), PICKUP_RANGE, itype_id("sashimi"), quantity, return_true<item>);
 
         REQUIRE(quantity == 0);
         REQUIRE(components.size() == 1);
@@ -996,16 +997,15 @@ TEST_CASE("Map powered fridge and freezer furniture controls food rot") {
 
     SECTION("powered freezer furniture keeps charge food fresh when consumed for crafting") {
         prepare_map_storage_test();
-        const auto pos = tripoint_bub_ms(60, 60, 0);
-        get_map().set_temperature(pos, 100);
-        get_map().furn_set(pos, f_test_minifreezer_on);
-        add_food_to_map(pos, itype_id("bread"));
+        get_map().set_temperature(bub_test_origin(), 100);
+        get_map().furn_set(bub_test_origin(), f_test_minifreezer_on);
+        add_food_to_map(bub_test_origin(), itype_id("bread"));
 
         calendar::turn += 20_days;
 
         auto quantity = 1;
-        auto components =
-            get_map().use_charges(pos, 0, itype_id("bread"), quantity, return_true<item>);
+        auto components = get_map().use_charges(
+            bub_test_origin(), 0, itype_id("bread"), quantity, return_true<item>);
 
         REQUIRE(quantity == 0);
         REQUIRE(components.size() == 1);
@@ -1013,7 +1013,7 @@ TEST_CASE("Map powered fridge and freezer furniture controls food rot") {
         CHECK(components.front()->get_rot() == 0_turns);
         CHECK(!components.front()->rotten());
 
-        auto remaining = get_map().i_at(pos);
+        auto remaining = get_map().i_at(bub_test_origin());
         REQUIRE(remaining.size() == 1);
         CHECK(remaining.only_item().charges == 1);
         CHECK(remaining.only_item().get_rot() == 0_turns);
@@ -1021,16 +1021,15 @@ TEST_CASE("Map powered fridge and freezer furniture controls food rot") {
 
     SECTION("powered fridge furniture catches up charge food rot when consumed for crafting") {
         prepare_map_storage_test();
-        const auto pos = tripoint_bub_ms(60, 60, 0);
-        get_map().set_temperature(pos, 100);
-        get_map().furn_set(pos, f_test_fridge_on);
-        add_food_to_map(pos, itype_id("bread"));
+        get_map().set_temperature(bub_test_origin(), 100);
+        get_map().furn_set(bub_test_origin(), f_test_fridge_on);
+        add_food_to_map(bub_test_origin(), itype_id("bread"));
 
         calendar::turn += 24_hours;
 
         auto quantity = 1;
-        auto components =
-            get_map().use_charges(pos, 0, itype_id("bread"), quantity, return_true<item>);
+        auto components = get_map().use_charges(
+            bub_test_origin(), 0, itype_id("bread"), quantity, return_true<item>);
 
         REQUIRE(quantity == 0);
         REQUIRE(components.size() == 1);
@@ -1038,7 +1037,7 @@ TEST_CASE("Map powered fridge and freezer furniture controls food rot") {
         CHECK(components.front()->get_relative_rot() > 0.0);
         CHECK(components.front()->get_relative_rot() < 1.0);
 
-        auto remaining = get_map().i_at(pos);
+        auto remaining = get_map().i_at(bub_test_origin());
         REQUIRE(remaining.size() == 1);
         CHECK(remaining.only_item().charges == 1);
         CHECK(remaining.only_item().get_relative_rot() > 0.0);
@@ -1047,13 +1046,12 @@ TEST_CASE("Map powered fridge and freezer furniture controls food rot") {
 
     SECTION("unprotected map storage reports stale rot when inspected before processing") {
         prepare_map_storage_test();
-        const auto pos = tripoint_bub_ms(60, 60, 0);
-        get_map().set_temperature(pos, 100);
-        add_sashimi_to_map(pos);
+        get_map().set_temperature(bub_test_origin(), 100);
+        add_sashimi_to_map(bub_test_origin());
 
         calendar::turn += 20_days;
 
-        auto items = get_map().i_at(pos);
+        auto items = get_map().i_at(bub_test_origin());
         REQUIRE(items.size() == 1);
         CHECK(items.only_item().get_rot() > 0_turns);
         CHECK_FALSE(items.only_item().is_fresh());
@@ -1061,12 +1059,11 @@ TEST_CASE("Map powered fridge and freezer furniture controls food rot") {
 
     SECTION("unprotected map storage rots food normally") {
         prepare_map_storage_test();
-        const auto pos = tripoint_bub_ms(60, 60, 0);
-        get_map().set_temperature(pos, 100);
-        add_sashimi_to_map(pos);
+        get_map().set_temperature(bub_test_origin(), 100);
+        add_sashimi_to_map(bub_test_origin());
 
         process_storage_for(25_hours);
 
-        CHECK(get_map().i_at(pos).empty());
+        CHECK(get_map().i_at(bub_test_origin()).empty());
     }
 }

@@ -2022,7 +2022,7 @@ public:
 
     auto active_submap_view(const tripoint_abs_sm& pos) const
         -> std::optional<mapbuffer_abs_submap_view> {
-        return active_submaps_.get_submap_view(pos);
+        return active_submaps_.submap_view_at(pos);
     }
 
     auto has_active_load_region() const -> bool { return static_cast<bool>(active_load_region_); }

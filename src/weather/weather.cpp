@@ -331,7 +331,7 @@ static void fill_water_collectors(int mmPerHour, bool acid) {
         g->m.get_funnel_locations(), [&](const std::pair<tripoint_abs_sm, point_sm_ms>& entry) {
             const auto sm_abs = tripoint_abs_sm(entry.first);
             const auto& lp = point_sm_ms(entry.second);
-            auto* sm = mbuf.lookup_submap_in_memory(sm_abs);
+            auto* sm = mbuf.find_resident_submap(sm_abs);
             if (!sm) { return; }
             // Resolve the effective trap: terrain-attached funnels (e.g. gutter
             // downspouts) live in ter_t::trap, not the standalone trp array.

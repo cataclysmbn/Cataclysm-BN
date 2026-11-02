@@ -48,7 +48,7 @@ static auto reset_efficiency_state() -> void {
 
     // Move player somewhere safe
     REQUIRE_FALSE(g->u.in_vehicle);
-    g->u.setpos(tripoint_bub_ms(g_half_mapsize_x + SEEX - 1, g_half_mapsize_y + SEEY - 1, -2));
+    g->u.setpos(test_origin_at_z(-2) + tripoint_rel_ms(SEEX - 1, SEEY - 1, 0));
     // Blind the player to avoid needless drawing-related overhead
     g->u.add_effect(effect_blind, 365_days, bodypart_str_id::NULL_ID());
 }
@@ -178,9 +178,11 @@ static auto test_efficiency(
     int max_dist = target_distance * 1.01;
     prepare_efficiency_map(terrain);
 
-    const tripoint_bub_ms map_starting_point(60, 60, 0);
     map& here = get_map();
-    vehicle* veh_ptr = here.add_vehicle(veh_id, map_starting_point, -90_degrees, 0, 0);
+    const auto map_starting_point_abs =
+        test_origin + tripoint_rel_ms(60 - g_half_mapsize_x, 60 - g_half_mapsize_y, 0);
+    vehicle* veh_ptr =
+        here.add_vehicle(veh_id, abs_to_bub(map_starting_point_abs), -90_degrees, 0, 0);
 
     REQUIRE(veh_ptr != nullptr);
     if (veh_ptr == nullptr) { return 0; }
@@ -206,7 +208,7 @@ static auto test_efficiency(
     const float starting_fuel_per = fuel_percentage_left(veh, starting_fuel);
     REQUIRE(std::abs(starting_fuel_per - 1.0f) < 0.001f);
 
-    const auto starting_point = veh.bub_ms_location();
+    const auto starting_point_abs = veh.abs_ms_location();
     veh.tags.insert("IN_CONTROL_OVERRIDE");
     veh.engine_on = true;
 
@@ -228,9 +230,9 @@ static auto test_efficiency(
         // If the vehicle starts skidding, the effects become random and test is RUINED
         REQUIRE(!veh.skidding);
         // How much it moved
-        tiles_travelled += square_dist(starting_point, veh.bub_ms_location());
+        tiles_travelled += square_dist(starting_point_abs, veh.abs_ms_location());
         // Bring it back to starting point to prevent it from leaving the map
-        const tripoint_rel_ms displacement = starting_point - veh.bub_ms_location();
+        const tripoint_rel_ms displacement = starting_point_abs - veh.abs_ms_location();
         here.displace_vehicle(veh, tripoint_rel_ms(displacement));
         if (reset_velocity_turn < 0) { continue; }
 
@@ -269,10 +271,11 @@ TEST_CASE("vehicle_efficiency_movement_keeps_vehicle_on_valid_terrain", "[vehicl
     reset_efficiency_state();
     prepare_efficiency_map(ter_id("t_pavement"));
 
-    const tripoint_bub_ms map_starting_point(60, 60, 0);
     map& here = get_map();
-    vehicle* veh_ptr =
-        here.add_vehicle(vproto_id("fire_truck_test"), map_starting_point, -90_degrees, 0, 0);
+    const auto map_starting_point_abs =
+        test_origin + tripoint_rel_ms(60 - g_half_mapsize_x, 60 - g_half_mapsize_y, 0);
+    vehicle* veh_ptr = here.add_vehicle(
+        vproto_id("fire_truck_test"), abs_to_bub(map_starting_point_abs), -90_degrees, 0, 0);
     REQUIRE(veh_ptr != nullptr);
     vehicle& veh = *veh_ptr;
     veh.tags.insert("IN_CONTROL_OVERRIDE");
@@ -285,7 +288,7 @@ TEST_CASE("vehicle_efficiency_movement_keeps_vehicle_on_valid_terrain", "[vehicl
         veh.idle(true);
         REQUIRE(!veh.skidding);
         assert_vehicle_on_valid_terrain(here, veh);
-        here.displace_vehicle(veh, map_starting_point - veh.bub_ms_location());
+        here.displace_vehicle(veh, map_starting_point_abs - veh.abs_ms_location());
     }
 
     here.destroy_vehicle(veh_ptr);

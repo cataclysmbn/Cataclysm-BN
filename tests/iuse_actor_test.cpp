@@ -13,12 +13,15 @@
 #include <climits>
 #include <memory>
 
-static auto find_adjacent_monster(const tripoint_bub_ms& pos) -> monster* { // *NOPAD*
-    tripoint_bub_ms target = pos;
-    for (target.x() = pos.x() - 1; target.x() <= pos.x() + 1; target.x()++) {
-        for (target.y() = pos.y() - 1; target.y() <= pos.y() + 1; target.y()++) {
-            if (target == pos) { continue; }
-            if (monster* const candidate = g->critter_at<monster>(target)) { return candidate; }
+static auto find_adjacent_monster(const tripoint_abs_ms& pos_abs) -> monster* { // *NOPAD*
+    tripoint_abs_ms target_abs = pos_abs;
+    for (target_abs.x() = pos_abs.x() - 1; target_abs.x() <= pos_abs.x() + 1; target_abs.x()++) {
+        for (target_abs.y() = pos_abs.y() - 1; target_abs.y() <= pos_abs.y() + 1;
+             target_abs.y()++) {
+            if (target_abs == pos_abs) { continue; }
+            if (monster* const candidate = g->critter_at<monster>(abs_to_bub(target_abs))) {
+                return candidate;
+            }
         }
     }
     return nullptr;
@@ -37,7 +40,7 @@ TEST_CASE("manhack", "[iuse_actor][manhack]") {
     int test_item_pos = dummy.inv_position_by_item(&test_item);
     REQUIRE(test_item_pos != INT_MIN);
 
-    monster* new_manhack = find_adjacent_monster(dummy.bub_pos());
+    monster* new_manhack = find_adjacent_monster(dummy.abs_pos());
     REQUIRE(new_manhack == nullptr);
 
     dummy.invoke_item(&test_item);
@@ -45,7 +48,7 @@ TEST_CASE("manhack", "[iuse_actor][manhack]") {
     test_item_pos = dummy.inv_position_by_item(&test_item);
     REQUIRE(test_item_pos == INT_MIN);
 
-    new_manhack = find_adjacent_monster(dummy.bub_pos());
+    new_manhack = find_adjacent_monster(dummy.abs_pos());
     REQUIRE(new_manhack != nullptr);
     REQUIRE(new_manhack->type->id == mtype_id("mon_manhack"));
     g->clear_zombies();

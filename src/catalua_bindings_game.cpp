@@ -478,12 +478,10 @@ auto place_player_dimension_at( const dimension_travel_options &opts ) -> bool
                                      original_origin ) ) {
             throw std::runtime_error( "Failed to restore original dimension after blocked landing" );
         }
-        avatar.setpos( original_pos );
-        g->update_map( avatar );
+        g->set_player_position( original_pos );
         return false;
     }
-    avatar.setpos( *landing );
-    g->update_map( avatar );
+    g->set_player_position( bub_to_abs( *landing ) );
     return true;
 }
 
@@ -515,7 +513,9 @@ void cata::detail::reg_game_api( sol::state &lua )
     DOC( "Teleports player to absolute coordinate in overmap" );
     luna::set_fx( lib, "place_player_overmap_at", []( const tripoint_abs_omt & p ) -> void { g->place_player_overmap( p ); } );
     DOC( "Teleports player to local coordinates within active map" );
-    luna::set_fx( lib, "place_player_local_at", []( const tripoint_bub_ms & p ) -> void { g->place_player( p ); } );
+    luna::set_fx( lib, "place_player_local_at", []( const tripoint_bub_ms & p ) -> void {
+        g->u.setpos( bub_to_abs( p ) );
+    } );
     DOC( "Returns the current dimension id. Empty string means the overworld." );
     luna::set_fx( lib, "get_current_dimension_id", []() -> std::string { return g->get_current_dimension_id().str(); } );
     DOC( "Moves the player into another dimension and loads the destination around required target_ms or target_omt." );

@@ -444,16 +444,15 @@ TEST_CASE("active night vision tiers allow fine detail vision in darkness", "[re
     get_weather().weather_id = weather_type_id("clear");
 
     auto& dummy = get_avatar();
-    constexpr auto pos = tripoint_bub_ms(60, 60, 0);
-    g->place_player(pos);
+    g->u.setpos(test_origin);
 
     auto& here = get_map();
-    here.ter_set(pos, ter_id("t_floor"));
-    here.furn_set(pos, furn_id("f_null"));
-    here.ter_set(pos + tripoint_above, ter_id("t_flat_roof"));
-    here.invalidate_map_cache(pos.z());
-    here.build_map_cache(pos.z());
-    here.update_visibility_cache(pos.z());
+    here.ter_set(bub_test_origin(), ter_id("t_floor"));
+    here.furn_set(bub_test_origin(), furn_id("f_null"));
+    here.ter_set(abs_to_bub(test_origin_at_z(1)), ter_id("t_flat_roof"));
+    here.invalidate_map_cache(g->u.bub_pos().z());
+    here.build_map_cache(g->u.bub_pos().z());
+    here.update_visibility_cache(g->u.bub_pos().z());
 
     REQUIRE_FALSE(character_funcs::can_see_fine_details(dummy));
 

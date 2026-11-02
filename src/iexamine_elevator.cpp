@@ -1,5 +1,6 @@
 #include "catalua_coord.h"
 #include "catalua_hooks.h"
+#include "avatar.h"
 #include "coordinates.h"
 #include "flood_fill.h"
 #include "game.h"
@@ -175,7 +176,11 @@ auto move_creatures_away( const elevator::tiles &dest ) -> void
         if( candidate == xs.end() ) {
             continue;
         }
-        critter.setpos( *candidate );
+        if( player *const player_character = critter.as_player(); player_character == &g->u ) {
+            g->set_player_position( bub_to_abs( *candidate ) );
+        } else {
+            critter.setpos( *candidate );
+        }
     }
 }
 
@@ -196,7 +201,12 @@ auto move_creatures( const elevator::tiles &from, const elevator::tiles &dest ) 
     for( Creature &critter : g->all_creatures() ) {
         const auto eit = std::ranges::find( from, critter.bub_pos() );
         if( eit != from.cend() ) {
-            critter.setpos( dest[ std::distance( from.cbegin(), eit ) ] );
+            const auto destination = dest[ std::distance( from.cbegin(), eit )];
+            if( player *const player_character = critter.as_player(); player_character == &g->u ) {
+                g->set_player_position( bub_to_abs( destination ) );
+            } else {
+                critter.setpos( destination );
+            }
         }
     }
 }
@@ -222,7 +232,17 @@ auto move_player( player &p, const int /*movez*/ ) -> void
 
     // yes, this is inefficient, but i'm lazy
     elevator::find_elevators_nearby( p.bub_pos() )
-    .transform( []( const tripoint_bub_ms & pos ) -> point_rel_sm { return g->place_player( pos ); } );
+    .transform( [&]( const tripoint_bub_ms & pos ) -> point_rel_sm {
+        const auto origin_before = here.get_abs_sub();
+        if( &p == &g->u )
+        {
+            g->set_player_position( bub_to_abs( pos ) );
+        } else
+        {
+            p.setpos( pos );
+        }
+        return here.get_abs_sub() - origin_before;
+    } );
 
     cata_event_dispatch::avatar_moves( *p.as_avatar(), here, p.abs_pos() );
 }

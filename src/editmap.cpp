@@ -1742,9 +1742,9 @@ void editmap::mapgen_preview( const point_abs_ms &tc, uilist &gmenu )
                 const point target_sub( target.x() / SEEX, target.y() / SEEY );
                 const auto pos = tripoint_bub_sm( x, y, target.z() ) + target_sub;
 
-                submap *destsm = here.get_mapbuffer().lookup_submap_in_memory(
+                submap *destsm = here.get_mapbuffer().find_resident_submap(
                                      map_local_to_abs( here, pos ) );
-                submap *srcsm = preview_buffer.lookup_submap_in_memory(
+                submap *srcsm = preview_buffer.find_resident_submap(
                                     map_local_to_abs( here, pos ) );
 
                 submap::swap( *destsm,  *srcsm );
@@ -1760,7 +1760,7 @@ void editmap::mapgen_preview( const point_abs_ms &tc, uilist &gmenu )
         const auto base_sub = project_to<coords::sm>( omt_pos );
         tmpmap.set_abs_sub( base_sub.xy() );
         for( const auto offset : point_range<point_rel_sm>( point_rel_sm::zero(), point_rel_sm( 1, 1 ) ) ) {
-            buf.lookup_submap_in_memory( base_sub + offset );
+            buf.find_resident_submap( base_sub + offset );
         }
     };
     const auto invalidate_cache = [&]() {
@@ -1778,7 +1778,7 @@ void editmap::mapgen_preview( const point_abs_ms &tc, uilist &gmenu )
         for( int x = 0; x < here.getmapsize(); x++ ) {
             for( int y = 0; y < here.getmapsize(); y++ ) {
                 const auto dest_pos = tripoint_bub_sm( x, y, target.z() );
-                const submap *destsm = here.get_mapbuffer().lookup_submap_in_memory(
+                const submap *destsm = here.get_mapbuffer().find_resident_submap(
                                            map_local_to_abs( here, dest_pos ) );
                 here.update_vehicle_list( destsm, target.z() ); // update real map's vcaches
             }
@@ -1909,7 +1909,7 @@ vehicle *editmap::mapgen_veh_query( const tripoint_abs_omt &omt_tgt )
     for( int x = 0; x < 2; x++ ) {
         for( int y = 0; y < 2; y++ ) {
             const auto pos = tripoint_bub_sm{ x, y, target.z() };
-            submap *destsm = target_bay.get_mapbuffer().lookup_submap_in_memory(
+            submap *destsm = target_bay.get_mapbuffer().find_resident_submap(
                                  map_local_to_abs( target_bay, pos ) );
             for( const auto &vehicle : destsm->vehicles ) {
                 possible_vehicles.push_back( vehicle.get() );
@@ -1944,7 +1944,7 @@ bool editmap::mapgen_veh_destroy( const tripoint_abs_omt &omt_tgt, vehicle *car_
     for( int x = 0; x < 2; x++ ) {
         for( int y = 0; y < 2; y++ ) {
             const auto pos = tripoint_bub_sm{ x, y, target.z() };
-            submap *destsm = target_bay.get_mapbuffer().lookup_submap_in_memory(
+            submap *destsm = target_bay.get_mapbuffer().find_resident_submap(
                                  map_local_to_abs( target_bay, pos ) );
             for( auto &z : destsm->vehicles ) {
                 if( z.get() == car_target ) {
