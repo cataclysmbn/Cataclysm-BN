@@ -8432,9 +8432,18 @@ TEST_CASE(
     });
     const auto walk = std::vector<map_step>{
         [&](const auto&) { return invoke("editor:open", {.text = original.string()}); },
+        [](const auto&) { return invoke("editor:save"); },
+        // The next save goes to the copy, and makes no other.
         [](const auto&) { return invoke("editor:save"); }, [](const auto&) { return act("QUIT"); }};
     CHECK(walk_map(walk) == walk.size());
     CHECK(std::filesystem::exists(copy));
+    CHECK(
+        std::ranges::count_if(
+            std::filesystem::directory_iterator(copy.parent_path()),
+            [](const std::filesystem::directory_entry& entry) {
+                return entry.path().filename().string().starts_with("zz_simple_save");
+            })
+        == 1);
     auto in = std::ifstream(original, std::ios::binary);
     CHECK(std::string(std::istreambuf_iterator<char>(in), {}) == text);
 }
