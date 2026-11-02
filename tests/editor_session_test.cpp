@@ -8384,6 +8384,13 @@ TEST_CASE("the map editor in Simple mode shows no ids or JSON", "[editor_session
                     entry.columns, std::string("mod"), &game_client::interaction_column::key);
             }));
             CHECK(ec::find_component(*screen.root, "editor:objects") == nullptr);
+            // Nothing asks for a typed path.
+            CHECK(ec::find_component(*screen.root, "editor:file") == nullptr);
+            for (const auto* const id : {"editor:open", "editor:save_as", "editor:new_folder"}) {
+                CAPTURE(id);
+                CHECK_FALSE(
+                    std::ranges::contains(screen.affordances, std::string(id), &ec::affordance::id));
+            }
             CHECK_FALSE(json(screen));
             CHECK(affordance(screen, "editor:advanced").group == "View");
             CHECK(affordance(screen, "editor:advanced").label == "Show advanced settings");
