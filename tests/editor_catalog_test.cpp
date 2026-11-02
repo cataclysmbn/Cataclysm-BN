@@ -28,8 +28,25 @@ TEST_CASE("every kind of catalog lists what the game loaded", "[editor_catalog]"
         const auto page = editor::search_catalog({.kind = kind});
         CHECK(page.total > 10);
         CHECK(page.entries.size() == std::min<std::size_t>(page.total, 50));
-        CHECK(std::ranges::is_sorted(ids(page)));
     }
+}
+
+TEST_CASE("an unsearched catalog opens on what the game's maps use most", "[editor_catalog]") {
+    using enum editor::catalog_kind;
+    const auto first_page = [](const editor::catalog_kind kind) {
+        return ids(editor::search_catalog({.kind = kind}));
+    };
+    const auto terrain_page = first_page(terrain);
+    for (const auto* const id : {"t_floor", "t_door_c", "t_brick_wall", "t_linoleum_gray"}) {
+        CAPTURE(id);
+        CHECK(std::ranges::contains(terrain_page, std::string(id)));
+    }
+    const auto furniture_page = first_page(furniture);
+    for (const auto* const id : {"f_counter", "f_fridge", "f_oven", "f_bed"}) {
+        CAPTURE(id);
+        CHECK(std::ranges::contains(furniture_page, std::string(id)));
+    }
+    CHECK(std::ranges::contains(first_page(item_group), std::string("kitchen")));
 }
 
 TEST_CASE("a catalog filter matches the id or the name, ignoring case", "[editor_catalog]") {
