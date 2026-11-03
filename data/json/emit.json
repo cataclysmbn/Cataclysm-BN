@@ -81,6 +81,13 @@
     "qty": 24
   },
   {
+    "id": "emit_toxic_stream_small",
+    "type": "emit",
+    "//": "Small stream of toxic gas",
+    "field": "fd_toxic_gas",
+    "intensity": 2
+  },
+  {
     "id": "emit_tear_gas_stream",
     "type": "emit",
     "//": "Steady stream of tear gas (example: tear gas canister)",

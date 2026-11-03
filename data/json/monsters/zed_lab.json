@@ -61,7 +61,7 @@
     "starting_ammo": { "bot_manhack": 3 },
     "path_settings": { "max_dist": 10 },
     "special_attacks": [ [ "scratch", 20 ], [ "SCIENCE", 18 ] ],
-    "extend": { "flags": [ "DROPS_AMMO", "ACIDPROOF", "ELECTRIC" ] },
+    "extend": { "flags": [ "DROPS_AMMO", "ACIDPROOF", "ELECTRIC", "IRRADIATED" ] },
     "delete": { "upgrades": { "half_life": 28, "into_group": "GROUP_ZOMBIE_SCIENCE_UPGRADE" } }
   },
   {

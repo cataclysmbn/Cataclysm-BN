@@ -484,6 +484,13 @@ bool melee_actor::call( monster &z ) const
         target->add_msg_player_or_npc( m_neutral, no_dmg_msg_u, no_dmg_msg_npc, z.name(),
                                        body_part_name_accusative( bp_hit ) );
     }
+    // Deal radiation damage unless resisted/immune, bypass protection depending on if we broke through armor
+    if( z.has_flag( MF_IRRADIATED ) ) {
+        Character *ch = target->as_character();
+        if( ch != nullptr ) {
+            ch->irradiate( damage.total_damage(), damage_total > 0 );
+        }
+    }
     if( throw_strength > 0 && !target->has_flag( MF_IMMOBILE ) ) {
         auto msg_type = target->attitude_to( g->u ) == Attitude::A_FRIENDLY ? m_bad : m_neutral;
         target->add_msg_player_or_npc( msg_type,

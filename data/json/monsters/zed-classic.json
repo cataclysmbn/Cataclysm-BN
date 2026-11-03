@@ -451,6 +451,7 @@
     "death_drops": "mon_zombie_hazmat_death_drops",
     "death_function": [ "NORMAL" ],
     "burn_into": "mon_zombie_scorched",
+    "upgrades": { "half_life": 20, "into": "mon_zombie_radiation_1" },
     "flags": [
       "SEES",
       "HEARS",
