@@ -1506,7 +1506,7 @@ TEST_CASE("place_player_overmap_reanchors_loaded_map") {
 
 TEST_CASE("reality_bubble_origin_helpers_use_explicit_size") {
     const auto player_sm = tripoint_abs_sm(100, 200, 2);
-    const auto player_abs = project_combine(player_sm, point_sm_ms(3, 4) );
+    const auto player_abs = project_combine(player_sm, point_sm_ms(3, 4));
 
     const auto size_four_origin = reality_bubble_origin_from_player(player_abs, 4);
     CHECK(size_four_origin == player_sm - tripoint_rel_sm(5, 5, 0));

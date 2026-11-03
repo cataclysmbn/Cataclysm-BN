@@ -87,7 +87,7 @@ auto teleporter_list::place_avatar_overmap(Character& you, const tripoint_abs_om
     const auto abs_dest = project_combine(omt_pt, *omt_dest);
     you.add_effect(efftype_id("ignore_fall_damage"), 1_seconds, bodypart_str_id::NULL_ID(), 0, true);
     g->place_player_overmap(omt_pt);
-    g->u.setpos( abs_dest );
+    g->u.setpos(abs_dest);
     return true;
 }
 

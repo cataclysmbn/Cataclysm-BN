@@ -332,7 +332,7 @@ void start_location::place_player( player &u, const int &z ) const
     map &m = g->m;
     // Start us off somewhere in the center of the map
     u.setpos_no_map_update( map_local_to_abs( m, tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y,
-                             z ) ) );
+                            z ) ) );
     m.invalidate_map_cache( z );
     m.build_map_cache( z );
     const bool must_be_inside = !flags().contains( "ALLOW_OUTSIDE" );
@@ -359,7 +359,7 @@ void start_location::place_player( player &u, const int &z ) const
         const int rate = rate_location( m, pt, must_be_inside, bash, tries, checked, checked_sy );
         if( best_rate < rate ) {
             best_rate = rate;
-        u.setpos_no_map_update( map_local_to_abs( m, pt ) );
+            u.setpos_no_map_update( map_local_to_abs( m, pt ) );
             if( rate == INT_MAX ) {
                 found_good_spot = true;
             }

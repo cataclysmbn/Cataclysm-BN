@@ -142,9 +142,7 @@ TEST_CASE(
     zed.add_effect(efftype_id("grabbed"), 1_days);
     auto remains_adjacent = false;
 
-    SECTION("Avatar moves away") {
-        g->u.setpos(avatar_start_abs + tripoint_rel_ms::south());
-    }
+    SECTION("Avatar moves away") { g->u.setpos(avatar_start_abs + tripoint_rel_ms::south()); }
     SECTION("Avatar moves to another z-level") {
         get_map()
             .ter_set(abs_to_bub(avatar_start_abs + tripoint_rel_ms::above()), ter_id("t_floor"));

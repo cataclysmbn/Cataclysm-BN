@@ -1858,7 +1858,7 @@ void map::board_vehicle(const tripoint_bub_ms& pos, Character* who) {
     vp->vehicle().invalidate_mass();
 
     if (player* const passenger = who->as_player(); passenger == &g->u) {
-        g->u.setpos( bub_to_abs( pos ) );
+        g->u.setpos(bub_to_abs(pos));
     } else {
         who->setpos(pos);
     }
@@ -1990,8 +1990,9 @@ auto map::displace_vehicle(vehicle& veh, const tripoint_rel_ms& dp) -> bool {
             // Place passenger on the new part location.  Z must include mount
             // and terrain-topology offsets — precalc[1] is XY-only.
             auto psgp = abs_to_bub(
-                dest + tripoint_rel_ms(veh_part.precalc[1].x(), veh_part.precalc[1].y(),
-                                      veh_part.mount.z() + veh_part.z_terrain[1]));
+                dest
+                + tripoint_rel_ms(veh_part.precalc[1].x(), veh_part.precalc[1].y(),
+                                  veh_part.mount.z() + veh_part.z_terrain[1]));
             // someone is in the way so try again
             if (g->critter_at(psgp)) {
                 complete = false;
@@ -2003,7 +2004,7 @@ auto map::displace_vehicle(vehicle& veh, const tripoint_rel_ms& dp) -> bool {
             }
 
             if (player* const passenger = psg->as_player(); passenger == &g->u) {
-                g->u.setpos( bub_to_abs( psgp ) );
+                g->u.setpos(bub_to_abs(psgp));
             } else {
                 psg->setpos(psgp);
             }

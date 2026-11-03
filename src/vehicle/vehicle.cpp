@@ -2683,7 +2683,7 @@ void vehicle::relocate_passengers(const std::vector<Character*>& passengers) {
             if (vp.part().passenger_id != passenger->getID()) { continue; }
             if (player* const passenger_player = passenger->as_player();
                 passenger_player == &g->u) {
-                g->u.setpos( bub_to_abs( vp.pos() ) );
+                g->u.setpos(bub_to_abs(vp.pos()));
             } else {
                 passenger->setpos(vp.pos());
             }

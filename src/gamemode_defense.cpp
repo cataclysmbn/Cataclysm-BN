@@ -303,7 +303,7 @@ void defense_game::init_map()
     auto &player_character = get_avatar();
     const int z = player_character.bub_pos().z();
     player_character.setpos_no_map_update( map_local_to_abs( g->m,
-                                            tripoint_bub_ms( SEEX, SEEY, z ) ) );
+                                           tripoint_bub_ms( SEEX, SEEY, z ) ) );
 
     monster *const generator = g->place_critter_around(
                                    mtype_id( "mon_generator" ), g->u.bub_pos(), 2 );

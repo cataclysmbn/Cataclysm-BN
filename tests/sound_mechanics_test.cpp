@@ -128,8 +128,8 @@ TEST_CASE("sounds_keep_absolute_positions_when_reality_bubble_resizes", "[sound]
         // start.
         you.setpos(original_position);
         {
-            const auto initial_bubble = override_option(
-                "REALITY_BUBBLE_SIZE", std::to_string(original_bubble_size));
+            const auto initial_bubble =
+                override_option("REALITY_BUBBLE_SIZE", std::to_string(original_bubble_size));
             g->on_options_changed();
         }
         here.resize(g_mapsize);
