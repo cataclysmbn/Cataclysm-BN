@@ -74,7 +74,7 @@
   {
     "type": "ammunition_type",
     "id": "shot",
-    "name": "shot",
+    "name": "12 gauge shot",
     "default": "shot_00"
   },
   {
