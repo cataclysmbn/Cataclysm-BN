@@ -458,6 +458,6 @@
     "copy-from": "frame_carbon",
     "type": "vehicle_part",
     "symbol": "c",
-    "extend": { "flags": [ "INITIAL_PART" ] }
+    "extend": { "flags": [ "INITIAL_PART", "RC_COMPATIBLE" ] }
   }
 ]
