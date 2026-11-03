@@ -396,17 +396,15 @@ void cata::detail::reg_map( sol::state &lua )
         } );
 
         DOC( "Spawns a random artifact at a position on the map." );
-        luna::set_fx( ut, "spawn_artifact_at", []( map & m, const tripoint_bub_ms & p ) -> void {
-            m.spawn_artifact( p );
+        luna::set_fx( ut, "spawn_artifact_at", []( map & m, const tripoint_bub_ms & p,
+        sol::optional<relicgen_id> relic ) -> void {
+            m.spawn_artifact( p, relic ? *relic : relicgen_id( "default" ) );
         } );
 
-        DOC( "Spawns a natural artifact at a position on the map. Omit `property` to choose one at random." );
+        DOC( "OBSOLETE" );
         luna::set_fx( ut, "spawn_natural_artifact_at", []( map & m, const tripoint_bub_ms & p,
         sol::optional<std::string> property ) -> void {
-            const auto prop = property && !property->empty()
-            ? io::string_to_enum<artifact_natural_property>( *property )
-            : ARTPROP_NULL;
-            m.spawn_natural_artifact( p, prop );
+            m.spawn_artifact( p, relicgen_id( "default" ) );
         } );
 
         DOC( "Creates a new corpse at a position on the map. You can skip `Opt` ones by omitting them or passing `nil`. `MtypeId` specifies which monster's body it is, `TimePoint` indicates when it died, `string` gives it a custom name, and `int` determines the revival time if the monster has the `REVIVES` flag." );

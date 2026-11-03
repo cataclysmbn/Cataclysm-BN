@@ -1142,13 +1142,8 @@ auto mapgen_constructor::add_corpse(const point_omt_ms& p) -> void {
     add_item_or_charges(p, std::move(body));
 }
 
-auto mapgen_constructor::spawn_artifact(const point_omt_ms& p) -> void {
-    add_item_or_charges(p, relicgen_id("default")->generate_relic());
-}
-
-auto mapgen_constructor::spawn_natural_artifact(
-    const point_omt_ms& p, const artifact_natural_property prop) -> void {
-    add_item_or_charges(p, relicgen_id("default")->generate_relic());
+auto mapgen_constructor::spawn_artifact(const point_omt_ms& p, const relicgen_id& relic) -> void {
+    add_item_or_charges(p, relic->generate_relic());
 }
 
 auto mapgen_constructor::make_rubble(

@@ -1750,7 +1750,7 @@ void debug()
                 artifact_natural_property prop = static_cast<artifact_natural_property>( rng( ARTPROP_NULL + 1,
                                                  ARTPROP_MAX - 1 ) );
                 m.create_anomaly( *center, prop );
-                m.spawn_natural_artifact( *center, prop );
+                m.spawn_artifact( *center, relicgen_id( "default" ) );
             }
             break;
 

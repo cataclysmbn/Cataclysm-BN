@@ -5095,12 +5095,8 @@ auto map::spawn_items(const tripoint_bub_ms& p, std::vector<detached_ptr<item>> 
     return ret;
 }
 
-void map::spawn_artifact(const tripoint_bub_ms& p) {
-    add_item_or_charges(p, relicgen_id("default")->generate_relic());
-}
-
-void map::spawn_natural_artifact(const tripoint_bub_ms& p, artifact_natural_property prop) {
-    add_item_or_charges(p, relicgen_id("default")->generate_relic());
+void map::spawn_artifact(const tripoint_bub_ms& p, const relicgen_id& relic) {
+    add_item_or_charges(p, relic->generate_relic());
 }
 
 void map::spawn_item(
