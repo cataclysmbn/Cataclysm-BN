@@ -168,6 +168,9 @@ using profession_id = string_id<profession>;
 class recipe;
 using recipe_id = string_id<recipe>;
 
+class relicgen;
+using relicgen_id = string_id<relicgen>;
+
 struct requirement_data;
 using requirement_id = string_id<requirement_data>;
 

@@ -28,6 +28,7 @@
 #include "overmap/omdata.h"
 #include "point.h"
 #include "point_float.h"
+#include "relicgen.h"
 #include "rng.h"
 #include "text_snippets.h"
 #include "thread_pool.h"
@@ -1142,12 +1143,12 @@ auto mapgen_constructor::add_corpse(const point_omt_ms& p) -> void {
 }
 
 auto mapgen_constructor::spawn_artifact(const point_omt_ms& p) -> void {
-    add_item_or_charges(p, item::spawn(new_artifact(), calendar::start_of_cataclysm));
+    add_item_or_charges(p, relicgen_id("default")->generate_relic());
 }
 
 auto mapgen_constructor::spawn_natural_artifact(
     const point_omt_ms& p, const artifact_natural_property prop) -> void {
-    add_item_or_charges(p, item::spawn(new_natural_artifact(prop), calendar::start_of_cataclysm));
+    add_item_or_charges(p, relicgen_id("default")->generate_relic());
 }
 
 auto mapgen_constructor::make_rubble(

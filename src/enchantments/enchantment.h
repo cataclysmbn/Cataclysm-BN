@@ -18,11 +18,16 @@ class item;
 class JsonOut;
 class JsonIn;
 class JsonObject;
+class relicgen_part;
 enum enchantment_condition_type : unsigned int;
 // an "enchantment" is what passive artifact effects used to be:
 // under certain conditions, the effect persists upon the appropriate Character
 class enchantment {
 public:
+    enchantment() = default;
+    enchantment(const enchantment& rhs) = default;
+    enchantment(relicgen_part& part);
+
     static void load_enchantment(const JsonObject& jo, const std::string& src);
     void load(const JsonObject& jo, const std::string& src = "");
     static void reset();

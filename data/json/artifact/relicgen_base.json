@@ -1,0 +1,14 @@
+[
+  {
+    "id": "artifact_cube",
+    "type": "TOOL",
+    "name": { "str": "Cube" },
+    "description": "This is a solid cube that is much heavier than its size suggests.",
+    "weight": "2 kg",
+    "volume": "100 ml",
+    "material": [ "iron" ],
+    "symbol": "]",
+    "color": "light_gray",
+    "flags": [ "TRADER_AVOID" ],
+  },
+]

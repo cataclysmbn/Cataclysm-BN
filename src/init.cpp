@@ -83,6 +83,7 @@
 #include "profession.h"
 #include "recipe_dictionary.h"
 #include "recipe_groups.h"
+#include "relicgen.h"
 #include "regional_settings.h"
 #include "requirements.h"
 #include "rotatable_symbols.h"
@@ -491,6 +492,7 @@ void DynamicDataLoader::initialize()
     add( "achievement", &achievement::load_achievement );
     add( "named_color", &RGBColor::load_named_color );
     add( "perk", &perk::load_perks );
+    add( "relicgen", &relicgen::load_relicgens );
     add( "vehicle_blacklist", &vehicle_prototype::load_vehicle_blacklist );
 #if defined(TILES)
     add( "mod_tileset", &load_mod_tileset );
@@ -698,6 +700,7 @@ void DynamicDataLoader::unload_data()
     l10n_data::unload_mod_catalogues();
     RGBColor::unload_names();
     perk::reset();
+    relicgen::reset();
 #if defined(TILES)
     reset_mod_tileset();
 #endif
@@ -783,6 +786,7 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
             { _( "Localization" ), &l10n_data::load_mod_catalogues },
             { _( "Enchantments" ), &enchantment::finalize_all },
             { _( "Perks" ), &perk::finalize_all },
+            { _( "Relicgen" ), &relicgen::finalize_all },
 #if defined(TILES)
             { _( "Tileset" ), &load_tileset },
 #endif
@@ -892,6 +896,7 @@ void DynamicDataLoader::check_consistency( loading_ui &ui )
             { _( "Factions" ), &faction_template::check_consistency },
             { _( "Effects" ), &effect_type::check_consistency },
             { _( "Perks" ), &perk::check_consistency },
+            { _( "Relicgen" ), &relicgen::check_consistency },
         }
     };
 
