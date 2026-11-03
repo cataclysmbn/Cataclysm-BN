@@ -17,7 +17,6 @@
 #include "map/map.h"
 #include "mutation.h"
 #include "point.h"
-#include "relicgen.h"
 #include "rng.h"
 #include "string_id.h"
 #include "type_id.h"
@@ -819,21 +818,3 @@ void enchantment::check(std::set<enchantment_condition_type> incompatible_cond_t
 }
 
 void enchantment::check_consistency() { enchant_factory.check(); }
-
-enchantment::enchantment(relicgen_part& part) {
-    was_loaded = true;
-    ench_effects = part.ench_effects;
-    fake_items = part.fake_items;
-    values_add = part.values_add;
-    values_multiply = part.values_multiply;
-    values_max = part.values_max;
-    hit_me_effect = part.hit_me_effect;
-    hit_you_effect = part.hit_you_effect;
-    intermittent_activation = part.intermittent_activation;
-    conditions = part.conditions;
-    immune_effects = part.immune_effects;
-    immune_fields = part.immune_fields;
-    flags = part.flags;
-    special_visions = part.special_visions;
-    finalize();
-}

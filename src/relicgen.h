@@ -19,6 +19,7 @@ class JsonOut;
 class relicgen_part
 {
     public:
+        void add_to_relic( relic &relic, int &points_left );
         void load( const JsonObject &jo );
         void finalize();
         void check() const;
@@ -29,24 +30,24 @@ class relicgen_part
         std::vector<relic_recharge> recharges;
         // Activate spells to add;
         std::vector<fake_spell> actives;
-        // Adds most things relics can add with the following excemptions:
-        // Mutations: Anything mutations can do enchantments should be given the abiity to
-        // Emitter: Current limitation with enchantments is there can only be one emitter; Need to hide that
-        // See enchantments for what these do, we are purely setting an enchantment from this.
-        std::map<efftype_id, int> ench_effects;
-        std::set<itype_id> fake_items;
-        std::map<enchantment_value_id, int> values_add;
-        std::map<enchantment_value_id, double> values_multiply;
-        std::map<enchantment_value_id, int> values_max;
-        std::vector<fake_spell> hit_me_effect;
-        std::vector<fake_spell> hit_you_effect;
-        std::map<time_duration, std::vector<fake_spell>> intermittent_activation;
-        std::set<enchantment_condition_id> conditions;
-        std::set<efftype_id> immune_effects;
-        std::set<field_type_id> immune_fields;
-        std::map<enchantment_flag_id, int> flags;
-        std::vector<enchantment_vision_id> special_visions;
+        // Enchantments;
+        std::vector<enchantment> enchantments;
+    private:
+        void add_enchantment( enchantment &ench );
 };
+
+class relicgen_set
+{
+    public:
+        int min_count;
+        int max_count;
+        void add_to_relic( relic &relic, int &points_left );
+        void load( const JsonObject &jo );
+        void finalize();
+        void check() const;
+        weighted_int_list<relicgen_part> effects;
+};
+
 class relicgen
 {
     public:
@@ -75,7 +76,7 @@ class relicgen
         int max_power;
 
         // Relicgen part choices
-        weighted_int_list<relicgen_part> effects;
+        std::vector<relicgen_set> effects;
         weighted_int_list<itype_id> itypes;
         weighted_int_list<translation> name_prefix;
         weighted_int_list<translation> name_postfix;

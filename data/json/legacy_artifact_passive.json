@@ -2,44 +2,42 @@
   {
     "type": "enchantment",
     "id": "AEP_STR_UP",
-    "values": [ { "value": "STRENGTH", "add": 4 } ],
-    "has": "WIELD"
+    "values": [ { "value": "STRENGTH", "add": 4 } ]
   },
   {
     "type": "enchantment",
     "id": "AEP_STR_DOWN",
-    "values": [ { "value": "STRENGTH", "add": -3 } ],
-    "has": "WIELD"
+    "values": [ { "value": "STRENGTH", "add": -3 } ]
   },
   {
     "type": "enchantment",
     "id": "AEP_DEX_UP",
-    "values": [ { "value": "DEXTERITY", "add": 4 } ],
-    "has": "WIELD"
+    "values": [ { "value": "DEXTERITY", "add": 4 } ]
   },
   {
     "type": "enchantment",
     "id": "AEP_DEX_DOWN",
-    "values": [ { "value": "STRENGTH", "add": -3 } ],
-    "has": "WIELD"
+    "values": [ { "value": "DEXTERITY", "add": -3 } ]
   },
   {
     "type": "enchantment",
     "id": "AEP_PER_UP",
-    "values": [ { "value": "PERCEPTION", "add": 4 } ],
-    "has": "WIELD"
+    "values": [ { "value": "PERCEPTION", "add": 4 } ]
   },
   {
     "type": "enchantment",
     "id": "AEP_PER_DOWN",
-    "values": [ { "value": "STRENGTH", "add": -3 } ],
-    "has": "WIELD"
+    "values": [ { "value": "STRENGTH", "add": -3 } ]
   },
   {
     "type": "enchantment",
     "id": "AEP_INT_UP",
-    "values": [ { "value": "INTELLIGENCE", "add": 4 } ],
-    "has": "WIELD"
+    "values": [ { "value": "INTELLIGENCE", "add": 4 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_INT_DOWN",
+    "values": [ { "value": "INTELLIGENCE", "add": -3 } ]
   },
   {
     "type": "enchantment",
@@ -61,7 +59,6 @@
       { "value": "PERCEPTION", "add": -2 },
       { "value": "INTELLIGENCE", "add": -2 }
     ],
-    "has": "WIELD"
   },
   {
     "type": "enchantment",
@@ -106,5 +103,20 @@
     "effect_str": "attention",
     "min_duration": 180000,
     "max_duration": 180000
-  }
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_CLAIRVOYANCE",
+    "values": [ { "value": "CLAIRVOYANCE", "max": 3 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_CLAIRVOYANCE_PLUS",
+    "values": [ { "value": "CLAIRVOYANCE", "max": 8 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_CLAIRVOYANCE_SUPER",
+    "values": [ { "value": "CLAIRVOYANCE", "max": 40 } ]
+  },
 ]
