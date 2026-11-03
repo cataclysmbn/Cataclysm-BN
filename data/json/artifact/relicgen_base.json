@@ -9,6 +9,6 @@
     "material": [ "iron" ],
     "symbol": "]",
     "color": "light_gray",
-    "flags": [ "TRADER_AVOID" ],
-  },
+    "flags": [ "TRADER_AVOID" ]
+  }
 ]
