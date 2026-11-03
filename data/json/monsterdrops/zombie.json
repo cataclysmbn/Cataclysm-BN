@@ -176,7 +176,7 @@
           { "item": "atomic_light", "prob": 5, "damage": [ 1, 4 ] },
           { "item": "knife_heat", "prob": 5, "damage": [ 1, 4 ] },
           { "group": "ammo_atomic_batteries", "prob": 4, "damage": [ 1, 4 ] },
-          { "item": "mininuke", "prob": 5, "damage": [ 1, 4 ] }
+          { "item": "mininuke", "prob": 1, "damage": [ 1, 4 ] }
         ],
         "prob": 50
       },
