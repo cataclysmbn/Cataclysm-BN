@@ -331,7 +331,7 @@ void start_location::place_player( player &u, const int &z ) const
     // Need the "real" map with it's inside/outside cache and the like.
     map &m = g->m;
     // Start us off somewhere in the center of the map
-    u.set_internal_position( map_local_to_abs( m, tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y,
+    u.setpos_no_map_update( map_local_to_abs( m, tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y,
                              z ) ) );
     m.invalidate_map_cache( z );
     m.build_map_cache( z );
@@ -359,7 +359,7 @@ void start_location::place_player( player &u, const int &z ) const
         const int rate = rate_location( m, pt, must_be_inside, bash, tries, checked, checked_sy );
         if( best_rate < rate ) {
             best_rate = rate;
-            u.set_internal_position( map_local_to_abs( m, pt ) );
+        u.setpos_no_map_update( map_local_to_abs( m, pt ) );
             if( rate == INT_MAX ) {
                 found_good_spot = true;
             }

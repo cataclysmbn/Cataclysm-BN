@@ -1,12 +1,11 @@
 #include "player.h"
 
-#include "enums.h"
 #include "avatar.h"
+#include "enums.h"
 #include "flag.h"
 #include "game.h"
 #include "map/map.h"
 #include "messages.h"
-#include "monster.h"
 #include "output.h"
 #include "string_id.h"
 #include "vitamin.h"
@@ -65,34 +64,37 @@ player &player::operator=( player && )  noexcept = default;
 
 auto player::setpos( const tripoint_bub_ms &p ) -> void
 {
-    setpos( map_local_to_abs( get_map(), p ) );
+    // Bad legacy API: player movement should be expressed in absolute coordinates.
+    setpos( bub_to_abs( p ) );
 }
 
 auto player::setpos( const tripoint_abs_ms &p ) -> void
 {
-    if( p == abs_pos() ) {
+    const auto old_position = abs_pos();
+    if( p == old_position ) {
         return;
     }
 
-    if( g != nullptr && this == &g->u ) {
-        g->clear_avatar_grab();
-        if( in_vehicle ) {
-            g->m.unboard_vehicle( bub_pos() );
-        }
-        if( is_mounted() ) {
-            dismount();
-        }
-        g->set_player_position( p );
-    } else {
-        set_internal_position( p );
+    position = p;
+    if( g == nullptr || this != &g->u ) {
+        return;
+    }
+
+    g->m.invalidate_visibility_caches();
+    g->mon_info_cache_dirty = true;
+
+    const auto old_submap = project_to<coords::sm>( old_position );
+    const auto new_submap = project_to<coords::sm>( p );
+    if( old_submap.xy() != new_submap.xy() ) {
+        g->update_map( *this );
+    }
+    if( old_position.z() != p.z() ) {
+        g->vertical_shift( old_position.z(), p.z() );
     }
 }
 
-auto player::set_internal_position( const tripoint_abs_ms &p ) -> void
+auto player::setpos_no_map_update( const tripoint_abs_ms &p ) -> void
 {
-    // This is deliberately only the coordinate write.  Map realignment belongs to
-    // game::set_player_position so lifecycle and specialized movement callers can choose it
-    // explicitly without inheriting teleport or ordinary movement effects.
     position = p;
     if( g != nullptr && this == &g->u ) {
         g->m.invalidate_visibility_caches();

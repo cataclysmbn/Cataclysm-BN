@@ -678,14 +678,6 @@ class game : public submap_load_listener
         auto update_map( Character &who ) -> point_rel_sm;
         auto update_map( const tripoint_abs_ms &center ) -> point_rel_sm;
         auto update_map( int &x, int &y ) -> point_rel_sm;
-        /**
-         * Move the active player and realign the loaded map without applying movement effects.
-         *
-         * This is the shared position transition for normal movement paths and public player
-         * relocation. It also unmounts if mounted. Callers that need
-         * teleport-specific cleanup must use player::setpos().
-         */
-        auto set_player_position( const tripoint_abs_ms &destination ) -> point_rel_sm;
         void update_overmap_seen(); // Update which overmap tiles we can see
 
         void process_artifact( item &it, Character &who );
@@ -705,9 +697,6 @@ class game : public submap_load_listener
         bool is_zones_manager_open() const;
         bool is_zone_submap_grid_overlay_enabled() const;
         void zones_manager();
-
-        /** Clear the active avatar's furniture, vehicle, and creature grab state. */
-        auto clear_avatar_grab() -> void;
 
         // Look at nearby terrain ';', or select zone points
         std::optional<tripoint_bub_ms> look_around( look_around_mode mode = LA_MODE_DEFAULT );

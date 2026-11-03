@@ -177,7 +177,7 @@ auto move_creatures_away( const elevator::tiles &dest ) -> void
             continue;
         }
         if( player *const player_character = critter.as_player(); player_character == &g->u ) {
-            g->set_player_position( bub_to_abs( *candidate ) );
+            g->u.setpos( bub_to_abs( *candidate ) );
         } else {
             critter.setpos( *candidate );
         }
@@ -203,7 +203,7 @@ auto move_creatures( const elevator::tiles &from, const elevator::tiles &dest ) 
         if( eit != from.cend() ) {
             const auto destination = dest[ std::distance( from.cbegin(), eit )];
             if( player *const player_character = critter.as_player(); player_character == &g->u ) {
-                g->set_player_position( bub_to_abs( destination ) );
+                g->u.setpos( bub_to_abs( destination ) );
             } else {
                 critter.setpos( destination );
             }
@@ -236,7 +236,7 @@ auto move_player( player &p, const int /*movez*/ ) -> void
         const auto origin_before = here.get_abs_sub();
         if( &p == &g->u )
         {
-            g->set_player_position( bub_to_abs( pos ) );
+            g->u.setpos( bub_to_abs( pos ) );
         } else
         {
             p.setpos( pos );

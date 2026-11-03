@@ -1414,9 +1414,9 @@ void iexamine::chainfence( player &p, const tripoint_bub_ms &examp )
         here.unboard_vehicle( p.bub_pos() );
     }
     if( &p == &g->u ) {
-        g->set_player_position( bub_to_abs( examp ) );
+        g->u.setpos( bub_to_abs( examp ) );
     } else {
-        p.set_internal_position( bub_to_abs( examp ) );
+        p.setpos_no_map_update( bub_to_abs( examp ) );
     }
 }
 
@@ -1446,9 +1446,9 @@ void iexamine::bars( player &p, const tripoint_bub_ms &examp )
     p.moves -= to_turns<int>( 2_seconds );
     add_msg( _( "You slide right between the bars." ) );
     if( &p == &g->u ) {
-        g->set_player_position( bub_to_abs( examp ) );
+        g->u.setpos( bub_to_abs( examp ) );
     } else {
-        p.set_internal_position( bub_to_abs( examp ) );
+        p.setpos_no_map_update( bub_to_abs( examp ) );
     }
 }
 
@@ -6209,9 +6209,9 @@ auto iexamine::jump_over_tile( player &p, const tripoint_bub_ms &examp ) -> bool
         maybe_cut_from_sharp_jump_terrain( p, here, jumped_tile );
     }
     if( &p == &g->u ) {
-        g->set_player_position( jump_state.dest );
+        g->u.setpos( jump_state.dest );
     } else {
-        p.set_internal_position( jump_state.dest );
+        p.setpos_no_map_update( jump_state.dest );
     }
     if( stumbled ) {
         add_msg( m_bad, _( "You misjudge the leap past %s and crash to the ground." ),
@@ -6363,9 +6363,9 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp_bub )
 
             p.moves -= to_moves<int>( 1_seconds + 1_seconds * fall_mod );
             if( &p == &g->u ) {
-                g->set_player_position( examp );
+                g->u.setpos( examp );
             } else {
-                p.set_internal_position( examp );
+                p.setpos_no_map_update( examp );
             }
 
             if( climb_cost > 0 || rng_float( 0.8, 1.0 ) > fall_mod ) {
@@ -8537,9 +8537,9 @@ void iexamine::portal( player &p, const tripoint_bub_ms &examp )
     g->travel_to_dimension( pt->target_dim_id, wt_id, std::nullopt, dest_sm );
 
     if( &p == &g->u ) {
-        g->set_player_position( pt->target_pos );
+        g->u.setpos( pt->target_pos );
     } else {
-        p.set_internal_position( pt->target_pos );
+        p.setpos_no_map_update( pt->target_pos );
     }
 }
 

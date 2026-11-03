@@ -1134,7 +1134,7 @@ bool game::start_game()
     const auto starting_player_pos = project_to<coords::ms>(
                                          lev + tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 ) );
     load_map( lev.xy(), /*pump_events=*/true );
-    u.set_internal_position( starting_player_pos );
+    u.setpos_no_map_update( starting_player_pos );
 
     m.invalidate_map_cache( lev.z() );
     m.build_map_cache( lev.z() );
@@ -1244,7 +1244,7 @@ bool game::start_game()
             if( name.find( search ) != std::string::npos ) {
                 for( const vpart_reference &vp : v.v->get_any_parts( VPFLAG_CONTROLS ) ) {
                     const tripoint_bub_ms pos = vp.pos();
-                    u.set_internal_position( map_local_to_abs( m, pos ) );
+                    u.setpos_no_map_update( map_local_to_abs( m, pos ) );
 
                     // Delete the items that would have spawned here from a "corpse"
                     for( auto sp : v.v->parts_at_relative( vp.mount(), true ) ) {
@@ -3457,7 +3457,7 @@ void game::validate_mounted_npcs()
                 continue;
             }
             mounted_pl->mounted_creature = shared_from( m );
-            mounted_pl->set_internal_position( bub_to_abs( m.bub_pos() ) );
+            mounted_pl->setpos_no_map_update( bub_to_abs( m.bub_pos() ) );
             mounted_pl->add_effect( effect_riding, 1_turns, bodypart_str_id::NULL_ID() );
             m.mounted_player = mounted_pl;
         }
@@ -7237,7 +7237,7 @@ void game::knockback( std::vector<tripoint_bub_ms> &traj, int stun, int dam_mult
         for( size_t i = 1; i < traj.size(); i++ ) {
             if( m.impassable( traj[i] ) ||
                 m.obstructed_by_vehicle_rotation( tp, traj[i] ) ) { // oops, we hit a wall!
-                set_player_position( bub_to_abs( traj[i - 1] ) );
+                u.setpos( bub_to_abs( traj[i - 1] ) );
                 force_remaining = traj.size() - i;
                 if( stun != 0 ) {
                     if( u.has_effect( effect_stunned ) ) {
@@ -7270,7 +7270,7 @@ void game::knockback( std::vector<tripoint_bub_ms> &traj, int stun, int dam_mult
                 m.bash( traj[i], 2 * dam_mult * force_remaining );
                 break;
             } else if( critter_at( traj[i] ) ) {
-                set_player_position( bub_to_abs( traj[i - 1] ) );
+                u.setpos( bub_to_abs( traj[i - 1] ) );
                 force_remaining = traj.size() - i;
                 if( stun != 0 ) {
                     if( u.has_effect( effect_stunned ) ) {
@@ -7302,7 +7302,7 @@ void game::knockback( std::vector<tripoint_bub_ms> &traj, int stun, int dam_mult
             if( m.has_flag( TFLAG_LIQUID, u.bub_pos() ) && force_remaining == 0 ) {
                 avatar_action::swim( u.abs_pos() );
             } else {
-                set_player_position( bub_to_abs( traj[i] ) );
+                u.setpos( bub_to_abs( traj[i] ) );
             }
             tp = traj[i];
 
@@ -9001,12 +9001,12 @@ void game::peek( const tripoint_rel_ms &p )
     const auto prev = u.abs_pos();
     const auto peek_pos = prev + p;
     auto restore_player_pos = [&]() {
-        set_player_position( prev );
+        u.setpos( prev );
         m.invalidate_map_cache( get_levz() );
     };
     auto restore_on_return = on_out_of_scope( restore_player_pos );
 
-    set_player_position( peek_pos );
+    u.setpos( peek_pos );
     // Force a full cache rebuild from the peek position so look_around renders
     // correct FOV and lighting.  Without this, lightmap_dirty may already be
     // false (built from the pre-peek player position earlier this turn), causing
@@ -13359,12 +13359,15 @@ auto game::process_player_movement( const tripoint_abs_ms &dest_abs ) -> point_r
         u.stop_hauling();
     }
     const auto moved = u.abs_pos() != dest_abs;
-    const auto submap_shift = set_player_position( dest_abs );
+    const auto origin_before_setpos = m.get_abs_sub();
+    u.setpos( dest_abs );
     if( u.is_mounted() ) {
         monster *mon = u.mounted_creature.get();
+        mon->setpos( dest_abs );
         mon->process_triggers();
         m.creature_in_field( *mon );
     }
+    const auto submap_shift = m.get_abs_sub() - origin_before_setpos;
     const auto post_move_vehicle = here.veh_at( u.abs_pos() );
 
     //Auto pulp or butcher and Auto foraging
@@ -13618,7 +13621,7 @@ void game::place_player_overmap( const tripoint_abs_omt &om_dest )
     // The map has already been replaced, so this is an explicit relocation.  Do
     // not send the destination through normal movement: its bubble frame was
     // defined by the map that was unloaded above.
-    u.set_internal_position( map_local_to_abs( m, player_pos ) );
+    u.setpos_no_map_update( map_local_to_abs( m, player_pos ) );
     m.spawn_monsters( true ); // Static monsters
     update_overmap_seen();
     // load_npcs() scans around the player's absolute position, updated by the explicit
@@ -13683,7 +13686,7 @@ bool game::phasing_move( const tripoint_abs_ms &dest_loc, const bool via_ramp )
         u.mod_power_level( -( ( tunneldist - 1 ) * power_cost ) );
         //tunneling costs 100 moves baseline, 50 per extra tile up to a cap of 500 moves
         u.moves -= ( 50 + ( tunneldist * 50 ) );
-        set_player_position( dest );
+        u.setpos( dest );
 
         if( here.veh_at( u.abs_pos() ).part_with_feature( "BOARDABLE", true ) ) {
             m.board_vehicle( u.bub_pos(), &u );
@@ -14371,9 +14374,9 @@ void game::fling_creature( Creature *c, const units::angle &dir, float flvel, bo
                     m.unboard_vehicle( p->bub_pos() );
                 }
                 if( p == &u ) {
-                    set_player_position( bub_to_abs( pt ) );
+                    p->setpos( bub_to_abs( pt ) );
                 } else {
-                    p->set_internal_position( bub_to_abs( pt ) );
+                    p->setpos_no_map_update( bub_to_abs( pt ) );
                 }
             } else if( !critter_at( pt ) ) {
                 // Dying monster doesn't always leave an empty tile (blob spawning etc.)
@@ -14849,7 +14852,9 @@ void game::vertical_move( int movez, bool force, bool peeking )
     }
 
     const auto old_pos = g->u.bub_pos();
-    const auto submap_shift = set_player_position( map_local_to_abs( m, stairs ) );
+    const auto origin_before_setpos = m.get_abs_sub();
+    u.setpos( map_local_to_abs( m, stairs ) );
+    const auto submap_shift = m.get_abs_sub() - origin_before_setpos;
 
     // if an NPC or monster is on the stiars when player ascends/descends
     // they may end up merged on th esame tile, do some displacement to resolve that.
@@ -14889,7 +14894,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
                 }
             }
             if( player_displace ) {
-                set_player_position( bub_to_abs( *displace ) );
+                u.setpos( bub_to_abs( *displace ) );
                 u.moves -= 20;
                 add_msg( _( "You push past %s blocking the way." ), crit_name );
             }
@@ -15293,7 +15298,7 @@ auto game::travel_to_dimension( const dimension_id &dim_id,
         const auto target_player_pos = project_to<coords::ms>(
                                            target_load_origin + tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 ) );
         load_map( target_load_origin.xy(), false );
-        player.set_internal_position( target_player_pos );
+        player.setpos_no_map_update( target_player_pos );
         debug_assert_player_map_origin( "travel_to_dimension" );
 
         add_msg( m_debug, "[DIM] Loaded new dimension '%s' map", dim_id );
@@ -15609,39 +15614,6 @@ void game::vertical_notes( int z_before, int z_after )
 auto game::update_map( Character &who ) -> point_rel_sm
 {
     return update_map( who.abs_pos() );
-}
-
-auto game::set_player_position( const tripoint_abs_ms &destination ) -> point_rel_sm
-{
-    const auto old_position = u.abs_pos();
-    if( old_position == destination ) {
-        return point_rel_sm::zero();
-    }
-
-    const auto old_submap = project_to<coords::sm>( old_position );
-    const auto new_submap = project_to<coords::sm>( destination );
-    if( u.is_mounted() ) {
-        u.dismount();
-    }
-    u.set_internal_position( destination );
-
-    auto submap_shift = point_rel_sm::zero();
-    if( old_submap.xy() != new_submap.xy() ) {
-        submap_shift = update_map( destination );
-    }
-    if( old_position.z() != destination.z() ) {
-        vertical_shift( old_position.z(), destination.z() );
-    }
-    return submap_shift;
-}
-
-auto game::clear_avatar_grab() -> void
-{
-    if( Creature *const grabbed = avatar_grabbed_creature() ) {
-        grabbed->remove_effect( effect_grabbed );
-    }
-    u.remove_effect( effect_grabbing );
-    u.grab( OBJECT_NONE );
 }
 
 auto game::update_map( int &x, int &y ) -> point_rel_sm
@@ -15986,7 +15958,7 @@ void game::update_stair_monsters()
                         msg = _( "The %s pushed you back!" );
                     }
                     add_msg( m_warning, msg.c_str(), critter.name() );
-                    set_player_position( bub_to_abs( u.bub_pos() + push ) );
+                    u.setpos( bub_to_abs( u.bub_pos() + push ) );
                     return;
                 }
             }

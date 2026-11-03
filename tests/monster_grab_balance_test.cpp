@@ -143,12 +143,12 @@ TEST_CASE(
     auto remains_adjacent = false;
 
     SECTION("Avatar moves away") {
-        g->set_player_position(avatar_start_abs + tripoint_rel_ms::south());
+        g->u.setpos(avatar_start_abs + tripoint_rel_ms::south());
     }
     SECTION("Avatar moves to another z-level") {
         get_map()
             .ter_set(abs_to_bub(avatar_start_abs + tripoint_rel_ms::above()), ter_id("t_floor"));
-        g->set_player_position(avatar_start_abs + tripoint_rel_ms::above());
+        g->u.setpos(avatar_start_abs + tripoint_rel_ms::above());
         REQUIRE(dummy.abs_pos() == avatar_start_abs + tripoint_rel_ms::above());
     }
     SECTION("Monster is knocked away") {
@@ -161,7 +161,7 @@ TEST_CASE(
     }
     SECTION("Cardinally adjacent grab persists") { remains_adjacent = true; }
     SECTION("Diagonally adjacent grab persists") {
-        g->set_player_position(avatar_start_abs + tripoint_rel_ms::east());
+        g->u.setpos(avatar_start_abs + tripoint_rel_ms::east());
         remains_adjacent = true;
     }
 

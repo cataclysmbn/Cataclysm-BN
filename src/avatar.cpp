@@ -207,7 +207,7 @@ void avatar::control_npc( npc &np )
     if( swapped_out_character_was_dead ) {
         // Keep the newly controlled avatar in the current reality bubble while
         // the swapped-out dead character runs death side effects.
-        set_internal_position( previous_avatar_pos );
+        setpos_no_map_update( previous_avatar_pos );
         np.die( nullptr );
     } else {
         g->add_npc_follower( np.getID() );
@@ -220,7 +220,7 @@ void avatar::control_npc( npc &np )
     g->reset_light_level();
     // The control swap keeps the loaded map window aligned with the new avatar
     // without applying an ordinary movement transaction.
-    g->set_player_position( controlled_npc_pos );
+    g->u.setpos( controlled_npc_pos );
     cata::run_hooks( "on_control_npc", [ & ]( auto & params ) {
         params["npc"] = &np;
     } );

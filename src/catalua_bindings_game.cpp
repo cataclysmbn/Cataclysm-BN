@@ -477,10 +477,10 @@ auto place_player_dimension_at( const dimension_travel_options &opts ) -> bool
                                      original_origin ) ) {
             throw std::runtime_error( "Failed to restore original dimension after blocked landing" );
         }
-        g->set_player_position( original_pos );
+        g->u.setpos( original_pos );
         return false;
     }
-    g->set_player_position( bub_to_abs( *landing ) );
+    g->u.setpos( bub_to_abs( *landing ) );
     return true;
 }
 

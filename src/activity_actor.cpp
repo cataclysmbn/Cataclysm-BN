@@ -2105,9 +2105,9 @@ void throw_activity_actor::do_turn( player_activity &act, Character &who )
     const auto original_player_position = who.abs_pos();
     if( blind_throw_pos ) {
         if( who.as_player() == &g->u ) {
-            g->set_player_position( bub_to_abs( *blind_throw_pos ) );
+            g->u.setpos( bub_to_abs( *blind_throw_pos ) );
         } else {
-            who.as_player()->set_internal_position( bub_to_abs( *blind_throw_pos ) );
+            who.as_player()->setpos_no_map_update( bub_to_abs( *blind_throw_pos ) );
         }
     }
 
@@ -2117,9 +2117,9 @@ void throw_activity_actor::do_turn( player_activity &act, Character &who )
     // If we previously shifted our position, put ourselves back now that we've picked our target.
     if( blind_throw_pos ) {
         if( who.as_player() == &g->u ) {
-            g->set_player_position( original_player_position );
+            g->u.setpos( original_player_position );
         } else {
-            who.as_player()->set_internal_position( original_player_position );
+            who.as_player()->setpos_no_map_update( original_player_position );
         }
     }
 

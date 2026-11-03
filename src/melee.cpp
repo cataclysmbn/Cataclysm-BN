@@ -2678,7 +2678,7 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
 
             if( !move_issue ) {
                 if( t.bub_pos() != prev_pos ) {
-                    g->set_player_position( bub_to_abs( prev_pos ) );
+                    g->u.setpos( bub_to_abs( prev_pos ) );
                     g->on_move_effects();
                 }
             }

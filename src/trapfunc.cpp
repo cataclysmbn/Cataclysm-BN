@@ -317,7 +317,7 @@ bool trapfunc::tripwire( const tripoint_bub_ms &p, Creature *c, item * )
                 }
             }
             if( !valid.empty() ) {
-                g->set_player_position( bub_to_abs( random_entry( valid ) ) );
+                g->u.setpos( bub_to_abs( random_entry( valid ) ) );
                 z->setpos( g->u.bub_pos() );
             }
             g->u.moves -= 150;
@@ -1129,7 +1129,7 @@ static bool sinkhole_safety_roll( player *p, const itype_id &itemname, const int
         p->add_msg_player_or_npc( m_good, _( "You pull yourself to safety!" ),
                                   _( "<npcname> steps on a sinkhole, but manages to pull themselves to safety." ) );
         if( p == &g->u ) {
-            g->set_player_position( bub_to_abs( random_entry( safe ) ) );
+            g->u.setpos( bub_to_abs( random_entry( safe ) ) );
         } else {
             p->setpos( random_entry( safe ) );
         }
@@ -1245,7 +1245,7 @@ bool trapfunc::ledge( const tripoint_bub_ms &p, Creature *c, item * )
         //Special case: monster falling is a mount
         //Move player down beforehand to avoid player being dismounted midair
         if( g->u.is_mounted() && g->u.mounted_creature.get() == c ) {
-            g->set_player_position( bub_to_abs( where ) );
+            g->u.setpos( bub_to_abs( where ) );
         }
         c->setpos( where );
         c->impact( height * 10, where );

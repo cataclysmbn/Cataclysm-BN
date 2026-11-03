@@ -1461,8 +1461,8 @@ TEST_CASE("free_bubble_conversions_follow_avatar_position") {
 
     auto& you = get_avatar();
     const auto player_sm = tripoint_abs_sm(100, 200, 2);
-    const auto player_offset = tripoint_rel_ms(3, 4, 0);
-    const auto player_abs = project_to<coords::ms>(player_sm) + player_offset;
+    const auto player_offset = point_sm_ms(3, 4);
+    const auto player_abs = project_combine(player_sm, player_offset);
     you.setpos(player_abs);
 
     const auto expected_origin = player_sm - tripoint_rel_sm(g_half_mapsize, g_half_mapsize, 0);
@@ -1506,7 +1506,7 @@ TEST_CASE("place_player_overmap_reanchors_loaded_map") {
 
 TEST_CASE("reality_bubble_origin_helpers_use_explicit_size") {
     const auto player_sm = tripoint_abs_sm(100, 200, 2);
-    const auto player_abs = project_to<coords::ms>(player_sm) + tripoint_rel_ms(3, 4, 0);
+    const auto player_abs = project_combine(player_sm, point_sm_ms(3, 4) );
 
     const auto size_four_origin = reality_bubble_origin_from_player(player_abs, 4);
     CHECK(size_four_origin == player_sm - tripoint_rel_sm(5, 5, 0));
@@ -1540,6 +1540,20 @@ TEST_CASE("avatar_setpos_updates_map_from_absolute_position") {
     CHECK(here.get_abs_sub() == moved_origin);
 }
 
+TEST_CASE("avatar_setpos_reanchors_map_from_far_absolute_position") {
+    clear_all_state();
+
+    auto& here = get_map();
+    auto& you = get_avatar();
+    const auto destination_abs = test_origin + tripoint_rel_ms(5 * SEEX, -4 * SEEY, 0);
+
+    you.setpos(destination_abs);
+
+    CHECK(you.abs_pos() == destination_abs);
+    CHECK(here.get_abs_sub()
+          == reality_bubble_origin_from_player(destination_abs, g_reality_bubble_size).xy());
+}
+
 TEST_CASE("player_internal_position_does_not_realign_map") {
     clear_all_state();
 
@@ -1548,15 +1562,15 @@ TEST_CASE("player_internal_position_does_not_realign_map") {
     const auto original_map_origin = here.get_abs_sub();
     const auto destination_abs = test_origin + tripoint_rel_ms(SEEX, 0, 0);
 
-    you.set_internal_position(destination_abs);
+    you.setpos_no_map_update(destination_abs);
 
     CHECK(you.abs_pos() == destination_abs);
     CHECK(here.get_abs_sub() == original_map_origin);
 
-    g->set_player_position(test_origin);
+    you.setpos(test_origin);
 }
 
-TEST_CASE("avatar_setpos_clears_grab_and_moves_mount") {
+TEST_CASE("process_player_movement_moves_mount_and_preserves_grab") {
     clear_all_state();
 
     auto& you = get_avatar();
@@ -1572,13 +1586,13 @@ TEST_CASE("avatar_setpos_clears_grab_and_moves_mount") {
     you.grab(OBJECT_FURNITURE, tripoint_rel_ms::north());
 
     const auto destination_abs = test_origin + tripoint_rel_ms(SEEX, 0, 0);
-    you.setpos(destination_abs);
+    g->process_player_movement(destination_abs);
 
     CHECK(you.abs_pos() == destination_abs);
     CHECK(mount.abs_pos() == destination_abs);
-    CHECK(you.get_grab_type() == OBJECT_NONE);
-    CHECK_FALSE(you.has_effect(effect_grabbing));
-    CHECK_FALSE(grab_target.has_effect(effect_grabbed));
+    CHECK(you.get_grab_type() == OBJECT_FURNITURE);
+    CHECK(you.has_effect(effect_grabbing));
+    CHECK(grab_target.has_effect(effect_grabbed));
 }
 
 TEST_CASE("monster_tracker_uses_absolute_positions") {
