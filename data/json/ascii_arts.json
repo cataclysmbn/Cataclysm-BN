@@ -2162,5 +2162,35 @@
       " ╚█</color><color_brown>█░█</color><color_dark_gray>░▀",
       "   </color><color_light_gray>▀</color><color_dark_gray>▀▀"
     ]
+  },
+  {
+    "type": "ascii_art",
+    "id": "hammer",
+    "picture": [
+      "                                  <color_light_gray>▓▓▓▓</color>",
+      "                                 <color_light_gray>▓▓</color><color_dark_gray>██</color><color_light_gray>▓</color>",
+      "                                <color_light_gray>▓▓</color><color_dark_gray>████</color><color_light_gray>▓</color>",
+      "                               <color_light_gray>▓▓</color><color_dark_gray>█████</color><color_light_gray>▓</color>",
+      "<color_brown>████████████████████████████████</color><color_dark_gray>███████</color>",
+      "<color_brown>▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓</color><color_dark_gray>███████</color>",
+      "<color_brown>▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒</color><color_dark_gray>████████</color>",
+      "                               <color_dark_gray>████████</color>",
+      "                               <color_dark_gray>▓▓▓▓▓▓▓▓</color>",
+      "                               <color_dark_gray>▓▓▓▓▓▓▓▓</color>",
+      "                               <color_dark_gray>▒▒▒▒▒▒▒▒</color>"
+    ]
+  },
+  {
+    "type": "ascii_art",
+    "id": "crowbar",
+    "picture": [
+      "<color_dark_gray>██</color>",
+      "<color_dark_gray>▓▓█</color>",
+      " <color_dark_gray>▓▓</color><color_light_gray>▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓</color>",
+      "  <color_dark_gray>▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓██</color><color_light_gray>▓</color>",
+      "                                    <color_dark_gray>▓██</color>",
+      "                                   <color_light_gray>▓</color><color_dark_gray>█▓▓</color>",
+      "                               <color_dark_gray>███▓▓▓</color>"
+    ]
   }
 ]
