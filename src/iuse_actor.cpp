@@ -3354,8 +3354,8 @@ int repair_item_actor::get_material_amt_needed( const item &fix, bool just_check
     // Round up if checking, but roll if actually consuming
     // TODO: should 250_ml be part of the cost_scaling?
     return std::max<int>( 1, just_check ?
-                          std::ceil( fix.volume() / 250_ml * cost_scaling ) :
-                          roll_remainder( fix.volume() / 250_ml * cost_scaling ) );
+                          std::ceil( fix.volume() / 250_ml * cost_scaling * .25 ) :
+                          roll_remainder( fix.volume() / 250_ml * cost_scaling  * .25) );
 }
 
 std::set<material_id> repair_item_actor::get_valid_materials( const item &fix ) const

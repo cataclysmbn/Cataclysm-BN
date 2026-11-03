@@ -1213,7 +1213,7 @@
         ],
         "skill": "fabrication",
         "tool_quality": 10,
-        "cost_scaling": 0.1,
+        "cost_scaling": 0.05,
         "move_cost": 500
       },
       {
