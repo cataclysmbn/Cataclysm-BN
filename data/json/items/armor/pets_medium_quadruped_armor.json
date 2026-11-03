@@ -4,7 +4,7 @@
     "type": "PET_ARMOR",
     "name": { "str": "medium quadruped armor" },
     "symbol": "[",
-    "min_pet_vol": "300 L",
+    "min_pet_vol": "55 L",
     "max_pet_vol": "1000 L",
     "pet_bodytype": "quadruped",
     "flags": [ "IS_PET_ARMOR" ]

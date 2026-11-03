@@ -278,8 +278,8 @@ static const bionic_id bio_faraday( "bio_faraday" );
 static const bionic_id bio_flashlight( "bio_flashlight" );
 static const bionic_id bio_gills( "bio_gills" );
 static const bionic_id bio_ground_sonar( "bio_ground_sonar" );
+static const bionic_id bio_heat_absorb( "bio_heat_absorb" );
 static const bionic_id bio_heatsink( "bio_heatsink" );
-static const bionic_id bio_infrared( "bio_infrared" );
 static const bionic_id bio_jointservo( "bio_jointservo" );
 static const bionic_id bio_laser( "bio_laser" );
 static const bionic_id bio_leukocyte( "bio_leukocyte" );
@@ -287,17 +287,14 @@ static const bionic_id bio_lighter( "bio_lighter" );
 static const bionic_id bio_membrane( "bio_membrane" );
 static const bionic_id bio_memory( "bio_memory" );
 static const bionic_id bio_night_vision( "bio_night_vision" );
-static const bionic_id bio_ods( "bio_ods" );
 static const bionic_id bio_railgun( "bio_railgun" );
 static const bionic_id bio_recycler( "bio_recycler" );
+static const bionic_id bio_shock( "bio_shock" );
 static const bionic_id bio_shock_absorber( "bio_shock_absorber" );
 static const bionic_id bio_synaptic_regen( "bio_synaptic_regen" );
 static const bionic_id bio_tattoo_led( "bio_tattoo_led" );
 static const bionic_id bio_tools( "bio_tools" );
 static const bionic_id bio_ups( "bio_ups" );
-
-// Aftershock stuff!
-static const bionic_id afs_bio_linguistic_coprocessor( "afs_bio_linguistic_coprocessor" );
 
 static const trait_id trait_BARK( "BARK" );
 static const trait_id trait_BIRD_EYE( "BIRD_EYE" );
@@ -3604,21 +3601,33 @@ ret_val<bool> Character::can_wear( const item &it, bool with_equip_change ) cons
         }
     }
 
-    if( it.is_armor_plate() ) {
-        if( is_wearing_plate_carrier() == 0 ) {
-            return ret_val<bool>::make_failure(
-                       _( "Can't wear armor plates without a compatible plate carrier!" ) );
-        }
+    if( it.requires_slots() ) {
+        std::map<flag_id, int> remaining_required_slots = it.get_required_slots();
+        bool had_conflict = false;
         for( auto &i : worn ) {
-            int plates = 0;
-            if( i->has_flag( flag_ARMOR_PLATE ) ) {
-                plates += 1;
+            for( const auto &flag : remaining_required_slots | std::views::keys ) {
+                const std::map<flag_id, int> has_slots = i->get_provided_slots();
+                if( has_slots.contains( flag ) ) {
+                    remaining_required_slots[flag] -= has_slots.at( flag );
+                }
+                if( i->requires_slots() ) {
+                    const std::map<flag_id, int> &used_slots = i->get_required_slots();
+                    if( used_slots.contains( flag ) ) {
+                        remaining_required_slots[flag] += used_slots.at( flag );
+                        had_conflict = true;
+                    }
+                }
             }
-            if( it.has_flag( flag_ARMOR_PLATE ) && ( is_wearing_plate_carrier() == 0 ) ) {
-                return ret_val<bool>::make_failure(
-                           _( "Can't wear armor plates without a compatible plate carrier!" ) );
-            } else if( ( plates >= is_wearing_plate_carrier() ) && it.has_flag( flag_ARMOR_PLATE ) ) {
-                return ret_val<bool>::make_failure( _( "Can't wear more armor plates than worn plate carriers!" ) );
+        }
+        for( const auto &rem : remaining_required_slots | std::views::values ) {
+            if( rem > 0 ) {
+                if( had_conflict ) {
+                    return ret_val<bool>::make_failure(
+                               _( "Can't wear more mounted armor pieces then compatible mount spots!" ) );
+                } else {
+                    return ret_val<bool>::make_failure(
+                               _( "Can't wear mounted armor pieces without a compatible mount!" ) );
+                }
             }
         }
     }
@@ -4869,17 +4878,6 @@ bool Character::is_wearing_active_optcloak() const
         }
     }
     return false;
-}
-
-int Character::is_wearing_plate_carrier() const
-{
-    int result = 0;
-    for( auto &elem : worn ) {
-        if( elem->has_flag( flag_PLATE_CARRIER ) ) {
-            result += 1;
-        }
-    }
-    return result;
 }
 
 bool Character::in_climate_control()
@@ -9993,22 +9991,37 @@ void Character::on_hit( Creature *source, bodypart_id bp_hit,
     }
 
     bool u_see = g->u.sees( *this );
-    units::energy trigger_cost_base = bio_ods->power_trigger;
-    if( has_active_bionic( bio_ods ) && get_power_level() >= trigger_cost_base * 4 ) {
+    units::energy trigger_cost = bio_shock->power_trigger;
+    if( has_active_bionic( bio_shock ) && get_power_level() >= bio_shock->power_trigger ) {
         if( is_player() ) {
-            add_msg( m_good, _( "Your offensive defense system shocks %s in mid-attack!" ),
+            add_msg( m_good, _( "Your electroshock unit shocks %s in mid-attack!" ),
                      source->disp_name() );
         } else if( u_see ) {
-            add_msg( _( "%1$s's offensive defense system shocks %2$s in mid-attack!" ),
+            add_msg( _( "%1$s's electroshock unit shocks %2$s in mid-attack!" ),
                      disp_name(),
                      source->disp_name() );
         }
-        int shock = rng( 1, 4 );
-        mod_power_level( -shock * trigger_cost_base );
-        damage_instance ods_shock_damage;
-        ods_shock_damage.add_damage( DT_ELECTRIC, shock * 5 );
+        mod_power_level( -bio_shock->power_trigger );
+        damage_instance bio_shock_damage;
+        bio_shock_damage.add_damage( DT_ELECTRIC, rng( 5, 10 ) );
         // Should hit body part used for attack
-        source->deal_damage( this, bodypart_id( "torso" ), ods_shock_damage );
+        source->deal_damage( this, bodypart_id( "torso" ), bio_shock_damage );
+    }
+    if( has_active_bionic( bio_heat_absorb ) && get_power_level() >= bio_heat_absorb->power_trigger &&
+        source->is_warm() ) {
+        if( is_player() ) {
+            add_msg( m_good, _( "You drain %s's body heat in mid-attack!" ),
+                     source->disp_name() );
+        } else if( u_see ) {
+            add_msg( _( "%1$s's drains %s's body heat in mid-attack!" ),
+                     disp_name(),
+                     source->disp_name() );
+        }
+        mod_power_level( bio_heat_absorb->power_trigger );
+        damage_instance bio_heat_absorb_damage;
+        bio_heat_absorb_damage.add_damage( DT_COLD, 3 );
+        // Should hit body part used for attack
+        source->deal_damage( this, bodypart_id( "torso" ), bio_heat_absorb_damage );
     }
     if( !wearing_something_on( bp_hit ) &&
         ( has_trait( trait_SPINES ) || has_trait( trait_QUILLS ) ) ) {

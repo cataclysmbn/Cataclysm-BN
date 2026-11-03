@@ -1098,9 +1098,8 @@
     "difficulty": 1,
     "time": "10 m",
     "autolearn": true,
-    "using": [ [ "welding_standard", 1 ] ],
-    "qualities": [ { "id": "DRILL", "level": 3 } ],
-    "components": [ [ [ "scrap", 2 ] ] ]
+    "using": [ [ "welding_standard", 1 ], [ "steel_tiny", 1 ] ],
+    "qualities": [ { "id": "DRILL", "level": 3 } ]
   },
   {
     "type": "recipe",
@@ -1112,7 +1111,7 @@
     "difficulty": 3,
     "time": "1 h",
     "autolearn": true,
-    "using": [ [ "blacksmithing_advanced", 2 ], [ "steel_tiny", 2 ] ]
+    "using": [ [ "blacksmithing_advanced", 1 ], [ "steel_tiny", 1 ] ]
   },
   {
     "type": "recipe",
@@ -2173,7 +2172,7 @@
     "time": "20 m",
     "autolearn": true,
     "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_W", "level": 1 }, { "id": "SANDING", "level": 1 } ],
-    "components": [ [ [ "nail_glue", 4, "LIST" ] ], [ [ "stick", 2 ], [ "2x4", 2 ] ] ]
+    "components": [ [ [ "nail_glue", 2, "LIST" ] ], [ [ "wood_structural_small", 1, "LIST" ] ] ]
   },
   {
     "result": "carbonfiber_boat_hull",
@@ -2198,7 +2197,7 @@
     "skills_required": [ [ "fabrication", 2 ] ],
     "time": "10 m",
     "book_learn": [ [ "textbook_computer", 1 ], [ "advanced_electronics", 1 ], [ "reference_fabrication1", 1 ] ],
-    "using": [ [ "3d_printing_standard", 5 ] ],
+    "using": [ [ "3d_printing_standard", 15 ] ],
     "components": [ [ [ "carbon_fiber_filament", 150 ] ] ]
   },
   {
@@ -2211,7 +2210,7 @@
     "skills_required": [ [ "fabrication", 2 ] ],
     "time": "10 m",
     "book_learn": [ [ "textbook_computer", 1 ], [ "advanced_electronics", 1 ], [ "reference_fabrication1", 1 ] ],
-    "using": [ [ "3d_printing_standard", 15 ] ],
+    "using": [ [ "3d_printing_standard", 40 ] ],
     "components": [ [ [ "carbon_fiber_filament", 400 ] ] ]
   },
   {
@@ -2255,6 +2254,7 @@
     "time": "45 m",
     "autolearn": true,
     "using": [ [ "welding_standard", 12 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 } ],
     "components": [ [ [ "material_aluminium_ingot", 6 ] ] ]
   },
   {
@@ -2294,7 +2294,7 @@
     "autolearn": true,
     "time": "20 m",
     "batch_time_factors": [ 60, 1 ],
-    "using": [ [ "3d_printing_standard", 20 ] ],
+    "using": [ [ "3d_printing_standard", 30 ] ],
     "components": [ [ [ "carbon_fiber_filament", 300 ] ] ]
   },
   {

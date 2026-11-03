@@ -614,5 +614,37 @@
     "base_casting_time": 3,
     "effect": "summon",
     "effect_str": "mon_task_force_shade"
+  },
+  {
+    "id": "fpf_boss_shockwave",
+    "type": "SPELL",
+    "name": "Smartbomb Generator",
+    "description": "AOE energy blast.",
+    "sprite": "fd_laser",
+    "effect": "target_attack",
+    "extra_effects": [ { "id": "fpf_boss_shockwave_teleport" } ],
+    "valid_targets": [ "hostile", "ground", "none" ],
+    "effect_str": "stunned",
+    "flags": [ "LOUD", "NO_FAIL", "RANDOM_DAMAGE", "RANDOM_DURATION" ],
+    "min_damage": 12,
+    "max_damage": 18,
+    "min_aoe": 7,
+    "max_aoe": 7,
+    "min_duration": 200,
+    "max_duration": 300,
+    "base_casting_time": 200,
+    "damage_type": "fire"
+  },
+  {
+    "type": "SPELL",
+    "id": "fpf_boss_shockwave_teleport",
+    "name": { "str": "Smartbomb Teleport" },
+    "description": "And this teleports the caster, counts as a safe teleport.",
+    "message": "",
+    "effect": "teleport_random",
+    "valid_targets": [ "self" ],
+    "flags": [ "NO_EXPLOSION_VFX", "SILENT" ],
+    "min_range": 5,
+    "max_range": 8
   }
 ]

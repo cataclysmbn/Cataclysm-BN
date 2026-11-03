@@ -1598,6 +1598,7 @@
       [ "unitard", 5 ],
       [ "corset", 10 ],
       [ "halter_top", 50 ],
+      [ "tshirt_cropped", 30 ],
       [ "nanoskirt", 10 ]
     ]
   },
@@ -1644,6 +1645,7 @@
       [ "jersey", 60 ],
       [ "maid_hat", 3 ],
       [ "halter_top", 50 ],
+      [ "tshirt_cropped", 70 ],
       [ "nanoskirt", 40 ],
       [ "ear_spool", 30 ],
       { "item": "straw_fedora", "prob": 5, "damage": [ 1, 3 ] }

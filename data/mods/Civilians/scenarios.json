@@ -1,0 +1,8 @@
+[
+  {
+    "type": "scenario",
+    "id": "player_feral",
+    "copy-from": "player_feral",
+    "delete": { "flags": [ "SUM_START" ] }
+  }
+]

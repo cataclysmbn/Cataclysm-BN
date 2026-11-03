@@ -62,7 +62,12 @@
         "    |----:--+-:----|4   "
       ],
       "palettes": [ "shelter" ],
-      "place_nested": [ { "chunks": [ [ "shelter_nest_base", 100 ] ], "x": 0, "y": 0 } ]
+      "place_nested": [ { "chunks": [ [ "shelter_nest_base", 100 ] ], "x": 0, "y": 0 } ],
+      "place_vehicles": [
+        { "chance": 25, "status": 1, "vehicle": "suburban_home_compact", "x": 7, "y": 4, "rotation": 90 },
+        { "chance": 25, "status": 1, "vehicle": "suburban_home_compact", "x": 12, "y": 4, "rotation": 90 },
+        { "chance": 25, "status": 1, "vehicle": "suburban_home_compact", "x": 17, "y": 4, "rotation": 90 }
+      ]
     }
   },
   {
@@ -147,7 +152,12 @@
         "    |----:--+-:----|    "
       ],
       "palettes": [ "shelter" ],
-      "place_nested": [ { "chunks": [ [ "shelter_1_nest_base", 100 ] ], "x": 0, "y": 0 } ]
+      "place_nested": [ { "chunks": [ [ "shelter_1_nest_base", 100 ] ], "x": 0, "y": 0 } ],
+      "place_vehicles": [
+        { "chance": 25, "status": 1, "vehicle": "suburban_home_compact", "x": 7, "y": 3, "rotation": 90 },
+        { "chance": 25, "status": 1, "vehicle": "suburban_home_compact", "x": 12, "y": 3, "rotation": 90 },
+        { "chance": 25, "status": 1, "vehicle": "suburban_home_compact", "x": 17, "y": 3, "rotation": 90 }
+      ]
     }
   },
   {
@@ -211,6 +221,7 @@
         "    `!!!!`!!!!`!!!!`    ",
         "    `!!!!`!!!!`!!!!`    ",
         "    `!!!!`!!!!`!!!!`    ",
+        "    `!!!!`!!!!`!!!!`    ",
         "    &&&&&&&&&&&&&&&&    ",
         "           |-:-++-:-|   ",
         "   ||------|........|   ",
@@ -228,8 +239,7 @@
         "  |..................|  ",
         "  |--..............--|  ",
         "   |................|4  ",
-        "   |--------|.......|   ",
-        "            |-:-+-:-|   "
+        "   |-:-+-:----------|   "
       ],
       "palettes": [ "shelter" ],
       "place_nested": [ { "chunks": [ [ "shelter_2_nest_base", 100 ] ], "x": 0, "y": 0 } ],
@@ -242,7 +252,12 @@
             { "name": "Contact Us", "action": "emerg_ref_center" }
           ]
         }
-      }
+      },
+      "place_vehicles": [
+        { "chance": 25, "status": 1, "vehicle": "suburban_home_compact", "x": 7, "y": 3, "rotation": 90 },
+        { "chance": 25, "status": 1, "vehicle": "suburban_home_compact", "x": 12, "y": 3, "rotation": 90 },
+        { "chance": 25, "status": 1, "vehicle": "suburban_home_compact", "x": 17, "y": 3, "rotation": 90 }
+      ]
     }
   },
   {
@@ -253,6 +268,7 @@
     "object": {
       "fill_ter": "t_flat_roof",
       "rows": [
+        "                        ",
         "                        ",
         "                        ",
         "                        ",
@@ -275,8 +291,7 @@
         "  |..................3  ",
         "  ||................33  ",
         "   |................5   ",
-        "   |--------|.......3   ",
-        "            |-------3   "
+        "   |----------------3   "
       ],
       "terrain": {
         ".": "t_flat_roof",
@@ -327,7 +342,12 @@
         "    |----:--+-:----|4   "
       ],
       "palettes": [ "shelter" ],
-      "place_nested": [ { "chunks": [ [ "shelter_nest_vandal", 50 ], [ "shelter_nest_used", 50 ] ], "x": 0, "y": 0 } ]
+      "place_nested": [ { "chunks": [ [ "shelter_nest_vandal", 50 ], [ "shelter_nest_used", 50 ] ], "x": 0, "y": 0 } ],
+      "place_vehicles": [
+        { "chance": 25, "status": 1, "vehicle": "suburban_home_compact", "x": 7, "y": 4, "rotation": 90 },
+        { "chance": 25, "status": 1, "vehicle": "suburban_home_compact", "x": 12, "y": 4, "rotation": 90 },
+        { "chance": 25, "status": 1, "vehicle": "suburban_home_compact", "x": 17, "y": 4, "rotation": 90 }
+      ]
     }
   },
   {
@@ -364,7 +384,12 @@
         "    |----:--+-:----|    "
       ],
       "palettes": [ "shelter" ],
-      "place_nested": [ { "chunks": [ [ "shelter_1_nest_vandal", 50 ], [ "shelter_1_nest_used", 50 ] ], "x": 0, "y": 0 } ]
+      "place_nested": [ { "chunks": [ [ "shelter_1_nest_vandal", 50 ], [ "shelter_1_nest_used", 50 ] ], "x": 0, "y": 0 } ],
+      "place_vehicles": [
+        { "chance": 25, "status": 1, "vehicle": "suburban_home_compact", "x": 7, "y": 3, "rotation": 90 },
+        { "chance": 25, "status": 1, "vehicle": "suburban_home_compact", "x": 12, "y": 3, "rotation": 90 },
+        { "chance": 25, "status": 1, "vehicle": "suburban_home_compact", "x": 17, "y": 3, "rotation": 90 }
+      ]
     }
   },
   {
@@ -375,6 +400,7 @@
     "object": {
       "fill_ter": "t_floor",
       "rows": [
+        "    `!!!!`!!!!`!!!!`    ",
         "    `!!!!`!!!!`!!!!`    ",
         "    `!!!!`!!!!`!!!!`    ",
         "    `!!!!`!!!!`!!!!`    ",
@@ -397,8 +423,7 @@
         "  |..................|  ",
         "  |--..............--|  ",
         "   |................|4  ",
-        "   |--------|.......|   ",
-        "            |-:-+-:-|   "
+        "   |-:-+-:----------|   "
       ],
       "palettes": [ "shelter" ],
       "place_nested": [ { "chunks": [ [ "shelter_2_nest_vandal", 50 ], [ "shelter_2_nest_used", 50 ] ], "x": 0, "y": 0 } ],
@@ -411,7 +436,12 @@
             { "name": "Contact Us", "action": "emerg_ref_center" }
           ]
         }
-      }
+      },
+      "place_vehicles": [
+        { "chance": 25, "status": 1, "vehicle": "suburban_home_compact", "x": 7, "y": 3, "rotation": 90 },
+        { "chance": 25, "status": 1, "vehicle": "suburban_home_compact", "x": 12, "y": 3, "rotation": 90 },
+        { "chance": 25, "status": 1, "vehicle": "suburban_home_compact", "x": 17, "y": 3, "rotation": 90 }
+      ]
     }
   },
   {
@@ -448,13 +478,13 @@
         "####;;;;;;;;;;;;;;;;####"
       ],
       "palettes": [ "shelter" ],
-      "items": { "_": { "item": "shelter_supplies", "chance": 1 } }
+      "items": { "_": [ { "item": "trash", "chance": 1 }, { "item": "shelter_supplies", "chance": 1 } ] }
     }
   },
   {
     "type": "mapgen",
     "method": "json",
-    "weight": 10,
+    "weight": 50,
     "om_terrain": [ "shelter_under" ],
     "object": {
       "fill_ter": "t_linoleum_white",
@@ -474,8 +504,8 @@
         "####;$|T||bbbbb___b;####",
         "####;____|----|___b;####",
         "####;S%S_+____A___b;####",
-        "####;----|_<<_+___b;####",
-        "####;S%S_|_<<_+___b;####",
+        "####;----|_<<_X___b;####",
+        "####;S%S_|_<<_X___b;####",
         "####;____+____A___b;####",
         "####;$|T||----|___b;####",
         "####;---|%bbbbb___b;####",
@@ -485,11 +515,12 @@
         "####;;;;;;;;;;;;;;;;####"
       ],
       "palettes": [ "shelter" ],
+      "terrain": { "X": "t_door_boarded" },
       "items": {
-        "_": [ { "item": "trash", "chance": 1 }, { "item": "shelter_supplies", "chance": 7 } ],
-        "b": { "item": "shelter", "chance": 4 }
+        "_": [ { "item": "trash", "chance": 5 }, { "item": "shelter_supplies", "chance": 1 } ],
+        "b": { "item": "shelter", "chance": 10 }
       },
-      "monsters": { "_": { "monster": "GROUP_ZOMBIE", "chance": 40 }, "b": { "monster": "GROUP_ZOMBIE", "chance": 10 } }
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 16, 18 ], "y": [ 10, 21 ], "repeat": [ 2, 4 ] } ]
     }
   }
 ]

@@ -229,6 +229,7 @@ const flag_id flag_NO_RECOVER_AMMO( "NO_RECOVER_AMMO" );
 const flag_id flag_NO_RELOAD( "NO_RELOAD" );
 const flag_id flag_NO_REPAIR( "NO_REPAIR" );
 const flag_id flag_NO_SALVAGE( "NO_SALVAGE" );
+const flag_id flag_BUTCHERY_ROPE( "BUTCHERY_ROPE" );
 const flag_id flag_NO_STERILE( "NO_STERILE" );
 const flag_id flag_NO_TAKEOFF( "NO_TAKEOFF" );
 const flag_id flag_NO_UNLOAD( "NO_UNLOAD" );

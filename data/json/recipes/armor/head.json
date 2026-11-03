@@ -653,7 +653,8 @@
     "tools": [ [ [ "soldering_standard", 60, "LIST" ], [ "surface_heat", 60, "LIST" ] ] ],
     "components": [
       [ [ "helmet_liner", 1 ], [ "hat_cotton", 1 ], [ "rag", 3 ] ],
-      [ [ "tac_helmet", 1 ], [ "tac_fullhelmet", 1 ], [ "helmet_army", 1 ], [ "kevlar_plate", 6 ] ],
+      [ [ "helmet_army", 1 ], [ "helmet_steel", 1 ] ],
+      [ [ "kevlar_plate", 2 ] ],
       [ [ "hood_rain", 1 ], [ "bag_plastic", 2 ], [ "bag_zipper", 2 ], [ "bag_zipper_small", 8 ] ],
       [ [ "fabric_hides_proper", 8, "LIST" ] ],
       [ [ "duct_tape", 150 ] ],
@@ -685,7 +686,7 @@
     "tools": [ [ [ "soldering_standard", 60, "LIST" ], [ "surface_heat", 60, "LIST" ] ] ],
     "components": [
       [ [ "helmet_liner", 1 ], [ "hat_cotton", 1 ], [ "rag", 3 ] ],
-      [ [ "tac_helmet", 1 ], [ "tac_fullhelmet", 1 ], [ "helmet_army", 1 ] ],
+      [ [ "tac_helmet", 1 ], [ "tac_fullhelmet", 1 ] ],
       [ [ "hood_rain", 1 ], [ "bag_plastic", 2 ], [ "bag_zipper", 2 ], [ "bag_zipper_small", 8 ] ],
       [ [ "steel_chunk", 2 ], [ "scrap", 6 ] ],
       [ [ "duct_tape", 75 ] ],
@@ -717,7 +718,7 @@
     "tools": [ [ [ "soldering_standard", 60, "LIST" ], [ "surface_heat", 60, "LIST" ] ] ],
     "components": [
       [ [ "helmet_liner", 1 ], [ "hat_cotton", 1 ], [ "rag", 3 ] ],
-      [ [ "tac_helmet", 1 ], [ "tac_fullhelmet", 1 ], [ "helmet_army", 1 ] ],
+      [ [ "tac_helmet", 1 ], [ "tac_fullhelmet", 1 ] ],
       [ [ "hood_rain", 1 ], [ "bag_plastic", 2 ], [ "bag_zipper", 2 ], [ "bag_zipper_small", 8 ] ],
       [ [ "alloy_sheet", 4 ] ],
       [ [ "duct_tape", 75 ] ],

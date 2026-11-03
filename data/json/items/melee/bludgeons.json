@@ -64,6 +64,7 @@
     "color": "light_gray",
     "price_postapoc": "1250 cent",
     "material": [ "aluminum" ],
+    "flags": [ "DURABLE_MELEE" ],
     "qualities": [ [ "HAMMER", 1 ] ]
   },
   {
@@ -105,7 +106,8 @@
     "description": "A baseball bat with several nails driven through it, an excellent melee weapon.",
     "weight": "1159 g",
     "cutting": 4,
-    "flags": [ "STAB" ],
+    "material": [ "wood", "steel" ],
+    "flags": [ "STAB", "DURABLE_MELEE", "NONCONDUCTIVE" ],
     "price_postapoc": "1750 cent"
   },
   {

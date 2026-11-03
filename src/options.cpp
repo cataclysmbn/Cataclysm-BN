@@ -2832,8 +2832,8 @@ void options_manager::add_options_world_default()
        );
 
     add( "VEHICLE_DAMAGE", world_default, translate_marker( "Vehicle damage scaling factor" ),
-         translate_marker( "A scaling factor that determines how damaged vehicles are." ),
-         0.0, 10.0, 1, 0.1
+         translate_marker( "A scaling factor that determines how damaged vehicles are.  0 disables damage, 1 is the default, and 4 wrecks every damaged vehicle." ),
+         0.0, 4.0, 1, 0.1
        );
 
     add( "VEHICLE_LOCKS", world_default, translate_marker( "Vehicle door locks" ),
@@ -2865,6 +2865,11 @@ void options_manager::add_options_world_default()
          0.0, 10.0, 1.0, 0.01, COPT_NO_HIDE
        );
 
+    add( "ROT_RATE", world_default, translate_marker( "Food spoilage rate scaling factor" ),
+         translate_marker( "A scaling factor that determines how fast food and corpses spoil.  A higher number means faster spoilage.  Set to 0.00 to stop spoilage." ),
+         0.0, 100.0, 1.0, 0.05, COPT_NO_HIDE
+       );
+
     add( "NPC_DENSITY", world_default, translate_marker( "NPC spawn rate scaling factor" ),
          translate_marker( "A scaling factor that determines density of dynamic NPC spawns." ),
          0.0, 100.0, 0.1, 0.01
@@ -2885,6 +2890,10 @@ void options_manager::add_options_world_default()
          translate_marker( "Zombies Always Evolve" ),
          translate_marker( "When reaching the maximum half lives, instead of never evolving they will evolve at that time." ),
          false );
+    add( "REVIVIFICATION_FREQUENCY", world_default, translate_marker( "Revivification Frequency" ),
+         translate_marker( "Determines how soon in hours a freshly-killed zombie will attempt to revive, before damaged or burnt status is taken into account.  No effect if Prevent Zombie Revivification mod is used." ),
+         1, 1000, 6
+       );
     add( "CROWD_CRUSH", world_default,
          translate_marker( "Crowd crush" ),
          translate_marker( "When enabled, being grabbed by enough adjacent creatures can drain breath and eventually cause crushing damage." ),

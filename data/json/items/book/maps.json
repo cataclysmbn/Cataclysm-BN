@@ -99,7 +99,9 @@
         { "om_terrain": "silo", "om_terrain_match_type": "TYPE" },
         { "om_terrain": "shelter", "om_terrain_match_type": "TYPE" },
         "police",
-        "mil_base_road_entrance"
+        "mil_base_road_entrance",
+        "mil_airfield",
+        "mil_barracks"
       ],
       "message": "You add roads and facilities to your map."
     }

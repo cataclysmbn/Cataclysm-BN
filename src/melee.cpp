@@ -3142,7 +3142,7 @@ std::string Character::melee_special_effects( Creature &t, damage_instance &d, i
     if( has_active_bionic( bio_shock ) && get_power_level() >= bio_shock->power_trigger &&
         ( !is_armed() || primary_weapon().conductive() ) ) {
         mod_power_level( -bio_shock->power_trigger );
-        d.add_damage( DT_ELECTRIC, rng( 2, 10 ) );
+        d.add_damage( DT_ELECTRIC, rng( 5, 10 ) );
 
         if( is_player() ) {
             dump += string_format( _( "You shock %s." ), target ) + "\n";

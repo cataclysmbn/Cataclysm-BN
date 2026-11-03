@@ -17,6 +17,7 @@
       "<": "t_stairs_up",
       "x": "t_console_broken",
       "|": "t_wall_w",
+      "A": "t_wall_w",
       ";": "t_concrete_wall",
       "*": "t_ladder_up",
       "=": "t_door_locked_interior",

@@ -435,6 +435,7 @@ static const trait_id trait_THICKSKIN( "THICKSKIN" );
 static const trait_id trait_WEB_ROPE( "WEB_ROPE" );
 static const trait_id trait_INATTENTIVE( "INATTENTIVE" );
 static const trait_id trait_WAYFARER( "WAYFARER" );
+static const trait_id trait_WAYFARER_SELF( "WAYFARER_SELF" );
 static const trait_id trait_HAS_NEMESIS( "HAS_NEMESIS" );
 static const trait_id trait_DEBUG_INFINITE_SPEED( "DEBUG_INFINITE_SPEED" );
 
@@ -8144,6 +8145,10 @@ void game::control_vehicle()
                         ( veh->avail_part_with_feature( veh_part, "CONTROL_ANIMAL", true ) >= 0 &&
                           veh->has_engine_type( fuel_type_animal, false ) && veh->has_harnessed_animal() ) ) &&
                u.in_vehicle ) {
+        if( u.has_trait( trait_WAYFARER_SELF ) && veh->type != vproto_id( "none" ) ) {
+            add_msg( m_info, _( "You refuse to take control of this vehicle." ) );
+            return;
+        }
         if( u.has_trait( trait_WAYFARER ) ) {
             add_msg( m_info, _( "You refuse to take control of this vehicle." ) );
             return;
@@ -13532,7 +13537,8 @@ auto game::place_player( const tripoint_bub_ms &dest_loc ) -> point_rel_sm
     if( ( vp1.part_with_feature( "CONTROL_ANIMAL", true ) ||
           vp1.part_with_feature( "CONTROLS", true ) ) && u.in_vehicle && !u.is_mounted() ) {
         add_msg( _( "There are vehicle controls here." ) );
-        if( !u.has_trait( trait_id( "WAYFARER" ) ) ) {
+        if( !u.has_trait( trait_WAYFARER ) &&
+            ( !u.has_trait( trait_WAYFARER_SELF ) || vp1->vehicle().type == vproto_id( "none" ) ) ) {
             add_msg( m_info, _( "%s to drive." ), press_x( ACTION_CONTROL_VEHICLE ) );
         }
     } else if( vp1.part_with_feature( "CONTROLS", true ) && u.in_vehicle &&

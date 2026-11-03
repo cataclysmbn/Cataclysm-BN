@@ -630,7 +630,7 @@
     "special_attacks": [
       {
         "type": "gun",
-        "cooldown": 5,
+        "cooldown": 15,
         "move_cost": 150,
         "gun_type": "bola_net_launcher",
         "ammo_type": "bola_cartridge",

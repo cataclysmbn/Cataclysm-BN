@@ -101,6 +101,32 @@
   },
   {
     "type": "recipe",
+    "result": "bat",
+    "byproducts": [ [ "splinter", 30 ] ],
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_BASHING",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "time": "1h",
+    "autolearn": true,
+    "book_learn": [ [ "recipe_melee", 2 ] ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
+    "components": [ [ [ "log", 1 ] ], [ [ "varnish", 2, "LIST" ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "bat_metal",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_BASHING",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "time": "1 h 45 m",
+    "book_learn": [ [ "recipe_melee", 3 ] ],
+    "using": [ [ "blacksmithing_intermediate", 2 ] ],
+    "components": [ [ [ "material_aluminium_ingot", 3 ] ] ]
+  },
+  {
+    "type": "recipe",
     "result": "nailbat",
     "category": "CC_WEAPON",
     "subcategory": "CSC_WEAPON_BASHING",

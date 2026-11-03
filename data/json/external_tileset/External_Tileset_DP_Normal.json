@@ -345,7 +345,11 @@
           { "id": "shield_kevlar_large", "fg": 238 },
           { "id": [ "overlay_worn_shield_kevlar_large", "overlay_wielded_shield_kevlar_large" ], "fg": 239 },
           { "id": "vp_drone_rotors", "fg": 240 },
-          { "id": "rid_mon_haulerbot", "fg": 241 }
+          { "id": "rid_mon_haulerbot", "fg": 241 },
+          { "id": "mon_feral_soldier_rifle", "fg": 242 },
+          { "id": "mon_feral_soldier_lmg", "fg": 243 },
+          { "id": "mon_feral_soldier_shotgun", "fg": 244 },
+          { "id": "mon_feral_soldier_sniper", "fg": 245 }
         ],
         "sprite_width": 32,
         "sprite_height": 32

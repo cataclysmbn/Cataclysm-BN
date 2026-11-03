@@ -2,7 +2,7 @@
   {
     "type": "MOD_INFO",
     "id": "no_reviving_zombies",
-    "name": "Prevent Zombie Revivication",
+    "name": "Prevent Zombie Revivification",
     "description": "Disables zombie revival.",
     "category": "rebalance",
     "dependencies": [ "bn" ]

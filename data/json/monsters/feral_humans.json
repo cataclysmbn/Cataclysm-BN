@@ -49,19 +49,9 @@
     "death_drops": "feral_humans_death_drops_pipe",
     "death_function": [ "NORMAL" ],
     "zombify_into": "mon_zombie",
+    "upgrades": { "half_life": 40, "into_group": "GROUP_FERAL_UPGRADE" },
     "anger_triggers": [ "FRIEND_DIED", "FRIEND_ATTACKED", "HURT" ],
-    "flags": [
-      "SEES",
-      "HEARS",
-      "SMELLS",
-      "WARM",
-      "BASHES",
-      "GROUP_BASH",
-      "HUMAN",
-      "CAN_OPEN_DOORS",
-      "PATH_AVOID_DANGER_1",
-      "DROPS_AMMO"
-    ]
+    "flags": [ "SEES", "HEARS", "SMELLS", "WARM", "BASHES", "GROUP_BASH", "HUMAN", "CAN_OPEN_DOORS", "PATH_AVOID_DANGER_1" ]
   },
   {
     "id": "mon_feral_human_crowbar",
@@ -146,7 +136,6 @@
       "HUMAN",
       "CAN_OPEN_DOORS",
       "PATH_AVOID_DANGER_2",
-      "DROPS_AMMO",
       "CBM_SCI"
     ]
   },
@@ -181,7 +170,7 @@
     "path_settings": { "max_dist": 10 },
     "diff": 5,
     "monster_weapon": "feral_security_monster_weapon_9mm",
-    "starting_ammo": { "9mm": 5 },
+    "starting_ammo": { "9mm": 15 },
     "special_attacks": [
       [ "PARROT_AT_DANGER", 5 ],
       {
@@ -215,7 +204,6 @@
       "CLIMBS",
       "PUSH_MON",
       "PATH_AVOID_DANGER_2",
-      "DROPS_AMMO",
       "NO_SLIP"
     ]
   },
@@ -252,7 +240,6 @@
     "path_settings": { "max_dist": 10 },
     "diff": 5,
     "monster_weapon": "feral_security_monster_weapon_flashlight",
-    "starting_ammo": { "9mm": 5 },
     "special_attacks": [ [ "PARROT_AT_DANGER", 5 ], [ "TAZER", 10 ] ],
     "death_drops": "feral_security_death_drops_flashlight",
     "death_function": [ "NORMAL" ],
@@ -270,7 +257,6 @@
       "CLIMBS",
       "PUSH_MON",
       "PATH_AVOID_DANGER_2",
-      "DROPS_AMMO",
       "NO_SLIP"
     ]
   },
@@ -314,7 +300,7 @@
     "vision_night": 3,
     "harvest": "human_maybe_survivalist_bionics",
     "monster_weapon": "feral_jackboot_shotgun",
-    "starting_ammo": { "shot_00": 5 },
+    "starting_ammo": { "shot_00": 6 },
     "special_attacks": [
       [ "PARROT_AT_DANGER", 5 ],
       {
@@ -347,8 +333,7 @@
       "CAN_OPEN_DOORS",
       "CLIMBS",
       "PUSH_MON",
-      "PATH_AVOID_DANGER_1",
-      "DROPS_AMMO"
+      "PATH_AVOID_DANGER_1"
     ],
     "anger_triggers": [ "FRIEND_DIED", "FRIEND_ATTACKED", "HURT" ]
   },
@@ -438,7 +423,7 @@
     "name": { "str": "well dressed feral" },
     "description": "Wearing fancy clothes and with crossbow in hand, this maniac was once a socialite.  Its hands seem to caress the crossbow as if touching a loved one.",
     "monster_weapon": "feral_fancy_monster_weapon_crossbow",
-    "starting_ammo": { "bolt_cf": 6 },
+    "starting_ammo": { "bolt_cf": 10 },
     "special_attacks": [
       [ "PARROT_AT_DANGER", 5 ],
       {
@@ -515,7 +500,7 @@
     "vision_day": 50,
     "vision_night": 3,
     "harvest": "human_maybe_survivalist_bionics",
-    "starting_ammo": { "9mm": 3 },
+    "starting_ammo": { "9mm": 15 },
     "monster_weapon": "mon_feral_prepper_monster_weapon",
     "special_attacks": [
       [ "PARROT_AT_DANGER", 5 ],
@@ -529,7 +514,7 @@
         "fake_skills": [ [ "gun", 0 ], [ "pistol", 0 ] ],
         "fake_dex": 8,
         "fake_per": 9,
-        "ranges": [ [ 0, 14, "DEFAULT" ], [ 10, 35, "DEFAULT" ] ],
+        "ranges": [ [ 0, 35, "DEFAULT" ] ],
         "require_targeting_player": false,
         "description": "The feral prepper haphazardly fires their firearm!",
         "no_crits": true
@@ -550,7 +535,6 @@
       "CLIMBS",
       "PUSH_MON",
       "PATH_AVOID_DANGER_1",
-      "DROPS_AMMO",
       "NO_SLIP"
     ]
   },
@@ -602,7 +586,6 @@
       "CLIMBS",
       "PUSH_MON",
       "PATH_AVOID_DANGER_1",
-      "DROPS_AMMO",
       "NO_SLIP"
     ],
     "anger_triggers": [ "FRIEND_ATTACKED", "PLAYER_CLOSE", "STALK" ],
@@ -612,7 +595,7 @@
     "id": "mon_feral_militia",
     "type": "MONSTER",
     "name": { "str": "feral militia" },
-    "description": "Wearing a camo uniform with a kevlar vest, this person was a militia member turned feral.  Their hands grip an automatic rifle as bloodshot eyes scan around; a headlamp above them illuminating their surroundings.",
+    "description": "Wearing a camo uniform with a kevlar vest, this person was a militia member turned feral.  Their hands grip a rifle as bloodshot eyes scan around; a headlamp above them illuminating their surroundings.",
     "default_faction": "zombie",
     "bodytype": "human",
     "species": [ "HUMAN" ],
@@ -640,7 +623,7 @@
     "vision_night": 4,
     "harvest": "human_maybe_survivalist_bionics",
     "luminance": 500,
-    "starting_ammo": { "223": 10 },
+    "starting_ammo": { "223": 30 },
     "monster_weapon": "feral_autogun",
     "special_attacks": [
       [ "PARROT_AT_DANGER", 5 ],
@@ -653,9 +636,9 @@
         "fake_skills": [ [ "gun", 2 ], [ "rifle", 2 ] ],
         "fake_dex": 8,
         "fake_per": 10,
-        "ranges": [ [ 0, 30, "BURST" ], [ 0, 30, "AUTO" ] ],
+        "ranges": [ [ 0, 30, "DEFAULT" ] ],
         "require_targeting_player": false,
-        "description": "The feral militia fires their machine gun!",
+        "description": "The feral militia fires their rifle!",
         "no_crits": true
       }
     ],
@@ -674,7 +657,6 @@
       "CLIMBS",
       "PUSH_MON",
       "PATH_AVOID_DANGER_1",
-      "DROPS_AMMO",
       "NO_SLIP"
     ],
     "anger_triggers": [ "FRIEND_ATTACKED", "PLAYER_CLOSE", "STALK" ]
@@ -701,7 +683,7 @@
     "melee_dice": 2,
     "melee_dice_sides": 2,
     "melee_cut": 18,
-    "//": "Matches armor value of an empty MBR/dragonskin vest.",
+    "//": "Matches armor value of an empty ballistic vest.",
     "armor_bash": 14,
     "armor_cut": 28,
     "armor_bullet": 42,
@@ -714,6 +696,7 @@
     "monster_weapon": "mon_feral_soldier_monster_weapon",
     "death_drops": "mon_feral_soldier_death_drops",
     "zombify_into": "mon_zombie_soldier",
+    "upgrades": { "half_life": 40, "into_group": "GROUP_FERAL_SOLDIER_UPGRADE" },
     "anger_triggers": [ "FRIEND_DIED", "FRIEND_ATTACKED", "HURT" ],
     "flags": [
       "SEES",
@@ -727,6 +710,115 @@
       "PATH_AVOID_DANGER_1",
       "NO_SLIP"
     ]
+  },
+  {
+    "id": "mon_feral_soldier_rifle",
+    "copy-from": "mon_feral_soldier",
+    "type": "MONSTER",
+    "name": { "str": "feral rifleman" },
+    "description": "Wearing a military uniform with a ballistic vest, this person seems to be a highly trained military professional, now turned feral.  Tense, dirty hands grip an automatic rifle as their bloodshot eyes scan for threats.",
+    "monster_weapon": "mon_feral_soldier_rifle_monster_weapon",
+    "starting_ammo": { "556": 30 },
+    "special_attacks": [
+      [ "PARROT_AT_DANGER", 0 ],
+      {
+        "type": "gun",
+        "cooldown": 10,
+        "move_cost": 150,
+        "gun_type": "m16a4_monster",
+        "ammo_type": "556",
+        "fake_skills": [ [ "gun", 2 ], [ "rifle", 2 ] ],
+        "fake_dex": 8,
+        "fake_per": 10,
+        "ranges": [ [ 0, 30, "DEFAULT" ], [ 0, 15, "AUTO" ] ],
+        "require_targeting_player": false,
+        "description": "The feral soldier fires their rifle!",
+        "no_crits": true
+      }
+    ],
+    "delete": { "upgrades": { "half_life": 40, "into_group": "GROUP_FERAL_SOLDIER_UPGRADE" } }
+  },
+  {
+    "id": "mon_feral_soldier_lmg",
+    "copy-from": "mon_feral_soldier",
+    "type": "MONSTER",
+    "name": { "str": "feral machinegunner" },
+    "description": "Wearing a military uniform with a ballistic vest, this person seems to be a highly trained military professional, now turned feral.  Tense, dirty hands grip a light machinegun as their bloodshot eyes scan for threats.",
+    "monster_weapon": "mon_feral_soldier_lmg_monster_weapon",
+    "starting_ammo": { "556": 100 },
+    "special_attacks": [
+      [ "PARROT_AT_DANGER", 0 ],
+      {
+        "type": "gun",
+        "cooldown": 10,
+        "move_cost": 150,
+        "//": "Use less accurate version for spray and prey",
+        "gun_type": "talon_m249",
+        "ammo_type": "556",
+        "fake_skills": [ [ "gun", 2 ], [ "rifle", 2 ] ],
+        "fake_dex": 7,
+        "fake_per": 9,
+        "ranges": [ [ 0, 30, "DEFAULT" ] ],
+        "require_targeting_player": false,
+        "description": "The feral soldier fires their machinegun!",
+        "no_crits": true
+      }
+    ],
+    "delete": { "upgrades": { "half_life": 40, "into_group": "GROUP_FERAL_SOLDIER_UPGRADE" } }
+  },
+  {
+    "id": "mon_feral_soldier_shotgun",
+    "copy-from": "mon_feral_soldier",
+    "type": "MONSTER",
+    "name": { "str": "feral shotgunner" },
+    "description": "Wearing a military uniform with a ballistic vest, this person seems to be a highly trained military professional, now turned feral.  Tense, dirty hands grip a shotgun as their bloodshot eyes scan for threats.",
+    "monster_weapon": "mon_feral_soldier_shotgun_monster_weapon",
+    "starting_ammo": { "shot_00": 9 },
+    "special_attacks": [
+      [ "PARROT_AT_DANGER", 0 ],
+      {
+        "type": "gun",
+        "cooldown": 10,
+        "move_cost": 150,
+        "gun_type": "feral_jackboot_gun",
+        "ammo_type": "shot_00",
+        "fake_skills": [ [ "gun", 2 ], [ "shotgun", 2 ] ],
+        "fake_dex": 8,
+        "fake_per": 10,
+        "ranges": [ [ 0, 30, "DEFAULT" ] ],
+        "require_targeting_player": false,
+        "description": "The feral soldier fires their shotgun!",
+        "no_crits": true
+      }
+    ],
+    "delete": { "upgrades": { "half_life": 40, "into_group": "GROUP_FERAL_SOLDIER_UPGRADE" } }
+  },
+  {
+    "id": "mon_feral_soldier_sniper",
+    "copy-from": "mon_feral_soldier",
+    "type": "MONSTER",
+    "name": { "str": "feral marksman" },
+    "description": "Wearing a military uniform with a ballistic vest, this person seems to be a highly trained military professional, now turned feral.  Tense, dirty hands grip a sniper rifle as their bloodshot eyes scan for threats.",
+    "monster_weapon": "mon_feral_soldier_shotgun_monster_weapon",
+    "starting_ammo": { "762_51": 20 },
+    "special_attacks": [
+      [ "PARROT_AT_DANGER", 0 ],
+      {
+        "type": "gun",
+        "cooldown": 10,
+        "move_cost": 150,
+        "gun_type": "m1a_monster",
+        "ammo_type": "762_51",
+        "fake_skills": [ [ "gun", 2 ], [ "rifle", 2 ] ],
+        "fake_dex": 8,
+        "fake_per": 10,
+        "ranges": [ [ 0, 30, "DEFAULT" ] ],
+        "require_targeting_player": false,
+        "description": "The feral soldier fires their sniper rifle!",
+        "no_crits": true
+      }
+    ],
+    "delete": { "upgrades": { "half_life": 40, "into_group": "GROUP_FERAL_SOLDIER_UPGRADE" } }
   },
   {
     "id": "mon_feral_pa_boss",
@@ -1135,7 +1227,7 @@
     "armor_bullet": 12,
     "dodge": 2,
     "harvest": "human",
-    "starting_ammo": { "9mm": 17 },
+    "starting_ammo": { "9mm": 30 },
     "special_attacks": [
       [ "PARROT_AT_DANGER", 5 ],
       {
@@ -1183,8 +1275,8 @@
     "armor_bash": 21,
     "armor_cut": 35,
     "armor_bullet": 75,
-    "armor_acid": 17,
-    "armor_fire": 16,
+    "armor_acid": 18,
+    "armor_fire": 17,
     "dodge": 6,
     "harvest": "CBM_OP_BOSS_FERAL",
     "vision_night": 20,
@@ -1262,8 +1354,8 @@
     "armor_bash": 27,
     "armor_cut": 41,
     "armor_bullet": 80,
-    "armor_acid": 17,
-    "armor_fire": 16,
+    "armor_acid": 18,
+    "armor_fire": 17,
     "dodge": 8,
     "harvest": "CBM_OP_BOSS_FERAL",
     "vision_night": 20,
@@ -1322,8 +1414,8 @@
     "armor_bash": 21,
     "armor_cut": 35,
     "armor_bullet": 75,
-    "armor_acid": 17,
-    "armor_fire": 16,
+    "armor_acid": 18,
+    "armor_fire": 17,
     "dodge": 4,
     "harvest": "CBM_OP_BOSS_FERAL",
     "vision_night": 20,
@@ -1398,8 +1490,8 @@
     "armor_bash": 21,
     "armor_cut": 35,
     "armor_bullet": 75,
-    "armor_acid": 17,
-    "armor_fire": 16,
+    "armor_acid": 18,
+    "armor_fire": 17,
     "dodge": 6,
     "harvest": "CBM_OP_BOSS_FERAL",
     "vision_night": 30,
@@ -1467,10 +1559,11 @@
     "melee_dice_sides": 5,
     "dodge": 4,
     "//": "Armor value matches that of SWAT armor.",
-    "armor_bash": 16,
-    "armor_cut": 27,
-    "armor_bullet": 38,
-    "armor_acid": 1,
+    "armor_bash": 17,
+    "armor_cut": 28,
+    "armor_bullet": 39,
+    "armor_acid": 2,
+    "armor_fire": 1,
     "vision_day": 50,
     "vision_night": 4,
     "path_settings": { "max_dist": 40, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
@@ -1539,10 +1632,11 @@
     "melee_dice_sides": 5,
     "dodge": 0,
     "//": "Armor value balanced around being able to tank up to 5.56.",
-    "armor_bash": 16,
-    "armor_cut": 27,
+    "armor_bash": 17,
+    "armor_cut": 28,
     "armor_bullet": 70,
-    "armor_acid": 1,
+    "armor_acid": 2,
+    "armor_fire": 1,
     "vision_day": 50,
     "vision_night": 4,
     "path_settings": { "max_dist": 40, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
@@ -1612,10 +1706,11 @@
     "melee_dice_sides": 5,
     "dodge": 4,
     "//": "Armor value matches that of SWAT armor.",
-    "armor_bash": 16,
-    "armor_cut": 27,
-    "armor_bullet": 38,
-    "armor_acid": 1,
+    "armor_bash": 17,
+    "armor_cut": 28,
+    "armor_bullet": 39,
+    "armor_acid": 2,
+    "armor_fire": 1,
     "vision_day": 50,
     "vision_night": 4,
     "path_settings": { "max_dist": 40, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
@@ -1687,10 +1782,11 @@
     "melee_damage": [ { "damage_type": "electric", "amount": 5 } ],
     "dodge": 8,
     "//": "Armor value matches that of SWAT armor.",
-    "armor_bash": 16,
-    "armor_cut": 27,
-    "armor_bullet": 38,
-    "armor_acid": 1,
+    "armor_bash": 17,
+    "armor_cut": 28,
+    "armor_bullet": 39,
+    "armor_acid": 2,
+    "armor_fire": 1,
     "vision_day": 50,
     "vision_night": 14,
     "harvest": "zombie_maybe_mil_bionics",
@@ -1718,5 +1814,71 @@
       "NO_SLIP"
     ],
     "anger_triggers": [ "FRIEND_ATTACKED", "PLAYER_CLOSE", "HURT" ]
+  },
+  {
+    "id": "mon_feral_fpf_boss",
+    "type": "MONSTER",
+    "name": { "str": "feral FPF commander" },
+    "description": "This feral is heavily armored and wearing an exo-suit, marking them as the commander for this site's Federal Protective Force.  Glowing white blades extend from their wrists as they bound with unnatural speed.  Before the Cataclysm, they defended this facility and its nuclear material, and they seem to have no intention to abandon this duty now.",
+    "default_faction": "zombie",
+    "bodytype": "human",
+    "species": [ "HUMAN" ],
+    "volume": "62500 ml",
+    "weight": "81500 g",
+    "hp": 200,
+    "speed": 175,
+    "attack_cost": 200,
+    "material": [ "flesh" ],
+    "symbol": "@",
+    "color": "red",
+    "aggression": 100,
+    "morale": 100,
+    "melee_skill": 10,
+    "melee_dice": 1,
+    "melee_dice_sides": 1,
+    "melee_damage": [ { "damage_type": "heat", "amount": 18 }, { "damage_type": "cut", "amount": 36, "armor_penetration": 28 } ],
+    "//": "Matches armor value of heavy ballistic vest + superalloy plates. Melee stats simulate monomolecular blade, hence no monster_weapon.",
+    "armor_bash": 32,
+    "armor_cut": 46,
+    "armor_bullet": 70,
+    "dodge": 9,
+    "harvest": "CBM_OP_BOSS_FERAL",
+    "vision_night": 20,
+    "uncanny_dodge_cost": 50,
+    "grab_strength": 6,
+    "special_attacks": [
+      [ "GRAB", 10 ],
+      { "type": "leap", "cooldown": 5, "max_range": 5 },
+      { "id": "dropkick" },
+      { "id": "execute" },
+      {
+        "type": "spell",
+        "spell_data": { "id": "fpf_boss_shockwave", "hit_self": true },
+        "cooldown": 5,
+        "monster_message": "A powerful energy blast emanates from the feral!"
+      }
+    ],
+    "death_function": [ "NORMAL" ],
+    "regenerates": 1,
+    "luminance": 20,
+    "regeneration_modifiers": [ { "effect": "emp", "base_mod": -1 } ],
+    "death_drops": "mon_feral_fpf_boss_death_drops",
+    "zombify_into": "mon_zombie_soldier_blackops_2",
+    "flags": [
+      "SEES",
+      "HEARS",
+      "GOODHEARING",
+      "SMELLS",
+      "WARM",
+      "BASHES",
+      "GROUP_BASH",
+      "HUMAN",
+      "CAN_OPEN_DOORS",
+      "PATH_AVOID_DANGER_1",
+      "UNCANNY_DODGE",
+      "STUN_IMMUNE",
+      "PRIORITIZE_TARGETS",
+      "NO_SLIP"
+    ]
   }
 ]

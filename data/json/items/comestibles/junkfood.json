@@ -266,11 +266,11 @@
     "description": "A handful of peanut butter cups… your favorite!",
     "price": "180 cent",
     "price_postapoc": "150 cent",
-    "material": [ "junk" ],
+    "material": [ "junk", "nut" ],
     "volume": "250 ml",
     "charges": 3,
     "fun": 4,
-    "vitamins": [ [ "junk_allergen", 1 ] ]
+    "vitamins": [ [ "junk_allergen", 1 ], [ "nut_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",

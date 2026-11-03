@@ -1022,5 +1022,42 @@
     "type": "item_group",
     "id": "forest_tomb_spellbook",
     "items": [ [ "summon_undead_spellbook", 100 ] ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_BANDIT_LEADER_bashing",
+    "subtype": "distribution",
+    "ammo": 100,
+    "entries": [
+      { "item": "warhammer_plus_one", "prob": 1 },
+      { "item": "warhammer_plus_two", "prob": 1 },
+      { "item": "mace_plus_one", "prob": 1 },
+      { "item": "mace_plus_two", "prob": 1 },
+      { "item": "morningstar_plus_one", "prob": 1 },
+      { "item": "morningstar_plus_two", "prob": 1 },
+      { "item": "lucerne_plus_one", "prob": 1 },
+      { "item": "lucerne_plus_two", "prob": 1 },
+      { "item": "mjolnir", "prob": 1 },
+      { "item": "gaul_maraz", "prob": 1 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_BANDIT_LEADER_cutting",
+    "subtype": "distribution",
+    "ammo": 100,
+    "entries": [
+      { "item": "nodachi_plus_one", "prob": 2 },
+      { "item": "nodachi_plus_two", "prob": 3 },
+      { "item": "zweihander_plus_one", "prob": 2 },
+      { "item": "zweihander_plus_two", "prob": 3 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_BANDIT_LEADER_stabbing",
+    "subtype": "distribution",
+    "ammo": 100,
+    "entries": [ { "item": "estoc_plus_one", "prob": 2 }, { "item": "estoc_plus_two", "prob": 3 } ]
   }
 ]

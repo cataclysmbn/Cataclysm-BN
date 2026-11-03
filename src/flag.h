@@ -229,6 +229,7 @@ extern const flag_id flag_NO_RECOVER_AMMO;
 extern const flag_id flag_NO_RELOAD;
 extern const flag_id flag_NO_REPAIR;
 extern const flag_id flag_NO_SALVAGE;
+extern const flag_id flag_BUTCHERY_ROPE;
 extern const flag_id flag_NO_STERILE;
 extern const flag_id flag_NO_TAKEOFF;
 extern const flag_id flag_NO_UNLOAD;

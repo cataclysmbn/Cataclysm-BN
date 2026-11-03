@@ -27,5 +27,23 @@
     "fake_item": "toolset_extended",
     "included": true,
     "flags": [ "BIONIC_TOGGLED", "BIONIC_WEAPON", "BIONIC_TOOLS" ]
+  },
+  {
+    "id": "bio_ods",
+    "type": "bionic",
+    "name": { "str": "Obsolete Bionic" },
+    "description": "The effects of this bionic in the code have been replaced with Electroshock Unit.  It can be uninstalled at minimum difficulty."
+  },
+  {
+    "id": "bio_infrared",
+    "type": "bionic",
+    "name": { "str": "Obsolete Bionic" },
+    "description": "The effects of this bionic in the code have been replaced with Hybrid Night Vision.  It can be uninstalled at minimum difficulty."
+  },
+  {
+    "id": "afs_bio_linguistic_coprocessor",
+    "type": "bionic",
+    "name": { "str": "Obsolete Bionic" },
+    "description": "The effects of this bionic in the code have been replaced with Memory Coprocessor.  It can be uninstalled at minimum difficulty."
   }
 ]

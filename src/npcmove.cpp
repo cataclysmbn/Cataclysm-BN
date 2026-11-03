@@ -170,7 +170,6 @@ static const bionic_id bio_heatsink( "bio_heatsink" );
 static const bionic_id bio_hydraulics( "bio_hydraulics" );
 static const bionic_id bio_leukocyte( "bio_leukocyte" );
 static const bionic_id bio_nanobots( "bio_nanobots" );
-static const bionic_id bio_ods( "bio_ods" );
 static const bionic_id bio_painkiller( "bio_painkiller" );
 static const bionic_id bio_plutfilter( "bio_plutfilter" );
 static const bionic_id bio_radscrubber( "bio_radscrubber" );

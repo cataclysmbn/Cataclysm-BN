@@ -75,7 +75,13 @@
     "time": "480 m",
     "reversible": true,
     "decomp_learn": 6,
-    "book_learn": [ [ "textbook_robots", 5 ], [ "recipe_lab_elec", 5 ] ],
+    "book_learn": [
+      [ "advanced_electronics", 5 ],
+      [ "textbook_electronics", 5 ],
+      [ "textbook_robots", 5 ],
+      [ "recipe_lab_elec", 5 ],
+      [ "reference_aircraft", 5 ]
+    ],
     "using": [ [ "soldering_standard", 75 ], [ "steel_standard", 20 ], [ "welding_standard", 10 ] ],
     "qualities": [
       { "id": "HAMMER", "level": 3 },

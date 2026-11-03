@@ -908,5 +908,30 @@
     "id": "oldguard_armor_superalloy",
     "type": "MIGRATION",
     "replace": "oldguard_armor"
+  },
+  {
+    "id": "dragonskinempty",
+    "type": "MIGRATION",
+    "replace": "dragonskin"
+  },
+  {
+    "id": "ballistic_vest_empty",
+    "type": "MIGRATION",
+    "replace": "ballistic_vest_esapi"
+  },
+  {
+    "id": "esapi_plate",
+    "type": "MIGRATION",
+    "replace": "ceramic_ballistic_plate"
+  },
+  {
+    "id": "esbi_plate",
+    "type": "MIGRATION",
+    "replace": "ceramic_ballistic_plate"
+  },
+  {
+    "id": "ceramicdisks",
+    "type": "MIGRATION",
+    "replace": "dragonskin"
   }
 ]

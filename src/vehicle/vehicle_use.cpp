@@ -984,6 +984,7 @@ auto vehicle::fold_up() -> bool {
     if (can_be_folded) {
         folding_veh_item->set_var("weight", to_milligram(total_mass()));
         folding_veh_item->set_var("volume", total_folded_volume() / units::legacy_volume_factor);
+        folding_veh_item->set_var("vehicle_id", type.str());
         // remove "folded" from name to allow for more flexibility with folded vehicle names. also
         // lowers first character
         folding_veh_item->set_var("name", to_lower_case(name));

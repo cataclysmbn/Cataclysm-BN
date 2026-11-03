@@ -230,11 +230,11 @@
         "entries": [
           { "item": "boots_combat", "custom-flags": [ "resized_large" ] },
           { "item": "gloves_tactical", "custom-flags": [ "resized_large" ] },
-          { "group": "army_mags_usp9" },
+          { "group": "police_mags_usp9" },
           { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
           { "item": "bandolier_shotgun", "contents-group": "bandolier_swat_cqc1" },
           { "item": "bandolier_shotgun", "contents-group": "bandolier_swat_cqc2" },
-          { "item": "usp_9mm", "ammo-item": "9mmfmj", "charges": 15, "container-item": "holster" },
+          { "item": "usp_9mm", "ammo-item": "9mm", "charges": 15, "container-item": "holster" },
           { "item": "ksg", "ammo-item": "shot_00", "charges": 7, "contents-item": "shoulder_strap" },
           { "item": "police_belt", "contents-item": "baton", "custom-flags": [ "resized_large" ] }
         ]

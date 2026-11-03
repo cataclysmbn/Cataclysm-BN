@@ -505,7 +505,7 @@
     "type": "BIONIC_ITEM",
     "name": { "str": "Heat Drain CBM" },
     "looks_like": "bio_int_enhancer",
-    "description": "While fighting unarmed against a warm-blooded opponent, there is a chance that a successful hit will drain body heat, inflicting a small amount of extra damage, and recharging the user's bionic power reserves slightly.",
+    "description": "While fighting against a warm-blooded opponent, striking them with unarmed attacks or being struck by them will drain body heat, inflicting a small amount of extra damage, and increasing your power reserves slightly.",
     "price": "5500 USD",
     "weight": "500 g",
     "difficulty": 5
@@ -542,17 +542,6 @@
     "weight": "700 g",
     "difficulty": 3,
     "installation_data": "AID_bio_infolink"
-  },
-  {
-    "id": "bio_infrared",
-    "copy-from": "bionic_general",
-    "type": "BIONIC_ITEM",
-    "name": { "str": "Infrared Vision CBM" },
-    "looks_like": "bio_int_enhancer",
-    "description": "A bionic module that extends the range of vision into the infrared, allowing the user to see warm-blooded creatures in the dark and through smoke.",
-    "price": "4500 USD",
-    "weight": "500 g",
-    "difficulty": 6
   },
   {
     "id": "bio_int_enhancer",
@@ -635,9 +624,9 @@
     "id": "bio_memory",
     "copy-from": "bionic_general",
     "type": "BIONIC_ITEM",
-    "name": { "str": "Enhanced Memory Banks CBM" },
+    "name": { "str": "Memory Coprocessor CBM" },
     "looks_like": "bio_int_enhancer",
-    "description": "A set of highly-advanced quantum storage drives used to enhance memory.  While active, they increase the rate that the user learns skills, and give them near-perfect memory of skills.",
+    "description": "A set of highly-advanced microcomputers and quantum storage drives used to enhance memory and learning.  While active, they increase the rate that the user learns skills, and give them near-perfect memory of skills.",
     "price": "10 kUSD",
     "weight": "100 g",
     "difficulty": 9
@@ -689,23 +678,12 @@
     "id": "bio_night_vision",
     "copy-from": "bionic_general",
     "type": "BIONIC_ITEM",
-    "name": { "str": "Implanted Night Vision CBM" },
+    "name": { "str": "Hybrid Night Vision CBM" },
     "looks_like": "bio_int_enhancer",
-    "description": "This bionic module modifies the user's eyes to amplify existing light, allowing them to see in the dark.",
+    "description": "This bionic module modifies the user's eyes to both amplify existing light and provide thermal images, allowing them to see in the dark and detect warm-blooded creatures with ease.",
     "price": "9 kUSD",
     "weight": "100 g",
     "difficulty": 11
-  },
-  {
-    "id": "bio_ods",
-    "copy-from": "bionic_general_npc_usable",
-    "type": "BIONIC_ITEM",
-    "name": { "str": "Offensive Defense System CBM" },
-    "looks_like": "bio_int_enhancer",
-    "description": "A thin forcefield gets projected around the user's body, continually draining power.  This field does not deflect attacks, but rather delivers a strong shock, damaging unarmed attackers and those with a conductive weapon.",
-    "price": "9500 USD",
-    "weight": "1000 g",
-    "difficulty": 7
   },
   {
     "id": "bio_painkiller",
@@ -1396,15 +1374,6 @@
     "type": "BIONIC_ITEM",
     "name": { "str": "Deployable Grenade Launcher CBM" },
     "description": "Your right hand can fold inward to reveal a mechanism capable of igniting and firing 40mm grenades across medium distances with great accuracy due built in ballistic calculator.",
-    "price": "1 kUSD",
-    "difficulty": 5
-  },
-  {
-    "id": "afs_bio_linguistic_coprocessor",
-    "copy-from": "bionic_general",
-    "type": "BIONIC_ITEM",
-    "name": { "str": "Linguistic Coprocessor CBM" },
-    "description": "A microcomputer installed into the left hemisphere of your brain to increase the speed that it processes language.  When installed, it provides a passive boost to reading speed.",
     "price": "1 kUSD",
     "difficulty": 5
   },

@@ -46,6 +46,7 @@
       "t_wall_p",
       "t_concrete_wall",
       "t_brick_wall",
+      "t_fungus_wall",
       "t_strconc_wall"
     ],
     "messages": {

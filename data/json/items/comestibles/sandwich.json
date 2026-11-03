@@ -268,7 +268,7 @@
     "material": [ "wheat", "nut" ],
     "volume": "500 ml",
     "fun": 3,
-    "vitamins": [ [ "calcium", 10 ], [ "iron", 28 ], [ "wheat_allergen", 1 ] ],
+    "vitamins": [ [ "calcium", 10 ], [ "iron", 28 ], [ "wheat_allergen", 1 ], [ "nut_allergen", 1 ] ],
     "charges": 4
   },
   {
@@ -279,7 +279,14 @@
     "description": "A delicious peanut butter and jelly sandwich.  It reminds you of the times your mother would make you lunch.",
     "material": [ "fruit", "wheat", "nut" ],
     "fun": 6,
-    "vitamins": [ [ "vitC", 3 ], [ "calcium", 7 ], [ "iron", 14 ], [ "wheat_allergen", 1 ], [ "fruit_allergen", 1 ] ]
+    "vitamins": [
+      [ "vitC", 3 ],
+      [ "calcium", 7 ],
+      [ "iron", 14 ],
+      [ "wheat_allergen", 1 ],
+      [ "fruit_allergen", 1 ],
+      [ "nut_allergen", 1 ]
+    ]
   },
   {
     "type": "COMESTIBLE",
@@ -290,7 +297,7 @@
     "description": "Some damned fool put honey on this peanut butter sandwich, who in their right mind- oh wait this is pretty good.",
     "material": [ "wheat", "honey", "nut" ],
     "fun": 6,
-    "vitamins": [ [ "calcium", 8 ], [ "iron", 16 ], [ "wheat_allergen", 1 ] ]
+    "vitamins": [ [ "calcium", 8 ], [ "iron", 16 ], [ "wheat_allergen", 1 ], [ "nut_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -301,7 +308,7 @@
     "description": "Who knew you could mix maple syrup and peanut butter to create yet another different sandwich?",
     "material": [ "wheat", "nut" ],
     "fun": 6,
-    "vitamins": [ [ "calcium", 12 ], [ "iron", 28 ], [ "wheat_allergen", 1 ] ]
+    "vitamins": [ [ "calcium", 12 ], [ "iron", 28 ], [ "wheat_allergen", 1 ], [ "nut_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",

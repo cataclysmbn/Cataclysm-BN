@@ -7,6 +7,9 @@
 #include "bionics.h"
 #include "calendar.h"
 #include "cata_utility.h"
+#include "catalua_hooks.h"
+#include "catalua_icallback_actor.h"
+#include "catalua_sol.h"
 #include "character.h"
 #include "craft_command.h"
 #include "debug.h"
@@ -739,7 +742,8 @@ ret_val<edible_rating> Character::can_eat( const item &food ) const
     return ret_val<edible_rating>::make_success();
 }
 
-ret_val<edible_rating> Character::will_eat( const item &food, bool interactive ) const
+ret_val<edible_rating> Character::will_eat( const item &food, bool interactive,
+        const consume_overrides &overrides ) const
 {
     const auto ret = can_eat( food );
     if( !ret.success() ) {
@@ -761,20 +765,22 @@ ret_val<edible_rating> Character::will_eat( const item &food, bool interactive )
     }
 
     const bool carnivore = has_trait( trait_CARNIVORE );
-    if( food.has_vitamin( vitamin_human_flesh_vitamin ) && !has_trait_flag( trait_flag_CANNIBAL ) ) {
+    if( food.has_vitamin( vitamin_human_flesh_vitamin ) && !has_trait_flag( trait_flag_CANNIBAL )
+        && !overrides.skip_cannibalism ) {
         add_consequence( _( "The thought of eating human flesh makes you feel sick." ),
                          edible_rating::cannibalism );
     }
 
     const bool edible = comest->comesttype == comesttype_FOOD || food.has_flag( flag_USE_EAT_VERB );
 
-    int food_kcal = compute_effective_nutrients( food ).kcal;
+    int food_kcal = overrides.kcal ? *overrides.kcal : compute_effective_nutrients( food ).kcal;
+    const int quench = overrides.thirst ? *overrides.thirst : comest->quench;
     if( food_kcal > 0 && has_effect( effect_nausea ) ) {
         add_consequence( _( "You still feel nauseous and will probably puke it all up again." ),
                          edible_rating::nausea );
     }
 
-    if( ( food_kcal > 0 || comest->quench > 0 ) && has_effect( effect_bloated )
+    if( ( food_kcal > 0 || quench > 0 ) && has_effect( effect_bloated )
         && !food.has_flag( flag_NO_BLOAT ) ) {
         add_consequence( _( "You're full and will vomit if you try to consume anything." ),
                          edible_rating::bloated );
@@ -797,7 +803,7 @@ ret_val<edible_rating> Character::will_eat( const item &food, bool interactive )
         ( ( food_kcal > 0 && !has_active_mutation( trait_EATHEALTH ) &&
             get_stored_kcal() + stomach.get_calories() + food_kcal
             > max_stored_kcal() ) ||
-          ( comest->quench > 0 && get_thirst() < comest->quench && !has_trait( trait_NO_THIRST ) ) ) ) {
+          ( quench > 0 && get_thirst() < quench && !has_trait( trait_NO_THIRST ) ) ) ) {
         add_consequence( _( "You're full already and the excess food will be wasted." ),
                          edible_rating::too_full );
     }
@@ -835,13 +841,61 @@ bool Character::eat( item &food, bool force )
     if( !food.is_food() ) {
         return false;
     }
-    const auto ret = force ? can_eat( food ) : will_eat( food, is_player() );
+
+    // Lua consume callbacks run before the edibility checks and the
+    // confirmation prompt so that nutrition/thirst overrides also affect
+    // the "eat anyway?" consequences, and the cannibalism check can be
+    // skipped per item. Callback side effects therefore happen even if
+    // the checks fail or the player declines.
+    consume_overrides lua_overrides;
+    if( cata::has_hooks( "on_character_try_consume" ) ) {
+        const auto &hook_results = cata::run_hooks( "on_character_try_consume",
+        [ &, this ]( sol::table & params ) {
+            params["char"] = this;
+            params["item"] = &food;
+            params["nutrition"] = compute_effective_nutrients( food ).kcal;
+            params["thirst"] = food.get_comestible()->quench;
+            const auto fun = fun_for( food );
+            params["fun"] = fun.first;
+            params["fun_max"] = fun.second;
+        }, { .exit_early = true } );
+        if( !hook_results.get_or( "allowed", true ) ) {
+            return false;
+        }
+        if( const auto kcal = hook_results.get<sol::optional<int>>( "nutrition" ) ) {
+            lua_overrides.kcal = kcal.value();
+        }
+        if( const auto quench = hook_results.get<sol::optional<int>>( "thirst" ) ) {
+            lua_overrides.thirst = quench.value();
+        }
+        if( const auto fun = hook_results.get<sol::optional<int>>( "fun" ) ) {
+            lua_overrides.fun = fun.value();
+        }
+        if( const auto fun_max = hook_results.get<sol::optional<int>>( "fun_max" ) ) {
+            lua_overrides.fun_max = fun_max.value();
+        }
+        if( const auto skip = hook_results.get<sol::optional<bool>>( "skip_cannibalism" ) ) {
+            lua_overrides.skip_cannibalism = skip.value();
+        }
+    }
+
+    if( const lua_iconsume_actor *iconsume_cb = food.type->iconsume_callbacks ) {
+        if( !iconsume_cb->call_on_try_consume( *this, food, lua_overrides ) ) {
+            return false;
+        }
+    }
+
+    const auto ret = force ? can_eat( food ) : will_eat( food, is_player(), lua_overrides );
     if( !ret.success() ) {
         return false;
     }
 
+    const auto food_kcal = lua_overrides.kcal ? *lua_overrides.kcal
+                           : compute_effective_nutrients( food ).kcal;
+    const auto quench = lua_overrides.thirst ? *lua_overrides.thirst
+                        : food.get_comestible()->quench;
     if( has_effect( effect_bloated ) &&
-        ( compute_effective_nutrients( food ).kcal > 0 || food.get_comestible()->quench > 0 ) &&
+        ( food_kcal > 0 || quench > 0 ) &&
         !food.has_flag( flag_NO_BLOAT ) ) {
         add_msg_if_player( _( "You force yourself to vomit to make space for %s." ), food.tname() );
         vomit();
@@ -860,7 +914,9 @@ bool Character::eat( item &food, bool force )
     // Note: the block below assumes we decided to eat it
     // No coming back from here
 
-    const int nutr = nutrition_for( food );
+    const auto nutr = lua_overrides.kcal
+                      ? static_cast<int>( *lua_overrides.kcal / islot_comestible::kcal_per_nutr )
+                      : nutrition_for( food );
     const bool spoiled = food.rotten();
 
     // The item is solid food
@@ -882,7 +938,7 @@ bool Character::eat( item &food, bool force )
         }
     }
 
-    if( !consume_effects( food ) ) {
+    if( !consume_effects( food, lua_overrides ) ) {
         // Already consumed by using `food.type->invoke`?
         if( charges_used > 0 ) {
             food.mod_charges( -charges_used );
@@ -1062,7 +1118,7 @@ const morale_type MORALE_FOOD_VERY_COLD( "morale_food_very_cold" );
 
 } // namespace
 
-void Character::modify_morale( item &food, int nutr )
+void Character::modify_morale( item &food, int nutr, const consume_overrides &overrides )
 {
     time_duration morale_time = 12_hours;
 
@@ -1099,13 +1155,19 @@ void Character::modify_morale( item &food, int nutr )
 
 
     std::pair<int, int> fun = fun_for( food );
+    if( overrides.fun ) {
+        fun.first = *overrides.fun;
+    }
+    if( overrides.fun_max ) {
+        fun.second = *overrides.fun_max;
+    }
 
     fun.first += bonus_from_enchantments( fun.first, ench_val_FOOD_FUN );
 
     if( fun.first < 0 ) {
         if( has_active_bionic( bio_taste_blocker ) &&
             get_power_level() > units::from_kilojoule( -fun.first ) ) {
-            mod_power_level( units::from_kilojoule( std::min( 0, fun_for( food ).first ) ) );
+            mod_power_level( units::from_kilojoule( std::min( 0, fun.first ) ) );
         } else {
             add_morale( MORALE_FOOD_BAD, fun.first, fun.second, morale_time, morale_time / 2, false,
                         food.type );
@@ -1123,7 +1185,7 @@ void Character::modify_morale( item &food, int nutr )
         }
     }
 
-    if( food.has_vitamin( vitamin_human_flesh_vitamin ) ) {
+    if( food.has_vitamin( vitamin_human_flesh_vitamin ) && !overrides.skip_cannibalism ) {
         const bool cannibal = has_trait( trait_CANNIBAL );
         const bool psycho = has_trait( trait_PSYCHOPATH );
         const bool sapiovore = has_trait( trait_SAPIOVORE );
@@ -1189,7 +1251,7 @@ void Character::modify_morale( item &food, int nutr )
     }
 }
 
-bool Character::consume_effects( item &food )
+bool Character::consume_effects( item &food, const consume_overrides &overrides )
 {
     if( !food.is_comestible() ) {
         debugmsg( "called Character::consume_effects with non-comestible" );
@@ -1220,7 +1282,9 @@ bool Character::consume_effects( item &food )
     }
 
     // Used in hibernation messages.
-    const auto nutr = nutrition_for( food );
+    const auto nutr = overrides.kcal
+                      ? static_cast<int>( *overrides.kcal / islot_comestible::kcal_per_nutr )
+                      : nutrition_for( food );
     const bool skip_health = has_trait( trait_PROJUNK2 ) && comest.healthy < 0;
     // We can handle junk just fine
     if( !skip_health ) {
@@ -1230,7 +1294,7 @@ bool Character::consume_effects( item &food )
     modify_fatigue( comest );
     modify_radiation( comest );
     modify_addiction( comest );
-    modify_morale( food, nutr );
+    modify_morale( food, nutr, overrides );
 
     // Moved here and changed a bit - it was too complex
     // Incredibly minor stuff like this shouldn't require complexity
@@ -1257,6 +1321,9 @@ bool Character::consume_effects( item &food )
     food_summary ingested {
         compute_effective_nutrients( contained_food )
     };
+    if( overrides.kcal ) {
+        ingested.nutr.kcal = *overrides.kcal;
+    }
     // Maybe move tapeworm to digestion
     if( has_effect( effect_tapeworm ) ) {
         ingested.nutr /= 2;
@@ -1271,9 +1338,10 @@ bool Character::consume_effects( item &food )
         excess_kcal = 0;
     }
 
-    int excess_quench = -( get_thirst() - comest.quench );
+    int excess_quench = -( get_thirst() - ( overrides.thirst ? *overrides.thirst : comest.quench ) );
     stomach.ingest( ingested );
-    mod_thirst( -contained_food.type->comestible->quench );
+    mod_thirst( -( overrides.thirst ? *overrides.thirst :
+                   contained_food.type->comestible->quench ) );
 
 
     if( ( excess_kcal > 0 || ( excess_quench > 0 && !has_trait( trait_NO_THIRST ) ) ) &&
