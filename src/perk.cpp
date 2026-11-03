@@ -79,7 +79,7 @@ std::string perk::get_description() const
             added_string = true;
         }
     }
-    return added_string ? oss.str() : "";
+    return added_string ? oss.str() : description.translated();
 }
 
 std::string perk::get_category() const

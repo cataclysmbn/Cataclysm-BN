@@ -23,11 +23,13 @@
     "subtype": "collection",
     "entries": [
       { "item": "gold_watch" },
+      { "item": "gold_chain" },
       { "item": "boxer_shorts" },
-      { "item": "polo_shirt" },
-      { "item": "jacket_leather" },
+      { "item": "tank_top" },
       { "item": "pants" },
-      { "item": "dress_shoes" }
+      { "item": "socks" },
+      { "item": "slippers" },
+      { "item": "hat_ball" }
     ]
   },
   {

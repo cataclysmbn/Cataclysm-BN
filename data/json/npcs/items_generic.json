@@ -105,6 +105,7 @@
       [ "tank_top", 20 ],
       [ "halter_top", 20 ],
       [ "camisole", 20 ],
+      [ "tshirt_cropped", 20 ],
       [ "dress", 10 ],
       [ "sundress", 10 ],
       [ "corset", 5 ]

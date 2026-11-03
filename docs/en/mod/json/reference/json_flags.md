@@ -1079,6 +1079,9 @@ Multiple death functions can be used. Not all combinations make sense.
 - `ID_CARD_DESPAWN` Despawns when a science ID card is used on a nearby console
 - `INTERIOR_AMMO` Monster contains ammo inside itself, no need to load on launch. Prevents ammo from
   being dropped on disable.
+- `IRRADIATED` Melee attacks from the monster will irradiate targets. Scales with how much damage the
+  attack would deal before armor. Radiation-resistant gear only protects against this if the attack
+  dealt zero damage, otherwise bypasses protection outright.
 - `KEENNOSE` Keen sense of smell.
 - `LARVA` Creature is a larva. Currently used for gib and blood handling.
 - `LEATHER` May produce leather when butchered.

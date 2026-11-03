@@ -461,9 +461,11 @@ void vpart_info::load(const JsonObject& jo, const std::string& src) {
     if (jo.has_member("requirements")) {
         auto reqs = jo.get_object("requirements");
 
-        parse_vp_reqs(reqs, id.str(), "install", install_reqs, install_skills, install_moves);
-        parse_vp_reqs(reqs, id.str(), "removal", removal_reqs, removal_skills, removal_moves);
-        parse_vp_reqs(reqs, id.str(), "repair", repair_reqs, repair_skills, repair_moves);
+        std::string id_str = id.str();
+        if (jo.has_member("abstract")) { id_str = jo.get_string("abstract"); }
+        parse_vp_reqs(reqs, id_str, "install", install_reqs, install_skills, install_moves);
+        parse_vp_reqs(reqs, id_str, "removal", removal_reqs, removal_skills, removal_moves);
+        parse_vp_reqs(reqs, id_str, "repair", repair_reqs, repair_skills, repair_moves);
     }
 
     if (jo.has_member("symbol")) { sym = jo.get_string("symbol")[0]; }
@@ -528,10 +530,10 @@ void vpart_info::load(const JsonObject& jo, const std::string& src) {
     if (jo.has_array("shapes")) {
         for (JsonObject obj : jo.get_array("shapes")) {
             vpart_info shape = vpart_info(*this);
-            if (shape.id.str() == "") {
+            if (jo.has_string("abstract")) {
                 shape.id = vpart_id(jo.get_string("abstract") + "_" + obj.get_string("direction"));
             } else {
-                shape.id = vpart_id(shape.id.str() + "_" + obj.get_string("direction"));
+                shape.id = vpart_id(id.str() + "_" + obj.get_string("direction"));
             }
             if (shape.looks_like != "") {
                 shape.looks_like = shape.looks_like + "_" + obj.get_string("direction");
@@ -539,6 +541,7 @@ void vpart_info::load(const JsonObject& jo, const std::string& src) {
             if (obj.has_string("symbol")) { shape.sym = obj.get_string("symbol")[0]; }
             if (obj.has_string("symbol_broken")) { shape.sym = obj.get_string("symbol_broken")[0]; }
             if (obj.has_string("looks_like")) { shape.looks_like = obj.get_string("looks_like"); }
+            shape.was_loaded = true;
             all_vparts.insert(shape);
         }
     }
@@ -651,7 +654,7 @@ void vpart_info::check() const {
         }
     }
 
-    for (const auto& [req, multiplier] : install_reqs) {
+    for (const auto& [req, multiplier] : removal_reqs) {
         if (!(req.is_null() || req.is_valid()) || multiplier < 0) {
             debugmsg("vehicle part %s has unknown or incorrectly specified removal requirements %s",
                      id.c_str(), req.c_str());

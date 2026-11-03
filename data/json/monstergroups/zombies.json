@@ -927,5 +927,24 @@
       { "monster": "mon_zombie_survivor_elite", "freq": 10, "cost_multiplier": 5, "starts": 360 },
       { "monster": "mon_zombie_runner", "freq": 65, "cost_multiplier": 2 }
     ]
+  },
+  {
+    "name": "GROUP_RETIREMENT_COMMUNITY",
+    "type": "monstergroup",
+    "default": "mon_zombie",
+    "monsters": [
+      { "monster": "mon_zombie", "freq": 310, "cost_multiplier": 0 },
+      { "monster": "mon_zombie_nurse", "freq": 50, "cost_multiplier": 0 },
+      { "monster": "mon_zombie_fat", "freq": 150, "cost_multiplier": 0 },
+      { "monster": "mon_zombie_runner", "freq": 65, "cost_multiplier": 0 },
+      { "monster": "mon_zombie_rot", "freq": 105, "pack_size": [ 2, 2 ], "cost_multiplier": 0 },
+      { "monster": "mon_zombie_crawler", "freq": 50, "cost_multiplier": 0 },
+      { "monster": "mon_zombie_brainless", "freq": 50, "cost_multiplier": 0 },
+      { "monster": "mon_zombie_child", "freq": 30, "cost_multiplier": 0 },
+      { "monster": "mon_boomer", "freq": 50, "cost_multiplier": 0 },
+      { "monster": "mon_zombie_dog", "freq": 55, "cost_multiplier": 0 },
+      { "monster": "mon_feral_human_pipe", "freq": 55, "cost_multiplier": 0, "starts": 250 },
+      { "monster": "mon_feral_human_crowbar", "freq": 30, "cost_multiplier": 0, "starts": 250 }
+    ]
   }
 ]

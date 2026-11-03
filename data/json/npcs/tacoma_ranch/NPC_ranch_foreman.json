@@ -632,9 +632,9 @@
           "om_terrain": "ranch_camp_61",
           "place_vehicles": [
             { "vehicle": "car", "chance": 100, "rotation": 270, "x": 1, "y": 20 },
-            { "vehicle": "cube_van_cheap", "chance": 100, "rotation": 90, "x": 10, "y": 10 },
+            { "vehicle": "cube_van_cheap", "chance": 100, "rotation": 90, "x": 10, "y": 8 },
             { "vehicle": "car_sports", "chance": 100, "rotation": 90, "x": 3, "y": 9 },
-            { "vehicle": "flatbed_truck", "chance": 100, "rotation": 270, "x": 10, "y": 23 }
+            { "vehicle": "flatbed_truck", "chance": 100, "rotation": 270, "x": 17, "y": 6 }
           ]
         },
         {
@@ -759,7 +759,7 @@
         {
           "om_terrain": "ranch_camp_61",
           "translate_ter": [ { "from": "t_underbrush", "to": "t_dirt", "x": 0, "y": 0 } ],
-          "place_vehicles": [ { "vehicle": "ambulance", "chance": 100, "rotation": 90, "x": 16, "y": 5 } ]
+          "place_vehicles": [ { "vehicle": "ambulance", "chance": 100, "rotation": 270, "x": 9, "y": 16 } ]
         }
       ]
     }

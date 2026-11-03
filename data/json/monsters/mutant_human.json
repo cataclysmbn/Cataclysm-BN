@@ -29,7 +29,7 @@
       "groups": [ [ "subway", 40 ], [ "sewer", 20 ], [ "trash", 5 ], [ "bedroom", 5 ], [ "dresser", 10 ], [ "ammo", 18 ] ]
     },
     "death_function": [ "NORMAL" ],
-    "flags": [ "SEES", "HEARS", "WARM", "BASHES", "GROUP_BASH", "HUMAN" ]
+    "flags": [ "SEES", "HEARS", "WARM", "BASHES", "GROUP_BASH", "HUMAN", "IRRADIATED" ]
   },
   {
     "id": "mon_mutant_experimental",
