@@ -32,7 +32,7 @@ physical book is preserved.
 
 The resulting digital copy retains the original book's type, skills, recipes,
 morale effects, and manual actions. Its instance flags mark it as `DIGITAL`,
-`IRREMOVABLE`, and `NO_DROP`, and its volume is zero. It can be studied, copied,
+`IRREMOVABLE`, and `NO_DROP`, and its volume is 1 ml. It can be studied, copied,
 exported, and deleted like other installed files. Scanning the same title again
 is unnecessary while a copy is installed on the reader.
 
@@ -47,7 +47,7 @@ is unnecessary while a copy is installed on the reader.
 - `DIGITAL_PHOTOS`: the file is a photo album the reader can display.
 
 Derive instructional files from `digital_instruction`, a `BOOK` abstract with
-zero mass and volume and the `DIGITAL`, `IRREMOVABLE`, and `NO_DROP` flags:
+zero mass, a minimum volume of 1 ml, and the `DIGITAL`, `IRREMOVABLE`, and `NO_DROP` flags:
 
 ```json
 {

@@ -297,7 +297,8 @@ TEST_CASE("digital_urbex_maps_preserve_map_behavior_and_location", "[digital_med
     const auto paper = item::spawn("urbexmap");
     REQUIRE(is_digital_file(*map));
     CHECK(map->weight() == 0_gram);
-    CHECK(map->volume() == 0_ml);
+    CHECK(map->volume() == 1_ml);
+    CHECK(map->charges_per_volume(1_ml) == 1);
     const auto* digital_use = map->get_use("reveal_map");
     const auto* paper_use = paper->get_use("reveal_map");
     REQUIRE(digital_use != nullptr);

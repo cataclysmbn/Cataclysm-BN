@@ -9,9 +9,11 @@
 #include "item_contents.h"
 #include "itype.h"
 #include "json.h"
+#include "map_helpers.h"
 #include "player_activity.h"
 #include "player_helpers.h"
 #include "recipe.h"
+#include "recipe_dictionary.h"
 #include "skill.h"
 #include "state_helpers.h"
 
@@ -49,7 +51,10 @@ TEST_CASE(
     CHECK(file.typeId() == book.typeId());
     CHECK(file.type_name() != book.type_name());
     CHECK(file.weight() == 0_gram);
-    CHECK(file.volume() == 0_ml);
+    CHECK(file.volume() == 1_ml);
+    file.set_var("volume", 0);
+    CHECK(file.volume() == 1_ml);
+    CHECK(file.charges_per_volume(1_ml) == 1);
     CHECK(file.type->book->skill == book.type->book->skill);
     CHECK(reader.ammo_remaining() < 10);
     CHECK(who.has_item(book));
@@ -84,7 +89,7 @@ TEST_CASE(
     const auto& imported = other_reader.contents.front();
     CHECK(imported.typeId() == book.typeId());
     CHECK(imported.weight() == 0_gram);
-    CHECK(imported.volume() == 0_ml);
+    CHECK(imported.volume() == 1_ml);
     CHECK(imported.get_var("DIGITAL_FILE_ID") == file.get_var("DIGITAL_FILE_ID"));
     CHECK(digital_reader_for(who, imported));
 }

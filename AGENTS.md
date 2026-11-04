@@ -153,3 +153,4 @@ rg -C2 -i 'speedway' lang/po/ko.po | rg -v '^(#:|--)' | head -n 20
 - UI regression tests must follow the actual refresh path; do not manually prepare layout or paging after an action unless production does so, since that can hide stale display ordering.
 - When reviewing PRs that stop tracking generated or externally pulled files, verify ignore rules by running the generator/pull command or checking `git status --ignored`; do not assume removed tracked files are ignored.
 - When generated or externally pulled files are removed from tracking, verify all CI and release consumers still receive required files or directories.
+- Keep digital files at a minimum of 1 ml; engine volume and capacity calculations reject zero-volume items, including scanned book instances.

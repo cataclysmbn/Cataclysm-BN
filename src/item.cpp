@@ -5864,6 +5864,11 @@ units::volume item::volume( bool integral ) const
         return 0_ml;
     }
 
+    // Scanned books retain their physical type but need a nonzero file volume.
+    if( is_book() && is_digital_file( *this ) ) {
+        return 1_ml;
+    }
+
     if( is_corpse() ) {
         return corpse_volume( corpse );
     }

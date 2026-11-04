@@ -374,7 +374,7 @@
     "color": "light_gray",
     "material": [  ],
     "weight": "0 g",
-    "volume": "0 ml",
+    "volume": "1 ml",
     "container": "null",
     "flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ],
     "use_action": {

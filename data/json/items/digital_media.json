@@ -7,7 +7,7 @@
     "description": "Genetic sample data for a genome workstation.  Additional scans can complete a partial sample, allowing the workstation to produce DNA for cloning.",
     "container": "null",
     "weight": "0 g",
-    "volume": "0 ml",
+    "volume": "1 ml",
     "extend": { "flags": [ "GENOME_DRIVE" ] }
   },
   {
@@ -34,7 +34,7 @@
     "description": "An instructional digital file.",
     "container": "null",
     "weight": "0 g",
-    "volume": "0 ml",
+    "volume": "1 ml",
     "time": "20 m",
     "intelligence": 6
   },
@@ -88,7 +88,7 @@
     "symbol": "#",
     "material": [  ],
     "weight": "0 g",
-    "volume": "0 ml",
+    "volume": "1 ml",
     "container": "null",
     "flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ]
   },
@@ -129,7 +129,7 @@
     "extend": { "flags": [ "CAN_HAVE_CHARGES" ] },
     "container": "null",
     "weight": "0 g",
-    "volume": "0 ml"
+    "volume": "1 ml"
   },
   {
     "id": "digital_hello_world",

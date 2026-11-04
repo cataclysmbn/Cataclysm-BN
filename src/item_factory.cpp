@@ -270,9 +270,9 @@ void Item_factory::finalize_pre( itype &obj )
         }
     }
 
-    // Physical items always should have some volume.
+    // Items always should have some volume.
     // TODO: make items with 0 volume an error during loading?
-    if( obj.volume <= 0_ml && !obj.has_flag( flag_id( "DIGITAL" ) ) ) {
+    if( obj.volume <= 0_ml ) {
         obj.volume = units::from_milliliter( 1 );
     }
 

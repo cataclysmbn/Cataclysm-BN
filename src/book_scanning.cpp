@@ -98,7 +98,6 @@ auto activity_handlers::scan_book_finish( player_activity *act, player *who ) ->
     file->set_flag( flag_id( "DIGITAL" ) );
     file->set_flag( flag_IRREMOVABLE );
     file->set_flag( flag_NO_DROP );
-    file->set_var( "volume", 0 );
     file->set_var( "DIGITAL_FILE_ID", "scanned_book:" + book.typeId().str() );
     reader.put_in( std::move( file ) );
     who->add_msg_if_player( m_good, _( "You save a digital copy of %s on your %s." ),
