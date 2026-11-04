@@ -99,7 +99,7 @@
   {
     "type": "enchantment",
     "id": "AEP_STEALTH",
-    "flags": [ "SILENT" ],
+    "flags": [ "SILENT" ]
   },
   {
     "type": "enchantment",
