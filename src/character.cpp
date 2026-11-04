@@ -10027,10 +10027,10 @@ void Character::on_hit( Creature *source, bodypart_id bp_hit,
     units::energy trigger_cost = bio_shock->power_trigger;
     if( has_active_bionic( bio_shock ) && get_power_level() >= bio_shock->power_trigger ) {
         if( is_player() ) {
-            add_msg( m_good, to_translation( "Your offensive defense system shocks %s in mid-attack!" ),
+            add_msg( m_good, to_translation( "Your electroshock unit shocks %s in mid-attack!" ),
                      source->disp_name() );
         } else if( u_see ) {
-            add_msg( to_translation( "%1$s's offensive defense system shocks %2$s in mid-attack!" ),
+            add_msg( to_translation( "%1$s's electroshock unit shocks %2$s in mid-attack!" ),
                      disp_name(),
                      source->disp_name() );
         }
@@ -10043,10 +10043,10 @@ void Character::on_hit( Creature *source, bodypart_id bp_hit,
     if( has_active_bionic( bio_heat_absorb ) && get_power_level() >= bio_heat_absorb->power_trigger &&
         source->is_warm() ) {
         if( is_player() ) {
-            add_msg( m_good, _( "You drain %s's body heat in mid-attack!" ),
+            add_msg( m_good, to_translation( "You drain %s's body heat in mid-attack!" ),
                      source->disp_name() );
         } else if( u_see ) {
-            add_msg( _( "%1$s's drains %s's body heat in mid-attack!" ),
+            add_msg( to_translation( "%1$s drains %2$s's body heat in mid-attack!" ),
                      disp_name(),
                      source->disp_name() );
         }

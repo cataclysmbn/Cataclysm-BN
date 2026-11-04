@@ -4,6 +4,7 @@
 #include "avatar.h"
 #include "avatar_action.h"
 #include "avatar_functions.h"
+#include "clothing_link.h"
 #include "crafting.h"
 #include "engine_client_component.h"
 #include "engine_client_world.h"

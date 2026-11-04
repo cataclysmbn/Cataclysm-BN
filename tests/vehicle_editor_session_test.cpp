@@ -2604,14 +2604,139 @@ TEST_CASE(
     CHECK(step == tabs.size() + 2);
 }
 
+
+namespace {
+/// Chooses the option labelled `label` of the menu on top, as a player picks it.
+auto answer(const std::string& label) -> input_event {
+    const auto snapshot = game_client::current_interaction({.limit = 200});
+    const auto option =
+        std::ranges::find(snapshot.choices, label, &game_client::interaction_choice::label);
+    REQUIRE(option != snapshot.choices.end());
+    auto input = game_client::input_command{};
+    input.interaction = game_client::interaction_command{
+        .input_id = snapshot.input_id,
+        .operation = game_client::interaction_operation::choose,
+        .target_id = option->id};
+    const auto result =
+        game_client::resolve_input_command(input, game_client::memory::screen_size());
+    REQUIRE(result.has_value());
+    return *result;
+}
+auto form_field(const ec::screen_view& screen, const std::string& form, const std::string& id)
+    -> const ec::form_field& {
+    const auto& fields = body<ec::form_body>(part(screen, form)).fields;
+    const auto found = std::ranges::find(fields, id, &ec::form_field::id);
+    INFO(id);
+    REQUIRE(found != fields.end());
+    return *found;
+}
+auto offers(const ec::form_field& field, const std::string& id) -> bool {
+    return std::ranges::contains(field.options, id, &ec::form_option::id);
+}
+auto picked_tool(const ec::screen_view& screen) -> std::string {
+    const auto& tools = rows(screen, "vehicle:canvas_tools");
+    const auto found = std::ranges::find(tools, true, &ec::row::selected);
+    REQUIRE(found != tools.end());
+    return found->id;
+}
+/// A key press, as the game's own prompts read it.
+auto key(const int ch) -> input_event { return input_event(ch, input_event_t::keyboard); }
+} // namespace
+
 TEST_CASE(
-    "the vehicle editor explains its world actions and says what its empty lists mean",
+    "the vehicle editor offers a tank's fuel as choices and says inline why it turns one away",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    const auto tank = [](const ec::screen_view& screen) {
+        const auto& stack = rows(screen, "vehicle:stack");
+        const auto found = std::ranges::find(stack, vpart_id("tank")->name(), &ec::row::label);
+        REQUIRE(found != stack.end());
+        return found->id;
+    };
+    // A prompt over the editor, as a raw debug message raises, is a refusal shown out of line.
+    auto prompts = 0;
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        if (screen.kind == "uilist") { return answer("Leave without saving"); }
+        if (screen.kind != "vehicle_editor") {
+            REQUIRE(++prompts < 5);
+            return key(' ');
+        }
+        switch (step++) {
+            case 0:
+                return invoke("vehicle:open", {.row = "prototype:car"});
+            case 1:
+                return invoke("vehicle:mount", {.row = "mount:-2,-1"});
+            case 2:
+                return invoke("vehicle:pick", {.row = tank(screen)});
+            case 3:
+                return invoke("vehicle:tool", {.row = "tool:part"});
+            case 4: {
+                const auto& fuel = form_field(screen, "vehicle:part_form", "fuel");
+                CHECK(fuel.type == "select");
+                CHECK(fuel.value == "gasoline");
+                CHECK(offers(fuel, "gasoline"));
+                CHECK(offers(fuel, "diesel"));
+                CHECK(offers(fuel, "water_clean"));
+                // Empty leaves the tank to the fuel its part takes by default.
+                CHECK(offers(fuel, ""));
+                CHECK_FALSE(offers(fuel, "unobtainium"));
+                // Rocks are no liquid a tank holds.
+                CHECK_FALSE(offers(fuel, "rock"));
+                CHECK(refused(state, "vehicle:part_set", {.row = "fuel", .text = "unobtainium"}));
+                // A client that sends it anyway is told so inline.
+                return invoke("vehicle:part_set", {.row = "fuel", .text = "unobtainium"});
+            }
+            case 5:
+                CHECK(notice_of(screen).contains("unobtainium"));
+                CHECK(stat(screen, "saved").value == "Yes");
+                return invoke("vehicle:part_set", {.row = "fuel", .text = "rock"});
+            case 6:
+                CHECK(notice_of(screen).contains("rock"));
+                CHECK(stat(screen, "saved").value == "Yes");
+                return invoke("vehicle:show:json");
+            case 7:
+                return invoke("vehicle:field_set", {.row = "pointer", .text = "/parts/-"});
+            case 8:
+                return invoke(
+                    "vehicle:field_set",
+                    {.row = "value",
+                     .text = R"({"x":9,"y":9,"parts":["frame_vertical",)"
+                             R"({"part":"tank","fuel":"unobtainium"}]})"});
+            case 9:
+                return invoke("vehicle:field_apply");
+            case 10:
+                // What the game says of the raw JSON is listed, not raised over the editor.
+                CHECK_FALSE(messages(screen).empty());
+                return invoke("vehicle:undo");
+            case 11:
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 12);
+    CHECK(prompts == 0);
+}
+
+TEST_CASE(
+    "the vehicle editor offers the fuel a world tank holds and the rounds a world turret fires as "
+    "choices",
     "[editor_vehicle][engine_client_component]") {
     const auto guard = screen_guard{};
     clear_map();
     const auto cleanup_vehicles = on_out_of_scope([] { clear_vehicles(); });
-    const auto top = [](const ec::boundary_state& state) {
-        return nlohmann::json::parse(ec::serialize_interaction_boundary(state))["stack"].back();
+    REQUIRE(editor::spawn_design(
+        vproto_id("armored_car"), get_avatar().bub_pos() + tripoint_rel_ms(10, 0, 0), {}));
+    const auto named = [](const ec::screen_view& screen, const std::string& label) {
+        const auto& stack = rows(screen, "vehicle:stack");
+        const auto found = std::ranges::find(stack, label, &ec::row::label);
+        REQUIRE(found != stack.end());
+        return found->id;
     };
     auto step = 0;
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
@@ -3043,6 +3168,85 @@ TEST_CASE(
     });
     editor::run_vehicle_editor();
     CHECK(step == 2);
+}
+
+TEST_CASE(
+    "the vehicle editor explains its world actions and says what its empty lists mean",
+    "[editor_vehicle][engine_client_component]") {
+    const auto guard = screen_guard{};
+    clear_map();
+    const auto cleanup_vehicles = on_out_of_scope([] { clear_vehicles(); });
+    const auto top = [](const ec::boundary_state& state) {
+        return nlohmann::json::parse(ec::serialize_interaction_boundary(state))["stack"].back();
+    };
+    const auto description = [&](const ec::boundary_state& state, const std::string& id) {
+        const auto listed = top(state)["affordances"];
+        const auto found = std::ranges::find_if(listed, [&](const nlohmann::json& entry) {
+            return entry.value("id", "") == id;
+        });
+        INFO(id);
+        REQUIRE(found != listed.end());
+        return found->value("description", "");
+    };
+    /// What the list `id` says while it is empty, as the wire has it.
+    const auto empty_text = [&](const ec::boundary_state& state, const std::string& id) {
+        const auto find = [&](this const auto& self, const nlohmann::json& value) -> std::string {
+            if (value.is_object() && value.value("id", "") == id && value.contains("kind")) {
+                return value.value("empty", "");
+            }
+            if (!value.is_structured()) { return ""; }
+            for (const auto& child : value) {
+                if (auto said = self(child); !said.empty()) { return said; }
+            }
+            return "";
+        };
+        return find(top(state)["root"]);
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto state = captured();
+        const auto screen = ec::top_screen(state);
+        switch (step++) {
+            case 0:
+                CHECK_FALSE(description(state, "vehicle:paste").empty());
+                return invoke("vehicle:filter", {.text = "zzqx_no_such_id"});
+            case 1:
+                CHECK(rows(screen, "vehicle:prototypes").empty());
+                CHECK(empty_text(state, "vehicle:prototypes").find("zzqx_no_such_id")
+                      != std::string::npos);
+                return invoke("vehicle:source", {.row = "source:world"});
+            case 2:
+                CHECK(rows(screen, "vehicle:world").empty());
+                CHECK(empty_text(state, "vehicle:world") == "No vehicle is near you.");
+                for (const auto* const id : {"vehicle:export", "vehicle:copy", "vehicle:edit"}) {
+                    INFO(id);
+                    CHECK_FALSE(description(state, id).empty());
+                }
+                REQUIRE(editor::spawn_design(
+                    vproto_id("bicycle"), get_avatar().bub_pos() + tripoint_rel_ms(8, 0, 0), {}));
+                return invoke("vehicle:edit", {.row = "world:0"});
+            case 3:
+                CHECK_FALSE(description(state, "vehicle:done").empty());
+                return invoke("vehicle:done");
+            case 4:
+                return invoke("vehicle:open", {.row = "prototype:bicycle"});
+            case 5:
+                CHECK_FALSE(description(state, "vehicle:spawn").empty());
+                // A label that says it all needs no more.
+                CHECK(description(state, "vehicle:undo").empty());
+                return invoke("vehicle:part_filter", {.text = "zzqx_no_such_id"});
+            case 6:
+                CHECK(rows(screen, "vehicle:parts").empty());
+                CHECK(empty_text(state, "vehicle:parts").find("zzqx_no_such_id")
+                      != std::string::npos);
+                return act("QUIT");
+            default:
+                FAIL("the vehicle editor outlived its exit");
+                return act("QUIT");
+        }
+    });
+    editor::run_vehicle_editor();
+    CHECK(step == 7);
 }
 
 TEST_CASE(

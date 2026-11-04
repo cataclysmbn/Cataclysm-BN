@@ -694,6 +694,7 @@ void DynamicDataLoader::unload_data()
     zone_type::reset_zones();
     l10n_data::unload_mod_catalogues();
     RGBColor::unload_names();
+    perk::reset();
     game_client::reset_mod_tileset();
 
     // Has to be cleaned last in case one of the above data collections
@@ -776,6 +777,7 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
             { _( "Achievements" ), &achievement::finalize },
             { _( "Localization" ), &l10n_data::load_mod_catalogues },
             { _( "Enchantments" ), &enchantment::finalize_all },
+            { _( "Perks" ), &perk::finalize_all },
         }
     };
     if( game_client::has_tiles() ) {

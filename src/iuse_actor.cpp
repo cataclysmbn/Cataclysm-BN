@@ -329,10 +329,10 @@ int iuse_transform::use( player &p, item &it, bool t, const tripoint_bub_ms &pos
     if( set_timer && !p.is_npc() ) {
         bool got_value = query_int( time, _( "Set the timer to (0 to cancel)?" ) );
         if( !got_value || time <= 0 ) {
-            p.add_msg_if_player( _( "Never mind." ) );
+            p.add_msg_if_player( to_translation( "Never mind." ) );
             return 0;
         }
-        p.add_msg_if_player( _( "You set the timer on the %s's to %d." ), it.tname(), time );
+        p.add_msg_if_player( to_translation( "You set the timer on the %s's to %d." ), it.tname(), time );
         // Default value in case an NPC uses one.
     } else {
         const itype_id act_bomb_type = target;

@@ -14,6 +14,8 @@
 #include "input.h"
 #include "line.h"
 #include "map/map.h"
+#include "map/mapdata.h"
+#include "map_memory.h"
 #include "map_perception.h"
 #include "monster.h"
 #include "mtype.h"

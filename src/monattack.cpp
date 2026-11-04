@@ -2996,28 +2996,32 @@ bool mattack::grab( monster *z )
         return true;
     }
 
-    item &cur_weapon = pl->primary_weapon();
-    ///\EFFECT_DEX increases chance to avoid being grabbed
-    if( pl->can_use_grab_break_tec( cur_weapon ) &&
-        rng( 0, pl->get_dex() ) > rng( 0, z->type->melee_sides + z->type->melee_dice ) ) {
-        if( target->has_effect( effect_grabbed ) ) {
-            target->add_msg_if_player( m_info,
-                                       to_translation( "The %s tries to grab you as well, but you bat it away!" ),
-                                       localised::name_of( *z ) );
-        } else if( pl->is_throw_immune() && ( !pl->is_armed() ||
-                                              pl->martial_arts_data->selected_has_weapon( pl->primary_weapon().typeId() ) ) ) {
-            target->add_msg_if_player( m_info, to_translation( "The %s tries to grab you…" ),
-                                       localised::name_of( *z ) );
-            thrown_by_judo( z );
-        } else if( pl->has_grab_break_tec() ) {
-            ma_technique tech = pl->martial_arts_data->get_grab_break_tec( cur_weapon );
-            target->add_msg_player_or_npc( m_info, to_translation( tech.avatar_message ),
-                                           to_translation( tech.npc_message ), z->name() );
-        } else {
-            target->add_msg_player_or_npc( m_info,
-                                           to_translation( "The %s tries to grab you, but you break its grab!" ),
-                                           to_translation( "The %s tries to grab <npcname>, but they break its grab!" ),
+    player *pl = dynamic_cast<player *>( target );
+    if( pl != nullptr ) {
+        item &cur_weapon = pl->primary_weapon();
+        ///\EFFECT_DEX increases chance to avoid being grabbed
+        if( pl->can_use_grab_break_tec( cur_weapon ) &&
+            rng( 0, pl->get_dex() ) > rng( 0, z->type->melee_sides + z->type->melee_dice ) ) {
+            if( target->has_effect( effect_grabbed ) ) {
+                target->add_msg_if_player( m_info,
+                                           to_translation( "The %s tries to grab you as well, but you bat it away!" ),
                                            localised::name_of( *z ) );
+            } else if( pl->is_throw_immune() && ( !pl->is_armed() ||
+                                                  pl->martial_arts_data->selected_has_weapon( pl->primary_weapon().typeId() ) ) ) {
+                target->add_msg_if_player( m_info, to_translation( "The %s tries to grab you…" ),
+                                           localised::name_of( *z ) );
+                thrown_by_judo( z );
+            } else if( pl->has_grab_break_tec() ) {
+                ma_technique tech = pl->martial_arts_data->get_grab_break_tec( cur_weapon );
+                target->add_msg_player_or_npc( m_info, to_translation( tech.avatar_message ),
+                                               to_translation( tech.npc_message ), z->name() );
+            } else {
+                target->add_msg_player_or_npc( m_info,
+                                               to_translation( "The %s tries to grab you, but you break its grab!" ),
+                                               to_translation( "The %s tries to grab <npcname>, but they break its grab!" ),
+                                               localised::name_of( *z ) );
+            }
+            return true;
         }
     }
 

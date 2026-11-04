@@ -162,8 +162,8 @@ auto tint_generation() -> std::size_t & // *NOPAD*
     return generation;
 }
 
-auto flag_text( const std::string &flag ) -> const std::string& { return flag; }
-auto flag_text( const flag_id &flag ) -> const std::string& { return flag.str(); }
+auto flag_text( const std::string &flag ) -> const std::string & { return flag; } // *NOPAD*
+auto flag_text( const flag_id &flag ) -> const std::string & { return flag.str(); } // *NOPAD*
 
 /// What a tileset's tints are tried by for a thing, in the native order, kept to those the client has:
 /// its flags, then its id.

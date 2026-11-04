@@ -5,6 +5,7 @@
 
 #include "character.h"
 #include "cursesdef.h"
+#include "engine_client_component.h"
 #include "flag.h"
 #include "game.h"
 #include "game_inventory.h"
@@ -181,9 +182,59 @@ void draw_perk_menu( Character &player )
     ctxt.register_action( "NEXT_TAB" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
 
+    namespace ec = engine_client;
+    const auto perk_row_id = []( const perk_id & perk ) { return "perk:" + perk.str(); };
+    const auto screen = ec::screen_scope( ctxt, "perks", { .role = "screen", .view = [&]( const ec::boundary_state & )
+    {
+        const auto &cat_perks = perks_by_category[all_categories[current_category]];
+        const auto tab_of = [&]( const std::string & category ) { return ec::tab_entry{ .id = category, .label = category, .selected = category == all_categories[current_category] }; };
+        const auto row_of = [&]( const perk_id & perk ) { return ec::row{ .id = perk_row_id( perk ), .label = perk->get_name() }; };
+        return ec::screen_view{
+            .title = _( "Perks" ),
+            .root = ec::tabs( {
+                .id = "perks:tabs",
+                .tabs = all_categories | std::views::transform( tab_of ) | std::ranges::to<std::vector>(),
+                .select = "perks:tab",
+                .child = ec::split( {
+                    .id = "perks",
+                    .relation = "detail",
+                    .active = "perks:list",
+                    .children = ec::children_of(
+                    ec::list( { .id = "perks:list", .rows = cat_perks | std::views::transform( row_of ) | std::ranges::to<std::vector>(), .selection = "single", .activate = "perks:pick" } ),
+                    ec::panel( { .id = "perks:info", .child = ec::component{ .id = "perks:details", .body = ec::text_body{ .markup = cat_perks[list_position]->get_description() } } } ) ),
+                } ),
+            } ),
+            .affordances = {
+                ec::invoke_affordance( { .id = "perks:tab", .label = _( "Category" ), .args = { .row = ec::row_shape{ .component_id = "perks:tabs" } }, .role = "select" } ),
+                ec::invoke_affordance( { .id = "perks:pick", .label = _( "Select" ), .args = { .row = ec::row_shape{ .component_id = "perks:list" } }, .role = "select" } ),
+            },
+            .focus_component = "perks:list",
+            .focus_row = perk_row_id( cat_perks[list_position] ),
+        };
+    }
+                                                         } );
+
     while( true ) {
         ui_manager::redraw();
         const std::string action = ctxt.handle_input();
+        if( const auto call = ec::invoked( ctxt.get_raw_input() ); call && call->args.row ) {
+            if( call->affordance_id == "perks:tab" ) {
+                const auto found = std::ranges::find( all_categories, *call->args.row );
+                if( found != all_categories.end() ) {
+                    current_category = static_cast<int>( found - all_categories.begin() );
+                    list_position = 0;
+                    info_position = 0;
+                }
+            } else {
+                const auto &cat_perks = perks_by_category[all_categories[current_category]];
+                const auto found = std::ranges::find( cat_perks, *call->args.row, perk_row_id );
+                if( found != cat_perks.end() ) {
+                    list_position = static_cast<int>( found - cat_perks.begin() );
+                    info_position = 0;
+                }
+            }
+            continue;
+        }
         if( action == "PAGE_UP" ) {
             info_position -= 1;
             if( info_position < 0 ) { info_position = info_lines - 1; }
@@ -207,7 +258,7 @@ void draw_perk_menu( Character &player )
             info_position = 0;
             list_position = 0;
             current_category -= 1;
-            if( current_category < 0 ) { current_category = num_categories; }
+            if( current_category < 0 ) { current_category = num_categories - 1; }
         } else if( action == "QUIT" ) {
             return;
         }

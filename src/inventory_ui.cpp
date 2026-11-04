@@ -7,6 +7,7 @@
 #include "client_interaction.h"
 #include "debug.h"
 #include "detached_ptr.h"
+#include "drop_preview.h"
 #include "engine_client_component.h"
 #include "engine_client_world.h"
 #include "flag.h"
@@ -2050,6 +2051,7 @@ std::optional<game_client::interaction_totals>
 /// The mark the native column prints before a row of a multi-select list: none, some or all of it chosen.
 static auto selection_mark( const inventory_entry &entry ) -> game_client::interaction_mark
 {
+    if( entry.automatic_drop_count > 0 ) { return { .glyph = "\\", .color = "c_light_gray" }; }
     if( entry.chosen_count == 0 ) { return { .glyph = "-", .color = "c_dark_gray" }; }
     return { .glyph = entry.chosen_count >= entry.get_available_count() ? "+" : "#", .color = "c_light_green" };
 }
@@ -2889,8 +2891,11 @@ auto inventory_drop_selector::update_drop_preview() -> void
         return;
     }
     auto selected = drop_locations{};
+    // Dropping order and linked items only exist for what the character carries.
     for( const auto &[target, count] : dropping ) {
-        selected.emplace_back( *target, count );
+        if( u.has_item( *target ) ) {
+            selected.emplace_back( *target, count );
+        }
     }
     auto preview = make_drop_preview( u, selected );
     predicted_drops = std::move( preview.items );

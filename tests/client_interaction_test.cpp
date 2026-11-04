@@ -450,7 +450,8 @@ struct pickup_fixture_guard {
     ~pickup_fixture_guard() { clear_pickup_fixture_state(); }
 };
 
-auto add_ground_item(const itype_id& id, const int charges = -1) -> item& { // *NOPAD*
+auto add_ground_item(const itype_id& id, const int charges = -1) -> item& // *NOPAD*
+{
     auto added = item::spawn(id, calendar::turn, charges);
     auto& result = *added;
     get_map().add_item(pickup_test_pos, std::move(added));

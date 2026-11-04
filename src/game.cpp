@@ -113,6 +113,7 @@
 #include "map/utils/map_functions.h"
 #include "map_item_stack.h"
 #include "map_iterator.h"
+#include "map_memory.h"
 #include "map_perception.h"
 #include "mapsharing.h"
 #include "memorial_logger.h"
@@ -7540,7 +7541,7 @@ auto game::control_vehicle( const std::optional<tripoint_bub_ms> &where ) -> voi
                           veh->has_engine_type( fuel_type_animal, false ) && veh->has_harnessed_animal() ) ) &&
                u.in_vehicle ) {
         if( u.has_trait( trait_WAYFARER_SELF ) && veh->type != vproto_id( "none" ) ) {
-            add_msg( m_info, _( "You refuse to take control of this vehicle." ) );
+            add_msg( m_info, to_translation( "You refuse to take control of this vehicle." ) );
             return;
         }
         if( u.has_trait( trait_WAYFARER ) ) {
@@ -13299,7 +13300,8 @@ auto game::place_player( const tripoint_bub_ms &dest_loc ) -> point_rel_sm
     if( ( vp1.part_with_feature( "CONTROL_ANIMAL", true ) ||
           vp1.part_with_feature( "CONTROLS", true ) ) && u.in_vehicle && !u.is_mounted() ) {
         add_msg( to_translation( "There are vehicle controls here." ) );
-        if( !u.has_trait( trait_id( "WAYFARER" ) ) ) {
+        if( !u.has_trait( trait_WAYFARER ) &&
+            ( !u.has_trait( trait_WAYFARER_SELF ) || vp1->vehicle().type == vproto_id( "none" ) ) ) {
             add_msg( m_info, to_translation( "%s to drive." ), press_x( ACTION_CONTROL_VEHICLE ) );
         }
     } else if( vp1.part_with_feature( "CONTROLS", true ) && u.in_vehicle &&
@@ -14230,10 +14232,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
         // Climbing
         if( m.has_floor_or_support( stairs ) ) {
             add_msg( m_info, to_translation( "You can't climb here - there's a ceiling above your head." ) );
-            // Don't prompt the player if they're already standing on stairs, they might've just hit the wrong key
-            if( !m.has_flag( "GOES_DOWN", u.bub_pos() ) ) {
-                suggest_auto_walk_to_stairs( u, m, "up" );
-            }
+            suggest_auto_walk_to_stairs( u, m, "up" );
             return;
         }
 
@@ -14270,9 +14269,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
             } else {
                 add_msg( m_info,
                          to_translation( "You can't climb here - you need walls and/or furniture to brace against." ) );
-                if( !m.has_flag( "GOES_DOWN", u.bub_pos() ) ) {
-                    suggest_auto_walk_to_stairs( u, m, "up" );
-                }
+                suggest_auto_walk_to_stairs( u, m, "up" );
             }
             return;
 
@@ -14281,9 +14278,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
         if( pts.empty() ) {
             add_msg( m_info,
                      to_translation( "You can't climb here - there is no terrain above you that would support your weight." ) );
-            if( !m.has_flag( "GOES_DOWN", u.bub_pos() ) ) {
-                suggest_auto_walk_to_stairs( u, m, "up" );
-            }
+            suggest_auto_walk_to_stairs( u, m, "up" );
             return;
         } else {
             // TODO: Make it an extended action
@@ -14308,6 +14303,9 @@ void game::vertical_move( int movez, bool force, bool peeking )
         const auto &mutations = get_avatar().get_mutations();
 
         if( !can_fly ) {
+            if( suggest_auto_walk_to_stairs( u, m, "up" ) ) {
+                return;
+            }
             add_msg( m_info, to_translation( "You can't go up here!" ) );
             return;
         }
@@ -14356,21 +14354,19 @@ void game::vertical_move( int movez, bool force, bool peeking )
         const bool standing_on_air = here_terrain == t_open_air;
 
         if( !can_fly ) {
-            add_msg( m_info, to_translation( "You can't go down here!" ) );
-            if( !m.has_flag( "GOES_UP", u.bub_pos() ) ) {
-                suggest_auto_walk_to_stairs( u, m, "down" );
+            if( suggest_auto_walk_to_stairs( u, m, "down" ) ) {
+                return;
             }
-            add_msg( m_info, _( "You can't go down here!" ) );
+            add_msg( m_info, to_translation( "You can't go down here!" ) );
             return;
         }
 
         if( m.impassable( dest ) || !standing_on_air ) {
             if( !can_noclip ) {
-                add_msg( m_info, to_translation( "You can't go down here!" ) );
-                if( !m.has_flag( "GOES_UP", u.bub_pos() ) ) {
-                    suggest_auto_walk_to_stairs( u, m, "down" );
+                if( suggest_auto_walk_to_stairs( u, m, "down" ) ) {
+                    return;
                 }
-                add_msg( m_info, _( "You can't go down here!" ) );
+                add_msg( m_info, to_translation( "You can't go down here!" ) );
                 return;
             } else {
                 if( dest.z() < -OVERMAP_DEPTH ) {

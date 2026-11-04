@@ -463,7 +463,9 @@ static void draw_description( const catacurses::window &win, const bionic &bio,
         int count = who.count_bionic_of_type( bio.id );
         if( count != 1 ) {
             fold_and_print( win, point( 0, ypos ), width, c_magenta,
-                            _( "You have %s instances of this bionic installed." ), count );
+                            vgettext( "You have %d instance of this bionic installed.",
+                                      "You have %d instances of this bionic installed.", count ),
+                            count );
         }
     }
     // TODO: Unhide when enforcing limits
@@ -684,7 +686,8 @@ auto bionic_description( const bionic &bio, const Character &who ) -> std::strin
     text += "\n\n" + colorize( bio.id->description.translated(), c_light_blue );
     if( bio.info().has_flag( flag_MULTIINSTALL ) ) {
         if( const auto count = who.count_bionic_of_type( bio.id ); count != 1 ) {
-            text += "\n" + colorize( string_format( _( "You have %s instances of this bionic installed." ),
+            text += "\n" + colorize( string_format( vgettext( "You have %d instance of this bionic installed.",
+                                                    "You have %d instances of this bionic installed.", count ),
                                                     count ),
                                      c_magenta );
         }

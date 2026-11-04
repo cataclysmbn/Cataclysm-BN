@@ -123,17 +123,16 @@ TEST_CASE("sounds_keep_absolute_positions_when_reality_bubble_resizes", "[sound]
     // Cleanup resizes to the option value, so pin it to the bubble this test started with.
     const auto original_bubble =
         override_option("REALITY_BUBBLE_SIZE", std::to_string(g_reality_bubble_size));
+    const auto original_map_origin = here.get_abs_sub();
     const auto cleanup = on_out_of_scope([&]() {
         sounds::reset_sounds();
         sounds::clear_floodfill_que(true);
+        // Re-applying a bubble size re-centers the map on the player, so restore
+        // the player position first, then restore the initial map window so tests
+        // sharing this process see the same map origin and scale as at process start.
+        you.setpos(original_position);
         g->on_options_changed();
         here.resize(original_map_size);
-        you.setpos(original_position);
-        {
-            const auto initial_bubble = override_option("REALITY_BUBBLE_SIZE", "4");
-            g->on_options_changed();
-        }
-        here.resize(MAPSIZE);
         here.load(original_map_origin, false);
         clear_all_state();
     });

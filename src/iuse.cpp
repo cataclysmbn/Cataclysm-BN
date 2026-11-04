@@ -8265,6 +8265,9 @@ int iuse::remoteveh( player *p, item *it, bool t, const tripoint_bub_ms &pos )
         if( g->u.has_trait( trait_WAYFARER ) ) {
             add_msg( m_info,
                      to_translation( "Despite using a controller, you still refuse to take control of this vehicle." ) );
+        } else if( g->u.has_trait( trait_WAYFARER_SELF ) && veh->type != vproto_id( "none" ) ) {
+            add_msg( m_info,
+                     to_translation( "Despite using a controller, you still refuse to take control of this vehicle." ) );
         } else {
             it->activate();
             g->setremoteveh( veh );

@@ -242,9 +242,6 @@ public:
 
     auto draw_line(const line_animation_options& options) -> bool override {
         if (!use_tiles || !tilecontext || options.points == nullptr) { return false; }
-        if (!options.no_reveal && !avatar_knows_travel_destination(g->u, options.position)) {
-            return true;
-        }
         tilecontext->init_draw_line(options.position, *options.points, "line_target", true);
         return true;
     }

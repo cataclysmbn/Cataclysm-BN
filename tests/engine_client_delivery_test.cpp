@@ -209,6 +209,7 @@ auto wait_for(
     result.milliseconds =
         std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - began).count();
     result.frames = count_of(output.str(), R"("method":"bn.events")");
+    result.oracle_mismatches = authority_session.oracle_mismatches().size();
     result.watcher_frames = count_of(watcher_output.str(), R"("method":"bn.events")");
     result.rng = rng_get_engine();
     result.state = authority();

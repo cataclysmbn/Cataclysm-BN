@@ -2920,13 +2920,20 @@ auto profession_details( const avatar &u, const profession &prof ) -> std::strin
     if( prof.vehicle() ) {
         buffer += colorize( _( "Vehicle:" ), c_light_blue ) + "\n";
         vproto_id veh_id = prof.vehicle();
-        buffer += veh_id->name + "\n";
+        buffer += _( veh_id->name ) + "\n";
     }
     // Profession spells
     if( !prof.spells().empty() ) {
         buffer += colorize( _( "Spells:" ), c_light_blue ) + "\n";
         for( const std::pair<spell_id, int> spell_pair : prof.spells() ) {
             buffer += string_format( _( "%s level %d" ), spell_pair.first->name, spell_pair.second ) + "\n";
+        }
+    }
+
+    if( !prof.get_perks().empty() ) {
+        buffer += colorize( _( "Perks:" ), c_light_blue ) + "\n";
+        for( const perk_id &perk : prof.get_perks() ) {
+            buffer += string_format( _( "%s" ), perk->get_name() ) + "\n";
         }
     }
 
@@ -4877,6 +4884,11 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
         std::ranges::transform( current_bionics,
         std::back_inserter( bionic_lines ), []( const bionic_id & id ) { return id->name.translated(); } );
 
+        auto perk_lines = std::vector<std::string> {};
+        const auto perk_name = []( const perk_id & perk ) { return perk->get_name(); };
+        std::ranges::transform( you.prof->get_perks(), std::back_inserter( perk_lines ), perk_name );
+        std::ranges::transform( g->scen->get_perks(), std::back_inserter( perk_lines ), perk_name );
+
         auto spell_lines = std::vector<std::string> {};
         for( const auto &[id, level] : you.prof->spells() ) {
             spell_lines.push_back( string_format( _( "%s level %d" ), id->name, level ) );
@@ -4942,7 +4954,7 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
 
         auto facts = std::move( stats );
         for( auto &entry : std::vector<ec::panel_stat> {
-        section( "traits", _( "Traits: " ), trait_lines ), section( "bionics", _( "Bionics: " ), bionic_lines ),
+        section( "traits", _( "Traits: " ), trait_lines ), section( "perks", _( "Perks: " ), perk_lines ), section( "bionics", _( "Bionics: " ), bionic_lines ),
             section( "spells", _( "Spells: " ), spell_lines ), section( "skills", _( "Skills:" ), skill_lines ),
             section( "vehicle", _( "Vehicle: " ), vehicle_lines ), section( "companions", _( "Companions: " ), companion_lines ),
             fact( { .key = "cash", .label = _( "Cash: " ), .value = cash } ), section( "pets", _( "Pets: " ), pet_lines ),
