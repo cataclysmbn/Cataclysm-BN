@@ -9,9 +9,6 @@
 #include "color.h"
 #include "debug.h"
 #include "distraction_manager.h"
-#include "editor/editor_session.h"
-#include "editor/recent_documents.h"
-#include "editor/session_file.h"
 #include "engine_client_component.h"
 #include "enums.h"
 #include "filesystem.h"
@@ -19,7 +16,6 @@
 #include "game.h"
 #include "game_info.h"
 #include "gamemode.h"
-#include "gamemode_editor.h"
 #include "get_version.h"
 #include "help.h"
 #include "loading_ui.h"
@@ -66,18 +62,17 @@ enum class main_menu_opts : int {
     NEWCHAR = 1,
     LOADCHAR = 2,
     WORLD = 3,
-    EDITOR = 4,
-    SETTINGS = 5,
-    HELP = 6,
-    CREDITS = 7,
-    QUIT = 8
+    SETTINGS = 4,
+    HELP = 5,
+    CREDITS = 6,
+    QUIT = 7
 };
-static constexpr int max_menu_opts = 8;
+static constexpr int max_menu_opts = 7;
 
 namespace
 {
 /// Protocol ids of the top-level tabs, in `main_menu_opts` order.
-constexpr auto menu_tab_ids = std::array<std::string_view, 9> { "motd", "new_game", "load", "world", "editor", "settings", "help", "credits", "quit" };
+constexpr auto menu_tab_ids = std::array<std::string_view, 8> { "motd", "new_game", "load", "world", "settings", "help", "credits", "quit" };
 constexpr auto settings_ids = std::array<std::string_view, 6> { "options", "keybindings", "autopickup", "safemode", "distractions", "colors" };
 
 struct submenu_entry {
@@ -237,18 +232,15 @@ void main_menu::display_sub_menu( int sel, const point &bottom_left, int sel_lin
             }
             break;
         case main_menu_opts::NEWCHAR:
-        case main_menu_opts::EDITOR: {
-            const auto &items = sel_o == main_menu_opts::NEWCHAR ? vNewGameSubItems : vEditorSubItems;
-            for( int i = 0; static_cast<size_t>( i ) < items.size(); i++ ) {
+            for( int i = 0; static_cast<size_t>( i ) < vNewGameSubItems.size(); i++ ) {
                 nc_color clr = i == sel2 ? hilite( c_yellow ) : c_yellow;
-                sub_opts.push_back( shortcut_text( clr, items[i] ) );
-                int len = utf8_width( shortcut_text( clr, items[i] ), true );
+                sub_opts.push_back( shortcut_text( clr, vNewGameSubItems[i] ) );
+                int len = utf8_width( shortcut_text( clr, vNewGameSubItems[i] ), true );
                 if( len > xlen ) {
                     xlen = len;
                 }
             }
-        }
-        break;
+            break;
         case main_menu_opts::LOADCHAR:
         case main_menu_opts::WORLD: {
             const bool extra_opt = sel == getopt( main_menu_opts::WORLD );
@@ -262,8 +254,7 @@ void main_menu::display_sub_menu( int sel, const point &bottom_left, int sel_lin
                 int savegames_count = world->world_saves.size();
                 nc_color clr = c_white;
                 std::string txt = all_worldnames[i];
-                if( all_worldnames[i] == "TUTORIAL" || all_worldnames[i] == "DEFENSE" ||
-                    all_worldnames[i] == "EDITOR" ) {
+                if( all_worldnames[i] == "TUTORIAL" || all_worldnames[i] == "DEFENSE" ) {
                     clr = c_light_cyan;
                 }
                 sub_opts.push_back( colorize( string_format( "%s (%d)", txt, savegames_count ),
@@ -360,10 +351,8 @@ void main_menu::print_menu( const catacurses::window &w_open, int iSel, const po
         mvwputch( w_open, point( i, window_height - 5 ), c_white, LINE_OXOX );
     }
 
-    if( iSel == getopt( main_menu_opts::NEWCHAR ) ||
-        ( iSel == getopt( main_menu_opts::EDITOR ) && !vEditorHints.empty() ) ) {
-        const auto &hints = iSel == getopt( main_menu_opts::NEWCHAR ) ? vNewGameHints : vEditorHints;
-        std::vector<std::string> lines = foldstring( hints[sel2], window_width - 2 );
+    if( iSel == getopt( main_menu_opts::NEWCHAR ) ) {
+        std::vector<std::string> lines = foldstring( vNewGameHints[sel2], window_width - 2 );
         center_print( w_open, window_height - 3, c_yellow, lines[0] );
         if( lines.size() > 1 ) {
             center_print( w_open, window_height - 2, c_yellow, lines[1] );
@@ -549,7 +538,6 @@ void main_menu::init_strings()
     vMenuItems.emplace_back( pgettext( "Main Menu", "<N|n>ew Game" ) );
     vMenuItems.emplace_back( pgettext( "Main Menu", "Lo<a|A>d" ) );
     vMenuItems.emplace_back( pgettext( "Main Menu", "<W|w>orld" ) );
-    vMenuItems.emplace_back( pgettext( "Main Menu", "Ed<i|I>tor" ) );
     vMenuItems.emplace_back( pgettext( "Main Menu", "Se<t|T>tings" ) );
     vMenuItems.emplace_back( pgettext( "Main Menu", "H<e|E|?>lp" ) );
     vMenuItems.emplace_back( pgettext( "Main Menu", "<C|c>redits" ) );
@@ -586,41 +574,6 @@ void main_menu::init_strings()
         _( "Learn controls and basic game mechanics while exploring a small underground complex." ) );
     vNewGameHints.emplace_back(
         _( "Defend against waves of incoming enemies.  This game mode hasn't been updated in a while and may contain bugs." ) );
-    vEditorSubItems.clear();
-    vEditorIds.clear();
-    vEditorHints.clear();
-    // Special games don't play well together with shared maps
-    if( !MAP_SHARING::isSharing() ) {
-        vEditorSubItems.emplace_back( pgettext( "Main Menu|Editor", "Map editor" ) );
-        vEditorIds.emplace_back( "map" );
-        vEditorHints.emplace_back(
-            _( "Edit maps in a new world of open field, without making a character." ) );
-        vEditorSubItems.emplace_back( pgettext( "Main Menu|Editor", "Vehicle editor" ) );
-        vEditorIds.emplace_back( "vehicle" );
-        vEditorHints.emplace_back(
-            _( "Edit vehicle prototypes in a new world of open field, without making a character." ) );
-        vEditorSubItems.emplace_back( pgettext( "Main Menu|Editor", "Load save" ) );
-        vEditorIds.emplace_back( "save" );
-        vEditorHints.emplace_back(
-            _( "Open a saved game in the editor, with the character where the save left it." ) );
-        vEditorSubItems.emplace_back( pgettext( "Main Menu|Editor", "Choose mods" ) );
-        vEditorIds.emplace_back( "mods" );
-        vEditorHints.emplace_back(
-            _( "Choose the mods of the editor world, then open the map editor in it." ) );
-        // The documents the editors opened, newest first, with the mods they were opened with.
-        for( const auto &[index, recent] : editor::recent_documents() | std::views::enumerate ) {
-            const auto mods = recent.mods | std::views::transform( []( const mod_id & mod ) {
-                return mod.is_valid() ? mod->name() : mod.str();
-            } ) | std::ranges::to<std::vector>();
-            vEditorSubItems.emplace_back( recent.editor == "map" ? editor::document_title( recent.name ) :
-                                          recent.name );
-            vEditorIds.emplace_back( string_format( "recent:%d", index ) );
-            vEditorHints.emplace_back( string_format( recent.editor == "vehicle"
-                                       ? _( "Open it in the vehicle editor with %s." )
-                                       : _( "Open it in the map editor with %s." ), enumerate_as_string( mods ) ) );
-        }
-    }
-
     vNewGameHotkeys.clear();
     vNewGameHotkeys.reserve( vNewGameSubItems.size() );
     for( const std::string &item : vNewGameSubItems ) {
@@ -815,10 +768,6 @@ bool main_menu::opening_screen()
                 add( "new_game:" + vNewGameIds[index], vNewGameSubItems[index],
                      index < vNewGameHints.size() ? vNewGameHints[index] : "" );
             }
-        } else if( sel1 == getopt( main_menu_opts::EDITOR ) ) {
-            for( auto index = std::size_t{ 0 }; index < vEditorSubItems.size(); ++index ) {
-                add( "editor:" + vEditorIds[index], vEditorSubItems[index], vEditorHints[index] );
-            }
         } else if( sel1 == getopt( main_menu_opts::SETTINGS ) ) {
             for( auto index = std::size_t{ 0 }; index < vSettingsSubItems.size(); ++index ) {
                 add( "settings:" + std::string{ settings_ids[index] }, vSettingsSubItems[index], "" );
@@ -1008,9 +957,6 @@ bool main_menu::opening_screen()
                 case main_menu_opts::NEWCHAR:
                     max_item_count = vNewGameSubItems.size();
                     break;
-                case main_menu_opts::EDITOR:
-                    max_item_count = vEditorSubItems.size();
-                    break;
                 case main_menu_opts::SETTINGS:
                     max_item_count = vSettingsSubItems.size();
                     break;
@@ -1075,9 +1021,6 @@ bool main_menu::opening_screen()
                         start_new = true;
                     }
                     break;
-                case main_menu_opts::EDITOR:
-                    start = static_cast<std::size_t>( sel2 ) < vEditorIds.size() && editor_tab( vEditorIds[sel2] );
-                    break;
                 case main_menu_opts::MOTD:
                 case main_menu_opts::CREDITS:
                 default:
@@ -1093,10 +1036,6 @@ bool main_menu::opening_screen()
 
 bool main_menu::new_character_tab()
 {
-    if( sel2 == 5 || sel2 == 6 ) {
-        return start_special_game( sel2 == 5 ? special_game_type::TUTORIAL : special_game_type::DEFENSE );
-    }
-
     std::string selected_template;
 
     avatar &pc = get_avatar();
@@ -1156,10 +1095,19 @@ bool main_menu::new_character_tab()
     } );
     g->gamemode.reset();
 
-    // Pick a world, suppressing prompts if it's "play now" mode.
-    bool empty_only = sel2 == 3 || sel2 == 4;
-    bool show_prompt = !empty_only;
-    WORLDINFO *world = world_generator->pick_world( show_prompt, empty_only );
+    WORLDINFO *world;
+    if( sel2 == 5 ) {
+        g->gamemode = get_special_game( special_game_type::TUTORIAL );
+        world = world_generator->make_new_world( special_game_type::TUTORIAL );
+    } else if( sel2 == 6 ) {
+        g->gamemode = get_special_game( special_game_type::DEFENSE );
+        world = world_generator->make_new_world( special_game_type::DEFENSE );
+    } else {
+        // Pick a world, suppressing prompts if it's "play now" mode.
+        bool empty_only = sel2 == 3 || sel2 == 4;
+        bool show_prompt = !empty_only;
+        world = world_generator->pick_world( show_prompt, empty_only );
+    }
 
     if( world == nullptr ) {
         return false;
@@ -1170,6 +1118,14 @@ bool main_menu::new_character_tab()
     } catch( const std::exception &err ) {
         debugmsg( "Error: %s", err.what() );
         return false;
+    }
+
+    if( g->gamemode ) {
+        bool success = g->gamemode->init();
+        if( success ) {
+            cleanup.cancel();
+        }
+        return success;
     }
 
     character_type play_type = character_type::CUSTOM;
@@ -1198,103 +1154,6 @@ bool main_menu::new_character_tab()
     }
 
     if( !g->start_game() ) {
-        return false;
-    }
-    cleanup.cancel();
-    return true;
-}
-
-auto main_menu::editor_tab( const std::string &id ) -> bool
-{
-    if( id == "save" ) {
-        return open_save_in_editor();
-    }
-    // The editors make a mod of the folder they save a new file in, which the game learns of here.
-    world_generator->get_mod_manager().refresh_mod_list();
-    const auto recent = editor::recent_documents();
-    auto index = std::size_t{ 0 };
-    const auto reopened = std::sscanf( id.c_str(), "recent:%zu", &index ) == 1 && index < recent.size()
-                          ? std::optional( recent[index] ) : std::nullopt;
-    const auto initial = editor::editor_world_mods( reopened ? reopened->mods : std::vector<mod_id> {} );
-    const auto mods = id == "mods" ? world_generator->pick_mods( initial, {
-        .question = _( "Open the editor with these mods?" ),
-        .heading = _( "Turn on the mod that holds your files, then press Esc." ),
-        .yes_first = true
-    } ) : std::optional( initial );
-    if( !mods || !start_special_game( special_game_type::EDITOR, *mods ) ) {
-        return false;
-    }
-    if( reopened ) {
-        editor::open_first( *reopened );
-    } else if( id == "vehicle" ) {
-        editor::open_vehicle_editor_first();
-    }
-    return true;
-}
-
-auto main_menu::open_save_in_editor() -> bool
-{
-    struct save_choice {
-        WORLDINFO *world;
-        save_t save;
-    };
-    auto choices = std::vector<save_choice> {};
-    for( const auto &name : world_generator->all_worldnames() ) {
-        if( name == "TUTORIAL" || name == "DEFENSE" || name == "EDITOR" ) {
-            continue;
-        }
-        auto *const world = world_generator->get_world( name );
-        for( const auto &save : world->world_saves ) {
-            choices.push_back( { .world = world, .save = save } );
-        }
-    }
-    if( choices.empty() ) {
-        on_error();
-        popup( _( "There are no saves to open." ) );
-        return false;
-    }
-
-    uilist mmenu( _( "Open a save in the editor" ), {} );
-    mmenu.border_color = c_light_gray;
-    mmenu.hotkey_color = c_yellow;
-    sound_on_move_uilist_callback cb( this );
-    mmenu.callback = &cb;
-    auto opt_val = 0;
-    for( const auto &choice : choices ) {
-        mmenu.entries.emplace_back( opt_val++, true, MENU_AUTOASSIGN,
-                                    string_format( "%s: %s", choice.world->world_name, choice.save.decoded_name() ) );
-    }
-    mmenu.entries.emplace_back( opt_val++, true, 'q', "<= Return" );
-    mmenu.query();
-    if( mmenu.ret < 0 || static_cast<std::size_t>( mmenu.ret ) >= choices.size() ) {
-        return false;
-    }
-    const auto &picked = choices[mmenu.ret];
-    return load_save( picked.world, picked.save, true );
-}
-
-auto main_menu::start_special_game( const special_game_type type,
-                                    const std::vector<mod_id> &mods ) -> bool
-{
-    auto &pc = get_avatar();
-    on_out_of_scope cleanup( [&pc]() {
-        g->gamemode.reset();
-        pc = avatar();
-        world_generator->set_active_world( nullptr );
-    } );
-    g->gamemode = get_special_game( type );
-    auto *const world = world_generator->make_new_world( type, mods );
-    if( world == nullptr ) {
-        return false;
-    }
-    world_generator->set_active_world( world );
-    try {
-        g->setup();
-    } catch( const std::exception &err ) {
-        debugmsg( "Error: %s", err.what() );
-        return false;
-    }
-    if( !g->gamemode->init() ) {
         return false;
     }
     cleanup.cancel();
@@ -1336,12 +1195,6 @@ bool main_menu::load_character_tab( const std::string &worldname )
         return false;
     }
 
-    return load_save( world, savegames[opt_val], false );
-}
-
-auto main_menu::load_save( WORLDINFO *const world, const save_t &save,
-                           const bool editor_mode ) -> bool
-{
     avatar &pc = get_avatar();
     on_out_of_scope cleanup( [&pc]() {
         pc = avatar();
@@ -1350,7 +1203,7 @@ auto main_menu::load_save( WORLDINFO *const world, const save_t &save,
 
     g->gamemode = nullptr;
     world_generator->last_world_name = world->world_name;
-    world_generator->last_character_name = save.decoded_name();
+    world_generator->last_character_name = savegames[opt_val].decoded_name();
     world_generator->save_last_world_info();
     world_generator->set_active_world( world );
 
@@ -1361,18 +1214,12 @@ auto main_menu::load_save( WORLDINFO *const world, const save_t &save,
         return false;
     }
 
-    if( !g->load( save ) ) {
-        return false;
+    if( g->load( savegames[opt_val] ) ) {
+        cleanup.cancel();
+        return true;
     }
-    if( editor_mode ) {
-        g->gamemode = std::make_unique<editor_save_game>();
-        if( !g->gamemode->init() ) {
-            g->gamemode.reset();
-            return false;
-        }
-    }
-    cleanup.cancel();
-    return true;
+
+    return false;
 }
 
 void main_menu::world_tab( const std::string &worldname )

@@ -10,9 +10,7 @@
 #include "character_id.h"
 #include "cube_direction.h" // IWYU pragma: associated
 #include "debug.h"
-#include "debug_log_capture.h"
 #include "distribution.h"
-#include "editor/special_grid.h"
 #include "enum_conversions.h"
 #include "flood_fill.h"
 #include "fluid_grid.h"
@@ -31,7 +29,6 @@
 #include "mapgen/mapgen_functions.h"
 #include "math_defines.h"
 #include "messages.h"
-#include "mod_manager.h"
 #include "mongroup.h"
 #include "monster.h"
 #include "mtype.h"
@@ -79,7 +76,6 @@
 #include <point.h>
 #include <ranges>
 #include <set>
-#include <sstream>
 #include <tuple>
 #include <unordered_set>
 #include <vector>
@@ -689,13 +685,6 @@ auto is_ot_match(const std::string& name, const oter_id& oter, const ot_match_ty
     }
 }
 
-namespace {
-
-/// Whether an overmap terrain loads for the editor's check alone, so that it registers nothing.
-auto loading_detached_oter = false;
-
-} // namespace
-
 /*
  * load mapgen functions from an overmap_terrain json entry
  * suffix is for roads/subways/etc which have "_straight", "_curved", "_tee", "_four_way" function
@@ -751,9 +740,7 @@ void oter_type_t::load(const JsonObject& jo, const std::string& src) {
 
     optional(jo, was_loaded, "connect_group", connect_group, string_reader{});
 
-    if (loading_detached_oter) {
-        // The check registers no label or mapgen of the game's.
-    } else if (map_label.has_value()) {
+    if (map_label.has_value()) {
         overmap_labels::set_label(id, map_label);
     } else if (jo.has_member("copy-from")) {
         auto copy_from_id = oter_type_str_id(jo.get_string("copy-from"));
@@ -766,7 +753,7 @@ void oter_type_t::load(const JsonObject& jo, const std::string& src) {
         }
 
         for (const auto& elem : om_lines::mapgen_suffixes) {
-            if (!loading_detached_oter) { load_overmap_terrain_mapgens(jo, id.str(), elem); }
+            load_overmap_terrain_mapgens(jo, id.str(), elem);
         }
 
         if (symbol == NULL_UNICODE) {
@@ -784,7 +771,7 @@ void oter_type_t::load(const JsonObject& jo, const std::string& src) {
             debugmsg("sym is defined as number instead of string for overmap_terrain %s (%s)",
                      id.c_str(), name);
         }
-        if (!loading_detached_oter) { load_overmap_terrain_mapgens(jo, id.str()); }
+        load_overmap_terrain_mapgens(jo, id.str());
     }
 }
 
@@ -2560,8 +2547,8 @@ void overmap_special::load(const JsonObject& jo, const std::string& src) {
             break;
         }
         default:
-            // A subtype the reader could not read has no name to print.
-            jo.throw_error("subtype not implemented", "subtype");
+            jo.throw_error(
+                string_format("subtype %s not implemented", io::enum_to_string(subtype_)));
     }
 
     if (jo.has_array("place_nested")) {
@@ -2637,11 +2624,6 @@ void overmap_special::finalize_mapgen_parameters() {
 }
 
 void overmap_special::check() const {
-    check_layout();
-    check_nested();
-}
-
-void overmap_special::check_layout() const {
     data_->check(string_format("overmap special %s", id.str()));
 
     for (const auto& elem : connections) {
@@ -2675,9 +2657,7 @@ void overmap_special::check_layout() const {
             }
         }
     }
-}
 
-void overmap_special::check_nested() const {
     // Make sure nested specials doesn't loop back to parents
     std::function<std::optional<
         overmap_special_id>(const overmap_special_id, std::unordered_set<overmap_special_id>)>
@@ -2703,123 +2683,6 @@ void overmap_special::check_nested() const {
         debugmsg("In overmap special \"%s\", nested special \"%s\" places itself recursively.", id,
                  *recurse);
     }
-}
-
-namespace {
-
-/// A special or building entry as the game's loader completes it, unless it copies another or is
-/// abstract, and what the loader reported, in order.
-struct detached_special {
-    std::optional<overmap_special> special;
-    std::vector<editor::loader_message> messages;
-};
-
-auto load_detached_special(const std::string_view text) -> detached_special {
-    auto special = std::optional<overmap_special>{};
-    auto thrown = std::optional<std::string>{};
-    const auto said = capture_each_debugmsg_during([&] {
-        try {
-            auto in = std::istringstream(std::string(text));
-            auto jsin = JsonIn(in, "editor");
-            const auto entry = jsin.get_object();
-            // What a special copies or leaves abstract only the game's whole data completes.
-            if (entry.has_member("copy-from") || entry.has_member("abstract")) {
-                entry.allow_omitted_members();
-                return;
-            }
-            auto loaded = overmap_special{};
-            loaded.id = overmap_special_id(entry.get_string("id"));
-            loaded.load(entry, mod_management::get_default_core_content_pack().str());
-            loaded.finalize();
-            loaded.check_layout();
-            special = std::move(loaded);
-        } catch (const JsonError& e) { thrown = e.what(); }
-    });
-    auto messages =
-        said | std::views::transform([](const std::string& message) {
-            return editor::loader_message{.text = editor::plain_loader_text(message)};
-        })
-        | std::ranges::to<std::vector>();
-    if (thrown) { messages.push_back({.text = editor::plain_loader_text(*thrown)}); }
-    return {.special = std::move(special), .messages = std::move(messages)};
-}
-
-/// How far from the avatar, in overmap squares, a special is placed at most.
-constexpr auto special_search_radius = 30;
-
-} // namespace
-
-auto editor::check_special(const std::string_view text) -> std::vector<loader_message> {
-    return load_detached_special(text).messages;
-}
-
-auto editor::check_oter(const std::string_view text) -> std::vector<loader_message> {
-    auto thrown = std::optional<std::string>{};
-    const auto detached = restore_on_out_of_scope(loading_detached_oter);
-    loading_detached_oter = true;
-    const auto said = capture_each_debugmsg_during([&] {
-        try {
-            auto in = std::istringstream(std::string(text));
-            auto jsin = JsonIn(in, "editor");
-            const auto entry = jsin.get_object();
-            // What an entry copies or leaves abstract only the game's whole data completes.
-            if (entry.has_member("copy-from") || entry.has_member("abstract")) {
-                entry.allow_omitted_members();
-                return;
-            }
-            auto loaded = oter_type_t{};
-            loaded.id = oter_type_str_id(
-                entry.has_array("id")
-                    ? entry.get_array("id").get_string(0)
-                    : entry.get_string("id"));
-            loaded.load(entry, mod_management::get_default_core_content_pack().str());
-        } catch (const JsonError& e) { thrown = e.what(); }
-    });
-    auto messages =
-        said | std::views::transform([](const std::string& message) {
-            return loader_message{.text = plain_loader_text(message)};
-        })
-        | std::ranges::to<std::vector>();
-    if (thrown) { messages.push_back({.text = editor::plain_loader_text(*thrown)}); }
-    return messages;
-}
-
-auto editor::terrain_mapgen_ids(const std::string& type_id) -> std::vector<std::string> {
-    const auto type = oter_type_str_id(type_id);
-    if (!type.is_valid()) { return {}; }
-    if (!type->is_linear()) { return {type_id}; }
-    return om_lines::mapgen_suffixes
-         | std::views::transform([&](const std::string& suffix) { return type_id + suffix; })
-         | std::ranges::to<std::vector>();
-}
-
-auto editor::apply_special(const std::string_view text)
-    -> std::expected<overmap_special_id, std::string> {
-    auto loaded = load_detached_special(text);
-    if (!loaded.messages.empty()) { return std::unexpected(loaded.messages.front().text); }
-    if (!loaded.special) {
-        return std::unexpected(
-            std::string(_("A special that copies another is placed with the game's data only.")));
-    }
-    return specials.insert(*loaded.special).id;
-}
-
-auto editor::place_special_near(const overmap_special_id& id, const tripoint_abs_omt& center)
-    -> std::optional<tripoint_abs_omt> {
-    auto& buffer = ACTIVE_OVERMAP_BUFFER;
-    // Generated land keeps what was made there, so the special goes where the game would place it
-    // on land not made yet.
-    for (const auto& raw :
-         closest_points_first(tripoint(center.raw().xy(), 0), special_search_radius)) {
-        const auto origin = tripoint_abs_omt(raw);
-        const auto used = buffer.place_special(*id, origin, om_direction::type::north, true, false);
-        if (!used) { continue; }
-        std::ranges::for_each(*used, [&](const tripoint_abs_omt& at) {
-            buffer.set_seen(at, true);
-        });
-        return origin;
-    }
-    return std::nullopt;
 }
 
 // *** BEGIN overmap FUNCTIONS ***

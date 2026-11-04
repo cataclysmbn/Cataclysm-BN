@@ -4,7 +4,6 @@
 #include "action.h"
 #include "client_input.h"
 #include "client_shortcut.h"
-#include "editor/editor_access.h"
 #include "game.h"
 #include "input.h"
 #include "translations.h"
@@ -326,9 +325,6 @@ auto map_view( const boundary_state &state ) -> screen_view
             },
         },
     };
-    if( auto denial = editor::editor_denial(); !denial.empty() ) {
-        result.denials.push_back( { .id = "editor", .reason = std::move( denial ) } );
-    }
     return result;
 }
 

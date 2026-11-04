@@ -32,7 +32,6 @@
 #include "debug_menu.h"
 #include "diary.h"
 #include "distraction_manager.h"
-#include "editor/editor_session.h"
 #include "engine_client_contract.h"
 #include "faction.h"
 #include "flag.h"
@@ -1965,10 +1964,6 @@ bool game::handle_action()
             // starts destination activity after the player successfully reached his destination
             u.start_destination_activity();
             return false;
-        } else if( const auto next = gamemode->next_action() ) {
-            act = *next;
-        } else if( editor::reopens_after_waiting() ) {
-            act = ACTION_EDITOR;
         } else {
             ZoneScopedN( "handle_action_get_player_input" );
             // No auto-move, ask player for input
@@ -3071,10 +3066,6 @@ bool game::handle_action()
                     break;    //don't do anything when sharing and not debugger
                 }
                 debug_menu::debug();
-                break;
-
-            case ACTION_EDITOR:
-                editor::open_map_editor();
                 break;
 
             case ACTION_LUA_CONSOLE:

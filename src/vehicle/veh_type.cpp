@@ -30,7 +30,6 @@
 #include "units.h"
 #include "units_utility.h"
 #include "value_ptr.h"
-#include "veh_prototype_build.h"
 #include "vehicle.h"
 #include "vehicle_group.h"
 #include "vehicle_palette.h"
@@ -1057,11 +1056,7 @@ void vehicle_prototype::load(const JsonObject& jo) {
     if (vproto.parts.empty()) { vproto.name = jo.get_string("name"); }
 
     vgroups[vgroup_id(jo.get_string("id"))].add_vehicle(vproto_id(jo.get_string("id")), 100);
-    read_vehicle_prototype(jo, vproto);
-}
 
-auto read_vehicle_prototype(const JsonObject& jo, vehicle_prototype& vproto) -> void {
-    using part_def = vehicle_prototype::part_def;
     const auto add_part_obj = [&](const JsonObject& part, tripoint_mnt_veh pos) {
         part_def pt;
         pt.pos = pos;
@@ -1206,107 +1201,100 @@ void vehicle_prototype::reset() { vtypes.clear(); }
  *Works through cached vehicle definitions and creates vehicle objects from them.
  */
 void vehicle_prototype::finalize() {
-    for (auto& [id, proto] : vtypes) { finalize_vehicle_prototype(id, proto); }
-}
+    for (auto& vp : vtypes) {
+        std::unordered_set<tripoint_mnt_veh> cargo_spots;
+        vehicle_prototype& proto = vp.second;
+        const vproto_id& id = vp.first;
 
-auto finalize_vehicle_prototype(const vproto_id& id, vehicle_prototype& proto) -> void {
-    std::unordered_set<tripoint_mnt_veh> cargo_spots;
+        // Calls the default constructor to create an empty vehicle. Calling the constructor with
+        // the type as parameter would make it look up the type in the map and copy the
+        // (non-existing) blueprint.
+        proto.blueprint = std::make_unique<vehicle>();
+        vehicle& blueprint = *proto.blueprint;
+        blueprint.type = id;
+        blueprint.name = _(proto.name);
 
-    // Calls the default constructor to create an empty vehicle. Calling the constructor with
-    // the type as parameter would make it look up the type in the map and copy the
-    // (non-existing) blueprint.
-    proto.blueprint = std::make_unique<vehicle>();
-    vehicle& blueprint = *proto.blueprint;
-    blueprint.type = id;
-    blueprint.name = _(proto.name);
-
-    if (!proto.color_palette.is_empty() && !proto.color_palette.is_valid()) {
-        debugmsg("init_vehicles: unknown color_palette %s in %s", proto.color_palette.c_str(),
-                 id.c_str());
-    }
-
-    blueprint.suspend_refresh();
-    for (auto& pt : proto.parts) {
-        if (proto.color_palette.is_valid() && !proto.color_match.contains(pt.part.str())) {
-            int index = proto.color_palette->fuzzy_to_index(pt.part);
-            if (index != -1) { proto.color_match[pt.part.str()] = index; }
-        }
-        if (!pt.part.is_valid()) {
-            debugmsg("unknown vehicle part %s in %s", pt.part.c_str(), id.c_str());
-            continue;
-        }
-        const itype* base = &*pt.part->item;
-
-        if (blueprint.install_part(pt.pos, pt.part, true) < 0) {
-            debugmsg("init_vehicles: '%s' part '%s'(%d) can't be installed to %d,%d",
-                     blueprint.name, pt.part.c_str(), blueprint.part_count(), pt.pos.x(),
-                     pt.pos.y());
-        }
-
-        if (!base->gun) {
-            if (pt.with_ammo) {
-                debugmsg("init_vehicles: non-turret %s with ammo in %s", pt.part.c_str(),
-                         id.c_str());
+        blueprint.suspend_refresh();
+        for (auto& pt : proto.parts) {
+            if (proto.color_palette.is_valid() && !proto.color_match.contains(pt.part.str())) {
+                int index = proto.color_palette->fuzzy_to_index(pt.part);
+                if (index != -1) { proto.color_match[pt.part.str()] = index; }
             }
-            if (!pt.ammo_types.empty()) {
-                debugmsg("init_vehicles: non-turret %s with ammo_types in %s", pt.part.c_str(),
-                         id.c_str());
-            }
-            if (pt.ammo_qty.first > 0 || pt.ammo_qty.second > 0) {
-                debugmsg("init_vehicles: non-turret %s with ammo_qty in %s", pt.part.c_str(),
-                         id.c_str());
+            const itype* base = &*pt.part->item;
+
+            if (!pt.part.is_valid()) {
+                debugmsg("unknown vehicle part %s in %s", pt.part.c_str(), id.c_str());
+                continue;
             }
 
-        } else {
-            for (const itype_id& e : pt.ammo_types) {
-                if (!e.is_valid() || !e->ammo || !base->gun->ammo.contains(e->ammo->type)) {
-                    debugmsg("init_vehicles: turret %s has invalid ammo_type %s in %s",
-                             pt.part.c_str(), e.c_str(), id.c_str());
+            if (blueprint.install_part(pt.pos, pt.part, true) < 0) {
+                debugmsg("init_vehicles: '%s' part '%s'(%d) can't be installed to %d,%d",
+                         blueprint.name, pt.part.c_str(), blueprint.part_count(), pt.pos.x(),
+                         pt.pos.y());
+            }
+
+            if (!base->gun) {
+                if (pt.with_ammo) {
+                    debugmsg("init_vehicles: non-turret %s with ammo in %s", pt.part.c_str(),
+                             id.c_str());
+                }
+                if (!pt.ammo_types.empty()) {
+                    debugmsg("init_vehicles: non-turret %s with ammo_types in %s", pt.part.c_str(),
+                             id.c_str());
+                }
+                if (pt.ammo_qty.first > 0 || pt.ammo_qty.second > 0) {
+                    debugmsg("init_vehicles: non-turret %s with ammo_qty in %s", pt.part.c_str(),
+                             id.c_str());
+                }
+
+            } else {
+                for (const itype_id& e : pt.ammo_types) {
+                    if (!e->ammo && base->gun->ammo.contains(e->ammo->type)) {
+                        debugmsg("init_vehicles: turret %s has invalid ammo_type %s in %s",
+                                 pt.part.c_str(), e.c_str(), id.c_str());
+                    }
+                }
+                if (pt.ammo_types.empty()) {
+                    if (!base->gun->ammo.empty()) {
+                        pt.ammo_types.insert(
+                            ammotype(*base->gun->ammo.begin())->default_ammotype());
+                    }
                 }
             }
-            if (pt.ammo_types.empty()) {
-                if (!base->gun->ammo.empty()) {
-                    pt.ammo_types.insert(ammotype(*base->gun->ammo.begin())->default_ammotype());
+
+            if (base->container || base->magazine) {
+                if (!pt.fuel.is_valid()) {
+                    debugmsg("init_vehicles: tank %s specified invalid fuel in %s", pt.part.c_str(),
+                             id.c_str());
+                }
+            } else {
+                if (!pt.fuel.is_null()) {
+                    debugmsg("init_vehicles: non-fuel store part %s with fuel in %s",
+                             pt.part.c_str(), id.c_str());
+                }
+            }
+
+            if (pt.part.obj().has_flag("CARGO")) { cargo_spots.insert(pt.pos); }
+        }
+        blueprint.enable_refresh();
+
+        for (auto& i : proto.item_spawns) {
+            if (!cargo_spots.contains(i.pos)) {
+                debugmsg("Invalid spawn location (no CARGO vpart) in %s (%d, %d, %d): %d%%",
+                         proto.name, i.pos.x(), i.pos.y(), i.pos.z(), i.chance);
+            }
+            for (auto& j : i.item_ids) {
+                if (!j.is_valid()) {
+                    debugmsg("unknown item %s in spawn list of %s", j.c_str(), id.c_str());
+                }
+            }
+            for (auto& j : i.item_groups) {
+                if (!j.is_valid()) {
+                    debugmsg("unknown item group %s in spawn list of %s", j.c_str(), id.c_str());
                 }
             }
         }
-
-        if (base->container || base->magazine) {
-            if (!pt.fuel.is_valid()) {
-                debugmsg("init_vehicles: tank %s specified invalid fuel in %s", pt.part.c_str(),
-                         id.c_str());
-            }
-        } else {
-            if (!pt.fuel.is_null()) {
-                debugmsg("init_vehicles: non-fuel store part %s with fuel in %s", pt.part.c_str(),
-                         id.c_str());
-            }
-        }
-
-        if (pt.part.obj().has_flag("CARGO")) { cargo_spots.insert(pt.pos); }
     }
-    blueprint.enable_refresh();
-
-    for (auto& i : proto.item_spawns) {
-        if (!cargo_spots.contains(i.pos)) {
-            debugmsg("Invalid spawn location (no CARGO vpart) in %s (%d, %d, %d): %d%%", proto.name,
-                     i.pos.x(), i.pos.y(), i.pos.z(), i.chance);
-        }
-        for (auto& j : i.item_ids) {
-            if (!j.is_valid()) {
-                debugmsg("unknown item %s in spawn list of %s", j.c_str(), id.c_str());
-            }
-        }
-        for (auto& j : i.item_groups) {
-            if (!j.is_valid()) {
-                debugmsg("unknown item group %s in spawn list of %s", j.c_str(), id.c_str());
-            }
-        }
-    }
-}
-
-auto register_vehicle_prototype(const vproto_id& id, vehicle_prototype&& proto) -> void {
-    vtypes[id] = std::move(proto);
 }
 
 auto vehicle_prototype::get_all() -> std::vector<vproto_id> {

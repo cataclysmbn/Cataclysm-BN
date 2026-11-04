@@ -1524,33 +1524,6 @@ TEST_CASE(
     CHECK(affordance(top_of(map), "UP").role.empty());
 }
 
-TEST_CASE(
-    "the map offers the editor only with the Debug Editor trait", "[engine_client_component]") {
-    const auto trait = trait_id("DEBUG_EDITOR");
-    const auto context = get_default_mode_input_context();
-    REQUIRE(std::ranges::contains(context.get_registered_actions_copy(), std::string("editor")));
-    auto state = map_only();
-    state.actions.push_back({.id = "editor", .name = context.get_action_name("editor")});
-    auto& you = get_avatar();
-    const auto had = you.has_trait(trait);
-    you.unset_mutation(trait);
-    {
-        const auto view = top_of(state);
-        const auto& denied = affordance(view, "editor");
-        CHECK(denied.label == "Map Editor");
-        CHECK_FALSE(denied.enabled);
-        CHECK(denied.denial.starts_with("You need the Debug Editor trait: open the debug menu"));
-    }
-    you.set_mutation(trait);
-    {
-        const auto view = top_of(state);
-        const auto& offered = affordance(view, "editor");
-        CHECK(offered.enabled);
-        CHECK(offered.denial.empty());
-    }
-    if (!had) { you.unset_mutation(trait); }
-}
-
 TEST_CASE("a generic message asks what the parts after it answer", "[engine_client_component]") {
     auto native = menu();
     native.message = "Start how?";

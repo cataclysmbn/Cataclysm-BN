@@ -26,7 +26,6 @@
 #include <sstream>
 #include <stdexcept>
 #include <sys/stat.h>
-#include <thread>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -132,22 +131,7 @@ auto captured_errors = std::ostringstream {};
 static bool capturing = false;
 /** сaptured debug messages */
 static std::string captured;
-/** The captured debug messages one by one, while capture_each_debugmsg_during runs. */
-static std::vector<std::string> *captured_each = nullptr;
-/** The thread that runs capture_each_debugmsg_during. */
-static std::thread::id captured_each_thread;
 static std::ostringstream captured_log;
-
-namespace
-{
-/// Whether this thread's debug messages go one by one to capture_each_debugmsg_during; another
-/// thread's are not its own.
-auto capturing_each_here() -> bool
-{
-    return capturing && captured_each != nullptr
-           && captured_each_thread == std::this_thread::get_id();
-}
-} // namespace
 
 #if defined(BACKTRACE)
 namespace
@@ -236,20 +220,6 @@ std::string capture_debugmsg_during( const std::function<void()> &func )
     capture_debugmsg capture;
     func();
     return capture.dmsg();
-}
-
-auto capture_each_debugmsg_during( const std::function < auto()->void > &func ) ->
-std::vector<std::string>
-{
-    auto each = std::vector<std::string> {};
-    const auto restore = on_out_of_scope( [previous = std::exchange( captured_each, &each ),
-             thread = std::exchange( captured_each_thread, std::this_thread::get_id() )] {
-        captured_each = previous;
-        captured_each_thread = thread;
-    } );
-    capture_debugmsg capture;
-    func();
-    return each;
 }
 
 capture_debugmsg::capture_debugmsg()
@@ -729,13 +699,6 @@ void realDebugmsg( const char *filename, const char *line, const char *funcname,
     assert( line != nullptr );
     assert( funcname != nullptr );
 
-    if( capturing_each_here() ) {
-        captured_each->push_back( text );
-        // Whoever captures it says it in its own words, so no prompt raises it a second time, but
-        // debug.log still keeps it.
-        *detail::realDebugLog( debug_level, DC::DebugMsg, filename, line, funcname ) << text;
-        return;
-    }
     if( capturing ) {
         captured += text;
     } else {
@@ -1793,19 +1756,15 @@ detail::DebugLogGuard::~DebugLogGuard()
 detail::DebugLogGuard detail::realDebugLog( DL lev, DC cl, const char *filename,
         const char *line, const char *funcname )
 {
-    // A debug message captured one by one is expected, so it goes to the log as it is.
-    const auto captured_each_line = cl == DC::DebugMsg && capturing_each_here();
     if( lev == DL::Error ) {
         auto lock = std::unique_lock<std::mutex>( g_debug_log_mutex );
         if( capturing_errors ) {
             return DebugLogGuard( captured_errors, std::move( lock ) );
         }
-        if( !captured_each_line ) {
-            error_observed = true;
-        }
+        error_observed = true;
     }
 
-    if( capturing && cl == DC::DebugMsg && !captured_each_line ) {
+    if( capturing && cl == DC::DebugMsg ) {
         return DebugLogGuard( captured_log );
     }
 

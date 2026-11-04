@@ -231,8 +231,7 @@ WORLDINFO *worldfactory::make_new_world( bool show_prompt, const std::string &wo
     return add_world( std::move( retworld ) );
 }
 
-WORLDINFO *worldfactory::make_new_world( special_game_type special_type,
-        const std::vector<mod_id> &mods )
+WORLDINFO *worldfactory::make_new_world( special_game_type special_type )
 {
     std::string worldname;
     switch( special_type ) {
@@ -242,34 +241,18 @@ WORLDINFO *worldfactory::make_new_world( special_game_type special_type,
         case special_game_type::DEFENSE:
             worldname = "DEFENSE";
             break;
-        case special_game_type::EDITOR:
-            worldname = "EDITOR";
-            break;
         default:
             return nullptr;
-    }
-
-    auto order = std::vector<mod_id> {};
-    for( const auto &mod : mods ) {
-        mman_ui->try_add( mod, order );
     }
 
     // Look through all worlds and see if a world named worldname already exists. If so, then just return it instead of
     // making a new world.
     if( has_world( worldname ) ) {
-        auto *const existing = all_worlds[worldname].get();
-        if( !order.empty() ) {
-            existing->active_mod_order = order;
-            existing->save();
-        }
-        return existing;
+        return all_worlds[worldname].get();
     }
 
     std::unique_ptr<WORLDINFO> special_world = std::make_unique<WORLDINFO>();
     special_world->world_name = worldname;
-    if( !order.empty() ) {
-        special_world->active_mod_order = order;
-    }
 
     special_world->WORLD_OPTIONS["WORLD_END"].setValue( "delete" );
 
@@ -942,15 +925,6 @@ void worldfactory::show_active_world_mods( const std::vector<mod_id> &world_mods
 
 void worldfactory::edit_active_world_mods( WORLDINFO *world )
 {
-    if( const auto mods = pick_mods( world->active_mod_order, { .question = _( "Save changes?" ) } ) ) {
-        world->active_mod_order = *mods;
-        world->save();
-    }
-}
-
-auto worldfactory::pick_mods( const std::vector<mod_id> &initial,
-                              const pick_mods_options &options ) -> std::optional<std::vector<mod_id>>
-{
     // set up window
     catacurses::window wf_win;
     ui_adaptor ui;
@@ -969,30 +943,22 @@ auto worldfactory::pick_mods( const std::vector<mod_id> &initial,
         wnoutrefresh( wf_win );
     } );
 
-    auto accepted = false;
-    auto mods = initial;
-    show_modselection_window( wf_win, mods, {
-        .on_quit = [&accepted, &options]()
+    bool save_changes = false;
+    mod_manager::t_mod_list new_mod_order = world->active_mod_order;
+    show_modselection_window( wf_win, new_mod_order, {
+        .on_quit = [&save_changes]()
         {
-            // Where the player chose the mods to go on with, Enter takes them.
-            accepted = options.yes_first
-            ? query_popup()
-            .context( "YESNO" )
-            .message( "%s", options.question )
-            .option( "YES" )
-            .option( "NO" )
-            .cursor( 0 )
-            .query()
-            .action == "YES"
-            : query_yn( "%s", options.question );
+            save_changes = query_yn( _( "Save changes?" ) );
             return true;
         },
         .on_backtab = nullptr,
-        .standalone = true,
-        .heading = options.heading
+        .standalone = true
     } );
 
-    return accepted ? std::optional( mods ) : std::nullopt;
+    if( save_changes ) {
+        world->active_mod_order = new_mod_order;
+        world->save();
+    }
 }
 
 int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win, WORLDINFO *world,
@@ -1230,9 +1196,6 @@ int worldfactory::show_modselection_window( const catacurses::window &win,
             draw_worldgen_tabs( win, 0 );
         }
         draw_modselection_borders( win, ctxt, options.standalone );
-        if( !options.heading.empty() ) {
-            fold_and_print( win, point( 2, 1 ), getmaxx( win ) - 4, c_white, options.heading );
-        }
 
         // Redraw headers
         for( size_t i = 0; i < headers.size(); ++i ) {
@@ -1361,9 +1324,6 @@ int worldfactory::show_modselection_window( const catacurses::window &win,
             active.push_back( note_of( "none", _( "--NO ACTIVE MODS--" ) ) );
         }
         auto notes = std::vector<ec::panel_stat> {};
-        if( !options.heading.empty() ) {
-            notes.push_back( note_of( "heading", options.heading ) );
-        }
         if( !current_filter.empty() ) {
             notes.push_back( note_of( "filter", string_format( _( "Filter: %s" ), current_filter ) ) );
         }

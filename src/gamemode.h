@@ -1,7 +1,6 @@
 #pragma once
 
 #include <memory>
-#include <optional>
 #include <string>
 
 #include "enums.h"
@@ -28,10 +27,6 @@ struct special_game {
     virtual void pre_action( action_id & ) { }
     // Run after the game handles the action
     virtual void post_action( action_id ) { }
-    /// An action the game runs instead of asking the player for one; none asks as usual.
-    virtual auto next_action() -> std::optional<action_id> {
-        return std::nullopt;
-    }
     // Run when the player dies (or the game otherwise ends)
     virtual void game_over() { }
 

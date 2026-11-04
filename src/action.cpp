@@ -196,7 +196,6 @@ std::string io::enum_to_string<action_id>( action_id data )
 
             PAIR( ACTION_TOGGLE_FULLSCREEN )
             PAIR( ACTION_DEBUG )
-            PAIR( ACTION_EDITOR )
             PAIR( ACTION_LUA_CONSOLE )
             PAIR( ACTION_LUA_RELOAD )
             PAIR( ACTION_DISPLAY_SCENT )
@@ -471,8 +470,6 @@ std::string action_ident( action_id act )
             return "help";
         case ACTION_DEBUG:
             return "debug";
-        case ACTION_EDITOR:
-            return "editor";
         case ACTION_LUA_CONSOLE:
             return "lua_console";
         case ACTION_LUA_RELOAD:
@@ -621,7 +618,6 @@ bool can_action_change_worldstate( const action_id act )
         // Debug Functions
         case ACTION_TOGGLE_FULLSCREEN:
         case ACTION_DEBUG:
-        case ACTION_EDITOR:
         case ACTION_LUA_CONSOLE:
         case ACTION_LUA_RELOAD:
         case ACTION_DISPLAY_SCENT:
@@ -1166,10 +1162,6 @@ action_id handle_action_menu()
             register_actions( { ACTION_DEBUG } );
             if( ( entry = &entries.back() ) ) {
                 // debug _is_a menu.
-                entry->txt += "…";
-            }
-            register_actions( { ACTION_EDITOR } );
-            if( ( entry = &entries.back() ) ) {
                 entry->txt += "…";
             }
             if( !game_client::has_tiles() ) {

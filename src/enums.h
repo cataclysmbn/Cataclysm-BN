@@ -127,7 +127,6 @@ enum class special_game_type : int {
     NONE = 0,
     TUTORIAL,
     DEFENSE,
-    EDITOR,
     NUM_SPECIAL_GAME_TYPES
 };
 

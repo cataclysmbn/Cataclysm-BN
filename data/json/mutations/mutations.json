@@ -6986,15 +6986,6 @@
   },
   {
     "type": "mutation",
-    "id": "DEBUG_EDITOR",
-    "name": { "str": "Debug Editor" },
-    "points": 99,
-    "valid": false,
-    "description": "Opens the map editor from the map, its action menu and its toolbar.",
-    "debug": true
-  },
-  {
-    "type": "mutation",
     "id": "DEBUG_HT",
     "name": { "str": "Debug Hammertime" },
     "points": 99,

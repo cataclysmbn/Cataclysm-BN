@@ -5,7 +5,6 @@
 #include <iosfwd>
 #include <map>
 #include <memory>
-#include <optional>
 #include <vector>
 #include <string>
 
@@ -37,9 +36,7 @@ class worldfactory
 
         // Generate a world
         WORLDINFO *make_new_world( bool show_prompt = true, const std::string &world_to_copy = "" );
-        /// A mod list given for the editor replaces the one of the world made before; each mod brings its
-        /// dependencies, as the world creation's mod list does.
-        WORLDINFO *make_new_world( special_game_type special_type, const std::vector<mod_id> &mods = {} );
+        WORLDINFO *make_new_world( special_game_type special_type );
         // Used for unit tests - does NOT verify if the mods can be loaded
         WORLDINFO *make_new_world( const std::vector<mod_id> &mods );
         // Returns the *existing* world of given name.
@@ -79,17 +76,6 @@ class worldfactory
         static void draw_worldgen_tabs( const catacurses::window &w, size_t current );
         void show_active_world_mods( const std::vector<mod_id> &world_mods );
         void edit_active_world_mods( WORLDINFO *world );
-        /// What the mod list screen asks on leaving and says first.
-        struct pick_mods_options {
-            std::string question;
-            std::string heading;
-            /// Whether the question offers yes first, else it is asked as every yes or no question is.
-            bool yes_first = false;
-        };
-        /// The mod list screen, started from `initial`; the mods chosen, or nothing when the
-        /// question was answered no.
-        auto pick_mods( const std::vector<mod_id> &initial,
-                        const pick_mods_options &options ) -> std::optional<std::vector<mod_id>>;
 
         void convert_to_v2( const std::string &worldname );
 
@@ -106,13 +92,12 @@ class worldfactory
         int show_worldgen_tab_confirm( const catacurses::window &win, WORLDINFO *world,
                                        const std::function<bool()> &on_quit );
 
-        /// How the mod list screen runs: what Esc and the previous tab key do, whether it stands
-        /// alone outside world creation, and the line it says first.
+        /// How the mod list screen runs: what Esc and the previous tab key do, and whether it
+        /// stands alone outside world creation.
         struct modselection_options {
             std::function<bool()> on_quit;
             std::function<bool()> on_backtab;
             bool standalone = false;
-            std::string heading;
         };
         int show_modselection_window( const catacurses::window &win, std::vector<mod_id> &active_mod_order,
                                       const modselection_options &options );

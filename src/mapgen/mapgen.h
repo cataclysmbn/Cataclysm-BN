@@ -2,7 +2,6 @@
 
 #include "cata_variant.h"
 #include "coordinates.h"
-#include "editor/mapgen_legend.h"
 #include "json.h"
 #include "mapgen_parameter.h"
 #include "memory_fast.h"
@@ -274,8 +273,6 @@ public:
 
     std::unordered_set<map_key> keys_with_terrain;
     placing_map format_placings;
-    /// What each key of format_placings is mapped to, as the data writes it, in the same order.
-    std::unordered_map<map_key, std::vector<editor::legend_line>> legend;
 
     template <typename PieceType>
     /**
@@ -396,8 +393,6 @@ private:
 
 class mapgen_function_json_base {
 public:
-    /// Where the object was read from.
-    auto source_location() const -> const json_source_location&; // *NOPAD*
     void merge_non_nest_parameters_into(mapgen_parameters&, const std::string& outer_context) const;
     auto check_inbounds(const jmapgen_int& x, const jmapgen_int& y, const JsonObject& jso) const
         -> bool;

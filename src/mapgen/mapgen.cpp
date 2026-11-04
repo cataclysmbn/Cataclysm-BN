@@ -8,7 +8,6 @@
 #include "assign.h"
 #include "avatar.h"
 #include "calendar.h"
-#include "cata_utility.h"
 #include "catacharset.h"
 #include "catalua.h"
 #include "catalua_hooks.h"
@@ -20,15 +19,8 @@
 #include "computer.h"
 #include "coordinates.h"
 #include "debug.h"
-#include "debug_log_capture.h"
 #include "drawing_primitives.h"
-#include "editor/catalog.h"
-#include "editor/mapgen_check.h"
-#include "editor/mapgen_legend.h"
-#include "editor/mapgen_preview.h"
-#include "editor/mapgen_source.h"
 #include "enums.h"
-#include "filesystem.h"
 #include "fluid_grid.h"
 #include "game.h"
 #include "game_constants.h"
@@ -95,8 +87,6 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
-#include <cctype>
-#include <charconv>
 #include <cmath>
 #include <cstdlib>
 #include <functional>
@@ -106,7 +96,6 @@
 #include <optional>
 #include <ranges>
 #include <set>
-#include <sstream>
 #include <stdexcept>
 #include <unordered_map>
 
@@ -199,7 +188,7 @@ auto mapgen_constructor::generate(
         ZoneScopedN("generate_extras");
         const auto& region_extras = omap.get_settings(omt_pos).region_extras;
         const auto extra_it = region_extras.find(terrain_type->get_extras());
-        if (draw_options.map_extras && extra_it != region_extras.end()) {
+        if (extra_it != region_extras.end()) {
             const map_extras& ex = extra_it->second;
             if (ex.chance > 0 && one_in(ex.chance)) {
                 const std::string* extra = ex.values.pick();
@@ -309,13 +298,6 @@ public:
         }
         return true;
     }
-    /// Makes `ptr` the only function the container picks.
-    void replace(const std::shared_ptr<mapgen_function>& ptr) {
-        assert(ptr);
-        mapgens_.clear();
-        weights_ = {};
-        weights_.add(ptr, std::max(ptr->weight, 1));
-    }
     auto pick(const int hardcoded_weight) const -> std::shared_ptr<mapgen_function> {
         if (hardcoded_weight > 0
             && rng(1, weights_.get_weight() + hardcoded_weight) > weights_.get_weight()) {
@@ -329,12 +311,6 @@ public:
         if (!ptr) { return nullptr; }
         assert(*ptr);
         return *ptr;
-    }
-    /// Every function of the container, before or after setup.
-    auto functions() const -> std::vector<std::shared_ptr<mapgen_function>> {
-        auto all = mapgens_;
-        weights_.apply([&](const std::shared_ptr<mapgen_function>& ptr) { all.push_back(ptr); });
-        return all;
     }
     auto has_direct_lua_generator() const -> bool {
         auto found = false;
@@ -383,9 +359,7 @@ class mapgen_factory {
 private:
     std::map<std::string, mapgen_basic_container> mapgens_;
     bool any_direct_lua_generator_ = false;
-    std::optional<std::set<std::string>> usages_;
 
-public:
     /// Collect all the possible and expected keys that may get used with @ref pick.
     static auto get_usages() -> std::set<std::string> {
         std::set<std::string> result;
@@ -409,15 +383,9 @@ public:
     }
 
 public:
-    /// @ref get_usages as the data checks saw it, kept until the data is reset.
-    auto usages() -> const std::set<std::string>& { // *NOPAD*
-        if (!usages_) { usages_ = get_usages(); }
-        return *usages_;
-    }
     void reset() {
         mapgens_.clear();
         any_direct_lua_generator_ = false;
-        usages_.reset();
     }
     /// @see mapgen_basic_container::setup
     void setup() {
@@ -438,9 +406,12 @@ public:
         }
     }
     void check_consistency() {
+        // Cache all strings that may get looked up here so we don't have to go through
+        // all the sources for them upon each loop.
+        const std::set<std::string> usages = get_usages();
         for (std::pair<const std::string, mapgen_basic_container>& omw : mapgens_) {
             omw.second.check_consistency(omw.first);
-            if (!usages().contains(omw.first)) {
+            if (!usages.contains(omw.first)) {
                 debugmsg("Mapgen %s is not used by anything!", omw.first);
             }
         }
@@ -455,10 +426,6 @@ public:
     auto add(const std::string& key, const std::shared_ptr<mapgen_function>& ptr) -> int {
         return mapgens_[key].add(ptr);
     }
-    /// @see mapgen_basic_container::replace
-    void replace(const std::string& key, const std::shared_ptr<mapgen_function>& ptr) {
-        mapgens_[key].replace(ptr);
-    }
     /// @see mapgen_basic_container::generate
     auto generate(mapgendata& dat, const std::string& key, const int hardcoded_weight = 0) const
         -> bool {
@@ -471,13 +438,6 @@ public:
         const auto iter = mapgens_.find(disable_mapgen ? "test" : key);
         if (iter == mapgens_.end()) { return nullptr; }
         return iter->second.pick(hardcoded_weight);
-    }
-    /// @see mapgen_basic_container::functions
-    auto functions(const std::string& key) const -> std::vector<std::shared_ptr<mapgen_function>> {
-        const auto iter = mapgens_.find(key);
-        return iter == mapgens_.end()
-                 ? std::vector<std::shared_ptr<mapgen_function>>{}
-                 : iter->second.functions();
     }
     auto has_direct_lua_generator(const std::string& key) const -> bool {
         const auto iter = mapgens_.find(disable_mapgen ? "test" : key);
@@ -608,30 +568,6 @@ static void set_mapgen_defer(
 /*
  * load a single mapgen json structure; this can be inside an overmap_terrain, or on it's own.
  */
-namespace {
-
-/// What JSON named a built-in or Lua mapgen, and where.
-struct code_mapgen_origin {
-    /// The function itself, so that another one at its address once it is freed is not it.
-    std::weak_ptr<mapgen_function> function;
-    std::string method;
-    std::string name;
-    json_source_location where;
-};
-
-/// The built-in and Lua mapgens loaded, by function, until the data is reset.
-auto code_mapgen_origins = std::map<const mapgen_function*, code_mapgen_origin>{};
-
-auto code_mapgen_named(
-    const JsonObject& jio, const std::string& method, const std::string& name,
-    std::shared_ptr<mapgen_function> function) -> std::shared_ptr<mapgen_function> {
-    code_mapgen_origins[function.get()] = code_mapgen_origin{
-        .function = function, .method = method, .name = name, .where = jio.get_source_location()};
-    return function;
-}
-
-} // namespace
-
 auto load_mapgen_function(
     const JsonObject& jio, const point_rel_omt& offset, const point_rel_omt& total)
     -> std::shared_ptr<mapgen_function> {
@@ -643,9 +579,7 @@ auto load_mapgen_function(
     const std::string mgtype = jio.get_string("method");
     if (mgtype == "builtin") {
         if (const building_gen_pointer ptr = get_mapgen_cfunction(jio.get_string("name"))) {
-            return code_mapgen_named(
-                jio, mgtype, jio.get_string("name"),
-                std::make_shared<mapgen_function_builtin>(ptr, mgweight));
+            return std::make_shared<mapgen_function_builtin>(ptr, mgweight);
         } else {
             jio.throw_error("function does not exist", "name");
         }
@@ -662,8 +596,7 @@ auto load_mapgen_function(
             jio.throw_error(R"(mapgen with method "lua" must define string "luamethod")");
         }
         std::string luamethod = jio.get_string("luamethod");
-        return code_mapgen_named(
-            jio, mgtype, luamethod, std::make_shared<mapgen_function_lua>(luamethod, mgweight));
+        return std::make_shared<mapgen_function_lua>(luamethod, mgweight);
     } else {
         jio.throw_error(R"(invalid value: must be "builtin" or "json")", "method");
     }
@@ -760,7 +693,6 @@ void load_mapgen(const JsonObject& jo) {
 
 void reset_mapgens() {
     oter_mapgen.reset();
-    code_mapgen_origins.clear();
     nested_mapgen.clear();
     update_mapgen.clear();
 }
@@ -768,10 +700,6 @@ void reset_mapgens() {
 /////////////////////////////////////////////////////////////////////////////////
 ///// 2 - right after init() finishes parsing all game json and terrain info/etc is set..
 /////   ...parse more json! (mapgen_function_json)
-
-auto mapgen_function_json_base::source_location() const -> const json_source_location& {
-    return *jsrcloc;
-}
 
 auto mapgen_function_json_base::calc_index(const point_rel_ms& p) const -> size_t {
     if (p.x() >= mapgensize.x()) { debugmsg("invalid value %zu for x in calc_index", p.x()); }
@@ -2944,7 +2872,7 @@ public:
         auto merge_from = [&](const std::string& name) {
             if (name == "null") { return; }
             const auto iter = nested_mapgen.find(name);
-            if (iter == nested_mapgen.end() || iter->second.empty()) {
+            if (iter == nested_mapgen.end()) {
                 debugmsg("Unknown nested mapgen function id %s", name);
                 return;
             }
@@ -3020,8 +2948,7 @@ private:
                 continue;
             }
             const auto iter = nested_mapgen.find(entry.obj);
-            // A name the editor left with no chunks is unknown, and nothing keeps its list.
-            if (iter == nested_mapgen.end() || iter->second.empty()) {
+            if (iter == nested_mapgen.end()) {
                 debugmsg("Unknown nested mapgen function id %s", entry.obj.c_str());
                 resolved.add({}, entry.weight);
                 continue;
@@ -3224,24 +3151,6 @@ void load_place_mapings<jmapgen_terrain>(
     load_place_mapings_alternatively<jmapgen_terrain>(value, vect);
 }
 
-namespace {
-
-/// The JSON text of the member `name` of `jo`.
-auto raw_member(const JsonObject& jo, const std::string& name) -> std::string {
-    auto& jsin = *jo.get_raw(name);
-    jsin.eat_whitespace();
-    const auto begin = jsin.tell();
-    jsin.skip_value();
-    auto text = jsin.substr(begin, jsin.tell() - begin);
-    while (!text.empty()
-           && (std::isspace(static_cast<unsigned char>(text.back())) || text.back() == ',')) {
-        text.pop_back();
-    }
-    return text;
-}
-
-} // namespace
-
 template <typename PieceType>
 void mapgen_palette::load_place_mapings(
     const JsonObject& jo, const std::string& member_name, placing_map& format_placings) {
@@ -3253,16 +3162,13 @@ void mapgen_palette::load_place_mapings(
             if (!sub.has_member(member_name)) { continue; }
             auto& vect = format_placings[key];
             ::load_place_mapings<PieceType>(sub.get_member(member_name), vect);
-            legend[key].push_back({.layer = member_name, .value = raw_member(sub, member_name)});
         }
     }
     if (!jo.has_object(member_name)) { return; }
-    const auto mappings = jo.get_object(member_name);
-    for (const JsonMember member : mappings) {
+    for (const JsonMember member : jo.get_object(member_name)) {
         const map_key key(member);
         auto& vect = format_placings[key];
         ::load_place_mapings<PieceType>(member, vect);
-        legend[key].push_back({.layer = member_name, .value = raw_member(mappings, member.name())});
     }
 }
 
@@ -3380,15 +3286,6 @@ void mapgen_palette::add(const mapgen_palette& rh, const add_palette_context& co
             format_placings[placing.first];
         these_placings
             .insert(these_placings.end(), constrained_placings.begin(), constrained_placings.end());
-    }
-    for (const auto& [key, lines] : rh.legend) {
-        auto& these_lines = legend[key];
-        for (const auto& line : lines) {
-            these_lines.push_back(
-                {.layer = line.layer,
-                 .value = line.value,
-                 .source = line.source.empty() ? rh.id.str() : line.source});
-        }
     }
     for (const auto& placing : rh.keys_with_terrain) { keys_with_terrain.insert(placing); }
     parameters.check_and_merge(rh.parameters, actual_context);
@@ -3593,17 +3490,14 @@ auto mapgen_function_json_base::setup_common(const JsonObject& jo) -> bool {
             std::vector<map_key> row_keys;
             for (const std::string& key : utf8_display_split(row)) { row_keys.emplace_back(key); }
             if (row_keys.size() < static_cast<size_t>(expected_dim.x())) {
-                parray.throw_error(
-                    string_format("  format: row %d must have at least %d columns, not %d", c + 1,
-                                  expected_dim.x(), row_keys.size()),
-                    c);
+                parray.throw_error(string_format(
+                    "  format: row %d must have at least %d columns, not %d", c + 1,
+                    expected_dim.x(), row_keys.size()));
             }
             if (row_keys.size() != static_cast<size_t>(total_size.x())) {
-                parray.throw_error(
-                    string_format(
-                        "  format: row %d must have %d columns, not %d; check mapgensize if applicable",
-                        c + 1, total_size.x(), row_keys.size()),
-                    c);
+                parray.throw_error(string_format(
+                    "  format: row %d must have %d columns, not %d; check mapgensize if applicable",
+                    c + 1, total_size.x(), row_keys.size()));
             }
             for (int i = m_offset.x(); i < expected_dim.x(); i++) {
                 const auto p = point_rel_ms(i, c) - m_offset;
@@ -3732,29 +3626,15 @@ void jmapgen_objects::finalize() {
     });
 }
 
-namespace {
-
-/// Each piece of `objects` once: a symbol of the rows places the same piece on every square of it.
-auto distinct_pieces(const auto& objects) -> std::vector<const jmapgen_piece*> {
-    auto seen = std::unordered_set<const jmapgen_piece*>{};
-    auto pieces = std::vector<const jmapgen_piece*>{};
-    for (const auto& obj : objects) {
-        if (seen.insert(obj.second.get()).second) { pieces.push_back(obj.second.get()); }
-    }
-    return pieces;
-}
-
-} // namespace
-
 void jmapgen_objects::check(
     const std::string& oter_name, const mapgen_parameters& parameters) const {
-    for (const auto* piece : distinct_pieces(objects)) { piece->check(oter_name, parameters); }
+    for (const jmapgen_obj& obj : objects) { obj.second->check(oter_name, parameters); }
 }
 
 void jmapgen_objects::merge_parameters_into(
     mapgen_parameters& params, const std::string& outer_context) const {
-    for (const auto* piece : distinct_pieces(objects)) {
-        piece->merge_parameters_into(params, outer_context);
+    for (const jmapgen_obj& obj : objects) {
+        obj.second->merge_parameters_into(params, outer_context);
     }
 }
 
@@ -6367,495 +6247,3 @@ namespace mapgen {
 auto has_update_id(const mapgen_id& id) -> bool { return update_mapgen.contains(id); }
 
 } // namespace mapgen
-
-namespace {
-
-/// A mapgen read from an entry in memory rather than from its data file.
-class detached_mapgen final: public mapgen_function_json {
-public:
-    detached_mapgen(const point_rel_omt& offset, const point_rel_omt& total)
-        : mapgen_function(1000),
-          mapgen_function_json(json_source_location{}, 1000, offset, total) {}
-    auto load(const JsonObject& jo) -> bool { return setup_common(jo); }
-
-    /// Fixes each parameter named in `pins` to its value; the error names one it does not have.
-    auto pin(const std::map<std::string, std::string>& pins) -> std::expected<void, std::string> {
-        for (const auto& [name, value] : pins) {
-            const auto found = parameters.map.find(name);
-            if (found == parameters.map.end()) { return std::unexpected("no parameter " + name); }
-            found->second = mapgen_parameter(
-                mapgen_value<std::string>(value), found->second.type(), found->second.scope());
-        }
-        return {};
-    }
-
-    auto parameters_of() const -> const mapgen_parameters& { return parameters; } // *NOPAD*
-
-    /// The overmap special that places a mapgen gives it the parameters of the special's scope;
-    /// a preview has no special, so they are picked here as the special picks them.
-    void generate(mapgendata& md) override {
-        auto args = mapgen_arguments{};
-        for (const auto& [name, parameter] : parameters.map) {
-            if (parameter.scope() == mapgen_parameter_scope::overmap_special) {
-                args.map.emplace(name, parameter.get(md));
-            }
-        }
-        if (args.map.empty()) {
-            mapgen_function_json::generate(md);
-            return;
-        }
-        auto with_args = mapgendata(md, args);
-        mapgen_function_json::generate(with_args);
-    }
-};
-
-class detached_nested_mapgen final: public mapgen_function_json_nested {
-public:
-    detached_nested_mapgen(): mapgen_function_json_nested(json_source_location{}) {}
-    auto load(const JsonObject& jo) -> bool { return setup_common(jo); }
-};
-
-/// The source name the loader gives the text, which its messages name with a line and column.
-constexpr auto editor_source = std::string_view("editor");
-
-/// The byte a message names as "<source>:<line>:<column>", counted as `JsonIn::line_number` counts.
-auto offset_named(std::string_view message, std::string_view text) -> std::optional<size_t> {
-    const auto at = message.find(std::string(editor_source) + ":");
-    if (at == std::string_view::npos) { return std::nullopt; }
-    auto rest = message.substr(at + editor_source.size() + 1);
-    auto line = 0;
-    auto column = 0;
-    const auto read_line = std::from_chars(rest.data(), rest.data() + rest.size(), line);
-    if (read_line.ec != std::errc{} || *read_line.ptr != ':') { return std::nullopt; }
-    const auto read_column = std::from_chars(read_line.ptr + 1, rest.data() + rest.size(), column);
-    if (read_column.ec != std::errc{} || line < 1 || column < 1) { return std::nullopt; }
-    auto offset = size_t{0};
-    for (auto seen = 1; seen < line; ++seen) {
-        offset = text.find('\n', offset);
-        if (offset == std::string_view::npos) { return std::nullopt; }
-        ++offset;
-    }
-    return std::min(offset + column - 1, text.size());
-}
-
-/// The loader drops a placement whose square is outside its map, since a map of several overmap
-/// squares keeps it for another of them; one outside all of them is named here. A nested chunk's
-/// placement lands on the map around it, so it is not checked.
-auto check_placements_inside(const JsonObject& object, const point_rel_ms& size) -> void {
-    // A copy, so that walking every member leaves a misspelt one unvisited and reported.
-    auto members = object;
-    members.allow_omitted_members();
-    for (const JsonMember member : members) {
-        if (!member.name().starts_with("place_") || !member.test_array()) { continue; }
-        for (JsonObject placement : member.get_array()) {
-            placement.allow_omitted_members();
-            for (const auto& [axis, limit] : {std::pair{"x", size.x()}, std::pair{"y", size.y()}}) {
-                if (!placement.has_member(axis)) { continue; }
-                const auto range = jmapgen_int(placement, axis);
-                if (range.val >= 0 && range.valmax < limit) { continue; }
-                try {
-                    placement.throw_error(
-                        string_format("%s is outside the %dx%d map", axis, size.x(), size.y()),
-                        axis);
-                } catch (const JsonError& e) { debugmsg("(json-error)\n%s", e.what()); }
-            }
-        }
-    }
-}
-
-/// Names, where they are written, the palettes nobody defines; the loader names them only after
-/// loading every file, or without a place.
-auto check_ids(const JsonObject& object) -> void {
-    const auto said_at = [](auto&& holder, const std::string& message, const auto& where) {
-        try {
-            holder.throw_error(message, where);
-        } catch (const JsonError& e) { debugmsg("(json-error)\n%s", e.what()); }
-    };
-    if (!object.has_array("palettes")) { return; }
-    auto palettes = object.get_array("palettes");
-    for (auto index = 0; index < static_cast<int>(palettes.size()); ++index) {
-        if (!palettes.has_string(index)) { continue; }
-        const auto name = palettes.get_string(index);
-        if (!palette_id(name).is_valid()) {
-            said_at(palettes, string_format("Requested palette with unknown id %s", name), index);
-        }
-    }
-}
-
-/// Loads `object` as a mapgen of `entry`'s kind, then finalizes and checks it; the mapgen of each
-/// overmap square, row by row.
-auto load_detached(const JsonObject& entry, const JsonObject& object) -> editor::detached_mapgens {
-    auto loaded = editor::detached_mapgens{.grid = point_rel_omt(1, 1)};
-    const auto finish = [&](auto& mapgen, const std::string& name) {
-        mapgen_defer::defer = false;
-        const auto loaded = mapgen.load(object);
-        if (mapgen_defer::defer) {
-            mapgen_defer::defer = false;
-            auto deferred = mapgen_defer::jsi;
-            mapgen_defer::jsi = JsonObject();
-            deferred.throw_error(mapgen_defer::message, mapgen_defer::member);
-        }
-        if (!loaded) { object.throw_error("format: no terrain map"); }
-        mapgen.finalize_parameters();
-        mapgen.check(name);
-    };
-    if (entry.has_string("nested_mapgen_id")) {
-        auto nested = detached_nested_mapgen();
-        finish(nested, entry.get_string("nested_mapgen_id"));
-        return loaded;
-    } else if (entry.has_string("update_mapgen_id")) {
-        auto update = update_mapgen_function_json(json_source_location{});
-        if (update.setup_update(object)) {
-            update.finalize_parameters();
-            update.check(entry.get_string("update_mapgen_id"));
-        }
-    } else if (entry.has_array("om_terrain") && entry.get_array("om_terrain").test_array()) {
-        const auto grid = entry.get_array("om_terrain");
-        loaded.grid = point_rel_omt(grid.get_array(0).size(), grid.size());
-        auto offset = point_rel_omt::zero();
-        for (const JsonArray row : grid) {
-            for (const std::string id : row) {
-                auto mapgen = std::make_shared<detached_mapgen>(offset, loaded.grid);
-                finish(*mapgen, id);
-                loaded.om_terrains.push_back(id);
-                loaded.functions.push_back(std::move(mapgen));
-                offset.x()++;
-            }
-            offset.y()++;
-            offset.x() = 0;
-        }
-    } else {
-        const auto name =
-            entry.has_string("om_terrain")
-                ? entry.get_string("om_terrain")
-                : entry.get_array("om_terrain").get_string(0);
-        auto mapgen = std::make_shared<detached_mapgen>(point_rel_omt::zero(), loaded.grid);
-        finish(*mapgen, name);
-        loaded.om_terrains.push_back(name);
-        loaded.functions.push_back(std::move(mapgen));
-    }
-    check_placements_inside(
-        object, point_rel_ms(SEEX * 2 * loaded.grid.x(), SEEY * 2 * loaded.grid.y()));
-    return loaded;
-}
-
-/// Loads a palette entry as the loader does, then adds it with every palette it names as a mapgen
-/// using it would, and checks the result. The entry stands in for the palette of its id meanwhile,
-/// so that a loop through it is found.
-auto check_palette(const JsonObject& entry) -> void {
-    check_ids(entry);
-    const auto id = palette_id(entry.get_string("id"));
-    auto kept = palettes.extract(id);
-    const auto restore = on_out_of_scope([&] {
-        palettes.erase(id);
-        if (kept) { palettes.insert(std::move(kept)); }
-    });
-    mapgen_palette::load(entry, mod_management::get_default_core_content_pack().str());
-    auto user = std::ostringstream{};
-    auto jsout = JsonOut(user);
-    jsout.start_object();
-    jsout.member("palettes", std::vector{id.str()});
-    jsout.end_object();
-    auto in = std::istringstream(user.str());
-    auto jsin = JsonIn(in, std::string(editor_source));
-    mapgen_palette::load_temp(jsin.get_object(), "", "").check();
-}
-
-} // namespace
-
-auto editor::terrain_placed(const std::string& name) -> bool {
-    return name == "null" || oter_mapgen.usages().contains(name);
-}
-
-auto editor::check_mapgen(const std::string_view text) -> std::vector<loader_message> {
-    auto thrown = std::optional<std::string>{};
-    const auto said = capture_each_debugmsg_during([&] {
-        try {
-            auto in = std::istringstream(std::string(text));
-            auto jsin = JsonIn(in, std::string(editor_source));
-            const auto entry = jsin.get_object();
-            if (entry.get_string("type") == "palette") {
-                check_palette(entry);
-                return;
-            }
-            entry.get_int("weight", 1000);
-            if (entry.get_string("method") != "json") {
-                entry.throw_error("the editor reads only \"json\" mapgen", "method");
-            }
-            const auto object = entry.get_object("object");
-            check_ids(object);
-            load_detached(entry, object);
-        } catch (const JsonError& e) { thrown = e.what(); }
-    });
-    auto messages =
-        said | std::views::transform([&](const std::string& message) {
-            return editor::loader_message{
-                .text = plain_loader_text(message), .offset = offset_named(message, text)};
-        })
-        | std::ranges::to<std::vector>();
-    if (thrown) {
-        messages.push_back(
-            {.text = plain_loader_text(*thrown), .offset = offset_named(*thrown, text)});
-    }
-    return messages;
-}
-
-editor::file_stand_ins::file_stand_ins(const std::vector<std::string>& texts) {
-    auto ids = std::make_shared<std::vector<palette_id>>();
-    auto kept = std::make_shared<std::vector<decltype(palettes)::node_type>>();
-    struct kept_chunks {
-        std::string name;
-        /// The game's chunks of the name, none when it has none.
-        std::optional<nested_mapgen_function_list> was;
-    };
-    auto chunks_kept = std::make_shared<std::vector<kept_chunks>>();
-    // Set first, so that whatever loading throws, the game gets its own back.
-    restore_palettes_ = [ids, kept] {
-        for (const auto& id : *ids) { palettes.erase(id); }
-        for (auto& node : *kept) { palettes.insert(std::move(node)); }
-    };
-    // The lists stay where they are, since the mapgens that place them keep their address; a name
-    // the game lacks is left with no chunks, which places nothing, as an unknown name does.
-    restore_chunks_ = [chunks_kept] {
-        for (auto& entry : *chunks_kept) {
-            nested_mapgen[entry.name] = std::move(entry.was).value_or(
-                nested_mapgen_function_list{});
-        }
-    };
-    const auto each_entry = [&](const auto& read) {
-        for (const auto& text : texts) {
-            try {
-                auto in = std::istringstream(text);
-                auto jsin = JsonIn(in, std::string(editor_source));
-                const auto entry = jsin.get_object();
-                entry.allow_omitted_members();
-                read(entry);
-            } catch (const JsonError& /*e*/) {}
-        }
-    };
-    capture_each_debugmsg_during([&] {
-        // Palettes first, so that a chunk reads the palettes of the file.
-        each_entry([&](const JsonObject& entry) {
-            if (entry.get_string("type") != "palette") { return; }
-            const auto id = palette_id(entry.get_string("id"));
-            if (!std::ranges::contains(*ids, id)) {
-                ids->push_back(id);
-                if (auto node = palettes.extract(id)) { kept->push_back(std::move(node)); }
-            }
-            mapgen_palette::load(entry, mod_management::get_default_core_content_pack().str());
-        });
-        auto loaded = std::map<std::string, nested_mapgen_function_list>{};
-        each_entry([&](const JsonObject& entry) {
-            if (!entry.has_string("nested_mapgen_id")) { return; }
-            auto chunk = std::make_shared<detached_nested_mapgen>();
-            auto object = entry.get_object("object");
-            object.allow_omitted_members();
-            mapgen_defer::defer = false;
-            const auto read = chunk->load(object);
-            // A chunk the loader would defer is left to checking it, which reports why.
-            if (std::exchange(mapgen_defer::defer, false) || !read) { return; }
-            loaded[entry.get_string("nested_mapgen_id")].add(chunk, entry.get_int("weight", 1000));
-        });
-        // Only names with a chunk that loaded stand in, so a broken one leaves the game's.
-        for (auto& [name, chunks] : loaded) {
-            chunks.precalc();
-            const auto found = nested_mapgen.find(name);
-            chunks_kept->push_back(
-                {.name = name,
-                 .was = found == nested_mapgen.end()
-                          ? std::nullopt
-                          : std::optional(std::exchange(found->second, std::move(chunks)))});
-            if (found == nested_mapgen.end()) { nested_mapgen[name] = std::move(chunks); }
-        }
-        // As the game does after loading them all, so that a chunk sees the chunks it places.
-        for (const auto& entry : *chunks_kept) {
-            for (const auto& chunk : nested_mapgen[entry.name]) {
-                chunk.obj->finalize_parameters();
-            }
-        }
-    });
-}
-
-auto editor::plain_loader_text(const std::string_view message) -> std::string {
-    constexpr auto header = std::string_view("Json error: ");
-    const auto at = message.find(header);
-    if (at == std::string_view::npos) { return std::string(message); }
-    auto rest = message.substr(at + header.size());
-    auto line = std::optional<int>{};
-    // The place leads as "<source>:<line>:<column>: " or "<source>:EOF: ".
-    if (const auto colon = rest.find(": "); colon != std::string_view::npos) {
-        const auto place = rest.substr(0, colon);
-        const auto column = place.rfind(':');
-        const auto row =
-            column == std::string_view::npos || column == 0
-                ? std::string_view::npos
-                : place.rfind(':', column - 1);
-        auto read = 0;
-        if (row != std::string_view::npos
-            && std::from_chars(place.data() + row + 1, place.data() + column, read).ec
-                   == std::errc{}) {
-            line = read;
-        }
-        rest.remove_prefix(colon + 2);
-    }
-    // The text around the place is quoted after a blank line.
-    rest = rest.substr(0, rest.find("\n\n"));
-    constexpr auto missing = std::string_view("missing required field \"");
-    if (rest.starts_with(missing)) {
-        const auto name =
-            rest.substr(missing.size(), rest.find('"', missing.size()) - missing.size());
-        return string_format(_("The \"%s\" field is missing."), name);
-    }
-    auto text = std::string(rest);
-    if (!text.empty()) {
-        text[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(text[0])));
-    }
-    return line ? string_format(_("Line %1$d: %2$s"), *line, text) : text;
-}
-
-auto editor::mapgen_legend(const std::string_view text)
-    -> std::expected<std::vector<legend_symbol>, std::string> {
-    auto symbols = std::map<std::string, legend_symbol>{};
-    auto thrown = std::optional<std::string>{};
-    // What the loader says is check_mapgen's to report.
-    capture_each_debugmsg_during([&] {
-        try {
-            auto in = std::istringstream(std::string(text));
-            auto jsin = JsonIn(in, std::string(editor_source));
-            const auto entry = jsin.get_object();
-            entry.allow_omitted_members();
-            // A palette maps its symbols itself; a mapgen in its object.
-            const auto object =
-                entry.get_string("type", "") == "palette" ? entry : entry.get_object("object");
-            object.allow_omitted_members();
-            const auto palette = mapgen_palette::
-                load_temp(object, mod_management::get_default_core_content_pack().str(), "");
-            for (const auto& [key, lines] : palette.legend) {
-                symbols[key.str] = {.symbol = key.str, .lines = lines};
-            }
-            if (!object.has_array("rows")) { return; }
-            for (const std::string row : object.get_array("rows")) {
-                for (const auto& symbol : utf8_display_split(row)) {
-                    auto& found = symbols[symbol];
-                    found.symbol = symbol;
-                    found.used = true;
-                }
-            }
-        } catch (const JsonError& e) { thrown = e.what(); }
-    });
-    if (thrown) { return std::unexpected(*thrown); }
-    return symbols | std::views::values | std::ranges::to<std::vector>();
-}
-
-auto editor::load_detached_mapgens(const std::string_view text)
-    -> std::expected<detached_mapgens, std::string> {
-    try {
-        auto in = std::istringstream(std::string(text));
-        auto jsin = JsonIn(in, std::string(editor_source));
-        const auto entry = jsin.get_object();
-        entry.allow_omitted_members();
-        if (entry.get_string("method") != "json") {
-            entry.throw_error("the editor reads only \"json\" mapgen", "method");
-        }
-        const auto object = entry.get_object("object");
-        object.allow_omitted_members();
-        return load_detached(entry, object);
-    } catch (const JsonError& e) { return std::unexpected(plain_loader_text(e.what())); }
-}
-
-auto editor::apply_mapgen(const std::string_view text) -> std::expected<void, std::string> {
-    const auto loaded = load_detached_mapgens(text);
-    if (!loaded) { return std::unexpected(loaded.error()); }
-    if (loaded->functions.empty()) {
-        return std::unexpected(std::string(_("Only an overmap terrain's mapgen can be applied.")));
-    }
-    for (const auto index : std::views::iota(std::size_t{0}, loaded->functions.size())) {
-        oter_mapgen.replace(loaded->om_terrains[index], loaded->functions[index]);
-    }
-    return {};
-}
-
-auto editor::mapgen_source_of(const std::string& mapgen_id) -> std::optional<mapgen_source> {
-    const auto picked = oter_mapgen.pick(mapgen_id);
-    const auto* const json = dynamic_cast<const mapgen_function_json_base*>(picked.get());
-    if (json == nullptr || !json->source_location().path) { return std::nullopt; }
-    return mapgen_source{
-        .path = *json->source_location().path, .offset = json->source_location().offset};
-}
-
-auto editor::nested_mapgen_source_of(const std::string& id) -> std::optional<mapgen_source> {
-    const auto found = nested_mapgen.find(id);
-    if (found == nested_mapgen.end()) { return std::nullopt; }
-    for (const auto& function : found->second) {
-        const auto* const json = dynamic_cast<const mapgen_function_json_base*>(function.obj.get());
-        if (json != nullptr && json->source_location().path) {
-            return mapgen_source{
-                .path = *json->source_location().path, .offset = json->source_location().offset};
-        }
-    }
-    return std::nullopt;
-}
-
-auto editor::source_line(const std::string& path, const int offset) -> std::string {
-    const auto text = read_entire_file(path);
-    const auto end = std::min(static_cast<std::size_t>(std::max(offset, 0)), text.size());
-    const auto line = std::ranges::count(text.substr(0, end), '\n') + 1;
-    return string_format("%s:%d", path, line);
-}
-
-auto editor::code_mapgens_of(const std::string& mapgen_id) -> std::vector<code_mapgen> {
-    return oter_mapgen.functions(mapgen_id) | std::views::filter([](const auto& function) {
-               const auto found = code_mapgen_origins.find(function.get());
-               return found != code_mapgen_origins.end()
-                   && found->second.function.lock() == function;
-           })
-         | std::views::transform([](const auto& function) {
-               const auto& origin = code_mapgen_origins.at(function.get());
-               return code_mapgen{
-                   .method = origin.method,
-                   .name = origin.name,
-                   .declared =
-                       origin.where.path
-                           ? std::optional(source_line(*origin.where.path, origin.where.offset))
-                           : std::nullopt,
-                   .defined =
-                       origin.method == "lua" ? lua_mapgen_defined_at(origin.name) : std::nullopt};
-           })
-         | std::ranges::to<std::vector>();
-}
-
-auto editor::nested_mapgen_ids() -> std::vector<std::string> {
-    return nested_mapgen
-         | std::views::filter([](const auto& entry) { return !entry.second.empty(); })
-         | std::views::keys | std::ranges::to<std::vector>();
-}
-
-auto editor::palette_ids() -> std::vector<std::string> {
-    return palettes | std::views::keys | std::views::transform(&palette_id::str)
-         | std::ranges::to<std::vector>();
-}
-
-auto editor::parameters_of(const mapgen_function& function)
-    -> std::vector<mapgen_parameter_choice> {
-    const auto* const detached = dynamic_cast<const detached_mapgen*>(&function);
-    if (detached == nullptr) { return {}; }
-    const auto& parameters = detached->parameters_of();
-    auto choices =
-        parameters.map | std::views::transform([&](const auto& entry) {
-            return mapgen_parameter_choice{
-                .name = entry.first, .values = entry.second.all_possible_values(parameters)};
-        })
-        | std::ranges::to<std::vector>();
-    std::ranges::sort(choices, {}, &mapgen_parameter_choice::name);
-    return choices;
-}
-
-auto editor::pin_parameters(
-    mapgen_function& function, const std::map<std::string, std::string>& pins)
-    -> std::expected<void, std::string> {
-    auto* const detached = dynamic_cast<detached_mapgen*>(&function);
-    if (detached == nullptr) {
-        return std::unexpected(std::string("not a mapgen the editor loaded"));
-    }
-    return detached->pin(pins);
-}
