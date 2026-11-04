@@ -37,8 +37,7 @@ In order to compile localization files, you'll also need `gettext` package.
 ## Build Environment
 
 Tiles, curses, and MCP can run from one executable. See
-[Engine and clients](../../explanation/engine_clients.md) for enabling and selecting clients,
-and [Playing through MCP](../mcp.md) for connecting an agent.
+[Engine and clients](../../explanation/engine_clients.md) for enabling and selecting clients.
 
 ### Client configurations
 

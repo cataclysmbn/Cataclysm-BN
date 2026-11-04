@@ -26,11 +26,6 @@ auto request_of( const envelope &input ) -> request
              .method = input["method"].get<std::string>(),
              .params = params == input.end() ? std::nullopt : std::optional{ params->dump() } };
 }
-auto legacy_bad_shape( const request_id &id ) -> legacy_error
-{
-    return { .id = { .json = id.json.value_or( "null" ) },
-             .reason = id.json ? legacy_reason::invalid_parameters : legacy_reason::invalid_request };
-}
 auto member( const envelope &input, const char *name ) -> const envelope *
 {
     const auto found = input.find( name );
@@ -93,38 +88,6 @@ struct trusted_error {
     error_code code;
     std::string_view message;
 };
-auto legacy_message( legacy_reason reason ) -> std::optional<trusted_error>
-{
-    switch( reason ) {
-        case legacy_reason::parse_error:
-            return trusted_error{ .code = error_code::parse_error, .message = "Parse error" };
-        case legacy_reason::invalid_request:
-            return trusted_error{ .code = error_code::invalid_request, .message = "Invalid request" };
-        case legacy_reason::invalid_parameters:
-            return trusted_error{ .code = error_code::invalid_params, .message = "Invalid parameters" };
-        case legacy_reason::invalid_jsonrpc_version:
-            return trusted_error{ .code = error_code::invalid_request, .message = "Invalid JSON-RPC version" };
-        case legacy_reason::invalid_jsonrpc_request:
-            return trusted_error{ .code = error_code::invalid_request, .message = "Invalid JSON-RPC request" };
-        case legacy_reason::method_required:
-            return trusted_error{ .code = error_code::invalid_request, .message = "JSON-RPC method is required" };
-        case legacy_reason::not_initialized:
-            return trusted_error{ .code = error_code::not_initialized, .message = "Server is not initialized" };
-        case legacy_reason::unknown_resource:
-            return trusted_error{ .code = error_code::invalid_params, .message = "Unknown resource" };
-        case legacy_reason::structured_state_unavailable:
-            return trusted_error{ .code = error_code::internal_error, .message = "Structured state is unavailable" };
-        case legacy_reason::subscriptions_not_supported:
-            return trusted_error{ .code = error_code::method_not_found, .message = "Resource subscriptions are not supported" };
-        case legacy_reason::structured_interaction_unavailable:
-            return trusted_error{ .code = error_code::internal_error, .message = "Structured interaction is unavailable" };
-        case legacy_reason::unknown_tool:
-            return trusted_error{ .code = error_code::invalid_params, .message = "Unknown tool" };
-        case legacy_reason::method_not_found:
-            return trusted_error{ .code = error_code::method_not_found, .message = "Method not found" };
-    }
-    return std::nullopt;
-}
 /// Only the closed tables above supply messages; there is no public arbitrary-string seam.
 auto assemble_error( const error_options &options, std::string_view message ) ->
 std::expected<std::string, output_error>
@@ -206,38 +169,6 @@ auto apply_strict_policy( const envelope &input ) -> request_entry
     }
     return request_of( input );
 }
-auto apply_legacy_policy( const envelope &input ) -> legacy_request_entry
-{
-    if( !input.is_object() ) {
-        return legacy_error{ .id = { .json = "null" }, .reason = legacy_reason::parse_error };
-    }
-    const auto bad_id = legacy_error{ .id = { .json = "null" }, .reason = legacy_reason::invalid_request };
-    const auto id_value = member( input, "id" );
-    if( id_value && id_value->is_number() ) {
-        // Historical clients use signed 64-bit integers only.
-        if( !id_value->is_number_integer() ||
-            ( id_value->is_number_unsigned() &&
-              id_value->get<std::uint64_t>() > std::numeric_limits<std::int64_t>::max() ) ) {
-            return bad_id;
-        }
-    } else if( id_value && !id_value->is_string() && !id_value->is_null() ) { return bad_id; }
-    const auto id = request_id{ .json = id_value ? std::optional{ id_value->dump() } : std::nullopt };
-    const auto version = member( input, "jsonrpc" );
-    if( version && !version->is_string() ) { return legacy_bad_shape( id ); }
-    if( !version || *version != "2.0" ) {
-        return legacy_error{ .id = { .json = id.json.value_or( "null" ) },
-                             .reason = id.json ? legacy_reason::invalid_jsonrpc_version :
-                                       legacy_reason::invalid_jsonrpc_request };
-    }
-    const auto method = member( input, "method" );
-    if( !method ) {
-        return legacy_error{ .id = { .json = id.json.value_or( "null" ) }, .reason = legacy_reason::method_required };
-    }
-    if( !method->is_string() ) { return legacy_bad_shape( id ); }
-    // Legacy dispatch establishes notification identity BEFORE inspecting application payloads.
-    // A params:null (or otherwise wrong-type) notification must therefore remain a notification.
-    return request_of( input );
-}
 
 auto read_frame( std::istream &input, std::size_t max_bytes ) -> read_result
 {
@@ -297,16 +228,6 @@ std::expected<std::optional<response>, output_error>
     const auto message = error_message( options.code );
     if( !message ) { return std::unexpected( output_error::invalid_value ); }
     auto bytes = assemble_error( options, *message );
-    if( !bytes ) { return std::unexpected( bytes.error() ); }
-    return response( std::move( *bytes ) );
-}
-auto make_legacy_error( const legacy_error &options ) ->
-std::expected<std::optional<response>, output_error>
-{
-    if( !options.id.json ) { return std::nullopt; }
-    const auto trusted = legacy_message( options.reason );
-    if( !trusted ) { return std::unexpected( output_error::invalid_value ); }
-    auto bytes = assemble_error( { .id = options.id, .code = trusted->code }, trusted->message );
     if( !bytes ) { return std::unexpected( bytes.error() ); }
     return response( std::move( *bytes ) );
 }

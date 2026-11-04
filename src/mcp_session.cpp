@@ -1,5 +1,4 @@
 #include "mcp_session.h"
-#include "game_observation.h"
 
 #include <algorithm>
 #include <chrono>
@@ -12,7 +11,6 @@
 #include <memory>
 #include <optional>
 #include <ranges>
-#include <sstream>
 #include <stdexcept>
 #include <streambuf>
 #include <string>
@@ -53,7 +51,6 @@ constexpr size_t max_pending_events = 256;
 
 struct session_state {
     std::deque<key_event> events;
-    screen_snapshot screen{ .json = "{\"width\":0,\"height\":0,\"cells\":[]}" };
     std::unique_ptr<server> transport;
     std::unique_ptr<std::streambuf> output_buffer;
     std::unique_ptr<std::ostream> output;
@@ -98,41 +95,6 @@ auto redirect_stdout_to_stderr() -> bool
 #endif
 }
 
-auto serialize_actions() -> std::string
-{
-    const auto active = game_client::active_input_context();
-    auto output = std::ostringstream{};
-    auto json = JsonOut( output );
-    json.start_object();
-    json.member( "input_id", game_client::current_input_id() );
-    json.member( "category", std::string( active.category ) );
-    json.member( "timeout_ms", active.timeout_ms );
-    json.member( "actions" );
-    json.start_array();
-    for( const auto &action : game_client::available_input_actions() ) {
-        json.start_object();
-        json.member( "id", action.id );
-        json.member( "name", action.name );
-        json.member( "bindings" );
-        json.start_array();
-        for( const auto &binding : action.bindings ) {
-            json.start_object();
-            json.member( "input_method", binding.type == input_event_t::keyboard ? "keyboard" : "other" );
-            json.member( "sequence" );
-            json.start_array();
-            for( const auto key : binding.sequence ) {
-                json.write( inp_mngr.get_keyname( key, binding.type, true ) );
-            }
-            json.end_array();
-            json.end_object();
-        }
-        json.end_array();
-        json.end_object();
-    }
-    json.end_array();
-    json.end_object();
-    return output.str();
-}
 
 auto has_input() -> bool
 {
@@ -151,33 +113,14 @@ auto submit_events( const std::vector<key_event> &requests ) -> bool
     return true;
 }
 
-auto observe() -> screen_snapshot
-{
-    return state().screen;
-}
 
-auto actions() -> std::string
-{
-    return serialize_actions();
-}
 
-auto structured_state() -> screen_snapshot
-{
-    const auto current = game_observation::capture();
-    return { .json = current.json, .text = current.text };
-}
 
 auto resize_viewport( const int cols, const int rows ) -> void
 {
     game_ui::resize_terrain_window( { cols, rows } );
 }
 
-auto interaction( const std::size_t offset, const std::size_t limit ) -> screen_snapshot
-{
-    const auto current = game_client::current_interaction( { .offset = offset, .limit = limit } );
-    const auto text = !current.message.empty() ? current.message : current.title;
-    return { .json = game_client::serialize_interaction( current ), .text = text };
-}
 
 constexpr auto heartbeat_interval = std::chrono::seconds( 2 );
 
@@ -313,7 +256,7 @@ auto provide_input( const int timeout_ms ) -> input_event
                 return *event;
             } else {
                 session.events.clear();
-                if( const auto leader = controller() ) { leader->protocol.reject_pending( event.error() ); }
+                if( const auto leader = controller() ) { leader->protocol.reject_pending(); }
             }
         }
         // A zero-timeout poll is a running activity checking for interruption, not input being
@@ -355,62 +298,7 @@ auto report_loading( const game_client::loading_progress &progress ) -> void
     }
 }
 
-auto serialize_screen( const game_client::screen_snapshot &screen ) -> screen_snapshot
-{
-    auto output = std::ostringstream{};
-    auto json = JsonOut( output );
-    json.start_object();
-    json.member( "width", screen.width );
-    json.member( "height", screen.height );
-    json.member( "cursor" );
-    json.start_object();
-    json.member( "x", screen.cursor.x );
-    json.member( "y", screen.cursor.y );
-    json.member( "visible", screen.cursor_visible );
-    json.end_object();
-    json.member( "rows" );
-    json.start_array();
-    for( int y = 0; y < screen.height; ++y ) {
-        auto row = std::string{};
-        for( int x = 0; x < screen.width; ++x ) {
-            row += screen.cells[static_cast<size_t>( y * screen.width + x )].text;
-        }
-        json.write( row );
-    }
-    json.end_array();
-    json.member( "styles" );
-    json.start_array();
-    for( int y = 0; y < screen.height; ++y ) {
-        auto run_start = 0;
-        while( run_start < screen.width ) {
-            const auto &first = screen.cells[static_cast<size_t>( y * screen.width + run_start )];
-            auto run_length = 1;
-            while( run_start + run_length < screen.width ) {
-                const auto &next = screen.cells[
-                                       static_cast<size_t>( y * screen.width + run_start + run_length )];
-                if( next.foreground != first.foreground || next.background != first.background ) {
-                    break;
-                }
-                ++run_length;
-            }
-            json.start_array();
-            json.write( y * screen.width + run_start );
-            json.write( run_length );
-            json.write( first.foreground );
-            json.write( first.background );
-            json.end_array();
-            run_start += run_length;
-        }
-    }
-    json.end_array();
-    json.end_object();
-    return {.json = output.str(), .text = screen.text};
-}
 
-auto publish_screen( const game_client::screen_snapshot &screen ) -> void
-{
-    state().screen = serialize_screen( screen );
-}
 
 } // namespace
 
@@ -444,8 +332,6 @@ auto start_session() -> void
         throw std::runtime_error( "Unable to isolate MCP stdio" );
     }
     auto host = mcp_host{
-        .observe = observe,
-        .state = structured_state,
         .submit = submit_events,
         .has_input = has_input,
         .wait_input = []( const int wait_ms )
@@ -456,8 +342,6 @@ auto start_session() -> void
             return state().hub->wait_controller_ready( wait_ms );
 #endif
         },
-        .actions = actions,
-        .interaction = interaction,
         .resize_viewport = resize_viewport
     };
 #if defined(_WIN32)
@@ -469,7 +353,6 @@ auto start_session() -> void
 #endif
     session.started = true;
     game_client::memory::set_input_provider( provide_input );
-    game_client::memory::set_present_callback( publish_screen );
     game_client::set_loading_observer( report_loading );
 }
 
@@ -500,7 +383,6 @@ auto finish_session() -> void
         return;
     }
     if( const auto leader = controller() ) {
-        leader->protocol.finish_pending( leader->out, std::cerr );
         static_cast<void>( leader->protocol.finish( leader->out ) );
         leader->out.flush();
     }
@@ -509,7 +391,6 @@ auto finish_session() -> void
 #endif
     request_stop();
     game_client::memory::set_input_provider( {} );
-    game_client::memory::set_present_callback( {} );
     game_client::set_loading_observer( nullptr );
     session.output.reset();
     session.output_buffer.reset();

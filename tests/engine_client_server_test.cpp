@@ -133,7 +133,6 @@ struct fixture {
     std::ostringstream errors;
     bn::mcp::server server{
         {
-            .observe = [] { return bn::mcp::screen_snapshot{.json = "{}"}; },
             .submit =
                 [this](const auto& input) {
                     queued = input;
@@ -216,7 +215,6 @@ TEST_CASE(
     auto waits = std::vector<int>{};
     auto answers = true;
     auto timed = bn::mcp::server{{
-        .observe = [] { return bn::mcp::screen_snapshot{.json = "{}"}; },
         .submit = [&](const auto& input) { return test.queued = input, true; },
         .has_input = [&] { return !test.queued.empty(); },
         .wait_input = [&](const int ms) { return waits.push_back(ms), answers; },
@@ -752,7 +750,6 @@ struct held_walk {
     int steps = 0;
     bn::mcp::server server{
         {
-            .observe = [] { return bn::mcp::screen_snapshot{.json = "{}"}; },
             .submit = [this](const auto& input) { return test.queued = input, true; },
             .has_input = [this] { return !test.queued.empty(); },
             .wait_input = [this](int) { return in.rdbuf()->in_avail() > 0; },
@@ -1572,11 +1569,12 @@ TEST_CASE(
         {"{not json", "-32700"},
         {"", ""},
         {"[]", "-32600"},
-        {"42", "-32700"}, // historical: a scalar frame is a parse error
-        {"null", "-32700"},
+        {"42", "-32600"},
+        {"null", "-32600"},
         {R"({"jsonrpc":"2.0"})", "-32600"},
         {R"({"jsonrpc":"1.0","method":"bn.subscribe","id":4})", "-32600"},
-        {R"({"jsonrpc":"2.0","method":5,"id":4})", "-32602"}, // historical shape error
+        {R"({"jsonrpc":"2.0","method":5,"id":4})", "-32600"},
+        {R"({"jsonrpc":"2.0","method":"initialize","id":4})", "-32601"},
         {R"({"jsonrpc":"2.0","method":"bn.subscribe","id":{}})", "-32600"},
         {R"({"jsonrpc":"2.0","method":"bn.nope","params":{},"id":4})", "-32601"},
         {R"({"jsonrpc":"2.0","method":"bn.credit","params":[],"id":4})", "-32602"},
@@ -1795,7 +1793,6 @@ struct hub_rig {
     explicit hub_rig(const bn::mcp::stdio_options options = {}) {
         REQUIRE(test.authority.publish_boundary());
         const auto host = bn::mcp::mcp_host{
-            .observe = [] { return bn::mcp::screen_snapshot{.json = "{}"}; },
             .submit =
                 [this](const auto& input) {
                     test.queued = input;

@@ -36,7 +36,6 @@ struct connection {
     bn::mcp::server server;
     explicit connection(ec::session& authority)
         : server{{
-              .observe = [] { return bn::mcp::screen_snapshot{.json = "{}"}; },
               .submit =
                   [this](const auto& input) {
                       queued = input;
