@@ -165,7 +165,7 @@
     "initial_charges": 20,
     "max_charges": 20,
     "charges_per_use": 1,
-    "item_vars": { "digital_content": "test_digital_music_content" },
+    "item_vars": { "digital_content": "test_digital_music_content", "digital_reader_ports": "SD" },
     "flags": [ "DIGITAL_READER", "DIGITAL_STORAGE" ],
     "use_action": [
       "EINKTABLETPC",
