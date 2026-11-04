@@ -109,7 +109,6 @@ are selected; smaller selections list the individual category names. The same
 rule applies independently to each group in a mixed selection. Unknown/unassigned
 storage types use their translated type name instead. Existing zone names remain unchanged.
 
-
 The Zone Manager returns to its creation checklist if the manual filter dialog
 is canceled; pending checkboxes are preserved and no name/area dialog opens.
 Recognized filter prefixes (`c:`, `m:`, `q:`, etc.) are highlighted only for display.
