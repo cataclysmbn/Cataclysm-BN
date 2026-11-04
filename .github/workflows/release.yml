@@ -14,7 +14,7 @@ env:
   VCPKG_BINARY_SOURCES: "default"
   # Each bundle, a no-soundpack one for Windows and both macOS, and the Windows PDB.
   EXPECTED_NIGHTLY_ASSET_COUNT: 8
-  CLIENT_REPOSITORY: scarf005/bn-client-egui
+  CLIENT_REPOSITORY: cataclysmbn/bn-client-egui
 
 jobs:
   metadata:

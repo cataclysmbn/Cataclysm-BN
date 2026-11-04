@@ -23,6 +23,11 @@ on:
         required: false
         type: string
         default: ""
+      checkout-repository:
+        description: "Repository of checkout-ref when it is not the calling one"
+        required: false
+        type: string
+        default: ""
       matrix-json:
         description: "Build matrix include entries as JSON"
         required: false
@@ -85,7 +90,7 @@ on:
         type: string
         default: ""
       client-ref:
-        description: "Commit of scarf005/bn-client-egui to bundle as what the player starts (empty for none)"
+        description: "Commit of cataclysmbn/bn-client-egui to bundle as what the player starts (empty for none)"
         required: false
         type: string
         default: ""
@@ -111,6 +116,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          repository: ${{ inputs.checkout-repository || github.repository }}
           ref: ${{ inputs.checkout-ref }}
 
       - name: Build shadercross
@@ -122,7 +128,7 @@ jobs:
       - name: Upload generated shaders
         uses: actions/upload-artifact@v4
         with:
-          name: generated-shaders
+          name: generated-shaders${{ inputs.artifact-label != '' && format('-{0}', inputs.artifact-label) || '' }}
           path: data/shaders/
           if-no-files-found: error
 
@@ -138,12 +144,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          repository: ${{ inputs.checkout-repository || github.repository }}
           ref: ${{ inputs.checkout-ref }}
 
       - name: Download generated shaders
         uses: actions/download-artifact@v4
         with:
-          name: generated-shaders
+          name: generated-shaders${{ inputs.artifact-label != '' && format('-{0}', inputs.artifact-label) || '' }}
           path: data/shaders
 
       - name: Download translation artifacts
@@ -161,8 +168,8 @@ jobs:
           cat >VERSION.txt <<EOL
           build type: ${{ matrix.artifact }}
           build number: ${{ inputs.version-label }}
-          commit sha: ${{ github.sha }}
-          commit url: https://github.com/${{ github.repository }}/commit/${{ github.sha }}
+          commit sha: ${{ inputs.checkout-repository != '' && inputs.checkout-ref || github.sha }}
+          commit url: https://github.com/${{ inputs.checkout-repository || github.repository }}/commit/${{ inputs.checkout-repository != '' && inputs.checkout-ref || github.sha }}
           EOL
 
       - name: Bundle CDDA tilesets
@@ -448,7 +455,7 @@ jobs:
         if: inputs.client-ref != ''
         uses: actions/checkout@v4
         with:
-          repository: scarf005/bn-client-egui
+          repository: cataclysmbn/bn-client-egui
           ref: ${{ inputs.client-ref }}
           path: client-src
 
@@ -926,6 +933,8 @@ jobs:
           gh release upload "$release" --clobber cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.${{ matrix.ext }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # The checkout can be another repository; the release is always the running one's.
+          GH_REPO: ${{ github.repository }}
         shell: bash
 
       - name: Upload PDB to release (windows msvc)
@@ -938,6 +947,7 @@ jobs:
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         shell: bash
 
       - name: Run sharded tests (desktop)
