@@ -45,7 +45,7 @@ auto upload_digital_files( const Character &who, const digital_file_upload_optio
 auto migrate_legacy_digital_media( item &media ) -> void;
 /// Migrate old drives and find sample files carried on any storage device.
 auto digital_genome_samples( const Character &who ) -> std::vector<item *>;
-/// Writable USB drives and SD cards, initialized and excluding encrypted media.
+/// Writable removable storage, initialized and excluding encrypted media.
 auto digital_genome_storage( const Character &who ) -> std::vector<item *>;
 /// The device's own captured photos, separate from imported collections.
 auto camera_photo_collection( item &camera ) -> item &; // *NOPAD*

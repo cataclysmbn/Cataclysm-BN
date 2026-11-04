@@ -1,6 +1,6 @@
 # Digital media
 
-Digital files are items stored inside USB drives, SD cards, or a reader. The
+Digital files are items stored inside USB drives, SD cards, hard drives, or a reader. The
 e-ink tablet, laptops, wrist computers, and smartphones provide a **Download
 data from storage media** action that copies files into internal storage.
 **Browse digital files** offers information, study, and item actions for
@@ -9,7 +9,7 @@ use action appears under its configured name; cooldown and availability details
 appear in the menu description area.
 
 **Copy files to storage media** copies all installed files onto an unencrypted
-USB drive or SD card. For a single file, choose **Browse digital files → file →
+USB drive, SD card, or hard drive. For a single file, choose **Browse digital files → file →
 Copy to storage media**. The
 reader must be powered. Existing destination files are retained, and the original
 files stay on the reader. Copies preserve their entry counts, metadata, and file
@@ -140,6 +140,19 @@ Selections are generated once when the file enters storage and are saved in the
 file. Downloading, exporting, and loading the file retain that selection. An
 empty result is retained too, rather than rerolled on every access.
 
+## Salvaged hard drives
+
+Disassembling intact or broken computer terminals, including the furniture
+versions, recovers a `hard_drive`. Each drive generates one to three random
+files from `digital_content_terminal` when first accessed. The pool includes
+photos, music, instructional files, executables, and recipe archives. Files are
+rolled once and retained when copied or saved.
+
+Hard drives use the same removable-storage support as USB drives and SD cards:
+download their files onto a powered reader, copy additional files back, or encrypt
+them through the reader's storage menu. Genome workstations can also store
+sample files on unencrypted hard drives.
+
 ## Generating content
 
 Media can name an ordinary item group using the `digital_content` item variable:
@@ -266,7 +279,7 @@ available for repeated playback.
 
 ## First-pass limits
 
-Media capacity is not measured in bytes. The tablet imports USB drives and SD cards directly; format compatibility is not modeled yet. Other media,
+Media capacity is not measured in bytes. The tablet imports USB drives, SD cards, and hard drives directly; format compatibility is not modeled yet. Other media,
 such as DVDs, can later use the same flags and content groups without adding
 media-specific file types. Files must be copied into a reader before use; an
 adjacent USB or SD card alone supplies no recipe references.

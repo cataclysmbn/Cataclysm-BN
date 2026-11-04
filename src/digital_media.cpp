@@ -367,7 +367,7 @@ auto digital_genome_storage( const Character &who ) -> std::vector<item *>
 {
     auto storage = who.all_items_with_flag( flag_id( "DIGITAL_STORAGE" ) );
     std::erase_if( storage, []( auto * media ) {
-        if( media->typeId() != itype_id( "usb_drive" ) && !media->has_flag( flag_MC_MOBILE ) ) {
+        if( !is_digital_storage_media( *media ) ) {
             return true;
         }
         initialize_digital_media( *media );

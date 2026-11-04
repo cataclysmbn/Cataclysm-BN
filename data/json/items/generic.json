@@ -607,6 +607,19 @@
   },
   {
     "type": "GENERIC",
+    "id": "hard_drive",
+    "copy-from": "usb_drive",
+    "name": { "str": "hard drive" },
+    "description": "A hard disk drive salvaged from a computer.  It may still contain usable files.  Connect it to a powered reader to inspect or copy its contents.",
+    "looks_like": "usb_drive",
+    "symbol": ";",
+    "material": [ "steel", "plastic" ],
+    "weight": "600 g",
+    "volume": "400 ml",
+    "item_vars": { "digital_content": "digital_content_terminal" }
+  },
+  {
+    "type": "GENERIC",
     "id": "genome_drive",
     "looks_like": "usb_drive",
     "symbol": ",",

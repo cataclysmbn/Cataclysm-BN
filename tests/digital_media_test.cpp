@@ -16,6 +16,7 @@
 #include "itype.h"
 #include "iuse.h"
 #include "json.h"
+#include "map/mapdata.h"
 #include "map_helpers.h"
 #include "morale_types.h"
 #include "player_activity.h"
@@ -136,6 +137,75 @@ TEST_CASE("digital_storage_accepts_files_only", "[digital_media][item]") {
     CHECK_FALSE(media->contents.empty());
 }
 
+TEST_CASE(
+    "terminal_disassembly_recovers_hard_drives_with_persistent_files",
+    "[digital_media][hard_drive][item_group]") {
+    const auto terminal =
+        GENERATE("t_console", "t_console_broken", "f_console_table", "f_console_broken_table");
+    const auto drop_group =
+        std::string_view(terminal).starts_with("t_")
+            ? ter_str_id(terminal).obj().deconstruct.drop_group
+            : furn_str_id(terminal).obj().deconstruct.drop_group;
+    const auto drops = item_group::items_from(drop_group, calendar::turn_zero);
+    namespace ranges = std::ranges;
+    using namespace std::views;
+    const auto found = ranges::find_if(drops, [](const auto& drop) {
+        return drop->typeId() == itype_id("hard_drive");
+    });
+    REQUIRE(found != drops.end());
+    auto& drive = **found;
+    initialize_digital_media(drive);
+    REQUIRE_FALSE(drive.contents.empty());
+    const auto possible = item_group::every_possible_item_from(
+        item_group_id(drive.get_var("digital_content")));
+    for (const auto* file : drive.contents.all_items_top()) {
+        CHECK(is_digital_file(*file));
+        CHECK(possible.contains(file->type));
+    }
+    const auto identities =
+        drive.contents.all_items_top()
+        | transform([](const auto* file) { return file->get_var("DIGITAL_FILE_ID"); })
+        | ranges::to<std::vector<std::string>>();
+    initialize_digital_media(drive);
+    CHECK(ranges::equal(
+        identities,
+        drive.contents.all_items_top() | transform([](const auto* file) {
+            return file->get_var("DIGITAL_FILE_ID");
+        })));
+}
+
+TEST_CASE(
+    "hard_drive_files_can_be_downloaded_copied_and_saved",
+    "[digital_media][hard_drive][savegame]") {
+    auto dummy = avatar{};
+    auto drive = item::spawn("test_digital_hard_drive");
+    auto& storage = *drive;
+    initialize_digital_media(storage);
+    REQUIRE(storage.contents.num_item_stacks() == 1);
+    const auto identity = storage.contents.front().get_var("DIGITAL_FILE_ID");
+    auto device = item::spawn("eink_tablet_pc");
+    auto& reader = *device;
+    reader.ammo_set(itype_id("battery"), 10);
+    REQUIRE(download_digital_files(reader, storage, dummy) == 1);
+    dummy.i_add(std::move(device));
+    storage.contents.clear_items();
+    REQUIRE(upload_digital_files(dummy, {.source = reader, .destination = storage}) == 1);
+    CHECK(storage.contents.front().get_var("DIGITAL_FILE_ID") == identity);
+    CHECK(is_writable_digital_media(storage));
+    dummy.i_add(std::move(drive));
+    CHECK(std::ranges::contains(digital_genome_storage(dummy), &storage));
+
+    auto output = std::ostringstream{};
+    auto writer = JsonOut(output);
+    storage.serialize(writer);
+    auto input = std::istringstream(output.str());
+    auto parser = JsonIn(input);
+    const auto loaded = item::spawn(parser);
+    initialize_digital_media(*loaded);
+    REQUIRE(loaded->contents.num_item_stacks() == 1);
+    CHECK(loaded->contents.front().typeId() == itype_id("test_digital_instruction"));
+    CHECK(loaded->contents.front().get_var("DIGITAL_FILE_ID") == identity);
+}
 
 TEST_CASE("digital_media_content_is_rolled_once", "[digital_media][item_group]") {
     auto media = item::spawn("test_digital_media");

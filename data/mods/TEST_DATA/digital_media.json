@@ -1,5 +1,12 @@
 [
   {
+    "id": "test_digital_hard_drive",
+    "copy-from": "hard_drive",
+    "type": "GENERIC",
+    "name": { "str": "test hard drive" },
+    "item_vars": { "digital_content": "test_digital_content" }
+  },
+  {
     "id": "test_digital_instruction",
     "copy-from": "digital_instruction",
     "type": "BOOK",

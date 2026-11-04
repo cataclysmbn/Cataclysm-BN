@@ -1,5 +1,25 @@
 [
   {
+    "id": "digital_content_terminal",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [ { "group": "digital_content_terminal_files", "count": [ 3, 7 ] } ]
+  },
+  {
+    "id": "digital_content_terminal_files",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "digital_photo_album", "prob": 20, "charges": [ 5, 30 ] },
+      { "item": "digital_music_collection", "prob": 20, "charges": [ 5, 15 ] },
+      { "item": "digital_cooking_show", "prob": 15 },
+      { "item": "digital_hello_world", "prob": 15 },
+      { "item": "digital_cooking_recipe_archive", "prob": 15 },
+      { "item": "digital_3d_printing_guide", "prob": 10 },
+      { "item": "digital_science_recipe_archive", "prob": 5 }
+    ]
+  },
+  {
     "id": "sd_memory_card_personal",
     "type": "item_group",
     "subtype": "collection",
