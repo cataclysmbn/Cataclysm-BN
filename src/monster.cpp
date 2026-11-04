@@ -4231,6 +4231,10 @@ bool monster::make_fungus()
 
 void monster::make_friendly()
 {
+    // Permanently friendly monsters must not be downgraded to a temporary countdown.
+    if( friendly < 0 ) {
+        return;
+    }
     unset_dest();
     friendly = rng( 5, 30 ) + rng( 0, 20 );
 }
