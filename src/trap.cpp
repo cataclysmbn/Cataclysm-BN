@@ -213,6 +213,11 @@ void trap::load( const JsonObject &jo, const std::string & )
             vehicle_data.remove_trap = false;
         }
     }
+    if( jo.has_object( "hunting" ) ) {
+        auto data = hunting.value_or( trap_hunting_data{} );
+        data.load( jo.get_object( "hunting" ) );
+        hunting = data;
+    }
 }
 
 std::string trap::name() const
@@ -415,6 +420,12 @@ void trap::check() const
     }
     if( act_string == "map_regen" && !mapgen::has_update_id( map_regen ) ) {
         debugmsg( "trap %s has invalid update mapgen id %s.", id.str(), map_regen );
+    }
+    if( hunting && hunting->min_size > hunting->max_size ) {
+        debugmsg( "trap %s has hunting min_size larger than max_size", id.str() );
+    }
+    if( hunting && hunting->efficiency <= 0.0 ) {
+        debugmsg( "trap %s has non-positive hunting efficiency %g", id.str(), hunting->efficiency );
     }
 }
 

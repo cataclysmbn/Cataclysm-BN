@@ -1,0 +1,47 @@
+[
+  {
+    "type": "hunting_bait",
+    "id": "meat",
+    "items": [ "meat", "meat_scrap", "offal", "fish", "dogfood", "catfood" ],
+    "attraction": 1.2,
+    "monsters": [
+      "mon_fox_red",
+      "mon_fox_gray",
+      "mon_coyote",
+      "mon_bobcat",
+      "mon_raccoon",
+      "mon_opossum",
+      "mon_mink",
+      "mon_otter",
+      "mon_crow",
+      "mon_boar_wild"
+    ]
+  },
+  {
+    "type": "hunting_bait",
+    "id": "greens",
+    "items": [ "carrot", "lettuce", "cabbage", "apple", "potato", "pumpkin", "blueberries", "strawberries", "raspberries" ],
+    "attraction": 1.0,
+    "monsters": [
+      "mon_rabbit",
+      "mon_hare",
+      "mon_groundhog",
+      "mon_lemming",
+      "mon_muskrat",
+      "mon_beaver",
+      "mon_deer",
+      "mon_deer_fawn",
+      "mon_boar_wild",
+      "mon_raccoon",
+      "mon_opossum"
+    ]
+  },
+  {
+    "type": "hunting_bait",
+    "id": "seeds",
+    "items": [ "acorns", "pine_nuts", "corn", "oats", "wheat", "barley", "birdfood" ],
+    "attraction": 1.0,
+    "species": [ "BIRD" ],
+    "monsters": [ "mon_squirrel", "mon_chipmunk", "mon_deer", "mon_boar_wild" ]
+  }
+]
