@@ -41,6 +41,7 @@
     "ammo": "battery",
     "charges_per_use": 5,
     "use_action": "CAMERA",
+    "item_vars": { "digital_reader_ports": "SD" },
     "flags": [ "DIGITAL_STORAGE", "DIGITAL_READER" ],
     "magazines": [ [ "battery", [ "light_plus_battery_cell", "light_battery_cell", "light_minus_battery_cell" ] ] ],
     "magazine_well": "250 ml"
@@ -64,6 +65,7 @@
     "max_charges": 200,
     "charges_per_use": 5,
     "use_action": [ "CAMERA", "TOGGLE_UPS_CHARGING" ],
+    "item_vars": { "digital_reader_ports": "SD" },
     "flags": [ "CAMERA_PRO", "ALWAYS_TWOHAND", "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ]
   },
   {

@@ -680,6 +680,8 @@ TEST_CASE("digital_study_uses_the_reader", "[digital_media][reading]") {
     dummy.i_add(std::move(device));
     REQUIRE(digital_reader_for(dummy, file));
 
+    const auto already_known = dummy.knows_recipe(
+        &recipe_id("test_soldering_iron_digital_media").obj());
     REQUIRE(dummy.read(&file, true));
     REQUIRE_FALSE(dummy.activity->is_null());
     SECTION("losing power stops study") {
@@ -687,7 +689,8 @@ TEST_CASE("digital_study_uses_the_reader", "[digital_media][reading]") {
         activity_handlers::read_do_turn(&*dummy.activity, &dummy);
         CHECK(dummy.activity->is_null());
         CHECK_FALSE(digital_reader_for(dummy, file));
-        CHECK_FALSE(dummy.knows_recipe(&recipe_id("test_soldering_iron_digital_media").obj()));
+        CHECK(dummy.knows_recipe(&recipe_id("test_soldering_iron_digital_media").obj())
+              == already_known);
     }
     SECTION("losing the device stops study") {
         const auto removed = reader.detach();
@@ -1399,7 +1402,7 @@ TEST_CASE("reader_ports_control_storage_transfers", "[digital_media][ports]") {
     auto dummy = avatar{};
     auto device = item::spawn(reader_id);
     auto& reader = *device;
-    reader.ammo_set(itype_id("battery"), 10);
+    if (reader.ammo_required() > 0) { reader.ammo_set(itype_id("battery"), 10); }
     reader.set_var("DIGITAL_INITIALIZED", 1);
     dummy.i_add(std::move(device));
     auto storage = item::spawn(storage_id);
