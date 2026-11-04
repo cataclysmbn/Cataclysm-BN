@@ -107,8 +107,7 @@
       "digital_photos_snippets": "digital_personal_photos",
       "digital_photos_unaffected_snippets": "digital_unaffected_photos",
       "digital_photos_moves_min": "300",
-      "digital_photos_moves_max": "700",
-      "digital_photos_cooldown_seconds": "600"
+      "digital_photos_moves_max": "700"
     }
   },
   {

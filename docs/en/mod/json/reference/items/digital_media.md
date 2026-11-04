@@ -236,8 +236,7 @@ The reader runs it through the normal item-action path:
   "digital_photos_moves_max": "700",
   "digital_photos_morale_min": "15",
   "digital_photos_morale_max": "30",
-  "digital_photos_morale_cap": "100",
-  "digital_photos_cooldown_seconds": "600"
+  "digital_photos_morale_cap": "100"
 }
 ```
 
@@ -255,7 +254,6 @@ The action reads these item variables:
 
 | Variable                                                 | Meaning                               |
 | -------------------------------------------------------- | ------------------------------------- |
-| `digital_photos_cooldown_seconds`                        | Pause between viewings of this album  |
 | `digital_photos_moves_min`, `digital_photos_moves_max`   | Move cost per use                     |
 | `digital_photos_morale_min`, `digital_photos_morale_max` | Morale gained per use                 |
 | `digital_photos_morale_cap`                              | Maximum photo morale                  |
@@ -263,11 +261,10 @@ The action reads these item variables:
 | `digital_photos_unaffected_snippets`                     | Snippet category used for psychopaths |
 
 Use **Browse digital files → View photos** or the reader's photos menu to view
-an album. Viewing preserves its photo count and starts the JSON-configured
-cooldown (ten minutes for the standard album). It can be viewed again once the
-cooldown expires. Cooldowns are tracked per viewer and file identity, so copying
-the same album to another reader does not reset them. Music also remains
-available for repeated playback.
+an album. Viewing preserves its photo count and starts one ten-minute cooldown
+on the player. During that time, the player cannot view any album, including
+other albums or copies on other devices. Each player has their own cooldown.
+Album item variables cannot shorten it.
 
 ## First-pass limits
 

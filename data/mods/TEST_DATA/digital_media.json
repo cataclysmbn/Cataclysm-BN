@@ -91,8 +91,7 @@
       "digital_photos_snippets": "digital_personal_photos",
       "digital_photos_unaffected_snippets": "digital_unaffected_photos",
       "digital_photos_moves_min": "100",
-      "digital_photos_moves_max": "100",
-      "digital_photos_cooldown_seconds": "60"
+      "digital_photos_moves_max": "100"
     }
   },
   {
@@ -105,8 +104,7 @@
       "digital_photos_morale_min": "2",
       "digital_photos_morale_max": "2",
       "digital_photos_moves_min": "40",
-      "digital_photos_moves_max": "40",
-      "digital_photos_cooldown_seconds": "5"
+      "digital_photos_moves_max": "40"
     }
   },
   {

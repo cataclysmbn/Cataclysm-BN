@@ -48,10 +48,9 @@ auto identify_digital_file( item &file ) -> void
     }
 }
 
-auto photo_album_cooldown_remaining( const Character &who, const item &album ) -> time_duration
+auto photo_cooldown_remaining( const Character &who ) -> time_duration
 {
-    const auto until = who.get_value_as_int( "digital_photos_ready_" +
-                       album.get_var( "DIGITAL_FILE_ID" ) ).value_or( 0 );
+    const auto until = who.get_value_as_int( "digital_photos_ready" ).value_or( 0 );
     return std::max( 0_turns, time_point::from_turn( until ) - calendar::turn );
 }
 
@@ -72,9 +71,9 @@ class photo_album_actor : public iuse_actor
                 return ret_val<bool>::make_failure(
                            _( "You need to install this file on a powered reader first." ) );
             }
-            const auto remaining = photo_album_cooldown_remaining( who, album );
+            const auto remaining = photo_cooldown_remaining( who );
             if( remaining > 0_turns ) {
-                return ret_val<bool>::make_failure( _( "You recently viewed this album.  Try again in %s." ),
+                return ret_val<bool>::make_failure( _( "You recently viewed photos.  Try again in %s." ),
                                                     to_string( remaining ) );
             }
             return ret_val<bool>::make_success();
@@ -90,7 +89,6 @@ class photo_album_actor : public iuse_actor
                 who.add_msg_if_player( m_info, available.str() );
                 return 0;
             }
-            identify_digital_file( album );
             who.mod_moves( -rng( digital_setting( album, "digital_photos_moves_min" ),
                                  digital_setting( album, "digital_photos_moves_max" ) ) );
             const auto unaffected = who.has_trait( trait_id( "PSYCHOPATH" ) );
@@ -104,10 +102,8 @@ class photo_album_actor : public iuse_actor
             if( const auto message = SNIPPET.random_from_category( category ) ) {
                 who.add_msg_if_player( unaffected ? m_info : m_good, "%s", message->translated() );
             }
-            const auto cooldown = time_duration::from_seconds( digital_setting( album,
-                                  "digital_photos_cooldown_seconds" ) );
-            who.set_value( "digital_photos_ready_" + album.get_var( "DIGITAL_FILE_ID" ),
-                           std::to_string( to_turn<int>( calendar::turn + cooldown ) ) );
+            who.set_value( "digital_photos_ready",
+                           std::to_string( to_turn<int>( calendar::turn + 10_minutes ) ) );
             return 0;
         }
 };
