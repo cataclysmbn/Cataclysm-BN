@@ -33,7 +33,6 @@ auto digital_reader_can_access_storage( const item &reader, const item &storage 
 auto digital_reader_for( const Character &who, const item &file ) -> digital_reader_reference;
 /// Roll the media's JSON item group once, preserving legacy initialized cards.
 auto initialize_digital_media( item &media ) -> void;
-auto finish_memory_card_download( item &media ) -> void;
 /// Copy files without consuming the source or duplicating identical files.
 auto download_digital_files( item &reader, item &media, const Character &who ) -> int;
 auto is_digital_storage_media( const item &media ) -> bool;

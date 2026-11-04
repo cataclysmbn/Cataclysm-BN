@@ -766,7 +766,7 @@
     "subcategory": "CSC_OTHER_OTHER",
     "skill_used": "computer",
     "difficulty": 10,
-    "contained": true,
+    "container": "usb_drive",
     "time": "4 h",
     "using": [ [ "coding_standard", 120 ], [ "hacking_standard", -1 ] ],
     "components": [ [ [ "usb_drive", 1 ] ] ]

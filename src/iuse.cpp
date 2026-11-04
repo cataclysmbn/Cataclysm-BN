@@ -5956,7 +5956,9 @@ static bool einkpc_download_memory_card( player &p, item &eink, item &mc )
         }
     }
 
-    finish_memory_card_download( mc );
+    if( !mc.has_flag( flag_MC_ENCRYPTED ) ) {
+        mc.set_var( "DIGITAL_INITIALIZED", 1 );
+    }
 
     if( !something_downloaded ) {
         p.add_msg_if_player( m_info, _( "This storage device does not contain any new data." ) );
@@ -6372,14 +6374,14 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
         }
 
         if( ei_books == choice ) {
-            uilist bmenu;
+            auto bmenu = uilist{};
             bmenu.text = _( "Books on device:" );
             for( auto index = 0; index < static_cast<int>( books.size() ); ++index ) {
                 bmenu.addentry( index, true, MENU_AUTOASSIGN, books[index]->display_name() );
             }
             bmenu.query();
             if( bmenu.ret >= 0 && bmenu.ret < static_cast<int>( books.size() ) ) {
-                if( avatar *you = p->as_avatar() ) {
+                if( auto *you = p->as_avatar() ) {
                     you->read( books[bmenu.ret] );
                 }
             }

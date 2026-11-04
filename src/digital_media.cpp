@@ -16,6 +16,7 @@
 #include "recipe.h"
 #include "recipe_dictionary.h"
 #include "rng.h"
+#include "string_utils.h"
 #include "player.h"
 #include "morale_types.h"
 #include "messages.h"
@@ -46,27 +47,6 @@ auto identify_digital_file( item &file ) -> void
                       std::to_string( rng_bits() ) + "-" + std::to_string( rng_bits() ) + "-" +
                       std::to_string( rng_bits() ) );
     }
-}
-
-auto reader_can_access_storage( const item &reader, const item &storage ) -> bool
-{
-    const auto reader_ports = reader.get_var( "digital_reader_ports" );
-    auto required_ports = storage.get_var( "digital_storage_ports" );
-    while( !required_ports.empty() ) {
-        const auto separator = required_ports.find( ',' );
-        const auto port = required_ports.substr( 0, separator );
-        const auto position = reader_ports.find( port );
-        if( position != std::string::npos &&
-            ( position == 0 || reader_ports[position - 1] == ',' ) &&
-            ( position + port.size() == reader_ports.size() || reader_ports[position + port.size()] == ',' ) ) {
-            return true;
-        }
-        if( separator == std::string::npos ) {
-            break;
-        }
-        required_ports.erase( 0, separator + 1 );
-    }
-    return required_ports.empty() && storage.get_var( "digital_storage_ports" ).empty();
 }
 
 auto photo_cooldown_remaining( const Character &who ) -> time_duration
@@ -156,7 +136,15 @@ auto is_digital_file( const item &file ) -> bool { return file.has_flag( flag_id
 
 auto digital_reader_can_access_storage( const item &reader, const item &storage ) -> bool
 {
-    return reader_can_access_storage( reader, storage );
+    namespace ranges = std::ranges;
+    const auto required_ports = storage.get_var( "digital_storage_ports" );
+    if( required_ports.empty() ) {
+        return true;
+    }
+    const auto reader_ports = string_split( reader.get_var( "digital_reader_ports" ), ',' );
+    return ranges::any_of( string_split( required_ports, ',' ), [&reader_ports]( const auto & port ) {
+        return !port.empty() && ranges::contains( reader_ports, port );
+    } );
 }
 
 auto digital_reader_ready( const item &reader, const Character &who ) -> bool
@@ -219,18 +207,10 @@ auto initialize_digital_media( item &media ) -> void
     }
 }
 
-auto finish_memory_card_download( item &media ) -> void
-{
-    if( media.has_flag( flag_MC_ENCRYPTED ) ) {
-        return;
-    }
-    media.set_var( "DIGITAL_INITIALIZED", 1 );
-}
-
 auto download_digital_files( item &reader, item &media, const Character &who ) -> int
 {
     if( &reader == &media || !digital_reader_ready( reader, who ) ||
-        !reader_can_access_storage( reader, media ) ||
+        !digital_reader_can_access_storage( reader, media ) ||
         !media.has_flag( flag_id( "DIGITAL_STORAGE" ) ) || media.has_flag( flag_MC_ENCRYPTED ) ) {
         return 0;
     }
@@ -278,7 +258,7 @@ auto upload_digital_files( const Character &who, const digital_file_upload_optio
     namespace ranges = std::ranges;
     if( &opts.source == &opts.destination || !who.has_item( opts.source ) ||
         !digital_reader_ready( opts.source, who ) || !is_writable_digital_media( opts.destination ) ||
-        !reader_can_access_storage( opts.source, opts.destination ) ) {
+        !digital_reader_can_access_storage( opts.source, opts.destination ) ) {
         return 0;
     }
     initialize_digital_media( opts.destination );

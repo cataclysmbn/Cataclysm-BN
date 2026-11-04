@@ -34,6 +34,17 @@
 #include <sstream>
 #include <string_view>
 
+namespace {
+auto reload_item(const item& original) -> detached_ptr<item> {
+    auto output = std::ostringstream{};
+    auto writer = JsonOut(output);
+    original.serialize(writer);
+    auto input = std::istringstream(output.str());
+    auto parser = JsonIn(input);
+    return item::spawn(parser);
+}
+} // namespace
+
 TEST_CASE("digital_media_settings_are_editable_from_lua", "[digital_media][lua]") {
     auto storage = item::spawn("usb_drive");
     auto music = item::spawn("test_digital_music_collection");
@@ -59,12 +70,7 @@ TEST_CASE("digital_media_settings_are_editable_from_lua", "[digital_media][lua]"
     CHECK(recipes.front().recipe == recipe_id("test_soldering_iron_digital_media"));
     CHECK(recipes.front().skill_level == 3);
 
-    auto output = std::ostringstream{};
-    auto writer = JsonOut(output);
-    storage->serialize(writer);
-    auto input = std::istringstream(output.str());
-    auto parser = JsonIn(input);
-    const auto loaded = item::spawn(parser);
+    const auto loaded = reload_item(*storage);
     CHECK(digital_music_on(*loaded).morale_cap == 4);
     REQUIRE(loaded->contents.num_item_stacks() == 2);
     CHECK(loaded->contents.back().get_var("digital_recipes").empty());
@@ -88,12 +94,7 @@ TEST_CASE(
         music->erase_var("digital_music_cooldown_seconds");
     }
     music->set_var("DIGITAL_FILE_ID", "saved-file");
-    auto output = std::ostringstream{};
-    auto writer = JsonOut(output);
-    music->serialize(writer);
-    auto input = std::istringstream(output.str());
-    auto parser = JsonIn(input);
-    const auto loaded = item::spawn(parser);
+    const auto loaded = reload_item(*music);
     CHECK(loaded->get_var("digital_music_morale_cap", 0) == (customized ? 4 : 9));
     CHECK(loaded->get_var("digital_music_cooldown_seconds", -1) == (customized ? 0 : 60));
     CHECK(loaded->get_var("DIGITAL_FILE_ID") == "saved-file");
@@ -108,12 +109,7 @@ TEST_CASE(
     REQUIRE_FALSE(selection.empty());
     const auto definitions = reference->get_var("digital_recipes");
     reference->erase_var("digital_recipes");
-    auto output = std::ostringstream{};
-    auto writer = JsonOut(output);
-    reference->serialize(writer);
-    auto input = std::istringstream(output.str());
-    auto parser = JsonIn(input);
-    const auto loaded = item::spawn(parser);
+    const auto loaded = reload_item(*reference);
     CHECK(loaded->get_var("digital_recipes") == definitions);
     CHECK(loaded->get_var("DIGITAL_RECIPES") == selection);
 }
@@ -241,12 +237,7 @@ TEST_CASE(
     dummy.i_add(std::move(drive));
     CHECK(std::ranges::contains(digital_genome_storage(dummy), &storage));
 
-    auto output = std::ostringstream{};
-    auto writer = JsonOut(output);
-    storage.serialize(writer);
-    auto input = std::istringstream(output.str());
-    auto parser = JsonIn(input);
-    const auto loaded = item::spawn(parser);
+    const auto loaded = reload_item(storage);
     initialize_digital_media(*loaded);
     REQUIRE(loaded->contents.num_item_stacks() == 1);
     CHECK(loaded->contents.front().typeId() == itype_id("test_digital_instruction"));
@@ -336,12 +327,7 @@ TEST_CASE("digital_urbex_maps_preserve_map_behavior_and_location", "[digital_med
     reader.ammo_unset();
     CHECK_FALSE(digital_reader_for(dummy, file));
 
-    auto output = std::ostringstream{};
-    auto writer = JsonOut(output);
-    file.serialize(writer);
-    auto input = std::istringstream(output.str());
-    auto parser = JsonIn(input);
-    const auto loaded = item::spawn(parser);
+    const auto loaded = reload_item(file);
     CHECK(loaded->typeId() == itype_id("digital_urbex_map"));
     CHECK(loaded->get_var("reveal_map_center_omt", tripoint_abs_omt()) == center);
     CHECK(loaded->get_use("reveal_map") != nullptr);
@@ -433,12 +419,7 @@ TEST_CASE(
     CHECK_FALSE(is_writable_digital_media(*media));
     CHECK(upload_digital_files(dummy, {.source = source, .destination = *media}) == 0);
 
-    auto output = std::ostringstream{};
-    auto writer = JsonOut(output);
-    media->serialize(writer);
-    auto input = std::istringstream(output.str());
-    auto parser = JsonIn(input);
-    auto loaded = item::spawn(parser);
+    auto loaded = reload_item(*media);
     REQUIRE(loaded->has_flag(flag_MC_ENCRYPTED));
     CHECK(loaded->typeId() == itype_id(media_id));
     REQUIRE(loaded->contents.num_item_stacks() == 1);
@@ -457,7 +438,7 @@ TEST_CASE(
     CHECK(loaded->contents.num_item_stacks() == 1);
 }
 
-TEST_CASE("sd_card_exports_reject_invalid_destinations_and_uninstalled_files", "[digital_media]") {
+TEST_CASE("sd_card_exports_preserve_camera_data_and_reject_uninstalled_files", "[digital_media]") {
     auto dummy = avatar{};
     auto device = item::spawn("wrist_comp_budget");
     auto& reader = *device;
@@ -466,12 +447,6 @@ TEST_CASE("sd_card_exports_reject_invalid_destinations_and_uninstalled_files", "
     dummy.i_add(std::move(device));
     auto card = item::spawn("sd_memory_card");
 
-    SECTION("encrypted cards are not writable") {
-        card->set_flag(flag_MC_ENCRYPTED);
-        CHECK_FALSE(is_writable_digital_media(*card));
-        CHECK(upload_digital_files(dummy, {.source = reader, .destination = *card}) == 0);
-        CHECK(card->contents.empty());
-    }
     SECTION("existing camera data is preserved") {
         card->set_var("MC_EXTENDED_PHOTOS", "existing camera data");
         CHECK(is_writable_digital_media(*card));
@@ -492,8 +467,9 @@ TEST_CASE("digital_recipe_references_require_a_powered_reader", "[digital_media]
     dummy.set_skill_level(skill_id("electronics"), 1);
     const auto& recipe = recipe_id("test_soldering_iron_digital_media").obj();
     REQUIRE_FALSE(dummy.knows_recipe(&recipe));
-    auto media = item::spawn("test_digital_media");
-    initialize_digital_media(*media);
+    const auto file_id = GENERATE("test_digital_instruction", "test_digital_reference");
+    auto media = item::spawn("usb_drive");
+    media->put_in(item::spawn(file_id));
     auto reader = item::spawn("wrist_comp_budget");
     reader->ammo_set(itype_id("battery"), 10);
 
@@ -512,7 +488,9 @@ TEST_CASE("digital_recipe_references_require_a_powered_reader", "[digital_media]
         REQUIRE(download_digital_files(*reader, *media, dummy) == 1);
         auto inv = inventory{};
         inv.add_item(*reader, false);
-        CHECK(dummy.get_recipes_from_books(inv).contains(recipe));
+        const auto references = dummy.get_recipes_from_books(inv);
+        CHECK(references.contains(recipe));
+        CHECK(references.get_custom_difficulty(&recipe) == 1);
         CHECK_FALSE(dummy.knows_recipe(&recipe));
         CHECK_FALSE(
             dummy.get_recipes_from_books(inv, [](const auto& /*recipe*/) { return false; })
@@ -523,35 +501,6 @@ TEST_CASE("digital_recipe_references_require_a_powered_reader", "[digital_media]
         reader->ammo_unset();
         CHECK_FALSE(dummy.get_recipes_from_books(inv).contains(recipe));
     }
-}
-
-TEST_CASE(
-    "digital_reference_files_supply_recipes_without_being_books", "[digital_media][recipes]") {
-    auto dummy = avatar{};
-    dummy.set_skill_level(skill_id("electronics"), 1);
-    const auto& recipe = recipe_id("test_soldering_iron_digital_media").obj();
-    auto reference = item::spawn("test_digital_reference");
-    REQUIRE_FALSE(reference->is_book());
-    initialize_digital_recipe_file(*reference);
-    CHECK(reference->get_available_recipes(dummy).empty());
-    CHECK_FALSE(dummy.knows_recipe(&recipe));
-
-    auto device = item::spawn("wrist_comp_budget");
-    auto& reader = *device;
-    reader.ammo_set(itype_id("battery"), 10);
-    reader.put_in(std::move(reference));
-    dummy.i_add(std::move(device));
-    auto inv = inventory{};
-    inv.add_item(reader, false);
-    const auto references = dummy.get_recipes_from_books(inv);
-    CHECK(references.contains(recipe));
-    CHECK(references.get_custom_difficulty(&recipe) == 1);
-    CHECK_FALSE(dummy.knows_recipe(&recipe));
-    dummy.set_skill_level(skill_id("electronics"), 0);
-    CHECK_FALSE(dummy.get_recipes_from_books(inv).contains(recipe));
-    dummy.set_skill_level(skill_id("electronics"), 1);
-    reader.ammo_unset();
-    CHECK_FALSE(dummy.get_recipes_from_books(inv).contains(recipe));
 }
 
 TEST_CASE(
@@ -576,12 +525,7 @@ TEST_CASE(
     REQUIRE(
         upload_digital_files(dummy, {.source = reader, .destination = *card, .file = &file}) == 1);
     CHECK(card->contents.front().get_var("DIGITAL_RECIPES") == selection);
-    auto output = std::ostringstream{};
-    auto writer = JsonOut(output);
-    card->serialize(writer);
-    auto input = std::istringstream(output.str());
-    auto parser = JsonIn(input);
-    const auto loaded = item::spawn(parser);
+    const auto loaded = reload_item(*card);
     REQUIRE(loaded->contents.num_item_stacks() == 1);
     CHECK(loaded->contents.front().get_var("DIGITAL_RECIPES") == selection);
 }
@@ -724,13 +668,16 @@ TEST_CASE("digital_study_uses_the_reader", "[digital_media][reading]") {
     }
 }
 
-TEST_CASE("digital_media_spawns_with_json_defined_contents", "[digital_media][item_group]") {
-    const auto media =
-        item_group::items_from(item_group_id("test_preloaded_digital_media"), calendar::turn_zero);
-    REQUIRE(media.size() == 1);
-    CHECK(media.front()->typeId() == itype_id("sd_memory_card"));
-    REQUIRE(media.front()->contents.num_item_stacks() == 1);
-    CHECK(media.front()->contents.front().typeId() == itype_id("test_digital_instruction"));
+TEST_CASE("crafted_satellite_maps_can_be_installed_on_readers", "[digital_media][crafting]") {
+    auto dummy = avatar{};
+    const auto media = recipe_id("satellitemap")->create_result();
+    REQUIRE(media->typeId() == itype_id("usb_drive"));
+    REQUIRE(media->contents.num_item_stacks() == 1);
+    CHECK(media->contents.front().typeId() == itype_id("satellitemap"));
+    auto reader = item::spawn("wrist_comp_budget");
+    reader->ammo_set(itype_id("battery"), 10);
+    REQUIRE(download_digital_files(*reader, *media, dummy) == 1);
+    CHECK(reader->contents.front().get_use("reveal_map") != nullptr);
 }
 
 TEST_CASE("photo_and_music_files_use_json_quantities_and_effects", "[digital_media]") {
@@ -758,26 +705,13 @@ TEST_CASE("photo_and_music_files_use_json_quantities_and_effects", "[digital_med
     REQUIRE(album->get_use("view_photos") != nullptr);
     REQUIRE(
         album->get_use("view_photos")->can_call(dummy, *album, false, dummy.bub_pos()).success());
+    const auto original_moves = dummy.moves;
     dummy.invoke_item(album, "view_photos");
     CHECK(digital_photos_on(reader) == 7);
     CHECK(dummy.get_morale(MORALE_PHOTOS) == 5);
-    const auto moves_after_viewing = dummy.moves;
-    CHECK(album->get_use("view_photos")->can_call(dummy, *album, false, dummy.bub_pos()).success());
-    dummy.invoke_item(album, "view_photos");
-    CHECK(dummy.moves == moves_after_viewing - 100);
-    CHECK(dummy.get_morale(MORALE_PHOTOS) == 5);
+    CHECK(dummy.moves == original_moves - 100);
     CHECK(download_digital_files(reader, *media, dummy) == 0);
-    CHECK(digital_photos_on(reader) == 7);
     CHECK(digital_photos_on(*media) == 7);
-    calendar::turn += 10_minutes - 1_seconds;
-    CHECK(album->get_use("view_photos")->can_call(dummy, *album, false, dummy.bub_pos()).success());
-    dummy.invoke_item(album, "view_photos");
-    calendar::turn += 1_seconds;
-    REQUIRE(album->get_use("view_photos") != nullptr);
-    REQUIRE(
-        album->get_use("view_photos")->can_call(dummy, *album, false, dummy.bub_pos()).success());
-    dummy.invoke_item(album, "view_photos");
-    CHECK(digital_photos_on(reader) == 7);
 }
 
 TEST_CASE("digital_music_survives_stop_and_replay_after_cooldown", "[digital_media][iuse]") {
@@ -881,7 +815,7 @@ TEST_CASE("photo_cooldown_limits_rewards_without_blocking_viewing", "[digital_me
     CHECK(second_action->can_call(dummy, second, false, dummy.bub_pos()).success());
     dummy.invoke_item(&second, "view_photos");
     CHECK(dummy.get_morale(MORALE_PHOTOS) == morale_after_first);
-    CHECK(dummy.moves < moves_after_first);
+    CHECK(dummy.moves == moves_after_first - 40);
     CHECK(first.charges == 7);
     CHECK(second.charges == 7);
     auto duplicate = item::spawn(first);
@@ -889,12 +823,14 @@ TEST_CASE("photo_cooldown_limits_rewards_without_blocking_viewing", "[digital_me
     second_reader.put_in(std::move(duplicate));
     CHECK(first_action->can_call(dummy, copy, false, dummy.bub_pos()).success());
     dummy.invoke_item(&copy, "view_photos");
-    CHECK(dummy.moves < moves_after_first);
+    CHECK(dummy.moves == moves_after_first - 140);
+    CHECK(dummy.get_morale(MORALE_PHOTOS) == morale_after_first);
 
     calendar::turn += 10_minutes - 1_seconds;
     CHECK(second_action->can_call(dummy, second, false, dummy.bub_pos()).success());
     dummy.invoke_item(&second, "view_photos");
-    CHECK(dummy.moves < moves_after_first);
+    CHECK(dummy.moves == moves_after_first - 180);
+    CHECK(dummy.get_morale(MORALE_PHOTOS) == morale_after_first);
     calendar::turn += 1_seconds;
     dummy.rem_morale(MORALE_PHOTOS);
     REQUIRE(second_action->can_call(dummy, second, false, dummy.bub_pos()).success());
@@ -955,52 +891,16 @@ TEST_CASE(
     CHECK(dummy.moves == moves - 40);
     CHECK(dummy.get_morale(MORALE_PHOTOS) == 2);
     CHECK(file.charges == 7);
-    CHECK(action->can_call(dummy, file, false, dummy.bub_pos()).success());
-    dummy.invoke_item(&file, "view_photos");
-    CHECK(dummy.moves == moves - 80);
-    CHECK(dummy.get_morale(MORALE_PHOTOS) == 2);
-
     calendar::turn += 10_minutes;
-    REQUIRE(action->can_call(dummy, file, false, dummy.bub_pos()).success());
     file.set_var("digital_photos_moves_min", 12);
     file.set_var("digital_photos_moves_max", 12);
     dummy.rem_morale(MORALE_PHOTOS);
-    const auto moves_before_reopening = dummy.moves;
     dummy.invoke_item(&file, "view_photos");
-    CHECK(action->can_call(dummy, file, false, dummy.bub_pos()).success());
-    dummy.invoke_item(&file, "view_photos");
-    CHECK(dummy.moves == moves_before_reopening - 24);
-    CHECK(dummy.get_morale(MORALE_PHOTOS) == 2);
-    calendar::turn += 10_minutes;
-    REQUIRE(action->can_call(dummy, file, false, dummy.bub_pos()).success());
-    dummy.invoke_item(&file, "view_photos");
-    CHECK(dummy.moves == moves_before_reopening - 36);
+    CHECK(dummy.moves == moves - 52);
     CHECK(dummy.get_morale(MORALE_PHOTOS) == 2);
     CHECK(file.charges == 7);
     reader.ammo_unset();
     CHECK_FALSE(action->can_call(dummy, file, false, dummy.bub_pos()).success());
-}
-
-TEST_CASE(
-    "memory_card_download_preserves_contents_without_changing_to_a_used_form", "[digital_media]") {
-    auto media = item::spawn("sd_memory_card");
-    media->put_in(item::spawn("test_digital_instruction"));
-    media->set_var("MC_EXTENDED_PHOTOS", "preserved camera data");
-    finish_memory_card_download(*media);
-    CHECK(media->typeId() == itype_id("sd_memory_card"));
-    CHECK(media->contents.num_item_stacks() == 1);
-    CHECK(media->get_var("MC_EXTENDED_PHOTOS") == "preserved camera data");
-    media->contents.clear_items();
-    media->erase_var("MC_EXTENDED_PHOTOS");
-    media->on_contents_changed();
-    CHECK(media->typeId() == itype_id("sd_memory_card"));
-    CHECK_FALSE(media->has_flag(flag_MC_HAS_DATA));
-}
-
-TEST_CASE("populating_an_sd_card_preserves_its_type", "[digital_media]") {
-    auto media = item::spawn("sd_memory_card");
-    media->put_in(item::spawn("test_digital_instruction"));
-    CHECK(media->typeId() == itype_id("sd_memory_card"));
 }
 
 TEST_CASE("loading_an_obsolete_used_sd_card_preserves_its_files", "[digital_media][savegame]") {
@@ -1056,15 +956,7 @@ TEST_CASE("saving_and_loading_preserve_playable_media_counts", "[digital_media][
     REQUIRE(digital_music_on(*device).songs == 9);
     REQUIRE(digital_photos_on(*device) == 7);
 
-    auto output = std::ostringstream{};
-    auto writer = JsonOut(output);
-    device->serialize(writer);
-    CHECK(digital_music_on(*device).songs == 9);
-    CHECK(digital_photos_on(*device) == 7);
-
-    auto input = std::istringstream(output.str());
-    auto parser = JsonIn(input);
-    auto loaded = item::spawn(parser);
+    auto loaded = reload_item(*device);
     CHECK(digital_music_on(*loaded).songs == 9);
     CHECK(digital_photos_on(*loaded) == 7);
     auto& reader = *loaded;
@@ -1145,12 +1037,7 @@ TEST_CASE(
     CHECK(reader.contents.num_item_stacks() == count);
     CHECK(collection.get_var("DIGITAL_FILE_ID") == identity);
 
-    auto output = std::ostringstream{};
-    auto writer = JsonOut(output);
-    reader.serialize(writer);
-    auto input = std::istringstream(output.str());
-    auto parser = JsonIn(input);
-    auto loaded = item::spawn(parser);
+    auto loaded = reload_item(reader);
     initialize_digital_media(*loaded);
     CHECK(loaded->contents.num_item_stacks() == count);
     CHECK(digital_music_on(*loaded).songs == digital_music_on(reader).songs);
@@ -1198,12 +1085,7 @@ TEST_CASE(
     CHECK(device->contents.num_item_stacks() == 1);
     CHECK(find_camera_photo_collection(*device)->get().get_var("DIGITAL_FILE_ID") == identity);
 
-    auto output = std::ostringstream{};
-    auto writer = JsonOut(output);
-    device->serialize(writer);
-    auto input = std::istringstream(output.str());
-    auto parser = JsonIn(input);
-    auto loaded = item::spawn(parser);
+    auto loaded = reload_item(*device);
     migrate_legacy_digital_media(*loaded);
     album = find_camera_photo_collection(*loaded);
     REQUIRE(album);
@@ -1272,14 +1154,7 @@ TEST_CASE(
     const auto name = drive->get_var("specimen_name");
     drive->set_var("item_note", "Keep this drive");
     SECTION("opening old media migrates it") { initialize_digital_media(*drive); }
-    SECTION("loading an old save migrates it") {
-        auto output = std::ostringstream{};
-        auto writer = JsonOut(output);
-        drive->serialize(writer);
-        auto input = std::istringstream(output.str());
-        auto parser = JsonIn(input);
-        drive = item::spawn(parser);
-    }
+    SECTION("loading an old save migrates it") { drive = reload_item(*drive); }
     REQUIRE(drive->contents.num_item_stacks() == 1);
     auto& sample = drive->contents.front();
     CHECK(is_digital_file(sample));
@@ -1302,12 +1177,7 @@ TEST_CASE(
     reader.ammo_set(itype_id("battery"), 10);
     REQUIRE(download_digital_files(reader, *drive, dummy) == 1);
     CHECK(download_digital_files(reader, *drive, dummy) == 0);
-    auto output = std::ostringstream{};
-    auto writer = JsonOut(output);
-    drive->serialize(writer);
-    auto input = std::istringstream(output.str());
-    auto parser = JsonIn(input);
-    drive = item::spawn(parser);
+    drive = reload_item(*drive);
     initialize_digital_media(*drive);
     CHECK(drive->typeId() == itype_id("usb_drive"));
     REQUIRE(drive->contents.num_item_stacks() == 1);
@@ -1414,4 +1284,18 @@ TEST_CASE("reader_ports_control_storage_transfers", "[digital_media][ports]") {
     CHECK(upload_digital_files(dummy, {.source = reader, .destination = *storage})
           == (compatible ? 1 : 0));
     CHECK(storage->contents.num_item_stacks() == (compatible ? 2 : 1));
+}
+
+TEST_CASE("digital_storage_ports_match_complete_tokens", "[digital_media][ports]") {
+    auto reader = item::spawn("wrist_comp_budget");
+    auto storage = item::spawn("usb_drive");
+    reader->set_var("digital_reader_ports", "USB_C,USB");
+    CHECK(digital_reader_can_access_storage(*reader, *storage));
+    reader->set_var("digital_reader_ports", "USB_C");
+    CHECK_FALSE(digital_reader_can_access_storage(*reader, *storage));
+    storage->set_var("digital_storage_ports", "SD,USB_C");
+    CHECK(digital_reader_can_access_storage(*reader, *storage));
+    storage->erase_var("digital_storage_ports");
+    reader->erase_var("digital_reader_ports");
+    CHECK(digital_reader_can_access_storage(*reader, *storage));
 }

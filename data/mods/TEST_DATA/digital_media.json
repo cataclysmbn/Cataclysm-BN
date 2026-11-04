@@ -53,12 +53,6 @@
     "components": [ [ [ "test_rock", 1 ] ] ]
   },
   {
-    "id": "test_preloaded_digital_media",
-    "type": "item_group",
-    "subtype": "collection",
-    "entries": [ { "item": "sd_memory_card", "contents-item": "test_digital_instruction" } ]
-  },
-  {
     "id": "test_digital_action",
     "copy-from": "software",
     "type": "GENERIC",

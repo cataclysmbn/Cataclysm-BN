@@ -107,10 +107,8 @@ std::vector<digital_recipe_reference>
     using namespace std::views;
     auto result = std::vector<digital_recipe_reference> {};
     for( const auto &entry : data.recipes ) {
-        if( entry.recipe.is_valid() ) {
-            result.push_back( { .recipe = entry.recipe,
-                                .skill_level = entry.skill_level.value_or( entry.recipe->difficulty ) } );
-        }
+        result.push_back( { .recipe = entry.recipe,
+                            .skill_level = entry.skill_level.value_or( entry.recipe->difficulty ) } );
     }
     if( !data.random_recipes ) {
         return result;
