@@ -6165,7 +6165,7 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
     } else if( !p->is_npc() ) {
 
         enum {
-            ei_invalid, ei_photo, ei_music, ei_recipe, ei_uploaded_photos, ei_monsters, ei_download, ei_decrypt,
+            ei_invalid, ei_photo, ei_music, ei_recipe, ei_books, ei_uploaded_photos, ei_monsters, ei_download, ei_decrypt,
             ei_files, ei_export, ei_encrypt
         };
 
@@ -6217,8 +6217,13 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
 
         const auto digital_recipes = digital_recipes_on_device( *it );
         if( !it->get_var( "EIPC_RECIPES" ).empty() || !digital_recipes.empty() ) {
-            amenu.addentry( ei_recipe, true, 'r', _( "View recipes on E-ink screen" ) );
+            amenu.addentry( ei_recipe, true, 'r', _( "View recipes" ) );
         }
+
+        const auto books = stored_files | std::views::filter( []( const auto * file ) {
+            return file->is_book() && is_digital_file( *file );
+        } ) | std::ranges::to<std::vector>();
+        amenu.addentry( ei_books, !books.empty(), 'b', books.empty() ? _( "No books on device" ) : _( "Read books" ) );
 
         if( has_camera_photos ) {
             amenu.addentry( ei_uploaded_photos, true, 'l', _( "Camera photos" ) );
@@ -6305,6 +6310,21 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
 
             rmenu.query();
 
+            return it->type->charges_to_use();
+        }
+
+        if( ei_books == choice ) {
+            uilist bmenu;
+            bmenu.text = _( "Books on device:" );
+            for( auto index = 0; index < static_cast<int>( books.size() ); ++index ) {
+                bmenu.addentry( index, true, MENU_AUTOASSIGN, books[index]->display_name() );
+            }
+            bmenu.query();
+            if( bmenu.ret >= 0 && bmenu.ret < static_cast<int>( books.size() ) ) {
+                if( avatar *you = p->as_avatar() ) {
+                    you->read( books[bmenu.ret] );
+                }
+            }
             return it->type->charges_to_use();
         }
 
