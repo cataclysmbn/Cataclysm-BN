@@ -5070,16 +5070,23 @@ auto vehicle::handle_potential_theft(avatar& you, bool check_only, bool prompt) 
 }
 
 auto vehicle::stability() const -> double {
+    using namespace std::views;
     // Nominal decks, not terrain offsets: a whole vehicle at mount.z == 1 is still planar.
     if (mount_min.z() == mount_max.z()) { return 1.0; }
 
-    const auto wheels = get_avail_parts(VPFLAG_WHEEL);
-    const auto first_wheel = wheels.begin();
-    if (first_wheel == wheels.end()) { return 0.0; }
-    const auto wheel_z = first_wheel->mount().z();
-    auto min_mount = first_wheel->mount().xy();
+    auto supports =
+        get_all_parts() | filter([](const auto& vp) {
+            return !vp.part().removed && vp.part().is_available()
+                && (vp.has_feature(VPFLAG_WHEEL)
+                    || (vp.has_feature(VPFLAG_FLOATS)
+                        && get_map().has_flag(TFLAG_SWIMMABLE, vp.pos())));
+        });
+    const auto first_support = supports.begin();
+    if (first_support == supports.end()) { return 0.0; }
+    const auto support_z = first_support->mount().z();
+    auto min_mount = first_support->mount().xy();
     auto max_mount = min_mount;
-    for (const auto& vp : wheels) {
+    for (const auto& vp : supports) {
         const auto mount = vp.mount();
         min_mount.x() = std::min(min_mount.x(), mount.x());
         min_mount.y() = std::min(min_mount.y(), mount.y());
@@ -5090,7 +5097,7 @@ auto vehicle::stability() const -> double {
     const auto mass = units::to_milligram(total_mass());
     if (mass <= 0) { return 1.0; }
     // Falling uses four metres per vertical level; local XY distances are metres.
-    const auto height = 4.0 * std::max(0.0, mass_z_moment / mass - wheel_z);
+    const auto height = 4.0 * std::max(0.0, mass_z_moment / mass - support_z);
     if (height <= 0.0) { return 1.0; }
     const auto span = std::
         min(static_cast<double>(max_mount.x()) - min_mount.x(),
