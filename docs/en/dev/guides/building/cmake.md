@@ -49,13 +49,6 @@ cmake --preset linux-clients
 cmake --build --preset linux-clients --target cataclysm-bn
 ```
 
-Add the optional Dear ImGui proof client to that configuration with:
-
-```sh
-cmake --preset linux-clients -DIMGUI=ON
-cmake --build --preset linux-clients --target cataclysm-bn-imgui
-```
-
 For a CPU-only MCP build without SDL, Tiles, curses, or sound, use:
 
 ```sh
@@ -424,7 +417,6 @@ Installation prefix for binaries, resources, and documentation files.
 | `CURSES`              | `ON`                                    | Build curses version.                                                             |
 | `TILES`               | `OFF`                                   | Build graphical tileset version.                                                  |
 | `MCP`                 | `OFF`                                   | Build the headless MCP client.                                                    |
-| `IMGUI`               | `OFF`                                   | Build the optional Dear ImGui SDL3 proof client.                                  |
 | `SOUND`               | `ON`                                    | Build audio support.                                                              |
 | `LANGUAGES`           | `" "`                                   | Build specificed language support.                                                |
 | `TESTS`               | `ON`                                    | Build test units.                                                                 |

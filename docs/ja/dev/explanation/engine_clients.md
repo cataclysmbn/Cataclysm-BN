@@ -12,22 +12,7 @@ out/build/linux-clients/src/cataclysm-bn --client=curses
 out/build/linux-clients/src/cataclysm-bn --client=mcp
 ```
 
-`TILES`、`CURSES`、`MCP` は、組み込む標準バックエンドを制御します。`IMGUI=ON` は省略可能な Dear ImGui バックエンドを追加します。`--client` は実行するバックエンドを選択します。既定ではタイル、curses、ImGui、MCP の順で優先されます。互換実行ファイル名は、`--client` で上書きしない限り対応するクライアントを選択します。
-
-### ImGui 実証用クライアント
-
-省略可能な ImGui クライアントは、共有の合成画面を登録済みアクションおよび構造化された状態の概要と並べて表示します。タイル UI の代替ではなく、バックエンド開発を目的としています。
-
-```sh
-cmake --preset linux-clients -DIMGUI=ON
-cmake --build --preset linux-clients --target cataclysm-bn-imgui
-out/build/linux-clients/src/cataclysm-bn-imgui \
-  --userdir out/imgui-profile/ --configdir out/imgui-profile/config/
-```
-
-まず `--paths` を追加し、`Config Directory` がプロファイル内のパスとして解決されることを確認してください。合成画面でキーボードを使うか、登録済みアクションを選択するか、コントロールペインにテキストを入力できます。ゲームが表示中の入力境界で待機している間だけコントロールが有効になります。ImGui のレイアウト設定は永続化されません。
-
-このバックエンドはタイルレンダラーではなく、代替クライアントの実証実装です。合成画面、ライブアクション、テキスト入力、簡潔なプレイヤー/所持品ビューを公開しますが、まだすべてのメニュー選択肢、フィールド、対象を構造化ウィジェットとして公開するわけではありません。構造化された選択肢は、前へ/次へボタンと現在のオフセットおよび総数を持つ、最大 100 項目のページで表示されます。数量の更新では現在ページを維持し、選択肢のスキーマが変更、フィルター、並べ替え、短縮された場合は、描画前にページをリセットまたは範囲内へ補正します。
+`TILES`、`CURSES`、`MCP` は、組み込む標準バックエンドを制御します。`--client` は実行するバックエンドを選択します。既定ではタイル、curses、MCP の順で優先されます。互換実行ファイル名は、`--client` で上書きしない限り対応するクライアントを選択します。
 
 ## 依存関係の境界
 
@@ -42,7 +27,6 @@ flowchart TD
     device --> tiles[SDL タイル]
     device --> curses[ネイティブ端末]
     device --> mcp[MCP メモリディスプレイ]
-    device --> imgui[ImGui SDL ディスプレイ]
     presentation --> tiles
     mcp --> rpc[JSON-RPC 画面、状態、アクション、入力]
 ```

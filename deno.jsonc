@@ -13,8 +13,7 @@
     "docs:gen:lua": "deno run --allow-run=$CATA_EXE --allow-env=CATA_EXE --allow-write ./scripts/gen_lua_docs.ts",
     "migrate-unit": "deno run -A scripts/migrations/3312.migrate_legacy_unit.ts --paths data/json data/mods",
     "dprint": "deno run -A npm:dprint",
-    "replay:diff": "deno run --allow-read --allow-write --allow-run --allow-env tools/client/replay_diff.ts",
-    "test:tooling": "deno test --allow-read --allow-write --allow-run --allow-env build-scripts tools/client scripts/format_json_test.ts",
+    "test:tooling": "deno test --allow-read --allow-write --allow-run --allow-env build-scripts scripts/format_json_test.ts",
     "changelog:reddit": {
       "description": "creates a weekly reddit changelog template",
       "command": "deno run -A scripts/changelog/main.ts --format reddit",

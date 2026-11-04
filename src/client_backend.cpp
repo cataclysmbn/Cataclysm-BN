@@ -67,7 +67,6 @@ auto parse_client_kind( const std::string &name ) -> client_kind
     if( name == "tiles" ) { return client_kind::tiles; }
     if( name == "curses" ) { return client_kind::curses; }
     if( name == "mcp" ) { return client_kind::mcp; }
-    if( name == "imgui" ) { return client_kind::imgui; }
     throw std::invalid_argument( "unknown client backend: " + name );
 }
 

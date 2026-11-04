@@ -183,7 +183,7 @@ target_link_libraries(cataclysm-bn-client-common PUBLIC cataclysm-bn-engine)
 add_library(cataclysm-bn-platform OBJECT ${CLIENT_PLATFORM_CPP})
 target_include_directories(cataclysm-bn-platform PUBLIC ${CMAKE_SOURCE_DIR}/src)
 target_link_libraries(cataclysm-bn-platform PRIVATE cataclysm-bn-engine)
-foreach(client TILES CURSES MCP IMGUI)
+foreach(client TILES CURSES MCP)
     if (${client})
         target_compile_definitions(cataclysm-bn-platform PRIVATE CATA_HAS_${client})
     endif ()
@@ -235,26 +235,6 @@ if (CURSES)
     endif ()
 endif ()
 
-if (IMGUI)
-    add_library(cataclysm-bn-imgui-dependency STATIC
-        "${imgui_SOURCE_DIR}/imgui.cpp"
-        "${imgui_SOURCE_DIR}/imgui_draw.cpp"
-        "${imgui_SOURCE_DIR}/imgui_tables.cpp"
-        "${imgui_SOURCE_DIR}/imgui_widgets.cpp"
-        "${imgui_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp"
-        "${imgui_SOURCE_DIR}/backends/imgui_impl_sdlrenderer3.cpp")
-    target_include_directories(cataclysm-bn-imgui-dependency SYSTEM PUBLIC
-        "${imgui_SOURCE_DIR}" "${imgui_SOURCE_DIR}/backends")
-    target_compile_options(cataclysm-bn-imgui-dependency PRIVATE
-        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-w>)
-    link_sdl_core(cataclysm-bn-imgui-dependency)
-    add_cata_client_library(cataclysm-bn-imgui-client
-        SOURCES ${CATA_IMGUI_SOURCES}
-        DEFINITIONS CATA_IMGUI)
-    target_link_libraries(cataclysm-bn-imgui-client PUBLIC cataclysm-bn-imgui-dependency)
-    link_sdl_core(cataclysm-bn-imgui-client)
-endif ()
-
 if (MCP)
     add_library(cataclysm-bn-mcp-client OBJECT
         ${CATA_MCP_SOURCES})
@@ -282,10 +262,6 @@ if (MCP)
     target_link_libraries(cataclysm-bn PRIVATE
         cataclysm-bn-mcp-client cataclysm-bn-mcp-protocol)
 endif ()
-if (IMGUI)
-    target_link_libraries(cataclysm-bn PRIVATE
-        cataclysm-bn-imgui-client cataclysm-bn-imgui-dependency)
-endif ()
 target_link_libraries(cataclysm-bn PRIVATE cataclysm-bn-client-audio)
 if (WIN32)
     target_compile_definitions(cataclysm-bn PRIVATE USE_WINMAIN)
@@ -300,7 +276,7 @@ if (RELEASE)
     if (NOT CATA_CLIENT_INSTALL_BINDIR)
         set(CATA_CLIENT_INSTALL_BINDIR bin)
     endif ()
-    foreach(client TILES MCP IMGUI)
+    foreach(client TILES MCP)
         if (${client})
             string(TOLOWER "${client}" client_name)
             if (WIN32)
@@ -332,7 +308,7 @@ if (WIN32 OR APPLE)
 else ()
     set(CATA_CLIENT_ALIAS_COMMAND create_symlink)
 endif ()
-foreach (client_alias IN ITEMS tiles mcp imgui)
+foreach (client_alias IN ITEMS tiles mcp)
     string(TOUPPER ${client_alias} client_option)
     if (${client_option})
         add_custom_command(TARGET cataclysm-bn POST_BUILD
@@ -348,7 +324,4 @@ if (TILES)
 endif ()
 if (MCP)
     add_custom_target(cataclysm-bn-mcp DEPENDS cataclysm-bn)
-endif ()
-if (IMGUI)
-    add_custom_target(cataclysm-bn-imgui DEPENDS cataclysm-bn)
 endif ()

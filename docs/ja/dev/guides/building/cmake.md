@@ -47,13 +47,6 @@ cmake --preset linux-clients
 cmake --build --preset linux-clients --target cataclysm-bn
 ```
 
-この構成に省略可能な Dear ImGui 実証用クライアントを追加するには、次を実行します。
-
-```sh
-cmake --preset linux-clients -DIMGUI=ON
-cmake --build --preset linux-clients --target cataclysm-bn-imgui
-```
-
 SDL、タイル、curses、サウンドを含まない CPU 専用 MCP ビルドには、次を使います。
 
 ```sh
@@ -400,7 +393,6 @@ cmake-gui -S . -B out/build/linux-slim
 | `CURSES`              | `ON`                                      | curses 版をビルドします。                                                                                   |
 | `TILES`               | `OFF`                                     | グラフィックタイルセット版をビルドします。                                                                  |
 | `MCP`                 | `OFF`                                     | ヘッドレス MCP クライアントをビルドします。                                                                 |
-| `IMGUI`               | `OFF`                                     | 省略可能な Dear ImGui SDL3 実証用クライアントをビルドします。                                               |
 | `SOUND`               | `ON`                                      | オーディオサポートをビルドします。                                                                          |
 | `LANGUAGES`           | `" "`                                     | 指定した言語サポートをビルドします。                                                                        |
 | `TESTS`               | `ON`                                      | テストユニットをビルドします。                                                                              |

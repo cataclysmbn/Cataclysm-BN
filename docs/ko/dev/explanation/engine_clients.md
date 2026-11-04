@@ -12,22 +12,7 @@ out/build/linux-clients/src/cataclysm-bn --client=curses
 out/build/linux-clients/src/cataclysm-bn --client=mcp
 ```
 
-`TILES`, `CURSES`, `MCP`는 포함할 표준 백엔드를 제어합니다. `IMGUI=ON`은 선택 사항인 Dear ImGui 백엔드를 추가합니다. `--client`는 실행할 백엔드를 선택합니다. 기본 설정은 타일, curses, ImGui, MCP 순으로 우선합니다. 호환 실행 파일 이름은 `--client`로 재정의하지 않는 한 각각 해당하는 클라이언트를 선택합니다.
-
-### ImGui 시험용 클라이언트
-
-선택 사항인 ImGui 클라이언트는 공유 합성 화면을 등록된 액션 및 구조화된 상태 요약과 함께 표시합니다. 타일 UI를 대체하기보다는 백엔드 개발에 사용하기 위한 것입니다.
-
-```sh
-cmake --preset linux-clients -DIMGUI=ON
-cmake --build --preset linux-clients --target cataclysm-bn-imgui
-out/build/linux-clients/src/cataclysm-bn-imgui \
-  --userdir out/imgui-profile/ --configdir out/imgui-profile/config/
-```
-
-먼저 `--paths`를 추가하고 `Config Directory`가 프로필 안의 경로로 해석되는지 확인하세요. 합성 화면에서 키보드를 사용하거나, 등록된 액션을 선택하거나, 제어 창에 텍스트를 입력할 수 있습니다. 게임이 표시된 입력 경계에서 기다리는 동안에만 컨트롤이 활성화됩니다. ImGui 레이아웃 설정은 저장되지 않습니다.
-
-이 백엔드는 타일 렌더러가 아니라 대체 클라이언트 시험 구현입니다. 합성 화면, 실시간 액션, 텍스트 입력, 간결한 플레이어/인벤토리 보기를 제공하지만 아직 모든 메뉴 선택지, 필드, 대상을 구조화된 위젯으로 제공하지는 않습니다. 구조화 선택지는 이전/다음 컨트롤과 현재 오프셋 및 전체 개수를 표시하는 최대 100개 항목의 페이지로 렌더링됩니다. 수량을 변경해도 현재 페이지를 유지하며, 선택지 스키마가 변경되거나 필터링, 재정렬, 축소되면 렌더링 전에 페이지를 초기화하거나 유효 범위로 조정합니다.
+`TILES`, `CURSES`, `MCP`는 포함할 표준 백엔드를 제어합니다. `--client`는 실행할 백엔드를 선택합니다. 기본 설정은 타일, curses, MCP 순으로 우선합니다. 호환 실행 파일 이름은 `--client`로 재정의하지 않는 한 각각 해당하는 클라이언트를 선택합니다.
 
 ## 의존성 경계
 
@@ -42,7 +27,6 @@ flowchart TD
     device --> tiles[SDL 타일]
     device --> curses[네이티브 터미널]
     device --> mcp[MCP 메모리 디스플레이]
-    device --> imgui[ImGui SDL 디스플레이]
     presentation --> tiles
     mcp --> rpc[JSON-RPC 화면, 상태, 액션, 입력]
 ```

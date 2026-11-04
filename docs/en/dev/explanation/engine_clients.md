@@ -12,22 +12,7 @@ out/build/linux-clients/src/cataclysm-bn --client=curses
 out/build/linux-clients/src/cataclysm-bn --client=mcp
 ```
 
-`TILES`, `CURSES`, and `MCP` control which standard backends are included. `IMGUI=ON` adds the optional Dear ImGui backend. `--client` selects the backend to run. The default prefers tiles, then curses, then ImGui, then MCP. Compatibility executable names select their corresponding client unless `--client` overrides them.
-
-### ImGui proof client
-
-The optional ImGui client presents the shared composed screen beside registered actions and a structured state summary. It is intended for backend development rather than as a replacement for the Tiles UI.
-
-```sh
-cmake --preset linux-clients -DIMGUI=ON
-cmake --build --preset linux-clients --target cataclysm-bn-imgui
-out/build/linux-clients/src/cataclysm-bn-imgui \
-  --userdir out/imgui-profile/ --configdir out/imgui-profile/config/
-```
-
-Append `--paths` first and verify that `Config Directory` resolves inside the profile. Use the keyboard in the composed screen, select a registered action, or enter text in the control pane. Controls are enabled only while the game is waiting at the displayed input boundary. ImGui layout settings are not persisted.
-
-This backend is an alternate-client proof, not a tiles renderer. It exposes the composed screen, live actions, text input, and a concise player/inventory view, but does not yet expose every menu choice, field, or target as a structured widget. Structured choices use bounded 100-entry pages with previous/next controls and visible offset and total counts. A quantity update retains the current page; a changed, filtered, reordered, or shortened choice schema resets or clamps it before rendering.
+`TILES`, `CURSES`, and `MCP` control which standard backends are included. `--client` selects the backend to run. The default prefers tiles, then curses, then MCP. Compatibility executable names select their corresponding client unless `--client` overrides them.
 
 ## Dependency boundaries
 
@@ -42,7 +27,6 @@ flowchart TD
     device --> tiles[SDL tiles]
     device --> curses[Native terminal]
     device --> mcp[MCP memory display]
-    device --> imgui[ImGui SDL display]
     presentation --> tiles
     mcp --> rpc[JSON-RPC screen, state, actions, input]
 ```

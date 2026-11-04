@@ -34,7 +34,6 @@ cmake_dependent_option(DYNAMIC_ATLAS
 )
 option(CURSES "Build curses version." "ON")
 option(MCP "Build the headless BN MCP client." "OFF")
-option(IMGUI "Build the optional Dear ImGui SDL3 client." "OFF")
 option(SOUND "Support for in-game sounds & music." "OFF")
 option(BACKTRACE "Support for printing stack backtraces on crash" "ON")
 option(LIBBACKTRACE "Print backtrace with libbacktrace." "OFF")
@@ -210,7 +209,7 @@ else ()
     endif ()
 endif ()
 
-if (TILES OR CURSES OR SOUND OR IMGUI)
+if (TILES OR CURSES OR SOUND)
     set(CATA_SDL ON CACHE BOOL
         "Link SDL3 core for GPU platform services used by existing game targets." FORCE)
 endif ()
@@ -266,7 +265,6 @@ message(STATUS "TILES                         : ${TILES}")
 message(STATUS "DYNAMIC_ATLAS                 : ${DYNAMIC_ATLAS}")
 message(STATUS "CURSES                        : ${CURSES}")
 message(STATUS "MCP                           : ${MCP}")
-message(STATUS "IMGUI                         : ${IMGUI}")
 message(STATUS "SOUND                         : ${SOUND}")
 message(STATUS "BACKTRACE                     : ${BACKTRACE}")
 message(STATUS "LIBBACKTRACE                  : ${LIBBACKTRACE}")
@@ -792,14 +790,6 @@ if (CCACHE_FOUND AND CATA_CCACHE)
     set(CMAKE_CXX_COMPILER_LAUNCHER ${CATA_CCACHE_CMD})
     set(CMAKE_C_LINKER_LAUNCHER     ${CATA_CCACHE_CMD})
     set(CMAKE_CXX_LINKER_LAUNCHER   ${CATA_CCACHE_CMD})
-endif ()
-
-if (IMGUI)
-    FetchContent_Declare(
-        imgui
-        GIT_REPOSITORY https://github.com/ocornut/imgui.git
-        GIT_TAG f5befd2d29e66809cd1110a152e375a7f1981f06)
-    FetchContent_MakeAvailable(imgui)
 endif ()
 
 # Wire protocol JSON for the engine client; header-only.

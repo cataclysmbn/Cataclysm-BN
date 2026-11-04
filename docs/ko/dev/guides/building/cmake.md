@@ -47,13 +47,6 @@ cmake --preset linux-clients
 cmake --build --preset linux-clients --target cataclysm-bn
 ```
 
-이 구성에 선택 사항인 Dear ImGui 시험용 클라이언트를 추가하려면 다음을 실행하세요:
-
-```sh
-cmake --preset linux-clients -DIMGUI=ON
-cmake --build --preset linux-clients --target cataclysm-bn-imgui
-```
-
 SDL, 타일, curses, 사운드가 없는 CPU 전용 MCP 빌드는 다음과 같이 구성하세요:
 
 ```sh
@@ -400,7 +393,6 @@ cmake-gui -S . -B out/build/linux-slim
 | `CURSES`              | `ON`                                       | curses 버전을 빌드합니다.                                                                        |
 | `TILES`               | `OFF`                                      | 그래픽 타일셋 버전을 빌드합니다.                                                                 |
 | `MCP`                 | `OFF`                                      | 헤드리스 MCP 클라이언트를 빌드합니다.                                                            |
-| `IMGUI`               | `OFF`                                      | 선택 사항인 Dear ImGui SDL3 시험용 클라이언트를 빌드합니다.                                      |
 | `SOUND`               | `ON`                                       | 오디오 지원을 빌드합니다.                                                                        |
 | `LANGUAGES`           | `" "`                                      | 지정된 언어 지원을 빌드합니다.                                                                   |
 | `TESTS`               | `ON`                                       | 테스트 유닛을 빌드합니다.                                                                        |

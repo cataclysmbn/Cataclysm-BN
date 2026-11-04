@@ -95,8 +95,6 @@ auto run_game( int argc, char *argv[] ) -> int
         selected_client = game_client::client_kind::tiles;
     } else if( program_name == "cataclysm-bn-mcp" ) {
         selected_client = game_client::client_kind::mcp;
-    } else if( program_name == "cataclysm-bn-imgui" ) {
-        selected_client = game_client::client_kind::imgui;
     }
     for( auto index = 1; index < argc; ++index ) {
         const auto argument = std::string( argv[index] );
@@ -104,7 +102,7 @@ auto run_game( int argc, char *argv[] ) -> int
             selected_client = game_client::parse_client_kind( argument.substr( 9 ) );
         } else if( argument == "--client" ) {
             if( index + 1 == argc ) {
-                throw std::invalid_argument( "--client requires tiles, curses, mcp, or imgui" );
+                throw std::invalid_argument( "--client requires tiles, curses, or mcp" );
             }
             selected_client = game_client::parse_client_kind( argv[++index] );
         }
@@ -135,7 +133,7 @@ auto run_game( int argc, char *argv[] ) -> int
         const char *section_user_directory = "User directories";
         const std::array<arg_handler, 24> first_pass_arguments = {
             {   {
-                    "--client", "tiles|curses|mcp|imgui", "Select the runtime client backend",
+                    "--client", "tiles|curses|mcp", "Select the runtime client backend",
                     section_default,
                     // Client selection has already been parsed before platform setup.
                     []( int num_args, const char ** /*params*/ ) -> int { return num_args < 1 ? -1 : 1; }

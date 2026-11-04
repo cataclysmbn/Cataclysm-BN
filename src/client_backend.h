@@ -22,7 +22,6 @@ enum class client_kind : int {
     tiles,
     curses,
     mcp,
-    imgui,
 };
 
 struct client_capabilities {
@@ -100,7 +99,6 @@ auto parse_client_kind( const std::string &name ) -> client_kind;
 auto make_tiles_backend() -> backend_ptr;
 auto make_curses_backend() -> backend_ptr;
 auto make_mcp_backend() -> backend_ptr;
-auto make_imgui_backend() -> backend_ptr;
 
 namespace curses
 {

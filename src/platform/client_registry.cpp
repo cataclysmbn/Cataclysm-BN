@@ -13,17 +13,12 @@ auto register_builtin_backends() -> void {
 #if defined(CATA_HAS_MCP)
     register_backend(client_kind::mcp, make_mcp_backend);
 #endif
-#if defined(CATA_HAS_IMGUI)
-    register_backend(client_kind::imgui, make_imgui_backend);
-#endif
 }
 auto default_client_kind() -> client_kind {
 #if defined(CATA_HAS_TILES)
     return client_kind::tiles;
 #elif defined(CATA_HAS_CURSES)
     return client_kind::curses;
-#elif defined(CATA_HAS_IMGUI)
-    return client_kind::imgui;
 #elif defined(CATA_HAS_MCP)
     return client_kind::mcp;
 #else
