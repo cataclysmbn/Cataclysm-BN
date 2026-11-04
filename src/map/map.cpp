@@ -2757,10 +2757,20 @@ auto map::climb_difficulty(const tripoint_bub_ms& p) const -> int {
 }
 
 auto map::has_floor(const tripoint_bub_ms& p, bool visible_only, bool terrain_only) const -> bool {
-    return inbounds_z(p.z())
-        && get_mapbuffer().has_floor(
-            map_local_to_abs(*this, p),
-            {.visible_only = visible_only, .terrain_only = terrain_only});
+    if (p.z() < -OVERMAP_DEPTH || p.z() > OVERMAP_HEIGHT) { return false; }
+
+    point_sm_ms l;
+    submap* sm = get_submap_at(tripoint_bub_ms(p), l);
+    if (!sm) { return false; }
+    if (sm->floor_dirty) {
+        const int smx = divide_round_to_minus_infinity(p.x(), SEEX);
+        const int smy = divide_round_to_minus_infinity(p.y(), SEEY);
+        sm->rebuild_floor_cache(*this, tripoint_bub_sm(smx, smy, p.z()));
+    }
+    return sm->floor_cache[l.x()][l.y()] || (!visible_only && has_flag(TFLAG_Z_TRANSPARENT, p))
+        || (!terrain_only
+            && get_mapbuffer().vehicle_floor_between(
+                map_local_to_abs(*this, p), map_local_to_abs(*this, p + tripoint_rel_ms::below())));
 }
 
 auto map::floor_between(

@@ -112,7 +112,6 @@ private:
     vehicle* veh;
     inventory crafting_inv;
     input_context main_context;
-    input_context gameplay_context{"DEFAULTMODE"};
 
     // maximum level of available lifting equipment (if any)
     int max_lift;

@@ -253,8 +253,8 @@ veh_interact::veh_interact(vehicle& veh, tripoint_mnt_veh p)
     main_context.register_action("FILTER");
     main_context.register_action("ZOOM_IN");
     main_context.register_action("ZOOM_OUT");
-    gameplay_context.register_action("LEVEL_UP");
-    gameplay_context.register_action("LEVEL_DOWN");
+    main_context.register_action("LEVEL_UP");
+    main_context.register_action("LEVEL_DOWN");
     main_context.register_action("ANY_INPUT");
 
     count_durability();
@@ -406,12 +406,11 @@ auto veh_interact::create_or_get_ui_adaptor() -> shared_ptr_fast<ui_adaptor> {
 auto veh_interact::display_deck_controls() -> void {
     werase(w_deck);
     const auto width = getmaxx(w_deck);
+    trim_and_print(w_deck, point_zero, width, c_white, _("Deck %+d"), vehicle_cursor.z());
     trim_and_print(
-        w_deck, point_zero, width, c_white, _("Deck %+d (gameplay keys)"), vehicle_cursor.z());
-    trim_and_print(w_deck, point(0, 1), width, c_light_gray, _("Up [%s]"),
-                   gameplay_context.get_desc("LEVEL_UP"));
+        w_deck, point(0, 1), width, c_light_gray, _("Up [%s]"), main_context.get_desc("LEVEL_UP"));
     trim_and_print(w_deck, point(0, 2), width, c_light_gray, _("Down [%s]"),
-                   gameplay_context.get_desc("LEVEL_DOWN"));
+                   main_context.get_desc("LEVEL_DOWN"));
     const auto has_lower_deck = !veh->all_standalone_parts(vehicle_cursor.z() - 1).empty();
     trim_and_print(
         w_deck, point(0, 3), width, c_dark_gray,
@@ -444,13 +443,8 @@ void veh_interact::do_main_loop() {
     while (!finish) {
         calc_overview();
         ui_manager::redraw();
-        std::string action = main_context.handle_input();
+        const std::string action = main_context.handle_input();
         msg.reset();
-        const auto& event = main_context.get_raw_input();
-        const auto& gameplay_action = gameplay_context.input_to_action(event);
-        if (gameplay_action == "LEVEL_UP" || gameplay_action == "LEVEL_DOWN") {
-            action = gameplay_action;
-        }
         if (action == "LEVEL_UP" || action == "LEVEL_DOWN") {
             const auto delta = action == "LEVEL_UP" ? 1 : -1;
             const auto old_z = vehicle_cursor.z();

@@ -6,6 +6,7 @@
 #include "avatar.h"
 #include "avatar_functions.h"
 #include "bionics.h"
+#include "cata_cartesian_product.h"
 #include "cata_utility.h"
 #include "character.h"
 #include "clzones.h"
@@ -1165,7 +1166,7 @@ void vehicle::drive_to_local_target(const tripoint_abs_ms& target, bool follow_p
         parts | std::views::filter([](const auto& p) { return !p.removed; })
         | std::views::transform([](const auto& p) { return p.mount.z(); })
         | std::ranges::to<std::set>();
-    for (const auto [pt_elem, z] : std::views::cartesian_product(points_to_check, heights)) {
+    for (const auto [pt_elem, z] : cata::views::cartesian_product(points_to_check, heights)) {
         auto elem = abs_to_bub(pt_elem);
         if (stop) { break; }
         const auto pos = tripoint_bub_ms(elem, abs_sm_pos.z() + z);
