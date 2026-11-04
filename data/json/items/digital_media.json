@@ -132,6 +132,53 @@
     "volume": "1 ml"
   },
   {
+    "abstract": "digital_text",
+    "copy-from": "digital_collection",
+    "type": "GENERIC",
+    "name": { "str": "digital text" },
+    "extend": { "flags": [ "SNIPPET_NEEDS_LITERACY" ] }
+  },
+  {
+    "id": "digital_saved_news",
+    "copy-from": "digital_text",
+    "type": "GENERIC",
+    "name": { "str": "saved news snippet" },
+    "description": "A saved news article from shortly before the Cataclysm.",
+    "snippet_category": "newest_news"
+  },
+  {
+    "id": "digital_saved_flier",
+    "copy-from": "digital_text",
+    "type": "GENERIC",
+    "name": { "str": "saved flier" },
+    "description": "A saved advertisement for a product or service.",
+    "snippet_category": "flier"
+  },
+  {
+    "id": "digital_character_sheet",
+    "copy-from": "digital_text",
+    "type": "GENERIC",
+    "name": { "str": "digital character sheet" },
+    "description": "A saved character sheet for a tabletop role-playing game.",
+    "snippet_category": "charsheet"
+  },
+  {
+    "id": "digital_radio_archive",
+    "copy-from": "digital_text",
+    "type": "GENERIC",
+    "name": { "str": "radio archive transcript" },
+    "description": "A saved transcript of an archived radio broadcast.",
+    "snippet_category": "radio_archive"
+  },
+  {
+    "id": "digital_saved_email",
+    "copy-from": "digital_text",
+    "type": "GENERIC",
+    "name": { "str": "saved email" },
+    "description": "A saved internal email from a research facility.",
+    "snippet_category": "lab_notes"
+  },
+  {
     "id": "digital_hello_world",
     "copy-from": "digital_collection",
     "type": "GENERIC",

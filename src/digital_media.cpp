@@ -194,6 +194,11 @@ auto initialize_digital_media( item &media ) -> void
         }
     }
     for( auto &file : item_group::items_from( item_group_id( group ), media.birthday() ) ) {
+        // Software loot normally arrives in a USB drive; keep its file, not the physical wrapper.
+        if( is_digital_storage_media( *file ) && file->contents.num_item_stacks() == 1 &&
+            is_digital_file( file->contents.front() ) ) {
+            file = file->contents.remove_top( &file->contents.front() );
+        }
         if( !is_digital_file( *file ) ) {
             debugmsg( "Digital content group %s contains a physical item: %s", group,
                       file->typeId().str() );

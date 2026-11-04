@@ -184,9 +184,18 @@ Media can name an ordinary item group using the `digital_content` item variable:
 
 The reader rolls this group on the first access to the media, then stores the
 result as real item contents. Use collection probabilities, distributions, and
-nested groups as usual. Every generated top-level item must be `DIGITAL` and
-must not be wrapped in a physical container. Already initialized legacy SD cards
+nested groups as usual. Generated items must be `DIGITAL`. A file packaged in a
+single-file storage device, such as software's default USB drive, is extracted
+from that wrapper. Already initialized legacy SD cards
 keep their original contents rather than receiving another loot roll.
+
+Saved text files reuse the newspaper, flier, character-sheet, radio-archive, and
+lab-note snippet categories. Choose **Read saved text** in the file browser to
+open a scrolling view. The selected text is retained when copied or saved.
+Saved lab emails appear in scientific storage; personal files also include
+fliers, character sheets, and radio transcripts.
+Ordinary software can appear in the random file pools, with technical programs
+more common in scientific storage.
 
 `digital_encryption_chance` is a one-in-N chance to set `MC_ENCRYPTED` when
 initializing a media content group. Encryption is an instance flag and does not

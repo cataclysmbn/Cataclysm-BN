@@ -6113,7 +6113,7 @@ auto browse_digital_files( player &who, item &reader, const bool photos_only = f
     auto *file = files[menu.ret];
     enum file_action {
         delete_file, study_file, listen_file, copy_file, show_recipes,
-        show_captured_photos, show_monsters, use_action_start
+        show_captured_photos, show_monsters, read_text, use_action_start
     };
     namespace ranges = std::ranges;
     using namespace std::views;
@@ -6122,6 +6122,9 @@ auto browse_digital_files( player &who, item &reader, const bool photos_only = f
     actions.text = file->type->description.translated();
     actions.hilight_disabled = true;
     actions.title = file->display_name();
+    if( !file->type->snippet_category.empty() || file->has_var( "description" ) ) {
+        actions.addentry( read_text, true, 't', _( "Read saved text" ) );
+    }
     if( file->is_book() ) {
         actions.addentry( study_file, true, 'r', _( "Study" ) );
     }
@@ -6158,6 +6161,14 @@ auto browse_digital_files( player &who, item &reader, const bool photos_only = f
     if( actions.ret >= use_action_start &&
         actions.ret < use_action_start + static_cast<int>( use_methods.size() ) ) {
         who.invoke_item( file, use_methods[actions.ret - use_action_start] );
+    } else if( actions.ret == read_text ) {
+        const auto description = iteminfo_query( std::vector{ iteminfo_parts::DESCRIPTION } );
+        const auto text = file->info( description, 1, temperature_flag::TEMP_NORMAL );
+        auto data = item_info_data( file->display_name(), {}, text, {} );
+        data.handle_scrolling = true;
+        draw_item_info( []() -> catacurses::window {
+            return catacurses::newwin( TERMY, TERMX, point_zero );
+        }, data );
     } else if( actions.ret == delete_file ) {
         if( who.query_yn( _( "Delete %s from this device?" ), file->display_name() ) ) {
             const auto file_name = file->display_name();

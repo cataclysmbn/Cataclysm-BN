@@ -1,5 +1,18 @@
 [
   {
+    "id": "test_digital_software_media",
+    "copy-from": "usb_drive",
+    "type": "GENERIC",
+    "name": { "str": "test software drive" },
+    "item_vars": { "digital_content": "test_digital_software_content" }
+  },
+  {
+    "id": "test_digital_software_content",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [ { "item": "software_useless" } ]
+  },
+  {
     "id": "test_digital_hard_drive",
     "copy-from": "hard_drive",
     "type": "GENERIC",

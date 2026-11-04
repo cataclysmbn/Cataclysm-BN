@@ -13,6 +13,7 @@
 #include "item.h"
 #include "item_contents.h"
 #include "item_group.h"
+#include "iteminfo_query.h"
 #include "itype.h"
 #include "iuse.h"
 #include "iuse_actor.h"
@@ -177,6 +178,41 @@ TEST_CASE("digital_storage_accepts_files_only", "[digital_media][item]") {
     media->put_in(item::spawn(*file));
     CHECK(media->spill_contents(tripoint_bub_ms::zero()));
     CHECK_FALSE(media->contents.empty());
+}
+
+TEST_CASE("saved_text_files_survive_copying_and_loading", "[digital_media][savegame]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    auto dummy = avatar{};
+    auto media = item::spawn("usb_drive");
+    const auto file_id =
+        GENERATE("digital_saved_news", "digital_saved_flier", "digital_character_sheet",
+                 "digital_radio_archive", "digital_saved_email");
+    auto text = item::spawn(file_id);
+    text->set_snippet(snippet_id(text->type->snippet_category + "_1"));
+    const auto description = iteminfo_query(std::vector{iteminfo_parts::DESCRIPTION});
+    const auto article = text->info_string(description);
+    REQUIRE_FALSE(article.empty());
+    CHECK(article.find(text->type->description.translated()) == std::string::npos);
+    media->put_in(std::move(text));
+    auto reader = item::spawn("wrist_comp_budget");
+    reader->ammo_set(itype_id("battery"), 10);
+    REQUIRE(download_digital_files(*reader, *media, dummy) == 1);
+    CHECK(reader->contents.front().info_string(description) == article);
+    const auto loaded = reload_item(*reader);
+    REQUIRE(loaded->contents.num_item_stacks() == 1);
+    CHECK(loaded->contents.front().info_string(description) == article);
+}
+
+TEST_CASE(
+    "digital_loot_keeps_software_without_its_default_usb_wrapper", "[digital_media][item_group]") {
+    auto media = item::spawn("test_digital_software_media");
+    initialize_digital_media(*media);
+    REQUIRE(media->contents.num_item_stacks() == 1);
+    const auto& file = media->contents.front();
+    CHECK(file.typeId() == itype_id("software_useless"));
+    CHECK(is_digital_file(file));
+    CHECK(file.contents.empty());
 }
 
 TEST_CASE(
