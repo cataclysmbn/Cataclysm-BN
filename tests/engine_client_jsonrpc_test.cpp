@@ -602,6 +602,191 @@ TEST_CASE(
     check_copy(original);
 }
 
+TEST_CASE(
+    "jsonrpc_strict_policy_wrapper_and_legacy_id_rules_stay_separate", "[engine_client_jsonrpc]") {
+    for (const auto id :
+         {"1.5", "1.00000000000000001", "1e0", "-1E+2", "9223372036854775808",
+          "-9223372036854775809", "18446744073709551615", "true", "{}", "[]"}) {
+        CAPTURE(id);
+        const auto text = std::string{R"({"jsonrpc":"2.0","method":"ping","id":)"} + id + "}";
+        const auto frame = rpc::inspect_frame(text);
+        REQUIRE(frame);
+        const auto policy = rpc::apply_legacy_policy(first_envelope(*frame));
+        REQUIRE(std::holds_alternative<rpc::legacy_error>(policy));
+        const auto& error = std::get<rpc::legacy_error>(policy);
+        CHECK(*error.id.json == "null");
+        CHECK(error.reason == rpc::legacy_reason::invalid_request);
+        const auto response = rpc::make_legacy_error(error);
+        REQUIRE(response);
+        REQUIRE(*response);
+        CHECK(
+            (*response)->bytes()
+            == R"({"jsonrpc":"2.0","id":null,"error":{"code":-32600,"message":"Invalid request"}})");
+        const auto strict = parse_frame(text);
+        REQUIRE(strict);
+        const auto strict_entry = rpc::apply_strict_policy(first_envelope(*frame));
+        CHECK(first_request(*strict).index() == strict_entry.index());
+        if (first_envelope(*frame).at("id").is_number()) {
+            REQUIRE(std::holds_alternative<rpc::request>(strict_entry));
+        } else {
+            CHECK(std::holds_alternative<rpc::error_code>(strict_entry));
+        }
+    }
+    for (const auto id :
+         {"-9223372036854775808", "9223372036854775807", "9007199254740993", "0", "null",
+          "\"string-id\"", R"("\u0000😀")"}) {
+        const auto frame = rpc::inspect_frame(
+            std::string{R"({"jsonrpc":"2.0","method":"ping","id":)"} + id + "}");
+        REQUIRE(frame);
+        const auto policy = rpc::apply_legacy_policy(first_envelope(*frame));
+        REQUIRE(std::holds_alternative<rpc::request>(policy));
+        CHECK(*std::get<rpc::request>(policy).id.json == id);
+    }
+    for (const auto params : {"null", "42", "true", "\"wrong-type\"", "{}", "[]"}) {
+        const auto frame = rpc::inspect_frame(
+            std::string{R"({"jsonrpc":"2.0","method":"unknown/method","params":)"} + params + "}");
+        REQUIRE(frame);
+        const auto policy = rpc::apply_legacy_policy(first_envelope(*frame));
+        REQUIRE(std::holds_alternative<rpc::request>(policy));
+        const auto& notification = std::get<rpc::request>(policy);
+        CHECK_FALSE(notification.id.json);
+        CHECK(*notification.params == params);
+        const auto error = rpc::make_legacy_error(
+            {.id = notification.id, .reason = rpc::legacy_reason::invalid_parameters});
+        REQUIRE(error);
+        CHECK_FALSE(*error);
+        const auto strict = rpc::apply_strict_policy(first_envelope(*frame));
+        CHECK(std::holds_alternative<rpc::request>(strict)
+              == (first_envelope(*frame).at("params").is_object()
+                  || first_envelope(*frame).at("params").is_array()));
+    }
+}
+
+TEST_CASE(
+    "jsonrpc_legacy_envelope_errors_keep_historical_phase_id_and_closed_reason",
+    "[engine_client_jsonrpc]") {
+    struct envelope_case {
+        std::string_view json;
+        std::string_view id;
+        rpc::legacy_reason reason;
+    };
+    const auto cases = std::array<envelope_case, 12>{
+        {{.json = "[]", .id = "null", .reason = rpc::legacy_reason::parse_error},
+         {.json = "7", .id = "null", .reason = rpc::legacy_reason::parse_error},
+         {.json = R"({"method":"ping"})",
+          .id = "null",
+          .reason = rpc::legacy_reason::invalid_jsonrpc_request},
+         {.json = R"({"method":"ping","id":1})",
+          .id = "1",
+          .reason = rpc::legacy_reason::invalid_jsonrpc_version},
+         {.json = R"({"jsonrpc":"1.0","method":"ping","id":null})",
+          .id = "null",
+          .reason = rpc::legacy_reason::invalid_jsonrpc_version},
+         {.json = R"({"jsonrpc":null,"method":"ping"})",
+          .id = "null",
+          .reason = rpc::legacy_reason::invalid_request},
+         {.json = R"({"jsonrpc":2,"method":"ping","id":1})",
+          .id = "1",
+          .reason = rpc::legacy_reason::invalid_parameters},
+         {.json = R"({"jsonrpc":"2.0"})",
+          .id = "null",
+          .reason = rpc::legacy_reason::method_required},
+         {.json = R"({"jsonrpc":"2.0","id":1})",
+          .id = "1",
+          .reason = rpc::legacy_reason::method_required},
+         {.json = R"({"jsonrpc":"2.0","method":null})",
+          .id = "null",
+          .reason = rpc::legacy_reason::invalid_request},
+         {.json = R"({"jsonrpc":"2.0","method":null,"id":null})",
+          .id = "null",
+          .reason = rpc::legacy_reason::invalid_parameters},
+         {.json = R"({"jsonrpc":"2.0","method":42,"id":"a"})",
+          .id = R"("a")",
+          .reason = rpc::legacy_reason::invalid_parameters}}};
+    for (const auto& entry : cases) {
+        CAPTURE(entry.json);
+        // Wrap arrays as batch members so inspection retains their non-object type.
+        const auto frame = rpc::inspect_frame("[" + std::string(entry.json) + "]");
+        REQUIRE(frame);
+        REQUIRE(frame->size() == 1);
+        const auto policy = rpc::apply_legacy_policy(first_envelope(*frame));
+        REQUIRE(std::holds_alternative<rpc::legacy_error>(policy));
+        const auto& error = std::get<rpc::legacy_error>(policy);
+        CHECK(*error.id.json == entry.id);
+        CHECK(error.reason == entry.reason);
+    }
+}
+
+TEST_CASE(
+    "jsonrpc_trusted_legacy_error_table_has_no_arbitrary_diagnostic_seam",
+    "[engine_client_jsonrpc]") {
+    struct message_case {
+        rpc::legacy_reason reason;
+        rpc::error_code code;
+        std::string_view message;
+    };
+    const auto cases = std::array<message_case, 13>{
+        {{.reason = rpc::legacy_reason::parse_error,
+          .code = rpc::error_code::parse_error,
+          .message = "Parse error"},
+         {.reason = rpc::legacy_reason::invalid_request,
+          .code = rpc::error_code::invalid_request,
+          .message = "Invalid request"},
+         {.reason = rpc::legacy_reason::invalid_parameters,
+          .code = rpc::error_code::invalid_params,
+          .message = "Invalid parameters"},
+         {.reason = rpc::legacy_reason::invalid_jsonrpc_version,
+          .code = rpc::error_code::invalid_request,
+          .message = "Invalid JSON-RPC version"},
+         {.reason = rpc::legacy_reason::invalid_jsonrpc_request,
+          .code = rpc::error_code::invalid_request,
+          .message = "Invalid JSON-RPC request"},
+         {.reason = rpc::legacy_reason::method_required,
+          .code = rpc::error_code::invalid_request,
+          .message = "JSON-RPC method is required"},
+         {.reason = rpc::legacy_reason::not_initialized,
+          .code = rpc::error_code::not_initialized,
+          .message = "Server is not initialized"},
+         {.reason = rpc::legacy_reason::unknown_resource,
+          .code = rpc::error_code::invalid_params,
+          .message = "Unknown resource"},
+         {.reason = rpc::legacy_reason::structured_state_unavailable,
+          .code = rpc::error_code::internal_error,
+          .message = "Structured state is unavailable"},
+         {.reason = rpc::legacy_reason::subscriptions_not_supported,
+          .code = rpc::error_code::method_not_found,
+          .message = "Resource subscriptions are not supported"},
+         {.reason = rpc::legacy_reason::structured_interaction_unavailable,
+          .code = rpc::error_code::internal_error,
+          .message = "Structured interaction is unavailable"},
+         {.reason = rpc::legacy_reason::unknown_tool,
+          .code = rpc::error_code::invalid_params,
+          .message = "Unknown tool"},
+         {.reason = rpc::legacy_reason::method_not_found,
+          .code = rpc::error_code::method_not_found,
+          .message = "Method not found"}}};
+    const auto id = rpc::request_id{.json = R"("\u0000😀")"};
+    for (const auto& entry : cases) {
+        const auto response = rpc::make_legacy_error({.id = id, .reason = entry.reason});
+        REQUIRE(response);
+        REQUIRE(*response);
+        CHECK(
+            (*response)->bytes()
+            == R"({"jsonrpc":"2.0","id":"\u0000😀","error":{"code":)"
+                   + std::to_string(static_cast<int>(entry.code)) + R"(,"message":")"
+                   + std::string(entry.message) + R"("}})");
+        const auto notification = rpc::make_legacy_error({.reason = entry.reason});
+        REQUIRE(notification);
+        CHECK_FALSE(*notification);
+    }
+    CHECK(rpc::make_legacy_error({.id = id, .reason = static_cast<rpc::legacy_reason>(999)}).error()
+          == rpc::output_error::invalid_value);
+    CHECK(rpc::make_legacy_error({.id = {.json = "true"}}).error()
+          == rpc::output_error::invalid_value);
+    CHECK(rpc::make_legacy_error({.id = {.json = std::string(rpc::maximum_frame_bytes + 1, '0')}})
+              .error()
+          == rpc::output_error::resource_limit);
+}
 
 TEST_CASE(
     "jsonrpc_configurable_read_limit_cannot_relax_absolute_transport_cap",
@@ -667,6 +852,9 @@ TEST_CASE(
     REQUIRE(second);
     CHECK_FALSE(second->contains("id"));
     CHECK(second->at("params").is_null());
+    const auto legacy = rpc::apply_legacy_policy(*second);
+    REQUIRE(std::holds_alternative<rpc::request>(legacy));
+    CHECK_FALSE(std::get<rpc::request>(legacy).id.json);
     REQUIRE(moved.next());
     CHECK_FALSE(moved.next());
     CHECK(moved.remaining() == 0);

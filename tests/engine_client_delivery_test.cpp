@@ -131,6 +131,7 @@ auto wait_for(
     }};
     auto server = bn::mcp::server{
         {
+            .observe = [] { return bn::mcp::screen_snapshot{.json = "{}"}; },
             .submit = [](const auto&) { return true; },
             .has_input = [] { return false; },
             .contract_session = &authority_session,
