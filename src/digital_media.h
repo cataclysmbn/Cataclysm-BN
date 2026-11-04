@@ -32,13 +32,11 @@ auto digital_reader_ready( const item &reader, const Character &who ) -> bool;
 auto digital_reader_for( const Character &who, const item &file ) -> digital_reader_reference;
 /// Roll the media's JSON item group once, preserving legacy initialized cards.
 auto initialize_digital_media( item &media ) -> void;
-/// Keep the clean/used SD-card state consistent with its actual stored data.
-auto refresh_memory_card_state( item &media ) -> void;
 auto finish_memory_card_download( item &media ) -> void;
 /// Copy files without consuming the source or duplicating identical files.
 auto download_digital_files( item &reader, item &media, const Character &who ) -> int;
-auto is_clean_digital_card( const item &media ) -> bool;
-/// Copy one selected file, or all files, from a powered reader to a clean SD card.
+auto is_writable_digital_card( const item &media ) -> bool;
+/// Copy one selected file, or all files, from a powered reader to an unencrypted SD card.
 auto upload_digital_files( const Character &who, const digital_file_upload_options &opts ) -> int;
 /// Convert old photo/music counters to files without changing their quantities.
 auto migrate_legacy_digital_media( item &media ) -> void;

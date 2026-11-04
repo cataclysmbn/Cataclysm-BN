@@ -1,5 +1,23 @@
 [
   {
+    "id": "sd_memory_card_personal",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [ { "item": "sd_memory_card", "custom-flags": [ "MC_RANDOM_STUFF", "MC_MAY_BE_ENCRYPTED" ] } ]
+  },
+  {
+    "id": "sd_memory_card_encrypted",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [ { "item": "sd_memory_card", "custom-flags": [ "MC_ENCRYPTED", "MC_RANDOM_STUFF" ] } ]
+  },
+  {
+    "id": "sd_memory_card_science",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [ { "item": "sd_memory_card", "custom-flags": [ "MC_ENCRYPTED", "MC_SCIENCE_STUFF" ] } ]
+  },
+  {
     "id": "digital_content_reader",
     "type": "item_group",
     "subtype": "collection",

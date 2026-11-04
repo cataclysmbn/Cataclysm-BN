@@ -6,13 +6,12 @@ data from storage media** action that copies files into internal storage.
 **Browse digital files** offers information, study, and item actions for
 installed files.
 
-**Copy files to SD card** copies all installed files onto a clean SD card. For a
-single file, choose **Browse digital files → file → Copy to SD card**. The
-reader must be powered. The destination becomes a used card, while the original
+**Copy files to SD card** copies all installed files onto an unencrypted SD card.
+For a single file, choose **Browse digital files → file → Copy to SD card**. The
+reader must be powered. Existing destination files are retained, and the original
 files stay on the reader. Copies preserve their entry counts, metadata, and file
-identities, including shared cooldowns. The card can then be imported onto
-another reader. Populated and encrypted cards are excluded from the destination
-picker.
+identities, including shared cooldowns. The media can then be imported onto
+another reader. Encrypted media are excluded from the destination picker.
 
 ## Files and readers
 
@@ -136,15 +135,21 @@ nested groups as usual. Every generated top-level item must be `DIGITAL` and
 must not be wrapped in a physical container. Already initialized legacy SD cards
 keep their original contents rather than receiving another loot roll.
 
-`digital_encryption_chance` is a one-in-N chance, and `digital_encrypted_type`
-names the item to convert to when that roll succeeds. The encrypted type can
-select a different content group. These properties replace the former C++
-SD-card loot and encryption rolls.
+`digital_encryption_chance` is a one-in-N chance to set `MC_ENCRYPTED` when
+initializing a media content group. Encryption is an instance flag and does not
+change the device's item type. Item groups can also set `MC_ENCRYPTED` through
+`custom-flags`.
+
+The `sd_memory_card_personal`, `sd_memory_card_encrypted`, and
+`sd_memory_card_science` loot groups all spawn `sd_memory_card` items. Their
+flags select personal, encrypted, or science content, preserving the different
+loot profiles without separate card item types. Personal cards have a one-in-eight
+chance of encryption. Plain `sd_memory_card` items start empty.
 
 For predetermined contents, use existing item-group modifiers instead:
 
 ```json
-{ "item": "mobile_memory_card_used", "contents-item": "digital_cooking_show" }
+{ "item": "sd_memory_card", "contents-item": "digital_cooking_show" }
 ```
 
 Files are copied without consuming the source. Identical copies are skipped;
@@ -153,10 +158,12 @@ does not reset the viewer's cooldown. Encryption prevents downloading until the
 SD card is decrypted. Formatting or triggering a card's data-erasure protection
 deletes its files.
 
-An SD card containing files or camera data is labeled **used** after
-downloading. It is labeled **clean** only when no data remains. Copying files
-preserves the source card's data. Old saves with populated cards labeled clean
-are repaired when loaded.
+SD cards keep the same item type whether empty, populated, or encrypted.
+Encrypted cards display an **(encrypted)** suffix and hide their contents.
+**Decrypt memory card** uses the existing computer-skill check to unlock them.
+Encrypted cards cannot be copied to or downloaded from until unlocked.
+Copying files preserves existing data on both media and readers. Old SD-card
+variants migrate to `sd_memory_card`, preserving files and encryption.
 
 ## Music and photos
 
@@ -230,8 +237,8 @@ file on the camera or phone. **Camera photos** and **Browse digital files →
 Browse captured photos** reopen the individual photographs with their original
 descriptions and quality. The computer's monster collection includes creatures
 recorded in these files, including photographs taken with the same device.
-Camera exports copy the collection onto a clean SD card; newer captures can be
-exported again without changing previously copied files. Legacy camera photos
+Camera exports copy the collection onto an unencrypted SD card.
+Newer captures can be exported again without changing previously copied files. Legacy camera photos
 migrate into a collection when the device is used. Older tablet and SD-card
 photo metadata remains readable through its existing import path. Existing
 mission-terminal downloads retain their original behavior, including overwriting

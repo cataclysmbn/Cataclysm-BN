@@ -27,12 +27,12 @@
 
 #include <algorithm>
 #include <sstream>
+#include <string_view>
 
 TEST_CASE("digital_storage_accepts_files_only", "[digital_media][item]") {
     const auto media_id = GENERATE(
-        "usb_drive", "genome_drive", "mobile_memory_card", "mobile_memory_card_used",
-        "mobile_memory_card_data", "mobile_memory_card_encrypted", "eink_tablet_pc",
-        "eink_tablet_pc_music", "laptop", "laptop_screen_lit", "laptop_music", "control_laptop",
+        "usb_drive", "genome_drive", "sd_memory_card", "eink_tablet_pc", "eink_tablet_pc_music",
+        "laptop", "laptop_screen_lit", "laptop_music", "control_laptop",
         "control_laptop_screen_lit", "control_laptop_music", "wrist_comp_budget",
         "wrist_comp_budget_flashlight", "wrist_comp_budget_music", "wrist_comp_control",
         "wrist_comp_control_flashlight", "wrist_comp_control_music", "smart_phone",
@@ -99,7 +99,7 @@ TEST_CASE("digital_files_are_copied_and_encryption_is_respected", "[digital_medi
     CHECK(download_digital_files(*reader, *media, dummy) == 0);
 }
 
-TEST_CASE("reader_files_can_be_copied_onto_a_clean_sd_card", "[digital_media]") {
+TEST_CASE("reader_files_can_be_copied_onto_an_sd_card", "[digital_media]") {
     auto dummy = avatar{};
     auto source = item::spawn("test_digital_multimedia_media");
     initialize_digital_media(*source);
@@ -108,12 +108,12 @@ TEST_CASE("reader_files_can_be_copied_onto_a_clean_sd_card", "[digital_media]") 
     reader.ammo_set(itype_id("battery"), 10);
     REQUIRE(download_digital_files(reader, *source, dummy) == 2);
     dummy.i_add(std::move(device));
-    auto card = item::spawn("mobile_memory_card_used");
-    REQUIRE(is_clean_digital_card(*card));
+    auto card = item::spawn("sd_memory_card");
+    REQUIRE(is_writable_digital_card(*card));
 
     CHECK(upload_digital_files(dummy, {.source = reader, .destination = *card}) == 2);
-    CHECK(card->typeId() == itype_id("mobile_memory_card_data"));
-    CHECK_FALSE(is_clean_digital_card(*card));
+    CHECK(card->typeId() == itype_id("sd_memory_card"));
+    CHECK(is_writable_digital_card(*card));
     CHECK(digital_music_on(*card).songs == 9);
     CHECK(digital_photos_on(*card) == 7);
     CHECK(digital_music_on(reader).songs == 9);
@@ -121,10 +121,17 @@ TEST_CASE("reader_files_can_be_copied_onto_a_clean_sd_card", "[digital_media]") 
     CHECK(upload_digital_files(dummy, {.source = reader, .destination = *card}) == 0);
     CHECK(card->contents.num_item_stacks() == 2);
 
-    auto empty_card = item::spawn("mobile_memory_card_used");
+    reader.put_in(item::spawn("test_digital_instruction"));
+    CHECK(upload_digital_files(dummy, {.source = reader, .destination = *card}) == 1);
+    CHECK(card->contents.num_item_stacks() == 3);
+    CHECK(card->contents.back().typeId() == itype_id("test_digital_instruction"));
+    CHECK(digital_music_on(*card).songs == 9);
+    CHECK(digital_photos_on(*card) == 7);
+
+    auto empty_card = item::spawn("sd_memory_card");
     reader.ammo_unset();
     CHECK(upload_digital_files(dummy, {.source = reader, .destination = *empty_card}) == 0);
-    CHECK(is_clean_digital_card(*empty_card));
+    CHECK(is_writable_digital_card(*empty_card));
 }
 
 TEST_CASE("exporting_a_selected_file_preserves_identity_and_metadata", "[digital_media]") {
@@ -137,7 +144,7 @@ TEST_CASE("exporting_a_selected_file_preserves_identity_and_metadata", "[digital
     auto& file = *original;
     reader.put_in(std::move(original));
     dummy.i_add(std::move(device));
-    auto card = item::spawn("mobile_memory_card_used");
+    auto card = item::spawn("sd_memory_card");
     REQUIRE(
         upload_digital_files(dummy, {.source = reader, .destination = *card, .file = &file}) == 1);
     REQUIRE(card->contents.num_item_stacks() == 1);
@@ -162,18 +169,18 @@ TEST_CASE("sd_card_exports_reject_invalid_destinations_and_uninstalled_files", "
     reader.ammo_set(itype_id("battery"), 10);
     reader.put_in(item::spawn("test_digital_instruction"));
     dummy.i_add(std::move(device));
-    auto card = item::spawn("mobile_memory_card_used");
+    auto card = item::spawn("sd_memory_card");
 
     SECTION("encrypted cards are not writable") {
         card->set_flag(flag_MC_ENCRYPTED);
-        CHECK_FALSE(is_clean_digital_card(*card));
+        CHECK_FALSE(is_writable_digital_card(*card));
         CHECK(upload_digital_files(dummy, {.source = reader, .destination = *card}) == 0);
         CHECK(card->contents.empty());
     }
     SECTION("existing camera data is preserved") {
         card->set_var("MC_EXTENDED_PHOTOS", "existing camera data");
-        CHECK_FALSE(is_clean_digital_card(*card));
-        CHECK(upload_digital_files(dummy, {.source = reader, .destination = *card}) == 0);
+        CHECK(is_writable_digital_card(*card));
+        CHECK(upload_digital_files(dummy, {.source = reader, .destination = *card}) == 1);
         CHECK(card->get_var("MC_EXTENDED_PHOTOS") == "existing camera data");
     }
     SECTION("files must be installed on the source reader") {
@@ -181,7 +188,7 @@ TEST_CASE("sd_card_exports_reject_invalid_destinations_and_uninstalled_files", "
         CHECK(upload_digital_files(
                   dummy, {.source = reader, .destination = *card, .file = &*elsewhere})
               == 0);
-        CHECK(is_clean_digital_card(*card));
+        CHECK(is_writable_digital_card(*card));
     }
 }
 
@@ -270,7 +277,7 @@ TEST_CASE(
     initialize_digital_recipe_file(file);
     CHECK(file.get_var("DIGITAL_RECIPES") == selection);
     dummy.i_add(std::move(device));
-    auto card = item::spawn("mobile_memory_card_used");
+    auto card = item::spawn("sd_memory_card");
     REQUIRE(
         upload_digital_files(dummy, {.source = reader, .destination = *card, .file = &file}) == 1);
     CHECK(card->contents.front().get_var("DIGITAL_RECIPES") == selection);
@@ -286,7 +293,7 @@ TEST_CASE(
 
 TEST_CASE("both_legacy_recipe_tokens_migrate_to_reference_files", "[digital_media][recipes]") {
     const auto token = GENERATE(std::string("SIMPLE"), std::string("SCIENCE"));
-    auto media = item::spawn("mobile_memory_card");
+    auto media = item::spawn("sd_memory_card");
     media->set_flag(flag_MC_HAS_DATA);
     media->set_var("MC_RECIPE", token);
     initialize_digital_media(*media);
@@ -423,7 +430,7 @@ TEST_CASE("digital_media_spawns_with_json_defined_contents", "[digital_media][it
     const auto media =
         item_group::items_from(item_group_id("test_preloaded_digital_media"), calendar::turn_zero);
     REQUIRE(media.size() == 1);
-    CHECK(media.front()->typeId() == itype_id("mobile_memory_card_data"));
+    CHECK(media.front()->typeId() == itype_id("sd_memory_card"));
     REQUIRE(media.front()->contents.num_item_stacks() == 1);
     CHECK(media.front()->contents.front().typeId() == itype_id("test_digital_instruction"));
 }
@@ -570,42 +577,66 @@ TEST_CASE("different_photo_albums_have_independent_cooldowns", "[digital_media]"
     CHECK_FALSE(view_digital_photos(dummy, copy));
 }
 
-TEST_CASE("memory_card_label_matches_retained_contents", "[digital_media]") {
-    auto media = item::spawn("mobile_memory_card");
+TEST_CASE(
+    "memory_card_download_preserves_contents_without_changing_to_a_used_form", "[digital_media]") {
+    auto media = item::spawn("sd_memory_card");
     media->put_in(item::spawn("test_digital_instruction"));
     media->set_var("MC_EXTENDED_PHOTOS", "preserved camera data");
     finish_memory_card_download(*media);
-    CHECK(media->typeId() == itype_id("mobile_memory_card_data"));
-    CHECK(media->has_flag(flag_MC_HAS_DATA));
+    CHECK(media->typeId() == itype_id("sd_memory_card"));
     CHECK(media->contents.num_item_stacks() == 1);
     CHECK(media->get_var("MC_EXTENDED_PHOTOS") == "preserved camera data");
     media->contents.clear_items();
     media->erase_var("MC_EXTENDED_PHOTOS");
     media->on_contents_changed();
-    CHECK(media->typeId() == itype_id("mobile_memory_card_used"));
+    CHECK(media->typeId() == itype_id("sd_memory_card"));
     CHECK_FALSE(media->has_flag(flag_MC_HAS_DATA));
 }
 
-TEST_CASE("populating_a_clean_card_updates_its_state", "[digital_media]") {
-    auto media = item::spawn("mobile_memory_card_used");
+TEST_CASE("populating_an_sd_card_preserves_its_type", "[digital_media]") {
+    auto media = item::spawn("sd_memory_card");
     media->put_in(item::spawn("test_digital_instruction"));
-    CHECK(media->typeId() == itype_id("mobile_memory_card_data"));
+    CHECK(media->typeId() == itype_id("sd_memory_card"));
 }
 
-TEST_CASE("loading_a_populated_legacy_clean_card_repairs_its_state", "[digital_media][savegame]") {
-    auto media = item::spawn("mobile_memory_card_used");
-    // Reproduce the old save state, bypassing the corrected insertion path.
-    media->contents.insert_item(item::spawn("test_digital_instruction"));
-    REQUIRE(media->typeId() == itype_id("mobile_memory_card_used"));
+TEST_CASE("loading_an_obsolete_used_sd_card_preserves_its_files", "[digital_media][savegame]") {
+    auto media = item::spawn("sd_memory_card");
+    media->put_in(item::spawn("test_digital_instruction"));
+    media->contents.front().set_var("test_content", "preserved");
+    media->contents.front().set_var("DIGITAL_FILE_ID", "legacy-file");
+    auto photos = item::spawn("test_digital_photo_album");
+    photos->charges = 7;
+    media->put_in(std::move(photos));
+    media->set_var("DIGITAL_INITIALIZED", 1);
     auto output = std::ostringstream{};
     auto writer = JsonOut(output);
     media->serialize(writer);
-    auto input = std::istringstream(output.str());
+    auto saved = output.str();
+    const auto current_id = std::string("sd_memory_card");
+    const auto position = saved.find(current_id);
+    REQUIRE(position != std::string::npos);
+    const auto legacy_id =
+        GENERATE("mobile_memory_card_used", "mobile_memory_card_data", "mobile_memory_card",
+                 "mobile_memory_card_encrypted", "mobile_memory_card_science");
+    saved.replace(position, current_id.size(), legacy_id);
+    auto input = std::istringstream(saved);
     auto reader = JsonIn(input);
     const auto loaded = item::spawn(reader);
-    CHECK(loaded->typeId() == itype_id("mobile_memory_card_data"));
-    REQUIRE(loaded->contents.num_item_stacks() == 1);
+    CHECK(loaded->typeId() == itype_id("sd_memory_card"));
+    REQUIRE(loaded->contents.num_item_stacks() == 2);
     CHECK(loaded->contents.front().typeId() == itype_id("test_digital_instruction"));
+    CHECK(loaded->contents.front().get_var("test_content") == "preserved");
+    CHECK(loaded->contents.front().get_var("DIGITAL_FILE_ID") == "legacy-file");
+    CHECK(digital_photos_on(*loaded) == 7);
+    const auto encrypted =
+        std::string_view(legacy_id) == "mobile_memory_card_encrypted"
+        || std::string_view(legacy_id) == "mobile_memory_card_science";
+    CHECK(loaded->has_flag(flag_MC_ENCRYPTED) == encrypted);
+    CHECK(loaded->has_flag(flag_MC_SCIENCE_STUFF)
+          == (std::string_view(legacy_id) == "mobile_memory_card_science"));
+    CHECK(is_writable_digital_card(*loaded) == !encrypted);
+    initialize_digital_media(*loaded);
+    CHECK(loaded->contents.num_item_stacks() == 2);
 }
 
 TEST_CASE("saving_and_loading_preserve_playable_media_counts", "[digital_media][savegame][iuse]") {
@@ -640,7 +671,7 @@ TEST_CASE("saving_and_loading_preserve_playable_media_counts", "[digital_media][
 }
 
 TEST_CASE("legacy_photo_and_music_counters_migrate_without_losing_metadata", "[digital_media]") {
-    auto media = item::spawn("mobile_memory_card");
+    auto media = item::spawn("sd_memory_card");
     media->set_flag(flag_MC_HAS_DATA);
     media->set_var("MC_PHOTOS", 7);
     media->set_var("MC_MUSIC", 9);
@@ -792,7 +823,7 @@ TEST_CASE(
     album.set_var("CAMERA_MONSTER_PHOTOS", ",mon_zombie,3,");
     update_camera_photo_collection(camera, 1);
     const auto original = album.get_var("DIGITAL_FILE_ID");
-    auto card = item::spawn("mobile_memory_card_used");
+    auto card = item::spawn("sd_memory_card");
     REQUIRE(
         upload_digital_files(dummy, {.source = camera, .destination = *card, .file = &album}) == 1);
     auto reader = item::spawn("eink_tablet_pc");
@@ -811,7 +842,7 @@ TEST_CASE(
     update_camera_photo_collection(camera, 2);
     CHECK(album.get_var("DIGITAL_FILE_ID") != original);
     CHECK(camera.contents.num_item_stacks() == 1);
-    auto next_card = item::spawn("mobile_memory_card_used");
+    auto next_card = item::spawn("sd_memory_card");
     REQUIRE(
         upload_digital_files(dummy, {.source = camera, .destination = *next_card, .file = &album})
         == 1);
@@ -885,7 +916,7 @@ TEST_CASE(
     CHECK(imported.get_var("specimen_name") == name);
     CHECK(imported.get_var("DIGITAL_FILE_ID") == identity);
     dummy.i_add(std::move(device));
-    auto card = item::spawn("mobile_memory_card_used");
+    auto card = item::spawn("sd_memory_card");
     REQUIRE(upload_digital_files(dummy, {.source = reader, .destination = *card, .file = &imported})
             == 1);
     CHECK(card->contents.front().get_var("specimen_sample") == specimen);
@@ -897,7 +928,7 @@ TEST_CASE(
 TEST_CASE("genome_workstation_finds_samples_inside_storage", "[digital_media][genome]") {
     auto dummy = avatar{};
     const auto storage_id =
-        GENERATE("genome_drive", "usb_drive", "mobile_memory_card_used", "eink_tablet_pc");
+        GENERATE("genome_drive", "usb_drive", "sd_memory_card", "eink_tablet_pc");
     auto storage = item::spawn(storage_id);
     auto file = item::spawn("digital_genome_sample");
     file->set_var("specimen_sample", "mon_black_rat");
@@ -916,14 +947,15 @@ TEST_CASE("genome_workstation_finds_samples_inside_storage", "[digital_media][ge
 
 TEST_CASE(
     "genome_storage_accepts_usb_and_sd_cards_without_erasing_files", "[digital_media][genome]") {
-    const auto media_id =
-        GENERATE("usb_drive", "mobile_memory_card_used", "mobile_memory_card_data");
+    const auto media_id = GENERATE("usb_drive", "sd_memory_card");
     auto dummy = avatar{};
     auto media = item::spawn(media_id);
     auto& storage = *media;
     storage.put_in(item::spawn("test_digital_instruction"));
     dummy.i_add(std::move(media));
-    dummy.i_add(item::spawn("mobile_memory_card_encrypted"));
+    auto encrypted_card = item::spawn("sd_memory_card");
+    encrypted_card->set_flag(flag_MC_ENCRYPTED);
+    dummy.i_add(std::move(encrypted_card));
     dummy.i_add(item::spawn("eink_tablet_pc"));
     const auto destinations = digital_genome_storage(dummy);
     REQUIRE(destinations.size() == 1);
@@ -947,7 +979,8 @@ TEST_CASE("prefilled_genome_files_spawn_in_ordinary_usb_drives", "[digital_media
 
 TEST_CASE("encrypted_cards_hide_genome_samples_from_the_workstation", "[digital_media][genome]") {
     auto dummy = avatar{};
-    auto media = item::spawn("mobile_memory_card_encrypted");
+    auto media = item::spawn("sd_memory_card");
+    media->set_flag(flag_MC_ENCRYPTED);
     media->put_in(item::spawn("digital_genome_sample_black_rat"));
     dummy.i_add(std::move(media));
     CHECK(digital_genome_samples(dummy).empty());

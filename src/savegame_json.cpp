@@ -2955,7 +2955,6 @@ void item::deserialize( JsonIn &jsin )
         migrate_legacy_digital_media( *this );
     }
     initialize_digital_recipe_file( *this );
-    refresh_memory_card_state( *this );
 
     if( data.has_member( "id" ) ) {
         safe_reference<item>::id_type id;

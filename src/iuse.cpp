@@ -260,8 +260,6 @@ static const itype_id itype_joint( "joint" );
 static const itype_id itype_log( "log" );
 static const itype_id itype_mask_h20survivor_on( "mask_h20survivor_on" );
 static const itype_id itype_mininuke_act( "mininuke_act" );
-static const itype_id itype_mobile_memory_card( "mobile_memory_card" );
-static const itype_id itype_mobile_memory_card_used( "mobile_memory_card_used" );
 static const itype_id itype_mp3( "mp3" );
 static const itype_id itype_mp3_on( "mp3_on" );
 static const itype_id itype_multi_cooker( "multi_cooker" );
@@ -5997,8 +5995,8 @@ auto export_files_to_sd_card( player &who, item &reader, item *file = nullptr ) 
     if( you == nullptr ) {
         return false;
     }
-    auto *card = game_menus::inv::titled_filter_menu( is_clean_digital_card, *you,
-                 _( "Choose a clean SD card" ) );
+    auto *card = game_menus::inv::titled_filter_menu( is_writable_digital_card, *you,
+                 _( "Choose an SD card" ) );
     if( card == nullptr ) {
         return false;
     }
@@ -6295,7 +6293,7 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
 
         avatar *you = p->as_avatar();
         item *loc = nullptr;
-        auto filter = [it]( const item & media ) {
+        auto filter = [it]( const auto & media ) {
             return &media != it && ( media.has_flag( flag_MC_MOBILE ) ||
                                      media.has_flag( flag_id( "DIGITAL_STORAGE" ) ) );
         };
@@ -6371,7 +6369,6 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
                 p->add_msg_if_player( m_good, _( "You successfully decrypted content on %s!" ),
                                       mc.tname() );
                 mc.unset_flag( flag_MC_ENCRYPTED );
-                mc.convert( itype_mobile_memory_card );
                 einkpc_download_memory_card( *p, *it, mc );
             } else {
                 if( success > -10 || one_in( 5 ) ) {
@@ -6381,8 +6378,8 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
                                           _( "You tripped the firmware protection, and the card deleted its data!" ) );
                     mc.clear_vars();
                     mc.contents.clear_items();
-                    mc.unset_flags();
-                    mc.convert( itype_mobile_memory_card_used );
+                    mc.unset_flag( flag_MC_ENCRYPTED );
+                    mc.set_var( "DIGITAL_INITIALIZED", 1 );
                 }
             }
             return it->type->charges_to_use();

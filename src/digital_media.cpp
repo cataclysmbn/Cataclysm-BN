@@ -31,14 +31,6 @@
 
 namespace
 {
-auto memory_card_has_data( const item &media ) -> bool
-{
-    return !media.contents.empty() || media.get_var( "MC_PHOTOS", 0 ) > 0 ||
-           media.get_var( "MC_MUSIC", 0 ) > 0 || !media.get_var( "MC_RECIPE" ).empty() ||
-           !media.get_var( "MC_EXTENDED_PHOTOS" ).empty() ||
-           !media.get_var( "MC_MONSTER_PHOTOS" ).empty();
-}
-
 auto digital_property( const item &file, const std::string &key ) -> int
 {
     return static_cast<int>( std::clamp<int64_t>( file.get_property_int64_t( key ), 0, INT_MAX ) );
@@ -97,8 +89,15 @@ auto digital_reader_for( const Character &who, const item &file ) -> digital_rea
 auto initialize_digital_media( item &media ) -> void
 {
     migrate_legacy_digital_media( media );
-    refresh_memory_card_state( media );
     auto group = media.get_property_string( "digital_content" );
+    if( group.empty() ) {
+        if( media.has_flag( flag_MC_SCIENCE_STUFF ) ) {
+            group = "digital_content_science";
+        } else if( media.has_flag( flag_MC_RANDOM_STUFF ) ) {
+            group = media.has_flag( flag_MC_ENCRYPTED ) ? "digital_content_encrypted" :
+                    "digital_content_personal";
+        }
+    }
     if( group.empty() || media.has_var( "DIGITAL_INITIALIZED" ) ) {
         return;
     }
@@ -106,11 +105,13 @@ auto initialize_digital_media( item &media ) -> void
     if( media.has_flag( flag_MC_USED ) || media.has_flag( flag_MC_HAS_DATA ) ) {
         return;
     }
-    const auto encryption_chance = digital_property( media, "digital_encryption_chance" );
-    const auto encrypted_type = media.get_property_string( "digital_encrypted_type" );
-    if( encryption_chance > 0 && !encrypted_type.empty() && one_in( encryption_chance ) ) {
-        media.convert( itype_id( encrypted_type ) );
-        group = media.get_property_string( "digital_content" );
+    const auto encryption_chance = media.has_flag( flag_MC_MAY_BE_ENCRYPTED ) ? 8 :
+                                   digital_property( media, "digital_encryption_chance" );
+    if( encryption_chance > 0 && one_in( encryption_chance ) ) {
+        media.set_flag( flag_MC_ENCRYPTED );
+        if( media.has_flag( flag_MC_RANDOM_STUFF ) ) {
+            group = "digital_content_encrypted";
+        }
     }
     for( auto &file : item_group::items_from( item_group_id( group ), media.birthday() ) ) {
         if( !is_digital_file( *file ) ) {
@@ -126,31 +127,12 @@ auto initialize_digital_media( item &media ) -> void
     }
 }
 
-auto refresh_memory_card_state( item &media ) -> void
-{
-    if( !media.has_flag( flag_MC_USED ) ) {
-        return;
-    }
-    if( media.typeId() == itype_id( "mobile_memory_card_used" ) && memory_card_has_data( media ) ) {
-        media.convert( itype_id( "mobile_memory_card_data" ) );
-    } else if( media.typeId() == itype_id( "mobile_memory_card_data" ) &&
-               !memory_card_has_data( media ) ) {
-        media.convert( itype_id( "mobile_memory_card_used" ) );
-    }
-}
-
 auto finish_memory_card_download( item &media ) -> void
 {
     if( media.has_flag( flag_MC_ENCRYPTED ) ) {
         return;
     }
-    if( media.has_flag( flag_MC_TURN_USED ) ) {
-        media.unset_flags();
-        media.convert( itype_id( memory_card_has_data( media ) ? "mobile_memory_card_data" :
-                                 "mobile_memory_card_used" ) );
-        media.set_var( "DIGITAL_INITIALIZED", 1 );
-    }
-    refresh_memory_card_state( media );
+    media.set_var( "DIGITAL_INITIALIZED", 1 );
 }
 
 auto download_digital_files( item &reader, item &media, const Character &who ) -> int
@@ -173,18 +155,21 @@ auto download_digital_files( item &reader, item &media, const Character &who ) -
     return copied;
 }
 
-auto is_clean_digital_card( const item &media ) -> bool
+auto is_writable_digital_card( const item &media ) -> bool
 {
-    return media.has_flag( flag_MC_MOBILE ) && media.has_flag( flag_MC_USED ) &&
-           media.has_flag( flag_id( "DIGITAL_STORAGE" ) ) && !media.has_flag( flag_MC_ENCRYPTED ) &&
-           !memory_card_has_data( media );
+    return media.has_flag( flag_MC_MOBILE ) &&
+           media.has_flag( flag_id( "DIGITAL_STORAGE" ) ) && !media.has_flag( flag_MC_ENCRYPTED );
 }
 
 auto upload_digital_files( const Character &who, const digital_file_upload_options &opts ) -> int
 {
     namespace ranges = std::ranges;
     if( &opts.source == &opts.destination || !who.has_item( opts.source ) ||
-        !digital_reader_ready( opts.source, who ) || !is_clean_digital_card( opts.destination ) ) {
+        !digital_reader_ready( opts.source, who ) || !is_writable_digital_card( opts.destination ) ) {
+        return 0;
+    }
+    initialize_digital_media( opts.destination );
+    if( !is_writable_digital_card( opts.destination ) ) {
         return 0;
     }
     if( opts.file != nullptr ) {
