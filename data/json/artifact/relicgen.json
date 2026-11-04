@@ -17,7 +17,7 @@
           { "weight": 1, "cost": 5, "enchantments": [ { "id": "AEP_ALL_UP" } ] },
           { "weight": 1, "cost": 4, "enchantments": [ { "id": "AEP_SPEED_UP" } ] },
           { "weight": 1, "cost": 5, "enchantments": [ { "id": "AEP_CLAIRVOYANCE" } ] },
-          { "weight": 1, "cost": 7, "enchantments": [ { "id": "AEP_CLAIRVOYANCE_PLUS" } ] },
+          { "weight": 1, "cost": 7, "enchantments": [ { "id": "AEP_CLAIRVOYANCE_PLUS" } ] }
         ]
       },
       {
@@ -32,7 +32,7 @@
           { "weight": 1, "cost": -5, "enchantments": [ { "id": "AEP_ALL_DOWN" } ] },
           { "weight": 1, "cost": -4, "enchantments": [ { "id": "AEP_SPEED_DOWN" } ] },
           { "weight": 1, "cost": -5, "enchantments": [ { "id": "AEP_EVIL" } ] },
-          { "weight": 1, "cost": -1, "enchantments": [ { "id": "AEP_SMOKE" } ] },
+          { "weight": 1, "cost": -1, "enchantments": [ { "id": "AEP_SMOKE" } ] }
         ]
       }
     ],
@@ -49,7 +49,7 @@
       { "itype": "relic_baseline_stone_beads", "weight": 100 },
       { "itype": "relic_baseline_serpentine_ring", "weight": 100 },
       { "itype": "relic_baseline_wavering_scarf", "weight": 100 },
-      { "itype": "relic_baseline_chiral_vambrace", "weight": 100 },
+      { "itype": "relic_baseline_chiral_vambrace", "weight": 100 }
     ],
     "name_prefix": [
       { "prefix": "Forbidden", "weight": 1 },
@@ -71,7 +71,7 @@
       { "prefix": "Frigid", "weight": 1 },
       { "prefix": "Shattered", "weight": 1 },
       { "prefix": "Sleeping", "weight": 1 },
-      { "prefix": "Repellent", "weight": 1 },
+      { "prefix": "Repellent", "weight": 1 }
     ],
     "name_postfix": [
       { "postfix": "of Technique", "weight": 1 },
@@ -93,7 +93,7 @@
       { "postfix": "of Horrors", "weight": 1 },
       { "postfix": "of Suffering", "weight": 1 },
       { "postfix": "of Death", "weight": 1 },
-      { "postfix": "of Horror", "weight": 1 },
+      { "postfix": "of Horror", "weight": 1 }
     ]
   }
 ]
