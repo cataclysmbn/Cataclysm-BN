@@ -1726,17 +1726,52 @@ auto vehicle::is_structural_part_removed() const -> bool {
 
 namespace {
 
-auto is_vertical_frame(const vpart_info& part) -> bool {
-    return part.location == "structure" && !part.has_flag("PROTRUSION")
-        && !part.has_flag(VPFLAG_EXTENDABLE);
-}
-
-auto is_vertical_frame(const vehicle_part& part) -> bool {
-    return !part.removed && !part.has_flag(vehicle_part::carried_flag)
-        && is_vertical_frame(part.info());
+auto supported_endpoint(const vpart_position& vp) -> bool {
+    const auto& veh = vp.vehicle();
+    const auto& part = veh.cpart(vp.part_index());
+    return part.is_available()
+        && std::ranges::any_of(veh.parts_at_relative(part.mount, false), [&](const auto index) {
+               const auto& frame = veh.cpart(index);
+               return frame.is_available() && frame.info().location == "structure"
+                   && !frame.info().has_flag("PROTRUSION")
+                   && !frame.info().has_flag(VPFLAG_EXTENDABLE);
+           });
 }
 
 } // namespace
+
+auto vehicle_stair_at(mapbuffer& buffer, const tripoint_abs_ms& from, const int dz)
+    -> std::expected<std::optional<tripoint_abs_ms>, vehicle_step_failure> {
+    if (std::abs(dz) != 1) { return std::nullopt; }
+    const auto source_tile = buffer.get_abs_tile(from);
+    if (!source_tile) { return std::unexpected(vehicle_step_failure::outside_domain); }
+    const auto up = dz > 0;
+    const auto source_flag = up ? "VEHICLE_STAIRS_UP" : "VEHICLE_STAIRS_DOWN";
+    const auto target_flag = up ? "VEHICLE_STAIRS_DOWN" : "VEHICLE_STAIRS_UP";
+    const auto source =
+        buffer.veh_at(from, {.mode = mapbuffer_lookup_mode::resident_only})
+            .part_with_feature(source_flag, false);
+    if (!source) { return std::nullopt; }
+    const auto& veh = source->vehicle();
+    if (!supported_endpoint(*source)) { return std::unexpected(vehicle_step_failure::unavailable); }
+    const auto mount = source->mount() + tripoint_rel_veh(0, 0, dz);
+    const auto index = veh.part_with_feature(mount, target_flag, false);
+    if (index < 0) { return std::unexpected(vehicle_step_failure::unpaired); }
+    const auto target = vpart_position(source->vehicle(), index);
+    const auto to = veh.abs_part_location(index);
+    const auto target_tile = buffer.get_abs_tile(to);
+    if (!target_tile) { return std::unexpected(vehicle_step_failure::outside_domain); }
+    if (!supported_endpoint(target)) { return std::unexpected(vehicle_step_failure::unavailable); }
+    if (!source_tile->passable_ter_furn() || !target_tile->passable_ter_furn()
+        || source->obstacle_at_part() || target.obstacle_at_part()
+        || buffer.has_floor(
+            up ? to : from,
+            {.visible_only = (up ? target_tile : source_tile)->get_ter_t().has_flag(TFLAG_RAMP_DOWN),
+             .terrain_only = true})) {
+        return std::unexpected(vehicle_step_failure::blocked);
+    }
+    return to;
+}
 
 /**
  * Returns whether or not the vehicle part with the given id can be mounted in
@@ -1782,7 +1817,9 @@ auto vehicle::can_mount(const tripoint_mnt_veh& dp, const vpart_id& id) const ->
                     && !has_structural_or_extendable_part(dp + point_east)
                     && !has_structural_or_extendable_part(dp + point_south)
                     && !has_structural_or_extendable_part(dp + point_west)
-                    && !has_structural_or_extendable_part(dp + point_north)) {
+                    && !has_structural_or_extendable_part(dp + point_north)
+                    && !has_structural_or_extendable_part(dp + tripoint_above)
+                    && !has_structural_or_extendable_part(dp + tripoint_below)) {
                     return false;
                 }
                 return true;
@@ -1830,19 +1867,11 @@ auto vehicle::can_mount(const tripoint_mnt_veh& dp, const vpart_id& id) const ->
     // All parts after the first must be installed on or next to an existing part
     // the exception is when a single tile only structural object is being repaired
     if (!parts.empty()) {
-        const auto vertical_support =
-            is_vertical_frame(part)
-            && std::ranges::
-                any_of(std::array{tripoint_above, tripoint_below}, [&](const auto offset) {
-                    return std::ranges::
-                        any_of(parts_at_relative(dp + offset, false), [&](const auto index) {
-                            return is_vertical_frame(parts[index]);
-                        });
-                });
         if (!is_structural_part_removed() && !has_structural_part(dp)
             && !has_structural_part(dp + point_east) && !has_structural_part(dp + point_south)
             && !has_structural_part(dp + point_west) && !has_structural_part(dp + point_north)
-            && !vertical_support) {
+            && !has_structural_part(dp + tripoint_above)
+            && !has_structural_part(dp + tripoint_below)) {
             return false;
         }
     }
@@ -1989,11 +2018,6 @@ auto vehicle::can_unmount(const int p, std::string& reason) const -> bool {
                 std::vector<int> parts_over_there = parts_at_relative(next, false);
                 // Ignore empty squares
                 if (!parts_over_there.empty()) {
-                    if (offset.z != 0
-                        && (!is_vertical_frame(parts[p])
-                            || !is_vertical_frame(parts[parts_over_there[0]]))) {
-                        continue;
-                    }
                     // Just need one part from the square to track the x/y
                     connected_parts.push_back(&parts[parts_over_there[0]]);
                 }
@@ -2052,12 +2076,6 @@ auto vehicle::is_connected(
 
         for (const auto offset : six_cardinal_directions) {
             auto next = current + offset;
-            std::vector<int> parts_there = parts_at_relative(next, true);
-            if (offset.z != 0
-                && (parts_there.empty() || !is_vertical_frame(current_part)
-                    || !is_vertical_frame(parts[parts_there[0]]))) {
-                continue;
-            }
 
             if (next == target) {
                 // Success!
@@ -2066,6 +2084,8 @@ auto vehicle::is_connected(
                 // There might be a path, but we're not allowed to go that way
                 continue;
             }
+
+            std::vector<int> parts_there = parts_at_relative(next, true);
 
             if (!parts_there.empty() && !parts[parts_there[0]].removed
                 && (part_info(parts_there[0]).location == "structure"
@@ -2172,9 +2192,7 @@ auto vehicle::install_part(const tripoint_mnt_veh& dp, vehicle_part&& new_part) 
 auto vehicle::try_to_rack_nearby_vehicle(const std::vector<std::vector<int>>& list_of_racks)
     -> bool {
     if (vehicle_has_local_height(*this)) {
-        add_msg(
-            m_warning,
-            _("Vehicles with nonzero local deck height cannot load or be loaded on bike racks yet."));
+        add_msg(m_warning, _("Multideck vehicles cannot load or be loaded on bike racks yet."));
         return false;
     }
     for (const auto& this_bike_rack : list_of_racks) {
@@ -2197,9 +2215,8 @@ auto vehicle::try_to_rack_nearby_vehicle(const std::vector<std::vector<int>>& li
                     partial_matches[i].clear();
                 }
                 if (vehicle_has_local_height(*test_veh)) {
-                    add_msg(
-                        m_warning,
-                        _("Vehicles with nonzero local deck height cannot load or be loaded on bike racks yet."));
+                    add_msg(m_warning,
+                            _("Multideck vehicles cannot load or be loaded on bike racks yet."));
                     return false;
                 }
                 partial_matches[i].insert(search_pos);
@@ -2426,11 +2443,14 @@ auto vehicle::remove_part(const int p, RemovePartHandler& handler) -> bool {
     // if a windshield is removed (usually destroyed) also remove curtains
     // attached to it.
     if (remove_dependent_part("WINDOW", "CURTAIN") || part_flag(p, VPFLAG_OPAQUE)) {
-        handler.set_transparency_cache_dirty(part_loc.z());
+        handler.set_transparency_cache_dirty(abs_sm_pos.z() + parts[p].mount.z());
     }
 
     if (part_flag(p, VPFLAG_ROOF) || part_flag(p, VPFLAG_OPAQUE)) {
-        handler.set_floor_cache_dirty(part_loc.z() + 1);
+        handler.set_floor_cache_dirty(abs_sm_pos.z() + parts[p].mount.z() + 1);
+    }
+    if (parts[p].mount.z() > min_mount_z() && part_flag(p, VPFLAG_BOARDABLE)) {
+        handler.set_floor_cache_dirty(abs_sm_pos.z() + parts[p].mount.z());
     }
 
     remove_dependent_part("SEAT", "SEATBELT");
@@ -2717,11 +2737,6 @@ auto vehicle::find_and_split_vehicles(int exclude) -> bool {
                 for (int p : all_neighbor_parts) {
                     if (parts[p].removed) { continue; }
                     if (part_info(p).location == part_location_structure) {
-                        if (offset.z != 0
-                            && (!is_vertical_frame(parts[test_part])
-                                || !is_vertical_frame(parts[p]))) {
-                            continue;
-                        }
                         neighbor_struct_part = p;
                         break;
                     }
@@ -4149,7 +4164,8 @@ auto vehicle::max_ground_velocity(const bool fueled, const bool ideal) const -> 
         -total_engine_w);
     add_msg(m_debug, "%s: power %d, c_air %3.2f, c_rolling %3.2f, max_in_mps %3.2f", name,
             total_engine_w, coeff_air_drag(), c_rolling_drag, max_in_mps);
-    return mps_to_cmps(max_in_mps);
+    return static_cast<int>(
+        mps_to_cmps(max_in_mps) * vehicle_ground_stability_multiplier(stability()));
 }
 
 // the same physics as ground velocity, but there's no rolling resistance so the math is easy
@@ -4168,7 +4184,8 @@ auto vehicle::max_water_velocity(const bool fueled, const bool ideal) const -> i
     double max_in_mps = std::cbrt(total_engine_w / total_drag);
     add_msg(m_debug, "%s: power %d, c_air %3.2f, c_water %3.2f, water max_in_mps %3.2f", name,
             total_engine_w, coeff_air_drag(), coeff_water_drag(), max_in_mps);
-    return mps_to_cmps(max_in_mps);
+    return static_cast<int>(
+        mps_to_cmps(max_in_mps) * vehicle_ground_stability_multiplier(stability()));
 }
 
 auto vehicle::max_air_velocity(const bool fueled, const bool ideal) const -> int {
@@ -4216,14 +4233,19 @@ auto vehicle::safe_ground_velocity(const bool fueled, const bool ideal) const ->
         }
         // Cap safe speed at the point where the slowest animal found would start to damage their
         // yoke If damage or weight has pulled max speed lower than this, cap at that instead.
-        if (animal_vel > 0) { return std::min(animal_vel, max_ground_velocity(fueled)); }
+        if (animal_vel > 0) {
+            return std::
+                min(static_cast<int>(animal_vel * vehicle_ground_stability_multiplier(stability())),
+                    max_ground_velocity(fueled));
+        }
     }
     int effective_engine_w = (ideal ? ideal_engine_power(true) : total_power_w(fueled, true));
     double c_rolling_drag = coeff_rolling_drag();
     double safe_in_mps = simple_cubic_solution(
         coeff_air_drag(), c_rolling_drag, c_rolling_drag * vehicles::rolling_constant_to_variable,
         -effective_engine_w);
-    return mps_to_cmps(safe_in_mps);
+    return static_cast<int>(
+        mps_to_cmps(safe_in_mps) * vehicle_ground_stability_multiplier(stability()));
 }
 
 // TODO: Consider some kind of dynamic pressure based safe velocity
@@ -4238,7 +4260,8 @@ auto vehicle::safe_water_velocity(const bool fueled, const bool ideal) const -> 
     int total_engine_w = (ideal ? ideal_engine_power(true) : total_power_w(fueled, true));
     double total_drag = coeff_water_drag() + coeff_air_drag();
     double safe_in_mps = std::cbrt(total_engine_w / total_drag);
-    return mps_to_cmps(safe_in_mps);
+    return static_cast<int>(
+        mps_to_cmps(safe_in_mps) * vehicle_ground_stability_multiplier(stability()));
 }
 
 auto vehicle::safe_velocity(const bool fueled) const -> int {
@@ -7027,19 +7050,19 @@ void vehicle::damage_all(int dmg1, int dmg2, damage_type type, const tripoint_mn
  * @param delta How much to shift along each axis
  * Only XY components of delta are applied; local deck heights are preserved.
  */
-void vehicle::shift_parts(tripoint_rel_veh delta) {
-    delta.z() = 0;
-    for (auto& elem : parts) { elem.mount -= delta; }
+void vehicle::shift_parts(const tripoint_rel_veh& delta) {
+    const auto xy_delta = tripoint_rel_veh(delta.xy(), 0);
+    for (auto& elem : parts) { elem.mount -= xy_delta; }
 
     decltype(labels) new_labels;
-    for (auto& l : labels) { new_labels.insert(label(l - delta, l.text)); }
+    for (auto& l : labels) { new_labels.insert(label(l - xy_delta, l.text)); }
     labels = new_labels;
 
     decltype(loot_zones) new_zones;
-    for (auto const& z : loot_zones) { new_zones.emplace(z.first - delta, z.second); }
+    for (auto const& z : loot_zones) { new_zones.emplace(z.first - xy_delta, z.second); }
     loot_zones = new_zones;
 
-    pivot_anchor[0] -= delta;
+    pivot_anchor[0] -= xy_delta;
     refresh();
     // Need to also update the map after this
     g->m.reset_vehicle_cache();
@@ -7232,7 +7255,7 @@ auto vehicle::damage_direct(int p, int dmg, damage_type type) -> int {
     // If auto-driving and damage happens, bail out
     if (is_autodriving) { stop_autodriving(); }
     here.set_memory_seen_cache_dirty(bub_part_location(p));
-    here.set_vehicle_cache_dirty(bub_part_location(p).z());
+    here.set_vehicle_cache_dirty(abs_sm_pos.z() + parts[p].mount.z());
     if (parts[p].is_broken()) { return break_off(p, dmg); }
 
     int tsh = std::min(20, part_info(p).durability / 10);
@@ -7701,7 +7724,10 @@ auto vehicle::advance_precalc_mounts(const tripoint_abs_ms& src) -> std::set<int
         prt.precalc[0] = prt.precalc[1];
         prt.z_terrain[0] = prt.z_terrain[1];
 
-        smzs.insert(prt.z_terrain[0]);
+        smzs.insert(prt.mount.z() + prt.z_terrain[0]);
+        if (prt.mount.z() != 0 && prt.info().has_flag(VPFLAG_BOARDABLE)) {
+            smzs.insert(prt.mount.z() + prt.z_terrain[0] - 1);
+        }
     }
 
     pivot_anchor[0] = pivot_anchor[1];

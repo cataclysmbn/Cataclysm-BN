@@ -254,7 +254,7 @@ TEST_CASE(
 TEST_CASE("multiz_core_connector_routes", "[vehicle][vehicle_multiz][vehicle_multiz_core]") {
     const auto legacy = GENERATE(false, true);
     auto fixture = runtime_fixture{};
-    auto& veh = spawn_vehicle("multiz_two_deck_test", tripoint_bub_ms(60, 60, 1));
+    auto& veh = spawn_vehicle("multiz_two_deck_test", tripoint_bub_ms(60, 60, 0));
     const auto from = veh.abs_part_location(boardable(veh, tripoint_mnt_veh::zero()));
     const auto to = veh.abs_part_location(boardable(veh, tripoint_mnt_veh(0, 0, 1)));
     const auto stair = boardable(veh, tripoint_mnt_veh(2, 0, 0));
@@ -512,8 +512,7 @@ TEST_CASE("multiz_core_boating_and_sinking", "[vehicle][vehicle_multiz][vehicle_
     CHECK(veh.abs_ms_location() == origin + tripoint_rel_ms::east());
     check_rider(veh, get_avatar(), driver);
     check_rider(veh, passenger, upstairs);
-    veh.stop();
-    veh.cruise_on = false;
+    REQUIRE(veh.velocity > 0);
     const auto unit = item::spawn("lead", calendar::turn, 1);
     const auto charges = static_cast<int>(
         units::to_milligram(4000_kilogram) / units::to_milligram(unit->weight()));

@@ -469,7 +469,7 @@ public:
         -> std::optional<bool>;
     /// Physical support includes live vehicle decks; terrain/vehicle physics can exclude them.
     auto has_floor(const tripoint_abs_ms& p, const mapbuffer_floor_options& options = {}) -> bool;
-    /// Read physical vehicle floor/roof boundaries between adjacent absolute tiles.
+    /// Read physical additional-deck boundaries between adjacent absolute tiles.
     auto vehicle_floor_between(const tripoint_abs_ms& first, const tripoint_abs_ms& second) -> bool;
     auto valid_move(
         const tripoint_abs_ms& from, const tripoint_abs_ms& to,

@@ -107,7 +107,6 @@ auto mapgen_constructor::get_buffer() const -> mapbuffer& { return buffer_; }
 
 auto mapgen_constructor::get_abs_tile(const tripoint_abs_ms& pos) const
     -> std::optional<mapbuffer_abs_tile_view> {
-    if (pos.z() < -OVERMAP_DEPTH || pos.z() > OVERMAP_HEIGHT) { return std::nullopt; }
     const auto projected = project_remain<coords::sm>(pos);
     const auto origin = project_to<coords::sm>(abs_offset_);
     const auto* sm =
@@ -1041,7 +1040,6 @@ auto mapgen_constructor::add_vehicle(
 auto mapgen_constructor::add_vehicle(std::unique_ptr<vehicle> veh, const bool merge_wrecks)
     -> std::unique_ptr<vehicle> {
     const auto existing = get_vehicles();
-    const auto local_height = vehicle_has_local_height(*veh);
     // We only want to check once per square, so loop over all structural parts
     std::vector<int> frame_indices = veh->all_standalone_parts();
 
@@ -1050,21 +1048,18 @@ auto mapgen_constructor::add_vehicle(std::unique_ptr<vehicle> veh, const bool me
     bool needs_smashing = false;
     for (const int pt : frame_indices) {
         // Don't spawn anything in water
-        const auto abs_pos = veh->abs_part_location(pt);
-        const auto omt_pos = project_remain<coords::omt>(abs_pos).remainder;
+        const auto omt_pos = project_remain<coords::omt>(veh->abs_part_location(pt)).remainder;
+        const auto abs_pos =
+            project_combine(abs_offset_, omt_pos) + tripoint_rel_ms(0, 0, veh->cpart(pt).mount.z());
         if (abs_pos.z() < -OVERMAP_DEPTH || abs_pos.z() > OVERMAP_HEIGHT) { return nullptr; }
         const auto tile = get_abs_tile(abs_pos);
-        if (!tile) {
-            if (!local_height) { return nullptr; }
-            continue;
-        }
+        if (!tile) { continue; }
         const auto& terrain = tile->get_ter_t();
-        const auto floating =
-            can_float && terrain.has_flag(TFLAG_SWIMMABLE) && tile->get_furn_t().movecost >= 0;
         if (!terrain.has_flag(TFLAG_NO_FLOOR)
             && !veh->parts_at_relative(veh->cpart(pt).mount + tripoint_below, false).empty()) {
             const auto below = get_abs_tile(abs_pos + tripoint_rel_ms::below());
-            if (!floating || !below || !below->get_ter_t().has_flag(TFLAG_SWIMMABLE)
+            if (!can_float || !terrain.has_flag(TFLAG_SWIMMABLE) || tile->get_furn_t().movecost < 0
+                || !below || !below->get_ter_t().has_flag(TFLAG_SWIMMABLE)
                 || below->get_furn_t().has_flag("SUN_ROOF_ABOVE")) {
                 return nullptr;
             }
@@ -1114,7 +1109,7 @@ auto mapgen_constructor::add_vehicle(std::unique_ptr<vehicle> veh, const bool me
             add_vehicle(std::move(old_veh), false);
             return nullptr;
 
-        } else if (!tile->passable_ter_furn() && !floating) {
+        } else if (!tile->passable_ter_furn()) {
             if (!merge_wrecks || abs_pos.z() != abs_offset_.z()) { return nullptr; }
 
             // There's a wall or other obstacle here; destroy it

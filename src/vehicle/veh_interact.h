@@ -88,7 +88,6 @@ private:
     catacurses::window w_msg;
     catacurses::window w_disp;
     catacurses::window w_deck;
-    catacurses::window w_stairs;
     catacurses::window w_parts;
     catacurses::window w_stats;
     catacurses::window w_list;
@@ -114,8 +113,6 @@ private:
     inventory crafting_inv;
     input_context main_context;
     input_context gameplay_context{"DEFAULTMODE"};
-    std::string stair_status_text;
-    bool stair_status_dual = false;
 
     // maximum level of available lifting equipment (if any)
     int max_lift;

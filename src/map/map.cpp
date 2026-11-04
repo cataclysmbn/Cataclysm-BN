@@ -1142,11 +1142,7 @@ void map::vehmove() {
             // gain_moves() sets of_turn=0.001 for velocity==0 non-falling
             // non-autopilot vehicles.  Moving and falling vehicles receive
             // of_turn = 1 + carry >= 1.0, so this threshold is unambiguous.
-            if (w.v->of_turn >= 1.0f
-                || (vehicle_has_local_height(*w.v) && w.v->is_in_water(true)
-                    && !w.v->can_float())) {
-                pq.push(&w);
-            }
+            if (w.v->of_turn >= 1.0f) { pq.push(&w); }
             if (w.v->is_falling || (w.v->is_aircraft() && w.v->get_z_change() != 0)) {
                 falling_vehicles.push_back(&w);
             }
@@ -1361,8 +1357,7 @@ auto map::move_vehicle(vehicle& veh, const tripoint_rel_ms& dp, const tileray& f
         }
 
         for (auto& pair : veh_collisions) {
-            impulse += vehicle_vehicle_collision(
-                veh, {.target = *pair.first, .collisions = pair.second, .vertical = vertical});
+            impulse += vehicle_vehicle_collision(veh, *pair.first, pair.second);
         }
 
         // Non-vehicle collisions
@@ -1550,10 +1545,8 @@ auto map::move_vehicle(vehicle& veh, const tripoint_rel_ms& dp, const tileray& f
     return &veh;
 }
 
-auto map::vehicle_vehicle_collision(vehicle& veh, const vehicle_vehicle_collision_options& options)
-    -> float {
-    auto& veh2 = options.target;
-    const auto& collisions = options.collisions;
+auto map::vehicle_vehicle_collision(
+    vehicle& veh, vehicle& veh2, const std::vector<veh_collision>& collisions) -> float {
     if (&veh == &veh2) {
         debugmsg("Vehicle %s collided with itself", veh.name);
         return 0.0f;
@@ -1567,7 +1560,7 @@ auto map::vehicle_vehicle_collision(vehicle& veh, const vehicle_vehicle_collisio
     add_msg(m_bad, _("The %1$s's %2$s collides with %3$s's %4$s."), veh.name,
             veh.part_info(c.part).name(), veh2.name, veh2.part_info(c.target_part).name());
 
-    const bool vertical = options.vertical;
+    const bool vertical = veh.abs_sm_pos.z() != veh2.abs_sm_pos.z();
 
     // Used to calculate the epicenter of the collision.
     tripoint_rel_veh epicenter1;
@@ -1923,6 +1916,7 @@ auto map::displace_vehicle(vehicle& veh, const tripoint_rel_ms& dp) -> bool {
                   .lookup_submap_in_memory(dest_proj.quotient_tripoint)
             : nullptr;
 
+    std::set<int> smzs;
     size_t our_i = 0;
 
     if (sm_shift) {
@@ -2084,7 +2078,7 @@ auto map::displace_vehicle(vehicle& veh, const tripoint_rel_ms& dp) -> bool {
         }
     }
 
-    veh.advance_precalc_mounts(src);
+    smzs = veh.advance_precalc_mounts(src);
     veh.sm_ms_pos = dest_proj.remainder;
 
     // Expand bounds with the new footprint (precalc[0] now holds new offsets).
@@ -2113,11 +2107,12 @@ auto map::displace_vehicle(vehicle& veh, const tripoint_rel_ms& dp) -> bool {
     auto vehicle_moved_marked = false;
     auto const mark_vehicle_moved = [&]() {
         if (vehicle_moved_marked) { return; }
-        for (auto z = std::max(-OVERMAP_DEPTH, veh_sm_min.z() - local_height);
-             z <= std::min(OVERMAP_HEIGHT, veh_sm_max.z()); ++z) {
-            on_vehicle_moved(abs_to_map_local(*this, tripoint_abs_sm(veh_sm_min.xy(), z)),
-                             abs_to_map_local(*this, tripoint_abs_sm(veh_sm_max.xy(), z)), z);
-        }
+        std::ranges::for_each(smzs, [&](const int vsmz) {
+            const auto smz = dest.z() + vsmz;
+            const auto veh_bub_sm_min = abs_to_bub(tripoint_abs_sm(veh_sm_min.xy(), smz));
+            const auto veh_bub_sm_max = abs_to_bub(tripoint_abs_sm(veh_sm_max.xy(), smz));
+            on_vehicle_moved(veh_bub_sm_min, veh_bub_sm_max, smz);
+        });
         vehicle_moved_marked = true;
     };
 
@@ -6029,7 +6024,7 @@ auto map::tr_at(const tripoint_bub_ms& p) const -> const trap& {
 
     if (current_submap->get_ter(l).obj().trap != tr_null) {
         if (current_submap->get_ter(l).obj().trap == tr_ledge && has_floor(p)) {
-            return current_submap->get_trap(l).obj();
+            return tr_null.obj();
         }
         return current_submap->get_ter(l).obj().trap.obj();
     }
@@ -8393,12 +8388,14 @@ void map::build_obstacle_cache(
             }
         }
     }
-    VehicleList vehs = get_vehicles();
+    const auto start_sm = project_to<coords::sm>(start);
+    const auto end_sm = project_to<coords::sm>(end);
+    VehicleList vehs = get_vehicles({start_sm.xy(), -OVERMAP_DEPTH}, {end_sm.xy(), OVERMAP_HEIGHT});
     const inclusive_cuboid<tripoint_bub_ms> bounds(start, end);
     // Cache all the vehicle stuff in one loop
     for (auto& v : vehs) {
         for (const vpart_reference& vp : v.v->get_all_parts()) {
-            auto p = abs_to_map_local(*this, v.v->abs_part_location(vp.part()));
+            auto p = v.pos + vp.part().precalc[0] + tripoint_rel_ms(0, 0, vp.mount().z());
             if (!bounds.contains(p)) { continue; }
 
             if (vp.obstacle_at_part()) { obstacle_cache[p.x() * cache_sy + p.y()] = 1000.0f; }
@@ -8541,41 +8538,38 @@ static void vehicle_caching_internal(level_cache& zch, const vpart_reference& vp
         floor_cache[zch.idx(part_pos.x(), part_pos.y())] = true;
     }
 
-    const auto neighbor_mount = [&](const auto& pos) {
-        return tripoint_mnt_veh(v->bubble_to_mount(pos).xy(), vp.mount().z());
-    };
-    tripoint_mnt_veh t = neighbor_mount(part_pos + point_north_west);
+    tripoint_mnt_veh t = v->bubble_to_mount(part_pos + point_north_west);
     if (!v->allowed_light(t, vp.mount())) {
         obscured_cache[zch.idx(part_pos.x(), part_pos.y())].nw = true;
     }
-    if (!v->allowed_move(t, vp.mount())) {
+    if (!v->allowed_move(t, tripoint_mnt_veh(vp.mount().xy(), t.z()))) {
         obstructed_cache[zch.idx(part_pos.x(), part_pos.y())].nw = true;
     }
 
-    t = neighbor_mount(part_pos + point_north_east);
+    t = v->bubble_to_mount(part_pos + point_north_east);
     if (!v->allowed_light(t, vp.mount())) {
         obscured_cache[zch.idx(part_pos.x(), part_pos.y())].ne = true;
     }
-    if (!v->allowed_move(t, vp.mount())) {
+    if (!v->allowed_move(t, tripoint_mnt_veh(vp.mount().xy(), t.z()))) {
         obstructed_cache[zch.idx(part_pos.x(), part_pos.y())].ne = true;
     }
 
     if (part_pos.x() > 0 && part_pos.y() < zch.cache_y - 1) {
-        t = neighbor_mount(part_pos + point_south_west);
+        t = v->bubble_to_mount(part_pos + point_south_west);
         if (!v->allowed_light(t, vp.mount())) {
             obscured_cache[zch.idx(part_pos.x() - 1, part_pos.y() + 1)].ne = true;
         }
-        if (!v->allowed_move(t, vp.mount())) {
+        if (!v->allowed_move(t, tripoint_mnt_veh(vp.mount().xy(), t.z()))) {
             obstructed_cache[zch.idx(part_pos.x() - 1, part_pos.y() + 1)].ne = true;
         }
     }
 
     if (part_pos.x() < zch.cache_x - 1 && part_pos.y() < zch.cache_y - 1) {
-        t = neighbor_mount(part_pos + point_south_east);
+        t = v->bubble_to_mount(tripoint_bub_ms(part_pos + point_south_east));
         if (!v->allowed_light(t, vp.mount())) {
             obscured_cache[zch.idx(part_pos.x() + 1, part_pos.y() + 1)].nw = true;
         }
-        if (!v->allowed_move(t, vp.mount())) {
+        if (!v->allowed_move(t, tripoint_mnt_veh(vp.mount().xy(), t.z()))) {
             obstructed_cache[zch.idx(part_pos.x() + 1, part_pos.y() + 1)].nw = true;
         }
     }
@@ -8593,23 +8587,30 @@ static void vehicle_caching_internal_above(
 
 void map::do_vehicle_caching(int z) {
     level_cache& ch = get_cache(z);
-    // Rebuild the target level, not the owner's level. Scheduler registration stays unique.
+    if (ch.vehicle_list.empty() && inbounds_z(z + 1)) {
+        get_cache(z + 1).vehicle_floor_cache_dirty = false;
+    }
     for (const auto& owner : get_vehicles()) {
         auto* const v = owner.v;
-        const auto local_height = vehicle_has_local_height(*v);
+        if (v->abs_sm_pos.z() != z && std::ranges::none_of(v->get_all_parts(), [&](const auto& vp) {
+                return !vp.part().removed && v->abs_sm_pos.z() + vp.mount().z() == z;
+            })) {
+            continue;
+        }
         for (const vpart_reference& vp : v->get_all_parts()) {
             const tripoint_bub_ms& part_pos = v->bub_part_location(vp.part());
             if (!inbounds(part_pos) || vp.part().removed) { continue; }
-            if (part_pos.z() == z) {
-                if (ch.vehicle_caches_dirty) { vehicle_caching_internal(ch, vp, v); }
-                if (ch.vehicle_floor_cache_dirty && vp.has_feature(VPFLAG_BOARDABLE) && local_height
-                    && !vp.part().is_broken()) {
-                    ch.vehicle_floor_cache[ch.idx(part_pos.x(), part_pos.y())] = true;
-                    ch.has_any_vehicle_floor = true;
-                }
-            } else if (part_pos.z() + 1 == z && ch.vehicle_floor_cache_dirty
-                       && (!local_height || !vp.part().is_broken())) {
-                vehicle_caching_internal_above(ch, vp, v);
+            vehicle_caching_internal(get_cache(part_pos.z()), vp, v);
+            if (vp.mount().z() > v->min_mount_z() && vp.has_feature(VPFLAG_BOARDABLE)
+                && !vp.part().is_broken()) {
+                auto& deck_cache = get_cache(part_pos.z());
+                deck_cache.vehicle_floor_cache[deck_cache.idx(part_pos.x(), part_pos.y())] = true;
+                deck_cache.has_any_vehicle_floor = true;
+            }
+            if (part_pos.z() < OVERMAP_HEIGHT) {
+                level_cache& ch_above = get_cache(part_pos.z() + 1);
+                vehicle_caching_internal_above(ch_above, vp, v);
+                ch_above.vehicle_floor_cache_dirty = false;
             }
         }
     }
@@ -8686,11 +8687,6 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
         // They must complete before outside/sheltered caches which read floor[z+1].
         for (int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; ++z) {
             const bool floor_was_dirty = !get_cache_ref(z).floor_cache_dirty.none();
-            auto& ch = get_cache(z);
-            ch.vehicle_caches_dirty |=
-                ch.veh_in_active_range
-                && (floor_was_dirty || !ch.outside_cache_dirty.none()
-                    || !ch.transparency_cache_dirty.none());
             if (build_floor_cache(z)) { seen_cache_dirty = true; }
             if (floor_was_dirty) {
                 gpu_floor_dirty = true;
@@ -8760,7 +8756,8 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
         ZoneScopedN("Phase3_vehicles");
         for (int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++) {
             // If one cache is dirty redo the entire cache for simplicity
-            if (get_cache(z).vehicle_caches_dirty || get_cache(z).vehicle_floor_cache_dirty) {
+            if (get_cache(z).vehicle_caches_dirty || get_cache(z).vehicle_floor_cache_dirty
+                || (inbounds_z(z + 1) && get_cache(z + 1).vehicle_floor_cache_dirty)) {
                 add_gpu_dirty_level(gpu_transparency_dirty_levels, z);
                 add_gpu_dirty_level(gpu_transparency_residency_invalid_levels, z);
                 add_gpu_dirty_level(gpu_floor_dirty_levels, z);

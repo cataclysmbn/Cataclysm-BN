@@ -333,14 +333,15 @@ bool monster::can_reach_to( const tripoint_bub_ms &p ) const
     }
 
     const bool is_going_up = p.z() > bub_pos().z();
+    const auto vp = here.veh_at( bub_pos() );
     if( is_going_up ) {
-        const bool has_up_ramp = here.ramp_offset( bub_pos(), p ) == p.z() - bub_pos().z();
+        const bool has_up_ramp = here.ramp_offset( vp, p + tripoint_below ) > 0;
         const bool has_stairs = here.has_flag( TFLAG_GOES_UP, bub_pos() );
         const bool can_fly_there = flies() && here.has_flag( TFLAG_NO_FLOOR, p );
 
         return has_up_ramp || has_stairs || can_fly_there;
     } else {
-        const bool has_down_ramp = here.ramp_offset( bub_pos(), p ) == p.z() - bub_pos().z();
+        const bool has_down_ramp = here.ramp_offset( vp, p + tripoint_above ) < 0;
         const bool has_stairs = here.has_flag( TFLAG_GOES_DOWN, bub_pos() );
         const bool can_fly_there = flies() && here.has_flag( TFLAG_NO_FLOOR, bub_pos() );
 

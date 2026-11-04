@@ -178,7 +178,6 @@
 #include "vehicle/vehicle.h"
 #include "vehicle/vehicle_grab.h"
 #include "vehicle/vehicle_part.h"
-#include "vehicle/vehicle_stairs.h"
 #include "vehicle/vpart_position.h"
 #include "vehicle/vpart_range.h"
 #include "wcwidth.h"
@@ -14539,7 +14538,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
 
         const auto dest = u.bub_pos() + tripoint_above;
         const ter_id dest_terrain = m.ter( dest );
-        const bool dest_is_air = dest_terrain == t_open_air && !m.floor_between( u.bub_pos(), dest );
+        const bool dest_is_air = dest_terrain == t_open_air && !m.floor_between( u.bub_pos(), dest, true );
 
         const auto &mutations = get_avatar().get_mutations();
 
@@ -14592,7 +14591,8 @@ void game::vertical_move( int movez, bool force, bool peeking )
 
         // Check if player is standing on open air
         const ter_id here_terrain = m.ter( u.bub_pos() );
-        const bool standing_on_air = here_terrain == t_open_air && !m.has_floor( u.bub_pos() );
+        const bool standing_on_air = here_terrain == t_open_air &&
+                                     !m.floor_between( u.bub_pos(), dest, true );
 
         if( !can_fly ) {
             if( suggest_auto_walk_to_stairs( u, m, "down" ) ) {

@@ -84,11 +84,6 @@ class vpart_reference;
 struct mongroup;
 struct projectile;
 struct veh_collision;
-struct vehicle_vehicle_collision_options {
-    vehicle& target;
-    const std::vector<veh_collision>& collisions;
-    bool vertical;
-};
 
 template <typename T> class visitable;
 
@@ -1194,10 +1189,9 @@ public:
 
     // Executes vehicle-vehicle collision based on vehicle::collision results
     // Returns impulse of the executed collision
-    // Contacts with vehicles other than options.target are ignored. Axis is the movement axis,
-    // never inferred from the vehicles' owning submap levels.
-    auto vehicle_vehicle_collision(vehicle& veh, const vehicle_vehicle_collision_options& options)
-        -> float;
+    // If vector contains collisions with vehicles other than veh2, they will be ignored
+    auto vehicle_vehicle_collision(
+        vehicle& veh, vehicle& veh2, const std::vector<veh_collision>& collisions) -> float;
     // Throws vehicle passengers about the vehicle, possibly out of it
     // Returns change in vehicle orientation due to lost control
     auto shake_vehicle(vehicle& veh, int velocity_before, units::angle direction) -> units::angle;

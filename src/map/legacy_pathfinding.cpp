@@ -18,7 +18,6 @@
 #include "vehicle/veh_type.h"
 #include "vehicle/vehicle.h"
 #include "vehicle/vehicle_part.h"
-#include "vehicle/vehicle_stairs.h"
 #include "vehicle/vpart_position.h"
 
 #include <algorithm>

@@ -13,6 +13,7 @@
 #include "type_id.h"
 
 #include <array>
+#include <expected>
 #include <functional>
 #include <map>
 #include <optional>
@@ -1390,7 +1391,7 @@ public:
     void damage_all(int dmg1, int dmg2, damage_type type, const tripoint_mnt_veh& impact);
 
     // Shifts the coordinates of all parts and moves the vehicle in the opposite direction.
-    void shift_parts(tripoint_rel_veh delta);
+    void shift_parts(const tripoint_rel_veh& delta);
     auto shift_if_needed() -> bool;
 
     void shed_loose_parts();
@@ -1907,7 +1908,14 @@ private:
 /// Nonzero permanent local height, not a planar vehicle deformed by terrain.
 auto vehicle_has_local_height(const vehicle& veh) -> bool;
 
-/// Stability speed factor for land and water; callers exempt flight and falling.
+enum class vehicle_step_failure { unpaired, unavailable, outside_domain, blocked };
+
+/// Empty success means no endpoint; an error must not authorize terrain/rope fallback.
+/// Live, actor-independent topology. No loading, boarding, or other world mutation.
+auto vehicle_stair_at(mapbuffer& buffer, const tripoint_abs_ms& from, int dz)
+    -> std::expected<std::optional<tripoint_abs_ms>, vehicle_step_failure>;
+
+/// Stability factor applied by the land and water velocity calculations.
 constexpr auto vehicle_ground_stability_multiplier(double stability) -> double {
     return 0.25 + 0.75 * stability;
 }

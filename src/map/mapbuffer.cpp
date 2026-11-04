@@ -49,7 +49,6 @@
 #include "vehicle/veh_type.h"
 #include "vehicle/vehicle.h"
 #include "vehicle/vehicle_part.h"
-#include "vehicle/vehicle_stairs.h"
 #include "vehicle/vpart_range.h"
 #include "weather/weather.h"
 #include "world.h"
@@ -1816,8 +1815,7 @@ auto mapbuffer::has_floor(const tripoint_abs_ms& p, const mapbuffer_floor_option
         const auto below = get_abs_tile(p + tripoint_rel_ms::below(), options.lookup);
         if (below && below->get_furn_t().has_flag(TFLAG_SUN_ROOF_ABOVE)) { return true; }
     }
-    return !options.terrain_only
-        && vehicle_part_at_loaded_tile(p).part_with_feature(VPFLAG_BOARDABLE, true).has_value();
+    return !options.terrain_only && vehicle_floor_between(p, p + tripoint_rel_ms::below());
 }
 
 auto mapbuffer::vehicle_floor_between(const tripoint_abs_ms& first, const tripoint_abs_ms& second)
@@ -2102,9 +2100,7 @@ auto mapbuffer::set_trap(
     const auto tile = lookup_tile(*this, p, options);
     if (!tile) { return false; }
 
-    const auto terrain_trap = tile->sm->get_ter(tile->local).obj().trap;
-    if (terrain_trap != tr_null && trap != tr_null
-        && !(terrain_trap == tr_ledge && has_floor(p, {.lookup = options}))) {
+    if (tile->sm->get_ter(tile->local).obj().trap != tr_null && trap != tr_null) {
         debugmsg("set trap %s on top of terrain %s which already has a built-in trap",
                  trap.obj().name(), tile->sm->get_ter(tile->local).obj().name());
         return false;
@@ -2120,12 +2116,14 @@ auto mapbuffer::set_trap(
 
 auto mapbuffer::creature_on_trap(Creature& critter, const bool may_avoid) -> void {
     const auto pos = critter.abs_pos();
-    const auto tile = lookup_tile(*this, pos, {});
+    const auto tile = get_abs_tile(pos);
     if (!tile) { return; }
-    const auto& tr =
-        tile->sm->get_ter(tile->local).obj().trap == tr_ledge && has_floor(pos)
-            ? tile->sm->get_trap(tile->local).obj()
-            : trap_at_tile(*tile->sm, tile->local);
+
+    auto trap_here = tile->get_ter_t().trap;
+    if (trap_here == tr_ledge && has_floor(pos)) { return; }
+    if (trap_here == tr_null) { trap_here = tile->get_trap(); }
+
+    const auto& tr = trap_here.obj();
     if (tr.is_null()) { return; }
     const player* const pl = critter.as_player();
     if (pl != nullptr && pl->in_vehicle) { return; }

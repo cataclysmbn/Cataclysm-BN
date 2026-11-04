@@ -48,7 +48,6 @@
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vehicle_selector.h"
-#include "vehicle_stairs.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
 #include "wheel_dimensions.h"
@@ -274,9 +273,8 @@ void veh_interact::allocate_windows() {
 
     const int mode_h = 1;
     const int name_h = 1;
-    const auto stair_h = stair_status_text.empty() ? 0 : 2;
 
-    page_size = grid_h - (mode_h + stats_h + 1 + name_h + stair_h) - 2;
+    page_size = grid_h - (mode_h + stats_h + 1 + name_h) - 2;
 
     const int pane_y = grid.y + mode_h + 1;
 
@@ -295,8 +293,7 @@ void veh_interact::allocate_windows() {
     const int parts_h = std::max(1, page_size - preview_h - deck_h);
     const int parts_y = pane_y + deck_h + preview_h;
 
-    const auto stair_y = pane_y + page_size + 1;
-    const int name_y = stair_y + stair_h;
+    const int name_y = pane_y + page_size + 1;
     const int stats_y = name_y + name_h;
 
     const int list_x = grid.x + disp_w + 1;
@@ -314,9 +311,6 @@ void veh_interact::allocate_windows() {
     w_mode = catacurses::newwin(mode_h, grid_w, grid);
     w_msg = catacurses::newwin(page_size, pane_w, point(msg_x, pane_y));
     w_deck = catacurses::newwin(deck_h, disp_w, point(grid.x, pane_y));
-    w_stairs =
-        stair_h > 0 ? catacurses::newwin(stair_h, grid_w, point(grid.x, stair_y))
-                    : catacurses::window{};
     w_disp = catacurses::newwin(preview_h, disp_w, point(grid.x, pane_y + deck_h));
     w_parts = catacurses::newwin(parts_h, disp_w, point(grid.x, parts_y));
     w_list = catacurses::newwin(page_size, pane_w, point(list_x, pane_y));
@@ -424,21 +418,7 @@ auto veh_interact::display_deck_controls() -> void {
         has_lower_deck
             ? string_format(_("Below %+d: reference only"), vehicle_cursor.z() - 1)
             : _("Below: no reference"));
-    if (w_stairs) {
-        werase(w_stairs);
-        if (stair_status_dual) {
-            // Reserve one row per direction so a long failure cannot hide the usable exit.
-            const auto lines = string_split(stair_status_text, '\n');
-            for (auto row = 0; row < static_cast<int>(lines.size()) && row < getmaxy(w_stairs);
-                 ++row) {
-                trim_and_print(w_stairs, point(0, row), getmaxx(w_stairs), c_white, lines[row]);
-            }
-        } else {
-            fold_and_print(w_stairs, point_zero, getmaxx(w_stairs), c_white, stair_status_text);
-        }
-    }
     wnoutrefresh(w_deck);
-    if (w_stairs) { wnoutrefresh(w_stairs); }
 }
 
 void veh_interact::hide_ui(const bool hide) {
@@ -2201,7 +2181,6 @@ auto veh_interact::can_potentially_install(const vpart_info& vpart) -> bool {
  * @param dstart_at How far to change the start position for vehicle part descriptions
  */
 void veh_interact::move_cursor(tripoint_rel_veh d, int dstart_at) {
-    namespace ranges = std::ranges;
     const auto& here = get_map();
 
     const auto old_z = vehicle_cursor.z();
@@ -2269,42 +2248,6 @@ void veh_interact::move_cursor(tripoint_rel_veh d, int dstart_at) {
 
     /* Update the lifting quality to be the that is available for this newly selected tile */
     if (in_world) { cache_tool_availability_update_lifting(vehp); }
-
-    const auto had_stairs = !stair_status_text.empty();
-    stair_status_text.clear();
-    stair_status_dual = false;
-    for (const auto index : parts_here) {
-        const auto& part = veh->cpart(index);
-        const auto up = part.info().has_flag("VEHICLE_STAIRS_UP");
-        const auto down = part.info().has_flag("VEHICLE_STAIRS_DOWN");
-        if (part.removed || (!up && !down)) { continue; }
-        stair_status_dual = up && down;
-        for (const auto direction : {1, -1}) {
-            const auto ascending = direction > 0;
-            if ((ascending && !up) || (!ascending && !down)) { continue; }
-            const auto probe =
-                vehicle_stair_at(here.get_mapbuffer(), veh->abs_part_location(part), direction);
-            const auto available = probe && probe->has_value();
-            const auto status =
-                available
-                    ? _("Ready for use.")
-                    : vehicle_step_failure_message(
-                          probe ? vehicle_step_failure::unavailable : probe.error());
-            const auto label =
-                stair_status_dual
-                    ? (ascending ? _("Up: %s") : _("Down: %s"))
-                    : (ascending ? _("Stairs up: %s") : _("Stairs down: %s"));
-            auto line = string_format(label, status);
-            if (stair_status_dual) {
-                // Only the separator we insert may consume a row, even in translated messages.
-                ranges::replace(line, '\n', ' ');
-            }
-            if (!stair_status_text.empty()) { stair_status_text += '\n'; }
-            stair_status_text += colorize(line, available ? c_light_green : c_yellow);
-        }
-        break;
-    }
-    if (w_disp && had_stairs != !stair_status_text.empty()) { allocate_windows(); }
 }
 
 void veh_interact::display_grid() {
@@ -2602,12 +2545,11 @@ void veh_interact::display_stats() const {
                    vel_to_int(veh->aircraft_acceleration(false, !veh->engine_on)),
                    velocity_units(VU_VEHICLE));
     } else {
-        const auto ground_factor = vehicle_ground_stability_multiplier(stability);
         if (is_ground) {
             print_stat(
                 _("Safe/Top Speed: <color_light_green>%3d</color>/<color_light_red>%3d</color> %s"),
-                vel_to_int(veh->safe_ground_velocity(false, !veh->engine_on) * ground_factor),
-                vel_to_int(veh->max_ground_velocity(false, !veh->engine_on) * ground_factor),
+                vel_to_int(veh->safe_ground_velocity(false, !veh->engine_on)),
+                vel_to_int(veh->max_ground_velocity(false, !veh->engine_on)),
                 velocity_units(VU_VEHICLE));
             // TODO: extract accelerations units to its own function
             print_stat(
@@ -2621,8 +2563,8 @@ void veh_interact::display_stats() const {
         if (is_boat) {
             print_stat(
                 _("Water Safe/Top Speed: <color_light_green>%3d</color>/<color_light_red>%3d</color> %s"),
-                vel_to_int(veh->safe_water_velocity(false, !veh->engine_on) * ground_factor),
-                vel_to_int(veh->max_water_velocity(false, !veh->engine_on) * ground_factor),
+                vel_to_int(veh->safe_water_velocity(false, !veh->engine_on)),
+                vel_to_int(veh->max_water_velocity(false, !veh->engine_on)),
                 velocity_units(VU_VEHICLE));
             // TODO: extract accelerations units to its own function
             print_stat(

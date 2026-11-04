@@ -173,10 +173,8 @@ void vehicle::thrust(int thd, int z) {
             return;
         }
     }
-    const auto stability_multiplier =
-        z == 0 && !is_flying && !is_falling ? vehicle_ground_stability_multiplier(stability()) : 1.0;
-    const int max_vel = traction * max_velocity() * stability_multiplier;
-    const int min_vel = max_reverse_velocity() * stability_multiplier;
+    const int max_vel = traction * max_velocity();
+    const int min_vel = max_reverse_velocity();
     const int max_brake = 894;
     // pos or neg if accelerator or brake
     int vel_inc = (accel + (thrusting ? 0 : max_brake)) * thd;
@@ -191,7 +189,7 @@ void vehicle::thrust(int thd, int z) {
     // Keep exact cruise control speed
     if (cruise_on && accel != 0) {
         int effective_cruise =
-            stability_multiplier < 1.0
+            !is_flying && !is_falling && stability() < 1.0
                 ? std::clamp(cruise_velocity, min_vel, max_vel)
                 : std::min(cruise_velocity, max_vel);
         if (thd > 0) {
@@ -297,11 +295,9 @@ void vehicle::thrust(int thd, int z) {
 
 void vehicle::cruise_thrust(int amount) {
     if (amount == 0) { return; }
-    const auto stability_multiplier =
-        !is_flying && !is_falling ? vehicle_ground_stability_multiplier(stability()) : 1.0;
-    int safe_vel = safe_velocity() * stability_multiplier;
-    int max_vel = (autopilot_on ? safe_velocity() : max_velocity()) * stability_multiplier;
-    int max_rev_vel = max_reverse_velocity() * stability_multiplier;
+    int safe_vel = safe_velocity();
+    int max_vel = autopilot_on ? safe_velocity() : max_velocity();
+    int max_rev_vel = max_reverse_velocity();
 
     // if the safe velocity is between the cruise velocity and its next value, set to safe velocity
     if ((cruise_velocity < safe_vel && safe_vel < (cruise_velocity + amount))

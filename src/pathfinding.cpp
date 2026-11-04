@@ -13,7 +13,6 @@
 #include "vehicle/veh_type.h"
 #include "vehicle/vehicle.h"
 #include "vehicle/vehicle_part.h"
-#include "vehicle/vehicle_stairs.h"
 #include "vehicle/vpart_position.h"
 
 #include <algorithm>
@@ -760,11 +759,10 @@ Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
                              0.0;
                 }
 
-                if( care_about_traps && !std::isinf( cur_g ) ) {
+                if( care_about_traps && !std::isinf( cur_g ) &&
+                    ( terrain.trap != tr_ledge || !buffer.has_floor( cur_point_with_z ) ) ) {
                     const trap &maybe_ter_trap = terrain.trap.obj();
-                    const trap &maybe_trap = maybe_ter_trap.is_benign() ||
-                                             ( terrain.trap == tr_ledge && buffer.has_floor( cur_point_with_z ) ) ?
-                                             new_tile.trap.obj() : maybe_ter_trap;
+                    const trap &maybe_trap = maybe_ter_trap.is_benign() ? new_tile.trap.obj() : maybe_ter_trap;
                     const bool is_trap = !maybe_trap.is_benign();
 
                     cur_g += is_trap ? this->settings.trap_cost : 0.0;
