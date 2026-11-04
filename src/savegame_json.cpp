@@ -4161,11 +4161,11 @@ void addiction::deserialize( JsonIn &jsin )
 
 void serialize( const recipe_subset &value, JsonOut &jsout )
 {
-    jsout.start_array();
-    for( const auto &entry : value ) {
-        jsout.write( entry->ident() );
-    }
-    jsout.end_array();
+    // The subset is ordered by recipe address, which differs from run to run.
+    auto idents = value | std::views::transform( []( const auto * entry ) { return entry->ident().str(); } )
+    | std::ranges::to<std::vector>();
+    std::ranges::sort( idents );
+    jsout.write( idents );
 }
 
 void deserialize( recipe_subset &value, JsonIn &jsin )

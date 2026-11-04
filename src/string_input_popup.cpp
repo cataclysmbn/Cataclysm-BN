@@ -9,6 +9,7 @@
 #include "input.h"
 #include "output.h"
 #include "point.h"
+#include "replay/replay.h"
 #include "translations.h"
 #include "ui.h"
 #include "ui_manager.h"
@@ -541,16 +542,22 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
                 if( action == "TEXT.PASTE" ) {
 #if defined(TILES)
                     if( edit.empty() ) {
-                        char *const clip = SDL_GetClipboardText();
-                        if( clip ) {
-                            entered = clip;
-                            SDL_free( clip );
-                        }
+                        entered = replay::external_text_or_exit( "clipboard", []() {
+                            auto text = std::string{};
+                            char *const clip = SDL_GetClipboardText();
+                            if( clip ) {
+                                text = clip;
+                                SDL_free( clip );
+                            }
+                            return text;
+                        } );
                     }
 #endif
                 } else if( action == "TEXT.INPUT_FROM_FILE" ) {
                     if( edit.empty() ) {
-                        entered = get_input_string_from_file();
+                        entered = replay::external_text_or_exit( "file", []() {
+                            return get_input_string_from_file();
+                        } );
                     }
                 } else {
                     entered = ev.text;
