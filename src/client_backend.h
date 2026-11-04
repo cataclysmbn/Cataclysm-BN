@@ -38,7 +38,7 @@ class backend
 {
     public:
         virtual ~backend() = default;
-        virtual auto native_window_handle() const -> void* { return nullptr; }
+        virtual auto native_window_handle() const -> void * { return nullptr; }
 
         /// Performs client setup that must happen after selection and before game data loads.
         virtual auto prepare() -> void {}

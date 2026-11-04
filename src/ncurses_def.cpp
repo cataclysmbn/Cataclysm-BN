@@ -35,7 +35,7 @@
 namespace
 {
 
-auto native_stdscr() -> ::WINDOW * { return ::stdscr; }
+auto native_stdscr() -> ::WINDOW* { return ::stdscr; }
 
 int native_timeout = -1;
 
