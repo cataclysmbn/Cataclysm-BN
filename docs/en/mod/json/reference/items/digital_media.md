@@ -6,8 +6,9 @@ data from storage media** action that copies files into internal storage.
 **Browse digital files** offers information, study, and item actions for
 installed files.
 
-**Copy files to SD card** copies all installed files onto an unencrypted SD card.
-For a single file, choose **Browse digital files → file → Copy to SD card**. The
+**Copy files to storage media** copies all installed files onto an unencrypted
+USB drive or SD card. For a single file, choose **Browse digital files → file →
+Copy to storage media**. The
 reader must be powered. Existing destination files are retained, and the original
 files stay on the reader. Copies preserve their entry counts, metadata, and file
 identities, including shared cooldowns. The media can then be imported onto
@@ -138,7 +139,7 @@ keep their original contents rather than receiving another loot roll.
 `digital_encryption_chance` is a one-in-N chance to set `MC_ENCRYPTED` when
 initializing a media content group. Encryption is an instance flag and does not
 change the device's item type. Item groups can also set `MC_ENCRYPTED` through
-`custom-flags`.
+`custom-flags`, including on USB drives.
 
 The `sd_memory_card_personal`, `sd_memory_card_encrypted`, and
 `sd_memory_card_science` loot groups all spawn `sd_memory_card` items. Their
@@ -158,10 +159,11 @@ does not reset the viewer's cooldown. Encryption prevents downloading until the
 SD card is decrypted. Formatting or triggering a card's data-erasure protection
 deletes its files.
 
-SD cards keep the same item type whether empty, populated, or encrypted.
-Encrypted cards display an **(encrypted)** suffix and hide their contents.
-**Decrypt memory card** uses the existing computer-skill check to unlock them.
-Encrypted cards cannot be copied to or downloaded from until unlocked.
+USB drives and SD cards keep the same item type whether empty, populated, or
+encrypted. Encrypted media display an **(encrypted)** suffix and hide their
+contents. **Encrypt storage media** encrypts either kind of media, and
+**Decrypt storage media** uses the existing computer-skill check to unlock it.
+Encrypted media cannot be copied to or downloaded from until unlocked.
 Copying files preserves existing data on both media and readers. Old SD-card
 variants migrate to `sd_memory_card`, preserving files and encryption.
 
@@ -237,7 +239,7 @@ file on the camera or phone. **Camera photos** and **Browse digital files →
 Browse captured photos** reopen the individual photographs with their original
 descriptions and quality. The computer's monster collection includes creatures
 recorded in these files, including photographs taken with the same device.
-Camera exports copy the collection onto an unencrypted SD card.
+Camera exports copy the collection onto an unencrypted USB drive or SD card.
 Newer captures can be exported again without changing previously copied files. Legacy camera photos
 migrate into a collection when the device is used. Older tablet and SD-card
 photo metadata remains readable through its existing import path. Existing

@@ -35,8 +35,11 @@ auto initialize_digital_media( item &media ) -> void;
 auto finish_memory_card_download( item &media ) -> void;
 /// Copy files without consuming the source or duplicating identical files.
 auto download_digital_files( item &reader, item &media, const Character &who ) -> int;
-auto is_writable_digital_card( const item &media ) -> bool;
-/// Copy one selected file, or all files, from a powered reader to an unencrypted SD card.
+auto is_digital_storage_media( const item &media ) -> bool;
+auto is_writable_digital_media( const item &media ) -> bool;
+/// Encrypt or decrypt removable storage without changing its type or files.
+auto set_digital_media_encryption( item &media, bool encrypted ) -> bool;
+/// Copy one selected file, or all files, from a powered reader to unencrypted storage.
 auto upload_digital_files( const Character &who, const digital_file_upload_options &opts ) -> int;
 /// Convert old photo/music counters to files without changing their quantities.
 auto migrate_legacy_digital_media( item &media ) -> void;

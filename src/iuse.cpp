@@ -5955,7 +5955,7 @@ static bool einkpc_download_memory_card( player &p, item &eink, item &mc )
     finish_memory_card_download( mc );
 
     if( !something_downloaded ) {
-        p.add_msg_if_player( m_info, _( "This memory card does not contain any new data." ) );
+        p.add_msg_if_player( m_info, _( "This storage device does not contain any new data." ) );
         return false;
     }
 
@@ -5989,14 +5989,14 @@ auto digital_recipes_on_device( const item &reader ) -> std::set<recipe_id>
     return result;
 }
 
-auto export_files_to_sd_card( player &who, item &reader, item *file = nullptr ) -> bool
+auto export_files_to_storage( player &who, item &reader, item *file = nullptr ) -> bool
 {
     auto *you = who.as_avatar();
     if( you == nullptr ) {
         return false;
     }
-    auto *card = game_menus::inv::titled_filter_menu( is_writable_digital_card, *you,
-                 _( "Choose an SD card" ) );
+    auto *card = game_menus::inv::titled_filter_menu( is_writable_digital_media, *you,
+                 _( "Choose storage media" ) );
     if( card == nullptr ) {
         return false;
     }
@@ -6006,12 +6006,12 @@ auto export_files_to_sd_card( player &who, item &reader, item *file = nullptr ) 
         .file = file
     } );
     if( copied == 0 ) {
-        who.add_msg_if_player( m_info, _( "You couldn't copy any files to that SD card." ) );
+        who.add_msg_if_player( m_info, _( "You couldn't copy any files to that storage device." ) );
         return false;
     }
     who.mod_moves( -to_moves<int>( 2_seconds ) );
-    who.add_msg_if_player( m_good, vgettext( "You copy %d file onto the SD card.",
-                           "You copy %d files onto the SD card.", copied ), copied );
+    who.add_msg_if_player( m_good, vgettext( "You copy %d file onto the storage device.",
+                           "You copy %d files onto the storage device.", copied ), copied );
     return true;
 }
 
@@ -6072,7 +6072,7 @@ auto browse_digital_files( player &who, item &reader, const bool photos_only = f
                       music_wait <= 0_turns, 'm', music_wait > 0_turns ?
                       string_format( _( "Listen (available in %s)" ), to_string( music_wait ) ) :
                       _( "Listen" ) );
-    actions.addentry( 5, true, 'c', _( "Copy to SD card" ) );
+    actions.addentry( 5, true, 'c', _( "Copy to storage media" ) );
     const auto recipes = digital_file_recipes( *file );
     actions.addentry( 6, !recipes.empty(), 'v', _( "View recipes" ) );
     actions.addentry( 7, file->has_var( "CAMERA_EXTENDED_PHOTOS" ) ||
@@ -6093,7 +6093,7 @@ auto browse_digital_files( player &who, item &reader, const bool photos_only = f
     } else if( actions.ret == 4 ) {
         listen_to_digital_music( who, reader, *file );
     } else if( actions.ret == 5 ) {
-        export_files_to_sd_card( who, reader, file );
+        export_files_to_storage( who, reader, file );
     } else if( actions.ret == 7 ) {
         show_photo_selection( who, *file, "CAMERA_EXTENDED_PHOTOS" );
     } else if( actions.ret == 8 ) {
@@ -6141,7 +6141,7 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
 
         enum {
             ei_invalid, ei_photo, ei_music, ei_recipe, ei_uploaded_photos, ei_monsters, ei_download, ei_decrypt,
-            ei_files, ei_export
+            ei_files, ei_export, ei_encrypt
         };
 
         if( p->is_underwater() ) {
@@ -6209,13 +6209,15 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
         amenu.addentry( ei_download, true, 'w', _( "Download data from storage media" ) );
         const auto has_files = std::ranges::any_of( it->contents.all_items_top(),
         []( const auto * file ) { return is_digital_file( *file ); } );
-        amenu.addentry( ei_export, has_files, 'e', _( "Copy files to SD card" ) );
+        amenu.addentry( ei_export, has_files, 'e', _( "Copy files to storage media" ) );
+
+        amenu.addentry( ei_encrypt, true, 's', _( "Encrypt storage media" ) );
 
         /** @EFFECT_COMPUTER >2 allows decrypting memory cards more easily */
         if( p->get_skill_level( skill_computer ) > 2 ) {
-            amenu.addentry( ei_decrypt, true, 'd', _( "Decrypt memory card" ) );
+            amenu.addentry( ei_decrypt, true, 'd', _( "Decrypt storage media" ) );
         } else {
-            amenu.addentry( ei_decrypt, false, 'd', _( "Decrypt memory card (low skill)" ) );
+            amenu.addentry( ei_decrypt, false, 'd', _( "Decrypt storage media (low skill)" ) );
         }
 
         amenu.query();
@@ -6223,7 +6225,7 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
         const int choice = amenu.ret;
 
         if( choice == ei_export ) {
-            return export_files_to_sd_card( *p, *it ) ? it->type->charges_to_use() : 0;
+            return export_files_to_storage( *p, *it ) ? it->type->charges_to_use() : 0;
         }
 
         if( choice == ei_files ) {
@@ -6293,10 +6295,7 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
 
         avatar *you = p->as_avatar();
         item *loc = nullptr;
-        auto filter = [it]( const auto & media ) {
-            return &media != it && ( media.has_flag( flag_MC_MOBILE ) ||
-                                     media.has_flag( flag_id( "DIGITAL_STORAGE" ) ) );
-        };
+        auto filter = [it]( const auto & media ) { return &media != it && is_digital_storage_media( media ); };
         const std::string title = _( "Insert storage media" );
 
         if( ei_download == choice ) {
@@ -6313,23 +6312,37 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
             item &mc = *loc;
 
             if( !mc.has_flag( flag_MC_MOBILE ) && !mc.has_flag( flag_id( "DIGITAL_STORAGE" ) ) ) {
-                p->add_msg_if_player( m_info, _( "This is not a compatible memory card." ) );
+                p->add_msg_if_player( m_info, _( "This is not compatible storage media." ) );
                 return it->type->charges_to_use();
             }
 
             initialize_digital_media( mc );
 
             if( mc.has_flag( flag_MC_ENCRYPTED ) ) {
-                p->add_msg_if_player( m_info, _( "This memory card is encrypted." ) );
+                p->add_msg_if_player( m_info, _( "This storage device is encrypted." ) );
                 return it->type->charges_to_use();
             }
             if( !mc.has_flag( flag_MC_HAS_DATA ) && mc.contents.empty() ) {
-                p->add_msg_if_player( m_info, _( "This memory card does not contain any new data." ) );
+                p->add_msg_if_player( m_info, _( "This storage device does not contain any new data." ) );
                 return it->type->charges_to_use();
             }
 
             einkpc_download_memory_card( *p, *it, mc );
 
+            return it->type->charges_to_use();
+        }
+
+        if( ei_encrypt == choice ) {
+            if( you != nullptr ) {
+                loc = game_menus::inv::titled_filter_menu( filter, *you, title );
+            }
+            if( loc == nullptr ) {
+                return 0;
+            }
+            if( set_digital_media_encryption( *loc, true ) ) {
+                p->mod_moves( -to_moves<int>( 2_seconds ) );
+                p->add_msg_if_player( m_good, _( "You encrypt the %s." ), loc->tname() );
+            }
             return it->type->charges_to_use();
         }
 
@@ -6344,15 +6357,15 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
             }
             item &mc = *loc;
 
-            if( !mc.has_flag( flag_MC_MOBILE ) ) {
-                p->add_msg_if_player( m_info, _( "This is not a compatible memory card." ) );
+            if( !is_digital_storage_media( mc ) ) {
+                p->add_msg_if_player( m_info, _( "This is not compatible storage media." ) );
                 return it->type->charges_to_use();
             }
 
             initialize_digital_media( mc );
 
             if( !mc.has_flag( flag_MC_ENCRYPTED ) ) {
-                p->add_msg_if_player( m_info, _( "This memory card is not encrypted." ) );
+                p->add_msg_if_player( m_info, _( "This storage device is not encrypted." ) );
                 return it->type->charges_to_use();
             }
 
@@ -6368,7 +6381,7 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
                 p->practice( skill_computer, rng( 5, 10 ) );
                 p->add_msg_if_player( m_good, _( "You successfully decrypted content on %s!" ),
                                       mc.tname() );
-                mc.unset_flag( flag_MC_ENCRYPTED );
+                set_digital_media_encryption( mc, false );
                 einkpc_download_memory_card( *p, *it, mc );
             } else {
                 if( success > -10 || one_in( 5 ) ) {
@@ -7461,7 +7474,7 @@ int iuse::camera( player *p, item *it, bool, const tripoint_bub_ms & )
             p->add_msg_if_player( _( "You can't see the camera screen, you're blind." ) );
             return 0;
         }
-        return export_files_to_sd_card( *p, *it, collection ) ? it->type->charges_to_use() : 0;
+        return export_files_to_storage( *p, *it, collection ) ? it->type->charges_to_use() : 0;
     }
     return 0;
 }

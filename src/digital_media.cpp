@@ -155,21 +155,40 @@ auto download_digital_files( item &reader, item &media, const Character &who ) -
     return copied;
 }
 
-auto is_writable_digital_card( const item &media ) -> bool
+auto is_digital_storage_media( const item &media ) -> bool
 {
-    return media.has_flag( flag_MC_MOBILE ) &&
-           media.has_flag( flag_id( "DIGITAL_STORAGE" ) ) && !media.has_flag( flag_MC_ENCRYPTED );
+    return media.has_flag( flag_id( "DIGITAL_STORAGE" ) ) &&
+           !media.has_flag( flag_id( "DIGITAL_READER" ) );
+}
+
+auto is_writable_digital_media( const item &media ) -> bool
+{
+    return is_digital_storage_media( media ) && !media.has_flag( flag_MC_ENCRYPTED );
+}
+
+auto set_digital_media_encryption( item &media, bool encrypted ) -> bool
+{
+    if( !is_digital_storage_media( media ) ) {
+        return false;
+    }
+    initialize_digital_media( media );
+    if( encrypted ) {
+        media.set_flag( flag_MC_ENCRYPTED );
+    } else {
+        media.unset_flag( flag_MC_ENCRYPTED );
+    }
+    return true;
 }
 
 auto upload_digital_files( const Character &who, const digital_file_upload_options &opts ) -> int
 {
     namespace ranges = std::ranges;
     if( &opts.source == &opts.destination || !who.has_item( opts.source ) ||
-        !digital_reader_ready( opts.source, who ) || !is_writable_digital_card( opts.destination ) ) {
+        !digital_reader_ready( opts.source, who ) || !is_writable_digital_media( opts.destination ) ) {
         return 0;
     }
     initialize_digital_media( opts.destination );
-    if( !is_writable_digital_card( opts.destination ) ) {
+    if( !is_writable_digital_media( opts.destination ) ) {
         return 0;
     }
     if( opts.file != nullptr ) {

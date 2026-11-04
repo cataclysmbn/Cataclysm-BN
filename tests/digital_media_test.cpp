@@ -109,11 +109,11 @@ TEST_CASE("reader_files_can_be_copied_onto_an_sd_card", "[digital_media]") {
     REQUIRE(download_digital_files(reader, *source, dummy) == 2);
     dummy.i_add(std::move(device));
     auto card = item::spawn("sd_memory_card");
-    REQUIRE(is_writable_digital_card(*card));
+    REQUIRE(is_writable_digital_media(*card));
 
     CHECK(upload_digital_files(dummy, {.source = reader, .destination = *card}) == 2);
     CHECK(card->typeId() == itype_id("sd_memory_card"));
-    CHECK(is_writable_digital_card(*card));
+    CHECK(is_writable_digital_media(*card));
     CHECK(digital_music_on(*card).songs == 9);
     CHECK(digital_photos_on(*card) == 7);
     CHECK(digital_music_on(reader).songs == 9);
@@ -131,7 +131,7 @@ TEST_CASE("reader_files_can_be_copied_onto_an_sd_card", "[digital_media]") {
     auto empty_card = item::spawn("sd_memory_card");
     reader.ammo_unset();
     CHECK(upload_digital_files(dummy, {.source = reader, .destination = *empty_card}) == 0);
-    CHECK(is_writable_digital_card(*empty_card));
+    CHECK(is_writable_digital_media(*empty_card));
 }
 
 TEST_CASE("exporting_a_selected_file_preserves_identity_and_metadata", "[digital_media]") {
@@ -162,6 +162,53 @@ TEST_CASE("exporting_a_selected_file_preserves_identity_and_metadata", "[digital
     CHECK(card->contents.num_item_stacks() == 1);
 }
 
+TEST_CASE(
+    "removable_storage_encryption_preserves_files_and_blocks_transfers",
+    "[digital_media][savegame]") {
+    const auto media_id = GENERATE("usb_drive", "sd_memory_card");
+    auto dummy = avatar{};
+    auto device = item::spawn("eink_tablet_pc");
+    auto& source = *device;
+    source.ammo_set(itype_id("battery"), 10);
+    source.put_in(item::spawn("test_digital_instruction"));
+    source.contents.front().set_var("test_content", "preserved");
+    dummy.i_add(std::move(device));
+    auto media = item::spawn(media_id);
+    REQUIRE(upload_digital_files(dummy, {.source = source, .destination = *media}) == 1);
+    const auto file_id = media->contents.front().get_var("DIGITAL_FILE_ID");
+    const auto unlocked_name = media->tname();
+
+    REQUIRE(set_digital_media_encryption(*media, true));
+    CHECK(media->typeId() == itype_id(media_id));
+    CHECK(media->tname() != unlocked_name);
+    CHECK_FALSE(set_digital_media_encryption(source, true));
+    CHECK_FALSE(is_writable_digital_media(*media));
+    CHECK(upload_digital_files(dummy, {.source = source, .destination = *media}) == 0);
+
+    auto output = std::ostringstream{};
+    auto writer = JsonOut(output);
+    media->serialize(writer);
+    auto input = std::istringstream(output.str());
+    auto parser = JsonIn(input);
+    auto loaded = item::spawn(parser);
+    REQUIRE(loaded->has_flag(flag_MC_ENCRYPTED));
+    CHECK(loaded->typeId() == itype_id(media_id));
+    REQUIRE(loaded->contents.num_item_stacks() == 1);
+    CHECK(loaded->contents.front().get_var("test_content") == "preserved");
+    CHECK(loaded->contents.front().get_var("DIGITAL_FILE_ID") == file_id);
+
+    auto destination = item::spawn("eink_tablet_pc");
+    destination->ammo_set(itype_id("battery"), 10);
+    CHECK(download_digital_files(*destination, *loaded, dummy) == 0);
+    CHECK(destination->contents.empty());
+    REQUIRE(set_digital_media_encryption(*loaded, false));
+    CHECK(is_writable_digital_media(*loaded));
+    CHECK(loaded->tname() == unlocked_name);
+    REQUIRE(download_digital_files(*destination, *loaded, dummy) == 1);
+    CHECK(destination->contents.front().get_var("DIGITAL_FILE_ID") == file_id);
+    CHECK(loaded->contents.num_item_stacks() == 1);
+}
+
 TEST_CASE("sd_card_exports_reject_invalid_destinations_and_uninstalled_files", "[digital_media]") {
     auto dummy = avatar{};
     auto device = item::spawn("eink_tablet_pc");
@@ -173,13 +220,13 @@ TEST_CASE("sd_card_exports_reject_invalid_destinations_and_uninstalled_files", "
 
     SECTION("encrypted cards are not writable") {
         card->set_flag(flag_MC_ENCRYPTED);
-        CHECK_FALSE(is_writable_digital_card(*card));
+        CHECK_FALSE(is_writable_digital_media(*card));
         CHECK(upload_digital_files(dummy, {.source = reader, .destination = *card}) == 0);
         CHECK(card->contents.empty());
     }
     SECTION("existing camera data is preserved") {
         card->set_var("MC_EXTENDED_PHOTOS", "existing camera data");
-        CHECK(is_writable_digital_card(*card));
+        CHECK(is_writable_digital_media(*card));
         CHECK(upload_digital_files(dummy, {.source = reader, .destination = *card}) == 1);
         CHECK(card->get_var("MC_EXTENDED_PHOTOS") == "existing camera data");
     }
@@ -188,7 +235,7 @@ TEST_CASE("sd_card_exports_reject_invalid_destinations_and_uninstalled_files", "
         CHECK(upload_digital_files(
                   dummy, {.source = reader, .destination = *card, .file = &*elsewhere})
               == 0);
-        CHECK(is_writable_digital_card(*card));
+        CHECK(is_writable_digital_media(*card));
     }
 }
 
@@ -634,7 +681,7 @@ TEST_CASE("loading_an_obsolete_used_sd_card_preserves_its_files", "[digital_medi
     CHECK(loaded->has_flag(flag_MC_ENCRYPTED) == encrypted);
     CHECK(loaded->has_flag(flag_MC_SCIENCE_STUFF)
           == (std::string_view(legacy_id) == "mobile_memory_card_science"));
-    CHECK(is_writable_digital_card(*loaded) == !encrypted);
+    CHECK(is_writable_digital_media(*loaded) == !encrypted);
     initialize_digital_media(*loaded);
     CHECK(loaded->contents.num_item_stacks() == 2);
 }
