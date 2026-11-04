@@ -59,7 +59,7 @@ void mission_start::place_dog( mission *miss )
         return;
     }
     g->u.i_add( item::spawn( "dog_whistle", calendar::start_of_cataclysm ) );
-    add_msg( to_translation( "%s gave you a dog whistle." ), dev->name );
+    add_msg( _( "%s gave you a dog whistle." ), dev->name );
 
     miss->target = house;
     get_overmapbuffer( miss->get_dimension() ).reveal( house, 6 );
@@ -214,7 +214,7 @@ void mission_start::place_npc_software( mission *miss )
         return;
     }
     g->u.i_add( item::spawn( "usb_drive", calendar::start_of_cataclysm ) );
-    add_msg( to_translation( "%s gave you a USB drive." ), dev->name );
+    add_msg( _( "%s gave you a USB drive." ), dev->name );
 
     std::string type = "house";
 
@@ -394,7 +394,7 @@ void mission_start::reveal_refugee_center( mission *miss )
     const std::optional<tripoint_abs_omt> target_pos = mission_util::assign_mission_target( t );
 
     if( !target_pos ) {
-        add_msg( to_translation( "You don't know where the address could be…" ) );
+        add_msg( _( "You don't know where the address could be…" ) );
         return;
     }
 
@@ -414,9 +414,9 @@ void mission_start::reveal_refugee_center( mission *miss )
     params.popup = make_shared_fast<throbber_popup>( _( "Please wait…" ) );
 
     if( get_overmapbuffer( miss->get_dimension() ).reveal_route( source_road, dest_road, params ) ) {
-        add_msg( to_translation( "You mark the refugee center and the road that leads to it…" ) );
+        add_msg( _( "You mark the refugee center and the road that leads to it…" ) );
     } else {
-        add_msg( to_translation( "You mark the refugee center, but you have no idea how to get there by road…" ) );
+        add_msg( _( "You mark the refugee center, but you have no idea how to get there by road…" ) );
     }
 }
 

@@ -17,8 +17,6 @@
 #    include "game.h"
 #    include "input.h"
 #    include "item.h"
-#    include "locale_fixture.h"
-#    include "locale_scope.h"
 #    include "map/map.h"
 #    include "map_helpers.h"
 #    include "npc.h"
@@ -757,73 +755,6 @@ TEST_CASE(
     CHECK(wires[0] == wires[1]);
 }
 
-TEST_CASE(
-    "NPC trade has the same ids and shape in every language",
-    "[client][interaction][npc_trade][engine_client_trade][engine_client_locale][mcp]") {
-    const auto catalogue = locale_fixture::korean_catalogue{};
-    const auto guard = screen_guard{};
-    const auto fixture = trade_fixture{};
-    fixture.trader->mission = NPC_MISSION_SHOPKEEP;
-    fixture.add_npc_item(itype_id("test_platinum_bit"), 10);
-    fixture.add_player_item(itype_id("test_pipe"));
-    auto state = npc_trading::trade_state{};
-    npc_trading::setup_trade_state(state, 0, *fixture.trader);
-    auto reads = 0;
-
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        ++reads;
-        const auto english = stack_json();
-        auto korean = nlohmann::json{};
-        {
-            const auto scope = localization::locale_scope{locale_fixture::korean};
-            korean = stack_json();
-        }
-        // The words differ, and the oracle is the catalogue: the title is composed from its word.
-        CHECK(english.back()["title"] != korean.back()["title"]);
-        CHECK(korean.back()["title"].get<std::string>().starts_with(
-            locale_fixture::in_korean("Trading with")));
-        // What a recorded input names is the same, and so is everything but the words.
-        CHECK(ids_of(english) == ids_of(korean));
-        CHECK(without_text(english) == without_text(korean));
-        return ts::invoke("trade:cancel");
-    });
-
-    CHECK_FALSE(
-        trading_window(state).perform_trade(*fixture.trader, npc_trading::deal_kind::trade));
-    CHECK(reads == 1);
-}
-
-TEST_CASE(
-    "NPC trade title follows the kind the caller names, not the wording of its language",
-    "[client][interaction][npc_trade][engine_client_trade][engine_client_locale][mcp]") {
-    const auto catalogue = locale_fixture::korean_catalogue{};
-    const auto guard = screen_guard{};
-    const auto fixture = trade_fixture{};
-    const auto [kind, word] =
-        GENERATE(std::pair{npc_trading::deal_kind::pay, std::string{"Paying"}},
-                 std::pair{npc_trading::deal_kind::reward, std::string{"Accepting a reward from"}});
-    INFO(word);
-    auto state = npc_trading::trade_state{};
-    npc_trading::setup_trade_state(state, 0, *fixture.trader);
-    auto reads = 0;
-
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        ++reads;
-        const auto english = stack_json();
-        auto korean = nlohmann::json{};
-        {
-            const auto scope = localization::locale_scope{locale_fixture::korean};
-            korean = stack_json();
-        }
-        CHECK(english.back()["title"].get<std::string>().starts_with(word));
-        CHECK(
-            korean.back()["title"].get<std::string>().starts_with(locale_fixture::in_korean(word)));
-        return ts::invoke("trade:cancel");
-    });
-
-    CHECK_FALSE(trading_window(state).perform_trade(*fixture.trader, kind));
-    CHECK(reads == 1);
-}
 
 TEST_CASE(
     "NPC trade item popup is a screen of its own and closes by an invoke",

@@ -18,8 +18,7 @@ auto initialize_native() -> void {
     const auto height = std::max(FULL_SCREEN_HEIGHT, get_option<int>("TERMINAL_Y"));
     memory::initialize(width, height);
     engine_client::process_session().set_world_capture(
-        &engine_client::world::capture_world, &engine_client::world::capture_patch,
-        &engine_client::world::capture_worded);
+        &engine_client::world::capture_world, &engine_client::world::capture_patch);
     set_loading_image_factory(&make_selecting_loading_image_renderer);
 }
 

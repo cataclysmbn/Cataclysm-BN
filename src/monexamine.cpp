@@ -301,10 +301,9 @@ auto reload_monster_weapons( avatar &you, monster &z ) -> void
 
     if( reloadable_slots.empty() ) {
         if( needs_ammo_reload( z ) ) {
-            add_msg( m_info, to_translation( "You don't have compatible ammo to reload the %s." ),
-                     z.get_name() );
+            add_msg( m_info, _( "You don't have compatible ammo to reload the %s." ), z.get_name() );
         } else {
-            add_msg( m_info, to_translation( "The %s's weapons are already fully loaded." ), z.get_name() );
+            add_msg( m_info, _( "The %s's weapons are already fully loaded." ), z.get_name() );
         }
         return;
     }
@@ -345,7 +344,8 @@ auto reload_monster_weapons( avatar &you, monster &z ) -> void
     } else {
         you.use_amount( selected_ammo, reload_amount );
     }
-    add_msg( localised::counted{ .format = pl_translation( "You load %1$d x %2$s round into the %3$s.", "You load %1$d x %2$s rounds into the %3$s." ), .count = reload_amount },
+    add_msg( vgettext( "You load %1$d x %2$s round into the %3$s.",
+                       "You load %1$d x %2$s rounds into the %3$s.", reload_amount ),
              reload_amount, selected_ammo->nname( reload_amount ), z.get_name() );
     you.moves -= 100;
 }
@@ -361,7 +361,7 @@ auto unload_monster_weapons( avatar &you, monster &z ) -> void
     }
 
     if( loaded_slots.empty() ) {
-        add_msg( m_info, to_translation( "The %s's weapons are already empty." ), z.get_name() );
+        add_msg( m_info, _( "The %s's weapons are already empty." ), z.get_name() );
         return;
     }
 
@@ -392,7 +392,7 @@ auto unload_monster_weapons( avatar &you, monster &z ) -> void
         auto unloaded_ammo = item::spawn( selected_ammo, calendar::turn, loaded_ammo_iter->amount );
         unloaded_ammo = you.i_add_or_drop( std::move( unloaded_ammo ) );
         if( unloaded_ammo ) {
-            add_msg( m_info, to_translation( "You can't unload the %s right now." ), z.get_name() );
+            add_msg( m_info, _( "You can't unload the %s right now." ), z.get_name() );
             return;
         }
         unloaded_amount = loaded_ammo_iter->amount;
@@ -401,7 +401,7 @@ auto unload_monster_weapons( avatar &you, monster &z ) -> void
             auto unloaded_ammo = item::spawn( selected_ammo, calendar::turn, item::solitary_tag() );
             unloaded_ammo = you.i_add_or_drop( std::move( unloaded_ammo ) );
             if( unloaded_ammo ) {
-                add_msg( m_info, to_translation( "You can't unload the %s right now." ), z.get_name() );
+                add_msg( m_info, _( "You can't unload the %s right now." ), z.get_name() );
                 break;
             }
             ++unloaded_amount;
@@ -417,7 +417,8 @@ auto unload_monster_weapons( avatar &you, monster &z ) -> void
     if( unloaded_amount != loaded_ammo_iter->amount ) {
         return;
     }
-    add_msg( localised::counted{ .format = pl_translation( "You unload %1$d x %2$s round from the %3$s.", "You unload %1$d x %2$s rounds from the %3$s." ), .count = loaded_ammo_iter->amount },
+    add_msg( vgettext( "You unload %1$d x %2$s round from the %3$s.",
+                       "You unload %1$d x %2$s rounds from the %3$s.", loaded_ammo_iter->amount ),
              loaded_ammo_iter->amount, selected_ammo->nname( loaded_ammo_iter->amount ),
              z.get_name() );
     you.moves -= 100;
@@ -869,7 +870,7 @@ void monexamine::shear_animal( monster &z )
         you.activity->str_values.emplace_back( "temp_tie" );
     }
     you.activity->targets.emplace_back( you.best_quality_item( qual_shear ) );
-    add_msg( to_translation( "You start shearing the %s." ), z.get_name() );
+    add_msg( _( "You start shearing the %s." ), z.get_name() );
 }
 
 static item *pet_armor_loc( monster &z )
@@ -945,18 +946,17 @@ bool monexamine::mech_hack( monster &z )
             z.add_effect( effect_pet, 1_turns );
             z.friendly = -1;
             if( z.has_flag( MF_RIDEABLE_MECH ) ) {
-                add_msg( m_good,
-                         to_translation( "The %s whirs into life and opens its restraints to accept a pilot." ),
+                add_msg( m_good, _( "The %s whirs into life and opens its restraints to accept a pilot." ),
                          z.get_name() );
             } else {
-                add_msg( m_good, to_translation( "The %s begins to follow you." ),
+                add_msg( m_good, _( "The %s begins to follow you." ),
                          z.get_name() );
             }
             you.use_amount( card_type, 1 );
             return true;
         }
     } else {
-        add_msg( m_info, to_translation( "You do not have the required %s to activate this." ),
+        add_msg( m_info, _( "You do not have the required %s to activate this." ),
                  item::nname( card_type ) );
     }
     return false;
@@ -1155,7 +1155,7 @@ void monexamine::attach_or_remove_saddle( monster &z )
         item *loc = tack_loc();
 
         if( !loc ) {
-            add_msg( to_translation( "Never mind." ) );
+            add_msg( _( "Never mind." ) );
             return;
         }
         z.set_tack_item( loc->detach() );
@@ -1208,7 +1208,7 @@ void monexamine::push( monster &z )
     avatar &you = get_avatar();
     you.moves -= 30;
 
-    add_msg( to_translation( "You pushed the %s." ), pet_name );
+    add_msg( _( "You pushed the %s." ), pet_name );
 
     auto delta = z.bub_pos().xy() - you.bub_pos().xy();
     z.move_to( z.bub_pos() + delta );
@@ -1237,13 +1237,13 @@ void monexamine::attach_bag_to( monster &z )
     item *loc = game_menus::inv::titled_filter_menu( filter, you, _( "Bag item" ), "", ITEM_RADIUS );
 
     if( !loc ) {
-        add_msg( to_translation( "Never mind." ) );
+        add_msg( _( "Never mind." ) );
         return;
     }
 
     item &it = *loc;
     z.set_storage_item( it.detach( ) );
-    add_msg( to_translation( "You mount the %1$s on your %2$s." ), it.display_name(), pet_name );
+    add_msg( _( "You mount the %1$s on your %2$s." ), it.display_name(), pet_name );
     // Update encumbrance in case we were wearing it
     you.flag_encumbrance();
     you.moves -= 200;
@@ -1257,12 +1257,11 @@ void monexamine::remove_bag_from( monster &z )
             dump_items( z );
         }
         avatar &you = get_avatar();
-        add_msg( to_translation( "You remove the %1$s from %2$s." ), z.get_storage_item()->display_name(),
-                 pet_name );
+        add_msg( _( "You remove the %1$s from %2$s." ), z.get_storage_item()->display_name(), pet_name );
         get_map().add_item_or_charges( you.bub_pos(), z.remove_storage_item() );
         you.moves -= 200;
     } else {
-        add_msg( m_bad, to_translation( "Your %1$s doesn't have a bag!" ), pet_name );
+        add_msg( m_bad, _( "Your %1$s doesn't have a bag!" ), pet_name );
     }
 }
 
@@ -1271,7 +1270,7 @@ void monexamine::dump_items( monster &z )
     std::string pet_name = z.get_name();
     avatar &you = get_avatar();
     z.drop_items( you.bub_pos() );
-    add_msg( to_translation( "You dump the contents of the %s's bag on the ground." ), pet_name );
+    add_msg( _( "You dump the contents of the %s's bag on the ground." ), pet_name );
     you.moves -= 200;
 }
 
@@ -1279,7 +1278,7 @@ bool monexamine::give_items_to( monster &z )
 {
     std::string pet_name = z.get_name();
     if( !z.get_storage_item() ) {
-        add_msg( to_translation( "There is no container on your %s to put things in!" ), pet_name );
+        add_msg( _( "There is no container on your %s to put things in!" ), pet_name );
         return true;
     }
 
@@ -1299,12 +1298,10 @@ bool monexamine::give_items_to( monster &z )
         units::volume item_volume = it_copy->volume();
         units::mass item_weight = it_copy->weight();
         if( max_weight < item_weight ) {
-            add_msg( to_translation( "The %1$s is too heavy for the %2$s to carry." ), it_copy->tname(),
-                     pet_name );
+            add_msg( _( "The %1$s is too heavy for the %2$s to carry." ), it_copy->tname(), pet_name );
             continue;
         } else if( max_volume < item_volume ) {
-            add_msg( to_translation( "The %1$s is too big to fit in the %2$s." ), it_copy->tname(),
-                     storage.tname() );
+            add_msg( _( "The %1$s is too big to fit in the %2$s." ), it_copy->tname(), storage.tname() );
             continue;
         } else {
             max_weight -= item_weight;
@@ -1346,8 +1343,7 @@ void monexamine::take_items_from( monster &z )
     item *retrieved_item = monster_inv[selection];
     detached_ptr<item> detached = z.remove_item( retrieved_item );
 
-    add_msg( to_translation( "You remove the %1$s from the %2$s's bag." ), retrieved_item->tname(),
-             pet_name );
+    add_msg( _( "You remove the %1$s from the %2$s's bag." ), retrieved_item->tname(), pet_name );
 
     avatar &you = get_avatar();
     you.i_add( std::move( detached ) );
@@ -1359,21 +1355,21 @@ bool monexamine::add_armor( monster &z )
     item *loc = pet_armor_loc( z );
 
     if( !loc ) {
-        add_msg( to_translation( "Never mind." ) );
+        add_msg( _( "Never mind." ) );
         return true;
     }
 
     item &armor = *loc;
     units::mass max_weight = z.weight_capacity() - z.get_carried_weight();
     if( max_weight <= armor.weight() ) {
-        add_msg( to_translation( "pet armor", "Your %1$s is too heavy for your %2$s." ), armor.tname( 1 ),
+        add_msg( pgettext( "pet armor", "Your %1$s is too heavy for your %2$s." ), armor.tname( 1 ),
                  pet_name );
         return true;
     }
 
     armor.set_var( "pet_armor", "true" );
     z.set_armor_item( loc->detach() );
-    add_msg( to_translation( "pet armor", "You put the %1$s on your %2$s." ), armor.display_name(),
+    add_msg( pgettext( "pet armor", "You put the %1$s on your %2$s." ), armor.display_name(),
              pet_name );
     // TODO: armoring a horse takes a lot longer than 2 seconds. This should be a long action.
     get_avatar().moves -= 200;
@@ -1383,7 +1379,7 @@ bool monexamine::add_armor( monster &z )
 void monexamine::remove_harness( monster &z )
 {
     z.remove_effect( effect_harnessed );
-    add_msg( m_info, to_translation( "You unhitch %s from the vehicle." ), z.get_name() );
+    add_msg( m_info, _( "You unhitch %s from the vehicle." ), z.get_name() );
 }
 
 void monexamine::remove_armor( monster &z )
@@ -1391,12 +1387,12 @@ void monexamine::remove_armor( monster &z )
     std::string pet_name = z.get_name();
     if( item *armor = z.get_armor_item() ) {
         get_map().add_item_or_charges( z.bub_pos(), z.remove_armor_item() );
-        add_msg( to_translation( "pet armor", "You remove the %1$s from %2$s." ), armor->display_name(),
+        add_msg( pgettext( "pet armor", "You remove the %1$s from %2$s." ), armor->display_name(),
                  pet_name );
         // TODO: removing armor from a horse takes a lot longer than 2 seconds. This should be a long action.
         get_avatar().moves -= 200;
     } else {
-        add_msg( m_bad, to_translation( "Your %1$s isn't wearing armor!" ), pet_name );
+        add_msg( m_bad, _( "Your %1$s isn't wearing armor!" ), pet_name );
     }
 }
 
@@ -1425,7 +1421,7 @@ void monexamine::train_pet( monster &z )
 void monexamine::kill_zslave( monster &z )
 {
     avatar &you = get_avatar();
-    you.add_msg_if_player( to_translation( "With a clean cut you put your %s down." ), z.get_name() );
+    you.add_msg_if_player( _( "With a clean cut you put your %s down." ), z.get_name() );
     z.die( &you ); // execute it cleanly without damaging the corpse
 
     you.moves -= 150;
@@ -1462,7 +1458,7 @@ void monexamine::add_leash( monster &z )
     z.set_tied_item( rope_item->split( 1 ) );
     z.add_effect( effect_leashed, 1_turns );
     z.get_effect( effect_leashed ).set_permanent();
-    add_msg( to_translation( "You add a leash to your %s." ), z.get_name() );
+    add_msg( _( "You add a leash to your %s." ), z.get_name() );
 }
 
 void monexamine::remove_leash( monster &z )
@@ -1478,7 +1474,7 @@ void monexamine::remove_leash( monster &z )
         get_player_character().i_add( it->detach() );
 
     }
-    add_msg( to_translation( "You remove the leash from your %s." ), z.get_name() );
+    add_msg( _( "You remove the leash from your %s." ), z.get_name() );
 }
 
 void monexamine::tie_pet( monster &z )
@@ -1488,7 +1484,7 @@ void monexamine::tie_pet( monster &z )
     }
     z.add_effect( effect_tied, 1_turns );
     z.get_effect( effect_tied ).set_permanent();
-    add_msg( to_translation( "You tie your %s." ), z.get_name() );
+    add_msg( _( "You tie your %s." ), z.get_name() );
 }
 
 void monexamine::untie_pet( monster &z )
@@ -1502,7 +1498,7 @@ void monexamine::untie_pet( monster &z )
         z.add_effect( effect_leashed, 1_turns );
         z.get_effect( effect_leashed ).set_permanent();
     }
-    add_msg( to_translation( "You untie your %s." ), z.get_name() );
+    add_msg( _( "You untie your %s." ), z.get_name() );
 }
 
 void monexamine::start_leading( monster &z )
@@ -1516,18 +1512,18 @@ void monexamine::start_leading( monster &z )
     z.add_effect( effect_led_by_leash, 1_turns );
     z.get_effect( effect_led_by_leash ).set_permanent();
 
-    add_msg( to_translation( "You take hold of the %s's leash to make it follow you." ), z.get_name() );
+    add_msg( _( "You take hold of the %s's leash to make it follow you." ), z.get_name() );
 }
 
 void monexamine::toggle_ignore_targets( monster &z )
 {
     if( z.has_effect( effect_docile ) ) {
         z.remove_effect( effect_docile );
-        add_msg( to_translation( "You order the %s to engage targets." ), z.get_name() );
+        add_msg( _( "You order the %s to engage targets." ), z.get_name() );
         return;
     } else {
         z.add_effect( effect_docile, 1_turns );
-        add_msg( to_translation( "You order the %s to focus on following you." ), z.get_name() );
+        add_msg( _( "You order the %s to focus on following you." ), z.get_name() );
         return;
     }
 }
@@ -1539,7 +1535,7 @@ void monexamine::stop_leading( monster &z )
     }
     z.remove_effect( effect_led_by_leash );
     // The pet may or may not stop following so don't print that here
-    add_msg( to_translation( "You release the %s's leash." ), z.get_name() );
+    add_msg( _( "You release the %s's leash." ), z.get_name() );
 }
 
 void monexamine::deactivate_pet( monster &z )
@@ -1596,8 +1592,8 @@ void monexamine::milk_source( monster &source_mon )
             source_mon.add_effect( effect_tied, 1_turns );
             you.activity->str_values.emplace_back( "temp_tie" );
         }
-        add_msg( to_translation( "You milk the %s." ), source_mon.get_name() );
+        add_msg( _( "You milk the %s." ), source_mon.get_name() );
     } else {
-        add_msg( to_translation( "The %s has no more milk." ), source_mon.get_name() );
+        add_msg( _( "The %s has no more milk." ), source_mon.get_name() );
     }
 }

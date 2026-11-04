@@ -10,11 +10,11 @@
 #include "client_input.h"
 #include "input.h"
 #include "json.h"
-#include "translation_snapshot.h"
 #include "wcwidth.h"
 
 #include <algorithm>
 #include <charconv>
+#include <cstdint>
 #include <cmath>
 #include <iomanip>
 #include <limits>
@@ -22,6 +22,7 @@
 #include <ranges>
 #include <sstream>
 #include <stdexcept>
+#include <string_view>
 #include <utility>
 
 namespace game_client
@@ -103,7 +104,27 @@ thread_local auto next_provider_token = std::size_t {0};
 constexpr auto maximum_page_size = std::size_t {200};
 auto wire_overmap_tiles = false;
 
-auto hex_digest( const localization::content_hash &hash ) -> std::string
+/// Length-framed, deterministic content identity of an interaction.
+class content_hash
+{
+    public:
+        auto add( const std::string_view value ) -> void {
+            // Length framing includes embedded NULs and prevents separator collisions.
+            for( const auto shift : std::views::iota( 0, 8 ) ) {
+                value_ ^= static_cast<unsigned char>( static_cast<std::uint64_t>( value.size() ) >> ( shift * 8 ) );
+                value_ *= 1099511628211ULL;
+            }
+            for( const auto byte : value ) {
+                value_ ^= static_cast<unsigned char>( byte );
+                value_ *= 1099511628211ULL;
+            }
+        }
+        auto value() const -> std::uint64_t { return value_; }
+    private:
+        std::uint64_t value_ = 14695981039346656037ULL;
+};
+
+auto hex_digest( const content_hash &hash ) -> std::string
 {
     auto output = std::ostringstream{};
     output.imbue( std::locale::classic() );
@@ -120,7 +141,7 @@ auto provider_for( const input_context &context ) -> const provider_entry *
     return provider == providers.rend() ? nullptr : &*provider;
 }
 
-auto add_position( localization::content_hash &hash, const interaction_position &position ) -> void
+auto add_position( content_hash &hash, const interaction_position &position ) -> void
 {
     hash.add( std::to_string( position.x ) );
     hash.add( std::to_string( position.y ) );
@@ -136,7 +157,7 @@ auto schema_for( const interaction_snapshot &snapshot,
 {
     ++work.schema_hashes;
     work.hashed_choices += snapshot.choices.size();
-    auto hash = localization::content_hash{};
+    auto hash = content_hash{};
     if( descriptions ) { hash.add( "owned-lazy-choice-descriptions-v1" ); }
     hash.add( interaction_kind_name( snapshot.kind ) );
     hash.add( snapshot.context );
@@ -732,7 +753,7 @@ auto target_bounds_contain( const interaction_target &target,
 auto opaque_interaction_id( const std::string &prefix, const std::vector<std::string> &identity )
 -> std::string
 {
-    auto hash = localization::content_hash{};
+    auto hash = content_hash{};
     for( const auto &part : identity ) { hash.add( part ); }
     return prefix + ":" + hex_digest( hash );
 }

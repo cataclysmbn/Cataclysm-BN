@@ -420,7 +420,7 @@ static bool handle_emote( player &u, efftype_id effect, int emote_choice )
     const bool permanent = u.has_effect( effect );
     if( permanent ) {
         u.add_effect( effect, 9999_days, bodypart_str_id::NULL_ID() );
-        u.add_msg_if_player( to_translation( "You will keep emoting." ) );
+        u.add_msg_if_player( _( "You will keep emoting." ) );
     } else {
         u.add_effect( effect, 30_seconds, bodypart_str_id::NULL_ID() );
     }
@@ -727,7 +727,7 @@ void game::chat()
             }
 
             if( here.impassable( *p ) ) {
-                add_msg( m_info, to_translation( "This destination can't be reached." ) );
+                add_msg( m_info, _( "This destination can't be reached." ) );
                 return;
             }
 
@@ -875,7 +875,7 @@ void game::chat()
 
         if( !matched ) {
             // No prefix: just show plain text
-            add_msg( to_translation( "%s" ), monologue_msg );
+            add_msg( _( "%s" ), monologue_msg );
         }
     }
 
@@ -1121,10 +1121,10 @@ void npc::talk_to_u( bool radio_contact, bool enforce_first_topic )
         set_attitude( NPCATT_NULL );
     } else if( !has_mind_control && ( get_attitude() == NPCATT_FLEE ||
                                       get_attitude() == NPCATT_FLEE_TEMP ) ) {
-        add_msg( to_translation( "%s is fleeing from you!" ), name );
+        add_msg( _( "%s is fleeing from you!" ), name );
         return;
     } else if( !has_mind_control && get_attitude() == NPCATT_KILL ) {
-        add_msg( to_translation( "%s is hostile!" ), name );
+        add_msg( _( "%s is hostile!" ), name );
         return;
     }
     if( get_faction() ) {

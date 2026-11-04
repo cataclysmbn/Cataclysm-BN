@@ -140,8 +140,6 @@ auto error_name( const error value ) -> std::string
             return "unknown_affordance";
         case error::stale_screen:
             return "stale_screen";
-        case error::unavailable_locale:
-            return "unavailable_locale";
     }
     return "validation_failed";
 }
@@ -178,8 +176,6 @@ auto error_text( const error value ) -> std::string
             return _( "That is not possible on this screen." );
         case error::stale_screen:
             return _( "That screen has closed." );
-        case error::unavailable_locale:
-            return _( "The game has no translation for this language." );
     }
     return _( "Not possible here." );
 }

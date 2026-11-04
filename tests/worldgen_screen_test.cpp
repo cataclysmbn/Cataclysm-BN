@@ -13,8 +13,6 @@
 #    include "filesystem.h"
 #    include "game_constants.h"
 #    include "input.h"
-#    include "locale_fixture.h"
-#    include "locale_scope.h"
 #    include "mod_manager.h"
 #    include "options.h"
 #    include "output.h"
@@ -422,43 +420,6 @@ TEST_CASE(
     CHECK(world_generator->active_world->info->active_mod_order == active_before);
 }
 
-TEST_CASE(
-    "the world creation tabs are the same at any viewport size and have the same ids in another language",
-    "[worldgen_screen][engine_client_component]") {
-    clear_all_state();
-    const auto guard = screen_guard{};
-    const auto fixture_ko = locale_fixture::korean_catalogue{};
-    REQUIRE(world_generator->active_world != nullptr);
-    const auto mods = world_generator->active_world->info->active_mod_order;
-    auto reads = 0;
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        ++reads;
-        const auto saved_x = TERMX;
-        const auto saved_y = TERMY;
-        TERMX = 80;
-        TERMY = 24;
-        const auto narrow = published();
-        TERMX = 200;
-        TERMY = 60;
-        const auto wide = published();
-        TERMX = saved_x;
-        TERMY = saved_y;
-        CHECK(narrow.dump() == wide.dump());
-        const auto korean = [] {
-            const auto scope = localization::locale_scope(locale_fixture::korean);
-            return published();
-        }();
-        auto english_ids = std::vector<std::string>{};
-        auto korean_ids = std::vector<std::string>{};
-        collect_ids(narrow, english_ids);
-        collect_ids(korean, korean_ids);
-        CHECK(english_ids == korean_ids);
-        CHECK(without_words(narrow) == without_words(korean));
-        return act("QUIT");
-    });
-    world_generator->show_active_world_mods(mods);
-    CHECK(reads == 1);
-}
 
 TEST_CASE(
     "the world picker lists the worlds and enters the one a client selects",

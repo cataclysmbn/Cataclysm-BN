@@ -15,8 +15,6 @@
 #    include "engine_client_contract.h"
 #    include "game_constants.h"
 #    include "input.h"
-#    include "locale_fixture.h"
-#    include "locale_scope.h"
 #    include "options.h"
 #    include "output.h"
 #    include "state_helpers.h"
@@ -202,19 +200,6 @@ void check_invariance(const std::string& context) {
     TERMX = saved_x;
     TERMY = saved_y;
     CHECK(narrow.dump() == wide.dump());
-    const auto fixture_ko = locale_fixture::korean_catalogue{};
-    const auto korean = [] {
-        const auto scope = localization::locale_scope(locale_fixture::korean);
-        return published();
-    }();
-    auto english_ids = std::vector<std::string>{};
-    auto korean_ids = std::vector<std::string>{};
-    collect_ids(narrow, english_ids);
-    collect_ids(korean, korean_ids);
-    INFO(context);
-    CHECK_FALSE(english_ids.empty());
-    CHECK(english_ids == korean_ids);
-    CHECK(without_words(narrow) == without_words(korean));
 }
 
 } // namespace

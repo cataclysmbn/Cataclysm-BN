@@ -1,12 +1,10 @@
 #pragma once
 
 #include <cstdint>
-#include <optional>
 #include <string>
 #include <vector>
 
 #include "enums.h"
-#include "localised_text.h"
 
 namespace Messages
 {
@@ -24,8 +22,6 @@ struct feed_entry {
     int count = 1;
     /// The game turn the message was logged on, or last repeated on.
     int turn = 0;
-    /// What a client renders in its own language, for a line made from a translatable format.
-    std::optional<localised_text> localised;
 };
 
 /// Messages added after `after` in log order, plus the cursor's own message when it repeated since.

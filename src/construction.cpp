@@ -1774,7 +1774,7 @@ std::optional<construction_id> construction_menu( const bool blueprint )
             if( !blueprint ) {
                 if( player_can_build( g->u, total_inv, constructs[select] ) ) {
                     if( !player_can_see_to_build( g->u, constructs[select] ) ) {
-                        add_msg( m_info, to_translation( "It is too dark to construct right now." ) );
+                        add_msg( m_info, _( "It is too dark to construct right now." ) );
                     } else {
                         ui.reset();
                         place_construction( constructs[select] );
@@ -1938,7 +1938,7 @@ void place_construction( const construction_group_str_id &group )
     partial_con *pre_c = here.partial_con_at( pnt );
     if( pre_c ) {
         add_msg( m_info,
-                 to_translation( "There is already an unfinished construction there, examine it to continue working on it" ) );
+                 _( "There is already an unfinished construction there, examine it to continue working on it" ) );
         return;
     }
     std::vector<detached_ptr<item>> used;
@@ -2012,10 +2012,10 @@ void complete_construction( Character &who, tripoint_abs_ms &where )
     if( who.is_avatar() ) {
         for( auto &elem : character_funcs::get_crafting_helpers( who ) ) {
             if( elem->meets_skill_requirements( built ) ) {
-                add_msg( m_info, to_translation( "%s assists you with the work…" ), elem->name );
+                add_msg( m_info, _( "%s assists you with the work…" ), elem->name );
             } else {
                 //NPC near you isn't skilled enough to help
-                add_msg( m_info, to_translation( "%s watches you work…" ), elem->name );
+                add_msg( m_info, _( "%s watches you work…" ), elem->name );
             }
 
             award_xp( *elem );
@@ -2071,8 +2071,7 @@ void complete_construction( Character &who, tripoint_abs_ms &where )
         here.spawn_items( who.bub_pos(), std::move( items_list ) );
     }
 
-    add_msg( m_info, to_translation( "%s finished construction: %s." ), who.disp_name(),
-             built.group->name() );
+    add_msg( m_info, _( "%s finished construction: %s." ), who.disp_name(), built.group->name() );
     // clear the activity
     who.activity->set_to_null();
 
@@ -2214,21 +2213,20 @@ void construct::done_grave( const tripoint_bub_ms &p )
                     if( g->u.has_trait( trait_SPIRITUAL ) ) {
                         g->u.add_morale( MORALE_FUNERAL, burial_morale, 75, 1_days, 1_hours );
                         add_msg( m_good,
-                                 to_translation( "You feel relieved after providing last rites for this human being, whose name is lost in the Cataclysm." ) );
+                                 _( "You feel relieved after providing last rites for this human being, whose name is lost in the Cataclysm." ) );
                     } else {
-                        add_msg( m_neutral,
-                                 to_translation( "You bury remains of a human, whose name is lost in the Cataclysm." ) );
+                        add_msg( m_neutral, _( "You bury remains of a human, whose name is lost in the Cataclysm." ) );
                     }
                 }
             } else {
                 if( g->u.has_trait( trait_SPIRITUAL ) ) {
                     g->u.add_morale( MORALE_FUNERAL, burial_morale, 75, 1_days, 1_hours );
                     add_msg( m_good,
-                             to_translation( "You feel sadness, but also relief after providing last rites for %s, whose name you will keep in your memory." ),
+                             _( "You feel sadness, but also relief after providing last rites for %s, whose name you will keep in your memory." ),
                              it->get_corpse_name() );
                 } else {
                     add_msg( m_neutral,
-                             to_translation( "You bury remains of %s, who joined uncounted masses perished in the Cataclysm." ),
+                             _( "You bury remains of %s, who joined uncounted masses perished in the Cataclysm." ),
                              it->get_corpse_name() );
                 }
             }
@@ -2240,7 +2238,7 @@ void construct::done_grave( const tripoint_bub_ms &p )
         iuse::handle_ground_graffiti( g->u, nullptr, _( "Inscribe something on the grave?" ), p );
     } else {
         add_msg( m_neutral,
-                 to_translation( "Unfortunately you don't have anything sharp to place an inscription on the grave." ) );
+                 _( "Unfortunately you don't have anything sharp to place an inscription on the grave." ) );
     }
 
     if( proper_burial ) {
@@ -2309,7 +2307,7 @@ void construct::done_deconstruct( const tripoint_bub_ms &p )
     if( here.has_furn( p ) ) {
         const furn_t &f = here.furn( p ).obj();
         if( !f.deconstruct.can_do ) {
-            add_msg( m_info, to_translation( "That %s can not be disassembled!" ), f.name() );
+            add_msg( m_info, _( "That %s can not be disassembled!" ), f.name() );
             return;
         }
         if( f.active ) {
@@ -2320,7 +2318,7 @@ void construct::done_deconstruct( const tripoint_bub_ms &p )
         } else {
             here.furn_set( p, f.deconstruct.furn_set );
         }
-        add_msg( to_translation( "The %s is disassembled." ), f.name() );
+        add_msg( _( "The %s is disassembled." ), f.name() );
         items_list = item_group::items_from( f.deconstruct.drop_group,
                                              calendar::turn );
         // HACK: Hack alert.
@@ -2332,14 +2330,13 @@ void construct::done_deconstruct( const tripoint_bub_ms &p )
     } else {
         const ter_t &t = here.ter( p ).obj();
         if( !t.deconstruct.can_do ) {
-            add_msg( to_translation( "That %s can not be disassembled!" ), t.name() );
+            add_msg( _( "That %s can not be disassembled!" ), t.name() );
             return;
         }
         if( t.deconstruct.deconstruct_above ) {
             const tripoint_bub_ms top = p + tripoint_rel_ms::above();
             if( here.has_furn( top ) ) {
-                add_msg( to_translation( "That %s can not be disassembled, since there is furniture above it." ),
-                         t.name() );
+                add_msg( _( "That %s can not be disassembled, since there is furniture above it." ), t.name() );
                 return;
             }
             done_deconstruct( top );
@@ -2350,7 +2347,7 @@ void construct::done_deconstruct( const tripoint_bub_ms &p )
             tripoint_bub_ms below( p.xy(), p.z() - 1 );
             here.ter_set( p, here.get_roof( below, true ) );
         }
-        add_msg( to_translation( "The %s is disassembled." ), t.name() );
+        add_msg( _( "The %s is disassembled." ), t.name() );
         items_list = item_group::items_from( t.deconstruct.drop_group,
                                              calendar::turn );
     }
@@ -2399,7 +2396,7 @@ void construct::done_digormine_stair( const tripoint_bub_ms &p, bool dig )
             here.ter_set( p, t_pit ); // You dug down a bit before detecting the problem
             unroll_digging( dig ? 8 : 12 );
         } else {
-            add_msg( m_warning, to_translation( "You just tunneled into lava!" ) );
+            add_msg( m_warning, _( "You just tunneled into lava!" ) );
             g->events().send<event_type::digs_into_lava>();
             here.ter_set( p, t_open_air );
         }
@@ -2409,11 +2406,11 @@ void construct::done_digormine_stair( const tripoint_bub_ms &p, bool dig )
 
     bool impassable = here.impassable( below );
     if( !impassable ) {
-        add_msg( to_translation( "You dig into a preexisting space, and improvise a ladder." ) );
+        add_msg( _( "You dig into a preexisting space, and improvise a ladder." ) );
     } else if( dig ) {
-        add_msg( to_translation( "You dig a stairway, adding sturdy timbers and a rope for safety." ) );
+        add_msg( _( "You dig a stairway, adding sturdy timbers and a rope for safety." ) );
     } else {
-        add_msg( to_translation( "You drill out a passage, heading deeper underground." ) );
+        add_msg( _( "You drill out a passage, heading deeper underground." ) );
     }
     here.ter_set( p, t_stairs_down ); // There's the top half
     // Again, need to use submap-local coordinates.
@@ -2439,8 +2436,7 @@ void construct::done_mine_upstair( const tripoint_bub_ms &p )
 
     if( here.ter( below ) == t_lava ) {
         here.ter_set( p, t_rock_floor ); // You dug a bit before discovering the problem
-        add_msg( m_warning,
-                 to_translation( "The rock overhead feels hot.  You decide *not* to mine magma." ) );
+        add_msg( m_warning, _( "The rock overhead feels hot.  You decide *not* to mine magma." ) );
         unroll_digging( 12 );
         return;
     }
@@ -2452,8 +2448,7 @@ void construct::done_mine_upstair( const tripoint_bub_ms &p )
 
     if( liquids.contains( here.ter( below ) ) ) {
         here.ter_set( p, t_rock_floor ); // You dug a bit before discovering the problem
-        add_msg( m_warning,
-                 to_translation( "The rock above is rather damp.  You decide *not* to mine water." ) );
+        add_msg( m_warning, _( "The rock above is rather damp.  You decide *not* to mine water." ) );
         unroll_digging( 12 );
         return;
     }
@@ -2465,7 +2460,7 @@ void construct::done_mine_upstair( const tripoint_bub_ms &p )
     g->u.mod_thirst( 20 + no_mut_penalty );
     g->u.mod_fatigue( 25 + no_mut_penalty );
 
-    add_msg( to_translation( "You drill out a passage, heading for the surface." ) );
+    add_msg( _( "You drill out a passage, heading for the surface." ) );
     here.ter_set( p, t_stairs_up ); // There's the bottom half
     // We need to write to submap-local coordinates.
     // TODO: Add roof above
@@ -2488,7 +2483,7 @@ void construct::done_window_curtains( const tripoint_bub_ms & )
     here.spawn_item( g->u.bub_pos(), itype_stick );
     here.spawn_item( g->u.bub_pos(), itype_string_36 );
     g->u.add_msg_if_player(
-        to_translation( "After boarding up the window the curtains and curtain rod are left." ) );
+        _( "After boarding up the window the curtains and curtain rod are left." ) );
 }
 
 void construct::done_extract_maybe_revert_to_dirt( const tripoint_bub_ms &p )
@@ -2499,12 +2494,12 @@ void construct::done_extract_maybe_revert_to_dirt( const tripoint_bub_ms &p )
     }
 
     if( here.ter( p ) == t_clay ) {
-        add_msg( to_translation( "You gather some clay." ) );
+        add_msg( _( "You gather some clay." ) );
     } else if( here.ter( p ) == t_sand ) {
-        add_msg( to_translation( "You gather some sand." ) );
+        add_msg( _( "You gather some sand." ) );
     } else {
         // Fall through to an undefined material.
-        add_msg( to_translation( "You gather some materials." ) );
+        add_msg( _( "You gather some materials." ) );
     }
 }
 
@@ -2532,12 +2527,12 @@ void construct::done_ramp_high( const tripoint_bub_ms &p )
 
 void construct::failure_standard( const tripoint_bub_ms & )
 {
-    add_msg( m_info, to_translation( "You cannot build there!" ) );
+    add_msg( m_info, _( "You cannot build there!" ) );
 }
 
 void construct::failure_deconstruct( const tripoint_bub_ms & )
 {
-    add_msg( m_info, to_translation( "You cannot deconstruct this!" ) );
+    add_msg( m_info, _( "You cannot deconstruct this!" ) );
 }
 
 void construction::load( const JsonObject &jo, const std::string &/*src*/ )

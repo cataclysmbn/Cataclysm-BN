@@ -17,8 +17,6 @@
 #include "tile_parts.h"
 
 #if defined(CATA_MCP)
-#    include "locale_fixture.h"
-#    include "locale_scope.h"
 #endif
 
 #include <algorithm>
@@ -324,25 +322,4 @@ auto without_words(json value) -> json {
 }
 } // namespace
 
-TEST_CASE(
-    "a look square has the same facts in another language and its words are the catalogue's",
-    "[target_screen][look][engine_client_component]") {
-    const auto fixture = locale_fixture::korean_catalogue{};
-    const auto square = crowded_square{};
-    const auto shape = [&] {
-        auto result = json::array();
-        for (const auto& part : ec::tile_parts(square.at + tripoint_east)) {
-            result.push_back(json::parse(ec::to_json(part).dump()));
-        }
-        return result;
-    };
-    const auto english = shape();
-    const auto korean = [&] {
-        const auto scope = localization::locale_scope(locale_fixture::korean);
-        return shape();
-    }();
-    CHECK(without_words(english) == without_words(korean));
-    CHECK(english.dump().find("-ko") == std::string::npos);
-    CHECK(korean.dump().find("Move cost-ko: ") != std::string::npos);
-}
 #endif

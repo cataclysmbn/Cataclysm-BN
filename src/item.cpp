@@ -678,7 +678,7 @@ bool item::revert( Character *ch, bool alert )
         return false;
     }
     if( ch && alert && !tooldata->revert_msg.empty() ) {
-        ch->add_msg_if_player( m_info, to_translation( tooldata->revert_msg ), tname() );
+        ch->add_msg_if_player( m_info, _( tooldata->revert_msg ), tname() );
     }
     convert( *tooldata->revert_to );
     if( ch ) {
@@ -10742,18 +10742,18 @@ detached_ptr<item> item::process_corpse( detached_ptr<item> &&self, player *carr
         if( carrier == nullptr ) {
             if( get_avatar().sees( pos ) ) {
                 if( self->corpse->in_species( ROBOT ) ) {
-                    add_msg( m_warning, to_translation( "A nearby robot has repaired itself and stands up!" ) );
+                    add_msg( m_warning, _( "A nearby robot has repaired itself and stands up!" ) );
                 } else {
-                    add_msg( m_warning, to_translation( "A nearby corpse rises and moves towards you!" ) );
+                    add_msg( m_warning, _( "A nearby corpse rises and moves towards you!" ) );
                 }
             }
         } else {
             if( self->corpse->in_species( ROBOT ) ) {
                 carrier->add_msg_if_player( m_warning,
-                                            to_translation( "Oh dear god, a robot you're carrying has started moving!" ) );
+                                            _( "Oh dear god, a robot you're carrying has started moving!" ) );
             } else {
                 carrier->add_msg_if_player( m_warning,
-                                            to_translation( "Oh dear god, a corpse you're carrying has started moving!" ) );
+                                            _( "Oh dear god, a corpse you're carrying has started moving!" ) );
             }
         }
         // Destroy this corpse item
@@ -10849,8 +10849,7 @@ detached_ptr<item> item::process_litcig( detached_ptr<item> &&self, player *carr
         } else if( carrier->has_trait( trait_LIGHTWEIGHT ) ) {
             duration = 30_seconds;
         }
-        carrier->add_msg_if_player( m_neutral, to_translation( "You take a puff of your %s." ),
-                                    it.tname() );
+        carrier->add_msg_if_player( m_neutral, _( "You take a puff of your %s." ), it.tname() );
         if( it.type->istate_callbacks ) {
             it.type->istate_callbacks->call_on_puff( *carrier, it );
         }
@@ -10867,8 +10866,7 @@ detached_ptr<item> item::process_litcig( detached_ptr<item> &&self, player *carr
         carrier->moves -= 15;
 
         if( ( carrier->has_effect( effect_shakes ) && one_in( 10 ) ) ) {
-            carrier->add_msg_if_player( m_bad,
-                                        to_translation( "Your shaking hand causes you to drop your %s." ),
+            carrier->add_msg_if_player( m_bad, _( "Your shaking hand causes you to drop your %s." ),
                                         it.tname() );
             here.add_item_or_charges( pos + point_rel_ms( rng( -1, 1 ), rng( -1, 1 ) ),
                                       std::move( self ) );
@@ -10876,7 +10874,7 @@ detached_ptr<item> item::process_litcig( detached_ptr<item> &&self, player *carr
         }
 
         if( carrier->has_effect( effect_sleep ) ) {
-            carrier->add_msg_if_player( m_bad, to_translation( "You fall asleep and drop your %s." ),
+            carrier->add_msg_if_player( m_bad, _( "You fall asleep and drop your %s." ),
                                         it.tname() );
             here.add_item_or_charges( pos + point_rel_ms( rng( -1, 1 ), rng( -1, 1 ) ),
                                       std::move( self ) );
@@ -10897,7 +10895,7 @@ detached_ptr<item> item::process_litcig( detached_ptr<item> &&self, player *carr
     // cig dies out
     if( it.item_counter == 0 ) {
         if( carrier != nullptr ) {
-            carrier->add_msg_if_player( m_neutral, to_translation( "You finish your %s." ), it.tname() );
+            carrier->add_msg_if_player( m_neutral, _( "You finish your %s." ), it.tname() );
         }
         it.convert( dynamic_cast<const iuse_transform *>
                     ( it.type->get_use( "transform" )->get_actor_ptr() )->target );
@@ -10966,13 +10964,12 @@ detached_ptr<item> item::process_extinguish( detached_ptr<item> &&self, player *
     }
     if( carrier != nullptr ) {
         if( submerged ) {
-            carrier->add_msg_if_player( m_neutral, to_translation( "Your %s is quenched by water." ),
-                                        self->tname() );
+            carrier->add_msg_if_player( m_neutral, _( "Your %s is quenched by water." ), self->tname() );
         } else if( precipitation ) {
-            carrier->add_msg_if_player( m_neutral, to_translation( "Your %s is quenched by precipitation." ),
+            carrier->add_msg_if_player( m_neutral, _( "Your %s is quenched by precipitation." ),
                                         self->tname() );
         } else if( windtoostrong ) {
-            carrier->add_msg_if_player( m_neutral, to_translation( "Your %s is blown out by the wind." ),
+            carrier->add_msg_if_player( m_neutral, _( "Your %s is blown out by the wind." ),
                                         self->tname() );
         }
     }
@@ -11030,7 +11027,7 @@ detached_ptr<item> item::process_cable( detached_ptr<item> &&self, player *carri
         switch( nonchar.state ) {
             case state_solar_pack:
                 if( !carrier->has_item( *self ) || !carrier->worn_with_flag( flag_SOLARPACK_ON ) ) {
-                    carrier->add_msg_if_player( m_bad, to_translation( "You notice the cable has come loose!" ) );
+                    carrier->add_msg_if_player( m_bad, _( "You notice the cable has come loose!" ) );
                     self->reset_cable( carrier );
                 }
                 return std::move( self );
@@ -11043,15 +11040,14 @@ detached_ptr<item> item::process_cable( detached_ptr<item> &&self, player *carri
                     for( item *used : carrier->items_with( used_ups ) ) {
                         used->erase_var( "cable" );
                     }
-                    carrier->add_msg_if_player( m_bad, to_translation( "You notice the cable has come loose!" ) );
+                    carrier->add_msg_if_player( m_bad, _( "You notice the cable has come loose!" ) );
                     self->reset_cable( carrier );
                 }
                 return std::move( self );
             }
             case state_vehicle: {
                 if( !here.veh_at( nonchar.point ) ) {
-                    carrier->add_msg_if_player( m_bad,
-                                                to_translation( "You notice the cable has disconnected from a vehicle!" ) );
+                    carrier->add_msg_if_player( m_bad, _( "You notice the cable has disconnected from a vehicle!" ) );
                     data->unset_con( self.get(), nonchar );
                     return std::move( self );
                 }
@@ -11072,7 +11068,7 @@ detached_ptr<item> item::process_cable( detached_ptr<item> &&self, player *carri
                 auto *grid_connector = active_tiles::furn_at<vehicle_connector_tile>( s );
                 if( !grid_connector ) {
                     if( carrier->has_item( *self ) ) {
-                        carrier->add_msg_if_player( m_bad, to_translation( "You notice the cable has come loose!" ) );
+                        carrier->add_msg_if_player( m_bad, _( "You notice the cable has come loose!" ) );
                     }
                     self->reset_cable( carrier );
                     return std::move( self );
@@ -11092,7 +11088,7 @@ detached_ptr<item> item::process_cable( detached_ptr<item> &&self, player *carri
         self->charges = self->type->maximum_charges() - distance;
         if( self->charges < 1 ) {
             if( carrier ) {
-                carrier->add_msg_if_player( m_bad, to_translation( "The over-extended cable breaks loose!" ) );
+                carrier->add_msg_if_player( m_bad, _( "The over-extended cable breaks loose!" ) );
             }
             self->reset_cable( carrier );
         }
@@ -11115,7 +11111,7 @@ void item::reset_cable( Character *who )
     charges = max_charges;
 
     if( who != nullptr ) {
-        who->add_msg_if_player( m_info, to_translation( "You reel in the cable." ) );
+        who->add_msg_if_player( m_info, _( "You reel in the cable." ) );
         who->mod_moves( -10 * charges );
     }
 }
@@ -11235,15 +11231,13 @@ detached_ptr<item> item::process_tool( detached_ptr<item> &&self, player *carrie
             if( carrier ) {
                 if( self->is_power_armor() ) {
                     if( uses_UPS ) {
-                        carrier->add_msg_if_player( m_info,
-                                                    to_translation( "You need a UPS or Bionic Power Interface to run the %s!" ),
+                        carrier->add_msg_if_player( m_info, _( "You need a UPS or Bionic Power Interface to run the %s!" ),
                                                     self->tname() );
                     } else {
 
                     }
                 } else if( uses_UPS ) {
-                    carrier->add_msg_if_player( m_info, to_translation( "You need a UPS to run the %s!" ),
-                                                self->tname() );
+                    carrier->add_msg_if_player( m_info, _( "You need a UPS to run the %s!" ), self->tname() );
                 }
             }
             if( carrier && self->type->can_use( "set_transform" ) ) {
@@ -11321,7 +11315,7 @@ detached_ptr<item> item::process_blackpowder_fouling( detached_ptr<item> &&self,
         if( self->damage() < self->max_damage() && one_in( 2000 ) ) {
             self->inc_damage( DT_ACID );
             if( carrier ) {
-                carrier->add_msg_if_player( m_bad, to_translation( "Your %s rusts due to blackpowder fouling." ),
+                carrier->add_msg_if_player( m_bad, _( "Your %s rusts due to blackpowder fouling." ),
                                             self->tname() );
             }
         }
@@ -11332,14 +11326,14 @@ detached_ptr<item> item::process_blackpowder_fouling( detached_ptr<item> &&self,
         if( self->damage() < self->max_damage() && one_in( 2000 / leftover ) ) {
             self->inc_damage( DT_ACID );
             if( carrier ) {
-                carrier->add_msg_if_player( m_bad, to_translation( "Your %s rusts due to blackpowder fouling." ),
+                carrier->add_msg_if_player( m_bad, _( "Your %s rusts due to blackpowder fouling." ),
                                             self->tname() );
             }
         }
         for( int i = 0; i < count; i++ ) {
             self->inc_damage( DT_ACID );
             if( carrier ) {
-                carrier->add_msg_if_player( m_bad, to_translation( "Your %s rusts due to blackpowder fouling." ),
+                carrier->add_msg_if_player( m_bad, _( "Your %s rusts due to blackpowder fouling." ),
                                             self->tname() );
             }
         }
@@ -11450,7 +11444,7 @@ detached_ptr<item> item::process_internal( detached_ptr<item> &&self, player *ca
         self->set_var( "ethereal", ethereal_counter );
         const bool processed = ethereal_counter <= 0;
         if( processed && carrier != nullptr ) {
-            carrier->add_msg_if_player( to_translation( "Your %s disappears!" ), self->tname() );
+            carrier->add_msg_if_player( _( "Your %s disappears!" ), self->tname() );
         }
         if( processed ) {
             return detached_ptr<item>();

@@ -16,7 +16,6 @@
 #include "iuse_actor.h"
 #include "json.h"
 #include "line.h"
-#include "localised_names.h"
 #include "map/field_type.h"
 #include "map/map.h"
 #include "map/utils/map_functions.h"
@@ -168,7 +167,7 @@ bool leap_actor::call( monster &z ) const
     z.setpos( chosen );
     seen |= g->u.sees( z ); // ... or we can see them land
     if( seen ) {
-        add_msg( to_translation( "The %s leaps!" ), localised::name_of( z ) );
+        add_msg( _( "The %s leaps!" ), z.name() );
     }
 
     return true;
@@ -766,8 +765,9 @@ bool gun_actor::call( monster &z ) const
             return attempt_shoot( res.value().get().bub_pos(), &res.value().get() );
         }
         if( const int hostiles = res.error(); hostiles > 0 && g->u.sees( z ) ) {
-            add_msg( m_warning, localised::counted{ .format = pl_translation( "Pointed in your direction, the %s emits an IFF warning beep.", "Pointed in your direction, the %s emits %d annoyed sounding beeps." ), .count = hostiles },
-                     z.name(), hostiles );
+            add_msg( m_warning, vgettext( "Pointed in your direction, the %s emits an IFF warning beep.",
+                                          "Pointed in your direction, the %s emits %d annoyed sounding beeps.",
+                                          hostiles ), z.name(), hostiles );
         }
         return false;
     }
@@ -789,7 +789,7 @@ bool gun_actor::try_target( monster &z, Creature &target ) const
 {
     if( require_sunlight && !g->is_in_sunlight( z.bub_pos() ) ) {
         if( one_in( 3 ) && g->u.sees( z ) ) {
-            add_msg( to_translation( failure_msg ), z.name() );
+            add_msg( _( failure_msg ), z.name() );
         }
         return false;
     }
@@ -819,7 +819,7 @@ bool gun_actor::try_target( monster &z, Creature &target ) const
             target.add_effect( effect_laserlocked, 5_turns );
             target.add_effect( effect_was_laserlocked, 5_turns );
             target.add_msg_if_player( m_warning,
-                                      to_translation( "You're not sure why you've got a laser dot on you…" ) );
+                                      _( "You're not sure why you've got a laser dot on you…" ) );
         }
 
         z.moves -= targeting_cost;
@@ -888,7 +888,7 @@ void gun_actor::shoot( monster &z, const tripoint_bub_ms &target, const gun_mode
     tmp.i_add( item::spawn( "UPS_off", calendar::turn, 1000 ) );
 
     if( g->u.sees( z ) ) {
-        add_msg( m_warning, to_translation( description ), z.name(), tmp.primary_weapon().tname() );
+        add_msg( m_warning, _( description ), z.name(), tmp.primary_weapon().tname() );
     }
 
     z.ammo[ammo] -= ranged::fire_gun( tmp, target, qty );

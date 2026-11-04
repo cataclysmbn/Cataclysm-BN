@@ -989,7 +989,7 @@ void inventory::rust_iron_items()
                 //Freshwater without oxygen rusts slower than air
                 g->m.water_from( g->u.bub_pos() )->typeId() == itype_salt_water ) {
                 elem_stack_iter->inc_damage( DT_ACID ); // rusting never completely destroys an item
-                add_msg( m_bad, to_translation( "Your %s is damaged by rust." ), elem_stack_iter->tname() );
+                add_msg( m_bad, _( "Your %s is damaged by rust." ), elem_stack_iter->tname() );
             }
         }
     }

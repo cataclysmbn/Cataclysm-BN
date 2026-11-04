@@ -99,13 +99,13 @@ auto mode_defs() -> std::vector<mode_def>
         if( on ) {
             g->set_safe_mode( SAFE_MODE_ON );
             g->mostseen = 0;
-            add_msg( m_info, to_translation( "Safe mode ON!" ) );
+            add_msg( m_info, _( "Safe mode ON!" ) );
         } else {
             g->turnssincelastmon = 0;
             g->set_safe_mode( SAFE_MODE_OFF );
             add_msg( m_info, get_option<bool>( "AUTOSAFEMODE" )
-                     ? to_translation( "Safe mode OFF!  (Auto safe mode still enabled!)" ) :
-                     to_translation( "Safe mode OFF!" ) );
+                     ? _( "Safe mode OFF!  (Auto safe mode still enabled!)" ) :
+                     _( "Safe mode OFF!" ) );
         }
         if( get_avatar().has_effect( effect_laserlocked ) ) {
             get_avatar().remove_effect( effect_laserlocked );
@@ -114,20 +114,20 @@ auto mode_defs() -> std::vector<mode_def>
     } } ) );
     result.push_back( option_mode( { .id = "auto_safe_mode", .name = "AUTOSAFEMODE", .announce = []( const options_manager::cOpt & option )
     {
-        add_msg( m_info, option.value_as<bool>() ? to_translation( "Auto safe mode ON!" ) :
-                 to_translation( "Auto safe mode OFF!" ) );
+        add_msg( m_info, option.value_as<bool>() ? _( "Auto safe mode ON!" ) :
+                 _( "Auto safe mode OFF!" ) );
     }, .save = false } ) );
     result.push_back( flag( { .id = "auto_travel_mode", .label = _( "Auto travel mode" ), .now = g->auto_travel_mode, .apply = []( const bool on )
     {
         g->auto_travel_mode = on;
-        add_msg( m_info, on ? to_translation( "Auto travel mode ON!" ) :
-                 to_translation( "Auto travel mode OFF!" ) );
+        add_msg( m_info, on ? _( "Auto travel mode ON!" ) :
+                 _( "Auto travel mode OFF!" ) );
     } } ) );
     result.push_back( flag( { .id = "manual_combat_mode", .label = _( "Manual combat mode" ), .now = g->manual_combat_mode, .apply = []( const bool on )
     {
         g->manual_combat_mode = on;
-        add_msg( m_info, on ? to_translation( "Manual combat mode ON!" ) :
-                 to_translation( "Manual combat mode OFF!" ) );
+        add_msg( m_info, on ? _( "Manual combat mode ON!" ) :
+                 _( "Manual combat mode OFF!" ) );
     } } ) );
     result.push_back( { .shown = { .id = "thief_mode", .label = _( "Thief mode" ), .value = thief_value(),
     .values = { { "ask", _( "Ask" ) }, { "honest", _( "Honest" ) }, { "steal", _( "Steal" ) } }
@@ -140,36 +140,36 @@ auto mode_defs() -> std::vector<mode_def>
                                 honest ? "THIEF_HONEST" : steal ? "THIEF_STEAL" : "THIEF_ASK" );
         get_avatar().set_value( "THIEF_MODE_KEEP", honest || steal ? "YES" : "NO" );
         //~ Thief mode cycled between THIEF_ASK/THIEF_HONEST/THIEF_STEAL
-        add_msg( honest ? to_translation( "You will not pick up other peoples belongings." ) : steal ?
-                 to_translation( "You will pick up also those things that belong to others!" ) :
-                 to_translation( "You will be reminded not to steal." ) );
+        add_msg( honest ? _( "You will not pick up other peoples belongings." ) : steal ?
+                 _( "You will pick up also those things that belong to others!" ) :
+                 _( "You will be reminded not to steal." ) );
     } } );
     result.push_back( option_mode( { .id = "auto_features", .name = "AUTO_FEATURES", .announce = []( const options_manager::cOpt & option )
     {
         //~ Auto Features are now ON/OFF
-        add_msg( to_translation( "%s are now %s." ), option.getMenuText(),
+        add_msg( _( "%s are now %s." ), option.getMenuText(),
                  option.value_as<bool>() ? _( "ON" ) : _( "OFF" ) );
     }, .save = true } ) );
     result.push_back( option_mode( { .id = "auto_pulp_butcher", .name = "AUTO_PULP_BUTCHER", .announce = []( const options_manager::cOpt & option )
     {
         //~ Auto Pulp/Pulp Adjacent/Butcher is now set to x
-        add_msg( to_translation( "%s is now set to %s." ), option.getMenuText(), option.getValueName() );
+        add_msg( _( "%s is now set to %s." ), option.getMenuText(), option.getValueName() );
     }, .save = true } ) );
     result.push_back( option_mode( { .id = "auto_mining", .name = "AUTO_MINING", .announce = []( const options_manager::cOpt & option )
     {
         //~ Auto Mining is now ON/OFF
-        add_msg( to_translation( "%s is now %s." ), option.getMenuText(),
+        add_msg( _( "%s is now %s." ), option.getMenuText(),
                  option.value_as<bool>() ? _( "ON" ) : _( "OFF" ) );
     }, .save = true } ) );
     result.push_back( option_mode( { .id = "auto_foraging", .name = "AUTO_FORAGING", .announce = []( const options_manager::cOpt & option )
     {
         //~ Auto Foraging is now set to x
-        add_msg( to_translation( "%s is now set to %s." ), option.getMenuText(), option.getValueName() );
+        add_msg( _( "%s is now set to %s." ), option.getMenuText(), option.getValueName() );
     }, .save = true } ) );
     result.push_back( option_mode( { .id = "auto_pickup", .name = "AUTO_PICKUP", .announce = []( const options_manager::cOpt & option )
     {
         //~ Auto pickup is now set to x
-        add_msg( to_translation( "%s is now set to %s." ), option.getMenuText(), option.getValueName() );
+        add_msg( _( "%s is now set to %s." ), option.getMenuText(), option.getValueName() );
     }, .save = true } ) );
     result.push_back( flag( { .id = "zone_overlay", .label = _( "Zone overlay" ), .now = g->show_zone_overlay, .apply = []( const bool on ) { g->show_zone_overlay = on; } } ) );
     result.push_back( flag( { .id = "map_memory", .label = _( "Map memory" ), .now = you.should_show_map_memory(), .apply = []( const bool /*on*/ ) { get_avatar().toggle_map_memory(); } } ) );
@@ -179,7 +179,7 @@ auto mode_defs() -> std::vector<mode_def>
         result.push_back( flag( { .id = "debug_mode", .label = _( "Debug mode" ), .now = debug_mode, .apply = []( const bool on )
         {
             debug_mode = on;
-            add_msg( m_info, on ? to_translation( "Debug mode ON!" ) : to_translation( "Debug mode OFF!" ) );
+            add_msg( m_info, on ? _( "Debug mode ON!" ) : _( "Debug mode OFF!" ) );
         } } ) );
     }
     result.push_back( { .shown = { .id = "move_mode", .label = _( "Movement mode" ), .value = move_value( you.get_movement_mode() ),

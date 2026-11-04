@@ -408,8 +408,7 @@ bool process_recharge_entry( item &itm, const relic_recharge &rech, Character *c
         }
         case relic_recharge_type::pain: {
             if( carrier ) {
-                carrier->add_msg_if_player( m_bad,
-                                            to_translation( "You suddenly feel sharp pain for no reason." ) );
+                carrier->add_msg_if_player( m_bad, _( "You suddenly feel sharp pain for no reason." ) );
                 carrier->mod_pain_noresist( rng( rech.intensity_min, rech.intensity_max ) );
             } else {
                 return false;
@@ -418,7 +417,7 @@ bool process_recharge_entry( item &itm, const relic_recharge &rech, Character *c
         }
         case relic_recharge_type::hp: {
             if( carrier ) {
-                carrier->add_msg_if_player( m_bad, to_translation( "You feel your body decaying." ) );
+                carrier->add_msg_if_player( m_bad, _( "You feel your body decaying." ) );
                 carrier->hurtall( rng( rech.intensity_min, rech.intensity_max ), nullptr );
             } else {
                 return false;
@@ -427,7 +426,7 @@ bool process_recharge_entry( item &itm, const relic_recharge &rech, Character *c
         }
         case relic_recharge_type::fatigue: {
             if( carrier ) {
-                carrier->add_msg_if_player( m_bad, to_translation( "You feel fatigue seeping into your body." ) );
+                carrier->add_msg_if_player( m_bad, _( "You feel fatigue seeping into your body." ) );
                 carrier->mod_fatigue( rng( rech.intensity_min, rech.intensity_max ) );
                 carrier->mod_stamina( -100 * rng( rech.intensity_min, rech.intensity_max ), false );
             } else {
@@ -509,7 +508,7 @@ bool process_recharge_entry( item &itm, const relic_recharge &rech, Character *c
     }
     if( rech.message ) {
         if( carrier ) {
-            carrier->add_msg_if_player( to_translation( *rech.message ) );
+            carrier->add_msg_if_player( _( *rech.message ) );
         }
     }
     return true;

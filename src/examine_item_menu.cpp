@@ -374,14 +374,13 @@ bool run(
     if( !has_pickup_rule ) {
         add_entry( "AUTOPICKUP_ADD", hint_rating::good, [&]() {
             get_auto_pickup().add_rule( &itm );
-            add_msg( m_info, to_translation( "'%s' added to character pickup rules." ), itm.tname( 1, false ) );
+            add_msg( m_info, _( "'%s' added to character pickup rules." ), itm.tname( 1, false ) );
             return false;
         } );
     } else {
         add_entry( "AUTOPICKUP_REMOVE", hint_rating::iffy, [&]() {
             get_auto_pickup().remove_rule( &itm );
-            add_msg( m_info, to_translation( "'%s' removed from character pickup rules." ), itm.tname( 1,
-                     false ) );
+            add_msg( m_info, _( "'%s' removed from character pickup rules." ), itm.tname( 1, false ) );
             return false;
         } );
     }

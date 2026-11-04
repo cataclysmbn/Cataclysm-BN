@@ -3,11 +3,6 @@
 #include <string>
 #include <vector>
 
-namespace localization
-{
-class locale_snapshot;
-}
-
 /**
  * Contains information on a language supported by the game.
  *
@@ -132,10 +127,6 @@ class trans_library;
 namespace l10n_data
 {
 const cata_libintl::trans_library &get_library();
-/// O(1) ownership of the current immutable catalogue publication; does not change language version.
-auto pin_library() -> localization::locale_snapshot;
-/// Read-only publication mode, for callers that restore catalogue selection through its producers.
-auto mod_catalogues_are_loaded() -> bool;
 
 void reload_catalogues();
 void unload_catalogues();

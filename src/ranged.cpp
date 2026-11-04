@@ -359,11 +359,11 @@ auto print_grouped_shot_hit_messages( const grouped_shot_message_options &option
         if( grouped_hit.target_is_player && grouped_hit.target != nullptr ) {
             if( grouped_hit.total_damage > 0 ) {
                 grouped_hit.target->add_msg_if_player( m_bad,
-                                                       to_translation( "%1$d %2$s pellets hit you for %3$d damage." ),
+                                                       _( "%1$d %2$s pellets hit you for %3$d damage." ),
                                                        grouped_hit.pellet_hits, ammo_name, grouped_hit.total_damage );
             } else {
                 grouped_hit.target->add_msg_if_player( m_warning,
-                                                       to_translation( "%1$d %2$s pellets hit you but deal no damage." ),
+                                                       _( "%1$d %2$s pellets hit you but deal no damage." ),
                                                        grouped_hit.pellet_hits, ammo_name );
             }
             continue;
@@ -953,15 +953,15 @@ bool ranged::handle_gun_damage( Character &shooter, item &it )
         x_in_y( dirt_dbl * dirt_dbl * dirt_dbl,
                 1000000000000.0 ) ) {
         shooter.add_msg_player_or_npc(
-            to_translation( "Your %s misfires with a muffled click!" ),
-            to_translation( "<npcname>'s %s misfires with a muffled click!" ),
+            _( "Your %s misfires with a muffled click!" ),
+            _( "<npcname>'s %s misfires with a muffled click!" ),
             it.tname() );
         // at high dirt levels the chance to misfire gets to significant levels. 10,000 is max and 7800 is quite high so above that the player gets some relief in the form of exchanging time for some dirt reduction. Basically jiggling the parts loose to remove some dirt and get a few more shots out.
         if( dirt_dbl >
             7800 ) {
             shooter.add_msg_player_or_npc(
-                to_translation( "Perhaps taking the ammo out of your %s and reloading will help." ),
-                to_translation( "Perhaps taking the ammo out of <npcname>'s %s and reloading will help." ),
+                _( "Perhaps taking the ammo out of your %s and reloading will help." ),
+                _( "Perhaps taking the ammo out of <npcname>'s %s and reloading will help." ),
                 it.tname() );
         }
         return false;
@@ -974,8 +974,8 @@ bool ranged::handle_gun_damage( Character &shooter, item &it )
     int effective_durability = firing.durability;
     if( shooter.is_underwater() && !parent.has_flag( flag_WATERPROOF_GUN ) &&
         one_in( effective_durability ) ) {
-        shooter.add_msg_player_or_npc( to_translation( "Your %s misfires with a wet click!" ),
-                                       to_translation( "<npcname>'s %s misfires with a wet click!" ),
+        shooter.add_msg_player_or_npc( _( "Your %s misfires with a wet click!" ),
+                                       _( "<npcname>'s %s misfires with a wet click!" ),
                                        it.tname() );
         return false;
         // Here we check for a chance for the weapon to suffer a mechanical malfunction.
@@ -984,16 +984,16 @@ bool ranged::handle_gun_damage( Character &shooter, item &it )
         // a chance of mechanical failure between 1/(64*3) and 1/(1024*3) on any given shot.
         // the malfunction can't cause damage
     } else if( one_in( ( 2 << effective_durability ) * 3 ) && !it.has_flag( flag_NEVER_JAMS ) ) {
-        shooter.add_msg_player_or_npc( to_translation( "Your %s malfunctions!" ),
-                                       to_translation( "<npcname>'s %s malfunctions!" ),
+        shooter.add_msg_player_or_npc( _( "Your %s malfunctions!" ),
+                                       _( "<npcname>'s %s malfunctions!" ),
                                        it.tname() );
         return false;
         // Here we check for a chance for the weapon to suffer a misfire due to
         // using player-made 'RECYCLED' bullets. Note that not all forms of
         // player-made ammunition have this effect.
     } else if( curammo_effects.contains( ammo_effect_RECYCLED ) && one_in( 256 ) ) {
-        shooter.add_msg_player_or_npc( to_translation( "Your %s misfires with a muffled click!" ),
-                                       to_translation( "<npcname>'s %s misfires with a muffled click!" ),
+        shooter.add_msg_player_or_npc( _( "Your %s misfires with a muffled click!" ),
+                                       _( "<npcname>'s %s misfires with a muffled click!" ),
                                        it.tname() );
         return false;
         // Here we check for a chance for attached mods to get damaged if they are flagged as 'CONSUMABLE'.
@@ -1021,14 +1021,13 @@ bool ranged::handle_gun_damage( Character &shooter, item &it )
                 }
                 if( one_in( modconsume ) ) {
                     if( mod->mod_damage( dmgamt ) ) {
-                        shooter.add_msg_player_or_npc( m_bad,
-                                                       to_translation( "Your attached %s is destroyed by your shot!" ),
-                                                       to_translation( "<npcname>'s attached %s is destroyed by their shot!" ),
+                        shooter.add_msg_player_or_npc( m_bad, _( "Your attached %s is destroyed by your shot!" ),
+                                                       _( "<npcname>'s attached %s is destroyed by their shot!" ),
                                                        mod->tname() );
                         mod->detach();
                     } else if( parent.damage() > initstate ) {
-                        shooter.add_msg_player_or_npc( m_bad, to_translation( "Your attached %s is damaged by your shot!" ),
-                                                       to_translation( "<npcname>'s %s is damaged by their shot!" ),
+                        shooter.add_msg_player_or_npc( m_bad, _( "Your attached %s is damaged by your shot!" ),
+                                                       _( "<npcname>'s %s is damaged by their shot!" ),
                                                        mod->tname() );
                     }
                 }
@@ -1037,8 +1036,8 @@ bool ranged::handle_gun_damage( Character &shooter, item &it )
     }
     if( parent.has_fault( fault_gun_unlubricated ) &&
         x_in_y( dirt_dbl, dirt_max_dbl ) ) {
-        shooter.add_msg_player_or_npc( m_bad, to_translation( "Your %s emits a grimace-inducing screech!" ),
-                                       to_translation( "<npcname>'s %s emits a grimace-inducing screech!" ),
+        shooter.add_msg_player_or_npc( m_bad, _( "Your %s emits a grimace-inducing screech!" ),
+                                       _( "<npcname>'s %s emits a grimace-inducing screech!" ),
                                        it.tname() );
         parent.inc_damage();
     }
@@ -1051,8 +1050,8 @@ bool ranged::handle_gun_damage( Character &shooter, item &it )
             if( ( ( it.ammo_data()->ammo->recoil < firing.min_cycle_recoil ) ||
                   ( parent.has_fault( fault_gun_unlubricated ) && one_in( 16 ) ) ) &&
                 parent.faults_potential().contains( fault_gun_chamber_spent ) ) {
-                shooter.add_msg_player_or_npc( m_bad, to_translation( "Your %s fails to cycle!" ),
-                                               to_translation( "<npcname>'s %s fails to cycle!" ),
+                shooter.add_msg_player_or_npc( m_bad, _( "Your %s fails to cycle!" ),
+                                               _( "<npcname>'s %s fails to cycle!" ),
                                                it.tname() );
                 parent.faults.insert( fault_gun_chamber_spent );
                 // Don't return false in this case; this shot happens, follow-up ones won't.
@@ -1090,8 +1089,8 @@ bool ranged::handle_gun_damage( Character &shooter, item &it )
     if( dirt_dbl > 5000 &&
         x_in_y( dirt_dbl * dirt_dbl * dirt_dbl,
                 5555555555555 ) ) {
-        shooter.add_msg_player_or_npc( m_bad, to_translation( "Your %s is damaged by the high pressure!" ),
-                                       to_translation( "<npcname>'s %s is damaged by the high pressure!" ),
+        shooter.add_msg_player_or_npc( m_bad, _( "Your %s is damaged by the high pressure!" ),
+                                       _( "<npcname>'s %s is damaged by the high pressure!" ),
                                        it.tname() );
         // Don't increment until after the message
         parent.inc_damage();
@@ -1104,7 +1103,7 @@ void npc::pretend_fire( npc *source, int shots, item &gun )
     int curshot = 0;
     avatar &you = get_avatar();
     if( you.sees( *source ) && one_in( 50 ) ) {
-        add_msg( m_info, to_translation( "%s shoots something." ), source->disp_name() );
+        add_msg( m_info, _( "%s shoots something." ), source->disp_name() );
     }
     while( curshot != shots ) {
         if( gun.ammo_consume( gun.ammo_required(), bub_pos() ) != gun.ammo_required() ) {
@@ -1116,7 +1115,7 @@ void npc::pretend_fire( npc *source, int shots, item &gun )
         const auto data = weapon->gun_noise( shots > 1 );
 
         if( you.sees( *source ) ) {
-            add_msg( m_warning, to_translation( "You hear %s." ), data.sound );
+            add_msg( m_warning, _( "You hear %s." ), data.sound );
         }
         curshot++;
         moves -= 100;
@@ -1393,7 +1392,7 @@ int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int max_sho
         if( gun.faults.contains( fault_gun_chamber_spent ) && curshot == 0 ) {
             who.moves -= 50;
             gun.faults.erase( fault_gun_chamber_spent );
-            who.add_msg_if_player( to_translation( "You cycle your %s manually." ), gun.tname() );
+            who.add_msg_if_player( _( "You cycle your %s manually." ), gun.tname() );
         }
 
         if( !ranged::handle_gun_damage( who, gun ) ) {
@@ -1525,10 +1524,10 @@ int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int max_sho
 
         int noise = calc_gun_volume( gun );
         if( !who.is_deaf() && noise > 0 ) {
-            who.add_msg_if_player( m_warning, to_translation( "You fire your %s, %s" ),
+            who.add_msg_if_player( m_warning, _( "You fire your %s, %s" ),
                                    gun.tname(), gun.gun_noise( shots > 1 ).sound );
         } else {
-            who.add_msg_if_player( m_warning, to_translation( "You fire your %s!" ),
+            who.add_msg_if_player( m_warning, _( "You fire your %s!" ),
                                    gun.tname() );
         }
         ranged::make_gun_sound_effect( who, shots > 1, gun );
@@ -1538,8 +1537,7 @@ int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int max_sho
         if( who.has_trait( trait_PYROMANIA ) &&
             !who.has_morale( MORALE_PYROMANIA_STARTFIRE ) &&
             gun.has_flag( flag_PYROMANIAC_WEAPON ) ) {
-            who.add_msg_if_player( m_good,
-                                   to_translation( "You feel a surge of euphoria as flames roar out of the %s!" ),
+            who.add_msg_if_player( m_good, _( "You feel a surge of euphoria as flames roar out of the %s!" ),
                                    gun.tname() );
             who.add_morale( MORALE_PYROMANIA_STARTFIRE, 15, 15, 8_hours, 6_hours );
             who.rem_morale( MORALE_PYROMANIA_NOFIRE );
@@ -3335,7 +3333,7 @@ auto target_ui::add_gun_stats( std::vector<engine_client::panel_stat> &stats ) -
 target_handler::trajectory target_ui::run()
 {
     if( mode == TargetMode::Spell && !no_mana && !casting->can_cast( *you ) ) {
-        you->add_msg_if_player( m_bad, to_translation( "You don't have enough %s to cast this spell" ),
+        you->add_msg_if_player( m_bad, _( "You don't have enough %s to cast this spell" ),
                                 casting->energy_string() );
     }
     if( mode == TargetMode::Fire || mode == TargetMode::TurretManual || mode == TargetMode::Shape ) {
@@ -5016,14 +5014,13 @@ void ranged::prompt_select_default_ammo_for( avatar &u, item &w )
     } );
     if( opt ) {
         if( u.ammo_location && opt.ammo == &*u.ammo_location ) {
-            u.add_msg_if_player( to_translation( "Cleared ammo preferences for %s." ), w.tname() );
+            u.add_msg_if_player( _( "Cleared ammo preferences for %s." ), w.tname() );
             u.ammo_location = nullptr;
         } else if( u.has_item( *opt.ammo ) ) {
-            u.add_msg_if_player( to_translation( "Selected %s as default ammo for %s." ), opt.ammo->tname(),
-                                 w.tname() );
+            u.add_msg_if_player( _( "Selected %s as default ammo for %s." ), opt.ammo->tname(), w.tname() );
             u.ammo_location = opt.ammo;
         } else {
-            u.add_msg_if_player( to_translation( "You don't have that ammo on you." ) );
+            u.add_msg_if_player( _( "You don't have that ammo on you." ) );
         }
     }
 }

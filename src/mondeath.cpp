@@ -18,7 +18,6 @@
 #include "iuse_actor.h"
 #include "kill_tracker.h"
 #include "line.h"
-#include "localised_names.h"
 #include "make_static.h"
 #include "map/field_type.h"
 #include "map/map.h"
@@ -108,7 +107,7 @@ void mdeath::normal( monster &z )
 
     if( g->u.sees( z ) ) {
         //Currently it is possible to get multiple messages that a monster died.
-        add_msg( m_good, to_translation( "The %s dies!" ), localised::name_of( z ) );
+        add_msg( m_good, _( "The %s dies!" ), z.name() );
     }
 
     const int max_hp = std::max( z.get_hp_max(), 1 );
@@ -276,9 +275,9 @@ void mdeath::acid( monster &z )
     if( g->u.sees( z ) ) {
         if( z.type->dies.size() ==
             1 ) { //If this death function is the only function. The corpse gets dissolved.
-            add_msg( m_mixed, to_translation( "The %s's body dissolves into acid." ), localised::name_of( z ) );
+            add_msg( m_mixed, _( "The %s's body dissolves into acid." ), z.name() );
         } else {
-            add_msg( m_warning, to_translation( "The %s's body leaks acid." ), localised::name_of( z ) );
+            add_msg( m_warning, _( "The %s's body leaks acid." ), z.name() );
         }
     }
     g->m.add_field( z.bub_pos(), fd_acid, 3 );
@@ -408,7 +407,7 @@ void mdeath::vine_cut( monster &z )
 void mdeath::triffid_heart( monster &z )
 {
     if( g->u.sees( z ) ) {
-        add_msg( m_warning, to_translation( "The surrounding roots begin to crack and crumble." ) );
+        add_msg( m_warning, _( "The surrounding roots begin to crack and crumble." ) );
     }
     g->timed_events.add( TIMED_EVENT_ROOTS_DIE, calendar::turn + 10_minutes );
 }
@@ -442,7 +441,7 @@ void mdeath::fungus( monster &z )
 void mdeath::disintegrate( monster &z )
 {
     if( g->u.sees( z ) ) {
-        add_msg( m_good, to_translation( "The %s disintegrates!" ), localised::name_of( z ) );
+        add_msg( m_good, _( "The %s disintegrates!" ), z.name() );
     }
 }
 
@@ -450,10 +449,9 @@ void mdeath::worm( monster &z )
 {
     if( g->u.sees( z ) ) {
         if( z.type->dies.size() == 1 ) {
-            add_msg( m_good, to_translation( "The %s splits in two!" ), localised::name_of( z ) );
+            add_msg( m_good, _( "The %s splits in two!" ), z.name() );
         } else {
-            add_msg( m_warning, to_translation( "Two worms crawl out of the %s's corpse." ),
-                     localised::name_of( z ) );
+            add_msg( m_warning, _( "Two worms crawl out of the %s's corpse." ), z.name() );
         }
     }
 
@@ -466,7 +464,7 @@ void mdeath::worm( monster &z )
 void mdeath::disappear( monster &z )
 {
     if( g->u.sees( z ) ) {
-        add_msg( m_good, to_translation( "The %s disappears." ), localised::name_of( z ) );
+        add_msg( m_good, _( "The %s disappears." ), z.name() );
     }
 }
 
@@ -500,8 +498,8 @@ void mdeath::guilt( monster &z )
         // player no longer cares
         if( kill_count == maxKills ) {
             //~ Message after killing a lot of monsters which would normally affect the morale negatively. %s is the monster name, it will be pluralized with a number of 100.
-            add_msg( m_good, to_translation( "After killing so many bloody %s you no longer care "
-                                             "about their deaths anymore." ), localised::name_of( z, maxKills ) );
+            add_msg( m_good, _( "After killing so many bloody %s you no longer care "
+                                "about their deaths anymore." ), z.name( maxKills ) );
         }
         return;
 
@@ -546,15 +544,15 @@ void mdeath::blobsplit( monster &z )
     if( z.get_speed() <= 0 ) {
         if( g->u.sees( z ) ) {
             // TODO: Add vermin-tagged tiny versions of the splattered blob  :)
-            add_msg( m_good, to_translation( "The %s splatters apart." ), localised::name_of( z ) );
+            add_msg( m_good, _( "The %s splatters apart." ), z.name() );
         }
         return;
     }
     if( g->u.sees( z ) ) {
         if( z.type->dies.size() == 1 ) {
-            add_msg( m_good, to_translation( "The %s splits in two!" ), localised::name_of( z ) );
+            add_msg( m_good, _( "The %s splits in two!" ), z.name() );
         } else {
-            add_msg( m_bad, to_translation( "Two small blobs slither out of the corpse." ) );
+            add_msg( m_bad, _( "Two small blobs slither out of the corpse." ) );
         }
     }
 
@@ -586,7 +584,7 @@ void mdeath::jackson( monster &z )
             critter.remove_effect( effect_ai_controlled );
         }
         if( g->u.sees( z ) ) {
-            add_msg( m_warning, to_translation( "The music stops!" ) );
+            add_msg( m_warning, _( "The music stops!" ) );
         }
     }
 }
@@ -594,7 +592,7 @@ void mdeath::jackson( monster &z )
 void mdeath::melt( monster &z )
 {
     if( g->u.sees( z ) ) {
-        add_msg( m_good, to_translation( "The %s melts away." ), localised::name_of( z ) );
+        add_msg( m_good, _( "The %s melts away." ), z.name() );
     }
 }
 
@@ -613,7 +611,7 @@ void mdeath::amigara( monster &z )
     // We were the last!
     if( g->u.has_effect( effect_amigara ) ) {
         g->u.remove_effect( effect_amigara );
-        add_msg( to_translation( "Your obsession with the fault fades away…" ) );
+        add_msg( _( "Your obsession with the fault fades away…" ) );
     }
 
     g->m.spawn_artifact( z.bub_pos() );
@@ -666,8 +664,7 @@ void mdeath::focused_beam( monster &z )
     if( !z.get_items().empty() ) {
 
         if( g->u.sees( z ) ) {
-            add_msg( m_warning,
-                     to_translation( "As the final light is destroyed, it erupts in a blinding flare!" ) );
+            add_msg( m_warning, _( "As the final light is destroyed, it erupts in a blinding flare!" ) );
         }
 
         item &settings = *z.get_items()[0];
@@ -761,9 +758,9 @@ void mdeath::broken( monster &z )
 
     // TODO: make mdeath::splatter work for robots
     if( ( broken_mon_ref.damage() >= broken_mon_ref.max_damage() ) && g->u.sees( z.bub_pos() ) ) {
-        add_msg( m_good, to_translation( "The %s is destroyed!" ), localised::name_of( z ) );
+        add_msg( m_good, _( "The %s is destroyed!" ), z.name() );
     } else if( g->u.sees( z.bub_pos() ) ) {
-        add_msg( m_good, to_translation( "The %s collapses!" ), localised::name_of( z ) );
+        add_msg( m_good, _( "The %s collapses!" ), z.name() );
     }
 }
 
@@ -771,7 +768,7 @@ void mdeath::ratking( monster &z )
 {
     g->u.remove_effect( effect_rat );
     if( g->u.sees( z ) ) {
-        add_msg( m_warning, to_translation( "Rats suddenly swarm into view." ) );
+        add_msg( m_warning, _( "Rats suddenly swarm into view." ) );
     }
 
     for( int rats = 0; rats < 7; rats++ ) {
@@ -783,7 +780,7 @@ void mdeath::darkman( monster &z )
 {
     g->u.remove_effect( effect_darkness );
     if( g->u.sees( z ) ) {
-        add_msg( m_good, to_translation( "The %s melts away." ), localised::name_of( z ) );
+        add_msg( m_good, _( "The %s melts away." ), z.name() );
     }
 }
 
@@ -824,7 +821,7 @@ void mdeath::fungalburst( monster &z )
     // If the fungus died from anti-fungal poison, don't pouf
     if( g->m.get_field_intensity( z.bub_pos(), fd_fungicidal_gas ) ) {
         if( g->u.sees( z ) ) {
-            add_msg( m_good, to_translation( "The %s inflates and melts away." ), localised::name_of( z ) );
+            add_msg( m_good, _( "The %s inflates and melts away." ), z.name() );
         }
         return;
     }
@@ -867,7 +864,7 @@ void mdeath::jabberwock( monster &z )
 
 void mdeath::gameover( monster &z )
 {
-    add_msg( m_bad, to_translation( "The %s was destroyed!  GAME OVER!" ), localised::name_of( z ) );
+    add_msg( m_bad, _( "The %s was destroyed!  GAME OVER!" ), z.name() );
     g->u.set_part_hp_cur( bodypart_id( "torso" ), 0 );
 }
 
@@ -931,12 +928,12 @@ void mdeath::detonate( monster &z )
         if( dets.empty() ) {
             add_msg( m_info,
                      //~ %s is the possessive form of the monster's name
-                     to_translation( "The %s's hands fly to its pockets, but there's nothing left in them." ),
-                     localised::name_of( z ) );
+                     _( "The %s's hands fly to its pockets, but there's nothing left in them." ),
+                     z.name() );
         } else {
             //~ %s is the possessive form of the monster's name
-            add_msg( m_bad, to_translation( "The %s's hands fly to its remaining pockets, opening them!" ),
-                     localised::name_of( z ) );
+            add_msg( m_bad, _( "The %s's hands fly to its remaining pockets, opening them!" ),
+                     z.name() );
         }
     }
     // HACK, used to stop them from having ammo on respawn
@@ -957,8 +954,8 @@ void mdeath::broken_ammo( monster &z )
 {
     if( g->u.sees( z.bub_pos() ) ) {
         //~ %s is the possessive form of the monster's name
-        add_msg( m_info, to_translation( "The %s's interior compartment sizzles with destructive energy." ),
-                 localised::name_of( z ) );
+        add_msg( m_info, _( "The %s's interior compartment sizzles with destructive energy." ),
+                 z.name() );
     }
     mdeath::broken( z );
 }
@@ -1037,8 +1034,7 @@ void mdeath::preg_roach( monster &z )
     while( num_roach > 0 && g->place_critter_around( mon_giant_cockroach_nymph, z.bub_pos(), 1 ) ) {
         num_roach--;
         if( g->u.sees( z ) ) {
-            add_msg( m_warning,
-                     to_translation( "A cockroach nymph crawls out of the pregnant giant cockroach corpse." ) );
+            add_msg( m_warning, _( "A cockroach nymph crawls out of the pregnant giant cockroach corpse." ) );
         }
     }
 }
@@ -1061,7 +1057,7 @@ void mdeath::fireball( monster &z )
         se.monfaction = z.faction.id();
         sounds::sound( se );
         if( g->u.sees( z ) && g->u.has_trait( trait_PYROMANIA ) ) {
-            add_msg( m_good, to_translation( "I love the smell of burning zed in the morning." ) );
+            add_msg( m_good, _( "I love the smell of burning zed in the morning." ) );
         }
     } else {
         normal( z );
@@ -1086,13 +1082,12 @@ void mdeath::conflagration( monster &z )
         se.monfaction = z.faction.id();
         sounds::sound( se );
         if( g->u.sees( z ) && g->u.has_trait( trait_PYROMANIA ) ) {
-            add_msg( m_good, to_translation( "Toasty!" ) );
+            add_msg( m_good, _( "Toasty!" ) );
         }
     } else if( one_in( 2 ) ) {
         g->m.propagate_field( z.bub_pos(), fd_fire, 1, 3 );
-        add_msg( m_bad, to_translation( "The %s bursts into flames as it dies!" ),
-                 localised::name_of( z ) );
+        add_msg( m_bad, _( "The %s bursts into flames as it dies!" ), z.name() );
     } else {
-        add_msg( m_good, to_translation( "The flames sputter and die out." ) );
+        add_msg( m_good, _( "The flames sputter and die out." ) );
     }
 }

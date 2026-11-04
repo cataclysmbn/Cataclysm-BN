@@ -191,10 +191,10 @@ auto release_grabbed_creature( avatar &you ) -> bool
 
     Creature *const target = nearby_grabbed_creature( you );
     if( target != nullptr ) {
-        add_msg( to_translation( "You release %s." ), target->disp_name() );
+        add_msg( _( "You release %s." ), target->disp_name() );
         target->remove_effect( effect_grabbed );
     } else {
-        add_msg( to_translation( "You release your grip." ) );
+        add_msg( _( "You release your grip." ) );
     }
     you.remove_effect( effect_grabbing );
     return true;
@@ -215,7 +215,7 @@ auto confirm_grab_npc( const npc &target ) -> bool
 auto grab_creature( avatar &you, Creature &target ) -> void
 {
     if( !can_grab_creature( target ) ) {
-        add_msg( m_info, to_translation( "You can't grab %s." ), target.disp_name() );
+        add_msg( m_info, _( "You can't grab %s." ), target.disp_name() );
         return;
     }
 
@@ -234,7 +234,7 @@ auto grab_creature( avatar &you, Creature &target ) -> void
     you.add_effect( effect_grabbing, 1_days, body_part_torso, grab_strength );
     you.mod_moves( -100 );
     you.mod_stamina( -std::max( 50, grab_strength * 20 ) );
-    add_msg( to_translation( "You grab %s." ), target.disp_name() );
+    add_msg( _( "You grab %s." ), target.disp_name() );
 }
 
 } // namespace
@@ -568,7 +568,7 @@ inline static void rcdrive( point_rel_ms d )
     std::string car_location_string = u.get_value( "remote_controlling" );
 
     if( car_location_string.empty() ) {
-        u.add_msg_if_player( m_warning, to_translation( "No radio car connected." ) );
+        u.add_msg_if_player( m_warning, _( "No radio car connected." ) );
         return;
     }
 
@@ -583,7 +583,7 @@ inline static void rcdrive( point_rel_ms d )
     } );
 
     if( rc_items.empty() ) {
-        u.add_msg_if_player( m_warning, to_translation( "No radio car connected." ) );
+        u.add_msg_if_player( m_warning, _( "No radio car connected." ) );
         u.remove_value( "remote_controlling" );
         return;
     }
@@ -656,30 +656,29 @@ static void pldrive( const tripoint_rel_veh &p )
         const bool has_animal = veh->has_engine_type( fuel_type_animal, false ) &&
                                 veh->has_harnessed_animal();
         if( !has_controls && !has_animal_controls ) {
-            add_msg( m_info, to_translation( "You can't drive the vehicle from here.  You need controls!" ) );
+            add_msg( m_info, _( "You can't drive the vehicle from here.  You need controls!" ) );
             u.controlling_vehicle = false;
             return;
         } else if( !has_controls && has_animal_controls && !has_animal ) {
-            add_msg( m_info, to_translation( "You can't drive this vehicle without an animal to pull it." ) );
+            add_msg( m_info, _( "You can't drive this vehicle without an animal to pull it." ) );
             u.controlling_vehicle = false;
             return;
         }
     } else {
         if( veh->get_avail_parts( "REMOTE_CONTROLS" ).empty() ) {
-            add_msg( m_info,
-                     to_translation( "Can't drive this vehicle remotely.  It has no working controls." ) );
+            add_msg( m_info, _( "Can't drive this vehicle remotely.  It has no working controls." ) );
             return;
         }
     }
     if( p.z() == -1 ) {
         if( veh->check_heli_descend( u ) ) {
-            u.add_msg_if_player( m_info, to_translation( "You steer the vehicle into a descent." ) );
+            u.add_msg_if_player( m_info, _( "You steer the vehicle into a descent." ) );
         } else {
             return;
         }
     } else if( p.z() == 1 ) {
         if( veh->check_heli_ascend( u ) ) {
-            u.add_msg_if_player( m_info, to_translation( "You steer the vehicle into an ascent." ) );
+            u.add_msg_if_player( m_info, _( "You steer the vehicle into an ascent." ) );
         } else {
             return;
         }
@@ -721,7 +720,7 @@ static void open( const std::optional<tripoint_bub_ms> &target )
             if( const std::optional<vpart_reference> already_open = vp.part_with_feature( "OPENABLE",
                     true ) ) {
                 const std::string name = already_open->info().name();
-                add_msg( m_info, to_translation( "That %s is already open." ), name );
+                add_msg( m_info, _( "That %s is already open." ), name );
             }
         }
     } else if( here.open_door( &u, openp, !here.is_outside( u.bub_pos() ) ) ) {
@@ -730,15 +729,15 @@ static void open( const std::optional<tripoint_bub_ms> &target )
         const ter_str_id tid = here.ter( openp ).id();
 
         if( here.has_flag( flag_LOCKED, openp ) ) {
-            add_msg( m_info, to_translation( "The door is locked!" ) );
+            add_msg( m_info, _( "The door is locked!" ) );
             sfx::play_variant_sound( "menu_error", "default", 100 );
             return;
         } else if( tid.obj().close ) {
             // if the following message appears unexpectedly, the prior check was for t_door_o
-            add_msg( m_info, to_translation( "That door is already open." ) );
+            add_msg( m_info, _( "That door is already open." ) );
             return;
         }
-        add_msg( m_info, to_translation( "No door there." ) );
+        add_msg( m_info, _( "No door there." ) );
     }
 }
 
@@ -784,9 +783,9 @@ static void grab()
 
     if( you.get_grab_type() != OBJECT_NONE ) {
         if( const auto target = vehicle_grab_target_at( here, you.bub_pos() + you.grab_point ) ) {
-            add_msg( to_translation( "You release the %s." ), target->vp.vehicle().name );
+            add_msg( _( "You release the %s." ), target->vp.vehicle().name );
         } else if( here.has_furn( you.bub_pos() + you.grab_point ) ) {
-            add_msg( to_translation( "You release the %s." ), here.furnname( you.bub_pos() + you.grab_point ) );
+            add_msg( _( "You release the %s." ), here.furnname( you.bub_pos() + you.grab_point ) );
         }
 
         you.grab( OBJECT_NONE );
@@ -795,13 +794,13 @@ static void grab()
 
     const std::optional<tripoint_bub_ms> grabp_ = choose_adjacent( _( "Grab where?" ) );
     if( !grabp_ ) {
-        add_msg( to_translation( "Never mind." ) );
+        add_msg( _( "Never mind." ) );
         return;
     }
     const auto grabp = *grabp_;
 
     if( grabp == you.bub_pos() ) {
-        add_msg( to_translation( "You get a hold of yourself." ) );
+        add_msg( _( "You get a hold of yourself." ) );
         you.grab( OBJECT_NONE );
         return;
     }
@@ -812,20 +811,20 @@ static void grab()
             return;
         }
         you.grab( OBJECT_VEHICLE, target->pos - you.bub_pos() );
-        add_msg( to_translation( "You grab the %s." ), target->vp.vehicle().name );
+        add_msg( _( "You grab the %s." ), target->vp.vehicle().name );
     } else if( here.has_furn( grabp ) ) { // If not, grab furniture if present
         if( !here.furn( grabp ).obj().is_movable() ) {
-            add_msg( to_translation( "You can not grab the %s" ), here.furnname( grabp ) );
+            add_msg( _( "You can not grab the %s" ), here.furnname( grabp ) );
             return;
         }
         you.grab( OBJECT_FURNITURE, grabp - you.bub_pos() );
         if( !here.can_move_furniture( grabp, &you ) ) {
-            add_msg( to_translation( "You grab the %s. It feels really heavy." ), here.furnname( grabp ) );
+            add_msg( _( "You grab the %s. It feels really heavy." ), here.furnname( grabp ) );
         } else {
-            add_msg( to_translation( "You grab the %s." ), here.furnname( grabp ) );
+            add_msg( _( "You grab the %s." ), here.furnname( grabp ) );
         }
     } else { // TODO: grab mob? Captured squirrel = pet (or meat that stays fresh longer).
-        add_msg( m_info, to_translation( "There's nothing to grab there!" ) );
+        add_msg( m_info, _( "There's nothing to grab there!" ) );
     }
 }
 
@@ -838,13 +837,13 @@ static void haul()
         u.stop_hauling();
     } else {
         if( here.veh_at( u.bub_pos() ) ) {
-            add_msg( m_info, to_translation( "You cannot haul inside vehicles." ) );
+            add_msg( m_info, _( "You cannot haul inside vehicles." ) );
         } else if( here.has_flag( TFLAG_DEEP_WATER, u.bub_pos() ) ) {
-            add_msg( m_info, to_translation( "You cannot haul while in deep water." ) );
+            add_msg( m_info, _( "You cannot haul while in deep water." ) );
         } else if( !here.can_put_items( u.bub_pos() ) ) {
-            add_msg( m_info, to_translation( "You cannot haul items here." ) );
+            add_msg( m_info, _( "You cannot haul items here." ) );
         } else if( !has_haulable_items( u.bub_pos() ) ) {
-            add_msg( m_info, to_translation( "There are no items to haul here." ) );
+            add_msg( m_info, _( "There are no items to haul here." ) );
         } else {
             u.start_hauling();
         }
@@ -859,7 +858,7 @@ static void smash()
         auto mons = u.mounted_creature.get();
         if( mons->has_flag( MF_RIDEABLE_MECH ) ) {
             if( !mons->check_mech_powered() ) {
-                add_msg( m_bad, to_translation( "Your %s refuses to move as its batteries have been drained." ),
+                add_msg( m_bad, _( "Your %s refuses to move as its batteries have been drained." ),
                          mons->get_name() );
                 return;
             }
@@ -912,8 +911,7 @@ static void smash()
             continue;
         }
         if( smashskill < bash_info.str_min ) {
-            add_msg( m_neutral, to_translation( "You don't seem to be damaging the %s." ),
-                     fd_to_smsh.first->get_name() );
+            add_msg( m_neutral, _( "You don't seem to be damaging the %s." ), fd_to_smsh.first->get_name() );
             return;
         } else if( smashskill >= rng( bash_info.str_min, bash_info.str_max ) ) {
             sound_event se;
@@ -996,7 +994,7 @@ static void smash()
             const int vol = weapon.volume() / units::legacy_volume_factor;
             if( weapon.can_shatter() &&
                 rng( 0, vol + 3 ) < vol ) {
-                add_msg( m_bad, to_translation( "Your %s shatters!" ), weapon.tname() );
+                add_msg( m_bad, _( "Your %s shatters!" ), weapon.tname() );
                 weapon.spill_contents( u.bub_pos() );
                 sound_event se;
                 se.origin = u.bub_pos();
@@ -1022,12 +1020,10 @@ static void smash()
         if( smashskill < here.bash_resistance( smashp ) && one_in( 10 ) ) {
             if( here.has_furn( smashp ) && here.furn( smashp ).obj().bash.str_min != -1 ) {
                 // %s is the smashed furniture
-                add_msg( m_neutral, to_translation( "You don't seem to be damaging the %s." ),
-                         here.furnname( smashp ) );
+                add_msg( m_neutral, _( "You don't seem to be damaging the %s." ), here.furnname( smashp ) );
             } else {
                 // %s is the smashed terrain
-                add_msg( m_neutral, to_translation( "You don't seem to be damaging the %s." ),
-                         here.tername( smashp ) );
+                add_msg( m_neutral, _( "You don't seem to be damaging the %s." ), here.tername( smashp ) );
             }
         }
 
@@ -1057,7 +1053,7 @@ static void smash()
             }
         }
     } else {
-        add_msg( to_translation( "There's nothing there to smash!" ) );
+        add_msg( _( "There's nothing there to smash!" ) );
     }
 }
 
@@ -1255,7 +1251,7 @@ static void wait()
         }
         const auto parsed_duration = parse_custom_wait_duration( duration_input );
         if( !parsed_duration ) {
-            add_msg( m_bad, to_translation( "Invalid duration. Use s, m, h, or d suffixes." ) );
+            add_msg( m_bad, _( "Invalid duration. Use s, m, h, or d suffixes." ) );
             return;
         }
         time_to_wait = *parsed_duration;
@@ -1272,10 +1268,10 @@ static void wait()
         // Setting alarm
         u.remove_effect( effect_alarm_clock );
         if( as_m.ret == 11 ) {
-            add_msg( to_translation( "You cancel your alarm." ) );
+            add_msg( _( "You cancel your alarm." ) );
         } else {
             u.add_effect( effect_alarm_clock, time_to_wait );
-            add_msg( to_translation( "You set your alarm." ) );
+            add_msg( _( "You set your alarm." ) );
         }
 
     } else {
@@ -1298,7 +1294,7 @@ static void sleep()
 {
     avatar &u = get_avatar();
     if( u.is_mounted() ) {
-        u.add_msg_if_player( m_info, to_translation( "You cannot sleep while mounted." ) );
+        u.add_msg_if_player( m_info, _( "You cannot sleep while mounted." ) );
         return;
     }
     uilist as_m;
@@ -1350,8 +1346,7 @@ static void sleep()
     // check for deactivating any currently played music instrument.
     for( auto &item : u.inv_dump() ) {
         if( item->is_active() && item->get_use( "musical_instrument" ) != nullptr ) {
-            u.add_msg_if_player( to_translation( "You stop playing your %s before trying to sleep." ),
-                                 item->tname() );
+            u.add_msg_if_player( _( "You stop playing your %s before trying to sleep." ), item->tname() );
             // deactivate instrument
             item->deactivate();
         }
@@ -1467,8 +1462,8 @@ static void loot()
     flags |= g->check_near_zone( zone_type_id( "LOOT_CORPSE" ), u.bub_pos() ) ? MultiDissect : 0;
     flags |= g->check_near_zone( zone_type_id( "MINING" ), u.bub_pos() ) ? MultiMining : 0;
     if( flags == 0 ) {
-        add_msg( m_info, to_translation( "There is no compatible zone nearby." ) );
-        add_msg( m_info, to_translation( "Compatible zones are %s and %s" ),
+        add_msg( m_info, _( "There is no compatible zone nearby." ) );
+        add_msg( m_info, _( "Compatible zones are %s and %s" ),
                  mgr.get_name_from_type( zone_type_id( "LOOT_UNSORTED" ) ),
                  mgr.get_name_from_type( zone_type_id( "FARM_PLOT" ) ) );
         return;
@@ -1532,7 +1527,7 @@ static void loot()
 
     switch( flags ) {
         case None:
-            add_msg( to_translation( "Never mind." ) );
+            add_msg( _( "Never mind." ) );
             break;
         case SortLoot:
             u.assign_activity( ACT_MOVE_LOOT );
@@ -1582,7 +1577,7 @@ static void wear()
         loc->obtain( u );
         u.wear_possessed( *loc );
     } else {
-        add_msg( to_translation( "Never mind." ) );
+        add_msg( _( "Never mind." ) );
     }
 }
 
@@ -1595,7 +1590,7 @@ static void takeoff()
         loc->obtain( u );
         u.takeoff( *loc );
     } else {
-        add_msg( to_translation( "Never mind." ) );
+        add_msg( _( "Never mind." ) );
     }
 }
 
@@ -1613,7 +1608,7 @@ static void read()
             u.read( loc );
         }
     } else {
-        add_msg( to_translation( "Never mind." ) );
+        add_msg( _( "Never mind." ) );
     }
 }
 
@@ -1666,11 +1661,11 @@ static void fire()
                 if( u.has_effect( effect_relax_gas ) )
                 {
                     if( one_in( 8 ) ) {
-                        add_msg( m_good, to_translation( "Your willpower asserts itself, and so do you!" ) );
+                        add_msg( m_good, _( "Your willpower asserts itself, and so do you!" ) );
                         reach_attack( u );
                     } else {
                         u.moves -= rng( 2, 8 ) * 10;
-                        add_msg( m_bad, to_translation( "You're too pacified to strike anything…" ) );
+                        add_msg( m_bad, _( "You're too pacified to strike anything…" ) );
                     }
                 } else
                 {
@@ -1723,11 +1718,11 @@ static void fire()
     } else if( weapon.reach_range( u ) > 1 ) {
         if( u.has_effect( effect_relax_gas ) ) {
             if( one_in( 8 ) ) {
-                add_msg( m_good, to_translation( "Your willpower asserts itself, and so do you!" ) );
+                add_msg( m_good, _( "Your willpower asserts itself, and so do you!" ) );
                 reach_attack( u );
             } else {
                 u.moves -= rng( 2, 8 ) * 10;
-                add_msg( m_bad, to_translation( "You're too pacified to strike anything…" ) );
+                add_msg( m_bad, _( "You're too pacified to strike anything…" ) );
             }
         } else {
             reach_attack( u );
@@ -1798,7 +1793,7 @@ auto try_cast_spell( player &u, spell &sp ) -> bool
     if( !( sp.has_flag( spell_flag::BRAWL ) || sp.has_flag( spell_flag::PHYSICAL ) ) &&
         u.has_trait( trait_BRAWLER ) ) {
         add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
-                 to_translation( "Pfft, that spell is for COWARDS, and a Brawler like you is no coward!" ) );
+                 _( "Pfft, that spell is for COWARDS, and a Brawler like you is no coward!" ) );
         return false;
     }
 
@@ -1807,7 +1802,7 @@ auto try_cast_spell( player &u, spell &sp ) -> bool
         for( const auto &blocker : blockers ) {
             if( u.has_trait( blocker ) ) {
                 add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
-                         to_translation( "Your %s mutation prevents you from casting this spell!" ), blocker->name() );
+                         _( "Your %s mutation prevents you from casting this spell!" ), blocker->name() );
                 return false;
             }
         }
@@ -1817,20 +1812,20 @@ auto try_cast_spell( player &u, spell &sp ) -> bool
                            sp.has_flag( spell_flag::PHYSICAL ) ) &&
         !u.primary_weapon().has_flag( flag_MAGIC_FOCUS ) && u.primary_weapon().is_two_handed( u ) ) {
         add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
-                 to_translation( "You need at least one hand free to cast this spell!" ) );
+                 _( "You need at least one hand free to cast this spell!" ) );
         return false;
     }
 
     if( !u.magic->has_enough_energy( u, sp ) ) {
         add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
-                 to_translation( "You don't have enough %s to cast the spell." ),
+                 _( "You don't have enough %s to cast the spell." ),
                  sp.energy_string() );
         return false;
     }
 
     if( sp.energy_source() == hp_energy && !u.has_quality( qual_CUT ) ) {
         add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
-                 to_translation( "You cannot cast Blood Magic without a cutting implement." ) );
+                 _( "You cannot cast Blood Magic without a cutting implement." ) );
         return false;
     }
 
@@ -1856,7 +1851,7 @@ auto cast_spell() -> void
 
     if( spells.empty() ) {
         add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
-                 to_translation( "You don't know any spells to cast." ) );
+                 _( "You don't know any spells to cast." ) );
         return;
     }
 
@@ -1874,12 +1869,12 @@ auto cast_spell() -> void
 
     if( !can_cast_spells ) {
         add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
-                 to_translation( "You can't cast any of the spells you know!" ) );
+                 _( "You can't cast any of the spells you know!" ) );
         return;
     }
     if( !has_brawler_spell && u.has_trait( trait_BRAWLER ) ) {
         add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
-                 to_translation( "You don't know any spells you can cast as a Brawler!" ) );
+                 _( "You don't know any spells you can cast as a Brawler!" ) );
         return;
     }
 
@@ -1900,7 +1895,7 @@ auto cast_last_spell() -> void
     const auto last_cast_spell = u.magic->last_cast_spell();
     if( !last_cast_spell ) {
         add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
-                 to_translation( "You haven't cast any spells yet." ) );
+                 _( "You haven't cast any spells yet." ) );
         return;
     }
 
@@ -1955,7 +1950,7 @@ bool game::handle_action()
             }
             act = u.get_next_auto_move_direction();
             if( act == ACTION_NULL ) {
-                add_msg( m_info, to_translation( "Auto-move canceled" ) );
+                add_msg( m_info, _( "Auto-move canceled" ) );
                 u.clear_destination();
                 return false;
             }
@@ -2166,11 +2161,11 @@ bool game::handle_action()
             const int ch = evt.get_first_input();
             const std::string &&name = inp_mngr.get_keyname( ch, evt.type, true );
             if( !get_option<bool>( "NO_UNKNOWN_COMMAND_MSG" ) ) {
-                add_msg( m_info, to_translation( "Unknown command: \"%s\" (%ld)" ), name, ch );
+                add_msg( m_info, _( "Unknown command: \"%s\" (%ld)" ), name, ch );
                 if( const std::optional<std::string> hint =
                         press_x_if_bound( ACTION_KEYBINDINGS ) ) {
-                    add_msg( m_info, to_translation( "%s at any time to see and edit keybindings relevant to "
-                                                     "the current context." ),
+                    add_msg( m_info, _( "%s at any time to see and edit keybindings relevant to "
+                                        "the current context." ),
                              *hint );
                 }
             }
@@ -2364,7 +2359,7 @@ bool game::handle_action()
                             mon->has_flag( MF_FLIES );
 
                         if( !can_use_ladder ) {
-                            add_msg( m_info, to_translation( "Your mount can't go downstairs while riding." ) );
+                            add_msg( m_info, _( "Your mount can't go downstairs while riding." ) );
                             break;
                         }
                     } else {
@@ -2373,7 +2368,7 @@ bool game::handle_action()
                             mon->has_flag( MF_FLIES );
 
                         if( !can_use_stairs ) {
-                            add_msg( m_info, to_translation( "Your mount can't go downstairs while riding." ) );
+                            add_msg( m_info, _( "Your mount can't go downstairs while riding." ) );
                             break;
                         }
                     }
@@ -2419,7 +2414,7 @@ bool game::handle_action()
                             mon->has_flag( MF_FLIES );
 
                         if( !can_use_ladder ) {
-                            add_msg( m_info, to_translation( "Your mount can't go upstairs or climb while riding." ) );
+                            add_msg( m_info, _( "Your mount can't go upstairs or climb while riding." ) );
                             break;
                         }
                     } else {
@@ -2428,7 +2423,7 @@ bool game::handle_action()
                             mon->has_flag( MF_FLIES );
 
                         if( !can_use_stairs ) {
-                            add_msg( m_info, to_translation( "Your mount can't go upstairs or climb while riding." ) );
+                            add_msg( m_info, _( "Your mount can't go upstairs or climb while riding." ) );
                             break;
                         }
                     }
@@ -2440,9 +2435,9 @@ bool game::handle_action()
                                  controlled_vehicle->has_part( "BALLOON" ) ||
                                  controlled_vehicle->has_part( "WING" ) ) &&
                                !controlled_vehicle->has_sufficient_lift() ) {
-                        add_msg( m_bad, to_translation( "The craft struggles to generate enough lift!" ) );
+                        add_msg( m_bad, _( "The craft struggles to generate enough lift!" ) );
                     } else {
-                        u.add_msg_if_player( to_translation( "You need a propeller to take off!" ) );
+                        u.add_msg_if_player( _( "You need a propeller to take off!" ) );
                     }
                 } else if( !u.in_vehicle ) {
                     if( get_map().has_rope_at( u.bub_pos() ) ) {
@@ -2479,17 +2474,17 @@ bool game::handle_action()
                         vertical_move( 1, false );
                     }
                 } else {
-                    u.add_msg_if_player( to_translation( "You need a propeller to take off!" ) );
+                    u.add_msg_if_player( _( "You need a propeller to take off!" ) );
                 }
                 break;
 
             case ACTION_OPEN:
                 if( u.has_active_mutation( trait_SHELL2 ) ) {
-                    add_msg( m_info, to_translation( "You can't open things while you're in your shell." ) );
+                    add_msg( m_info, _( "You can't open things while you're in your shell." ) );
                 } else if( u.is_mounted() ) {
                     auto mon = u.mounted_creature.get();
                     if( !mon->has_flag( MF_MOUNTABLE_DOORS ) ) {
-                        add_msg( m_info, to_translation( "You can't open things while you're riding." ) );
+                        add_msg( m_info, _( "You can't open things while you're riding." ) );
                         break;
                     } else {
                         open( mouse_target );
@@ -2501,11 +2496,11 @@ bool game::handle_action()
 
             case ACTION_CLOSE:
                 if( u.has_active_mutation( trait_SHELL2 ) ) {
-                    add_msg( m_info, to_translation( "You can't close things while you're in your shell." ) );
+                    add_msg( m_info, _( "You can't close things while you're in your shell." ) );
                 } else if( u.is_mounted() ) {
                     auto mon = u.mounted_creature.get();
                     if( !mon->has_flag( MF_MOUNTABLE_DOORS ) ) {
-                        add_msg( m_info, to_translation( "You can't close things while you're riding." ) );
+                        add_msg( m_info, _( "You can't close things while you're riding." ) );
                         break;
                     } else {
                         close();
@@ -2521,7 +2516,7 @@ bool game::handle_action()
                 if( veh_ctrl ) {
                     handbrake();
                 } else if( u.has_active_mutation( trait_SHELL2 ) ) {
-                    add_msg( m_info, to_translation( "You can't smash things while you're in your shell." ) );
+                    add_msg( m_info, _( "You can't smash things while you're in your shell." ) );
                 } else {
                     smash();
                 }
@@ -2529,8 +2524,7 @@ bool game::handle_action()
 
             case ACTION_EXAMINE:
                 if( u.has_active_mutation( trait_SHELL2 ) ) {
-                    add_msg( m_info,
-                             to_translation( "You can't examine your surroundings while you're in your shell." ) );
+                    add_msg( m_info, _( "You can't examine your surroundings while you're in your shell." ) );
                 } else if( mouse_target ) {
                     examine( *mouse_target );
                 } else {
@@ -2548,9 +2542,9 @@ bool game::handle_action()
 
             case ACTION_ADVANCEDINV:
                 if( u.has_active_mutation( trait_SHELL2 ) ) {
-                    add_msg( m_info, to_translation( "You can't move mass quantities while you're in your shell." ) );
+                    add_msg( m_info, _( "You can't move mass quantities while you're in your shell." ) );
                 } else if( u.is_mounted() ) {
-                    add_msg( m_info, to_translation( "You can't move mass quantities while you're riding." ) );
+                    add_msg( m_info, _( "You can't move mass quantities while you're riding." ) );
                 } else {
                     create_advanced_inv();
                 }
@@ -2558,9 +2552,9 @@ bool game::handle_action()
 
             case ACTION_PICKUP:
                 if( u.has_active_mutation( trait_SHELL2 ) ) {
-                    add_msg( m_info, to_translation( "You can't pick anything up while you're in your shell." ) );
+                    add_msg( m_info, _( "You can't pick anything up while you're in your shell." ) );
                 } else if( u.is_mounted() ) {
-                    add_msg( m_info, to_translation( "You can't pick anything up while you're riding." ) );
+                    add_msg( m_info, _( "You can't pick anything up while you're riding." ) );
                 } else if( mouse_target ) {
                     pickup( *mouse_target );
                 } else {
@@ -2570,9 +2564,9 @@ bool game::handle_action()
 
             case ACTION_PICKUP_ALL:
                 if( u.has_active_mutation( trait_SHELL2 ) ) {
-                    add_msg( m_info, to_translation( "You can't pick anything up while you're in your shell." ) );
+                    add_msg( m_info, _( "You can't pick anything up while you're in your shell." ) );
                 } else if( u.is_mounted() ) {
-                    add_msg( m_info, to_translation( "You can't pick anything up while you're riding." ) );
+                    add_msg( m_info, _( "You can't pick anything up while you're riding." ) );
                 } else {
                     pickup_all();
                 }
@@ -2580,7 +2574,7 @@ bool game::handle_action()
 
             case ACTION_PICKUP_FEET:
                 if( u.has_active_mutation( trait_SHELL2 ) ) {
-                    add_msg( m_info, to_translation( "You can't pick anything up while you're in your shell." ) );
+                    add_msg( m_info, _( "You can't pick anything up while you're in your shell." ) );
                 } else {
                     pickup_feet();
                 }
@@ -2588,14 +2582,14 @@ bool game::handle_action()
 
             case ACTION_GRAB:
                 if( u.has_active_mutation( trait_SHELL2 ) ) {
-                    add_msg( m_info, to_translation( "You can't grab things while you're in your shell." ) );
+                    add_msg( m_info, _( "You can't grab things while you're in your shell." ) );
                 } else if( u.is_mounted() ) {
                     auto mon = u.mounted_creature.get();
                     if( !mon->has_flag( MF_RIDEABLE_MECH ) ) {
-                        add_msg( m_info, to_translation( "You can't grab things while you're riding." ) );
+                        add_msg( m_info, _( "You can't grab things while you're riding." ) );
                         break;
                     } else if( !mon->type->mech_weapon.is_empty() ) {
-                        add_msg( m_info, to_translation( "Your mech doesn't have hands to grab with." ) );
+                        add_msg( m_info, _( "Your mech doesn't have hands to grab with." ) );
                         break;
                     } else {
                         grab();
@@ -2607,9 +2601,9 @@ bool game::handle_action()
 
             case ACTION_HAUL:
                 if( u.has_active_mutation( trait_SHELL2 ) ) {
-                    add_msg( m_info, to_translation( "You can't haul things while you're in your shell." ) );
+                    add_msg( m_info, _( "You can't haul things while you're in your shell." ) );
                 } else if( u.is_mounted() ) {
-                    add_msg( m_info, to_translation( "You can't haul things while you're riding." ) );
+                    add_msg( m_info, _( "You can't haul things while you're riding." ) );
                 } else {
                     haul();
                 }
@@ -2617,9 +2611,9 @@ bool game::handle_action()
 
             case ACTION_BUTCHER:
                 if( u.has_active_mutation( trait_SHELL2 ) ) {
-                    add_msg( m_info, to_translation( "You can't butcher while you're in your shell." ) );
+                    add_msg( m_info, _( "You can't butcher while you're in your shell." ) );
                 } else if( u.is_mounted() ) {
-                    add_msg( m_info, to_translation( "You can't butcher while you're riding." ) );
+                    add_msg( m_info, _( "You can't butcher while you're riding." ) );
                 } else {
                     butcher();
                 }
@@ -2631,9 +2625,9 @@ bool game::handle_action()
 
             case ACTION_PEEK:
                 if( u.has_active_mutation( trait_SHELL2 ) ) {
-                    add_msg( m_info, to_translation( "You can't peek around corners while you're in your shell." ) );
+                    add_msg( m_info, _( "You can't peek around corners while you're in your shell." ) );
                 } else if( u.is_mounted() ) {
-                    add_msg( m_info, to_translation( "You can't peek around corners while you're riding." ) );
+                    add_msg( m_info, _( "You can't peek around corners while you're riding." ) );
                 } else {
                     peek();
                 }
@@ -2758,8 +2752,7 @@ bool game::handle_action()
                     if( u.primary_weapon().gun_all_modes().size() > 1 ) {
                         u.primary_weapon().gun_cycle_mode();
                     } else {
-                        add_msg( m_info, to_translation( "Your %s has only one firing mode." ),
-                                 u.primary_weapon().display_name() );
+                        add_msg( m_info, _( "Your %s has only one firing mode." ), u.primary_weapon().display_name() );
                     }
                 }
                 break;
@@ -2777,8 +2770,7 @@ bool game::handle_action()
 
             case ACTION_DIR_DROP:
                 if( u.has_active_mutation( trait_SHELL2 ) ) {
-                    add_msg( m_info,
-                             to_translation( "You can't drop things to another tile while you're in your shell." ) );
+                    add_msg( m_info, _( "You can't drop things to another tile while you're in your shell." ) );
                 } else {
                     drop_in_direction();
                 }
@@ -2802,9 +2794,9 @@ bool game::handle_action()
 
             case ACTION_CRAFT:
                 if( u.has_active_mutation( trait_SHELL2 ) ) {
-                    add_msg( m_info, to_translation( "You can't craft while you're in your shell." ) );
+                    add_msg( m_info, _( "You can't craft while you're in your shell." ) );
                 } else if( u.is_mounted() ) {
-                    add_msg( m_info, to_translation( "You can't craft while you're riding." ) );
+                    add_msg( m_info, _( "You can't craft while you're riding." ) );
                 } else {
                     u.craft();
                 }
@@ -2812,9 +2804,9 @@ bool game::handle_action()
 
             case ACTION_RECRAFT:
                 if( u.has_active_mutation( trait_SHELL2 ) ) {
-                    add_msg( m_info, to_translation( "You can't craft while you're in your shell." ) );
+                    add_msg( m_info, _( "You can't craft while you're in your shell." ) );
                 } else if( u.is_mounted() ) {
-                    add_msg( m_info, to_translation( "You can't craft while you're riding." ) );
+                    add_msg( m_info, _( "You can't craft while you're riding." ) );
                 } else {
                     u.recraft();
                 }
@@ -2822,9 +2814,9 @@ bool game::handle_action()
 
             case ACTION_LONGCRAFT:
                 if( u.has_active_mutation( trait_SHELL2 ) ) {
-                    add_msg( m_info, to_translation( "You can't craft while you're in your shell." ) );
+                    add_msg( m_info, _( "You can't craft while you're in your shell." ) );
                 } else if( u.is_mounted() ) {
-                    add_msg( m_info, to_translation( "You can't craft while you're riding." ) );
+                    add_msg( m_info, _( "You can't craft while you're riding." ) );
                 } else {
                     u.long_craft();
                 }
@@ -2832,9 +2824,9 @@ bool game::handle_action()
 
             case ACTION_DISASSEMBLE:
                 if( u.controlling_vehicle ) {
-                    add_msg( m_info, to_translation( "You can't disassemble items while driving." ) );
+                    add_msg( m_info, _( "You can't disassemble items while driving." ) );
                 } else if( u.is_mounted() ) {
-                    add_msg( m_info, to_translation( "You can't disassemble items while you're riding." ) );
+                    add_msg( m_info, _( "You can't disassemble items while you're riding." ) );
                 } else {
                     crafting::disassemble( u );
                 }
@@ -2842,9 +2834,9 @@ bool game::handle_action()
 
             case ACTION_SALVAGE:
                 if( u.controlling_vehicle ) {
-                    add_msg( m_info, to_translation( "You can't salvage items while driving." ) );
+                    add_msg( m_info, _( "You can't salvage items while driving." ) );
                 } else if( u.is_mounted() ) {
-                    add_msg( m_info, to_translation( "You can't salvage items while you're riding." ) );
+                    add_msg( m_info, _( "You can't salvage items while you're riding." ) );
                 } else {
                     salvage::menu_salvage_single( u );
                 }
@@ -2852,11 +2844,11 @@ bool game::handle_action()
 
             case ACTION_CONSTRUCT:
                 if( u.in_vehicle ) {
-                    add_msg( m_info, to_translation( "You can't construct while in a vehicle." ) );
+                    add_msg( m_info, _( "You can't construct while in a vehicle." ) );
                 } else if( u.has_active_mutation( trait_SHELL2 ) ) {
-                    add_msg( m_info, to_translation( "You can't construct while you're in your shell." ) );
+                    add_msg( m_info, _( "You can't construct while you're in your shell." ) );
                 } else if( u.is_mounted() ) {
-                    add_msg( m_info, to_translation( "You can't construct while you're riding." ) );
+                    add_msg( m_info, _( "You can't construct while you're riding." ) );
                 } else {
                     construction_menu( false );
                 }
@@ -2864,7 +2856,7 @@ bool game::handle_action()
 
             case ACTION_SLEEP:
                 if( veh_ctrl ) {
-                    add_msg( m_info, to_translation( "Vehicle control has moved, %s" ),
+                    add_msg( m_info, _( "Vehicle control has moved, %s" ),
                              press_x( ACTION_CONTROL_VEHICLE, _( "new binding is " ),
                                       _( "new default binding is '^'." ) ) );
                 } else {
@@ -2874,7 +2866,7 @@ bool game::handle_action()
 
             case ACTION_CONTROL_VEHICLE:
                 if( u.has_active_mutation( trait_SHELL2 ) ) {
-                    add_msg( m_info, to_translation( "You can't operate a vehicle while you're in your shell." ) );
+                    add_msg( m_info, _( "You can't operate a vehicle while you're in your shell." ) );
                 } else if( u.is_mounted() ) {
                     u.dismount();
                 } else {
@@ -2891,7 +2883,7 @@ bool game::handle_action()
                 if( safe_mode == SAFE_MODE_OFF ) {
                     set_safe_mode( SAFE_MODE_ON );
                     mostseen = 0;
-                    add_msg( m_info, to_translation( "Safe mode ON!" ) );
+                    add_msg( m_info, _( "Safe mode ON!" ) );
                 } else {
                     turnssincelastmon = 0;
                     set_safe_mode( SAFE_MODE_OFF );
@@ -2914,7 +2906,7 @@ bool game::handle_action()
 
             case ACTION_IGNORE_ENEMY:
                 if( safe_mode == SAFE_MODE_STOP ) {
-                    add_msg( m_info, to_translation( "Ignoring enemy!" ) );
+                    add_msg( m_info, _( "Ignoring enemy!" ) );
                     for( auto &elem : u.get_mon_visible().new_seen_mon ) {
                         monster &critter = *elem;
                         critter.ignoring = rl_dist( u.bub_pos(), critter.bub_pos() );
@@ -2922,9 +2914,9 @@ bool game::handle_action()
                     set_safe_mode( SAFE_MODE_ON );
                 } else if( u.has_effect( effect_laserlocked ) ) {
                     if( u.has_trait( trait_PROF_CHURL ) ) {
-                        add_msg( m_warning, to_translation( "You make the sign of the cross." ) );
+                        add_msg( m_warning, _( "You make the sign of the cross." ) );
                     } else {
-                        add_msg( m_info, to_translation( "Ignoring laser targeting!" ) );
+                        add_msg( m_info, _( "Ignoring laser targeting!" ) );
                     }
                     u.remove_effect( effect_laserlocked );
                     safe_mode_warning_logged = false;
@@ -2934,7 +2926,7 @@ bool game::handle_action()
             case ACTION_WHITELIST_ENEMY:
                 if( safe_mode == SAFE_MODE_STOP && !get_safemode().empty() ) {
                     get_safemode().add_rule( get_safemode().lastmon_whitelist, Attitude::A_ANY, 0, RULE_WHITELISTED );
-                    add_msg( m_info, to_translation( "Creature whitelisted: %s" ), get_safemode().lastmon_whitelist );
+                    add_msg( m_info, _( "Creature whitelisted: %s" ), get_safemode().lastmon_whitelist );
                     set_safe_mode( SAFE_MODE_ON );
                     mostseen = 0;
                 } else {
@@ -2982,7 +2974,7 @@ bool game::handle_action()
                 if( m.is_outside( u.bub_pos() ) ) {
                     ui::omap::display_visible_weather();
                 } else {
-                    add_msg( m_info, to_translation( "You can't see the sky from here." ) );
+                    add_msg( m_info, _( "You can't see the sky from here." ) );
                 }
                 break;
 
@@ -3014,7 +3006,7 @@ bool game::handle_action()
                 if( !get_option<std::string>( "WIKI_DOC_URL" ).empty() ) {
                     open_url( get_option<std::string>( "WIKI_DOC_URL" ) );
                 } else {
-                    add_msg( m_bad, to_translation( "Invalid Wiki URL specified!" ) );
+                    add_msg( m_bad, _( "Invalid Wiki URL specified!" ) );
 
                 }
 
@@ -3024,7 +3016,7 @@ bool game::handle_action()
                 if( !get_option<std::string>( "HHG_URL" ).empty() ) {
                     open_url( get_option<std::string>( "HHG_URL" ) + std::string( "/?t=UNDEAD_PEOPLE" ) );
                 } else {
-                    add_msg( m_bad, to_translation( "Invalid Hitchhiker's Guide URL specified!" ) );
+                    add_msg( m_bad, _( "Invalid Hitchhiker's Guide URL specified!" ) );
 
                 }
                 break;
@@ -3098,7 +3090,7 @@ bool game::handle_action()
                 get_options().get_option( "AUTO_FEATURES" ).setNext();
                 get_options().save();
                 //~ Auto Features are now ON/OFF
-                add_msg( to_translation( "%s are now %s." ),
+                add_msg( _( "%s are now %s." ),
                          get_options().get_option( "AUTO_FEATURES" ).getMenuText(),
                          get_option<bool>( "AUTO_FEATURES" ) ? _( "ON" ) : _( "OFF" ) );
                 break;
@@ -3107,7 +3099,7 @@ bool game::handle_action()
                 get_options().get_option( "AUTO_PULP_BUTCHER" ).setNext();
                 get_options().save();
                 //~ Auto Pulp/Pulp Adjacent/Butcher is now set to x
-                add_msg( to_translation( "%s is now set to %s." ),
+                add_msg( _( "%s is now set to %s." ),
                          get_options().get_option( "AUTO_PULP_BUTCHER" ).getMenuText(),
                          get_options().get_option( "AUTO_PULP_BUTCHER" ).getValueName() );
                 break;
@@ -3116,7 +3108,7 @@ bool game::handle_action()
                 get_options().get_option( "AUTO_MINING" ).setNext();
                 get_options().save();
                 //~ Auto Mining is now ON/OFF
-                add_msg( to_translation( "%s is now %s." ),
+                add_msg( _( "%s is now %s." ),
                          get_options().get_option( "AUTO_MINING" ).getMenuText(),
                          get_option<bool>( "AUTO_MINING" ) ? _( "ON" ) : _( "OFF" ) );
                 break;
@@ -3126,21 +3118,20 @@ bool game::handle_action()
                     u.set_value( "THIEF_MODE", "THIEF_HONEST" );
                     u.set_value( "THIEF_MODE_KEEP", "YES" );
                     //~ Thief mode cycled between THIEF_ASK/THIEF_HONEST/THIEF_STEAL
-                    add_msg( to_translation( "You will not pick up other peoples belongings." ) );
+                    add_msg( _( "You will not pick up other peoples belongings." ) );
                 } else if( g->u.get_value( "THIEF_MODE" ) == "THIEF_HONEST" ) {
                     u.set_value( "THIEF_MODE", "THIEF_STEAL" );
                     u.set_value( "THIEF_MODE_KEEP", "YES" );
                     //~ Thief mode cycled between THIEF_ASK/THIEF_HONEST/THIEF_STEAL
-                    add_msg( to_translation( "You will pick up also those things that belong to others!" ) );
+                    add_msg( _( "You will pick up also those things that belong to others!" ) );
                 } else if( g->u.get_value( "THIEF_MODE" ) == "THIEF_STEAL" ) {
                     u.set_value( "THIEF_MODE", "THIEF_ASK" );
                     u.set_value( "THIEF_MODE_KEEP", "NO" );
                     //~ Thief mode cycled between THIEF_ASK/THIEF_HONEST/THIEF_STEAL
-                    add_msg( to_translation( "You will be reminded not to steal." ) );
+                    add_msg( _( "You will be reminded not to steal." ) );
                 } else {
                     // ERROR
-                    add_msg( to_translation( "THIEF_MODE CONTAINED BAD VALUE [ %s ]!" ),
-                             g->u.get_value( "THIEF_MODE" ) );
+                    add_msg( _( "THIEF_MODE CONTAINED BAD VALUE [ %s ]!" ), g->u.get_value( "THIEF_MODE" ) );
                 }
                 break;
 
@@ -3148,7 +3139,7 @@ bool game::handle_action()
                 get_options().get_option( "AUTO_FORAGING" ).setNext();
                 get_options().save();
                 //~ Auto Foraging is now set to x
-                add_msg( to_translation( "%s is now set to %s." ),
+                add_msg( _( "%s is now set to %s." ),
                          get_options().get_option( "AUTO_FORAGING" ).getMenuText(),
                          get_options().get_option( "AUTO_FORAGING" ).getValueName() );
                 break;
@@ -3157,7 +3148,7 @@ bool game::handle_action()
                 get_options().get_option( "AUTO_PICKUP" ).setNext();
                 get_options().save();
                 //~ Auto pickup is now set to x
-                add_msg( to_translation( "%s is now set to %s." ),
+                add_msg( _( "%s is now set to %s." ),
                          get_options().get_option( "AUTO_PICKUP" ).getMenuText(),
                          get_options().get_option( "AUTO_PICKUP" ).getValueName() );
                 break;
@@ -3255,9 +3246,9 @@ bool game::handle_action()
                 }
                 debug_mode = !debug_mode;
                 if( debug_mode ) {
-                    add_msg( m_info, to_translation( "Debug mode ON!" ) );
+                    add_msg( m_info, _( "Debug mode ON!" ) );
                 } else {
-                    add_msg( m_info, to_translation( "Debug mode OFF!" ) );
+                    add_msg( m_info, _( "Debug mode OFF!" ) );
                 }
                 break;
 

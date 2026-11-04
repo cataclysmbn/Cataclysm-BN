@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstddef>
-#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -11,7 +10,6 @@
 #include "string_formatter.h"
 #include "enums.h"
 #include "debug.h"
-#include "localised_text.h"
 
 class JsonOut;
 class JsonObject;
@@ -27,10 +25,6 @@ namespace Messages
 std::vector<std::pair<std::string, std::string>> recent_messages( size_t count );
 void add_msg( std::string msg );
 void add_msg( const game_message_params &params, std::string msg );
-/// A line that also carries its untranslated format, for a client to render in its own language.
-/// `msg` stays the rendering the native log and the saves keep.
-void add_msg( const game_message_params &params, std::string msg,
-              std::optional<localised_text> localised );
 void clear_messages();
 void deactivate();
 size_t size();
@@ -53,11 +47,10 @@ inline void add_msg( const char *const msg, Args &&... args )
 {
     return add_msg( string_format( msg, std::forward<Args>( args )... ) );
 }
-template<localised::message_format Format, typename ...Args>
-inline void add_msg( const Format &msg, Args &&... args )
+template<typename ...Args>
+inline void add_msg( const translation &msg, Args &&... args )
 {
-    return Messages::add_msg( m_neutral, localised::render( msg, args... ),
-                              localised::from_format( msg, args... ) );
+    return add_msg( string_format( msg, std::forward<Args>( args )... ) );
 }
 
 void add_msg( const game_message_params &params, std::string msg );
@@ -77,13 +70,5 @@ inline void add_msg( const game_message_params &params, const char *const msg, A
     }
     return add_msg( params, string_format( msg, std::forward<Args>( args )... ) );
 }
-template<localised::message_format Format, typename ...Args>
-inline void add_msg( const game_message_params &params, const Format &msg, Args &&... args )
-{
-    if( params.type == m_debug && !debug_mode ) {
-        return;
-    }
-    return Messages::add_msg( params, localised::render( msg, args... ),
-                              localised::from_format( msg, args... ) );
-}
+
 

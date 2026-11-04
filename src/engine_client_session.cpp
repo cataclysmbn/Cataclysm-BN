@@ -13,7 +13,6 @@
 #include "game_session.h"
 #include "get_version.h"
 #include "language.h"
-#include "locale_scope.h"
 #include "message_types.h"
 #include "options.h"
 #include "output.h"
@@ -61,12 +60,11 @@ auto session::current_permissions() const -> command_permissions
 
 auto session::set_phase( std::string phase ) -> void { phase_ = std::move( phase ); }
 
-auto session::set_world_capture( const world_capture_fn capture, const world_patch_fn patch,
-                                 const text_capture_fn text ) -> void
+auto session::set_world_capture( const world_capture_fn capture,
+                                 const world_patch_fn patch ) -> void
 {
     world_capture_ = capture;
     world_patch_ = patch;
-    text_capture_ = text;
     patch_consecutive_ = false;
 }
 
@@ -106,14 +104,6 @@ auto session::interrupt( const error reason ) -> void
 
 namespace
 {
-/// `message` and the messages nested in it without the native color tags.
-auto strip_color_tags( localised_text &message ) -> void
-{
-    for( auto &value : message.args ) {
-        if( auto *text = std::get_if<std::string>( &value ) ) { *text = remove_color_tags( *text ); }
-        if( auto *nested = std::get_if<std::vector<localised_text>>( &value ) ) { std::ranges::for_each( *nested, strip_color_tags ); }
-    }
-}
 auto to_message( const Messages::feed_entry &entry ) -> message_value
 {
     const auto kind = std::ranges::find( msg_type_and_names(), entry.type,
@@ -122,15 +112,12 @@ auto to_message( const Messages::feed_entry &entry ) -> message_value
     auto label = entry.count > 1 ?
                  //~ Message %s on the message log was repeated %d times, e.g. "You hear a whack! x 12"
                  string_format( _( "%s x %d" ), text, entry.count ) : text;
-    auto localised = entry.localised;
-    if( localised ) { strip_color_tags( *localised ); }
     return {
         .id = entry.id, .text = std::move( text ),
         .kind = kind == msg_type_and_names().end() ? "neutral" : kind->second,
         .color = get_all_colors().get_name( msgtype_to_color( entry.type ) ),
         .count = static_cast<counter>( entry.count ), .turn = static_cast<counter>( entry.turn ),
-        .label = std::move( label ),
-        .localised = std::move( localised )
+        .label = std::move( label )
     };
 }
 } // namespace
@@ -149,7 +136,6 @@ auto session::restart_epoch( const std::string_view reason ) -> void
     lifecycle_ = std::make_unique<command_lifecycle>( epoch_, *this );
     active_.reset();
     stream_.reset();
-    groups_.clear();
     patch_consecutive_ = false;
 }
 
@@ -211,7 +197,6 @@ auto session::check_oracle( const state_value &before,
     if( oracle_aborts_ ) { std::abort(); }
     // Go on from the full capture, so that one miss does not hide the next.
     static_cast<void>( stream_->rebase( full ) );
-    groups_.clear();
     patch_consecutive_ = false;
 }
 
@@ -226,7 +211,6 @@ auto session::publish_boundary( const bool settles ) -> std::expected<void, erro
         auto created = event_stream::create( epoch_, std::move( *candidate ) );
         if( !created ) { return std::unexpected( created.error() ); }
         stream_ = std::move( *created );
-        groups_.clear();
         patch_consecutive_ = false;
         // The whole log is new to this stream: a loaded game's saved lines and a new game's first
         // line were written before it existed. They enter the stream's log, which a snapshot carries.
@@ -238,7 +222,6 @@ auto session::publish_boundary( const bool settles ) -> std::expected<void, erro
         }
         stream_->seed_log( std::move( seeded ) );
         presentation::collect( true );
-        fill_groups();
         return {};
     }
     auto interaction = capture_interaction();
@@ -267,7 +250,7 @@ auto session::publish_boundary( const bool settles ) -> std::expected<void, erro
         published = stream_->publish( publish_request{ .next = *candidate, .command = command } );
     }
     if( published ) {
-        for( const auto &event : *published ) { post( event_push{ .epoch = epoch_, .event = event }, worded_variants( event ) ); }
+        for( const auto &event : *published ) { post( event_push{ .epoch = epoch_, .event = event } ); }
         if( before && patch_consecutive_ ) { check_oracle( *before, *published ); }
     } else if( published.error() == error::resource_limit ||
                published.error() == error::resync_required ) {
@@ -276,11 +259,8 @@ auto session::publish_boundary( const bool settles ) -> std::expected<void, erro
         post( resync_notice{ .epoch = epoch_,
                              .reason = published.error() == error::resource_limit ? "overflow" : "state_removed",
                              .lost_after = stream_->current().at.sequence } );
-        // The languages start over from a snapshot, like every subscriber.
-        groups_.clear();
         if( const auto rebased = stream_->rebase( std::move( *candidate ) ); !rebased ) { return rebased; }
     } else { return std::unexpected( published.error() ); }
-    fill_groups();
     publish_messages( command );
     if( settles && active_ && active_->stage == command_stage::executing ) {
         const auto &now = stream_->current();
@@ -320,102 +300,6 @@ auto session::current() const -> std::expected<snapshot, error>
 {
     if( !stream_ ) { return std::unexpected( error::not_ready ); }
     return stream_->current();
-}
-
-auto session::current( const std::string &lang_id ) -> std::expected<snapshot, error>
-{
-    auto result = current();
-    if( !result || lang_id.empty() || lang_id == get_language().id ) { return result; }
-    // The state a language starts from is the one captured at a publication, which the stream holds too.
-    const auto group = groups_.find( lang_id );
-    if( group == groups_.end() || !group->second ) { return std::unexpected( error::not_ready ); }
-    const auto &state = group->second;
-    result->value.interaction = *state->interaction;
-    // Without a text capture the world has no wording of its own, and the engine's stands.
-    if( state->avatar ) { result->value.world.avatar = state->avatar; }
-    if( state->environment ) { result->value.world.environment = state->environment; }
-    return result;
-}
-
-auto session::prepare_locale( const std::string &lang_id ) -> void
-{
-    if( !stream_ || lang_id.empty() || lang_id == get_language().id ) { return; }
-    auto &state = groups_[lang_id];
-    if( state ) { return; }
-    if( auto worded = word( lang_id, {} ) ) { state = std::move( *worded ); }
-}
-
-auto session::fill_groups() -> void
-{
-    prune_groups();
-    for( const auto &reader : readers_ ) {
-        const auto &lang_id = reader.lock()->locale;
-        if( !lang_id.empty() && lang_id != get_language().id ) { prepare_locale( lang_id ); }
-    }
-}
-
-auto session::word( const std::string &lang_id,
-                    const wanted sections ) const -> std::expected<worded_state, error>
-{
-    ZoneScopedN( "engine_client_word" );
-    const auto scope = localization::locale_scope{ lang_id };
-    auto result = worded_state{};
-    if( sections.interaction ) {
-        auto interaction = capture_interaction();
-        if( !interaction ) { return std::unexpected( interaction.error() ); }
-        result.interaction = std::move( *interaction );
-    }
-    if( sections.world && text_capture_ ) {
-        auto world = text_capture_();
-        result.avatar = std::move( world.avatar );
-        result.environment = std::move( world.environment );
-    }
-    return result;
-}
-
-auto session::prune_groups() -> void
-{
-    std::erase_if( readers_, []( const auto & reader ) { return reader.expired(); } );
-    std::erase_if( groups_, [this]( const auto & group ) {
-        return std::ranges::none_of( readers_, [&]( const auto & reader ) { return reader.lock()->locale == group.first; } );
-    } );
-}
-
-auto session::worded_variants( const public_event &event ) -> locale_items
-{
-    auto variants = locale_items{};
-    const auto &delta = event.value().delta;
-    if( !delta.interaction && !delta.avatar && !delta.environment ) { return variants; }
-    prune_groups();
-    for( auto &[lang_id, state] : groups_ ) {
-        if( !state ) { continue; }
-        auto worded = word( lang_id, { .interaction = delta.interaction.has_value(), .world = delta.avatar || delta.environment } );
-        auto value = event.value();
-        auto &changed = value.delta;
-        if( worded && changed.interaction ) {
-            changed.actions_unchanged = state->interaction &&
-                                        state->interaction->actions == worded->interaction->actions;
-            changed.interaction = *worded->interaction;
-        }
-        if( worded && changed.avatar && worded->avatar ) {
-            changed.avatar_kept = state->avatar ? kept_members( *state->avatar,
-                                  *worded->avatar ) : std::vector<std::string> {};
-            changed.avatar = *worded->avatar;
-        }
-        if( worded && changed.environment && worded->environment ) { changed.environment = worded->environment; }
-        auto sealed = worded ? public_event::sealed( std::move( value ), epoch_ ) : std::nullopt;
-        if( !sealed ) {
-            // Its text does not fit an event or could not be captured: the readers start over from a snapshot.
-            variants.emplace( lang_id, resync_notice{ .epoch = epoch_, .reason = "overflow", .lost_after = event.value().sequence - 1 } );
-            state.reset();
-            continue;
-        }
-        if( worded->interaction ) { state->interaction = std::move( worded->interaction ); }
-        if( worded->avatar ) { state->avatar = std::move( worded->avatar ); }
-        if( worded->environment ) { state->environment = std::move( worded->environment ); }
-        variants.emplace( lang_id, event_push{ .epoch = epoch_, .event = std::move( *sealed ) } );
-    }
-    return variants;
 }
 
 auto session::boundary() const -> std::expected<boundary_state, error>
@@ -517,9 +401,7 @@ auto session::result( const result_request &request ) const -> std::expected<com
     return lifecycle_->result( request.command_id );
 }
 
-auto push_reader::take() -> std::vector<push_item> { return std::exchange( inbox_->items, {} ); }
-
-auto push_reader::use_locale( std::string lang_id ) -> void { inbox_->locale = std::move( lang_id ); }
+auto push_reader::take() -> std::vector<push_item> { return std::exchange( *inbox_, {} ); }
 
 auto session::record_to( const std::string &path ) -> void
 {
@@ -551,25 +433,15 @@ auto session::open_push() -> push_reader
     return reader;
 }
 
-auto session::post( push_item item, const locale_items &variants ) -> void
+auto session::post( push_item item ) -> void
 {
     if( const auto *pushed = std::get_if<event_push>( &item ); recording_ && pushed ) { recorded_.push_back( pushed->event ); }
     std::erase_if( readers_, []( const auto & reader ) { return reader.expired(); } );
-    // A reader of a language that has a variant gets it; the others get the item.
-    const auto variant_for = [&]( const push_reader::inbox & inbox ) -> const push_item * { // *NOPAD*
-        const auto found = variants.find( inbox.locale );
-        return found == variants.end() ? nullptr :&found->second;
-    };
     // The last reader takes the item itself; with one connection nothing is copied.
     for( const auto &reader : readers_ | std::views::take( readers_.size() - 1 ) ) {
-        const auto inbox = reader.lock();
-        const auto *variant = variant_for( *inbox );
-        inbox->items.push_back( variant ? *variant : item );
+        reader.lock()->push_back( item );
     }
-    if( readers_.empty() ) { return; }
-    const auto inbox = readers_.back().lock();
-    if( const auto *variant = variant_for( *inbox ) ) { inbox->items.push_back( *variant ); }
-    else { inbox->items.push_back( std::move( item ) ); }
+    if( !readers_.empty() ) { readers_.back().lock()->push_back( std::move( item ) ); }
 }
 
 namespace

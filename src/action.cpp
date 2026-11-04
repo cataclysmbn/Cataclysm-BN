@@ -1450,7 +1450,7 @@ std::optional<tripoint_rel_ms> choose_direction( const std::string &message,
         }
     } while( action != "QUIT" );
 
-    add_msg( to_translation( "Never mind." ) );
+    add_msg( _( "Never mind." ) );
     return std::nullopt;
 }
 
@@ -1464,7 +1464,7 @@ std::optional<tripoint_bub_ms> choose_adjacent( const std::string &message,
     }
 
     if( get_map().obstructed_by_vehicle_rotation( g->u.bub_pos(), *dir + g->u.bub_pos() ) ) {
-        add_msg( to_translation( "You can't reach through that vehicle's wall." ) );
+        add_msg( _( "You can't reach through that vehicle's wall." ) );
         return std::nullopt;
     }
 

@@ -4,8 +4,6 @@
 #    include "catch/catch.hpp"
 #    include "client_screen_support.h"
 #    include "engine_client_component.h"
-#    include "locale_fixture.h"
-#    include "locale_scope.h"
 #    include "main_menu.h"
 #    include "state_helpers.h"
 #    include "worldfactory.h"
@@ -135,30 +133,5 @@ TEST_CASE(
     CHECK(stage == 3);
 }
 
-TEST_CASE(
-    "the main menu is the same at any viewport size and in another language",
-    "[client][interaction][mcp][screens][main_menu][engine_client_component]") {
-    clear_all_state();
-    const auto restore = menu_restore{};
-    const auto guard = screen_guard{};
-    const auto fixture = locale_fixture::korean_catalogue{};
-    auto stage = 0;
-    open_stack([&] { main_menu{}.opening_screen(); },
-               [&](const auto& /*snapshot*/, const auto& top) {
-                   if (stage++ == 0) {
-                       const auto [narrow, wide] = at_both_sizes();
-                       CHECK(narrow.dump() == wide.dump());
-                       const auto english = top_json();
-                       const auto korean = [&] {
-                           const auto scope = localization::locale_scope(locale_fixture::korean);
-                           return top_json();
-                       }();
-                       CHECK(without_words(english) == without_words(korean));
-                       return invoke_event(top, "menu:tab", {.row = "quit"});
-                   }
-                   return run_action("YES");
-               });
-    CHECK(stage == 2);
-}
 
 #endif // CATA_MCP

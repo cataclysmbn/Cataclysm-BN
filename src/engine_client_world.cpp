@@ -1324,14 +1324,6 @@ auto capture_world() -> world_state
     return state;
 }
 
-auto capture_worded() -> world_state
-{
-    if( !g || !game_session::running() ) { return {}; }
-    auto &here = get_map();
-    return { .avatar = capture_avatar( here, get_avatar(), here.get_bound_dimension().str() ),
-             .environment = capture_environment() };
-}
-
 auto capture_patch( const snapshot &previous, const bool consecutive ) -> world_patch
 {
     ZoneScopedN( "engine_client_capture_patch" );

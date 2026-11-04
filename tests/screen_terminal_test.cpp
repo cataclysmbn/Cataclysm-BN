@@ -7,8 +7,6 @@
 #    include "computer_session.h"
 #    include "engine_client_component.h"
 #    include "game.h"
-#    include "locale_fixture.h"
-#    include "locale_scope.h"
 #    include "map/map.h"
 #    include "map_helpers.h"
 #    include "options_helpers.h"
@@ -186,31 +184,6 @@ TEST_CASE(
     CHECK(stage == 1);
 }
 
-TEST_CASE(
-    "the terminal is the same at any viewport size and in another language",
-    "[client][interaction][mcp][screens][terminal][engine_client_component]") {
-    clear_all_state();
-    clear_map();
-    const auto guard = screen_guard{};
-    const auto fixture = locale_fixture::korean_catalogue{};
-    auto terminal = computer("Locked Terminal", 5);
-    auto stage = 0;
-    open_stack([&] { computer_session(terminal).use(); },
-               [&](const auto& /*snapshot*/, const auto& /*top*/) {
-                   if (stage++ == 0) {
-                       const auto [narrow, wide] = at_both_sizes();
-                       CHECK(narrow.dump() == wide.dump());
-                       const auto english = top_json();
-                       const auto korean = [&] {
-                           const auto scope = localization::locale_scope(locale_fixture::korean);
-                           return top_json();
-                       }();
-                       CHECK(without_words(english) == without_words(korean));
-                   }
-                   return run_action("QUIT");
-               });
-    CHECK(stage == 1);
-}
 
 TEST_CASE(
     "the extended description names its target and shows the chosen one",
@@ -255,31 +228,5 @@ TEST_CASE(
     CHECK(stage == 2);
 }
 
-TEST_CASE(
-    "the extended description is the same at any viewport size and in another language",
-    "[client][interaction][mcp][screens][terminal][engine_client_component]") {
-    clear_all_state();
-    clear_map();
-    auto& you = get_avatar();
-    clear_character(you, false);
-    const auto guard = screen_guard{};
-    const auto fixture = locale_fixture::korean_catalogue{};
-    auto stage = 0;
-    open_stack([&] { g->extended_description(you.bub_pos() + tripoint_east); },
-               [&](const auto& /*snapshot*/, const auto& /*top*/) {
-                   if (stage++ == 0) {
-                       const auto [narrow, wide] = at_both_sizes();
-                       CHECK(narrow.dump() == wide.dump());
-                       const auto english = top_json();
-                       const auto korean = [&] {
-                           const auto scope = localization::locale_scope(locale_fixture::korean);
-                           return top_json();
-                       }();
-                       CHECK(without_words(english) == without_words(korean));
-                   }
-                   return run_action("QUIT");
-               });
-    CHECK(stage == 1);
-}
 
 #endif // CATA_MCP

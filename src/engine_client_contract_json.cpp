@@ -917,43 +917,11 @@ auto to_json( const changes &delta ) -> json
     }
     return result;
 }
-auto to_json( const localised_text &value ) -> json
-{
-    auto result = json{{"key", value.key}};
-    if( value.ctx ) { result["ctx"] = *value.ctx; }
-    if( value.plural ) { result["plural"] = *value.plural; }
-    if( value.plural_key ) { result["plural_key"] = *value.plural_key; }
-    const auto arg_json = []( const localised_text::arg & arg ) {
-        return std::visit( []( const auto & held ) {
-            if constexpr( std::is_same_v<std::remove_cvref_t<decltype( held )>, std::vector<localised_text>> ) {
-                return to_json( held.front() );
-            } else {
-                return json( held );
-            }
-        }, arg );
-    };
-    if( !value.args.empty() ) {
-        result["args"] = value.args | std::views::transform( arg_json ) | std::ranges::to<std::vector>();
-    }
-    if( value.npcname ) { result["npcname"] = arg_json( *value.npcname ); }
-    return result;
-}
-/// A converted line is a LocalisedString; its repeat suffix is the native `%s x %d` message around it.
-/// `lang` only for a line that is not in the locale of the connection reading it.
 auto to_json( const message_value &line ) -> json
 {
-    auto result = json{{"id", std::to_string( line.id )}, {"text", line.text}, {"kind", line.kind},
+    return json{{"id", std::to_string( line.id )}, {"text", line.text}, {"kind", line.kind},
         {"color", line.color}, {"count", line.count}, {"turn", std::to_string( line.turn )},
         {"label", line.label}};
-    if( line.localised ) {
-        const auto text = to_json( *line.localised );
-        result["text"] = text;
-result["label"] = line.count > 1 ? json{{"key", "%s x %d"}, {"args", {text, line.count}}} :
-        text;
-    } else if( !line.lang.empty() ) {
-        result["lang"] = line.lang;
-    }
-    return result;
 }
 auto to_json( const event_value &value ) -> json
 {
@@ -1160,7 +1128,6 @@ auto serialize_snapshot( const snapshot &value ) -> std::expected<snapshot_wire,
         header["messages"] = json::array();
         for( const auto &line : value.log ) { header["messages"].push_back( to_json( line ) ); }
     }
-    if( !value.catalogues.empty() ) { header["catalogues"] = value.catalogues; }
     header["parts"] = result.parts.size();
     result.header = header.dump();
     if( result.header.size() > maximum_inline_bytes ) { return std::unexpected( error::resource_limit ); }

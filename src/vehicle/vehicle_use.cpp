@@ -153,13 +153,13 @@ void handbrake() {
     const optional_vpart_position vp = here.veh_at(pl.bub_pos());
     if (!vp) { return; }
     vehicle* const veh = &vp->vehicle();
-    add_msg(to_translation("You pull a handbrake."));
+    add_msg(_("You pull a handbrake."));
     veh->cruise_velocity = 0;
     bool is_on_rails = vehicle_movement::is_on_rails(here, *veh);
     if (!is_on_rails && veh->last_turn != 0_degrees
         && std::lround(static_cast<double>(rng(15, 60) * 100) * 0.44704) < std::abs(veh->velocity)) {
         veh->skidding = true;
-        add_msg(m_warning, to_translation("You lose control of %s."), veh->name);
+        add_msg(m_warning, _("You lose control of %s."), veh->name);
         veh->turn(veh->last_turn > 0_degrees ? 60_degrees : -60_degrees);
     } else {
         int braking_power = std::abs(veh->velocity) / 2 + 447;
@@ -305,12 +305,12 @@ void vehicle::set_electronics_menu_options(
         actions.emplace_back([&] {
             if (camera_on) {
                 camera_on = false;
-                add_msg(to_translation("Camera system disabled"));
+                add_msg(_("Camera system disabled"));
             } else if (fuel_left(fuel_type_battery, true)) {
                 camera_on = true;
-                add_msg(to_translation("Camera system enabled"));
+                add_msg(_("Camera system enabled"));
             } else {
-                add_msg(to_translation("Camera system won't turn on"));
+                add_msg(_("Camera system won't turn on"));
             }
             get_map().set_seen_cache_dirty(bub_ms_location().z());
             get_map().set_vehicle_cache_dirty(bub_ms_location().z());
@@ -399,10 +399,9 @@ void vehicle::control_engines() {
     if (velocity > safe_vel) { cruise_velocity = safe_vel; }
 
     if (engines_were_on && !engine_on) {
-        add_msg(to_translation("You turn off the %s's engines to change their configurations."),
-                name);
+        add_msg(_("You turn off the %s's engines to change their configurations."), name);
     } else if (!g->u.controlling_vehicle) {
-        add_msg(to_translation("You change the %s's engine configuration."), name);
+        add_msg(_("You change the %s's engine configuration."), name);
     }
 
     if (engine_on) { start_engines(); }
@@ -460,7 +459,7 @@ auto vehicle::select_engine() -> int {
 auto vehicle::interact_vehicle_locked() -> bool {
     if (is_locked) {
         const inventory& crafting_inv = g->u.crafting_inventory();
-        add_msg(to_translation("You don't find any keys in the %s."), name);
+        add_msg(_("You don't find any keys in the %s."), name);
         if (crafting_inv.has_quality(quality_id("SCREW"))) {
             if (query_yn(_("You don't find any keys in the %s. Attempt to hotwire vehicle?"),
                          name)) {
@@ -483,11 +482,11 @@ auto vehicle::interact_vehicle_locked() -> bool {
                 if (has_security_working() && query_yn(_("Trigger the %s's Alarm?"), name)) {
                     is_alarm_on = true;
                 } else {
-                    add_msg(to_translation("You leave the controls alone."));
+                    add_msg(_("You leave the controls alone."));
                 }
             }
         } else {
-            add_msg(to_translation("You could use a screwdriver to hotwire it."));
+            add_msg(_("You could use a screwdriver to hotwire it."));
         }
     }
 
@@ -525,9 +524,9 @@ void vehicle::smash_security_system() {
             if (parts[c].removed || parts[c].is_broken()) {
                 g->u.controlling_vehicle = false;
                 is_alarm_on = false;
-                add_msg(to_translation("You destroy the controls…"));
+                add_msg(_("You destroy the controls…"));
             } else {
-                add_msg(to_translation("You damage the controls."));
+                add_msg(_("You damage the controls."));
             }
         }
         if (percent_alarm > rand) {
@@ -616,11 +615,11 @@ void vehicle::toggle_tracking() {
     if (tracking_on) {
         get_overmapbuffer(dimension_id_).remove_vehicle(this);
         tracking_on = false;
-        add_msg(to_translation("You stop keeping track of the vehicle position."));
+        add_msg(_("You stop keeping track of the vehicle position."));
     } else {
         get_overmapbuffer(dimension_id_).add_vehicle(this);
         tracking_on = true;
-        add_msg(to_translation("You start keeping track of this vehicle's position."));
+        add_msg(_("You start keeping track of this vehicle's position."));
     }
 }
 
@@ -647,7 +646,7 @@ void vehicle::use_controls(const tripoint_bub_ms& pos) {
             if (confirm_stop_driving()) {
                 you.controlling_vehicle = false;
                 g->setremoteveh(nullptr);
-                add_msg(to_translation("You stop controlling the vehicle."));
+                add_msg(_("You stop controlling the vehicle."));
                 refresh();
             }
         });
@@ -660,7 +659,7 @@ void vehicle::use_controls(const tripoint_bub_ms& pos) {
             actions.emplace_back([&] {
                 if (confirm_stop_driving()) {
                     you.controlling_vehicle = false;
-                    add_msg(to_translation("You let go of the controls."));
+                    add_msg(_("You let go of the controls."));
                     refresh();
                 }
             });
@@ -670,7 +669,7 @@ void vehicle::use_controls(const tripoint_bub_ms& pos) {
     }
 
     if (get_parts_at(pos, "CONTROLS", part_status_flag::any).empty() && !has_electronic_controls) {
-        add_msg(m_info, to_translation("No controls there"));
+        add_msg(m_info, _("No controls there"));
         return;
     }
 
@@ -688,7 +687,7 @@ void vehicle::use_controls(const tripoint_bub_ms& pos) {
                 } else if (engine_on && has_engine_type_not(fuel_type_muscle, true)
                            && has_engine_type_not(fuel_type_animal, true)
                            && has_engine_type_not(fuel_type_wind, true)) {
-                    add_msg(to_translation("You turn the engine off and let go of the controls."));
+                    add_msg(_("You turn the engine off and let go of the controls."));
                     sound_event se;
                     se.origin = pos;
                     se.volume = 40;
@@ -697,7 +696,7 @@ void vehicle::use_controls(const tripoint_bub_ms& pos) {
                     se.description = _("the engine go silent");
                     sounds::sound(se);
                 } else {
-                    add_msg(to_translation("You let go of the controls."));
+                    add_msg(_("You let go of the controls."));
                 }
 
                 for (size_t e = 0; e < engines.size(); ++e) {
@@ -825,7 +824,7 @@ void vehicle::use_controls(const tripoint_bub_ms& pos) {
             options.emplace_back(_("Trigger alarm"), keybind("TOGGLE_ALARM"));
             actions.emplace_back([&] {
                 is_alarm_on = true;
-                add_msg(to_translation("You trigger the alarm"));
+                add_msg(_("You trigger the alarm"));
                 refresh();
             });
         }
@@ -928,22 +927,21 @@ auto vehicle::fold_up() -> bool {
     if (g->u.controlling_vehicle) {
         add_msg(
             m_warning,
-            to_translation(
-                "As the pitiless metal bars close on your nether regions, you reconsider trying to fold the %s while riding it."),
+            _("As the pitiless metal bars close on your nether regions, you reconsider trying to fold the %s while riding it."),
             name);
         return false;
     }
 
     if (velocity > 0) {
-        add_msg(m_warning, to_translation("You can't fold the %s while it's in motion."), name);
+        add_msg(m_warning, _("You can't fold the %s while it's in motion."), name);
         return false;
     }
 
-    add_msg(to_translation("You painstakingly pack the %s into a portable configuration."), name);
+    add_msg(_("You painstakingly pack the %s into a portable configuration."), name);
 
     if (g->u.get_grab_type() != OBJECT_NONE) {
         g->u.grab(OBJECT_NONE);
-        add_msg(to_translation("You let go of %s as you fold it."), name);
+        add_msg(_("You let go of %s as you fold it."), name);
     }
 
     std::string itype_id = "generic_folded_vehicle";
@@ -1053,15 +1051,15 @@ auto vehicle::start_engine(const int e) -> bool {
             // Muscle engines cannot start with broken limbs
             if (einfo.has_flag("MUSCLE_ARMS")
                 && (get_player_character().get_working_arm_count() < 2)) {
-                add_msg(to_translation("You cannot use %s with a broken arm."), eng.name());
+                add_msg(_("You cannot use %s with a broken arm."), eng.name());
                 return false;
             } else if (einfo.has_flag("MUSCLE_LEGS")
                        && (get_player_character().get_working_leg_count() < 2)) {
-                add_msg(to_translation("You cannot use %s with a broken leg."), eng.name());
+                add_msg(_("You cannot use %s with a broken leg."), eng.name());
                 return false;
             }
         } else {
-            add_msg(to_translation("Looks like the %1$s is out of %2$s."), eng.name(),
+            add_msg(_("Looks like the %1$s is out of %2$s."), eng.name(),
                     item::nname(einfo.fuel_type));
             return false;
         }
@@ -1177,7 +1175,7 @@ auto vehicle::start_engine(const int e) -> bool {
 void vehicle::stop_engines() {
     vehicle_noise = 0;
     engine_on = false;
-    add_msg(to_translation("You turn the engine off."));
+    add_msg(_("You turn the engine off."));
     for (size_t e = 0; e < engines.size(); ++e) {
         if (is_engine_on(e)) {
             const vpart_info& einfo = part_info(e);
@@ -1227,11 +1225,11 @@ void vehicle::start_engines(const bool take_control, const bool autodrive) {
 
     if (take_control && !g->u.controlling_vehicle) {
         g->u.controlling_vehicle = true;
-        add_msg(to_translation("You take control of the %s."), name);
+        add_msg(_("You take control of the %s."), name);
     }
 
     if (!has_engine) {
-        add_msg(m_info, to_translation("The %s doesn't have an engine!"), name);
+        add_msg(m_info, _("The %s doesn't have an engine!"), name);
         return;
     }
 
@@ -1259,7 +1257,7 @@ void vehicle::honk_horn() {
         const vpart_info& horn_type = vp.info();
         if ((horn_type.get_id() != vpart_id("horn_bicycle")) && no_power) { continue; }
         if (!honked) {
-            add_msg(to_translation("You honk the horn!"));
+            add_msg(_("You honk the horn!"));
             honked = true;
         }
         // Get global position of horn
@@ -1288,7 +1286,7 @@ void vehicle::honk_horn() {
         }
     }
 
-    if (!honked) { add_msg(to_translation("You honk the horn, but nothing happens.")); }
+    if (!honked) { add_msg(_("You honk the horn, but nothing happens.")); }
 }
 
 void vehicle::reload_seeds(const tripoint_bub_ms& pos) {
@@ -1659,15 +1657,14 @@ auto vehicle::can_close(int part_index, Character& who) -> bool {
             const Creature* const mon = g->critter_at(bub_part_location(parts[partID]));
             if (mon) {
                 if (mon->is_player()) {
-                    who.add_msg_if_player(
-                        m_info, to_translation("There's some buffoon in the way!"));
+                    who.add_msg_if_player(m_info, _("There's some buffoon in the way!"));
                 } else if (mon->is_monster()) {
                     // TODO: Houseflies, mosquitoes, etc shouldn't count
                     who.add_msg_if_player(
-                        m_info, to_translation("%s is in the way!"), mon->disp_name(false, true));
+                        m_info, _("%s is in the way!"), mon->disp_name(false, true));
                 } else {
                     who.add_msg_if_player(
-                        m_info, to_translation("%s is in the way!"), mon->disp_name(false, true));
+                        m_info, _("%s is in the way!"), mon->disp_name(false, true));
                 }
                 return false;
             }
@@ -1732,7 +1729,7 @@ void vehicle::use_monster_capture(int part, const tripoint_bub_ms& pos) {
 void vehicle::use_harness(int part, const tripoint_bub_ms& pos) {
     if (parts[part].is_unavailable() || parts[part].removed) { return; }
     if (!g->is_empty(pos)) {
-        add_msg(m_info, to_translation("The harness is blocked."));
+        add_msg(m_info, _("The harness is blocked."));
         return;
     }
     const std::function<bool(const tripoint_bub_ms&)> f = [](const tripoint_bub_ms& pnt) {
@@ -1747,34 +1744,34 @@ void vehicle::use_harness(int part, const tripoint_bub_ms& pos) {
         _("Where is the creature to harness?"), _("There is no creature to harness nearby."), f,
         false);
     if (!pnt_) {
-        add_msg(m_info, to_translation("Never mind."));
+        add_msg(m_info, _("Never mind."));
         return;
     }
     const tripoint_bub_ms& target = *pnt_;
     monster* mon_ptr = g->critter_at<monster>(target);
     if (mon_ptr == nullptr) {
-        add_msg(m_info, to_translation("No creature there."));
+        add_msg(m_info, _("No creature there."));
         return;
     }
     monster& m = *mon_ptr;
     std::string Harness_Bodytype = "HARNESS_" + m.type->bodytype;
     if (m.friendly == 0) {
-        add_msg(m_info, to_translation("This creature is not friendly!"));
+        add_msg(m_info, _("This creature is not friendly!"));
         return;
     } else if (!m.has_flag(MF_PET_MOUNTABLE) && !m.has_flag(MF_PET_HARNESSABLE)) {
-        add_msg(m_info, to_translation("This creature cannot be harnessed."));
+        add_msg(m_info, _("This creature cannot be harnessed."));
         return;
     } else if (!part_flag(part, Harness_Bodytype) && !part_flag(part, "HARNESS_any")) {
-        add_msg(m_info, to_translation("The harness is not adapted for this creature morphology."));
+        add_msg(m_info, _("The harness is not adapted for this creature morphology."));
         return;
     }
 
     m.add_effect(effect_harnessed, 1_turns, bodypart_str_id::NULL_ID());
     m.setpos(pos);
     //~ %1$s: monster name, %2$s: vehicle name
-    add_msg(m_info, to_translation("You harness your %1$s to %2$s."), m.get_name(), disp_name());
+    add_msg(m_info, _("You harness your %1$s to %2$s."), m.get_name(), disp_name());
     if (m.has_effect(effect_tied)) {
-        add_msg(m_info, to_translation("You untie your %s."), m.get_name());
+        add_msg(m_info, _("You untie your %s."), m.get_name());
         m.remove_effect(effect_tied);
         g->u.i_add(m.remove_tied_item());
     }
@@ -2044,7 +2041,7 @@ void vehicle::interact_with(const tripoint_bub_ms& pos, int interact_part) {
             return;
         }
         case PEEK_CURTAIN: {
-            add_msg(to_translation("You carefully peek through the curtains."));
+            add_msg(_("You carefully peek through the curtains."));
             g->peek(you.bub_pos() - pos);
             return;
         }

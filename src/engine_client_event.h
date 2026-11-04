@@ -3,7 +3,6 @@
 #include "engine_client_contract.h"
 #include "engine_client_presentation.h"
 #include "loading_ui_client.h"
-#include "localised_text.h"
 
 #include <expected>
 #include <optional>
@@ -79,11 +78,6 @@ struct message_value {
     counter turn = 0;
     /// The line the way the native log prints it: `text`, with the native repeat suffix from `count` 2 on.
     std::string label = {};
-    /// Set on the copy a connection reads of a line that is not in its own locale: the BN language id the line is in.
-    std::string lang = {};
-    /// The untranslated format and values of a converted site: `text` and `label` then go out as LocalisedStrings
-    /// the client renders in its own language, and `lang` is never set.
-    std::optional<localised_text> localised = std::nullopt;
 };
 struct event_value {
     counter sequence = 0;
@@ -132,8 +126,6 @@ struct snapshot {
     /// revision, but a receiver that applies the stream's `message.logged` events holds exactly
     /// this log, so a fresh subscribe equals it.
     std::vector<message_value> log = {};
-    /// The catalogue files the reader's LocalisedStrings are worded from, in lookup order.
-    std::vector<std::string> catalogues = {};
 };
 /// Adds a line to a log: a repeat replaces the line with the same id, the oldest line falls off.
 auto remember( std::vector<message_value> &log, const message_value &line ) -> void;

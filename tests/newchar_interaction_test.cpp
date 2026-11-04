@@ -15,8 +15,6 @@
 #    include "game.h"
 #    include "game_constants.h"
 #    include "input.h"
-#    include "locale_fixture.h"
-#    include "locale_scope.h"
 #    include "magic/magic.h"
 #    include "newcharacter.h"
 #    include "output.h"
@@ -500,43 +498,5 @@ TEST_CASE(
     CHECK(you.magic->knows_spell(spell_id("test_spell_apprentice")));
 }
 
-TEST_CASE(
-    "the character creation tabs are the same at any viewport size and have the same ids in another language",
-    "[newchar][engine_client_component]") {
-    clear_all_state();
-    const auto guard = newchar_guard{};
-    const auto fixture_ko = locale_fixture::korean_catalogue{};
-    auto& you = get_avatar();
-    const auto restore = restore_name{you};
-    auto popups = std::vector<std::string>{};
-    auto stage = 0;
-    const auto tabs = std::array<std::string, 4>{"scenario", "profession", "skills", "overview"};
-    create_with(you, popups, [&](const auto&, const auto&) {
-        const auto saved_x = TERMX;
-        const auto saved_y = TERMY;
-        TERMX = 80;
-        TERMY = 24;
-        const auto narrow = published();
-        TERMX = 200;
-        TERMY = 60;
-        const auto wide = published();
-        TERMX = saved_x;
-        TERMY = saved_y;
-        CHECK(narrow.dump() == wide.dump());
-        const auto korean = [] {
-            const auto scope = localization::locale_scope(locale_fixture::korean);
-            return published();
-        }();
-        auto english_ids = std::vector<std::string>{};
-        auto korean_ids = std::vector<std::string>{};
-        collect_ids(narrow, english_ids);
-        collect_ids(korean, korean_ids);
-        CHECK(english_ids == korean_ids);
-        CHECK(without_words(narrow) == without_words(korean));
-        const auto next = static_cast<std::size_t>(stage++);
-        return next < tabs.size() ? go_to(tabs[next]) : act("QUIT");
-    });
-    CHECK(stage == 5);
-}
 
 #endif // CATA_MCP

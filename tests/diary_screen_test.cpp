@@ -9,8 +9,6 @@
 #    include "diary.h"
 #    include "engine_client_component.h"
 #    include "item_serial.h"
-#    include "locale_fixture.h"
-#    include "locale_scope.h"
 #    include "map_helpers.h"
 #    include "page_serial.h"
 #    include "player_helpers.h"
@@ -118,33 +116,6 @@ struct diary_fixture {
 
 } // namespace
 
-TEST_CASE(
-    "the diary is the same at any viewport size and has the same ids in another language",
-    "[diary_screen][engine_client_component]") {
-    auto fixture = diary_fixture{};
-    const auto fixture_ko = locale_fixture::korean_catalogue{{
-        {"pages: %d", "pages: %d-ko"},
-        {"Info", "Info-ko"},
-        {"%s's Diary", "%s's Diary-ko"},
-    }};
-    auto reads = 0;
-    fixture.open([&](const int read, const ec::screen_view& top) {
-        if (read == 0) { return run_action("NEW_PAGE"); }
-        ++reads;
-        REQUIRE(top.root);
-        const auto [narrow, wide] = at_both_sizes();
-        CHECK(narrow.dump() == wide.dump());
-        const auto korean = [] {
-            const auto scope = localization::locale_scope(locale_fixture::korean);
-            return top_json();
-        }();
-        CHECK(without_words(narrow) == without_words(korean));
-        // The words really do differ, so equal ids are not equal text.
-        CHECK(narrow.dump() != korean.dump());
-        return run_action("QUIT");
-    });
-    CHECK(reads == 1);
-}
 
 TEST_CASE("the diary publishes no window text", "[diary_screen][engine_client_component]") {
     auto fixture = diary_fixture{};

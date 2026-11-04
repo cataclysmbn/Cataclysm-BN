@@ -212,14 +212,14 @@ auto get_liquid_target( item &liquid, const int radius, liquid_dest_opt &target 
         item *const cont = target.it;
 
         if( cont == nullptr || cont->is_null() ) {
-            add_msg( to_translation( "Never mind." ) );
+            add_msg( _( "Never mind." ) );
             return;
         }
         // Sometimes the cont parameter is omitted, but the liquid is still within a container that counts
         // as valid target for the liquid. So check for that.
         if( cont == liquid.parent_item() || ( !cont->contents.empty() &&
                                               &cont->contents.front() == &liquid ) ) {
-            add_msg( m_info, to_translation( "That's the same container!" ) );
+            add_msg( m_info, _( "That's the same container!" ) );
             return; // The user has intended to do something, but mistyped.
         }
         target.dest_opt = LD_ITEM;
@@ -284,8 +284,7 @@ auto get_liquid_target( item &liquid, const int radius, liquid_dest_opt &target 
         // infinite space and the liquid can not be used from there anyway.
         if( liquid.has_infinite_charges() && liquid.is_loaded() &&
             liquid.where() == item_location_type::map ) {
-            add_msg( m_info, to_translation( "Clearing out the %s would take forever." ),
-                     here.name( liquid.bub_pos() ) );
+            add_msg( m_info, _( "Clearing out the %s would take forever." ), here.name( liquid.bub_pos() ) );
             return;
         }
 
@@ -299,11 +298,11 @@ auto get_liquid_target( item &liquid, const int radius, liquid_dest_opt &target 
 
         if( liquid.is_loaded() && liquid.where() == item_location_type::map &&
             liquid.bub_pos() == target.pos ) {
-            add_msg( m_info, to_translation( "That's where you took it from!" ) );
+            add_msg( m_info, _( "That's where you took it from!" ) );
             return;
         }
         if( !here.can_put_items_ter_furn( target.pos ) ) {
-            add_msg( m_info, to_translation( "You can't pour there!" ) );
+            add_msg( m_info, _( "You can't pour there!" ) );
             return;
         }
         target.dest_opt = LD_GROUND;
@@ -317,7 +316,7 @@ auto get_liquid_target( item &liquid, const int radius, liquid_dest_opt &target 
         actions.emplace_back( [&]() {
             const int chosen_amount = prompt_for_ground_amount( liquid );
             if( chosen_amount <= 0 ) {
-                add_msg( to_translation( "Never mind." ) );
+                add_msg( _( "Never mind." ) );
                 return;
             }
 
@@ -330,11 +329,11 @@ auto get_liquid_target( item &liquid, const int radius, liquid_dest_opt &target 
 
             if( liquid.is_loaded() && liquid.where() == item_location_type::map &&
                 liquid.bub_pos() == target.pos ) {
-                add_msg( m_info, to_translation( "That's where you took it from!" ) );
+                add_msg( m_info, _( "That's where you took it from!" ) );
                 return;
             }
             if( !here.can_put_items_ter_furn( target.pos ) ) {
-                add_msg( m_info, to_translation( "You can't pour there!" ) );
+                add_msg( m_info, _( "You can't pour there!" ) );
                 return;
             }
             target.dest_opt = LD_GROUND;
@@ -348,7 +347,7 @@ auto get_liquid_target( item &liquid, const int radius, liquid_dest_opt &target 
 
     menu.query();
     if( menu.ret < 0 || static_cast<size_t>( menu.ret ) >= actions.size() ) {
-        add_msg( to_translation( "Never mind." ) );
+        add_msg( _( "Never mind." ) );
         // Explicitly canceled all options (container, drink, pour).
         return false;
     }
@@ -533,7 +532,7 @@ bool handle_liquid( detached_ptr<item> &&liquid, int radius )
         return false;
     }
     if( !liquid->made_of( LIQUID ) ) {
-        add_msg( to_translation( "The %s froze solid before you could finish." ), liquid->tname() );
+        add_msg( _( "The %s froze solid before you could finish." ), liquid->tname() );
         return false;
     }
     struct liquid_dest_opt liquid_target;
@@ -551,7 +550,7 @@ bool handle_liquid( item &liquid, const int radius )
         return false;
     }
     if( !liquid.made_of( LIQUID ) ) {
-        add_msg( to_translation( "The %s froze solid before you could finish." ), liquid.tname() );
+        add_msg( _( "The %s froze solid before you could finish." ), liquid.tname() );
         return false;
     }
     struct liquid_dest_opt liquid_target;
@@ -572,7 +571,7 @@ bool handle_liquid( const tripoint_bub_ms &pos, int radius )
     }
 
     if( !liquid->made_of( LIQUID ) ) {
-        add_msg( to_translation( "The %s froze solid before you could finish." ), liquid->tname() );
+        add_msg( _( "The %s froze solid before you could finish." ), liquid->tname() );
         return false;
     }
     struct liquid_dest_opt liquid_target;
@@ -593,7 +592,7 @@ bool handle_liquid( vehicle *veh, int part_id, int radius )
     }
 
     if( !liquid.made_of( LIQUID ) ) {
-        add_msg( to_translation( "The %s froze solid before you could finish." ), liquid.tname() );
+        add_msg( _( "The %s froze solid before you could finish." ), liquid.tname() );
         return false;
     }
     struct liquid_dest_opt liquid_target;

@@ -1,8 +1,6 @@
 #pragma once
 
-#include <cstddef>
 #include <map>
-#include <optional>
 #include <ostream>
 #include <string>
 #include <type_traits>
@@ -10,7 +8,6 @@
 #include <vector>
 
 #include "value_ptr.h"
-#include "translation_snapshot.h"
 
 constexpr int INVALID_LANGUAGE_VERSION = 0;
 
@@ -149,14 +146,6 @@ class JsonIn;
 /**
  * Class for storing translation context and raw string for deferred translation
  **/
-/// What a gettext catalogue is searched by.
-struct catalogue_key {
-    std::string msgid;
-    std::optional<std::string> context;
-    /// The msgid of the plural form, for a string that has one.
-    std::optional<std::string> msgid_plural;
-};
-
 class translation
 {
     public:
@@ -220,9 +209,6 @@ class translation
          **/
         std::string translated( int num = 1 ) const;
 
-        /// O(1) owned frozen inputs; never translates, clones text/cache, or hashes on acquisition.
-        auto snapshot() const -> localization::translation_snapshot;
-
         /**
          * Methods exposing the underlying raw strings are not implemented, and
          * probably should not if there's no good reason to do so. Most importantly,
@@ -240,9 +226,6 @@ class translation
          * is or whether translation is needed.
          **/
         bool empty() const;
-
-        /// The msgids and context to look up; nullopt for a string that needs no translation.
-        auto key() const -> std::optional<catalogue_key>;
 
         /**
          * Compare translations by their translated strings (singular form).
@@ -269,7 +252,7 @@ class translation
          * Get raw untranslated string for debug purposes.
          */
         std::string_view debug_get_raw() const {
-            return data().raw;
+            return raw;
         }
 
     private:
@@ -281,8 +264,10 @@ class translation
         struct no_translation_tag {};
         translation( const std::string &str, no_translation_tag );
 
-        auto data() const -> const localization::translation_input &; // *NOPAD*
-        std::shared_ptr<const localization::translation_input> input_;
+        cata::value_ptr<std::string> ctxt = nullptr;
+        std::string raw;
+        cata::value_ptr<std::string> raw_pl = nullptr;
+        bool needs_translation = false;
         // translation cache. For "plural" translation only latest `num` is optimistically cached
         mutable int cached_language_version = INVALID_LANGUAGE_VERSION;
         mutable int cached_num = 0; // `num`, which `cached_translation` corresponds to

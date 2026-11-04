@@ -15,8 +15,6 @@
 #include "state_helpers.h"
 
 #if defined(CATA_MCP)
-#    include "locale_fixture.h"
-#    include "locale_scope.h"
 #endif
 
 #include <algorithm>
@@ -305,21 +303,4 @@ TEST_CASE(
 }
 
 #if defined(CATA_MCP)
-TEST_CASE(
-    "the pickup screen has the same ids and shape in another language",
-    "[pickup][engine_client_component]") {
-    const auto fixture = locale_fixture::korean_catalogue{};
-    auto list = ground({"test_1kg_cube", "test_1kg_cube", "rock"});
-    list.picks[0] = {.pick = true, .count = 1};
-    const auto english = published(list);
-    const auto korean = [&] {
-        const auto scope = localization::locale_scope(locale_fixture::korean);
-        return published(list);
-    }();
-    CHECK(ids_of(english) == ids_of(korean));
-    CHECK(without_words(english) == without_words(korean));
-    // The words are composed again in the language: the stack's name is the catalogue's.
-    CHECK(english.dump().find("-ko") == std::string::npos);
-    CHECK(korean.dump().find("TEST 1kg cubes-ko") != std::string::npos);
-}
 #endif

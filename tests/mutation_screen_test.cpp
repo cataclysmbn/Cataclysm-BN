@@ -12,8 +12,6 @@
 #    include "engine_client_contract.h"
 #    include "game.h"
 #    include "input.h"
-#    include "locale_fixture.h"
-#    include "locale_scope.h"
 #    include "mutation.h"
 #    include "mutation_ui.h"
 #    include "output.h"
@@ -313,40 +311,6 @@ TEST_CASE(
     CHECK(step == 3);
 }
 
-TEST_CASE(
-    "the mutation screen is the same at any viewport size and has the same ids in another language",
-    "[mutation_screen][engine_client_component]") {
-    const auto guard = screen_guard{};
-    const auto fixture_ko = locale_fixture::korean_catalogue{};
-    auto reads = 0;
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        ++reads;
-        const auto saved_x = TERMX;
-        const auto saved_y = TERMY;
-        TERMX = 80;
-        TERMY = 24;
-        const auto narrow = published();
-        TERMX = 200;
-        TERMY = 60;
-        const auto wide = published();
-        TERMX = saved_x;
-        TERMY = saved_y;
-        CHECK(narrow.dump() == wide.dump());
-        const auto korean = [] {
-            const auto scope = localization::locale_scope(locale_fixture::korean);
-            return published();
-        }();
-        auto english_ids = std::vector<std::string>{};
-        auto korean_ids = std::vector<std::string>{};
-        collect_ids(narrow, english_ids);
-        collect_ids(korean, korean_ids);
-        CHECK(english_ids == korean_ids);
-        CHECK(without_words(narrow) == without_words(korean));
-        return act("QUIT");
-    });
-    show_mutations_ui(get_avatar());
-    CHECK(reads == 1);
-}
 
 TEST_CASE(
     "the mutation screen publishes no window text and says when a column is empty",

@@ -229,8 +229,7 @@ public:
                 == &veh) {
                 if (act.values[6] >= part) {
                     player_character.cancel_activity();
-                    add_msg(m_info,
-                            to_translation("The vehicle part you were working on has gone!"));
+                    add_msg(m_info, _("The vehicle part you were working on has gone!"));
                 }
             }
         }
@@ -239,8 +238,7 @@ public:
         if (g->u.get_grab_type() == OBJECT_VEHICLE
             && g->u.bub_pos() + g->u.grab_point == veh.bub_part_location(part)) {
             if (veh.parts_at_relative(veh.part(part).mount, false).empty()) {
-                add_msg(m_info,
-                        to_translation("The vehicle part you were holding has been destroyed!"));
+                add_msg(m_info, _("The vehicle part you were holding has been destroyed!"));
                 g->u.grab(OBJECT_NONE);
             }
         }
@@ -555,7 +553,7 @@ auto vehicle::remote_controlled(const Character& who) const -> bool {
         if (g->m.inbounds(vp.pos())) { return true; }
     }
 
-    add_msg(m_bad, to_translation("Lost connection with the vehicle due to distance!"));
+    add_msg(m_bad, _("Lost connection with the vehicle due to distance!"));
     g->setremoteveh(nullptr);
     return false;
 }
@@ -1479,10 +1477,8 @@ void vehicle::validate_muscle_engines() {
                 const int part_idx = engines[e];
                 const vpart_info& engine_info = part_info(part_idx);
                 parts[part_idx].enabled = false;
-                add_msg(
-                    m_info,
-                    to_translation("The %s shuts down - it cannot operate without an occupant."),
-                    engine_info.name());
+                add_msg(m_info, _("The %s shuts down - it cannot operate without an occupant."),
+                        engine_info.name());
             }
         }
     }
@@ -2312,7 +2308,7 @@ auto vehicle::merge_rackable_vehicle(vehicle* carry_veh, const std::vector<int>&
         zones_dirty = true;
 
         //~ %1$s is the vehicle being loaded onto the bicycle rack
-        add_msg(to_translation("You load the %1$s on the rack"), carry_veh->name);
+        add_msg(_("You load the %1$s on the rack"), carry_veh->name);
         map& here = get_map();
         carry_veh->part_removal_cleanup();
         here.dirty_vehicle_list.insert(this);
@@ -2322,7 +2318,7 @@ auto vehicle::merge_rackable_vehicle(vehicle* carry_veh, const std::vector<int>&
         refresh();
     } else {
         //~ %1$s is the vehicle being loaded onto the bicycle rack
-        add_msg(m_bad, to_translation("You can't get the %1$s on the rack"), carry_veh->name);
+        add_msg(m_bad, _("You can't get the %1$s on the rack"), carry_veh->name);
     }
     return found_all_parts;
 }
@@ -2573,8 +2569,7 @@ auto vehicle::remove_carried_vehicle(const std::vector<int>& carried_parts) -> b
             // the player that there's something wrong.
             add_msg(
                 m_warning,
-                to_translation(
-                    "A part of the vehicle ('%s') has no containing vehicle's name.  It will be detached from the %s vehicle."),
+                _("A part of the vehicle ('%s') has no containing vehicle's name.  It will be detached from the %s vehicle."),
                 parts[carried_part].name(), new_vehicle->name);
 
             // check if any other parts at the same location have a valid carry name so we can still
@@ -2589,8 +2584,7 @@ auto vehicle::remove_carried_vehicle(const std::vector<int>& carried_parts) -> b
         if (mount_str.empty()) {
             add_msg(
                 m_bad,
-                to_translation(
-                    "There's not viable mount location on this vehicle: %s. It can't be unloaded from the rack."),
+                _("There's not viable mount location on this vehicle: %s. It can't be unloaded from the rack."),
                 new_vehicle->name);
             return false;
         }
@@ -2611,7 +2605,7 @@ auto vehicle::remove_carried_vehicle(const std::vector<int>& carried_parts) -> b
     const bool success = split_vehicles(carried_vehicles, new_vehicles, carried_mounts);
     if (success) {
         //~ %s is the vehicle being loaded onto the bicycle rack
-        add_msg(to_translation("You unload the %s from the bike rack."), new_vehicle->name);
+        add_msg(_("You unload the %s from the bike rack."), new_vehicle->name);
         new_vehicle->remove_carried_flag();
         if (tracked_parts) {
             new_vehicle->toggle_tracking();     // turn on tracking for our newly created vehicle
@@ -2622,8 +2616,7 @@ auto vehicle::remove_carried_vehicle(const std::vector<int>& carried_parts) -> b
         part_removal_cleanup();
     } else {
         //~ %s is the vehicle being loaded onto the bicycle rack
-        add_msg(m_bad, to_translation("You can't unload the %s from the bike rack."),
-                new_vehicle->name);
+        add_msg(m_bad, _("You can't unload the %s from the bike rack."), new_vehicle->name);
     }
     return success;
 }
@@ -5327,7 +5320,7 @@ void vehicle::power_parts(int turns) {
             // All reactors out of fuel or destroyed
             for (auto& elem : reactors) { parts[elem].enabled = false; }
             if (player_in_control(g->u) || g->u.sees(bub_ms_location())) {
-                add_msg(to_translation("The %s's reactor dies!"), name);
+                add_msg(_("The %s's reactor dies!"), name);
             }
         }
     }
@@ -5357,14 +5350,14 @@ void vehicle::power_parts(int turns) {
         is_alarm_on = false;
         camera_on = false;
         if (player_in_control(g->u) || g->u.sees(bub_ms_location())) {
-            add_msg(to_translation("The %s's battery dies!"), name);
+            add_msg(_("The %s's battery dies!"), name);
         }
         if (engine_epower < 0) {
             // Not enough epower to run gas engine ignition system
             engine_on = false;
             if ((player_in_control(g->u) || g->u.sees(bub_ms_location()))
                 && has_engine_type_not(fuel_type_muscle, true)) {
-                add_msg(to_translation("The %s's engine dies!"), name);
+                add_msg(_("The %s's engine dies!"), name);
             }
         }
     }
@@ -5630,9 +5623,9 @@ void vehicle::do_engine_damage(size_t e, int strain) {
         int dmg = rng(0, strain * 4);
         damage_direct(engines[e], dmg);
         if (one_in(2)) {
-            add_msg(to_translation("Your engine emits a high pitched whine."));
+            add_msg(_("Your engine emits a high pitched whine."));
         } else {
-            add_msg(to_translation("Your engine emits a loud grinding sound."));
+            add_msg(_("Your engine emits a loud grinding sound."));
         }
     }
 }
@@ -5670,7 +5663,7 @@ void vehicle::idle_turns(const int turns) {
                 && has_engine_type_not(fuel_type_animal, true)
                 && has_engine_type_not(fuel_type_wind, true)
                 && has_engine_type_not(fuel_type_mana, true))) {
-            add_msg(to_translation("The %s's engine dies!"), name);
+            add_msg(_("The %s's engine dies!"), name);
         }
         engine_on = false;
     }
@@ -5711,7 +5704,7 @@ void vehicle::idle(bool on_map) {
                 && has_engine_type_not(fuel_type_animal, true)
                 && has_engine_type_not(fuel_type_wind, true)
                 && has_engine_type_not(fuel_type_mana, true))) {
-            add_msg(to_translation("The %s's engine dies!"), name);
+            add_msg(_("The %s's engine dies!"), name);
         }
         engine_on = false;
     }
@@ -5720,7 +5713,7 @@ void vehicle::idle(bool on_map) {
     if (!warm_enough_to_plant(g->u.abs_pos()) || abs_ms_location().z() < 0) {
         for (const vpart_reference& vp : get_enabled_parts("PLANTER")) {
             if (g->u.sees(bub_ms_location())) {
-                add_msg(to_translation("The %s's planter turns off due to low temperature."), name);
+                add_msg(_("The %s's planter turns off due to low temperature."), name);
             }
             vp.part().enabled = false;
         }
@@ -6083,7 +6076,7 @@ auto vehicle::decrement_summon_timer() -> bool {
             dump_items_from_part(p);
         }
         if (g->u.sees(bub_ms_location())) {
-            add_msg(m_info, to_translation("Your %s winks out of existence."), name);
+            add_msg(m_info, _("Your %s winks out of existence."), name);
         }
         g->m.destroy_vehicle(this);
         return true;
@@ -6405,8 +6398,7 @@ void vehicle::do_towing_move() {
         // how the hellicopter did this happen?
         // yes, this can happen when towing over a bridge (see #47293)
         invalidate = true;
-        add_msg(m_info, to_translation("A towing cable snaps off of %s."),
-                tow_data.get_towed()->disp_name());
+        add_msg(m_info, _("A towing cable snaps off of %s."), tow_data.get_towed()->disp_name());
     }
     if (invalidate) {
         invalidate_towing(true);
@@ -6879,8 +6871,8 @@ void vehicle::damage_all(int dmg1, int dmg2, damage_type type, const tripoint_mn
             }
             if (net_dmg > part_info(p).damage_reduction.type_resist(type)) {
                 damage_direct(p, net_dmg, type);
-                add_msg(m_debug, to_translation("%1s took %.1f damage from shock."),
-                        part_info(p).name(), 1.0f * net_dmg);
+                add_msg(m_debug, _("%1s took %.1f damage from shock."), part_info(p).name(),
+                        1.0f * net_dmg);
             }
         }
     }
@@ -6968,14 +6960,14 @@ auto vehicle::break_off(int p, int dmg) -> int {
             if (parts[parts_in_square[index]].is_broken()) {
                 // Tearing off a broken part - break it up
                 if (g->u.sees(pos)) {
-                    add_msg(m_bad, to_translation("The %s's %s breaks into pieces!"), name,
+                    add_msg(m_bad, _("The %s's %s breaks into pieces!"), name,
                             parts[parts_in_square[index]].name());
                 }
                 scatter_parts(parts[parts_in_square[index]]);
             } else {
                 // Intact (but possibly damaged) part - remove it in one piece
                 if (g->u.sees(pos)) {
-                    add_msg(m_bad, to_translation("The %1$s's %2$s is torn off!"), name,
+                    add_msg(m_bad, _("The %1$s's %2$s is torn off!"), name,
                             parts[parts_in_square[index]].name());
                 }
                 if (!magic) {
@@ -6987,7 +6979,7 @@ auto vehicle::break_off(int p, int dmg) -> int {
         }
         // After clearing the frame, remove it.
         if (g->u.sees(pos)) {
-            add_msg(m_bad, to_translation("The %1$s's %2$s is destroyed!"), name, parts[p].name());
+            add_msg(m_bad, _("The %1$s's %2$s is destroyed!"), name, parts[p].name());
         }
         scatter_parts(parts[p]);
         remove_part(p);
@@ -6995,7 +6987,7 @@ auto vehicle::break_off(int p, int dmg) -> int {
     } else {
         // Just break it off
         if (g->u.sees(pos)) {
-            add_msg(m_bad, to_translation("The %1$s's %2$s is destroyed!"), name, parts[p].name());
+            add_msg(m_bad, _("The %1$s's %2$s is destroyed!"), name, parts[p].name());
         }
 
         scatter_parts(parts[p]);
@@ -7715,7 +7707,7 @@ void vehicle::item_dropper_drop_single(bool single) {
 
     // Select one
     if (options.empty()) {
-        add_msg(m_warning, to_translation("None of the droppers are loaded."));
+        add_msg(m_warning, _("None of the droppers are loaded."));
         return;
     }
     const int idx = uilist(_("Drop from which dropper?"), option_names);

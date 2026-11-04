@@ -122,25 +122,6 @@ void player::add_msg_player_or_npc( const game_message_params &params,
     Messages::add_msg( params, player_msg );
 }
 
-void player::add_localised_msg_if_player( const game_message_params &params,
-        const std::string &msg, const std::optional<localised_text> &localised ) const
-{
-    // An NPC is a player too, and its line goes to its own sink.
-    if( !is_avatar() ) {
-        return add_msg_if_player( params, msg );
-    }
-    Messages::add_msg( params, msg, localised );
-}
-
-void player::add_localised_msg_player_or_npc( const game_message_params &params,
-        const localised_pair &pair ) const
-{
-    if( !is_avatar() ) {
-        return add_msg_player_or_npc( params, pair.player_msg, pair.npc_msg );
-    }
-    Messages::add_msg( params, pair.player_msg, pair.player_localised );
-}
-
 void player::add_msg_player_or_say( const std::string &player_msg,
                                     const std::string &/*npc_speech*/ ) const
 {

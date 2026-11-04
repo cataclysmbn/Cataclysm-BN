@@ -17,8 +17,6 @@
 #    include "game_constants.h"
 #    include "input.h"
 #    include "json.h"
-#    include "locale_fixture.h"
-#    include "locale_scope.h"
 #    include "monstergenerator.h"
 #    include "mtype.h"
 #    include "options.h"
@@ -200,25 +198,6 @@ auto published() -> json {
     top.erase("screen_id");
     return top;
 }
-auto without_words(json value) -> json {
-    if (value.is_string()) { return ""; }
-    if (!value.is_structured()) { return value; }
-    for (auto& member : value) { member = without_words(std::move(member)); }
-    return value;
-}
-void collect_ids(const json& value, std::vector<std::string>& into) {
-    if (value.is_object()) {
-        for (const auto& [name, member] : value.items()) {
-            if ((name == "id" || name == "affordance") && member.is_string()) {
-                into.push_back(member.get<std::string>());
-            }
-            collect_ids(member, into);
-        }
-    } else if (value.is_array()) {
-        for (const auto& member : value) { collect_ids(member, into); }
-    }
-}
-
 /// The screen at 80x24 and at 200x60, and in Korean: its shape must not depend on any of them.
 void check_invariance(const std::string& context) {
     const auto saved_x = TERMX;
@@ -232,19 +211,6 @@ void check_invariance(const std::string& context) {
     TERMX = saved_x;
     TERMY = saved_y;
     CHECK(narrow.dump() == wide.dump());
-    const auto fixture_ko = locale_fixture::korean_catalogue{};
-    const auto korean = [] {
-        const auto scope = localization::locale_scope(locale_fixture::korean);
-        return published();
-    }();
-    auto english_ids = std::vector<std::string>{};
-    auto korean_ids = std::vector<std::string>{};
-    collect_ids(narrow, english_ids);
-    collect_ids(korean, korean_ids);
-    INFO(context);
-    CHECK_FALSE(english_ids.empty());
-    CHECK(english_ids == korean_ids);
-    CHECK(without_words(narrow) == without_words(korean));
 }
 
 /// The character's name for the screen, put back after it.

@@ -10,8 +10,6 @@
 #include "type_id.h"
 
 #if defined(CATA_MCP)
-#    include "locale_fixture.h"
-#    include "locale_scope.h"
 #endif
 
 #include <algorithm>
@@ -245,26 +243,4 @@ TEST_CASE(
 }
 
 #if defined(CATA_MCP)
-TEST_CASE(
-    "the inventory selector has the same ids and shape in another language",
-    "[inventory][engine_client_component]") {
-    const auto fixture = locale_fixture::korean_catalogue{};
-    clear_avatar();
-    auto cube = item::spawn("test_1kg_cube");
-    auto selector = plain_selector(get_avatar());
-    selector.add_item(selector.own_inv_column, cube.get());
-    const auto published = [&] {
-        const auto screen = selector.open_screen();
-        return top_screen();
-    };
-    const auto english = published();
-    const auto korean = [&] {
-        const auto scope = localization::locale_scope(locale_fixture::korean);
-        return published();
-    }();
-    CHECK(ids_of(english) == ids_of(korean));
-    CHECK(without_words(english) == without_words(korean));
-    CHECK(english.dump().find("-ko") == std::string::npos);
-    CHECK(korean.dump().find("TEST 1kg cube-ko") != std::string::npos);
-}
 #endif

@@ -225,27 +225,34 @@ static void put_into_vehicle( Character &c, item_drop_reason reason,
         switch( reason ) {
             case item_drop_reason::deliberate:
                 c.add_msg_player_or_npc(
-                    localised::counted{ .format = pl_translation( "You put your %1$s in the %2$s's %3$s.", "You put your %1$s in the %2$s's %3$s." ), .count = dropcount },
-                    localised::counted{ .format = pl_translation( "<npcname> puts their %1$s in the %2$s's %3$s.", "<npcname> puts their %1$s in the %2$s's %3$s." ), .count = dropcount },
+                    vgettext( "You put your %1$s in the %2$s's %3$s.",
+                              "You put your %1$s in the %2$s's %3$s.", dropcount ),
+                    vgettext( "<npcname> puts their %1$s in the %2$s's %3$s.",
+                              "<npcname> puts their %1$s in the %2$s's %3$s.", dropcount ),
                     it_name, veh.name, part_name
                 );
                 break;
             case item_drop_reason::too_large:
                 c.add_msg_if_player(
-                    localised::counted{ .format = pl_translation( "There's no room in your inventory for the %s, so you drop it into the %s's %s.", "There's no room in your inventory for the %s, so you drop them into the %s's %s." ), .count = dropcount },
+                    vgettext(
+                        "There's no room in your inventory for the %s, so you drop it into the %s's %s.",
+                        "There's no room in your inventory for the %s, so you drop them into the %s's %s.",
+                        dropcount ),
                     it_name, veh.name, part_name
                 );
                 break;
             case item_drop_reason::too_heavy:
                 c.add_msg_if_player(
-                    localised::counted{ .format = pl_translation( "The %s is too heavy to carry, so you drop it into the %s's %s.", "The %s are too heavy to carry, so you drop them into the %s's %s." ), .count = dropcount },
+                    vgettext( "The %s is too heavy to carry, so you drop it into the %s's %s.",
+                              "The %s are too heavy to carry, so you drop them into the %s's %s.", dropcount ),
                     it_name, veh.name, part_name
                 );
                 break;
             case item_drop_reason::tumbling:
                 c.add_msg_if_player(
                     m_bad,
-                    localised::counted{ .format = pl_translation( "Your %s tumbles into the %s's %s.", "Your %s tumble into the %s's %s." ), .count = dropcount },
+                    vgettext( "Your %s tumbles into the %s's %s.",
+                              "Your %s tumble into the %s's %s.", dropcount ),
                     it_name, veh.name, part_name
                 );
                 break;
@@ -254,8 +261,8 @@ static void put_into_vehicle( Character &c, item_drop_reason reason,
         switch( reason ) {
             case item_drop_reason::deliberate:
                 c.add_msg_player_or_npc(
-                    to_translation( "You put several items in the %1$s's %2$s." ),
-                    to_translation( "<npcname> puts several items in the %1$s's %2$s." ),
+                    _( "You put several items in the %1$s's %2$s." ),
+                    _( "<npcname> puts several items in the %1$s's %2$s." ),
                     veh.name, part_name
                 );
                 break;
@@ -263,7 +270,7 @@ static void put_into_vehicle( Character &c, item_drop_reason reason,
             case item_drop_reason::too_heavy:
             case item_drop_reason::tumbling:
                 c.add_msg_if_player(
-                    m_bad, to_translation( "Some items tumble into the %1$s's %2$s." ),
+                    m_bad, _( "Some items tumble into the %1$s's %2$s." ),
                     veh.name, part_name
                 );
                 break;
@@ -274,13 +281,15 @@ static void put_into_vehicle( Character &c, item_drop_reason reason,
         if( into_vehicle ) {
             c.add_msg_if_player(
                 m_warning,
-                localised::counted{ .format = pl_translation( "The %s is full, so something fell to the %s.", "The %s is full, so some items fell to the %s." ), .count = fallen_count },
+                vgettext( "The %s is full, so something fell to the %s.",
+                          "The %s is full, so some items fell to the %s.", fallen_count ),
                 part_name, ter_name
             );
         } else {
             c.add_msg_if_player(
                 m_warning,
-                localised::counted{ .format = pl_translation( "The %s is full, so it fell to the %s.", "The %s is full, so they fell to the %s." ), .count = fallen_count },
+                vgettext( "The %s is full, so it fell to the %s.",
+                          "The %s is full, so they fell to the %s.", fallen_count ),
                 part_name, ter_name
             );
         }
@@ -306,11 +315,11 @@ static void stash_on_pet( std::vector<detached_ptr<item>> &items, monster &pet,
     for( detached_ptr<item> &it : items ) {
         item &obj = *it;
         if( it->volume() > remaining_volume ) {
-            add_msg( m_bad, to_translation( "%1$s did not fit and fell to the %2$s." ), it->display_name(),
+            add_msg( m_bad, _( "%1$s did not fit and fell to the %2$s." ), it->display_name(),
                      here.name( pet.bub_pos() ) );
             here.add_item_or_charges( pet.bub_pos(), std::move( it ) );
         } else if( it->weight() > remaining_weight ) {
-            add_msg( m_bad, to_translation( "%1$s is too heavy and fell to the %2$s." ), it->display_name(),
+            add_msg( m_bad, _( "%1$s is too heavy and fell to the %2$s." ), it->display_name(),
                      here.name( pet.bub_pos() ) );
             here.add_item_or_charges( pet.bub_pos(), std::move( it ) );
         } else {
@@ -368,34 +377,41 @@ void drop_on_map( Character &c, item_drop_reason reason,
             case item_drop_reason::deliberate:
                 if( can_move_there ) {
                     c.add_msg_player_or_npc(
-                        localised::counted{ .format = pl_translation( "You drop your %1$s on the %2$s.", "You drop your %1$s on the %2$s." ), .count = dropcount },
-                        localised::counted{ .format = pl_translation( "<npcname> drops their %1$s on the %2$s.", "<npcname> drops their %1$s on the %2$s." ), .count = dropcount },
+                        vgettext( "You drop your %1$s on the %2$s.",
+                                  "You drop your %1$s on the %2$s.", dropcount ),
+                        vgettext( "<npcname> drops their %1$s on the %2$s.",
+                                  "<npcname> drops their %1$s on the %2$s.", dropcount ),
                         it_name, ter_name
                     );
                 } else {
                     c.add_msg_player_or_npc(
-                        localised::counted{ .format = pl_translation( "You put your %1$s in the %2$s.", "You put your %1$s in the %2$s." ), .count = dropcount },
-                        localised::counted{ .format = pl_translation( "<npcname> puts their %1$s in the %2$s.", "<npcname> puts their %1$s in the %2$s." ), .count = dropcount },
+                        vgettext( "You put your %1$s in the %2$s.",
+                                  "You put your %1$s in the %2$s.", dropcount ),
+                        vgettext( "<npcname> puts their %1$s in the %2$s.",
+                                  "<npcname> puts their %1$s in the %2$s.", dropcount ),
                         it_name, ter_name
                     );
                 }
                 break;
             case item_drop_reason::too_large:
                 c.add_msg_if_player(
-                    localised::counted{ .format = pl_translation( "There's no room in your inventory for the %s, so you drop it.", "There's no room in your inventory for the %s, so you drop them." ), .count = dropcount },
+                    vgettext( "There's no room in your inventory for the %s, so you drop it.",
+                              "There's no room in your inventory for the %s, so you drop them.", dropcount ),
                     it_name
                 );
                 break;
             case item_drop_reason::too_heavy:
                 c.add_msg_if_player(
-                    localised::counted{ .format = pl_translation( "The %s is too heavy to carry, so you drop it.", "The %s is too heavy to carry, so you drop them." ), .count = dropcount },
+                    vgettext( "The %s is too heavy to carry, so you drop it.",
+                              "The %s is too heavy to carry, so you drop them.", dropcount ),
                     it_name
                 );
                 break;
             case item_drop_reason::tumbling:
                 c.add_msg_if_player(
                     m_bad,
-                    localised::counted{ .format = pl_translation( "Your %1$s tumbles to the %2$s.", "Your %1$s tumble to the %2$s." ), .count = dropcount },
+                    vgettext( "Your %1$s tumbles to the %2$s.",
+                              "Your %1$s tumble to the %2$s.", dropcount ),
                     it_name, ter_name
                 );
                 break;
@@ -418,14 +434,14 @@ void drop_on_map( Character &c, item_drop_reason reason,
             case item_drop_reason::deliberate:
                 if( can_move_there ) {
                     c.add_msg_player_or_npc(
-                        to_translation( "You drop several items on the %s." ),
-                        to_translation( "<npcname> drops several items on the %s." ),
+                        _( "You drop several items on the %s." ),
+                        _( "<npcname> drops several items on the %s." ),
                         ter_name
                     );
                 } else {
                     c.add_msg_player_or_npc(
-                        to_translation( "You put several items in the %s." ),
-                        to_translation( "<npcname> puts several items in the %s." ),
+                        _( "You put several items in the %s." ),
+                        _( "<npcname> puts several items in the %s." ),
                         ter_name
                     );
                 }
@@ -433,7 +449,7 @@ void drop_on_map( Character &c, item_drop_reason reason,
             case item_drop_reason::too_large:
             case item_drop_reason::too_heavy:
             case item_drop_reason::tumbling:
-                c.add_msg_if_player( m_bad, to_translation( "Some items tumble to the %s." ), ter_name );
+                c.add_msg_if_player( m_bad, _( "Some items tumble to the %s." ), ter_name );
                 break;
         }
     }
@@ -888,7 +904,7 @@ void stash_activity_actor::do_turn( player_activity &, Character &who )
             pet->remove_effect( effect_ai_waiting );
         }
     } else {
-        who.add_msg_if_player( to_translation( "The pet has moved somewhere else." ) );
+        who.add_msg_if_player( _( "The pet has moved somewhere else." ) );
         who.cancel_activity();
     }
 }
@@ -2342,9 +2358,9 @@ static bool fetch_activity( player &p, const tripoint_bub_ms &src_loc,
                     const std::string item_name = moved->tname();
                     if( p.is_npc() ) {
                         if( pickup_count == 1 ) {
-                            add_msg( to_translation( "%1$s picks up a %2$s." ), p.disp_name(), item_name );
+                            add_msg( _( "%1$s picks up a %2$s." ), p.disp_name(), item_name );
                         } else {
-                            add_msg( to_translation( "%s picks up several items." ),  p.disp_name() );
+                            add_msg( _( "%s picks up several items." ),  p.disp_name() );
                         }
                     }
                     p.i_add( std::move( moved ) );
@@ -2414,7 +2430,7 @@ static bool chop_plank_activity( player &p, const tripoint_bub_ms &src_loc )
         if( i->typeId() == itype_log ) {
             here.i_rem( src_loc, i );
             int moves = to_moves<int>( 20_minutes );
-            p.add_msg_if_player( to_translation( "You cut the log into planks." ) );
+            p.add_msg_if_player( _( "You cut the log into planks." ) );
             p.assign_activity( ACT_CHOP_PLANKS, moves, -1 );
             p.activity->placement = bub_to_abs( src_loc );
             return true;
@@ -2527,8 +2543,7 @@ void activity_on_turn_move_loot( player_activity &act, player &p )
 
                 // check if we found path to source / adjacent tile
                 if( route.empty() ) {
-                    add_msg( m_info,
-                             to_translation( "%s can't reach the source tile.  Try to sort out loot without a cart." ),
+                    add_msg( m_info, _( "%s can't reach the source tile.  Try to sort out loot without a cart." ),
                              p.disp_name() );
                     continue;
                 }
@@ -2669,8 +2684,7 @@ void activity_on_turn_move_loot( player_activity &act, player &p )
     }
 
     // If we got here without restarting the activity, it means we're done
-    add_msg( m_info, to_translation( "%s sorted out every item possible." ), p.disp_name( false,
-             true ) );
+    add_msg( m_info, _( "%s sorted out every item possible." ), p.disp_name( false, true ) );
     if( p.is_npc() ) {
         npc *guy = dynamic_cast<npc *>( &p );
         guy->revert_after_activity();
@@ -2890,8 +2904,8 @@ static std::unordered_set<tripoint_abs_ms> generic_multi_activity_locations( pla
                         _( "Construction tasks skipped: all targets are inside a Construction: Ignore zone.  Remove that zone or move the blueprint." ) );
                 }
                 p.add_msg_player_or_npc( m_info,
-                                         to_translation( "Construction tasks skipped: all targets are inside a Construction: Ignore zone.  Remove that zone or move the blueprint." ),
-                                         to_translation( "<npcname> reports every construction target is inside a Construction: Ignore zone.  Remove that zone or move the blueprint." ) );
+                                         _( "Construction tasks skipped: all targets are inside a Construction: Ignore zone.  Remove that zone or move the blueprint." ),
+                                         _( "<npcname> reports every construction target is inside a Construction: Ignore zone.  Remove that zone or move the blueprint." ) );
             }
             // farming activities encompass tilling, planting, harvesting.
         } else if( act_id == ACT_MULTIPLE_FARM ) {
@@ -2932,7 +2946,7 @@ static std::unordered_set<tripoint_abs_ms> generic_multi_activity_locations( pla
     }
     const bool post_dark_check = src_set.empty();
     if( !pre_dark_check && post_dark_check ) {
-        p.add_msg_if_player( m_info, to_translation( "It is too dark to do this activity." ) );
+        p.add_msg_if_player( m_info, _( "It is too dark to do this activity." ) );
         if( act_id == ACT_MULTIPLE_FARM ) {
             set_activity_failure_message( p,
                                           _( "Farming blocked for nearby farm plots: it is too dark to work." ) );
@@ -2949,8 +2963,8 @@ static std::unordered_set<tripoint_abs_ms> generic_multi_activity_locations( pla
                 _( "No construction sites are available.  Add a Construction: Blueprint zone or start a construction to give the order." ) );
         }
         p.add_msg_player_or_npc( m_info,
-                                 to_translation( "No construction sites are available.  Add a Construction: Blueprint zone or start a construction to give the order." ),
-                                 to_translation( "<npcname> reports no construction sites are available.  Add a Construction: Blueprint zone or start a construction to give the order." ) );
+                                 _( "No construction sites are available.  Add a Construction: Blueprint zone or start a construction to give the order." ),
+                                 _( "<npcname> reports no construction sites are available.  Add a Construction: Blueprint zone or start a construction to give the order." ) );
     }
     return src_set;
 }
@@ -3548,7 +3562,7 @@ bool generic_multi_activity_handler( player_activity &act, player &p, bool check
             !character_funcs::can_see_fine_details( p ) ) {
             const zone_data *zone = mgr.get_zone_at( src, get_zone_for_act( src_loc, mgr,
                                     activity_to_restore ) );
-            p.add_msg_if_player( m_info, to_translation( "It is too dark to work here." ) );
+            p.add_msg_if_player( m_info, _( "It is too dark to work here." ) );
             if( is_multi_construction ) {
                 set_activity_failure_message( p,
                                               string_format( _( "Construction task for %s ended with no progress.  It was too dark to work." ),

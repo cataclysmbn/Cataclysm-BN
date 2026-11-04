@@ -88,7 +88,7 @@ TEST_CASE(
     const auto running = game_session::running();
     const auto restore = on_out_of_scope([&] { game_session::set_running(running); });
     game_session::set_running(true);
-    const auto state = ec::world::capture_worded();
+    const auto state = ec::world::capture_world();
     REQUIRE(state.avatar);
     CHECK(state.avatar->modes == ec::engine_modes());
 }
