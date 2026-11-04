@@ -42,23 +42,10 @@ out/build/linux-full/src/cataclysm-bn --client=tiles \
 一度記録し、その記録を比較対象のビルドと検査対象のビルドで再生します:
 
 ```sh
-deno task replay:record --binary ./cataclysm-bn-tiles out/rec
 deno task replay:diff --recording out/rec/inputs.jsonl --profile out/rec/profile \
   --base base/cataclysm-bn-tiles --head ./cataclysm-bn-tiles out/diff
 ```
 
-`replay:record` は `--entry`(既定は `new_game:tutorial`)の新しいゲームを始め、`--waits` 回待機し、保存して終了します。`out/rec/profile` は記録が始まった時点の手付かずのユーザーディレクトリです。`replay:diff` は各ビルドでそのプロフィールのコピーから `--state-hash-log` 付きで記録を再生し、ログをターンごとに、保存されたワールドを `tools/client/compare_saves.ts` で比較します。`out/diff/summary.json` には、ターンまたは `rng`、`avatar`、`monsters`、`npcs`、`map` のハッシュが最初に異なるステップと、異なる保存レコードが書かれます。両ビルドが一致すれば 0、分かれれば 1、再生が失敗すれば 2 で終了します(入力コンテキストの変化も失敗で、`game.stderr` がそのイベントを示します)。ゲームルートがバイナリのディレクトリでないビルドには `--base-root` と `--head-root` を指定します。
-
-## チュートリアルセッションの記録
-
-`--scenario tutorial` は、待機の後にもっと長いセッションを、クライアントと同じプロトコルで記録し、実行したステップを出力します。
-
-```sh
-deno task replay:record --binary ./cataclysm-bn-tiles --scenario tutorial out/tutorial
-deno task replay:diff --recording out/tutorial/inputs.jsonl --profile out/tutorial/profile \
-  --base base/cataclysm-bn-tiles --head ./cataclysm-bn-tiles out/tutorial-diff
-```
-
-セッションでは、所持品セレクターで正確な数量を捨て、高度な所持品でフィルターと移動を行い、マチェーテを拾い、カーゴパンツを解体して布を拾い、簡易包帯 2 個のバッチを製作し、バックパックを着用し、存在しないレシピと建設を試し、待機し、東西へ移動して保存します。アイテムは歩いて探さず、デバッグメニューでアバターの足元に出すため、記録は毎回同じになります(`tools/client/replay_tutorial.ts`)。短いシナリオの成功はそのシナリオの証拠であり、すべてのゲームプレイで決定的リプレイが可能だという証明ではありません。
+`out/rec/profile` は記録が始まった時点の手付かずのユーザーディレクトリです。`replay:diff` は各ビルドでそのプロフィールのコピーから `--state-hash-log` 付きで記録を再生し、ログをターンごとに、保存されたワールドを `tools/client/compare_saves.ts` で比較します。`out/diff/summary.json` には、ターンまたは `rng`、`avatar`、`monsters`、`npcs`、`map` のハッシュが最初に異なるステップと、異なる保存レコードが書かれます。両ビルドが一致すれば 0、分かれれば 1、再生が失敗すれば 2 で終了します(入力コンテキストの変化も失敗で、`game.stderr` がそのイベントを示します)。ゲームルートがバイナリのディレクトリでないビルドには `--base-root` と `--head-root` を指定します。
 
 [エンジンとクライアント](../explanation/engine_clients.md)、[MCP](mcp.md)、[Tracy プロファイリング](tracy.md)も参照してください。

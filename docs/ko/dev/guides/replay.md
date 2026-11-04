@@ -42,23 +42,10 @@ out/build/linux-full/src/cataclysm-bn --client=tiles \
 한 번 기록한 뒤, 그 기록을 비교 기준 빌드와 검사 대상 빌드에서 재생합니다:
 
 ```sh
-deno task replay:record --binary ./cataclysm-bn-tiles out/rec
 deno task replay:diff --recording out/rec/inputs.jsonl --profile out/rec/profile \
   --base base/cataclysm-bn-tiles --head ./cataclysm-bn-tiles out/diff
 ```
 
-`replay:record`는 `--entry`(기본값 `new_game:tutorial`)의 새 게임을 시작해 `--waits`번 기다린 뒤 저장하고 종료합니다. `out/rec/profile`은 기록이 시작된 시점의 손대지 않은 사용자 디렉터리입니다. `replay:diff`는 각 빌드에서 그 프로필의 사본으로 `--state-hash-log`를 켜고 기록을 재생한 뒤, 로그를 턴마다, 저장된 월드를 `tools/client/compare_saves.ts`로 비교합니다. `out/diff/summary.json`에는 턴이나 `rng`, `avatar`, `monsters`, `npcs`, `map` 해시가 처음 달라지는 단계와 달라진 저장 레코드가 적힙니다. 두 빌드가 같으면 0, 갈라지면 1, 재생이 실패하면 2로 끝납니다(입력 컨텍스트가 바뀐 것도 실패이며 `game.stderr`가 그 이벤트를 알려 줍니다). 게임 루트가 바이너리 디렉터리가 아닌 빌드에는 `--base-root`와 `--head-root`를 줍니다.
-
-## 튜토리얼 세션 기록
-
-`--scenario tutorial`은 기다리기 뒤에 더 긴 세션을 클라이언트와 같은 프로토콜로 기록하고, 실행한 단계를 출력합니다:
-
-```sh
-deno task replay:record --binary ./cataclysm-bn-tiles --scenario tutorial out/tutorial
-deno task replay:diff --recording out/tutorial/inputs.jsonl --profile out/tutorial/profile \
-  --base base/cataclysm-bn-tiles --head ./cataclysm-bn-tiles out/tutorial-diff
-```
-
-세션은 인벤토리 선택기로 정확한 수량을 버리고, 고급 인벤토리에서 필터와 이동을 하며, 마체테를 줍고, 카고 바지를 재활용해 나온 천 조각을 줍고, 임시 붕대 2개 묶음을 제작하고, 배낭을 착용하고, 없는 제작법과 건설을 시도하고, 기다리고, 동쪽/서쪽으로 이동한 뒤 저장합니다. 아이템은 걸어가서 찾지 않고 디버그 메뉴로 아바타 발밑에 만들기 때문에 기록은 매번 같습니다(`tools/client/replay_tutorial.ts`). 짧은 시나리오가 성공했다는 사실은 해당 시나리오의 증거이며 모든 게임 플레이에서 결정적 리플레이가 가능하다는 증명은 아닙니다.
+`out/rec/profile`은 기록이 시작된 시점의 손대지 않은 사용자 디렉터리입니다. `replay:diff`는 각 빌드에서 그 프로필의 사본으로 `--state-hash-log`를 켜고 기록을 재생한 뒤, 로그를 턴마다, 저장된 월드를 `tools/client/compare_saves.ts`로 비교합니다. `out/diff/summary.json`에는 턴이나 `rng`, `avatar`, `monsters`, `npcs`, `map` 해시가 처음 달라지는 단계와 달라진 저장 레코드가 적힙니다. 두 빌드가 같으면 0, 갈라지면 1, 재생이 실패하면 2로 끝납니다(입력 컨텍스트가 바뀐 것도 실패이며 `game.stderr`가 그 이벤트를 알려 줍니다). 게임 루트가 바이너리 디렉터리가 아닌 빌드에는 `--base-root`와 `--head-root`를 줍니다.
 
 [엔진과 클라이언트](../explanation/engine_clients.md), [MCP](mcp.md), [Tracy 프로파일링](tracy.md)도 참조하세요.

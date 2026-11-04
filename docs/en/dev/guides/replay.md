@@ -65,24 +65,11 @@ not a full simulation-state checksum.
 Record once, then play the recording on the build to compare against and on the build under test:
 
 ```sh
-deno task replay:record --binary ./cataclysm-bn-tiles out/rec
 deno task replay:diff --recording out/rec/inputs.jsonl --profile out/rec/profile \
   --base base/cataclysm-bn-tiles --head ./cataclysm-bn-tiles out/diff
 ```
 
-`replay:record` starts a new game of `--entry` (`new_game:tutorial` by default), waits `--waits` times, saves and quits; `out/rec/profile` is the untouched user directory the recording starts from. `replay:diff` plays the recording on each build from a copy of that profile with `--state-hash-log`, then compares the logs turn by turn and the saved worlds with `tools/client/compare_saves.ts`. `out/diff/summary.json` names the first step whose turn or `rng`, `avatar`, `monsters`, `npcs` or `map` hash differs, and the saved records that differ. It exits 0 when both builds agree, 1 when they part and 2 when a playback fails (a changed input context is such a failure; its `game.stderr` names the event). `--base-root` and `--head-root` name a build's game root when it is not the binary's directory.
-
-## Recording a tutorial session
-
-`--scenario tutorial` records a longer session after the waits, through the same protocol a client uses, and prints the steps it ran:
-
-```sh
-deno task replay:record --binary ./cataclysm-bn-tiles --scenario tutorial out/tutorial
-deno task replay:diff --recording out/tutorial/inputs.jsonl --profile out/tutorial/profile \
-  --base base/cataclysm-bn-tiles --head ./cataclysm-bn-tiles out/tutorial-diff
-```
-
-The session drops an exact count through the inventory selector, filters and moves in the advanced inventory, picks up a machete, salvages cargo pants and picks up the rags, crafts a batch of two makeshift bandages, wears a backpack, tries a missing recipe and construction, waits, moves east and west, and saves. Items are spawned at the avatar's feet with the debug menu instead of walked to, so the recording is the same every time (`tools/client/replay_tutorial.ts`). A short scenario passing is evidence for that scenario, not proof of deterministic replay for all gameplay.
+`out/rec/profile` is the untouched user directory the recording starts from. `replay:diff` plays the recording on each build from a copy of that profile with `--state-hash-log`, then compares the logs turn by turn and the saved worlds with `tools/client/compare_saves.ts`. `out/diff/summary.json` names the first step whose turn or `rng`, `avatar`, `monsters`, `npcs` or `map` hash differs, and the saved records that differ. It exits 0 when both builds agree, 1 when they part and 2 when a playback fails (a changed input context is such a failure; its `game.stderr` names the event). `--base-root` and `--head-root` name a build's game root when it is not the binary's directory.
 
 See [engine and clients](../explanation/engine_clients.md), [MCP](mcp.md), and
 [Tracy profiling](tracy.md).
