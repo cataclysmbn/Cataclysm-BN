@@ -105,7 +105,12 @@
   {
     "type": "enchantment",
     "id": "AEP_GLOW",
-    "values": [ { "value": "LUMINATION", "value": 25 } ]
+    "values": [ { "value": "LUMINATION", "max": 25 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_PSYSHIELD",
+    "flags": [ "PSYSHIELD" ]
   },
   {
     "type": "enchantment",
@@ -115,7 +120,7 @@
   {
     "type": "enchantment",
     "id": "AEP_CARRY_MORE",
-    "values": [ { "value": "CARRY_WEIGHT", "value": 22500 } ],
+    "values": [ { "value": "CARRY_WEIGHT", "add": 22500 } ],
     "//1": "Unported: AEP_SAP_LIFE; Need spell master help",
     "//2": "Unported: AEP_FUN; Dunno how"
   },
