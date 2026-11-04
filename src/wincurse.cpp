@@ -676,7 +676,7 @@ void input_manager::pump_events()
     previously_pressed_key = 0;
 }
 
-input_event input_manager::get_input_event()
+input_event input_manager::read_native_input_event()
 {
     // standards note: getch is sometimes required to call refresh
     // see, e.g., http://linux.die.net/man/3/getch

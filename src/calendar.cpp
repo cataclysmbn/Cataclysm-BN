@@ -35,7 +35,7 @@ calendar_config calendar::config( calendar::turn_zero,
 const time_point &calendar::start_of_cataclysm = calendar::config.start_of_cataclysm();
 const time_point &calendar::start_of_game = calendar::config.start_of_game();
 const season_type &calendar::initial_season = calendar::config.initial_season();
-time_point calendar::turn = calendar::turn_zero;
+thread_local constinit time_point calendar::turn = time_point::from_turn( 0 );
 
 // Sunrise/sunset hours are now driven by world options (SUNRISE_SUMMER etc.) with per-dimension
 // overrides registered via calendar::register_dim_time_config(). See calendar.h for details.

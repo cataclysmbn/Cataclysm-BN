@@ -16,6 +16,7 @@
 #endif
 
 #include "wcwidth.h"
+#include "replay/replay.h"
 #include "ui_manager.h"
 
 static bool is_linebreak( const uint32_t uc )
@@ -702,16 +703,22 @@ std::pair<bool, std::string> string_editor_window::query_string()
             if( action == "TEXT.PASTE" ) {
 #if defined(TILES)
                 if( edit.empty() ) {
-                    char *const clip = SDL_GetClipboardText();
-                    if( clip ) {
-                        entered = clip;
-                        SDL_free( clip );
-                    }
+                    entered = replay::external_text_or_exit( "clipboard", []() {
+                        auto text = std::string{};
+                        char *const clip = SDL_GetClipboardText();
+                        if( clip ) {
+                            text = clip;
+                            SDL_free( clip );
+                        }
+                        return text;
+                    } );
                 }
 #endif
             } else if( action == "TEXT.INPUT_FROM_FILE" ) {
                 if( edit.empty() ) {
-                    entered = get_input_string_from_file();
+                    entered = replay::external_text_or_exit( "file", []() {
+                        return get_input_string_from_file();
+                    } );
                 }
             } else if( ch == '\n' ) {
                 if( edit.empty() ) {

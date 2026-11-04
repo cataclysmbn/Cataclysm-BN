@@ -3953,7 +3953,7 @@ void input_manager::pump_events()
 
 // This is how we're actually going to handle input events, SDL getch
 // is simply a wrapper around this.
-input_event input_manager::get_input_event()
+input_event input_manager::read_native_input_event()
 {
     ZoneScopedN( "sdl_input_get_input_event" );
     previously_pressed_key = 0;

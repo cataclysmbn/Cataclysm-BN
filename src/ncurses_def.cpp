@@ -343,7 +343,7 @@ void input_manager::pump_events()
     previously_pressed_key = 0;
 }
 
-input_event input_manager::get_input_event()
+input_event input_manager::read_native_input_event()
 {
     int key = ERR;
     input_event rval;
