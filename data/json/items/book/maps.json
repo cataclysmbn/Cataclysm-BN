@@ -370,7 +370,7 @@
     "copy-from": "abstractmap",
     "type": "GENERIC",
     "name": { "str": "satellite map" },
-    "description": "An offline satellite map of the local area.  Due to its low quality and lack of map legend, you are unable to recognise most buildings.  Load it onto a powered reader to add terrain and roads to your map.",
+    "description": "An offline satellite map of the local area.  Due to its low quality and lack of map legend, you are unable to recognise most buildings.",
     "color": "light_gray",
     "material": [  ],
     "weight": "0 g",

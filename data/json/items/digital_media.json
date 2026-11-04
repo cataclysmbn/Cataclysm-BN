@@ -84,7 +84,7 @@
     "copy-from": "urbexmap",
     "type": "GENERIC",
     "name": { "str": "saved urbex forum guide" },
-    "description": "A saved post from an urban exploration forum, with directions to abandoned buildings and advice on getting there.  Load it onto a powered reader to add the roads and locations mentioned in the post to your map.",
+    "description": "A saved post from an urban exploration forum, with directions to abandoned buildings and advice on getting there.",
     "symbol": "#",
     "material": [  ],
     "weight": "0 g",
@@ -97,7 +97,7 @@
     "copy-from": "digital_urbex_map",
     "type": "GENERIC",
     "name": { "str": "saved evacuation map" },
-    "description": "An offline emergency evacuation guide showing the regional refugee center, nearby evac shelters, and the roads connecting them.  Load it onto a powered reader to add these locations and roads to your map.",
+    "description": "An offline emergency evacuation guide showing the regional refugee center, nearby evac shelters, and the roads connecting them.",
     "use_action": {
       "type": "reveal_map",
       "radius": 180,
@@ -117,7 +117,7 @@
     "copy-from": "digital_collection",
     "type": "GENERIC",
     "name": { "str": "3D printing infographic archive" },
-    "description": "An illustrated reference archive containing plans for assembling a basic 3D printer from salvaged components.  Load it onto a powered reader to consult the recipe.",
+    "description": "An illustrated reference archive containing plans for assembling a basic 3D printer from salvaged components.",
     "item_vars": { "digital_recipes": "[{\"id\":\"3d_printer_basic\",\"skill_level\":7}]" }
   },
   {
@@ -151,7 +151,7 @@
     "copy-from": "digital_collection",
     "type": "GENERIC",
     "name": { "str": "music collection" },
-    "description": "A saved collection of music tracks.  Copy it to a reader to listen.",
+    "description": "A saved collection of music tracks.",
     "extend": { "flags": [ "DIGITAL_MUSIC" ] },
     "item_vars": { "digital_music_morale_cap": "25", "digital_music_cooldown_seconds": "300" }
   },
@@ -160,7 +160,7 @@
     "copy-from": "digital_collection",
     "type": "GENERIC",
     "name": { "str": "personal photo album" },
-    "description": "A saved collection of personal photos.  Copy it to a reader to view.",
+    "description": "A saved collection of personal photos.",
     "extend": { "flags": [ "DIGITAL_PHOTOS" ] },
     "use_action": { "type": "view_photos" },
     "item_vars": {
@@ -178,7 +178,7 @@
     "copy-from": "digital_photo_album",
     "type": "GENERIC",
     "name": { "str": "nature photo album" },
-    "description": "A saved collection of photographs of landscapes, wildlife, and the outdoors.  Copy it to a reader to view.",
+    "description": "A saved collection of photographs of landscapes, wildlife, and the outdoors.",
     "item_vars": { "digital_photos_snippets": "digital_nature_photos" }
   },
   {
@@ -186,7 +186,7 @@
     "copy-from": "digital_photo_album",
     "type": "GENERIC",
     "name": { "str": "travel photo album" },
-    "description": "A saved collection of vacation photographs from places near and far.  Copy it to a reader to view.",
+    "description": "A saved collection of vacation photographs from places near and far.",
     "item_vars": { "digital_photos_snippets": "digital_travel_photos" }
   },
   {
@@ -194,7 +194,7 @@
     "copy-from": "digital_photo_album",
     "type": "GENERIC",
     "name": { "str": "digital art album" },
-    "description": "A saved collection of digital art, convention photos, and creative projects.  Copy it to a reader to view.",
+    "description": "A saved collection of digital art, convention photos, and creative projects.",
     "item_vars": { "digital_photos_snippets": "digital_art_photos" }
   },
   {
@@ -202,14 +202,14 @@
     "copy-from": "digital_collection",
     "type": "GENERIC",
     "name": { "str": "camera photo collection" },
-    "description": "A collection of photographs taken with a camera, including notes on photographed creatures.  Open it on a powered reader to revisit individual photos or browse the monster collection."
+    "description": "A collection of photographs taken with a camera, including notes on photographed creatures."
   },
   {
     "id": "digital_cooking_recipe_archive",
     "copy-from": "digital_collection",
     "type": "GENERIC",
     "name": { "str": "saved cooking recipe" },
-    "description": "A saved recipe from a cooking website.  Load it onto a powered reader to consult it while crafting.",
+    "description": "A saved recipe from a cooking website.",
     "item_vars": {
       "digital_random_recipes": "{\"count\":1,\"category\":\"CC_FOOD\",\"min_difficulty\":0,\"max_difficulty\":3,\"difficulty_chance_offset\":0}"
     }
@@ -219,7 +219,7 @@
     "copy-from": "digital_collection",
     "type": "GENERIC",
     "name": { "str": "scientific recipe archive" },
-    "description": "A saved technical recipe from a research archive.  Load it onto a powered reader to consult it while crafting.",
+    "description": "A saved technical recipe from a research archive.",
     "item_vars": { "digital_random_recipes": "{\"count\":1,\"min_difficulty\":3,\"difficulty_chance_offset\":1}" }
   },
   {
@@ -227,7 +227,7 @@
     "copy-from": "digital_collection",
     "type": "GENERIC",
     "name": { "str": "tailoring recipe archive" },
-    "description": "A saved collection of tailoring recipes.  Load it onto a powered reader to consult it while crafting.",
+    "description": "A saved collection of tailoring recipes.",
     "item_vars": {
       "digital_random_recipes": "{\"count\":3,\"category\":\"CC_ARMOR\",\"min_difficulty\":0,\"max_difficulty\":3,\"difficulty_chance_offset\":0}"
     }
@@ -237,7 +237,7 @@
     "copy-from": "digital_collection",
     "type": "GENERIC",
     "name": { "str": "bartender drinks list" },
-    "description": "A saved list of drink recipes from a bartender's reference site.  Load it onto a powered reader to consult it while crafting.",
+    "description": "A saved list of drink recipes from a bartender's reference site.",
     "item_vars": {
       "digital_random_recipes": "{\"count\":3,\"subcategory\":\"CSC_FOOD_DRINKS\",\"min_difficulty\":0,\"max_difficulty\":3,\"difficulty_chance_offset\":0}"
     }
