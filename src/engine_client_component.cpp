@@ -477,7 +477,7 @@ auto screen_of( const boundary_state &state, const slot &entry, const bool top )
         std::erase_if( registered, [&]( const affordance & offered_action ) {
             return std::ranges::any_of( result.affordances, [&]( const affordance & own ) {
                 return own.covers == offered_action.id && performs( own );
-            } )&& !std::ranges::contains( result.denials, offered_action.id, &denial::id );
+            } ) && !std::ranges::contains( result.denials, offered_action.id, &denial::id );
         } );
         for( const auto &[id, reason] : result.denials ) {
             const auto found = std::ranges::find( registered, id, &affordance::id );
