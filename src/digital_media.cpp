@@ -31,9 +31,9 @@
 
 namespace
 {
-auto digital_property( const item &file, const std::string &key ) -> int
+auto digital_setting( const item &file, const std::string &key ) -> int
 {
-    return static_cast<int>( std::clamp<int64_t>( file.get_property_int64_t( key ), 0, INT_MAX ) );
+    return static_cast<int>( std::clamp<int64_t>( file.get_var( key, int64_t{ 0 } ), 0, INT_MAX ) );
 }
 
 auto identify_digital_file( item &file ) -> void
@@ -89,7 +89,7 @@ auto digital_reader_for( const Character &who, const item &file ) -> digital_rea
 auto initialize_digital_media( item &media ) -> void
 {
     migrate_legacy_digital_media( media );
-    auto group = media.get_property_string( "digital_content" );
+    auto group = media.get_var( "digital_content" );
     if( group.empty() ) {
         if( media.has_flag( flag_MC_SCIENCE_STUFF ) ) {
             group = "digital_content_science";
@@ -106,7 +106,7 @@ auto initialize_digital_media( item &media ) -> void
         return;
     }
     const auto encryption_chance = media.has_flag( flag_MC_MAY_BE_ENCRYPTED ) ? 8 :
-                                   digital_property( media, "digital_encryption_chance" );
+                                   digital_setting( media, "digital_encryption_chance" );
     if( encryption_chance > 0 && one_in( encryption_chance ) ) {
         media.set_flag( flag_MC_ENCRYPTED );
         if( media.has_flag( flag_MC_RANDOM_STUFF ) ) {
@@ -373,7 +373,7 @@ auto digital_music_on( const item &reader ) -> digital_music_summary
         if( file->has_flag( flag_id( "DIGITAL_MUSIC" ) ) ) {
             result.songs += std::max( 0, static_cast<int>( file->charges ) );
             result.morale_cap = std::max( result.morale_cap,
-                                          digital_property( *file, "digital_music_morale_cap" ) );
+                                          digital_setting( *file, "digital_music_morale_cap" ) );
         }
     }
     result.morale_cap = std::min( result.songs, result.morale_cap );
@@ -391,7 +391,7 @@ auto digital_music_playing( const item &reader ) -> digital_music_summary
             file->get_var( "DIGITAL_FILE_ID" ) == selected ) {
             const auto songs = std::max( 0, static_cast<int>( file->charges ) );
             return { .songs = songs, .morale_cap = std::min( songs,
-                                                   digital_property( *file, "digital_music_morale_cap" ) ) };
+                                                   digital_setting( *file, "digital_music_morale_cap" ) ) };
         }
     }
     return {};
@@ -499,7 +499,7 @@ auto finish_digital_music( Character &who, const item &reader ) -> void
     for( const auto *file : reader.contents.all_items_top() ) {
         if( file->has_flag( flag_id( "DIGITAL_MUSIC" ) ) &&
             file->get_var( "DIGITAL_FILE_ID" ) == selected ) {
-            const auto cooldown = time_duration::from_seconds( digital_property( *file,
+            const auto cooldown = time_duration::from_seconds( digital_setting( *file,
                                   "digital_music_cooldown_seconds" ) );
             const auto until = calendar::turn + std::max( cooldown,
                                digital_music_cooldown_remaining( who, *file ) );
@@ -522,20 +522,20 @@ auto view_digital_photos( player &who, item &album ) -> bool
                                to_string( remaining ) );
         return false;
     }
-    who.mod_moves( -rng( digital_property( album, "digital_photos_moves_min" ),
-                         digital_property( album, "digital_photos_moves_max" ) ) );
+    who.mod_moves( -rng( digital_setting( album, "digital_photos_moves_min" ),
+                         digital_setting( album, "digital_photos_moves_max" ) ) );
     const auto unaffected = who.has_trait( trait_id( "PSYCHOPATH" ) );
     if( !unaffected ) {
-        who.add_morale( MORALE_PHOTOS, rng( digital_property( album, "digital_photos_morale_min" ),
-                                            digital_property( album, "digital_photos_morale_max" ) ),
-                        digital_property( album, "digital_photos_morale_cap" ) );
+        who.add_morale( MORALE_PHOTOS, rng( digital_setting( album, "digital_photos_morale_min" ),
+                                            digital_setting( album, "digital_photos_morale_max" ) ),
+                        digital_setting( album, "digital_photos_morale_cap" ) );
     }
-    const auto category = album.get_property_string( unaffected ? "digital_photos_unaffected_snippets" :
-                          "digital_photos_snippets" );
+    const auto category = album.get_var( unaffected ? "digital_photos_unaffected_snippets" :
+                                         "digital_photos_snippets" );
     if( const auto message = SNIPPET.random_from_category( category ) ) {
         who.add_msg_if_player( unaffected ? m_info : m_good, "%s", message->translated() );
     }
-    const auto cooldown = time_duration::from_seconds( digital_property( album,
+    const auto cooldown = time_duration::from_seconds( digital_setting( album,
                           "digital_photos_cooldown_seconds" ) );
     who.set_value( "digital_photos_ready_" + album.get_var( "DIGITAL_FILE_ID" ),
                    std::to_string( to_turn<int>( calendar::turn + cooldown ) ) );

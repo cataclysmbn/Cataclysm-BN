@@ -2,6 +2,8 @@
 #include "avatar.h"
 #include "calendar.h"
 #include "cata_utility.h"
+#include "catalua.h"
+#include "catalua_sol.h"
 #include "catch/catch.hpp"
 #include "digital_media.h"
 #include "digital_recipes.h"
@@ -28,6 +30,86 @@
 #include <algorithm>
 #include <sstream>
 #include <string_view>
+
+TEST_CASE("digital_media_settings_are_editable_from_lua", "[digital_media][lua]") {
+    auto storage = item::spawn("usb_drive");
+    auto music = item::spawn("test_digital_music_collection");
+    music->charges = 9;
+    auto reference = item::spawn("test_digital_reference");
+    auto& file = *reference;
+    auto lua = make_lua_state();
+    lua["test_music"] = &*music;
+    lua["test_reference"] = &file;
+    const auto script = lua.safe_script(R"(
+        assert(test_music:get_var_num("digital_music_morale_cap", 0) == 9)
+        assert(test_reference:get_var_str("digital_recipe_group", "") == "test_digital_fixed_recipes")
+        test_music:set_var_num("digital_music_morale_cap", 4)
+        test_reference:set_var_str("digital_recipe_group", "test_digital_random_recipes")
+    )");
+    REQUIRE(script.valid());
+    storage->put_in(std::move(music));
+    storage->put_in(std::move(reference));
+    CHECK(digital_music_on(*storage).morale_cap == 4);
+    const auto recipes = digital_file_recipes(file);
+    REQUIRE(recipes.size() == 1);
+    CHECK(recipes.front().recipe == recipe_id("test_soldering_iron_digital_media"));
+    CHECK(recipes.front().skill_level == 3);
+
+    auto output = std::ostringstream{};
+    auto writer = JsonOut(output);
+    storage->serialize(writer);
+    auto input = std::istringstream(output.str());
+    auto parser = JsonIn(input);
+    const auto loaded = item::spawn(parser);
+    CHECK(digital_music_on(*loaded).morale_cap == 4);
+    REQUIRE(loaded->contents.num_item_stacks() == 2);
+    CHECK(loaded->contents.back().get_var("digital_recipe_group") == "test_digital_random_recipes");
+    const auto loaded_recipes = digital_file_recipes(loaded->contents.back());
+    REQUIRE(loaded_recipes.size() == 1);
+    CHECK(loaded_recipes.front().skill_level == 3);
+}
+
+TEST_CASE(
+    "loading_digital_settings_restores_defaults_and_preserves_overrides",
+    "[digital_media][savegame]") {
+    const auto customized = GENERATE(false, true);
+    auto music = item::spawn("test_digital_music_collection");
+    if (customized) {
+        music->set_var("digital_music_morale_cap", 4);
+        music->set_var("digital_music_cooldown_seconds", 0);
+    } else {
+        music->erase_var("digital_music_morale_cap");
+        music->erase_var("digital_music_cooldown_seconds");
+    }
+    music->set_var("DIGITAL_FILE_ID", "saved-file");
+    auto output = std::ostringstream{};
+    auto writer = JsonOut(output);
+    music->serialize(writer);
+    auto input = std::istringstream(output.str());
+    auto parser = JsonIn(input);
+    const auto loaded = item::spawn(parser);
+    CHECK(loaded->get_var("digital_music_morale_cap", 0) == (customized ? 4 : 9));
+    CHECK(loaded->get_var("digital_music_cooldown_seconds", -1) == (customized ? 0 : 60));
+    CHECK(loaded->get_var("DIGITAL_FILE_ID") == "saved-file");
+}
+
+TEST_CASE(
+    "loading_legacy_recipe_files_preserves_the_resolved_selection",
+    "[digital_media][recipes][savegame]") {
+    auto reference = item::spawn("test_digital_reference");
+    initialize_digital_recipe_file(*reference);
+    const auto selection = reference->get_var("DIGITAL_RECIPES");
+    REQUIRE_FALSE(selection.empty());
+    reference->erase_var("digital_recipe_group");
+    auto output = std::ostringstream{};
+    auto writer = JsonOut(output);
+    reference->serialize(writer);
+    auto input = std::istringstream(output.str());
+    auto parser = JsonIn(input);
+    const auto loaded = item::spawn(parser);
+    CHECK(loaded->get_var("digital_recipe_group") == "test_digital_fixed_recipes");
+    CHECK(loaded->get_var("DIGITAL_RECIPES") == selection);
+}
 
 TEST_CASE("digital_storage_accepts_files_only", "[digital_media][item]") {
     const auto media_id = GENERATE(

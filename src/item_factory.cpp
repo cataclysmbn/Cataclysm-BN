@@ -1304,14 +1304,15 @@ void Item_factory::check_definitions() const
             }
         }
 
-        if( const auto content = type->properties.find( "digital_content" );
-            content != type->properties.end() &&
+        if( const auto content = type->item_vars.find( "digital_content" );
+            content != type->item_vars.end() && !content->second.empty() &&
             !item_group::group_is_defined( item_group_id( content->second ) ) ) {
             msg += string_format( "invalid digital_content item group %s\n", content->second );
         }
 
-        if( const auto group = type->properties.find( "digital_recipe_group" );
-            group != type->properties.end() && !digital_recipe_group_exists( group->second ) ) {
+        if( const auto group = type->item_vars.find( "digital_recipe_group" );
+            group != type->item_vars.end() && !group->second.empty() &&
+            !digital_recipe_group_exists( group->second ) ) {
             msg += string_format( "invalid digital_recipe_group %s\n", group->second );
         }
 

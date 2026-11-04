@@ -55,7 +55,7 @@
     "type": "GENERIC",
     "name": { "str": "3D printing infographic archive" },
     "description": "An illustrated reference archive containing plans for assembling a basic 3D printer from salvaged components.  Load it onto a powered reader to consult the recipe.",
-    "properties": [ [ "digital_recipe_group", "digital_3d_printing" ] ]
+    "item_vars": { "digital_recipe_group": "digital_3d_printing" }
   },
   {
     "abstract": "digital_collection",
@@ -89,7 +89,7 @@
     "name": { "str": "music collection" },
     "description": "A saved collection of music tracks.  Copy it to a reader to listen.",
     "extend": { "flags": [ "DIGITAL_MUSIC" ] },
-    "properties": [ [ "digital_music_morale_cap", "25" ], [ "digital_music_cooldown_seconds", "300" ] ]
+    "item_vars": { "digital_music_morale_cap": "25", "digital_music_cooldown_seconds": "300" }
   },
   {
     "id": "digital_photo_album",
@@ -98,16 +98,16 @@
     "name": { "str": "personal photo album" },
     "description": "A saved collection of personal photos.  Copy it to a reader to view.",
     "extend": { "flags": [ "DIGITAL_PHOTOS" ] },
-    "properties": [
-      [ "digital_photos_morale_min", "15" ],
-      [ "digital_photos_morale_max", "30" ],
-      [ "digital_photos_morale_cap", "100" ],
-      [ "digital_photos_snippets", "digital_personal_photos" ],
-      [ "digital_photos_unaffected_snippets", "digital_unaffected_photos" ],
-      [ "digital_photos_moves_min", "300" ],
-      [ "digital_photos_moves_max", "700" ],
-      [ "digital_photos_cooldown_seconds", "600" ]
-    ]
+    "item_vars": {
+      "digital_photos_morale_min": "15",
+      "digital_photos_morale_max": "30",
+      "digital_photos_morale_cap": "100",
+      "digital_photos_snippets": "digital_personal_photos",
+      "digital_photos_unaffected_snippets": "digital_unaffected_photos",
+      "digital_photos_moves_min": "300",
+      "digital_photos_moves_max": "700",
+      "digital_photos_cooldown_seconds": "600"
+    }
   },
   {
     "id": "digital_camera_photo_collection",
@@ -122,7 +122,7 @@
     "type": "GENERIC",
     "name": { "str": "saved cooking recipe" },
     "description": "A saved recipe from a cooking website.  Load it onto a powered reader to consult it while crafting.",
-    "properties": [ [ "digital_recipe_group", "digital_simple_recipes" ] ]
+    "item_vars": { "digital_recipe_group": "digital_simple_recipes" }
   },
   {
     "id": "digital_science_recipe_archive",
@@ -130,6 +130,6 @@
     "type": "GENERIC",
     "name": { "str": "scientific recipe archive" },
     "description": "A saved technical recipe from a research archive.  Load it onto a powered reader to consult it while crafting.",
-    "properties": [ [ "digital_recipe_group", "digital_science_recipes" ] ]
+    "item_vars": { "digital_recipe_group": "digital_science_recipes" }
   }
 ]

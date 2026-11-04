@@ -65,6 +65,21 @@ files → hello_world.exe → Run** to print **Hello, world!**. Its JSON
 `manualnoise` action uses `noise: 0` to display a message silently. The file is
 preserved and can be run repeatedly.
 
+All digital settings below are per-instance `item_vars`. JSON values must be
+strings, including numeric settings. They are copied with the file and saved
+with it. Lua can edit them through the existing item variable methods:
+
+```lua
+file:set_var_num("digital_music_morale_cap", 40)
+file:set_var_str("digital_recipe_group", "my_recipe_references")
+```
+
+Recipe selections and media loot are generated once. Changing the settings does
+not replace an already resolved selection or reroll initialized media. To
+explicitly regenerate a recipe file, erase `DIGITAL_RECIPES` and reinstall it on
+a reader. Older saves receive missing default digital settings while retaining
+saved overrides and recipe selections.
+
 ## Recipe reference files
 
 Reference files are `GENERIC` items, separate from instructional `BOOK` files.
@@ -72,10 +87,10 @@ They supply crafting recipes through a powered reader without teaching a skill
 or memorizing a recipe. The 3D printing infographic archive is one example.
 Choose **View recipes** in its file menu to inspect the available recipes.
 
-Point a file at a JSON group using its properties:
+Point a file at a JSON group using its item variables:
 
 ```json
-"properties": [ [ "digital_recipe_group", "my_recipe_references" ] ]
+"item_vars": { "digital_recipe_group": "my_recipe_references" }
 ```
 
 Fixed groups list recipes and an optional skill level required to consult them:
@@ -124,10 +139,10 @@ empty result is retained too, rather than rerolled on every access.
 
 ## Generating content
 
-Media can name an ordinary item group using the `digital_content` property:
+Media can name an ordinary item group using the `digital_content` item variable:
 
 ```json
-"properties": [ [ "digital_content", "my_digital_content" ] ]
+"item_vars": { "digital_content": "my_digital_content" }
 ```
 
 The reader rolls this group on the first access to the media, then stores the
@@ -188,7 +203,7 @@ ranges:
 }
 ```
 
-Music collections set `digital_music_morale_cap` in their `properties`. The
+Music collections set `digital_music_morale_cap` in their `item_vars`. The
 playing collection's morale cap is limited by its own track count. The
 `digital_builtin_music` group defines the preloaded collection on existing
 reader devices. The `digital_content_reader` group combines it with random
@@ -204,9 +219,9 @@ Use **Browse digital files → Listen** to choose a collection. The general musi
 action automatically picks an available collection. Copies of the same file
 share a cooldown, even on another reader.
 
-Photo albums configure their viewing behavior through these integer properties:
+Photo albums configure their viewing behavior through these item variables:
 
-| Property                                                 | Meaning                               |
+| Variable                                                 | Meaning                               |
 | -------------------------------------------------------- | ------------------------------------- |
 | `digital_photos_cooldown_seconds`                        | Pause between viewings of this album  |
 | `digital_photos_moves_min`, `digital_photos_moves_max`   | Move cost per use                     |

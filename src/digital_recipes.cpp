@@ -175,7 +175,7 @@ auto digital_recipe_group_exists( const std::string &id ) -> bool
 
 auto initialize_digital_recipe_file( item &file ) -> void
 {
-    const auto group = file.get_property_string( "digital_recipe_group" );
+    const auto group = file.get_var( "digital_recipe_group" );
     if( group.empty() || file.has_var( "DIGITAL_RECIPES" ) ) {
         return;
     }

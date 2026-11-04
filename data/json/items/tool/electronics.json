@@ -234,7 +234,7 @@
       "EINKTABLETPC",
       "RADGLOVE"
     ],
-    "properties": [ [ "digital_content", "digital_content_reader" ] ],
+    "item_vars": { "digital_content": "digital_content_reader" },
     "flags": [
       "WATCH",
       "ALARMCLOCK",
@@ -477,7 +477,7 @@
       },
       "TOGGLE_UPS_CHARGING"
     ],
-    "properties": [ [ "digital_content", "digital_content_reader" ] ],
+    "item_vars": { "digital_content": "digital_content_reader" },
     "flags": [ "WATCH", "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ]
   },
   {
@@ -645,7 +645,7 @@
       },
       "TOGGLE_UPS_CHARGING"
     ],
-    "properties": [ [ "digital_content", "digital_content_reader" ] ],
+    "item_vars": { "digital_content": "digital_content_reader" },
     "flags": [ "WATCH", "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ]
   },
   {
@@ -825,7 +825,7 @@
       "PORTABLE_GAME",
       "TOGGLE_UPS_CHARGING"
     ],
-    "properties": [ [ "digital_content", "digital_content_reader" ] ],
+    "item_vars": { "digital_content": "digital_content_reader" },
     "flags": [ "WATCH", "ALARMCLOCK", "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ]
   },
   {
@@ -915,7 +915,7 @@
         "menu_text": "Listen to music"
       }
     ],
-    "properties": [ [ "digital_content", "digital_content_reader" ] ],
+    "item_vars": { "digital_content": "digital_content_reader" },
     "flags": [ "WATCH", "ALARMCLOCK", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ]
   },
   {

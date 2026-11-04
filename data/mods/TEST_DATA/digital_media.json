@@ -17,14 +17,14 @@
     "copy-from": "usb_drive",
     "type": "GENERIC",
     "name": { "str": "test digital media" },
-    "properties": [ [ "digital_content", "test_digital_content" ] ]
+    "item_vars": { "digital_content": "test_digital_content" }
   },
   {
     "id": "test_digital_media_encrypting",
     "copy-from": "test_digital_media",
     "type": "GENERIC",
     "name": { "str": "test encrypting media" },
-    "properties": [ [ "digital_encryption_chance", "1" ] ]
+    "item_vars": { "digital_encryption_chance": "1" }
   },
   {
     "id": "test_digital_content",
@@ -76,16 +76,16 @@
     "name": { "str": "test photo album" },
     "description": "A deterministic photo album.",
     "extend": { "flags": [ "DIGITAL_PHOTOS" ] },
-    "properties": [
-      [ "digital_photos_morale_min", "5" ],
-      [ "digital_photos_morale_max", "5" ],
-      [ "digital_photos_morale_cap", "20" ],
-      [ "digital_photos_snippets", "digital_personal_photos" ],
-      [ "digital_photos_unaffected_snippets", "digital_unaffected_photos" ],
-      [ "digital_photos_moves_min", "100" ],
-      [ "digital_photos_moves_max", "100" ],
-      [ "digital_photos_cooldown_seconds", "60" ]
-    ]
+    "item_vars": {
+      "digital_photos_morale_min": "5",
+      "digital_photos_morale_max": "5",
+      "digital_photos_morale_cap": "20",
+      "digital_photos_snippets": "digital_personal_photos",
+      "digital_photos_unaffected_snippets": "digital_unaffected_photos",
+      "digital_photos_moves_min": "100",
+      "digital_photos_moves_max": "100",
+      "digital_photos_cooldown_seconds": "60"
+    }
   },
   {
     "id": "test_digital_multimedia_content",
@@ -98,7 +98,7 @@
     "copy-from": "usb_drive",
     "type": "GENERIC",
     "name": { "str": "test multimedia drive" },
-    "properties": [ [ "digital_content", "test_digital_multimedia_content" ] ]
+    "item_vars": { "digital_content": "test_digital_multimedia_content" }
   },
   {
     "id": "test_digital_music_collection",
@@ -107,7 +107,7 @@
     "name": { "str": "test music collection" },
     "description": "Reusable music with a fixed cooldown.",
     "extend": { "flags": [ "DIGITAL_MUSIC" ] },
-    "properties": [ [ "digital_music_morale_cap", "9" ], [ "digital_music_cooldown_seconds", "60" ] ]
+    "item_vars": { "digital_music_morale_cap": "9", "digital_music_cooldown_seconds": "60" }
   },
   {
     "id": "test_digital_music_content",
@@ -129,7 +129,7 @@
     "initial_charges": 20,
     "max_charges": 20,
     "charges_per_use": 1,
-    "properties": [ [ "digital_content", "test_digital_music_content" ] ],
+    "item_vars": { "digital_content": "test_digital_music_content" },
     "flags": [ "DIGITAL_READER", "DIGITAL_STORAGE" ],
     "use_action": [
       "EINKTABLETPC",
@@ -167,7 +167,7 @@
     "type": "GENERIC",
     "name": { "str": "test digital recipe reference" },
     "description": "A reference file that supplies recipes without teaching a skill.",
-    "properties": [ [ "digital_recipe_group", "test_digital_fixed_recipes" ] ]
+    "item_vars": { "digital_recipe_group": "test_digital_fixed_recipes" }
   },
   {
     "id": "test_digital_random_reference",
@@ -175,6 +175,6 @@
     "type": "GENERIC",
     "name": { "str": "test random recipe reference" },
     "description": "A deterministic random recipe file.",
-    "properties": [ [ "digital_recipe_group", "test_digital_random_recipes" ] ]
+    "item_vars": { "digital_recipe_group": "test_digital_random_recipes" }
   }
 ]

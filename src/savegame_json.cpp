@@ -2954,6 +2954,11 @@ void item::deserialize( JsonIn &jsin )
     if( has_flag( flag_id( "GENOME_DRIVE" ) ) && !is_digital_file( *this ) ) {
         migrate_legacy_digital_media( *this );
     }
+    for( const auto &[key, value] : type->item_vars ) {
+        if( key.starts_with( "digital_" ) && !has_var( key ) ) {
+            set_var( key, value );
+        }
+    }
     initialize_digital_recipe_file( *this );
 
     if( data.has_member( "id" ) ) {
