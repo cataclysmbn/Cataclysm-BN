@@ -128,10 +128,19 @@ Selections are generated once when the file enters storage and are saved in the
 file. Downloading, exporting, and loading the file retain that selection. An
 empty result is retained too, rather than rerolled on every access.
 
+## Digital maps
+
+`digital_urbex_map` is a saved urban exploration forum guide, found among personal
+files, encrypted card contents, and salvaged terminal files. Copy it onto a
+powered reader, then select **Browse digital files → saved urbex forum guide
+→ Read**. It inherits the paper urban explorer's map's reveal action,
+including its coverage and location filters. A `reveal_map_center_omt` item
+variable, when present, travels with the file when it is copied or saved.
+
 ## Salvaged hard drives
 
 Disassembling intact or broken computer terminals, including the furniture
-versions, recovers a `hard_drive`. Each drive generates one to three random
+versions, recovers a `hard_drive`. Each drive generates three to seven random
 files from `digital_content_terminal` when first accessed. The pool includes
 photos, music, instructional files, executables, and recipe archives. Files are
 rolled once and retained when copied or saved.

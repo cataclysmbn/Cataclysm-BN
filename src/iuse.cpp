@@ -6058,15 +6058,16 @@ auto browse_digital_files( player &who, item &reader, const bool photos_only = f
     }
     auto *file = files[menu.ret];
     enum file_action {
-        show_info, study_file, listen_file, copy_file, show_recipes,
+        delete_file, study_file, listen_file, copy_file, show_recipes,
         show_captured_photos, show_monsters, use_action_start
     };
     namespace ranges = std::ranges;
     using namespace std::views;
     const auto use_methods = file->type->use_methods | keys | ranges::to<std::vector<std::string>>();
     auto actions = uilist{};
-    actions.text = file->type_name();
+    actions.text = file->type->description.translated();
     actions.hilight_disabled = true;
+    actions.title = file->display_name();
     if( file->is_book() ) {
         actions.addentry( study_file, true, 'r', _( "Study" ) );
     }
@@ -6095,7 +6096,7 @@ auto browse_digital_files( player &who, item &reader, const bool photos_only = f
     if( !file->get_var( "CAMERA_MONSTER_PHOTOS" ).empty() ) {
         actions.addentry( show_monsters, true, 'z', _( "Your collection of monsters" ) );
     }
-    actions.addentry( show_info, true, 'i', _( "File information" ) );
+    actions.addentry( delete_file, true, 'd', _( "Delete file" ) );
     actions.addentry( copy_file, true, 'c', _( "Copy to storage media" ) );
     actions.desc_enabled = ranges::any_of( actions.entries,
     []( const auto & entry ) { return !entry.desc.empty(); } );
@@ -6103,8 +6104,13 @@ auto browse_digital_files( player &who, item &reader, const bool photos_only = f
     if( actions.ret >= use_action_start &&
         actions.ret < use_action_start + static_cast<int>( use_methods.size() ) ) {
         who.invoke_item( file, use_methods[actions.ret - use_action_start] );
-    } else if( actions.ret == show_info ) {
-        popup( "%s", file->type->description.translated() );
+    } else if( actions.ret == delete_file ) {
+        if( who.query_yn( _( "Delete %s from this device?" ), file->display_name() ) ) {
+            const auto file_name = file->display_name();
+            reader.contents.remove_top( file );
+            who.add_msg_if_player( m_info, _( "You delete %s from the device." ),
+                                   file_name );
+        }
     } else if( actions.ret == study_file ) {
         if( auto *you = who.as_avatar() ) {
             you->read( file );

@@ -15,6 +15,7 @@
 #include "item_group.h"
 #include "itype.h"
 #include "iuse.h"
+#include "iuse_actor.h"
 #include "json.h"
 #include "map/mapdata.h"
 #include "map_helpers.h"
@@ -297,6 +298,53 @@ TEST_CASE("digital_files_are_copied_and_encryption_is_respected", "[digital_medi
     CHECK(download_digital_files(*reader, *reader, dummy) == 0);
     reader->ammo_unset();
     CHECK(download_digital_files(*reader, *media, dummy) == 0);
+}
+
+TEST_CASE("digital_urbex_maps_preserve_map_behavior_and_location", "[digital_media][map]") {
+    auto dummy = avatar{};
+    auto map = item::spawn("digital_urbex_map");
+    const auto paper = item::spawn("urbexmap");
+    REQUIRE(is_digital_file(*map));
+    CHECK(map->weight() == 0_gram);
+    CHECK(map->volume() == 0_ml);
+    const auto* digital_use = map->get_use("reveal_map");
+    const auto* paper_use = paper->get_use("reveal_map");
+    REQUIRE(digital_use != nullptr);
+    REQUIRE(paper_use != nullptr);
+    const auto* digital_action = dynamic_cast<const reveal_map_actor*>(
+        digital_use->get_actor_ptr());
+    const auto* paper_action = dynamic_cast<const reveal_map_actor*>(paper_use->get_actor_ptr());
+    REQUIRE(digital_action != nullptr);
+    REQUIRE(paper_action != nullptr);
+    CHECK(digital_action->radius == paper_action->radius);
+    CHECK(digital_action->omt_types == paper_action->omt_types);
+    CHECK(digital_action->omt_types_view == paper_action->omt_types_view);
+    CHECK(digital_action->omt_types_view_exclude == paper_action->omt_types_view_exclude);
+
+    const auto center = tripoint_abs_omt(12, 34, 0);
+    map->set_var("reveal_map_center_omt", center);
+    auto media = item::spawn("usb_drive");
+    media->put_in(std::move(map));
+    auto device = item::spawn("eink_tablet_pc");
+    auto& reader = *device;
+    reader.ammo_set(itype_id("battery"), 10);
+    REQUIRE(download_digital_files(reader, *media, dummy) == 1);
+    auto& file = reader.contents.front();
+    CHECK(file.get_var("reveal_map_center_omt", tripoint_abs_omt()) == center);
+    dummy.i_add(std::move(device));
+    REQUIRE(digital_reader_for(dummy, file));
+    reader.ammo_unset();
+    CHECK_FALSE(digital_reader_for(dummy, file));
+
+    auto output = std::ostringstream{};
+    auto writer = JsonOut(output);
+    file.serialize(writer);
+    auto input = std::istringstream(output.str());
+    auto parser = JsonIn(input);
+    const auto loaded = item::spawn(parser);
+    CHECK(loaded->typeId() == itype_id("digital_urbex_map"));
+    CHECK(loaded->get_var("reveal_map_center_omt", tripoint_abs_omt()) == center);
+    CHECK(loaded->get_use("reveal_map") != nullptr);
 }
 
 TEST_CASE("reader_files_can_be_copied_onto_an_sd_card", "[digital_media]") {
@@ -686,7 +734,6 @@ TEST_CASE("photo_and_music_files_use_json_quantities_and_effects", "[digital_med
     const auto restore_time = restore_on_out_of_scope(calendar::turn);
     calendar::turn = calendar::turn_zero + 12_hours;
     auto dummy = avatar{};
-    clear_character(dummy);
     auto media = item::spawn("test_digital_multimedia_media");
     initialize_digital_media(*media);
     REQUIRE(media->contents.num_item_stacks() == 2);
@@ -808,7 +855,6 @@ TEST_CASE("photo_viewing_cooldown_is_shared_across_albums_and_devices", "[digita
     const auto restore_time = restore_on_out_of_scope(calendar::turn);
     calendar::turn = calendar::turn_zero + 12_hours;
     auto dummy = avatar{};
-    clear_character(dummy);
     auto first_device = item::spawn("test_digital_music_reader");
     auto first_album = item::spawn("test_digital_photo_album");
     first_album->charges = 7;
@@ -859,8 +905,6 @@ TEST_CASE("photo_viewing_cooldown_is_independent_for_each_player", "[digital_med
     calendar::turn = calendar::turn_zero + 12_hours;
     auto first_viewer = avatar{};
     auto second_viewer = avatar{};
-    clear_character(first_viewer);
-    clear_character(second_viewer);
     auto first_device = item::spawn("test_digital_music_reader");
     auto first_album = item::spawn("test_digital_photo_album");
     first_album->charges = 7;
@@ -886,7 +930,6 @@ TEST_CASE(
     const auto restore_time = restore_on_out_of_scope(calendar::turn);
     calendar::turn = calendar::turn_zero + 12_hours;
     auto dummy = avatar{};
-    clear_character(dummy);
     auto album = item::spawn("test_digital_custom_photo_album");
     album->charges = 7;
     auto& file = *album;

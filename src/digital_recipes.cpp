@@ -27,6 +27,7 @@ struct fixed_recipe_reference {
 struct random_recipe_options {
     int count = 1;
     std::string category;
+    std::string subcategory;
     int min_difficulty = 0;
     int max_difficulty = INT_MAX;
     bool include_unlearnable = false;
@@ -70,6 +71,7 @@ std::expected<digital_recipe_data, std::string>
             auto options = random_recipe_options{
                 .count = random.get_int( "count", 1 ),
                 .category = random.get_string( "category", "" ),
+                .subcategory = random.get_string( "subcategory", "" ),
                 .min_difficulty = random.get_int( "min_difficulty", 0 ),
                 .max_difficulty = random.get_int( "max_difficulty", INT_MAX ),
                 .include_unlearnable = random.get_bool( "include_unlearnable", false ),
@@ -118,6 +120,7 @@ std::vector<digital_recipe_reference>
     | filter( [&options]( const auto & candidate ) {
         return ( options.include_unlearnable || !candidate.never_learn ) &&
                ( options.category.empty() || candidate.category == options.category ) &&
+               ( options.subcategory.empty() || candidate.subcategory == options.subcategory ) &&
                candidate.difficulty >= options.min_difficulty &&
                candidate.difficulty <= options.max_difficulty &&
                ( options.candidates.empty() || ranges::contains( options.candidates, candidate.ident() ) );
