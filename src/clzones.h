@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cstddef>
 #include <functional>
 #include <map>
@@ -18,6 +19,7 @@
 #include "point.h"
 #include "string_id.h"
 #include "type_id.h"
+#include "translations.h"
 
 class JsonIn;
 class JsonObject;
@@ -35,7 +37,7 @@ const std::string type_dim_hash_str = "__DIM__";
 class zone_type
 {
     private:
-        std::string name_;
+        translation name_;
         std::string desc_;
         nc_color color_;
     public:
@@ -45,7 +47,7 @@ class zone_type
 
         zone_type() = default;
         explicit zone_type( const std::string &name, const std::string &desc,
-                            nc_color color = c_yellow ) : name_( name ),
+                            nc_color color = c_yellow ) : name_( to_translation( name ) ),
             desc_( desc ), color_( color ) {}
 
         std::string name() const;
@@ -104,16 +106,7 @@ class zone_options
         virtual void deserialize( const JsonObject & ) {}
 };
 
-// mark option interface
-class mark_option
-{
-    public:
-        virtual ~mark_option() = default;
-
-        virtual std::string get_mark() const = 0;
-};
-
-class plot_options : public zone_options, public mark_option
+class plot_options : public zone_options
 {
     private:
         itype_id mark;
@@ -128,9 +121,6 @@ class plot_options : public zone_options, public mark_option
         query_seed_result query_seed();
 
     public:
-        std::string get_mark() const override {
-            return mark.str();
-        }
         itype_id get_seed() const {
             return seed;
         }
@@ -150,7 +140,7 @@ class plot_options : public zone_options, public mark_option
         void deserialize( const JsonObject &jo_zone ) override;
 };
 
-class blueprint_options : public zone_options, public mark_option
+class blueprint_options : public zone_options
 {
     public:
         enum class blueprint_layout {
@@ -182,9 +172,6 @@ class blueprint_options : public zone_options, public mark_option
         auto query_layout() -> query_layout_result;
 
     public:
-        std::string get_mark() const override {
-            return mark;
-        }
         construction_id get_index() const {
             return index;
         }
@@ -218,11 +205,14 @@ class blueprint_options : public zone_options, public mark_option
         void deserialize( const JsonObject &jo_zone ) override;
 };
 
-class loot_options : public zone_options, public mark_option
+class loot_options : public zone_options
 {
     private:
-        // basic item filter.
+        // Manual text filter; category selections use language-independent zone IDs.
         std::string mark;
+        bool use_categories = false;
+        std::vector<zone_type_id> categories;
+        auto query_categories() -> bool;
 
         enum query_loot_result {
             canceled,
@@ -233,9 +223,13 @@ class loot_options : public zone_options, public mark_option
         query_loot_result query_loot();
 
     public:
-        std::string get_mark() const override {
-            return mark;
+        auto set_categories( std::vector<zone_type_id> selected ) -> void;
+        auto uses_categories() const -> bool { return use_categories; }
+        auto category_count() const -> size_t { return categories.size(); }
+        auto has_category( const zone_type_id &id ) const -> bool {
+            return uses_categories() && std::ranges::contains( categories, id );
         }
+        auto matches( const item &candidate ) const -> bool;
 
         bool has_options() const override {
             return true;
@@ -444,7 +438,8 @@ class zone_manager
         bool has_near( const zone_type_id &type, const tripoint_abs_ms &where, int range = MAX_DISTANCE,
                        const faction_id &fac = your_fac ) const;
         bool has_loot_dest_near( const tripoint_abs_ms &where ) const;
-        bool custom_loot_has( const tripoint_abs_ms &where, const item *it ) const;
+        bool custom_loot_has( const tripoint_abs_ms &where, const item *it,
+                              bool regular_only = false ) const;
         std::unordered_set<tripoint_abs_ms> get_near( const zone_type_id &type,
                 const tripoint_abs_ms &where,
                 int range = MAX_DISTANCE, const item *it = nullptr, const faction_id &fac = your_fac ) const;
@@ -455,8 +450,6 @@ class zone_manager
         std::vector<zone_data> get_zones( const zone_type_id &type, const tripoint_abs_ms &where,
                                           const faction_id &fac = your_fac ) const;
         const zone_data *get_zone_at( const tripoint_abs_ms &where ) const;
-        const zone_data *get_bottom_zone( const tripoint_abs_ms &where,
-                                          const faction_id &fac = your_fac ) const;
         std::optional<std::string> query_name( const std::string &default_name = "" ) const;
         std::optional<zone_type_id> query_type() const;
         void swap( zone_data &a, zone_data &b );

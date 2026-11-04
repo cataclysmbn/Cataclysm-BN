@@ -2,483 +2,483 @@
   {
     "id": "LOOT_UNSORTED",
     "type": "LOOT_ZONE",
-    "name": "Loot: Unsorted",
+    "name": { "str": "Unsorted", "ctxt": "zone name LOOT_UNSORTED" },
     "description": "Place to drop unsorted loot.  You can use \"sort out loot\" zone-action to sort items inside.  It can overlap with Loot zones of different types.",
     "color": "yellow"
   },
   {
     "id": "LOOT_FOOD",
     "type": "LOOT_ZONE",
-    "name": "Loot: Food",
+    "name": { "str": "Food", "ctxt": "zone name LOOT_FOOD" },
     "description": "Destination for comestibles.  If more specific food zone is not defined, all food is moved here.",
     "color": "green"
   },
   {
     "id": "LOOT_PFOOD",
     "type": "LOOT_ZONE",
-    "name": "Loot: P.Food",
+    "name": { "str": "Perishable food", "ctxt": "zone name LOOT_PFOOD" },
     "description": "Destination for perishable comestibles.  Does include perishable drinks if such zone is not specified.",
     "color": "light_green"
   },
   {
     "id": "LOOT_DRINK",
     "type": "LOOT_ZONE",
-    "name": "Loot: Drink",
+    "name": { "str": "Drink", "ctxt": "zone name LOOT_DRINK" },
     "description": "Destination for drinks.  Does include perishable drinks if such zone is not specified.",
     "color": "blue"
   },
   {
     "id": "LOOT_PDRINK",
     "type": "LOOT_ZONE",
-    "name": "Loot: P.Drink",
+    "name": { "str": "Perishable drinks", "ctxt": "zone name LOOT_PDRINK" },
     "description": "Destination for perishable drinks.",
     "color": "light_blue"
   },
   {
     "id": "LOOT_CONTAINERS",
     "type": "LOOT_ZONE",
-    "name": "Loot: Containers",
+    "name": { "str": "Containers", "ctxt": "zone name LOOT_CONTAINERS" },
     "description": "Destination for empty containers.",
     "color": "light_gray"
   },
   {
     "id": "LOOT_GUNS",
     "type": "LOOT_ZONE",
-    "name": "Loot: Guns",
+    "name": { "str": "Guns", "ctxt": "zone name LOOT_GUNS" },
     "description": "Destination for guns, bows and similar weapons.",
     "color": "red"
   },
   {
     "id": "LOOT_MAGAZINES",
     "type": "LOOT_ZONE",
-    "name": "Loot: Magazines",
+    "name": { "str": "Magazines", "ctxt": "zone name LOOT_MAGAZINES" },
     "description": "Destination for gun magazines.",
     "color": "light_red"
   },
   {
     "id": "LOOT_AMMO",
     "type": "LOOT_ZONE",
-    "name": "Loot: Ammo",
+    "name": { "str": "Ammo", "ctxt": "zone name LOOT_AMMO" },
     "description": "Destination for ammo.",
     "color": "magenta"
   },
   {
     "id": "LOOT_WEAPONS",
     "type": "LOOT_ZONE",
-    "name": "Loot: Weapons",
+    "name": { "str": "Weapons", "ctxt": "zone name LOOT_WEAPONS" },
     "description": "Destination for melee weapons.",
     "color": "pink"
   },
   {
     "id": "LOOT_TOOLS",
     "type": "LOOT_ZONE",
-    "name": "Loot: Tools",
+    "name": { "str": "Tools", "ctxt": "zone name LOOT_TOOLS" },
     "description": "Destination for tools.",
     "color": "brown"
   },
   {
     "id": "LOOT_CLOTHING",
     "type": "LOOT_ZONE",
-    "name": "Loot: Clothing",
+    "name": { "str": "Clothing", "ctxt": "zone name LOOT_CLOTHING" },
     "description": "Destination for clothing.",
     "color": "cyan"
   },
   {
     "id": "LOOT_DRUGS",
     "type": "LOOT_ZONE",
-    "name": "Loot: Drugs",
+    "name": { "str": "Drugs", "ctxt": "zone name LOOT_DRUGS" },
     "description": "Destination for drugs and other medical items.",
     "color": "white"
   },
   {
     "id": "LOOT_BATTERY",
     "type": "LOOT_ZONE",
-    "name": "Loot: Battery",
+    "name": { "str": "Battery", "ctxt": "zone name LOOT_BATTERY" },
     "description": "Destination for batteries.",
     "color": "light_cyan"
   },
   {
     "id": "LOOT_BOOKS",
     "type": "LOOT_ZONE",
-    "name": "Loot: Books",
+    "name": { "str": "Books", "ctxt": "zone name LOOT_BOOKS" },
     "description": "Destination for books and magazines.",
     "color": "light_cyan"
   },
   {
     "id": "LOOT_SPELLBOOKS",
     "type": "LOOT_ZONE",
-    "name": "Loot: Spellbooks",
+    "name": { "str": "Spellbooks", "ctxt": "zone name LOOT_SPELLBOOKS" },
     "description": "Destination for spellbooks and scrolls.",
     "color": "pink"
   },
   {
     "id": "LOOT_MODS",
     "type": "LOOT_ZONE",
-    "name": "Loot: Mods",
+    "name": { "str": "Mods", "ctxt": "zone name LOOT_MODS" },
     "description": "Destination for firearm modifications and similar items.",
     "color": "light_red"
   },
   {
     "id": "LOOT_MUTAGENS",
     "type": "LOOT_ZONE",
-    "name": "Loot: Mutagens",
+    "name": { "str": "Mutagens", "ctxt": "zone name LOOT_MUTAGENS" },
     "description": "Destination for mutagens, serums, and purifiers.",
     "color": "pink"
   },
   {
     "id": "LOOT_BIONICS",
     "type": "LOOT_ZONE",
-    "name": "Loot: Bionics",
+    "name": { "str": "Bionics", "ctxt": "zone name LOOT_BIONICS" },
     "description": "Destination for Compact Bionics Modules, a.k.a. CBMS.",
     "color": "light_cyan"
   },
   {
     "id": "LOOT_VEHICLE_PARTS",
     "type": "LOOT_ZONE",
-    "name": "Loot: V.Parts",
+    "name": { "str": "V.Parts", "ctxt": "zone name LOOT_VEHICLE_PARTS" },
     "description": "Destination for vehicle parts.",
     "color": "light_gray"
   },
   {
     "id": "LOOT_OTHER",
     "type": "LOOT_ZONE",
-    "name": "Loot: Other",
+    "name": { "str": "Other", "ctxt": "zone name LOOT_OTHER" },
     "description": "Destination for other miscellaneous items.",
     "color": "yellow"
   },
   {
     "id": "LOOT_FUEL",
     "type": "LOOT_ZONE",
-    "name": "Loot: Fuel",
+    "name": { "str": "Fuel", "ctxt": "zone name LOOT_FUEL" },
     "description": "Destination for gasoline, diesel, lamp oil and other substances used as a fuel.",
     "color": "light_red"
   },
   {
     "id": "LOOT_SEEDS",
     "type": "LOOT_ZONE",
-    "name": "Loot: Seeds",
+    "name": { "str": "Seeds", "ctxt": "zone name LOOT_SEEDS" },
     "description": "Destination for seeds, stems and similar items.",
     "color": "green"
   },
   {
     "id": "LOOT_CHEMICAL",
     "type": "LOOT_ZONE",
-    "name": "Loot: Chemical",
+    "name": { "str": "Chemical", "ctxt": "zone name LOOT_CHEMICAL" },
     "description": "Destination for chemicals.",
     "color": "light_green"
   },
   {
     "id": "LOOT_SPARE_PARTS",
     "type": "LOOT_ZONE",
-    "name": "Loot: S.Parts",
+    "name": { "str": "S.Parts", "ctxt": "zone name LOOT_SPARE_PARTS" },
     "description": "Destination for spare parts.",
     "color": "light_gray"
   },
   {
     "id": "LOOT_ARTIFACTS",
     "type": "LOOT_ZONE",
-    "name": "Loot: Artifacts",
+    "name": { "str": "Artifacts", "ctxt": "zone name LOOT_ARTIFACTS" },
     "description": "Destination for artifacts",
     "color": "magenta"
   },
   {
     "id": "LOOT_CORPSE",
     "type": "LOOT_ZONE",
-    "name": "Loot: Corpses",
+    "name": { "str": "Corpses", "ctxt": "zone name LOOT_CORPSE" },
     "description": "Destination for corpses",
     "color": "dark_gray"
   },
   {
     "id": "LOOT_MAP",
     "type": "LOOT_ZONE",
-    "name": "Loot: Maps",
+    "name": { "str": "Maps", "ctxt": "zone name LOOT_MAP" },
     "description": "Destination for maps.",
     "color": "light_cyan"
   },
   {
     "id": "LOOT_WOOD",
     "type": "LOOT_ZONE",
-    "name": "Loot: Wood",
+    "name": { "str": "Wood", "ctxt": "zone name LOOT_WOOD" },
     "description": "Destination for firewood and items that can be used as such.",
     "color": "brown"
   },
   {
     "id": "LOOT_CUSTOM",
     "type": "LOOT_ZONE",
-    "name": "Loot: Custom",
+    "name": { "str": "Custom filter", "ctxt": "zone name LOOT_CUSTOM" },
     "description": "Destination for loot with a custom filter that you can modify",
     "color": "yellow"
   },
   {
     "id": "LOOT_IGNORE",
     "type": "LOOT_ZONE",
-    "name": "Loot: Ignore",
+    "name": { "str": "Ignore", "ctxt": "zone name LOOT_IGNORE" },
     "description": "Items inside of this zone are ignored by \"sort out loot\" zone-action.",
     "color": "dark_gray"
   },
   {
     "id": "LOOT_IGNORE_FAVORITES",
     "type": "LOOT_ZONE",
-    "name": "Loot: Ignore Favorites",
+    "name": { "str": "Ignore Favorites", "ctxt": "zone name LOOT_IGNORE_FAVORITES" },
     "description": "Favorite items inside of this zone are ignored by \"sort out loot\" zone-action.",
     "color": "dark_gray"
   },
   {
     "id": "LOOT_TOOLS",
     "type": "LOOT_ZONE",
-    "name": "Loot: Other Tools",
+    "name": { "str": "Other Tools", "ctxt": "zone name LOOT_TOOLS" },
     "description": "Destination for other tools.",
     "color": "brown"
   },
   {
     "id": "LOOT_ENTRY_TOOLS",
     "type": "LOOT_ZONE",
-    "name": "Loot: Entry Tools",
+    "name": { "str": "Entry Tools", "ctxt": "zone name LOOT_ENTRY_TOOLS" },
     "description": "Destination for entry tools.",
     "color": "brown"
   },
   {
     "id": "LOOT_WORKSHOP_TOOLS",
     "type": "LOOT_ZONE",
-    "name": "Loot: Workshop Tools",
+    "name": { "str": "Workshop Tools", "ctxt": "zone name LOOT_WORKSHOP_TOOLS" },
     "description": "Destination for workshop tools.",
     "color": "brown"
   },
   {
     "id": "LOOT_COOKING_TOOLS",
     "type": "LOOT_ZONE",
-    "name": "Loot: Cooking Tools",
+    "name": { "str": "Cooking Tools", "ctxt": "zone name LOOT_COOKING_TOOLS" },
     "description": "Destination for cooking tools.",
     "color": "brown"
   },
   {
     "id": "LOOT_CHEMISTRY_TOOLS",
     "type": "LOOT_ZONE",
-    "name": "Loot: Chemistry Tools",
+    "name": { "str": "Chemistry Tools", "ctxt": "zone name LOOT_CHEMISTRY_TOOLS" },
     "description": "Destination for chemistry tools.",
     "color": "brown"
   },
   {
     "id": "LOOT_FARM_TOOLS",
     "type": "LOOT_ZONE",
-    "name": "Loot: Farm Tools",
+    "name": { "str": "Farm Tools", "ctxt": "zone name LOOT_FARM_TOOLS" },
     "description": "Destination for farm tools.",
     "color": "brown"
   },
   {
     "id": "LOOT_DEPLOYABLES",
     "type": "LOOT_ZONE",
-    "name": "Loot: Deployables",
+    "name": { "str": "Deployables", "ctxt": "zone name LOOT_DEPLOYABLES" },
     "description": "Destination for deployable objects.",
     "color": "light_gray"
   },
   {
     "id": "LOOT_ELECTRONICS",
     "type": "LOOT_ZONE",
-    "name": "Loot: Electronics",
+    "name": { "str": "Electronics", "ctxt": "zone name LOOT_ELECTRONICS" },
     "description": "Destination for electronics.",
     "color": "light_cyan"
   },
   {
     "id": "LOOT_COOKING_INGREDIENTS",
     "type": "LOOT_ZONE",
-    "name": "Loot: Cooking Ingredients",
+    "name": { "str": "Cooking Ingredients", "ctxt": "zone name LOOT_COOKING_INGREDIENTS" },
     "description": "Destination for cooking ingredients.",
     "color": "green"
   },
   {
     "id": "LOOT_SCRAP_METAL",
     "type": "LOOT_ZONE",
-    "name": "Loot: Scrap Metal",
+    "name": { "str": "Scrap Metal", "ctxt": "zone name LOOT_SCRAP_METAL" },
     "description": "Destination for scrap metal.",
     "color": "light_gray"
   },
   {
     "id": "LOOT_SCRAP_ELECTRONICS",
     "type": "LOOT_ZONE",
-    "name": "Loot: Scrap Electronics",
+    "name": { "str": "Scrap Electronics", "ctxt": "zone name LOOT_SCRAP_ELECTRONICS" },
     "description": "Destination for scrap electronics.",
     "color": "light_gray"
   },
   {
     "id": "LOOT_SCRAP_FABRIC",
     "type": "LOOT_ZONE",
-    "name": "Loot: Scrap Fabric",
+    "name": { "str": "Scrap Fabric", "ctxt": "zone name LOOT_SCRAP_FABRIC" },
     "description": "Destination for scrap fabric.",
     "color": "light_gray"
   },
   {
     "id": "LOOT_SCRAP_WOOD",
     "type": "LOOT_ZONE",
-    "name": "Loot: Scrap Wood",
+    "name": { "str": "Scrap Wood", "ctxt": "zone name LOOT_SCRAP_WOOD" },
     "description": "Destination for scrap wood.",
     "color": "light_gray"
   },
   {
     "id": "LOOT_SCRAP_PLASTIC",
     "type": "LOOT_ZONE",
-    "name": "Loot: Scrap Plastic",
+    "name": { "str": "Scrap Plastic", "ctxt": "zone name LOOT_SCRAP_PLASTIC" },
     "description": "Destination for scrap plastic.",
     "color": "light_gray"
   },
   {
     "id": "LOOT_SCRAP_CERAMICS",
     "type": "LOOT_ZONE",
-    "name": "Loot: Scrap Ceramics",
+    "name": { "str": "Scrap Ceramics", "ctxt": "zone name LOOT_SCRAP_CERAMICS" },
     "description": "Destination for scrap ceramics.",
     "color": "light_gray"
   },
   {
     "id": "LOOT_SCRAP_GLASS",
     "type": "LOOT_ZONE",
-    "name": "Loot: Scrap Glass",
+    "name": { "str": "Scrap Glass", "ctxt": "zone name LOOT_SCRAP_GLASS" },
     "description": "Destination for scrap glass.",
     "color": "light_gray"
   },
   {
     "id": "LOOT_VALUABLES",
     "type": "LOOT_ZONE",
-    "name": "Loot: Valuables",
+    "name": { "str": "Valuables", "ctxt": "zone name LOOT_VALUABLES" },
     "description": "Destination for valuables.",
     "color": "yellow"
   },
   {
     "id": "LOOT_ROCKS",
     "type": "LOOT_ZONE",
-    "name": "Loot: Rocks",
+    "name": { "str": "Rocks", "ctxt": "zone name LOOT_ROCKS" },
     "description": "Destination for rocks and minerals.",
     "color": "dark_gray"
   },
   {
     "id": "LOOT_SOIL",
     "type": "LOOT_ZONE",
-    "name": "Loot: Soil",
+    "name": { "str": "Soil", "ctxt": "zone name LOOT_SOIL" },
     "description": "Destination for soil.",
     "color": "brown"
   },
   {
     "id": "NO_AUTO_PICKUP",
     "type": "LOOT_ZONE",
-    "name": "No Auto Pickup",
+    "name": { "str": "No Auto Pickup", "ctxt": "zone name NO_AUTO_PICKUP" },
     "description": "You won't auto-pickup items inside the zone.",
     "color": "dark_gray"
   },
   {
     "id": "NO_NPC_PICKUP",
     "type": "LOOT_ZONE",
-    "name": "No NPC Pickup",
+    "name": { "str": "No NPC Pickup", "ctxt": "zone name NO_NPC_PICKUP" },
     "description": "Friendly NPCs don't pickup items inside the zone.",
     "color": "dark_gray"
   },
   {
     "id": "NPC_RETREAT",
     "type": "LOOT_ZONE",
-    "name": "NPC Retreat",
+    "name": { "str": "NPC Retreat", "ctxt": "zone name NPC_RETREAT" },
     "description": "When fleeing, friendly NPCs will attempt to retreat toward this zone if it is within 60 tiles.",
     "color": "white"
   },
   {
     "id": "NPC_NO_INVESTIGATE",
     "type": "LOOT_ZONE",
-    "name": "NPC Ignore Sounds",
+    "name": { "str": "NPC Ignore Sounds", "ctxt": "zone name NPC_NO_INVESTIGATE" },
     "description": "Friendly NPCs won't investigate unseen sounds coming from this zone.",
     "color": "white"
   },
   {
     "id": "NPC_INVESTIGATE_ONLY",
     "type": "LOOT_ZONE",
-    "name": "NPC Investigation Area",
+    "name": { "str": "NPC Investigation Area", "ctxt": "zone name NPC_INVESTIGATE_ONLY" },
     "description": "Friendly NPCs will investigate unseen sounds only if they come from inside this area.",
     "color": "white"
   },
   {
     "id": "LOOT_DUMP",
     "type": "LOOT_ZONE",
-    "name": "Loot: Dump",
+    "name": { "str": "Dump", "ctxt": "zone name LOOT_DUMP" },
     "description": "Any item not otherwise sorted will be placed here if this zone is specified.",
     "color": "yellow"
   },
   {
     "id": "SOURCE_FIREWOOD",
     "type": "LOOT_ZONE",
-    "name": "Source: Firewood",
+    "name": { "str": "Source Firewood", "ctxt": "zone name SOURCE_FIREWOOD" },
     "description": "Source for firewood or other flammable materials in this zone may be used to automatically refuel fires.  This will be done to maintain light during long-running tasks such as crafting, reading or waiting.",
     "color": "light_red"
   },
   {
     "id": "CONSTRUCTION_BLUEPRINT",
     "type": "LOOT_ZONE",
-    "name": "Construction: Blueprint",
+    "name": { "str": "Construction Blueprint", "ctxt": "zone name CONSTRUCTION_BLUEPRINT" },
     "description": "Designate a blueprint zone for construction.",
     "color": "cyan"
   },
   {
     "id": "CONSTRUCTION_IGNORE",
     "type": "LOOT_ZONE",
-    "name": "Construction: Ignore",
+    "name": { "str": "Construction Ignore", "ctxt": "zone name CONSTRUCTION_IGNORE" },
     "description": "NPCs will ignore construction orders inside this zone, useful for leaving openings such as doorways.",
     "color": "dark_gray"
   },
   {
     "id": "FARM_PLOT",
     "type": "LOOT_ZONE",
-    "name": "Farm: Plot",
+    "name": { "str": "Farm Plot", "ctxt": "zone name FARM_PLOT" },
     "description": "Designate a farm plot for tilling, planting, fertilizing, and harvesting.",
     "color": "green"
   },
   {
     "id": "CHOP_TREES",
     "type": "LOOT_ZONE",
-    "name": "Chop Trees",
+    "name": { "str": "Chop Trees", "ctxt": "zone name CHOP_TREES" },
     "description": "Designate an area to chop down trees.",
     "color": "brown"
   },
   {
     "id": "FISHING_SPOT",
     "type": "LOOT_ZONE",
-    "name": "Fishing Spot",
+    "name": { "str": "Fishing Spot", "ctxt": "zone name FISHING_SPOT" },
     "description": "Designate an area to fish from.",
     "color": "blue"
   },
   {
     "id": "MINING",
     "type": "LOOT_ZONE",
-    "name": "Mine Terrain",
+    "name": { "str": "Mine Terrain", "ctxt": "zone name MINING" },
     "description": "Designate an area to mine.",
     "color": "dark_gray"
   },
   {
     "id": "VEHICLE_DECONSTRUCT",
     "type": "LOOT_ZONE",
-    "name": "Vehicle Deconstruct Zone",
+    "name": { "str": "Vehicle Deconstruct Zone", "ctxt": "zone name VEHICLE_DECONSTRUCT" },
     "description": "Any vehicles in this area are marked for deconstruction.",
     "color": "red"
   },
   {
     "id": "VEHICLE_REPAIR",
     "type": "LOOT_ZONE",
-    "name": "Vehicle Repair Zone",
+    "name": { "str": "Vehicle Repair Zone", "ctxt": "zone name VEHICLE_REPAIR" },
     "description": "Any vehicles in this area are marked for repair work.",
     "color": "light_blue"
   },
   {
     "id": "VEHICLE_PATROL",
     "type": "LOOT_ZONE",
-    "name": "Vehicle Patrol Zone",
+    "name": { "str": "Vehicle Patrol Zone", "ctxt": "zone name VEHICLE_PATROL" },
     "description": "Vehicles with an autopilot will patrol in this zone.",
     "color": "light_cyan"
   },
   {
     "id": "AUTO_EAT",
     "type": "LOOT_ZONE",
-    "name": "Auto Eat",
+    "name": { "str": "Auto Eat", "ctxt": "zone name AUTO_EAT" },
     "description": "Items in this zone will be automatically eaten during a long activity if you get hungry.",
     "color": "light_green"
   },
   {
     "id": "AUTO_DRINK",
     "type": "LOOT_ZONE",
-    "name": "Auto Drink",
+    "name": { "str": "Auto Drink", "ctxt": "zone name AUTO_DRINK" },
     "description": "Items in this zone will be automatically consumed during a long activity if you get thirsty.",
     "color": "light_blue"
   }

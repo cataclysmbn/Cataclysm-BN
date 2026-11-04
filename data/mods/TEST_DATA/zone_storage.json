@@ -1,0 +1,28 @@
+[
+  {
+    "type": "LOOT_ZONE",
+    "id": "test_mod_parts_storage",
+    "name": "Mod parts",
+    "color": "white"
+  },
+  {
+    "type": "ITEM_CATEGORY",
+    "id": "test_mod_parts",
+    "name": "MOD PARTS",
+    "sort_rank": 0,
+    "zone": "test_mod_parts_storage"
+  },
+  {
+    "type": "LOOT_ZONE",
+    "id": "test_priority_storage",
+    "name": "Priority storage"
+  },
+  {
+    "type": "ITEM_CATEGORY",
+    "id": "test_priority_category",
+    "name": "Priority test category",
+    "sort_rank": 0,
+    "zone": "LOOT_OTHER",
+    "priority_zones": [ { "id": "test_priority_storage", "flags": [ "FIREWOOD" ] } ]
+  }
+]

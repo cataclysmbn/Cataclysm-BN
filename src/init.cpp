@@ -15,6 +15,7 @@
 #include "catalua_impl.h"
 #include "clothing_mod.h"
 #include "clzones.h"
+#include "zone_groups.h"
 #include "construction.h"
 #include "construction_category.h"
 #include "construction_group.h"
@@ -412,6 +413,7 @@ void DynamicDataLoader::initialize()
     } );
 
     add( "LOOT_ZONE", &zone_type::load_zones );
+    add( "LOOT_ZONE_GROUP", &load_loot_zone_group );
     add( "monster_adjustment", &load_monster_adjustment );
     add( "recipe_category", &load_recipe_category );
     add( "recipe",  &recipe_dictionary::load_recipe );
@@ -695,6 +697,7 @@ void DynamicDataLoader::unload_data()
     base_weathers::reset();
     world_types::reset();
     zone_type::reset_zones();
+    reset_loot_zone_groups();
     l10n_data::unload_mod_catalogues();
     RGBColor::unload_names();
     perk::reset();
