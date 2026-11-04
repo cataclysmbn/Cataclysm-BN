@@ -3,6 +3,7 @@
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catalua.h"
+#include "catalua_impl.h"
 #include "catalua_sol.h"
 #include "catch/catch.hpp"
 #include "digital_media.h"
@@ -638,7 +639,7 @@ TEST_CASE("different_music_files_have_independent_cooldowns", "[digital_media][i
     clear_all_state();
     const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
     calendar::turn = calendar::turn_zero + 12_hours;
-    auto& dummy = get_avatar();
+    auto dummy = avatar{};
     clear_character(dummy);
     auto device = item::spawn("test_digital_music_reader");
     auto& reader = *device;
@@ -771,7 +772,7 @@ TEST_CASE("loading_an_obsolete_used_sd_card_preserves_its_files", "[digital_medi
 TEST_CASE("saving_and_loading_preserve_playable_media_counts", "[digital_media][savegame][iuse]") {
     clear_all_state();
     const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
-    auto& dummy = get_avatar();
+    auto dummy = avatar{};
     clear_character(dummy);
     auto device = item::spawn("test_digital_music_reader");
     initialize_digital_media(*device);
@@ -833,7 +834,7 @@ TEST_CASE(
     auto device = item::spawn(base);
     auto& reader = *device;
     if (!reader.ammo_types().empty()) { reader.ammo_set(itype_id("battery"), 100); }
-    const auto group = item_group_id(reader.get_property_string("digital_content"));
+    const auto group = item_group_id(reader.get_var("digital_content"));
     const auto possible = item_group::every_possible_item_from(group);
     const auto personal = item_group::every_possible_item_from(
         item_group_id("digital_content_personal"));
