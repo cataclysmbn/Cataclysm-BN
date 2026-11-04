@@ -4,7 +4,6 @@
 #    include "calendar.h"
 #    include "catch/catch.hpp"
 #    include "client_input.h"
-#    include "engine_client_schema.h"
 #    include "engine_client_session.h"
 #    include "engine_client_world.h"
 #    include "game.h"
@@ -164,10 +163,10 @@ auto wait_for(
     REQUIRE(authority_session.publish_boundary());
     if (mode == client_mode::watched) {
         auto input = std::istringstream{
-            request("bn.hello",
-                    R"({"versions":["0.2"],"client":{"name":"w","version":"1"},"schema":")"
-                        + std::string{engine_schema_hash} + R"(","delivery":{"credits":1}})",
-                    "1")
+            request(
+                "bn.hello",
+                R"({"versions":["0.2"],"client":{"name":"w","version":"1"},"delivery":{"credits":1}})",
+                "1")
             + request("bn.subscribe", "{}", "2")};
         REQUIRE(watcher.poll_input(input, watcher_output, errors));
         REQUIRE(watcher.poll_input(input, watcher_output, errors));
@@ -176,8 +175,7 @@ auto wait_for(
         const auto window = mode == client_mode::stalled ? "1" : "256";
         feed(request(
             "bn.hello",
-            R"({"versions":["0.2"],"client":{"name":"t","version":"1"},"schema":")"
-                + std::string{engine_schema_hash} + R"(","delivery":{"credits":)"
+            R"({"versions":["0.2"],"client":{"name":"t","version":"1"},"delivery":{"credits":)"
                 + std::string{window} + "}}",
             "1"));
         feed(request("bn.subscribe", "{}", "2"));

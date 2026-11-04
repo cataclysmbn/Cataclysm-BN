@@ -7,7 +7,6 @@
 #    include "client_input.h"
 #    include "client_interaction.h"
 #    include "engine_client_component.h"
-#    include "engine_client_schema.h"
 #    include "engine_client_session.h"
 #    include "engine_client_world.h"
 #    include "game.h"
@@ -79,8 +78,7 @@ auto rpc(const std::string& method, const std::string& params, const std::string
 auto hello(const std::string& locale = {}) -> std::string {
     return rpc(
         "bn.hello",
-        R"({"versions":["0.2"],"client":{"name":"t","version":"1"},"schema":")"
-            + std::string{ec::engine_schema_hash} + '"'
+        R"({"versions":["0.2"],"client":{"name":"t","version":"1"})"
             + (locale.empty() ? "" : R"(,"locale":")" + locale + '"') + "}",
         "1");
 }

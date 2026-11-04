@@ -2,13 +2,13 @@
 title: エンジン/クライアントプロトコル 0.2
 ---
 
-外部クライアントは `cataclysm-bn-tiles --client=mcp` の stdio 上で、改行区切りの JSON-RPC 2.0 によりゲームをプレイします。値は [Draft 2020-12 スキーマ](../../../schema/engine-client/0.2.schema.json)で定義され、以下の例はすべて[例ファイル](../../../schema/engine-client/0.2.examples/)でスキーマに照らして検証されています。従来の MCP ツール(`bn.observe`、`bn.press` など)は別の面であり変更されません。クライアントが `bn.hello` を呼ぶと、これらのツールは入力を拒否します。
+外部クライアントは `cataclysm-bn-tiles --client=mcp` の stdio 上で、改行区切りの JSON-RPC 2.0 によりゲームをプレイします。従来の MCP ツール(`bn.observe`、`bn.press` など)は別の面であり変更されません。クライアントが `bn.hello` を呼ぶと、これらのツールは入力を拒否します。
 
 ## セッション
 
 ```text
--> {"jsonrpc":"2.0","id":1,"method":"bn.hello","params":{"versions":["0.2"],"client":{"name":"my-client","version":"1"},"schema":"sha256:0123456789abcdef"}}
-<- {"jsonrpc":"2.0","id":1,"result":{"version":"0.2","epoch":"epoch:e7f3","engine":{"build":"...","mods":["bn"],"display":{"tiles":true,"tileset":"UNDEAD_PEOPLE_BASE"},"sound":{"soundpack":"/opt/bn/data/sound/Basic"}},"limits":{"frame_bytes":1048576,"cells_per_part":512,"cells_per_query":4096,"screen_queue":8},"schema":"sha256:0123456789abcdef","locale":"en","engine_locale":"en","role":"controller"}}
+-> {"jsonrpc":"2.0","id":1,"method":"bn.hello","params":{"versions":["0.2"],"client":{"name":"my-client","version":"1"}}}
+<- {"jsonrpc":"2.0","id":1,"result":{"version":"0.2","epoch":"epoch:e7f3","engine":{"build":"...","mods":["bn"],"display":{"tiles":true,"tileset":"UNDEAD_PEOPLE_BASE"},"sound":{"soundpack":"/opt/bn/data/sound/Basic"}},"limits":{"frame_bytes":1048576,"cells_per_part":512,"cells_per_query":4096,"screen_queue":8},"locale":"en","engine_locale":"en","role":"controller"}}
 -> {"jsonrpc":"2.0","id":2,"method":"bn.subscribe","params":{}}
 <- {"jsonrpc":"2.0","id":2,"result":{"at":{"epoch":"epoch:e7f3","sequence":"40","revision":"31"},"interaction":{...},"entities":[],"parts":1}}
 <- {"jsonrpc":"2.0","method":"bn.snapshot.part","params":{"epoch":"epoch:e7f3","at":{...},"index":0,"last":true,"cells":[...]}}
@@ -24,23 +24,23 @@ title: エンジン/クライアントプロトコル 0.2
 
 ## メソッド
 
-| メソッド                 | パラメータ                                                 | 結果                                                                                                                                           |
-| ------------------------ | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bn.hello`               | `versions`, `client`, `schema`, `locale?`, `capabilities?` | `version`, `epoch`, `engine`, `limits`, `delivery?`, `schema`, `locale`, `engine_locale`, `role`                                               |
-| `bn.viewport`            | `cols`, `rows`                                             | なし                                                                                                                                           |
-| `bn.interrupt`           | なし                                                       | なし                                                                                                                                           |
-| `bn.hold`                | `epoch`, `screen_id`, `affordance_id`                      | なし                                                                                                                                           |
-| `bn.release`             | なし                                                       | なし                                                                                                                                           |
-| `bn.subscribe`           | なし                                                       | スナップショットヘッダー。続いてパートとイベントが届く                                                                                         |
-| `bn.unsubscribe`         | なし                                                       | なし                                                                                                                                           |
-| `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit`                  | `boundary_id`, `total`, `choices` (読み取り専用)                                                                                               |
-| `bn.world.describe`      | `epoch`, `boundary_id`, `pos`                              | `lines`(読み取り専用)                                                                                                                          |
-| `bn.world.cells`         | `epoch`, `min`, `max`                                      | `at`, `cells`, `forgotten` (読み取り専用)                                                                                                      |
-| `bn.overmap.cells`       | `epoch`, `min`, `max`                                      | `overmap` オーバーマップ 1 階層のマス、カーソルとは無関係 (読み取り専用)                                                                       |
-| `bn.panel.view`          | `epoch`, `panel` (`character` または `inventory`), `row?`  | アバターに開いたときの `screen`、`row` (行またはタブの id) にフォーカス、1 フレームに収まる限りリストの全行、実行できるものなし (読み取り専用) |
-| `bn.command.submit`      | `epoch`, `expect`, `operation`                             | `command_id`, `stage: "received"`                                                                                                              |
-| `bn.command.result`      | `epoch`, `command_id`                                      | 最新のステージ。失われた通知の回復に使う                                                                                                       |
-| `bn.credit`              | `frames`                                                   | 付与後の保有 `credits`                                                                                                                         |
+| メソッド                 | パラメータ                                                | 結果                                                                                                                                           |
+| ------------------------ | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bn.hello`               | `versions`, `client`, `locale?`, `capabilities?`          | `version`, `epoch`, `engine`, `limits`, `delivery?`, `locale`, `engine_locale`, `role`                                                         |
+| `bn.viewport`            | `cols`, `rows`                                            | なし                                                                                                                                           |
+| `bn.interrupt`           | なし                                                      | なし                                                                                                                                           |
+| `bn.hold`                | `epoch`, `screen_id`, `affordance_id`                     | なし                                                                                                                                           |
+| `bn.release`             | なし                                                      | なし                                                                                                                                           |
+| `bn.subscribe`           | なし                                                      | スナップショットヘッダー。続いてパートとイベントが届く                                                                                         |
+| `bn.unsubscribe`         | なし                                                      | なし                                                                                                                                           |
+| `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit`                 | `boundary_id`, `total`, `choices` (読み取り専用)                                                                                               |
+| `bn.world.describe`      | `epoch`, `boundary_id`, `pos`                             | `lines`(読み取り専用)                                                                                                                          |
+| `bn.world.cells`         | `epoch`, `min`, `max`                                     | `at`, `cells`, `forgotten` (読み取り専用)                                                                                                      |
+| `bn.overmap.cells`       | `epoch`, `min`, `max`                                     | `overmap` オーバーマップ 1 階層のマス、カーソルとは無関係 (読み取り専用)                                                                       |
+| `bn.panel.view`          | `epoch`, `panel` (`character` または `inventory`), `row?` | アバターに開いたときの `screen`、`row` (行またはタブの id) にフォーカス、1 フレームに収まる限りリストの全行、実行できるものなし (読み取り専用) |
+| `bn.command.submit`      | `epoch`, `expect`, `operation`                            | `command_id`, `stage: "received"`                                                                                                              |
+| `bn.command.result`      | `epoch`, `command_id`                                     | 最新のステージ。失われた通知の回復に使う                                                                                                       |
+| `bn.credit`              | `frames`                                                  | 付与後の保有 `credits`                                                                                                                         |
 
 エンジンからの通知は `bn.snapshot.part`、`bn.events`、`bn.command`、`bn.resync`、`bn.loading`、`bn.progress` です。`bn.loading` と `bn.progress` 以外は、購読中のクライアントへ入力境界ごとに送られます。`bn.progress`(`{epoch}`)はハートビートで、待機などの行動が入力境界に到達せずに続いている間、`bn.hello` を済ませたクライアントへ 2 秒ごとに送られます。通信が途絶えたなら、エンジンは動いていません。ワールドの読み込み中は `bn.loading` が同じ役割を果たします。
 
@@ -48,10 +48,9 @@ title: エンジン/クライアントプロトコル 0.2
 
 ## hello とスタック
 
-エンジンはすべてのトランスポートで `"0.2"` だけを提供する。`"0.2"` を列挙しない hello は `negotiation_failed`、`action: "hello"` で失敗する。hello は次を含める必要がある。
+エンジンはすべてのトランスポートで `"0.2"` だけを提供する。`"0.2"` を列挙しない hello は `negotiation_failed`、`action: "hello"` で失敗する。hello は `versions` と `client` を含み、次を含めることができる。
 
-- `schema`: `sha256:` と、[`0.2.schema.json`](../../../schema/engine-client/0.2.schema.json) の生バイトの SHA-256 の先頭 16 桁の 16 進数。ハッシュが異なると `negotiation_failed`、`action: "hello"`、`error.data.schema = {engine, client}` で失敗する。エンジンは CMake の構成時にスキーマファイルからハッシュを得る。
-- 任意の `locale` と `capabilities`（`tiles`、`tint_ids`、`viewport`、`delivery`。個別メンバーとして送っても受け付けるが両方の形式は併用できない）。結果には `schema`、`locale`（接続のテキストの言語）、`engine_locale`、`role` が加わる。エンジンにカタログのない `locale` は `unavailable_locale`、`action: "hello"` で失敗する。
+- 任意の `locale` と `capabilities`（`tiles`、`tint_ids`、`viewport`、`delivery`。個別メンバーとして送っても受け付けるが両方の形式は併用できない）。結果には `locale`（接続のテキストの言語）、`engine_locale`、`role` が加わる。エンジンにカタログのない `locale` は `unavailable_locale`、`action: "hello"` で失敗する。
 
 すべてのインタラクション境界（スナップショットのヘッダーとイベント）は `interaction` と並んで `stack` を持つ。スタックは開いている画面を外側から並べたもので、最後の画面だけが affordance を持つ。画面の `kind` はどの画面か（`map`、`crafting`、`uilist` など）を表し、開くたびに、どの言語でも同じなので、クライアントはウィンドウの位置のように画面ごとに覚えるものをこの値で区別する。`kind` のない画面は、エンジンがまだ名前を付けていない画面である。`component_id` 付きの `bn.interaction.choices` は最上位画面のその一覧（`rows`、`total`）を読む。
 

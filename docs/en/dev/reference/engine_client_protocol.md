@@ -2,13 +2,13 @@
 title: Engine/client protocol 0.2
 ---
 
-An external client plays the game over newline-delimited JSON-RPC 2.0 on the stdio of `cataclysm-bn-tiles --client=mcp`. The values are defined by the [Draft 2020-12 schema](../../../schema/engine-client/0.2.schema.json), and every example below is checked against it in the [examples files](../../../schema/engine-client/0.2.examples/). The legacy MCP tools (`bn.observe`, `bn.press`, ...) are a separate, unchanged surface; once a client says `bn.hello`, they refuse input.
+An external client plays the game over newline-delimited JSON-RPC 2.0 on the stdio of `cataclysm-bn-tiles --client=mcp`. The legacy MCP tools (`bn.observe`, `bn.press`, ...) are a separate, unchanged surface; once a client says `bn.hello`, they refuse input.
 
 ## A session
 
 ```text
--> {"jsonrpc":"2.0","id":1,"method":"bn.hello","params":{"versions":["0.2"],"client":{"name":"my-client","version":"1"},"schema":"sha256:0123456789abcdef"}}
-<- {"jsonrpc":"2.0","id":1,"result":{"version":"0.2","epoch":"epoch:e7f3","engine":{"build":"...","mods":["bn"],"display":{"tiles":true,"tileset":"UNDEAD_PEOPLE_BASE"},"sound":{"soundpack":"/opt/bn/data/sound/Basic"}},"limits":{"frame_bytes":1048576,"cells_per_part":512,"cells_per_query":4096,"screen_queue":8},"schema":"sha256:0123456789abcdef","locale":"en","engine_locale":"en","role":"controller"}}
+-> {"jsonrpc":"2.0","id":1,"method":"bn.hello","params":{"versions":["0.2"],"client":{"name":"my-client","version":"1"}}}
+<- {"jsonrpc":"2.0","id":1,"result":{"version":"0.2","epoch":"epoch:e7f3","engine":{"build":"...","mods":["bn"],"display":{"tiles":true,"tileset":"UNDEAD_PEOPLE_BASE"},"sound":{"soundpack":"/opt/bn/data/sound/Basic"}},"limits":{"frame_bytes":1048576,"cells_per_part":512,"cells_per_query":4096,"screen_queue":8},"locale":"en","engine_locale":"en","role":"controller"}}
 -> {"jsonrpc":"2.0","id":2,"method":"bn.subscribe","params":{}}
 <- {"jsonrpc":"2.0","id":2,"result":{"at":{"epoch":"epoch:e7f3","sequence":"40","revision":"31"},"interaction":{...},"entities":[],"parts":1}}
 <- {"jsonrpc":"2.0","method":"bn.snapshot.part","params":{"epoch":"epoch:e7f3","at":{...},"index":0,"last":true,"cells":[...]}}
@@ -24,23 +24,23 @@ Collect the `parts` snapshot parts, then apply `bn.events` in order. A gap, an e
 
 ## Methods
 
-| Method                   | Params                                                     | Result                                                                                                                                        |
-| ------------------------ | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bn.hello`               | `versions`, `client`, `schema`, `locale?`, `capabilities?` | `version`, `epoch`, `engine`, `limits`, `delivery?`, `schema`, `locale`, `engine_locale`, `role`                                              |
-| `bn.viewport`            | `cols`, `rows`                                             | none                                                                                                                                          |
-| `bn.interrupt`           | none                                                       | none                                                                                                                                          |
-| `bn.hold`                | `epoch`, `screen_id`, `affordance_id`                      | none                                                                                                                                          |
-| `bn.release`             | none                                                       | none                                                                                                                                          |
-| `bn.subscribe`           | none                                                       | snapshot header; parts and events follow                                                                                                      |
-| `bn.unsubscribe`         | none                                                       | none                                                                                                                                          |
-| `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit`                  | `boundary_id`, `total`, `choices` (reads only)                                                                                                |
-| `bn.world.describe`      | `epoch`, `boundary_id`, `pos`                              | `lines` (reads only)                                                                                                                          |
-| `bn.world.cells`         | `epoch`, `min`, `max`                                      | `at`, `cells`, `forgotten` (reads only)                                                                                                       |
-| `bn.overmap.cells`       | `epoch`, `min`, `max`                                      | `overmap` squares of an overmap level, whatever the cursor (reads only)                                                                       |
-| `bn.panel.view`          | `epoch`, `panel` (`character` or `inventory`), `row?`      | the `screen` as it opens on the avatar, `row` (a row or tab id) focused, every list row while it fits a frame, nothing to invoke (reads only) |
-| `bn.command.submit`      | `epoch`, `expect`, `operation`                             | `command_id`, `stage: "received"`                                                                                                             |
-| `bn.command.result`      | `epoch`, `command_id`                                      | latest stage, for recovering a lost notification                                                                                              |
-| `bn.credit`              | `frames`                                                   | `credits` held after the grant                                                                                                                |
+| Method                   | Params                                                | Result                                                                                                                                        |
+| ------------------------ | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bn.hello`               | `versions`, `client`, `locale?`, `capabilities?`      | `version`, `epoch`, `engine`, `limits`, `delivery?`, `locale`, `engine_locale`, `role`                                                        |
+| `bn.viewport`            | `cols`, `rows`                                        | none                                                                                                                                          |
+| `bn.interrupt`           | none                                                  | none                                                                                                                                          |
+| `bn.hold`                | `epoch`, `screen_id`, `affordance_id`                 | none                                                                                                                                          |
+| `bn.release`             | none                                                  | none                                                                                                                                          |
+| `bn.subscribe`           | none                                                  | snapshot header; parts and events follow                                                                                                      |
+| `bn.unsubscribe`         | none                                                  | none                                                                                                                                          |
+| `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit`             | `boundary_id`, `total`, `choices` (reads only)                                                                                                |
+| `bn.world.describe`      | `epoch`, `boundary_id`, `pos`                         | `lines` (reads only)                                                                                                                          |
+| `bn.world.cells`         | `epoch`, `min`, `max`                                 | `at`, `cells`, `forgotten` (reads only)                                                                                                       |
+| `bn.overmap.cells`       | `epoch`, `min`, `max`                                 | `overmap` squares of an overmap level, whatever the cursor (reads only)                                                                       |
+| `bn.panel.view`          | `epoch`, `panel` (`character` or `inventory`), `row?` | the `screen` as it opens on the avatar, `row` (a row or tab id) focused, every list row while it fits a frame, nothing to invoke (reads only) |
+| `bn.command.submit`      | `epoch`, `expect`, `operation`                        | `command_id`, `stage: "received"`                                                                                                             |
+| `bn.command.result`      | `epoch`, `command_id`                                 | latest stage, for recovering a lost notification                                                                                              |
+| `bn.credit`              | `frames`                                              | `credits` held after the grant                                                                                                                |
 
 Notifications from the engine: `bn.snapshot.part`, `bn.events`, `bn.command`, `bn.resync`, `bn.loading`, `bn.progress`. All but `bn.loading` and `bn.progress` are sent at input boundaries to a subscribed client. `bn.progress` (`{epoch}`) is a heartbeat, sent every 2 seconds to a client that said `bn.hello` while a wait or other activity runs without reaching an input boundary, so silence on the wire means the engine is not working. `bn.loading` plays the same role while the world loads.
 
@@ -48,10 +48,9 @@ Errors use code `1000` with `error.data = {kind, action?, at?}`; `action` says w
 
 ## Hello and the stack
 
-The engine serves `"0.2"` only, on every transport. A hello that does not list `"0.2"` fails with `negotiation_failed` and `action: "hello"`. The hello must carry:
+The engine serves `"0.2"` only, on every transport. A hello that does not list `"0.2"` fails with `negotiation_failed` and `action: "hello"`. The hello carries `versions` and `client`, and may carry:
 
-- `schema`: `sha256:` and the first 16 hex digits of the SHA-256 of the raw bytes of [`0.2.schema.json`](../../../schema/engine-client/0.2.schema.json). A different hash fails with `negotiation_failed`, `action: "hello"` and `error.data.schema = {engine, client}`. The engine takes its hash from the schema file when CMake configures.
-- optional `locale` and `capabilities` (`tiles`, `tint_ids`, `viewport`, `delivery`; the members may also stand loose in the hello, but not both forms). The result adds `schema`, `locale` (the language of the connection's text), `engine_locale` and `role`. A `locale` the engine has no catalogue for fails with `unavailable_locale` and `action: "hello"`.
+- optional `locale` and `capabilities` (`tiles`, `tint_ids`, `viewport`, `delivery`; the members may also stand loose in the hello, but not both forms). The result adds `locale` (the language of the connection's text), `engine_locale` and `role`. A `locale` the engine has no catalogue for fails with `unavailable_locale` and `action: "hello"`.
 
 Every interaction boundary (snapshot header and events) carries `stack`, next to `interaction`. The stack is the open screens, outermost first; only the last has affordances. A screen's `kind` names what screen it is (`map`, `crafting`, `uilist`, ...), the same at every opening and in every language, so a client keys what it keeps per screen, such as a window's place, on it; a screen without `kind` is one the engine does not name yet. `bn.interaction.choices` with `component_id` reads that list of the top screen (`rows`, `total`).
 

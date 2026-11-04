@@ -111,4 +111,4 @@ NPC 대화에서는 이미 계산된 현재 대사와 선택 가능한 응답을
 
 세션을 기록하려면 게임 실행 시 `--replay-record PATH`를 추가하세요. 나중에 호스트 없이 `--client=mcp --replay-play PATH`로 실행할 수 있습니다. 동일한 초기 프로필을 준비하고 실제 세션 스모크 검사를 실행하는 방법은 [리플레이 가이드](replay.md)를 따르세요.
 
-`--contract-record PATH`를 추가하면 엔진의 발행마다 그 이벤트와 남긴 스냅샷이 JSON 한 줄로 기록됩니다. 클라이언트가 재구성한 결과를 이것과 비교할 수 있습니다(`tests/protocol/stdio_test.ts`).
+`--contract-record PATH`를 추가하면 엔진의 발행마다 그 이벤트와 남긴 스냅샷이 JSON 한 줄로 기록됩니다. 클라이언트가 재구성한 결과를 이것과 비교할 수 있습니다.

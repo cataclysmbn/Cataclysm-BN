@@ -21,8 +21,6 @@ struct hello_request {
     std::vector<std::string> versions = {};
     std::string client_name = {};
     std::string client_version = {};
-    /// 0.2 only, and then required: the hash of the schema the client was built with.
-    std::optional<std::string> schema = std::nullopt;
     /// 0.2 only: the BN language id the client wants its text in; absent: the engine's.
     std::optional<std::string> locale = std::nullopt;
     std::optional<viewport> view = std::nullopt;
@@ -84,17 +82,11 @@ auto serialize_description( const tile_description &value ) -> std::string;
 
 /// What the client should do after an application error.
 enum class required_action { none, hello, subscribe, retry };
-/// The schema hashes of a hello the engine refused, so that both sides can say what differs.
-struct schema_hashes {
-    std::string engine = {};
-    std::string client = {};
-};
 /// Closed application_error data, with no free-form diagnostics or arbitrary payloads.
 struct application_error {
     error kind = error::validation_failed;
     required_action action = required_action::none;
     std::optional<clock_point> at = std::nullopt;
-    std::optional<schema_hashes> schemas = std::nullopt;
 };
 
 struct engine_info {
@@ -117,7 +109,6 @@ struct delivery_grant {
 };
 /// What a hello answers besides the engine, limits and delivery.
 struct hello_identity {
-    std::string schema = {};
     /// The language the connection's text is in.
     std::string locale = {};
     std::string engine_locale = {};

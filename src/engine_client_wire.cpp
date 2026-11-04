@@ -220,25 +220,15 @@ auto read_capabilities( const json &source, hello_request &result ) -> void
         result.tiles = source.at( "tiles" ).get<bool>();
     }
 }
-/// `sha256:` and 16 lowercase hex digits.
-auto read_schema_hash( const json &object, const char *name ) -> std::string
-{
-    auto value = text( object, name );
-    require( value.size() == 23 && value.starts_with( "sha256:" ) &&
-    std::ranges::all_of( value.substr( 7 ), []( const char digit ) {
-        return ( digit >= '0' && digit <= '9' ) || ( digit >= 'a' && digit <= 'f' );
-    } ) );
-    return value;
-}
 auto read_request( const json &value, hello_request &result ) -> void
 {
-    // Only a client that offers the version sends (and must send) the schema; any other hello is refused by the negotiation.
+    // Only a client that offers the version may send the optional members; any other hello is refused by the negotiation.
     const auto offers_02 = value.is_object() && value.contains( "versions" ) &&
                            value.at( "versions" ).is_array() &&
     std::ranges::any_of( value.at( "versions" ), []( const json & entry ) { return entry == contract_version; } );
     if( offers_02 ) {
-        members( value, {"versions", "client", "schema"}, {"locale", "capabilities", "viewport", "tiles", "tint_ids", "delivery"} );
-        result.schema = read_schema_hash( value, "schema" );
+        // "schema" is accepted and ignored: clients built for an earlier 0.2 engine still send it.
+        members( value, {"versions", "client"}, {"schema", "locale", "capabilities", "viewport", "tiles", "tint_ids", "delivery"} );
         if( value.contains( "locale" ) ) { result.locale = id( value, "locale" ); }
     } else {
         members( value, {"versions", "client"}, {"viewport", "tiles", "tint_ids", "delivery"} );
@@ -428,7 +418,6 @@ auto serialize_hello( const hello_reply &reply ) -> std::string
         };
         if( delivery->max_hz ) { result["delivery"]["max_hz"] = *delivery->max_hz; }
     }
-    result["schema"] = identity.schema;
     result["locale"] = identity.locale;
     result["engine_locale"] = identity.engine_locale;
     result["role"] = identity.role;
@@ -466,7 +455,6 @@ std::expected<std::string, error>
     result["message"] = error_text( value.kind );
     if( !action->empty() ) { result["action"] = std::string( *action ); }
     if( value.at ) { result["at"] = nlohmann::ordered_json::parse( serialize_clock( *value.at ) ); }
-    if( value.schemas ) { result["schema"] = {{"engine", value.schemas->engine}, {"client", value.schemas->client}}; }
     return result.dump();
 }
 } // namespace engine_client

@@ -1,7 +1,6 @@
 #include "mcp_server.h"
 #include "engine_client_component.h"
 #include "engine_client_panels.h"
-#include "engine_client_schema.h"
 #include "engine_client_world.h"
 
 #include <algorithm>
@@ -798,8 +797,8 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
     namespace rpc = jsonrpc;
     // Direct notifications are deliberately effect-free, including hello and reads.
     if( !request.id.json ) { return std::nullopt; }
-    const auto fail = [&]( const error reason, std::optional<schema_hashes> schemas = std::nullopt ) {
-        auto data = application_error{ .kind = reason, .at = session_.at(), .schemas = std::move( schemas ) };
+    const auto fail = [&]( const error reason ) {
+        auto data = application_error{ .kind = reason, .at = session_.at() };
         switch( reason ) {
             case error::negotiation_failed:
             case error::unavailable_locale:
@@ -833,10 +832,6 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         if( !decoded ) { return invalid(); }
         if( !std::ranges::contains( decoded->versions, contract_version ) ) {
             return fail( error::negotiation_failed );
-        }
-        // The decoder requires the schema of a hello that offers the version.
-        if( *decoded->schema != engine_schema_hash ) {
-            return fail( error::negotiation_failed, schema_hashes{ .engine = engine_schema_hash, .client = *decoded->schema } );
         }
         // The language is the connection's own to ask for, and the engine must be able to word it.
         if( decoded->locale && !localization::locale_available( *decoded->locale ) ) { return fail( error::unavailable_locale ); }
@@ -872,7 +867,7 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         const auto grant = credits_ ? std::optional{ delivery_grant{ .credits = *credits_, .max_hz = decoded->max_hz } } :
                            std::nullopt;
         auto reply = hello_reply{ .epoch = session_.epoch(), .engine = describe_engine(), .delivery = grant };
-        reply.identity = { .schema = engine_schema_hash, .locale = locale_.empty() ? reply.engine.locale : locale_,
+        reply.identity = { .locale = locale_.empty() ? reply.engine.locale : locale_,
                            .engine_locale = reply.engine.locale,
                            .role = options_.spectator ? "spectator" : "controller"
                          };

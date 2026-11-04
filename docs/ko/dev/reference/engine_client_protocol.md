@@ -2,13 +2,13 @@
 title: 엔진/클라이언트 프로토콜 0.2
 ---
 
-외부 클라이언트는 `cataclysm-bn-tiles --client=mcp`의 stdio에서 줄바꿈으로 구분된 JSON-RPC 2.0으로 게임을 플레이합니다. 값은 [Draft 2020-12 스키마](../../../schema/engine-client/0.2.schema.json)가 정의하며, 아래 예시는 모두 [예시 파일](../../../schema/engine-client/0.2.examples/)에서 스키마로 검증됩니다. 기존 MCP 도구(`bn.observe`, `bn.press` 등)는 별개이며 바뀌지 않습니다. 클라이언트가 `bn.hello`를 호출하면 이 도구들은 입력을 거부합니다.
+외부 클라이언트는 `cataclysm-bn-tiles --client=mcp`의 stdio에서 줄바꿈으로 구분된 JSON-RPC 2.0으로 게임을 플레이합니다. 기존 MCP 도구(`bn.observe`, `bn.press` 등)는 별개이며 바뀌지 않습니다. 클라이언트가 `bn.hello`를 호출하면 이 도구들은 입력을 거부합니다.
 
 ## 세션
 
 ```text
--> {"jsonrpc":"2.0","id":1,"method":"bn.hello","params":{"versions":["0.2"],"client":{"name":"my-client","version":"1"},"schema":"sha256:0123456789abcdef"}}
-<- {"jsonrpc":"2.0","id":1,"result":{"version":"0.2","epoch":"epoch:e7f3","engine":{"build":"...","mods":["bn"],"display":{"tiles":true,"tileset":"UNDEAD_PEOPLE_BASE"},"sound":{"soundpack":"/opt/bn/data/sound/Basic"}},"limits":{"frame_bytes":1048576,"cells_per_part":512,"cells_per_query":4096,"screen_queue":8},"schema":"sha256:0123456789abcdef","locale":"en","engine_locale":"en","role":"controller"}}
+-> {"jsonrpc":"2.0","id":1,"method":"bn.hello","params":{"versions":["0.2"],"client":{"name":"my-client","version":"1"}}}
+<- {"jsonrpc":"2.0","id":1,"result":{"version":"0.2","epoch":"epoch:e7f3","engine":{"build":"...","mods":["bn"],"display":{"tiles":true,"tileset":"UNDEAD_PEOPLE_BASE"},"sound":{"soundpack":"/opt/bn/data/sound/Basic"}},"limits":{"frame_bytes":1048576,"cells_per_part":512,"cells_per_query":4096,"screen_queue":8},"locale":"en","engine_locale":"en","role":"controller"}}
 -> {"jsonrpc":"2.0","id":2,"method":"bn.subscribe","params":{}}
 <- {"jsonrpc":"2.0","id":2,"result":{"at":{"epoch":"epoch:e7f3","sequence":"40","revision":"31"},"interaction":{...},"entities":[],"parts":1}}
 <- {"jsonrpc":"2.0","method":"bn.snapshot.part","params":{"epoch":"epoch:e7f3","at":{...},"index":0,"last":true,"cells":[...]}}
@@ -24,23 +24,23 @@ title: 엔진/클라이언트 프로토콜 0.2
 
 ## 메서드
 
-| 메서드                   | 매개변수                                                   | 결과                                                                                                                          |
-| ------------------------ | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `bn.hello`               | `versions`, `client`, `schema`, `locale?`, `capabilities?` | `version`, `epoch`, `engine`, `limits`, `delivery?`, `schema`, `locale`, `engine_locale`, `role`                              |
-| `bn.viewport`            | `cols`, `rows`                                             | 없음                                                                                                                          |
-| `bn.interrupt`           | 없음                                                       | 없음                                                                                                                          |
-| `bn.hold`                | `epoch`, `screen_id`, `affordance_id`                      | 없음                                                                                                                          |
-| `bn.release`             | 없음                                                       | 없음                                                                                                                          |
-| `bn.subscribe`           | 없음                                                       | 스냅샷 헤더. 이어서 파트와 이벤트가 전송됨                                                                                    |
-| `bn.unsubscribe`         | 없음                                                       | 없음                                                                                                                          |
-| `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit`                  | `boundary_id`, `total`, `choices` (읽기 전용)                                                                                 |
-| `bn.world.describe`      | `epoch`, `boundary_id`, `pos`                              | `lines` (읽기 전용)                                                                                                           |
-| `bn.world.cells`         | `epoch`, `min`, `max`                                      | `at`, `cells`, `forgotten` (읽기 전용)                                                                                        |
-| `bn.overmap.cells`       | `epoch`, `min`, `max`                                      | `overmap` 한 층의 칸들, 커서와 무관 (읽기 전용)                                                                               |
-| `bn.panel.view`          | `epoch`, `panel` (`character` 또는 `inventory`), `row?`    | 아바타에게 열릴 때의 `screen`, `row`(줄 또는 탭 id)에 포커스, 한 프레임에 들어가면 목록의 모든 줄, 실행할 것 없음 (읽기 전용) |
-| `bn.command.submit`      | `epoch`, `expect`, `operation`                             | `command_id`, `stage: "received"`                                                                                             |
-| `bn.command.result`      | `epoch`, `command_id`                                      | 최신 단계. 유실된 알림을 복구할 때 사용                                                                                       |
-| `bn.credit`              | `frames`                                                   | 부여 후 보유 `credits`                                                                                                        |
+| 메서드                   | 매개변수                                                | 결과                                                                                                                          |
+| ------------------------ | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `bn.hello`               | `versions`, `client`, `locale?`, `capabilities?`        | `version`, `epoch`, `engine`, `limits`, `delivery?`, `locale`, `engine_locale`, `role`                                        |
+| `bn.viewport`            | `cols`, `rows`                                          | 없음                                                                                                                          |
+| `bn.interrupt`           | 없음                                                    | 없음                                                                                                                          |
+| `bn.hold`                | `epoch`, `screen_id`, `affordance_id`                   | 없음                                                                                                                          |
+| `bn.release`             | 없음                                                    | 없음                                                                                                                          |
+| `bn.subscribe`           | 없음                                                    | 스냅샷 헤더. 이어서 파트와 이벤트가 전송됨                                                                                    |
+| `bn.unsubscribe`         | 없음                                                    | 없음                                                                                                                          |
+| `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit`               | `boundary_id`, `total`, `choices` (읽기 전용)                                                                                 |
+| `bn.world.describe`      | `epoch`, `boundary_id`, `pos`                           | `lines` (읽기 전용)                                                                                                           |
+| `bn.world.cells`         | `epoch`, `min`, `max`                                   | `at`, `cells`, `forgotten` (읽기 전용)                                                                                        |
+| `bn.overmap.cells`       | `epoch`, `min`, `max`                                   | `overmap` 한 층의 칸들, 커서와 무관 (읽기 전용)                                                                               |
+| `bn.panel.view`          | `epoch`, `panel` (`character` 또는 `inventory`), `row?` | 아바타에게 열릴 때의 `screen`, `row`(줄 또는 탭 id)에 포커스, 한 프레임에 들어가면 목록의 모든 줄, 실행할 것 없음 (읽기 전용) |
+| `bn.command.submit`      | `epoch`, `expect`, `operation`                          | `command_id`, `stage: "received"`                                                                                             |
+| `bn.command.result`      | `epoch`, `command_id`                                   | 최신 단계. 유실된 알림을 복구할 때 사용                                                                                       |
+| `bn.credit`              | `frames`                                                | 부여 후 보유 `credits`                                                                                                        |
 
 엔진이 보내는 알림은 `bn.snapshot.part`, `bn.events`, `bn.command`, `bn.resync`, `bn.loading`, `bn.progress`입니다. `bn.loading`과 `bn.progress`를 제외한 알림은 구독한 클라이언트에 입력 경계마다 전송됩니다. `bn.progress`(`{epoch}`)는 하트비트로, 대기 같은 활동이 입력 경계에 도달하지 않고 계속되는 동안 `bn.hello`를 마친 클라이언트에 2초마다 전송됩니다. 통신이 끊기면 엔진이 일하지 않는다는 뜻입니다. 월드를 불러오는 동안은 `bn.loading`이 같은 역할을 합니다.
 
@@ -48,10 +48,9 @@ title: 엔진/클라이언트 프로토콜 0.2
 
 ## hello와 스택
 
-엔진은 모든 전송 방식에서 `"0.2"`만 제공한다. `"0.2"`를 나열하지 않은 hello는 `negotiation_failed`, `action: "hello"`로 실패한다. hello는 다음을 담아야 한다.
+엔진은 모든 전송 방식에서 `"0.2"`만 제공한다. `"0.2"`를 나열하지 않은 hello는 `negotiation_failed`, `action: "hello"`로 실패한다. hello는 `versions`와 `client`를 담고, 다음을 담을 수 있다.
 
-- `schema`: `sha256:`과 [`0.2.schema.json`](../../../schema/engine-client/0.2.schema.json) 원본 바이트의 SHA-256 앞 16자리 16진수. 해시가 다르면 `negotiation_failed`, `action: "hello"`, `error.data.schema = {engine, client}`로 실패한다. 엔진은 CMake 구성 시 스키마 파일에서 해시를 얻는다.
-- 선택 항목 `locale`, `capabilities`(`tiles`, `tint_ids`, `viewport`, `delivery`; 개별 멤버로 보내도 받지만 두 형식을 함께 쓸 수 없다). 결과에는 `schema`, `locale`(연결의 텍스트 언어), `engine_locale`, `role`이 추가된다. 엔진에 카탈로그가 없는 `locale`은 `unavailable_locale`, `action: "hello"`로 실패한다.
+- 선택 항목 `locale`, `capabilities`(`tiles`, `tint_ids`, `viewport`, `delivery`; 개별 멤버로 보내도 받지만 두 형식을 함께 쓸 수 없다). 결과에는 `locale`(연결의 텍스트 언어), `engine_locale`, `role`이 추가된다. 엔진에 카탈로그가 없는 `locale`은 `unavailable_locale`, `action: "hello"`로 실패한다.
 
 모든 상호작용 경계(스냅샷 헤더와 이벤트)는 `interaction` 옆에 `stack`을 담는다. 스택은 열린 화면을 바깥쪽부터 나열하며 마지막 화면만 affordance를 가진다. 화면의 `kind`는 어떤 화면인지(`map`, `crafting`, `uilist`, ...)를 나타내며, 열 때마다 그리고 어느 언어에서나 같으므로 클라이언트는 창의 위치처럼 화면마다 기억하는 것을 이 값으로 구분한다. `kind`가 없는 화면은 엔진이 아직 이름을 붙이지 않은 화면이다. `component_id`가 있는 `bn.interaction.choices`는 맨 위 화면의 해당 목록(`rows`, `total`)을 읽는다.
 

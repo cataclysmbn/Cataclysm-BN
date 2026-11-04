@@ -4,7 +4,6 @@
 #    include "catch/catch.hpp"
 #    include "client_input.h"
 #    include "engine_client_component.h"
-#    include "engine_client_schema.h"
 #    include "engine_client_session.h"
 #    include "game_session.h"
 #    include "input.h"
@@ -50,14 +49,8 @@ auto rpc(const std::string& method, const std::string& params, const std::string
          + (id.empty() ? "" : R"(,"id":)" + id) + "}\n";
 }
 const auto subscribe = rpc("bn.subscribe", "{}", "2");
-const auto engine_hash = std::string{engine_schema_hash};
-auto hello_with_schema(const std::string& hash) -> std::string {
-    return rpc(
-        "bn.hello",
-        R"({"versions":["0.2"],"client":{"name":"test","version":"1"},"schema":")" + hash + R"("})",
-        "1");
-}
-const auto hello = hello_with_schema(engine_hash);
+const auto hello =
+    rpc("bn.hello", R"({"versions":["0.2"],"client":{"name":"test","version":"1"}})", "1");
 /// The requests of `texts` as one JSON-RPC batch frame.
 auto batch_of(const std::vector<std::string>& texts) -> std::string {
     auto frame = std::string{"["};
@@ -84,8 +77,8 @@ auto count_of(const std::string& text, const std::string& part) -> std::size_t {
 auto hello_with(const std::string& delivery) -> std::string {
     return rpc(
         "bn.hello",
-        R"({"versions":["0.2"],"client":{"name":"test","version":"1"},"schema":")" + engine_hash
-            + R"(","delivery":)" + delivery + "}",
+        R"({"versions":["0.2"],"client":{"name":"test","version":"1"},"delivery":)" + delivery
+            + "}",
         "1");
 }
 
@@ -285,8 +278,7 @@ TEST_CASE(
     const auto declare = [](const std::string& view) {
         return rpc(
             "bn.hello",
-            R"({"versions":["0.2"],"client":{"name":"t","version":"1"},"schema":")" + engine_hash
-                + R"(","viewport":)" + view + "}",
+            R"({"versions":["0.2"],"client":{"name":"t","version":"1"},"viewport":)" + view + "}",
             "1");
     };
     SECTION("a hello without a viewport leaves the terminal alone") {
@@ -508,27 +500,18 @@ TEST_CASE("interaction choices are a passive paged read", "[engine_client_server
     CHECK(test.authority.at() == before);
 }
 
-TEST_CASE("a hello names the schema and a wrong one is refused", "[engine_client_server]") {
+TEST_CASE("a hello is answered with the locale and the role", "[engine_client_server]") {
     auto boundary = input_boundary{};
     auto test = fixture{};
-    const auto stranger = std::string{"sha256:0000000000000000"};
-    SECTION("the hash, the locale and the role are answered") {
+    SECTION("the locale and the role are answered") {
         test.pump(hello);
         const auto out = test.output.str();
         CHECK(contains(out, R"("version":"0.2")"));
-        CHECK(contains(out, R"("schema":")" + engine_hash + R"(","locale":")"));
+        CHECK(contains(out, R"("locale":")"));
+        CHECK_FALSE(contains(out, R"("schema")"));
         CHECK(contains(out, R"("engine_locale":")"));
         CHECK(contains(out, R"("screen_queue":8)"));
         CHECK(contains(out, R"("role":"controller")"));
-    }
-    SECTION("a different hash fails the negotiation and names both") {
-        test.pump(hello_with_schema(stranger));
-        const auto out = test.output.str();
-        CHECK(contains(out, R"("kind":"negotiation_failed")"));
-        CHECK(contains(out, R"("action":"hello")"));
-        CHECK(contains(
-            out, R"("schema":{"engine":")" + engine_hash + R"(","client":")" + stranger + R"("})"));
-        CHECK_FALSE(contains(out, R"("version":"0.2")"));
     }
     SECTION("a 0.1 hello is refused with negotiation_failed, and negotiates nothing") {
         test.pump(
@@ -540,24 +523,26 @@ TEST_CASE("a hello names the schema and a wrong one is refused", "[engine_client
         CHECK_FALSE(contains(out, R"("version":"0.)"));
     }
     SECTION("a refused hello negotiates nothing, and a hello after it is served") {
-        test.pump(hello_with_schema(stranger) + rpc("bn.subscribe", "{}", "7") + hello + subscribe);
+        test.pump(
+            rpc("bn.hello", R"({"versions":["0.1"],"client":{"name":"t","version":"1"}})", "5")
+            + rpc("bn.subscribe", "{}", "7") + hello + subscribe);
         const auto out = test.output.str();
         CHECK(index_of(out, R"("id":7,"error")") != std::string::npos);
         CHECK(contains(out, R"("version":"0.2")"));
-        CHECK(contains(out, R"("schema":)" + std::string{"\""} + engine_hash));
+        CHECK(contains(out, R"("role":"controller")"));
     }
-    SECTION("a 0.2 hello without the hash, or with a malformed one, is invalid params") {
-        test.pump(
-            rpc("bn.hello", R"({"versions":["0.2"],"client":{"name":"t","version":"1"}})", "5")
-            + hello_with_schema("sha256:ABCDEF0123456789"));
-        CHECK(count_of(test.output.str(), R"("code":-32602)") == 2);
-        CHECK_FALSE(contains(test.output.str(), R"("version":"0.2")"));
+    SECTION("a schema member is ignored") {
+        test.pump(rpc(
+            "bn.hello",
+            R"({"versions":["0.2"],"client":{"name":"t","version":"1"},"schema":"sha256:0123456789abcdef"})",
+            "1"));
+        CHECK(contains(test.output.str(), R"("version":"0.2")"));
+        CHECK_FALSE(contains(test.output.str(), R"("schema")"));
     }
     SECTION("capabilities carry what the loose members do") {
         test.pump(rpc(
             "bn.hello",
-            R"({"versions":["0.2"],"client":{"name":"t","version":"1"},"schema":")" + engine_hash
-                + R"(","capabilities":{"viewport":{"cols":40,"rows":25},"delivery":{"credits":4}}})",
+            R"({"versions":["0.2"],"client":{"name":"t","version":"1"},"capabilities":{"viewport":{"cols":40,"rows":25},"delivery":{"credits":4}}})",
             "1"));
         CHECK(declared_viewport == std::vector<std::pair<int, int>>{{40, 25}});
         CHECK(contains(test.output.str(), R"("delivery":{"credits":4)"));
@@ -1899,8 +1884,7 @@ TEST_CASE("a spectator's hello leaves the controller's view alone", "[engine_cli
     auto watcher = spectator{test};
     watcher.read(rpc(
         "bn.hello",
-        R"({"versions":["0.2"],"client":{"name":"w","version":"1"},"schema":")" + engine_hash
-            + R"(","viewport":{"cols":10,"rows":10}})",
+        R"({"versions":["0.2"],"client":{"name":"w","version":"1"},"viewport":{"cols":10,"rows":10}})",
         "1"));
     CHECK(contains(watcher.output.str(), R"("version":"0.2")"));
     CHECK(watcher.resized.empty());
