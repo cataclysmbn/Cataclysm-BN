@@ -1,5 +1,6 @@
 [
   {
+    "//": "Todo: AEP_EXTINGUISH, AEP_BAD_WEATHER",
     "type": "enchantment",
     "id": "AEP_STR_UP",
     "values": [ { "value": "STRENGTH", "add": 4 } ]
@@ -73,8 +74,7 @@
   {
     "type": "enchantment",
     "id": "AEP_PBLUE",
-    "ench_effects": [ { "effect": "artifact_pblue", "intensity": 1 } ],
-    "//": "To port AEP_SNAKES"
+    "ench_effects": [ { "effect": "artifact_pblue", "intensity": 1 } ]
   },
   {
     "type": "enchantment",
@@ -100,7 +100,6 @@
     "type": "enchantment",
     "id": "AEP_STEALTH",
     "flags": [ "SILENT" ],
-    "//": "Unported AEP_EXTINGUISH"
   },
   {
     "type": "enchantment",
@@ -120,9 +119,7 @@
   {
     "type": "enchantment",
     "id": "AEP_CARRY_MORE",
-    "values": [ { "value": "CARRY_WEIGHT", "add": 22500 } ],
-    "//1": "Unported: AEP_SAP_LIFE; Need spell master help",
-    "//2": "Unported: AEP_FUN; Dunno how"
+    "values": [ { "value": "CARRY_WEIGHT", "add": 22500 } ]
   },
   {
     "type": "enchantment",
@@ -144,7 +141,8 @@
   {
     "type": "enchantment",
     "id": "AEP_EVIL",
-    "intermittent_activation": { "effects": [ { "frequency": "15 minutes", "spell_effects": [ { "id": "AEP_EVIL_SPELL" } ] } ] }
+    "intermittent_activation": { "effects": [ { "frequency": "15 minutes", "spell_effects": [ { "id": "AEP_EVIL_SPELL" } ] } ] },
+    "flags": [ "EVIL" ]
   },
   {
     "type": "SPELL",
@@ -157,5 +155,101 @@
     "effect_str": "attention",
     "min_duration": 180000,
     "max_duration": 180000
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_ATTENTION",
+    "intermittent_activation": { "effects": [ { "frequency": "15 minutes", "spell_effects": [ { "id": "AEP_ATTENTION_SPELL" } ] } ] }
+  },
+  {
+    "id": "AEP_SAP_LIFE_SPELL",
+    "type": "SPELL",
+    "name": { "str": "Sap Life" },
+    "description": "This creates the effect that heals the caster.",
+    "valid_targets": [ "self" ],
+    "effect": "target_attack",
+    "min_damage": -1,
+    "max_damage": -3,
+    "flags": [ "NO_EXPLOSION_VFX", "RANDOM_DAMAGE", "SILENT" ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_SAP_LIFE",
+    "hit_you_effect": [ { "id": "AEP_SAP_LIFE_SPELL", "hit_self": true } ]
+  },
+  {
+    "id": "AEP_SNAKES_SPELL",
+    "type": "SPELL",
+    "name": { "str": "Snaaaake!" },
+    "description": "Creates a shadow snake.",
+    "valid_targets": [ "ground" ],
+    "message": "",
+    "flags": [ "NO_EXPLOSION_VFX", "PERMANENT" ],
+    "effect": "summon",
+    "effect_str": "mon_shadow_snake",
+    "min_damage": 1,
+    "max_damage": 1,
+    "min_aoe": 2,
+    "max_aoe": 2
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_SNAKES",
+    "hit_me_effect": [
+      {
+        "id": "AEP_SNAKES_SPELL",
+        "hit_self": false,
+        "once_in": 5,
+        "message": "A snake sprouts from your body!",
+        "npc_message": "A snake sprouts from %1$s's body!"
+      }
+    ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_HUNGER",
+    "values": [ { "value": "METABOLISM", "multiply": 0.25 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_THIRST",
+    "values": [ { "value": "THIRST", "multiply": 0.25 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_SCHIZO",
+    "mutations": [ "SCHIZOPHRENIC" ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_RADIOACTIVE",
+    "ench_effects": [ { "effect": "artifact_rads", "intensity": 1 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_MUTAGENIC",
+    "//": "Reuse the AEA spell for conveinence.",
+    "intermittent_activation": { "effects": [ { "frequency": "16 hours", "spell_effects": [ { "id": "AEA_MUTATE" } ] } ] }
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_FORCE_TELEPORT",
+    "//": "Reuse the AEA spell for conveinence.",
+    "intermittent_activation": { "effects": [ { "frequency": "1 hours", "spell_effects": [ { "id": "AEA_TELEPORT" } ] } ] }
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_MOVEMENT_NOISE",
+    "values": [ { "value": "NOISE", "multiply": 1.0 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_SICK",
+    "ench_effects": [ { "effect": "artifact_sickness", "intensity": 1 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_FUN",
+    "ench_effects": [ { "effect": "artifact_fun", "intensity": 1 } ]
   }
 ]

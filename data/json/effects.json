@@ -2678,5 +2678,20 @@
     "//": "Scaling mods so that multiple artifacts can apply it",
     "scaling_mods": { "rad_chance": [ 1 ], "rad_min": [ -1 ] },
     "rating": "good"
+  },
+  {
+    "type": "effect_type",
+    "id": "artifact_rads",
+    "//": "Scaling mods so that multiple artifacts can apply it",
+    "scaling_mods": { "health_min": [ -1 ], "health_tick": [ 60 ] },
+    "rating": "bad"
+  },
+  {
+    "type": "effect_type",
+    "id": "artifact_fun",
+    "morale": "morale_feeling_good",
+    "//": "Scaling mods so that multiple artifacts can apply it",
+    "scaling_mods": { "morale": [ 15 ] },
+    "rating": "good"
   }
 ]
