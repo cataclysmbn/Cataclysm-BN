@@ -5890,6 +5890,10 @@ int iuse::robotcontrol( player *p, item *it, bool, const tripoint_bub_ms & )
 
 static bool einkpc_download_memory_card( player &p, item &eink, item &mc )
 {
+    if( !digital_reader_can_access_storage( eink, mc ) ) {
+        p.add_msg_if_player( m_info, _( "This reader is not compatible with that storage device." ) );
+        return false;
+    }
     const auto copied_files = download_digital_files( eink, mc, p );
     auto something_downloaded = copied_files > 0;
     if( copied_files > 0 ) {
@@ -6036,6 +6040,53 @@ auto show_monster_collection( const item &reader ) -> void
     }
 }
 
+auto delete_files_from_storage( player &who, item &reader ) -> void
+{
+    auto *you = who.as_avatar();
+    if( you == nullptr ) {
+        return;
+    }
+    const auto filter = [&reader]( const auto & media ) {
+        return &media != &reader && is_digital_storage_media( media );
+    };
+    auto *storage = game_menus::inv::titled_filter_menu( filter, *you, _( "Select storage media" ) );
+    if( storage == nullptr ) {
+        return;
+    }
+    if( !digital_reader_can_access_storage( reader, *storage ) ) {
+        who.add_msg_if_player( m_info, _( "This reader is not compatible with that storage device." ) );
+        return;
+    }
+    initialize_digital_media( *storage );
+    if( storage->has_flag( flag_MC_ENCRYPTED ) ) {
+        who.add_msg_if_player( m_info, _( "This storage device is encrypted." ) );
+        return;
+    }
+    auto files = std::vector<item *> {};
+    auto menu = uilist{};
+    menu.text = _( "Files on storage media:" );
+    for( auto *file : storage->contents.all_items_top() ) {
+        if( is_digital_file( *file ) ) {
+            menu.addentry( static_cast<int>( files.size() ), true, MENU_AUTOASSIGN, file->display_name() );
+            files.push_back( file );
+        }
+    }
+    if( files.empty() ) {
+        who.add_msg_if_player( m_info, _( "There are no digital files on this device." ) );
+        return;
+    }
+    menu.query();
+    if( menu.ret < 0 || menu.ret >= static_cast<int>( files.size() ) ) {
+        return;
+    }
+    auto *file = files[menu.ret];
+    const auto name = file->display_name();
+    if( who.query_yn( _( "Delete %s from this storage device?" ), name ) ) {
+        storage->contents.remove_top( file );
+        who.add_msg_if_player( m_info, _( "You delete %s from the storage device." ), name );
+    }
+}
+
 auto browse_digital_files( player &who, item &reader, const bool photos_only = false ) -> void
 {
     auto files = std::vector<item *> {};
@@ -6166,7 +6217,7 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
 
         enum {
             ei_invalid, ei_photo, ei_music, ei_recipe, ei_books, ei_uploaded_photos, ei_monsters, ei_download, ei_decrypt,
-            ei_files, ei_export, ei_encrypt
+            ei_files, ei_export, ei_encrypt, ei_delete_storage
         };
 
         if( p->is_underwater() ) {
@@ -6223,7 +6274,8 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
         const auto books = stored_files | std::views::filter( []( const auto * file ) {
             return file->is_book() && is_digital_file( *file );
         } ) | std::ranges::to<std::vector>();
-        amenu.addentry( ei_books, !books.empty(), 'b', books.empty() ? _( "No books on device" ) : _( "Read books" ) );
+        amenu.addentry( ei_books, !books.empty(), 'b',
+                        books.empty() ? _( "No books on device" ) : _( "Read books" ) );
 
         if( has_camera_photos ) {
             amenu.addentry( ei_uploaded_photos, true, 'l', _( "Camera photos" ) );
@@ -6240,6 +6292,7 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
         const auto has_files = std::ranges::any_of( it->contents.all_items_top(),
         []( const auto * file ) { return is_digital_file( *file ); } );
         amenu.addentry( ei_export, has_files, 'e', _( "Copy files to storage media" ) );
+        amenu.addentry( ei_delete_storage, true, 'x', _( "Delete files from storage media" ) );
 
         amenu.addentry( ei_encrypt, true, 's', _( "Encrypt storage media" ) );
 
@@ -6256,6 +6309,11 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
 
         if( choice == ei_export ) {
             return export_files_to_storage( *p, *it ) ? it->type->charges_to_use() : 0;
+        }
+
+        if( choice == ei_delete_storage ) {
+            delete_files_from_storage( *p, *it );
+            return it->type->charges_to_use();
         }
 
         if( choice == ei_files ) {
