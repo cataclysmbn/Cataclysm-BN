@@ -27,7 +27,7 @@
   {
     "type": "enchantment",
     "id": "AEP_PER_DOWN",
-    "values": [ { "value": "STRENGTH", "add": -3 } ]
+    "values": [ { "value": "PERCEPTION", "add": -3 } ]
   },
   {
     "type": "enchantment",
@@ -58,7 +58,7 @@
       { "value": "DEXTERITY", "add": -2 },
       { "value": "PERCEPTION", "add": -2 },
       { "value": "INTELLIGENCE", "add": -2 }
-    ],
+    ]
   },
   {
     "type": "enchantment",
@@ -69,6 +69,55 @@
     "type": "enchantment",
     "id": "AEP_SPEED_DOWN",
     "values": [ { "value": "SPEED", "add": -20 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_PBLUE",
+    "ench_effects": [ { "effect": "artifact_pblue", "intensity": 1 } ],
+    "//": "To port AEP_SNAKES"
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_INVISIBLE",
+    "ench_effects": [ { "effect": "invisibility", "intensity": 1 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_CLAIRVOYANCE",
+    "values": [ { "value": "CLAIRVOYANCE", "max": 3 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_CLAIRVOYANCE_PLUS",
+    "values": [ { "value": "CLAIRVOYANCE", "max": 8 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_CLAIRVOYANCE_SUPER",
+    "values": [ { "value": "CLAIRVOYANCE", "max": 40 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_STEALTH",
+    "flags": [ "SILENT" ],
+    "//": "Unported AEP_EXTINGUISH"
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_GLOW",
+    "values": [ { "value": "LUMINATION", "value": 25 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_RESIST_ELECTRICITY",
+    "flags": [ "ELECTRIC_IMMUNE" ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_CARRY_MORE",
+    "values": [ { "value": "CARRY_WEIGHT", "value": 22500 } ],
+    "//1": "Unported: AEP_SAP_LIFE; Need spell master help",
+    "//2": "Unported: AEP_FUN; Dunno how"
   },
   {
     "type": "enchantment",
@@ -103,20 +152,5 @@
     "effect_str": "attention",
     "min_duration": 180000,
     "max_duration": 180000
-  },
-  {
-    "type": "enchantment",
-    "id": "AEP_CLAIRVOYANCE",
-    "values": [ { "value": "CLAIRVOYANCE", "max": 3 } ]
-  },
-  {
-    "type": "enchantment",
-    "id": "AEP_CLAIRVOYANCE_PLUS",
-    "values": [ { "value": "CLAIRVOYANCE", "max": 8 } ]
-  },
-  {
-    "type": "enchantment",
-    "id": "AEP_CLAIRVOYANCE_SUPER",
-    "values": [ { "value": "CLAIRVOYANCE", "max": 40 } ]
-  },
+  }
 ]

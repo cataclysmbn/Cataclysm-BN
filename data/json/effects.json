@@ -2671,5 +2671,12 @@
     "max_duration": "10 m",
     "base_mods": { "pain_amount": [ 0 ], "pain_max": [ 1 ], "pain_max_val": [ 10 ] },
     "scaling_mods": { "pain_min": [ 1 ], "pain_max": [ 1 ], "pain_chance": [ 10 ], "pain_max_val": [ 10 ] }
+  },
+  {
+    "type": "effect_type",
+    "id": "artifact_pblue",
+    "//": "Scaling mods so that multiple artifacts can apply it",
+    "scaling_mods": { "rad_chance": [ 1 ], "rad_min": [ -1 ] },
+    "rating": "good"
   }
 ]
