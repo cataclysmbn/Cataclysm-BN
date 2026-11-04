@@ -3,6 +3,7 @@
 #include <functional>
 #include <map>
 #include <optional>
+#include <vector>
 
 #include "type_id.h"
 
@@ -41,6 +42,10 @@ auto is_clean_digital_card( const item &media ) -> bool;
 auto upload_digital_files( const Character &who, const digital_file_upload_options &opts ) -> int;
 /// Convert old photo/music counters to files without changing their quantities.
 auto migrate_legacy_digital_media( item &media ) -> void;
+/// Migrate old drives and find sample files carried on any storage device.
+auto digital_genome_samples( const Character &who ) -> std::vector<item *>;
+/// Writable USB drives and SD cards, initialized and excluding encrypted media.
+auto digital_genome_storage( const Character &who ) -> std::vector<item *>;
 /// The device's own captured photos, separate from imported collections.
 auto camera_photo_collection( item &camera ) -> item &; // *NOPAD*
 auto find_camera_photo_collection( item &camera ) -> digital_reader_reference;

@@ -2951,6 +2951,9 @@ void item::deserialize( JsonIn &jsin )
         data.read( "item_kill_tracker", kills );
     }
 
+    if( has_flag( flag_id( "GENOME_DRIVE" ) ) && !is_digital_file( *this ) ) {
+        migrate_legacy_digital_media( *this );
+    }
     initialize_digital_recipe_file( *this );
     refresh_memory_card_state( *this );
 

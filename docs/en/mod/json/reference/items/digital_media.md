@@ -236,3 +236,18 @@ migrate into a collection when the device is used. Older tablet and SD-card
 photo metadata remains readable through its existing import path. Existing
 mission-terminal downloads retain their original behavior, including overwriting
 the chosen USB drive.
+
+## Genome samples
+
+USB drives and SD cards store `digital_genome_sample` files. These preserve the specimen
+ID, name, and scan progress when downloaded to a reader or copied to an SD card.
+The genome sampler and workstation can use samples carried inside digital
+storage, including USB drives, SD cards, and readers. Scanning more specimens
+updates a partial file without requiring another storage device; workstation
+research updates the selected file. The workstation can copy a sample onto
+another USB drive or unencrypted SD card without erasing existing files. Updated
+samples can be copied again.
+
+Old genome drives, including prefilled rat and dire wolf drives, migrate their
+stored specimen variables into a sample file when loaded or accessed, and become
+ordinary USB drives. Migration preserves partial progress and other drive data.

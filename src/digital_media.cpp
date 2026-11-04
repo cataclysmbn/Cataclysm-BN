@@ -204,6 +204,20 @@ auto upload_digital_files( const Character &who, const digital_file_upload_optio
 
 auto migrate_legacy_digital_media( item &media ) -> void
 {
+    if( media.has_flag( flag_id( "GENOME_DRIVE" ) ) && !is_digital_file( media ) ) {
+        if( media.has_var( "specimen_sample" ) ) {
+            auto file = item::spawn( "digital_genome_sample", media.birthday() );
+            for( const auto *key : { "specimen_sample", "specimen_sample_progress", "specimen_name" } ) {
+                if( media.has_var( key ) ) {
+                    file->set_var( key, media.get_var( key ) );
+                    media.erase_var( key );
+                }
+            }
+            identify_digital_file( *file );
+            media.put_in( std::move( file ) );
+        }
+        media.convert( itype_id( "usb_drive" ) );
+    }
     struct legacy_counter {
         std::string variable;
         std::string file;
@@ -254,6 +268,36 @@ auto migrate_legacy_digital_media( item &media ) -> void
         media.erase_var( "MC_RECIPE" );
         media.set_var( "DIGITAL_INITIALIZED", 1 );
     }
+}
+
+auto digital_genome_samples( const Character &who ) -> std::vector<item *>
+{
+    const auto flag = flag_id( "GENOME_DRIVE" );
+    for( auto *drive : who.all_items_with_flag( flag ) ) {
+        migrate_legacy_digital_media( *drive );
+    }
+    auto samples = who.all_items_with_flag( flag );
+    std::erase_if( samples, [&who]( const auto * sample ) {
+        return !is_digital_file( *sample ) || std::ranges::any_of( who.parents( *sample ),
+        []( const auto * parent ) { return parent->has_flag( flag_MC_ENCRYPTED ); } );
+    } );
+    for( auto *sample : samples ) {
+        identify_digital_file( *sample );
+    }
+    return samples;
+}
+
+auto digital_genome_storage( const Character &who ) -> std::vector<item *>
+{
+    auto storage = who.all_items_with_flag( flag_id( "DIGITAL_STORAGE" ) );
+    std::erase_if( storage, []( auto * media ) {
+        if( media->typeId() != itype_id( "usb_drive" ) && !media->has_flag( flag_MC_MOBILE ) ) {
+            return true;
+        }
+        initialize_digital_media( *media );
+        return media->has_flag( flag_MC_ENCRYPTED );
+    } );
+    return storage;
 }
 
 auto find_camera_photo_collection( item &camera ) -> digital_reader_reference

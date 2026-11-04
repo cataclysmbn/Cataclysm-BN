@@ -30,13 +30,14 @@
 
 TEST_CASE("digital_storage_accepts_files_only", "[digital_media][item]") {
     const auto media_id = GENERATE(
-        "usb_drive", "mobile_memory_card", "mobile_memory_card_used", "mobile_memory_card_data",
-        "mobile_memory_card_encrypted", "eink_tablet_pc", "eink_tablet_pc_music", "laptop",
-        "laptop_screen_lit", "laptop_music", "control_laptop", "control_laptop_screen_lit",
-        "control_laptop_music", "wrist_comp_budget", "wrist_comp_budget_flashlight",
-        "wrist_comp_budget_music", "wrist_comp_control", "wrist_comp_control_flashlight",
-        "wrist_comp_control_music", "smart_phone", "smart_phone_music", "smart_phone_flashlight",
-        "afs_atomic_smartphone", "afs_atomic_smartphone_music", "afs_atomic_smartphone_flashlight");
+        "usb_drive", "genome_drive", "mobile_memory_card", "mobile_memory_card_used",
+        "mobile_memory_card_data", "mobile_memory_card_encrypted", "eink_tablet_pc",
+        "eink_tablet_pc_music", "laptop", "laptop_screen_lit", "laptop_music", "control_laptop",
+        "control_laptop_screen_lit", "control_laptop_music", "wrist_comp_budget",
+        "wrist_comp_budget_flashlight", "wrist_comp_budget_music", "wrist_comp_control",
+        "wrist_comp_control_flashlight", "wrist_comp_control_music", "smart_phone",
+        "smart_phone_music", "smart_phone_flashlight", "afs_atomic_smartphone",
+        "afs_atomic_smartphone_music", "afs_atomic_smartphone_flashlight");
     const auto media = item::spawn(media_id);
     const auto file = item::spawn("test_digital_instruction");
     const auto rock = item::spawn("test_rock");
@@ -819,4 +820,135 @@ TEST_CASE(
     CHECK(reader->contents.back().get_var("CAMERA_EXTENDED_PHOTOS") == second);
     CHECK(album.charges == 2);
     CHECK(card->contents.front().get_var("CAMERA_EXTENDED_PHOTOS") == first);
+}
+
+TEST_CASE(
+    "legacy_genome_drives_migrate_to_copyable_sample_files", "[digital_media][genome][savegame]") {
+    const auto drive_id =
+        GENERATE("genome_drive", "genome_drive_black_rat", "genome_drive_wolf_mutant_huge");
+    auto drive = item::spawn(drive_id);
+    if (!drive->has_var("specimen_sample")) {
+        drive->set_var("specimen_sample", "mon_black_rat");
+        drive->set_var("specimen_sample_progress", "1");
+        drive->set_var("specimen_name", "partial rat sample");
+    }
+    const auto specimen = drive->get_var("specimen_sample");
+    const auto progress = drive->get_var("specimen_sample_progress");
+    const auto name = drive->get_var("specimen_name");
+    drive->set_var("item_note", "Keep this drive");
+    SECTION("opening old media migrates it") { initialize_digital_media(*drive); }
+    SECTION("loading an old save migrates it") {
+        auto output = std::ostringstream{};
+        auto writer = JsonOut(output);
+        drive->serialize(writer);
+        auto input = std::istringstream(output.str());
+        auto parser = JsonIn(input);
+        drive = item::spawn(parser);
+    }
+    REQUIRE(drive->contents.num_item_stacks() == 1);
+    auto& sample = drive->contents.front();
+    CHECK(is_digital_file(sample));
+    CHECK(drive->can_contain(sample));
+    CHECK(sample.get_var("specimen_sample") == specimen);
+    CHECK(sample.get_var("specimen_sample_progress") == progress);
+    CHECK(sample.get_var("specimen_name") == name);
+    CHECK(drive->get_var("item_note") == "Keep this drive");
+    CHECK(drive->typeId() == itype_id("usb_drive"));
+    CHECK_FALSE(drive->has_var("specimen_sample"));
+    const auto identity = sample.get_var("DIGITAL_FILE_ID");
+    REQUIRE_FALSE(identity.empty());
+    initialize_digital_media(*drive);
+    CHECK(drive->contents.num_item_stacks() == 1);
+    CHECK(sample.get_var("DIGITAL_FILE_ID") == identity);
+
+    auto dummy = avatar{};
+    auto device = item::spawn("eink_tablet_pc");
+    auto& reader = *device;
+    reader.ammo_set(itype_id("battery"), 10);
+    REQUIRE(download_digital_files(reader, *drive, dummy) == 1);
+    CHECK(download_digital_files(reader, *drive, dummy) == 0);
+    auto output = std::ostringstream{};
+    auto writer = JsonOut(output);
+    drive->serialize(writer);
+    auto input = std::istringstream(output.str());
+    auto parser = JsonIn(input);
+    drive = item::spawn(parser);
+    initialize_digital_media(*drive);
+    CHECK(drive->typeId() == itype_id("usb_drive"));
+    REQUIRE(drive->contents.num_item_stacks() == 1);
+    CHECK(drive->contents.front().get_var("DIGITAL_FILE_ID") == identity);
+    CHECK(download_digital_files(reader, *drive, dummy) == 0);
+
+    auto& imported = reader.contents.front();
+    CHECK(imported.get_var("specimen_sample") == specimen);
+    CHECK(imported.get_var("specimen_sample_progress") == progress);
+    CHECK(imported.get_var("specimen_name") == name);
+    CHECK(imported.get_var("DIGITAL_FILE_ID") == identity);
+    dummy.i_add(std::move(device));
+    auto card = item::spawn("mobile_memory_card_used");
+    REQUIRE(upload_digital_files(dummy, {.source = reader, .destination = *card, .file = &imported})
+            == 1);
+    CHECK(card->contents.front().get_var("specimen_sample") == specimen);
+    CHECK(card->contents.front().get_var("specimen_sample_progress") == progress);
+    CHECK(card->contents.front().get_var("specimen_name") == name);
+    CHECK(card->contents.front().get_var("DIGITAL_FILE_ID") == identity);
+}
+
+TEST_CASE("genome_workstation_finds_samples_inside_storage", "[digital_media][genome]") {
+    auto dummy = avatar{};
+    const auto storage_id =
+        GENERATE("genome_drive", "usb_drive", "mobile_memory_card_used", "eink_tablet_pc");
+    auto storage = item::spawn(storage_id);
+    auto file = item::spawn("digital_genome_sample");
+    file->set_var("specimen_sample", "mon_black_rat");
+    file->set_var("specimen_sample_progress", "1");
+    auto* sample = file.get();
+    storage->put_in(std::move(file));
+    dummy.i_add(std::move(storage));
+    auto old_drive = item::spawn("genome_drive_black_rat");
+    dummy.i_add(std::move(old_drive));
+    const auto samples = digital_genome_samples(dummy);
+    REQUIRE(samples.size() == 2);
+    CHECK(std::ranges::contains(samples, sample));
+    CHECK(std::ranges::all_of(samples, [](const auto* entry) { return is_digital_file(*entry); }));
+    CHECK(digital_genome_samples(dummy).size() == 2);
+}
+
+TEST_CASE(
+    "genome_storage_accepts_usb_and_sd_cards_without_erasing_files", "[digital_media][genome]") {
+    const auto media_id =
+        GENERATE("usb_drive", "mobile_memory_card_used", "mobile_memory_card_data");
+    auto dummy = avatar{};
+    auto media = item::spawn(media_id);
+    auto& storage = *media;
+    storage.put_in(item::spawn("test_digital_instruction"));
+    dummy.i_add(std::move(media));
+    dummy.i_add(item::spawn("mobile_memory_card_encrypted"));
+    dummy.i_add(item::spawn("eink_tablet_pc"));
+    const auto destinations = digital_genome_storage(dummy);
+    REQUIRE(destinations.size() == 1);
+    CHECK(destinations.front() == &storage);
+    storage.put_in(item::spawn("digital_genome_sample"));
+    CHECK(storage.contents.num_item_stacks() == 2);
+    CHECK(storage.contents.front().typeId() == itype_id("test_digital_instruction"));
+    CHECK(digital_genome_samples(dummy).size() == 1);
+}
+
+TEST_CASE("prefilled_genome_files_spawn_in_ordinary_usb_drives", "[digital_media][genome]") {
+    const auto file_id =
+        GENERATE("digital_genome_sample_black_rat", "digital_genome_sample_wolf_mutant_huge");
+    const auto drive = item::in_its_container(item::spawn(file_id));
+    CHECK(drive->typeId() == itype_id("usb_drive"));
+    REQUIRE(drive->contents.num_item_stacks() == 1);
+    CHECK(drive->contents.front().typeId() == itype_id(file_id));
+    CHECK(is_digital_file(drive->contents.front()));
+    CHECK_FALSE(drive->contents.front().get_var("specimen_sample").empty());
+}
+
+TEST_CASE("encrypted_cards_hide_genome_samples_from_the_workstation", "[digital_media][genome]") {
+    auto dummy = avatar{};
+    auto media = item::spawn("mobile_memory_card_encrypted");
+    media->put_in(item::spawn("digital_genome_sample_black_rat"));
+    dummy.i_add(std::move(media));
+    CHECK(digital_genome_samples(dummy).empty());
 }

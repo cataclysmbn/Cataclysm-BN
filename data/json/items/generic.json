@@ -619,7 +619,8 @@
     "weight": "18 g",
     "volume": "5 ml",
     "to_hit": -3,
-    "flags": [ "GENOME_DRIVE" ],
+    "container_data": { "contains": "1 ml" },
+    "flags": [ "GENOME_DRIVE", "DIGITAL_STORAGE" ],
     "category": "valuables"
   },
   {
