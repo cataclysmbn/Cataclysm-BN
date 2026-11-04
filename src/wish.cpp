@@ -5,6 +5,7 @@
 #include "cursesdef.h"
 #include "debug.h"
 #include "debug_menu.h" // IWYU pragma: associated
+#include "digital_media.h"
 #include "flag.h"
 #include "flat_set.h"
 #include "game.h"
@@ -667,11 +668,15 @@ class wish_item_callback: public uilist_callback
             const auto *selected_type = standard_itype_ids[menu->selected];
             const auto selected_item = item::spawn_temporary( selected_type, calendar::turn );
             auto containers = item_controller->all()
-            | filter( []( const auto * type ) { return type->container != nullptr; } )
+            | filter( []( const auto * type ) {
+                return type->container != nullptr || type->has_flag( flag_id( "DIGITAL_STORAGE" ) );
+            } )
             | filter( [&]( const auto * type ) {
                 const auto candidate = item::spawn_temporary( type, calendar::turn );
-                return candidate->can_contain( *selected_item ) && selected_item->volume() > 0_ml &&
-                       selected_item->charges_per_volume( candidate->get_container_capacity() ) > 0;
+                return candidate->can_contain( *selected_item ) &&
+                       ( is_digital_file( *selected_item ) ||
+                         ( selected_item->volume() > 0_ml &&
+                           selected_item->charges_per_volume( candidate->get_container_capacity() ) > 0 ) );
             } )
             | ranges::to<std::vector>();
             ranges::sort( containers, []( const auto * lhs, const auto * rhs ) {
@@ -837,16 +842,20 @@ void debug_menu::wishitem( Character *who, const tripoint_bub_ms &pos )
             if( cb.incontainer ) {
                 if( cb.container && !granted->made_of( LIQUID ) ) {
                     auto container = item::spawn( *cb.container, calendar::turn );
-                    const auto count = granted->volume() > 0_ml ?
-                                       granted->charges_per_volume( container->get_container_capacity() ) : 0;
-                    if( granted->count_by_charges() ) {
-                        if( count > 0 ) {
-                            granted->charges = count;
-                            container->put_in( std::move( granted ) );
-                        }
+                    if( is_digital_file( *granted ) ) {
+                        container->put_in( std::move( granted ) );
                     } else {
-                        for( auto index = 0; index < count; ++index ) {
-                            container->put_in( item::spawn( *granted ) );
+                        const auto count = granted->volume() > 0_ml ?
+                                           granted->charges_per_volume( container->get_container_capacity() ) : 0;
+                        if( granted->count_by_charges() ) {
+                            if( count > 0 ) {
+                                granted->charges = count;
+                                container->put_in( std::move( granted ) );
+                            }
+                        } else {
+                            for( auto index = 0; index < count; ++index ) {
+                                container->put_in( item::spawn( *granted ) );
+                            }
                         }
                     }
                     granted = std::move( container );
