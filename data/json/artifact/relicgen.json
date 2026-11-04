@@ -37,7 +37,19 @@
       }
     ],
     "itypes": [
-      { "itype": "artifact_cube", "weight": 100, "//": "Theoretically there would be other options but effort..." }
+      { "itype": "relic_baseline_flesh_glob", "weight": 100 },
+      { "itype": "relic_baseline_bronze_disc", "weight": 100 },
+      { "itype": "relic_baseline_strange_quartz", "weight": 100 },
+      { "itype": "relic_baseline_gordian_knot", "weight": 100 },
+      { "itype": "relic_baseline_crystal_ball", "weight": 100 },
+      { "itype": "relic_baseline_tungsten_cube", "weight": 100 },
+      { "itype": "relic_baseline_death_lamp", "weight": 100 },
+      { "itype": "relic_baseline_spiral_rod", "weight": 100 },
+      { "itype": "relic_baseline_golden_needle", "weight": 100 },
+      { "itype": "relic_baseline_stone_beads", "weight": 100 },
+      { "itype": "relic_baseline_serpentine_ring", "weight": 100 },
+      { "itype": "relic_baseline_wavering_scarf", "weight": 100 },
+      { "itype": "relic_baseline_chiral_vambrace", "weight": 100 },
     ],
     "name_prefix": [
       { "prefix": "Forbidden", "weight": 1 },
