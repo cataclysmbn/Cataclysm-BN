@@ -229,7 +229,7 @@ TEST_CASE(
     initialize_digital_media(storage);
     REQUIRE(storage.contents.num_item_stacks() == 1);
     const auto identity = storage.contents.front().get_var("DIGITAL_FILE_ID");
-    auto device = item::spawn("eink_tablet_pc");
+    auto device = item::spawn("wrist_comp_budget");
     auto& reader = *device;
     reader.ammo_set(itype_id("battery"), 10);
     REQUIRE(download_digital_files(reader, storage, dummy) == 1);
@@ -279,7 +279,7 @@ TEST_CASE("digital_media_content_is_rolled_once", "[digital_media][item_group]")
 TEST_CASE("digital_files_are_copied_and_encryption_is_respected", "[digital_media]") {
     auto dummy = avatar{};
     auto media = item::spawn("test_digital_media");
-    auto reader = item::spawn("eink_tablet_pc");
+    auto reader = item::spawn("wrist_comp_budget");
     reader->ammo_set(itype_id("battery"), 10);
     initialize_digital_media(*media);
     REQUIRE(media->contents.num_item_stacks() == 1);
@@ -325,7 +325,7 @@ TEST_CASE("digital_urbex_maps_preserve_map_behavior_and_location", "[digital_med
     map->set_var("reveal_map_center_omt", center);
     auto media = item::spawn("usb_drive");
     media->put_in(std::move(map));
-    auto device = item::spawn("eink_tablet_pc");
+    auto device = item::spawn("wrist_comp_budget");
     auto& reader = *device;
     reader.ammo_set(itype_id("battery"), 10);
     REQUIRE(download_digital_files(reader, *media, dummy) == 1);
@@ -351,7 +351,7 @@ TEST_CASE("reader_files_can_be_copied_onto_an_sd_card", "[digital_media]") {
     auto dummy = avatar{};
     auto source = item::spawn("test_digital_multimedia_media");
     initialize_digital_media(*source);
-    auto device = item::spawn("eink_tablet_pc");
+    auto device = item::spawn("wrist_comp_budget");
     auto& reader = *device;
     reader.ammo_set(itype_id("battery"), 10);
     REQUIRE(download_digital_files(reader, *source, dummy) == 2);
@@ -384,7 +384,7 @@ TEST_CASE("reader_files_can_be_copied_onto_an_sd_card", "[digital_media]") {
 
 TEST_CASE("exporting_a_selected_file_preserves_identity_and_metadata", "[digital_media]") {
     auto dummy = avatar{};
-    auto device = item::spawn("eink_tablet_pc");
+    auto device = item::spawn("wrist_comp_budget");
     auto& reader = *device;
     reader.ammo_set(itype_id("battery"), 10);
     auto original = item::spawn("test_digital_instruction");
@@ -402,7 +402,7 @@ TEST_CASE("exporting_a_selected_file_preserves_identity_and_metadata", "[digital
     CHECK(exported.get_var("DIGITAL_FILE_ID") == file.get_var("DIGITAL_FILE_ID"));
     CHECK(exported.get_var("test_content") == "preserved");
 
-    auto other_reader = item::spawn("eink_tablet_pc");
+    auto other_reader = item::spawn("wrist_comp_budget");
     other_reader->ammo_set(itype_id("battery"), 10);
     REQUIRE(download_digital_files(*other_reader, *card, dummy) == 1);
     CHECK(other_reader->contents.front().get_var("DIGITAL_FILE_ID")
@@ -415,7 +415,7 @@ TEST_CASE(
     "[digital_media][savegame]") {
     const auto media_id = GENERATE("usb_drive", "sd_memory_card");
     auto dummy = avatar{};
-    auto device = item::spawn("eink_tablet_pc");
+    auto device = item::spawn("wrist_comp_budget");
     auto& source = *device;
     source.ammo_set(itype_id("battery"), 10);
     source.put_in(item::spawn("test_digital_instruction"));
@@ -445,7 +445,7 @@ TEST_CASE(
     CHECK(loaded->contents.front().get_var("test_content") == "preserved");
     CHECK(loaded->contents.front().get_var("DIGITAL_FILE_ID") == file_id);
 
-    auto destination = item::spawn("eink_tablet_pc");
+    auto destination = item::spawn("wrist_comp_budget");
     destination->ammo_set(itype_id("battery"), 10);
     CHECK(download_digital_files(*destination, *loaded, dummy) == 0);
     CHECK(destination->contents.empty());
@@ -459,7 +459,7 @@ TEST_CASE(
 
 TEST_CASE("sd_card_exports_reject_invalid_destinations_and_uninstalled_files", "[digital_media]") {
     auto dummy = avatar{};
-    auto device = item::spawn("eink_tablet_pc");
+    auto device = item::spawn("wrist_comp_budget");
     auto& reader = *device;
     reader.ammo_set(itype_id("battery"), 10);
     reader.put_in(item::spawn("test_digital_instruction"));
@@ -494,7 +494,7 @@ TEST_CASE("digital_recipe_references_require_a_powered_reader", "[digital_media]
     REQUIRE_FALSE(dummy.knows_recipe(&recipe));
     auto media = item::spawn("test_digital_media");
     initialize_digital_media(*media);
-    auto reader = item::spawn("eink_tablet_pc");
+    auto reader = item::spawn("wrist_comp_budget");
     reader->ammo_set(itype_id("battery"), 10);
 
     SECTION("a file on passive media supplies no recipes") {
@@ -536,7 +536,7 @@ TEST_CASE(
     CHECK(reference->get_available_recipes(dummy).empty());
     CHECK_FALSE(dummy.knows_recipe(&recipe));
 
-    auto device = item::spawn("eink_tablet_pc");
+    auto device = item::spawn("wrist_comp_budget");
     auto& reader = *device;
     reader.ammo_set(itype_id("battery"), 10);
     reader.put_in(std::move(reference));
@@ -558,7 +558,7 @@ TEST_CASE(
     "random_recipe_files_keep_their_selection_when_copied_and_saved",
     "[digital_media][recipes][savegame]") {
     auto dummy = avatar{};
-    auto device = item::spawn("eink_tablet_pc");
+    auto device = item::spawn("wrist_comp_budget");
     auto& reader = *device;
     reader.ammo_set(itype_id("battery"), 10);
     auto reference = item::spawn("test_digital_random_reference");
@@ -616,7 +616,7 @@ TEST_CASE("digital_item_actions_require_installation", "[digital_media][iuse]") 
     CHECK_FALSE(dummy.invoke_item(&source_file, "transform"));
     CHECK(source_file.typeId() == itype_id("test_digital_action"));
 
-    auto device = item::spawn("eink_tablet_pc");
+    auto device = item::spawn("wrist_comp_budget");
     device->ammo_set(itype_id("battery"), 10);
     REQUIRE(download_digital_files(*device, *source, dummy) == 1);
     auto& installed_file = device->contents.front();
@@ -672,7 +672,7 @@ TEST_CASE("digital_study_uses_the_reader", "[digital_media][reading]") {
     set_time(calendar::turn_zero + 12_hours);
     auto& dummy = get_avatar();
     clear_character(dummy);
-    auto device = item::spawn("eink_tablet_pc");
+    auto device = item::spawn("wrist_comp_budget");
     auto& reader = *device;
     reader.ammo_set(itype_id("battery"), 10);
     reader.put_in(item::spawn("test_digital_instruction"));
@@ -739,7 +739,7 @@ TEST_CASE("photo_and_music_files_use_json_quantities_and_effects", "[digital_med
     REQUIRE(media->contents.num_item_stacks() == 2);
     CHECK(digital_music_on(*media).songs == 9);
     CHECK(digital_photos_on(*media) == 7);
-    auto device = item::spawn("eink_tablet_pc");
+    auto device = item::spawn("wrist_comp_budget");
     auto& reader = *device;
     reader.ammo_set(itype_id("battery"), 10);
     REQUIRE(download_digital_files(reader, *media, dummy) == 2);
@@ -941,7 +941,7 @@ TEST_CASE(
     CHECK_FALSE(file.has_flag(flag_id("DIGITAL_PHOTOS")));
     CHECK_FALSE(action->can_call(dummy, file, false, dummy.bub_pos()).success());
 
-    auto device = item::spawn("eink_tablet_pc");
+    auto device = item::spawn("wrist_comp_budget");
     auto& reader = *device;
     reader.ammo_set(itype_id("battery"), 10);
     reader.put_in(std::move(album));
@@ -1085,7 +1085,7 @@ TEST_CASE("legacy_photo_and_music_counters_migrate_without_losing_metadata", "[d
     initialize_digital_media(*media);
     CHECK(media->contents.num_item_stacks() == 2);
 
-    auto reader = item::spawn("eink_tablet_pc");
+    auto reader = item::spawn("wrist_comp_budget");
     reader->set_var("EIPC_PHOTOS", 11);
     reader->set_var("EIPC_MUSIC", 13);
     migrate_legacy_digital_media(*reader);
@@ -1155,7 +1155,7 @@ TEST_CASE(
 
 TEST_CASE("downloading_initializes_unopened_media_once", "[digital_media]") {
     auto dummy = avatar{};
-    auto reader = item::spawn("eink_tablet_pc");
+    auto reader = item::spawn("wrist_comp_budget");
     reader->ammo_set(itype_id("battery"), 100);
     auto media = item::spawn("test_digital_media");
     CHECK(download_digital_files(*reader, *media, dummy) == 1);
@@ -1226,7 +1226,7 @@ TEST_CASE(
     auto card = item::spawn("sd_memory_card");
     REQUIRE(
         upload_digital_files(dummy, {.source = camera, .destination = *card, .file = &album}) == 1);
-    auto reader = item::spawn("eink_tablet_pc");
+    auto reader = item::spawn("wrist_comp_budget");
     reader->ammo_set(itype_id("battery"), 100);
     REQUIRE(download_digital_files(*reader, *card, dummy) == 1);
     CHECK(reader->contents.front().get_var("CAMERA_EXTENDED_PHOTOS") == first);
@@ -1293,7 +1293,7 @@ TEST_CASE(
     CHECK(sample.get_var("DIGITAL_FILE_ID") == identity);
 
     auto dummy = avatar{};
-    auto device = item::spawn("eink_tablet_pc");
+    auto device = item::spawn("wrist_comp_budget");
     auto& reader = *device;
     reader.ammo_set(itype_id("battery"), 10);
     REQUIRE(download_digital_files(reader, *drive, dummy) == 1);
@@ -1356,7 +1356,7 @@ TEST_CASE(
     auto encrypted_card = item::spawn("sd_memory_card");
     encrypted_card->set_flag(flag_MC_ENCRYPTED);
     dummy.i_add(std::move(encrypted_card));
-    dummy.i_add(item::spawn("eink_tablet_pc"));
+    dummy.i_add(item::spawn("wrist_comp_budget"));
     const auto destinations = digital_genome_storage(dummy);
     REQUIRE(destinations.size() == 1);
     CHECK(destinations.front() == &storage);
@@ -1384,4 +1384,30 @@ TEST_CASE("encrypted_cards_hide_genome_samples_from_the_workstation", "[digital_
     media->put_in(item::spawn("digital_genome_sample_black_rat"));
     dummy.i_add(std::move(media));
     CHECK(digital_genome_samples(dummy).empty());
+}
+
+TEST_CASE("reader_ports_control_storage_transfers", "[digital_media][ports]") {
+    const auto reader_id =
+        GENERATE("laptop", "laptop_screen_lit", "laptop_music", "smart_phone", "smart_phone_music",
+                 "smart_phone_flashlight", "afs_atomic_smartphone", "wrist_comp_budget");
+    const auto storage_id = GENERATE("usb_drive", "sd_memory_card", "hard_drive");
+    const auto supports_all = std::string_view(reader_id) == "wrist_comp_budget";
+    const auto is_laptop = std::string_view(reader_id).starts_with("laptop");
+    const auto is_sd = std::string_view(storage_id) == "sd_memory_card";
+    const auto compatible = supports_all || is_laptop != is_sd;
+    auto dummy = avatar{};
+    auto device = item::spawn(reader_id);
+    auto& reader = *device;
+    reader.ammo_set(itype_id("battery"), 10);
+    reader.set_var("DIGITAL_INITIALIZED", 1);
+    dummy.i_add(std::move(device));
+    auto storage = item::spawn(storage_id);
+    storage->set_var("DIGITAL_INITIALIZED", 1);
+    storage->put_in(item::spawn("test_digital_instruction"));
+    CHECK(digital_reader_can_access_storage(reader, *storage) == compatible);
+    CHECK(download_digital_files(reader, *storage, dummy) == (compatible ? 1 : 0));
+    reader.put_in(item::spawn("test_digital_reference"));
+    CHECK(upload_digital_files(dummy, {.source = reader, .destination = *storage})
+          == (compatible ? 1 : 0));
+    CHECK(storage->contents.num_item_stacks() == (compatible ? 2 : 1));
 }

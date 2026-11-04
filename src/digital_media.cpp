@@ -48,6 +48,27 @@ auto identify_digital_file( item &file ) -> void
     }
 }
 
+auto reader_can_access_storage( const item &reader, const item &storage ) -> bool
+{
+    const auto reader_ports = reader.get_var( "digital_reader_ports" );
+    auto required_ports = storage.get_var( "digital_storage_ports" );
+    while( !required_ports.empty() ) {
+        const auto separator = required_ports.find( ',' );
+        const auto port = required_ports.substr( 0, separator );
+        const auto position = reader_ports.find( port );
+        if( position != std::string::npos &&
+            ( position == 0 || reader_ports[position - 1] == ',' ) &&
+            ( position + port.size() == reader_ports.size() || reader_ports[position + port.size()] == ',' ) ) {
+            return true;
+        }
+        if( separator == std::string::npos ) {
+            break;
+        }
+        required_ports.erase( 0, separator + 1 );
+    }
+    return required_ports.empty() && storage.get_var( "digital_storage_ports" ).empty();
+}
+
 auto photo_cooldown_remaining( const Character &who ) -> time_duration
 {
     const auto until = who.get_value_as_int( "digital_photos_ready" ).value_or( 0 );
@@ -133,6 +154,11 @@ auto make_photo_album_actor() -> std::unique_ptr<iuse_actor>
 
 auto is_digital_file( const item &file ) -> bool { return file.has_flag( flag_id( "DIGITAL" ) ); }
 
+auto digital_reader_can_access_storage( const item &reader, const item &storage ) -> bool
+{
+    return reader_can_access_storage( reader, storage );
+}
+
 auto digital_reader_ready( const item &reader, const Character &who ) -> bool
 {
     return reader.is_tool() && reader.has_flag( flag_id( "DIGITAL_READER" ) ) &&
@@ -204,6 +230,7 @@ auto finish_memory_card_download( item &media ) -> void
 auto download_digital_files( item &reader, item &media, const Character &who ) -> int
 {
     if( &reader == &media || !digital_reader_ready( reader, who ) ||
+        !reader_can_access_storage( reader, media ) ||
         !media.has_flag( flag_id( "DIGITAL_STORAGE" ) ) || media.has_flag( flag_MC_ENCRYPTED ) ) {
         return 0;
     }
@@ -250,7 +277,8 @@ auto upload_digital_files( const Character &who, const digital_file_upload_optio
 {
     namespace ranges = std::ranges;
     if( &opts.source == &opts.destination || !who.has_item( opts.source ) ||
-        !digital_reader_ready( opts.source, who ) || !is_writable_digital_media( opts.destination ) ) {
+        !digital_reader_ready( opts.source, who ) || !is_writable_digital_media( opts.destination ) ||
+        !reader_can_access_storage( opts.source, opts.destination ) ) {
         return 0;
     }
     initialize_digital_media( opts.destination );

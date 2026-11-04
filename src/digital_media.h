@@ -29,6 +29,7 @@ using digital_reader_reference = std::optional<std::reference_wrapper<item>>;
 /// Digital files are only usable while installed on a powered reader.
 auto is_digital_file( const item &file ) -> bool;
 auto digital_reader_ready( const item &reader, const Character &who ) -> bool;
+auto digital_reader_can_access_storage( const item &reader, const item &storage ) -> bool;
 auto digital_reader_for( const Character &who, const item &file ) -> digital_reader_reference;
 /// Roll the media's JSON item group once, preserving legacy initialized cards.
 auto initialize_digital_media( item &media ) -> void;

@@ -234,7 +234,7 @@
       "EINKTABLETPC",
       "RADGLOVE"
     ],
-    "item_vars": { "digital_content": "digital_content_reader" },
+    "item_vars": { "digital_content": "digital_content_reader", "digital_reader_ports": "USB,SD,HARD_DRIVE" },
     "flags": [
       "WATCH",
       "ALARMCLOCK",
@@ -477,7 +477,7 @@
       },
       "TOGGLE_UPS_CHARGING"
     ],
-    "item_vars": { "digital_content": "digital_content_reader" },
+    "item_vars": { "digital_content": "digital_content_reader", "digital_reader_ports": "USB,HARD_DRIVE" },
     "flags": [ "WATCH", "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ]
   },
   {
@@ -645,7 +645,7 @@
       },
       "TOGGLE_UPS_CHARGING"
     ],
-    "item_vars": { "digital_content": "digital_content_reader" },
+    "item_vars": { "digital_content": "digital_content_reader", "digital_reader_ports": "USB,HARD_DRIVE" },
     "flags": [ "WATCH", "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ]
   },
   {
@@ -826,7 +826,7 @@
       "PORTABLE_GAME",
       "TOGGLE_UPS_CHARGING"
     ],
-    "item_vars": { "digital_content": "digital_content_reader" },
+    "item_vars": { "digital_content": "digital_content_reader", "digital_reader_ports": "SD" },
     "flags": [ "WATCH", "ALARMCLOCK", "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ]
   },
   {
@@ -916,7 +916,7 @@
         "menu_text": "Listen to music"
       }
     ],
-    "item_vars": { "digital_content": "digital_content_reader" },
+    "item_vars": { "digital_content": "digital_content_reader", "digital_reader_ports": "SD" },
     "flags": [ "WATCH", "ALARMCLOCK", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ]
   },
   {

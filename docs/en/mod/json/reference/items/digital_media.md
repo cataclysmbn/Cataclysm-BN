@@ -16,6 +16,12 @@ files stay on the reader. Copies preserve their entry counts, metadata, and file
 identities, including shared cooldowns. The media can then be imported onto
 another reader. Encrypted media are excluded from the destination picker.
 
+Readers connect to removable storage through `digital_reader_ports`, a comma-separated
+list matched against the storage's `digital_storage_ports`. USB drives use `USB`,
+SD cards use `SD`, and hard drives use `HARD_DRIVE`. Laptops support USB and hard
+drives, smartphones support SD cards, and wrist computers support all three.
+Storage without a port requirement remains compatible with any reader.
+
 ## Files and readers
 
 - `DIGITAL`: the item is a file. It can only be placed in digital storage, and
