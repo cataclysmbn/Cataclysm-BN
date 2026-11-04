@@ -174,22 +174,12 @@
     "use_action": [ "MP3_ON", "EINKTABLETPC" ]
   },
   {
-    "type": "digital_recipe_group",
-    "id": "test_digital_fixed_recipes",
-    "recipes": [ { "id": "test_soldering_iron_digital_media", "skill_level": 1 } ]
-  },
-  {
-    "type": "digital_recipe_group",
-    "id": "test_digital_random_recipes",
-    "random_recipes": { "count": 1, "candidates": [ "test_soldering_iron_digital_media" ], "min_difficulty": 3, "max_difficulty": 3 }
-  },
-  {
     "id": "test_digital_reference",
     "copy-from": "digital_collection",
     "type": "GENERIC",
     "name": { "str": "test digital recipe reference" },
     "description": "A reference file that supplies recipes without teaching a skill.",
-    "item_vars": { "digital_recipe_group": "test_digital_fixed_recipes" }
+    "item_vars": { "digital_recipes": "[{\"id\":\"test_soldering_iron_digital_media\",\"skill_level\":1}]" }
   },
   {
     "id": "test_digital_random_reference",
@@ -197,6 +187,8 @@
     "type": "GENERIC",
     "name": { "str": "test random recipe reference" },
     "description": "A deterministic random recipe file.",
-    "item_vars": { "digital_recipe_group": "test_digital_random_recipes" }
+    "item_vars": {
+      "digital_random_recipes": "{\"count\":1,\"candidates\":[\"test_soldering_iron_digital_media\"],\"min_difficulty\":3,\"max_difficulty\":3}"
+    }
   }
 ]

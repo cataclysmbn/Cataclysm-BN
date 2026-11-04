@@ -55,7 +55,7 @@
     "type": "GENERIC",
     "name": { "str": "3D printing infographic archive" },
     "description": "An illustrated reference archive containing plans for assembling a basic 3D printer from salvaged components.  Load it onto a powered reader to consult the recipe.",
-    "item_vars": { "digital_recipe_group": "digital_3d_printing" }
+    "item_vars": { "digital_recipes": "[{\"id\":\"3d_printer_basic\",\"skill_level\":7}]" }
   },
   {
     "abstract": "digital_collection",
@@ -124,7 +124,9 @@
     "type": "GENERIC",
     "name": { "str": "saved cooking recipe" },
     "description": "A saved recipe from a cooking website.  Load it onto a powered reader to consult it while crafting.",
-    "item_vars": { "digital_recipe_group": "digital_simple_recipes" }
+    "item_vars": {
+      "digital_random_recipes": "{\"count\":1,\"category\":\"CC_FOOD\",\"min_difficulty\":0,\"max_difficulty\":3,\"difficulty_chance_offset\":0}"
+    }
   },
   {
     "id": "digital_science_recipe_archive",
@@ -132,6 +134,6 @@
     "type": "GENERIC",
     "name": { "str": "scientific recipe archive" },
     "description": "A saved technical recipe from a research archive.  Load it onto a powered reader to consult it while crafting.",
-    "item_vars": { "digital_recipe_group": "digital_science_recipes" }
+    "item_vars": { "digital_random_recipes": "{\"count\":1,\"min_difficulty\":3,\"difficulty_chance_offset\":1}" }
   }
 ]

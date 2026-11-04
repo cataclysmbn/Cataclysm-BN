@@ -1,18 +1,17 @@
 #include "digital_recipes.h"
 
+#include "data_vars.h"
 #include "debug.h"
-#include "generic_factory.h"
 #include "item.h"
 #include "json.h"
 #include "recipe.h"
 #include "recipe_dictionary.h"
 #include "rng.h"
-#include "string_id.h"
-#include "type_id_implement.h"
 
 #include <algorithm>
 #include <climits>
 #include <cstdint>
+#include <expected>
 #include <optional>
 #include <ranges>
 #include <sstream>
@@ -20,9 +19,6 @@
 
 namespace
 {
-struct digital_recipe_group_data;
-using digital_group_id = string_id<digital_recipe_group_data>;
-
 struct fixed_recipe_reference {
     recipe_id recipe;
     std::optional<int> skill_level;
@@ -38,97 +34,86 @@ struct random_recipe_options {
     std::vector<recipe_id> candidates;
 };
 
-struct digital_recipe_group_data {
-    digital_group_id id;
-    bool was_loaded = false;
+struct digital_recipe_data {
     std::vector<fixed_recipe_reference> recipes;
     std::optional<random_recipe_options> random_recipes;
-
-    auto load( const JsonObject &jo, const std::string &src ) -> void;
-    auto check() const -> void;
 };
 
-auto recipe_groups = generic_factory<digital_recipe_group_data>( "digital recipe group" );
-} // namespace
-
-IMPLEMENT_STRING_AND_INT_IDS( digital_recipe_group_data, recipe_groups );
-
-auto digital_recipe_group_data::load( const JsonObject &jo, const std::string &/*src*/ ) -> void
+auto read_recipe_data( const data_vars::data_set &vars ) ->
+std::expected<digital_recipe_data, std::string>
 {
-    if( jo.has_array( "recipes" ) ) {
-        recipes.clear();
-        for( const auto value : jo.get_array( "recipes" ) ) {
-            const auto entry = value.get_object();
-            const auto level = entry.has_int( "skill_level" ) ?
-                               std::optional<int>( entry.get_int( "skill_level" ) ) : std::nullopt;
-            if( level && *level < 0 ) {
-                entry.throw_error( "skill_level must not be negative", "skill_level" );
-            }
-            recipes.push_back( { .recipe = recipe_id( entry.get_string( "id" ) ), .skill_level = level } );
-        }
-    }
-    if( jo.has_object( "random_recipes" ) ) {
-        const auto random = jo.get_object( "random_recipes" );
-        auto options = random_recipe_options{
-            .count = random.get_int( "count", 1 ),
-            .category = random.get_string( "category", "" ),
-            .min_difficulty = random.get_int( "min_difficulty", 0 ),
-            .max_difficulty = random.get_int( "max_difficulty", INT_MAX ),
-            .include_unlearnable = random.get_bool( "include_unlearnable", false ),
-            .difficulty_chance_offset = std::nullopt,
-            .candidates = {}
-        };
-        if( random.has_int( "difficulty_chance_offset" ) ) {
-            options.difficulty_chance_offset = random.get_int( "difficulty_chance_offset" );
-        }
-        random.read( "candidates", options.candidates );
-        if( options.count < 0 || options.min_difficulty < 0 ||
-            options.max_difficulty < options.min_difficulty ||
-            ( options.difficulty_chance_offset && *options.difficulty_chance_offset < 0 ) ) {
-            random.throw_error( "invalid random recipe count, difficulty range, or chance offset" );
-        }
-        random_recipes = std::move( options );
-    }
-    if( recipes.empty() && !random_recipes ) {
-        jo.throw_error( "digital recipe group needs recipes or random_recipes" );
-    }
-}
-
-auto digital_recipe_group_data::check() const -> void
-{
-    for( const auto &entry : recipes ) {
-        if( !entry.recipe.is_valid() ) {
-            debugmsg( "Digital recipe group %s references invalid recipe %s", id.str(), entry.recipe.str() );
-        }
-    }
-    if( random_recipes ) {
-        for( const auto &candidate : random_recipes->candidates ) {
-            if( !candidate.is_valid() ) {
-                debugmsg( "Digital recipe group %s references invalid candidate %s", id.str(),
-                          candidate.str() );
+    auto result = digital_recipe_data{};
+    try {
+        const auto fixed = vars.get( "digital_recipes" );
+        if( !fixed.empty() ) {
+            auto input = std::istringstream( fixed );
+            auto json = JsonIn( input );
+            for( const auto value : json.get_array() ) {
+                const auto entry = value.get_object();
+                const auto level = entry.has_int( "skill_level" ) ?
+                                   std::optional<int>( entry.get_int( "skill_level" ) ) : std::nullopt;
+                if( level && *level < 0 ) {
+                    entry.throw_error( "skill_level must not be negative", "skill_level" );
+                }
+                const auto id = recipe_id( entry.get_string( "id" ) );
+                if( !id.is_valid() ) {
+                    return std::unexpected( "invalid digital recipe " + id.str() );
+                }
+                result.recipes.push_back( { .recipe = id, .skill_level = level } );
             }
         }
+        const auto random_data = vars.get( "digital_random_recipes" );
+        if( !random_data.empty() ) {
+            auto input = std::istringstream( random_data );
+            auto json = JsonIn( input );
+            const auto random = json.get_object();
+            auto options = random_recipe_options{
+                .count = random.get_int( "count", 1 ),
+                .category = random.get_string( "category", "" ),
+                .min_difficulty = random.get_int( "min_difficulty", 0 ),
+                .max_difficulty = random.get_int( "max_difficulty", INT_MAX ),
+                .include_unlearnable = random.get_bool( "include_unlearnable", false ),
+                .difficulty_chance_offset = std::nullopt,
+                .candidates = {}
+            };
+            if( random.has_int( "difficulty_chance_offset" ) ) {
+                options.difficulty_chance_offset = random.get_int( "difficulty_chance_offset" );
+            }
+            random.read( "candidates", options.candidates );
+            if( options.count < 0 || options.min_difficulty < 0 ||
+                options.max_difficulty < options.min_difficulty ||
+                ( options.difficulty_chance_offset && *options.difficulty_chance_offset < 0 ) ) {
+                random.throw_error( "invalid random recipe count, difficulty range, or chance offset" );
+            }
+            for( const auto &candidate : options.candidates ) {
+                if( !candidate.is_valid() ) {
+                    return std::unexpected( "invalid digital recipe candidate " + candidate.str() );
+                }
+            }
+            result.random_recipes = std::move( options );
+        }
+    } catch( const JsonError &error ) {
+        return std::unexpected( std::string( error.what() ) );
     }
+    return result;
 }
 
-namespace
-{
-auto generate_recipes( const digital_recipe_group_data &group ) ->
+auto generate_recipes( const digital_recipe_data &data ) ->
 std::vector<digital_recipe_reference>
 {
     namespace ranges = std::ranges;
     using namespace std::views;
     auto result = std::vector<digital_recipe_reference> {};
-    for( const auto &entry : group.recipes ) {
+    for( const auto &entry : data.recipes ) {
         if( entry.recipe.is_valid() ) {
             result.push_back( { .recipe = entry.recipe,
                                 .skill_level = entry.skill_level.value_or( entry.recipe->difficulty ) } );
         }
     }
-    if( !group.random_recipes ) {
+    if( !data.random_recipes ) {
         return result;
     }
-    const auto &options = *group.random_recipes;
+    const auto &options = *data.random_recipes;
     auto candidates = recipe_dict | values
     | filter( [&options]( const auto & candidate ) {
         return ( options.include_unlearnable || !candidate.never_learn ) &&
@@ -161,32 +146,32 @@ std::vector<digital_recipe_reference>
 }
 } // namespace
 
-auto load_digital_recipe_group( const JsonObject &jo, const std::string &src ) -> void
+auto validate_digital_recipe_data( const data_vars::data_set &vars ) ->
+std::expected<void, std::string>
 {
-    recipe_groups.load( jo, src );
-}
-
-auto reset_digital_recipe_groups() -> void { recipe_groups.reset(); }
-auto check_digital_recipe_groups() -> void { recipe_groups.check(); }
-auto digital_recipe_group_exists( const std::string &id ) -> bool
-{
-    return recipe_groups.is_valid( digital_group_id( id ) );
+    const auto data = read_recipe_data( vars );
+    if( !data ) {
+        return std::unexpected( data.error() );
+    }
+    return {};
 }
 
 auto initialize_digital_recipe_file( item &file ) -> void
 {
-    const auto group = file.get_var( "digital_recipe_group" );
-    if( group.empty() || file.has_var( "DIGITAL_RECIPES" ) ) {
+    if( file.has_var( "DIGITAL_RECIPES" ) ||
+        ( file.get_var( "digital_recipes" ).empty() &&
+          file.get_var( "digital_random_recipes" ).empty() ) ) {
         return;
     }
-    if( !digital_recipe_group_exists( group ) ) {
-        debugmsg( "Invalid digital recipe group %s on %s", group, file.typeId().str() );
+    const auto data = read_recipe_data( file.item_vars() );
+    if( !data ) {
+        debugmsg( "Invalid digital recipe data on %s: %s", file.typeId().str(), data.error() );
         return;
     }
     auto buffer = std::ostringstream{};
     auto json = JsonOut( buffer );
     json.start_array();
-    for( const auto &entry : generate_recipes( recipe_groups.obj( digital_group_id( group ) ) ) ) {
+    for( const auto &entry : generate_recipes( *data ) ) {
         json.start_object();
         json.member( "id", entry.recipe.str() );
         json.member( "skill_level", entry.skill_level );

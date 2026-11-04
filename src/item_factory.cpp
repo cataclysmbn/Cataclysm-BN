@@ -1312,10 +1312,8 @@ void Item_factory::check_definitions() const
             msg += string_format( "invalid digital_content item group %s\n", content->second );
         }
 
-        if( const auto group = type->item_vars.find( "digital_recipe_group" );
-            group != type->item_vars.end() && !group->second.empty() &&
-            !digital_recipe_group_exists( group->second ) ) {
-            msg += string_format( "invalid digital_recipe_group %s\n", group->second );
+        if( const auto recipes = validate_digital_recipe_data( type->item_vars ); !recipes ) {
+            msg += string_format( "invalid digital recipe data: %s\n", recipes.error() );
         }
 
         for( const auto &f : type->faults ) {

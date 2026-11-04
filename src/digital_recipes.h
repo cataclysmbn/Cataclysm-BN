@@ -2,10 +2,10 @@
 
 #include "type_id.h"
 
+#include <expected>
 #include <string>
 #include <vector>
 
-class JsonObject;
 class item;
 
 struct digital_recipe_reference {
@@ -13,10 +13,14 @@ struct digital_recipe_reference {
     int skill_level = 0;
 };
 
-auto load_digital_recipe_group( const JsonObject &jo, const std::string &src ) -> void;
-auto reset_digital_recipe_groups() -> void;
-auto check_digital_recipe_groups() -> void;
-auto digital_recipe_group_exists( const std::string &id ) -> bool;
-/// Resolve a file's JSON recipe group once and persist the selected recipes.
+namespace data_vars
+{
+class data_set;
+}
+
+/// Validate recipe definitions stored directly in item variables.
+auto validate_digital_recipe_data( const data_vars::data_set &vars ) ->
+std::expected<void, std::string>;
+/// Resolve the file's fixed/random recipe definitions once and persist the selection.
 auto initialize_digital_recipe_file( item &file ) -> void;
 auto digital_file_recipes( const item &file ) -> std::vector<digital_recipe_reference>;

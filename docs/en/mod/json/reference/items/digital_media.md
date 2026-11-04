@@ -74,7 +74,7 @@ with it. Lua can edit them through the existing item variable methods:
 
 ```lua
 file:set_var_num("digital_music_morale_cap", 40)
-file:set_var_str("digital_recipe_group", "my_recipe_references")
+file:set_var_str("digital_recipes", '[{"id":"3d_printer_basic","skill_level":7}]')
 ```
 
 Recipe selections and media loot are generated once. Changing the settings does
@@ -90,44 +90,32 @@ They supply crafting recipes through a powered reader without teaching a skill
 or memorizing a recipe. The 3D printing infographic archive is one example.
 Choose **View recipes** in its file menu to inspect the available recipes.
 
-Point a file at a JSON group using its item variables:
+Recipe definitions live directly on each item. `digital_recipes` is a
+JSON-encoded array of recipe IDs and optional required skill levels:
 
 ```json
-"item_vars": { "digital_recipe_group": "my_recipe_references" }
-```
-
-Fixed groups list recipes and an optional skill level required to consult them:
-
-```json
-{
-  "type": "digital_recipe_group",
-  "id": "my_recipe_references",
-  "recipes": [{ "id": "3d_printer_basic", "skill_level": 7 }]
+"item_vars": {
+  "digital_recipes": "[{\"id\":\"3d_printer_basic\",\"skill_level\":7}]"
 }
 ```
 
-Omitting `skill_level` uses the recipe's difficulty. A group can also select
-random recipes, including recipes added by mods:
+Omitting `skill_level` uses the recipe's difficulty. `digital_random_recipes`
+contains JSON-encoded selection options and can include recipes added by mods:
 
 ```json
-{
-  "type": "digital_recipe_group",
-  "id": "my_cooking_recipes",
-  "random_recipes": {
-    "count": 1,
-    "category": "CC_FOOD",
-    "min_difficulty": 0,
-    "max_difficulty": 3,
-    "difficulty_chance_offset": 0
-  }
+"item_vars": {
+  "digital_random_recipes": "{\"count\":1,\"category\":\"CC_FOOD\",\"min_difficulty\":0,\"max_difficulty\":3,\"difficulty_chance_offset\":0}"
 }
 ```
+
+Both variables can be present on the same file. No separate recipe-file JSON
+object type or registry is needed. An empty string disables a definition.
 
 `category` is optional. Difficulty defaults to an unrestricted nonnegative
 range, and `count` defaults to one. An optional `candidates` array restricts the
 pool to specific recipe IDs. Recipes marked `never_learn` are excluded unless
 `include_unlearnable` is true. Random selections do not repeat fixed entries or
-other selections from the same group.
+other selections on the same file.
 
 When `difficulty_chance_offset` is present, each matching recipe has a
 one-in-`max(1, difficulty + offset)` chance to enter the pool before selection.

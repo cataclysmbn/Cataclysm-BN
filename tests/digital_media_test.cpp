@@ -44,9 +44,10 @@ TEST_CASE("digital_media_settings_are_editable_from_lua", "[digital_media][lua]"
     lua["test_reference"] = &file;
     const auto script = lua.safe_script(R"(
         assert(test_music:get_var_num("digital_music_morale_cap", 0) == 9)
-        assert(test_reference:get_var_str("digital_recipe_group", "") == "test_digital_fixed_recipes")
+        assert(test_reference:get_var_str("digital_recipes", "") ~= "")
         test_music:set_var_num("digital_music_morale_cap", 4)
-        test_reference:set_var_str("digital_recipe_group", "test_digital_random_recipes")
+        test_reference:set_var_str("digital_recipes", "")
+        test_reference:set_var_str("digital_random_recipes", '{"count":1,"candidates":["test_soldering_iron_digital_media"],"min_difficulty":3,"max_difficulty":3}')
     )");
     REQUIRE(script.valid());
     storage->put_in(std::move(music));
@@ -65,7 +66,9 @@ TEST_CASE("digital_media_settings_are_editable_from_lua", "[digital_media][lua]"
     const auto loaded = item::spawn(parser);
     CHECK(digital_music_on(*loaded).morale_cap == 4);
     REQUIRE(loaded->contents.num_item_stacks() == 2);
-    CHECK(loaded->contents.back().get_var("digital_recipe_group") == "test_digital_random_recipes");
+    CHECK(loaded->contents.back().get_var("digital_recipes").empty());
+    CHECK(loaded->contents.back().get_var("digital_random_recipes")
+          == file.get_var("digital_random_recipes"));
     const auto loaded_recipes = digital_file_recipes(loaded->contents.back());
     REQUIRE(loaded_recipes.size() == 1);
     CHECK(loaded_recipes.front().skill_level == 3);
@@ -102,17 +105,59 @@ TEST_CASE(
     initialize_digital_recipe_file(*reference);
     const auto selection = reference->get_var("DIGITAL_RECIPES");
     REQUIRE_FALSE(selection.empty());
-    reference->erase_var("digital_recipe_group");
+    const auto definitions = reference->get_var("digital_recipes");
+    reference->erase_var("digital_recipes");
     auto output = std::ostringstream{};
     auto writer = JsonOut(output);
     reference->serialize(writer);
     auto input = std::istringstream(output.str());
     auto parser = JsonIn(input);
     const auto loaded = item::spawn(parser);
-    CHECK(loaded->get_var("digital_recipe_group") == "test_digital_fixed_recipes");
+    CHECK(loaded->get_var("digital_recipes") == definitions);
     CHECK(loaded->get_var("DIGITAL_RECIPES") == selection);
 }
 
+TEST_CASE(
+    "inline_recipe_variables_validate_fixed_and_random_definitions", "[digital_media][recipes]") {
+    auto file = item::spawn("test_digital_reference");
+    REQUIRE(validate_digital_recipe_data(file->item_vars()).has_value());
+    SECTION("unknown recipes are rejected") {
+        file->set_var("digital_recipes", R"([{"id":"test_missing_digital_recipe"}])");
+        const auto result = validate_digital_recipe_data(file->item_vars());
+        REQUIRE_FALSE(result.has_value());
+        CHECK(result.error().find("test_missing_digital_recipe") != std::string::npos);
+    }
+    SECTION("invalid selection ranges are rejected") {
+        file->set_var("digital_random_recipes", R"({"count":-1})");
+        CHECK_FALSE(validate_digital_recipe_data(file->item_vars()).has_value());
+    }
+    SECTION("malformed recipe JSON is rejected") {
+        file->set_var("digital_recipes", "not JSON");
+        CHECK_FALSE(validate_digital_recipe_data(file->item_vars()).has_value());
+    }
+    SECTION("random recipes do not duplicate fixed entries") {
+        file->set_var("digital_random_recipes",
+                      R"({"count":1,"candidates":["test_soldering_iron_digital_media"]})");
+        initialize_digital_recipe_file(*file);
+        const auto recipes = digital_file_recipes(*file);
+        REQUIRE(recipes.size() == 1);
+        CHECK(recipes.front().skill_level == 1);
+    }
+    SECTION("empty resolved selections do not reroll after settings change") {
+        file->set_var("digital_recipes", "");
+        file->set_var("digital_random_recipes", R"({"count":0})");
+        initialize_digital_recipe_file(*file);
+        REQUIRE(file->has_var("DIGITAL_RECIPES"));
+        REQUIRE(digital_file_recipes(*file).empty());
+        file->set_var("digital_random_recipes",
+                      R"({"count":1,"candidates":["test_soldering_iron_digital_media"]})");
+        initialize_digital_recipe_file(*file);
+        CHECK(digital_file_recipes(*file).empty());
+        file->erase_var("DIGITAL_RECIPES");
+        initialize_digital_recipe_file(*file);
+        CHECK(digital_file_recipes(*file).size() == 1);
+    }
+}
 
 TEST_CASE("digital_storage_accepts_files_only", "[digital_media][item]") {
     const auto media_id = GENERATE(
