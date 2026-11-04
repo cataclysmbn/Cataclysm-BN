@@ -528,10 +528,14 @@ auto sfx::load_playlist( const JsonObject &jsobj ) -> void
 static auto find_random_effect( const id_and_variant &id_variants_pair ) -> const sound_effect *
 {
     const auto iter = sfx_resources.sound_effects.find( id_variants_pair );
-    if( iter == sfx_resources.sound_effects.end() ) {
+    if( iter == sfx_resources.sound_effects.end() || iter->second.empty() ) {
         return nullptr;
     }
-    return &random_entry_ref( iter->second );
+    // Whether a sound plays depends on the audio device and wall time, so it must not draw from the gameplay engine.
+    // NOLINTNEXTLINE(cata-determinism)
+    static auto sound_engine = cata_default_random_engine( std::random_device{}() );
+    auto index = std::uniform_int_distribution<std::size_t>( 0, iter->second.size() - 1 );
+    return &iter->second[index( sound_engine )];
 }
 
 static auto find_random_effect( const std::string &id,

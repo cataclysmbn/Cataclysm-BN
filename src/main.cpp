@@ -41,6 +41,8 @@
 #include "options.h"
 #include "output.h"
 #include "path_info.h"
+#include "replay/replay.h"
+#include "replay/state_hash.h"
 #include "rng.h"
 #include "type_id.h"
 #include "ui_manager.h"
@@ -226,6 +228,10 @@ int main( int argc, char *argv[] )
 #endif
     init_crash_handlers();
     int seed = time( nullptr );
+    auto seed_explicit = false;
+    auto replay_record_path = std::string{};
+    auto replay_play_path = std::string{};
+    auto state_hash_log_path = std::string{};
     bool verifyexit = false;
     bool check_mods = false;
     auto check_mods_mode = init::check_mods_mode::default_mods;
@@ -270,18 +276,49 @@ int main( int argc, char *argv[] )
         const char *section_default = nullptr;
         const char *section_map_sharing = "Map sharing";
         const char *section_user_directory = "User directories";
-        const std::array<arg_handler, 17> first_pass_arguments = {{
+        const std::array<arg_handler, 20> first_pass_arguments = {{
                 {
                     "--seed", "<string of letters and or numbers>",
                     "Sets the random number generator's seed value",
                     section_default,
-                    [&seed]( int num_args, const char **params ) -> int {
+                    [&seed, &seed_explicit]( int num_args, const char **params ) -> int {
                         if( num_args < 1 )
                         {
                             return -1;
                         }
                         const unsigned char *hash_input = reinterpret_cast<const unsigned char *>( params[0] );
                         seed = djb2_hash( hash_input );
+                        seed_explicit = true;
+                        return 1;
+                    }
+                },
+                {
+                    "--replay-record", "<jsonl path>",
+                    "Record input and the deterministic RNG seed to a new replay file",
+                    section_default,
+                    [&replay_record_path]( int num_args, const char **params ) -> int {
+                        if( num_args < 1 || *params[0] == '\0' ) { return -1; }
+                        replay_record_path = params[0];
+                        return 1;
+                    }
+                },
+                {
+                    "--replay-play", "<jsonl path>",
+                    "Play recorded input without waiting for a human",
+                    section_default,
+                    [&replay_play_path]( int num_args, const char **params ) -> int {
+                        if( num_args < 1 || *params[0] == '\0' ) { return -1; }
+                        replay_play_path = params[0];
+                        return 1;
+                    }
+                },
+                {
+                    "--state-hash-log", "<jsonl path>",
+                    "Write hashes of the game state after every turn to a new file, to compare runs",
+                    section_default,
+                    [&state_hash_log_path]( int num_args, const char **params ) -> int {
+                        if( num_args < 1 || *params[0] == '\0' ) { return -1; }
+                        state_hash_log_path = params[0];
                         return 1;
                     }
                 },
@@ -754,6 +791,30 @@ int main( int argc, char *argv[] )
     check_dir_good( PATH_INFO::config_dir() );
     check_dir_good( PATH_INFO::savedir() );
 
+    const auto replay_seed = seed == 0 ? 1u : static_cast<unsigned int>( seed );
+    try {
+        if( !replay_record_path.empty() && !replay_play_path.empty() ) {
+            throw std::invalid_argument( "--replay-record and --replay-play are mutually exclusive" );
+        }
+        if( test_mode && ( !replay_record_path.empty() || !replay_play_path.empty() ) ) {
+            throw std::invalid_argument( "Replay requires an interactive game session" );
+        }
+        if( !replay_record_path.empty() ) {
+            replay::configure_recording( replay_record_path, {.rng_seed = replay_seed} );
+        } else if( !replay_play_path.empty() ) {
+            if( seed_explicit ) {
+                replay::configure_playback( replay_play_path, {.rng_seed = replay_seed} );
+            } else {
+                replay::configure_playback( replay_play_path );
+            }
+        }
+        replay::start();
+        if( !state_hash_log_path.empty() ) { replay::configure_state_hash_log( state_hash_log_path ); }
+    } catch( const std::exception &err ) {
+        std::cerr << "Cataclysm BN: " << err.what() << '\n';
+        return 1;
+    }
+
     setupDebug( DebugOutput::file );
 
     if( !init_language_system() ) {
@@ -835,7 +896,11 @@ int main( int argc, char *argv[] )
     set_language();
 #endif
 
-    rng_set_engine_seed( seed );
+    if( replay::is_enabled() ) {
+        rng_set_deterministic_seed( replay::session_rng_seed( replay_seed ) );
+    } else {
+        rng_set_engine_seed( seed );
+    }
 
     g = std::make_unique<game>();
     // First load and initialize everything that does not
@@ -925,10 +990,10 @@ int main( int argc, char *argv[] )
 
         shared_ptr_fast<ui_adaptor> ui = g->create_or_get_main_ui_adaptor();
         options_manager::cache_balance_options();
-        while( !g->do_turn() );
+        while( !g->do_turn() ) { replay::log_state_hash(); }
     }
 
-    exit_handler( -999 );
+    exit_handler( replay::is_enabled() ? 0 : -999 );
     return 0;
 }
 

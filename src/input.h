@@ -289,11 +289,15 @@ class input_manager
         std::string get_keyname( int ch, input_event_t inp_type, bool portable = false ) const;
 
         /**
-         * curses getch() replacement.
+         * curses getch() replacement. Reads the platform's input, or the replay when one is active.
+         */
+        input_event get_input_event();
+        /**
+         * Reads the next event from the platform.
          *
          * Defined in the respective platform wrapper, e.g. sdlcurse.cpp
          */
-        input_event get_input_event();
+        input_event read_native_input_event();
         /**
          * Resize & refresh if necessary, process all pending window events, and ignore keypresses
          */
@@ -768,6 +772,7 @@ class input_context
         std::vector<std::string> filter_strings_by_phrase( const std::vector<std::string> &strings,
                 const std::string &phrase ) const;
     public:
+        auto category_name() const -> const std::string & { return category; } // *NOPAD*
         std::vector<std::string> get_registered_actions_copy() const {
             return registered_actions;
         }

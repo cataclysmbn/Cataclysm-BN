@@ -13,6 +13,7 @@
 #include "overmap/omdata.h"
 #include "point.h"
 #include "profile.h"
+#include "replay/replay.h"
 #include "thread_pool.h"
 
 #include <algorithm>
@@ -34,6 +35,15 @@ static constexpr auto retained_omt_hard_scale = std::size_t{2};
 static constexpr auto retained_omt_panic_scale = std::size_t{4};
 static constexpr auto retained_omt_max_budget_scale = std::size_t{8};
 static constexpr auto lazy_border_steps_to_cross_omt = std::size_t{SEEX * 2};
+
+template <typename Point>
+auto retained_omt_seed_id(const std::pair<dimension_id, Point>& key) -> std::uint64_t {
+    const auto dimension = key.first.str();
+    return static_cast<std::uint64_t>(std::hash<Point>{}(key.second))
+         ^ (static_cast<std::uint64_t>(
+                djb2_hash(reinterpret_cast<const unsigned char*>(dimension.c_str())))
+            << 1);
+}
 
 auto divide_round_up_size(const std::size_t numerator, const std::size_t denominator)
     -> std::size_t {
@@ -424,7 +434,11 @@ auto submap_load_manager::reap_lazy_omt_jobs() -> void {
     auto generated_omt_columns = horizontal_omt_set{};
     std::erase_if(lazy_omt_futures_, [&](auto& entry) {
         auto& [key, future] = entry;
-        if (future.wait_for(std::chrono::seconds(0)) != std::future_status::ready) { return false; }
+        // A replay applies every load at the same point, however long the worker took.
+        if (!replay::is_enabled()
+            && future.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
+            return false;
+        }
         auto result = complete_lazy_omt_result_on_main_thread(key, future.get());
         if (apply_lazy_omt_result(key, result)) {
             generated = true;
@@ -482,31 +496,36 @@ auto submap_load_manager::start_lazy_omt_job(const omt_key& key) -> lazy_omt_sta
 
             lazy_omt_futures_.emplace(
                 key,
-                get_thread_pool().submit_returning([&mb, omt_addr = key.second, selected_mapgen]() {
-                    return load_lazy_omt_zlevel_data(
-                        mb, omt_addr,
-                        {
-                            .defer_postprocess_hooks = true,
-                            .worker_safe = true,
-                            .use_selected_mapgen = true,
-                            .selected_mapgen = selected_mapgen,
-                        });
-                }));
+                get_thread_pool().submit_returning(
+                    {.stream = 0x6c617a796f6d745f, .id = retained_omt_seed_id(key)},
+                    [&mb, omt_addr = key.second, selected_mapgen]() {
+                        return load_lazy_omt_zlevel_data(
+                            mb, omt_addr,
+                            {
+                                .defer_postprocess_hooks = true,
+                                .worker_safe = true,
+                                .use_selected_mapgen = true,
+                                .selected_mapgen = selected_mapgen,
+                            });
+                    }));
             return {.started = true};
         }
     }
 
-    lazy_omt_futures_
-        .emplace(key, get_thread_pool().submit_returning([&mb, omt_addr = key.second]() {
-            return load_lazy_omt_zlevel_data(
-                mb, omt_addr,
-                {
-                    .defer_postprocess_hooks = true,
-                    .worker_safe = true,
-                    .use_selected_mapgen = false,
-                    .selected_mapgen = nullptr,
-                });
-        }));
+    lazy_omt_futures_.emplace(
+        key,
+        get_thread_pool().submit_returning(
+            {.stream = 0x6c617a796f6d745f, .id = retained_omt_seed_id(key)},
+            [&mb, omt_addr = key.second]() {
+                return load_lazy_omt_zlevel_data(
+                    mb, omt_addr,
+                    {
+                        .defer_postprocess_hooks = true,
+                        .worker_safe = true,
+                        .use_selected_mapgen = false,
+                        .selected_mapgen = nullptr,
+                    });
+            }));
     return {.started = true};
 }
 
@@ -862,9 +881,9 @@ auto submap_load_manager::update(const bool defer_lazy_border_work) -> void {
                     continue;
                 }
                 ++preloaded_zlevels;
-                preload_futures.push_back(get_thread_pool().submit_returning([&mb, omt_addr]() {
-                    mb.preload_omt(omt_addr);
-                }));
+                preload_futures.push_back(get_thread_pool().submit_returning(
+                    {.stream = 0x7072656c6f61645f, .id = retained_omt_seed_id(qk)},
+                    [&mb, omt_addr]() { mb.preload_omt(omt_addr); }));
             }
         }
         std::ranges::for_each(preload_futures, [](auto& f) { f.get(); });
