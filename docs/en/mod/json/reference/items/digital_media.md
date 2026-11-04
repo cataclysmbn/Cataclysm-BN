@@ -4,7 +4,9 @@ Digital files are items stored inside USB drives, SD cards, or a reader. The
 e-ink tablet, laptops, wrist computers, and smartphones provide a **Download
 data from storage media** action that copies files into internal storage.
 **Browse digital files** offers information, study, and item actions for
-installed files.
+installed files. Only options supported by the selected file are shown. Each
+use action appears under its configured name; cooldown and availability details
+appear in the menu description area.
 
 **Copy files to storage media** copies all installed files onto an unencrypted
 USB drive or SD card. For a single file, choose **Browse digital files → file →
@@ -54,14 +56,15 @@ activity.
 Non-book files can derive from `software`. Override `container` to `"null"` when
 defining files intended for a media contents group; otherwise the software base
 wraps spawned files in a USB drive. Existing JSON or Lua `use_action`s are
-available through **Run**. Actions receive the file as their item and retain
-their normal cost and behavior. The tablet additionally charges one device use
+listed individually under their configured action names, including `menu_text`
+overrides. Actions receive the file as their item and retain their normal cost
+and behavior. The tablet additionally charges one device use
 for its browse operation. Destructive actions can therefore remove their file;
 actions intended to be repeatable should not consume it.
 
 `digital_hello_world` (`hello_world.exe`) is a minimal executable example found
 on personal SD cards. Copy it to a powered reader and choose **Browse digital
-files → hello_world.exe → Run** to print **Hello, world!**. Its JSON
+files → hello_world.exe → Print greeting** to print **Hello, world!**. Its JSON
 `manualnoise` action uses `noise: 0` to display a message silently. The file is
 preserved and can be run repeatedly.
 
@@ -219,7 +222,31 @@ Use **Browse digital files → Listen** to choose a collection. The general musi
 action automatically picks an available collection. Copies of the same file
 share a cooldown, even on another reader.
 
-Photo albums configure their viewing behavior through these item variables:
+Photo albums attach the `view_photos` use action. It displays a message from the
+album's snippet category and controls its morale effect, move cost, and cooldown.
+The reader runs it through the normal item-action path:
+
+```json
+"use_action": { "type": "view_photos" },
+"item_vars": {
+  "digital_photos_snippets": "digital_personal_photos",
+  "digital_photos_unaffected_snippets": "digital_unaffected_photos",
+  "digital_photos_moves_min": "300",
+  "digital_photos_moves_max": "700",
+  "digital_photos_morale_min": "15",
+  "digital_photos_morale_max": "30",
+  "digital_photos_morale_cap": "100",
+  "digital_photos_cooldown_seconds": "600"
+}
+```
+
+Choose snippet categories describing the album's photos, such as family photos
+or travel pictures. Lua can change these item variables on individual albums.
+`DIGITAL_PHOTOS` includes an album in the reader's photo shortcut and count;
+the use action works independently of that flag. Replacing `use_action` replaces
+the album's behavior without adding device-specific code.
+
+The action reads these item variables:
 
 | Variable                                                 | Meaning                               |
 | -------------------------------------------------------- | ------------------------------------- |
@@ -239,16 +266,14 @@ available for repeated playback.
 
 ## First-pass limits
 
-Media capacity is not measured in bytes. The tablet imports supported USB drives
-and SD cards directly; format compatibility is not modeled yet. Other media,
+Media capacity is not measured in bytes. The tablet imports USB drives and SD cards directly; format compatibility is not modeled yet. Other media,
 such as DVDs, can later use the same flags and content groups without adding
 media-specific file types. Files must be copied into a reader before use; an
 adjacent USB or SD card alone supplies no recipe references.
 
 Old `MC_PHOTOS`, `MC_MUSIC`, `EIPC_PHOTOS`, and `EIPC_MUSIC` counters are
 converted into collection items once, preserving their counts. Legacy recipe
-tokens (`MC_RECIPE`) become cooking or scientific reference files using the JSON
-groups above. Existing tablet recipe references remain readable for save
+tokens (`MC_RECIPE`) become cooking or scientific reference files using the item-variable definitions above. Existing tablet recipe references remain readable for save
 compatibility. Camera captures are stored in a `digital_camera_photo_collection`
 file on the camera or phone. **Camera photos** and **Browse digital files →
 Browse captured photos** reopen the individual photographs with their original

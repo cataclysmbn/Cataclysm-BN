@@ -1,5 +1,6 @@
 #include "digital_media.h"
 #include "digital_recipes.h"
+#include "photo_album_actor.h"
 
 #include "character.h"
 #include "calendar.h"
@@ -9,6 +10,8 @@
 #include "item_contents.h"
 #include "item_group.h"
 #include "itype.h"
+#include "iuse.h"
+#include "ret_val.h"
 #include "json.h"
 #include "recipe.h"
 #include "recipe_dictionary.h"
@@ -45,6 +48,70 @@ auto identify_digital_file( item &file ) -> void
     }
 }
 
+auto photo_album_cooldown_remaining( const Character &who, const item &album ) -> time_duration
+{
+    const auto until = who.get_value_as_int( "digital_photos_ready_" +
+                       album.get_var( "DIGITAL_FILE_ID" ) ).value_or( 0 );
+    return std::max( 0_turns, time_point::from_turn( until ) - calendar::turn );
+}
+
+class photo_album_actor : public iuse_actor
+{
+    public:
+        photo_album_actor() : iuse_actor( "view_photos" ) {}
+
+        auto load( const JsonObject &/*obj*/ ) -> void override {}
+        auto clone() const -> std::unique_ptr<iuse_actor> override { return std::make_unique<photo_album_actor>( *this ); }
+
+        auto can_use( const Character &who, const item &album, bool /*active*/,
+                      const tripoint_bub_ms &/*pos*/ ) const -> ret_val<bool> override {
+            if( album.charges <= 0 ) {
+                return ret_val<bool>::make_failure( _( "This album contains no photos." ) );
+            }
+            if( is_digital_file( album ) && !digital_reader_for( who, album ) ) {
+                return ret_val<bool>::make_failure(
+                           _( "You need to install this file on a powered reader first." ) );
+            }
+            const auto remaining = photo_album_cooldown_remaining( who, album );
+            if( remaining > 0_turns ) {
+                return ret_val<bool>::make_failure( _( "You recently viewed this album.  Try again in %s." ),
+                                                    to_string( remaining ) );
+            }
+            return ret_val<bool>::make_success();
+        }
+
+        auto use( player &who, item &album, bool active,
+                  const tripoint_bub_ms &pos ) const -> int override {
+            if( active ) {
+                return 0;
+            }
+            const auto available = can_use( who, album, false, pos );
+            if( !available.success() ) {
+                who.add_msg_if_player( m_info, available.str() );
+                return 0;
+            }
+            identify_digital_file( album );
+            who.mod_moves( -rng( digital_setting( album, "digital_photos_moves_min" ),
+                                 digital_setting( album, "digital_photos_moves_max" ) ) );
+            const auto unaffected = who.has_trait( trait_id( "PSYCHOPATH" ) );
+            if( !unaffected ) {
+                who.add_morale( MORALE_PHOTOS, rng( digital_setting( album, "digital_photos_morale_min" ),
+                                                    digital_setting( album, "digital_photos_morale_max" ) ),
+                                digital_setting( album, "digital_photos_morale_cap" ) );
+            }
+            const auto category = album.get_var( unaffected ? "digital_photos_unaffected_snippets" :
+                                                 "digital_photos_snippets" );
+            if( const auto message = SNIPPET.random_from_category( category ) ) {
+                who.add_msg_if_player( unaffected ? m_info : m_good, "%s", message->translated() );
+            }
+            const auto cooldown = time_duration::from_seconds( digital_setting( album,
+                                  "digital_photos_cooldown_seconds" ) );
+            who.set_value( "digital_photos_ready_" + album.get_var( "DIGITAL_FILE_ID" ),
+                           std::to_string( to_turn<int>( calendar::turn + cooldown ) ) );
+            return 0;
+        }
+};
+
 auto copy_digital_file( item &file, item &destination ) -> bool
 {
     namespace ranges = std::ranges;
@@ -64,6 +131,11 @@ auto copy_digital_file( item &file, item &destination ) -> bool
     return true;
 }
 } // namespace
+
+auto make_photo_album_actor() -> std::unique_ptr<iuse_actor>
+{
+    return std::make_unique<photo_album_actor>();
+}
 
 auto is_digital_file( const item &file ) -> bool { return file.has_flag( flag_id( "DIGITAL" ) ); }
 
@@ -408,13 +480,6 @@ auto digital_photos_on( const item &reader ) -> int
     return photos;
 }
 
-auto digital_photo_cooldown_remaining( const Character &who, const item &album ) -> time_duration
-{
-    const auto until = who.get_value_as_int( "digital_photos_ready_" +
-                       album.get_var( "DIGITAL_FILE_ID" ) ).value_or( 0 );
-    return std::max( 0_turns, time_point::from_turn( until ) - calendar::turn );
-}
-
 auto digital_music_cooldown_remaining( const Character &who, const item &file ) -> time_duration
 {
     const auto until = who.get_value_as_int( "digital_music_ready_" +
@@ -507,39 +572,6 @@ auto finish_digital_music( Character &who, const item &reader ) -> void
                            std::to_string( to_turn<int>( until ) ) );
         }
     }
-}
-
-auto view_digital_photos( player &who, item &album ) -> bool
-{
-    if( !album.has_flag( flag_id( "DIGITAL_PHOTOS" ) ) || album.charges <= 0 ||
-        !digital_reader_for( who, album ) ) {
-        return false;
-    }
-    identify_digital_file( album );
-    const auto remaining = digital_photo_cooldown_remaining( who, album );
-    if( remaining > 0_turns ) {
-        who.add_msg_if_player( m_info, _( "You recently viewed this album.  Try again in %s." ),
-                               to_string( remaining ) );
-        return false;
-    }
-    who.mod_moves( -rng( digital_setting( album, "digital_photos_moves_min" ),
-                         digital_setting( album, "digital_photos_moves_max" ) ) );
-    const auto unaffected = who.has_trait( trait_id( "PSYCHOPATH" ) );
-    if( !unaffected ) {
-        who.add_morale( MORALE_PHOTOS, rng( digital_setting( album, "digital_photos_morale_min" ),
-                                            digital_setting( album, "digital_photos_morale_max" ) ),
-                        digital_setting( album, "digital_photos_morale_cap" ) );
-    }
-    const auto category = album.get_var( unaffected ? "digital_photos_unaffected_snippets" :
-                                         "digital_photos_snippets" );
-    if( const auto message = SNIPPET.random_from_category( category ) ) {
-        who.add_msg_if_player( unaffected ? m_info : m_good, "%s", message->translated() );
-    }
-    const auto cooldown = time_duration::from_seconds( digital_setting( album,
-                          "digital_photos_cooldown_seconds" ) );
-    who.set_value( "digital_photos_ready_" + album.get_var( "DIGITAL_FILE_ID" ),
-                   std::to_string( to_turn<int>( calendar::turn + cooldown ) ) );
-    return true;
 }
 
 auto digital_recipe_references( const item &reader, const Character &who ) -> recipe_subset

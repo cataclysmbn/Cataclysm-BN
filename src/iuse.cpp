@@ -6057,51 +6057,70 @@ auto browse_digital_files( player &who, item &reader, const bool photos_only = f
         return;
     }
     auto *file = files[menu.ret];
+    enum file_action {
+        show_info, study_file, listen_file, copy_file, show_recipes,
+        show_captured_photos, show_monsters, use_action_start
+    };
+    namespace ranges = std::ranges;
+    using namespace std::views;
+    const auto use_methods = file->type->use_methods | keys | ranges::to<std::vector<std::string>>();
     auto actions = uilist{};
     actions.text = file->type_name();
-    actions.addentry( 0, true, 'i', _( "File information" ) );
-    actions.addentry( 1, file->is_book(), 'r', _( "Study" ) );
-    actions.addentry( 2, file->has_use(), 'a', _( "Run" ) );
-    const auto photo_wait = digital_photo_cooldown_remaining( who, *file );
-    actions.addentry( 3, file->has_flag( flag_id( "DIGITAL_PHOTOS" ) ) && file->charges > 0 &&
-                      photo_wait <= 0_turns, 'p', photo_wait > 0_turns ?
-                      string_format( _( "View photos (available in %s)" ), to_string( photo_wait ) ) :
-                      _( "View photos" ) );
-    const auto music_wait = digital_music_cooldown_remaining( who, *file );
-    actions.addentry( 4, file->has_flag( flag_id( "DIGITAL_MUSIC" ) ) && file->charges > 0 &&
-                      music_wait <= 0_turns, 'm', music_wait > 0_turns ?
-                      string_format( _( "Listen (available in %s)" ), to_string( music_wait ) ) :
-                      _( "Listen" ) );
-    actions.addentry( 5, true, 'c', _( "Copy to storage media" ) );
-    const auto recipes = digital_file_recipes( *file );
-    actions.addentry( 6, !recipes.empty(), 'v', _( "View recipes" ) );
-    actions.addentry( 7, file->has_var( "CAMERA_EXTENDED_PHOTOS" ) ||
-                      file->has_var( "CAMERA_NPC_PHOTOS" ), 'l', _( "Browse captured photos" ) );
-    actions.addentry( 8, file->has_var( "CAMERA_MONSTER_PHOTOS" ), 'z',
-                      _( "Your collection of monsters" ) );
+    actions.hilight_disabled = true;
+    if( file->is_book() ) {
+        actions.addentry( study_file, true, 'r', _( "Study" ) );
+    }
+    for( auto index = 0; index < static_cast<int>( use_methods.size() ); ++index ) {
+        const auto &action = file->type->use_methods.at( use_methods[index] );
+        const auto available = action.can_call( who, *file, false, who.bub_pos() );
+        actions.addentry_desc( use_action_start + index, available.success(), MENU_AUTOASSIGN,
+                               action.get_name(), available.str() );
+    }
+    if( file->has_flag( flag_id( "DIGITAL_MUSIC" ) ) ) {
+        const auto music_wait = digital_music_cooldown_remaining( who, *file );
+        const auto description = file->charges <= 0 ? _( "This collection contains no music." ) :
+                                 music_wait > 0_turns ? string_format( _( "Available in %s." ),
+                                         to_string( music_wait ) ) : std::string{};
+        actions.addentry_desc( listen_file, file->charges > 0 && music_wait <= 0_turns, 'm',
+                               _( "Listen" ), description );
+    }
+    const auto recipe_entries = digital_file_recipes( *file );
+    if( !recipe_entries.empty() ) {
+        actions.addentry( show_recipes, true, 'v', _( "View recipes" ) );
+    }
+    if( !file->get_var( "CAMERA_EXTENDED_PHOTOS" ).empty() ||
+        !file->get_var( "CAMERA_NPC_PHOTOS" ).empty() ) {
+        actions.addentry( show_captured_photos, true, 'p', _( "Browse captured photos" ) );
+    }
+    if( !file->get_var( "CAMERA_MONSTER_PHOTOS" ).empty() ) {
+        actions.addentry( show_monsters, true, 'z', _( "Your collection of monsters" ) );
+    }
+    actions.addentry( show_info, true, 'i', _( "File information" ) );
+    actions.addentry( copy_file, true, 'c', _( "Copy to storage media" ) );
+    actions.desc_enabled = ranges::any_of( actions.entries,
+    []( const auto & entry ) { return !entry.desc.empty(); } );
     actions.query();
-    if( actions.ret == 0 ) {
+    if( actions.ret >= use_action_start &&
+        actions.ret < use_action_start + static_cast<int>( use_methods.size() ) ) {
+        who.invoke_item( file, use_methods[actions.ret - use_action_start] );
+    } else if( actions.ret == show_info ) {
         popup( "%s", file->type->description.translated() );
-    } else if( actions.ret == 1 ) {
+    } else if( actions.ret == study_file ) {
         if( auto *you = who.as_avatar() ) {
             you->read( file );
         }
-    } else if( actions.ret == 2 ) {
-        who.invoke_item( file );
-    } else if( actions.ret == 3 ) {
-        view_digital_photos( who, *file );
-    } else if( actions.ret == 4 ) {
+    } else if( actions.ret == listen_file ) {
         listen_to_digital_music( who, reader, *file );
-    } else if( actions.ret == 5 ) {
+    } else if( actions.ret == copy_file ) {
         export_files_to_storage( who, reader, file );
-    } else if( actions.ret == 7 ) {
+    } else if( actions.ret == show_captured_photos ) {
         show_photo_selection( who, *file, "CAMERA_EXTENDED_PHOTOS" );
-    } else if( actions.ret == 8 ) {
+    } else if( actions.ret == show_monsters ) {
         show_monster_collection( *file );
-    } else if( actions.ret == 6 ) {
+    } else if( actions.ret == show_recipes ) {
         auto recipe_menu = uilist{};
         recipe_menu.text = _( "Recipes in file:" );
-        for( const auto &entry : recipes ) {
+        for( const auto &entry : recipe_entries ) {
             recipe_menu.addentry( MENU_AUTOASSIGN, true, -1, entry.recipe->result_name() );
         }
         recipe_menu.query();

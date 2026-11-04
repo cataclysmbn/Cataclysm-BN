@@ -112,6 +112,7 @@ TEST_CASE(
     CHECK(loaded->get_var("DIGITAL_RECIPES") == selection);
 }
 
+
 TEST_CASE("digital_storage_accepts_files_only", "[digital_media][item]") {
     const auto media_id = GENERATE(
         "usb_drive", "genome_drive", "sd_memory_card", "eink_tablet_pc", "eink_tablet_pc_music",
@@ -134,6 +135,7 @@ TEST_CASE("digital_storage_accepts_files_only", "[digital_media][item]") {
     CHECK(media->spill_contents(tripoint_bub_ms::zero()));
     CHECK_FALSE(media->contents.empty());
 }
+
 
 TEST_CASE("digital_media_content_is_rolled_once", "[digital_media][item_group]") {
     auto media = item::spawn("test_digital_media");
@@ -588,19 +590,29 @@ TEST_CASE("photo_and_music_files_use_json_quantities_and_effects", "[digital_med
     });
     REQUIRE(album_it != files.end());
     auto* album = *album_it;
-    REQUIRE(view_digital_photos(dummy, *album));
+    REQUIRE(album->get_use("view_photos") != nullptr);
+    REQUIRE(
+        album->get_use("view_photos")->can_call(dummy, *album, false, dummy.bub_pos()).success());
+    dummy.invoke_item(album, "view_photos");
     CHECK(digital_photos_on(reader) == 7);
     CHECK(dummy.get_morale(MORALE_PHOTOS) == 5);
     const auto moves_after_viewing = dummy.moves;
-    CHECK_FALSE(view_digital_photos(dummy, *album));
+    CHECK_FALSE(
+        album->get_use("view_photos")->can_call(dummy, *album, false, dummy.bub_pos()).success());
+    dummy.invoke_item(album, "view_photos");
     CHECK(dummy.moves == moves_after_viewing);
     CHECK(download_digital_files(reader, *media, dummy) == 0);
     CHECK(digital_photos_on(reader) == 7);
     CHECK(digital_photos_on(*media) == 7);
     calendar::turn += 59_seconds;
-    CHECK_FALSE(view_digital_photos(dummy, *album));
+    CHECK_FALSE(
+        album->get_use("view_photos")->can_call(dummy, *album, false, dummy.bub_pos()).success());
+    dummy.invoke_item(album, "view_photos");
     calendar::turn += 1_seconds;
-    REQUIRE(view_digital_photos(dummy, *album));
+    REQUIRE(album->get_use("view_photos") != nullptr);
+    REQUIRE(
+        album->get_use("view_photos")->can_call(dummy, *album, false, dummy.bub_pos()).success());
+    dummy.invoke_item(album, "view_photos");
     CHECK(digital_photos_on(reader) == 7);
 }
 
@@ -694,17 +706,70 @@ TEST_CASE("different_photo_albums_have_independent_cooldowns", "[digital_media]"
     reader.put_in(std::move(second_album));
     dummy.i_add(std::move(device));
 
-    REQUIRE(view_digital_photos(dummy, first));
+    REQUIRE(first.get_use("view_photos") != nullptr);
+    REQUIRE(first.get_use("view_photos")->can_call(dummy, first, false, dummy.bub_pos()).success());
+    dummy.invoke_item(&first, "view_photos");
     const auto morale_after_first = dummy.get_morale(MORALE_PHOTOS);
-    REQUIRE(view_digital_photos(dummy, second));
+    REQUIRE(second.get_use("view_photos") != nullptr);
+    REQUIRE(
+        second.get_use("view_photos")->can_call(dummy, second, false, dummy.bub_pos()).success());
+    dummy.invoke_item(&second, "view_photos");
     CHECK(dummy.get_morale(MORALE_PHOTOS) > morale_after_first);
-    CHECK_FALSE(view_digital_photos(dummy, first));
+    CHECK_FALSE(
+        first.get_use("view_photos")->can_call(dummy, first, false, dummy.bub_pos()).success());
+    dummy.invoke_item(&first, "view_photos");
     CHECK(first.charges == 7);
     CHECK(second.charges == 7);
     auto duplicate = item::spawn(first);
     auto& copy = *duplicate;
     reader.put_in(std::move(duplicate));
-    CHECK_FALSE(view_digital_photos(dummy, copy));
+    CHECK_FALSE(
+        copy.get_use("view_photos")->can_call(dummy, copy, false, dummy.bub_pos()).success());
+    dummy.invoke_item(&copy, "view_photos");
+}
+
+TEST_CASE(
+    "photo_album_actions_use_item_variables_without_device_photo_logic", "[digital_media][iuse]") {
+    const auto restore_time = restore_on_out_of_scope(calendar::turn);
+    calendar::turn = calendar::turn_zero + 12_hours;
+    auto dummy = avatar{};
+    clear_character(dummy);
+    auto album = item::spawn("test_digital_custom_photo_album");
+    album->charges = 7;
+    auto& file = *album;
+    const auto* action = file.get_use("view_photos");
+    REQUIRE(action != nullptr);
+    CHECK_FALSE(file.has_flag(flag_id("DIGITAL_PHOTOS")));
+    CHECK_FALSE(action->can_call(dummy, file, false, dummy.bub_pos()).success());
+
+    auto device = item::spawn("eink_tablet_pc");
+    auto& reader = *device;
+    reader.ammo_set(itype_id("battery"), 10);
+    reader.put_in(std::move(album));
+    dummy.i_add(std::move(device));
+    REQUIRE(action->can_call(dummy, file, false, dummy.bub_pos()).success());
+    const auto moves = dummy.moves;
+    dummy.invoke_item(&file, "view_photos");
+    CHECK(dummy.moves == moves - 40);
+    CHECK(dummy.get_morale(MORALE_PHOTOS) == 2);
+    CHECK(file.charges == 7);
+    CHECK_FALSE(action->can_call(dummy, file, false, dummy.bub_pos()).success());
+    dummy.invoke_item(&file, "view_photos");
+    CHECK(dummy.moves == moves - 40);
+
+    calendar::turn += 5_seconds;
+    REQUIRE(action->can_call(dummy, file, false, dummy.bub_pos()).success());
+    file.set_var("digital_photos_moves_min", 12);
+    file.set_var("digital_photos_moves_max", 12);
+    file.set_var("digital_photos_cooldown_seconds", 0);
+    const auto moves_before_reopening = dummy.moves;
+    dummy.invoke_item(&file, "view_photos");
+    REQUIRE(action->can_call(dummy, file, false, dummy.bub_pos()).success());
+    dummy.invoke_item(&file, "view_photos");
+    CHECK(dummy.moves == moves_before_reopening - 24);
+    CHECK(file.charges == 7);
+    reader.ammo_unset();
+    CHECK_FALSE(action->can_call(dummy, file, false, dummy.bub_pos()).success());
 }
 
 TEST_CASE(

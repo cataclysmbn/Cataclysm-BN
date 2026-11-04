@@ -76,6 +76,7 @@
     "description": "A tiny executable that prints \"Hello, world!\" when run.",
     "use_action": {
       "type": "manualnoise",
+      "menu_text": "Print greeting",
       "use_message": "Hello, world!",
       "no_charges_message": "The reader has no power.",
       "noise": 0,
@@ -98,6 +99,7 @@
     "name": { "str": "personal photo album" },
     "description": "A saved collection of personal photos.  Copy it to a reader to view.",
     "extend": { "flags": [ "DIGITAL_PHOTOS" ] },
+    "use_action": { "type": "view_photos" },
     "item_vars": {
       "digital_photos_morale_min": "15",
       "digital_photos_morale_max": "30",

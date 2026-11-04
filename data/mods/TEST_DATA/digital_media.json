@@ -76,6 +76,7 @@
     "name": { "str": "test photo album" },
     "description": "A deterministic photo album.",
     "extend": { "flags": [ "DIGITAL_PHOTOS" ] },
+    "use_action": { "type": "view_photos" },
     "item_vars": {
       "digital_photos_morale_min": "5",
       "digital_photos_morale_max": "5",
@@ -85,6 +86,20 @@
       "digital_photos_moves_min": "100",
       "digital_photos_moves_max": "100",
       "digital_photos_cooldown_seconds": "60"
+    }
+  },
+  {
+    "id": "test_digital_custom_photo_album",
+    "copy-from": "test_digital_photo_album",
+    "type": "GENERIC",
+    "name": { "str": "test custom photo album" },
+    "delete": { "flags": [ "DIGITAL_PHOTOS" ] },
+    "item_vars": {
+      "digital_photos_morale_min": "2",
+      "digital_photos_morale_max": "2",
+      "digital_photos_moves_min": "40",
+      "digital_photos_moves_max": "40",
+      "digital_photos_cooldown_seconds": "5"
     }
   },
   {
