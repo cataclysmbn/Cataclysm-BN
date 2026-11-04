@@ -125,7 +125,7 @@ auto run_game( int argc, char *argv[] ) -> int
         const char *section_default = nullptr;
         const char *section_map_sharing = "Map sharing";
         const char *section_user_directory = "User directories";
-        const std::array<arg_handler, 21> first_pass_arguments = {
+        const std::array<arg_handler, 20> first_pass_arguments = {
             {   {
                     "--client", "tiles|curses|mcp", "Select the runtime client backend",
                     section_default,
@@ -149,16 +149,6 @@ auto run_game( int argc, char *argv[] ) -> int
                     []( int /*num_args*/, const char ** /*params*/ ) -> int {
                         main_menu::ignore_holidays() = true;
                         return 0;
-                    }
-                },
-                {
-                    "--listen", "<socket path>",
-                    "Serve the mcp client's protocol on a local socket instead of stdio",
-                    section_default,
-                    []( int num_args, const char **params ) -> int {
-                        if( num_args < 1 ) { return -1; }
-                        game_client::listen_endpoint() = params[0];
-                        return 1;
                     }
                 },
                 {
@@ -489,10 +479,6 @@ auto run_game( int argc, char *argv[] ) -> int
             cata_printf( resolved_game_paths( false ) );
             return 0;
         }
-    }
-
-    if( !game_client::listen_endpoint().empty() && selected_client != game_client::client_kind::mcp ) {
-        throw std::invalid_argument( "--listen requires --client mcp" );
     }
 
     game_client::set_active_backend( game_client::create_backend( selected_client ) );

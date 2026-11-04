@@ -112,8 +112,6 @@ struct hello_identity {
     /// The language the connection's text is in.
     std::string locale = {};
     std::string engine_locale = {};
-    /// `controller` or `spectator`.
-    std::string role = {};
 };
 struct hello_reply {
     std::string epoch = {};

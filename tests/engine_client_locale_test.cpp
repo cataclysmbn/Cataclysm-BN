@@ -90,26 +90,24 @@ struct connection {
     std::ostringstream errors;
     std::vector<bn::mcp::key_event> queued;
     bn::mcp::server server;
-    explicit connection(ec::session& authority, const bool spectator)
-        : server{
-              {
-                  .observe = [] { return bn::mcp::screen_snapshot{.json = "{}"}; },
-                  .submit =
-                      [this](const auto& input) {
-                          queued = input;
-                          return true;
-                      },
-                  .has_input = [this] { return !queued.empty(); },
-                  .contract_session = &authority,
-              },
-              {.spectator = spectator}} {}
+    explicit connection(ec::session& authority)
+        : server{{
+              .observe = [] { return bn::mcp::screen_snapshot{.json = "{}"}; },
+              .submit =
+                  [this](const auto& input) {
+                      queued = input;
+                      return true;
+                  },
+              .has_input = [this] { return !queued.empty(); },
+              .contract_session = &authority,
+          }} {}
+    auto flush() -> void { REQUIRE(server.flush_pushed(output)); }
     auto send(const std::string& text) -> void {
         auto input = std::istringstream{text};
         for (auto lines = std::ranges::count(text, '\n'); lines > 0; --lines) {
             REQUIRE(server.poll_input(input, output, errors));
         }
     }
-    auto flush() -> void { REQUIRE(server.flush_pushed(output)); }
     /// Every frame written so far.
     auto frames() const -> std::vector<json> {
         auto result = std::vector<json>{};
@@ -275,167 +273,26 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "a spectator in another language and a controller read the same ids over the wire",
-    "[engine_client_locale][engine_client_server]") {
-    const auto fixture = korean_catalogue{};
-    const auto boundary = yes_no_boundary{};
-    Messages::clear_messages();
-    Messages::add_msg("First line.");
-    auto authority = ec::session{};
-    authority.set_world_capture(&test_text, nullptr, &test_text);
-    strength = 8;
-    REQUIRE(authority.publish_boundary());
-    auto controller = connection{authority, false};
-    auto spectator = connection{authority, true};
-    controller.send(hello());
-    spectator.send(hello(korean));
-    // No publication has worded the language yet; the subscribe makes one.
-    controller.send(subscribe);
-    spectator.send(subscribe);
-
-    SECTION("the hello names the language granted and the engine's") {
-        const auto answer = spectator.result(1);
-        CHECK(answer["version"] == "0.2");
-        CHECK(answer["locale"] == korean);
-        CHECK(answer["engine_locale"] == json(get_language().id));
-        CHECK(answer["role"] == "spectator");
-        CHECK(controller.result(1)["locale"] == json(get_language().id));
-        CHECK(controller.result(1)["engine_locale"] == json(get_language().id));
-    }
-    SECTION("the snapshot has the same ids and stack shape, with the words of the language") {
-        const auto base = controller.result(2);
-        const auto worded = spectator.result(2);
-        const auto& left = base["interaction"];
-        const auto& right = worded["interaction"];
-        CHECK(right["boundary_id"] == left["boundary_id"]);
-        CHECK(right["interaction"]["schema_id"] == left["interaction"]["schema_id"]);
-        CHECK(right["interaction"]["choices"][0]["id"] == left["interaction"]["choices"][0]["id"]);
-        CHECK(left["interaction"]["choices"][0]["label"] == "Yes");
-        CHECK(right["interaction"]["choices"][0]["label"] == json(in_korean("Yes")));
-        REQUIRE(left["stack"].size() == right["stack"].size());
-        for (const auto index : std::views::iota(std::size_t{0}, left["stack"].size())) {
-            CHECK(right["stack"][index]["screen_id"] == left["stack"][index]["screen_id"]);
-        }
-        CHECK(left["stack"].dump().find("Yes-ko") == std::string::npos);
-        CHECK(right["stack"].dump().find("Yes-ko") != std::string::npos);
-        CHECK(base["avatar"]["stats"][0]["label"] == "Strength");
-        CHECK(worded["avatar"]["stats"][0]["label"] == json(in_korean("Strength")));
-        CHECK(worded["environment"]["time"] == json(in_korean("Dawn")));
-    }
-    SECTION("a message line says it is in the engine's language, to a reader of another") {
-        CHECK_FALSE(controller.result(2)["messages"][0].contains("lang"));
-        CHECK(spectator.result(2)["messages"][0]["lang"] == json(get_language().id));
-        CHECK(spectator.result(2)["messages"][0]["text"] == "First line.");
-        controller.output.str("");
-        spectator.output.str("");
-        Messages::add_msg("Second line.");
-        REQUIRE(authority.publish_boundary());
-        controller.flush();
-        spectator.flush();
-        const auto base = controller.events();
-        const auto worded = spectator.events();
-        REQUIRE(base.size() == 1);
-        REQUIRE(worded.size() == 1);
-        CHECK(base.front()["type"] == "message.logged");
-        CHECK_FALSE(base.front()["data"].contains("lang"));
-        CHECK(worded.front()["data"]["lang"] == json(get_language().id));
-        CHECK(worded.front()["data"]["text"] == "Second line.");
-    }
-    SECTION(
-        "the snapshot names the catalogues of the connection's language, the game's then the mods'") {
-        REQUIRE(std::ranges::contains(
-            world_generator->active_world->info->active_mod_order, mod_id{"test_data"}));
-        auto& mod = const_cast<MOD_INFORMATION&>(mod_id{"test_data"}.obj());
-        const auto old_path = mod.path;
-        const auto restore = on_out_of_scope([&]() { mod.path = old_path; });
-        mod.path = (fixture.directory / "mod").string();
-        // The game runs from its own directory with a relative base path; a reader runs elsewhere.
-        PATH_INFO::init_base_path(std::filesystem::relative(fixture.directory).string());
-        const auto base = on_out_of_scope([&]() {
-            PATH_INFO::init_base_path(fixture.directory.string());
-        });
-        // The language without its dialect, as the game looks a mod's catalogue up.
-        const auto mod_catalogue = fixture.directory / "mod/lang/ko.mo";
-        std::filesystem::create_directories(mod_catalogue.parent_path());
-        auto output = std::ofstream{mod_catalogue, std::ios::binary};
-        const auto bytes = catalogue({{"Yes", "Yes-mod"}});
-        output.write(bytes.data(), static_cast<std::streamsize>(bytes.size()));
-        output.close();
-        controller.send(rpc("bn.subscribe", "{}", "3"));
-        spectator.send(rpc("bn.subscribe", "{}", "3"));
-        CHECK_FALSE(controller.result(3).contains("catalogues"));
-        const auto catalogues = spectator.result(3)["catalogues"];
-        REQUIRE(catalogues.size() == 2);
-        for (const auto& path : catalogues) {
-            CHECK(std::filesystem::path{path.get<std::string>()}.is_absolute());
-        }
-        CHECK(std::filesystem::equivalent(
-            catalogues[0].get<std::string>(),
-            fixture.directory / "lang/mo" / korean / "LC_MESSAGES/cataclysm-bn.mo"));
-        CHECK(std::filesystem::equivalent(catalogues[1].get<std::string>(), mod_catalogue));
-    }
-    SECTION("a converted line is the same LocalisedString for both readers and has no lang") {
-        controller.output.str("");
-        spectator.output.str("");
-        add_msg(to_translation("The %s dies!"), std::string{"zombie"});
-        REQUIRE(authority.publish_boundary());
-        controller.flush();
-        spectator.flush();
-        const auto expected = json::parse(R"({"key":"The %s dies!","args":["zombie"]})");
-        for (const auto* reader : {&controller, &spectator}) {
-            const auto events = reader->events();
-            REQUIRE(events.size() == 1);
-            CHECK(events.front()["data"]["text"] == expected);
-            CHECK(events.front()["data"]["label"] == expected);
-            CHECK_FALSE(events.front()["data"].contains("lang"));
-        }
-    }
-    SECTION("an event carries the screen and avatar of its connection's language") {
-        controller.output.str("");
-        spectator.output.str("");
-        strength = 9;
-        game_client::begin_input_boundary();
-        REQUIRE(authority.publish_boundary());
-        controller.flush();
-        spectator.flush();
-        const auto base = controller.events();
-        const auto worded = spectator.events();
-        REQUIRE(base.size() == 1);
-        REQUIRE(worded.size() == 1);
-        CHECK(worded.front()["sequence"] == base.front()["sequence"]);
-        CHECK(worded.front()["revision"] == base.front()["revision"]);
-        const auto& left = base.front()["changes"];
-        const auto& right = worded.front()["changes"];
-        CHECK(right["interaction"]["boundary_id"] == left["interaction"]["boundary_id"]);
-        CHECK(left["interaction"]["interaction"]["choices"][0]["label"] == "Yes");
-        CHECK(right["interaction"]["interaction"]["choices"][0]["label"] == json(in_korean("Yes")));
-        CHECK(left["avatar"]["stats"][0]["label"] == "Strength");
-        CHECK(right["avatar"]["stats"][0]["label"] == json(in_korean("Strength")));
-        CHECK(right["avatar"].at("keep") == left["avatar"].at("keep"));
-    }
-}
-
-TEST_CASE(
     "a hello asking for a language the engine cannot word is refused",
     "[engine_client_locale][engine_client_server]") {
     const auto fixture = korean_catalogue{};
     const auto boundary = yes_no_boundary{};
     auto authority = ec::session{};
     REQUIRE(authority.publish_boundary());
-    auto spectator = connection{authority, true};
+    auto asker = connection{authority};
     for (const auto* locale : {"xx_XX", "de_DE"}) {
-        spectator.output.str("");
-        spectator.send(hello(locale));
-        const auto out = spectator.output.str();
+        asker.output.str("");
+        asker.send(hello(locale));
+        const auto out = asker.output.str();
         INFO(out);
         CHECK(out.find(R"("kind":"unavailable_locale","message":")") != std::string::npos);
         CHECK(out.find(R"("action":"hello")") != std::string::npos);
         CHECK(out.find(R"("version":"0.2")") == std::string::npos);
     }
     // The refusal negotiates nothing, and the same connection may say hello again.
-    spectator.output.str("");
-    spectator.send(hello(korean));
-    CHECK(spectator.result(1)["locale"] == korean);
+    asker.output.str("");
+    asker.send(hello(korean));
+    CHECK(asker.result(1)["locale"] == korean);
 }
 
 TEST_CASE(
@@ -449,8 +306,8 @@ TEST_CASE(
     authority.set_world_capture(&test_text, nullptr, &test_text);
     strength = 8;
     REQUIRE(authority.publish_boundary());
-    auto implicit = connection{authority, true};
-    auto named = connection{authority, true};
+    auto implicit = connection{authority};
+    auto named = connection{authority};
     implicit.send(hello() + subscribe);
     named.send(hello(get_language().id) + subscribe);
     strength = 9;

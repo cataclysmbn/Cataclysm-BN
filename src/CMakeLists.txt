@@ -1,6 +1,6 @@
 set(MAIN_CPP ${CMAKE_SOURCE_DIR}/src/main.cpp)
 set(MESSAGES_CPP ${CMAKE_SOURCE_DIR}/src/messages.cpp)
-set(MCP_SERVER_CPP ${CMAKE_SOURCE_DIR}/src/mcp_server.cpp ${CMAKE_SOURCE_DIR}/src/mcp_socket.cpp)
+set(MCP_SERVER_CPP ${CMAKE_SOURCE_DIR}/src/mcp_server.cpp ${CMAKE_SOURCE_DIR}/src/mcp_stdio.cpp)
 set(RESOURCE_RC ${CMAKE_SOURCE_DIR}/src/resource.rc)
 set(CLIENT_PLATFORM_CPP
     ${CMAKE_SOURCE_DIR}/src/platform/client_platform.cpp

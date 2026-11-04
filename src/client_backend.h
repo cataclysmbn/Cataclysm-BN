@@ -38,7 +38,7 @@ class backend
 {
     public:
         virtual ~backend() = default;
-        virtual auto native_window_handle() const -> void* { return nullptr; }
+        virtual auto native_window_handle() const -> void * { return nullptr; }
 
         /// Performs client setup that must happen after selection and before game data loads.
         virtual auto prepare() -> void {}
@@ -85,10 +85,6 @@ auto set_active_backend( backend_ptr client ) -> void;
 /// Returns the selected client backend.
 auto active_backend() -> backend&; // *NOPAD*
 auto backend_selected() -> bool;
-
-/// The socket path the headless client serves its protocol on instead of stdio (`--listen`);
-/// empty for stdio.
-auto listen_endpoint() -> std::string&; // *NOPAD*
 
 /// Creates a registered backend for a command-line client kind.
 auto create_backend( client_kind kind ) -> backend_ptr;

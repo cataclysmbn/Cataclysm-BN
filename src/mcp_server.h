@@ -51,9 +51,6 @@ struct mcp_host {
     std::function < auto( int, int ) -> void > resize_viewport;
     /// Production defaults to the process authority; tests may bind an isolated real session.
     engine_client::session *contract_session = nullptr;
-    /// Called after the server publishes a boundary, so the other connections can be sent it.
-    /// Optional.
-    std::function < auto() -> void > published;
 };
 
 /// A small MCP stdio server that adapts the game client to the standard JSON-RPC protocol.
@@ -72,9 +69,6 @@ class server
             std::size_t max_frame_bytes = default_max_frame_bytes;
             /// The wall clock that paces activity publication; unset means the steady clock.
             std::function < auto() -> std::chrono::steady_clock::time_point > now;
-            /// A spectator reads the game but never commands it: it publishes nothing, interrupts
-            /// nothing and leaves the viewport and tile settings to the controller.
-            bool spectator = false;
         };
 
         explicit server( mcp_host host );
@@ -196,8 +190,6 @@ class server
         auto step_walk() -> bool;
 
         auto publish_boundary( std::ostream &out, bool settles = true ) -> bool;
-        /// Interrupt the open command. A spectator has none, and never ends the controller's.
-        auto interrupt( engine_client::error reason ) -> void;
         /// Turn what the session published into notifications and write them, in order.
         auto flush_push( std::ostream &out ) -> bool;
         /// Turn what the session published into notifications written after the current response.

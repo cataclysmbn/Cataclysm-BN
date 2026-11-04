@@ -218,7 +218,7 @@ TEST_CASE("serialized values", "[engine_client_wire]") {
     const auto reply = hello_reply{
         .epoch = "epoch:a",
         .engine = {.build = "0.9", .mods = {"bn"}, .use_tiles = false, .tileset = "MSX"},
-        .identity = {.locale = "ko", .engine_locale = "en", .role = "spectator"}};
+        .identity = {.locale = "ko", .engine_locale = "en"}};
     const auto hello = serialize_hello(reply);
     CHECK(contains(hello, R"("display":{"tiles":false,"tileset":"MSX"})"));
     // Sound off names no pack.
@@ -227,7 +227,7 @@ TEST_CASE("serialized values", "[engine_client_wire]") {
     sounding.engine.soundpack = "/bn/data/sound/Basic";
     CHECK(contains(serialize_hello(sounding), R"("sound":{"soundpack":"/bn/data/sound/Basic"})"));
     CHECK(contains(hello, R"("version":"0.2")"));
-    CHECK(contains(hello, R"("locale":"ko","engine_locale":"en","role":"spectator")"));
+    CHECK(contains(hello, R"("locale":"ko","engine_locale":"en")"));
     CHECK_FALSE(contains(hello, R"("schema")"));
     CHECK(contains(hello, R"("screen_queue":8)"));
     CHECK(contains(hello, R"("mods":["bn"])"));

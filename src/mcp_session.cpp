@@ -39,7 +39,7 @@
 #include "game.h"
 #include "game_session.h"
 #include "mcp_server.h"
-#include "mcp_socket.h"
+#include "mcp_stdio.h"
 #include "json.h"
 #include "output.h"
 #include "runtime_handlers.h"
@@ -57,10 +57,10 @@ struct session_state {
     std::unique_ptr<server> transport;
     std::unique_ptr<std::streambuf> output_buffer;
     std::unique_ptr<std::ostream> output;
-    /// Serves the protocol on a socket instead of stdio; then `transport` and `output` are unset.
-    std::unique_ptr<socket_hub> sockets;
-    /// The game has told the spectators where it waits for a controller to connect.
-    bool published_unled = false;
+#if !defined(_WIN32)
+    /// Serves stdio; Windows serves it through `transport` and `output`.
+    std::unique_ptr<stdio_hub> hub;
+#endif
     bool started = false;
     bool stop = false;
 };
@@ -219,36 +219,37 @@ extern "C" auto name_the_signal( const int sig ) -> void
 }
 #endif
 
+/// The connection that commands the game: stdio.
+auto controller() -> std::optional<controller_endpoint>
+{
+    auto &session = state();
+#if defined(_WIN32)
+    if( session.transport && session.output ) {
+        return controller_endpoint{ *session.transport, std::cin, *session.output };
+    }
+    return std::nullopt;
+#else
+    return session.hub ? session.hub->controller() : std::nullopt;
+#endif
+}
+
 /// Leaves the process with the reason on stderr, which the client shows on its error screen.
 [[noreturn]] auto leave( const std::string &why ) -> void
 {
     auto &session = state();
-    const auto leader = session.sockets ? session.sockets->controller() : std::nullopt;
-    const auto protocol = leader ? &leader->protocol : session.transport.get();
+    const auto leader = controller();
+    const auto protocol = leader ? &leader->protocol : nullptr;
     std::cerr << "mcp: the engine is exiting: "
               << ( session.stop ? "a stop was requested" : protocol ? protocol->end_reason() : why ) << std::endl;
     exit_handler( protocol && protocol->failed() ? 1 : 0 );
 }
 
-/// The connection that commands the game: stdio, or the socket that holds the controller role.
-auto controller() -> std::optional<socket_hub::endpoint>
-{
-    auto &session = state();
-    if( session.sockets ) { return session.sockets->controller(); }
-#if defined(_WIN32)
-    if( session.transport && session.output ) {
-        return socket_hub::endpoint{ *session.transport, std::cin, *session.output };
-    }
-#endif
-    return std::nullopt;
-}
-
 auto controller_ready() -> bool
 {
 #if defined(_WIN32)
-    return state().sockets ? state().sockets->controller_ready() : stdin_ready();
+    return stdin_ready();
 #else
-    return state().sockets->controller_ready();
+    return state().hub->controller_ready();
 #endif
 }
 
@@ -263,32 +264,17 @@ auto save_game() -> void
               std::endl;
 }
 
-/// The controller is gone: a socket's game waits for the next one, stdio's ends with it. A stdio
-/// client dropped for falling behind did not choose to leave, so its game is saved first.
-auto lose_controller( const std::string &why ) -> void
+/// The controller is gone and the game ends with it. A client dropped for falling behind did not
+/// choose to leave, so its game is saved first.
+[[noreturn]] auto lose_controller( const std::string &why ) -> void
 {
-    auto &session = state();
-    if( session.sockets && session.sockets->listening() ) {
-        session.sockets->drop_controller();
-        return;
-    }
-    if( session.sockets && session.sockets->controller_fell_behind() ) {
+#if !defined(_WIN32)
+    if( state().hub && state().hub->controller_fell_behind() ) {
         std::cerr << "mcp: the client left more output unread than the engine keeps" << std::endl;
         save_game();
     }
+#endif
     leave( why );
-}
-
-/// Without a controller the game waits at its input boundary, as it does for a player who has not
-/// pressed a key: the spectators are told where it stands, and a new connection takes the role.
-auto wait_for_controller() -> void
-{
-    auto &session = state();
-    if( !std::exchange( session.published_unled, true ) ) {
-        static_cast<void>( engine_client::process_session().publish_boundary() );
-        session.sockets->flush_spectators();
-    }
-    session.sockets->service( 1000 );
 }
 
 /// Answers the requests that already wait while an activity runs, which reaches no input boundary.
@@ -300,15 +286,11 @@ auto serve_waiting_requests() -> void
     const auto now = std::chrono::steady_clock::now();
     if( now - last_beat >= heartbeat_interval ) {
         last_beat = now;
-        if( session.sockets ) {
-            session.sockets->heartbeat();
-        } else if( session.transport ) {
-            session.transport->heartbeat( *session.output );
-        }
+        if( const auto leader = controller() ) { leader->protocol.heartbeat( leader->out ); }
     }
-    // A socket's controller may leave mid-activity: the activity runs on, and the game waits
-    // for a controller at its next input boundary.
-    if( session.sockets ) { session.sockets->service( 0 ); }
+#if !defined(_WIN32)
+    if( session.hub ) { session.hub->service( 0 ); }
+#endif
     while( session.events.empty() && controller() && controller_ready() ) {
         const auto leader = controller();
         if( leader->protocol.poll_input( leader->in, leader->out, std::cerr ) ) { continue; }
@@ -347,11 +329,6 @@ auto provide_input( const int timeout_ms ) -> input_event
             return polled;
         }
         const auto leader = controller();
-        if( !leader && session.sockets ) {
-            wait_for_controller();
-            continue;
-        }
-        session.published_unled = false;
         if( !leader || !leader->protocol.pump_until_input( leader->in, leader->out, std::cerr,
                 refreshing ? timeout_ms : 0 ) ) {
             if( !leader ) { break; }
@@ -370,11 +347,11 @@ auto provide_input( const int timeout_ms ) -> input_event
 auto report_loading( const game_client::loading_progress &progress ) -> void
 {
     auto &session = state();
-    if( session.sockets ) {
-        session.sockets->service( 0 );
-        session.sockets->notify_loading( progress );
-    } else if( session.transport && session.output ) {
-        session.transport->notify_loading( progress, *session.output );
+    if( const auto leader = controller() ) {
+#if !defined(_WIN32)
+        session.hub->service( 0 );
+#endif
+        leader->protocol.notify_loading( progress, leader->out );
     }
 }
 
@@ -471,26 +448,25 @@ auto start_session() -> void
         .state = structured_state,
         .submit = submit_events,
         .has_input = has_input,
-        .wait_input = []( const int wait_ms ) { return state().sockets->wait_controller_ready( wait_ms ); },
+        .wait_input = []( const int wait_ms )
+        {
+#if defined(_WIN32)
+            return stdin_ready( wait_ms );
+#else
+            return state().hub->wait_controller_ready( wait_ms );
+#endif
+        },
         .actions = actions,
         .interaction = interaction,
         .resize_viewport = resize_viewport
     };
-    if( const auto &path = game_client::listen_endpoint(); !path.empty() ) {
-        close_fd( protocol_fd );
-        auto listening = socket_hub::listen( path, host );
-        if( !listening ) { throw std::runtime_error( listening.error() ); }
-        session.sockets = std::move( *listening );
-    } else {
 #if defined(_WIN32)
-        host.wait_input = []( const int wait_ms ) { return stdin_ready( wait_ms ); };
-        session.output_buffer = make_fd_output( protocol_fd );
-        session.output = std::make_unique<std::ostream>( session.output_buffer.get() );
-        session.transport = std::make_unique<server>( std::move( host ) );
+    session.output_buffer = make_fd_output( protocol_fd );
+    session.output = std::make_unique<std::ostream>( session.output_buffer.get() );
+    session.transport = std::make_unique<server>( std::move( host ) );
 #else
-        session.sockets = socket_hub::attach_stdio( STDIN_FILENO, protocol_fd, host );
+    session.hub = stdio_hub::attach( STDIN_FILENO, protocol_fd, host );
 #endif
-    }
     session.started = true;
     game_client::memory::set_input_provider( provide_input );
     game_client::memory::set_present_callback( publish_screen );
@@ -528,7 +504,9 @@ auto finish_session() -> void
         static_cast<void>( leader->protocol.finish( leader->out ) );
         leader->out.flush();
     }
-    if( session.sockets ) { session.sockets->finish(); }
+#if !defined(_WIN32)
+    if( session.hub ) { session.hub->finish(); }
+#endif
     request_stop();
     game_client::memory::set_input_provider( {} );
     game_client::memory::set_present_callback( {} );
@@ -536,7 +514,9 @@ auto finish_session() -> void
     session.output.reset();
     session.output_buffer.reset();
     session.transport.reset();
-    session.sockets.reset();
+#if !defined(_WIN32)
+    session.hub.reset();
+#endif
     session.events.clear();
     session.started = false;
 }
