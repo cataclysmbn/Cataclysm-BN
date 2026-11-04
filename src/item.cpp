@@ -8213,6 +8213,9 @@ auto item::get_relic_recharge_scheme() const -> std::vector<relic_recharge>
 
 bool item::can_contain( const item &it ) const
 {
+    if( is_digital_file( it ) || has_flag( flag_id( "DIGITAL_STORAGE" ) ) ) {
+        return has_flag( flag_id( "DIGITAL_STORAGE" ) ) && is_digital_file( it );
+    }
     // TODO: Volume check
     return can_contain( *it.type );
 }
@@ -11645,6 +11648,9 @@ std::string item::type_name( unsigned int quantity ) const
         }
     }
 
+    if( is_book() && is_digital_file( *this ) && !type->has_flag( flag_id( "DIGITAL" ) ) ) {
+        ret_name = string_format( _( "digital copy of %s" ), ret_name );
+    }
     return ret_name;
 }
 

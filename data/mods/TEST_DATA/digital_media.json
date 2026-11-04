@@ -20,6 +20,15 @@
     "fun": 1
   },
   {
+    "id": "test_scannable_book",
+    "copy-from": "test_digital_instruction",
+    "type": "BOOK",
+    "name": { "str": "test physical book" },
+    "weight": "100 g",
+    "volume": "100 ml",
+    "flags": [  ]
+  },
+  {
     "id": "test_digital_media",
     "copy-from": "usb_drive",
     "type": "GENERIC",
@@ -49,7 +58,7 @@
     "difficulty": 3,
     "time": "1 m",
     "autolearn": false,
-    "book_learn": [ [ "test_digital_instruction", 1 ] ],
+    "book_learn": [ [ "test_digital_instruction", 1 ], [ "test_scannable_book", 1 ] ],
     "components": [ [ [ "test_rock", 1 ] ] ]
   },
   {

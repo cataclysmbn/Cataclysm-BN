@@ -1,4 +1,5 @@
 #include "iuse.h"
+#include "book_scanning.h"
 
 #include "action.h"
 #include "action_time_scale.h"
@@ -6219,7 +6220,7 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
 
         enum {
             ei_invalid, ei_photo, ei_music, ei_recipe, ei_books, ei_uploaded_photos, ei_monsters, ei_download, ei_decrypt,
-            ei_files, ei_export, ei_encrypt, ei_delete_storage
+            ei_files, ei_export, ei_encrypt, ei_delete_storage, ei_scan_book
         };
 
         if( p->is_underwater() ) {
@@ -6290,6 +6291,7 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
         }
 
         amenu.addentry( ei_files, true, 'f', _( "Browse digital files" ) );
+        amenu.addentry( ei_scan_book, true, 'a', _( "Scan book" ) );
         amenu.addentry( ei_download, true, 'w', _( "Download data from storage media" ) );
         const auto has_files = std::ranges::any_of( it->contents.all_items_top(),
         []( const auto * file ) { return is_digital_file( *file ); } );
@@ -6308,6 +6310,16 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
         amenu.query();
 
         const int choice = amenu.ret;
+
+        if( choice == ei_scan_book ) {
+            if( auto *you = p->as_avatar() ) {
+                const auto filter = []( const auto & book ) { return book.is_book() && !is_digital_file( book ); };
+                if( auto *book = game_menus::inv::titled_filter_menu( filter, *you, _( "Scan which book?" ) ) ) {
+                    start_book_scan( *p, *it, *book );
+                }
+            }
+            return 0;
+        }
 
         if( choice == ei_export ) {
             return export_files_to_storage( *p, *it ) ? it->type->charges_to_use() : 0;

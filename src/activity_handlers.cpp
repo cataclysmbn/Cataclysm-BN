@@ -1,4 +1,5 @@
 #include "activity_handlers.h"
+#include "book_scanning.h"
 
 #include <algorithm>
 #include <climits>
@@ -265,6 +266,7 @@ using namespace activity_handlers;
 
 const std::map< activity_id, std::function<void( player_activity *, player * )> >
 activity_handlers::do_turn_functions = {
+    { activity_id( "ACT_SCAN_BOOK" ), scan_book_do_turn },
     { ACT_BURROW, burrow_do_turn },
     { ACT_CRAFT, craft_do_turn },
     { ACT_FILL_LIQUID, fill_liquid_do_turn },
@@ -329,6 +331,7 @@ activity_handlers::do_turn_functions = {
 
 const std::map< activity_id, std::function<void( player_activity *, player * )> >
 activity_handlers::finish_functions = {
+    { activity_id( "ACT_SCAN_BOOK" ), scan_book_finish },
     { ACT_BURROW, burrow_finish },
     { ACT_BUTCHER, butcher_finish },
     { ACT_BUTCHER_FULL, butcher_finish },

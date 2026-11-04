@@ -24,6 +24,18 @@ Storage without a port requirement remains compatible with any reader.
 
 ## Files and readers
 
+Choose **Scan book** on a reader to digitize a physical book in your inventory.
+Scanning takes one minute per 50 ml of book volume, with a minimum of one minute,
+and consumes one device use per minute. Losing the book, reader, power, or enough
+light to see fine details interrupts the scan without producing a file. The
+physical book is preserved.
+
+The resulting digital copy retains the original book's type, skills, recipes,
+morale effects, and manual actions. Its instance flags mark it as `DIGITAL`,
+`IRREMOVABLE`, and `NO_DROP`, and its volume is zero. It can be studied, copied,
+exported, and deleted like other installed files. Scanning the same title again
+is unnecessary while a copy is installed on the reader.
+
 - `DIGITAL`: the item is a file. It can only be placed in digital storage, and
   requires installation on a powered reader to study or activate it.
 - `DIGITAL_STORAGE`: the item accepts digital contents and rejects physical
