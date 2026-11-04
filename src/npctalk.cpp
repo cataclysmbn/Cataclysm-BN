@@ -3774,7 +3774,7 @@ static consumption_result try_consume( npc &p, item &it, std::string &reason )
             p.use_charges( comest->tool, 1 );
             reason = _( "Thanks, I feel better already." );
         }
-        if( to_eat.type->has_use() ) {
+        if( to_eat.has_use() ) {
             amount_used = to_eat.type->invoke( p, to_eat, p.bub_pos() );
             if( amount_used <= 0 ) {
                 reason = _( "It doesn't look like a good idea to consume this…" );

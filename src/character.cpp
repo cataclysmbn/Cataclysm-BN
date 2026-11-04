@@ -360,6 +360,7 @@ static const trait_id trait_WEBBED( "WEBBED" );
 
 static const std::string flag_PLOWABLE( "PLOWABLE" );
 static const std::string iuse_TOGGLE_UPS_CHARGING( "TOGGLE_UPS_CHARGING" );
+static const std::string iuse_RELIC( "RELIC" );
 
 static const mtype_id mon_player_blob( "mon_player_blob" );
 static const mtype_id mon_shadow_snake( "mon_shadow_snake" );
@@ -8766,6 +8767,10 @@ bool Character::invoke_item( item *used, const std::string &method, const tripoi
     }
     if( method == iuse_TOGGLE_UPS_CHARGING ) {
         iuse::toggle_ups_charging( this->as_player(), used, false, pt );
+        return true;
+    }
+    if( method == iuse_RELIC ) {
+        iuse::relic( this->as_player(), used, false, pt );
         return true;
     }
     item *actually_used = used->get_usable_item( method );

@@ -54,6 +54,7 @@
 #include "overmap/overmap.h"
 #include "player.h"
 #include "player_activity.h"
+#include "relic.h"
 #include "recipe.h"
 #include "ret_val.h"
 #include "rng.h"
@@ -1578,6 +1579,11 @@ bool avatar::invoke_item( item *used, const tripoint_bub_ms &pt )
     // Make sure the flag is that of the mod, not of the item being used :P
     if( used->has_flag( flag_ADD_UPS_TOGGLE ) && !used->type->has_flag( flag_ADD_UPS_TOGGLE ) ) {
         use_methods["TOGGLE_UPS_CHARGING"] = item_controller->usage_from_string( "TOGGLE_UPS_CHARGING" );
+    }
+    if( used->relic_data && !used->relic_data->get_spells().empty() ) {
+        use_methods["RELIC"] = item_controller->usage_from_string( "RELIC" );
+    } else if( used->type->relic_data && !used->type->relic_data->get_spells().empty() ) {
+        use_methods["RELIC"] = item_controller->usage_from_string( "RELIC" );
     }
     if( use_methods.empty() ) {
         return false;
