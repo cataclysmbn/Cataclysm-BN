@@ -143,6 +143,12 @@ powered reader, then select **Browse digital files → saved urbex forum guide
 including its coverage and location filters. A `reveal_map_center_omt` item
 variable, when present, travels with the file when it is copied or saved.
 
+`digital_evacuation_map` is a saved emergency evacuation guide found on personal
+SD cards, encrypted cards, and salvaged hard drives. Open it on a powered reader
+to mark refugee centers, evac shelters, and roads within 180 overmap tiles of
+the map's saved center or your current location. It covers both refugee center
+layouts and the standard, expanded, and vandalized evac shelters.
+
 ## Salvaged hard drives
 
 Disassembling intact or broken computer terminals, including the furniture

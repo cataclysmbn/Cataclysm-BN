@@ -93,6 +93,26 @@
     "flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ]
   },
   {
+    "id": "digital_evacuation_map",
+    "copy-from": "digital_urbex_map",
+    "type": "GENERIC",
+    "name": { "str": "saved evacuation map" },
+    "description": "An offline emergency evacuation guide showing the regional refugee center, nearby evac shelters, and the roads connecting them.  Load it onto a powered reader to add these locations and roads to your map.",
+    "use_action": {
+      "type": "reveal_map",
+      "radius": 180,
+      "terrain": [
+        "hiway",
+        "road",
+        "bridge",
+        { "om_terrain": "refctr", "om_terrain_match_type": "PREFIX" },
+        { "om_terrain": "evac_center", "om_terrain_match_type": "PREFIX" },
+        { "om_terrain": "shelter", "om_terrain_match_type": "PREFIX" }
+      ],
+      "message": "You add refugee centers, evac shelters, and connecting roads to your map."
+    }
+  },
+  {
     "id": "digital_3d_printing_guide",
     "copy-from": "digital_collection",
     "type": "GENERIC",

@@ -23,6 +23,7 @@
       { "item": "digital_cooking_recipe_archive", "prob": 15 },
       { "item": "digital_3d_printing_guide", "prob": 10 },
       { "item": "digital_urbex_map", "prob": 5 },
+      { "item": "digital_evacuation_map", "prob": 5 },
       { "item": "digital_science_recipe_archive", "prob": 5 },
       { "item": "digital_tailoring_recipe_archive", "prob": 10 },
       { "item": "digital_bartender_drinks_list", "prob": 10 }
@@ -70,6 +71,7 @@
       { "item": "digital_3d_printing_guide", "prob": 2 },
       { "item": "digital_cooking_recipe_archive", "prob": 5 },
       { "item": "digital_urbex_map", "prob": 5 },
+      { "item": "digital_evacuation_map", "prob": 5 },
       { "item": "digital_tailoring_recipe_archive", "prob": 5 },
       { "item": "digital_bartender_drinks_list", "prob": 5 }
     ]
@@ -106,6 +108,7 @@
       { "item": "digital_3d_printing_guide", "prob": 10 },
       { "item": "digital_cooking_recipe_archive", "prob": 15 },
       { "item": "digital_urbex_map", "prob": 10 },
+      { "item": "digital_evacuation_map", "prob": 10 },
       { "item": "digital_tailoring_recipe_archive", "prob": 15 },
       { "item": "digital_bartender_drinks_list", "prob": 15 }
     ]
