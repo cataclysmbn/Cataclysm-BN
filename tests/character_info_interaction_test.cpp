@@ -31,7 +31,6 @@
 #    include "options_helpers.h"
 #    include "output.h"
 #    include "path_info.h"
-#    include "replay/replay.h"
 #    include "rng.h"
 #    include "skill.h"
 #    include "state_helpers.h"
@@ -1012,81 +1011,6 @@ TEST_CASE(
         return action("QUIT");
     });
     character_display::disp_info(get_avatar());
-}
-
-TEST_CASE(
-    "character info semantic native workflow replays with identical actor and RNG",
-    "[character_info_interaction][replay]") {
-    const auto guard = character_info_guard{};
-    static auto counter = std::atomic_uint64_t{};
-    const auto directory =
-        std::filesystem::path(PATH_INFO::user_dir())
-        / ("character-info-replay-" + std::to_string(counter.fetch_add(1)));
-    REQUIRE(std::filesystem::create_directory(directory));
-    const auto cleanup = on_out_of_scope{[&]() {
-        replay::stop();
-        std::filesystem::remove_all(directory);
-    }};
-    const auto path = directory / "input.jsonl";
-    const auto setup = []() {
-        const auto restore_mode = restore_on_out_of_scope{test_mode};
-        test_mode = true;
-        get_avatar() = avatar{};
-        clear_all_state();
-        newcharacter::add_default_mutation_type_traits(get_avatar());
-        get_avatar().name = "Replay actor";
-    };
-    setup();
-    const auto initial_actor = actor_state();
-    auto step = 0;
-    replay::configure_recording(path.string(), {.rng_seed = 37});
-    replay::start();
-    client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = client::current_interaction();
-        switch (step++) {
-            case 0:
-                return invoke("character:tab", {.row = "skills"});
-            case 1:
-                return invoke("character:focus:skills", {.row = "skill:melee"});
-            case 2:
-                return action("CONFIRM");
-            case 3:
-                return action("CHANGE_NAME");
-            case 4:
-                REQUIRE(snapshot.field);
-                return resolve(
-                    {.input_id = snapshot.input_id,
-                     .operation = client::interaction_operation::fill,
-                     .target_id = snapshot.field->id,
-                     .value = "Recorded actor",
-                     .submit = true});
-            case 5:
-                return action("QUIT");
-            default:
-                FAIL("unexpected native read");
-                return input_event{};
-        }
-    });
-    character_display::disp_info(get_avatar());
-    const auto recorded = saved_state_fingerprint(actor_state());
-    const auto rng = rng_get_engine();
-    replay::finish();
-    setup();
-    auto initial_stream = std::istringstream{initial_actor};
-    auto initial_json = JsonIn{initial_stream};
-    get_avatar().deserialize(initial_json);
-    REQUIRE(saved_state_fingerprint(actor_state()) == saved_state_fingerprint(initial_actor));
-    client::memory::set_input_provider([](const int /*timeout*/) -> input_event {
-        throw std::runtime_error("character info replay must not read live input");
-    });
-    replay::configure_playback(path.string(), {.rng_seed = 37});
-    replay::start();
-    character_display::disp_info(get_avatar());
-    CHECK(saved_state_fingerprint(actor_state()) == recorded);
-    CHECK(rng_get_engine() == rng);
-    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
-    replay::finish();
-    CHECK(step == 6);
 }
 
 TEST_CASE(

@@ -9,7 +9,6 @@
 #    include "json.h"
 #    include "map/map.h"
 #    include "map_helpers.h"
-#    include "replay/state_hash.h"
 #    include "state_helpers.h"
 
 #    include <algorithm>
@@ -28,19 +27,6 @@ auto fresh_game() -> void {
     game_client::reset_item_serials();
     build_test_map(ter_id("t_floor"));
     get_avatar().setpos(spot);
-}
-
-auto serialized(const item& thing) -> std::string {
-    auto out = std::ostringstream{};
-    auto json = JsonOut(out);
-    thing.serialize(json);
-    return out.str();
-}
-
-auto digests(const replay::state_hash& hash) -> std::vector<std::string> {
-    auto result = std::vector<std::string>{};
-    for (const auto& part : hash.parts) { result.push_back(part.name + part.digest); }
-    return result;
 }
 
 auto on_ground() -> std::vector<item*> {
@@ -173,29 +159,6 @@ TEST_CASE(
     CHECK(game_client::stack_row_id(without_lowest) != id);
     CHECK(game_client::stack_row_id(std::span(members).first(1))
           == game_client::item_row_id(*items[0]));
-}
-
-TEST_CASE(
-    "publishing row ids changes neither the state hash nor the saved item",
-    "[item_serial][state_hash]") {
-    fresh_game();
-    get_map().add_item(spot, item::spawn("rock"));
-    get_avatar().i_add(item::spawn("rock"));
-    const auto ground = on_ground().front();
-    auto carried = std::vector<const item*>{};
-    for (const auto* const thing : get_avatar().inv_dump()) { carried.push_back(thing); }
-    REQUIRE_FALSE(carried.empty());
-    const auto hash = digests(replay::hash_game_state());
-    const auto saved = serialized(*ground);
-    const auto saved_carried = serialized(*carried.front());
-
-    static_cast<void>(game_client::item_row_id(*ground));
-    static_cast<void>(game_client::stack_row_id(carried));
-
-    CHECK(digests(replay::hash_game_state()) == hash);
-    CHECK(serialized(*ground) == saved);
-    CHECK(serialized(*carried.front()) == saved_carried);
-    CHECK(saved.find("\"id\"") == std::string::npos);
 }
 
 #endif

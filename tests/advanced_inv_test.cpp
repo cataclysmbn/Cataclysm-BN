@@ -27,7 +27,6 @@
 #    include "path_info.h"
 #    include "player_activity.h"
 #    include "player_helpers.h"
-#    include "replay/replay.h"
 #    include "state_helpers.h"
 #    include "string_formatter.h"
 #    include "ui.h"
@@ -718,7 +717,7 @@ TEST_CASE(
 
 TEST_CASE(
     "advanced inventory moves the exact stacks and charges an invoke names",
-    "[advanced_inventory][client][replay][mcp]") {
+    "[advanced_inventory][client][mcp]") {
     const auto guard = screen_guard{};
     const auto fixture = aim_fixture{};
     auto& you = get_avatar();
@@ -1030,76 +1029,6 @@ TEST_CASE(
     REQUIRE(ground_item != ground_items.end());
     CHECK((*ground_item)->get_owner() == owner_id);
     CHECK(you.get_value("THIEF_MODE") == "THIEF_ASK");
-}
-
-TEST_CASE(
-    "semantic replay repeats an advanced inventory move and refuses to invent one",
-    "[advanced_inventory][client][replay][mcp]") {
-    const auto guard = screen_guard{};
-    static auto counter = std::atomic_uint64_t{0};
-    const auto directory =
-        std::filesystem::path(PATH_INFO::user_dir())
-        / ("semantic-advanced-inventory-" + std::to_string(counter.fetch_add(1)));
-    REQUIRE(std::filesystem::create_directory(directory));
-    const auto cleanup_replay = on_out_of_scope([&] {
-        replay::stop();
-        std::filesystem::remove_all(directory);
-    });
-    const auto path = directory / "input.jsonl";
-
-    {
-        const auto fixture = aim_fixture{};
-        auto& recorded = get_avatar();
-        add_to_inventory(itype_id("test_1kg_cube"), 3);
-        replay::configure_recording(path.string(), {.rng_seed = 37});
-        replay::start();
-        auto plan = script{};
-        plan.steps.push_back(move_rows("aim:pane:left", "aim:pane:right", {{"test_1kg_cube", 2}}));
-        run_script(plan);
-        REQUIRE(recorded.activity);
-        process_activity(recorded);
-        CHECK(recorded.amount_of(itype_id("test_1kg_cube")) == 1);
-        CHECK(ground_item_count(itype_id("test_1kg_cube")) == 2);
-        replay::finish();
-    }
-
-    {
-        const auto fixture = aim_fixture{};
-        auto& played = get_avatar();
-        add_to_inventory(itype_id("test_1kg_cube"), 3);
-        game_client::memory::set_input_provider([](const int /*timeout*/) -> input_event {
-            throw std::runtime_error("advanced inventory playback must not read live input");
-        });
-        replay::configure_playback(path.string(), {.rng_seed = 37});
-        replay::start();
-        create_advanced_inv();
-        REQUIRE(played.activity);
-        CHECK(played.activity->id() == activity_id("ACT_DROP"));
-        process_activity(played);
-        CHECK_FALSE(played.activity);
-        CHECK(played.backlog.empty());
-        CHECK(played.amount_of(itype_id("test_1kg_cube")) == 1);
-        CHECK(ground_item_count(itype_id("test_1kg_cube")) == 2);
-        replay::finish();
-    }
-
-    {
-        // The recorded row is not there: the invoke names nothing the screen has, so nothing moves.
-        const auto fixture = aim_fixture{};
-        auto& changed = get_avatar();
-        game_client::memory::set_input_provider([](const int /*timeout*/) -> input_event {
-            throw std::runtime_error(
-                "changed advanced inventory playback must not read live input");
-        });
-        replay::configure_playback(path.string(), {.rng_seed = 37});
-        replay::start();
-        // The screen ignores the invoke and leaves when the recording has no input left to give.
-        CHECK_NOTHROW(create_advanced_inv());
-        CHECK_FALSE(changed.activity);
-        CHECK(changed.backlog.empty());
-        CHECK(ground_item_count(itype_id("test_1kg_cube")) == 0);
-        replay::stop();
-    }
 }
 
 #endif

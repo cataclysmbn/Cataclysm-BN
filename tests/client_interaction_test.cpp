@@ -56,7 +56,6 @@
 #    include "popup.h"
 #    include "ranged.h"
 #    include "recipe.h"
-#    include "replay/replay.h"
 #    include "rng.h"
 #    include "state_helpers.h"
 #    include "string_input_popup.h"
@@ -1666,107 +1665,6 @@ TEST_CASE(
     }
 }
 TEST_CASE(
-    "semantic replay repeats real partial ground pickup transfer",
-    "[client][interaction][pickup][replay][mcp]") {
-    const auto guard = interaction_test_guard{};
-    static auto counter = std::atomic_uint64_t{0};
-    const auto directory =
-        std::filesystem::path(PATH_INFO::user_dir())
-        / ("semantic-pickup-replay-" + std::to_string(counter.fetch_add(1)));
-    REQUIRE(std::filesystem::create_directory(directory));
-    const auto cleanup_replay = on_out_of_scope([&] {
-        replay::stop();
-        std::filesystem::remove_all(directory);
-        clear_pickup_fixture_state();
-    });
-    const auto path = directory / "input.jsonl";
-    const auto id = itype_id("test_screwdriver");
-    const auto setup = [&] {
-        clear_pickup_fixture_state();
-        auto& you = get_avatar();
-        you.setpos(map_local_to_abs(get_map(), pickup_test_pos));
-        you.set_moves(1000);
-        you.worn.push_back(item::spawn("duffelbag"));
-        std::ranges::for_each(std::views::iota(0, 3), [&](const auto /*index*/) {
-            add_ground_item(id);
-        });
-    };
-
-    setup();
-    replay::configure_recording(path.string(), {.rng_seed = 424242});
-    replay::start();
-    auto reads = 0;
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        if (reads++ == 0) { return pick_count(pickup_rows().front(), 2); }
-        return resolve_action("CONFIRM");
-    });
-    pickup::pick_up(pickup_test_pos, 0, pickup::from_ground);
-    finish_pickup_activity(get_avatar());
-    replay::finish();
-    REQUIRE(get_avatar().amount_of(id) == 2);
-    REQUIRE(ground_item_count(id) == 1);
-
-    setup();
-    game_client::memory::set_input_provider([](const int /*timeout*/) -> input_event {
-        throw std::runtime_error("playback must not read live input");
-    });
-    replay::configure_playback(path.string(), {.rng_seed = 424242});
-    replay::start();
-    pickup::pick_up(pickup_test_pos, 0, pickup::from_ground);
-    finish_pickup_activity(get_avatar());
-    CHECK(get_avatar().amount_of(id) == 2);
-    CHECK(ground_item_count(id) == 1);
-    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
-    replay::finish();
-}
-TEST_CASE(
-    "semantic replay restores real inventory quantity selection",
-    "[client][interaction][inventory][replay][mcp]") {
-    clear_all_state();
-    const auto cleanup_state = on_out_of_scope([]() { clear_all_state(); });
-    const auto guard = interaction_test_guard{};
-    static auto counter = std::atomic_uint64_t{0};
-    const auto directory =
-        std::filesystem::path(PATH_INFO::user_dir())
-        / ("semantic-inventory-replay-" + std::to_string(counter.fetch_add(1)));
-    REQUIRE(std::filesystem::create_directory(directory));
-    const auto cleanup_replay = on_out_of_scope([&] {
-        replay::stop();
-        std::filesystem::remove_all(directory);
-    });
-    const auto path = directory / "input.jsonl";
-    auto& you = get_avatar();
-    you.i_add(item::spawn("test_platinum_bit", calendar::turn, 7));
-
-    replay::configure_recording(path.string(), {.rng_seed = 23});
-    replay::start();
-    auto reads = 0;
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        if (reads++ == 0) { return count_item(selector_rows().front(), 2); }
-        return resolve_action("CONFIRM");
-    });
-    auto recorded_selector = inventory_drop_selector(you);
-    recorded_selector.add_character_items(you);
-    const auto recorded = recorded_selector.execute();
-    replay::finish();
-    REQUIRE(recorded.size() == 1);
-    CHECK(recorded.front().count == 2);
-
-    game_client::memory::set_input_provider([](const int /*timeout*/) -> input_event {
-        throw std::runtime_error("playback must not read live input");
-    });
-    replay::configure_playback(path.string(), {.rng_seed = 23});
-    replay::start();
-    auto playback_selector = inventory_drop_selector(you);
-    playback_selector.add_character_items(you);
-    const auto playback = playback_selector.execute();
-    REQUIRE(playback.size() == 1);
-    CHECK(playback.front().count == recorded.front().count);
-    CHECK(&*playback.front().loc == &*recorded.front().loc);
-    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
-    replay::finish();
-}
-TEST_CASE(
     "inventory semantic ids reject filtered removed and denied entries",
     "[client][interaction][inventory][mcp]") {
     clear_all_state();
@@ -2012,47 +1910,6 @@ TEST_CASE(
 
     CHECK(target_handler::mode_throw(you, *rock, false).empty());
 }
-TEST_CASE(
-    "semantic replay re-enters the same real string widget", "[client][interaction][replay][mcp]") {
-    const auto guard = interaction_test_guard{};
-    static auto counter = std::atomic_uint64_t{0};
-    const auto directory =
-        std::filesystem::path(PATH_INFO::user_dir())
-        / ("semantic-replay-" + std::to_string(counter.fetch_add(1)));
-    REQUIRE(std::filesystem::create_directory(directory));
-    const auto cleanup = on_out_of_scope([&] {
-        replay::stop();
-        std::filesystem::remove_all(directory);
-    });
-    const auto path = directory / "input.jsonl";
-
-    replay::configure_recording(path.string(), {.rng_seed = 17});
-    replay::start();
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = game_client::current_interaction();
-        REQUIRE(snapshot.field);
-        return resolve({
-            .input_id = snapshot.input_id,
-            .operation = game_client::interaction_operation::fill,
-            .target_id = snapshot.field->id,
-            .value = "recorded value",
-            .submit = true,
-        });
-    });
-    auto recorded_popup = string_input_popup{};
-    CHECK(recorded_popup.title("Replay field").max_length(30).query_string() == "recorded value");
-    replay::finish();
-
-    game_client::memory::set_input_provider([](const int /*timeout*/) -> input_event {
-        throw std::runtime_error("playback must not read live input");
-    });
-    replay::configure_playback(path.string(), {.rng_seed = 17});
-    replay::start();
-    auto playback_popup = string_input_popup{};
-    CHECK(playback_popup.title("Replay field").max_length(30).query_string() == "recorded value");
-    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
-    replay::finish();
-}
 namespace {
 
 class fixed_clipboard final: public game_client::render_service {
@@ -2064,87 +1921,6 @@ public:
 
 } // namespace
 
-TEST_CASE(
-    "replay inserts the recorded clipboard text instead of the live clipboard",
-    "[client][replay][mcp]") {
-    const auto guard = interaction_test_guard{};
-    static auto counter = std::atomic_uint64_t{0};
-    const auto directory =
-        std::filesystem::path(PATH_INFO::user_dir())
-        / ("clipboard-replay-" + std::to_string(counter.fetch_add(1)));
-    REQUIRE(std::filesystem::create_directory(directory));
-    const auto cleanup = on_out_of_scope([&] {
-        replay::stop();
-        std::filesystem::remove_all(directory);
-    });
-    const auto path = directory / "input.jsonl";
-    auto clipboard = std::make_unique<fixed_clipboard>();
-    auto& live_clipboard = *clipboard;
-    const auto presentation = game_client::presentation_scope(std::move(clipboard));
-
-    auto presses = 0;
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        return resolve_action(presses++ == 0 ? "TEXT.PASTE" : "TEXT.CONFIRM");
-    });
-    live_clipboard.text = "Alice";
-    replay::configure_recording(path.string(), {.rng_seed = 23});
-    replay::start();
-    auto recorded_popup = string_input_popup{};
-    CHECK(recorded_popup.title("Paste").max_length(30).query_string() == "Alice");
-    replay::finish();
-
-    live_clipboard.text = "Bob";
-    game_client::memory::set_input_provider([](const int /*timeout*/) -> input_event {
-        throw std::runtime_error("playback must not read live input");
-    });
-    replay::configure_playback(path.string(), {.rng_seed = 23});
-    replay::start();
-    auto playback_popup = string_input_popup{};
-    CHECK(playback_popup.title("Paste").max_length(30).query_string() == "Alice");
-    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
-    replay::finish();
-}
-TEST_CASE(
-    "semantic replay rejects a different real uilist in the same context",
-    "[client][interaction][replay][mcp]") {
-    const auto guard = interaction_test_guard{};
-    static auto counter = std::atomic_uint64_t{0};
-    const auto directory =
-        std::filesystem::path(PATH_INFO::user_dir())
-        / ("semantic-list-replay-" + std::to_string(counter.fetch_add(1)));
-    REQUIRE(std::filesystem::create_directory(directory));
-    const auto cleanup = on_out_of_scope([&] {
-        replay::stop();
-        std::filesystem::remove_all(directory);
-    });
-    const auto path = directory / "input.jsonl";
-
-    replay::configure_recording(path.string(), {.rng_seed = 19});
-    replay::start();
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = game_client::current_interaction();
-        return resolve({
-            .input_id = snapshot.input_id,
-            .operation = game_client::interaction_operation::choose,
-            .target_id = snapshot.choices.front().id,
-        });
-    });
-    {
-        auto recorded = uilist{};
-        recorded.entries.emplace_back(1, true, MENU_AUTOASSIGN, "Recorded choice");
-        recorded.query();
-    }
-    replay::finish();
-
-    replay::configure_playback(path.string(), {.rng_seed = 19});
-    replay::start();
-    {
-        auto different = uilist{};
-        different.entries.emplace_back(1, true, MENU_AUTOASSIGN, "Different choice");
-        different.entries.emplace_back(2, true, MENU_AUTOASSIGN, "Another choice");
-        CHECK_THROWS_WITH(different.query(), Catch::Matchers::Contains("schema changed"));
-    }
-}
 TEST_CASE(
     "common direction choice exposes only native relative vectors",
     "[client][interaction][direction][mcp]") {
@@ -2549,77 +2325,6 @@ TEST_CASE(
     CHECK_FALSE(construction_menu(false));
     CHECK(step == 6);
     CHECK_FALSE(get_avatar().activity);
-}
-
-TEST_CASE(
-    "constructing through the screen replays from the recorded invokes",
-    "[construction][engine_client_component][replay][mcp]") {
-    clear_all_state();
-    const auto cleanup_state = on_out_of_scope([]() { clear_all_state(); });
-    const auto guard = interaction_test_guard{};
-    const auto restore_turn = restore_on_out_of_scope<decltype(calendar::turn)>(calendar::turn);
-    const auto state = construction_state_guard{};
-    static auto counter = std::atomic_uint64_t{0};
-    const auto directory =
-        std::filesystem::path(PATH_INFO::user_dir())
-        / ("semantic-construction-replay-" + std::to_string(counter.fetch_add(1)));
-    REQUIRE(std::filesystem::create_directory(directory));
-    const auto cleanup_replay = on_out_of_scope([&] {
-        replay::stop();
-        std::filesystem::remove_all(directory);
-    });
-    const auto path = directory / "input.jsonl";
-    const auto& con = construction_str_id("constr_test_semantic_construction").obj();
-
-    auto reads = 0;
-    const auto semantic_provider = [&](const int /*timeout*/) {
-        ++reads;
-        const auto snapshot = game_client::current_interaction();
-        if (snapshot.context == "CONSTRUCTION") {
-            return construct_row("construct:construct", con.group.str());
-        }
-        CAPTURE(snapshot.title, snapshot.message, reads);
-        REQUIRE(snapshot.context == "DEFAULTMODE");
-        return choose_east(snapshot);
-    };
-    uistate.construction_filter = "TEST semantic construction";
-    const auto recorded_destination = prepare_semantic_construction();
-    const auto cleanup_construction = on_out_of_scope(
-        std::bind_front(clear_construction_fixture, recorded_destination));
-    replay::configure_recording(path.string(), {.rng_seed = 37});
-    replay::start();
-    game_client::memory::set_input_provider(semantic_provider);
-    CHECK_FALSE(construction_menu(false));
-    CHECK(reads == 2);
-    REQUIRE(get_avatar().activity);
-    CHECK(get_avatar().activity->id() == activity_id("ACT_BUILD"));
-    CHECK(get_avatar().amount_of(itype_id("e_scrap")) == 0);
-    finish_construction_activity(get_avatar());
-    CHECK(get_map().furn(recorded_destination) == furn_id("f_test_semantic_construction"));
-    replay::finish();
-
-    // Normalising the avatar may ask whether to eat while full; the recorded provider must not
-    // answer that.
-    game_client::memory::set_input_provider([](const int /*timeout*/) {
-        return resolve_action("YES");
-    });
-    clear_all_state();
-    uistate.construction_filter = "TEST semantic construction";
-    const auto played_destination = prepare_semantic_construction();
-    game_client::memory::set_input_provider([](const int /*timeout*/) -> input_event {
-        throw std::runtime_error("construction playback must not read live input");
-    });
-    replay::configure_playback(path.string(), {.rng_seed = 37});
-    replay::start();
-    CHECK_FALSE(construction_menu(false));
-    REQUIRE(get_avatar().activity);
-    CHECK(get_avatar().activity->id() == activity_id("ACT_BUILD"));
-    CHECK(get_avatar().amount_of(itype_id("e_scrap")) == 0);
-    finish_construction_activity(get_avatar());
-    CHECK(get_map().partial_con_at(played_destination) == nullptr);
-    CHECK(get_map().furn(played_destination) == furn_id("f_test_semantic_construction"));
-    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
-    replay::finish();
 }
 
 namespace {
@@ -3204,74 +2909,6 @@ TEST_CASE(
     CHECK_FALSE(you.activity);
     CHECK(you.amount_of(itype_id("e_scrap")) == scrap_before);
     CHECK(you.amount_of(itype_id("test_soldering_iron")) == 0);
-}
-
-TEST_CASE(
-    "crafting through the screen replays from the recorded invokes",
-    "[crafting][engine_client_component][replay][mcp]") {
-    clear_all_state();
-    const auto cleanup_state = on_out_of_scope([]() { clear_all_state(); });
-    const auto guard = interaction_test_guard{};
-    const auto state = crafting_state_guard{};
-    static auto counter = std::atomic_uint64_t{0};
-    const auto directory =
-        std::filesystem::path(PATH_INFO::user_dir())
-        / ("semantic-crafting-replay-" + std::to_string(counter.fetch_add(1)));
-    REQUIRE(std::filesystem::create_directory(directory));
-    const auto cleanup_replay = on_out_of_scope([&] {
-        replay::stop();
-        std::filesystem::remove_all(directory);
-    });
-    const auto path = directory / "input.jsonl";
-    const auto& iron = recipe_id("test_soldering_iron").obj();
-    prepare_crafting_fixture();
-
-    replay::configure_recording(path.string(), {.rng_seed = 29});
-    replay::start();
-    auto step = 0;
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        switch (step++) {
-            case 0:
-                return craft_search(iron.result_name());
-            case 1:
-                return craft_batch(iron.ident().str(), 2);
-            default:
-                return craft_row("craft:craft", "2");
-        }
-    });
-    auto& recorded = get_avatar();
-    recorded.craft(recorded.bub_pos());
-    REQUIRE(recorded.activity);
-    REQUIRE(recorded.activity->id() == activity_id("ACT_CRAFT"));
-    CHECK(recorded.amount_of(itype_id("e_scrap")) == 0);
-    finish_crafting_activity(recorded);
-    REQUIRE_FALSE(recorded.activity);
-    CHECK(recorded.amount_of(itype_id("test_soldering_iron")) == 2);
-    replay::finish();
-
-    // Normalising the avatar may ask whether to eat while full; the recorded provider must not
-    // answer that.
-    game_client::memory::set_input_provider([](const int /*timeout*/) {
-        return resolve_action("YES");
-    });
-    clear_all_state();
-    prepare_crafting_fixture();
-    game_client::memory::set_input_provider([](const int /*timeout*/) -> input_event {
-        throw std::runtime_error("crafting playback must not read live input");
-    });
-    replay::configure_playback(path.string(), {.rng_seed = 29});
-    replay::start();
-    auto& played = get_avatar();
-    played.craft(played.bub_pos());
-    REQUIRE(played.activity);
-    REQUIRE(played.activity->id() == activity_id("ACT_CRAFT"));
-    CHECK(played.amount_of(itype_id("e_scrap")) == 0);
-    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
-    finish_crafting_activity(played);
-    REQUIRE_FALSE(played.activity);
-    CHECK(played.amount_of(itype_id("test_soldering_iron")) == 2);
-    CHECK(played.amount_of(itype_id("cable")) == 0);
-    replay::finish();
 }
 
 TEST_CASE(
@@ -4165,96 +3802,6 @@ auto handle_action() -> bool {
 
 } // namespace
 
-TEST_CASE(
-    "a drop a client submits is recorded, replays and leaves the view where it is",
-    "[client][interaction][mcp][engine_client_contract][replay]") {
-    const auto guard = interaction_test_guard{};
-    static auto counter = std::atomic_uint64_t{0};
-    const auto directory =
-        std::filesystem::path(PATH_INFO::user_dir())
-        / ("item-operation-replay-" + std::to_string(counter.fetch_add(1)));
-    REQUIRE(std::filesystem::create_directory(directory));
-    const auto running = game_session::running();
-    const auto cleanup = on_out_of_scope([&] {
-        replay::stop();
-        std::filesystem::remove_all(directory);
-        game_client::memory::set_input_provider({});
-        clear_pickup_fixture_state();
-        get_avatar().view_offset = tripoint_rel_ms();
-        game_session::set_running(running);
-    });
-    const auto animations = override_option("ANIMATIONS", "false");
-    const auto realtime = override_option("TURN_DURATION", "0");
-    const auto path = directory / "input.jsonl";
-    const auto cube = itype_id("test_1kg_cube");
-    const auto panned = tripoint_rel_ms(3, -2, 0);
-    const auto setup = [&] {
-        clear_pickup_fixture_state();
-        auto& you = get_avatar();
-        you.setpos(map_local_to_abs(get_map(), pickup_test_pos));
-        you.set_moves(1000);
-        you.worn.push_back(item::spawn("duffelbag"));
-        for (const auto _ : std::views::iota(0, 3)) { you.i_add(item::spawn(cube)); }
-        you.view_offset = panned;
-        game_session::set_running(true);
-        engine_client::process_session().replace_world();
-    };
-    const auto check_dropped = [&] {
-        auto& you = get_avatar();
-        CHECK(you.view_offset == panned);
-        REQUIRE(you.activity);
-        process_activity(you);
-        CHECK(ground_item_count(cube) == 2);
-        CHECK(you.amount_of(cube) == 1);
-    };
-
-    setup();
-    replay::configure_recording(path.string(), {.rng_seed = 424242});
-    replay::start();
-    auto reads = 0;
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        REQUIRE(reads++ == 0);
-        auto& session = engine_client::process_session();
-        REQUIRE(session.publish_boundary());
-        const auto current = session.current();
-        REQUIRE(current);
-        const auto stacks = engine_client::world::item_stacks(get_map(), get_avatar());
-        const auto carried = std::ranges::find(stacks.inventory, cube.str(), [](const auto& stack) {
-            return stack.row.appearance.id.value_or("");
-        });
-        REQUIRE(carried != stacks.inventory.end());
-        REQUIRE(session.submit({
-            .epoch = session.epoch(),
-            .expect =
-                {.revision = current->at.revision, .boundary_id = current->value.interaction.id},
-            .operation =
-                engine_client::item_operation{.drop = true, .item_id = carried->row.id, .count = 2},
-        }));
-        // As the controller delivers a command: the prepared input, resolved at the native
-        // boundary; the backend then hands the game what the session validated.
-        const auto native = session.prepare_input(game_client::memory::screen_size());
-        REQUIRE(native);
-        const auto event =
-            game_client::resolve_input_command(*native, game_client::memory::screen_size());
-        REQUIRE(event);
-        return *event;
-    });
-    handle_action();
-    check_dropped();
-    replay::finish();
-    REQUIRE(reads == 1);
-
-    setup();
-    game_client::memory::set_input_provider([](const int /*timeout*/) -> input_event {
-        throw std::runtime_error("playback must not read live input");
-    });
-    replay::configure_playback(path.string(), {.rng_seed = 424242});
-    replay::start();
-    handle_action();
-    check_dropped();
-    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
-    replay::finish();
-}
 namespace {
 
 auto tile_ids(const tripoint_bub_ms& at) -> std::vector<std::string> {
@@ -4465,69 +4012,6 @@ TEST_CASE(
         CHECK_FALSE(travel->label.empty());
         CHECK(travel->keys.empty());
     }
-}
-
-TEST_CASE(
-    "a tile action runs the native action on its square and replays",
-    "[client][interaction][mcp][engine_client_contract][tile_action][replay]") {
-    const auto guard = interaction_test_guard{};
-    static auto counter = std::atomic_uint64_t{0};
-    const auto directory =
-        std::filesystem::path(PATH_INFO::user_dir())
-        / ("tile-action-replay-" + std::to_string(counter.fetch_add(1)));
-    REQUIRE(std::filesystem::create_directory(directory));
-    const auto running = game_session::running();
-    const auto cleanup = on_out_of_scope([&] {
-        replay::stop();
-        std::filesystem::remove_all(directory);
-        game_client::memory::set_input_provider({});
-        clear_pickup_fixture_state();
-        game_session::set_running(running);
-    });
-    const auto animations = override_option("ANIMATIONS", "false");
-    const auto realtime = override_option("TURN_DURATION", "0");
-    const auto path = directory / "input.jsonl";
-    const auto east = pickup_test_pos + tripoint_east;
-    const auto setup = [&] {
-        clear_pickup_fixture_state();
-        auto& you = get_avatar();
-        you.setpos(map_local_to_abs(get_map(), pickup_test_pos));
-        you.set_moves(1000);
-        REQUIRE(get_map().ter_set(east, ter_id("t_door_o")));
-        game_session::set_running(true);
-        engine_client::process_session().replace_world();
-    };
-    const auto check_closed = [&] {
-        CHECK(get_map().ter(east) == ter_id("t_door_c"));
-        CHECK(get_avatar().moves < 1000);
-    };
-
-    setup();
-    replay::configure_recording(path.string(), {.rng_seed = 424242});
-    replay::start();
-    auto reads = 0;
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        REQUIRE(reads++ == 0);
-        const auto event = deliver(
-            engine_client::tile_operation{.action_id = "close", .target = absolute(east)});
-        REQUIRE(event);
-        return *event;
-    });
-    handle_action();
-    check_closed();
-    replay::finish();
-    REQUIRE(reads == 1);
-
-    setup();
-    game_client::memory::set_input_provider([](const int /*timeout*/) -> input_event {
-        throw std::runtime_error("playback must not read live input");
-    });
-    replay::configure_playback(path.string(), {.rng_seed = 424242});
-    replay::start();
-    handle_action();
-    check_closed();
-    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
-    replay::finish();
 }
 
 TEST_CASE(
@@ -4751,50 +4235,6 @@ TEST_CASE(
     CHECK(menu.as_interaction().filter.empty());
 }
 
-TEST_CASE("semantic replay repeats a uilist filter invoke", "[client][interaction][replay][mcp]") {
-    const auto guard = interaction_test_guard{};
-    static auto counter = std::atomic_uint64_t{0};
-    const auto directory =
-        std::filesystem::path(PATH_INFO::user_dir())
-        / ("list-filter-replay-" + std::to_string(counter.fetch_add(1)));
-    REQUIRE(std::filesystem::create_directory(directory));
-    const auto cleanup = on_out_of_scope([&] {
-        replay::stop();
-        std::filesystem::remove_all(directory);
-    });
-    const auto path = directory / "input.jsonl";
-
-    auto reads = 0;
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        if (reads++ == 0) { return invoke_event("bn:filter:list:choices", {.text = "tele"}); }
-        return resolve({
-            .input_id = game_client::current_interaction().input_id,
-            .operation = game_client::interaction_operation::cancel,
-        });
-    });
-    replay::configure_recording(path.string(), {.rng_seed = 29});
-    replay::start();
-    {
-        auto recorded = uilist{};
-        filter_menu(recorded);
-        recorded.query();
-        CHECK(recorded.as_interaction().choices.size() == 2);
-    }
-    replay::finish();
-
-    game_client::memory::set_input_provider([](const int /*timeout*/) -> input_event {
-        throw std::runtime_error("playback must not read live input");
-    });
-    replay::configure_playback(path.string(), {.rng_seed = 29});
-    replay::start();
-    auto played = uilist{};
-    filter_menu(played);
-    played.query();
-    CHECK(played.as_interaction().choices.size() == 2);
-    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
-    replay::finish();
-}
-
 namespace {
 
 /// A callback that tests two raw keys itself, like the debug item spawner.
@@ -4858,54 +4298,6 @@ TEST_CASE(
     CHECK(labelled);
     CHECK(keyed);
     CHECK(recorder.pressed == std::vector<int>{'c'});
-}
-
-TEST_CASE("semantic replay repeats a uilist key invoke", "[client][interaction][replay][mcp]") {
-    const auto guard = interaction_test_guard{};
-    static auto counter = std::atomic_uint64_t{0};
-    const auto directory =
-        std::filesystem::path(PATH_INFO::user_dir())
-        / ("list-key-replay-" + std::to_string(counter.fetch_add(1)));
-    REQUIRE(std::filesystem::create_directory(directory));
-    const auto cleanup = on_out_of_scope([&] {
-        replay::stop();
-        std::filesystem::remove_all(directory);
-    });
-    const auto path = directory / "input.jsonl";
-
-    auto reads = 0;
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        if (reads++ == 0) { return invoke_event("bn:key:97"); }
-        return resolve({
-            .input_id = game_client::current_interaction().input_id,
-            .operation = game_client::interaction_operation::cancel,
-        });
-    });
-    replay::configure_recording(path.string(), {.rng_seed = 31});
-    replay::start();
-    {
-        auto recorded = uilist{};
-        filter_menu(recorded);
-        auto recorder = key_recorder{};
-        recorded.callback = &recorder;
-        recorded.query();
-        CHECK(recorder.pressed == std::vector<int>{'a'});
-    }
-    replay::finish();
-
-    game_client::memory::set_input_provider([](const int /*timeout*/) -> input_event {
-        throw std::runtime_error("playback must not read live input");
-    });
-    replay::configure_playback(path.string(), {.rng_seed = 31});
-    replay::start();
-    auto played = uilist{};
-    filter_menu(played);
-    auto recorder = key_recorder{};
-    played.callback = &recorder;
-    played.query();
-    CHECK(recorder.pressed == std::vector<int>{'a'});
-    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
-    replay::finish();
 }
 
 TEST_CASE(

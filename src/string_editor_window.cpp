@@ -11,7 +11,6 @@
 
 
 #include "wcwidth.h"
-#include "replay/replay.h"
 #include "ui_manager.h"
 
 namespace
@@ -739,15 +738,11 @@ std::pair<bool, std::string> string_editor_window::query_string()
             std::string entered;
             if( action == "TEXT.PASTE" ) {
                 if( edit.empty() ) {
-                    entered = replay::external_text( "clipboard", []() {
-                        return game_client::presentation().clipboard_text();
-                    } );
+                    entered = game_client::presentation().clipboard_text();
                 }
             } else if( action == "TEXT.INPUT_FROM_FILE" ) {
                 if( edit.empty() ) {
-                    entered = replay::external_text( "file", []() {
-                        return get_input_string_from_file();
-                    } );
+                    entered = get_input_string_from_file();
                 }
             } else if( ch == '\n' ) {
                 if( edit.empty() ) {

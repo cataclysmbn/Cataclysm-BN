@@ -26,7 +26,6 @@
 #    include "output.h"
 #    include "path_info.h"
 #    include "player_helpers.h"
-#    include "replay/replay.h"
 #    include "rng.h"
 #    include "state_helpers.h"
 #    include "string_utils.h"
@@ -883,69 +882,6 @@ TEST_CASE(
     CHECK_FALSE(
         trading_window(state).perform_trade(*fixture.trader, npc_trading::deal_kind::trade));
     CHECK(step == 3);
-}
-
-TEST_CASE(
-    "replay repeats an NPC trade made through its affordances",
-    "[client][interaction][npc_trade][engine_client_trade][replay][mcp]") {
-    const auto guard = screen_guard{};
-    static auto counter = std::atomic_uint64_t{0};
-    const auto directory =
-        std::filesystem::path(PATH_INFO::user_dir())
-        / ("semantic-npc-trade-" + std::to_string(counter.fetch_add(1)));
-    REQUIRE(std::filesystem::create_directory(directory));
-    const auto cleanup_replay = on_out_of_scope([&] {
-        replay::stop();
-        std::filesystem::remove_all(directory);
-    });
-    const auto path = directory / "input.jsonl";
-
-    {
-        const auto fixture = trade_fixture{};
-        fixture.add_npc_item(itype_id("test_pipe"));
-        fixture.trader->op_of_u.owed = 100000;
-        replay::configure_recording(path.string(), {.rng_seed = 41});
-        replay::start();
-        auto step = 0;
-        game_client::memory::set_input_provider([&](const int /*timeout*/) {
-            if (const auto screen = ts::top()) {
-                if (step == 0) {
-                    const auto* const target = ts::item_row(*screen, "list:npc", "test_pipe");
-                    REQUIRE(target != nullptr);
-                    step = 1;
-                    return ts::set_count(target->id, 1);
-                }
-                REQUIRE(step == 1);
-                step = 2;
-                return ts::invoke("trade:confirm");
-            }
-            REQUIRE(ec::top_screen(ts::captured()).context == "YESNO");
-            REQUIRE(step == 2);
-            step = 3;
-            return ts::answer("YES");
-        });
-        CHECK(npc_trading::trade(*fixture.trader, 0, npc_trading::deal_kind::trade));
-        CHECK(step == 3);
-        CHECK(get_avatar().amount_of(itype_id("test_pipe")) == 1);
-        CHECK(fixture.trader->amount_of(itype_id("test_pipe")) == 0);
-        replay::finish();
-    }
-
-    {
-        const auto fixture = trade_fixture{};
-        fixture.add_npc_item(itype_id("test_pipe"));
-        fixture.trader->op_of_u.owed = 100000;
-        game_client::memory::set_input_provider([](const int /*timeout*/) -> input_event {
-            throw std::runtime_error("NPC trade playback must not read live input");
-        });
-        replay::configure_playback(path.string(), {.rng_seed = 41});
-        replay::start();
-        CHECK(npc_trading::trade(*fixture.trader, 0, npc_trading::deal_kind::trade));
-        CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
-        CHECK(get_avatar().amount_of(itype_id("test_pipe")) == 1);
-        CHECK(fixture.trader->amount_of(itype_id("test_pipe")) == 0);
-        replay::finish();
-    }
 }
 
 #endif

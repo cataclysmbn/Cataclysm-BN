@@ -48,13 +48,13 @@ auto count_items_at(const tripoint_bub_ms& pos, const itype_id& type) -> int {
 
 } // namespace
 
-TEST_CASE("fresh monsters have deterministic stair state", "[monster][replay]") {
+TEST_CASE("fresh monsters have deterministic stair state", "[monster]") {
     const auto test_monster = monster(mtype_id("debug_mon"));
 
     CHECK(test_monster.staircount == 0);
 }
 
-TEST_CASE("monster copies preserve transient Creature bonuses", "[monster][copy][replay]") {
+TEST_CASE("monster copies preserve transient Creature bonuses", "[monster][copy]") {
     auto source = monster(mtype_id("debug_mon"));
     const auto base_size = source.get_size();
     source.mod_bash_bonus(11);

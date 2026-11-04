@@ -3,7 +3,6 @@
 #include "item_factory.h"
 #include "loading_ui_client.h"
 #include "options.h"
-#include "replay/replay.h"
 #include "rng.h"
 #include "rng_observation.h"
 #include "sdlsound.h"
@@ -97,7 +96,7 @@ TEST_CASE(
     }
 }
 
-TEST_CASE("audio variant selection does not advance simulation RNG", "[rng][sound][replay]") {
+TEST_CASE("audio variant selection does not advance simulation RNG", "[rng][sound]") {
     const auto restore = restore_rng{};
     rng_set_deterministic_seed(92821);
     const auto expected = rng_get_engine();
@@ -110,7 +109,7 @@ TEST_CASE("audio variant selection does not advance simulation RNG", "[rng][soun
     CHECK(rng_get_engine() == expected);
 }
 
-TEST_CASE("loading image order does not advance simulation RNG", "[rng][replay]") {
+TEST_CASE("loading image order does not advance simulation RNG", "[rng]") {
     const auto restore = restore_rng{};
     rng_set_deterministic_seed(92822);
     const auto expected = rng_get_engine();
@@ -124,7 +123,7 @@ TEST_CASE("loading image order does not advance simulation RNG", "[rng][replay]"
     CHECK(rng_get_engine() == expected);
 }
 
-TEST_CASE("item definition validation does not advance simulation RNG", "[rng][item][replay]") {
+TEST_CASE("item definition validation does not advance simulation RNG", "[rng][item]") {
     const auto restore = restore_rng{};
     rng_set_deterministic_seed(92823);
     const auto expected = rng_get_engine();
@@ -321,17 +320,6 @@ TEST_CASE(
     REQUIRE(after);
     CHECK(after->engine_state == root->engine_state);
     CHECK(after->next_root_call == root->next_root_call + 2);
-}
-
-TEST_CASE(
-    "a session without a replay is seeded from its own seed", "[rng][replay][deterministic_rng]") {
-    const auto restore = restore_rng{};
-    REQUIRE_FALSE(replay::is_enabled());
-    const auto seed = replay::session_rng_seed(424242);
-    CHECK(seed == 424242);
-    rng_set_deterministic_seed(seed);
-    CHECK(rng_deterministic_seed_active());
-    CHECK(rng_deterministic_seed_value() == 424242);
 }
 
 TEST_CASE(

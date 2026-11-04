@@ -185,7 +185,7 @@ TEST_CASE("throwing ratings and costs", "[item][iteminfo][throwing]") {
         "Stamina cost: <color_c_yellow>91</color>\n");
 }
 
-TEST_CASE("item information does not advance gameplay RNG", "[item][iteminfo][rng][replay]") {
+TEST_CASE("item information does not advance gameplay RNG", "[item][iteminfo][rng]") {
     clear_all_state();
     auto restore_rng = restore_on_out_of_scope<cata_default_random_engine>(rng_get_engine());
     const auto weapon = item::spawn_temporary("test_normal_sword");

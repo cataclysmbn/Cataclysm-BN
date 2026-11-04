@@ -22,7 +22,6 @@
 #    include "messages.h"
 #    include "output.h"
 #    include "path_info.h"
-#    include "replay/replay.h"
 #    include "rng.h"
 #    include "thread_pool.h"
 #    include "translations.h"
@@ -171,25 +170,6 @@ auto semantic_choice(const client::interaction_snapshot& snapshot, const std::st
     REQUIRE(resolved.has_value());
     return *resolved;
 }
-
-struct debug_replay_file {
-    std::filesystem::path directory;
-    std::filesystem::path path;
-    debug_replay_file() {
-        REQUIRE_FALSE(replay::is_enabled());
-        static auto next = std::uint64_t{0};
-        do {
-            directory =
-                std::filesystem::path(PATH_INFO::user_dir())
-                / ("debug-replay-" + std::to_string(++next));
-        } while (!std::filesystem::create_directory(directory));
-        path = directory / "input.jsonl";
-    }
-    ~debug_replay_file() {
-        replay::stop();
-        std::filesystem::remove_all(directory);
-    }
-};
 
 /// Independent byte oracle: diagnostic and metadata strings are data, never color markup.
 /// Deliberately does not use string_format, report(), or any color-tag helper.
@@ -997,106 +977,6 @@ TEST_CASE(
     support::prompt(before);
     support::prompt(after);
     CHECK(reads == 2);
-}
-
-TEST_CASE(
-    "native debug semantic replay copies full reports and continues without live input",
-    "[client][debug_prompt][debug_prompt_semantic]") {
-    auto fixture = native_fixture{};
-    auto replay_file = debug_replay_file{};
-    auto rng = restore_on_out_of_scope<cata_default_random_engine>{rng_get_engine()};
-    auto clipboard = std::make_unique<clipboard_service>();
-    auto& service = *clipboard;
-    auto presentation = client::presentation_scope{std::move(clipboard)};
-    const auto options = support::prompt_options{.text = "replayed full report\nreplay tail"};
-    auto reads = 0;
-    client::memory::set_input_provider([&](const int /*timeout*/) {
-        if (++reads > 3) { throw std::runtime_error("replay record input budget"); }
-        return semantic_choice(client::current_interaction(), reads < 3 ? "Copy" : "Continue");
-    });
-    replay::configure_recording(replay_file.path.string(), {.rng_seed = 424242});
-    replay::start();
-    support::prompt(options);
-    replay::finish();
-    REQUIRE(service.copies.size() == 2);
-    client::memory::set_input_provider(failing_provider);
-    replay::configure_playback(replay_file.path.string(), {.rng_seed = 424242});
-    replay::start();
-    support::prompt(options);
-    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
-    replay::finish();
-    CHECK(reads == 3);
-    REQUIRE(service.copies.size() == 4);
-    CHECK(std::ranges::all_of(service.copies, [&](const auto& text) {
-        return text == report(options);
-    }));
-    CHECK(serialized_messages() == fixture.messages);
-}
-
-TEST_CASE(
-    "native debug rejects hostile replay records before clipboard or ignored state changes",
-    "[client][debug_prompt][debug_prompt_semantic]") {
-    auto fixture = native_fixture{};
-    auto replay_file = debug_replay_file{};
-    auto rng = restore_on_out_of_scope<cata_default_random_engine>{rng_get_engine()};
-    const auto reason = GENERATE(
-        std::string("schema"), std::string("unknown"), std::string("cancel"), std::string("fill"),
-        std::string("count"), std::string("malformed"), std::string("boundary"));
-    CAPTURE(reason);
-    auto clipboard = std::make_unique<clipboard_service>();
-    auto& service = *clipboard;
-    auto presentation = client::presentation_scope{std::move(clipboard)};
-    const auto options = support::prompt_options{.text = "hostile replay report"};
-    auto recorded = input_event{};
-    auto reads = 0;
-    client::memory::set_input_provider([&](const int /*timeout*/) {
-        if (++reads > 1) { throw std::runtime_error("replay discovery input budget"); }
-        recorded = semantic_choice(client::current_interaction(), "Ignore");
-        return semantic_choice(client::current_interaction(), "Continue");
-    });
-    support::prompt(options);
-    REQUIRE(recorded.interaction.has_value());
-    auto& payload = *recorded.interaction;
-    if (reason == "schema") { payload.schema_id = "wrong-schema"; }
-    if (reason == "unknown") { payload.target_id = "not-offered"; }
-    if (reason == "cancel") {
-        payload.operation = client::interaction_operation::cancel;
-        payload.target_id.clear();
-    }
-    if (reason == "fill") {
-        payload.operation = client::interaction_operation::fill;
-        payload.value = "value";
-        payload.submit = true;
-    }
-    if (reason == "count") {
-        payload.operation = client::interaction_operation::set_count;
-        payload.count = 1;
-    }
-    if (reason == "malformed") { payload.value = "unauthorized value"; }
-    replay::configure_recording(replay_file.path.string(), {.rng_seed = 424242});
-    replay::start();
-    replay::record_input_event(
-        recorded,
-        {.context = reason == "boundary" ? "WRONG_CONTEXT" : "DEBUG_MSG",
-         .actions = {},
-         .timeout_ms = inp_mngr.get_timeout()});
-    replay::finish();
-    client::memory::set_input_provider(failing_provider);
-    replay::configure_playback(replay_file.path.string(), {.rng_seed = 424242});
-    if (reason == "malformed") {
-        CHECK_THROWS(replay::start());
-    } else {
-        replay::start();
-        CHECK_THROWS(support::prompt(options));
-    }
-    replay::stop();
-    CHECK(service.copies.empty());
-    auto retry_reads = 0;
-    raw_sequence({' '}, retry_reads);
-    support::prompt(options);
-    CHECK(retry_reads == 1);
-    CHECK(service.copies.empty());
-    CHECK(serialized_messages() == fixture.messages);
 }
 
 TEST_CASE(

@@ -7,7 +7,6 @@
 #include "cursesdef.h"
 #include "game.h"
 #include "hsv_color.h"
-#include "replay/replay.h"
 #include "runtime_handlers.h"
 
 template <>
@@ -87,27 +86,7 @@ auto refresh_display() -> void {
 
 auto input_manager::get_input_event() -> input_event {
     game_client::begin_input_boundary();
-    auto result = input_event{};
-    if (replay::is_enabled()) {
-        const auto active = game_client::active_input_context();
-        const auto boundary = replay::input_boundary_metadata{
-            .context = std::string(active.category),
-            .actions = active.context ? active.context->get_registered_actions_copy()
-                                      : std::vector<std::string>{},
-            .timeout_ms = get_timeout(),
-            .pointer_space = game_client::has_tiles() ? "pixel" : "cell"};
-        try {
-            if (const auto recorded = replay::next_input_event(boundary)) {
-                game_client::active_backend().pump_events();
-                result = *recorded;
-            } else {
-                result = game_client::active_backend().read_input(get_timeout());
-                replay::record_input_event(result, boundary);
-            }
-        } catch (const replay::completed& /*end*/) { exit_handler(0); }
-    } else {
-        result = game_client::active_backend().read_input(get_timeout());
-    }
+    const auto result = game_client::active_backend().read_input(get_timeout());
     previously_pressed_key = result.type == input_event_t::keyboard ? result.get_first_input() : 0;
     return result;
 }

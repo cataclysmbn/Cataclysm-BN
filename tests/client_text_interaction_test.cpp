@@ -25,7 +25,6 @@
 #    include "output.h"
 #    include "path_display.h"
 #    include "path_info.h"
-#    include "replay/replay.h"
 #    include "rng.h"
 #    include "string_formatter.h"
 #    include "string_utils.h"
@@ -745,127 +744,6 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "an invoked help topic and a closed reader replay without live input",
-    "[client][interaction][help][text][replay][mcp]") {
-    const auto guard = text_widget_guard{};
-    static auto counter = std::atomic_uint64_t{0};
-    const auto directory =
-        std::filesystem::path(PATH_INFO::user_dir())
-        / ("help-text-replay-" + std::to_string(counter.fetch_add(1)));
-    REQUIRE(std::filesystem::create_directory(directory));
-    const auto cleanup = on_out_of_scope([&] {
-        replay::stop();
-        std::filesystem::remove_all(directory);
-    });
-    const auto path = directory / "input.jsonl";
-    replay::configure_recording(path.string(), {.rng_seed = 37});
-    replay::start();
-    auto boundaries = std::vector<replay::input_boundary_metadata>{};
-    auto reads = 0;
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        REQUIRE(++reads <= 4);
-        const auto active = game_client::active_input_context();
-        REQUIRE(active.context);
-        boundaries.push_back(
-            {.context = active.context->category_name(),
-             .actions = active.context->get_registered_actions_copy(),
-             .timeout_ms = active.timeout_ms});
-        const auto top = top_screen_now();
-        if (reads == 1) {
-            REQUIRE(topic_rows(top).size() > 1);
-            return invoke_event(top, "help:topic", {.row = topic_rows(top)[1].id});
-        }
-        if (reads == 2) {
-            check_reader(top);
-            return resolve_action("PAGE_DOWN");
-        }
-        if (reads == 3) { check_reader(top); }
-        if (reads == 4) { CHECK_FALSE(topic_rows(top).empty()); }
-        return invoke_event(top, "QUIT");
-    });
-    auto recorded = help{};
-    recorded.load();
-    recorded.display_help();
-    REQUIRE(reads == 4);
-    replay::finish();
-    REQUIRE(boundaries.size() == 4);
-    CHECK(boundaries[0].context == "default");
-    CHECK(boundaries[1].context == "SCROLLABLE_TEXT");
-    CHECK(boundaries[2].context == "SCROLLABLE_TEXT");
-    CHECK(boundaries[3] == boundaries[0]);
-    CHECK(boundaries[2] == boundaries[1]);
-    replay::configure_playback(path.string(), {.rng_seed = 37});
-    replay::start();
-    for (const auto index : std::views::iota(std::size_t{0}, boundaries.size())) {
-        const auto event = replay::next_input_event(boundaries[index]);
-        REQUIRE(event);
-        if (index == 1) {
-            CHECK(event->type == input_event_t::keyboard);
-        } else if (index == 0) {
-            REQUIRE(event->interaction);
-            CHECK(event->interaction->operation == game_client::interaction_operation::invoke);
-            CHECK(event->interaction->target_id == "help:topic");
-        } else {
-            CHECK(event->type != input_event_t::interaction);
-        }
-    }
-    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
-    replay::finish();
-
-    game_client::memory::set_input_provider([](const int /*timeout*/) -> input_event {
-        throw std::runtime_error("help/text replay must not request repeated live input");
-    });
-    replay::configure_playback(path.string(), {.rng_seed = 37});
-    replay::start();
-    auto played = help{};
-    played.load();
-    played.display_help();
-    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
-    replay::finish();
-    CHECK_FALSE(game_client::current_interaction().structured);
-}
-
-TEST_CASE(
-    "text reader replay keeps the recording when only the authorized text changes",
-    "[client][interaction][text][replay][mcp]") {
-    const auto guard = text_widget_guard{};
-    static auto counter = std::atomic_uint64_t{0};
-    const auto directory =
-        std::filesystem::path(PATH_INFO::user_dir())
-        / ("reader-schema-replay-" + std::to_string(counter.fetch_add(1)));
-    REQUIRE(std::filesystem::create_directory(directory));
-    const auto cleanup = on_out_of_scope([&] {
-        replay::stop();
-        std::filesystem::remove_all(directory);
-    });
-    const auto path = directory / "input.jsonl";
-    replay::configure_recording(path.string(), {.rng_seed = 37});
-    replay::start();
-    game_client::memory::set_input_provider([](const int /*timeout*/) {
-        const auto top = top_screen_now();
-        check_reader(top);
-        return invoke_event(top, "QUIT");
-    });
-    scrollable_text(reader_window, "Document", "Original authorized text");
-    replay::finish();
-    game_client::memory::set_input_provider([](const int /*timeout*/) -> input_event {
-        throw std::runtime_error("reader replay must not read live input");
-    });
-    replay::configure_playback(path.string(), {.rng_seed = 37});
-    replay::start();
-    scrollable_text(reader_window, "Document", "Changed authorized text");
-    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
-    replay::finish();
-    CHECK_FALSE(game_client::active_input_context().context);
-    CHECK_FALSE(game_client::current_interaction().structured);
-    replay::configure_playback(path.string(), {.rng_seed = 37});
-    replay::start();
-    scrollable_text(reader_window, "Document", "Original authorized text");
-    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
-    replay::finish();
-}
-
-TEST_CASE(
     "morale viewer publishes native values without query effects",
     "[client][interaction][morale][morale_view][mcp]") {
     const auto populated = GENERATE(false, true);
@@ -954,45 +832,6 @@ TEST_CASE(
     });
     morale.display(93, modifiers ? 4 : 0, modifiers ? 7 : 0);
     CHECK(reads == 3);
-    CHECK_FALSE(game_client::current_interaction().structured);
-}
-
-TEST_CASE(
-    "morale replay keeps the native close and accepts changed values",
-    "[client][interaction][morale][morale_view][replay][mcp]") {
-    const auto guard = text_widget_guard{};
-    const auto directory = std::filesystem::path(PATH_INFO::user_dir()) / "morale-view-replay";
-    REQUIRE(std::filesystem::create_directory(directory));
-    const auto cleanup = on_out_of_scope([&]() {
-        replay::stop();
-        std::filesystem::remove_all(directory);
-    });
-    const auto path = directory / "inputs.jsonl";
-    auto morale = player_morale{};
-    morale.add(MORALE_GAME, 12, 12);
-    replay::configure_recording(path.string(), {.rng_seed = 37});
-    replay::start();
-    game_client::memory::set_input_provider([](const int /*timeout*/) {
-        const auto top = top_screen_now();
-        REQUIRE(top.root);
-        return invoke_event(top, "QUIT");
-    });
-    morale.display(93, 0, 0);
-    replay::finish();
-    game_client::memory::set_input_provider([](const int /*timeout*/) -> input_event {
-        throw std::runtime_error("morale replay must not use live input");
-    });
-    replay::configure_playback(path.string(), {.rng_seed = 37});
-    replay::start();
-    morale.display(93, 0, 0);
-    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
-    replay::finish();
-    replay::configure_playback(path.string(), {.rng_seed = 37});
-    replay::start();
-    morale.display(94, 0, 0);
-    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
-    replay::finish();
-    CHECK_FALSE(game_client::active_input_context().context);
     CHECK_FALSE(game_client::current_interaction().structured);
 }
 

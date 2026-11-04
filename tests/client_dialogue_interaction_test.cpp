@@ -8,7 +8,6 @@
 #    include "engine_client_contract.h"
 #    include "json.h"
 #    include "path_info.h"
-#    include "replay/replay.h"
 
 #    include <algorithm>
 #    include <array>
@@ -324,90 +323,6 @@ TEST_CASE(
         CHECK(fixture.opt().id == topics.at(row));
         CHECK(fixture.talker->get_value(branch_var).empty());
     }
-}
-
-TEST_CASE(
-    "semantic dialogue replay repeats the real NPC conversation loop and topic stack",
-    "[client][interaction][client_dialogue][replay][mcp]") {
-    auto fixture = dialogue_fixture{};
-    static auto counter = std::atomic_uint64_t{0};
-    const auto directory =
-        std::filesystem::path(PATH_INFO::user_dir())
-        / ("client-dialogue-replay-" + std::to_string(counter.fetch_add(1)));
-    REQUIRE(std::filesystem::create_directory(directory));
-    const auto cleanup = on_out_of_scope([&] {
-        replay::stop();
-        std::filesystem::remove_all(directory);
-    });
-    const auto path = directory / "input.jsonl";
-    auto& you = get_avatar();
-    const auto original_npc = serialize_actor(*fixture.talker);
-    const auto original_avatar = serialize_actor(you);
-    const auto original_known = fixture.talker->get_known_to_u();
-    auto* talker_faction = fixture.talker->get_faction();
-    REQUIRE(talker_faction != nullptr);
-    const auto original_faction = *talker_faction;
-    rng_set_engine_seed(74261);
-    replay::configure_recording(path.string(), {.rng_seed = 74261});
-    replay::start();
-    auto reads = 0;
-    auto second_branch_id = std::string{};
-    game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto screen = top();
-        REQUIRE(reads < 5);
-        switch (reads++) {
-            case 0:
-                CHECK(history(screen).find("Adapter narrative") != std::string::npos);
-                second_branch_id = rows(screen, responses_id)[1].id;
-                return respond(second_branch_id);
-            case 1:
-                CHECK(history(screen).find("Second native branch") != std::string::npos);
-                CHECK(fixture.talker->get_value(branch_var) == "10");
-                return respond(row_with(screen, "Back to the previous topic"));
-            case 2:
-                CHECK(history(screen).find("Adapter narrative") != std::string::npos);
-                CHECK(rows(screen, responses_id)[1].id == second_branch_id);
-                return respond(row_with(screen, "Successful native trial"));
-            case 3:
-                CHECK(history(screen).find("Second native branch") != std::string::npos);
-                CHECK(you.cash == 83);
-                return respond(row_with(screen, "Goodbye."));
-            default:
-                FAIL("unexpected native dialogue boundary");
-                return input_event{};
-        }
-    });
-    fixture.talker->talk_to_u(false, false);
-    CHECK(reads == 4);
-    CHECK(fixture.talker->get_value(branch_var) == "10");
-    CHECK(fixture.talker->get_value(trial_var) == "1");
-    CHECK(you.cash == 83);
-    CHECK(you.charges_of(itype_id("test_platinum_bit")) == 5);
-    CHECK(fixture.talker->get_value(speaker_var) == "2");
-    replay::finish();
-    const auto recorded_npc = serialize_actor(*fixture.talker);
-    const auto recorded_avatar = serialize_actor(you);
-    const auto recorded_faction = serialize_actor(*talker_faction);
-    const auto recorded_rng = rng_get_engine();
-    fixture.reset_effect_state();
-    fixture.talker->set_known_to_u(original_known);
-    // Keep the live faction object's address stable while resetting native discovery/membership.
-    *talker_faction = original_faction;
-    REQUIRE(serialize_actor(*fixture.talker) == original_npc);
-    REQUIRE(serialize_actor(you) == original_avatar);
-    game_client::memory::set_input_provider([](const int /*timeout*/) -> input_event {
-        throw std::runtime_error("dialogue playback must not read live input");
-    });
-    rng_set_engine_seed(74261);
-    replay::configure_playback(path.string(), {.rng_seed = 74261});
-    replay::start();
-    fixture.talker->talk_to_u(false, false);
-    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
-    replay::finish();
-    CHECK(serialize_actor(*fixture.talker) == recorded_npc);
-    CHECK(serialize_actor(you) == recorded_avatar);
-    CHECK(serialize_actor(*talker_faction) == recorded_faction);
-    CHECK(rng_get_engine() == recorded_rng);
 }
 
 #endif

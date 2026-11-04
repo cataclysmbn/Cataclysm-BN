@@ -26,8 +26,6 @@
 #include "path_info.h"
 #include "platform/client_platform.h"
 #include "preload_config.h"
-#include "replay/replay.h"
-#include "replay/state_hash.h"
 #include "rng.h"
 #include "runtime_handlers.h"
 #include "sdlsound.h"
@@ -109,10 +107,6 @@ auto run_game( int argc, char *argv[] ) -> int
     }
     init_crash_handlers();
     auto seed = static_cast<unsigned int>( time( nullptr ) );
-    auto seed_explicit = false;
-    auto replay_record_path = std::string{};
-    auto replay_play_path = std::string{};
-    auto state_hash_log_path = std::string{};
     auto contract_record_path = std::string{};
     bool verifyexit = false;
     bool check_mods = false;
@@ -131,7 +125,7 @@ auto run_game( int argc, char *argv[] ) -> int
         const char *section_default = nullptr;
         const char *section_map_sharing = "Map sharing";
         const char *section_user_directory = "User directories";
-        const std::array<arg_handler, 24> first_pass_arguments = {
+        const std::array<arg_handler, 21> first_pass_arguments = {
             {   {
                     "--client", "tiles|curses|mcp", "Select the runtime client backend",
                     section_default,
@@ -141,12 +135,11 @@ auto run_game( int argc, char *argv[] ) -> int
                 {
                     "--seed", "<string of letters and or numbers>",
                     "Sets the random number generator's seed value", section_default,
-                    [&seed, &seed_explicit]( int num_args, const char **params ) -> int {
+                    [&seed]( int num_args, const char **params ) -> int {
                         if( num_args < 1 ) { return -1; }
                         const unsigned char *hash_input = reinterpret_cast<const unsigned char *>(
                             params[0] );
                         seed = static_cast<unsigned int>( djb2_hash( hash_input ) );
-                        seed_explicit = true;
                         return 1;
                     }
                 },
@@ -165,36 +158,6 @@ auto run_game( int argc, char *argv[] ) -> int
                     []( int num_args, const char **params ) -> int {
                         if( num_args < 1 ) { return -1; }
                         game_client::listen_endpoint() = params[0];
-                        return 1;
-                    }
-                },
-                {
-                    "--replay-record", "<jsonl path>",
-                    "Record client input and deterministic RNG seed to a new replay file",
-                    section_default,
-                    [&replay_record_path]( int num_args, const char **params ) -> int {
-                        if( num_args < 1 ) { return -1; }
-                        replay_record_path = params[0];
-                        return 1;
-                    }
-                },
-                {
-                    "--replay-play", "<jsonl path>",
-                    "Play recorded input without waiting for a human or automation client",
-                    section_default,
-                    [&replay_play_path]( int num_args, const char **params ) -> int {
-                        if( num_args < 1 ) { return -1; }
-                        replay_play_path = params[0];
-                        return 1;
-                    }
-                },
-                {
-                    "--state-hash-log", "<jsonl path>",
-                    "Write hashes of the game state after every turn to a new file, to compare runs",
-                    section_default,
-                    [&state_hash_log_path]( int num_args, const char **params ) -> int {
-                        if( num_args < 1 ) { return -1; }
-                        state_hash_log_path = params[0];
                         return 1;
                     }
                 },
@@ -531,12 +494,6 @@ auto run_game( int argc, char *argv[] ) -> int
     if( !game_client::listen_endpoint().empty() && selected_client != game_client::client_kind::mcp ) {
         throw std::invalid_argument( "--listen requires --client mcp" );
     }
-    if( !replay_record_path.empty() && !replay_play_path.empty() ) {
-        throw std::invalid_argument( "--replay-record and --replay-play are mutually exclusive" );
-    }
-    if( test_mode && ( !replay_record_path.empty() || !replay_play_path.empty() ) ) {
-        throw std::invalid_argument( "Replay requires an interactive game session" );
-    }
 
     game_client::set_active_backend( game_client::create_backend( selected_client ) );
     game_client::active_backend().prepare();
@@ -627,24 +584,12 @@ auto run_game( int argc, char *argv[] ) -> int
     if( !test_mode && selected_client == game_client::client_kind::mcp ) { load_soundset(); }
     if( needs_compute ) { client_platform::initialize_compute(); }
 
-    if( !replay_record_path.empty() ) {
-        replay::configure_recording( replay_record_path, {.rng_seed = seed == 0 ? 1u : seed} );
-    } else if( !replay_play_path.empty() ) {
-        if( seed_explicit ) {
-            replay::configure_playback( replay_play_path, {.rng_seed = seed == 0 ? 1u : seed} );
-        } else {
-            replay::configure_playback( replay_play_path );
-        }
-    }
-    replay::start();
     // Every session is seeded deterministically, so workers and keyed tasks never fall back to the clock.
-    rng_set_deterministic_seed( replay::session_rng_seed( seed ) );
+    rng_set_deterministic_seed( seed );
     atexit( []() {
-        if( replay::is_enabled() ) { replay::stop(); }
         rng_clear_deterministic_seed();
     } );
 
-    if( !state_hash_log_path.empty() ) { replay::configure_state_hash_log( state_hash_log_path ); }
     if( !contract_record_path.empty() ) { engine_client::process_session().record_to( contract_record_path ); }
 
     g = std::make_unique<game>();
@@ -731,18 +676,17 @@ auto run_game( int argc, char *argv[] ) -> int
             shared_ptr_fast<ui_adaptor> ui = g->create_or_get_main_ui_adaptor();
             options_manager::cache_balance_options();
             game_session::set_running( true );
-            while( !g->do_turn() ) { replay::log_state_hash(); }
+            while( !g->do_turn() ) {}
             game_session::set_running( false );
         }
     } catch( const std::exception &error ) {
         std::cerr << "Cataclysm BN: " << error.what() << '\n';
-        replay::stop();
         exit_handler( 1 );
     }
 
     game_session::set_phase( "shutting_down" );
     engine_client::process_session().interrupt( engine_client::error::not_ready );
-    exit_handler( replay::is_enabled() ? 0 : -999 );
+    exit_handler( -999 );
     return 0;
 }
 

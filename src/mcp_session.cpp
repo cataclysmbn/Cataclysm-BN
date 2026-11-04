@@ -42,7 +42,6 @@
 #include "mcp_socket.h"
 #include "json.h"
 #include "output.h"
-#include "replay/replay.h"
 #include "runtime_handlers.h"
 
 namespace bn::mcp
@@ -295,8 +294,6 @@ auto wait_for_controller() -> void
 /// Answers the requests that already wait while an activity runs, which reaches no input boundary.
 auto serve_waiting_requests() -> void
 {
-    // A recording that plays back has no client to answer, and its stdin is not one.
-    if( replay::is_playing() ) { return; }
     auto &session = state();
     // The heartbeat tells the client the activity is alive.
     static auto last_beat = std::chrono::steady_clock::time_point{};
