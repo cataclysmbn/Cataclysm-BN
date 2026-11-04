@@ -22,8 +22,18 @@ namespace bn::mcp
 /// MCP transports the same commands used by other clients.
 using key_event = game_client::input_command;
 
+/// A complete, render-independent view of the current game client.
+/// `json` must be a JSON object and is embedded in the tool result as structured content.
+struct screen_snapshot {
+    std::string json;
+    std::string text;
+};
 
 struct mcp_host {
+    /// Capture the complete current screen after all pending redraws are flushed.
+    std::function < auto() -> screen_snapshot > observe;
+    /// Capture structured player-visible and player-known game state.
+    std::function < auto() -> screen_snapshot > state;
     /// Deliver events through the active game input pipeline, then redraw the client.
     std::function < auto( const std::vector<key_event> & ) -> bool > submit;
     /// Reports whether submit has events waiting at the game input boundary.
@@ -31,6 +41,11 @@ struct mcp_host {
     /// Waits up to this many milliseconds for a request frame; false when none arrived.
     /// Optional: unset means a timed wait is never cut short.
     std::function < auto( int ) -> bool > wait_input;
+    /// Describe the active context and its registered actions/bindings as a JSON object.
+    /// This is optional so clients can still operate with raw keys during startup screens.
+    std::function < auto() -> std::string > actions;
+    /// Describe the current structured interaction, with bounded choice pagination.
+    std::function < auto( std::size_t, std::size_t ) -> screen_snapshot > interaction;
     /// Resize the terrain window to this many map cells, as a native window resize would.
     /// Optional: unset means the client's viewport is ignored.
     std::function < auto( int, int ) -> void > resize_viewport;
@@ -48,6 +63,9 @@ class server
         static constexpr auto default_max_frame_bytes = std::size_t { 1024 * 1024 };
 
         struct options {
+            std::string name = "cataclysm-bright-nights";
+            std::string version = "development";
+            std::string protocol_version = "2025-11-25";
             std::size_t max_frame_bytes = default_max_frame_bytes;
             /// The wall clock that paces activity publication; unset means the steady clock.
             std::function < auto() -> std::chrono::steady_clock::time_point > now;
@@ -82,8 +100,11 @@ class server
         /// publications have taken a fifth of the time; the next publication carries their facts.
         auto publish_activity( std::ostream &out ) -> bool;
 
+        /// Complete a deferred bn.press response using the latest published screen.
+        auto finish_pending( std::ostream &out, std::ostream &err ) -> void;
+
         /// Reject the remainder of a batch whose next input is invalid in the current context.
-        auto reject_pending() -> void;
+        auto reject_pending( std::string error = {} ) -> void;
 
         /// Interrupt what is outstanding and write the notifications that caused. For shutdown.
         auto finish( std::ostream &out ) -> bool;
@@ -104,14 +125,22 @@ class server
         auto held_frames() const -> std::size_t;
         auto held_bytes() const -> std::size_t;
 
+        struct deferred_response {
+            engine_client::jsonrpc::request_id id;
+            bool interaction = false;
+            std::string error;
+        };
 
     private:
         mcp_host host_;
         options options_;
+        bool initialize_requested_ = false;
+        bool initialized_ = false;
         bool pump_mode_ = false;
         bool polling_ = false;
         bool eof_ = false;
         bool failed_ = false;
+        std::optional<deferred_response> pending_response_;
         engine_client::session &session_;
         engine_client::push_reader push_ = session_.open_push();
         bool hello_ = false;
@@ -170,6 +199,9 @@ class server
         auto drop_held_events() -> void;
         auto deliver_input() -> bool;
         auto direct( const engine_client::jsonrpc::request &request ) ->
+        std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::jsonrpc::output_error>;
+        auto legacy_dispatch( const engine_client::jsonrpc::request &request,
+                              std::ostream &err ) ->
         std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::jsonrpc::output_error>;
         auto process_requests( std::ostream &out, std::ostream &err ) -> bool;
         auto dispatch( std::string_view line, std::ostream &out, std::ostream &err ) -> bool;

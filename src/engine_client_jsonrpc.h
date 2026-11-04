@@ -73,6 +73,23 @@ auto inspect_frame( std::string_view input ) -> std::expected<inspected_frame, p
 auto method_of( const envelope &input ) -> std::string;
 auto apply_strict_policy( const envelope &input ) -> request_entry;
 
+/// Established legacy protocol messages ONLY, never native/host/rejection diagnostics.
+enum class legacy_reason {
+    parse_error, invalid_request, invalid_parameters, invalid_jsonrpc_version,
+    invalid_jsonrpc_request, method_required, not_initialized, unknown_resource,
+    structured_state_unavailable, subscriptions_not_supported,
+    structured_interaction_unavailable, unknown_tool, method_not_found,
+};
+struct legacy_error {
+    request_id id = {};
+    legacy_reason reason = legacy_reason::invalid_request;
+};
+using legacy_request_entry = std::variant<request, legacy_error>;
+/// Historical legacy envelope/ID policy AFTER full strict syntax validation: only signed
+/// int64 numeric IDs without decimal/exponent spelling, null error ID on invalid IDs,
+/// and no params-type restriction (valid legacy notifications remain silent).
+/// Never use this policy for direct bn methods; selection belongs to the server.
+auto apply_legacy_policy( const envelope &input ) -> legacy_request_entry;
 
 enum class read_status { complete, eof, partial_eof, too_large, io_error };
 struct read_result {
@@ -97,6 +114,8 @@ class response
         std::expected<std::optional<response>, output_error>;
         friend auto make_error( const struct error_options & ) ->
         std::expected<std::optional<response>, output_error>;
+        friend auto make_legacy_error( const legacy_error & ) ->
+        std::expected<std::optional<response>, output_error>;
 };
 /// Missing IDs suppress all results/errors. A present null ID still receives a response.
 auto make_result( const request &input, std::string_view result ) ->
@@ -108,9 +127,12 @@ struct error_options {
     /// not application policy. No native exception/diagnostic message parameter exists.
     std::optional<std::string_view> data = std::nullopt;
 };
-/// Fixed safe messages. For protocol
+/// Fixed safe messages, including the unchanged legacy initialization error. For protocol
 /// parse/invalid-request errors pass an explicit ID of "null", not a missing notification ID.
 auto make_error( const error_options &options ) ->
+std::expected<std::optional<response>, output_error>;
+/// Closed trusted legacy code/message pairs; omitted IDs still suppress responses.
+auto make_legacy_error( const legacy_error &options ) ->
 std::expected<std::optional<response>, output_error>;
 
 /// Incrementally stores ONLY bounded response bytes, not an unbounded response vector.
