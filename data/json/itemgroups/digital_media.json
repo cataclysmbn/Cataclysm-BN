@@ -11,6 +11,9 @@
     "subtype": "distribution",
     "entries": [
       { "item": "digital_photo_album", "prob": 20, "charges": [ 5, 30 ] },
+      { "item": "digital_nature_photo_album", "prob": 7, "charges": [ 5, 30 ] },
+      { "item": "digital_travel_photo_album", "prob": 7, "charges": [ 5, 30 ] },
+      { "item": "digital_art_album", "prob": 7, "charges": [ 5, 30 ] },
       { "item": "digital_music_collection", "prob": 20, "charges": [ 5, 15 ] },
       { "item": "digital_cooking_show", "prob": 15 },
       { "item": "digital_survivor_show", "prob": 10 },
@@ -55,6 +58,9 @@
     "subtype": "collection",
     "entries": [
       { "item": "digital_photo_album", "prob": 25, "charges": [ 5, 30 ] },
+      { "item": "digital_nature_photo_album", "prob": 8, "charges": [ 5, 30 ] },
+      { "item": "digital_travel_photo_album", "prob": 8, "charges": [ 5, 30 ] },
+      { "item": "digital_art_album", "prob": 8, "charges": [ 5, 30 ] },
       { "item": "digital_music_collection", "prob": 12, "charges": [ 5, 15 ] },
       { "item": "digital_cooking_show", "prob": 12 },
       { "item": "digital_survivor_show", "prob": 8 },
@@ -74,6 +80,9 @@
     "subtype": "collection",
     "entries": [
       { "item": "digital_photo_album", "prob": 75, "charges": [ 5, 30 ] },
+      { "item": "digital_nature_photo_album", "prob": 25, "charges": [ 5, 30 ] },
+      { "item": "digital_travel_photo_album", "prob": 25, "charges": [ 5, 30 ] },
+      { "item": "digital_art_album", "prob": 25, "charges": [ 5, 30 ] },
       { "item": "digital_music_collection", "prob": 35, "charges": [ 5, 15 ] },
       { "item": "digital_3d_printing_guide" },
       { "item": "digital_science_recipe_archive" },
@@ -86,6 +95,9 @@
     "subtype": "collection",
     "entries": [
       { "item": "digital_photo_album", "prob": 75, "charges": [ 5, 30 ] },
+      { "item": "digital_nature_photo_album", "prob": 25, "charges": [ 5, 30 ] },
+      { "item": "digital_travel_photo_album", "prob": 25, "charges": [ 5, 30 ] },
+      { "item": "digital_art_album", "prob": 25, "charges": [ 5, 30 ] },
       { "item": "digital_music_collection", "prob": 35, "charges": [ 5, 15 ] },
       { "item": "digital_cooking_show", "prob": 30 },
       { "item": "digital_survivor_show", "prob": 20 },
