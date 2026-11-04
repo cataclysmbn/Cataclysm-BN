@@ -241,6 +241,10 @@ The reader runs it through the normal item-action path:
 }
 ```
 
+The standard personal photo album draws random messages from
+`digital_personal_photos`, including family, pet, vacation, nature, food, and
+hobby pictures. These are flavor messages on the same album item.
+
 Choose snippet categories describing the album's photos, such as family photos
 or travel pictures. Lua can change these item variables on individual albums.
 `DIGITAL_PHOTOS` includes an album in the reader's photo shortcut and count;
