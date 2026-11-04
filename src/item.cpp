@@ -47,6 +47,10 @@
 #include "item_group.h"
 #include "iteminfo_format_utils.h"
 #include "iteminfo_query.h"
+#include "iteminfo_request.h"
+#include "item_preview.h"
+#include "nutrient_range.h"
+#include "crafting_inventory_request.h"
 #include "itype.h"
 #include "iuse.h"
 #include "iuse_actor.h"
@@ -294,10 +298,19 @@ item::item() : contents( this ),
     charges = 0;
 }
 
-item::item( const itype *type, time_point turn, int qty ) : type( type ),
+item::item( const itype *type, time_point turn, int qty ) :
+    item( { .type = type, .turn = turn, .charges = qty }, false ) {}
+
+item::item( const item_preview_request &request, bool preview ) : type( request.type ),
     contents( this ),
-    components( new component_item_location( this ) ), bday( turn )
+    components( new component_item_location( this ) ), bday( request.turn )
 {
+    const auto turn = request.turn;
+    const auto qty = request.charges;
+    const auto spawn_child = [preview, turn, qty]( const itype_id & id ) {
+        return preview ? spawn_for_display( { .type = &*id, .turn = turn, .charges = qty } ) :
+               spawn( id, turn, qty );
+    };
     item_vars_ = type->item_vars;
     corpse = has_flag( flag_CORPSE ) ? &mtype_id::NULL_ID().obj() : nullptr;
     item_counter = type->countdown_interval;
@@ -347,17 +360,19 @@ item::item( const itype *type, time_point turn, int qty ) : type( type ),
 
     if( type->gun ) {
         for( const itype_id &mod : type->gun->built_in_mods ) {
-            detached_ptr<item> it = item::spawn( mod, turn, qty );
+            auto it = spawn_child( mod );
             it->set_flag( flag_IRREMOVABLE );
             put_in( std::move( it ) );
         }
         for( const itype_id &mod : type->gun->default_mods ) {
-            put_in( item::spawn( mod, turn, qty ) );
+            put_in( spawn_child( mod ) );
         }
 
     } else if( type->magazine ) {
         if( type->magazine->count > 0 ) {
-            put_in( item::spawn( type->magazine->default_ammo, calendar::turn, type->magazine->count ) );
+            const auto &ammo = type->magazine->default_ammo;
+            put_in( preview ? spawn_for_display( { .type = &*ammo, .charges = type->magazine->count } ) :
+                    spawn( ammo, calendar::turn, type->magazine->count ) );
         }
 
     } else if( goes_bad() ) {
@@ -366,7 +381,7 @@ item::item( const itype *type, time_point turn, int qty ) : type( type ),
 
     } else if( type->tool ) {
         if( ammo_remaining() && !ammo_types().empty() ) {
-            ammo_set( ammo_default(), ammo_remaining() );
+            set_ammo_impl( { .ammo = ammo_default(), .charges = ammo_remaining(), .preview = preview } );
         }
     }
 
@@ -378,12 +393,26 @@ item::item( const itype *type, time_point turn, int qty ) : type( type ),
         snip_id = SNIPPET.random_id_from_category( type->snippet_category );
     }
 
-    for( const auto &func : type->use_methods | std::views::values ) {
-        const auto actor = func.get_actor_ptr();
-        if( actor != nullptr ) {
-            actor->on_spawned( *this );
+    if( !preview ) {
+        for( const auto &func : type->use_methods | std::views::values ) {
+            const auto actor = func.get_actor_ptr();
+            if( actor != nullptr ) {
+                actor->on_spawned( *this );
+            }
         }
     }
+}
+
+auto item::spawn_for_display( const item_preview_request &request ) -> detached_ptr<item>
+{
+    const auto rng_scope = rng_deterministic_task_scope( 1u );
+    return detached_ptr<item>( new item( request, true ) );
+}
+
+auto item::copy_for_display( const item &source ) -> detached_ptr<item>
+{
+    const auto rng_scope = rng_deterministic_task_scope( 1u );
+    return detached_ptr<item>( new item( source, true ) );
 }
 
 item::item( const itype_id &id, time_point turn, int qty )
@@ -454,7 +483,9 @@ item::item( const recipe *rec, int qty, std::vector<detached_ptr<item>> &&items,
     }
 }
 
-item::item( const item &source ) : game_object<item>( source ), contents( this ),
+item::item( const item &source ) : item( source, false ) {}
+
+item::item( const item &source, bool preview ) : game_object<item>( source ), contents( this ),
     components( new component_item_location( this ) )
 {
     //TODO!: back to defaults
@@ -493,18 +524,20 @@ item::item( const item &source ) : game_object<item>( source ), contents( this )
     activated_by = source.activated_by;
     is_favorite = source.is_favorite;
 
-    for( item * const &it : source.contents.all_items_top() ) {
-        contents.insert_item( item::spawn( *it ) );
+    for( const auto *it : source.contents.all_items_top() ) {
+        contents.insert_item( preview ? copy_for_display( *it ) : spawn( *it ) );
     }
 
-    for( item * const &it : source.components ) {
-        components.push_back( item::spawn( *it ) );
+    for( const auto *it : source.components ) {
+        components.push_back( preview ? copy_for_display( *it ) : spawn( *it ) );
     }
 
-    for( const auto &func : type->use_methods | std::views::values ) {
-        const auto actor = func.get_actor_ptr();
-        if( actor != nullptr ) {
-            actor->on_spawned( *this );
+    if( !preview ) {
+        for( const auto &func : type->use_methods | std::views::values ) {
+            const auto actor = func.get_actor_ptr();
+            if( actor != nullptr ) {
+                actor->on_spawned( *this );
+            }
         }
     }
 }
@@ -645,7 +678,7 @@ bool item::revert( Character *ch, bool alert )
         return false;
     }
     if( ch && alert && !tooldata->revert_msg.empty() ) {
-        ch->add_msg_if_player( m_info, _( tooldata->revert_msg ), tname() );
+        ch->add_msg_if_player( m_info, to_translation( tooldata->revert_msg ), tname() );
     }
     convert( *tooldata->revert_to );
     if( ch ) {
@@ -674,6 +707,17 @@ units::energy item::mod_energy( const units::energy &qty )
 
 void item::ammo_set( const itype_id &ammo, int qty )
 {
+    set_ammo_impl( { .ammo = ammo, .charges = qty } );
+}
+
+auto item::set_ammo_impl( const item_ammo_request &request ) -> void
+{
+    const auto &ammo = request.ammo;
+    auto qty = request.charges;
+    const auto spawn_ammo = [&request]( const itype_id & id, int charges = -1 ) {
+        return request.preview ? spawn_for_display( { .type = &*id, .charges = charges } ) :
+               spawn( id, calendar::turn, charges );
+    };
     if( qty < 0 ) {
         // completely fill an integral or existing magazine
         if( magazine_integral() || magazine_current() ) {
@@ -681,11 +725,11 @@ void item::ammo_set( const itype_id &ammo, int qty )
 
             // else try to add a magazine using default ammo count property if set
         } else if( !magazine_default().is_null() ) {
-            item mag( magazine_default() );
-            if( mag.type->magazine->count > 0 ) {
-                qty = mag.type->magazine->count;
+            const auto mag = spawn_ammo( magazine_default() );
+            if( mag->type->magazine->count > 0 ) {
+                qty = mag->type->magazine->count;
             } else {
-                qty = mag.ammo_capacity();
+                qty = mag->ammo_capacity();
             }
         }
     }
@@ -713,8 +757,7 @@ void item::ammo_set( const itype_id &ammo, int qty )
 
     if( is_magazine() ) {
         ammo_unset();
-        detached_ptr<item> set_ammo = item::spawn( ammo, calendar::turn, std::min( qty,
-                                      ammo_capacity() ) );
+        auto set_ammo = spawn_ammo( ammo, std::min( qty, ammo_capacity() ) );
         if( has_flag( flag_NO_UNLOAD ) ) {
             set_ammo->set_flag( flag_NO_DROP );
             set_ammo->set_flag( flag_IRREMOVABLE );
@@ -755,9 +798,9 @@ void item::ammo_set( const itype_id &ammo, int qty )
                     }
                 }
             }
-            put_in( item::spawn( mag ) );
+            put_in( spawn_ammo( mag ) );
         }
-        magazine_current()->ammo_set( ammo, qty );
+        magazine_current()->set_ammo_impl( { .ammo = ammo, .charges = qty, .preview = request.preview } );
     }
 
 }
@@ -1105,8 +1148,21 @@ detached_ptr<item> item::in_its_container( detached_ptr<item> &&self )
 
 detached_ptr<item> item::in_container( const itype_id &cont, detached_ptr<item> &&self )
 {
+    return in_container_impl( cont, std::move( self ), false );
+}
+
+auto item::in_container_for_display( const itype_id &cont,
+                                     detached_ptr<item> &&self ) -> detached_ptr<item>
+{
+    return in_container_impl( cont, std::move( self ), true );
+}
+
+auto item::in_container_impl( const itype_id &cont, detached_ptr<item> &&self,
+                              bool preview ) -> detached_ptr<item>
+{
     if( !cont.is_null() ) {
-        detached_ptr<item> ret = item::spawn( cont, self->birthday() );
+        auto ret = preview ? spawn_for_display( { .type = &*cont, .turn = self->birthday() } ) :
+                   spawn( cont, self->birthday() );
         ret->invlet = self->invlet;
         item &obj = *self;
         ret->put_in( std::move( self ) );
@@ -1723,7 +1779,10 @@ std::map<std::string, double> item::dps( const bool for_display, const bool for_
             ( comp_mon.second.evaluate != for_calc ) ) {
             continue;
         }
-        monster test_mon = monster( comp_mon.second.mon_id );
+        // Synthetic comparison monsters randomize irrelevant cooldowns during construction.
+        // Keep item inspection deterministic without advancing the gameplay RNG stream.
+        [[maybe_unused]] const auto rng_scope = rng_deterministic_task_scope( 1u );
+        auto test_mon = monster( comp_mon.second.mon_id );
         results[ comp_mon.first.translated() ] = effective_dps( guy, test_mon, attack );
     }
     return results;
@@ -1745,9 +1804,11 @@ double item::average_dps( const player &guy, const attack_statblock &attack ) co
     return sum / dps_data.size();
 }
 
-void item::basic_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,
-                       bool debug /* debug */ ) const
+auto item::basic_info( std::vector<iteminfo> &info, const iteminfo_request &request,
+                       bool debug ) const -> void
 {
+    const auto *parts = &request.parts;
+    const auto batch = request.batch;
     if( display_mod_source && parts->test( iteminfo_parts::BASE_MOD_SRC ) ) {
         info.emplace_back( "BASE", string_format( _( "<stat>Origin: %s</stat>" ),
                            enumerate_as_string( type->src.begin(),
@@ -1791,8 +1852,18 @@ void item::basic_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
                            convert_weight( weight() ) * batch );
     }
     if( !owner.is_null() ) {
-        info.emplace_back( "BASE", string_format( _( "Owner: %s" ),
-                           _( get_owner_name() ) ) );
+        auto owner_name = std::string{};
+        if( request.observing() ) {
+            const auto &manager = *g->faction_manager_ptr;
+            auto effective_owner = manager.get_for_display( owner );
+            if( !effective_owner ) {
+                effective_owner = manager.get_for_display( faction_id::NULL_ID() );
+            }
+            owner_name = effective_owner ? effective_owner->name : "no owner";
+        } else {
+            owner_name = get_owner_name();
+        }
+        info.emplace_back( "BASE", string_format( _( "Owner: %s" ), _( owner_name ) ) );
     }
     if( parts->test( iteminfo_parts::BASE_CATEGORY ) ) {
         info.emplace_back( "BASE", _( "Category: " ),
@@ -1834,7 +1905,7 @@ void item::basic_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
             // Just use the dynamic description
             info.emplace_back( "DESCRIPTION", snippet.value().translated() );
             // only ever do the effect for a snippet the first time you see it
-            if( !get_avatar().has_seen_snippet( snip_id ) ) {
+            if( !request.observing() && !get_avatar().has_seen_snippet( snip_id ) ) {
                 //note that you have seen the snippet
                 get_avatar().add_snippet( snip_id );
             }
@@ -2002,10 +2073,14 @@ void item::med_info( const item *med_item, std::vector<iteminfo> &info, const it
     }
 }
 
-void item::food_info( const item *food_item, std::vector<iteminfo> &info,
-                      const iteminfo_query *parts, int batch, bool debug,
-                      temperature_flag temperature ) const
+auto item::food_info( const item &food, std::vector<iteminfo> &info,
+                      const iteminfo_request &request ) const -> void
 {
+    const auto *food_item = &food;
+    const auto *parts = &request.parts;
+    const auto batch = request.batch;
+    const auto temperature = request.temperature;
+    const auto debug = g != nullptr && debug_mode;
     nutrients min_nutr;
     nutrients max_nutr;
     avatar &you = get_avatar();
@@ -2013,6 +2088,12 @@ void item::food_info( const item *food_item, std::vector<iteminfo> &info,
     std::string recipe_exemplar = get_var( "recipe_exemplar", "" );
     if( recipe_exemplar.empty() ) {
         min_nutr = max_nutr = you.compute_effective_nutrients( *food_item );
+    } else if( request.observing() ) {
+        const auto range = compute_nutrient_range_for_display( you, {
+            .food = *food_item, .recipe = recipe_id( recipe_exemplar ),
+        } );
+        min_nutr = range.minimum;
+        max_nutr = range.maximum;
     } else {
         std::tie( min_nutr, max_nutr ) =
             you.compute_nutrient_range( *food_item, recipe_id( recipe_exemplar ) );
@@ -2396,9 +2477,10 @@ auto nname( const itype_id &id ) -> std::string
 }
 } // namespace
 
-void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminfo_query *parts,
-                     int /* batch */, bool /* debug */ ) const
+auto item::gun_info( const item *mod, std::vector<iteminfo> &info,
+                     const iteminfo_request &request ) const -> void
 {
+    const auto *parts = &request.parts;
     const islot_gun &gun = *mod->type->gun;
     const Skill &skill = *mod->gun_skill();
     avatar &viewer = get_avatar();
@@ -2407,8 +2489,9 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
     // if item is unloaded (or is RELOAD_AND_SHOOT) shows approximate stats using default ammo
     const item *loaded_mod = mod;
     if( mod->ammo_required() && !mod->ammo_remaining() ) {
-        item &tmp = *item::spawn_temporary( *mod );
-        tmp.ammo_set( mod->magazine_current() ? tmp.common_ammo_default() : tmp.ammo_default() );
+        auto &tmp = request.observing() ? *copy_for_display( *mod ) : *spawn_temporary( *mod );
+        tmp.set_ammo_impl( { .ammo = mod->magazine_current() ? tmp.common_ammo_default() : tmp.ammo_default(),
+                             .preview = request.observing() } );
         if( tmp.ammo_data() == nullptr ) {
             insert_separation_line( info );
             info.emplace_back( "GUN",
@@ -2441,7 +2524,8 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
                           : damage_unit( DT_STAB, 0 );
 
     if( skill.ident() == skill_throw && curammo != nullptr ) {
-        item &tmp = *item::spawn_temporary( item( curammo ) );
+        auto &tmp = request.observing() ? *spawn_for_display( { .type = curammo } ) :
+                    *spawn_temporary( item( curammo ) );
 
         thrown_du.amount += ranged::throw_damage( tmp,
                             get_avatar().get_skill_level( skill_throw ),
@@ -2491,8 +2575,11 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
     }
     info.back().bNewLine = true;
     avatar &you = get_avatar();
-    int base_gun_range = loaded_mod->gun_range( true ); // Without player bonuses
-    int max_gun_range = loaded_mod->gun_range( &you ); // Includes enchantment bonuses
+    // Description-only observation must propagate through both range overloads and thrown ammo.
+    const auto base_gun_range = request.observing() ? loaded_mod->gun_range_for_display( true ) :
+                                loaded_mod->gun_range( true );
+    const auto max_gun_range = request.observing() ? loaded_mod->gun_range_for_display( &you ) :
+                               loaded_mod->gun_range( &you );
     if( max_gun_range > 0 && parts->test( iteminfo_parts::GUN_MAX_RANGE ) ) {
         info.emplace_back( "GUN", _( "Maximum range: " ), "<num>", iteminfo::no_flags,
                            max_gun_range );
@@ -3249,9 +3336,10 @@ void item::armor_fit_info( std::vector<iteminfo> &info, const iteminfo_query *pa
     }
 }
 
-void item::book_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int /* batch */,
-                      bool /* debug */ ) const
+auto item::book_info( std::vector<iteminfo> &info, const iteminfo_request &request,
+                      bool /* debug */ ) const -> void
 {
+    const auto *parts = &request.parts;
     if( !is_book() ) {
         return;
     }
@@ -3285,13 +3373,14 @@ void item::book_info( std::vector<iteminfo> &info, const iteminfo_query *parts, 
         info.emplace_back( "BOOK", _( "It can be <info>understood by "
                                       "beginners</info>." ) );
     }
-    avatar &you = get_avatar();
+    const auto &you = get_avatar();
     if( !you.has_identified( typeId() ) && parts->test( iteminfo_parts::BOOK_UNREAD ) ) {
         info.emplace_back( "BOOK",
                            _( "You have <info>never read</info> this book." ) );
     }
     if( book.skill ) {
-        const SkillLevel &skill = you.get_skill_level_object( book.skill );
+        const SkillLevel &skill = request.observing() ? you.get_skill_level_object( book.skill ) :
+                                  get_avatar().get_skill_level_object( book.skill );
         if( parts->test( iteminfo_parts::BOOK_SKILLRANGE_MAX ) ) {
             const std::string skill_name = book.skill->name();
             const std::string fmt = string_format( _( "Can bring <info>%s skill to</info> "
@@ -3348,9 +3437,13 @@ void item::book_info( std::vector<iteminfo> &info, const iteminfo_query *parts, 
         info.emplace_back( "BOOK", "", fmt, iteminfo::no_flags, unread );
     }
 
-    std::vector<std::string> recipe_list;
+    const auto local_recipes = request.observing() ? you.get_learned_recipes_for_display() :
+                               recipe_subset{};
+    const auto &known_recipes = request.observing() || book.recipes.empty() ? local_recipes :
+                                you.get_learned_recipes();
+    auto recipe_list = std::vector<std::string> {};
     for( const book_recipe &elem : book.recipes ) {
-        const bool knows_it = you.knows_recipe( elem.recipe );
+        const auto knows_it = known_recipes.contains( *elem.recipe );
         const bool can_learn = you.get_skill_level( elem.recipe->skill_used )  >= elem.skill_level;
         // If the player knows it, they recognize it even if it's not clearly stated.
         if( elem.is_hidden() && !knows_it ) {
@@ -4041,15 +4134,17 @@ void item::damage_statblock_info( std::vector<iteminfo> &info, damage_instance a
     info.emplace_back( "BASE", sep, "", iteminfo::no_newline );
 }
 
-void item::throw_info( std::vector < iteminfo > &info, const iteminfo_query *parts, int /*batch*/,
-                       bool /*debug*/ ) const
+auto item::throw_info( std::vector<iteminfo> &info,
+                       const iteminfo_request &request ) const -> void
 {
+    const auto *parts = &request.parts;
     if( !parts->test( iteminfo_parts::BASE_THROW ) ) {
         return;
     }
 
     const avatar &you = get_avatar();
-    const int throw_range = you.throw_range( *this );
+    const auto throw_range = request.observing() ? you.throw_range_for_display( *this ) :
+                             you.throw_range( *this );
 
     if( throw_range == 0 ) {
         return;
@@ -4216,15 +4311,15 @@ void item::contents_info( std::vector<iteminfo> &info, const iteminfo_query *par
     }
 }
 
-void item::final_info( std::vector<iteminfo> &info, const iteminfo_query &parts_ref, int batch,
-                       bool debug ) const
+auto item::final_info( std::vector<iteminfo> &info, const iteminfo_request &request,
+                       bool debug ) const -> void
 {
     if( is_null() ) {
         return;
     }
 
-    // TODO: Remove
-    const iteminfo_query *parts = &parts_ref;
+    const auto *parts = &request.parts;
+    const auto batch = request.batch;
 
     const std::string space = "  ";
 
@@ -4433,6 +4528,9 @@ void item::final_info( std::vector<iteminfo> &info, const iteminfo_query &parts_
     } );
 
     if( !holsters.empty() && parts->test( iteminfo_parts::DESCRIPTION_HOLSTERS ) ) {
+        std::ranges::sort( holsters, localized_compare, []( const itype * e ) {
+            return e->nname( 1 );
+        } );
         insert_separation_line( info );
         info.emplace_back( "DESCRIPTION", _( "<bold>Can be stored in</bold>: " ) +
                            enumerate_as_string( holsters.begin(), holsters.end(),
@@ -4470,8 +4568,10 @@ void item::final_info( std::vector<iteminfo> &info, const iteminfo_query &parts_
     }
 
     // Price and barter value
-    const int price_preapoc = price( false ) * batch;
-    const int price_postapoc = price( true ) * batch;
+    const int price_preapoc = ( request.observing() ? price_for_display( false ) : price(
+                                    false ) ) * batch;
+    const int price_postapoc = ( request.observing() ? price_for_display( true ) : price(
+                                     true ) ) * batch;
     if( parts->test( iteminfo_parts::BASE_PRICE ) ) {
         insert_separation_line( info );
         info.emplace_back( "BASE", _( "Price: " ), _( "$<num>" ),
@@ -4487,10 +4587,15 @@ void item::final_info( std::vector<iteminfo> &info, const iteminfo_query &parts_
     // Recipes using this item as an ingredient
     if( parts->test( iteminfo_parts::DESCRIPTION_APPLICABLE_RECIPES ) ) {
         itype_id tid = contents.empty() ? typeId() : contents.front().typeId();
-        const inventory &crafting_inv = you.crafting_inventory();
+        const auto local_inventory = request.observing() ?
+                                     you.crafting_inventory_for_display() : inventory{};
+        const auto &crafting_inv = request.observing() ? local_inventory : you.crafting_inventory();
 
-        const recipe_subset available_recipe_subset = you.get_available_recipes( crafting_inv, nullptr,
-                recipe_filter_by_component( tid ) );
+        const auto available_recipe_subset = you.get_available_recipes( {
+            .crafting_inv = crafting_inv,
+            .filter = recipe_filter_by_component( tid ),
+            .observation = request.observing(),
+        } );
         const std::set<const recipe *> &item_recipes = available_recipe_subset.of_component( tid );
 
         if( item_recipes.empty() ) {
@@ -4512,9 +4617,11 @@ void item::final_info( std::vector<iteminfo> &info, const iteminfo_query &parts_
                 std::ranges::transform(
                     item_recipes,
                     std::back_inserter( result_names ),
-                [&crafting_inv]( const recipe * r ) {
-                    bool can_make = r->deduped_requirements().can_make_with_inventory(
-                                        crafting_inv, r->get_component_filter() );
+                [&crafting_inv, &request]( const recipe * r ) {
+                    const auto can_make = request.observing() ?
+                                          r->can_make_with_inventory_for_display( crafting_inv ) :
+                                          r->deduped_requirements().can_make_with_inventory(
+                                              crafting_inv, r->get_component_filter() );
                     return std::make_pair( r->result_name( /*decorated=*/true ), can_make );
                 } );
                 std::ranges::sort( result_names, localized_compare );
@@ -4580,6 +4687,13 @@ std::vector<iteminfo> item::info( temperature_flag temperature ) const
 std::vector<iteminfo> item::info( const iteminfo_query &parts_ref, int batch,
                                   temperature_flag temperature ) const
 {
+    return info( { .parts = parts_ref, .batch = batch, .temperature = temperature } );
+}
+
+auto item::info( const iteminfo_request &request ) const -> std::vector<iteminfo>
+{
+    const auto &parts_ref = request.parts;
+    const auto batch = request.batch;
     const bool debug = g != nullptr && debug_mode;
 
     // TODO: Use reference properly
@@ -4587,7 +4701,7 @@ std::vector<iteminfo> item::info( const iteminfo_query &parts_ref, int batch,
     std::vector<iteminfo> info;
 
     if( !is_null() ) {
-        basic_info( info, parts, batch, debug );
+        basic_info( info, request, debug );
     }
 
     const item *med_item = nullptr;
@@ -4601,13 +4715,13 @@ std::vector<iteminfo> item::info( const iteminfo_query &parts_ref, int batch,
     }
 
     if( const item *food_item = get_food() ) {
-        food_info( food_item, info, parts, batch, debug, temperature );
+        food_info( *food_item, info, request );
     }
 
     container_info( info, parts, batch, debug );
     contents_info( info, parts, batch, debug );
     combat_info( info, parts, batch, debug );
-    throw_info( info, parts, batch, debug );
+    throw_info( info, request );
 
     magazine_info( info, parts, batch, debug );
     ammo_info( info, parts, batch, debug );
@@ -4626,13 +4740,13 @@ std::vector<iteminfo> item::info( const iteminfo_query &parts_ref, int batch,
         }
     }
     if( gun != nullptr ) {
-        gun_info( gun, info, parts, batch, debug );
+        gun_info( gun, info, request );
     }
 
     gunmod_info( info, parts, batch, debug );
     armor_info( info, parts, batch, debug );
     animal_armor_info( info, parts, batch, debug );
-    book_info( info, parts, batch, debug );
+    book_info( info, request, debug );
     battery_info( info, parts, batch, debug );
     tool_info( info, parts, batch, debug );
     component_info( info, parts, batch, debug );
@@ -4642,7 +4756,13 @@ std::vector<iteminfo> item::info( const iteminfo_query &parts_ref, int batch,
     if( parts->test( iteminfo_parts::DESCRIPTION_USE_METHODS ) ) {
         for( const std::pair<const std::string, use_function> &method : type->use_methods ) {
             insert_separation_line( info );
-            method.second.dump_info( *this, info );
+            if( request.observing() ) {
+                if( const auto *actor = method.second.get_actor_ptr() ) {
+                    actor->info_for_display( *this, info );
+                }
+            } else {
+                method.second.dump_info( *this, info );
+            }
         }
     }
 
@@ -4651,7 +4771,7 @@ std::vector<iteminfo> item::info( const iteminfo_query &parts_ref, int batch,
 
     enchantment_info( info, parts_ref, batch, debug );
 
-    final_info( info, parts_ref, batch, debug );
+    final_info( info, request, debug );
 
     if( !info.empty() && info.back().sName == "--" ) {
         info.pop_back();
@@ -4669,6 +4789,12 @@ std::string item::info_string( const iteminfo_query &parts, int batch,
                                temperature_flag temperature ) const
 {
     std::vector<iteminfo> item_info = info( parts, batch, temperature );
+    return format_item_info( item_info, {} );
+}
+
+auto item::info_string( const iteminfo_request &request ) const -> std::string
+{
+    const auto item_info = info( request );
     return format_item_info( item_info, {} );
 }
 
@@ -5219,6 +5345,26 @@ void item::on_map_placement( const tripoint_abs_ms &abs_pos )
     }
 }
 
+auto item::tname_passive() const -> std::string
+{
+    struct rot_state {
+        item *target;
+        time_duration rot;
+        time_point last_rot_check;
+    };
+    auto *self = const_cast<item *>( this );
+    auto saved = std::vector<rot_state> { { self, rot, last_rot_check } };
+    for( item *contained : self->contents.all_items_ptr() ) {
+        saved.push_back( { contained, contained->rot, contained->last_rot_check } );
+    }
+    auto name = tname();
+    for( const auto &state : saved ) {
+        state.target->rot = state.rot;
+        state.target->last_rot_check = state.last_rot_check;
+    }
+    return name;
+}
+
 std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int truncate ) const
 {
     int dirt_level = get_var( "dirt", 0 ) / 2000;
@@ -5660,9 +5806,19 @@ nc_color item::color() const
 
 auto item::price( bool practical ) const -> float
 {
+    return price_impl( practical, false );
+}
+
+auto item::price_for_display( bool practical ) const -> float
+{
+    return price_impl( practical, true );
+}
+
+auto item::price_impl( bool practical, bool observation ) const -> float
+{
     float res = 0;
 
-    visit_items( [&res, practical]( const item * e ) {
+    visit_items( [&res, practical, observation]( const item * e ) {
         if( e->rotten() ) {
             // TODO: Special case things that stay useful when rotten
             return VisitResponse::NEXT;
@@ -5680,7 +5836,11 @@ auto item::price( bool practical ) const -> float
 
         } else if( e->magazine_integral() && e->ammo_remaining() && e->ammo_data() ) {
             // items with integral magazines may contain ammunition which can affect the price
-            child += item( e->ammo_data(), calendar::turn, e->charges ).price( practical );
+            // Only passive descriptions omit the ammo constructor's effects; native prices stay native.
+            child += observation ?
+                     spawn_for_display( { .type = e->ammo_data(), .charges = e->charges } )->price_for_display(
+                         practical ) :
+                     item( e->ammo_data(), calendar::turn, e->charges ).price( practical );
 
         } else if( e->is_tool() && e->ammo_types().empty() && e->ammo_capacity() ) {
             // if tool has no ammo (e.g. spray can) reduce price proportional to remaining charges
@@ -8506,6 +8666,16 @@ int item::gun_recoil( bool bipod ) const
 
 int item::gun_range( bool with_ammo ) const
 {
+    return gun_range_impl( with_ammo, false );
+}
+
+auto item::gun_range_for_display( bool with_ammo ) const -> int
+{
+    return gun_range_impl( with_ammo, true );
+}
+
+auto item::gun_range_impl( bool with_ammo, bool observation ) const -> int
+{
     if( !is_gun() ) {
         return 0;
     }
@@ -8521,8 +8691,11 @@ int item::gun_range( bool with_ammo ) const
             int ret_thrown = 0;
             if( gun_skill() == skill_throw && ammo_data() ) {
                 const itype *curammo = ammo_data();
-                item &tmp = *item::spawn_temporary( item( curammo ) );
-                ret_thrown += get_avatar().throw_range( tmp );
+                // Native gameplay keeps both the original construction/copy and throw-copy stages.
+                auto &tmp = observation ? *spawn_for_display( { .type = curammo } ) :
+                            *spawn_temporary( item( curammo ) );
+                ret_thrown += observation ? get_avatar().throw_range_for_display( tmp ) :
+                              get_avatar().throw_range( tmp );
             }
             ret += std::max( ammo_data()->ammo->range, ret_thrown );
         }
@@ -8533,7 +8706,17 @@ int item::gun_range( bool with_ammo ) const
 
 int item::gun_range( const player *p ) const
 {
-    int ret = gun_range( true );
+    return gun_range_impl( p, false );
+}
+
+auto item::gun_range_for_display( const player *p ) const -> int
+{
+    return gun_range_impl( p, true );
+}
+
+auto item::gun_range_impl( const player *p, bool observation ) const -> int
+{
+    int ret = gun_range_impl( true, observation );
     if( p == nullptr ) {
         return ret;
     }
@@ -10559,18 +10742,18 @@ detached_ptr<item> item::process_corpse( detached_ptr<item> &&self, player *carr
         if( carrier == nullptr ) {
             if( get_avatar().sees( pos ) ) {
                 if( self->corpse->in_species( ROBOT ) ) {
-                    add_msg( m_warning, _( "A nearby robot has repaired itself and stands up!" ) );
+                    add_msg( m_warning, to_translation( "A nearby robot has repaired itself and stands up!" ) );
                 } else {
-                    add_msg( m_warning, _( "A nearby corpse rises and moves towards you!" ) );
+                    add_msg( m_warning, to_translation( "A nearby corpse rises and moves towards you!" ) );
                 }
             }
         } else {
             if( self->corpse->in_species( ROBOT ) ) {
                 carrier->add_msg_if_player( m_warning,
-                                            _( "Oh dear god, a robot you're carrying has started moving!" ) );
+                                            to_translation( "Oh dear god, a robot you're carrying has started moving!" ) );
             } else {
                 carrier->add_msg_if_player( m_warning,
-                                            _( "Oh dear god, a corpse you're carrying has started moving!" ) );
+                                            to_translation( "Oh dear god, a corpse you're carrying has started moving!" ) );
             }
         }
         // Destroy this corpse item
@@ -10666,7 +10849,8 @@ detached_ptr<item> item::process_litcig( detached_ptr<item> &&self, player *carr
         } else if( carrier->has_trait( trait_LIGHTWEIGHT ) ) {
             duration = 30_seconds;
         }
-        carrier->add_msg_if_player( m_neutral, _( "You take a puff of your %s." ), it.tname() );
+        carrier->add_msg_if_player( m_neutral, to_translation( "You take a puff of your %s." ),
+                                    it.tname() );
         if( it.type->istate_callbacks ) {
             it.type->istate_callbacks->call_on_puff( *carrier, it );
         }
@@ -10683,7 +10867,8 @@ detached_ptr<item> item::process_litcig( detached_ptr<item> &&self, player *carr
         carrier->moves -= 15;
 
         if( ( carrier->has_effect( effect_shakes ) && one_in( 10 ) ) ) {
-            carrier->add_msg_if_player( m_bad, _( "Your shaking hand causes you to drop your %s." ),
+            carrier->add_msg_if_player( m_bad,
+                                        to_translation( "Your shaking hand causes you to drop your %s." ),
                                         it.tname() );
             here.add_item_or_charges( pos + point_rel_ms( rng( -1, 1 ), rng( -1, 1 ) ),
                                       std::move( self ) );
@@ -10691,7 +10876,7 @@ detached_ptr<item> item::process_litcig( detached_ptr<item> &&self, player *carr
         }
 
         if( carrier->has_effect( effect_sleep ) ) {
-            carrier->add_msg_if_player( m_bad, _( "You fall asleep and drop your %s." ),
+            carrier->add_msg_if_player( m_bad, to_translation( "You fall asleep and drop your %s." ),
                                         it.tname() );
             here.add_item_or_charges( pos + point_rel_ms( rng( -1, 1 ), rng( -1, 1 ) ),
                                       std::move( self ) );
@@ -10712,7 +10897,7 @@ detached_ptr<item> item::process_litcig( detached_ptr<item> &&self, player *carr
     // cig dies out
     if( it.item_counter == 0 ) {
         if( carrier != nullptr ) {
-            carrier->add_msg_if_player( m_neutral, _( "You finish your %s." ), it.tname() );
+            carrier->add_msg_if_player( m_neutral, to_translation( "You finish your %s." ), it.tname() );
         }
         it.convert( dynamic_cast<const iuse_transform *>
                     ( it.type->get_use( "transform" )->get_actor_ptr() )->target );
@@ -10781,12 +10966,13 @@ detached_ptr<item> item::process_extinguish( detached_ptr<item> &&self, player *
     }
     if( carrier != nullptr ) {
         if( submerged ) {
-            carrier->add_msg_if_player( m_neutral, _( "Your %s is quenched by water." ), self->tname() );
+            carrier->add_msg_if_player( m_neutral, to_translation( "Your %s is quenched by water." ),
+                                        self->tname() );
         } else if( precipitation ) {
-            carrier->add_msg_if_player( m_neutral, _( "Your %s is quenched by precipitation." ),
+            carrier->add_msg_if_player( m_neutral, to_translation( "Your %s is quenched by precipitation." ),
                                         self->tname() );
         } else if( windtoostrong ) {
-            carrier->add_msg_if_player( m_neutral, _( "Your %s is blown out by the wind." ),
+            carrier->add_msg_if_player( m_neutral, to_translation( "Your %s is blown out by the wind." ),
                                         self->tname() );
         }
     }
@@ -10844,7 +11030,7 @@ detached_ptr<item> item::process_cable( detached_ptr<item> &&self, player *carri
         switch( nonchar.state ) {
             case state_solar_pack:
                 if( !carrier->has_item( *self ) || !carrier->worn_with_flag( flag_SOLARPACK_ON ) ) {
-                    carrier->add_msg_if_player( m_bad, _( "You notice the cable has come loose!" ) );
+                    carrier->add_msg_if_player( m_bad, to_translation( "You notice the cable has come loose!" ) );
                     self->reset_cable( carrier );
                 }
                 return std::move( self );
@@ -10857,14 +11043,15 @@ detached_ptr<item> item::process_cable( detached_ptr<item> &&self, player *carri
                     for( item *used : carrier->items_with( used_ups ) ) {
                         used->erase_var( "cable" );
                     }
-                    carrier->add_msg_if_player( m_bad, _( "You notice the cable has come loose!" ) );
+                    carrier->add_msg_if_player( m_bad, to_translation( "You notice the cable has come loose!" ) );
                     self->reset_cable( carrier );
                 }
                 return std::move( self );
             }
             case state_vehicle: {
                 if( !here.veh_at( nonchar.point ) ) {
-                    carrier->add_msg_if_player( m_bad, _( "You notice the cable has disconnected from a vehicle!" ) );
+                    carrier->add_msg_if_player( m_bad,
+                                                to_translation( "You notice the cable has disconnected from a vehicle!" ) );
                     data->unset_con( self.get(), nonchar );
                     return std::move( self );
                 }
@@ -10885,7 +11072,7 @@ detached_ptr<item> item::process_cable( detached_ptr<item> &&self, player *carri
                 auto *grid_connector = active_tiles::furn_at<vehicle_connector_tile>( s );
                 if( !grid_connector ) {
                     if( carrier->has_item( *self ) ) {
-                        carrier->add_msg_if_player( m_bad, _( "You notice the cable has come loose!" ) );
+                        carrier->add_msg_if_player( m_bad, to_translation( "You notice the cable has come loose!" ) );
                     }
                     self->reset_cable( carrier );
                     return std::move( self );
@@ -10905,7 +11092,7 @@ detached_ptr<item> item::process_cable( detached_ptr<item> &&self, player *carri
         self->charges = self->type->maximum_charges() - distance;
         if( self->charges < 1 ) {
             if( carrier ) {
-                carrier->add_msg_if_player( m_bad, _( "The over-extended cable breaks loose!" ) );
+                carrier->add_msg_if_player( m_bad, to_translation( "The over-extended cable breaks loose!" ) );
             }
             self->reset_cable( carrier );
         }
@@ -10928,7 +11115,7 @@ void item::reset_cable( Character *who )
     charges = max_charges;
 
     if( who != nullptr ) {
-        who->add_msg_if_player( m_info, _( "You reel in the cable." ) );
+        who->add_msg_if_player( m_info, to_translation( "You reel in the cable." ) );
         who->mod_moves( -10 * charges );
     }
 }
@@ -11048,13 +11235,15 @@ detached_ptr<item> item::process_tool( detached_ptr<item> &&self, player *carrie
             if( carrier ) {
                 if( self->is_power_armor() ) {
                     if( uses_UPS ) {
-                        carrier->add_msg_if_player( m_info, _( "You need a UPS or Bionic Power Interface to run the %s!" ),
+                        carrier->add_msg_if_player( m_info,
+                                                    to_translation( "You need a UPS or Bionic Power Interface to run the %s!" ),
                                                     self->tname() );
                     } else {
 
                     }
                 } else if( uses_UPS ) {
-                    carrier->add_msg_if_player( m_info, _( "You need a UPS to run the %s!" ), self->tname() );
+                    carrier->add_msg_if_player( m_info, to_translation( "You need a UPS to run the %s!" ),
+                                                self->tname() );
                 }
             }
             if( carrier && self->type->can_use( "set_transform" ) ) {
@@ -11132,7 +11321,7 @@ detached_ptr<item> item::process_blackpowder_fouling( detached_ptr<item> &&self,
         if( self->damage() < self->max_damage() && one_in( 2000 ) ) {
             self->inc_damage( DT_ACID );
             if( carrier ) {
-                carrier->add_msg_if_player( m_bad, _( "Your %s rusts due to blackpowder fouling." ),
+                carrier->add_msg_if_player( m_bad, to_translation( "Your %s rusts due to blackpowder fouling." ),
                                             self->tname() );
             }
         }
@@ -11143,14 +11332,14 @@ detached_ptr<item> item::process_blackpowder_fouling( detached_ptr<item> &&self,
         if( self->damage() < self->max_damage() && one_in( 2000 / leftover ) ) {
             self->inc_damage( DT_ACID );
             if( carrier ) {
-                carrier->add_msg_if_player( m_bad, _( "Your %s rusts due to blackpowder fouling." ),
+                carrier->add_msg_if_player( m_bad, to_translation( "Your %s rusts due to blackpowder fouling." ),
                                             self->tname() );
             }
         }
         for( int i = 0; i < count; i++ ) {
             self->inc_damage( DT_ACID );
             if( carrier ) {
-                carrier->add_msg_if_player( m_bad, _( "Your %s rusts due to blackpowder fouling." ),
+                carrier->add_msg_if_player( m_bad, to_translation( "Your %s rusts due to blackpowder fouling." ),
                                             self->tname() );
             }
         }
@@ -11261,7 +11450,7 @@ detached_ptr<item> item::process_internal( detached_ptr<item> &&self, player *ca
         self->set_var( "ethereal", ethereal_counter );
         const bool processed = ethereal_counter <= 0;
         if( processed && carrier != nullptr ) {
-            carrier->add_msg_if_player( _( "Your %s disappears!" ), self->tname() );
+            carrier->add_msg_if_player( to_translation( "Your %s disappears!" ), self->tname() );
         }
         if( processed ) {
             return detached_ptr<item>();

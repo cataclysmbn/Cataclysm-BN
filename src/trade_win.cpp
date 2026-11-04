@@ -2,7 +2,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <functional>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <ranges>
@@ -12,17 +14,24 @@
 
 #include "avatar.h"
 #include "catacharset.h"
+#include "client_interaction.h"
 #include "color.h"
+#include "drop_token.h"
+#include "engine_client_component.h"
+#include "engine_client_world.h"
 #include "game.h"
 #include "input.h"
 #include "ime.h"
 #include "item.h"
+#include "iteminfo_request.h"
 #include "item_category.h"
 #include "item_contents.h"
 #include "item_search.h"
+#include "item_serial.h"
 #include "itype.h"
 #include "npc.h"
 #include "output.h"
+#include "ownership_observation.h"
 #include "player.h"
 #include "point.h"
 #include "string_formatter.h"
@@ -45,6 +54,24 @@ struct category_range {
     size_t start = 0;
     size_t end = 0;
 };
+
+struct trade_selection_totals {
+    units::volume volume = 0_ml;
+    units::mass weight = 0_gram;
+};
+
+auto selected_trade_amount( const item_pricing &pricing, const bool is_theirs ) -> int
+{
+    if( pricing.charges > 0 ) {
+        return is_theirs ? pricing.u_charges : pricing.npc_charges;
+    }
+    return is_theirs ? pricing.u_has : pricing.npc_has;
+}
+
+auto available_trade_amount( const item_pricing &pricing ) -> int
+{
+    return pricing.charges > 0 ? pricing.charges : std::max( pricing.count, 1 );
+}
 
 auto build_page_starts( const std::vector<item_pricing> &list,
                         const std::vector<size_t> &filtered,
@@ -125,6 +152,196 @@ auto build_category_ranges( const std::vector<item_pricing> &list,
     return ranges;
 }
 
+namespace ec = engine_client;
+
+constexpr auto head_id = "trade:head";
+constexpr auto panes_id = "trade:panes";
+constexpr auto npc_pane_id = "pane:npc";
+constexpr auto you_pane_id = "pane:you";
+constexpr auto npc_list_id = "list:npc";
+constexpr auto you_list_id = "list:you";
+constexpr auto set_count_id = "trade:set_count";
+constexpr auto filter_id = "trade:filter";
+constexpr auto confirm_id = "trade:confirm";
+constexpr auto cancel_id = "trade:cancel";
+
+auto selected_totals( const std::vector<item_pricing> &list,
+                      const bool is_theirs ) -> trade_selection_totals
+{
+    return std::ranges::fold_left( list | std::views::transform( [is_theirs](
+    const item_pricing & pricing ) {
+        const auto amount = selected_trade_amount( pricing, is_theirs );
+        return trade_selection_totals{ .volume = pricing.vol * amount, .weight = pricing.weight * amount };
+    } ), trade_selection_totals{}, []( const trade_selection_totals & lhs,
+                                       const trade_selection_totals & rhs ) {
+        return trade_selection_totals{ .volume = lhs.volume + rhs.volume, .weight = lhs.weight + rhs.weight };
+    } );
+}
+
+/// The ids of a pane's rows, one per entry of `filtered`: from the items' own serials, never from their words.
+auto item_row_ids( const std::vector<item_pricing> &list, const std::vector<size_t> &filtered ) ->
+std::vector<std::string>
+{
+    return filtered | std::views::transform( [&]( const size_t index ) {
+        const auto members = list[index].locs | std::ranges::to<std::vector<const item *>>();
+        return game_client::stack_row_id( members );
+    } ) | std::ranges::to<std::vector>();
+}
+
+/// The name of a game color; empty for the light gray the native list prints in by default.
+auto shade( const nc_color &color ) -> std::string
+{
+    const auto name = ec::world::color_name( color );
+    return name == ec::world::color_name( c_light_gray ) ? std::string{} :
+           name;
+}
+
+struct pane_capacity {
+    units::volume free_volume;
+    units::mass free_weight;
+    units::volume max_volume;
+    units::mass max_weight;
+};
+
+/// What the native pane header prints under the title: carried against capacity, green or red.
+auto capacity_stats( const pane_capacity &opts ) -> std::vector<ec::panel_stat>
+{
+    const auto used_volume = opts.max_volume - opts.free_volume;
+    const auto used_weight = opts.max_weight - opts.free_weight;
+    const auto volume_text = []( const units::volume value ) {
+        return string_format( "%.2f", convert_volume( to_milliliter( value ) ) );
+    };
+    return {
+        {
+            .key = "weight", .label = _( "weight" ), .value = string_format( "%.2f", convert_weight( used_weight ) ),
+            .max = string_format( "%.2f", convert_weight( opts.max_weight ) ), .unit = weight_units(),
+            .tone = used_weight > opts.max_weight ? "bad" : "good"
+        },
+        {
+            .key = "volume", .label = _( "vol" ), .value = volume_text( used_volume ), .max = volume_text( opts.max_volume ),
+            .unit = volume_units_abbr(), .tone = used_volume > opts.max_volume ? "bad" : "good"
+        },
+    };
+}
+
+struct pane_options {
+    const npc &np;
+    const std::vector<item_pricing> &list;
+    /// The entries of `list` the pane's filter lets through.
+    const std::vector<size_t> &filtered;
+    const std::string &filter;
+    bool is_theirs = false;
+    /// The shopkeeper's pane has none: it carries whatever it is given.
+    std::optional<pane_capacity> carrying = std::nullopt;
+    /// Set on the pane the cursor is in: the entry of `filtered` it is on.
+    std::optional<size_t> cursor = std::nullopt;
+    /// Set while the category selection is on in this pane.
+    std::optional<size_t> category = std::nullopt;
+    /// The entry of `filtered` the page starts at, and the letters that pick the entries from there on.
+    size_t offset = 0;
+    std::string hotkeys = {};
+};
+struct pane_view {
+    ec::component component;
+    /// The row the cursor is on; empty for another pane or when nothing is listed.
+    std::string focus_row;
+};
+
+/// A pane from the trade's model state: category heading rows and item rows with the columns the native
+/// list prints, composed here so that each locale words them itself.
+auto make_pane( const pane_options &opts ) -> pane_view
+{
+    const auto &list = opts.list;
+    const auto &filtered = opts.filtered;
+    const auto role = std::string{ opts.is_theirs ? "npc" : "you" };
+    const auto ids = item_row_ids( list, filtered );
+    const auto ranges = build_category_ranges( list, filtered );
+    const auto active = opts.category && *opts.category < ranges.size() ?
+                        std::optional{ ranges[*opts.category].id } :
+                        std::nullopt;
+    const auto &person = opts.is_theirs ? static_cast<const Character &>( opts.np ) :
+                         static_cast<const Character &>( g->u );
+    const auto freely = opts.np.will_exchange_items_freely();
+    auto rows = std::vector<ec::row> {};
+    auto last_category = std::optional<item_category_id> {};
+    for( const auto &[ordinal, index] : std::views::enumerate( filtered ) ) {
+        const auto position = static_cast<size_t>( ordinal );
+        const auto &pricing = list[index];
+        const auto &candidate = *pricing.locs.front();
+        const auto category = candidate.get_category().get_id();
+        if( last_category != category ) {
+            rows.push_back( { .id = game_client::opaque_interaction_id( "trade-category", { role, category.str() } ),
+                              .label = to_upper_case( candidate.get_category().name() ), .selectable = false,
+                              .selected = active == category, .header = true } );
+            last_category = category;
+        }
+        const auto available = available_trade_amount( pricing );
+        const auto picked = selected_trade_amount( pricing, opts.is_theirs );
+        const auto off_person = freely && candidate.where() != item_location_type::character;
+        auto price_color = nc_color{ c_light_gray };
+        if( freely ) {
+            price_color = c_dark_gray;
+        } else if( const auto base = candidate.price( true ); base > 0 ) {
+            const auto ratio = pricing.price / base;
+            price_color = ratio < 0.95 ? ( opts.is_theirs ? c_light_green : c_light_red ) :
+                          ratio > 1.05 ? ( opts.is_theirs ? c_light_red : c_light_green ) : c_light_gray;
+        }
+        rows.push_back( {
+            .id = ids[position],
+            .label = candidate.display_name() + ( off_person ? " (" + candidate.describe_location( &g->u ) + ")" : std::string{} ),
+            // What the native examine shows, for the row the cursor is on; the rows left are many and long.
+            .description = opts.cursor == position ? remove_color_tags( candidate.info_string( { .mode = iteminfo_mode::observation } ) ) : std::string{},
+            .hotkey = position >= opts.offset && position - opts.offset < opts.hotkeys.size() ?
+            std::string( 1, opts.hotkeys[position - opts.offset] ) : std::string{},
+            .selected = picked > 0,
+            .columns = {
+                { .key = "qty", .label = _( "amt" ), .value = available > 1 ? string_format( "%d", available ) : std::string{} },
+                {
+                    .key = "weight", .label = _( "weight" ),
+                    .value = string_format( "%.2f", convert_weight( pricing.weight * available ) )
+                },
+                {
+                    .key = "vol", .label = _( "vol" ),
+                    .value = string_format( "%.2f", convert_volume( to_milliliter( pricing.vol * available ) ) )
+                },
+                {
+.key = "price", .label = _( "unit price" ), .value = freely ? std::string{} : format_money( pricing.price ),
+                    .color = shade( price_color )
+                },
+            },
+            .color = shade( pricing.selected ? c_white : off_person ? c_light_blue :
+                            &candidate == &person.primary_weapon() ? c_yellow : c_light_gray ),
+            .mark = game_client::interaction_mark{ .glyph = picked >= available ? "+" : picked > 0 ? "#" : "-" },
+            .selected_count = static_cast<std::uint64_t>( picked ), .minimum_count = 0,
+            .max = static_cast<std::uint64_t>( available ), .look = ec::world::item_appearance( candidate ),
+        } );
+    }
+    auto list_part = ec::list( { .id = opts.is_theirs ? npc_list_id : you_list_id, .rows = std::move( rows ),
+                                 .selection = "count", .filterable = true } );
+    list_part.affordances = { set_count_id, filter_id };
+    return {
+        .component = ec::panel( {
+            .id = opts.is_theirs ? npc_pane_id : you_pane_id,
+            .title = string_format( "%s %s", _( "Inventory:" ), opts.is_theirs ? opts.np.name : _( "You" ) ),
+            .stats = opts.carrying ? capacity_stats( *opts.carrying ) : std::vector<ec::panel_stat> {},
+            .filter = opts.filter, .child = std::move( list_part ) } ),
+        .focus_row = opts.cursor && *opts.cursor < ids.size() ? ids[*opts.cursor] : std::string{},
+    };
+}
+
+auto title_label_of( npc_trading::deal_kind kind ) -> std::string
+{
+    switch( kind ) {
+        case npc_trading::deal_kind::pay:
+            return _( "Paying" );
+        case npc_trading::deal_kind::reward:
+            return _( "Accepting a reward from" );
+        case npc_trading::deal_kind::trade:
+            break;
+    }
+    return _( "Trading with" );
+}
+
 auto register_trade_actions( input_context &ctxt, bool include_any_input ) -> void
 {
     ctxt.register_action( "SWITCH_LISTS" );
@@ -173,7 +390,7 @@ auto trading_window::setup_win( ui_adaptor &ui ) -> void
     ui.position( point_zero, point( TERMX, TERMY ) );
 }
 
-auto trading_window::update_win( npc &np, const std::string &deal ) -> void
+auto trading_window::update_win( npc &np ) -> void
 {
     // Draw borders, one of which is highlighted
     werase( w_them );
@@ -188,19 +405,6 @@ auto trading_window::update_win( npc &np, const std::string &deal ) -> void
 
     auto ctxt = input_context( "NPC_TRADE" );
     register_trade_actions( ctxt, false );
-    ctxt.register_action( "SWITCH_LISTS" );
-    ctxt.register_action( "PAGE_UP" );
-    ctxt.register_action( "PAGE_DOWN" );
-    ctxt.register_action( "UP" );
-    ctxt.register_action( "DOWN" );
-    ctxt.register_action( "LEFT" );
-    ctxt.register_action( "RIGHT" );
-    ctxt.register_action( "FILTER" );
-    ctxt.register_action( "RESET_FILTER" );
-    ctxt.register_action( "EXAMINE" );
-    ctxt.register_action( "CONFIRM" );
-    ctxt.register_action( "QUIT" );
-    ctxt.register_action( "HELP_KEYBINDINGS" );
 
     werase( w_head );
     draw_border( w_head );
@@ -210,17 +414,7 @@ auto trading_window::update_win( npc &np, const std::string &deal ) -> void
     const auto head_keybinds_label_middle = _( "] keybindings >" );
     const auto head_keybinds_label_width = utf8_width( head_keybinds_label_prefix ) +
                                            1 + utf8_width( head_keybinds_label_middle );
-    const auto title_label = [&deal]() -> std::string {
-        if( deal == _( "Pay:" ) )
-        {
-            return _( "Paying" );
-        }
-        if( deal == _( "Reward" ) )
-        {
-            return _( "Accepting a reward from" );
-        }
-        return _( "Trading with" );
-    }();
+    const auto title_label = title_label_of( kind );
     mvwprintz( w_head, point( 1, head_title_y ), c_white, title_label );
     mvwprintz( w_head, point( 1 + utf8_width( title_label ) + 1, head_title_y ),
                c_light_green, np.disp_name() );
@@ -721,6 +915,13 @@ auto trading_window::show_item_data( size_t index, bool target_is_theirs ) -> in
     ctxt.register_action( "CONFIRM" );
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
+    const auto screen = ec::screen_scope( ctxt, "trade_item_info", { .view = [&]( const auto & )
+    {
+        return ec::screen_view{
+            .title = itm.tname(),
+            .root = ec::component{ .id = "text:info", .body = ec::text_body{ .markup = info_text } } };
+    }
+                                                                   } );
 
     auto result = info_popup_result::none;
     auto exit = false;
@@ -765,6 +966,72 @@ auto trading_window::build_filtered_indices( const std::vector<item_pricing> &li
     | std::ranges::to<std::vector>();
 }
 
+auto trading_window::view( const npc &np, input_context &ctxt ) const -> ec::screen_view
+{
+    // The letters the native list prints before its rows, as the loop reads them.
+    const auto hotkeys =
+        ctxt.get_available_single_char_hotkeys( "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" );
+    const auto theirs_selected = selected_totals( state.theirs, true );
+    const auto yours_selected = selected_totals( state.yours, false );
+    const auto filtered_theirs = build_filtered_indices( state.theirs, them_filter );
+    const auto filtered_yours = build_filtered_indices( state.yours, you_filter );
+    const auto theirs = make_pane( {
+        .np = np, .list = state.theirs, .filtered = filtered_theirs, .filter = them_filter, .is_theirs = true,
+        .carrying = np.is_shopkeeper() ? std::nullopt : std::optional{
+            pane_capacity{
+                .free_volume = state.volume_left, .free_weight = state.weight_left,
+                .max_volume = np.volume_capacity(), .max_weight = np.weight_capacity()
+            } },
+.cursor = focus_them ? std::optional{ them_cursor } : std::nullopt,
+.category = category_mode && focus_them ? std::optional{ them_category_cursor } : std::nullopt,
+        .offset = them_off, .hotkeys = hotkeys,
+    } );
+    const auto yours = make_pane( {
+        .np = np, .list = state.yours, .filtered = filtered_yours, .filter = you_filter,
+        .carrying = pane_capacity{
+            .free_volume = g->u.volume_capacity() - g->u.volume_carried() + yours_selected.volume - theirs_selected.volume,
+            .free_weight = g->u.weight_capacity() - g->u.weight_carried() + yours_selected.weight - theirs_selected.weight,
+            .max_volume = g->u.volume_capacity(), .max_weight = g->u.weight_capacity()
+        },
+        .cursor = focus_them ? std::nullopt : std::optional{ you_cursor },
+.category = category_mode && !focus_them ? std::optional{ you_category_cursor } : std::nullopt,
+        .offset = you_off, .hotkeys = hotkeys,
+    } );
+    const auto balance = np.will_exchange_items_freely() ? std::string{ _( "Exchange" ) } :
+                         string_format( state.your_balance >= 0 ? _( "Credit %s" ) : _( "Debt %s" ),
+                                        format_money( std::abs( state.your_balance ) ) );
+    const auto title_label = title_label_of( kind );
+    const auto title = string_format( "%s %s", title_label, np.disp_name() );
+    return {
+        .title = title,
+        .root = ec::panel( {
+            .id = head_id,
+            .stats = { { .key = "category_mode", .label = ctxt.get_action_name( "CATEGORY_SELECTION" ), .value = category_mode ? _( "ON" ) : _( "OFF" ) } },
+            .child = ec::split( {
+                .id = panes_id, .active = focus_them ? npc_pane_id : you_pane_id, .children = ec::children_of(
+                ec::component{
+                    .id = "trade:balance",
+                    .body = ec::text_body{ .markup = balance, .tone = npc_trading::npc_will_accept_trade( state, np ) ? "good" : "bad" }
+                },
+                theirs.component, yours.component )
+            } ) } ),
+        .affordances = {
+            ec::invoke_affordance( {
+                .id = set_count_id, .label = _( "amt" ),
+                .args = { .row = ec::row_shape{ .component_id = panes_id }, .count = ec::count_shape{ .min = 0 } }
+            } ),
+            ec::invoke_affordance( {
+                .id = filter_id, .label = ctxt.get_action_name( "FILTER" ),
+                .args = { .text = ec::text_shape{}, .pane = ec::pane_shape{ .component_id = panes_id } }, .covers = "FILTER"
+            } ),
+            ec::invoke_affordance( { .id = confirm_id, .label = ctxt.get_action_name( "CONFIRM" ), .role = "confirm", .covers = "CONFIRM" } ),
+            ec::invoke_affordance( { .id = cancel_id, .label = ctxt.get_action_name( "QUIT" ), .role = "cancel", .covers = "QUIT" } ),
+        },
+        .focus_component = focus_them ? npc_list_id : you_list_id,
+        .focus_row = focus_them ? theirs.focus_row : yours.focus_row,
+    };
+}
+
 auto trading_window::get_var_trade( const item &it, int total_count, int amount_hint ) -> int
 {
     auto popup_input = string_input_popup{};
@@ -792,7 +1059,7 @@ auto trading_window::get_var_trade( const item &it, int total_count, int amount_
     return std::min( total_count, how_many );
 }
 
-auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
+auto trading_window::perform_trade( npc &np, npc_trading::deal_kind deal ) -> bool
 {
     state.volume_left = np.volume_capacity() - np.volume_carried();
     state.weight_left = np.weight_capacity() - np.weight_carried();
@@ -803,8 +1070,15 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
         state.weight_left = 5000_kilogram;
     }
 
+    kind = deal;
+
     auto ctxt = input_context( "NPC_TRADE" );
     register_trade_actions( ctxt, true );
+    const auto screen = ec::screen_scope( ctxt, "trade", { .role = "screen", .view = [&]( const auto & )
+    {
+        return view( np, ctxt );
+    }
+                                                         } );
 
     auto ui = ui_adaptor{};
     ui.on_screen_resize( [this]( ui_adaptor & ui ) {
@@ -813,7 +1087,7 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
     ui.mark_resize();
 
     ui.on_redraw( [&]( const ui_adaptor & ) {
-        update_win( np, deal );
+        update_win( np );
     } );
 
     auto confirm = false;
@@ -1056,6 +1330,30 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
         }
         return plan;
     };
+    const auto toggle_trade_item = [&]( item_pricing & ip ) -> void {
+        if( get_current_amount( ip ) > 0 )
+        {
+            apply_trade_change( ip, 0 );
+            return;
+        }
+        const auto max_amount = get_max_amount( ip );
+        auto amount = 1;
+        if( max_amount > 1 )
+        {
+            auto hint = 0;
+            if( ip.price > 0 ) {
+                if( focus_them && state.your_balance > 0 ) {
+                    hint = state.your_balance / ip.price;
+                } else if( !focus_them && state.your_balance < 0 ) {
+                    const auto offered = state.your_balance / ip.price;
+                    const auto remainder = std::fmod( state.your_balance, ip.price ) == 0 ? 0 : 1;
+                    hint = offered - remainder;
+                }
+            }
+            amount = get_var_trade( *ip.locs.front(), max_amount, hint );
+        }
+        if( amount > 0 ) { apply_trade_change( ip, amount ); }
+    };
     const auto calc_autobalance_amount = [&]( const item_pricing & ip ) -> int {
         const auto unit_balance_delta = ( focus_them ? -1 : 1 ) * static_cast<int>( ip.price );
         if( unit_balance_delta == 0 )
@@ -1106,6 +1404,45 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
             return std::abs( lhs - current_amount ) > std::abs( rhs - current_amount );
         } );
     };
+    const auto set_pane_filter = [&]( const bool is_theirs, const std::string & text ) -> void {
+        auto &filter = is_theirs ? them_filter : you_filter;
+        auto &list = is_theirs ? state.theirs : state.yours;
+        auto &visible = is_theirs ? them_filtered : you_filtered;
+        filter = text;
+        visible = build_filtered_indices( list, filter );
+        clamp_cursor_to_list( clamp_cursor_options{
+            .list = list,
+            .filtered = visible,
+            .cursor = is_theirs ? them_cursor : you_cursor,
+            .offset = is_theirs ? them_off : you_off,
+        } );
+    };
+    // The row's pane takes the cursor, as a pick with the keys would.
+    const auto set_row_count = [&]( const std::string & row_id, const int count ) -> void {
+        for( const auto is_theirs : { true, false } )
+        {
+            auto &list = is_theirs ? state.theirs : state.yours;
+            auto &visible = is_theirs ? them_filtered : you_filtered;
+            const auto ids = item_row_ids( list, visible );
+            const auto found = std::ranges::find( ids, row_id );
+            if( found == ids.end() ) { continue; }
+            focus_them = is_theirs;
+            auto &cursor = is_theirs ? them_cursor : you_cursor;
+            cursor = static_cast<size_t>( std::distance( ids.begin(), found ) );
+            clamp_cursor_to_list( clamp_cursor_options{
+                .list = list,
+                .filtered = visible,
+                .cursor = cursor,
+                .offset = is_theirs ? them_off : you_off,
+            } );
+            if( category_mode ) {
+                sync_category_cursor( list, visible, build_category_ranges( list, visible ),
+                                      is_theirs ? them_category_cursor : you_category_cursor, cursor );
+            }
+            apply_trade_change( list[visible[cursor]], count );
+            return;
+        }
+    };
     while( !exit ) {
         auto &target_list = focus_them ? state.theirs : state.yours;
         auto &filtered = focus_them ? them_filtered : you_filtered;
@@ -1127,7 +1464,26 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
         }
         ui_manager::redraw();
 
-        const auto action = ctxt.handle_input();
+        auto action = std::string{ ctxt.handle_input() };
+        // What a client invoked on this screen: the screen's own affordances, run from its loop.
+        if( const auto invoke = ec::invoked( ctxt.get_raw_input() ) ) {
+            const auto &args = invoke->args;
+            if( invoke->affordance_id == confirm_id ) {
+                action = "CONFIRM";
+            } else if( invoke->affordance_id == cancel_id ) {
+                action = "QUIT";
+            } else {
+                if( invoke->affordance_id == filter_id && args.pane && args.text &&
+                    ( *args.pane == npc_pane_id || *args.pane == you_pane_id ) ) {
+                    set_pane_filter( *args.pane == npc_pane_id, *args.text );
+                } else if( invoke->affordance_id == set_count_id && args.row && args.count ) {
+                    set_row_count( *args.row, static_cast<int>( std::clamp<std::int64_t>( *args.count, 0,
+                                   std::numeric_limits<int>::max() ) ) );
+                }
+                pending_count.reset();
+                continue;
+            }
+        }
         if( action == "SWITCH_LISTS" ) {
             focus_them = !focus_them;
             if( category_mode ) {
@@ -1419,61 +1775,7 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
                     }
                 }
                 auto &ip = target_list[filtered[ch_index]];
-                auto change_amount = 1;
-                auto &owner_sells = focus_them ? ip.u_has : ip.npc_has;
-                auto &owner_sells_charge = focus_them ? ip.u_charges : ip.npc_charges;
-
-                const auto calc_amount_hint = [&]() -> int {
-                    if( ip.price > 0 )
-                    {
-                        if( focus_them && state.your_balance > 0 ) {
-                            return state.your_balance / ip.price;
-                        } else if( !focus_them && state.your_balance < 0 ) {
-                            const auto amt = state.your_balance / ip.price;
-                            const auto rem = ( std::fmod( state.your_balance, ip.price ) == 0 ) ? 0 : 1;
-                            return amt - rem;
-                        }
-                    }
-                    return 0;
-                };
-
-                if( ip.selected ) {
-                    if( owner_sells_charge > 0 ) {
-                        change_amount = owner_sells_charge;
-                        owner_sells_charge = 0;
-                    } else if( owner_sells > 0 ) {
-                        change_amount = owner_sells;
-                        owner_sells = 0;
-                    }
-                } else if( ip.charges > 0 ) {
-                    const auto hint = calc_amount_hint();
-                    change_amount = get_var_trade( *ip.locs.front(), ip.charges, hint );
-                    if( change_amount < 1 ) {
-                        continue;
-                    }
-                    owner_sells_charge = change_amount;
-                } else {
-                    if( ip.count > 1 ) {
-                        const auto hint = calc_amount_hint();
-                        change_amount = get_var_trade( *ip.locs.front(), ip.count, hint );
-                        if( change_amount < 1 ) {
-                            continue;
-                        }
-                    }
-                    owner_sells = change_amount;
-                }
-                ip.selected = !ip.selected;
-                if( ip.selected != focus_them ) {
-                    change_amount *= -1;
-                }
-                const auto delta_price = static_cast<int>( ip.price * change_amount );
-                if( !np.will_exchange_items_freely() ) {
-                    state.your_balance -= delta_price;
-                }
-                if( affects_npc_capacity( *ip.locs.front() ) ) {
-                    state.volume_left += ip.vol * change_amount;
-                    state.weight_left += ip.weight * change_amount;
-                }
+                toggle_trade_item( ip );
             }
         }
     }

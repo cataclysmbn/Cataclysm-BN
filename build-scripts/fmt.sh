@@ -61,6 +61,8 @@ fi
 
 cpp_files=()
 json_files=()
+doc_files=()
+lua_files=()
 stage_files=()
 
 append_stage_file() {
@@ -86,20 +88,39 @@ if [[ "$mode" == staged ]]; then
                 append_stage_file "$file"
                 ;;
             *.json)
-                if [[ "$file" != data/names/* ]]; then
+                if [[ "$file" == data/names/* ]]; then
+                    :
+                elif [[ "$file" == data/* ]]; then
                     json_files+=( "$file" )
+                    append_stage_file "$file"
+                else
+                    doc_files+=( "$file" )
                     append_stage_file "$file"
                 fi
                 ;;
-            *.md|*.ts|*.lua)
+            *.md|*.ts)
+                doc_files+=( "$file" )
+                append_stage_file "$file"
+                ;;
+            *.lua)
+                lua_files+=( "$file" )
                 append_stage_file "$file"
                 ;;
         esac
     done < <(git diff --cached --name-only --diff-filter=ACMR -z)
 fi
 
-deno fmt
-deno task dprint fmt
+if [[ "$mode" == all ]]; then
+    deno fmt
+    deno task dprint fmt
+else
+    if (( ${#doc_files[@]} > 0 )); then
+        deno fmt "${doc_files[@]}"
+    fi
+    if (( ${#lua_files[@]} > 0 )); then
+        deno task dprint fmt "${lua_files[@]}"
+    fi
+fi
 
 if [[ "$mode" == all ]]; then
     build-scripts/format-cpp.sh

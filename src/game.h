@@ -820,8 +820,6 @@ class game : public submap_load_listener
         void knockback( std::vector<tripoint_bub_ms> &traj, int stun, int dam_mult, Creature *source );
 
         // Animation related functions
-        void draw_bullet( const tripoint_bub_ms &t, int i, const std::vector<tripoint_bub_ms> &trajectory,
-        char bullet, const std::string &custom_sprite = {} );
         void draw_hit_mon( const tripoint_bub_ms &p, const monster &m, bool dead = false );
         void draw_hit_player( const Character &p, int dam );
         void draw_line( const tripoint_bub_ms &p, const tripoint_bub_ms &center_point,
@@ -942,6 +940,9 @@ class game : public submap_load_listener
         void reset_item_list_state( const catacurses::window &window, int height, bool bRadiusSort );
 
         game::vmenu_ret list_monsters( const std::vector<Creature *> &monster_list );
+        /// Aims the next shot at @p target from scratch, as firing at it from the creature list does;
+        /// false when it is beyond the range of the wielded gun.
+        auto choose_fire_target( const Creature &target ) -> bool;
 
         /** Check for dangerous stuff at dest_loc, return false if the player decides
         not to step there */
@@ -950,7 +951,8 @@ class game : public submap_load_listener
         bool grabbed_veh_move( const tripoint_rel_ms &dp );
         auto grabbed_furn_move( const tripoint_rel_ms &dp ) -> bool;
 
-        void control_vehicle(); // Use vehicle controls  '^'
+        /// Uses vehicle controls  '^'; @p where picks the adjacent controls the native prompt would ask for.
+        auto control_vehicle( const std::optional<tripoint_bub_ms> &where = std::nullopt ) -> void;
         void examine( const tripoint_bub_ms &p ); // Examine nearby terrain  'e'
         void examine();
 
@@ -1059,13 +1061,11 @@ class game : public submap_load_listener
         auto has_activity_skip_relevant_vehicle() -> bool;
         auto has_activity_skip_active_fire() -> bool;
         auto run_activity_skip_batch_turns( int skipped_turns ) -> void;
-        auto handle_wait_activity_redraw( bool force = false ) -> void;
         auto run_activity_cadence_boundary() -> void;
         void handle_key_blocking_activity(); // Abort reading etc.
         void open_consume_item_menu(); // Custom menu for consuming specific group of items
         bool handle_action();
         bool try_get_right_click_action( action_id &act, const tripoint_bub_ms &mouse_target );
-        bool try_get_left_click_action( action_id &act, const tripoint_bub_ms &mouse_target );
 
         void item_action_menu(); // Displays item action menu
 
@@ -1076,6 +1076,20 @@ class game : public submap_load_listener
     public:
         // Draws the pixel minimap based on the player's current location
         void draw_pixel_minimap( const catacurses::window &w );
+        /// Left click on a map square: first click plans `destination_preview`, a second click on its
+        /// end starts auto-move and sets `act` to the first step.
+        bool try_get_left_click_action( action_id &act, const tripoint_bub_ms &mouse_target );
+        /// The route a first click planned, nearest square first, ending at the clicked square.
+        auto get_destination_preview() const -> const std::vector<tripoint_bub_ms>& { // *NOPAD*
+            return destination_preview;
+        }
+        /// The square the terrain window is centered on: the one the last draw centered it on while looking around,
+        /// else where the next draw will center it, since the avatar moves and the map shifts between draws.
+        auto terrain_view_center() const -> point_bub_ms;
+        /// The squares of the current level the terrain window shows, so a click can select them.
+        auto click_window() const -> std::optional<half_open_rectangle<point_bub_ms>>;
+        /// The terrain window cell whose click selects `target`; nullopt when it is not shown.
+        auto click_cell_of( const tripoint_bub_ms &target ) const -> std::optional<point>;
     private:
 
         //  int autosave_timeout();  // If autosave enabled, how long we should wait for user inaction before saving.
@@ -1119,6 +1133,7 @@ class game : public submap_load_listener
                 using IRLTimeMs = std::chrono::time_point<std::chrono::system_clock, std::chrono::milliseconds>;
                 void toggle();
                 void print_time();
+                auto is_enabled() const -> bool { return enabled; }
             private:
                 bool enabled = false;
                 std::optional<IRLTimeMs> start_time = std::nullopt;
@@ -1198,6 +1213,8 @@ class game : public submap_load_listener
         bool display_overlay_state( action_id );
         // toggles the timing of in-game hours
         void toggle_debug_hour_timer();
+        auto debug_hour_timer_enabled() const -> bool { return debug_hour_timer.is_enabled(); }
+        auto reset_safe_mode_warning() -> void { safe_mode_warning_logged = false; }
         /** Creature for which to display the visibility map */
         Creature *displaying_visibility_creature;
         /** Type of lighting condition overlay to display */
@@ -1299,6 +1316,8 @@ class game : public submap_load_listener
 
         std::unique_ptr<static_popup> wait_popup;
     public:
+        /// Shows the wait popup while the avatar waits, sleeps or travels, and drops it otherwise.
+        auto handle_wait_activity_redraw( bool force = false ) -> void;
         /** Used to implement mouse "edge scrolling". Returns a
          *  tripoint which is a vector of the resulting "move", i.e.
          *  (0, 0, 0) if the mouse is not at the edge of the screen,
@@ -1323,6 +1342,8 @@ class game : public submap_load_listener
         // Set during dimension transitions to prevent temperature/weather code from
         // accessing partially-loaded map data. Reset to false at the start of the next turn.
         bool swapping_dimensions = false;
+        /// Drops the reality bubble and lazy border load requests held by the active map.
+        auto release_active_load_regions() -> void;
     private:
         /// Sets both current_dimension_id_ and g_active_dimension_id to @p dim_id.
         /// Always use this instead of assigning the two fields separately.
@@ -1336,7 +1357,6 @@ class game : public submap_load_listener
         /// is set and before bind_dimension().
         auto activate_dimension_state( const dimension_id &new_dim_id,
                                        const dimension_id &old_dim_id ) -> void;
-        auto release_active_load_regions() -> void;
         auto update_active_load_regions( const dimension_id &dim_id,
                                          const point_abs_sm &begin,
                                          const point_abs_sm &end ) -> void;
@@ -1363,8 +1383,9 @@ class game : public submap_load_listener
         bool in_activity_bubble_ = false;
 
         // Avoid paying the fixed-window proof cost every turn when a long activity is
-        // currently ineligible because of nearby simulation state.
-        time_point next_activity_fixed_window_check_ = calendar::turn_zero;
+        // currently ineligible because of nearby simulation state: the turn a check failed,
+        // which defers the next one for a minute of the clock running forward from it.
+        std::optional<time_point> activity_fixed_window_deferred_at_;
         bool activity_fixed_window_force_normal_turn_ = false;
 
         // Consecutive turns each dynamic condition has been continuously met.

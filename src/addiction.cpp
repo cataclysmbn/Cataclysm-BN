@@ -85,13 +85,13 @@ void addict_effect( Character &u, addiction &add )
                 break;
             }
 
-            u.add_msg_if_player( m_warning, _( "You want some caffeine." ) );
+            u.add_msg_if_player( m_warning, to_translation( "You want some caffeine." ) );
             u.add_morale( MORALE_CRAVING_CAFFEINE, -5, -30 );
             if( current_stim > -10 * in && rng( 0, 10 ) < in ) {
                 u.mod_stim( -1 );
             }
             if( rng( 8, 400 ) < in ) {
-                u.add_msg_if_player( m_bad, _( "Your hands start shaking… you need it bad!" ) );
+                u.add_msg_if_player( m_bad, to_translation( "Your hands start shaking… you need it bad!" ) );
                 u.add_effect( effect_shakes, 2_minutes );
             }
             break;
@@ -122,7 +122,7 @@ void addict_effect( Character &u, addiction &add )
                     u.add_msg_if_player( m_warning, msg_1 );
                     u.add_morale( morale_type, morale_penalty_min, morale_penalty_max );
                     if( on_ghb && one_in( 5 ) ) {
-                        u.add_msg_if_player( _( "The GHB makes it not so bad." ) );
+                        u.add_msg_if_player( to_translation( "The GHB makes it not so bad." ) );
                     }
                 } else if( action_time_scale::once_every_this_tick( 1_minutes ) &&
                            rng( 8, 300 ) < in && ( !on_ghb || one_in( 2 ) ) ) {
@@ -135,7 +135,7 @@ void addict_effect( Character &u, addiction &add )
                     const time_duration shake_duration = on_ghb ? 2_minutes : 5_minutes;
                     u.add_effect( effect_shakes, shake_duration );
                     if( on_ghb && one_in( 5 ) ) {
-                        u.add_msg_if_player( _( "The GHB makes it not so bad." ) );
+                        u.add_msg_if_player( to_translation( "The GHB makes it not so bad." ) );
                     }
                 }
             }
@@ -172,11 +172,12 @@ void addict_effect( Character &u, addiction &add )
                 u.mod_healthy_mod( -1, -in * 30 );
             }
             if( one_in( 20 ) && dice( 2, 20 ) < in ) {
-                u.add_msg_if_player( m_bad, _( "Your hands start shaking… you need some painkillers." ) );
+                u.add_msg_if_player( m_bad,
+                                     to_translation( "Your hands start shaking… you need some painkillers." ) );
                 u.add_morale( MORALE_CRAVING_OPIATE, -40, -10 * in );
                 u.add_effect( effect_shakes, 2_minutes + in * 30_seconds );
             } else if( one_in( 20 ) && dice( 2, 30 ) < in ) {
-                u.add_msg_if_player( m_bad, _( "You feel anxious.  You need your painkillers!" ) );
+                u.add_msg_if_player( m_bad, to_translation( "You feel anxious.  You need your painkillers!" ) );
                 u.add_morale( MORALE_CRAVING_OPIATE, -30, -10 * in );
             } else if( one_in( 50 ) && dice( 3, 50 ) < in ) {
                 u.vomit();
@@ -196,14 +197,15 @@ void addict_effect( Character &u, addiction &add )
                 u.mod_healthy_mod( -1, -in );
             }
             if( dice( 2, 100 ) < in ) {
-                u.add_msg_if_player( m_warning, _( "You feel depressed.  Speed would help." ) );
+                u.add_msg_if_player( m_warning, to_translation( "You feel depressed.  Speed would help." ) );
                 u.add_morale( MORALE_CRAVING_SPEED, -25, -50 - 10 * in );
             } else if( one_in( 10 ) && dice( 2, 80 ) < in ) {
-                u.add_msg_if_player( m_bad, _( "Your hands start shaking… you need a pick-me-up." ) );
+                u.add_msg_if_player( m_bad,
+                                     to_translation( "Your hands start shaking… you need a pick-me-up." ) );
                 u.add_morale( MORALE_CRAVING_SPEED, -25, -50 - 10 * in );
                 u.add_effect( effect_shakes, in * 2_minutes );
             } else if( one_in( 50 ) && dice( 2, 100 ) < in ) {
-                u.add_msg_if_player( m_bad, _( "You stop suddenly, feeling bewildered." ) );
+                u.add_msg_if_player( m_bad, to_translation( "You stop suddenly, feeling bewildered." ) );
                 u.moves -= 300;
             } else if( !u.has_effect( effect_hallu ) && one_in( 20 ) && 8 + dice( 2, 80 ) < in ) {
                 u.add_effect( effect_hallu, 6_hours );
@@ -245,7 +247,7 @@ void addict_effect( Character &u, addiction &add )
                 if( u.focus_pool > 40 && one_in( 800 - 20 * in ) ) {
                     u.focus_pool -= in;
                     u.add_msg_if_player( m_warning,
-                                         _( "You daydream what it'd be like if you were *different*.  Different is good." ) );
+                                         to_translation( "You daydream what it'd be like if you were *different*.  Different is good." ) );
                 }
             } else if( one_in( 500 - 15 * in ) ) {
                 u.add_msg_if_player( m_warning, rng( 0, 6 ) < in ? _( "You haven't had any mutagen lately." ) :

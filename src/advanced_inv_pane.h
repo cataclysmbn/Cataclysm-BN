@@ -110,6 +110,7 @@ class advanced_inventory_pane
          * item in @ref items.
          */
         advanced_inv_listitem *get_cur_item_ptr();
+        auto get_cur_item_ptr() const -> const advanced_inv_listitem *; // *NOPAD*
         /**
          * Set the filter string, disables filtering when the filter string is empty.
          */

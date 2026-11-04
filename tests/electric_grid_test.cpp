@@ -157,6 +157,7 @@ TEST_CASE("grid_and_vehicle_outside_bubble", "[grids][vehicle]") {
     const auto old_abs_sub = m.get_abs_sub();
     // Ugly: we move the real map instead of the detached test map to reuse clear_map() results
     m.load(m.get_abs_sub() + point(m.getmapsize(), 0), true);
+    const auto restore_map = on_out_of_scope([&m, old_abs_sub]() { m.load(old_abs_sub, true); });
     GIVEN("vehicle and battery are on one grid") {
         map tm(2);
         tm.load(old_abs_sub, false);
@@ -404,7 +405,9 @@ TEST_CASE("grid_furn_transform_queue_outside_bubble", "[grids]") {
 
     // Ugly: we move the real map to have submap exist in mapbuffer only
     map& m = get_map();
+    const auto old_abs_sub = m.get_abs_sub();
     m.load(m.get_abs_sub() + point(m.getmapsize(), 0), true);
+    const auto restore_map = on_out_of_scope([&m, old_abs_sub]() { m.load(old_abs_sub, true); });
 
     grid_furn_transform_queue tf_queue;
     tf_queue.add(pos_abs, f_floor_lamp_on, "");

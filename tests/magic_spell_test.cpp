@@ -155,6 +155,8 @@ TEST_CASE(
 TEST_CASE("known magic remembers the last cast spell", "[magic][spell][save]") {
     clear_all_state();
     clear_avatar();
+    // Clearing the avatar keeps its spells, so the ones learned here go when the case ends.
+    const auto restore_magic = restore_on_out_of_scope<known_magic>(*g->u.magic);
 
     const auto pew_id = spell_id("test_spell_pew");
     const auto lava_id = spell_id("test_spell_lava");

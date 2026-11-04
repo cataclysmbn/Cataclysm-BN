@@ -16,9 +16,15 @@ void clear_npcs();
 void clear_fields(int zlevel);
 void clear_items(int zlevel);
 void clear_map();
+/// Makes the open air above the ground the uniform submaps the game generates for it, as
+/// `clear_map` leaves every square written to.
+auto make_open_air_uniform() -> void;
 void clear_overmap();
 void put_player_underground();
 auto move_player_out_of_the_way() -> void;
+/// Binds the real map to `dim` and releases every load request, as a test that loads its map
+/// directly holds none.
+auto rebind_map_dimension(const dimension_id& dim) -> void;
 auto spawn_test_monster(const std::string& monster_type, const tripoint_bub_ms& start)
     -> monster&; // *NOPAD*
 void clear_vehicles();

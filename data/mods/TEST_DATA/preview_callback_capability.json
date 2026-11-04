@@ -1,0 +1,26 @@
+[
+  {
+    "type": "ARMOR",
+    "id": "test_preview_callback_coat",
+    "name": "TEST callback preview coat",
+    "description": "A deterministic coat for real Lua preview callback capability witnesses.",
+    "weight": "100 g",
+    "volume": "250 ml",
+    "material": [ "cotton" ],
+    "symbol": "[",
+    "color": "white",
+    "covers": [ "torso" ],
+    "coverage": 100,
+    "encumbrance": 0,
+    "warmth": 0,
+    "material_thickness": 1
+  },
+  {
+    "type": "profession",
+    "id": "test_preview_callback_profession",
+    "name": "TEST callback preview profession",
+    "description": "One fixed callback coat without CBMs or randomized inscriptions.",
+    "points": 0,
+    "items": { "both": [ "test_preview_callback_coat" ] }
+  }
+]

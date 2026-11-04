@@ -8,6 +8,24 @@ Run `tests/cata_test --help` to see the available command-line options, and/or c
 [Catch2 tutorial](https://github.com/catchorg/Catch2/blob/devel/docs/tutorial.md) for a more
 thorough introduction.
 
+## Running the whole suite
+
+Run the full suite as filename-tag shards, the way CI does. The runner starts one test process per
+shard (about 25 s of data loading each), so it uses at most `--jobs` processes at once:
+
+```sh
+build-scripts/run-linux-test-shards.ts --mode file-tags --jobs 4 \
+  ./out/build/linux-full/tests/cata_test-tiles -- --use-colour no --rng-seed 1 --gpu-backend=software
+```
+
+Pass `./out/build/linux-full/tests/cata_test-mcp` to run the MCP variant. Shards are balanced by
+`build-scripts/test-shard-weights.json`; regenerate it from Catch2 XML reports (add `-r xml -d yes`
+to the test options and keep the runner's output) after tests change a lot:
+
+```sh
+build-scripts/test-shard-weights.ts shards.log > build-scripts/test-shard-weights.json
+```
+
 ## Playtesting pull requests
 
 Use [`just playtest [--os OS] <PR URL>`](../reference/tooling.md#playtesting-pull-requests) to download and launch

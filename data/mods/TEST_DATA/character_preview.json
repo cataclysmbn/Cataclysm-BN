@@ -1,0 +1,216 @@
+[
+  {
+    "type": "ARMOR",
+    "id": "test_preview_coat",
+    "name": "TEST preview coat",
+    "description": "A fixed profession coat whose inscription exercises native item generation.",
+    "weight": "100 g",
+    "volume": "250 ml",
+    "material": [ "cotton" ],
+    "symbol": "[",
+    "color": "white",
+    "covers": [ "torso" ],
+    "coverage": 100,
+    "encumbrance": 0,
+    "warmth": 0,
+    "material_thickness": 1,
+    "flags": [ "VARSIZE" ],
+    "snippet_category": [
+      { "id": "test_preview_inscription_a", "text": "First preview inscription." },
+      { "id": "test_preview_inscription_b", "text": "Second preview inscription." }
+    ]
+  },
+  {
+    "type": "GENERIC",
+    "id": "test_preview_wielded",
+    "name": "TEST preview wielded item",
+    "description": "A fixed profession item with the native auto-wield flag.",
+    "weight": "100 g",
+    "volume": "250 ml",
+    "material": [ "steel" ],
+    "symbol": "/",
+    "color": "white",
+    "flags": [ "auto_wield" ]
+  },
+  {
+    "type": "mutation",
+    "id": "test_preview_trait",
+    "name": "TEST preview trait",
+    "description": "A visible inert preview trait.",
+    "points": 0
+  },
+  {
+    "type": "mutation",
+    "id": "test_preview_active_trait",
+    "name": "TEST active preview trait",
+    "description": "A visible powered preview trait without gameplay modifiers.",
+    "points": 0,
+    "active": true,
+    "starts_active": true
+  },
+  {
+    "type": "effect_type",
+    "id": "test_preview_effect",
+    "name": [ "TEST preview effect" ],
+    "desc": [ "A visible inert preview effect." ]
+  },
+  {
+    "type": "BIONIC_ITEM",
+    "id": "test_preview_profession_cbm",
+    "name": "TEST preview profession CBM item",
+    "description": "The item version of the preview profession CBM.",
+    "weight": "1 g",
+    "volume": "1 ml",
+    "material": [ "steel" ],
+    "symbol": ":",
+    "color": "yellow",
+    "difficulty": 1,
+    "flags": [ "CBM" ],
+    "use_action": "install_bionic"
+  },
+  {
+    "type": "BIONIC_ITEM",
+    "id": "test_preview_installed_cbm",
+    "name": "TEST installed preview CBM item",
+    "description": "The item version of the actor-installed preview CBM.",
+    "weight": "1 g",
+    "volume": "1 ml",
+    "material": [ "steel" ],
+    "symbol": ":",
+    "color": "yellow",
+    "difficulty": 1,
+    "flags": [ "CBM" ],
+    "use_action": "install_bionic"
+  },
+  {
+    "type": "bionic",
+    "id": "test_preview_profession_cbm",
+    "name": { "str": "TEST preview profession CBM" },
+    "description": "A profession CBM with native capacity messages.",
+    "capacity": "7 kJ",
+    "included_bionics": [ "test_preview_included_cbm" ]
+  },
+  {
+    "type": "bionic",
+    "id": "test_preview_included_cbm",
+    "name": { "str": "TEST included preview CBM" },
+    "description": "An included CBM that also retains its native overlay.",
+    "included": true
+  },
+  {
+    "type": "bionic",
+    "id": "test_preview_installed_cbm",
+    "name": { "str": "TEST installed preview CBM" },
+    "description": "An actor-installed CBM with native capacity messages.",
+    "capacity": "11 kJ"
+  },
+  {
+    "type": "profession",
+    "id": "test_preview_profession",
+    "name": "TEST preview profession",
+    "description": "Fixed real gear and CBMs for presentation lifetime tests.",
+    "points": 0,
+    "items": { "both": [ "test_preview_coat", "test_preview_wielded" ] },
+    "CBMs": [ "test_preview_profession_cbm" ]
+  },
+  {
+    "type": "overlay_order",
+    "overlay_ordering": [
+      { "order": 10, "id": [ "test_preview_trait" ] },
+      { "order": 20, "id": [ "active_test_preview_active_trait" ] },
+      { "order": 30, "id": [ "test_preview_profession_cbm" ] },
+      { "order": 40, "id": [ "test_preview_included_cbm" ] },
+      { "order": 50, "id": [ "test_preview_installed_cbm" ] }
+    ]
+  },
+  {
+    "type": "mutation",
+    "id": "test_preview_spell_class",
+    "name": "TEST preview spell class",
+    "description": "A native class learned by the temporary preview actor.",
+    "points": 0
+  },
+  {
+    "type": "SPELL",
+    "id": "test_preview_spell",
+    "name": "TEST preview spell",
+    "description": "A native preview CBM spell.",
+    "spell_class": "test_preview_spell_class",
+    "effect": "target_attack",
+    "valid_targets": [ "hostile" ],
+    "max_level": 5,
+    "difficulty": 1,
+    "base_casting_time": 100,
+    "base_energy_cost": 0,
+    "energy_source": "MANA"
+  },
+  {
+    "type": "bionic",
+    "id": "test_preview_active_cbm",
+    "name": { "str": "TEST initially active preview CBM" },
+    "description": "A native toggled CBM eligible to activate without power or fuel.",
+    "flags": [ "INITIALLY_ACTIVATE", "BIONIC_TOGGLED" ],
+    "learned_spells": [ [ "test_preview_spell", 1 ] ]
+  },
+  {
+    "type": "bionic",
+    "id": "test_preview_power_blocked_cbm",
+    "name": { "str": "TEST power-blocked preview CBM" },
+    "description": "An initially active CBM requiring power the temporary actor lacks.",
+    "flags": [ "INITIALLY_ACTIVATE", "BIONIC_TOGGLED" ],
+    "act_cost": "1 kJ"
+  },
+  {
+    "type": "bionic",
+    "id": "test_preview_fuel_blocked_cbm",
+    "name": { "str": "TEST fuel-blocked preview CBM" },
+    "description": "An initially active CBM requiring fuel the temporary actor lacks.",
+    "flags": [ "INITIALLY_ACTIVATE", "BIONIC_TOGGLED" ],
+    "fuel_options": [ "battery" ],
+    "fuel_capacity": 10
+  },
+  {
+    "type": "bionic",
+    "id": "test_preview_spell_upgrade_cbm",
+    "name": { "str": "TEST preview spell upgrade CBM" },
+    "description": "An installed CBM upgrading the same native preview spell.",
+    "learned_spells": [ [ "test_preview_spell", 3 ] ]
+  },
+  {
+    "type": "profession",
+    "id": "test_preview_active_profession",
+    "name": "TEST active preview profession",
+    "description": "Native initially active, power-gated, fuel-gated and spell-granting CBMs.",
+    "points": 0,
+    "items": { "both": [ "test_preview_coat", "test_preview_wielded" ] },
+    "CBMs": [ "test_preview_active_cbm", "test_preview_power_blocked_cbm", "test_preview_fuel_blocked_cbm" ]
+  },
+  {
+    "type": "BIONIC_ITEM",
+    "id": "test_preview_active_cbm",
+    "copy-from": "test_preview_profession_cbm",
+    "name": "TEST preview active CBM item",
+    "description": "A native preview eligibility test CBM."
+  },
+  {
+    "type": "BIONIC_ITEM",
+    "id": "test_preview_power_blocked_cbm",
+    "copy-from": "test_preview_profession_cbm",
+    "name": "TEST preview power_blocked CBM item",
+    "description": "A native preview eligibility test CBM."
+  },
+  {
+    "type": "BIONIC_ITEM",
+    "id": "test_preview_fuel_blocked_cbm",
+    "copy-from": "test_preview_profession_cbm",
+    "name": "TEST preview fuel_blocked CBM item",
+    "description": "A native preview eligibility test CBM."
+  },
+  {
+    "type": "BIONIC_ITEM",
+    "id": "test_preview_spell_upgrade_cbm",
+    "copy-from": "test_preview_profession_cbm",
+    "name": "TEST preview spell_upgrade CBM item",
+    "description": "A native preview eligibility test CBM."
+  }
+]

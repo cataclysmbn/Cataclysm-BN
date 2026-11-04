@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <string_view>
+#include <vector>
 
 #include "catalua_sol_fwd.h"
 

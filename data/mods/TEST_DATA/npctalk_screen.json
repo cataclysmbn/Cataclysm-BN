@@ -1,0 +1,55 @@
+[
+  {
+    "type": "talk_topic",
+    "id": "TALK_TEST_NPCTALK_PIN",
+    "dynamic_line": "Pinned narrative.",
+    "responses": [
+      { "text": "Plain response.", "topic": "TALK_DONE" },
+      { "text": "*Acts helpless.", "topic": "TALK_DONE" },
+      { "text": "&Acts out loud.", "topic": "TALK_DONE" },
+      {
+        "text": "Persuade the NPC.",
+        "trial": { "type": "PERSUADE", "difficulty": 20 },
+        "success": { "topic": "TALK_DONE" },
+        "failure": { "topic": "TALK_DONE" }
+      },
+      {
+        "text": "Intimidate the NPC.",
+        "trial": { "type": "INTIMIDATE", "difficulty": 40 },
+        "success": { "topic": "TALK_DONE" },
+        "failure": { "topic": "TALK_DONE" }
+      },
+      { "text": "Goodbye.", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_TEST_NPCTALK_IDENTITY",
+    "dynamic_line": "Identity narrative.",
+    "responses": [
+      {
+        "text": "Only while flagged.",
+        "condition": { "u_has_var": "flagged", "type": "test", "context": "npctalk_identity", "value": "yes" },
+        "topic": "TALK_DONE"
+      },
+      { "text": "Plain response.", "topic": "TALK_NONE" },
+      { "id": "leave", "text": "Leave.", "topic": "TALK_DONE" },
+      { "text": "Plain response.", "topic": "TALK_NONE" }
+    ],
+    "repeat_responses": [
+      { "for_item": [ "tshirt", "jeans" ], "response": { "text": "Offer the <topic_item>.", "topic": "TALK_NONE" } },
+      { "for_category": "clothing", "response": { "text": "Hand over the <topic_item>.", "topic": "TALK_NONE" } }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_TEST_NPCTALK_EXTENDED",
+    "dynamic_line": "Extended narrative.",
+    "responses": [ { "text": "First of the base data.", "topic": "TALK_DONE" } ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_TEST_NPCTALK_EXTENDED",
+    "responses": [ { "text": "First of the extension.", "topic": "TALK_DONE" } ]
+  }
+]

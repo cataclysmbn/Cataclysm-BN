@@ -441,16 +441,17 @@ auto select_shader_format(SDL_GPUShaderFormat const formats)
     return {SDL_GPU_SHADERFORMAT_INVALID, ""};
 }
 
+/// Whether the device can run the compiled shaders in data/shaders.
 auto probe_shader(
     SDL_GPUDevice* const device, SDL_GPUShaderFormat const fmt, std::string_view const ext)
-    -> void {
+    -> bool {
     auto const path = PATH_INFO::shaders() + "test_compute" + std::string{ext};
     auto const blob = read_file_bytes(path);
     if (blob.empty()) {
         DebugLog(DL::Info, DC::Main)
             << "SDL_GPU: shader blob not found: " << path
             << " (run a build with shadercross to compile shaders)";
-        return;
+        return false;
     }
 
     SDL_GPUComputePipelineCreateInfo const info{
@@ -474,11 +475,12 @@ auto probe_shader(
     if (pipeline == nullptr) {
         DebugLog(DL::Warn, DC::Main)
             << "SDL_GPU: compute pipeline creation failed for " << path << ": " << SDL_GetError();
-        return;
+        return false;
     }
 
     DebugLog(DL::Info, DC::Main) << "SDL_GPU: shader probe OK (" << path << ")";
     SDL_ReleaseGPUComputePipeline(device, pipeline);
+    return true;
 }
 
 } // namespace
@@ -559,7 +561,17 @@ auto init() -> void {
                                                              : "sdl_gpu_hardware");
 
     auto const [fmt, ext] = select_shader_format(formats);
-    if (fmt != SDL_GPU_SHADERFORMAT_INVALID) { probe_shader(device, fmt, ext); }
+    if (fmt != SDL_GPU_SHADERFORMAT_INVALID && !probe_shader(device, fmt, ext)) {
+        auto const require_gpu_device = accel == compute_accel::gpu || require_software_device;
+        DebugLog(require_gpu_device ? DL::Error : DL::Warn, DC::Main)
+            << "SDL_GPU: compute shaders are missing or unusable in " << PATH_INFO::shaders()
+            << "; "
+            << (require_gpu_device
+                    ? "the selected GPU compute backend is unavailable"
+                    : "CPU compute fallback will be selected");
+        SDL_DestroyGPUDevice(device);
+        return;
+    }
 
     s_device = device;
 }

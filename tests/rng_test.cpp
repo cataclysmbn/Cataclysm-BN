@@ -70,3 +70,14 @@ TEST_CASE("random_entry_preserves_constness") {
     i1 = 5678;
     CHECK(v1[0] == 5678);
 }
+
+TEST_CASE("a seed draws the same floats with every standard library", "[rng]") {
+    rng_set_engine_seed(424242);
+    auto engine = rng_get_engine();
+    // Two draws fill a double's mantissa, the low one first.
+    const auto range = static_cast<double>(engine.max() - engine.min()) + 1.0;
+    const auto low = static_cast<double>(engine() - engine.min());
+    const auto high = static_cast<double>(engine() - engine.min());
+    CHECK(rng_float(0.0, 1.0) == (low + high * range) / (range * range));
+    CHECK(rng_get_engine() == engine);
+}

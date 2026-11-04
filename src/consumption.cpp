@@ -11,6 +11,10 @@
 #include "catalua_icallback_actor.h"
 #include "catalua_sol.h"
 #include "character.h"
+#include "character_functions.h"
+#include "crafting_inventory_request.h"
+#include "item_preview.h"
+#include "nutrient_range.h"
 #include "craft_command.h"
 #include "debug.h"
 #include "enchantments/enchantment.h"
@@ -359,119 +363,186 @@ nutrients Character::compute_effective_nutrients( const item &comest ) const
     }
 }
 
-// Calculate range of nutrients obtainable for a given item when crafted via
-// the given recipe
-std::pair<nutrients, nutrients> Character::compute_nutrient_range(
-    const item &comest, const recipe_id &recipe_i,
-    const cata::flat_set<flag_id> &extra_flags ) const
+namespace
 {
+
+struct nutrient_calculation_context {
+    const Character &you;
+    const inventory *crafting_inv = nullptr;
+    const recipe_subset *available_recipes = nullptr;
+
+    auto observing() const -> bool { return crafting_inv != nullptr; }
+};
+
+auto nutrient_range_for_type( const nutrient_calculation_context &context,
+                              const itype_id &comest_id,
+                              const cata::flat_set<flag_id> &extra_flags ) -> nutrient_range;
+
+auto can_make_for_nutrients( const nutrient_calculation_context &context,
+                             const recipe &rec, int charges ) -> bool
+{
+    if( !context.observing() ) {
+        return g->u.can_make( &rec, charges );
+    }
+    // Native has_recipe treats recipes without a primary skill as known unconditionally.
+    if( rec.skill_used && !context.available_recipes->contains( rec ) ) {
+        return false;
+    }
+    return rec.can_make_with_inventory_for_display( *context.crafting_inv, charges );
+}
+
+// Both gameplay and observation use the same recursive arithmetic and availability rules.
+auto nutrient_range_for_recipe( const nutrient_calculation_context &context,
+                                const nutrient_range_request &request ) -> nutrient_range
+{
+    const auto &comest = request.food;
     if( !comest.is_comestible() ) {
         return {};
     }
 
-    const recipe &rec = *recipe_i;
-    int charges = comest.count();
-    // if item has components, will derive calories from that instead.
-    if( comest.has_flag( flag_NUTRIENT_OVERRIDE ) || !g->u.can_make( &rec, charges ) ) {
-        nutrients result = compute_default_effective_nutrients( comest, *this );
-        return { result, result };
+    const auto &rec = *request.recipe;
+    const auto charges = comest.count();
+    if( comest.has_flag( flag_NUTRIENT_OVERRIDE ) ||
+        !can_make_for_nutrients( context, rec, charges ) ) {
+        const auto result = compute_default_effective_nutrients( comest, context.you );
+        return { .minimum = result, .maximum = result };
     }
 
-    nutrients tally_min;
-    nutrients tally_max;
-
-    cata::flat_set<flag_id> our_extra_flags = extra_flags;
-
-    if( rec.hot_result() || rec.dehydrate_result() ) {
+    auto tally = nutrient_range{};
+    auto our_extra_flags = request.extra_flags;
+    const auto cooked = context.observing() ?
+                        rec.hot_result_for_display() || rec.dehydrate_result_for_display() :
+                        rec.hot_result() || rec.dehydrate_result();
+    if( cooked ) {
         our_extra_flags.insert( flag_COOKED );
     }
 
-    const requirement_data requirements = rec.simple_requirements();
-    const requirement_data::alter_item_comp_vector &component_requirements =
-        requirements.get_components();
-
-    for( const std::vector<item_comp> &component_options : component_requirements ) {
-        nutrients this_min;
-        nutrients this_max;
-        bool first = true;
-        for( const item_comp &component_option : component_options ) {
-            if( component_option.has( g->u.crafting_inventory(), rec.get_component_filter(), charges ) ) {
-                std::pair<nutrients, nutrients> component_option_range =
-                    compute_nutrient_range( component_option.type, our_extra_flags );
-                component_option_range.first *= component_option.count;
-                component_option_range.second *= component_option.count;
-
+    const auto requirements = rec.simple_requirements();
+    for( const auto &component_options : requirements.get_components() ) {
+        auto this_range = nutrient_range{};
+        auto first = true;
+        for( const auto &component_option : component_options ) {
+            const auto &crafting_inv = context.observing() ? *context.crafting_inv :
+                                       g->u.crafting_inventory();
+            const auto filter = context.observing() ? rec.get_component_filter_for_display() :
+                                rec.get_component_filter();
+            if( component_option.has( crafting_inv, filter, charges ) ) {
+                auto option_range = nutrient_range_for_type( context, component_option.type, our_extra_flags );
+                option_range.minimum *= component_option.count;
+                option_range.maximum *= component_option.count;
                 if( first ) {
-                    std::tie( this_min, this_max ) = component_option_range;
+                    this_range = option_range;
                     first = false;
                 } else {
-                    this_min.min_in_place( component_option_range.first );
-                    this_max.max_in_place( component_option_range.second );
+                    this_range.minimum.min_in_place( option_range.minimum );
+                    this_range.maximum.max_in_place( option_range.maximum );
                 }
             }
         }
-        tally_min += this_min;
-        tally_max += this_max;
+        tally.minimum += this_range.minimum;
+        tally.maximum += this_range.maximum;
     }
 
-    for( const std::pair<const itype_id, int> &byproduct : rec.byproducts ) {
-        item &byproduct_it = *item::spawn_temporary( byproduct.first, calendar::turn, byproduct.second );
-        nutrients byproduct_nutr = compute_default_effective_nutrients( byproduct_it, *this );
-        tally_min -= byproduct_nutr;
-        tally_max -= byproduct_nutr;
+    for( const auto &byproduct : rec.byproducts ) {
+        const auto byproduct_it = context.observing() ?
+                                  item::spawn_for_display( { .type = &*byproduct.first, .charges = byproduct.second } ) :
+                                  item::spawn( byproduct.first, calendar::turn, byproduct.second );
+        const auto byproduct_nutr = compute_default_effective_nutrients( *byproduct_it, context.you );
+        tally.minimum -= byproduct_nutr;
+        tally.maximum -= byproduct_nutr;
     }
     if( comest.get_kcal_mult() > 1 ) {
-        tally_min.kcal *= comest.get_kcal_mult();
-        tally_max.kcal *= comest.get_kcal_mult();
+        tally.minimum.kcal *= comest.get_kcal_mult();
+        tally.maximum.kcal *= comest.get_kcal_mult();
     }
 
-    return { tally_min / charges, tally_max / charges };
+    return { .minimum = tally.minimum / charges, .maximum = tally.maximum / charges };
 }
 
-// Calculate the range of nturients possible for a given item across all
-// possible recipes
-std::pair<nutrients, nutrients> Character::compute_nutrient_range(
-    const itype_id &comest_id, const cata::flat_set<flag_id> &extra_flags ) const
+auto nutrient_range_for_type( const nutrient_calculation_context &context,
+                              const itype_id &comest_id,
+                              const cata::flat_set<flag_id> &extra_flags ) -> nutrient_range
 {
-    const itype *comest = &*comest_id;
+    const auto *comest = &*comest_id;
     if( !comest->comestible ) {
         return {};
     }
-    //TODO!: wtf is all this shit
-    item &comest_it = *item::spawn_temporary( comest, calendar::turn, 1 );
-    // The default nutrients are always a possibility
-    nutrients min_nutr = compute_default_effective_nutrients( comest_it, *this, extra_flags );
+    const auto comest_it = context.observing() ?
+                           item::spawn_for_display( { .type = comest, .charges = 1 } ) :
+                           item::spawn( comest, calendar::turn, 1 );
+    // The default nutrients are always a possibility.
+    const auto default_nutr = compute_default_effective_nutrients( *comest_it, context.you,
+                              extra_flags );
+    auto range = nutrient_range{ .minimum = default_nutr, .maximum = default_nutr };
 
     if( comest->has_flag( flag_NUTRIENT_OVERRIDE ) ||
         recipe_dict.is_item_on_loop( comest->get_id() ) ) {
-        return { min_nutr, min_nutr };
+        return range;
     }
 
-    nutrients max_nutr = min_nutr;
-
-    for( const recipe_id &rec : comest->recipes ) {
-        nutrients this_min;
-        nutrients this_max;
-
-        detached_ptr<item> res = rec->create_result();
-        item *result_it = &*res;
+    for( const auto &rec : comest->recipes ) {
+        auto result = context.observing() ? rec->create_result_for_display() : rec->create_result();
+        auto *result_it = &*result;
         if( result_it->contents.num_item_stacks() == 1 ) {
-            item &alt_result = result_it->contents.front();
-            if( alt_result.typeId() == comest_it.typeId() ) {
+            auto &alt_result = result_it->contents.front();
+            if( alt_result.typeId() == comest_it->typeId() ) {
                 result_it = &alt_result;
             }
         }
-        if( result_it->typeId() != comest_it.typeId() ) {
+        if( result_it->typeId() != comest_it->typeId() ) {
             debugmsg( "When creating recipe result expected %s, got %s\n",
-                      comest_it.typeId().str(), result_it->typeId().str() );
+                      comest_it->typeId().str(), result_it->typeId().str() );
         }
 
-        std::tie( this_min, this_max ) = compute_nutrient_range( *result_it, rec, extra_flags );
-        min_nutr.min_in_place( this_min );
-        max_nutr.max_in_place( this_max );
+        const auto recipe_range = nutrient_range_for_recipe( context, {
+            .food = *result_it, .recipe = rec, .extra_flags = extra_flags,
+        } );
+        range.minimum.min_in_place( recipe_range.minimum );
+        range.maximum.max_in_place( recipe_range.maximum );
     }
 
-    return { min_nutr, max_nutr };
+    return range;
+}
+
+} // namespace
+
+auto Character::compute_nutrient_range(
+    const item &comest, const recipe_id &recipe_i,
+    const cata::flat_set<flag_id> &extra_flags ) const -> std::pair<nutrients, nutrients>
+{
+    const auto range = nutrient_range_for_recipe( { .you = *this }, {
+        .food = comest, .recipe = recipe_i, .extra_flags = extra_flags,
+    } );
+    return { range.minimum, range.maximum };
+}
+
+auto Character::compute_nutrient_range(
+    const itype_id &comest_id, const cata::flat_set<flag_id> &extra_flags ) const ->
+std::pair<nutrients, nutrients>
+{
+    const auto range = nutrient_range_for_type( { .you = *this }, comest_id, extra_flags );
+    return { range.minimum, range.maximum };
+}
+
+auto compute_nutrient_range_for_display( const Character &you,
+        const nutrient_range_request &request ) -> nutrient_range
+{
+    if( !request.food.is_comestible() ) {
+        return {};
+    }
+    if( request.food.has_flag( flag_NUTRIENT_OVERRIDE ) ) {
+        const auto result = compute_default_effective_nutrients( request.food, you );
+        return { .minimum = result, .maximum = result };
+    }
+    // Native availability is checked against the player's resources, even for another eater.
+    const auto inventory = g->u.crafting_inventory_for_display();
+    const auto helpers = character_funcs::get_crafting_helpers( g->u );
+    const auto available = g->u.get_available_recipes( {
+        .crafting_inv = inventory, .helpers = &helpers, .observation = true,
+    } );
+    return nutrient_range_for_recipe( {
+        .you = you, .crafting_inv = &inventory, .available_recipes = &available,
+    }, request );
 }
 
 int Character::nutrition_for( const item &comest ) const
@@ -897,7 +968,8 @@ bool Character::eat( item &food, bool force )
     if( has_effect( effect_bloated ) &&
         ( food_kcal > 0 || quench > 0 ) &&
         !food.has_flag( flag_NO_BLOAT ) ) {
-        add_msg_if_player( _( "You force yourself to vomit to make space for %s." ), food.tname() );
+        add_msg_if_player( to_translation( "You force yourself to vomit to make space for %s." ),
+                           food.tname() );
         vomit();
     }
 
@@ -928,9 +1000,9 @@ bool Character::eat( item &food, bool force )
 
     if( spoiled ) {
         if( !has_enchantment_flag( ench_flag_EAT_ROTTEN_MORALE ) ) {
-            add_msg_if_player( m_bad, _( "Ick, this %s doesn't taste so good…" ), food.tname() );
+            add_msg_if_player( m_bad, to_translation( "Ick, this %s doesn't taste so good…" ), food.tname() );
         } else {
-            add_msg_if_player( m_good, _( "Mmm, this %s tastes delicious…" ), food.tname() );
+            add_msg_if_player( m_good, to_translation( "Mmm, this %s tastes delicious…" ), food.tname() );
         }
         if( !has_enchantment_flag( ench_flag_EAT_ROTTEN ) &&
             !has_enchantment_flag( ench_flag_FOOD_POISON_IMMUNE ) ) {
@@ -989,13 +1061,16 @@ bool Character::eat( item &food, bool force )
     }
 
     if( amorphous ) {
-        add_msg_player_or_npc( _( "You assimilate your %s." ), _( "<npcname> assimilates a %s." ),
+        add_msg_player_or_npc( to_translation( "You assimilate your %s." ),
+                               to_translation( "<npcname> assimilates a %s." ),
                                food.tname() );
     } else if( drinkable ) {
-        add_msg_player_or_npc( _( "You drink your %s." ), _( "<npcname> drinks a %s." ),
+        add_msg_player_or_npc( to_translation( "You drink your %s." ),
+                               to_translation( "<npcname> drinks a %s." ),
                                food.tname() );
     } else if( chew ) {
-        add_msg_player_or_npc( _( "You eat your %s." ), _( "<npcname> eats a %s." ),
+        add_msg_player_or_npc( to_translation( "You eat your %s." ),
+                               to_translation( "<npcname> eats a %s." ),
                                food.tname() );
     }
 
@@ -1132,8 +1207,8 @@ void Character::modify_morale( item &food, int nutr, const consume_overrides &ov
                                         get_map().has_nearby_fire( bub_pos(), PICKUP_RANGE ) );
         if( heater && heater->consume( *this ) ) {
             add_msg_player_or_npc( m_good,
-                                   _( "You heat up your %1$s using the %2$s." ),
-                                   _( "<npcname> heats up their %1$s using the %2$s." ),
+                                   to_translation( "You heat up your %1$s using the %2$s." ),
+                                   to_translation( "<npcname> heats up their %1$s using the %2$s." ),
                                    food.tname(), heater->it.tname() );
             morale_time += 2_hours;
             food_morale( MORALE_FOOD_HOT );
@@ -1142,11 +1217,11 @@ void Character::modify_morale( item &food, int nutr, const consume_overrides &ov
         const auto temp = rot::temp::for_location( get_map(), food );
 
         if( temp == temperature_flag::TEMP_FREEZER ) {
-            add_msg_if_player( m_good, _( "This stuff is icy!" ), food.tname() );
+            add_msg_if_player( m_good, to_translation( "This stuff is icy!" ), food.tname() );
             morale_time += 2_hours;
             food_morale( MORALE_FOOD_VERY_COLD );
         } else if( temp == temperature_flag::TEMP_FRIDGE || temp == temperature_flag::TEMP_ROOT_CELLAR ) {
-            add_msg_if_player( m_good, _( "This stuff is cold!" ), food.tname() );
+            add_msg_if_player( m_good, to_translation( "This stuff is cold!" ), food.tname() );
             morale_time += 1_hours;
             food_morale( MORALE_FOOD_COLD );
         }
@@ -1190,12 +1265,12 @@ void Character::modify_morale( item &food, int nutr, const consume_overrides &ov
         const bool psycho = has_trait( trait_PSYCHOPATH );
         const bool sapiovore = has_trait( trait_SAPIOVORE );
         if( cannibal ) {
-            add_msg_if_player( m_good, _( "You indulge your shameful hunger." ) );
+            add_msg_if_player( m_good, to_translation( "You indulge your shameful hunger." ) );
             add_morale( MORALE_CANNIBAL, 20, 200 );
         } else if( psycho || sapiovore ) {
             // Nothing - doesn't care enough to print a message
         } else {
-            add_msg_if_player( m_bad, _( "You feel horrible for eating a person." ) );
+            add_msg_if_player( m_bad, to_translation( "You feel horrible for eating a person." ) );
             add_morale( MORALE_CANNIBAL, -60, -400, 60_minutes, 30_minutes );
         }
     }
@@ -1204,26 +1279,27 @@ void Character::modify_morale( item &food, int nutr, const consume_overrides &ov
     if( !food.has_flag( flag_NO_INGEST ) ) {
         const auto allergy = allergy_type( food );
         if( allergy != MORALE_NULL ) {
-            add_msg_if_player( m_bad, _( "Yuck!  How can anybody eat this stuff?" ) );
+            add_msg_if_player( m_bad, to_translation( "Yuck!  How can anybody eat this stuff?" ) );
             add_morale( allergy, -75, -400, 30_minutes, 24_minutes );
         }
         if( food.has_flag( flag_ALLERGEN_JUNK ) ) {
             if( has_trait( trait_PROJUNK ) ) {
-                add_msg_if_player( m_good, _( "Mmm, junk food." ) );
+                add_msg_if_player( m_good, to_translation( "Mmm, junk food." ) );
                 add_morale( MORALE_SWEETTOOTH, 5, 30, 30_minutes, 24_minutes );
             }
             if( has_trait( trait_PROJUNK2 ) ) {
                 if( !one_in( 100 ) ) {
-                    add_msg_if_player( m_good, _( "When life's got you down, there's always sugar." ) );
+                    add_msg_if_player( m_good, to_translation( "When life's got you down, there's always sugar." ) );
                 } else {
-                    add_msg_if_player( m_good, _( "They may do what they must… you've already won." ) );
+                    add_msg_if_player( m_good, to_translation( "They may do what they must… you've already won." ) );
                 }
                 add_morale( MORALE_SWEETTOOTH, 10, 50, 1_hours, 50_minutes );
             }
             // Carnivores CAN eat junk food, but they won't like it much.
             // Pizza-scraping happens in consume_effects.
             if( has_trait( trait_CARNIVORE ) && !food.has_flag( flag_CARNIVORE_OK ) ) {
-                add_msg_if_player( m_bad, _( "Your stomach begins gurgling and you feel bloated and ill." ) );
+                add_msg_if_player( m_bad,
+                                   to_translation( "Your stomach begins gurgling and you feel bloated and ill." ) );
                 add_morale( MORALE_NO_DIGEST, -25, -125, 30_minutes, 24_minutes );
             }
         }
@@ -1232,7 +1308,8 @@ void Character::modify_morale( item &food, int nutr, const consume_overrides &ov
                       food.has_flag( flag_USE_EAT_VERB );
     if( !food.rotten() && chew && has_enchantment_flag( ench_flag_ONLY_EAT_ROTTEN ) ) {
         // It's OK to *drink* things that haven't rotted.  Alternative is to ban water.  D:
-        add_msg_if_player( m_bad, _( "Your stomach begins gurgling and you feel bloated and ill." ) );
+        add_msg_if_player( m_bad,
+                           to_translation( "Your stomach begins gurgling and you feel bloated and ill." ) );
         add_morale( MORALE_NO_DIGEST, -75, -400, 30_minutes, 24_minutes );
     }
     if( food.has_flag( flag_URSINE_HONEY ) && ( !crossed_threshold() ||
@@ -1243,9 +1320,10 @@ void Character::modify_morale( item &food, int nutr, const consume_overrides &ov
                         std::min( mutation_category_level[mutation_category_URSINE] / 8, 20 ) :
                         mutation_category_level[mutation_category_URSINE] / 12;
         if( honey_fun < 10 ) {
-            add_msg_if_player( m_good, _( "You find the sweet taste of honey surprisingly palatable." ) );
+            add_msg_if_player( m_good,
+                               to_translation( "You find the sweet taste of honey surprisingly palatable." ) );
         } else {
-            add_msg_if_player( m_good, _( "You feast upon the sweet honey." ) );
+            add_msg_if_player( m_good, to_translation( "You feast upon the sweet honey." ) );
         }
         add_morale( MORALE_HONEY, honey_fun, 100 );
     }
@@ -1301,7 +1379,7 @@ bool Character::consume_effects( item &food, const consume_overrides &overrides 
     if( !is_npc() && has_trait( trait_SLIMESPAWNER ) &&
         max_stored_kcal() < get_stored_kcal() + 4000 && get_thirst() < thirst_levels::slaked ) {
         add_msg_if_player( m_mixed,
-                           _( "You feel as though you're going to split open!  In a good way?" ) );
+                           to_translation( "You feel as though you're going to split open!  In a good way?" ) );
         mod_pain( 5 );
         int numslime = 1;
         for( int i = 0; i < numslime; i++ ) {
@@ -1313,7 +1391,7 @@ bool Character::consume_effects( item &food, const consume_overrides &overrides 
         mod_thirst( 40 );
         //~ slimespawns have *small voices* which may be the Nice equivalent
         //~ of the Rat King's ALL CAPS invective.  Probably shared-brain telepathy.
-        add_msg_if_player( m_good, _( "hey, you look like me!  let's work together!" ) );
+        add_msg_if_player( m_good, to_translation( "hey, you look like me!  let's work together!" ) );
     }
 
     // Set up food for ingestion
@@ -1386,38 +1464,28 @@ bool Character::feed_furnace_with( item &it )
 
     if( energy == 0 ) {
         add_msg_player_or_npc( m_info,
-                               _( "You digest your %s, but fail to acquire energy from it." ),
-                               _( "<npcname> digests their %s for energy, but fails to acquire energy from it." ),
+                               to_translation( "You digest your %s, but fail to acquire energy from it." ),
+                               to_translation( "<npcname> digests their %s for energy, but fails to acquire energy from it." ),
                                it.tname() );
     } else if( is_max_power() ) {
         add_msg_player_or_npc(
-            _( "You digest your %s, but you're fully powered already, so the energy is wasted." ),
-            _( "<npcname> digests a %s for energy, they're fully powered already, so the energy is wasted." ),
+            to_translation( "You digest your %s, but you're fully powered already, so the energy is wasted." ),
+            to_translation( "<npcname> digests a %s for energy, they're fully powered already, so the energy is wasted." ),
             it.tname() );
     } else {
         const int profitable_energy = std::min( energy,
                                                 units::to_kilojoule( get_max_power_level() - get_power_level() ) );
         if( it.count_by_charges() ) {
             add_msg_player_or_npc( m_info,
-                                   vgettext( "You digest %d %s and recharge %d point of energy.",
-                                             "You digest %d %s and recharge %d points of energy.",
-                                             profitable_energy
-                                           ),
-                                   vgettext( "<npcname> digests %d %s and recharges %d point of energy.",
-                                             "<npcname> digests %d %s and recharges %d points of energy.",
-                                             profitable_energy
-                                           ), consumed_charges, it.tname(), profitable_energy
+                                   localised::counted{ .format = pl_translation( "You digest %d %s and recharge %d point of energy.", "You digest %d %s and recharge %d points of energy." ), .count = profitable_energy },
+                                   localised::counted{ .format = pl_translation( "<npcname> digests %d %s and recharges %d point of energy.", "<npcname> digests %d %s and recharges %d points of energy." ), .count = profitable_energy },
+                                   consumed_charges, it.tname(), profitable_energy
                                  );
         } else {
             add_msg_player_or_npc( m_info,
-                                   vgettext( "You digest your %s and recharge %d point of energy.",
-                                             "You digest your %s and recharge %d points of energy.",
-                                             profitable_energy
-                                           ),
-                                   vgettext( "<npcname> digests a %s and recharges %d point of energy.",
-                                             "<npcname> digests a %s and recharges %d points of energy.",
-                                             profitable_energy
-                                           ), it.tname(), profitable_energy
+                                   localised::counted{ .format = pl_translation( "You digest your %s and recharge %d point of energy.", "You digest your %s and recharge %d points of energy." ), .count = profitable_energy },
+                                   localised::counted{ .format = pl_translation( "<npcname> digests a %s and recharges %d point of energy.", "<npcname> digests a %s and recharges %d points of energy." ), .count = profitable_energy },
+                                   it.tname(), profitable_energy
                                  );
         }
         mod_power_level( units::from_kilojoule( profitable_energy ) );
@@ -1456,11 +1524,12 @@ bool Character::fuel_bionic_with( item &it )
     update_fuel_storage( it.typeId() );
     add_msg_player_or_npc( m_info,
                            //~ %1$i: charge number, %2$s: item name, %3$s: bionics name
-                           vgettext( "You load %1$i charge of %2$s in your %3$s.",
-                                     "You load %1$i charges of %2$s in your %3$s.", loadable ),
+                           localised::counted{ .format = pl_translation( "You load %1$i charge of %2$s in your %3$s.",
+                                   "You load %1$i charges of %2$s in your %3$s." ), .count = loadable },
                            //~ %1$i: charge number, %2$s: item name, %3$s: bionics name
-                           vgettext( "<npcname> load %1$i charge of %2$s in their %3$s.",
-                                     "<npcname> load %1$i charges of %2$s in their %3$s.", loadable ), loadable, it.tname(), bio->name );
+                           localised::counted{ .format = pl_translation( "<npcname> load %1$i charge of %2$s in their %3$s.",
+                                   "<npcname> load %1$i charges of %2$s in their %3$s." ), .count = loadable }, loadable, it.tname(),
+                           bio->name );
     mod_moves( -250 );
     return true;
 }
@@ -1592,13 +1661,13 @@ detached_ptr<item> Character::consume_item( detached_ptr<item> &&target )
         return detached_ptr<item>();
     }
     if( is_underwater() && !has_trait( trait_WATERSLEEP ) ) {
-        add_msg_if_player( m_info, _( "You can't do that while underwater." ) );
+        add_msg_if_player( m_info, to_translation( "You can't do that while underwater." ) );
         return std::move( target );
     }
 
     item &comest = get_consumable_from( *target );
     if( comest.is_null() || target->is_craft() ) {
-        add_msg_if_player( m_info, _( "You can't eat your %s." ), target->tname() );
+        add_msg_if_player( m_info, to_translation( "You can't eat your %s." ), target->tname() );
         if( is_npc() ) {
             debugmsg( "%s tried to eat a %s", name, target->tname() );
         }
@@ -1630,11 +1699,11 @@ detached_ptr<item> Character::consume_item( detached_ptr<item> &&target )
 void Character::consume( item &target )
 {
     if( target.is_null() ) {
-        add_msg_if_player( m_info, _( "You do not have that item." ) );
+        add_msg_if_player( m_info, to_translation( "You do not have that item." ) );
         return;
     }
     if( is_underwater() && !has_trait( trait_WATERSLEEP ) ) {
-        add_msg_if_player( m_info, _( "You can't do that while underwater." ) );
+        add_msg_if_player( m_info, to_translation( "You can't do that while underwater." ) );
         return;
     }
 
@@ -1642,7 +1711,7 @@ void Character::consume( item &target )
     const auto old_invlet = target.invlet;
 
     if( comest.is_null() || target.is_craft() ) {
-        add_msg_if_player( m_info, _( "You can't eat your %s." ), target.tname() );
+        add_msg_if_player( m_info, to_translation( "You can't eat your %s." ), target.tname() );
         if( is_npc() ) {
             debugmsg( "%s tried to eat a %s", name, target.tname() );
         }
@@ -1696,9 +1765,10 @@ void Character::consume( item &target )
 
     if( consumed ) {
         if( was_in_container && wielding ) {
-            add_msg_if_player( _( "You are now wielding an empty %s." ), primary_weapon().tname() );
+            add_msg_if_player( to_translation( "You are now wielding an empty %s." ),
+                               primary_weapon().tname() );
         } else if( was_in_container && worn ) {
-            add_msg_if_player( _( "You are now wearing an empty %s." ), target.tname() );
+            add_msg_if_player( to_translation( "You are now wearing an empty %s." ), target.tname() );
         } else if( was_in_container && !is_npc() ) {
             bool drop_it = false;
             if( get_option<std::string>( "DROP_EMPTY" ) == "no" ) {
@@ -1709,12 +1779,12 @@ void Character::consume( item &target )
                 drop_it = true;
             }
             if( drop_it ) {
-                add_msg( _( "You drop the empty %s." ), target.tname() );
+                add_msg( to_translation( "You drop the empty %s." ), target.tname() );
                 put_into_vehicle_or_drop( *this, item_drop_reason::deliberate, target.detach() );
             } else {
                 int quantity = inv.const_stack( inv.position_by_item( &target ) ).size();
                 char letter = target.invlet ? target.invlet : ' ';
-                add_msg( m_info, _( "%c - %d empty %s" ), letter, quantity, target.tname( quantity ) );
+                add_msg( m_info, to_translation( "%c - %d empty %s" ), letter, quantity, target.tname( quantity ) );
             }
         }
     } else if( inv_item ) {
@@ -1745,7 +1815,8 @@ bool Character::consume_med( item &target )
                 has_amount( tool_type, 1 ) &&
                 has_charges( tool_type, req_tool->tool->charges_per_use )
             ) ) {
-            add_msg_if_player( m_info, _( "You need a %s to consume that!" ), req_tool->nname( 1 ) );
+            add_msg_if_player( m_info, to_translation( "You need a %s to consume that!" ),
+                               req_tool->nname( 1 ) );
             return false;
         }
         use_charges( tool_type, req_tool->tool->charges_per_use );

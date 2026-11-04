@@ -127,7 +127,8 @@ void mdefense::acidsplash( monster &m, Creature *const source,
                 };
                 source->deal_damage( &m, one_in( 2 ) ? bodypart_id( "hand_l" ) : bodypart_id( "hand_r" ),
                                      acid_burn );
-                source->add_msg_if_player( m_bad, _( "Acid covering %s burns your hand!" ), m.disp_name() );
+                source->add_msg_if_player( m_bad, to_translation( "Acid covering %s burns your hand!" ),
+                                           m.disp_name() );
             }
         }
     }
@@ -148,7 +149,7 @@ void mdefense::acidsplash( monster &m, Creature *const source,
     }
 
     if( get_avatar().sees( m.bub_pos() ) ) {
-        add_msg( m_warning, _( "Acid sprays out of %s as it is hit!" ), m.disp_name() );
+        add_msg( m_warning, to_translation( "Acid sprays out of %s as it is hit!" ), m.disp_name() );
     }
 }
 
@@ -236,9 +237,9 @@ void mdefense::revenge_aggro( monster &m, Creature *source, const dealt_projecti
 
     if( source->is_avatar() ) {
         if( aggroed > 25 ) {
-            add_msg( m_bad, _( "You feel intensely hated for a moment." ) );
+            add_msg( m_bad, to_translation( "You feel intensely hated for a moment." ) );
         } else if( aggroed > 5 ) {
-            add_msg( m_warning, _( "You feel an angry presence." ) );
+            add_msg( m_warning, to_translation( "You feel an angry presence." ) );
         }
     }
 }

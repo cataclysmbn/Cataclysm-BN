@@ -1,7 +1,9 @@
 #pragma once
 
+#include <cstdint>
 #include <list>
 #include <map>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -60,22 +62,28 @@ bucketed_points optimal_bucketing( const bucketed_points &buckets, size_t max_bu
 bool minimap_requires_animation();
 bool terrain_requires_animation();
 
+/// A line of sprites along the given points.
 struct draw_sprite_line_options {
     const tripoint_bub_ms &p;
     const std::vector<tripoint_bub_ms> &points;
     /// Sprite for 0 degree angle (↑)
     std::string sprite;
     bool rotate = false;
+    /// The multishot the shot is a pellet of: the pellets are drawn together once they all flew.
+    std::optional<std::uint64_t> group = std::nullopt;
 };
-/// Draw a line of sprites along the given points
-void draw_line_of( const draw_sprite_line_options &options );
 
+/// An explosion over the given squares, each drawn in its own color.
+struct draw_custom_explosion_options {
+    tripoint_bub_ms position;
+    std::map<tripoint_bub_ms, nc_color> area;
+    std::string name;
+};
+
+/// Several projectile trajectories in a single animation sequence.
 struct draw_bullet_trajectories_options {
     const std::vector<std::vector<tripoint_bub_ms>> &trajectories;
     char bullet;
     bool draw_as_line = false;
     std::string custom_sprite;
 };
-
-/// Draw multiple projectile trajectories in a single animation sequence.
-void draw_bullet_trajectories( const draw_bullet_trajectories_options &options );

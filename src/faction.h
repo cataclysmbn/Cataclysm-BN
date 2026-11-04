@@ -2,6 +2,7 @@
 
 #include <bitset>
 #include <map>
+#include <optional>
 #include <set>
 #include <string>
 #include <tuple>
@@ -139,5 +140,7 @@ class faction_manager
         }
 
         faction *get( const faction_id &id, bool complain = true );
+        /// Effective metadata after template validation, without creating or changing stored factions.
+        auto get_for_display( const faction_id &id ) const -> std::optional<faction>;
 };
 

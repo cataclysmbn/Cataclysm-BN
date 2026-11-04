@@ -2,10 +2,16 @@
 
 #include <algorithm> //std::min
 #include <cstddef>
+#include <map>
+#include <string>
+#include <vector>
 #include <memory>
+#include <ranges>
 #include <unordered_map>
 
 #include "character.h"
+#include "engine_client_component.h"
+#include "engine_client_requirements.h"
 #include "enums.h"
 #include "input.h"
 #include "inventory.h"
@@ -60,10 +66,10 @@ static trait_id GetTrait( std::vector<trait_id> active, std::vector<trait_id> pa
     return mut_id;
 }
 
-static void show_mutations_titlebar( const catacurses::window &window,
-                                     const mutation_menu_mode menu_mode, const input_context &ctxt )
+/// The line the title shows: what the mode does and the keys that change it.
+static auto mutations_help( const mutation_menu_mode menu_mode,
+                            const input_context &ctxt ) -> std::string
 {
-    werase( window );
     std::string desc;
     if( menu_mode == mutation_menu_mode::reassigning ) {
         desc += std::string( _( "Reassigning." ) ) + "  " +
@@ -88,9 +94,33 @@ static void show_mutations_titlebar( const catacurses::window &window,
     }
     desc += shortcut_desc( _( "%s to toggle sprite visibility, " ), ctxt.get_desc( "TOGGLE_SPRITE" ) );
     desc += shortcut_desc( _( "%s to change keybindings." ), ctxt.get_desc( "HELP_KEYBINDINGS" ) );
+    return desc;
+}
+
+static void show_mutations_titlebar( const catacurses::window &window,
+                                     const mutation_menu_mode menu_mode, const input_context &ctxt )
+{
+    werase( window );
     // NOLINTNEXTLINE(cata-use-named-point-constants)
-    fold_and_print( window, point( 1, 0 ), getmaxx( window ) - 1, c_white, desc );
+    fold_and_print( window, point( 1, 0 ), getmaxx( window ) - 1, c_white, mutations_help( menu_mode,
+                    ctxt ) );
     wnoutrefresh( window );
+}
+
+/// The color the mutation list prints a trait in: innate traits darker, active ones green when on and red when off.
+static auto mutation_color( const Character &who, const trait_id &trait, const bool active_kind,
+                            const bool highlighted ) -> nc_color
+{
+    const auto base = who.has_base_trait( trait );
+    if( !active_kind ) {
+        return highlighted ? ( base ? c_cyan_yellow : c_light_cyan_yellow ) :
+               ( base ? c_cyan : c_light_cyan );
+    }
+    if( who.my_mutations.at( trait ).powered ) {
+        return highlighted ? ( base ? c_green_yellow : c_light_green_yellow ) :
+               ( base ? c_green : c_light_green );
+    }
+    return highlighted ? ( base ? c_red_yellow : c_light_red_yellow ) : ( base ? c_red : c_light_red );
 }
 
 static std::optional<trait_id> trait_by_invlet( const mutation_collection &mutations, int ch )
@@ -102,6 +132,132 @@ static std::optional<trait_id> trait_by_invlet( const mutation_collection &mutat
     }
     return std::nullopt;
 }
+
+namespace
+{
+namespace ec = engine_client;
+
+/// One select affordance per column: the client names the one whose row target holds its focus.
+auto pick_id( const std::string &column ) -> std::string { return "mutations:pick:" + column; }
+
+/// What the screen shows, as its loop keeps it: the focus is read when the screen is published.
+struct mutations_model {
+    Character &who;
+    const std::vector<trait_id> &passive;
+    const std::vector<trait_id> &active;
+    const mutation_tab_mode &tab;
+    const mutation_menu_mode &mode;
+    const int &cursor;
+    const std::optional<trait_id> &examined;
+    const input_context &ctxt;
+};
+
+auto mutation_row_id( const trait_id &trait ) -> std::string { return "mutation:" + trait.str(); }
+
+/// Why the mutation cannot be used by a confirm now; empty when it can, or when the screen is not activating.
+auto use_denial( const mutations_model &model, const trait_id &trait ) -> std::string
+{
+    if( model.mode != mutation_menu_mode::activating ) {
+        return {};
+    }
+    const auto &branch = trait.obj();
+    if( !branch.activated ) {
+        return string_format( _( "You cannot activate %s!  To read a description of "
+                                 "%s, press '!'." ), branch.name(), branch.name() );
+    }
+    if( !model.who.my_mutations.at( trait ).powered && ( ( branch.hunger &&
+            model.who.get_kcal_percent() < 0.8f ) ||
+            ( branch.thirst && model.who.get_thirst() > 400 ) || ( branch.fatigue &&
+                    model.who.get_fatigue() > 400 ) ) ) {
+        return string_format( _( "You don't have enough in you to activate your %s!" ), branch.name() );
+    }
+    return {};
+}
+
+auto mutation_rows( const mutations_model &model, const std::vector<trait_id> &traits,
+                    const bool active_kind ) -> std::vector<ec::row>
+{
+    using namespace std::views;
+    return traits | transform( [&]( const trait_id & trait ) {
+        const auto &branch = trait.obj();
+        const auto &data = model.who.my_mutations.at( trait );
+        auto state = std::string();
+        if( active_kind ) {
+            state = data.powered ? _( "Active" ) : _( "Inactive" );
+            if( branch.cost > 0 ) {
+                state += string_format( _( ", %d RU" ), branch.cost );
+            }
+            if( branch.cooldown > 0 ) {
+                state += string_format( _( ", %d turns" ), branch.cooldown );
+            }
+        }
+        const auto denial = use_denial( model, trait );
+        return ec::row{
+            .id = mutation_row_id( trait ), .label = branch.name(), .description = remove_color_tags( branch.desc() ),
+            .denial = denial,
+            .hotkey = std::string( 1, data.key ),
+            .enabled = denial.empty(),
+            .columns = {
+                { .key = "kind", .label = _( "Kind" ), .value = active_kind ? _( "Active" ) : _( "Passive" ) },
+                { .key = "state", .label = _( "State" ), .value = state },
+                { .key = "sprite", .label = _( "Sprite" ), .value = data.show_sprite ? _( "Shown" ) : _( "Hidden" ) },
+                { .key = "innate", .label = _( "Innate" ), .value = model.who.has_base_trait( trait ) ? _( "Yes" ) : _( "No" ) },
+                { .key = "cost", .label = _( "Cost" ), .value = std::to_string( branch.cost ) },
+                { .key = "cooldown", .label = _( "Cooldown" ), .value = std::to_string( branch.cooldown ) },
+            },
+            .color = string_from_color( mutation_color( model.who, trait, active_kind, false ) ),
+.toggled = active_kind ? std::optional<bool> { data.powered } :
+            std::nullopt,
+        };
+    } ) | std::ranges::to<std::vector>();
+}
+
+auto mutations_view( const mutations_model &model ) -> ec::screen_view
+{
+    const auto passive_id = std::string( "mutations:passive" );
+    const auto active_id = std::string( "mutations:active" );
+    auto parts = std::vector<ec::component> {};
+    parts.push_back( { .id = "mutations:help", .body = ec::text_body{ .markup = mutations_help( model.mode, model.ctxt ) } } );
+    const auto add_column = [&]( const std::string & id, const std::string & name,
+                                 const std::string & title,
+                                 const std::vector<trait_id> &traits,
+    const bool active_kind ) {
+        parts.push_back( ec::panel( { .id = id, .title = ec::caption( title ),
+                                      .child = ec::list( { .id = id + ":rows", .rows = mutation_rows( model, traits, active_kind ),
+                                               .selection = "single", .activate = pick_id( name ) } ) } ) );
+        if( traits.empty() ) {
+            parts.push_back( { .id = id + ":none", .body = ec::text_body{ .markup = _( "None" ) } } );
+        }
+    };
+    add_column( passive_id, "passive", _( "Passive:" ), model.passive, false );
+    add_column( active_id, "active", _( "Active:" ), model.active, true );
+    if( model.mode == mutation_menu_mode::examining && model.examined ) {
+        parts.push_back( { .id = "mutations:description", .body = ec::text_body{ .markup = colorize( ( *model.examined )->desc(), c_light_blue ) } } );
+    }
+    const auto &traits = model.tab == mutation_tab_mode::active ? model.active : model.passive;
+    const auto at_cursor = model.tab != mutation_tab_mode::none &&
+                           static_cast<std::size_t>( model.cursor ) < traits.size() ?
+                           &traits[model.cursor] : nullptr;
+    auto denials = std::vector<ec::denial> {};
+    if( at_cursor != nullptr ) {
+        if( const auto reason = use_denial( model, *at_cursor ); !reason.empty() ) {
+            denials.push_back( { .id = "CONFIRM", .reason = reason } );
+        }
+    }
+    const auto column = model.tab == mutation_tab_mode::active ? active_id : passive_id;
+    return {
+        .title = _( " MUTATIONS " ),
+        .root = ec::split( { .id = "mutations:panes", .active = column, .children = std::move( parts ) } ),
+        .affordances = {
+            ec::invoke_affordance( { .id = pick_id( "passive" ), .label = _( "Select" ), .args = { .row = ec::row_shape{ .component_id = passive_id + ":rows" } }, .role = "select" } ),
+            ec::invoke_affordance( { .id = pick_id( "active" ), .label = _( "Select" ), .args = { .row = ec::row_shape{ .component_id = active_id + ":rows" } }, .role = "select" } ),
+        },
+        .denials = std::move( denials ),
+        .focus_component = column + ":rows",
+        .focus_row = at_cursor != nullptr ? mutation_row_id( *at_cursor ) : std::string{},
+    };
+}
+} // namespace
 
 void show_mutations_ui( Character &who )
 {
@@ -131,17 +287,22 @@ detail::mutations_ui_result detail::show_mutations_ui_internal( Character &who )
 {
     std::vector<trait_id> passive;
     std::vector<trait_id> active;
-    for( std::pair<const trait_id, char_trait_data> &mut : who.my_mutations ) {
-        if( !mut.first->activated && ! mut.first->transform ) {
-            passive.push_back( mut.first );
+    // The table iterates in the order of its interned ids, which any newly interned id shuffles:
+    // the id order keeps the rows and the letters new mutations get.
+    auto traits = who.my_mutations | std::views::keys | std::ranges::to<std::vector>();
+    std::ranges::sort( traits, lexicographic<mutation_branch> {} );
+    for( const auto &trait : traits ) {
+        if( !trait->activated && ! trait->transform ) {
+            passive.push_back( trait );
         } else {
-            active.push_back( mut.first );
+            active.push_back( trait );
         }
         // New mutations are initialized with no key at all, so we have to do this here.
-        if( mut.second.key == ' ' ) {
+        auto &key = who.my_mutations[trait].key;
+        if( key == ' ' ) {
             for( const auto &letter : mutation_chars ) {
                 if( !trait_by_invlet( who.my_mutations, letter ) ) {
-                    mut.second.key = letter;
+                    key = letter;
                     break;
                 }
             }
@@ -285,11 +446,8 @@ detail::mutations_ui_result detail::show_mutations_ui_internal( Character &who )
                 if( i - scroll_position == list_height ) {
                     break;
                 }
-                if( is_highlighted && tab_mode == mutation_tab_mode::passive ) {
-                    type = who.has_base_trait( passive[i] ) ? c_cyan_yellow : c_light_cyan_yellow;
-                } else {
-                    type = who.has_base_trait( passive[i] ) ? c_cyan : c_light_cyan;
-                }
+                type = mutation_color( who, passive[i], false, is_highlighted &&
+                                       tab_mode == mutation_tab_mode::passive );
                 mvwprintz( wBio, point( 2, list_start_y + i - scroll_position ),
                            type, "%c %s", td.key, md.name() );
                 if( !td.show_sprite ) {
@@ -309,19 +467,8 @@ detail::mutations_ui_result detail::show_mutations_ui_internal( Character &who )
                 if( i - scroll_position == list_height ) {
                     break;
                 }
-                if( td.powered ) {
-                    if( is_highlighted && tab_mode == mutation_tab_mode::active ) {
-                        type = who.has_base_trait( active[i] ) ? c_green_yellow : c_light_green_yellow;
-                    } else {
-                        type = who.has_base_trait( active[i] ) ? c_green : c_light_green;
-                    }
-                } else {
-                    if( is_highlighted && tab_mode == mutation_tab_mode::active ) {
-                        type = who.has_base_trait( active[i] ) ? c_red_yellow : c_light_red_yellow;
-                    } else {
-                        type = who.has_base_trait( active[i] ) ? c_red : c_light_red;
-                    }
-                }
+                type = mutation_color( who, active[i], true, is_highlighted &&
+                                       tab_mode == mutation_tab_mode::active );
                 // TODO: track resource(s) used and specify
                 mvwputch( wBio, point( second_column, list_start_y + i - scroll_position ),
                           type, td.key );
@@ -357,13 +504,37 @@ detail::mutations_ui_result detail::show_mutations_ui_internal( Character &who )
         }
     } );
 
+    const auto model = mutations_model{ .who = who, .passive = passive, .active = active, .tab = tab_mode, .mode = menu_mode, .cursor = cursor, .examined = examine_id, .ctxt = ctxt };
+    const auto screen = ec::screen_scope( ctxt, "mutations", { .view = [&]( const ec::boundary_state & ) { return mutations_view( model ); } } );
+
     mutations_ui_result ret;
     bool exit = false;
     while( !exit ) {
         recalc_max_scroll_position();
         ui_manager::redraw();
         bool handled = false;
-        const std::string action = ctxt.handle_input();
+        auto action = ctxt.handle_input();
+        if( const auto picked = ec::invoked( ctxt.get_raw_input() ) ) {
+            // A picked mutation is Enter on it: the same cursor, whichever mode the menu is in.
+            const auto row = picked->affordance_id.starts_with( pick_id( "" ) ) ? picked->args.row.value_or(
+                                 std::string() ) : std::string();
+            const auto named = [&]( const trait_id & trait ) { return mutation_row_id( trait ) == row; };
+            const auto in_active = std::ranges::find_if( active, named );
+            const auto in_passive = std::ranges::find_if( passive, named );
+            if( in_active != active.end() ) {
+                tab_mode = mutation_tab_mode::active;
+                cursor = static_cast<int>( in_active - active.begin() );
+            } else if( in_passive != passive.end() ) {
+                tab_mode = mutation_tab_mode::passive;
+                cursor = static_cast<int>( in_passive - passive.begin() );
+            } else {
+                continue;
+            }
+            if( !picked->activates ) {
+                continue;
+            }
+            action = "CONFIRM";
+        }
         const input_event evt = ctxt.get_raw_input();
         if( evt.type == input_event_t::keyboard && !evt.sequence.empty() ) {
             const int ch = evt.get_first_input();
@@ -422,7 +593,7 @@ detail::mutations_ui_result detail::show_mutations_ui_internal( Character &who )
                                 if( trans && !trans->msg_transform.empty() ) {
                                     who.add_msg_if_player( m_neutral, trans->msg_transform );
                                 } else {
-                                    who.add_msg_if_player( m_neutral, _( "You stop using your %s." ), mut_data.name() );
+                                    who.add_msg_if_player( m_neutral, to_translation( "You stop using your %s." ), mut_data.name() );
                                 }
                                 ret.cmd = mutations_ui_cmd::deactivate;
                                 ret.mut = *mut_id;
@@ -431,7 +602,7 @@ detail::mutations_ui_result detail::show_mutations_ui_internal( Character &who )
                                 if( trans && !trans->msg_transform.empty() ) {
                                     who.add_msg_if_player( m_neutral, trans->msg_transform );
                                 } else {
-                                    who.add_msg_if_player( m_neutral, _( "You activate your %s." ), mut_data.name() );
+                                    who.add_msg_if_player( m_neutral, to_translation( "You activate your %s." ), mut_data.name() );
                                 }
                                 ret.cmd = mutations_ui_cmd::activate;
                                 ret.mut = *mut_id;
@@ -589,7 +760,7 @@ detail::mutations_ui_result detail::show_mutations_ui_internal( Character &who )
                         case mutation_menu_mode::activating: {
                             if( mut_data.activated ) {
                                 if( who.my_mutations[mut_id].powered ) {
-                                    who.add_msg_if_player( m_neutral, _( "You stop using your %s." ), mut_data.name() );
+                                    who.add_msg_if_player( m_neutral, to_translation( "You stop using your %s." ), mut_data.name() );
 
                                     who.deactivate_mutation( mut_id );
                                     // Action done, leave screen
@@ -597,7 +768,7 @@ detail::mutations_ui_result detail::show_mutations_ui_internal( Character &who )
                                 } else if( ( !mut_data.hunger || who.get_kcal_percent() >= 0.8f ) &&
                                            ( !mut_data.thirst || who.get_thirst() <= 400 ) &&
                                            ( !mut_data.fatigue || who.get_fatigue() <= 400 ) ) {
-                                    who.add_msg_if_player( m_neutral, _( "You activate your %s." ), mut_data.name() );
+                                    who.add_msg_if_player( m_neutral, to_translation( "You activate your %s." ), mut_data.name() );
 
                                     who.activate_mutation( mut_id );
                                     // Action done, leave screen

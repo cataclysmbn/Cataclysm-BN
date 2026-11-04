@@ -4,9 +4,11 @@
 #include <unordered_map>
 #include <vector>
 #include <array>
+#include <cstdint>
 
 #include "creature.h"
 #include "enums.h"
+#include "rule_serial.h"
 
 class JsonIn;
 class JsonOut;
@@ -34,6 +36,8 @@ class safemode
                 Attitude attitude;
                 int proximity;
                 Categories category;
+                /// The rule among the rules of the session, which the client names it by.
+                std::uint64_t serial = next_rule_serial();
 
                 rules_class() : active( false ), whitelist( false ), attitude( Attitude::A_HOSTILE ),
                     proximity( 0 ), category( Categories::HOSTILE_SPOTTED ) {}

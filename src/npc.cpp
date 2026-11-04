@@ -17,6 +17,7 @@
 #include "debug.h"
 #include "detached_ptr.h"
 #include "effect.h"
+#include "engine_client_presentation.h"
 #include "enums.h"
 #include "event.h"
 #include "event_bus.h"
@@ -65,6 +66,7 @@
 #include "string_formatter.h"
 #include "string_utils.h"
 #include "text_snippets.h"
+#include "tile_parts.h"
 #include "tileray.h"
 #include "trait_group.h"
 #include "translations.h"
@@ -85,6 +87,7 @@
 #include <functional>
 #include <limits>
 #include <memory>
+#include <ranges>
 
 static const activity_id ACT_READ( "ACT_READ" );
 static const activity_id ACT_CRAFT( "ACT_CRAFT" );
@@ -536,6 +539,16 @@ faction *npc::get_faction() const
     return my_fac;
 }
 
+auto npc::get_faction_id_for_display() const -> std::optional<faction_id>
+{
+    if( my_fac ) {
+        return my_fac->id;
+    }
+    const auto effective = g->faction_manager_ptr->get_for_display( faction_id( "no_faction" ) );
+    return effective ? std::optional{ effective->id } :
+           std::nullopt;
+}
+
 // item id from group "<class-name>_<what>" or from fallback group
 // may still be a null item!
 static detached_ptr<item> random_item_from( const npc_class_id &type, const std::string &what,
@@ -771,12 +784,16 @@ auto npc::setpos_preserving_movement_state( const tripoint_abs_ms &new_pos ) -> 
 auto npc::setpos_impl( const tripoint_abs_ms &new_pos, const bool preserve_movement_state ) -> void
 {
     const auto old_pos = position;
+    const auto from = bub_pos();
     const auto pos_om_old = project_to<coords::om>( project_to<coords::sm>( position ).xy() );
     const auto pos_om_new = project_to<coords::om>( project_to<coords::sm>( new_pos ).xy() );
     if( is_active() ) {
         get_mapbuffer().update_active_npc_pos( *this, new_pos );
     }
     Character::setpos( new_pos );
+    if( old_pos != new_pos ) {
+        engine_client::presentation::record_move( { .mover = *this, .from = from, .to = bub_pos() } );
+    }
     if( old_pos != new_pos && !preserve_movement_state ) {
         clear_transient_movement_state_after_reposition();
     }
@@ -1083,13 +1100,14 @@ void npc::finish_read( item *it )
                 return;
             }
             if( display_messages ) {
-                add_msg( m_good, _( "%s increases their %s level." ), disp_name(), skill_name );
+                add_msg( m_good, to_translation( "%s increases their %s level." ), disp_name(), skill_name );
             }
             continuous = true;
         } else {
             continuous = true;
             if( display_messages ) {
-                add_msg( m_info, _( "%s learns a little about %s!" ), disp_name(), skill.obj().name() );
+                add_msg( m_info, to_translation( "%s learns a little about %s!" ), disp_name(),
+                         skill.obj().name() );
             }
         }
 
@@ -1097,12 +1115,14 @@ void npc::finish_read( item *it )
             ( ( has_trait( trait_SCHIZOPHRENIC ) ||
                 has_artifact_with( AEP_SCHIZO ) ) && one_in( 25 ) ) ) {
             if( display_messages ) {
-                add_msg( m_info, _( "%s can no longer learn from %s." ), disp_name(), book.type_name() );
+                add_msg( m_info, to_translation( "%s can no longer learn from %s." ), disp_name(),
+                         book.type_name() );
             }
         }
     } else if( skill ) {
         if( display_messages ) {
-            add_msg( m_info, _( "%s can no longer learn from %s." ), disp_name(), book.type_name() );
+            add_msg( m_info, to_translation( "%s can no longer learn from %s." ), disp_name(),
+                     book.type_name() );
         }
     }
 
@@ -1156,7 +1176,7 @@ void npc::do_npc_read()
         }
         if( can_read( *loc, fail_reasons ) ) {
             if( g->u.sees( bub_pos() ) ) {
-                add_msg( m_info, _( "%s starts reading." ), disp_name() );
+                add_msg( m_info, to_translation( "%s starts reading." ), disp_name() );
             }
             start_read( *loc, pl );
         } else {
@@ -1165,7 +1185,7 @@ void npc::do_npc_read()
             }
         }
     } else {
-        add_msg( _( "Never mind." ) );
+        add_msg( to_translation( "Never mind." ) );
     }
 }
 
@@ -1208,7 +1228,7 @@ void npc::do_npc_craft( const std::optional<tripoint> & )
         }
 
         if( found.empty() ) {
-            add_msg( m_info, _( "No in-progress crafts within reach." ) );
+            add_msg( m_info, to_translation( "No in-progress crafts within reach." ) );
             return;
         }
 
@@ -1231,7 +1251,7 @@ void npc::do_npc_craft( const std::optional<tripoint> & )
                 can_pick_weight( *sel.it, false ) ) {
                 detached_ptr<item> det = here.i_rem( target_pos, sel.it );
                 if( det ) {
-                    add_msg( _( "%1$s picks up the %2$s." ), name, det->tname() );
+                    add_msg( to_translation( "%1$s picks up the %2$s." ), name, det->tname() );
                     target = &i_add( std::move( det ) );
                     target_pos = bub_pos();
                 }
@@ -1318,7 +1338,7 @@ void npc::stow_weapon( )
     if( !detached ) {
         // Wearing the item was successful, remove weapon and post message.
         if( g->u.sees( bub_pos() ) ) {
-            add_msg_if_npc( m_info, _( "<npcname> wears the %s." ), weapon.tname() );
+            add_msg_if_npc( m_info, to_translation( "<npcname> wears the %s." ), weapon.tname() );
         }
         moves -= 15;
         // Weapon cannot be worn or wearing was not successful. Store it in inventory if possible,
@@ -1330,7 +1350,7 @@ void npc::stow_weapon( )
         if( e->can_holster( weapon ) ) {
             if( g->u.sees( bub_pos() ) ) {
                 //~ %1$s: weapon name, %2$s: holster name
-                add_msg_if_npc( m_info, _( "<npcname> puts away the %1$s in the %2$s." ),
+                add_msg_if_npc( m_info, to_translation( "<npcname> puts away the %1$s in the %2$s." ),
                                 weapon.tname(), e->tname() );
             }
 
@@ -1341,13 +1361,13 @@ void npc::stow_weapon( )
     }
     if( volume_carried() + weapon.volume() <= volume_capacity() ) {
         if( g->u.sees( bub_pos() ) ) {
-            add_msg_if_npc( m_info, _( "<npcname> puts away the %s." ), weapon.tname() );
+            add_msg_if_npc( m_info, to_translation( "<npcname> puts away the %s." ), weapon.tname() );
         }
         i_add( std::move( detached ) );
         moves -= 15;
     } else { // No room for weapon, so we drop it
         if( g->u.sees( bub_pos() ) ) {
-            add_msg_if_npc( m_info, _( "<npcname> drops the %s." ), weapon.tname() );
+            add_msg_if_npc( m_info, to_translation( "<npcname> drops the %s." ), weapon.tname() );
         }
         g->m.add_item_or_charges( bub_pos(), std::move( detached ) );
     }
@@ -1369,7 +1389,7 @@ bool npc::wield( item &it )
     set_primary_weapon( it.detach() );
 
     if( g->u.sees( bub_pos() ) ) {
-        add_msg_if_npc( m_info, _( "<npcname> wields a %s." ),  primary_weapon().tname() );
+        add_msg_if_npc( m_info, to_translation( "<npcname> wields a %s." ),  primary_weapon().tname() );
     }
     invalidate_range_cache();
     return true;
@@ -1559,7 +1579,8 @@ void npc::mutiny()
     }
     const bool seen = g->u.sees( bub_pos() );
     if( seen ) {
-        add_msg( m_bad, _( "%s is tired of your incompetent leadership and abuse!" ), disp_name() );
+        add_msg( m_bad, to_translation( "%s is tired of your incompetent leadership and abuse!" ),
+                 disp_name() );
     }
     // NPCs leaving your faction due to mistreatment further reduce their opinion of you
     if( my_fac->likes_u < -10 ) {
@@ -1776,11 +1797,11 @@ void npc::say( const std::string &line, const sounds::sound_t spriority ) const
 
     std::string sound = string_format( _( "%1$s saying \"%2$s\"" ), name, formatted_line );
     if( g->u.sees( *this ) && g->u.is_deaf() ) {
-        add_msg( m_warning, _( "%1$s says something but you can't hear it!" ), name );
+        add_msg( m_warning, to_translation( "%1$s says something but you can't hear it!" ), name );
     }
     // Hallucinations don't make noise when they speak
     if( is_hallucination() ) {
-        add_msg( _( "%1$s saying \"%2$s\"" ), name, formatted_line );
+        add_msg( to_translation( "%1$s saying \"%2$s\"" ), name, formatted_line );
         return;
     }
     // Sound happens even if we can't hear it
@@ -2520,97 +2541,102 @@ nc_color npc::basic_symbol_color() const
     return c_pink;
 }
 
+auto npc::info_facts() const -> std::vector<engine_client::fact>
+{
+    const auto bar = get_hp_bar( hp_percentage(), 100 );
+    auto facts = std::vector<engine_client::fact> {};
+    facts.push_back( { .kind = "hp", .text = bar.first, .color = bar.second, .values = { { "percent", hp_percentage() } } } );
+    facts.push_back( { .kind = "creature", .text = name, .color = basic_symbol_color() } );
+    if( const auto goal = npc_attitude_name( get_attitude() ); !goal.empty() ) {
+        facts.push_back( { .kind = "goal", .text = goal, .color = basic_symbol_color() } );
+    }
+    const auto res = Creature::get_attitude_ui_data( attitude_to( g->u ) );
+    const auto aware = sees( g->u );
+    facts.push_back( { .kind = "senses", .text = aware ? _( "Aware of your presence" ) : _( "Unaware of you" ),
+                       .color = aware ? c_yellow : c_green } );
+    facts.push_back( { .kind = "attitude", .text = res.first.translated(), .color = res.second } );
+    if( display_object_ids ) {
+        facts.push_back( { .kind = "object_id", .text = string_format( "[%s]", myclass ), .color = c_light_blue } );
+    }
+    const int per = g->u.get_per();
+    const int dist = rl_dist( g->u.bub_pos(), bub_pos() );
+    const int visibility_cap = per <= 1 ? INT_MAX : std::round( dist * dist / 20.0 / ( per - 1 ) );
+    std::ranges::copy( equipment_facts( visibility_cap ), std::back_inserter( facts ) );
+    return facts;
+}
+
 auto npc::print_info( const catacurses::window &w, int line, int vLines, int column ) const -> int
 {
     const int last_line = line + vLines;
     const int iWidth = getmaxx( w ) - 2;
+    const auto facts = info_facts();
+    const auto fact_of = [&]( const std::string & kind ) -> const engine_client::fact * { // *NOPAD*
+        const auto found = std::ranges::find( facts, kind, &engine_client::fact::kind );
+        return found == facts.end() ? nullptr :& *found;
+    };
 
-    const auto bar = get_hp_bar( hp_percentage(), 100 );
-    mvwprintz( w, point( column, line ), bar.second, bar.first );
+    const auto &bar = *fact_of( "hp" );
+    mvwprintz( w, point( column, line ), *bar.color, bar.text );
     constexpr auto bar_max_width = 5;
-    const auto bar_width = utf8_width( bar.first );
+    const auto bar_width = utf8_width( bar.text );
     for( int i = 0; i < bar_max_width - bar_width; ++i ) {
         mvwprintz( w, point( column + bar_max_width - 1 - i, line ), c_white, "." );
     }
     const auto name_column = column + bar_max_width + 1;
-    mvwprintz( w, point( name_column, line ), basic_symbol_color(), name );
-    const std::string att_goal = npc_attitude_name( get_attitude() );
-    if( !att_goal.empty() ) {
+    const auto &named = *fact_of( "creature" );
+    mvwprintz( w, point( name_column, line ), *named.color, named.text );
+    if( const auto *const goal = fact_of( "goal" ) ) {
         const auto info_width = getmaxx( w ) - column - 1;
-        const auto name_width = utf8_width( name );
+        const auto name_width = utf8_width( named.text );
         const auto name_end = name_column + name_width;
         const auto available_for_goal = column + info_width - ( name_end + 1 );
         if( available_for_goal > 0 ) {
-            const auto goal_text = utf8_truncate( att_goal, static_cast<size_t>( available_for_goal ) );
+            const auto goal_text = utf8_truncate( goal->text, static_cast<size_t>( available_for_goal ) );
             if( !goal_text.empty() ) {
                 const auto goal_width = utf8_width( goal_text );
                 const auto right_align_offset = std::max( 0, info_width - goal_width );
                 auto goal_column = column + right_align_offset;
                 goal_column = std::max( goal_column, name_end + 1 );
-                mvwprintz( w, point( goal_column, line ), basic_symbol_color(), goal_text );
+                mvwprintz( w, point( goal_column, line ), *goal->color, goal_text );
             }
         }
     }
 
-    Attitude att = attitude_to( g->u );
-    const std::pair<translation, nc_color> res = Creature::get_attitude_ui_data( att );
-
-    const std::string senses_str = sees( g->u ) ? _( "Aware of your presence" ) :
-                                   _( "Unaware of you" );
+    const auto &senses = *fact_of( "senses" );
+    const auto &att = *fact_of( "attitude" );
     line = line + 1;
-    mvwprintz( w, point( column, line ), sees( g->u ) ? c_yellow : c_green, senses_str );
+    mvwprintz( w, point( column, line ), *senses.color, senses.text );
     const auto info_width = getmaxx( w ) - column - 1;
-    const auto senses_end = column + utf8_width( senses_str );
+    const auto senses_end = column + utf8_width( senses.text );
     const auto info_end = column + info_width;
     const int available_for_att = std::max( 0, info_end - ( senses_end + 1 ) );
     if( available_for_att > 0 ) {
-        const auto att_text = utf8_truncate( res.first.translated(),
-                                             static_cast<size_t>( available_for_att ) );
+        const auto att_text = utf8_truncate( att.text, static_cast<size_t>( available_for_att ) );
         if( !att_text.empty() ) {
             const int att_width = utf8_width( att_text );
             const int att_column = info_end - att_width;
-            mvwprintz( w, point( att_column, line ), res.second, att_text );
+            mvwprintz( w, point( att_column, line ), *att.color, att_text );
         }
     }
 
-    if( display_object_ids && line < last_line ) {
-        mvwprintz( w, point( column, ++line ), c_light_blue, string_format( "[%s]", myclass ) );
-    }
-
-    if( is_armed() && line < last_line ) {
-        mvwprintz( w, point( column, ++line ), c_light_gray, _( "Wielding: " ) );
-        trim_and_print( w, point( column + utf8_width( _( "Wielding: " ) ), line ), iWidth, c_red,
-                        primary_weapon().tname() );
-    }
-
-    const std::string worn_str = enumerate_as_string( worn.begin(),
-    worn.end(), []( const item * const & it ) {
-        return it->tname();
-    } );
-    if( !worn_str.empty() ) {
-        std::vector<std::string> worn_lines = foldstring( _( "Wearing: " ) + worn_str, iWidth );
-        int worn_numlines = worn_lines.size();
-        // keeps the light gray color intact; changing this breaks the colorization again
-        for( int i = 0; i < worn_numlines && line < last_line; i++ ) {
-            trim_and_print( w, point( column, ++line ), iWidth, c_light_gray, worn_lines[i] );
-        }
-    }
-
-    const int per = g->u.get_per();
-    const int dist = rl_dist( g->u.bub_pos(), bub_pos() );
-    int visibility_cap;
-    if( per <= 1 ) {
-        visibility_cap = INT_MAX;
-    } else {
-        visibility_cap = std::round( dist * dist / 20.0 / ( per - 1 ) );
-    }
-
-    const std::string trait_str = visible_mutations( visibility_cap );
-    if( !trait_str.empty() ) {
-        std::vector<std::string> trait_lines = foldstring( _( "Traits: " ) + trait_str, iWidth );
-        int trait_numlines = trait_lines.size();
-        for( int i = 0; i < trait_numlines && line < last_line; i++ ) {
-            trim_and_print( w, point( column, ++line ), iWidth, c_light_gray, trait_lines[i] );
+    for( const auto &entry : facts ) {
+        if( entry.kind == "object_id" ) {
+            if( line < last_line ) {
+                mvwprintz( w, point( column, ++line ), *entry.color, entry.text );
+            }
+        } else if( entry.kind == "wielding" ) {
+            if( line < last_line ) {
+                mvwprintz( w, point( column, ++line ), c_light_gray, entry.label );
+                trim_and_print( w, point( column + utf8_width( entry.label ), line ), iWidth, *entry.color,
+                                entry.text );
+            }
+        } else if( entry.kind == "wearing" || entry.kind == "traits" ) {
+            const auto lines = foldstring( entry.label + entry.text, iWidth );
+            const int numlines = lines.size();
+            // keeps the light gray color intact; changing this breaks the colorization again
+            for( int i = 0; i < numlines && line < last_line; i++ ) {
+                trim_and_print( w, point( column, ++line ), iWidth, *entry.color, lines[i] );
+            }
         }
     }
 
@@ -2774,6 +2800,7 @@ void npc::die( Creature *nkiller )
         // *only* set to true in this function!
         return;
     }
+    engine_client::presentation::record_death( *this );
     // Need to unboard from vehicle before dying, otherwise
     // the vehicle code cannot find us
     if( in_vehicle ) {
@@ -2802,13 +2829,13 @@ void npc::die( Creature *nkiller )
 
     if( is_hallucination() ) {
         if( g->u.sees( *this ) ) {
-            add_msg( _( "%s disappears." ), name.c_str() );
+            add_msg( to_translation( "%s disappears." ), name.c_str() );
         }
         return;
     }
 
     if( g->u.sees( *this ) ) {
-        add_msg( _( "%s dies!" ), name );
+        add_msg( to_translation( "%s dies!" ), name );
     }
 
     if( Character *ch = dynamic_cast<Character *>( get_killer() ) ) {
@@ -2836,7 +2863,7 @@ void npc::die( Creature *nkiller )
 
     if( get_killer() == &g->u && g->u.has_trait( trait_PROF_FERAL ) ) {
         if( !g->u.has_effect( effect_feral_killed_recently ) ) {
-            g->u.add_msg_if_player( m_good, _( "The voices in your head quiet down a bit." ) );
+            g->u.add_msg_if_player( m_good, to_translation( "The voices in your head quiet down a bit." ) );
         }
         g->u.add_effect( effect_feral_killed_recently, 7_days );
     }
@@ -3012,6 +3039,20 @@ void npc::add_msg_player_or_npc( const game_message_params &params,
 {
     if( g->u.sees( *this ) ) {
         add_msg( params, replace_with_npc_name( npc_msg ) );
+    }
+}
+
+auto npc::add_localised_msg_if_npc( const game_message_params &params, const std::string &msg,
+                                    const std::optional<localised_text> &localised ) const -> void
+{
+    Messages::add_msg( params, replace_with_npc_name( msg ), localised );
+}
+
+auto npc::add_localised_msg_player_or_npc( const game_message_params &params,
+        const localised_pair &pair ) const -> void
+{
+    if( g->u.sees( *this ) ) {
+        Messages::add_msg( params, replace_with_npc_name( pair.npc_msg ), pair.npc_localised );
     }
 }
 
@@ -3704,16 +3745,16 @@ void npc::set_attitude( npc_attitude new_attitude )
     if( new_group != old_group && !is_fake() && g->u.sees( *this ) ) {
         switch( new_group ) {
             case attitude_group::hostile:
-                add_msg_if_npc( m_bad, _( "<npcname> gets angry!" ) );
+                add_msg_if_npc( m_bad, to_translation( "<npcname> gets angry!" ) );
                 break;
             case attitude_group::fearful:
-                add_msg_if_npc( m_warning, _( "<npcname> gets scared!" ) );
+                add_msg_if_npc( m_warning, to_translation( "<npcname> gets scared!" ) );
                 break;
             default:
                 if( old_group == attitude_group::hostile ) {
-                    add_msg_if_npc( m_good, _( "<npcname> calms down." ) );
+                    add_msg_if_npc( m_good, to_translation( "<npcname> calms down." ) );
                 } else if( old_group == attitude_group::fearful ) {
-                    add_msg_if_npc( _( "<npcname> is no longer afraid." ) );
+                    add_msg_if_npc( to_translation( "<npcname> is no longer afraid." ) );
                 }
                 break;
         }

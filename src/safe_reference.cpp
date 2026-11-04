@@ -5,6 +5,7 @@
 #include "coordinates.h"
 #include "game.h"
 #include "item.h"
+#include "item_serial.h"
 #include "json.h"
 #include "map/map.h"
 #include "map/map_selector.h"
@@ -213,6 +214,7 @@ auto safe_reference<T>::lookup_id( const T *obj ) -> safe_reference<T>::id_type
 template<typename T>
 void safe_reference<T>::mark_destroyed( T *obj )
 {
+    game_client::forget_item_serial( obj );
     const std::lock_guard<std::mutex> guard( records_mutex );
     auto search = records_by_pointer.find( obj );
     if( search == records_by_pointer.end() ) {
@@ -311,6 +313,7 @@ safe_reference<T>::~safe_reference()
 
 void cleanup_references()
 {
+    game_client::reset_item_serials();
     safe_reference<item>::cleanup();
 }
 

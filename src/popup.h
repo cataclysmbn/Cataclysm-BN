@@ -15,6 +15,10 @@
 #include "string_formatter.h"
 
 class ui_adaptor;
+namespace game_client
+{
+struct interaction_snapshot;
+}
 
 /**
  * UI class for displaying messages or querying player input with popups.
@@ -236,6 +240,10 @@ class query_popup
                     int max_width, int horz_padding );
         void invalidate_ui() const;
         void init() const;
+        auto register_input_actions( input_context &context ) const -> void;
+        auto make_interaction( const input_context &context ) const
+        -> game_client::interaction_snapshot;
+        auto apply_response( result response ) -> result;
 
         template <typename ...Args>
         static void assert_format( const std::string &, Args &&... ) {

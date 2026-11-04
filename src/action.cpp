@@ -4,10 +4,13 @@
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "character.h"
+#include "client_display.h"
+#include "client_interaction.h"
 #include "crafting.h"
 #include "creature.h"
 #include "cursesdef.h"
 #include "debug.h"
+#include "engine_client_component.h"
 #include "enum_conversions.h"
 #include "flag.h"
 #include "game.h"
@@ -15,6 +18,7 @@
 #include "input.h"
 #include "item.h"
 #include "item_functions.h"
+#include "line.h"
 #include "lua_action_menu.h"
 #include "map/map.h"
 #include "map/mapdata.h"
@@ -853,6 +857,24 @@ static bool can_pickup_at( const tripoint_bub_ms &p )
     return ( here.has_items( p ) && !here.has_flag( flag_SEALED, p ) ) || veh_has_items;
 }
 
+namespace
+{
+/// Whether `^` would use the controls at `p` rather than first drive, dismount or take the vehicle the avatar is in.
+auto can_control_vehicle_at( const tripoint_bub_ms &p ) -> bool
+{
+    static const auto fuel_type_animal = itype_id( "animal" );
+    const auto &you = get_avatar();
+    const auto &here = get_map();
+    const auto own = here.veh_at( you.bub_pos() );
+    const auto takes_own = you.in_vehicle && own && ( own.part_with_feature( "CONTROLS", true ) ||
+                           ( own.part_with_feature( "CONTROL_ANIMAL", true ) &&
+                             own->vehicle().has_engine_type( fuel_type_animal, false ) &&
+                             own->vehicle().has_harnessed_animal() ) );
+    return !you.controlling_vehicle && g->remoteveh() == nullptr && !you.is_mounted() && !takes_own &&
+           here.veh_at( p ).part_with_feature( "CONTROLS", true ).has_value();
+}
+} // namespace
+
 bool can_interact_at( action_id action, const tripoint_bub_ms &p )
 {
     map &here = get_map();
@@ -880,6 +902,8 @@ bool can_interact_at( action_id action, const tripoint_bub_ms &p )
         case ACTION_PICKUP_ALL:
         case ACTION_PICKUP_FEET:
             return can_pickup_at( p );
+        case ACTION_CONTROL_VEHICLE:
+            return can_control_vehicle_at( p );
         default:
             return false;
     }
@@ -940,7 +964,9 @@ auto make_register_actions( std::vector<uilist_entry> &entries, const input_cont
 {
     return [&]( std::vector<action_id> &&names ) -> void {
         const auto fn = [&]( action_id name ) -> uilist_entry {
-            return { name, true, hotkey_for_action( name ), ctxt.get_action_name( action_ident( name ) ) };
+            auto entry = uilist_entry{ name, true, hotkey_for_action( name ), ctxt.get_action_name( action_ident( name ) ) };
+            entry.action_id = action_ident( name );
+            return entry;
         };
         std::ranges::transform( names, std::back_inserter( entries ), fn );
     };
@@ -1138,12 +1164,11 @@ action_id handle_action_menu()
                 // debug _is_a menu.
                 entry->txt += "…";
             }
-#if !defined(TILES)
-            register_actions( { ACTION_TOGGLE_FULLSCREEN } );
-#endif
-#if defined(TILES)
-            register_actions( { ACTION_TOGGLE_PIXEL_MINIMAP, ACTION_RELOAD_TILESET  } );
-#endif // TILES
+            if( !game_client::has_tiles() ) {
+                register_actions( { ACTION_TOGGLE_FULLSCREEN } );
+            } else {
+                register_actions( { ACTION_TOGGLE_PIXEL_MINIMAP, ACTION_RELOAD_TILESET  } );
+            }
             register_actions( {
                 ACTION_TOGGLE_PANEL_ADM, ACTION_DISPLAY_SCENT, ACTION_DISPLAY_SCENT_TYPE,
                 ACTION_DISPLAY_TEMPERATURE, ACTION_DISPLAY_VEHICLE_AI, ACTION_DISPLAY_VISIBILITY,
@@ -1188,11 +1213,9 @@ action_id handle_action_menu()
                 ACTION_WAIT, ACTION_SLEEP, ACTION_BIONICS, ACTION_MUTATIONS, ACTION_PERKS,
                 ACTION_CONTROL_VEHICLE, ACTION_ITEMACTION, ACTION_TOGGLE_THIEF_MODE
             } );
-#if defined(TILES)
-            if( use_tiles ) {
+            if( game_client::has_tiles() && use_tiles ) {
                 register_actions( { ACTION_ZOOM_OUT, ACTION_ZOOM_IN } );
             }
-#endif
             register_lua_action_entries( category_id );
         } else {
             register_lua_action_entries( category_id );
@@ -1264,6 +1287,101 @@ action_id handle_main_menu()
     }
 }
 
+namespace
+{
+
+namespace ec = engine_client;
+
+struct direction_choice {
+    tripoint_rel_ms offset;
+    std::string label;
+};
+
+auto direction_choices( const bool allow_vertical ) -> std::vector<direction_choice>
+{
+    auto result = std::vector<direction_choice> {
+        { .offset = tripoint_rel_ms::north(), .label = _( "North" ) },
+        { .offset = tripoint_rel_ms::north_east(), .label = _( "North East" ) },
+        { .offset = tripoint_rel_ms::east(), .label = _( "East" ) },
+        { .offset = tripoint_rel_ms::south_east(), .label = _( "South East" ) },
+        { .offset = tripoint_rel_ms::south(), .label = _( "South" ) },
+        { .offset = tripoint_rel_ms::south_west(), .label = _( "South West" ) },
+        { .offset = tripoint_rel_ms::west(), .label = _( "West" ) },
+        { .offset = tripoint_rel_ms::north_west(), .label = _( "North West" ) },
+        { .offset = tripoint_rel_ms::zero(), .label = _( "Here" ) },
+    };
+    if( allow_vertical ) {
+        result.push_back( { .offset = tripoint_rel_ms::above(), .label = _( "Above" ) } );
+        result.push_back( { .offset = tripoint_rel_ms::below(), .label = _( "Below" ) } );
+    }
+    return result;
+}
+
+/// The id of the choice of `offset`, the same among the choices and in the compass.
+auto direction_id( const tripoint_rel_ms &offset ) -> std::string
+{
+    return game_client::opaque_interaction_id( "direction", {
+        std::to_string( offset.x() ), std::to_string( offset.y() ), std::to_string( offset.z() )
+    } );
+}
+
+auto direction_interaction_snapshot( const std::string &message,
+                                     const std::vector<direction_choice> &directions )
+-> game_client::interaction_snapshot
+{
+    auto snapshot = game_client::interaction_snapshot{
+        .kind = game_client::interaction_kind::choices,
+        .title = _( "Choose direction" ),
+        .message = message,
+        .allow_cancel = true,
+    };
+    std::ranges::transform( directions, std::back_inserter( snapshot.choices ),
+    []( const auto & entry ) {
+        return game_client::interaction_choice{ .id = direction_id( entry.offset ), .label = entry.label };
+    } );
+    return snapshot;
+}
+
+/// The directions as a compass: the squares around the avatar and its own where they lie, above and below in
+/// a column beside them.
+auto direction_view( const input_context &ctxt, const std::string &message,
+                     const std::vector<direction_choice> &directions ) -> ec::screen_view
+{
+    constexpr auto compass_id = "direction:compass";
+    constexpr auto choose_id = "direction:choose";
+    const auto cell_of = []( const direction_choice & entry ) {
+        const auto &at = entry.offset;
+        return ec::grid_cell{
+.at = at.z() != 0 ? ec::grid_point{ 3, at.z() > 0 ? 0 : 2 } :
+            ec::grid_point{ at.x() + 1, at.y() + 1 },
+            .id = direction_id( at ),
+            .glyph = trim( direction_name_short( direction_from( at.raw() ) ) ),
+            .label = entry.label,
+            .affordance = choose_id,
+        };
+    };
+    const auto vertical = std::ranges::any_of( directions, []( const direction_choice & entry ) { return entry.offset.z() != 0; } );
+    auto compass = ec::component{
+        .id = compass_id, .affordances = { choose_id },
+        .body = ec::grid_body{ .cols = vertical ? 4 : 3, .rows = 3, .cells = directions | std::views::transform( cell_of ) | std::ranges::to<std::vector>() },
+    };
+    auto prompt = ec::component{ .id = "text:message", .body = ec::text_body{ .markup = message, .role = "prompt" } };
+    return {
+        .title = _( "Choose direction" ),
+        .root = ec::split( { .id = "direction", .children = ec::children_of( std::move( prompt ), std::move( compass ) ) } ),
+        .affordances = {
+            {
+                .id = choose_id, .label = _( "Choose direction" ), .args = { .row = ec::row_shape{ .component_id = compass_id } },
+                .runs = ec::invoke_kind::choose
+            },
+            { .id = "bn:cancel", .label = ctxt.get_action_name( "QUIT" ), .role = "cancel", .runs = ec::invoke_kind::cancel, .covers = "QUIT" },
+        },
+        .focus_component = compass_id,
+    };
+}
+
+} // namespace
+
 std::optional<tripoint_rel_ms> choose_direction( const std::string &message,
         const bool allow_vertical )
 {
@@ -1282,18 +1400,47 @@ std::optional<tripoint_rel_ms> choose_direction( const std::string &message,
     //~ %s: "Close where?" "Pry where?" etc.
     popup.message( _( "%s (Direction button)" ), message ).on_top( true );
 
-    std::string action;
+    const auto directions = direction_choices( allow_vertical );
+    const auto screen = ec::screen_scope( ctxt, "direction", { .view = [&]( const ec::boundary_state & /*state*/ )
+    {
+        return direction_view( ctxt, message, directions );
+    }
+                                                             } );
+    const auto face_and_return = []( const tripoint_rel_ms & vec ) {
+        // Make player's sprite face left/right if interacting with something to the left or right
+        if( vec.x() > 0 ) {
+            g->u.facing = FD_RIGHT;
+        } else if( vec.x() < 0 ) {
+            g->u.facing = FD_LEFT;
+        }
+        return std::optional<tripoint_rel_ms> { vec };
+    };
+    auto action = std::string{};
     do {
         ui_manager::redraw();
-        action = ctxt.handle_input();
-        if( const std::optional<tripoint_rel_ms> vec = ctxt.get_direction( action ) ) {
-            // Make player's sprite face left/right if interacting with something to the left or right
-            if( vec->x() > 0 ) {
-                g->u.facing = FD_RIGHT;
-            } else if( vec->x() < 0 ) {
-                g->u.facing = FD_LEFT;
+        {
+            const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+                return direction_interaction_snapshot( message, directions );
+            } );
+            action = ctxt.handle_input();
+        }
+        const auto &event = ctxt.get_raw_input();
+        if( event.interaction ) {
+            if( event.interaction->operation == game_client::interaction_operation::cancel ) {
+                action = "QUIT";
+            } else if( event.interaction->operation == game_client::interaction_operation::choose ) {
+                const auto snapshot = direction_interaction_snapshot( message, directions );
+                const auto choice = std::ranges::find( snapshot.choices,
+                                                       event.interaction->target_id,
+                                                       &game_client::interaction_choice::id );
+                if( choice != snapshot.choices.end() ) {
+                    const auto index = std::distance( snapshot.choices.begin(), choice );
+                    return face_and_return( directions[static_cast<std::size_t>( index )].offset );
+                }
             }
-            return vec;
+        }
+        if( const std::optional<tripoint_rel_ms> vec = ctxt.get_direction( action ) ) {
+            return face_and_return( *vec );
         } else if( action == "pause" ) {
             return tripoint_rel_ms::zero();
         } else if( action == "LEVEL_UP" ) {
@@ -1303,7 +1450,7 @@ std::optional<tripoint_rel_ms> choose_direction( const std::string &message,
         }
     } while( action != "QUIT" );
 
-    add_msg( _( "Never mind." ) );
+    add_msg( to_translation( "Never mind." ) );
     return std::nullopt;
 }
 
@@ -1317,7 +1464,7 @@ std::optional<tripoint_bub_ms> choose_adjacent( const std::string &message,
     }
 
     if( get_map().obstructed_by_vehicle_rotation( g->u.bub_pos(), *dir + g->u.bub_pos() ) ) {
-        add_msg( _( "You can't reach through that vehicle's wall." ) );
+        add_msg( to_translation( "You can't reach through that vehicle's wall." ) );
         return std::nullopt;
     }
 

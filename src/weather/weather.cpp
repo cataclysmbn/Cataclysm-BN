@@ -412,13 +412,13 @@ void weather_effect::wet_player(int amount) {
 void weather_effect::thunder(int intensity) {
     if (!g->u.has_effect(effect_sleep) && !g->u.is_deaf() && one_in(intensity)) {
         if (g->get_levz() >= 0) {
-            add_msg(_("You hear a distant rumble of thunder."));
+            add_msg(to_translation("You hear a distant rumble of thunder."));
             sfx::play_variant_sound("environment", "thunder_far", 80, random_direction());
         } else if (
             one_in(std::max(
                 roll_remainder(2.0f * g->get_levz() / g->u.mutation_value("hearing_modifier")),
                 1))) {
-            add_msg(_("You hear a rumble of thunder from above."));
+            add_msg(to_translation("You hear a rumble of thunder from above."));
             sfx::play_variant_sound(
                 "environment", "thunder_far", (80 * g->u.mutation_value("hearing_modifier")),
                 random_direction());
@@ -438,7 +438,7 @@ void weather_effect::thunder(int intensity) {
 void weather_effect::lightning(int intensity) {
     if (one_in(intensity)) {
         if (g->get_levz() >= 0) {
-            add_msg(_("A flash of lightning illuminates your surroundings!"));
+            add_msg(to_translation("A flash of lightning illuminates your surroundings!"));
             sfx::play_variant_sound("environment", "thunder_near", 100, random_direction());
             get_weather().lightning_active = true;
         }
@@ -524,7 +524,8 @@ void weather_effect::effect(
 
         if (one_in(odds)) {
             if (one_in(effect_msg_blocked_frequency)) {
-                add_msg(_("Your %s protects you from the %s."), name, precipitation_name);
+                add_msg(to_translation("Your %s protects you from the %s."), name,
+                        precipitation_name);
             }
             return;
         }

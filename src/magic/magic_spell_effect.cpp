@@ -138,7 +138,7 @@ void spell_effect::pain_split(const spell& sp, Creature& caster, const tripoint_
     player* p = caster.as_player();
     if (p == nullptr) { return; }
     sp.make_sound(caster.bub_pos(), caster);
-    add_msg(m_info, _("Your injuries even out."));
+    add_msg(m_info, to_translation("Your injuries even out."));
     int num_limbs = 0; // number of limbs effected (broken don't count)
     int total_hp = 0;  // total hp among limbs
 
@@ -487,7 +487,8 @@ static void damage_targets(
         } else if (sp.damage() < 0) {
             sp.heal(target);
             if (get_avatar().sees(cr->bub_pos())) {
-                add_msg(m_good, _("%s wounds are closing up!"), cr->disp_name(true, true));
+                add_msg(m_good, to_translation("%s wounds are closing up!"),
+                        cr->disp_name(true, true));
             }
         }
     }
@@ -951,7 +952,7 @@ void spell_effect::spawn_summoned_vehicle(
     const spell& sp, Creature& caster, const tripoint_bub_ms& target) {
     map& here = get_map();
     if (here.veh_at(target)) {
-        caster.add_msg_if_player(m_bad, _("There is already a vehicle there."));
+        caster.add_msg_if_player(m_bad, to_translation("There is already a vehicle there."));
         return;
     }
     vehicle* veh =

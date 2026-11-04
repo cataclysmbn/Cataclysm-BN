@@ -15,6 +15,7 @@
 #include "mutation.h"
 #include "output.h"
 #include "overmap/overmap_ui.h"
+#include "page_serial.h"
 #include "path_info.h"
 #include "skill.h"
 #include "string_formatter.h"
@@ -58,6 +59,16 @@ int diary::set_opened_page( int page_number )
     return opened_page;
 }
 
+
+const diary_page *diary::page_at( size_t index ) const
+{
+    return index < pages.size() ? pages[index].get() : nullptr;
+}
+
+size_t diary::page_count() const
+{
+    return pages.size();
+}
 
 diary_page *diary::get_page_ptr( int offset )
 {
@@ -739,6 +750,7 @@ void diary::new_page()
 void diary::delete_page()
 {
     if( opened_page < static_cast<int>( pages.size() ) ) {
+        game_client::forget_diary_page_serial( pages[opened_page].get() );
         pages.erase( pages.begin() + opened_page );
         set_opened_page( opened_page - 1 );
     }
@@ -856,6 +868,9 @@ void diary::deserialize( JsonIn &jsin )
         JsonObject data = jsin.get_object();
 
         data.read( "owner", owner );
+        for( const auto &page : pages ) {
+            game_client::forget_diary_page_serial( page.get() );
+        }
         pages.clear();
         for( JsonObject elem : data.get_array( "pages" ) ) {
             std::unique_ptr<diary_page> page( new diary_page() );

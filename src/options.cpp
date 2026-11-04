@@ -14,10 +14,14 @@
 #include "cached_item_options.h"
 #include "cata_utility.h"
 #include "catacharset.h"
+#include "client_display.h"
+#include "client_interaction.h"
+#include "client_presentation.h"
 #include "color.h"
 #include "cursesdef.h"
 #include "cursesport.h"
 #include "debug.h"
+#include "engine_client_component.h"
 #include "enum_bitset.h"
 #include "filesystem.h"
 #include "fstream_utils.h"
@@ -35,7 +39,6 @@
 #include "point.h"
 #include "popup.h"
 #include "sdlsound.h"
-#include "sdltiles.h"
 #include "sounds.h"
 #include "string_formatter.h"
 #include "string_input_popup.h"
@@ -45,13 +48,7 @@
 #include "ui_manager.h"
 #include "worldfactory.h"
 
-#if defined(TILES)
-#include "cata_tiles.h"
-#endif // TILES
 
-#if defined(__ANDROID__)
-#include <jni.h>
-#endif
 
 #include <algorithm>
 #include <cstdlib>
@@ -1003,33 +1000,21 @@ bool options_manager::cOpt::is_hidden() const
             return false;
 
         case COPT_SDL_HIDE:
-#if defined(TILES)
-            return true;
-#else
-            return false;
-#endif
+            return game_client::has_tiles();
 
         case COPT_CURSES_HIDE:
-#if !defined(TILES) // If not defined.  it's curses interface.
-            return true;
-#else
-            return false;
-#endif
+            return !game_client::has_tiles();
 
         case COPT_POSIX_CURSES_HIDE:
             // Check if we on windows and using wincurses.
-#if defined(TILES) || defined(_WIN32)
+#if defined(_WIN32)
             return false;
 #else
-            return true;
+            return !game_client::has_tiles();
 #endif
 
         case COPT_NO_SOUND_HIDE:
-#if !defined(SDL_SOUND) // If not defined, we have no sound support.
-            return true;
-#else
-            return false;
-#endif
+            return !sound_supported();
 
         case COPT_ANDROID_HIDE:
 #if defined(__ANDROID__)
@@ -1546,20 +1531,7 @@ std::vector<options_manager::id_and_option> options_manager::build_soundpacks_li
     return result;
 }
 
-#if defined(__ANDROID__)
-bool options_manager::android_get_default_setting( const char *settings_name, bool default_value )
-{
-    JNIEnv *env = static_cast< JNIEnv *>( SDL_GetAndroidJNIEnv() );
-    jobject activity = static_cast< jobject>( SDL_GetAndroidActivity() );
-    jclass clazz( env->GetObjectClass( activity ) );
-    jmethodID method_id = env->GetMethodID( clazz, "getDefaultSetting", "(Ljava/lang/String;Z)Z" );
-    jboolean ans = env->CallBooleanMethod( activity, method_id, env->NewStringUTF( settings_name ),
-                                           default_value );
-    env->DeleteLocalRef( activity );
-    env->DeleteLocalRef( clazz );
-    return ans;
-}
-#endif
+
 
 void options_manager::Page::removeRepeatedEmptyLines()
 {
@@ -2316,38 +2288,38 @@ void options_manager::add_options_graphics()
 
     add_empty_line();
 
-#if defined(TILES)
-    add_option_group( graphics, Group( "font_params", to_translation( "Font settings" ),
-                                       to_translation( "Font display settings.  To change font type or source file, edit fonts.json in config directory." ) ),
-    [&]( auto & page_id ) {
-        add( "USE_DRAW_ASCII_LINES_ROUTINE", page_id, translate_marker( "SDL ASCII lines" ),
-             translate_marker( "Use SDL ASCII line drawing routine instead of Unicode Line Drawing characters.  Use this option when your selected font doesn't contain necessary glyphs." ),
-             true, COPT_CURSES_HIDE );
+    if( game_client::has_tiles() ) {
+        add_option_group( graphics, Group( "font_params", to_translation( "Font settings" ),
+                                           to_translation( "Font display settings.  To change font type or source file, edit fonts.json in config directory." ) ),
+        [&]( auto & page_id ) {
+            add( "USE_DRAW_ASCII_LINES_ROUTINE", page_id, translate_marker( "SDL ASCII lines" ),
+                 translate_marker( "Use SDL ASCII line drawing routine instead of Unicode Line Drawing characters.  Use this option when your selected font doesn't contain necessary glyphs." ),
+                 true, COPT_CURSES_HIDE );
 
-        add( "FONT_BLENDING", page_id, translate_marker( "Font blending" ),
-             translate_marker( "If true, fonts will look better." ),
-             false, COPT_CURSES_HIDE );
+            add( "FONT_BLENDING", page_id, translate_marker( "Font blending" ),
+                 translate_marker( "If true, fonts will look better." ),
+                 false, COPT_CURSES_HIDE );
 
-        add( "FONT_WIDTH", page_id, translate_marker( "Font width" ),
-             translate_marker( "Set the font width.  Requires restart." ),
-             8, 100, 8, COPT_CURSES_HIDE );
+            add( "FONT_WIDTH", page_id, translate_marker( "Font width" ),
+                 translate_marker( "Set the font width.  Requires restart." ),
+                 8, 100, 8, COPT_CURSES_HIDE );
 
-        static auto font_size_options = std::array<std::array<std::string, 3>, 8> {{
-                {"FONT_HEIGHT",         translate_marker( "Font height" ),         translate_marker( "Set the font height.  Requires restart." )},
-                {"FONT_SIZE",           translate_marker( "Font size" ),           translate_marker( "Set the font size.  Requires restart." )},
-                {"MAP_FONT_WIDTH",      translate_marker( "Map font width" ),      translate_marker( "Set the map font width.  Requires restart." )},
-                {"MAP_FONT_HEIGHT",     translate_marker( "Map font height" ),     translate_marker( "Set the map font height.  Requires restart." )},
-                {"MAP_FONT_SIZE",       translate_marker( "Map font size" ),       translate_marker( "Set the map font size.  Requires restart." )},
-                {"OVERMAP_FONT_WIDTH",  translate_marker( "Overmap font width" ),  translate_marker( "Set the overmap font width.  Requires restart." )},
-                {"OVERMAP_FONT_HEIGHT", translate_marker( "Overmap font height" ), translate_marker( "Set the overmap font height.  Requires restart." )},
-                {"OVERMAP_FONT_SIZE",   translate_marker( "Overmap font size" ),   translate_marker( "Set the overmap font size.  Requires restart." )}
+            static auto font_size_options = std::array<std::array<std::string, 3>, 8> {{
+                    {"FONT_HEIGHT",         translate_marker( "Font height" ),         translate_marker( "Set the font height.  Requires restart." )},
+                    {"FONT_SIZE",           translate_marker( "Font size" ),           translate_marker( "Set the font size.  Requires restart." )},
+                    {"MAP_FONT_WIDTH",      translate_marker( "Map font width" ),      translate_marker( "Set the map font width.  Requires restart." )},
+                    {"MAP_FONT_HEIGHT",     translate_marker( "Map font height" ),     translate_marker( "Set the map font height.  Requires restart." )},
+                    {"MAP_FONT_SIZE",       translate_marker( "Map font size" ),       translate_marker( "Set the map font size.  Requires restart." )},
+                    {"OVERMAP_FONT_WIDTH",  translate_marker( "Overmap font width" ),  translate_marker( "Set the overmap font width.  Requires restart." )},
+                    {"OVERMAP_FONT_HEIGHT", translate_marker( "Overmap font height" ), translate_marker( "Set the overmap font height.  Requires restart." )},
+                    {"OVERMAP_FONT_SIZE",   translate_marker( "Overmap font size" ),   translate_marker( "Set the overmap font size.  Requires restart." )}
+                }
+            };
+            for( auto &&[option, option_name, option_desc] : font_size_options ) {
+                add( option, page_id, option_name, option_desc, 8, 100, 16, COPT_CURSES_HIDE );
             }
-        };
-        for( auto &&[option, option_name, option_desc] : font_size_options ) {
-            add( option, page_id, option_name, option_desc, 8, 100, 16, COPT_CURSES_HIDE );
-        }
-    } );
-#endif // TILES
+        } );
+    }
 
     add( "ENABLE_ASCII_ART_ITEM", graphics,
          translate_marker( "Enable ASCII art in item descriptions" ),
@@ -2514,13 +2486,19 @@ void options_manager::add_options_graphics()
 
     add_empty_line();
 
-#if defined(TILES)
-    std::vector<options_manager::id_and_option> display_list = cata_tiles::build_display_list();
-    add( "DISPLAY", graphics, translate_marker( "Display" ),
-         translate_marker( "Sets which video display will be used to show the game.  Requires restart." ),
-         display_list,
-         display_list.front().first, COPT_CURSES_HIDE );
-#endif
+    if( game_client::has_tiles() ) {
+        const auto display_options = game_client::presentation().display_options();
+        auto display_list = std::vector<options_manager::id_and_option> {};
+        for( const auto &option : display_options ) {
+            display_list.emplace_back( option.id, option.name );
+        }
+        if( !display_list.empty() ) {
+            add( "DISPLAY", graphics, translate_marker( "Display" ),
+                 translate_marker( "Sets which video display will be used to show the game.  Requires restart." ),
+                 display_list,
+                 display_list.front().first, COPT_CURSES_HIDE );
+        }
+    }
 
 #if !defined(__ANDROID__) // Android is always fullscreen
     add( "FULLSCREEN", graphics, translate_marker( "Fullscreen" ),
@@ -2535,26 +2513,32 @@ void options_manager::add_options_graphics()
 #endif
 
 #if !defined(__ANDROID__)
-#   if !defined(TILES)
-    // No renderer selection in non-TILES mode
-    add( "RENDERER", graphics, translate_marker( "Renderer" ),
-    translate_marker( "Set which renderer to use.  Requires restart." ),   {   { "software", translate_marker( "software" ) } },
-    "software", COPT_CURSES_HIDE );
-#   else
-    std::vector<options_manager::id_and_option> renderer_list = cata_tiles::build_renderer_list();
-    std::string default_renderer = renderer_list.front().first;
-#   if defined(_WIN32)
-    for( const id_and_option &renderer : renderer_list ) {
-        if( renderer.first == "direct3d11" ) {
-            default_renderer = renderer.first;
-            break;
+    if( !game_client::has_tiles() ) {
+        // No renderer selection in non-TILES mode
+        add( "RENDERER", graphics, translate_marker( "Renderer" ),
+        translate_marker( "Set which renderer to use.  Requires restart." ),   {   { "software", translate_marker( "software" ) } },
+        "software", COPT_CURSES_HIDE );
+    } else {
+        const auto renderer_options = game_client::presentation().renderer_options();
+        auto renderer_list = std::vector<options_manager::id_and_option> {};
+        for( const auto &option : renderer_options ) {
+            renderer_list.emplace_back( option.id, option.name );
+        }
+        if( !renderer_list.empty() ) {
+            auto default_renderer = renderer_list.front().first;
+#if defined(_WIN32)
+            for( const auto &renderer : renderer_list ) {
+                if( renderer.first == "direct3d11" ) {
+                    default_renderer = renderer.first;
+                    break;
+                }
+            }
+#endif
+            add( "RENDERER", graphics, translate_marker( "Renderer" ),
+                 translate_marker( "Set which renderer to use.  Requires restart." ), renderer_list,
+                 default_renderer, COPT_CURSES_HIDE );
         }
     }
-#   endif
-    add( "RENDERER", graphics, translate_marker( "Renderer" ),
-         translate_marker( "Set which renderer to use.  Requires restart." ), renderer_list,
-         default_renderer, COPT_CURSES_HIDE );
-#   endif
 
 #else
     add( "SOFTWARE_RENDERING", graphics, translate_marker( "Software rendering" ),
@@ -2565,34 +2549,34 @@ void options_manager::add_options_graphics()
        );
 #endif
 
-#if defined(TILES)
-    add( "TEXTURE_STREAMING", graphics, translate_marker( "Texture Streaming" ),
-         translate_marker( "Use texture-streaming instead of render-to-texture for dynamic graphics. Requires restart." ),
-    {
-        { "auto", translate_marker( "Auto" ) },
-        { "on", translate_marker( "Enable" ) },
-        { "off", translate_marker( "Disable" ) }
-    },
-    "auto" );
-#endif
+    if( game_client::has_tiles() ) {
+        add( "TEXTURE_STREAMING", graphics, translate_marker( "Texture Streaming" ),
+             translate_marker( "Use texture-streaming instead of render-to-texture for dynamic graphics. Requires restart." ),
+        {
+            { "auto", translate_marker( "Auto" ) },
+            { "on", translate_marker( "Enable" ) },
+            { "off", translate_marker( "Disable" ) }
+        },
+        "auto" );
+    }
 
-#if defined(SDL_HINT_RENDER_BATCHING)
-    add( "RENDER_BATCHING", graphics, translate_marker( "Allow render batching" ),
-         translate_marker( "Use render batching for 2D render API to make it more efficient.  Requires restart." ),
-         true, COPT_CURSES_HIDE
-       );
-#endif
+    if( game_client::has_tiles() ) {
+        add( "RENDER_BATCHING", graphics, translate_marker( "Allow render batching" ),
+             translate_marker( "Use render batching for 2D render API to make it more efficient.  Requires restart." ),
+             true, COPT_CURSES_HIDE
+           );
+    }
     add( "FRAMEBUFFER_ACCEL", graphics, translate_marker( "Software framebuffer acceleration" ),
          translate_marker( "Use hardware acceleration for the framebuffer when using software rendering.  Requires restart." ),
          false, COPT_CURSES_HIDE
        );
 
-#if defined(SDL_HINT_RENDER_VSYNC)
-    add( "VSYNC", graphics, translate_marker( "Use VSync" ),
-         translate_marker( "Enable vertical synchronization to prevent screen tearing.  VSync can slow the game down a lot.  Requires restart." ),
-         true, COPT_CURSES_HIDE
-       );
-#endif
+    if( game_client::has_tiles() ) {
+        add( "VSYNC", graphics, translate_marker( "Use VSync" ),
+             translate_marker( "Enable vertical synchronization to prevent screen tearing.  VSync can slow the game down a lot.  Requires restart." ),
+             true, COPT_CURSES_HIDE
+           );
+    }
 
 #if defined(__ANDROID__)
     get_option( "FRAMEBUFFER_ACCEL" ).setPrerequisite( "SOFTWARE_RENDERING" );
@@ -2615,7 +2599,6 @@ void options_manager::add_options_graphics()
     "1", COPT_CURSES_HIDE );
 #endif
 
-#if defined(CATA_SDL)
     add_empty_line();
     add( "COMPUTE_ACCELERATION", graphics, translate_marker( "Compute Acceleration" ),
          translate_marker( "Controls compute backend selection for lighting, visibility, and line of sight.  Requires restart." ),
@@ -2626,7 +2609,6 @@ void options_manager::add_options_graphics()
         { "gpu_software", translate_marker( "Software GPU (debug)" ) }
     },
     "auto" );
-#endif
 
 }
 
@@ -3602,74 +3584,16 @@ void options_manager::add_options_android()
 #endif
 }
 
-#if defined(TILES)
-// Helper method to isolate #ifdeffed tiles code.
-static void refresh_tiles( bool used_tiles_changed, bool pixel_minimap_height_changed, bool ingame,
-                           bool force_tile_change )
+static void refresh_tiles( const bool used_tiles_changed, const bool pixel_minimap_height_changed,
+                           const bool ingame, const bool force_tile_change )
 {
-    if( used_tiles_changed ) {
-        // Disable UIs below to avoid accessing the tile context during loading.
-        ui_adaptor dummy( ui_adaptor::disable_uis_below {} );
-        //try and keep SDL calls limited to source files that deal specifically with them
-        const auto tilesName = get_option<std::string>( "TILES" );
-        const auto omTilesName = get_option<std::string>( "OVERMAP_TILES" );
-        try {
-            tilecontext->reinit();
-            std::vector<mod_id> dummy;
-
-            tilecontext->load_tileset(
-                tilesName,
-                ingame ? world_generator->active_world->info->active_mod_order : dummy,
-                /*precheck=*/false,
-                /*force=*/force_tile_change,
-                /*pump_events=*/true
-            );
-            //game_ui::init_ui is called when zoom is changed
-            g->reset_zoom();
-            g->mark_main_ui_adaptor_resize();
-            tilecontext->do_tile_loading_report( []( const std::string & str ) {
-                DebugLog( DL::Info, DC::Main ) << str;
-            } );
-        } catch( const std::exception &err ) {
-            popup( _( "Loading the tileset failed: %s" ), err.what() );
-            use_tiles = false;
-            use_tiles_overmap = false;
-        }
-        if( tilesName == omTilesName ) {
-            overmap_tilecontext = tilecontext;
-        } else {
-            try {
-                repoint_overmap_tilecontext();
-                std::vector<mod_id> dummy;
-
-                overmap_tilecontext->load_tileset(
-                    omTilesName,
-                    ingame ? world_generator->active_world->info->active_mod_order : dummy,
-                    /*precheck=*/false,
-                    /*force=*/force_tile_change,
-                    /*pump_events=*/true
-                );
-                //game_ui::init_ui is called when zoom is changed
-                g->reset_zoom();
-                g->mark_main_ui_adaptor_resize();
-                overmap_tilecontext->do_tile_loading_report( []( const std::string & str ) {
-                    DebugLog( DL::Info, DC::Main ) << str;
-                } );
-            } catch( const std::exception &err ) {
-                popup( _( "Loading the overmap tileset failed: %s" ), err.what() );
-                use_tiles = false;
-                use_tiles_overmap = false;
-            }
-        }
-    } else if( ingame && pixel_minimap_option && pixel_minimap_height_changed ) {
-        g->mark_main_ui_adaptor_resize();
-    }
+    game_client::presentation().refresh_tileset( {
+        .used_tiles_changed = used_tiles_changed,
+        .pixel_minimap_height_changed = pixel_minimap_height_changed,
+        .ingame = ingame,
+        .force_tile_change = force_tile_change
+    } );
 }
-#else
-static void refresh_tiles( bool, bool, bool, bool )
-{
-}
-#endif // TILES
 
 static void draw_borders_external(
     const catacurses::window &w, int horizontal_level, const std::set<int> &vert_lines,
@@ -3717,33 +3641,59 @@ options_manager::PageItem::fmt_tooltip( const Group &group,
             std::string ret = string_format( "%s #%s",
                                              opt.getTooltip(),
                                              opt.getDefaultText() );
-#if defined(TILES) || defined(_WIN32)
-            if( opt_name == "TERMINAL_X" ) {
-                int new_window_width = 0;
-                new_window_width = projected_window_width();
-
-                ret += " -- ";
-                ret += string_format(
-                           vgettext( "The window will be %d pixel wide with the selected value.",
-                                     "The window will be %d pixels wide with the selected value.",
-                                     new_window_width ), new_window_width );
-            } else if( opt_name == "TERMINAL_Y" ) {
-                int new_window_height = 0;
-                new_window_height = projected_window_height();
-
-                ret += " -- ";
-                ret += string_format(
-                           vgettext( "The window will be %d pixel tall with the selected value.",
-                                     "The window will be %d pixels tall with the selected value.",
-                                     new_window_height ), new_window_height );
-            }
+#if defined(_WIN32)
+            if( true ) {
+#else
+            if( game_client::has_tiles() ) {
 #endif
+
+                if( opt_name == "TERMINAL_X" ) {
+                    int new_window_width = 0;
+                    new_window_width = projected_window_width();
+
+                    ret += " -- ";
+                    ret += string_format(
+                               vgettext( "The window will be %d pixel wide with the selected value.",
+                                         "The window will be %d pixels wide with the selected value.",
+                                         new_window_width ), new_window_width );
+                } else if( opt_name == "TERMINAL_Y" ) {
+                    int new_window_height = 0;
+                    new_window_height = projected_window_height();
+
+                    ret += " -- ";
+                    ret += string_format(
+                               vgettext( "The window will be %d pixel tall with the selected value.",
+                                         "The window will be %d pixels tall with the selected value.",
+                                         new_window_height ), new_window_height );
+                }
+            }
             return ret;
         }
         default:
             abort();
     }
 }
+
+namespace
+{
+namespace ec = engine_client;
+
+/// The colour the options list prints a value in: off values red, a refused option gray.
+auto option_value_color( const std::string &value, bool prerequisite_met ) -> nc_color
+{
+    return !prerequisite_met ? c_light_gray : value == "false" || value == "disabled" ||
+           value == "off" ? c_light_red : c_light_green;
+}
+
+/// The components and affordances of the options screen.
+constexpr auto options_pages = "options:pages";
+constexpr auto options_items = "options:items";
+constexpr auto options_editor = "options:editor";
+constexpr auto options_page = "options:page";
+constexpr auto options_select = "options:select";
+constexpr auto options_activate = "options:activate";
+constexpr auto options_set = "options:set";
+} // namespace
 
 /** String with color */
 struct string_col {
@@ -3917,14 +3867,8 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
                     string_col name( name_prefix + opt.getMenuText(), !hasPrerequisite ||
                                      hasPrerequisiteFulfilled ? c_white : c_light_gray );
 
-                    nc_color cLineColor;
-                    if( hasPrerequisite && !hasPrerequisiteFulfilled ) {
-                        cLineColor = c_light_gray;
-                    } else if( opt.getValue() == "false" || opt.getValue() == "disabled" || opt.getValue() == "off" ) {
-                        cLineColor = c_light_red;
-                    } else {
-                        cLineColor = c_light_green;
-                    }
+                    const auto cLineColor = option_value_color( opt.getValue(), !hasPrerequisite ||
+                                            hasPrerequisiteFulfilled );
 
                     string_col value( opt.getValueName(), is_selected ? hilite( cLineColor ) : cLineColor );
 
@@ -4015,16 +3959,192 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
         wnoutrefresh( w_options );
     } );
 
+    // What a client can set on an option directly, from the same values the native menu cycles through.
+    const auto field_of = []( const std::string & id, const cOpt & opt ) -> ec::form_field {
+        const auto type = opt.getType();
+        auto field = ec::form_field{ .id = id, .label = opt.getMenuText(), .value = opt.getValue( true ) };
+        if( type == "int" || type == "int_map" )
+        {
+            field.value = std::to_string( opt.iSet );
+        }
+        if( type == "bool" )
+        {
+            field.type = "bool";
+        } else if( type == "string_select" )
+        {
+            field.type = "select";
+            for( const auto &item : opt.getItems() ) {
+                field.options.push_back( { .id = item.first, .label = item.second.translated() } );
+            }
+        } else if( type == "int_map" )
+        {
+            field.type = "select";
+            for( const auto &[value, name] : opt.mIntValues ) {
+                field.options.push_back( { .id = std::to_string( value ), .label = name } );
+            }
+        } else if( type == "int" )
+        {
+            field.type = "integer";
+            field.min = opt.iMin;
+            field.max = opt.iMax;
+        } else if( type == "float" )
+        {
+            field.type = "float";
+            field.min = opt.fMin;
+            field.max = opt.fMax;
+        } else
+        {
+            field.max_length = opt.getMaxLength() > 0 ? opt.getMaxLength() : -1;
+        }
+        return field;
+    };
+
+    const auto is_selectable = [&]( const PageItem & item ) -> bool {
+        switch( item.type )
+        {
+            case ItemType::BlankLine:
+                return false;
+            case ItemType::GroupHeader:
+                return true;
+            case ItemType::Option:
+                return groups_state[item.group];
+            default:
+                abort();
+        }
+    };
+    const auto row_id_of = []( const PageItem & item ) {
+        return ( item.type == ItemType::GroupHeader ? "group:" : "option:" ) + item.data;
+    };
+
+    // The pages as tabs over the entries of the current page, and beside them the tooltip and the value of
+    // the entry under the cursor.
+    const auto options_view = [&]() -> ec::screen_view {
+        const auto &cOPTIONS = ( ingame || world_options_only ) && iCurrentPage == iWorldOptPage ?
+        ACTIVE_WORLD_OPTIONS : OPTIONS;
+        const auto &page_items = pages_[iCurrentPage].items_;
+        const auto &cursor = page_items[iCurrentLine];
+        auto rows = std::vector<ec::row> {};
+        for( auto index = 0; index < static_cast<int>( page_items.size() ); ++index )
+        {
+            const auto &item = page_items[index];
+            if( !is_selectable( item ) ) {
+                continue;
+            }
+            if( item.type == ItemType::GroupHeader ) {
+                rows.push_back( { .id = row_id_of( item ), .label = find_group( item.data ).name_.translated(),
+                                  .selected = index == iCurrentLine, .toggled = groups_state[item.data] } );
+                continue;
+            }
+            const auto &opt = cOPTIONS.find( item.data )->second;
+            const auto met = !opt.hasPrerequisite() || opt.checkPrerequisite();
+            const auto value = opt.getValue();
+            const auto value_color = option_value_color( value, met );
+            rows.push_back( {
+                .id = row_id_of( item ), .label = opt.getMenuText(),
+.denial = met ? std::string{} : string_format( _( "Prerequisite for this option not met!\n(%s)" ),
+                        get_options().get_option( opt.getPrerequisite() ).getMenuText() ),
+                .enabled = met, .selected = index == iCurrentLine,
+                .columns = { { .key = "value", .label = _( "Value" ), .value = opt.getValueName(), .color = string_from_color( value_color ) } },
+.color = met ? std::string{} : string_from_color( c_light_gray ),
+.parent_id = item.group.empty() ? std::optional<std::string> {} : "group:" + item.group,
+            } );
+        }
+        const auto selected = cursor.type == ItemType::Option ? cOPTIONS.find( cursor.data ) : cOPTIONS.end();
+        const auto editable = selected != cOPTIONS.end() && ( !selected->second.hasPrerequisite() ||
+                              selected->second.checkPrerequisite() );
+        auto facts = ec::children_of( ec::component{ .id = "options:tooltip", .body = ec::text_body{
+                .markup = cursor.fmt_tooltip( find_group( cursor.group ), cOPTIONS ) } } );
+        if( ingame && iCurrentPage == iWorldOptPage )
+        {
+            facts.push_back( {
+                .id = "options:note", .body = ec::text_body{
+                    .markup = colorize( _( "Note: " ), c_light_red ) +
+                    _( "Some of these options may produce unexpected results if changed." ) } } );
+        }
+        if( editable )
+        {
+            facts.push_back( { .id = options_editor, .affordances = { options_set }, .body = ec::form_body{
+                    .fields = { field_of( row_id_of( cursor ), selected->second ) } } } );
+        }
+        const auto row_arg = ec::arg_shape{ .row = ec::row_shape{ .component_id = options_items } };
+        auto affordances = std::vector<ec::affordance> {
+            ec::invoke_affordance( { .id = options_select, .label = _( "Select" ), .args = row_arg, .role = "select" } ),
+            ec::invoke_affordance( { .id = options_activate, .label = ctxt.get_action_name( "CONFIRM" ), .args = row_arg, .covers = "CONFIRM" } ),
+            ec::invoke_affordance( {
+                .id = options_set, .label = _( "Value" ), .args = {
+                    .row = ec::row_shape{ .component_id = options_editor }, .text = ec::text_shape{}
+                }, .enabled = editable } ),
+        };
+        auto items = ec::list( { .id = options_items, .rows = std::move( rows ), .selection = "single",
+                                 .activate = options_activate } );
+        items.affordances.push_back( options_select );
+        auto body = ec::split( {
+            .id = "options:body", .relation = "detail", .active = options_items,
+            .children = ec::children_of( std::move( items ), ec::panel( {
+                .id = "options:detail",
+                .title = cursor.type == ItemType::GroupHeader ? find_group( cursor.data ).name_.translated() :
+                selected != cOPTIONS.end() ? selected->second.getMenuText() : std::string{},
+                .child = ec::split( { .id = "options:facts", .children = std::move( facts ) } ) } ) ) } );
+        if( !world_options_only )
+        {
+            affordances.push_back( ec::invoke_affordance( {
+                .id = options_page, .label = _( "Options" ),
+                .args = { .row = ec::row_shape{ .component_id = options_pages } } } ) );
+            body = ec::tabs( {
+                .id = options_pages,
+                .tabs = std::views::iota( std::size_t{ 0 }, pages_.size() ) | std::views::transform( [&]( const auto index )
+                {
+                    return ec::tab_entry{
+                        .id = pages_[index].id_,
+                        .label = ingame && static_cast<int>( index ) == iWorldOptPage ?
+std::string{ _( "Current world" ) } :
+                        pages_[index].name_.translated(),
+                        .selected = static_cast<int>( index ) == iCurrentPage };
+                } ) | std::ranges::to<std::vector>(),
+                .select = options_page, .child = std::move( body ) } );
+        }
+        return { .title = world_options_only ? _( "World options" ) : _( "Options" ), .root = std::move( body ),
+                 .affordances = std::move( affordances ), .focus_component = options_items,
+                 .focus_row = is_selectable( cursor ) ? row_id_of( cursor ) : std::string{} };
+    };
+    const auto screen = ec::screen_scope( ctxt, "options", { .role = "screen", .view = [&]( const auto & /*state*/ ) { return options_view(); } } );
+
     while( true ) {
         ui_manager::redraw();
 
-        Page &page = pages_[iCurrentPage];
-        auto &page_items = page.items_;
+        auto &page_items = pages_[iCurrentPage].items_;
 
         auto &cOPTIONS = ( ingame || world_options_only ) && iCurrentPage == iWorldOptPage ?
                          ACTIVE_WORLD_OPTIONS : OPTIONS;
 
-        const std::string action = ctxt.handle_input();
+        auto action = std::string{ ctxt.handle_input() };
+
+        // A client's affordance acts on the native cursor, like the keypress that does the same.
+        if( const auto invoked = ec::invoked( ctxt.get_raw_input() ) ) {
+            const auto &args = invoked->args;
+            const auto &id = invoked->affordance_id;
+            const auto row = args.row ? std::ranges::find_if( page_items, [&]( const PageItem & item ) {
+                return is_selectable( item ) && row_id_of( item ) == *args.row;
+            } ) : page_items.end();
+            const auto page_index = args.row ? std::ranges::find( pages_, *args.row,
+                                    &Page::id_ ) : pages_.end();
+            action.clear();
+            if( id == options_page && page_index != pages_.end() && !world_options_only ) {
+                iCurrentPage = static_cast<int>( page_index - pages_.begin() );
+                iCurrentLine = 0;
+                iStartPos = 0;
+            } else if( row != page_items.end() ) {
+                iCurrentLine = static_cast<int>( row - page_items.begin() );
+                if( id == options_activate ) {
+                    action = "CONFIRM";
+                } else if( id == options_set && args.text && row->type == ItemType::Option ) {
+                    auto &opt = cOPTIONS[row->data];
+                    if( !opt.hasPrerequisite() || opt.checkPrerequisite() ) {
+                        opt.setValue( *args.text );
+                    }
+                }
+            }
+        }
 
         if( world_options_only && ( action == "NEXT_TAB" || action == "PREV_TAB" ||
                                     ( action == "QUIT" && ( !on_quit || on_quit() ) ) ) ) {
@@ -4088,35 +4208,20 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
             }
         };
 
-        const auto is_selectable = [&]( int i ) -> bool {
-            const PageItem &curr_item = page_items[i];
-            switch( curr_item.type )
-            {
-                case ItemType::BlankLine:
-                    return false;
-                case ItemType::GroupHeader:
-                    return true;
-                case ItemType::Option:
-                    return groups_state[curr_item.group];
-                default:
-                    abort();
-            }
-        };
-
         if( action == "DOWN" ) {
             do {
                 iCurrentLine++;
                 if( iCurrentLine >= static_cast<int>( page_items.size() ) ) {
                     iCurrentLine = 0;
                 }
-            } while( !is_selectable( iCurrentLine ) );
+            } while( !is_selectable( page_items[iCurrentLine] ) );
         } else if( action == "UP" ) {
             do {
                 iCurrentLine--;
                 if( iCurrentLine < 0 ) {
                     iCurrentLine = page_items.size() - 1;
                 }
-            } while( !is_selectable( iCurrentLine ) );
+            } while( !is_selectable( page_items[iCurrentLine] ) );
         } else if( action == "NEXT_TAB" ) {
             iCurrentLine = 0;
             iStartPos = 0;
@@ -4245,8 +4350,12 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
     calendar::set_eternal_season( ::get_option<bool>( "ETERNAL_SEASON" ) );
     calendar::set_season_length( ::get_option<int>( "SEASON_LENGTH" ) );
 
-#if !defined(__ANDROID__) && (defined(TILES) || defined(_WIN32))
+#if !defined(__ANDROID__)
+#if defined(_WIN32)
     if( terminal_size_changed ) {
+#else
+    if( game_client::has_tiles() && terminal_size_changed ) {
+#endif
         int scaling_factor = get_scaling_factor();
         int TERMX = ::get_option<int>( "TERMINAL_X" );
         int TERMY = ::get_option<int>( "TERMINAL_Y" );
@@ -4256,7 +4365,7 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
         get_option( "TERMINAL_Y" ).setValue( std::max( FULL_SCREEN_HEIGHT * scaling_factor, TERMY ) );
         save();
 
-        resize_term( ::get_option<int>( "TERMINAL_X" ), ::get_option<int>( "TERMINAL_Y" ) );
+        resize_client_term( ::get_option<int>( "TERMINAL_X" ), ::get_option<int>( "TERMINAL_Y" ) );
     }
 #else
     ( void ) terminal_size_changed;
@@ -4349,15 +4458,11 @@ void options_manager::cache_to_globals()
     display_mod_source = ::get_option<bool>( "MOD_SOURCE" );
     display_object_ids = ::get_option<bool>( "SHOW_IDS" );
     trigdist = ::get_option<bool>( "CIRCLEDIST" );
-#if defined(TILES)
-    use_tiles = ::get_option<bool>( "USE_TILES" );
-    colored_lighting = use_tiles && ::get_option<bool>( "COLORED_LIGHTING" );
-    use_tiles_overmap = ::get_option<bool>( "USE_TILES_OVERMAP" );
-#else
-    use_tiles = false;
-    colored_lighting = false;
-    use_tiles_overmap = false;
-#endif
+    use_tiles = game_client::has_tiles() && ::get_option<bool>( "USE_TILES" );
+    // A protocol client draws tiles from the published map, colored light included.
+    colored_lighting = ( use_tiles || game_client::has_protocol_client() ) &&
+                       ::get_option<bool>( "COLORED_LIGHTING" );
+    use_tiles_overmap = use_tiles && ::get_option<bool>( "USE_TILES_OVERMAP" );
     use_pinyin_search = ::get_option<bool>( "USE_PINYIN_SEARCH" );
     log_from_top = ::get_option<std::string>( "LOG_FLOW" ) == "new_top";
     message_ttl = ::get_option<int>( "MESSAGE_TTL" );
@@ -4434,25 +4539,21 @@ void options_manager::cache_to_globals()
 
     similarity_threshold = ::get_option<float>( "MERGE_COMESTIBLES_THRESHOLD" );
 
-#if defined(SDL_SOUND)
-    sounds::sound_enabled = ::get_option<bool>( "SOUND_ENABLED" );
-#endif
+    if( options.contains( "SOUND_ENABLED" ) ) {
+        sounds::sound_enabled = ::get_option<bool>( "SOUND_ENABLED" );
+    }
 
-#if defined(CATA_SDL)
     if( options.contains( "COMPUTE_ACCELERATION" ) ) {
         preload_config::set_compute_accel(
             preload_config::compute_accel_from_string(
                 ::get_option<std::string>( "COMPUTE_ACCELERATION" ) ) );
     }
-#endif
 
-#if defined(TILES)
-    if( options.contains( "TEXTURE_STREAMING" ) ) {
+    if( game_client::has_tiles() && options.contains( "TEXTURE_STREAMING" ) ) {
         preload_config::set_texture_streaming(
             preload_config::tristate_from_string(
                 ::get_option<std::string>( "TEXTURE_STREAMING" ) ) );
     }
-#endif
 }
 
 bool options_manager::save()
@@ -4466,9 +4567,7 @@ bool options_manager::save()
         serialize( jout );
     }, _( "options" ) );
 
-#if defined(CATA_SDL)
     preload_config::save();
-#endif
 
     return ok;
 }

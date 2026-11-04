@@ -1,0 +1,922 @@
+#include "client_interaction.h"
+#include "client_interaction_prepared.h"
+#include "client_interaction_validation.h"
+
+#include "catacharset.h"
+#include "char_validity_check.h"
+#include "cursesdef.h"
+#include "cursesport.h"
+#include "client_command.h"
+#include "client_input.h"
+#include "input.h"
+#include "json.h"
+#include "translation_snapshot.h"
+#include "wcwidth.h"
+
+#include <algorithm>
+#include <charconv>
+#include <cmath>
+#include <iomanip>
+#include <limits>
+#include <locale>
+#include <ranges>
+#include <sstream>
+#include <stdexcept>
+#include <utility>
+
+namespace game_client
+{
+namespace
+{
+thread_local auto work = interaction_work_counts {};
+
+/// Sorting ordinals leaves output order intact and makes duplicate IDs first-occurrence wins.
+auto index_for( const auto &values ) -> std::vector<std::size_t>
+{
+    namespace ranges = std::ranges;
+    auto index = std::views::iota( std::size_t{0}, values.size() )
+                 | ranges::to<std::vector>();
+    ranges::sort( index, [&values]( const auto lhs, const auto rhs ) {
+        const auto order = values[lhs].id.compare( values[rhs].id );
+        return order < 0 || ( order == 0 && lhs < rhs );
+    } );
+    return index;
+}
+
+/// Copy everything but the choices, which stay with the caller untouched.
+auto without_choices( interaction_snapshot &full ) -> interaction_snapshot
+{
+    auto choices = std::move( full.choices );
+    auto result = full;
+    full.choices = std::move( choices );
+    return result;
+}
+} // namespace
+
+/// Defined only here: callers can retain const ownership but cannot access or mutate the model.
+class prepared_interaction
+{
+    public:
+        prepared_interaction( const input_context &context, interaction_snapshot snapshot,
+                              std::optional<lazy_choice_descriptions> descriptions = std::nullopt )
+            : context( &context ), metadata( without_choices( snapshot ) ),
+              snapshot( std::move( snapshot ) ),
+              choices( index_for( this->snapshot.choices ) ),
+              targets( this->snapshot.target ? index_for( this->snapshot.target->candidates ) :
+                       std::vector<std::size_t> {} ), descriptions( std::move( descriptions ) ),
+        description_cache( this->descriptions ? this->snapshot.choices.size() : 0 ) {}
+
+        auto description( const std::size_t index ) const -> const std::string & { // *NOPAD*
+            auto &cached = description_cache[index];
+            if( !cached ) {
+                ++work.description_calls;
+                auto value = descriptions->render( index );
+                work.description_bytes += value.size();
+                cached = std::move( value );
+            }
+            return *cached;
+        }
+
+        const input_context *const context;
+        /// Every field but the choices, so a page copies the whole value and cannot drop a new field.
+        const interaction_snapshot metadata;
+        const interaction_snapshot snapshot;
+        const std::vector<std::size_t> choices;
+        const std::vector<std::size_t> targets;
+        const std::optional<lazy_choice_descriptions> descriptions;
+        mutable std::vector<std::optional<std::string>> description_cache;
+};
+
+namespace
+{
+
+struct provider_entry {
+    const input_context *context;
+    std::shared_ptr<interaction_provider> provider;
+    prepared_interaction_handle prepared;
+    std::size_t token;
+};
+
+thread_local auto providers = std::vector<provider_entry> {};
+thread_local auto next_provider_token = std::size_t {0};
+
+constexpr auto maximum_page_size = std::size_t {200};
+auto wire_overmap_tiles = false;
+
+auto hex_digest( const localization::content_hash &hash ) -> std::string
+{
+    auto output = std::ostringstream{};
+    output.imbue( std::locale::classic() );
+    output << std::hex << std::setfill( '0' ) << std::setw( 16 ) << hash.value();
+    return output.str();
+}
+
+auto provider_for( const input_context &context ) -> const provider_entry *
+{
+    const auto provider =
+    std::ranges::find_if( providers | std::views::reverse, [&context]( const auto & entry ) {
+        return entry.context == &context;
+    } );
+    return provider == providers.rend() ? nullptr : &*provider;
+}
+
+auto add_position( localization::content_hash &hash, const interaction_position &position ) -> void
+{
+    hash.add( std::to_string( position.x ) );
+    hash.add( std::to_string( position.y ) );
+    hash.add( std::to_string( position.z ) );
+}
+
+/// The identity of what the native screen offers: its kind, the ids of its choices, panes and targets, their
+/// counts and states, and positions. No text goes in, so the same screen has the same schema in every
+/// language and a recorded input stays valid when it is played in another. Lazily rendered descriptions
+/// enter through their dependency keys, which are owned by the screen that prepared them.
+auto schema_for( const interaction_snapshot &snapshot,
+                 const lazy_choice_descriptions *descriptions ) -> std::string
+{
+    ++work.schema_hashes;
+    work.hashed_choices += snapshot.choices.size();
+    auto hash = localization::content_hash{};
+    if( descriptions ) { hash.add( "owned-lazy-choice-descriptions-v1" ); }
+    hash.add( interaction_kind_name( snapshot.kind ) );
+    hash.add( snapshot.context );
+    hash.add( snapshot.message_tone );
+    if( snapshot.category_mode ) { hash.add( *snapshot.category_mode ? "category-on" : "category-off" ); }
+    hash.add( std::to_string( snapshot.refresh_ms ) );
+    hash.add( snapshot.allow_cancel ? "cancel" : "no-cancel" );
+    hash.add( snapshot.allow_set_count ? "set-count" : "no-set-count" );
+    for( const auto &pane : snapshot.panes ) {
+        hash.add( pane.id );
+        hash.add( pane.role );
+        hash.add( pane.area_id );
+        hash.add( pane.filter );
+        hash.add( pane.storage_kind );
+        if( pane.page ) { hash.add( std::to_string( pane.page->number ) + "/" + std::to_string( pane.page->count ) ); }
+        std::ranges::for_each( pane.blocked_areas, [&hash]( const auto & area ) { hash.add( area ); } );
+    }
+    auto ordinal = std::size_t{0};
+    for( const auto &choice : snapshot.choices ) {
+        hash.add( choice.id );
+        if( descriptions ) { hash.add( descriptions->dependency_keys[ordinal++] ); }
+        hash.add( choice.pane_id.value_or( "no-pane" ) );
+        hash.add( choice.area_id.value_or( "no-area" ) );
+        hash.add( choice.storage_kind );
+        hash.add( choice.enabled ? "enabled" : "disabled" );
+        hash.add( choice.selectable ? "selectable" : "blocked" );
+        std::ranges::for_each( choice.columns, [&hash]( const auto & column ) { hash.add( column.key ); } );
+        if( choice.editor ) {
+            hash.add( choice.editor->type );
+            hash.add( std::to_string( choice.editor->max_length ) );
+            hash.add( choice.editor->minimum ? std::to_string( *choice.editor->minimum ) : "no-minimum" );
+            hash.add( choice.editor->maximum ? std::to_string( *choice.editor->maximum ) : "no-maximum" );
+            std::ranges::for_each( choice.editor->values, [&hash]( const auto & value ) { hash.add( value.id ); } );
+        }
+        hash.add( choice.minimum_count ? std::to_string( *choice.minimum_count ) : "default-minimum" );
+        hash.add( choice.available_count ? std::to_string( *choice.available_count ) : "no-limit" );
+    }
+    if( snapshot.field ) {
+        hash.add( snapshot.field->id );
+        hash.add( snapshot.field->type );
+        hash.add( std::to_string( snapshot.field->max_length ) );
+        hash.add( snapshot.field->printable ? "printable" : "controls-allowed" );
+    }
+    if( snapshot.target ) {
+        hash.add( snapshot.target->coordinate_space );
+        add_position( hash, snapshot.target->source );
+        add_position( hash, snapshot.target->cursor );
+        if( snapshot.target->minimum_position ) {
+            add_position( hash, *snapshot.target->minimum_position );
+        }
+        if( snapshot.target->maximum_position ) {
+            add_position( hash, *snapshot.target->maximum_position );
+        }
+        hash.add( std::to_string( snapshot.target->range ) );
+        hash.add( snapshot.target->distance_metric );
+        hash.add( snapshot.target->limit_to_reality_bubble ? "bubble-limited" : "map-limited" );
+        for( const auto &candidate : snapshot.target->candidates ) {
+            hash.add( candidate.id );
+            add_position( hash, candidate.position );
+            hash.add( candidate.creature ? "creature" : "tile" );
+        }
+    }
+    return hex_digest( hash );
+}
+
+auto normalize( const input_context &context, interaction_snapshot snapshot,
+                const lazy_choice_descriptions *descriptions = nullptr ) -> interaction_snapshot
+{
+    snapshot.context = context.category_name();
+    snapshot.structured = true;
+    snapshot.actions_only = false;
+    snapshot.choice_offset = 0;
+    snapshot.choice_total = snapshot.choices.size();
+    snapshot.schema_id = schema_for( snapshot, descriptions );
+    return snapshot;
+}
+
+struct acquired_interaction {
+    prepared_interaction_handle prepared;
+    interaction_snapshot legacy;
+
+    auto snapshot() const -> const interaction_snapshot & { // *NOPAD*
+        return prepared ? prepared->snapshot : legacy;
+    }
+
+    /// Prepared lookup is logarithmic; legacy callbacks still capture their complete live model.
+    template<typename Values>
+    auto find_id( const Values &values, const std::vector<std::size_t> *index,
+                  const std::string &id ) const -> const typename Values::value_type * { // *NOPAD*
+        if( index != nullptr ) {
+            const auto found = std::ranges::lower_bound( *index, id, {}, [&values]( const auto ordinal )
+            -> const std::string & { // *NOPAD*
+                ++work.id_comparisons;
+                return values[ordinal].id;
+            } );
+            if( found == index->end() ) { return nullptr; }
+            ++work.id_comparisons;
+            return values[*found].id == id ? &values[*found] : nullptr;
+        }
+        const auto found = std::ranges::find_if( values, [&id]( const auto & value ) {
+            ++work.id_comparisons;
+            return value.id == id;
+        } );
+        return found == values.end() ? nullptr : &*found;
+    }
+
+    auto choice( const std::string &id ) const -> const interaction_choice * { // *NOPAD*
+        return find_id( snapshot().choices, prepared ? &prepared->choices : nullptr, id );
+    }
+
+    auto target( const std::string &id ) const -> const interaction_target_candidate * { // *NOPAD*
+        return find_id( snapshot().target->candidates, prepared ? &prepared->targets : nullptr, id );
+    }
+};
+
+auto acquire( const input_context &context ) -> acquired_interaction
+{
+    const auto entry = provider_for( context );
+    if( entry == nullptr ) {
+        return { .legacy = {
+                .schema_id = {},
+                .context = context.category_name(),
+                .kind = interaction_kind::custom,
+                .structured = false,
+                .actions_only = true,
+            } };
+    }
+    if( entry->prepared ) { return { .prepared = entry->prepared }; }
+    // Pin the original callable: nested registration can grow the registry, and mutable
+    // legacy callbacks must retain their own state rather than run on a copied callable.
+    const auto provider = entry->provider;
+    return { .legacy = normalize( context, ( *provider )() ) };
+}
+
+auto acquire_active() -> acquired_interaction
+{
+    const auto active = active_input_context();
+    if( active.context != nullptr ) { return acquire( *active.context ); }
+    return { .legacy = { .context = std::string( active.category ) } };
+}
+
+auto materialize( acquired_interaction acquired,
+                  interaction_page page ) -> interaction_snapshot
+{
+    const auto &full = acquired.snapshot();
+    const auto group_of = []( const interaction_choice & choice ) { return choice.pane_id.value_or( "" ); };
+    // Indexes of the rows paged over: all of them, or one pane's.
+    const auto rows = std::views::iota( std::size_t{0}, full.choices.size() )
+    | std::views::filter( [&]( const auto index ) {
+        return !page.group || group_of( full.choices[index] ) == *page.group;
+    } )
+    | std::ranges::to<std::vector>();
+    const auto total = rows.size();
+    const auto offset = std::min( page.offset, total );
+    const auto count = std::min( total - offset, std::min( page.limit, maximum_page_size ) );
+    auto choices = std::vector<interaction_choice> {};
+    choices.reserve( count );
+    std::ranges::copy( rows | std::views::drop( offset ) | std::views::take( count )
+                       | std::views::transform( [&]( const auto index ) -> const interaction_choice & { return full.choices[index]; } ),
+                       std::back_inserter( choices ) );
+    auto groups = std::map<std::string, interaction_group_page> {};
+    const auto first = offset < total ? rows[offset] : full.choices.size();
+    for( const auto index : std::views::iota( std::size_t{0}, full.choices.size() ) ) {
+        auto &group = groups[group_of( full.choices[index] )];
+        ++group.total;
+        if( index < first ) { ++group.offset; }
+    }
+    const auto focus = std::ranges::find( full.choices, true, &interaction_choice::highlighted );
+    const auto focus_choice = focus == full.choices.end() ? std::string{} :
+                              focus->id;
+    const auto focus_pane = focus == full.choices.end() ? std::optional<std::string> {} :
+                            focus->pane_id;
+    // Immutable prepared metadata needs an owned copy.  Ephemeral legacy captures already
+    // own their metadata: transfer it, including complete target candidate storage.
+    // Never clone the full choices vector merely to discard off-page rows.
+    auto result = interaction_snapshot{};
+    if( acquired.prepared ) {
+        result = acquired.prepared->metadata;
+    } else {
+        result = std::move( acquired.legacy );
+    }
+    result.choices = std::move( choices );
+    result.groups = std::move( groups );
+    result.focus_choice_id = focus_choice;
+    result.focus_pane_id = focus_pane;
+    if( acquired.prepared && acquired.prepared->descriptions ) {
+        for( const auto index : std::views::iota( std::size_t{0}, count ) ) {
+            result.choices[index].description = acquired.prepared->description( rows[offset + index] );
+        }
+    }
+    result.input_id = current_input_id();
+    result.choice_offset = offset;
+    result.choice_total = total;
+    work.materialized_choices += count;
+    return result;
+}
+
+auto validate_field_value( const interaction_field &field, const std::string &value )
+-> std::expected<void, std::string>
+{
+    if( field.type == "key" ) {
+        return inp_mngr.get_keycode( value ) != 0 || utf8_wrapper( value ).length() == 1 ?
+               std::expected<void, std::string> {} :
+               std::unexpected( "invalid: field value is not a key name" );
+    }
+    const auto text = utf8_wrapper( value );
+    if( field.max_length > 0 && text.display_width() > static_cast<std::size_t>( field.max_length ) ) {
+        return std::unexpected( "invalid: field value exceeds max_length" );
+    }
+    auto remaining = static_cast<int>( value.size() );
+    const auto *cursor = value.c_str();
+    auto position = std::size_t{0};
+    while( remaining > 0 ) {
+        const auto codepoint = UTF8_getch( &cursor, &remaining );
+        if( mk_wcwidth( codepoint ) < 0 || ( field.printable && !is_char_allowed( codepoint ) ) ) {
+            return std::unexpected( "invalid: field value contains a disallowed character" );
+        }
+        if( field.type == "integer" ) {
+            const auto is_sign = codepoint == '-' && position == 0;
+            if( !is_sign && ( codepoint < '0' || codepoint > '9' ) ) {
+                return std::unexpected(
+                           "invalid: integer field accepts an optional leading minus and digits" );
+            }
+        }
+        ++position;
+    }
+    return {};
+}
+
+/// The value must be one the editor offers, so a client cannot set what the native menu would refuse.
+auto validate_editor_value( const interaction_editor &editor, const std::string &value )
+-> std::expected<void, std::string>
+{
+    if( editor.type == "bool" ) {
+        if( value != "true" && value != "false" ) {
+            return std::unexpected( "invalid: bool editor accepts true or false" );
+        }
+    } else if( editor.type == "select" ) {
+        if( std::ranges::none_of( editor.values, [&value]( const auto & entry ) { return entry.id == value; } ) ) {
+            return std::unexpected( "invalid: value is not one of the editor values" );
+        }
+    } else if( editor.type == "integer" || editor.type == "float" ) {
+        auto parsed = 0.0;
+        const auto *const end = value.data() + value.size();
+        const auto result = std::from_chars( value.data(), end, parsed );
+        if( value.empty() || result.ec != std::errc{} || result.ptr != end || !std::isfinite( parsed ) ||
+            ( editor.type == "integer" && parsed != std::trunc( parsed ) ) ) {
+            return std::unexpected( "invalid: editor value is not a number of its type" );
+        }
+        if( ( editor.minimum && parsed < *editor.minimum ) || ( editor.maximum &&
+                parsed > *editor.maximum ) ) {
+            return std::unexpected( "invalid: editor value is outside its range" );
+        }
+    } else {
+        return validate_field_value( { .max_length = editor.max_length }, value );
+    }
+    return {};
+}
+
+auto validate( const acquired_interaction &acquired, const interaction_event &event )
+-> std::expected<void, std::string>
+{
+    if( event.operation == interaction_operation::invoke ) {
+        // The screen that offered the affordance runs it from its own loop; the lifecycle has matched it
+        // to the affordance's shape, so no native widget has to describe it.
+        if( event.target_id.empty() || !event.value.empty() || event.submit || event.count ||
+            event.position || !event.arguments ) {
+            return std::unexpected( "invalid: invoke requires only an affordance_id and its arguments" );
+        }
+        return {};
+    }
+    if( event.arguments ) { return std::unexpected( "invalid: only invoke carries arguments" ); }
+    const auto &snapshot = acquired.snapshot();
+    if( !snapshot.structured ) {
+        return std::unexpected( "unsupported: active view only exposes generic actions" );
+    }
+    if( event.schema_id != snapshot.schema_id ) {
+        return std::unexpected(
+                   "invalid: interaction schema changed (recorded=" + event.schema_id
+                   + ", active=" + snapshot.schema_id + ", context=" + snapshot.context + ")" );
+    }
+    if( event.operation == interaction_operation::cancel ) {
+        if( !event.target_id.empty() || !event.value.empty() || event.submit || event.count
+            || event.position ) {
+            return std::unexpected(
+                       "invalid: cancel does not accept a target, value, submit, count, or position" );
+        }
+        if( !snapshot.allow_cancel ) {
+            return std::unexpected( "unsupported: active interaction cannot be canceled" );
+        }
+        return {};
+    }
+    if( event.operation == interaction_operation::choose ) {
+        if( event.target_id.empty() || !event.value.empty() || event.submit || event.count
+            || event.position ) {
+            return std::unexpected( "invalid: choose requires only a choice_id" );
+        }
+        const auto choice = acquired.choice( event.target_id );
+        if( choice == nullptr ) {
+            return std::unexpected( "invalid: choice_id is not in the active interaction" );
+        }
+        if( !choice->selectable ) { return std::unexpected( "disabled: choice is not selectable" ); }
+        return {};
+    }
+    if( event.operation == interaction_operation::set_count ) {
+        if( event.target_id.empty() || !event.value.empty() || event.submit || !event.count
+            || event.position ) {
+            return std::unexpected( "invalid: set_count requires only a choice_id and count" );
+        }
+        if( !snapshot.allow_set_count ) {
+            return std::unexpected(
+                       "unsupported: active interaction does not accept item quantities" );
+        }
+        const auto choice = acquired.choice( event.target_id );
+        if( choice == nullptr ) {
+            return std::unexpected( "invalid: choice_id is not in the active interaction" );
+        }
+        if( !choice->selectable ) { return std::unexpected( "disabled: choice is not selectable" ); }
+        const auto minimum = choice->minimum_count.value_or( 0 );
+        if( *event.count < minimum ) {
+            return std::unexpected( "invalid: count is below the minimum quantity" );
+        }
+        if( !choice->available_count || *event.count > *choice->available_count ) {
+            return std::unexpected( "invalid: count exceeds the available item quantity" );
+        }
+        return {};
+    }
+    if( event.operation == interaction_operation::set_target ) {
+        if( !event.value.empty() || event.submit || event.count || !event.position ) {
+            return std::unexpected(
+                       "invalid: set_target requires a position and optional candidate_id" );
+        }
+        if( !snapshot.target ) {
+            return std::unexpected( "unsupported: active interaction does not accept a target" );
+        }
+        if( !event.target_id.empty() ) {
+            const auto candidate = acquired.target( event.target_id );
+            if( candidate == nullptr
+                || candidate->position != *event.position ) {
+                return std::unexpected(
+                           "invalid: candidate_id does not identify the requested target" );
+            }
+        }
+        if( snapshot.target->minimum_position
+            && ( event.position->x < snapshot.target->minimum_position->x
+                 || event.position->y < snapshot.target->minimum_position->y
+                 || event.position->z < snapshot.target->minimum_position->z ) ) {
+            return std::unexpected(
+                       "invalid: target position is below the active coordinate bounds" );
+        }
+        if( snapshot.target->maximum_position
+            && ( event.position->x > snapshot.target->maximum_position->x
+                 || event.position->y > snapshot.target->maximum_position->y
+                 || event.position->z > snapshot.target->maximum_position->z ) ) {
+            return std::unexpected(
+                       "invalid: target position is above the active coordinate bounds" );
+        }
+        if( target_distance( *snapshot.target, *event.position ) > snapshot.target->range ) {
+            return std::unexpected( "invalid: target position is outside the active range" );
+        }
+        return {};
+    }
+    if( event.target_id.empty() || !event.submit || event.count || event.position ) {
+        return std::unexpected( "invalid: fill requires field_id, value, and explicit submit" );
+    }
+    if( const auto choice = acquired.choice( event.target_id ); choice != nullptr && choice->editor ) {
+        if( !choice->selectable ) { return std::unexpected( "disabled: choice is not selectable" ); }
+        return validate_editor_value( *choice->editor, event.value );
+    }
+    if( !snapshot.field || snapshot.field->id != event.target_id ) {
+        return std::unexpected( "invalid: field_id is not in the active interaction" );
+    }
+    return validate_field_value( *snapshot.field, event.value );
+}
+
+} // namespace
+
+interaction_scope::interaction_scope( const input_context &context, interaction_provider provider )
+    : token_( ++next_provider_token )
+{
+    providers.push_back( {.context = &context,
+                          .provider = std::make_shared<interaction_provider>( std::move( provider ) ),
+                          .token = token_} );
+}
+
+interaction_scope::~interaction_scope()
+{
+    const auto entry = std::ranges::find( providers, token_, &provider_entry::token );
+    if( entry != providers.end() ) { providers.erase( entry ); }
+}
+
+auto window_canvas( const std::vector<catacurses::window> &layers ) -> interaction_canvas
+{
+    const auto *const frame = layers.empty() ? nullptr : layers.front().get<cata_cursesport::WINDOW>();
+    if( frame == nullptr ) { return {}; }
+    auto cells = std::vector<cata_cursesport::cursecell>( static_cast<size_t>
+                 ( frame->width * frame->height ) );
+    for( const auto &layer : layers ) {
+        const auto *const window = layer.get<cata_cursesport::WINDOW>();
+        if( window == nullptr ) { continue; }
+        const auto offset = window->pos - frame->pos;
+        for( const auto y : std::views::iota( 0, window->height ) ) {
+            for( const auto x : std::views::iota( 0, window->width ) ) {
+                const auto at = offset + point( x, y );
+                if( at.x < 0 || at.y < 0 || at.x >= frame->width || at.y >= frame->height ) { continue; }
+                cells[static_cast<size_t>( at.y * frame->width + at.x )] = window->line[y].chars[x];
+            }
+        }
+    }
+    auto result = interaction_canvas{ .cols = frame->width };
+    for( const auto y : std::views::iota( 0, frame->height ) ) {
+        auto row = std::vector<interaction_canvas_run> {};
+        for( const auto &cell : cells | std::views::drop( y * frame->width ) | std::views::take(
+                 frame->width ) ) {
+            const auto foreground = static_cast<int>( cell.FG );
+            const auto background = static_cast<int>( cell.BG );
+            if( row.empty() || row.back().foreground != foreground || row.back().background != background ) {
+                row.push_back( { .foreground = foreground, .background = background } );
+            }
+            row.back().text += cell.ch;
+        }
+        // Blank cells over the default background carry nothing a client draws.
+        while( !row.empty() && row.back().background == 0 &&
+               row.back().text.find_first_not_of( ' ' ) == std::string::npos ) {
+            row.pop_back();
+        }
+        if( !row.empty() && row.back().background == 0 ) {
+            row.back().text.erase( row.back().text.find_last_not_of( ' ' ) + 1 );
+        }
+        result.rows.push_back( std::move( row ) );
+    }
+    return result;
+}
+
+auto overmap_tiles() -> bool { return wire_overmap_tiles; }
+auto set_overmap_tiles( const bool tiles ) -> void { wire_overmap_tiles = tiles; }
+
+auto interaction_work() -> interaction_work_counts { return work; }
+auto reset_interaction_work() -> void { work = {}; }
+
+auto prepare_interaction( const input_context &context, interaction_snapshot snapshot )
+-> prepared_interaction_handle
+{
+    return std::make_shared<const prepared_interaction>( context,
+            normalize( context, std::move( snapshot ) ) );
+}
+
+auto prepare_interaction( const input_context &context, interaction_snapshot snapshot,
+                          lazy_choice_descriptions descriptions ) -> prepared_interaction_handle
+{
+    if( !descriptions.render || descriptions.dependency_keys.size() != snapshot.choices.size() ||
+    std::ranges::any_of( snapshot.choices, []( const auto & choice ) { return !choice.description.empty(); } ) ) {
+        throw std::invalid_argument( "lazy descriptions require empty text and complete owned dependencies" );
+    }
+    auto normalized = normalize( context, std::move( snapshot ), &descriptions );
+    return std::make_shared<const prepared_interaction>( context, std::move( normalized ),
+            std::move( descriptions ) );
+}
+
+prepared_interaction_scope::prepared_interaction_scope( const input_context &context,
+        prepared_interaction_handle prepared )
+    : token_( ++next_provider_token )
+{
+    if( !prepared || prepared->context != &context ) {
+        throw std::invalid_argument( "prepared interaction requires its original context" );
+    }
+    providers.push_back( { .context = &context, .prepared = std::move( prepared ), .token = token_ } );
+}
+
+prepared_interaction_scope::~prepared_interaction_scope()
+{
+    const auto entry = std::ranges::find( providers, token_, &provider_entry::token );
+    if( entry != providers.end() ) { providers.erase( entry ); }
+}
+
+auto current_interaction( interaction_page page ) -> interaction_snapshot
+{
+    return materialize( acquire_active(), page );
+}
+
+auto paginated_interaction( interaction_page_state &state ) -> interaction_snapshot
+{
+    state.limit = std::clamp( state.limit, std::size_t{1}, maximum_page_size );
+    auto acquired = acquire_active();
+    const auto &full = acquired.snapshot();
+    if( state.schema_id != full.schema_id ) {
+        state.offset = 0;
+        state.schema_id = full.schema_id;
+    }
+    const auto last_offset = full.choices.empty() ? std::size_t{0} :
+                             ( ( full.choices.size() - 1 ) / state.limit ) * state.limit;
+    state.offset = std::min( state.offset, last_offset );
+    auto result = materialize( std::move( acquired ), { .offset = state.offset, .limit = state.limit } );
+    state.offset = result.choice_offset;
+    return result;
+}
+
+auto resolve_interaction_command( const interaction_command &command )
+-> std::expected<interaction_event, std::string>
+{
+    auto result = resolve_checked_interaction( { .command = command } );
+    if( !result ) { return std::unexpected( std::move( result.error().message ) ); }
+    return std::move( *result );
+}
+
+auto resolve_checked_interaction( const interaction_validation_request &request )
+-> std::expected<interaction_event, interaction_validation_error>
+{
+    const auto &command = request.command;
+    if( command.input_id != current_input_id() ) {
+        return std::unexpected( interaction_validation_error{
+            .kind = interaction_rejection::stale_boundary,
+            .message = "stale: input boundary changed; query bn.interaction again",
+        } );
+    }
+    const auto active = active_input_context();
+    if( active.context == nullptr ) {
+        return std::unexpected( interaction_validation_error{
+            .message = "unsupported: no active input interaction",
+        } );
+    }
+    const auto acquired = acquire( *active.context );
+    const auto &snapshot = acquired.snapshot();
+    if( request.expected_schema && *request.expected_schema != snapshot.schema_id ) {
+        return std::unexpected( interaction_validation_error{
+            .kind = interaction_rejection::stale_schema,
+            .message = "stale: interaction schema changed",
+        } );
+    }
+    if( request.target_space && ( !snapshot.target ||
+                                  *request.target_space != snapshot.target->coordinate_space ) ) {
+        return std::unexpected( interaction_validation_error{
+            .message = "invalid: target coordinate space changed",
+        } );
+    }
+    auto event = interaction_event{
+        .operation = command.operation,
+        .schema_id = snapshot.schema_id,
+        .target_id = command.target_id,
+        .value = command.value,
+        .submit = command.submit,
+        .count = command.count,
+        .position = command.position,
+    };
+    if( const auto valid = validate( acquired, event ); !valid ) {
+        return std::unexpected( interaction_validation_error{ .message = valid.error() } );
+    }
+    return event;
+}
+
+auto validate_interaction_event( const input_context &context, const interaction_event &event )
+-> std::expected<void, std::string>
+{
+    return validate( acquire( context ), event );
+}
+
+auto interaction_kind_name( const interaction_kind kind ) -> std::string
+{
+    switch( kind ) {
+        case interaction_kind::choices:
+            return "choices";
+        case interaction_kind::field:
+            return "field";
+        case interaction_kind::inventory:
+            return "inventory";
+        case interaction_kind::target:
+            return "target";
+        case interaction_kind::custom:
+            return "custom";
+    }
+    return "custom";
+}
+
+auto target_distance( const interaction_target &target, const interaction_position &to ) -> int
+{
+    const auto dx = static_cast<double>( to.x ) - target.source.x;
+    const auto dy = static_cast<double>( to.y ) - target.source.y;
+    const auto dz = static_cast<double>( to.z ) - target.source.z;
+    return target.distance_metric == "trig" ? static_cast<int>( std::round( std::sqrt(
+                dx * dx + dy * dy + dz * dz ) ) )
+           : static_cast<int>( std::max( {std::abs( dx ), std::abs( dy ), std::abs( dz )} ) );
+}
+
+auto target_bounds_contain( const interaction_target &target,
+                            const interaction_position &to ) -> bool
+{
+    const auto above = [&]( const interaction_position & low ) { return to.x < low.x || to.y < low.y || to.z < low.z; };
+    const auto below = [&]( const interaction_position & high ) { return to.x > high.x || to.y > high.y || to.z > high.z; };
+    return !( target.minimum_position && above( *target.minimum_position ) ) &&
+           !( target.maximum_position && below( *target.maximum_position ) );
+}
+
+auto opaque_interaction_id( const std::string &prefix, const std::vector<std::string> &identity )
+-> std::string
+{
+    auto hash = localization::content_hash{};
+    for( const auto &part : identity ) { hash.add( part ); }
+    return prefix + ":" + hex_digest( hash );
+}
+
+auto serialize_interaction( const interaction_snapshot &snapshot ) -> std::string
+{
+    auto output = std::ostringstream{};
+    auto json = JsonOut( output );
+    json.start_object();
+    json.member( "input_id", snapshot.input_id );
+    json.member( "schema_id", snapshot.schema_id );
+    json.member( "context", snapshot.context );
+    json.member( "kind", interaction_kind_name( snapshot.kind ) );
+    json.member( "structured", snapshot.structured );
+    json.member( "actions_only", snapshot.actions_only );
+    json.member( "allow_cancel", snapshot.allow_cancel );
+    json.member( "allow_set_count", snapshot.allow_set_count );
+    json.member( "title", snapshot.title );
+    json.member( "message", snapshot.message );
+    if( !snapshot.message_tone.empty() ) { json.member( "message_tone", snapshot.message_tone ); }
+    if( snapshot.category_mode ) { json.member( "category_mode", *snapshot.category_mode ); }
+    json.member( "panes" );
+    json.start_array();
+    for( const auto &pane : snapshot.panes ) {
+        json.start_object();
+        json.member( "id", pane.id );
+        json.member( "label", pane.label );
+        json.member( "role", pane.role );
+        json.member( "area_id", pane.area_id );
+        json.member( "area_label", pane.area_label );
+        json.member( "area_description", pane.area_description );
+        json.member( "filter", pane.filter );
+        json.member( "storage_kind", pane.storage_kind );
+        json.member( "sort", pane.sort );
+        if( pane.page ) {
+            json.member( "page" );
+            json.start_object();
+            json.member( "number", pane.page->number );
+            json.member( "count", pane.page->count );
+            json.end_object();
+        }
+        if( pane.totals ) {
+            json.member( "totals" );
+            json.start_object();
+            json.member( "weight", pane.totals->weight );
+            json.member( "weight_max", pane.totals->weight_max );
+            json.member( "weight_unit", pane.totals->weight_unit );
+            json.member( "volume", pane.totals->volume );
+            json.member( "volume_max", pane.totals->volume_max );
+            json.member( "volume_unit", pane.totals->volume_unit );
+            json.member( "over_weight", pane.totals->over_weight );
+            json.member( "over_volume", pane.totals->over_volume );
+            json.end_object();
+        }
+        json.end_object();
+    }
+    json.end_array();
+    json.member( "choices" );
+    json.start_array();
+    for( const auto &choice : snapshot.choices ) {
+        json.start_object();
+        json.member( "id", choice.id );
+        json.member( "label", choice.label );
+        json.member( "description", choice.description );
+        json.member( "denial", choice.denial );
+        if( !choice.hotkey.empty() ) { json.member( "hotkey", choice.hotkey ); }
+        if( choice.pane_id ) { json.member( "pane_id", *choice.pane_id ); }
+        if( choice.area_id ) { json.member( "area_id", *choice.area_id ); }
+        if( !choice.storage_kind.empty() ) { json.member( "storage_kind", choice.storage_kind ); }
+        json.member( "enabled", choice.enabled );
+        json.member( "selectable", choice.selectable );
+        json.member( "selected", choice.selected );
+        json.member( "highlighted", choice.highlighted );
+        json.member( "columns" );
+        json.start_array();
+        for( const auto &column : choice.columns ) {
+            json.start_object();
+            json.member( "key", column.key );
+            json.member( "label", column.label );
+            json.member( "value", column.value );
+            if( !column.color.empty() ) { json.member( "color", column.color ); }
+            json.end_object();
+        }
+        json.end_array();
+        if( choice.favorite ) { json.member( "favorite", true ); }
+        if( !choice.color.empty() ) { json.member( "color", choice.color ); }
+        if( !choice.key_color.empty() ) { json.member( "key_color", choice.key_color ); }
+        if( !choice.markup.empty() ) { json.member( "markup", choice.markup ); }
+        if( choice.parent_id ) { json.member( "parent_id", *choice.parent_id ); }
+        if( !choice.nest_color.empty() ) { json.member( "nest_color", choice.nest_color ); }
+        if( choice.mark ) {
+            json.member( "mark" );
+            json.start_object();
+            json.member( "glyph", choice.mark->glyph );
+            if( !choice.mark->color.empty() ) { json.member( "color", choice.mark->color ); }
+            json.end_object();
+        }
+        if( choice.editor ) {
+            json.member( "editor" );
+            json.start_object();
+            json.member( "type", choice.editor->type );
+            json.member( "value", choice.editor->value );
+            json.member( "values" );
+            json.start_array();
+            for( const auto &value : choice.editor->values ) {
+                json.start_object();
+                json.member( "id", value.id );
+                json.member( "label", value.label );
+                json.end_object();
+            }
+            json.end_array();
+            if( choice.editor->minimum ) { json.member( "minimum", *choice.editor->minimum ); }
+            if( choice.editor->maximum ) { json.member( "maximum", *choice.editor->maximum ); }
+            json.member( "max_length", choice.editor->max_length );
+            json.end_object();
+        }
+        if( choice.selected_count ) { json.member( "selected_count", *choice.selected_count ); }
+        if( choice.minimum_count ) { json.member( "minimum_count", *choice.minimum_count ); }
+        if( choice.available_count ) { json.member( "available_count", *choice.available_count ); }
+        json.end_object();
+    }
+    json.end_array();
+    json.member( "choice_page" );
+    json.start_object();
+    json.member( "offset", snapshot.choice_offset );
+    json.member( "count", snapshot.choices.size() );
+    json.member( "total", snapshot.choice_total );
+    json.end_object();
+    if( snapshot.field ) {
+        json.member( "field" );
+        json.start_object();
+        json.member( "id", snapshot.field->id );
+        json.member( "label", snapshot.field->label );
+        json.member( "description", snapshot.field->description );
+        json.member( "value", snapshot.field->value );
+        json.member( "type", snapshot.field->type );
+        json.member( "max_length", snapshot.field->max_length );
+        json.member( "printable", snapshot.field->printable );
+        json.end_object();
+    }
+    if( snapshot.target ) {
+        const auto write_position = [&json]( const interaction_position & position ) {
+            json.start_object();
+            json.member( "x", position.x );
+            json.member( "y", position.y );
+            json.member( "z", position.z );
+            json.end_object();
+        };
+        json.member( "target" );
+        json.start_object();
+        json.member( "coordinate_space", snapshot.target->coordinate_space );
+        json.member( "source" );
+        write_position( snapshot.target->source );
+        json.member( "cursor" );
+        write_position( snapshot.target->cursor );
+        if( snapshot.target->minimum_position ) {
+            json.member( "minimum_position" );
+            write_position( *snapshot.target->minimum_position );
+        }
+        if( snapshot.target->maximum_position ) {
+            json.member( "maximum_position" );
+            write_position( *snapshot.target->maximum_position );
+        }
+        json.member( "range", snapshot.target->range );
+        json.member( "distance_metric", snapshot.target->distance_metric );
+        json.member( "status", snapshot.target->status );
+        json.member( "limit_to_reality_bubble", snapshot.target->limit_to_reality_bubble );
+        json.member( "candidates" );
+        json.start_array();
+        for( const auto &candidate : snapshot.target->candidates ) {
+            json.start_object();
+            json.member( "id", candidate.id );
+            json.member( "label", candidate.label );
+            json.member( "description", candidate.description );
+            json.member( "position" );
+            write_position( candidate.position );
+            json.member( "creature", candidate.creature );
+            json.end_object();
+        }
+        json.end_array();
+        json.end_object();
+    }
+    json.end_object();
+    return output.str();
+}
+
+} // namespace game_client

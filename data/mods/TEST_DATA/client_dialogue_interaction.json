@@ -1,0 +1,87 @@
+[
+  {
+    "type": "talk_topic",
+    "id": "TALK_TEST_CLIENT_DIALOGUE_START",
+    "dynamic_line": "Adapter narrative, already evaluated: <swear>.",
+    "speaker_effect": { "effect": { "npc_adjust_var": "speaker", "type": "test", "context": "client_dialogue", "adjustment": 1 } },
+    "responses": [
+      {
+        "text": "Identical adapter response labels remain separate, even when they span several lines in the native response panel.",
+        "success": {
+          "topic": "TALK_TEST_CLIENT_DIALOGUE_FIRST",
+          "effect": { "npc_adjust_var": "branches", "type": "test", "context": "client_dialogue", "adjustment": 1 }
+        }
+      },
+      {
+        "text": "Identical adapter response labels remain separate, even when they span several lines in the native response panel.",
+        "success": {
+          "topic": "TALK_TEST_CLIENT_DIALOGUE_SECOND",
+          "effect": { "npc_adjust_var": "branches", "type": "test", "context": "client_dialogue", "adjustment": 10 }
+        }
+      },
+      {
+        "text": "Even the same next topic can have different effects.",
+        "topic": "TALK_TEST_CLIENT_DIALOGUE_FIRST",
+        "effect": { "npc_adjust_var": "branches", "type": "test", "context": "client_dialogue", "adjustment": 100 }
+      },
+      {
+        "text": "Even the same next topic can have different effects.",
+        "topic": "TALK_TEST_CLIENT_DIALOGUE_FIRST",
+        "effect": { "npc_adjust_var": "branches", "type": "test", "context": "client_dialogue", "adjustment": 1000 }
+      },
+      {
+        "text": "Successful native trial, cost 17 cents.",
+        "trial": { "type": "LIE", "difficulty": 100000 },
+        "success": {
+          "topic": "TALK_TEST_CLIENT_DIALOGUE_SECOND",
+          "opinion": { "value": 3 },
+          "effect": [
+            { "npc_adjust_var": "trials", "type": "test", "context": "client_dialogue", "adjustment": 1 },
+            { "u_spend_ecash": 17 },
+            { "u_consume_item": "test_platinum_bit", "count": 2 }
+          ]
+        },
+        "failure": { "topic": "TALK_DONE", "opinion": { "value": -100 } }
+      },
+      {
+        "text": "Denied native trial.",
+        "trial": { "type": "LIE", "difficulty": -100000 },
+        "success": { "topic": "TALK_DONE", "opinion": { "value": 100 } },
+        "failure": {
+          "topic": "TALK_TEST_CLIENT_DIALOGUE_FIRST",
+          "opinion": { "value": -3 },
+          "effect": { "npc_adjust_var": "trials", "type": "test", "context": "client_dialogue", "adjustment": -1 }
+        }
+      },
+      {
+        "text": "Only displayed before the conditional response is removed.",
+        "condition": { "not": { "u_has_var": "removed", "type": "test", "context": "client_dialogue", "value": "yes" } },
+        "topic": "TALK_DONE"
+      },
+      {
+        "text": "Provoke the NPC, with native confirmation.",
+        "success": { "topic": "TALK_DONE", "opinion": { "anger": 1000 } }
+      },
+      { "text": "Goodbye.", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_TEST_CLIENT_DIALOGUE_EMPTY",
+    "dynamic_line": "No regular response is currently available.",
+    "replace_built_in_responses": true,
+    "responses": [ { "text": "Unavailable response.", "condition": { "u_has_strength": 100000 }, "topic": "TALK_DONE" } ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_TEST_CLIENT_DIALOGUE_FIRST",
+    "dynamic_line": "First native branch.",
+    "responses": [ { "text": "Back to the previous topic.", "topic": "TALK_NONE" }, { "text": "Goodbye.", "topic": "TALK_DONE" } ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_TEST_CLIENT_DIALOGUE_SECOND",
+    "dynamic_line": "Second native branch.",
+    "responses": [ { "text": "Back to the previous topic.", "topic": "TALK_NONE" }, { "text": "Goodbye.", "topic": "TALK_DONE" } ]
+  }
+]

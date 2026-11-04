@@ -18,7 +18,6 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
-#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
@@ -34,6 +33,15 @@ static constexpr auto retained_omt_hard_scale = std::size_t{2};
 static constexpr auto retained_omt_panic_scale = std::size_t{4};
 static constexpr auto retained_omt_max_budget_scale = std::size_t{8};
 static constexpr auto lazy_border_steps_to_cross_omt = std::size_t{SEEX * 2};
+
+template <typename Point>
+auto retained_omt_seed_id(const std::pair<dimension_id, Point>& key) -> std::uint64_t {
+    const auto dimension = key.first.str();
+    return static_cast<std::uint64_t>(std::hash<Point>{}(key.second))
+         ^ (static_cast<std::uint64_t>(
+                djb2_hash(reinterpret_cast<const unsigned char*>(dimension.c_str())))
+            << 1);
+}
 
 auto divide_round_up_size(const std::size_t numerator, const std::size_t denominator)
     -> std::size_t {
@@ -404,7 +412,7 @@ auto submap_load_manager::finish_lazy_omt_job(const omt_key& key) -> bool {
     auto result = lazy_omt_load_result{};
     {
         ZoneScopedN("slm_lazy_z_wait");
-        result = it->second.get();
+        result = it->second.result.get();
     }
     result = complete_lazy_omt_result_on_main_thread(key, std::move(result));
     const auto generated = apply_lazy_omt_result(key, result);
@@ -415,28 +423,6 @@ auto submap_load_manager::finish_lazy_omt_job(const omt_key& key) -> bool {
         run_deferred_mapgen_hooks_and_omt_post_passes(generated_omt_columns);
     }
     return generated;
-}
-
-auto submap_load_manager::reap_lazy_omt_jobs() -> void {
-    ZoneScopedN("slm_lazy_z_reap");
-    auto generated = false;
-    auto completed = std::size_t{0};
-    auto generated_omt_columns = horizontal_omt_set{};
-    std::erase_if(lazy_omt_futures_, [&](auto& entry) {
-        auto& [key, future] = entry;
-        if (future.wait_for(std::chrono::seconds(0)) != std::future_status::ready) { return false; }
-        auto result = complete_lazy_omt_result_on_main_thread(key, future.get());
-        if (apply_lazy_omt_result(key, result)) {
-            generated = true;
-            generated_omt_columns.emplace(key.first, key.second.xy());
-        }
-        ++completed;
-        return true;
-    });
-
-    if (generated) { run_deferred_mapgen_hooks_and_omt_post_passes(generated_omt_columns); }
-    TracyPlot("Lazy Border Z Jobs Completed", static_cast<int64_t>(completed));
-    TracyPlot("Lazy Border Z Jobs In-Flight", static_cast<int64_t>(lazy_omt_futures_.size()));
 }
 
 auto submap_load_manager::start_lazy_omt_job(const omt_key& key) -> lazy_omt_start_result {
@@ -482,31 +468,40 @@ auto submap_load_manager::start_lazy_omt_job(const omt_key& key) -> lazy_omt_sta
 
             lazy_omt_futures_.emplace(
                 key,
-                get_thread_pool().submit_returning([&mb, omt_addr = key.second, selected_mapgen]() {
+                lazy_omt_flight{
+                    .result = get_thread_pool().submit_returning(
+                        {.stream = 0x6c617a796f6d745f, .id = retained_omt_seed_id(key)},
+                        [&mb, omt_addr = key.second, selected_mapgen]() {
+                            return load_lazy_omt_zlevel_data(
+                                mb, omt_addr,
+                                {
+                                    .defer_postprocess_hooks = true,
+                                    .worker_safe = true,
+                                    .use_selected_mapgen = true,
+                                    .selected_mapgen = selected_mapgen,
+                                });
+                        }),
+                    .started = calendar::turn});
+            return {.started = true};
+        }
+    }
+
+    lazy_omt_futures_.emplace(
+        key,
+        lazy_omt_flight{
+            .result = get_thread_pool().submit_returning(
+                {.stream = 0x6c617a796f6d745f, .id = retained_omt_seed_id(key)},
+                [&mb, omt_addr = key.second]() {
                     return load_lazy_omt_zlevel_data(
                         mb, omt_addr,
                         {
                             .defer_postprocess_hooks = true,
                             .worker_safe = true,
-                            .use_selected_mapgen = true,
-                            .selected_mapgen = selected_mapgen,
+                            .use_selected_mapgen = false,
+                            .selected_mapgen = nullptr,
                         });
-                }));
-            return {.started = true};
-        }
-    }
-
-    lazy_omt_futures_
-        .emplace(key, get_thread_pool().submit_returning([&mb, omt_addr = key.second]() {
-            return load_lazy_omt_zlevel_data(
-                mb, omt_addr,
-                {
-                    .defer_postprocess_hooks = true,
-                    .worker_safe = true,
-                    .use_selected_mapgen = false,
-                    .selected_mapgen = nullptr,
-                });
-        }));
+                }),
+            .started = calendar::turn});
     return {.started = true};
 }
 
@@ -685,7 +680,6 @@ auto submap_load_manager::process_lazy_border_preload() -> void {
 
 auto submap_load_manager::process_lazy_border_work() -> void {
     ZoneScopedN("slm_lazy_border_work");
-    reap_lazy_omt_jobs();
     process_lazy_border_preload();
     process_retained_omt_eviction();
 }
@@ -695,71 +689,31 @@ auto submap_load_manager::has_lazy_border_work_pending() const -> bool {
         || retained_omt_index_.size() > retained_omt_soft_cap();
 }
 
-void submap_load_manager::process_or_defer_lazy_border_work(const bool defer_lazy_border_work) {
-    if (!has_lazy_border_work_pending()) {
-        lazy_border_work_deferred_ = false;
-        TracyPlot("Lazy Border Work Deferred", int64_t{0});
-        return;
-    }
-
-    if (defer_lazy_border_work) {
-        lazy_border_work_deferred_ = true;
-        TracyPlot("Lazy Border Work Deferred", int64_t{1});
-        return;
-    }
-
-    lazy_border_work_deferred_ = false;
-    TracyPlot("Lazy Border Work Deferred", int64_t{0});
-    process_lazy_border_work();
-}
-
-auto submap_load_manager::process_deferred_lazy_border_work() -> void {
-    ZoneScopedN("slm_deferred_lazy_border_work");
-    if (!lazy_border_work_deferred_) { return; }
-    if (!has_lazy_border_work_pending()) {
-        lazy_border_work_deferred_ = false;
-        TracyPlot("Lazy Border Work Deferred", int64_t{0});
-        return;
-    }
-    lazy_border_work_deferred_ = false;
-    TracyPlot("Lazy Border Work Deferred", int64_t{0});
-    process_lazy_border_work();
-}
-
-auto submap_load_manager::has_deferred_lazy_border_work() const noexcept -> bool {
-    return lazy_border_work_deferred_;
-}
-
-void submap_load_manager::drain_lazy_loads() {
+auto submap_load_manager::finish_lazy_loads(const std::optional<time_point>& started_before)
+    -> void {
     ZoneScopedN("drain_lazy_loads");
-    auto generated = false;
     auto generated_omt_columns = horizontal_omt_set{};
-    std::ranges::for_each(lazy_omt_futures_, [&](auto& entry) {
-        auto result = complete_lazy_omt_result_on_main_thread(entry.first, entry.second.get());
+    std::erase_if(lazy_omt_futures_, [&](auto& entry) {
+        if (started_before && entry.second.started >= *started_before) { return false; }
+        auto result =
+            complete_lazy_omt_result_on_main_thread(entry.first, entry.second.result.get());
         if (apply_lazy_omt_result(entry.first, result)) {
-            generated = true;
             generated_omt_columns.emplace(entry.first.first, entry.first.second.xy());
         }
+        return true;
     });
-    lazy_omt_futures_.clear();
-    if (generated) { run_deferred_mapgen_hooks_and_omt_post_passes(generated_omt_columns); }
+    if (!generated_omt_columns.empty()) {
+        run_deferred_mapgen_hooks_and_omt_post_passes(generated_omt_columns);
+    }
 }
 
-auto submap_load_manager::update(const bool defer_lazy_border_work) -> void {
+void submap_load_manager::drain_lazy_loads() { finish_lazy_loads(std::nullopt); }
+
+void submap_load_manager::finish_due_lazy_loads() { finish_lazy_loads(calendar::turn); }
+
+auto submap_load_manager::update() -> void {
     ZoneScoped;
 
-    if (lazy_border_work_deferred_) {
-        if (!has_lazy_border_work_pending()) {
-            lazy_border_work_deferred_ = false;
-            TracyPlot("Lazy Border Work Deferred", int64_t{0});
-        } else if (defer_lazy_border_work) {
-            TracyPlot("Lazy Border Work Deferred", int64_t{1});
-        } else {
-            process_deferred_lazy_border_work();
-        }
-    } else if (!defer_lazy_border_work) {
-        reap_lazy_omt_jobs();
-    }
 
     TracyPlot("Thread Pool Workers", static_cast<int64_t>(get_thread_pool().num_workers()));
     TracyPlot("Thread Pool Queue", static_cast<int64_t>(get_thread_pool().queue_size()));
@@ -786,7 +740,7 @@ auto submap_load_manager::update(const bool defer_lazy_border_work) -> void {
         });
         if (bubble_delta != point_zero) { lazy_omt_preload_direction_ = bubble_delta; }
         if (cur_requests == prev_requests_) {
-            process_or_defer_lazy_border_work(defer_lazy_border_work);
+            if (has_lazy_border_work_pending()) { process_lazy_border_work(); }
             return;
         }
         prev_requests_ = std::move(cur_requests);
@@ -862,9 +816,9 @@ auto submap_load_manager::update(const bool defer_lazy_border_work) -> void {
                     continue;
                 }
                 ++preloaded_zlevels;
-                preload_futures.push_back(get_thread_pool().submit_returning([&mb, omt_addr]() {
-                    mb.preload_omt(omt_addr);
-                }));
+                preload_futures.push_back(get_thread_pool().submit_returning(
+                    {.stream = 0x7072656c6f61645f, .id = retained_omt_seed_id(qk)},
+                    [&mb, omt_addr]() { mb.preload_omt(omt_addr); }));
             }
         }
         std::ranges::for_each(preload_futures, [](auto& f) { f.get(); });
@@ -990,7 +944,7 @@ auto submap_load_manager::update(const bool defer_lazy_border_work) -> void {
     }
 
     queue_lazy_border_omts(lazy_border_omts);
-    process_or_defer_lazy_border_work(defer_lazy_border_work);
+    if (has_lazy_border_work_pending()) { process_lazy_border_work(); }
 
     rebuild_simulated_submaps_by_dimension(simulated);
     prev_simulated_ = std::move(simulated);

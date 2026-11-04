@@ -5,6 +5,7 @@
 #include "character_id.h"
 #include "color.h"
 #include "debug.h"
+#include "engine_client_component.h"
 #include "enums.h"
 #include "event.h"
 #include "event_bus.h"
@@ -49,6 +50,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <string>
 #include <utility>
 
@@ -74,6 +76,23 @@ static const mtype_id mon_manhack( "mon_manhack" );
 static const mtype_id mon_secubot( "mon_secubot" );
 
 static const std::string flag_CONSOLE( "CONSOLE" );
+
+namespace
+{
+
+namespace ec = engine_client;
+
+/// The terminal as the native window draws it: its lines under the computer's name, green unless a line is colored.
+auto terminal_screen( const std::string &title,
+                      const std::vector<std::pair<int, std::string>> &lines ) -> ec::screen_view
+{
+    using namespace std::views;
+    const auto text = lines | transform( []( const auto & line ) { return std::string( line.first, ' ' ) + line.second; } )
+    | join_with( '\n' ) | std::ranges::to<std::string>();
+    return { .title = title, .root = ec::component{ .id = "terminal:output", .body = ec::text_body{ .markup = colorize( text, c_green ), .role = "terminal_output" } } };
+}
+
+} // namespace
 
 static catacurses::window init_window()
 {
@@ -585,12 +604,12 @@ void computer_session::action_miss_disarm()
     // TODO: stop the nuke from creating radioactive clouds.
     if( query_yn( _( "Disarm missile." ) ) ) {
         g->events().send<event_type::disarms_nuke>();
-        add_msg( m_info, _( "Nuclear missile disarmed!" ) );
+        add_msg( m_info, to_translation( "Nuclear missile disarmed!" ) );
         //disable missile.
         comp.options.clear();
         activate_failure( COMPFAIL_SHUTDOWN );
     } else {
-        add_msg( m_neutral, _( "Nuclear missile remains active." ) );
+        add_msg( m_neutral, to_translation( "Nuclear missile remains active." ) );
         return;
     }
 }
@@ -941,7 +960,7 @@ void computer_session::action_srcf_seal()
     print_line( _( "Charges Detonated" ) );
     print_line( _( "Backup Generator Power Failing" ) );
     print_line( _( "Evacuate Immediately" ) );
-    add_msg( m_warning, _( "Evacuate Immediately!" ) );
+    add_msg( m_warning, to_translation( "Evacuate Immediately!" ) );
     map &here = get_map();
     for( const auto &p : here.points_on_zlevel() ) {
         if( here.ter( p ) == t_elevator || here.furn( p ) == furn_str_id( "f_cloning_vat" ) ) {
@@ -1315,7 +1334,7 @@ void computer_session::failure_shutdown()
     for( const auto &p : here.points_in_radius( g->u.bub_pos(), 1 ) ) {
         if( here.has_flag( flag_CONSOLE, p ) ) {
             here.ter_set( p, t_console_broken );
-            add_msg( m_bad, _( "The console shuts down." ) );
+            add_msg( m_bad, to_translation( "The console shuts down." ) );
             found_tile = true;
         }
     }
@@ -1325,7 +1344,7 @@ void computer_session::failure_shutdown()
     for( const auto &p : here.points_on_zlevel() ) {
         if( here.has_flag( flag_CONSOLE, p ) ) {
             here.ter_set( p, t_console_broken );
-            add_msg( m_bad, _( "The console shuts down." ) );
+            add_msg( m_bad, to_translation( "The console shuts down." ) );
         }
     }
 }
@@ -1354,7 +1373,7 @@ void computer_session::failure_manhacks()
         get_map().points_in_radius( get_player_character().bub_pos(), 3 );
     for( int i = 0; i < num_robots; i++ ) {
         if( g->place_critter_within( mon_manhack, range ) ) {
-            add_msg( m_warning, _( "Manhacks drop from compartments in the ceiling." ) );
+            add_msg( m_warning, to_translation( "Manhacks drop from compartments in the ceiling." ) );
         }
     }
 }
@@ -1366,25 +1385,25 @@ void computer_session::failure_secubots()
         get_map().points_in_radius( get_player_character().bub_pos(), 3 );
     for( int i = 0; i < num_robots; i++ ) {
         if( g->place_critter_within( mon_secubot, range ) ) {
-            add_msg( m_warning, _( "Secubots emerge from compartments in the floor." ) );
+            add_msg( m_warning, to_translation( "Secubots emerge from compartments in the floor." ) );
         }
     }
 }
 
 void computer_session::failure_damage()
 {
-    add_msg( m_neutral, _( "The console shocks you." ) );
+    add_msg( m_neutral, to_translation( "The console shocks you." ) );
     if( g->u.is_elec_immune() ) {
-        add_msg( m_good, _( "You're protected from electric shocks." ) );
+        add_msg( m_good, to_translation( "You're protected from electric shocks." ) );
     } else {
-        add_msg( m_bad, _( "Your body is damaged by the electric shock!" ) );
+        add_msg( m_bad, to_translation( "Your body is damaged by the electric shock!" ) );
         g->u.hurtall( rng( 1, 10 ), nullptr );
     }
 }
 
 void computer_session::failure_pump_explode()
 {
-    add_msg( m_warning, _( "The pump explodes!" ) );
+    add_msg( m_warning, to_translation( "The pump explodes!" ) );
     map &here = get_map();
     for( const auto &p : here.points_on_zlevel() ) {
         if( here.ter( p ) == t_sewage_pump ) {
@@ -1396,7 +1415,7 @@ void computer_session::failure_pump_explode()
 
 void computer_session::failure_pump_leak()
 {
-    add_msg( m_warning, _( "Sewage leaks!" ) );
+    add_msg( m_warning, to_translation( "Sewage leaks!" ) );
     map &here = get_map();
     for( const auto &p : here.points_on_zlevel() ) {
         if( here.ter( p ) != t_sewage_pump ) {
@@ -1567,8 +1586,11 @@ bool computer_session::query_any( const std::string &text, Args &&... args )
 
 bool computer_session::query_any()
 {
+    input_context ctxt( "COMPUTER_TERMINAL" );
+    ctxt.register_action( "ANY_INPUT", to_translation( "Press any key" ) );
+    const auto screen = ec::screen_scope( ctxt, "computer", { .view = [&]( const ec::boundary_state & ) { return terminal_screen( comp.name, lines ); } } );
     ui_manager::redraw();
-    inp_mngr.wait_for_any_key();
+    ctxt.handle_input();
     return true;
 }
 
@@ -1594,10 +1616,12 @@ computer_session::ynq computer_session::query_ynq( const std::string &text, Args
                          ctxt.describe_key_and_name( "NO", allow_key ),
                          ctxt.describe_key_and_name( "QUIT", allow_key ) );
 
+    const auto screen = ec::screen_scope( ctxt, "computer", { .view = [&]( const ec::boundary_state & ) { return terminal_screen( comp.name, lines ); } } );
     do {
         ui_manager::redraw();
         const std::string action = ctxt.handle_input();
-        if( allow_key( ctxt.get_raw_input() ) ) {
+        // An offered action a client runs by id carries no key to check the case of.
+        if( !ctxt.get_raw_input().action.empty() || allow_key( ctxt.get_raw_input() ) ) {
             if( action == "YES" ) {
                 return ynq::yes;
             } else if( action == "NO" ) {

@@ -16,6 +16,7 @@
 #include "cursesdef.h"
 #include "debug.h"
 #include "effect.h"
+#include "engine_client_presentation.h"
 #include "enums.h"
 #include "event.h"
 #include "event_bus.h"
@@ -43,6 +44,7 @@
 #include "mattack_actors.h"
 #include "mattack_common.h"
 #include "melee.h"
+#include "localised_names.h"
 #include "messages.h"
 #include "mission.h"
 #include "mod_manager.h"
@@ -67,6 +69,7 @@
 #include "string_id.h"
 #include "string_utils.h"
 #include "text_snippets.h"
+#include "tile_parts.h"
 #include "translations.h"
 #include "trap.h"
 #include "type_id.h"
@@ -521,8 +524,10 @@ auto monster::setpos( const tripoint_abs_ms &p ) -> void
     }
 
     const auto wandering = is_wandering();
+    const auto from = bub_pos();
     g->update_zombie_pos( *this, p );
     pos_abs = p;
+    engine_client::presentation::record_move( { .mover = *this, .from = from, .to = bub_pos() } );
     if( has_effect( effect_ridden ) && mounted_player && mounted_player->abs_pos() != pos_abs ) {
         add_msg( m_debug, "Ridden monster %s moved independently and dumped player", get_name() );
         mounted_player->forced_dismount();
@@ -1122,74 +1127,103 @@ static std::optional<std::pair<std::string, nc_color>> action_readiness_descript
                            c_light_green );
 }
 
+auto monster::info_facts() const -> std::vector<engine_client::fact>
+{
+    auto facts = std::vector<engine_client::fact> {};
+    auto bar_color = c_white;
+    auto bar = std::string {};
+    get_HP_Bar( bar_color, bar );
+    facts.push_back( { .kind = "hp", .text = bar, .color = bar_color,
+    .values = { { "hp", hp }, { "max", get_hp_max() } } } );
+    facts.push_back( { .kind = "creature", .text = name(), .color = basic_symbol_color(), .id = type->id.str() } );
+    if( const auto effects = get_effect_status(); !effects.empty() ) {
+        facts.push_back( { .kind = "effects", .text = effects } );
+    }
+    const auto att = get_attitude();
+    facts.push_back( { .kind = "attitude", .text = att.first, .color = att.second } );
+    const auto sees_you = sees( g->u );
+    facts.push_back( { .kind = "senses", .text = sees_you ? _( "Can see to your current location" ) :
+                       _( "Can't see to your current location" ), .color = sees_you ? c_red : c_green } );
+    const auto speed_desc = speed_description( speed_rating(), has_flag( MF_IMMOBILE ) );
+    facts.push_back( { .kind = "speed", .text = speed_desc.first, .color = speed_desc.second } );
+    if( const auto ready = action_readiness_description( *this ) ) {
+        facts.push_back( { .kind = "readiness", .text = ready->first, .color = ready->second } );
+    }
+    if( debug_mode ) {
+        facts.push_back( { .kind = "difficulty", .text = _( " Difficulty " ) + std::to_string( type->difficulty ),
+        .color = c_light_gray, .values = { { "difficulty", type->difficulty } } } );
+        facts.push_back( { .kind = "moves", .text = string_format( _( "Moves: %d  Speed: %d" ), get_moves(), get_speed() ),
+        .color = c_light_gray, .values = { { "moves", get_moves() }, { "speed", get_speed() } } } );
+    }
+    if( display_mod_source ) {
+        const auto mod_src = enumerate_as_string( type->src.begin(),
+        type->src.end(), []( const std::pair<mtype_id, mod_id> &source ) {
+            return string_format( "'%s'", source.second->name() );
+        }, enumeration_conjunction::arrow );
+        facts.push_back( { .kind = "origin", .text = string_format( _( "Origin: %s" ), mod_src ), .color = c_cyan } );
+    }
+    if( display_object_ids ) {
+        facts.push_back( { .kind = "object_id", .text = string_format( "[%s]", type->id.str() ), .color = c_light_blue } );
+    }
+    facts.push_back( { .kind = "description", .text = type->get_description(), .color = c_light_gray } );
+    if( has_effect( effect_ridden ) && mounted_player ) {
+        facts.push_back( { .kind = "rider", .text = string_format( _( "Rider: %s" ), mounted_player->disp_name() ),
+                           .color = c_white } );
+    }
+    if( size_bonus > 0 ) {
+        facts.push_back( { .kind = "size", .text = string_format( _( "It is %s." ), size_names.at( get_size() ) ),
+                           .color = c_light_gray } );
+    }
+    return facts;
+}
+
 int monster::print_info( const catacurses::window &w, int vStart, int vLines, int column ) const
 {
     const int vEnd = vStart + vLines;
     const int max_width = getmaxx( w ) - column - 1;
+    const auto facts = info_facts();
+    const auto fact_of = [&]( const std::string & kind ) -> const engine_client::fact * { // *NOPAD*
+        const auto found = std::ranges::find( facts, kind, &engine_client::fact::kind );
+        return found == facts.end() ? nullptr :& *found;
+    };
 
-    nc_color color = c_white;
-    std::string bar_str;
-    get_HP_Bar( color, bar_str );
-    mvwprintz( w, point( column, vStart ), color, bar_str );
+    const auto &bar = *fact_of( "hp" );
+    mvwprintz( w, point( column, vStart ), *bar.color, bar.text );
     const int bar_max_width = 5;
-    const int bar_width = utf8_width( bar_str );
+    const int bar_width = utf8_width( bar.text );
     for( int i = 0; i < bar_max_width - bar_width; ++i ) {
         mvwprintz( w, point( column + 4 - i, vStart ), c_white, "." );
     }
-    mvwprintz( w, point( column + bar_max_width + 1, vStart ), basic_symbol_color(), name() );
+    const auto &named = *fact_of( "creature" );
+    mvwprintz( w, point( column + bar_max_width + 1, vStart ), *named.color, named.text );
 
-    const auto att = get_attitude();
-    const int att_width = utf8_width( att.first );
+    const auto &att = *fact_of( "attitude" );
+    const int att_width = utf8_width( att.text );
     const int att_start = column + std::max( 0, max_width - att_width );
-    const int effect_start = column + bar_max_width + utf8_width( " " + name() + " " );
+    const int effect_start = column + bar_max_width + utf8_width( " " + named.text + " " );
     const int effect_width = std::max( 0, att_start - effect_start - 1 );
     if( effect_width > 0 ) {
-        trim_and_print( w, point( effect_start, vStart ), effect_width, h_white, get_effect_status() );
+        if( const auto *const effects = fact_of( "effects" ) ) {
+            trim_and_print( w, point( effect_start, vStart ), effect_width, h_white, effects->text );
+        }
     }
-    mvwprintz( w, point( att_start, vStart ), att.second, att.first );
+    mvwprintz( w, point( att_start, vStart ), *att.color, att.text );
 
-    const std::string senses_str = sees( g->u ) ? _( "Can see to your current location" ) :
-                                   _( "Can't see to your current location" );
-    mvwprintz( w, point( column, ++vStart ), sees( g->u ) ? c_red : c_green, senses_str );
-
-    const auto speed_desc = speed_description( speed_rating(), has_flag( MF_IMMOBILE ) );
-    mvwprintz( w, point( column, ++vStart ), speed_desc.second, speed_desc.first );
-
-    if( const auto ready = action_readiness_description( *this ) ) {
-        mvwprintz( w, point( column, ++vStart ), ready->second, ready->first );
-    }
-
-    if( debug_mode ) {
-        mvwprintz( w, point( column, ++vStart ), c_light_gray,
-                   _( " Difficulty " ) + std::to_string( type->difficulty ) );
-        mvwprintz( w, point( column, ++vStart ), c_light_gray,
-                   string_format( _( "Moves: %d  Speed: %d" ), get_moves(), get_speed() ) );
-    }
-    if( display_mod_source ) {
-        const std::string mod_src = enumerate_as_string( type->src.begin(),
-        type->src.end(), []( const std::pair<mtype_id, mod_id> &source ) {
-            return string_format( "'%s'", source.second->name() );
-        }, enumeration_conjunction::arrow );
-        vStart += fold_and_print( w, point( column, vStart + 1 ), getmaxx( w ) - 2, c_cyan,
-                                  string_format( _( "Origin: %s" ), mod_src ) );
-    }
-    if( display_object_ids ) {
-        mvwprintz( w, point( column, ++vStart ), c_light_blue, string_format( "[%s]", type->id.str() ) );
-    }
-
-    std::vector<std::string> lines = foldstring( type->get_description(), max_width );
-    const int numlines = lines.size();
-    for( int i = 0; i < numlines && vStart < vEnd; i++ ) {
-        mvwprintz( w, point( column, ++vStart ), c_light_gray, lines[i] );
-    }
-
-    if( has_effect( effect_ridden ) && mounted_player ) {
-        mvwprintz( w, point( column, ++vStart ), c_white, _( "Rider: %s" ), mounted_player->disp_name() );
-    }
-
-    if( size_bonus > 0 ) {
-        mvwprintz( w, point( column, ++vStart ), c_light_gray, _( "It is %s." ),
-                   size_names.at( get_size() ) );
+    for( const auto &entry : facts ) {
+        if( entry.kind == "senses" || entry.kind == "speed" || entry.kind == "readiness" ||
+            entry.kind == "difficulty" || entry.kind == "moves" || entry.kind == "object_id" ||
+            entry.kind == "rider" || entry.kind == "size" ) {
+            mvwprintz( w, point( column, ++vStart ), *entry.color, entry.text );
+        } else if( entry.kind == "origin" ) {
+            vStart += fold_and_print( w, point( column, vStart + 1 ), getmaxx( w ) - 2, *entry.color,
+                                      entry.text );
+        } else if( entry.kind == "description" ) {
+            std::vector<std::string> lines = foldstring( entry.text, max_width );
+            const int numlines = lines.size();
+            for( int i = 0; i < numlines && vStart < vEnd; i++ ) {
+                mvwprintz( w, point( column, ++vStart ), *entry.color, lines[i] );
+            }
+        }
     }
 
     return ++vStart;
@@ -2418,14 +2452,14 @@ bool monster::uncanny_dodge()
     const bool u_see_me = g->u.sees( *this );
     if( x_in_y( get_dodge(), 10 ) ) {
         if( u_see_me ) {
-            add_msg( _( "%s dodges… so fast!" ),
+            add_msg( to_translation( "%s dodges… so fast!" ),
                      disp_name( false, true ) );
         }
         mod_moves( -get_uncanny_dodge_cost() );
         return true;
     } else {
         if( u_see_me ) {
-            add_msg( _( "%s tries to dodge but fails!" ),
+            add_msg( to_translation( "%s tries to dodge but fails!" ),
                      disp_name( false, true ) );
         }
         return false;
@@ -2536,16 +2570,16 @@ void monster::melee_attack( Creature &target, float accuracy )
         // Miss
         if( u_see_me && !target.in_sleep_state() ) {
             if( target.is_player() ) {
-                add_msg( _( "You dodge %s." ), disp_name() );
+                add_msg( to_translation( "You dodge %s." ), disp_name() );
             } else if( target.is_npc() ) {
-                add_msg( _( "%1$s dodges %2$s attack." ),
+                add_msg( to_translation( "%1$s dodges %2$s attack." ),
                          target.disp_name(), disp_name( true ) );
             } else {
-                add_msg( _( "%1$s misses %2$s!" ),
+                add_msg( to_translation( "%1$s misses %2$s!" ),
                          disp_name( false, true ), target.disp_name() );
             }
         } else if( target.is_player() ) {
-            add_msg( _( "You dodge an attack from an unseen source." ) );
+            add_msg( to_translation( "You dodge an attack from an unseen source." ) );
         }
     } else if( is_hallucination() || total_dealt > 0 ) {
         // Hallucinations always produce messages but never actually deal damage
@@ -2555,32 +2589,34 @@ void monster::melee_attack( Creature &target, float accuracy )
                                          sfx::get_heard_volume( target.bub_pos(), 65 ) );
                 sfx::do_player_death_hurt( dynamic_cast<player &>( target ), false );
                 //~ 1$s is attacker name, 2$s is bodypart name in accusative.
-                add_msg( m_bad, _( "%1$s hits your %2$s." ), disp_name( false, true ),
+                add_msg( m_bad, to_translation( "%1$s hits your %2$s." ), disp_name( false, true ),
                          bp_hit->accusative.translated() );
             } else if( target.is_npc() ) {
                 if( has_effect( effect_ridden ) && has_flag( MF_RIDEABLE_MECH ) && bub_pos() == g->u.bub_pos() ) {
                     //~ %1$s: name of your mount, %2$s: target NPC name, %3$d: damage value
-                    add_msg( m_good, _( "Your %1$s hits %2$s for %3$d damage!" ), name(), target.disp_name(),
+                    add_msg( m_good, to_translation( "Your %1$s hits %2$s for %3$d damage!" ), name(),
+                             target.disp_name(),
                              total_dealt );
                 } else {
                     //~ %1$s: attacker name, %2$s: target NPC name, %3$s: bodypart name in accusative
-                    add_msg( _( "%1$s hits %2$s %3$s." ), disp_name( false, true ),
+                    add_msg( to_translation( "%1$s hits %2$s %3$s." ), disp_name( false, true ),
                              target.disp_name( true ),
                              bp_hit->accusative.translated() );
                 }
             } else {
                 if( has_effect( effect_ridden ) && has_flag( MF_RIDEABLE_MECH ) && bub_pos() == g->u.bub_pos() ) {
                     //~ %1$s: name of your mount, %2$s: target creature name, %3$d: damage value
-                    add_msg( m_good, _( "Your %1$s hits %2$s for %3$d damage!" ), get_name(), target.disp_name(),
+                    add_msg( m_good, to_translation( "Your %1$s hits %2$s for %3$d damage!" ), get_name(),
+                             target.disp_name(),
                              total_dealt );
                 } else {
                     //~ %1$s: attacker name, %2$s: target creature name
-                    add_msg( _( "%1$s hits %2$s!" ), disp_name( false, true ), target.disp_name() );
+                    add_msg( to_translation( "%1$s hits %2$s!" ), disp_name( false, true ), target.disp_name() );
                 }
             }
         } else if( target.is_player() ) {
             //~ %s is bodypart name in accusative.
-            add_msg( m_bad, _( "Something hits your %s." ),
+            add_msg( m_bad, to_translation( "Something hits your %s." ),
                      bp_hit->accusative.translated() );
         }
         // Deal radiation damage, bypass immunity since we broke through armor
@@ -2595,13 +2631,15 @@ void monster::melee_attack( Creature &target, float accuracy )
         if( u_see_me ) {
             if( target.is_player() ) {
                 //~ 1$s is attacker name, 2$s is bodypart name in accusative, 3$s is armor name
-                add_msg( _( "%1$s hits your %2$s, but your %3$s protects you." ), disp_name( false, true ),
+                add_msg( to_translation( "%1$s hits your %2$s, but your %3$s protects you." ), disp_name( false,
+                         true ),
                          bp_hit->accusative.translated(), target.skin_name() );
             } else if( target.is_npc() ) {
                 //~ $1s is monster name, %2$s is that monster target name,
                 //~ $3s is target bodypart name in accusative, $4s is the monster target name,
                 //~ 5$s is target armor name.
-                add_msg( _( "%1$s hits %2$s %3$s but is stopped by %4$s %5$s." ), disp_name( false, true ),
+                add_msg( to_translation( "%1$s hits %2$s %3$s but is stopped by %4$s %5$s." ), disp_name( false,
+                         true ),
                          target.disp_name( true ),
                          bp_hit->accusative.translated(),
                          target.disp_name( true ),
@@ -2609,14 +2647,14 @@ void monster::melee_attack( Creature &target, float accuracy )
             } else {
                 //~ $1s is monster name, %2$s is that monster target name,
                 //~ $3s is target armor name.
-                add_msg( _( "%1$s hits %2$s but is stopped by its %3$s." ),
+                add_msg( to_translation( "%1$s hits %2$s but is stopped by its %3$s." ),
                          disp_name( false, true ),
                          target.disp_name(),
                          target.skin_name() );
             }
         } else if( target.is_player() ) {
             //~ 1$s is bodypart name in accusative, 2$s is armor name.
-            add_msg( _( "Something hits your %1$s, but your %2$s protects you." ),
+            add_msg( to_translation( "Something hits your %1$s, but your %2$s protects you." ),
                      bp_hit->accusative.translated(), target.skin_name() );
         }
         // Radiation damage, armor negated attack so check if we're wearing radiation protection
@@ -2661,18 +2699,18 @@ void monster::melee_attack( Creature &target, float accuracy )
     const int stab_cut = dealt_dam.type_damage( DT_CUT ) + dealt_dam.type_damage( DT_STAB );
 
     if( stab_cut > 0 && has_flag( MF_VENOM ) ) {
-        target.add_msg_if_player( m_bad, _( "You're envenomed!" ) );
+        target.add_msg_if_player( m_bad, to_translation( "You're envenomed!" ) );
         target.add_effect( effect_poison, 3_minutes );
     }
 
     if( stab_cut > 0 && has_flag( MF_BADVENOM ) ) {
         target.add_msg_if_player( m_bad,
-                                  _( "You feel venom flood your body, wracking you with pain…" ) );
+                                  to_translation( "You feel venom flood your body, wracking you with pain…" ) );
         target.add_effect( effect_badpoison, 4_minutes );
     }
 
     if( stab_cut > 0 && has_flag( MF_PARALYZE ) ) {
-        target.add_msg_if_player( m_bad, _( "You feel venom enter your body!" ) );
+        target.add_msg_if_player( m_bad, to_translation( "You feel venom enter your body!" ) );
         target.add_effect( effect_paralyzepoison, 10_minutes );
     }
 
@@ -2744,13 +2782,14 @@ void monster::set_hp( const int hp )
 }
 
 void monster::apply_damage( Creature *source, item *source_weapon, item *source_projectile,
-                            bodypart_id /*bp*/,
+                            bodypart_id bp,
                             int dam,
                             const bool /*bypass_med*/ )
 {
     if( is_dead_state() ) {
         return;
     }
+    engine_client::presentation::record_damage( { .hurt = *this, .part = bp, .amount = dam } );
     hp -= dam;
     if( hp < 1 ) {
         set_killer( source );
@@ -2829,13 +2868,13 @@ bool monster::move_effects( bool )
         const float struggle_threshold = type->melee_dice * type->melee_sides * 1.5f * struggle_multiplier;
         if( !immediate_break && rng( 0, 900 ) > struggle_threshold ) {
             if( u_see_me ) {
-                add_msg( _( "The %s struggles to break free of its bonds." ), name() );
+                add_msg( to_translation( "The %s struggles to break free of its bonds." ), name() );
             }
         } else if( immediate_break ) {
             remove_effect( effect_tied );
             if( tied_item ) {
                 if( u_see_me ) {
-                    add_msg( _( "The %s easily slips out of its bonds." ), name() );
+                    add_msg( to_translation( "The %s easily slips out of its bonds." ), name() );
                 }
                 g->m.add_item_or_charges( bub_pos(), remove_tied_item() );
             }
@@ -2852,9 +2891,9 @@ bool monster::move_effects( bool )
                 }
                 if( u_see_me ) {
                     if( broken ) {
-                        add_msg( _( "The %s snaps the bindings holding it down." ), name() );
+                        add_msg( to_translation( "The %s snaps the bindings holding it down." ), name() );
                     } else {
-                        add_msg( _( "The %s breaks free of the bindings holding it down." ), name() );
+                        add_msg( to_translation( "The %s breaks free of the bindings holding it down." ), name() );
                     }
                 }
             }
@@ -2865,11 +2904,11 @@ bool monster::move_effects( bool )
     if( has_effect( effect_downed ) ) {
         if( rng( 0, 40 ) > type->melee_dice * type->melee_sides * 1.5 ) {
             if( u_see_me ) {
-                add_msg( _( "The %s struggles to stand." ), name() );
+                add_msg( to_translation( "The %s struggles to stand." ), name() );
             }
         } else {
             if( u_see_me ) {
-                add_msg( _( "The %s climbs to its feet!" ), name() );
+                add_msg( to_translation( "The %s climbs to its feet!" ), name() );
             }
             remove_effect( effect_downed );
         }
@@ -2878,7 +2917,7 @@ bool monster::move_effects( bool )
     if( has_effect( effect_webbed ) ) {
         if( x_in_y( type->melee_dice * type->melee_sides, 6 * get_effect_int( effect_webbed ) ) ) {
             if( u_see_me ) {
-                add_msg( _( "The %s breaks free of the webs!" ), name() );
+                add_msg( to_translation( "The %s breaks free of the webs!" ), name() );
             }
             remove_effect( effect_webbed );
         }
@@ -2890,7 +2929,7 @@ bool monster::move_effects( bool )
             g->m.spawn_item( bub_pos(), "string_36" );
             g->m.spawn_item( bub_pos(), "snare_trigger" );
             if( u_see_me ) {
-                add_msg( _( "The %s escapes the light snare!" ), name() );
+                add_msg( to_translation( "The %s escapes the light snare!" ), name() );
             }
         }
         return false;
@@ -2902,7 +2941,7 @@ bool monster::move_effects( bool )
                 g->m.spawn_item( bub_pos(), "rope_6" );
                 g->m.spawn_item( bub_pos(), "snare_trigger" );
                 if( u_see_me ) {
-                    add_msg( _( "The %s escapes the heavy snare!" ), name() );
+                    add_msg( to_translation( "The %s escapes the heavy snare!" ), name() );
                 }
             }
         }
@@ -2914,7 +2953,7 @@ bool monster::move_effects( bool )
                 remove_effect( effect_beartrap );
                 g->m.spawn_item( bub_pos(), "beartrap" );
                 if( u_see_me ) {
-                    add_msg( _( "The %s escapes the bear trap!" ), name() );
+                    add_msg( to_translation( "The %s escapes the bear trap!" ), name() );
                 }
             }
         }
@@ -2924,7 +2963,7 @@ bool monster::move_effects( bool )
         if( x_in_y( type->melee_dice * type->melee_sides, 100 ) ) {
             remove_effect( effect_crushed );
             if( u_see_me ) {
-                add_msg( _( "The %s frees itself from the rubble!" ), name() );
+                add_msg( to_translation( "The %s frees itself from the rubble!" ), name() );
             }
         }
         return false;
@@ -2937,7 +2976,7 @@ bool monster::move_effects( bool )
             return false;
         } else {
             if( u_see_me ) {
-                add_msg( _( "The %s escapes the pit!" ), name() );
+                add_msg( to_translation( "The %s escapes the pit!" ), name() );
             }
             remove_effect( effect_in_pit );
         }
@@ -2953,7 +2992,7 @@ bool monster::move_effects( bool )
             return false;
         } else {
             if( u_see_me ) {
-                add_msg( _( "The %s breaks free from the grab!" ), name() );
+                add_msg( to_translation( "The %s breaks free from the grab!" ), name() );
             }
             remove_effect( effect_grabbed );
             grabber->remove_effect( effect_grabbing );
@@ -3532,11 +3571,11 @@ void monster::process_turn()
                     if( one_in( 4 ) ) {
                         explosion_handler::explosion( bub_pos(), nullptr, 40, 0.8, true );
                         if( player_sees ) {
-                            add_msg( m_warning, _( "The %s explodes in a fiery inferno!" ), g->m.tername( zap ) );
+                            add_msg( m_warning, to_translation( "The %s explodes in a fiery inferno!" ), g->m.tername( zap ) );
                         }
                     } else {
                         if( player_sees ) {
-                            add_msg( m_warning, _( "Lightning from %1$s engulfs the %2$s!" ), name(),
+                            add_msg( m_warning, to_translation( "Lightning from %1$s engulfs the %2$s!" ), name(),
                                      g->m.tername( zap ) );
                         }
                         g->m.add_field( zap, fd_fire, 1, 2_turns );
@@ -3563,8 +3602,8 @@ void monster::process_turn()
                 se.volume = 120;
                 sounds::sound( se );
                 if( g->u.sees( bub_pos() ) ) {
-                    add_msg( m_bad, _( "Lightning strikes the %s!" ), name() );
-                    add_msg( m_bad, _( "Your vision goes white!" ) );
+                    add_msg( m_bad, to_translation( "Lightning strikes the %s!" ), name() );
+                    add_msg( m_bad, to_translation( "Your vision goes white!" ) );
                     g->u.add_effect( effect_blind, rng( 1_minutes, 2_minutes ) );
                 }
                 add_effect( effect_supercharged, 12_hours );
@@ -3701,6 +3740,8 @@ void monster::die( Creature *nkiller )
         mounted_player->forced_dismount();
     }
     g->set_critter_died();
+    // The creature tracker stops finding a dead monster, and with it the ID the client knows it by.
+    engine_client::presentation::record_death( *this );
     dead = true;
     set_killer( nkiller );
     if( !death_drops ) {
@@ -3731,7 +3772,7 @@ void monster::die( Creature *nkiller )
         // Feral survivors are motivated to kill anything human
         if( ch->has_trait( trait_PROF_FERAL ) && has_flag( MF_HUMAN ) ) {
             if( !ch->has_effect( effect_feral_killed_recently ) ) {
-                ch->add_msg_if_player( m_good, _( "The voices in your head quiet down a bit." ) );
+                ch->add_msg_if_player( m_good, to_translation( "The voices in your head quiet down a bit." ) );
             }
             if( faction != faction_zombie && !type->in_species( ZOMBIE ) ) {
                 ch->add_effect( effect_feral_killed_recently, 3_days );
@@ -3740,7 +3781,7 @@ void monster::die( Creature *nkiller )
                 ch->add_effect( effect_feral_killed_recently, 6_hours );
                 if( one_in( 3 ) ) {
                     ch->add_msg_if_player( m_bad,
-                                           _( "The rush of blood seems to drive off the smell of decay for a moment." ) );
+                                           to_translation( "The rush of blood seems to drive off the smell of decay for a moment." ) );
                     ch->add_effect( effect_feral_infighting_punishment, 6_hours );
                 }
             }
@@ -3767,8 +3808,8 @@ void monster::die( Creature *nkiller )
     if( has_effect( effect_grabbing ) ) {
         remove_effect( effect_grabbing );
         for( player *p : find_targets_to_ungrab( bub_pos() ) ) {
-            p->add_msg_player_or_npc( m_good, _( "The last enemy holding you collapses!" ),
-                                      _( "The last enemy holding <npcname> collapses!" ) );
+            p->add_msg_player_or_npc( m_good, to_translation( "The last enemy holding you collapses!" ),
+                                      to_translation( "The last enemy holding <npcname> collapses!" ) );
             p->remove_effect( effect_grabbed );
         }
     }
@@ -3893,7 +3934,8 @@ bool monster::check_mech_powered() const
     }
     const itype &type = *battery_item->type;
     if( battery_item->ammo_remaining() <= type.magazine->capacity / 10 && one_in( 10 ) ) {
-        add_msg( m_bad, _( "Your %s emits a beeping noise as its batteries start to get low." ),
+        add_msg( m_bad,
+                 to_translation( "Your %s emits a beeping noise as its batteries start to get low." ),
                  get_name() );
     }
     return true;
@@ -4139,12 +4181,12 @@ void monster::process_effects_internal()
     }
     const int healed_amount = heal( round( regeneration_amount ) );
     if( healed_amount > 0 && g->u.sees( *this ) ) {
-        add_msg( m_warning, _( "The %1$s regenerates %2$s damage." ), name(), healed_amount );
+        add_msg( m_warning, to_translation( "The %1$s regenerates %2$s damage." ), name(), healed_amount );
     }
 
     if( type->regenerates_in_dark ) {
         const float light = g->m.ambient_light_at( bub_pos() );
-        add_msg( m_debug, _( "%1$s local light level: %2$s" ), name(), light );
+        add_msg( m_debug, to_translation( "%1$s local light level: %2$s" ), name(), light );
         // Requires standing in a properly dark tile, scales as it gets darker
         if( light < 11.0f && one_in( 2 ) && hp < get_hp_max() ) {
             // Regen will max out at 50 at 6.0 light (barely able to craft), or top off to max HP
@@ -4153,7 +4195,8 @@ void monster::process_effects_internal()
             dark_regen_amount = std::min( dark_regen_amount, 50 );
             heal( round( dark_regen_amount ) );
             if( dark_regen_amount > 0 && g->u.sees( *this ) ) {
-                add_msg( m_warning, _( "The %1$s uses the darkness to regenerate %2$s damage." ), name(),
+                add_msg( m_warning, to_translation( "The %1$s uses the darkness to regenerate %2$s damage." ),
+                         name(),
                          dark_regen_amount );
             }
         }
@@ -4188,7 +4231,7 @@ void monster::process_effects_internal()
     // If this critter dies in sunlight, check & assess damage.
     if( has_flag( MF_SUNDEATH ) && g->is_in_sunlight( bub_pos() ) ) {
         if( g->u.sees( *this ) ) {
-            add_msg( m_good, _( "The %s burns horribly in the sunlight!" ), name() );
+            add_msg( m_good, to_translation( "The %s burns horribly in the sunlight!" ), name() );
         }
         apply_damage( nullptr, bodypart_id( "torso" ), 100 );
         if( hp < 0 ) {
@@ -4222,7 +4265,7 @@ bool monster::make_fungus()
     poly( type->fungalize_into );
 
     if( g->u.sees( bub_pos() ) ) {
-        add_msg( m_info, _( "The spores transform %1$s into a %2$s!" ),
+        add_msg( m_info, to_translation( "The spores transform %1$s into a %2$s!" ),
                  old_name, name() );
     }
 
@@ -4282,7 +4325,7 @@ void monster::on_pet_bonding( Character *ch )
     pet_bond_level = std::clamp( pet_bond_level + 1, 0, pet_bond_max_level );
     if( pet_bond_level == pet_bond_max_level ) {
         bonded_character_id = ch->getID();
-        ch->add_msg_if_player( m_good, _( "%s has bonded with you!" ), get_name() );
+        ch->add_msg_if_player( m_good, to_translation( "%s has bonded with you!" ), get_name() );
     }
 }
 
@@ -4356,6 +4399,28 @@ void monster::add_msg_player_or_npc( const game_message_params &params,
     if( g->u.sees( *this ) ) {
         add_msg( params, replace_with_npc_name( npc_msg ) );
     }
+}
+
+auto monster::add_localised_msg_if_npc( const game_message_params &params, const std::string &msg,
+                                        const std::optional<localised_text> &localised ) const -> void
+{
+    if( g->u.sees( *this ) ) {
+        Messages::add_msg( params, replace_with_npc_name( msg ), localised );
+    }
+}
+
+auto monster::add_localised_msg_player_or_npc( const game_message_params &params,
+        const localised_pair &pair ) const -> void
+{
+    if( g->u.sees( *this ) ) {
+        Messages::add_msg( params, replace_with_npc_name( pair.npc_msg ), pair.npc_localised );
+    }
+}
+
+auto monster::npc_name_arg() const -> localised_text::arg
+{
+    const auto text = localised::from_format( to_translation( "the %s" ), localised::name_of( *this ) );
+    return text ? localised::nested( *text ) : localised_text::arg{ disp_name() };
 }
 
 units::mass monster::get_carried_weight() const
@@ -4540,8 +4605,8 @@ void monster::on_damage_of_type( int amt, damage_type dt, const bodypart_id &bp 
         x_in_y( amt * 10, full_hp ) ) {
         remove_effect( effect_grabbing );
         for( player *p : find_targets_to_ungrab( bub_pos() ) ) {
-            p->add_msg_player_or_npc( m_good, _( "%s flinches, letting you go!" ),
-                                      _( "%s flinches, letting <npcname> go!" ),
+            p->add_msg_player_or_npc( m_good, to_translation( "%s flinches, letting you go!" ),
+                                      to_translation( "%s flinches, letting <npcname> go!" ),
                                       disp_name( false, true ) );
             p->remove_effect( effect_grabbed );
         }

@@ -1,4 +1,7 @@
 #include "string_input_popup.h"
+#include "client_interaction.h"
+#include "client_presentation.h"
+#include "engine_client_component.h"
 
 #include <cctype>
 #include <optional>
@@ -15,16 +18,7 @@
 #include "uistate.h"
 #include "wcwidth.h"
 
-#if defined(TILES)
-#include "sdl_wrappers.h"
-#endif
 
-#if defined(__ANDROID__)
-#include <SDL3/SDL.h>
-
-#include "options.h"
-#include "sdltiles.h"
-#endif
 
 #include <algorithm>
 #include <cstdlib>
@@ -119,9 +113,9 @@ void string_input_popup::create_context()
     ctxt->register_action( "TEXT.HOME" );
     ctxt->register_action( "TEXT.END" );
     ctxt->register_action( "TEXT.DELETE" );
-#if defined(TILES)
-    ctxt->register_action( "TEXT.PASTE" );
-#endif
+    if( game_client::presentation().clipboard_available() ) {
+        ctxt->register_action( "TEXT.PASTE" );
+    }
     ctxt->register_action( "TEXT.INPUT_FROM_FILE" );
     ctxt->register_action( "HELP_KEYBINDINGS" );
     ctxt->register_action( "PAGE_UP" );
@@ -391,6 +385,9 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
 
     _canceled = false;
     _confirmed = false;
+    // A drawing-only call reads no input, so it is no screen of its own; nor is a field inside another screen.
+    auto screen = std::optional<engine_client::screen_scope> {};
+    if( !draw_only && !shares_screen ) { screen.emplace( *ctxt, "text_input" ); }
     do {
         if( _position < 0 ) {
             _position = 0;
@@ -434,10 +431,61 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
             return _text;
         }
 
-        const std::string action = ctxt->handle_input();
-        const input_event ev = ctxt->get_raw_input();
+        auto action = std::string{};
+        auto ev = input_event{};
+        {
+            const auto field = [this, &ret, printable]() {
+                auto snapshot = game_client::interaction_snapshot{
+                    .kind = game_client::interaction_kind::field,
+                    .title = remove_color_tags( _title ),
+                    .message = remove_color_tags( _description ),
+                    .allow_cancel = true,
+                    .field = game_client::interaction_field{
+                        .id = "field:value",
+                        .label = remove_color_tags( _title ),
+                        .description = remove_color_tags( _description ),
+                        .value = ret.str(),
+                        .type = _only_digits ? "integer" : "text",
+                        .max_length = _max_length,
+                        .printable = printable,
+                    },
+                };
+                if( extend_interaction ) { extend_interaction( snapshot ); }
+                return snapshot;
+            };
+            auto interaction = std::optional<game_client::interaction_scope> {};
+            if( !shares_screen ) { interaction.emplace( *ctxt, field ); }
+            action = ctxt->handle_input();
+            ev = ctxt->get_raw_input();
+        }
         ch = ev.type == input_event_t::keyboard ? ev.get_first_input() : 0;
         _handled = true;
+
+        if( ev.interaction &&
+            ev.interaction->operation == game_client::interaction_operation::cancel ) {
+            game_client::presentation().stop_text_input();
+            _text.clear();
+            _position = -1;
+            _canceled = true;
+            return _text;
+        }
+        if( ev.interaction && ev.interaction->operation == game_client::interaction_operation::fill ) {
+            ret = utf8_wrapper( ev.interaction->value );
+            _position = ret.length();
+            edit = utf8_wrapper{};
+            ctxt->set_edittext( {} );
+            if( *ev.interaction->submit ) {
+                add_to_history( ret.str() );
+                _confirmed = true;
+                _text = ret.str();
+                if( !_hist_use_uilist ) {
+                    _hist_str_ind = 0;
+                    _session_str_entered.clear();
+                }
+                return _text;
+            }
+            continue;
+        }
 
         if( callbacks[ch] ) {
             if( callbacks[ch]() ) {
@@ -446,11 +494,7 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
         }
 
         if( action == "TEXT.QUIT" ) {
-#if defined(__ANDROID__)
-            if( get_option<bool>( "ANDROID_AUTO_KEYBOARD" ) ) {
-                SDL_StopTextInput( get_sdl_window().get() );
-            }
-#endif
+            game_client::presentation().stop_text_input();
             _text.clear();
             _position = -1;
             _canceled = true;
@@ -539,15 +583,9 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
             if( _max_length <= 0 || ret.display_width() < static_cast<size_t>( _max_length ) ) {
                 std::string entered;
                 if( action == "TEXT.PASTE" ) {
-#if defined(TILES)
                     if( edit.empty() ) {
-                        char *const clip = SDL_GetClipboardText();
-                        if( clip ) {
-                            entered = clip;
-                            SDL_free( clip );
-                        }
+                        entered = game_client::presentation().clipboard_text();
                     }
-#endif
                 } else if( action == "TEXT.INPUT_FROM_FILE" ) {
                     if( edit.empty() ) {
                         entered = get_input_string_from_file();

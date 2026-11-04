@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <ranges>
 #include <set>
 #include <string>
 #include <vector>
@@ -167,4 +168,35 @@ TEST_CASE("vehicle split with perishable cargo keeps hack ids", "[vehicle][hack_
     const VehicleList vehs = here.get_vehicles();
     REQUIRE(vehs.size() >= 2);
     for (const wrapped_vehicle& wv : vehs) { require_unique_hack_ids(*wv.v); }
+}
+
+TEST_CASE("installing parts keeps each part's cargo on that part", "[vehicle][hack_id]") {
+    clear_all_state();
+    vehicle* const veh = get_map().add_vehicle(
+        vproto_id("cross_split_test"), tripoint_bub_ms(10, 10, 0), 0_degrees, 0, 0);
+    REQUIRE(veh != nullptr);
+    const auto cargo =
+        veh->get_any_parts("CARGO") | std::views::transform(&vpart_reference::part_index)
+        | std::ranges::to<std::vector>();
+    REQUIRE_FALSE(cargo.empty());
+    for (const auto part : cargo) {
+        REQUIRE_FALSE(veh->add_item(static_cast<int>(part), item::spawn("rock")));
+    }
+    // Enough frames that the part list moves to new storage more than once.
+    for (auto x = 2; x < 66; ++x) {
+        REQUIRE(
+            veh->install_part(tripoint_mnt_veh(x, 0, 0), vpart_id("frame_vertical"), true) >= 0);
+    }
+    const auto debug = capture_debugmsg_during([&] {
+        for (const auto part : cargo) {
+            auto& rock = veh->get_items(static_cast<int>(part)).only_item();
+            CHECK(rock.where() == item_location_type::vehicle);
+            CHECK(rock.bub_pos() == veh->bub_part_location(static_cast<int>(part)));
+            // Taking it out finds the part by its id.
+            const auto taken = rock.detach();
+            CHECK(taken);
+            CHECK(veh->get_items(static_cast<int>(part)).empty());
+        }
+    });
+    CHECK(debug.empty());
 }

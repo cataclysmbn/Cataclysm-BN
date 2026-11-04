@@ -2,9 +2,12 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <iterator>
+#include <map>
 #include <memory>
+#include <ranges>
 #include <string>
 #include <vector>
 
@@ -14,6 +17,9 @@
 #include "character_display.h"
 #include "clothing_utils.h"
 #include "debug.h"
+#include "engine_client_component.h"
+#include "engine_client_requirements.h"
+#include "engine_client_world.h"
 #include "enums.h"
 #include "flag.h"
 #include "game.h"
@@ -21,10 +27,12 @@
 #include "input.h"
 #include "inventory.h"
 #include "item.h"
+#include "item_serial.h"
 #include "line.h"
 #include "output.h"
 #include "player_activity.h"
 #include "string_formatter.h"
+#include "string_utils.h"
 #include "translations.h"
 #include "ui_manager.h"
 #include "units_utility.h"
@@ -37,6 +45,15 @@ const bodypart_str_id body_part_appendix( "num_bp" );
 const flag_id json_flag_HIDDEN( "HIDDEN" );
 
 std::string clothing_layer( const item &worn_item );
+/// A named number of an item's details, shown by the middle pane and published by the screen.
+struct item_stat {
+    std::string key;
+    std::string label;
+    std::string value;
+};
+auto property_stats( const item &worn_item, const Character &c,
+                     const bodypart_id &bp ) -> std::vector<item_stat>;
+auto protection_stats( const item &worn_item ) -> std::vector<item_stat>;
 std::vector<std::string> clothing_properties(
     const item &worn_item, int width, const Character &, const bodypart_id &bp );
 std::vector<std::string> clothing_protection( const item &worn_item, int width );
@@ -125,6 +142,10 @@ item_penalties get_item_penalties( const location_vector<item>::const_iterator &
              std::move( lists_of_bad_items_within[0] ) };
 }
 
+auto stacking_penalty_message( const item &worn_item,
+                               const item_penalties &penalties ) -> std::string;
+auto out_of_order_penalty_message( const item_penalties &penalties ) -> std::string;
+
 std::string body_part_names( const std::vector<bodypart_id> &parts )
 {
     if( parts.empty() ) {
@@ -192,69 +213,82 @@ void draw_mid_pane( const catacurses::window &w_sort_middle,
 
     const item_penalties penalties = get_item_penalties( worn_item_it, c, bp );
 
-    if( !penalties.body_parts_with_stacking_penalty.empty() ) {
-        std::string layer_description = [&]() {
-            switch( worn_item->get_layer() ) {
-                case PERSONAL_LAYER:
-                    return _( "in your <color_light_blue>personal aura</color>" );
-                case UNDERWEAR_LAYER:
-                    return _( "<color_light_blue>close to your skin</color>" );
-                case REGULAR_LAYER:
-                    return _( "of <color_light_blue>normal</color> clothing" );
-                case WAIST_LAYER:
-                    return _( "on your <color_light_blue>waist</color>" );
-                case OUTER_LAYER:
-                    return _( "of <color_light_blue>outer</color> clothing" );
-                case BELTED_LAYER:
-                    return _( "<color_light_blue>strapped</color> to you" );
-                case AURA_LAYER:
-                    return _( "an <color_light_blue>aura</color> around you" );
-                default:
-                    return _( "Unexpected layer" );
-            }
-        }
-        ();
-        std::string body_parts =
-            body_part_names( penalties.body_parts_with_stacking_penalty );
-        std::string message =
-            string_format(
-                vgettext( "Wearing multiple items %s on your "
-                          "<color_light_red>%s</color> is adding encumbrance there.",
-                          "Wearing multiple items %s on your "
-                          "<color_light_red>%s</color> is adding encumbrance there.",
-                          penalties.body_parts_with_stacking_penalty.size() ),
-                layer_description, body_parts
-            );
-        i += fold_and_print( w_sort_middle, point( 0, i ), win_width, c_light_gray, message );
+    const std::string stacking = stacking_penalty_message( *worn_item, penalties );
+    if( !stacking.empty() ) {
+        i += fold_and_print( w_sort_middle, point( 0, i ), win_width, c_light_gray, stacking );
     }
 
-    if( !penalties.body_parts_with_out_of_order_penalty.empty() ) {
-        std::string body_parts =
-            body_part_names( penalties.body_parts_with_out_of_order_penalty );
-        std::string message;
-
-        if( penalties.bad_items_within.empty() ) {
-            message = string_format(
-                          vgettext( "Wearing this outside items it would normally be beneath "
-                                    "is adding encumbrance to your <color_light_red>%s</color>.",
-                                    "Wearing this outside items it would normally be beneath "
-                                    "is adding encumbrance to your <color_light_red>%s</color>.",
-                                    penalties.body_parts_with_out_of_order_penalty.size() ),
-                          body_parts
-                      );
-        } else {
-            std::string bad_item_name = *penalties.bad_items_within.begin();
-            message = string_format(
-                          vgettext( "Wearing this outside your <color_light_blue>%s</color> "
-                                    "is adding encumbrance to your <color_light_red>%s</color>.",
-                                    "Wearing this outside your <color_light_blue>%s</color> "
-                                    "is adding encumbrance to your <color_light_red>%s</color>.",
-                                    penalties.body_parts_with_out_of_order_penalty.size() ),
-                          bad_item_name, body_parts
-                      );
-        }
-        fold_and_print( w_sort_middle, point( 0, i ), win_width, c_light_gray, message );
+    const std::string out_of_order = out_of_order_penalty_message( penalties );
+    if( !out_of_order.empty() ) {
+        fold_and_print( w_sort_middle, point( 0, i ), win_width, c_light_gray, out_of_order );
     }
+}
+
+/// Why the item adds encumbrance by sharing a layer with others; empty when it does not.
+auto stacking_penalty_message( const item &worn_item,
+                               const item_penalties &penalties ) -> std::string
+{
+    if( penalties.body_parts_with_stacking_penalty.empty() ) {
+        return {};
+    }
+    std::string layer_description = [&]() {
+        switch( worn_item.get_layer() ) {
+            case PERSONAL_LAYER:
+                return _( "in your <color_light_blue>personal aura</color>" );
+            case UNDERWEAR_LAYER:
+                return _( "<color_light_blue>close to your skin</color>" );
+            case REGULAR_LAYER:
+                return _( "of <color_light_blue>normal</color> clothing" );
+            case WAIST_LAYER:
+                return _( "on your <color_light_blue>waist</color>" );
+            case OUTER_LAYER:
+                return _( "of <color_light_blue>outer</color> clothing" );
+            case BELTED_LAYER:
+                return _( "<color_light_blue>strapped</color> to you" );
+            case AURA_LAYER:
+                return _( "an <color_light_blue>aura</color> around you" );
+            default:
+                return _( "Unexpected layer" );
+        }
+    }
+    ();
+    std::string body_parts = body_part_names( penalties.body_parts_with_stacking_penalty );
+    return string_format(
+               vgettext( "Wearing multiple items %s on your "
+                         "<color_light_red>%s</color> is adding encumbrance there.",
+                         "Wearing multiple items %s on your "
+                         "<color_light_red>%s</color> is adding encumbrance there.",
+                         penalties.body_parts_with_stacking_penalty.size() ),
+               layer_description, body_parts
+           );
+}
+
+/// Why the item adds encumbrance by being worn out of order; empty when it does not.
+auto out_of_order_penalty_message( const item_penalties &penalties ) -> std::string
+{
+    if( penalties.body_parts_with_out_of_order_penalty.empty() ) {
+        return {};
+    }
+    std::string body_parts = body_part_names( penalties.body_parts_with_out_of_order_penalty );
+    if( penalties.bad_items_within.empty() ) {
+        return string_format(
+                   vgettext( "Wearing this outside items it would normally be beneath "
+                             "is adding encumbrance to your <color_light_red>%s</color>.",
+                             "Wearing this outside items it would normally be beneath "
+                             "is adding encumbrance to your <color_light_red>%s</color>.",
+                             penalties.body_parts_with_out_of_order_penalty.size() ),
+                   body_parts
+               );
+    }
+    std::string bad_item_name = *penalties.bad_items_within.begin();
+    return string_format(
+               vgettext( "Wearing this outside your <color_light_blue>%s</color> "
+                         "is adding encumbrance to your <color_light_red>%s</color>.",
+                         "Wearing this outside your <color_light_blue>%s</color> "
+                         "is adding encumbrance to your <color_light_red>%s</color>.",
+                         penalties.body_parts_with_out_of_order_penalty.size() ),
+               bad_item_name, body_parts
+           );
 }
 
 std::string clothing_layer( const item &worn_item )
@@ -278,6 +312,36 @@ std::string clothing_layer( const item &worn_item )
     return layer;
 }
 
+auto property_stats( const item &worn_item, const Character &c,
+                     const bodypart_id &bp ) -> std::vector<item_stat>
+{
+    const int coverage = bp.id().is_null() ? worn_item.get_avg_coverage() :
+                         worn_item.get_coverage( bp );
+    const int encumbrance = bp.id().is_null() ? worn_item.get_avg_encumber(
+                                c ) : worn_item.get_encumber( c, bp );
+    return {
+        { "coverage", _( "Coverage:" ), string_format( "%3d", coverage ) },
+        { "encumbrance", _( "Encumbrance:" ), string_format( "%3d", encumbrance ) },
+        { "warmth", _( "Warmth:" ), string_format( "%3d", worn_item.get_warmth() ) },
+        {
+            "storage", string_format( _( "Storage (%s):" ), volume_units_abbr() ),
+            format_volume( worn_item.get_storage() )
+        },
+    };
+}
+
+auto protection_stats( const item &worn_item ) -> std::vector<item_stat>
+{
+    return {
+        { "bash", _( "Bash:" ), string_format( "%3d", worn_item.bash_resist() ) },
+        { "cut", _( "Cut:" ), string_format( "%3d", worn_item.cut_resist() ) },
+        { "ballistic", _( "Ballistic:" ), string_format( "%3d", worn_item.bullet_resist() ) },
+        { "acid", _( "Acid:" ), string_format( "%3d", worn_item.acid_resist() ) },
+        { "fire", _( "Fire:" ), string_format( "%3d", worn_item.fire_resist() ) },
+        { "environmental", _( "Environmental:" ), string_format( "%3d", worn_item.get_env_resist() ) },
+    };
+}
+
 std::vector<std::string> clothing_properties(
     const item &worn_item, const int width, const Character &c, const bodypart_id &bp )
 {
@@ -285,42 +349,23 @@ std::vector<std::string> clothing_properties(
     props.reserve( 5 );
 
     const std::string space = "  ";
-    const int coverage = bp.id().is_null() ? worn_item.get_avg_coverage() :
-                         worn_item.get_coverage( bp );
-    const int encumbrance = bp.id().is_null() ? worn_item.get_avg_encumber(
-                                c ) : worn_item.get_encumber( c, bp );
     props.push_back( string_format( "<color_c_green>[%s]</color>", _( "Properties" ) ) );
-    props.push_back( name_and_value( space + _( "Coverage:" ),
-                                     string_format( "%3d", coverage ), width ) );
-    props.push_back( name_and_value( space + _( "Encumbrance:" ),
-                                     string_format( "%3d", encumbrance ),
-                                     width ) );
-    props.push_back( name_and_value( space + _( "Warmth:" ),
-                                     string_format( "%3d", worn_item.get_warmth() ), width ) );
-    props.push_back( name_and_value( space + string_format( _( "Storage (%s):" ), volume_units_abbr() ),
-                                     format_volume( worn_item.get_storage() ), width ) );
+    for( const item_stat &stat : property_stats( worn_item, c, bp ) ) {
+        props.push_back( name_and_value( space + stat.label, stat.value, width ) );
+    }
     return props;
 }
 
 std::vector<std::string> clothing_protection( const item &worn_item, const int width )
 {
     std::vector<std::string> prot;
-    prot.reserve( 6 );
+    prot.reserve( 7 );
 
     const std::string space = "  ";
     prot.push_back( string_format( "<color_c_green>[%s]</color>", _( "Protection" ) ) );
-    prot.push_back( name_and_value( space + _( "Bash:" ),
-                                    string_format( "%3d", worn_item.bash_resist() ), width ) );
-    prot.push_back( name_and_value( space + _( "Cut:" ),
-                                    string_format( "%3d", worn_item.cut_resist() ), width ) );
-    prot.push_back( name_and_value( space + _( "Ballistic:" ),
-                                    string_format( "%3d", worn_item.bullet_resist() ), width ) );
-    prot.push_back( name_and_value( space + _( "Acid:" ),
-                                    string_format( "%3d", worn_item.acid_resist() ), width ) );
-    prot.push_back( name_and_value( space + _( "Fire:" ),
-                                    string_format( "%3d", worn_item.fire_resist() ), width ) );
-    prot.push_back( name_and_value( space + _( "Environmental:" ),
-                                    string_format( "%3d", worn_item.get_env_resist() ), width ) );
+    for( const item_stat &stat : protection_stats( worn_item ) ) {
+        prot.push_back( name_and_value( space + stat.label, stat.value, width ) );
+    }
     return prot;
 }
 
@@ -377,6 +422,8 @@ struct layering_item_info {
     item_penalties penalties;
     int encumber;
     std::string name;
+    /// Where the item is among the worn ones; not part of what makes two entries alike.
+    std::size_t position = 0;
 
     // Operator overload required to leverage vector equality operator.
     bool operator ==( const layering_item_info &o ) const {
@@ -399,12 +446,231 @@ static std::vector<layering_item_info> items_cover_bp( const Character &c, const
         if( elem->covers( bp ) ) {
             s.push_back( { get_item_penalties( elem_it, c, bp ),
                            elem->get_encumber( c, bp ),
-                           elem->tname()
+                           elem->tname(),
+                           static_cast<std::size_t>( elem_it - c.worn.begin() )
                          } );
         }
     }
     return s;
 }
+
+/// Whether a body part is listed together with its opposite: both have the same items, so one entry stands for the pair.
+static auto combines_with_opposite( const Character &who, const bodypart_id &cover ) -> bool
+{
+    const bodypart_id opposite = cover.obj().opposite_part;
+    return cover != opposite && items_cover_bp( who, cover ) == items_cover_bp( who, opposite );
+}
+
+/// The body parts the right list has an entry for: a combined pair once.
+static auto listed_body_parts( const Character &who,
+                               const cata::flat_set<bodypart_id> &parts ) -> cata::flat_set<bodypart_id>
+{
+    cata::flat_set<bodypart_id> listed;
+    for( const bodypart_id cover : parts ) {
+        if( !combines_with_opposite( who, cover ) || listed.count( cover.obj().opposite_part ) == 0 ) {
+            listed.insert( cover );
+        }
+    }
+    return listed;
+}
+
+namespace
+{
+namespace ec = engine_client;
+
+constexpr auto tabs_id = "armor:tabs";
+constexpr auto worn_rows_id = "armor:worn:rows";
+constexpr auto select_part_id = "armor:part";
+constexpr auto select_item_id = "armor:pick";
+
+/// What the screen shows, as its loop keeps it.
+struct armor_model {
+    Character &who;
+    const cata::flat_set<bodypart_id> &parts;
+    const int &tab;
+    /// Where in the worn items each item of the body part's list is.
+    const std::vector<int> &listed;
+    const int &cursor;
+    /// The list index of the item grabbed to be moved, or -1.
+    const int &grabbed;
+};
+
+/// The identity of a body part filter, and of a part in the lists.
+auto part_id( const bodypart_id &part ) -> std::string
+{
+    return part.id().is_null() ? "part:all" : "part:" + part.id().str();
+}
+
+/// The identity of each worn item: its own serial, so it keeps it when the layers are reordered.
+auto worn_ids( const Character &who ) -> std::vector<std::string>
+{
+    return who.worn | std::views::transform( []( const item * worn ) { return game_client::item_row_id( *worn ); } )
+    | std::ranges::to<std::vector>();
+}
+
+auto stat_of( const item_stat &stat ) -> ec::panel_stat
+{
+    return { .key = stat.key, .label = ec::caption( stat.label ), .value = trim( stat.value ) };
+}
+
+auto worn_rows( const armor_model &model ) -> std::vector<ec::row>
+{
+    const auto ids = worn_ids( model.who );
+    const auto &part = model.parts[model.tab];
+    auto rows = std::vector<ec::row> {};
+    for( const auto &[index, position] : std::views::enumerate( model.listed ) ) {
+        const auto it = std::next( model.who.worn.begin(), position );
+        const item &worn = **it;
+        rows.push_back( {
+            .id = ids[position], .label = remove_color_tags( worn.display_name() ),
+            .selected = static_cast<int>( index ) == model.grabbed,
+            .columns = {
+                { .key = "storage", .label = string_format( _( "Storage (%s)" ), volume_units_abbr() ), .value = format_volume( worn.get_storage() ) },
+                { .key = "hidden", .label = _( "Hidden" ), .value = worn.has_flag( json_flag_HIDDEN ) ? _( "Yes" ) : _( "No" ) },
+            },
+            .color = string_from_color( get_item_penalties( it, model.who, part ).color_for_stacking_badness() ),
+            .look = ec::world::item_appearance( worn ),
+        } );
+    }
+    return rows;
+}
+
+/// What the focused item is: its figures, then what it is worn as and what it costs in encumbrance.
+auto detail_panel( const armor_model &model ) -> ec::component
+{
+    if( model.listed.empty() ) {
+        return { .id = "armor:detail", .body = ec::text_body{ .markup = _( "Nothing to see here!" ) } };
+    }
+    const auto it = std::next( model.who.worn.begin(), model.listed[model.cursor] );
+    const item &worn = **it;
+    const auto &part = model.parts[model.tab];
+    const auto penalties = get_item_penalties( it, model.who, part );
+    auto lines = std::vector<std::string> {};
+    if( const auto layer = clothing_layer( worn ); !layer.empty() ) {
+        lines.push_back( colorize( layer, c_light_blue ) );
+    }
+    for( const auto &line : clothing_flags_description( worn ) ) {
+        lines.push_back( colorize( line, c_light_blue ) );
+    }
+    for( const auto &message : { stacking_penalty_message( worn, penalties ), out_of_order_penalty_message( penalties ) } ) {
+        if( !message.empty() ) {
+            lines.push_back( message );
+        }
+    }
+    const auto stats = []( const std::vector<item_stat> &values ) {
+        return values | std::views::transform( stat_of ) | std::ranges::to<std::vector>();
+    };
+    return ec::panel( { .id = "armor:detail", .title = worn.type_name( 1 ), .child = ec::split( {
+            .id = "armor:detail:parts", .children = ec::children_of(
+            ec::panel( { .id = "armor:properties", .title = _( "Properties" ), .stats = stats( property_stats( worn, model.who, part ) ) } ),
+            ec::panel( { .id = "armor:protection", .title = _( "Protection" ), .stats = stats( protection_stats( worn ) ) } ),
+            ec::component{ .id = "armor:notes", .body = ec::text_body{ .markup = join( lines, "\n" ) } } ) } ) } );
+}
+
+/// The protection the worn items give a body part together.
+auto total_protection( const Character &who,
+                       const bodypart_id &part ) -> std::vector<ec::panel_stat>
+{
+    if( part.id().is_null() ) {
+        return {};
+    }
+    const auto number = []( const float value ) { return string_format( "%g", value ); };
+    return {
+        { .key = "bash", .label = ec::caption( _( "Bash:" ) ), .value = number( who.get_armor_bash( part ) ) },
+        { .key = "cut", .label = ec::caption( _( "Cut:" ) ), .value = number( who.get_armor_cut( part ) ) },
+        { .key = "stab", .label = ec::caption( _( "Stab:" ) ), .value = number( std::round( who.get_armor_cut( part ) * 0.8f ) ) },
+        { .key = "ballistic", .label = ec::caption( _( "Ballistic:" ) ), .value = number( who.get_armor_bullet( part ) ) },
+    };
+}
+
+/// The items over each body part, innermost first, and what each adds in encumbrance.
+auto layer_rows( const armor_model &model ) -> std::vector<ec::row>
+{
+    const auto ids = worn_ids( model.who );
+    const auto &selected = model.parts[model.tab];
+    auto rows = std::vector<ec::row> {};
+    for( const bodypart_id cover : listed_body_parts( model.who, model.parts ) ) {
+        if( cover.id().is_null() ) {
+            continue;
+        }
+        const auto combined = combines_with_opposite( model.who, cover );
+        const auto highlighted = cover == selected || ( combined &&
+                                 static_cast<bodypart_id>( cover.obj().opposite_part ) == selected );
+        rows.push_back( { .id = "cover:" + part_id( cover ), .label = body_part_name_as_heading( cover, combined ? 2 : 1 ),
+                          .enabled = false, .selectable = false, .color = string_from_color( highlighted ? c_yellow : c_white ),
+                          .header = true } );
+        for( const auto &elem : items_cover_bp( model.who, cover ) ) {
+            rows.push_back( {
+                .id = "layer:" + part_id( cover ) + ":" + ids[elem.position], .label = remove_color_tags( elem.name ),
+                .columns = { {
+                        .key = "encumbrance", .label = _( "Encumbrance" ),
+                        .value = std::to_string( elem.encumber ) + ( elem.penalties.badness() > 0 ? "+" : "" )
+                    }
+                },
+                .color = string_from_color( elem.penalties.color_for_stacking_badness() ),
+            } );
+        }
+    }
+    return rows;
+}
+
+/// The encumbrance and warmth of each body part, with the parts the focused item covers marked.
+auto encumbrance_rows( const armor_model &model ) -> std::vector<ec::row>
+{
+    const auto *const focused = model.listed.empty() ? nullptr :
+                                *std::next( model.who.worn.begin(), model.listed[model.cursor] );
+    using namespace std::views;
+    return character_display::encumbrance_lines( model.who,
+    focused ) | transform( [&]( const auto & line ) {
+        return ec::row{
+            .id = "encumbrance:part:" + line.part.str(),
+            .label = body_part_name_as_heading( line.part, line.combined ? 2 : 1 ), .selectable = false,
+            .columns = {
+                { .key = "encumbrance", .label = _( "Encumbrance" ), .value = std::to_string( line.encumbrance ), .color = string_from_color( line.encumbrance_color ) },
+                { .key = "layering", .label = _( "Layering" ), .value = std::to_string( line.layering ), .color = string_from_color( line.encumbrance_color ) },
+                { .key = "warmth", .label = _( "Warmth" ), .value = std::to_string( line.warmth ), .color = string_from_color( line.warmth_color ) },
+            },
+            .color = string_from_color( line.covered ? c_green : c_light_gray ),
+        };
+    } ) | std::ranges::to<std::vector>();
+}
+
+auto armor_view( const armor_model &model ) -> ec::screen_view
+{
+    auto entries = std::vector<ec::tab_entry> {};
+    for( const auto &[index, part] : std::views::enumerate( model.parts ) ) {
+        entries.push_back( { .id = part_id( part ), .label = part.id() ? body_part_name_as_heading( part, 1 ) : _( "All" ),
+                             .selected = static_cast<int>( index ) == model.tab } );
+    }
+    const auto ids = worn_ids( model.who );
+    auto worn_parts = ec::children_of( ec::list( { .id = worn_rows_id, .rows = worn_rows( model ), .selection = "single", .activate = select_item_id } ) );
+    if( model.listed.empty() ) {
+        worn_parts.push_back( { .id = "armor:worn:none", .body = ec::text_body{ .markup = _( "<empty>" ) } } );
+    }
+    auto panes = ec::children_of(
+                     ec::panel( { .id = "armor:worn", .title = _( "(Innermost)" ), .subtitle = _( "(Outermost)" ),
+                                  .stats = total_protection( model.who, model.parts[model.tab] ),
+                                  .child = ec::split( { .id = "armor:worn:parts", .children = std::move( worn_parts ) } ) } ),
+                     detail_panel( model ),
+                     ec::panel( { .id = "armor:encumbrance", .title = _( "Encumbrance and Warmth" ),
+                                  .child = ec::list( { .id = "armor:encumbrance:rows", .rows = encumbrance_rows( model ), .selection = "none" } ) } ),
+                     ec::panel( { .id = "armor:layers", .title = _( "Encumbrance" ),
+                                  .child = ec::list( { .id = "armor:layers:rows", .rows = layer_rows( model ), .selection = "none" } ) } ) );
+    return {
+        .title = _( "Sort Armor" ),
+        .root = ec::tabs( {
+            .id = tabs_id, .tabs = std::move( entries ), .select = select_part_id,
+            .child = ec::split( { .id = "armor:panes", .active = "armor:worn", .children = std::move( panes ) } ) } ),
+        .affordances = {
+            ec::invoke_affordance( { .id = select_part_id, .label = _( "Category" ), .args = { .row = ec::row_shape{ .component_id = tabs_id } } } ),
+            ec::invoke_affordance( { .id = select_item_id, .label = _( "Select" ), .args = { .row = ec::row_shape{ .component_id = worn_rows_id } }, .role = "select" } ),
+        },
+        .focus_component = worn_rows_id,
+.focus_row = model.listed.empty() ? std::string{} :
+        ids[model.listed[model.cursor]],
+    };
+}
+} // namespace
 
 static void draw_grid( const catacurses::window &w, int left_pane_w, int mid_pane_w )
 {
@@ -668,20 +934,15 @@ void show_armor_layers_ui( Character &who )
         right_print( w_sort_right, 0, 0, c_light_gray, _( "Encumbrance" ) );
 
         const auto &combine_bp = [&who]( const bodypart_id & cover ) -> bool {
-            const bodypart_id opposite = cover.obj().opposite_part;
-            return cover != opposite &&
-            items_cover_bp( who, cover ) == items_cover_bp( who, opposite );
+            return combines_with_opposite( who, cover );
         };
 
-        cata::flat_set<bodypart_id> rl;
+        const cata::flat_set<bodypart_id> rl = listed_body_parts( who, armor_cat );
 
         // Right list
         rightListSize = 0;
-        for( const bodypart_id cover : armor_cat ) {
-            if( !combine_bp( cover ) || rl.count( cover.obj().opposite_part ) == 0 ) {
-                rightListSize += items_cover_bp( who, cover ).size() + 1;
-                rl.insert( cover );
-            }
+        for( const bodypart_id cover : rl ) {
+            rightListSize += items_cover_bp( who, cover ).size() + 1;
         }
         if( rightListLines > rightListSize ) {
             rightListOffset = 0;
@@ -731,6 +992,9 @@ void show_armor_layers_ui( Character &who )
         wnoutrefresh( w_encumb );
     } );
 
+    const auto model = armor_model{ .who = who, .parts = armor_cat, .tab = tabindex, .listed = tmp_worn, .cursor = leftListIndex, .grabbed = selected };
+    const auto screen = ec::screen_scope( ctxt, "armor_layers", { .view = [&]( const ec::boundary_state & /*state*/ ) { return armor_view( model ); } } );
+
     avatar &you = get_avatar();
     bool exit = false;
     while( !exit ) {
@@ -743,11 +1007,11 @@ void show_armor_layers_ui( Character &who )
         } else {
             // Player is sorting NPC's armor here
             if( rl_dist( you.bub_pos(), who.bub_pos() ) > 1 ) {
-                you.add_msg_if_npc( m_bad, _( "%s is too far to sort armor." ), who.name );
+                you.add_msg_if_npc( m_bad, to_translation( "%s is too far to sort armor." ), who.name );
                 return;
             }
             if( you.attitude_to( you ) != Attitude::A_FRIENDLY ) {
-                you.add_msg_if_npc( m_bad, _( "%s is not friendly!" ), who.name );
+                you.add_msg_if_npc( m_bad, to_translation( "%s is not friendly!" ), who.name );
                 return;
             }
         }
@@ -778,7 +1042,28 @@ void show_armor_layers_ui( Character &who )
         leftListIndex = std::min( leftListIndex, new_index_upper_bound );
 
         ui_manager::redraw();
-        const std::string action = ctxt.handle_input();
+        const auto action = ctxt.handle_input();
+        // A client picked a body part or an item: the cursor moves there.
+        if( const auto picked = ec::invoked( ctxt.get_raw_input() ); picked && picked->args.row ) {
+            if( picked->affordance_id == select_part_id ) {
+                const auto found = std::ranges::find( armor_cat, *picked->args.row, part_id );
+                if( found != armor_cat.end() ) {
+                    tabindex = static_cast<int>( found - armor_cat.begin() );
+                    leftListIndex = leftListOffset = 0;
+                    selected = -1;
+                }
+            } else if( picked->affordance_id == select_item_id && selected < 0 ) {
+                // A grabbed item moves with the cursor, which only the move actions do.
+                const auto ids = worn_ids( who );
+                const auto worn = std::ranges::find( ids, *picked->args.row );
+                const auto listed = worn == ids.end() ? tmp_worn.end() :
+                                    std::ranges::find( tmp_worn, static_cast<int>( worn - ids.begin() ) );
+                if( listed != tmp_worn.end() ) {
+                    leftListIndex = static_cast<int>( listed - tmp_worn.begin() );
+                }
+            }
+            continue;
+        }
         if( who.is_npc() && action == "ASSIGN_INVLETS" ) {
             // It doesn't make sense to assign invlets to NPC items
             continue;
@@ -861,7 +1146,7 @@ void show_armor_layers_ui( Character &who )
                     who.change_side( *access_tmp_worn( leftListIndex ) );
                 }
             }
-        } else if( action == "TOGGLE_CLOTH" ) {
+        } else if( action == "TOGGLE_CLOTH" && leftListSize > 0 ) {
             if( !( *access_tmp_worn( leftListIndex ) )->has_flag( json_flag_HIDDEN ) ) {
                 ( *access_tmp_worn( leftListIndex ) )->set_flag( json_flag_HIDDEN );
             } else {

@@ -43,6 +43,7 @@
 #include <algorithm>
 #include <memory>
 #include <ranges>
+#include <set>
 #include <vector>
 
 namespace {
@@ -149,6 +150,24 @@ auto total_field_intensity_in_radius(
 }
 
 } // namespace
+
+TEST_CASE("a test case may leave the map moved", "[map][harness]") {
+    clear_all_state();
+    get_map().load(get_map().get_abs_sub() + point_rel_sm(-5, -5), false);
+    CHECK(get_map().get_abs_sub() != point_abs_sm::zero());
+}
+
+TEST_CASE("the next test case starts with the map where the run started", "[map][harness]") {
+    CHECK(get_map().get_abs_sub() == point_abs_sm::zero());
+}
+
+TEST_CASE("every treetop terrain looks like the tree it tops", "[map][looks_like]") {
+    for (const auto& tree : ter_t::get_all()) {
+        if (!tree.has_flag(TFLAG_TREE) || tree.roof.is_null()) { continue; }
+        CAPTURE(tree.id.str(), tree.roof.str());
+        CHECK_FALSE(tree.roof->looks_like.empty());
+    }
+}
 
 TEST_CASE("mapgen_water_fixtures_are_already_plumbed", "[mapgen][fluid_grid][regression]") {
     clear_all_state();
@@ -1393,6 +1412,72 @@ TEST_CASE("mapbuffer_simulated_lookup_uses_load_manager_membership") {
     CHECK(buffer.get_submap(sm_pos) == sm);
 }
 
+TEST_CASE(
+    "lazy_border_submaps_are_applied_the_turn_after_they_start_dated_by_their_start",
+    "[map][lazy_border]") {
+    clear_all_state();
+
+    auto& buffer = MAPBUFFER;
+    // Outside the map even after it recentres, so only the jobs write these submaps.
+    const auto away = get_map().getmapsize() * 2;
+    const auto request_begin = get_map().get_abs_sub() + point_rel_sm(away, away);
+    const auto request_end = request_begin + point_rel_sm(12, 12);
+    auto omts = std::vector<tripoint_abs_omt>{};
+    for (const auto x : std::views::iota(0, 6)) {
+        for (const auto y : std::views::iota(0, 6)) {
+            for (const auto z : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
+                omts.emplace_back(project_to<coords::omt>(request_begin) + point(x, y), z);
+            }
+        }
+    }
+    const auto cleanup = on_out_of_scope([&]() {
+        submap_loader.drain_lazy_loads();
+        std::ranges::for_each(omts, [&](const auto& omt) { buffer.unload_omt(omt, false); });
+        clear_all_state();
+    });
+    REQUIRE(std::ranges::none_of(omts, [&](const auto& omt) {
+        return buffer.lookup_submap_in_memory(project_to<coords::sm>(omt)) != nullptr;
+    }));
+
+    const auto no_autosave = override_option("AUTOSAVE", "false");
+    const auto normal_bubble_size =
+        override_option("REALITY_BUBBLE_SIZE", std::to_string(g_reality_bubble_size));
+    const auto no_mobile_bubble = override_option("ACTIVITY_MOBILE_BUBBLE_SIZE", "0");
+    const auto no_idle_bubble = override_option("ACTIVITY_IDLE_BUBBLE_SIZE", "0");
+    // Without a simulated area every loaded submap counts as simulated and the turn touches it.
+    const auto dim_id = get_map().get_bound_dimension();
+    const auto map_handle = submap_loader.request_load(
+        load_request_source::script, dim_id, get_map().get_abs_sub(),
+        get_map().get_abs_sub() + point_rel_sm(get_map().getmapsize(), get_map().getmapsize()));
+    const auto release_map = on_out_of_scope([&]() { submap_loader.release_load(map_handle); });
+    // The jobs start on the pool in this turn and run through its end; nothing asks for the border
+    // afterwards.
+    const auto started = calendar::turn;
+    const auto lazy_handle = submap_loader.request_load(
+        load_request_source::lazy_border, dim_id, request_begin, request_end);
+    submap_loader.update();
+    submap_loader.release_load(lazy_handle);
+
+    g->new_game = false;
+    get_avatar().set_moves(0);
+    CHECK_FALSE(g->do_turn());
+    REQUIRE(calendar::turn == started + 1_turns);
+    CHECK_FALSE(submap_loader.is_fully_drained());
+    get_avatar().set_moves(0);
+    CHECK_FALSE(g->do_turn());
+    REQUIRE(calendar::turn == started + 2_turns);
+    CHECK(submap_loader.is_fully_drained());
+
+    const auto dated =
+        omts | std::views::transform([&](const auto& omt) {
+            return buffer.lookup_submap_in_memory(project_to<coords::sm>(omt));
+        })
+        | std::views::filter([](const submap* sm) { return sm != nullptr; })
+        | std::views::transform([](const submap* sm) { return to_turn<int>(sm->last_touched); })
+        | std::ranges::to<std::set>();
+    CHECK(dated == std::set{to_turn<int>(started)});
+}
+
 TEST_CASE("mapbuffer_load_or_generate_lookup_is_explicit") {
     clear_all_state();
 
@@ -1542,7 +1627,7 @@ TEST_CASE("binding_dimensions_rebuilds_vehicle_caches", "[map][vehicle][dimensio
     const auto original_dim = here.get_bound_dimension();
     const auto other_dim = dimension_id("vehicle_cache_rebinding");
     const auto cleanup = on_out_of_scope([&]() {
-        here.bind_dimension(original_dim);
+        rebind_map_dimension(original_dim);
         MAPBUFFER_REGISTRY.unload_dimension(other_dim);
         clear_vehicles();
     });
@@ -1567,6 +1652,19 @@ TEST_CASE("binding_dimensions_rebuilds_vehicle_caches", "[map][vehicle][dimensio
     CHECK(here.get_cache_ref(0).vehicle_list.contains(veh));
 }
 
+namespace {
+
+/// Loads the newly bound dimension's submaps and floors `p`: what its mapgen puts there depends on
+/// the overmaps earlier cases left, and may be a wall.
+auto make_passable_in_bound_dimension(const tripoint_bub_ms& p) -> void {
+    auto& here = get_map();
+    here.load(here.get_abs_sub(), true);
+    here.ter_set(p, ter_id("t_floor"));
+    here.furn_set(p, furn_str_id::NULL_ID());
+}
+
+} // namespace
+
 TEST_CASE("placed_monsters_inherit_bound_dimension") {
     clear_all_state();
 
@@ -1575,17 +1673,54 @@ TEST_CASE("placed_monsters_inherit_bound_dimension") {
     const auto test_dim = dimension_id("placed_monsters_inherit_bound_dimension");
     const auto cleanup = on_out_of_scope([&]() {
         g->clear_zombies();
-        here.bind_dimension(original_dim);
+        rebind_map_dimension(original_dim);
         MAPBUFFER_REGISTRY.unload_dimension(test_dim);
     });
 
     here.bind_dimension(test_dim);
 
     const auto monster_pos = tripoint_bub_ms(g_half_mapsize_x + 2, g_half_mapsize_y, 0);
+    make_passable_in_bound_dimension(monster_pos);
     auto* const mon = g->place_critter_at(mtype_id("mon_zombie"), monster_pos);
 
     REQUIRE(mon != nullptr);
     CHECK(mon->get_dimension() == test_dim);
+}
+
+TEST_CASE("map_dimension_rebind_discards_vehicle_cache_before_unload") {
+    clear_all_state();
+
+    auto& here = get_map();
+    const auto original_dim = here.get_bound_dimension();
+    const auto test_dim = dimension_id("map_dimension_rebind_discards_vehicle_cache");
+    const auto cleanup = on_out_of_scope([&]() {
+        g->clear_zombies();
+        rebind_map_dimension(original_dim);
+        MAPBUFFER_REGISTRY.unload_dimension(test_dim);
+    });
+
+    here.bind_dimension(test_dim);
+    const auto vehicle_pos = tripoint_bub_ms(g_half_mapsize_x + 2, g_half_mapsize_y, 0);
+    make_passable_in_bound_dimension(vehicle_pos);
+    REQUIRE(g->place_critter_at(mtype_id("mon_zombie"), vehicle_pos) != nullptr);
+    auto* const vehicle = here.add_vehicle(vproto_id("none"), vehicle_pos, 0_degrees, 0, 0);
+    REQUIRE(vehicle != nullptr);
+    REQUIRE(vehicle->install_part(tripoint_mnt_veh::zero(), vpart_id("frame_vertical")) >= 0);
+    here.add_vehicle_to_cache(vehicle);
+    here.build_map_cache(0, true);
+
+    CHECK(here.get_cache_ref(0).vehicle_list.contains(vehicle));
+
+    here.bind_dimension(test_dim);
+    CHECK(here.get_cache_ref(0).vehicle_list.contains(vehicle));
+
+    g->clear_zombies();
+    here.bind_dimension(original_dim);
+    CHECK_FALSE(here.get_cache_ref(0).vehicle_list.contains(vehicle));
+    CHECK_FALSE(here.get_cache_ref(0).zone_vehicles.contains(vehicle));
+    MAPBUFFER_REGISTRY.unload_dimension(test_dim);
+    here.build_map_cache(0, true);
+    CHECK(here.get_bound_dimension() == original_dim);
 }
 
 static auto operator<<(std::ostream& os, const ter_id& tid) -> std::ostream& { // *NOPAD*

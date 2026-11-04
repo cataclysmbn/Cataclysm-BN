@@ -6,10 +6,13 @@
 #include "avatar_functions.h"
 #include "clothing_link.h"
 #include "crafting.h"
+#include "engine_client_component.h"
+#include "engine_client_world.h"
 #include "game_inventory.h"
 #include "input.h"
 #include "item.h"
 #include "item_functions.h"
+#include "iteminfo_request.h"
 #include "itype.h"
 #include "map/map.h"
 #include "messages.h"
@@ -27,13 +30,74 @@
 #include "options.h"
 #include "ui.h"
 
+namespace examine_item_menu
+{
+
 struct action_entry {
     std::string action;
+    std::string name;
+    hint_rating hint = hint_rating::good;
     std::function<bool()> on_select;
 };
 
-namespace examine_item_menu
+namespace
 {
+namespace ec = engine_client;
+
+constexpr auto action_rows_id = "examine:actions";
+constexpr auto select_action_id = "examine:select";
+constexpr auto run_action_id = "examine:run";
+
+/// The colour the menu draws an action in, by how well it is rated.
+auto hint_color( const hint_rating hint ) -> nc_color
+{
+    switch( hint ) {
+        case hint_rating::cant:
+            return c_light_gray;
+        case hint_rating::iffy:
+            return c_light_red;
+        case hint_rating::good:
+            return c_light_green;
+        case hint_rating::blood:
+            return c_red;
+    }
+    return c_light_gray;
+}
+
+/// What the menu shows, as its loop keeps it.
+struct examine_model {
+    const item &itm;
+    const input_context &ctxt;
+    const std::vector<action_entry> &actions;
+    const int &selected;
+};
+
+auto examine_view( const examine_model &model ) -> ec::screen_view
+{
+    const auto &itm = model.itm;
+    auto rows = std::vector<ec::row> {};
+    for( const auto &entry : model.actions ) {
+        const auto key = model.ctxt.key_bound_to( entry.action );
+        rows.push_back( { .id = entry.action, .label = entry.name, .hotkey = key.size() == 1 ? key : std::string{},
+                          .color = string_from_color( hint_color( entry.hint ) ) } );
+    }
+    const auto focus = static_cast<std::size_t>( model.selected );
+    return {
+        .title = remove_color_tags( itm.tname() ),
+        .root = ec::split( {
+            .id = "examine:panes", .relation = "detail", .active = action_rows_id,
+            .children = ec::children_of(
+            ec::component{ .id = "examine:info", .body = ec::text_body{ .markup = format_item_info( itm.info( rot::temp::for_location( get_map(), itm ) ), {} ) } },
+            ec::list( { .id = action_rows_id, .rows = std::move( rows ), .selection = "single", .activate = run_action_id } ) ) } ),
+        .affordances = {
+            ec::invoke_affordance( { .id = select_action_id, .label = _( "Select" ), .args = { .row = ec::row_shape{ .component_id = action_rows_id } }, .role = "select" } ),
+            ec::invoke_affordance( { .id = run_action_id, .label = model.ctxt.get_action_name( "CONFIRM" ), .args = { .row = ec::row_shape{ .component_id = action_rows_id } }, .covers = "CONFIRM" } ),
+        },
+        .focus_component = action_rows_id,
+        .focus_row = focus < model.actions.size() ? model.actions[focus].action : std::string{},
+    };
+}
+} // namespace
 
 bool run(
     item &loc,
@@ -104,14 +168,16 @@ bool run(
     int number = INT_MIN ) {
         action_entry ae;
         ae.action = act;
+        ae.hint = hint;
         ae.on_select = std::move( on_select );
-        actions.push_back( std::move( ae ) );
 
         ctxt.register_action( act );
 
         std::string bound_key = ctxt.key_bound_to( act );
         int bound_key_i = bound_key.size() == 1 ? bound_key[0] : '?';
         std::string act_name = ctxt.get_action_name( act );
+        ae.name = act_name;
+        actions.push_back( std::move( ae ) );
         if( number == INT_MIN ) {
             action_list.addentry( actions.size(), true, bound_key_i, act_name );
         } else {
@@ -308,13 +374,14 @@ bool run(
     if( !has_pickup_rule ) {
         add_entry( "AUTOPICKUP_ADD", hint_rating::good, [&]() {
             get_auto_pickup().add_rule( &itm );
-            add_msg( m_info, _( "'%s' added to character pickup rules." ), itm.tname( 1, false ) );
+            add_msg( m_info, to_translation( "'%s' added to character pickup rules." ), itm.tname( 1, false ) );
             return false;
         } );
     } else {
         add_entry( "AUTOPICKUP_REMOVE", hint_rating::iffy, [&]() {
             get_auto_pickup().remove_rule( &itm );
-            add_msg( m_info, _( "'%s' removed from character pickup rules." ), itm.tname( 1, false ) );
+            add_msg( m_info, to_translation( "'%s' removed from character pickup rules." ), itm.tname( 1,
+                     false ) );
             return false;
         } );
     }
@@ -346,13 +413,29 @@ bool run(
         action_list.show( ui );
     } );
 
+    const auto model = examine_model{ .itm = itm, .ctxt = ctxt, .actions = actions, .selected = selected_action };
+    const auto screen = ec::screen_scope( ctxt, "examine_item", { .view = [&]( const ec::boundary_state & /*state*/ ) { return examine_view( model ); } } );
+
     bool exit = false;
     bool ret_val = true;
     while( !exit ) {
         ui->invalidate_ui();
         ui_manager::redraw();
 
-        const std::string &action = ctxt.handle_input();
+        auto action = std::string{ ctxt.handle_input() };
+        // A client moved the cursor to an action, or ran one: the cursor moves there and, for a run, confirms.
+        if( const auto picked = ec::invoked( ctxt.get_raw_input() ); picked && picked->args.row ) {
+            const auto found = std::ranges::find( actions, *picked->args.row, &action_entry::action );
+            if( found == actions.end() ) {
+                continue;
+            }
+            selected_action = static_cast<int>( found - actions.begin() );
+            action_list.set_selected( selected_action );
+            if( picked->affordance_id != run_action_id ) {
+                continue;
+            }
+            action = "CONFIRM";
+        }
 
         if( action == "QUIT" || action == "LEFT" ) {
             ret_val = false;

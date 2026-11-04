@@ -325,8 +325,8 @@ void Character::mutation_effect( const trait_id &mut )
         }
 
         add_msg_player_or_npc( m_bad,
-                               _( "Your %s is pushed off!" ),
-                               _( "<npcname>'s %s is pushed off!" ),
+                               to_translation( "Your %s is pushed off!" ),
+                               to_translation( "<npcname>'s %s is pushed off!" ),
                                armor->tname() );
         // It could cause segmentation fault if mutation change will trigger clothes removal on character creation
         // with preview clothes toggled on. So checking if game started.
@@ -337,8 +337,8 @@ void Character::mutation_effect( const trait_id &mut )
             const auto deps = get_dependent_worn_items( *armor );
             for( const auto &it : deps ) {
                 add_msg_player_or_npc( m_bad,
-                                       _( "Your %s is pushed off!" ),
-                                       _( "<npcname>'s %s is pushed off!" ),
+                                       to_translation( "Your %s is pushed off!" ),
+                                       to_translation( "<npcname>'s %s is pushed off!" ),
                                        it->tname() );
 
                 it->on_takeoff( *this );
@@ -523,17 +523,18 @@ void Character::activate_mutation( const trait_id &mut )
 
     if( mut == trait_WEB_WEAVER ) {
         g->m.add_field( bub_pos(), fd_web, 1 );
-        add_msg_if_player( _( "You start spinning web with your spinnerets!" ) );
+        add_msg_if_player( to_translation( "You start spinning web with your spinnerets!" ) );
     } else if( mut == trait_SLIMESPAWNER ) {
         monster *const slime = g->place_critter_around( mtype_id( "mon_player_blob" ), bub_pos(), 1 );
         if( !slime ) {
             // Oops, no room to divide!
-            add_msg_if_player( m_bad, _( "You focus, but are too hemmed in to birth a new slimespring!" ) );
+            add_msg_if_player( m_bad,
+                               to_translation( "You focus, but are too hemmed in to birth a new slimespring!" ) );
             tdata.powered = false;
             return;
         }
         add_msg_if_player( m_good,
-                           _( "You focus, and with a pleasant splitting feeling, birth a new slimespring!" ) );
+                           to_translation( "You focus, and with a pleasant splitting feeling, birth a new slimespring!" ) );
         slime->friendly = -1;
         if( one_in( 3 ) ) {
             add_msg_if_player( m_good,
@@ -541,10 +542,10 @@ void Character::activate_mutation( const trait_id &mut )
                                _( "wow!  you look just like me!  we should look out for each other!" ) );
         } else if( one_in( 2 ) ) {
             //~ Usual enthusiastic slimespring small voices! :D
-            add_msg_if_player( m_good, _( "come on, big me, let's go!" ) );
+            add_msg_if_player( m_good, to_translation( "come on, big me, let's go!" ) );
         } else {
             //~ Usual enthusiastic slimespring small voices! :D
-            add_msg_if_player( m_good, _( "we're a team, we've got this!" ) );
+            add_msg_if_player( m_good, to_translation( "we're a team, we've got this!" ) );
         }
         tdata.powered = false;
         return;
@@ -568,7 +569,7 @@ void Character::activate_mutation( const trait_id &mut )
     } else if( mut == trait_TREE_COMMUNION ) {
         tdata.powered = false;
         if( !get_overmapbuffer( get_dimension() ).ter( abs_omt_pos() ).obj().is_wooded() ) {
-            add_msg_if_player( m_info, _( "You can only do that in a wooded area." ) );
+            add_msg_if_player( m_info, to_translation( "You can only do that in a wooded area." ) );
             return;
         }
         // Check for adjacent trees.
@@ -579,15 +580,15 @@ void Character::activate_mutation( const trait_id &mut )
             }
         }
         if( !adjacent_tree ) {
-            add_msg_if_player( m_info, _( "You can only do that next to a tree." ) );
+            add_msg_if_player( m_info, to_translation( "You can only do that next to a tree." ) );
             return;
         }
 
         if( has_trait( trait_ROOTS2 ) || has_trait( trait_ROOTS3 ) ) {
-            add_msg_if_player( _( "You reach out to the trees with your roots." ) );
+            add_msg_if_player( to_translation( "You reach out to the trees with your roots." ) );
         } else {
             add_msg_if_player(
-                _( "You lay next to the trees letting your hair roots tangle with the trees." ) );
+                to_translation( "You lay next to the trees letting your hair roots tangle with the trees." ) );
         }
 
         assign_activity( ACT_TREE_COMMUNION );
@@ -1238,7 +1239,8 @@ bool Character::mutate_towards( const trait_id &mut )
     // It shouldn't pick a Threshold anyway--they're supposed to be non-Valid
     // and aren't categorized. This can happen if someone makes a threshold mutation into a prerequisite.
     if( threshold ) {
-        add_msg_if_player( _( "You feel something straining deep inside you, yearning to be free…" ) );
+        add_msg_if_player(
+            to_translation( "You feel something straining deep inside you, yearning to be free…" ) );
         return false;
     }
     if( profession ) {
@@ -1267,7 +1269,8 @@ bool Character::mutate_towards( const trait_id &mut )
 
     // No crossing The Threshold by simply not having it
     if( ( tierreq != 0 ) && !has_threshreq )  {
-        add_msg_if_player( _( "You feel something straining deep inside you, yearning to be free…" ) );
+        add_msg_if_player(
+            to_translation( "You feel something straining deep inside you, yearning to be free…" ) );
         return false;
     }
 
@@ -1586,10 +1589,11 @@ static mutagen_rejection try_reject_mutagen( Character &guy, const item &it, boo
     }
 
     if( guy.has_trait( trait_THRESH_MYCUS ) ) {
-        guy.add_msg_if_player( m_info, _( "This is a contaminant.  We reject it from the Mycus." ) );
+        guy.add_msg_if_player( m_info,
+                               to_translation( "This is a contaminant.  We reject it from the Mycus." ) );
         if( guy.has_trait( trait_M_SPORES ) || guy.has_trait( trait_M_FERTILE ) ||
             guy.has_trait( trait_M_BLOSSOMS ) || guy.has_trait( trait_M_BLOOM ) ) {
-            guy.add_msg_if_player( m_good, _( "We decontaminate it with spores." ) );
+            guy.add_msg_if_player( m_good, to_translation( "We decontaminate it with spores." ) );
             g->m.ter_set( guy.bub_pos(), t_fungus );
             if( guy.is_avatar() ) {
                 g->memorial().add(
@@ -1599,15 +1603,15 @@ static mutagen_rejection try_reject_mutagen( Character &guy, const item &it, boo
             return mutagen_rejection::destroyed;
         } else {
             guy.add_msg_if_player( m_bad,
-                                   _( "We must eliminate this contaminant at the earliest opportunity." ) );
+                                   to_translation( "We must eliminate this contaminant at the earliest opportunity." ) );
             return mutagen_rejection::rejected;
         }
     }
 
     if( guy.has_trait( trait_THRESH_MARLOSS ) ) {
         guy.add_msg_player_or_npc( m_warning,
-                                   _( "The %s sears your insides white-hot, and you collapse to the ground!" ),
-                                   _( "<npcname> writhes in agony and collapses to the ground!" ),
+                                   to_translation( "The %s sears your insides white-hot, and you collapse to the ground!" ),
+                                   to_translation( "<npcname> writhes in agony and collapses to the ground!" ),
                                    it.tname() );
         guy.vomit();
         guy.mod_pain( 35 + ( strong ? 20 : 0 ) );
@@ -1620,8 +1624,9 @@ static mutagen_rejection try_reject_mutagen( Character &guy, const item &it, boo
         if( strong ) {
             guy.unset_mutation( trait_THRESH_MARLOSS );
             guy.add_msg_if_player( m_warning,
-                                   _( "It was probably that marloss -- how did you know to call it \"marloss\" anyway?" ) );
-            guy.add_msg_if_player( m_warning, _( "Best to stay clear of that alien crap in future." ) );
+                                   to_translation( "It was probably that marloss -- how did you know to call it \"marloss\" anyway?" ) );
+            guy.add_msg_if_player( m_warning,
+                                   to_translation( "Best to stay clear of that alien crap in future." ) );
             if( guy.is_avatar() ) {
                 g->memorial().add(
                     pgettext( "memorial_male",
@@ -1631,7 +1636,7 @@ static mutagen_rejection try_reject_mutagen( Character &guy, const item &it, boo
             }
         } else {
             guy.add_msg_if_player( m_warning,
-                                   _( "That was some toxic %s!  Let's stick with Marloss next time, that's safe." ),
+                                   to_translation( "That was some toxic %s!  Let's stick with Marloss next time, that's safe." ),
                                    it.tname() );
             if( guy.is_avatar() ) {
                 g->memorial().add(
@@ -1728,7 +1733,7 @@ void test_crossing_threshold( Character &guy, const mutation_category_trait &m_c
         int breacher = breach_power + booster;
         if( x_in_y( breacher, total ) ) {
             guy.add_msg_if_player( m_good,
-                                   _( "Something strains mightily for a moment… and then… you're… FREE!" ) );
+                                   to_translation( "Something strains mightily for a moment… and then… you're… FREE!" ) );
             guy.set_mutation( mutation_thresh[tier] );
             g->events().send<event_type::crosses_mutation_threshold>( guy.getID(), m_category.id );
             guy.thresh_category = mutation_category; // Set the mutation category for the character
@@ -1739,23 +1744,24 @@ void test_crossing_threshold( Character &guy, const mutation_category_trait &m_c
             if( mutation_category == mutation_category_id( "URSINE" ) &&
                 guy.has_trait( trait_CARNIVORE ) ) {
                 guy.unset_mutation( trait_CARNIVORE );
-                guy.add_msg_if_player( _( "Your appetite for blood fades." ) );
+                guy.add_msg_if_player( to_translation( "Your appetite for blood fades." ) );
             }
         }
     } else if( guy.has_trait( trait_NOPAIN ) ) {
         // With additional tiers of threshold, this is now possible to actually hit
-        guy.add_msg_if_player( m_bad, _( "You feel extremely disappointed as nothing happens." ) );
+        guy.add_msg_if_player( m_bad,
+                               to_translation( "You feel extremely disappointed as nothing happens." ) );
     } else if( breach_power > 100 ) {
-        guy.add_msg_if_player( m_bad, _( "You stagger with a piercing headache!" ) );
+        guy.add_msg_if_player( m_bad, to_translation( "You stagger with a piercing headache!" ) );
         guy.mod_pain_noresist( 8 );
         guy.add_effect( effect_stunned, rng( 3_turns, 5_turns ) );
     } else if( breach_power > 80 ) {
         guy.add_msg_if_player( m_bad,
-                               _( "Your head throbs with memories of your life, before all this…" ) );
+                               to_translation( "Your head throbs with memories of your life, before all this…" ) );
         guy.mod_pain_noresist( 6 );
         guy.add_effect( effect_stunned, rng( 2_turns, 4_turns ) );
     } else if( breach_power > 60 ) {
-        guy.add_msg_if_player( m_bad, _( "Images of your past life flash before you." ) );
+        guy.add_msg_if_player( m_bad, to_translation( "Images of your past life flash before you." ) );
         guy.add_effect( effect_stunned, rng( 2_turns, 3_turns ) );
     }
 }
@@ -1814,7 +1820,8 @@ bool can_use_mutation_warn( const trait_id &mut, const Character &character )
 {
     const bool result = can_use_mutation( mut, character );
     if( !result ) {
-        character.add_msg_if_player( m_warning, _( "You feel like using your %s would kill you!" ),
+        character.add_msg_if_player( m_warning,
+                                     to_translation( "You feel like using your %s would kill you!" ),
                                      mut.obj().name() );
     }
 

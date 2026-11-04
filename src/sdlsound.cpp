@@ -6,6 +6,7 @@
 #include <array>
 #include <chrono>
 #include <map>
+#include <random>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -15,15 +16,16 @@
 
 #include "cached_options.h"
 #include "debug.h"
+#include "engine_client_presentation.h"
 #include "init.h"
 #include "json.h"
 #include "messages.h"
 #include "options.h"
 #include "path_info.h"
-#include "rng.h"
-#include "sdl_wrappers.h"
 #include "sounds.h"
 #include "units_angle.h"
+
+auto sound_supported() -> bool { return true; }
 
 #define dbg(x) DebugLogFL((x),DC::SDL)
 
@@ -85,6 +87,28 @@ static constexpr const char *TAG_WEATHER    = "cbn.weather";
 static constexpr const char *TAG_CONTEXT    = "cbn.context_themes";
 static constexpr const char *TAG_FATIGUE    = "cbn.fatigue";
 
+namespace
+{
+/// The reserved channels a group fades together.
+auto group_channels( const sfx::group group ) -> std::vector<sfx::channel>
+{
+    using ch = sfx::channel;
+    switch( group ) {
+        case sfx::group::time_of_day:
+            return { ch::daytime_outdoors_env, ch::nighttime_outdoors_env };
+        case sfx::group::weather:
+            return { ch::underground_env, ch::indoors_env, ch::indoors_rain_env, ch::outdoors_snow_env,
+                     ch::outdoors_flurry_env, ch::outdoors_thunderstorm_env, ch::outdoors_rain_env,
+                     ch::outdoors_drizzle_env, ch::outdoor_blizzard };
+        case sfx::group::context_themes:
+            return { ch::danger_extreme_theme, ch::danger_high_theme, ch::danger_medium_theme, ch::danger_low_theme };
+        case sfx::group::fatigue:
+            return { ch::stamina_75, ch::stamina_50, ch::stamina_35 };
+    }
+    return {};
+}
+} // namespace
+
 static auto sfx_group_to_tag( const sfx::group group ) -> const char *
 {
     switch( group ) {
@@ -143,8 +167,6 @@ static sfx_resources_t sfx_resources;
 static std::vector<id_and_variant> sfx_preload;
 static std::map<std::string, std::chrono::steady_clock::time_point> played_sound_time_map;
 static std::map<int, double> sound_durations;
-
-bool sounds::sound_enabled = false;
 
 // ── Internal helpers ───────────────────────────────────────────────────────────
 
@@ -206,8 +228,6 @@ auto init_sound() -> bool
 
     // ── String-tag grouping ──────────────────────────────────────────────────
 
-    using ch = sfx::channel;
-
     // All SFX (everything except music) — used by fade_audio_channel(any)
     for( int i = 0; i < MAX_CHANNEL_COUNT; ++i ) {
         MIX_TagTrack( channel_tracks[i], TAG_ALL_SFX );
@@ -216,31 +236,12 @@ auto init_sound() -> bool
         MIX_TagTrack( t, TAG_ALL_SFX );
     }
 
-    // Mirrors original: Mix_GroupChannels(daytime_outdoors_env, nighttime_outdoors_env, time_of_day)
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::daytime_outdoors_env )],   TAG_TIME_OF_DAY );
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::nighttime_outdoors_env )], TAG_TIME_OF_DAY );
-
-    // Mirrors original: Mix_GroupChannels(underground_env, outdoor_blizzard, weather)
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::underground_env )],           TAG_WEATHER );
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::indoors_env )],               TAG_WEATHER );
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::indoors_rain_env )],          TAG_WEATHER );
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::outdoors_snow_env )],         TAG_WEATHER );
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::outdoors_flurry_env )],       TAG_WEATHER );
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::outdoors_thunderstorm_env )], TAG_WEATHER );
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::outdoors_rain_env )],         TAG_WEATHER );
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::outdoors_drizzle_env )],      TAG_WEATHER );
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::outdoor_blizzard )],          TAG_WEATHER );
-
-    // Mirrors original: Mix_GroupChannels(danger_extreme_theme, danger_low_theme, context_themes)
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::danger_extreme_theme )], TAG_CONTEXT );
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::danger_high_theme )],    TAG_CONTEXT );
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::danger_medium_theme )],  TAG_CONTEXT );
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::danger_low_theme )],     TAG_CONTEXT );
-
-    // Mirrors original: Mix_GroupChannels(stamina_75, stamina_35, fatigue)
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::stamina_75 )], TAG_FATIGUE );
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::stamina_50 )], TAG_FATIGUE );
-    MIX_TagTrack( channel_tracks[static_cast<int>( ch::stamina_35 )], TAG_FATIGUE );
+    // Mirrors original: Mix_GroupChannels of time_of_day, weather, context_themes and fatigue
+    for( const auto group : { sfx::group::time_of_day, sfx::group::weather, sfx::group::context_themes, sfx::group::fatigue } ) {
+        for( const auto channel : group_channels( group ) ) {
+            MIX_TagTrack( channel_tracks[static_cast<int>( channel )], sfx_group_to_tag( group ) );
+        }
+    }
 
     DebugLog( DL::Info, DC::Main ) << "SDL3_mixer initialized successfully";
     sound_init_success = true;
@@ -367,6 +368,7 @@ void musicFinished()
 
 auto play_music( const std::string &playlist ) -> void
 {
+    engine_client::presentation::record_music( playlist );
     const auto iter = playlists.find( playlist );
     if( iter == playlists.end() ) {
         return;
@@ -384,7 +386,7 @@ auto play_music( const std::string &playlist ) -> void
     }
     if( list.shuffle ) {
         // NOLINTNEXTLINE(cata-determinism)
-        static auto eng = cata_default_random_engine(
+        static auto eng = std::minstd_rand0(
                               std::chrono::system_clock::now().time_since_epoch().count() );
         std::shuffle( playlist_indexes.begin(), playlist_indexes.end(), eng );
     }
@@ -397,6 +399,7 @@ auto play_music( const std::string &playlist ) -> void
 
 auto stop_music() -> void
 {
+    engine_client::presentation::record_music( {} );
     if( test_mode ) {
         return;
     }
@@ -479,9 +482,6 @@ static auto add_sfx_path( const std::string &path ) -> int
 
 auto sfx::load_sound_effects( const JsonObject &jsobj ) -> void
 {
-    if( !sound_init_success ) {
-        return;
-    }
     const id_and_variant key( jsobj.get_string( "id" ), jsobj.get_string( "variant", "default" ) );
     const int volume = jsobj.get_int( "volume", 100 );
     auto &effects = sfx_resources.sound_effects[key];
@@ -496,9 +496,6 @@ auto sfx::load_sound_effects( const JsonObject &jsobj ) -> void
 
 auto sfx::load_sound_effect_preload( const JsonObject &jsobj ) -> void
 {
-    if( !sound_init_success ) {
-        return;
-    }
     for( JsonObject aobj : jsobj.get_array( "preload" ) ) {
         const id_and_variant preload_key( aobj.get_string( "id" ),
                                           aobj.get_string( "variant", "default" ) );
@@ -508,9 +505,6 @@ auto sfx::load_sound_effect_preload( const JsonObject &jsobj ) -> void
 
 auto sfx::load_playlist( const JsonObject &jsobj ) -> void
 {
-    if( !sound_init_success ) {
-        return;
-    }
     for( JsonObject playlist : jsobj.get_array( "playlists" ) ) {
         const std::string playlist_id = playlist.get_string( "id" );
         music_playlist playlist_to_load;
@@ -528,10 +522,10 @@ auto sfx::load_playlist( const JsonObject &jsobj ) -> void
 static auto find_random_effect( const id_and_variant &id_variants_pair ) -> const sound_effect *
 {
     const auto iter = sfx_resources.sound_effects.find( id_variants_pair );
-    if( iter == sfx_resources.sound_effects.end() ) {
+    if( iter == sfx_resources.sound_effects.end() || iter->second.empty() ) {
         return nullptr;
     }
-    return &random_entry_ref( iter->second );
+    return &iter->second[sfx::presentation_random_effect_index( iter->second.size() )];
 }
 
 static auto find_random_effect( const std::string &id,
@@ -581,6 +575,7 @@ bool valid_last_time_played( MIX_Audio *audio, const int res_id, const std::stri
 auto sfx::play_variant_sound( const std::string &id, const std::string &variant,
                               const int volume, const bool stacks ) -> void
 {
+    engine_client::presentation::record_sound_effect( { .id = id, .variant = variant, .volume = volume, .stacks = stacks } );
     if( test_mode ) {
         return;
     }
@@ -622,10 +617,23 @@ auto sfx::play_variant_sound( const std::string &id, const std::string &variant,
     }
 }
 
-auto sfx::play_variant_sound( const std::string &id, const std::string &variant, const int volume,
-                              const units::angle angle,
-                              double /*pitch_min*/, double /*pitch_max*/, const bool stacks ) -> void
+namespace
 {
+
+struct effect_call {
+    const std::string &id;
+    const std::string &variant;
+    int volume = 0;
+    units::angle angle;
+    bool stacks = false;
+};
+
+/// When the native player last played a paced sound.
+auto paced_at = std::chrono::steady_clock::time_point {};
+
+auto play_effect( const effect_call &call ) -> void
+{
+    const auto &[id, variant, volume, angle, stacks] = call;
     if( test_mode ) {
         return;
     }
@@ -666,11 +674,37 @@ auto sfx::play_variant_sound( const std::string &id, const std::string &variant,
     }
 }
 
+} // namespace
+
+auto sfx::play_variant_sound( const std::string &id, const std::string &variant, const int volume,
+                              const units::angle angle,
+                              double /*pitch_min*/, double /*pitch_max*/, const bool stacks ) -> void
+{
+    engine_client::presentation::record_sound_effect( { .id = id, .variant = variant, .volume = volume, .angle = angle,
+            .stacks = stacks } );
+    play_effect( { .id = id, .variant = variant, .volume = volume, .angle = angle, .stacks = stacks } );
+}
+
+auto sfx::play_paced_sound( const paced_sound_options &options ) -> void
+{
+    engine_client::presentation::record_sound_effect( { .id = options.id, .variant = options.variant,
+            .volume = options.volume, .angle = options.angle, .stacks = options.stacks, .wait_ms = options.wait_ms } );
+    const auto now = std::chrono::steady_clock::now();
+    if( test_mode || now - paced_at < std::chrono::milliseconds( options.wait_ms ) ) {
+        return;
+    }
+    paced_at = now;
+    play_effect( { .id = options.id, .variant = options.variant, .volume = options.volume, .angle = options.angle,
+                   .stacks = options.stacks } );
+}
+
 auto sfx::play_ambient_variant_sound( const std::string &id, const std::string &variant,
                                       const int volume, const channel channel,
                                       const int fade_in_duration,
                                       double /*pitch*/, const int loops ) -> void
 {
+    engine_client::presentation::record_channel_sound( { .channel = channel, .id = id, .variant = variant, .volume = volume,
+            .fade_in_ms = fade_in_duration, .loops = loops } );
     if( test_mode ) {
         return;
     }
@@ -736,6 +770,9 @@ auto sfx::play_ambient_variant_sound( const std::string &id, const std::string &
 
 auto sfx::fade_audio_group( const group group, const int duration ) -> void
 {
+    for( const auto channel : group_channels( group ) ) {
+        engine_client::presentation::record_channel_stop( channel, duration );
+    }
     if( test_mode ) {
         return;
     }
@@ -747,6 +784,7 @@ auto sfx::fade_audio_group( const group group, const int duration ) -> void
 
 auto sfx::fade_audio_channel( const channel channel, const int duration ) -> void
 {
+    engine_client::presentation::record_channel_stop( channel, duration );
     if( test_mode ) {
         return;
     }
@@ -765,6 +803,10 @@ auto sfx::is_channel_playing( const channel channel ) -> bool
     if( test_mode ) {
         return false;
     }
+    // Without audio the channels play what the published facts told them to.
+    if( !sound_init_success ) {
+        return engine_client::presentation::channel_playing( channel );
+    }
     if( channel == channel::any ) {
         return false;
     }
@@ -774,6 +816,7 @@ auto sfx::is_channel_playing( const channel channel ) -> bool
 
 auto sfx::stop_sound_effect_fade( const channel channel, const int duration ) -> void
 {
+    engine_client::presentation::record_channel_stop( channel, duration );
     if( test_mode ) {
         return;
     }
@@ -789,6 +832,9 @@ auto sfx::stop_sound_effect_fade( const channel channel, const int duration ) ->
 
 auto sfx::stop_sound_effect_timed( const channel channel, const int time ) -> void
 {
+    if( channel != channel::any ) {
+        engine_client::presentation::record_channel_stop( channel, time );
+    }
     if( test_mode ) {
         return;
     }
@@ -804,6 +850,7 @@ auto sfx::stop_sound_effect_timed( const channel channel, const int time ) -> vo
 
 auto sfx::set_channel_volume( const channel channel, const int volume ) -> int
 {
+    engine_client::presentation::record_channel_change( { .channel = channel, .volume = volume } );
     if( test_mode ) {
         return 0;
     }
@@ -826,6 +873,7 @@ auto sfx::set_channel_volume( const channel channel, const int volume ) -> int
 auto sfx::set_channel_3d_position( const channel channel, const units::angle angle,
                                    int /*distance*/ ) -> void
 {
+    engine_client::presentation::record_channel_change( { .channel = channel, .angle = angle } );
     if( !sound_init_success || channel == channel::any ) {
         return;
     }
@@ -851,6 +899,8 @@ auto sfx::get_channel_volume( const channel channel ) -> int
     }
     return static_cast<int>( MIX_GetTrackGain( track ) * 128.0f );
 }
+
+auto soundpack_path() -> std::string { return current_soundpack_path; }
 
 // ── Soundset loading ──────────────────────────────────────────────────────────
 
@@ -887,6 +937,10 @@ auto load_soundset() -> void
         dbg( DL::Error ) << "failed to load sounds: " << err.what();
     }
 
+    // Without audio the index alone names the sounds a pack has, for the variants the game picks.
+    if( !sound_init_success ) {
+        sfx_preload.clear();
+    }
     for( const id_and_variant &preload : sfx_preload ) {
         const auto &[id, variant] = preload;
 

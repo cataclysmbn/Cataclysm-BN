@@ -15,6 +15,7 @@
 #include "color.h"
 #include "cursesdef.h"
 #include "debug.h"
+#include "engine_client_component.h"
 #include "fstream_utils.h"
 #include "input.h"
 #include "json.h"
@@ -172,58 +173,101 @@ void help::display_help()
         draw_menu( w_help );
     } );
 
+    namespace ec = engine_client;
+    constexpr auto open_topic_id = "help:topic";
+    const auto topic_row_id = []( const int order ) { return "topic:" + std::to_string( order ); };
+    const auto screen = ec::screen_scope( ctxt, "help", { .view = [&]( const ec::boundary_state & )
+    {
+        using namespace std::views;
+        auto rows = help_texts | transform( [&]( const auto & entry ) {
+            const auto &[order, topic] = entry;
+            // The hotkey is the row's own; the label is the topic without the key it is chosen by.
+            const auto &named = _( topic.first );
+            auto name = named.substr( named.find( '>' ) + 1 );
+            name.erase( 0, name.find_first_not_of( ": " ) );
+            return ec::row{
+                .id = topic_row_id( order ), .label = std::move( name ),
+                .hotkey = static_cast<std::size_t>( order ) < hotkeys.size() && !hotkeys[order].empty() ? hotkeys[order].front() : std::string{},
+            };
+        } ) | std::ranges::to<std::vector>();
+        return ec::screen_view{
+            .title = _( " HELP " ),
+            .root = ec::split( {
+                .id = "help:root", .children = ec::children_of(
+                ec::component{
+                    .id = "help:intro", .body = ec::text_body{
+                        .markup = _( "Please press one of the following for help on that topic:\n"
+                                     "Press ESC to return to the game." ) } },
+                ec::list( { .id = "help:topics", .rows = std::move( rows ), .selection = "single", .activate = open_topic_id } ) ) } ),
+            .affordances = { ec::invoke_affordance( { .id = open_topic_id, .label = ctxt.get_action_name( "CONFIRM" ), .args = { .row = ec::row_shape{ .component_id = "help:topics" } }, .covers = "CONFIRM" } ) },
+        };
+    }
+                                                        } );
+
     do {
         ui_manager::redraw();
 
         action = ctxt.handle_input();
-        std::string sInput = ctxt.get_raw_input().text;
-        for( size_t i = 0; i < hotkeys.size(); ++i ) {
-            for( const std::string &hotkey : hotkeys[i] ) {
-                if( sInput == hotkey ) {
-                    std::vector<std::string> i18n_help_texts;
-                    i18n_help_texts.reserve( help_texts[i].second.size() );
-                    std::transform( help_texts[i].second.begin(), help_texts[i].second.end(),
-                    std::back_inserter( i18n_help_texts ), [&]( std::string & line ) {
-                        std::string line_proc = _( line );
-                        size_t pos = line_proc.find( "<press_", 0, 7 );
-                        while( pos != std::string::npos ) {
-                            size_t pos2 = line_proc.find( ">", pos, 1 );
-
-                            std::string action = line_proc.substr( pos + 7, pos2 - pos - 7 );
-                            auto replace = "<color_light_blue>" + press_x( look_up_action( action ), "", "" ) + "</color>";
-
-                            if( replace.empty() ) {
-                                debugmsg( "Help json: Unknown action: %s", action );
-                            } else {
-                                line_proc = replace_all( line_proc, "<press_" + action + ">", replace );
-                            }
-
-                            pos = line_proc.find( "<press_", pos2, 7 );
-                        }
-                        return line_proc;
-                    } );
-
-                    if( !i18n_help_texts.empty() ) {
-                        ui.on_screen_resize( nullptr );
-
-                        const auto get_w_help_border = [&]() {
-                            init_windows( ui );
-                            return w_help_border;
-                        };
-
-                        scrollable_text( get_w_help_border, _( " HELP " ),
-                                         std::accumulate( i18n_help_texts.begin() + 1, i18n_help_texts.end(),
-                                                          i18n_help_texts.front(),
-                        []( const std::string & lhs, const std::string & rhs ) {
-                            return lhs + "\n\n" + rhs;
-                        } ) );
-
-                        ui.on_screen_resize( init_windows );
-                    }
-                    action = "CONFIRM";
+        const auto &input = ctxt.get_raw_input();
+        auto selected_topic = std::optional<int> {};
+        if( const auto picked = ec::invoked( input ) ) {
+            const auto row = picked->affordance_id == open_topic_id ? picked->args.row.value_or(
+                                 std::string() ) : std::string();
+            const auto topic = std::ranges::find_if( help_texts, [&]( const auto & entry ) { return topic_row_id( entry.first ) == row; } );
+            if( topic != help_texts.end() ) {
+                selected_topic = topic->first;
+            }
+        } else {
+            for( auto i = std::size_t{0}; i < hotkeys.size(); ++i ) {
+                if( std::ranges::find( hotkeys[i], input.text ) != hotkeys[i].end() ) {
+                    selected_topic = static_cast<int>( i );
                     break;
                 }
             }
+        }
+        if( selected_topic ) {
+            const auto i = *selected_topic;
+            auto i18n_help_texts = std::vector<std::string> {};
+            i18n_help_texts.reserve( help_texts[i].second.size() );
+            std::ranges::transform( help_texts[i].second,
+            std::back_inserter( i18n_help_texts ), [&]( const auto & line ) {
+                auto line_proc = std::string( _( line ) );
+                auto pos = line_proc.find( "<press_", 0, 7 );
+                while( pos != std::string::npos ) {
+                    const auto pos2 = line_proc.find( ">", pos, 1 );
+
+                    const auto action = line_proc.substr( pos + 7, pos2 - pos - 7 );
+                    auto replace = "<color_light_blue>" + press_x( look_up_action( action ), "", "" ) + "</color>";
+
+                    if( replace.empty() ) {
+                        debugmsg( "Help json: Unknown action: %s", action );
+                    } else {
+                        line_proc = replace_all( line_proc, "<press_" + action + ">", replace );
+                    }
+
+                    pos = line_proc.find( "<press_", pos2, 7 );
+                }
+                return line_proc;
+            } );
+
+            if( !i18n_help_texts.empty() ) {
+                ui.on_screen_resize( nullptr );
+
+                const auto get_w_help_border = [&]() {
+                    init_windows( ui );
+                    return w_help_border;
+                };
+
+                scrollable_text( get_w_help_border, _( " HELP " ),
+                                 std::accumulate( i18n_help_texts.begin() + 1, i18n_help_texts.end(),
+                                                  i18n_help_texts.front(),
+                []( const std::string & lhs, const std::string & rhs ) {
+                    return lhs + "\n\n" + rhs;
+                } ) );
+
+                ui.on_screen_resize( init_windows );
+            }
+            action = "CONFIRM";
         }
     } while( action != "QUIT" );
 }

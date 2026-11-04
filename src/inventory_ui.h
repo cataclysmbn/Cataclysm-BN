@@ -3,6 +3,7 @@
 #include <cassert>
 #include <climits>
 #include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <limits>
 #include <memory>
@@ -32,6 +33,12 @@ class item_category;
 class string_input_popup;
 struct tripoint;
 class ui_adaptor;
+
+namespace engine_client
+{
+class screen_scope;
+struct screen_view;
+}
 
 using excluded_stack = std::pair<item *, int>;
 using excluded_stacks = std::map<item *, int>;
@@ -172,8 +179,14 @@ class inventory_selector_preset
         virtual nc_color get_color( const inventory_entry &entry ) const;
 
         std::string get_denial( const inventory_entry &entry ) const;
+        /// Denial for passive observation: must not run Lua callbacks or change state.
+        virtual std::string get_observed_denial( const item *loc ) const {
+            return get_denial( loc );
+        }
+        std::string get_observed_denial( const inventory_entry &entry ) const;
         /** Text in the cell */
         std::string get_cell_text( const inventory_entry &entry, size_t cell_index ) const;
+        std::string get_cell_title( size_t cell_index ) const;
         /** @return Whether the cell is a stub */
         bool is_stub_cell( const inventory_entry &entry, size_t cell_index ) const;
         /** Number of cells in the preset. */
@@ -318,6 +331,7 @@ class inventory_column
             return selected_index;
         }
 
+        auto is_multiselect() const -> bool { return multiselect; }
         void set_multiselect( bool multiselect ) {
             this->multiselect = multiselect;
         }
@@ -536,6 +550,23 @@ class inventory_selector
                         const item_category *custom_category = nullptr );
 
         inventory_input get_input();
+        struct interaction_row {
+            std::string id;
+            /// The key of the column the row is in, which names its panel, list and affordances.
+            std::string column_key;
+            const inventory_column *column = nullptr;
+            const item_category *category = nullptr;
+            /// Null for a category heading.
+            inventory_entry *entry = nullptr;
+        };
+        /// The rows the screen publishes, in order: a heading for each category, then its items.
+        auto interaction_rows() const -> std::vector<interaction_row>;
+        /// The screen as components, composed from the columns and the preset.
+        auto interaction_view() const -> engine_client::screen_view;
+        /// Alive while the selector is open: the screen the protocol publishes.
+        auto open_screen() -> engine_client::screen_scope;
+        virtual auto supports_semantic_count() const -> bool { return false; }
+        virtual auto apply_semantic_count( inventory_entry &/*entry*/, std::size_t /*count*/ ) -> void {}
 
         /** Given an action from the input_context, try to act according to it. */
         void on_input( const inventory_input &input );
@@ -689,8 +720,8 @@ class inventory_selector
         std::vector<char> all_bound_keys( ) const;
 };
 
-inventory_selector::stat display_stat( const std::string &caption, int cur_value, int max_value,
-                                       const std::function<std::string( int )> &disp_func );
+inventory_selector::stat display_stat( const std::string &caption, std::int64_t cur_value,
+                                       std::int64_t max_value, const std::function<std::string( std::int64_t )> &disp_func );
 
 class inventory_pick_selector : public inventory_selector
 {
@@ -719,8 +750,10 @@ class inventory_multiselector : public inventory_selector
     protected:
         void rearrange_columns( size_t client_width ) override;
         size_t query_count( size_t count );
-        void set_chosen_count( inventory_entry &entry, size_t count );
+        virtual void set_chosen_count( inventory_entry &entry, size_t count );
         std::vector<inventory_entry *> get_selection_column_items() const;
+        auto supports_semantic_count() const -> bool override { return true; }
+        auto apply_semantic_count( inventory_entry &entry, std::size_t count ) -> void override;
         std::unique_ptr<inventory_column> selection_col;
 };
 
@@ -731,6 +764,7 @@ class inventory_compare_selector : public inventory_multiselector
         std::pair<const item *, const item *> execute();
 
     protected:
+        auto supports_semantic_count() const -> bool override { return false; }
         std::vector<const item *> compared;
 
         void toggle_entry( inventory_entry *entry );
@@ -751,7 +785,7 @@ class inventory_iuse_selector : public inventory_multiselector
 
     protected:
         stats get_raw_stats() const override;
-        void set_chosen_count( inventory_entry &entry, size_t count );
+        void set_chosen_count( inventory_entry &entry, size_t count ) override;
 
     private:
         GetStats get_stats;
@@ -774,7 +808,7 @@ class inventory_drop_selector : public inventory_multiselector
          */
         stats get_raw_stats() const override;
         /** Toggle item dropping */
-        void set_chosen_count( inventory_entry &entry, size_t count );
+        void set_chosen_count( inventory_entry &entry, size_t count ) override;
         void process_selected( int &count, const std::vector<inventory_entry *> &selected );
         auto update_drop_preview() -> void;
         auto get_drop_preview() const -> const drop_locations & { return predicted_drops; } // *NOPAD*

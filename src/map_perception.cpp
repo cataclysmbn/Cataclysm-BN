@@ -1,0 +1,940 @@
+#include "map_perception.h"
+
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <iterator>
+#include <map>
+#include <ranges>
+#include <random>
+#include <set>
+#include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "avatar.h"
+#include "cata_utility.h"
+#include "enums.h"
+#include "map/field.h"
+#include "game.h"
+#include "map/map.h"
+#include "map_memory.h"
+#include "map/mapdata.h"
+#include "map/submap.h"
+#include "overmap/overmapbuffer.h"
+#include "overmap/overmapbuffer_registry.h"
+#include "output.h"
+#include "profile.h"
+#include "trap.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+#include "vehicle/vpart_range.h"
+#include "tileray.h"
+
+namespace map_perception
+{
+namespace
+{
+
+const auto neighbors = std::array { point_south, point_east, point_west, point_north };
+
+struct field_appearance {
+    field_type_id field;
+    ter_id terrain;
+    furn_id furniture;
+    auto operator<=>( const field_appearance & ) const = default; // *NOPAD*
+};
+
+struct vehicle_appearance {
+    memorized_terrain_tile tile;
+    int symbol = 0;
+    bool stationary = false;
+    bool detailed = false;
+    auto operator==( const vehicle_appearance & ) const -> bool = default;
+};
+
+/// This game-thread cache owns no submap/vehicle pointers or authoritative world work.
+struct acquisition_state {
+    const map *owner = nullptr;
+    point_abs_sm origin{};
+    dimension_id dimension{};
+    tripoint_abs_ms position{};
+    int size = 0;
+    bool full_pending = true;
+    bool committing = false;
+    bool blind = false;
+    float threshold = 0;
+    visibility_variables vision{};
+    // Squares the last full scan found clear, by z-level up from -OVERMAP_DEPTH to the avatar's, so
+    // the next scan can skip the columns a visibility refresh left unchanged.
+    std::vector<std::vector<uint8_t>> clear;
+    std::set<tripoint_bub_ms> dirty;
+    // Keep hidden/unvisited invalidations until a visibility completion can authorize them.
+    std::set<tripoint_bub_ms> pending;
+    std::map<tripoint_bub_ms, field_appearance> fields;
+    std::map<tripoint_bub_ms, trap_id> traps;
+    std::map<tripoint_bub_ms, vehicle_appearance> vehicles;
+};
+
+auto state = acquisition_state {};
+
+auto same_vision( const visibility_variables &a, const visibility_variables &b ) -> bool
+{
+    return a.variables_set == b.variables_set && a.u_sight_impaired == b.u_sight_impaired &&
+           a.u_is_boomered == b.u_is_boomered && a.g_light_level == b.g_light_level &&
+           a.u_clairvoyance == b.u_clairvoyance && a.u_unimpaired_range == b.u_unimpaired_range &&
+           a.vision_threshold == b.vision_threshold && a.visibility_range == b.visibility_range &&
+           a.detail_range == b.detail_range && a.visibility_scale_factor == b.visibility_scale_factor;
+}
+
+/// Compare sparse native field/vehicle inputs, not every loaded map cell. In particular,
+/// direct field aging and vehicle control/appearance changes need no visibility invalidation.
+template<typename Snapshot>
+auto update_sparse( const map &here, Snapshot &previous, Snapshot current ) -> void
+{
+    for( const auto &[p, value] : current ) {
+        const auto old = previous.find( p );
+        if( old == previous.end() || old->second != value ) {
+            invalidate_cell( here, p );
+        }
+    }
+    for( const auto &[p, value] : previous ) {
+        if( !current.contains( p ) ) {
+            invalidate_cell( here, p );
+        }
+    }
+    previous = std::move( current );
+}
+
+struct cell_facts {
+    tripoint_bub_ms position;
+    ter_id terrain{};
+    furn_id furniture{};
+    trap_id trap{};
+    int field_symbol = 0;
+    bool field_overrides = false;
+    bool vehicle_only = false;
+    bool roof = false;
+    bool stationary_vehicle = false;
+    memorized_terrain_tile vehicle_tile{};
+    int vehicle_symbol = 0;
+};
+
+auto normally_visible( const map &here, const tripoint_bub_ms &p, const sight &view ) -> bool
+{
+    if( !here.inbounds( p ) ) {
+        return false;
+    }
+    if( view.blind && ( view.clairvoyance == 0 ||
+                        rl_dist( get_avatar().bub_pos(), p ) > view.clairvoyance ) ) {
+        return false;
+    }
+    const auto &cache = here.access_cache( p.z() );
+    return here.get_visibility( cache.visibility_cache[cache.idx( p.x(), p.y() )],
+                                here.get_visibility_variables_cache() ) == VIS_CLEAR;
+}
+
+auto normally_visible( const map &here, const tripoint_bub_ms &p ) -> bool
+{
+    return normally_visible( here, p, current_sight() );
+}
+
+/// Only semantic historical knowledge can supply an invisible neighbor, never live terrain.
+auto known_terrain( const map &here, const tripoint_bub_ms &p, const sight &view ) -> ter_id
+{
+    if( !here.inbounds( p ) ) {
+        return ter_id();
+    }
+    if( normally_visible( here, p, view ) ) {
+        return here.ter( p );
+    }
+    const auto abs = map_local_to_abs( here, p );
+    const auto remembered = get_avatar().get_terrain_tile( abs );
+    // Older Tiles memory stored an explicit terrain ID in the overlay slot.
+    // This is a historical fact, unlike a glyph-only cell; do not rewrite it.
+    const auto tile = remembered.tile.empty() ? get_avatar().get_memorized_tile( abs ).tile :
+                      remembered.tile;
+    const auto id = ter_str_id( tile );
+    return !tile.empty() && id.is_valid() ? id.id() : ter_id();
+}
+
+auto known_furniture( const map &here, const tripoint_bub_ms &p, const sight &view ) -> furn_id
+{
+    if( !here.inbounds( p ) ) {
+        return furn_id();
+    }
+    if( normally_visible( here, p, view ) ) {
+        return here.furn( p );
+    }
+    const auto remembered = get_avatar().get_memorized_tile( map_local_to_abs( here, p ) );
+    const auto id = furn_str_id( remembered.tile );
+    return !remembered.tile.empty() && id.is_valid() ? id.id() : furn_id();
+}
+
+auto known_trap( const map &here, const tripoint_bub_ms &p, const sight &view ) -> trap_id
+{
+    if( !here.inbounds( p ) ) {
+        return trap_id();
+    }
+    if( normally_visible( here, p, view ) ) {
+        const auto &tr = here.tr_at( p );
+        return tr.can_see( p, get_avatar() ) ? tr.loadid : trap_id();
+    }
+    const auto remembered = get_avatar().get_memorized_tile( map_local_to_abs( here, p ) );
+    const auto id = trap_str_id( remembered.tile );
+    return !remembered.tile.empty() && id.is_valid() ? id.id() : trap_id();
+}
+
+/// The ASCII wall mapping uses the same SEWN mask as the semantic tile channel.
+auto wall_symbol( const uint8_t mask, const int fallback ) -> int
+{
+    const auto symbols = std::array{
+        fallback, LINE_XOXO, LINE_OXOX, LINE_OXXO,
+        LINE_OXOX, LINE_OOXX, LINE_OXOX, LINE_OXXX,
+        LINE_XOXO, LINE_XOXO, LINE_XXOO, LINE_XXXO,
+        LINE_XOOX, LINE_XOXX, LINE_XXOX, LINE_XXXX
+    };
+    return symbols[mask];
+}
+
+template<typename Id>
+auto connection_mask( const Id &id, const std::array<Id, 4> &adjacent ) -> uint8_t
+{
+    auto mask = uint8_t{ 0 };
+    auto group = 0;
+    const auto grouped = id.obj().connects( group );
+    for( const auto i : std::views::iota( 0, 4 ) ) {
+        if( adjacent[i] && ( grouped ? adjacent[i].obj().connects_to( group ) : adjacent[i] == id ) ) {
+            mask |= 1 << i;
+        }
+    }
+    return mask;
+}
+
+struct cell_memory {
+    tripoint_abs_ms position;
+    int symbol = 0;
+    memorized_terrain_tile terrain{};
+    memorized_terrain_tile overlay{};
+};
+
+/// The native tile selection of a cell: connections to its known neighbours and, for unconnected
+/// furniture, the alignment to walls or workbenches.
+auto orientations( const map &here, const cell_facts &facts,
+                   const sight &view ) -> cell_orientations
+{
+    const auto &p = facts.position;
+    auto terrain_neighbors = std::array<ter_id, 4> {};
+    for( const auto i : std::views::iota( 0, 4 ) ) {
+        terrain_neighbors[i] = known_terrain( here, p + neighbors[i], view );
+    }
+    auto result = cell_orientations{};
+    result.terrain_mask = connection_mask( facts.terrain, terrain_neighbors );
+    result.terrain = orient( result.terrain_mask );
+    if( facts.furniture ) {
+        auto furniture_neighbors = std::array<furn_id, 4> {};
+        for( const auto i : std::views::iota( 0, 4 ) ) {
+            furniture_neighbors[i] = known_furniture( here, p + neighbors[i], view );
+        }
+        result.furniture = orient( connection_mask( facts.furniture, furniture_neighbors ) );
+        if( result.furniture.subtile == unconnected ) {
+            auto walls = 0;
+            auto workbenches = 0;
+            for( const auto i : std::views::iota( 0, 4 ) ) {
+                // Alignment mask is NESW, unlike connection masks.
+                const auto bit = std::array{ 4, 2, 8, 1 } [i];
+                const auto &ter = terrain_neighbors[i].obj();
+                if( ter.has_flag( TFLAG_WALL ) || ter.has_flag( "WINDOW" ) ||
+                    ter.has_flag( "DOOR" ) ) {
+                    walls |= bit;
+                }
+                if( furniture_neighbors[i] && furniture_neighbors[i]->workbench ) {
+                    workbenches |= bit;
+                }
+            }
+            const auto use_workbench = facts.furniture->has_flag( "ALIGN_WORKBENCH" ) && workbenches;
+            const auto alignment = use_workbench ? workbenches : walls;
+            const auto rotations = std::array{ 0, 0, 1, 0, 2, 1, 1, 1, 3, 0, 0, 0, 3, 3, 2, 0 };
+            result.furniture.rotation = ( rotations[alignment] + ( use_workbench ? 2 : 0 ) ) % 4;
+        }
+    }
+    if( facts.trap ) {
+        auto mask = uint8_t{ 0 };
+        for( const auto i : std::views::iota( 0, 4 ) ) {
+            if( known_trap( here, p + neighbors[i], view ) == facts.trap ) {
+                mask |= 1 << i;
+            }
+        }
+        result.trap = orient( mask );
+    }
+    return result;
+}
+
+auto derive( const map &here, const cell_facts &facts, const sight &view ) -> cell_memory
+{
+    const auto &p = facts.position;
+    if( facts.vehicle_only ) {
+        auto result = cell_memory{
+            .position = map_local_to_abs( here, p ),
+            .symbol = get_avatar().get_memorized_symbol( map_local_to_abs( here, p ) ),
+            .terrain = get_avatar().get_terrain_tile( map_local_to_abs( here, p ) ),
+            .overlay = get_avatar().get_memorized_tile( map_local_to_abs( here, p ) )
+        };
+        if( facts.stationary_vehicle ) {
+            result.overlay = facts.vehicle_tile;
+            result.symbol = facts.vehicle_symbol;
+        } else if( result.overlay.tile.starts_with( "vp_" ) ) {
+            // Actor-aware movement clears a vehicle ghost, without reading the
+            // unseen current ground or deriving new connections beneath it.
+            result.overlay = mm_submap::default_tile;
+            const auto historical = ter_str_id( result.terrain.tile );
+            result.symbol = 0;
+            if( !result.terrain.tile.empty() && historical.is_valid() ) {
+                result.symbol = historical->has_flag( TFLAG_AUTO_WALL_SYMBOL ) ?
+                                remembered_wall_symbol( result.terrain, historical->symbol() ) : historical->symbol();
+            }
+        }
+        return result;
+    }
+    const auto shapes = orientations( here, facts, view );
+    auto result = cell_memory{ .position = map_local_to_abs( here, p ) };
+    result.symbol = facts.terrain->has_flag( TFLAG_AUTO_WALL_SYMBOL ) ?
+                    wall_symbol( shapes.terrain_mask, facts.terrain->symbol() ) : facts.terrain->symbol();
+    if( !facts.terrain->has_flag( TFLAG_NO_MEMORY ) &&
+        !facts.terrain->has_flag( TFLAG_Z_TRANSPARENT ) ) {
+        result.terrain = { .tile = facts.terrain.id().str(),
+                           .subtile = shapes.terrain.subtile, .rotation = shapes.terrain.rotation
+                         };
+    }
+    if( facts.furniture ) {
+        result.symbol = facts.furniture->symbol();
+        result.overlay = { .tile = facts.furniture.id().str(),
+                           .subtile = shapes.furniture.subtile, .rotation = shapes.furniture.rotation
+                         };
+    }
+    if( facts.trap ) {
+        result.symbol = facts.trap->sym == '%' ? '*' : facts.trap->sym;
+        if( facts.trap.id().str() != "tr_ledge" ) {
+            result.overlay = { .tile = facts.trap.id().str(),
+                               .subtile = shapes.trap.subtile, .rotation = shapes.trap.rotation
+                             };
+        }
+    }
+    if( facts.field_symbol && ( facts.field_overrides || result.symbol == '.' ) ) {
+        result.symbol = facts.field_symbol;
+    }
+    if( facts.stationary_vehicle ) {
+        result.overlay = facts.vehicle_tile;
+        result.symbol = facts.vehicle_symbol;
+    }
+    return result;
+}
+
+auto observe( const map &here, const tripoint_bub_ms &p, const sight &view,
+              const bool in_sight ) -> cell_facts
+{
+    auto facts = cell_facts{ .position = p, .vehicle_only = !in_sight };
+    const auto &you = get_avatar();
+    if( !facts.vehicle_only ) {
+        facts.terrain = here.ter( p );
+        facts.furniture = here.furn( p );
+        const auto &tr = here.tr_at( p );
+        if( tr.can_see( p, you ) ) {
+            facts.trap = tr.loadid;
+        }
+        const auto &fields = here.field_at( p );
+        if( fields.field_count() ) {
+            const auto &id = fields.displayed_field_type();
+            const auto sym = id->get_symbol();
+            if( fields.find_field( id ) && sym != "&" && sym != "%" && !sym.empty() ) {
+                facts.field_symbol = sym == "*" ? '*' : sym[0];
+                facts.field_overrides = sym == "*" || id->priority > 1;
+            }
+        }
+    }
+    const auto vp = here.veh_at( p );
+    if( vp ) {
+        const auto &veh = vp->vehicle();
+        facts.roof = p.z() < you.bub_pos().z();
+        facts.stationary_vehicle = !veh.forward_velocity() && !veh.player_in_control( you );
+        auto modifier = char{ 0 };
+        const auto &id = veh.part_id_string( vp->part_index(), facts.roof, modifier );
+        const auto direction = veh.part_display_direction( vp->part_index(), facts.roof );
+        facts.vehicle_tile = { .tile = "vp_" + id.str(),
+                               .subtile = modifier == 1 ? open_ : modifier == 2 ? broken : 0,
+                               .rotation = static_cast<int>( std::round( to_degrees( direction ) ) )
+                             };
+        facts.vehicle_symbol = special_symbol( tileray( direction ).dir_symbol(
+                veh.part_sym( vp->part_index(), facts.roof ) ) );
+    }
+    return facts;
+}
+
+} // namespace
+
+auto current_sight() -> sight
+{
+    const auto &you = get_avatar();
+    const auto blind = you.is_blind();
+    return { .blind = blind, .clairvoyance = blind ? you.clairvoyance() : 0 };
+}
+
+auto visible_orientations( const map &here, const tripoint_bub_ms &p,
+                           const sight &view ) -> cell_orientations
+{
+    auto facts = cell_facts{ .position = p, .terrain = here.ter( p ), .furniture = here.furn( p ) };
+    if( const auto &tr = here.tr_at( p ); tr.can_see( p, get_avatar() ) ) { facts.trap = tr.loadid; }
+    return orientations( here, facts, view );
+}
+
+auto terrain_orientation( const map &here, const tripoint_bub_ms &p,
+                          const sight &view ) -> orientation
+{
+    auto adjacent = std::array<ter_id, 4> {};
+    for( const auto i : std::views::iota( 0, 4 ) ) { adjacent[i] = known_terrain( here, p + neighbors[i], view ); }
+    return orient( connection_mask( here.ter( p ), adjacent ) );
+}
+
+auto multitile_key( const int subtile ) -> std::string
+{
+    const auto keys = std::array<const char *, num_multitile_types> {
+        "center", "corner", "edge", "t_connection", "end_piece", "unconnected", "open", "broken"
+    };
+    return subtile >= 0 && subtile < num_multitile_types ? keys[subtile] : "";
+}
+
+auto cosmetic_variant() -> int
+{
+    static auto cosmetic = std::minstd_rand( 1 );
+    return 1 + static_cast<int>( cosmetic() % 5 );
+}
+
+auto orient( const uint8_t connections ) -> orientation
+{
+    const auto subtiles = std::array{ unconnected, end_piece, end_piece, corner,
+                                      end_piece, corner, edge, t_connection, end_piece,
+                                      edge, corner, t_connection, corner, t_connection, t_connection, center };
+    const auto rotations = std::array{ 0, 0, 1, 0, 3, 3, 1, 0, 2, 0, 1, 1, 2, 3, 2, 0 };
+    return { .subtile = subtiles[connections & 15], .rotation = rotations[connections & 15] };
+}
+
+auto remembered_wall_symbol( const memorized_terrain_tile &tile, const int fallback ) -> int
+{
+    const auto masks = std::views::iota( 0, 16 );
+    const auto found = std::ranges::find_if( masks, [&]( const int mask ) {
+        const auto shape = orient( mask );
+        return shape.subtile == tile.subtile && shape.rotation == tile.rotation;
+    } );
+    return found == masks.end() ? fallback : wall_symbol( *found, fallback );
+}
+
+auto connected_wall_symbol( const map &here, const tripoint_bub_ms &p ) -> int
+{
+    const auto terrain = here.ter( p );
+    if( !terrain->has_flag( TFLAG_AUTO_WALL_SYMBOL ) ) { return terrain->symbol(); }
+    auto adjacent = std::array<ter_id, 4> {};
+    const auto view = current_sight();
+    for( const auto i : std::views::iota( 0, 4 ) ) { adjacent[i] = known_terrain( here, p + neighbors[i], view ); }
+    return wall_symbol( connection_mask( terrain, adjacent ), terrain->symbol() );
+}
+
+auto vehicle_known( const map &here, const vehicle &veh ) -> bool
+{
+    const auto &you = get_avatar();
+    const auto occupied = here.veh_at( you.bub_pos() );
+    if( you.in_vehicle && occupied && &occupied->vehicle() == &veh ) {
+        return true;
+    }
+    // The native remote-control capability supplies vehicle telemetry, not
+    // vision of the ground beneath it. Match its actor-held target, power and
+    // radio range without remote_controlled()'s disconnect/message side effects.
+    const auto target_value = you.get_value( "remote_controlling_vehicle" );
+    if( target_value.empty() || ( !you.has_active_bionic( bionic_id( "bio_remote" ) ) &&
+                                  !you.has_active_item_with_action( "REMOTEVEH" ) ) ) {
+        return false;
+    }
+    auto stream = std::istringstream( target_value );
+    auto target = tripoint_bub_ms{};
+    if( !( stream >> target.x() >> target.y() >> target.z() ) || target != veh.bub_ms_location() ||
+        veh.fuel_left( itype_id( "battery" ), true ) <= 0 ) {
+        return false;
+    }
+    return std::ranges::any_of( veh.get_avail_parts( "REMOTE_CONTROLS" ),
+    [&]( const auto & part ) { return rl_dist( you.bub_pos(), part.pos() ) <= 40; } );
+}
+
+auto visible_at( const map &here, const tripoint_bub_ms &p ) -> bool
+{
+    return normally_visible( here, p );
+}
+
+namespace
+{
+using clear_levels = std::array < bool, static_cast<size_t>( lit_level::BLANK ) + 1 >;
+
+/// Classify each light level once instead of calling the map per cell.
+auto clear_levels_of( const map &here ) -> clear_levels
+{
+    const auto &vision = here.get_visibility_variables_cache();
+    auto clear = clear_levels {};
+    for( const auto level : std::views::iota( 0, static_cast<int>( clear.size() ) ) ) {
+        clear[level] = here.get_visibility( static_cast<lit_level>( level ), vision ) == VIS_CLEAR;
+    }
+    return clear;
+}
+} // namespace
+
+auto visible_cells( const map &here ) -> std::vector<tripoint_bub_ms>
+{
+    const auto &you = get_avatar();
+    // A blind avatar sees only within clairvoyance, which needs the per-cell test.
+    const auto blind = you.is_blind();
+    if( blind && you.clairvoyance() == 0 ) { return {}; }
+    const auto clear = clear_levels_of( here );
+    // Scanning every level of every square costs about a millisecond, and a refresh of the visibility
+    // caches is the only thing that changes what they hold: a capture without one reuses the last scan.
+    struct scan {
+        const map *owner = nullptr;
+        size_t refreshes = 0;
+        clear_levels clear{};
+        std::vector<tripoint_bub_ms> cells;
+    };
+    static auto last = scan{};
+    if( !blind && last.owner == &here && last.refreshes == visibility_refresh_count() &&
+        last.clear == clear ) {
+        return last.cells;
+    }
+    auto result = std::vector<tripoint_bub_ms> {};
+    for( const auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
+        const auto &cache = here.access_cache( z );
+        if( cache.visibility_cache.size() < static_cast<size_t>( cache.cache_x * cache.cache_y ) ) { continue; }
+        for( const auto x : std::views::iota( 0, cache.cache_x ) ) {
+            for( const auto y : std::views::iota( 0, cache.cache_y ) ) {
+                if( !clear[static_cast<size_t>( cache.visibility_cache[cache.idx( x, y )] )] ) {
+                    continue;
+                }
+                const auto p = tripoint_bub_ms( x, y, z );
+                if( !blind || normally_visible( here, p ) ) { result.push_back( p ); }
+            }
+        }
+    }
+    if( !blind ) { last = { .owner = &here, .refreshes = visibility_refresh_count(), .clear = clear, .cells = result }; }
+    return result;
+}
+
+namespace
+{
+auto detailed_at( const map &here, const tripoint_bub_ms &p, const sight &view ) -> bool
+{
+    if( !here.inbounds( p ) ) {
+        return false;
+    }
+    if( normally_visible( here, p, view ) ) {
+        return true;
+    }
+    const auto vp = here.veh_at( p );
+    if( !vp ) {
+        return false;
+    }
+    if( vehicle_known( here, vp->vehicle() ) ) {
+        return true;
+    }
+    // A vehicle floor can occlude its own roof in 3-D FoV. Only a clear column of
+    // exposed air above it grants the exterior surface, not the ground beneath it.
+    if( p.z() >= get_avatar().bub_pos().z() ) {
+        return false;
+    }
+    for( const auto z : std::views::iota( p.z() + 1, get_avatar().bub_pos().z() + 1 ) ) {
+        const auto above = tripoint_bub_ms( p.xy(), z );
+        if( !here.has_flag( TFLAG_NO_FLOOR, above ) || !normally_visible( here, above, view ) ) {
+            return false;
+        }
+    }
+    return true;
+}
+} // namespace
+
+auto detailed_at( const map &here, const tripoint_bub_ms &p ) -> bool
+{
+    return detailed_at( here, p, current_sight() );
+}
+
+auto reset() -> void { state = acquisition_state{}; }
+
+namespace
+{
+auto presentation_depth = 0;
+} // namespace
+
+presentation_scope::presentation_scope() { ++presentation_depth; }
+presentation_scope::~presentation_scope() { --presentation_depth; }
+auto presenting() -> bool { return presentation_depth > 0; }
+
+auto invalidate_visibility( const map &here ) -> void
+{
+    if( state.owner == &here ) {
+        state.full_pending = true;
+    }
+}
+
+auto invalidate_all( const map &here ) -> void
+{
+    if( state.owner == &here ) {
+        state.full_pending = true;
+        state.clear.clear();
+    }
+}
+
+auto invalidate_cell( const map &here, const tripoint_bub_ms &p ) -> void
+{
+    if( state.owner != &here || state.committing || !here.inbounds( p ) ) {
+        return;
+    }
+    state.dirty.insert( p );
+    state.pending.insert( p );
+    for( const auto &delta : neighbors ) {
+        if( here.inbounds( p + delta ) ) {
+            state.dirty.insert( p + delta );
+            state.pending.insert( p + delta );
+        }
+    }
+}
+
+namespace
+{
+/// Kept from the first request on; none while the history is unknown, which is also how it outgrowing the
+/// limit shows.
+constexpr auto memory_log_limit = size_t { 1 << 18 };
+auto memory_log = std::optional<std::set<tripoint_abs_ms>> {};
+} // namespace
+
+auto take_memory_changes() -> std::optional<std::set<tripoint_abs_ms>>
+{
+    return std::exchange( memory_log, std::set<tripoint_abs_ms> {} );
+}
+
+auto memory_changed( const tripoint_abs_ms &p ) -> void
+{
+    if( memory_log ) {
+        memory_log->insert( p );
+        if( memory_log->size() > memory_log_limit ) { memory_log.reset(); }
+    }
+    if( g ) {
+        invalidate_cell( get_map(), abs_to_map_local( get_map(), p ) );
+    }
+}
+
+namespace
+{
+auto visibility_refreshes = size_t { 0 };
+} // namespace
+
+auto visibility_refresh_count() -> size_t { return visibility_refreshes; }
+auto visibility_refreshed() -> void { ++visibility_refreshes; }
+
+auto invalidate_stale_visibility( map &here ) -> void
+{
+    auto &you = get_avatar();
+    const auto vision = here.make_visibility_variables( you.bub_pos().z() );
+    if( state.owner != &here || state.position != you.abs_pos() ||
+        !same_vision( state.vision, vision ) || state.blind != you.is_blind() ||
+        state.threshold != g_visible_threshold ) {
+        here.invalidate_visibility_caches();
+    }
+}
+
+namespace
+{
+using clear_squares_t = std::vector<std::vector<uint8_t>>;
+
+/// Whether ordinary sight shows each square, for every z-level up to `zlev`.
+auto clear_squares( const map &here, const int zlev ) -> clear_squares_t
+{
+    const auto clear = clear_levels_of( here );
+    auto result = clear_squares_t {};
+    for( const auto z : std::views::iota( -OVERMAP_DEPTH, zlev + 1 ) ) {
+        const auto &cache = here.access_cache( z );
+        const auto squares = static_cast<size_t>( cache.cache_x * cache.cache_y );
+        auto &level = result.emplace_back();
+        if( cache.visibility_cache.size() < squares ) { continue; }
+        std::ranges::transform( cache.visibility_cache | std::views::take( squares ),
+                                std::back_inserter( level ),
+        [&]( const lit_level light ) { return static_cast<uint8_t>( clear[static_cast<size_t>( light )] ); } );
+    }
+    return result;
+}
+
+/// A column and the four neighbours that derive their knowledge from it.
+auto mark_column( std::vector<uint8_t> &columns, const level_cache &cache,
+                  const point_bub_ms &p ) -> void
+{
+    if( cache.inbounds( p ) ) { columns[cache.idx( p.x(), p.y() )] = 1; }
+    for( const auto &delta : neighbors ) {
+        if( cache.inbounds( p + delta ) ) { columns[cache.idx( p.x() + delta.x, p.y() + delta.y )] = 1; }
+    }
+}
+
+/// The columns of the map to look at again after a refresh: where the squares ordinary sight shows
+/// differ on any z-level, with their neighbours. Every
+/// column when the two scans do not compare, or when the avatar sees by clairvoyance, which depends
+/// on its position.
+auto changed_columns( const clear_squares_t &before, const clear_squares_t &after,
+                      const level_cache &cache,
+                      const bool clairvoyant ) -> std::vector<uint8_t>
+{
+    const auto squares = static_cast<size_t>( cache.cache_x * cache.cache_y );
+    if( clairvoyant || before.size() != after.size() ) { return std::vector<uint8_t>( squares, 1 ); }
+    auto columns = std::vector<uint8_t>( squares, 0 );
+    for( const auto &[old_level, level] : std::views::zip( before, after ) ) {
+        if( old_level.size() != level.size() ) { return std::vector<uint8_t>( squares, 1 ); }
+        for( const auto i : std::views::iota( size_t{ 0 }, level.size() ) ) {
+            if( old_level[i] == level[i] ) { continue; }
+            mark_column( columns, cache, { static_cast<int>( i ) / cache.cache_y, static_cast<int>( i ) % cache.cache_y } );
+        }
+    }
+    return columns;
+}
+} // namespace
+
+auto acquire( const acquire_options &options ) -> acquisition_counts
+{
+    ZoneScopedN( "map_perception_acquire" );
+    auto counts = acquisition_counts{};
+    auto &here = get_map();
+    auto &you = get_avatar();
+    const auto zlev = you.bub_pos().z();
+    if( state.owner != &here || state.origin != here.get_abs_sub() ||
+        state.dimension != here.get_bound_dimension() || state.size != here.getmapsize() ) {
+        reset();
+        state.owner = &here;
+        state.origin = here.get_abs_sub();
+        state.dimension = here.get_bound_dimension();
+        state.size = here.getmapsize();
+    }
+    you.recalc_sight_limits();
+    g->reset_light_level();
+    // Detect changed actor knowledge before the CPU cached-light shortcut. Unchanged
+    // inputs reuse native caches; camera offset, zoom and redraw are not inputs.
+    invalidate_stale_visibility( here );
+    // Native sparse dynamic-light detection must run even with a clean visibility flag.
+    if( options.build_caches ) {
+        ++counts.cache_checks;
+        here.build_map_cache( zlev, false );
+    }
+    if( here.visibility_caches_dirty() ) {
+        ++counts.visibility_updates;
+        here.update_visibility_cache( zlev );
+    }
+    const auto previous_position = std::exchange( state.position, you.abs_pos() );
+    const auto previous_blind = std::exchange( state.blind, you.is_blind() );
+    state.vision = here.get_visibility_variables_cache();
+    state.threshold = g_visible_threshold;
+    const auto view = current_sight();
+
+    {
+        ZoneScopedN( "map_perception_acquire_sparse" );
+        auto fields = decltype( state.fields ) {};
+        auto traps = decltype( state.traps ) {};
+        for( const auto &submap_view : here.active_submap_views() ) {
+            ++counts.submaps_checked;
+            const auto &sm = submap_view.get_submap();
+            for( const auto &local : sm.trap_cache ) {
+                ++counts.traps_checked;
+                const auto trap = sm.get_effective_trap( local );
+                if( trap != tr_null ) {
+                    traps.emplace( abs_to_map_local( here, project_combine( submap_view.abs_pos(), local ) ), trap );
+                }
+            }
+            for( const auto &local : sm.field_cache ) {
+                ++counts.fields_checked;
+                const auto p = abs_to_map_local( here, project_combine( submap_view.abs_pos(), local ) );
+                const auto &field = sm.get_field( local );
+                if( field.field_count() ) {
+                    fields.emplace( p, field_appearance{ .field = field.displayed_field_type(),
+                                                         .terrain = sm.get_ter( local ), .furniture = sm.get_furn( local ) } );
+                }
+            }
+        }
+        update_sparse( here, state.fields, std::move( fields ) );
+        update_sparse( here, state.traps, std::move( traps ) );
+        auto vehicles = decltype( state.vehicles ) {};
+        for( const auto &wrapped : here.get_vehicles() ) {
+            for( const auto &abs : wrapped.v->get_points() ) {
+                ++counts.vehicle_points_checked;
+                const auto p = abs_to_map_local( here, abs );
+                if( !here.inbounds( p ) ) {
+                    continue;
+                }
+                const auto facts = observe( here, p, view, normally_visible( here, p, view ) );
+                vehicles.emplace( p, vehicle_appearance{ .tile = facts.vehicle_tile,
+                                  .symbol = facts.vehicle_symbol, .stationary = facts.stationary_vehicle,
+                                  .detailed = detailed_at( here, p, view ) } );
+            }
+        }
+        update_sparse( here, state.vehicles, std::move( vehicles ) );
+    }
+    if( !state.full_pending && state.dirty.empty() ) {
+        return counts;
+    }
+    const auto &cache = here.access_cache( zlev );
+    you.prepare_map_memory_region( map_local_to_abs( here, tripoint_bub_ms( 0, 0, zlev ) ),
+                                   map_local_to_abs( here, tripoint_bub_ms( cache.cache_x - 1, cache.cache_y - 1, zlev ) ) );
+    auto facts = std::vector<cell_facts> {};
+    const auto acquire_cell = [&]( const auto & p ) {
+        ++counts.candidates;
+        if( detailed_at( here, p, view ) ) {
+            facts.push_back( observe( here, p, view, normally_visible( here, p, view ) ) );
+            state.pending.erase( p );
+        }
+    };
+    if( state.full_pending ) {
+        ZoneScopedN( "map_perception_acquire_full_rescan" );
+        ++counts.full_rescans;
+        auto seen = std::vector<int>( static_cast<size_t>( here.getmapsize() ) * here.getmapsize(), 0 );
+        // Squares whose sight did not change keep what the last scan made of them. The avatar's
+        // surroundings, traps, vehicles and invalidated squares depend on more than sight.
+        auto clear = clear_squares( here, zlev );
+        auto columns = changed_columns( state.clear, clear, cache, view.blind || previous_blind );
+        const auto mark = [&]( const tripoint_bub_ms & p ) { mark_column( columns, cache, p.xy() ); };
+        mark( you.bub_pos() );
+        mark( abs_to_map_local( here, previous_position ) );
+        std::ranges::for_each( state.traps | std::views::keys, mark );
+        std::ranges::for_each( state.vehicles | std::views::keys, mark );
+        std::ranges::for_each( state.dirty, mark );
+        state.clear = std::move( clear );
+        for( const auto y : std::views::iota( 0, cache.cache_y ) ) {
+            for( const auto x : std::views::iota( 0, cache.cache_x ) ) {
+                const auto light = cache.visibility_cache[cache.idx( x, y )];
+                seen[( x / SEEX ) * here.getmapsize() + y / SEEY] +=
+                    light == lit_level::BRIGHT || light == lit_level::LIT;
+                if( !columns[cache.idx( x, y )] ) {
+                    continue;
+                }
+                // Follow exposed surfaces, not the camera and not every clear z-level.
+                for( const auto z : std::views::iota( -OVERMAP_DEPTH, zlev + 1 ) | std::views::reverse ) {
+                    const auto p = tripoint_bub_ms( x, y, z );
+                    acquire_cell( p );
+                    if( here.dont_draw_lower_floor( p ) || here.veh_at( p ) ) {
+                        break;
+                    }
+                }
+            }
+        }
+        for( const auto y : std::views::iota( 0, here.getmapsize() ) ) {
+            for( const auto x : std::views::iota( 0, here.getmapsize() ) ) {
+                if( seen[x * here.getmapsize() + y] > 36 ) {
+                    const auto sm = tripoint_bub_sm( x, y, zlev );
+                    const auto omt = project_to<coords::omt>( map_local_to_abs( here, sm ) );
+                    get_overmapbuffer( here.get_bound_dimension() ).set_seen( tripoint_abs_omt( omt.xy(), 0 ), true );
+                }
+            }
+        }
+    } else {
+        ZoneScopedN( "map_perception_acquire_dirty" );
+        for( const auto &p : state.dirty ) {
+            // Only exposed surfaces in this column are candidates, even for dirty lower cells.
+            if( p.z() > zlev ) {
+                continue;
+            }
+            auto exposed = true;
+            for( const auto z : std::views::iota( p.z() + 1, zlev + 1 ) ) {
+                const auto above = tripoint_bub_ms( p.xy(), z );
+                if( here.dont_draw_lower_floor( above ) || here.veh_at( above ) ) {
+                    exposed = false;
+                    break;
+                }
+            }
+            if( exposed ) {
+                acquire_cell( p );
+            }
+        }
+    }
+    // Derive against the completed facts and previous memory, before committing anything.
+    ZoneNamedN( commit_zone, "map_perception_acquire_commit", true );
+    auto memories = std::vector<cell_memory> {};
+    memories.reserve( facts.size() );
+    for( const auto &cell : facts ) {
+        memories.push_back( derive( here, cell, view ) );
+    }
+    state.committing = true;
+    const auto finish_commit = on_out_of_scope( []() { state.committing = false; } );
+    for( const auto &cell : memories ) {
+        if( you.get_terrain_tile( cell.position ) != cell.terrain ) {
+            you.memorize_terrain_tile( cell.position, cell.terrain.tile, cell.terrain.subtile,
+                                       cell.terrain.rotation );
+            ++counts.memory_writes;
+        }
+        if( you.get_memorized_tile( cell.position ) != cell.overlay ) {
+            you.memorize_tile( cell.position, cell.overlay.tile, cell.overlay.subtile, cell.overlay.rotation );
+            ++counts.memory_writes;
+        }
+        if( you.get_memorized_symbol( cell.position ) != cell.symbol ) {
+            you.memorize_symbol( cell.position, cell.symbol );
+            ++counts.memory_writes;
+        }
+    }
+    state.full_pending = false;
+    state.dirty.clear();
+    counts.acquired = memories.size();
+    return counts;
+}
+
+auto remember( const map &here, const std::vector<tripoint_bub_ms> &squares ) -> void
+{
+    auto &you = get_avatar();
+    const auto view = current_sight();
+    // Neighbours out of sight join by what is remembered of them: the first pass remembers what each
+    // square holds, the second how it joins what is now beside it.
+    for( auto pass = 0; pass < 2; ++pass ) {
+        for( const auto &p : squares ) {
+            const auto cell = derive( here, observe( here, p, view, true ), view );
+            you.memorize_terrain_tile( cell.position, cell.terrain.tile, cell.terrain.subtile,
+                                       cell.terrain.rotation );
+            you.memorize_tile( cell.position, cell.overlay.tile, cell.overlay.subtile,
+                               cell.overlay.rotation );
+            you.memorize_symbol( cell.position, cell.symbol );
+        }
+    }
+}
+
+auto contact( const tripoint_bub_ms &p ) -> void
+{
+    auto &here = get_map();
+    auto &you = get_avatar();
+    if( !here.inbounds( p ) ) {
+        return;
+    }
+    const auto abs = map_local_to_abs( here, p );
+    const auto vp = here.veh_at( p );
+    if( vp ) {
+        const auto &veh = vp->vehicle();
+        auto modifier = char{ 0 };
+        const auto &id = veh.part_id_string( vp->part_index(), false, modifier );
+        you.memorize_tile( abs, "vp_" + id.str(), modifier == 1 ? open_ : modifier == 2 ? broken : 0, 0 );
+        you.memorize_symbol( abs, special_symbol( veh.part_sym( vp->part_index() ) ) );
+    } else if( here.has_furn( p ) ) {
+        you.memorize_tile( abs, here.furn( p ).id().str(), 0, 0 );
+        you.memorize_symbol( abs, here.furn( p )->symbol() );
+    } else {
+        const auto &ter = here.ter( p );
+        // Classify recorded producer IDs, not hidden world traps. Unknown or
+        // cross-category ambiguous descriptors are not evidence of contradiction.
+        const auto overlay = you.get_memorized_tile( abs ).tile;
+        const auto furniture = furn_str_id( overlay ).is_valid() && furn_str_id( overlay ).id() != f_null;
+        const auto vehicle_id = overlay.starts_with( "vp_" ) ? vpart_id( overlay.substr(
+                                    3 ) ) : vpart_id::NULL_ID();
+        const auto vehicle = vehicle_id.is_valid() && vehicle_id != vpart_id::NULL_ID();
+        const auto terrain = ter_str_id( overlay ).is_valid() && ter_str_id( overlay ).id() != t_null;
+        const auto trap = trap_str_id( overlay ).is_valid();
+        if( !trap && furniture + vehicle + terrain == 1 &&
+            ( furniture || vehicle || ter_str_id( overlay ).id() != ter ) ) {
+            you.clear_memorized_overlay( abs );
+        }
+        you.memorize_terrain_tile( abs, ter.id().str(), 0, 0 );
+        you.memorize_symbol( abs, ter->symbol() );
+    }
+}
+
+} // namespace map_perception

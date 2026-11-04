@@ -1,5 +1,19 @@
 #include "input.h"
 
+#if defined(__ANDROID__)
+std::list<input_context *> input_context::input_context_stack;
+#endif
+
+// The narrow host platform target compiles the real Android lifecycle above/in input.h,
+// without linking a host-layout input_context to Android-layout objects or requiring SDL/NDK.
+#if !defined(CATA_INPUT_LIFECYCLE_TEST)
+#include "client_input.h"
+#include "client_display.h"
+#include "client_interaction.h"
+#include "engine_client_component.h"
+#include "engine_client_contract.h"
+#include "engine_client_screen_keys.h"
+
 #include <algorithm>
 #include <cctype>
 #include <fstream>
@@ -10,6 +24,7 @@
 #include <exception>
 #include <locale>
 #include <memory>
+#include <ranges>
 #include <set>
 #include <utility>
 
@@ -70,15 +85,6 @@ static std::string int_to_str( int number )
     buffer.imbue( std::locale::classic() );
     buffer << number;
     return buffer.str();
-}
-
-bool is_mouse_enabled()
-{
-#if defined(_WIN32) && !defined(TILES)
-    return false;
-#else
-    return true;
-#endif
 }
 
 //helper function for those have problem inputting certain characters.
@@ -699,8 +705,6 @@ const std::string &input_context::input_to_action( const input_event &inp ) cons
 }
 
 #if defined(__ANDROID__)
-std::list<input_context *> input_context::input_context_stack;
-
 void input_context::register_manual_key( manual_key mk )
 {
     // Prevent duplicates
@@ -738,7 +742,9 @@ void input_context::register_action( const std::string &action_descriptor,
         handling_coordinate_input = true;
     }
 
-    registered_actions.push_back( action_descriptor );
+    if( !std::ranges::contains( registered_actions, action_descriptor ) ) {
+        registered_actions.push_back( action_descriptor );
+    }
     if( !name.empty() ) {
         action_name_overrides[action_descriptor] = name;
     }
@@ -939,7 +945,24 @@ const std::string &input_context::handle_input( const int timeout )
     while( true ) {
         {
             ZoneScopedN( "input_context_get_input_event" );
+            const auto active_context = game_client::input_context_scope( *this, category,
+                                        inp_mngr.get_timeout() );
             next_action = inp_mngr.get_input_event();
+        }
+        // The map view carries out a client's pickup, drop or square action itself (game::handle_action); it has no widget.
+        if( category == "DEFAULTMODE" && ( engine_client::item_operation_of( next_action ) ||
+                                           engine_client::tile_operation_of( next_action ) ||
+                                           engine_client::mode_operation_of( next_action ) ) ) {
+            result = &ANY_INPUT;
+            break;
+        }
+        if( next_action.interaction ) {
+            const auto valid = game_client::validate_interaction_event( *this, *next_action.interaction );
+            if( !valid ) {
+                throw std::runtime_error( "Semantic interaction rejected: " + valid.error() );
+            }
+            result = &ANY_INPUT;
+            break;
         }
         if( next_action.type == input_event_t::timeout ) {
             result = &TIMEOUT;
@@ -948,6 +971,11 @@ const std::string &input_context::handle_input( const int timeout )
 
         const auto &action = [&]() -> const std::string & {
             ZoneScopedN( "input_context_input_to_action" );
+            if( !next_action.action.empty() )
+            {
+                const auto found = std::ranges::find( registered_actions, next_action.action );
+                return found != registered_actions.end() ? *found : CATA_ERROR;
+            }
             return input_to_action( next_action );
         }();
 
@@ -1086,6 +1114,15 @@ enum class fallback_action {
     execute,
 };
 } // namespace
+namespace ec = engine_client;
+namespace
+{
+/// The components and affordances of the keybindings screen.
+constexpr auto keybindings_actions = "keybindings:actions";
+constexpr auto keybindings_select = "keybindings:select";
+constexpr auto keybindings_pick = "keybindings:pick";
+constexpr auto keybindings_filter = "keybindings:filter";
+} // namespace
 static const std::map<fallback_action, int> fallback_keys = {
     { fallback_action::add_local, '+' },
     { fallback_action::add_global, '=' },
@@ -1096,6 +1133,8 @@ static const std::map<fallback_action, int> fallback_keys = {
 action_id input_context::display_menu( const bool permit_execute_action )
 {
     action_id action_to_execute = ACTION_NULL;
+    // The keys the screen open on this context gives its own actions, listed after its registered ones.
+    const auto own_keys = ec::screen_keys( *this );
 
     // Shamelessly stolen from help.cpp
     input_context ctxt( "HELP_KEYBINDINGS" );
@@ -1118,9 +1157,9 @@ action_id input_context::display_menu( const bool permit_execute_action )
     ctxt.register_action( "TEXT.HOME" );
     ctxt.register_action( "TEXT.END" );
     ctxt.register_action( "TEXT.DELETE" );
-#if defined( TILES )
-    ctxt.register_action( "TEXT.PASTE" );
-#endif
+    if( game_client::has_tiles() ) {
+        ctxt.register_action( "TEXT.PASTE" );
+    }
     ctxt.register_action( "TEXT.INPUT_FROM_FILE" );
     ctxt.register_action( "ANY_INPUT" );
 
@@ -1186,21 +1225,27 @@ action_id input_context::display_menu( const bool permit_execute_action )
     static const nc_color unbound_key = c_light_red;
     // (vertical) scroll offset
     size_t scroll_offset = 0;
+    // The action row an engine client acts on; native input shows none.
+    size_t cursor = 0;
     // keybindings help
-    std::string legend;
-    legend += colorize( _( "Unbound keys" ), unbound_key ) + "\n";
-    legend += colorize( _( "Keybinding active only on this screen" ), local_key ) + "\n";
-    legend += colorize( _( "Keybinding active globally" ), global_key ) + "\n";
-    legend += string_format(
-                  _( "Press %c to remove keybinding\nPress %c to add local keybinding\nPress %c to add global keybinding\n" ),
-                  fallback_keys.at( fallback_action::remove ),
-                  fallback_keys.at( fallback_action::add_local ),
-                  fallback_keys.at( fallback_action::add_global ) );
-    if( permit_execute_action ) {
+    const auto legend_of = [&]() {
+        std::string legend;
+        legend += colorize( _( "Unbound keys" ), unbound_key ) + "\n";
+        legend += colorize( _( "Keybinding active only on this screen" ), local_key ) + "\n";
+        legend += colorize( _( "Keybinding active globally" ), global_key ) + "\n";
         legend += string_format(
-                      _( "Press %c to execute action\n" ),
-                      fallback_keys.at( fallback_action::execute ) );
-    }
+                      _( "Press %c to remove keybinding\nPress %c to add local keybinding\nPress %c to add global keybinding\n" ),
+                      fallback_keys.at( fallback_action::remove ),
+                      fallback_keys.at( fallback_action::add_local ),
+                      fallback_keys.at( fallback_action::add_global ) );
+        if( permit_execute_action ) {
+            legend += string_format(
+                          _( "Press %c to execute action\n" ),
+                          fallback_keys.at( fallback_action::execute ) );
+        }
+        return legend;
+    };
+    const auto legend = legend_of();
 
     std::vector<std::string> filtered_registered_actions = org_registered_actions;
     std::string filter_phrase;
@@ -1263,6 +1308,73 @@ action_id input_context::display_menu( const bool permit_execute_action )
     };
     ui.on_redraw( redraw );
 
+    // One row per action as the native menu lists them, under the mode that picking a row acts in.
+    const auto keybindings_view = [&]() -> ec::screen_view {
+        const auto mode = status == s_add ? "ADD_LOCAL" : status == s_add_global ? "ADD_GLOBAL" :
+        status == s_remove ? "REMOVE" : status == s_execute ? "EXECUTE" : "";
+        auto rows = std::vector<ec::row> {};
+        for( const auto &[index, action_id] : std::views::enumerate( filtered_registered_actions ) )
+        {
+            auto is_local = false;
+            const auto &attributes = inp_mngr.get_action_attributes( action_id, category, &is_local );
+            const auto &color = attributes.input_events.empty() ? unbound_key : is_local ? local_key :
+                                global_key;
+            rows.push_back( {
+                .id = "action:" + action_id, .label = get_action_name( action_id ), .selected = static_cast<size_t>( index ) == cursor,
+                .columns = { { .key = "keys", .label = _( "Keys" ), .value = get_desc( action_id ), .color = {} },
+                    {
+                        .key = "scope", .label = _( "Scope" ), .value = attributes.input_events.empty() ? _( "Unbound" ) :
+                        is_local ? _( "Local" ) : _( "Global" ), .color = {}
+                    }
+                },
+                .color = string_from_color( color ),
+            } );
+        }
+        for( const auto &[index, key] : std::views::enumerate( own_keys ) )
+        {
+            if( !filter_phrase.empty() && !lcmatch( key.label, filter_phrase ) ) { continue; }
+            rows.push_back( {
+                .id = "screen_key:" + std::to_string( index ), .label = key.label, .selectable = false,
+                .columns = { { .key = "keys", .label = _( "Keys" ), .value = join( key.keys, ", " ), .color = {} },
+                    { .key = "scope", .label = _( "Scope" ), .value = _( "This screen" ), .color = {} }
+                },
+                .color = string_from_color( local_key ),
+            } );
+        }
+        const auto focus_row = cursor < rows.size() ? rows[cursor].id : std::string{};
+        const auto row_arg = ec::arg_shape{ .row = ec::row_shape{ .component_id = keybindings_actions } };
+        auto actions = ec::list( { .id = keybindings_actions, .rows = std::move( rows ), .selection = "single",
+                                   .activate = keybindings_pick, .filterable = true } );
+        actions.affordances.push_back( keybindings_select );
+        actions.affordances.push_back( keybindings_filter );
+        auto stats = std::vector<ec::panel_stat> {};
+        if( status != s_show )
+        {
+            stats.push_back( { .key = "mode", .label = _( "Mode" ), .value = ctxt.get_action_name( mode ) } );
+        }
+        return {
+            .title = _( "Keybindings" ),
+            .root = ec::panel( {
+                .id = "keybindings:window", .title = _( "Keybindings" ), .stats = std::move( stats ), .filter = filter_phrase,
+                .child = ec::split( {
+                    .id = "keybindings:body", .relation = "detail", .active = keybindings_actions,
+                    .children = ec::children_of( ec::component{ .id = "keybindings:legend", .body = ec::text_body{ .markup = legend_of() } },
+                    std::move( actions ) ) } ) } ),
+            .affordances = {
+                ec::invoke_affordance( { .id = keybindings_select, .label = _( "Select" ), .args = row_arg, .role = "select" } ),
+                ec::invoke_affordance( {
+.id = keybindings_pick, .label = status == s_show ? std::string{ _( "Select" ) } : ctxt.get_action_name( mode ),
+                    .args = row_arg, .enabled = status != s_show } ),
+                ec::invoke_affordance( {
+                    .id = keybindings_filter, .label = _( "Filter" ), .args = { .text = ec::text_shape{} },
+                    .enabled = status == s_show } ),
+            },
+            .focus_component = keybindings_actions, .focus_row = focus_row,
+        };
+    };
+    spopup.shares_screen = true;
+    const auto screen = ec::screen_scope( ctxt, "keybindings", { .view = [&]( const auto & /*state*/ ) { return keybindings_view(); } } );
+
     // do not switch IME mode now, but restore previous mode on return
     ime_sentry sentry( ime_sentry::keep );
     while( true ) {
@@ -1281,9 +1393,35 @@ action_id input_context::display_menu( const bool permit_execute_action )
             }
         }
 
+        // A client's affordance acts like the key that does the same.
+        const auto invoked = ec::invoked( ctxt.get_raw_input() );
+        if( invoked && invoked->affordance_id == keybindings_filter && invoked->args.text &&
+            status == s_show ) {
+            filter_phrase = *invoked->args.text;
+        }
         filtered_registered_actions = filter_strings_by_phrase( org_registered_actions, filter_phrase );
         if( scroll_offset > filtered_registered_actions.size() ) {
             scroll_offset = 0;
+        }
+        cursor = std::min( cursor, filtered_registered_actions.empty() ? 0 :
+                           filtered_registered_actions.size() - 1 );
+
+        auto picked_action = std::optional<size_t> {};
+        if( invoked ) {
+            const auto picked = invoked->args.row ? std::ranges::find_if( filtered_registered_actions, [&](
+            const std::string & id ) {
+                return *invoked->args.row == "action:" + id;
+            } ) : filtered_registered_actions.end();
+            action.clear();
+            if( picked != filtered_registered_actions.end() ) {
+                cursor = static_cast<size_t>( picked - filtered_registered_actions.begin() );
+                if( invoked->affordance_id == keybindings_pick ) {
+                    picked_action = cursor;
+                }
+            }
+            if( !picked_action ) {
+                continue;
+            }
         }
 
         // In addition to the modifiable hotkeys, we also check for hardcoded
@@ -1311,12 +1449,14 @@ action_id input_context::display_menu( const bool permit_execute_action )
                 status = s_execute;
             }
         } else if( action == "DOWN" ) {
+            cursor = cursor + 1 < filtered_registered_actions.size() ? cursor + 1 : 0;
             if( !filtered_registered_actions.empty()
                 && filtered_registered_actions.size() > display_height
                 && scroll_offset < filtered_registered_actions.size() - display_height ) {
                 scroll_offset++;
             }
         } else if( action == "UP" ) {
+            cursor = cursor > 0 ? cursor - 1 : std::max<size_t>( filtered_registered_actions.size(), 1 ) - 1;
             if( !filtered_registered_actions.empty()
                 && scroll_offset > 0 ) {
                 scroll_offset--;
@@ -1351,10 +1491,10 @@ action_id input_context::display_menu( const bool permit_execute_action )
             hotkeys = ctxt.get_available_single_char_hotkeys( display_help_hotkeys );
         } else if( !filtered_registered_actions.empty() && status != s_show ) {
             const size_t hotkey_index = hotkeys.find_first_of( raw_input_char );
-            if( hotkey_index == std::string::npos ) {
+            if( !picked_action && hotkey_index == std::string::npos ) {
                 continue;
             }
-            const size_t action_index = hotkey_index + scroll_offset;
+            const size_t action_index = picked_action ? *picked_action : hotkey_index + scroll_offset;
             if( action_index >= filtered_registered_actions.size() ) {
                 continue;
             }
@@ -1476,63 +1616,23 @@ void input_manager::wait_for_any_key()
     }
 }
 
-#if !(defined(TILES) || defined(_WIN32))
-// Also specify that we don't have a gamepad plugged in.
-bool gamepad_available()
+auto input_context::action_name_source( const std::string &action_id ) const ->
+std::optional<std::reference_wrapper<const translation>> // *NOPAD*
 {
-    return false;
+    const auto action_override = action_name_overrides.find( action_id );
+    if( action_override != action_name_overrides.end() ) { return std::cref( action_override->second ); }
+    const auto &attributes = inp_mngr.get_action_attributes( action_id, category );
+    if( !attributes.name.empty() ) { return std::cref( attributes.name ); }
+    // A local unnamed action masks the global binding, but keeps its native label fallback.
+    const auto &defaults = inp_mngr.get_action_attributes( action_id, default_context_id );
+    if( !defaults.name.empty() ) { return std::cref( defaults.name ); }
+    return std::nullopt;
 }
 
-std::optional<tripoint_bub_ms> input_context::get_coordinates( const catacurses::window
-        &capture_win )
+auto input_context::get_action_name( const std::string &action_id ) const -> std::string
 {
-    if( !coordinate_input_received ) {
-        return std::nullopt;
-    }
-    const point view_size( getmaxx( capture_win ), getmaxy( capture_win ) );
-    const point win_min( getbegx( capture_win ),
-                         getbegy( capture_win ) );
-    const half_open_rectangle<point> win_bounds( win_min, win_min + view_size );
-    if( !win_bounds.contains( coordinate ) ) {
-        return std::nullopt;
-    }
-
-    point_bub_ms view_offset;
-    if( capture_win == g->w_terrain ) {
-        view_offset = g->ter_view_p.xy();
-    }
-
-    const point_bub_ms p = view_offset - ( view_size / 2 - coordinate );
-    return tripoint_bub_ms( p, g->get_levz() );
-}
-#endif
-
-std::string input_context::get_action_name( const std::string &action_id ) const
-{
-    // 1) Check action name overrides specific to this input_context
-    const auto action_name_override =
-        action_name_overrides.find( action_id );
-    if( action_name_override != action_name_overrides.end() ) {
-        return action_name_override->second.translated();
-    }
-
-    // 2) Check if the hotkey has a name
-    const action_attributes &attributes = inp_mngr.get_action_attributes( action_id, category );
-    if( !attributes.name.empty() ) {
-        return attributes.name.translated();
-    }
-
-    // 3) If the hotkey has no name, the user has created a local hotkey in
-    // this context that is masking the global hotkey. Fallback to the global
-    // hotkey's name.
-    const action_attributes &default_attributes = inp_mngr.get_action_attributes( action_id,
-            default_context_id );
-    if( !default_attributes.name.empty() ) {
-        return default_attributes.name.translated();
-    }
-
-    // 4) Unable to find suitable name. Keybindings configuration likely borked
-    return action_id;
+    const auto source = action_name_source( action_id );
+    return source ? source->get().translated() : action_id;
 }
 
 // (Press X (or Y)|Try) to Z
@@ -1614,3 +1714,4 @@ void input_context::reset_timeout()
 {
     timeout = -1;
 }
+#endif // !CATA_INPUT_LIFECYCLE_TEST

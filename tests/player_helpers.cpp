@@ -23,7 +23,9 @@
 #include "stomach.h"
 #include "string_id.h"
 #include "type_id.h"
+#include "vitamin.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <list>
 #include <memory>
@@ -57,6 +59,8 @@ void clear_character(player& dummy, bool debug_storage) {
     dummy.inv_clear();
     dummy.remove_primary_weapon();
     dummy.clear_mutations();
+    // Clearing keeps the grown table, whose layout would order the mutations.
+    dummy.my_mutations = {};
 
     // Prevent spilling, but don't cause encumbrance
     if (debug_storage && !dummy.has_trait(trait_id("DEBUG_STORAGE"))) {
@@ -73,6 +77,8 @@ void clear_character(player& dummy, bool debug_storage) {
     // contents (needs to happen before clear_morale).
     dummy.stomach.empty();
     dummy.consumption_history->elems.clear();
+    // As a new character's: a deficiency an earlier test starved into it would blind it at night.
+    std::ranges::for_each(vitamin::all(), [&](const auto& v) { dummy.vitamin_set(v.id, 0); });
     item& food = *item::spawn_temporary("debug_nutrition");
     dummy.eat(food);
 
@@ -81,10 +87,14 @@ void clear_character(player& dummy, bool debug_storage) {
     dummy.environmental_revert_effect();
 
     dummy.clear_skills();
+    // Losing a skill unlearns nothing, so the recipes earlier skills or tests taught are forgotten
+    // here.
+    dummy.forget_recipes();
     dummy.clear_morale();
     dummy.activity->set_to_null();
     // Make sure any lingering safe references from the activity are removed
     dummy.activity->targets.clear();
+    dummy.backlog.clear();
     dummy.reset_chargen_attributes();
     dummy.set_pain(0);
     dummy.reset_bonuses();
@@ -101,6 +111,8 @@ void clear_character(player& dummy, bool debug_storage) {
     dummy.clear_effects();   // mark effects for removal
     dummy.process_effects(); // actually remove them
     dummy.set_underwater(false);
+    // Removing a blindness or a sleep leaves the sight it limited cut short until recalculated.
+    dummy.recalc_sight_limits();
 
     // Make stats nominal.
     dummy.str_max = 8;
@@ -125,7 +137,10 @@ void clear_character(player& dummy, bool debug_storage) {
     dummy.invalidate_crafting_inventory();
 }
 
-void clear_avatar() { clear_character(g->u); }
+void clear_avatar() {
+    clear_character(g->u);
+    g->u.reset_all_missions();
+}
 
 void process_activity(player& dummy) {
     do {

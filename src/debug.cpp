@@ -1,4 +1,5 @@
 #include "debug.h"
+#include "debug_test_support.h"
 #include "debug_log_capture.h"
 
 #include <algorithm>
@@ -82,9 +83,9 @@
 #   include <backtrace.h>
 #endif
 
-#if defined(TILES)
-#include "sdl_wrappers.h"
-#endif // TILES
+#include "client_input.h"
+#include "client_interaction.h"
+#include "client_presentation.h"
 
 #if defined(__ANDROID__)
 // used by android_version() function for __system_property_get().
@@ -131,6 +132,18 @@ static bool capturing = false;
 /** сaptured debug messages */
 static std::string captured;
 static std::ostringstream captured_log;
+
+#if defined(BACKTRACE)
+namespace
+{
+auto backtrace_deadline() -> time_t & // *NOPAD*
+{
+    // Push the first retrieved value back by a second so it won't match.
+    static auto next = time( nullptr ) - 1;
+    return next;
+}
+} // namespace
+#endif
 
 
 #if defined(_WIN32) && defined(LIBBACKTRACE)
@@ -340,31 +353,32 @@ static void debug_error_prompt(
     };
     init_window( ui );
     ui.on_screen_resize( init_window );
-    const std::string message = string_format(
-                                    "\n\n" // Looks nicer with some space
-                                    " %s\n" // translated user string: error notification
-                                    " -----------------------------------------------------------\n"
-                                    "%s"
-                                    " -----------------------------------------------------------\n"
+    auto message = string_format(
+                       "\n\n" // Looks nicer with some space
+                       " %s\n" // translated user string: error notification
+                       " -----------------------------------------------------------\n"
+                       "%s"
+                       " -----------------------------------------------------------\n"
 #if defined(BACKTRACE)
-                                    " %s\n" // translated user string: where to find backtrace
+                       " %s\n" // translated user string: where to find backtrace
 #endif
-                                    " %s\n" // translated user string: space to continue
-                                    " %s\n" // translated user string: ignore key
-#if defined(TILES)
-                                    " %s\n" // translated user string: copy
-#endif // TILES
-                                    , _( "An error has occurred!  Written below is the error report:" ),
-                                    formatted_report,
+                       " %s\n" // translated user string: space to continue
+                       " %s\n" // translated user string: ignore key
+                       , _( "An error has occurred!  Written below is the error report:" ),
+                       formatted_report,
 #if defined(BACKTRACE)
-                                    backtrace_instructions,
+                       backtrace_instructions,
 #endif
-                                    _( "Press <color_white>space bar</color> to continue the game." ),
-                                    _( "Press <color_white>I</color> (or <color_white>i</color>) to also ignore this particular message in the future." )
-#if defined(TILES)
-                                    , _( "Press <color_white>C</color> (or <color_white>c</color>) to copy this message to the clipboard." )
-#endif // TILES
-                                );
+                       _( "Press <color_white>space bar</color> to continue the game." ),
+                       _( "Press <color_white>I</color> (or <color_white>i</color>) to also ignore this particular message in the future." )
+                   );
+    const auto clipboard_available = game_client::presentation().clipboard_available();
+    if( clipboard_available ) {
+        message += " ";
+        message +=
+            _( "Press <color_white>C</color> (or <color_white>c</color>) to copy this message to the clipboard." );
+        message += "\n";
+    }
     ui.on_redraw( [&]( const ui_adaptor & ) {
         catacurses::erase();
         fold_and_print( catacurses::stdscr, point_zero, getmaxx( catacurses::stdscr ), c_light_red,
@@ -372,21 +386,88 @@ static void debug_error_prompt(
         wnoutrefresh( catacurses::stdscr );
     } );
 
+    auto ctxt = input_context( "DEBUG_MSG" );
 #if defined(__ANDROID__)
-    input_context ctxt( "DEBUG_MSG" );
     ctxt.register_manual_key( 'C' );
     ctxt.register_manual_key( 'I' );
     ctxt.register_manual_key( ' ' );
 #endif
+    const auto continue_id = game_client::opaque_interaction_id( "debug-choice",
+    {filename, line, "continue"} );
+    const auto ignore_id = game_client::opaque_interaction_id( "debug-choice",
+    {filename, line, "ignore"} );
+    const auto copy_id = game_client::opaque_interaction_id( "debug-choice",
+    {filename, line, "copy"} );
+    // Diagnostic/metadata bytes are literal data, not markup. Strip only trusted fragments,
+    // before interpolating runtime values such as the backtrace path.
+    auto interaction_message = std::string( "\n\n " ) + remove_color_tags(
+                                   _( "An error has occurred!  Written below is the error report:" ) ) +
+                               "\n -----------------------------------------------------------\n";
+    interaction_message += formatted_report;
+    interaction_message += " -----------------------------------------------------------\n";
+#if defined(BACKTRACE)
+    interaction_message += " " + string_format(
+                               remove_color_tags( _( "See %s for a full stack backtrace" ) ),
+                               PATH_INFO::debug() ) + "\n";
+#endif
+    interaction_message += " " + remove_color_tags(
+                               _( "Press <color_white>space bar</color> to continue the game." ) ) + "\n";
+    interaction_message += " " + remove_color_tags(
+                               _( "Press <color_white>I</color> (or <color_white>i</color>) to also ignore this particular message in the future." ) )
+                           +
+                           "\n";
+    if( clipboard_available ) {
+        interaction_message += " " + remove_color_tags(
+                                   _( "Press <color_white>C</color> (or <color_white>c</color>) to copy this message to the clipboard." ) )
+                               +
+                               "\n";
+    }
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        auto snapshot = game_client::interaction_snapshot{};
+        snapshot.kind = game_client::interaction_kind::choices;
+        snapshot.title = _( "An error has occurred!" );
+        snapshot.message = interaction_message;
+        const auto choice = []( const auto & id, const auto & label ) {
+            auto result = game_client::interaction_choice{};
+            result.id = id;
+            result.label = label;
+            return result;
+        };
+        snapshot.choices = { choice( continue_id, _( "Continue" ) ),
+                             choice( ignore_id, _( "Ignore" ) )
+                           };
+        if( clipboard_available ) {
+            snapshot.choices.push_back( choice( copy_id, _( "Copy" ) ) );
+        }
+        return snapshot;
+    } );
     for( bool stop = false; !stop && !dont_debugmsg; ) {
         ui_manager::redraw();
-        switch( inp_mngr.get_input_event().get_first_input() ) {
-#if defined(TILES)
+        auto event = input_event{};
+        {
+            const auto active_context = game_client::input_context_scope( ctxt,
+                                        ctxt.category_name(), inp_mngr.get_timeout() );
+            event = inp_mngr.get_input_event();
+        }
+        auto key = event.get_first_input();
+        if( event.interaction ) {
+            const auto valid = game_client::validate_interaction_event( ctxt, *event.interaction );
+            if( !valid ) {
+                throw std::runtime_error( "Semantic interaction rejected: " + valid.error() );
+            }
+            if( event.interaction->target_id == continue_id ) {
+                key = ' ';
+            } else if( event.interaction->target_id == ignore_id ) {
+                key = 'I';
+            } else if( event.interaction->target_id == copy_id ) {
+                key = 'C';
+            }
+        }
+        switch( key ) {
             case 'c':
             case 'C':
-                SDL_SetClipboardText( formatted_report.c_str() );
+                game_client::presentation().set_clipboard_text( formatted_report );
                 break;
-#endif // TILES
             case 'i':
             case 'I':
                 ignored_messages.insert( msg_key );
@@ -524,6 +605,92 @@ struct repetition_folder {
 
 static thread_local repetition_folder rep_folder;
 static void output_repetitions( std::ostream &out );
+
+namespace debug_test_support
+{
+
+struct scoped_state::saved_state {
+    std::set<std::string> ignored;
+    repetition_folder repetition;
+    std::vector<buffered_prompt_info> buffered;
+    std::vector<buffered_prompt_info> workers;
+    bool buffering = false;
+    bool error = false;
+    bool capture = false;
+    bool suppress = false;
+    bool testing = false;
+#if defined(BACKTRACE)
+    time_t backtrace = 0;
+#endif
+    enum_bitset<DL> levels;
+    enum_bitset<DC> classes;
+    std::string text;
+    std::ostringstream log;
+};
+
+scoped_state::scoped_state( const state_options &options ) :
+    saved_( std::make_unique<saved_state>() )
+{
+    // Allocate and acquire the worker lock before changing any state. Swaps preserve
+    // owned queue/report storage and the stream's formatting and error state.
+    auto lock = std::lock_guard( g_worker_prompts_mutex );
+    saved_->ignored.swap( ignored_messages );
+    std::swap( saved_->repetition, rep_folder );
+    saved_->buffered.swap( buffered_prompts() );
+    saved_->workers.swap( g_worker_thread_prompts );
+    saved_->buffering = buffering_debugmsgs.exchange( options.buffering );
+    saved_->error = error_observed.exchange( false );
+    saved_->capture = std::exchange( capturing, false );
+    saved_->suppress = std::exchange( dont_debugmsg, false );
+    saved_->testing = std::exchange( test_mode, false );
+    saved_->levels = debugLevel;
+    saved_->classes = debugClass;
+    debugLevel.set( DL::Error );
+    saved_->text.swap( captured );
+    saved_->log.swap( captured_log );
+#if defined(BACKTRACE)
+    saved_->backtrace = backtrace_deadline();
+#endif
+}
+
+scoped_state::~scoped_state() noexcept
+{
+    auto lock = std::lock_guard( g_worker_prompts_mutex );
+    saved_->ignored.swap( ignored_messages );
+    std::swap( saved_->repetition, rep_folder );
+    saved_->buffered.swap( buffered_prompts() );
+    saved_->workers.swap( g_worker_thread_prompts );
+    buffering_debugmsgs = saved_->buffering;
+    error_observed = saved_->error;
+    capturing = saved_->capture;
+    dont_debugmsg = saved_->suppress;
+    test_mode = saved_->testing;
+    debugLevel = saved_->levels;
+    debugClass = saved_->classes;
+    saved_->text.swap( captured );
+    saved_->log.swap( captured_log );
+#if defined(BACKTRACE)
+    backtrace_deadline() = saved_->backtrace;
+#endif
+}
+
+auto prompt( const prompt_options &options ) -> void
+{
+    debug_error_prompt( options.filename.c_str(), options.line.c_str(),
+                        options.function.c_str(), options.text.c_str(), options.force );
+}
+
+auto prime_repetition( const prompt_options &options ) -> void
+{
+    rep_folder.set( options.filename.c_str(), options.line.c_str(),
+                    options.function.c_str(), options.text );
+    rep_folder.repeat_count = repetition_folder::repetition_threshold - 1;
+    // A future hour pins the timeout comparison independently of scheduler delays.
+    // The real increment_count() replaces this with the real clock before routing.
+    rep_folder.m_time = { .hours = 24, .minutes = 0, .seconds = 0, .mseconds = 0 };
+}
+
+} // namespace debug_test_support
 
 void realDebugmsg( const char *filename, const char *line, const char *funcname,
                    const DL debug_level, const std::string &text )
@@ -1630,8 +1797,7 @@ detail::DebugLogGuard detail::realDebugLog( DL lev, DC cl, const char *filename,
 
         // Backtrace on error.
 #if defined(BACKTRACE)
-        // Push the first retrieved value back by a second so it won't match.
-        static time_t next_backtrace = time( nullptr ) - 1;
+        auto &next_backtrace = backtrace_deadline();
         time_t now = time( nullptr );
         if( lev == DL::Error && now >= next_backtrace ) {
             out << "(error message will follow backtrace)";

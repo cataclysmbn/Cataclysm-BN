@@ -18,6 +18,7 @@
 #include "input.h"
 #include "int_id.h"
 #include "item.h"
+#include "iteminfo_request.h"
 #include "item_contents.h"
 #include "item_search.h"
 #include "item_stack.h"
@@ -32,6 +33,7 @@
 #include "output.h"
 #include "overmap/overmapbuffer.h"
 #include "panels.h"
+#include "pickup_screen.h"
 #include "pickup_token.h"
 #include "player.h"
 #include "player_activity.h"
@@ -75,15 +77,6 @@ static void show_pickup_message( const pickup_map &mapPickup );
 static std::optional<tripoint_abs_omt> get_note_pos_from_item( const item &it );
 static void maybe_remove_favorite_drop_note( const tripoint_abs_omt &note_pos,
         const std::string &item_name );
-
-struct pickup_count {
-    bool pick = false;
-    // nullopt if the whole stack is being picked up, nonzero otherwise.
-    std::optional<int> count;
-    std::optional<size_t> parent;
-    std::vector<size_t> children;
-    bool all_children_picked = false;
-};
 
 static bool select_autopickup_items( const std::vector<std::list<item_stack::iterator>> &here,
                                      std::vector<pickup_count> &getitem )
@@ -367,10 +360,10 @@ static auto pick_one_up( const pick_one_up_options &opts ) -> bool
 
                     picked_up = !newloc;
                     if( u.primary_weapon().invlet ) {
-                        add_msg( m_info, _( "Wielding %c - %s" ), u.primary_weapon().invlet,
+                        add_msg( m_info, to_translation( "Wielding %c - %s" ), u.primary_weapon().invlet,
                                  u.primary_weapon().display_name() );
                     } else {
-                        add_msg( m_info, _( "Wielding - %s" ), u.primary_weapon().display_name() );
+                        add_msg( m_info, to_translation( "Wielding - %s" ), u.primary_weapon().display_name() );
                     }
                 } else {
                     add_msg( m_neutral, "%s", wield_check.c_str() );
@@ -481,13 +474,13 @@ bool do_pickup( std::vector<pick_drop_selection> &targets, bool autopickup )
     }
 
     if( got_water ) {
-        add_msg( m_info, _( "You can't pick up a liquid!" ) );
+        add_msg( m_info, to_translation( "You can't pick up a liquid!" ) );
     }
     if( weight_was_okay && u.weight_carried() > u.weight_capacity() ) {
-        add_msg( m_bad, _( "You're overburdened!" ) );
+        add_msg( m_bad, to_translation( "You're overburdened!" ) );
     }
     if( volume_was_okay && u.volume_carried() > u.volume_capacity() ) {
-        add_msg( m_bad, _( "You struggle to carry such a large volume!" ) );
+        add_msg( m_bad, to_translation( "You struggle to carry such a large volume!" ) );
     }
 
     return !problem;
@@ -617,6 +610,7 @@ std::vector<std::list<item_stack::iterator>> flatten( const std::vector<stacked_
 
 namespace
 {
+namespace ec = engine_client;
 
 auto append_item_iterators( item_stack &stack, std::vector<item_stack::iterator> &items ) -> void
 {
@@ -626,9 +620,19 @@ auto append_item_iterators( item_stack &stack, std::vector<item_stack::iterator>
     } );
 }
 
-auto pick_up_from_items( const std::vector<item_stack::iterator> &here, const int min,
-                         const std::optional<tripoint_bub_ms> &starting_pos ) -> void
+struct pick_up_from_items_options {
+    const std::vector<item_stack::iterator> &here;
+    int minimum;
+    std::optional<tripoint_bub_ms> starting_pos;
+    pickup::source_kind source;
+    std::string source_identity;
+};
+
+auto pick_up_from_items( const pick_up_from_items_options &opts ) -> void
 {
+    const auto &here = opts.here;
+    const auto min = opts.minimum;
+    const auto &starting_pos = opts.starting_pos;
     if( here.empty() ) {
         return;
     }
@@ -762,7 +766,9 @@ auto pick_up_from_items( const std::vector<item_stack::iterator> &here, const in
                 item *loc = *stacked_here[matches[selected]].front();
                 temperature_flag temperature = rot::temp::for_location( get_map(), *loc );
 
-                std::vector<iteminfo> this_item = selected_item.info( temperature );
+                const auto this_item = selected_item.info( {
+                    .temperature = temperature, .mode = iteminfo_mode::observation,
+                } );
 
                 item_info_data dummy( {}, {}, this_item, {}, iScrollPos );
                 dummy.without_getch = true;
@@ -909,12 +915,39 @@ auto pick_up_from_items( const std::vector<item_stack::iterator> &here, const in
 
         // Now print the two lists; those on the ground and about to be added to inv
         // Continue until we hit return or space
+        auto semantic_index = std::optional<int> {};
+        auto semantic_count = std::optional<int> {};
+        const auto screen_state = [&]() -> pickup::screen_options {
+            return {
+                .stacked_here = stacked_here, .getitem = getitem, .matches = matches, .filter = filter,
+                .source = opts.source, .source_identity = opts.source_identity, .selected = selected,
+                .weight_predict = weight_predict, .volume_predict = volume_predict,
+                .hotkeys = ctxt.get_available_single_char_hotkeys( all_pickup_chars ), .ctxt = ctxt,
+            };
+        };
+        const auto screen = ec::screen_scope( ctxt, "pickup", {
+            .view = [&]( const ec::boundary_state & ) { return pickup::screen_of( screen_state() ); },
+        } );
         do {
             const std::string pickup_chars = ctxt.get_available_single_char_hotkeys( all_pickup_chars );
-            int idx = -1;
+            auto idx = -1;
 
-            if( action == "ANY_INPUT" &&
-                raw_input_char >= '0' && raw_input_char <= '9' ) {
+            if( semantic_index ) {
+                idx = *semantic_index;
+                selected = idx;
+                start = ( idx / maxitems ) * maxitems;
+                if( semantic_count ) {
+                    if( *semantic_count == 0 ) {
+                        action = "LEFT";
+                    } else {
+                        itemcount = *semantic_count;
+                        action = "RIGHT";
+                    }
+                }
+                semantic_index.reset();
+                semantic_count.reset();
+            } else if( action == "ANY_INPUT" &&
+                       raw_input_char >= '0' && raw_input_char <= '9' ) {
                 int raw_input_char_value = static_cast<char>( raw_input_char ) - '0';
                 if( !itemcount ) {
                     itemcount.emplace( 0 );
@@ -1016,7 +1049,7 @@ auto pick_up_from_items( const std::vector<item_stack::iterator> &here, const in
                             show_pickup_message( direct_map_pickup );
                         }
                         if( direct_got_water ) {
-                            add_msg( m_info, _( "You can't pick up a liquid!" ) );
+                            add_msg( m_info, to_translation( "You can't pick up a liquid!" ) );
                         }
                         if( handled ) {
                             g->reenter_fullscreen();
@@ -1165,7 +1198,16 @@ auto pick_up_from_items( const std::vector<item_stack::iterator> &here, const in
             ui_manager::redraw();
             action = ctxt.handle_input();
             raw_input_char = ctxt.get_raw_input().get_first_input();
-
+            if( const auto invoked = ec::invoked( ctxt.get_raw_input() ); invoked && invoked->args.row ) {
+                const auto ids = pickup::choice_ids( screen_state() );
+                const auto row = std::ranges::find( ids, *invoked->args.row );
+                if( row != ids.end() ) {
+                    semantic_index = static_cast<int>( std::distance( ids.begin(), row ) );
+                    if( invoked->affordance_id == pickup::count_id ) {
+                        semantic_count = static_cast<int>( *invoked->args.count );
+                    }
+                }
+            }
         } while( action != "QUIT" && action != "CONFIRM" );
 
         bool item_selected = false;
@@ -1176,7 +1218,7 @@ auto pick_up_from_items( const std::vector<item_stack::iterator> &here, const in
             }
         }
         if( action != "CONFIRM" || !item_selected ) {
-            add_msg( _( "Never mind." ) );
+            add_msg( to_translation( "Never mind." ) );
             g->reenter_fullscreen();
             return;
         }
@@ -1322,7 +1364,17 @@ auto pickup::pick_up( const tripoint_bub_ms &p, int min, from_where get_items_fr
     }
 
     const auto starting_pos = from_vehicle ? std::nullopt : std::make_optional( g->u.bub_pos() );
-    pick_up_from_items( here, min, starting_pos );
+    const auto absolute = map_local_to_abs( get_map(), p );
+    const auto source = from_vehicle ? pickup::source_kind::vehicle_cargo : pickup::source_kind::ground;
+    const auto source_identity = string_format( "%s:%d:%d:%d:%d", from_vehicle ? "vehicle" : "ground",
+                                 absolute.x(), absolute.y(), absolute.z(), cargo_part );
+    pick_up_from_items( {
+        .here = here,
+        .minimum = min,
+        .starting_pos = starting_pos,
+        .source = source,
+        .source_identity = source_identity,
+    } );
 }
 
 auto pickup::nearby_items_for_pickup( const tripoint_bub_ms &center ) -> nearby_pickup_items
@@ -1360,13 +1412,20 @@ auto pickup::pick_up_all_nearby() -> void
 {
     const auto nearby = nearby_items_for_pickup( g->u.bub_pos() );
     if( nearby.items.empty() ) {
-        add_msg( _( "There is nothing to pick up nearby." ) );
+        add_msg( to_translation( "There is nothing to pick up nearby." ) );
         return;
     }
 
     const auto starting_pos = nearby.has_ground_items ? std::make_optional(
                                   g->u.bub_pos() ) : std::nullopt;
-    pick_up_from_items( nearby.items, 0, starting_pos );
+    const auto absolute = get_avatar().abs_pos();
+    pick_up_from_items( {
+        .here = nearby.items,
+        .minimum = 0,
+        .starting_pos = starting_pos,
+        .source = pickup::source_kind::nearby,
+        .source_identity = string_format( "nearby:%d:%d:%d", absolute.x(), absolute.y(), absolute.z() ),
+    } );
 }
 
 //helper function for Pickup::pick_up
@@ -1374,10 +1433,10 @@ void show_pickup_message( const pickup_map &mapPickup )
 {
     for( auto &entry : mapPickup ) {
         if( entry.second.first->invlet != 0 ) {
-            add_msg( _( "You pick up: %d %s [%c]" ), entry.second.second,
+            add_msg( to_translation( "You pick up: %d %s [%c]" ), entry.second.second,
                      entry.second.first->display_name( entry.second.second ), entry.second.first->invlet );
         } else {
-            add_msg( _( "You pick up: %d %s" ), entry.second.second,
+            add_msg( to_translation( "You pick up: %d %s" ), entry.second.second,
                      entry.second.first->display_name( entry.second.second ) );
         }
     }
@@ -1449,8 +1508,8 @@ detached_ptr<item> pickup::handle_spillable_contents( Character &c, detached_ptr
         // rest of the contents
         if( it->is_bucket_nonempty() ) {
             c.add_msg_player_or_npc(
-                _( "To avoid spilling its contents, you set your %1$s on the %2$s." ),
-                _( "To avoid spilling its contents, <npcname> sets their %1$s on the %2$s." ),
+                to_translation( "To avoid spilling its contents, you set your %1$s on the %2$s." ),
+                to_translation( "To avoid spilling its contents, <npcname> sets their %1$s on the %2$s." ),
                 it->display_name(), m.name( c.bub_pos() )
             );
             m.add_item_or_charges( c.bub_pos(), std::move( it ) );

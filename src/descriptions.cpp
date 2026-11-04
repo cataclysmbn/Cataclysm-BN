@@ -1,6 +1,7 @@
 #include "avatar.h"
 #include "calendar.h"
 #include "color.h"
+#include "engine_client_component.h"
 #include "game.h" // IWYU pragma: associated
 #include "harvest.h"
 #include "input.h"
@@ -20,6 +21,8 @@
 #include <sstream>
 #include <type_traits>
 #include <utility>
+
+namespace ec = engine_client;
 
 static const skill_id skill_survival( "survival" );
 
@@ -83,22 +86,8 @@ void game::extended_description( const tripoint_bub_ms &p )
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
 
-    ui.on_redraw( [&]( const ui_adaptor & ) {
-        werase( w_head );
-        mvwprintz( w_head, point_zero, c_white,
-                   _( "[%s] describe creatures, [%s] describe furniture, "
-                      "[%s] describe terrain, [%s] close." ),
-                   ctxt.get_desc( "CREATURE" ), ctxt.get_desc( "FURNITURE" ),
-                   ctxt.get_desc( "TERRAIN" ), ctxt.get_desc( "QUIT" ) );
-
-        // Set up line drawings
-        for( int i = 0; i < TERMX; i++ ) {
-            mvwputch( w_head, point( i, top - 1 ), c_white, LINE_OXOX );
-        }
-
-        wnoutrefresh( w_head );
-
-        std::string desc;
+    const auto describe = [&]() {
+        auto desc = std::string{};
         // Allow looking at invisible tiles - player may want to examine hallucinations etc.
         switch( cur_target ) {
             case description_target::creature: {
@@ -155,10 +144,40 @@ void game::extended_description( const tripoint_bub_ms &p )
                     signage );
         }
 
+        return desc;
+    };
+
+    ui.on_redraw( [&]( const ui_adaptor & ) {
+        werase( w_head );
+        mvwprintz( w_head, point_zero, c_white,
+                   _( "[%s] describe creatures, [%s] describe furniture, "
+                      "[%s] describe terrain, [%s] close." ),
+                   ctxt.get_desc( "CREATURE" ), ctxt.get_desc( "FURNITURE" ),
+                   ctxt.get_desc( "TERRAIN" ), ctxt.get_desc( "QUIT" ) );
+
+        // Set up line drawings
+        for( int i = 0; i < TERMX; i++ ) {
+            mvwputch( w_head, point( i, top - 1 ), c_white, LINE_OXOX );
+        }
+
+        wnoutrefresh( w_head );
+
         werase( w_main );
-        fold_and_print_from( w_main, point_zero, width, 0, c_light_gray, desc );
+        fold_and_print_from( w_main, point_zero, width, 0, c_light_gray, describe() );
         wnoutrefresh( w_main );
     } );
+
+    // The target being described is the panel's title, under the name of the action that picked it.
+    const auto screen = ec::screen_scope( ctxt, "extended_description", { .view = [&]( const ec::boundary_state & )
+    {
+        const auto target = cur_target == description_target::creature ? "CREATURE" :
+                            cur_target == description_target::furniture ? "FURNITURE" : "TERRAIN";
+        return ec::screen_view{
+            .title = _( "Description" ),
+            .root = ec::panel( { .id = "description", .title = ctxt.get_action_name( target ), .child = ec::component{ .id = "description:text", .body = ec::text_body{ .markup = colorize( describe(), c_light_gray ) } } } ),
+        };
+    }
+                                                                        } );
 
     do {
         ui_manager::redraw();

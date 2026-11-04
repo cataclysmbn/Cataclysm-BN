@@ -255,7 +255,8 @@ class Item_factory
 
         mutable std::map<itype_id, std::unique_ptr<itype>> m_runtimes;
 
-        using GroupMap = std::map<item_group_id, std::unique_ptr<Item_spawn_data>>;
+        using GroupMap = std::map<item_group_id, std::unique_ptr<Item_spawn_data>,
+              item_group_id::LexCmp>;
         GroupMap m_template_groups;
 
         std::unordered_map<itype_id, ammotype> migrated_ammo;

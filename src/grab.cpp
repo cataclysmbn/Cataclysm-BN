@@ -106,7 +106,7 @@ bool game::grabbed_veh_move( const tripoint_rel_ms &dp )
 {
     const auto grabbed_vehicle_target = vehicle_grab_target_at( m, u.bub_pos() + u.grab_point );
     if( !grabbed_vehicle_target ) {
-        add_msg( m_info, _( "No vehicle at grabbed point." ) );
+        add_msg( m_info, to_translation( "No vehicle at grabbed point." ) );
         u.grab( OBJECT_NONE );
         return false;
     }
@@ -121,7 +121,7 @@ bool game::grabbed_veh_move( const tripoint_rel_ms &dp )
     for( const vpart_reference &part : grabbed_vehicle->get_all_parts() ) {
         auto *mon = grabbed_vehicle->get_pet( static_cast<int>( part.part_index() ) );
         if( mon != nullptr && mon->has_effect( effect_harnessed ) ) {
-            add_msg( m_info, _( "You cannot move this vehicle whilst your %s is harnessed!" ),
+            add_msg( m_info, to_translation( "You cannot move this vehicle whilst your %s is harnessed!" ),
                      mon->get_name() );
             u.grab( OBJECT_NONE );
             return false;
@@ -190,17 +190,17 @@ bool game::grabbed_veh_move( const tripoint_rel_ms &dp )
         const int ex = dice( 1, 6 ) - 1 + str_req;
         if( ex > str + 1 ) {
             // Pain and movement penalty if exertion exceeds character strength
-            add_msg( m_bad, _( "You strain yourself to move the %s!" ), grabbed_vehicle->name );
+            add_msg( m_bad, to_translation( "You strain yourself to move the %s!" ), grabbed_vehicle->name );
             u.moves -= 200;
             u.mod_pain( 1 );
         } else if( ex >= str ) {
             // Movement is slow if exertion nearly equals character strength
-            add_msg( _( "It takes some time to move the %s." ), grabbed_vehicle->name );
+            add_msg( to_translation( "It takes some time to move the %s." ), grabbed_vehicle->name );
             u.moves -= 200;
         }
     } else {
         u.moves -= 100;
-        add_msg( m_bad, _( "You lack the strength to move the %s" ), grabbed_vehicle->name );
+        add_msg( m_bad, to_translation( "You lack the strength to move the %s" ), grabbed_vehicle->name );
         return true;
     }
 
@@ -245,7 +245,7 @@ bool game::grabbed_veh_move( const tripoint_rel_ms &dp )
     }
 
     if( final_dp_veh == tripoint_rel_ms::zero() ) {
-        add_msg( _( "The %s collides with %s." ), grabbed_vehicle->name, blocker_name );
+        add_msg( to_translation( "The %s collides with %s." ), grabbed_vehicle->name, blocker_name );
         u.grab_point = prev_grab;
         return true;
     }

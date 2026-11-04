@@ -1,13 +1,18 @@
 #include "avatar.h"
+#include "cata_utility.h"
 #include "catch/catch.hpp"
 #include "game.h"
 #include "item.h"
 #include "iteminfo_query.h"
 #include "itype.h"
 #include "options_helpers.h"
+#include "output.h"
 #include "player_helpers.h"
 #include "recipe.h"
+#include "rng.h"
 #include "state_helpers.h"
+#include "string_utils.h"
+#include "translations.h"
 #include "type_id.h"
 #include "value_ptr.h"
 
@@ -178,6 +183,21 @@ TEST_CASE("throwing ratings and costs", "[item][iteminfo][throwing]") {
         "Throw range: <color_c_yellow>13</color>\n"
         "Moves per throw: <color_c_yellow>70</color>\n"
         "Stamina cost: <color_c_yellow>91</color>\n");
+}
+
+TEST_CASE("item information does not advance gameplay RNG", "[item][iteminfo][rng]") {
+    clear_all_state();
+    auto restore_rng = restore_on_out_of_scope<cata_default_random_engine>(rng_get_engine());
+    const auto weapon = item::spawn_temporary("test_normal_sword");
+    REQUIRE(weapon != nullptr);
+    const auto query = q_vec({iteminfo_parts::BASE_MOVES});
+    rng_set_engine_seed(424242);
+    const auto rng_before = rng_get_engine();
+
+    const auto first = weapon->info_string(query, 1);
+    CHECK(rng_get_engine() == rng_before);
+    CHECK(weapon->info_string(query, 1) == first);
+    CHECK(rng_get_engine() == rng_before);
 }
 
 TEST_CASE("weapon attack ratings and moves", "[item][iteminfo][weapon]") {
@@ -1051,4 +1071,24 @@ TEST_CASE("show available recipes with item as an ingredient", "[item][iteminfo]
             }
         }
     }
+}
+
+TEST_CASE("an item lists what it can be stored in by name", "[item][iteminfo]") {
+    const auto q = iteminfo_query(
+        std::vector<iteminfo_parts>{iteminfo_parts::DESCRIPTION_HOLSTERS});
+    const auto info = remove_color_tags(item::spawn_temporary("sword_wood")->info_string(q, 1));
+    const auto prefix = std::string("Can be stored in: ");
+    const auto start = info.find(prefix);
+    REQUIRE(start != std::string::npos);
+    auto names = std::vector<std::string>{};
+    auto list = info.substr(start + prefix.size());
+    list = list.substr(0, list.find('\n'));
+    for (const auto& part : string_split(list, ',')) {
+        auto name = trim(part);
+        if (name.starts_with("and ")) { name = name.substr(4); }
+        names.push_back(name);
+    }
+    CAPTURE(list);
+    REQUIRE(names.size() > 2);
+    CHECK(std::ranges::is_sorted(names, localized_compare));
 }

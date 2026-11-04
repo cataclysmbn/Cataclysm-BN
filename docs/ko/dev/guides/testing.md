@@ -4,6 +4,24 @@
 
 `tests/cata_test --help`를 실행하면 사용 가능한 명령줄 옵션을 확인할 수 있고, [Catch2 튜토리얼](https://github.com/catchorg/Catch2/blob/devel/docs/tutorial.md)에서 더 자세한 내용을 볼 수 있습니다.
 
+## 전체 테스트 실행
+
+CI와 같이 파일명 태그 샤드로 전체 테스트를 실행합니다. 러너는 샤드마다 테스트 프로세스를 하나씩 띄우며
+(데이터 로딩에 약 25초), 동시에 `--jobs`개까지만 실행합니다.
+
+```sh
+build-scripts/run-linux-test-shards.ts --mode file-tags --jobs 4 \
+  ./out/build/linux-full/tests/cata_test-tiles -- --use-colour no --rng-seed 1 --gpu-backend=software
+```
+
+MCP 변형을 실행하려면 `./out/build/linux-full/tests/cata_test-mcp`를 넘깁니다. 샤드는
+`build-scripts/test-shard-weights.json`의 가중치로 균형을 맞춥니다. 테스트가 크게 바뀌면 Catch2 XML 보고서
+(테스트 옵션에 `-r xml -d yes`를 추가하고 러너 출력을 보관)로 다시 생성합니다.
+
+```sh
+build-scripts/test-shard-weights.ts shards.log > build-scripts/test-shard-weights.json
+```
+
 ## PR 플레이테스트
 
 [`just playtest [--os OS] <PR URL>`](../reference/tooling.md#pr-플레이테스트)로 기존 PR 빌드를 내려받아 로컬 컴파일 없이 실행할 수 있습니다. 필수 도구, 지원 플랫폼, 아티팩트 선택 및 세이브 위치는 개발자 도구 가이드를 참고하세요.

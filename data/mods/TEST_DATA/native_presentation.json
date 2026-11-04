@@ -1,0 +1,10 @@
+[
+  {
+    "id": "test_buckshot_8",
+    "copy-from": "test_buckshot",
+    "type": "AMMO",
+    "name": { "str": "test eight-pellet buckshot" },
+    "description": "A deterministic eight-pellet load for native presentation traces.",
+    "shot": { "count": 8, "half_angle": 3 }
+  }
+]

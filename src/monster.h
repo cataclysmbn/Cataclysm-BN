@@ -38,6 +38,10 @@
 #include "visitable.h"
 #include "sounds.h"
 
+namespace engine_client
+{
+struct fact;
+} // namespace engine_client
 class Character;
 class JsonIn;
 class JsonObject;
@@ -159,6 +163,8 @@ class monster : public Creature, public location_visitable<monster>
         void get_HP_Bar( nc_color &color, std::string &text ) const;
         std::pair<std::string, nc_color> get_attitude() const;
         int print_info( const catacurses::window &w, int vStart, int vLines, int column ) const override;
+        /// What `print_info` prints, a fact per line.
+        auto info_facts() const -> std::vector<engine_client::fact>;
 
         nc_color basic_symbol_color() const override;
         nc_color symbol_color() const override;
@@ -628,6 +634,11 @@ class monster : public Creature, public location_visitable<monster>
                                     const std::string &npc_msg ) const override;
         void add_msg_player_or_npc( const game_message_params &params, const std::string &player_msg,
                                     const std::string &npc_msg ) const override;
+        auto add_localised_msg_if_npc( const game_message_params &params, const std::string &msg,
+                                       const std::optional<localised_text> &localised ) const -> void override;
+        auto add_localised_msg_player_or_npc( const game_message_params &params,
+                                              const localised_pair &pair ) const -> void override;
+        auto npc_name_arg() const -> localised_text::arg override;
 
         // TEMP VALUES
         tripoint_bub_ms wander_pos; // Wander destination - Just try to move in that direction
@@ -716,7 +727,7 @@ class monster : public Creature, public location_visitable<monster>
         std::optional<time_point> lastseen_turn;
 
         // Stair data.
-        int staircount;
+        int staircount = 0;
 
         // Ammunition if we use a gun.
         std::map<itype_id, int> ammo;

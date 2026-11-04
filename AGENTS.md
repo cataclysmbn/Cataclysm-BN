@@ -101,6 +101,7 @@ deno task dprint fmt
 ```
 
 - **Verify**: Build and fix any issues. Do not skip the game binary target when validating code changes; build `cataclysm-bn-tiles` together with tests.
+- **MUST** isolate validation game invocations on XDG builds with both `--userdir <profile>/` and `--configdir <profile>/config/`; verify the resolved config directory with `--paths` before runtime. Never modify or restore personal configuration without a known baseline.
 
 ```sh
 # Build project and tests
@@ -113,6 +114,9 @@ cmake --build --preset linux-full --target cataclysm-bn-tiles cata_test-tiles
 ```sh
 # Run Tests
 ./out/build/linux-full/tests/cata_test-tiles "[optional-filter]"
+
+# Run the whole suite as shards (also for cata_test-mcp); see docs/en/dev/guides/testing.md
+build-scripts/run-linux-test-shards.ts --mode file-tags --jobs 4 ./out/build/linux-full/tests/cata_test-tiles -- --use-colour no --rng-seed 1 --gpu-backend=software
 
 # Validate JSON
 ./build-scripts/lint-json.sh

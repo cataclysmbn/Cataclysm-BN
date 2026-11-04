@@ -360,7 +360,8 @@ bool aim_activity_actor::load_RAS_weapon()
     stamina_cost_per_shot = gun->get_min_str() * static_cast<int>
                             ( 0.002f * get_option<int>( "PLAYER_MAX_STAMINA" ) );
     if( you.get_stamina() < stamina_cost_per_shot ) {
-        you.add_msg_if_player( m_bad, _( "You're too tired to draw your %s." ), weapon->tname() );
+        you.add_msg_if_player( m_bad, to_translation( "You're too tired to draw your %s." ),
+                               weapon->tname() );
         return false;
     }
 
@@ -457,7 +458,7 @@ void autodrive_activity_actor::do_turn( player_activity &/* act */, Character &w
 
 void autodrive_activity_actor::canceled( player_activity &act, Character &who )
 {
-    who.add_msg_if_player( m_info, _( "Auto-drive canceled." ) );
+    who.add_msg_if_player( m_info, to_translation( "Auto-drive canceled." ) );
     who.omt_path.clear();
     if( player_vehicle ) {
         player_vehicle->stop_autodriving( false );
@@ -467,7 +468,7 @@ void autodrive_activity_actor::canceled( player_activity &act, Character &who )
 
 void autodrive_activity_actor::finish( player_activity &act, Character &who )
 {
-    who.add_msg_if_player( m_info, _( "You have reached your destination." ) );
+    who.add_msg_if_player( m_info, to_translation( "You have reached your destination." ) );
     player_vehicle->stop_autodriving( false );
     act.set_to_null();
 }
@@ -534,7 +535,7 @@ void dig_activity_actor::finish( player_activity &act, Character &who )
 
             g->place_critter_at( random_entry( monids ), byproducts_location );
             here.furn_set( location, f_coffin_o );
-            who.add_msg_if_player( m_warning, _( "Something crawls out of the coffin!" ) );
+            who.add_msg_if_player( m_warning, to_translation( "Something crawls out of the coffin!" ) );
         } else {
             here.spawn_item( location, itype_bone_human, rng( 5, 15 ) );
             here.furn_set( location, f_coffin_c );
@@ -566,9 +567,9 @@ void dig_activity_actor::finish( player_activity &act, Character &who )
     who.mod_fatigue( std::max( 1, act_exertion / to_moves<int>( 6_minutes ) ) );
     who.mod_stamina( std::min( -1, -act_exertion / to_moves<int>( 10_seconds ) ) );
     if( grave ) {
-        who.add_msg_if_player( m_good, _( "You finish exhuming a grave." ) );
+        who.add_msg_if_player( m_good, to_translation( "You finish exhuming a grave." ) );
     } else {
-        who.add_msg_if_player( m_good, _( "You finish digging the %s." ),
+        who.add_msg_if_player( m_good, to_translation( "You finish digging the %s." ),
                                here.ter( location )->name() );
     }
 
@@ -651,7 +652,7 @@ void dig_channel_activity_actor::finish( player_activity &act, Character &who )
     who.mod_thirst( std::max( 1, act_exertion / to_moves<int>( 12_minutes ) ) );
     who.mod_fatigue( std::max( 1, act_exertion / to_moves<int>( 6_minutes ) ) );
     who.mod_stamina( std::min( -1, -act_exertion / to_moves<int>( 10_seconds ) ) );
-    who.add_msg_if_player( m_good, _( "You finish digging up %s." ),
+    who.add_msg_if_player( m_good, to_translation( "You finish digging up %s." ),
                            here.ter( location )->name() );
 
     act.set_to_null();
@@ -920,7 +921,7 @@ static hack_result hack_attempt( Character &who, const bool using_bionic )
     const int hack_stddev = 5;
     int success = std::ceil( normal_roll( hack_level( who ), hack_stddev ) );
     if( success < 0 ) {
-        who.add_msg_if_player( _( "You cause a short circuit!" ) );
+        who.add_msg_if_player( to_translation( "You cause a short circuit!" ) );
         if( using_bionic ) {
             who.mod_power_level( -25_kJ );
         } else {
@@ -929,10 +930,10 @@ static hack_result hack_attempt( Character &who, const bool using_bionic )
 
         if( success <= -5 ) {
             if( !using_bionic ) {
-                who.add_msg_if_player( m_bad, _( "Your electrohack is ruined!" ) );
+                who.add_msg_if_player( m_bad, to_translation( "Your electrohack is ruined!" ) );
                 who.use_amount( itype_electrohack, 1 );
             } else {
-                who.add_msg_if_player( m_bad, _( "Your power is drained!" ) );
+                who.add_msg_if_player( m_bad, to_translation( "Your power is drained!" ) );
                 who.mod_power_level( units::from_kilojoule( -rng( 25,
                                      units::to_kilojoule( who.get_power_level() ) ) ) );
             }
@@ -958,7 +959,7 @@ void hacking_activity_actor::finish( player_activity &act, Character &who )
     sound_event se;
     switch( hack_attempt( who, using_bionic ) ) {
         case HACK_UNABLE:
-            who.add_msg_if_player( _( "You cannot hack this." ) );
+            who.add_msg_if_player( to_translation( "You cannot hack this." ) );
             break;
         case HACK_FAIL:
             // currently all things that can be hacked have equivalent alarm failure states.
@@ -977,7 +978,7 @@ void hacking_activity_actor::finish( player_activity &act, Character &who )
             }
             break;
         case HACK_NOTHING:
-            who.add_msg_if_player( _( "You fail the hack, but no alarms are triggered." ) );
+            who.add_msg_if_player( to_translation( "You fail the hack, but no alarms are triggered." ) );
             break;
         case HACK_SUCCESS:
             if( type == HACK_GAS ) {
@@ -990,7 +991,8 @@ void hacking_activity_actor::finish( player_activity &act, Character &who )
                 const std::optional<tripoint_bub_ms> pGasPump = iexamine::getGasPumpByNumber( examp,
                         uistate.ags_pay_gas_selected_pump );
                 if( pGasPump && iexamine::toPumpFuel( pTank, *pGasPump, tankGasUnits ) ) {
-                    who.add_msg_if_player( _( "You hack the terminal and route all available fuel to your pump!" ) );
+                    who.add_msg_if_player(
+                        to_translation( "You hack the terminal and route all available fuel to your pump!" ) );
                     se.origin = examp;
                     se.volume = 40;
                     se.category = sounds::sound_t::activity;
@@ -1003,14 +1005,14 @@ void hacking_activity_actor::finish( player_activity &act, Character &who )
                     se.monfaction = who.get_faction()->mon_faction;
                     sounds::sound( se );
                 } else {
-                    who.add_msg_if_player( _( "Nothing happens." ) );
+                    who.add_msg_if_player( to_translation( "Nothing happens." ) );
                 }
             } else if( type == HACK_SAFE ) {
-                who.add_msg_if_player( m_good, _( "The door on the safe swings open." ) );
+                who.add_msg_if_player( m_good, to_translation( "The door on the safe swings open." ) );
                 here.furn_set( examp, furn_str_id( "f_gunsafe_o" ) );
             } else if( type == HACK_DOOR ) {
-                who.add_msg_if_player( _( "You activate the panel!" ) );
-                who.add_msg_if_player( m_good, _( "The nearby doors unlock." ) );
+                who.add_msg_if_player( to_translation( "You activate the panel!" ) );
+                who.add_msg_if_player( m_good, to_translation( "The nearby doors unlock." ) );
                 here.ter_set( examp, t_card_reader_broken );
                 for( const tripoint_bub_ms &tmp : here.points_in_radius( ( examp ), 3 ) ) {
                     if( here.ter( tmp ) == t_door_metal_locked ) {
@@ -1144,7 +1146,7 @@ void pickup_activity_actor::do_turn( player_activity &act, Character &who )
     // the activity, only populate starting_pos when grabbing from the ground
     if( starting_pos && *starting_pos != who.bub_pos() ) {
         who.cancel_activity();
-        who.add_msg_if_player( _( "Moving canceled auto-pickup." ) );
+        who.add_msg_if_player( to_translation( "Moving canceled auto-pickup." ) );
         return;
     }
 
@@ -1272,10 +1274,10 @@ void hacksaw_activity_actor::do_turn( player_activity &/* act */, Character &who
         }
     } else {
         if( who.is_avatar() ) {
-            who.add_msg_if_player( m_bad, _( "Your %1$s ran out of charges." ), tool->tname() );
+            who.add_msg_if_player( m_bad, to_translation( "Your %1$s ran out of charges." ), tool->tname() );
         } else { // who.is_npc()
             if( get_avatar().sees( who.bub_pos() ) ) {
-                add_msg( _( "%1$s %2$s ran out of charges." ), who.disp_name( false,
+                add_msg( to_translation( "%1$s %2$s ran out of charges." ), who.disp_name( false,
                          true ), tool->tname() );
             }
         }
@@ -1421,10 +1423,10 @@ void boltcutting_activity_actor::do_turn( player_activity &/* act */, Character 
         tool->ammo_consume( tool->ammo_required(), tool->bub_pos() );
     } else {
         if( who.is_avatar() ) {
-            who.add_msg_if_player( m_bad, _( "Your %1$s ran out of charges." ), tool->tname() );
+            who.add_msg_if_player( m_bad, to_translation( "Your %1$s ran out of charges." ), tool->tname() );
         } else { // who.is_npc()
             if( get_avatar().sees( who.bub_pos() ) ) {
-                add_msg( _( "%1$s %2$s ran out of charges." ), who.disp_name( false,
+                add_msg( to_translation( "%1$s %2$s ran out of charges." ), who.disp_name( false,
                          true ), tool->tname() );
             }
         }
@@ -1683,14 +1685,14 @@ void lockpick_activity_actor::finish( player_activity &act, Character &who )
         // damage lockpick on a low result, unless it's durable
         if( it->inc_damage() ) {
             who.add_msg_if_player( m_bad,
-                                   _( "The lock stumps your efforts to pick it, and you destroy your tool." ) );
+                                   to_translation( "The lock stumps your efforts to pick it, and you destroy your tool." ) );
             destroy = true;
         } else {
             who.add_msg_if_player( m_bad,
-                                   _( "The lock stumps your efforts to pick it, and you damage your tool." ) );
+                                   to_translation( "The lock stumps your efforts to pick it, and you damage your tool." ) );
         }
     } else {
-        who.add_msg_if_player( m_bad, _( "The lock stumps your efforts to pick it." ) );
+        who.add_msg_if_player( m_bad, to_translation( "The lock stumps your efforts to pick it." ) );
     }
 
     if( !perfect ) {
@@ -1747,7 +1749,7 @@ bool lockpick_activity_actor::is_pickable( const tripoint_bub_ms &p )
 std::optional<tripoint_bub_ms> lockpick_activity_actor::select_location( avatar &you )
 {
     if( you.is_mounted() ) {
-        you.add_msg_if_player( m_info, _( "You cannot do that while mounted." ) );
+        you.add_msg_if_player( m_info, to_translation( "You cannot do that while mounted." ) );
         return std::nullopt;
     }
 
@@ -1763,14 +1765,15 @@ std::optional<tripoint_bub_ms> lockpick_activity_actor::select_location( avatar 
 
     const ter_id terr_type = get_map().ter( *target );
     if( *target == you.bub_pos() ) {
-        you.add_msg_if_player( m_info, _( "You pick your nose and your sinuses swing open." ) );
+        you.add_msg_if_player( m_info,
+                               to_translation( "You pick your nose and your sinuses swing open." ) );
     } else if( g->critter_at<npc>( *target ) ) {
         you.add_msg_if_player( m_info,
-                               _( "You can pick your friends, and you can pick your nose, but you can't pick your friend's nose." ) );
+                               to_translation( "You can pick your friends, and you can pick your nose, but you can't pick your friend's nose." ) );
     } else if( !terr_type->open.is_null() ) {
-        you.add_msg_if_player( m_info, _( "That door isn't locked." ) );
+        you.add_msg_if_player( m_info, to_translation( "That door isn't locked." ) );
     } else {
-        you.add_msg_if_player( m_info, _( "That cannot be picked." ) );
+        you.add_msg_if_player( m_info, to_translation( "That cannot be picked." ) );
     }
     return std::nullopt;
 }
@@ -1859,10 +1862,10 @@ void oxytorch_activity_actor::do_turn( player_activity &/*act*/, Character &who 
         }
     } else {
         if( who.is_avatar() ) {
-            who.add_msg_if_player( m_bad, _( "Your %1$s ran out of charges." ), tool->tname() );
+            who.add_msg_if_player( m_bad, to_translation( "Your %1$s ran out of charges." ), tool->tname() );
         } else { // who.is_npc()
             if( get_avatar().sees( who.bub_pos() ) ) {
-                add_msg( _( "%1$s %2$s ran out of charges." ), who.disp_name( false,
+                add_msg( to_translation( "%1$s %2$s ran out of charges." ), who.disp_name( false,
                          true ), tool->tname() );
             }
         }
@@ -2310,8 +2313,8 @@ void craft_activity_actor::start( player_activity &act, Character &who )
     item *craft_item = find_in_progress_craft( act, who );
     if( !craft_item ) {
         who.add_msg_player_or_npc(
-            _( "You lost your in progress %s and had to stop crafting." ),
-            _( "<npcname> lost the in progress %s and had to stop crafting." ),
+            to_translation( "You lost your in progress %s and had to stop crafting." ),
+            to_translation( "<npcname> lost the in progress %s and had to stop crafting." ),
             rec->result_name() );
         act.set_to_null();
         return;
@@ -2337,11 +2340,11 @@ void craft_activity_actor::do_turn( player_activity &act, Character &who )
     item *craft_item = find_in_progress_craft( act, who );
     if( !craft_item ) {
         who.add_msg_player_or_npc(
-            _( "You no longer have the in progress craft in your possession.  "
-               "You stop crafting.  "
-               "Reactivate the in progress craft to continue crafting." ),
-            _( "<npcname> no longer has the in progress craft in their possession.  "
-               "<npcname> stops crafting." ) );
+            to_translation( "You no longer have the in progress craft in your possession.  "
+                            "You stop crafting.  "
+                            "Reactivate the in progress craft to continue crafting." ),
+            to_translation( "<npcname> no longer has the in progress craft in their possession.  "
+                            "<npcname> stops crafting." ) );
         act.set_to_null();
         return;
     }
@@ -2357,8 +2360,8 @@ void craft_activity_actor::do_turn( player_activity &act, Character &who )
 
     if( crafting_speed <= 0.0f ) {
         who.add_msg_player_or_npc( m_bad,
-                                   _( "You cannot continue crafting." ),
-                                   _( "<npcname> cannot continue crafting." ) );
+                                   to_translation( "You cannot continue crafting." ),
+                                   to_translation( "<npcname> cannot continue crafting." ) );
         act.set_to_null();
         return;
     }
@@ -2409,8 +2412,8 @@ void craft_activity_actor::do_turn( player_activity &act, Character &who )
         const bool destroy = craft_item->handle_craft_failure( who );
         if( destroy ) {
             who.add_msg_player_or_npc(
-                _( "There is nothing left of the %s to craft from." ),
-                _( "There is nothing left of the %s <npcname> was crafting." ),
+                to_translation( "There is nothing left of the %s to craft from." ),
+                to_translation( "There is nothing left of the %s <npcname> was crafting." ),
                 craft_item->tname() );
             craft_item->detach();
             act.set_to_null();
@@ -2598,7 +2601,8 @@ void construction_activity_actor::do_turn( player_activity &act, Character &who 
     // Maybe the player and the NPC are working on the same construction at the same time or toubles during load
     if( !pc ) {
         act.set_to_null();
-        add_msg( m_info, _( "%s did not find an unfinished construction at the activity spot." ),
+        add_msg( m_info,
+                 to_translation( "%s did not find an unfinished construction at the activity spot." ),
                  who.disp_name() );
         return;
     }
@@ -2611,7 +2615,7 @@ void construction_activity_actor::do_turn( player_activity &act, Character &who 
     } else {
         auto &built = *pc->id;
         if( !who.has_trait( trait_DEBUG_HS ) && !who.meets_skill_requirements( built ) ) {
-            add_msg( m_info, _( "%s can't work on this construction anymore." ), who.disp_name() );
+            add_msg( m_info, to_translation( "%s can't work on this construction anymore." ), who.disp_name() );
             act.set_to_null();
             return;
         }

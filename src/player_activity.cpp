@@ -620,7 +620,7 @@ void player_activity::do_turn( player &p )
     const int adjusted_stamina = travel_activity ? p.get_stamina() - 1 : p.get_stamina();
     if( adjusted_stamina < previous_stamina && p.get_stamina() < p.get_stamina_max() / 3 ) {
         if( one_in( 50 ) ) {
-            p.add_msg_if_player( _( "You pause for a moment to catch your breath." ) );
+            p.add_msg_if_player( to_translation( "You pause for a moment to catch your breath." ) );
         }
         auto_resume = true;
         std::unique_ptr<player_activity> new_act = std::make_unique<player_activity>

@@ -10,6 +10,7 @@ not comprehensive, but covers the broad strokes.
 | achievements.json          | achievements                                                          |
 | anatomy.json               | a listing of player body parts - do not edit                          |
 | ascii_arts.json            | ascii arts for item descriptions                                      |
+| client_shortcuts.json      | shortcut bar buttons a client shows beside the map                    |
 | bionics.json               | bionics, does NOT include bionic effects                              |
 | body_parts.json            | an expansion of anatomy.json - do not edit                            |
 | clothing_mods.json         | definition of clothing mods                                           |

@@ -54,6 +54,7 @@
 #include "mtype.h"
 #include "npc.h"
 #include "npc_class.h"
+#include "npctrade.h"
 #include "options.h"
 #include "output.h"
 #include "overmap/omdata.h"
@@ -122,12 +123,8 @@ static const mtype_id mon_generator( "mon_generator" );
 extern std::map<std::string, weighted_int_list<std::shared_ptr<mapgen_function_json_nested>> >
         nested_mapgen;
 
-#if defined(TILES)
-#include "sdl_wrappers.h"
-#include "cata_tiles.h"
-#include "dynamic_atlas.h"
-#include "sdltiles.h"
-#endif
+#include "client_presentation.h"
+#include "client_display.h"
 
 namespace debug_menu
 {
@@ -139,6 +136,7 @@ enum debug_menu_index {
     DEBUG_TELEPORT_TO_OVERMAP_SPECIAL,
     DEBUG_REVEAL_MAP,
     DEBUG_SPAWN_NPC,
+    DEBUG_TRADE_NPC,
     DEBUG_SPAWN_MON,
     DEBUG_GAME_STATE,
     DEBUG_REPRODUCE_AREA,
@@ -246,21 +244,19 @@ static int info_uilist( bool display_all_entries = true )
             { uilist_entry( DEBUG_DISPLAY_WEATHER, true, 'w', _( "Display weather" ) ) },
             { uilist_entry( DEBUG_DISPLAY_SCENTS, true, 'S', _( "Display overmap scents" ) ) },
             { uilist_entry( DEBUG_DISPLAY_DISTRIBUTION_GRIDS, true, 'G', _( "Display overmap distribution grids" ) ) },
-            { uilist_entry( DEBUG_DISPLAY_SCENTS_LOCAL, true, 's', _( "Toggle display local scents" ) ) },
-            { uilist_entry( DEBUG_DISPLAY_SCENTS_TYPE_LOCAL, true, 'y', _( "Toggle display local scents type" ) ) },
-            { uilist_entry( DEBUG_DISPLAY_TEMP, true, 'T', _( "Toggle display temperature" ) ) },
-            { uilist_entry( DEBUG_DISPLAY_VEHICLE_AI, true, 'V', _( "Toggle display vehicle autopilot overlay" ) ) },
-            { uilist_entry( DEBUG_DISPLAY_VISIBILITY, true, 'v', _( "Toggle display visibility" ) ) },
-            { uilist_entry( DEBUG_DISPLAY_LIGHTING, true, 'l', _( "Toggle display lighting" ) ) },
-            { uilist_entry( DEBUG_DISPLAY_TRANSPARENCY, true, 'p', _( "Toggle display transparency" ) ) },
-            { uilist_entry( DEBUG_DISPLAY_OUTSIDE, true, 'O', _( "Toggle display outside/sheltered/indoors" ) ) },
-            { uilist_entry( DEBUG_DISPLAY_RADIATION, true, 'R', _( "Toggle display radiation" ) ) },
-            { uilist_entry( DEBUG_DISPLAY_SUBMAP_GRID, true, 'o', _( "Toggle display submap grid" ) ) },
-            { uilist_entry( DEBUG_DISPLAY_TERRAIN_SOUND_ABSORPTION, true, 'Q', _( "Toggle display terrain sound absorption" ) ) },
-            { uilist_entry( DEBUG_DISPLAY_SOUND_WALLS, true, 'q', _( "Toggle display sound walls" ) ) },
-#if defined(TILES)
-            { uilist_entry( ACTION_TOGGLE_ZONE_OVERLAY, true, 'z', _( "Toggle zone overlay" ) ) },
-#endif
+            { uilist_entry( DEBUG_DISPLAY_SCENTS_LOCAL, true, 's', _( "Toggle display local scents" ) ).with_toggled( g->display_overlay_state( ACTION_DISPLAY_SCENT ) ) },
+            { uilist_entry( DEBUG_DISPLAY_SCENTS_TYPE_LOCAL, true, 'y', _( "Toggle display local scents type" ) ).with_toggled( g->display_overlay_state( ACTION_DISPLAY_SCENT_TYPE ) ) },
+            { uilist_entry( DEBUG_DISPLAY_TEMP, true, 'T', _( "Toggle display temperature" ) ).with_toggled( g->display_overlay_state( ACTION_DISPLAY_TEMPERATURE ) ) },
+            { uilist_entry( DEBUG_DISPLAY_VEHICLE_AI, true, 'V', _( "Toggle display vehicle autopilot overlay" ) ).with_toggled( g->display_overlay_state( ACTION_DISPLAY_VEHICLE_AI ) ) },
+            { uilist_entry( DEBUG_DISPLAY_VISIBILITY, true, 'v', _( "Toggle display visibility" ) ).with_toggled( g->display_overlay_state( ACTION_DISPLAY_VISIBILITY ) ) },
+            { uilist_entry( DEBUG_DISPLAY_LIGHTING, true, 'l', _( "Toggle display lighting" ) ).with_toggled( g->display_overlay_state( ACTION_DISPLAY_LIGHTING ) ) },
+            { uilist_entry( DEBUG_DISPLAY_TRANSPARENCY, true, 'p', _( "Toggle display transparency" ) ).with_toggled( g->display_overlay_state( ACTION_DISPLAY_TRANSPARENCY ) ) },
+            { uilist_entry( DEBUG_DISPLAY_OUTSIDE, true, 'O', _( "Toggle display outside/sheltered/indoors" ) ).with_toggled( g->display_overlay_state( ACTION_DISPLAY_OUTSIDE ) ) },
+            { uilist_entry( DEBUG_DISPLAY_RADIATION, true, 'R', _( "Toggle display radiation" ) ).with_toggled( g->display_overlay_state( ACTION_DISPLAY_RADIATION ) ) },
+            { uilist_entry( DEBUG_DISPLAY_SUBMAP_GRID, true, 'o', _( "Toggle display submap grid" ) ).with_toggled( g->debug_submap_grid_overlay ) },
+            { uilist_entry( DEBUG_DISPLAY_TERRAIN_SOUND_ABSORPTION, true, 'Q', _( "Toggle display terrain sound absorption" ) ).with_toggled( g->display_overlay_state( ACTION_DISPLAY_SOUND_ABSORPTION ) ) },
+            { uilist_entry( DEBUG_DISPLAY_SOUND_WALLS, true, 'q', _( "Toggle display sound walls" ) ).with_toggled( g->display_overlay_state( ACTION_DISPLAY_SOUND_WALLS ) ) },
+            { uilist_entry( ACTION_TOGGLE_ZONE_OVERLAY, game_client::has_tiles(), 'z', _( "Toggle zone overlay" ) ).with_toggled( g->show_zone_overlay ) },
             { uilist_entry( DEBUG_SET_AUTOMOVE, true, 'A', _( "Set automove target" ) ) },
             { uilist_entry( DEBUG_SHOW_MUT_CAT, true, 'm', _( "Show mutation category levels" ) ) },
             { uilist_entry( DEBUG_SHOW_MUT_CHANCES, true, 'u', _( "Show mutation trait chances" ) ) },
@@ -273,20 +269,16 @@ static int info_uilist( bool display_all_entries = true )
             { uilist_entry( DEBUG_SHOW_WORKER_MSG, true, 0, _( "Show debug message (worker thread)" ) ) },
             { uilist_entry( DEBUG_CRASH_WORKER, true, 0, _( "Crash worker thread (test crash handling)" ) ) },
             { uilist_entry( DEBUG_RELOAD_TRANSLATIONS, true, 'L', _( "Reload translations" ) ) },
-            { uilist_entry( DEBUG_DISPLAY_NPC_PATH, true, 'n', _( "Toggle NPC pathfinding on map" ) ) },
+            { uilist_entry( DEBUG_DISPLAY_NPC_PATH, true, 'n', _( "Toggle NPC pathfinding on map" ) ).with_toggled( g->debug_pathfinding ) },
             { uilist_entry( DEBUG_PRINT_FACTION_INFO, true, 'f', _( "Print faction info to console" ) ) },
             { uilist_entry( DEBUG_PRINT_NPC_MAGIC, true, 'M', _( "Print NPC magic info to console" ) ) },
             { uilist_entry( DEBUG_TEST_WEATHER, true, 'W', _( "Test weather" ) ) },
             { uilist_entry( DEBUG_TEST_MAP_EXTRA_DISTRIBUTION, true, 'e', _( "Test map extra list" ) ) },
             { uilist_entry( DEBUG_RESET_IGNORED_MESSAGES, true, 'I', _( "Reset ignored debug messages" ) ) },
             { uilist_entry( DEBUG_SWAP_CHAR, true, 'x', _( "Control NPC follower" ) ) },
-#if defined(TILES)
-            { uilist_entry( DEBUG_RELOAD_TILES, true, 'D', _( "Reload tileset and show missing tiles" ) ) },
-#endif
-#if defined(TILES) && defined(DYNAMIC_ATLAS)
-            { uilist_entry( DEBUG_DUMP_TILES, true, 'F', _( "Dump dynamic tile atlas" ) ) },
-            { uilist_entry( DEBUG_DISPLAY_TILESET_NO_VFX, true, 'j', _( "Toggle tileset visual effects" ) ) },
-#endif
+            { uilist_entry( DEBUG_RELOAD_TILES, game_client::has_tiles(), 'D', _( "Reload tileset and show missing tiles" ) ) },
+            { uilist_entry( DEBUG_DUMP_TILES, game_client::presentation().dynamic_atlas_available(), 'F', _( "Dump dynamic tile atlas" ) ) },
+            { uilist_entry( DEBUG_DISPLAY_TILESET_NO_VFX, game_client::presentation().dynamic_atlas_available(), 'j', _( "Toggle tileset visual effects" ) ) },
         };
         uilist_initializer.insert( uilist_initializer.begin(), debug_only_options.begin(),
                                    debug_only_options.end() );
@@ -323,6 +315,7 @@ static int spawning_uilist()
     const std::vector<uilist_entry> uilist_initializer = {
         { uilist_entry( DEBUG_WISH, true, 'w', _( "Spawn an item" ) ) },
         { uilist_entry( DEBUG_SPAWN_NPC, true, 'n', _( "Spawn NPC" ) ) },
+        { uilist_entry( DEBUG_TRADE_NPC, true, 't', _( "Trade with a spawned shopkeeper" ) ) },
         { uilist_entry( DEBUG_SPAWN_MON, true, 'm', _( "Spawn monster" ) ) },
         { uilist_entry( DEBUG_SPAWN_VEHICLE, true, 'v', _( "Spawn a vehicle" ) ) },
         { uilist_entry( DEBUG_SPAWN_ARTIFACT, true, 'a', _( "Spawn artifact" ) ) },
@@ -334,7 +327,7 @@ static int spawning_uilist()
 
 static int map_uilist()
 {
-    const std::vector<uilist_entry> uilist_initializer = {
+    std::vector<uilist_entry> uilist_initializer = {
         { uilist_entry( DEBUG_REVEAL_MAP, true, 'r', _( "Reveal map" ) ) },
         { uilist_entry( DEBUG_REPRODUCE_AREA, true, 'R', _( "Reproduce in Area" ) ) },
         { uilist_entry( DEBUG_ERASE_ITEMS_AREA, true, 'e', _( "Erase items in Area" ) ) },
@@ -437,7 +430,8 @@ void teleport_short()
     }
     g->place_player( *where );
     const auto new_pos = g->u.bub_pos();
-    add_msg( _( "You teleport to point (%d,%d,%d)." ), new_pos.x(), new_pos.y(), new_pos.z() );
+    add_msg( to_translation( "You teleport to point (%d,%d,%d)." ), new_pos.x(), new_pos.y(),
+             new_pos.z() );
 }
 
 void teleport_long()
@@ -447,7 +441,7 @@ void teleport_long()
         return;
     }
     g->place_player_overmap( where );
-    add_msg( _( "You teleport to submap %s." ), where.to_string() );
+    add_msg( to_translation( "You teleport to submap %s." ), where.to_string() );
 }
 
 void teleport_overmap( bool specific_coordinates )
@@ -480,7 +474,7 @@ void teleport_overmap( bool specific_coordinates )
     g->place_player_overmap( where );
 
     const tripoint_abs_om new_pos = project_to<coords::om>( g->u.abs_omt_pos() );
-    add_msg( _( "You teleport to overmap %s." ), new_pos.to_string() );
+    add_msg( to_translation( "You teleport to overmap %s." ), new_pos.to_string() );
 }
 
 static void teleport_to_overmap_special()
@@ -510,7 +504,7 @@ static void teleport_to_overmap_special()
     t.reveal_radius = 3;
 
     g->place_player_overmap( mission_util::get_om_terrain_pos( t ) );
-    add_msg( _( "You teleport to submap %s." ), target_id );
+    add_msg( to_translation( "You teleport to submap %s." ), target_id );
 }
 
 void spawn_nested_mapgen()
@@ -848,7 +842,7 @@ void character_edit_menu( Character &c )
                 if( value >= 0 && value <= p.get_stamina_max() ) {
                     p.set_stamina( value );
                 } else {
-                    add_msg( m_bad, _( "Target stamina value out of bounds!" ) );
+                    add_msg( m_bad, to_translation( "Target stamina value out of bounds!" ) );
                 }
             }
             break;
@@ -1155,14 +1149,14 @@ void character_edit_menu( Character &c )
         }
         break;
         case edit_character::learn_ma:
-            add_msg( m_info, _( "Martial arts debug." ) );
-            add_msg( _( "Your eyes blink rapidly as knowledge floods your brain." ) );
+            add_msg( m_info, to_translation( "Martial arts debug." ) );
+            add_msg( to_translation( "Your eyes blink rapidly as knowledge floods your brain." ) );
             for( auto &style : all_martialart_types() ) {
                 if( style != matype_id( "style_none" ) ) {
                     c.martial_arts_data->add_martialart( style );
                 }
             }
-            add_msg( m_good, _( "You now know a lot more than just 10 styles of kung fu." ) );
+            add_msg( m_good, to_translation( "You now know a lot more than just 10 styles of kung fu." ) );
             break;
 
         case edit_character::effects:
@@ -1170,34 +1164,35 @@ void character_edit_menu( Character &c )
             break;
 
         case edit_character::unlock_recipes: {
-            add_msg( m_info, _( "Recipe debug." ) );
-            add_msg( _( "Your eyes blink rapidly as knowledge floods your brain." ) );
+            add_msg( m_info, to_translation( "Recipe debug." ) );
+            add_msg( to_translation( "Your eyes blink rapidly as knowledge floods your brain." ) );
             for( const auto &e : recipe_dict ) {
                 p.learn_recipe( &e.second );
             }
-            add_msg( m_good, _( "You know how to craft that now." ) );
+            add_msg( m_good, to_translation( "You know how to craft that now." ) );
         }
         break;
         case edit_character::forget_items:
-            add_msg( m_info, _( "Item debug." ) );
+            add_msg( m_info, to_translation( "Item debug." ) );
             uistate.read_items.clear();
-            add_msg( m_bad, _( "You don't know about any items anymore." ) );
+            add_msg( m_bad, to_translation( "You don't know about any items anymore." ) );
             break;
         case edit_character::learn_spells:
             if( spell_type::get_all().empty() ) {
-                add_msg( m_bad, _( "There are no spells to learn.  You must install a mod that adds some." ) );
+                add_msg( m_bad,
+                         to_translation( "There are no spells to learn.  You must install a mod that adds some." ) );
             } else {
                 for( const spell_type &learn : spell_type::get_all() ) {
                     c.magic->learn_spell( &learn, g->u, true );
                 }
                 add_msg( m_good,
-                         _( "You have become an Archwizardpriest!  What will you do with your newfound power?" ) );
+                         to_translation( "You have become an Archwizardpriest!  What will you do with your newfound power?" ) );
             }
             break;
         case edit_character::level_spells: {
             std::vector<spell *> spells = c.magic->get_spells();
             if( spells.empty() ) {
-                add_msg( m_bad, _( "Try learning some spells first." ) );
+                add_msg( m_bad, to_translation( "Try learning some spells first." ) );
                 return;
             }
             std::vector<uilist_entry> uiles;
@@ -1232,7 +1227,8 @@ void character_edit_menu( Character &c )
                 spells[action]->gain_level();
                 cur_level = spells[action]->get_level();
             }
-            add_msg( m_good, _( "%s is now level %d!" ), spells[action]->name(), spells[action]->get_level() );
+            add_msg( m_good, to_translation( "%s is now level %d!" ), spells[action]->name(),
+                     spells[action]->get_level() );
             break;
         }
         case UILIST_CANCEL:
@@ -1365,27 +1361,27 @@ static bool remove_from_vec( std::vector<mission *> &vec, mission *m )
 void mission_debug::remove_mission( mission &m )
 {
     if( remove_from_vec( g->u.active_missions, &m ) ) {
-        add_msg( _( "Removing from active_missions" ) );
+        add_msg( to_translation( "Removing from active_missions" ) );
     }
     if( remove_from_vec( g->u.completed_missions, &m ) ) {
-        add_msg( _( "Removing from completed_missions" ) );
+        add_msg( to_translation( "Removing from completed_missions" ) );
     }
     if( remove_from_vec( g->u.failed_missions, &m ) ) {
-        add_msg( _( "Removing from failed_missions" ) );
+        add_msg( to_translation( "Removing from failed_missions" ) );
     }
 
     if( g->u.active_mission == &m ) {
         g->u.active_mission = nullptr;
-        add_msg( _( "Unsetting active mission" ) );
+        add_msg( to_translation( "Unsetting active mission" ) );
     }
 
     const auto giver = g->find_npc( m.npc_id );
     if( giver != nullptr ) {
         if( remove_from_vec( giver->chatbin.missions_assigned, &m ) ) {
-            add_msg( _( "Removing from %s missions_assigned" ), giver->name );
+            add_msg( to_translation( "Removing from %s missions_assigned" ), giver->name );
         }
         if( remove_from_vec( giver->chatbin.missions, &m ) ) {
-            add_msg( _( "Removing from %s missions" ), giver->name );
+            add_msg( to_translation( "Removing from %s missions" ), giver->name );
         }
     }
 }
@@ -1514,6 +1510,23 @@ static std::optional<tripoint_range<tripoint_bub_ms>> select_area()
                first.position.value(), second.position.value() );
 }
 
+auto spawn_vehicle( avatar &you, const vehicle_spawn &spawn ) -> vehicle *
+{
+    auto &here = get_map();
+    const auto at = you.bub_pos();
+    auto *const veh = here.add_vehicle( spawn.type, at, spawn.dir, 100, spawn.status, true, false,
+                                        true );
+    if( veh == nullptr ) {
+        return nullptr;
+    }
+    veh->set_owner( you );
+    // A part spawned into a wall smashes the vehicle, which can destroy the seat on the avatar's square.
+    if( here.veh_at( at ).part_with_feature( VPFLAG_BOARDABLE, true ) ) {
+        here.board_vehicle( at, &you );
+    }
+    return veh;
+}
+
 void debug()
 {
     bool debug_menu_has_hotkey = hotkey_for_action( ACTION_DEBUG, false ) != -1;
@@ -1546,7 +1559,7 @@ void debug()
                     }
                 }
             }
-            add_msg( m_good, _( "Current overmap revealed." ) );
+            add_msg( m_good, to_translation( "Current overmap revealed." ) );
         }
         break;
 
@@ -1573,6 +1586,16 @@ void debug()
                 params["npc"] = temp.get();
             } );
             g->load_npcs();
+        }
+        break;
+
+        case DEBUG_TRADE_NPC: {
+            const auto trader = get_map().place_npc( u.bub_pos() + tripoint_east,
+                                string_id<npc_template>( "evac_merchant" ), true );
+            g->load_npcs();
+            if( const auto guy = g->find_npc( trader ) ) {
+                npc_trading::trade( *guy, 0, npc_trading::deal_kind::trade );
+            }
         }
         break;
 
@@ -1613,16 +1636,17 @@ void debug()
                 g->num_creatures() );
             for( const npc &guy : g->all_npcs() ) {
                 auto t = guy.abs_sm_pos();
-                add_msg( m_info, _( "%s: map ( %d:%d ) pos ( %d:%d )" ), guy.name, t.x(),
+                add_msg( m_info, to_translation( "%s: map ( %d:%d ) pos ( %d:%d )" ), guy.name, t.x(),
                          t.y(), guy.bub_pos().x(), guy.bub_pos().y() );
             }
 
-            add_msg( m_info, _( "(you: %d:%d)" ), u.bub_pos().x(), u.bub_pos().y() );
-            add_msg( m_info, _( "Thirst: %d, kCal: %d / %d" ), u.get_thirst(), u.get_stored_kcal(),
+            add_msg( m_info, to_translation( "(you: %d:%d)" ), u.bub_pos().x(), u.bub_pos().y() );
+            add_msg( m_info, to_translation( "Thirst: %d, kCal: %d / %d" ), u.get_thirst(), u.get_stored_kcal(),
                      u.max_stored_kcal() );
-            add_msg( m_info, _( "Body Mass Index: %.0f\nBasal Metabolic Rate: %i" ), u.bmi(), u.bmr() );
+            add_msg( m_info, to_translation( "Body Mass Index: %.0f\nBasal Metabolic Rate: %i" ), u.bmi(),
+                     u.bmr() );
             if( get_option<bool>( "STATS_THROUGH_KILLS" ) ) {
-                add_msg( m_info, _( "Kill xp: %d" ), u.kill_xp() );
+                add_msg( m_info, to_translation( "Kill xp: %d" ), u.kill_xp() );
             }
             g->invalidate_main_ui_adaptor();
             g->disp_NPCs();
@@ -1683,7 +1707,7 @@ void debug()
         break;
         case DEBUG_KILL_NPCS:
             for( npc &guy : g->all_npcs() ) {
-                add_msg( _( "%s's head implodes!" ), guy.name );
+                add_msg( to_translation( "%s's head implodes!" ), guy.name );
                 guy.set_part_hp_cur( bodypart_id( "head" ), 0 );
             }
             break;
@@ -1718,7 +1742,6 @@ void debug()
                 if( veh_menu.ret >= 0 && veh_menu.ret < static_cast<int>( veh_strings.size() ) ) {
                     // Didn't cancel
                     const vproto_id &selected_opt = veh_strings[veh_menu.ret].second;
-                    auto dest = u.bub_pos();
                     uilist veh_cond_menu;
                     veh_cond_menu.text = _( "Vehicle condition" );
                     veh_cond_menu.addentry( 0, true, MENU_AUTOASSIGN, _( "Light damage" ) );
@@ -1729,16 +1752,7 @@ void debug()
                     if( veh_cond_menu.ret >= 0 && veh_cond_menu.ret < 3 ) {
                         int dir = 0;
                         if( query_int( dir, -90, _( "Vehicle direction (in degrees): " ) ) ) {
-                            vehicle *veh = m.add_vehicle( selected_opt, dest,
-                                                          normalize( units::from_degrees( dir ) ),
-                                                          100, veh_cond_menu.ret - 1,
-                                                          true,
-                                                          false,
-                                                          true );
-                            if( veh != nullptr ) {
-                                veh->set_owner( u );
-                                m.board_vehicle( dest, &u );
-                            }
+                            spawn_vehicle( u, { .type = selected_opt, .dir = normalize( units::from_degrees( dir ) ), .status = veh_cond_menu.ret - 1 } );
                         }
                     }
                 }
@@ -1920,7 +1934,6 @@ void debug()
         break;
 
         case DEBUG_SHOW_SOUND: {
-#if defined(TILES)
             const auto &sounds_to_draw = sounds::get_monster_sounds();
 
             shared_ptr_fast<game::draw_callback_t> sound_cb = make_shared_fast<game::draw_callback_t>( [&]() {
@@ -1938,9 +1951,6 @@ void debug()
 
             ui_manager::redraw();
             inp_mngr.wait_for_any_key();
-#else
-            popup( _( "This binary was not compiled with tiles support." ) );
-#endif
         }
         break;
 
@@ -2247,14 +2257,10 @@ void debug()
             // write to log
             DebugLog( DL::Info, DC::Main ) << " GAME REPORT:\n" << report;
             std::string popup_msg = _( "Report written to debug.log" );
-#if defined(TILES)
             // copy to clipboard
-            int clipboard_result = SDL_SetClipboardText( report.c_str() );
-            printErrorIf( clipboard_result != 0, "Error while copying the game report to the clipboard." );
-            if( clipboard_result == 0 ) {
+            if( game_client::presentation().set_clipboard_text( report ) ) {
                 popup_msg += _( " and to the clipboard." );
             }
-#endif
             popup( popup_msg );
         }
         break;
@@ -2268,7 +2274,7 @@ void debug()
         case DEBUG_VEHICLE_BATTERY_CHARGE: {
             optional_vpart_position v_part_pos = g->m.veh_at( u.bub_pos() );
             if( !v_part_pos ) {
-                add_msg( m_bad, _( "There's no vehicle there." ) );
+                add_msg( m_bad, to_translation( "There's no vehicle there." ) );
                 break;
             }
 
@@ -2291,7 +2297,7 @@ void debug()
         case DEBUG_VEHICLE_EXPORT_JSON: {
             const optional_vpart_position v_part_pos = g->m.veh_at( u.bub_pos() );
             if( !v_part_pos ) {
-                add_msg( m_bad, _( "There's no vehicle there." ) );
+                add_msg( m_bad, to_translation( "There's no vehicle there." ) );
                 break;
             }
             const vehicle &veh = v_part_pos->vehicle();
@@ -2323,9 +2329,7 @@ void debug()
             break;
         }
         case DEBUG_DUMP_TILES: {
-#if defined(TILES) && defined(DYNAMIC_ATLAS)
-            tilecontext->current_tileset()->texture_atlas()->readback_dump( PATH_INFO::config_dir() );
-#endif
+            game_client::presentation().dump_atlas( PATH_INFO::config_dir() );
             break;
         }
         case DEBUG_DISPLAY_TILESET_NO_VFX: {

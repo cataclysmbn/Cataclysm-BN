@@ -18,6 +18,7 @@
 #include "creature.h"
 #include "debug.h"
 #include "dialogue.h" // IWYU pragma: associated
+#include "engine_client_component.h"
 #include "enums.h"
 #include "faction.h"
 #include "flag.h"
@@ -29,6 +30,7 @@
 #include "item.h"
 #include "item_category.h"
 #include "item_contents.h"
+#include "item_serial.h"
 #include "itype.h"
 #include "json.h"
 #include "line.h"
@@ -83,6 +85,7 @@
 #include <map>
 #include <memory>
 #include <ostream>
+#include <ranges>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -417,11 +420,28 @@ static bool handle_emote( player &u, efftype_id effect, int emote_choice )
     const bool permanent = u.has_effect( effect );
     if( permanent ) {
         u.add_effect( effect, 9999_days, bodypart_str_id::NULL_ID() );
-        u.add_msg_if_player( _( "You will keep emoting." ) );
+        u.add_msg_if_player( to_translation( "You will keep emoting." ) );
     } else {
         u.add_effect( effect, 30_seconds, bodypart_str_id::NULL_ID() );
     }
     u.last_emote = effect;
+    return true;
+}
+
+auto can_chat_with( const Character &you, const npc &guy ) -> bool
+{
+    // TODO: Get rid of the z-level check when z-level vision gets "better"
+    return you.bub_pos().z() == guy.bub_pos().z() && you.sees( guy.bub_pos() ) &&
+           rl_dist( you.bub_pos(), guy.bub_pos() ) <= SEEX * 2;
+}
+
+auto refuse_faceless_speech( Character &you ) -> bool
+{
+    if( !you.has_trait( trait_PROF_FOODP ) || you.is_wearing( itype_id( "foodperson_mask" ) ) ||
+        you.is_wearing( itype_id( "foodperson_mask_on" ) ) ) {
+        return false;
+    }
+    you.add_msg_if_player( m_warning, to_translation( "You can't speak without your face!" ) );
     return true;
 }
 
@@ -430,9 +450,7 @@ void game::chat()
     int volume = u.get_shout_volume();
 
     const std::vector<npc *> available = get_npcs_if( [&]( const npc & guy ) {
-        // TODO: Get rid of the z-level check when z-level vision gets "better"
-        return u.bub_pos().z() == guy.bub_pos().z() && u.sees( guy.bub_pos() ) &&
-               rl_dist( u.bub_pos(), guy.bub_pos() ) <= SEEX * 2;
+        return can_chat_with( u, guy );
     } );
     const int available_count = available.size();
     const std::vector<npc *> followers = get_npcs_if( [&]( const npc & guy ) {
@@ -445,9 +463,7 @@ void game::chat()
     } );
     const int guard_count = guards.size();
 
-    if( u.has_trait( trait_PROF_FOODP ) && !( u.is_wearing( itype_id( "foodperson_mask" ) ) ||
-            u.is_wearing( itype_id( "foodperson_mask_on" ) ) ) ) {
-        u.add_msg_if_player( m_warning, _( "You can't speak without your face!" ) );
+    if( refuse_faceless_speech( u ) ) {
         return;
     }
     std::vector<vehicle *> animal_vehicles;
@@ -711,7 +727,7 @@ void game::chat()
             }
 
             if( here.impassable( *p ) ) {
-                add_msg( m_info, _( "This destination can't be reached." ) );
+                add_msg( m_info, to_translation( "This destination can't be reached." ) );
                 return;
             }
 
@@ -859,7 +875,7 @@ void game::chat()
 
         if( !matched ) {
             // No prefix: just show plain text
-            add_msg( _( "%s" ), monologue_msg );
+            add_msg( to_translation( "%s" ), monologue_msg );
         }
     }
 
@@ -1105,10 +1121,10 @@ void npc::talk_to_u( bool radio_contact, bool enforce_first_topic )
         set_attitude( NPCATT_NULL );
     } else if( !has_mind_control && ( get_attitude() == NPCATT_FLEE ||
                                       get_attitude() == NPCATT_FLEE_TEMP ) ) {
-        add_msg( _( "%s is fleeing from you!" ), name );
+        add_msg( to_translation( "%s is fleeing from you!" ), name );
         return;
     } else if( !has_mind_control && get_attitude() == NPCATT_KILL ) {
-        add_msg( _( "%s is hostile!" ), name );
+        add_msg( to_translation( "%s is hostile!" ), name );
         return;
     }
     if( get_faction() ) {
@@ -1552,10 +1568,11 @@ void dialogue::apply_speaker_effects( const talk_topic &the_topic )
     }
 }
 
-talk_response &dialogue::add_response( const std::string &text, const std::string &r,
-                                       const bool first )
+talk_response &dialogue::add_response( const std::string &id, const std::string &text,
+                                       const std::string &r, const bool first )
 {
     talk_response result = talk_response();
+    result.id = id;
     result.truetext = no_translation( text );
     result.truefalse_condition = []( const dialogue & ) {
         return true;
@@ -1570,76 +1587,76 @@ talk_response &dialogue::add_response( const std::string &text, const std::strin
     }
 }
 
-talk_response &dialogue::add_response_done( const std::string &text )
+talk_response &dialogue::add_response_done( const std::string &id, const std::string &text )
 {
-    return add_response( text, "TALK_DONE" );
+    return add_response( id, text, "TALK_DONE" );
 }
 
-talk_response &dialogue::add_response_none( const std::string &text )
+talk_response &dialogue::add_response_none( const std::string &id, const std::string &text )
 {
-    return add_response( text, "TALK_NONE" );
+    return add_response( id, text, "TALK_NONE" );
 }
 
-talk_response &dialogue::add_response( const std::string &text, const std::string &r,
-                                       talkfunction_ptr effect_success, const bool first )
+talk_response &dialogue::add_response( const std::string &id, const std::string &text,
+                                       const std::string &r, talkfunction_ptr effect_success, const bool first )
 {
-    talk_response &result = add_response( text, r, first );
+    talk_response &result = add_response( id, text, r, first );
     result.success.set_effect( effect_success );
     return result;
 }
 
-talk_response &dialogue::add_response( const std::string &text, const std::string &r,
-                                       std::function<void( npc & )> effect_success,
+talk_response &dialogue::add_response( const std::string &id, const std::string &text,
+                                       const std::string &r, std::function<void( npc & )> effect_success,
                                        dialogue_consequence consequence, const bool first )
 {
-    talk_response &result = add_response( text, r, first );
+    talk_response &result = add_response( id, text, r, first );
     result.success.set_effect_consequence( effect_success, consequence );
     return result;
 }
 
-talk_response &dialogue::add_response( const std::string &text, const std::string &r,
-                                       mission *miss, const bool first )
+talk_response &dialogue::add_response( const std::string &id, const std::string &text,
+                                       const std::string &r, mission *miss, const bool first )
 {
     if( miss == nullptr ) {
         debugmsg( "tried to select null mission" );
     }
-    talk_response &result = add_response( text, r, first );
+    talk_response &result = add_response( id, text, r, first );
     result.mission_selected = miss;
     return result;
 }
 
-talk_response &dialogue::add_response( const std::string &text, const std::string &r,
-                                       const skill_id &skill, const bool first )
+talk_response &dialogue::add_response( const std::string &id, const std::string &text,
+                                       const std::string &r, const skill_id &skill, const bool first )
 {
-    talk_response &result = add_response( text, r, first );
+    talk_response &result = add_response( id, text, r, first );
     result.skill = skill;
     return result;
 }
 
-talk_response &dialogue::add_response( const std::string &text, const std::string &r,
-                                       const spell_id &sp, const bool first )
+talk_response &dialogue::add_response( const std::string &id, const std::string &text,
+                                       const std::string &r, const spell_id &sp, const bool first )
 {
-    talk_response &result = add_response( text, r, first );
+    talk_response &result = add_response( id, text, r, first );
     result.dialogue_spell = sp;
     return result;
 }
 
-talk_response &dialogue::add_response( const std::string &text, const std::string &r,
-                                       const martialart &style, const bool first )
+talk_response &dialogue::add_response( const std::string &id, const std::string &text,
+                                       const std::string &r, const martialart &style, const bool first )
 {
-    talk_response &result = add_response( text, r, first );
+    talk_response &result = add_response( id, text, r, first );
     result.style = style.id;
     return result;
 }
 
-talk_response &dialogue::add_response( const std::string &text, const std::string &r,
-                                       const itype_id &item_type, const bool first )
+talk_response &dialogue::add_response( const std::string &id, const std::string &text,
+                                       const std::string &r, const itype_id &item_type, const bool first )
 {
     if( item_type.is_null() ) {
         debugmsg( "explicitly specified null item" );
     }
 
-    talk_response &result = add_response( text, r, first );
+    talk_response &result = add_response( id, text, r, first );
     result.success.next_topic.item_type = item_type;
     return result;
 }
@@ -1660,19 +1677,22 @@ void dialogue::gen_responses( const talk_topic &the_topic )
     avatar &you = get_avatar();
     if( topic == "TALK_MISSION_LIST" ) {
         if( p->chatbin.missions.size() == 1 ) {
-            add_response( _( "Tell me about it." ), "TALK_MISSION_OFFER",
+            add_response( "TALK_MISSION_LIST:offer", _( "Tell me about it." ), "TALK_MISSION_OFFER",
                           p->chatbin.missions.front(), true );
         } else {
             for( auto &mission : p->chatbin.missions ) {
-                add_response( mission->get_type().tname(), "TALK_MISSION_OFFER", mission, true );
+                add_response( "TALK_MISSION_LIST:mission:" + std::to_string( mission->get_id() ),
+                              mission->get_type().tname(), "TALK_MISSION_OFFER", mission, true );
             }
         }
     } else if( topic == "TALK_MISSION_LIST_ASSIGNED" ) {
         if( missions_assigned.size() == 1 ) {
-            add_response( _( "I have news." ), "TALK_MISSION_INQUIRE", missions_assigned.front() );
+            add_response( "TALK_MISSION_LIST_ASSIGNED:news", _( "I have news." ), "TALK_MISSION_INQUIRE",
+                          missions_assigned.front() );
         } else {
             for( auto &miss_it : missions_assigned ) {
-                add_response( miss_it->get_type().tname(), "TALK_MISSION_INQUIRE", miss_it );
+                add_response( "TALK_MISSION_LIST_ASSIGNED:mission:" + std::to_string( miss_it->get_id() ),
+                              miss_it->get_type().tname(), "TALK_MISSION_INQUIRE", miss_it );
             }
         }
     } else if( topic == "TALK_TRAIN" ) {
@@ -1687,16 +1707,19 @@ void dialogue::gen_responses( const talk_topic &the_topic )
                 if( !styleid.is_valid() ) {
                     const spell_id &sp_id = spell_id( backlog.name );
                     if( p->magic->knows_spell( sp_id ) ) {
-                        add_response( string_format( _( "Yes, let's resume training %s" ), sp_id->name ),
+                        add_response( "TALK_TRAIN:resume", string_format( _( "Yes, let's resume training %s" ),
+                                      sp_id->name ),
                                       "TALK_TRAIN_START", sp_id );
                     }
                 } else {
                     const martialart &style = styleid.obj();
-                    add_response( string_format( _( "Yes, let's resume training %s" ), style.name ), "TALK_TRAIN_START",
-                                  style );
+                    add_response( "TALK_TRAIN:resume", string_format( _( "Yes, let's resume training %s" ),
+                                  style.name ),
+                                  "TALK_TRAIN_START", style );
                 }
             } else {
-                add_response( string_format( _( "Yes, let's resume training %s" ), skillt->name() ),
+                add_response( "TALK_TRAIN:resume", string_format( _( "Yes, let's resume training %s" ),
+                              skillt->name() ),
                               "TALK_TRAIN_START", skillt );
             }
         }
@@ -1717,7 +1740,7 @@ void dialogue::gen_responses( const talk_topic &the_topic )
             }
         }
         if( trainable.empty() && styles.empty() && teachable_spells.empty() ) {
-            add_response_none( _( "Oh, okay." ) );
+            add_response_none( "TALK_TRAIN:none", _( "Oh, okay." ) );
             return;
         }
         for( const spell_id &sp : teachable_spells ) {
@@ -1733,7 +1756,7 @@ void dialogue::gen_responses( const talk_topic &the_topic )
                 text = string_format( _( "%s: teaching spell knowledge (cost %s)" ), temp_spell.name(),
                                       format_money( cost ) );
             }
-            add_response( text, "TALK_TRAIN_START", sp );
+            add_response( "TALK_TRAIN:spell:" + sp.str(), text, "TALK_TRAIN_START", sp );
         }
         for( auto &style_id : styles ) {
             auto &style = style_id.obj();
@@ -1741,7 +1764,7 @@ void dialogue::gen_responses( const talk_topic &the_topic )
             //~Martial art style (cost in dollars)
             const std::string text = string_format( cost > 0 ? _( "%s ( cost $%d )" ) : "%s",
                                                     style.name, cost / 100 );
-            add_response( text, "TALK_TRAIN_START", style );
+            add_response( "TALK_TRAIN:style:" + style.id.str(), text, "TALK_TRAIN_START", style );
         }
         for( auto &trained : trainable ) {
             const int cost = calc_skill_training_cost( *p, trained );
@@ -1757,21 +1780,21 @@ void dialogue::gen_responses( const talk_topic &the_topic )
                                               _( "%s: %d (%d%%) -> %d (%d%%)" ),
                                               trained.obj().name(), cur_level, cur_level_exercise,
                                               next_level, next_level_exercise, cost / 100 );
-            add_response( text, "TALK_TRAIN_START", trained );
+            add_response( "TALK_TRAIN:skill:" + trained.str(), text, "TALK_TRAIN_START", trained );
         }
-        add_response_none( _( "Eh, never mind." ) );
+        add_response_none( "TALK_TRAIN:never_mind", _( "Eh, never mind." ) );
     } else if( topic == "TALK_HOW_MUCH_FURTHER" ) {
-        add_response_none( _( "Okay, thanks." ) );
-        add_response_done( _( "Let's keep moving." ) );
+        add_response_none( "TALK_HOW_MUCH_FURTHER:thanks", _( "Okay, thanks." ) );
+        add_response_done( "TALK_HOW_MUCH_FURTHER:keep_moving", _( "Let's keep moving." ) );
     }
 
     if( you.has_trait( trait_DEBUG_MIND_CONTROL ) && !p->is_player_ally() ) {
-        add_response( _( "OBEY ME!" ), "TALK_MIND_CONTROL" );
-        add_response_done( _( "Bye." ) );
+        add_response( "debug:obey", _( "OBEY ME!" ), "TALK_MIND_CONTROL" );
+        add_response_done( "debug:bye", _( "Bye." ) );
     }
 
     if( ret.empty() ) {
-        add_response_done( _( "Bye." ) );
+        add_response_done( "fallback:bye", _( "Bye." ) );
     }
 }
 
@@ -2149,8 +2172,81 @@ const talk_topic &special_talk( char ch )
     return no_topic;
 }
 
-talk_topic dialogue::opt( dialogue_window &d_win, const std::string &npc_name,
-                          const talk_topic &topic )
+namespace
+{
+namespace ec = engine_client;
+
+constexpr auto responses_id = "talk:responses";
+constexpr auto special_rows_id = "talk:special";
+constexpr auto respond_id = "talk:respond";
+constexpr auto special_run_id = "talk:special:run";
+
+/// The keys that talk about the NPC instead of answering it, by the names of their rows.
+struct special_key {
+    char key;
+    const char *id;
+    std::string label;
+};
+auto special_keys() -> std::array<special_key, 4>
+{
+    return { {
+            { 'L', "special:look_at", _( "Look at" ) }, { 'S', "special:size_up", _( "Size up stats" ) },
+            { 'Y', "special:yell", _( "Yell" ) }, { 'O', "special:opinion", _( "Check opinion" ) },
+        }
+    };
+}
+
+/// What the talk window shows, as the loop of `dialogue::opt` keeps it.
+struct talk_model {
+    const std::string &npc_name;
+    const dialogue_window &window;
+    const std::vector<talk_response> &responses;
+    const std::vector<talk_data> &lines;
+    const std::size_t &selected;
+};
+
+auto talk_view( const talk_model &model ) -> ec::screen_view
+{
+    auto rows = std::vector<ec::row> {};
+    for( const auto index : std::views::iota( std::size_t{0}, model.responses.size() ) ) {
+        const auto &line = model.lines[index];
+        rows.push_back( { .id = model.responses[index].id, .label = remove_color_tags( line.text ),
+                          .hotkey = line.letter >= 'a' && line.letter <= 'z' ? std::string( 1, line.letter ) : std::string{},
+                          .color = string_from_color( line.col ) } );
+    }
+    auto special = std::vector<ec::row> {};
+    for( const auto &entry : special_keys() ) {
+        special.push_back( { .id = entry.id, .label = entry.label, .hotkey = std::string( 1, entry.key ) } );
+    }
+    const auto history = model.window.history_lines() | std::views::join_with( std::string( "\n\n" ) ) |
+                         std::ranges::to<std::string>();
+    return {
+        .title = remove_color_tags( model.npc_name ),
+        .root = ec::split( {
+            .id = "talk:panes", .active = "talk:replies",
+            .children = ec::children_of(
+            ec::panel( {
+                .id = "talk:history", .title = _( "Dialogue:" ),
+                .child = ec::component{ .id = "talk:history:text", .body = ec::text_body{ .markup = history } } } ),
+            ec::panel( {
+                .id = "talk:replies", .title = _( "Your response:" ),
+                .child = ec::split( {
+                    .id = "talk:replies:parts",
+                    .children = ec::children_of(
+                    ec::list( { .id = responses_id, .rows = std::move( rows ), .selection = "single", .activate = respond_id } ),
+                    ec::list( { .id = special_rows_id, .rows = std::move( special ), .selection = "single", .activate = special_run_id } ) ) } ) } ) ) } ),
+        .affordances = {
+            ec::invoke_affordance( { .id = respond_id, .label = _( "Select" ), .args = { .row = ec::row_shape{ .component_id = responses_id } } } ),
+            ec::invoke_affordance( { .id = special_run_id, .label = _( "Select" ), .args = { .row = ec::row_shape{ .component_id = special_rows_id } } } ),
+        },
+        .focus_component = responses_id,
+        .focus_row = model.selected < model.responses.size() ? model.responses[model.selected].id : std::string{},
+    };
+}
+} // namespace
+
+auto dialogue::opt( dialogue_window &d_win, const std::string &npc_name,
+                    const talk_topic &topic ) -> talk_topic
 {
     std::string challenge = dynamic_line( topic );
     gen_responses( topic );
@@ -2187,8 +2283,9 @@ talk_topic dialogue::opt( dialogue_window &d_win, const std::string &npc_name,
     }
     auto selected_response = size_t{ 0 };
 
+    auto ctxt = input_context( "DIALOGUE_CHOOSE_RESPONSE" );
+    ctxt.register_action( "ANY_INPUT" );
 #if defined(__ANDROID__)
-    input_context ctxt( "DIALOGUE_CHOOSE_RESPONSE" );
     for( size_t i = 0; i < responses.size(); i++ ) {
         ctxt.register_manual_key( 'a' + i );
     }
@@ -2197,6 +2294,11 @@ talk_topic dialogue::opt( dialogue_window &d_win, const std::string &npc_name,
     ctxt.register_manual_key( 'Y', "Yell" );
     ctxt.register_manual_key( 'O', "Check opinion" );
 #endif
+
+    // The lines are evaluated once, here: observing them must not parse tags, generate responses, run
+    // speaker effects or roll a trial again.
+    const auto model = talk_model{ .npc_name = npc_name, .window = d_win, .responses = responses, .lines = response_lines, .selected = selected_response };
+    const auto screen = ec::screen_scope( ctxt, "talk", { .view = [&]( const ec::boundary_state & /*state*/ ) { return talk_view( model ); } } );
 
     ui_adaptor ui;
     ui.on_screen_resize( [&]( ui_adaptor & ui ) {
@@ -2216,7 +2318,28 @@ talk_topic dialogue::opt( dialogue_window &d_win, const std::string &npc_name,
         d_win.refresh_response_display();
         do {
             ui_manager::redraw();
-            ch = inp_mngr.get_input_event().get_first_input();
+            ctxt.handle_input();
+            const auto &input = ctxt.get_raw_input();
+            if( const auto picked = ec::invoked( input ) ) {
+                // Resolve only to the original native branch; confirmations, rolls and effects stay below.
+                // A row the screen does not hold is none, so nothing is chosen.
+                ch = -1;
+                if( picked->affordance_id == special_run_id && picked->args.row ) {
+                    const auto keys = special_keys();
+                    const auto found = std::ranges::find( keys, *picked->args.row, &special_key::id );
+                    if( found != keys.end() ) {
+                        return special_talk( found->key );
+                    }
+                } else if( picked->affordance_id == respond_id && picked->args.row ) {
+                    const auto found = std::ranges::find( responses, *picked->args.row, &talk_response::id );
+                    if( found != responses.end() ) {
+                        ch = static_cast<int>( found - responses.begin() );
+                        break;
+                    }
+                }
+                continue;
+            }
+            ch = input.get_first_input();
             if( ch == KEY_UP ) {
                 if( selected_response > 0 ) {
                     selected_response -= 1;
@@ -2325,7 +2448,7 @@ talk_trial::talk_trial( const JsonObject &jo )
 static talk_topic load_inline_topic( const JsonObject &jo )
 {
     const std::string id = jo.get_string( "id" );
-    json_talk_topics[id].load( jo );
+    json_talk_topics[id].load( jo, id );
     return talk_topic( id );
 }
 
@@ -3290,6 +3413,7 @@ talk_response::talk_response()
 
 talk_response::talk_response( const JsonObject &jo )
 {
+    id = jo.get_string( "id", "" );
     if( jo.has_member( "truefalsetext" ) ) {
         JsonObject truefalse_jo = jo.get_object( "truefalsetext" );
         read_condition<dialogue>( truefalse_jo, "condition", truefalse_condition, true );
@@ -3368,6 +3492,13 @@ json_talk_response::json_talk_response( const JsonObject &jo )
     load_condition( jo );
 }
 
+auto json_talk_response::name_by( const std::string &fallback ) -> void
+{
+    if( actual_response.id.empty() ) {
+        actual_response.id = fallback;
+    }
+}
+
 void json_talk_response::load_condition( const JsonObject &jo )
 {
     is_switch = jo.get_bool( "switch", false );
@@ -3396,11 +3527,12 @@ bool json_talk_response::gen_responses( dialogue &d, bool switch_done ) const
 
 // repeat responses always go in front
 bool json_talk_response::gen_repeat_response( dialogue &d, const itype_id &item_id,
-        bool switch_done ) const
+        const std::string &about, bool switch_done ) const
 {
     if( !is_switch || !switch_done ) {
         if( test_condition( d ) ) {
             talk_response result = actual_response;
+            result.id += ":" + about;
             result.success.next_topic.item_type = item_id;
             result.failure.next_topic.item_type = item_id;
             d.responses.insert( d.responses.begin(), result );
@@ -3590,7 +3722,7 @@ void json_dynamic_line_effect::apply( dialogue &d ) const
     effect.apply( d );
 }
 
-void json_talk_topic::load( const JsonObject &jo )
+void json_talk_topic::load( const JsonObject &jo, const std::string &topic_id )
 {
     if( jo.has_member( "dynamic_line" ) ) {
         dynamic_line = dynamic_line_t::from_member( jo, "dynamic_line" );
@@ -3613,12 +3745,21 @@ void json_talk_topic::load( const JsonObject &jo )
     }
     for( JsonObject response : jo.get_array( "responses" ) ) {
         responses.emplace_back( response );
+        responses.back().name_by( topic_id + ":" + std::to_string( responses.size() - 1 ) );
+        if( std::ranges::count( responses, responses.back().id(), &json_talk_response::id ) > 1 ) {
+            response.throw_error( "the response id is not unique in its topic" );
+        }
     }
+    const auto add_repeat = [&]( const JsonObject & elem ) {
+        repeat_responses.emplace_back( elem );
+        repeat_responses.back().response.name_by( topic_id + ":repeat:" +
+                std::to_string( repeat_responses.size() - 1 ) );
+    };
     if( jo.has_object( "repeat_responses" ) ) {
-        repeat_responses.emplace_back( jo.get_object( "repeat_responses" ) );
+        add_repeat( jo.get_object( "repeat_responses" ) );
     } else if( jo.has_array( "repeat_responses" ) ) {
         for( JsonObject elem : jo.get_array( "repeat_responses" ) ) {
-            repeat_responses.emplace_back( elem );
+            add_repeat( elem );
         }
     }
     if( responses.empty() ) {
@@ -3644,7 +3785,7 @@ bool json_talk_topic::gen_responses( dialogue &d ) const
         std::function<bool( const item & )> filter = return_true<item>;
         for( const itype_id &item_id : repeat.for_item ) {
             if( actor->charges_of( item_id ) > 0 || actor->has_amount( item_id, 1 ) ) {
-                switch_done |= repeat.response.gen_repeat_response( d, item_id, switch_done );
+                switch_done |= repeat.response.gen_repeat_response( d, item_id, item_id.str(), switch_done );
             }
         }
         for( const item_category_id &category_id : repeat.for_category ) {
@@ -3657,7 +3798,8 @@ bool json_talk_topic::gen_responses( dialogue &d ) const
                 return it.type && it.type->category_force == category_id;
             } );
             for( const auto &it : items_with ) {
-                switch_done |= repeat.response.gen_repeat_response( d, it->typeId(), switch_done );
+                switch_done |= repeat.response.gen_repeat_response( d, it->typeId(),
+                               game_client::item_row_id( *it ), switch_done );
             }
         }
     }
@@ -3690,11 +3832,11 @@ void load_talk_topic( const JsonObject &jo )
 {
     if( jo.has_array( "id" ) ) {
         for( auto &id : jo.get_string_array( "id" ) ) {
-            json_talk_topics[id].load( jo );
+            json_talk_topics[id].load( jo, id );
         }
     } else {
         const std::string id = jo.get_string( "id" );
-        json_talk_topics[id].load( jo );
+        json_talk_topics[id].load( jo, id );
     }
 }
 

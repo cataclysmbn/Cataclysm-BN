@@ -3,6 +3,7 @@
 #include "avatar.h"
 #include "bionics.h"
 #include "bodypart.h"
+#include "cached_options.h"
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catacharset.h"
@@ -39,6 +40,7 @@
 #include "monster.h"
 #include "npc.h"
 #include "options.h"
+#include "options_helpers.h"
 #include "overmap/overmap_special.h"
 #include "overmap/overmapbuffer.h"
 #include "overmap/overmapbuffer_registry.h"
@@ -48,6 +50,7 @@
 #include "state_helpers.h"
 #include "string_formatter.h"
 #include "stringmaker.h"
+#include "thread_pool.h"
 #include "type_id.h"
 #include "units_angle.h"
 #include "units_energy.h"
@@ -275,6 +278,55 @@ TEST_CASE(
     CHECK(test_data.get<int>("max_depth") == 1);
 }
 
+// Lua runs on the main thread only, and planning a monster asks for its attitude.
+TEST_CASE("monsters_whose_attitude_lua_decides_are_planned_on_the_main_thread", "[lua][monster]") {
+    clear_all_state();
+    sol::state& lua = DynamicDataLoader::get_instance().lua->lua;
+    sol::table attitudes = lua.globals()["game"]["monster_attitude_functions"];
+    REQUIRE(attitudes.valid());
+    const auto no_autosave = override_option("AUTOSAVE", "false");
+    const auto same_bubble =
+        override_option("REALITY_BUBBLE_SIZE", std::to_string(g_reality_bubble_size));
+    const auto chunk_size = monster_plan_chunk_size;
+    const auto cleanup = on_out_of_scope([&]() {
+        monster_plan_chunk_size = chunk_size;
+        attitudes["test_recursive_attitude"] = sol::lua_nil;
+        lua.globals()["test_on_worker"] = sol::lua_nil;
+        lua.globals()["test_data"] = sol::lua_nil;
+        clear_all_state();
+    });
+
+    auto test_data = lua.create_table();
+    test_data["on_worker"] = false;
+    lua.globals()["test_data"] = test_data;
+    lua.set_function("test_on_worker", []() { return is_pool_worker_thread(); });
+    const auto script = lua.safe_script(
+        R"(
+        game.monster_attitude_functions["test_recursive_attitude"] = function(mon, target)
+            if test_on_worker() then
+                test_data.on_worker = true
+            end
+            return MonsterAttitude.MATT_IGNORE
+        end
+    )",
+        sol::script_pass_on_error);
+    REQUIRE(script.valid());
+
+    // One monster per planning task, so the pool takes several of them.
+    REQUIRE(parallel_enabled);
+    REQUIRE(parallel_monster_planning);
+    REQUIRE(get_thread_pool().num_workers() > 0);
+    monster_plan_chunk_size = 1;
+    for (const auto x : {56, 58, 62, 64}) {
+        spawn_test_monster("mon_test_lua_attitude_recursion", tripoint_bub_ms(x, 56, 0)).moves =
+            100;
+    }
+
+    CHECK_FALSE(g->do_turn());
+
+    CHECK_FALSE(test_data.get<bool>("on_worker"));
+}
+
 static void run_lua_test_script(sol::state& lua, const std::string& script_name) {
     std::string full_script_name = "tests/lua/" + script_name;
 
@@ -419,6 +471,10 @@ TEST_CASE("lua_class_members", "[lua]") {
 }
 
 TEST_CASE("lua_global_functions", "[lua]") {
+    clear_all_state();
+    // The avatar name derives the save id, so a randomized name must not outlive the test.
+    const auto restore_name = restore_on_out_of_scope<std::string>(get_avatar().name);
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
     sol::state lua = make_lua_state();
 
     // Create global table for test
@@ -718,9 +774,17 @@ TEST_CASE(
 
 TEST_CASE("lua_activity_bindings", "[lua]") {
     clear_all_state();
-    auto& state = *DynamicDataLoader::get_instance().lua;
-    cata::init_global_state_tables(state, {});
-    sol::state& lua = state.lua;
+    sol::state& lua = DynamicDataLoader::get_instance().lua->lua;
+    // Registers into the live tables: init_global_state_tables() would drop every hook the data
+    // registered, such as the mapgens only Lua uses, for each test after this one.
+    sol::table activities = lua.globals()["game"]["activity_functions"];
+    REQUIRE(activities.valid());
+    const auto cleanup = on_out_of_scope([&]() {
+        activities["TEST_TURN"] = sol::lua_nil;
+        activities["TEST_CALLBACK"] = sol::lua_nil;
+        lua.globals()["test_data"] = sol::lua_nil;
+        clear_all_state();
+    });
 
     auto test_data = lua.create_table();
     lua.globals()["test_data"] = test_data;
@@ -939,6 +1003,7 @@ TEST_CASE("lua_coord_cpp_helpers", "[lua]") {
 
 TEST_CASE("plumbing_lua_tripoint_migration", "[lua][plumbing]") {
     clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
     auto lua = make_lua_state();
 
     auto fake_map = lua.create_table();
@@ -1501,7 +1566,9 @@ TEST_CASE("failed dimension deletion preserves saved metadata", "[lua]") {
     clear_all_state();
     initialize_dimension_test_storage();
     const auto target_dimension_id = dimension_id("lua\\test_failed_delete");
+    const auto original_map_size = get_map().getmapsize();
     g->place_player_overmap(tripoint_abs_omt(tripoint_zero));
+    const auto original_origin = player_reality_bubble_origin();
 
     auto* const active_world = g->get_active_world();
     REQUIRE(active_world != nullptr);
@@ -1517,11 +1584,14 @@ TEST_CASE("failed dimension deletion preserves saved metadata", "[lua]") {
         unload_overmapbuffer_dimension(target_dimension_id);
         auto input = std::istringstream(original_save.str());
         g->unserialize(input);
+        get_map().resize(original_map_size);
         clear_all_state();
     });
 
     const auto pocket_data = enter_test_pocket(target_dimension_id, tripoint_abs_omt(24, 24, 0));
-    REQUIRE(g->travel_to_dimension(dimension_id(), world_type_id(), std::nullopt, std::nullopt));
+    // Home at the bubble it left: one around the pocket's square loads home submaps no cleanup
+    // unloads.
+    REQUIRE(g->travel_to_dimension(dimension_id(), world_type_id(), std::nullopt, original_origin));
 
     CHECK_FALSE(g->delete_dimension(target_dimension_id));
 

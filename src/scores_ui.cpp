@@ -1,8 +1,10 @@
 #include "scores_ui.h"
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <iterator>
+#include <optional>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -11,6 +13,7 @@
 #include "achievement.h"
 #include "color.h"
 #include "cursesdef.h"
+#include "engine_client_component.h"
 #include "event_statistics.h"
 #include "input.h"
 #include "kill_tracker.h"
@@ -119,27 +122,54 @@ void show_scores_ui( const achievements_tracker &achievements, stats_tracker &st
         view.draw( c_white );
     } );
 
+    const auto text_of = [&]( const tab_mode mode ) {
+        switch( mode ) {
+            case tab_mode::achievements:
+                return get_achievements_text( achievements );
+            case tab_mode::scores:
+                return get_scores_text( stats );
+            case tab_mode::kills:
+                return kills.get_kills_text();
+            case tab_mode::num_tabs:
+                break;
+        }
+        assert( false );
+        return std::string();
+    };
+    namespace ec = engine_client;
+    constexpr auto select_tab_id = "scores:tab";
+    const auto tab_ids = std::array<std::string, 3> { "achievements", "scores", "kills" };
+    const auto screen = ec::screen_scope( ctxt, "scores", { .view = [&]( const ec::boundary_state & )
+    {
+        auto entries = std::vector<ec::tab_entry> {};
+        for( const auto &[mode, name] : tabs ) {
+            const auto index = static_cast<std::size_t>( mode );
+            entries.push_back( { .id = tab_ids[index], .label = name, .selected = mode == tab } );
+        }
+        return ec::screen_view{
+            .title = _( "Scores" ),
+            .root = ec::tabs( {
+                .id = "scores:tabs", .tabs = std::move( entries ), .select = select_tab_id,
+                .child = { .id = "scores:text", .body = ec::text_body{ .markup = text_of( tab ) } } } ),
+            .affordances = { ec::invoke_affordance( { .id = select_tab_id, .label = _( "Category" ), .args = { .row = ec::row_shape{ .component_id = "scores:tabs" } } } ) },
+        };
+    }
+                                                          } );
+
     while( true ) {
         if( new_tab ) {
-            switch( tab ) {
-                case tab_mode::achievements:
-                    view.set_text( get_achievements_text( achievements ) );
-                    break;
-                case tab_mode::scores:
-                    view.set_text( get_scores_text( stats ) );
-                    break;
-                case tab_mode::kills:
-                    view.set_text( kills.get_kills_text() );
-                    break;
-                case tab_mode::num_tabs:
-                    assert( false );
-                    break;
-            }
+            view.set_text( text_of( tab ) );
         }
 
         ui_manager::redraw();
-        const std::string action = ctxt.handle_input();
-        new_tab = false;
+        const auto action = ctxt.handle_input();
+        const auto picked = ec::invoked( ctxt.get_raw_input() );
+        const auto chosen_tab = picked && picked->affordance_id == select_tab_id && picked->args.row ?
+                                std::ranges::find( tab_ids, *picked->args.row ) : tab_ids.end();
+        new_tab = chosen_tab != tab_ids.end();
+        if( new_tab ) {
+            tab = static_cast<tab_mode>( chosen_tab - tab_ids.begin() );
+        }
         if( action == "RIGHT" || action == "NEXT_TAB" ) {
             tab = static_cast<tab_mode>( static_cast<int>( tab ) + 1 );
             if( tab >= tab_mode::num_tabs ) {
@@ -199,9 +229,18 @@ void show_kills( kill_tracker &kills )
         view.draw( c_white );
     } );
 
+    const auto screen = engine_client::screen_scope( ctxt, "kills", { .view = [&]( const engine_client::boundary_state & )
+    {
+        return engine_client::screen_view{
+            .title = _( "Kills" ),
+            .root = engine_client::component{ .id = "kills:text", .body = engine_client::text_body{ .markup = kills.get_kills_text() } },
+        };
+    }
+                                                                    } );
+
     while( true ) {
         ui_manager::redraw();
-        const std::string action = ctxt.handle_input();
+        const auto action = ctxt.handle_input();
         if( action == "DOWN" ) {
             view.scroll_down();
         } else if( action == "UP" ) {

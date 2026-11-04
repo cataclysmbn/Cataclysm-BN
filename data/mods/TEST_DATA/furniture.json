@@ -1,6 +1,17 @@
 [
   {
     "type": "furniture",
+    "id": "f_test_semantic_construction",
+    "name": "TEST semantic construction marker",
+    "description": "A deterministic furniture result for semantic construction tests.",
+    "symbol": "#",
+    "color": "light_gray",
+    "move_cost_mod": 0,
+    "required_str": 1,
+    "flags": [ "FLAT_SURF" ]
+  },
+  {
+    "type": "furniture",
     "id": "f_atomic_freezer",
     "name": "atomic freezer",
     "copy-from": "f_glass_fridge_base",

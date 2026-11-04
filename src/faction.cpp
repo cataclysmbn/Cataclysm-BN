@@ -5,6 +5,8 @@
 #include "character.h"
 #include "cursesdef.h"
 #include "debug.h"
+#include "engine_client_component.h"
+#include "engine_client_requirements.h"
 #include "game.h"
 #include "game_constants.h"
 #include "input.h"
@@ -12,6 +14,7 @@
 #include "json.h"
 #include "line.h"
 #include "mtype.h"
+#include "mtype_display.h"
 #include "npc.h"
 #include "output.h"
 #include "overmap/overmapbuffer.h"
@@ -21,17 +24,21 @@
 #include "point.h"
 #include "skill.h"
 #include "string_formatter.h"
+#include "string_utils.h"
 #include "text_snippets.h"
 #include "translations.h"
 #include "type_id.h"
 #include "ui_manager.h"
 
+#include <algorithm>
+#include <array>
 #include <bitset>
 #include <cstdlib>
 #include <limits>
 #include <map>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <string>
 #include <utility>
@@ -418,6 +425,50 @@ faction *faction_manager::add_new_faction( const std::string &name_new, const fa
     return nullptr;
 }
 
+namespace
+{
+
+auto validate_faction_from_template( faction &value, const faction_id &id ) -> void
+{
+    namespace ranges = std::ranges;
+    const auto found = ranges::find( npc_factions::all_templates, id, &faction_template::id );
+    if( found != npc_factions::all_templates.end() ) {
+        value.currency = found->currency;
+        value.lone_wolf_faction = found->lone_wolf_faction;
+        value.name = found->name;
+        value.desc = found->desc;
+        value.mon_faction = found->mon_faction;
+        value.epilogue_data = found->epilogue_data;
+        for( const auto &relation : found->relations ) {
+            value.relations.try_emplace( relation.first, relation.second );
+        }
+    }
+    value.validated = true;
+}
+
+} // namespace
+
+auto faction_manager::get_for_display( const faction_id &id ) const -> std::optional<faction>
+{
+    namespace ranges = std::ranges;
+    const auto effective_id = id.is_null() ? faction_id( "no_faction" ) : id;
+    const auto stored = factions.find( effective_id );
+    if( stored != factions.end() ) {
+        auto result = stored->second;
+        if( !result.validated ) {
+            validate_faction_from_template( result, effective_id );
+        }
+        return result;
+    }
+    const auto found = ranges::find( npc_factions::all_templates, effective_id, &faction_template::id );
+    if( found == npc_factions::all_templates.end() ) {
+        return std::nullopt;
+    }
+    auto result = faction( *found );
+    result.validated = true;
+    return result;
+}
+
 faction *faction_manager::get( const faction_id &id, const bool complain )
 {
     if( id.is_null() ) {
@@ -426,23 +477,7 @@ faction *faction_manager::get( const faction_id &id, const bool complain )
     for( auto &elem : factions ) {
         if( elem.first == id ) {
             if( !elem.second.validated ) {
-                for( const faction_template &fac_temp : npc_factions::all_templates ) {
-                    if( fac_temp.id == id ) {
-                        elem.second.currency = fac_temp.currency;
-                        elem.second.lone_wolf_faction = fac_temp.lone_wolf_faction;
-                        elem.second.name = fac_temp.name;
-                        elem.second.desc = fac_temp.desc;
-                        elem.second.mon_faction = fac_temp.mon_faction;
-                        elem.second.epilogue_data = fac_temp.epilogue_data;
-                        for( const auto &rel_data : fac_temp.relations ) {
-                            if( !elem.second.relations.contains( rel_data.first ) ) {
-                                elem.second.relations[rel_data.first] = rel_data.second;
-                            }
-                        }
-                        break;
-                    }
-                }
-                elem.second.validated = true;
+                validate_faction_from_template( elem.second, id );
             }
             return &elem.second;
         }
@@ -492,119 +527,135 @@ void faction::faction_display( const catacurses::window &fac_w, const int width 
     fold_and_print( fac_w, point( width, ++y ), getmaxx( fac_w ) - width - 2, c_light_gray, _( desc ) );
 }
 
+namespace
+{
+/// The status, condition and needs of a follower, one colored line each.
+auto npc_condition_lines( const npc &guy ) -> std::vector<std::pair<std::string, nc_color>>
+{
+    nc_color status_col = c_white;
+    std::string current_status = _( "Status: " );
+    if( guy.current_target() != nullptr ) {
+        current_status += _( "In Combat!" );
+        status_col = c_light_red;
+    } else if( guy.in_sleep_state() ) {
+        current_status += _( "Sleeping" );
+    } else if( guy.is_following() ) {
+        current_status += _( "Following" );
+    } else if( guy.is_leader() ) {
+        current_status += _( "Leading" );
+    } else if( guy.is_patrolling() ) {
+        current_status += _( "Patrolling" );
+    } else if( guy.is_guarding() ) {
+        current_status += _( "Guarding" );
+    }
+    const std::pair <std::string, nc_color> condition = guy.hp_description();
+    const std::pair <std::string, nc_color> hunger_pair = guy.get_hunger_description();
+    const std::pair <std::string, nc_color> thirst_pair = guy.get_thirst_description();
+    const std::pair <std::string, nc_color> fatigue_pair = guy.get_fatigue_description();
+    const std::string nominal = pgettext( "needs", "Nominal" );
+    return {
+        { current_status, status_col },
+        { _( "Condition: " ) + condition.first, condition.second },
+        { _( "Hunger: " ) + ( hunger_pair.first.empty() ? nominal : hunger_pair.first ), hunger_pair.second },
+        { _( "Thirst: " ) + ( thirst_pair.first.empty() ? nominal : thirst_pair.first ), thirst_pair.second },
+        { _( "Fatigue: " ) + ( fatigue_pair.first.empty() ? nominal : fatigue_pair.first ), fatigue_pair.second },
+    };
+}
+} // namespace
+
+namespace
+{
+/// How a follower can be reached from where the player is.
+struct follower_contact {
+    /// 0 out of reach, 1 within interaction range, 2 within radio range.
+    int level = 0;
+    std::string text;
+    nc_color color = c_light_red;
+};
+
+auto contact_with( const npc &guy ) -> follower_contact
+{
+    Character &player_character = get_player_character();
+    static const flag_id json_flag_TWO_WAY_RADIO( "TWO_WAY_RADIO" );
+    const bool u_has_radio = g->u.has_item_with_flag( json_flag_TWO_WAY_RADIO, true ) ||
+                             g->u.has_enchantment_flag( enchantment_flag_id( "RADIO" ) );
+    const bool guy_has_radio = guy.has_item_with_flag( json_flag_TWO_WAY_RADIO, true ) ||
+                               guy.has_enchantment_flag( enchantment_flag_id( "RADIO" ) );
+    // is the NPC even in the same area as the player?
+    if( rl_dist( player_character.abs_omt_pos(), guy.abs_omt_pos() ) > 3 ||
+        ( rl_dist( g->u.bub_pos(), guy.bub_pos() ) > SEEX * 2 || !g->u.sees( guy.bub_pos() ) ) ) {
+        if( u_has_radio && guy_has_radio ) {
+            // TODO: better range calculation than just elevation.
+            int max_range = 200;
+            max_range *= ( 1 + ( g->u.bub_pos().z() * 0.1 ) );
+            max_range *= ( 1 + ( guy.bub_pos().z() * 0.1 ) );
+            if( ( ( g->u.bub_pos().z() >= 0 && guy.bub_pos().z() >= 0 ) ||
+                  ( g->u.bub_pos().z() == guy.bub_pos().z() ) ) &&
+                square_dist( g->u.abs_sm_pos(), guy.abs_sm_pos() ) <= max_range ) {
+                return { .level = 2, .text = _( "Within radio range" ), .color = c_light_green };
+            }
+            return { .text = _( "Not within radio range" ) };
+        } else if( guy_has_radio && !u_has_radio ) {
+            return { .text = _( "You do not have a radio" ) };
+        } else if( !guy_has_radio && u_has_radio ) {
+            return { .text = _( "Follower does not have a radio" ) };
+        }
+        return { .text = _( "Both you and follower need a radio" ) };
+    }
+    return { .level = 1, .text = _( "Within interaction range" ), .color = c_light_green };
+}
+
+/// What a follower is best at: the best combat skill and the best three other skills.
+struct follower_skills {
+    std::string combat;
+    std::vector<std::string> others;
+};
+
+auto skills_of( const npc &guy ) -> follower_skills
+{
+    const auto skillslist = Skill::get_skills_sorted_by( [&]( const Skill & a, const Skill & b ) {
+        const int level_a = guy.get_skill_level( a.ident() );
+        const int level_b = guy.get_skill_level( b.ident() );
+        return localized_compare( std::make_pair( -level_a, a.name() ),
+                                  std::make_pair( -level_b, b.name() ) );
+    } );
+    follower_skills result{ .combat = string_format( _( "Best combat skill: %s: %d" ),
+                                      guy.best_skill().obj().name(), guy.best_skill_level() ), .others = {} };
+    for( size_t i = 0; i < skillslist.size() && result.others.size() < 3; i++ ) {
+        if( !skillslist[ i ]->is_combat_skill() ) {
+            result.others.push_back( string_format( "%s: %d", skillslist[i]->name(),
+                                                    guy.get_skill_level( skillslist[i]->ident() ) ) );
+        }
+    }
+    return result;
+}
+} // namespace
+
 int npc::faction_display( const catacurses::window &fac_w, const int width ) const
 {
-    int retval = 0;
     int y = 2;
     const nc_color col = c_white;
-    Character &player_character = get_player_character();
-    const tripoint_abs_omt player_abspos = player_character.abs_omt_pos();
 
     //get NPC followers, status, direction, location, needs, weapon, etc.
     mvwprintz( fac_w, point( width, ++y ), c_light_gray,
                _( "Press enter to talk to this follower" ) );
     mvwprintz( fac_w, point( width, ++y ), c_light_gray,
                _( "Press s to swap to this follower" ) );
-    std::string can_see;
-    nc_color see_color;
-
-    static const flag_id json_flag_TWO_WAY_RADIO( "TWO_WAY_RADIO" );
-    bool u_has_radio = g->u.has_item_with_flag( json_flag_TWO_WAY_RADIO, true ) ||
-                       g->u.has_enchantment_flag( enchantment_flag_id( "RADIO" ) );
-    bool guy_has_radio = has_item_with_flag( json_flag_TWO_WAY_RADIO, true ) ||
-                         has_enchantment_flag( enchantment_flag_id( "RADIO" ) );
-    // is the NPC even in the same area as the player?
-    if( rl_dist( player_abspos, abs_omt_pos() ) > 3 ||
-        ( rl_dist( g->u.bub_pos(), bub_pos() ) > SEEX * 2 || !g->u.sees( bub_pos() ) ) ) {
-        if( u_has_radio && guy_has_radio ) {
-            // TODO: better range calculation than just elevation.
-            int max_range = 200;
-            max_range *= ( 1 + ( g->u.bub_pos().z() * 0.1 ) );
-            max_range *= ( 1 + ( bub_pos().z() * 0.1 ) );
-            if( ( ( g->u.bub_pos().z() >= 0 && bub_pos().z() >= 0 ) ||
-                  ( g->u.bub_pos().z() == bub_pos().z() ) ) &&
-                square_dist( g->u.abs_sm_pos(), abs_sm_pos() ) <= max_range ) {
-                retval = 2;
-                can_see = _( "Within radio range" );
-                see_color = c_light_green;
-            } else {
-                can_see = _( "Not within radio range" );
-                see_color = c_light_red;
-            }
-        } else if( guy_has_radio && !u_has_radio ) {
-            can_see = _( "You do not have a radio" );
-            see_color = c_light_red;
-        } else if( !guy_has_radio && u_has_radio ) {
-            can_see = _( "Follower does not have a radio" );
-            see_color = c_light_red;
-        } else {
-            can_see = _( "Both you and follower need a radio" );
-            see_color = c_light_red;
-        }
-    } else {
-        retval = 1;
-        can_see = _( "Within interaction range" );
-        see_color = c_light_green;
+    const auto contact = contact_with( *this );
+    mvwprintz( fac_w, point( width, ++y ), contact.color, "%s", contact.text );
+    for( const auto &[text, line_color] : npc_condition_lines( *this ) ) {
+        mvwprintz( fac_w, point( width, ++y ), line_color, text );
     }
-    mvwprintz( fac_w, point( width, ++y ), see_color, "%s", can_see );
-    nc_color status_col = col;
-    std::string current_status = _( "Status: " );
-    if( current_target() != nullptr ) {
-        current_status += _( "In Combat!" );
-        status_col = c_light_red;
-    } else if( in_sleep_state() ) {
-        current_status += _( "Sleeping" );
-    } else if( is_following() ) {
-        current_status += _( "Following" );
-    } else if( is_leader() ) {
-        current_status += _( "Leading" );
-    } else if( is_patrolling() ) {
-        current_status += _( "Patrolling" );
-    } else if( is_guarding() ) {
-        current_status += _( "Guarding" );
-    }
-    mvwprintz( fac_w, point( width, ++y ), status_col, current_status );
-
-    const std::pair <std::string, nc_color> condition = hp_description();
-    mvwprintz( fac_w, point( width, ++y ), condition.second, _( "Condition: " ) + condition.first );
-    const std::pair <std::string, nc_color> hunger_pair = get_hunger_description();
-    const std::pair <std::string, nc_color> thirst_pair = get_thirst_description();
-    const std::pair <std::string, nc_color> fatigue_pair = get_fatigue_description();
-    const std::string nominal = pgettext( "needs", "Nominal" );
-    mvwprintz( fac_w, point( width, ++y ), hunger_pair.second,
-               _( "Hunger: " ) + ( hunger_pair.first.empty() ? nominal : hunger_pair.first ) );
-    mvwprintz( fac_w, point( width, ++y ), thirst_pair.second,
-               _( "Thirst: " ) + ( thirst_pair.first.empty() ? nominal : thirst_pair.first ) );
-    mvwprintz( fac_w, point( width, ++y ), fatigue_pair.second,
-               _( "Fatigue: " ) + ( fatigue_pair.first.empty() ? nominal : fatigue_pair.first ) );
     int lines = fold_and_print( fac_w, point( width, ++y ), getmaxx( fac_w ) - width - 2, c_white,
                                 _( "Wielding: " ) + primary_weapon().tname() );
     y += lines;
 
-    const auto skillslist = Skill::get_skills_sorted_by( [&]( const Skill & a, const Skill & b ) {
-        const int level_a = get_skill_level( a.ident() );
-        const int level_b = get_skill_level( b.ident() );
-        return localized_compare( std::make_pair( -level_a, a.name() ),
-                                  std::make_pair( -level_b, b.name() ) );
-    } );
-    size_t count = 0;
-    std::vector<std::string> skill_strs;
-    for( size_t i = 0; i < skillslist.size() && count < 3; i++ ) {
-        if( !skillslist[ i ]->is_combat_skill() ) {
-            std::string skill_str = string_format( "%s: %d", skillslist[i]->name(),
-                                                   get_skill_level( skillslist[i]->ident() ) );
-            skill_strs.push_back( skill_str );
-            count += 1;
-        }
-    }
-    std::string best_three_noncombat = _( "Best other skills: " );
-    std::string best_skill_text = string_format( _( "Best combat skill: %s: %d" ),
-                                  best_skill().obj().name(), best_skill_level() );
-    mvwprintz( fac_w, point( width, ++y ), col, best_skill_text );
-    mvwprintz( fac_w, point( width, ++y ), col, best_three_noncombat + skill_strs[0] );
-    mvwprintz( fac_w, point( width + 20, ++y ), col, skill_strs[1] );
-    mvwprintz( fac_w, point( width + 20, ++y ), col, skill_strs[2] );
-    return retval;
+    const auto skills = skills_of( *this );
+    mvwprintz( fac_w, point( width, ++y ), col, skills.combat );
+    mvwprintz( fac_w, point( width, ++y ), col, _( "Best other skills: " ) + skills.others[0] );
+    mvwprintz( fac_w, point( width + 20, ++y ), col, skills.others[1] );
+    mvwprintz( fac_w, point( width + 20, ++y ), col, skills.others[2] );
+    return contact.level;
 }
 
 void faction_manager::display() const
@@ -653,8 +704,7 @@ void faction_manager::display() const
     std::vector<const faction *> valfac; // Factions that we know of.
     npc *guy = nullptr;
     const faction *cur_fac = nullptr;
-    bool interactable = false;
-    bool radio_interactable = false;
+    follower_contact contact;
     size_t active_vec_size = 0;
 
     std::vector<std::pair<snippet_id, std::string>> lore; // Lore we have seen
@@ -699,12 +749,7 @@ void faction_manager::display() const
                                         followers[i]->disp_name() );
                     }
                     if( guy ) {
-                        int retval = guy->faction_display( w_missions, 31 );
-                        if( retval == 2 ) {
-                            radio_interactable = true;
-                        } else if( retval == 1 ) {
-                            interactable = true;
-                        }
+                        guy->faction_display( w_missions, 31 );
                     } else {
                         mvwprintz( w_missions, point( 31, 4 ), c_light_red, no_ally );
                     }
@@ -811,7 +856,157 @@ void faction_manager::display() const
         return localized_compare( a->nname(), b->nname() );
     } );
 
+    namespace ec = engine_client;
+    constexpr auto tabs_id = "factions:tabs";
+    constexpr auto select_tab_id = "factions:tab";
+    constexpr auto list_id = "factions:list";
+    constexpr auto select_row_id = "factions:select";
+    const auto tab_ids = std::array<std::string, 4> { "followers", "factions", "lore", "creatures" };
+    // The rows of the current tab, by the identity of what they list.
+    const auto tab_rows = [&]() {
+        auto rows = std::vector<ec::row> {};
+        switch( tab ) {
+            case tab_mode::TAB_FOLLOWERS:
+                for( const auto *follower : followers ) {
+                    rows.push_back( { .id = "follower:" + std::to_string( follower->getID().get_value() ),
+                                      .label = follower->disp_name() } );
+                }
+                break;
+            case tab_mode::TAB_OTHERFACTIONS:
+                for( const auto *fac : valfac ) {
+                    rows.push_back( { .id = "faction:" + fac->id.str(), .label = _( fac->name ) } );
+                }
+                break;
+            case tab_mode::TAB_LORE:
+                for( const auto &entry : lore ) {
+                    rows.push_back( { .id = "lore:" + entry.first.str(), .label = _( entry.second ) } );
+                }
+                break;
+            case tab_mode::TAB_CREATURES:
+                for( const auto &type : creatures ) {
+                    rows.push_back( { .id = "creature:" + type.str(), .label = type->nname(),
+                                      .markup = string_format( "%s  %s", colorize( type->sym, type->color ), type->nname() ) } );
+                }
+                break;
+            default:
+                break;
+        }
+        return rows;
+    };
+    const auto figure_label = []( const std::string & format ) {
+        return ec::caption( format.substr( 0, format.find( '%' ) ) );
+    };
+    const auto detail = [&]() -> std::optional<ec::component> {
+        auto lines = std::vector<std::string> {};
+        auto stats = std::vector<ec::panel_stat> {};
+        auto title = std::string();
+        switch( tab )
+        {
+            case tab_mode::TAB_FOLLOWERS: {
+                if( !guy ) {
+                    return std::nullopt;
+                }
+                title = guy->disp_name();
+                lines.push_back( colorize( contact.text, contact.color ) );
+                for( const auto &[text, color] : npc_condition_lines( *guy ) ) {
+                    lines.push_back( colorize( text, color ) );
+                }
+                lines.push_back( colorize( _( "Wielding: " ) + guy->primary_weapon().tname(), c_white ) );
+                const auto skills = skills_of( *guy );
+                lines.push_back( skills.combat );
+                lines.push_back( _( "Best other skills: " ) + join( skills.others, ", " ) );
+                break;
+            }
+            case tab_mode::TAB_OTHERFACTIONS:
+                if( !cur_fac ) {
+                    return std::nullopt;
+                }
+                title = _( cur_fac->name );
+                stats.push_back( { .key = "attitude", .label = figure_label( _( "Attitude to you:           %s" ) ),
+                                   .value = fac_ranking_text( cur_fac->likes_u ) } );
+                stats.push_back( { .key = "strength", .label = figure_label( _( "Faction strength:       %s" ) ),
+                                   .value = std::to_string( cur_fac->power ) } );
+                lines.push_back( _( cur_fac->desc ) );
+                break;
+            case tab_mode::TAB_LORE:
+                if( !snippet ) {
+                    return std::nullopt;
+                }
+                title = _( snippet->second );
+                lines.push_back( SNIPPET.get_snippet_by_id( snippet->first ).value().translated() );
+                break;
+            case tab_mode::TAB_CREATURES:
+                if( cur_creature.is_null() ) {
+                    return std::nullopt;
+                }
+                title = cur_creature->nname();
+                for( const auto &line : mtype_display_lines( *cur_creature, 60 ) ) {
+                    lines.push_back( std::string( line.indent, ' ' ) + colorize( line.text, line.color ) );
+                }
+                break;
+            default:
+                return std::nullopt;
+        }
+        return ec::panel( { .id = "factions:detail", .title = title, .stats = std::move( stats ),
+                            .child = ec::component{ .id = "factions:facts",
+                                    .body = ec::text_body{ .markup = join( lines, "\n" ) } } } );
+    };
+    const auto screen = ec::screen_scope( ctxt, "factions", { .view = [&]( const ec::boundary_state & )
+    {
+        const auto tab_names = std::array<std::string, 4> { _( "YOUR FOLLOWERS" ), _( "OTHER FACTIONS" ),
+                   _( "LORE" ), _( "CREATURES" )
+                                                          };
+        const auto current = static_cast<std::size_t>( tab );
+        auto entries = std::vector<ec::tab_entry> {};
+        for( auto i = std::size_t{ 0 }; i < tab_ids.size(); ++i ) {
+            entries.push_back( { .id = tab_ids[i], .label = tab_names[i], .selected = i == current } );
+        }
+        auto rows = tab_rows();
+        auto content = ec::component {};
+        auto focus_row = std::string();
+        if( rows.empty() ) {
+            const auto nope = std::array<std::string, 4> { _( "You have no followers" ),
+                       _( "You don't know of any factions." ), _( "You haven't learned anything about the world." ),
+                       _( "You haven't recorded sightings of any creatures.  Taking photos can be a good way to keep track of them." )
+                                                         };
+            content = { .id = "factions:none", .body = ec::text_body{ .markup = nope[current] } };
+        } else {
+            focus_row = rows[std::min( selection, rows.size() - 1 )].id;
+            auto parts = ec::children_of( ec::list( { .id = list_id, .rows = std::move( rows ), .selection = "single", .activate = select_row_id } ) );
+            if( auto shown = detail() ) {
+                parts.push_back( std::move( *shown ) );
+            }
+            content = ec::split( { .id = "factions:root", .relation = "detail", .children = std::move( parts ) } );
+        }
+        auto denials = std::vector<ec::denial> {};
+        if( tab != tab_mode::TAB_FOLLOWERS || !guy ) {
+            const auto reason = tab == tab_mode::TAB_FOLLOWERS ? _( "You have no followers" ) :
+                                _( "Pick a follower first" );
+            denials.push_back( { .id = "CONFIRM", .reason = reason } );
+            denials.push_back( { .id = "SWAPTONPC", .reason = reason } );
+        } else {
+            if( contact.level == 0 && !guy->has_companion_mission() ) {
+                denials.push_back( { .id = "CONFIRM", .reason = contact.text } );
+            }
+            if( contact.level != 1 ) {
+                denials.push_back( { .id = "SWAPTONPC", .reason = contact.level == 0 ? contact.text : _( "Swapping needs the follower within interaction range" ) } );
+            }
+        }
+        return ec::screen_view{
+            .title = _( "Factions" ),
+            .root = ec::tabs( { .id = tabs_id, .tabs = std::move( entries ), .select = select_tab_id, .child = std::move( content ) } ),
+            .affordances = {
+                ec::invoke_affordance( { .id = select_tab_id, .label = _( "Category" ), .args = { .row = ec::row_shape{ .component_id = tabs_id } } } ),
+                ec::invoke_affordance( { .id = select_row_id, .label = _( "Select" ), .args = { .row = ec::row_shape{ .component_id = list_id } }, .role = "select" } ),
+            },
+            .denials = std::move( denials ),
+            .focus_component = focus_row.empty() ? "" : list_id,
+            .focus_row = focus_row,
+        };
+    }
+                                                            } );
 
+    auto activated = false;
     while( true ) {
         // create a list of NPCs, visible and the ones on overmapbuffer
         followers.clear();
@@ -836,9 +1031,7 @@ void faction_manager::display() const
         }
         guy = nullptr;
         cur_fac = nullptr;
-        interactable = false;
         snippet = nullptr;
-        radio_interactable = false;
 
         if( tab < tab_mode::FIRST_TAB || tab >= tab_mode::NUM_TABS ) {
             debugmsg( "The sanity check failed because tab=%d", static_cast<int>( tab ) );
@@ -848,6 +1041,7 @@ void faction_manager::display() const
         if( tab == tab_mode::TAB_FOLLOWERS ) {
             if( selection < followers.size() ) {
                 guy = followers[selection];
+                contact = contact_with( *guy );
             }
             active_vec_size = followers.size();
         } else if( tab == tab_mode::TAB_OTHERFACTIONS ) {
@@ -869,7 +1063,27 @@ void faction_manager::display() const
         }
 
         ui_manager::redraw();
-        const std::string action = ctxt.handle_input();
+        // A row a client activated is confirmed once the loop has read the follower under the cursor.
+        const auto activating = std::exchange( activated, false );
+        const auto action = activating ? std::string( "CONFIRM" ) : ctxt.handle_input();
+        // A client picked a tab or a row: the cursor moves there.
+        if( const auto picked = activating ? std::nullopt : ec::invoked( ctxt.get_raw_input() );
+            picked && picked->args.row ) {
+            if( picked->affordance_id == select_tab_id ) {
+                if( const auto found = std::ranges::find( tab_ids, *picked->args.row ); found != tab_ids.end() ) {
+                    tab = static_cast<tab_mode>( found - tab_ids.begin() );
+                    selection = 0;
+                }
+            } else if( picked->affordance_id == select_row_id ) {
+                const auto rows = tab_rows();
+                if( const auto found = std::ranges::find( rows, *picked->args.row, &ec::row::id );
+                    found != rows.end() ) {
+                    selection = found - rows.begin();
+                    activated = picked->activates;
+                }
+            }
+            continue;
+        }
         if( action == "NEXT_TAB" || action == "RIGHT" ) {
             tab = static_cast<tab_mode>( static_cast<int>( tab ) + 1 );
             if( tab >= tab_mode::NUM_TABS ) {
@@ -898,13 +1112,13 @@ void faction_manager::display() const
                 guy->reset_companion_mission();
                 popup( _( "%s returns from their mission" ), guy->disp_name() );
             } else {
-                if( tab == tab_mode::TAB_FOLLOWERS && guy && ( interactable || radio_interactable ) ) {
-                    guy->talk_to_u( radio_interactable );
+                if( tab == tab_mode::TAB_FOLLOWERS && guy && contact.level != 0 ) {
+                    guy->talk_to_u( contact.level == 2 );
                 }
             }
         } else if( action == "QUIT" ) {
             break;
-        } else if( action == "SWAPTONPC" && guy && interactable ) {
+        } else if( action == "SWAPTONPC" && guy && contact.level == 1 ) {
             get_avatar().control_npc( *guy );
         }
     }

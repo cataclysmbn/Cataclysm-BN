@@ -18,24 +18,30 @@
 #endif
 #define CATCH_CONFIG_RUNNER
 #include "../src/map/map.h"
+#include "../src/map/submap_load_manager.h"
 #include "../src/overmap/overmap.h"
 #include "../src/overmap/overmapbuffer.h"
 #include "avatar.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
+#include "client_backend.h"
 #include "color.h"
 #include "coordinates.h"
 #include "debug.h"
 #include "distribution_grid.h"
 #include "filesystem.h"
 #include "game.h"
+#include "game_constants.h"
 #include "init.h"
 #include "language.h"
 #include "loading_ui.h"
+#include "map/submap_load_manager.h"
+#include "map_helpers.h"
 #include "mod_manager.h"
 #include "options.h"
 #include "output.h"
 #include "overmap/overmap_special.h"
+#include "overmap/overmapbuffer_registry.h"
 #include "path_info.h"
 #include "pldata.h"
 #include "rng.h"
@@ -54,7 +60,9 @@
 #include <cstring>
 #include <ctime>
 #include <exception>
+#include <map>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <stdexcept>
 #include <string>
@@ -298,8 +306,113 @@ static auto extract_user_dir(std::vector<const char*>& arg_vec) -> std::string {
     return option_user_dir;
 }
 
+namespace {
+
+/// Global state a test case must leave as it found it, else later tests fail depending on order.
+struct global_snapshot {
+    int reality_bubble_size;
+    int map_size;
+    bool map_in_simulated_bubble;
+    std::string avatar_dimension;
+    std::string active_dimension;
+    bool save_tx_active;
+    std::size_t load_requests;
+    std::string avatar_name;
+    std::map<std::string, std::string> world_default_options;
+
+    auto operator==(const global_snapshot&) const -> bool = default; // *NOPAD*
+};
+
+auto take_global_snapshot() -> global_snapshot {
+    auto options = std::map<std::string, std::string>{};
+    for (const auto& [name, opt] : get_options().get_world_defaults()) {
+        options.emplace(name, opt.getValue(true));
+    }
+    return {
+        .reality_bubble_size = g_reality_bubble_size,
+        .map_size = get_map().getmapsize(),
+        .map_in_simulated_bubble =
+            submap_loader.is_simulated(get_map().get_bound_dimension(), get_map().get_abs_sub()),
+        .avatar_dimension = get_avatar().get_dimension().str(),
+        .active_dimension = g_active_dimension_id.str(),
+        .save_tx_active =
+            g->get_active_world() != nullptr && g->get_active_world()->is_save_tx_active(),
+        .load_requests = submap_loader.request_count(),
+        .avatar_name = get_avatar().name,
+        .world_default_options = std::move(options),
+    };
+}
+
+/// Describes every field that differs, as `name: before -> after`.
+auto describe_leaks(const global_snapshot& before, const global_snapshot& after) -> std::string {
+    auto out = std::string{};
+    const auto report =
+        [&](const std::string& name, const std::string& was, const std::string& now) {
+            if (was != now) { out += string_format("\n  %s: '%s' -> '%s'", name, was, now); }
+        };
+    report("g_reality_bubble_size", std::to_string(before.reality_bubble_size),
+           std::to_string(after.reality_bubble_size));
+    report("get_map().getmapsize()", std::to_string(before.map_size),
+           std::to_string(after.map_size));
+    report("submap_loader.is_simulated(get_map().get_abs_sub())",
+           std::to_string(before.map_in_simulated_bubble),
+           std::to_string(after.map_in_simulated_bubble));
+    report("get_avatar().get_dimension()", before.avatar_dimension, after.avatar_dimension);
+    report("is_save_tx_active()", std::to_string(before.save_tx_active),
+           std::to_string(after.save_tx_active));
+    report("submap_loader.request_count()", std::to_string(before.load_requests),
+           std::to_string(after.load_requests));
+    report("get_avatar().name", before.avatar_name, after.avatar_name);
+    report("g_active_dimension_id", before.active_dimension, after.active_dimension);
+    for (const auto& [name, value] : after.world_default_options) {
+        const auto it = before.world_default_options.find(name);
+        report("option " + name, it == before.world_default_options.end() ? "<unset>" : it->second,
+               value);
+    }
+    return out;
+}
+
+} // namespace
+
 struct CataListener: Catch::TestEventListenerBase {
     using TestEventListenerBase::TestEventListenerBase;
+
+    void testRunStarting(Catch::TestRunInfo const& runInfo) override {
+        TestEventListenerBase::testRunStarting(runInfo);
+        baseline = take_global_snapshot();
+        start_turn = calendar::turn;
+        start_origin = get_map().get_abs_sub();
+    }
+
+    void testCaseStarting(Catch::TestCaseInfo const& testInfo) override {
+        TestEventListenerBase::testCaseStarting(testInfo);
+        test_name = testInfo.name;
+        // Game time is harness-owned: every case starts at the same turn, whatever earlier cases
+        // did.
+        if (calendar::turn != start_turn) { set_time(start_turn); }
+        // So is where the map lies: a case that moved it would run the next at other world
+        // coordinates.
+        if (get_map().get_abs_sub() != start_origin) { get_map().load(start_origin, false); }
+        before = take_global_snapshot();
+    }
+
+    // The test case's own section ends after its body but before the case is tallied, so a
+    // failure reported here is attributed to the leaking test case itself.
+    void sectionEnded(Catch::SectionStats const& sectionStats) override {
+        TestEventListenerBase::sectionEnded(sectionStats);
+        if (sectionStats.sectionInfo.name != test_name || !before) { return; }
+        // A test that begins dirty and ends at the baseline cleaned up after an earlier leaker.
+        const auto after = take_global_snapshot();
+        const auto leaks = after == baseline ? std::string{} : describe_leaks(*before, after);
+        before.reset();
+        if (leaks.empty()) { return; }
+        const auto message = "test case leaked global state:" + leaks;
+        auto reaction = Catch::AssertionReaction{};
+        Catch::getResultCapture().handleMessage(
+            Catch::AssertionInfo{"LEAK_CHECK", sectionStats.sectionInfo.lineInfo, "",
+                                 Catch::ResultDisposition::ContinueOnFailure},
+            Catch::ResultWas::ExplicitFailure, message, reaction);
+    }
 
     void sectionStarting(Catch::SectionInfo const& sectionInfo) override {
         TestEventListenerBase::sectionStarting(sectionInfo);
@@ -321,6 +434,13 @@ struct CataListener: Catch::TestEventListenerBase {
 
         return TestEventListenerBase::assertionEnded(assertionStats);
     }
+
+private:
+    std::string test_name;
+    global_snapshot baseline;
+    time_point start_turn;
+    point_abs_sm start_origin;
+    std::optional<global_snapshot> before;
 };
 
 CATCH_REGISTER_LISTENER(CataListener)
@@ -393,6 +513,14 @@ auto main(int argc, const char* argv[]) -> int {
     }
 
     test_mode = true;
+#if defined(CATA_MCP)
+    game_client::set_active_backend(game_client::make_mcp_backend());
+#elif defined(TILES)
+    game_client::set_active_backend(game_client::make_tiles_backend());
+#else
+    game_client::set_active_backend(game_client::make_curses_backend());
+#endif
+    game_client::active_backend().prepare();
 
     setupDebug(DebugOutput::std_err);
 

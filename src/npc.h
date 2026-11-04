@@ -790,6 +790,7 @@ class npc : public player
                                        npc_factions::relationship flag ) const;
         void set_fac( const faction_id &id );
         faction *get_faction() const override;
+        auto get_faction_id_for_display() const -> std::optional<faction_id> override;
         faction_id get_fac_id() const;
         /** Teleport the NPC to a random tile within the given absolute submap. */
         void spawn_at_sm( const tripoint_abs_sm &p );
@@ -815,6 +816,8 @@ class npc : public player
 
         nc_color basic_symbol_color() const override;
         int print_info( const catacurses::window &w, int line, int vLines, int column ) const override;
+        /// What `print_info` prints, a fact per line.
+        auto info_facts() const -> std::vector<engine_client::fact>;
         std::string opinion_text() const;
         int faction_display( const catacurses::window &fac_w, int width ) const;
 
@@ -1204,6 +1207,10 @@ class npc : public player
                                     const std::string &npc_msg ) const override;
         void add_msg_player_or_npc( const game_message_params &params, const std::string &player_msg,
                                     const std::string &npc_msg ) const override;
+        auto add_localised_msg_if_npc( const game_message_params &params, const std::string &msg,
+                                       const std::optional<localised_text> &localised ) const -> void override;
+        auto add_localised_msg_player_or_npc( const game_message_params &params,
+                                              const localised_pair &pair ) const -> void override;
         using player::add_msg_if_player;
         void add_msg_if_player( const std::string &/*msg*/ ) const override {}
         void add_msg_if_player( const game_message_params &/*type*/,

@@ -6,6 +6,7 @@
 #include "overmapbuffer.h"
 #include "thread_pool.h"
 
+#include <cstdint>
 #include <functional>
 #include <future>
 #include <map>
@@ -22,6 +23,12 @@
 namespace {
 
 auto primary_dimension_id() -> dimension_id { return dimension_id(); }
+
+auto dimension_seed_id(const dimension_id& dim_id) -> std::uint64_t {
+    const auto raw = dim_id.str();
+    return static_cast<std::uint64_t>(
+        djb2_hash(reinterpret_cast<const unsigned char*>(raw.c_str())));
+}
 
 class overmapbuffer_registry {
 public:
@@ -104,9 +111,9 @@ auto save_all_overmapbuffers() -> void {
     futures.reserve(8); // most games have at most a handful of dimensions
 
     for_each_overmapbuffer([&futures](const dimension_id& dim_id, overmapbuffer& buf) {
-        futures.push_back(get_thread_pool().submit_returning([dim_id, &buf]() {
-            buf.save(dim_id);
-        }));
+        futures.push_back(get_thread_pool().submit_returning(
+            {.stream = 0x736176655f6f6d5f, .id = dimension_seed_id(dim_id)},
+            [dim_id, &buf]() { buf.save(dim_id); }));
     });
 
     std::ranges::for_each(futures, [](auto& f) { f.get(); });

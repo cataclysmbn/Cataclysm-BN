@@ -1,4 +1,5 @@
 #include "crash.h"
+#include "client_presentation.h"
 #include "sdl_wrappers.h"
 
 #if defined(BACKTRACE)
@@ -93,12 +94,7 @@ extern "C" {
                  << "\nVERSION: " << getVersionString()
                  << "\nTYPE: " << type
                  << "\nMESSAGE: " << msg;
-#if defined(TILES)
-        if( SDL_ShowSimpleMessageBox( SDL_MESSAGEBOX_ERROR, "Error",
-                                      log_text.str().c_str(), nullptr ) != 0 ) {
-            log_text << "Error creating SDL message box: " << SDL_GetError() << '\n';
-        }
-#endif
+        game_client::presentation().show_error( log_text.str() );
 #endif
         log_text << "\nSTACK TRACE:\n";
         debug_write_backtrace( log_text );

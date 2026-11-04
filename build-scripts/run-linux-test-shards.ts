@@ -13,6 +13,8 @@ import { assertEquals } from "@std/assert"
 import { pooledMap } from "@std/async"
 import { emptyDir, ensureDir } from "@std/fs"
 import { basename, join } from "@std/path"
+import type { ShardWeights } from "./test-shard-weights.ts"
+import weights from "./test-shard-weights.json" with { type: "json" }
 
 type Mode = "auto" | "file-tags" | "tiles" | "legacy"
 
@@ -55,19 +57,19 @@ const fixedShards: Shard[] = [
   {
     name: "00-vehicle-rails-basic",
     filters: ["vehicle_rail_movement_basic*"],
-    estimatedSeconds: 215,
+    estimatedSeconds: 21,
     compute: "cpu",
   },
   {
     name: "09-vehicle-rails-fork",
     filters: ["vehicle_rail_movement_fork"],
-    estimatedSeconds: 180,
+    estimatedSeconds: 14,
     compute: "cpu",
   },
   {
     name: "19-vehicle-rails-shifting",
     filters: ["vehicle_rail_movement_shifting*"],
-    estimatedSeconds: 200,
+    estimatedSeconds: 36,
     compute: "cpu",
   },
   {
@@ -77,42 +79,28 @@ const fixedShards: Shard[] = [
       "[#shadowcasting_test] ~[.]",
       "[#zlevel_visibility_cache_test] ~[.]",
     ],
-    estimatedSeconds: 250,
+    estimatedSeconds: 86,
     compute: "gpu_software",
   },
   {
     name: "21-vehicle-efficiency",
     filters: ["[#vehicle_efficiency_test] ~[.]"],
-    estimatedSeconds: 260,
+    estimatedSeconds: 7,
     compute: "cpu",
   },
   {
     name: "22-starting-items",
     filters: ["starting_items"],
-    estimatedSeconds: 220,
+    estimatedSeconds: 11,
     compute: "cpu",
   },
   {
     name: "29-vehicle-rails-other",
     filters: ["vehicle_rail_movement_derailed,vehicle_rail_movement_ramp"],
-    estimatedSeconds: 120,
+    estimatedSeconds: 16,
     compute: "cpu",
   },
 ]
-
-const tagWeights = new Map<string, number>([
-  ["[#enchantment_test]", 350],
-  ["[#vehicle_test]", 150],
-  ["[#vehicle_ramp_test]", 100],
-  ["[#map_test]", 100],
-  ["[#crafting_test]", 120],
-  ["[#weather_test]", 80],
-  ["[#json_test]", 70],
-  ["[#overmap_test]", 55],
-  ["[#generic_factory_test]", 35],
-  ["[#catalua_test]", 30],
-  ["[#vehicle_drag_test]", 18],
-])
 
 const specialTagPattern =
   /^\[#(vehicle_(efficiency|rails)|vision|shadowcasting|zlevel_visibility_cache)_test\]$/
@@ -192,7 +180,7 @@ const distributeWorkItems = (items: Shard[], shardCount: number): Shard[] => {
 const tagWorkItem = (tag: string, prefix: "slow" | "non-slow"): Shard => ({
   name: tag,
   filters: [prefix === "slow" ? `[slow] ~starting_items ${tag}` : `~[slow] ~[.] ${tag}`],
-  estimatedSeconds: tagWeights.get(tag) ?? 10,
+  estimatedSeconds: (weights as ShardWeights)[prefix === "slow" ? "slow" : "nonSlow"][tag] ?? 10,
   compute: "cpu",
 })
 
@@ -376,6 +364,20 @@ Deno.test("buildShardPlan keeps visibility on its GPU shard", () => {
   const shards = buildShardPlan(["[#enchantment_test]", "[#tiny_test]"], [], 2, 1)
   const visibility = shards.find((shard) => shard.name === "20-visibility")
   assertEquals(visibility?.compute, "gpu_software")
+})
+
+Deno.test("buildShardPlan keeps every CPU shard within 20% of the mean with measured weights", () => {
+  const { nonSlow, slow } = weights as ShardWeights
+  const shards = buildShardPlan(Object.keys(nonSlow), Object.keys(slow), 4, 1)
+    .filter((shard) => shard.name.endsWith("-cpu"))
+  const mean = shards.reduce((sum, shard) => sum + shard.estimatedSeconds, 0) / shards.length
+  for (const shard of shards) {
+    assertEquals(
+      shard.estimatedSeconds <= mean * 1.2,
+      true,
+      `${shard.name}: ${shard.estimatedSeconds} vs mean ${mean}`,
+    )
+  }
 })
 
 if (import.meta.main) {

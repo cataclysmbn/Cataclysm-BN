@@ -134,6 +134,16 @@ TEST_CASE("recipe_subset") {
     }
 }
 
+TEST_CASE("clearing_the_avatar_forgets_the_recipes_its_earlier_skills_taught", "[recipes]") {
+    clear_avatar();
+    auto& you = get_avatar();
+    const auto& food = recipe_id("test_info_food").obj();
+    you.set_skill_level(food.skill_used, 2);
+    REQUIRE(you.knows_recipe(&food));
+    clear_avatar();
+    CHECK_FALSE(you.knows_recipe(&food));
+}
+
 TEST_CASE("available_recipes", "[recipes]") {
     clear_all_state();
     const recipe* r = &recipe_id("magazine_battery_light_mod").obj();

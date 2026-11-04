@@ -8,10 +8,16 @@
 #include "cursesdef.h"
 #include "npctrade.h"
 
+class input_context;
 class item;
 class npc;
 class string_input_popup;
 class ui_adaptor;
+
+namespace engine_client
+{
+struct screen_view;
+} // namespace engine_client
 
 class trading_window
 {
@@ -19,11 +25,11 @@ class trading_window
         explicit trading_window( npc_trading::trade_state &state );
         ~trading_window();
 
-        auto perform_trade( npc &np, const std::string &deal ) -> bool;
+        auto perform_trade( npc &np, npc_trading::deal_kind deal ) -> bool;
 
     private:
         auto setup_win( ui_adaptor &ui ) -> void;
-        auto update_win( npc &np, const std::string &deal ) -> void;
+        auto update_win( npc &np ) -> void;
         enum class info_popup_result {
             none,
             move_up,
@@ -32,9 +38,12 @@ class trading_window
         auto show_item_data( size_t index, bool target_is_theirs ) -> info_popup_result;
         auto build_filtered_indices( const std::vector<item_pricing> &list,
                                      const std::string &filter ) const -> std::vector<size_t>;
+        /// The screen as the model state shows it, whatever the size of the window.
+        auto view( const npc &np, input_context &ctxt ) const -> engine_client::screen_view;
         auto get_var_trade( const item &it, int total_count, int amount_hint ) -> int;
 
         npc_trading::trade_state &state;
+        npc_trading::deal_kind kind = npc_trading::deal_kind::trade;
         catacurses::window w_head;
         catacurses::window w_them;
         catacurses::window w_you;

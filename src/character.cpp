@@ -26,12 +26,15 @@
 #include "consumption.h"
 #include "coordinates.h"
 #include "craft_command.h"
+#include "crafting_inventory_request.h"
 #include "creature.h"
 #include "damage.h"
 #include "debug.h"
 #include "detached_ptr.h"
 #include "disease.h"
 #include "effect.h"
+#include "engine_client_component.h"
+#include "engine_client_presentation.h"
 #include "enchantments/enchantment.h"
 #include "event.h"
 #include "event_bus.h"
@@ -47,6 +50,7 @@
 #include "iuse.h"
 #include "iuse_actor.h"
 #include "line.h"
+#include "localised_names.h"
 #include "make_static.h"
 #include "map/field.h"
 #include "map/field_type.h"
@@ -92,6 +96,7 @@
 #include "string_id.h"
 #include "string_utils.h"
 #include "text_snippets.h"
+#include "tile_parts.h"
 #include "thread_pool.h"
 #include "translations.h"
 #include "trap.h"
@@ -1359,7 +1364,7 @@ void Character::mount_creature( monster &z )
     z.mounted_player_id = getID();
     if( z.has_effect( effect_harnessed ) ) {
         z.remove_effect( effect_harnessed );
-        add_msg_if_player( m_info, _( "You remove the %s's harness." ), z.get_name() );
+        add_msg_if_player( m_info, to_translation( "You remove the %s's harness." ), z.get_name() );
     }
     mounted_creature = mons;
     mons->mounted_player = this;
@@ -1368,7 +1373,7 @@ void Character::mount_creature( monster &z )
             g->u.stop_hauling();
         }
         if( g->u.get_grab_type() != OBJECT_NONE ) {
-            add_msg( m_warning, _( "You let go of the grabbed object." ) );
+            add_msg( m_warning, to_translation( "You let go of the grabbed object." ) );
             g->u.grab( OBJECT_NONE );
         }
         g->place_player( pnt );
@@ -1379,12 +1384,12 @@ void Character::mount_creature( monster &z )
     z.facing = facing;
     // Make sure something didn't interrupt this process and knock the player off partway through!
     if( has_effect( effect_riding ) ) {
-        add_msg_if_player( m_good, _( "You climb on the %s." ), z.get_name() );
+        add_msg_if_player( m_good, to_translation( "You climb on the %s." ), z.get_name() );
         if( z.has_flag( MF_RIDEABLE_MECH ) ) {
             if( !z.type->mech_weapon.is_empty() ) {
                 wield( item::spawn( z.type->mech_weapon ) );
             }
-            add_msg_if_player( m_good, _( "You hear your %s whir to life." ), z.get_name() );
+            add_msg_if_player( m_good, to_translation( "You hear your %s whir to life." ), z.get_name() );
         }
     }
     // Unfreeze recently-dismounted horses
@@ -1410,7 +1415,7 @@ bool Character::check_mount_will_move( const tripoint_bub_ms &dest_loc )
             if( att == Attitude::A_HOSTILE && sees( critter ) &&
                 rl_dist( bub_pos(), critter.bub_pos() ) <= 15 &&
                 rl_dist( dest_loc, critter.bub_pos() ) < rl_dist( bub_pos(), critter.bub_pos() ) ) {
-                add_msg_if_player( _( "You fail to budge your %s!" ), mounted_creature->get_name() );
+                add_msg_if_player( to_translation( "You fail to budge your %s!" ), mounted_creature->get_name() );
                 return false;
             }
         }
@@ -1503,11 +1508,11 @@ void Character::forced_dismount()
     if( !valid.empty() ) {
         setpos( random_entry( valid ) );
         if( mech ) {
-            add_msg_player_or_npc( m_bad, _( "You are ejected from your mech!" ),
-                                   _( "<npcname> is ejected from their mech!" ) );
+            add_msg_player_or_npc( m_bad, to_translation( "You are ejected from your mech!" ),
+                                   to_translation( "<npcname> is ejected from their mech!" ) );
         } else {
-            add_msg_player_or_npc( m_bad, _( "You fall off your mount!" ),
-                                   _( "<npcname> falls off their mount!" ) );
+            add_msg_player_or_npc( m_bad, to_translation( "You fall off your mount!" ),
+                                   to_translation( "<npcname> falls off their mount!" ) );
         }
         const int dodge = get_dodge();
         const int damage = std::max( 0, rng( 1, 20 ) - rng( dodge, dodge * 2 ) );
@@ -1547,7 +1552,7 @@ void Character::forced_dismount()
                 break;
         }
         if( damage > 0 ) {
-            add_msg_if_player( m_bad, _( "You hurt yourself!" ) );
+            add_msg_if_player( m_bad, to_translation( "You hurt yourself!" ) );
             deal_damage( nullptr, hit, damage_instance( DT_BASH, damage ) );
             if( is_avatar() ) {
                 g->memorial().add(
@@ -1562,7 +1567,7 @@ void Character::forced_dismount()
     }
     if( is_avatar() ) {
         if( g->u.get_grab_type() != OBJECT_NONE ) {
-            add_msg( m_warning, _( "You let go of the grabbed object." ) );
+            add_msg( m_warning, to_translation( "You let go of the grabbed object." ) );
             g->u.grab( OBJECT_NONE );
         }
         set_movement_mode( CMM_WALK );
@@ -1584,7 +1589,7 @@ void Character::dismount()
     }
     if( const std::optional<tripoint_bub_ms> pnt = choose_adjacent( _( "Dismount where?" ) ) ) {
         if( !g->is_empty( *pnt ) ) {
-            add_msg( m_warning, _( "You cannot dismount there!" ) );
+            add_msg( m_warning, to_translation( "You cannot dismount there!" ) );
             return;
         }
         remove_effect( effect_riding );
@@ -1596,7 +1601,7 @@ void Character::dismount()
             remove_item( weapon );
         }
         if( is_avatar() && g->u.get_grab_type() != OBJECT_NONE ) {
-            add_msg( m_warning, _( "You let go of the grabbed object." ) );
+            add_msg( m_warning, to_translation( "You let go of the grabbed object." ) );
             g->u.grab( OBJECT_NONE );
         }
         critter->remove_effect( effect_ridden );
@@ -1672,10 +1677,10 @@ void Character::try_remove_downed( Character &c )
 
     /** @EFFECT_STR increases chance to stand up when knocked down, slightly */
     if( rng( 0, 40 ) > c.get_dex() + c.get_str() / 2 ) {
-        c.add_msg_if_player( _( "You struggle to stand." ) );
+        c.add_msg_if_player( to_translation( "You struggle to stand." ) );
     } else {
-        c.add_msg_player_or_npc( m_good, _( "You stand up." ),
-                                 _( "<npcname> stands up." ) );
+        c.add_msg_player_or_npc( m_good, to_translation( "You stand up." ),
+                                 to_translation( "<npcname> stands up." ) );
         c.remove_effect( effect_downed );
     }
 }
@@ -1697,21 +1702,22 @@ void static try_remove_bear_trap( Character &c )
                 mon->remove_effect( effect_beartrap );
                 c.remove_effect( effect_beartrap );
                 here.spawn_item( c.bub_pos(), itype_beartrap );
-                add_msg( _( "The %s escapes the bear trap!" ), mon->get_name() );
+                add_msg( to_translation( "The %s escapes the bear trap!" ), mon->get_name() );
             } else {
                 c.add_msg_if_player( m_bad,
-                                     _( "Your %s tries to free itself from the bear trap, but can't get loose!" ), mon->get_name() );
+                                     to_translation( "Your %s tries to free itself from the bear trap, but can't get loose!" ),
+                                     mon->get_name() );
             }
         }
     } else {
         if( x_in_y( c.get_str(), 100 ) ) {
             c.remove_effect( effect_beartrap );
-            c.add_msg_player_or_npc( m_good, _( "You free yourself from the bear trap!" ),
-                                     _( "<npcname> frees themselves from the bear trap!" ) );
+            c.add_msg_player_or_npc( m_good, to_translation( "You free yourself from the bear trap!" ),
+                                     to_translation( "<npcname> frees themselves from the bear trap!" ) );
             here.spawn_item( c.bub_pos(), itype_beartrap );
         } else {
             c.add_msg_if_player( m_bad,
-                                 _( "You try to free yourself from the bear trap, but can't get loose!" ) );
+                                 to_translation( "You try to free yourself from the bear trap, but can't get loose!" ) );
         }
     }
 }
@@ -1726,7 +1732,7 @@ void static try_remove_lightsnare( Character &c )
             c.remove_effect( effect_lightsnare );
             here.spawn_item( c.bub_pos(), itype_string_36 );
             here.spawn_item( c.bub_pos(), itype_snare_trigger );
-            add_msg( _( "The %s escapes the light snare!" ), mon->get_name() );
+            add_msg( to_translation( "The %s escapes the light snare!" ), mon->get_name() );
         }
     } else {
         /** @EFFECT_STR increases chance to escape light snare */
@@ -1734,13 +1740,13 @@ void static try_remove_lightsnare( Character &c )
         /** @EFFECT_DEX increases chance to escape light snare */
         if( x_in_y( c.get_str(), 12 ) || x_in_y( c.get_dex(), 8 ) ) {
             c.remove_effect( effect_lightsnare );
-            c.add_msg_player_or_npc( m_good, _( "You free yourself from the light snare!" ),
-                                     _( "<npcname> frees themselves from the light snare!" ) );
+            c.add_msg_player_or_npc( m_good, to_translation( "You free yourself from the light snare!" ),
+                                     to_translation( "<npcname> frees themselves from the light snare!" ) );
             here.spawn_item( c.bub_pos(), itype_string_36 );
             here.spawn_item( c.bub_pos(), itype_snare_trigger );
         } else {
             c.add_msg_if_player( m_bad,
-                                 _( "You try to free yourself from the light snare, but can't get loose!" ) );
+                                 to_translation( "You try to free yourself from the light snare, but can't get loose!" ) );
         }
     }
 }
@@ -1756,7 +1762,7 @@ void static try_remove_heavysnare( Character &c )
                 c.remove_effect( effect_heavysnare );
                 here.spawn_item( c.bub_pos(), itype_rope_6 );
                 here.spawn_item( c.bub_pos(), itype_snare_trigger );
-                add_msg( _( "The %s escapes the heavy snare!" ), mon->get_name() );
+                add_msg( to_translation( "The %s escapes the heavy snare!" ), mon->get_name() );
             }
         }
     } else {
@@ -1765,13 +1771,13 @@ void static try_remove_heavysnare( Character &c )
         /** @EFFECT_DEX increases chance to escape light snare */
         if( x_in_y( c.get_str(), 32 ) || x_in_y( c.get_dex(), 16 ) ) {
             c.remove_effect( effect_heavysnare );
-            c.add_msg_player_or_npc( m_good, _( "You free yourself from the heavy snare!" ),
-                                     _( "<npcname> frees themselves from the heavy snare!" ) );
+            c.add_msg_player_or_npc( m_good, to_translation( "You free yourself from the heavy snare!" ),
+                                     to_translation( "<npcname> frees themselves from the heavy snare!" ) );
             here.spawn_item( c.bub_pos(), itype_rope_6 );
             here.spawn_item( c.bub_pos(), itype_snare_trigger );
         } else {
             c.add_msg_if_player( m_bad,
-                                 _( "You try to free yourself from the heavy snare, but can't get loose!" ) );
+                                 to_translation( "You try to free yourself from the heavy snare, but can't get loose!" ) );
         }
     }
 }
@@ -1783,10 +1789,11 @@ void static try_remove_crushed( Character &c )
     /** @EFFECT_DEX increases chance to escape crushing rubble, slightly */
     if( x_in_y( c.get_str() + c.get_dex() / 4.0, 100 ) ) {
         c.remove_effect( effect_crushed );
-        c.add_msg_player_or_npc( m_good, _( "You free yourself from the rubble!" ),
-                                 _( "<npcname> frees themselves from the rubble!" ) );
+        c.add_msg_player_or_npc( m_good, to_translation( "You free yourself from the rubble!" ),
+                                 to_translation( "<npcname> frees themselves from the rubble!" ) );
     } else {
-        c.add_msg_if_player( m_bad, _( "You try to free yourself from the rubble, but can't get loose!" ) );
+        c.add_msg_if_player( m_bad,
+                             to_translation( "You try to free yourself from the rubble, but can't get loose!" ) );
     }
 }
 
@@ -1800,16 +1807,16 @@ bool static try_remove_grab( Character &c )
             if( ( dice( mon->type->melee_dice + mon->type->melee_sides,
                         3 ) < c.get_effect_int( effect_grabbed ) ) ||
                 !one_in( 4 ) ) {
-                add_msg( m_bad, _( "Your %s tries to break free, but fails!" ), mon->get_name() );
+                add_msg( m_bad, to_translation( "Your %s tries to break free, but fails!" ), mon->get_name() );
                 return false;
             } else {
-                add_msg( m_good, _( "Your %s breaks free from the grab!" ), mon->get_name() );
+                add_msg( m_good, to_translation( "Your %s breaks free from the grab!" ), mon->get_name() );
                 c.remove_effect( effect_grabbed );
                 mon->remove_effect( effect_grabbed );
             }
         } else {
             if( one_in( 4 ) ) {
-                add_msg( m_bad, _( "You are pulled from your %s!" ), mon->get_name() );
+                add_msg( m_bad, to_translation( "You are pulled from your %s!" ), mon->get_name() );
                 c.remove_effect( effect_grabbed );
                 c.forced_dismount();
             }
@@ -1822,18 +1829,18 @@ bool static try_remove_grab( Character &c )
             }
         }
         if( zed_number == 0 ) {
-            c.add_msg_player_or_npc( m_good, _( "You find yourself no longer grabbed." ),
-                                     _( "<npcname> finds themselves no longer grabbed." ) );
+            c.add_msg_player_or_npc( m_good, to_translation( "You find yourself no longer grabbed." ),
+                                     to_translation( "<npcname> finds themselves no longer grabbed." ) );
             c.remove_effect( effect_grabbed );
 
             /** @EFFECT_STR increases chance to escape grab */
         } else if( rng( 0, c.get_str() ) < rng( c.get_effect_int( effect_grabbed, body_part_torso ), 8 ) ) {
-            c.add_msg_player_or_npc( m_bad, _( "You try break out of the grab, but fail!" ),
-                                     _( "<npcname> tries to break out of the grab, but fails!" ) );
+            c.add_msg_player_or_npc( m_bad, to_translation( "You try break out of the grab, but fail!" ),
+                                     to_translation( "<npcname> tries to break out of the grab, but fails!" ) );
             return false;
         } else {
-            c.add_msg_player_or_npc( m_good, _( "You break out of the grab!" ),
-                                     _( "<npcname> breaks out of the grab!" ) );
+            c.add_msg_player_or_npc( m_good, to_translation( "You break out of the grab!" ),
+                                     to_translation( "<npcname> breaks out of the grab!" ) );
             c.remove_effect( effect_grabbed );
             for( auto &&dest : here.points_in_radius( c.bub_pos(), 1, 0 ) ) { // *NOPAD*
                 Creature *const grabber = g->critter_at<Creature>( dest );
@@ -1852,17 +1859,18 @@ void static try_remove_webs( Character &c )
         auto mon = c.mounted_creature.get();
         if( x_in_y( mon->type->melee_dice * mon->type->melee_sides,
                     6 * c.get_effect_int( effect_webbed ) ) ) {
-            add_msg( _( "The %s breaks free of the webs!" ), mon->get_name() );
+            add_msg( to_translation( "The %s breaks free of the webs!" ), mon->get_name() );
             mon->remove_effect( effect_webbed );
             c.remove_effect( effect_webbed );
         }
         /** @EFFECT_STR increases chance to escape webs */
     } else if( x_in_y( c.get_str(), 6 * c.get_effect_int( effect_webbed ) ) ) {
-        c.add_msg_player_or_npc( m_good, _( "You free yourself from the webs!" ),
-                                 _( "<npcname> frees themselves from the webs!" ) );
+        c.add_msg_player_or_npc( m_good, to_translation( "You free yourself from the webs!" ),
+                                 to_translation( "<npcname> frees themselves from the webs!" ) );
         c.remove_effect( effect_webbed );
     } else {
-        c.add_msg_if_player( _( "You try to free yourself from the webs, but can't get loose!" ) );
+        c.add_msg_if_player(
+            to_translation( "You try to free yourself from the webs, but can't get loose!" ) );
     }
 }
 
@@ -1907,11 +1915,11 @@ auto Character::move_effects( const bool attacking, const bool skip_pit_escape )
 
         /** @EFFECT_DEX increases chance to escape pit, slightly */
         if( rng( 0, 40 ) > get_str() + get_dex() / 2 ) {
-            add_msg_if_player( m_bad, _( "You try to escape the pit, but slip back in." ) );
+            add_msg_if_player( m_bad, to_translation( "You try to escape the pit, but slip back in." ) );
             return false;
         } else {
-            add_msg_player_or_npc( m_good, _( "You escape the pit!" ),
-                                   _( "<npcname> escapes the pit!" ) );
+            add_msg_player_or_npc( m_good, to_translation( "You escape the pit!" ),
+                                   to_translation( "<npcname> escapes the pit!" ) );
             remove_effect( effect_in_pit );
         }
     }
@@ -2058,6 +2066,9 @@ float Character::night_vision_sight_range() const
 void Character::recalc_sight_limits()
 {
     ZoneScopedN( "recalc_sight_limits" );
+    const auto previous_limit = sight_max;
+    const auto previous_modes = vision_mode_cache;
+    const auto previous_nv = nv_range;
     sight_max = 9999;
     vision_mode_cache.reset();
 
@@ -2134,6 +2145,12 @@ void Character::recalc_sight_limits()
     } else if( has_artifact_with( AEP_CLAIRVOYANCE ) ||
                has_effect_with_flag( flag_EFFECT_CLAIRVOYANCE ) ) {
         vision_mode_cache.set( VISION_CLAIRVOYANCE );
+    }
+    // Invalidate only changed native actor inputs, including changes hidden by
+    // the final visibility threshold/range clamps. Inactive actors are not owners.
+    if( g && this == &get_avatar() && ( previous_limit != sight_max ||
+                                        previous_modes != vision_mode_cache || previous_nv != nv_range ) ) {
+        get_map().invalidate_visibility_caches();
     }
 }
 
@@ -2472,6 +2489,24 @@ void Character::conduct_blood_analysis() const
     ctxt.register_action( "CONFIRM" );
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
+    namespace ec = engine_client;
+    const auto screen = ec::screen_scope( ctxt, "blood_test", { .view = [&]( const ec::boundary_state & )
+    {
+        auto lines = std::vector<ec::panel_stat> {};
+        for( const auto &[type, by_part] : *effects ) {
+            if( type->get_blood_analysis_description().empty() ) {
+                continue;
+            }
+            lines.push_back( { .key = "effect:" + type.str(), .label = type->get_blood_analysis_description(),
+                               .tone = type->get_rating() == e_good ? "good" : "bad" } );
+        }
+        if( lines.empty() ) {
+            lines.push_back( { .key = "none", .label = _( "No effects." ) } );
+        }
+        const auto title = _( "Blood Test Results" );
+        return ec::screen_view{ .title = title, .root = ec::panel( { .id = "blood_test", .title = title, .stats = std::move( lines ) } ) };
+    }
+                                                              } );
     bool stop = false;
     // Display new messages
     g->invalidate_main_ui_adaptor();
@@ -2647,8 +2682,8 @@ detached_ptr<item> Character::wear_item( detached_ptr<item> &&wear,
 
     if( interactive ) {
         add_msg_player_or_npc(
-            _( "You put on your %s." ),
-            _( "<npcname> puts on their %s." ),
+            to_translation( "You put on your %s." ),
+            to_translation( "<npcname> puts on their %s." ),
             to_wear.tname() );
         moves -= item_wear_cost( to_wear );
 
@@ -2661,21 +2696,21 @@ detached_ptr<item> Character::wear_item( detached_ptr<item> &&wear,
             }
         }
         if( !was_deaf && is_deaf() ) {
-            add_msg_if_player( m_info, _( "You're deafened!" ) );
+            add_msg_if_player( m_info, to_translation( "You're deafened!" ) );
         }
         if( size_matters && supertinymouse && !to_wear.has_flag( flag_UNDERSIZE ) &&
             !to_wear.has_flag( flag_resized_small ) ) {
             add_msg_if_player( m_warning,
-                               _( "This %s is too big to wear comfortably!  Maybe it could be refitted." ),
+                               to_translation( "This %s is too big to wear comfortably!  Maybe it could be refitted." ),
                                to_wear.tname() );
         } else if( size_matters && !supertinymouse && ( to_wear.has_flag( flag_UNDERSIZE ) ||
                    to_wear.has_flag( flag_resized_small ) ) ) {
             add_msg_if_player( m_warning,
-                               _( "This %s is too small to wear comfortably!  Maybe it could be refitted." ),
+                               to_translation( "This %s is too small to wear comfortably!  Maybe it could be refitted." ),
                                to_wear.tname() );
         }
     } else {
-        add_msg_if_npc( _( "<npcname> puts on their %s." ), to_wear.tname() );
+        add_msg_if_npc( to_translation( "<npcname> puts on their %s." ), to_wear.tname() );
     }
 
     to_wear.on_wear( *this );
@@ -2762,7 +2797,7 @@ detached_ptr<item> Character::i_add_to_container( detached_ptr<item> &&it, const
         if( contained_ammo.charges < container.ammo_capacity() ) {
             const int diff = container.ammo_capacity() - contained_ammo.charges;
             //~ %1$s: item name, %2$s: container name
-            add_msg( pgettext( "container", "You put the %1$s in your %2$s." ), it->tname(),
+            add_msg( to_translation( "container", "You put the %1$s in your %2$s." ), it->tname(),
                      container.tname() );
             if( diff >= it->charges ) {
                 contained_ammo.merge_charges( std::move( it ) );
@@ -3081,8 +3116,8 @@ void Character::drop( const drop_locations &what, const tripoint_bub_ms &target,
     }
 
     if( rl_dist( bub_pos(), target ) > 1 || !( stash || get_map().can_put_items( target ) ) ) {
-        add_msg_player_or_npc( m_info, _( "You can't place items here!" ),
-                               _( "<npcname> can't place items here!" ) );
+        add_msg_player_or_npc( m_info, to_translation( "You can't place items here!" ),
+                               to_translation( "<npcname> can't place items here!" ) );
         return;
     }
 
@@ -3381,13 +3416,14 @@ bool Character::can_use( const item &it, const item *context ) const
 
         if( &it == &ctx ) {
             //~ %1$s - list of unmet requirements, %2$s - item name.
-            add_msg_player_or_npc( m_bad, _( "You need at least %1$s to use this %2$s." ),
-                                   _( "<npcname> needs at least %1$s to use this %2$s." ),
+            add_msg_player_or_npc( m_bad, to_translation( "You need at least %1$s to use this %2$s." ),
+                                   to_translation( "<npcname> needs at least %1$s to use this %2$s." ),
                                    unmet, it.tname() );
         } else {
             //~ %1$s - list of unmet requirements, %2$s - item name, %3$s - indirect item name.
-            add_msg_player_or_npc( m_bad, _( "You need at least %1$s to use this %2$s with your %3$s." ),
-                                   _( "<npcname> needs at least %1$s to use this %2$s with their %3$s." ),
+            add_msg_player_or_npc( m_bad,
+                                   to_translation( "You need at least %1$s to use this %2$s with your %3$s." ),
+                                   to_translation( "<npcname> needs at least %1$s to use this %2$s with their %3$s." ),
                                    unmet, it.tname(), ctx.tname() );
         }
 
@@ -3399,13 +3435,9 @@ bool Character::can_use( const item &it, const item *context ) const
 
 ret_val<bool> Character::can_wear( const item &it, bool with_equip_change ) const
 {
-    if( !it.is_armor() ) {
-        return ret_val<bool>::make_failure( _( "Putting on a %s would be tricky." ), it.tname() );
-    }
-
     // During multithreaded mapgen this can be called on NPC gen
     // If so it will cause random segfaults on NPC generation
-    if( !is_pool_worker_thread() ) {
+    if( it.is_armor() && !is_pool_worker_thread() ) {
         const auto &hook_results = cata::run_hooks( "on_character_try_wear",
         [&]( sol::table & params ) {
             params["who"] = this;
@@ -3417,6 +3449,16 @@ ret_val<bool> Character::can_wear( const item &it, bool with_equip_change ) cons
             return ret_val<bool>::make_failure( hook_results.get_or( "message",
                                                 _( "Wearing that is blocked for an unknown reason. One of your lua mods isn't returning the hook right." ) ) );
         }
+    }
+
+    return can_wear_natively( it, with_equip_change );
+}
+
+auto Character::can_wear_natively( const item &it,
+                                   bool with_equip_change ) const -> ret_val<bool>
+{
+    if( !it.is_armor() ) {
+        return ret_val<bool>::make_failure( _( "Putting on a %s would be tricky." ), it.tname() );
     }
 
     if( !it.has_flag( flag_SEMITANGIBLE ) ) {
@@ -3672,8 +3714,8 @@ bool Character::wear_possessed( item &to_wear, bool interactive,
     if( is_worn( to_wear ) ) {
         if( interactive ) {
             add_msg_player_or_npc( m_info,
-                                   _( "You are already wearing that." ),
-                                   _( "<npcname> is already wearing that." )
+                                   to_translation( "You are already wearing that." ),
+                                   to_translation( "<npcname> is already wearing that." )
                                  );
         }
         return false;
@@ -3681,8 +3723,8 @@ bool Character::wear_possessed( item &to_wear, bool interactive,
     if( to_wear.is_null() ) {
         if( interactive ) {
             add_msg_player_or_npc( m_info,
-                                   _( "You don't have that item." ),
-                                   _( "<npcname> doesn't have that item." ) );
+                                   to_translation( "You don't have that item." ),
+                                   to_translation( "<npcname> doesn't have that item." ) );
         }
         return false;
     }
@@ -3713,18 +3755,9 @@ bool Character::wear_possessed( item &to_wear, bool interactive,
 
 ret_val<bool> Character::can_takeoff( const item &it, bool dropping ) const
 {
-    auto iter = std::ranges::find_if( worn, [ &it ]( item * wit ) {
-        return &it == wit;
-    } );
-
-    if( iter == worn.end() ) {
-        return ret_val<bool>::make_failure( !is_npc() ? _( "You are not wearing that item." ) :
-                                            _( "<npcname> is not wearing that item." ) );
-    }
-
     // During multithreaded mapgen this can be called on NPC gen
     // If so it will cause random segfaults on NPC generation
-    if( !is_pool_worker_thread() ) {
+    if( is_worn( it ) && !is_pool_worker_thread() ) {
         const auto &hook_results = cata::run_hooks( "on_character_try_takeoff",
         [&]( sol::table & params ) {
             params["who"] = this;
@@ -3737,6 +3770,20 @@ ret_val<bool> Character::can_takeoff( const item &it, bool dropping ) const
                                                 _( "Taking that off is blocked for an unknown reason. One of your lua mods isn't returning the hook right." ) ) );
         }
     }
+    return can_takeoff_natively( it, dropping );
+}
+
+auto Character::can_takeoff_natively( const item &it, bool dropping ) const -> ret_val<bool>
+{
+    auto iter = std::ranges::find_if( worn, [ &it ]( item * wit ) {
+        return &it == wit;
+    } );
+
+    if( iter == worn.end() ) {
+        return ret_val<bool>::make_failure( !is_npc() ? _( "You are not wearing that item." ) :
+                                            _( "<npcname> is not wearing that item." ) );
+    }
+
     if( dropping && !get_dependent_worn_items( it ).empty() ) {
         if( it.has_flag( flag_POWERARMOR_EXO ) ) {
             return ret_val<bool>::make_failure( !is_npc() ?
@@ -3796,8 +3843,8 @@ bool Character::takeoff( item &it, std::vector<detached_ptr<item>> *res )
         res->push_back( std::move( det ) );
     }
 
-    add_msg_player_or_npc( _( "You take off your %s." ),
-                           _( "<npcname> takes off their %s." ),
+    add_msg_player_or_npc( to_translation( "You take off your %s." ),
+                           to_translation( "<npcname> takes off their %s." ),
                            it.tname() );
 
     // TODO: Make this variable
@@ -3965,7 +4012,8 @@ void Character::drop_invalid_inventory()
     } );
 
     if( dropped_liquid ) {
-        add_msg_if_player( m_bad, _( "Liquid from your inventory has leaked onto the ground." ) );
+        add_msg_if_player( m_bad,
+                           to_translation( "Liquid from your inventory has leaked onto the ground." ) );
     }
 
     if( volume_carried() > volume_capacity() ) {
@@ -4249,7 +4297,7 @@ const SkillLevelMap &Character::get_all_skills() const
 
 const SkillLevel &Character::get_skill_level_object( const skill_id &ident ) const
 {
-    return _skills->get_skill_level_object( ident );
+    return std::as_const( *_skills ).get_skill_level_object( ident );
 }
 
 SkillLevel &Character::get_skill_level_object( const skill_id &ident )
@@ -4425,11 +4473,11 @@ void Character::practice( const skill_id &id, int amount, int cap, bool suppress
             reset_encumbrance();
         }
         if( is_player() && newLevel > oldLevel ) {
-            add_msg( m_good, _( "Your skill in %s has increased to %d!" ), skill_name, newLevel );
+            add_msg( m_good, to_translation( "Your skill in %s has increased to %d!" ), skill_name, newLevel );
         }
         if( is_player() && newLevel > cap ) {
             //inform player immediately that the current recipe can't be used to train further
-            add_msg( m_info, _( "You feel that %s tasks of this level are becoming trivial." ),
+            add_msg( m_info, to_translation( "You feel that %s tasks of this level are becoming trivial." ),
                      skill_name );
         }
 
@@ -4594,7 +4642,7 @@ void Character::do_skill_rust( const time_duration &duration )
                 // Additionally, catching up NPCs will prevent rust
                 // for combat skills, presumably they'd hunt while
                 // the player is gone.
-                add_msg_if_player( _( "Your heart races as you recall your most recent hunt." ) );
+                add_msg_if_player( to_translation( "Your heart races as you recall your most recent hunt." ) );
                 mod_stim( tries );
             }
             continue;
@@ -4643,13 +4691,14 @@ void Character::do_skill_rust( const time_duration &duration )
             const int oldSkillLevel = skill_level_obj.level();
             if( skill_level_obj.rust( charged_bio_mem, rust_rate_tmp ) ) {
                 add_msg_if_player( m_warning,
-                                   _( "Your knowledge of %s begins to fade, but your memory banks retain it!" ),
+                                   to_translation( "Your knowledge of %s begins to fade, but your memory banks retain it!" ),
                                    aSkill.name() );
                 mod_power_level( -bio_memory->power_trigger );
             }
             const int newSkill = skill_level_obj.level();
             if( newSkill < oldSkillLevel ) {
-                add_msg_if_player( m_bad, _( "Your skill in %s has reduced to %d!" ), aSkill.name(), newSkill );
+                add_msg_if_player( m_bad, to_translation( "Your skill in %s has reduced to %d!" ), aSkill.name(),
+                                   newSkill );
                 reset_encumbrance();
             }
         }
@@ -4758,16 +4807,16 @@ bool Character::change_side( item &it, bool interactive )
     if( !it.swap_side() ) {
         if( interactive ) {
             add_msg_player_or_npc( m_info,
-                                   _( "You cannot swap the side on which your %s is worn." ),
-                                   _( "<npcname> cannot swap the side on which their %s is worn." ),
+                                   to_translation( "You cannot swap the side on which your %s is worn." ),
+                                   to_translation( "<npcname> cannot swap the side on which their %s is worn." ),
                                    it.tname() );
         }
         return false;
     }
 
     if( interactive ) {
-        add_msg_player_or_npc( m_info, _( "You swap the side on which your %s is worn." ),
-                               _( "<npcname> swaps the side on which their %s is worn." ),
+        add_msg_player_or_npc( m_info, to_translation( "You swap the side on which your %s is worn." ),
+                               to_translation( "<npcname> swaps the side on which their %s is worn." ),
                                it.tname() );
     }
 
@@ -4782,8 +4831,8 @@ bool Character::change_side( item *it, bool interactive )
     if( !it || !is_worn( *it ) ) {
         if( interactive ) {
             add_msg_player_or_npc( m_info,
-                                   _( "You are not wearing that item." ),
-                                   _( "<npcname> isn't wearing that item." ) );
+                                   to_translation( "You are not wearing that item." ),
+                                   to_translation( "<npcname> isn't wearing that item." ) );
         }
         return false;
     }
@@ -5302,7 +5351,7 @@ void Character::print_health() const
     }
     int current_health = get_healthy();
     if( get_option<std::string>( "HEALTH_STYLE" ) == "number" ) {
-        add_msg_if_player( _( "Your current health value is %d." ), current_health );
+        add_msg_if_player( to_translation( "Your current health value is %d." ), current_health );
     }
 
     static const std::map<int, std::string> msg_categories = {
@@ -5616,7 +5665,7 @@ void Character::on_damage_of_type( int adjusted_damage, damage_type type, const 
                 // The chance to incapacitate is as high as 50% if the attack deals damage equal to one third of the body part's current health.
                 if( x_in_y( adjusted_damage * 3, bp_hp ) && one_in( 2 ) ) {
                     if( i.incapacitated_time == 0_turns ) {
-                        add_msg_if_player( m_bad, _( "Your %s bionic shorts out!" ), info.name );
+                        add_msg_if_player( m_bad, to_translation( "Your %s bionic shorts out!" ), info.name );
                     }
                     i.incapacitated_time += rng( min_disable_time, 10 * min_disable_time );
                 }
@@ -5693,7 +5742,7 @@ void Character::regen( int rate_multiplier )
             if( part.get_damage_bandaged() <= 0 ) {
                 part.set_damage_bandaged( 0 );
                 remove_effect( effect_bandaged, bp.id() );
-                add_msg_if_player( _( "Bandaged wounds on your %s healed." ), body_part_name( bp ) );
+                add_msg_if_player( to_translation( "Bandaged wounds on your %s healed." ), body_part_name( bp ) );
             }
         }
         if( part.get_damage_disinfected() > 0 ) {
@@ -5701,7 +5750,8 @@ void Character::regen( int rate_multiplier )
             if( part.get_damage_disinfected() <= 0 ) {
                 part.set_damage_disinfected( 0 );
                 remove_effect( effect_disinfected, bp.id() );
-                add_msg_if_player( _( "Disinfected wounds on your %s healed." ), body_part_name( bp ) );
+                add_msg_if_player( to_translation( "Disinfected wounds on your %s healed." ),
+                                   body_part_name( bp ) );
             }
         }
 
@@ -5709,12 +5759,13 @@ void Character::regen( int rate_multiplier )
         if( has_effect( effect_bandaged, bp.id() ) && ( get_part( bp ).is_at_max_hp() ) ) {
             part.set_damage_bandaged( 0 );
             remove_effect( effect_bandaged, bp.id() );
-            add_msg_if_player( _( "Bandaged wounds on your %s healed." ), body_part_name( bp ) );
+            add_msg_if_player( to_translation( "Bandaged wounds on your %s healed." ), body_part_name( bp ) );
         }
         if( has_effect( effect_disinfected, bp.id() ) && ( get_part( bp ).is_at_max_hp() ) ) {
             part.set_damage_disinfected( 0 );
             remove_effect( effect_disinfected, bp.id() );
-            add_msg_if_player( _( "Disinfected wounds on your %s healed." ), body_part_name( bp ) );
+            add_msg_if_player( to_translation( "Disinfected wounds on your %s healed." ),
+                               body_part_name( bp ) );
         }
     }
 
@@ -5977,7 +6028,7 @@ void Character::update_needs( int rate_multiplier )
     }
     if( is_player() && wasnt_fatigued && get_fatigue() > fatigue_levels::dead_tired && !lying ) {
         if( !activity ) {
-            add_msg_if_player( m_warning, _( "You're feeling tired.  %s to lie down for sleep." ),
+            add_msg_if_player( m_warning, to_translation( "You're feeling tired.  %s to lie down for sleep." ),
                                press_x( ACTION_SLEEP ) );
         } else {
             g->cancel_activity_query( _( "You're feeling tired." ) );
@@ -6001,7 +6052,7 @@ void Character::update_needs( int rate_multiplier )
         // it's painful to work the controls, but passengers in open topped vehicles are fine
         if( veh && ( veh->enclosed_at( bub_pos() ) || veh->player_in_control( *this->as_player() ) ) ) {
             add_msg_if_player( m_bad,
-                               _( "You're cramping up from stuffing yourself in this vehicle." ) );
+                               to_translation( "You're cramping up from stuffing yourself in this vehicle." ) );
             if( is_npc() ) {
                 npc &as_npc = dynamic_cast<npc &>( *this );
                 as_npc.complain_about( "cramped_vehicle", 1_hours, "<cramped_vehicle>", false );
@@ -6095,28 +6146,28 @@ void Character::check_needs_extremes()
 {
     // Check if we've overdosed... in any deadly way.
     if( get_stim() > 250 ) {
-        add_msg_if_player( m_bad, _( "You have a sudden heart attack!" ) );
+        add_msg_if_player( m_bad, to_translation( "You have a sudden heart attack!" ) );
         g->events().send<event_type::dies_from_drug_overdose>( getID(), efftype_id() );
         set_part_hp_cur( bodypart_id( "torso" ), 0 );
     } else if( get_stim() < -200 || get_painkiller() > 240 ) {
-        add_msg_if_player( m_bad, _( "Your breathing stops completely." ) );
+        add_msg_if_player( m_bad, to_translation( "Your breathing stops completely." ) );
         g->events().send<event_type::dies_from_drug_overdose>( getID(), efftype_id() );
         set_part_hp_cur( bodypart_id( "torso" ), 0 );
         // taking GHB greatly reduces the amount of stimulation needed to die
     } else if( get_effect_int( effect_took_antinarcoleptic )  && get_stim() < -80 ) {
-        add_msg_if_player( m_bad, _( "Your breathing slows down to a stop." ) );
+        add_msg_if_player( m_bad, to_translation( "Your breathing slows down to a stop." ) );
         g->events().send<event_type::dies_from_drug_overdose>( getID(), effect_took_antinarcoleptic );
         set_part_hp_cur( bodypart_id( "torso" ), 0 );
     } else if( has_effect( effect_jetinjector ) && get_effect_dur( effect_jetinjector ) > 40_minutes ) {
         if( !( has_trait( trait_NOPAIN ) ) ) {
-            add_msg_if_player( m_bad, _( "Your heart spasms painfully and stops." ) );
+            add_msg_if_player( m_bad, to_translation( "Your heart spasms painfully and stops." ) );
         } else {
-            add_msg_if_player( _( "Your heart spasms and stops." ) );
+            add_msg_if_player( to_translation( "Your heart spasms and stops." ) );
         }
         g->events().send<event_type::dies_from_drug_overdose>( getID(), effect_jetinjector );
         set_part_hp_cur( bodypart_id( "torso" ), 0 );
     } else if( get_effect_int( effect_drunk ) > 4 ) {
-        add_msg_if_player( m_bad, _( "Your breathing slows down to a stop." ) );
+        add_msg_if_player( m_bad, to_translation( "Your breathing slows down to a stop." ) );
         g->events().send<event_type::dies_from_drug_overdose>( getID(), effect_drunk );
         set_part_hp_cur( bodypart_id( "torso" ), 0 );
     }
@@ -6124,7 +6175,7 @@ void Character::check_needs_extremes()
     // check if we've starved
     if( is_player() ) {
         if( get_stored_kcal() <= 0 ) {
-            add_msg_if_player( m_bad, _( "You have starved to death." ) );
+            add_msg_if_player( m_bad, to_translation( "You have starved to death." ) );
             g->events().send<event_type::dies_of_starvation>( getID() );
             set_part_hp_cur( bodypart_id( "torso" ), 0 );
         } else if( action_time_scale::once_every_this_tick( 6_hours ) ) {
@@ -6149,31 +6200,31 @@ void Character::check_needs_extremes()
     // Check if we're dying of thirst
     if( is_player() && get_thirst() >= thirst_levels::parched ) {
         if( get_thirst() >= thirst_levels::dead ) {
-            add_msg_if_player( m_bad, _( "You have died of dehydration." ) );
+            add_msg_if_player( m_bad, to_translation( "You have died of dehydration." ) );
             g->events().send<event_type::dies_of_thirst>( getID() );
             set_part_hp_cur( bodypart_id( "torso" ), 0 );
         } else if( get_thirst() >= lerp( +thirst_levels::parched, +thirst_levels::dead, 0.333f ) &&
                    action_time_scale::once_every_this_tick( 30_minutes ) ) {
-            add_msg_if_player( m_warning, _( "Even your eyes feel dry…" ) );
+            add_msg_if_player( m_warning, to_translation( "Even your eyes feel dry…" ) );
         } else if( get_thirst() >= lerp( +thirst_levels::parched, +thirst_levels::dead, 0.666f ) &&
                    action_time_scale::once_every_this_tick( 30_minutes ) ) {
-            add_msg_if_player( m_warning, _( "You are THIRSTY!" ) );
+            add_msg_if_player( m_warning, to_translation( "You are THIRSTY!" ) );
         } else if( action_time_scale::once_every_this_tick( 30_minutes ) ) {
-            add_msg_if_player( m_warning, _( "Your mouth feels so dry…" ) );
+            add_msg_if_player( m_warning, to_translation( "Your mouth feels so dry…" ) );
         }
     }
 
     // Check if we're falling asleep, unless we're sleeping
     if( get_fatigue() >= fatigue_levels::exhausted + 25 && !in_sleep_state() ) {
         if( get_fatigue() >= fatigue_levels::massive ) {
-            add_msg_if_player( m_bad, _( "Survivor sleep now." ) );
+            add_msg_if_player( m_bad, to_translation( "Survivor sleep now." ) );
             g->events().send<event_type::falls_asleep_from_exhaustion>( getID() );
             mod_fatigue( -10 );
             fall_asleep();
         } else if( get_fatigue() >= 800 && action_time_scale::once_every_this_tick( 30_minutes ) ) {
-            add_msg_if_player( m_warning, _( "Anywhere would be a good place to sleep…" ) );
+            add_msg_if_player( m_warning, to_translation( "Anywhere would be a good place to sleep…" ) );
         } else if( action_time_scale::once_every_this_tick( 30_minutes ) ) {
-            add_msg_if_player( m_warning, _( "You feel like you haven't slept in days." ) );
+            add_msg_if_player( m_warning, to_translation( "You feel like you haven't slept in days." ) );
         }
     }
 
@@ -6182,7 +6233,7 @@ void Character::check_needs_extremes()
     if( get_fatigue() >= fatigue_levels::dead_tired && !in_sleep_state() ) {
         if( get_fatigue() >= 700 ) {
             if( action_time_scale::once_every_this_tick( 30_minutes ) ) {
-                add_msg_if_player( m_warning, _( "You're too physically tired to stop yawning." ) );
+                add_msg_if_player( m_warning, to_translation( "You're too physically tired to stop yawning." ) );
                 add_effect( effect_lack_sleep, 30_minutes + 1_turns );
             }
             /** @EFFECT_INT slightly decreases occurrence of short naps when dead tired */
@@ -6191,7 +6242,7 @@ void Character::check_needs_extremes()
             }
         } else if( get_fatigue() >= fatigue_levels::exhausted ) {
             if( action_time_scale::once_every_this_tick( 30_minutes ) ) {
-                add_msg_if_player( m_warning, _( "How much longer until bedtime?" ) );
+                add_msg_if_player( m_warning, to_translation( "How much longer until bedtime?" ) );
                 add_effect( effect_lack_sleep, 30_minutes + 1_turns );
             }
             /** @EFFECT_INT slightly decreases occurrence of short naps when exhausted */
@@ -6200,7 +6251,7 @@ void Character::check_needs_extremes()
             }
         } else if( get_fatigue() >= fatigue_levels::dead_tired &&
                    action_time_scale::once_every_this_tick( 30_minutes ) ) {
-            add_msg_if_player( m_warning, _( "*yawn* You should really get some sleep." ) );
+            add_msg_if_player( m_warning, to_translation( "*yawn* You should really get some sleep." ) );
             add_effect( effect_lack_sleep, 30_minutes + 1_turns );
         }
     }
@@ -6215,11 +6266,11 @@ void Character::check_needs_extremes()
         ( !has_effect( effect_meth ) || sleep_deprivation >= sleep_deprivation_levels::massive ) ) {
         if( sleep_deprivation < sleep_deprivation_levels::minor ) {
             add_msg_if_player( m_warning,
-                               _( "Your mind feels tired.  It's been a while since you've slept well." ) );
+                               to_translation( "Your mind feels tired.  It's been a while since you've slept well." ) );
             mod_fatigue( 1 );
         } else if( sleep_deprivation < sleep_deprivation_levels::serious ) {
             add_msg_if_player( m_bad,
-                               _( "Your mind feels foggy from lack of good sleep, and your eyes keep trying to close against your will." ) );
+                               to_translation( "Your mind feels foggy from lack of good sleep, and your eyes keep trying to close against your will." ) );
             mod_fatigue( 5 );
 
             if( one_in( 10 ) ) {
@@ -6227,7 +6278,7 @@ void Character::check_needs_extremes()
             }
         } else if( sleep_deprivation < sleep_deprivation_levels::major ) {
             add_msg_if_player( m_bad,
-                               _( "Your mind feels weary, and you dread every wakeful minute that passes.  You crave sleep, and feel like you're about to collapse." ) );
+                               to_translation( "Your mind feels weary, and you dread every wakeful minute that passes.  You crave sleep, and feel like you're about to collapse." ) );
             mod_fatigue( 10 );
 
             if( one_in( 5 ) ) {
@@ -6235,7 +6286,7 @@ void Character::check_needs_extremes()
             }
         } else if( sleep_deprivation < sleep_deprivation_levels::massive ) {
             add_msg_if_player( m_bad,
-                               _( "You haven't slept decently for so long that your whole body is screaming for mercy.  It's a miracle that you're still awake, but it just feels like a curse now." ) );
+                               to_translation( "You haven't slept decently for so long that your whole body is screaming for mercy.  It's a miracle that you're still awake, but it just feels like a curse now." ) );
             mod_fatigue( 40 );
 
             mod_healthy_mod( -5, -50 );
@@ -6256,8 +6307,8 @@ void Character::check_needs_extremes()
                 /** @EFFECT_PER slightly increases resilience against passing out from sleep deprivation */
                 one_in( static_cast<int>( ( 1.0f - sleep_deprivation_pct ) * 100 ) + get_per() ) ) ) ) {
             add_msg_player_or_npc( m_bad,
-                                   _( "Your body collapses due to sleep deprivation, your neglected fatigue rushing back all at once, and you pass out on the spot." )
-                                   , _( "<npcname> collapses to the ground from exhaustion." ) );
+                                   to_translation( "Your body collapses due to sleep deprivation, your neglected fatigue rushing back all at once, and you pass out on the spot." )
+                                   , to_translation( "<npcname> collapses to the ground from exhaustion." ) );
             if( get_fatigue() < fatigue_levels::exhausted ) {
                 set_fatigue( static_cast<int>( fatigue_levels::exhausted ) );
             }
@@ -6379,27 +6430,27 @@ void warn_temp_change( Character &chr, const bodypart_id &bp, units::temperature
     //       at this moment contains temperature values from before the equalization.
     if( temp_before > BODYTEMP_FREEZING && temp_after <= BODYTEMP_FREEZING ) {
         //~ %s is bodypart
-        add_msg( m_warning, _( "You feel your %s beginning to go numb from the cold!" ),
+        add_msg( m_warning, to_translation( "You feel your %s beginning to go numb from the cold!" ),
                  body_part_name( bp->token ) );
     } else if( temp_before > BODYTEMP_VERY_COLD && temp_after <= BODYTEMP_VERY_COLD ) {
         //~ %s is bodypart
-        add_msg( m_warning, _( "You feel your %s getting very cold." ),
+        add_msg( m_warning, to_translation( "You feel your %s getting very cold." ),
                  body_part_name( bp->token ) );
     } else if( temp_before > BODYTEMP_COLD && temp_after <= BODYTEMP_COLD ) {
         //~ %s is bodypart
-        add_msg( m_warning, _( "You feel your %s getting chilly." ),
+        add_msg( m_warning, to_translation( "You feel your %s getting chilly." ),
                  body_part_name( bp->token ) );
     } else if( temp_before < BODYTEMP_SCORCHING && temp_after >= BODYTEMP_SCORCHING ) {
         //~ %s is bodypart
-        add_msg( m_bad, _( "You feel your %s getting red hot from the heat!" ),
+        add_msg( m_bad, to_translation( "You feel your %s getting red hot from the heat!" ),
                  body_part_name( bp->token ) );
     } else if( temp_before < BODYTEMP_VERY_HOT && temp_after >= BODYTEMP_VERY_HOT ) {
         //~ %s is bodypart
-        add_msg( m_warning, _( "You feel your %s getting very hot." ),
+        add_msg( m_warning, to_translation( "You feel your %s getting very hot." ),
                  body_part_name( bp->token ) );
     } else if( temp_before < BODYTEMP_HOT && temp_after >= BODYTEMP_HOT ) {
         //~ %s is bodypart
-        add_msg( m_warning, _( "You feel your %s getting warm." ),
+        add_msg( m_warning, to_translation( "You feel your %s getting warm." ),
                  body_part_name( bp->token ) );
     }
 }
@@ -6430,14 +6481,15 @@ void warn_wind_chill( const bodypart_id &bp, const units::temperature bp_conv,
     // Warn the player that wind is going to be a problem.
     // But only if it can be a problem, no need to spam player with "wind chills your scorching body"
     if( bp_conv <= BODYTEMP_COLD && bp_wind_chill < -10 && one_in( 200 ) ) {
-        add_msg( m_bad, _( "The wind is making your %s feel quite cold." ),
+        add_msg( m_bad, to_translation( "The wind is making your %s feel quite cold." ),
                  body_part_name( bp->token ) );
     } else if( bp_conv <= BODYTEMP_COLD && bp_wind_chill < -20 && one_in( 100 ) ) {
         add_msg( m_bad,
-                 _( "The wind is very strong, you should find some more wind-resistant clothing for your %s." ),
+                 to_translation( "The wind is very strong, you should find some more wind-resistant clothing for your %s." ),
                  body_part_name( bp->token ) );
     } else if( bp_conv <= BODYTEMP_COLD && bp_wind_chill < -30 && one_in( 50 ) ) {
-        add_msg( m_bad, _( "Your clothing is not providing enough protection from the wind for your %s!" ),
+        add_msg( m_bad,
+                 to_translation( "Your clothing is not providing enough protection from the wind for your %s!" ),
                  body_part_name( bp->token ) );
     }
 }
@@ -6454,11 +6506,12 @@ void wake_if_hypothermia( Character &chr, const bodypart_id &bp, bodypart &bp_st
         const auto curr_temperature = bp_stats.get_temp_cur();
         if( bp == body_part_torso && curr_temperature <= BODYTEMP_COLD &&
             !chr.has_enchantment_flag( ench_flag_NO_THERMAL_WAKE ) ) {
-            add_msg( m_warning, _( "Your shivering prevents you from sleeping." ) );
+            add_msg( m_warning, to_translation( "Your shivering prevents you from sleeping." ) );
             chr.wake_up();
         } else if( bp != body_part_torso && curr_temperature <= BODYTEMP_VERY_COLD &&
                    chr.has_effect( effect_frostbite ) && !chr.has_enchantment_flag( ench_flag_NO_THERMAL_WAKE ) ) {
-            add_msg( m_warning, _( "You are too cold.  Your frostbite prevents you from sleeping." ) );
+            add_msg( m_warning,
+                     to_translation( "You are too cold.  Your frostbite prevents you from sleeping." ) );
             chr.wake_up();
         }
     }
@@ -6592,7 +6645,7 @@ void apply_frostbite( Character &chr, const bodypart_id &bp, bodypart &bp_stats,
                 bp_stats.set_frostbite_timer( bp_stats.get_frostbite_timer() + 3 );
             }
             if( one_in( 100 ) && !chr.has_effect( effect_frostbite, bp.id() ) ) {
-                add_msg( m_warning, _( "Your %s will be frostnipped in the next few hours." ),
+                add_msg( m_warning, to_translation( "Your %s will be frostnipped in the next few hours." ),
                          body_part_name( bp->token ) );
             }
             // Medium risk zones
@@ -6605,7 +6658,7 @@ void apply_frostbite( Character &chr, const bodypart_id &bp, bodypart &bp_stats,
                        -4 * Ftemperature + 3 * FBwindPower - 170 >= 0 ) ) ) {
             bp_stats.set_frostbite_timer( bp_stats.get_frostbite_timer() + 8 );
             if( one_in( 100 ) && intense < 2 ) {
-                add_msg( m_warning, _( "Your %s will be frostbitten within the hour!" ),
+                add_msg( m_warning, to_translation( "Your %s will be frostbitten within the hour!" ),
                          body_part_name( bp->token ) );
             }
             // High risk zones
@@ -6615,7 +6668,7 @@ void apply_frostbite( Character &chr, const bodypart_id &bp, bodypart &bp_stats,
                      ( Ftemperature < -35 && FBwindPower >= 10 ) ) ) {
             bp_stats.set_frostbite_timer( bp_stats.get_frostbite_timer() + 72 );
             if( one_in( 100 ) && intense < 2 ) {
-                add_msg( m_warning, _( "Your %s will be frostbitten any minute now!" ),
+                add_msg( m_warning, to_translation( "Your %s will be frostbitten any minute now!" ),
                          body_part_name( bp->token ) );
             }
             // Risk free, so reduce frostbite timer
@@ -7589,11 +7642,21 @@ bool Character::is_rad_immune() const
 
 int Character::throw_range( const item &it ) const
 {
+    return throw_range_impl( it, false );
+}
+
+auto Character::throw_range_for_display( const item &it ) const -> int
+{
+    return throw_range_impl( it, true );
+}
+
+auto Character::throw_range_impl( const item &it, bool observation ) const -> int
+{
     if( it.is_null() ) {
         return -1;
     }
 
-    item &tmp = *item::spawn_temporary( it );
+    auto &tmp = observation ? *item::copy_for_display( it ) : *item::spawn_temporary( it );
 
     if( tmp.count_by_charges() && tmp.charges > 1 ) {
         tmp.charges = 1;
@@ -7833,13 +7896,14 @@ detached_ptr<item> Character::pour_into( item &container, detached_ptr<item> &&l
         return std::move( liquid );
     }
 
-    add_msg_if_player( _( "You pour %1$s into the %2$s." ), liquid->tname(), container.tname() );
+    add_msg_if_player( to_translation( "You pour %1$s into the %2$s." ), liquid->tname(),
+                       container.tname() );
 
     liquid = container.fill_with( std::move( liquid ), amount );
     inv.unsort();
 
     if( liquid ) {
-        add_msg_if_player( _( "There's some left over!" ) );
+        add_msg_if_player( to_translation( "There's some left over!" ) );
     }
 
     return std::move( liquid );
@@ -7863,14 +7927,14 @@ detached_ptr<item> Character::pour_into( vehicle &veh, detached_ptr<item> &&liqu
     }
 
     //~ $1 - vehicle name, $2 - part name, $3 - liquid type
-    add_msg_if_player( _( "You refill the %1$s's %2$s with %3$s." ),
+    add_msg_if_player( to_translation( "You refill the %1$s's %2$s with %3$s." ),
                        veh.name, tank.name(), liquid->type_name() );
 
     liquid = tank.fill_with( std::move( liquid ), limit );
 
 
     if( liquid ) {
-        add_msg_if_player( _( "There's some left over!" ) );
+        add_msg_if_player( to_translation( "There's some left over!" ) );
     }
     return std::move( liquid );
 }
@@ -7924,13 +7988,13 @@ float Character::rest_quality() const
         if( !activity->get_suppress_comfort() && !has_effect( effect_sleep ) &&
             ( has_activity( ACT_TRY_SLEEP ) || hp_percentage() < 100 ) && one_in( 18 ) ) {
             if( comfort >= character_funcs::comfort_level::very_comfortable ) {
-                add_msg_if_player( _( "Resting here is very comfortable." ) );
+                add_msg_if_player( to_translation( "Resting here is very comfortable." ) );
             } else if( comfort >= character_funcs::comfort_level::comfortable ) {
-                add_msg_if_player( _( "Resting here is comfortable." ) );
+                add_msg_if_player( to_translation( "Resting here is comfortable." ) );
             } else if( comfort >= character_funcs::comfort_level::slightly_comfortable ) {
-                add_msg_if_player( _( "Resting here is slightly comfortable." ) );
+                add_msg_if_player( to_translation( "Resting here is slightly comfortable." ) );
             } else {
-                add_msg_if_player( _( "Resting here isn't comfortable." ) );
+                add_msg_if_player( to_translation( "Resting here isn't comfortable." ) );
             }
         }
     }
@@ -8658,7 +8722,7 @@ void Character::burn_move_stamina( int moves )
     // Starts at 1 in 25, goes down by 5 for every 50% more carried
     if( ( current_weight > max_weight ) && ( has_trait( trait_BADBACK ) || get_stamina() == 0 ) &&
         one_in( 35 - 5 * current_weight / ( max_weight / 2 ) ) ) {
-        add_msg_if_player( m_bad, _( "Your body strains under the weight!" ) );
+        add_msg_if_player( m_bad, to_translation( "Your body strains under the weight!" ) );
         // 1 more pain for every 800 grams more (5 per extra STR needed)
         if( ( ( current_weight - max_weight ) / 800_gram > get_pain() && get_pain() < 100 ) ) {
             mod_pain( 1 );
@@ -8862,21 +8926,9 @@ detached_ptr<item> Character::dispose_item( detached_ptr<item> &&obj, const std:
         }
     }
 
-    int w = utf8_width( menu.text, true ) + 4;
-    for( const auto &e : opts ) {
-        w = std::max( w, utf8_width( e.prompt, true ) + 4 );
-    }
-    for( auto &e : opts ) {
-        e.prompt += std::string( w - utf8_width( e.prompt, true ), ' ' );
-    }
-
-    menu.text.insert( 0, 2, ' ' ); // add space for UI hotkeys
-    menu.text += std::string( w + 2 - utf8_width( menu.text, true ), ' ' );
-    menu.text += _( " | Moves  " );
-
-    for( const auto &e : opts ) {
-        menu.addentry( -1, e.enabled, e.invlet, string_format( e.enabled ? "%s | %-7d" : "%s |",
-                       e.prompt, e.moves ) );
+    for( const auto &[i, e] : std::views::enumerate( opts ) ) {
+        menu.entries.emplace_back( static_cast<int>( i ), e.enabled, e.invlet, e.prompt, "",
+                                   e.enabled ? string_format( vgettext( "%d move", "%d moves", e.moves ), e.moves ) : "" );
     }
 
     menu.query();
@@ -8910,15 +8962,11 @@ bool Character::has_enough_charges( const item &it, bool show_msg ) const
         if( show_msg ) {
             if( it.has_flag( flag_USE_UPS ) ) {
                 add_msg_if_player( m_info,
-                                   vgettext( "Your %s needs %d charge, from some UPS or a Bionic Power Interface.",
-                                             "Your %s needs %d charges, from some UPS or a Bionic Power Interface.",
-                                             it.ammo_required() ),
+                                   localised::counted{ .format = pl_translation( "Your %s needs %d charge, from some UPS or a Bionic Power Interface.", "Your %s needs %d charges, from some UPS or a Bionic Power Interface." ), .count = it.ammo_required() },
                                    it.tname(), it.ammo_required() );
             } else {
                 add_msg_if_player( m_info,
-                                   vgettext( "Your %s needs %d charge, from a Bionic Power Interface.",
-                                             "Your %s needs %d charges, from a Bionic Power Interface.",
-                                             it.ammo_required() ),
+                                   localised::counted{ .format = pl_translation( "Your %s needs %d charge, from a Bionic Power Interface.", "Your %s needs %d charges, from a Bionic Power Interface." ), .count = it.ammo_required() },
                                    it.tname(), it.ammo_required() );
             }
         }
@@ -8930,18 +8978,14 @@ bool Character::has_enough_charges( const item &it, bool show_msg ) const
         }
         if( show_msg ) {
             add_msg_if_player( m_info,
-                               vgettext( "Your %s needs %d charge from some UPS.",
-                                         "Your %s needs %d charges from some UPS.",
-                                         it.ammo_required() ),
+                               localised::counted{ .format = pl_translation( "Your %s needs %d charge from some UPS.", "Your %s needs %d charges from some UPS." ), .count = it.ammo_required() },
                                it.tname(), it.ammo_required() );
         }
         return false;
     } else if( !it.ammo_sufficient() ) {
         if( show_msg ) {
             add_msg_if_player( m_info,
-                               vgettext( "Your %s has %d charge but needs %d.",
-                                         "Your %s has %d charges but needs %d.",
-                                         it.ammo_remaining() ),
+                               localised::counted{ .format = pl_translation( "Your %s has %d charge but needs %d.", "Your %s has %d charges but needs %d." ), .count = it.ammo_remaining() },
                                it.tname(), it.ammo_remaining(), it.ammo_required() );
         }
         return false;
@@ -9104,7 +9148,7 @@ void Character::cough( bool harmful, int loudness )
     }
 
     if( !is_npc() ) {
-        add_msg( m_bad, _( "You cough heavily." ) );
+        add_msg( m_bad, to_translation( "You cough heavily." ) );
     }
     sound_event se;
     se.origin = bub_pos();
@@ -9193,7 +9237,7 @@ void Character::shout( std::string msg, bool order )
     // You can't shout without your face
     if( has_trait( trait_PROF_FOODP ) && !( is_wearing( itype_id( "foodperson_mask" ) ) ||
                                             is_wearing( itype_id( "foodperson_mask_on" ) ) ) ) {
-        add_msg_if_player( m_warning, _( "You try to shout but you have no face!" ) );
+        add_msg_if_player( m_warning, to_translation( "You try to shout but you have no face!" ) );
         return;
     }
 
@@ -9201,16 +9245,16 @@ void Character::shout( std::string msg, bool order )
     if( msg.empty() ) {
         if( has_trait( trait_SHOUT3 ) ) {
             base = 80;
-            add_msg_if_player( m_warning, _( "You let out an ear-piercing howl!" ) );
+            add_msg_if_player( m_warning, to_translation( "You let out an ear-piercing howl!" ) );
             msg = is_player() ? _( "yourself let out an ear-piercing howl!" ) : _( "an ear-piercing howl!" );
             shout = "howl";
         } else if( has_trait( trait_SHOUT2 ) ) {
             base = 70;
-            add_msg_if_player( m_mixed, _( "You scream loudly!" ) );
+            add_msg_if_player( m_mixed, to_translation( "You scream loudly!" ) );
             msg = is_player() ? _( "yourself scream loudly!" ) : _( "a loud scream!" );
             shout = "scream";
         } else {
-            add_msg_if_player( m_info, _( "You yell loudly!" ) );
+            add_msg_if_player( m_info, to_translation( "You yell loudly!" ) );
             msg = is_player() ? _( "yourself shout loudly!" ) : _( "a loud shout!" );
             shout = "default";
         }
@@ -9244,11 +9288,12 @@ void Character::shout( std::string msg, bool order )
     // TODO: indistinct noise descriptions should be handled in the sounds code
     if( noise <= minimum_noise ) {
         add_msg_if_player( m_warning,
-                           _( "The sound of your voice is almost completely muffled!" ) );
+                           to_translation( "The sound of your voice is almost completely muffled!" ) );
         msg = is_player() ? _( "your muffled shout" ) : _( "an indistinct voice" );
     } else if( noise * 2 <= noise + penalty ) {
         // The shout's volume is 1/2 or lower of what it would be without the penalty
-        add_msg_if_player( m_warning, _( "The sound of your voice is significantly muffled!" ) );
+        add_msg_if_player( m_warning,
+                           to_translation( "The sound of your voice is significantly muffled!" ) );
     }
 
     sound_event se;
@@ -9278,11 +9323,12 @@ void Character::vomit()
 
     map &here = get_map();
     if( get_effect_int( effect_fungus ) >= 3 ) {
-        add_msg_player_or_npc( m_bad,  _( "You vomit thousands of live spores!" ),
-                               _( "<npcname> vomits thousands of live spores!" ) );
+        add_msg_player_or_npc( m_bad,  to_translation( "You vomit thousands of live spores!" ),
+                               to_translation( "<npcname> vomits thousands of live spores!" ) );
         fungal_effects( *g, here ).fungalize( bub_pos(), this );
     } else if( stomach.get_calories() > 0 || get_thirst() < 0 ) {
-        add_msg_player_or_npc( m_bad, _( "You throw up heavily!" ), _( "<npcname> throws up heavily!" ) );
+        add_msg_player_or_npc( m_bad, to_translation( "You throw up heavily!" ),
+                               to_translation( "<npcname> throws up heavily!" ) );
         here.add_field( tripoint_bub_ms( character_funcs::pick_safe_adjacent_tile( *this ).value_or(
                                              bub_pos() ) ), fd_bile, 1 );
     } else {
@@ -9594,8 +9640,8 @@ static void destroyed_armor_msg( Character &who, const std::string &pre_damage_n
                pre_damage_name );
     }
     who.add_msg_player_or_npc( m_bad,
-                               _( "Your %s is completely destroyed!" ),
-                               _( "<npcname>'s %s is completely destroyed!" ),
+                               to_translation( "Your %s is completely destroyed!" ),
+                               to_translation( "<npcname>'s %s is completely destroyed!" ),
                                pre_damage_name );
 }
 
@@ -9630,7 +9676,7 @@ void Character::absorb_hit( const bodypart_id &bp, damage_instance &dam )
             elem.amount = 0;
             if( !forcefield_message ) {
                 forcefield_message = true;
-                add_msg_if_player( _( "The incoming attack was deflected" ) );
+                add_msg_if_player( to_translation( "The incoming attack was deflected" ) );
             }
             continue;
         }
@@ -9671,19 +9717,21 @@ void Character::absorb_hit( const bodypart_id &bp, damage_instance &dam )
                 const units::energy shatter_thresh = ( elem.type == DT_BULLET ) ? 20_kJ : 15_kJ;
                 if( ads_cost >= shatter_thresh ) {
                     if( bio.incapacitated_time == 0_turns ) {
-                        add_msg_if_player( m_bad, _( "Your forcefield shatters and the feedback shorts out the %s!" ),
+                        add_msg_if_player( m_bad,
+                                           to_translation( "Your forcefield shatters and the feedback shorts out the %s!" ),
                                            bio.info().name );
                     }
                     int over = units::to_kilojoule( ads_cost - ( shatter_thresh - 5_kJ ) );
                     bio.incapacitated_time += ( ( over / 5 ) ) * 1_turns;
                 } else {
-                    add_msg_if_player( m_bad, _( "Your forcefield crackles and the %s powers down." ),
+                    add_msg_if_player( m_bad, to_translation( "Your forcefield crackles and the %s powers down." ),
                                        bio.info().name );
                 }
             } else {
                 //You tried to (re)activate it and immediately enter combat, no mitigation for you.
                 deactivate_bionic( bio );
-                add_msg_if_player( m_bad, _( "The %s is interrupted and powers down." ), bio.info().name );
+                add_msg_if_player( m_bad, to_translation( "The %s is interrupted and powers down." ),
+                                   bio.info().name );
             }
         }
 
@@ -9943,7 +9991,7 @@ void Character::on_dodge( Creature *source, int difficulty )
 
         if( tec != tec_none && !is_dead_state() ) {
             if( get_stamina() < get_stamina_max() / 3 ) {
-                add_msg( m_bad, _( "You try to counterattack but you are too exhausted!" ) );
+                add_msg( m_bad, to_translation( "You try to counterattack but you are too exhausted!" ) );
             } else {
                 melee_attack( *source, false, &tec );
             }
@@ -9979,10 +10027,10 @@ void Character::on_hit( Creature *source, bodypart_id bp_hit,
     units::energy trigger_cost = bio_shock->power_trigger;
     if( has_active_bionic( bio_shock ) && get_power_level() >= bio_shock->power_trigger ) {
         if( is_player() ) {
-            add_msg( m_good, _( "Your electroshock unit shocks %s in mid-attack!" ),
+            add_msg( m_good, to_translation( "Your electroshock unit shocks %s in mid-attack!" ),
                      source->disp_name() );
         } else if( u_see ) {
-            add_msg( _( "%1$s's electroshock unit shocks %2$s in mid-attack!" ),
+            add_msg( to_translation( "%1$s's electroshock unit shocks %2$s in mid-attack!" ),
                      disp_name(),
                      source->disp_name() );
         }
@@ -9995,10 +10043,10 @@ void Character::on_hit( Creature *source, bodypart_id bp_hit,
     if( has_active_bionic( bio_heat_absorb ) && get_power_level() >= bio_heat_absorb->power_trigger &&
         source->is_warm() ) {
         if( is_player() ) {
-            add_msg( m_good, _( "You drain %s's body heat in mid-attack!" ),
+            add_msg( m_good, to_translation( "You drain %s's body heat in mid-attack!" ),
                      source->disp_name() );
         } else if( u_see ) {
-            add_msg( _( "%1$s's drains %s's body heat in mid-attack!" ),
+            add_msg( to_translation( "%1$s drains %2$s's body heat in mid-attack!" ),
                      disp_name(),
                      source->disp_name() );
         }
@@ -10013,12 +10061,12 @@ void Character::on_hit( Creature *source, bodypart_id bp_hit,
         int spine = rng( 1, has_trait( trait_QUILLS ) ? 20 : 8 );
         if( !is_player() ) {
             if( u_see ) {
-                add_msg( _( "%1$s's %2$s puncture %3$s in mid-attack!" ), name,
+                add_msg( to_translation( "%1$s's %2$s puncture %3$s in mid-attack!" ), name,
                          ( has_trait( trait_QUILLS ) ? _( "quills" ) : _( "spines" ) ),
                          source->disp_name() );
             }
         } else {
-            add_msg( m_good, _( "Your %1$s puncture %2$s in mid-attack!" ),
+            add_msg( m_good, to_translation( "Your %1$s puncture %2$s in mid-attack!" ),
                      ( has_trait( trait_QUILLS ) ? _( "quills" ) : _( "spines" ) ),
                      source->disp_name() );
         }
@@ -10030,11 +10078,11 @@ void Character::on_hit( Creature *source, bodypart_id bp_hit,
         ( !( source->has_weapon() ) ) ) {
         if( !is_player() ) {
             if( u_see ) {
-                add_msg( _( "%1$s's %2$s scrape %3$s in mid-attack!" ), name,
+                add_msg( to_translation( "%1$s's %2$s scrape %3$s in mid-attack!" ), name,
                          _( "thorns" ), source->disp_name() );
             }
         } else {
-            add_msg( m_good, _( "Your thorns scrape %s in mid-attack!" ), source->disp_name() );
+            add_msg( m_good, to_translation( "Your thorns scrape %s in mid-attack!" ), source->disp_name() );
         }
         int thorn = rng( 1, 4 );
         damage_instance thorn_damage;
@@ -10046,11 +10094,11 @@ void Character::on_hit( Creature *source, bodypart_id bp_hit,
     if( ( !( wearing_something_on( bp_hit ) ) ) && ( has_trait( trait_CF_HAIR ) ) ) {
         if( !is_player() ) {
             if( u_see ) {
-                add_msg( _( "%1$s gets a load of %2$s's %3$s stuck in!" ), source->disp_name(),
+                add_msg( to_translation( "%1$s gets a load of %2$s's %3$s stuck in!" ), source->disp_name(),
                          name, ( _( "hair" ) ) );
             }
         } else {
-            add_msg( m_good, _( "Your hairs detach into %s!" ), source->disp_name() );
+            add_msg( m_good, to_translation( "Your hairs detach into %s!" ), source->disp_name() );
         }
         source->add_effect( effect_stunned, 2_turns );
         if( one_in( 3 ) ) { // In the eyes!
@@ -10077,10 +10125,10 @@ void Character::on_hit( Creature *source, bodypart_id bp_hit,
         if( stability_roll() < dice( rolls, 10 ) ) {
             if( !is_player() ) {
                 if( u_see ) {
-                    add_msg( _( "%1$s loses their balance while being hit!" ), name );
+                    add_msg( to_translation( "%1$s loses their balance while being hit!" ), name );
                 }
             } else {
-                add_msg( m_bad, _( "You lose your balance while being hit!" ) );
+                add_msg( m_bad, to_translation( "You lose your balance while being hit!" ) );
             }
             if( in_skater_vehicle ) {
                 g->fling_creature( this, rng_float( 0_degrees, 360_degrees ), 10 );
@@ -10111,6 +10159,7 @@ void Character::apply_damage( Creature *source, item *source_weapon, item *sourc
         debugmsg( "Wacky body part hurt!" );
         hurt = bodypart_id( "torso" );
     }
+    engine_client::presentation::record_damage( { .hurt = *this, .part = hurt, .amount = dam } );
 
     mod_pain( dam / 2 );
 
@@ -10124,7 +10173,7 @@ void Character::apply_damage( Creature *source, item *source_weapon, item *sourc
     const item &weapon = primary_weapon();
     if( !weapon.is_null() && !as_player()->can_wield( weapon ).success() &&
         can_unwield( weapon ).success() ) {
-        add_msg_if_player( _( "You are no longer able to wield your %s and drop it!" ),
+        add_msg_if_player( to_translation( "You are no longer able to wield your %s and drop it!" ),
                            weapon.display_name() );
         put_into_vehicle_or_drop( *this, item_drop_reason::tumbling, remove_primary_weapon() );
     }
@@ -10214,9 +10263,9 @@ dealt_damage_instance Character::deal_damage( Creature *source, bodypart_id bp,
             }
         }
         if( spawned == 1 ) {
-            add_msg( m_warning, _( "A snake sprouts from your body!" ) );
+            add_msg( m_warning, to_translation( "A snake sprouts from your body!" ) );
         } else if( spawned >= 2 ) {
-            add_msg( m_warning, _( "Some snakes sprout from your body!" ) );
+            add_msg( m_warning, to_translation( "Some snakes sprout from your body!" ) );
         }
     }
 
@@ -10224,7 +10273,7 @@ dealt_damage_instance Character::deal_damage( Creature *source, bodypart_id bp,
     if( ( has_trait( trait_SLIMESPAWNER ) ) && ( dam >= 10 ) && one_in( 20 - dam ) ) {
         if( monster *const slime = g->place_critter_around( mon_player_blob, bub_pos(), 1 ) ) {
             slime->friendly = -1;
-            add_msg_if_player( m_warning, _( "Slime is torn from you, and moves on its own!" ) );
+            add_msg_if_player( m_warning, to_translation( "Slime is torn from you, and moves on its own!" ) );
         }
     }
 
@@ -10234,10 +10283,10 @@ dealt_damage_instance Character::deal_damage( Creature *source, bodypart_id bp,
     if( source && has_trait( trait_ACIDBLOOD ) && !one_in( 3 ) &&
         ( dam >= 4 || cut_dam > 0 ) && ( rl_dist( g->u.bub_pos(), source->bub_pos() ) <= 1 ) ) {
         if( is_player() ) {
-            add_msg( m_good, _( "Your acidic blood splashes %s in mid-attack!" ),
+            add_msg( m_good, to_translation( "Your acidic blood splashes %s in mid-attack!" ),
                      source->disp_name() );
         } else if( u_see ) {
-            add_msg( _( "%1$s's acidic blood splashes on %2$s in mid-attack!" ),
+            add_msg( to_translation( "%1$s's acidic blood splashes on %2$s in mid-attack!" ),
                      disp_name(), source->disp_name() );
         }
         damage_instance acidblood_damage;
@@ -10280,18 +10329,20 @@ dealt_damage_instance Character::deal_damage( Creature *source, bodypart_id bp,
 
             if( has_grab_break_tec() && ( rng( 0, get_dex() )  > rng( 0, 10 ) ) ) {
                 if( has_effect( effect_grabbed ) ) {
-                    add_msg_if_player( m_warning, _( "%s tries to grab you as well, but you bat it away!" ),
+                    add_msg_if_player( m_warning,
+                                       to_translation( "%s tries to grab you as well, but you bat it away!" ),
                                        source->disp_name( false, true ) );
                 } else {
-                    add_msg_player_or_npc( m_info, _( "%s tries to grab you, but you break its grab!" ),
-                                           _( "%s tries to grab <npcname>, but they break its grab!" ),
+                    add_msg_player_or_npc( m_info, to_translation( "%s tries to grab you, but you break its grab!" ),
+                                           to_translation( "%s tries to grab <npcname>, but they break its grab!" ),
                                            source->disp_name( false, true ) );
                 }
             } else {
                 int prev_effect = get_effect_int( effect_grabbed );
                 add_effect( effect_grabbed, 2_turns, body_part_torso, prev_effect + 2 );
                 source->add_effect( effect_grabbing, 2_turns );
-                add_msg_player_or_npc( m_bad, _( "You are grabbed by %s!" ), _( "<npcname> is grabbed by %s!" ),
+                add_msg_player_or_npc( m_bad, to_translation( "You are grabbed by %s!" ),
+                                       to_translation( "<npcname> is grabbed by %s!" ),
                                        source->disp_name() );
             }
         }
@@ -10320,17 +10371,19 @@ int Character::reduce_healing_effect( const efftype_id &eff_id, int remove_med,
     int intensity = e.get_intensity();
     if( remove_med < intensity ) {
         if( eff_id == effect_bandaged ) {
-            add_msg_if_player( m_bad, _( "Bandages on your %s were damaged!" ), body_part_name( hurt_token ) );
+            add_msg_if_player( m_bad, to_translation( "Bandages on your %s were damaged!" ),
+                               body_part_name( hurt_token ) );
         } else  if( eff_id == effect_disinfected ) {
-            add_msg_if_player( m_bad, _( "You got some filth on your disinfected %s!" ),
+            add_msg_if_player( m_bad, to_translation( "You got some filth on your disinfected %s!" ),
                                body_part_name( hurt_token ) );
         }
     } else {
         if( eff_id == effect_bandaged ) {
-            add_msg_if_player( m_bad, _( "Bandages on your %s were destroyed!" ),
+            add_msg_if_player( m_bad, to_translation( "Bandages on your %s were destroyed!" ),
                                body_part_name( hurt_token ) );
         } else  if( eff_id == effect_disinfected ) {
-            add_msg_if_player( m_bad, _( "Your %s is no longer disinfected!" ), body_part_name( hurt_token ) );
+            add_msg_if_player( m_bad, to_translation( "Your %s is no longer disinfected!" ),
+                               body_part_name( hurt_token ) );
         }
     }
     e.mod_duration( -6_hours * remove_med );
@@ -10475,7 +10528,7 @@ void Character::restore_scent()
         set_type_of_scent( scenttype_id( prev_scent ) );
         remove_value( "prev_scent" );
         remove_value( "waterproof_scent" );
-        add_msg_if_player( m_info, _( "You smell like yourself again." ) );
+        add_msg_if_player( m_info, to_translation( "You smell like yourself again." ) );
     }
 }
 
@@ -10563,7 +10616,7 @@ void Character::rooted_message() const
     if( ( has_trait( trait_ROOTS2 ) || has_trait( trait_ROOTS3 ) ) &&
         get_map().has_flag( flag_PLOWABLE, bub_pos() ) &&
         !wearing_shoes ) {
-        add_msg( m_info, _( "You sink your roots into the soil." ) );
+        add_msg( m_info, to_translation( "You sink your roots into the soil." ) );
     }
 }
 
@@ -10908,16 +10961,16 @@ bool Character::check_and_recover_morale()
 
 void Character::start_hauling()
 {
-    add_msg( _( "You start hauling items along the ground." ) );
+    add_msg( to_translation( "You start hauling items along the ground." ) );
     if( is_armed() ) {
-        add_msg( m_warning, _( "Your hands are not free, which makes hauling slower." ) );
+        add_msg( m_warning, to_translation( "Your hands are not free, which makes hauling slower." ) );
     }
     hauling = true;
 }
 
 void Character::stop_hauling()
 {
-    add_msg( _( "You stop hauling items." ) );
+    add_msg( to_translation( "You stop hauling items." ) );
     hauling = false;
     if( has_activity( ACT_MOVE_ITEMS ) ) {
         cancel_activity();
@@ -10951,7 +11004,7 @@ void Character::assign_activity( std::unique_ptr<player_activity> act, bool allo
     bool resuming = false;
     if( allow_resume && !backlog.empty() && backlog.front()->can_resume_with( *act, *this ) ) {
         resuming = true;
-        add_msg_if_player( _( "You resume your task." ) );
+        add_msg_if_player( to_translation( "You resume your task." ) );
         activity = std::move( backlog.front() );
         backlog.pop_front();
     } else {
@@ -11032,15 +11085,15 @@ void Character::fall_asleep()
     std::string item_name = is_snuggling();
     if( item_name == "many" ) {
         if( one_in( 15 ) ) {
-            add_msg_if_player( _( "You nestle your pile of clothes for warmth." ) );
+            add_msg_if_player( to_translation( "You nestle your pile of clothes for warmth." ) );
         } else {
-            add_msg_if_player( _( "You use your pile of clothes for warmth." ) );
+            add_msg_if_player( to_translation( "You use your pile of clothes for warmth." ) );
         }
     } else if( item_name != "nothing" ) {
         if( one_in( 15 ) ) {
-            add_msg_if_player( _( "You snuggle your %s to keep warm." ), item_name );
+            add_msg_if_player( to_translation( "You snuggle your %s to keep warm." ), item_name );
         } else {
-            add_msg_if_player( _( "You use your %s to keep warm." ), item_name );
+            add_msg_if_player( to_translation( "You use your %s to keep warm." ), item_name );
         }
     }
     if( has_active_mutation( trait_HIBERNATE ) ) {
@@ -11051,11 +11104,11 @@ void Character::fall_asleep()
                                    pgettext( "memorial_female", "Entered hibernation." ) );
             }
 
-            add_msg_if_player( _( "You enter hibernation." ) );
+            add_msg_if_player( to_translation( "You enter hibernation." ) );
             fall_asleep( 7_days );
         } else {
             add_msg_if_player( m_bad,
-                               _( "You need to be nearly full of food and water to enter hibernation." ) );
+                               to_translation( "You need to be nearly full of food and water to enter hibernation." ) );
         }
     }
 
@@ -12188,11 +12241,17 @@ bool Character::knows_trap( const tripoint_bub_ms &pos ) const
 void Character::add_known_trap( const tripoint_bub_ms &pos, const trap &t )
 {
     const auto p = bub_to_abs( pos );
+    const auto previous = known_traps.find( p );
+    const auto changed = t.is_null() ? previous != known_traps.end() :
+                         previous == known_traps.end() || previous->second != t.id.str();
     if( t.is_null() ) {
         known_traps.erase( p );
     } else {
         // TODO: known_traps should map to a trap_str_id
         known_traps[p] = t.id.str();
+    }
+    if( changed && g && this == &get_avatar() ) {
+        get_map().set_memory_seen_cache_dirty( pos );
     }
 }
 
@@ -12276,22 +12335,33 @@ std::vector<std::string> Character::short_description_parts() const
 
     std::string gender = male ? _( "Male" ) : _( "Female" );
     result.push_back( name +  ", "  + gender );
+    const int visibility_cap = 0; // no cap
+    for( const auto &entry : equipment_facts( visibility_cap ) ) {
+        result.push_back( entry.label + entry.text );
+    }
+    return result;
+}
+
+auto Character::equipment_facts( const int visibility_cap ) const ->
+std::vector<engine_client::fact>
+{
+    auto facts = std::vector<engine_client::fact> {};
     if( is_armed() ) {
-        result.push_back( _( "Wielding: " ) + primary_weapon().tname() );
+        facts.push_back( { .kind = "wielding", .label = _( "Wielding: " ), .text = primary_weapon().tname(),
+                           .color = c_red } );
     }
     const std::string worn_str = enumerate_as_string( worn.begin(), worn.end(),
     []( const item * const & it ) {
         return it->tname();
     } );
     if( !worn_str.empty() ) {
-        result.push_back( _( "Wearing: " ) + worn_str );
+        facts.push_back( { .kind = "wearing", .label = _( "Wearing: " ), .text = worn_str, .color = c_light_gray } );
     }
-    const int visibility_cap = 0; // no cap
     const auto trait_str = visible_mutations( visibility_cap );
     if( !trait_str.empty() ) {
-        result.push_back( _( "Traits: " ) + trait_str );
+        facts.push_back( { .kind = "traits", .label = _( "Traits: " ), .text = trait_str, .color = c_light_gray } );
     }
-    return result;
+    return facts;
 }
 
 std::string Character::short_description() const
@@ -12299,28 +12369,39 @@ std::string Character::short_description() const
     return join( short_description_parts(), ";   " );
 }
 
+auto Character::info_facts() const -> std::vector<engine_client::fact>
+{
+    const auto bar = ::get_hp_bar( get_hp(), get_hp_max(), false );
+    auto facts = std::vector<engine_client::fact> {};
+    facts.push_back( { .kind = "hp", .text = bar.first, .color = bar.second,
+    .values = { { "hp", get_hp() }, { "max", get_hp_max() } } } );
+    facts.push_back( { .kind = "creature", .text = string_format( _( "You (%s)" ), name ), .color = basic_symbol_color() } );
+    const int visibility_cap = 0; // no cap
+    std::ranges::copy( equipment_facts( visibility_cap ), std::back_inserter( facts ) );
+    return facts;
+}
+
 auto Character::print_info( const catacurses::window &w, int vStart, int vLines,
                             int column ) const -> int
 {
     const int last_line = vStart + vLines;
     const int iWidth = getmaxx( w ) - 2;
-    const auto bar = ::get_hp_bar( get_hp(), get_hp_max(), false );
-    mvwprintz( w, point( column, vStart ), bar.second, bar.first );
+    const auto facts = info_facts();
+    const auto &bar = facts.at( 0 );
+    mvwprintz( w, point( column, vStart ), *bar.color, bar.text );
     constexpr auto bar_max_width = 5;
-    const auto bar_width = utf8_width( bar.first );
+    const auto bar_width = utf8_width( bar.text );
     for( int i = 0; i < bar_max_width - bar_width; ++i ) {
         mvwprintz( w, point( column + bar_max_width - 1 - i, vStart ), c_white, "." );
     }
     const int name_column = column + bar_max_width + 1;
-    mvwprintz( w, point( name_column, vStart ), basic_symbol_color(), _( "You (%s)" ), name );
+    mvwprintz( w, point( name_column, vStart ), *facts.at( 1 ).color, facts.at( 1 ).text );
     int line = vStart + 1;
-    const auto description_parts = short_description_parts();
-    for( size_t idx = 1; idx < description_parts.size(); ++idx ) {
-        const auto &part = description_parts[idx];
+    for( const auto &entry : facts | std::views::drop( 2 ) ) {
         if( line >= last_line ) {
             break;
         }
-        const std::vector<std::string> part_lines = foldstring( part, iWidth );
+        const std::vector<std::string> part_lines = foldstring( entry.label + entry.text, iWidth );
         for( const std::string &part_line : part_lines ) {
             if( line >= last_line ) {
                 break;
@@ -12543,18 +12624,32 @@ bool Character::defer_move( const tripoint_bub_ms &next )
     return true;
 }
 
+auto Character::include_autolearn_recipes( recipe_subset &target ) const -> void
+{
+    for( const auto *recipe : recipe_dict.all_autolearn() ) {
+        if( meets_skill_requirements( recipe->autolearn_requirements ) ) {
+            target.include( recipe );
+        }
+    }
+}
+
 const recipe_subset &Character::get_learned_recipes() const
 {
     if( *_skills != *autolearn_skills_stamp ) {
-        for( const auto &r : recipe_dict.all_autolearn() ) {
-            if( meets_skill_requirements( r->autolearn_requirements ) ) {
-                learned_recipes->include( r );
-            }
-        }
+        include_autolearn_recipes( *learned_recipes );
         *autolearn_skills_stamp = *_skills;
     }
 
     return *learned_recipes;
+}
+
+auto Character::get_learned_recipes_for_display() const -> recipe_subset
+{
+    auto result = *learned_recipes;
+    if( *_skills != *autolearn_skills_stamp ) {
+        include_autolearn_recipes( result );
+    }
+    return result;
 }
 
 bool Character::knows_recipe( const recipe *rec ) const
@@ -12568,6 +12663,13 @@ void Character::learn_recipe( const recipe *const rec )
         return;
     }
     learned_recipes->include( rec );
+}
+
+auto Character::forget_recipes() -> void
+{
+    *learned_recipes = recipe_subset{};
+    include_autolearn_recipes( *learned_recipes );
+    *autolearn_skills_stamp = *_skills;
 }
 
 bool Character::can_learn_by_disassembly( const recipe &rec ) const
@@ -12723,12 +12825,12 @@ bool Character::block_ranged_hit( Creature *source, bodypart_id &bp_hit, damage_
     const float technic_modifier = coverage_modifier_by_technic( level, is_leg_hit( bp_hit ) );
     const float shield_coverage_modifier = shield.get_avg_coverage() * technic_modifier;
 
-    add_msg( m_debug, _( "block_ranged_hit success rate: %i%%" ),
+    add_msg( m_debug, to_translation( "block_ranged_hit success rate: %i%%" ),
              static_cast<int>( shield_coverage_modifier ) );
 
     // Now roll coverage to determine if we intercept the shot.
     if( rng( 1, 100 ) > shield_coverage_modifier ) {
-        add_msg( m_debug, _( "block_ranged_hit attempt failed" ) );
+        add_msg( m_debug, to_translation( "block_ranged_hit attempt failed" ) );
         return false;
     }
 
@@ -12747,18 +12849,18 @@ bool Character::block_ranged_hit( Creature *source, bodypart_id &bp_hit, damage_
         elem.res_pen = std::max( 0.0f, elem.res_pen - res.type_resist( elem.type ) );
     }
     blocked_damage = std::min( total_damage, blocked_damage );
-    add_msg( m_debug, _( "expected base damage: %i" ), total_damage );
+    add_msg( m_debug, to_translation( "expected base damage: %i" ), total_damage );
 
     const std::string thing_blocked_with = shield.tname();
     if( blocked_damage > 0 ) {
         add_msg_player_or_npc(
-            _( "The shot hits your %s, absorbing %i damage." ),
-            _( "The shot hits <npcname>'s %s, absorbing %i damage." ),
+            to_translation( "The shot hits your %s, absorbing %i damage." ),
+            to_translation( "The shot hits <npcname>'s %s, absorbing %i damage." ),
             thing_blocked_with, blocked_damage );
     } else {
         add_msg_player_or_npc(
-            _( "The shot hits your %s, but it punches right through!" ),
-            _( "The shot hits <npcname>'s %s, but it punches right through!" ),
+            to_translation( "The shot hits your %s, but it punches right through!" ),
+            to_translation( "The shot hits <npcname>'s %s, but it punches right through!" ),
             thing_blocked_with );
     }
     return true;
@@ -12874,7 +12976,7 @@ int Character::impact( const int force, const tripoint_bub_ms &p )
 
     if( !slam && mod < 1.0f && mod * force < 5 ) {
         // Perfect landing, no damage (regardless of armor)
-        add_msg_if_player( m_warning, _( "You land on %s." ), target_name );
+        add_msg_if_player( m_warning, to_translation( "You land on %s." ), target_name );
         return 0;
     }
 
@@ -12903,23 +13005,23 @@ int Character::impact( const int force, const tripoint_bub_ms &p )
 
     if( total_dealt > 0 && is_player() ) {
         // "You slam against the dirt" is fine
-        add_msg( m_bad, _( "You are slammed against %1$s for %2$d damage." ),
+        add_msg( m_bad, to_translation( "You are slammed against %1$s for %2$d damage." ),
                  target_name, total_dealt );
     } else if( is_player() && shock_absorbers ) {
-        add_msg( m_bad, _( "You are slammed against %s!" ),
+        add_msg( m_bad, to_translation( "You are slammed against %s!" ),
                  target_name, total_dealt );
-        add_msg( m_good, _( "…but your shock absorbers negate the damage!" ) );
+        add_msg( m_good, to_translation( "…but your shock absorbers negate the damage!" ) );
     } else if( slam ) {
         // Only print this line if it is a slam and not a landing
         // Non-players should only get this one: player doesn't know how much damage was dealt
         // and landing messages for each slammed creature would be too much
         add_msg_player_or_npc( m_bad,
-                               _( "You are slammed against %s." ),
-                               _( "<npcname> is slammed against %s." ),
+                               to_translation( "You are slammed against %s." ),
+                               to_translation( "<npcname> is slammed against %s." ),
                                target_name );
     } else {
         // No landing message for NPCs
-        add_msg_if_player( m_warning, _( "You land on %s." ), target_name );
+        add_msg_if_player( m_warning, to_translation( "You land on %s." ), target_name );
     }
 
     // Check if creature being impacted is player,
@@ -12951,7 +13053,8 @@ void Character::knock_back_to( const tripoint_bub_ms &to )
 
         apply_damage( nullptr, bodypart_id( "torso" ), 3 );
         add_effect( effect_stunned, 2_turns );
-        add_msg_player_or_npc( _( "You bounce off a %s!" ), _( "<npcname> bounces off a %s!" ),
+        add_msg_player_or_npc( to_translation( "You bounce off a %s!" ),
+                               to_translation( "<npcname> bounces off a %s!" ),
                                g->m.obstacle_name( intervening ) );
         return;
     }
@@ -12972,8 +13075,9 @@ void Character::knock_back_to( const tripoint_bub_ms &to )
         }
         critter->check_dead_state();
 
-        add_msg_player_or_npc( _( "You bounce off a %s!" ), _( "<npcname> bounces off a %s!" ),
-                               critter->name() );
+        add_msg_player_or_npc( to_translation( "You bounce off a %s!" ),
+                               to_translation( "<npcname> bounces off a %s!" ),
+                               localised::name_of( *critter ) );
         return;
     }
 
@@ -12982,7 +13086,8 @@ void Character::knock_back_to( const tripoint_bub_ms &to )
                      static_cast<float>( np->get_size() + 1 ) ) );
         add_effect( effect_stunned, 1_turns );
         np->deal_damage( this, bodypart_id( "torso" ), damage_instance( DT_BASH, 3 ) );
-        add_msg_player_or_npc( _( "You bounce off %s!" ), _( "<npcname> bounces off %s!" ),
+        add_msg_player_or_npc( to_translation( "You bounce off %s!" ),
+                               to_translation( "<npcname> bounces off %s!" ),
                                np->name );
         np->check_dead_state();
         return;
@@ -13000,7 +13105,8 @@ void Character::knock_back_to( const tripoint_bub_ms &to )
         // TODO: who knocked us back? Maybe that creature should be the source of the damage?
         apply_damage( nullptr, bodypart_id( "torso" ), 3 );
         add_effect( effect_stunned, 2_turns );
-        add_msg_player_or_npc( _( "You bounce off a %s!" ), _( "<npcname> bounces off a %s!" ),
+        add_msg_player_or_npc( to_translation( "You bounce off a %s!" ),
+                               to_translation( "<npcname> bounces off a %s!" ),
                                g->m.obstacle_name( to ) );
 
     } else { // It's no wall
@@ -13144,12 +13250,24 @@ recipe_subset Character::get_recipes_from_books( const inventory &crafting_inv,
 recipe_subset Character::get_available_recipes( const inventory &crafting_inv,
         const std::vector<npc *> *helpers, recipe_filter filter ) const
 {
-    recipe_subset res;
+    return get_available_recipes( { .crafting_inv = crafting_inv, .helpers = helpers,
+                                    .filter = std::move( filter ) } );
+}
+
+auto Character::get_available_recipes(
+    const available_recipes_request &request ) const -> recipe_subset
+{
+    const auto &crafting_inv = request.crafting_inv;
+    const auto *helpers = request.helpers;
+    const auto &filter = request.filter;
+    const auto local_recipes = request.observation ? get_learned_recipes_for_display() : recipe_subset{};
+    const auto &known_recipes = request.observation ? local_recipes : get_learned_recipes();
+    auto res = recipe_subset{};
 
     if( filter ) {
-        res.include_if( get_learned_recipes(), filter );
+        res.include_if( known_recipes, filter );
     } else {
-        res.include( get_learned_recipes() );
+        res.include( known_recipes );
     }
 
     res.include( get_recipes_from_books( crafting_inv, filter ) );
@@ -13159,7 +13277,10 @@ recipe_subset Character::get_available_recipes( const inventory &crafting_inv,
             // Directly form the helper's inventory
             res.include( get_recipes_from_books( np->inv.as_inventory(), filter ) );
             // Being told what to do
-            res.include_if( np->get_learned_recipes(), [this, &filter]( const recipe & r ) {
+            const auto local_helper_recipes = request.observation ? np->get_learned_recipes_for_display() :
+                                              recipe_subset{};
+            const auto &helper_recipes = request.observation ? local_helper_recipes : np->get_learned_recipes();
+            res.include_if( helper_recipes, [this, &filter]( const recipe & r ) {
                 if( filter && !filter( r ) ) {
                     return false;
                 }

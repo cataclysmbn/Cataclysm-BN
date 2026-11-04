@@ -331,6 +331,7 @@ class ma_style_callback : public uilist_callback
         {}
 
         bool key( const input_context &ctxt, const input_event &event, int entnum, uilist *menu ) override;
+        auto row_details( const uilist &menu, int entry_index ) const -> uilist_row_details override;
         ~ma_style_callback() override = default;
 };
 

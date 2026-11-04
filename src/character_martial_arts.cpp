@@ -162,7 +162,8 @@ void character_martial_arts::learn_current_style_CQB( bool is_avatar )
 {
     add_martialart( style_selected );
     if( is_avatar ) {
-        add_msg( m_good, _( "You have learned %s from extensive practice with the CQB Bionic." ),
+        add_msg( m_good,
+                 to_translation( "You have learned %s from extensive practice with the CQB Bionic." ),
                  style_selected->name );
     }
 }
@@ -172,9 +173,9 @@ void character_martial_arts::learn_style( const matype_id &mastyle, bool is_avat
     add_martialart( mastyle );
 
     if( is_avatar ) {
-        add_msg( m_good, _( "You learn %s." ),
+        add_msg( m_good, to_translation( "You learn %s." ),
                  mastyle->name );
-        add_msg( m_info, _( "%s to select martial arts style." ),
+        add_msg( m_info, to_translation( "%s to select martial arts style." ),
                  press_x( ACTION_PICK_STYLE ) );
     }
 }

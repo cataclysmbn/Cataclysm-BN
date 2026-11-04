@@ -61,6 +61,7 @@
 #include "map_feature_descriptions.h"
 #include "map_iterator.h"
 #include "map_memory.h"
+#include "map_perception.h"
 #include "map_selector.h"
 #include "mapbuffer.h"
 #include "mapdata.h"
@@ -105,6 +106,7 @@
 #include "vehicle/vpart_position.h"
 #include "vehicle/vpart_range.h"
 #include "visitable.h"
+#include "water_source.h"
 #include "weather/weather.h"
 #include "weighted_list.h"
 
@@ -130,6 +132,7 @@
 
 #if defined(CATA_SDL)
 #    include "compute/compute_backend.h"
+#    include "compute/gpu_failure.h"
 #    include "compute/gpu_lm.h"
 #    include "compute/gpu_platform.h"
 #endif
@@ -461,18 +464,44 @@ auto map::resize(int new_mapsize) -> void {
 }
 
 auto map::bind_dimension(const dimension_id& dim) -> void {
-    const auto changed = bound_dimension_ != dim;
+    if (bound_dimension_ == dim) {
+        refresh_active_submap_view();
+        return;
+    }
+
+    // All vehicle caches contain raw pointers into the bound mapbuffer.  Drop
+    // them before the old dimension can be unloaded or its submaps destroyed.
+    clear_vehicle_cache();
+    for (const auto zlev : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
+        clear_vehicle_list(zlev);
+        auto& cache = get_cache(zlev);
+        cache.suspension_cache.clear();
+        cache.suspension_cache_initialized = false;
+    }
+    dirty_vehicle_list.clear();
+    last_full_vehicle_list.clear();
+    last_full_vehicle_list_dirty = true;
+    funnel_locations_.clear();
+    max_populated_zlev.reset();
+    support_cache_dirty.clear();
+    visibility_variables_cache = {};
+    {
+        const auto lock = std::unique_lock(*skew_vision_cache_mutex);
+        skew_vision_cache.assign(vision_cache_slots, vision_cache_slot{});
+    }
+    m_last_lightmap_source_signature_valid = false;
+    release_active_load_region();
+
     bound_dimension_ = dim;
     refresh_active_submap_view();
-    if (changed) {
-        // Cached vehicle pointers belong to the old buffer, which may now be unloaded.
-        dirty_vehicle_list.clear();
-        for (auto z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; ++z) { clear_vehicle_list(z); }
-        for (const auto p : bubble_submaps()) {
-            update_vehicle_list(get_submap_at(project_to<coords::ms>(p)), p.z());
-        }
-        reset_vehicle_cache();
+    for (const auto zlev : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
+        invalidate_map_cache(zlev);
     }
+    // Rebuild vehicle tracking from the newly bound buffer.
+    for (const auto p : bubble_submaps()) {
+        update_vehicle_list(get_submap_at(project_to<coords::ms>(p)), p.z());
+    }
+    reset_vehicle_cache();
 }
 
 auto map::refresh_active_submap_view() -> void {
@@ -1522,7 +1551,7 @@ auto map::move_vehicle(vehicle& veh, const tripoint_rel_ms& dp, const tileray& f
         veh.do_towing_move();
         // veh.do_towing_move() may cancel towing, so we need to recheck is_towing here
         if (veh.is_towing() && veh.tow_data.get_towed()->tow_cable_too_far()) {
-            add_msg(m_info, _("A towing cable snaps off of %s."),
+            add_msg(m_info, to_translation("A towing cable snaps off of %s."),
                     veh.tow_data.get_towed()->disp_name());
             veh.tow_data.get_towed()->invalidate_towing(true);
         }
@@ -1551,7 +1580,7 @@ auto map::vehicle_vehicle_collision(
     //  parts are damaged/broken on both sides,
     //  remaining times are normalized
     const veh_collision& c = collisions[0];
-    add_msg(m_bad, _("The %1$s's %2$s collides with %3$s's %4$s."), veh.name,
+    add_msg(m_bad, to_translation("The %1$s's %2$s collides with %3$s's %4$s."), veh.name,
             veh.part_info(c.part).name(), veh2.name, veh2.part_info(c.target_part).name());
 
     const bool vertical = veh.abs_sm_pos.z() != veh2.abs_sm_pos.z();
@@ -2281,7 +2310,7 @@ auto map::move_furn(
             for (auto& it : src_contents) { i_at(to).insert(std::move(it)); }
             for (auto& it : dst_contents) { i_at(from).insert(std::move(it)); }
         } else {
-            add_msg(_("Stuff spills from the %s!"), moving_furn.obj().name());
+            add_msg(to_translation("Stuff spills from the %s!"), moving_furn.obj().name());
         }
     }
 
@@ -2295,7 +2324,7 @@ static auto release_avatar_grabbed_furniture_if_destroyed(
     avatar& you = get_avatar();
     if (you.get_grab_type() == OBJECT_FURNITURE && you.bub_pos() + you.grab_point == p
         && !new_furniture.obj().is_movable()) {
-        add_msg(_("The %s you were grabbing is destroyed!"), old_furniture.name());
+        add_msg(to_translation("The %s you were grabbing is destroyed!"), old_furniture.name());
         you.grab(OBJECT_NONE);
     }
 }
@@ -2384,19 +2413,17 @@ auto map::get_known_connections(
     if (!ch.inbounds(p.xy())) { return 0; }
     uint8_t val = 0;
     std::function<bool(const tripoint_bub_ms&)> is_memorized;
-#ifdef TILES
     if (use_tiles) {
         is_memorized = [&](const tripoint_bub_ms& q) {
-            return !g->u.get_memorized_tile(map_local_to_abs(*this, q)).tile.empty();
+            const auto abs = map_local_to_abs(*this, q);
+            return !g->u.get_memorized_tile(abs).tile.empty()
+                || !g->u.get_terrain_tile(abs).tile.empty();
         };
     } else {
-#endif
         is_memorized = [&](const tripoint_bub_ms& q) {
             return g->u.get_memorized_symbol(map_local_to_abs(*this, q));
         };
-#ifdef TILES
     }
-#endif
 
     const bool overridden = override.contains(p);
     const bool is_transparent =
@@ -2436,19 +2463,17 @@ auto map::get_known_connections_f(
     uint8_t val = 0;
     std::function<bool(const tripoint_bub_ms&)> is_memorized;
     avatar& player_character = get_avatar();
-#ifdef TILES
     if (use_tiles) {
         is_memorized = [&](const tripoint_bub_ms& q) {
-            return !player_character.get_memorized_tile(map_local_to_abs(*this, q)).tile.empty();
+            const auto abs = map_local_to_abs(*this, q);
+            return !player_character.get_memorized_tile(abs).tile.empty()
+                || !player_character.get_terrain_tile(abs).tile.empty();
         };
     } else {
-#endif
         is_memorized = [&](const tripoint_bub_ms& q) {
             return player_character.get_memorized_symbol(map_local_to_abs(*this, q));
         };
-#ifdef TILES
     }
-#endif
 
     const bool overridden = override.contains(p);
     const bool is_transparent =
@@ -2872,7 +2897,8 @@ void map::drop_furniture(const tripoint_bub_ms& p) {
         }
 
         critter->add_msg_player_or_npc(
-            m_bad, _("Falling %s hits you!"), _("Falling %s hits <npcname>"), furn_name);
+            m_bad, to_translation("Falling %s hits you!"),
+            to_translation("Falling %s hits <npcname>"), furn_name);
         // TODO: A chance to dodge/uncanny dodge
         player* pl = dynamic_cast<player*>(critter);
         monster* mon = dynamic_cast<monster*>(critter);
@@ -3674,15 +3700,17 @@ void map::smash_items(
 
     // Let the player know that the item was damaged if they can see it.
     if (items_destroyed > 1 && g->u.sees(p)) {
-        add_msg(m_bad, _("The %s destroys several items!"), cause_message);
+        add_msg(m_bad, to_translation("The %s destroys several items!"), cause_message);
     } else if (items_destroyed == 1 && items_damaged == 1 && g->u.sees(p)) {
         //~ %1$s: the cause of destruction, %2$s: destroyed item name
-        add_msg(m_bad, _("The %1$s destroys the %2$s!"), cause_message, damaged_item_name);
+        add_msg(m_bad, to_translation("The %1$s destroys the %2$s!"), cause_message,
+                damaged_item_name);
     } else if (items_damaged > 1 && g->u.sees(p)) {
-        add_msg(m_bad, _("The %s damages several items."), cause_message);
+        add_msg(m_bad, to_translation("The %s damages several items."), cause_message);
     } else if (items_damaged == 1 && g->u.sees(p)) {
         //~ %1$s: the cause of damage, %2$s: damaged item name
-        add_msg(m_bad, _("The %1$s damages the %2$s."), cause_message, damaged_item_name);
+        add_msg(m_bad, to_translation("The %1$s damages the %2$s."), cause_message,
+                damaged_item_name);
     }
 
     for (detached_ptr<item>& it : contents) { add_item_or_charges(p, std::move(it)); }
@@ -4137,11 +4165,13 @@ auto map::bash_ter_furn(const tripoint_bub_ms& p, const bash_params& params) -> 
         if (has_flag(TFLAG_UNSTABLE, above) && character != nullptr
             && character->stability_roll() < params.strength) {
             character->add_msg_if_player(
-                m_warning, _("You feel the ground beneath you shake from the impact!"));
+                m_warning,
+                to_translation("You feel the ground beneath you shake from the impact!"));
 
             if (character->stability_roll() < rng(1, params.strength) && one_in(10)) {
                 character->add_msg_player_or_npc(
-                    m_bad, _("You lose your balance!"), _("<npcname> loses their balance!"));
+                    m_bad, to_translation("You lose your balance!"),
+                    to_translation("<npcname> loses their balance!"));
 
                 g->fling_creature(character, rng_float(0_degrees, 360_degrees), 10);
             }
@@ -4329,8 +4359,8 @@ void map::crush(const tripoint_bub_ms& p) {
         if (!player_inside) { // If there's a player at p and he's not in a covered vehicle...
             // This is the roof coming down on top of us, no chance to dodge
             crushed_player->add_msg_player_or_npc(
-                m_bad, _("You are crushed by the falling debris!"),
-                _("<npcname> is crushed by the falling debris!"));
+                m_bad, to_translation("You are crushed by the falling debris!"),
+                to_translation("<npcname> is crushed by the falling debris!"));
             // TODO: Make this depend on the ceiling material
             const int dam = rng(0, 40);
             // Torso and head take the brunt of the blow
@@ -4436,7 +4466,9 @@ void map::shoot(
         } else if (proj.has_effect(ammo_effect_NO_PENETRATE_OBSTACLES)) {
             // We shot something with a flamethrower or other non-penetrating weapon.
             // Try to bash the obstacle and stop the shot.
-            if (get_avatar().sees(p)) { add_msg(_("The shot strikes the %s!"), furnname(p)); }
+            if (get_avatar().sees(p)) {
+                add_msg(to_translation("The shot strikes the %s!"), furnname(p));
+            }
             if (phys) { bash(p, dam, false); }
             dam = 0;
         } else if (rfi.reduction_laser && proj.has_effect(ammo_effect_LASER)) {
@@ -4454,11 +4486,12 @@ void map::shoot(
             // job
             if (get_avatar().sees(p)) {
                 if (dam <= 0) {
-                    add_msg(_("The shot is stopped by the %s!"), furnname(p));
+                    add_msg(to_translation("The shot is stopped by the %s!"), furnname(p));
                     // Only bother mentioning it punched through if it had any resistance, so zip
                     // through canvas with no message.
                 } else if (rfi.reduction.min > 0) {
-                    add_msg(_("The shot hits the %s and punches through!"), furnname(p));
+                    add_msg(to_translation("The shot hits the %s and punches through!"),
+                            furnname(p));
                 }
             }
             add_msg(m_debug, "%s: damage: %.0f -> %.0f, arpen: %.0f -> %.0f", furn.name(),
@@ -4486,7 +4519,9 @@ void map::shoot(
         } else if (proj.has_effect(ammo_effect_NO_PENETRATE_OBSTACLES)) {
             // We shot something with a flamethrower or other non-penetrating weapon.
             // Try to bash the obstacle if it was a thrown rock or the like, then stop the shot.
-            if (get_avatar().sees(p)) { add_msg(_("The shot strikes the %s!"), tername(p)); }
+            if (get_avatar().sees(p)) {
+                add_msg(to_translation("The shot strikes the %s!"), tername(p));
+            }
             if (phys) { bash(p, dam, false); }
             dam = 0;
         } else if (ri.reduction_laser && proj.has_effect(ammo_effect_LASER)) {
@@ -4503,11 +4538,12 @@ void map::shoot(
             // job
             if (get_avatar().sees(p)) {
                 if (dam <= 0) {
-                    add_msg(_("The shot is stopped by the %s!"), tername(p));
+                    add_msg(to_translation("The shot is stopped by the %s!"), tername(p));
                     // Only bother mentioning it punched through if it had any resistance, so zip
                     // through canvas with no message.
                 } else if (ri.reduction.min > 0) {
-                    add_msg(_("The shot hits the %s and punches through!"), tername(p));
+                    add_msg(to_translation("The shot hits the %s and punches through!"),
+                            tername(p));
                 }
             }
             add_msg(m_debug, "%s: damage: %.0f -> %.0f, arpen: %.0f -> %.0f", ter.name(),
@@ -4597,7 +4633,7 @@ auto map::hit_with_acid(const tripoint_bub_ms& p) -> bool {
     } else if (t == t_door_bar_c || t == t_door_bar_o || t == t_door_bar_locked || t == t_bars
                || t == t_reb_cage) {
         ter_set(p, t_floor);
-        add_msg(m_warning, _("The metal bars melt!"));
+        add_msg(m_warning, to_translation("The metal bars melt!"));
     } else if (t == t_door_b) {
         if (one_in(4)) {
             ter_set(p, t_door_frame);
@@ -4664,7 +4700,8 @@ struct can_open_while_mounted {
             if (u->is_mounted()) {
                 auto mon = u->mounted_creature.get();
                 if (!mon->has_flag(MF_MOUNTABLE_DOORS)) {
-                    u->add_msg_if_player(m_info, _("You can't open things while you're riding."));
+                    u->add_msg_if_player(
+                        m_info, to_translation("You can't open things while you're riding."));
                     return false;
                 }
             }
@@ -4768,12 +4805,12 @@ auto map::can_open_door_veh(
                 std::visit([](auto&& v) { return static_cast<const Creature*>(v); }, who);
             if (inside) {
                 you->add_msg_if_player(
-                    _("The %1$s's %2$s can only be opened from outside."), vp->vehicle().name,
-                    vp->vehicle().part_info(vp->part_index()).name());
+                    to_translation("The %1$s's %2$s can only be opened from outside."),
+                    vp->vehicle().name, vp->vehicle().part_info(vp->part_index()).name());
             } else {
                 you->add_msg_if_player(
-                    _("The %1$s's %2$s can only be opened from inside."), vp->vehicle().name,
-                    vp->vehicle().part_info(vp->part_index()).name());
+                    to_translation("The %1$s's %2$s can only be opened from inside."),
+                    vp->vehicle().name, vp->vehicle().part_info(vp->part_index()).name());
             }
         }
         return false;
@@ -4816,7 +4853,7 @@ auto map::open_door_veh(
         const auto you = std::visit([](auto&& v) { return static_cast<const Creature*>(v); }, who);
         const auto dpart = veh.next_part_to_open(vp->part_index(), !inside);
         you->add_msg_if_player(
-            _("The %1$s's %2$s is locked."), veh.name, veh.part_info(dpart).name());
+            to_translation("The %1$s's %2$s is locked."), veh.name, veh.part_info(dpart).name());
 
         return false;
     }
@@ -5300,53 +5337,46 @@ void map::add_item(const tripoint_bub_ms& p, detached_ptr<item>&& new_item) {
     return;
 }
 
-auto map::water_from(const tripoint_bub_ms& p) -> detached_ptr<item> {
-    if (has_flag("SALT_WATER", p)) {
-        return item::spawn("salt_water", calendar::start_of_cataclysm, item::INFINITE_CHARGES);
-    }
+auto map::water_source_at(const tripoint_bub_ms& p) const -> std::optional<water_source> {
+    if (has_flag("SALT_WATER", p)) { return water_source{.type = itype_id("salt_water")}; }
 
-    const ter_id terrain_id = ter(p);
+    const auto terrain_id = ter(p);
     if (terrain_id == t_sewage) {
-        detached_ptr<item> ret =
-            item::spawn("water_sewage", calendar::start_of_cataclysm, item::INFINITE_CHARGES);
-        ret->poison = rng(1, 7);
-        return ret;
+        return water_source{.type = itype_id("water_sewage"), .poison = water_source_poison::sewage};
     }
-
-
-    // iexamine::water_source requires a valid liquid from this function.
     if (terrain_id.obj().examine == &iexamine::water_source) {
-        detached_ptr<item> ret =
-            item::spawn("water", calendar::start_of_cataclysm, item::INFINITE_CHARGES);
-        int poison_chance = 0;
-        if (terrain_id.obj().has_flag(TFLAG_DEEP_WATER)) {
-            if (terrain_id.obj().has_flag(TFLAG_CURRENT)) {
-                poison_chance = 20;
-            } else {
-                poison_chance = 4;
-            }
-        } else {
-            if (terrain_id.obj().has_flag(TFLAG_CURRENT)) {
-                poison_chance = 10;
-            } else {
-                poison_chance = 3;
-            }
-        }
-        if (one_in(poison_chance)) { ret->poison = rng(1, 4); }
-        return ret;
+        return water_source{.type = itype_id("water"), .poison = water_source_poison::natural};
     }
     if (furn(p).obj().examine == &iexamine::water_source) {
-        return item::spawn("water", calendar::start_of_cataclysm, item::INFINITE_CHARGES);
+        return water_source{.type = itype_id("water")};
     }
     if (furn(p).obj().examine == &iexamine::clean_water_source
         || terrain_id.obj().examine == &iexamine::clean_water_source) {
-        return item::spawn("water_clean", calendar::start_of_cataclysm, item::INFINITE_CHARGES);
+        return water_source{.type = itype_id("water_clean")};
     }
     if (furn(p).obj().examine == &iexamine::liquid_source) {
-        // Terrains have no "provides_liquids" to work with generic source
-        return item::spawn(furn(p).obj().provides_liquids, calendar::turn, item::INFINITE_CHARGES);
+        return water_source{.type = furn(p).obj().provides_liquids, .birthday = calendar::turn};
     }
-    return detached_ptr<item>();
+    return std::nullopt;
+}
+
+auto map::water_from(const tripoint_bub_ms& p) -> detached_ptr<item> {
+    const auto source = water_source_at(p);
+    if (!source) { return {}; }
+    auto ret = item::spawn(source->type, source->birthday, item::INFINITE_CHARGES);
+    if (source->poison == water_source_poison::sewage) {
+        ret->poison = rng(1, 7);
+    } else if (source->poison == water_source_poison::natural) {
+        const auto& terrain = ter(p).obj();
+        auto poison_chance = 0;
+        if (terrain.has_flag(TFLAG_DEEP_WATER)) {
+            poison_chance = terrain.has_flag(TFLAG_CURRENT) ? 20 : 4;
+        } else {
+            poison_chance = terrain.has_flag(TFLAG_CURRENT) ? 10 : 3;
+        }
+        if (one_in(poison_chance)) { ret->poison = rng(1, 4); }
+    }
+    return ret;
 }
 
 void map::make_inactive(item& loc) {
@@ -6001,7 +6031,7 @@ void map::disarm_trap(const tripoint_bub_ms& p) {
     // Some traps are not actual traps. Skip the rolls, different message and give the option to
     // grab it right away.
     if (tr.get_avoidance() == 0 && tr.get_difficulty() == 0) {
-        add_msg(_("The %s is taken down."), tr.name());
+        add_msg(to_translation("The %s is taken down."), tr.name());
         tr.on_disarmed(*this, p);
         return;
     }
@@ -6013,7 +6043,7 @@ void map::disarm_trap(const tripoint_bub_ms& p) {
     ///\EFFECT_TRAPS increases chance of disarming trap
     while ((rng(5, 20) < g->u.per_cur || rng(1, 20) < g->u.dex_cur) && roll < 50) { roll++; }
     if (roll >= diff) {
-        add_msg(_("You disarm the trap!"));
+        add_msg(to_translation("You disarm the trap!"));
         const int morale_buff = tr.get_avoidance() * 0.4 + tr.get_difficulty() + rng(0, 4);
         g->u.rem_morale(MORALE_FAILURE);
         g->u.add_morale(MORALE_ACCOMPLISHMENT, morale_buff, 40);
@@ -6022,13 +6052,13 @@ void map::disarm_trap(const tripoint_bub_ms& p) {
             g->u.practice(skill_traps, tReward);
         }
     } else if (roll >= diff * .8) {
-        add_msg(_("You fail to disarm the trap."));
+        add_msg(to_translation("You fail to disarm the trap."));
         const int morale_debuff = -rng(6, 18);
         g->u.rem_morale(MORALE_ACCOMPLISHMENT);
         g->u.add_morale(MORALE_FAILURE, morale_debuff, -40);
         if (diff > 1.25 * tSkillLevel) { g->u.practice(skill_traps, tReward / 2); }
     } else {
-        add_msg(m_bad, _("You fail to disarm the trap, and you set it off!"));
+        add_msg(m_bad, to_translation("You fail to disarm the trap, and you set it off!"));
         const int morale_debuff = -rng(12, 24);
         g->u.rem_morale(MORALE_ACCOMPLISHMENT);
         g->u.add_morale(MORALE_FAILURE, morale_debuff, -40);
@@ -6257,7 +6287,8 @@ auto map::update_visibility_cache(const int zlev, const std::function<void()>& w
     if (cata_compute::uses_sdl_gpu_compute()) {
         SDL_GPUDevice* const gpu_device = cata_gpu::get_device();
         if (gpu_device == nullptr) {
-            debugmsg("SDL_GPU visibility is required, but no GPU device is available");
+            cata_gpu::report_failure_once(
+                "SDL_GPU visibility is required, but no GPU device is available");
             return;
         }
         const auto& visibility_cache_for_residency = get_cache_ref(zlev);
@@ -6276,13 +6307,14 @@ auto map::update_visibility_cache(const int zlev, const std::function<void()>& w
                     .cache_y = visibility_cache_y,
                     .z_count = OVERMAP_LAYERS,
                 })) {
-                debugmsg(
+                cata_gpu::report_failure_once(
                     "SDL_GPU visibility residency bootstrap failed; see debug.log for details");
                 return;
             }
         }
     }
 #endif
+    map_perception::visibility_refreshed();
     visibility_variables_cache = make_visibility_variables(zlev);
 
 #if defined(CATA_SDL)
@@ -6331,20 +6363,27 @@ auto map::update_visibility_cache(const int zlev, const std::function<void()>& w
                 .rebuild_seen_cache = rebuild_seen_cache,
             });
         if (gpu_visibility_work.id == 0) {
-            debugmsg("SDL_GPU visibility dispatch failed; see debug.log for details");
+            cata_gpu::report_failure_once(
+                "SDL_GPU visibility dispatch failed; see debug.log for details");
             return;
         }
         if (while_gpu_pending) { while_gpu_pending(); }
         const auto gpu_visibility_ok =
             cata_gpu::finish_gpu_visibility(gpu_device, gpu_visibility_work);
         if (!gpu_visibility_ok) {
-            debugmsg("SDL_GPU visibility completion failed; see debug.log for details");
+            cata_gpu::report_failure_once(
+                "SDL_GPU visibility completion failed; see debug.log for details");
             return;
         }
         if (rebuild_seen_cache) {
             auto& origin_cache = get_cache(player_pos.z());
             std::fill(origin_cache.camera_cache.begin(), origin_cache.camera_cache.end(), 0.0f);
             m_last_seen_cache_origin = player_pos;
+            // The pass rebuilt every level's seen cache. Left set, the flags make the next
+            // build_map_cache schedule another rebuild, and each refresh waits on the GPU again.
+            std::ranges::for_each(visibility_download_levels, [this](const int z) {
+                get_cache(z).seen_cache_dirty = false;
+            });
         }
         mark_visibility_caches_clean();
         mark_overmap_seen_from_visibility(get_cache_ref(zlev));
@@ -6494,7 +6533,10 @@ void map::draw(const catacurses::window& w, const tripoint_bub_ms& center) {
 
     g->reset_light_level();
 
-    update_visibility_cache(center.z());
+    if (!get_visibility_variables_cache().variables_set
+        || get_cache_ref(center.z()).visibility_cache_dirty) {
+        update_visibility_cache(center.z());
+    }
     const visibility_variables& cache = get_visibility_variables_cache();
 
     const level_cache& draw_lc = get_cache_ref(center.z());
@@ -6545,7 +6587,7 @@ void map::draw(const catacurses::window& w, const tripoint_bub_ms& center) {
         return true;
     };
 
-    drawsq_params params = drawsq_params().memorize(true);
+    drawsq_params params = drawsq_params();
     for (int wy = 0; wy < wnd_h; wy++) {
         for (int wx = 0; wx < wnd_w; wx++) {
             wmove(w, point(wx, wy));
@@ -6571,30 +6613,6 @@ void map::draw(const catacurses::window& w, const tripoint_bub_ms& center) {
             if (draw_maptile(w, p, curr_maptile, params)) { continue; }
             const maptile tile_below = maptile_at_internal(tripoint_bub_ms(p) - tripoint_above);
             draw_from_above(w, tripoint_bub_ms(p.xy(), p.z() - 1), tile_below, params);
-        }
-    }
-
-    // Memorize off-screen tiles
-    half_open_rectangle<point_bub_ms> display(offs.xy(), offs.xy() + point_rel_ms(wnd_w, wnd_h));
-    drawsq_params mm_params = drawsq_params().memorize(true).output(false);
-    for (int y = 0; y < draw_lc.cache_y; y++) {
-        for (int x = 0; x < draw_lc.cache_x; x++) {
-            const tripoint_bub_ms p(x, y, center.z());
-            if (display.contains(p.xy())) {
-                // Have been memorized during display loop
-                continue;
-            }
-
-            const lit_level lighting = visibility_cache[draw_lc.idx(p.x(), p.y())];
-            const visibility_type vis = get_visibility(lighting, cache);
-
-            if (vis != VIS_CLEAR) { continue; }
-
-            const maptile curr_maptile = maptile_at_internal(tripoint_bub_ms(p));
-            mm_params.low_light(lighting == lit_level::LOW)
-                .bright_light(lighting == lit_level::BRIGHT);
-
-            draw_maptile(w, p, curr_maptile, mm_params);
         }
     }
 }
@@ -6664,7 +6682,7 @@ auto map::draw_maptile(
     if (curr_trap.can_see(p, g->u)) {
         tercol = curr_trap.color;
         if (curr_trap.sym == '%') {
-            switch (rng(1, 5)) {
+            switch (map_perception::cosmetic_variant()) {
                 case 1:
                     sym = '*';
                     break;
@@ -6693,7 +6711,7 @@ auto map::draw_maptile(
             // Do nothing, a '&' indicates invisible fields.
         } else if (field_symbol == "*") {
             // A random symbol.
-            switch (rng(1, 5)) {
+            switch (map_perception::cosmetic_variant()) {
                 case 1:
                     sym = '*';
                     break;
@@ -6753,7 +6771,6 @@ auto map::draw_maptile(
         }
     }
 
-    int memory_sym = sym;
     int veh_part = 0;
     const vehicle* veh = veh_at_internal(tripoint_bub_ms(p), veh_part);
     if (veh != nullptr) {
@@ -6761,12 +6778,6 @@ auto map::draw_maptile(
         sym = special_symbol(part_face.dir_symbol(veh->part_sym(veh_part)));
         tercol = veh->part_color(veh_part);
         item_sym.clear(); // clear the item symbol so `sym` is used instead.
-
-        if (!veh->forward_velocity() && !veh->player_in_control(g->u)) { memory_sym = sym; }
-    }
-
-    if (param.memorize() && check_and_set_seen_cache(p)) {
-        g->u.memorize_symbol(map_local_to_abs(*this, p), memory_sym);
     }
 
     // If there's graffiti here, change background color
@@ -6802,12 +6813,10 @@ auto map::draw_maptile(
         }
     }
 
-    if (params.output()) {
-        if (item_sym.empty()) {
-            wputch(w, tercol, sym);
-        } else {
-            wprintz(w, tercol, item_sym);
-        }
+    if (item_sym.empty()) {
+        wputch(w, tercol, sym);
+    } else {
+        wprintz(w, tercol, item_sym);
     }
     return true;
 }
@@ -6879,26 +6888,14 @@ void map::draw_from_above(
 
     if (params.highlight()) { tercol = invert_color(tercol); }
 
-    if (params.output()) { wputch(w, tercol, sym); }
+    wputch(w, tercol, sym);
 }
 
 auto map::sees(const tripoint_bub_ms& F, const tripoint_bub_ms& T, const int range) const -> bool {
-    int dummy = 0;
-    return sees(F, T, range, dummy);
-}
-
-/**
- * This one is internal-only, we don't want to expose the slope tweaking ickiness outside the map
- * class.
- **/
-auto map::sees(
-    const tripoint_bub_ms& F, const tripoint_bub_ms& T, const int range, int& bresenham_slope) const
-    -> bool {
-    if ((range >= 0 && range < rl_dist(F, T)) || !inbounds(T) || !inbounds(F)) {
-        bresenham_slope = 0;
-        return false; // Out of range!
-    }
-    // Cannonicalize the order of the tripoints so the cache is reflexive.
+    if ((range >= 0 && range < rl_dist(F, T)) || !inbounds(T) || !inbounds(F)) { return false; }
+    // The cache answers a pair from either end, but the lines from either end cross different
+    // squares, so it always holds the line from the lesser end: which end or which planning
+    // thread asked first must not decide the answer.
     const tripoint_bub_ms& min = F < T ? F : T;
     const tripoint_bub_ms& max = !(F < T) ? F : T;
     // Pack two tripoints into one int64_t: 29 bits each (12 x + 12 y + 5 z).
@@ -6917,7 +6914,27 @@ auto map::sees(
         const auto& slot = skew_vision_cache[slot_idx];
         if (slot.key == key && slot.value >= 0) { return slot.value > 0; }
     }
+    auto slope = 0;
+    const auto visible = sees(min, max, -1, slope);
+    {
+        std::unique_lock<std::shared_mutex> lock(*skew_vision_cache_mutex);
+        skew_vision_cache[slot_idx] = {key, static_cast<char>(visible ? 1 : 0)};
+    }
+    return visible;
+}
 
+/**
+ * This one is internal-only, we don't want to expose the slope tweaking ickiness outside the map
+ * class.
+ **/
+auto map::sees(
+    const tripoint_bub_ms& F, const tripoint_bub_ms& T, const int range, int& bresenham_slope) const
+    -> bool {
+    if ((range >= 0 && range < rl_dist(F, T)) || !inbounds(T) || !inbounds(F)) {
+        bresenham_slope = 0;
+        return false; // Out of range!
+    }
+    // A line from another start offset is another line, so this trace is never cached.
     bool visible = true;
 
     // Ugly `if` for now
@@ -6939,10 +6956,6 @@ auto map::sees(
                       last_point = point_bub_ms(new_point);
                       return true;
                   });
-        {
-            std::unique_lock<std::shared_mutex> lock(*skew_vision_cache_mutex);
-            skew_vision_cache[slot_idx] = {key, static_cast<char>(visible ? 1 : 0)};
-        }
         return visible;
     }
 
@@ -6975,10 +6988,6 @@ auto map::sees(
             last_point = tripoint_bub_ms(new_point);
             return true;
         });
-    {
-        std::unique_lock<std::shared_mutex> lock(*skew_vision_cache_mutex);
-        skew_vision_cache[slot_idx] = {key, static_cast<char>(visible ? 1 : 0)};
-    }
     return visible;
 }
 
@@ -7328,6 +7337,16 @@ void map::load(const point_abs_sm& w, const bool update_vehicle, const bool pump
         MAPBUFFER_REGISTRY.get(bound_dimension_).actualize_submap(map_local_to_abs(*this, p));
         if (pump_events) { inp_mngr.pump_events(); }
     }
+    for (const auto zlev : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
+        set_transparency_cache_dirty(zlev);
+        set_floor_cache_dirty(zlev);
+        set_outside_cache_dirty(zlev);
+        set_absorption_cache_dirty(zlev);
+        set_seen_cache_dirty(zlev);
+        set_pathfinding_cache_dirty(zlev);
+        set_suspension_cache_dirty(zlev);
+        set_vehicle_cache_dirty(zlev);
+    }
     refresh_active_submap_view();
     validate_active_submap_view_complete("map::load");
     reset_vehicle_cache();
@@ -7467,7 +7486,8 @@ void map::shift(const point_rel_sm& sp) {
             .shift_y_submaps = sp.y(),
         });
         if (!gpu_residency_shifted) {
-            debugmsg("SDL_GPU resident lighting input shift failed; see debug.log for details");
+            cata_gpu::report_failure_once(
+                "SDL_GPU resident lighting input shift failed; see debug.log for details");
             auto shifted_levels = std::vector<int>{};
             for (const auto gridz : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
                 shifted_levels.push_back(gridz);
@@ -7642,13 +7662,6 @@ void map::shift(const point_rel_sm& sp) {
         ZoneScopedN("shift_grid_copy_load");
         for (const auto gridz : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
             clear_vehicle_list(gridz);
-            {
-                ZoneScopedN("shift_memory_seen_cache");
-                auto& gc = get_cache(gridz);
-                shift_bitset_cache(gc.map_memory_seen_cache, gc.cache_x, SEEX, sp);
-                gc.map_memory_seen_cache_dirty_points.clear();
-                gc.map_memory_seen_cache_dirty_all = true;
-            }
             {
                 ZoneScopedN("shift_prerequisite_caches");
                 auto& gc = get_cache(gridz);
@@ -7839,16 +7852,8 @@ void map::loadn(const tripoint_bub_sm& grid, const bool update_vehicles, const b
                 .absorption = true,
                 .pathfinding = true,
             });
-        } else {
-            set_transparency_cache_dirty(grid.z());
-            set_floor_cache_dirty(grid.z());
-            set_outside_cache_dirty(grid.z());
-            set_absorption_cache_dirty(grid.z());
-            set_seen_cache_dirty(grid.z());
-            set_pathfinding_cache_dirty(grid.z());
-            set_suspension_cache_dirty(grid.z());
-            set_vehicle_cache_dirty(grid.z());
         }
+        // Otherwise map::load marks each whole z-level once after loading all its submaps.
     }
     // Overlay boundary terrain on the edge tiles of this submap if it sits at the
     // edge of a bounded dimension.  Must run before reality-bubble actualization
@@ -8537,6 +8542,8 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
               static_cast<int64_t>(OVERMAP_HEIGHT - -OVERMAP_DEPTH + 1 - valid_lm_levels));
     bool seen_cache_dirty = false;
     bool gpu_transparency_dirty = false;
+    // Lines map::sees remembered were traced through the old transparency.
+    auto transparency_changed = false;
     bool gpu_floor_dirty = false;
     bool gpu_vehicle_floor_dirty = false;
     bool gpu_vehicle_obscured_dirty = false;
@@ -8613,6 +8620,7 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
         auto const transparency_dirty_levels =
             build_transparency_caches(-OVERMAP_DEPTH, OVERMAP_HEIGHT);
         if (!transparency_dirty_levels.empty()) {
+            transparency_changed = true;
             gpu_transparency_dirty = true;
             std::ranges::
                 copy(transparency_dirty_levels, std::back_inserter(gpu_transparency_dirty_levels));
@@ -8792,12 +8800,9 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
                 .sun_dy_per_z = m_solar.dy_per_z,
             });
         if (pending_gpu_lighting.id == 0) {
-            debugmsg("SDL_GPU lighting dispatch failed; see debug.log for details");
+            cata_gpu::report_failure_once(
+                "SDL_GPU lighting dispatch failed; see debug.log for details");
             return;
-        }
-        if (submap_loader.has_deferred_lazy_border_work()) {
-            ZoneScopedN("Phase4_lightmap_pending_lazy_border");
-            submap_loader.process_deferred_lazy_border_work();
         }
     }
 #endif
@@ -8809,7 +8814,9 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
     }
 
     seen_cache_dirty |= build_vision_transparency_cache(get_player_character());
-    if (seen_cache_dirty) { skew_vision_cache.assign(vision_cache_slots, vision_cache_slot{}); }
+    if (seen_cache_dirty || transparency_changed) {
+        skew_vision_cache.assign(vision_cache_slots, vision_cache_slot{});
+    }
     const auto need_seen_rebuild =
         seen_cache_dirty || force_seen_rebuild_for_gpu_residency || m_last_seen_cache_origin != p;
     TracyPlot("Map Need Seen Rebuild", need_seen_rebuild ? int64_t{1} : int64_t{0});
@@ -8817,7 +8824,7 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
 #if defined(CATA_SDL)
         if (use_sdl_gpu_compute) {
             if (gpu_device == nullptr) {
-                debugmsg(
+                cata_gpu::report_failure_once(
                     "SDL_GPU lighting is required for 3D visibility, but no GPU device is available");
                 return;
             }
@@ -8842,7 +8849,8 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
                     const bool gpu_lighting_ok =
                         cata_gpu::finish_gpu_lighting(gpu_device, pending_gpu_lighting);
                     if (!gpu_lighting_ok) {
-                        debugmsg("SDL_GPU lighting completion failed; see debug.log for details");
+                        cata_gpu::report_failure_once(
+                            "SDL_GPU lighting completion failed; see debug.log for details");
                         return;
                     }
 
@@ -8852,7 +8860,7 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
                     });
                 }
             } else if (!dirty_lightmap_levels.empty()) {
-                debugmsg(
+                cata_gpu::report_failure_once(
                     "SDL_GPU lighting is required for lightmap rebuild, but no GPU device is available");
                 return;
             }
@@ -9401,7 +9409,6 @@ level_cache::level_cache(int mx, int my)
       camera_cache(static_cast<size_t>(mx * my), 0.0f),
       visibility_cache(static_cast<size_t>(mx * my), lit_level::DARK),
       colored_light_cache(static_cast<size_t>(mx * my), 0u),
-      map_memory_seen_cache(static_cast<size_t>(mx * my)),
       veh_exists_at(static_cast<size_t>(mx * my), false),
       absorption_cache(static_cast<size_t>(mx * my), 0),
       sound_wall_cache(static_cast<size_t>(mx * my), false)
@@ -9470,21 +9477,6 @@ auto map::get_pf_special(const tripoint_bub_ms& p) const -> pf_special {
     return sm->pf_special_cache[l.x()][l.y()];
 }
 
-auto map::check_seen_cache(const tripoint_bub_ms& p) const -> bool {
-    const level_cache& ch = get_cache(p.z());
-    return !ch.map_memory_seen_cache[static_cast<size_t>(p.x() + p.y() * ch.cache_x)];
-}
-
-auto map::check_and_set_seen_cache(const tripoint_bub_ms& p) const -> bool {
-    level_cache& ch = get_cache(p.z());
-    const size_t offset = static_cast<size_t>(p.x() + p.y() * ch.cache_x);
-    if (!ch.map_memory_seen_cache[offset]) {
-        ch.map_memory_seen_cache.set(offset);
-        return true;
-    }
-    return false;
-}
-
 auto map::is_map_cache_valid(const int zlev) -> bool {
     if (inbounds_z(zlev)) {
         level_cache& ch = get_cache(zlev);
@@ -9529,6 +9521,7 @@ auto map::mark_visibility_cache_dirty(const int zlev) -> void {
     if (!inbounds_z(zlev)) { return; }
     get_cache(zlev).visibility_cache_dirty = true;
     visibility_caches_dirty_ = true;
+    map_perception::invalidate_visibility(*this);
 }
 
 auto map::mark_visibility_caches_clean() -> void {
@@ -9692,41 +9685,11 @@ void map::invalidate_visibility_caches() {
 }
 
 void map::set_memory_seen_cache_dirty(const tripoint_bub_ms& p) {
-    level_cache& ch = get_cache(p.z());
-    const int offset = p.x() + p.y() * ch.cache_x;
-    if (offset >= 0 && offset < ch.cache_x * ch.cache_y) {
-        const auto bit = static_cast<size_t>(offset);
-        if (ch.map_memory_seen_cache[bit]) {
-            ch.map_memory_seen_cache.reset(bit);
-            if (!ch.map_memory_seen_cache_dirty_all) {
-                ch.map_memory_seen_cache_dirty_points.push_back(p);
-            }
-        }
-    }
+    map_perception::invalidate_cell(*this, p);
 }
 
-auto map::set_memory_seen_cache_dirty(const int zlev) -> void {
-    level_cache& ch = get_cache(zlev);
-    ch.map_memory_seen_cache.reset();
-    ch.map_memory_seen_cache_dirty_points.clear();
-    ch.map_memory_seen_cache_dirty_all = true;
-}
-
-auto map::is_memory_seen_cache_dirty_all(const int zlev) const -> bool {
-    return get_cache(zlev).map_memory_seen_cache_dirty_all;
-}
-
-auto map::take_memory_seen_cache_dirty_points(const int zlev) -> std::vector<tripoint_bub_ms> {
-    level_cache& ch = get_cache(zlev);
-    auto dirty_points = std::move(ch.map_memory_seen_cache_dirty_points);
-    ch.map_memory_seen_cache_dirty_points.clear();
-    return dirty_points;
-}
-
-auto map::mark_memory_seen_cache_dirty_all_clean(const int zlev) -> void {
-    level_cache& ch = get_cache(zlev);
-    ch.map_memory_seen_cache_dirty_all = false;
-    ch.map_memory_seen_cache_dirty_points.clear();
+auto map::set_memory_seen_cache_dirty(const int /*zlev*/) -> void {
+    map_perception::invalidate_all(*this);
 }
 
 void map::clip_to_bounds(point_bub_ms& p) const {

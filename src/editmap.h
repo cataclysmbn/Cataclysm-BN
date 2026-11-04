@@ -82,6 +82,8 @@ class editmap
         shapetype editshape;
 
         std::vector<tripoint_bub_ms> target_list;
+        /// What a client is told `target_list` is: `selection`, or `omt_border` while mapgen targets an overmap terrain square.
+        std::string target_list_role = "selection";
         std::function<void( const tripoint_bub_ms &p )> draw_target_override;
         std::map<std::string, editmap_hilight> hilights;
         bool blink;

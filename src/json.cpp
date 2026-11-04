@@ -2155,6 +2155,12 @@ JsonOut::JsonOut( std::ostream &s, bool pretty, int depth ) :
     stream->setf( std::ios_base::boolalpha );
 }
 
+JsonOut::JsonOut( std::ostream &s, const JsonOut &context ) :
+    JsonOut( s, context.pretty_print, context.indent_level )
+{
+    need_wrap = context.need_wrap;
+}
+
 int JsonOut::tell()
 {
     return stream->tellp();

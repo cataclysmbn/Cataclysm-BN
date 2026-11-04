@@ -1,12 +1,13 @@
 #include "iuse_software_kitten.h"
 
+#include <chrono>
 #include <cstdlib>  // Needed for rand()
 #include <vector>
 
 #include "input.h"
 #include "output.h"
-#include "posix_time.h"
 #include "rng.h"
+#include "iuse_software_screen.h"
 #include "translations.h"
 #include "ui_manager.h"
 
@@ -420,13 +421,24 @@ void robot_finds_kitten::process_input()
     input_context ctxt( "IUSE_SOFTWARE_KITTEN" );
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
-    ctxt.register_action( "ANY_INPUT" );
+    // Named, so that a client offers it as the action that stands for any key.
+    ctxt.register_action( "ANY_INPUT", to_translation( "Press any key" ) );
+    const auto final_frame = end_animation_frame + 1 == num_end_animation_frames;
+    const auto animating = current_ui_state == ui_state::end_animation && !final_frame;
+    const auto screen = engine_client::screen_scope( ctxt, "robot_finds_kitten", { .view = [&]( const engine_client::boundary_state & )
+    {
+        return iuse_software::canvas_screen( { .title = _( "robotfindskitten v22July2008" ), .layers = { bkatwin, w },
+                                               .refresh_ms = animating ? end_animation_frame_ms : 0 } );
+    }
+                                                                                 } );
+
     switch( current_ui_state ) {
         case ui_state::instructions: {
             const std::string action = ctxt.handle_input();
             if( action == "QUIT" ) {
                 current_ui_state = ui_state::exit;
-            } else if( action == "ANY_INPUT" && !ctxt.get_raw_input().sequence.empty() ) {
+            } else if( action == "ANY_INPUT" &&
+                       ( !ctxt.get_raw_input().sequence.empty() || !ctxt.get_raw_input().action.empty() ) ) {
                 current_ui_state = ui_state::main;
             }
             break;
@@ -439,7 +451,7 @@ void robot_finds_kitten::process_input()
             if( action == "QUIT" ) {
                 current_ui_state = ui_state::exit;
             } else if( action == "ANY_INPUT" ) {
-                if( !ctxt.get_raw_input().sequence.empty() ) {
+                if( !ctxt.get_raw_input().sequence.empty() || !ctxt.get_raw_input().action.empty() ) {
                     current_ui_state = ui_state::invalid_input;
                 }
             } else if( action != "HELP_KEYBINDINGS" ) {
@@ -493,13 +505,13 @@ void robot_finds_kitten::process_input()
                     current_ui_state = ui_state::exit;
                 }
             } else {
-                refresh_display();
-                timespec ts;
-                ts.tv_sec = 0;
-                ts.tv_nsec = 100000000; // 100 ms
-                for( int i = 0; i < 10; ++i ) {
-                    nanosleep( &ts, nullptr );
-                    inp_mngr.pump_events();
+                // Each frame lasts a second; keys pressed meanwhile do nothing.
+                const auto until = std::chrono::steady_clock::now() +
+                                   std::chrono::milliseconds( end_animation_frame_ms );
+                auto left = end_animation_frame_ms;
+                while( left > 0 && ctxt.handle_input( left ) != "TIMEOUT" ) {
+                    left = std::chrono::duration_cast<std::chrono::milliseconds>(
+                               until - std::chrono::steady_clock::now() ).count();
                 }
                 end_animation_frame++;
             }

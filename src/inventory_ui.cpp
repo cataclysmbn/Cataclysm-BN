@@ -4,17 +4,22 @@
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "character.h"
+#include "client_interaction.h"
 #include "debug.h"
 #include "detached_ptr.h"
 #include "drop_preview.h"
+#include "engine_client_component.h"
+#include "engine_client_world.h"
 #include "flag.h"
 #include "game.h"
 #include "game_inventory.h"
 #include "ime.h"
 #include "inventory.h"
 #include "item.h"
+#include "iteminfo_request.h"
 #include "item_category.h"
 #include "item_search.h"
+#include "item_serial.h"
 #include "item_stack.h"
 #include "itype.h"
 #include "line.h"
@@ -42,6 +47,7 @@
 #endif
 
 #include <algorithm>
+#include <cstdlib>
 #include <iterator>
 #include <limits>
 #include <map>
@@ -317,6 +323,11 @@ std::string inventory_selector_preset::get_denial( const inventory_entry &entry 
     return entry.is_item() ? get_denial( entry.any_item() ) : std::string();
 }
 
+std::string inventory_selector_preset::get_observed_denial( const inventory_entry &entry ) const
+{
+    return entry.is_item() ? get_observed_denial( entry.any_item() ) : std::string();
+}
+
 std::string inventory_selector_preset::get_cell_text( const inventory_entry &entry,
         size_t cell_index ) const
 {
@@ -333,6 +344,14 @@ std::string inventory_selector_preset::get_cell_text( const inventory_entry &ent
     } else {
         return entry.get_category_ptr()->name();
     }
+}
+
+std::string inventory_selector_preset::get_cell_title( const size_t cell_index ) const
+{
+    if( cell_index >= cells.size() ) {
+        return {};
+    }
+    return remove_color_tags( cells[cell_index].title );
 }
 
 bool inventory_selector_preset::is_stub_cell( const inventory_entry &entry,
@@ -1672,8 +1691,8 @@ void inventory_selector::draw_header( const catacurses::window &w ) const
     }
 }
 
-inventory_selector::stat display_stat( const std::string &caption, int cur_value, int max_value,
-                                       const std::function<std::string( int )> &disp_func )
+inventory_selector::stat display_stat( const std::string &caption, std::int64_t cur_value,
+                                       std::int64_t max_value, const std::function<std::string( std::int64_t )> &disp_func )
 {
     const nc_color color = cur_value > max_value ? c_red : c_light_gray;
     return {{
@@ -1690,16 +1709,16 @@ inventory_selector::stats inventory_selector::get_weight_and_volume_stats(
     return {
         {
             display_stat( string_format( _( "Weight (%s):" ), weight_units() ),
-                          to_gram( weight_carried ),
-                          to_gram( weight_capacity ), []( int w )
+                          to_milligram( weight_carried ),
+                          to_milligram( weight_capacity ), []( std::int64_t w )
             {
-                return string_format( "%.1f", round_up( convert_weight( units::from_gram( w ) ), 1 ) );
+                return string_format( "%.1f", round_up( convert_weight( units::from_milligram( w ) ), 1 ) );
             } ),
             display_stat( string_format( _( "Volume (%s):" ), volume_units_abbr() ),
                           units::to_milliliter( volume_carried ),
-                          units::to_milliliter( volume_capacity ), []( int v )
+                          units::to_milliliter( volume_capacity ), []( std::int64_t v )
             {
-                return format_volume( units::from_milliliter( v ) );
+                return format_volume( units::from_milliliter( static_cast<int>( v ) ) );
             } )
         }
     };
@@ -1999,13 +2018,238 @@ bool inventory_selector::has_available_choices() const
     } );
 }
 
+namespace
+{
+/// The letter the native selector prints before an item row: its invlet, else the slot's hint.
+auto invlet_hotkey( const inventory_entry &entry ) -> std::string
+{
+    const auto invlet = entry.get_invlet() != '\0' ? entry.get_invlet() :
+                        entry.invlet_hint ? entry.invlet_hint->invlet : '\0';
+    return invlet > 0 ? std::string( 1, static_cast<char>( invlet ) ) : std::string{};
+}
+
+/// The weight and volume the native header prints at its right, with its maximum, over it when the printed value exceeds it.
+auto header_totals( const inventory_selector::stats &stats ) ->
+std::optional<game_client::interaction_totals>
+{
+    const auto &[weight, volume] = stats;
+    if( weight[0].empty() || volume[0].empty() ) {
+        return std::nullopt;
+    }
+    const auto text = []( const std::string & cell ) { return remove_color_tags( cell ); };
+    const auto over = [&text]( const std::string & value, const std::string & max ) {
+        return std::strtod( text( value ).c_str(), nullptr ) > std::strtod( text( max ).c_str(), nullptr );
+    };
+    return game_client::interaction_totals{
+        .weight = text( weight[1] ), .weight_max = text( weight[3] ), .weight_unit = weight_units(),
+        .volume = text( volume[1] ), .volume_max = text( volume[3] ), .volume_unit = volume_units_abbr(),
+        .over_weight = over( weight[1], weight[3] ), .over_volume = over( volume[1], volume[3] ),
+    };
+}
+} // namespace
+
+/// The mark the native column prints before a row of a multi-select list: none, some or all of it chosen.
+static auto selection_mark( const inventory_entry &entry ) -> game_client::interaction_mark
+{
+    if( entry.automatic_drop_count > 0 ) { return { .glyph = "\\", .color = "c_light_gray" }; }
+    if( entry.chosen_count == 0 ) { return { .glyph = "-", .color = "c_dark_gray" }; }
+    return { .glyph = entry.chosen_count >= entry.get_available_count() ? "+" : "#", .color = "c_light_green" };
+}
+
+namespace
+{
+namespace ec = engine_client;
+
+auto list_id( const std::string &column_key ) -> std::string { return "list:" + column_key; }
+auto choose_id( const std::string &column_key ) -> std::string { return list_id( column_key ) + ":choose"; }
+auto count_id( const std::string &column_key ) -> std::string { return list_id( column_key ) + ":count"; }
+constexpr auto digit_prefix = std::string_view { "inventory:digit:" };
+} // namespace
+
+auto inventory_selector::interaction_rows() const -> std::vector<interaction_row>
+{
+    auto result = std::vector<interaction_row> {};
+    // Equal categories are told apart by their order; an item is told by its own serial.
+    auto seen = std::unordered_map<std::string, std::size_t> {};
+    for( const auto index : std::views::iota( std::size_t{ 0 }, columns.size() ) ) {
+        const auto &column = *columns[index];
+        // The columns the player's inventory is made of are named; any other is told by its place.
+        const auto key = &column == &own_inv_column ? "inventory" : &column == &map_column ? "nearby" :
+                         &column == &own_gear_column ? "worn" : "extra" + std::to_string( index );
+        auto heading = static_cast<const item_category *>( nullptr );
+        for( const auto &entry : column.entries | std::views::filter( &inventory_entry::is_item ) ) {
+            const auto *const category = entry.get_category_ptr();
+            const auto category_id = category->get_id().str();
+            if( category != heading ) {
+                heading = category;
+                const auto ordinal = seen[key + "|" + category_id]++;
+                result.push_back( {
+                    .id = game_client::opaque_interaction_id( "category", { key, category_id, std::to_string( ordinal ) } ),
+                    .column_key = key, .column = &column, .category = category,
+                } );
+            }
+            const auto members = entry.locations | std::ranges::to<std::vector<const item *>>();
+            result.push_back( {
+                .id = game_client::stack_row_id( members ),
+                .column_key = key, .column = &column, .category = category,
+                .entry = const_cast<inventory_entry *>( &entry ),
+            } );
+        }
+    }
+    return result;
+}
+
+auto inventory_selector::interaction_view() const -> ec::screen_view
+{
+    const auto rows = interaction_rows();
+    const auto &active = get_active_column();
+    const auto &cursor = active.get_selected();
+    const auto on_category = mode == navigation_mode::CATEGORY;
+    auto focus_row = std::string{};
+    auto active_key = std::string{};
+    auto panels = std::vector<ec::component> {};
+    auto affordances = std::vector<ec::affordance> {};
+    for( const auto &column : columns | std::views::transform( []( const auto * c ) -> const
+            inventory_column & { return *c; } ) ) {
+        const auto here = rows | std::views::filter( [&]( const auto & row ) { return row.column == &column; } )
+        |
+        std::ranges::to<std::vector>();
+        if( here.empty() ) { continue; }
+        const auto &key = here.front().column_key;
+        if( &column == &active ) { active_key = key; }
+        auto list_rows = std::vector<ec::row> {};
+        for( const auto &row : here ) {
+            if( row.entry == nullptr ) {
+                list_rows.push_back( { .id = row.id, .label = row.category->name(), .selectable = false, .header = true } );
+                // In category mode the cursor is on the heading of the category it is in.
+                if( on_category && &column == &active && row.category == cursor.get_category_ptr() ) {
+                    focus_row = row.id;
+                }
+                continue;
+            }
+            const auto &entry = *row.entry;
+            const auto under_cursor = &entry == &cursor;
+            if( under_cursor && !on_category ) { focus_row = row.id; }
+            const auto denial = remove_color_tags( preset.get_observed_denial( entry ) );
+            auto cells = std::vector<game_client::interaction_column> {};
+            for( const auto cell : std::views::iota( std::size_t{ 1 }, preset.get_cells_count() ) ) {
+                cells.push_back( { .key = "cell" + std::to_string( cell ), .label = preset.get_cell_title( cell ),
+                                   .value = remove_color_tags( preset.get_cell_text( entry, cell ) ) } );
+            }
+            const auto counted = column.is_multiselect() && supports_semantic_count();
+            // The native window describes the item under the cursor only.
+            const auto description = under_cursor ?
+                                     remove_color_tags( entry.any_item()->info_string( { .mode = iteminfo_mode::observation } ) ) :
+                                     std::string{};
+            list_rows.push_back( {
+                .id = row.id, .label = remove_color_tags( preset.get_cell_text( entry, 0 ) ),
+                .description = description, .denial = denial, .hotkey = invlet_hotkey( entry ),
+                .enabled = entry.is_selectable(),
+                .selectable = column.allows_selecting() && entry.is_selectable() && denial.empty(),
+                .selected = entry.chosen_count > 0, .columns = std::move( cells ),
+                .color = string_from_color( preset.get_color( entry ) ),
+                .key_color = string_from_color( entry.get_invlet_color() ),
+                .markup = preset.get_cell_text( entry, 0 ),
+                .mark = column.is_multiselect() && column.activatable() ? std::optional( selection_mark( entry ) ) : std::nullopt,
+                .selected_count = counted ? std::optional<std::uint64_t>( entry.chosen_count ) : std::nullopt,
+                .minimum_count = counted ? std::optional<std::uint64_t>( 0 ) : std::nullopt,
+                .max = counted ? std::optional<std::uint64_t>( entry.get_available_count() ) : std::nullopt,
+                .look = ec::world::item_appearance( *entry.any_item() ),
+            } );
+        }
+        const auto selecting = column.allows_selecting();
+        auto items = ec::list( {
+            .id = list_id( key ), .rows = std::move( list_rows ), .selection = selecting ? "single" : "none",
+            .activate = selecting ? choose_id( key ) : std::string{},
+        } );
+        if( selecting ) {
+            const auto shape = ec::row_shape{ .component_id = list_id( key ) };
+            const auto label = ctxt.get_action_name( column.is_multiselect() ? "RIGHT" : "CONFIRM" );
+            affordances.push_back( ec::invoke_affordance( { .id = choose_id( key ), .label = label, .args = { .row = shape } } ) );
+            if( supports_semantic_count() ) {
+                items.affordances.push_back( count_id( key ) );
+                // Zero clears the mark; a number is held to what the stack has.
+                affordances.push_back( ec::invoke_affordance( {
+                    .id = count_id( key ), .label = _( "Count" ), .args = { .row = shape, .count = ec::count_shape{ .min = 0 } }
+                } ) );
+            }
+        }
+        panels.push_back( ec::panel( { .id = "panel:" + key, .child = std::move( items ) } ) );
+    }
+    // A counting list reads a typed digit as its count, before any action bound to the key.
+    if( supports_semantic_count() ) {
+        for( const auto digit : std::views::iota( 0, 10 ) ) {
+            const auto key = std::to_string( digit );
+            affordances.push_back( ec::invoke_affordance( {
+                .id = std::string{ digit_prefix } + key, .label = key, .keys = { key }, .role = "digit"
+            } ) );
+        }
+    }
+    auto stats = std::vector<ec::panel_stat> {};
+    if( const auto totals = display_stats ? header_totals( get_raw_stats() ) : std::nullopt ) {
+        stats.push_back( { .key = "weight", .label = string_format( _( "Weight (%s):" ), totals->weight_unit ), .value = totals->weight,
+                           .max = totals->weight_max, .tone = totals->over_weight ? "bad" : "" } );
+        stats.push_back( { .key = "volume", .label = string_format( _( "Volume (%s):" ), totals->volume_unit ), .value = totals->volume,
+                           .max = totals->volume_max, .tone = totals->over_volume ? "bad" : "" } );
+    }
+    auto content = panels.empty() ? ec::component{ .id = "text:empty", .body = ec::text_body{ .markup = _( "Your inventory is empty." ) } } :
+                   ec::split( { .id = "split:columns", .active = active_key.empty() ? std::string{} : "panel:" + active_key,
+                                .children = std::move( panels ) } );
+    return {
+        .title = remove_color_tags( title ),
+        .root = ec::panel( {
+            .id = "inventory", .subtitle = remove_color_tags( hint ),
+            .stats = std::move( stats ), .filter = filter, .child = std::move( content ),
+        } ),
+        .affordances = std::move( affordances ),
+.focus_component = focus_row.empty() ? std::string{} :
+        list_id( active_key ),
+        .focus_row = focus_row,
+    };
+}
+
+auto inventory_selector::open_screen() -> ec::screen_scope
+{
+    return ec::screen_scope( ctxt, "inventory", {
+        .role = "screen",
+        .view = [this]( const ec::boundary_state & ) { return interaction_view(); },
+    } );
+}
+
 inventory_input inventory_selector::get_input()
 {
-    inventory_input res;
-
+    auto res = inventory_input{};
     res.action = ctxt.handle_input();
-    res.ch = ctxt.get_raw_input().get_first_input();
+    const auto &event = ctxt.get_raw_input();
+    res.ch = event.get_first_input();
     res.entry = find_entry_by_invlet( res.ch );
+
+    if( const auto invoked = engine_client::invoked( event ) ) {
+        // A digit of the count, as the native list reads the key.
+        if( invoked->affordance_id.starts_with( digit_prefix ) ) {
+            res.action.clear();
+            res.ch = invoked->affordance_id.back();
+            res.entry = nullptr;
+            return res;
+        }
+        // A row of the published screen, chosen or given a count.
+        res.entry = nullptr;
+        const auto rows = interaction_rows();
+        const auto row = std::ranges::find( rows, invoked->args.row.value_or( "" ), &interaction_row::id );
+        // A row the player may not choose, as the screen says, is not chosen or counted.
+        const auto choosable = row != rows.end() && row->entry != nullptr &&
+                               row->column->allows_selecting() &&
+                               row->entry->is_selectable() && preset.get_observed_denial( *row->entry ).empty();
+        if( choosable ) {
+            res.entry = row->entry;
+            select( res.entry->any_item() );
+            if( invoked->args.count ) {
+                apply_semantic_count( *res.entry, static_cast<std::size_t>( *invoked->args.count ) );
+                res.entry = nullptr;
+                res.action = "SEMANTIC_COUNT";
+            }
+        }
+    }
 
     if( res.entry != nullptr && !res.entry->is_selectable() ) {
         res.entry = nullptr;
@@ -2189,6 +2433,7 @@ std::vector<char> inventory_selector::all_bound_keys() const
 item *inventory_pick_selector::execute()
 {
     shared_ptr_fast<ui_adaptor> ui = create_or_get_ui_adaptor();
+    const auto screen = open_screen();
     while( true ) {
         ui_manager::redraw();
 
@@ -2286,6 +2531,12 @@ size_t inventory_multiselector::query_count( size_t count = 0 )
     return count;
 }
 
+auto inventory_multiselector::apply_semantic_count( inventory_entry &entry,
+        const std::size_t count ) -> void
+{
+    set_chosen_count( entry, count );
+}
+
 void inventory_multiselector::set_chosen_count( inventory_entry &entry, size_t count )
 {
     if( entry.is_item() ) {
@@ -2306,6 +2557,7 @@ inventory_compare_selector::inventory_compare_selector( player &p ) :
 std::pair<const item *, const item *> inventory_compare_selector::execute()
 {
     shared_ptr_fast<ui_adaptor> ui = create_or_get_ui_adaptor();
+    const auto screen = open_screen();
     while( true ) {
         ui_manager::redraw();
 
@@ -2379,6 +2631,7 @@ inventory_iuse_selector::inventory_iuse_selector(
 std::vector<iuse_location> inventory_iuse_selector::execute()
 {
     shared_ptr_fast<ui_adaptor> ui = create_or_get_ui_adaptor();
+    const auto screen = open_screen();
 
     int count = 0;
     while( true ) {
@@ -2514,6 +2767,7 @@ void inventory_drop_selector::process_selected( int &count,
 drop_locations inventory_drop_selector::execute()
 {
     shared_ptr_fast<ui_adaptor> ui = create_or_get_ui_adaptor();
+    const auto screen = open_screen();
     this->keep_open = false;
     preview_dirty = true;
 
@@ -2637,8 +2891,11 @@ auto inventory_drop_selector::update_drop_preview() -> void
         return;
     }
     auto selected = drop_locations{};
+    // Dropping order and linked items only exist for what the character carries.
     for( const auto &[target, count] : dropping ) {
-        selected.emplace_back( *target, count );
+        if( u.has_item( *target ) ) {
+            selected.emplace_back( *target, count );
+        }
     }
     auto preview = make_drop_preview( u, selected );
     predicted_drops = std::move( preview.items );
@@ -2709,6 +2966,7 @@ inventory_pickup_selector::inventory_pickup_selector( player &p,
 std::vector<pickup::pick_drop_selection> inventory_pickup_selector::execute()
 {
     shared_ptr_fast<ui_adaptor> ui = create_or_get_ui_adaptor();
+    const auto screen = open_screen();
 
     while( true ) {
         ui_manager::redraw();

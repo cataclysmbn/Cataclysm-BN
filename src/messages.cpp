@@ -1,10 +1,13 @@
 #include "messages.h"
+#include "message_feed.h"
+#include "client_presentation.h"
 #include "message_types.h"
 #include "calendar.h"
 #include "catacharset.h"
 #include "color.h"
 #include "cursesdef.h"
 #include "debug.h"
+#include "engine_client_component.h"
 #include "enums.h"
 #include "game.h"
 #include "ime.h"
@@ -37,23 +40,31 @@
 namespace
 {
 
+/// Identity of a message for readers that follow the log; never reused, survives coalescing.
+auto last_message_serial = std::uint64_t { 0 };
+
 struct game_message : public JsonDeserializer, public JsonSerializer {
     std::string       message;
     time_point timestamp_in_turns  = calendar::start_of_cataclysm;
     int               timestamp_in_user_actions = 0;
     int               count = 1;
+    std::uint64_t serial = ++last_message_serial;
     // number of times this message has been seen while it was in cooldown.
     unsigned cooldown_seen = 1;
     // hide the message, because at some point it was in cooldown period.
     bool cooldown_hidden = false;
     game_message_type type  = m_neutral;
+    /// The untranslated format and values the message was made from; not saved, so a loaded line has none.
+    std::optional<localised_text> localised;
 
     game_message() = default;
-    game_message( std::string &&msg, game_message_type const t ) :
+    game_message( std::string &&msg, game_message_type const t,
+                  std::optional<localised_text> &&source = std::nullopt ) :
         message( std::move( msg ) ),
         timestamp_in_turns( calendar::turn ),
         timestamp_in_user_actions( g->get_user_action_counter() ),
-        type( t ) {
+        type( t ),
+        localised( std::move( source ) ) {
     }
 
     const time_point &turn() const {
@@ -168,12 +179,14 @@ class messages_impl
             add_msg_string( std::move( msg ), m_neutral, gmf_none );
         }
 
-        void add_msg_string( std::string &&msg, const game_message_params &params ) {
-            add_msg_string( std::move( msg ), params.type, params.flags );
+        void add_msg_string( std::string &&msg, const game_message_params &params,
+                             std::optional<localised_text> &&source = std::nullopt ) {
+            add_msg_string( std::move( msg ), params.type, params.flags, std::move( source ) );
         }
 
         void add_msg_string( std::string &&msg, game_message_type const type,
-                             const game_message_flags flags ) {
+                             const game_message_flags flags,
+                             std::optional<localised_text> &&source = std::nullopt ) {
             if( msg.empty() || !active ) {
                 return;
             }
@@ -186,7 +199,7 @@ class messages_impl
                 DebugLog( DL::Info, DC::DebugModeMsg ) << msg;
             }
 
-            game_message m = game_message( std::move( msg ), type );
+            game_message m = game_message( std::move( msg ), type, std::move( source ) );
 
             refresh_cooldown( m, flags );
             hide_message_in_cooldown( m );
@@ -317,6 +330,28 @@ bool message_exceeds_ttl( const game_message &message )
            message.timestamp_in_user_actions + message_ttl <= g->get_user_action_counter();
 }
 
+/// What a filter text lets through: an optional message type before a colon, then text to find.
+struct message_filter {
+    std::optional<game_message_type> type;
+    std::string text;
+
+    auto matches( const game_message &msg ) const -> bool {
+        return ( !type || *type == msg.type ) &&
+               ci_find_substr( remove_color_tags( msg.get_with_count() ), text ) >= 0;
+    }
+};
+
+auto parse_filter( const std::string &filter_str ) -> message_filter
+{
+    const auto colon = filter_str.find( ':' );
+    if( colon == std::string::npos ) {
+        return { .text = filter_str };
+    }
+    auto type = m_neutral;
+    const auto typed = msg_type_from_name( type, filter_str.substr( 0, colon ) );
+    return { .type = typed ? std::optional{ type } : std::nullopt, .text = filter_str.substr( colon + 1 ) };
+}
+
 } //namespace
 
 std::vector<std::pair<std::string, std::string>> Messages::recent_messages( const size_t count )
@@ -344,6 +379,21 @@ void Messages::deserialize( const JsonObject &json )
     obj.read( "curmes", player_messages.curmes );
 }
 
+auto Messages::feed_since( const feed_cursor &after ) -> std::vector<feed_entry>
+{
+    using namespace std::views;
+    const auto unseen = [&after]( const game_message & m ) {
+        return !m.is_in_cooldown() &&
+               ( m.serial > after.id || ( m.serial == after.id && m.count > after.count ) );
+    };
+    const auto entry = []( const game_message & m ) {
+        return feed_entry{ .id = m.serial, .text = m.message, .type = m.type, .count = m.count,
+                           .turn = to_turn<int>( m.turn() ), .localised = m.localised };
+    };
+    return player_messages.messages | filter( unseen ) | transform( entry ) |
+           std::ranges::to<std::vector>();
+}
+
 void Messages::add_msg( std::string msg )
 {
     player_messages.add_msg_string( std::move( msg ) );
@@ -352,6 +402,12 @@ void Messages::add_msg( std::string msg )
 void Messages::add_msg( const game_message_params &params, std::string msg )
 {
     player_messages.add_msg_string( std::move( msg ), params );
+}
+
+void Messages::add_msg( const game_message_params &params, std::string msg,
+                        std::optional<localised_text> localised )
+{
+    player_messages.add_msg_string( std::move( msg ), params, std::move( localised ) );
 }
 
 void Messages::clear_messages()
@@ -391,6 +447,8 @@ class dialog
         void do_filter( const std::string &filter_str );
         void set_size();
         static std::vector<std::string> filter_help_text( int width );
+        /// The log the filter lets through, in the order it is shown.
+        auto view() const -> engine_client::screen_view;
 
         const nc_color border_color;
         const nc_color filter_color;
@@ -646,25 +704,14 @@ void Messages::dialog::show()
 
 void Messages::dialog::do_filter( const std::string &filter_str )
 {
-    // Split the search string into type and text
-    bool has_type_filter = false;
-    game_message_type filter_type = m_neutral;
-    std::string filter_text;
-    const auto colon = filter_str.find( ':' );
-    if( colon != std::string::npos ) {
-        has_type_filter = msg_type_from_name( filter_type, filter_str.substr( 0, colon ) );
-        filter_text = filter_str.substr( colon + 1 );
-    } else {
-        filter_text = filter_str;
-    }
+    const auto allowed = parse_filter( filter_str );
 
     // Start filtering the log
     folded_filtered.clear();
     for( size_t folded_ind = 0; folded_ind < folded_all.size(); ) {
         const size_t msg_ind = folded_all[folded_ind].first;
         const game_message &msg = player_messages.history( msg_ind );
-        const bool match = ( !has_type_filter || filter_type == msg.type ) &&
-                           ci_find_substr( remove_color_tags( msg.get_with_count() ), filter_text ) >= 0;
+        const bool match = allowed.matches( msg );
 
         // Always advance the index, but only add to filtered list if the original message matches
         for( ; folded_ind < folded_all.size() && folded_all[folded_ind].first == msg_ind; ++folded_ind ) {
@@ -704,7 +751,7 @@ void Messages::dialog::input( const ui_adaptor &ui )
             filter.text( filter_str );
         }
     } else {
-        const std::string &action = ctxt.handle_input();
+        const auto action = ctxt.handle_input();
         if( action == "DOWN" && offset + max_lines < folded_filtered.size() ) {
             ++offset;
         } else if( action == "UP" && offset > 0 ) {
@@ -765,13 +812,10 @@ void Messages::dialog::input( const ui_adaptor &ui )
             DebugLog( DL::Info, DC::Main ) << " MESSAGE LOG COPY:\n" << clipboard_text;
             std::string popup_msg = _( "Messages written to debug.log" );
 
-#if defined(TILES)
             // Also copy to clipboard in tiles mode
-            const int clipboard_result = SDL_SetClipboardText( clipboard_text.c_str() );
-            if( clipboard_result == 0 ) {
+            if( game_client::presentation().set_clipboard_text( clipboard_text ) ) {
                 popup_msg = _( "Messages written to debug.log and copied to clipboard" );
             }
-#endif
             popup( popup_msg );
         } else if( action == "ERASE_HISTORY" ) {
             clear_messages();
@@ -789,6 +833,38 @@ void Messages::dialog::input( const ui_adaptor &ui )
     }
 }
 
+auto Messages::dialog::view() const -> engine_client::screen_view
+{
+    namespace ec = engine_client;
+    const auto allowed = parse_filter( filter_str );
+    const auto type_names = msg_type_and_names() | std::ranges::to<std::map>();
+    const auto count = size();
+    auto rows = std::vector<ec::row> {};
+    for( size_t ind = 0; ind < count; ++ind ) {
+        const auto &msg = player_messages.history( log_from_top ? ind : count - 1 - ind );
+        if( !allowed.matches( msg ) ) {
+            continue;
+        }
+        const auto type = type_names.find( msg.type );
+        rows.push_back( {
+            .id = "message:" + std::to_string( msg.serial ),
+            .label = remove_color_tags( msg.get_with_count() ),
+            .selectable = false,
+            .columns = {
+                { .key = "time", .label = _( "Time" ), .value = to_string_clipped( calendar::turn - msg.timestamp_in_turns ) },
+                { .key = "type", .label = _( "Type" ), .value = type == type_names.end() ? std::string() : pgettext( "message type", type->second ) },
+            },
+            .markup = colorize( msg.get_with_count(), msgtype_to_color( msg.type, false ) ),
+        } );
+    }
+    return {
+        .title = _( "Messages" ),
+        .root = ec::panel( {
+            .id = "messages", .filter = filter_str,
+            .child = ec::list( { .id = "messages:log", .rows = std::move( rows ), .selection = "none" } ) } ),
+    };
+}
+
 void Messages::dialog::run()
 {
     ui_adaptor ui;
@@ -799,6 +875,8 @@ void Messages::dialog::run()
     ui.on_redraw( [this]( const ui_adaptor & ) {
         show();
     } );
+
+    const auto screen = engine_client::screen_scope( ctxt, "messages", { .view = [this]( const engine_client::boundary_state & ) { return view(); } } );
 
     while( !errored && !canceled ) {
         ui_manager::redraw();

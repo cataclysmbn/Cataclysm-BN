@@ -4,13 +4,19 @@
 #include "type_id.h"
 
 #include <optional>
+#include <string>
 
 namespace catacurses {
 class window;
 } // namespace catacurses
 
+namespace game_client {
+struct interaction_overmap;
+} // namespace game_client
+
 class input_context;
 class nc_color;
+struct regional_settings;
 
 namespace ui {
 
@@ -89,15 +95,32 @@ struct draw_data_t {
     bool debug_grids = false;
 };
 
-#if defined(TILES)
 struct tiles_redraw_info {
     tripoint_abs_omt center;
     bool blink = false;
 };
 extern tiles_redraw_info redraw_info;
-#endif
 
 auto fmt_omt_coords(const tripoint_abs_omt& coord) -> std::string;
+
+/// The tile the overmap draws for a square: its terrain type id (the "overmap_terrain" tile), the
+/// quarter turns and the connection subtile the native tile selection picked.
+struct omt_tile {
+    std::string id;
+    int rotation = 0;
+    int subtile = -1;
+};
+/// The terrain of a square with its connections to the neighbours, as the tiles view selects it.
+auto omt_tile_at(const tripoint_abs_omt& omp) -> omt_tile;
+/// The tile for a square the player may not have seen: unknown terrain, or the region's display
+/// terrain.
+auto omt_tile_shown(const tripoint_abs_omt& omp, bool seen, const regional_settings& region)
+    -> omt_tile;
+
+/// The squares of the level `min` and `max` lie on, from `min` to `max`, as the player knows them.
+/// The screen's cursor stays where it is, no random number is drawn and no overmap is made.
+auto known_squares(const tripoint_abs_omt& min, const tripoint_abs_omt& max, bool tiles)
+    -> game_client::interaction_overmap;
 
 auto get_weather_at_point(const point_abs_omt& pos) -> weather_type_id;
 auto get_note_display_info(const std::string& note) -> std::tuple<char, nc_color, size_t>;

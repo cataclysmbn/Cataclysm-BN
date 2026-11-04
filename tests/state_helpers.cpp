@@ -1,11 +1,15 @@
 #include "state_helpers.h"
 
 #include "../src/map/map.h"
+#include "../src/map/submap_load_manager.h"
+#include "avatar.h"
 #include "calendar.h"
 #include "cata_arena.h"
+#include "game.h"
 #include "map_helpers.h"
 #include "name.h"
 #include "player_helpers.h"
+#include "sounds.h"
 #include "weather/weather.h"
 
 namespace {
@@ -40,17 +44,37 @@ auto clear_states(const enum_bitset<test_state>& states) -> void {
         weather.clear_temp_cache();
     }
 
-    if (normalized_states.test(state::avatar)) { clear_avatar(); }
+    if (normalized_states.test(state::avatar)) {
+        clear_avatar();
+        // A wait the case left running keeps its popup over every later screen.
+        g->handle_wait_activity_redraw();
+    }
 
     if (normalized_states.test(state::map)) {
+        // Tests load their map directly and hold no load requests; dimension travel leaves the
+        // bubble ones behind, which makes is_simulated() reject every submap outside them.
+        submap_loader.drain_lazy_loads();
+        g->release_active_load_regions();
+        submap_loader.flush_prev_desired();
         clear_map();
+        sounds::reset_sounds();
     } else {
         if (normalized_states.test(state::npc)) { clear_npcs(); }
         if (normalized_states.test(state::creature)) { clear_creatures(); }
         if (normalized_states.test(state::vehicle)) { clear_vehicles(); }
     }
 
-    if (normalized_states.test(state::time)) { set_time(calendar::turn_zero); }
+    if (normalized_states.test(state::time) && normalized_states.test(state::map)) {
+        // clear_map() brought every cache but the lightmap up to date, and the lightmap rebuilds
+        // itself when the time changes its light; set_time() would rebuild the level again.
+        calendar::turn = calendar::turn_zero;
+        g->reset_light_level();
+        const auto z = g->u.bub_pos().z();
+        g->m.build_map_cache(z);
+        g->m.update_visibility_cache(z);
+    } else if (normalized_states.test(state::time)) {
+        set_time(calendar::turn_zero);
+    }
     if (normalized_states.test(state::name)) { Name::clear(); }
     if (normalized_states.test(state::arena)) { cleanup_arenas(); }
 }

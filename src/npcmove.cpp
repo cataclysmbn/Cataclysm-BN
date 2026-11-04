@@ -1288,7 +1288,7 @@ void npc::execute_action( npc_action action )
                         activate_bionic_by_id( bio_soporific );
                         add_effect( effect_lying_down, 30_minutes, bodypart_str_id::NULL_ID(), 1 );
                         if( player_character.sees( *this ) && !player_character.in_sleep_state() ) {
-                            add_msg( _( "%s lies down to sleep." ), name );
+                            add_msg( to_translation( "%s lies down to sleep." ), name );
                         }
                     }
                 } else {
@@ -1789,7 +1789,7 @@ npc_action npc::method_of_attack()
         effective_range >= dist ) {
         add_msg( m_debug, "%s is aiming", disp_name() );
         if( critter->is_player() && player_character.sees( *this ) ) {
-            add_msg( m_bad, _( "%s takes aim at you!" ), disp_name() );
+            add_msg( m_bad, to_translation( "%s takes aim at you!" ), disp_name() );
         }
         return npc_aim;
     }
@@ -2883,11 +2883,12 @@ void npc::move_to( const tripoint_bub_ms &pt, bool no_bashing, std::set<tripoint
         ///\EFFECT_DEX_NPC increases chance to climb CLIMBABLE furniture or terrain
         int climb = get_dex();
         if( one_in( climb ) ) {
-            add_msg_if_npc( m_neutral, _( "%1$s tries to climb the %2$s but slips." ), name,
+            add_msg_if_npc( m_neutral, to_translation( "%1$s tries to climb the %2$s but slips." ), name,
                             here.tername( p ) );
             moves -= 400;
         } else {
-            add_msg_if_npc( m_neutral, _( "%1$s climbs over the %2$s." ), name, here.tername( p ) );
+            add_msg_if_npc( m_neutral, to_translation( "%1$s climbs over the %2$s." ), name,
+                            here.tername( p ) );
             moves -= ( 500 - ( rng( 0, climb ) * 20 ) );
             moved = true;
         }
@@ -3461,14 +3462,14 @@ void npc::pick_up_item()
     bool u_see = player_character.sees( *this ) || player_character.sees( wanted_item_pos );
     if( u_see ) {
         if( picked_up.size() == 1 ) {
-            add_msg( _( "%1$s picks up a %2$s." ), name, picked_up.front()->tname() );
+            add_msg( to_translation( "%1$s picks up a %2$s." ), name, picked_up.front()->tname() );
         } else if( picked_up.size() == 2 ) {
-            add_msg( _( "%1$s picks up a %2$s and a %3$s." ), name, picked_up.front()->tname(),
+            add_msg( to_translation( "%1$s picks up a %2$s and a %3$s." ), name, picked_up.front()->tname(),
                      picked_up.back()->tname() );
         } else if( picked_up.size() > 2 ) {
-            add_msg( _( "%s picks up several items." ), name );
+            add_msg( to_translation( "%s picks up several items." ), name );
         } else {
-            add_msg( _( "%s looks around nervously, as if searching for something." ), name );
+            add_msg( to_translation( "%s looks around nervously, as if searching for something." ), name );
         }
     }
 
@@ -3651,10 +3652,11 @@ void npc::drop_items( units::mass drop_weight, units::volume drop_volume, int mi
     // Finally, describe the action if u can see it
     if( get_player_character().sees( *this ) ) {
         if( num_items_dropped >= 3 ) {
-            add_msg( vgettext( "%s drops %d item.", "%s drops %d items.", num_items_dropped ), name,
+            add_msg( localised::counted{ .format = pl_translation( "%s drops %d item.", "%s drops %d items." ), .count = num_items_dropped },
+                     name,
                      num_items_dropped );
         } else {
-            add_msg( _( "%1$s drops a %2$s." ), name, item_name );
+            add_msg( to_translation( "%1$s drops a %2$s." ), name, item_name );
         }
     }
     update_worst_item_value();
@@ -3940,7 +3942,7 @@ bool npc::wield_better_weapon()
             debugmsg( "Failed to set mode for %s", primary_weapon().tname() );
         }
         if( get_player_character().sees( bub_pos() ) ) {
-            add_msg( m_info, _( "%s activates their %s." ), disp_name(),
+            add_msg( m_info, to_translation( "%s activates their %s." ), disp_name(),
                      cbm_toggled->name );
         }
 
@@ -3977,7 +3979,7 @@ void npc::scan_new_items()
 static void npc_throw( npc &np, item &it, const tripoint_bub_ms &pos )
 {
     if( get_player_character().sees( np ) ) {
-        add_msg( _( "%1$s throws a %2$s." ), np.name, it.tname() );
+        add_msg( to_translation( "%1$s throws a %2$s." ), np.name, it.tname() );
     }
 
     detached_ptr<item> det = it.count_by_charges() ? it.split( 1 ) : it.detach();
@@ -4163,7 +4165,7 @@ void npc::heal_player( Character &patient )
     // Close enough to heal!
     bool u_see = player_character.sees( *this ) || player_character.sees( patient );
     if( u_see ) {
-        add_msg( _( "%1$s heals %2$s." ), disp_name(), patient.disp_name() );
+        add_msg( to_translation( "%1$s heals %2$s." ), disp_name(), patient.disp_name() );
     }
 
     item &used = get_healing_item( ai_cache.can_heal );
@@ -4183,7 +4185,7 @@ void npc::heal_player( Character &patient )
 void npc:: pretend_heal( Character &patient, item &used )
 {
     if( get_player_character().sees( *this ) ) {
-        add_msg( _( "%1$s heals %2$s." ), disp_name(),
+        add_msg( to_translation( "%1$s heals %2$s." ), disp_name(),
                  patient.disp_name() ); // you can tell that it's not real by looking at your HP though
     }
     consume_charges( used, 1 ); // empty hallucination's inventory to avoid spammming
@@ -4221,7 +4223,7 @@ void npc::heal_self()
     }
 
     if( get_player_character().sees( *this ) ) {
-        add_msg( _( "%s applies a %s" ), disp_name(), used.tname() );
+        add_msg( to_translation( "%s applies a %s" ), disp_name(), used.tname() );
     }
     warn_about( "heal_self", 1_turns );
 
@@ -4245,7 +4247,7 @@ void npc::use_painkiller()
         move_pause();
     } else {
         if( get_player_character().sees( *this ) ) {
-            add_msg( _( "%1$s takes some %2$s." ), disp_name(), it->tname() );
+            add_msg( to_translation( "%1$s takes some %2$s." ), disp_name(), it->tname() );
         }
         consume( *it );
         moves = 0;
@@ -4407,10 +4409,10 @@ void npc::mug_player( Character &mark )
         // Describe the action
         if( mark.is_npc() ) {
             if( u_see ) {
-                add_msg( _( "%1$s takes %2$s's money!" ), name, mark.name );
+                add_msg( to_translation( "%1$s takes %2$s's money!" ), name, mark.name );
             }
         } else {
-            add_msg( m_bad, _( "%s takes your money!" ), name );
+            add_msg( m_bad, to_translation( "%s takes your money!" ), name );
         }
         return;
     }
@@ -4449,10 +4451,10 @@ void npc::mug_player( Character &mark )
         i_add( to_steal->detach( ) );
         if( mark.is_npc() ) {
             if( u_see ) {
-                add_msg( _( "%1$s takes %2$s's %3$s." ), name, mark.name, to_steal->tname() );
+                add_msg( to_translation( "%1$s takes %2$s's %3$s." ), name, mark.name, to_steal->tname() );
             }
         } else {
-            add_msg( m_bad, _( "%1$s takes your %2$s." ), name, to_steal->tname() );
+            add_msg( m_bad, to_translation( "%1$s takes your %2$s." ), name, to_steal->tname() );
         }
     }
     moves -= 100;
@@ -4532,8 +4534,8 @@ void npc::reach_omt_destination()
                       player_character.has_enchantment_flag( enchantment_flag_id( "RADIO" ) ) ) &&
                     ( has_item_with_flag( flag_TWO_WAY_RADIO, true ) ||
                       has_enchantment_flag( enchantment_flag_id( "RADIO" ) ) ) ) {
-                    add_msg( m_info, _( "From your two-way radio you hear %s reporting in, "
-                                        "'I've arrived, boss!'" ), disp_name() );
+                    add_msg( m_info, to_translation( "From your two-way radio you hear %s reporting in, "
+                                                     "'I've arrived, boss!'" ), disp_name() );
                 }
             }
         } else {
@@ -5074,7 +5076,7 @@ void npc::do_reload( item &it )
     recoil = MAX_RECOIL;
 
     if( get_player_character().sees( *this ) ) {
-        add_msg( _( "%1$s reloads their %2$s." ), name, it.tname() );
+        add_msg( to_translation( "%1$s reloads their %2$s." ), name, it.tname() );
         sfx::play_variant_sound( "reload", it.typeId().str(), sfx::get_heard_volume( bub_pos(), 60 ),
                                  sfx::get_heard_angle( bub_pos() ) );
     }

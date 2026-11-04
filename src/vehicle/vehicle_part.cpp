@@ -549,14 +549,14 @@ auto vehicle::can_enable(const vehicle_part& pt, bool alert) const -> bool {
     // Disallow running a planter underground for now
     if (pt.info().has_flag("PLANTER")
         && (!warm_enough_to_plant(g->u.abs_pos()) || bub_ms_location().z() < 0)) {
-        if (alert) { add_msg(m_bad, _("It is too cold to plant anything now.")); }
+        if (alert) { add_msg(m_bad, to_translation("It is too cold to plant anything now.")); }
         return false;
     }
 
     // TODO: check fuel for combustion engines
 
     if (pt.info().epower < 0 && fuel_left(fuel_type_battery, true) <= 0) {
-        if (alert) { add_msg(m_bad, _("Insufficient power to enable %s"), pt.name()); }
+        if (alert) { add_msg(m_bad, to_translation("Insufficient power to enable %s"), pt.name()); }
         return false;
     }
 

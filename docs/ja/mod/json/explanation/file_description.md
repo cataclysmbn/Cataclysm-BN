@@ -9,6 +9,7 @@
 | achievements.json          | アチーブメント（実績）の定義。                                   |
 | anatomy.json               | プレイヤーの身体部位のリスト。編集不可。                         |
 | ascii_arts.json            | アイテムの説明に使用されるアスキーアート。                       |
+| client_shortcuts.json      | クライアントがマップ横に表示するショートカットボタン。           |
 | bionics.json               | バイオニック。ただし、バイオニックの効果は含まない。             |
 | body_parts.json            | anatomy.jsonの拡張。編集不可。                                   |
 | clothing_mods.json         | 衣類MODの定義。                                                  |

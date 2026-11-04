@@ -212,6 +212,9 @@ public:
      * Returns ot_null if the point is not in any existing overmap.
      */
     auto ter_existing(const tripoint_abs_omt& p) -> const oter_id&;
+    /// Like @ref ter_existing but reads only overmaps already in memory; never loads or registers
+    /// one.
+    auto ter_loaded(const tripoint_abs_omt& p) -> const oter_id&;
     void ter_set(const tripoint_abs_omt& p, const oter_id& id);
     auto join_used_at(const std::pair<tripoint_abs_omt, cube_direction>&) -> std::string*;
     auto mapgen_args(const tripoint_abs_omt&) -> std::optional<mapgen_arguments>*;
@@ -247,6 +250,8 @@ public:
     auto is_path(const tripoint_abs_omt& p) -> bool;
     void toggle_path(const tripoint_abs_omt& p);
     auto seen(const tripoint_abs_omt& p) -> bool;
+    /// Like @ref seen but reads only overmaps already in memory; never loads or registers one.
+    auto seen_loaded(const tripoint_abs_omt& p) -> bool;
     void set_seen(const tripoint_abs_omt& p, bool seen = true);
     auto has_vehicle(const tripoint_abs_omt& p) -> bool;
     auto has_horde(const tripoint_abs_omt& p) -> bool;
@@ -433,6 +438,8 @@ public:
      * (x,y) are global overmap coordinates (same as @ref get).
      */
     auto get_existing(const point_abs_om& p) -> overmap*;
+    /// Returns the overmap only if it is already in memory; never touches disk or the caches.
+    auto find_loaded(const point_abs_om& p) -> overmap*;
     /**
      * Returns whether or not the location has been generated (e.g. mapgen has run).
      * @param loc is in world-global omt coordinates.

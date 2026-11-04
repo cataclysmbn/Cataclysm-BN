@@ -19,6 +19,7 @@
 #include "pldata.h"
 #include "point.h"
 #include "profession.h"
+#include "scenario.h"
 #include "scent_map.h"
 #include "text_snippets.h"
 #include "translations.h"
@@ -127,6 +128,8 @@ bool tutorial_game::init()
     //~ default name for the tutorial
     you.name = _( "John Smith" );
     you.prof = profession::generic();
+    // No character creation here, so the scenario saved with the avatar must be set too.
+    g->scen = scenario::generic();
     // overmap terrain coordinates
     const tripoint_om_omt lp( 50, 50, 0 );
     // Assume overmap zero

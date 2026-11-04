@@ -3,6 +3,7 @@
 #include <ranges>
 
 #include "game_info.h"
+#include "client_display.h"
 #include "options.h"
 #include "get_version.h"
 #include "string_formatter.h"
@@ -371,11 +372,7 @@ auto game_info::game_version() -> std::string
 
 auto game_info::graphics_version() -> std::string
 {
-#if defined(TILES)
-    return "Tiles";
-#else
-    return "Curses";
-#endif
+    return game_client::has_tiles() ? "Tiles" : "Text";
 }
 
 auto game_info::save_file_version() -> std::string

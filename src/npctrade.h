@@ -39,6 +39,13 @@ class item_pricing
 namespace npc_trading
 {
 
+/// What the window is opened for; it words the title, whatever the language.
+enum class deal_kind {
+    trade,
+    pay,
+    reward
+};
+
 struct trade_state {
     std::vector<item_pricing> theirs;
     std::vector<item_pricing> yours;
@@ -59,7 +66,7 @@ int cash_to_favor( const npc &, int cash );
 void transfer_items( std::vector<item_pricing> &stuff, Character &giver, Character &receiver,
                      bool npc_gives );
 double net_price_adjustment( const Character &buyer, const Character &seller );
-auto trade( npc &p, int cost, const std::string &deal ) -> bool;
+auto trade( npc &p, int cost, deal_kind kind ) -> bool;
 std::vector<item_pricing> init_selling( npc &p );
 std::vector<item_pricing> init_buying( Character &buyer, Character &seller, bool is_npc );
 } // namespace npc_trading

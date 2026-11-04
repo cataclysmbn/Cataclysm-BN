@@ -100,7 +100,7 @@ void timed_event::actualize()
                 se.variant = "scream_tortured";
                 sounds::sound( se );
                 if( !g->u.is_deaf() ) {
-                    add_msg( _( "The eye you're carrying lets out a tortured scream!" ) );
+                    add_msg( to_translation( "The eye you're carrying lets out a tortured scream!" ) );
                     g->u.add_morale( MORALE_SCREAM, -15, 0, 30_minutes, 30_seconds );
                 }
             }
@@ -167,7 +167,7 @@ void timed_event::actualize()
                 }
             }
             if( saw_grate ) {
-                add_msg( _( "The nearby grates open to reveal a staircase!" ) );
+                add_msg( to_translation( "The nearby grates open to reveal a staircase!" ) );
             }
         }
         break;
@@ -215,13 +215,13 @@ void timed_event::actualize()
             // Check if we should print a message
             if( flood_buf[g->u.bub_pos().x() * flood_sy + g->u.bub_pos().y()] != g->m.ter( g->u.bub_pos() ) ) {
                 if( flood_buf[g->u.bub_pos().x() * flood_sy + g->u.bub_pos().y()] == t_water_sh ) {
-                    add_msg( m_warning, _( "Water quickly floods up to your knees." ) );
+                    add_msg( m_warning, to_translation( "Water quickly floods up to your knees." ) );
                     g->memorial().add(
                         pgettext( "memorial_male", "Water level reached knees." ),
                         pgettext( "memorial_female", "Water level reached knees." ) );
                 } else {
                     // Must be deep water!
-                    add_msg( m_warning, _( "Water fills nearly to the ceiling!" ) );
+                    add_msg( m_warning, to_translation( "Water fills nearly to the ceiling!" ) );
                     g->memorial().add(
                         pgettext( "memorial_male", "Water level reached the ceiling." ),
                         pgettext( "memorial_female", "Water level reached the ceiling." ) );
@@ -266,7 +266,7 @@ void timed_event::per_turn()
                 }
                 g->place_critter_at( mon_eyebot, place );
                 if( g->u.sees( place ) ) {
-                    add_msg( m_warning, _( "An eyebot swoops down nearby!" ) );
+                    add_msg( m_warning, to_translation( "An eyebot swoops down nearby!" ) );
                 }
                 // One eyebot per trigger is enough, really
                 when = calendar::turn;
@@ -281,13 +281,13 @@ void timed_event::per_turn()
             }
             if( action_time_scale::once_every_this_tick( time_duration::from_seconds( rng( 2, 3 ) ) ) &&
                 !g->u.is_deaf() ) {
-                add_msg( m_warning, _( "You hear screeches from the rock above and around you!" ) );
+                add_msg( m_warning, to_translation( "You hear screeches from the rock above and around you!" ) );
             }
             break;
 
         case TIMED_EVENT_AMIGARA:
             if( action_time_scale::once_every_this_tick( time_duration::from_seconds( rng( 2, 3 ) ) ) ) {
-                add_msg( m_warning, _( "The entire cavern shakes!" ) );
+                add_msg( m_warning, to_translation( "The entire cavern shakes!" ) );
             }
             break;
 
@@ -309,7 +309,7 @@ void timed_event::per_turn()
 
         case TIMED_EVENT_TEMPLE_OPEN:
             if( action_time_scale::once_every_this_tick( time_duration::from_seconds( rng( 2, 3 ) ) ) ) {
-                add_msg( m_warning, _( "The earth rumbles." ) );
+                add_msg( m_warning, to_translation( "The earth rumbles." ) );
             }
             break;
 

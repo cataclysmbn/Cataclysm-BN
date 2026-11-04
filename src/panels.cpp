@@ -1,4 +1,6 @@
 #include "panels.h"
+#include "client_choice.h"
+#include "client_display.h"
 
 #include "action.h"
 #include "avatar.h"
@@ -35,6 +37,7 @@
 #include "overmap/overmap.h"
 #include "overmap/overmap_ui.h"
 #include "overmap/overmapbuffer.h"
+#include "panels_snapshot.h"
 #include "panels_utility.h"
 #include "path_info.h"
 #include "player.h"
@@ -43,6 +46,7 @@
 #include "sounds.h"
 #include "string_formatter.h"
 #include "string_id.h"
+#include "string_utils.h"
 #include "tileray.h"
 #include "translations.h"
 #include "type_id.h"
@@ -994,15 +998,10 @@ static int get_int_digits( const int &digits )
 // panels code
 // ===============================
 
-static void draw_limb_health( avatar &u, const catacurses::window &w, const bodypart_str_id &bp )
+/// The text of a limb's health the sidebar prints, in the colors it prints each part in.
+static auto limb_health_runs( const avatar &u, const bodypart_str_id &bp ) ->
+std::vector<std::pair<std::string, nc_color>>
 {
-    static auto print_symbol_num = []( const catacurses::window & w, int num, const std::string & sym,
-    const nc_color & color ) {
-        while( num-- > 0 ) {
-            wprintz( w, color, sym );
-        }
-    };
-
     const int hp_cur = u.get_part_hp_cur( bp );
     const int hp_max = u.get_part_hp_max( bp );
 
@@ -1019,9 +1018,7 @@ static void draw_limb_health( avatar &u, const catacurses::window &w, const body
             color_override = color;
         } else {
             const int num = mend_perc / 20;
-            print_symbol_num( w, num, "#", color );
-            print_symbol_num( w, 5 - num, "=", color );
-            return;
+            return { { std::string( num, '#' ), color }, { std::string( 5 - num, '=' ), color } };
         }
     }
 
@@ -1032,12 +1029,16 @@ static void draw_limb_health( avatar &u, const catacurses::window &w, const body
     }
 
     if( get_option<std::string>( "HEALTH_STYLE" ) == "number" || u.has_effect( effect_got_checked ) ) {
-        wprintz( w, hp.second, "%3d  ", hp_cur );
-    } else {
-        wprintz( w, hp.second, hp.first );
+        return { { string_format( "%3d  ", hp_cur ), hp.second } };
+    }
+    //Add the trailing symbols for a not-quite-full health bar
+    return { { hp.first, hp.second }, { std::string( std::max( 0, 5 - utf8_width( hp.first ) ), '.' ), c_white } };
+}
 
-        //Add the trailing symbols for a not-quite-full health bar
-        print_symbol_num( w, 5 - utf8_width( hp.first ), ".", c_white );
+static void draw_limb_health( avatar &u, const catacurses::window &w, const bodypart_str_id &bp )
+{
+    for( const auto &[text, color] : limb_health_runs( u, bp ) ) {
+        wprintz( w, color, "%s", text );
     }
 }
 
@@ -1119,7 +1120,7 @@ static void draw_stats( avatar &u, const catacurses::window &w )
     wnoutrefresh( w );
 }
 
-static nc_color move_mode_color( avatar &u )
+static nc_color move_mode_color( const avatar &u )
 {
     if( u.movement_mode_is( CMM_RUN ) ) {
         return c_red;
@@ -1132,7 +1133,7 @@ static nc_color move_mode_color( avatar &u )
     }
 }
 
-static std::string move_mode_string( avatar &u )
+static std::string move_mode_string( const avatar &u )
 {
     if( u.movement_mode_is( CMM_RUN ) ) {
         return pgettext( "movement-type", "R" );
@@ -2032,14 +2033,12 @@ static void draw_messages_classic( avatar &, const catacurses::window &w )
     wnoutrefresh( w );
 }
 
-#if defined(TILES)
 static void draw_mminimap( avatar &, const catacurses::window &w )
 {
     werase( w );
     g->draw_pixel_minimap( w );
     wnoutrefresh( w );
 }
-#endif
 
 static void draw_compass( avatar &, const catacurses::window &w )
 {
@@ -2461,10 +2460,10 @@ static std::vector<window_panel> initialize_default_classic_panels()
     ret.emplace_back( draw_simple_compass, translate_marker( "Sim.Compass" ), 1, 44, false );
 
     ret.emplace_back( draw_messages_classic, translate_marker( "Log" ), -2, 44, true );
-#if defined(TILES)
-    ret.emplace_back( draw_mminimap, translate_marker( "Map" ), -1, 44, true,
-                      default_render, true );
-#endif // TILES
+    if( game_client::has_tiles() ) {
+        ret.emplace_back( draw_mminimap, translate_marker( "Map" ), -1, 44, true,
+                          default_render, true );
+    }
     ret.emplace_back( draw_ai_goal, "AI Needs", 1, 44, false );
     return ret;
 }
@@ -2490,10 +2489,10 @@ static std::vector<window_panel> initialize_default_compact_panels()
     ret.emplace_back( draw_compass, translate_marker( "Compass" ), 8, 32, true );
     ret.emplace_back( draw_compass, translate_marker( "Comp.Compass" ), 3, 32, false );
     ret.emplace_back( draw_simple_compass, translate_marker( "Sim.Compass" ), 1, 32, false );
-#if defined(TILES)
-    ret.emplace_back( draw_mminimap, translate_marker( "Map" ), -1, 32, true,
-                      default_render, true );
-#endif // TILES
+    if( game_client::has_tiles() ) {
+        ret.emplace_back( draw_mminimap, translate_marker( "Map" ), -1, 32, true,
+                          default_render, true );
+    }
     ret.emplace_back( draw_ai_goal, "AI Needs", 1, 32, false );
 
     return ret;
@@ -2526,10 +2525,10 @@ static std::vector<window_panel> initialize_default_label_narrow_panels()
     ret.emplace_back( draw_compass_padding, translate_marker( "Comp.Compass" ), 3, 32,
                       false );
     ret.emplace_back( draw_simple_compass, translate_marker( "Sim.Compass" ), 1, 32, false );
-#if defined(TILES)
-    ret.emplace_back( draw_mminimap, translate_marker( "Map" ), -1, 32, true,
-                      default_render, true );
-#endif // TILES
+    if( game_client::has_tiles() ) {
+        ret.emplace_back( draw_mminimap, translate_marker( "Map" ), -1, 32, true,
+                          default_render, true );
+    }
     ret.emplace_back( draw_ai_goal, "AI Needs", 1, 32, false );
 
     return ret;
@@ -2563,10 +2562,10 @@ static std::vector<window_panel> initialize_default_label_panels()
     ret.emplace_back( draw_compass_padding, translate_marker( "Comp.Compass" ), 3, 44,
                       false );
     ret.emplace_back( draw_simple_compass, translate_marker( "Sim.Compass" ), 1, 44, false );
-#if defined(TILES)
-    ret.emplace_back( draw_mminimap, translate_marker( "Map" ), -1, 44, true,
-                      default_render, true );
-#endif // TILES
+    if( game_client::has_tiles() ) {
+        ret.emplace_back( draw_mminimap, translate_marker( "Map" ), -1, 44, true,
+                          default_render, true );
+    }
     ret.emplace_back( draw_ai_goal, "AI Needs", 1, 44, false );
 
     return ret;
@@ -2938,6 +2937,38 @@ void panel_manager::show_adm()
         wnoutrefresh( w );
     } );
 
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        auto &panels = layouts[current_layout_id];
+        auto snapshot = game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::choices,
+            .title = _( "Sidebar Options" ),
+            .message = swapping ? _( "Choose where the panel goes" ) : std::string(),
+            .allow_cancel = true,
+        };
+        for( const auto &[row, index] : row_indices ) {
+            snapshot.choices.push_back( {
+                .id = "panel:" + std::to_string( index ), .label = _( panels[index].get_name() ),
+                .selected = panels[index].toggle,
+                .highlighted = current_col == 0 && row == current_row,
+                .columns = { { .key = "order", .label = _( "Order" ), .value = std::to_string( row + 1 ) } },
+            } );
+        }
+        auto row = std::size_t{ 0 };
+        for( const auto &layout : layouts ) {
+            snapshot.choices.push_back( {
+                .id = "layout:" + std::to_string( row ), .label = _( layout.first ),
+                .selected = layout.first == current_layout_id,
+                .highlighted = current_col == 2 && row == current_row,
+            } );
+            ++row;
+        }
+        for( const auto *id : { "TOGGLE_PANEL", "MOVE_PANEL" } ) {
+            snapshot.choices.push_back( { .id = std::string( "action:" ) + id,
+                                          .label = remove_color_tags( ctxt.get_action_name( id ) ) } );
+        }
+        return snapshot;
+    } );
+
     while( !exit ) {
         auto &panels = layouts[current_layout_id];
 
@@ -2958,7 +2989,25 @@ void panel_manager::show_adm()
 
         ui_manager::redraw();
 
-        const std::string action = ctxt.handle_input();
+        const auto action = game_client::action_of( ctxt,
+        ctxt.handle_input(), [&]( const std::string & id ) {
+            if( id.starts_with( "layout:" ) ) {
+                // Choosing a layout is Enter on it.
+                current_col = 2;
+                current_row = std::stoul( id.substr( 7 ) );
+                return std::string( "MOVE_PANEL" );
+            }
+            if( !id.starts_with( "panel:" ) ) { return std::string(); }
+            const auto index = std::stoul( id.substr( 6 ) );
+            const auto found = std::ranges::find_if( row_indices, [&]( const auto & entry ) {
+                return entry.second == index;
+            } );
+            if( found == row_indices.end() ) { return std::string(); }
+            current_col = 0;
+            current_row = found->first;
+            // A chosen panel is toggled; while one is picked up for moving, it is the place to drop it.
+            return std::string( swapping ? "MOVE_PANEL" : "TOGGLE_PANEL" );
+        } );
         if( action == "UP" ) {
             if( current_row > 0 ) {
                 current_row -= 1;
@@ -3019,4 +3068,105 @@ void panel_manager::show_adm()
 
     g->show_panel_adm = false;
     g->invalidate_main_ui_adaptor();
+}
+
+auto sidebar_snapshot( const avatar &u ) -> engine_client::sidebar_value
+{
+    using namespace engine_client;
+    const auto name = []( const nc_color & color ) { return get_all_colors().get_name( color ); };
+    // The native labels carry the padding that places them; the client lays them out itself.
+    const auto label = []( const std::string & text ) { return trim( text ); };
+    const auto text = [&]( const std::pair<std::string, nc_color> &pair ) -> sidebar_text {
+        return { .text = pair.first, .color = name( pair.second ) };
+    };
+    const auto colored = [&]( const std::pair<nc_color, std::string> &pair ) -> sidebar_text {
+        return { .text = pair.second, .color = name( pair.first ) };
+    };
+    auto result = sidebar_value{};
+    auto &manager = panel_manager::get_manager();
+    const auto side = get_option<std::string>( "SIDEBAR_POSITION" );
+    result.layout = {
+        .id = manager.get_current_layout_id(), .side = side,
+        .width = side == "left" ? manager.get_width_left() : manager.get_width_right(),
+        // The panels the native panel options list; the others are not shown in this state.
+        .panels = manager.get_current_layout() | std::views::filter( []( const window_panel & panel ) { return panel.render(); } ) |
+        std::views::transform( []( const window_panel & panel ) -> sidebar_panel {
+            // -2 is the panel that takes the rest of the column.
+            return {
+                .id = panel.get_name(), .label = _( panel.get_name() ), .enabled = panel.toggle,
+                .height = panel.get_height() == -2 ? std::nullopt : std::optional{ panel.get_height() } };
+        } ) | std::ranges::to<std::vector>()
+    };
+    for( const bodypart_id &bp : u.get_all_body_parts( true ) ) {
+        const auto broken = u.is_limb_broken( bp.id() ) && !bp->essential;
+        const auto splinted = u.worn_with_flag( json_flag_SPLINT, bp.id() ) ||
+                              u.mutation_value( "mending_modifier" ) >= 1.0f;
+        const auto hp_cur = u.get_part_hp_cur( bp.id() );
+        const auto hp_max = u.get_part_hp_max( bp.id() );
+        result.limbs.push_back( {
+            .id = bp.id().str(),
+            .label = {
+                .text = body_part_hp_bar_ui_text( bp ),
+                .color = name( u.limb_color( bp.id(), true, true, true ) )
+            },
+            .hp = hp_cur, .hp_max = hp_max,
+            .color = name( broken ? ( splinted ? c_blue : c_dark_gray ) : get_hp_bar( hp_cur, hp_max ).second ),
+            .broken = broken } );
+    }
+    result.pain = text( u.get_pain_description() );
+    result.hunger = text( u.get_hunger_description() );
+    result.thirst = text( u.get_thirst_description() );
+    result.fatigue = text( u.get_fatigue_description() );
+    result.focus = u.focus_pool;
+    result.focus_label = label( _( "Focus" ) );
+    const auto morale = morale_stat( u );
+    result.morale_level = morale.second;
+    result.morale = { .text = morale_emotion( morale.second, get_face_type( u ),
+                              get_option<std::string>( "MORALE_STYLE" ) == "horizontal" ), .color = name( morale.first )
+                    };
+    result.stamina = u.get_stamina();
+    result.stamina_max = u.get_stamina_max();
+    result.stamina_color = name( get_hp_bar( u.get_stamina(), u.get_stamina_max() ).second );
+    result.stamina_label = label( _( "Stm" ) );
+    result.speed = u.get_speed();
+    result.speed_color = name( u.get_speed() < 100 ? c_red : c_white );
+    result.speed_label = label( _( "Spd " ) );
+    result.move_counter = u.movecounter;
+    result.move_mode = u.movement_mode_is( CMM_RUN ) ? "run" : u.movement_mode_is(
+                           CMM_CROUCH ) ? "crouch" :
+                       u.movement_mode_is( CMM_PRONE ) ? "prone" : "walk";
+    result.move_text = move_mode_string( u );
+    result.move_color = name( u.movement_mode_is( CMM_WALK ) ? c_white : move_mode_color( u ) );
+    const auto temperature = temp_stat( u );
+    result.temperature = { .text = temperature.second + temp_delta_string( u ), .color = name( temperature.first ) };
+    result.power = colored( power_stat( u ) );
+    result.power.label = label( _( "POWER" ) );
+    result.safe_mode = g->safe_mode || get_option<bool>( "AUTOSAFEMODE" );
+    result.safe_color = name( safe_color() );
+    result.safe_label = label( _( "SAFE" ) );
+    result.location = { .text = ACTIVE_OVERMAP_BUFFER.ter( u.abs_omt_pos() )->get_name(), .color = name( c_white ),
+                        .label = label( _( "Location:" ) )
+                      };
+    const auto underground = g->get_levz() < 0;
+    result.weather = underground ? sidebar_text{ .text = _( "Underground" ) } :
+                     sidebar_text{ .text = get_weather().weather_id->name.translated(),
+                                   .color = name( get_weather().weather_id->color ), .label = label( _( "Weather :" ) ) };
+    result.season = calendar::name_season( season_of_year( calendar::turn ) );
+    result.day = day_of_season<int>( calendar::turn ) + 1;
+    result.day_label = label( _( "Day " ) );
+    result.has_watch = u.has_watch();
+    // NOLINTNEXTLINE(cata-text-style): the question mark does not end a sentence
+    result.clock = result.has_watch ? to_string_time_of_day( calendar::turn ) : underground ?
+                   _( "Time: ???" ) :
+                   time_approx();
+    if( u.has_item_with_flag( json_flag_THERMOMETER ) ||
+        u.has_enchantment_flag( enchantment_flag_id( "THERMOMETER" ) ) ) {
+        result.ambient = sidebar_text{ .text = print_temperature( get_weather().get_temperature( u.abs_pos() ) ),
+                                       .label = label( _( "Temp : " ) ) };
+    }
+    result.weapon = { .text = character_funcs::fmt_wielded_weapon( u ), .label = label( _( "Weapon  :" ) ) };
+    if( const auto style = u.martial_arts_data->selected_style_name( u ); !style.empty() ) {
+        result.style = sidebar_text{ .text = style, .color = name( u.is_armed() ? c_red : c_blue ) };
+    }
+    return result;
 }

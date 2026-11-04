@@ -145,7 +145,7 @@ void reload_lua_code()
     try {
         cata::lua_action_menu::clear_entries();
         const int lua_mods = init::load_main_lua_scripts( state, packs );
-        add_msg( m_good, _( "Reloaded %1$d lua mods." ), lua_mods );
+        add_msg( m_good, to_translation( "Reloaded %1$d lua mods." ), lua_mods );
     } catch( std::runtime_error &e ) {
         debugmsg( "%s", e.what() );
     }

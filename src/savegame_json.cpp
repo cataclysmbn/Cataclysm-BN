@@ -4092,6 +4092,7 @@ void map_memory::load_legacy( JsonIn &jsin )
     }
     jsin.end_array();
 
+    replaced();
     for( const std::pair<const tripoint_abs_ms, mig_elem> &elem : elems ) {
         const auto cp = project_remain<coords::sm>( elem.first );
         shared_ptr_fast<mm_submap> sm = find_submap( cp.quotient_tripoint );
@@ -4161,8 +4162,11 @@ void addiction::deserialize( JsonIn &jsin )
 
 void serialize( const recipe_subset &value, JsonOut &jsout )
 {
+    auto recipes = std::vector<const recipe *>( value.begin(), value.end() );
+    std::ranges::sort( recipes, recipe_id::LexCmp{}, &recipe::ident );
+
     jsout.start_array();
-    for( const auto &entry : value ) {
+    for( const auto &entry : recipes ) {
         jsout.write( entry->ident() );
     }
     jsout.end_array();

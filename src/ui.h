@@ -4,6 +4,7 @@
 #include <initializer_list>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -30,6 +31,11 @@ const int UILIST_CANCEL = -1027;
 const int UILIST_TIMEOUT = -1028;
 const int UILIST_ADDITIONAL = -1029;
 const int MENU_AUTOASSIGN = -1;
+
+namespace game_client
+{
+struct interaction_snapshot;
+} // namespace game_client
 
 class input_context;
 class string_input_popup;
@@ -75,6 +81,10 @@ struct uilist_entry {
     // Use 'hilite_color' when selected instead of uilist's 'hilight_color'
     bool override_hilite_color = false;
     nc_color hilite_color;
+    // Registered action the entry runs, published to clients as a stable id for the row
+    std::string action_id;
+    // The entry switches something on or off, and this is which it is now; none for an entry that is no switch
+    std::optional<bool> toggled;
 
     uilist_entry( std::string T ) : txt( T ) {}
 
@@ -117,6 +127,11 @@ struct uilist_entry {
 
     uilist_entry &with_hk_color( nc_color c ) {
         hotkey_color = c;
+        return *this;
+    }
+
+    uilist_entry &with_toggled( bool on ) {
+        toggled = on;
         return *this;
     }
 
@@ -166,9 +181,46 @@ class uilist;
 * event completely". This is unchanged before or after the PR.
 * @{
 */
+/// A key a callback tests on its own, outside the input context's actions. The menu publishes it as an
+/// `bn:key:<code>` screen affordance so a client can press it, and runs the callback's key handler with that key.
+struct uilist_key {
+    int key;
+    std::string name;
+};
+
+struct uilist_detail_column {
+    std::string key;
+    std::string label;
+    std::string value;
+};
+
+/// What a callback draws beside an entry, as text for clients that cannot see the callback's window.
+struct uilist_row_details {
+    std::string description;
+    std::vector<uilist_detail_column> columns;
+    bool favorite = false;
+    /// What the entry is, when its return value is only its place: the row is known by it in the 0.2 components.
+    std::string identity;
+};
+
 class uilist_callback
 {
     public:
+
+        /// The details the callback draws for entry `entry_index`, published as the row's description and columns.
+        virtual uilist_row_details row_details( const uilist &/*menu*/, int /*entry_index*/ ) const {
+            return {};
+        }
+
+        /// What the last choice did, which the callback shows until the next one; published after the menu's text.
+        virtual auto notice() const -> std::string {
+            return {};
+        }
+
+        /// The raw keys `key` reacts to, for clients that only send actions and choices.
+        virtual std::vector<uilist_key> keys() const {
+            return {};
+        }
 
         /**
         * After a new item is selected, call this once
@@ -242,6 +294,8 @@ class uilist // NOLINT(cata-xy)
         void show( ui_adaptor &ui );
         bool scrollby( int scrollby );
         void query( bool loop = true, int timeout = -1 );
+        /// The list as a client sees it: the filtered entries, and whether it can be filtered.
+        auto as_interaction() const -> game_client::interaction_snapshot;
 
         /**
          * Repopulate filtered entries list (fentries) and set fselected accordingly.
@@ -388,6 +442,7 @@ class uilist // NOLINT(cata-xy)
         report_color_error _color_error = report_color_error::yes;
         input_context create_main_input_context() const;
         input_context create_filter_input_context() const;
+
 
     public:
         // Iternal states

@@ -16,12 +16,10 @@
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
-#if defined(TILES)
-#   include "cata_tiles.h"
-#   include "sdltiles.h"
-#endif // TILES
+#include "client_render_hooks.h"
 #include "cata_utility.h" // for normal_cdf
 #include "creature.h"
+#include "engine_client_presentation.h"
 #include "damage.h"
 #include "debug.h"
 #include "dispersion.h"
@@ -36,6 +34,7 @@
 #include "monster.h"
 #include "mtype.h"
 #include "options.h"
+#include "presentation_sink.h"
 #include "projectile.h"
 #include "rng.h"
 #include "sounds.h"
@@ -76,16 +75,23 @@ static const std::string flag_THIN_OBSTACLE( "THIN_OBSTACLE" );
 
 static const flag_id flag_FLY_STRAIGHT( "FLY_STRAIGHT" );
 
-thread_local int projectile_animation_suppression_depth = 0;
-
-scoped_projectile_animation_suppression::scoped_projectile_animation_suppression()
+namespace
 {
-    projectile_animation_suppression_depth++;
+
+thread_local auto last_projectile_group = std::uint64_t { 0 };
+/// The multishot in progress.
+thread_local auto projectile_group = std::optional<std::uint64_t> {};
+
+} // namespace
+
+scoped_projectile_group::scoped_projectile_group() : outer_( projectile_group )
+{
+    projectile_group = ++last_projectile_group;
 }
 
-scoped_projectile_animation_suppression::~scoped_projectile_animation_suppression()
+scoped_projectile_group::~scoped_projectile_group()
 {
-    projectile_animation_suppression_depth--;
+    projectile_group = outer_;
 }
 
 namespace
@@ -108,7 +114,7 @@ void drop_or_embed_projectile( dealt_projectile_attack &attack )
     if( proj.has_effect( ammo_effect_SHATTER_SELF ) ) {
         // Drop the contents, not the thrown item
         if( g->u.sees( pt ) ) {
-            add_msg( _( "The %s shatters!" ), drop_item.tname() );
+            add_msg( to_translation( "The %s shatters!" ), drop_item.tname() );
         }
 
         // copies the drop item to spill the contents
@@ -130,7 +136,7 @@ void drop_or_embed_projectile( dealt_projectile_attack &attack )
     if( proj.has_effect( ammo_effect_BURST ) ) {
         // Drop the contents, not the thrown item
         if( g->u.sees( pt ) ) {
-            add_msg( _( "The %s bursts!" ), drop_item.tname() );
+            add_msg( to_translation( "The %s bursts!" ), drop_item.tname() );
         }
 
         // copies the drop item to spill the contents
@@ -165,7 +171,7 @@ void drop_or_embed_projectile( dealt_projectile_attack &attack )
     if( embed ) {
         mon->add_item( std::move( drop ) );
         if( g->u.sees( *mon ) ) {
-            add_msg( _( "The %1$s embeds in %2$s!" ), drop_item.tname(), mon->disp_name() );
+            add_msg( to_translation( "The %1$s embeds in %2$s!" ), drop_item.tname(), mon->disp_name() );
         }
     } else {
         bool do_drop = true;
@@ -185,6 +191,7 @@ void drop_or_embed_projectile( dealt_projectile_attack &attack )
 
         map &here = get_map();
         if( drop && do_drop ) {
+            engine_client::presentation::record_landing( *drop, attack.end_point );
             here.add_item_or_charges( attack.end_point, std::move( drop ) );
         }
 
@@ -310,9 +317,10 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
                         Creature *origin, item *source_weapon, const vehicle *in_veh,
                         const bool suppress_damage_messages ) -> dealt_projectile_attack
 {
-    const bool do_animation = get_option<bool>( "ANIMATION_PROJECTILES" ) &&
-                              projectile_animation_suppression_depth == 0;
+    // The multishot this attack is a pellet of, presented together once they all flew.
+    const auto group = projectile_group;
 
+    const auto flight = engine_client::presentation::flight_scope{ group };
     double range = rl_dist( source, target_arg );
 
     Creature *target_critter = g->critter_at( target_arg );
@@ -355,30 +363,28 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
     const auto is_thrown = proj.has_effect( ammo_effect_THROWN );
     const auto *thrown_item = proj.get_drop();
     auto custom_bullet_sprite = std::string{};
-#if defined(TILES)
-    if( tilecontext ) {
-        const auto set_sprite_from_lookup = [&]( const std::string & candidate, TILE_CATEGORY category ) {
-            if( !custom_bullet_sprite.empty() ) { return; }
-            auto lookup = tilecontext->find_tile_looks_like( candidate, category );
-            if( lookup ) { custom_bullet_sprite = lookup->id(); }
-        };
-
-        const auto set_sprite_from_item = [&]( const item & it, const bool allow_item_fallback ) {
-            const auto id = it.typeId().str();
-            set_sprite_from_lookup( "animation_bullet_" + id, C_BULLET );
-            if( allow_item_fallback ) { set_sprite_from_lookup( id, C_ITEM ); }
-        };
-
-        if( thrown_item ) { set_sprite_from_item( *thrown_item, is_thrown ); }
-
-        if( custom_bullet_sprite.empty() && source_weapon ) {
-            const auto ammo_type = source_weapon->ammo_current();
-            if( !ammo_type.is_null() ) {
-                set_sprite_from_lookup( "animation_bullet_" + ammo_type.str(), C_BULLET );
-            }
+    const auto set_sprite_from_lookup = [&]( const std::string & candidate,
+    const game_client::tile_category category ) {
+        if( custom_bullet_sprite.empty() ) {
+            custom_bullet_sprite = game_client::find_projectile_sprite( candidate, category ).value_or( "" );
+        }
+    };
+    const auto set_sprite_from_item = [&]( const item & it, const bool allow_item_fallback ) {
+        const auto id = it.typeId().str();
+        set_sprite_from_lookup( "animation_bullet_" + id, game_client::tile_category::bullet );
+        if( allow_item_fallback ) {
+            set_sprite_from_lookup( id, game_client::tile_category::item );
+        }
+    };
+    if( thrown_item ) {
+        set_sprite_from_item( *thrown_item, is_thrown );
+    }
+    if( custom_bullet_sprite.empty() && source_weapon ) {
+        const auto ammo_type = source_weapon->ammo_current();
+        if( !ammo_type.is_null() ) {
+            set_sprite_from_lookup( "animation_bullet_" + ammo_type.str(), game_client::tile_category::bullet );
         }
     }
-#endif // TILES
 
     // If we were targetting a tile rather than a monster, don't overshoot
     // Unless the target was a wall, then we are aiming high enough to overshoot
@@ -517,10 +523,13 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
 
         // Drawing the bullet uses player g->u, and not player p, because it's drawn
         // relative to YOUR position, which may not be the gunman's position.
-        if( do_animation && !do_draw_line ) {
+        if( !do_draw_line ) {
             // TODO: Make this draw thrown item/launched grenade/arrow
-            if( projectile_skip_current_frame >= projectile_skip_calculation ) {
-                g->draw_bullet( tp, static_cast<int>( i ), trajectory, bullet, custom_bullet_sprite );
+            const auto skipped = projectile_skip_current_frame < projectile_skip_calculation;
+            presentation::emit( game_client::bullet_animation_options{
+                .position = tp, .index = static_cast<int>( i ), .trajectory = &trajectory,
+                .bullet = bullet, .custom_sprite = custom_bullet_sprite, .skipped = skipped, .group = group } );
+            if( !skipped ) {
                 projectile_skip_current_frame = 0;
                 // If we missed recalculate the skip factor so they spread out.
                 projectile_skip_calculation =
@@ -619,6 +628,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
                 continue;
             }
             attack.missed_by = cur_missed_by;
+            const auto before_hit = engine_client::presentation::mark();
             if( mon != nullptr ) {
                 mon->deal_projectile_attack( null_source ? nullptr : origin, source_weapon, attack, true );
             } else {
@@ -627,6 +637,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
             // Critter can still dodge the projectile
             // In this case hit_critter won't be set
             if( attack.hit_critter != nullptr ) {
+                engine_client::presentation::record_hit( { .at = tp, .struck = attack.hit_critter, .mark = before_hit } );
                 last_hit_critter = attack.hit_critter;
                 if( mon != nullptr ) {
                     hit_monsters.push_back( std::make_pair( *mon, attack ) );
@@ -654,9 +665,13 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
         } else {
             // Track damage before processing so we'll know if we actually hit any cover.
             const float dmg_before_penetration = proj.impact.total_damage();
+            const auto before_hit = engine_client::presentation::mark();
             here.shoot( source, tp, proj, !no_item_damage && tp == target );
             const float dmg_after_penetration = proj.impact.total_damage();
             has_momentum = dmg_after_penetration > 0 || ( no_damage && here.passable( tp ) );
+            if( dmg_before_penetration > dmg_after_penetration || ( !has_momentum && here.impassable( tp ) ) ) {
+                engine_client::presentation::record_hit( { .at = tp, .mark = before_hit } );
+            }
             // We lost momentum from hitting something, penalize range.
             if( dmg_before_penetration > dmg_after_penetration ) {
                 apply_overpenetration_penalty( is_projectile_modify_overpenetration );
@@ -672,16 +687,17 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
     attack.hit_critter = last_hit_critter;
     attack.trajectory.assign( trajectory.begin(), trajectory.begin() + traj_len );
 
-    if( do_animation && do_draw_line && traj_len > 2 ) {
+    if( do_draw_line && traj_len > 2 ) {
         trajectory.erase( trajectory.begin() );
         trajectory.resize( traj_len-- );
         auto should_rotate = is_thrown && thrown_item &&
                              !thrown_item->has_flag( flag_FLY_STRAIGHT );
-        draw_line_of( {
+        presentation::emit( draw_sprite_line_options{
             .p = tp,
             .points = trajectory,
             .sprite = custom_bullet_sprite,
             .rotate = should_rotate,
+            .group = group,
         } );
     }
 
@@ -720,7 +736,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
         } );
         if( mon_ptr ) {
             Creature &z = *mon_ptr;
-            add_msg( _( "The attack bounced to %s!" ), z.get_name() );
+            add_msg( to_translation( "The attack bounced to %s!" ), z.get_name() );
             z.add_effect( effect_bounced, 1_turns );
             projectile_attack( proj, tp, z.bub_pos(), dispersion, origin, source_weapon, in_veh );
             // Take the volume of a bio lightening impact at 70dB

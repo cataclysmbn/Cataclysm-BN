@@ -1,4 +1,7 @@
 #include "output.h"
+#include "client_presentation.h"
+#include "client_display.h"
+#include "client_interaction.h"
 
 #include <algorithm>
 #include <cerrno>
@@ -17,10 +20,13 @@
 #include <vector>
 #include <array>
 #include <memory>
+#include <random>
 #include <type_traits>
 #include <cmath>
 
 #include "cached_options.h"
+#include "engine_client_component.h"
+#include "engine_client_presentation.h"
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "color.h"
@@ -40,9 +46,6 @@
 #include "point.h"
 #include "wcwidth.h"
 
-#if defined(__ANDROID__)
-#include <SDL3/SDL.h>
-#endif
 
 // Display data
 int TERMX;
@@ -393,6 +396,7 @@ void scrollable_text( const std::function<catacurses::window()> &init_window,
 
         lines = foldstring( text, text_w );
         max_beg_line = std::max( 0, static_cast<int>( lines.size() ) - text_h );
+        beg_line = std::min( beg_line, max_beg_line );
 
         ui.position_from_window( w );
     };
@@ -410,6 +414,15 @@ void scrollable_text( const std::function<catacurses::window()> &init_window,
         .viewport_pos( std::min( beg_line, max_beg_line ) ).viewport_size( text_h ).apply( w );
         wnoutrefresh( w );
     } );
+
+    const auto screen = engine_client::screen_scope( ctxt, "scrollable_text", { .view = [&]( const engine_client::boundary_state & )
+    {
+        return engine_client::screen_view{
+            .title = title,
+            .root = engine_client::component{ .id = "text:body", .body = engine_client::text_body{ .markup = text } },
+        };
+    }
+                                                                              } );
 
     std::string action;
     do {
@@ -433,7 +446,7 @@ void scrollable_text( const std::function<catacurses::window()> &init_window,
         } else if( action == "PAGE_DOWN" ) {
             // always scroll an entire page's length
             if( beg_line < max_beg_line ) {
-                beg_line += text_h;
+                beg_line = std::min( beg_line + text_h, max_beg_line );
             }
         }
     } while( action != "CONFIRM" && action != "QUIT" );
@@ -806,9 +819,7 @@ input_event draw_item_info( const int iLeft, const int iWidth, const int iTop, c
         catacurses::newwin( iHeight, iWidth,
                             point( iLeft, iTop ) );
 
-#if defined(TILES)
-    clear_window_area( win );
-#endif // TILES
+    game_client::presentation().clear_window( win );
     wclear( win );
     wnoutrefresh( win );
 
@@ -1847,10 +1858,7 @@ scrollingcombattext::cSCT::cSCT( point p_pos, const direction p_oDir,
     oDir = p_oDir;
 
     // translate from player relative to screen relative direction
-    iso_mode = false;
-#if defined(TILES)
     iso_mode = tile_iso && use_tiles;
-#endif
     oUp = iso_mode ? direction::NORTHEAST : direction::NORTH;
     oUpRight = iso_mode ? direction::EAST : direction::NORTHEAST;
     oRight = iso_mode ? direction::SOUTHEAST : direction::EAST;
@@ -1881,11 +1889,28 @@ scrollingcombattext::cSCT::cSCT( point p_pos, const direction p_oDir,
 
 }
 
+namespace
+{
+
+/// Display-only coin for the isometric drift, kept off the gameplay RNG.
+auto cosmetic_coin() -> bool
+{
+    static auto cosmetic = std::minstd_rand( 1 );
+    return cosmetic() % 2 == 0;
+}
+
+} // namespace
+
 void scrollingcombattext::add( point pos, direction p_oDir,
                                const std::string &p_sText, const game_message_type p_gmt,
                                const std::string &p_sText2, const game_message_type p_gmt2,
                                const std::string &p_sType )
 {
+    engine_client::presentation::record_text( pos, p_oDir, p_sType, p_sText, p_gmt, p_sText2, p_gmt2 );
+    // Gameplay draws this coin where a non-isometric game with combat text on always has, so the
+    // display options and test mode never shift the gameplay RNG stream.
+    const auto drift_up = p_sType != "hp" &&
+                          ( p_oDir == direction::EAST || p_oDir == direction::WEST ) && one_in( 2 );
     // TODO: A non-hack
     if( test_mode ) {
         return;
@@ -1894,12 +1919,8 @@ void scrollingcombattext::add( point pos, direction p_oDir,
 
         int iCurStep = 0;
 
-        bool tiled = false;
-        bool iso_mode = false;
-#if defined(TILES)
-        tiled = use_tiles;
-        iso_mode = tile_iso && use_tiles;
-#endif
+        const auto tiled = use_tiles;
+        const auto iso_mode = tile_iso && use_tiles;
 
         if( p_sType == "hp" ) {
             //Remove old HP bar
@@ -1914,12 +1935,13 @@ void scrollingcombattext::add( point pos, direction p_oDir,
 
         } else {
             //reserve Left/Right for creature hp display
+            const auto up = [&]() { return iso_mode ? cosmetic_coin() : drift_up; };
             if( p_oDir == ( iso_mode ? direction::SOUTHEAST : direction::EAST ) ) {
-                p_oDir = ( one_in( 2 ) ) ? ( iso_mode ? direction::EAST : direction::NORTHEAST ) :
+                p_oDir = up() ? ( iso_mode ? direction::EAST : direction::NORTHEAST ) :
                          ( iso_mode ? direction::SOUTH : direction::SOUTHEAST );
 
             } else if( p_oDir == ( iso_mode ? direction::NORTHWEST : direction::WEST ) ) {
-                p_oDir = ( one_in( 2 ) ) ? ( iso_mode ? direction::NORTH : direction::NORTHWEST ) :
+                p_oDir = up() ? ( iso_mode ? direction::NORTH : direction::NORTHWEST ) :
                          ( iso_mode ? direction::WEST : direction::SOUTHWEST );
             }
         }
@@ -2191,27 +2213,7 @@ std::string format_volume( const units::volume &volume, int width, bool *out_tru
     }
 }
 
-// In non-SDL mode, width/height is just what's specified in the menu
-#if !defined(TILES)
-// We need to override these for Windows console resizing
-#   if !defined(_WIN32)
-int get_terminal_width()
-{
-    int width = get_option<int>( "TERMINAL_X" );
-    return width < FULL_SCREEN_WIDTH ? FULL_SCREEN_WIDTH : width;
-}
-
-int get_terminal_height()
-{
-    return get_option<int>( "TERMINAL_Y" );
-}
-#   endif
-
-bool is_draw_tiles_mode()
-{
-    return false;
-}
-#endif
+auto is_draw_tiles_mode() -> bool { return game_client::has_tiles() && use_tiles; }
 
 void mvwprintz( const catacurses::window &w, point p, const nc_color &FG,
                 const std::string &text )

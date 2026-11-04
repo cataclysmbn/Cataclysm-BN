@@ -50,6 +50,7 @@ class player;
 #include "recipe_dictionary.h"
 #include "relic.h"
 #include "requirements.h"
+#include "rng.h"
 #include "skill.h"
 #include "string_formatter.h"
 #include "string_id.h"
@@ -1207,6 +1208,9 @@ bool Item_factory::check_ammo_type( std::string &msg, const ammotype &ammo ) con
 
 void Item_factory::check_definitions() const
 {
+    // Consistency checks construct sample items.  Keep that validation-only randomness
+    // deterministic and isolated from the simulation stream.
+    const auto validation_rng = rng_deterministic_task_scope( 0x6974656dU );
     for( const auto &elem : m_templates ) {
         std::string msg;
         const itype *type = &elem.second;

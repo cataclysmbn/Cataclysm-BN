@@ -53,6 +53,7 @@ class robot_finds_kitten
         int bogus_message_idx = 0;
         int end_animation_frame = 0;
         static constexpr int num_end_animation_frames = 6;
+        static constexpr int end_animation_frame_ms = 1000;
         bool end_animation_last_input_left_or_up = false;
 };
 

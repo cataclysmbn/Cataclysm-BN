@@ -116,6 +116,10 @@ class iuse_transform : public iuse_actor
         std::unique_ptr<iuse_actor> clone() const override;
         void finalize( const itype_id &my_item_type ) override;
         void info( const item &, std::vector<iteminfo> & ) const override;
+        auto info_for_display( const item &it, std::vector<iteminfo> &dump ) const -> void override;
+
+    private:
+        auto info_impl( const item &it, std::vector<iteminfo> &dump, bool observation ) const -> void;
 };
 
 class unpack_actor : public iuse_actor
@@ -159,6 +163,10 @@ class countdown_actor : public iuse_actor
                                const tripoint_bub_ms & ) const override;
         std::string get_name() const override;
         void info( const item &, std::vector<iteminfo> & ) const override;
+        auto info_for_display( const item &it, std::vector<iteminfo> &dump ) const -> void override;
+
+    private:
+        auto info_impl( const item &it, std::vector<iteminfo> &dump, bool observation ) const -> void;
 };
 
 /**

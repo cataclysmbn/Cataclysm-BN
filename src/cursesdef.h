@@ -1,13 +1,19 @@
 #pragma once
 
-#include <memory>
-#include <string>
-#include <utility>
-
 #include "point.h"
 #include "string_formatter.h"
 
+#include <memory>
+#include <string>
+#include <type_traits>
+#include <utility>
+
 class nc_color;
+
+namespace cata_cursesport
+{
+struct WINDOW;
+}
 
 /**
  * Contains the curses interface used by the whole game.
@@ -16,16 +22,9 @@ class nc_color;
  * types from this namespace only. The @ref input_manager and @ref input_context
  * should be used for user input.
  *
- * There are currently (Nov 2017) two implementations for most of this interface:
- * - ncurses (mostly in ncurses_def.cpp). The interface originates from there,
- *   so it's mostly just forwarding to ncurses functions of the same name.
- * - our own curses library @ref cata_cursesport (mostly in cursesport.cpp),
- *   cursesport.h contains the structures and some functions specific to that.
- *
- * A few (system specific) functions are implemented in three versions:
- * - ncurses (ncurses_def.cpp),
- * - Windows curses (no SDL, using @ref cata_cursesport, see wincurses.cpp), and
- * - SDL curses (using @ref cata_cursesport, see sdltiles.cpp).
+ * The facade always owns a logical @ref cata_cursesport::WINDOW cell buffer.
+ * Runtime backends project that common representation to ncurses, Windows,
+ * SDL, or the MCP memory client.
  *
  * As this interface is derived from ncurses, refer to documentation of that.
  *
@@ -52,36 +51,34 @@ void init_interface();
 class window
 {
     private:
-        std::shared_ptr<void> native_window;
+        std::shared_ptr<cata_cursesport::WINDOW> native_window;
 
     public:
         window() = default;
-        window( std::shared_ptr<void> ptr ) : native_window( std::move( ptr ) ) {
+        explicit window( std::shared_ptr<cata_cursesport::WINDOW> ptr ): native_window( std::move(
+                        ptr ) ) {}
+        template <typename T = cata_cursesport::WINDOW>
+        auto get() const -> T* { // *NOPAD*
+            static_assert( std::is_same_v<T, cata_cursesport::WINDOW>,
+                           "catacurses::window stores only cell windows" );
+            return native_window.get();
         }
-        template<typename T = void>
-        T * get() const {
-            return static_cast<T *>( native_window.get() );
-        }
-        explicit operator bool() const {
-            return native_window.operator bool();
-        }
+        explicit operator bool() const { return native_window.operator bool(); }
         bool operator==( const window &rhs ) const {
             return native_window.get() == rhs.native_window.get();
         }
-        std::weak_ptr<void> weak_ptr() const {
-            return native_window;
-        }
+        auto weak_ptr() const -> std::weak_ptr<void> { return native_window; }
 };
 
 enum base_color : short {
-    black = 0x00,    // RGB{0, 0, 0}
-    red = 0x01,      // RGB{196, 0, 0}
-    green = 0x02,    // RGB{0, 196, 0}
-    yellow = 0x03,   // RGB{196, 180, 30}
-    blue = 0x04,     // RGB{0, 0, 196}
-    magenta = 0x05,  // RGB{196, 0, 180}
-    cyan = 0x06,     // RGB{0, 170, 200}
-    white = 0x07,    // RGB{196, 196, 196}
+    black = 0x00,   // RGB{0, 0, 0}
+    red = 0x01,     // RGB{196, 0, 0}
+    green = 0x02,   // RGB{0, 196, 0}
+    yellow = 0x03,  // RGB{196, 180, 30}
+    blue = 0x04,    // RGB{0, 0, 196}
+    magenta = 0x05, // RGB{196, 0, 180}
+    cyan = 0x06,    // RGB{0, 170, 200}
+    white = 0x07,   // RGB{196, 196, 196}
 };
 
 using chtype = int;
@@ -91,8 +88,9 @@ extern window newscr;
 extern window stdscr;
 
 window newwin( int nlines, int ncols, point begin );
-void wborder( const window &win, chtype ls, chtype rs, chtype ts, chtype bs, chtype tl, chtype tr,
-              chtype bl, chtype br );
+void wborder(
+    const window &win, chtype ls, chtype rs, chtype ts, chtype bs, chtype tl, chtype tr, chtype bl,
+    chtype br );
 void mvwhline( const window &win, point p, chtype ch, int n );
 void mvwvline( const window &win, point p, chtype ch, int n );
 void wnoutrefresh( const window &win );
@@ -101,15 +99,14 @@ void refresh();
 void doupdate();
 void wredrawln( const window &win, int beg_line, int num_lines );
 void mvwprintw( const window &win, point p, const std::string &text );
-template<typename ...Args>
-inline void mvwprintw( const window &win, point p, const char *const fmt,
-                       Args &&... args )
+template <typename... Args>
+inline void mvwprintw( const window &win, point p, const char *const fmt, Args &&... args )
 {
     return mvwprintw( win, p, string_format( fmt, std::forward<Args>( args )... ) );
 }
 
 void wprintw( const window &win, const std::string &text );
-template<typename ...Args>
+template <typename... Args>
 inline void wprintw( const window &win, const char *const fmt, Args &&... args )
 {
     return wprintw( win, string_format( fmt, std::forward<Args>( args )... ) );
@@ -135,5 +132,3 @@ int getbegy( const window &win );
 int getcurx( const window &win );
 int getcury( const window &win );
 } // namespace catacurses
-
-

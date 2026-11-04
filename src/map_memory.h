@@ -1,7 +1,9 @@
 #pragma once
 
+#include <cstdint>
 #include <map>
 #include <string>
+#include <vector>
 
 #include "game_constants.h"
 #include "memory_fast.h"
@@ -22,6 +24,17 @@ struct memorized_terrain_tile {
     bool operator!=( const memorized_terrain_tile &rhs ) const {
         return !( *this == rhs );
     }
+};
+
+/**
+ * Names the content of a map_memory: equal revisions mean nothing was memorized, forgotten, loaded or
+ * dropped in between. `edits` counts every write to any memorized square in the process, `owner`
+ * changes when memory is replaced as a whole.
+ */
+struct memory_revision {
+    std::uint64_t owner = 0;
+    std::uint64_t edits = 0;
+    auto operator<=>( const memory_revision & ) const = default; // *NOPAD*
 };
 
 /** Represent a submap-sized chunk of tile memory. */
@@ -52,6 +65,7 @@ struct mm_submap {
                 tiles.reserve( SEEX * SEEY );
                 tiles.resize( SEEX * SEEY, default_tile );
             }
+            note_edit();
             tiles[p.y() * SEEX + p.x()] = value;
         }
 
@@ -68,6 +82,7 @@ struct mm_submap {
                 terrain_tiles.reserve( SEEX * SEEY );
                 terrain_tiles.resize( SEEX * SEEY, default_tile );
             }
+            note_edit();
             terrain_tiles[p.y() * SEEX + p.x()] = value;
         }
 
@@ -85,13 +100,18 @@ struct mm_submap {
                 symbols.reserve( SEEX * SEEY );
                 symbols.resize( SEEX * SEEY, default_symbol );
             }
+            note_edit();
             symbols[p.y() * SEEX + p.x()] = value;
         }
 
         void serialize( JsonOut &jsout ) const;
         void deserialize( JsonIn &jsin );
 
+        /** Writes to any submap so far, see memory_revision. */
+        static auto edits() -> std::uint64_t;
+
     private:
+        static auto note_edit() -> void;
         std::vector<memorized_terrain_tile>
         tiles;         // overlay: furniture, vpart, trap — 0 or SEEX*SEEY
         std::vector<memorized_terrain_tile>
@@ -127,6 +147,9 @@ class map_memory
 {
     public:
         map_memory();
+
+        /** Changes whenever what this memory knows may have changed, for caches of what it knows. */
+        auto revision() const -> memory_revision;
 
         /** Load memorized submaps around given global map square pos. */
         void load( const tripoint_abs_ms &pos );
@@ -195,6 +218,12 @@ class map_memory
         int get_symbol( const tripoint_abs_ms &pos );
 
         /**
+         * Every position with a stored tile, terrain or symbol. Reads existing submaps only and
+         * allocates or loads none, so the cost follows what is known, not the size of the world.
+         */
+        std::vector<tripoint_abs_ms> memorized_positions() const;
+
+        /**
          * Clears memorized overlay tile (furniture/vpart/trap) and symbol, leaving terrain memory intact.
          * Use this when a vehicle or furniture leaves a tile so the ground beneath is preserved.
          * @param pos tile position, in global ms coords.
@@ -209,6 +238,9 @@ class map_memory
 
     private:
         std::map<tripoint_abs_sm, shared_ptr_fast<mm_submap>> submaps;
+        /** Replaced whenever submaps are loaded, dropped or cleared, which no single write shows. */
+        std::uint64_t owner = 0;
+        auto replaced() -> void;
 
         std::vector<shared_ptr_fast<mm_submap>> cached;
         tripoint_abs_sm cache_pos;

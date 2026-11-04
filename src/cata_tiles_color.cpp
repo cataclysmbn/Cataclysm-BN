@@ -11,7 +11,11 @@
 #    include "vehicle/vehicle_part.h"
 #    include "vehicle/vpart_position.h"
 
-static constexpr RGBColor RGB_NO_COLOR = TILESET_NO_COLOR;
+static constexpr auto RGB_NO_COLOR = RGBColor
+{
+    TILESET_NO_COLOR.r, TILESET_NO_COLOR.g,
+                        TILESET_NO_COLOR.b, TILESET_NO_COLOR.a
+};
 
 namespace
 {

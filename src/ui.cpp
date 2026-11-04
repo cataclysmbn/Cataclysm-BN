@@ -1,4 +1,7 @@
 #include "ui.h"
+#include "client_interaction.h"
+#include "client_presentation.h"
+#include "engine_client_component.h"
 
 #include <algorithm>
 #include <cassert>
@@ -7,6 +10,8 @@
 #include <cstdlib>
 #include <iterator>
 #include <memory>
+#include <map>
+#include <ranges>
 
 #include "avatar.h"
 #include "cata_utility.h"
@@ -21,11 +26,6 @@
 #include "string_utils.h"
 #include "ui_manager.h"
 
-#if defined(__ANDROID__)
-#include <SDL3/SDL.h>
-
-#include "options.h"
-#endif
 
 catacurses::window new_centered_win( int nlines, int ncols )
 {
@@ -79,6 +79,12 @@ uilist::pos_scalar &uilist::pos_scalar::operator=( const std::function<int( int 
     this->fun = fun;
     return *this;
 }
+
+namespace
+{
+/// The screen affordance that presses a key the callback tests itself, followed by the key's code.
+constexpr auto key_affordance_prefix = std::string_view { "bn:key:" };
+} // namespace
 
 uilist::uilist()
 {
@@ -234,7 +240,9 @@ input_context uilist::create_main_input_context() const
     }
     ctxt.register_action( "SELECT" );
     ctxt.register_action( "CONFIRM" );
-    ctxt.register_action( "FILTER" );
+    if( filtering ) {
+        ctxt.register_action( "FILTER" );
+    }
     ctxt.register_action( "ANY_INPUT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
     for( const auto &additional_action : additional_actions ) {
@@ -256,9 +264,9 @@ input_context uilist::create_filter_input_context() const
     ctxt.register_action( "TEXT.HOME" );
     ctxt.register_action( "TEXT.END" );
     ctxt.register_action( "TEXT.DELETE" );
-#if defined( TILES )
-    ctxt.register_action( "TEXT.PASTE" );
-#endif
+    if( game_client::presentation().clipboard_available() ) {
+        ctxt.register_action( "TEXT.PASTE" );
+    }
     ctxt.register_action( "TEXT.INPUT_FROM_FILE" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
     ctxt.register_action( "ANY_INPUT" );
@@ -290,8 +298,10 @@ void uilist::filterlist()
     int num_entries = entries.size();
     // check if string begin by " and finish by ". If that's the case, we only return a result if it matches it exactly
     bool exact_match_only = !filter.empty() && filter.front() == '\"' && filter.back() == '\"';
+    // The filter keeps its quotes, so the text a client set is the text it reads back.
+    auto needle = filter;
     if( exact_match_only ) {
-        filter.erase( std::remove( filter.begin(), filter.end(), '\"' ), filter.end() );
+        needle.erase( std::remove( needle.begin(), needle.end(), '\"' ), needle.end() );
     }
 
     for( int i = 0; i < num_entries; i++ ) {
@@ -300,14 +310,14 @@ void uilist::filterlist()
         }
         if( filtering ) {
             if( exact_match_only ) {
-                if( !( entries[i].txt == filter ) ) {
+                if( !( entries[i].txt == needle ) ) {
                     continue;
                 }
             } else if( ignore_case ) {
-                if( !lcmatch( entries[i].txt, filter ) ) {
+                if( !lcmatch( entries[i].txt, needle ) ) {
                     continue;
                 }
-            } else if( entries[i].txt.find( filter ) == std::string::npos ) {
+            } else if( entries[i].txt.find( needle ) == std::string::npos ) {
                 continue;
             }
         }
@@ -450,6 +460,14 @@ void uilist::inputfilter()
     filter_popup->context( ctxt ).text( filter )
     .max_length( 256 )
     .window( window, point( 4, w_height - 1 ), w_width - 4 );
+    // The rows the filter leaves follow each keystroke; they are shown, not chosen, while the prompt has the input.
+    filter_popup->extend_interaction = [this]( game_client::interaction_snapshot & snapshot ) {
+        snapshot.choices = as_interaction().choices;
+        for( auto &choice : snapshot.choices ) {
+            choice.selectable = false;
+            choice.highlighted = false;
+        }
+    };
     ime_sentry sentry;
     do {
         ui_manager::redraw();
@@ -1054,6 +1072,7 @@ void uilist::query( bool loop, int timeout )
     ret = UILIST_WAIT_INPUT;
 
     input_context ctxt = create_main_input_context();
+    const auto screen = engine_client::screen_scope( ctxt, "uilist" );
 
     shared_ptr_fast<ui_adaptor> ui = create_or_get_ui_adaptor();
 
@@ -1068,12 +1087,51 @@ void uilist::query( bool loop, int timeout )
 #endif
 
     do {
-        ret_act = ctxt.handle_input( timeout );
-        const auto event = ctxt.get_raw_input();
+        auto event = input_event{};
+        {
+            const auto interaction = game_client::interaction_scope( ctxt, [this]() { return as_interaction(); } );
+            ret_act = ctxt.handle_input( timeout );
+            event = ctxt.get_raw_input();
+        }
         keypress = event.get_first_input();
         const auto iter = keymap.find( keypress );
 
-        if( scrollby( scroll_amount_from_action( ret_act ) ) ) {
+        if( event.interaction &&
+            event.interaction->operation == game_client::interaction_operation::cancel ) {
+            ret = UILIST_CANCEL;
+        } else if( event.interaction && filtering &&
+                   event.interaction->operation == game_client::interaction_operation::invoke &&
+                   event.interaction->target_id.starts_with( "bn:filter:" ) &&
+                   event.interaction->arguments && event.interaction->arguments->text ) {
+            // A client set the filter text without opening the prompt.
+            set_filter( *event.interaction->arguments->text );
+        } else if( event.interaction &&
+                   event.interaction->operation == game_client::interaction_operation::invoke &&
+                   event.interaction->target_id.starts_with( key_affordance_prefix ) ) {
+            // A client pressed a key the callback tests itself.
+            auto pressed = input_event();
+            pressed.type = input_event_t::keyboard;
+            pressed.sequence.push_back( std::stoi( event.interaction->target_id.substr(
+                    key_affordance_prefix.size() ) ) );
+            if( callback != nullptr ) {
+                callback->key( ctxt, pressed, selected, this );
+            }
+        } else if( event.interaction &&
+                   event.interaction->operation == game_client::interaction_operation::choose ) {
+            const auto choice = std::ranges::find_if( fentries, [&]( const auto entry_index ) {
+                return event.interaction->target_id == "entry:" + std::to_string( entry_index );
+            } );
+            if( choice != fentries.end() ) {
+                selected = *choice;
+                fselected = static_cast<int>( std::distance( fentries.begin(), choice ) );
+                if( callback != nullptr ) {
+                    callback->select( this );
+                }
+                if( entries[selected].enabled || allow_disabled ) {
+                    ret = entries[selected].retval;
+                }
+            }
+        } else if( scrollby( scroll_amount_from_action( ret_act ) ) ) {
             /* nothing */
         } else if( filtering && ret_act == "FILTER" ) {
             inputfilter();
@@ -1130,6 +1188,89 @@ void uilist::query( bool loop, int timeout )
 }
 
 ///@}
+/**
+ * the list as the client sees it
+ */
+namespace
+{
+/// `columns` and, when the entry has one, the second column native draws after its text, colored by its first tag.
+auto with_second_column( std::vector<game_client::interaction_column> columns,
+                         const std::string &ctxt ) -> std::vector<game_client::interaction_column>
+{
+    if( ctxt.empty() ) {
+        return columns;
+    }
+    const auto start = ctxt.find( "<color_" );
+    const auto end = ctxt.find( '>', start );
+    columns.push_back( {
+        .key = "ctxt", .label = "", .value = remove_color_tags( ctxt ),
+.color = start == std::string::npos || end == std::string::npos ? std::string{} :
+        string_from_color( get_color_from_tag( ctxt.substr( start, end - start + 1 ) ).color ),
+    } );
+    return columns;
+}
+} // namespace
+
+auto uilist::as_interaction() const -> game_client::interaction_snapshot
+{
+    auto snapshot = game_client::interaction_snapshot{
+        .kind = game_client::interaction_kind::choices,
+        .title = remove_color_tags( title ),
+        .message = remove_color_tags( text ),
+        .allow_cancel = allow_cancel,
+        .filterable = filtering,
+        .filter = filter,
+    };
+    if( const auto notice = callback != nullptr ? remove_color_tags( callback->notice() ) : std::string{};
+        !notice.empty() ) {
+        snapshot.message += ( snapshot.message.empty() ? "" : "\n" ) + notice;
+    }
+    if( callback != nullptr ) {
+        for( const auto &callback_key : callback->keys() ) {
+            snapshot.keys.push_back( {
+                .id = std::string{ key_affordance_prefix } + std::to_string( callback_key.key ),
+                .label = callback_key.name,
+                .keys = { inp_mngr.get_keyname( callback_key.key, input_event_t::keyboard, true ) },
+            } );
+        }
+    }
+    snapshot.choices.reserve( fentries.size() );
+    // A row is known by its entry's own return value; entries that share one are told apart by
+    // their order among them, whatever the filter shows.
+    auto seen = std::map<int, int> {};
+    const auto identities = entries | std::views::transform( [&seen]( const auto & entry ) {
+        const auto count = seen[entry.retval]++;
+        return "entry:" + std::to_string( entry.retval ) + ( count == 0 ? "" : "#" + std::to_string(
+                    count ) );
+    } ) | std::ranges::to<std::vector>();
+    for( const auto entry_index : fentries ) {
+        const auto &entry = entries[entry_index];
+        auto details = callback != nullptr ? callback->row_details( *this,
+                       static_cast<int>( entry_index ) ) : uilist_row_details{};
+        // Native draws the entry description under a rule, apart from the callback's panel.
+        const auto separator = entry.desc.empty() || details.description.empty() ? "" : "\n--\n";
+        snapshot.choices.push_back( {
+            .id = "entry:" + std::to_string( entry_index ),
+            .label = remove_color_tags( entry.txt ),
+            .description = remove_color_tags( entry.desc ) + separator + details.description,
+            .hotkey = entry.hotkey >= 33 && entry.hotkey < 126 ? std::string( 1, static_cast<char>( entry.hotkey ) ) : std::string{},
+            .enabled = entry.enabled,
+            .selectable = entry.enabled || allow_disabled,
+            .selected = entry_index == selected,
+            .highlighted = entry_index == selected,
+            .columns = with_second_column( details.columns | std::views::transform( []( const auto & column )
+            {
+                return game_client::interaction_column{ .key = column.key, .label = column.label, .value = column.value };
+            } ) | std::ranges::to<std::vector>(), entry.ctxt ),
+            .favorite = details.favorite,
+            .action_id = entry.action_id,
+            .identity = details.identity.empty() ? identities[entry_index] : details.identity,
+            .toggled = entry.toggled,
+        } );
+    }
+    return snapshot;
+}
+
 /**
  * cleanup
  */

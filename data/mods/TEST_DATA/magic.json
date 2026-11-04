@@ -210,5 +210,33 @@
     "base_casting_time": 100,
     "base_energy_cost": 100,
     "energy_source": "MANA"
+  },
+  {
+    "id": "test_spell_apprentice",
+    "type": "SPELL",
+    "name": "Apprentice Pew",
+    "description": "A cheap spell a test profession may learn while its character is created.",
+    "effect": "target_attack",
+    "damage_type": "true",
+    "valid_targets": [ "hostile" ],
+    "flags": [ "VERBAL", "SOMATIC", "NO_LEGS", "BRAWL" ],
+    "max_level": 3,
+    "max_damage": 1,
+    "min_range": 5,
+    "spell_class": "NONE",
+    "difficulty": 1,
+    "base_casting_time": 100,
+    "base_energy_cost": 50,
+    "energy_source": "MANA",
+    "starting_points": 2,
+    "increase_points": 1
+  },
+  {
+    "type": "profession",
+    "id": "test_spellcaster",
+    "name": "Test Spellcaster",
+    "description": "A profession that may start with the test spell.",
+    "points": 0,
+    "allowed_spells": [ "test_spell_apprentice" ]
   }
 ]

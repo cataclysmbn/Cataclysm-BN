@@ -13,36 +13,32 @@ struct section {
     std::string name, path;
 };
 
-auto create_line_printer( const std::string &base_path )
+auto maybe_colorize( const std::string &text, const nc_color &color,
+                     const bool use_color ) -> std::string
 {
-    const std::string colored_base_path = colorize( base_path, c_light_cyan );
+    return use_color ? colorize( text, color ) : text;
+}
 
-    return [&base_path, colored_base_path]( section s ) -> std::string {
+auto path_info( const section &title, const std::vector<section> &xs,
+                const bool use_color ) -> std::string
+{
+    const auto result = string_format( "%s: %s\n",
+                                       maybe_colorize( title.name, c_white, use_color ),
+                                       maybe_colorize( title.path, c_light_cyan, use_color ) );
+    const auto displayed_base_path = maybe_colorize( title.path, c_light_cyan, use_color );
+    const auto printer = [&title, &displayed_base_path, use_color]( const section & s ) {
         return string_format( "    %s: %s",
-                              colorize( s.name, c_yellow ),
-                              replace_all( s.path, base_path, colored_base_path ) );
+                              maybe_colorize( s.name, c_yellow, use_color ),
+                              replace_all( s.path, title.path, displayed_base_path ) );
     };
-};
 
-auto path_info( const section &title,
-                const std::vector<section> &xs ) -> std::string
-{
-    const std::string result = string_format( "%s: %s\n",
-                               colorize( title.name, c_white ),
-                               colorize( title.path, c_light_cyan ) );
-
-    const auto printer = create_line_printer( title.path );
-
-    return result + enumerate_as_string( xs.begin(), xs.end(),
-                                         printer,
+    return result + enumerate_as_string( xs.begin(), xs.end(), printer,
                                          enumeration_conjunction::newline ) + "\n\n";
-};
+}
 
-} // namespace
-
-auto user_directory() -> std::string
+auto format_user_directory( const bool use_color ) -> std::string
 {
-    return path_info( {_( "User Directory" ), PATH_INFO::user_dir() }, {
+    return path_info( { _( "User Directory" ), PATH_INFO::user_dir() }, {
         { _( "user mods" ), PATH_INFO::user_moddir() },
         { _( "user saves" ), PATH_INFO::savedir() },
         { _( "user sounds" ), PATH_INFO::user_sound() },
@@ -51,19 +47,19 @@ auto user_directory() -> std::string
         { _( "user memorials" ), PATH_INFO::memorialdir() },
         { _( "user templates" ), PATH_INFO::templatedir() },
         { _( "user graveyard" ), PATH_INFO::graveyarddir() },
-    } );
+    }, use_color );
 }
 
-auto defaults_directory() -> std::string
+auto format_defaults_directory( const bool use_color ) -> std::string
 {
-    const section title = { _( "Defaults Directory" ),
-                            PATH_INFO::base_path().empty()
-                            ? _( "(Current Working Directory)" )
-                            : PATH_INFO::base_path()
-                          };
+    const auto title = section{ _( "Defaults Directory" ),
+                                PATH_INFO::base_path().empty()
+                                ? _( "(Current Working Directory)" )
+                                : PATH_INFO::base_path()
+                              };
 
     return path_info( title, {
-        { _( "data directory" ), colorize( PATH_INFO::datadir(), c_white ) },
+        { _( "data directory" ), maybe_colorize( PATH_INFO::datadir(), c_white, use_color ) },
         { _( "font" ), PATH_INFO::fontdir() },
         { _( "help" ), PATH_INFO::help() },
         { _( "mods" ), PATH_INFO::moddir() },
@@ -79,10 +75,10 @@ auto defaults_directory() -> std::string
         { _( "graphics" ), PATH_INFO::gfxdir() },
         { _( "default sound" ), PATH_INFO::defaultsounddir() },
         { _( "sound" ), PATH_INFO::data_sound() },
-    } );
+    }, use_color );
 }
 
-auto config_directory() -> std::string
+auto format_config_directory( const bool use_color ) -> std::string
 {
     return path_info( { _( "Config Directory" ), PATH_INFO::config_dir() }, {
         { _( "debug" ), PATH_INFO::debug() },
@@ -98,11 +94,30 @@ auto config_directory() -> std::string
         { _( "last world" ), PATH_INFO::lastworld() },
         { _( "panel options" ), PATH_INFO::panel_options() },
         { _( "safe mode" ), PATH_INFO::safemode() },
-    } );
+    }, use_color );
 }
 
-auto resolved_game_paths() -> std::string
+} // namespace
+
+auto user_directory() -> std::string
 {
-    return enumerate_as_string( std::vector{ user_directory(), defaults_directory(), config_directory() },
+    return format_user_directory( true );
+}
+
+auto defaults_directory() -> std::string
+{
+    return format_defaults_directory( true );
+}
+
+auto config_directory() -> std::string
+{
+    return format_config_directory( true );
+}
+
+auto resolved_game_paths( const bool use_color ) -> std::string
+{
+    return enumerate_as_string( std::vector{ format_user_directory( use_color ),
+                                format_defaults_directory( use_color ),
+                                format_config_directory( use_color ) },
                                 enumeration_conjunction::newline );
 }

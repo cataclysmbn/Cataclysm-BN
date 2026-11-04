@@ -9,6 +9,7 @@
 #include "color.h"
 #include "debug.h"
 #include "distraction_manager.h"
+#include "engine_client_component.h"
 #include "enums.h"
 #include "filesystem.h"
 #include "fstream_utils.h"
@@ -21,6 +22,7 @@
 #include "map/mapbuffer.h"
 #include "mapsharing.h"
 #include "messages.h"
+#include "mod_manager.h"
 #include "newcharacter.h"
 #include "options.h"
 #include "output.h"
@@ -41,6 +43,7 @@
 #include "worldfactory.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
@@ -51,6 +54,9 @@
 #include <istream>
 #include <memory>
 #include <optional>
+#include <ranges>
+#include <string_view>
+
 enum class main_menu_opts : int {
     MOTD = 0,
     NEWCHAR = 1,
@@ -62,6 +68,26 @@ enum class main_menu_opts : int {
     QUIT = 7
 };
 static constexpr int max_menu_opts = 7;
+
+namespace
+{
+/// Protocol ids of the top-level tabs, in `main_menu_opts` order.
+constexpr auto menu_tab_ids = std::array<std::string_view, 8> { "motd", "new_game", "load", "world", "settings", "help", "credits", "quit" };
+constexpr auto settings_ids = std::array<std::string_view, 6> { "options", "keybindings", "autopickup", "safemode", "distractions", "colors" };
+
+struct submenu_entry {
+    std::string id;
+    std::string label;
+    std::string description;
+};
+
+namespace ec = engine_client;
+/// The affordances the main menu runs from its own loop.
+constexpr auto tabs_id = "menu:tabs";
+constexpr auto tab_id = "menu:tab";
+constexpr auto entries_id = "menu:entries";
+constexpr auto entry_id = "menu:entry";
+} // namespace
 
 static int getopt( main_menu_opts o )
 {
@@ -402,6 +428,18 @@ void main_menu::print_menu( const catacurses::window &w_open, int iSel, const po
     display_sub_menu( iSel, p_offset + point( offsets[iSel], offset.y - 3 ), sel_line );
 }
 
+auto main_menu::banner_lines() const -> std::vector<std::string>
+{
+    auto lines = mmenu_title;
+    if( lines.size() == 1 ) {
+        lines.front() = "<color_light_cyan>" + lines.front() + "</color>";
+    }
+    lines.emplace_back();
+    lines.push_back( "<color_light_blue>" + string_format( _( "Version: %s" ), getVersionString() ) +
+                     "</color>" );
+    return lines;
+}
+
 std::vector<std::string> main_menu::load_file( const std::string &path,
         const std::string &alt_text ) const
 {
@@ -421,9 +459,20 @@ std::vector<std::string> main_menu::load_file( const std::string &path,
     return result;
 }
 
+auto main_menu::ignore_holidays() -> bool & // *NOPAD*
+{
+    static auto ignore = false;
+    return ignore;
+}
+
+auto main_menu::holiday_at( const std::time_t time ) -> holiday
+{
+    return ignore_holidays() ? holiday::none : ::get_holiday_from_time( time, true );
+}
+
 holiday main_menu::get_holiday_from_time()
 {
-    return ::get_holiday_from_time( 0, true );
+    return holiday_at( 0 );
 }
 
 void main_menu::init_windows()
@@ -496,6 +545,7 @@ void main_menu::init_strings()
 
     // new game menu items
     vNewGameSubItems.clear();
+    vNewGameIds = { "custom", "preset", "random" };
     vNewGameSubItems.emplace_back( pgettext( "Main Menu|New Game", "C<u|U>stom Character" ) );
     vNewGameSubItems.emplace_back( pgettext( "Main Menu|New Game", "<P|p>reset Character" ) );
     vNewGameSubItems.emplace_back( pgettext( "Main Menu|New Game", "<R|r>andom Character" ) );
@@ -508,6 +558,7 @@ void main_menu::init_strings()
         // Special games don't play well together with shared maps
         vNewGameSubItems.emplace_back( pgettext( "Main Menu|New Game", "<T|t>utorial" ) );
         vNewGameSubItems.emplace_back( pgettext( "Main Menu|New Game", "<D|d>efence mode" ) );
+        vNewGameIds.insert( vNewGameIds.end(), { "play_now_default", "play_now", "tutorial", "defence" } );
     }
     vNewGameHints.clear();
     vNewGameHints.emplace_back(
@@ -704,14 +755,116 @@ bool main_menu::opening_screen()
     } );
     ui.mark_resize();
 
+    // The entries of the selected tab, with ids that do not depend on language or position.
+    const auto submenu_entries = [this]() {
+        auto entries = std::vector<submenu_entry> {};
+        const auto add = [&]( const std::string & id, const std::string & item,
+        const std::string & hint ) {
+            entries.push_back( { .id = id, .label = remove_color_tags( shortcut_text( c_white, item ) ),
+                                 .description = remove_color_tags( hint ) } );
+        };
+        if( sel1 == getopt( main_menu_opts::NEWCHAR ) ) {
+            for( auto index = std::size_t{ 0 }; index < vNewGameSubItems.size(); ++index ) {
+                add( "new_game:" + vNewGameIds[index], vNewGameSubItems[index],
+                     index < vNewGameHints.size() ? vNewGameHints[index] : "" );
+            }
+        } else if( sel1 == getopt( main_menu_opts::SETTINGS ) ) {
+            for( auto index = std::size_t{ 0 }; index < vSettingsSubItems.size(); ++index ) {
+                add( "settings:" + std::string{ settings_ids[index] }, vSettingsSubItems[index], "" );
+            }
+        } else if( sel1 == getopt( main_menu_opts::LOADCHAR ) ||
+                   sel1 == getopt( main_menu_opts::WORLD ) ) {
+            const auto prefix = sel1 == getopt( main_menu_opts::LOADCHAR ) ? "load:" : "world:";
+            if( sel1 == getopt( main_menu_opts::WORLD ) ) {
+                add( "world:create", _( "Create World" ), "" );
+            }
+            for( const auto &world_name : world_generator->all_worldnames() ) {
+                const auto *const world = world_generator->get_world( world_name );
+                add( prefix + world_name, string_format( "%s (%d)", world_name, world->world_saves.size() ),
+                     "" );
+            }
+        }
+        return entries;
+    };
+
+    // The title art over the tabs, and under them the selected tab's text or entries.
+    const auto screen = ec::screen_scope( ctxt, "main_menu", {
+        .role = "screen",
+        .view = [this, &submenu_entries]( const ec::boundary_state & )
+        {
+            auto tabs = std::views::iota( std::size_t{ 0 }, vMenuItems.size() ) | std::views::transform( [&](
+            const auto index ) {
+                return ec::tab_entry{ .id = std::string{ menu_tab_ids[index] }, .label = remove_color_tags( shortcut_text( c_white, vMenuItems[index] ) ),
+                                      .selected = static_cast<int>( index ) == sel1 };
+            } ) | std::ranges::to<std::vector>();
+            const auto entries = submenu_entries();
+            const auto prose = sel1 == getopt( main_menu_opts::MOTD ) ? mmenu_motd :
+                               sel1 == getopt( main_menu_opts::CREDITS ) ? mmenu_credits : std::string{};
+            const auto listed = prose.empty() && !entries.empty();
+            auto content = ec::component{ .id = "menu:text", .body = ec::text_body{ .markup = prose } };
+            if( listed ) {
+                auto rows = entries | std::views::transform( []( const auto & entry ) {
+                    return ec::row{ .id = entry.id, .label = entry.label, .description = entry.description };
+                } ) | std::ranges::to<std::vector>();
+                content = ec::list( { .id = entries_id, .rows = std::move( rows ), .selection = "single", .activate = entry_id } );
+            }
+            const auto banner = banner_lines() | std::views::join_with( '\n' ) | std::ranges::to<std::string>();
+            auto result = ec::screen_view{
+                .title = "Cataclysm: Bright Nights",
+                .root = ec::split( {
+                    .id = "menu", .children = ec::children_of(
+                    ec::component{ .id = "menu:banner", .body = ec::text_body{ .markup = banner, .role = "banner" } },
+                    ec::tabs( { .id = tabs_id, .tabs = std::move( tabs ), .select = tab_id, .child = std::move( content ) } ) ) } ),
+                .affordances = { ec::invoke_affordance( { .id = tab_id, .label = ctxt.get_action_name( "CONFIRM" ), .args = { .row = ec::row_shape{ .component_id = tabs_id } } } ) },
+            };
+            if( listed ) {
+                result.affordances.push_back( ec::invoke_affordance( { .id = entry_id, .label = ctxt.get_action_name( "CONFIRM" ), .args = { .row = ec::row_shape{ .component_id = entries_id } }, .covers = "CONFIRM" } ) );
+                result.focus_component = entries_id;
+                result.focus_row = sel2 >= 0 &&
+                                   static_cast<std::size_t>( sel2 ) < entries.size() ? entries[sel2].id : std::string{};
+            }
+            return result;
+        },
+    } );
+
     bool start_new = false;
     while( !start ) {
         ui_manager::redraw();
         // Refresh in case player created new world or deleted old world
         // Since this is an index for a mutable array, it should always be regenerated instead of modified.
         const size_t last_world_pos = world_generator->get_world_index( world_generator->last_world_name );
-        std::string action = ctxt.handle_input();
-        input_event sInput = ctxt.get_raw_input();
+        auto action = std::string{};
+        auto sInput = input_event{};
+        action = ctxt.handle_input();
+        sInput = ctxt.get_raw_input();
+
+        if( const auto invoked = ec::invoked( sInput ); invoked && invoked->args.row ) {
+            const auto &row_id = *invoked->args.row;
+            const auto tab = std::ranges::find( menu_tab_ids, row_id );
+            if( invoked->affordance_id == tab_id && tab != menu_tab_ids.end() ) {
+                const auto next = static_cast<int>( tab - menu_tab_ids.begin() );
+                if( next != sel1 ) {
+                    sel1 = next;
+                    sel2 = sel1 == getopt( main_menu_opts::LOADCHAR ) ? last_world_pos : 0;
+                    sel_line = 0;
+                    on_move();
+                }
+                if( sel1 == getopt( main_menu_opts::HELP ) ) {
+                    action = "CONFIRM";
+                } else if( sel1 == getopt( main_menu_opts::QUIT ) ) {
+                    action = "QUIT";
+                } else {
+                    action.clear();
+                }
+            } else if( invoked->affordance_id == entry_id ) {
+                const auto entries = submenu_entries();
+                const auto entry = std::ranges::find( entries, row_id, &submenu_entry::id );
+                if( entry != entries.end() ) {
+                    sel2 = static_cast<int>( entry - entries.begin() );
+                    action = "CONFIRM";
+                }
+            }
+        }
 
         // check automatic menu shortcuts
         for( int i = 0; static_cast<size_t>( i ) < vMenuHotkeys.size(); ++i ) {

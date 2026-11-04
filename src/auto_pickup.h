@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <functional>
 #include <iosfwd>
 #include <string>
@@ -7,6 +8,7 @@
 #include <vector>
 
 #include "enums.h"
+#include "rule_serial.h"
 
 class JsonIn;
 class JsonOut;
@@ -41,6 +43,8 @@ class rule
         std::string sRule = "";
         bool bActive = false;
         bool bExclude = false;
+        /// The rule among the rules of the session, which the client names it by.
+        std::uint64_t serial = next_rule_serial();
 
         rule() = default;
 
@@ -74,11 +78,15 @@ class user_interface
         class tab
         {
             public:
+                /// What the client names the tab by: `global`, `character` or `npc`.
+                std::string id;
                 std::string title;
                 rule_list new_rules;
                 std::reference_wrapper<rule_list> rules;
 
-                tab( const std::string &t, rule_list &r ) : title( t ), new_rules( r ), rules( r ) { }
+                tab( const std::string &i, const std::string &t, rule_list &r ) : id( i ), title( t ),
+                    new_rules( r ),
+                    rules( r ) { }
         };
 
         std::string title;

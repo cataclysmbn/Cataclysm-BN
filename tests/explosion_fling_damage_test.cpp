@@ -11,6 +11,7 @@
 #include "monster.h"
 #include "npc.h"
 #include "options_helpers.h"
+#include "overmap/overmapbuffer.h"
 #include "player_helpers.h"
 #include "state_helpers.h"
 #include "type_id.h"
@@ -22,6 +23,7 @@ TEST_CASE(
     "[explosion][npc]["
     "avatar]") {
     clear_all_state();
+    const auto restore_name = restore_on_out_of_scope<std::string>(get_avatar().name);
     override_option opt("OLD_EXPLOSIONS", "false");
     clear_map();
     move_player_out_of_the_way();
@@ -29,6 +31,9 @@ TEST_CASE(
     avatar& you = get_avatar();
     const auto cleanup_test_state = on_out_of_scope([]() {
         clear_all_state();
+        // control_npc left the dead avatar body in the follower's npc, which clear_npcs does not
+        // reach
+        get_overmapbuffer(g->get_current_dimension_id()).remove_npc(character_id());
         get_avatar().setID(character_id(), true);
     });
     npc& follower = spawn_npc(tripoint_bub_ms(45, 30, 0), "test_talker");

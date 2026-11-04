@@ -1,3 +1,4 @@
+#include "client_choice.h"
 #include "worldfactory.h"
 
 #include <algorithm>
@@ -6,6 +7,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <iterator>
+#include <ranges>
 #include <memory>
 #include <set>
 #include <unordered_map>
@@ -14,9 +16,11 @@
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "catalua.h"
+#include "client_presentation.h"
 #include "color.h"
 #include "cursesdef.h"
 #include "debug.h"
+#include "engine_client_component.h"
 #include "enums.h"
 #include "filesystem.h"
 #include "fstream_utils.h"
@@ -28,6 +32,7 @@
 #include "output.h"
 #include "path_info.h"
 #include "point.h"
+#include "popup.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "string_input_popup.h"
@@ -46,6 +51,112 @@ std::unique_ptr<worldfactory> world_generator;
   * 0 index is inclusive.
   */
 static const int max_worldname_len = 32;
+
+namespace
+{
+
+namespace ec = engine_client;
+
+struct worldgen_tab {
+    std::string id;
+    std::string caption;
+};
+
+auto worldgen_tabs() -> std::vector<worldgen_tab>
+{
+    return {
+        { "mods", translate_marker( "World Mods" ) },
+        { "options", translate_marker( "World Options" ) },
+        { "confirm", translate_marker( "Finalize World" ) },
+    };
+}
+
+constexpr auto worldgen_tabs_id = "worldgen:tabs";
+constexpr auto worldgen_select_id = "worldgen:tab";
+
+/// The tabs a client jumped over, still to be stepped through, one per tab function call.
+auto pending_world_steps = 0;
+
+/// Holds the steps queued by a jump for the lifetime of one world creation: none survive its end, however it ends.
+struct world_jump_scope {
+    world_jump_scope() { pending_world_steps = 0; }
+    world_jump_scope( const world_jump_scope & ) = delete;
+    auto operator=( const world_jump_scope & ) -> world_jump_scope & = delete; // *NOPAD*
+    ~world_jump_scope() { pending_world_steps = 0; }
+};
+
+auto pending_world_step() -> int
+{
+    const auto step = pending_world_steps < 0 ? -1 : pending_world_steps > 0 ? 1 : 0;
+    pending_world_steps -= step;
+    return step;
+}
+
+/// Turns a chosen tab into the step toward it; later steps are queued for the tabs in between.
+auto worldgen_jump( const std::string &id, const std::string &tab ) -> int
+{
+    const auto tabs = worldgen_tabs();
+    const auto from = std::ranges::find( tabs, tab, &worldgen_tab::id ) - tabs.begin();
+    const auto to = std::ranges::find( tabs, id, &worldgen_tab::id ) - tabs.begin();
+    const auto delta = static_cast<int>( to - from );
+    pending_world_steps = delta > 0 ? delta - 1 : delta < 0 ? delta + 1 : 0;
+    return delta > 0 ? 1 : delta < 0 ? -1 : 0;
+}
+
+struct worldgen_view_options {
+    /// The id of the tab on show; empty for a screen without the world creation tabs.
+    std::string tab = {};
+    /// The id and the title of a screen without the tabs.
+    std::string id = {};
+    std::string title = {};
+    std::vector<ec::component> parts = {};
+    std::vector<ec::affordance> affordances = {};
+    std::string focus_component = {};
+    std::string focus_row = {};
+};
+
+/// The tab strip of the world creation and the parts of the tab on show.
+auto worldgen_view( worldgen_view_options options ) -> ec::screen_view
+{
+    auto view = ec::screen_view{ .affordances = std::move( options.affordances ),
+                                 .focus_component = std::move( options.focus_component ), .focus_row = std::move( options.focus_row ) };
+    if( options.tab.empty() ) {
+        view.title = std::move( options.title );
+        view.root = ec::split( { .id = std::move( options.id ), .children = std::move( options.parts ) } );
+        return view;
+    }
+    using namespace std::views;
+    auto entries = worldgen_tabs() | transform( [&]( const worldgen_tab & tab ) { return ec::tab_entry{ .id = tab.id, .label = _( tab.caption ), .selected = tab.id == options.tab }; } )
+    | std::ranges::to<std::vector>();
+    view.title = _( "World creation" );
+    view.root = ec::tabs( { .id = worldgen_tabs_id, .tabs = std::move( entries ), .select = worldgen_select_id,
+                            .child = ec::split( { .id = "worldgen:" + options.tab, .children = std::move( options.parts ) } ) } );
+    view.affordances.push_back( ec::invoke_affordance( { .id = worldgen_select_id, .label = _( "Category" ),
+                                .args = { .row = ec::row_shape{ .component_id = worldgen_tabs_id } } } ) );
+    return view;
+}
+
+auto pick_affordance( const std::string &id, const std::string &label,
+                      const std::string &list ) -> ec::affordance
+{
+    return ec::invoke_affordance( { .id = id, .label = label, .args = { .row = ec::row_shape{ .component_id = list } }, .role = "select" } );
+}
+
+/// A line a panel says above its content.
+auto note_of( const std::string &key, const std::string &markup, const std::string &tone = {} ) ->
+ec::panel_stat {
+    return { .key = key, .label = markup, .value = {}, .max = {}, .unit = {}, .tone = tone };
+}
+
+/// The mods a list shows, by their ids.
+auto mod_rows( const std::vector<mod_id> &mods, const std::string &prefix ) -> std::vector<ec::row>
+{
+    using namespace std::views;
+    return mods | transform( [&]( const mod_id & mod ) { return ec::row{ .id = prefix + mod.str(), .label = mod->name() }; } )
+    | std::ranges::to<std::vector>();
+}
+
+} // namespace
 
 worldfactory::worldfactory()
     : active_world( nullptr )
@@ -105,6 +216,7 @@ WORLDINFO *worldfactory::make_new_world( bool show_prompt, const std::string &wo
         } );
 
         const size_t numtabs = tabs.size();
+        const auto jumps = world_jump_scope{};
         while( static_cast<size_t>( curtab ) < numtabs ) {
             ui_manager::redraw();
             curtab += tabs[curtab]( wf_win, retworld.get(), []() -> bool {
@@ -428,10 +540,43 @@ WORLDINFO *worldfactory::pick_world( bool show_prompt, bool empty_only )
     ctxt.register_action( "PREV_TAB" );
     ctxt.register_action( "CONFIRM" );
 
+    const auto screen = ec::screen_scope( ctxt, "world_pick", { .role = "screen", .view = [&]( const ec::boundary_state & )
+    {
+        using namespace std::views;
+        const auto title = trim( _( " WORLD SELECTION " ) );
+        const auto row_of = [&]( const std::string & name ) { return ec::row{ .id = "world:" + name, .label = string_format( "%s (%d)", name, get_world( name )->world_saves.size() ) }; };
+        return worldgen_view( {
+            .id = "world_pick", .title = title,
+            .parts = ec::children_of( ec::panel( {
+                .id = "world_pick:worlds", .title = title,
+                .stats = { note_of( "hint", _( "Pick a world to enter game" ) ) },
+                .child = ec::list( {
+                    .id = "world_pick:rows", .rows = world_names | transform( row_of ) | std::ranges::to<std::vector>(),
+                    .selection = "single", .activate = "world_pick:pick" } ) } ) ),
+            .affordances = { pick_affordance( "world_pick:pick", _( "Select" ), "world_pick:rows" ) },
+            .focus_component = "world_pick:rows",
+            .focus_row = "world:" + world_pages[selpage][sel],
+        } );
+    }
+                                                              } );
+
     while( true ) {
         ui_manager::redraw();
 
-        const std::string action = ctxt.handle_input();
+        auto action = ctxt.handle_input();
+        // A client picks a row of any page; the native list moves its cursor there, and Enter on it enters the world.
+        if( const auto call = ec::invoked( ctxt.get_raw_input() ); call && call->args.row ) {
+            const auto name = call->args.row->substr( std::string_view{ "world:" }.size() );
+            auto picked = false;
+            for( const auto &[page, names] : world_pages ) {
+                if( const auto found = std::ranges::find( names, name ); found != names.end() ) {
+                    selpage = page;
+                    sel = found - names.begin();
+                    picked = true;
+                }
+            }
+            action = picked && call->activates ? "CONFIRM" : "";
+        }
 
         if( action == "QUIT" ) {
             break;
@@ -524,14 +669,19 @@ std::string worldfactory::pick_random_name()
 
 std::string worldfactory::get_next_valid_worldname()
 {
-    std::string worldname = Name::get( nameIsWorldName );
-
+    // A world named like an existing one would write into its folder and load its saves.
+    const auto base = Name::get( nameIsWorldName );
+    auto worldname = base;
+    for( auto copy = 2; has_world( worldname ); ++copy ) {
+        worldname = string_format( "%s %d", base, copy );
+    }
     return worldname;
 }
 
 int worldfactory::show_worldgen_tab_options( const catacurses::window &, WORLDINFO *world,
         const std::function<bool()> &on_quit )
 {
+    if( const auto step = pending_world_step() ) { return step; }
     get_options().set_world_options( &world->WORLD_OPTIONS );
     const std::string action = get_options().show( false, true, on_quit );
     get_options().set_world_options( nullptr );
@@ -717,10 +867,41 @@ void worldfactory::show_active_world_mods( const std::vector<mod_id> &world_mods
         wnoutrefresh( w_mods );
     } );
 
+    const auto screen = ec::screen_scope( ctxt, "world_mods", { .role = "screen", .view = [&]( const ec::boundary_state & )
+    {
+        const auto title = trim( _( " ACTIVE WORLD MODS " ) );
+        auto parts = ec::children_of( ec::panel( { .id = "worldgen:active_mods", .title = title,
+                                      .stats = world_mods.empty() ? std::vector<ec::panel_stat> { note_of( "none", _( "--NO ACTIVE MODS--" ) ) } : std::vector<ec::panel_stat> {},
+                                      .child = ec::list( { .id = "worldgen:active_mods:rows", .rows = mod_rows( world_mods, "mod:" ),
+                                               .selection = "single", .activate = "worldgen:active_mods:pick" } ) } ) );
+        if( !world_mods.empty() ) {
+            parts.push_back( { .id = "worldgen:active_mods:details", .body = ec::text_body{
+                    .markup = remove_color_tags( mman_ui->get_information( &world_mods[cursor].obj() ) ) } } );
+        }
+        return worldgen_view( {
+            .id = "worldgen:active_mods", .title = title, .parts = std::move( parts ),
+            .affordances = { pick_affordance( "worldgen:active_mods:pick", _( "Select" ), "worldgen:active_mods:rows" ) },
+            .focus_component = "worldgen:active_mods:rows",
+            .focus_row = world_mods.empty() ? std::string() : "mod:" + world_mods[cursor].str(),
+        } );
+    }
+                                                              } );
+
     while( true ) {
         ui_manager::redraw();
 
-        const std::string action = ctxt.handle_input();
+        const auto action = [&]() {
+            const auto action = ctxt.handle_input();
+            if( const auto call = ec::invoked( ctxt.get_raw_input() ); call && call->args.row ) {
+                const auto found = std::ranges::find( world_mods, call->args.row->substr( 4 ), &mod_id::str );
+                if( found == world_mods.end() ) { return std::string{}; }
+                cursor = static_cast<int>( found - world_mods.begin() );
+                // Enter on a row closes the list, as the native key does.
+                return std::string( call->activates ? "CONFIRM" : "" );
+            }
+            return action;
+        }
+        ();
 
         if( action == "UP" ) {
             cursor--;
@@ -764,10 +945,15 @@ void worldfactory::edit_active_world_mods( WORLDINFO *world )
 
     bool save_changes = false;
     mod_manager::t_mod_list new_mod_order = world->active_mod_order;
-    show_modselection_window( wf_win, new_mod_order, [&save_changes]() {
-        save_changes = query_yn( _( "Save changes?" ) );
-        return true;
-    }, nullptr, true );
+    show_modselection_window( wf_win, new_mod_order, {
+        .on_quit = [&save_changes]()
+        {
+            save_changes = query_yn( _( "Save changes?" ) );
+            return true;
+        },
+        .on_backtab = nullptr,
+        .standalone = true
+    } );
 
     if( save_changes ) {
         world->active_mod_order = new_mod_order;
@@ -778,14 +964,14 @@ void worldfactory::edit_active_world_mods( WORLDINFO *world )
 int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win, WORLDINFO *world,
         const std::function<bool()> &on_quit )
 {
-    return show_modselection_window( win, world->active_mod_order, on_quit, on_quit, false );
+    if( const auto step = pending_world_step() ) { return step; }
+    return show_modselection_window( win, world->active_mod_order, {
+        .on_quit = on_quit, .on_backtab = on_quit, .standalone = false
+    } );
 }
 
 int worldfactory::show_modselection_window( const catacurses::window &win,
-        std::vector<mod_id> &active_mod_order,
-        const std::function<bool()> &on_quit,
-        const std::function<bool()> &on_backtab,
-        bool standalone )
+        std::vector<mod_id> &active_mod_order, const modselection_options &options )
 {
     {
         std::vector<mod_id> tmp_mod_order;
@@ -805,7 +991,7 @@ int worldfactory::show_modselection_window( const catacurses::window &win,
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "NEXT_CATEGORY_TAB" );
     ctxt.register_action( "PREV_CATEGORY_TAB" );
-    if( !standalone ) {
+    if( !options.standalone ) {
         ctxt.register_action( "NEXT_TAB" );
         ctxt.register_action( "PREV_TAB" );
     }
@@ -1004,12 +1190,12 @@ int worldfactory::show_modselection_window( const catacurses::window &win,
     };
 
     ui.on_redraw( [&]( const ui_adaptor & ) {
-        if( standalone ) {
+        if( options.standalone ) {
             draw_empty_worldgen_tabs( win );
         } else {
             draw_worldgen_tabs( win, 0 );
         }
-        draw_modselection_borders( win, ctxt, standalone );
+        draw_modselection_borders( win, ctxt, options.standalone );
 
         // Redraw headers
         for( size_t i = 0; i < headers.size(); ++i ) {
@@ -1115,6 +1301,64 @@ int worldfactory::show_modselection_window( const catacurses::window &win,
         fpopup.reset();
     };
 
+    const auto screen = ec::screen_scope( ctxt, "world_creation", { .role = "screen", .view = [&]( const ec::boundary_state & )
+    {
+        const auto &categories = get_mod_list_tabs();
+        const auto &current_tab = all_tabs[iCurrentTab];
+        auto entries = std::vector<ec::tab_entry> {};
+        for( auto i = std::size_t{ 0 }; i < categories.size(); ++i ) {
+            entries.push_back( { .id = all_tabs[i].id, .label = _( categories[i].second ), .selected = i == iCurrentTab } );
+        }
+        auto available = std::vector<ec::panel_stat> {};
+        if( current_tab.mods.empty() ) {
+            available.push_back( note_of( "none", current_tab.mods_unfiltered.empty() ?
+                                          _( "--NO AVAILABLE MODS--" ) : _( "--NO MATCHES--" ) ) );
+        }
+        auto active_rows = mod_rows( active_mod_order, "active:" );
+        for( auto i = std::size_t{ 0 }; i < active_rows.size(); ++i ) {
+            active_rows[i].columns = { { .key = "order", .label = _( "Order" ), .value = std::to_string( i + 1 ), .color = {} } };
+            active_rows[i].toggled = true;
+        }
+        auto active = std::vector<ec::panel_stat> {};
+        if( active_mod_order.empty() ) {
+            active.push_back( note_of( "none", _( "--NO ACTIVE MODS--" ) ) );
+        }
+        auto notes = std::vector<ec::panel_stat> {};
+        if( !current_filter.empty() ) {
+            notes.push_back( note_of( "filter", string_format( _( "Filter: %s" ), current_filter ) ) );
+        }
+        auto parts = ec::children_of( ec::split( { .id = "worldgen:mods:lists",
+                                      .active = active_header == 0 ? "worldgen:mods:categories" : "worldgen:mods:active",
+                                      .children = ec::children_of(
+                                              ec::tabs( { .id = "worldgen:mods:categories", .tabs = std::move( entries ), .select = "worldgen:mods:category",
+                                                      .child = ec::panel( { .id = "worldgen:mods:available", .title = headers[0], .stats = std::move( available ),
+                                                              .child = ec::list( { .id = "worldgen:mods:available:rows", .rows = mod_rows( current_tab.mods, "mod:" ),
+                                                                      .selection = "single", .activate = "worldgen:mods:add" } ) } ) } ),
+                                              ec::panel( { .id = "worldgen:mods:active", .title = headers[1], .stats = std::move( active ),
+                                                      .child = ec::list( { .id = "worldgen:mods:active:rows", .rows = std::move( active_rows ),
+                                                              .selection = "single", .activate = "worldgen:mods:remove" } ) } ) ) } ) );
+        if( const auto *const selected = get_selected_mod() ) {
+            parts.push_back( { .id = "worldgen:mods:details", .body = ec::text_body{ .markup = remove_color_tags( mman_ui->get_information( selected ) ) } } );
+        }
+        parts = ec::children_of( ec::panel( { .id = "worldgen:mods:header", .stats = std::move( notes ),
+                                              .child = ec::split( { .id = "worldgen:mods:body", .relation = "detail", .children = std::move( parts ) } ) } ) );
+        const auto &focused = active_header == 0 ? current_tab.mods : active_mod_order;
+        const auto line = active_header == 0 ? cursel[0] : cursel[1];
+        return worldgen_view( {
+            .tab = options.standalone ? std::string() : "mods", .id = "worldgen:mods", .title = _( "Mods" ), .parts = std::move( parts ),
+            .affordances = {
+                pick_affordance( "worldgen:mods:add", ctxt.get_action_name( "CONFIRM" ), "worldgen:mods:available:rows" ),
+                pick_affordance( "worldgen:mods:remove", ctxt.get_action_name( "CONFIRM" ), "worldgen:mods:active:rows" ),
+                ec::invoke_affordance( {
+                    .id = "worldgen:mods:category", .label = _( "Category" ),
+                    .args = { .row = ec::row_shape{ .component_id = "worldgen:mods:categories" } } } ),
+            },
+            .focus_component = active_header == 0 ? "worldgen:mods:available:rows" : "worldgen:mods:active:rows",
+            .focus_row = line < focused.size() ? ( active_header == 0 ? "mod:" : "active:" ) + focused[line].str() : std::string(),
+        } );
+    }
+                                                                  } );
+
     int tab_output = 0;
     while( tab_output == 0 ) {
         ui_manager::redraw();
@@ -1136,7 +1380,35 @@ int worldfactory::show_modselection_window( const catacurses::window &win,
                              prev_selection;
         }
 
-        const std::string action = ctxt.handle_input();
+        const auto action = [&]() {
+            const auto action = ctxt.handle_input();
+            const auto call = ec::invoked( ctxt.get_raw_input() );
+            if( !call || !call->args.row ) { return action; }
+            const auto &id = *call->args.row;
+            const auto index_in = [&]( const std::vector<mod_id> &mods, const std::size_t skip ) {
+                return static_cast<std::size_t>( std::ranges::find( mods, id.substr( skip ),
+                                                 &mod_id::str ) - mods.begin() );
+            };
+            if( call->affordance_id == worldgen_select_id ) {
+                tab_output = worldgen_jump( id, "mods" );
+            } else if( call->affordance_id == "worldgen:mods:category" ) {
+                iCurrentTab = static_cast<std::size_t>( std::ranges::find( all_tabs, id,
+                                                        &mod_tab::id ) - all_tabs.begin() );
+                startsel[0] = 0;
+                cursel[0] = 0;
+            } else if( call->affordance_id == "worldgen:mods:add" ) {
+                active_header = 0;
+                cursel[0] = index_in( all_tabs[iCurrentTab].mods, 4 );
+                return std::string( call->activates ? "CONFIRM" : "" );
+            } else {
+                // Selecting marks the mod for the move actions, activating deactivates it.
+                active_header = 1;
+                cursel[1] = index_in( active_mod_order, 7 );
+                return std::string( call->activates ? "CONFIRM" : "" );
+            }
+            return std::string();
+        }
+        ();
 
         if( action == "DOWN" ) {
             selection = next_selection;
@@ -1198,7 +1470,7 @@ int worldfactory::show_modselection_window( const catacurses::window &win,
             }
         } else if( action == "NEXT_TAB" ) {
             tab_output = 1;
-        } else if( action == "PREV_TAB" && ( !on_backtab || on_backtab() ) ) {
+        } else if( action == "PREV_TAB" && ( !options.on_backtab || options.on_backtab() ) ) {
             tab_output = -1;
         } else if( action == "SAVE_DEFAULT_MODS" ) {
             if( query_yn( _( "Save list of active mods as default mod list?" ) ) ) {
@@ -1212,7 +1484,7 @@ int worldfactory::show_modselection_window( const catacurses::window &win,
             if( const MOD_INFORMATION *selmod = get_selected_mod() ) {
                 popup( "%s", mman_ui->get_information( selmod ) );
             }
-        } else if( action == "QUIT" && ( !on_quit || on_quit() ) ) {
+        } else if( action == "QUIT" && ( !options.on_quit || options.on_quit() ) ) {
             tab_output = -999;
         } else if( action == "FILTER" ) {
             set_filter();
@@ -1251,12 +1523,14 @@ int worldfactory::show_modselection_window( const catacurses::window &win,
 int worldfactory::show_worldgen_tab_confirm( const catacurses::window &win, WORLDINFO *world,
         const std::function<bool()> &on_quit )
 {
+    if( const auto step = pending_world_step() ) { return step; }
     catacurses::window w_confirmation;
 
     ui_adaptor ui;
 
     string_input_popup spopup;
     spopup.max_length( max_worldname_len );
+    spopup.shares_screen = true;
 
     const point namebar_pos( 3 + utf8_width( _( "World Name:" ) ), 1 );
 
@@ -1275,9 +1549,9 @@ int worldfactory::show_worldgen_tab_confirm( const catacurses::window &win, WORL
     ctxt.register_action( "TEXT.HOME" );
     ctxt.register_action( "TEXT.END" );
     ctxt.register_action( "TEXT.DELETE" );
-#if defined( TILES )
-    ctxt.register_action( "TEXT.PASTE" );
-#endif
+    if( game_client::presentation().clipboard_available() ) {
+        ctxt.register_action( "TEXT.PASTE" );
+    }
     ctxt.register_action( "TEXT.INPUT_FROM_FILE" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
     ctxt.register_action( "ANY_INPUT" );
@@ -1349,10 +1623,52 @@ int worldfactory::show_worldgen_tab_confirm( const catacurses::window &win, WORL
         }
     } );
 
+    const auto screen = ec::screen_scope( ctxt, "world_creation", { .role = "screen", .view = [&]( const ec::boundary_state & )
+    {
+        const auto v2 = world->world_save_format == save_format::V2_COMPRESSED_SQLITE3;
+        auto notes = std::vector<ec::panel_stat> {
+            note_of( "random", string_format( _( "Press [<color_yellow>%s</color>] to pick a random name for your world." ),
+                                              ctxt.get_desc( "PICK_RANDOM_WORLDNAME" ) ) ),
+            note_of( "format", v2 ? _( "Save Format: V2 (Current)" ) : _( "Save Format: V1 (Legacy)" ), v2 ? "good" : "" ),
+            note_of( "format_help", string_format( _( "Press [<color_yellow>%s</color>] to toggle save format.\n"
+                                                   "<color_light_blue>V2 format shrinks save files and reduces save corruption. "
+                                                   "V1 is the legacy format. You can convert existing V1 worlds to V2 from the main menu. "
+                                                   "V2 worlds cannot currently be converted back to V1.</color>" ),
+                                                   ctxt.get_desc( "TOGGLE_V2_SAVE_FORMAT" ) ) ),
+            note_of( "finish", string_format( _( "Press [<color_yellow>%s</color>] when you are satisfied with the world as it is and are ready "
+                                                 "to continue, or [<color_yellow>%s</color>] to go back and review your world." ),
+                                              ctxt.get_desc( "NEXT_TAB" ), ctxt.get_desc( "PREV_TAB" ) ) ),
+        };
+        auto parts = ec::children_of( ec::panel( { .id = "worldgen:confirm:notes", .stats = std::move( notes ),
+                                      .child = ec::component{ .id = "worldgen:confirm:name", .affordances = { "worldgen:confirm:name" },
+        .body = ec::form_body{ .fields = { {
+                    .id = "name", .label = _( "World Name:" ), .value = worldname, .max_length = max_worldname_len, .printable = true,
+                }
+            } } } } ) );
+        return worldgen_view( {
+            .tab = "confirm", .parts = std::move( parts ),
+            .affordances = {
+                ec::invoke_affordance( {
+                    .id = "worldgen:confirm:name", .label = _( "World Name:" ),
+                    .args = { .text = ec::text_shape{ .field_id = "name" } } } )
+            },
+            .focus_component = "worldgen:confirm:name", .focus_row = "name",
+        } );
+    }
+                                                                  } );
+
     do {
         ui_manager::redraw();
 
         worldname = spopup.query_string( false, false, true );
+        if( const auto call = ec::invoked( ctxt.get_raw_input() ) ) {
+            if( call->affordance_id == worldgen_select_id && call->args.row ) {
+                world->world_name = worldname;
+                return worldgen_jump( *call->args.row, "confirm" );
+            }
+            if( call->args.text ) { worldname = utf8_truncate( *call->args.text, max_worldname_len ); }
+            continue;
+        }
         const std::string action = ctxt.input_to_action( ctxt.get_raw_input() );
         if( action == "NEXT_TAB" ) {
             if( worldname.empty() ) {
@@ -1471,16 +1787,9 @@ void worldfactory::draw_worldgen_tabs( const catacurses::window &w, size_t curre
 {
     werase( w );
 
-    static const std::vector<std::string> tab_strings = { {
-            translate_marker( "World Mods" ),
-            translate_marker( "World Options" ),
-            translate_marker( "Finalize World" )
-        }
-    };
-
-    std::vector<std::string> tab_strings_translated( tab_strings );
-    std::ranges::for_each( tab_strings_translated,
-                           []( std::string & str )->void { str = _( str ); } );
+    using namespace std::views;
+    const auto tab_strings_translated = worldgen_tabs() | transform( []( const worldgen_tab & tab ) { return std::string( _( tab.caption ) ); } )
+    | std::ranges::to<std::vector>();
 
     draw_tabs( w, tab_strings_translated, current );
     draw_border_below_tabs( w );

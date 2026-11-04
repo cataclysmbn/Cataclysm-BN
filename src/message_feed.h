@@ -1,0 +1,35 @@
+#pragma once
+
+#include <cstdint>
+#include <optional>
+#include <string>
+#include <vector>
+
+#include "enums.h"
+#include "localised_text.h"
+
+namespace Messages
+{
+
+/// How far a reader has followed the native message log: the last message and its repeat count.
+struct feed_cursor {
+    std::uint64_t id = 0;
+    int count = 0;
+};
+/// A message as the native log shows it, without the "x N" suffix.
+struct feed_entry {
+    std::uint64_t id = 0;
+    std::string text;
+    game_message_type type = m_neutral;
+    int count = 1;
+    /// The game turn the message was logged on, or last repeated on.
+    int turn = 0;
+    /// What a client renders in its own language, for a line made from a translatable format.
+    std::optional<localised_text> localised;
+};
+
+/// Messages added after `after` in log order, plus the cursor's own message when it repeated since.
+/// Messages hidden by the cooldown are skipped as the native sidebar does.
+auto feed_since( const feed_cursor &after ) -> std::vector<feed_entry>;
+
+} // namespace Messages

@@ -138,3 +138,54 @@ TEST_CASE("opening_floor_rebuilds_below_visibility", "[vision][zlevel]") {
     CHECK(below_cache.visibility_cache[below_cache.idx(hole_pos.x(), hole_pos.y())]
           != lit_level::BLANK);
 }
+
+TEST_CASE("visibility_pass_clears_seen_cache_dirty_until_a_door_opens", "[vision][seen_cache]") {
+    clear_all_state();
+
+    map& here = get_map();
+
+    const ter_id t_floor("t_floor");
+    const ter_id t_wall("t_wall");
+    const ter_id t_door_c("t_door_c");
+    const ter_id t_door_o("t_door_o");
+
+    g->place_player(tripoint_bub_ms(60, 60, 0));
+    calendar::turn = calendar::turn_zero + 12_hours;
+    g->reset_light_level();
+
+    const auto player_pos = g->u.bub_pos();
+    const auto door_pos = player_pos + point(2, 0);
+    const auto beyond_pos = player_pos + point(4, 0);
+    std::ranges::for_each(std::views::iota(-3, 4), [&](const int dy) {
+        here.ter_set(door_pos + point(0, dy), t_wall);
+    });
+    here.ter_set(door_pos, t_door_c);
+    here.ter_set(beyond_pos, t_floor);
+
+    const auto refresh = [&] {
+        here.build_map_cache(player_pos.z());
+        if (here.visibility_caches_dirty()) { here.update_visibility_cache(player_pos.z()); }
+    };
+    const auto& cache = here.access_cache(player_pos.z());
+    const auto beyond_idx = static_cast<size_t>(cache.idx(beyond_pos.x(), beyond_pos.y()));
+
+    here.invalidate_map_cache(player_pos.z());
+    refresh();
+    REQUIRE(cache.visibility_cache[beyond_idx] == lit_level::BLANK);
+
+    // Nothing changed since the pass: neither the pass nor another cache build may ask for more
+    // work.
+    CHECK_FALSE(cache.seen_cache_dirty);
+    CHECK_FALSE(here.visibility_caches_dirty());
+    here.build_map_cache(player_pos.z());
+    CHECK_FALSE(cache.seen_cache_dirty);
+    CHECK_FALSE(here.visibility_caches_dirty());
+
+    // A real change marks the caches again and the next pass lets the avatar see through.
+    here.ter_set(door_pos, t_door_o);
+    CHECK(cache.seen_cache_dirty);
+    refresh();
+    CHECK(cache.visibility_cache[beyond_idx] != lit_level::BLANK);
+    CHECK_FALSE(cache.seen_cache_dirty);
+    CHECK_FALSE(here.visibility_caches_dirty());
+}

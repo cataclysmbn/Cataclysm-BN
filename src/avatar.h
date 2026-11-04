@@ -24,6 +24,7 @@ class monster;
 class npc;
 class map_memory;
 struct memorized_terrain_tile;
+struct memory_revision;
 
 namespace debug_menu
 {
@@ -134,6 +135,10 @@ class avatar : public player
         int get_memorized_symbol( const tripoint_abs_ms &p ) const;
         void clear_memorized_overlay( const tripoint_abs_ms &pos );
         void clear_memorized_tile( const tripoint_abs_ms &pos );
+        /** Every position the avatar has any map memory of, without loading or allocating memory. */
+        std::vector<tripoint_abs_ms> memorized_positions() const;
+        /** Changes whenever the avatar's map memory may have changed. */
+        auto map_memory_revision() const -> memory_revision;
         /** Returns last stored map tile in given location in tiles mode */
         bool has_memorized_tile_for_autodrive( const tripoint_abs_ms &p ) const;
 
@@ -233,6 +238,7 @@ class avatar : public player
         void upgrade_stat( character_stat stat );
 
         faction *get_faction() const override;
+        auto get_faction_id_for_display() const -> std::optional<faction_id> override;
         // Set in npc::talk_to_you for use in further NPC interactions
         bool dialogue_by_radio = false;
         // Preferred aim mode - ranged.cpp aim mode defaults to this if possible

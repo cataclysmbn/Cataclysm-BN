@@ -1,22 +1,47 @@
 #include "string_editor_window.h"
+#include "engine_client_component.h"
+#include "translations.h"
+#include "client_presentation.h"
+#include "cata_utility.h"
 
-#if defined(TILES)
-#include "sdl_wrappers.h"
-#endif
 
 #include <algorithm>
 #include <array>
 #include <cctype>
 
-#if defined(__ANDROID__)
-#include <SDL3/SDL.h>
-#include "cata_utility.h"
-#include "options.h"
-#include "sdltiles.h"
-#endif
 
 #include "wcwidth.h"
 #include "ui_manager.h"
+
+namespace
+{
+namespace ec = engine_client;
+
+constexpr auto editor_form_id = "editor:form";
+constexpr auto editor_field_id = "editor:text";
+constexpr auto editor_set_id = "editor:set";
+
+/// The text being edited and where its cursor stands, as the editor keeps them.
+auto editor_view( const std::string &text, const int cursor ) -> ec::screen_view
+{
+    return {
+        .title = _( "Text" ),
+        .root = ec::component{
+            .id = editor_form_id, .affordances = { editor_set_id },
+            .body = ec::form_body{
+                .fields = { {
+                        .id = editor_field_id, .label = _( "Text" ), .value = text, .type = "text",
+                        .multiline = true, .cursor = cursor
+                    }
+                } } },
+        .affordances = {
+            ec::invoke_affordance( {
+                .id = editor_set_id, .label = _( "Text" ),
+                .args = { .text = ec::text_shape{ .field_id = editor_field_id } } } ),
+        },
+    };
+}
+} // namespace
 
 static bool is_linebreak( const uint32_t uc )
 {
@@ -490,9 +515,9 @@ void string_editor_window::create_context()
     ctxt->register_action( "TEXT.PAGE_UP" );
     ctxt->register_action( "TEXT.PAGE_DOWN" );
     ctxt->register_action( "TEXT.DELETE" );
-#if defined(TILES)
-    ctxt->register_action( "TEXT.PASTE" );
-#endif
+    if( game_client::presentation().clipboard_available() ) {
+        ctxt->register_action( "TEXT.PASTE" );
+    }
     ctxt->register_action( "TEXT.INPUT_FROM_FILE" );
     ctxt->register_action( "HELP_KEYBINDINGS" );
     ctxt->register_action( "ANY_INPUT" );
@@ -603,22 +628,34 @@ std::pair<bool, std::string> string_editor_window::query_string()
         wnoutrefresh( _win );
     } );
 
-#if defined(__ANDROID__)
-    on_out_of_scope stop_text_input( []() {
-        if( get_option<bool>( "ANDROID_AUTO_KEYBOARD" ) ) {
-            SDL_StopTextInput( get_sdl_window().get() );
-        }
-    } );
-#endif
+    const auto stop_text_input = on_out_of_scope( []() { game_client::presentation().stop_text_input(); } );
+
+    const auto screen = ec::screen_scope( *ctxt, "text_editor", { .view = [this]( const ec::boundary_state & /*state*/ )
+    {
+        return editor_view( _utext.str(), _position );
+    }
+                                                                } );
 
     int ch = 0;
     do {
         ui_manager::redraw();
 
-        const std::string action = ctxt->handle_input();
-
-        const input_event ev = ctxt->get_raw_input();
+        const auto action = ctxt->handle_input();
+        const auto ev = ctxt->get_raw_input();
         ch = ev.type == input_event_t::keyboard ? ev.get_first_input() : 0;
+
+        if( const auto set = ec::invoked( ev ) ) {
+            // The whole text at once, as a client that cannot type key by key sends it.
+            if( set->affordance_id == editor_set_id && set->args.text ) {
+                _utext = utf8_wrapper( *set->args.text );
+                _position = _utext.length();
+                _cursor_desired_x = -1;
+                edit = utf8_wrapper();
+                ctxt->set_edittext( {} );
+                refold = true;
+            }
+            continue;
+        }
 
         if( action == "TEXT.QUIT" ) {
             return { false, _utext.str() };
@@ -700,15 +737,9 @@ std::pair<bool, std::string> string_editor_window::query_string()
             // paste, input from file, or text input
             std::string entered;
             if( action == "TEXT.PASTE" ) {
-#if defined(TILES)
                 if( edit.empty() ) {
-                    char *const clip = SDL_GetClipboardText();
-                    if( clip ) {
-                        entered = clip;
-                        SDL_free( clip );
-                    }
+                    entered = game_client::presentation().clipboard_text();
                 }
-#endif
             } else if( action == "TEXT.INPUT_FROM_FILE" ) {
                 if( edit.empty() ) {
                     entered = get_input_string_from_file();

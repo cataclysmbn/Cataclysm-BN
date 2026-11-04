@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cstdint>
 #include <functional>
 #include <iosfwd>
 #include <optional>
@@ -24,7 +25,41 @@ struct tripoint;
 void rng_set_engine_seed( unsigned int seed );
 
 using cata_default_random_engine = std::minstd_rand0;
-cata_default_random_engine &rng_get_engine();
+
+struct rng_deterministic_key {
+    std::uint64_t stream = 0;
+    std::uint64_t id = 0;
+};
+
+class rng_deterministic_task_scope
+{
+    public:
+        explicit rng_deterministic_task_scope( unsigned int seed );
+        ~rng_deterministic_task_scope();
+
+        rng_deterministic_task_scope( const rng_deterministic_task_scope & ) = delete;
+        auto operator=( const rng_deterministic_task_scope & )
+        -> rng_deterministic_task_scope & = delete; // *NOPAD*
+
+    private:
+        bool old_has_task_engine_ = false;
+        cata_default_random_engine old_task_engine_;
+        bool old_has_task_context_ = false;
+        std::uint64_t old_task_context_seed_ = 0;
+        std::uint64_t old_task_child_counter_ = 0;
+};
+
+auto rng_get_engine() -> cata_default_random_engine &; // *NOPAD*
+auto rng_set_deterministic_seed( unsigned int seed ) -> void;
+auto rng_clear_deterministic_seed() -> void;
+auto rng_deterministic_seed_active() -> bool;
+auto rng_deterministic_seed_value() -> std::optional<unsigned int>;
+auto rng_deterministic_seed_for( const rng_deterministic_key &key ) -> unsigned int;
+auto rng_deterministic_child_seed( unsigned int parent_seed,
+                                   const rng_deterministic_key &key ) -> unsigned int;
+auto rng_deterministic_seed_for_current_context(
+    const rng_deterministic_key &key ) -> std::optional<unsigned int>;
+auto rng_next_deterministic_call_seed( std::uint64_t stream ) -> std::optional<unsigned int>;
 unsigned int rng_bits();
 
 /**

@@ -243,6 +243,10 @@ class iuse_actor
         virtual ret_val<bool> can_use( const Character &, const item &, bool,
                                        const tripoint_bub_ms & ) const;
         virtual void info( const item &, std::vector<iteminfo> & ) const {}
+        /// Override only descriptions with effectful construction or delegated description calls.
+        virtual auto info_for_display( const item &it, std::vector<iteminfo> &dump ) const -> void {
+            info( it, dump );
+        }
         /**
          * Returns a deep copy of this object. Example implementation:
          * \code

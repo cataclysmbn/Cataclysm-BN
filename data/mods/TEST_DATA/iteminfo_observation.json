@@ -1,0 +1,318 @@
+[
+  {
+    "type": "ARMOR",
+    "id": "test_info_jersey",
+    "copy-from": "jersey",
+    "name": "TEST observation jersey",
+    "snippet_category": [ { "id": "test_info_unseen", "text": "An unseen observation jersey inscription." } ]
+  },
+  {
+    "type": "BOOK",
+    "id": "test_info_book",
+    "name": "TEST observation mechanics book",
+    "description": "A mechanics book with an observation recipe.",
+    "weight": "100 g",
+    "volume": "250 ml",
+    "material": [ "paper" ],
+    "symbol": "?",
+    "color": "blue",
+    "skill": "mechanics",
+    "max_level": 3,
+    "required_level": 0,
+    "intelligence": 0,
+    "time": "10 m",
+    "chapters": 3
+  },
+  {
+    "type": "GENERIC",
+    "id": "test_info_result",
+    "name": "TEST observation water assembly",
+    "description": "A deterministic observation recipe result.",
+    "weight": "100 g",
+    "volume": "250 ml",
+    "material": [ "steel" ],
+    "symbol": ";",
+    "color": "white"
+  },
+  {
+    "type": "recipe",
+    "result": "test_info_result",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_OTHER",
+    "skill_used": "mechanics",
+    "difficulty": 2,
+    "time": "1 m",
+    "autolearn": [ [ "mechanics", 2 ] ],
+    "book_learn": [ [ "test_info_book", 0 ] ],
+    "components": [ [ [ "test_info_jersey", 1 ] ], [ [ "water", 1 ] ], [ [ "water_sewage", 1 ] ] ]
+  },
+  {
+    "type": "ARMOR",
+    "id": "test_info_target",
+    "copy-from": "jersey",
+    "name": "TEST observation transform target",
+    "snippet_category": [
+      { "id": "test_info_target_a", "text": "First transform-target inscription." },
+      { "id": "test_info_target_b", "text": "Second transform-target inscription." }
+    ]
+  },
+  {
+    "type": "GENERIC",
+    "id": "test_info_transform",
+    "copy-from": "test_info_result",
+    "name": "TEST observation transformer",
+    "use_action": { "type": "transform", "target": "test_info_target", "msg": "The test item transforms." }
+  },
+  {
+    "type": "recipe",
+    "result": "test_info_target",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_OTHER",
+    "skill_used": "mechanics",
+    "difficulty": 2,
+    "time": "1 m",
+    "autolearn": [ [ "mechanics", 2 ] ],
+    "components": [ [ [ "test_info_jersey", 1 ] ] ]
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "test_info_food_component",
+    "copy-from": "test_pine_nuts",
+    "name": "TEST observation food component",
+    "snippet_category": [
+      { "id": "test_info_food_a", "text": "First food-component inscription." },
+      { "id": "test_info_food_b", "text": "Second food-component inscription." }
+    ]
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "test_info_food",
+    "copy-from": "test_pine_nuts",
+    "name": "TEST observation crafted food",
+    "delete": { "flags": [ "NUTRIENT_OVERRIDE" ] }
+  },
+  {
+    "type": "recipe",
+    "result": "test_info_food",
+    "category": "CC_FOOD",
+    "subcategory": "CSC_FOOD_OTHER",
+    "skill_used": "mechanics",
+    "difficulty": 2,
+    "time": "1 m",
+    "autolearn": [ [ "mechanics", 2 ] ],
+    "components": [ [ [ "test_info_food_component", 1 ] ] ]
+  },
+  {
+    "type": "faction",
+    "id": "test_info_faction",
+    "name": "TEST observation faction",
+    "description": "Effective observation faction description.",
+    "likes_u": 60,
+    "respects_u": 60,
+    "known_by_u": true,
+    "size": 1,
+    "power": 100,
+    "food_supply": 0,
+    "wealth": 0,
+    "currency": "test_info_result",
+    "relations": { "test_info_faction": { "share my stuff": true, "knows your voice": true } }
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "test_info_food_low",
+    "copy-from": "test_info_food_component",
+    "name": "test info food low",
+    "calories": 100,
+    "charges": 1,
+    "flags": [ "RAW", "NUTRIENT_OVERRIDE" ],
+    "snippet_category": "auto:test_info_food_component"
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "test_info_food_high",
+    "copy-from": "test_info_food_component",
+    "name": "test info food high",
+    "calories": 400,
+    "charges": 1,
+    "flags": [ "NUTRIENT_OVERRIDE" ],
+    "snippet_category": "auto:test_info_food_component"
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "test_info_food_waste",
+    "copy-from": "test_info_food_component",
+    "name": "test info food waste",
+    "calories": 20,
+    "charges": 1,
+    "flags": [ "NUTRIENT_OVERRIDE" ],
+    "vitamins": [ [ "iron", 1 ] ],
+    "snippet_category": "auto:test_info_food_component"
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "test_info_food_child",
+    "copy-from": "test_info_food_component",
+    "name": "test info food child",
+    "calories": 200,
+    "charges": 1,
+    "flags": [  ],
+    "snippet_category": "auto:test_info_food_component"
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "test_info_food_recursive",
+    "copy-from": "test_info_food_component",
+    "name": "test info food recursive",
+    "calories": 500,
+    "charges": 1,
+    "flags": [  ],
+    "snippet_category": "auto:test_info_food_component"
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "test_info_food_dry",
+    "copy-from": "test_info_food_component",
+    "name": "test info food dry",
+    "calories": 200,
+    "charges": 1,
+    "flags": [  ],
+    "snippet_category": "auto:test_info_food_component"
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "test_info_food_shelf_stable",
+    "copy-from": "test_info_food_component",
+    "name": "test info food shelf stable",
+    "calories": 200,
+    "charges": 1,
+    "flags": [  ],
+    "spoils_in": 0,
+    "snippet_category": "auto:test_info_food_component"
+  },
+  {
+    "type": "recipe",
+    "result": "test_info_food_child",
+    "category": "CC_FOOD",
+    "subcategory": "CSC_FOOD_OTHER",
+    "skill_used": "mechanics",
+    "difficulty": 2,
+    "time": "1 m",
+    "autolearn": [ [ "mechanics", 2 ] ],
+    "components": [ [ [ "test_info_food_low", 1 ] ] ],
+    "contained": true,
+    "container": "bag_plastic"
+  },
+  {
+    "type": "recipe",
+    "result": "test_info_food_recursive",
+    "category": "CC_FOOD",
+    "subcategory": "CSC_FOOD_OTHER",
+    "skill_used": "mechanics",
+    "difficulty": 2,
+    "time": "1 m",
+    "autolearn": [ [ "mechanics", 2 ] ],
+    "components": [ [ [ "test_info_food_child", 1 ], [ "test_info_food_high", 1 ] ] ],
+    "tools": [ [ [ "hotplate", -1 ] ] ],
+    "byproducts": [ [ "test_info_food_waste", 1 ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "test_info_food_dry",
+    "category": "CC_FOOD",
+    "subcategory": "CSC_FOOD_OTHER",
+    "skill_used": "mechanics",
+    "difficulty": 2,
+    "time": "1 m",
+    "autolearn": [ [ "mechanics", 2 ] ],
+    "components": [ [ [ "test_info_food_low", 1 ] ] ],
+    "tools": [ [ [ "dehydrator", -1 ] ] ],
+    "charges": 2
+  },
+  {
+    "type": "recipe",
+    "result": "test_info_food_shelf_stable",
+    "category": "CC_FOOD",
+    "subcategory": "CSC_FOOD_OTHER",
+    "skill_used": "mechanics",
+    "difficulty": 2,
+    "time": "1 m",
+    "autolearn": [ [ "mechanics", 2 ] ],
+    "components": [ [ [ "test_info_food_component", 1 ] ] ],
+    "flags": [ "FULL_MAGAZINE" ]
+  },
+  {
+    "type": "MAGAZINE",
+    "id": "test_info_battery",
+    "name": "TEST observation battery",
+    "description": "A deterministic magazine for component-filter observation tests.",
+    "weight": "100 g",
+    "volume": "100 ml",
+    "material": [ "steel" ],
+    "symbol": "=",
+    "ammo_type": "battery",
+    "capacity": 10
+  },
+  {
+    "type": "ammunition_type",
+    "id": "test_info_range_ammo_type",
+    "name": "TEST observation ammunition",
+    "default": "test_info_range_ammo"
+  },
+  {
+    "type": "AMMO",
+    "id": "test_info_range_ammo",
+    "copy-from": "test_rock",
+    "name": "TEST observation range ammunition",
+    "ammo_type": "test_info_range_ammo_type",
+    "weight": "200 g",
+    "volume": "100 ml",
+    "range": 0,
+    "count": 1,
+    "snippet_category": [
+      { "id": "test_info_range_ammo_a", "text": "First range-ammo inscription." },
+      { "id": "test_info_range_ammo_b", "text": "Second range-ammo inscription." }
+    ],
+    "price": "1 USD",
+    "price_postapoc": "50 cent",
+    "stack_size": 1
+  },
+  {
+    "type": "GENERIC",
+    "id": "test_info_range_child",
+    "copy-from": "test_info_result",
+    "name": "TEST observation range child",
+    "weight": "100 g",
+    "volume": "100 ml"
+  },
+  {
+    "type": "GUNMOD",
+    "id": "test_info_range_mod",
+    "copy-from": "test_mod_neg_int",
+    "name": "TEST observation range mod",
+    "integral_weight": "0 g",
+    "integral_volume": "0 ml",
+    "weight": "100 g",
+    "volume": "100 ml"
+  },
+  {
+    "type": "GUN",
+    "id": "test_info_range_gun",
+    "copy-from": "sling",
+    "name": "TEST observation range gun",
+    "ammo": [ "test_info_range_ammo_type" ],
+    "weight": "300 g",
+    "volume": "250 ml",
+    "range": 5,
+    "built_in_mods": [ "test_info_range_mod" ],
+    "flags": [ "PRIMITIVE_RANGED_WEAPON" ],
+    "valid_mod_locations": [ [ "accessories", 1 ] ]
+  },
+  {
+    "type": "GENERIC",
+    "id": "test_info_range_countdown",
+    "copy-from": "test_info_result",
+    "name": "TEST observation delegated transform",
+    "use_action": { "type": "countdown", "interval": 10 },
+    "countdown_action": { "type": "transform", "target": "test_info_range_child" }
+  }
+]

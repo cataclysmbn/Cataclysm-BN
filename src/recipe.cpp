@@ -1,4 +1,5 @@
 #include "recipe.h"
+#include "item_preview.h"
 
 #include "assign.h"
 #include "cached_options.h"
@@ -386,7 +387,19 @@ std::string recipe::get_consistency_error() const
 
 detached_ptr<item> recipe::create_result() const
 {
-    detached_ptr<item> newit = item::spawn( result_, calendar::turn, item::default_charges_tag{} );
+    return create_result_impl( false );
+}
+
+auto recipe::create_result_for_display() const -> detached_ptr<item>
+{
+    return create_result_impl( true );
+}
+
+auto recipe::create_result_impl( bool preview ) const -> detached_ptr<item>
+{
+    auto newit = preview ? item::spawn_for_display( { .type = &*result_,
+                 .charges = result_->charges_default() } ) :
+                 item::spawn( result_, calendar::turn, item::default_charges_tag{} );
     if( charges ) {
         newit->charges = *charges;
     }
@@ -405,7 +418,8 @@ detached_ptr<item> recipe::create_result() const
     }
 
     if( contained ) {
-        newit = item::in_container( container, std::move( newit ) );
+        newit = preview ? item::in_container_for_display( container, std::move( newit ) ) :
+                item::in_container( container, std::move( newit ) );
     }
 
     return newit;
@@ -569,9 +583,28 @@ bool recipe::will_be_blacklisted() const
 std::function<bool( const item & )> recipe::get_component_filter(
     const recipe_filter_flags flags ) const
 {
-    detached_ptr<item> res = create_result();
-    item &result = *res;
+    const auto result = create_result();
+    return component_filter_for_result( *result, flags );
+}
 
+auto recipe::can_make_with_inventory_for_display( const inventory &crafting_inv,
+        int batch ) const -> bool
+{
+    const auto local_requirements = deduped_requirements();
+    return local_requirements.can_make_with_inventory( crafting_inv,
+            get_component_filter_for_display(), batch );
+}
+
+auto recipe::get_component_filter_for_display( recipe_filter_flags flags ) const ->
+recipe_component_filter
+{
+    const auto result = create_result_for_display();
+    return component_filter_for_result( *result, flags );
+}
+
+auto recipe::component_filter_for_result( const item &result, recipe_filter_flags flags ) const ->
+recipe_component_filter
+{
     // Disallow crafting of non-perishables with rotten components
     // Make an exception for items with the ALLOW_ROTTEN flag such as seeds
     const bool recipe_forbids_rotten =
@@ -641,6 +674,18 @@ std::function<bool( const item & )> recipe::get_component_filter(
 
 bool recipe::hot_result() const
 {
+    const auto result = create_result();
+    return hot_result_impl( *result );
+}
+
+auto recipe::hot_result_for_display() const -> bool
+{
+    const auto result = create_result_for_display();
+    return hot_result_impl( *result );
+}
+
+auto recipe::hot_result_impl( const item &result ) const -> bool
+{
     // Check if the recipe tools make this food item hot upon making it.
     // We don't actually know which specific tool the player used/will use here, but
     // we're checking for a class of tools; because of the way requirements
@@ -653,7 +698,7 @@ bool recipe::hot_result() const
     // does get heated we'll find it right away.
     //
     // TODO: Make this less of a hack
-    if( create_result()->is_food() ) {
+    if( result.is_food() ) {
         const requirement_data::alter_tool_comp_vector &tool_lists = simple_requirements().get_tools();
         for( const std::vector<tool_comp> &tools : tool_lists ) {
             for( const tool_comp &t : tools ) {
@@ -668,7 +713,19 @@ bool recipe::hot_result() const
 
 bool recipe::dehydrate_result() const
 {
-    if( create_result()->is_food() ) {
+    const auto result = create_result();
+    return dehydrate_result_impl( *result );
+}
+
+auto recipe::dehydrate_result_for_display() const -> bool
+{
+    const auto result = create_result_for_display();
+    return dehydrate_result_impl( *result );
+}
+
+auto recipe::dehydrate_result_impl( const item &result ) const -> bool
+{
+    if( result.is_food() ) {
         const requirement_data::alter_tool_comp_vector &tool_lists = simple_requirements().get_tools();
         for( const std::vector<tool_comp> &tools : tool_lists ) {
             for( const tool_comp &t : tools ) {

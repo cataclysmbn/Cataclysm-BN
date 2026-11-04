@@ -78,6 +78,13 @@
       }
     },
     {
+      "name": "linux-clients",
+      "inherits": "linux-slim",
+      "displayName": "Linux (Tiles, Curses, MCP)",
+      "description": "One executable with all three runtime clients.",
+      "cacheVariables": { "CURSES": "ON", "MCP": "ON" }
+    },
+    {
       "name": "osx-arm-slim",
       "binaryDir": "${sourceDir}/out/build/${presetName}",
       "displayName": "macOS ARM Slim Build (Tiles, Sounds)",
@@ -173,6 +180,7 @@
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "CURSES": "OFF",
         "TILES": "ON",
+        "MCP": "ON",
         "SOUND": "ON",
         "BUILD_SDL3": "ON",
         "LANGUAGES": "all",
@@ -253,6 +261,7 @@
         "CMAKE_OSX_ARCHITECTURES": "x86_64",
         "CURSES": "OFF",
         "TILES": "ON",
+        "MCP": "ON",
         "SOUND": "ON"
       }
     },
@@ -277,6 +286,7 @@
         "CMAKE_OSX_ARCHITECTURES": "arm64",
         "CURSES": "OFF",
         "TILES": "ON",
+        "MCP": "ON",
         "SOUND": "ON"
       }
     },
@@ -393,6 +403,12 @@
       "name": "linux-slim",
       "configurePreset": "linux-slim",
       "description": "The minimal build preset for Linux. Recommended for new contributors."
+    },
+    {
+      "name": "linux-clients",
+      "configurePreset": "linux-clients",
+      "targets": ["cataclysm-bn", "cata_test-tiles", "cata_test", "cata_test-mcp"],
+      "description": "Build the shared executable and client regression tests."
     },
     {
       "name": "osx-arm-slim",
