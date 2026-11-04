@@ -24,7 +24,7 @@
           { "weight": 1, "cost": 1, "enchantments": [ { "id": "AEP_GLOW" } ] },
           { "weight": 1, "cost": 1, "enchantments": [ { "id": "AEP_PSYSHIELD" } ] },
           { "weight": 1, "cost": 3, "enchantments": [ { "id": "AEP_RESIST_ELECTRICITY" } ] },
-          { "weight": 1, "cost": 3, "enchantments": [ { "id": "AEP_CARRY_MORE" } ] },
+          { "weight": 1, "cost": 3, "enchantments": [ { "id": "AEP_CARRY_MORE" } ] }
         ]
       },
       {
@@ -48,7 +48,7 @@
           { "weight": 1, "cost": 5, "active_effects": [ { "id": "AEA_TELEPORT" } ] },
           { "weight": 1, "cost": 1, "active_effects": [ { "id": "AEA_LIGHT" } ] },
           { "weight": 1, "cost": 6, "active_effects": [ { "id": "AEA_HURTALL" } ] },
-          { "weight": 1, "cost": 2, "active_effects": [ { "id": "AEA_FUN" } ] },
+          { "weight": 1, "cost": 2, "active_effects": [ { "id": "AEA_FUN" } ] }
         ]
       },
       {
@@ -83,7 +83,7 @@
           { "weight": 1, "cost": -3, "active_effects": [ { "id": "AEA_FLASH" } ] },
           { "weight": 1, "cost": -4, "active_effects": [ { "id": "AEA_VOMIT" } ] },
           { "weight": 1, "cost": -5, "active_effects": [ { "id": "AEA_SHADOWS" } ] },
-          { "weight": 1, "cost": -2, "active_effects": [ { "id": "AEA_STAMINA_EMPTY"}  ] }
+          { "weight": 1, "cost": -2, "active_effects": [ { "id": "AEA_STAMINA_EMPTY" } ] }
         ]
       }
     ],
