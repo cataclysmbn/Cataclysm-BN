@@ -71,11 +71,6 @@ class photo_album_actor : public iuse_actor
                 return ret_val<bool>::make_failure(
                            _( "You need to install this file on a powered reader first." ) );
             }
-            const auto remaining = photo_cooldown_remaining( who );
-            if( remaining > 0_turns ) {
-                return ret_val<bool>::make_failure( _( "You recently viewed photos.  Try again in %s." ),
-                                                    to_string( remaining ) );
-            }
             return ret_val<bool>::make_success();
         }
 
@@ -92,7 +87,8 @@ class photo_album_actor : public iuse_actor
             who.mod_moves( -rng( digital_setting( album, "digital_photos_moves_min" ),
                                  digital_setting( album, "digital_photos_moves_max" ) ) );
             const auto unaffected = who.has_trait( trait_id( "PSYCHOPATH" ) );
-            if( !unaffected ) {
+            const auto cooldown_ready = photo_cooldown_remaining( who ) <= 0_turns;
+            if( !unaffected && cooldown_ready ) {
                 who.add_morale( MORALE_PHOTOS, rng( digital_setting( album, "digital_photos_morale_min" ),
                                                     digital_setting( album, "digital_photos_morale_max" ) ),
                                 digital_setting( album, "digital_photos_morale_cap" ) );
@@ -102,8 +98,10 @@ class photo_album_actor : public iuse_actor
             if( const auto message = SNIPPET.random_from_category( category ) ) {
                 who.add_msg_if_player( unaffected ? m_info : m_good, "%s", message->translated() );
             }
-            who.set_value( "digital_photos_ready",
-                           std::to_string( to_turn<int>( calendar::turn + 10_minutes ) ) );
+            if( cooldown_ready && !unaffected ) {
+                who.set_value( "digital_photos_ready",
+                               std::to_string( to_turn<int>( calendar::turn + 10_minutes ) ) );
+            }
             return 0;
         }
 };

@@ -851,7 +851,7 @@ TEST_CASE("different_music_files_have_independent_cooldowns", "[digital_media][i
     CHECK(digital_music_playing(reader).songs == 9);
 }
 
-TEST_CASE("photo_viewing_cooldown_is_shared_across_albums_and_devices", "[digital_media][iuse]") {
+TEST_CASE("photo_cooldown_limits_rewards_without_blocking_viewing", "[digital_media][iuse]") {
     const auto restore_time = restore_on_out_of_scope(calendar::turn);
     calendar::turn = calendar::turn_zero + 12_hours;
     auto dummy = avatar{};
@@ -876,28 +876,29 @@ TEST_CASE("photo_viewing_cooldown_is_shared_across_albums_and_devices", "[digita
     dummy.invoke_item(&first, "view_photos");
     const auto morale_after_first = dummy.get_morale(MORALE_PHOTOS);
     const auto moves_after_first = dummy.moves;
-    CHECK_FALSE(second_action->can_call(dummy, second, false, dummy.bub_pos()).success());
+    CHECK(second_action->can_call(dummy, second, false, dummy.bub_pos()).success());
     dummy.invoke_item(&second, "view_photos");
     CHECK(dummy.get_morale(MORALE_PHOTOS) == morale_after_first);
-    CHECK(dummy.moves == moves_after_first);
+    CHECK(dummy.moves < moves_after_first);
     CHECK(first.charges == 7);
     CHECK(second.charges == 7);
     auto duplicate = item::spawn(first);
     auto& copy = *duplicate;
     second_reader.put_in(std::move(duplicate));
-    CHECK_FALSE(first_action->can_call(dummy, copy, false, dummy.bub_pos()).success());
+    CHECK(first_action->can_call(dummy, copy, false, dummy.bub_pos()).success());
     dummy.invoke_item(&copy, "view_photos");
-    CHECK(dummy.moves == moves_after_first);
+    CHECK(dummy.moves < moves_after_first);
 
     calendar::turn += 10_minutes - 1_seconds;
-    CHECK_FALSE(second_action->can_call(dummy, second, false, dummy.bub_pos()).success());
+    CHECK(second_action->can_call(dummy, second, false, dummy.bub_pos()).success());
     dummy.invoke_item(&second, "view_photos");
-    CHECK(dummy.moves == moves_after_first);
+    CHECK(dummy.moves < moves_after_first);
     calendar::turn += 1_seconds;
     REQUIRE(second_action->can_call(dummy, second, false, dummy.bub_pos()).success());
     dummy.invoke_item(&second, "view_photos");
-    CHECK(dummy.moves == moves_after_first - 40);
-    CHECK_FALSE(first_action->can_call(dummy, first, false, dummy.bub_pos()).success());
+    CHECK(dummy.moves == moves_after_first - 220);
+    CHECK(dummy.get_morale(MORALE_PHOTOS) > morale_after_first);
+    CHECK(first_action->can_call(dummy, first, false, dummy.bub_pos()).success());
 }
 
 TEST_CASE("photo_viewing_cooldown_is_independent_for_each_player", "[digital_media][iuse]") {
@@ -919,7 +920,9 @@ TEST_CASE("photo_viewing_cooldown_is_independent_for_each_player", "[digital_med
     const auto* action = first.get_use("view_photos");
     REQUIRE(action != nullptr);
     first_viewer.invoke_item(&first, "view_photos");
-    CHECK_FALSE(action->can_call(first_viewer, first, false, first_viewer.bub_pos()).success());
+    CHECK(action->can_call(first_viewer, first, false, first_viewer.bub_pos()).success());
+    first_viewer.invoke_item(&first, "view_photos");
+    CHECK(first_viewer.get_morale(MORALE_PHOTOS) == 5);
     REQUIRE(action->can_call(second_viewer, second, false, second_viewer.bub_pos()).success());
     second_viewer.invoke_item(&second, "view_photos");
     CHECK(second_viewer.get_morale(MORALE_PHOTOS) == 5);
@@ -949,9 +952,10 @@ TEST_CASE(
     CHECK(dummy.moves == moves - 40);
     CHECK(dummy.get_morale(MORALE_PHOTOS) == 2);
     CHECK(file.charges == 7);
-    CHECK_FALSE(action->can_call(dummy, file, false, dummy.bub_pos()).success());
+    CHECK(action->can_call(dummy, file, false, dummy.bub_pos()).success());
     dummy.invoke_item(&file, "view_photos");
-    CHECK(dummy.moves == moves - 40);
+    CHECK(dummy.moves == moves - 80);
+    CHECK(dummy.get_morale(MORALE_PHOTOS) == 2);
 
     calendar::turn += 10_minutes;
     REQUIRE(action->can_call(dummy, file, false, dummy.bub_pos()).success());
@@ -959,13 +963,15 @@ TEST_CASE(
     file.set_var("digital_photos_moves_max", 12);
     const auto moves_before_reopening = dummy.moves;
     dummy.invoke_item(&file, "view_photos");
-    CHECK_FALSE(action->can_call(dummy, file, false, dummy.bub_pos()).success());
+    CHECK(action->can_call(dummy, file, false, dummy.bub_pos()).success());
     dummy.invoke_item(&file, "view_photos");
-    CHECK(dummy.moves == moves_before_reopening - 12);
+    CHECK(dummy.moves == moves_before_reopening - 24);
+    CHECK(dummy.get_morale(MORALE_PHOTOS) == 4);
     calendar::turn += 10_minutes;
     REQUIRE(action->can_call(dummy, file, false, dummy.bub_pos()).success());
     dummy.invoke_item(&file, "view_photos");
-    CHECK(dummy.moves == moves_before_reopening - 24);
+    CHECK(dummy.moves == moves_before_reopening - 36);
+    CHECK(dummy.get_morale(MORALE_PHOTOS) == 6);
     CHECK(file.charges == 7);
     reader.ammo_unset();
     CHECK_FALSE(action->can_call(dummy, file, false, dummy.bub_pos()).success());
