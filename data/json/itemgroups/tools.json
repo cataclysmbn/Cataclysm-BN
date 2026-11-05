@@ -524,7 +524,7 @@
       [ "multitool", 10 ],
       [ "screwdriver_set", 10 ],
       [ "flashlight", 10 ],
-      { "group": "sd_memory_card_encrypted", "prob": 40 },
+      { "group": "digital_storage_media_encrypted", "prob": 40 },
       [ "camera_pro", 2 ],
       [ "element", 5 ],
       [ "light_battery_cell", 10 ],

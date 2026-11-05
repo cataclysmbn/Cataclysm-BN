@@ -7,16 +7,38 @@
     "//": "Compatibility alias for saved hard drives using the former contents group."
   },
   {
+    "id": "digital_storage_media",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "usb_drive", "prob": 7, "custom-flags": [ "MC_RANDOM_STUFF" ] },
+      { "item": "sd_memory_card", "prob": 7, "custom-flags": [ "MC_RANDOM_STUFF" ] },
+      { "item": "usb_drive", "prob": 1, "custom-flags": [ "MC_ENCRYPTED", "MC_RANDOM_STUFF" ] },
+      { "item": "sd_memory_card", "prob": 1, "custom-flags": [ "MC_ENCRYPTED", "MC_RANDOM_STUFF" ] }
+    ]
+  },
+  {
+    "id": "digital_storage_media_encrypted",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "usb_drive", "custom-flags": [ "MC_ENCRYPTED", "MC_RANDOM_STUFF" ] },
+      { "item": "sd_memory_card", "custom-flags": [ "MC_ENCRYPTED", "MC_RANDOM_STUFF" ] }
+    ]
+  },
+  {
     "id": "sd_memory_card_personal",
     "type": "item_group",
     "subtype": "collection",
-    "entries": [ { "item": "sd_memory_card", "custom-flags": [ "MC_RANDOM_STUFF", "MC_MAY_BE_ENCRYPTED" ] } ]
+    "entries": [ { "group": "digital_storage_media" } ],
+    "//": "Compatibility alias for mixed removable-media loot."
   },
   {
     "id": "sd_memory_card_encrypted",
     "type": "item_group",
     "subtype": "collection",
-    "entries": [ { "item": "sd_memory_card", "custom-flags": [ "MC_ENCRYPTED", "MC_RANDOM_STUFF" ] } ]
+    "entries": [ { "group": "digital_storage_media_encrypted" } ],
+    "//": "Compatibility alias for encrypted removable-media loot."
   },
   {
     "id": "sd_memory_card_science",

@@ -151,7 +151,7 @@
       { "item": "umbrella", "prob": 10 },
       { "item": "teleumbrella", "prob": 10 },
       { "item": "pen", "count": [ 1, 5 ], "prob": 50 },
-      { "item": "usb_drive", "prob": 30 },
+      { "group": "digital_storage_media", "prob": 30 },
       { "group": "tools_drawer", "prob": 50 },
       { "group": "tools_cleaning_small", "prob": 30 }
     ]
