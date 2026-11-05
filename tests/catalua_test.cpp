@@ -838,6 +838,12 @@ TEST_CASE("lua_character_get_items_if_filters_items", "[lua][character][item]") 
     CHECK(test_data.get<int>("any_char_forge_count") == 1);
     CHECK(test_data.get<int>("removed_food_count") == 2);
     CHECK(test_data.get<int>("after_remove_count") == 3);
+    CHECK(test_data.get<int>("removed_by_object_count") == 1);
+    CHECK(test_data.get<int>("by_object_count") == 1);
+    CHECK(test_data.get<std::string>("type_str") == "rock");
+    CHECK(test_data.get<std::string>("id_type") == "userdata");
+    CHECK(test_data.get<bool>("id_eq") == true);
+    CHECK(test_data.get<int>("by_table") == 1);
 }
 
 TEST_CASE("lua_gapi_get_items_if_filters_map_items", "[lua][item][map]") {

@@ -24,23 +24,26 @@ namespace
 template<typename T>
 auto lua_value_to_id( const LuaValue &val ) -> T
 {
-    if( val.is<std::string>() ) {
-        return T( val.as<std::string>() );
+    // unwrap into a plain object first: referenced objects can misreport type queries
+    const sol::object obj = val;
+    if( obj.get_type() == sol::type::string ) {
+        return T( obj.as<std::string>() );
     }
-    return val.as<T>();
+    return obj.as<T>();
 }
 
 template<typename T>
 auto lua_value_to_set( const LuaValue &val ) -> std::unordered_set<T>
 {
-    if( val.is<sol::table>() ) {
+    const sol::object obj = val;
+    if( obj.get_type() == sol::type::table ) {
         std::unordered_set<T> out;
-        for( auto &&[key, value] : val.as<sol::table>() ) {
+        for( auto &&[key, value] : obj.as<sol::table>() ) {
             out.insert( lua_value_to_id<T>( value ) );
         }
         return out;
     }
-    return { lua_value_to_id<T>( val ) };
+    return { lua_value_to_id<T>( obj ) };
 }
 
 const std::unordered_map<std::string, std::function<item_predicate( LuaValue &val )>>
@@ -84,7 +87,8 @@ handlers = {
     },
     {
         "has_charges", []( LuaValue & val ) -> item_predicate {
-            auto tbl = val.as<sol::table>();
+            const sol::object obj = val;
+            auto tbl = obj.as<sol::table>();
             LuaValue id_val = tbl["id"];
             const auto id = lua_value_to_id<itype_id>( id_val );
             const auto amount = tbl["amount"].get<int>();
