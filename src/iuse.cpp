@@ -6167,8 +6167,14 @@ auto browse_digital_files( player &who, item &reader ) -> void
         const auto text = file->info( description, 1, temperature_flag::TEMP_NORMAL );
         auto data = item_info_data( file->display_name(), {}, text, {} );
         data.handle_scrolling = true;
-        draw_item_info( []() -> catacurses::window {
-            return catacurses::newwin( TERMY, TERMX, point_zero );
+        draw_item_info( [&data]() -> catacurses::window {
+            const auto width = std::min( TERMX, FULL_SCREEN_WIDTH );
+            const auto buffer = data.get_item_name() + "\n" + std::string( data.padding, '\n' ) +
+            format_item_info( data.get_item_display(), data.get_item_compare() );
+            const auto lines = static_cast<int>( foldstring( buffer, std::max( 1, width - 5 ) ).size() );
+            const auto height = std::min( { TERMY, FULL_SCREEN_HEIGHT, lines + 2 } );
+            return catacurses::newwin( height, width,
+                                       point( ( TERMX - width ) / 2, ( TERMY - height ) / 2 ) );
         }, data );
     } else if( actions.ret == delete_file ) {
         if( who.query_yn( _( "Delete %s from this device?" ), file->display_name() ) ) {
