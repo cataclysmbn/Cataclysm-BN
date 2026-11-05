@@ -5,48 +5,83 @@ local storage = game.mod_storage[game.current_mod]
 
 mod.storage = storage
 
+---@param ... any
+game.iuse_functions["ARTIFACT_COMPASS"] = function(...) return mod.artifact_compass.use(...) end
+---@param ... any
 game.iuse_functions["VOLTMETER"] = function(...) return mod.voltmeter.menu(...) end
+---@param ... any
 game.iuse_functions["sonar_scan"] = function(...) return mod.sonar_scan(...) end
+---@param ... any
 game.iuse_functions["ARTIFACT_ANALYZER"] = function(...) return mod.artifact_analyzer.menu(...) end
+---@param ... any
 game.iuse_functions["OBJ_VAR_VIEWER"] = function(...) return mod.item_var_viewer.menu(...) end
+---@param ... any
 game.examine_functions["PLUMBING_SHOWER_EXAMINE"] = function(...) return mod.plumbing.examine_shower(...) end
+---@param ... any
 game.examine_functions["PLUMBING_BATHTUB_EXAMINE"] = function(...) return mod.plumbing.examine_bathtub(...) end
+---@param ... any
 game.activity_functions["PLUMBING_FINISH_WASH"] = function(...) return mod.plumbing.finish_wash(...) end
+---@param ... any
 game.bionic_functions["bio_minirose"] = { on_activate = function(...) return mod.minirose.on_activate(...) end }
 
+---@param ... any
 gapi.add_on_every_x_hook(TimeDuration.from_turns(1), function(...)
   if mod.on_nyctophobia_tick then mod.on_nyctophobia_tick(...) end
   if mod.on_morale_traits_tick then mod.on_morale_traits_tick(...) end
+  if mod.on_artifact_compass_tick then mod.on_artifact_compass_tick(...) end
 end)
 
+---@param ... any
 gapi.add_on_every_x_hook(TimeDuration.from_turns(300), function(...)
   if mod.on_clutter_intolerant_tick then mod.on_clutter_intolerant_tick(...) end
 end)
 
+---@param ... any
 game.add_hook("on_character_try_move", function(...) return mod.on_character_try_move(...) end)
+---@param ... any
 game.add_hook("on_elevator_try_use", function(...) return mod.robofac.on_elevator_try_use(...) end)
+---@param ... any
 game.add_hook("on_dialogue_end", function(...) return mod.robofac.authorize_hub01_after_dialogue(...) end)
+---@param ... any
 game.add_hook("on_mission_end", function(...) return mod.robofac.authorize_hub01_after_mission(...) end)
+---@param ... any
 game.add_hook("on_npc_spawn", function(...) return mod.robofac.authorize_hub01_security(...) end)
+---@param ... any
 game.add_hook("on_npc_loaded", function(...) return mod.robofac.authorize_hub01_security(...) end)
+---@param ... any
 game.add_hook("on_monster_spawn", function(...) return mod.robofac.authorize_hub01_turret(...) end)
+---@param ... any
 game.add_hook("on_monster_loaded", function(...) return mod.robofac.authorize_hub01_turret(...) end)
+---@param ... any
 game.add_hook("on_craft_result", function(...)
   mod.cooking.on_craft_result(...)
   mod.spray_can.on_craft_result(...)
 end)
+---@param ... any
 game.add_hook("on_explosion_start", function(...) return mod.nuclear_tear.on_explosion(...) end)
+---@param ... any
 game.add_hook("on_character_death", function(...) return mod.minirose.on_character_death(...) end)
+---@param ... any
 game.add_hook("on_character_try_wear", function(...) return mod.wool.on_character_try_wear(...) end)
 
 -- Mapgen
+---@param ... any
 game.mapgen_functions["slimepit"] = function(...) return mod.slimepit.draw(...) end
+---@param ... any
 game.mapgen_functions["lab"] = function(...) return mod.lab.draw(...) end
+---@param ... any
 game.mapgen_functions["lab_ice"] = function(...) return mod.lab.ice_draw(...) end
 
 -- Enchanter
+---@param ... any
 game.enchanter_can_use_on["cvd_machine"] = function(...) return mod.cvd_machine.can_use_on(...) end
 
+---@class MapgenFactoryResults
+---@field [integer] string
+---@field insert fun(self: MapgenFactoryResults, index: integer, value: string)
+---@class MakeMapgenFactoryListParams
+---@field results MapgenFactoryResults
+---@param params MakeMapgenFactoryListParams
 game.add_hook("on_make_mapgen_factory_list", function(params)
   params.results:insert(#params.results + 1, "lab_1side")
   params.results:insert(#params.results + 1, "lab_4side")
