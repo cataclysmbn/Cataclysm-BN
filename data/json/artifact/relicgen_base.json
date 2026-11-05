@@ -10,6 +10,7 @@
     "price_postapoc": "50 USD",
     "weight": "250 g",
     "volume": "250 ml",
+    "max_charges": 1,
     "material": [ "stone" ],
     "to_hit": -1,
     "flags": [ "NO_REPAIR", "NO_SALVAGE", "UNBREAKABLE_MELEE" ]

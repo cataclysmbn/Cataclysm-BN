@@ -2715,9 +2715,17 @@ void item::io( Archive &archive )
 {
 
     itype_id orig; // original ID as loaded from JSON
+    bool load_relicdata = true;
     const auto load_type = [&]( const std::string & id ) {
         orig = itype_id( id );
-        convert( item_controller->migrate_id( orig ) );
+        if( !orig.is_valid() && orig.str().starts_with( "artifact_" ) ) {
+            detached_ptr<item> ref = relicgen_id( "default" )->generate_relic();
+            relic_data = ref->relic_data;
+            convert( ref->typeId() );
+            load_relicdata = false;
+        } else {
+            convert( item_controller->migrate_id( orig ) );
+        }
     };
 
     const auto load_curammo = [this]( const std::string & id ) {
@@ -2808,7 +2816,9 @@ void item::io( Archive &archive )
     archive.io( "light_dir", light.direction, nolight.direction );
 
     static const cata::value_ptr<relic> null_relic_ptr = nullptr;
-    archive.io( "relic_data", relic_data, null_relic_ptr );
+    if( load_relicdata ) {
+        archive.io( "relic_data", relic_data, null_relic_ptr );
+    }
 
     if constexpr( Archive::is_input::value ) {
         auto dim = dimension_info{};
@@ -2955,12 +2965,6 @@ void item::deserialize( JsonIn &jsin )
         safe_reference<item>::id_type id;
         data.read( "id", id );
         safe_reference<item>::register_load( this, id );
-        const auto itype_id = this->typeId();
-        if( !itype_id.is_valid() && itype_id.str().starts_with( "artifact_" ) ) {
-            detached_ptr<item> ref = relicgen_id( "default" )->generate_relic();
-            relic_data = ref->relic_data;
-            convert( ref->typeId() );
-        }
     }
 
     // Sealed item migration: items with "unseals_into" set should always have contents
