@@ -856,14 +856,19 @@ TEST_CASE("lua_gapi_get_items_if_filters_map_items", "[lua][item][map]") {
     here.add_item_or_charges( pos, item::spawn( "bread" ) );
     here.add_item_or_charges( pos, item::spawn( "rock" ) );
     here.add_item_or_charges( far_pos, item::spawn( "apple" ) );
+    auto bag = item::spawn( "bag_plastic" );
+    bag->put_in( item::spawn( "banana" ) );
+    here.add_item_or_charges( far_pos, std::move( bag ) );
     test_data["pos"] = pos;
 
     run_lua_test_script(lua, "gapi_get_items_if_test.lua");
 
     CHECK(test_data.get<int>("food_count") == 1);
-    CHECK(test_data.get<int>("food_radius2_count") == 2);
+    CHECK(test_data.get<int>("food_radius2_count") == 3);
     CHECK(test_data.get<int>("rock_count") == 1);
-    CHECK(test_data.get<int>("all_count") == 3);
+    CHECK(test_data.get<int>("all_count") == 5);
+    // the banana inside the plastic bag at far_pos is found too
+    CHECK(test_data.get<int>("contained_food_count") == 1);
     // the sacrifice flow removed the only food within radius 1 (the bread at pos)
     CHECK(test_data.get<std::string>("sacrificed") == "bread (fresh) (2)");
     CHECK(test_data.get<int>("food_after_sacrifice") == 0);

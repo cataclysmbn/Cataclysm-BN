@@ -4,11 +4,13 @@ local food = gapi.get_items_if({ pos = pos, radius = 1, is_food = true })
 local food_radius2 = gapi.get_items_if({ pos = pos, radius = 2, is_food = true })
 local rock = gapi.get_items_if({ pos = pos, radius = 1, type = "rock" })
 local all = gapi.get_items_if({ pos = pos, radius = 2 })
+local contained_food = gapi.get_items_if({ pos = pos, radius = 2, type = "banana" })
 
 test_data.food_count = #food
 test_data.food_radius2_count = #food_radius2
 test_data.rock_count = #rock
 test_data.all_count = #all
+test_data.contained_food_count = #contained_food
 
 -- sacrifice flow: find food within 1 tile of pos and delete it from the map
 local map = gapi.get_map()

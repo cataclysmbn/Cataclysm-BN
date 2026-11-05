@@ -842,6 +842,7 @@ void cata::detail::reg_game_api( sol::state &lua )
     } );
 
     DOC( "Returns items on the map within a radius of a point, matching every given filter, as an array of Item.  " );
+    DOC( "Items inside containers on the ground are included.  " );
     DOC( "Takes a table where each key is a filter; unknown keys show a debug message and are ignored. Available filters:  " );
     DOC( "* `pos` (Tripoint): Center point to search around.  " );
     DOC( "* `radius` (integer, optional): Search radius in tiles. Defaults to the pickup range.  " );
@@ -862,11 +863,18 @@ void cata::detail::reg_game_api( sol::state &lua )
         }
         auto out = lua.create_table();
         auto idx = 1;
+        auto collect = [&]( item * node ) -> void {
+            if( matches_item_filters( parsed, *node ) ) {
+                out[idx++] = node;
+            }
+        };
         for( const auto pt : g->m.points_in_radius( pos, radius ) ) {
             for( const auto *it : g->m.i_at( pt ) ) {
-                if( matches_item_filters( parsed, *it ) ) {
-                    out[idx++] = const_cast<item *>( it );
-                }
+                // visit_items covers the item itself and everything inside its containers
+                const_cast<item *>( it )->visit_items( [&collect]( item * node, item * ) -> VisitResponse {
+                    collect( node );
+                    return VisitResponse::NEXT;
+                } );
             }
         }
         return out;
