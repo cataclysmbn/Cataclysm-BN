@@ -246,5 +246,33 @@
     "item_vars": {
       "digital_random_recipes": "{\"count\":3,\"subcategory\":\"CSC_FOOD_DRINKS\",\"min_difficulty\":0,\"max_difficulty\":3,\"difficulty_chance_offset\":0}"
     }
+  },
+  {
+    "id": "digital_electronic_blueprints",
+    "copy-from": "digital_collection",
+    "type": "GENERIC",
+    "name": { "str": "electronic blueprints", "str_pl": "sets of electronic blueprints" },
+    "description": "Saved circuit diagrams and assembly instructions for a pair of electronic devices.",
+    "item_vars": { "digital_random_recipes": "{\"count\":2,\"category\":\"CC_ELECTRONIC\",\"min_difficulty\":2,\"max_difficulty\":6}" }
+  },
+  {
+    "id": "digital_chemical_synthesis_sheet",
+    "copy-from": "digital_collection",
+    "type": "GENERIC",
+    "name": { "str": "chemical synthesis sheet" },
+    "description": "A saved laboratory procedure detailing the reagents, equipment, and steps needed to synthesize a chemical.",
+    "item_vars": {
+      "digital_random_recipes": "{\"count\":1,\"subcategory\":\"CSC_CHEM_CHEMICALS\",\"min_difficulty\":2,\"max_difficulty\":6}"
+    }
+  },
+  {
+    "id": "digital_workshop_tool_plans",
+    "copy-from": "digital_collection",
+    "type": "GENERIC",
+    "name": { "str": "workshop tool plans", "str_pl": "sets of workshop tool plans" },
+    "description": "Saved construction drawings and assembly notes for a pair of workshop tools.",
+    "item_vars": {
+      "digital_random_recipes": "{\"count\":2,\"subcategory\":\"CSC_OTHER_TOOLS\",\"min_difficulty\":2,\"max_difficulty\":5}"
+    }
   }
 ]

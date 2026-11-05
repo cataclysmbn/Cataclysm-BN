@@ -29,7 +29,10 @@
       { "item": "digital_evacuation_map", "prob": 5 },
       { "item": "digital_science_recipe_archive", "prob": 5 },
       { "item": "digital_tailoring_recipe_archive", "prob": 10 },
-      { "item": "digital_bartender_drinks_list", "prob": 10 }
+      { "item": "digital_bartender_drinks_list", "prob": 10 },
+      { "item": "digital_electronic_blueprints", "prob": 8 },
+      { "item": "digital_chemical_synthesis_sheet", "prob": 5 },
+      { "item": "digital_workshop_tool_plans", "prob": 8 }
     ]
   },
   {
@@ -79,7 +82,10 @@
       { "item": "digital_urbex_map", "prob": 5 },
       { "item": "digital_evacuation_map", "prob": 5 },
       { "item": "digital_tailoring_recipe_archive", "prob": 5 },
-      { "item": "digital_bartender_drinks_list", "prob": 5 }
+      { "item": "digital_bartender_drinks_list", "prob": 5 },
+      { "item": "digital_electronic_blueprints", "prob": 3 },
+      { "item": "digital_chemical_synthesis_sheet", "prob": 1 },
+      { "item": "digital_workshop_tool_plans", "prob": 3 }
     ]
   },
   {
@@ -95,7 +101,10 @@
       { "item": "digital_music_collection", "prob": 35, "charges": [ 5, 15 ] },
       { "item": "digital_3d_printing_guide" },
       { "item": "digital_science_recipe_archive" },
-      { "item": "digital_tailoring_recipe_archive" }
+      { "item": "digital_tailoring_recipe_archive" },
+      { "item": "digital_electronic_blueprints", "prob": 25 },
+      { "item": "digital_chemical_synthesis_sheet", "prob": 35 },
+      { "item": "digital_workshop_tool_plans", "prob": 10 }
     ]
   },
   {
@@ -106,7 +115,10 @@
       { "item": "software_hacking", "prob": 10 },
       { "item": "software_cryptow", "prob": 5 },
       { "item": "digital_urbex_map", "prob": 10 },
-      { "item": "digital_saved_email", "prob": 10 }
+      { "item": "digital_saved_email", "prob": 10 },
+      { "item": "digital_electronic_blueprints", "prob": 10 },
+      { "item": "digital_chemical_synthesis_sheet", "prob": 10 },
+      { "item": "digital_workshop_tool_plans", "prob": 5 }
     ]
   },
   {
