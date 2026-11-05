@@ -806,6 +806,7 @@
   {
     "id": "MC_SCIENCE_STUFF",
     "type": "json_flag",
+    "tag": "(XEDRA)",
     "context": [ "TOOL", "TOOL_ARMOR" ]
   },
   {
@@ -826,6 +827,7 @@
   {
     "id": "MC_ENCRYPTED",
     "type": "json_flag",
+    "tag": "(encrypted)",
     "context": [ "TOOL", "TOOL_ARMOR" ]
   },
   {

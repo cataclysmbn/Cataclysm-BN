@@ -5356,12 +5356,6 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
 
     avatar &you = get_avatar();
     std::string tagtext;
-    if( has_flag( flag_id( "DIGITAL_STORAGE" ) ) && has_flag( flag_MC_SCIENCE_STUFF ) ) {
-        tagtext += _( " (XEDRA)" );
-    }
-    if( has_flag( flag_id( "DIGITAL_STORAGE" ) ) && has_flag( flag_MC_ENCRYPTED ) ) {
-        tagtext += _( " (encrypted)" );
-    }
     if( is_food() ) {
         if( has_flag( flag_HIDDEN_POISON ) && you.get_skill_level( skill_survival ) >= 3 ) {
             tagtext += _( " (poisonous)" );
