@@ -5,6 +5,7 @@
 #include "detached_ptr.h"
 #include "enchantments/enchantment.h"
 #include "enums.h"
+#include "flag.h"
 #include "generic_factory.h"
 #include "json.h"
 #include "monster.h"
@@ -39,6 +40,7 @@ detached_ptr<item> relicgen::generate_relic() const
         result->set_var( "name", name );
     }
     result->relic_data = cata::make_value<relic>( generate_relicdata() );
+    result->set_flag( flag_SECRET_ENCHANTMENTS );
     return std::move( result );
 }
 

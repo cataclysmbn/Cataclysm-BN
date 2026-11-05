@@ -1068,9 +1068,6 @@ void init::load_world_modfiles( loading_ui &ui, const world *world,
     auto &mods = world->info->active_mod_order;
     mods = normalize_mod_load_order( mods );
 
-    // TODO: get rid of artifacts
-    load_artifacts( world, artifacts_file );
-
     // this code does not care about mod dependencies,
     // it assumes that those dependencies are static and
     // are resolved during the creation of the world.

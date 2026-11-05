@@ -77,8 +77,10 @@
 #include "recipe.h"
 #include "recipe_dictionary.h"
 #include "relic.h"
+#include "relicgen.h"
 #include "requirements.h"
 #include "rng.h"
+#include "safe_reference.h"
 #include "scenario.h"
 #include "skill.h"
 #include "stats_tracker.h"
@@ -2953,6 +2955,12 @@ void item::deserialize( JsonIn &jsin )
         safe_reference<item>::id_type id;
         data.read( "id", id );
         safe_reference<item>::register_load( this, id );
+        const auto itype_id = this->typeId();
+        if( !itype_id.is_valid() && itype_id.str().starts_with( "artifact_" ) ) {
+            detached_ptr<item> ref = relicgen_id( "default" )->generate_relic();
+            relic_data = ref->relic_data;
+            convert( ref->typeId() );
+        }
     }
 
     // Sealed item migration: items with "unseals_into" set should always have contents
