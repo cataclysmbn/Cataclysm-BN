@@ -856,15 +856,15 @@ TEST_CASE("lua_gapi_get_items_if_filters_map_items", "[lua][item][map]") {
 
     auto& here = get_map();
     const auto pos = get_avatar().bub_pos();
-    const auto far_pos = tripoint_bub_ms( pos.x() + 2, pos.y(), pos.z() );
-    here.i_clear( pos );
-    here.i_clear( far_pos );
-    here.add_item_or_charges( pos, item::spawn( "bread" ) );
-    here.add_item_or_charges( pos, item::spawn( "rock" ) );
-    here.add_item_or_charges( far_pos, item::spawn( "apple" ) );
-    auto bag = item::spawn( "bag_plastic" );
-    bag->put_in( item::spawn( "banana" ) );
-    here.add_item_or_charges( far_pos, std::move( bag ) );
+    const auto far_pos = tripoint_bub_ms(pos.x() + 2, pos.y(), pos.z());
+    here.i_clear(pos);
+    here.i_clear(far_pos);
+    here.add_item_or_charges(pos, item::spawn("bread"));
+    here.add_item_or_charges(pos, item::spawn("rock"));
+    here.add_item_or_charges(far_pos, item::spawn("apple"));
+    auto bag = item::spawn("bag_plastic");
+    bag->put_in(item::spawn("banana"));
+    here.add_item_or_charges(far_pos, std::move(bag));
     test_data["pos"] = pos;
 
     run_lua_test_script(lua, "gapi_get_items_if_test.lua");
@@ -878,10 +878,10 @@ TEST_CASE("lua_gapi_get_items_if_filters_map_items", "[lua][item][map]") {
     // the sacrifice flow removed the only food within radius 1 (the bread at pos)
     CHECK(test_data.get<std::string>("sacrificed") == "bread (fresh) (2)");
     CHECK(test_data.get<int>("food_after_sacrifice") == 0);
-    CHECK(here.i_at( pos ).size() == 1);
+    CHECK(here.i_at(pos).size() == 1);
 
-    here.i_clear( pos );
-    here.i_clear( far_pos );
+    here.i_clear(pos);
+    here.i_clear(far_pos);
 }
 
 TEST_CASE("lua_npc_move_to_binding_moves_real_npc", "[lua][npc]") {
