@@ -40,7 +40,10 @@
       { "item": "digital_piercing_weapon_blueprints", "prob": 5 },
       { "item": "digital_archery_blueprints", "prob": 5 },
       { "item": "digital_firearm_blueprints", "prob": 3 },
-      { "item": "digital_advanced_weapon_blueprints", "prob": 1 }
+      { "item": "digital_advanced_weapon_blueprints", "prob": 1 },
+      { "item": "digital_basic_trap_blueprints", "prob": 8 },
+      { "item": "digital_mechanical_trap_blueprints", "prob": 4 },
+      { "item": "digital_advanced_trap_blueprints", "prob": 1 }
     ]
   },
   {
@@ -100,7 +103,9 @@
       { "item": "digital_blade_blueprints", "prob": 2 },
       { "item": "digital_piercing_weapon_blueprints", "prob": 2 },
       { "item": "digital_archery_blueprints", "prob": 3 },
-      { "item": "digital_firearm_blueprints", "prob": 1 }
+      { "item": "digital_firearm_blueprints", "prob": 1 },
+      { "item": "digital_basic_trap_blueprints", "prob": 5 },
+      { "item": "digital_mechanical_trap_blueprints", "prob": 1 }
     ]
   },
   {
@@ -122,7 +127,9 @@
       { "item": "digital_workshop_tool_plans", "prob": 10 },
       { "item": "digital_corrupted_file", "prob": 2 },
       { "item": "digital_firearm_blueprints", "prob": 5 },
-      { "item": "digital_advanced_weapon_blueprints", "prob": 5 }
+      { "item": "digital_advanced_weapon_blueprints", "prob": 5 },
+      { "item": "digital_mechanical_trap_blueprints", "prob": 5 },
+      { "item": "digital_advanced_trap_blueprints", "prob": 5 }
     ]
   },
   {
@@ -142,7 +149,10 @@
       { "item": "digital_piercing_weapon_blueprints", "prob": 5 },
       { "item": "digital_archery_blueprints", "prob": 5 },
       { "item": "digital_firearm_blueprints", "prob": 10 },
-      { "item": "digital_advanced_weapon_blueprints", "prob": 3 }
+      { "item": "digital_advanced_weapon_blueprints", "prob": 3 },
+      { "item": "digital_basic_trap_blueprints", "prob": 5 },
+      { "item": "digital_mechanical_trap_blueprints", "prob": 10 },
+      { "item": "digital_advanced_trap_blueprints", "prob": 5 }
     ]
   },
   {
