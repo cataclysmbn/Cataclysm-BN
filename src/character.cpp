@@ -127,6 +127,8 @@
 
 using character_funcs::base_comfort_value;
 
+using char_item_filter_fn = std::function<bool( const item & )>;
+
 struct dealt_projectile_attack;
 
 static const activity_id ACT_MOVE_ITEMS( "ACT_MOVE_ITEMS" );
@@ -11449,9 +11451,7 @@ const -> std::vector<item *>
     } );
 }
 
-auto Character::remove_items_if( const std::vector<std::function<bool( const item & )>> &filters )
-- >
-    std::vector<detached_ptr<item>>
+auto Character::remove_items_if( const std::vector<char_item_filter_fn> &filters ) -> std::vector<detached_ptr<item>>
 {
     std::vector<detached_ptr<item>> removed;
     remove_items_with( [&removed, &filters]( detached_ptr<item> &&it ) -> VisitResponse {
