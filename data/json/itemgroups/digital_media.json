@@ -3,8 +3,26 @@
     "id": "digital_content_terminal",
     "type": "item_group",
     "subtype": "collection",
-    "entries": [ { "group": "digital_content_reader" } ],
-    "//": "Compatibility alias for saved hard drives using the former contents group."
+    "entries": [ { "group": "digital_content_bulk_files", "count": [ 3, 7 ] } ]
+  },
+  {
+    "id": "digital_content_bulk_files",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [
+      { "group": "digital_content_saved_text", "prob": 41 },
+      { "group": "digital_content_common_books", "prob": 30 },
+      { "group": "digital_content_software", "prob": 45 },
+      { "item": "digital_music_collection", "prob": 2, "charges": [ 5, 15 ] },
+      { "group": "digital_content_recordings", "prob": 58 },
+      { "group": "digital_content_recipe_archives", "prob": 50 },
+      { "group": "digital_content_maps", "prob": 10 },
+      { "item": "digital_electronic_blueprints", "prob": 8 },
+      { "item": "digital_chemical_synthesis_sheet", "prob": 5 },
+      { "item": "digital_workshop_tool_plans", "prob": 8 },
+      { "group": "digital_content_weapon_blueprints", "prob": 19 },
+      { "group": "digital_content_trap_blueprints", "prob": 13 }
+    ]
   },
   {
     "id": "digital_storage_media",

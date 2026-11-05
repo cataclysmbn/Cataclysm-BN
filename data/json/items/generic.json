@@ -617,7 +617,7 @@
     "material": [ "steel", "plastic" ],
     "weight": "600 g",
     "volume": "400 ml",
-    "item_vars": { "digital_content": "digital_content_reader", "digital_storage_ports": "HARD_DRIVE" }
+    "item_vars": { "digital_content": "digital_content_terminal", "digital_storage_ports": "HARD_DRIVE" }
   },
   {
     "type": "GENERIC",
