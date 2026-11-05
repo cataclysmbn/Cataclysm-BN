@@ -32,7 +32,8 @@
       { "item": "digital_bartender_drinks_list", "prob": 10 },
       { "item": "digital_electronic_blueprints", "prob": 8 },
       { "item": "digital_chemical_synthesis_sheet", "prob": 5 },
-      { "item": "digital_workshop_tool_plans", "prob": 8 }
+      { "item": "digital_workshop_tool_plans", "prob": 8 },
+      { "group": "digital_martial_arts_videos", "prob": 3 }
     ]
   },
   {
@@ -85,7 +86,8 @@
       { "item": "digital_bartender_drinks_list", "prob": 5 },
       { "item": "digital_electronic_blueprints", "prob": 3 },
       { "item": "digital_chemical_synthesis_sheet", "prob": 1 },
-      { "item": "digital_workshop_tool_plans", "prob": 3 }
+      { "item": "digital_workshop_tool_plans", "prob": 3 },
+      { "group": "digital_martial_arts_videos", "prob": 3 }
     ]
   },
   {
@@ -121,6 +123,23 @@
       { "item": "digital_chemical_synthesis_sheet", "prob": 10 },
       { "item": "digital_workshop_tool_plans", "prob": 5 },
       { "item": "digital_corrupted_file", "prob": 1 }
+    ]
+  },
+  {
+    "id": "digital_martial_arts_videos",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "digital_aikido_video" },
+      { "item": "digital_boxing_video" },
+      { "item": "digital_eskrima_video" },
+      { "item": "digital_fencing_video" },
+      { "item": "digital_judo_video" },
+      { "item": "digital_karate_video" },
+      { "item": "digital_kickboxing_video" },
+      { "item": "digital_krav_maga_video" },
+      { "item": "digital_muay_thai_video" },
+      { "item": "digital_taekwondo_video" }
     ]
   },
   {
