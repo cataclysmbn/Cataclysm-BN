@@ -23,12 +23,12 @@ struct lua_item_filters {
 /// Parses a Lua filter table into item predicates for @ref Character::get_items_if and gapi.get_items_if.
 /// Unknown keys show a debug message and are ignored; @p ignored_keys are skipped silently.
 auto item_filters_from_lua( const sol::table &filters,
-                            const std::vector<std::string> &ignored_keys = {} ) -> lua_item_filters;
+const std::vector<std::string> &ignored_keys = {} ) -> lua_item_filters;
 
 /// Same as @ref item_filters_from_lua, additionally turning the `worn`/`wielded` keys into
 /// predicates bound to the given character.
 auto character_item_predicates_from_lua( const Character &c, const sol::table &filters,
-        const std::vector<std::string> &ignored_keys = {} ) -> std::vector<item_predicate>;
+const std::vector<std::string> &ignored_keys = {} ) -> std::vector<item_predicate>;
 
 /// Whether the item matches every predicate in the set.
 auto matches_item_filters( const lua_item_filters &filters, const item &it ) -> bool;

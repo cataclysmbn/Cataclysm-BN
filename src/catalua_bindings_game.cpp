@@ -857,12 +857,14 @@ void cata::detail::reg_game_api( sol::state &lua )
         const auto pos = filters["pos"].get<tripoint_bub_ms>();
         const auto radius = filters.get_or<int>( "radius", PICKUP_RANGE );
         const auto parsed = item_filters_from_lua( filters, { "pos", "radius" } );
-        if( parsed.worn || parsed.wielded ) {
+        if( parsed.worn || parsed.wielded )
+        {
             debugmsg( "`worn`/`wielded` filters are not applicable to map items and were ignored" );
         }
         auto out = lua.create_table();
         auto idx = 1;
-        for( const auto pt : g->m.points_in_radius( pos, radius ) ) {
+        for( const auto pt : g->m.points_in_radius( pos, radius ) )
+        {
             for( const auto *it : g->m.i_at( pt ) ) {
                 if( matches_item_filters( parsed, *it ) ) {
                     out[idx++] = const_cast<item *>( it );
@@ -883,7 +885,8 @@ void cata::detail::reg_game_api( sol::state &lua )
         auto failure = opts.get<std::string>( "failure" );
         auto radius = opts.get_or<int>( "radius", PICKUP_RANGE );
         const auto parsed = item_filters_from_lua( opts, { "title", "failure", "radius" } );
-        return g->inv_map_splice( [&parsed]( const item & e ) {
+        return g->inv_map_splice( [&parsed]( const item & e )
+        {
             return matches_item_filters( parsed, e );
         }, title, radius, failure );
     } );
