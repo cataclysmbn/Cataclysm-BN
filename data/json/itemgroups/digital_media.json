@@ -43,7 +43,8 @@
       { "item": "digital_advanced_weapon_blueprints", "prob": 1 },
       { "item": "digital_basic_trap_blueprints", "prob": 8 },
       { "item": "digital_mechanical_trap_blueprints", "prob": 4 },
-      { "item": "digital_advanced_trap_blueprints", "prob": 1 }
+      { "item": "digital_advanced_trap_blueprints", "prob": 1 },
+      { "group": "digital_content_common_books", "prob": 30 }
     ]
   },
   {
@@ -105,7 +106,8 @@
       { "item": "digital_archery_blueprints", "prob": 3 },
       { "item": "digital_firearm_blueprints", "prob": 1 },
       { "item": "digital_basic_trap_blueprints", "prob": 5 },
-      { "item": "digital_mechanical_trap_blueprints", "prob": 1 }
+      { "item": "digital_mechanical_trap_blueprints", "prob": 1 },
+      { "group": "digital_content_common_books", "prob": 30, "count": [ 1, 3 ] }
     ]
   },
   {
@@ -129,7 +131,8 @@
       { "item": "digital_firearm_blueprints", "prob": 5 },
       { "item": "digital_advanced_weapon_blueprints", "prob": 5 },
       { "item": "digital_mechanical_trap_blueprints", "prob": 5 },
-      { "item": "digital_advanced_trap_blueprints", "prob": 5 }
+      { "item": "digital_advanced_trap_blueprints", "prob": 5 },
+      { "group": "digital_content_science_journals", "prob": 20 }
     ]
   },
   {
@@ -170,6 +173,25 @@
       { "item": "digital_krav_maga_video" },
       { "item": "digital_muay_thai_video" },
       { "item": "digital_taekwondo_video" }
+    ]
+  },
+  {
+    "id": "digital_content_common_books",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "group": "homebooks", "custom-flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ] } ]
+  },
+  {
+    "id": "digital_content_science_journals",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "textbook_atomic_lab", "custom-flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ] },
+      { "item": "recipe_animal", "custom-flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ] },
+      { "item": "recipe_creepy", "custom-flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ] },
+      { "item": "recipe_maiar", "custom-flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ] },
+      { "item": "recipe_lab_cvd", "custom-flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ] },
+      { "item": "recipe_lab_elec", "custom-flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ] }
     ]
   },
   {
