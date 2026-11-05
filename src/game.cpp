@@ -867,7 +867,7 @@ void game::load_map( const point_abs_sm &pos_sm, const bool pump_events )
     }
 
     const auto bubble_begin = pos_sm;
-    const auto bubble_end = bubble_begin + point_rel_sm( g_mapsize, g_mapsize );
+    const auto bubble_end = bubble_begin + point_rel_sm( m.getmapsize(), m.getmapsize() );
 
     update_active_load_regions( new_dim_id, bubble_begin, bubble_end );
     // map::loadn() now uses MAPBUFFER_REGISTRY.get(bound_dimension_), so
@@ -15620,7 +15620,7 @@ auto game::update_map( const tripoint_abs_ms &center ) -> point_rel_sm
     if( m.has_active_load_region() ) {
         ZoneScopedN( "update_map_submap_loader" );
         const auto bubble_begin = player_reality_bubble_origin().xy();
-        const auto bubble_end = bubble_begin + point_rel_sm( g_mapsize, g_mapsize );
+        const auto bubble_end = bubble_begin + point_rel_sm( m.getmapsize(), m.getmapsize() );
         update_active_load_regions( m.get_bound_dimension(), bubble_begin, bubble_end );
         // Ensure trackers exist for all active dimensions before firing events.
         for( const auto &dim_id : submap_loader.active_dimensions() ) {

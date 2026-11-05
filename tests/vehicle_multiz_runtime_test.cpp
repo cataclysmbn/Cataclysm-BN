@@ -284,6 +284,7 @@ TEST_CASE(
     const auto upper = veh.bub_part_location(floor);
     board(veh, get_avatar(), boardable(veh, tripoint_mnt_veh::zero()));
     here.build_map_cache(lower.z());
+    here.update_visibility_cache(lower.z());
     CHECK_FALSE(get_avatar().sees(upper));
     auto shot = projectile{};
     shot.speed = 1000;

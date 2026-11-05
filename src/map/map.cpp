@@ -1398,6 +1398,7 @@ auto map::move_vehicle(vehicle& veh, const tripoint_rel_ms& dp, const tileray& f
         // prevent vehicle bouncing after the first collision
         if (vertical && velocity_before < 0 && coll_velocity > 0) {
             veh.vertical_velocity = 0; // also affects `coll_velocity` and thus exits the loop
+            veh.is_falling = false;
         }
 
     } while (
