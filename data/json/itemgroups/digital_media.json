@@ -33,7 +33,9 @@
       { "item": "digital_electronic_blueprints", "prob": 8 },
       { "item": "digital_chemical_synthesis_sheet", "prob": 5 },
       { "item": "digital_workshop_tool_plans", "prob": 8 },
-      { "group": "digital_martial_arts_videos", "prob": 3 }
+      { "group": "digital_martial_arts_videos", "prob": 3 },
+      { "item": "digital_home_video", "prob": 10 },
+      { "item": "digital_voice_memo", "prob": 5 }
     ]
   },
   {
@@ -87,7 +89,9 @@
       { "item": "digital_electronic_blueprints", "prob": 3 },
       { "item": "digital_chemical_synthesis_sheet", "prob": 1 },
       { "item": "digital_workshop_tool_plans", "prob": 3 },
-      { "group": "digital_martial_arts_videos", "prob": 3 }
+      { "group": "digital_martial_arts_videos", "prob": 3 },
+      { "item": "digital_home_video", "prob": 15 },
+      { "item": "digital_voice_memo", "prob": 8 }
     ]
   },
   {

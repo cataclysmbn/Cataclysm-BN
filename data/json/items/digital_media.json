@@ -139,6 +139,22 @@
     "extend": { "flags": [ "SNIPPET_NEEDS_LITERACY" ] }
   },
   {
+    "id": "digital_home_video",
+    "copy-from": "digital_collection",
+    "type": "GENERIC",
+    "name": { "str": "home video" },
+    "description": "A saved personal video recording.  A small piece of someone's life, preserved on a screen.",
+    "snippet_category": "digital_home_video"
+  },
+  {
+    "id": "digital_voice_memo",
+    "copy-from": "digital_collection",
+    "type": "GENERIC",
+    "name": { "str": "personal voice memo" },
+    "description": "A saved audio recording made by the device's former owner.",
+    "snippet_category": "digital_voice_memo"
+  },
+  {
     "id": "digital_saved_news",
     "copy-from": "digital_text",
     "type": "GENERIC",
