@@ -92,6 +92,14 @@
         ],
         "prob": 50
       },
+      {
+        "distribution": [
+          { "item": "lsd", "charges": [ 100, 500 ], "prob": 50 },
+          { "item": "dry_mushroom", "count": [ 20, 100 ], "custom-flags": [ "HIDDEN_HALLU" ], "prob": 50 }
+        ],
+        "prob": 20
+      },
+      { "item": "ghb", "charges": [ 2000, 3500 ], "container-item": "jerrycan_big", "prob": 75 },
       { "item": "money_bundle", "count": [ 5, 50 ], "prob": 50 },
       { "item": "money_pile", "count": [ 1, 3 ], "prob": 10 }
     ]
