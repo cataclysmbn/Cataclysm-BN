@@ -706,6 +706,14 @@ public:
     auto actualize_submap(const tripoint_abs_sm& pos) -> void;
 
     /**
+     * Advance plant growth on all plant tiles of a resident, actively simulated
+     * submap.  Called once per turn so crops grow while the player stays in the
+     * area; actualize_submap() covers the catch-up for submaps that were not
+     * simulated.
+     */
+    auto grow_plants_in_submap(const tripoint_abs_sm& pos) -> void;
+
+    /**
      * Destroy submaps that were discarded by preload_omt() because the in-memory
      * version already existed.  Must be called on the main thread after all
      * preload_omt() futures have been joined.

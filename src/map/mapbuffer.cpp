@@ -3563,6 +3563,41 @@ auto mapbuffer::actualize_submap(const tripoint_abs_sm& pos) -> void {
     tmpsub->last_actualized = calendar::turn;
 }
 
+auto mapbuffer::grow_plants_in_submap(const tripoint_abs_sm& pos) -> void {
+    ZoneScopedN("mapbuffer_grow_plants_in_submap");
+
+    auto* const tmpsub = lookup_submap_in_memory(pos);
+    if (tmpsub == nullptr) {
+        return;
+    }
+
+    // Copy the positions: grow_plant() transforms furniture, which invalidates
+    // the cache, so the cached vector must not be iterated while mutating.
+    const auto plants = tmpsub->plant_tiles();
+    if (plants.empty()) {
+        return;
+    }
+
+    const auto lookup_options = mapbuffer_lookup_options{
+        .mode = mapbuffer_lookup_mode::resident_only,
+    };
+
+    for (const auto p : plants) {
+        const auto abs_pos = project_combine(pos, p);
+        auto options = actualize_tile_options{
+            .buffer = *this,
+            .sm = *tmpsub,
+            .local = p,
+            .abs_pos = abs_pos,
+            .active_bubble_pos = active_reality_bubble_local(abs_pos),
+            .last_touched = calendar::turn,
+            .elapsed = 0_turns,
+            .lookup = lookup_options,
+        };
+        grow_plant(options);
+    }
+}
+
 auto mapbuffer::drain_pending_submap_destroy() -> void {
     auto to_destroy = std::vector<std::unique_ptr<submap>>{};
     {
