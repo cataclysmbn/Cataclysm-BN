@@ -5,7 +5,7 @@
     "name": "Evacuee",
     "points": 0,
     "description": "You have survived the initial wave of panic, and have achieved (relative) safety in one of the many government evac shelters.",
-    "allowed_locs": [ "sloc_shelter", "sloc_shelter_vandalized" ],
+    "allowed_locs": [ "sloc_shelter" ],
     "start_name": "Evac Shelter",
     "flags": [ "CITY_START" ]
   },
@@ -472,7 +472,7 @@
     "name": "Challenge - Bordered",
     "points": -2,
     "description": "You have survived the initial wave of panic, and have achieved (relative) safety in one of the many government evac shelters.  The only thing that really bothers you is a mysterious sky-high wall seen in the distance.",
-    "allowed_locs": [ "sloc_shelter", "sloc_shelter_vandalized" ],
+    "allowed_locs": [ "sloc_shelter" ],
     "start_name": "Evac Shelter",
     "flags": [ "CHALLENGE", "CITY_START", "BORDERED" ]
   },
@@ -483,6 +483,8 @@
     "points": -3,
     "description": "It is the winter after zero hour.  As you were scavenging for food and a warm place to stay at, you heard the sound of lots of movement nearby.",
     "allowed_locs": [
+      "sloc_shelter",
+      "sloc_shelter_vandalized",
       "sloc_field",
       "sloc_forest",
       "sloc_swamp",
@@ -523,6 +525,8 @@
     "points": 0,
     "description": "A little over a year has passed since the apocalypse started, and you're about to face your second summer in Hell.",
     "allowed_locs": [
+      "sloc_shelter",
+      "sloc_shelter_vandalized",
       "sloc_field",
       "sloc_forest",
       "sloc_swamp",
