@@ -864,6 +864,10 @@ TEST_CASE("lua_gapi_get_items_if_filters_map_items", "[lua][item][map]") {
     CHECK(test_data.get<int>("food_radius2_count") == 2);
     CHECK(test_data.get<int>("rock_count") == 1);
     CHECK(test_data.get<int>("all_count") == 3);
+    // the sacrifice flow removed the only food within radius 1 (the bread at pos)
+    CHECK(test_data.get<std::string>("sacrificed") == "bread (fresh) (2)");
+    CHECK(test_data.get<int>("food_after_sacrifice") == 0);
+    CHECK(here.i_at( pos ).size() == 1);
 
     here.i_clear( pos );
     here.i_clear( far_pos );
