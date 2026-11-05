@@ -736,7 +736,8 @@
     "name": "motel",
     "copy-from": "generic_city_building_no_sidewalk",
     "sym": "m",
-    "color": "light_blue"
+    "color": "light_blue",
+    "extend": { "flags": [ "SOURCE_SAFETY" ] }
   },
   {
     "type": "overmap_terrain",
