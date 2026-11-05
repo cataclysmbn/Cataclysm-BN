@@ -885,15 +885,26 @@ void cata::detail::reg_game_api( sol::state &lua )
     DOC( "* `title` (string): Menu title.  " );
     DOC( "* `failure` (string): Message shown when no item passes the filter.  " );
     DOC( "* `radius` (integer, optional): Search radius for nearby items. Defaults to the pickup range.  " );
-    DOC( "* plus any filter key accepted by `gapi.get_items_if` (e.g. `category`, `type`, `is_food`, `flags`, `need_charges`, `has_charges`)." );
+    DOC( "* plus any filter key accepted by `gapi.get_items_if` (e.g. `category`, `type`, `is_food`, `flags`, `need_charges`, `has_charges`).  " );
+    DOC( "Containers whose contents match a filter are listed as well; the returned item is then the container itself." );
     luna::set_fx( lib, "inv_map_splice_if", []( sol::table opts ) -> item* {
         auto title = opts.get<std::string>( "title" );
         auto failure = opts.get<std::string>( "failure" );
         auto radius = opts.get_or<int>( "radius", PICKUP_RANGE );
         const auto parsed = item_filters_from_lua( opts, { "title", "failure", "radius" } );
-        return g->inv_map_splice( [&parsed]( const item & e ) {
-            return matches_item_filters( parsed, e );
-        }, title, radius, failure );
+        const auto matches = [&parsed]( const item & e ) -> bool {
+            auto found = false;
+            // visit_items covers the item itself and everything inside its containers
+            const_cast<item &>( e ).visit_items( [&]( item * node, item * ) -> VisitResponse {
+                if( matches_item_filters( parsed, *node ) ) {
+                    found = true;
+                    return VisitResponse::ABORT;
+                }
+                return VisitResponse::NEXT;
+            } );
+            return found;
+        };
+        return g->inv_map_splice( matches, title, radius, failure );
     } );
 
     DOC( "Runs a function editing the player's inventory and nearby items.  " );
