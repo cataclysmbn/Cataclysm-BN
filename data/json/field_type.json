@@ -17,10 +17,20 @@
         "effects": [
           {
             "effect_id": "hallu",
-            "min_duration": "10 seconds",
-            "max_duration": "10 seconds",
+            "min_duration": "1 minutes",
+            "max_duration": "3 minutes",
             "intensity": 1,
             "is_environmental": false
+          },
+          {
+            "effect_id": "deaf",
+            "min_duration": "1 minutes",
+            "max_duration": "3 minutes",
+            "intensity": 3,
+            "is_environmental": false,
+            "message": "Signal interference drowns out all sound!",
+            "message_npc": "<npcname> reels as a burst of static overwhelms their hearing!",
+            "message_type": "bad"
           }
         ]
       }

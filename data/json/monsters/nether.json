@@ -32,8 +32,10 @@
     "path_settings": { "max_dist": 30, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
     "emit_fields": [ { "emit_id": "emit_physical_static", "delay": "4 seconds" } ],
     "harvest": "exempt",
+    "death_drops": "ghost_in_the_machine",
     "special_attacks": [
       [ "FEAR_PARALYZE", 20 ],
+      [ "GRAB", 7 ],
       {
         "type": "spell",
         "spell_data": { "id": "spell_ghost_in_the_machine_blink", "hit_self": true },

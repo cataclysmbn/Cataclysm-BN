@@ -1,5 +1,26 @@
 [
   {
+    "id": "ghost_in_the_machine",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [ { "group": "ghost_in_the_machine_media", "prob": 100 } ]
+  },
+  {
+    "id": "ghost_in_the_machine_media",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "usb_drive", "contents-group": "ghost_in_the_machine_files" },
+      { "item": "sd_memory_card", "contents-group": "ghost_in_the_machine_files" }
+    ]
+  },
+  {
+    "id": "ghost_in_the_machine_files",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [ { "group": "digital_content_science_journals", "count": [ 2, 4 ] } ]
+  },
+  {
     "id": "digital_content_terminal",
     "type": "item_group",
     "subtype": "collection",
@@ -128,6 +149,19 @@
     "type": "item_group",
     "subtype": "distribution",
     "entries": [
+      { "item": "recipe_alpha", "custom-flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ] },
+      { "item": "recipe_raptor", "custom-flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ] },
+      { "item": "recipe_chimera", "custom-flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ] },
+      { "item": "recipe_elfa", "custom-flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ] },
+      { "item": "recipe_medicalmut", "custom-flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ] },
+      { "item": "recipe_serum", "custom-flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ] },
+      { "item": "recipe_labchem", "custom-flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ] },
+      { "item": "recipe_augs", "custom-flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ] },
+      { "item": "recipe_mil_augs", "custom-flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ] },
+      { "item": "recipe_caseless", "custom-flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ] },
+      { "item": "recipe_atomic_battery", "custom-flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ] },
+      { "item": "recipe_mininuke_launch", "custom-flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ] },
+      { "item": "textbook_robots", "custom-flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ] },
       { "item": "textbook_atomic_lab", "custom-flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ] },
       { "item": "recipe_animal", "custom-flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ] },
       { "item": "recipe_creepy", "custom-flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ] },
