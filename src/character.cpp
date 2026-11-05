@@ -8770,16 +8770,16 @@ bool Character::invoke_item( item *used, const std::string &method, const tripoi
         return true;
     }
     if( method == iuse_RELIC ) {
-        iuse::relic( this->as_player(), used, false, pt );
-        return true;
+        int charges_used = iuse::relic( this->as_player(), used, false, pt );
+        return consume_charges( *used, charges_used );
     }
+
     item *actually_used = used->get_usable_item( method );
     if( actually_used == nullptr ) {
         debugmsg( "Tried to invoke a method %s on item %s, which doesn't have this method",
                   method.c_str(), used->tname() );
         return false;
     }
-
     int charges_used = actually_used->type->invoke( *this->as_player(), *actually_used, pt, method );
     if( charges_used == 0 ) {
         return false;

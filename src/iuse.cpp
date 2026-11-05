@@ -4845,7 +4845,7 @@ int iuse::relic( player *p, item *it, bool, const tripoint_bub_ms &loc )
     if( it->type->relic_data ) {
         it->type->relic_data->activate( *p, loc );
     }
-    return 1;
+    return it->type->charges_to_use();
 }
 
 int iuse::artifact( player *p, item *it, bool, const tripoint_bub_ms & )

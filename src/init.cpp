@@ -5,7 +5,6 @@
 #include "ammo.h"
 #include "ammo_effect.h"
 #include "anatomy.h"
-#include "artifact.h"
 #include "ascii_art.h"
 #include "behavior.h"
 #include "bionics.h"
@@ -1060,8 +1059,7 @@ void init::load_core_bn_modfiles()
     );
 }
 
-void init::load_world_modfiles( loading_ui &ui, const world *world,
-                                const std::string &artifacts_file )
+void init::load_world_modfiles( loading_ui &ui, const world *world )
 {
     clear_loaded_data();
 

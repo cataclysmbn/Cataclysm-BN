@@ -1,11 +1,13 @@
 #include "relicgen.h"
 
 #include "assign.h"
+#include "calendar.h"
 #include "debug.h"
 #include "detached_ptr.h"
 #include "enchantments/enchantment.h"
 #include "enums.h"
 #include "flag.h"
+#include "itype.h"
 #include "generic_factory.h"
 #include "json.h"
 #include "monster.h"
@@ -29,7 +31,7 @@ IMPLEMENT_STRING_AND_INT_IDS( relicgen, all_relicgens );
 
 detached_ptr<item> relicgen::generate_relic() const
 {
-    detached_ptr<item> result = item::spawn( *itypes.pick() );
+    detached_ptr<item> result = item::spawn( *itypes.pick(), calendar::turn_zero, -1 );
     std::string name = result->type_name();
     if( !name_prefix.empty() ) {
         name = string_format( "%s %s", name_prefix.pick()->translated(), name );
