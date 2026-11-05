@@ -15,6 +15,7 @@
     "deconstruct": {
       "furn_set": "f_table",
       "items": [
+        { "item": "hard_drive" },
         { "item": "processor", "count": [ 1, 2 ] },
         { "item": "RAM", "count": [ 4, 8 ] },
         { "item": "cable", "charges": [ 4, 6 ] },
@@ -66,6 +67,7 @@
     "deconstruct": {
       "furn_set": "f_table",
       "items": [
+        { "item": "hard_drive" },
         { "item": "processor", "count": [ 1, 2 ] },
         { "item": "RAM", "count": [ 4, 8 ] },
         { "item": "cable", "charges": [ 4, 6 ] },

@@ -37,6 +37,7 @@
 #include "input.h"
 #include "item.h"
 #include "item_contents.h"
+#include "digital_recipes.h"
 #include "item_group.h"
 #include "iuse_actor.h"
 #include "json.h"
@@ -269,7 +270,6 @@ void Item_factory::finalize_pre( itype &obj )
     }
 
     // Items always should have some volume.
-    // TODO: handle possible exception software?
     // TODO: make items with 0 volume an error during loading?
     if( obj.volume <= 0_ml ) {
         obj.volume = units::from_milliliter( 1 );
@@ -1302,6 +1302,16 @@ void Item_factory::check_definitions() const
             if( !e.is_valid() ) {
                 msg += string_format( "item %s has unknown emit source %s\n", type->id.c_str(), e.c_str() );
             }
+        }
+
+        if( const auto content = type->item_vars.find( "digital_content" );
+            content != type->item_vars.end() && !content->second.empty() &&
+            !item_group::group_is_defined( item_group_id( content->second ) ) ) {
+            msg += string_format( "invalid digital_content item group %s\n", content->second );
+        }
+
+        if( const auto recipes = validate_digital_recipe_data( type->item_vars ); !recipes ) {
+            msg += string_format( "invalid digital recipe data: %s\n", recipes.error() );
         }
 
         for( const auto &f : type->faults ) {

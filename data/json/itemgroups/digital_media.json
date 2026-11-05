@@ -1,0 +1,130 @@
+[
+  {
+    "id": "digital_content_terminal",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [ { "group": "digital_content_terminal_files", "count": [ 3, 7 ] } ]
+  },
+  {
+    "id": "digital_content_terminal_files",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "digital_saved_flier", "prob": 10 },
+      { "item": "digital_character_sheet", "prob": 8 },
+      { "item": "digital_radio_archive", "prob": 8 },
+      { "item": "software_useless", "prob": 15 },
+      { "item": "software_utility", "prob": 10 },
+      { "item": "software_electronics_reference", "prob": 5 },
+      { "item": "digital_music_collection", "prob": 20, "charges": [ 5, 15 ] },
+      { "item": "digital_cooking_show", "prob": 15 },
+      { "item": "digital_survivor_show", "prob": 10 },
+      { "item": "digital_mechanics_show", "prob": 10 },
+      { "item": "digital_adult_video", "prob": 5 },
+      { "item": "digital_hello_world", "prob": 15 },
+      { "item": "digital_saved_news", "prob": 15 },
+      { "item": "digital_cooking_recipe_archive", "prob": 15 },
+      { "item": "digital_3d_printing_guide", "prob": 10 },
+      { "item": "digital_urbex_map", "prob": 5 },
+      { "item": "digital_evacuation_map", "prob": 5 },
+      { "item": "digital_science_recipe_archive", "prob": 5 },
+      { "item": "digital_tailoring_recipe_archive", "prob": 10 },
+      { "item": "digital_bartender_drinks_list", "prob": 10 },
+      { "item": "digital_electronic_blueprints", "prob": 8 },
+      { "item": "digital_chemical_synthesis_sheet", "prob": 5 },
+      { "item": "digital_workshop_tool_plans", "prob": 8 }
+    ]
+  },
+  {
+    "id": "sd_memory_card_personal",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [ { "item": "sd_memory_card", "custom-flags": [ "MC_RANDOM_STUFF", "MC_MAY_BE_ENCRYPTED" ] } ]
+  },
+  {
+    "id": "sd_memory_card_encrypted",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [ { "item": "sd_memory_card", "custom-flags": [ "MC_ENCRYPTED", "MC_RANDOM_STUFF" ] } ]
+  },
+  {
+    "id": "sd_memory_card_science",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [ { "item": "sd_memory_card", "custom-flags": [ "MC_ENCRYPTED", "MC_SCIENCE_STUFF" ] } ]
+  },
+  {
+    "id": "digital_content_reader",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [ { "group": "digital_builtin_music" }, { "group": "digital_content_personal" } ]
+  },
+  {
+    "id": "digital_content_personal",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      { "item": "digital_saved_flier", "prob": 15 },
+      { "item": "digital_character_sheet", "prob": 8 },
+      { "item": "digital_radio_archive", "prob": 3 },
+      { "item": "software_useless", "prob": 15 },
+      { "item": "software_utility", "prob": 8 },
+      { "item": "software_electronics_reference", "prob": 2 },
+      { "item": "digital_music_collection", "prob": 12, "charges": [ 5, 15 ] },
+      { "item": "digital_cooking_show", "prob": 12 },
+      { "item": "digital_survivor_show", "prob": 8 },
+      { "item": "digital_mechanics_show", "prob": 8 },
+      { "item": "digital_adult_video", "prob": 5 },
+      { "item": "digital_hello_world", "prob": 10 },
+      { "item": "digital_saved_news", "prob": 15 },
+      { "item": "digital_3d_printing_guide", "prob": 2 },
+      { "item": "digital_cooking_recipe_archive", "prob": 5 },
+      { "item": "digital_urbex_map", "prob": 5 },
+      { "item": "digital_evacuation_map", "prob": 5 },
+      { "item": "digital_tailoring_recipe_archive", "prob": 5 },
+      { "item": "digital_bartender_drinks_list", "prob": 5 },
+      { "item": "digital_electronic_blueprints", "prob": 3 },
+      { "item": "digital_chemical_synthesis_sheet", "prob": 1 },
+      { "item": "digital_workshop_tool_plans", "prob": 3 }
+    ]
+  },
+  {
+    "id": "digital_content_science",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      { "item": "digital_saved_email", "prob": 35 },
+      { "item": "digital_radio_archive", "prob": 10 },
+      { "item": "software_useless", "prob": 5 },
+      { "item": "software_utility", "prob": 15 },
+      { "item": "software_electronics_reference", "prob": 15 },
+      { "item": "digital_music_collection", "prob": 35, "charges": [ 5, 15 ] },
+      { "item": "digital_3d_printing_guide" },
+      { "item": "digital_science_recipe_archive" },
+      { "item": "digital_tailoring_recipe_archive" },
+      { "item": "digital_electronic_blueprints", "prob": 25 },
+      { "item": "digital_chemical_synthesis_sheet", "prob": 35 },
+      { "item": "digital_workshop_tool_plans", "prob": 10 }
+    ]
+  },
+  {
+    "id": "digital_content_encrypted",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      { "item": "software_hacking", "prob": 10 },
+      { "item": "software_cryptow", "prob": 5 },
+      { "item": "digital_urbex_map", "prob": 10 },
+      { "item": "digital_saved_email", "prob": 10 },
+      { "item": "digital_electronic_blueprints", "prob": 10 },
+      { "item": "digital_chemical_synthesis_sheet", "prob": 10 },
+      { "item": "digital_workshop_tool_plans", "prob": 5 }
+    ]
+  },
+  {
+    "id": "digital_builtin_music",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [ { "item": "digital_music_collection", "charges": 20 } ]
+  }
+]

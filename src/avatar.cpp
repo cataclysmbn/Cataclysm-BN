@@ -17,6 +17,7 @@
 #include "character_stat.h"
 #include "color.h"
 #include "debug.h"
+#include "digital_media.h"
 #include "diary.h"
 #include "effect.h"
 #include "enums.h"
@@ -403,6 +404,11 @@ const Character *avatar::get_book_reader( const item &book,
     if( !book.is_book() ) {
         reasons.push_back( string_format( _( "Your %s is not good reading material." ),
                                           book.tname() ) );
+        return nullptr;
+    }
+
+    if( is_digital_file( book ) && !digital_reader_for( *this, book ) ) {
+        reasons.emplace_back( _( "You need to install this file on a powered reader first." ) );
         return nullptr;
     }
 

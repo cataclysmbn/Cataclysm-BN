@@ -1,4 +1,5 @@
 #include "iuse.h"
+#include "book_scanning.h"
 
 #include "action.h"
 #include "action_time_scale.h"
@@ -23,6 +24,9 @@
 #include "creature.h"
 #include "damage.h"
 #include "debug.h"
+#include "digital_media.h"
+#include "digital_recipes.h"
+#include "photo_morale.h"
 #include "distribution_grid.h"
 #include "effect.h" // for weed_msg
 #include "enums.h"
@@ -258,8 +262,6 @@ static const itype_id itype_joint( "joint" );
 static const itype_id itype_log( "log" );
 static const itype_id itype_mask_h20survivor_on( "mask_h20survivor_on" );
 static const itype_id itype_mininuke_act( "mininuke_act" );
-static const itype_id itype_mobile_memory_card( "mobile_memory_card" );
-static const itype_id itype_mobile_memory_card_used( "mobile_memory_card_used" );
 static const itype_id itype_mp3( "mp3" );
 static const itype_id itype_mp3_on( "mp3_on" );
 static const itype_id itype_multi_cooker( "multi_cooker" );
@@ -3908,32 +3910,8 @@ int iuse::tazer2( player *p, item *it, bool b, const tripoint_bub_ms &pos )
 
 static std::string get_music_description()
 {
-    const std::array<std::string, 5> descriptions = {{
-            translate_marker( "a sweet guitar solo!" ),
-            translate_marker( "a funky bassline." ),
-            translate_marker( "some amazing vocals." ),
-            translate_marker( "some pumping bass." ),
-            translate_marker( "dramatic classical music." )
-        }
-    };
-
-    if( one_in( 50 ) ) {
-        return _( "some bass-heavy post-glam speed polka." );
-    }
-
-    size_t i = static_cast<size_t>( rng( 0, descriptions.size() * 2 ) );
-    if( i < descriptions.size() ) {
-        return _( descriptions[i] );
-    }
-    // Not one of the hard-coded versions, let's apply a random string made up
-    // of snippets {a, b, c}, but only a 50% chance
-    // Actual chance = 24.5% of being selected
-    if( one_in( 2 ) ) {
-        return SNIPPET.expand( SNIPPET.random_from_category( "<music_description>" ).value_or(
-                                   translation() ).translated() );
-    }
-
-    return _( "a sweet guitar solo!" );
+    return SNIPPET.expand( SNIPPET.random_from_category( "<music_description>" ).value_or(
+                               translation() ).translated() );
 }
 
 void iuse::play_music( player &p, const tripoint_bub_ms &source, const int volume,
@@ -3978,9 +3956,22 @@ int iuse::mp3_on( player *p, item *it, bool t, const tripoint_bub_ms &pos )
     if( t ) { // Normal use
         if( p->has_item( *it ) ) {
             // mp3 player in inventory, we can listen
-            play_music( *p, pos, 40, 20 );
+            if( it->has_flag( flag_id( "DIGITAL_READER" ) ) ) {
+                initialize_digital_media( *it );
+                if( digital_music_playing( *it ).songs == 0 && !digital_music_ready( *p, *it ) ) {
+                    return 0;
+                }
+                play_music( *p, pos, 40, std::max( digital_music_playing( *it ).morale_cap,
+                                                   p->get_morale( MORALE_MUSIC ) ) );
+            } else {
+                play_music( *p, pos, 40, 20 );
+            }
         }
     } else { // Turning it off
+        if( it->has_flag( flag_id( "DIGITAL_READER" ) ) ) {
+            finish_digital_music( *p, *it );
+            it->erase_var( "EIPC_MUSIC_ON" );
+        }
         // Creatively make it so that the reversion isn't hard-coded
         // There's *probably* a better way to do this, but this works
         std::string active_item = it->typeId().str();
@@ -5910,164 +5901,18 @@ int iuse::robotcontrol( player *p, item *it, bool, const tripoint_bub_ms & )
     return 0;
 }
 
-static void init_memory_card_with_random_stuff( item &it )
-{
-    if( it.has_flag( flag_MC_MOBILE ) && ( it.has_flag( flag_MC_RANDOM_STUFF ) ||
-                                           it.has_flag( flag_MC_SCIENCE_STUFF ) ) && !( it.has_flag( flag_MC_USED ) ||
-                                                   it.has_flag( flag_MC_HAS_DATA ) ) ) {
-
-        it.set_flag( flag_MC_HAS_DATA );
-
-        bool encrypted = false;
-
-        if( it.has_flag( flag_MC_MAY_BE_ENCRYPTED ) && one_in( 8 ) ) {
-            it.convert( itype_id( it.typeId().str() + "_encrypted" ) );
-        }
-
-        //some special cards can contain "MC_ENCRYPTED" flag
-        if( it.has_flag( flag_MC_ENCRYPTED ) ) {
-            encrypted = true;
-        }
-
-        int data_chance = 2;
-
-        //encrypted memory cards often contain data
-        if( encrypted && !one_in( 3 ) ) {
-            data_chance--;
-        }
-
-        //just empty memory card
-        if( !one_in( data_chance ) ) {
-            return;
-        }
-
-        //add someone's personal photos
-        if( one_in( data_chance ) ) {
-
-            //decrease chance to more data
-            data_chance++;
-
-            if( encrypted && one_in( 3 ) ) {
-                data_chance--;
-            }
-
-            const int duckfaces_count = rng( 5, 30 );
-            it.set_var( "MC_PHOTOS", duckfaces_count );
-        }
-        //decrease chance to music and other useful data
-        data_chance++;
-        if( encrypted && one_in( 2 ) ) {
-            data_chance--;
-        }
-
-        if( one_in( data_chance ) ) {
-            data_chance++;
-
-            if( encrypted && one_in( 3 ) ) {
-                data_chance--;
-            }
-
-            const int new_songs_count = rng( 5, 15 );
-            it.set_var( "MC_MUSIC", new_songs_count );
-        }
-        data_chance++;
-        if( encrypted && one_in( 2 ) ) {
-            data_chance--;
-        }
-
-        if( one_in( data_chance ) ) {
-            it.set_var( "MC_RECIPE", "SIMPLE" );
-        }
-
-        if( it.has_flag( flag_MC_SCIENCE_STUFF ) ) {
-            it.set_var( "MC_RECIPE", "SCIENCE" );
-        }
-    }
-}
-
 static bool einkpc_download_memory_card( player &p, item &eink, item &mc )
 {
-    bool something_downloaded = false;
-    if( mc.get_var( "MC_PHOTOS", 0 ) > 0 ) {
-        something_downloaded = true;
-
-        int new_photos = mc.get_var( "MC_PHOTOS", 0 );
-        mc.erase_var( "MC_PHOTOS" );
-
-        p.add_msg_if_player( m_good, vgettext( "You download %d new photo into internal memory.",
-                                               "You download %d new photos into internal memory.", new_photos ), new_photos );
-
-        const int old_photos = eink.get_var( "EIPC_PHOTOS", 0 );
-        eink.set_var( "EIPC_PHOTOS", old_photos + new_photos );
+    if( !digital_reader_can_access_storage( eink, mc ) ) {
+        p.add_msg_if_player( m_info, _( "This reader is not compatible with that storage device." ) );
+        return false;
     }
-
-    if( mc.get_var( "MC_MUSIC", 0 ) > 0 ) {
-        something_downloaded = true;
-
-        int new_songs = mc.get_var( "MC_MUSIC", 0 );
-        mc.erase_var( "MC_MUSIC" );
-
-        p.add_msg_if_player( m_good, vgettext( "You download %d new song into internal memory.",
-                                               "You download %d new songs into internal memory.", new_songs ), new_songs );
-
-        const int old_songs = eink.get_var( "EIPC_MUSIC", 0 );
-        eink.set_var( "EIPC_MUSIC", old_songs + new_songs );
+    const auto copied_files = download_digital_files( eink, mc, p );
+    auto something_downloaded = copied_files > 0;
+    if( copied_files > 0 ) {
+        p.add_msg_if_player( m_good, vgettext( "You copy %d digital file onto the tablet.",
+                                               "You copy %d digital files onto the tablet.", copied_files ), copied_files );
     }
-
-    if( !mc.get_var( "MC_RECIPE" ).empty() ) {
-        const bool science = mc.get_var( "MC_RECIPE" ) == "SCIENCE";
-
-        mc.erase_var( "MC_RECIPE" );
-
-        std::vector<const recipe *> candidates;
-
-        for( const auto &e : recipe_dict ) {
-            const auto &r = e.second;
-            if( r.never_learn ) {
-                continue;
-            }
-            if( science ) {
-                if( r.difficulty >= 3 && one_in( r.difficulty + 1 ) ) {
-                    candidates.push_back( &r );
-                }
-            } else {
-                if( r.category == "CC_FOOD" ) {
-                    if( r.difficulty <= 3 && one_in( r.difficulty ) ) {
-                        candidates.push_back( &r );
-                    }
-                }
-
-            }
-
-        }
-
-        if( !candidates.empty() ) {
-
-            const recipe *r = random_entry( candidates );
-            const recipe_id &rident = r->ident();
-
-            const auto old_recipes = eink.get_var( "EIPC_RECIPES" );
-            if( old_recipes.empty() ) {
-                something_downloaded = true;
-                eink.set_var( "EIPC_RECIPES", "," + rident.str() + "," );
-
-                p.add_msg_if_player( m_good, _( "You download a recipe for %s into the tablet's memory." ),
-                                     r->result_name() );
-            } else {
-                if( old_recipes.find( "," + rident.str() + "," ) == std::string::npos ) {
-                    something_downloaded = true;
-                    eink.set_var( "EIPC_RECIPES", old_recipes + rident.str() + "," );
-
-                    p.add_msg_if_player( m_good, _( "You download a recipe for %s into the tablet's memory." ),
-                                         r->result_name() );
-                } else {
-                    p.add_msg_if_player( m_good, _( "Your tablet already has a recipe for %s." ),
-                                         r->result_name() );
-                }
-            }
-        }
-    }
-
     if( mc.has_var( "MC_EXTENDED_PHOTOS" ) ) {
         std::vector<extended_photo_def> extended_photos;
         try {
@@ -6124,14 +5969,12 @@ static bool einkpc_download_memory_card( player &p, item &eink, item &mc )
         }
     }
 
-    if( mc.has_flag( flag_MC_TURN_USED ) ) {
-        mc.clear_vars();
-        mc.unset_flags();
-        mc.convert( itype_mobile_memory_card_used );
+    if( !mc.has_flag( flag_MC_ENCRYPTED ) ) {
+        mc.set_var( "DIGITAL_INITIALIZED", 1 );
     }
 
     if( !something_downloaded ) {
-        p.add_msg_if_player( m_info, _( "This memory card does not contain any new data." ) );
+        p.add_msg_if_player( m_info, _( "This storage device does not contain any new data." ) );
         return false;
     }
 
@@ -6150,17 +5993,248 @@ static std::string photo_quality_name( const int index )
     return _( names[index] );
 }
 
+namespace
+{
+auto digital_recipes_on_device( const item &reader ) -> std::set<recipe_id>
+{
+    auto result = std::set<recipe_id> {};
+    for( const auto *file : reader.contents.all_items_top() ) {
+        if( is_digital_file( *file ) ) {
+            for( const auto &entry : digital_file_recipes( *file ) ) {
+                result.insert( entry.recipe );
+            }
+        }
+    }
+    return result;
+}
+
+auto export_files_to_storage( player &who, item &reader, item *file = nullptr ) -> bool
+{
+    auto *you = who.as_avatar();
+    if( you == nullptr ) {
+        return false;
+    }
+    auto *card = game_menus::inv::titled_filter_menu( is_writable_digital_media, *you,
+                 _( "Choose storage media" ) );
+    if( card == nullptr ) {
+        return false;
+    }
+    const auto copied = upload_digital_files( who, {
+        .source = reader,
+        .destination = *card,
+        .file = file
+    } );
+    if( copied == 0 ) {
+        who.add_msg_if_player( m_info, _( "You couldn't copy any files to that storage device." ) );
+        return false;
+    }
+    who.mod_moves( -to_moves<int>( 2_seconds ) );
+    who.add_msg_if_player( m_good, vgettext( "You copy %d file onto the storage device.",
+                           "You copy %d files onto the storage device.", copied ), copied );
+    return true;
+}
+
+auto show_monster_collection( player &who, const item &reader ) -> void
+{
+    const auto photos = digital_monster_photos( reader );
+    auto menu = uilist{};
+    auto descriptions = std::vector<std::string> {};
+    menu.text = _( "Your collection of monsters:" );
+    for( const auto &[id, quality] : photos ) {
+        const auto specimen = monster( id );
+        menu.addentry( static_cast<int>( descriptions.size() ), true, MENU_AUTOASSIGN,
+                       string_format( "%s [%s]", specimen.name(), photo_quality_name( quality ) ) );
+        descriptions.push_back( specimen.type->get_description() );
+    }
+    while( true ) {
+        menu.query();
+        if( menu.ret < 0 || menu.ret >= static_cast<int>( descriptions.size() ) ) {
+            return;
+        }
+        popup( "%s", descriptions[menu.ret] );
+        apply_photo_viewing_morale( who );
+    }
+}
+
+auto delete_files_from_storage( player &who, item &reader ) -> void
+{
+    auto *you = who.as_avatar();
+    if( you == nullptr ) {
+        return;
+    }
+    const auto filter = [&reader]( const auto & media ) {
+        return &media != &reader && is_digital_storage_media( media );
+    };
+    auto *storage = game_menus::inv::titled_filter_menu( filter, *you, _( "Select storage media" ) );
+    if( storage == nullptr ) {
+        return;
+    }
+    if( !digital_reader_can_access_storage( reader, *storage ) ) {
+        who.add_msg_if_player( m_info, _( "This reader is not compatible with that storage device." ) );
+        return;
+    }
+    initialize_digital_media( *storage );
+    if( storage->has_flag( flag_MC_ENCRYPTED ) ) {
+        who.add_msg_if_player( m_info, _( "This storage device is encrypted." ) );
+        return;
+    }
+    auto files = std::vector<item *> {};
+    auto menu = uilist{};
+    menu.text = _( "Files on storage media:" );
+    for( auto *file : storage->contents.all_items_top() ) {
+        if( is_digital_file( *file ) ) {
+            menu.addentry( static_cast<int>( files.size() ), true, MENU_AUTOASSIGN, file->display_name() );
+            files.push_back( file );
+        }
+    }
+    if( files.empty() ) {
+        who.add_msg_if_player( m_info, _( "There are no digital files on this device." ) );
+        return;
+    }
+    menu.query();
+    if( menu.ret < 0 || menu.ret >= static_cast<int>( files.size() ) ) {
+        return;
+    }
+    auto *file = files[menu.ret];
+    const auto name = file->display_name();
+    if( who.query_yn( _( "Delete %s from this storage device?" ), name ) ) {
+        storage->contents.remove_top( file );
+        who.add_msg_if_player( m_info, _( "You delete %s from the storage device." ), name );
+    }
+}
+
+auto browse_digital_files( player &who, item &reader ) -> void
+{
+    auto files = std::vector<item *> {};
+    auto menu = uilist{};
+    menu.text = _( "Files on device:" );
+    for( auto *file : reader.contents.all_items_top() ) {
+        if( is_digital_file( *file ) ) {
+            menu.addentry( static_cast<int>( files.size() ), true, MENU_AUTOASSIGN, file->type_name() );
+            files.push_back( file );
+        }
+    }
+    if( files.empty() ) {
+        who.add_msg_if_player( m_info, _( "There are no digital files on this device." ) );
+        return;
+    }
+    menu.query();
+    if( menu.ret < 0 || menu.ret >= static_cast<int>( files.size() ) ) {
+        return;
+    }
+    auto *file = files[menu.ret];
+    enum file_action {
+        delete_file, study_file, listen_file, copy_file, show_recipes,
+        show_captured_photos, show_monsters, read_text, use_action_start
+    };
+    namespace ranges = std::ranges;
+    using namespace std::views;
+    const auto use_methods = file->type->use_methods | keys | ranges::to<std::vector<std::string>>();
+    auto actions = uilist{};
+    actions.text = file->type->description.translated();
+    actions.hilight_disabled = true;
+    actions.title = file->display_name();
+    if( !file->type->snippet_category.empty() || file->has_var( "description" ) ) {
+        actions.addentry( read_text, true, 't', _( "Read saved text" ) );
+    }
+    if( file->is_book() ) {
+        actions.addentry( study_file, true, 'r', _( "Study" ) );
+    }
+    for( auto index = 0; index < static_cast<int>( use_methods.size() ); ++index ) {
+        const auto &action = file->type->use_methods.at( use_methods[index] );
+        const auto available = action.can_call( who, *file, false, who.bub_pos() );
+        actions.addentry_desc( use_action_start + index, available.success(), MENU_AUTOASSIGN,
+                               action.get_name(), available.str() );
+    }
+    if( file->has_flag( flag_id( "DIGITAL_MUSIC" ) ) ) {
+        const auto music_wait = digital_music_cooldown_remaining( who, *file );
+        const auto description = file->charges <= 0 ? _( "This collection contains no music." ) :
+                                 music_wait > 0_turns ? string_format( _( "Available in %s." ),
+                                         to_string( music_wait ) ) : std::string{};
+        actions.addentry_desc( listen_file, file->charges > 0 && music_wait <= 0_turns, 'm',
+                               _( "Listen" ), description );
+    }
+    const auto recipe_entries = digital_file_recipes( *file );
+    if( !recipe_entries.empty() ) {
+        actions.addentry( show_recipes, true, 'v', _( "View recipes" ) );
+    }
+    if( !file->get_var( "CAMERA_EXTENDED_PHOTOS" ).empty() ||
+        !file->get_var( "CAMERA_NPC_PHOTOS" ).empty() ) {
+        actions.addentry( show_captured_photos, true, 'p', _( "Browse captured photos" ) );
+    }
+    if( !file->get_var( "CAMERA_MONSTER_PHOTOS" ).empty() ) {
+        actions.addentry( show_monsters, true, 'z', _( "Your collection of monsters" ) );
+    }
+    actions.addentry( delete_file, true, 'd', _( "Delete file" ) );
+    actions.addentry( copy_file, true, 'c', _( "Copy to storage media" ) );
+    actions.desc_enabled = ranges::any_of( actions.entries,
+    []( const auto & entry ) { return !entry.desc.empty(); } );
+    actions.query();
+    if( actions.ret >= use_action_start &&
+        actions.ret < use_action_start + static_cast<int>( use_methods.size() ) ) {
+        who.invoke_item( file, use_methods[actions.ret - use_action_start] );
+    } else if( actions.ret == read_text ) {
+        const auto description = iteminfo_query( std::vector{ iteminfo_parts::DESCRIPTION } );
+        const auto text = file->info( description, 1, temperature_flag::TEMP_NORMAL );
+        auto data = item_info_data( file->display_name(), {}, text, {} );
+        data.handle_scrolling = true;
+        draw_item_info( [&data]() -> catacurses::window {
+            const auto width = std::min( TERMX, FULL_SCREEN_WIDTH );
+            const auto buffer = data.get_item_name() + "\n" + std::string( data.padding, '\n' ) +
+            format_item_info( data.get_item_display(), data.get_item_compare() );
+            const auto lines = static_cast<int>( foldstring( buffer, std::max( 1, width - 5 ) ).size() );
+            const auto height = std::min( { TERMY, FULL_SCREEN_HEIGHT, lines + 2 } );
+            return catacurses::newwin( height, width,
+                                       point( ( TERMX - width ) / 2, ( TERMY - height ) / 2 ) );
+        }, data );
+    } else if( actions.ret == delete_file ) {
+        if( who.query_yn( _( "Delete %s from this device?" ), file->display_name() ) ) {
+            const auto file_name = file->display_name();
+            reader.contents.remove_top( file );
+            who.add_msg_if_player( m_info, _( "You delete %s from the device." ),
+                                   file_name );
+        }
+    } else if( actions.ret == study_file ) {
+        if( auto *you = who.as_avatar() ) {
+            you->read( file );
+        }
+    } else if( actions.ret == listen_file ) {
+        listen_to_digital_music( who, reader, *file );
+    } else if( actions.ret == copy_file ) {
+        export_files_to_storage( who, reader, file );
+    } else if( actions.ret == show_captured_photos ) {
+        show_photo_selection( who, *file, "CAMERA_EXTENDED_PHOTOS" );
+    } else if( actions.ret == show_monsters ) {
+        show_monster_collection( who, *file );
+    } else if( actions.ret == show_recipes ) {
+        auto recipe_menu = uilist{};
+        recipe_menu.text = _( "Recipes in file:" );
+        for( const auto &entry : recipe_entries ) {
+            recipe_menu.addentry( MENU_AUTOASSIGN, true, -1, entry.recipe->result_name() );
+        }
+        recipe_menu.query();
+    }
+}
+} // namespace
+
 int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos )
 {
+    initialize_digital_media( *it );
     if( t ) {
+        if( it->type->can_use( "MP3_ON" ) || it->get_var( "EIPC_MUSIC_ON" ).empty() ) {
+            return 0;
+        }
         if( !it->get_var( "EIPC_MUSIC_ON" ).empty() && ( it->ammo_remaining() > 0 ) ) {
             if( action_time_scale::once_every_this_tick( 5_minutes ) ) {
                 it->ammo_consume( 1, p->bub_pos() );
             }
 
             //the more varied music, the better max mood.
-            const int songs = it->get_var( "EIPC_MUSIC", 0 );
-            play_music( *p, pos, 60, std::min( 25, songs ) );
+            if( digital_music_playing( *it ).songs == 0 && !digital_music_ready( *p, *it ) ) {
+                return 0;
+            }
+            const auto music = digital_music_playing( *it );
+            play_music( *p, pos, 60, std::max( music.morale_cap, p->get_morale( MORALE_MUSIC ) ) );
         } else {
             it->deactivate();
             it->erase_var( "EIPC_MUSIC_ON" );
@@ -6174,7 +6248,8 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
     } else if( !p->is_npc() ) {
 
         enum {
-            ei_invalid, ei_photo, ei_music, ei_recipe, ei_uploaded_photos, ei_monsters, ei_download, ei_decrypt
+            ei_invalid, ei_recipe, ei_books, ei_uploaded_photos, ei_monsters, ei_download, ei_decrypt,
+            ei_files, ei_export, ei_encrypt, ei_delete_storage, ei_scan_book
         };
 
         if( p->is_underwater() ) {
@@ -6196,139 +6271,76 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
 
         amenu.text = _( "Choose menu option:" );
 
-        const int photos = it->get_var( "EIPC_PHOTOS", 0 );
-        if( photos > 0 ) {
-            amenu.addentry( ei_photo, true, 'p', _( "Unsorted photos [%d]" ), photos );
-        } else {
-            amenu.addentry( ei_photo, false, 'p', _( "No photos on device" ) );
+        const auto stored_files = it->contents.all_items_top();
+        const auto has_captured_photos = std::ranges::any_of( stored_files, []( const auto * file ) {
+            return file->has_var( "CAMERA_EXTENDED_PHOTOS" ) || file->has_var( "CAMERA_NPC_PHOTOS" );
+        } );
+        const auto has_camera_photos = !it->get_var( "EIPC_EXTENDED_PHOTOS" ).empty() ||
+                                       has_captured_photos;
+
+        const auto digital_recipes = digital_recipes_on_device( *it );
+        if( !it->get_var( "EIPC_RECIPES" ).empty() || !digital_recipes.empty() ) {
+            amenu.addentry( ei_recipe, true, 'r', _( "View recipes" ) );
         }
 
-        const int songs = it->get_var( "EIPC_MUSIC", 0 );
-        if( songs > 0 ) {
-            if( it->is_active() ) {
-                amenu.addentry( ei_music, true, 'm', _( "Turn music off" ) );
-            } else {
-                amenu.addentry( ei_music, true, 'm', _( "Turn music on [%d]" ), songs );
-            }
-        } else {
-            amenu.addentry( ei_music, false, 'm', _( "No music on device" ) );
+        const auto books = stored_files | std::views::filter( []( const auto * file ) {
+            return file->is_book() && is_digital_file( *file );
+        } ) | std::ranges::to<std::vector>();
+        amenu.addentry( ei_books, !books.empty(), 'b',
+                        books.empty() ? _( "No books on device" ) : _( "Read books" ) );
+
+        if( has_camera_photos ) {
+            amenu.addentry( ei_uploaded_photos, true, 'l', _( "Camera photos" ) );
         }
 
-        if( !it->get_var( "EIPC_RECIPES" ).empty() ) {
-            amenu.addentry( ei_recipe, true, 'r', _( "View recipes on E-ink screen" ) );
-        }
-
-        if( !it->get_var( "EIPC_EXTENDED_PHOTOS" ).empty() ) {
-            amenu.addentry( ei_uploaded_photos, true, 'l', _( "Your photos" ) );
-        }
-
-        if( !it->get_var( "EINK_MONSTER_PHOTOS" ).empty() ) {
+        if( !digital_monster_photos( *it ).empty() ) {
             amenu.addentry( ei_monsters, true, 'y', _( "Your collection of monsters" ) );
         } else {
             amenu.addentry( ei_monsters, false, 'y', _( "Collection of monsters is empty" ) );
         }
 
-        amenu.addentry( ei_download, true, 'w', _( "Download data from memory card" ) );
+        amenu.addentry( ei_files, true, 'f', _( "Browse digital files" ) );
+        amenu.addentry( ei_scan_book, true, 'a', _( "Scan book" ) );
+        amenu.addentry( ei_download, true, 'w', _( "Download data from storage media" ) );
+        const auto has_files = std::ranges::any_of( it->contents.all_items_top(),
+        []( const auto * file ) { return is_digital_file( *file ); } );
+        amenu.addentry( ei_export, has_files, 'e', _( "Copy files to storage media" ) );
+        amenu.addentry( ei_delete_storage, true, 'x', _( "Delete files from storage media" ) );
+
+        amenu.addentry( ei_encrypt, true, 's', _( "Encrypt storage media" ) );
 
         /** @EFFECT_COMPUTER >2 allows decrypting memory cards more easily */
         if( p->get_skill_level( skill_computer ) > 2 ) {
-            amenu.addentry( ei_decrypt, true, 'd', _( "Decrypt memory card" ) );
+            amenu.addentry( ei_decrypt, true, 'd', _( "Decrypt storage media" ) );
         } else {
-            amenu.addentry( ei_decrypt, false, 'd', _( "Decrypt memory card (low skill)" ) );
+            amenu.addentry( ei_decrypt, false, 'd', _( "Decrypt storage media (low skill)" ) );
         }
 
         amenu.query();
 
         const int choice = amenu.ret;
 
-        if( ei_photo == choice ) {
-
-            const int photos = it->get_var( "EIPC_PHOTOS", 0 );
-            const int viewed = std::min( photos, rng( 10, 30 ) );
-            const int count = photos - viewed;
-            if( count == 0 ) {
-                it->erase_var( "EIPC_PHOTOS" );
-            } else {
-                it->set_var( "EIPC_PHOTOS", count );
-            }
-
-            p->moves -= to_moves<int>( rng( 3_seconds, 7_seconds ) );
-
-            if( p->has_trait( trait_PSYCHOPATH ) ) {
-                p->add_msg_if_player( m_info, _( "Wasted time, these pictures do not provoke your senses." ) );
-            } else {
-                p->add_morale( MORALE_PHOTOS, rng( 15, 30 ), 100 );
-
-                const int random_photo = rng( 1, 20 );
-                switch( random_photo ) {
-                    case 1:
-                        p->add_msg_if_player( m_good, _( "You used to have a dog like this…" ) );
-                        break;
-                    case 2:
-                        p->add_msg_if_player( m_good, _( "Ha-ha!  An amusing cat photo." ) );
-                        break;
-                    case 3:
-                        p->add_msg_if_player( m_good, _( "Excellent pictures of nature." ) );
-                        break;
-                    case 4:
-                        p->add_msg_if_player( m_good, _( "Food photos… your stomach rumbles!" ) );
-                        break;
-                    case 5:
-                        p->add_msg_if_player( m_good, _( "Some very interesting travel photos." ) );
-                        break;
-                    case 6:
-                        p->add_msg_if_player( m_good, _( "Pictures of a concert of popular band." ) );
-                        break;
-                    case 7:
-                        p->add_msg_if_player( m_good, _( "Photos of someone's luxurious house." ) );
-                        break;
-                    default:
-                        p->add_msg_if_player( m_good, _( "You feel nostalgic as you stare at the photo." ) );
-                        break;
+        if( choice == ei_scan_book ) {
+            if( auto *you = p->as_avatar() ) {
+                const auto filter = []( const auto & book ) { return book.is_book() && !is_digital_file( book ); };
+                if( auto *book = game_menus::inv::titled_filter_menu( filter, *you, _( "Scan which book?" ) ) ) {
+                    start_book_scan( *p, *it, *book );
                 }
             }
+            return 0;
+        }
 
+        if( choice == ei_export ) {
+            return export_files_to_storage( *p, *it ) ? it->type->charges_to_use() : 0;
+        }
+
+        if( choice == ei_delete_storage ) {
+            delete_files_from_storage( *p, *it );
             return it->type->charges_to_use();
         }
 
-        if( ei_music == choice ) {
-
-            p->moves -= 30;
-
-            if( it->is_active() ) {
-                // Turn music off - revert to original type
-                const std::optional<itype_id> revert_to = it->type->tool->revert_to;
-                if( revert_to.has_value() ) {
-                    it->convert( revert_to.value() );
-                }
-                it->deactivate();
-                it->erase_var( "EIPC_MUSIC_ON" );
-
-                p->add_msg_if_player( m_info, _( "You turned off music on your %s." ), it->tname() );
-            } else {
-                // Turn music on - find music_player action's target if it exists
-                itype_id music_type;
-                const auto music_it = it->type->use_methods.find( "music_player" );
-                if( music_it != it->type->use_methods.end() ) {
-                    const iuse_music_player *music_actor =
-                        dynamic_cast<const iuse_music_player *>( music_it->second.get_actor_ptr() );
-                    if( music_actor ) {
-                        music_type = music_actor->target;
-                    }
-                }
-
-                // Transform to music variant if found
-                if( !music_type.is_empty() && music_type.is_valid() ) {
-                    it->convert( music_type );
-                }
-
-                it->activate();
-                it->set_var( "EIPC_MUSIC_ON", "1" );
-
-                p->add_msg_if_player( m_info, _( "You turned on music on your %s." ), it->tname() );
-
-            }
-
+        if( choice == ei_files ) {
+            browse_digital_files( *p, *it );
             return it->type->charges_to_use();
         }
 
@@ -6339,26 +6351,35 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
 
             rmenu.text = _( "List recipes:" );
 
-            std::vector<recipe_id> candidate_recipes;
-            std::istringstream f( it->get_var( "EIPC_RECIPES" ) );
-            std::string s;
-            int k = 0;
-            while( getline( f, s, ',' ) ) {
-
-                if( s.empty() ) {
-                    continue;
+            auto candidate_recipes = digital_recipes;
+            auto legacy = std::istringstream( it->get_var( "EIPC_RECIPES" ) );
+            auto token = std::string{};
+            while( getline( legacy, token, ',' ) ) {
+                if( !token.empty() && recipe_id( token ).is_valid() ) {
+                    candidate_recipes.insert( recipe_id( token ) );
                 }
-
-                candidate_recipes.emplace_back( s );
-
-                const auto &recipe = *candidate_recipes.back();
-                if( recipe ) {
-                    rmenu.addentry( k++, true, -1, recipe.result_name( /*decorated=*/true ) );
-                }
+            }
+            for( const auto &id : candidate_recipes ) {
+                rmenu.addentry( MENU_AUTOASSIGN, true, -1, id->result_name( /*decorated=*/true ) );
             }
 
             rmenu.query();
 
+            return it->type->charges_to_use();
+        }
+
+        if( ei_books == choice ) {
+            auto bmenu = uilist{};
+            bmenu.text = _( "Books on device:" );
+            for( auto index = 0; index < static_cast<int>( books.size() ); ++index ) {
+                bmenu.addentry( index, true, MENU_AUTOASSIGN, books[index]->display_name() );
+            }
+            bmenu.query();
+            if( bmenu.ret >= 0 && bmenu.ret < static_cast<int>( books.size() ) ) {
+                if( auto *you = p->as_avatar() ) {
+                    you->read( books[bmenu.ret] );
+                }
+            }
             return it->type->charges_to_use();
         }
 
@@ -6368,52 +6389,14 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
         }
 
         if( ei_monsters == choice ) {
-
-            uilist pmenu;
-
-            pmenu.text = _( "Your collection of monsters:" );
-
-            std::vector<mtype_id> monster_photos;
-
-            std::istringstream f( it->get_var( "EINK_MONSTER_PHOTOS" ) );
-            std::string s;
-            int k = 0;
-            while( getline( f, s, ',' ) ) {
-                if( s.empty() ) {
-                    continue;
-                }
-                monster_photos.emplace_back( s );
-                std::string menu_str;
-                const monster dummy( monster_photos.back() );
-                menu_str = dummy.name();
-                getline( f, s, ',' );
-                char *chq = s.data();
-                const int quality = atoi( chq );
-                menu_str += " [" + photo_quality_name( quality ) + "]";
-                pmenu.addentry( k++, true, -1, menu_str.c_str() );
-            }
-
-            int choice;
-            do {
-                pmenu.query();
-                choice = pmenu.ret;
-
-                if( choice < 0 ) {
-                    break;
-                }
-
-                const monster dummy( monster_photos[choice] );
-                popup( dummy.type->get_description() );
-            } while( true );
+            show_monster_collection( *p, *it );
             return it->type->charges_to_use();
         }
 
         avatar *you = p->as_avatar();
         item *loc = nullptr;
-        auto filter = []( const item & it ) {
-            return it.has_flag( flag_MC_MOBILE );
-        };
-        const std::string title = _( "Insert memory card" );
+        auto filter = [it]( const auto & media ) { return &media != it && is_digital_storage_media( media ); };
+        const std::string title = _( "Insert storage media" );
 
         if( ei_download == choice ) {
 
@@ -6428,24 +6411,38 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
             }
             item &mc = *loc;
 
-            if( !mc.has_flag( flag_MC_MOBILE ) ) {
-                p->add_msg_if_player( m_info, _( "This is not a compatible memory card." ) );
+            if( !mc.has_flag( flag_MC_MOBILE ) && !mc.has_flag( flag_id( "DIGITAL_STORAGE" ) ) ) {
+                p->add_msg_if_player( m_info, _( "This is not compatible storage media." ) );
                 return it->type->charges_to_use();
             }
 
-            init_memory_card_with_random_stuff( mc );
+            initialize_digital_media( mc );
 
             if( mc.has_flag( flag_MC_ENCRYPTED ) ) {
-                p->add_msg_if_player( m_info, _( "This memory card is encrypted." ) );
+                p->add_msg_if_player( m_info, _( "This storage device is encrypted." ) );
                 return it->type->charges_to_use();
             }
-            if( !mc.has_flag( flag_MC_HAS_DATA ) ) {
-                p->add_msg_if_player( m_info, _( "This memory card does not contain any new data." ) );
+            if( !mc.has_flag( flag_MC_HAS_DATA ) && mc.contents.empty() ) {
+                p->add_msg_if_player( m_info, _( "This storage device does not contain any new data." ) );
                 return it->type->charges_to_use();
             }
 
             einkpc_download_memory_card( *p, *it, mc );
 
+            return it->type->charges_to_use();
+        }
+
+        if( ei_encrypt == choice ) {
+            if( you != nullptr ) {
+                loc = game_menus::inv::titled_filter_menu( filter, *you, title );
+            }
+            if( loc == nullptr ) {
+                return 0;
+            }
+            if( set_digital_media_encryption( *loc, true ) ) {
+                p->mod_moves( -to_moves<int>( 2_seconds ) );
+                p->add_msg_if_player( m_good, _( "You encrypt the %s." ), loc->tname() );
+            }
             return it->type->charges_to_use();
         }
 
@@ -6460,15 +6457,15 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
             }
             item &mc = *loc;
 
-            if( !mc.has_flag( flag_MC_MOBILE ) ) {
-                p->add_msg_if_player( m_info, _( "This is not a compatible memory card." ) );
+            if( !is_digital_storage_media( mc ) ) {
+                p->add_msg_if_player( m_info, _( "This is not compatible storage media." ) );
                 return it->type->charges_to_use();
             }
 
-            init_memory_card_with_random_stuff( mc );
+            initialize_digital_media( mc );
 
             if( !mc.has_flag( flag_MC_ENCRYPTED ) ) {
-                p->add_msg_if_player( m_info, _( "This memory card is not encrypted." ) );
+                p->add_msg_if_player( m_info, _( "This storage device is not encrypted." ) );
                 return it->type->charges_to_use();
             }
 
@@ -6484,6 +6481,7 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
                 p->practice( skill_computer, rng( 5, 10 ) );
                 p->add_msg_if_player( m_good, _( "You successfully decrypted content on %s!" ),
                                       mc.tname() );
+                set_digital_media_encryption( mc, false );
                 einkpc_download_memory_card( *p, *it, mc );
             } else {
                 if( success > -10 || one_in( 5 ) ) {
@@ -6492,8 +6490,9 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
                     p->add_msg_if_player( m_bad,
                                           _( "You tripped the firmware protection, and the card deleted its data!" ) );
                     mc.clear_vars();
-                    mc.unset_flags();
-                    mc.convert( itype_mobile_memory_card_used );
+                    mc.contents.clear_items();
+                    mc.unset_flag( flag_MC_ENCRYPTED );
+                    mc.set_var( "DIGITAL_INITIALIZED", 1 );
                 }
             }
             return it->type->charges_to_use();
@@ -7275,7 +7274,7 @@ static bool show_photo_selection( player &p, item &it, const std::string &var_na
     }
 
     uilist pmenu;
-    pmenu.text = _( "Photos saved on camera:" );
+    pmenu.text = _( "Saved photos:" );
 
     std::vector<std::string> descriptions;
     std::vector<extended_photo_def> extended_photos;
@@ -7292,6 +7291,20 @@ static bool show_photo_selection( player &p, item &it, const std::string &var_na
         }
     } catch( const JsonError &e ) {
         debugmsg( "Error migrating old photo format: %s", e.c_str() );
+    }
+
+    if( var_name == "EIPC_EXTENDED_PHOTOS" ) {
+        for( auto *file : it.contents.all_items_top() ) {
+            if( !is_digital_file( *file ) ) {
+                continue;
+            }
+            try {
+                item_read_extended_photos( *file, extended_photos, "CAMERA_EXTENDED_PHOTOS", true );
+                item_read_extended_photos( *file, extended_photos, "CAMERA_NPC_PHOTOS", true );
+            } catch( const JsonError &e ) {
+                debugmsg( "Error reading captured photos: %s", e.c_str() );
+            }
+        }
     }
 
     int k = 0;
@@ -7341,6 +7354,7 @@ static bool show_photo_selection( player &p, item &it, const std::string &var_na
         };
 
         scrollable_text( new_win, "", desc.c_str() );
+        apply_photo_viewing_morale( p );
 
     } while( true );
     return true;
@@ -7348,12 +7362,17 @@ static bool show_photo_selection( player &p, item &it, const std::string &var_na
 
 int iuse::camera( player *p, item *it, bool, const tripoint_bub_ms & )
 {
+    migrate_legacy_digital_media( *it );
+    const auto saved_collection = find_camera_photo_collection( *it );
+    auto *collection = saved_collection ? &saved_collection->get() : nullptr;
     enum {c_shot, c_photos, c_monsters, c_upload};
 
     // CAMERA_NPC_PHOTOS is old save variable
-    bool found_extended_photos = !it->get_var( "CAMERA_NPC_PHOTOS" ).empty() ||
-                                 !it->get_var( "CAMERA_EXTENDED_PHOTOS" ).empty();
-    bool found_monster_photos = !it->get_var( "CAMERA_MONSTER_PHOTOS" ).empty();
+    const auto found_extended_photos = collection &&
+                                       ( !collection->get_var( "CAMERA_NPC_PHOTOS" ).empty() ||
+                                         !collection->get_var( "CAMERA_EXTENDED_PHOTOS" ).empty() );
+    const auto found_monster_photos = collection &&
+                                      !collection->get_var( "CAMERA_MONSTER_PHOTOS" ).empty();
 
     uilist amenu;
     amenu.text = _( "What to do with camera?" );
@@ -7401,12 +7420,10 @@ int iuse::camera( player *p, item *it, bool, const tripoint_bub_ms & )
         se.variant = "camera_shutter";
         sounds::sound( se );
 
-        for( std::vector<tripoint_bub_ms>::iterator point_it = trajectory.begin();
-             point_it != trajectory.end();
-             ++point_it ) {
-            const auto trajectory_point = *point_it;
-            if( point_it != trajectory.end() ) {
-                const auto next_point = *( point_it + 1 ); // Trajectory ends on last visible tile
+        for( auto index = size_t{ 0 }; index < trajectory.size(); ++index ) {
+            const auto trajectory_point = trajectory[index];
+            if( index + 1 < trajectory.size() ) {
+                const auto next_point = trajectory[index + 1]; // Trajectory ends on last visible tile
                 if( !g->m.sees( p->bub_pos(), next_point, rl_dist( p->bub_pos(), next_point ) + 3 ) ) {
                     p->add_msg_if_player( _( "You have the wrong camera focus." ) );
                     incorrect_focus = true;
@@ -7476,10 +7493,13 @@ int iuse::camera( player *p, item *it, bool, const tripoint_bub_ms & )
                                            character_vec );
                 photo.quality = photo_quality;
 
+                auto &album = camera_photo_collection( *it );
                 try {
-                    item_read_extended_photos( *it, extended_photos, "CAMERA_EXTENDED_PHOTOS" );
+                    item_read_extended_photos( album, extended_photos, "CAMERA_EXTENDED_PHOTOS" );
+                    item_read_extended_photos( album, extended_photos, "CAMERA_NPC_PHOTOS", true );
+                    album.erase_var( "CAMERA_NPC_PHOTOS" );
                     extended_photos.push_back( photo );
-                    item_write_extended_photos( *it, extended_photos, "CAMERA_EXTENDED_PHOTOS" );
+                    item_write_extended_photos( album, extended_photos, "CAMERA_EXTENDED_PHOTOS" );
                 } catch( const JsonError &e ) {
                     debugmsg( "Error when adding new photo (loaded photos = %i): %s", extended_photos.size(),
                               e.c_str() );
@@ -7527,8 +7547,9 @@ int iuse::camera( player *p, item *it, bool, const tripoint_bub_ms & )
                     }
                 }
                 if( !monster_vec.empty() ) {
-                    item_save_monsters( *p, *it, monster_vec, photo_quality );
+                    item_save_monsters( *p, album, monster_vec, photo_quality );
                 }
+                update_camera_photo_collection( *it, static_cast<int>( extended_photos.size() ) );
                 return it->type->charges_to_use();
             }
         }
@@ -7536,7 +7557,7 @@ int iuse::camera( player *p, item *it, bool, const tripoint_bub_ms & )
     }
 
     if( c_photos == choice ) {
-        show_photo_selection( *p, *it, "CAMERA_EXTENDED_PHOTOS" );
+        show_photo_selection( *p, *collection, "CAMERA_EXTENDED_PHOTOS" );
         return it->type->charges_to_use();
     }
 
@@ -7545,110 +7566,20 @@ int iuse::camera( player *p, item *it, bool, const tripoint_bub_ms & )
             p->add_msg_if_player( _( "You can't see the camera screen, you're blind." ) );
             return 0;
         }
-        uilist pmenu;
-
-        pmenu.text = _( "Your collection of monsters:" );
-
-        std::vector<mtype_id> monster_photos;
-        std::vector<std::string> descriptions;
-
-        std::istringstream f_mon( it->get_var( "CAMERA_MONSTER_PHOTOS" ) );
-        std::string s;
-        int k = 0;
-        while( getline( f_mon, s, ',' ) ) {
-
-            if( s.empty() ) {
-                continue;
-            }
-
-            monster_photos.emplace_back( s );
-
-            std::string menu_str;
-
-            const monster dummy( monster_photos.back() );
-            menu_str = dummy.name();
-            descriptions.push_back( dummy.type->get_description() );
-
-            getline( f_mon, s, ',' );
-            char *chq = s.data();
-            const int quality = atoi( chq );
-
-            menu_str += " [" + photo_quality_name( quality ) + "]";
-
-            pmenu.addentry( k++, true, -1, menu_str.c_str() );
-        }
-
-        int choice;
-        do {
-            pmenu.query();
-            choice = pmenu.ret;
-
-            if( choice < 0 ) {
-                break;
-            }
-
-            popup( "%s", descriptions[choice].c_str() );
-
-        } while( true );
-
+        show_monster_collection( *p, *collection );
         return it->type->charges_to_use();
     }
 
     if( c_upload == choice ) {
-
         if( p->is_blind() ) {
             p->add_msg_if_player( _( "You can't see the camera screen, you're blind." ) );
             return 0;
         }
-
-        p->moves -= to_moves<int>( 2_seconds );
-
-        avatar *you = p->as_avatar();
-        item *loc = nullptr;
-        if( you != nullptr ) {
-            loc = game_menus::inv::titled_filter_menu( []( const item & it ) {
-                return it.has_flag( flag_MC_MOBILE );
-            }, *you, _( "Insert memory card" ) );
-        }
-        if( !loc ) {
-            p->add_msg_if_player( m_info, _( "You do not have that item!" ) );
-            return it->type->charges_to_use();
-        }
-        item &mc = *loc;
-
-        if( !mc.has_flag( flag_MC_MOBILE ) ) {
-            p->add_msg_if_player( m_info, _( "This is not a compatible memory card." ) );
-            return it->type->charges_to_use();
-        }
-
-        init_memory_card_with_random_stuff( mc );
-
-        if( mc.has_flag( flag_MC_ENCRYPTED ) ) {
-            if( !query_yn( _( "This memory card is encrypted.  Format and clear data?" ) ) ) {
-                return it->type->charges_to_use();
-            }
-        }
-        if( mc.has_flag( flag_MC_HAS_DATA ) ) {
-            if( !query_yn( _( "Are you sure you want to clear the old data on the card?" ) ) ) {
-                return it->type->charges_to_use();
-            }
-        }
-
-        mc.convert( itype_mobile_memory_card );
-        mc.clear_vars();
-        mc.unset_flags();
-        mc.set_flag( flag_MC_HAS_DATA );
-
-        mc.set_var( "MC_MONSTER_PHOTOS", it->get_var( "CAMERA_MONSTER_PHOTOS" ) );
-        mc.set_var( "MC_EXTENDED_PHOTOS", it->get_var( "CAMERA_EXTENDED_PHOTOS" ) );
-        p->add_msg_if_player( m_info,
-                              _( "You upload your photos and monster collection to memory card." ) );
-
-        return it->type->charges_to_use();
+        return export_files_to_storage( *p, *it, collection ) ? it->type->charges_to_use() : 0;
     }
-
-    return it->type->charges_to_use();
+    return 0;
 }
+
 
 int iuse::ehandcuffs( player *p, item *it, bool t, const tripoint_bub_ms &pos )
 {
@@ -8064,10 +7995,11 @@ int iuse::radiocontrol( player *p, item *it, bool t, const tripoint_bub_ms & )
 static bool hackveh( player &p, item &it, vehicle &veh )
 {
     if( !veh.is_locked || !veh.has_security_working() ) {
+        // In the event something causes a vehicle to have non-working security but still count as locked.
+        veh.is_locked = false;
         return true;
     }
-    const auto advanced = !veh.get_avail_parts( "REMOTE_CONTROLS" ).empty();
-    if( advanced && veh.is_alarm_on ) {
+    if( veh.is_alarm_on ) {
         p.add_msg_if_player( m_bad, _( "This vehicle's security system has locked you out!" ) );
         return false;
     }
@@ -8075,7 +8007,7 @@ static bool hackveh( player &p, item &it, vehicle &veh )
     /** @EFFECT_INT increases chance of bypassing vehicle security system */
 
     /** @EFFECT_COMPUTER increases chance of bypassing vehicle security system */
-    int roll = dice( p.get_skill_level( skill_computer ) + 2, p.int_cur ) - ( advanced ? 50 : 25 );
+    int roll = dice( p.get_skill_level( skill_computer ) + 2, p.int_cur ) - ( 50 );
     int effort = 0;
     bool success = false;
     if( roll < -20 ) { // Really bad rolls will trigger the alarm before you know it exists
@@ -8095,7 +8027,7 @@ static bool hackveh( player &p, item &it, vehicle &veh )
         return false;
     }
 
-    p.practice( skill_computer, advanced ? 10 : 3 );
+    p.practice( skill_computer, 10 );
     if( roll < -10 ) {
         effort = rng( 4, 8 );
         p.add_msg_if_player( m_bad, _( "You waste some time, but fail to affect the security system." ) );
@@ -8111,16 +8043,15 @@ static bool hackveh( player &p, item &it, vehicle &veh )
 
     p.moves -= to_moves<int>( time_duration::from_seconds( effort ) );
     it.charges -= effort;
-    if( success && advanced ) { // Unlock controls, but only if they're drive-by-wire
+    if( success ) { // Unlock controls
         veh.is_locked = false;
     }
     return success;
 }
 
-static vehicle *pickveh( const tripoint_bub_ms &center, bool advanced )
+static vehicle *pickveh( const tripoint_bub_ms &center )
 {
-    static const std::string ctrl = "CTRL_ELECTRONIC";
-    static const std::string advctrl = "REMOTE_CONTROLS";
+    static const std::string ctrl = "REMOTE_CONTROLS";
     uilist pmenu;
     pmenu.title = _( "Select vehicle to access" );
     std::vector< vehicle * > vehs;
@@ -8129,8 +8060,7 @@ static vehicle *pickveh( const tripoint_bub_ms &center, bool advanced )
         auto &v = veh.v;
         if( g->m.inbounds( v->bub_ms_location() ) &&
             v->fuel_left( itype_battery, true ) > 0 &&
-            ( !v->get_avail_parts( advctrl ).empty() ||
-              ( !advanced && !v->get_avail_parts( ctrl ).empty() ) ) ) {
+            !v->get_avail_parts( ctrl ).empty() ) {
             vehs.push_back( v );
         }
     }
@@ -8164,8 +8094,10 @@ int iuse::remoteveh( player *p, item *it, bool t, const tripoint_bub_ms &pos )
     if( t ) {
         bool stop = false;
         if( !it->units_sufficient( *p ) ) {
+            // We don't want it to deactivate because revert already handles that.
             p->add_msg_if_player( m_bad, _( "The remote control's battery goes dead." ) );
-            stop = true;
+            g->setremoteveh( nullptr );
+            g->u.view_offset = tripoint_rel_ms::zero();
         } else if( remote == nullptr ) {
             p->add_msg_if_player( _( "Lost contact with the vehicle." ) );
             stop = true;
@@ -8183,12 +8115,21 @@ int iuse::remoteveh( player *p, item *it, bool t, const tripoint_bub_ms &pos )
     }
 
     bool controlling = it->is_active() && remote != nullptr;
-    int choice = uilist( _( "What to do with remote vehicle control:" ), {
-        controlling ? _( "Stop controlling the vehicle." ) : _( "Take control of a vehicle." ),
-        _( "Execute one vehicle action" )
-    } );
 
-    if( choice < 0 || choice > 1 ) {
+    int choice = -1;
+    if( controlling ) {
+        choice = uilist( _( "What to do with remote vehicle control:" ), {
+            _( "Stop controlling the vehicle." ),
+            _( "Execute one vehicle action" ), _( "Examine vehicle" )
+        } );
+    } else {
+        choice = uilist( _( "What to do with remote vehicle control:" ), {
+            _( "Take control of a vehicle." ),
+            _( "Execute one vehicle action" )
+        } );
+    }
+
+    if( choice < 0 || choice > 2 || ( choice > 1 && !controlling ) ) {
         return 0;
     }
 
@@ -8200,6 +8141,7 @@ int iuse::remoteveh( player *p, item *it, bool t, const tripoint_bub_ms &pos )
         if( remote->has_part( "CAMERA" ) && remote->has_part( "CAMERA_CONTROL" ) ) {
             remote->camera_on = false;
         }
+        remote->enable_refresh();
         g->setremoteveh( nullptr );
         g->u.view_offset = tripoint_rel_ms::zero();
         return 0;
@@ -8207,14 +8149,17 @@ int iuse::remoteveh( player *p, item *it, bool t, const tripoint_bub_ms &pos )
 
     const auto p2 = g->u.view_offset.xy();
 
-    vehicle *veh = pickveh( pos, choice == 0 );
+    vehicle *veh = remote;
 
-    if( veh == nullptr ) {
-        return 0;
-    }
+    if( !controlling ) {
+        veh = pickveh( pos );
+        if( veh == nullptr ) {
+            return 0;
+        }
 
-    if( !hackveh( *p, *it, *veh ) ) {
-        return 0;
+        if( !hackveh( *p, *it, *veh ) ) {
+            return 0;
+        }
     }
     const auto rctrl_parts = veh->get_avail_parts( "REMOTE_CONTROLS" );
 
@@ -8237,12 +8182,25 @@ int iuse::remoteveh( player *p, item *it, bool t, const tripoint_bub_ms &pos )
             }
         }
     } else if( choice == 1 ) {
+        if( !controlling ) {
+            it->activate();
+            g->setremoteveh( veh );
+        }
         // Revert to original behavior if we can't find remote controls.
         if( rctrl_parts.empty() ) {
             veh->use_controls( tripoint_bub_ms( pos ) );
         } else {
             veh->use_controls( tripoint_bub_ms( rctrl_parts.begin()->pos() ) );
         }
+        if( !controlling ) {
+            it->deactivate();
+            g->setremoteveh( nullptr );
+            g->u.view_offset = tripoint_rel_ms::zero();
+            return it->type->charges_to_use();
+        }
+    } else if( choice == 2 ) {
+        // Revert to original behavior if we can't find remote controls.
+        g->exam_vehicle( *remote );
     }
 
     g->u.view_offset.x() = p2.x();

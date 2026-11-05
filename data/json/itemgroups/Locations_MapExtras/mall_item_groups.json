@@ -291,7 +291,7 @@
       [ "smart_phone", 90 ],
       [ "wrist_comp_budget", 30 ],
       [ "wristwatch", 60 ],
-      [ "mobile_memory_card_used", 10 ]
+      [ "sd_memory_card", 10 ]
     ]
   },
   {

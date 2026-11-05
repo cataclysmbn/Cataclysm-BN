@@ -260,9 +260,9 @@
       {
         "distribution": [
           { "item": "usb_drive", "prob": 50 },
-          { "item": "mobile_memory_card", "prob": 10 },
-          { "item": "mobile_memory_card_used", "prob": 10 },
-          { "item": "mobile_memory_card_encrypted", "prob": 5 }
+          { "group": "sd_memory_card_personal", "prob": 10 },
+          { "item": "sd_memory_card", "prob": 10 },
+          { "group": "sd_memory_card_encrypted", "prob": 5 }
         ],
         "prob": 10
       },

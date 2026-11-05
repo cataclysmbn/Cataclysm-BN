@@ -602,7 +602,7 @@
   {
     "type": "item_action",
     "id": "dna_editor",
-    "name": { "str": "Inspect genome drive" }
+    "name": { "str": "Inspect genome samples" }
   },
   {
     "type": "item_action",

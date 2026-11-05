@@ -9425,5 +9425,20 @@
       "male": [ "boxer_shorts" ],
       "female": [ "boy_shorts", "sports_bra" ]
     }
+  },
+  {
+    "type": "profession",
+    "id": "data_hoarder",
+    "name": "Data Hoarder",
+    "description": "You spent years collecting, sorting, and backing up digital files.  Your laptop and hard drives may hold useful information—or just a lot of clutter.",
+    "points": 2,
+    "skills": [ { "level": 2, "name": "computer" }, { "level": 1, "name": "electronics" } ],
+    "items": {
+      "both": {
+        "items": [ "jeans", "tshirt", "socks", "sneakers", "backpack", "laptop", "hard_drive", "hard_drive", "hard_drive", "hard_drive" ]
+      },
+      "male": [ "boxer_briefs" ],
+      "female": [ "bra", "panties" ]
+    }
   }
 ]

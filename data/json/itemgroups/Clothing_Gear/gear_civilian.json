@@ -42,7 +42,7 @@
       [ "camera_pro", 5 ],
       [ "eink_tablet_pc", 30 ],
       [ "laptop", 15 ],
-      [ "mobile_memory_card", 50 ],
+      { "group": "sd_memory_card_personal", "prob": 50 },
       [ "usb_drive", 50 ],
       [ "mp3", 20 ],
       [ "portable_game", 50 ],

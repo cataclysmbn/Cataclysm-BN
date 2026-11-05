@@ -747,7 +747,8 @@
       [ "angle_grinder", 4 ],
       [ "textbook_launcher", 2 ],
       [ "105mm_casing", 12 ],
-      [ "120mm_case_base", 4 ]
+      [ "120mm_case_base", 4 ],
+      [ "combat_drone_item", 1 ]
     ]
   },
   {
@@ -1698,7 +1699,7 @@
     "//": "For s_electronics shops",
     "items": [
       [ "usb_drive", 65 ],
-      [ "mobile_memory_card", 95 ],
+      { "group": "sd_memory_card_personal", "prob": 95 },
       [ "software_math", 15 ],
       [ "software_useless", 25 ],
       [ "software_utility", 10 ],
