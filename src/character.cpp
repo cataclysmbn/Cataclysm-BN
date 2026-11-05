@@ -11451,7 +11451,8 @@ const -> std::vector<item *>
     } );
 }
 
-auto Character::remove_items_if( const std::vector<char_item_filter_fn> &filters ) -> std::vector<detached_ptr<item>>
+auto Character::remove_items_if( const std::vector<char_item_filter_fn> &filters ) ->
+std::vector<detached_ptr<item>>
 {
     std::vector<detached_ptr<item>> removed;
     remove_items_with( [&removed, &filters]( detached_ptr<item> &&it ) -> VisitResponse {
