@@ -148,8 +148,8 @@ void relicgen_part::add_enchantment( enchantment &nench )
 
 void relicgen::load( const JsonObject &jo, const std::string &src )
 {
-    optional( jo, was_loaded, "min_power", min_power );
-    optional( jo, was_loaded, "max_power", max_power );
+    optional( jo, was_loaded, "min_power", min_power, 1 );
+    optional( jo, was_loaded, "max_power", max_power, 1 );
     for( JsonObject jobj : jo.get_array( "effects" ) ) {
         relicgen_set set;
         set.load( jobj );
