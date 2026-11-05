@@ -78,7 +78,8 @@ handlers = {
         "need_charges", []( LuaValue & val ) -> item_predicate {
             const auto expected = val.as<bool>();
             return [expected]( const item & it ) -> bool {
-                if( expected && it.is_tool() && it.type->tool->max_charges ) {
+                if( expected && it.is_tool() && it.type->tool->max_charges )
+                {
                     return it.charges > 0;
                 }
                 return true;
