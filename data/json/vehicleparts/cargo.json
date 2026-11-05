@@ -742,5 +742,20 @@
       { "item": "motor_tiny", "prob": 25 }
     ],
     "damage_reduction": { "all": 32 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "carbon_box_small",
+    "copy-from": "basketsm",
+    "name": { "str": "small carbon fiber box" },
+    "durability": 90,
+    "folded_volume": "1 L",
+    "item": "sheet_carbon",
+    "location": "center",
+    "requirements": {
+      "repair": { "skills": [ [ "mechanics", 1 ] ], "time": "30 m", "using": [ [ "adhesive", 1 ], [ "vehicle_repair_carbon", 3 ] ] }
+    },
+    "extend": { "flags": [ "SHOCK_RESISTANT" ] },
+    "breaks_into": "ig_vp_carbon"
   }
 ]

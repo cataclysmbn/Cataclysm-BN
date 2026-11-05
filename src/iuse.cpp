@@ -8053,10 +8053,11 @@ int iuse::radiocontrol( player *p, item *it, bool t, const tripoint_bub_ms & )
 static bool hackveh( player &p, item &it, vehicle &veh )
 {
     if( !veh.is_locked || !veh.has_security_working() ) {
+        // In the event something causes a vehicle to have non-working security but still count as locked.
+        veh.is_locked = false;
         return true;
     }
-    const auto advanced = !veh.get_avail_parts( "REMOTE_CONTROLS" ).empty();
-    if( advanced && veh.is_alarm_on ) {
+    if( veh.is_alarm_on ) {
         p.add_msg_if_player( m_bad, _( "This vehicle's security system has locked you out!" ) );
         return false;
     }
@@ -8064,7 +8065,7 @@ static bool hackveh( player &p, item &it, vehicle &veh )
     /** @EFFECT_INT increases chance of bypassing vehicle security system */
 
     /** @EFFECT_COMPUTER increases chance of bypassing vehicle security system */
-    int roll = dice( p.get_skill_level( skill_computer ) + 2, p.int_cur ) - ( advanced ? 50 : 25 );
+    int roll = dice( p.get_skill_level( skill_computer ) + 2, p.int_cur ) - ( 50 );
     int effort = 0;
     bool success = false;
     if( roll < -20 ) { // Really bad rolls will trigger the alarm before you know it exists
@@ -8084,7 +8085,7 @@ static bool hackveh( player &p, item &it, vehicle &veh )
         return false;
     }
 
-    p.practice( skill_computer, advanced ? 10 : 3 );
+    p.practice( skill_computer, 10 );
     if( roll < -10 ) {
         effort = rng( 4, 8 );
         p.add_msg_if_player( m_bad, _( "You waste some time, but fail to affect the security system." ) );
@@ -8100,16 +8101,15 @@ static bool hackveh( player &p, item &it, vehicle &veh )
 
     p.moves -= to_moves<int>( time_duration::from_seconds( effort ) );
     it.charges -= effort;
-    if( success && advanced ) { // Unlock controls, but only if they're drive-by-wire
+    if( success ) { // Unlock controls
         veh.is_locked = false;
     }
     return success;
 }
 
-static vehicle *pickveh( const tripoint_bub_ms &center, bool advanced )
+static vehicle *pickveh( const tripoint_bub_ms &center )
 {
-    static const std::string ctrl = "CTRL_ELECTRONIC";
-    static const std::string advctrl = "REMOTE_CONTROLS";
+    static const std::string ctrl = "REMOTE_CONTROLS";
     uilist pmenu;
     pmenu.title = _( "Select vehicle to access" );
     std::vector< vehicle * > vehs;
@@ -8118,8 +8118,7 @@ static vehicle *pickveh( const tripoint_bub_ms &center, bool advanced )
         auto &v = veh.v;
         if( g->m.inbounds( v->bub_ms_location() ) &&
             v->fuel_left( itype_battery, true ) > 0 &&
-            ( !v->get_avail_parts( advctrl ).empty() ||
-              ( !advanced && !v->get_avail_parts( ctrl ).empty() ) ) ) {
+            !v->get_avail_parts( ctrl ).empty() ) {
             vehs.push_back( v );
         }
     }
@@ -8153,8 +8152,10 @@ int iuse::remoteveh( player *p, item *it, bool t, const tripoint_bub_ms &pos )
     if( t ) {
         bool stop = false;
         if( !it->units_sufficient( *p ) ) {
+            // We don't want it to deactivate because revert already handles that.
             p->add_msg_if_player( m_bad, _( "The remote control's battery goes dead." ) );
-            stop = true;
+            g->setremoteveh( nullptr );
+            g->u.view_offset = tripoint_rel_ms::zero();
         } else if( remote == nullptr ) {
             p->add_msg_if_player( _( "Lost contact with the vehicle." ) );
             stop = true;
@@ -8172,12 +8173,21 @@ int iuse::remoteveh( player *p, item *it, bool t, const tripoint_bub_ms &pos )
     }
 
     bool controlling = it->is_active() && remote != nullptr;
-    int choice = uilist( _( "What to do with remote vehicle control:" ), {
-        controlling ? _( "Stop controlling the vehicle." ) : _( "Take control of a vehicle." ),
-        _( "Execute one vehicle action" )
-    } );
 
-    if( choice < 0 || choice > 1 ) {
+    int choice = -1;
+    if( controlling ) {
+        choice = uilist( _( "What to do with remote vehicle control:" ), {
+            _( "Stop controlling the vehicle." ),
+            _( "Execute one vehicle action" ), _( "Examine vehicle" )
+        } );
+    } else {
+        choice = uilist( _( "What to do with remote vehicle control:" ), {
+            _( "Take control of a vehicle." ),
+            _( "Execute one vehicle action" )
+        } );
+    }
+
+    if( choice < 0 || choice > 2 || ( choice > 1 && !controlling ) ) {
         return 0;
     }
 
@@ -8189,6 +8199,7 @@ int iuse::remoteveh( player *p, item *it, bool t, const tripoint_bub_ms &pos )
         if( remote->has_part( "CAMERA" ) && remote->has_part( "CAMERA_CONTROL" ) ) {
             remote->camera_on = false;
         }
+        remote->enable_refresh();
         g->setremoteveh( nullptr );
         g->u.view_offset = tripoint_rel_ms::zero();
         return 0;
@@ -8196,14 +8207,17 @@ int iuse::remoteveh( player *p, item *it, bool t, const tripoint_bub_ms &pos )
 
     const auto p2 = g->u.view_offset.xy();
 
-    vehicle *veh = pickveh( pos, choice == 0 );
+    vehicle *veh = remote;
 
-    if( veh == nullptr ) {
-        return 0;
-    }
+    if( !controlling ) {
+        veh = pickveh( pos );
+        if( veh == nullptr ) {
+            return 0;
+        }
 
-    if( !hackveh( *p, *it, *veh ) ) {
-        return 0;
+        if( !hackveh( *p, *it, *veh ) ) {
+            return 0;
+        }
     }
     const auto rctrl_parts = veh->get_avail_parts( "REMOTE_CONTROLS" );
 
@@ -8226,12 +8240,25 @@ int iuse::remoteveh( player *p, item *it, bool t, const tripoint_bub_ms &pos )
             }
         }
     } else if( choice == 1 ) {
+        if( !controlling ) {
+            it->activate();
+            g->setremoteveh( veh );
+        }
         // Revert to original behavior if we can't find remote controls.
         if( rctrl_parts.empty() ) {
             veh->use_controls( tripoint_bub_ms( pos ) );
         } else {
             veh->use_controls( tripoint_bub_ms( rctrl_parts.begin()->pos() ) );
         }
+        if( !controlling ) {
+            it->deactivate();
+            g->setremoteveh( nullptr );
+            g->u.view_offset = tripoint_rel_ms::zero();
+            return it->type->charges_to_use();
+        }
+    } else if( choice == 2 ) {
+        // Revert to original behavior if we can't find remote controls.
+        g->exam_vehicle( *remote );
     }
 
     g->u.view_offset.x() = p2.x();
