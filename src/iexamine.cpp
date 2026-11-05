@@ -41,6 +41,7 @@
 #include "construction_group.h"
 #include "construction_partial.h"
 #include "craft_command.h"
+#include "cultivated_harvest.h"
 #include "cursesdef.h"
 #include "damage.h"
 #include "data_vars.h"
@@ -2809,9 +2810,6 @@ void iexamine::harvest_plant( player &p, const tripoint_bub_ms &examp, bool from
             add_msg( m_info, _( "The seed blossoms into a flower-looking fungus." ) );
         }
     } else { // Generic seed, use the seed item data
-        const itype &type = *seed->type;
-        here.i_clear( examp );
-
         int skillLevel = p.get_skill_level( skill_survival );
         ///\EFFECT_SURVIVAL increases number of plants harvested from a seed
         int plant_count = rng( skillLevel / 2, skillLevel );
@@ -2823,13 +2821,19 @@ void iexamine::harvest_plant( player &p, const tripoint_bub_ms &examp, bool from
             plant_count = 1;
         }
         const int seedCount = std::max( 1, rng( plant_count / 4, plant_count / 2 ) );
-        for( auto &i : get_harvest_items( type, plant_count, seedCount, true ) ) {
+        auto harvest = get_cultivated_harvest( *seed, {
+            .plant_count = plant_count,
+            .seed_count = seedCount,
+            .byproducts = true
+        } );
+        here.i_clear( examp );
+        here.furn_set( examp, furn_str_id( here.furn( examp )->plant->transform ) );
+        for( auto &i : harvest ) {
             if( from_activity ) {
                 i->set_var( "activity_var", p.name );
             }
             here.add_item_or_charges( examp, std::move( i ) );
         }
-        here.furn_set( examp, furn_str_id( here.furn( examp )->plant->transform ) );
         p.moves -= to_moves<int>( 10_seconds );
     }
 }

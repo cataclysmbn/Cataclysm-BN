@@ -782,7 +782,7 @@
     "color": "light_gray",
     "id": "mushroom_culture",
     "copy-from": "seed",
-    "description": "A chunk of compost laden with spores and mycelium, for growing your own mushrooms.  You'll need to \"plant\" these on tree trunks, or dedicated mushroom racks, for it to grow.",
+    "description": "A chunk of compost laden with spores and mycelium, for growing your own mushrooms.  You'll need to \"plant\" these on tree trunks, or dedicated mushroom racks, for it to grow.  Mushrooms and cultures harvested from it retain the poisonous or hallucinogenic properties of the original mushroom.",
     "seed_data": { "plant_name": "mushroom", "fruit": "mushroom", "required_terrain_flag": "MUSHROOM_PLANTABLE", "grow": "14 days" },
     "extend": { "flags": [ "CAN_PLANT_UNDERGROUND" ] }
   },
