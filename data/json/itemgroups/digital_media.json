@@ -3,49 +3,8 @@
     "id": "digital_content_terminal",
     "type": "item_group",
     "subtype": "collection",
-    "entries": [ { "group": "digital_content_terminal_files", "count": [ 3, 7 ] } ]
-  },
-  {
-    "id": "digital_content_terminal_files",
-    "type": "item_group",
-    "subtype": "distribution",
-    "entries": [
-      { "item": "digital_saved_flier", "prob": 10 },
-      { "item": "digital_character_sheet", "prob": 8 },
-      { "item": "digital_radio_archive", "prob": 8 },
-      { "item": "software_useless", "prob": 15 },
-      { "item": "software_utility", "prob": 10 },
-      { "item": "software_electronics_reference", "prob": 5 },
-      { "item": "digital_music_collection", "prob": 20, "charges": [ 5, 15 ] },
-      { "item": "digital_cooking_show", "prob": 15 },
-      { "item": "digital_survivor_show", "prob": 10 },
-      { "item": "digital_mechanics_show", "prob": 10 },
-      { "item": "digital_adult_video", "prob": 5 },
-      { "item": "digital_hello_world", "prob": 15 },
-      { "item": "digital_saved_news", "prob": 15 },
-      { "item": "digital_cooking_recipe_archive", "prob": 15 },
-      { "item": "digital_3d_printing_guide", "prob": 10 },
-      { "item": "digital_urbex_map", "prob": 5 },
-      { "item": "digital_evacuation_map", "prob": 5 },
-      { "item": "digital_science_recipe_archive", "prob": 5 },
-      { "item": "digital_tailoring_recipe_archive", "prob": 10 },
-      { "item": "digital_bartender_drinks_list", "prob": 10 },
-      { "item": "digital_electronic_blueprints", "prob": 8 },
-      { "item": "digital_chemical_synthesis_sheet", "prob": 5 },
-      { "item": "digital_workshop_tool_plans", "prob": 8 },
-      { "group": "digital_martial_arts_videos", "prob": 3 },
-      { "item": "digital_home_video", "prob": 10 },
-      { "item": "digital_voice_memo", "prob": 5 },
-      { "item": "digital_blade_blueprints", "prob": 5 },
-      { "item": "digital_piercing_weapon_blueprints", "prob": 5 },
-      { "item": "digital_archery_blueprints", "prob": 5 },
-      { "item": "digital_firearm_blueprints", "prob": 3 },
-      { "item": "digital_advanced_weapon_blueprints", "prob": 1 },
-      { "item": "digital_basic_trap_blueprints", "prob": 8 },
-      { "item": "digital_mechanical_trap_blueprints", "prob": 4 },
-      { "item": "digital_advanced_trap_blueprints", "prob": 1 },
-      { "group": "digital_content_common_books", "prob": 30 }
-    ]
+    "entries": [ { "group": "digital_content_reader" } ],
+    "//": "Compatibility alias for saved hard drives using the former contents group."
   },
   {
     "id": "sd_memory_card_personal",
@@ -76,38 +35,18 @@
     "type": "item_group",
     "subtype": "collection",
     "entries": [
-      { "item": "digital_saved_flier", "prob": 15 },
-      { "item": "digital_character_sheet", "prob": 8 },
-      { "item": "digital_radio_archive", "prob": 3 },
-      { "item": "software_useless", "prob": 15 },
-      { "item": "software_utility", "prob": 8 },
-      { "item": "software_electronics_reference", "prob": 2 },
+      { "group": "digital_content_saved_text", "prob": 41 },
+      { "group": "digital_content_common_books", "prob": 30, "count": [ 1, 3 ] },
+      { "group": "digital_content_software", "prob": 35 },
       { "item": "digital_music_collection", "prob": 12, "charges": [ 5, 15 ] },
-      { "item": "digital_cooking_show", "prob": 12 },
-      { "item": "digital_survivor_show", "prob": 8 },
-      { "item": "digital_mechanics_show", "prob": 8 },
-      { "item": "digital_adult_video", "prob": 5 },
-      { "item": "digital_hello_world", "prob": 10 },
-      { "item": "digital_saved_news", "prob": 15 },
-      { "item": "digital_3d_printing_guide", "prob": 2 },
-      { "item": "digital_cooking_recipe_archive", "prob": 5 },
-      { "item": "digital_urbex_map", "prob": 5 },
-      { "item": "digital_evacuation_map", "prob": 5 },
-      { "item": "digital_tailoring_recipe_archive", "prob": 5 },
-      { "item": "digital_bartender_drinks_list", "prob": 5 },
+      { "group": "digital_content_recordings", "prob": 59 },
+      { "group": "digital_content_recipe_archives", "prob": 17 },
+      { "group": "digital_content_maps", "prob": 10 },
       { "item": "digital_electronic_blueprints", "prob": 3 },
       { "item": "digital_chemical_synthesis_sheet", "prob": 1 },
       { "item": "digital_workshop_tool_plans", "prob": 3 },
-      { "group": "digital_martial_arts_videos", "prob": 3 },
-      { "item": "digital_home_video", "prob": 15 },
-      { "item": "digital_voice_memo", "prob": 8 },
-      { "item": "digital_blade_blueprints", "prob": 2 },
-      { "item": "digital_piercing_weapon_blueprints", "prob": 2 },
-      { "item": "digital_archery_blueprints", "prob": 3 },
-      { "item": "digital_firearm_blueprints", "prob": 1 },
-      { "item": "digital_basic_trap_blueprints", "prob": 5 },
-      { "item": "digital_mechanical_trap_blueprints", "prob": 1 },
-      { "group": "digital_content_common_books", "prob": 30, "count": [ 1, 3 ] }
+      { "group": "digital_content_weapon_blueprints", "prob": 8 },
+      { "group": "digital_content_trap_blueprints", "prob": 6 }
     ]
   },
   {
@@ -115,24 +54,21 @@
     "type": "item_group",
     "subtype": "collection",
     "entries": [
+      { "item": "digital_corrupted_file", "prob": 2 },
       { "item": "digital_saved_email", "prob": 35 },
       { "item": "digital_radio_archive", "prob": 10 },
-      { "item": "software_useless", "prob": 5 },
-      { "item": "software_utility", "prob": 15 },
-      { "item": "software_electronics_reference", "prob": 15 },
+      { "group": "digital_content_software", "prob": 35 },
       { "item": "digital_music_collection", "prob": 35, "charges": [ 5, 15 ] },
-      { "item": "digital_3d_printing_guide" },
+      { "group": "digital_content_recipe_archives", "count": 2 },
       { "item": "digital_science_recipe_archive" },
-      { "item": "digital_tailoring_recipe_archive" },
+      { "group": "digital_content_science_journals", "prob": 20 },
       { "item": "digital_electronic_blueprints", "prob": 25 },
       { "item": "digital_chemical_synthesis_sheet", "prob": 35 },
       { "item": "digital_workshop_tool_plans", "prob": 10 },
-      { "item": "digital_corrupted_file", "prob": 2 },
-      { "item": "digital_firearm_blueprints", "prob": 5 },
+      { "group": "digital_content_weapon_blueprints", "prob": 15 },
       { "item": "digital_advanced_weapon_blueprints", "prob": 5 },
-      { "item": "digital_mechanical_trap_blueprints", "prob": 5 },
-      { "item": "digital_advanced_trap_blueprints", "prob": 5 },
-      { "group": "digital_content_science_journals", "prob": 20 }
+      { "group": "digital_content_trap_blueprints", "prob": 15 },
+      { "item": "digital_advanced_trap_blueprints", "prob": 5 }
     ]
   },
   {
@@ -140,39 +76,19 @@
     "type": "item_group",
     "subtype": "collection",
     "entries": [
+      { "item": "digital_corrupted_file", "prob": 1 },
       { "item": "software_hacking", "prob": 10 },
       { "item": "software_cryptow", "prob": 5 },
-      { "item": "digital_urbex_map", "prob": 10 },
+      { "group": "digital_content_maps", "prob": 10 },
       { "item": "digital_saved_email", "prob": 10 },
-      { "item": "digital_electronic_blueprints", "prob": 10 },
-      { "item": "digital_chemical_synthesis_sheet", "prob": 10 },
-      { "item": "digital_workshop_tool_plans", "prob": 5 },
-      { "item": "digital_corrupted_file", "prob": 1 },
-      { "item": "digital_blade_blueprints", "prob": 5 },
-      { "item": "digital_piercing_weapon_blueprints", "prob": 5 },
-      { "item": "digital_archery_blueprints", "prob": 5 },
-      { "item": "digital_firearm_blueprints", "prob": 10 },
-      { "item": "digital_advanced_weapon_blueprints", "prob": 3 },
-      { "item": "digital_basic_trap_blueprints", "prob": 5 },
-      { "item": "digital_mechanical_trap_blueprints", "prob": 10 },
+      { "group": "digital_content_recipe_archives", "prob": 10 },
+      { "item": "digital_electronic_blueprints", "prob": 15 },
+      { "item": "digital_chemical_synthesis_sheet", "prob": 20 },
+      { "item": "digital_workshop_tool_plans", "prob": 10 },
+      { "group": "digital_content_weapon_blueprints", "prob": 25 },
+      { "item": "digital_advanced_weapon_blueprints", "prob": 5 },
+      { "group": "digital_content_trap_blueprints", "prob": 20 },
       { "item": "digital_advanced_trap_blueprints", "prob": 5 }
-    ]
-  },
-  {
-    "id": "digital_martial_arts_videos",
-    "type": "item_group",
-    "subtype": "distribution",
-    "entries": [
-      { "item": "digital_aikido_video" },
-      { "item": "digital_boxing_video" },
-      { "item": "digital_eskrima_video" },
-      { "item": "digital_fencing_video" },
-      { "item": "digital_judo_video" },
-      { "item": "digital_karate_video" },
-      { "item": "digital_kickboxing_video" },
-      { "item": "digital_krav_maga_video" },
-      { "item": "digital_muay_thai_video" },
-      { "item": "digital_taekwondo_video" }
     ]
   },
   {
@@ -192,6 +108,99 @@
       { "item": "recipe_maiar", "custom-flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ] },
       { "item": "recipe_lab_cvd", "custom-flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ] },
       { "item": "recipe_lab_elec", "custom-flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ] }
+    ]
+  },
+  {
+    "id": "digital_content_saved_text",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "digital_saved_flier", "prob": 10 },
+      { "item": "digital_character_sheet", "prob": 8 },
+      { "item": "digital_radio_archive", "prob": 8 },
+      { "item": "digital_saved_news", "prob": 15 }
+    ]
+  },
+  {
+    "id": "digital_content_software",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "software_useless", "prob": 15 },
+      { "item": "software_utility", "prob": 10 },
+      { "item": "software_electronics_reference", "prob": 5 },
+      { "item": "digital_hello_world", "prob": 15 }
+    ]
+  },
+  {
+    "id": "digital_content_recordings",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "digital_cooking_show", "prob": 15 },
+      { "item": "digital_survivor_show", "prob": 10 },
+      { "item": "digital_mechanics_show", "prob": 10 },
+      { "item": "digital_adult_video", "prob": 5 },
+      { "group": "digital_martial_arts_videos", "prob": 3 },
+      { "item": "digital_home_video", "prob": 10 },
+      { "item": "digital_voice_memo", "prob": 5 }
+    ]
+  },
+  {
+    "id": "digital_content_recipe_archives",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "digital_cooking_recipe_archive", "prob": 15 },
+      { "item": "digital_3d_printing_guide", "prob": 10 },
+      { "item": "digital_science_recipe_archive", "prob": 5 },
+      { "item": "digital_tailoring_recipe_archive", "prob": 10 },
+      { "item": "digital_bartender_drinks_list", "prob": 10 }
+    ]
+  },
+  {
+    "id": "digital_content_maps",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "item": "digital_urbex_map", "prob": 5 }, { "item": "digital_evacuation_map", "prob": 5 } ]
+  },
+  {
+    "id": "digital_content_weapon_blueprints",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "digital_blade_blueprints", "prob": 5 },
+      { "item": "digital_piercing_weapon_blueprints", "prob": 5 },
+      { "item": "digital_archery_blueprints", "prob": 5 },
+      { "item": "digital_firearm_blueprints", "prob": 3 },
+      { "item": "digital_advanced_weapon_blueprints", "prob": 1 }
+    ]
+  },
+  {
+    "id": "digital_content_trap_blueprints",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "digital_basic_trap_blueprints", "prob": 8 },
+      { "item": "digital_mechanical_trap_blueprints", "prob": 4 },
+      { "item": "digital_advanced_trap_blueprints", "prob": 1 }
+    ]
+  },
+  {
+    "id": "digital_martial_arts_videos",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "digital_aikido_video" },
+      { "item": "digital_boxing_video" },
+      { "item": "digital_eskrima_video" },
+      { "item": "digital_fencing_video" },
+      { "item": "digital_judo_video" },
+      { "item": "digital_karate_video" },
+      { "item": "digital_kickboxing_video" },
+      { "item": "digital_krav_maga_video" },
+      { "item": "digital_muay_thai_video" },
+      { "item": "digital_taekwondo_video" }
     ]
   },
   {
