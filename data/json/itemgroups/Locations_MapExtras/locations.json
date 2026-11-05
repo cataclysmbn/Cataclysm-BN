@@ -1872,7 +1872,7 @@
       [ "wrist_comp_budget", 10 ],
       [ "eink_tablet_pc", 15 ],
       { "group": "sd_memory_card_personal", "prob": 40 },
-      { "group": "sd_memory_card_science", "prob": 10 },
+      { "group": "sd_memory_card_encrypted", "prob": 10 },
       [ "standard_template_construct", 5 ],
       [ "camera", 15 ],
       [ "camera_pro", 5 ],

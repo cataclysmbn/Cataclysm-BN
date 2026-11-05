@@ -260,7 +260,7 @@
       { "item": "atomic_soda_machine", "prob": 5 },
       { "item": "eink_tablet_pc", "prob": 1 },
       { "group": "sd_memory_card_personal", "prob": 8 },
-      { "group": "sd_memory_card_science", "prob": 1 },
+      { "group": "sd_memory_card_encrypted", "prob": 1 },
       { "item": "standard_template_construct", "prob": 8 },
       { "item": "id_military", "prob": 3 },
       { "item": "id_industrial", "prob": 5 },

@@ -22,7 +22,8 @@
     "id": "sd_memory_card_science",
     "type": "item_group",
     "subtype": "collection",
-    "entries": [ { "item": "sd_memory_card", "custom-flags": [ "MC_ENCRYPTED", "MC_SCIENCE_STUFF" ] } ]
+    "entries": [ { "group": "sd_memory_card_encrypted" } ],
+    "//": "Obsolete compatibility alias; science cards now use ordinary encrypted-card contents."
   },
   {
     "id": "digital_content_reader",
@@ -53,23 +54,8 @@
     "id": "digital_content_science",
     "type": "item_group",
     "subtype": "collection",
-    "entries": [
-      { "item": "digital_corrupted_file", "prob": 2 },
-      { "item": "digital_saved_email", "prob": 35 },
-      { "item": "digital_radio_archive", "prob": 10 },
-      { "group": "digital_content_software", "prob": 35 },
-      { "item": "digital_music_collection", "prob": 35, "charges": [ 5, 15 ] },
-      { "group": "digital_content_recipe_archives", "count": 2 },
-      { "item": "digital_science_recipe_archive" },
-      { "group": "digital_content_science_journals", "prob": 20 },
-      { "item": "digital_electronic_blueprints", "prob": 25 },
-      { "item": "digital_chemical_synthesis_sheet", "prob": 35 },
-      { "item": "digital_workshop_tool_plans", "prob": 10 },
-      { "group": "digital_content_weapon_blueprints", "prob": 15 },
-      { "item": "digital_advanced_weapon_blueprints", "prob": 5 },
-      { "group": "digital_content_trap_blueprints", "prob": 15 },
-      { "item": "digital_advanced_trap_blueprints", "prob": 5 }
-    ]
+    "entries": [ { "group": "digital_content_encrypted" } ],
+    "//": "Compatibility alias for saved media with the former science contents group or flag."
   },
   {
     "id": "digital_content_encrypted",
@@ -88,7 +74,8 @@
       { "group": "digital_content_weapon_blueprints", "prob": 25 },
       { "item": "digital_advanced_weapon_blueprints", "prob": 5 },
       { "group": "digital_content_trap_blueprints", "prob": 20 },
-      { "item": "digital_advanced_trap_blueprints", "prob": 5 }
+      { "item": "digital_advanced_trap_blueprints", "prob": 5 },
+      { "group": "digital_content_science_journals", "prob": 20 }
     ]
   },
   {

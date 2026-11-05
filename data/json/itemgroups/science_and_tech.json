@@ -24,7 +24,7 @@
       [ "laptop", 10 ],
       [ "eink_tablet_pc", 20 ],
       { "group": "sd_memory_card_personal", "prob": 50 },
-      { "group": "sd_memory_card_science", "prob": 5 },
+      { "group": "sd_memory_card_encrypted", "prob": 5 },
       [ "standard_template_construct", 5 ],
       [ "camera", 3 ],
       [ "thermometer", 3 ],
