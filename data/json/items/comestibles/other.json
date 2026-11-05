@@ -762,5 +762,26 @@
     "price_postapoc": "0 cent",
     "flags": [ "TRADER_AVOID" ],
     "volume": "250 ml"
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "coffee_cherry",
+    "price": "160 cent",
+    "name": { "str": "coffee cherries" },
+    "symbol": ".",
+    "color": "brown",
+    "description": "Some coffee cherries can be cut into coffee beans.",
+    "comestible_type": "FOOD",
+    "addiction_type": "caffeine",
+    "spoils_in": "2 days 12 hours",
+    "quench": 2,
+    "healthy": 1,
+    "fun": 1,
+    "material": [ "fruit" ],
+    "volume": "50 ml",
+    "stack_size": 40,
+    "weight": "50 g",
+    "calories": 130,
+    "vitamins": [ [ "vitC", 4 ], [ "iron", 1 ], [ "fruit_allergen", 1 ] ]
   }
 ]
