@@ -121,7 +121,7 @@
       "8": { "item": "shower", "chance": 33 },
       ":": { "item": "traveler", "chance": 80, "repeat": [ 3, 5 ] },
       "d": { "item": "book_motel", "chance": 100 },
-      "Q": { "item": "SUS_fridge", "chance": 100 },
+      "Q": { "item": "fridgesnacks", "chance": 100 },
       "T": { "item": "SUS_toilet", "chance": 50 }
     },
     "item": { "x": { "item": "television", "chance": 100 } }
