@@ -112,7 +112,6 @@
       { "item": "digital_chemical_synthesis_sheet", "prob": 20 },
       { "item": "digital_workshop_tool_plans", "prob": 10 },
       { "group": "digital_content_weapon_blueprints", "prob": 25 },
-      { "item": "digital_advanced_weapon_blueprints", "prob": 5 },
       { "group": "digital_content_trap_blueprints", "prob": 20 },
       { "item": "digital_advanced_trap_blueprints", "prob": 5 },
       { "group": "digital_content_science_journals", "prob": 20 }
@@ -199,8 +198,7 @@
       { "item": "digital_blade_blueprints", "prob": 5 },
       { "item": "digital_piercing_weapon_blueprints", "prob": 5 },
       { "item": "digital_archery_blueprints", "prob": 5 },
-      { "item": "digital_firearm_blueprints", "prob": 3 },
-      { "item": "digital_advanced_weapon_blueprints", "prob": 1 }
+      { "item": "digital_firearm_blueprints", "prob": 3 }
     ]
   },
   {
