@@ -13,6 +13,7 @@ local nuclear_tear = require("lua/nuclear_tear")
 local minirose = require("lua/minirose")
 local plumbing = require("lua/plumbing")
 local wool = require("lua/traits/wool_allergy")
+local corrupted_file = require("lua/iuse/corrupted_file")
 
 local mod = game.mod_runtime[game.current_mod]
 local storage = game.mod_storage[game.current_mod]
@@ -33,3 +34,4 @@ mod.nuclear_tear = nuclear_tear
 mod.minirose = minirose
 mod.cvd_machine = cvd_machine
 mod.wool = wool
+mod.corrupted_file = corrupted_file

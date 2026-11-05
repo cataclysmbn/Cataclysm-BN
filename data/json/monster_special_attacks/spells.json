@@ -1,5 +1,38 @@
 [
   {
+    "id": "spell_ghost_in_the_machine_static_bolt",
+    "type": "SPELL",
+    "name": { "str": "Static Bolt" },
+    "description": "Fires a bolt that bursts into physical static, briefly inducing hallucinations in anyone caught in the field.",
+    "effect": "projectile_attack",
+    "valid_targets": [ "hostile", "ally", "ground" ],
+    "flags": [ "SILENT", "NO_FAIL", "NO_EXPLOSION_VFX" ],
+    "sprite": "fd_dazzling",
+    "min_range": 12,
+    "max_range": 12,
+    "min_aoe": 2,
+    "max_aoe": 2,
+    "field_id": "fd_physical_static",
+    "field_chance": 1,
+    "min_field_intensity": 1,
+    "max_field_intensity": 1,
+    "base_casting_time": 100
+  },
+  {
+    "id": "spell_ghost_in_the_machine_blink",
+    "type": "SPELL",
+    "name": { "str": "Static Blink" },
+    "description": "The caster dissolves into static and teleports a short distance.",
+    "effect": "teleport_random",
+    "valid_targets": [ "self" ],
+    "flags": [ "NO_EXPLOSION_VFX", "SILENT", "NO_FAIL" ],
+    "min_range": 2,
+    "max_range": 2,
+    "min_aoe": 4,
+    "max_aoe": 4,
+    "base_casting_time": 100
+  },
+  {
     "id": "pain_damage",
     "type": "SPELL",
     "name": { "str": "Debug Pain" },

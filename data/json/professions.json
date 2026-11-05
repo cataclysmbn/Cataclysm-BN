@@ -9435,7 +9435,18 @@
     "skills": [ { "level": 2, "name": "computer" }, { "level": 1, "name": "electronics" } ],
     "items": {
       "both": {
-        "items": [ "jeans", "tshirt", "socks", "sneakers", "backpack", "laptop", "hard_drive", "hard_drive", "hard_drive", "hard_drive" ]
+        "items": [
+          "jeans",
+          "linuxtshirt",
+          "socks",
+          "sneakers",
+          "backpack",
+          "laptop",
+          "hard_drive",
+          "hard_drive",
+          "hard_drive",
+          "hard_drive"
+        ]
       },
       "male": [ "boxer_briefs" ],
       "female": [ "bra", "panties" ]
