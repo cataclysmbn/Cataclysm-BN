@@ -858,17 +858,20 @@ void cata::detail::reg_game_api( sol::state &lua )
         const auto pos = filters["pos"].get<tripoint_bub_ms>();
         const auto radius = filters.get_or<int>( "radius", PICKUP_RANGE );
         const auto parsed = item_filters_from_lua( filters, { "pos", "radius" } );
-        if( parsed.worn || parsed.wielded ) {
+        if( parsed.worn || parsed.wielded )
+        {
             debugmsg( "`worn`/`wielded` filters are not applicable to map items and were ignored" );
         }
         auto out = lua.create_table();
         auto idx = 1;
         auto collect = [&]( item * node ) -> void {
-            if( matches_item_filters( parsed, *node ) ) {
+            if( matches_item_filters( parsed, *node ) )
+            {
                 out[idx++] = node;
             }
         };
-        for( const auto pt : g->m.points_in_radius( pos, radius ) ) {
+        for( const auto pt : g->m.points_in_radius( pos, radius ) )
+        {
             for( const auto *it : g->m.i_at( pt ) ) {
                 // visit_items covers the item itself and everything inside its containers
                 const_cast<item *>( it )->visit_items( [&collect]( item * node, item * ) -> VisitResponse {
@@ -896,7 +899,8 @@ void cata::detail::reg_game_api( sol::state &lua )
             auto found = false;
             // visit_items covers the item itself and everything inside its containers
             const_cast<item &>( e ).visit_items( [&]( item * node, item * ) -> VisitResponse {
-                if( matches_item_filters( parsed, *node ) ) {
+                if( matches_item_filters( parsed, *node ) )
+                {
                     found = true;
                     return VisitResponse::ABORT;
                 }
