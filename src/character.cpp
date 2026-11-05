@@ -11449,6 +11449,19 @@ const -> std::vector<item *>
     } );
 }
 
+auto Character::remove_items_if( const std::vector<std::function<bool( const item & )>> &filters ) ->
+std::vector<detached_ptr<item>>
+{
+    std::vector<detached_ptr<item>> removed;
+    remove_items_with( [&removed, &filters]( detached_ptr<item> &&it ) -> VisitResponse {
+        if( std::ranges::all_of( filters, [&it]( const auto & filter ) { return filter( *it ); } ) ) {
+            removed.push_back( std::move( it ) );
+        }
+        return VisitResponse::NEXT;
+    } );
+    return removed;
+}
+
 bool Character::has_charges( const itype_id &it, int quantity,
                              const std::function<bool( const item & )> &filter ) const
 {

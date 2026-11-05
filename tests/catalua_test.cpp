@@ -812,6 +812,9 @@ TEST_CASE("lua_character_get_items_if_filters_items", "[lua][character][item]") 
     auto& player = get_avatar();
     player.i_add(item::spawn("bread"));
     player.i_add(item::spawn("apple"));
+    auto char_forge = item::spawn("char_forge");
+    char_forge->charges = 0;
+    player.i_add(std::move(char_forge));
     player.wear_item(item::spawn("tshirt"), false);
     player.wield(item::spawn("rock"));
     test_data["character"] = &player;
@@ -819,13 +822,51 @@ TEST_CASE("lua_character_get_items_if_filters_items", "[lua][character][item]") 
     run_lua_test_script(lua, "character_get_items_if_test.lua");
 
     // all_count covers inventory + worn + wielded; the type filters pin the worn and wielded items.
-    CHECK(test_data.get<int>("all_count") == 4);
+    CHECK(test_data.get<int>("all_count") == 5);
     CHECK(test_data.get<int>("food_count") == 2);
     CHECK(test_data.get<int>("food_category_count") == 2);
     CHECK(test_data.get<int>("wielded_rock_count") == 1);
     CHECK(test_data.get<int>("worn_tshirt_count") == 1);
     CHECK(test_data.get<int>("flag_count") == 1);
     CHECK(test_data.get<int>("combined_count") == 2);
+    CHECK(test_data.get<int>("worn_count") == 1);
+    CHECK(test_data.get<int>("wielded_count") == 1);
+    CHECK(test_data.get<int>("not_worn_count") == 4);
+    // the flashlight spawns empty, so need_charges excludes it
+    CHECK(test_data.get<int>("charged_tools_count") == 4);
+    CHECK(test_data.get<int>("empty_char_forge_count") == 0);
+    CHECK(test_data.get<int>("any_char_forge_count") == 1);
+    CHECK(test_data.get<int>("removed_food_count") == 2);
+    CHECK(test_data.get<int>("after_remove_count") == 3);
+}
+
+TEST_CASE("lua_gapi_get_items_if_filters_map_items", "[lua][item][map]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    auto lua = make_lua_state();
+
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    auto& here = get_map();
+    const auto pos = get_avatar().bub_pos();
+    const auto far_pos = tripoint_bub_ms( pos.x() + 2, pos.y(), pos.z() );
+    here.i_clear( pos );
+    here.i_clear( far_pos );
+    here.add_item_or_charges( pos, item::spawn( "bread" ) );
+    here.add_item_or_charges( pos, item::spawn( "rock" ) );
+    here.add_item_or_charges( far_pos, item::spawn( "apple" ) );
+    test_data["pos"] = pos;
+
+    run_lua_test_script(lua, "gapi_get_items_if_test.lua");
+
+    CHECK(test_data.get<int>("food_count") == 1);
+    CHECK(test_data.get<int>("food_radius2_count") == 2);
+    CHECK(test_data.get<int>("rock_count") == 1);
+    CHECK(test_data.get<int>("all_count") == 3);
+
+    here.i_clear( pos );
+    here.i_clear( far_pos );
 }
 
 TEST_CASE("lua_npc_move_to_binding_moves_real_npc", "[lua][npc]") {
