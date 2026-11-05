@@ -169,6 +169,7 @@ bool is_valid_in_w_terrain( point p );
 // NOLINTNEXTLINE(clang-analyzer-optin.performance.Padding)
 class game : public submap_load_listener
 {
+        friend class player;
         friend class editmap;
         friend class advanced_inventory;
         friend class main_menu;
@@ -892,9 +893,13 @@ class game : public submap_load_listener
         bool npc_menu( npc &who, const bool &force = false );
 
         // Handle phasing through walls, returns true if it handled the move
-        bool phasing_move( const tripoint_bub_ms &dest, bool via_ramp = false );
+        bool phasing_move( const tripoint_abs_ms &dest, bool via_ramp = false );
         // Regular movement. Returns false if it failed for any reason
-        bool walk_move( const tripoint_bub_ms &dest, bool via_ramp = false );
+        bool walk_move( const tripoint_abs_ms &dest, bool via_ramp = false );
+        /// Applies the movement effects for an already-authorized player step.
+        /// Callers that perform a specialized movement path, such as swimming,
+        /// must invoke this explicitly instead of relying on player::setpos().
+        auto process_player_movement( const tripoint_abs_ms &dest ) -> point_rel_sm;
         void on_move_effects();
     private:
         // Game-start procedures
@@ -965,8 +970,6 @@ class game : public submap_load_listener
         void butcher(); // Butcher a corpse  'B'
         void dissect(); // dissect a corpse
     public:
-        // Places the player at the specified point; hurts feet, lists items etc.
-        auto place_player( const tripoint_bub_ms &dest ) -> point_rel_sm;
         void place_player_overmap( const tripoint_abs_omt &om_dest );
 
         unsigned int get_seed() const;

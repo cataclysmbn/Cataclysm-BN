@@ -33,7 +33,7 @@ static const tripoint_abs_sm FAR_SM_POS{200, 200, 0};
 static auto make_blank_submap(mapbuffer& mb, const tripoint_abs_sm& pos) -> submap* {
     auto sm = std::make_unique<submap>(pos, mb.get_dimension_id());
     mb.add_submap(pos, sm);
-    return mb.lookup_submap_in_memory(pos);
+    return mb.find_resident_submap(pos);
 }
 
 // Add fd_fire to @p sm at @p local and keep field_count / field_cache / is_uniform consistent.
@@ -514,7 +514,7 @@ TEST_CASE("fire_isolated_between_dimensions", "[simulation][field][dimension]") 
     plant_fire(*dim_sm, fire_pt);
 
     // Primary dimension must have no fire at the same absolute position.
-    if (const auto* primary_sm = MAPBUFFER.lookup_submap_in_memory(FAR_SM_POS)) {
+    if (const auto* primary_sm = MAPBUFFER.find_resident_submap(FAR_SM_POS)) {
         REQUIRE(primary_sm->get_field(fire_pt).find_field(fd_fire) == nullptr);
     }
 
@@ -527,7 +527,7 @@ TEST_CASE("fire_isolated_between_dimensions", "[simulation][field][dimension]") 
     CHECK(dim_fire->get_field_age() == 1_turns);
 
     // Primary dimension must still be fire-free — no cross-dimension spread.
-    if (const auto* primary_sm = MAPBUFFER.lookup_submap_in_memory(FAR_SM_POS)) {
+    if (const auto* primary_sm = MAPBUFFER.find_resident_submap(FAR_SM_POS)) {
         CHECK(primary_sm->get_field(fire_pt).find_field(fd_fire) == nullptr);
     }
 

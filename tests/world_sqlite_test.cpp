@@ -163,7 +163,7 @@ TEST_CASE("sqlite save rollback preserves resident and evicted map data", "[worl
     buffer.clear();
     buffer.preload_omt(dimension_save_omt);
     buffer.drain_pending_submap_destroy();
-    const auto* restored = buffer.lookup_submap_in_memory(base);
+    const auto* restored = buffer.find_resident_submap(base);
     REQUIRE(restored != nullptr);
     CHECK(restored->get_ter(point_sm_ms::zero()) == ter_id("t_rock"));
     CHECK(restored->get_ter(point_sm_ms(1, 1)) == ter_id("t_floor"));

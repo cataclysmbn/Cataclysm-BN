@@ -1,5 +1,6 @@
 
 #include "../src/map/map.h"
+#include "avatar.h"
 #include "catch/catch.hpp"
 #include "game.h"
 #include "map_helpers.h"
@@ -129,43 +130,46 @@ TEST_CASE("scent_blockers_ignore_vehicle_parts_outside_cache", "[scent]") {
     clear_all_state();
 
     auto& here = get_map();
-    auto* const veh = here.add_vehicle(vproto_id("none"), tripoint_bub_ms::zero(), 0_degrees, 0, 0);
+    // This API's output buffer is indexed directly by bubble coordinates.  Zero is an intentional
+    // legacy API boundary here, not a stored world position.
+    const auto vehicle_origin = tripoint_bub_ms::zero();
+    auto* const veh = here.add_vehicle(vproto_id("none"), vehicle_origin, 0_degrees, 0, 0);
     REQUIRE(veh != nullptr);
     REQUIRE(veh->install_part(tripoint_mnt_veh(-1, 0, 0), vpart_id("windshield"), true) >= 0);
     REQUIRE(veh->install_part(tripoint_mnt_veh(1, 0, 0), vpart_id("windshield"), true) >= 0);
 
     auto scent_transfer = std::vector<char>(MAPSIZE_X * MAPSIZE_Y, 5);
     here.scent_blockers(
-        scent_transfer, MAPSIZE_Y, tripoint_bub_ms(-5, -5, 0), tripoint_bub_ms(5, 5, 0));
+        scent_transfer, MAPSIZE_Y, vehicle_origin + tripoint_rel_ms(-5, -5, 0),
+        vehicle_origin + tripoint_rel_ms(5, 5, 0));
 
     CHECK(scent_transfer[MAPSIZE_Y] == 1);
 }
 
 TEST_CASE("scent_matches_old", "[.]") {
     clear_all_state();
-    tripoint_bub_ms origin(60, 60, 0);
-
-    g->place_player(origin);
-
+    // The comparison implementation indexes fixed-size bubble arrays directly.
+    g->u.setpos(test_origin);
     map& here = get_map();
 
-    here.ter_set(origin + tripoint_south_west, t_brick_wall);
-    here.ter_set(origin + tripoint_west, t_brick_wall);
-    here.ter_set(origin + tripoint_north, t_rock_wall_half);
-    here.ter_set(origin, t_rock_wall_half);
+    here.ter_set(bub_test_origin() + tripoint_south_west, t_brick_wall);
+    here.ter_set(bub_test_origin() + tripoint_west, t_brick_wall);
+    here.ter_set(bub_test_origin() + tripoint_north, t_rock_wall_half);
+    here.ter_set(bub_test_origin(), t_rock_wall_half);
     g->scent.reset();
 
-    g->scent.set(origin, 1000, scenttype_id("sc_human"));
+    g->scent.set(bub_test_origin(), 1000, scenttype_id("sc_human"));
 
-    g->scent.update(origin, here);
-    g->scent.update(origin, here);
-    g->scent.update(origin, here);
+    g->scent.update(bub_test_origin(), here);
+    g->scent.update(bub_test_origin(), here);
+    g->scent.update(bub_test_origin(), here);
 
     std::array<std::array<int, MAPSIZE_Y>, MAPSIZE_X> old_scent;
     for (auto& elem : old_scent) {
         for (auto& val : elem) { val = 0; }
     }
 
+    const auto origin = bub_test_origin();
     old_scent[origin.x()][origin.y()] = 1000;
 
     old_scent_map_update(origin, here, old_scent);

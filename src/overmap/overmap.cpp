@@ -6052,7 +6052,7 @@ void overmap::spawn_ores(const tripoint_abs_omt& p) {
         std::string note_text(chosen);
         std::ranges::replace(note_text, '_', ' ');
         add_note(local_pos, string_format("Signs of %s ore nearby.", note_text));
-        if (!(MAPBUFFER_REGISTRY.get(dimension_id_).lookup_submap(target_sub))) {
+        if (!(MAPBUFFER_REGISTRY.get(dimension_id_).load_submap_from_storage(target_sub))) {
             // No overmap to replace, set the terrain and bail.
             ter_set(local_pos, oter_id("omt_ore_vein_" + chosen + directions[rand() % 4]));
             return;
@@ -6082,8 +6082,9 @@ void overmap::spawn_ores(const tripoint_abs_omt& p) {
              point_range<point_omt_sm>(point_omt_sm::zero(), point_omt_sm(1, 1))) {
             const auto dest_pos = target_sub + offset.raw();
 
-            submap* destsm = MAPBUFFER_REGISTRY.get(dimension_id_).lookup_submap(dest_pos);
-            submap* srcsm = generated_buffer.lookup_submap_in_memory(dest_pos);
+            submap* destsm =
+                MAPBUFFER_REGISTRY.get(dimension_id_).load_submap_from_storage(dest_pos);
+            submap* srcsm = generated_buffer.find_resident_submap(dest_pos);
             if (destsm == nullptr || srcsm == nullptr) { continue; }
 
             submap::swap(*destsm, *srcsm);
@@ -6100,7 +6101,7 @@ void overmap::spawn_ores(const tripoint_abs_omt& p) {
         for (const auto x : std::views::iota(0, here.getmapsize())) {
             for (const auto y : std::views::iota(0, here.getmapsize())) {
                 const auto dest_pos = tripoint_bub_sm(x, y, p.z());
-                const submap* destsm = here.get_mapbuffer().lookup_submap_in_memory(
+                const submap* destsm = here.get_mapbuffer().find_resident_submap(
                     map_local_to_abs(here, dest_pos));
                 here.update_vehicle_list(destsm, p.z()); // update real map's vcaches
             }
@@ -6653,7 +6654,7 @@ auto overmap::is_omt_generated(const tripoint_om_omt& loc) const -> bool {
 
     // TODO: fix point types
     const bool is_generated =
-        MAPBUFFER_REGISTRY.get(dimension_id_).lookup_submap(global_sm_loc) != nullptr;
+        MAPBUFFER_REGISTRY.get(dimension_id_).load_submap_from_storage(global_sm_loc) != nullptr;
 
     return is_generated;
 }

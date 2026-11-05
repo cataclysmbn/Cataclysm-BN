@@ -1,7 +1,10 @@
+#include "avatar.h"
 #include "catch/catch.hpp"
+#include "game.h"
 #include "json.h"
 #include "magic/magic.h"
 #include "magic/magic_spell_effect_helpers.h"
+#include "map_helpers.h"
 #include "npc.h"
 #include "player_helpers.h"
 #include "state_helpers.h"
@@ -33,18 +36,22 @@ TEST_CASE("line_attack", "[magic]") {
     spell sp(spell_id("test_line_spell"));
 
     // set up Character to test with, only need position
-    npc& c = spawn_npc(tripoint_bub_ms::zero(), "test_talker");
+    g->u.setpos(test_origin);
+    npc& c = spawn_npc(bub_test_origin(), "test_talker");
     clear_character(c);
-    c.setpos(tripoint_bub_ms::zero());
+    c.setpos(test_origin);
 
     // target point 5 tiles east of zero
-    tripoint_bub_ms target = tripoint_bub_ms(5, 0, 0);
+    const auto target = abs_to_bub(test_origin + tripoint_rel_ms(5, 0, 0));
 
     // Ensure that AOE=0 spell covers the 5 tiles along vector towards target
     SECTION("aoe=0") {
         const std::set<tripoint_bub_ms> reference(
-            {tripoint_bub_ms::east(), tripoint_bub_ms(2, 0, 0), tripoint_bub_ms(3, 0, 0),
-             tripoint_bub_ms(4, 0, 0), tripoint_bub_ms(5, 0, 0)});
+            {abs_to_bub(test_origin + tripoint_rel_ms(1, 0, 0)),
+             abs_to_bub(test_origin + tripoint_rel_ms(2, 0, 0)),
+             abs_to_bub(test_origin + tripoint_rel_ms(3, 0, 0)),
+             abs_to_bub(test_origin + tripoint_rel_ms(4, 0, 0)),
+             abs_to_bub(test_origin + tripoint_rel_ms(5, 0, 0))});
 
         std::set<tripoint_bub_ms> targets =
             calculate_spell_effect_area(sp, target, spell_effect::spell_effect_line, c, true);

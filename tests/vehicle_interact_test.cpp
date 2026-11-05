@@ -29,18 +29,18 @@ static const trait_id trait_DEBUG_HS("DEBUG_HS");
 
 static void test_repair(std::vector<detached_ptr<item>>& tools, bool expect_craftable) {
 
-    const tripoint_bub_ms test_origin(60, 60, 0);
-    g->u.setpos(test_origin);
+    g->u.setpos(::test_origin);
     g->u.wear_item(item::spawn("backpack"), false);
     for (detached_ptr<item>& gear : tools) { g->u.i_add(std::move(gear)); }
 
-    const tripoint_bub_ms vehicle_origin = test_origin + tripoint_rel_ms::south_east();
-    vehicle* veh_ptr =
-        get_map().add_vehicle(vproto_id("bicycle"), vehicle_origin, -90_degrees, 0, 0);
+    const auto vehicle_origin_abs = ::test_origin + tripoint_rel_ms::south_east();
+    vehicle* veh_ptr = get_map().add_vehicle(
+        vproto_id("bicycle"), abs_to_bub(vehicle_origin_abs), -90_degrees, 0, 0);
     REQUIRE(veh_ptr != nullptr);
     // Find the frame at the origin.
     vehicle_part* origin_frame = nullptr;
-    for (vehicle_part* part : veh_ptr->get_parts_at(vehicle_origin, "", part_status_flag::any)) {
+    for (vehicle_part* part :
+         veh_ptr->get_parts_at(abs_to_bub(vehicle_origin_abs), "", part_status_flag::any)) {
         if (part->info().location == "structure") {
             origin_frame = part;
             break;
@@ -117,10 +117,11 @@ TEST_CASE("debug_hammerspace_installs_full_vehicle_battery", "[vehicle][veh_inte
     you.toggle_trait(trait_DEBUG_HS);
     you.set_body();
 
-    const tripoint_bub_ms vehicle_origin(60, 60, 0);
-    you.setpos(vehicle_origin + point_south);
+    const auto vehicle_origin_abs = ::test_origin;
+    you.setpos(vehicle_origin_abs + tripoint_rel_ms::south());
 
-    vehicle* veh_ptr = here.add_vehicle(vproto_id("bicycle"), vehicle_origin, 0_degrees, 0, 0);
+    vehicle* veh_ptr =
+        here.add_vehicle(vproto_id("bicycle"), abs_to_bub(vehicle_origin_abs), 0_degrees, 0, 0);
     REQUIRE(veh_ptr != nullptr);
 
     const auto install_part_id = vpart_id("storage_battery");

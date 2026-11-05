@@ -33,7 +33,7 @@ auto get_items_at(const tripoint_abs_ms& loc) -> location_subrange {
 auto take_down_deployed_furniture(
     mapbuffer& buffer, const tripoint_abs_ms& furniture_pos, const tripoint_abs_ms& drop_pos)
     -> void {
-    const auto tile = buffer.get_abs_tile(furniture_pos);
+    const auto tile = buffer.resolve_abs_tile(furniture_pos);
     if (!tile) { return; }
     const auto furn_item = tile->get_furn_t().deployed_item;
     auto dropped_item = item::spawn(furn_item, calendar::turn);

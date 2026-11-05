@@ -362,8 +362,11 @@ auto throw_grabbed_creature( avatar &you ) -> bool
 
 #define dbg(x) DebugLog((x), DC::SDL)
 
-bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
+bool avatar_action::move( const tripoint_rel_ms &d )
 {
+    auto &you = get_avatar();
+    auto &m = get_map();
+    auto &here = you.get_mapbuffer();
     ZoneScopedN( "avatar_action_move" );
     if( ( !g->check_safe_mode_allowed() ) || you.has_active_mutation( trait_SHELL2 ) ) {
         if( you.has_active_mutation( trait_SHELL2 ) ) {
@@ -372,16 +375,16 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
         return false;
     }
     const bool is_riding = you.is_mounted();
-    tripoint_bub_ms dest_loc;
+    tripoint_abs_ms dest_loc;
     if( d.z() == 0 && you.has_effect( effect_stunned ) ) {
-        dest_loc.x() = rng( you.bub_pos().x() - 1, you.bub_pos().x() + 1 );
-        dest_loc.y() = rng( you.bub_pos().y() - 1, you.bub_pos().y() + 1 );
-        dest_loc.z() = you.bub_pos().z();
+        dest_loc.x() = rng( you.abs_pos().x() - 1, you.abs_pos().x() + 1 );
+        dest_loc.y() = rng( you.abs_pos().y() - 1, you.abs_pos().y() + 1 );
+        dest_loc.z() = you.abs_pos().z();
     } else {
-        dest_loc = you.bub_pos() + d;
+        dest_loc = you.abs_pos() + d;
     }
 
-    if( dest_loc == you.bub_pos() ) {
+    if( dest_loc == you.abs_pos() ) {
         // Well that sure was easy
         return true;
     }
@@ -390,50 +393,50 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
     const bool auto_mine = auto_features && get_option<bool>( "AUTO_MINING" );
 
     const auto can_use_ladder = [&]() -> bool {
-        if( is_riding || m.has_floor_or_support( dest_loc ) )
+        if( is_riding || m.has_floor_or_support( abs_to_bub( dest_loc ) ) )
         {
             return false;
         }
-        return m.has_flag( flag_LADDER, dest_loc + tripoint_below );
+        return here.has_flag( flag_LADDER, dest_loc + tripoint_below );
     };
 
     bool via_ramp = false;
-    if( m.has_flag( TFLAG_RAMP_UP, dest_loc ) ) {
+    if( here.has_flag( TFLAG_RAMP_UP, dest_loc ) ) {
         dest_loc.z() += 1;
         via_ramp = true;
-    } else if( m.has_flag( TFLAG_RAMP_DOWN, dest_loc ) || can_use_ladder() ) {
+    } else if( here.has_flag( TFLAG_RAMP_DOWN, dest_loc ) || can_use_ladder() ) {
         dest_loc.z() -= 1;
         via_ramp = true;
     }
 
-    if( m.has_flag( TFLAG_MINEABLE, dest_loc ) && g->mostseen == 0 &&
+    if( here.has_flag( TFLAG_MINEABLE, dest_loc ) && g->mostseen == 0 &&
         auto_mine && !m.veh_at( dest_loc ) && !you.is_underwater() && !you.has_effect( effect_stunned ) &&
         !is_riding ) {
         item &digging_tool = you.primary_weapon();
         if( digging_tool.has_flag( flag_DIG_TOOL ) ) {
             if( digging_tool.type->can_use( "JACKHAMMER" ) && digging_tool.ammo_sufficient() ) {
-                you.invoke_item( &digging_tool, "JACKHAMMER", dest_loc );
+                you.invoke_item( &digging_tool, "JACKHAMMER", abs_to_bub( dest_loc ) );
                 // don't move into the tile until done mining
-                you.defer_move( dest_loc );
+                you.defer_move( abs_to_bub( dest_loc ) );
                 return true;
             } else if( digging_tool.type->can_use( "PICKAXE" ) ) {
-                you.invoke_item( &digging_tool, "PICKAXE", dest_loc );
+                you.invoke_item( &digging_tool, "PICKAXE", abs_to_bub( dest_loc ) );
                 // don't move into the tile until done mining
-                you.defer_move( dest_loc );
+                you.defer_move( abs_to_bub( dest_loc ) );
                 return true;
             }
         }
         if( you.has_trait( trait_BURROW ) ) {
             item *burrowing_item = item::spawn_temporary( itype_id( "fake_burrowing" ) );
-            you.invoke_item( burrowing_item, "BURROW", dest_loc );
+            you.invoke_item( burrowing_item, "BURROW", abs_to_bub( dest_loc ) );
             // don't move into the tile until done mining
-            you.defer_move( dest_loc );
+            you.defer_move( abs_to_bub( dest_loc ) );
             return true;
         }
     }
 
     // If the player is *attempting to* move on the X axis, update facing direction of their sprite to match.
-    point_bub_ms new_d( dest_loc.xy() + point_rel_ms( -you.bub_pos().x(), -you.bub_pos().y() ) );
+    point_abs_ms new_d( dest_loc.xy() + point_rel_ms( -you.abs_pos().x(), -you.abs_pos().y() ) );
 
     if( !tile_iso ) {
         if( new_d.x() > 0 ) {
@@ -506,7 +509,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
                 if( dist < curdist ) {
                     curdist = dist;
                 }
-                dist = rl_dist( pt, dest_loc );
+                dist = rl_dist( pt, abs_to_bub( dest_loc ) );
                 if( dist < newdist ) {
                     newdist = dist;
                 }
@@ -518,7 +521,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
         }
     }
 
-    dbg( DL::Debug ) << "game:plmove: From " << you.bub_pos() << " to " << dest_loc;
+    dbg( DL::Debug ) << "game:plmove: From " << you.abs_pos() << " to " << dest_loc;
 
     // Check if our movement is actually an attack on a monster or npc
     // Are we displacing a monster?
@@ -529,13 +532,13 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
     }
 
     const auto skip_pit_escape = pit_trap_helpers::skips_pit_escape_check( m.tr_at( you.bub_pos() ),
-                                 m.tr_at( dest_loc ) );
+                                 here.get_trap( dest_loc )->obj() );
     if( !you.move_effects( attacking, skip_pit_escape ) ) {
         you.moves -= 100;
         return false;
     }
 
-    if( m.obstructed_by_vehicle_rotation( you.bub_pos(), dest_loc ) ) {
+    if( m.obstructed_by_vehicle_rotation( you.bub_pos(), abs_to_bub( dest_loc ) ) ) {
         add_msg( _( "You can't walk through that vehicle's wall." ) );
         return false;
     }
@@ -575,7 +578,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
             if( critter.is_hallucination() ) {
                 critter.die( &you );
             }
-            g->draw_hit_mon( dest_loc, critter, critter.is_dead() );
+            g->draw_hit_mon( abs_to_bub( dest_loc ), critter, critter.is_dead() );
             return false;
         } else if( critter.has_flag( MF_IMMOBILE ) || critter.has_effect( effect_harnessed ) ||
                    critter.has_effect( effect_ridden ) ) {
@@ -606,8 +609,8 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
 
     // GRAB: pre-action checking.
     int door_part = -1;
-    const optional_vpart_position vp_src = m.veh_at( you.bub_pos() );
-    const optional_vpart_position vp_dst = m.veh_at( dest_loc );
+    const optional_vpart_position vp_src = here.veh_at( you.abs_pos() );
+    const optional_vpart_position vp_dst = here.veh_at( dest_loc );
     vehicle *const src_veh = veh_pointer_or_null( vp_src );
     vehicle *const dst_veh = veh_pointer_or_null( vp_dst );
 
@@ -621,7 +624,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
     if( src_veh != nullptr && std::abs( src_veh->velocity ) > 100 ) {
         if( dst_veh == nullptr ) {
             if( query_yn( _( "Dive from moving vehicle?" ) ) ) {
-                g->moving_vehicle_dismount( dest_loc );
+                g->moving_vehicle_dismount( abs_to_bub( dest_loc ) );
             }
             return false;
         } else if( dst_veh != src_veh ) {
@@ -632,14 +635,14 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
             return false;
         }
     }
-    bool toSwimmable = m.has_flag( flag_SWIMMABLE, dest_loc );
-    bool toDeepWater = m.has_flag( TFLAG_DEEP_WATER, dest_loc );
-    bool fromSwimmable = m.has_flag( flag_SWIMMABLE, you.bub_pos() );
-    bool fromDeepWater = m.has_flag( TFLAG_DEEP_WATER, you.bub_pos() );
+    bool toSwimmable = here.has_flag( flag_SWIMMABLE, dest_loc );
+    bool toDeepWater = here.has_flag( TFLAG_DEEP_WATER, dest_loc );
+    bool fromSwimmable = here.has_flag( flag_SWIMMABLE, you.abs_pos() );
+    bool fromDeepWater = here.has_flag( TFLAG_DEEP_WATER, you.abs_pos() );
     bool fromBoat = src_veh != nullptr;
     bool toBoat = dst_veh != nullptr;
     if( is_riding ) {
-        if( !you.check_mount_will_move( dest_loc ) ) {
+        if( !you.check_mount_will_move( abs_to_bub( dest_loc ) ) ) {
             if( you.is_auto_moving() ) {
                 you.clear_destination();
             }
@@ -663,7 +666,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
                 add_msg( m_info, _( "%s to dive underwater." ),
                          press_x( ACTION_MOVE_DOWN ) );
             }
-            avatar_action::swim( get_map(), get_avatar(), dest_loc );
+            avatar_action::swim( dest_loc );
         }
 
         g->on_move_effects();
@@ -673,7 +676,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
     // Vehicle Openable
     if( dst_veh ) {
         if( veh_closed_door ) {
-            if( !m.open_door( &you, dest_loc, !outside_vehicle ) ) {
+            if( !m.open_door( &you, abs_to_bub( dest_loc ), !outside_vehicle ) ) {
                 return false;
             }
 
@@ -682,7 +685,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
             you.moves -= 100;
             // if auto-move is on, continue moving next turn
             if( you.is_auto_moving() ) {
-                you.defer_move( dest_loc );
+                you.defer_move( abs_to_bub( dest_loc ) );
             }
             return true;
         }
@@ -698,24 +701,24 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
     // Wooden Fence Gate (or equivalently walkable doors):
     // open it if we are walking
     // vault over it if we are running
-    if( m.passable_ter_furn( dest_loc )
+    if( m.passable_ter_furn( abs_to_bub( dest_loc ) )
         && you.movement_mode_is( CMM_WALK )
-        && m.open_door( &you, dest_loc, !m.is_outside( you.bub_pos() ) ) ) {
+        && m.open_door( &you, abs_to_bub( dest_loc ), !m.is_outside( you.bub_pos() ) ) ) {
         you.moves -= 100;
         // if auto-move is on, continue moving next turn
         if( you.is_auto_moving() ) {
-            you.defer_move( dest_loc );
+            you.defer_move( abs_to_bub( dest_loc ) );
         }
         return true;
     }
 
     // Openable furniture (wardrobes, etc)
-    if( m.furn( dest_loc ) != f_safe_c
-        && m.open_door( &you, dest_loc, !m.is_outside( you.bub_pos() ) ) ) {
+    if( here.get_furn( dest_loc ) != f_safe_c
+        && m.open_door( &you, abs_to_bub( dest_loc ), !m.is_outside( you.bub_pos() ) ) ) {
         you.moves -= 100;
         // if auto-move is on, continue moving next turn
         if( you.is_auto_moving() ) {
-            you.defer_move( dest_loc );
+            you.defer_move( abs_to_bub( dest_loc ) );
         }
         return true;
     }
@@ -725,8 +728,8 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
     // 2. The destination at current z-level is impassable (blocked by something)
     // 3. There's a valid destination above
     if( !is_riding
-        && m.has_flag( flag_LADDER, you.bub_pos() )
-        && !m.passable( dest_loc )
+        && here.has_flag( flag_LADDER, you.abs_pos() )
+        && !here.passable( dest_loc )
       ) {
         ZoneScopedN( "avatar_move_walk_move_ladder" );
         if( g->walk_move( dest_loc + tripoint_above ) ) {
@@ -745,8 +748,8 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
     // Invalid move
     const bool waste_moves = ( you.is_blind() && you.clairvoyance() < 1 ) ||
                              you.has_effect( effect_stunned );
-    if( waste_moves || dest_loc.z() != you.bub_pos().z() ) {
-        add_msg( _( "You bump into the %s!" ), m.obstacle_name( dest_loc ) );
+    if( waste_moves || dest_loc.z() != you.abs_pos().z() ) {
+        add_msg( _( "You bump into the %s!" ), m.obstacle_name( abs_to_bub( dest_loc ) ) );
         // Only lose movement if we're blind
         if( waste_moves ) {
             you.moves -= 100;
@@ -759,41 +762,46 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
                 char part_mod = 0;
                 const vpart_id &vp_id = m.veh_at( dest_loc )->vehicle().part_id_string( m.veh_at(
                                             dest_loc )->part_index(), false, part_mod );
-                you.memorize_tile( bub_to_abs( dest_loc ), "vp_" + vp_id.str(), 0, 0 );
+                you.memorize_tile( dest_loc, "vp_" + vp_id.str(), 0, 0 );
             } else {
-                if( m.has_furn( dest_loc ) ) {
-                    you.memorize_tile( bub_to_abs( dest_loc ), m.furn( dest_loc ).id().str(), 0, 0 );
+                if( here.get_furn( dest_loc ).has_value() ) {
+                    you.memorize_tile( dest_loc, here.get_furn( dest_loc )->id().str(), 0, 0 );
                 } else {
-                    std::string ter = m.ter( dest_loc ).id().str();
-                    you.memorize_tile( bub_to_abs( dest_loc ), ter, 0, 0 );
-                    you.memorize_terrain_tile( bub_to_abs( dest_loc ), ter, 0, 0 );
+                    std::string ter = here.get_ter( dest_loc )->id().str();
+                    you.memorize_tile( dest_loc, ter, 0, 0 );
+                    you.memorize_terrain_tile( dest_loc, ter, 0, 0 );
                 }
             }
         }
-    } else if( m.ter( dest_loc ) == t_door_locked || m.ter( dest_loc ) == t_door_locked_peep ||
-               m.ter( dest_loc ) == t_door_locked_alarm || m.ter( dest_loc ) == t_door_locked_interior ) {
+    } else if( here.get_ter( dest_loc ) == t_door_locked ||
+               here.get_ter( dest_loc ) == t_door_locked_peep ||
+               here.get_ter( dest_loc ) == t_door_locked_alarm ||
+               here.get_ter( dest_loc ) == t_door_locked_interior ) {
         // Don't drain move points for learning something you could learn just by looking
         add_msg( _( "That door is locked!" ) );
-    } else if( m.ter( dest_loc ) == t_door_bar_locked ) {
+    } else if( here.get_ter( dest_loc ) == t_door_bar_locked ) {
         add_msg( _( "You rattle the bars but the door is locked!" ) );
     }
     return false;
 }
 
-bool avatar_action::ramp_move( avatar &you, map &m, const tripoint_bub_ms &dest_loc )
+bool avatar_action::ramp_move( const tripoint_abs_ms &dest_loc )
 {
-    if( dest_loc.z() != you.bub_pos().z() ) {
+    auto &you = get_avatar();
+    auto &m = get_map();
+    auto &here = you.get_mapbuffer();
+    if( dest_loc.z() != you.abs_pos().z() ) {
         // No recursive ramp_moves
         return false;
     }
 
     // We're moving onto a tile with no support, check if it has a ramp below
-    if( !m.has_floor_or_support( dest_loc ) ) {
-        tripoint_bub_ms below( dest_loc.xy(), dest_loc.z() - 1 );
-        if( m.has_flag( TFLAG_RAMP, below ) ) {
+    if( !m.has_floor_or_support( abs_to_bub( dest_loc ) ) ) {
+        tripoint_abs_ms below( dest_loc.xy(), dest_loc.z() - 1 );
+        if( m.has_flag( TFLAG_RAMP, abs_to_bub( below ) ) ) {
             // But we're moving onto one from above
-            const auto dp = dest_loc - you.bub_pos();
-            move( you, m, tripoint_rel_ms( dp.xy(), -1 ) );
+            const auto dp = dest_loc - you.abs_pos();
+            move( tripoint_rel_ms( dp.xy(), -1 ) );
             // No penalty for misaligned stairs here
             // Also cheaper than climbing up
             return true;
@@ -802,8 +810,8 @@ bool avatar_action::ramp_move( avatar &you, map &m, const tripoint_bub_ms &dest_
         return false;
     }
 
-    if( !m.has_flag( TFLAG_RAMP, you.bub_pos() ) ||
-        m.passable( dest_loc ) ) {
+    if( !here.has_flag( TFLAG_RAMP, you.abs_pos() ) ||
+        here.passable( dest_loc ) ) {
         return false;
     }
 
@@ -811,7 +819,7 @@ bool avatar_action::ramp_move( avatar &you, map &m, const tripoint_bub_ms &dest_
     // Basically, finish walking on the stairs instead of pulling self up by hand
     bool aligned_ramps = false;
     for( const auto &pt : m.points_in_radius( you.bub_pos(), 1 ) ) {
-        if( rl_dist( pt, dest_loc ) < 2 && m.has_flag( flag_RAMP_END, pt ) ) {
+        if( rl_dist( pt, abs_to_bub( dest_loc ) ) < 2 && m.has_flag( flag_RAMP_END, pt ) ) {
             aligned_ramps = true;
             break;
         }
@@ -823,21 +831,24 @@ bool avatar_action::ramp_move( avatar &you, map &m, const tripoint_bub_ms &dest_
         return false;
     }
 
-    const auto dp = dest_loc - you.bub_pos();
-    const auto old_pos = you.bub_pos();
-    move( you, m, tripoint_rel_ms( dp.xy(), 1 ) );
+    const auto dp = dest_loc - you.abs_pos();
+    const auto old_pos = you.abs_pos();
+    move( tripoint_rel_ms( dp.xy(), 1 ) );
     // We can't just take the result of the above function here
-    if( you.bub_pos() != old_pos ) {
+    if( you.abs_pos() != old_pos ) {
         you.moves -= 50 + ( aligned_ramps ? 0 : 50 );
     }
 
     return true;
 }
 
-void avatar_action::swim( map &m, avatar &you, const tripoint_bub_ms &p )
+void avatar_action::swim( const tripoint_abs_ms &p )
 {
-    if( !m.has_flag( flag_SWIMMABLE, p ) ) {
-        debugmsg( "Tried to swim in %s!", m.tername( p ) );
+    auto &you = get_avatar();
+    auto &m = get_map();
+    auto &here = you.get_mapbuffer();
+    if( !here.has_flag( flag_SWIMMABLE, p ) ) {
+        debugmsg( "Tried to swim in %s!", m.tername( abs_to_bub( p ) ) );
         return;
     }
     if( you.has_effect( effect_onfire ) ) {
@@ -854,7 +865,7 @@ void avatar_action::swim( map &m, avatar &you, const tripoint_bub_ms &p )
         add_msg( _( "The water washes off the glowing goo!" ) );
         you.remove_effect( effect_glowing );
     }
-    if( m.has_flag( TFLAG_WATER_CUBE, p ) && !you.is_underwater() ) {
+    if( here.has_flag( TFLAG_WATER_CUBE, p ) && !you.is_underwater() ) {
         you.oxygen = 30 + 2 * you.str_cur;
         you.set_underwater( true );
     }
@@ -880,7 +891,7 @@ void avatar_action::swim( map &m, avatar &you, const tripoint_bub_ms &p )
             popup( _( "You need to breathe but you can't swim!  Get to dry land, quick!" ) );
         }
     }
-    bool diagonal = ( p.x() != you.bub_pos().x() && p.y() != you.bub_pos().y() );
+    const bool diagonal = ( p.x() != you.abs_pos().x() && p.y() != you.abs_pos().y() );
     if( you.in_vehicle ) {
         m.unboard_vehicle( you.bub_pos() );
     }
@@ -893,10 +904,11 @@ void avatar_action::swim( map &m, avatar &you, const tripoint_bub_ms &p )
             return;
         }
     }
-    if( m.has_flag_ter_or_furn( TFLAG_HIDE_PLACE, p ) && you.get_size() <= creature_size::medium ) {
-        add_msg( m_good, _( "You are hiding in the %s." ), m.name( p ) );
+    if( m.has_flag_ter_or_furn( TFLAG_HIDE_PLACE, abs_to_bub( p ) ) &&
+        you.get_size() <= creature_size::medium ) {
+        add_msg( m_good, _( "You are hiding in the %s." ), m.name( abs_to_bub( p ) ) );
     }
-    you.setpos( p );
+    g->process_player_movement( p );
 
     cata_event_dispatch::avatar_moves( you, m, you.abs_pos() );
 
@@ -961,7 +973,7 @@ static auto attack_best_hostile( avatar &you, map &m ) -> void
 
     const auto diff = best.bub_pos() - you.bub_pos();
     if( std::abs( diff.x() ) <= 1 && std::abs( diff.y() ) <= 1 && diff.z() == 0 ) {
-        avatar_action::move( you, m, tripoint_rel_ms( diff.xy(), 0 ) );
+        avatar_action::move( tripoint_rel_ms( diff.xy(), 0 ) );
         return;
     }
 

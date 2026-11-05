@@ -68,11 +68,14 @@ TEST_CASE("visitable_remove", "[visitable]") {
     };
 
     // Move to ground level to avoid weirdnesses around being underground.
-    p.setpos(tripoint_bub_ms(p.bub_pos().xy(), 0));
+    const auto ground_pos_abs = tripoint_abs_ms(p.abs_pos().xy(), 0);
+    p.setpos(ground_pos_abs);
     // move player randomly until we find a suitable position
     while (!suitable(p.bub_pos(), 1)) {
         CHECK(!p.in_vehicle);
-        p.setpos(random_entry(closest_points_first(p.bub_pos(), 1)));
+        const auto next_pos_abs =
+            map_local_to_abs(g->m, random_entry(closest_points_first(p.bub_pos(), 1)));
+        p.setpos(next_pos_abs);
     }
 
     detached_ptr<item> temp_liquid_d = item::spawn(liquid_id);

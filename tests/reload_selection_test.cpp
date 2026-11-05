@@ -37,9 +37,9 @@ TEST_CASE("reload_selection_supplied_options", "[reload][reload_selection]") {
     }
 
     SECTION("an NPC receives the first supplied option without sorting or rediscovery") {
-        auto& who = spawn_npc({50, 50, 0}, "test_talker");
+        auto& who = spawn_npc(bub_test_origin(), "test_talker");
         clear_character(who);
-        who.setpos(get_avatar().bub_pos());
+        who.setpos(test_origin);
         auto& cheap = who.i_add(item::spawn("38_special", calendar::start_of_cataclysm, 6));
         auto expensive_owner = item::spawn("38_special", calendar::start_of_cataclysm, 1);
         auto& expensive = *expensive_owner;
@@ -231,9 +231,9 @@ TEST_CASE("reload_stable_ordering", "[reload][reload_selection]") {
 
 TEST_CASE("reload_npc_empty_selection", "[reload][reload_selection]") {
     clear_all_state();
-    auto& who = spawn_npc({50, 50, 0}, "test_talker");
+    auto& who = spawn_npc(bub_test_origin(), "test_talker");
     clear_character(who);
-    who.setpos(get_avatar().bub_pos());
+    who.setpos(test_origin);
     const auto restore_history = restore_on_out_of_scope<std::map<ammotype, itype_id>>(
         uistate.lastreload);
     uistate.lastreload.clear();
@@ -254,18 +254,18 @@ TEST_CASE("reload_discovery_source_order_and_mounted_range", "[reload][reload_se
     clear_all_state();
     auto& who = get_avatar();
     auto& here = get_map();
-    const auto center = tripoint_bub_ms(60, 60, 0);
-    who.setpos(center);
+    who.setpos(test_origin);
     auto& gun = who.i_add(item::spawn("sw_619", calendar::start_of_cataclysm, 0));
     auto& carried = who.i_add(item::spawn("38_special", calendar::start_of_cataclysm, 1));
     auto ground_owner = item::spawn("38_special", calendar::start_of_cataclysm, 6);
     auto& ground = *ground_owner;
-    here.add_item_or_charges(center, std::move(ground_owner));
+    here.add_item_or_charges(bub_test_origin(), std::move(ground_owner));
     here.add_item_or_charges(
-        center + tripoint_south * 2, item::spawn("38_special", calendar::start_of_cataclysm, 6));
+        bub_test_origin() + tripoint_south * 2,
+        item::spawn("38_special", calendar::start_of_cataclysm, 6));
 
-    auto* cart =
-        here.add_vehicle(vproto_id("shopping_cart"), center + tripoint_east, 0_degrees, 0, 0);
+    auto* cart = here.add_vehicle(
+        vproto_id("shopping_cart"), bub_test_origin() + tripoint_east, 0_degrees, 0, 0);
     REQUIRE(cart != nullptr);
     const auto cargo = cart->part_with_feature(tripoint_mnt_veh::zero(), "CARGO", true);
     REQUIRE(cargo >= 0);
@@ -282,7 +282,7 @@ TEST_CASE("reload_discovery_source_order_and_mounted_range", "[reload][reload_se
     CHECK(unmounted.options[2].ammo == &vehicle_ammo);
     for (const auto& option : unmounted.options) { CHECK(option.target == &gun); }
 
-    auto& horse = spawn_test_monster("mon_horse", center + tripoint_north);
+    auto& horse = spawn_test_monster("mon_horse", bub_test_origin() + tripoint_north);
     who.mount_creature(horse);
     REQUIRE(who.is_mounted());
     const auto mounted = reload::discover_ammo(who, gun);
@@ -390,9 +390,9 @@ TEST_CASE("reload_discovery_respects_magazine_parent_ammo", "[reload][reload_sel
 
 TEST_CASE("reload_nonempty_precedes_cheaper_empty", "[reload][reload_selection]") {
     clear_all_state();
-    auto& who = spawn_npc({50, 50, 0}, "test_talker");
+    auto& who = spawn_npc(bub_test_origin(), "test_talker");
     clear_character(who);
-    who.setpos(get_avatar().bub_pos());
+    who.setpos(test_origin);
     auto& gun = who.i_add(item::spawn("glock_19", calendar::start_of_cataclysm, 0));
     auto& empty = who.i_add(item::spawn("glockmag", calendar::start_of_cataclysm, 0));
     auto loaded_owner = item::spawn("glockmag", calendar::start_of_cataclysm, 0);

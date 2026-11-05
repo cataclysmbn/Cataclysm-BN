@@ -1507,7 +1507,7 @@ auto add_static_emitter_sources(source_accumulator& acc) -> void {
     for (auto const z : acc.dirty_levels) {
         for (auto const& view : acc.m.active_submap_views(z)) {
             auto const grid = abs_to_bub(view.abs_pos());
-            auto const& sm = view.get_submap();
+            auto const& sm = view.submap_ref();
 
             for (auto const sm_ms : sm.static_emitter_tiles()) {
                 auto const pos = project_combine(grid, sm_ms);
@@ -1540,7 +1540,7 @@ auto add_field_sources(source_accumulator& acc) -> void {
     for (auto const z : acc.dirty_levels) {
         for (auto const& view : acc.m.active_submap_views(z)) {
             auto const grid = abs_to_bub(view.abs_pos());
-            auto const& sm = view.get_submap();
+            auto const& sm = view.submap_ref();
             if (sm.field_count == 0) { continue; }
 
             for (auto const sm_ms : sm.field_cache) {
@@ -1554,11 +1554,11 @@ auto add_field_sources(source_accumulator& acc) -> void {
 
 auto add_active_item_sources(source_accumulator& acc) -> void {
     ZoneScopedN("gpu_lm_collect_item_sources");
-    auto const& luminous_item_submaps = acc.m.get_mapbuffer().get_submaps_with_luminous_items();
+    auto const& luminous_tile_submaps = acc.m.get_mapbuffer().get_submaps_with_luminous_tiles();
     for (auto const z : acc.dirty_levels) {
-        for (tripoint_abs_sm const& abs_pos : luminous_item_submaps) {
+        for (tripoint_abs_sm const& abs_pos : luminous_tile_submaps) {
             if (abs_pos.z() != z || !acc.m.contains_abs_sm(abs_pos)) { continue; }
-            auto const* const sm_ptr = acc.m.get_mapbuffer().lookup_submap_in_memory(abs_pos);
+            auto const* const sm_ptr = acc.m.get_mapbuffer().find_resident_submap(abs_pos);
             if (sm_ptr == nullptr) { continue; }
 
             auto const grid = abs_to_bub(abs_pos);
@@ -1827,7 +1827,7 @@ auto write_field_light_overrides_to_source_map(map const& m, std::vector<int> co
     for (auto const z : dirty_levels) {
         for (auto const& view : m.active_submap_views(z)) {
             auto const grid = abs_to_bub(view.abs_pos());
-            auto const& sm = view.get_submap();
+            auto const& sm = view.submap_ref();
             if (sm.field_count == 0) { continue; }
 
             for (auto const sm_ms : sm.field_cache) {

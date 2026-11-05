@@ -228,7 +228,7 @@ class map_memory
          * Uses cache made by @ref prepare_region to speed up the lookup.
          * @returns the submap.
          */
-        mm_submap &get_submap( const tripoint_abs_sm &sm_pos );
+        mm_submap &resolve_submap( const tripoint_abs_sm &sm_pos );
 
         void clear_cache();
 };

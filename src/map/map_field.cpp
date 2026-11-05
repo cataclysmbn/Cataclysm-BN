@@ -1116,7 +1116,7 @@ auto neighbor_tile(
     const auto dsy = ny < 0 ? -1 : (ny >= SEEY ? 1 : 0);
     if (dsx == 0 && dsy == 0) { return {base, {nx, ny}, base_pos}; }
     const tripoint_abs_sm nbr_pos(base_pos.raw() + tripoint{dsx, dsy, 0});
-    auto* nbr = mb.lookup_submap_in_memory(nbr_pos);
+    auto* nbr = mb.find_resident_submap(nbr_pos);
     if (!nbr) { return {}; }
     return {nbr, {(nx + SEEX) % SEEX, (ny + SEEY) % SEEY}, nbr_pos};
 }
@@ -1462,7 +1462,7 @@ auto process_fields_in_submap(
                     // --- Z-rise: level-3 fire spreads upward ---
                     if (can_spread && pos.z() < OVERMAP_HEIGHT && cur.get_field_intensity() == 3) {
                         const tripoint_abs_sm above_pos(pos.raw() + tripoint{0, 0, 1});
-                        auto* above_sm = mb.lookup_submap_in_memory(above_pos);
+                        auto* above_sm = mb.find_resident_submap(above_pos);
                         if (above_sm) {
                             const auto& above_ter = above_sm->get_ter(local).obj();
                             if (above_ter.has_flag(TFLAG_NO_FLOOR) || above_ter.is_flammable()) {
@@ -1590,7 +1590,7 @@ auto process_fields_in_submap(
                     // --- Z-fall: fire on open-air tile falls to z-level below ---
                     if (no_floor && pos.z() > -OVERMAP_DEPTH) {
                         const tripoint_abs_sm below_pos(pos.raw() + tripoint{0, 0, -1});
-                        auto* below_sm = mb.lookup_submap_in_memory(below_pos);
+                        auto* below_sm = mb.find_resident_submap(below_pos);
                         if (below_sm) {
                             auto* fire_below = below_sm->get_field(local).find_field(fd_fire);
                             if (!fire_below) {
@@ -1627,7 +1627,7 @@ auto process_fields_in_submap(
                     auto spread_done = false;
                     if (pos.z() > -OVERMAP_DEPTH) {
                         const tripoint_abs_sm below_pos(pos.raw() + tripoint{0, 0, -1});
-                        auto* below_sm = mb.lookup_submap_in_memory(below_pos);
+                        auto* below_sm = mb.find_resident_submap(below_pos);
                         if (below_sm) {
                             auto dst = SubTile{below_sm, local, below_pos};
                             if (gas_can_spread_sub(cur, dst)) {

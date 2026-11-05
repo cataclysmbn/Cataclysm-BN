@@ -47,7 +47,7 @@ bool game::dump_stats( const std::string &what, dump_mode mode,
 
     int scol = 0; // sorting column
 
-    standard_npc test_npc( "S1", { 0, 0, 2 }, { "gloves_survivor", "mask_lsurvivor" },
+    standard_npc test_npc( "S1", tripoint_bub_ms( 0, 0, 2 ), { "gloves_survivor", "mask_lsurvivor" },
                            4, 8, 10, 8, 10 /* DEX 10, PER 10 */ );
 
     if( what == "AMMO" ) {

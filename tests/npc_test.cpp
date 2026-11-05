@@ -40,17 +40,16 @@ TEST_CASE("hallucination_npcs_do_not_drop_inventory", "[npc][hallucination]") {
     clear_all_state();
     auto& here = get_map();
 
-    const auto npc_pos = tripoint_bub_ms(60, 60, 0);
-    npc& hallucination_npc = spawn_npc(npc_pos, "test_talker");
+    npc& hallucination_npc = spawn_npc(bub_test_origin(), "test_talker");
     hallucination_npc.hallucination = true;
     hallucination_npc.i_add(item::spawn("rock"));
 
-    REQUIRE(here.i_at(npc_pos).empty());
+    REQUIRE(here.i_at(bub_test_origin()).empty());
 
     hallucination_npc.die(&get_avatar());
 
     CHECK(hallucination_npc.is_dead());
-    CHECK(here.i_at(npc_pos).empty());
+    CHECK(here.i_at(bub_test_origin()).empty());
     CHECK_FALSE(get_avatar().has_item_with_id(itype_id("rock")));
 }
 
@@ -58,19 +57,19 @@ TEST_CASE("hallucination_npcs_do_not_push_real_npcs", "[npc][hallucination]") {
     clear_all_state();
     build_test_map(ter_id("t_floor"));
 
-    const auto hallucination_pos = tripoint_bub_ms(50, 50, 0);
-    const auto bystander_pos = tripoint_bub_ms(51, 50, 0);
-    npc& bystander = spawn_npc(bystander_pos, "test_talker");
-    npc& hallucination_npc = spawn_npc(hallucination_pos, "test_talker");
+    const auto hallucination_pos_abs = test_origin + tripoint_rel_ms(-10, 0, 0);
+    const auto bystander_pos_abs = test_origin + tripoint_rel_ms(-9, 0, 0);
+    npc& bystander = spawn_npc(abs_to_bub(bystander_pos_abs), "test_talker");
+    npc& hallucination_npc = spawn_npc(abs_to_bub(hallucination_pos_abs), "test_talker");
     hallucination_npc.hallucination = true;
     REQUIRE(hallucination_npc.is_hallucination());
-    REQUIRE(hallucination_npc.bub_pos() == hallucination_pos);
-    REQUIRE(bystander.bub_pos() == bystander_pos);
+    REQUIRE(hallucination_npc.abs_pos() == hallucination_pos_abs);
+    REQUIRE(bystander.abs_pos() == bystander_pos_abs);
 
-    hallucination_npc.move_to(bystander_pos, true, nullptr);
+    hallucination_npc.move_to(abs_to_bub(bystander_pos_abs), true, nullptr);
 
-    CHECK(hallucination_npc.bub_pos() == hallucination_pos);
-    CHECK(bystander.bub_pos() == bystander_pos);
+    CHECK(hallucination_npc.abs_pos() == hallucination_pos_abs);
+    CHECK(bystander.abs_pos() == bystander_pos_abs);
 }
 
 TEST_CASE("hallucination_npcs_do_not_board_real_vehicles", "[npc][hallucination]") {
@@ -79,22 +78,27 @@ TEST_CASE("hallucination_npcs_do_not_board_real_vehicles", "[npc][hallucination]
     build_test_map(ter_id("t_pavement"));
     clear_vehicles();
 
-    const auto npc_pos = tripoint_bub_ms(63, 59, 0);
-    const auto seat_pos = tripoint_bub_ms(63, 60, 0);
-    auto* veh_ptr = here.add_vehicle(vproto_id("bicycle_test"), seat_pos, 0_degrees, 0, 0);
+    const auto seat_pos_abs = test_origin + tripoint_rel_ms(3, 0, 0);
+    const auto npc_pos_abs = test_origin + tripoint_rel_ms(3, -1, 0);
+    auto* veh_ptr =
+        here.add_vehicle(vproto_id("bicycle_test"), abs_to_bub(seat_pos_abs), 0_degrees, 0, 0);
     REQUIRE(veh_ptr != nullptr);
-    REQUIRE(here.veh_at(seat_pos).part_with_feature(VPFLAG_BOARDABLE, true).has_value());
+    REQUIRE(
+        here.veh_at(abs_to_bub(seat_pos_abs)).part_with_feature(VPFLAG_BOARDABLE, true).has_value());
 
-    npc& hallucination_npc = spawn_npc(npc_pos, "test_talker");
+    npc& hallucination_npc = spawn_npc(abs_to_bub(npc_pos_abs), "test_talker");
     hallucination_npc.hallucination = true;
     REQUIRE(hallucination_npc.is_hallucination());
-    hallucination_npc.move_to(seat_pos, true, nullptr);
+    hallucination_npc.move_to(abs_to_bub(seat_pos_abs), true, nullptr);
 
-    CHECK(hallucination_npc.bub_pos() == seat_pos);
+    CHECK(hallucination_npc.abs_pos() == seat_pos_abs);
     CHECK_FALSE(hallucination_npc.in_vehicle);
-    CHECK(veh_ptr->get_passenger(
-              here.veh_at(seat_pos).part_with_feature(VPFLAG_BOARDABLE, true)->part_index())
-          == nullptr);
+    CHECK(
+        veh_ptr->get_passenger(
+            here.veh_at(abs_to_bub(seat_pos_abs))
+                .part_with_feature(VPFLAG_BOARDABLE, true)
+                ->part_index())
+        == nullptr);
 }
 
 static void on_load_test(npc& who, const time_duration& from, const time_duration& to) {
@@ -271,7 +275,7 @@ constexpr char setup[height][width + 1] = {
     "  ###AAA#########", "    #####        ",
 };
 
-static void check_npc_movement(const tripoint_bub_ms& origin) {
+static void check_npc_movement(const tripoint_abs_ms& origin) {
     const efftype_id effect_bouldering("bouldering");
 
     INFO("Should not crash from infinite recursion");
@@ -284,7 +288,7 @@ static void check_npc_movement(const tripoint_bub_ms& origin) {
                 case 'M':
                 case 'B':
                 case 'C':
-                    tripoint_bub_ms p = origin + point_rel_ms(x, y);
+                    const auto p = abs_to_bub(origin + tripoint_rel_ms(x, y, 0));
                     npc* guy = g->critter_at<npc>(p);
                     REQUIRE(guy != nullptr);
                     guy->move();
@@ -297,7 +301,7 @@ static void check_npc_movement(const tripoint_bub_ms& origin) {
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             if (setup[y][x] == 'A') {
-                tripoint_bub_ms p = origin + point_rel_ms(x, y);
+                const auto p = abs_to_bub(origin + tripoint_rel_ms(x, y, 0));
                 npc* guy = g->critter_at<npc>(p);
                 REQUIRE(guy != nullptr);
                 CHECK(!guy->has_effect(effect_bouldering));
@@ -309,7 +313,7 @@ static void check_npc_movement(const tripoint_bub_ms& origin) {
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             if (setup[y][x] == 'R') {
-                tripoint_bub_ms p = origin + point_rel_ms(x, y);
+                const auto p = abs_to_bub(origin + tripoint_rel_ms(x, y, 0));
                 npc* guy = g->critter_at<npc>(p);
                 REQUIRE(guy != nullptr);
                 CHECK(guy->has_effect(effect_bouldering));
@@ -324,7 +328,7 @@ static void check_npc_movement(const tripoint_bub_ms& origin) {
                 case 'W':
                 case 'M':
                     CAPTURE(setup[y][x]);
-                    tripoint_bub_ms p = origin + point_rel_ms(x, y);
+                    const auto p = abs_to_bub(origin + tripoint_rel_ms(x, y, 0));
                     npc* guy = g->critter_at<npc>(p);
                     CHECK(guy != nullptr);
                     break;
@@ -338,7 +342,7 @@ static void check_npc_movement(const tripoint_bub_ms& origin) {
             switch (setup[y][x]) {
                 case 'B':
                 case 'C':
-                    tripoint_bub_ms p = origin + point_rel_ms(x, y);
+                    const auto p = abs_to_bub(origin + tripoint_rel_ms(x, y, 0));
                     npc* guy = g->critter_at<npc>(p);
                     CHECK(guy == nullptr);
                     break;
@@ -356,14 +360,16 @@ TEST_CASE("npc-movement") {
     const vpart_id vpart_frame_vertical("frame_vertical");
     const vpart_id vpart_seat("seat");
 
-    g->place_player(tripoint_bub_ms(60, 60, 0));
+    g->u.setpos(test_origin);
 
     Character& player_character = get_player_character();
     map& here = get_map();
+    const auto origin_abs = player_character.abs_pos();
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             const char type = setup[y][x];
-            const tripoint_bub_ms p = player_character.bub_pos() + point_rel_ms(x, y);
+            const auto p_abs = origin_abs + tripoint_rel_ms(x, y, 0);
+            const auto p = abs_to_bub(p_abs);
             // create walls
             if (type == '#') {
                 here.ter_set(p, t_reinforced_glass);
@@ -402,7 +408,7 @@ TEST_CASE("npc-movement") {
                     guy->randomize();
                     // Repeat until we get an NPC vulnerable to acid
                 } while (guy->is_immune_field(fd_acid));
-                const auto remain = project_remain<coords::sm>(map_local_to_abs(here, p));
+                const auto remain = project_remain<coords::sm>(p_abs);
                 guy->spawn_at_precise(remain.quotient, remain.remainder_tripoint);
                 // Set the shopkeep mission; this means that
                 // the NPC deems themselves to be guarding and stops them
@@ -423,7 +429,7 @@ TEST_CASE("npc-movement") {
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             const char type = setup[y][x];
-            const tripoint_bub_ms p = player_character.bub_pos() + point_rel_ms(x, y);
+            const auto p = abs_to_bub(origin_abs + tripoint_rel_ms(x, y, 0));
             if (type == '#') {
                 REQUIRE(!here.passable(p));
             } else {
@@ -452,16 +458,16 @@ TEST_CASE("npc-movement") {
     }
 
     SECTION("NPCs escape dangerous terrain by pushing other NPCs") {
-        check_npc_movement(player_character.bub_pos());
+        check_npc_movement(origin_abs);
     }
 
     SECTION("Player in vehicle & NPCs escaping dangerous terrain") {
-        const auto origin = player_character.bub_pos();
+        const auto origin = origin_abs;
 
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
                 if (setup[y][x] == 'V') {
-                    g->place_player(player_character.bub_pos() + point_rel_ms(x, y));
+                    g->u.setpos(origin_abs + tripoint_rel_ms(x, y, 0));
                     break;
                 }
             }
@@ -475,8 +481,13 @@ TEST_CASE("control_npc_updates_positions_and_reality_bubble", "[npc][control]") 
     clear_all_state();
 
     avatar& you = get_avatar();
-    g->place_player(tripoint_bub_ms(60, 60, 0));
-    npc& follower = spawn_npc(tripoint_bub_ms(10, 10, 0), "test_talker");
+    g->u.setpos(test_origin);
+    // Preserve the boundary-crossing scenario as an absolute position derived from the loaded
+    // map origin; the NPC is deliberately placed near the edge of the current bubble.
+    const auto follower_abs_pos =
+        tripoint_abs_ms(project_to<coords::ms>(get_map().get_abs_sub()), 0)
+        + tripoint_rel_ms(10, 10, 0);
+    npc& follower = spawn_npc(abs_to_bub(follower_abs_pos), "test_talker");
     follower.set_fac(faction_id("your_followers"));
     follower.set_attitude(NPCATT_FOLLOW);
     REQUIRE(follower.is_player_ally());
@@ -502,14 +513,15 @@ TEST_CASE("npc_can_target_player") {
 
     g->faction_manager_ptr->create_if_needed();
 
-    g->place_player(tripoint_bub_ms::zero());
+    g->u.setpos(test_origin);
 
     clear_npcs();
     clear_creatures();
 
     Character& player_character = get_player_character();
-    npc& hostile = spawn_npc(player_character.bub_pos() + point_south, "thug");
-    REQUIRE(rl_dist(player_character.bub_pos(), hostile.bub_pos()) <= 1);
+    const auto hostile_pos_abs = player_character.abs_pos() + tripoint_rel_ms::south();
+    npc& hostile = spawn_npc(abs_to_bub(hostile_pos_abs), "thug");
+    REQUIRE(rl_dist(player_character.abs_pos(), hostile.abs_pos()) <= 1);
     hostile.set_attitude(NPCATT_KILL);
     hostile.name = "Enemy NPC";
 
@@ -523,17 +535,19 @@ TEST_CASE("npc_can_target_player") {
 TEST_CASE("npc_move_through_vehicle_holes") {
     clear_all_state();
     map& here = get_map();
-    g->place_player(tripoint_bub_ms(65, 55, 0));
-    tripoint_bub_ms origin(60, 60, 0);
+    const auto origin_abs = test_origin;
+    g->u.setpos(origin_abs + tripoint_rel_ms(5, -5, 0));
+    const auto origin = abs_to_bub(origin_abs);
 
     get_map().add_vehicle(vproto_id("apc"), origin, -45_degrees, 0, 0);
     get_map().build_map_cache(0);
 
-    tripoint_bub_ms mon_origin = origin + tripoint_rel_ms(-2, 1, 0);
+    const auto mon_origin_abs = origin_abs + tripoint_rel_ms(-2, 1, 0);
+    const auto mon_origin = abs_to_bub(mon_origin_abs);
 
     shared_ptr_fast<npc> guy = make_shared_fast<npc>();
     guy->randomize();
-    const auto remain = project_remain<coords::sm>(map_local_to_abs(here, mon_origin));
+    const auto remain = project_remain<coords::sm>(mon_origin_abs);
     guy->spawn_at_precise(remain.quotient, remain.remainder_tripoint);
 
     ACTIVE_OVERMAP_BUFFER.insert_npc(guy);

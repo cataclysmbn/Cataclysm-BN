@@ -26,7 +26,7 @@ distribution_grid::distribution_grid( const std::vector<tripoint_abs_sm> &global
     mb( buffer )
 {
     for( const tripoint_abs_sm &sm_coord : submap_coords ) {
-        submap *sm = mb.lookup_submap( sm_coord );
+        submap *sm = mb.load_submap_from_storage( sm_coord );
         if( sm == nullptr ) {
             // Debugmsg already printed in mapbuffer.cpp
             return;
@@ -53,7 +53,7 @@ distribution_grid::operator bool() const
 void distribution_grid::update( time_point to )
 {
     for( const auto &c : contents ) {
-        submap *sm = mb.lookup_submap( c.first );
+        submap *sm = mb.load_submap_from_storage( c.first );
         if( sm == nullptr ) {
             return;
         }
@@ -401,7 +401,7 @@ static void sync_glt_paused( mapbuffer &buf, const tripoint_abs_ms &pos, bool pa
     tripoint_abs_sm sm_abs;
     point_sm_ms sm_pt;
     std::tie( sm_abs, sm_pt ) = project_remain<coords::sm>( pos );
-    submap *sm = buf.lookup_submap( sm_abs );
+    submap *sm = buf.load_submap_from_storage( sm_abs );
     if( sm == nullptr ) {
         return;
     }
@@ -462,7 +462,7 @@ void distribution_grid_tracker::resume_export_node( const tripoint_abs_ms &sourc
         // on the same turn as resume.  request_load() is async (SLM needs at
         // least one update() cycle); without this, the first make_distribution_grid_at
         // call for the remote side hits the empty sentinel and drops energy.
-        MAPBUFFER_REGISTRY.get( it->target_dim_id ).lookup_submap( target_sm );
+        MAPBUFFER_REGISTRY.get( it->target_dim_id ).load_submap_from_storage( target_sm );
 
         it->paused = false;
         sync_glt_paused( mb, source_pos, false );
@@ -562,7 +562,7 @@ void distribution_grid_tracker::on_submap_loaded( const tripoint_abs_sm &pos,
 
     // Scan newly-loaded submap for grid_link_tile active furniture and register
     // their export nodes so the link is live immediately on load.
-    submap *sm = mb.lookup_submap( pos );
+    submap *sm = mb.load_submap_from_storage( pos );
     if( sm == nullptr ) {
         return;
     }
@@ -594,12 +594,12 @@ void distribution_grid_tracker::on_submap_unloaded( const tripoint_abs_sm &pos,
     }
 
     // Remove export nodes whose source tile is in this submap before eviction.
-    // Use lookup_submap_in_memory() — the submap should still be resident when
+    // Use find_resident_submap() — the submap should still be resident when
     // called from the SLM listener, and we must not trigger a disk load here.
     // The null check handles the rare case where this fires after removal
     // (e.g. mapbuffer::save() spatial eviction) — export nodes were already
     // cleaned up by the SLM listener path in that scenario.
-    submap *sm = mb.lookup_submap_in_memory( pos );
+    submap *sm = mb.find_resident_submap( pos );
     if( sm != nullptr ) {
         std::ranges::for_each( sm->active_furniture, [&]( const auto & kv ) {
             const grid_link_tile *glt = dynamic_cast<const grid_link_tile *>( kv.second.get() );
@@ -739,7 +739,7 @@ void grid_furn_transform_queue::apply( mapbuffer &mb, distribution_grid_tracker 
         point_sm_ms p_within_sm;
         std::tie( p_abs_sm, p_within_sm ) = project_remain<coords::sm>( qt.p );
 
-        submap *sm = mb.lookup_submap( p_abs_sm );
+        submap *sm = mb.load_submap_from_storage( p_abs_sm );
         if( sm == nullptr ) {
             // Something transforming on a non-existant map...?
             return;

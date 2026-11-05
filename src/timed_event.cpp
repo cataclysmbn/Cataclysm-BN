@@ -225,7 +225,7 @@ void timed_event::actualize()
                     g->memorial().add(
                         pgettext( "memorial_male", "Water level reached the ceiling." ),
                         pgettext( "memorial_female", "Water level reached the ceiling." ) );
-                    avatar_action::swim( g->m, g->u, g->u.bub_pos() );
+                    avatar_action::swim( g->u.abs_pos() );
                 }
             }
             // flood_buf is filled with correct tiles; now copy them back to g->m

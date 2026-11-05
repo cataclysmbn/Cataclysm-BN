@@ -28,17 +28,17 @@ bool eat_here( avatar &you );
 
 // Standard movement; handles attacks, traps, &c. Returns false if auto move
 // should be canceled
-bool move( avatar &you, map &m, const tripoint_rel_ms &d );
-inline bool move( avatar &you, map &m, const point_rel_ms &d )
+bool move( const tripoint_rel_ms &d );
+inline bool move( const point_rel_ms &d )
 {
-    return move( you, m, tripoint_rel_ms( d, 0 ) );
+    return move( tripoint_rel_ms( d, 0 ) );
 }
 
 // Handle moving from a ramp
-bool ramp_move( avatar &you, map &m, const tripoint_bub_ms &dest );
+bool ramp_move( const tripoint_abs_ms &dest );
 
 /** Handles swimming by the player. Called by avatar_action::move(). */
-void swim( map &m, avatar &you, const tripoint_bub_ms &p );
+void swim( const tripoint_abs_ms &p );
 
 auto handle_melee_action( const melee_action_callback &callback ) -> void;
 auto melee_attack_while_handling_manual_combat_mode( avatar &you, Creature &target ) -> void;

@@ -1201,7 +1201,7 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
                     _( "Tunnel in which direction?" ) ) ) {
             if( g->m.impassable( *pnt ) ) {
                 add_msg_activate();
-                g->phasing_move( *pnt );
+                g->phasing_move( bub_to_abs( *pnt ) );
             } else {
                 refund_power();
                 add_msg_if_player( m_info, _( "There's nothing to phase through there." ) );

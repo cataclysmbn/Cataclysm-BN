@@ -34,8 +34,17 @@ class player : public Character
             return false;    // Overloaded for NPCs in npc.h
         }
 
+        /// Legacy compatibility shim; moving a player through bubble coordinates is conceptually
+        /// wrong because the bubble frame follows the player.
         void setpos( const tripoint_bub_ms &p ) override;
+        /// Relocate the player in absolute space without applying ordinary step effects.
+        /// The active player also realigns the loaded map and invalidates player-dependent caches.
         void setpos( const tripoint_abs_ms &p ) override;
+
+        /// Set the stored absolute position without map realignment or movement effects.
+        ///
+        /// This is reserved for callers that explicitly own map/lifecycle synchronization.
+        auto setpos_no_map_update( const tripoint_abs_ms &p ) -> void;
 
         // populate variables, inventory items, and misc from json object
         virtual void deserialize( JsonIn &jsin ) = 0;

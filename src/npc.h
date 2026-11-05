@@ -1414,6 +1414,9 @@ class standard_npc : public npc
                       const tripoint_bub_ms &pos = tripoint_bub_ms::min(),
                       const std::vector<std::string> &clothing = {},
                       int sk_lvl = 4, int s_str = 8, int s_dex = 8, int s_int = 8, int s_per = 8 );
+        standard_npc( const std::string &name, const tripoint_abs_ms &pos,
+                      const std::vector<std::string> &clothing = {},
+                      int sk_lvl = 4, int s_str = 8, int s_dex = 8, int s_int = 8, int s_per = 8 );
 };
 
 // instances of this can be accessed via string_id<npc_template>.

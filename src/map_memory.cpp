@@ -41,7 +41,7 @@ map_memory::map_memory()
 const memorized_terrain_tile &map_memory::get_tile( const tripoint_abs_ms &pos )
 {
     const auto p = project_remain<coords::sm>( pos );
-    const mm_submap &sm = get_submap( p.quotient_tripoint );
+    const mm_submap &sm = resolve_submap( p.quotient_tripoint );
     return sm.tile( p.remainder );
 }
 
@@ -64,21 +64,21 @@ void map_memory::memorize_tile( const tripoint_abs_ms &pos, const std::string &t
                                 const int subtile, const int rotation )
 {
     const auto p = project_remain<coords::sm>( pos );
-    mm_submap &sm = get_submap( p.quotient_tripoint );
+    mm_submap &sm = resolve_submap( p.quotient_tripoint );
     sm.set_tile( p.remainder, memorized_terrain_tile{ ter, subtile, rotation } );
 }
 
 int map_memory::get_symbol( const tripoint_abs_ms &pos )
 {
     const auto p = project_remain<coords::sm>( pos );
-    mm_submap &sm = get_submap( p.quotient_tripoint );
+    mm_submap &sm = resolve_submap( p.quotient_tripoint );
     return sm.symbol( p.remainder );
 }
 
 void map_memory::memorize_symbol( const tripoint_abs_ms &pos, const int symbol )
 {
     const auto p = project_remain<coords::sm>( pos );
-    mm_submap &sm = get_submap( p.quotient_tripoint );
+    mm_submap &sm = resolve_submap( p.quotient_tripoint );
     sm.set_symbol( p.remainder, symbol );
 }
 
@@ -86,21 +86,21 @@ void map_memory::memorize_terrain_tile( const tripoint_abs_ms &pos, const std::s
                                         const int subtile, const int rotation )
 {
     const auto p = project_remain<coords::sm>( pos );
-    mm_submap &sm = get_submap( p.quotient_tripoint );
+    mm_submap &sm = resolve_submap( p.quotient_tripoint );
     sm.set_terrain_tile( p.remainder, memorized_terrain_tile{ ter, subtile, rotation } );
 }
 
 memorized_terrain_tile map_memory::get_terrain_tile( const tripoint_abs_ms &pos )
 {
     const auto p = project_remain<coords::sm>( pos );
-    mm_submap &sm = get_submap( p.quotient_tripoint );
+    mm_submap &sm = resolve_submap( p.quotient_tripoint );
     return sm.terrain_tile( p.remainder );
 }
 
 void map_memory::clear_memorized_overlay( const tripoint_abs_ms &pos )
 {
     const auto p = project_remain<coords::sm>( pos );
-    mm_submap &sm = get_submap( p.quotient_tripoint );
+    mm_submap &sm = resolve_submap( p.quotient_tripoint );
     sm.set_symbol( p.remainder, mm_submap::default_symbol );
     sm.set_tile( p.remainder, mm_submap::default_tile );
 }
@@ -108,7 +108,7 @@ void map_memory::clear_memorized_overlay( const tripoint_abs_ms &pos )
 void map_memory::clear_memorized_tile( const tripoint_abs_ms &pos )
 {
     const auto p = project_remain<coords::sm>( pos );
-    mm_submap &sm = get_submap( p.quotient_tripoint );
+    mm_submap &sm = resolve_submap( p.quotient_tripoint );
     sm.set_symbol( p.remainder, mm_submap::default_symbol );
     sm.set_tile( p.remainder, mm_submap::default_tile );
     sm.set_terrain_tile( p.remainder, mm_submap::default_tile );
@@ -253,7 +253,7 @@ shared_ptr_fast<mm_submap> map_memory::load_submap( const tripoint_abs_sm &sm_po
     return ret;
 }
 
-mm_submap &map_memory::get_submap( const tripoint_abs_sm &sm_pos )
+mm_submap &map_memory::resolve_submap( const tripoint_abs_sm &sm_pos )
 {
     // First, try fetching from cache.
     // If it's not in cache (or cache is absent), go the long way.

@@ -33,7 +33,7 @@ static void clear_game_drag(const ter_id& terrain) {
     avatar& player_character = get_avatar();
     // Move player somewhere safe
     CHECK(!player_character.in_vehicle);
-    player_character.setpos(tripoint_bub_ms::zero());
+    player_character.setpos(test_origin);
     // Blind the player to avoid needless drawing-related overhead
     player_character.add_effect(effect_blind, 365_days, bodypart_str_id::NULL_ID());
     // Make sure the ST is 8 so that muscle powered results are consistent
@@ -46,8 +46,11 @@ static void clear_game_drag(const ter_id& terrain) {
 }
 
 static auto setup_drag_test(const vproto_id& veh_id) -> vehicle* { // *NOPAD*
-    const tripoint_bub_ms map_starting_point(60, 60, 0);
-    vehicle* veh_ptr = get_map().add_vehicle(veh_id, map_starting_point, -90_degrees, 0, 0);
+    map& here = get_map();
+    const auto map_starting_point_abs =
+        test_origin + tripoint_rel_ms(60 - g_half_mapsize_x, 60 - g_half_mapsize_y, 0);
+    vehicle* veh_ptr =
+        here.add_vehicle(veh_id, abs_to_bub(map_starting_point_abs), -90_degrees, 0, 0);
 
     REQUIRE(veh_ptr != nullptr);
     if (veh_ptr == nullptr) { return nullptr; }
@@ -151,7 +154,7 @@ TEST_CASE("water drag remains positive with excess floating parts", "[vehicle] [
     clear_game_drag(ter_id("t_pavement"));
 
     auto* const veh_ptr =
-        get_map().add_vehicle(vproto_id("none"), tripoint_bub_ms(60, 60, 0), 0_degrees, 0, 0);
+        get_map().add_vehicle(vproto_id("none"), bub_test_origin(), 0_degrees, 0, 0);
     REQUIRE(veh_ptr != nullptr);
 
     REQUIRE(

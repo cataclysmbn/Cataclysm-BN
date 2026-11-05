@@ -104,7 +104,11 @@ bool teleport::teleport( Creature &critter, int min_distance, int max_distance, 
     if( p && p->in_vehicle ) {
         get_map().unboard_vehicle( p->bub_pos() );
     }
-    critter.setpos( new_pos );
+    if( p == &g->u ) {
+        p->setpos( bub_to_abs( new_pos ) );
+    } else {
+        critter.setpos( new_pos );
+    }
     //player and npc exclusive teleporting effects
     if( p ) {
         if( add_teleglow ) {

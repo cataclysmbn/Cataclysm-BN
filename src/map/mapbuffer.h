@@ -60,7 +60,7 @@ struct mapbuffer_generate_omt_options {
     std::shared_ptr<mapgen_function> selected_mapgen;
 };
 
-enum class mapbuffer_lookup_mode : int {
+enum class mapbuffer_lookup_policy : int {
     simulated_only,
     resident_only,
     load_from_disk,
@@ -68,7 +68,7 @@ enum class mapbuffer_lookup_mode : int {
 };
 
 struct mapbuffer_lookup_options {
-    mapbuffer_lookup_mode mode = mapbuffer_lookup_mode::simulated_only;
+    mapbuffer_lookup_policy policy = mapbuffer_lookup_policy::simulated_only;
 };
 
 struct mapbuffer_valid_move_options {
@@ -147,7 +147,7 @@ struct mapbuffer_submap_bounds_mutation_options {
     int z_min = -OVERMAP_DEPTH;
     int z_max = OVERMAP_HEIGHT;
     mapbuffer_lookup_options lookup = {
-        .mode = mapbuffer_lookup_mode::resident_only,
+        .policy = mapbuffer_lookup_policy::resident_only,
     };
 };
 
@@ -157,7 +157,7 @@ struct mapbuffer_fill_terrain_options {
     int z_min = -OVERMAP_DEPTH;
     int z_max = OVERMAP_HEIGHT;
     mapbuffer_lookup_options lookup = {
-        .mode = mapbuffer_lookup_mode::resident_only,
+        .policy = mapbuffer_lookup_policy::resident_only,
     };
     ter_id terrain;
 };
@@ -169,7 +169,7 @@ struct mapbuffer_run_submap_batch_turns_options {
     int z_max = OVERMAP_HEIGHT;
     int turns = 0;
     mapbuffer_lookup_options lookup = {
-        .mode = mapbuffer_lookup_mode::resident_only,
+        .policy = mapbuffer_lookup_policy::resident_only,
     };
 };
 
@@ -193,6 +193,10 @@ public:
     auto get_field() const -> const field&;
     auto get_items() const -> const location_vector<item>&;
     auto get_furn_vars() const -> const data_vars::data_set&;
+    auto has_graffiti() const -> bool;
+    auto get_graffiti() const -> std::optional<std::string>;
+    auto has_signage() const -> bool;
+    auto get_signage() const -> std::optional<std::string>;
     auto get_radiation() const -> int;
     auto get_lum() const -> std::uint8_t;
     auto move_cost_ter_furn() const -> int;
@@ -230,7 +234,7 @@ public:
     explicit operator bool() const;
 
     auto abs_pos() const -> tripoint_abs_sm;
-    auto get_submap() const -> const submap&;
+    auto submap_ref() const -> const submap&;
     auto tile(const point_sm_ms& local) const -> mapbuffer_abs_tile_view;
     auto tiles() const -> point_range<point_sm_ms>;
 
@@ -249,7 +253,7 @@ public:
     auto abs_pos() const -> tripoint_abs_omt;
     auto has_any_submap() const -> bool;
     auto is_complete() const -> bool;
-    auto get_submap_view(const point_omt_sm& local) const
+    auto submap_view_at(const point_omt_sm& local) const
         -> std::optional<mapbuffer_abs_submap_view>;
 
 private:
@@ -275,9 +279,9 @@ public:
         const auto index = static_cast<std::size_t>(zlev + OVERMAP_DEPTH);
         return submaps_by_zlev_[index];
     }
-    auto get_submap_view(const tripoint_abs_sm& pos) const
+    auto submap_view_at(const tripoint_abs_sm& pos) const
         -> std::optional<mapbuffer_abs_submap_view>;
-    auto get_submap_view(const point_rel_sm& offset, int zlev) const
+    auto submap_view_at(const point_rel_sm& offset, int zlev) const
         -> std::optional<mapbuffer_abs_submap_view>;
     auto is_complete() const -> bool;
     auto update(const point_abs_sm& begin, const point_abs_sm& end, mapbuffer* buffer = nullptr)
@@ -305,7 +309,7 @@ public:
         load_request_source source = load_request_source::script;
         point_abs_sm begin;
         point_abs_sm end;
-        mapbuffer_lookup_options lookup = {.mode = mapbuffer_lookup_mode::resident_only};
+        mapbuffer_lookup_options lookup = {.policy = mapbuffer_lookup_policy::resident_only};
     };
 
     mapbuffer_load_region() = default;
@@ -313,7 +317,7 @@ public:
     mapbuffer_load_region(
         mapbuffer& buffer, load_request_source source, const point_abs_sm& begin,
         const point_abs_sm& end,
-        mapbuffer_lookup_options options = {.mode = mapbuffer_lookup_mode::resident_only});
+        mapbuffer_lookup_options options = {.policy = mapbuffer_lookup_policy::resident_only});
     ~mapbuffer_load_region();
 
     mapbuffer_load_region(const mapbuffer_load_region&) = delete;
@@ -333,7 +337,7 @@ public:
 private:
     mapbuffer* buffer_ = nullptr;
     load_request_source source_ = load_request_source::script;
-    mapbuffer_lookup_options options_ = {.mode = mapbuffer_lookup_mode::resident_only};
+    mapbuffer_lookup_options options_ = {.policy = mapbuffer_lookup_policy::resident_only};
     point_abs_sm begin_;
     point_abs_sm end_;
     load_request_handle handle_ = 0;
@@ -344,12 +348,11 @@ class mapbuffer_abs_tile_reader {
 public:
     mapbuffer_abs_tile_reader(mapbuffer& buffer, mapbuffer_lookup_options options = {});
 
-    auto get_tile(const tripoint_abs_ms& p) const -> std::optional<mapbuffer_abs_tile_view>;
-    auto get_tile_with_vehicle(const tripoint_abs_ms& p) const
+    auto tile_at(const tripoint_abs_ms& p) const -> std::optional<mapbuffer_abs_tile_view>;
+    auto tile_with_vehicle_at(const tripoint_abs_ms& p) const
         -> std::optional<mapbuffer_abs_tile_with_vehicle_view>;
-    auto get_submap_view(const tripoint_abs_sm& p) const
-        -> std::optional<mapbuffer_abs_submap_view>;
-    auto get_omt_view(const tripoint_abs_omt& p) const -> std::optional<mapbuffer_abs_omt_view>;
+    auto submap_view_at(const tripoint_abs_sm& p) const -> std::optional<mapbuffer_abs_submap_view>;
+    auto omt_view_at(const tripoint_abs_omt& p) const -> std::optional<mapbuffer_abs_omt_view>;
 
 private:
     mapbuffer* buffer_ = nullptr;
@@ -407,15 +410,15 @@ public:
      * load_or_generate: load saved/pending data first, then generate the
      * containing OMT on miss.
      */
-    auto get_submap(const tripoint_abs_sm& p, mapbuffer_lookup_options options = {}) -> submap*;
+    auto resolve_submap(const tripoint_abs_sm& p, mapbuffer_lookup_options options = {}) -> submap*;
 
-    auto get_abs_tile(const tripoint_abs_ms& p, mapbuffer_lookup_options options = {})
+    auto resolve_abs_tile(const tripoint_abs_ms& p, mapbuffer_lookup_options options = {})
         -> std::optional<mapbuffer_abs_tile_view>;
     auto get_abs_tile_with_vehicle(const tripoint_abs_ms& p, mapbuffer_lookup_options options = {})
         -> std::optional<mapbuffer_abs_tile_with_vehicle_view>;
-    auto get_abs_submap_view(const tripoint_abs_sm& p, mapbuffer_lookup_options options = {})
+    auto resolve_abs_submap_view(const tripoint_abs_sm& p, mapbuffer_lookup_options options = {})
         -> std::optional<mapbuffer_abs_submap_view>;
-    auto get_abs_omt_view(const tripoint_abs_omt& p, mapbuffer_lookup_options options = {})
+    auto resolve_abs_omt_view(const tripoint_abs_omt& p, mapbuffer_lookup_options options = {})
         -> std::optional<mapbuffer_abs_omt_view>;
     auto for_each_simulated_submap(const std::function<void(const tripoint_abs_sm&, submap&)>& fn)
         -> void;
@@ -583,12 +586,12 @@ public:
     auto get_submaps_with_active_items() const -> const std::set<tripoint_abs_sm>&;
     auto get_active_items_in_radius(
         const tripoint_abs_ms& center, int radius, special_item_type type) -> std::vector<item*>;
-    auto refresh_luminous_item_submap_index(
+    auto refresh_luminous_tile_submap_index(
         const tripoint_abs_ms& p, mapbuffer_lookup_options options = {}) -> bool;
-    auto refresh_luminous_item_submap_index(
+    auto refresh_luminous_tile_submap_index(
         const tripoint_abs_sm& p, mapbuffer_lookup_options options = {}) -> bool;
-    auto forget_luminous_item_submap_index(const tripoint_abs_sm& p) -> void;
-    auto get_submaps_with_luminous_items() const -> const std::set<tripoint_abs_sm>&;
+    auto forget_luminous_tile_submap_index(const tripoint_abs_sm& p) -> void;
+    auto get_submaps_with_luminous_tiles() const -> const std::set<tripoint_abs_sm>&;
 
     auto has_graffiti_at(const tripoint_abs_ms& p, mapbuffer_lookup_options options = {}) -> bool;
     auto graffiti_at(const tripoint_abs_ms& p, mapbuffer_lookup_options options = {})
@@ -631,16 +634,16 @@ public:
      * and could not be loaded. The mapbuffer takes care of the returned
      * submap object, don't delete it on your own.
      */
-    auto lookup_submap(const tripoint_abs_sm& p) -> submap*;
+    auto load_submap_from_storage(const tripoint_abs_sm& p) -> submap*;
 
     /** Get a submap only if it's already loaded in memory.
-     * Unlike lookup_submap(), this does NOT query the database for missing submaps.
+     * Unlike load_submap_from_storage(), this does NOT query the database for missing submaps.
      * Use this for out-of-bounds positions where we know there's no DB entry,
      * to avoid ~2400 wasted SQLite queries per pocket dimension map load.
      *
      * Thread-safe: may be called from background worker threads (under gen_mutex).
      */
-    auto lookup_submap_in_memory(const tripoint_abs_sm& p) -> submap* {
+    auto find_resident_submap(const tripoint_abs_sm& p) -> submap* {
         std::lock_guard<std::recursive_mutex> lk(submaps_mutex_);
         const auto iter = submaps.find(p);
         return iter != submaps.end() ? iter->second.get() : nullptr;
@@ -778,7 +781,7 @@ private:
 
     /// Guards all accesses to `submaps` that may overlap with background
     /// worker threads calling add_submap().  std::recursive_mutex allows
-    /// mapgen code (running under a held lock) to call lookup_submap_in_memory()
+    /// mapgen code (running under a held lock) to call find_resident_submap()
     /// or add_submap() without deadlocking.
     mutable std::recursive_mutex submaps_mutex_;
 
@@ -884,7 +887,7 @@ private:
         vehicle_footprint_by_location_;
     std::unordered_map<const vehicle*, std::vector<tripoint_abs_ms>> vehicle_footprint_locations_;
     std::set<tripoint_abs_sm> submaps_with_active_items_;
-    std::set<tripoint_abs_sm> submaps_with_luminous_items_;
+    std::set<tripoint_abs_sm> submaps_with_luminous_tiles_;
 
     /// The dimension this buffer belongs to (set by mapbuffer_registry::get()).
     /// Used to construct the correct save/load path without querying global state.

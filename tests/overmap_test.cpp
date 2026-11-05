@@ -78,8 +78,7 @@ TEST_CASE("fluid grids preserve multiple liquid types", "[overmap][fluid_grid]")
     const auto cleanup = on_out_of_scope([] { clear_all_state(); });
     clear_map();
     auto& here = get_map();
-    const auto center_abs =
-        map_local_to_abs(here, tripoint_bub_ms{g_half_mapsize_x, g_half_mapsize_y, 0});
+    const auto center_abs = test_origin;
     const auto tank_abs_omt = project_to<coords::omt>(center_abs);
     // Earlier tests can shift the bubble origin. Keep every fixture inside one absolute grid tile.
     const auto tank_abs_ms = project_to<coords::ms>(tank_abs_omt) + tripoint_rel_ms{SEEX, SEEY, 0};
@@ -183,12 +182,14 @@ TEST_CASE("fluid grid pumps respect liquid capacity while purifying", "[overmap]
     const auto cleanup = on_out_of_scope([] { clear_all_state(); });
     clear_map();
     auto& here = get_map();
-    const auto tank_pos = tripoint_bub_ms{g_half_mapsize_x, g_half_mapsize_y, 0};
-    const auto clean_pos = tank_pos + point_east;
-    const auto pump_pos = tank_pos + point_south;
-    const auto purifier_pos = clean_pos + point_south;
-    const auto tank_abs = map_local_to_abs(here, tank_pos);
-    const auto clean_abs = map_local_to_abs(here, clean_pos);
+    const auto tank_abs = test_origin;
+    const auto clean_abs = tank_abs + tripoint_rel_ms::east();
+    const auto pump_abs = tank_abs + tripoint_rel_ms::south();
+    const auto purifier_abs = clean_abs + tripoint_rel_ms::south();
+    const auto tank_pos = abs_to_bub(tank_abs);
+    const auto clean_pos = abs_to_bub(clean_abs);
+    const auto pump_pos = abs_to_bub(pump_abs);
+    const auto purifier_pos = abs_to_bub(purifier_abs);
     const auto grid = project_to<coords::omt>(tank_abs);
     const auto water = itype_id("water");
     const auto clean_water = itype_id("water_clean");
@@ -197,8 +198,8 @@ TEST_CASE("fluid grid pumps respect liquid capacity while purifying", "[overmap]
     here.furn_set(clean_pos, furn_id("test_fluid_tank"));
     here.furn_set(pump_pos, furn_id("test_fluid_pump"));
     here.furn_set(purifier_pos, furn_id("test_fluid_purifier"));
-    for (const auto& pos : {tank_pos, clean_pos, pump_pos, purifier_pos}) {
-        fluid_grid::on_structure_changed(map_local_to_abs(here, pos));
+    for (const auto& pos_abs : {tank_abs, clean_abs, pump_abs, purifier_abs}) {
+        fluid_grid::on_structure_changed(pos_abs);
     }
     REQUIRE(fluid_grid::assign_tank_liquid(tank_abs, water));
     REQUIRE(fluid_grid::assign_tank_liquid(clean_abs, clean_water));
@@ -235,10 +236,10 @@ TEST_CASE("fluid tank removal respects assigned liquid storage", "[overmap][flui
     const auto cleanup = on_out_of_scope([] { clear_all_state(); });
     clear_map();
     auto& here = get_map();
-    const auto tank_pos = tripoint_bub_ms{g_half_mapsize_x, g_half_mapsize_y, 0};
-    const auto spare_pos = tank_pos + point_east;
-    const auto tank_abs = map_local_to_abs(here, tank_pos);
-    const auto spare_abs = map_local_to_abs(here, spare_pos);
+    const auto tank_abs = test_origin;
+    const auto spare_abs = tank_abs + tripoint_rel_ms::east();
+    const auto tank_pos = abs_to_bub(tank_abs);
+    const auto spare_pos = abs_to_bub(spare_abs);
     const auto grid = project_to<coords::omt>(tank_abs);
     const auto water = itype_id("water");
     const auto clean = itype_id("water_clean");
@@ -282,9 +283,10 @@ TEST_CASE(
     const auto cleanup = on_out_of_scope([] { clear_all_state(); });
     clear_map();
     auto& here = get_map();
-    const auto tank_pos = tripoint_bub_ms{g_half_mapsize_x, g_half_mapsize_y, 0};
-    const auto spare_pos = tank_pos + point_east;
-    const auto tank_abs = map_local_to_abs(here, tank_pos);
+    const auto tank_abs = test_origin;
+    const auto spare_abs = tank_abs + tripoint_rel_ms::east();
+    const auto tank_pos = abs_to_bub(tank_abs);
+    const auto spare_pos = abs_to_bub(spare_abs);
     const auto grid = project_to<coords::omt>(tank_abs);
     const auto water = itype_id("water");
     fluid_grid::load(here);

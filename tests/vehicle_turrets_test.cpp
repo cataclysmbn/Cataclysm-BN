@@ -63,8 +63,9 @@ TEST_CASE("vehicle_turret", "[vehicle][gun][magazine][.]") {
     avatar& player_character = get_avatar();
     for (auto e : turret_types()) {
         SECTION(e->name()) {
+            const auto vehicle_abs_pos = test_origin + tripoint_rel_ms(5, 5, 0);
             vehicle* veh =
-                here.add_vehicle(vproto_id("none"), tripoint_bub_ms(65, 65, 0), 270_degrees, 0, 0);
+                here.add_vehicle(vproto_id("none"), abs_to_bub(vehicle_abs_pos), 270_degrees, 0, 0);
             REQUIRE(veh);
 
             const int idx = veh->install_part(tripoint_mnt_veh::zero(), e->get_id(), true);
@@ -95,7 +96,7 @@ TEST_CASE("vehicle_turret", "[vehicle][gun][magazine][.]") {
             REQUIRE(qry.query() == turret_data::status::ready);
             REQUIRE(qry.range() > 0);
 
-            player_character.setpos(veh->bub_part_location(idx));
+            player_character.setpos(veh->abs_part_location(idx));
             REQUIRE(
                 qry.fire(player_character, player_character.abs_pos() + point_rel_ms(qry.range(), 0))
                 > 0);
@@ -108,8 +109,9 @@ TEST_CASE("vehicle_turret", "[vehicle][gun][magazine][.]") {
 TEST_CASE("vehicle_turret_autoloader_integral_magazine", "[vehicle][gun][turret][autoload]") {
     clear_all_state();
     map& here = get_map();
+    const auto vehicle_abs_pos = test_origin + tripoint_rel_ms(5, 5, 0);
     vehicle* veh =
-        here.add_vehicle(vproto_id("none"), tripoint_bub_ms(65, 65, 0), 270_degrees, 0, 0);
+        here.add_vehicle(vproto_id("none"), abs_to_bub(vehicle_abs_pos), 270_degrees, 0, 0);
     REQUIRE(veh);
 
     const auto turret_part_id = vpart_id("mounted_rebar_rifle");
@@ -161,21 +163,20 @@ TEST_CASE("vehicle_turret_iff_protects_followers_in_line_of_fire", "[vehicle][tu
     map& here = get_map();
     set_time(calendar::turn_zero + 12_hours);
 
-    const auto shooter_pos = tripoint_bub_ms(60, 60, 0);
     avatar& shooter = get_avatar();
-    shooter.setpos(shooter_pos);
+    shooter.setpos(test_origin);
     shooter.set_body();
 
-    const auto follower_pos = shooter_pos + point(3, 0);
-    npc& follower = spawn_npc(follower_pos, "thug");
+    const auto follower_abs_pos = test_origin + tripoint_rel_ms(3, 0, 0);
+    npc& follower = spawn_npc(abs_to_bub(follower_abs_pos), "thug");
     follower.set_fac(faction_id("your_followers"));
     follower.set_attitude(NPCATT_FOLLOW);
     REQUIRE(follower.is_player_ally());
     REQUIRE(shooter.attitude_to(follower) == Attitude::A_FRIENDLY);
 
-    const auto hostile_pos = shooter_pos + point(8, 0);
-    monster& hostile = spawn_test_monster("mon_zombie_tough", hostile_pos);
-    update_player_visibility_cache(here, shooter_pos);
+    const auto hostile_abs_pos = test_origin + tripoint_rel_ms(8, 0, 0);
+    monster& hostile = spawn_test_monster("mon_zombie_tough", abs_to_bub(hostile_abs_pos));
+    update_player_visibility_cache(here, shooter.bub_pos());
     REQUIRE(shooter.sees(hostile));
 
     const auto target = creature_functions::
@@ -190,20 +191,19 @@ TEST_CASE("vehicle_turret_iff_allows_clear_shots", "[vehicle][turret][npc][iff]"
     map& here = get_map();
     set_time(calendar::turn_zero + 12_hours);
 
-    const auto shooter_pos = tripoint_bub_ms(60, 60, 0);
     avatar& shooter = get_avatar();
-    shooter.setpos(shooter_pos);
+    shooter.setpos(test_origin);
     shooter.set_body();
 
-    const auto follower_pos = shooter_pos + point(0, 5);
-    npc& follower = spawn_npc(follower_pos, "thug");
+    const auto follower_abs_pos = test_origin + tripoint_rel_ms(0, 5, 0);
+    npc& follower = spawn_npc(abs_to_bub(follower_abs_pos), "thug");
     follower.set_fac(faction_id("your_followers"));
     follower.set_attitude(NPCATT_FOLLOW);
     REQUIRE(follower.is_player_ally());
 
-    const auto hostile_pos = shooter_pos + point(8, 0);
-    monster& hostile = spawn_test_monster("mon_zombie_tough", hostile_pos);
-    update_player_visibility_cache(here, shooter_pos);
+    const auto hostile_abs_pos = test_origin + tripoint_rel_ms(8, 0, 0);
+    monster& hostile = spawn_test_monster("mon_zombie_tough", abs_to_bub(hostile_abs_pos));
+    update_player_visibility_cache(here, shooter.bub_pos());
     REQUIRE(shooter.sees(hostile));
 
     const auto target = creature_functions::

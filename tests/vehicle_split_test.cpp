@@ -1,9 +1,11 @@
 #include "../src/map/map.h"
 #include "../src/vehicle/vehicle_part.h"
+#include "avatar.h"
 #include "catch/catch.hpp"
 #include "character.h"
 #include "debug.h"
 #include "item.h"
+#include "map_helpers.h"
 #include "point.h"
 #include "state_helpers.h"
 #include "type_id.h"
@@ -23,9 +25,9 @@ TEST_CASE("vehicle_split_section") {
     Character& player_character = get_player_character();
     for (units::angle dir = 0_degrees; dir < 360_degrees; dir += 15_degrees) {
         CHECK(!player_character.in_vehicle);
-        const tripoint_bub_ms test_origin(15, 15, 0);
-        player_character.setpos(test_origin);
-        auto vehicle_origin = tripoint_bub_ms(10, 10, 0);
+        const auto test_player_origin = test_origin + tripoint_rel_ms(15, 15, 0);
+        get_avatar().setpos(test_player_origin);
+        auto vehicle_origin_abs = test_origin + tripoint_rel_ms(10, 10, 0);
         VehicleList vehs = here.get_vehicles();
         vehicle* veh_ptr;
         for (auto& vehs_v : vehs) {
@@ -33,13 +35,16 @@ TEST_CASE("vehicle_split_section") {
             here.destroy_vehicle(veh_ptr);
         }
         REQUIRE(here.get_vehicles().empty());
-        veh_ptr = here.add_vehicle(vproto_id("cross_split_test"), vehicle_origin, dir, 0, 0);
+        veh_ptr = here.add_vehicle(
+            vproto_id("cross_split_test"), abs_to_bub(vehicle_origin_abs), dir, 0, 0);
         REQUIRE(veh_ptr != nullptr);
         std::set<tripoint_abs_ms> original_points = veh_ptr->get_points(true);
 
-        here.destroy(vehicle_origin);
+        here.destroy(abs_to_bub(vehicle_origin_abs));
         veh_ptr->part_removal_cleanup();
-        REQUIRE(veh_ptr->get_parts_at(vehicle_origin, "", part_status_flag::available).empty());
+        REQUIRE(
+            veh_ptr->get_parts_at(abs_to_bub(vehicle_origin_abs), "", part_status_flag::available)
+                .empty());
         vehs = here.get_vehicles();
         // destroying the center frame results in 4 new vehicles
         CHECK(vehs.size() == 4);
@@ -75,12 +80,15 @@ TEST_CASE("vehicle_split_section") {
             here.destroy_vehicle(vehs[0].v);
         }
         REQUIRE(here.get_vehicles().empty());
-        vehicle_origin = tripoint_bub_ms(20, 20, 0);
-        veh_ptr = here.add_vehicle(vproto_id("circle_split_test"), vehicle_origin, dir, 0, 0);
+        vehicle_origin_abs = test_origin + tripoint_rel_ms(20, 20, 0);
+        veh_ptr = here.add_vehicle(
+            vproto_id("circle_split_test"), abs_to_bub(vehicle_origin_abs), dir, 0, 0);
         REQUIRE(veh_ptr != nullptr);
-        here.destroy(vehicle_origin);
+        here.destroy(abs_to_bub(vehicle_origin_abs));
         veh_ptr->part_removal_cleanup();
-        REQUIRE(veh_ptr->get_parts_at(vehicle_origin, "", part_status_flag::available).empty());
+        REQUIRE(
+            veh_ptr->get_parts_at(abs_to_bub(vehicle_origin_abs), "", part_status_flag::available)
+                .empty());
         vehs = here.get_vehicles();
         CHECK(vehs.size() == 1);
         if (vehs.size() == 1) {
@@ -93,8 +101,9 @@ TEST_CASE("vehicle_split_section") {
 TEST_CASE("split vehicle keeps selected structure part at origin") {
     clear_all_state();
     auto& here = get_map();
-    const auto vehicle_origin = tripoint_bub_ms(10, 10, 0);
-    auto* veh_ptr = here.add_vehicle(vproto_id("none"), vehicle_origin, 0_degrees, 0, 0);
+    const auto vehicle_origin_abs = test_origin + tripoint_rel_ms(10, 10, 0);
+    auto* veh_ptr =
+        here.add_vehicle(vproto_id("none"), abs_to_bub(vehicle_origin_abs), 0_degrees, 0, 0);
     REQUIRE(veh_ptr != nullptr);
 
     const auto anchor_frame =
@@ -135,8 +144,9 @@ static void require_unique_hack_ids(const vehicle& veh) {
 TEST_CASE("vehicle split with perishable cargo keeps hack ids", "[vehicle][hack_id]") {
     clear_all_state();
     map& here = get_map();
-    const tripoint_bub_ms origin(10, 10, 0);
-    vehicle* veh = here.add_vehicle(vproto_id("cross_split_test"), origin, 0_degrees, 0, 0);
+    const auto origin_abs = test_origin + tripoint_rel_ms(10, 10, 0);
+    vehicle* veh =
+        here.add_vehicle(vproto_id("cross_split_test"), abs_to_bub(origin_abs), 0_degrees, 0, 0);
     REQUIRE(veh != nullptr);
 
     require_unique_hack_ids(*veh);
@@ -158,7 +168,7 @@ TEST_CASE("vehicle split with perishable cargo keeps hack ids", "[vehicle][hack_
     REQUIRE(cargo_loaded > 0);
 
     const std::string debug = capture_debugmsg_during([&]() {
-        here.destroy(origin);
+        here.destroy(abs_to_bub(origin_abs));
         veh->part_removal_cleanup();
     });
     CHECK(debug.find("hack id") == std::string::npos);

@@ -217,8 +217,7 @@ TEST_CASE("vehicle_cargo_uses_full_part_volume", "[vehicle][cargo][volume]") {
     clear_map();
 
     auto& here = get_map();
-    const auto vehicle_origin = tripoint_bub_ms(60, 60, 0);
-    auto* veh_ptr = here.add_vehicle(vproto_id("none"), vehicle_origin, 0_degrees, 0, 0);
+    auto* veh_ptr = here.add_vehicle(vproto_id("none"), bub_test_origin(), 0_degrees, 0, 0);
     REQUIRE(veh_ptr != nullptr);
     REQUIRE(veh_ptr->install_part(tripoint_mnt_veh::zero(), vpart_id("frame_vertical"), true) >= 0);
 
@@ -257,12 +256,10 @@ TEST_CASE("vehicle deserialize keeps valid saved parts after an invalid part", "
 
 TEST_CASE("detaching_vehicle_unboards_passengers") {
     clear_all_state();
-    const tripoint_bub_ms test_origin(60, 60, 0);
-    const auto vehicle_origin = test_origin;
     avatar& player_character = get_avatar();
     map& here = get_map();
-    vehicle* veh_ptr = here.add_vehicle(vproto_id("bicycle"), vehicle_origin, -90_degrees, 0, 0);
-    here.board_vehicle(test_origin, &player_character);
+    vehicle* veh_ptr = here.add_vehicle(vproto_id("bicycle"), bub_test_origin(), -90_degrees, 0, 0);
+    here.board_vehicle(bub_test_origin(), &player_character);
     REQUIRE(player_character.in_vehicle);
     here.detach_vehicle(veh_ptr);
     REQUIRE(!player_character.in_vehicle);
@@ -273,8 +270,7 @@ TEST_CASE("detaching_opaque_vehicle_invalidates_transparency_cache", "[vehicle][
     auto& here = get_map();
     build_test_map(ter_id("t_pavement"));
 
-    const auto origin = tripoint_bub_ms(60, 60, 0);
-    auto* veh_ptr = here.add_vehicle(vproto_id("none"), origin, 0_degrees, 0, 0);
+    auto* veh_ptr = here.add_vehicle(vproto_id("none"), bub_test_origin(), 0_degrees, 0, 0);
     REQUIRE(veh_ptr != nullptr);
     REQUIRE(
         veh_ptr->install_part(tripoint_mnt_veh::zero(), vpart_id("frame_horizontal"), true) >= 0);
@@ -282,35 +278,36 @@ TEST_CASE("detaching_opaque_vehicle_invalidates_transparency_cache", "[vehicle][
         veh_ptr->install_part(tripoint_mnt_veh::zero(), vpart_id("clothboard_horizontal"), true);
     REQUIRE(board >= 0);
 
-    const auto board_pos = veh_ptr->bub_part_location(board);
+    const auto board_pos_abs = veh_ptr->abs_part_location(board);
     here.add_vehicle_to_cache(veh_ptr);
-    here.build_map_cache(board_pos.z(), true);
-    REQUIRE_FALSE(here.is_transparent(board_pos));
+    here.build_map_cache(board_pos_abs.z(), true);
+    REQUIRE_FALSE(here.is_transparent(abs_to_bub(board_pos_abs)));
 
     here.destroy_vehicle(veh_ptr);
-    here.build_map_cache(board_pos.z(), true);
+    here.build_map_cache(board_pos_abs.z(), true);
 
-    CHECK(here.is_transparent(board_pos));
+    CHECK(here.is_transparent(abs_to_bub(board_pos_abs)));
 }
 
 TEST_CASE("destroy_grabbed_vehicle_section") {
     clear_all_state();
     GIVEN("A vehicle grabbed by the player") {
         map& here = get_map();
-        const tripoint_bub_ms test_origin(60, 60, 0);
         avatar& player_character = get_avatar();
         player_character.setpos(test_origin);
-        const auto vehicle_origin = test_origin + tripoint_south_east;
-        vehicle* veh_ptr =
-            here.add_vehicle(vproto_id("bicycle"), vehicle_origin, -90_degrees, 0, 0);
+        const auto vehicle_origin_abs = test_origin + tripoint_rel_ms(1, 1, 0);
+        vehicle* veh_ptr = here.add_vehicle(
+            vproto_id("bicycle"), abs_to_bub(vehicle_origin_abs), -90_degrees, 0, 0);
         REQUIRE(veh_ptr != nullptr);
-        tripoint_bub_ms grab_point = test_origin + tripoint_rel_ms::east();
+        const auto grab_point_abs = test_origin + tripoint_rel_ms::east();
         player_character.grab(OBJECT_VEHICLE, tripoint_rel_ms::east());
         REQUIRE(player_character.get_grab_type() != OBJECT_NONE);
         REQUIRE(player_character.grab_point == tripoint_rel_ms::east());
         WHEN("The vehicle section grabbed by the player is destroyed") {
-            here.destroy(grab_point);
-            REQUIRE(veh_ptr->get_parts_at(grab_point, "", part_status_flag::available).empty());
+            here.destroy(abs_to_bub(grab_point_abs));
+            REQUIRE(
+                veh_ptr->get_parts_at(abs_to_bub(grab_point_abs), "", part_status_flag::available)
+                    .empty());
             THEN("The player's grab is released") {
                 CHECK(player_character.get_grab_type() == OBJECT_NONE);
                 CHECK(player_character.grab_point == tripoint_rel_ms::zero());
@@ -321,11 +318,11 @@ TEST_CASE("destroy_grabbed_vehicle_section") {
 
 TEST_CASE("taking_control_of_vehicle_without_engine", "[vehicle]") {
     clear_all_state();
-    const auto origin = tripoint_bub_ms(60, 60, 0);
     auto& player_character = get_avatar();
-    player_character.setpos(origin);
+    player_character.setpos(test_origin);
 
-    auto* veh_ptr = get_map().add_vehicle(vproto_id("shopping_cart"), origin, 0_degrees, 0, 0);
+    auto* veh_ptr =
+        get_map().add_vehicle(vproto_id("shopping_cart"), bub_test_origin(), 0_degrees, 0, 0);
     REQUIRE(veh_ptr != nullptr);
     REQUIRE_FALSE(player_character.controlling_vehicle);
     REQUIRE_FALSE(veh_ptr->engine_on);
@@ -339,9 +336,8 @@ TEST_CASE("taking_control_of_vehicle_without_engine", "[vehicle]") {
 
 TEST_CASE("moving_flying_vehicle_can_use_wait_menu", "[vehicle][wait]") {
     clear_all_state();
-    const auto origin = tripoint_bub_ms(60, 60, 0);
-
-    auto* veh_ptr = get_map().add_vehicle(vproto_id("plane_small"), origin, 0_degrees, 0, 0);
+    auto* veh_ptr =
+        get_map().add_vehicle(vproto_id("plane_small"), bub_test_origin(), 0_degrees, 0, 0);
     REQUIRE(veh_ptr != nullptr);
 
     veh_ptr->velocity = 100;
@@ -362,8 +358,7 @@ TEST_CASE("vehicle control scale modifies throttle move cost", "[vehicle][speed]
     auto& you = get_avatar();
     you.set_moves(25);
 
-    const auto origin = tripoint_bub_ms(60, 60, 0);
-    auto* veh_ptr = get_map().add_vehicle(vproto_id("bicycle"), origin, 0_degrees, 0, 0);
+    auto* veh_ptr = get_map().add_vehicle(vproto_id("bicycle"), bub_test_origin(), 0_degrees, 0, 0);
     REQUIRE(veh_ptr != nullptr);
 
     veh_ptr->cruise_on = false;
@@ -378,8 +373,7 @@ TEST_CASE("vehicle speed control free in cruise mode", "[vehicle][speed]") {
     auto& you = get_avatar();
     you.set_moves(25);
 
-    const auto origin = tripoint_bub_ms(60, 60, 0);
-    auto* veh_ptr = get_map().add_vehicle(vproto_id("bicycle"), origin, 0_degrees, 0, 0);
+    auto* veh_ptr = get_map().add_vehicle(vproto_id("bicycle"), bub_test_origin(), 0_degrees, 0, 0);
     REQUIRE(veh_ptr != nullptr);
 
     veh_ptr->cruise_on = true;
@@ -394,15 +388,14 @@ TEST_CASE("can autodrive", "[vehicle][autodrive]") {
 
     auto& here = get_map();
     auto& you = get_avatar();
-    const auto origin = tripoint_bub_ms(60, 60, 0);
-    you.setpos(origin);
+    you.setpos(test_origin);
     you.clear_map_memory();
     you.set_moves(1000);
 
     auto* veh_ptr =
-        here.add_vehicle(vproto_id("car"), origin, 0_degrees, 100, 0, true, false, true);
+        here.add_vehicle(vproto_id("car"), bub_test_origin(), 0_degrees, 100, 0, true, false, true);
     REQUIRE(veh_ptr != nullptr);
-    here.board_vehicle(origin, &you);
+    here.board_vehicle(bub_test_origin(), &you);
     veh_ptr->start_engines(true, true);
     veh_ptr->engine_on = true;
     REQUIRE(veh_ptr->player_in_control(you));
@@ -474,13 +467,13 @@ TEST_CASE("horde_spawns_skip_owned_vehicle_tiles", "[horde][vehicle][monster]") 
 
 TEST_CASE("add_item_to_broken_vehicle_part") {
     clear_all_state();
-    const tripoint_bub_ms test_origin(60, 60, 0);
-    const auto vehicle_origin = test_origin;
-    vehicle* veh_ptr = get_map().add_vehicle(vproto_id("bicycle"), vehicle_origin, 0_degrees, 0, 0);
+    const auto vehicle_origin_abs = test_origin;
+    vehicle* veh_ptr = get_map().add_vehicle(
+        vproto_id("bicycle"), abs_to_bub(vehicle_origin_abs), 0_degrees, 0, 0);
     REQUIRE(veh_ptr != nullptr);
 
-    const tripoint_bub_ms pos = vehicle_origin + tripoint_rel_ms::west();
-    auto cargo_parts = veh_ptr->get_parts_at(pos, "CARGO", part_status_flag::any);
+    auto cargo_parts = veh_ptr->get_parts_at(
+        abs_to_bub(vehicle_origin_abs + tripoint_rel_ms::west()), "CARGO", part_status_flag::any);
     REQUIRE(!cargo_parts.empty());
     vehicle_part* cargo_part = cargo_parts.front();
     REQUIRE(cargo_part != nullptr);
@@ -498,25 +491,28 @@ TEST_CASE("add_item_to_broken_vehicle_part") {
 
 TEST_CASE("damage_vehicle_oob") {
     clear_all_state();
-    const tripoint_bub_ms test_origin(60, 60, 0);
-    g->place_player(test_origin);
-    const tripoint_bub_ms vehicle_origin(SEEX, 0, 0);
-    vehicle* veh_ptr = get_map().add_vehicle(vproto_id("bicycle"), vehicle_origin, 0_degrees, 0, 0);
+    const auto test_position_abs = test_origin;
+    g->u.setpos(test_position_abs);
+    const auto map_origin_abs = tripoint_abs_ms(project_to<coords::ms>(get_map().get_abs_sub()), 0);
+    const auto vehicle_origin_abs = map_origin_abs + tripoint_rel_ms(SEEX, 0, 0);
+    vehicle* veh_ptr = get_map().add_vehicle(
+        vproto_id("bicycle"), abs_to_bub(vehicle_origin_abs), 0_degrees, 0, 0);
     REQUIRE(veh_ptr != nullptr);
 
     // Put an item in the vehicle
-    const tripoint_bub_ms cargo_pos = vehicle_origin + tripoint_rel_ms::west();
-    auto cargo_parts = veh_ptr->get_parts_at(cargo_pos, "CARGO", part_status_flag::any);
+    const auto cargo_pos_abs = vehicle_origin_abs + tripoint_rel_ms::west();
+    auto cargo_parts =
+        veh_ptr->get_parts_at(abs_to_bub(cargo_pos_abs), "CARGO", part_status_flag::any);
     REQUIRE(!cargo_parts.empty());
     vehicle_part* cargo_part = cargo_parts.front();
     REQUIRE(cargo_part != nullptr);
     REQUIRE(!veh_ptr->add_item(*cargo_part, item::spawn("jeans")));
 
     // Shift the vehicle half off the map
-    g->place_player(test_origin + tripoint_east * SEEX);
+    g->u.setpos(test_position_abs + tripoint_rel_ms(SEEX, 0, 0));
 
     // Check the vehicle is still there.
-    optional_vpart_position part_pos = get_map().veh_at(tripoint_bub_ms::zero());
+    optional_vpart_position part_pos = get_map().veh_at(abs_to_bub(vehicle_origin_abs));
     REQUIRE(part_pos);
 
     // TODO: vehicle is at origin so tripoint_west == bubble pos; use parts_at_relative(
@@ -532,14 +528,15 @@ TEST_CASE("damage_vehicle_oob") {
 }
 
 static void check_wreckage(int zlevel) {
-    const tripoint_bub_ms test_origin(60, 60, zlevel);
-    const auto vehicle_origin = test_origin;
+    const auto vehicle_origin_abs = test_origin_at_z(zlevel);
 
-    vehicle* veh_ptr = get_map().add_vehicle(vproto_id("bicycle"), vehicle_origin, 0_degrees, 0, 0);
+    vehicle* veh_ptr = get_map().add_vehicle(
+        vproto_id("bicycle"), abs_to_bub(vehicle_origin_abs), 0_degrees, 0, 0);
     REQUIRE(veh_ptr != nullptr);
 
     vehicle* veh_ptr2 = get_map().add_vehicle(
-        vproto_id("car"), vehicle_origin + tripoint_north_west, 0_degrees, 0, 0);
+        vproto_id("car"), abs_to_bub(vehicle_origin_abs + tripoint_rel_ms::north_west()), 0_degrees,
+        0, 0);
     REQUIRE(veh_ptr2 != nullptr);
 
     INFO(veh_ptr2->name);
@@ -564,9 +561,8 @@ static void test_coord_translate(
 
 TEST_CASE("check_vehicle_rotation_against_old", "[.]") {
     clear_all_state();
-    const tripoint_bub_ms test_origin(60, 60, 0);
-    const auto vehicle_origin = test_origin;
-    vehicle* veh_ptr = get_map().add_vehicle(vproto_id("bicycle"), vehicle_origin, 0_degrees, 0, 0);
+    vehicle* veh_ptr =
+        get_map().add_vehicle(vproto_id("bicycle"), bub_test_origin(), 0_degrees, 0, 0);
     const tripoint_mnt_veh pivot;
 
     for (int dir = 0; dir < 24; dir++) {
@@ -588,9 +584,8 @@ TEST_CASE("check_vehicle_rotation_against_old", "[.]") {
 
 TEST_CASE("vehicle_rotation_reverse") {
     clear_all_state();
-    const tripoint_bub_ms test_origin(60, 60, 0);
-    const auto vehicle_origin = test_origin;
-    vehicle* veh_ptr = get_map().add_vehicle(vproto_id("bicycle"), vehicle_origin, 0_degrees, 0, 0);
+    vehicle* veh_ptr =
+        get_map().add_vehicle(vproto_id("bicycle"), bub_test_origin(), 0_degrees, 0, 0);
     const tripoint_mnt_veh pivot;
 
     for (int dir = 0; dir < 24; dir++) {
@@ -613,8 +608,8 @@ TEST_CASE("vehicle_rotation_reverse") {
 
 TEST_CASE("broken_door_and_lock_can_be_removed", "[vehicle]") {
     clear_all_state();
-    const auto origin = tripoint_bub_ms(60, 60, 0);
-    auto* veh_ptr = get_map().add_vehicle(vproto_id("cross_split_test"), origin, 0_degrees, 0, 0);
+    auto* veh_ptr =
+        get_map().add_vehicle(vproto_id("cross_split_test"), bub_test_origin(), 0_degrees, 0, 0);
     REQUIRE(veh_ptr != nullptr);
 
     const auto door_mount = tripoint_mnt_veh(1, 0, 0);

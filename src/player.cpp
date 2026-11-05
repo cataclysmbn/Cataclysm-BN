@@ -1,5 +1,6 @@
 #include "player.h"
 
+#include "avatar.h"
 #include "enums.h"
 #include "flag.h"
 #include "game.h"
@@ -12,29 +13,6 @@
 #include <map>
 #include <memory>
 #include <string>
-
-static auto update_map_after_player_setpos( player &who,
-        const tripoint_abs_ms &old_pos ) -> void
-{
-    if( g == nullptr || !who.is_avatar() ) {
-        return;
-    }
-
-    const auto new_pos = who.abs_pos();
-    if( old_pos == new_pos ) {
-        return;
-    }
-
-    const auto old_sm = project_to<coords::sm>( old_pos );
-    const auto new_sm = project_to<coords::sm>( new_pos );
-
-    if( old_sm.xy() != new_sm.xy() ) {
-        g->update_map( who );
-    }
-    if( old_pos.z() != new_pos.z() ) {
-        g->vertical_shift( old_pos.z(), new_pos.z() );
-    }
-}
 
 player::player()
 {
@@ -86,14 +64,42 @@ player &player::operator=( player && )  noexcept = default;
 
 auto player::setpos( const tripoint_bub_ms &p ) -> void
 {
-    setpos( map_local_to_abs( get_map(), p ) );
+    // Bad legacy API: player movement should be expressed in absolute coordinates.
+    setpos( bub_to_abs( p ) );
 }
 
 auto player::setpos( const tripoint_abs_ms &p ) -> void
 {
-    const auto old_pos = position;
+    const auto old_position = abs_pos();
+    if( p == old_position ) {
+        return;
+    }
+
     position = p;
-    update_map_after_player_setpos( *this, old_pos );
+    if( g == nullptr || this != &g->u ) {
+        return;
+    }
+
+    g->m.invalidate_visibility_caches();
+    g->mon_info_cache_dirty = true;
+
+    const auto old_submap = project_to<coords::sm>( old_position );
+    const auto new_submap = project_to<coords::sm>( p );
+    if( old_submap.xy() != new_submap.xy() ) {
+        g->update_map( *this );
+    }
+    if( old_position.z() != p.z() ) {
+        g->vertical_shift( old_position.z(), p.z() );
+    }
+}
+
+auto player::setpos_no_map_update( const tripoint_abs_ms &p ) -> void
+{
+    position = p;
+    if( g != nullptr && this == &g->u ) {
+        g->m.invalidate_visibility_caches();
+        g->mon_info_cache_dirty = true;
+    }
 }
 
 

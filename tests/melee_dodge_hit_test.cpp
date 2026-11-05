@@ -254,22 +254,22 @@ TEST_CASE("player::get_dodge while grabbed", "[player][melee][dodge][grab]") {
     const float base_dodge = dummy.get_dodge_base();
 
     // Four nearby spots
-    auto mon1_pos = dummy.bub_pos() + tripoint_north;
-    auto mon2_pos = dummy.bub_pos() + tripoint_east;
-    auto mon3_pos = dummy.bub_pos() + tripoint_south;
-    auto mon4_pos = dummy.bub_pos() + tripoint_west;
+    const auto mon1_pos_abs = test_origin + tripoint_rel_ms::north();
+    const auto mon2_pos_abs = test_origin + tripoint_rel_ms::east();
+    const auto mon3_pos_abs = test_origin + tripoint_rel_ms::south();
+    const auto mon4_pos_abs = test_origin + tripoint_rel_ms::west();
 
     // Surrounded by zombies!
-    monster* zed1 = g->place_critter_at(mtype_id("debug_mon"), mon1_pos);
-    monster* zed2 = g->place_critter_at(mtype_id("debug_mon"), mon2_pos);
-    monster* zed3 = g->place_critter_at(mtype_id("debug_mon"), mon3_pos);
-    monster* zed4 = g->place_critter_at(mtype_id("debug_mon"), mon4_pos);
+    monster* zed1 = g->place_critter_at(mtype_id("debug_mon"), abs_to_bub(mon1_pos_abs));
+    monster* zed2 = g->place_critter_at(mtype_id("debug_mon"), abs_to_bub(mon2_pos_abs));
+    monster* zed3 = g->place_critter_at(mtype_id("debug_mon"), abs_to_bub(mon3_pos_abs));
+    monster* zed4 = g->place_critter_at(mtype_id("debug_mon"), abs_to_bub(mon4_pos_abs));
 
     // Make sure zombies are in their places
-    REQUIRE(g->critter_at<monster>(mon1_pos));
-    REQUIRE(g->critter_at<monster>(mon2_pos));
-    REQUIRE(g->critter_at<monster>(mon3_pos));
-    REQUIRE(g->critter_at<monster>(mon4_pos));
+    REQUIRE(g->critter_at<monster>(abs_to_bub(mon1_pos_abs)));
+    REQUIRE(g->critter_at<monster>(abs_to_bub(mon2_pos_abs)));
+    REQUIRE(g->critter_at<monster>(abs_to_bub(mon3_pos_abs)));
+    REQUIRE(g->critter_at<monster>(abs_to_bub(mon4_pos_abs)));
 
     // Get grabbed
     dummy.add_effect(efftype_id("grabbed"), 1_minutes);

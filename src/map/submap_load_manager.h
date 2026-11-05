@@ -34,7 +34,7 @@ class mapbuffer;
  *
  * Implementors that need to track memory residency rather than simulation
  * membership must maintain their own residency cache using
- * mapbuffer::lookup_submap_in_memory().
+ * mapbuffer::find_resident_submap().
  *
  * Implementors are registered with submap_load_manager::add_listener() and
  * are notified during submap_load_manager::update().

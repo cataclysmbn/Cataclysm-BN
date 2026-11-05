@@ -104,7 +104,7 @@ auto lookup_tile(
     if (buffer.is_outside_pocket_dimension_bounds(p)) { return std::nullopt; }
 
     const auto split = project_remain<coords::sm>(p);
-    auto* const sm = buffer.get_submap(split.quotient_tripoint, options);
+    auto* const sm = buffer.resolve_submap(split.quotient_tripoint, options);
     if (sm == nullptr) { return std::nullopt; }
 
     return mapbuffer_tile_lookup{
@@ -677,7 +677,9 @@ auto mapbuffer_abs_tile_view::get_ter() const -> ter_id { return sm_->get_ter(lo
 
 auto mapbuffer_abs_tile_view::get_furn() const -> furn_id { return sm_->get_furn(local_); }
 
-auto mapbuffer_abs_tile_view::get_trap() const -> trap_id { return sm_->get_trap(local_); }
+auto mapbuffer_abs_tile_view::get_trap() const -> trap_id {
+    return sm_->get_effective_trap(local_);
+}
 
 auto mapbuffer_abs_tile_view::get_ter_t() const -> const ter_t& { return get_ter().obj(); }
 
@@ -693,6 +695,20 @@ auto mapbuffer_abs_tile_view::get_items() const -> const location_vector<item>& 
 
 auto mapbuffer_abs_tile_view::get_furn_vars() const -> const data_vars::data_set& {
     return sm_->get_furn_vars(local_);
+}
+
+auto mapbuffer_abs_tile_view::has_graffiti() const -> bool { return sm_->has_graffiti(local_); }
+
+auto mapbuffer_abs_tile_view::get_graffiti() const -> std::optional<std::string> {
+    if (!has_graffiti()) { return std::nullopt; }
+    return sm_->get_graffiti(local_);
+}
+
+auto mapbuffer_abs_tile_view::has_signage() const -> bool { return sm_->has_signage(local_); }
+
+auto mapbuffer_abs_tile_view::get_signage() const -> std::optional<std::string> {
+    if (!has_signage()) { return std::nullopt; }
+    return sm_->get_signage(local_);
 }
 
 auto mapbuffer_abs_tile_view::get_radiation() const -> int { return sm_->get_radiation(local_); }
@@ -751,7 +767,7 @@ mapbuffer_abs_submap_view::operator bool() const { return sm_ != nullptr; }
 
 auto mapbuffer_abs_submap_view::abs_pos() const -> tripoint_abs_sm { return abs_sm_; }
 
-auto mapbuffer_abs_submap_view::get_submap() const -> const submap& { return *sm_; }
+auto mapbuffer_abs_submap_view::submap_ref() const -> const submap& { return *sm_; }
 
 auto mapbuffer_abs_submap_view::tile(const point_sm_ms& local) const -> mapbuffer_abs_tile_view {
     return mapbuffer_abs_tile_view(abs_sm_, local, *sm_);
@@ -776,7 +792,7 @@ auto mapbuffer_abs_omt_view::is_complete() const -> bool {
     return std::ranges::all_of(submaps_, [](const auto* sm) { return sm != nullptr; });
 }
 
-auto mapbuffer_abs_omt_view::get_submap_view(const point_omt_sm& local) const
+auto mapbuffer_abs_omt_view::submap_view_at(const point_omt_sm& local) const
     -> std::optional<mapbuffer_abs_submap_view> {
     const auto index = omt_submap_index(local);
     if (!index || submaps_[*index] == nullptr) { return std::nullopt; }
@@ -829,16 +845,16 @@ auto mapbuffer_bounds_view::indexed_submap_index(const point_rel_sm& offset, con
     return z_offset * width * height + x_offset * height + y_offset;
 }
 
-auto mapbuffer_bounds_view::get_submap_view(const tripoint_abs_sm& pos) const
+auto mapbuffer_bounds_view::submap_view_at(const tripoint_abs_sm& pos) const
     -> std::optional<mapbuffer_abs_submap_view> {
     if (pos.x() < begin_.x() || pos.y() < begin_.y() || pos.x() >= end_.x()
         || pos.y() >= end_.y()) {
         return std::nullopt;
     }
-    return get_submap_view(point_rel_sm(pos.x() - begin_.x(), pos.y() - begin_.y()), pos.z());
+    return submap_view_at(point_rel_sm(pos.x() - begin_.x(), pos.y() - begin_.y()), pos.z());
 }
 
-auto mapbuffer_bounds_view::get_submap_view(const point_rel_sm& offset, const int zlev) const
+auto mapbuffer_bounds_view::submap_view_at(const point_rel_sm& offset, const int zlev) const
     -> std::optional<mapbuffer_abs_submap_view> {
     const auto index = indexed_submap_index(offset, zlev);
     if (!index || *index >= indexed_submaps_.size()) { return std::nullopt; }
@@ -875,12 +891,12 @@ auto mapbuffer_bounds_view::update(
     for (const auto zlev : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
         const auto z_index = static_cast<std::size_t>(zlev + OVERMAP_DEPTH);
         for (const auto pos : point_range<point_abs_sm>(begin_, max)) {
-            auto view = buffer_->get_abs_submap_view(tripoint_abs_sm(pos, zlev), options_);
+            auto view = buffer_->resolve_abs_submap_view(tripoint_abs_sm(pos, zlev), options_);
             if (!view) { continue; }
 
             const auto offset = point_rel_sm(pos.x() - begin_.x(), pos.y() - begin_.y());
             if (const auto index = indexed_submap_index(offset, zlev)) {
-                indexed_submaps_[*index] = &view->get_submap();
+                indexed_submaps_[*index] = &view->submap_ref();
             }
             submaps_.push_back(*view);
             submaps_by_zlev_[z_index].push_back(*view);
@@ -969,24 +985,24 @@ mapbuffer_abs_tile_reader::mapbuffer_abs_tile_reader(
     : buffer_(&buffer),
       options_(options) {}
 
-auto mapbuffer_abs_tile_reader::get_tile(const tripoint_abs_ms& p) const
+auto mapbuffer_abs_tile_reader::tile_at(const tripoint_abs_ms& p) const
     -> std::optional<mapbuffer_abs_tile_view> {
-    return buffer_->get_abs_tile(p, options_);
+    return buffer_->resolve_abs_tile(p, options_);
 }
 
-auto mapbuffer_abs_tile_reader::get_tile_with_vehicle(const tripoint_abs_ms& p) const
+auto mapbuffer_abs_tile_reader::tile_with_vehicle_at(const tripoint_abs_ms& p) const
     -> std::optional<mapbuffer_abs_tile_with_vehicle_view> {
     return buffer_->get_abs_tile_with_vehicle(p, options_);
 }
 
-auto mapbuffer_abs_tile_reader::get_submap_view(const tripoint_abs_sm& p) const
+auto mapbuffer_abs_tile_reader::submap_view_at(const tripoint_abs_sm& p) const
     -> std::optional<mapbuffer_abs_submap_view> {
-    return buffer_->get_abs_submap_view(p, options_);
+    return buffer_->resolve_abs_submap_view(p, options_);
 }
 
-auto mapbuffer_abs_tile_reader::get_omt_view(const tripoint_abs_omt& p) const
+auto mapbuffer_abs_tile_reader::omt_view_at(const tripoint_abs_omt& p) const
     -> std::optional<mapbuffer_abs_omt_view> {
-    return buffer_->get_abs_omt_view(p, options_);
+    return buffer_->resolve_abs_omt_view(p, options_);
 }
 
 auto mapbuffer::register_submap_vehicles(const tripoint_abs_sm& p, submap& sm) -> void {
@@ -1103,7 +1119,7 @@ void mapbuffer::clear() {
         vehicle_footprint_by_location_.clear();
         vehicle_footprint_locations_.clear();
         submaps_with_active_items_.clear();
-        submaps_with_luminous_items_.clear();
+        submaps_with_luminous_tiles_.clear();
         submaps.clear();
         pocket_info_.reset();
     }
@@ -1119,10 +1135,10 @@ auto mapbuffer::add_submap(const tripoint_abs_sm& p, std::unique_ptr<submap>& sm
     submaps[p] = std::move(sm);
     register_submap_vehicles(p, *submaps[p]);
     if (!submaps[p]->active_items.empty()) { submaps_with_active_items_.insert(p); }
-    refresh_luminous_item_submap_index(
+    refresh_luminous_tile_submap_index(
         p,
         {
-            .mode = mapbuffer_lookup_mode::resident_only,
+            .policy = mapbuffer_lookup_policy::resident_only,
         });
 
     return true;
@@ -1147,7 +1163,7 @@ void mapbuffer::remove_submap(tripoint_abs_sm addr) {
     }
     unregister_submap_vehicles(addr);
     submaps_with_active_items_.erase(addr);
-    submaps_with_luminous_items_.erase(addr);
+    submaps_with_luminous_tiles_.erase(addr);
     submaps.erase(m_target);
 }
 
@@ -1167,7 +1183,7 @@ void mapbuffer::transfer_all_to(mapbuffer& dest) {
         if (std::ranges::any_of(submap_tiles(), [&](const point_sm_ms& pos) {
                 return kv.second->get_lum(pos) != 0;
             })) {
-            dest.submaps_with_luminous_items_.insert(kv.first);
+            dest.submaps_with_luminous_tiles_.insert(kv.first);
         }
         dest.submaps.emplace(kv.first, std::move(kv.second));
     }
@@ -1175,14 +1191,14 @@ void mapbuffer::transfer_all_to(mapbuffer& dest) {
     vehicle_footprint_by_location_.clear();
     vehicle_footprint_locations_.clear();
     submaps_with_active_items_.clear();
-    submaps_with_luminous_items_.clear();
+    submaps_with_luminous_tiles_.clear();
     submaps.clear();
 }
 
 auto mapbuffer::load_submap(const tripoint_abs_sm& pos) -> submap* {
     ZoneScoped;
     // lookup_submap already handles the disk-read path transparently.
-    return lookup_submap(pos);
+    return load_submap_from_storage(pos);
 }
 
 void mapbuffer::unload_omt(const tripoint_abs_omt& omt_addr, bool save) {
@@ -1271,10 +1287,10 @@ void mapbuffer::unload_omt(const tripoint_abs_omt& omt_addr, bool save) {
     }
 }
 
-auto mapbuffer::lookup_submap(const tripoint_abs_sm& p) -> submap* {
+auto mapbuffer::load_submap_from_storage(const tripoint_abs_sm& p) -> submap* {
     // Fast path: submap already resident in memory.
     auto* resident_sm = static_cast<submap*>(nullptr);
-    { resident_sm = lookup_submap_in_memory(p); }
+    { resident_sm = find_resident_submap(p); }
     if (resident_sm != nullptr) { return resident_sm; }
 
     // Cache miss — perform disk I/O outside submaps_mutex_ so that concurrent
@@ -1293,7 +1309,7 @@ auto mapbuffer::lookup_submap(const tripoint_abs_sm& p) -> submap* {
 
     std::vector<std::pair<tripoint_abs_sm, std::unique_ptr<submap>>> loaded;
     auto already_loaded = [this](const tripoint_abs_sm& q) {
-        return lookup_submap_in_memory(q) != nullptr;
+        return find_resident_submap(q) != nullptr;
     };
 
     try {
@@ -1325,38 +1341,38 @@ auto mapbuffer::lookup_submap(const tripoint_abs_sm& p) -> submap* {
         }
     }
     auto* result = static_cast<submap*>(nullptr);
-    { result = lookup_submap_in_memory(p); }
+    { result = find_resident_submap(p); }
     if (!result) {
         debugmsg("file did not contain the expected submap %d,%d,%d", p.x(), p.y(), p.z());
     }
     return result;
 }
 
-auto mapbuffer::get_submap(const tripoint_abs_sm& p, const mapbuffer_lookup_options options)
+auto mapbuffer::resolve_submap(const tripoint_abs_sm& p, const mapbuffer_lookup_options options)
     -> submap* {
-    switch (options.mode) {
-        case mapbuffer_lookup_mode::simulated_only:
+    switch (options.policy) {
+        case mapbuffer_lookup_policy::simulated_only:
             if (!submap_loader.is_simulated(dimension_id_, p)) { return nullptr; }
-            return lookup_submap_in_memory(p);
-        case mapbuffer_lookup_mode::resident_only:
-            return lookup_submap_in_memory(p);
-        case mapbuffer_lookup_mode::load_from_disk:
-            return lookup_submap(p);
-        case mapbuffer_lookup_mode::load_or_generate:
-            if (auto* sm = lookup_submap(p)) { return sm; }
+            return find_resident_submap(p);
+        case mapbuffer_lookup_policy::resident_only:
+            return find_resident_submap(p);
+        case mapbuffer_lookup_policy::load_from_disk:
+            return load_submap_from_storage(p);
+        case mapbuffer_lookup_policy::load_or_generate:
+            if (auto* sm = load_submap_from_storage(p)) { return sm; }
             generate_omt(project_to<coords::omt>(p));
-            return lookup_submap_in_memory(p);
+            return find_resident_submap(p);
     }
 
     return nullptr;
 }
 
-auto mapbuffer::get_abs_tile(const tripoint_abs_ms& p, const mapbuffer_lookup_options options)
+auto mapbuffer::resolve_abs_tile(const tripoint_abs_ms& p, const mapbuffer_lookup_options options)
     -> std::optional<mapbuffer_abs_tile_view> {
     if (is_outside_pocket_dimension_bounds(p)) { return std::nullopt; }
 
     const auto split = project_remain<coords::sm>(p);
-    auto* const sm = get_submap(split.quotient_tripoint, options);
+    auto* const sm = resolve_submap(split.quotient_tripoint, options);
     if (sm == nullptr) { return std::nullopt; }
 
     return mapbuffer_abs_tile_view(split.quotient_tripoint, split.remainder, *sm);
@@ -1365,28 +1381,29 @@ auto mapbuffer::get_abs_tile(const tripoint_abs_ms& p, const mapbuffer_lookup_op
 auto mapbuffer::get_abs_tile_with_vehicle(
     const tripoint_abs_ms& p, const mapbuffer_lookup_options options)
     -> std::optional<mapbuffer_abs_tile_with_vehicle_view> {
-    const auto tile = get_abs_tile(p, options);
+    const auto tile = resolve_abs_tile(p, options);
     if (!tile) { return std::nullopt; }
 
     return mapbuffer_abs_tile_with_vehicle_view(*tile, vehicle_part_at_loaded_tile(p));
 }
 
-auto mapbuffer::get_abs_submap_view(
+auto mapbuffer::resolve_abs_submap_view(
     const tripoint_abs_sm& p, const mapbuffer_lookup_options options)
     -> std::optional<mapbuffer_abs_submap_view> {
-    auto* const sm = get_submap(p, options);
+    auto* const sm = resolve_submap(p, options);
     if (sm == nullptr) { return std::nullopt; }
 
     return mapbuffer_abs_submap_view(p, *sm);
 }
 
-auto mapbuffer::get_abs_omt_view(const tripoint_abs_omt& p, const mapbuffer_lookup_options options)
+auto mapbuffer::resolve_abs_omt_view(
+    const tripoint_abs_omt& p, const mapbuffer_lookup_options options)
     -> std::optional<mapbuffer_abs_omt_view> {
     auto submaps = std::array<const submap*, 4>{};
     auto found_any = false;
     for (const auto& local : omt_submap_offsets()) {
         const auto index = omt_submap_index(local);
-        auto* const sm = get_submap(project_combine(p, local), options);
+        auto* const sm = resolve_submap(project_combine(p, local), options);
         if (!index) { continue; }
         submaps[*index] = sm;
         found_any |= sm != nullptr;
@@ -1429,7 +1446,7 @@ auto mapbuffer::for_each_simulated_submap_position(
 auto mapbuffer::for_each_simulated_submap(
     const std::function<void(const tripoint_abs_sm&, submap&)>& fn) -> void {
     for_each_simulated_submap_position([&](const tripoint_abs_sm& pos) {
-        auto* const sm = lookup_submap_in_memory(pos);
+        auto* const sm = find_resident_submap(pos);
         if (sm != nullptr) { fn(pos, *sm); }
     });
 }
@@ -1449,9 +1466,9 @@ auto mapbuffer::simulated_submap_views() -> std::vector<mapbuffer_abs_submap_vie
     auto result = std::vector<mapbuffer_abs_submap_view>{};
     const auto positions = simulated_submap_positions();
     result.reserve(positions.size());
-    const auto options = mapbuffer_lookup_options{.mode = mapbuffer_lookup_mode::resident_only};
+    const auto options = mapbuffer_lookup_options{.policy = mapbuffer_lookup_policy::resident_only};
     for (const tripoint_abs_sm& pos : positions) {
-        auto view = get_abs_submap_view(pos, options);
+        auto view = resolve_abs_submap_view(pos, options);
         if (view) { result.push_back(*view); }
     }
     return result;
@@ -1462,10 +1479,10 @@ auto mapbuffer::simulated_submap_views(const int zlev) -> std::vector<mapbuffer_
     const auto horizontal_positions = submap_loader.simulated_submaps(dimension_id_);
     result.reserve(
         horizontal_positions.empty() ? loaded_submap_count() : horizontal_positions.size());
-    const auto options = mapbuffer_lookup_options{.mode = mapbuffer_lookup_mode::resident_only};
+    const auto options = mapbuffer_lookup_options{.policy = mapbuffer_lookup_policy::resident_only};
     for_each_simulated_submap_position(
         [&](const tripoint_abs_sm& pos) {
-            auto view = get_abs_submap_view(pos, options);
+            auto view = resolve_abs_submap_view(pos, options);
             if (view) { result.push_back(*view); }
         },
         zlev);
@@ -1479,7 +1496,7 @@ auto mapbuffer::mark_submap_caches_dirty(const mapbuffer_mark_submap_caches_dirt
 
     const auto max = point_abs_sm(options.end.x() - 1, options.end.y() - 1);
     for (const auto pos : point_range<point_abs_sm>(options.begin, max)) {
-        auto* const sm = lookup_submap_in_memory(tripoint_abs_sm(pos, options.zlev));
+        auto* const sm = find_resident_submap(tripoint_abs_sm(pos, options.zlev));
         if (sm == nullptr) { continue; }
         sm->transparency_dirty = sm->transparency_dirty || options.transparency;
         sm->floor_dirty = sm->floor_dirty || options.floor;
@@ -1499,7 +1516,7 @@ auto mapbuffer::clear_spawns(const mapbuffer_submap_bounds_mutation_options& opt
     const auto max = point_abs_sm(options.end.x() - 1, options.end.y() - 1);
     for (const auto zlev : std::views::iota(z_min, z_max + 1)) {
         for (const auto pos : point_range<point_abs_sm>(options.begin, max)) {
-            auto* const sm = get_submap(tripoint_abs_sm(pos, zlev), options.lookup);
+            auto* const sm = resolve_submap(tripoint_abs_sm(pos, zlev), options.lookup);
             if (sm == nullptr) { continue; }
             sm->spawns.clear();
         }
@@ -1516,7 +1533,7 @@ auto mapbuffer::clear_traps(const mapbuffer_submap_bounds_mutation_options& opti
     const auto max = point_abs_sm(options.end.x() - 1, options.end.y() - 1);
     for (const auto zlev : std::views::iota(z_min, z_max + 1)) {
         for (const auto pos : point_range<point_abs_sm>(options.begin, max)) {
-            auto* const sm = get_submap(tripoint_abs_sm(pos, zlev), options.lookup);
+            auto* const sm = resolve_submap(tripoint_abs_sm(pos, zlev), options.lookup);
             if (sm == nullptr) { continue; }
             for (const auto local : submap_tiles()) {
                 if (sm->get_trap(local) == tr_null) { continue; }
@@ -1538,7 +1555,7 @@ auto mapbuffer::fill_terrain(const mapbuffer_fill_terrain_options& options) -> v
     const auto max = point_abs_sm(options.end.x() - 1, options.end.y() - 1);
     for (const auto zlev : std::views::iota(z_min, z_max + 1)) {
         for (const auto pos : point_range<point_abs_sm>(options.begin, max)) {
-            auto* const sm = get_submap(tripoint_abs_sm(pos, zlev), options.lookup);
+            auto* const sm = resolve_submap(tripoint_abs_sm(pos, zlev), options.lookup);
             if (sm == nullptr) { continue; }
             sm->is_uniform = true;
             sm->set_all_ter(options.terrain);
@@ -1558,7 +1575,7 @@ auto mapbuffer::run_submap_batch_turns(const mapbuffer_run_submap_batch_turns_op
     const auto max = point_abs_sm(options.end.x() - 1, options.end.y() - 1);
     for (const auto zlev : std::views::iota(z_min, z_max + 1)) {
         for (const auto pos : point_range<point_abs_sm>(options.begin, max)) {
-            auto* const sm = get_submap(tripoint_abs_sm(pos, zlev), options.lookup);
+            auto* const sm = resolve_submap(tripoint_abs_sm(pos, zlev), options.lookup);
             if (sm == nullptr) { continue; }
             ::run_submap_batch_turns(*sm, options.turns);
             sm->last_touched = calendar::turn;
@@ -1703,7 +1720,7 @@ auto mapbuffer::refresh_vehicle_registry_for_submap(
     const tripoint_abs_sm& p, const mapbuffer_lookup_options options) -> void {
     std::lock_guard<std::recursive_mutex> lk(submaps_mutex_);
     unregister_submap_vehicles(p);
-    auto* const sm = get_submap(p, options);
+    auto* const sm = resolve_submap(p, options);
     if (sm == nullptr) { return; }
     register_submap_vehicles(p, *sm);
 }
@@ -1774,7 +1791,9 @@ auto mapbuffer::veh_at(const tripoint_abs_ms& p, const mapbuffer_lookup_options 
     if (const auto local = active_reality_bubble_local(p)) { return g->m.veh_at(*local); }
 
     const auto target_sm = project_to<coords::sm>(p);
-    if (get_submap(target_sm, options) == nullptr) { return optional_vpart_position(std::nullopt); }
+    if (resolve_submap(target_sm, options) == nullptr) {
+        return optional_vpart_position(std::nullopt);
+    }
 
     return vehicle_part_at_loaded_tile(p);
 }
@@ -1814,7 +1833,7 @@ auto mapbuffer::valid_move(
     const auto tile_reader = make_abs_tile_reader(options.lookup);
 
     if (from.z() == to.z()) {
-        const auto target_tile = tile_reader.get_tile_with_vehicle(to);
+        const auto target_tile = tile_reader.tile_with_vehicle_at(to);
         if (!target_tile) { return false; }
         return target_tile->passable() || options.bash;
     }
@@ -1824,7 +1843,7 @@ auto mapbuffer::valid_move(
     const auto up_p = going_up ? to : from;
     const auto down_p = going_up ? from : to;
 
-    const auto up_tile = tile_reader.get_tile(up_p);
+    const auto up_tile = tile_reader.tile_at(up_p);
     if (!up_tile) { return false; }
     const auto& up_ter = up_tile->get_ter_t();
     if (up_ter.id.is_null()) { return false; }
@@ -1832,7 +1851,7 @@ auto mapbuffer::valid_move(
 
     if (up_ter.movecost == 0) { return false; }
 
-    const auto down_tile = tile_reader.get_tile(down_p);
+    const auto down_tile = tile_reader.tile_at(down_p);
     if (!down_tile) { return false; }
     const auto& down_ter = down_tile->get_ter_t();
     if (down_ter.id.is_null()) { return false; }
@@ -1871,7 +1890,7 @@ auto mapbuffer::climb_difficulty(const tripoint_abs_ms& p, const mapbuffer_looku
     -> std::optional<int> {
     if (p.z() > OVERMAP_HEIGHT || p.z() < -OVERMAP_DEPTH) { return std::nullopt; }
 
-    const auto center_tile = get_abs_tile(p, options);
+    const auto center_tile = resolve_abs_tile(p, options);
     if (!center_tile) { return std::nullopt; }
     const auto has_flag = [](const mapbuffer_abs_tile_view& tile, const auto& flag) {
         return tile.get_ter_t().has_flag(flag) || tile.get_furn_t().has_flag(flag);
@@ -1932,7 +1951,7 @@ auto mapbuffer::has_flag_vpart(
 auto mapbuffer::has_flag_furn_or_vpart(
     const std::string& flag, const tripoint_abs_ms& p, const mapbuffer_lookup_options options)
     -> bool {
-    const auto tile = get_abs_tile(p, options);
+    const auto tile = resolve_abs_tile(p, options);
     if (!tile) { return false; }
     if (tile->get_furn_t().has_flag(flag)) { return true; }
     return static_cast<bool>(vehicle_part_at_loaded_tile(p).part_with_feature(flag, true));
@@ -2022,7 +2041,7 @@ auto mapbuffer::get_trap(const tripoint_abs_ms& p, const mapbuffer_lookup_option
     const auto tile = lookup_tile(*this, p, options);
     if (!tile) { return std::nullopt; }
 
-    return tile->sm->get_trap(tile->local);
+    return tile->sm->get_effective_trap(tile->local);
 }
 
 auto mapbuffer::set_trap(
@@ -2046,7 +2065,7 @@ auto mapbuffer::set_trap(
 
 auto mapbuffer::creature_on_trap(Creature& critter, const bool may_avoid) -> void {
     const auto pos = critter.abs_pos();
-    const auto tile = get_abs_tile(pos);
+    const auto tile = resolve_abs_tile(pos);
     if (!tile) { return; }
 
     auto trap_here = tile->get_ter_t().trap;
@@ -2108,10 +2127,10 @@ auto mapbuffer::set_lum(
     if (old_luminance == luminance) { return false; }
 
     tile->sm->set_lum(tile->local, luminance);
-    refresh_luminous_item_submap_index(
+    refresh_luminous_tile_submap_index(
         project_to<coords::sm>(p),
         {
-            .mode = mapbuffer_lookup_mode::resident_only,
+            .policy = mapbuffer_lookup_policy::resident_only,
         });
     if (active_reality_bubble_local(p)) { g->m.invalidate_lightmap_caches(); }
     return true;
@@ -2122,7 +2141,7 @@ auto mapbuffer::get_temperature(const tripoint_abs_ms& p, const mapbuffer_lookup
     if (is_outside_pocket_dimension_bounds(p)) { return std::nullopt; }
 
     const auto split = project_to<coords::sm>(p);
-    auto* const sm = get_submap(split, options);
+    auto* const sm = resolve_submap(split, options);
     if (sm == nullptr) { return std::nullopt; }
 
     return sm->get_temperature();
@@ -2134,7 +2153,7 @@ auto mapbuffer::set_temperature(
     if (is_outside_pocket_dimension_bounds(p)) { return false; }
 
     const auto split = project_to<coords::sm>(p);
-    auto* const sm = get_submap(split, options);
+    auto* const sm = resolve_submap(split, options);
     if (sm == nullptr) { return false; }
 
     sm->set_temperature(temperature);
@@ -2469,10 +2488,10 @@ auto mapbuffer::add_item(
     const auto adds_luminance = new_item->is_emissive();
     tile->sm->update_lum_add(tile->local, *new_item);
     if (adds_luminance) {
-        refresh_luminous_item_submap_index(
+        refresh_luminous_tile_submap_index(
             project_to<coords::sm>(p),
             {
-                .mode = mapbuffer_lookup_mode::resident_only,
+                .policy = mapbuffer_lookup_policy::resident_only,
             });
         invalidate_active_item_luminance_cache(p);
     }
@@ -2500,10 +2519,10 @@ auto mapbuffer::erase_item(const tripoint_abs_ms& p, const mapbuffer_erase_item_
     const auto removed_luminance = to_remove->is_emissive();
     tile->sm->update_lum_rem(tile->local, *to_remove);
     if (removed_luminance) {
-        refresh_luminous_item_submap_index(
+        refresh_luminous_tile_submap_index(
             project_to<coords::sm>(p),
             {
-                .mode = mapbuffer_lookup_mode::resident_only,
+                .policy = mapbuffer_lookup_policy::resident_only,
             });
         invalidate_active_item_luminance_cache(p);
     }
@@ -2546,10 +2565,10 @@ auto mapbuffer::clear_items(const tripoint_abs_ms& p, const mapbuffer_lookup_opt
     const auto had_luminance = tile->sm->get_lum(tile->local) != 0;
     tile->sm->set_lum(tile->local, 0);
     if (had_luminance) {
-        refresh_luminous_item_submap_index(
+        refresh_luminous_tile_submap_index(
             project_to<coords::sm>(p),
             {
-                .mode = mapbuffer_lookup_mode::resident_only,
+                .policy = mapbuffer_lookup_policy::resident_only,
             });
         invalidate_active_item_luminance_cache(p);
     }
@@ -2615,10 +2634,10 @@ auto mapbuffer::update_item_lum(
     } else {
         tile->sm->update_lum_rem(tile->local, target);
     }
-    refresh_luminous_item_submap_index(
+    refresh_luminous_tile_submap_index(
         project_to<coords::sm>(p),
         {
-            .mode = mapbuffer_lookup_mode::resident_only,
+            .policy = mapbuffer_lookup_policy::resident_only,
         });
     invalidate_active_item_luminance_cache(p);
     return true;
@@ -2635,7 +2654,7 @@ auto mapbuffer::refresh_active_item_submap_index(
 
 auto mapbuffer::refresh_active_item_submap_index(
     const tripoint_abs_sm& p, const mapbuffer_lookup_options options) -> bool {
-    auto* sm = get_submap(p, options);
+    auto* sm = resolve_submap(p, options);
     if (sm == nullptr) { return false; }
 
     if (sm->active_items.empty()) {
@@ -2656,35 +2675,35 @@ auto mapbuffer::get_submaps_with_active_items() const -> const std::set<tripoint
     return submaps_with_active_items_;
 }
 
-auto mapbuffer::refresh_luminous_item_submap_index(
+auto mapbuffer::refresh_luminous_tile_submap_index(
     const tripoint_abs_ms& p, const mapbuffer_lookup_options options) -> bool {
-    return refresh_luminous_item_submap_index(project_to<coords::sm>(p), options);
+    return refresh_luminous_tile_submap_index(project_to<coords::sm>(p), options);
 }
 
-auto mapbuffer::refresh_luminous_item_submap_index(
+auto mapbuffer::refresh_luminous_tile_submap_index(
     const tripoint_abs_sm& p, const mapbuffer_lookup_options options) -> bool {
-    auto* const sm = get_submap(p, options);
+    auto* const sm = resolve_submap(p, options);
     if (sm == nullptr) {
-        submaps_with_luminous_items_.erase(p);
+        submaps_with_luminous_tiles_.erase(p);
         return false;
     }
 
     if (std::ranges::any_of(submap_tiles(), [&](const point_sm_ms& pos) {
             return sm->get_lum(pos) != 0;
         })) {
-        submaps_with_luminous_items_.insert(p);
+        submaps_with_luminous_tiles_.insert(p);
     } else {
-        submaps_with_luminous_items_.erase(p);
+        submaps_with_luminous_tiles_.erase(p);
     }
     return true;
 }
 
-auto mapbuffer::forget_luminous_item_submap_index(const tripoint_abs_sm& p) -> void {
-    submaps_with_luminous_items_.erase(p);
+auto mapbuffer::forget_luminous_tile_submap_index(const tripoint_abs_sm& p) -> void {
+    submaps_with_luminous_tiles_.erase(p);
 }
 
-auto mapbuffer::get_submaps_with_luminous_items() const -> const std::set<tripoint_abs_sm>& {
-    return submaps_with_luminous_items_;
+auto mapbuffer::get_submaps_with_luminous_tiles() const -> const std::set<tripoint_abs_sm>& {
+    return submaps_with_luminous_tiles_;
 }
 
 auto mapbuffer::get_active_items_in_radius(
@@ -2705,7 +2724,7 @@ auto mapbuffer::get_active_items_in_radius(
             continue;
         }
 
-        auto* sm = lookup_submap_in_memory(abs_submap_loc);
+        auto* sm = find_resident_submap(abs_submap_loc);
         if (sm == nullptr) { continue; }
 
         auto items =
@@ -3303,7 +3322,7 @@ auto mapbuffer::preload_omt(const tripoint_abs_omt& omt_addr) -> bool {
     // This avoids the expensive sm->load() (items, vehicles, terrain construction)
     // for submaps that were already loaded by a prior lazy-border or sync pass.
     auto already_loaded = [this](const tripoint_abs_sm& p) {
-        return lookup_submap_in_memory(p) != nullptr;
+        return find_resident_submap(p) != nullptr;
     };
 
     // Check the in-memory write-back cache before going to disk.  A omt that
@@ -3356,9 +3375,9 @@ auto mapbuffer::generate_omt(
     ZoneScopedN("mapbuffer_generate_omt");
     const auto base = project_to<coords::sm>(omt_addr);
     const auto all_loaded =
-        lookup_submap_in_memory(base) && lookup_submap_in_memory(base + point_east)
-        && lookup_submap_in_memory(base + point_south)
-        && lookup_submap_in_memory(base + point_south_east);
+        find_resident_submap(base) && find_resident_submap(base + point_east)
+        && find_resident_submap(base + point_south)
+        && find_resident_submap(base + point_south_east);
     if (all_loaded) { return {}; }
 
     if (const auto uniform_terrain = uniform_terrain_for_omt(dimension_id_, omt_addr)) {
@@ -3403,7 +3422,7 @@ auto mapbuffer::run_omt_pillar_post_pass_if_complete(const point_abs_omt& omt_po
     for (const auto zlev : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
         const auto base = project_to<coords::sm>(tripoint_abs_omt(omt_pos, zlev));
         const auto missing = std::ranges::any_of(offsets, [&](const point_rel_sm& offset) {
-            return lookup_submap_in_memory(base + offset) == nullptr;
+            return find_resident_submap(base + offset) == nullptr;
         });
         if (missing) { return false; }
     }
@@ -3429,7 +3448,7 @@ auto mapbuffer::run_omt_pillar_post_pass(const point_abs_omt& omt_pos) -> void {
     };
     const auto ensure_vertical_transition_link =
         [&](const vertical_transition_link_request& request) {
-            auto* const target_sm = lookup_submap_in_memory(request.target_pos);
+            auto* const target_sm = find_resident_submap(request.target_pos);
             if (target_sm == nullptr
                 || !can_replace_with_vertical_transition(
                     *target_sm, request.local, request.desired)) {
@@ -3444,11 +3463,11 @@ auto mapbuffer::run_omt_pillar_post_pass(const point_abs_omt& omt_pos) -> void {
         const auto base = project_to<coords::sm>(omt_addr);
         for (const auto& offset : offsets) {
             const auto sm_pos = base + offset;
-            auto* const sub_here = lookup_submap_in_memory(sm_pos);
+            auto* const sub_here = find_resident_submap(sm_pos);
             if (sub_here == nullptr) { continue; }
 
             auto* const sub_below =
-                zlev > -OVERMAP_DEPTH ? lookup_submap_in_memory(sm_pos + tripoint_below) : nullptr;
+                zlev > -OVERMAP_DEPTH ? find_resident_submap(sm_pos + tripoint_below) : nullptr;
 
             auto changed = false;
             for (const auto local : submap_tiles()) {
@@ -3495,7 +3514,7 @@ auto mapbuffer::run_omt_pillar_post_pass(const point_abs_omt& omt_pos) -> void {
 auto mapbuffer::actualize_submap(const tripoint_abs_sm& pos) -> void {
     ZoneScopedN("mapbuffer_actualize_submap");
 
-    auto* const tmpsub = lookup_submap_in_memory(pos);
+    auto* const tmpsub = find_resident_submap(pos);
     if (tmpsub == nullptr) {
         debugmsg("actualize_submap called on null submap %s", pos.to_string());
         return;
@@ -3524,7 +3543,7 @@ auto mapbuffer::actualize_submap(const tripoint_abs_sm& pos) -> void {
 
     const auto do_funnels = pos.z() >= 0;
     const auto lookup_options = mapbuffer_lookup_options{
-        .mode = mapbuffer_lookup_mode::resident_only,
+        .policy = mapbuffer_lookup_policy::resident_only,
     };
 
     for (const auto p : submap_tiles()) {

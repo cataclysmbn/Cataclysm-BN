@@ -435,7 +435,7 @@ void teleport_short()
     if( !where || *where == g->u.bub_pos() ) {
         return;
     }
-    g->place_player( *where );
+    g->u.setpos( bub_to_abs( *where ) );
     const auto new_pos = g->u.bub_pos();
     add_msg( _( "You teleport to point (%d,%d,%d)." ), new_pos.x(), new_pos.y(), new_pos.z() );
 }
@@ -1107,11 +1107,10 @@ void character_edit_menu( Character &c )
             break;
         case edit_character::tele: {
             if( const std::optional<tripoint_bub_ms> newpos = g->look_around( LA_MODE_3D ) ) {
-                p.setpos( *newpos );
-                if( p.is_player() ) {
-                    if( p.is_mounted() ) {
-                        p.mounted_creature->setpos( *newpos );
-                    }
+                if( player *const player_character = p.as_player(); player_character == &g->u ) {
+                    player_character->setpos( bub_to_abs( *newpos ) );
+                } else {
+                    p.setpos( *newpos );
                 }
             }
         }

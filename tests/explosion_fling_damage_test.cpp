@@ -31,21 +31,22 @@ TEST_CASE(
         clear_all_state();
         get_avatar().setID(character_id(), true);
     });
-    npc& follower = spawn_npc(tripoint_bub_ms(45, 30, 0), "test_talker");
+    const auto follower_abs_pos =
+        tripoint_abs_ms(project_to<coords::ms>(get_map().get_abs_sub()), 0)
+        + tripoint_rel_ms(45, 30, 0);
+    npc& follower = spawn_npc(abs_to_bub(follower_abs_pos), "test_talker");
     follower.set_fac(faction_id("your_followers"));
     follower.set_attitude(NPCATT_FOLLOW);
     REQUIRE(follower.is_player_ally());
 
-    const auto player_pos = you.bub_pos();
     const auto player_abs = you.abs_pos();
-    const auto explosion_center = player_pos;
     const auto follower_abs = player_abs + tripoint_rel_ms(0, 600, 0);
     follower.setpos(follower_abs);
     REQUIRE_FALSE(get_map().inbounds(follower.bub_pos()));
     you.set_part_hp_cur(bodypart_id("head"), 0);
     you.set_part_hp_cur(bodypart_id("torso"), 0);
     REQUIRE(you.Character::is_dead_state());
-    REQUIRE(you.bub_pos() == player_pos);
+    REQUIRE(you.abs_pos() == player_abs);
 
     explosion_handler::get_explosion_queue().clear();
     const auto ex = explosion_data{
@@ -53,7 +54,7 @@ TEST_CASE(
         .radius = 3.0f,
     };
 
-    explosion_handler::explosion(explosion_center, ex, nullptr);
+    explosion_handler::explosion(abs_to_bub(player_abs), ex, nullptr);
     explosion_handler::get_explosion_queue().execute();
 
     REQUIRE(you.Character::is_dead_state());
@@ -75,18 +76,19 @@ TEST_CASE("explosion_flung_items_damage_creatures", "[explosion][damage]") {
     move_player_out_of_the_way();
     map& here = get_map();
 
-    const tripoint_bub_ms explosion_center(30, 30, 0);
-    const auto item_pos = explosion_center + tripoint_east;
-    const auto zombie_pos = item_pos + tripoint_east;
+    const auto explosion_center_abs =
+        tripoint_abs_ms(project_to<coords::ms>(here.get_abs_sub()), 0) + tripoint_rel_ms(30, 30, 0);
+    const auto item_pos_abs = explosion_center_abs + tripoint_rel_ms::east();
+    const auto zombie_pos_abs = explosion_center_abs + tripoint_rel_ms(2, 0, 0);
 
     SECTION("heavy_items_flung_by_explosion_damage_creatures") {
-        monster& zombie = spawn_test_monster(mon_zombie.str(), zombie_pos);
+        monster& zombie = spawn_test_monster(mon_zombie.str(), abs_to_bub(zombie_pos_abs));
         const int initial_hp = zombie.get_hp();
 
         detached_ptr<item> rock = item::spawn("rock");
-        here.add_item(item_pos, std::move(rock));
+        here.add_item(abs_to_bub(item_pos_abs), std::move(rock));
 
-        const size_t items_at_start = here.i_at(item_pos).size();
+        const size_t items_at_start = here.i_at(abs_to_bub(item_pos_abs)).size();
         REQUIRE(items_at_start == 1);
 
         explosion_handler::get_explosion_queue().clear();
@@ -95,15 +97,15 @@ TEST_CASE("explosion_flung_items_damage_creatures", "[explosion][damage]") {
             .radius = 5.0f,
         };
 
-        explosion_handler::explosion(explosion_center, ex, nullptr);
+        explosion_handler::explosion(abs_to_bub(explosion_center_abs), ex, nullptr);
         explosion_handler::get_explosion_queue().execute();
 
         REQUIRE_FALSE(zombie.is_dead());
 
         // Check if items moved
-        const size_t items_after = here.i_at(item_pos).size();
+        const size_t items_after = here.i_at(abs_to_bub(item_pos_abs)).size();
         INFO("Items at original position: " << items_after);
-        INFO("Items at zombie position: " << here.i_at(zombie_pos).size());
+        INFO("Items at zombie position: " << here.i_at(abs_to_bub(zombie_pos_abs)).size());
 
         const int hp_after = zombie.get_hp();
         INFO("HP before: " << initial_hp << ", HP after: " << hp_after);
@@ -111,12 +113,12 @@ TEST_CASE("explosion_flung_items_damage_creatures", "[explosion][damage]") {
     }
 
     SECTION("nails_flung_by_explosion_damage_creatures") {
-        monster& zombie = spawn_test_monster(mon_zombie.str(), zombie_pos);
+        monster& zombie = spawn_test_monster(mon_zombie.str(), abs_to_bub(zombie_pos_abs));
         const int initial_hp = zombie.get_hp();
 
         for (int i = 0; i < 10; i++) {
             detached_ptr<item> nail = item::spawn("nail");
-            here.add_item(item_pos, std::move(nail));
+            here.add_item(abs_to_bub(item_pos_abs), std::move(nail));
         }
 
         explosion_handler::get_explosion_queue().clear();
@@ -124,7 +126,7 @@ TEST_CASE("explosion_flung_items_damage_creatures", "[explosion][damage]") {
             .damage = 50,
             .radius = 5.0f,
         };
-        explosion_handler::explosion(explosion_center, ex, nullptr);
+        explosion_handler::explosion(abs_to_bub(explosion_center_abs), ex, nullptr);
         explosion_handler::get_explosion_queue().execute();
 
         const int hp_after = zombie.get_hp();
@@ -132,18 +134,18 @@ TEST_CASE("explosion_flung_items_damage_creatures", "[explosion][damage]") {
     }
 
     SECTION("throwable_items_flung_by_explosion_damage_creatures") {
-        monster& zombie = spawn_test_monster(mon_zombie.str(), zombie_pos);
+        monster& zombie = spawn_test_monster(mon_zombie.str(), abs_to_bub(zombie_pos_abs));
         const int initial_hp = zombie.get_hp();
 
         detached_ptr<item> throwing_knife = item::spawn("throwing_knife");
-        here.add_item(item_pos, std::move(throwing_knife));
+        here.add_item(abs_to_bub(item_pos_abs), std::move(throwing_knife));
 
         explosion_handler::get_explosion_queue().clear();
         auto ex = explosion_data{
             .damage = 50,
             .radius = 5.0f,
         };
-        explosion_handler::explosion(explosion_center, ex, nullptr);
+        explosion_handler::explosion(abs_to_bub(explosion_center_abs), ex, nullptr);
         explosion_handler::get_explosion_queue().execute();
 
         const int hp_after = zombie.get_hp();

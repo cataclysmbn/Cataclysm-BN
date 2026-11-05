@@ -31,7 +31,9 @@ TEST_CASE("reload_on_vehicle_cargo", "[magazine][visitable][item][item_location]
 
     // Spawn a car...
     map& here = get_map();
-    const auto vehicle_center = tripoint_bub_ms(65, 65, z);
+    const auto vehicle_center_abs =
+        test_origin_at_z(z) + tripoint_rel_ms(65 - g_half_mapsize_x, 65 - g_half_mapsize_y, 0);
+    const auto vehicle_center = abs_to_map_local(here, vehicle_center_abs);
     const vproto_id car_id("car");
 
     vehicle* veh = here.add_vehicle(car_id, vehicle_center, 0_radians, 0, 0, false);
@@ -50,7 +52,7 @@ TEST_CASE("reload_on_vehicle_cargo", "[magazine][visitable][item][item_location]
 
     // Give the avatar a compatible source and position within reach...
     auto& ammo = who.i_add(item::spawn("38_special", calendar::start_of_cataclysm, 6));
-    who.setpos(veh->bub_part_location(part_num)); // Position avatar on cargo tile...
+    who.setpos(veh->abs_part_location(part_num)); // Position avatar on cargo tile...
     REQUIRE(gun.ammo_remaining() == 0);
     REQUIRE(gun.can_reload_with(ammo.typeId()));
     REQUIRE_FALSE(who.has_item(gun));

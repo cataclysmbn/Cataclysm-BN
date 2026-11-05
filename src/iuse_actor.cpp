@@ -7444,7 +7444,11 @@ void iuse_dimension_travel::dimension_travel( player &p, item &, const tripoint_
     g->travel_to_dimension( target_dim_id, destination, std::nullopt, load_pos );
 
     if( abs_pos.has_value() ) {
-        p.setpos( abs_pos.value() );
+        if( &p == &g->u ) {
+            g->u.setpos( abs_pos.value() );
+        } else {
+            p.setpos_no_map_update( abs_pos.value() );
+        }
     }
 }
 
@@ -7690,7 +7694,11 @@ void iuse_pocket_dimension::enter_pocket( player &p, item &it ) const
         pd.entry_point = map_local_to_abs( here, safe );
     }
 
-    p.setpos( pd.entry_point );
+    if( &p == &g->u ) {
+        g->u.setpos( pd.entry_point );
+    } else {
+        p.setpos_no_map_update( pd.entry_point );
+    }
 }
 
 // ---- iuse_portal_link -------------------------------------------------------
@@ -7773,7 +7781,11 @@ auto iuse_portal_link::use( player &p, item &it, bool, const tripoint_bub_ms & )
             const auto preload_point = project_to<coords::sm>( origin_pos ) - point_rel_sm( g_half_mapsize,
                                        g_half_mapsize );
             g->travel_to_dimension( origin_dim, wt_id, std::nullopt, preload_point );
-            p.setpos( origin_pos );
+            if( &p == &g->u ) {
+                g->u.setpos( origin_pos );
+            } else {
+                p.setpos_no_map_update( origin_pos );
+            }
             it.erase_var( "origin_stored" );
             return charges_per_use;
         }
@@ -7799,7 +7811,11 @@ auto iuse_portal_link::use( player &p, item &it, bool, const tripoint_bub_ms & )
     const auto dest_sm = project_to<coords::sm>( linked_pos ) -
                          tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 );
     g->travel_to_dimension( linked_dim, wt_id, std::nullopt, dest_sm );
-    p.setpos( linked_pos );
+    if( &p == &g->u ) {
+        g->u.setpos( linked_pos );
+    } else {
+        p.setpos_no_map_update( linked_pos );
+    }
     return charges_per_use;
 }
 
@@ -7834,7 +7850,11 @@ void iuse_pocket_dimension::exit_pocket( player &p, item &it ) const
 
     const auto &here = get_map();
     const auto safe = find_safe_spawn( abs_to_map_local( here, return_point ) );
-    p.setpos( map_local_to_abs( here, safe ) );
+    if( &p == &g->u ) {
+        g->u.setpos( map_local_to_abs( here, safe ) );
+    } else {
+        p.setpos_no_map_update( map_local_to_abs( here, safe ) );
+    }
 }
 
 // ---- iuse_paint_stuff -------------------------------------------------------

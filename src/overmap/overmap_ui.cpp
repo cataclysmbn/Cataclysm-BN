@@ -1168,7 +1168,7 @@ static void draw_ascii(
                 }
                 // Highlight areas that already have been generated
                 // TODO: fix point types
-                if (ACTIVE_MAPBUFFER.lookup_submap(project_to<coords::sm>(omp))) {
+                if (ACTIVE_MAPBUFFER.load_submap_from_storage(project_to<coords::sm>(omp))) {
                     ter_color = red_background(ter_color);
                 }
             }

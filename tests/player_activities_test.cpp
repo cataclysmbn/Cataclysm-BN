@@ -57,48 +57,53 @@ static const ter_str_id ter_test_t_boltcut2("test_t_boltcut2");
 static const ter_str_id ter_test_t_hacksaw1("test_t_hacksaw1");
 static const ter_str_id ter_test_t_hacksaw2("test_t_hacksaw2");
 
+// Activity actors still accept bubble-local map positions. Keep the fixture source absolute and
+// derive the legacy position at each call so it cannot become stale if the player moves.
+static auto activity_pos() -> tripoint_bub_ms { return bub_test_origin(); }
+
 TEST_CASE(
     "fill_liquid_from_infinite_water_respects_ground_pour_amount", "[activity][fluid_regression]") {
     clear_all_state();
     const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
     auto& here = get_map();
     auto& you = get_avatar();
-    const auto source = tripoint_bub_ms(60, 60, 0);
-    const auto target = tripoint_bub_ms(62, 60, 0);
+    const auto source_abs = test_origin;
+    const auto target_abs = source_abs + tripoint_rel_ms(2, 0, 0);
     const auto water_field = field_type_id("fd_water");
-    g->place_player(tripoint_bub_ms(61, 60, 0));
-    here.ter_set(source, ter_str_id("t_water_sh"));
-    REQUIRE(here.water_from(source));
-    const auto charges_per_turn =
-        std::max(1, here.water_from(source)->charges_per_volume(units::from_liter(4.0F / 6.0F)));
+    g->u.setpos(source_abs + tripoint_rel_ms(1, 0, 0));
+    here.ter_set(abs_to_bub(source_abs), ter_str_id("t_water_sh"));
+    REQUIRE(here.water_from(abs_to_bub(source_abs)));
+    const auto charges_per_turn = std::
+        max(1, here.water_from(abs_to_bub(source_abs))
+                   ->charges_per_volume(units::from_liter(4.0F / 6.0F)));
     const auto requested = charges_per_turn + 1;
 
     auto activity = player_activity(activity_id("ACT_FILL_LIQUID"));
     activity.values = {LST_INFINITE_MAP, 0, LTT_MAP, requested};
-    activity.coords = {bub_to_abs(source), bub_to_abs(target)};
+    activity.coords = {source_abs, target_abs};
 
     activity_handlers::fill_liquid_do_turn(&activity, &you);
     CHECK_FALSE(activity.is_null());
     CHECK(activity.values[3] == 1);
-    CHECK(here.get_field(target, water_field) != nullptr);
+    CHECK(here.get_field(abs_to_bub(target_abs), water_field) != nullptr);
 
     activity_handlers::fill_liquid_do_turn(&activity, &you);
     CHECK(activity.is_null());
 
-    here.remove_field(target, water_field);
+    here.remove_field(abs_to_bub(target_abs), water_field);
     auto zero_activity = player_activity(activity_id("ACT_FILL_LIQUID"));
     zero_activity.values = {LST_INFINITE_MAP, 0, LTT_MAP, 0};
-    zero_activity.coords = {bub_to_abs(source), bub_to_abs(target)};
+    zero_activity.coords = {source_abs, target_abs};
     activity_handlers::fill_liquid_do_turn(&zero_activity, &you);
     CHECK(zero_activity.is_null());
-    CHECK(here.get_field(target, water_field) == nullptr);
+    CHECK(here.get_field(abs_to_bub(target_abs), water_field) == nullptr);
 
     auto legacy_activity = player_activity(activity_id("ACT_FILL_LIQUID"));
     legacy_activity.values = {LST_INFINITE_MAP, 0, LTT_MAP};
-    legacy_activity.coords = {bub_to_abs(source), bub_to_abs(target)};
+    legacy_activity.coords = {source_abs, target_abs};
     activity_handlers::fill_liquid_do_turn(&legacy_activity, &you);
     CHECK_FALSE(legacy_activity.is_null());
-    CHECK(here.get_field(target, water_field) != nullptr);
+    CHECK(here.get_field(abs_to_bub(target_abs), water_field) != nullptr);
 }
 
 TEST_CASE(
@@ -108,20 +113,20 @@ TEST_CASE(
     const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
     auto& here = get_map();
     auto& you = get_avatar();
-    const auto source = tripoint_bub_ms(60, 60, 0);
-    const auto target = tripoint_bub_ms(62, 60, 0);
+    const auto source_abs = test_origin;
+    const auto target_abs = source_abs + tripoint_rel_ms(2, 0, 0);
     const auto water_field = field_type_id("fd_water");
-    g->place_player(tripoint_bub_ms(61, 60, 0));
-    auto* vehicle = here.add_vehicle(vproto_id("none"), source, 0_degrees, 0, 0);
+    g->u.setpos(source_abs + tripoint_rel_ms(1, 0, 0));
+    auto* vehicle = here.add_vehicle(vproto_id("none"), abs_to_bub(source_abs), 0_degrees, 0, 0);
     REQUIRE(vehicle);
     REQUIRE(vehicle->install_part(tripoint_mnt_veh::zero(), vpart_id("frame_vertical"), true) >= 0);
     const auto tank_index =
         vehicle->install_part(tripoint_mnt_veh::zero(), vpart_id("tank_small"), true);
     REQUIRE(tank_index >= 0);
     here.add_vehicle_to_cache(vehicle);
-    here.build_map_cache(source.z(), true);
-    const auto vehicle_source = vehicle->bub_part_location(0);
-    REQUIRE(here.veh_at(vehicle_source));
+    here.build_map_cache(source_abs.z(), true);
+    const auto vehicle_source_abs = vehicle->abs_part_location(0);
+    REQUIRE(here.veh_at(abs_to_bub(vehicle_source_abs)));
     auto& tank = vehicle->part(tank_index);
     const auto water = itype_id("water_clean");
     REQUIRE(tank.ammo_set(water, 20) > 0);
@@ -132,35 +137,35 @@ TEST_CASE(
 
     auto activity = player_activity(activity_id("ACT_FILL_LIQUID"));
     activity.values = {LST_VEHICLE, tank_index, LTT_MAP, requested};
-    activity.coords = {bub_to_abs(vehicle_source), bub_to_abs(target)};
+    activity.coords = {vehicle->abs_part_location(0), target_abs};
     activity_handlers::fill_liquid_do_turn(&activity, &you);
     CHECK_FALSE(activity.is_null());
     CHECK(activity.values[3] == 1);
     CHECK(tank.ammo_remaining() == initial_charges - charges_per_turn);
-    CHECK(here.get_field(target, water_field) != nullptr);
+    CHECK(here.get_field(abs_to_bub(target_abs), water_field) != nullptr);
 
     activity_handlers::fill_liquid_do_turn(&activity, &you);
     CHECK(activity.is_null());
     CHECK(tank.ammo_remaining() == initial_charges - requested);
 
-    here.remove_field(target, water_field);
+    here.remove_field(abs_to_bub(target_abs), water_field);
     auto zero_activity = player_activity(activity_id("ACT_FILL_LIQUID"));
     zero_activity.values = {LST_VEHICLE, tank_index, LTT_MAP, 0};
-    zero_activity.coords = {bub_to_abs(vehicle_source), bub_to_abs(target)};
+    zero_activity.coords = {vehicle->abs_part_location(0), target_abs};
     activity_handlers::fill_liquid_do_turn(&zero_activity, &you);
     CHECK(zero_activity.is_null());
     CHECK(tank.ammo_remaining() == initial_charges - requested);
-    CHECK(here.get_field(target, water_field) == nullptr);
+    CHECK(here.get_field(abs_to_bub(target_abs), water_field) == nullptr);
 
     REQUIRE(tank.ammo_set(water, 1) > 0);
     auto exhausted_activity = player_activity(activity_id("ACT_FILL_LIQUID"));
     exhausted_activity.values = {LST_VEHICLE, tank_index, LTT_MAP, 3};
-    exhausted_activity.coords = {bub_to_abs(vehicle_source), bub_to_abs(target)};
+    exhausted_activity.coords = {vehicle->abs_part_location(0), target_abs};
     activity_handlers::fill_liquid_do_turn(&exhausted_activity, &you);
     CHECK(exhausted_activity.is_null());
     CHECK(exhausted_activity.values[3] == 2);
     CHECK(tank.ammo_remaining() == 0);
-    CHECK(here.get_field(target, water_field) != nullptr);
+    CHECK(here.get_field(abs_to_bub(target_abs), water_field) != nullptr);
 }
 
 TEST_CASE("boltcut", "[activity][boltcut]") {
@@ -178,7 +183,7 @@ TEST_CASE("boltcut", "[activity][boltcut]") {
 
     auto setup_activity = [&dummy](item& cutter) -> void {
         auto act = std::make_unique<
-            boltcutting_activity_actor>(tripoint_bub_ms::zero(), safe_reference<item>(cutter));
+            boltcutting_activity_actor>(activity_pos(), safe_reference<item>(cutter));
         act->testing = true;
         dummy.assign_activity(std::make_unique<player_activity>(std::move(act)));
     };
@@ -188,8 +193,8 @@ TEST_CASE("boltcut", "[activity][boltcut]") {
             clear_map();
             clear_avatar();
 
-            mp.ter_set(tripoint_bub_ms::zero(), t_null);
-            REQUIRE(mp.ter(tripoint_bub_ms::zero()) == t_null);
+            mp.ter_set(activity_pos(), t_null);
+            REQUIRE(mp.ter(activity_pos()) == t_null);
 
             item& boltcutter = setup_dummy();
             setup_activity(boltcutter);
@@ -201,8 +206,8 @@ TEST_CASE("boltcut", "[activity][boltcut]") {
             clear_map();
             clear_avatar();
 
-            mp.ter_set(tripoint_bub_ms::zero(), t_dirt);
-            REQUIRE(mp.ter(tripoint_bub_ms::zero()) == t_dirt);
+            mp.ter_set(activity_pos(), t_dirt);
+            REQUIRE(mp.ter(activity_pos()) == t_dirt);
 
             item& boltcutter = setup_dummy();
             setup_activity(boltcutter);
@@ -214,8 +219,8 @@ TEST_CASE("boltcut", "[activity][boltcut]") {
             clear_map();
             clear_avatar();
 
-            mp.ter_set(tripoint_bub_ms::zero(), ter_test_t_boltcut1);
-            REQUIRE(mp.ter(tripoint_bub_ms::zero()) == ter_test_t_boltcut1);
+            mp.ter_set(activity_pos(), ter_test_t_boltcut1);
+            REQUIRE(mp.ter(activity_pos()) == ter_test_t_boltcut1);
 
             item& boltcutter = setup_dummy();
             setup_activity(boltcutter);
@@ -229,8 +234,8 @@ TEST_CASE("boltcut", "[activity][boltcut]") {
             clear_map();
             clear_avatar();
 
-            mp.furn_set(tripoint_bub_ms::zero(), furn_t_test_f_boltcut1);
-            REQUIRE(mp.furn(tripoint_bub_ms::zero()) == furn_t_test_f_boltcut1);
+            mp.furn_set(activity_pos(), furn_t_test_f_boltcut1);
+            REQUIRE(mp.furn(activity_pos()) == furn_t_test_f_boltcut1);
 
             item& boltcutter = setup_dummy();
             setup_activity(boltcutter);
@@ -244,8 +249,8 @@ TEST_CASE("boltcut", "[activity][boltcut]") {
             clear_map();
             clear_avatar();
 
-            mp.ter_set(tripoint_bub_ms::zero(), ter_test_t_boltcut1);
-            REQUIRE(mp.ter(tripoint_bub_ms::zero()) == ter_test_t_boltcut1);
+            mp.ter_set(activity_pos(), ter_test_t_boltcut1);
+            REQUIRE(mp.ter(activity_pos()) == ter_test_t_boltcut1);
 
             item& boltcutter = setup_dummy();
             setup_activity(boltcutter);
@@ -263,8 +268,8 @@ TEST_CASE("boltcut", "[activity][boltcut]") {
             clear_map();
             clear_avatar();
 
-            mp.furn_set(tripoint_bub_ms::zero(), furn_t_test_f_boltcut1);
-            REQUIRE(mp.furn(tripoint_bub_ms::zero()) == furn_t_test_f_boltcut1);
+            mp.furn_set(activity_pos(), furn_t_test_f_boltcut1);
+            REQUIRE(mp.furn(activity_pos()) == furn_t_test_f_boltcut1);
 
             item& boltcutter = setup_dummy();
             setup_activity(boltcutter);
@@ -284,8 +289,8 @@ TEST_CASE("boltcut", "[activity][boltcut]") {
             clear_map();
             clear_avatar();
 
-            mp.furn_set(tripoint_bub_ms::zero(), furn_t_test_f_boltcut3);
-            REQUIRE(mp.furn(tripoint_bub_ms::zero()) == furn_t_test_f_boltcut3);
+            mp.furn_set(activity_pos(), furn_t_test_f_boltcut3);
+            REQUIRE(mp.furn(activity_pos()) == furn_t_test_f_boltcut3);
 
             item& boltcutter_elec = dummy.i_add(
                 item::spawn(itype_test_boltcutter_elec, calendar::start_of_cataclysm, 2));
@@ -321,8 +326,8 @@ TEST_CASE("boltcut", "[activity][boltcut]") {
             clear_map();
             clear_avatar();
 
-            mp.ter_set(tripoint_bub_ms::zero(), ter_test_t_boltcut1);
-            REQUIRE(mp.ter(tripoint_bub_ms::zero()) == ter_test_t_boltcut1);
+            mp.ter_set(activity_pos(), ter_test_t_boltcut1);
+            REQUIRE(mp.ter(activity_pos()) == ter_test_t_boltcut1);
 
             item& boltcutter = setup_dummy();
             setup_activity(boltcutter);
@@ -332,7 +337,7 @@ TEST_CASE("boltcut", "[activity][boltcut]") {
             REQUIRE(dummy.activity->id() == ACT_NULL);
 
             THEN("terrain gets converted to new terrain type") {
-                CHECK(mp.ter(tripoint_bub_ms::zero()) == t_dirt);
+                CHECK(mp.ter(activity_pos()) == t_dirt);
             }
         }
 
@@ -340,8 +345,8 @@ TEST_CASE("boltcut", "[activity][boltcut]") {
             clear_map();
             clear_avatar();
 
-            mp.furn_set(tripoint_bub_ms::zero(), furn_t_test_f_boltcut1);
-            REQUIRE(mp.furn(tripoint_bub_ms::zero()) == furn_t_test_f_boltcut1);
+            mp.furn_set(activity_pos(), furn_t_test_f_boltcut1);
+            REQUIRE(mp.furn(activity_pos()) == furn_t_test_f_boltcut1);
 
             item& boltcutter = setup_dummy();
             setup_activity(boltcutter);
@@ -351,7 +356,7 @@ TEST_CASE("boltcut", "[activity][boltcut]") {
             REQUIRE(dummy.activity->id() == ACT_NULL);
 
             THEN("furniture gets converted to new furniture type") {
-                CHECK(mp.furn(tripoint_bub_ms::zero()) == f_null);
+                CHECK(mp.furn(activity_pos()) == f_null);
             }
         }
 
@@ -359,8 +364,8 @@ TEST_CASE("boltcut", "[activity][boltcut]") {
             clear_map();
             clear_avatar();
 
-            mp.furn_set(tripoint_bub_ms::zero(), furn_t_test_f_boltcut2);
-            REQUIRE(mp.furn(tripoint_bub_ms::zero()) == furn_t_test_f_boltcut2);
+            mp.furn_set(activity_pos(), furn_t_test_f_boltcut2);
+            REQUIRE(mp.furn(activity_pos()) == furn_t_test_f_boltcut2);
 
             item& boltcutter = setup_dummy();
             setup_activity(boltcutter);
@@ -370,7 +375,7 @@ TEST_CASE("boltcut", "[activity][boltcut]") {
             REQUIRE(dummy.activity->id() == ACT_NULL);
 
             THEN("furniture gets converted to new furniture type") {
-                CHECK(mp.furn(tripoint_bub_ms::zero()) == furn_t_test_f_boltcut1);
+                CHECK(mp.furn(activity_pos()) == furn_t_test_f_boltcut1);
             }
         }
 
@@ -379,8 +384,8 @@ TEST_CASE("boltcut", "[activity][boltcut]") {
             clear_map();
             clear_avatar();
 
-            mp.ter_set(tripoint_bub_ms::zero(), ter_test_t_boltcut2);
-            REQUIRE(mp.ter(tripoint_bub_ms::zero()) == ter_test_t_boltcut2);
+            mp.ter_set(activity_pos(), ter_test_t_boltcut2);
+            REQUIRE(mp.ter(activity_pos()) == ter_test_t_boltcut2);
 
             item& boltcutter = setup_dummy();
             setup_activity(boltcutter);
@@ -400,7 +405,7 @@ TEST_CASE("boltcut", "[activity][boltcut]") {
                 THEN("player receives the items") {
                     int count_amount = 0;
                     int count_random = 0;
-                    for (const auto& it : get_map().i_at(tripoint_bub_ms::zero())) {
+                    for (const auto& it : get_map().i_at(activity_pos())) {
                         // can't use switch here
                         const itype_id it_id = it->typeId();
                         if (it_id == test_amount) {
@@ -433,8 +438,8 @@ TEST_CASE("hacksaw", "[activity][hacksaw]") {
     };
 
     auto setup_activity = [&dummy](item& saw) -> void {
-        auto act = std::make_unique<
-            hacksaw_activity_actor>(tripoint_bub_ms::zero(), safe_reference<item>(saw));
+        auto act =
+            std::make_unique<hacksaw_activity_actor>(activity_pos(), safe_reference<item>(saw));
         act->testing = true;
         dummy.assign_activity(std::make_unique<player_activity>(std::move(act)));
     };
@@ -444,8 +449,8 @@ TEST_CASE("hacksaw", "[activity][hacksaw]") {
             clear_map();
             clear_avatar();
 
-            mp.ter_set(tripoint_bub_ms::zero(), t_null);
-            REQUIRE(mp.ter(tripoint_bub_ms::zero()) == t_null);
+            mp.ter_set(activity_pos(), t_null);
+            REQUIRE(mp.ter(activity_pos()) == t_null);
 
             item& hacksaw = setup_dummy();
             setup_activity(hacksaw);
@@ -457,8 +462,8 @@ TEST_CASE("hacksaw", "[activity][hacksaw]") {
             clear_map();
             clear_avatar();
 
-            mp.ter_set(tripoint_bub_ms::zero(), t_dirt);
-            REQUIRE(mp.ter(tripoint_bub_ms::zero()) == t_dirt);
+            mp.ter_set(activity_pos(), t_dirt);
+            REQUIRE(mp.ter(activity_pos()) == t_dirt);
 
             item& hacksaw = setup_dummy();
             setup_activity(hacksaw);
@@ -470,8 +475,8 @@ TEST_CASE("hacksaw", "[activity][hacksaw]") {
             clear_map();
             clear_avatar();
 
-            mp.ter_set(tripoint_bub_ms::zero(), ter_test_t_hacksaw1);
-            REQUIRE(mp.ter(tripoint_bub_ms::zero()) == ter_test_t_hacksaw1);
+            mp.ter_set(activity_pos(), ter_test_t_hacksaw1);
+            REQUIRE(mp.ter(activity_pos()) == ter_test_t_hacksaw1);
 
             item& hacksaw = setup_dummy();
             setup_activity(hacksaw);
@@ -483,8 +488,8 @@ TEST_CASE("hacksaw", "[activity][hacksaw]") {
             clear_map();
             clear_avatar();
 
-            mp.furn_set(tripoint_bub_ms::zero(), furn_t_test_f_hacksaw1);
-            REQUIRE(mp.furn(tripoint_bub_ms::zero()) == furn_t_test_f_hacksaw1);
+            mp.furn_set(activity_pos(), furn_t_test_f_hacksaw1);
+            REQUIRE(mp.furn(activity_pos()) == furn_t_test_f_hacksaw1);
 
             item& hacksaw = setup_dummy();
             setup_activity(hacksaw);
@@ -496,8 +501,8 @@ TEST_CASE("hacksaw", "[activity][hacksaw]") {
             clear_map();
             clear_avatar();
 
-            mp.ter_set(tripoint_bub_ms::zero(), ter_test_t_hacksaw1);
-            REQUIRE(mp.ter(tripoint_bub_ms::zero()) == ter_test_t_hacksaw1);
+            mp.ter_set(activity_pos(), ter_test_t_hacksaw1);
+            REQUIRE(mp.ter(activity_pos()) == ter_test_t_hacksaw1);
 
             item& hacksaw = setup_dummy();
             setup_activity(hacksaw);
@@ -515,8 +520,8 @@ TEST_CASE("hacksaw", "[activity][hacksaw]") {
             clear_map();
             clear_avatar();
 
-            mp.furn_set(tripoint_bub_ms::zero(), furn_t_test_f_hacksaw1);
-            REQUIRE(mp.furn(tripoint_bub_ms::zero()) == furn_t_test_f_hacksaw1);
+            mp.furn_set(activity_pos(), furn_t_test_f_hacksaw1);
+            REQUIRE(mp.furn(activity_pos()) == furn_t_test_f_hacksaw1);
 
             item& hacksaw = setup_dummy();
             setup_activity(hacksaw);
@@ -536,8 +541,8 @@ TEST_CASE("hacksaw", "[activity][hacksaw]") {
             clear_map();
             clear_avatar();
 
-            mp.furn_set(tripoint_bub_ms::zero(), furn_t_test_f_hacksaw3);
-            REQUIRE(mp.furn(tripoint_bub_ms::zero()) == furn_t_test_f_hacksaw3);
+            mp.furn_set(activity_pos(), furn_t_test_f_hacksaw3);
+            REQUIRE(mp.furn(activity_pos()) == furn_t_test_f_hacksaw3);
 
             item& hacksaw_elec = dummy.i_add(
                 item::spawn(itype_test_hacksaw_elec, calendar::start_of_cataclysm, 1));
@@ -574,8 +579,8 @@ TEST_CASE("hacksaw", "[activity][hacksaw]") {
             clear_map();
             clear_avatar();
 
-            mp.ter_set(tripoint_bub_ms::zero(), ter_test_t_hacksaw1);
-            REQUIRE(mp.ter(tripoint_bub_ms::zero()) == ter_test_t_hacksaw1);
+            mp.ter_set(activity_pos(), ter_test_t_hacksaw1);
+            REQUIRE(mp.ter(activity_pos()) == ter_test_t_hacksaw1);
 
             item& hacksaw = setup_dummy();
             setup_activity(hacksaw);
@@ -585,7 +590,7 @@ TEST_CASE("hacksaw", "[activity][hacksaw]") {
             REQUIRE(dummy.activity->id() == ACT_NULL);
 
             THEN("terrain gets converted to new terrain type") {
-                CHECK(mp.ter(tripoint_bub_ms::zero()) == t_dirt);
+                CHECK(mp.ter(activity_pos()) == t_dirt);
             }
         }
 
@@ -593,8 +598,8 @@ TEST_CASE("hacksaw", "[activity][hacksaw]") {
             clear_map();
             clear_avatar();
 
-            mp.furn_set(tripoint_bub_ms::zero(), furn_t_test_f_hacksaw1);
-            REQUIRE(mp.furn(tripoint_bub_ms::zero()) == furn_t_test_f_hacksaw1);
+            mp.furn_set(activity_pos(), furn_t_test_f_hacksaw1);
+            REQUIRE(mp.furn(activity_pos()) == furn_t_test_f_hacksaw1);
 
             item& hacksaw = setup_dummy();
             setup_activity(hacksaw);
@@ -604,7 +609,7 @@ TEST_CASE("hacksaw", "[activity][hacksaw]") {
             REQUIRE(dummy.activity->id() == ACT_NULL);
 
             THEN("furniture gets converted to new furniture type") {
-                CHECK(mp.furn(tripoint_bub_ms::zero()) == f_null);
+                CHECK(mp.furn(activity_pos()) == f_null);
             }
         }
 
@@ -612,8 +617,8 @@ TEST_CASE("hacksaw", "[activity][hacksaw]") {
             clear_map();
             clear_avatar();
 
-            mp.furn_set(tripoint_bub_ms::zero(), furn_t_test_f_hacksaw2);
-            REQUIRE(mp.furn(tripoint_bub_ms::zero()) == furn_t_test_f_hacksaw2);
+            mp.furn_set(activity_pos(), furn_t_test_f_hacksaw2);
+            REQUIRE(mp.furn(activity_pos()) == furn_t_test_f_hacksaw2);
 
             item& hacksaw = setup_dummy();
             setup_activity(hacksaw);
@@ -623,7 +628,7 @@ TEST_CASE("hacksaw", "[activity][hacksaw]") {
             REQUIRE(dummy.activity->id() == ACT_NULL);
 
             THEN("furniture gets converted to new furniture type") {
-                CHECK(mp.furn(tripoint_bub_ms::zero()) == furn_t_test_f_hacksaw1);
+                CHECK(mp.furn(activity_pos()) == furn_t_test_f_hacksaw1);
             }
         }
 
@@ -632,8 +637,8 @@ TEST_CASE("hacksaw", "[activity][hacksaw]") {
             clear_map();
             clear_avatar();
 
-            mp.ter_set(tripoint_bub_ms::zero(), ter_test_t_hacksaw2);
-            REQUIRE(mp.ter(tripoint_bub_ms::zero()) == ter_test_t_hacksaw2);
+            mp.ter_set(activity_pos(), ter_test_t_hacksaw2);
+            REQUIRE(mp.ter(activity_pos()) == ter_test_t_hacksaw2);
 
             item& hacksaw = setup_dummy();
             setup_activity(hacksaw);
@@ -653,7 +658,7 @@ TEST_CASE("hacksaw", "[activity][hacksaw]") {
                 THEN("player receives the items") {
                     int count_amount = 0;
                     int count_random = 0;
-                    for (const auto& it : get_map().i_at(tripoint_bub_ms::zero())) {
+                    for (const auto& it : get_map().i_at(activity_pos())) {
                         // can't use switch here
                         const itype_id it_id = it->typeId();
                         if (it_id == test_amount) {
@@ -687,8 +692,8 @@ TEST_CASE("oxytorch", "[activity][oxytorch]") {
     };
 
     auto setup_activity = [&dummy](item& torch) -> void {
-        auto act = std::make_unique<
-            oxytorch_activity_actor>(tripoint_bub_ms::zero(), safe_reference<item>(torch));
+        auto act =
+            std::make_unique<oxytorch_activity_actor>(activity_pos(), safe_reference<item>(torch));
         act->testing = true;
         dummy.assign_activity(std::make_unique<player_activity>(std::move(act)));
     };
@@ -698,8 +703,8 @@ TEST_CASE("oxytorch", "[activity][oxytorch]") {
             clear_map();
             clear_avatar();
 
-            mp.ter_set(tripoint_bub_ms::zero(), t_null);
-            REQUIRE(mp.ter(tripoint_bub_ms::zero()) == t_null);
+            mp.ter_set(activity_pos(), t_null);
+            REQUIRE(mp.ter(activity_pos()) == t_null);
 
             item& welding_torch = setup_dummy();
             setup_activity(welding_torch);
@@ -711,8 +716,8 @@ TEST_CASE("oxytorch", "[activity][oxytorch]") {
             clear_map();
             clear_avatar();
 
-            mp.ter_set(tripoint_bub_ms::zero(), t_dirt);
-            REQUIRE(mp.ter(tripoint_bub_ms::zero()) == t_dirt);
+            mp.ter_set(activity_pos(), t_dirt);
+            REQUIRE(mp.ter(activity_pos()) == t_dirt);
 
             item& welding_torch = setup_dummy();
             setup_activity(welding_torch);
@@ -724,8 +729,8 @@ TEST_CASE("oxytorch", "[activity][oxytorch]") {
             clear_map();
             clear_avatar();
 
-            mp.ter_set(tripoint_bub_ms::zero(), ter_test_t_oxytorch1);
-            REQUIRE(mp.ter(tripoint_bub_ms::zero()) == ter_test_t_oxytorch1);
+            mp.ter_set(activity_pos(), ter_test_t_oxytorch1);
+            REQUIRE(mp.ter(activity_pos()) == ter_test_t_oxytorch1);
 
             item& welding_torch = setup_dummy();
             setup_activity(welding_torch);
@@ -737,8 +742,8 @@ TEST_CASE("oxytorch", "[activity][oxytorch]") {
             clear_map();
             clear_avatar();
 
-            mp.furn_set(tripoint_bub_ms::zero(), furn_t_test_f_oxytorch1);
-            REQUIRE(mp.furn(tripoint_bub_ms::zero()) == furn_t_test_f_oxytorch1);
+            mp.furn_set(activity_pos(), furn_t_test_f_oxytorch1);
+            REQUIRE(mp.furn(activity_pos()) == furn_t_test_f_oxytorch1);
 
             item& welding_torch = setup_dummy();
             setup_activity(welding_torch);
@@ -750,8 +755,8 @@ TEST_CASE("oxytorch", "[activity][oxytorch]") {
             clear_map();
             clear_avatar();
 
-            mp.ter_set(tripoint_bub_ms::zero(), ter_test_t_oxytorch1);
-            REQUIRE(mp.ter(tripoint_bub_ms::zero()) == ter_test_t_oxytorch1);
+            mp.ter_set(activity_pos(), ter_test_t_oxytorch1);
+            REQUIRE(mp.ter(activity_pos()) == ter_test_t_oxytorch1);
 
             item& welding_torch = setup_dummy();
             setup_activity(welding_torch);
@@ -769,8 +774,8 @@ TEST_CASE("oxytorch", "[activity][oxytorch]") {
             clear_map();
             clear_avatar();
 
-            mp.furn_set(tripoint_bub_ms::zero(), furn_t_test_f_oxytorch1);
-            REQUIRE(mp.furn(tripoint_bub_ms::zero()) == furn_t_test_f_oxytorch1);
+            mp.furn_set(activity_pos(), furn_t_test_f_oxytorch1);
+            REQUIRE(mp.furn(activity_pos()) == furn_t_test_f_oxytorch1);
 
             item& welding_torch = setup_dummy();
             setup_activity(welding_torch);
@@ -790,8 +795,8 @@ TEST_CASE("oxytorch", "[activity][oxytorch]") {
             clear_map();
             clear_avatar();
 
-            mp.furn_set(tripoint_bub_ms::zero(), furn_t_test_f_oxytorch3);
-            REQUIRE(mp.furn(tripoint_bub_ms::zero()) == furn_t_test_f_oxytorch3);
+            mp.furn_set(activity_pos(), furn_t_test_f_oxytorch3);
+            REQUIRE(mp.furn(activity_pos()) == furn_t_test_f_oxytorch3);
 
             item& welding_torch = setup_dummy();
             setup_activity(welding_torch);
@@ -822,8 +827,8 @@ TEST_CASE("oxytorch", "[activity][oxytorch]") {
             clear_map();
             clear_avatar();
 
-            mp.ter_set(tripoint_bub_ms::zero(), ter_test_t_oxytorch1);
-            REQUIRE(mp.ter(tripoint_bub_ms::zero()) == ter_test_t_oxytorch1);
+            mp.ter_set(activity_pos(), ter_test_t_oxytorch1);
+            REQUIRE(mp.ter(activity_pos()) == ter_test_t_oxytorch1);
 
             item& welding_torch = setup_dummy();
             setup_activity(welding_torch);
@@ -833,7 +838,7 @@ TEST_CASE("oxytorch", "[activity][oxytorch]") {
             REQUIRE(dummy.activity->id() == ACT_NULL);
 
             THEN("terrain gets converted to new terrain type") {
-                CHECK(mp.ter(tripoint_bub_ms::zero()) == t_dirt);
+                CHECK(mp.ter(activity_pos()) == t_dirt);
             }
         }
 
@@ -841,8 +846,8 @@ TEST_CASE("oxytorch", "[activity][oxytorch]") {
             clear_map();
             clear_avatar();
 
-            mp.furn_set(tripoint_bub_ms::zero(), furn_t_test_f_oxytorch1);
-            REQUIRE(mp.furn(tripoint_bub_ms::zero()) == furn_t_test_f_oxytorch1);
+            mp.furn_set(activity_pos(), furn_t_test_f_oxytorch1);
+            REQUIRE(mp.furn(activity_pos()) == furn_t_test_f_oxytorch1);
 
             item& welding_torch = setup_dummy();
             setup_activity(welding_torch);
@@ -852,7 +857,7 @@ TEST_CASE("oxytorch", "[activity][oxytorch]") {
             REQUIRE(dummy.activity->id() == ACT_NULL);
 
             THEN("furniture gets converted to new furniture type") {
-                CHECK(mp.furn(tripoint_bub_ms::zero()) == f_null);
+                CHECK(mp.furn(activity_pos()) == f_null);
             }
         }
 
@@ -860,8 +865,8 @@ TEST_CASE("oxytorch", "[activity][oxytorch]") {
             clear_map();
             clear_avatar();
 
-            mp.furn_set(tripoint_bub_ms::zero(), furn_t_test_f_oxytorch2);
-            REQUIRE(mp.furn(tripoint_bub_ms::zero()) == furn_t_test_f_oxytorch2);
+            mp.furn_set(activity_pos(), furn_t_test_f_oxytorch2);
+            REQUIRE(mp.furn(activity_pos()) == furn_t_test_f_oxytorch2);
 
             item& welding_torch = setup_dummy();
             setup_activity(welding_torch);
@@ -871,7 +876,7 @@ TEST_CASE("oxytorch", "[activity][oxytorch]") {
             REQUIRE(dummy.activity->id() == ACT_NULL);
 
             THEN("furniture gets converted to new furniture type") {
-                CHECK(mp.furn(tripoint_bub_ms::zero()) == furn_t_test_f_oxytorch1);
+                CHECK(mp.furn(activity_pos()) == furn_t_test_f_oxytorch1);
             }
         }
 
@@ -880,8 +885,8 @@ TEST_CASE("oxytorch", "[activity][oxytorch]") {
             clear_map();
             clear_avatar();
 
-            mp.ter_set(tripoint_bub_ms::zero(), ter_test_t_oxytorch2);
-            REQUIRE(mp.ter(tripoint_bub_ms::zero()) == ter_test_t_oxytorch2);
+            mp.ter_set(activity_pos(), ter_test_t_oxytorch2);
+            REQUIRE(mp.ter(activity_pos()) == ter_test_t_oxytorch2);
 
             item& welding_torch = setup_dummy();
             setup_activity(welding_torch);
@@ -901,7 +906,7 @@ TEST_CASE("oxytorch", "[activity][oxytorch]") {
                 THEN("player receives the items") {
                     int count_amount = 0;
                     int count_random = 0;
-                    for (const auto& it : get_map().i_at(tripoint_bub_ms::zero())) {
+                    for (const auto& it : get_map().i_at(activity_pos())) {
                         // can't use switch here
                         const itype_id it_id = it->typeId();
                         if (it_id == test_amount) {

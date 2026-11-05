@@ -55,10 +55,10 @@ static const itype_id itype_gasoline("gasoline");
 namespace {
 
 static constexpr auto resident_lookup = mapbuffer_lookup_options{
-    .mode = mapbuffer_lookup_mode::resident_only};
+    .policy = mapbuffer_lookup_policy::resident_only};
 
 static constexpr auto load_or_generate_lookup = mapbuffer_lookup_options{
-    .mode = mapbuffer_lookup_mode::load_or_generate};
+    .policy = mapbuffer_lookup_policy::load_or_generate};
 
 auto omt_tile_max() -> point_omt_ms { return point_omt_ms(SEEX * 2 - 1, SEEY * 2 - 1); }
 
@@ -123,7 +123,7 @@ auto mapgen_constructor::submap_at_grid(const point_omt_sm& gridp) const -> subm
     if (index && *index < owned_submaps_.size() && owned_submaps_[*index] != nullptr) {
         return owned_submaps_[*index].get();
     }
-    return buffer_.lookup_submap_in_memory(abs);
+    return buffer_.find_resident_submap(abs);
 }
 
 auto mapgen_constructor::tile_at(const point_omt_ms& p) const -> std::pair<submap*, point_sm_ms> {
@@ -134,7 +134,7 @@ auto mapgen_constructor::bind_omt_for_hook(const tripoint_abs_omt& omt_pos) -> b
     clear();
     abs_offset_ = omt_pos;
     return std::ranges::all_of(all_submap_offsets(), [&](const point_omt_sm& offset) {
-        return buffer_.lookup_submap_in_memory(project_combine(abs_offset_, offset)) != nullptr;
+        return buffer_.find_resident_submap(project_combine(abs_offset_, offset)) != nullptr;
     });
 }
 
@@ -142,7 +142,7 @@ auto mapgen_constructor::load(const tripoint_abs_omt& omt_pos) -> bool {
     clear();
     abs_offset_ = omt_pos;
     return std::ranges::all_of(all_submap_offsets(), [&](const point_omt_sm& offset) {
-        return buffer_.get_submap(project_combine(abs_offset_, offset), load_or_generate_lookup)
+        return buffer_.resolve_submap(project_combine(abs_offset_, offset), load_or_generate_lookup)
             != nullptr;
     });
 }
@@ -191,7 +191,7 @@ auto mapgen_constructor::ensure_omt_submaps(const time_point& when) -> bool {
         const auto index = omt_submap_index(offset);
         if (!index) { return; }
         const auto abs = project_combine(abs_offset_, offset);
-        if (buffer_.lookup_submap_in_memory(abs) != nullptr) { return; }
+        if (buffer_.find_resident_submap(abs) != nullptr) { return; }
         auto sm = std::make_unique<submap>(abs, buffer_.get_dimension_id());
         sm->last_touched = when;
         owned_submaps_[*index] = std::move(sm);
@@ -204,7 +204,7 @@ auto mapgen_constructor::ensure_omt_submaps(const time_point& when) -> bool {
 auto mapgen_constructor::commit_generated_submaps() -> bool {
     if (!has_owned_submaps(owned_submaps_)) {
         return std::ranges::all_of(all_submap_offsets(), [&](const point_omt_sm& offset) {
-            const auto* const sm = buffer_.lookup_submap_in_memory(
+            const auto* const sm = buffer_.find_resident_submap(
                 project_combine(abs_offset_, offset));
             return sm != nullptr && sm->get_ter(point_sm_ms::zero()) != t_null;
         });
@@ -218,7 +218,7 @@ auto mapgen_constructor::commit_generated_submaps() -> bool {
     if (std::ranges::any_of(all_submap_offsets(), [&](const point_omt_sm& offset) {
             const auto index = omt_submap_index(offset);
             return index && *index < owned_submaps_.size() && owned_submaps_[*index] != nullptr
-                && buffer_.lookup_submap_in_memory(project_combine(abs_offset_, offset)) != nullptr;
+                && buffer_.find_resident_submap(project_combine(abs_offset_, offset)) != nullptr;
         })) {
         return false;
     }
