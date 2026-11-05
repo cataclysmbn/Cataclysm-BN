@@ -104,7 +104,8 @@
       { "item": "digital_tailoring_recipe_archive" },
       { "item": "digital_electronic_blueprints", "prob": 25 },
       { "item": "digital_chemical_synthesis_sheet", "prob": 35 },
-      { "item": "digital_workshop_tool_plans", "prob": 10 }
+      { "item": "digital_workshop_tool_plans", "prob": 10 },
+      { "item": "digital_corrupted_file", "prob": 2 }
     ]
   },
   {
@@ -118,7 +119,8 @@
       { "item": "digital_saved_email", "prob": 10 },
       { "item": "digital_electronic_blueprints", "prob": 10 },
       { "item": "digital_chemical_synthesis_sheet", "prob": 10 },
-      { "item": "digital_workshop_tool_plans", "prob": 5 }
+      { "item": "digital_workshop_tool_plans", "prob": 5 },
+      { "item": "digital_corrupted_file", "prob": 1 }
     ]
   },
   {

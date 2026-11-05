@@ -1,5 +1,19 @@
 [
   {
+    "id": "spell_ghost_in_the_machine_blink",
+    "type": "SPELL",
+    "name": { "str": "Static Blink" },
+    "description": "The caster dissolves into static and teleports a short distance.",
+    "effect": "teleport_random",
+    "valid_targets": [ "self" ],
+    "flags": [ "NO_EXPLOSION_VFX", "SILENT", "NO_FAIL" ],
+    "min_range": 2,
+    "max_range": 2,
+    "min_aoe": 4,
+    "max_aoe": 4,
+    "base_casting_time": 100
+  },
+  {
     "id": "pain_damage",
     "type": "SPELL",
     "name": { "str": "Debug Pain" },

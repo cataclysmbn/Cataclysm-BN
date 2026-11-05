@@ -194,6 +194,21 @@
     }
   },
   {
+    "type": "item_action",
+    "id": "CORRUPTED_FILE",
+    "name": { "str": "Open corrupted file" }
+  },
+  {
+    "id": "digital_corrupted_file",
+    "copy-from": "digital_collection",
+    "type": "TOOL",
+    "name": { "str": "corrupted file" },
+    "description": "An executable with a garbled filename and no recognizable file header.  Its preview shows a pale silhouette in an empty room.  The figure flickers between frames, appearing closer to the camera each time.  Opening this file seems like a very bad idea.",
+    "charges_per_use": 0,
+    "extend": { "flags": [ "DESTROY_ON_DECHARGE" ] },
+    "use_action": "CORRUPTED_FILE"
+  },
+  {
     "id": "digital_music_collection",
     "copy-from": "digital_collection",
     "type": "GENERIC",
