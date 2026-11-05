@@ -24,7 +24,9 @@
           { "weight": 1, "cost": 1, "enchantments": [ { "id": "AEP_GLOW" } ] },
           { "weight": 1, "cost": 1, "enchantments": [ { "id": "AEP_PSYSHIELD" } ] },
           { "weight": 1, "cost": 3, "enchantments": [ { "id": "AEP_RESIST_ELECTRICITY" } ] },
-          { "weight": 1, "cost": 3, "enchantments": [ { "id": "AEP_CARRY_MORE" } ] }
+          { "weight": 1, "cost": 3, "enchantments": [ { "id": "AEP_CARRY_MORE" } ] },
+          { "weight": 1, "cost": 5, "enchantments": [ { "id": "AEP_SAP_LIFE" } ] },
+          { "weight": 1, "cost": 1, "enchantments": [ { "id": "AEP_FUN" } ] }
         ]
       },
       {
@@ -56,14 +58,23 @@
         "min_count": 1,
         "max_count": 3,
         "effects": [
+          { "weight": 1, "cost": -2, "enchantments": [ { "id": "AEP_HUNGER" } ] },
+          { "weight": 1, "cost": -2, "enchantments": [ { "id": "AEP_THIRST" } ] },
+          { "weight": 1, "cost": -1, "enchantments": [ { "id": "AEP_SMOKE" } ] },
+          { "weight": 1, "cost": -5, "enchantments": [ { "id": "AEP_EVIL" } ] },
+          { "weight": 1, "cost": -3, "enchantments": [ { "id": "AEP_SCHIZO" } ] },
+          { "weight": 1, "cost": -5, "enchantments": [ { "id": "AEP_RADIOACTIVE" } ] },
+          { "weight": 1, "cost": -3, "enchantments": [ { "id": "AEP_MUTAGENIC" } ] },
+          { "weight": 1, "cost": -5, "enchantments": [ { "id": "AEP_ATTENTION" } ] },
           { "weight": 1, "cost": -2, "enchantments": [ { "id": "AEP_STR_DOWN" } ] },
           { "weight": 1, "cost": -2, "enchantments": [ { "id": "AEP_DEX_DOWN" } ] },
           { "weight": 1, "cost": -2, "enchantments": [ { "id": "AEP_INT_DOWN" } ] },
           { "weight": 1, "cost": -2, "enchantments": [ { "id": "AEP_PER_DOWN" } ] },
           { "weight": 1, "cost": -5, "enchantments": [ { "id": "AEP_ALL_DOWN" } ] },
           { "weight": 1, "cost": -4, "enchantments": [ { "id": "AEP_SPEED_DOWN" } ] },
-          { "weight": 1, "cost": -5, "enchantments": [ { "id": "AEP_EVIL" } ] },
-          { "weight": 1, "cost": -1, "enchantments": [ { "id": "AEP_SMOKE" } ] }
+          { "weight": 1, "cost": -3, "enchantments": [ { "id": "AEP_FORCE_TELEPORT" } ] },
+          { "weight": 1, "cost": -2, "enchantments": [ { "id": "AEP_MOVEMENT_NOISE" } ] },
+          { "weight": 1, "cost": -1, "enchantments": [ { "id": "AEP_SICK" } ] },
         ]
       },
       {
@@ -146,5 +157,1019 @@
       { "postfix": "of death", "weight": 1 },
       { "postfix": "of horror", "weight": 1 }
     ]
-  }
+  },
+  {
+    "type": "relicgen",
+    "id": "wriggling",
+    "//": "These artifacts are not power capped in any sense",
+    "min_power": 1,
+    "max_power": 1,
+    "effects": [
+      {
+        "//": "Passive Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_SPEED_UP" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_SNAKES" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_FUN" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+      {
+        "//": "Passive Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_DEX_DOWN" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_FORCE_TELEPORT" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_SICK" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+      {
+        "//": "Active Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_TELEPORT" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_ADRENALINE" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_FUN" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+      {
+        "//": "Active Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_MUTATE" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_ATTENTION" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_VOMIT" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+    ],
+    "name_prefix": [
+      { "prefix": "wriggling", "weight": 1 }
+    ],
+    "itypes": [
+      { "itype": "relic_baseline_flesh_glob", "weight": 100 },
+    ],
+  },
+  {
+    "type": "relicgen",
+    "id": "glowing",
+    "//": "These artifacts are not power capped in any sense",
+    "min_power": 1,
+    "max_power": 1,
+    "effects": [
+      {
+        "//": "Passive Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_INT_UP" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_GLOW" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_CLAIRVOYANCE" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+      {
+        "//": "Passive Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_RADIOACTIVE" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_MUTAGENIC" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_ATTENTION" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+      {
+        "//": "Active Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_LIGHT" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_LIGHT" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_LIGHT" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+      {
+        "//": "Active Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_ATTENTION" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_TELEGLOW" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_FLASH" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_SHADOWS" } ] },
+        ]
+      },
+    ],
+    "name_prefix": [
+      { "prefix": "glowing", "weight": 1 }
+    ],
+    "itypes": [
+      { "itype": "relic_baseline_bronze_disc", "weight": 100 },
+      { "itype": "relic_baseline_strange_quartz", "weight": 100 },
+      { "itype": "relic_baseline_crystal_ball", "weight": 100 },
+      { "itype": "relic_baseline_tungsten_cube", "weight": 100 },
+      { "itype": "relic_baseline_death_lamp", "weight": 100 },
+    ],
+  },
+  {
+    "type": "relicgen",
+    "id": "humming",
+    "//": "These artifacts are not power capped in any sense",
+    "min_power": 1,
+    "max_power": 1,
+    "effects": [
+      {
+        "//": "Passive Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_ALL_UP" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_PSYSHIELD" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_FUN" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+      {
+        "//": "Passive Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_SCHIZO" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_PER_DOWN" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_INT_DOWN" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+      {
+        "//": "Active Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_PULSE" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_ENTRANCE" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_FUN" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+      {
+        "//": "Active Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_NOISE" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_NOISE" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_SCREAM" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_STAMINA_EMPTY" } ] },
+        ]
+      },
+    ],
+    "name_prefix": [
+      { "prefix": "humming", "weight": 1 }
+    ],
+    "itypes": [
+      { "itype": "relic_baseline_flesh_glob", "weight": 100 },
+      { "itype": "relic_baseline_strange_quartz", "weight": 100 },
+      { "itype": "relic_baseline_crystal_ball", "weight": 100 },
+    ],
+  },
+  {
+    "type": "relicgen",
+    "id": "moving",
+    "//": "These artifacts are not power capped in any sense",
+    "min_power": 1,
+    "max_power": 1,
+    "effects": [
+      {
+        "//": "Passive Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_STR_UP" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_DEX_UP" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_SPEED_UP" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+      {
+        "//": "Passive Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_HUNGER" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_PER_DOWN" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_FORCE_TELEPORT" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+      {
+        "//": "Active Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_TELEPORT" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_TELEPORT" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_MAP" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+      {
+        "//": "Active Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_PARALYZE" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_VOMIT" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_VOMIT" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+    ],
+    "name_prefix": [
+      { "prefix": "moving", "weight": 1 }
+    ],
+    "itypes": [
+      { "itype": "relic_baseline_flesh_glob", "weight": 100 },
+    ],
+  },
+  {
+    "type": "relicgen",
+    "id": "whispering",
+    "//": "These artifacts are not power capped in any sense",
+    "min_power": 1,
+    "max_power": 1,
+    "effects": [
+      {
+        "//": "Passive Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_CLAIRVOYANCE" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_STEALTH" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_INVISIBLE" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+      {
+        "//": "Passive Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_EVIL" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_SCHIZO" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_ATTENTION" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+      {
+        "//": "Active Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_FATIGUE" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_ENTRANCE" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_ENTRANCE" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+      {
+        "//": "Active Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_ATTENTION" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_SCREAM" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_SCREAM" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_SHADOWS" } ] },
+        ]
+      },
+    ],
+    "name_prefix": [
+      { "prefix": "whispering", "weight": 1 }
+    ],
+    "itypes": [
+      { "itype": "relic_baseline_flesh_glob", "weight": 100 },
+      { "itype": "relic_baseline_death_lamp", "weight": 100 },
+      { "itype": "relic_baseline_serpentine_ring", "weight": 100 },
+      { "itype": "relic_baseline_wavering_scarf", "weight": 100 },
+      { "itype": "relic_baseline_chiral_vambrace", "weight": 100 }
+    ],
+  },
+  {
+    "type": "relicgen",
+    "id": "breathing",
+    "//": "These artifacts are not power capped in any sense",
+    "min_power": 1,
+    "max_power": 1,
+    "effects": [
+      {
+        "//": "Passive Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_SAP_LIFE" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_CLAIRVOYANCE" } ] }
+        ]
+      },
+      {
+        "//": "Passive Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_HUNGER" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_EVIL" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_ALL_DOWN" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_SICK" } ] },
+        ]
+      },
+      {
+        "//": "Active Good",
+        "min_count": 1,
+        "max_count": 1,
+        "//2": "Should theoretically have AEA_GROWTH",
+        "effects": [
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_ADRENALINE" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_HEAL" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_ENTRANCE" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+      {
+        "//": "Active Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_MUTATE" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_ATTENTION" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_SHADOWS" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_STAMINA_EMPTY" } ] },
+        ]
+      },
+    ],
+    "name_prefix": [
+      { "prefix": "breathing", "weight": 1 }
+    ],
+    "itypes": [
+      { "itype": "relic_baseline_flesh_glob", "weight": 100 },
+      { "itype": "relic_baseline_death_lamp", "weight": 100 },
+    ],
+  },
+  {
+    "type": "relicgen",
+    "id": "dead",
+    "//": "These artifacts are not power capped in any sense",
+    "min_power": 1,
+    "max_power": 1,
+    "effects": [
+      {
+        "//": "Passive Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_INVISIBLE" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_CLAIRVOYANCE" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_SAP_LIFE" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+      {
+        "//": "Passive Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_HUNGER" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_EVIL" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_ALL_DOWN" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_SICK" } ] },
+        ]
+      },
+      {
+        "//": "Active Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_BLOOD" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_HURTALL" } ] },
+          { "weight": 2, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+      {
+        "//": "Active Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_PAIN" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_SHADOWS" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_DIM" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_VOMIT" } ] },
+        ]
+      },
+    ],
+    "name_prefix": [
+      { "prefix": "dead", "weight": 1 }
+    ],
+    "itypes": [
+      { "itype": "relic_baseline_flesh_glob", "weight": 100 },
+      { "itype": "relic_baseline_serpentine_ring", "weight": 100 },
+    ],
+  },
+  {
+    "type": "relicgen",
+    "id": "itchy",
+    "//": "These artifacts are not power capped in any sense",
+    "min_power": 1,
+    "max_power": 1,
+    "effects": [
+      {
+        "//": "Passive Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_DEX_UP" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_SPEED_UP" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_PSYSHIELD" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_FUN" } ] },
+        ]
+      },
+      {
+        "//": "Passive Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_RADIOACTIVE" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_MUTAGENIC" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_SICK" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+      {
+        "//": "Active Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_ADRENALINE" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_BLOOD" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_HEAL" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_BUGS" } ] },
+        ]
+      },
+      {
+        "//": "Active Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_RADIATION" } ] },
+          { "weight": 2, "cost": 0, "active_effects": [ { "id": "AEA_PAIN" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_VOMIT" } ] },
+        ]
+      },
+    ],
+    "name_prefix": [
+      { "prefix": "itchy", "weight": 1 }
+    ],
+    "itypes": [
+      { "itype": "relic_baseline_gordian_knot", "weight": 100 },
+      { "itype": "relic_baseline_wavering_scarf", "weight": 100 },
+      { "itype": "relic_baseline_chiral_vambrace", "weight": 100 }
+    ],
+  },
+  {
+    "type": "relicgen",
+    "id": "glittering",
+    "//": "These artifacts are not power capped in any sense",
+    "min_power": 1,
+    "max_power": 1,
+    "effects": [
+      {
+        "//": "Passive Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 2, "cost": 0, "enchantments": [ { "id": "AEP_INT_UP" } ] },
+          { "weight": 2, "cost": 0, "enchantments": [ { "id": "AEP_GLOW" } ] },
+        ]
+      },
+      {
+        "//": "Passive Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_SMOKE" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_ATTENTION" } ] },
+          { "weight": 2, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+      {
+        "//": "Active Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_MAP" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_LIGHT" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_CONFUSED" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_ENTRANCE" } ] },
+        ]
+      },
+      {
+        "//": "Active Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_RADIATION" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_MUTATE" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_ATTENTION" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_FLASH" } ] },
+        ]
+      },
+    ],
+    "name_prefix": [
+      { "prefix": "glittering", "weight": 1 }
+    ],
+    "itypes": [
+      { "itype": "relic_baseline_strange_quartz", "weight": 100 },
+      { "itype": "relic_baseline_crystal_ball", "weight": 100 },
+    ],
+  },
+  {
+    "type": "relicgen",
+    "id": "electric",
+    "//": "These artifacts are not power capped in any sense",
+    "min_power": 1,
+    "max_power": 1,
+    "effects": [
+      {
+        "//": "Passive Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_RESIST_ELECTRICITY" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_DEX_UP" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_SPEED_UP" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_PSYSHIELD" } ] },
+        ]
+      },
+      {
+        "//": "Passive Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_THIRST" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_SMOKE" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_STR_DOWN" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+      {
+        "//": "Active Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_STORM" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_ADRENLINE" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_LIGHT" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_FUN" } ] },
+        ]
+      },
+      {
+        "//": "Active Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_PAIN" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_PARALYZE" } ] },
+          { "weight": 2, "cost": 0, "active_effects": [ { "id": "AEA_FLASH" } ] },
+        ]
+      },
+    ],
+    "name_prefix": [
+      { "prefix": "electric", "weight": 1 }
+    ],
+    "itypes": [
+      { "itype": "relic_baseline_strange_quartz", "weight": 100 },
+      { "itype": "relic_baseline_crystal_ball", "weight": 100 },
+      { "itype": "relic_baseline_tungsten_cube", "weight": 100 },
+    ],
+  },
+  {
+    "type": "relicgen",
+    "id": "slimy",
+    "//": "These artifacts are not power capped in any sense",
+    "min_power": 1,
+    "max_power": 1,
+    "effects": [
+      {
+        "//": "Passive Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_SNAKES" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_STEALTH" } ] },
+          { "weight": 2, "cost": 0, "enchantments": [ { "id": "AEP_SAP_LIFE" } ] },
+        ]
+      },
+      {
+        "//": "Passive Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_THIRST" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_DEX_DOWN" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_SPEED_DOWN" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_SICK" } ] },
+        ]
+      },
+      {
+        "//": "Active Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 2, "cost": 0, "active_effects": [ { "id": "AEA_BLOOD" } ] },
+          { "weight": 2, "cost": 0, "active_effects": [ { "id": "AEA_ACIDBALL" } ] },
+        ]
+      },
+      {
+        "//": "Active Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 2, "cost": 0, "active_effects": [ { "id": "AEA_MUTATE" } ] },
+          { "weight": 2, "cost": 0, "active_effects": [ { "id": "AEA_VOMIT" } ] },
+        ]
+      },
+    ],
+    "name_prefix": [
+      { "prefix": "slimy", "weight": 1 }
+    ],
+    "itypes": [
+      { "itype": "relic_baseline_flesh_glob", "weight": 100 },
+    ],
+  },
+  {
+    "type": "relicgen",
+    "id": "engraved",
+    "//": "These artifacts are not power capped in any sense",
+    "min_power": 1,
+    "max_power": 1,
+    "effects": [
+      {
+        "//": "Passive Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_CLAIRVOYANCE" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_INVISIBLE" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_PSYSHIELD" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_SAP_LIFE" } ] },
+        ]
+      },
+      {
+        "//": "Passive Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_EVIL" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_ATTENTION" } ] },
+          { "weight": 2, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+      {
+        "//": "Active Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 2, "cost": 0, "active_effects": [ { "id": "AEA_FATIGUE" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_TELEPORT" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_HEAL" } ] },
+        ]
+      },
+      {
+        "//": "Active Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 2, "cost": 0, "active_effects": [ { "id": "AEA_ATTENTION" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_TELEGLOW" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_DIM" } ] },
+        ]
+      },
+    ],
+    "name_prefix": [
+      { "prefix": "engraved", "weight": 1 }
+    ],
+    "itypes": [
+      { "itype": "relic_baseline_bronze_disc", "weight": 100 },
+      { "itype": "relic_baseline_strange_quartz", "weight": 100 },
+      { "itype": "relic_baseline_crystal_ball", "weight": 100 },
+      { "itype": "relic_baseline_tungsten_cube", "weight": 100 },
+      { "itype": "relic_baseline_spiral_rod", "weight": 100 },
+      { "itype": "relic_baseline_golden_needle", "weight": 100 },
+      { "itype": "relic_baseline_stone_beads", "weight": 100 },
+      { "itype": "relic_baseline_chiral_vambrace", "weight": 100 }
+    ],
+  },
+  {
+    "type": "relicgen",
+    "id": "crackling",
+    "//": "These artifacts are not power capped in any sense",
+    "min_power": 1,
+    "max_power": 1,
+    "effects": [
+      {
+        "//": "Passive Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 2, "cost": 0, "enchantments": [ { "id": "AEP_RESIST_ELECTRICITY" } ] },
+          { "weight": 2, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+      {
+        "//": "Passive Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_SMOKE" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_RADIOACTIVE" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_MOVEMENT_NOISE" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+      {
+        "//": "Active Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_STORM" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_FIREBALL" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_PULSE" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+      {
+        "//": "Active Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_PAIN" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_PARALYZE" } ] },
+          { "weight": 2, "cost": 0, "active_effects": [ { "id": "AEA_NOISE" } ] },
+        ]
+      },
+    ],
+    "name_prefix": [
+      { "prefix": "crackling", "weight": 1 }
+    ],
+    "itypes": [
+      { "itype": "relic_baseline_bronze_disc", "weight": 100 },
+      { "itype": "relic_baseline_strange_quartz", "weight": 100 },
+      { "itype": "relic_baseline_crystal_ball", "weight": 100 },
+      { "itype": "relic_baseline_tungsten_cube", "weight": 100 },
+    ],
+  },
+  {
+    "type": "relicgen",
+    "id": "warm",
+    "//": "These artifacts are not power capped in any sense",
+    "min_power": 1,
+    "max_power": 1,
+    "effects": [
+      {
+        "//": "Passive Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_STR_UP" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_GLOW" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_FUN" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+      {
+        "//": "Passive Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_SMOKE" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_RADIOACTIVE" } ] },
+          { "weight": 2, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+      {
+        "//": "Active Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 3, "cost": 0, "active_effects": [ { "id": "AEA_FIREBALL" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_LIGHT" } ] },
+        ]
+      },
+      {
+        "//": "Active Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 2, "cost": 0, "active_effects": [ { "id": "AEA_FIRESTORM" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_TELEGLOW" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+    ],
+    "name_prefix": [
+      { "prefix": "warm", "weight": 1 }
+    ],
+    "itypes": [
+      { "itype": "relic_baseline_bronze_disc", "weight": 100 },
+      { "itype": "relic_baseline_strange_quartz", "weight": 100 },
+      { "itype": "relic_baseline_crystal_ball", "weight": 100 },
+      { "itype": "relic_baseline_tungsten_cube", "weight": 100 },
+      { "itype": "relic_baseline_death_lamp", "weight": 100 },
+      { "itype": "relic_baseline_stone_beads", "weight": 100 },
+    ],
+  },
+  {
+    "type": "relicgen",
+    "id": "rattling",
+    "//": "These artifacts are not power capped in any sense",
+    "min_power": 1,
+    "max_power": 1,
+    "effects": [
+      {
+        "//": "Passive Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_DEX_UP" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_SPEED_UP" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_SNAKES" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_CARRY_MORE" } ] },
+        ]
+      },
+      {
+        "//": "Passive Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_ATTENTION" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_INT_DOWN" } ] },
+          { "weight": 2, "cost": 0, "enchantments": [ { "id": "AEP_MOVEMENT_NOISE" } ] },
+        ]
+      },
+      {
+        "//": "Active Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_BLOOD" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_PULSE" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_BUGS" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+      {
+        "//": "Active Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_PAIN" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_ATTENTION" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_NOISE" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+    ],
+    "name_prefix": [
+      { "prefix": "rattling", "weight": 1 }
+    ],
+    "itypes": [
+      { "itype": "relic_baseline_flesh_glob", "weight": 100 },
+      { "itype": "relic_baseline_bronze_disc", "weight": 100 },
+      { "itype": "relic_baseline_tungsten_cube", "weight": 100 },
+      { "itype": "relic_baseline_serpentine_ring", "weight": 100 },
+      { "itype": "relic_baseline_chiral_vambrace", "weight": 100 }
+    ],
+  },
+  {
+    "type": "relicgen",
+    "id": "scaled",
+    "//": "These artifacts are not power capped in any sense",
+    "min_power": 1,
+    "max_power": 1,
+    "effects": [
+      {
+        "//": "Passive Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 3, "cost": 0, "enchantments": [ { "id": "AEP_SNAKES" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_STEALTH" } ] },
+        ]
+      },
+      {
+        "//": "Passive Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_THIRST" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_MUTAGENIC" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_SPEED_DOWN" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+      {
+        "//": "Active Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_ADRENALINE" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_BUGS" } ] },
+          { "weight": 2, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+      {
+        "//": "Active Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_MUTATE" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_SCREAM" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_DIM" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+    ],
+    "name_prefix": [
+      { "prefix": "scaled", "weight": 1 }
+    ],
+    "itypes": [
+      { "itype": "relic_baseline_serpentine_ring", "weight": 100 },
+    ],
+  },
+  {
+    "type": "relicgen",
+    "id": "fractal",
+    "//": "These artifacts are not power capped in any sense",
+    "min_power": 1,
+    "max_power": 1,
+    "effects": [
+      {
+        "//": "Passive Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 2, "cost": 0, "enchantments": [ { "id": "AEP_ALL_UP" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_CLAIRVOYANCE" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_PSYSHIELD" } ] }
+        ]
+      },
+      {
+        "//": "Passive Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_SCHIZO" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_ATTENTION" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_FORCE_TELEPORT" } ] },
+          { "weight": 1, "cost": 0, "enchantments": [ { "id": "AEP_NULL" } ] },
+        ]
+      },
+      {
+        "//": "Active Good",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_STORM" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_FATIGUE" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_TELEPORT" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_FUN" } ] },
+        ]
+      },
+      {
+        "//": "Active Bad",
+        "min_count": 1,
+        "max_count": 1,
+        "effects": [
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_RADIATION" } ] },
+          { "weight": 1, "cost": 0, "active_effects": [ { "id": "AEA_MUTATE"} ] },
+          { "weight": 2, "cost": 0, "active_effects": [ { "id": "AEA_TELEGLOW" } ] },
+        ]
+      },
+    ],
+    "name_prefix": [
+      { "prefix": "fractal", "weight": 1 }
+    ],
+    "itypes": [
+      { "itype": "relic_baseline_strange_quartz", "weight": 100 },
+      { "itype": "relic_baseline_gordian_knot", "weight": 100 },
+      { "itype": "relic_baseline_crystal_ball", "weight": 100 },
+      { "itype": "relic_baseline_chiral_vambrace", "weight": 100 }
+    ],
+  },
 ]

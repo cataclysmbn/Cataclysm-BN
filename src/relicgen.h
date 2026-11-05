@@ -4,10 +4,12 @@
 #include <vector>
 
 #include "coordinates.h"
+#include "enums.h"
 #include "json_source_location.h"
 #include "magic/magic.h"
 #include "enchantments/enchantment.h"
 #include "translations.h"
+#include "type_id.h"
 #include "relic.h"
 #include "weighted_list.h"
 
@@ -83,5 +85,6 @@ class relicgen
 
         detached_ptr<item> generate_relic() const;
         relic generate_relicdata() const;
+        static const relicgen_id relicgen_from_natural( artifact_natural_property prop );
 };
 

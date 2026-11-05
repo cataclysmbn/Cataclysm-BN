@@ -22,6 +22,7 @@
 #include "overmap/overmap.h"
 #include "sol/sol.hpp"
 #include "sounds.h"
+#include "relicgen.h"
 #include "trap.h"
 #include "type_id.h"
 #include "units_angle.h"
@@ -404,7 +405,10 @@ void cata::detail::reg_map( sol::state &lua )
         DOC( "OBSOLETE" );
         luna::set_fx( ut, "spawn_natural_artifact_at", []( map & m, const tripoint_bub_ms & p,
         sol::optional<std::string> property ) -> void {
-            m.spawn_artifact( p, relicgen_id( "default" ) );
+            const auto prop = property && !property->empty()
+            ? io::string_to_enum<artifact_natural_property>( *property )
+            : ARTPROP_NULL;
+            m.spawn_artifact( p, relicgen::relicgen_from_natural( prop ) );
         } );
 
         DOC( "Creates a new corpse at a position on the map. You can skip `Opt` ones by omitting them or passing `nil`. `MtypeId` specifies which monster's body it is, `TimePoint` indicates when it died, `string` gives it a custom name, and `int` determines the revival time if the monster has the `REVIVES` flag." );

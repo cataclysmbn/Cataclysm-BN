@@ -251,5 +251,10 @@
     "type": "enchantment",
     "id": "AEP_FUN",
     "ench_effects": [ { "effect": "artifact_fun", "intensity": 1 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_NULL",
+    "//": "Yes this is suppost to be empty deal with it"
   }
 ]

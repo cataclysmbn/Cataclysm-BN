@@ -233,3 +233,45 @@ std::vector<relicgen> relicgen::get_all()
     return all_relicgens.get_all();
 }
 
+const relicgen_id relicgen::relicgen_from_natural( artifact_natural_property prop )
+{
+    switch( prop ) {
+        case ARTPROP_WRIGGLING:
+            return relicgen_id( "wriggling" );
+        case ARTPROP_GLOWING:
+            return relicgen_id( "glowing" );
+        case ARTPROP_HUMMING:
+            return relicgen_id( "humming" );
+        case ARTPROP_MOVING:
+            return relicgen_id( "moving" );
+        case ARTPROP_WHISPERING:
+            return relicgen_id( "whispering" );
+        case ARTPROP_BREATHING:
+            return relicgen_id( "breathing" );
+        case ARTPROP_DEAD:
+            return relicgen_id( "dead" );
+        case ARTPROP_ITCHY:
+            return relicgen_id( "itchy" );
+        case ARTPROP_GLITTERING:
+            return relicgen_id( "glittering" );
+        case ARTPROP_ELECTRIC:
+            return relicgen_id( "electric" );
+        case ARTPROP_SLIMY:
+            return relicgen_id( "slimy" );
+        case ARTPROP_ENGRAVED:
+            return relicgen_id( "engraved" );
+        case ARTPROP_CRACKLING:
+            return relicgen_id( "crackling" );
+        case ARTPROP_WARM:
+            return relicgen_id( "warm" );
+        case ARTPROP_RATTLING:
+            return relicgen_id( "rattling" );
+        case ARTPROP_SCALED:
+            return relicgen_id( "scaled" );
+        case ARTPROP_FRACTAL:
+            return relicgen_id( "fractal" );
+        case ARTPROP_NULL:
+        case ARTPROP_MAX:
+            return relicgen_id( "default" );
+    }
+}

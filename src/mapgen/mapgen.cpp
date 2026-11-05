@@ -64,6 +64,7 @@
 #include "point_float.h"
 #include "profile.h"
 #include "regional_settings.h"
+#include "relicgen.h"
 #include "rng.h"
 #include "string_formatter.h"
 #include "string_id.h"
@@ -2162,17 +2163,19 @@ public:
 /// Place an artifact.
 class jmapgen_artifact: public jmapgen_piece {
 public:
-    bool natural = false;
     relicgen_id relic_type;
     jmapgen_int chance;
 
     explicit jmapgen_artifact(const JsonObject& jsi): chance(jsi, "chance", 100, 100) {
         repeat = jmapgen_int(jsi, "repeat", 1, 1);
         optional(jsi, false, "relic_type", relic_type, relicgen_id("default"));
-        // For when natural spawns are restored
-        // if( jsi.has_bool("natural") && jsi.get_bool("natural") ) {
-        //     relic_type = relicgen_id("natural");
-        // }
+        // Legacy natural relic spawns
+        if (jsi.has_member("property")) {
+            jsi.show_warning(
+                "Member `property` is obsolete, directly used the relicgen type instead");
+            auto property = jsi.get_enum_value<artifact_natural_property>("property");
+            relic_type = relicgen::relicgen_from_natural(property);
+        }
     }
 
     void apply(const mapgendata& dat, const jmapgen_int& x, const jmapgen_int& y) const override {

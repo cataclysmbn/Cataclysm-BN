@@ -68,6 +68,7 @@
 #include "point.h"
 #include "popup.h"
 #include "recipe_dictionary.h"
+#include "relicgen.h"
 #include "rng.h"
 #include "sounds.h"
 #include "stomach.h"
@@ -1750,7 +1751,7 @@ void debug()
                 artifact_natural_property prop = static_cast<artifact_natural_property>( rng( ARTPROP_NULL + 1,
                                                  ARTPROP_MAX - 1 ) );
                 m.create_anomaly( *center, prop );
-                m.spawn_artifact( *center, relicgen_id( "default" ) );
+                m.spawn_artifact( *center, relicgen::relicgen_from_natural( prop ) );
             }
             break;
 
