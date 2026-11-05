@@ -72,7 +72,8 @@
       [ "antifungal", 1 ],
       [ "antiparasitic", 2 ],
       [ "diazepam", 1 ],
-      [ "lsd", 6 ]
+      [ "lsd", 6 ],
+      { "item": "dry_mushroom", "prob": 6, "count": [ 2, 5 ], "custom-flags": [ "HIDDEN_HALLU" ] }
     ]
   },
   {
