@@ -27,6 +27,8 @@
 #include "creature.h"
 #include "creature_tracker.h"
 #include "debug.h"
+#include "digital_media.h"
+#include "digital_recipes.h"
 #include "drop_token.h"
 #include "effect.h"
 #include "enum_conversions.h"
@@ -2948,6 +2950,16 @@ void item::deserialize( JsonIn &jsin )
         kills = std::make_unique<kill_tracker>( false );
         data.read( "item_kill_tracker", kills );
     }
+
+    if( has_flag( flag_id( "GENOME_DRIVE" ) ) && !is_digital_file( *this ) ) {
+        migrate_legacy_digital_media( *this );
+    }
+    for( const auto &[key, value] : type->item_vars ) {
+        if( key.starts_with( "digital_" ) && !has_var( key ) ) {
+            set_var( key, value );
+        }
+    }
+    initialize_digital_recipe_file( *this );
 
     if( data.has_member( "id" ) ) {
         safe_reference<item>::id_type id;

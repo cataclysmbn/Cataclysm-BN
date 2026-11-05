@@ -1,5 +1,28 @@
 [
   {
+    "id": "DIGITAL_MUSIC",
+    "type": "json_flag",
+    "context": [ "GENERIC" ]
+  },
+  {
+    "id": "DIGITAL",
+    "type": "json_flag",
+    "context": [ "GENERIC", "BOOK", "TOOL" ],
+    "info": "This is a <info>digital file</info>.  Install it on a powered reader to use it."
+  },
+  {
+    "id": "DIGITAL_STORAGE",
+    "type": "json_flag",
+    "context": [ "GENERIC", "TOOL" ],
+    "info": "This device can store <info>digital files</info>."
+  },
+  {
+    "id": "DIGITAL_READER",
+    "type": "json_flag",
+    "context": [ "TOOL" ],
+    "info": "This device can read installed <info>digital files</info> while powered."
+  },
+  {
     "id": "GRAB",
     "type": "json_flag",
     "context": [  ]
@@ -783,6 +806,7 @@
   {
     "id": "MC_SCIENCE_STUFF",
     "type": "json_flag",
+    "tag": "(XEDRA)",
     "context": [ "TOOL", "TOOL_ARMOR" ]
   },
   {
@@ -803,6 +827,7 @@
   {
     "id": "MC_ENCRYPTED",
     "type": "json_flag",
+    "tag": "(encrypted)",
     "context": [ "TOOL", "TOOL_ARMOR" ]
   },
   {

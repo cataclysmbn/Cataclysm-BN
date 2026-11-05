@@ -41,6 +41,8 @@
     "ammo": "battery",
     "charges_per_use": 5,
     "use_action": "CAMERA",
+    "item_vars": { "digital_reader_ports": "SD" },
+    "flags": [ "DIGITAL_STORAGE", "DIGITAL_READER" ],
     "magazines": [ [ "battery", [ "light_plus_battery_cell", "light_battery_cell", "light_minus_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
@@ -63,7 +65,8 @@
     "max_charges": 200,
     "charges_per_use": 5,
     "use_action": [ "CAMERA", "TOGGLE_UPS_CHARGING" ],
-    "flags": [ "CAMERA_PRO", "ALWAYS_TWOHAND", "RECHARGE", "NO_UNLOAD", "NO_RELOAD" ]
+    "item_vars": { "digital_reader_ports": "SD" },
+    "flags": [ "CAMERA_PRO", "ALWAYS_TWOHAND", "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ]
   },
   {
     "id": "cell_phone",
@@ -143,7 +146,7 @@
     "ammo": "battery",
     "initial_charges": 500,
     "max_charges": 700,
-    "flags": [ "WATCH", "ALARMCLOCK", "RECHARGE", "NO_UNLOAD", "NO_RELOAD" ],
+    "flags": [ "WATCH", "ALARMCLOCK", "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ],
     "relic_data": { "passive_effects": [ { "id": "DRONE_CAM" } ] }
   },
   {
@@ -152,9 +155,17 @@
     "type": "TOOL",
     "name": { "str": "control laptop - lit screen", "str_pl": "control laptops - lit screen" },
     "power_draw": 5000,
-    "revert_to": "laptop",
-    "use_action": { "target": "control_laptop", "msg": "You stop lighting up the screen.", "menu_text": "Turn off", "type": "transform" },
-    "flags": [ "WATCH", "LIGHT_20", "TRADER_AVOID", "RECHARGE", "NO_UNLOAD", "NO_RELOAD" ],
+    "revert_to": "control_laptop",
+    "use_action": [
+      "EINKTABLETPC",
+      {
+        "target": "control_laptop",
+        "msg": "You stop lighting up the screen.",
+        "menu_text": "Turn off",
+        "type": "transform"
+      }
+    ],
+    "flags": [ "WATCH", "LIGHT_20", "TRADER_AVOID", "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ],
     "relic_data": { "passive_effects": [ { "id": "DRONE_CAM" } ] }
   },
   {
@@ -164,8 +175,8 @@
     "name": { "str": "control laptop - music", "str_pl": "control laptops - music" },
     "power_draw": 7000,
     "revert_to": "control_laptop",
-    "use_action": [ "MP3_ON" ],
-    "flags": [ "WATCH", "TRADER_AVOID", "RECHARGE", "NO_UNLOAD", "NO_RELOAD" ],
+    "use_action": [ "MP3_ON", "EINKTABLETPC" ],
+    "flags": [ "WATCH", "TRADER_AVOID", "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ],
     "relic_data": { "passive_effects": [ { "id": "DRONE_CAM" } ] }
   },
   {
@@ -225,6 +236,7 @@
       "EINKTABLETPC",
       "RADGLOVE"
     ],
+    "item_vars": { "digital_content": "digital_content_reader", "digital_reader_ports": "USB,SD,HARD_DRIVE" },
     "flags": [
       "WATCH",
       "ALARMCLOCK",
@@ -237,7 +249,9 @@
       "NO_UNLOAD",
       "NO_RELOAD",
       "THERMOMETER",
-      "FANCY"
+      "FANCY",
+      "DIGITAL_STORAGE",
+      "DIGITAL_READER"
     ],
     "coverage": 15,
     "symbol": "[",
@@ -251,7 +265,7 @@
     "description": "This wrist computer is playing music, steadily raising your morale.  You can't hear anything else while you're listening.",
     "power_draw": 5000,
     "revert_to": "wrist_comp_budget",
-    "use_action": [ "MP3_ON" ],
+    "use_action": [ "MP3_ON", "EINKTABLETPC" ],
     "flags": [
       "WATCH",
       "WATER_FRIENDLY",
@@ -265,7 +279,9 @@
       "NO_UNLOAD",
       "NO_RELOAD",
       "THERMOMETER",
-      "FANCY"
+      "FANCY",
+      "DIGITAL_STORAGE",
+      "DIGITAL_READER"
     ],
     "magazine_well": "250 ml"
   },
@@ -277,6 +293,7 @@
     "power_draw": 1500,
     "revert_to": "wrist_comp_budget",
     "use_action": [
+      "EINKTABLETPC",
       {
         "target": "wrist_comp_budget",
         "msg": "You deactivate the flashlight.",
@@ -299,7 +316,9 @@
       "NO_UNLOAD",
       "NO_RELOAD",
       "THERMOMETER",
-      "FANCY"
+      "FANCY",
+      "DIGITAL_STORAGE",
+      "DIGITAL_READER"
     ]
   },
   {
@@ -353,7 +372,9 @@
       "NO_UNLOAD",
       "NO_RELOAD",
       "THERMOMETER",
-      "FANCY"
+      "FANCY",
+      "DIGITAL_STORAGE",
+      "DIGITAL_READER"
     ],
     "relic_data": { "passive_effects": [ { "id": "DRONE_CAM" } ] },
     "coverage": 15,
@@ -368,7 +389,7 @@
     "description": "This wrist computer is playing music, steadily raising your morale.  You can't hear anything else while you're listening.",
     "power_draw": 5000,
     "revert_to": "wrist_comp_control",
-    "use_action": [ "MP3_ON" ],
+    "use_action": [ "MP3_ON", "EINKTABLETPC" ],
     "magazine_well": "250 ml"
   },
   {
@@ -379,6 +400,7 @@
     "power_draw": 1500,
     "revert_to": "wrist_comp_control",
     "use_action": [
+      "EINKTABLETPC",
       {
         "target": "wrist_comp_control",
         "msg": "You deactivate the flashlight app.",
@@ -457,7 +479,8 @@
       },
       "TOGGLE_UPS_CHARGING"
     ],
-    "flags": [ "WATCH", "RECHARGE", "NO_UNLOAD", "NO_RELOAD" ]
+    "item_vars": { "digital_content": "digital_content_reader", "digital_reader_ports": "USB,HARD_DRIVE" },
+    "flags": [ "WATCH", "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ]
   },
   {
     "id": "eink_tablet_pc_music",
@@ -467,7 +490,7 @@
     "description": "This e-ink tablet PC is playing music, steadily raising your morale.  You can't hear anything else while you're listening.",
     "power_draw": 2500,
     "revert_to": "eink_tablet_pc",
-    "use_action": [ "MP3_ON" ]
+    "use_action": [ "MP3_ON", "EINKTABLETPC" ]
   },
   {
     "id": "electrohack",
@@ -624,7 +647,8 @@
       },
       "TOGGLE_UPS_CHARGING"
     ],
-    "flags": [ "WATCH", "RECHARGE", "NO_UNLOAD", "NO_RELOAD" ]
+    "item_vars": { "digital_content": "digital_content_reader", "digital_reader_ports": "USB,HARD_DRIVE" },
+    "flags": [ "WATCH", "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ]
   },
   {
     "id": "laptop_music",
@@ -633,8 +657,8 @@
     "name": { "str": "laptop computer - music", "str_pl": "laptop computers - music" },
     "power_draw": 7000,
     "revert_to": "laptop",
-    "use_action": [ "MP3_ON" ],
-    "flags": [ "WATCH", "TRADER_AVOID", "RECHARGE", "NO_UNLOAD", "NO_RELOAD" ]
+    "use_action": [ "MP3_ON", "EINKTABLETPC" ],
+    "flags": [ "WATCH", "TRADER_AVOID", "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ]
   },
   {
     "id": "laptop_screen_lit",
@@ -643,8 +667,11 @@
     "name": { "str": "laptop computer - lit screen", "str_pl": "laptop computers - lit screen" },
     "power_draw": 5000,
     "revert_to": "laptop",
-    "use_action": { "target": "laptop", "msg": "You stop lighting up the screen.", "menu_text": "Turn off", "type": "transform" },
-    "flags": [ "WATCH", "LIGHT_20", "TRADER_AVOID", "RECHARGE", "NO_UNLOAD", "NO_RELOAD" ]
+    "use_action": [
+      "EINKTABLETPC",
+      { "target": "laptop", "msg": "You stop lighting up the screen.", "menu_text": "Turn off", "type": "transform" }
+    ],
+    "flags": [ "WATCH", "LIGHT_20", "TRADER_AVOID", "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ]
   },
   {
     "id": "mp3",
@@ -662,7 +689,8 @@
     "ammo": "battery",
     "initial_charges": 160,
     "max_charges": 200,
-    "flags": [ "RECHARGE", "NO_UNLOAD", "NO_RELOAD" ],
+    "flags": [ "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ],
+    "item_vars": { "digital_content": "digital_builtin_music" },
     "use_action": [
       {
         "target": "mp3_on",
@@ -762,6 +790,7 @@
     "max_charges": 200,
     "charges_per_use": 1,
     "use_action": [
+      "EINKTABLETPC",
       {
         "target": "smart_phone_flashlight",
         "msg": "You activate the flashlight app.",
@@ -799,7 +828,8 @@
       "PORTABLE_GAME",
       "TOGGLE_UPS_CHARGING"
     ],
-    "flags": [ "WATCH", "ALARMCLOCK", "RECHARGE", "NO_UNLOAD", "NO_RELOAD" ]
+    "item_vars": { "digital_content": "digital_content_reader", "digital_reader_ports": "SD" },
+    "flags": [ "WATCH", "ALARMCLOCK", "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ]
   },
   {
     "id": "smart_phone_music",
@@ -809,8 +839,8 @@
     "description": "This phone is playing music, steadily raising your morale.  You can't hear anything else while you're listening.",
     "power_draw": 7000,
     "revert_to": "smart_phone",
-    "use_action": [ "MP3_ON" ],
-    "flags": [ "WATCH", "TRADER_AVOID", "ALARMCLOCK", "RECHARGE", "NO_UNLOAD", "NO_RELOAD" ],
+    "use_action": [ "EINKTABLETPC", "MP3_ON" ],
+    "flags": [ "WATCH", "TRADER_AVOID", "ALARMCLOCK", "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ],
     "magazine_well": "250 ml"
   },
   {
@@ -820,13 +850,26 @@
     "name": { "str": "smartphone - Flashlight", "str_pl": "smartphones - Flashlight" },
     "power_draw": 5000,
     "revert_to": "smart_phone",
-    "use_action": {
-      "target": "smart_phone",
-      "msg": "You deactivate the flashlight app.",
-      "menu_text": "Turn off flashlight",
-      "type": "transform"
-    },
-    "flags": [ "WATCH", "LIGHT_20", "TRADER_AVOID", "ALARMCLOCK", "RECHARGE", "NO_UNLOAD", "NO_RELOAD" ]
+    "use_action": [
+      "EINKTABLETPC",
+      {
+        "target": "smart_phone",
+        "msg": "You deactivate the flashlight app.",
+        "menu_text": "Turn off flashlight",
+        "type": "transform"
+      }
+    ],
+    "flags": [
+      "WATCH",
+      "LIGHT_20",
+      "TRADER_AVOID",
+      "ALARMCLOCK",
+      "RECHARGE",
+      "NO_UNLOAD",
+      "NO_RELOAD",
+      "DIGITAL_STORAGE",
+      "DIGITAL_READER"
+    ]
   },
   {
     "id": "afs_atomic_smartphone",
@@ -842,6 +885,7 @@
     "symbol": ";",
     "color": "light_green",
     "use_action": [
+      "EINKTABLETPC",
       {
         "target": "afs_atomic_smartphone_flashlight",
         "msg": "You activate the flashlight app.",
@@ -874,7 +918,8 @@
         "menu_text": "Listen to music"
       }
     ],
-    "flags": [ "WATCH", "ALARMCLOCK", "NO_UNLOAD", "NO_RELOAD" ]
+    "item_vars": { "digital_content": "digital_content_reader", "digital_reader_ports": "SD" },
+    "flags": [ "WATCH", "ALARMCLOCK", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ]
   },
   {
     "id": "afs_atomic_smartphone_music",
@@ -883,8 +928,8 @@
     "name": { "str": "atomic smartphone - music", "str_pl": "atomic smartphones - music" },
     "description": "This phone is playing music, steadily raising your morale.  You can't hear anything else while you're listening.",
     "revert_to": "afs_atomic_smartphone",
-    "use_action": [ "MP3_ON" ],
-    "flags": [ "WATCH", "TRADER_AVOID", "ALARMCLOCK", "NO_UNLOAD", "NO_RELOAD" ]
+    "use_action": [ "EINKTABLETPC", "MP3_ON" ],
+    "flags": [ "WATCH", "TRADER_AVOID", "ALARMCLOCK", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ]
   },
   {
     "id": "afs_atomic_smartphone_flashlight",
@@ -892,13 +937,16 @@
     "type": "TOOL",
     "name": { "str": "atomic smartphone - Flashlight", "str_pl": "atomic smartphones - Flashlight" },
     "revert_to": "afs_atomic_smartphone",
-    "use_action": {
-      "target": "afs_atomic_smartphone",
-      "msg": "You deactivate the flashlight app.",
-      "menu_text": "Turn off flashlight",
-      "type": "transform"
-    },
-    "flags": [ "WATCH", "LIGHT_25", "TRADER_AVOID", "ALARMCLOCK", "NO_UNLOAD", "NO_RELOAD" ]
+    "use_action": [
+      "EINKTABLETPC",
+      {
+        "target": "afs_atomic_smartphone",
+        "msg": "You deactivate the flashlight app.",
+        "menu_text": "Turn off flashlight",
+        "type": "transform"
+      }
+    ],
+    "flags": [ "WATCH", "LIGHT_25", "TRADER_AVOID", "ALARMCLOCK", "NO_UNLOAD", "NO_RELOAD", "DIGITAL_STORAGE", "DIGITAL_READER" ]
   },
   {
     "id": "UPS_off",
@@ -1048,7 +1096,7 @@
     "category": "electronics",
     "name": { "str": "genome sampler" },
     "looks_like": "90two",
-    "description": "A handheld device designed to extract and analyze DNA from living organisms.  If you have an empty USB drive on hand, scanning a creature with it can create a genome sample for later sequencing in a cloning vat.",
+    "description": "A handheld device designed to extract and analyze DNA from living organisms.  Scanning a creature records a genome sample file on a USB drive or unencrypted SD card for use in a genome workstation.",
     "weight": "141 g",
     "volume": "250 ml",
     "price": "10 kUSD",
@@ -1066,7 +1114,7 @@
     "category": "tools_cooking",
     "looks_like": "microcentrifuge",
     "name": { "str": "genome workstation" },
-    "description": "A medium-sized, high-tech machine with screens and sample trays.  It can scan genetic samples off USB drives, and produce DNA samples for cloning if provided with growth medium.  It can also be used as a microcentrifuge in a pinch.",
+    "description": "A medium-sized, high-tech machine with screens and sample trays.  It can read genetic sample files from USB drives, SD cards, and digital readers, and produce DNA samples for cloning if provided with growth medium.  It can also be used as a microcentrifuge in a pinch.",
     "weight": "2500 g",
     "volume": "2000 ml",
     "price": "25 USD",

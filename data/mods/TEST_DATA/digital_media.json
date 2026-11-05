@@ -1,0 +1,177 @@
+[
+  {
+    "id": "test_digital_software_media",
+    "copy-from": "usb_drive",
+    "type": "GENERIC",
+    "name": { "str": "test software drive" },
+    "item_vars": { "digital_content": "test_digital_software_content" }
+  },
+  {
+    "id": "test_digital_software_content",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [ { "item": "software_useless" } ]
+  },
+  {
+    "id": "test_digital_hard_drive",
+    "copy-from": "hard_drive",
+    "type": "GENERIC",
+    "name": { "str": "test hard drive" },
+    "item_vars": { "digital_content": "test_digital_content" }
+  },
+  {
+    "id": "test_digital_instruction",
+    "copy-from": "digital_instruction",
+    "type": "BOOK",
+    "name": { "str": "test digital lesson" },
+    "description": "A deterministic digital lesson for testing.",
+    "skill": "electronics",
+    "required_level": 0,
+    "max_level": 2,
+    "intelligence": 0,
+    "time": "1 m",
+    "fun": 1
+  },
+  {
+    "id": "test_scannable_book",
+    "copy-from": "test_digital_instruction",
+    "type": "BOOK",
+    "name": { "str": "test physical book" },
+    "weight": "100 g",
+    "volume": "100 ml",
+    "flags": [  ]
+  },
+  {
+    "id": "test_digital_media",
+    "copy-from": "usb_drive",
+    "type": "GENERIC",
+    "name": { "str": "test digital media" },
+    "item_vars": { "digital_content": "test_digital_content" }
+  },
+  {
+    "id": "test_digital_media_encrypting",
+    "copy-from": "test_digital_media",
+    "type": "GENERIC",
+    "name": { "str": "test encrypting media" },
+    "item_vars": { "digital_encryption_chance": "1" }
+  },
+  {
+    "id": "test_digital_content",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [ { "item": "test_digital_instruction" } ]
+  },
+  {
+    "type": "recipe",
+    "result": "test_soldering_iron",
+    "id_suffix": "digital_media",
+    "category": "CC_ELECTRONIC",
+    "subcategory": "CSC_ELECTRONIC_TOOLS",
+    "skill_used": "electronics",
+    "difficulty": 3,
+    "time": "1 m",
+    "autolearn": false,
+    "book_learn": [ [ "test_digital_instruction", 1 ], [ "test_scannable_book", 1 ] ],
+    "components": [ [ [ "test_rock", 1 ] ] ]
+  },
+  {
+    "id": "test_digital_action",
+    "copy-from": "software",
+    "type": "GENERIC",
+    "name": { "str": "test digital action" },
+    "description": "A file with a JSON-defined action.",
+    "container": "null",
+    "use_action": { "type": "transform", "target": "test_digital_instruction", "moves": 0, "msg": "You open the lesson." }
+  },
+  {
+    "id": "test_digital_charged_program",
+    "copy-from": "digital_hello_world",
+    "type": "TOOL",
+    "name": { "str": "test charged program" },
+    "initial_charges": 1,
+    "max_charges": 1,
+    "charges_per_use": 1
+  },
+  {
+    "id": "test_digital_multimedia_content",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [ { "item": "digital_music_collection", "charges": 9 }, { "item": "digital_camera_photo_collection" } ]
+  },
+  {
+    "id": "test_digital_multimedia_media",
+    "copy-from": "usb_drive",
+    "type": "GENERIC",
+    "name": { "str": "test multimedia drive" },
+    "item_vars": { "digital_content": "test_digital_multimedia_content" }
+  },
+  {
+    "id": "test_digital_music_collection",
+    "copy-from": "digital_collection",
+    "type": "GENERIC",
+    "name": { "str": "test music collection" },
+    "description": "Reusable music with a fixed cooldown.",
+    "extend": { "flags": [ "DIGITAL_MUSIC" ] },
+    "item_vars": { "digital_music_morale_cap": "9", "digital_music_cooldown_seconds": "60" }
+  },
+  {
+    "id": "test_digital_music_content",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [ { "item": "test_digital_music_collection", "charges": 9 } ]
+  },
+  {
+    "id": "test_digital_music_reader",
+    "type": "TOOL",
+    "name": { "str": "test music reader" },
+    "description": "A deterministic reader with music modes.",
+    "symbol": ";",
+    "color": "white",
+    "material": "plastic",
+    "weight": "1 g",
+    "volume": "1 ml",
+    "ammo": "battery",
+    "initial_charges": 20,
+    "max_charges": 20,
+    "charges_per_use": 1,
+    "item_vars": { "digital_content": "test_digital_music_content", "digital_reader_ports": "SD" },
+    "flags": [ "DIGITAL_READER", "DIGITAL_STORAGE" ],
+    "use_action": [
+      "EINKTABLETPC",
+      {
+        "type": "transform",
+        "target": "test_digital_music_reader_music",
+        "active": true,
+        "moves": 0,
+        "need_charges": 1,
+        "internal_name": "music_player"
+      }
+    ]
+  },
+  {
+    "id": "test_digital_music_reader_music",
+    "copy-from": "test_digital_music_reader",
+    "type": "TOOL",
+    "name": { "str": "test music reader playing" },
+    "revert_to": "test_digital_music_reader",
+    "use_action": [ "MP3_ON", "EINKTABLETPC" ]
+  },
+  {
+    "id": "test_digital_reference",
+    "copy-from": "digital_collection",
+    "type": "GENERIC",
+    "name": { "str": "test digital recipe reference" },
+    "description": "A reference file that supplies recipes without teaching a skill.",
+    "item_vars": { "digital_recipes": "[{\"id\":\"test_soldering_iron_digital_media\",\"skill_level\":1}]" }
+  },
+  {
+    "id": "test_digital_random_reference",
+    "copy-from": "digital_collection",
+    "type": "GENERIC",
+    "name": { "str": "test random recipe reference" },
+    "description": "A deterministic random recipe file.",
+    "item_vars": {
+      "digital_random_recipes": "{\"count\":1,\"candidates\":[\"test_soldering_iron_digital_media\"],\"min_difficulty\":3,\"max_difficulty\":3}"
+    }
+  }
+]

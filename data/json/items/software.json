@@ -166,7 +166,7 @@
     "symbol": "#",
     "container": "usb_drive",
     "description": "IF YOU ARE SEEING THIS IT IS A BUG.",
-    "flags": [ "IRREMOVABLE", "NO_DROP" ]
+    "flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ]
   },
   {
     "id": "software_useless",

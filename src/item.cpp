@@ -26,6 +26,8 @@
 #include "craft_command.h"
 #include "damage.h"
 #include "debug.h"
+#include "digital_media.h"
+#include "digital_recipes.h"
 #include "dispersion.h"
 #include "drop_token.h"
 #include "effect.h" // for weed_msg
@@ -383,6 +385,10 @@ item::item( const itype *type, time_point turn, int qty ) : type( type ),
         if( actor != nullptr ) {
             actor->on_spawned( *this );
         }
+    }
+
+    if( get_var( "digital_content" ) == "digital_builtin_music" ) {
+        initialize_digital_media( *this );
     }
 }
 
@@ -1335,6 +1341,7 @@ void item::put_in( detached_ptr<item> &&payload )
         debugmsg( "Tried to put %s inside itself", debug_name().c_str() );
         return;
     }
+    initialize_digital_recipe_file( *payload );
     contents.insert_item( std::move( payload ) );
 }
 
@@ -3390,7 +3397,8 @@ void item::book_info( std::vector<iteminfo> &info, const iteminfo_query *parts, 
 void item::container_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int /*batch*/,
                            bool /*debug*/ ) const
 {
-    if( !is_container() || !parts->test( iteminfo_parts::CONTAINER_DETAILS ) ) {
+    if( !is_container() || has_flag( flag_id( "DIGITAL_STORAGE" ) ) ||
+        !parts->test( iteminfo_parts::CONTAINER_DETAILS ) ) {
         return;
     }
 
@@ -4120,7 +4128,8 @@ void item::throw_info( std::vector < iteminfo > &info, const iteminfo_query *par
 void item::contents_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,
                           bool debug ) const
 {
-    if( contents.empty() || !parts->test( iteminfo_parts::DESCRIPTION_CONTENTS ) ) {
+    if( contents.empty() || has_flag( flag_MC_ENCRYPTED ) ||
+        !parts->test( iteminfo_parts::DESCRIPTION_CONTENTS ) ) {
         return;
     }
     const std::string space = "  ";
@@ -5323,7 +5332,7 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
             labeltext += string_format( "+%d", modamt );
         }
 
-        if( is_gun() || is_tool() || is_magazine() ) {
+        if( is_gun() || is_tool() || is_magazine() || has_flag( flag_MC_ENCRYPTED ) ) {
             maintext = labeltext;
         } else if( contents.num_item_stacks() == 1 ) {
             const item &contents_item = contents.front();
@@ -5851,6 +5860,11 @@ units::volume item::volume( bool integral ) const
 {
     if( is_null() ) {
         return 0_ml;
+    }
+
+    // Scanned books retain their physical type but need a nonzero file volume.
+    if( is_book() && is_digital_file( *this ) ) {
+        return 1_ml;
     }
 
     if( is_corpse() ) {
@@ -8202,12 +8216,19 @@ auto item::get_relic_recharge_scheme() const -> std::vector<relic_recharge>
 
 bool item::can_contain( const item &it ) const
 {
+    if( is_digital_file( it ) || has_flag( flag_id( "DIGITAL_STORAGE" ) ) ) {
+        return has_flag( flag_id( "DIGITAL_STORAGE" ) ) && is_digital_file( it );
+    }
     // TODO: Volume check
     return can_contain( *it.type );
 }
 
 bool item::can_contain( const itype &tp ) const
 {
+    const auto digital_storage = has_flag( flag_id( "DIGITAL_STORAGE" ) );
+    if( tp.has_flag( flag_id( "DIGITAL" ) ) || digital_storage ) {
+        return digital_storage && tp.has_flag( flag_id( "DIGITAL" ) );
+    }
     if( !type->container ) {
         // TODO: Tools etc.
         return false;
@@ -8231,6 +8252,9 @@ const item &item::get_contained() const
 
 bool item::spill_contents( Character &c )
 {
+    if( has_flag( flag_id( "DIGITAL_STORAGE" ) ) ) {
+        return true;
+    }
     if( !is_container() || is_container_empty() ) {
         return true;
     }
@@ -8247,6 +8271,9 @@ bool item::spill_contents( Character &c )
 
 bool item::spill_contents( const tripoint_bub_ms &pos )
 {
+    if( has_flag( flag_id( "DIGITAL_STORAGE" ) ) ) {
+        return true;
+    }
     if( !is_container() || is_container_empty() ) {
         return true;
     }
@@ -8286,7 +8313,17 @@ void item::mark_chapter_as_read( const Character &ch )
 
 std::vector<std::pair<const recipe *, int>> item::get_available_recipes( const Character &u ) const
 {
+    if( is_digital_file( *this ) && !digital_reader_for( u, *this ) ) {
+        return {};
+    }
     std::vector<std::pair<const recipe *, int>> recipe_entries;
+    if( is_digital_file( *this ) ) {
+        for( const auto &entry : digital_file_recipes( *this ) ) {
+            if( u.get_skill_level( entry.recipe->skill_used ) >= entry.skill_level ) {
+                recipe_entries.emplace_back( &*entry.recipe, entry.skill_level );
+            }
+        }
+    }
     if( is_book() ) {
         for( const book_recipe &elem : type->book->recipes ) {
             if( u.get_skill_level( elem.recipe->skill_used ) >= elem.skill_level ) {
@@ -8294,7 +8331,7 @@ std::vector<std::pair<const recipe *, int>> item::get_available_recipes( const C
             }
         }
     } else if( has_var( "EIPC_RECIPES" ) ) {
-        // See einkpc_download_memory_card() in iuse.cpp where this is set.
+        // Compatibility with tablet recipe references from older saves.
         const std::string recipes = get_var( "EIPC_RECIPES" );
         // Capture the index one past the delimiter, i.e. start of target string.
         size_t first_string_index = recipes.find_first_of( ',' ) + 1;
@@ -11614,6 +11651,9 @@ std::string item::type_name( unsigned int quantity ) const
         }
     }
 
+    if( is_book() && is_digital_file( *this ) && !type->has_flag( flag_id( "DIGITAL" ) ) ) {
+        ret_name = string_format( _( "digital copy of %s" ), ret_name );
+    }
     return ret_name;
 }
 

@@ -9,7 +9,7 @@
       { "item": "eink_tablet_pc", "prob": 30, "count": [ 1, 2 ] },
       { "item": "laptop", "prob": 60, "count": [ 1, 4 ] },
       { "item": "usb_drive", "prob": 60, "count": [ 3, 8 ] },
-      { "item": "mobile_memory_card_used", "prob": 60, "count": [ 2, 7 ] },
+      { "item": "sd_memory_card", "prob": 60, "count": [ 2, 7 ] },
       { "item": "battery_charger", "prob": 80 },
       { "item": "file", "count": [ 8, 20 ], "prob": 80 },
       { "item": "paper", "count": [ 40, 90 ], "prob": 80 },
@@ -32,8 +32,8 @@
           {
             "distribution": [
               { "item": "usb_drive", "prob": 50 },
-              { "item": "mobile_memory_card_used", "count": [ 1, 4 ], "prob": 25 },
-              { "item": "mobile_memory_card_encrypted", "count": [ 1, 2 ], "prob": 25 }
+              { "item": "sd_memory_card", "count": [ 1, 4 ], "prob": 25 },
+              { "group": "sd_memory_card_encrypted", "count": [ 1, 2 ], "prob": 25 }
             ],
             "prob": 75
           }
@@ -79,8 +79,8 @@
     "entries": [
       { "item": "file", "count": [ 1, 15 ], "prob": 95 },
       { "item": "paper", "charges": [ 100, 1500 ], "prob": 80 },
-      { "item": "mobile_memory_card_used", "count": [ 1, 4 ], "prob": 15 },
-      { "item": "mobile_memory_card_encrypted", "count": [ 1, 2 ], "prob": 15 }
+      { "item": "sd_memory_card", "count": [ 1, 4 ], "prob": 15 },
+      { "group": "sd_memory_card_encrypted", "count": [ 1, 2 ], "prob": 15 }
     ]
   },
   {
@@ -107,7 +107,7 @@
       { "item": "eink_tablet_pc", "prob": 2 },
       { "item": "laptop", "prob": 6 },
       { "item": "usb_drive", "prob": 5 },
-      { "item": "mobile_memory_card_used", "prob": 3 },
+      { "item": "sd_memory_card", "prob": 3 },
       { "item": "battery_charger", "prob": 8 },
       { "item": "file", "count": [ 1, 8 ], "prob": 20 },
       { "item": "paper", "count": [ 2, 9 ], "prob": 20 },

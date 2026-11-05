@@ -2,7 +2,16 @@
   {
     "type": "snippet",
     "category": "<music_description>",
-    "text": [ "some <musicgenre>.", "some <musicgenre>. The <musicdesc_part> is <musicdesc_evaluation>." ]
+    "text": [
+      "some <musicgenre>.",
+      "some <musicgenre>. The <musicdesc_part> is <musicdesc_evaluation>.",
+      "a sweet guitar solo!",
+      "a funky bassline.",
+      "some amazing vocals.",
+      "some pumping bass.",
+      "dramatic classical music.",
+      "some bass-heavy post-glam speed polka."
+    ]
   },
   {
     "type": "snippet",

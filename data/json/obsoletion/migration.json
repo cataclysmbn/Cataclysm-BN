@@ -1,5 +1,29 @@
 [
   {
+    "id": [ "mobile_memory_card_used", "mobile_memory_card_data" ],
+    "type": "MIGRATION",
+    "replace": "sd_memory_card",
+    "flags": [ "MC_USED" ]
+  },
+  {
+    "id": "mobile_memory_card",
+    "type": "MIGRATION",
+    "replace": "sd_memory_card",
+    "flags": [ "MC_RANDOM_STUFF", "MC_MAY_BE_ENCRYPTED" ]
+  },
+  {
+    "id": "mobile_memory_card_encrypted",
+    "type": "MIGRATION",
+    "replace": "sd_memory_card",
+    "flags": [ "MC_ENCRYPTED", "MC_RANDOM_STUFF" ]
+  },
+  {
+    "id": "mobile_memory_card_science",
+    "type": "MIGRATION",
+    "replace": "sd_memory_card",
+    "flags": [ "MC_ENCRYPTED", "MC_SCIENCE_STUFF" ]
+  },
+  {
     "id": "rifle_308",
     "type": "MIGRATION",
     "replace": "handmade_carbine",
