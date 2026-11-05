@@ -23,7 +23,8 @@
     "melee_dice_sides": 6,
     "melee_cut": 8,
     "attack_effs": [ { "id": "bleed", "duration": 900, "affect_hit_bp": true } ],
-    "dodge": 3,
+    "dodge": 7,
+    "uncanny_dodge_cost": 50,
     "armor_bash": 10,
     "armor_cut": 14,
     "armor_bullet": 20,
@@ -73,6 +74,7 @@
       "NO_BREATHE",
       "NOGIB",
       "HARDTOSHOOT",
+      "UNCANNY_DODGE",
       "CAN_OPEN_DOORS",
       "PATH_AVOID_DANGER_2",
       "PRIORITIZE_TARGETS"
