@@ -39,6 +39,13 @@
         "spell_data": { "id": "spell_ghost_in_the_machine_blink", "hit_self": true },
         "cooldown": 6,
         "monster_message": "%1$s flickers into a cloud of static!"
+      },
+      {
+        "type": "spell",
+        "id": "ghost_static_bolt",
+        "spell_data": { "id": "spell_ghost_in_the_machine_static_bolt" },
+        "cooldown": 20,
+        "monster_message": "%1$s fires a crackling bolt of static at %3$s!"
       }
     ],
     "death_function": [ "MELT" ],
