@@ -6,6 +6,32 @@
     "intensity_levels": [ { "name": "nothing" } ]
   },
   {
+    "id": "fd_physical_static",
+    "type": "field_type",
+    "intensity_levels": [
+      {
+        "name": "physical static",
+        "sym": "#",
+        "color": "pink",
+        "dangerous": true,
+        "effects": [
+          {
+            "effect_id": "hallu",
+            "min_duration": "10 seconds",
+            "max_duration": "10 seconds",
+            "intensity": 1,
+            "is_environmental": false
+          }
+        ]
+      }
+    ],
+    "immune_mtypes": [ "mon_signal_maw" ],
+    "half_life": "20 seconds",
+    "phase": "solid",
+    "display_field": true,
+    "looks_like": "fd_dazzling"
+  },
+  {
     "id": "fd_blood",
     "type": "field_type",
     "legacy_enum_id": 1,

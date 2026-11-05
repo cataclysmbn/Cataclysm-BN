@@ -30,6 +30,7 @@
     "vision_day": 30,
     "vision_night": 15,
     "path_settings": { "max_dist": 30, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
+    "emit_fields": [ { "emit_id": "emit_physical_static", "delay": "4 seconds" } ],
     "harvest": "exempt",
     "special_attacks": [
       [ "FEAR_PARALYZE", 20 ],
