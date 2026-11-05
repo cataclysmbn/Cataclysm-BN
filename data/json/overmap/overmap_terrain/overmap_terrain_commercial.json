@@ -754,7 +754,7 @@
   {
     "type": "overmap_terrain",
     "id": [ "motel_twd_1", "motel_entrance_no_sidewalk" ],
-    "copy-from": "generic_motel",
+    "copy-from": "generic_motel"
   },
   {
     "type": "overmap_terrain",
