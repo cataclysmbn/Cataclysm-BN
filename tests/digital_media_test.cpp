@@ -21,6 +21,7 @@
 #include "map/mapdata.h"
 #include "map_helpers.h"
 #include "morale_types.h"
+#include "photo_morale.h"
 #include "player_activity.h"
 #include "player_helpers.h"
 #include "recipe.h"
@@ -215,6 +216,37 @@ TEST_CASE(
     CHECK(file.contents.empty());
 }
 
+TEST_CASE("mp3_players_spawn_with_preloaded_music", "[digital_media][item]") {
+    auto player = item::spawn("mp3");
+    REQUIRE(player->contents.num_item_stacks() == 1);
+    const auto& music = player->contents.front();
+    CHECK(music.typeId() == itype_id("digital_music_collection"));
+    CHECK(music.charges == 20);
+    CHECK(is_digital_file(music));
+}
+
+TEST_CASE("viewing_camera_photos_grants_shared_photo_morale", "[digital_media][morale]") {
+    const auto restore_time = restore_on_out_of_scope(calendar::turn);
+    calendar::turn = calendar::turn_zero + 12_hours;
+    auto viewer = avatar{};
+    apply_photo_viewing_morale(viewer);
+    const auto first_reward = viewer.get_morale(MORALE_PHOTOS);
+    CHECK(first_reward >= 15);
+    CHECK(first_reward <= 30);
+
+    apply_photo_viewing_morale(viewer);
+    CHECK(viewer.get_morale(MORALE_PHOTOS) == first_reward);
+    calendar::turn += 10_minutes;
+    viewer.rem_morale(MORALE_PHOTOS);
+    apply_photo_viewing_morale(viewer);
+    CHECK(viewer.get_morale(MORALE_PHOTOS) >= 15);
+
+    auto psychopath = avatar{};
+    psychopath.toggle_trait(trait_id("PSYCHOPATH"));
+    apply_photo_viewing_morale(psychopath);
+    CHECK(psychopath.get_morale(MORALE_PHOTOS) == 0);
+}
+
 TEST_CASE(
     "terminal_disassembly_recovers_hard_drives_with_persistent_files",
     "[digital_media][hard_drive][item_group]") {
@@ -386,9 +418,7 @@ TEST_CASE("reader_files_can_be_copied_onto_an_sd_card", "[digital_media]") {
     CHECK(card->typeId() == itype_id("sd_memory_card"));
     CHECK(is_writable_digital_media(*card));
     CHECK(digital_music_on(*card).songs == 9);
-    CHECK(digital_photos_on(*card) == 7);
     CHECK(digital_music_on(reader).songs == 9);
-    CHECK(digital_photos_on(reader) == 7);
     CHECK(upload_digital_files(dummy, {.source = reader, .destination = *card}) == 0);
     CHECK(card->contents.num_item_stacks() == 2);
 
@@ -397,7 +427,6 @@ TEST_CASE("reader_files_can_be_copied_onto_an_sd_card", "[digital_media]") {
     CHECK(card->contents.num_item_stacks() == 3);
     CHECK(card->contents.back().typeId() == itype_id("test_digital_instruction"));
     CHECK(digital_music_on(*card).songs == 9);
-    CHECK(digital_photos_on(*card) == 7);
 
     auto empty_card = item::spawn("sd_memory_card");
     reader.ammo_unset();
@@ -717,7 +746,7 @@ TEST_CASE("crafted_satellite_maps_can_be_installed_on_readers", "[digital_media]
     CHECK(reader->contents.front().get_use("reveal_map") != nullptr);
 }
 
-TEST_CASE("photo_and_music_files_use_json_quantities_and_effects", "[digital_media]") {
+TEST_CASE("camera_photo_and_music_files_use_json_quantities", "[digital_media]") {
     const auto restore_time = restore_on_out_of_scope(calendar::turn);
     calendar::turn = calendar::turn_zero + 12_hours;
     auto dummy = avatar{};
@@ -725,7 +754,6 @@ TEST_CASE("photo_and_music_files_use_json_quantities_and_effects", "[digital_med
     initialize_digital_media(*media);
     REQUIRE(media->contents.num_item_stacks() == 2);
     CHECK(digital_music_on(*media).songs == 9);
-    CHECK(digital_photos_on(*media) == 7);
     auto device = item::spawn("wrist_comp_budget");
     auto& reader = *device;
     reader.ammo_set(itype_id("battery"), 10);
@@ -735,20 +763,12 @@ TEST_CASE("photo_and_music_files_use_json_quantities_and_effects", "[digital_med
     namespace ranges = std::ranges;
     const auto& files = reader.contents.all_items_top();
     const auto album_it = ranges::find_if(files, [](const auto* file) {
-        return file->typeId() == itype_id("test_digital_photo_album");
+        return file->typeId() == itype_id("digital_camera_photo_collection");
     });
     REQUIRE(album_it != files.end());
     auto* album = *album_it;
-    REQUIRE(album->get_use("view_photos") != nullptr);
-    REQUIRE(
-        album->get_use("view_photos")->can_call(dummy, *album, false, dummy.bub_pos()).success());
-    const auto original_moves = dummy.moves;
-    dummy.invoke_item(album, "view_photos");
-    CHECK(digital_photos_on(reader) == 7);
-    CHECK(dummy.get_morale(MORALE_PHOTOS) == 5);
-    CHECK(dummy.moves == original_moves - 100);
+    CHECK(is_digital_file(*album));
     CHECK(download_digital_files(reader, *media, dummy) == 0);
-    CHECK(digital_photos_on(*media) == 7);
 }
 
 TEST_CASE("digital_music_survives_stop_and_replay_after_cooldown", "[digital_media][iuse]") {
@@ -824,129 +844,14 @@ TEST_CASE("different_music_files_have_independent_cooldowns", "[digital_media][i
     CHECK(digital_music_playing(reader).songs == 9);
 }
 
-TEST_CASE("photo_cooldown_limits_rewards_without_blocking_viewing", "[digital_media][iuse]") {
-    const auto restore_time = restore_on_out_of_scope(calendar::turn);
-    calendar::turn = calendar::turn_zero + 12_hours;
-    auto dummy = avatar{};
-    auto first_device = item::spawn("test_digital_music_reader");
-    auto first_album = item::spawn("test_digital_photo_album");
-    first_album->charges = 7;
-    auto& first = *first_album;
-    first_device->put_in(std::move(first_album));
-    dummy.i_add(std::move(first_device));
-    auto second_device = item::spawn("test_digital_music_reader");
-    auto& second_reader = *second_device;
-    auto second_album = item::spawn("test_digital_custom_photo_album");
-    second_album->charges = 7;
-    auto& second = *second_album;
-    second_reader.put_in(std::move(second_album));
-    dummy.i_add(std::move(second_device));
-    const auto* first_action = first.get_use("view_photos");
-    const auto* second_action = second.get_use("view_photos");
-    REQUIRE(first_action != nullptr);
-    REQUIRE(second_action != nullptr);
-    REQUIRE(first_action->can_call(dummy, first, false, dummy.bub_pos()).success());
-    dummy.invoke_item(&first, "view_photos");
-    const auto morale_after_first = dummy.get_morale(MORALE_PHOTOS);
-    const auto moves_after_first = dummy.moves;
-    CHECK(second_action->can_call(dummy, second, false, dummy.bub_pos()).success());
-    dummy.invoke_item(&second, "view_photos");
-    CHECK(dummy.get_morale(MORALE_PHOTOS) == morale_after_first);
-    CHECK(dummy.moves == moves_after_first - 40);
-    CHECK(first.charges == 7);
-    CHECK(second.charges == 7);
-    auto duplicate = item::spawn(first);
-    auto& copy = *duplicate;
-    second_reader.put_in(std::move(duplicate));
-    CHECK(first_action->can_call(dummy, copy, false, dummy.bub_pos()).success());
-    dummy.invoke_item(&copy, "view_photos");
-    CHECK(dummy.moves == moves_after_first - 140);
-    CHECK(dummy.get_morale(MORALE_PHOTOS) == morale_after_first);
-
-    calendar::turn += 10_minutes - 1_seconds;
-    CHECK(second_action->can_call(dummy, second, false, dummy.bub_pos()).success());
-    dummy.invoke_item(&second, "view_photos");
-    CHECK(dummy.moves == moves_after_first - 180);
-    CHECK(dummy.get_morale(MORALE_PHOTOS) == morale_after_first);
-    calendar::turn += 1_seconds;
-    dummy.rem_morale(MORALE_PHOTOS);
-    REQUIRE(second_action->can_call(dummy, second, false, dummy.bub_pos()).success());
-    dummy.invoke_item(&second, "view_photos");
-    CHECK(dummy.moves == moves_after_first - 220);
-    CHECK(dummy.get_morale(MORALE_PHOTOS) == 2);
-    CHECK(first_action->can_call(dummy, first, false, dummy.bub_pos()).success());
-}
-
-TEST_CASE("photo_viewing_cooldown_is_independent_for_each_player", "[digital_media][iuse]") {
-    const auto restore_time = restore_on_out_of_scope(calendar::turn);
-    calendar::turn = calendar::turn_zero + 12_hours;
-    auto first_viewer = avatar{};
-    auto second_viewer = avatar{};
-    auto first_device = item::spawn("test_digital_music_reader");
-    auto first_album = item::spawn("test_digital_photo_album");
-    first_album->charges = 7;
-    auto& first = *first_album;
-    first_device->put_in(std::move(first_album));
-    first_viewer.i_add(std::move(first_device));
-    auto second_device = item::spawn("test_digital_music_reader");
-    auto second_album = item::spawn(first);
-    auto& second = *second_album;
-    second_device->put_in(std::move(second_album));
-    second_viewer.i_add(std::move(second_device));
-    const auto* action = first.get_use("view_photos");
-    REQUIRE(action != nullptr);
-    first_viewer.invoke_item(&first, "view_photos");
-    CHECK(action->can_call(first_viewer, first, false, first_viewer.bub_pos()).success());
-    first_viewer.invoke_item(&first, "view_photos");
-    CHECK(first_viewer.get_morale(MORALE_PHOTOS) == 5);
-    REQUIRE(action->can_call(second_viewer, second, false, second_viewer.bub_pos()).success());
-    second_viewer.invoke_item(&second, "view_photos");
-    CHECK(second_viewer.get_morale(MORALE_PHOTOS) == 5);
-}
-
-TEST_CASE(
-    "photo_album_actions_use_item_variables_without_device_photo_logic", "[digital_media][iuse]") {
-    const auto restore_time = restore_on_out_of_scope(calendar::turn);
-    calendar::turn = calendar::turn_zero + 12_hours;
-    auto dummy = avatar{};
-    auto album = item::spawn("test_digital_custom_photo_album");
-    album->charges = 7;
-    auto& file = *album;
-    const auto* action = file.get_use("view_photos");
-    REQUIRE(action != nullptr);
-    CHECK_FALSE(file.has_flag(flag_id("DIGITAL_PHOTOS")));
-    CHECK_FALSE(action->can_call(dummy, file, false, dummy.bub_pos()).success());
-
-    auto device = item::spawn("wrist_comp_budget");
-    auto& reader = *device;
-    reader.ammo_set(itype_id("battery"), 10);
-    reader.put_in(std::move(album));
-    dummy.i_add(std::move(device));
-    REQUIRE(action->can_call(dummy, file, false, dummy.bub_pos()).success());
-    const auto moves = dummy.moves;
-    dummy.invoke_item(&file, "view_photos");
-    CHECK(dummy.moves == moves - 40);
-    CHECK(dummy.get_morale(MORALE_PHOTOS) == 2);
-    CHECK(file.charges == 7);
-    calendar::turn += 10_minutes;
-    file.set_var("digital_photos_moves_min", 12);
-    file.set_var("digital_photos_moves_max", 12);
-    dummy.rem_morale(MORALE_PHOTOS);
-    dummy.invoke_item(&file, "view_photos");
-    CHECK(dummy.moves == moves - 52);
-    CHECK(dummy.get_morale(MORALE_PHOTOS) == 2);
-    CHECK(file.charges == 7);
-    reader.ammo_unset();
-    CHECK_FALSE(action->can_call(dummy, file, false, dummy.bub_pos()).success());
-}
-
 TEST_CASE("loading_an_obsolete_used_sd_card_preserves_its_files", "[digital_media][savegame]") {
     auto media = item::spawn("sd_memory_card");
     media->put_in(item::spawn("test_digital_instruction"));
     media->contents.front().set_var("test_content", "preserved");
     media->contents.front().set_var("DIGITAL_FILE_ID", "legacy-file");
-    auto photos = item::spawn("test_digital_photo_album");
-    photos->charges = 7;
+    auto photos = item::spawn("digital_camera_photo_collection");
+    photos->set_var("CAMERA_EXTENDED_PHOTOS",
+                    R"([{"quality":5,"name":"family","description":"A family photo."}])");
     media->put_in(std::move(photos));
     media->set_var("DIGITAL_INITIALIZED", 1);
     auto output = std::ostringstream{};
@@ -968,7 +873,8 @@ TEST_CASE("loading_an_obsolete_used_sd_card_preserves_its_files", "[digital_medi
     CHECK(loaded->contents.front().typeId() == itype_id("test_digital_instruction"));
     CHECK(loaded->contents.front().get_var("test_content") == "preserved");
     CHECK(loaded->contents.front().get_var("DIGITAL_FILE_ID") == "legacy-file");
-    CHECK(digital_photos_on(*loaded) == 7);
+    CHECK(loaded->contents.back().get_var("CAMERA_EXTENDED_PHOTOS")
+          == R"([{"quality":5,"name":"family","description":"A family photo."}])");
     const auto encrypted =
         std::string_view(legacy_id) == "mobile_memory_card_encrypted"
         || std::string_view(legacy_id) == "mobile_memory_card_science";
@@ -980,22 +886,24 @@ TEST_CASE("loading_an_obsolete_used_sd_card_preserves_its_files", "[digital_medi
     CHECK(loaded->contents.num_item_stacks() == 2);
 }
 
-TEST_CASE("saving_and_loading_preserve_playable_media_counts", "[digital_media][savegame][iuse]") {
+TEST_CASE(
+    "saving_and_loading_preserve_music_and_camera_photos", "[digital_media][savegame][iuse]") {
     clear_all_state();
     const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
     auto dummy = avatar{};
     clear_character(dummy);
     auto device = item::spawn("test_digital_music_reader");
     initialize_digital_media(*device);
-    auto album = item::spawn("test_digital_photo_album");
-    album->charges = 7;
-    device->put_in(std::move(album));
+    auto photos = item::spawn("digital_camera_photo_collection");
+    photos->set_var("CAMERA_EXTENDED_PHOTOS",
+                    R"([{"quality":5,"name":"family","description":"A family photo."}])");
+    device->put_in(std::move(photos));
     REQUIRE(digital_music_on(*device).songs == 9);
-    REQUIRE(digital_photos_on(*device) == 7);
 
     auto loaded = reload_item(*device);
     CHECK(digital_music_on(*loaded).songs == 9);
-    CHECK(digital_photos_on(*loaded) == 7);
+    CHECK(loaded->contents.back().get_var("CAMERA_EXTENDED_PHOTOS")
+          == R"([{"quality":5,"name":"family","description":"A family photo."}])");
     auto& reader = *loaded;
     dummy.i_add(std::move(loaded));
     dummy.invoke_item(&reader, "music_player");
@@ -1003,7 +911,7 @@ TEST_CASE("saving_and_loading_preserve_playable_media_counts", "[digital_media][
     CHECK(digital_music_playing(reader).songs == 9);
 }
 
-TEST_CASE("legacy_photo_and_music_counters_migrate_without_losing_metadata", "[digital_media]") {
+TEST_CASE("legacy_photo_counters_are_removed_and_music_counts_migrate", "[digital_media]") {
     auto media = item::spawn("sd_memory_card");
     media->set_flag(flag_MC_HAS_DATA);
     media->set_var("MC_PHOTOS", 7);
@@ -1011,21 +919,20 @@ TEST_CASE("legacy_photo_and_music_counters_migrate_without_losing_metadata", "[d
     media->set_var("MC_EXTENDED_PHOTOS", "preserved photo metadata");
     initialize_digital_media(*media);
     CHECK(digital_music_on(*media).songs == 9);
-    CHECK(digital_photos_on(*media) == 7);
     CHECK_FALSE(media->has_var("MC_PHOTOS"));
     CHECK_FALSE(media->has_var("MC_MUSIC"));
     CHECK(media->get_var("MC_EXTENDED_PHOTOS") == "preserved photo metadata");
     initialize_digital_media(*media);
-    CHECK(media->contents.num_item_stacks() == 2);
+    CHECK(media->contents.num_item_stacks() == 1);
 
     auto reader = item::spawn("wrist_comp_budget");
     reader->set_var("EIPC_PHOTOS", 11);
     reader->set_var("EIPC_MUSIC", 13);
     migrate_legacy_digital_media(*reader);
     initialize_digital_media(*reader);
-    CHECK(digital_photos_on(*reader) == 11);
     CHECK(digital_music_on(*reader).songs == 13);
-    CHECK(reader->contents.num_item_stacks() == 2);
+    CHECK_FALSE(reader->has_var("EIPC_PHOTOS"));
+    CHECK(reader->contents.num_item_stacks() == 1);
 }
 
 TEST_CASE(
@@ -1078,7 +985,6 @@ TEST_CASE(
     initialize_digital_media(*loaded);
     CHECK(loaded->contents.num_item_stacks() == count);
     CHECK(digital_music_on(*loaded).songs == digital_music_on(reader).songs);
-    CHECK(digital_photos_on(*loaded) == digital_photos_on(reader));
 }
 
 TEST_CASE("downloading_initializes_unopened_media_once", "[digital_media]") {

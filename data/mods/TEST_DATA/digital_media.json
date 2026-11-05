@@ -93,41 +93,10 @@
     "charges_per_use": 1
   },
   {
-    "id": "test_digital_photo_album",
-    "copy-from": "digital_collection",
-    "type": "GENERIC",
-    "name": { "str": "test photo album" },
-    "description": "A deterministic photo album.",
-    "extend": { "flags": [ "DIGITAL_PHOTOS" ] },
-    "use_action": { "type": "view_photos" },
-    "item_vars": {
-      "digital_photos_morale_min": "5",
-      "digital_photos_morale_max": "5",
-      "digital_photos_morale_cap": "20",
-      "digital_photos_snippets": "digital_personal_photos",
-      "digital_photos_unaffected_snippets": "digital_unaffected_photos",
-      "digital_photos_moves_min": "100",
-      "digital_photos_moves_max": "100"
-    }
-  },
-  {
-    "id": "test_digital_custom_photo_album",
-    "copy-from": "test_digital_photo_album",
-    "type": "GENERIC",
-    "name": { "str": "test custom photo album" },
-    "delete": { "flags": [ "DIGITAL_PHOTOS" ] },
-    "item_vars": {
-      "digital_photos_morale_min": "2",
-      "digital_photos_morale_max": "2",
-      "digital_photos_moves_min": "40",
-      "digital_photos_moves_max": "40"
-    }
-  },
-  {
     "id": "test_digital_multimedia_content",
     "type": "item_group",
     "subtype": "collection",
-    "entries": [ { "item": "digital_music_collection", "charges": 9 }, { "item": "test_digital_photo_album", "charges": 7 } ]
+    "entries": [ { "item": "digital_music_collection", "charges": 9 }, { "item": "digital_camera_photo_collection" } ]
   },
   {
     "id": "test_digital_multimedia_media",

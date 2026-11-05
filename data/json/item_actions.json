@@ -1,11 +1,6 @@
 [
   {
     "type": "item_action",
-    "id": "view_photos",
-    "name": { "str": "View photos" }
-  },
-  {
-    "type": "item_action",
     "id": "repair_fabric",
     "name": { "str": "Repair cotton/leather/wool/Nomex/fur" }
   },

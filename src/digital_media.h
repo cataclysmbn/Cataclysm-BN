@@ -56,7 +56,6 @@ auto update_camera_photo_collection( item &camera, int count ) -> void;
 auto digital_monster_photos( const item &reader ) -> std::map<mtype_id, int>;
 auto digital_music_on( const item &reader ) -> digital_music_summary;
 auto digital_music_playing( const item &reader ) -> digital_music_summary;
-auto digital_photos_on( const item &reader ) -> int;
 auto digital_music_cooldown_remaining( const Character &who, const item &file ) -> time_duration;
 auto digital_music_ready( const Character &who, item &reader ) -> bool;
 auto listen_to_digital_music( player &who, item &reader, item &file ) -> bool;

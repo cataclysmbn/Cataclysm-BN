@@ -1,6 +1,5 @@
 #include "digital_media.h"
 #include "digital_recipes.h"
-#include "photo_album_actor.h"
 
 #include "character.h"
 #include "calendar.h"
@@ -49,64 +48,6 @@ auto identify_digital_file( item &file ) -> void
     }
 }
 
-auto photo_cooldown_remaining( const Character &who ) -> time_duration
-{
-    const auto until = who.get_value_as_int( "digital_photos_ready" ).value_or( 0 );
-    return std::max( 0_turns, time_point::from_turn( until ) - calendar::turn );
-}
-
-class photo_album_actor : public iuse_actor
-{
-    public:
-        photo_album_actor() : iuse_actor( "view_photos" ) {}
-
-        auto load( const JsonObject &/*obj*/ ) -> void override {}
-        auto clone() const -> std::unique_ptr<iuse_actor> override { return std::make_unique<photo_album_actor>( *this ); }
-
-        auto can_use( const Character &who, const item &album, bool /*active*/,
-                      const tripoint_bub_ms &/*pos*/ ) const -> ret_val<bool> override {
-            if( album.charges <= 0 ) {
-                return ret_val<bool>::make_failure( _( "This album contains no photos." ) );
-            }
-            if( is_digital_file( album ) && !digital_reader_for( who, album ) ) {
-                return ret_val<bool>::make_failure(
-                           _( "You need to install this file on a powered reader first." ) );
-            }
-            return ret_val<bool>::make_success();
-        }
-
-        auto use( player &who, item &album, bool active,
-                  const tripoint_bub_ms &pos ) const -> int override {
-            if( active ) {
-                return 0;
-            }
-            const auto available = can_use( who, album, false, pos );
-            if( !available.success() ) {
-                who.add_msg_if_player( m_info, available.str() );
-                return 0;
-            }
-            who.mod_moves( -rng( digital_setting( album, "digital_photos_moves_min" ),
-                                 digital_setting( album, "digital_photos_moves_max" ) ) );
-            const auto unaffected = who.has_trait( trait_id( "PSYCHOPATH" ) );
-            const auto cooldown_ready = photo_cooldown_remaining( who ) <= 0_turns;
-            if( !unaffected && cooldown_ready ) {
-                who.add_morale( MORALE_PHOTOS, rng( digital_setting( album, "digital_photos_morale_min" ),
-                                                    digital_setting( album, "digital_photos_morale_max" ) ),
-                                digital_setting( album, "digital_photos_morale_cap" ) );
-            }
-            const auto category = album.get_var( unaffected ? "digital_photos_unaffected_snippets" :
-                                                 "digital_photos_snippets" );
-            if( const auto message = SNIPPET.random_from_category( category ) ) {
-                who.add_msg_if_player( unaffected ? m_info : m_good, "%s", message->translated() );
-            }
-            if( cooldown_ready && !unaffected ) {
-                who.set_value( "digital_photos_ready",
-                               std::to_string( to_turn<int>( calendar::turn + 10_minutes ) ) );
-            }
-            return 0;
-        }
-};
-
 auto copy_digital_file( item &file, item &destination ) -> bool
 {
     namespace ranges = std::ranges;
@@ -126,11 +67,6 @@ auto copy_digital_file( item &file, item &destination ) -> bool
     return true;
 }
 } // namespace
-
-auto make_photo_album_actor() -> std::unique_ptr<iuse_actor>
-{
-    return std::make_unique<photo_album_actor>();
-}
 
 auto is_digital_file( const item &file ) -> bool { return file.has_flag( flag_id( "DIGITAL" ) ); }
 
@@ -306,8 +242,6 @@ auto migrate_legacy_digital_media( item &media ) -> void
         std::string file;
     };
     const auto counters = std::array{
-        legacy_counter{ .variable = "MC_PHOTOS", .file = "digital_photo_album" },
-        legacy_counter{ .variable = "EIPC_PHOTOS", .file = "digital_photo_album" },
         legacy_counter{ .variable = "MC_MUSIC", .file = "digital_music_collection" },
         legacy_counter{ .variable = "EIPC_MUSIC", .file = "digital_music_collection" }
     };
@@ -323,6 +257,12 @@ auto migrate_legacy_digital_media( item &media ) -> void
             media.put_in( std::move( file ) );
         }
         media.erase_var( counter.variable );
+    }
+    for( const auto *variable : { "MC_PHOTOS", "EIPC_PHOTOS" } ) {
+        if( media.has_var( variable ) ) {
+            media.set_var( "DIGITAL_INITIALIZED", 1 );
+            media.erase_var( variable );
+        }
     }
     if( media.has_var( "CAMERA_EXTENDED_PHOTOS" ) || media.has_var( "CAMERA_NPC_PHOTOS" ) ||
         media.has_var( "CAMERA_MONSTER_PHOTOS" ) ) {
@@ -474,17 +414,6 @@ auto digital_music_playing( const item &reader ) -> digital_music_summary
         }
     }
     return {};
-}
-
-auto digital_photos_on( const item &reader ) -> int
-{
-    auto photos = 0;
-    for( const auto *file : reader.contents.all_items_top() ) {
-        if( file->has_flag( flag_id( "DIGITAL_PHOTOS" ) ) ) {
-            photos += std::max( 0, static_cast<int>( file->charges ) );
-        }
-    }
-    return photos;
 }
 
 auto digital_music_cooldown_remaining( const Character &who, const item &file ) -> time_duration

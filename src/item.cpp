@@ -386,6 +386,10 @@ item::item( const itype *type, time_point turn, int qty ) : type( type ),
             actor->on_spawned( *this );
         }
     }
+
+    if( get_var( "digital_content" ) == "digital_builtin_music" ) {
+        initialize_digital_media( *this );
+    }
 }
 
 item::item( const itype_id &id, time_point turn, int qty )

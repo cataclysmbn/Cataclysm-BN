@@ -203,48 +203,6 @@
     "item_vars": { "digital_music_morale_cap": "25", "digital_music_cooldown_seconds": "300" }
   },
   {
-    "id": "digital_photo_album",
-    "copy-from": "digital_collection",
-    "type": "GENERIC",
-    "name": { "str": "personal photo album" },
-    "description": "A saved collection of personal photos.",
-    "extend": { "flags": [ "DIGITAL_PHOTOS" ] },
-    "use_action": { "type": "view_photos" },
-    "item_vars": {
-      "digital_photos_morale_min": "15",
-      "digital_photos_morale_max": "30",
-      "digital_photos_morale_cap": "100",
-      "digital_photos_snippets": "digital_personal_photos",
-      "digital_photos_unaffected_snippets": "digital_unaffected_photos",
-      "digital_photos_moves_min": "300",
-      "digital_photos_moves_max": "700"
-    }
-  },
-  {
-    "id": "digital_nature_photo_album",
-    "copy-from": "digital_photo_album",
-    "type": "GENERIC",
-    "name": { "str": "nature photo album" },
-    "description": "A saved collection of photographs of landscapes, wildlife, and the outdoors.",
-    "item_vars": { "digital_photos_snippets": "digital_nature_photos" }
-  },
-  {
-    "id": "digital_travel_photo_album",
-    "copy-from": "digital_photo_album",
-    "type": "GENERIC",
-    "name": { "str": "travel photo album" },
-    "description": "A saved collection of vacation photographs from places near and far.",
-    "item_vars": { "digital_photos_snippets": "digital_travel_photos" }
-  },
-  {
-    "id": "digital_art_album",
-    "copy-from": "digital_photo_album",
-    "type": "GENERIC",
-    "name": { "str": "digital art album" },
-    "description": "A saved collection of digital art, convention photos, and creative projects.",
-    "item_vars": { "digital_photos_snippets": "digital_art_photos" }
-  },
-  {
     "id": "digital_camera_photo_collection",
     "copy-from": "digital_collection",
     "type": "GENERIC",

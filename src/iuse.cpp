@@ -26,6 +26,7 @@
 #include "debug.h"
 #include "digital_media.h"
 #include "digital_recipes.h"
+#include "photo_morale.h"
 #include "distribution_grid.h"
 #include "effect.h" // for weed_msg
 #include "enums.h"
@@ -6022,7 +6023,7 @@ auto export_files_to_storage( player &who, item &reader, item *file = nullptr ) 
     return true;
 }
 
-auto show_monster_collection( const item &reader ) -> void
+auto show_monster_collection( player &who, const item &reader ) -> void
 {
     const auto photos = digital_monster_photos( reader );
     auto menu = uilist{};
@@ -6040,6 +6041,7 @@ auto show_monster_collection( const item &reader ) -> void
             return;
         }
         popup( "%s", descriptions[menu.ret] );
+        apply_photo_viewing_morale( who );
     }
 }
 
@@ -6090,14 +6092,13 @@ auto delete_files_from_storage( player &who, item &reader ) -> void
     }
 }
 
-auto browse_digital_files( player &who, item &reader, const bool photos_only = false ) -> void
+auto browse_digital_files( player &who, item &reader ) -> void
 {
     auto files = std::vector<item *> {};
     auto menu = uilist{};
     menu.text = _( "Files on device:" );
     for( auto *file : reader.contents.all_items_top() ) {
-        if( is_digital_file( *file ) &&
-            ( !photos_only || file->has_flag( flag_id( "DIGITAL_PHOTOS" ) ) ) ) {
+        if( is_digital_file( *file ) ) {
             menu.addentry( static_cast<int>( files.size() ), true, MENU_AUTOASSIGN, file->type_name() );
             files.push_back( file );
         }
@@ -6187,7 +6188,7 @@ auto browse_digital_files( player &who, item &reader, const bool photos_only = f
     } else if( actions.ret == show_captured_photos ) {
         show_photo_selection( who, *file, "CAMERA_EXTENDED_PHOTOS" );
     } else if( actions.ret == show_monsters ) {
-        show_monster_collection( *file );
+        show_monster_collection( who, *file );
     } else if( actions.ret == show_recipes ) {
         auto recipe_menu = uilist{};
         recipe_menu.text = _( "Recipes in file:" );
@@ -6230,7 +6231,7 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
     } else if( !p->is_npc() ) {
 
         enum {
-            ei_invalid, ei_photo, ei_music, ei_recipe, ei_books, ei_uploaded_photos, ei_monsters, ei_download, ei_decrypt,
+            ei_invalid, ei_recipe, ei_books, ei_uploaded_photos, ei_monsters, ei_download, ei_decrypt,
             ei_files, ei_export, ei_encrypt, ei_delete_storage, ei_scan_book
         };
 
@@ -6259,26 +6260,6 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
         } );
         const auto has_camera_photos = !it->get_var( "EIPC_EXTENDED_PHOTOS" ).empty() ||
                                        has_captured_photos;
-
-        const auto photos = digital_photos_on( *it );
-        if( photos > 0 ) {
-            amenu.addentry( ei_photo, true, 'p', _( "Personal photo albums [%d photos]" ), photos );
-        } else if( !has_camera_photos ) {
-            amenu.addentry( ei_photo, false, 'p', _( "No photos on device" ) );
-        }
-
-        const auto playing = it->type->can_use( "MP3_ON" ) ||
-                             !it->get_var( "EIPC_MUSIC_ON" ).empty();
-        const auto songs = digital_music_on( *it ).songs;
-        if( songs > 0 ) {
-            if( playing ) {
-                amenu.addentry( ei_music, true, 'm', _( "Turn music off" ) );
-            } else {
-                amenu.addentry( ei_music, true, 'm', _( "Turn music on [%d]" ), songs );
-            }
-        } else {
-            amenu.addentry( ei_music, false, 'm', _( "No music on device" ) );
-        }
 
         const auto digital_recipes = digital_recipes_on_device( *it );
         if( !it->get_var( "EIPC_RECIPES" ).empty() || !digital_recipes.empty() ) {
@@ -6346,32 +6327,6 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
             return it->type->charges_to_use();
         }
 
-        if( ei_photo == choice ) {
-            browse_digital_files( *p, *it, true );
-            return it->type->charges_to_use();
-        }
-
-        if( ei_music == choice ) {
-            if( playing ) {
-                if( it->type->can_use( "MP3_ON" ) ) {
-                    p->invoke_item( it, "MP3_ON" );
-                } else {
-                    finish_digital_music( *p, *it );
-                    it->deactivate();
-                    it->erase_var( "EIPC_MUSIC_ON" );
-                }
-            } else if( digital_music_ready( *p, *it ) ) {
-                const auto selected = it->get_var( "DIGITAL_SELECTED_MUSIC" );
-                for( auto *file : it->contents.all_items_top() ) {
-                    if( file->get_var( "DIGITAL_FILE_ID" ) == selected ) {
-                        listen_to_digital_music( *p, *it, *file );
-                        break;
-                    }
-                }
-            }
-            return it->type->charges_to_use();
-        }
-
         if( ei_recipe == choice ) {
             p->moves -= 50;
 
@@ -6417,7 +6372,7 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
         }
 
         if( ei_monsters == choice ) {
-            show_monster_collection( *it );
+            show_monster_collection( *p, *it );
             return it->type->charges_to_use();
         }
 
@@ -7382,6 +7337,7 @@ static bool show_photo_selection( player &p, item &it, const std::string &var_na
         };
 
         scrollable_text( new_win, "", desc.c_str() );
+        apply_photo_viewing_morale( p );
 
     } while( true );
     return true;
@@ -7593,7 +7549,7 @@ int iuse::camera( player *p, item *it, bool, const tripoint_bub_ms & )
             p->add_msg_if_player( _( "You can't see the camera screen, you're blind." ) );
             return 0;
         }
-        show_monster_collection( *collection );
+        show_monster_collection( *p, *collection );
         return it->type->charges_to_use();
     }
 

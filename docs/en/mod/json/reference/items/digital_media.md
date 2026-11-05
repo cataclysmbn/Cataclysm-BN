@@ -44,7 +44,6 @@ is unnecessary while a copy is installed on the reader.
   while the device has sufficient power for one use. Readers should also have
   `DIGITAL_STORAGE` and a tool battery configuration.
 - `DIGITAL_MUSIC`: the file contains music tracks for the reader's playlist.
-- `DIGITAL_PHOTOS`: the file is a photo album the reader can display.
 
 Derive instructional files from `digital_instruction`, a `BOOK` abstract with
 zero mass, a minimum volume of 1 ml, and the `DIGITAL`, `IRREMOVABLE`, and `NO_DROP` flags:
@@ -234,8 +233,7 @@ The `digital_collection` abstract supplies `CAN_HAVE_CHARGES`, which preserves
 track and photo counts during saving and loading.
 
 These collections are ordinary `GENERIC` digital items. Their item-group
-`charges` field specifies the number of tracks or photos, including random
-ranges:
+`charges` field specifies the number of tracks, including random ranges:
 
 ```json
 {
@@ -243,8 +241,7 @@ ranges:
   "type": "item_group",
   "subtype": "collection",
   "entries": [
-    { "item": "digital_music_collection", "prob": 35, "charges": [5, 15] },
-    { "item": "digital_photo_album", "prob": 75, "charges": [5, 30] }
+    { "item": "digital_music_collection", "prob": 35, "charges": [5, 15] }
   ]
 }
 ```
@@ -265,48 +262,10 @@ Use **Browse digital files → Listen** to choose a collection. The general musi
 action automatically picks an available collection. Copies of the same file
 share a cooldown, even on another reader.
 
-Photo albums attach the `view_photos` use action. It displays a message from the
-album's snippet category and controls its morale effect, move cost, and cooldown.
-The reader runs it through the normal item-action path:
-
-```json
-"use_action": { "type": "view_photos" },
-"item_vars": {
-  "digital_photos_snippets": "digital_personal_photos",
-  "digital_photos_unaffected_snippets": "digital_unaffected_photos",
-  "digital_photos_moves_min": "300",
-  "digital_photos_moves_max": "700",
-  "digital_photos_morale_min": "15",
-  "digital_photos_morale_max": "30",
-  "digital_photos_morale_cap": "100"
-}
-```
-
-The standard personal photo album draws random messages from
-`digital_personal_photos`, including family, pet, vacation, nature, food, and
-hobby pictures. These are flavor messages on the same album item.
-
-Choose snippet categories describing the album's photos, such as family photos
-or travel pictures. Lua can change these item variables on individual albums.
-`DIGITAL_PHOTOS` includes an album in the reader's photo shortcut and count;
-the use action works independently of that flag. Replacing `use_action` replaces
-the album's behavior without adding device-specific code.
-
-The action reads these item variables:
-
-| Variable                                                 | Meaning                               |
-| -------------------------------------------------------- | ------------------------------------- |
-| `digital_photos_moves_min`, `digital_photos_moves_max`   | Move cost per use                     |
-| `digital_photos_morale_min`, `digital_photos_morale_max` | Morale gained per use                 |
-| `digital_photos_morale_cap`                              | Maximum photo morale                  |
-| `digital_photos_snippets`                                | Snippet category for viewing messages |
-| `digital_photos_unaffected_snippets`                     | Snippet category used for psychopaths |
-
-Use **Browse digital files → View photos** or the reader's photos menu to view
-an album. Viewing preserves its photo count and starts one ten-minute cooldown
-on the player. During that time, the player cannot view any album, including
-other albums or copies on other devices. Each player has their own cooldown.
-Album item variables cannot shorten it.
+Camera photographs and monster collection entries are viewed through the
+camera or their saved camera photo collection. Viewing either kind of photo can
+improve morale, with a shared ten-minute cooldown per character. Synthetic
+digital photo albums and their morale action have been removed.
 
 ## First-pass limits
 
@@ -315,8 +274,9 @@ such as DVDs, can later use the same flags and content groups without adding
 media-specific file types. Files must be copied into a reader before use; an
 adjacent USB or SD card alone supplies no recipe references.
 
-Old `MC_PHOTOS`, `MC_MUSIC`, `EIPC_PHOTOS`, and `EIPC_MUSIC` counters are
-converted into collection items once, preserving their counts. Legacy recipe
+Old `MC_MUSIC` and `EIPC_MUSIC` counters are converted into music collection
+items once, preserving their counts. Synthetic `MC_PHOTOS` and `EIPC_PHOTOS`
+counters are discarded. Legacy recipe
 tokens (`MC_RECIPE`) become cooking or scientific reference files using the item-variable definitions above. Existing tablet recipe references remain readable for save
 compatibility. Camera captures are stored in a `digital_camera_photo_collection`
 file on the camera or phone. **Camera photos** and **Browse digital files →

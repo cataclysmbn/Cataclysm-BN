@@ -5,11 +5,6 @@
     "context": [ "GENERIC" ]
   },
   {
-    "id": "DIGITAL_PHOTOS",
-    "type": "json_flag",
-    "context": [ "GENERIC" ]
-  },
-  {
     "id": "DIGITAL",
     "type": "json_flag",
     "context": [ "GENERIC", "BOOK", "TOOL" ],
