@@ -1,0 +1,31 @@
+[
+  {
+    "type": "GENERIC",
+    "id": "test_harvest_default",
+    "name": "test harvest seed",
+    "description": "A seed for testing JSON-configured harvest inheritance.",
+    "weight": "1 g",
+    "volume": "1 ml",
+    "symbol": ",",
+    "color": "brown",
+    "seed_data": { "plant_name": "test crop", "fruit": "test_rock", "grow": "1 day", "byproducts": [ "test_rag" ] }
+  },
+  {
+    "type": "GENERIC",
+    "id": "test_harvest_flags",
+    "copy-from": "test_harvest_default",
+    "seed_data": { "harvest_inherit_flags": [ "HIDDEN_ITEM" ] }
+  },
+  {
+    "type": "GENERIC",
+    "id": "test_harvest_poison",
+    "copy-from": "test_harvest_flags",
+    "seed_data": { "harvest_inherit_flags": [  ], "harvest_inherit_poison": true }
+  },
+  {
+    "type": "GENERIC",
+    "id": "test_harvest_both",
+    "copy-from": "test_harvest_flags",
+    "seed_data": { "harvest_inherit_poison": true }
+  }
+]

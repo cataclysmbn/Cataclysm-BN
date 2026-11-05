@@ -12,6 +12,6 @@ struct cultivated_harvest_options {
     bool byproducts = true;
 };
 
-/// Generate a harvest while preserving the source mushroom culture's traits.
+/// Generate a harvest with the trait inheritance configured in seed_data.
 auto get_cultivated_harvest( const item &seed, const cultivated_harvest_options &options ) ->
 std::vector<detached_ptr<item>>;

@@ -1,6 +1,5 @@
 #include "cultivated_harvest.h"
 
-#include "flag.h"
 #include "iexamine.h"
 #include "item.h"
 #include "itype.h"
@@ -10,8 +9,7 @@ std::vector<detached_ptr<item>>
 {
     auto result = iexamine::get_harvest_items( *seed.type, options.plant_count,
                   options.seed_count, options.byproducts );
-    if( !seed.type->seed ||
-        seed.type->seed->required_terrain_flag != "MUSHROOM_PLANTABLE" ) {
+    if( !seed.type->seed ) {
         return result;
     }
 
@@ -20,12 +18,12 @@ std::vector<detached_ptr<item>>
             harvest->typeId() != seed.type->seed->fruit_id ) {
             continue;
         }
-        for( const auto &flag : { flag_HIDDEN_POISON, flag_HIDDEN_HALLU } ) {
+        for( const auto &flag : seed.type->seed->harvest_inherit_flags ) {
             if( seed.has_flag( flag ) ) {
                 harvest->set_flag( flag );
             }
         }
-        if( seed.has_flag( flag_HIDDEN_POISON ) ) {
+        if( seed.type->seed->harvest_inherit_poison ) {
             harvest->poison = seed.poison;
         }
     }
