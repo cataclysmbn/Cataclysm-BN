@@ -1,0 +1,52 @@
+[
+  {
+    "id": "digital_blade_blueprints",
+    "copy-from": "digital_collection",
+    "type": "GENERIC",
+    "name": { "str": "bladed weapon blueprints", "str_pl": "sets of bladed weapon blueprints" },
+    "description": "Saved workshop drawings for a pair of bladed weapons, including dimensions, material specifications, and assembly notes.",
+    "item_vars": {
+      "digital_random_recipes": "{\"count\":2,\"subcategory\":\"CSC_WEAPON_CUTTING\",\"min_difficulty\":2,\"max_difficulty\":6}"
+    }
+  },
+  {
+    "id": "digital_piercing_weapon_blueprints",
+    "copy-from": "digital_collection",
+    "type": "GENERIC",
+    "name": { "str": "piercing weapon blueprints", "str_pl": "sets of piercing weapon blueprints" },
+    "description": "Saved construction drawings for a pair of piercing weapons, with notes on shaping points, fitting handles, and reinforcing joints.",
+    "item_vars": {
+      "digital_random_recipes": "{\"count\":2,\"subcategory\":\"CSC_WEAPON_PIERCING\",\"min_difficulty\":2,\"max_difficulty\":6}"
+    }
+  },
+  {
+    "id": "digital_archery_blueprints",
+    "copy-from": "digital_collection",
+    "type": "GENERIC",
+    "name": { "str": "archery blueprints", "str_pl": "sets of archery blueprints" },
+    "description": "Saved plans for a pair of bows or crossbows, with measured drawings and notes on the materials and tools needed to build them.",
+    "item_vars": {
+      "digital_random_recipes": "{\"count\":2,\"candidates\":[\"shortbow\",\"longbow\",\"compositebow_short\",\"compositebow\",\"crossbow\",\"compositecrossbow\",\"rep_crossbow\"]}"
+    }
+  },
+  {
+    "id": "digital_firearm_blueprints",
+    "copy-from": "digital_collection",
+    "type": "GENERIC",
+    "name": { "str": "firearm blueprints", "str_pl": "sets of firearm blueprints" },
+    "description": "Saved drawings and workshop notes for a pair of homemade firearms.  The files specify the materials, machining, and assembly work required.",
+    "item_vars": {
+      "digital_random_recipes": "{\"count\":2,\"candidates\":[\"pipe_rifle\",\"pipe_shotgun\",\"pipe_double_shotgun\",\"revolver_shotgun\",\"handmade_revolver\",\"smg_luty\",\"handmade_carbine\"]}"
+    }
+  },
+  {
+    "id": "digital_advanced_weapon_blueprints",
+    "copy-from": "digital_collection",
+    "type": "GENERIC",
+    "name": { "str": "advanced weapon blueprints", "str_pl": "sets of advanced weapon blueprints" },
+    "description": "A saved technical design for an experimental weapon.  The diagrams include power systems, specialized components, and extensive assembly requirements.",
+    "item_vars": {
+      "digital_random_recipes": "{\"count\":1,\"candidates\":[\"laser_rifle_cheap\",\"coilgun\",\"rebar_rifle\",\"heavy_rail_rifle\"]}"
+    }
+  }
+]

@@ -35,7 +35,12 @@
       { "item": "digital_workshop_tool_plans", "prob": 8 },
       { "group": "digital_martial_arts_videos", "prob": 3 },
       { "item": "digital_home_video", "prob": 10 },
-      { "item": "digital_voice_memo", "prob": 5 }
+      { "item": "digital_voice_memo", "prob": 5 },
+      { "item": "digital_blade_blueprints", "prob": 5 },
+      { "item": "digital_piercing_weapon_blueprints", "prob": 5 },
+      { "item": "digital_archery_blueprints", "prob": 5 },
+      { "item": "digital_firearm_blueprints", "prob": 3 },
+      { "item": "digital_advanced_weapon_blueprints", "prob": 1 }
     ]
   },
   {
@@ -91,7 +96,11 @@
       { "item": "digital_workshop_tool_plans", "prob": 3 },
       { "group": "digital_martial_arts_videos", "prob": 3 },
       { "item": "digital_home_video", "prob": 15 },
-      { "item": "digital_voice_memo", "prob": 8 }
+      { "item": "digital_voice_memo", "prob": 8 },
+      { "item": "digital_blade_blueprints", "prob": 2 },
+      { "item": "digital_piercing_weapon_blueprints", "prob": 2 },
+      { "item": "digital_archery_blueprints", "prob": 3 },
+      { "item": "digital_firearm_blueprints", "prob": 1 }
     ]
   },
   {
@@ -111,7 +120,9 @@
       { "item": "digital_electronic_blueprints", "prob": 25 },
       { "item": "digital_chemical_synthesis_sheet", "prob": 35 },
       { "item": "digital_workshop_tool_plans", "prob": 10 },
-      { "item": "digital_corrupted_file", "prob": 2 }
+      { "item": "digital_corrupted_file", "prob": 2 },
+      { "item": "digital_firearm_blueprints", "prob": 5 },
+      { "item": "digital_advanced_weapon_blueprints", "prob": 5 }
     ]
   },
   {
@@ -126,7 +137,12 @@
       { "item": "digital_electronic_blueprints", "prob": 10 },
       { "item": "digital_chemical_synthesis_sheet", "prob": 10 },
       { "item": "digital_workshop_tool_plans", "prob": 5 },
-      { "item": "digital_corrupted_file", "prob": 1 }
+      { "item": "digital_corrupted_file", "prob": 1 },
+      { "item": "digital_blade_blueprints", "prob": 5 },
+      { "item": "digital_piercing_weapon_blueprints", "prob": 5 },
+      { "item": "digital_archery_blueprints", "prob": 5 },
+      { "item": "digital_firearm_blueprints", "prob": 10 },
+      { "item": "digital_advanced_weapon_blueprints", "prob": 3 }
     ]
   },
   {
