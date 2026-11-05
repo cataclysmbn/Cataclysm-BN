@@ -18,7 +18,7 @@
     "id": "ghost_in_the_machine_files",
     "type": "item_group",
     "subtype": "collection",
-    "entries": [ { "group": "digital_content_science_journals", "count": [ 2, 4 ] } ]
+    "entries": [ { "group": "digital_content_science_journals", "count": 1 } ]
   },
   {
     "id": "digital_content_terminal",

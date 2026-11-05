@@ -26,7 +26,7 @@
     "dodge": 3,
     "armor_bash": 10,
     "armor_cut": 14,
-    "armor_bullet": 8,
+    "armor_bullet": 20,
     "vision_day": 30,
     "vision_night": 15,
     "path_settings": { "max_dist": 30, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
@@ -36,6 +36,21 @@
     "special_attacks": [
       [ "FEAR_PARALYZE", 20 ],
       [ "GRAB", 7 ],
+      {
+        "type": "gun",
+        "cooldown": 20,
+        "move_cost": 150,
+        "gun_type": "monster_emp_gun",
+        "ranges": [ [ 3, 10, "DEFAULT" ] ],
+        "require_targeting_npc": true,
+        "require_targeting_monster": true,
+        "description": "The ghost in the machine unleashes a crackling electromagnetic pulse!",
+        "targeting_cost": 200,
+        "targeting_timeout_extend": -10,
+        "targeting_sound": "a rising electronic whine!",
+        "targeting_volume": "54 dB",
+        "no_ammo_sound": "fading static."
+      },
       {
         "type": "spell",
         "spell_data": { "id": "spell_ghost_in_the_machine_blink", "hit_self": true },

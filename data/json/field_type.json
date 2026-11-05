@@ -17,6 +17,7 @@
         "effects": [
           {
             "effect_id": "hallu",
+            "body_part": "num_bp",
             "min_duration": "1 minutes",
             "max_duration": "3 minutes",
             "intensity": 1,
@@ -24,6 +25,7 @@
           },
           {
             "effect_id": "deaf",
+            "body_part": "num_bp",
             "min_duration": "1 minutes",
             "max_duration": "3 minutes",
             "intensity": 3,
