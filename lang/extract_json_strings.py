@@ -301,11 +301,13 @@ def extract_martial_art(state, item):
     if "initiate" in item:
         writestr(state, item["initiate"], format_strings=True,
                  comment=f"Initiate message for martial art '{name}'")
-    onhit_buffs = item.get("onhit_buffs", list())
-    static_buffs = item.get("static_buffs", list())
-    onmove_buffs = item.get("onmove_buffs", list())
-    ondodge_buffs = item.get("ondodge_buffs", list())
-    buffs = onhit_buffs + static_buffs + onmove_buffs + ondodge_buffs
+    # Keep in sync with the buff event arrays in martialart::load.
+    buff_fields = (
+        "static_buffs", "onmove_buffs", "onpause_buffs", "onhit_buffs",
+        "onattack_buffs", "ondodge_buffs", "onblock_buffs", "ongethit_buffs",
+        "onmiss_buffs", "oncrit_buffs", "onkill_buffs",
+    )
+    buffs = [buff for field in buff_fields for buff in item.get(field, [])]
     for buff in buffs:
         writestr(state, buff["name"])
         if buff["name"] == item["name"]:
