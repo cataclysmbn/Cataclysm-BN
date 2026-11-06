@@ -2346,6 +2346,7 @@
     "coverage": 30,
     "deconstruct": { "items": [ { "item": "minifridge", "count": 1 } ] },
     "max_volume": "75 L",
+    "required_str": 5,
     "extend": { "flags": [ "TRANSPARENT" ] },
     "bash": {
       "str_min": 18,
