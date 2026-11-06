@@ -1627,7 +1627,8 @@
       "2fmotel_entrance": "motel_entrance_north",
       "2fmotel_1": "motel_1_north",
       "2fmotel_2": "motel_2_north",
-      "2fmotel_3": "motel_3_north"
+      "2fmotel_3": "motel_3_north",
+      "motel_twd_second_floor": "motel_twd_1_f2_north"
     }
   }
 ]
