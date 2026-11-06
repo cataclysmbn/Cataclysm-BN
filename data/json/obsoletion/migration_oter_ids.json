@@ -1640,10 +1640,10 @@
       "2fmotel_3_east": "motel_3_east",
       "2fmotel_3_south": "motel_3_south",
       "2fmotel_3_west": "motel_3_west",
-      "motel_twd_second_floor_north": "motel_twd_1_f2_north",
-      "motel_twd_second_floor_east": "motel_twd_1_f2_east",
-      "motel_twd_second_floor_south": "motel_twd_1_f2_south",
-      "motel_twd_second_floor_west": "motel_twd_1_f2_west"
+      "motel_twd_second_floor_north": "motel_twd_1_f1_north",
+      "motel_twd_second_floor_east": "motel_twd_1_f1_east",
+      "motel_twd_second_floor_south": "motel_twd_1_f1_south",
+      "motel_twd_second_floor_west": "motel_twd_1_f1_west"
     }
   }
 ]
