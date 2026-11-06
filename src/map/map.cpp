@@ -5616,7 +5616,7 @@ void map::process_items_in_vehicles(submap& current_submap, int turns) {
 }
 
 void map::process_items_in_vehicle(vehicle& cur_veh, submap& current_submap, int turns) {
-    const bool engine_heater_is_on = cur_veh.has_part("E_HEATER", true) && cur_veh.engine_on;
+    const auto engine_heater_is_on = rot::temp::engine_heater_is_on(cur_veh);
     for (const vpart_reference& vp : cur_veh.get_any_parts(VPFLAG_FLUIDTANK)) {
         vp.part().process_contents(vp.pos(), engine_heater_is_on);
     }
