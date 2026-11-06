@@ -23,8 +23,8 @@
       [ "cleansuit", 5 ],
       [ "laptop", 10 ],
       [ "eink_tablet_pc", 20 ],
-      { "group": "sd_memory_card_personal", "prob": 50 },
-      { "group": "sd_memory_card_science", "prob": 5 },
+      { "group": "digital_storage_media", "prob": 55 },
+      { "group": "digital_storage_media_encrypted", "prob": 5 },
       [ "standard_template_construct", 5 ],
       [ "camera", 3 ],
       [ "thermometer", 3 ],
@@ -79,7 +79,6 @@
       [ "adv_UPS_off", 3 ],
       [ "tazer", 3 ],
       [ "plasma", 8 ],
-      [ "usb_drive", 5 ],
       [ "wrapped_rad_badge", 15 ],
       [ "bio_purifier", 10 ],
       [ "bio_sunglasses", 10 ],
@@ -363,7 +362,7 @@
       [ "recipe_lab_cvd", 8 ],
       [ "teleporter", 10 ],
       [ "antiparasitic", 5 ],
-      [ "usb_drive", 5 ]
+      { "group": "digital_storage_media", "prob": 5 }
     ]
   },
   {

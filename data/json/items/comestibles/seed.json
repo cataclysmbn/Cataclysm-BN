@@ -831,5 +831,16 @@
     "charges": 2,
     "stack_size": 8,
     "seed_data": { "plant_name": "spurge", "fruit": "spurge", "byproducts": [ "withered" ], "grow": "14 days" }
+  },
+  {
+    "id": "seed_coffee_cherry",
+    "copy-from": "seed",
+    "type": "COMESTIBLE",
+    "name": { "str_sp": "coffee seeds" },
+    "description": "Some coffee seeds.",
+    "price": "160 cent",
+    "charges": 2,
+    "stack_size": 8,
+    "seed_data": { "plant_name": "coffee", "fruit": "coffee_cherry", "byproducts": [ "withered" ], "grow": "14 days" }
   }
 ]
