@@ -2689,9 +2689,16 @@
   {
     "type": "effect_type",
     "id": "artifact_fun",
-    "morale": "morale_feeling_good",
+    "morale": "morale_artifact",
     "//": "Scaling mods so that multiple artifacts can apply it",
     "scaling_mods": { "morale": [ 15 ] },
     "rating": "good"
-  }
+  },
+  {
+    "type": "effect_type",
+    "id": "artifact_sick",
+    "//": "Scaling mods so that multiple artifacts can apply it",
+    "scaling_mods": { "str_mod": [ -1 ], "dex_mod": [ -2 ], "int_mod": [ -1 ] },
+    "blood_analysis_description": "Ill"
+  },
 ]
