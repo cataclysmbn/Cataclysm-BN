@@ -2696,7 +2696,7 @@
   },
   {
     "type": "effect_type",
-    "id": "artifact_sick",
+    "id": "artifact_sickness",
     "//": "Scaling mods so that multiple artifacts can apply it",
     "scaling_mods": { "str_mod": [ -1 ], "dex_mod": [ -2 ], "int_mod": [ -1 ] },
     "blood_analysis_description": "Ill"
