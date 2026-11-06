@@ -878,6 +878,15 @@ def extract_enchantment_vision(state, item):
         writestr(state, vision_desc.get("description"),
                  comment=f"Message shown when sensing creatures with enchantment vision '{vision_id}'")
 
+def extract_relicgen(state, item):
+    relicgen_id = item.get("id")
+    for entry in item.get("name_prefix", []):
+        writestr(state, entry.get("prefix"),
+                 comment=f"Name prefix of relicgen '{relicgen_id}'")
+    for entry in item.get("name_postfix", []):
+        writestr(state, entry.get("postfix"),
+                 comment=f"Name postfix of relicgen '{relicgen_id}'")
+
 def extract_option(state, item):
     name = item.get("name")
     writestr(state, item.get("menu_text"),
@@ -942,7 +951,8 @@ extract_specials = {
     "map_feature_description": extract_map_feature_description,
     "enchantment_condition": extract_enchantment_condition,
     "enchantment_value": extract_enchantment_value,
-    "enchantment_vision": extract_enchantment_vision,    
+    "enchantment_vision": extract_enchantment_vision,
+    "relicgen": extract_relicgen, 
 }
 
 
