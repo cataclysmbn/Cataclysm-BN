@@ -74,6 +74,24 @@
     "deps": [ { "option": "MERGE_COMESTIBLES", "values": [ "liquid", "all" ] } ]
   },
   {
+    "type": "OPTION_GROUP",
+    "id": "container_reloading",
+    "page": "general",
+    "title": "Container reloading",
+    "desc": "Configure which items appear when reloading containers."
+  },
+  {
+    "type": "OPTION",
+    "name": "RELOAD_CONTAINER_AMMO_COMESTIBLES_ONLY",
+    "stype": "bool",
+    "scope": "global",
+    "page": "general",
+    "group": "container_reloading",
+    "menu_text": "Show only ammo and comestibles",
+    "tooltip": "When enabled, reloading containers only shows ammunition and comestibles as sources.",
+    "default": false
+  },
+  {
     "type": "OPTION_SPACE",
     "page": "general"
   },

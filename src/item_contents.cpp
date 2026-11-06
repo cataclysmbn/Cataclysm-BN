@@ -317,7 +317,7 @@ units::volume item_contents::item_size_modifier() const
 {
     units::volume ret = 0_ml;
     for( const item * const &it : items ) {
-        ret += it->volume();
+        ret += it->volume_for_storage();
     }
     return ret;
 }

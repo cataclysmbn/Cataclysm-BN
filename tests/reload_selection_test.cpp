@@ -6,6 +6,7 @@
 #include "map/map.h"
 #include "map_helpers.h"
 #include "npc.h"
+#include "options_helpers.h"
 #include "player_helpers.h"
 #include "reload/reload.h"
 #include "reload/reload_selection.h"
@@ -14,6 +15,7 @@
 #include "uistate.h"
 #include "vehicle/vehicle.h"
 
+#include <algorithm>
 #include <map>
 #include <utility>
 #include <vector>
@@ -97,6 +99,34 @@ TEST_CASE("reload_single_discovered_option", "[reload][reload_selection]") {
     CHECK(gun.ammo_remaining() == 0);
     CHECK_FALSE(who.activity);
     CHECK(uistate.lastreload == history);
+}
+
+TEST_CASE("reload_container_source_filter", "[reload][reload_selection][container]") {
+    clear_all_state();
+    auto& who = get_avatar();
+    auto& container = who.i_add(item::spawn("bowl_plastic", calendar::start_of_cataclysm));
+    auto& ammo = who.i_add(item::spawn("38_special", calendar::start_of_cataclysm, 6));
+    auto& food = who.i_add(item::spawn("apple", calendar::start_of_cataclysm));
+    auto& other = who.i_add(item::spawn("rock", calendar::start_of_cataclysm));
+    {
+        const auto filter = override_option("RELOAD_CONTAINER_AMMO_COMESTIBLES_ONLY", "false");
+        const auto unfiltered = reload_selection::prepare(who, container, {.prompt = true});
+        CHECK(std::ranges::any_of(unfiltered.options, [&](const item_reload_option& option) {
+            return option.ammo == &other;
+        }));
+    }
+    const auto filter = override_option("RELOAD_CONTAINER_AMMO_COMESTIBLES_ONLY", "true");
+
+    const auto filtered = reload_selection::prepare(who, container, {.prompt = true});
+
+    CHECK(filtered.outcome == reload_selection::selection_outcome::interaction_required);
+    CHECK(filtered.options.size() == 2);
+    CHECK(std::ranges::all_of(filtered.options, [&](const item_reload_option& option) {
+        return option.ammo == &ammo || option.ammo == &food;
+    }));
+    CHECK(std::ranges::none_of(filtered.options, [&](const item_reload_option& option) {
+        return option.ammo == &other;
+    }));
 }
 
 TEST_CASE("reload_discovery_failure_precedence", "[reload][reload_selection]") {
