@@ -229,7 +229,7 @@
     "looks_like": "chitin_piece",
     "color": "blue",
     "name": { "str": "acrid fragment" },
-    "description": "An discolored, leathery piece of hardened tissue broken off from an otherworldly monster, like a massive shed scale.  It might be useful, or it could be made into a trophy of some sort.",
+    "description": "A discolored, leathery piece of hardened tissue broken off from an otherworldly monster, like a massive shed scale.  It might be useful, or it could be made into a trophy of some sort.",
     "price_postapoc": "5 USD",
     "flags": [ "NO_SALVAGE" ],
     "material": [ "acidchitin" ],

@@ -183,7 +183,7 @@
     "copy-from": "software",
     "type": "GENERIC",
     "name": { "str_sp": "UniTool" },
-    "description": "A versatile software toolkit - unzips archives, flashes drives, and a variety of other digital tasks.",
+    "description": "A versatile software toolkit - unzips archives, flashes drives, and performs a variety of other digital tasks.",
     "price": "5 USD",
     "price_postapoc": "0 cent",
     "category": "valuables"
@@ -254,7 +254,7 @@
     "name": { "str_sp": "neural data" },
     "symbol": "#",
     "container": "data_card",
-    "description": "Data stolen from a dead scientist memory banks.  Is the owner of these thoughts still hidden here, amidst the unreadable data; or are these just a collection of the precious moments of someone's life?\n\nWhatever the case, the idea of perpetually keeping a part of you within a metallic pill makes you feel uncomfortable.",
+    "description": "Data stolen from a dead scientist's memory banks.  Is the owner of these thoughts still hidden here, amidst the unreadable data; or are these just a collection of the precious moments of someone's life?\n\nWhatever the case, the idea of perpetually keeping a part of you within a metallic pill makes you feel uncomfortable.",
     "flags": [ "NO_DROP" ],
     "category": "valuables"
   },

@@ -194,7 +194,7 @@
     "type": "TOOL",
     "category": "drugs",
     "name": { "str": "oxygen tank" },
-    "description": "This is tank of compressed medical oxygen with a regulator and mask.  Commonly used in emergency situations, it provides immediate relief for asthma attacks or smoke inhalation, and can provide a brief burst of energy.",
+    "description": "This is a tank of compressed medical oxygen with a regulator and mask.  Commonly used in emergency situations, it provides immediate relief for asthma attacks or smoke inhalation, and can provide a brief burst of energy.",
     "weight": "2268 g",
     "volume": "1500 ml",
     "price": "60 USD",

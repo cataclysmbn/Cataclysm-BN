@@ -182,7 +182,7 @@
     "type": "furniture",
     "id": "f_arcane_candlestick_lit",
     "name": "lit candle pedestal",
-    "description": "A short stone pedestal with an ornate candle holder firmly mounted atop it.  A eerie blue flame lingers where one would expect a candle to be mounted, giving off a soothing glow.",
+    "description": "A short stone pedestal with an ornate candle holder firmly mounted atop it.  An eerie blue flame lingers where one would expect a candle to be mounted, giving off a soothing glow.",
     "looks_like": "t_pedestal_wyrm",
     "symbol": "&",
     "color": "dark_gray",

@@ -49,7 +49,7 @@
     "id": "essence_surge_generator_item",
     "copy-from": "essence_surge_generator_item_abstract",
     "name": { "str": "essence surge generator" },
-    "description": "A compact device built using otherworldly mechanisms to convert different types essence into electricity, yielding double the energy each essence holds if integrated into a vehicle.  Safe to use, but using magic essence might be prohibitively expensive for most purposes.",
+    "description": "A compact device built using otherworldly mechanisms to convert different types of essence into electricity, yielding double the energy each essence holds if integrated into a vehicle.  Safe to use, but using magic essence might be prohibitively expensive for most purposes.",
     "ammo": [ "essence_type" ],
     "max_charges": 1000
   },
@@ -58,7 +58,7 @@
     "id": "essence_blood_surge_generator_item",
     "copy-from": "essence_surge_generator_item_abstract",
     "name": { "str": "blood essence surge generator" },
-    "description": "A compact device built using otherworldly mechanisms to convert blood essence into electricity, providing a good source of power if integrated into a vehicle.  Safe to use despite its nature and unnaturally efficient, assuming one can afford the cost of obtaining essence fron life force in such quantities.",
+    "description": "A compact device built using otherworldly mechanisms to convert blood essence into electricity, providing a good source of power if integrated into a vehicle.  Safe to use despite its nature and unnaturally efficient, assuming one can afford the cost of obtaining essence from life force in such quantities.",
     "ammo": [ "essence_blood_type" ],
     "max_charges": 3000
   },
