@@ -7343,7 +7343,9 @@ void iexamine::cloning_vat_finalize( const tripoint_bub_ms &examp, const time_po
     detached_ptr<item> spawned_embryo = item::spawn( itype_embryo, calendar::turn );
     spawned_embryo->set_var( "place_monster_override", developing_embryo.get_var( "specimen_sample" ) );
     spawned_embryo->set_var( "place_monster_override_name",
-                             developing_embryo.get_var( "specimen_name" ) );
+                             cloning_utils::specimen_name(
+                                 mtype_id( developing_embryo.get_var( "specimen_sample" ) ),
+                                 developing_embryo.get_var( "specimen_name" ) ) );
     here.add_item( examp, std::move( spawned_embryo ) );
 
     return;

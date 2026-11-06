@@ -5661,7 +5661,8 @@ auto cloning_syringe_iuse::use( player &p, item &it, bool /*t*/,
                           m->in_species( species_SKELETON );
     if( m->has_flag( MF_CANT_CLONE ) || in_bad_species ) {
         add_msg( m_info,
-                 _( "The %s emits two error beeps.  This creature can't provide a valid sample." ) );
+                 _( "The %s emits two error beeps.  This creature can't provide a valid sample." ),
+                 it.display_name() );
         return 0;
     }
 
@@ -5690,12 +5691,12 @@ auto cloning_syringe_iuse::use( player &p, item &it, bool /*t*/,
                 progress++;
                 sample->set_var( "specimen_sample_progress", std::to_string( progress ) );
                 sample->erase_var( "DIGITAL_FILE_ID" );
-                add_msg( m_info, "Progress: %d/%d for genome sample.", progress, size );
+                add_msg( m_info, _( "Progress: %d/%d for genome sample." ), progress, size );
                 if( progress == size ) {
-                    add_msg( m_good, "Sample is complete." );
+                    add_msg( m_good, _( "Sample is complete." ) );
                 }
             } else {
-                add_msg( "Sample is already complete." );
+                add_msg( _( "Sample is already complete." ) );
             }
 
             return charges_to_use;
@@ -5712,9 +5713,9 @@ auto cloning_syringe_iuse::use( player &p, item &it, bool /*t*/,
     destination->put_in( std::move( sample ) );
 
     if( size > 1 ) {
-        add_msg( m_info, "Progress: 1/%d for genome sample.", size );
+        add_msg( m_info, _( "Progress: 1/%d for genome sample." ), size );
     } else {
-        add_msg( m_good, "Sample is complete." );
+        add_msg( m_good, _( "Sample is complete." ) );
     }
 
     return charges_to_use;
@@ -5771,9 +5772,9 @@ auto dna_editor_iuse::use( player &p, item &it, bool /*t*/,
 
     uilist menu;
     menu.text = string_format( _( "What to do with the %s?" ), selected_sample->display_name() );
-    menu.addentry( 0, true, 'e', "Examine sample" );
+    menu.addentry( 0, true, 'e', _( "Examine sample" ) );
     menu.addentry( 1, p.has_charges( itype_mutagen, 1 ) &&
-                   p.has_charges( itype_biomaterial, 1 ), 'i', "Research upgrade" );
+                   p.has_charges( itype_biomaterial, 1 ), 'i', _( "Research upgrade" ) );
     auto storage = digital_genome_storage( p );
     std::erase_if( storage, [&selected_sample]( const auto * media ) {
         return std::ranges::any_of( media->contents.all_items_top(), [&selected_sample](
@@ -5782,7 +5783,7 @@ auto dna_editor_iuse::use( player &p, item &it, bool /*t*/,
         } );
     } );
     menu.addentry( 2, !storage.empty(), 'c', _( "Copy sample file" ) );
-    menu.addentry( 3, p.has_charges( itype_biomaterial, 1 ), 'p', "Produce DNA" );
+    menu.addentry( 3, p.has_charges( itype_biomaterial, 1 ), 'p', _( "Produce DNA" ) );
     menu.query();
     if( menu.ret < 0 ) {
         return 0;
@@ -5798,7 +5799,7 @@ auto dna_editor_iuse::use( player &p, item &it, bool /*t*/,
 
         popup(
             _( "Examination Results:\n\nSample Name: %s\nSize Class: %s\nWeight: %.0fkg\nVolume: %.0fl" ),
-            selected_sample->get_var( "specimen_name" ),
+            cloning_utils::specimen_name( specimen_id, selected_sample->get_var( "specimen_name" ) ),
             size_str,
             static_cast<double>( to_kilogram( newmon.get_weight() ) ),
             static_cast<double>( to_liter( newmon.get_volume() ) )
@@ -5814,7 +5815,7 @@ auto dna_editor_iuse::use( player &p, item &it, bool /*t*/,
         const auto mons = upgrade_group.obj().monsters;
 
         if( mons.empty() ) {
-            popup( "A message pops up on the genome editor indicating there are no further mutations possible for this sample." );
+            popup( _( "A message pops up on the genome editor indicating there are no further mutations possible for this sample." ) );
             return 0;
         }
 
@@ -5849,7 +5850,7 @@ auto dna_editor_iuse::use( player &p, item &it, bool /*t*/,
 
         // chance of failure when converting DNA
         if( rng( 1, 100 ) < 80 ) {
-            add_msg( m_bad, "The research produced no result." );
+            add_msg( m_bad, _( "The research produced no result." ) );
             return charges_to_use;
         }
 
@@ -5870,7 +5871,9 @@ auto dna_editor_iuse::use( player &p, item &it, bool /*t*/,
     } else if( menu.ret == 3 ) {
         p.use_charges( itype_biomaterial, 1 );
         const std::string msg = string_format( _( "You produce a unit of %s DNA." ),
-                                               selected_sample->get_var( "specimen_name" ) );
+                                               cloning_utils::specimen_name(
+                                                       mtype_id( selected_sample->get_var( "specimen_sample" ) ),
+                                                       selected_sample->get_var( "specimen_name" ) ) );
         add_msg( msg );
 
         detached_ptr<item> dna = item::spawn( itype_id( "dna" ), calendar::turn, 1 );
