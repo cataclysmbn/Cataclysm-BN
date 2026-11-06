@@ -14,18 +14,21 @@
     "type": "GENERIC",
     "id": "test_harvest_flags",
     "copy-from": "test_harvest_default",
+    "name": "test harvest flag seed",
     "seed_data": { "harvest_inherit_flags": [ "HIDDEN_ITEM" ] }
   },
   {
     "type": "GENERIC",
     "id": "test_harvest_poison",
     "copy-from": "test_harvest_flags",
+    "name": "test harvest poison seed",
     "seed_data": { "harvest_inherit_flags": [  ], "harvest_inherit_poison": true }
   },
   {
     "type": "GENERIC",
     "id": "test_harvest_both",
     "copy-from": "test_harvest_flags",
+    "name": "test harvest both seed",
     "seed_data": { "harvest_inherit_poison": true }
   }
 ]
