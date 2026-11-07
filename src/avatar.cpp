@@ -438,7 +438,8 @@ const Character *avatar::get_book_reader( const item &book,
                !worn_with_flag( flag_FIX_FARSIGHT ) &&
                !has_effect( effect_contacts ) && !has_bionic( bio_eye_optic ) ) {
         reasons.emplace_back( _( "Your eyes won't focus without reading glasses." ) );
-    } else if( !character_funcs::can_see_fine_details( *this ) ) {
+    } else if( ( !is_digital_file( book ) || is_blind() ) &&
+               !character_funcs::can_see_fine_details( *this ) ) {
         // Too dark to read only applies if the player can read to himself
         reasons.emplace_back( _( "It's too dark to read!" ) );
         return nullptr;
@@ -509,8 +510,10 @@ int avatar::time_to_read( const item &book, const Character &reader,
     }
 
     int retval = type->time * reading_speed;
-    retval *= std::min( character_funcs::fine_detail_vision_mod( *this ),
-                        character_funcs::fine_detail_vision_mod( reader ) );
+    if( !is_digital_file( book ) ) {
+        retval *= std::min( character_funcs::fine_detail_vision_mod( *this ),
+                            character_funcs::fine_detail_vision_mod( reader ) );
+    }
 
     const int effective_int = std::min( { get_int(), reader.get_int(), learner ? learner->get_int() : INT_MAX } );
     if( type->intel > effective_int &&
@@ -767,7 +770,7 @@ bool avatar::read( item *loc, const bool continuous )
                                  character_funcs::fine_detail_vision_mod( *this ),
                                  character_funcs::fine_detail_vision_mod( *reader )
                              );
-    if( vision_mod > character_funcs::FINE_VISION_PERFECT ) {
+    if( !is_digital_file( it ) && vision_mod > character_funcs::FINE_VISION_PERFECT ) {
         add_msg( m_warning,
                  _( "It's difficult for %s to see fine details right now.  Reading will take longer than usual." ),
                  reader->disp_name() );

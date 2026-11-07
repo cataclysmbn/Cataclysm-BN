@@ -26,18 +26,19 @@ std::expected<void, std::string>
 {
     namespace ranges = std::ranges;
     if( !who.has_item( reader ) || !digital_reader_ready( reader, who ) ) {
-        return std::unexpected( _( "You need a powered reader to scan a book." ) );
+        return std::unexpected( _( "You need a powered reader to scan." ) );
     }
-    if( !who.has_item( book ) || !book.is_book() || is_digital_file( book ) ) {
-        return std::unexpected( _( "You need a physical book to scan." ) );
+    if( !who.has_item( book ) || !is_scannable_text( book ) ) {
+        return std::unexpected( _( "You need physical reading material to scan." ) );
     }
     if( !character_funcs::can_see_fine_details( who ) ) {
-        return std::unexpected( _( "You can't see well enough to scan a book." ) );
+        return std::unexpected( _( "You can't see well enough to scan." ) );
     }
     if( ranges::any_of( reader.contents.all_items_top(), [&book]( const auto * file ) {
-    return is_digital_file( *file ) && file->typeId() == book.typeId();
+    return is_digital_file( *file ) && file->typeId() == book.typeId() &&
+               file->snip_id == book.snip_id;
     } ) ) {
-        return std::unexpected( _( "This book is already installed on the reader." ) );
+        return std::unexpected( _( "This copy is already installed on the reader." ) );
     }
     return {};
 }
@@ -45,7 +46,8 @@ std::expected<void, std::string>
 auto check_scan_targets( player_activity &act, Character &who ) -> bool
 {
     if( act.targets.size() != 2 || !act.targets[0] || !act.targets[1] ) {
-        who.add_msg_if_player( m_info, _( "You no longer have the book or reader.  You stop scanning." ) );
+        who.add_msg_if_player( m_info,
+                               _( "You no longer have the reading material or reader.  You stop scanning." ) );
         act.set_to_null();
         return false;
     }
@@ -58,6 +60,11 @@ auto check_scan_targets( player_activity &act, Character &who ) -> bool
     return true;
 }
 } // namespace
+
+auto is_scannable_text( const item &text ) -> bool
+{
+    return !is_digital_file( text ) && ( text.is_book() || !text.snip_id.is_null() );
+}
 
 auto start_book_scan( Character &who, item &reader, item &book ) -> bool
 {
@@ -95,10 +102,13 @@ auto activity_handlers::scan_book_finish( player_activity *act, player *who ) ->
     auto &reader = *act->targets[0];
     const auto &book = *act->targets[1];
     auto file = item::spawn( book.typeId(), calendar::turn );
+    file->snip_id = book.snip_id;
     file->set_flag( flag_id( "DIGITAL" ) );
     file->set_flag( flag_IRREMOVABLE );
     file->set_flag( flag_NO_DROP );
-    file->set_var( "DIGITAL_FILE_ID", "scanned_book:" + book.typeId().str() );
+    const auto snippet_suffix = book.snip_id.is_null() ? std::string{} : ":"
+                                + book.snip_id.str();
+    file->set_var( "DIGITAL_FILE_ID", "scanned_book:" + book.typeId().str() + snippet_suffix );
     reader.put_in( std::move( file ) );
     who->add_msg_if_player( m_good, _( "You save a digital copy of %s on your %s." ),
                             book.type_name(), reader.type_name() );

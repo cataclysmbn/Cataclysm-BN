@@ -6123,7 +6123,8 @@ auto browse_digital_files( player &who, item &reader ) -> void
     actions.text = file->type->description.translated();
     actions.hilight_disabled = true;
     actions.title = file->display_name();
-    if( !file->type->snippet_category.empty() || file->has_var( "description" ) ) {
+    if( !file->snip_id.is_null() || !file->type->snippet_category.empty() ||
+        file->has_var( "description" ) ) {
         actions.addentry( read_text, true, 't', _( "Read saved text" ) );
     }
     if( file->is_book() ) {
@@ -6289,7 +6290,7 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
         }
 
         amenu.addentry( ei_files, true, 'f', _( "Browse digital files" ) );
-        amenu.addentry( ei_scan_book, true, 'a', _( "Scan book" ) );
+        amenu.addentry( ei_scan_book, true, 'a', _( "Scan book or text" ) );
         amenu.addentry( ei_download, true, 'w', _( "Download data from storage media" ) );
         const auto has_files = std::ranges::any_of( it->contents.all_items_top(),
         []( const auto * file ) { return is_digital_file( *file ); } );
@@ -6311,8 +6312,8 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
 
         if( choice == ei_scan_book ) {
             if( auto *you = p->as_avatar() ) {
-                const auto filter = []( const auto & book ) { return book.is_book() && !is_digital_file( book ); };
-                if( auto *book = game_menus::inv::titled_filter_menu( filter, *you, _( "Scan which book?" ) ) ) {
+                if( auto *book = game_menus::inv::titled_filter_menu( is_scannable_text, *you,
+                                 _( "Scan which book or text?" ) ) ) {
                     start_book_scan( *p, *it, *book );
                 }
             }

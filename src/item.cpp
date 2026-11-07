@@ -5877,8 +5877,8 @@ units::volume item::volume( bool integral ) const
         return 0_ml;
     }
 
-    // Scanned books retain their physical type but need a nonzero file volume.
-    if( is_book() && is_digital_file( *this ) ) {
+    // Digital copies retain their physical type but need a nonzero file volume.
+    if( is_digital_file( *this ) ) {
         return 1_ml;
     }
 
@@ -11700,7 +11700,7 @@ std::string item::type_name( unsigned int quantity ) const
         }
     }
 
-    if( is_book() && is_digital_file( *this ) && !type->has_flag( flag_id( "DIGITAL" ) ) ) {
+    if( is_digital_file( *this ) && !type->has_flag( flag_id( "DIGITAL" ) ) ) {
         ret_name = string_format( _( "digital copy of %s" ), ret_name );
     }
     return ret_name;
