@@ -1193,6 +1193,12 @@ All object defined use actions support the following two types.
     "type": "paint_stuff_cfg",  // Configures how it paints using paint stuff
     "color_swap": true          // Allow the color to be swapped to any other named color
 }
+"use_action": {
+  "type": "passivenoise",
+  "noise": 90, // Noise in decibles
+  "noise_chance": 10, // Percent chance to trigger per turn
+  "noise_message": "The chainsaws rumble." // Message to display with noise
+}
 ```
 
 ### Random Descriptions

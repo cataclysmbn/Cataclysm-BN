@@ -747,6 +747,7 @@ class passivenoise_actor : public iuse_actor
         void load( const JsonObject &obj ) override;
         int use( player &, item &, bool, const tripoint_bub_ms & ) const override;
         std::unique_ptr<iuse_actor> clone() const override;
+        bool activatable() const override { return false; }
 };
 
 /**
