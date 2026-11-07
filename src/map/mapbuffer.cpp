@@ -1106,6 +1106,9 @@ void mapbuffer::clear() {
         submaps_with_luminous_items_.clear();
         submaps.clear();
         pocket_info_.reset();
+        if (g != nullptr && g->m.get_bound_dimension() == dimension_id_) {
+            g->m.bind_dimension(dimension_id_);
+        }
     }
     std::lock_guard<std::mutex> pw_lk(pending_writes_mutex_);
     pending_writes_.clear();
@@ -1177,6 +1180,12 @@ void mapbuffer::transfer_all_to(mapbuffer& dest) {
     submaps_with_active_items_.clear();
     submaps_with_luminous_items_.clear();
     submaps.clear();
+    if (g != nullptr) {
+        if (g->m.get_bound_dimension() == dimension_id_) { g->m.bind_dimension(dimension_id_); }
+        if (g->m.get_bound_dimension() == dest.dimension_id_) {
+            g->m.bind_dimension(dest.dimension_id_);
+        }
+    }
 }
 
 auto mapbuffer::load_submap(const tripoint_abs_sm& pos) -> submap* {

@@ -90,10 +90,11 @@ void map_memory::memorize_terrain_tile( const tripoint_abs_ms &pos, const std::s
     sm.set_terrain_tile( p.remainder, memorized_terrain_tile{ ter, subtile, rotation } );
 }
 
-memorized_terrain_tile map_memory::get_terrain_tile( const tripoint_abs_ms &pos )
+auto map_memory::get_terrain_tile( const tripoint_abs_ms &pos ) -> const memorized_terrain_tile
+& // *NOPAD*
 {
     const auto p = project_remain<coords::sm>( pos );
-    mm_submap &sm = get_submap( p.quotient_tripoint );
+    const auto &sm = get_submap( p.quotient_tripoint );
     return sm.terrain_tile( p.remainder );
 }
 
@@ -119,7 +120,7 @@ bool map_memory::prepare_region( const tripoint_abs_ms &p1, const tripoint_abs_m
     assert( p1.z() == p2.z() );
     assert( p1.x() <= p2.x() && p1.y() <= p2.y() );
 
-    const auto sm_p1 = project_to<coords::sm>( p1 ) + point_south_west;
+    const auto sm_p1 = project_to<coords::sm>( p1 ) + point_north_west;
     const auto sm_p2 = project_to<coords::sm>( p2 ) + point_south_east;
 
     const auto sm_size = sm_p2.xy() - sm_p1.xy();
@@ -260,7 +261,7 @@ mm_submap &map_memory::get_submap( const tripoint_abs_sm &sm_pos )
     if( cache_pos != tripoint_abs_sm::zero() ) {
         int zoffset = ( sm_pos.z() + OVERMAP_DEPTH ) * cache_size.y() * cache_size.x();
         const point_rel_sm idx = ( sm_pos - cache_pos ).xy();
-        if( idx.x() > 0 && idx.y() > 0 && idx.x() < cache_size.x() && idx.y() < cache_size.y() ) {
+        if( idx.x() >= 0 && idx.y() >= 0 && idx.x() < cache_size.x() && idx.y() < cache_size.y() ) {
             return *cached[idx.y() * cache_size.x() + idx.x() + zoffset];
         }
     }

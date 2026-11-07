@@ -4,6 +4,7 @@
 #    include "color.h"
 #    include "map/field.h"
 #    include "map/map.h"
+#    include "map/submap.h"
 #    include "monster.h"
 #    include "overmap/omdata.h"
 #    include "vehicle/veh_type.h"
@@ -176,10 +177,17 @@ auto cata_tiles::get_terrain_color(
     const ter_t &t, const map &m, const tripoint_bub_ms &p ) const -> color_tint_pair
 {
     auto tint = tint_from_tileset( tileset_ptr, t );
+    if( !m.inbounds( p ) ) {
+        return tint;
+    }
 
-    const auto vars = m.ter_vars( p );
-    if( vars != nullptr ) {
-        return tint_from_data_vars( *vars, tint );
+    auto l = point_sm_ms{};
+    const auto *sm = m.get_submap_at( p, l );
+    if( sm != nullptr ) {
+        const auto &vars = sm->get_ter_vars( l );
+        if( !vars.empty() ) {
+            return tint_from_data_vars( vars, tint );
+        }
     }
 
     return tint;
@@ -189,10 +197,17 @@ auto cata_tiles::get_furniture_color(
     const furn_t &f, const map &m, const tripoint_bub_ms &p ) const -> color_tint_pair
 {
     auto tint = tint_from_tileset( tileset_ptr, f );
+    if( !m.inbounds( p ) ) {
+        return tint;
+    }
 
-    const auto vars = m.furn_vars( p );
-    if( vars != nullptr ) {
-        return tint_from_data_vars( *vars, tint );
+    auto l = point_sm_ms{};
+    const auto *sm = m.get_submap_at( p, l );
+    if( sm != nullptr ) {
+        const auto &vars = sm->get_furn_vars( l );
+        if( !vars.empty() ) {
+            return tint_from_data_vars( vars, tint );
+        }
     }
 
     return tint;
