@@ -707,6 +707,8 @@ can be planted:
     "seeds": false, // (optional, default is true). If true, harvesting the plant will spawn seeds (the same type as the item used to plant). If false only the fruits are spawned, no seeds.
     "fruit_div": 2, // (optional, default is 1). Final amount of fruit charges produced is divided by this number. Works only if fruit item is counted by charges.
     "byproducts": ["withered", "straw_pile"], // A list of further items that should spawn upon harvest.
+    "harvest_inherit_flags": ["HIDDEN_POISON", "HIDDEN_HALLU"], // Optional, default: []. Flags present on the planted item to copy to harvested fruits and seeds, excluding byproducts. Works with any required_terrain_flag.
+    "harvest_inherit_poison": true, // Optional, default: false. Copy the planted item's poison value to harvested fruits and seeds, excluding byproducts. Independent of flag inheritance.
     "plant_name": "sunflower", // The name of the plant that grows from this seed. This is only used as information displayed to the user.
     "grow" : 91 // A time duration: how long it takes for a plant to fully mature. Based around a 91 day season length (roughly a real world season) to give better accuracy for longer season lengths
                 // Note that growing time is later converted based upon the season_length option, basing it around 91 is just for accuracy purposes
