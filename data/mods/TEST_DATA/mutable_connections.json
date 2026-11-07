@@ -1,0 +1,45 @@
+[
+  {
+    "type": "overmap_special",
+    "id": "test_mutable_disconnected_connection",
+    "subtype": "mutable",
+    "locations": [ "land" ],
+    "occurrences": [ 0, 0 ],
+    "joins": [ "test_mutable_connection_join" ],
+    "overmaps": {
+      "root": { "overmap": "field", "east": "test_mutable_connection_join" },
+      "connector": { "overmap": "field", "west": "test_mutable_connection_join" },
+      "extra": { "overmap": "field" }
+    },
+    "root": "root",
+    "phases": [
+      [
+        {
+          "chunk": [
+            { "overmap": "connector", "pos": [ 0, 0, 0 ], "rot": "north" },
+            { "overmap": "extra", "pos": [ 0, 1, 0 ], "rot": "north" }
+          ],
+          "connections": [ { "point": [ 2, 0, 0 ], "connection": "local_road" } ],
+          "max": 1
+        }
+      ]
+    ]
+  },
+  {
+    "type": "overmap_special",
+    "id": "test_mutable_directed_connection",
+    "copy-from": "test_mutable_disconnected_connection",
+    "phases": [
+      [
+        {
+          "chunk": [
+            { "overmap": "connector", "pos": [ 0, 0, 0 ], "rot": "north" },
+            { "overmap": "extra", "pos": [ 0, 1, 0 ], "rot": "north" }
+          ],
+          "connections": [ { "point": [ 2, 0, 0 ], "connection": "local_road", "from": [ 1, 0, 0 ] } ],
+          "max": 1
+        }
+      ]
+    ]
+  }
+]
