@@ -1562,7 +1562,7 @@
     "revert_to": "cs_lajatang_off",
     "use_action": [
       { "type": "transform", "target": "e_combatsaw_off", "msg": "You turn off the combat chainsaw." },
-      { "type": "passivenoise", "noise": 110, "noise_chance": 10, "noise_message": "The chainsaw rumble." },
+      { "type": "passivenoise", "noise": 110, "noise_chance": 10, "noise_message": "The chainsaw rumble." }
     ],
     "qualities": [ [ "AXE", 4 ], [ "BUTCHER", -250 ] ],
     "turns_per_charge": 2,
