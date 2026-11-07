@@ -146,6 +146,36 @@
     "description": "A digital scan of text or images from an object."
   },
   {
+    "id": "digital_nft_artwork",
+    "copy-from": "digital_text",
+    "type": "GENERIC",
+    "name": { "str": "NFT artwork" },
+    "description": "A cached image and a certificate claiming exclusive ownership of a non-fungible token.  Someone paid a fortune for this before the Cataclysm.  The image still works; the market does not.",
+    "price": "250000 USD",
+    "price_postapoc": "0 cent",
+    "snippet_category": "digital_nft_artwork"
+  },
+  {
+    "id": "digital_nft_real_estate",
+    "copy-from": "digital_text",
+    "type": "GENERIC",
+    "name": { "str": "virtual real-estate NFT" },
+    "description": "A deed to an expensive parcel of virtual land.  The servers that made it a place are offline, and nobody is accepting it in exchange for somewhere to sleep.",
+    "price": "950000 USD",
+    "price_postapoc": "0 cent",
+    "snippet_category": "digital_nft_real_estate"
+  },
+  {
+    "id": "digital_nft_collectible",
+    "copy-from": "digital_text",
+    "type": "GENERIC",
+    "name": { "str": "NFT collectible" },
+    "description": "A limited-edition digital collectible with an impressive transaction history.  Its former owner considered it a retirement fund.  It has not become any more edible since then.",
+    "price": "75000 USD",
+    "price_postapoc": "0 cent",
+    "snippet_category": "digital_nft_collectible"
+  },
+  {
     "id": "digital_home_video",
     "copy-from": "digital_collection",
     "type": "GENERIC",
