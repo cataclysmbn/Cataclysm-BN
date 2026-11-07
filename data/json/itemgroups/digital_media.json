@@ -42,7 +42,8 @@
       { "item": "digital_chemical_synthesis_sheet", "prob": 5 },
       { "item": "digital_workshop_tool_plans", "prob": 8 },
       { "group": "digital_content_weapon_blueprints", "prob": 19 },
-      { "group": "digital_content_trap_blueprints", "prob": 13 }
+      { "group": "digital_content_trap_blueprints", "prob": 13 },
+      { "group": "digital_content_nfts", "prob": 1 }
     ]
   },
   {
@@ -108,7 +109,8 @@
       { "item": "digital_chemical_synthesis_sheet", "prob": 1 },
       { "item": "digital_workshop_tool_plans", "prob": 3 },
       { "group": "digital_content_weapon_blueprints", "prob": 8 },
-      { "group": "digital_content_trap_blueprints", "prob": 6 }
+      { "group": "digital_content_trap_blueprints", "prob": 6 },
+      { "group": "digital_content_nfts", "prob": 1 }
     ]
   },
   {
@@ -135,7 +137,8 @@
       { "group": "digital_content_weapon_blueprints", "prob": 25 },
       { "group": "digital_content_trap_blueprints", "prob": 20 },
       { "item": "digital_advanced_trap_blueprints", "prob": 5 },
-      { "group": "digital_content_science_journals", "prob": 20 }
+      { "group": "digital_content_science_journals", "prob": 20 },
+      { "group": "digital_content_nfts", "prob": 1 }
     ]
   },
   {
@@ -169,6 +172,12 @@
       { "item": "recipe_lab_cvd", "custom-flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ] },
       { "item": "recipe_lab_elec", "custom-flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ] }
     ]
+  },
+  {
+    "id": "digital_content_nfts",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "item": "digital_nft_artwork" }, { "item": "digital_nft_real_estate" }, { "item": "digital_nft_collectible" } ]
   },
   {
     "id": "digital_content_saved_text",

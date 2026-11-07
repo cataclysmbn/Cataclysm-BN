@@ -42,6 +42,22 @@
     "flags": [  ]
   },
   {
+    "id": "test_scannable_snippet",
+    "copy-from": "linuxtshirt",
+    "type": "ARMOR",
+    "name": { "str": "test printed snippet" },
+    "description": "A sheet of text for testing scanning.",
+    "weight": "1 g",
+    "volume": "100 ml",
+    "symbol": "?",
+    "color": "white",
+    "material": "paper",
+    "snippet_category": [
+      { "id": "test_scannable_snippet_first", "text": "The first printed snippet." },
+      { "id": "test_scannable_snippet_second", "text": "The second printed snippet." }
+    ]
+  },
+  {
     "id": "test_digital_media",
     "copy-from": "usb_drive",
     "type": "GENERIC",

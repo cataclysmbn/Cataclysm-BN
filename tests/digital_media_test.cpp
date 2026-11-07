@@ -18,6 +18,7 @@
 #include "iuse.h"
 #include "iuse_actor.h"
 #include "json.h"
+#include "map/map.h"
 #include "map/mapdata.h"
 #include "map_helpers.h"
 #include "morale_types.h"
@@ -567,6 +568,42 @@ TEST_CASE("digital_recipe_references_require_a_powered_reader", "[digital_media]
         reader->ammo_unset();
         CHECK_FALSE(dummy.get_recipes_from_books(inv).contains(recipe));
     }
+}
+
+TEST_CASE("device_recipes_allow_crafting_from_containers", "[digital_media][recipes][crafting]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    auto who = avatar{};
+    clear_character(who);
+    who.set_skill_level(skill_id("electronics"), 1);
+    const auto& recipe = recipe_id("test_soldering_iron_digital_media").obj();
+    REQUIRE_FALSE(who.knows_recipe(&recipe));
+    who.i_add(item::spawn("test_rock"));
+    auto device = item::spawn("wrist_comp_budget");
+    auto& reader = *device;
+    reader.ammo_set(itype_id("battery"), 10);
+    reader.put_in(item::spawn(GENERATE("test_digital_reference", "test_digital_instruction")));
+
+    SECTION("carried reader") { who.i_add(std::move(device)); }
+    SECTION("worn reader") { REQUIRE(!who.wear_item(std::move(device), false)); }
+    SECTION("nearby reader") { get_map().add_item(who.bub_pos(), std::move(device)); }
+    SECTION("reader inside a carried container") {
+        auto container = item::spawn("box_small");
+        container->put_in(std::move(device));
+        who.i_add(std::move(container));
+    }
+    SECTION("reader inside a nearby container") {
+        auto container = item::spawn("box_small");
+        container->put_in(std::move(device));
+        get_map().add_item(who.bub_pos(), std::move(container));
+    }
+
+    CHECK(who.has_recipe(&recipe, who.crafting_inventory(), {}) == 1);
+    CHECK(who.can_make(&recipe, 1));
+    CHECK_FALSE(who.knows_recipe(&recipe));
+    reader.ammo_unset();
+    CHECK(who.has_recipe(&recipe, who.crafting_inventory(), {}) == -1);
+    CHECK_FALSE(who.can_make(&recipe, 1));
 }
 
 TEST_CASE(
