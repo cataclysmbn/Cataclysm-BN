@@ -53,14 +53,13 @@
     "techniques": [ "SWEEP" ],
     "crafting_speed_modifier": 1.5,
     "use_action": {
-      "type": "fireweapon_off",
-      "target_id": "chainsaw_on",
+      "type": "transform",
+      "active": true,
+      "target": "chainsaw_on",
+      "msg": "With a roar, the chainsaw leaps to life!",
       "moves": 80,
-      "noise": 110,
-      "success_chance": 3,
-      "success_message": "With a roar, the chainsaw leaps to life!",
-      "failure_message": "You yank the cord, but nothing happens.",
-      "lacks_fuel_message": "You yank the cord, but nothing happens."
+      "transform_charges": 5,
+      "need_dry": true
     },
     "flags": [ "NONCONDUCTIVE", "COMBAT_NPC_USE" ]
   },
@@ -78,15 +77,11 @@
     "revert_to": "chainsaw_off",
     "techniques": [ "SWEEP" ],
     "qualities": [ [ "AXE", 5 ], [ "BUTCHER", -100 ] ],
-    "use_action": {
-      "type": "fireweapon_on",
-      "noise_chance": 10,
-      "noise_message": "The chainsaw rumbles.",
-      "noise": 110,
-      "voluntary_extinguish_message": "You turn off the chainsaw.",
-      "charges_extinguish_message": "Your chainsaw goes quiet.",
-      "water_extinguish_message": "Your chainsaw gurgles in the water and stops."
-    },
+    "revert_msg": "Your chainsaw goes quiet.",
+    "use_action": [
+      { "type": "transform", "target": "chainsaw_off", "msg": "You turn off the chainsaw." },
+      { "type": "passivenoise", "noise": 110, "noise_chance": 10, "noise_message": "The chainsaw rumbles." }
+    ],
     "flags": [
       "MESSY",
       "TRADER_AVOID",
@@ -116,14 +111,7 @@
     "color": "yellow",
     "ammo": "battery",
     "charges_per_use": 1,
-    "use_action": {
-      "type": "fireweapon_off",
-      "target_id": "circsaw_on",
-      "moves": 80,
-      "noise": 80,
-      "success_message": "The circular saw whirs as it starts up!",
-      "lacks_fuel_message": "You pull the trigger, but nothing happens."
-    },
+    "use_action": { "target": "circsaw_on", "msg": "The circular saw whirs as it starts up!", "active": true, "type": "transform" },
     "flags": [ "NONCONDUCTIVE", "COMBAT_NPC_USE" ],
     "magazines": [ [ "battery", [ "medium_battery_cell" ] ] ],
     "magazine_well": "500 ml"
@@ -137,19 +125,15 @@
     "description": "A lightweight handheld cordless circular saw.  It is currently on and the blade is spinning; use this item to turn it off.",
     "cutting": 50,
     "to_hit": -1,
-    "power_draw": 150000,
+    "power_draw": 1200000,
     "charges_per_use": 0,
     "revert_to": "circsaw_off",
     "qualities": [ [ "CUT", 1 ], [ "SAW_W", 2 ], [ "BUTCHER", -40 ] ],
-    "use_action": {
-      "type": "fireweapon_on",
-      "noise_chance": 10,
-      "noise_message": "The circular saw buzzes.",
-      "noise": 80,
-      "voluntary_extinguish_message": "You turn off the circular saw.",
-      "charges_extinguish_message": "Your circular saw goes quiet.",
-      "water_extinguish_message": "Your circular saw in the water and stops."
-    },
+    "revert_msg": "Your circular saw goes quiet.",
+    "use_action": [
+      { "type": "transform", "target": "circsaw_off", "msg": "You turn off the circular saw." },
+      { "type": "passivenoise", "noise": 80, "noise_chance": 10, "noise_message": "The circular saw buzzes." }
+    ],
     "flags": [ "MESSY", "TRADER_AVOID", "NONCONDUCTIVE", "WATER_DISABLE", "COMBAT_NPC_USE", "COMBAT_NPC_ON" ],
     "magazine_well": "500 ml"
   },
@@ -214,12 +198,13 @@
     "techniques": [ "SWEEP" ],
     "crafting_speed_modifier": 1.5,
     "use_action": {
-      "type": "fireweapon_off",
-      "target_id": "elec_chainsaw_on",
+      "type": "transform",
+      "active": true,
+      "target": "elec_chainsaw_on",
+      "msg": "With a roar, the electric chainsaw leaps to life!",
       "moves": 80,
-      "noise": 90,
-      "success_message": "With a roar, the electric chainsaw leaps to life!",
-      "lacks_fuel_message": "You pull the trigger, but nothing happens."
+      "transform_charges": 1,
+      "need_dry": true
     },
     "flags": [ "NONCONDUCTIVE", "POWERED", "COMBAT_NPC_USE" ],
     "magazines": [ [ "battery", [ "medium_battery_cell" ] ] ],
@@ -237,15 +222,11 @@
     "power_draw": 170000,
     "revert_to": "elec_chainsaw_off",
     "qualities": [ [ "AXE", 5 ], [ "BUTCHER", -100 ] ],
-    "use_action": {
-      "type": "fireweapon_on",
-      "noise_chance": 10,
-      "noise_message": "The electric chainsaw buzzes.",
-      "noise": 90,
-      "voluntary_extinguish_message": "You turn off the electric chainsaw.",
-      "charges_extinguish_message": "Your electric chainsaw goes quiet.",
-      "water_extinguish_message": "Your chainsaw gurgles in the water and stops."
-    },
+    "revert_msg": "Your electric chainsaw goes quiet.",
+    "use_action": [
+      { "type": "transform", "target": "elec_chainsaw_off", "msg": "You turn off the electric chainsaw." },
+      { "type": "passivenoise", "noise": 90, "noise_chance": 10, "noise_message": "The electric chainsaw buzzes." }
+    ],
     "flags": [ "MESSY", "TRADER_AVOID", "NONCONDUCTIVE", "FRAGILE_MELEE", "WATER_DISABLE", "COMBAT_NPC_USE", "COMBAT_NPC_ON" ],
     "magazine_well": "500 ml"
   },

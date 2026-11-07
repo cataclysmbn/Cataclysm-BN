@@ -101,12 +101,13 @@
     "ammo": "battery",
     "charges_per_use": 1,
     "use_action": {
-      "type": "fireweapon_off",
-      "target_id": "carver_on",
+      "type": "transform",
+      "active": true,
+      "target": "carver_on",
+      "msg": "The electric carver's serrated blades start buzzing!",
       "moves": 80,
-      "noise": 80,
-      "success_message": "The electric carver's serrated blades start buzzing!",
-      "lacks_fuel_message": "You pull the trigger, but nothing happens."
+      "transform_charges": 1,
+      "need_dry": true
     },
     "flags": [ "SHEATH_SWORD", "NONCONDUCTIVE", "COMBAT_NPC_USE" ],
     "magazines": [ [ "battery", [ "medium_battery_cell" ] ] ],
@@ -124,15 +125,11 @@
     "charges_per_use": 0,
     "revert_to": "carver_off",
     "qualities": [ [ "CUT", 1 ], [ "BUTCHER", 25 ] ],
-    "use_action": {
-      "type": "fireweapon_on",
-      "noise_chance": 10,
-      "noise_message": "The electric carver buzzes.",
-      "noise": 80,
-      "voluntary_extinguish_message": "You turn off the electric carver.",
-      "charges_extinguish_message": "Your electric carver goes quiet.",
-      "water_extinguish_message": "Your electric carver gurgles in the water and stops."
-    },
+    "revert_msg": "Your electric carver goes quiet.",
+    "use_action": [
+      { "type": "transform", "target": "carver_off", "msg": "You turn off the electric carver." },
+      { "type": "passivenoise", "noise": 80, "noise_chance": 10, "noise_message": "The electric carver buzzes." }
+    ],
     "flags": [ "MESSY", "TRADER_AVOID", "NONCONDUCTIVE", "WATER_DISABLE", "COMBAT_NPC_USE", "COMBAT_NPC_ON" ],
     "magazine_well": "500 ml"
   },
