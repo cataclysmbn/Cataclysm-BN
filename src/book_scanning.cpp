@@ -11,6 +11,7 @@
 #include "itype.h"
 #include "player.h"
 #include "player_activity.h"
+#include "string_formatter.h"
 #include "translations.h"
 
 #include <algorithm>
@@ -21,6 +22,13 @@
 
 namespace
 {
+auto scanned_file_identity( const item &source ) -> std::string
+{
+    const auto snippet_suffix = source.snip_id.is_null() ? std::string{} : ":"
+                                + source.snip_id.str();
+    return "scanned_book:" + source.typeId().str() + snippet_suffix;
+}
+
 auto validate_book_scan( const Character &who, const item &reader, const item &book ) ->
 std::expected<void, std::string>
 {
@@ -34,9 +42,11 @@ std::expected<void, std::string>
     if( !character_funcs::can_see_fine_details( who ) ) {
         return std::unexpected( _( "You can't see well enough to scan." ) );
     }
-    if( ranges::any_of( reader.contents.all_items_top(), [&book]( const auto * file ) {
-    return is_digital_file( *file ) && file->typeId() == book.typeId() &&
-               file->snip_id == book.snip_id;
+    const auto identity = scanned_file_identity( book );
+    if( ranges::any_of( reader.contents.all_items_top(), [&book, &identity]( const auto * file ) {
+    return is_digital_file( *file ) &&
+               ( file->get_var( "DIGITAL_FILE_ID" ) == identity ||
+                 ( file->typeId() == book.typeId() && file->snip_id == book.snip_id ) );
     } ) ) {
         return std::unexpected( _( "This copy is already installed on the reader." ) );
     }
@@ -101,14 +111,19 @@ auto activity_handlers::scan_book_finish( player_activity *act, player *who ) ->
     }
     auto &reader = *act->targets[0];
     const auto &book = *act->targets[1];
-    auto file = item::spawn( book.typeId(), calendar::turn );
+    auto file = item::spawn( book.is_book() ? book.typeId() : itype_id( "digital_scanned_text" ),
+                             calendar::turn );
+    if( !book.is_book() ) {
+        file->set_var( "name", string_format( _( "digital copy of %s" ), book.type_name() ) );
+        if( book.has_flag( flag_SNIPPET_NEEDS_LITERACY ) ) {
+            file->set_flag( flag_SNIPPET_NEEDS_LITERACY );
+        }
+    }
     file->snip_id = book.snip_id;
     file->set_flag( flag_id( "DIGITAL" ) );
     file->set_flag( flag_IRREMOVABLE );
     file->set_flag( flag_NO_DROP );
-    const auto snippet_suffix = book.snip_id.is_null() ? std::string{} : ":"
-                                + book.snip_id.str();
-    file->set_var( "DIGITAL_FILE_ID", "scanned_book:" + book.typeId().str() + snippet_suffix );
+    file->set_var( "DIGITAL_FILE_ID", scanned_file_identity( book ) );
     reader.put_in( std::move( file ) );
     who->add_msg_if_player( m_good, _( "You save a digital copy of %s on your %s." ),
                             book.type_name(), reader.type_name() );

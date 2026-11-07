@@ -43,7 +43,8 @@
   },
   {
     "id": "test_scannable_snippet",
-    "type": "GENERIC",
+    "copy-from": "linuxtshirt",
+    "type": "ARMOR",
     "name": { "str": "test printed snippet" },
     "description": "A sheet of text for testing scanning.",
     "weight": "1 g",

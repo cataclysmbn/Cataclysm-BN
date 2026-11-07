@@ -139,6 +139,13 @@
     "extend": { "flags": [ "SNIPPET_NEEDS_LITERACY" ] }
   },
   {
+    "id": "digital_scanned_text",
+    "copy-from": "digital_collection",
+    "type": "GENERIC",
+    "name": { "str": "scanned text file" },
+    "description": "A digital scan of text or images from an object."
+  },
+  {
     "id": "digital_home_video",
     "copy-from": "digital_collection",
     "type": "GENERIC",

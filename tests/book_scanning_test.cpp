@@ -44,6 +44,7 @@ TEST_CASE("scanning_preserves_distinct_snippets", "[digital_media][book_scanning
     reader.ammo_set(itype_id("battery"), 10);
     auto& text = who.i_add(item::spawn("test_scannable_snippet"));
     REQUIRE_FALSE(text.is_book());
+    REQUIRE(text.is_armor());
     REQUIRE(is_scannable_text(text));
     auto identities = std::vector<std::string>{};
     for (const auto& id :
@@ -58,7 +59,11 @@ TEST_CASE("scanning_preserves_distinct_snippets", "[digital_media][book_scanning
         CHECK(file.snip_id == id);
         CHECK(file.info_string().find(SNIPPET.get_snippet_ref_by_id(id).translated())
               != std::string::npos);
-        CHECK(file.type_name().find("digital copy") != std::string::npos);
+        CHECK(file.typeId() == itype_id("digital_scanned_text"));
+        CHECK(file.type_name() == "digital copy of " + text.type_name());
+        CHECK_FALSE(file.is_armor());
+        CHECK_FALSE(file.is_tool());
+        CHECK(file.type->use_methods.empty());
         CHECK(file.volume() == 1_ml);
         CHECK(file.weight() == 0_gram);
         CHECK(digital_reader_for(who, file));
@@ -83,6 +88,8 @@ TEST_CASE("scanning_preserves_distinct_snippets", "[digital_media][book_scanning
     REQUIRE(download_digital_files(other_reader, *loaded, who) == 2);
     CHECK(other_reader.contents.front().snip_id == reader.contents.front().snip_id);
     CHECK(other_reader.contents.back().snip_id == reader.contents.back().snip_id);
+    CHECK(other_reader.contents.front().type_name() == "digital copy of " + text.type_name());
+    CHECK(other_reader.contents.front().typeId() == itype_id("digital_scanned_text"));
     CHECK(download_digital_files(other_reader, *loaded, who) == 0);
 
     auto& rag = who.i_add(item::spawn("rag"));
