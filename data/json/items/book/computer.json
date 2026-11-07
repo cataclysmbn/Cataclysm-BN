@@ -109,7 +109,7 @@
     "type": "BOOK",
     "copy-from": "base_book",
     "name": { "str_sp": "High Level Commercial and Military Cryptology" },
-    "description": "An incredibly dense volume describing different advanced cryptographical methods, their strenghts, and weaknesses.  This text would probably be easier to digest with an added decade in Computer Science Academia.",
+    "description": "An incredibly dense volume describing different advanced cryptographical methods, their strengths, and weaknesses.  This text would probably be easier to digest with an added decade in Computer Science Academia.",
     "weight": "3 kg",
     "volume": "2 L",
     "price": "450 USD",

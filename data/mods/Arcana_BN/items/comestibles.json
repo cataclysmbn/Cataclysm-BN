@@ -300,7 +300,7 @@
     "comestible_type": "MED",
     "category": "arcane_components",
     "name": { "str": "air talisman" },
-    "description": "A crude paper talisman marked with strange patterns, anointed with a pure sacrifice.  Using it will heal any nearby ally, pet, or friendly creature near you, along with enhancing them temporarily.  Friendly NPCs and monsters alike will gain increased speed as well as immunities to various debuffs such as blindness, bleeding, or stunning; while friendly monsters/pets specfically will gain increased melee damage, accuracy, and dodge.",
+    "description": "A crude paper talisman marked with strange patterns, anointed with a pure sacrifice.  Using it will heal any nearby ally, pet, or friendly creature near you, along with enhancing them temporarily.  Friendly NPCs and monsters alike will gain increased speed as well as immunities to various debuffs such as blindness, bleeding, or stunning; while friendly monsters/pets specifically will gain increased melee damage, accuracy, and dodge.",
     "price_postapoc": "24 USD",
     "weight": "150 g",
     "volume": "100 ml",
@@ -336,7 +336,7 @@
     "copy-from": "scroll_magic_base",
     "type": "COMESTIBLE",
     "name": { "str": "divine scroll of command", "str_pl": "divine scrolls of command" },
-    "description": "This is a scroll, with odd writing and images of solders in formation on it, representing an otherworldly deity of order.  Using it will attempt to bind creatures to your will temporarily.  The sudden impact of projecting your mind outwards will painfully stun you, however.",
+    "description": "This is a scroll, with odd writing and images of soldiers in formation on it, representing an otherworldly deity of order.  Using it will attempt to bind creatures to your will temporarily.  The sudden impact of projecting your mind outwards will painfully stun you, however.",
     "price": "140 USD",
     "price_postapoc": "50 USD",
     "use_action": { "type": "cast_spell", "spell_id": "arcana_item_scroll_artifice", "no_fail": true, "level": 0 }
@@ -521,7 +521,7 @@
     "copy-from": "totem_base",
     "type": "COMESTIBLE",
     "name": { "str": "Magic Seal (Ward Against Evil)", "str_pl": "Magic Seals (Ward Against Evil)" },
-    "description": "An small winged figurine, carved from a strange iridescent stone.  Activate it to focus your mind and create a magic sign, expending the item entirely.\n\"This spell will grant a blessing that protects against certain anomalous threats.\"",
+    "description": "A small winged figurine, carved from a strange iridescent stone.  Activate it to focus your mind and create a magic sign, expending the item entirely.\n\"This spell will grant a blessing that protects against certain anomalous threats.\"",
     "price_postapoc": "50 USD",
     "color": "light_green",
     "use_action": { "type": "cast_spell", "spell_id": "arcana_seal_ward_against_evil", "no_fail": true, "level": 5 }

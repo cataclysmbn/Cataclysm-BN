@@ -36,7 +36,7 @@
     "id": "afs_biomaterial_5",
     "copy-from": "afs_scrap_5",
     "name": { "str": "autologous totipotent tissue culture" },
-    "description": "Uncontaminated pure cellular matter than with the right instructions can become just about anything.",
+    "description": "Uncontaminated pure cellular matter that with the right instructions can become just about anything.",
     "looks_like": "scrap"
   }
 ]

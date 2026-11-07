@@ -279,7 +279,7 @@
     "category": "weapons",
     "weapon_category": [ "FIST_WEAPONS", "FLAMETHROWERS" ],
     "name": { "str": "demon claw" },
-    "description": "An ornate weapon resembling a clawed gauntlet, blades perpetually glowing red-hot.  Despite this, the weapon doesn't burn ones hand when grasped.  Firing it will smite your enemies and scour the land with wicked fire, to sate the god of blood.",
+    "description": "An ornate weapon resembling a clawed gauntlet, blades perpetually glowing red-hot.  Despite this, the weapon doesn't burn one's hand when grasped.  Firing it will smite your enemies and scour the land with wicked fire, to sate the god of blood.",
     "weight": "360 g",
     "volume": "750 ml",
     "price_postapoc": "120 USD",

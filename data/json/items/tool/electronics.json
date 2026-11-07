@@ -1046,7 +1046,7 @@
     "type": "TOOL",
     "copy-from": "gps_device",
     "name": { "str": "military gps pinpointer" },
-    "description": "Durable handheld GPS unit built for outdoor navigation.  Activate to acquire satellite lock and search the database.  This one has encrpytion keys for military-grade satellites, allowing a much greater search range.",
+    "description": "Durable handheld GPS unit built for outdoor navigation.  Activate to acquire satellite lock and search the database.  This one has encryption keys for military-grade satellites, allowing a much greater search range.",
     "use_action": { "type": "gps_device", "radius": 120, "additional_charges_per_tile": 0.1 },
     "magazines": [ [ "battery", [ "medium_battery_cell" ] ] ]
   },

@@ -56,7 +56,7 @@
     "copy-from": "mon_zombie_scientist",
     "type": "MONSTER",
     "name": { "str": "elite zombie scientist" },
-    "description": "What used to be the shambling corpse of some former scientist now glowers with an eerie intelligence in its eyes.  Though more steady on its feet, its hands fumble awkwardly for hidden devices within various pockets, and the faint hum of manhack motors follow in its wake.",
+    "description": "What used to be the shambling corpse of some former scientist now glowers with an eerie intelligence in its eyes.  Though more steady on its feet, its hands fumble awkwardly for hidden devices within various pockets, and the faint hum of manhack motors follows in its wake.",
     "relative": { "hp": 20, "speed": 10, "melee_skill": 1, "dodge": 1 },
     "starting_ammo": { "bot_manhack": 3 },
     "path_settings": { "max_dist": 10 },
@@ -70,7 +70,7 @@
     "looks_like": "mon_zombie_nullfield",
     "type": "MONSTER",
     "name": { "str": "zombie cybernetics researcher" },
-    "description": "Decaying flesh and torn laboratory safety gear reveal hints of embedded alloy plating and various bionics components.  Cutting-edge cybernetics seem to be the only thing keeping its rotting corpse intact, and one arm crackle with electromagnetic discharges as it reaches for its prey.",
+    "description": "Decaying flesh and torn laboratory safety gear reveal hints of embedded alloy plating and various bionics components.  Cutting-edge cybernetics seem to be the only thing keeping its rotting corpse intact, and one arm crackles with electromagnetic discharges as it reaches for its prey.",
     "relative": { "hp": 50, "speed": -10, "melee_dice": 1, "armor_bash": 14, "armor_cut": 10, "armor_bullet": 8 },
     "luminance": 5,
     "special_attacks": [

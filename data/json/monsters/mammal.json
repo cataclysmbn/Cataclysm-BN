@@ -463,7 +463,7 @@
     "type": "MONSTER",
     "copy-from": "mon_cat",
     "name": "Siamese cat",
-    "description": "This cat has the distinctive dark extremeties of a Siamese, first native to Asia but a common domestic breed in North America.",
+    "description": "This cat has the distinctive dark extremities of a Siamese, first native to Asia but a common domestic breed in North America.",
     "reproduction": { "baby_monster": "mon_cat_siamese_kitten", "baby_count": 4, "baby_timer": 60 }
   },
   {

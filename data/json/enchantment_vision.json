@@ -19,7 +19,7 @@
     "id": "SONAR",
     "desc": "Allows Sight Of Digging Creatures",
     "show_with_flag": [ "DIGS" ],
-    "vision_desc": { "tile_id": "infrared_creature", "description": "You sense an digging critter." }
+    "vision_desc": { "tile_id": "infrared_creature", "description": "You sense a digging critter." }
   },
   {
     "type": "enchantment_vision",

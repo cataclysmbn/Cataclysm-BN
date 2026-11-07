@@ -147,7 +147,7 @@
     "type": "martial_art",
     "id": "style_boxing",
     "name": { "str": "Boxing" },
-    "description": "Sport of the true gentleman, modern boxing has evolved from the prizefights of the Victorian era.  Strength reduces blocked damage and moving increase dodge skill.",
+    "description": "Sport of the true gentleman, modern boxing has evolved from the prizefights of the Victorian era.  Strength reduces blocked damage and moving increases dodge skill.",
     "initiate": [ "You lower your chin and raise your fists to eye level.", "%s prepares to fight with raised fists." ],
     "learn_difficulty": 1,
     "arm_block": 1,
@@ -155,7 +155,7 @@
       {
         "id": "buff_boxing_static",
         "name": "Boxing Stance",
-        "description": "A solid stance allows you block more damage than normal and deliver better punches.\n\n+2 Damage, Blocked damge reduced by 50% of Strength.",
+        "description": "A solid stance allows you to block more damage than normal and deliver better punches.\n\n+2 Damage, Blocked damage reduced by 50% of Strength.",
         "unarmed_allowed": true,
         "flat_bonuses": [
           { "stat": "block", "scaling-stat": "str", "scale": 0.5 },
@@ -169,7 +169,7 @@
       {
         "id": "buff_boxing_onmove",
         "name": "Footwork",
-        "description": "You are make yourself harder to hit by bobbing and weaving as you move.\n\n+1.0 Dodge skill.\nLasts for 1 turns.  Stacks 2 times.",
+        "description": "You make yourself harder to hit by bobbing and weaving as you move.\n\n+1.0 Dodge skill.\nLasts for 1 turn.  Stacks 2 times.",
         "skill_requirements": [ { "name": "unarmed", "level": 3 } ],
         "unarmed_allowed": true,
         "buff_duration": 1,
@@ -281,7 +281,7 @@
       {
         "id": "buff_crane_static",
         "name": "Crane's Precision",
-        "description": "Your attacks strike at your opponents weakness with speed and precision instead of brute force.\nDexterity increases melee damage instead of Strength.\n\nDamage increased by 75% of Dexterity but decreased by 75% of Strength.",
+        "description": "Your attacks strike at your opponent's weakness with speed and precision instead of brute force.\nDexterity increases melee damage instead of Strength.\n\nDamage increased by 75% of Dexterity but decreased by 75% of Strength.",
         "unarmed_allowed": true,
         "flat_bonuses": [
           { "stat": "damage", "type": "bash", "scaling-stat": "dex", "scale": 0.75 },
@@ -308,7 +308,7 @@
       {
         "id": "buff_crane_ondodge",
         "name": "Crane's Grace",
-        "description": "Much like the crane, you a quick to avoid danger.\n\n+1 Dodge attempts, +1.0 Dodge skill.\nLasts 2 turns.",
+        "description": "Much like the crane, you are quick to avoid danger.\n\n+1 Dodge attempts, +1.0 Dodge skill.\nLasts 2 turns.",
         "unarmed_allowed": true,
         "skill_requirements": [ { "name": "unarmed", "level": 2 } ],
         "buff_duration": 2,
@@ -463,7 +463,7 @@
       {
         "id": "buff_medievalpole_onmove",
         "name": "Tactical Retreat",
-        "description": "You moved and nullified the effects of Stand Your Ground!\n\n-2 Block attempts, +1.0 Dodge skill, blocked damaged increased by 50% of Strength.\nLasts 1 turn.",
+        "description": "You moved and nullified the effects of Stand Your Ground!\n\n-2 Block attempts, +1.0 Dodge skill, blocked damage increased by 50% of Strength.\nLasts 1 turn.",
         "melee_allowed": true,
         "buff_duration": 1,
         "bonus_blocks": -2,
@@ -535,7 +535,7 @@
       {
         "id": "buff_karate_static",
         "name": "Karate Stance",
-        "description": "Your no nonsense stance allows you hit more accurately.\n\n+2 Accuracy.",
+        "description": "Your no nonsense stance allows you to hit more accurately.\n\n+2 Accuracy.",
         "unarmed_allowed": true,
         "flat_bonuses": [ { "stat": "hit", "scale": 2 } ]
       }
@@ -544,7 +544,7 @@
       {
         "id": "buff_karate_onhit",
         "name": "Karate Strike",
-        "description": "Landing a hit allows you to perfectly position yourself for maximum defense against multiple opponents.\n\n+2 Block attempts, +1 Dodges attempts, blocked damge reduced by 50% of Strength.\nLasts 2 turns.",
+        "description": "Landing a hit allows you to perfectly position yourself for maximum defense against multiple opponents.\n\n+2 Block attempts, +1 Dodge attempts, blocked damage reduced by 50% of Strength.\nLasts 2 turns.",
         "skill_requirements": [ { "name": "unarmed", "level": 3 } ],
         "unarmed_allowed": true,
         "buff_duration": 2,
@@ -659,7 +659,7 @@
       {
         "id": "buff_leopard_onmove1",
         "name": "Leopard's Stalk",
-        "description": "You proudly stalk the shadows and preparing to pounce with unrelenting fury.\n\n+2 Accuracy.\nEnables \"Leopard's Pounce\" buff.\nLasts 1 turn.",
+        "description": "You proudly stalk the shadows and prepare to pounce with unrelenting fury.\n\n+2 Accuracy.\nEnables \"Leopard's Pounce\" buff.\nLasts 1 turn.",
         "skill_requirements": [ { "name": "unarmed", "level": 1 } ],
         "unarmed_allowed": true,
         "buff_duration": 1,
@@ -1005,7 +1005,7 @@
       {
         "id": "buff_silat_onmove",
         "name": "Silat Evasion",
-        "description": "You stay low as you move, making it harder for enemies to pin you down.\n\n+1 Dodge attempts.\nLasts 2 turn.",
+        "description": "You stay low as you move, making it harder for enemies to pin you down.\n\n+1 Dodge attempts.\nLasts 2 turns.",
         "skill_requirements": [ { "name": "melee", "level": 1 } ],
         "melee_allowed": true,
         "buff_duration": 2,
@@ -1019,7 +1019,7 @@
     "type": "martial_art",
     "id": "style_snake",
     "name": { "str": "Snake Kung Fu" },
-    "description": "One of the five Shaolin animal styles.  The Snake focuses on sinuous movement and precision strikes.  Perception determines your Accuracy, rather than Dexterity.  Standing still will increases your accuracy and damage of your next attack.",
+    "description": "One of the five Shaolin animal styles.  The Snake focuses on sinuous movement and precision strikes.  Perception determines your Accuracy, rather than Dexterity.  Standing still will increase your accuracy and damage of your next attack.",
     "initiate": [ "You adopt a fluid stance, ready to strike like a snake.", "%s assumes a snake-like stance." ],
     "learn_difficulty": 10,
     "arm_block": 2,
@@ -1138,7 +1138,7 @@
       {
         "id": "buff_tai_chi_static",
         "name": "Tai Chi Stance",
-        "description": "You are focused of defense and predicting your opponents attacks.\n\n+1 Block attempts, blocked damage reduced by 100% Perception.",
+        "description": "You are focused on defense and predicting your opponent's attacks.\n\n+1 Block attempts, blocked damage reduced by 100% Perception.",
         "unarmed_allowed": true,
         "bonus_blocks": 1,
         "flat_bonuses": [ { "stat": "block", "scaling-stat": "per", "scale": 1 } ]
@@ -1280,7 +1280,7 @@
     "type": "martial_art",
     "id": "style_zui_quan",
     "name": { "str": "Zui Quan" },
-    "description": "AKA \"drunken boxing,\" Zui Quan imitates the movement of a drunk to confuse the enemy.  You gain a passive dodge bonus and accuracy bonus based on your intelligence.  Moving gives you additional dodge attempts and each time you dodge, you inflict more damage with your counterattack for until the end of your next turn.",
+    "description": "AKA \"drunken boxing,\" Zui Quan imitates the movement of a drunk to confuse the enemy.  You gain a passive dodge bonus and accuracy bonus based on your intelligence.  Moving gives you additional dodge attempts and each time you dodge, you inflict more damage with your counterattack until the end of your next turn.",
     "initiate": [ "You begin to sway to and fro with a confident swagger.", "%s stumbles as if pretending to be drunk." ],
     "learn_difficulty": 8,
     "static_buffs": [

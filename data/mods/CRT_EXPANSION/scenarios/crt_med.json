@@ -48,7 +48,7 @@
     "type": "profession",
     "id": "crt_medic_t2",
     "name": "C.R.I.T. Combat Surgeon",
-    "description": "While initially a mere Combat Medic, you have demonstrated exceptional medical ability. While you never recieved a C.R.I.T. Medical Blimp, you still were given the best gear CRIT has to offer.",
+    "description": "While initially a mere Combat Medic, you have demonstrated exceptional medical ability. While you never received a C.R.I.T. Medical Blimp, you still were given the best gear CRIT has to offer.",
     "points": 6,
     "traits": [ "MARTIAL_CRT", "PROF_MILITARY" ],
     "skills": [
@@ -90,7 +90,7 @@
     "type": "profession",
     "id": "crt_medic_t1",
     "name": "C.R.I.T. Combat Medic",
-    "description": "You were the team nerd.  A combat medic taught on how to engage strange anomalies.  However, your main focus was  keeping your squadmates in one piece.  For weeks, you slogged through hell and back and ensured that everyone made it.  Caught in between a tide of the undead and the crossfire of apparently rogue government robots, you were left stranded as a distraction.  Forced to flee, will you have what it takes to survive or will you join the horde to haunt them for their cardinal sin?",
+    "description": "You were the team nerd.  A combat medic taught how to engage strange anomalies.  However, your main focus was  keeping your squadmates in one piece.  For weeks, you slogged through hell and back and ensured that everyone made it.  Caught in between a tide of the undead and the crossfire of apparently rogue government robots, you were left stranded as a distraction.  Forced to flee, will you have what it takes to survive or will you join the horde to haunt them for their cardinal sin?",
     "points": 3,
     "traits": [ "MARTIAL_CRT", "PROF_MILITARY" ],
     "skills": [

@@ -268,7 +268,7 @@
     "id": "spell_scroll_recover_fatigue",
     "//": "Druid spell",
     "name": { "str": "Scroll of Nature's Trance", "str_pl": "Scrolls of Nature's Trance" },
-    "description": "Your connection to living things allows you to go into a magical trance.  This allows you to recover fatige quickly in exchange for mana.",
+    "description": "Your connection to living things allows you to go into a magical trance.  This allows you to recover fatigue quickly in exchange for mana.",
     "use_action": { "type": "learn_spell", "spells": [ "recover_fatigue" ] }
   },
   {
@@ -776,7 +776,7 @@
     "id": "spell_scroll_druidic_healing",
     "//": "Druid spell",
     "name": { "str": "Scroll of Sacrificial Healing", "str_pl": "Scrolls of Sacrificial Healing" },
-    "description": "Channels some of the user's own life force into healing energy, for the sake of ones allies.",
+    "description": "Channels some of the user's own life force into healing energy, for the sake of one's allies.",
     "use_action": { "type": "learn_spell", "spells": [ "druidic_healing" ] }
   },
   {
@@ -812,7 +812,7 @@
     "id": "spell_scroll_biomancer_visceral_projection",
     "//": "Biomancer spell",
     "name": { "str": "Scroll of Visceral Projection", "str_pl": "Scrolls of Visceral Projection" },
-    "description": "Projects a spray of acrid blood and gore all around you, growing to ensnare your prey in in a field of twitching poisonous tendrils.",
+    "description": "Projects a spray of acrid blood and gore all around you, growing to ensnare your prey in a field of twitching poisonous tendrils.",
     "use_action": { "type": "learn_spell", "spells": [ "biomancer_visceral_projection" ] }
   },
   {
@@ -1037,7 +1037,7 @@
     "id": "spell_scroll_phase_jump",
     "//": "Magus spell",
     "name": { "str": "Scroll of Phase Jump", "str_pl": "Scrolls of Phase Jump" },
-    "description": "Teleports you a short distance in chosen direction.",
+    "description": "Teleports you a short distance in the chosen direction.",
     "use_action": { "type": "learn_spell", "spells": [ "phase_jump" ] }
   }
 ]
