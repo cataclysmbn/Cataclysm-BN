@@ -81,7 +81,7 @@ static_assert(sizeof(lm_ambient_push_constants) == 144);
 // ---------------------------------------------------------------------------
 // lm_raytrace_push_constants
 // Uniform data for the per-source ray-casting pass.
-// 32 bytes.
+// 48 bytes.
 // ---------------------------------------------------------------------------
 struct lm_raytrace_push_constants {
     int32_t cache_x;        //  4 bytes
@@ -92,8 +92,10 @@ struct lm_raytrace_push_constants {
     uint32_t num_sources;   //  4 bytes
     int32_t max_radius;     //  4 bytes
     uint32_t source_offset; //  4 bytes = 32
+    uint32_t trigdist;      //  4 bytes
+    uint32_t _pad[3];       // 12 bytes = 48
 };
-static_assert(sizeof(lm_raytrace_push_constants) == 32);
+static_assert(sizeof(lm_raytrace_push_constants) == 48);
 
 // ---------------------------------------------------------------------------
 // lm_seen_push_constants

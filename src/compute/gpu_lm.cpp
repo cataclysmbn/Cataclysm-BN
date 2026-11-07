@@ -3300,6 +3300,8 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                         .num_sources = bucket.source_count,
                         .max_radius = bucket.max_radius,
                         .source_offset = bucket.source_offset,
+                        .trigdist = trigdist ? 1u : 0u,
+                        ._pad = {},
                     };
                     SDL_PushGPUComputeUniformData(cmd, 0, &raytrace_push, sizeof(raytrace_push));
                     SDL_DispatchGPUCompute(
@@ -3336,6 +3338,8 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                         .num_sources = bucket.source_count,
                         .max_radius = bucket.max_radius,
                         .source_offset = bucket.source_offset,
+                        .trigdist = trigdist ? 1u : 0u,
+                        ._pad = {},
                     };
                     SDL_PushGPUComputeUniformData(cmd, 0, &raytrace_push, sizeof(raytrace_push));
                     SDL_DispatchGPUCompute(
