@@ -2381,7 +2381,7 @@ std::unique_ptr<iuse_actor> fireweapon_off_actor::clone() const
     return std::make_unique<fireweapon_off_actor>( *this );
 }
 
-int fireweapon_off_actor::use( player &p, item &it, bool t, const tripoint_bub_ms & ) const
+int fireweapon_off_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &pos ) const
 {
     if( t ) {
         return 0;
@@ -2396,7 +2396,7 @@ int fireweapon_off_actor::use( player &p, item &it, bool t, const tripoint_bub_m
     if( rng( 0, 10 ) - it.damage_level( 4 ) > success_chance && !p.is_underwater() ) {
         if( noise > 0 ) {
             sound_event se;
-            se.origin = p.bub_pos();
+            se.origin = pos;
             se.volume = noise;
             se.category = sounds::sound_t::combat;
             se.description = _( success_message );
@@ -2453,7 +2453,7 @@ std::unique_ptr<iuse_actor> fireweapon_on_actor::clone() const
     return std::make_unique<fireweapon_on_actor>( *this );
 }
 
-int fireweapon_on_actor::use( player &p, item &it, bool t, const tripoint_bub_ms & ) const
+int fireweapon_on_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &pos ) const
 {
     bool extinguish = true;
     if( it.charges == 0 ) {
@@ -2481,7 +2481,7 @@ int fireweapon_on_actor::use( player &p, item &it, bool t, const tripoint_bub_ms
     } else if( one_in( noise_chance ) ) {
         if( noise > 0 ) {
             sound_event se;
-            se.origin = p.bub_pos();
+            se.origin = pos;
             se.volume = noise;
             se.category = sounds::sound_t::combat;
             se.description = _( noise_message );
@@ -2513,7 +2513,7 @@ std::unique_ptr<iuse_actor> manualnoise_actor::clone() const
     return std::make_unique<manualnoise_actor>( *this );
 }
 
-int manualnoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms & ) const
+int manualnoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &pos ) const
 {
     if( t ) {
         return 0;
@@ -2528,7 +2528,7 @@ int manualnoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &
         p.moves -= moves;
         if( noise > 0 ) {
             sound_event se;
-            se.origin = p.bub_pos();
+            se.origin = pos;
             se.volume = noise;
             se.category = sounds::sound_t::activity;
             se.description = noise_message.empty() ? _( "Hsss" ) : _( noise_message );
