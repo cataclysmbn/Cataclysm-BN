@@ -170,6 +170,7 @@ automatically_convertible = {
     "mutation_flag",
     "keybinding",
     "LOOT_ZONE",
+    "LOOT_ZONE_GROUP",
     "MAGAZINE",
     "map_extra",
     "MOD_INFO",

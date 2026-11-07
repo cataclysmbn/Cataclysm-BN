@@ -942,8 +942,6 @@ class cata_tiles
                          const bool ( &invisible )[5], int z_drop );
         bool draw_critter_at( const tripoint_bub_ms &p, lit_level ll, int &height_3d,
                               const bool ( &invisible )[5], int z_drop );
-        bool draw_zone_mark( const tripoint_bub_ms &p, lit_level ll, int &height_3d,
-                             const bool ( &invisible )[5], int z_drop );
         bool draw_zombie_revival_indicators( const tripoint_bub_ms &pos, lit_level ll, int &height_3d,
                                              const bool ( &invisible )[5], int z_drop );
         void draw_entity_with_overlays( const Character &ch, const tripoint_bub_ms &p, lit_level ll,

@@ -58,6 +58,8 @@ class item_category
         item_category_id get_id() const;
         std::optional<zone_type_id> priority_zone( const item &it ) const;
         std::optional<zone_type_id> zone() const;
+        /// All storage types referenced by loaded categories, including priority destinations.
+        static auto zone_types() -> std::vector<zone_type_id>;
         int sort_rank() const;
 
         /**

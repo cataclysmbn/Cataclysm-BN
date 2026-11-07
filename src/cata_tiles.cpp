@@ -3711,7 +3711,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
         zlevel_layer{ true, &cata_tiles::draw_critter_at }
     };
     const auto final_drawing_layers = std::array{
-        &cata_tiles::draw_zone_mark, &cata_tiles::draw_zombie_revival_indicators
+        &cata_tiles::draw_zombie_revival_indicators
     };
 
     const auto draw_zone_overlay_for = [&]( const tile_render_info & p ) {
@@ -6050,35 +6050,6 @@ bool cata_tiles::draw_critter_at( const tripoint_bub_ms &p, lit_level ll, int &h
     }
     return result;
 
-}
-
-bool cata_tiles::draw_zone_mark( const tripoint_bub_ms &p, lit_level ll, int &height_3d,
-                                 const bool ( &invisible )[5], int z_drop )
-{
-    if( invisible[0] ) {
-        return false;
-    }
-
-    if( !g->is_zones_manager_open() ) {
-        return false;
-    }
-
-    const zone_manager &mgr = zone_manager::get_manager();
-    const auto abs = bub_to_abs( p );
-    const auto zone = mgr.get_bottom_zone( abs );
-
-    if( zone && zone->has_options() ) {
-        auto option = dynamic_cast<const mark_option *>( &zone->get_options() );
-
-        if( option && !option->get_mark().empty() ) {
-            const tile_search_params tile { option->get_mark(), C_NONE, empty_string, 0, 0 };
-            return draw_from_id_string(
-                       tile, p, std::nullopt, std::nullopt,
-                       ll, true, z_drop, false, height_3d );
-        }
-    }
-
-    return false;
 }
 
 bool cata_tiles::draw_zombie_revival_indicators( const tripoint_bub_ms &pos, const lit_level /*ll*/,
