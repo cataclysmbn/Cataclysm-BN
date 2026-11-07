@@ -489,7 +489,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
         prev_point = tp;
         tp = trajectory[i];
 
-        if( !here.inbounds( tp ) ) {
+        if( !here.inbounds( tp ) || here.floor_between( prev_point, tp, true ) ) {
             traj_len = i;
             tp = prev_point;
             break;

@@ -5658,6 +5658,7 @@ auto map::add_vehicle_to_map(std::unique_ptr<vehicle> veh, const bool merge_wrec
     // When hitting a wall, only smash the vehicle once (but walls many times)
     bool needs_smashing = false;
 
+    const auto local_height = vehicle_has_local_height(*veh);
     veh->attach();
     veh->refresh_position();
 
@@ -5668,6 +5669,14 @@ auto map::add_vehicle_to_map(std::unique_ptr<vehicle> veh, const bool merge_wrec
         // checks reference the correct submap grid.
         const auto abs_pos = veh->abs_part_location(*part);
         const auto bub_pos = abs_to_map_local(*this, abs_pos);
+
+        if (local_height && !has_flag_ter(TFLAG_NO_FLOOR, bub_pos)
+            && !veh->parts_at_relative(veh->cpart(*part).mount + tripoint_below, false).empty()
+            && !(can_float && has_flag_ter(TFLAG_SWIMMABLE, bub_pos)
+                 && has_flag_ter(TFLAG_SWIMMABLE, bub_pos + tripoint_below)
+                 && !has_flag_furn(TFLAG_SUN_ROOF_ABOVE, bub_pos + tripoint_below))) {
+            return nullptr;
+        }
 
         // Don't spawn anything in water
         if (has_flag_ter(TFLAG_DEEP_WATER, bub_pos) && !can_float) { return nullptr; }

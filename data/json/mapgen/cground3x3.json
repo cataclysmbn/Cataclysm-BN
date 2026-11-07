@@ -96,7 +96,7 @@
         "7,,,7,*,7,*7,*,7,,*,,7,*,,7*||||vv||||,7*,,7*,,7,*,,*,7*,,,,*,7,,,*7,*,,"
       ],
       "palettes": [ "cground" ],
-      "place_vehicles": [ { "vehicle": "bus", "x": 33, "y": [ 18, 18 ], "chance": 100, "status": 4, "rotation": 90 } ],
+      "place_vehicles": [ { "vehicle": "city_bus_variants", "x": 33, "y": [ 18, 18 ], "chance": 100, "status": 4, "rotation": 90 } ],
       "place_npcs": [ { "class": "godco_cook", "x": [ 46, 47 ], "y": 14 } ],
       "place_loot": [ { "item": "oil_lamp_on", "x": 47, "y": 16 } ]
     }

@@ -2177,6 +2177,21 @@ void map::build_seen_cache(const tripoint_bub_ms& origin, const int target_z) {
     ZoneScopedN("build_seen_cache");
     if (!inbounds(origin)) { return; }
     auto& target_cache = get_cache(target_z);
+    auto ramped_vehicle = false;
+    for (const auto& owner : get_vehicles()) {
+        const auto& veh = *owner.v;
+        if (!vehicle_has_local_height(veh)) { continue; }
+        auto parts =
+            veh.get_all_parts()
+            | std::views::filter([](const auto& vp) { return !vp.part().removed; });
+        if (std::ranges::adjacent_find(
+                parts, std::not_equal_to{}, [](const auto& vp) { return vp.part().z_terrain[0]; })
+            == parts.end()) {
+            continue;
+        }
+        ramped_vehicle = true;
+        break;
+    }
 
     constexpr float light_transparency_solid = LIGHT_TRANSPARENCY_SOLID;
 
@@ -2543,6 +2558,22 @@ void map::build_seen_cache(const tripoint_bub_ms& origin, const int target_z) {
             blocked_restore_cache);
     }
 
+    // Apply after blind-spot/seam filling so it cannot reopen a real deck boundary.
+    if (ramped_vehicle) {
+        for (auto z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; ++z) {
+            auto& cache = get_cache(z);
+            for (auto x = 0; x < cache.cache_x; ++x) {
+                for (auto y = 0; y < cache.cache_y; ++y) {
+                    auto& seen = cache.seen_cache[cache.idx(x, y)];
+                    if (seen > LIGHT_TRANSPARENCY_SOLID
+                        && floor_between(new_origin, tripoint_bub_ms(x, y, z), true)) {
+                        seen = LIGHT_TRANSPARENCY_SOLID;
+                    }
+                }
+            }
+        }
+    }
+
     const auto remote_vehicle = g->remoteveh();
     tripoint_bub_ms cam_pos = new_origin;
     bool requires_camera = true;
@@ -2606,12 +2637,19 @@ void map::apply_vehicle_optics(
                 auto cumulative_transparency = LIGHT_TRANSPARENCY_OPEN_AIR;
                 auto transparent_steps = 0;
                 auto blocked = false;
+                auto previous = tripoint_bub_ms(camera_pos.xy(), target_z);
 
                 for (const point_bub_ms& step : line_to(camera_pos.xy(), target)) {
                     if (!target_cache.inbounds(step)) {
                         blocked = true;
                         break;
                     }
+                    const auto pos = tripoint_bub_ms(step, target_z);
+                    if (floor_between(previous, pos, true)) {
+                        blocked = true;
+                        break;
+                    }
+                    previous = pos;
 
                     const auto step_transparency =
                         target_cache.transparency_cache[target_cache.idx(step.x(), step.y())];
@@ -2662,10 +2700,24 @@ void map::apply_vehicle_optics(
         //
         // The naive solution of making the mirrors act like a second player
         // at an offset appears to give reasonable results though.
+        auto reflect = [&](const auto& pos, const auto intensity) {
+            if (!floor_between(tripoint_bub_ms(mirror_pos.xy(), target_z),
+                               tripoint_bub_ms(pos, target_z), true)) {
+                update_light(target_cache.camera_cache[target_cache.idx(pos.x(), pos.y())],
+                             intensity, quadrant::default_);
+            }
+        };
+        auto model = k_sight_model;
+        model.update_float = [](float& /*out*/, const float& /*value*/, quadrant /*q*/) {};
         castLightAll(
             target_cache.camera_cache.data(), target_cache.transparency_cache.data(),
             target_cache.vehicle_obscured_cache.data(), target_cache.cache_x, target_cache.cache_y,
-            mirror_pos.xy(), offset_distance, VISIBILITY_FULL, k_sight_model, &weather_lookup_);
+            mirror_pos.xy(), offset_distance, VISIBILITY_FULL, model, &weather_lookup_,
+            {.context = &reflect,
+             .update = [](void* context, int /*z_index*/, int x, int y, int /*idx*/,
+                          float intensity, quadrant /*q*/) {
+                 (*static_cast<decltype(reflect)*>(context))(point_bub_ms(x, y), intensity);
+             }});
     }
 }
 

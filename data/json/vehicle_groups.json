@@ -55,6 +55,7 @@
       [ "security_van", 500 ],
       [ "schoolbus", 100 ],
       [ "bus", 500 ],
+      [ "bus_double_decker", 100 ],
       [ "bus_tour", 50 ],
       [ "rv", 500 ],
       [ "camper_van", 125 ],
@@ -282,6 +283,7 @@
       [ "ifv_m2_bradley", 150 ],
       [ "schoolbus", 50 ],
       [ "bus", 350 ],
+      [ "bus_double_decker", 70 ],
       [ "bus_tour", 25 ],
       [ "rv", 800 ],
       [ "camper_van", 200 ],
@@ -598,7 +600,7 @@
     "id": "school_vehicles",
     "type": "vehicle_group",
     "//": "School bus or fire truck found near school locations",
-    "vehicles": [ [ "schoolbus", 50 ], [ "fire_truck", 70 ], [ "bus", 30 ] ]
+    "vehicles": [ [ "schoolbus", 50 ], [ "fire_truck", 70 ], [ "bus", 30 ], [ "bus_double_decker", 6 ] ]
   },
   {
     "id": "bandit_vehicles",
@@ -1007,7 +1009,12 @@
   {
     "type": "vehicle_group",
     "id": "buses",
-    "vehicles": [ [ "bus", 1000 ], [ "schoolbus", 100 ], [ "bus_tour", 50 ] ]
+    "vehicles": [ [ "bus", 1000 ], [ "bus_double_decker", 200 ], [ "schoolbus", 100 ], [ "bus_tour", 50 ] ]
+  },
+  {
+    "type": "vehicle_group",
+    "id": "city_bus_variants",
+    "vehicles": [ [ "bus", 100 ], [ "bus_double_decker", 20 ] ]
   },
   {
     "id": "VETS",

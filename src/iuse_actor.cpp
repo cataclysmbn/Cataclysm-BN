@@ -4372,7 +4372,7 @@ bool place_trap_actor::is_allowed( player &p, const tripoint_bub_ms &pos,
         return false;
     }
     map &here = get_map();
-    if( here.move_cost( pos ) != 2 ) {
+    if( here.move_cost( pos ) != 2 || here.ter( pos ).obj().trap == tr_ledge ) {
         p.add_msg_if_player( m_info, _( "You can't place a %s there." ), name );
         return false;
     }

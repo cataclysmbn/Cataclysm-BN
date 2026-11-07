@@ -1110,21 +1110,32 @@ void vehicle_prototype::load(const JsonObject& jo) {
                     }
                 }
             }
-            // TODO: Handle Z coordinates in blueprints
             auto pnt = jo.get_object("blueprint_origin");
-            int y = -pnt.get_int("y", 0);
-            for (std::string row : jo.get_array("blueprint")) {
-                int x = -pnt.get_int("x", 0) - 1;
-                for (char character : row) {
-                    x += 1;
-                    if (!veh_palette.contains(character)) { continue; }
-                    for (auto part : veh_palette.at(character)) {
-                        part_def pt = part;
-                        pt.pos = tripoint_mnt_veh(x, y, 0);
-                        vproto.parts.push_back(pt);
+            const auto append_layer = [&](const JsonArray& rows, const int z) {
+                int y = -pnt.get_int("y", 0);
+                for (const auto& row : rows) {
+                    int x = -pnt.get_int("x", 0) - 1;
+                    for (char character : row.get_string()) {
+                        x += 1;
+                        if (!veh_palette.contains(character)) { continue; }
+                        for (const auto& part : veh_palette.at(character)) {
+                            part_def pt = part;
+                            pt.pos = tripoint_mnt_veh(x, y, z);
+                            vproto.parts.push_back(std::move(pt));
+                        }
                     }
+                    y += 1;
                 }
-                y += 1;
+            };
+
+            auto blueprint = jo.get_array("blueprint");
+            if (blueprint.empty() || blueprint.has_string(0)) {
+                append_layer(blueprint, 0);
+            } else {
+                for (const auto& entry : blueprint) {
+                    const auto layer = entry.get_object();
+                    append_layer(layer.get_member("rows").get_array(), layer.get_int("z"));
+                }
             }
         } else {
             // This still has to be optional in cases where it is used only for display purposes
@@ -1228,9 +1239,9 @@ void vehicle_prototype::finalize() {
             }
 
             if (blueprint.install_part(pt.pos, pt.part, true) < 0) {
-                debugmsg("init_vehicles: '%s' part '%s'(%d) can't be installed to %d,%d",
+                debugmsg("init_vehicles: '%s' part '%s'(%d) can't be installed to %d,%d,%d",
                          blueprint.name, pt.part.c_str(), blueprint.part_count(), pt.pos.x(),
-                         pt.pos.y());
+                         pt.pos.y(), pt.pos.z());
             }
 
             if (!base->gun) {

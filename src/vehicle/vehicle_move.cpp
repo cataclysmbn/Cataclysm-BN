@@ -174,6 +174,7 @@ void vehicle::thrust(int thd, int z) {
         }
     }
     const int max_vel = traction * max_velocity();
+    const int min_vel = max_reverse_velocity();
     const int max_brake = 894;
     // pos or neg if accelerator or brake
     int vel_inc = (accel + (thrusting ? 0 : max_brake)) * thd;
@@ -187,7 +188,10 @@ void vehicle::thrust(int thd, int z) {
     int load;
     // Keep exact cruise control speed
     if (cruise_on && accel != 0) {
-        int effective_cruise = std::min(cruise_velocity, max_vel);
+        int effective_cruise =
+            !is_flying && !is_falling && stability() < 1.0
+                ? std::clamp(cruise_velocity, min_vel, max_vel)
+                : std::min(cruise_velocity, max_vel);
         if (thd > 0) {
             vel_inc = std::min(vel_inc, effective_cruise - velocity);
         } else {
@@ -264,7 +268,6 @@ void vehicle::thrust(int thd, int z) {
         stop();
     } else {
         // Increase velocity up to max_vel or min_vel, but not above.
-        const int min_vel = max_reverse_velocity();
         if (vel_inc > 0) {
             // Don't allow braking by accelerating (could happen with damaged engines)
             velocity = std::max(velocity, std::min(velocity + vel_inc, max_vel));
@@ -630,7 +633,8 @@ auto vehicle::part_collision(const vehicle_part_collision_options& options) -> v
         ret.type = veh_coll_bashable;
         terrain_collision_data(p, bash_floor, mass2, part_dens, e);
         ret.target_name = here.disp_name(p);
-    } else if (here.impassable_ter_furn(p) || (bash_floor && !here.has_flag(TFLAG_NO_FLOOR, p))) {
+    } else if (here.impassable_ter_furn(p)
+               || (bash_floor && !here.has_flag_ter_or_furn(TFLAG_NO_FLOOR, p))) {
         // not destructible
         ret.type = veh_coll_other;
         mass2 = 1000;
@@ -1103,16 +1107,25 @@ void vehicle::selfdrive(point p) {
 }
 
 auto vehicle::check_is_heli_landed() -> bool {
+    const auto landing_pos = bub_ms_location() + tripoint_rel_ms(0, 0, min_mount_z());
     // @TODO - when there are chasms that extend below z-level 0 - perhaps the heli
     // will be able to descend into them but for now, assume z-level-0 == the ground.
-    if ((bub_ms_location().z() == 0
-         || !get_map().has_flag_ter_or_furn(TFLAG_NO_FLOOR, bub_ms_location()))
-        && !get_map().has_flag_ter_or_furn(TFLAG_DEEP_WATER, bub_ms_location())) {
+    if ((landing_pos.z() == 0 || !get_map().has_flag_ter_or_furn(TFLAG_NO_FLOOR, landing_pos))
+        && !get_map().has_flag_ter_or_furn(TFLAG_DEEP_WATER, landing_pos)) {
         is_flying = false;
         return true;
     }
     return false;
 }
+
+namespace {
+auto vehicle_flight_critter(const vehicle& veh, const tripoint_bub_ms& pos) -> bool {
+    const auto* creature = g->critter_at(pos);
+    return creature
+        && (!vehicle_has_local_height(veh)
+            || !std::ranges::contains(veh.get_riders(), creature, &rider_data::psg));
+}
+} // namespace
 
 auto vehicle::check_heli_descend(Character& who) -> bool {
     if (!is_aircraft()) {
@@ -1130,12 +1143,13 @@ auto vehicle::check_heli_descend(Character& who) -> bool {
         }
         tripoint_bub_ms below = pt + tripoint_rel_ms::below();
         const optional_vpart_position ovp = here.veh_at(below);
-        if (ovp) {
+        const auto other_vehicle = ovp && &ovp->vehicle() != this;
+        if (other_vehicle) {
             const vpart_info info = ovp->vehicle().part_info(ovp->part_index());
             if (info.has_flag(VPFLAG_NOCOLLIDEABOVE)) { continue; }
         }
         if (here.impassable_ter_furn(below) || here.has_flag_ter_or_furn(TFLAG_RAMP_DOWN, below)
-            || ovp || g->critter_at(below)) {
+            || other_vehicle || vehicle_flight_critter(*this, below)) {
             who.add_msg_if_player(
                 m_bad, _("It would be unsafe to try and land when there are obstacles below you."));
             return false;
@@ -1169,11 +1183,11 @@ auto vehicle::check_heli_ascend(Character& who) -> bool {
         bool has_ceiling = !here.has_flag_ter(TFLAG_NO_FLOOR, above);
         bool has_blocking_ter_furn = here.impassable_ter_furn(above);
         auto veh = here.veh_at(above);
-        bool has_veh = veh.has_value();
+        bool has_veh = veh && &veh->vehicle() != this;
         if (has_veh) {
             has_veh = !veh->vehicle().part_info(veh->part_index()).has_flag(VPFLAG_NOCOLLIDEBELOW);
         }
-        bool has_critter = g->critter_at(above);
+        bool has_critter = vehicle_flight_critter(*this, above);
         if (has_ceiling || has_blocking_ter_furn || has_veh || has_critter) {
             direction obstacle_direction = direction_from((pt - who.bub_pos()).xy().raw());
             const std::string direction_string = direction_name(obstacle_direction);
@@ -1663,13 +1677,31 @@ void vehicle::check_falling_or_floating() {
 
     size_t deep_water_tiles = 0;
     size_t water_tiles = 0;
+    // Local decks must not hold one another up; retain the legacy planar support policy.
+    const auto local_height = vehicle_has_local_height(*this);
+    const auto* ignored_vehicle = local_height ? this : nullptr;
     for (const auto& abs : pts) {
         const auto p = abs_to_bub(abs);
         if (is_falling) {
             is_falling &=
                 here.has_flag_ter_or_furn(TFLAG_NO_FLOOR, p) && (p.z() > -OVERMAP_DEPTH)
-                && !here.supports_above(p + tripoint_rel_ms::below());
+                && !here.supports_above(p + tripoint_rel_ms::below(), ignored_vehicle);
         }
+    }
+
+    auto base_points = std::set<tripoint_abs_ms>{};
+    if (local_height) {
+        const auto lowest = min_mount_z();
+        for (const auto& vp : get_all_parts()) {
+            if (!vp.part().removed && vp.mount().z() == lowest) {
+                base_points.insert(abs_part_location(vp.part()));
+            }
+        }
+    }
+    // Upper decks add mass, but do not dilute water contact at the lowest occupied local level.
+    const auto& water_points = local_height ? base_points : pts;
+    for (const auto& abs : water_points) {
+        const auto p = abs_to_map_local(here, abs);
         deep_water_tiles += here.has_flag(TFLAG_DEEP_WATER, p) ? 1 : 0;
         water_tiles += here.has_flag(TFLAG_SWIMMABLE, p) ? 1 : 0;
     }
@@ -1681,10 +1713,10 @@ void vehicle::check_falling_or_floating() {
 
     // floating if 2/3rds of the vehicle is in deep water
     // Skip if is unable to float but can fly
-    is_floating = 3 * deep_water_tiles >= 2 * pts.size();
+    is_floating = !water_points.empty() && 3 * deep_water_tiles >= 2 * water_points.size();
     if (is_floating) { is_flying = false; }
     // in_water if 1/2 of the vehicle is in water at all
-    in_water = 2 * water_tiles >= pts.size();
+    in_water = !water_points.empty() && 2 * water_tiles >= water_points.size();
 }
 
 auto map::vehicle_wheel_traction(
@@ -1866,6 +1898,7 @@ static auto has_rail_at_vehicle_z(const map& m, const tripoint_bub_ms& p) -> boo
 static auto scan_rails_from_veh_internal(
     const map& m, const vehicle& veh, tripoint_bub_ms scan_initial_pos, point veh_plus_y_vec,
     point scan_vec) -> bool {
+    scan_initial_pos.z() += veh.min_mount_z();
     for (size_t rail_id = 0; rail_id < veh.rail_profile.size(); rail_id++) {
         int rail_y_rel_to_pivot = veh.rail_profile[rail_id] - veh.pivot_point().y();
         tripoint_bub_ms scan_pos = scan_initial_pos + rail_y_rel_to_pivot * veh_plus_y_vec;

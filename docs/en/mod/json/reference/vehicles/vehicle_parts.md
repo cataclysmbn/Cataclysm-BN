@@ -147,12 +147,15 @@ Note: this field does not support copy from, it must be defined on each object
 
 ### Vehicles
 
-See also `vehicles_spawning.md`
+See [vehicle prototypes and blueprints](./vehicles_spawning.md#blueprints) for the full authoring
+format, including backward-compatible multideck blueprints.
+`blueprint` with an inline `palette` is a supported way to generate parts. A `blueprint` without
+`palette` is documentation/display-only; the two uses should not be confused.
 
 ```json
 "id": "shopping_cart",                     // Internally-used name.
 "name": "Shopping Cart",                   // Display name, subject to i18n.
-"blueprint": "#",                          // Preview of vehicle - ignored by the code, so use only as documentation
+"blueprint": [ "#" ],                      // Documentation-only here; add a palette to generate parts
 "parts": [                                 // Parts list
     {"x": 0, "y": 0, "part": "box"},       // Part definition, positive x direction is to the left, positive y is to the right
     {"x": 0, "y": 0, "part": "casters"}    // See vehicle_parts.json for part ids

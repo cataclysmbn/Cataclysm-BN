@@ -2299,7 +2299,7 @@ bool game::handle_action()
                 }
                 if( controlled_vehicle != nullptr && controlled_vehicle->is_aircraft() ) {
                     pldrive( tripoint_rel_veh::below() );
-                } else if( !u.in_vehicle ) {
+                } else if( !u.in_vehicle || vp.part_with_feature( "VEHICLE_STAIRS_DOWN", false ) ) {
                     vertical_move( -1, false );
                 } else if( get_map().has_rope_at( u.bub_pos() ) ) {
                     map &here = get_map();
@@ -2363,7 +2363,7 @@ bool game::handle_action()
                     } else {
                         u.add_msg_if_player( _( "You need a propeller to take off!" ) );
                     }
-                } else if( !u.in_vehicle ) {
+                } else if( !u.in_vehicle || vp.part_with_feature( "VEHICLE_STAIRS_UP", false ) ) {
                     if( get_map().has_rope_at( u.bub_pos() ) ) {
                         auto xy = u.bub_pos().xy();
                         map &here = get_map();

@@ -1,5 +1,67 @@
 [
   {
+    "id": "flight_test_lower_deck",
+    "type": "vehicle",
+    "name": "Lower-deck rotorcraft flight test fixture",
+    "parts": [
+      {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "parts": [
+          "frame_vertical",
+          "engine_turbine_small",
+          { "part": "tank", "fuel": "jp8" },
+          "battery_car",
+          "small_civilian_rotors",
+          "seat",
+          "controls"
+        ]
+      },
+      { "x": 0, "y": 0, "z": -1, "parts": [ "frame_vertical", "seat", "controls" ] }
+    ]
+  },
+  {
+    "type": "vehicle",
+    "id": "boating_test_lower_only",
+    "name": "Powered lower-only boating test fixture",
+    "parts": [
+      {
+        "x": 0,
+        "y": 0,
+        "z": -1,
+        "parts": [ "frame_vertical", "boat_board", "engine_electric_large", "battery_car", "seat", "controls" ]
+      },
+      { "x": -1, "y": -1, "z": -1, "parts": [ "frame_vertical", "boat_board" ] },
+      { "x": -1, "y": 0, "z": -1, "parts": [ "frame_vertical", "boat_board" ] },
+      { "x": -1, "y": 1, "z": -1, "parts": [ "frame_vertical", "boat_board" ] },
+      { "x": 0, "y": -1, "z": -1, "parts": [ "frame_vertical", "boat_board", "cargo_space" ] },
+      { "x": 0, "y": 1, "z": -1, "parts": [ "frame_vertical", "boat_board", "seat", "controls" ] },
+      { "x": 1, "y": -1, "z": -1, "parts": [ "frame_vertical", "boat_board" ] },
+      { "x": 1, "y": 0, "z": -1, "parts": [ "frame_vertical", "boat_board" ] },
+      { "x": 1, "y": 1, "z": -1, "parts": [ "frame_vertical", "boat_board" ] }
+    ]
+  },
+  {
+    "id": "multiz_two_deck_test",
+    "type": "vehicle",
+    "name": "Two-deck prototype test fixture",
+    "parts": [
+      { "x": 0, "y": 0, "z": 0, "parts": [ "frame_vertical", "aisle_horizontal" ] },
+      { "x": 0, "y": 1, "z": 0, "parts": [ "frame_vertical", "seat" ] },
+      { "x": 1, "y": 0, "z": 0, "parts": [ "frame_vertical", "aisle_horizontal" ] },
+      { "x": 1, "y": 1, "z": 0, "parts": [ "frame_vertical", "cargo_space" ] },
+      { "x": 2, "y": 0, "z": 0, "parts": [ "frame_vertical", "vehicle_stairs" ] },
+      { "x": 2, "y": 1, "z": 0, "parts": [ "frame_vertical", "seat" ] },
+      { "x": 0, "y": 0, "z": 1, "parts": [ "frame_vertical", "aisle_horizontal", "roof", "solar_panel" ] },
+      { "x": 0, "y": 1, "z": 1, "parts": [ "frame_vertical", "seat", "roof" ] },
+      { "x": 1, "y": 0, "z": 1, "parts": [ "frame_vertical", "aisle_horizontal", "roof" ] },
+      { "x": 1, "y": 1, "z": 1, "parts": [ "frame_vertical", "cargo_space", "roof" ] },
+      { "x": 2, "y": 0, "z": 1, "parts": [ "frame_vertical", "vehicle_stair_landing", "roof" ] },
+      { "x": 2, "y": 1, "z": 1, "parts": [ "frame_vertical", "seat", "roof" ] }
+    ]
+  },
+  {
     "id": "bicycle_test",
     "type": "vehicle",
     "name": "Bicycle",

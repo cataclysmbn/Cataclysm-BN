@@ -81,12 +81,13 @@ private:
     int cpart = -1;
     int page_size;
     int fuel_index = 0; /** Starting index of where to start printing fuels from */
-    // height of the stats window
+    // Logical rows per stats column; stability uses one extra physical row.
     const int stats_h = 8;
     catacurses::window w_border;
     catacurses::window w_mode;
     catacurses::window w_msg;
     catacurses::window w_disp;
+    catacurses::window w_deck;
     catacurses::window w_parts;
     catacurses::window w_stats;
     catacurses::window w_list;
@@ -129,6 +130,7 @@ private:
 
     auto part_at(tripoint_bub_ms d) -> int;
     void move_cursor(tripoint_rel_veh d, int dstart_at = 0);
+    auto display_deck_controls() -> void;
     auto cant_do(char mode) -> task_reason;
     auto can_potentially_install(const vpart_info& vpart) -> bool;
     /** Move index (parameter pos) according to input action:
