@@ -542,14 +542,10 @@ def extract_map_feature_description(state, item):
 
 
 def extract_monster_attack(state, item):
-    if "hit_dmg_u" in item:
-        writestr(state, item.get("hit_dmg_u"))
-    if "hit_dmg_npc" in item:
-        writestr(state, item.get("hit_dmg_npc"))
-    if "no_dmg_msg_u" in item:
-        writestr(state, item.get("no_dmg_msg_u"))
-    if "no_dmg_msg_npc" in item:
-        writestr(state, item.get("no_dmg_msg_npc"))
+    for field in ("hit_dmg_u", "hit_dmg_npc", "no_dmg_msg_u", "no_dmg_msg_npc",
+                  "miss_msg_u", "miss_msg_npc", "bounce_msg_u", "bounce_msg_npc"):
+        if field in item:
+            writestr(state, item[field])
 
 
 def extract_recipe(state, item):
@@ -1269,9 +1265,14 @@ def extract_json(state, item):
     if "verb" in item:
        writestr(state, item["verb"])
        wrote = True
-    if "special_attacks" in item:
-        special_attacks = item["special_attacks"]
+    for special_attacks in (item.get("special_attacks", []),
+                            item.get("extend", {}).get("special_attacks", [])):
         for special_attack in special_attacks:
+            if not isinstance(special_attack, dict):
+                continue
+            attack_type = special_attack.get("attack_type", special_attack.get("type", "monster_attack"))
+            if attack_type in ("monster_attack", "melee", "bite"):
+                extract_monster_attack(state, special_attack)
             if "description" in special_attack:
                 writestr(state, special_attack["description"])
                 wrote = True
