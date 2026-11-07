@@ -725,6 +725,7 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
 
     using named_entry = std::pair<std::string, std::function<void()>>;
     const std::vector<named_entry> entries = {{
+            { _( "Zone groups" ), &finalize_loot_zone_groups },
             { _( "Flags" ), &json_flag::finalize_all },
             { _( "Mutation Flags" ), &json_trait_flag::finalize_all },
             { _( "Body parts" ), &body_part_type::finalize_all },

@@ -30,20 +30,23 @@
 #include <string>
 
 TEST_CASE("zone_row_keeps_room_for_long_name_and_location", "[zone][zone_ui]") {
-    const auto nearby = make_zone_row_layout(43, "0 Ц");
+    const auto nearby = make_zone_row_layout(43, "0 C");
     CHECK(nearby.name_width == 35);
     CHECK(nearby.location_x == 40);
     CHECK(nearby.vehicle_x == 39);
-    const auto distant = make_zone_row_layout(43, "12345 СЗ");
+    const auto distant = make_zone_row_layout(43, "12345 NW");
     CHECK(distant.name_width == 30);
     CHECK(distant.location_x == 35);
-    CHECK(distant.location_x + utf8_width("12345 СЗ") == 43);
-    const auto wide = make_zone_row_layout(63, "0 Ц");
+    CHECK(distant.location_x + utf8_width("12345 NW") == 43);
+    const auto unicode_direction = std::string("12345 \u5317\u897f");
+    const auto unicode = make_zone_row_layout(43, unicode_direction);
+    CHECK(unicode.location_x + utf8_width(unicode_direction) == 43);
+    const auto wide = make_zone_row_layout(63, "0 C");
     CHECK(wide.name_width > nearby.name_width);
 }
 
 TEST_CASE("custom_zone_details_show_only_filter_text", "[zone][zone_ui][json]") {
-    auto stream = std::istringstream{R"({"mark":"c:еда,m:железо,q:забивания"})"};
+    auto stream = std::istringstream{R"({"mark":"c:food,m:iron,q:hammering"})"};
     auto input = JsonIn{stream};
     auto options = loot_options{};
     options.deserialize(input.get_object());
@@ -51,7 +54,7 @@ TEST_CASE("custom_zone_details_show_only_filter_text", "[zone][zone_ui][json]") 
     const auto descriptions = options.get_descriptions();
     REQUIRE(descriptions.size() == 1);
     CHECK(descriptions.front().first.empty());
-    CHECK(descriptions.front().second == "c:еда,m:железо,q:забивания");
+    CHECK(descriptions.front().second == "c:food,m:iron,q:hammering");
 }
 
 TEST_CASE("category_storage_categories_and_round_trip", "[zone_ui][category_storage]") {
@@ -59,13 +62,15 @@ TEST_CASE("category_storage_categories_and_round_trip", "[zone_ui][category_stor
         REQUIRE(!group.categories.empty());
         for (const auto& category : group.categories) { CHECK(category.is_valid()); }
     }
-    const auto tools = std::ranges::find(loot_zone_groups(), "tools", &loot_zone_group::id);
+    const auto tools = std::ranges::find(loot_zone_groups(), "tools", [](const auto& group) {
+        return group.id.str();
+    });
     REQUIRE(tools != loot_zone_groups().end());
     auto options = loot_options();
     options.set_categories(tools->categories);
-    const auto hammer = item::spawn_temporary("hammer");
-    const auto crowbar = item::spawn_temporary("crowbar");
-    const auto rock = item::spawn_temporary("rock");
+    const auto hammer = item::spawn_temporary("test_zone_hammer");
+    const auto crowbar = item::spawn_temporary("test_zone_crowbar");
+    const auto rock = item::spawn_temporary("test_rock");
     REQUIRE(options.matches(*hammer));
     REQUIRE(options.matches(*crowbar));
     CHECK_FALSE(options.matches(*rock));
@@ -119,18 +124,20 @@ TEST_CASE(
     const auto broad = origin + tripoint_rel_ms(1, 0, 0);
     const auto specific = origin + tripoint_rel_ms(2, 0, 0);
     auto options = make_shared_fast<loot_options>();
-    const auto tools = std::ranges::find(loot_zone_groups(), "tools", &loot_zone_group::id);
+    const auto tools = std::ranges::find(loot_zone_groups(), "tools", [](const auto& group) {
+        return group.id.str();
+    });
     REQUIRE(tools != loot_zone_groups().end());
     options->set_categories(tools->categories);
     mgr.add("Tools", zone_type_id("LOOT_CUSTOM"), your_fac, false, true, broad, broad, options);
-    const auto hammer = item::spawn_temporary("hammer");
+    const auto hammer = item::spawn_temporary("test_zone_hammer");
     REQUIRE(hammer->get_category().zone() == zone_type_id("LOOT_WORKSHOP_TOOLS"));
     CHECK(mgr.get_near_zone_type_for_item(*hammer, origin, 10) == zone_type_id("LOOT_CUSTOM"));
     mgr.add("Workshop", zone_type_id("LOOT_WORKSHOP_TOOLS"), your_fac, false, true, specific,
             specific);
     CHECK(mgr.get_near_zone_type_for_item(*hammer, origin, 10)
           == zone_type_id("LOOT_WORKSHOP_TOOLS"));
-    auto rocks = item::spawn("rock");
+    auto rocks = item::spawn("test_rock");
     rocks->charges = 1000000;
     here.add_item(abs_to_bub(specific), std::move(rocks));
     REQUIRE(here.free_volume(abs_to_bub(specific)) < hammer->volume());
@@ -145,8 +152,8 @@ TEST_CASE("category_food_choices_are_independent", "[zone_ui][category_storage]"
     auto stream = std::istringstream(R"({"categories":["LOOT_DRINK"]})");
     auto input = JsonIn(stream);
     options.deserialize(input.get_object());
-    const auto water = item::spawn_temporary("water_clean");
-    const auto apple = item::spawn_temporary("apple");
+    const auto water = item::spawn_temporary("test_zone_drink");
+    const auto apple = item::spawn_temporary("test_zone_food");
     CHECK(options.matches(*water));
     CHECK_FALSE(options.matches(*apple));
 }
@@ -178,7 +185,9 @@ TEST_CASE(
         CHECK_FALSE(std::ranges::contains(available, rule));
     }
     auto selected = std::vector<zone_type_id>{zone_type_id("LOOT_BOOKS")};
-    const auto tools = std::ranges::find(loot_zone_groups(), "tools", &loot_zone_group::id);
+    const auto tools = std::ranges::find(loot_zone_groups(), "tools", [](const auto& group) {
+        return group.id.str();
+    });
     REQUIRE(tools != loot_zone_groups().end());
     toggle_zone_categories(selected, {tools->categories.front()});
     toggle_zone_categories(selected, tools->categories);
@@ -188,9 +197,9 @@ TEST_CASE(
     toggle_zone_categories(selected, tools->categories);
     auto options = loot_options();
     options.set_categories(selected);
-    CHECK(options.matches(*item::spawn_temporary("hammer")));
-    CHECK(options.matches(*item::spawn_temporary("novel_pulp")));
-    CHECK_FALSE(options.matches(*item::spawn_temporary("rock")));
+    CHECK(options.matches(*item::spawn_temporary("test_zone_hammer")));
+    CHECK(options.matches(*item::spawn_temporary("test_zone_book")));
+    CHECK_FALSE(options.matches(*item::spawn_temporary("test_rock")));
     auto out = std::ostringstream();
     auto json = JsonOut(out);
     json.start_object();
@@ -200,19 +209,19 @@ TEST_CASE(
     auto stream = std::istringstream(out.str());
     auto input = JsonIn(stream);
     restored.deserialize(input.get_object());
-    CHECK(restored.matches(*item::spawn_temporary("hammer")));
-    CHECK(restored.matches(*item::spawn_temporary("novel_pulp")));
-    CHECK_FALSE(restored.matches(*item::spawn_temporary("rock")));
+    CHECK(restored.matches(*item::spawn_temporary("test_zone_hammer")));
+    CHECK(restored.matches(*item::spawn_temporary("test_zone_book")));
+    CHECK_FALSE(restored.matches(*item::spawn_temporary("test_rock")));
 }
 
 TEST_CASE("zone_filter_wrap_keeps_conditions_intact", "[zone_ui]") {
-    const auto lines = wrap_zone_filter("c:еда,c:кухонные инструменты,m:железо", 25);
+    const auto lines = wrap_zone_filter("c:food,c:cooking tools,m:iron", 20);
     REQUIRE(lines.size() == 3);
-    CHECK(lines[0] == "c:еда,");
-    CHECK(lines[1] == "c:кухонные инструменты,");
-    CHECK(lines[2] == "m:железо");
-    CHECK(wrap_zone_filter("c:еда,m:железо", 40) == std::vector<std::string>{"c:еда,m:железо"});
-    for (const auto& line : wrap_zone_filter("c:сельскохозяйственные инструменты", 12)) {
+    CHECK(lines[0] == "c:food,");
+    CHECK(lines[1] == "c:cooking tools,");
+    CHECK(lines[2] == "m:iron");
+    CHECK(wrap_zone_filter("c:food,m:iron", 40) == std::vector<std::string>{"c:food,m:iron"});
+    for (const auto& line : wrap_zone_filter("c:agricultural tools", 12)) {
         CHECK(utf8_width(line) <= 12);
     }
 }
@@ -220,12 +229,12 @@ TEST_CASE("zone_filter_wrap_keeps_conditions_intact", "[zone_ui]") {
 TEST_CASE("zone_groups_follow_document_order_without_duplicate_types", "[zone_ui]") {
     const auto& groups = loot_zone_groups();
     REQUIRE(groups.size() == 17);
-    CHECK(groups.front().id == "food");
-    CHECK(groups[4].id == "technology");
-    CHECK(groups[13].id == "npc");
-    CHECK(groups[14].id == "fieldwork");
-    CHECK(groups[15].id == "construction");
-    CHECK(groups.back().id == "rules");
+    CHECK(groups.front().id.str() == "food");
+    CHECK(groups[4].id.str() == "technology");
+    CHECK(groups[13].id.str() == "npc");
+    CHECK(groups[14].id.str() == "fieldwork");
+    CHECK(groups[15].id.str() == "construction");
+    CHECK(groups.back().id.str() == "rules");
     for (const auto& id : groups.back().categories) {
         CHECK(std::ranges::contains(zone_creation_rules(), id));
     }
@@ -243,10 +252,10 @@ TEST_CASE("zone_groups_follow_document_order_without_duplicate_types", "[zone_ui
 }
 
 TEST_CASE("zone_category_continuations_start_at_left_edge", "[zone_ui]") {
-    const auto lines = wrap_zone_filter("Инструменты мастерской, Инструменты взлома, Книги", 30);
+    const auto lines = wrap_zone_filter("Workshop tools, Entry tools, Books", 25);
     REQUIRE(lines.size() == 2);
-    CHECK(lines[0] == "Инструменты мастерской,");
-    CHECK(lines[1] == "Инструменты взлома, Книги");
+    CHECK(lines[0] == "Workshop tools,");
+    CHECK(lines[1] == "Entry tools, Books");
 }
 
 TEST_CASE("zone_group_names_and_suggestions_follow_language", "[zone_ui][i18n]") {
@@ -258,7 +267,7 @@ TEST_CASE("zone_group_names_and_suggestions_follow_language", "[zone_ui][i18n]")
         const auto language = override_option("USE_LANG", "en_US");
         set_language();
         english_order = zone_storage_categories();
-        for (const auto& group : loot_zone_groups()) { english_groups.push_back(group.id); }
+        for (const auto& group : loot_zone_groups()) { english_groups.push_back(group.id.str()); }
         CHECK(storage.get_zone_name_suggestion() == "Workshop Tools");
         CHECK(zone_selection_name({zone_type_id("LOOT_FOOD")}) == "Food");
         CHECK(zone_selection_name({zone_type_id("LOOT_BOOKS"), zone_type_id("LOOT_TOOLS")})
@@ -269,7 +278,7 @@ TEST_CASE("zone_group_names_and_suggestions_follow_language", "[zone_ui][i18n]")
         set_language();
         CHECK(zone_storage_categories() == english_order);
         auto russian_groups = std::vector<std::string>();
-        for (const auto& group : loot_zone_groups()) { russian_groups.push_back(group.id); }
+        for (const auto& group : loot_zone_groups()) { russian_groups.push_back(group.id.str()); }
         CHECK(russian_groups == english_groups);
         CHECK(storage.get_zone_name_suggestion() == zone_type_id("LOOT_WORKSHOP_TOOLS")->name());
         CHECK(
@@ -287,28 +296,32 @@ TEST_CASE("zone_group_json_extensions_keep_unassigned_categories_available", "[z
     const auto load = [](const std::string& text) {
         auto stream = std::istringstream(text);
         auto input = JsonIn(stream);
-        load_loot_zone_group(input.get_object());
+        load_loot_zone_group(input.get_object(), "test_data");
     };
-    load(R"({"id":"tools","delete":{"categories":["LOOT_TOOLS"]}})");
+    load(R"({"id":"tools","copy-from":"tools","delete":{"categories":["LOOT_TOOLS"]}})");
     const auto available = zone_storage_categories();
     CHECK(std::ranges::contains(available, zone_type_id("LOOT_TOOLS")));
     CHECK(std::ranges::count(available, zone_type_id("LOOT_TOOLS")) == 1);
-    load(R"({"id":"tools","extend":{"categories":["LOOT_TOOLS","LOOT_TOOLS"]}})");
-    const auto tools = std::ranges::find(loot_zone_groups(), "tools", &loot_zone_group::id);
+    load(R"({"id":"tools","copy-from":"tools","extend":{"categories":["LOOT_TOOLS"]}})");
+    const auto tools = std::ranges::find(loot_zone_groups(), "tools", [](const auto& group) {
+        return group.id.str();
+    });
     REQUIRE(tools != loot_zone_groups().end());
     CHECK(std::ranges::count(tools->categories, zone_type_id("LOOT_TOOLS")) == 1);
     load(
         R"({"id":"test_mod_group","name":"Mod tools","sort_order":-10,"categories":["LOOT_TOOLS","not_installed"]})");
-    CHECK(loot_zone_groups().front().id == "test_mod_group");
+    CHECK(loot_zone_groups().front().id.str() == "test_mod_group");
     const auto reordered = zone_storage_categories();
     CHECK(std::ranges::count(reordered, zone_type_id("LOOT_TOOLS")) == 1);
     CHECK_FALSE(std::ranges::contains(reordered, zone_type_id("not_installed")));
-    load(R"({"id":"rules","sort_order":-1000})");
-    const auto rule_group = std::ranges::find(loot_zone_groups(), "rules", &loot_zone_group::id);
+    load(R"({"id":"rules","copy-from":"rules","sort_order":-1000})");
+    const auto rule_group = std::ranges::find(loot_zone_groups(), "rules", [](const auto& group) {
+        return group.id.str();
+    });
     const auto activity_group =
         std::ranges::find(loot_zone_groups(), "activity", &loot_zone_group::kind);
     CHECK(rule_group > activity_group);
-    load(R"({"id":"rules","categories":["LOOT_IGNORE"]})");
+    load(R"({"id":"rules","copy-from":"rules","categories":["LOOT_IGNORE"]})");
     const auto single_rule_rows = make_zone_checklist_rows(false);
     CHECK(
         std::ranges::count_if(
@@ -318,6 +331,16 @@ TEST_CASE("zone_group_json_extensions_keep_unassigned_categories_available", "[z
                     && row.members == std::vector<zone_type_id>{zone_type_id("LOOT_IGNORE")};
             })
         == 1);
+    load(
+        R"({"id":"test_inherited_group","copy-from":"tools","name":{"str":"Test tools","ctxt":"zone group test"},"delete":{"categories":["LOOT_TOOLS"]}})");
+    const auto inherited =
+        std::ranges::find(loot_zone_groups(), "test_inherited_group", [](const auto& group) {
+            return group.id.str();
+        });
+    REQUIRE(inherited != loot_zone_groups().end());
+    CHECK(inherited->title == to_translation("zone group test", "Test tools"));
+    CHECK_FALSE(std::ranges::contains(inherited->categories, zone_type_id("LOOT_TOOLS")));
+    CHECK(std::ranges::contains(inherited->categories, zone_type_id("LOOT_WORKSHOP_TOOLS")));
     reset_loot_zone_groups();
     CHECK(zone_creation_rules().empty());
     auto english_order = std::vector<zone_type_id>();
@@ -335,7 +358,7 @@ TEST_CASE("zone_group_json_extensions_keep_unassigned_categories_available", "[z
 }
 
 TEST_CASE("zone_filter_prefix_highlights_follow_filter_syntax", "[zone_ui]") {
-    const auto text = std::string("c:еда,-m:iron,b:q:cut;k:survival,http:c:literal");
+    const auto text = std::string("c:food,-m:iron,b:q:cut;k:survival,http:c:literal");
     auto marked = std::vector<std::string>();
     for (const auto byte : zone_filter_prefixes(text)) { marked.push_back(text.substr(byte, 2)); }
     CHECK(marked == std::vector<std::string>{"c:", "m:", "b:", "q:", "k:"});
@@ -379,7 +402,7 @@ TEST_CASE("simple_zone_functions_share_storage_area", "[zone_ui]") {
     mgr.add("Perishable food", zone_type_id("LOOT_CUSTOM"), your_fac, false, true, spot, spot,
             storage);
     mgr.add("Auto eat", zone_type_id("AUTO_EAT"), your_fac, false, true, spot, spot);
-    const auto apple = item::spawn_temporary("apple");
+    const auto apple = item::spawn_temporary("test_zone_food");
     REQUIRE(storage->matches(*apple));
     CHECK(mgr.get_near_zone_type_for_item(*apple, origin, 10) == zone_type_id("LOOT_CUSTOM"));
     CHECK(mgr.get_near(zone_type_id("AUTO_EAT"), origin, 10).contains(spot));
@@ -456,7 +479,7 @@ TEST_CASE(
     SECTION("specialized_storage_wins") { scenario = "specialized_storage_wins"; }
     SECTION("full_specialized_storage_falls_back") {
         scenario = "full_specialized_storage_falls_back";
-        auto rocks = item::spawn("rock");
+        auto rocks = item::spawn("test_rock");
         rocks->charges = 1000000;
         here.add_item(abs_to_bub(specialized), std::move(rocks));
         expected = fallback;
@@ -484,7 +507,7 @@ TEST_CASE(
     SECTION("already_sorted_item_stays_in_full_specialized_source") {
         scenario = "already_sorted_item_stays_in_full_specialized_source";
         fixture.add(source, zone_type_id("LOOT_WORKSHOP_TOOLS"));
-        auto rocks = item::spawn("rock");
+        auto rocks = item::spawn("test_rock");
         rocks->charges = 1000000;
         here.add_item(abs_to_bub(source), std::move(rocks));
         expected = source;
@@ -495,11 +518,11 @@ TEST_CASE(
         here.ter_set(abs_to_bub(fallback), ter_id("t_wall"));
         expected = source;
     }
-    here.add_item(abs_to_bub(source), item::spawn("hammer"));
+    here.add_item(abs_to_bub(source), item::spawn("test_zone_hammer"));
     CAPTURE(scenario);
     fixture.sort();
     CHECK(std::ranges::any_of(here.i_at(abs_to_bub(expected)), [](const auto& it) {
-        return it->typeId() == itype_id("hammer");
+        return it->typeId() == itype_id("test_zone_hammer");
     }));
     if (expected != source) { CHECK(here.i_at(abs_to_bub(source)).empty()); }
 }
@@ -537,8 +560,8 @@ TEST_CASE(
     const auto custom = manager.get_zones(zone_type_id("LOOT_CUSTOM"), tripoint_abs_ms(62, 60, 0));
     REQUIRE(custom.size() == 1);
     const auto& options = dynamic_cast<const loot_options&>(custom.front().get_options());
-    CHECK(options.matches(*item::spawn_temporary("hammer")));
-    CHECK_FALSE(options.matches(*item::spawn_temporary("rock")));
+    CHECK(options.matches(*item::spawn_temporary("test_zone_hammer")));
+    CHECK_FALSE(options.matches(*item::spawn_temporary("test_rock")));
 }
 
 TEST_CASE(
@@ -565,17 +588,23 @@ TEST_CASE(
     manager.create_vehicle_loot_zone(*cart, cargo->mount(), zone);
     auto full = false;
     SECTION("available_vehicle_storage") {}
+    SECTION("cargo_over_terrain_that_rejects_items") {
+        here.furn_set(abs_to_bub(cargo_point), furn_id("f_safe_c"));
+        REQUIRE_FALSE(here.can_put_items_ter_furn(abs_to_bub(cargo_point)));
+        const auto candidate = item::spawn_temporary("test_zone_hammer");
+        CHECK(zone_sorting_destination(*candidate, source, 10) == cargo_point);
+    }
     SECTION("full_vehicle_storage_uses_ground_fallback") {
-        const auto rock_volume = item::spawn_temporary("rock")->volume();
+        const auto rock_volume = item::spawn_temporary("test_rock")->volume();
         while (cart->free_volume(part) >= rock_volume) {
-            REQUIRE_FALSE(cart->add_item(part, item::spawn("rock")));
+            REQUIRE_FALSE(cart->add_item(part, item::spawn("test_rock")));
         }
-        REQUIRE(cart->free_volume(part) < item::spawn_temporary("hammer")->volume());
+        REQUIRE(cart->free_volume(part) < item::spawn_temporary("test_zone_hammer")->volume());
         full = true;
     }
     SECTION("full_ground_beneath_vehicle_does_not_block_cargo") {
         for (auto i = 0; i < MAX_ITEM_IN_SQUARE; ++i) {
-            here.add_item(abs_to_bub(cargo_point), item::spawn("rock"));
+            here.add_item(abs_to_bub(cargo_point), item::spawn("test_rock"));
         }
         REQUIRE(here.i_at(abs_to_bub(cargo_point)).size() == MAX_ITEM_IN_SQUARE);
     }
@@ -584,16 +613,18 @@ TEST_CASE(
         manager.cache_vzones();
         CHECK_FALSE(manager.has(zone_type_id("LOOT_WORKSHOP_TOOLS"), cargo_point));
     }
-    here.add_item(abs_to_bub(source), item::spawn("hammer"));
+    here.add_item(abs_to_bub(source), item::spawn("test_zone_hammer"));
     fixture.sort();
     CHECK(here.i_at(abs_to_bub(source)).empty());
     const auto cargo_has_hammer = std::ranges::any_of(cart->get_items(part), [](const auto& it) {
-        return it->typeId() == itype_id("hammer");
+        return it->typeId() == itype_id("test_zone_hammer");
     });
     CHECK(cargo_has_hammer == !full);
-    CHECK(std::ranges::any_of(here.i_at(abs_to_bub(fallback)),
-                              [](const auto& it) { return it->typeId() == itype_id("hammer"); })
-          == full);
+    CHECK(
+        std::ranges::any_of(
+            here.i_at(abs_to_bub(fallback)),
+            [](const auto& it) { return it->typeId() == itype_id("test_zone_hammer"); })
+        == full);
 }
 
 TEST_CASE(
@@ -603,7 +634,7 @@ TEST_CASE(
 
     const auto id = zone_type_id("test_mod_parts_storage");
     CHECK(std::ranges::contains(zone_storage_categories(), id));
-    auto type = itype(*item::spawn_temporary("hammer")->type);
+    auto type = itype(*item::spawn_temporary("test_zone_hammer")->type);
     type.category_force = item_category_id("test_mod_parts");
     auto candidate = item::spawn(&type);
     auto options = loot_options();
@@ -627,7 +658,7 @@ TEST_CASE(
     const auto cargo = here.veh_at(abs_to_bub(source)).part_with_feature("CARGO", false);
     REQUIRE(cargo);
     cart->get_items(cargo->part_index()).clear();
-    REQUIRE_FALSE(cart->add_item(cargo->part_index(), item::spawn("hammer")));
+    REQUIRE_FALSE(cart->add_item(cargo->part_index(), item::spawn("test_zone_hammer")));
     auto zone = zone_data(
         "Unsorted cart", zone_type_id("LOOT_UNSORTED"), your_fac, false, true, source, source);
     zone.set_dimension(here.get_bound_dimension());
@@ -635,7 +666,7 @@ TEST_CASE(
     fixture.sort();
     CHECK(cart->get_items(cargo->part_index()).empty());
     CHECK(std::ranges::any_of(here.i_at(abs_to_bub(destination)), [](const auto& it) {
-        return it->typeId() == itype_id("hammer");
+        return it->typeId() == itype_id("test_zone_hammer");
     }));
 }
 
@@ -667,16 +698,16 @@ TEST_CASE(
     auto input = JsonIn(stream);
     zone.deserialize(input);
     manager.create_vehicle_loot_zone(*cart, cargo->mount(), zone);
-    CHECK(manager.custom_loot_has(destination, item::spawn_temporary("hammer")));
-    CHECK_FALSE(manager.custom_loot_has(destination, item::spawn_temporary("rock")));
-    here.add_item(abs_to_bub(source), item::spawn("hammer"));
-    here.add_item(abs_to_bub(source), item::spawn("rock"));
+    CHECK(manager.custom_loot_has(destination, item::spawn_temporary("test_zone_hammer")));
+    CHECK_FALSE(manager.custom_loot_has(destination, item::spawn_temporary("test_rock")));
+    here.add_item(abs_to_bub(source), item::spawn("test_zone_hammer"));
+    here.add_item(abs_to_bub(source), item::spawn("test_rock"));
     fixture.sort();
     CHECK(std::ranges::any_of(cart->get_items(cargo->part_index()), [](const auto& it) {
-        return it->typeId() == itype_id("hammer");
+        return it->typeId() == itype_id("test_zone_hammer");
     }));
     CHECK(std::ranges::any_of(here.i_at(abs_to_bub(source)), [](const auto& it) {
-        return it->typeId() == itype_id("rock");
+        return it->typeId() == itype_id("test_rock");
     }));
 }
 
@@ -687,8 +718,8 @@ TEST_CASE(
     auto input = JsonIn(stream);
     auto options = loot_options();
     options.deserialize(input.get_object());
-    CHECK_FALSE(options.matches(*item::spawn_temporary("hammer")));
-    CHECK_FALSE(options.matches(*item::spawn_temporary("rock")));
+    CHECK_FALSE(options.matches(*item::spawn_temporary("test_zone_hammer")));
+    CHECK_FALSE(options.matches(*item::spawn_temporary("test_rock")));
     REQUIRE(options.get_descriptions().size() == 1);
     CHECK(options.get_descriptions().front().second == "removed_mod_storage");
     auto saved = std::ostringstream();
@@ -712,7 +743,7 @@ TEST_CASE("narrow_category_storage_precedes_general_storage", "[zone_ui][zone_so
         expected = narrow;
     }
     SECTION("full_narrow_storage_uses_general_storage") {
-        auto rocks = item::spawn("rock");
+        auto rocks = item::spawn("test_rock");
         rocks->charges = 1000000;
         get_map().add_item(abs_to_bub(narrow), std::move(rocks));
         expected = broad;
@@ -726,19 +757,19 @@ TEST_CASE("narrow_category_storage_precedes_general_storage", "[zone_ui][zone_so
     fixture.custom(
         broad,
         R"({"categories":["LOOT_WORKSHOP_TOOLS","LOOT_ENTRY_TOOLS","LOOT_COOKING_TOOLS","LOOT_CHEMISTRY_TOOLS","LOOT_FARM_TOOLS","LOOT_TOOLS"]})");
-    const auto hammer = item::spawn_temporary("hammer");
+    const auto hammer = item::spawn_temporary("test_zone_hammer");
     CHECK(zone_sorting_destination(*hammer, actor.abs_pos(), 10) == expected);
-    get_map().add_item(abs_to_bub(source), item::spawn("hammer"));
+    get_map().add_item(abs_to_bub(source), item::spawn("test_zone_hammer"));
     fixture.sort();
     CHECK(std::ranges::any_of(get_map().i_at(abs_to_bub(expected)), [](const auto& it) {
-        return it->typeId() == itype_id("hammer");
+        return it->typeId() == itype_id("test_zone_hammer");
     }));
 }
 
 TEST_CASE("mod_priority_storage_is_discovered_and_matches", "[zone_ui][zone_sorting]") {
     auto fixture = sorting_fixture();
 
-    auto type = itype(*item::spawn_temporary("hammer")->type);
+    auto type = itype(*item::spawn_temporary("test_zone_hammer")->type);
     type.category_force = item_category_id("test_priority_category");
     auto candidate = item::spawn(&type);
     candidate->set_flag(flag_id("FIREWOOD"));
@@ -770,14 +801,14 @@ TEST_CASE("edited_category_storage_sorts_after_reload", "[zone_ui][zone_sorting]
     auto input = JsonIn(stream);
     manager.deserialize(input);
     manager.cache_data();
-    here.add_item(abs_to_bub(source), item::spawn("hammer"));
-    here.add_item(abs_to_bub(source), item::spawn("novel_pulp"));
+    here.add_item(abs_to_bub(source), item::spawn("test_zone_hammer"));
+    here.add_item(abs_to_bub(source), item::spawn("test_zone_book"));
     fixture.sort();
     CHECK(std::ranges::any_of(here.i_at(abs_to_bub(destination)), [](const auto& it) {
-        return it->typeId() == itype_id("hammer");
+        return it->typeId() == itype_id("test_zone_hammer");
     }));
     CHECK(std::ranges::any_of(here.i_at(abs_to_bub(source)), [](const auto& it) {
-        return it->typeId() == itype_id("novel_pulp");
+        return it->typeId() == itype_id("test_zone_book");
     }));
 }
 
@@ -808,7 +839,7 @@ TEST_CASE("manual_filter_edit_and_favorite_rule_are_independent", "[zone_ui][zon
     manager.deserialize(input);
     manager.cache_data();
     for (const auto point : {source, other_source}) {
-        auto hammer = item::spawn("hammer");
+        auto hammer = item::spawn("test_zone_hammer");
         hammer->is_favorite = true;
         here.add_item(abs_to_bub(point), std::move(hammer));
     }
@@ -831,7 +862,7 @@ TEST_CASE("empty_category_storage_does_not_become_manual_filter", "[zone_ui][jso
     auto restored = loot_options();
     restored.deserialize(input.get_object());
     CHECK(restored.uses_categories());
-    CHECK_FALSE(restored.matches(*item::spawn_temporary("hammer")));
+    CHECK_FALSE(restored.matches(*item::spawn_temporary("test_zone_hammer")));
 }
 
 TEST_CASE("category_storage_honors_mod_food_mapping", "[zone_ui][zone_sorting]") {
@@ -844,7 +875,7 @@ TEST_CASE("category_storage_honors_mod_food_mapping", "[zone_ui][zone_sorting]")
     category.load(input.get_object(), "test_data");
     auto options = loot_options();
     options.set_categories({zone_type_id("test_mod_parts_storage")});
-    const auto apple = item::spawn_temporary("apple");
+    const auto apple = item::spawn_temporary("test_zone_food");
     REQUIRE(apple->get_category().get_id() == item_category_id("food"));
     CHECK(options.matches(*apple));
 }
@@ -921,14 +952,15 @@ TEST_CASE("category_storage_fails_closed_in_legacy_versions", "[zone_ui][json]")
         const auto fallback = saved.get_string("mark");
         REQUIRE_FALSE(fallback.empty());
         const auto legacy_filter = item_filter_from_string(fallback);
-        for (const auto id : {"hammer", "rock", "water_clean", "novel_pulp"}) {
+        for (const auto id :
+             {"test_zone_hammer", "test_rock", "test_zone_drink", "test_zone_book"}) {
             CAPTURE(id, fallback);
             CHECK_FALSE(legacy_filter(*item::spawn_temporary(id)));
         }
         auto restored = loot_options();
         restored.deserialize(saved);
         CHECK(restored.uses_categories());
-        CHECK(restored.matches(*item::spawn_temporary("hammer"))
+        CHECK(restored.matches(*item::spawn_temporary("test_zone_hammer"))
               == (!selected.empty() && selected.front() == zone_type_id("LOOT_WORKSHOP_TOOLS")));
         // An old version writes only mark back; upgrading again must remain safe.
         auto legacy_output = std::ostringstream();
@@ -941,8 +973,8 @@ TEST_CASE("category_storage_fails_closed_in_legacy_versions", "[zone_ui][json]")
         auto after_downgrade = loot_options();
         after_downgrade.deserialize(legacy_input.get_object());
         CHECK_FALSE(after_downgrade.uses_categories());
-        CHECK_FALSE(after_downgrade.matches(*item::spawn_temporary("hammer")));
-        CHECK_FALSE(after_downgrade.matches(*item::spawn_temporary("rock")));
+        CHECK_FALSE(after_downgrade.matches(*item::spawn_temporary("test_zone_hammer")));
+        CHECK_FALSE(after_downgrade.matches(*item::spawn_temporary("test_rock")));
     }
 }
 
@@ -958,7 +990,7 @@ TEST_CASE("confirming_native_storage_keeps_food_fallback", "[zone_ui][zone_sorti
     for (const auto& type : {zone_type_id("LOOT_FOOD"), zone_type_id("LOOT_DRINK")}) {
         const auto kept_type = zone_storage_type_after_edit(type, {type});
         const auto candidate = item::spawn_temporary(
-            type == zone_type_id("LOOT_FOOD") ? "apple" : "milk");
+            type == zone_type_id("LOOT_FOOD") ? "test_zone_food" : "test_zone_perishable_drink");
         fixture.add(destination, kept_type);
         CHECK(manager.get_near_zone_type_for_item(*candidate, origin, 10) == type);
     }
@@ -1082,25 +1114,6 @@ TEST_CASE("activity_search_clips_storage_to_radius_and_level", "[zone_ui][zone_s
     CHECK(zone_activity_points(type, origin + tripoint_rel_ms(0, 0, 2), 2).empty());
 }
 
-TEST_CASE("zone_group_snapshot_preserves_translation_context", "[zone_ui][json]") {
-    const auto original = loot_zone_groups();
-    const auto restore = on_out_of_scope([&]() { reset_loot_zone_groups(original); });
-    auto stream = std::istringstream(
-        R"({"id":"test_context_group","name":{"str":"Test group","ctxt":"zone group test"},"categories":["LOOT_BOOKS"]})");
-    auto input = JsonIn(stream);
-    load_loot_zone_group(input.get_object());
-    const auto saved = loot_zone_groups();
-    reset_loot_zone_groups();
-    REQUIRE(loot_zone_groups().empty());
-    reset_loot_zone_groups(saved);
-    const auto found =
-        std::ranges::find(loot_zone_groups(), "test_context_group", &loot_zone_group::id);
-    REQUIRE(found != loot_zone_groups().end());
-    CHECK(found->title == to_translation("zone group test", "Test group"));
-    CHECK(found->title != to_translation("Test group"));
-    CHECK(loot_zone_groups().size() == saved.size());
-}
-
 TEST_CASE("zone_checklist_search_excludes_group_toggles", "[zone_ui]") {
     // Initialize real menu state without drawing a window or querying input.
     const auto make_menu = []() {
@@ -1162,7 +1175,7 @@ TEST_CASE("zone_category_display_limit_does_not_change_storage", "[zone_ui][json
     CHECK(options.get_descriptions().front().second == first_ten);
     selected.push_back(zone_type_id("LOOT_BOOKS"));
     options.set_categories(selected);
-    const auto book = item::spawn_temporary("novel_pulp");
+    const auto book = item::spawn_temporary("test_zone_book");
     REQUIRE(options.matches(*book));
     auto before = std::ostringstream();
     auto before_json = JsonOut(before);

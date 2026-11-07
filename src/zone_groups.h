@@ -12,11 +12,14 @@ class JsonObject;
 struct uilist_entry;
 
 struct loot_zone_group {
-    std::string id;
+    string_id<loot_zone_group> id;
+    bool was_loaded = false;
     translation title;
     std::vector<zone_type_id> categories;
     std::string kind = "storage";
     int sort_order = 0;
+
+    auto load( const JsonObject &jo, const std::string &src ) -> void;
 };
 
 /// Rows shared by the checklist renderer and its interaction tests.
@@ -61,7 +64,8 @@ using zone_creation_choice = std::variant<zone_category_selection, zone_type_id>
 auto query_zone_creation( zone_category_selection &selection,
                           bool categories_only = false ) -> std::optional<zone_creation_choice>;
 
-auto load_loot_zone_group( const JsonObject &jo ) -> void;
+auto load_loot_zone_group( const JsonObject &jo, const std::string &src ) -> void;
+auto finalize_loot_zone_groups() -> void;
 /// Clear loaded groups, or restore a complete snapshot without losing translation metadata.
 auto reset_loot_zone_groups( std::vector<loot_zone_group> groups = {} ) -> void;
 auto zone_selection_name( const std::vector<zone_type_id> &categories ) -> std::string;

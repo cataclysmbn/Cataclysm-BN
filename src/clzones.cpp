@@ -11,9 +11,11 @@
 #include "cursesdef.h"
 #include "debug.h"
 #include "faction.h"
+#include "flag.h"
 #include "fstream_utils.h"
 #include "game.h"
 #include "generic_factory.h"
+#include "generic_readers.h"
 #include "iexamine.h"
 #include "int_id.h"
 #include "input.h"
@@ -192,10 +194,13 @@ auto zone_destination_accepts( const item &candidate, const tripoint_abs_ms &des
 {
     auto &here = get_map();
     const auto local = abs_to_bub( destination );
-    if( !here.inbounds( local ) || !here.can_put_items_ter_furn( local ) ) {
+    if( !here.inbounds( local ) ) {
         return false;
     }
     const auto cargo = here.veh_at( local ).part_with_feature( "CARGO", false );
+    if( !cargo && !here.can_put_items_ter_furn( local ) ) {
+        return false;
+    }
     const auto count = cargo ? cargo->vehicle().get_items( cargo->part_index() ).size() :
                        here.i_at( local ).size();
     const auto limit = cargo ? MAX_ITEM_IN_VEHICLE_STORAGE : MAX_ITEM_IN_SQUARE;
@@ -215,56 +220,12 @@ auto zone_destination_accepts( const item &candidate, const tripoint_abs_ms &des
 
 namespace
 {
+generic_factory<loot_zone_group> zone_group_factory( "loot zone group" );
 auto zone_groups = std::vector<loot_zone_group>();
-}
 
-auto loot_zone_groups() -> const std::vector<loot_zone_group> & // *NOPAD*
+auto update_zone_group_order() -> void
 {
-    return zone_groups;
-}
-
-auto reset_loot_zone_groups( std::vector<loot_zone_group> groups ) -> void
-{
-    zone_groups = std::move( groups );
-}
-
-auto load_loot_zone_group( const JsonObject &jo ) -> void
-{
-    const auto id = jo.get_string( "id" );
-    const auto found = std::ranges::find( zone_groups, id, &loot_zone_group::id );
-    auto group = found == zone_groups.end() ? loot_zone_group{ .id = id } :
-                 *found;
-    if( found == zone_groups.end() && !jo.has_member( "name" ) ) {
-        jo.throw_error( "A new zone group needs a name", "name" );
-    }
-    jo.read( "name", group.title );
-    jo.read( "kind", group.kind );
-    jo.read( "sort_order", group.sort_order );
-    jo.read( "categories", group.categories );
-    if( group.kind != "storage" && group.kind != "activity" && group.kind != "rules" ) {
-        jo.throw_error( "Expected storage, activity or rules", "kind" );
-    }
-    if( jo.has_object( "extend" ) ) {
-        auto extra = std::vector<zone_type_id>();
-        jo.get_object( "extend" ).read( "categories", extra );
-        for( const auto &entry : extra ) {
-            if( !std::ranges::contains( group.categories, entry ) ) {
-                group.categories.push_back( entry );
-            }
-        }
-    }
-    if( jo.has_object( "delete" ) ) {
-        auto removed = std::vector<zone_type_id>();
-        jo.get_object( "delete" ).read( "categories", removed );
-        std::erase_if( group.categories, [&]( const auto & entry ) {
-            return std::ranges::contains( removed, entry );
-        } );
-    }
-    if( found == zone_groups.end() ) {
-        zone_groups.push_back( group );
-    } else {
-        *found = group;
-    }
+    zone_groups = zone_group_factory.get_all();
     std::ranges::sort( zone_groups, []( const auto & left, const auto & right ) {
         const auto rank = []( const auto & kind ) { return kind == "storage" ? 0 : kind == "activity" ? 1 : 2; };
         if( rank( left.kind ) != rank( right.kind ) ) {
@@ -273,6 +234,46 @@ auto load_loot_zone_group( const JsonObject &jo ) -> void
         return left.sort_order == right.sort_order ? left.id < right.id :
                left.sort_order < right.sort_order;
     } );
+}
+} // namespace
+
+IMPLEMENT_STRING_AND_INT_IDS( loot_zone_group, zone_group_factory );
+
+auto loot_zone_groups() -> const std::vector<loot_zone_group> & // *NOPAD*
+{
+    return zone_groups;
+}
+
+auto reset_loot_zone_groups( std::vector<loot_zone_group> groups ) -> void
+{
+    zone_group_factory.reset();
+    for( const auto &group : groups ) {
+        zone_group_factory.insert( group );
+    }
+    update_zone_group_order();
+}
+
+auto loot_zone_group::load( const JsonObject &jo, const std::string &/*src*/ ) -> void
+{
+    mandatory( jo, was_loaded, "name", title );
+    optional( jo, was_loaded, "kind", kind, "storage" );
+    optional( jo, was_loaded, "sort_order", sort_order, 0 );
+    optional( jo, was_loaded, "categories", categories, auto_flags_reader<zone_type_id> {} );
+    if( kind != "storage" && kind != "activity" && kind != "rules" ) {
+        jo.throw_error( "Expected storage, activity or rules", "kind" );
+    }
+}
+
+auto load_loot_zone_group( const JsonObject &jo, const std::string &src ) -> void
+{
+    zone_group_factory.load( jo, src );
+    update_zone_group_order();
+}
+
+auto finalize_loot_zone_groups() -> void
+{
+    zone_group_factory.finalize();
+    update_zone_group_order();
 }
 
 auto zone_selection_name( const std::vector<zone_type_id> &categories ) -> std::string
@@ -330,11 +331,11 @@ auto loot_options::matches( const item &candidate ) const -> bool
             category = drink ? ( perishable ? zone_LOOT_PDRINK : zone_LOOT_DRINK ) :
                        ( perishable ? zone_LOOT_PFOOD : zone_LOOT_FOOD );
         }
-        if( std::ranges::contains( categories, zone_LOOT_WOOD ) &&
-            candidate.has_flag( STATIC( flag_id( "FIREWOOD" ) ) ) ) {
+        if( candidate.has_flag( flag_FIREWOOD ) &&
+            std::ranges::contains( categories, zone_LOOT_WOOD ) ) {
             category = zone_LOOT_WOOD;
         }
-        if( std::ranges::contains( categories, zone_LOOT_CORPSE ) && candidate.is_corpse() ) {
+        if( candidate.is_corpse() && std::ranges::contains( categories, zone_LOOT_CORPSE ) ) {
             category = zone_LOOT_CORPSE;
         }
         const auto priority = cat.priority_zone( candidate );
@@ -476,7 +477,7 @@ auto make_zone_checklist_rows( const bool categories_only ) -> std::vector<zone_
                                          _( "Select functions for this area. Entries requiring setup open separately." ),
                           .members = group.kind == "storage" ? members : std::vector<zone_type_id>(),
                           .rule = group.kind != "storage",
-                          .color = group.id == "remains" ? c_light_gray :
+                          .color = group.id.str() == "remains" ? c_light_gray :
                                    group.kind == "rules" ? c_yellow : c_light_cyan } );
         if( members.size() == 1 && group.kind == "storage" ) {
             continue;
