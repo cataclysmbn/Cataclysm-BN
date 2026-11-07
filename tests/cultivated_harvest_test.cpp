@@ -51,6 +51,8 @@ TEST_CASE("drying_mushrooms_preserves_their_effects", "[farming][crafting][food]
         auto& here = get_map();
         const auto pos = tripoint_bub_ms(60, 60, 0);
         here.furn_set(pos, furn_str_id("f_smoking_rack_active"));
+        // Firing a smoking rack marks its contents as processing before smoke-out.
+        mushroom->set_flag(flag_PROCESSING);
         here.add_item(pos, std::move(mushroom));
         iexamine::on_smoke_out(pos, calendar::turn);
         REQUIRE(here.i_at(pos).size() == 1);
