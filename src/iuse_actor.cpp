@@ -2569,13 +2569,13 @@ std::unique_ptr<iuse_actor> passivenoise_actor::clone() const
     return std::make_unique<passivenoise_actor>( *this );
 }
 
-int passivenoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms & ) const
+int passivenoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &pos ) const
 {
     // Make noise over time or force when used
     if( ( t && one_in( noise_chance ) ) || !t ) {
         if( noise > 0 ) {
             sound_event se;
-            se.origin = p.bub_pos();
+            se.origin = pos;
             se.volume = noise;
             se.category = sounds::sound_t::combat;
             se.description = _( noise_message );
@@ -2585,7 +2585,9 @@ int passivenoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms 
             se.monfaction = p.get_faction()->mon_faction;
             sounds::sound( se );
         }
-        p.add_msg_if_player( _( noise_message ) );
+        if( p.has_item( it ) ) {
+            p.add_msg_if_player( _( noise_message ) );
+        }
     }
     return 0;
 }
