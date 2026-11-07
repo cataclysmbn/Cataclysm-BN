@@ -131,6 +131,7 @@ public:
     void set_furn(const point_sm_ms& p, furn_id furn) {
         is_uniform = false;
         emitter_cache = std::nullopt;
+        plant_cache = std::nullopt;
         frn[p.x()][p.y()] = furn;
         frn_vars[p].merge(furn->default_vars);
         if (furn != f_null) { return; }
@@ -140,6 +141,7 @@ public:
     void set_all_furn(const furn_id& furn) {
         std::fill_n(&frn[0][0], elements, furn);
         emitter_cache = std::nullopt;
+        plant_cache = std::nullopt;
         if (furn != f_null) { return; }
         // Reset furniture vars on clear
         frn_vars.clear();
@@ -150,6 +152,7 @@ public:
     void set_ter(const point_sm_ms& p, ter_id terr) {
         is_uniform = false;
         emitter_cache = std::nullopt;
+        plant_cache = std::nullopt;
         ter[p.x()][p.y()] = terr;
         if (terr->trap != tr_null) { trap_cache.push_back(p); }
     }
@@ -157,6 +160,7 @@ public:
     void set_all_ter(const ter_id& terr) {
         std::fill_n(&ter[0][0], elements, terr);
         emitter_cache = std::nullopt;
+        plant_cache = std::nullopt;
     }
 
     auto get_radiation(const point_sm_ms& p) const -> int { return rad[p.x()][p.y()]; }
@@ -169,6 +173,9 @@ public:
     auto get_lum(const point_sm_ms& p) const -> uint8_t { return lum[p.x()][p.y()]; }
 
     auto static_emitter_tiles() const -> const std::vector<point_sm_ms>&;
+
+    /** Positions of furniture with the PLANT flag on this submap (growing crops). */
+    auto plant_tiles() const -> const std::vector<point_sm_ms>&;
 
     void set_lum(const point_sm_ms& p, uint8_t luminance) {
         is_uniform = false;
@@ -284,6 +291,10 @@ public:
      *  Empty vector = no emitters present.
      *  Rebuilt lazily; invalidated by set_ter/set_all_ter/set_furn/set_all_furn. */
     mutable std::optional<std::vector<point_sm_ms>> emitter_cache;
+
+    /** Positions of furniture with the PLANT flag on this submap.
+     *  Same lazy-cache semantics as emitter_cache; invalidated by the same setters. */
+    mutable std::optional<std::vector<point_sm_ms>> plant_cache;
     // Serialized as "turn_last_touched" (absolute turn number).
     // Initialized to calendar::turn_zero; legacy saves that predate
     // serialization will receive the maximum-capped catchup on first load.

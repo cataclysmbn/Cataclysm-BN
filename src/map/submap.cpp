@@ -41,6 +41,20 @@ auto submap::static_emitter_tiles() const -> const std::vector<point_sm_ms>& {
     return *emitter_cache;
 }
 
+auto submap::plant_tiles() const -> const std::vector<point_sm_ms>& {
+    if (!plant_cache.has_value()) {
+        ZoneScopedN("submap_rebuild_plant_cache");
+        auto plants = std::vector<point_sm_ms>{};
+        for (const auto sm_ms : submap_tiles()) {
+            if (get_furn(sm_ms)->has_flag("PLANT")) {
+                plants.push_back(sm_ms);
+            }
+        }
+        plant_cache = std::move(plants);
+    }
+    return *plant_cache;
+}
+
 template <int sx, int sy>
 void maptile_soa<sx, sy>::swap_soa_tile(const point_sm_ms& p1, const point_sm_ms& p2) {
     std::swap(ter[p1.x()][p1.y()], ter[p2.x()][p2.y()]);
@@ -72,6 +86,7 @@ void submap::swap(submap& first, submap& second) {
     std::swap(first.trap_cache, second.trap_cache);
     std::swap(first.field_cache, second.field_cache);
     std::swap(first.emitter_cache, second.emitter_cache);
+    std::swap(first.plant_cache, second.plant_cache);
     std::swap(first.last_touched, second.last_touched);
     std::swap(first.last_actualized, second.last_actualized);
     std::swap(first.spawns, second.spawns);
@@ -396,6 +411,7 @@ void submap::rotate(int turns) {
     trap_cache.clear();
     field_cache.clear();
     emitter_cache = std::nullopt;
+    plant_cache = std::nullopt;
     std::ranges::for_each(
         std::views::iota(0, SEEX * SEEY) | std::views::transform([](int i) -> point_sm_ms {
             return {i % SEEX, i / SEEX};

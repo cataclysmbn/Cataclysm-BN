@@ -6047,6 +6047,13 @@ void game::world_tick()
                 }
                 sm.last_touched = calendar::turn;
 
+                // Plants grow with calendar time; advance them every turn while the
+                // submap is simulated instead of only when it is (re)loaded.
+                {
+                    ZoneScopedN( "wtd_grow_plants" );
+                    mb.grow_plants_in_submap( pos_sm );
+                }
+
                 // Furniture field emitters — covers all loaded submaps, not just the bubble.
                 // Primary dimension only: m.emit_field() operates in primary-map coordinates.
                 // emitter_cache holds the positions of EMITTER furniture, lazily rebuilt on first
