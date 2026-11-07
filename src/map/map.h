@@ -1601,8 +1601,7 @@ public:
         -> map_stack::iterator;
 
     auto i_rem(const tripoint_bub_ms& p, item* it) -> detached_ptr<item>;
-    void spawn_artifact(const tripoint_bub_ms& p);
-    void spawn_natural_artifact(const tripoint_bub_ms& p, artifact_natural_property prop);
+    void spawn_artifact(const tripoint_bub_ms& p, const relicgen_id& relic);
     void spawn_item(
         const tripoint_bub_ms& p, const itype_id& type_id, unsigned quantity = 1, int charges = 0,
         const time_point& birthday = calendar::start_of_cataclysm, int damlevel = 0);

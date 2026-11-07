@@ -9260,7 +9260,12 @@ void item::gun_cycle_mode()
 
 bool item::has_use() const
 {
-    return type->has_use();
+    // Fast path
+    if( type->has_use() ) { return true; }
+    if( relic_data && !relic_data->get_spells().empty() ) { return true; }
+    if( relic_data && !type->relic_data->get_spells().empty() ) { return true; }
+    if( has_flag( flag_ADD_UPS_TOGGLE ) ) { return true; }
+    return false;
 }
 
 const use_function *item::get_use( const std::string &use_name ) const

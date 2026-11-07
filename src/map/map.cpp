@@ -81,6 +81,7 @@
 #include "point_float.h"
 #include "profile.h"
 #include "projectile.h"
+#include "relicgen.h"
 #include "rng.h"
 #include "rot.h"
 #include "safe_reference.h"
@@ -5094,12 +5095,8 @@ auto map::spawn_items(const tripoint_bub_ms& p, std::vector<detached_ptr<item>> 
     return ret;
 }
 
-void map::spawn_artifact(const tripoint_bub_ms& p) {
-    add_item_or_charges(p, item::spawn(new_artifact(), calendar::start_of_cataclysm));
-}
-
-void map::spawn_natural_artifact(const tripoint_bub_ms& p, artifact_natural_property prop) {
-    add_item_or_charges(p, item::spawn(new_natural_artifact(prop), calendar::start_of_cataclysm));
+void map::spawn_artifact(const tripoint_bub_ms& p, const relicgen_id& relic) {
+    add_item_or_charges(p, relic->generate_relic());
 }
 
 void map::spawn_item(

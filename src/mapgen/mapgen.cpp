@@ -64,6 +64,7 @@
 #include "point_float.h"
 #include "profile.h"
 #include "regional_settings.h"
+#include "relicgen.h"
 #include "rng.h"
 #include "string_formatter.h"
 #include "string_id.h"
@@ -2162,16 +2163,18 @@ public:
 /// Place an artifact.
 class jmapgen_artifact: public jmapgen_piece {
 public:
-    bool natural = false;
-    std::optional<artifact_natural_property> property;
+    relicgen_id relic_type;
     jmapgen_int chance;
 
     explicit jmapgen_artifact(const JsonObject& jsi): chance(jsi, "chance", 100, 100) {
         repeat = jmapgen_int(jsi, "repeat", 1, 1);
-        jsi.read("natural", natural);
+        optional(jsi, false, "relic_type", relic_type, relicgen_id("default"));
+        // Legacy natural relic spawns
         if (jsi.has_member("property")) {
-            property = jsi.get_enum_value<artifact_natural_property>("property");
-            natural = true;
+            jsi.show_warning(
+                "Member `property` is obsolete, directly used the relicgen type instead");
+            auto property = jsi.get_enum_value<artifact_natural_property>("property");
+            relic_type = relicgen::relicgen_from_natural(property);
         }
     }
 
@@ -2186,11 +2189,7 @@ public:
 
         if (final_chance != 100 && !x_in_y(final_chance, 100)) { return; }
         const point_omt_ms p(x.get(), y.get());
-        if (natural) {
-            dat.m.spawn_natural_artifact(p, property.value_or(ARTPROP_NULL));
-            return;
-        }
-        dat.m.spawn_artifact(p);
+        dat.m.spawn_artifact(p, relic_type);
     }
 };
 /**
@@ -4884,8 +4883,8 @@ void mapgen_constructor::draw_temple(const mapgendata& dat) {
         square(this, t_rock_floor, point_omt_ms(SEEX - 1, 1), point_omt_ms(SEEX + 2, 4));
         square(this, t_rock_floor, point_omt_ms(SEEX, 5), point_omt_ms(SEEX + 1, SOUTH_EDGE));
         line(this, t_stairs_up, point_omt_ms(SEEX, SOUTH_EDGE), point_omt_ms(SEEX + 1, SOUTH_EDGE));
-        spawn_artifact(point_omt_ms(rng(SEEX, SEEX + 1), rng(2, 3)));
-        spawn_artifact(point_omt_ms(rng(SEEX, SEEX + 1), rng(2, 3)));
+        spawn_artifact(point_omt_ms(rng(SEEX, SEEX + 1), rng(2, 3)), relicgen_id("default"));
+        spawn_artifact(point_omt_ms(rng(SEEX, SEEX + 1), rng(2, 3)), relicgen_id("default"));
         return;
     }
 }
@@ -5146,7 +5145,8 @@ void mapgen_constructor::draw_mine(mapgendata& dat) {
         }
         place_spawns(GROUP_DOG_THING, 1, point_omt_ms(SEEX, SEEX), point_omt_ms(SEEX + 1, SEEX + 1),
                      1, true, true);
-        spawn_artifact(point_omt_ms(rng(SEEX, SEEX + 1), rng(SEEY, SEEY + 1)));
+        spawn_artifact(
+            point_omt_ms(rng(SEEX, SEEX + 1), rng(SEEY, SEEY + 1)), relicgen_id("default"));
     }
     // Add patches of cave moss
     for (int i = 0; i < SEEX * 2; i++) {
