@@ -125,7 +125,7 @@
     "description": "A lightweight handheld cordless circular saw.  It is currently on and the blade is spinning; use this item to turn it off.",
     "cutting": 50,
     "to_hit": -1,
-    "power_draw": 1200000,
+    "power_draw": 150000,
     "charges_per_use": 0,
     "revert_to": "circsaw_off",
     "qualities": [ [ "CUT", 1 ], [ "SAW_W", 2 ], [ "BUTCHER", -40 ] ],
