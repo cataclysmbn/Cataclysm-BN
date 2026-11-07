@@ -7,6 +7,7 @@
 #include "catalua_sol.h"
 #include "cata_utility.h"
 #include "catacharset.h"
+#include "character_description.h"
 #include "character_effects.h"
 #include "character_encumbrance.h"
 #include "debug.h"
@@ -1264,6 +1265,10 @@ static bool handle_player_display_action( Character &you, unsigned int &line,
         you.custom_profession = popup.text();
         add_msg( "You now consider yourself to be a %s.", popup.text() );
         ui_tip.invalidate_ui();
+    } else if( action == "CHANGE_DESCRIPTION" && you.is_avatar() ) {
+        edit_character_description( you );
+        ui_tip.invalidate_ui();
+        ui_info.invalidate_ui();
     } else if( action == "CHANGE_NAME" ) {
         string_input_popup popup;
         popup.title( _( "Name: " ) )
@@ -1468,6 +1473,9 @@ void character_display::disp_info( Character &ch )
     ctxt.register_action( "CONFIRM", to_translation( "Toggle skill training / Upgrade stat" ) );
     ctxt.register_action( "CHANGE_PROFESSION_NAME", to_translation( "Change profession name" ) );
     ctxt.register_action( "CHANGE_NAME", to_translation( "Change name" ) );
+    if( ch.is_avatar() ) {
+        ctxt.register_action( "CHANGE_DESCRIPTION", to_translation( "Edit character description" ) );
+    }
     ctxt.register_action( "HELP_KEYBINDINGS" );
 
     std::map<std::string, int> speed_effects;

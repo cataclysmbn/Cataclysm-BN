@@ -9,6 +9,7 @@
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
 #include "character.h"
+#include "character_description.h"
 #include "character_functions.h"
 #include "character_id.h"
 #include "character_martial_arts.h"
@@ -237,6 +238,7 @@ void npc_template::load( const JsonObject &jsobj )
     npc &guy = *tem.guy;
     guy.idz = jsobj.get_string( "id" );
     guy.name.clear();
+    jsobj.read( "description", tem.description );
     jsobj.read( "name_unique", tem.name_unique );
     jsobj.read( "name_suffix", tem.name_suffix );
     if( jsobj.has_string( "gender" ) ) {
@@ -2614,6 +2616,12 @@ auto npc::print_info( const catacurses::window &w, int line, int vLines, int col
         }
     }
 
+    for( const auto &description_line : foldstring( get_character_description( *this ), iWidth ) ) {
+        if( line + 1 >= last_line ) {
+            break;
+        }
+        trim_and_print( w, point( column, ++line ), iWidth, c_dark_gray, "%s", description_line );
+    }
     return line;
 }
 

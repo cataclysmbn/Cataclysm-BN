@@ -49,6 +49,7 @@ class npc_class
     private:
         translation name;
         translation job_description;
+        translation description;
 
         bool common = true;
 
@@ -81,6 +82,7 @@ class npc_class
 
         std::string get_name() const;
         std::string get_job_description() const;
+        auto get_description() const -> std::string;
 
         int roll_strength() const;
         int roll_dexterity() const;
