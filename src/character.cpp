@@ -13154,26 +13154,26 @@ bool Character::studied_all_recipes( const itype &book ) const
 recipe_subset Character::get_recipes_from_books( const inventory &crafting_inv,
         const recipe_filter &filter ) const
 {
-    recipe_subset res;
+    auto res = recipe_subset{};
 
-    for( const auto &stack : crafting_inv.const_slice() ) {
-        const item &candidate = *stack->front();
-
-        const auto digital_recipes = digital_recipe_references( candidate, *this );
+    crafting_inv.visit_items( [&]( const item * candidate ) {
+        const auto digital_recipes = digital_recipe_references( *candidate, *this );
         if( filter ) {
             res.include_if( digital_recipes, filter );
         } else {
             res.include( digital_recipes );
         }
 
-        for( std::pair<const recipe *, int> recipe_entry :
-             candidate.get_available_recipes( *this ) ) {
+        for( const auto &recipe_entry : candidate->get_available_recipes( *this ) ) {
             if( filter && !filter( *recipe_entry.first ) ) {
                 continue;
             }
             res.include( recipe_entry.first, recipe_entry.second );
         }
-    }
+        // Installed files are handled through the reader's power and encryption checks.
+        return candidate->has_flag( flag_id( "DIGITAL_STORAGE" ) ) ?
+               VisitResponse::SKIP : VisitResponse::NEXT;
+    } );
 
     return res;
 }
