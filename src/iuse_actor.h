@@ -714,7 +714,8 @@ class fireweapon_off_actor : public iuse_actor
 class fireweapon_on_actor : public iuse_actor
 {
     public:
-        std::string noise_message; // If noise is 0, message content instead
+        std::string held_message; // If noise is 0, message content instead
+        std::string noise_message;
         std::string voluntary_extinguish_message;
         std::string charges_extinguish_message;
         std::string water_extinguish_message;
@@ -737,7 +738,8 @@ class fireweapon_on_actor : public iuse_actor
 class passivenoise_actor : public iuse_actor
 {
     public:
-        std::string noise_message; // If noise is 0, message content instead
+        std::string held_message; // If noise is 0, message content instead
+        std::string noise_message;
         int noise = 0; // If 0, it produces a message instead of noise
         int noise_chance = 1; // one_in(this variable)
 

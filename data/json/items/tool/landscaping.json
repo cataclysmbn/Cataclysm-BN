@@ -197,7 +197,13 @@
     "revert_msg": "Your hedge trimmer goes quiet.",
     "use_action": [
       { "type": "transform", "target": "trimmer_off", "msg": "You turn off the hedge trimmer." },
-      { "type": "passivenoise", "noise": 100, "noise_chance": 10, "noise_message": "The hedge trimmer rumbles." }
+      {
+        "type": "passivenoise",
+        "noise": 100,
+        "noise_chance": 10,
+        "held_message": "The hedge trimmer rumbles.",
+        "noise_message": "a hedge trimmer rumbling."
+      }
     ],
     "qualities": [ [ "CUT", 1 ], [ "BUTCHER", -60 ] ],
     "flags": [ "MESSY", "TRADER_AVOID", "NONCONDUCTIVE", "WATER_DISABLE", "COMBAT_NPC_USE", "COMBAT_NPC_ON" ]

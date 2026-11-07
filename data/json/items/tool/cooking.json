@@ -128,7 +128,13 @@
     "revert_msg": "Your electric carver goes quiet.",
     "use_action": [
       { "type": "transform", "target": "carver_off", "msg": "You turn off the electric carver." },
-      { "type": "passivenoise", "noise": 80, "noise_chance": 10, "noise_message": "The electric carver buzzes." }
+      {
+        "type": "passivenoise",
+        "noise": 80,
+        "noise_chance": 10,
+        "held_message": "The electric carver buzzes.",
+        "noise_message": "a carver buzzing."
+      }
     ],
     "flags": [ "MESSY", "TRADER_AVOID", "NONCONDUCTIVE", "WATER_DISABLE", "COMBAT_NPC_USE", "COMBAT_NPC_ON" ],
     "magazine_well": "500 ml"

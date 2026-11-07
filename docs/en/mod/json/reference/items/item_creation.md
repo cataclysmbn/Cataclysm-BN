@@ -1056,7 +1056,8 @@ All object defined use actions support the following two types.
     "type": "fireweapon_on", // Function for active (burning) fire based weapons.
     "noise_chance": 1, // The chance (one in X) that the item will make a noise, rolled on each turn.
     "noise": 0, // The sound volume it makes, if it makes a noise at all. If 0, no sound is made, but the noise message is still printed.
-    "noise_message": "Your No. 9 hisses.", // The message / sound description (if noise is > 0), that appears when the item makes a sound.
+    "held_message": "Your No. 9 hisses.", // The message / sound description (if noise is > 0), that appears when the item makes a sound and player is wielding it.
+    "noise_message": "hsss.", // Sound description when heard from another tile, e.g. wielded by an NPC.
     "voluntary_extinguish_message": "Your No. 9 goes dark.", // Message that appears when the item is turned of by player.
     "charges_extinguish_message": "Out of ammo!", // Message that appears when the item runs out of charges.
     "water_extinguish_message": "Your No. 9 hisses in the water and goes out.", // Message that appears if the character walks into water and the fire of the item is extinguished.
@@ -1196,10 +1197,11 @@ All object defined use actions support the following two types.
     "color_swap": true          // Allow the color to be swapped to any other named color
 }
 "use_action": {
-  "type": "passivenoise",
-  "noise": 90, // Noise in decibles
+  "type": "passivenoise", // Emits noise periodically, used mainly with active items such as chainsaws
+  "noise": 90, // Noise in decibels
   "noise_chance": 10, // Percent chance to trigger per turn
-  "noise_message": "The chainsaws rumble." // Message to display with noise
+  "noise_message": "The chainsaws rumble." // Message to display if player is holding the item
+  "noise_message": "a chainsaw rumbling." // Sound string when heard from another tile
 }
 ```
 

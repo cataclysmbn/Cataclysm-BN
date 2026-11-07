@@ -80,7 +80,13 @@
     "revert_msg": "Your chainsaw goes quiet.",
     "use_action": [
       { "type": "transform", "target": "chainsaw_off", "msg": "You turn off the chainsaw." },
-      { "type": "passivenoise", "noise": 110, "noise_chance": 10, "noise_message": "The chainsaw rumbles." }
+      {
+        "type": "passivenoise",
+        "noise": 110,
+        "noise_chance": 10,
+        "held_message": "The chainsaw rumbles.",
+        "noise_message": "a chainsaw rumbling."
+      }
     ],
     "flags": [
       "MESSY",
@@ -132,7 +138,13 @@
     "revert_msg": "Your circular saw goes quiet.",
     "use_action": [
       { "type": "transform", "target": "circsaw_off", "msg": "You turn off the circular saw." },
-      { "type": "passivenoise", "noise": 80, "noise_chance": 10, "noise_message": "The circular saw buzzes." }
+      {
+        "type": "passivenoise",
+        "noise": 80,
+        "noise_chance": 10,
+        "held_message": "The circular saw buzzes.",
+        "noise_message": "a saw buzzing."
+      }
     ],
     "flags": [ "MESSY", "TRADER_AVOID", "NONCONDUCTIVE", "WATER_DISABLE", "COMBAT_NPC_USE", "COMBAT_NPC_ON" ],
     "magazine_well": "500 ml"
@@ -225,7 +237,13 @@
     "revert_msg": "Your electric chainsaw goes quiet.",
     "use_action": [
       { "type": "transform", "target": "elec_chainsaw_off", "msg": "You turn off the electric chainsaw." },
-      { "type": "passivenoise", "noise": 90, "noise_chance": 10, "noise_message": "The electric chainsaw buzzes." }
+      {
+        "type": "passivenoise",
+        "noise": 90,
+        "noise_chance": 10,
+        "held_message": "The electric chainsaw buzzes.",
+        "noise_message": "a chainsaw buzzing."
+      }
     ],
     "flags": [ "MESSY", "TRADER_AVOID", "NONCONDUCTIVE", "FRAGILE_MELEE", "WATER_DISABLE", "COMBAT_NPC_USE", "COMBAT_NPC_ON" ],
     "magazine_well": "500 ml"

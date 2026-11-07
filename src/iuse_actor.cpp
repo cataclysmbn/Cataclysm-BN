@@ -2436,6 +2436,7 @@ ret_val<bool> fireweapon_off_actor::can_use( const Character &p, const item &it,
 
 void fireweapon_on_actor::load( const JsonObject &obj )
 {
+    held_message                    = obj.get_string( "held_message", "hsss" );
     noise_message                   = obj.get_string( "noise_message", "hsss" );
     voluntary_extinguish_message    = obj.get_string( "voluntary_extinguish_message" );
     charges_extinguish_message      = obj.get_string( "charges_extinguish_message" );
@@ -2491,7 +2492,7 @@ int fireweapon_on_actor::use( player &p, item &it, bool t, const tripoint_bub_ms
             se.monfaction = p.get_faction()->mon_faction;
             sounds::sound( se );
         }
-        p.add_msg_if_player( _( noise_message ) );
+        p.add_msg_if_player( _( held_message ) );
     }
 
     return it.type->charges_to_use();
@@ -2559,6 +2560,7 @@ ret_val<bool> manualnoise_actor::can_use( const Character &, const item &it, boo
 
 void passivenoise_actor::load( const JsonObject &obj )
 {
+    held_message                    = obj.get_string( "held_message", "hsss" );
     noise_message                   = obj.get_string( "noise_message", "hsss" );
     noise                           = obj.get_int( "noise", 0 );
     noise_chance                    = obj.get_int( "noise_chance", 1 );
@@ -2586,7 +2588,7 @@ int passivenoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms 
             sounds::sound( se );
         }
         if( p.has_item( it ) ) {
-            p.add_msg_if_player( _( noise_message ) );
+            p.add_msg_if_player( _( held_message ) );
         }
     }
     return 0;
