@@ -170,7 +170,7 @@
     "copy-from": "digital_text",
     "type": "GENERIC",
     "name": { "str": "NFT collectible" },
-    "description": "A limited-edition digital collectible with an impressive transaction history.  Its former owner considered it a retirement fund.  It has not become any more edible since then.",
+    "description": "A limited-edition digital collectible with an long transaction history.  Its original owner considered it a retirement fund, its last owner paid a few bucks for it.  It has not become any more edible since then.",
     "price": "75000 USD",
     "price_postapoc": "0 cent",
     "snippet_category": "digital_nft_collectible"
