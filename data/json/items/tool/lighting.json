@@ -420,29 +420,35 @@
   {
     "id": "lightstrip",
     "type": "TOOL",
-    "name": { "str": "lightstrip" },
+    "name": { "str": "lightstrip (on)", "str_pl": "lightstrips (on)" },
     "copy-from": "lightstrip_base",
-    "description": "This is a light-emitting circuit that has been wired directly to a battery.  It provides some weak light and can't be turned off until the battery dies.",
+    "description": "This is a makeshift light-emitting circuit and a couple wires.  It's currently connected to a battery, providing some weak light.",
     "color": "green",
     "power_draw": 1000,
+    "use_action": {
+      "target": "lightstrip_inactive",
+      "msg": "You disconnect the lightstrip from its battery.",
+      "menu_text": "Turn off",
+      "type": "transform"
+    },
     "revert_to": "lightstrip_inactive",
     "revert_msg": "The lightstrip dies.",
-    "flags": [ "LIGHT_4", "NO_UNLOAD", "NO_RELOAD" ]
+    "flags": [ "LIGHT_4" ]
   },
   {
-    "//": "This doesn't make too much sense, flavor-wise, but it's the best I can come up with.  Put it on the todo list.",
     "id": "lightstrip_inactive",
     "type": "TOOL",
-    "name": { "str": "lightstrip (inactive)", "str_pl": "lightstrips (inactive)" },
+    "name": { "str": "lightstrip" },
     "copy-from": "lightstrip_base",
-    "description": "This is a light-emitting circuit that can be wired directly to a battery.  It provides some weak light and can't be turned off until the battery dies.",
+    "description": "This is a makeshift light-emitting circuit and a couple wires, that if connected to a battery will provide a weak source of light.",
     "color": "white",
     "ammo": "battery",
     "use_action": {
       "target": "lightstrip",
-      "msg": "You irreversibly activate the lightstrip.",
+      "msg": "You connect the lightstrip to its battery.",
       "active": true,
       "need_charges": 1,
+      "transform_charges": 1,
       "type": "transform"
     },
     "magazines": [ [ "battery", [ "light_battery_cell", "light_minus_battery_cell" ] ] ]

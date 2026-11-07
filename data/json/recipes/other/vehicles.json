@@ -2239,7 +2239,7 @@
     "using": [ [ "soldering_standard", 5 ] ],
     "components": [
       [ [ "wing_carbon_item", 1 ] ],
-      [ [ "lightstrip_inactive", 1 ], [ "light_bulb", 1 ] ],
+      [ [ "light_bulb", 1 ], [ "lightstrip_inactive", 1 ] ],
       [ [ "cable", 10 ] ],
       [ [ "plastic_chunk", 1 ] ]
     ]
@@ -2395,7 +2395,7 @@
     "using": [ [ "soldering_standard", 5 ] ],
     "components": [
       [ [ "wing_metal_item", 1 ] ],
-      [ [ "lightstrip_inactive", 1 ], [ "light_bulb", 1 ] ],
+      [ [ "light_bulb", 1 ], [ "lightstrip_inactive", 1 ] ],
       [ [ "cable", 10 ] ],
       [ [ "plastic_chunk", 1 ] ]
     ]
@@ -2492,7 +2492,7 @@
     "using": [ [ "soldering_standard", 5 ] ],
     "components": [
       [ [ "wing_wood_item", 1 ] ],
-      [ [ "lightstrip_inactive", 1 ], [ "light_bulb", 1 ] ],
+      [ [ "light_bulb", 1 ], [ "lightstrip_inactive", 1 ] ],
       [ [ "cable", 10 ] ],
       [ [ "plastic_chunk", 1 ] ]
     ]
