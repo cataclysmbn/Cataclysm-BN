@@ -732,6 +732,25 @@ class fireweapon_on_actor : public iuse_actor
 };
 
 /**
+ * Makes noise of a given volume randomly over time
+ */
+class passivenoise_actor : public iuse_actor
+{
+    public:
+        std::string noise_message; // If noise is 0, message content instead
+        int noise = 0; // If 0, it produces a message instead of noise
+        int noise_chance = 1; // one_in(this variable)
+
+        passivenoise_actor( const std::string &type = "passivenoise" ) : iuse_actor( type ) {}
+
+        ~passivenoise_actor() override = default;
+        void load( const JsonObject &obj ) override;
+        int use( player &, item &, bool, const tripoint_bub_ms & ) const override;
+        std::unique_ptr<iuse_actor> clone() const override;
+        bool activatable() const override { return false; }
+};
+
+/**
  * Makes noise of a given volume
  */
 class manualnoise_actor : public iuse_actor

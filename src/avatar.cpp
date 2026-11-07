@@ -1597,6 +1597,7 @@ bool avatar::invoke_item( item *used, const tripoint_bub_ms &pt )
     umenu.hilight_disabled = true;
 
     for( const auto &e : use_methods ) {
+        if( !e.second.activatable() ) { continue; }
         const auto res = e.second.can_call( *this, *used, false, pt );
         umenu.addentry_desc( MENU_AUTOASSIGN, res.success(), MENU_AUTOASSIGN, e.second.get_name(),
                              res.str() );

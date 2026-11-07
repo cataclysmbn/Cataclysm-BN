@@ -1542,7 +1542,7 @@
       "type": "transform",
       "active": true,
       "target": "cs_lajatang_on",
-      "msg": "You turn on the chainsaw lajatang.",
+      "msg": "With a roar, the chainsaws leap to life!",
       "moves": 80,
       "transform_charges": 5,
       "need_dry": true
@@ -1559,8 +1559,11 @@
     "cutting": 140,
     "to_hit": -1,
     "revert_to": "cs_lajatang_off",
-    "revert_msg": "Your chainsaw lajatang goes quiet",
-    "use_action": { "type": "transform", "target": "cs_lajatang_off", "msg": "You turn off the chainsaw lajatang." },
+    "revert_msg": "Your chainsaw lajatang goes quiet.",
+    "use_action": [
+      { "type": "transform", "target": "cs_lajatang_off", "msg": "You turn off the chainsaw lajatang." },
+      { "type": "passivenoise", "noise": 110, "noise_chance": 10, "noise_message": "The chainsaws rumble." }
+    ],
     "qualities": [ [ "AXE", 4 ], [ "BUTCHER", -250 ] ],
     "turns_per_charge": 2,
     "charges_per_use": 0,
@@ -1600,7 +1603,7 @@
       "type": "transform",
       "active": true,
       "target": "ecs_lajatang_on",
-      "msg": "You turn on the chainsaw lajatang.",
+      "msg": "With a buzz, the chainsaws leap to life!",
       "moves": 80,
       "transform_charges": 1,
       "need_dry": true
@@ -1621,8 +1624,11 @@
     "power_draw": 340000,
     "charges_per_use": 0,
     "revert_to": "ecs_lajatang_off",
-    "revert_msg": "Your chainsaw lajatang goes quiet",
-    "use_action": { "type": "transform", "target": "ecs_lajatang_off", "msg": "You turn off the chainsaw lajatang." },
+    "revert_msg": "Your chainsaw lajatang goes quiet.",
+    "use_action": [
+      { "type": "transform", "target": "ecs_lajatang_off", "msg": "You turn off the chainsaw lajatang." },
+      { "type": "passivenoise", "noise": 90, "noise_chance": 10, "noise_message": "The chainsaws rumble." }
+    ],
     "qualities": [ [ "AXE", 4 ], [ "BUTCHER", -250 ] ],
     "flags": [
       "MESSY",
@@ -1765,7 +1771,7 @@
       "type": "transform",
       "active": true,
       "target": "combatsaw_on",
-      "msg": "You turn on the combat chainsaw.",
+      "msg": "With a snarl, the combat chainsaw screams to life!",
       "moves": 60,
       "transform_charges": 5,
       "need_dry": true
@@ -1785,8 +1791,11 @@
     "charges_per_use": 0,
     "revert_to": "combatsaw_off",
     "qualities": [ [ "AXE", 4 ], [ "BUTCHER", -120 ] ],
-    "revert_msg": "Your combat chainsaw goes quiet",
-    "use_action": { "type": "transform", "target": "combatsaw_off", "msg": "You turn off the combat chainsaw." },
+    "revert_msg": "Your combat chainsaw goes quiet.",
+    "use_action": [
+      { "type": "transform", "target": "combatsaw_off", "msg": "You turn off the combat chainsaw." },
+      { "type": "passivenoise", "noise": 110, "noise_chance": 10, "noise_message": "The combat chainsaw growls." }
+    ],
     "flags": [
       "MESSY",
       "DURABLE_MELEE",
@@ -1821,7 +1830,7 @@
       "type": "transform",
       "active": true,
       "target": "e_combatsaw_on",
-      "msg": "You turn on the combat chainsaw.",
+      "msg": "With a snarl, the electric combat chainsaw screams to life!",
       "moves": 60,
       "transform_charges": 1,
       "need_dry": true
@@ -1843,8 +1852,16 @@
     "charges_per_use": 0,
     "revert_to": "e_combatsaw_off",
     "qualities": [ [ "AXE", 4 ], [ "BUTCHER", -120 ] ],
-    "revert_msg": "Your combat chainsaw goes quiet",
-    "use_action": { "type": "transform", "target": "e_combatsaw_off", "msg": "You turn off the combat chainsaw." },
+    "revert_msg": "Your combat chainsaw goes quiet.",
+    "use_action": [
+      { "type": "transform", "target": "e_combatsaw_off", "msg": "You turn off the combat chainsaw." },
+      {
+        "type": "passivenoise",
+        "noise": 90,
+        "noise_chance": 10,
+        "noise_message": "The electric combat chainsaw buzzes."
+      }
+    ],
     "flags": [
       "MESSY",
       "DURABLE_MELEE",

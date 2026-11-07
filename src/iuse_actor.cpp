@@ -2557,6 +2557,39 @@ ret_val<bool> manualnoise_actor::can_use( const Character &, const item &it, boo
     return ret_val<bool>::make_success();
 }
 
+void passivenoise_actor::load( const JsonObject &obj )
+{
+    noise_message                   = obj.get_string( "noise_message", "hsss" );
+    noise                           = obj.get_int( "noise", 0 );
+    noise_chance                    = obj.get_int( "noise_chance", 1 );
+}
+
+std::unique_ptr<iuse_actor> passivenoise_actor::clone() const
+{
+    return std::make_unique<passivenoise_actor>( *this );
+}
+
+int passivenoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms & ) const
+{
+    // Make noise over time or force when used
+    if( ( t && one_in( noise_chance ) ) || !t ) {
+        if( noise > 0 ) {
+            sound_event se;
+            se.origin = p.bub_pos();
+            se.volume = noise;
+            se.category = sounds::sound_t::combat;
+            se.description = _( noise_message );
+            se.from_player = p.is_avatar();
+            se.from_npc = !se.from_player;
+            se.faction = p.get_faction()->id;
+            se.monfaction = p.get_faction()->mon_faction;
+            sounds::sound( se );
+        }
+        p.add_msg_if_player( _( noise_message ) );
+    }
+    return 0;
+}
+
 std::unique_ptr<iuse_actor> musical_instrument_actor::clone() const
 {
     return std::make_unique<musical_instrument_actor>( *this );
