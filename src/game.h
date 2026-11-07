@@ -686,6 +686,8 @@ class game : public submap_load_listener
         std::optional<tripoint_bub_ms> find_local_stairs_leading_to( map &mp, const int z_after );
         auto suggest_auto_walk_to_stairs( Character &u, map &m, const std::string &direction ) -> bool;
 
+        auto describe_tile( const tripoint_bub_ms &target ) -> void;
+
         void peek();
         void peek( const tripoint_rel_ms &p );
         std::optional<tripoint_bub_ms> look_debug();
