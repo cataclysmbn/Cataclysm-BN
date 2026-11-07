@@ -128,6 +128,8 @@
 
 using character_funcs::base_comfort_value;
 
+using char_item_filter_fn = std::function<bool( const item & )>;
+
 struct dealt_projectile_attack;
 
 static const activity_id ACT_MOVE_ITEMS( "ACT_MOVE_ITEMS" );
@@ -11445,6 +11447,28 @@ std::vector<item *> Character::all_items( bool need_charges ) const
         }
         return true;
     } );
+}
+
+auto Character::get_items_if( const std::vector<std::function<bool( const item & )>> &filters )
+const -> std::vector<item *>
+{
+    return items_with( [&filters]( const item & it ) {
+        return std::ranges::all_of( filters, [&it]( const auto & filter ) { return filter( it ); } );
+    } );
+}
+
+auto Character::remove_items_if( const std::vector<char_item_filter_fn> &filters ) ->
+std::vector<detached_ptr<item>>
+{
+    std::vector<detached_ptr<item>> removed;
+    remove_items_with( [&removed, &filters]( detached_ptr<item> &&it ) -> VisitResponse {
+        if( std::ranges::all_of( filters, [&it]( const auto & filter ) { return filter( *it ); } ) )
+        {
+            removed.push_back( std::move( it ) );
+        }
+        return VisitResponse::NEXT;
+    } );
+    return removed;
 }
 
 bool Character::has_charges( const itype_id &it, int quantity,

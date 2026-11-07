@@ -1867,6 +1867,19 @@ class Character : public Creature, public location_visitable<Character>
          */
         std::vector<item *> all_items( bool need_charges = false ) const;
 
+        /**
+         * All items in the character's inventory, wielded and worn that match every given filter.
+         */
+        auto get_items_if( const std::vector<std::function<bool( const item & )>> &filters ) const ->
+        std::vector<item *>;
+
+        /**
+         * Removes and returns all items in the character's inventory, wielded and worn
+         * that match every given filter.
+         */
+        auto remove_items_if( const std::vector<std::function<bool( const item & )>> &filters ) ->
+        std::vector<detached_ptr<item>>;
+
 
         bool has_charges( const itype_id &it, int quantity,
                           const std::function<bool( const item & )> &filter = return_true<item> ) const;
