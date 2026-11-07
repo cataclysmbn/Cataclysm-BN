@@ -415,7 +415,9 @@
     "to_hit": 2,
     "bashing": 1,
     "material": [ "plastic", "aluminum" ],
-    "symbol": ";"
+    "symbol": ";",
+    "ammo": "battery",
+    "magazines": [ [ "battery", [ "light_battery_cell", "light_minus_battery_cell" ] ] ]
   },
   {
     "id": "lightstrip",
@@ -433,7 +435,6 @@
     },
     "revert_to": "lightstrip_inactive",
     "revert_msg": "The lightstrip dies.",
-    "magazines": [ [ "battery", [ "light_battery_cell", "light_minus_battery_cell" ] ] ],
     "flags": [ "LIGHT_4" ]
   },
   {
@@ -443,7 +444,6 @@
     "copy-from": "lightstrip_base",
     "description": "This is a makeshift light-emitting circuit and a couple wires, that if connected to a battery will provide a weak source of light.",
     "color": "white",
-    "ammo": "battery",
     "use_action": {
       "target": "lightstrip",
       "msg": "You connect the lightstrip to its battery.",
@@ -451,8 +451,7 @@
       "need_charges": 1,
       "transform_charges": 1,
       "type": "transform"
-    },
-    "magazines": [ [ "battery", [ "light_battery_cell", "light_minus_battery_cell" ] ] ]
+    }
   },
   {
     "id": "oil_lamp",
