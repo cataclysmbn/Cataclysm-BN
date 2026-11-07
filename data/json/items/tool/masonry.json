@@ -21,13 +21,14 @@
     "techniques": [ "SWEEP" ],
     "crafting_speed_modifier": 1.25,
     "use_action": {
-      "type": "transform",
-      "active": true,
-      "target": "masonrysaw_on",
-      "msg": "You turn on the masonry saw.",
+      "type": "fireweapon_off",
+      "target_id": "masonrysaw_on",
       "moves": 80,
-      "transform_charges": 5,
-      "need_dry": true
+      "noise": 115,
+      "success_chance": 3,
+      "success_message": "With a snarl, the masonry saw screams to life!",
+      "failure_message": "You yank the cord, but nothing happens.",
+      "lacks_fuel_message": "You yank the cord, but nothing happens."
     },
     "flags": [ "NONCONDUCTIVE", "FRAGILE_MELEE", "COMBAT_NPC_USE" ]
   },
@@ -45,8 +46,15 @@
     "revert_to": "masonrysaw_off",
     "techniques": [ "SWEEP" ],
     "qualities": [ [ "AXE", 4 ], [ "BUTCHER", -100 ] ],
-    "revert_msg": "Your masonry saw goes quiet",
-    "use_action": { "type": "transform", "target": "masonrysaw_off", "msg": "You turn off the masonry saw." },
+    "use_action": {
+      "type": "fireweapon_on",
+      "noise_chance": 10,
+      "noise_message": "The masonry saw growls.",
+      "noise": 115,
+      "voluntary_extinguish_message": "You turn off the masonry saw.",
+      "charges_extinguish_message": "Your masonry saw goes quiet.",
+      "water_extinguish_message": "Your masonry saw gurgles in the water and stops."
+    },
     "flags": [
       "MESSY",
       "TRADER_AVOID",

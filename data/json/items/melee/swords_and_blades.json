@@ -1539,13 +1539,14 @@
     "techniques": [ "WBLOCK_1", "SPIN", "SWEEP" ],
     "crafting_speed_modifier": 1.25,
     "use_action": {
-      "type": "transform",
-      "active": true,
-      "target": "cs_lajatang_on",
-      "msg": "You turn on the chainsaw lajatang.",
+      "type": "fireweapon_off",
+      "target_id": "cs_lajatang_on",
       "moves": 80,
-      "transform_charges": 5,
-      "need_dry": true
+      "noise": 110,
+      "success_chance": 3,
+      "success_message": "With a roar, the chainsaws leap to life!",
+      "failure_message": "You yank the cords, but nothing happens.",
+      "lacks_fuel_message": "You yank the cords, but nothing happens."
     },
     "flags": [ "SHEATH_SPEAR", "NONCONDUCTIVE", "ALWAYS_TWOHAND", "COMBAT_NPC_USE" ]
   },
@@ -1559,8 +1560,15 @@
     "cutting": 140,
     "to_hit": -1,
     "revert_to": "cs_lajatang_off",
-    "revert_msg": "Your chainsaw lajatang goes quiet",
-    "use_action": { "type": "transform", "target": "cs_lajatang_off", "msg": "You turn off the chainsaw lajatang." },
+    "use_action": {
+      "type": "fireweapon_on",
+      "noise_chance": 10,
+      "noise_message": "The chainsaws rumble.",
+      "noise": 110,
+      "voluntary_extinguish_message": "You turn off the chainsaw lajatang.",
+      "charges_extinguish_message": "Your chainsaw lajatang goes quiet.",
+      "water_extinguish_message": "Your chainsaws gurgle in the water and stop."
+    },
     "qualities": [ [ "AXE", 4 ], [ "BUTCHER", -250 ] ],
     "turns_per_charge": 2,
     "charges_per_use": 0,
@@ -1597,13 +1605,12 @@
     "techniques": [ "WBLOCK_1", "SPIN", "SWEEP" ],
     "crafting_speed_modifier": 1.25,
     "use_action": {
-      "type": "transform",
-      "active": true,
-      "target": "ecs_lajatang_on",
-      "msg": "You turn on the chainsaw lajatang.",
+      "type": "fireweapon_off",
+      "target_id": "ecs_lajatang_on",
       "moves": 80,
-      "transform_charges": 1,
-      "need_dry": true
+      "noise": 90,
+      "success_message": "With a buzz, the chainsaws leap to life!",
+      "lacks_fuel_message": "You pull the triggers, but nothing happens."
     },
     "flags": [ "SHEATH_SPEAR", "NONCONDUCTIVE", "ALWAYS_TWOHAND", "COMBAT_NPC_USE" ],
     "magazines": [ [ "battery", [ "heavy_battery_cell" ] ] ],
@@ -1621,8 +1628,15 @@
     "power_draw": 340000,
     "charges_per_use": 0,
     "revert_to": "ecs_lajatang_off",
-    "revert_msg": "Your chainsaw lajatang goes quiet",
-    "use_action": { "type": "transform", "target": "ecs_lajatang_off", "msg": "You turn off the chainsaw lajatang." },
+    "use_action": {
+      "type": "fireweapon_on",
+      "noise_chance": 10,
+      "noise_message": "The chainsaws buzz.",
+      "noise": 90,
+      "voluntary_extinguish_message": "You turn off the chainsaw lajatang.",
+      "charges_extinguish_message": "Your chainsaw lajatang goes quiet.",
+      "water_extinguish_message": "Your chainsaws gurgle in the water and stop."
+    },
     "qualities": [ [ "AXE", 4 ], [ "BUTCHER", -250 ] ],
     "flags": [
       "MESSY",
@@ -1762,13 +1776,14 @@
     "max_charges": 500,
     "crafting_speed_modifier": 1.25,
     "use_action": {
-      "type": "transform",
-      "active": true,
-      "target": "combatsaw_on",
-      "msg": "You turn on the combat chainsaw.",
+      "type": "fireweapon_off",
+      "target_id": "combatsaw_on",
       "moves": 60,
-      "transform_charges": 5,
-      "need_dry": true
+      "noise": 110,
+      "success_chance": 3,
+      "success_message": "With a snarl, the combat chainsaw screams to life!",
+      "failure_message": "You yank the cord, but nothing happens.",
+      "lacks_fuel_message": "You yank the cord, but nothing happens."
     },
     "techniques": [ "WBLOCK_1", "SWEEP" ],
     "flags": [ "SHEATH_SWORD", "ALWAYS_TWOHAND", "COMBAT_NPC_USE" ]
@@ -1785,8 +1800,15 @@
     "charges_per_use": 0,
     "revert_to": "combatsaw_off",
     "qualities": [ [ "AXE", 4 ], [ "BUTCHER", -120 ] ],
-    "revert_msg": "Your combat chainsaw goes quiet",
-    "use_action": { "type": "transform", "target": "combatsaw_off", "msg": "You turn off the combat chainsaw." },
+    "use_action": {
+      "type": "fireweapon_on",
+      "noise_chance": 10,
+      "noise_message": "The combat chainsaw growls.",
+      "noise": 110,
+      "voluntary_extinguish_message": "You turn off the combat chainsaw.",
+      "charges_extinguish_message": "Your combat chainsaw goes quiet.",
+      "water_extinguish_message": "Your chainsaw gurgles in the water and stops."
+    },
     "flags": [
       "MESSY",
       "DURABLE_MELEE",
@@ -1818,13 +1840,12 @@
     "charges_per_use": 1,
     "crafting_speed_modifier": 1.25,
     "use_action": {
-      "type": "transform",
-      "active": true,
-      "target": "e_combatsaw_on",
-      "msg": "You turn on the combat chainsaw.",
+      "type": "fireweapon_off",
+      "target_id": "e_combatsaw_on",
       "moves": 60,
-      "transform_charges": 1,
-      "need_dry": true
+      "noise": 90,
+      "success_message": "With a snarl, the electric combat chainsaw screams to life!",
+      "lacks_fuel_message": "You pull the trigger, but nothing happens."
     },
     "techniques": [ "WBLOCK_1", "SWEEP" ],
     "flags": [ "SHEATH_SWORD", "ALWAYS_TWOHAND", "COMBAT_NPC_USE" ],
@@ -1843,8 +1864,15 @@
     "charges_per_use": 0,
     "revert_to": "e_combatsaw_off",
     "qualities": [ [ "AXE", 4 ], [ "BUTCHER", -120 ] ],
-    "revert_msg": "Your combat chainsaw goes quiet",
-    "use_action": { "type": "transform", "target": "e_combatsaw_off", "msg": "You turn off the combat chainsaw." },
+    "use_action": {
+      "type": "fireweapon_on",
+      "noise_chance": 10,
+      "noise_message": "The electric combat chainsaw buzzes.",
+      "noise": 90,
+      "voluntary_extinguish_message": "You turn off the combat chainsaw.",
+      "charges_extinguish_message": "Your combat chainsaw goes quiet.",
+      "water_extinguish_message": "Your chainsaw gurgles in the water and stops."
+    },
     "flags": [
       "MESSY",
       "DURABLE_MELEE",

@@ -174,13 +174,14 @@
     "max_charges": 600,
     "charges_per_use": 5,
     "use_action": {
-      "type": "transform",
-      "active": true,
-      "target": "trimmer_on",
-      "msg": "You turn on the hedge trimmer.",
+      "type": "fireweapon_off",
+      "target_id": "trimmer_on",
       "moves": 80,
-      "transform_charges": 1,
-      "need_dry": true
+      "noise": 100,
+      "success_chance": 3,
+      "success_message": "With a roar, the hedge trimmer leaps to life!",
+      "failure_message": "You yank the cord, but nothing happens.",
+      "lacks_fuel_message": "You yank the cord, but nothing happens."
     },
     "flags": [ "NONCONDUCTIVE", "COMBAT_NPC_USE" ]
   },
@@ -191,11 +192,18 @@
     "name": { "str": "hedge trimmer (on)", "str_pl": "hedge trimmers (on)" },
     "description": "A cordless, double-sided, gasoline-powered hedge trimmer.  It is currently on, ready to do some zombie topiary; use this item to turn it off.",
     "cutting": 40,
-    "power_draw": 500000,
+    "power_draw": 100000,
     "charges_per_use": 0,
     "revert_to": "trimmer_off",
-    "revert_msg": "Your hedge trimmer goes quiet",
-    "use_action": { "type": "transform", "target": "trimmer_off", "msg": "You turn off the hedge trimmer." },
+    "use_action": {
+      "type": "fireweapon_on",
+      "noise_chance": 10,
+      "noise_message": "The hedge trimmer rumbles.",
+      "noise": 100,
+      "voluntary_extinguish_message": "You turn off the hedge trimmer.",
+      "charges_extinguish_message": "Your hedge trimmer goes quiet.",
+      "water_extinguish_message": "Your hedge trimmer gurgles in the water and stops."
+    },
     "qualities": [ [ "CUT", 1 ], [ "BUTCHER", -60 ] ],
     "flags": [ "MESSY", "TRADER_AVOID", "NONCONDUCTIVE", "WATER_DISABLE", "COMBAT_NPC_USE", "COMBAT_NPC_ON" ]
   }
