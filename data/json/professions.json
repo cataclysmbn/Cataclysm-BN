@@ -9451,5 +9451,20 @@
       "male": [ "boxer_briefs" ],
       "female": [ "bra", "panties" ]
     }
+  },
+  {
+    "type": "profession",
+    "id": "necropolis_vault_contractor",
+    "name": "Vault Personnel",
+    "description": "You were a civilian contractor being shipped out to live with your family at a brand-new facility still under construction, but your transport never arrived.  You can't help but envy the people who made it there first, they're probably hunkered down safe and sound while you're out here dodging the undead.",
+    "points": 1,
+    "items": {
+      "both": {
+        "items": [ "cleansuit", "socks", "boots_steel", "slingpack", "flask_hip", "wrist_comp_budget", "ref_lighter" ],
+        "entries": [ { "item": "tool_belt", "contents-item": "multitool" } ]
+      },
+      "male": [ "boxer_shorts", "undershirt" ],
+      "female": [ "bra", "panties" ]
+    }
   }
 ]
