@@ -946,6 +946,11 @@
   },
   {
     "type": "item_action",
+    "id": "passivenoise",
+    "name": { "str": "Make some noise" }
+  },
+  {
+    "type": "item_action",
     "id": "musical_instrument",
     "name": { "ctxt": "musical_instrument", "str": "Play" }
   },
