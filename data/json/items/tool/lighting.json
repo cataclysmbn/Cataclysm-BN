@@ -433,6 +433,7 @@
     },
     "revert_to": "lightstrip_inactive",
     "revert_msg": "The lightstrip dies.",
+    "magazines": [ [ "battery", [ "light_battery_cell", "light_minus_battery_cell" ] ] ],
     "flags": [ "LIGHT_4" ]
   },
   {
