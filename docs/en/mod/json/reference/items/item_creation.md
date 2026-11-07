@@ -1200,7 +1200,7 @@ All object defined use actions support the following two types.
   "type": "passivenoise", // Emits noise periodically, used mainly with active items such as chainsaws
   "noise": 90, // Noise in decibels
   "noise_chance": 10, // Percent chance to trigger per turn
-  "noise_message": "The chainsaws rumble." // Message to display if player is holding the item
+  "held_message": "The chainsaws rumble." // Message to display if player is holding the item
   "noise_message": "a chainsaw rumbling." // Sound string when heard from another tile
 }
 ```
