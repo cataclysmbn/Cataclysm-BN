@@ -216,7 +216,6 @@
         {
           "om_terrain": "ranch_camp_46",
           "//": "tilled soil in the fields",
-          "translate_ter": [ { "from": "t_underbrush", "to": "t_dirt", "x": 0, "y": 0 } ],
           "set": [
             { "square": "terrain", "id": "t_dirt", "x": 7, "y": 4, "x2": 22, "y2": 23 },
             { "square": "terrain", "id": "t_dirtmound", "x": 8, "y": 5, "x2": 9, "y2": 22 },
@@ -226,7 +225,6 @@
         {
           "om_terrain": "ranch_camp_55",
           "//": "tilled soil in the fields",
-          "translate_ter": [ { "from": "t_underbrush", "to": "t_dirt", "x": 0, "y": 0 } ],
           "set": [
             { "square": "terrain", "id": "t_dirt", "x": 7, "y": 0, "x2": 22, "y2": 18 },
             { "square": "terrain", "id": "t_dirtmound", "x": 8, "y": 2, "x2": 9, "y2": 17 },
@@ -235,7 +233,6 @@
         },
         {
           "om_terrain": "ranch_camp_56",
-          "translate_ter": [ { "from": "t_underbrush", "to": "t_dirt", "x": 0, "y": 0 } ],
           "place_vehicles": [ { "vehicle": "hippie_van", "x": 10, "y": 10, "rotation": 270, "chance": 100 } ]
         },
         {
@@ -293,18 +290,13 @@
           "om_terrain": "ranch_camp_56",
           "place_vehicles": [ { "vehicle": "flatbed_truck", "x": 18, "y": 3, "rotation": 0, "chance": 100 } ]
         },
-        {
-          "om_terrain": "ranch_camp_57",
-          "translate_ter": [ { "from": "t_underbrush", "to": "t_dirt", "x": 0, "y": 0 } ],
-          "place_npcs": [ { "class": "ranch_crop_overseer", "x": 12, "y": 7 } ]
-        },
+        { "om_terrain": "ranch_camp_57", "place_npcs": [ { "class": "ranch_crop_overseer", "x": 12, "y": 7 } ] },
         {
           "om_terrain": "ranch_camp_58",
           "place_nested": [ { "chunks": [ "tacoma_commune_lumbermill_4" ], "x": 0, "y": 0 } ]
         },
         {
           "om_terrain": "ranch_camp_67",
-          "translate_ter": [ { "from": "t_underbrush", "to": "t_dirt", "x": 0, "y": 0 } ],
           "set": [ { "square": "terrain", "id": "t_palisade", "x": 21, "y": 19, "x2": 23, "y2": 19 } ]
         }
       ]
@@ -631,19 +623,17 @@
         {
           "om_terrain": "ranch_camp_61",
           "place_vehicles": [
-            { "vehicle": "car", "chance": 100, "rotation": 270, "x": 1, "y": 20 },
-            { "vehicle": "cube_van_cheap", "chance": 100, "rotation": 90, "x": 10, "y": 8 },
-            { "vehicle": "car_sports", "chance": 100, "rotation": 90, "x": 3, "y": 9 },
-            { "vehicle": "flatbed_truck", "chance": 100, "rotation": 270, "x": 17, "y": 6 }
+            { "vehicle": "car", "chance": 100, "rotation": 270, "x": 7, "y": 19 },
+            { "vehicle": "cube_van", "chance": 100, "rotation": 90, "x": 10, "y": 8 },
+            { "vehicle": "car_sports", "chance": 100, "rotation": 90, "x": 3, "y": 5 },
+            { "vehicle": "flatbed_truck", "chance": 100, "rotation": 270, "x": 18, "y": 6 }
           ]
         },
         {
           "om_terrain": "ranch_camp_69",
-          "translate_ter": [ { "from": "t_underbrush", "to": "t_dirt", "x": 0, "y": 0 } ],
           "place_vehicles": [
-            { "vehicle": "car_chassis", "chance": 100, "rotation": 0, "x": 3, "y": 14 },
-            { "vehicle": "pickup", "chance": 100, "rotation": 0, "x": 8, "y": 15 },
-            { "vehicle": "schoolbus", "chance": 100, "rotation": 135, "x": 22, "y": 13 }
+            { "vehicle": "pickup", "chance": 100, "rotation": 270, "x": 8, "y": 15 },
+            { "vehicle": "schoolbus", "chance": 100, "rotation": 180, "x": 7, "y": 5 }
           ]
         }
       ]
@@ -680,8 +670,7 @@
         },
         {
           "om_terrain": "ranch_camp_69",
-          "translate_ter": [ { "from": "t_underbrush", "to": "t_dirt", "x": 0, "y": 0 } ],
-          "place_vehicles": [ { "vehicle": "cube_van", "chance": 100, "rotation": 180, "x": 13, "y": 15 } ]
+          "place_vehicles": [ { "vehicle": "cube_van", "chance": 100, "rotation": 270, "x": 16, "y": 12 } ]
         }
       ]
     }
@@ -715,12 +704,11 @@
           "om_terrain": "ranch_camp_49_z1",
           "place_nested": [ { "chunks": [ "tacoma_commune_junk_shop_roof_1" ], "x": 0, "y": 0 } ]
         },
-        { "om_terrain": "ranch_camp_66", "place_npcs": [ { "class": "ranch_barber", "x": 5, "y": 3 } ] },
         {
-          "om_terrain": "ranch_camp_70",
-          "translate_ter": [ { "from": "t_underbrush", "to": "t_dirt", "x": 0, "y": 0 } ],
-          "place_vehicles": [ { "vehicle": "car_mini", "chance": 100, "rotation": 45, "x": 8, "y": 3 } ]
-        }
+          "om_terrain": "ranch_camp_61",
+          "place_vehicles": [ { "vehicle": "car_mini", "chance": 100, "rotation": 270, "x": 12, "y": 18 } ]
+        },
+        { "om_terrain": "ranch_camp_66", "place_npcs": [ { "class": "ranch_barber", "x": 5, "y": 3 } ] }
       ]
     }
   },
@@ -757,9 +745,8 @@
           "place_nested": [ { "chunks": [ "tacoma_commune_bar_14" ], "x": 0, "y": 0 } ]
         },
         {
-          "om_terrain": "ranch_camp_61",
-          "translate_ter": [ { "from": "t_underbrush", "to": "t_dirt", "x": 0, "y": 0 } ],
-          "place_vehicles": [ { "vehicle": "ambulance", "chance": 100, "rotation": 270, "x": 9, "y": 16 } ]
+          "om_terrain": "ranch_camp_70",
+          "place_vehicles": [ { "vehicle": "ambulance", "chance": 100, "rotation": 270, "x": 9, "y": 3 } ]
         }
       ]
     }
