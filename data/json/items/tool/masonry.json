@@ -24,7 +24,7 @@
       "type": "transform",
       "active": true,
       "target": "masonrysaw_on",
-      "msg": "You turn on the masonry saw.",
+      "msg": "With a snarl, the masonry saw screams to life!",
       "moves": 80,
       "transform_charges": 5,
       "need_dry": true
@@ -45,8 +45,17 @@
     "revert_to": "masonrysaw_off",
     "techniques": [ "SWEEP" ],
     "qualities": [ [ "AXE", 4 ], [ "BUTCHER", -100 ] ],
-    "revert_msg": "Your masonry saw goes quiet",
-    "use_action": { "type": "transform", "target": "masonrysaw_off", "msg": "You turn off the masonry saw." },
+    "revert_msg": "Your masonry saw goes quiet.",
+    "use_action": [
+      { "type": "transform", "target": "masonrysaw_off", "msg": "You turn off the masonry saw." },
+      {
+        "type": "passivenoise",
+        "noise": 115,
+        "noise_chance": 10,
+        "held_message": "The masonry saw growls.",
+        "noise_message": "a masonry saw growling."
+      }
+    ],
     "flags": [
       "MESSY",
       "TRADER_AVOID",

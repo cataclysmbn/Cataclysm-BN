@@ -2381,7 +2381,7 @@ std::unique_ptr<iuse_actor> fireweapon_off_actor::clone() const
     return std::make_unique<fireweapon_off_actor>( *this );
 }
 
-int fireweapon_off_actor::use( player &p, item &it, bool t, const tripoint_bub_ms & ) const
+int fireweapon_off_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &pos ) const
 {
     if( t ) {
         return 0;
@@ -2396,7 +2396,7 @@ int fireweapon_off_actor::use( player &p, item &it, bool t, const tripoint_bub_m
     if( rng( 0, 10 ) - it.damage_level( 4 ) > success_chance && !p.is_underwater() ) {
         if( noise > 0 ) {
             sound_event se;
-            se.origin = p.bub_pos();
+            se.origin = pos;
             se.volume = noise;
             se.category = sounds::sound_t::combat;
             se.description = _( success_message );
@@ -2436,6 +2436,7 @@ ret_val<bool> fireweapon_off_actor::can_use( const Character &p, const item &it,
 
 void fireweapon_on_actor::load( const JsonObject &obj )
 {
+    held_message                    = obj.get_string( "held_message", "hsss" );
     noise_message                   = obj.get_string( "noise_message", "hsss" );
     voluntary_extinguish_message    = obj.get_string( "voluntary_extinguish_message" );
     charges_extinguish_message      = obj.get_string( "charges_extinguish_message" );
@@ -2453,7 +2454,7 @@ std::unique_ptr<iuse_actor> fireweapon_on_actor::clone() const
     return std::make_unique<fireweapon_on_actor>( *this );
 }
 
-int fireweapon_on_actor::use( player &p, item &it, bool t, const tripoint_bub_ms & ) const
+int fireweapon_on_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &pos ) const
 {
     bool extinguish = true;
     if( it.charges == 0 ) {
@@ -2481,7 +2482,7 @@ int fireweapon_on_actor::use( player &p, item &it, bool t, const tripoint_bub_ms
     } else if( one_in( noise_chance ) ) {
         if( noise > 0 ) {
             sound_event se;
-            se.origin = p.bub_pos();
+            se.origin = pos;
             se.volume = noise;
             se.category = sounds::sound_t::combat;
             se.description = _( noise_message );
@@ -2491,7 +2492,7 @@ int fireweapon_on_actor::use( player &p, item &it, bool t, const tripoint_bub_ms
             se.monfaction = p.get_faction()->mon_faction;
             sounds::sound( se );
         }
-        p.add_msg_if_player( _( noise_message ) );
+        p.add_msg_if_player( _( held_message ) );
     }
 
     return it.type->charges_to_use();
@@ -2513,7 +2514,7 @@ std::unique_ptr<iuse_actor> manualnoise_actor::clone() const
     return std::make_unique<manualnoise_actor>( *this );
 }
 
-int manualnoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms & ) const
+int manualnoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &pos ) const
 {
     if( t ) {
         return 0;
@@ -2528,7 +2529,7 @@ int manualnoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &
         p.moves -= moves;
         if( noise > 0 ) {
             sound_event se;
-            se.origin = p.bub_pos();
+            se.origin = pos;
             se.volume = noise;
             se.category = sounds::sound_t::activity;
             se.description = noise_message.empty() ? _( "Hsss" ) : _( noise_message );
@@ -2555,6 +2556,42 @@ ret_val<bool> manualnoise_actor::can_use( const Character &, const item &it, boo
     }
 
     return ret_val<bool>::make_success();
+}
+
+void passivenoise_actor::load( const JsonObject &obj )
+{
+    held_message                    = obj.get_string( "held_message", "hsss" );
+    noise_message                   = obj.get_string( "noise_message", "hsss" );
+    noise                           = obj.get_int( "noise", 0 );
+    noise_chance                    = obj.get_int( "noise_chance", 1 );
+}
+
+std::unique_ptr<iuse_actor> passivenoise_actor::clone() const
+{
+    return std::make_unique<passivenoise_actor>( *this );
+}
+
+int passivenoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &pos ) const
+{
+    // Make noise over time or force when used
+    if( ( t && one_in( noise_chance ) ) || !t ) {
+        if( noise > 0 ) {
+            sound_event se;
+            se.origin = pos;
+            se.volume = noise;
+            se.category = sounds::sound_t::combat;
+            se.description = _( noise_message );
+            se.from_player = p.is_avatar();
+            se.from_npc = !se.from_player;
+            se.faction = p.get_faction()->id;
+            se.monfaction = p.get_faction()->mon_faction;
+            sounds::sound( se );
+        }
+        if( p.has_item( it ) ) {
+            p.add_msg_if_player( _( held_message ) );
+        }
+    }
+    return 0;
 }
 
 std::unique_ptr<iuse_actor> musical_instrument_actor::clone() const

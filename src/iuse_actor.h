@@ -714,7 +714,8 @@ class fireweapon_off_actor : public iuse_actor
 class fireweapon_on_actor : public iuse_actor
 {
     public:
-        std::string noise_message; // If noise is 0, message content instead
+        std::string held_message; // If noise is 0, message content instead
+        std::string noise_message;
         std::string voluntary_extinguish_message;
         std::string charges_extinguish_message;
         std::string water_extinguish_message;
@@ -729,6 +730,26 @@ class fireweapon_on_actor : public iuse_actor
         void load( const JsonObject &obj ) override;
         int use( player &, item &, bool, const tripoint_bub_ms & ) const override;
         std::unique_ptr<iuse_actor> clone() const override;
+};
+
+/**
+ * Makes noise of a given volume randomly over time
+ */
+class passivenoise_actor : public iuse_actor
+{
+    public:
+        std::string held_message; // If noise is 0, message content instead
+        std::string noise_message;
+        int noise = 0; // If 0, it produces a message instead of noise
+        int noise_chance = 1; // one_in(this variable)
+
+        passivenoise_actor( const std::string &type = "passivenoise" ) : iuse_actor( type ) {}
+
+        ~passivenoise_actor() override = default;
+        void load( const JsonObject &obj ) override;
+        int use( player &, item &, bool, const tripoint_bub_ms & ) const override;
+        std::unique_ptr<iuse_actor> clone() const override;
+        bool activatable() const override { return false; }
 };
 
 /**

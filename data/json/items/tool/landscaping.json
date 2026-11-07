@@ -177,7 +177,7 @@
       "type": "transform",
       "active": true,
       "target": "trimmer_on",
-      "msg": "You turn on the hedge trimmer.",
+      "msg": "With a roar, the hedge trimmer leaps to life!",
       "moves": 80,
       "transform_charges": 1,
       "need_dry": true
@@ -191,11 +191,20 @@
     "name": { "str": "hedge trimmer (on)", "str_pl": "hedge trimmers (on)" },
     "description": "A cordless, double-sided, gasoline-powered hedge trimmer.  It is currently on, ready to do some zombie topiary; use this item to turn it off.",
     "cutting": 40,
-    "power_draw": 500000,
+    "power_draw": 100000,
     "charges_per_use": 0,
     "revert_to": "trimmer_off",
-    "revert_msg": "Your hedge trimmer goes quiet",
-    "use_action": { "type": "transform", "target": "trimmer_off", "msg": "You turn off the hedge trimmer." },
+    "revert_msg": "Your hedge trimmer goes quiet.",
+    "use_action": [
+      { "type": "transform", "target": "trimmer_off", "msg": "You turn off the hedge trimmer." },
+      {
+        "type": "passivenoise",
+        "noise": 100,
+        "noise_chance": 10,
+        "held_message": "The hedge trimmer rumbles.",
+        "noise_message": "a hedge trimmer rumbling."
+      }
+    ],
     "qualities": [ [ "CUT", 1 ], [ "BUTCHER", -60 ] ],
     "flags": [ "MESSY", "TRADER_AVOID", "NONCONDUCTIVE", "WATER_DISABLE", "COMBAT_NPC_USE", "COMBAT_NPC_ON" ]
   }
