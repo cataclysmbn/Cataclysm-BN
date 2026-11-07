@@ -143,6 +143,7 @@
 #include "ranged.h"
 #include "recipe.h"
 #include "recipe_dictionary.h"
+#include "replay/replay.h"
 #include "ret_val.h"
 #include "rng.h"
 #include "rot.h"
@@ -2516,7 +2517,7 @@ bool game::do_turn()
     }
     {
         ZoneScopedN( "do_turn_submap_loader_update" );
-        submap_loader.update( is_draw_tiles_mode() );
+        submap_loader.update( is_draw_tiles_mode() && !replay::is_enabled() );
     }
     // Destroy trackers for non-primary dimensions with no remaining tracked submaps.
     {
@@ -2573,7 +2574,7 @@ void game::process_voluntary_act_interrupt()
     int64_t difference = std::chrono::duration_cast<std::chrono::milliseconds>
                          ( now - last_poll ).count();
 
-    if( difference > 100 ) {
+    if( replay::is_enabled() || difference > 100 ) {
         handle_key_blocking_activity();
         last_poll = now;
     }
@@ -15616,7 +15617,7 @@ auto game::update_map( const tripoint_abs_ms &center ) -> point_rel_sm
             ensure_distribution_grid_tracker_for( dim_id );
         }
         submap_loader.update_lazy_border_focus( m.get_bound_dimension(), u.abs_pos() );
-        submap_loader.update( is_draw_tiles_mode() );
+        submap_loader.update( is_draw_tiles_mode() && !replay::is_enabled() );
         // Destroy trackers for non-primary dimensions with no remaining tracked submaps.
         for( auto it = grid_trackers_.begin(); it != grid_trackers_.end(); ) {
             if( !it->first.is_empty() && !it->second->has_tracked_submaps() ) {
