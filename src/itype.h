@@ -561,9 +561,9 @@ struct islot_gun : common_ranged_data {
     int speed = 0;
 
     /**
-     * If this uses UPS charges, how many (per shoot), 0 for no UPS charges at all.
+     * If this uses character resources, how many of what type (per shot).
      */
-    int ups_charges = 0;
+    std::map<character_resource_id, int> resources_used;
     /**
      * One in X chance for gun to require major cleanup after firing blackpowder shot.
      */
@@ -1136,6 +1136,8 @@ struct itype {
         units::volume magazine_well = 0_ml;
 
         layer_level layer = layer_level::MAX_CLOTHING_LAYER;
+
+        character_resource_id resource_drained = character_resource_id::NULL_ID();
 
         /**
          * Efficiency of solar energy conversion for solarpacks.

@@ -45,6 +45,7 @@ enum class channel : int;
 class avatar;
 class Character;
 class character_id;
+class character_resource;
 class Creature;
 struct power_stat;
 class distribution_grid;
@@ -254,6 +255,7 @@ LUNA_ID( ammo_effect, "AmmunitionEffect" )
 LUNA_ID( activity_type, "ActivityType" )
 LUNA_ID( bionic_data, "BionicData" )
 LUNA_ID( body_part_type, "BodyPartType" )
+LUNA_ID( character_resource, "CharacterResource" )
 LUNA_ID( disease_type, "DiseaseType" )
 LUNA_VAL_WITH_ID( enchantment, "Enchantment" )
 LUNA_ID( enchantment_value, "EnchantmentValue" )

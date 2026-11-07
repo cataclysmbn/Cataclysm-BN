@@ -1073,8 +1073,18 @@ void reg_islot( sol::state &lua )
         DOC( "Modifies projectile speed as provided by the currently loaded ammo" );
         SET_MEMB_RO( speed );
 
-        DOC( "If this uses UPS charges, how many (per shoot), 0 for no UPS charges at all" );
-        SET_MEMB_RO( ups_charges );
+        DOC( "Obsolete, use `resources_used` instead" );
+        luna::set_prop( ut, "ups_charges", []( const UT_CLASS & it ) { return it.resources_used.contains( character_resource_id( "ups" ) ) ? it.resources_used.at( character_resource_id( "ups" ) ) : 0; } );
+
+        DOC( "Additional resources drained in addition to ammo. If there is no ammo this is all that is drained. Keys are given as strings, they may be invalid ids." );
+        luna::set_fx( ut, "get_resources_used", []( const UT_CLASS & it )
+        {
+            std::map<std::string, int> ret;
+            for( const auto& [k, v] : it.resources_used ) {
+                ret[k.str()] = v;
+            }
+            return ret;
+        } );
 
         DOC( "One in X chance for gun to require major cleanup after firing blackpowder shot" );
         SET_MEMB_RO( blackpowder_tolerance );

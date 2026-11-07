@@ -15,6 +15,7 @@
 #include "catalua_sol.h"
 #include "character.h"
 #include "character_functions.h"
+#include "character_resource.h"
 #include "color.h"
 #include "coordinates.h"
 #include "creature.h"
@@ -1330,9 +1331,11 @@ int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int max_sho
     }
 
     // cap our maximum burst size by the amount of UPS power left
-    if( !gun.has_flag( flag_VEHICLE ) && gun.get_gun_ups_drain() > 0 ) {
-        shots = std::min( shots, ( who.charges_of( itype_UPS ) /
-                                   gun.get_gun_ups_drain() ) );
+    if( !gun.has_flag( flag_VEHICLE ) ) {
+        for( const auto &[resource, amount] : gun.get_gun_resources_used() ) {
+            int charges = resource->get_charges( who );
+            shots = std::min( shots, charges / amount );
+        }
     }
 
     if( shots <= 0 ) {
@@ -1524,7 +1527,9 @@ int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int max_sho
         }
 
         if( !gun.has_flag( flag_VEHICLE ) ) {
-            who.use_charges( itype_UPS, gun.get_gun_ups_drain() );
+            for( const auto &[resource, amount] : gun.get_gun_resources_used() ) {
+                resource->drain_charges( who, amount );
+            }
         }
 
         if( aoe_attack ) {
@@ -3921,7 +3926,7 @@ void target_ui::update_ammo_range_from_gun_mode()
     if( mode == TargetMode::TurretManual ) {
         itype_id ammo_current = turret->ammo_current();
         // Test no-ammo and not a UPS weapon
-        if( !ammo_current && ( relevant->get_gun_ups_drain() == 0 ) ) {
+        if( !ammo_current && relevant->get_gun_resources_used().empty() ) {
             ammo = nullptr;
             range = 0;
         } else {
@@ -4625,31 +4630,12 @@ auto ranged::gunmode_checks_weapon( avatar &you, const map &m, std::vector<std::
         result = false;
     }
 
-    if( gmode->get_gun_ups_drain() > 0 ) {
-        const int ups_drain = gmode->get_gun_ups_drain();
-        const int adv_ups_drain = std::max( 1, ups_drain / 2 );
-        bool is_mech_weapon = false;
-        if( you.is_mounted() ) {
-            monster *mons = get_player_character().mounted_creature.get();
-            if( !mons->type->mech_weapon.is_empty() ) {
-                is_mech_weapon = true;
-            }
-        }
-        if( !is_mech_weapon ) {
-            if( !( you.has_charges( itype_UPS, ups_drain )  ||
-                   ( you.has_active_bionic( bio_ups ) &&
-                     you.get_power_level() >= units::from_kilojoule( ups_drain ) ) ) ) {
-                messages.push_back( string_format(
-                                        _( "You need a UPS with at least %2$d charges or an advanced UPS with at least %3$d charges to fire the %1$s!" ),
-                                        gmode->tname(), ups_drain, adv_ups_drain ) );
-                result = false;
-            }
-        } else {
-            if( !you.has_charges( itype_UPS, ups_drain ) ) {
-                messages.push_back( string_format( _( "Your mech has an empty battery, its %s will not fire." ),
-                                                   gmode->tname() ) );
-                result = false;
-            }
+    for( const auto &[resource, amount] : gmode->get_gun_resources_used() ) {
+        if( !resource->has_charges( you, amount ) ) {
+            messages.push_back( string_format(
+                                    _( "You need a %3$s with at least %2$d charges to fire the %1$s!" ),
+                                    gmode->tname(), amount, resource->need_info ) );
+            result = false;
         }
     }
 
