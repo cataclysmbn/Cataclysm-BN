@@ -11476,7 +11476,7 @@ detached_ptr<item> item::process_internal( detached_ptr<item> &&self, player *ca
             return std::move( self );
         }
     }
-    if( self->has_flag( flag_WATER_DISABLE ) && carrier->is_underwater() ) {
+    if( self->has_flag( flag_WATER_DISABLE ) && carrier && carrier->is_underwater() ) {
         ZoneScopedN( "item_process_water_disable" );
         carrier->add_msg_if_player( "Your %s gurgles and splutters.", self->tname() );
         self->revert( carrier );
