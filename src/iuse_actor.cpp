@@ -2485,7 +2485,7 @@ int fireweapon_on_actor::use( player &p, item &it, bool t, const tripoint_bub_ms
             sound_event se;
             se.origin = pos;
             se.volume = noise;
-            se.category = sounds::sound_t::combat;
+            se.category = sounds::sound_t::activity;
             se.description = _( noise_message );
             se.id = "tool";
             se.variant = noise_variant;
@@ -2583,7 +2583,7 @@ int passivenoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms 
             sound_event se;
             se.origin = pos;
             se.volume = noise;
-            se.category = sounds::sound_t::combat;
+            se.category = sounds::sound_t::activity;
             se.description = _( noise_message );
             se.id = "tool";
             se.variant = noise_variant;
