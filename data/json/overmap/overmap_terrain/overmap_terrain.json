@@ -33,6 +33,12 @@
   },
   {
     "type": "overmap_terrain",
+    "abstract": "generic_city_building_roof",
+    "copy-from": "generic_city_building_no_sidewalk",
+    "extend": { "flags": [ "SIDEWALK" ] }
+  },
+  {
+    "type": "overmap_terrain",
     "id": "park",
     "name": "park",
     "sym": "O",
