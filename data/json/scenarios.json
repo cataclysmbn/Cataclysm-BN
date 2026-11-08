@@ -581,6 +581,7 @@
       "lawyer",
       "politician",
       "unemployed",
+      "necropolis_vault_contractor",
       "neighborhood_watch"
     ]
   },
@@ -965,6 +966,7 @@
     "allowed_locs": [ "sloc_military_base_barracks", "sloc_military_base_mess_hall", "sloc_military_base_communications_center" ],
     "professions": [
       "unemployed",
+      "necropolis_vault_contractor",
       "soldier",
       "mil_auto_rifleman",
       "mil_grenadier",
@@ -1135,7 +1137,8 @@
       "bionic_spy",
       "military_saboteur",
       "marsoc",
-      "hacker"
+      "hacker",
+      "necropolis_vault_contractor"
     ],
     "allowed_locs": [ "sloc_lab_concourse_area" ],
     "bionics": [
@@ -1178,6 +1181,7 @@
       "hacker",
       "bionic_worker",
       "hazmat_unit",
+      "necropolis_vault_contractor",
       "unemployed"
     ],
     "allowed_locs": [ "nuclear_plant" ],
