@@ -1,6 +1,15 @@
 [
   {
     "type": "overmap_terrain",
+    "abstract": "road_abstract",
+    "name": "road",
+    "copy-from": "generic_transportation",
+    "color": "dark_gray",
+    "see_cost": 2,
+    "looks_like": "road"
+  },
+  {
+    "type": "overmap_terrain",
     "id": "hiway_ns",
     "copy-from": "generic_transportation",
     "name": "highway",
