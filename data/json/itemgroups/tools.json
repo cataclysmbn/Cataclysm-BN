@@ -99,27 +99,15 @@
       { "item": "hammer", "prob": 80 },
       { "item": "pliers", "prob": 40 },
       {
-        "distribution": [
-          { "item": "screwdriver", "prob": 80 },
-          { "item": "screwdriver_set", "prob": 50 }
-        ],
+        "distribution": [ { "item": "screwdriver", "prob": 80 }, { "item": "screwdriver_set", "prob": 50 } ],
         "prob": 80
       },
-      {
-        "distribution": [
-          { "item": "duct_tape", "prob": 10 },
-          { "item": "superglue", "prob": 5 }
-        ],
-        "prob": 10
-      },
+      { "distribution": [ { "item": "duct_tape", "prob": 10 }, { "item": "superglue", "prob": 5 } ], "prob": 10 },
       { "item": "wrench", "prob": 20 },
       { "item": "hand_pump", "prob": 10 },
       { "item": "xacto", "prob": 40 },
       {
-        "distribution": [
-          { "item": "jumper_cable", "prob": 5 },
-          { "item": "jumper_cable_heavy", "prob": 2 }
-        ],
+        "distribution": [ { "item": "jumper_cable", "prob": 5 }, { "item": "jumper_cable_heavy", "prob": 2 } ],
         "prob": 15
       },
       { "item": "hd_tow_cable", "prob": 5 },

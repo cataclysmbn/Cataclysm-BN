@@ -120,5 +120,5 @@
     "id": "trailer_hub_00",
     "copy-from": "s_lot",
     "delete": { "flags": [ "SIDEWALK", "NO_ROTATE" ] }
-  },
+  }
 ]

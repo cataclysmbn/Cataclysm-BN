@@ -1,6 +1,7 @@
 [
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "7x15_mobile_home_0",
     "object": {
       "mapgensize": [ 15, 15 ],
@@ -30,7 +31,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "7x15_mobile_home_1",
     "object": {
       "mapgensize": [ 15, 15 ],
@@ -60,7 +62,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "7x15_mobile_home_2",
     "object": {
       "mapgensize": [ 15, 15 ],
@@ -91,7 +94,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "7x15_mobile_home_3",
     "object": {
       "mapgensize": [ 15, 15 ],
@@ -122,7 +126,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "7x15_mobile_home_4",
     "object": {
       "mapgensize": [ 15, 15 ],
@@ -152,7 +157,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "4x6_porch_0",
     "object": {
       "mapgensize": [ 6, 6 ],
@@ -169,7 +175,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "4x6_porch_1",
     "object": {
       "mapgensize": [ 6, 6 ],
@@ -186,7 +193,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "4x6_porch_2",
     "object": {
       "mapgensize": [ 6, 6 ],
@@ -211,7 +219,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "4x6_porch_3",
     "object": {
       "mapgensize": [ 6, 6 ],
@@ -228,7 +237,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "trailer_fence_1",
     "object": {
       "mapgensize": [ 24, 24 ],
@@ -263,7 +273,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "trailer_fence_2",
     "object": {
       "mapgensize": [ 24, 24 ],
@@ -298,7 +309,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "6x8_concrete",
     "object": {
       "mapgensize": [ 8, 8 ],
@@ -317,16 +329,14 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "1x1_tree",
-    "object": {
-      "mapgensize": [ 1, 1 ],
-      "rows": [ "T" ],
-      "terrain": { "T": "t_region_tree" }
-    }
+    "object": { "mapgensize": [ 1, 1 ], "rows": [ "T" ], "terrain": { "T": "t_region_tree" } }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "1x1_clothesdryer",
     "object": {
       "mapgensize": [ 1, 1 ],

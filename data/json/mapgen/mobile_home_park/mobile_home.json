@@ -31,7 +31,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "om_terrain": [ "prefab" ],
     "//": "empty lawn variant",
     "weight": 500,
@@ -70,7 +71,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "om_terrain": [ "prefab" ],
     "//": "shed/greenhouse variant",
     "weight": 100,
@@ -109,7 +111,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "om_terrain": [ "prefab" ],
     "//": "outdoor furniture variant 1",
     "weight": 50,
@@ -151,7 +154,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "om_terrain": [ "prefab" ],
     "//": "outdoor furniture variant 2",
     "weight": 50,
@@ -193,7 +197,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "om_terrain": [ "prefab" ],
     "//": "outdoor furniture variant 3",
     "weight": 50,
@@ -235,7 +240,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "om_terrain": [ "prefab" ],
     "//": "garden variant",
     "weight": 33,
@@ -279,7 +285,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "om_terrain": [ "prefab_roof" ],
     "object": {
       "fill_ter": "t_shingle_flat_roof",
