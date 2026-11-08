@@ -833,16 +833,15 @@ void vehicle::init_state(
         }
 
         if (pt.is_reactor()) {
+            const auto& fuel_type = pt.info().fuel_type;
             if (veh_fuel_mult == 100) { // Mint condition vehicle
-                pt.ammo_set(itype_plut_cell, pt.ammo_capacity());
+                pt.ammo_set(fuel_type, pt.ammo_capacity());
             } else if (one_in(2) && veh_fuel_mult > 0) { // Randomize charge a bit
-                pt.ammo_set(itype_plut_cell,
-                            pt.ammo_capacity() * (veh_fuel_mult + rng(0, 10)) / 100);
+                pt.ammo_set(fuel_type, pt.ammo_capacity() * (veh_fuel_mult + rng(0, 10)) / 100);
             } else if (one_in(2) && veh_fuel_mult > 0) {
-                pt.ammo_set(itype_plut_cell,
-                            pt.ammo_capacity() * (veh_fuel_mult - rng(0, 10)) / 100);
+                pt.ammo_set(fuel_type, pt.ammo_capacity() * (veh_fuel_mult - rng(0, 10)) / 100);
             } else {
-                pt.ammo_set(itype_plut_cell, pt.ammo_capacity() * veh_fuel_mult / 100);
+                pt.ammo_set(fuel_type, pt.ammo_capacity() * veh_fuel_mult / 100);
             }
         }
 
