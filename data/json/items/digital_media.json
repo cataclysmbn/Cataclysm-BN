@@ -11,22 +11,6 @@
     "extend": { "flags": [ "GENOME_DRIVE" ] }
   },
   {
-    "id": "digital_genome_sample_black_rat",
-    "copy-from": "digital_genome_sample",
-    "type": "GENERIC",
-    "name": { "str": "genome sample" },
-    "container": "usb_drive",
-    "item_vars": { "specimen_sample": "mon_black_rat", "specimen_sample_progress": "2", "specimen_name": "black rat" }
-  },
-  {
-    "id": "digital_genome_sample_wolf_mutant_huge",
-    "copy-from": "digital_genome_sample",
-    "type": "GENERIC",
-    "name": { "str": "genome sample" },
-    "container": "usb_drive",
-    "item_vars": { "specimen_sample": "mon_wolf_mutant_huge", "specimen_sample_progress": "5", "specimen_name": "dire wolf" }
-  },
-  {
     "abstract": "digital_instruction",
     "copy-from": "software",
     "type": "BOOK",
