@@ -30,7 +30,6 @@
       "↓": "t_ramp_up_high",
       "↑": "t_ramp_up_low",
       "(": "t_reinforced_glass",
-      "£": "t_ballistic_glass",
       "/": "t_chainfence",
       "E": "t_fence_barbed",
       "!": "t_window_bars",
@@ -78,12 +77,12 @@
       "Ψ": "t_door_metal_c_peep",
       "Ω": "t_gutter_downspout",
       "б": "t_machinery_electronic",
-      "в": "t_lava",
+      "в": "t_flat_roof",
       "д": "t_little_column",
       "и": "t_metal_floor_no_roof",
       "л": "t_secretdoor_metal_c",
       "п": "t_palisade_gate",
-      "ф": "t_palisade",
+      "ф": "t_gutter_downspout",
       "Б": "t_floor_waxed",
       "Д": "t_pillar",
       "И": "t_window_reinforced_noglass",
@@ -94,7 +93,7 @@
       "Ф": "t_window_taped",
       "P": "t_sidewalk",
       "ǵ": "t_rock_green",
-      "ѽ": "t_dimensional_portal",
+      "ѽ": "t_gutter",
       "⌊": "t_thconc_floor_no_roof",
       "‡": "t_door_curtain_c",
       "ḅ": "t_rock_blue",
@@ -110,9 +109,9 @@
       "✪": "t_glass_roof",
       ",": "t_deck_coating_no_roof_r",
       "₵": "t_deck_coating_no_roof_w",
-      "☾": "t_porthole",
+      "☾": "t_gutter_drop",
       "❄": "t_metal_pontoon_dp",
-      "_": "t_nuclear_reactor",
+      "_": "t_shingle_flat_roof",
       "¬": "t_switchgear_s",
       "±": "t_machinery_light",
       "§": "t_generator_broken"
@@ -152,7 +151,6 @@
       "β": "f_olight_nogrid",
       "3": "f_drill_press",
       "δ": "f_wardrobe",
-      "я": "f_robotic_assembler",
       "Ḟ": "f_arc_furnace",
       "ḧ": "f_drophammer",
       "Ḣ": "f_HPLC",
@@ -165,7 +163,6 @@
       "ṡ": "f_control_station",
       "ḃ": "f_beaded_door",
       "ȧ": "f_air_conditioner",
-      "ẇ": "f_bandsaw",
       "ʝ": "f_arcade_machine",
       "ḅ": "f_birdbath",
       "5": "f_welderrig",
@@ -219,6 +216,20 @@
       "×": "f_triple_bunkbed"
     },
     "vendingmachines": { "V": {  } },
-    "toilets": { "U": {  } }
+    "toilets": { "U": {  } },
+    "nested": {
+      "я": {
+        "chunks": [
+          [ "null", 50 ],
+          [ "roof_2x2_utilities", 50 ],
+          [ "roof_2x2_utilities_b", 15 ],
+          [ "roof_2x2_utilities_c", 15 ],
+          [ "roof_2x2_utilities_d", 15 ],
+          [ "roof_2x2_infrastructure", 15 ],
+          [ "roof_2x2_infrastructure_1", 5 ],
+          [ "roof_2x2_infrastructure_2", 40 ]
+        ]
+      }
+    }
   }
 ]
