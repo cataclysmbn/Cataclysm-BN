@@ -1221,21 +1221,25 @@ TEST_CASE(
 }
 
 TEST_CASE("prefilled_genome_files_spawn_in_ordinary_usb_drives", "[digital_media][genome]") {
-    const auto file_id =
-        GENERATE("digital_genome_sample_black_rat", "digital_genome_sample_wolf_mutant_huge");
-    const auto drive = item::in_its_container(item::spawn(file_id));
-    CHECK(drive->typeId() == itype_id("usb_drive"));
-    REQUIRE(drive->contents.num_item_stacks() == 1);
-    CHECK(drive->contents.front().typeId() == itype_id(file_id));
-    CHECK(is_digital_file(drive->contents.front()));
-    CHECK_FALSE(drive->contents.front().get_var("specimen_sample").empty());
+    const auto test = [&](std::vector<detached_ptr<item>> drives) {
+        for (auto& drive : drives) {
+            CHECK(drive->typeId() == itype_id("usb_drive"));
+            REQUIRE(drive->contents.num_item_stacks() == 1);
+            CHECK(is_digital_file(drive->contents.front()));
+            CHECK_FALSE(drive->contents.front().get_var("specimen_sample").empty());
+        }
+    };
+    test(item_group::items_from(item_group_id("digital_genome_sample_black_rat")));
+    test(item_group::items_from(item_group_id("digital_genome_sample_wolf_mutant_huge")));
 }
 
 TEST_CASE("encrypted_cards_hide_genome_samples_from_the_workstation", "[digital_media][genome]") {
     auto dummy = avatar{};
     auto media = item::spawn("sd_memory_card");
     media->set_flag(flag_MC_ENCRYPTED);
-    media->put_in(item::spawn("digital_genome_sample_black_rat"));
+    std::vector<detached_ptr<item>> it = item_group::items_from(
+        item_group_id("digital_genome_sample_black_rat"));
+    media->put_in(std::move(it[0]));
     dummy.i_add(std::move(media));
     CHECK(digital_genome_samples(dummy).empty());
 }

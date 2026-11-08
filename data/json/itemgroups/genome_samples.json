@@ -6,6 +6,7 @@
       {
         "item": "digital_genome_sample",
         "prob": 100,
+        "container-item": "usb_drive",
         "vars": [
           { "name": "specimen_sample", "value": "mon_black_rat" },
           { "name": "specimen_sample_progress", "value": "2" },
@@ -21,6 +22,7 @@
       {
         "item": "digital_genome_sample",
         "prob": 100,
+        "container-item": "usb_drive",
         "vars": [
           { "name": "specimen_sample", "value": "mon_wolf_mutant_huge" },
           { "name": "specimen_sample_progress", "value": "5" },
