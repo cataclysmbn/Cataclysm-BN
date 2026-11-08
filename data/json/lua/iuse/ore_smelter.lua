@@ -15,7 +15,6 @@ local ORE_LEAD = ItypeId.new("lead_ore")
 local ORE_TIN = ItypeId.new("tin_ore")
 local ORE_SILVER = ItypeId.new("silver_ore")
 local ORE_GOLD = ItypeId.new("gold_ore")
-local CHARCOAL = ItypeId.new("charcoal")
 
 local RES_STEEL_LUMP = ItypeId.new("steel_lump")
 local RES_COPPER = ItypeId.new("copper")
@@ -44,8 +43,6 @@ local ORE_TO_RESULT = {
 }
 
 local MSG_NO_ORES = locale.gettext("The smelter does not have suitable metal to smelt.")
-local MSG_NO_CHARCOAL = locale.gettext("The smelter requires charcoal to function.")
-local MSG_NOT_ENOUGH_CHARCOAL = locale.gettext("Not enough charcoal. Available: %s Required: %s")
 local MSG_CONFIRM_FIRE = locale.gettext("Smelting %s ores will require %s charcoal. \n\n Continue?")
 local MSG_REMAINING_TIME = locale.gettext("Smelting will be finished in about %s hours.")
 local MSG_RETRIEVE = locale.gettext("You retrieve the materials from the smelter.")
@@ -153,5 +150,6 @@ end
 
 return {
     examine_empty = examine_empty,
-    examine_full = examine_full
+    examine_full = examine_full,
+    ALL_ORES = ALL_ORES
 }
