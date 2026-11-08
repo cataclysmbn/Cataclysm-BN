@@ -1567,7 +1567,8 @@
         "noise": 110,
         "noise_chance": 10,
         "held_message": "The chainsaws rumble.",
-        "noise_message": "the rumbling of chainsaws."
+        "noise_message": "the rumbling of chainsaws.",
+        "noise_variant": "chainsaw"
       }
     ],
     "qualities": [ [ "AXE", 4 ], [ "BUTCHER", -250 ] ],
@@ -1638,7 +1639,8 @@
         "noise": 90,
         "noise_chance": 10,
         "held_message": "The chainsaws rumble.",
-        "noise_message": "the rumbling of chainsaws."
+        "noise_message": "the rumbling of chainsaws.",
+        "noise_variant": "circsaw"
       }
     ],
     "qualities": [ [ "AXE", 4 ], [ "BUTCHER", -250 ] ],
@@ -1811,7 +1813,8 @@
         "noise": 110,
         "noise_chance": 10,
         "held_message": "The combat chainsaw growls.",
-        "noise_message": "a chainsaw growling."
+        "noise_message": "a chainsaw growling.",
+        "noise_variant": "chainsaw"
       }
     ],
     "flags": [
@@ -1878,7 +1881,8 @@
         "noise": 90,
         "noise_chance": 10,
         "held_message": "The electric combat chainsaw buzzes.",
-        "noise_message": "a chainsaw buzzing."
+        "noise_message": "a chainsaw buzzing.",
+        "noise_variant": "circsaw"
       }
     ],
     "flags": [
@@ -2134,7 +2138,8 @@
         "auto_extinguish_message": "The flame sputters, then dies with a faint hiss.",
         "voluntary_extinguish_message": "You shut it down. The flame gutters out.",
         "charges_extinguish_message": "The fuel runs dry. The flame gutters and dies in an instant.",
-        "water_extinguish_message": "Your shishkebab hisses in the water and goes out."
+        "water_extinguish_message": "Your shishkebab hisses in the water and goes out.",
+        "noise_variant": "fireweapon_lit"
       },
       { "type": "firestarter", "moves": 30 }
     ],
@@ -2191,7 +2196,8 @@
         "held_message": "The Sun shines brightly.",
         "voluntary_extinguish_message": "The Sun sets.",
         "charges_extinguish_message": "The Light Fades.",
-        "water_extinguish_message": "Your sword hisses in the water and goes out."
+        "water_extinguish_message": "Your sword hisses in the water and goes out.",
+        "noise_variant": "fireweapon_lit"
       },
       { "type": "firestarter", "moves": 30 }
     ],
@@ -2248,7 +2254,8 @@
         "held_message": "Your blade burns for combat!",
         "voluntary_extinguish_message": "Run away!",
         "charges_extinguish_message": "Thy strength fades!",
-        "water_extinguish_message": "Your sword hisses in the water and goes out."
+        "water_extinguish_message": "Your sword hisses in the water and goes out.",
+        "noise_variant": "fireweapon_lit"
       },
       { "type": "firestarter", "moves": 30 }
     ],
@@ -2307,7 +2314,8 @@
         "held_message": "Das Feuer um deine Schwertklinge leuchtet hell!",
         "voluntary_extinguish_message": "Die Flamme deines Schwertes erlischt.",
         "charges_extinguish_message": "Deinem Flammenschwert ist der Brennstoff ausgegangen!",
-        "water_extinguish_message": "Dein Schwert zischt und erlischt."
+        "water_extinguish_message": "Dein Schwert zischt und erlischt.",
+        "noise_variant": "fireweapon_lit"
       },
       { "type": "firestarter", "moves": 30 }
     ],
