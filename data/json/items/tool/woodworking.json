@@ -85,7 +85,8 @@
         "noise": 110,
         "noise_chance": 10,
         "held_message": "The chainsaw rumbles.",
-        "noise_message": "a chainsaw rumbling."
+        "noise_message": "a chainsaw rumbling.",
+        "noise_variant": "chainsaw"
       }
     ],
     "flags": [
@@ -143,7 +144,8 @@
         "noise": 80,
         "noise_chance": 10,
         "held_message": "The circular saw buzzes.",
-        "noise_message": "a saw buzzing."
+        "noise_message": "a saw buzzing.",
+        "noise_variant": "circsaw"
       }
     ],
     "flags": [ "MESSY", "TRADER_AVOID", "NONCONDUCTIVE", "WATER_DISABLE", "COMBAT_NPC_USE", "COMBAT_NPC_ON" ],
@@ -242,7 +244,8 @@
         "noise": 90,
         "noise_chance": 10,
         "held_message": "The electric chainsaw buzzes.",
-        "noise_message": "a chainsaw buzzing."
+        "noise_message": "a chainsaw buzzing.",
+        "noise_variant": "circsaw"
       }
     ],
     "flags": [ "MESSY", "TRADER_AVOID", "NONCONDUCTIVE", "FRAGILE_MELEE", "WATER_DISABLE", "COMBAT_NPC_USE", "COMBAT_NPC_ON" ],

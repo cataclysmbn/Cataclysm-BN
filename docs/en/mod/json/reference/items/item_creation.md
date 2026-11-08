@@ -1063,6 +1063,7 @@ All object defined use actions support the following two types.
     "water_extinguish_message": "Your No. 9 hisses in the water and goes out.", // Message that appears if the character walks into water and the fire of the item is extinguished.
     "auto_extinguish_chance": 0, // If > 0, this is the (one in X) chance that the item goes out on its own.
     "auto_extinguish_message": "Your No. 9 cuts out!" // Message that appears if the item goes out on its own (only required if auto_extinguish_chance is > 0).
+    "noise_variant": "fireweapon_lit" // sound variant for soundpacks, pair with id `tool`
 },
 "use_action": {
     "type": "musical_instrument", // The character plays an instrument (this item) while walking around.
@@ -1202,6 +1203,7 @@ All object defined use actions support the following two types.
   "noise_chance": 10, // Percent chance to trigger per turn
   "held_message": "The chainsaws rumble." // Message to display if player is holding the item
   "noise_message": "a chainsaw rumbling." // Sound string when heard from another tile
+  "noise_variant": "chainsaw" // sound variant for soundpacks, pair with id `tool`
 }
 ```
 

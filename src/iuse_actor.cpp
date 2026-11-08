@@ -2441,6 +2441,7 @@ void fireweapon_on_actor::load( const JsonObject &obj )
     voluntary_extinguish_message    = obj.get_string( "voluntary_extinguish_message" );
     charges_extinguish_message      = obj.get_string( "charges_extinguish_message" );
     water_extinguish_message        = obj.get_string( "water_extinguish_message" );
+    noise_variant                   = obj.get_string( "noise_variant", "default" );
     noise                           = obj.get_int( "noise", 0 );
     noise_chance                    = obj.get_int( "noise_chance", 1 );
     auto_extinguish_chance          = obj.get_int( "auto_extinguish_chance", 0 );
@@ -2486,6 +2487,8 @@ int fireweapon_on_actor::use( player &p, item &it, bool t, const tripoint_bub_ms
             se.volume = noise;
             se.category = sounds::sound_t::combat;
             se.description = _( noise_message );
+            se.id = "tool";
+            se.variant = noise_variant;
             se.from_player = p.is_avatar();
             se.from_npc = !se.from_player;
             se.faction = p.get_faction()->id;
@@ -2562,6 +2565,7 @@ void passivenoise_actor::load( const JsonObject &obj )
 {
     held_message                    = obj.get_string( "held_message", "hsss" );
     noise_message                   = obj.get_string( "noise_message", "hsss" );
+    noise_variant                   = obj.get_string( "noise_variant", "default" );
     noise                           = obj.get_int( "noise", 0 );
     noise_chance                    = obj.get_int( "noise_chance", 1 );
 }
@@ -2581,6 +2585,8 @@ int passivenoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms 
             se.volume = noise;
             se.category = sounds::sound_t::combat;
             se.description = _( noise_message );
+            se.id = "tool";
+            se.variant = noise_variant;
             se.from_player = p.is_avatar();
             se.from_npc = !se.from_player;
             se.faction = p.get_faction()->id;
