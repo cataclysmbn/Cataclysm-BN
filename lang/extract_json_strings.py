@@ -1066,7 +1066,16 @@ use_action_msgs = {
     "holster_msg",
     "holster_prompt",
     "verb",
-    "gerund"
+    "gerund",
+    "training_msg",
+    "no_charges_message",
+    "set_charges_msg",
+    "start_message",
+    "already_charged_message",
+    "need_battery_message",
+    "underwater_message",
+    "exhausted_message",
+    "fully_charged_message"
 }
 
 
@@ -1074,9 +1083,8 @@ def extract_use_action_msgs(state, use_action, it_name):
     """Extract messages for iuse_actor objects. """
     for f in sorted(use_action_msgs):
         if type(use_action) is dict and f in use_action:
-            if it_name:
-                writestr(state, use_action[f],
-                  comment=f"Use action {f} for {it_name}.")
+            comment = f"Use action {f} for {it_name}." if it_name else f"Use action {f}."
+            writestr(state, use_action[f], comment=comment)
     # Recursively check sub objects as they may contain more messages.
     if type(use_action) is list:
         for i in use_action:

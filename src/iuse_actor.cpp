@@ -6470,7 +6470,7 @@ int train_skill_actor::use( player &p, item &i, bool, const tripoint_bub_ms & ) 
         return 0;
     }
 
-    p.add_msg_if_player( training_msg );
+    p.add_msg_if_player( _( training_msg ) );
     // using metadata is the easiest way to transfer this over to the activity handler and also allow it to function as furniture
     p.set_value( "training_iuse_skill", training_skill );
     p.set_value( "training_iuse_skill_xp", std::to_string( training_skill_xp ) );
