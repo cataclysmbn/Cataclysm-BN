@@ -282,7 +282,6 @@
     "required_str": -1,
     "examine_action": "lua:ORE_SMELTER_EMPTY",
     "max_volume": "150 L",
-    "crafting_pseudo_item": "char_kiln",
     "flags": [ "CONTAINER", "FIRE_CONTAINER", "PLACE_ITEM", "EASY_DECONSTRUCT", "MINEABLE" ],
     "deconstruct": { "items": [ { "item": "rock", "count": 40 }, { "item": "material_soil", "count": 2 } ] },
     "bash": {
@@ -306,7 +305,7 @@
     "coverage": 90,
     "required_str": -1,
     "examine_action": "lua:ORE_SMELTER_FULL",
-    "flags": [ "NOITEM", "SEALED", "CONTAINER", "FIRE_CONTAINER", "SUPPRESS_SMOKE", "PLACE_ITEM", "EASY_DECONSTRUCT", "MINEABLE" ],
+    "flags": [ "NOITEM", "SEALED", "CONTAINER", "FIRE_CONTAINER", "SUPPRESS_SMOKE", "PLACE_ITEM", "MINEABLE" ],
     "deconstruct": { "items": [ { "item": "rock", "count": 40 }, { "item": "material_soil", "count": 2 } ] },
     "bash": {
       "str_min": 25,
