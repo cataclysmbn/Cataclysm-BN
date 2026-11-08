@@ -460,11 +460,27 @@ TEST_CASE("lua_scenario_binding", "[lua]") {
     // round-trips with "Tried to use non-existent scenario '(null)'".
     const auto scen_cleanup = on_out_of_scope([]() { set_scenario(scenario::generic()); });
 
-    set_scenario(&string_id<scenario>("hunted_start").obj());
+    // Use a dedicated test scenario so the checks below do not depend on the
+    // point balance of real scenarios such as "hunted_start".
+    const auto test_scenario_json = std::string(R"({
+        "id": "test_lua_binding",
+        "name": "Test Scenario",
+        "points": -3,
+        "description": "Scenario used to test the Lua scenario bindings.",
+        "start_name": "Test Start",
+        "allowed_locs": [ "sloc_house" ],
+        "forced_traits": [ "HAS_NEMESIS" ],
+        "flags": [ "LONE_START" ]
+    })");
+    auto stream = std::istringstream(test_scenario_json);
+    auto jsin = JsonIn(stream);
+    scenario::load_scenario(jsin.get_object(), "test");
+
+    set_scenario(&string_id<scenario>("test_lua_binding").obj());
     run_lua_test_script(lua, "scenario_binding_test.lua");
     CHECK(test_data.get<bool>("has_scenario"));
-    CHECK(test_data.get<std::string>("scenario_id") == "hunted_start");
-    CHECK(test_data.get<int>("point_cost") == -2);
+    CHECK(test_data.get<std::string>("scenario_id") == "test_lua_binding");
+    CHECK(test_data.get<int>("point_cost") == -3);
     CHECK(test_data.get<int>("forced_count") == 1);
     CHECK(test_data.get<bool>("has_nemesis"));
     CHECK(test_data.get<bool>("has_flag"));
