@@ -411,5 +411,10 @@
         [ "shimmer", 1 ]
       ]
     ]
-  }
+  },
+  {
+	"id": "ore_smelter_fuel",
+	"type": "requirement",
+	"components": [ [ [ "charcoal", 16 ] ] ]
+  }  
 ]

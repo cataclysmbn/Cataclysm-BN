@@ -2,6 +2,7 @@ local ui = require("lib.ui")
 
 local SMELTER_FULL = FurnId.new("f_ore_smelter_full")
 local SMELTER_EMPTY = FurnId.new("f_ore_smelter_empty")
+local REQ_FUEL = requirements.get("ore_smelter_fuel")
 
 local SMELT_DURATION = TimeDuration.from_hours(4):to_turns()
 
@@ -50,28 +51,6 @@ local MSG_REMAINING_TIME = locale.gettext("Smelting will be finished in about %s
 local MSG_RETRIEVE = locale.gettext("You retrieve the materials from the smelter.")
 
 
----@param map Map
----@param pos TripointBubMs
----@param amount integer
-local function consume_charcoal(map, pos, amount)
-    ---@type Item[]
-    local charcoal_items = gapi.get_items_if({ type = CHARCOAL, pos = pos })
-    local consumed_fuel = 0
-    local consumed_items = {}
-    for _, item in ipairs(charcoal_items) do
-        if consumed_fuel + item.charges > amount then
-            item:set_charges(item.charges - (amount - consumed_fuel))
-            break
-        else
-            consumed_fuel = consumed_fuel + item.charges
-            table.insert(consumed_items, item)
-        end
-    end
-    for _, item in ipairs(consumed_items) do
-      map:remove_item_at(pos, item)
-    end
-end
-
 -- Use a furn_var to store amount of ore types on the smelter
 ---@param map Map
 ---@param pos TripointBubMs
@@ -111,34 +90,24 @@ local examine_empty = function(params)
         gapi.add_msg(MSG_NO_ORES)
         return
     end
-    ---@type Item[]
-    local charcoal_items = gapi.get_items_if({
-        type = CHARCOAL,
-        pos = params.pos,
-    })
-    if not charcoal_items or #charcoal_items == 0 then
-        gapi.add_msg(MSG_NO_CHARCOAL)
+    ---@type RequirementData
+    local req = REQ_FUEL * #metal_items
+    local inv = params.user:crafting_inventory()
+    if not req:can_make_with_inventory(inv) then
+        gapi.add_msg(req:list_missing())
         return
     end
 
-    local required_fuel = #metal_items * FUEL_PER_ORE
-    local available_fuel = 0
-    for _, item in ipairs(charcoal_items) do
-        available_fuel = available_fuel + item.charges
-    end
-
-    if available_fuel < required_fuel then
-        gapi.add_msg(string.format(MSG_NOT_ENOUGH_CHARCOAL, available_fuel, required_fuel))
-        return
-    end
-
-    local confirm = ui.query_yn(string.format(MSG_CONFIRM_FIRE, #metal_items, required_fuel))
+    local confirm = ui.query_yn(string.format(MSG_CONFIRM_FIRE, #metal_items, #metal_items * FUEL_PER_ORE))
     if not confirm then return end
+
+    local accept = params.user:consume_requirement(REQ_FUEL, { count = #metal_items, range = 1 })
+    if not accept then return end
 
     local map = gapi.get_map()
     map:set_furn_at(params.pos, SMELTER_FULL:int_id())
     store_ores(map, params.pos, metal_items)
-    consume_charcoal(map, params.pos, required_fuel)
+
     map:set_furn_var_at(params.pos, VKEY_STARTED, tostring(gapi.current_turn():to_turn()))
 end
 
@@ -155,14 +124,14 @@ local examine_full = function(params)
     else
         started_turns = started_int
     end
-    
+
     local elapsed_turns = gapi.current_turn():to_turn() - started_turns
     if elapsed_turns < SMELT_DURATION then
       local remaining = SMELT_DURATION - elapsed_turns
       gapi.add_msg(string.format(MSG_REMAINING_TIME, TimeDuration.from_turns(remaining):to_hours()))
       return
     end
-    
+
     local contained_ores = {}
     for _, ore_type in ipairs(ALL_ORES) do
         local ore_type_str = ore_type:str()
