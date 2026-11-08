@@ -413,8 +413,8 @@
     ]
   },
   {
-	"id": "ore_smelter_fuel",
-	"type": "requirement",
-	"components": [ [ [ "charcoal", 16 ] ] ]
-  }  
+    "id": "ore_smelter_fuel",
+    "type": "requirement",
+    "components": [ [ [ "charcoal", 16 ] ] ]
+  }
 ]
