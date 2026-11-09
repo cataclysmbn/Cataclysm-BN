@@ -263,7 +263,7 @@ TEST_CASE("replay does not overwrite recordings or accept unfinished playback", 
     const auto fixture = replay_fixture{};
     fixture.write(header + timeout_event);
     const auto original = fixture.read();
-    replay::configure_recording(fixture.path.string());
+    replay::configure_recording(fixture.path.string(), {.rng_seed = 7});
     CHECK_THROWS(replay::start());
     CHECK(fixture.read() == original);
     CHECK_FALSE(replay::is_enabled());
@@ -351,8 +351,11 @@ TEST_CASE("replay rejects mouse events recorded in another pointer space", "[rep
     CHECK_THROWS_WITH(replay::next_input_event(pixels), Catch::Matchers::Contains("pointer_space"));
 }
 
-TEST_CASE("replay rejects seed mismatch and invalid end counts", "[replay][input]") {
+TEST_CASE("replay rejects a zero or mismatched seed and invalid end counts", "[replay][input]") {
     const auto fixture = replay_fixture{};
+    CHECK_THROWS_WITH(replay::configure_recording(fixture.path.string(), {}),
+                      Catch::Matchers::Contains("nonzero"));
+    CHECK_FALSE(replay::is_enabled());
     fixture.write(
         header
         + R"({"kind":"end","version":1,"events":1})"

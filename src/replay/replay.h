@@ -36,14 +36,12 @@ public:
     completed(): std::runtime_error("Replay completed") {}
 };
 
-/// Versioned replay header metadata.
+/// Replay header metadata.
 struct session_metadata {
-    std::uint32_t version = format_version;
-    /// Zero means capture the active deterministic seed, or use one if none is active.
     std::uint32_t rng_seed = 0;
 };
 
-auto configure_recording(const std::string& path, session_metadata metadata = {}) -> void;
+auto configure_recording(const std::string& path, session_metadata metadata) -> void;
 auto configure_playback(const std::string& path) -> void;
 auto configure_playback(const std::string& path, session_metadata expected) -> void;
 auto playback_metadata() -> const session_metadata&; // *NOPAD*

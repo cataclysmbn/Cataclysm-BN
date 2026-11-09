@@ -2,7 +2,6 @@
 
 #include "debug.h"
 #include "json.h"
-#include "rng.h"
 #include "runtime_handlers.h"
 
 #include <algorithm>
@@ -351,9 +350,7 @@ auto require_unconfigured() -> void {
 
 auto configure_recording(const std::string& path, session_metadata metadata) -> void {
     require_unconfigured();
-    if (metadata.version != format_version) {
-        throw std::runtime_error("Unsupported replay format version");
-    }
+    if (metadata.rng_seed == 0) { throw std::runtime_error("RNG seed must be nonzero"); }
     state().active_mode = mode::record;
     state().path = path;
     state().metadata = metadata;
@@ -386,9 +383,6 @@ auto start() -> void {
     if (current.path.empty()) { throw std::runtime_error("Replay path must not be empty"); }
     try {
         if (is_recording()) {
-            if (current.metadata.rng_seed == 0) {
-                current.metadata.rng_seed = rng_deterministic_seed_value().value_or(1u);
-            }
             current.recording
                 .open(current.path, std::ios::out | std::ios::binary | std::ios::noreplace);
             if (!current.recording) {
@@ -402,12 +396,9 @@ auto start() -> void {
                 throw std::runtime_error("Could not open replay file: " + current.path);
             }
             read_record(true);
-            if (current.expected_metadata) {
-                const auto expected = *current.expected_metadata;
-                if (expected.version != current.metadata.version
-                    || (expected.rng_seed != 0 && expected.rng_seed != current.metadata.rng_seed)) {
-                    throw std::runtime_error("Replay header does not match expected metadata");
-                }
+            if (current.expected_metadata
+                && current.expected_metadata->rng_seed != current.metadata.rng_seed) {
+                throw std::runtime_error("Replay header does not match expected metadata");
             }
             ensure_next();
         }
