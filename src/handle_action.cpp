@@ -11,6 +11,7 @@
 #include "bionics_ui.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "cata_utility.h"
 #include "catacharset.h"
 #include "catalua.h"
 #include "catalua_hooks.h"
@@ -40,6 +41,7 @@
 #include "help.h"
 #include "iexamine.h"
 #include "input.h"
+#include "input_pending.h"
 #include "int_id.h"
 #include "item.h"
 #include "item_contents.h"
@@ -505,7 +507,9 @@ input_context game::get_player_input( std::string &action )
 
             {
                 ZoneScopedN( "get_player_input_redraw_invalidated" );
-                ui_manager::redraw_invalidated();
+                if( !should_defer_redraw_for_queued_input() ) {
+                    ui_manager::redraw_invalidated();
+                }
             }
             auto keep_waiting = false;
             {
@@ -515,6 +519,8 @@ input_context game::get_player_input( std::string &action )
                 } else {
                     ctxt.reset_timeout();
                 }
+                const auto prompt_scope = restore_on_out_of_scope<bool>( main_prompt_reads_input );
+                main_prompt_reads_input = true;
                 keep_waiting = handle_mouseview( ctxt, action );
             }
             if( !keep_waiting || uquit == QUIT_WATCH ||
@@ -528,10 +534,14 @@ input_context game::get_player_input( std::string &action )
         {
             ZoneScopedN( "get_player_input_noanim_redraw" );
             invalidate_main_ui_adaptor();
-            ui_manager::redraw_invalidated();
+            if( !should_defer_redraw_for_queued_input() ) {
+                ui_manager::redraw_invalidated();
+            }
         }
         SCT.vSCT.clear();
 
+        const auto prompt_scope = restore_on_out_of_scope<bool>( main_prompt_reads_input );
+        main_prompt_reads_input = true;
         if( realtime_turns || uquit == QUIT_WATCH ) {
             ctxt.set_timeout( 125 );
             while( true ) {

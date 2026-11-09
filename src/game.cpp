@@ -72,6 +72,7 @@
 #include "iexamine.h"
 #include "init.h"
 #include "input.h"
+#include "input_pending.h"
 #include "int_id.h"
 #include "inventory.h"
 #include "item.h"
@@ -2461,7 +2462,8 @@ bool game::do_turn()
         cleanup_dead();
     }
 
-    if( u.moves < 0 && get_option<bool>( "FORCE_REDRAW" ) ) {
+    if( u.moves < 0 && get_option<bool>( "FORCE_REDRAW" ) &&
+        !should_defer_redraw_for_queued_input() ) {
         ZoneScopedN( "do_turn_force_redraw" );
         ui_manager::redraw();
         refresh_display();
