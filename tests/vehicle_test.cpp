@@ -15,10 +15,12 @@
 #include "game_constants.h"
 #include "item.h"
 #include "json.h"
+#include "map/field_type.h"
 #include "map_helpers.h"
 #include "mongroup.h"
 #include "monster.h"
 #include "options_helpers.h"
+#include "rng.h"
 #include "state_helpers.h"
 #include "type_id.h"
 #include "vehicle/veh_type.h"
@@ -26,6 +28,8 @@
 #include "vehicle/vehicle_wait.h"
 
 #include <algorithm>
+#include <array>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <ranges>
@@ -644,4 +648,45 @@ TEST_CASE("door_lock_removal_rules", "[vehicle]") {
     auto lock_reason = std::string{};
     CHECK(veh_ptr->can_unmount(door_idx, door_reason));
     CHECK(veh_ptr->can_unmount(lock_idx, lock_reason));
+}
+
+TEST_CASE("idling vehicles draw random numbers in map order", "[vehicle][deterministic_rng]") {
+    const auto cleanup = on_out_of_scope([] { clear_all_state(); });
+    // Each idling engine rolls for exhaust smoke. Which car has the lower address must not change
+    // which car gets which roll.
+    const auto origins = std::array{tripoint_bub_ms(50, 60, 0), tripoint_bub_ms(70, 60, 0)};
+    const auto aside = tripoint_rel_ms(0, 20, 0);
+    const auto smoke_turns = [&origins, &aside](const bool lower_address_first) {
+        clear_all_state();
+        auto& here = get_map();
+        auto cars = std::array<vehicle*, 2>{};
+        for (const auto index : {0, 1}) {
+            cars[index] = here.add_vehicle(vproto_id("car"), origins[index], 0_degrees, 100, 0);
+            REQUIRE(cars[index] != nullptr);
+            cars[index]->engine_on = true;
+        }
+        if (std::less<vehicle*>{}(cars[0], cars[1]) != lower_address_first) {
+            REQUIRE(here.displace_vehicle(*cars[0], aside));
+            REQUIRE(here.displace_vehicle(*cars[1], origins[0] - origins[1]));
+            REQUIRE(here.displace_vehicle(*cars[0], origins[1] - origins[0] - aside));
+        }
+        rng_set_engine_seed(1234);
+        auto result = std::array<std::vector<int>, 2>{};
+        for (const auto turn : std::views::iota(0, 200)) {
+            here.vehmove();
+            for (const auto index : {0, 1}) {
+                const auto smoky = std::ranges::
+                    any_of(here.points_in_radius(origins[index], 6), [&here](const auto& p) {
+                        return here.get_field(p, fd_smoke) != nullptr;
+                    });
+                if (smoky) { result[index].push_back(turn); }
+            }
+            clear_fields(0);
+        }
+        return result;
+    };
+    const auto lower_first = smoke_turns(true);
+    REQUIRE_FALSE(lower_first[0].empty());
+    REQUIRE_FALSE(lower_first[1].empty());
+    CHECK(smoke_turns(false) == lower_first);
 }
