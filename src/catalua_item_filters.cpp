@@ -8,11 +8,14 @@
 
 #include "catalua_sol.h"
 
+#include "addiction.h"
 #include "character.h"
 #include "debug.h"
 #include "flag.h"
 #include "item.h"
 #include "itype.h"
+#include "material.h"
+#include "pldata.h"
 #include "profile.h"
 #include "type_id.h"
 
@@ -44,6 +47,29 @@ auto lua_value_to_set( const LuaValue &val ) -> std::unordered_set<T>
         return out;
     }
     return { lua_value_to_id<T>( obj ) };
+}
+
+// Accepts an AddictionType enum value or a JSON-style string name (e.g. "alcohol")
+auto lua_value_to_add_type( const LuaValue &val ) -> add_type
+{
+    const sol::object obj = val;
+    if( obj.get_type() == sol::type::string ) {
+        return addiction_type( obj.as<std::string>() );
+    }
+    return obj.as<add_type>();
+}
+
+auto lua_value_to_addiction_set( const LuaValue &val ) -> std::unordered_set<add_type>
+{
+    const sol::object obj = val;
+    if( obj.get_type() == sol::type::table ) {
+        std::unordered_set<add_type> out;
+        for( auto &&[key, value] : obj.as<sol::table>() ) {
+            out.insert( lua_value_to_add_type( value ) );
+        }
+        return out;
+    }
+    return { lua_value_to_add_type( obj ) };
 }
 
 const std::unordered_map<std::string, std::function<item_predicate( LuaValue &val )>>
@@ -95,6 +121,22 @@ handlers = {
             const auto amount = tbl["amount"].get<int>();
             return [id, amount]( const item & it ) -> bool {
                 return it.typeId() == id && it.charges >= amount;
+            };
+        }
+    },
+    {
+        "addiction_type", []( LuaValue & val ) -> item_predicate {
+            const auto types = lua_value_to_addiction_set( val );
+            return [types]( const item & it ) -> bool {
+                return it.is_comestible() && types.contains( it.get_comestible()->add );
+            };
+        }
+    },
+    {
+        "material", []( LuaValue & val ) -> item_predicate {
+            const auto materials = lua_value_to_set<material_id>( val );
+            return [materials]( const item & it ) -> bool {
+                return std::ranges::any_of( materials, [&it]( const material_id & mat ) { return it.made_of( mat ); } );
             };
         }
     },
