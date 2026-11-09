@@ -1153,6 +1153,18 @@ def extract_json(state, item):
     if "use_action" in item:
         extract_use_action_msgs(state, item["use_action"], item.get("name"))
         wrote = True
+    if object_type in ("TOOL", "TOOL_ARMOR") and "revert_msg" in item:
+        writestr(state, item["revert_msg"], format_strings=True,
+                 comment=f"Reversion message for {name}.")
+        wrote = True
+    if object_type == "furniture" and len(item.get("active", [])) == 2:
+        active_type, active_data = item["active"]
+        if active_type in ("charge_watcher", "steady_consumer", "countdown"):
+            transform = active_data.get("transform", {})
+            if "msg" in transform:
+                writestr(state, transform["msg"],
+                         comment=f"Transformation message for {name}.")
+                wrote = True
     if "conditional_names" in item:
         for cname in item["conditional_names"]:
             c = f"Conditional name for {name} when {cname['type']} matches {cname['condition']}"
