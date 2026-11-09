@@ -1,5 +1,6 @@
 #include "catch/catch.hpp"
 #include "debug.h"
+#include "presentation_rng.h"
 #include "rng.h"
 #include "thread_pool.h"
 
@@ -128,4 +129,17 @@ TEST_CASE(
         pool.submit_returning({.stream = 1, .id = 2}, sample).get();
     });
     CHECK(keyed.empty());
+}
+
+TEST_CASE("presentation randomness leaves the game engine alone", "[rng]") {
+    const auto restore = restore_rng{};
+    rng_set_deterministic_seed(99);
+    const auto expected = sample();
+    rng_set_deterministic_seed(99);
+    for (auto draw = 0; draw < 100; ++draw) {
+        const auto value = presentation_rng(3, 1);
+        CHECK(value >= 1);
+        CHECK(value <= 3);
+    }
+    CHECK(sample() == expected);
 }

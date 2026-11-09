@@ -1,4 +1,5 @@
 #include "rng.h"
+#include "presentation_rng.h"
 #include "weighted_list.h"
 
 #include <atomic>
@@ -328,6 +329,16 @@ void rng_set_worker_seed( unsigned int seed )
 {
     tl_is_worker = true;
     tl_worker_engine.seed( seed );
+}
+
+auto presentation_rng( int lo, int hi ) -> int
+{
+    // NOLINTNEXTLINE(cata-determinism)
+    thread_local auto engine = cata_default_random_engine( std::random_device{}() );
+    if( lo > hi ) {
+        std::swap( lo, hi );
+    }
+    return std::uniform_int_distribution<int>( lo, hi )( engine );
 }
 
 namespace weighted_list_detail
