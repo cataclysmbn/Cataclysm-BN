@@ -4,6 +4,7 @@
 #include "json.h"
 #include "map/map.h"
 #include "map_helpers.h"
+#include "monster.h"
 #include "path_info.h"
 #include "recipe.h"
 #include "recipe_dictionary.h"
@@ -12,9 +13,13 @@
 #include "state_helpers.h"
 
 #include <algorithm>
+#include <array>
 #include <atomic>
+#include <cstddef>
 #include <filesystem>
 #include <fstream>
+#include <memory>
+#include <new>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -99,6 +104,23 @@ TEST_CASE("the state hash is stable and names the part that changed", "[replay][
         calendar::turn += 1_turns;
         CHECK(replay::hash_game_state().turn == start.turn + 1);
     }
+}
+
+TEST_CASE("a new monster is written the same whatever its memory held", "[replay][state_hash]") {
+    fresh_game();
+    const auto written = [](const std::byte fill) {
+        alignas(monster) auto storage = std::array<std::byte, sizeof(monster)>{};
+        storage.fill(fill);
+        // The constructor rolls attack cooldowns.
+        rng_set_engine_seed(1);
+        auto* const critter = new (storage.data()) monster(mtype_id("mon_zombie"));
+        auto text = std::ostringstream{};
+        auto json = JsonOut(text);
+        critter->serialize(json);
+        std::destroy_at(critter);
+        return text.str();
+    };
+    CHECK(written(std::byte{0x00}) == written(std::byte{0xff}));
 }
 
 TEST_CASE("a state record names the step, the turn and every part", "[replay][state_hash]") {
