@@ -189,6 +189,14 @@ auto non_zero_seed( const std::uint64_t value ) -> unsigned int
     return seed == 0 ? 1u : seed;
 }
 
+auto rng_deterministic_seed_for( const rng_deterministic_key &key ) -> unsigned int
+{
+    auto value = static_cast<std::uint64_t>( deterministic_seed().load( std::memory_order_relaxed ) );
+    value = splitmix64( value ^ key.stream );
+    value = splitmix64( value ^ key.id );
+    return non_zero_seed( value );
+}
+
 // Per-worker-thread engine.  Inactive (flag=false) on the main thread.
 // NOLINTNEXTLINE(cata-determinism)
 thread_local auto tl_is_worker = false;
@@ -257,14 +265,6 @@ auto rng_deterministic_seed_value() -> std::optional<unsigned int>
         return std::nullopt;
     }
     return deterministic_seed().load( std::memory_order_relaxed );
-}
-
-auto rng_deterministic_seed_for( const rng_deterministic_key &key ) -> unsigned int
-{
-    auto value = static_cast<std::uint64_t>( deterministic_seed().load( std::memory_order_relaxed ) );
-    value = splitmix64( value ^ key.stream );
-    value = splitmix64( value ^ key.id );
-    return non_zero_seed( value );
 }
 
 auto rng_deterministic_child_seed( const unsigned int parent_seed,
