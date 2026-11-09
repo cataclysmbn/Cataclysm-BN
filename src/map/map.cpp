@@ -116,6 +116,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
+#include <functional>
 #include <iterator>
 #include <limits>
 #include <mutex>
@@ -1103,13 +1104,18 @@ void map::vehmove() {
     VehicleList vehicle_list;
     {
         ZoneScopedN("veh_gain_moves");
+        auto vehicles = std::vector<vehicle*>{};
         for (int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; ++z) {
-            for (vehicle* veh : get_cache(z).vehicle_list) {
-                veh->gain_moves();
-                veh->slow_leak();
-                vehicle_list.push_back(wrapped_vehicle{
-                    .pos = abs_to_map_local(*this, veh->abs_ms_location()), .v = veh});
-            }
+            std::ranges::copy(get_cache(z).vehicle_list, std::back_inserter(vehicles));
+        }
+        // Vehicles draw random numbers as they act and idle, so both happen in map order instead
+        // of the caches' address order, which differs between runs.
+        std::ranges::sort(vehicles, std::less{}, &vehicle::abs_ms_location);
+        for (vehicle* veh : vehicles) {
+            veh->gain_moves();
+            veh->slow_leak();
+            vehicle_list.push_back(
+                wrapped_vehicle{.pos = abs_to_map_local(*this, veh->abs_ms_location()), .v = veh});
         }
     }
     TracyPlot("Vehicles Active", static_cast<int64_t>(vehicle_list.size()));
@@ -1235,8 +1241,10 @@ void map::vehmove() {
     });
     std::map<vehicle*, bool> connected_vehicles;
     vehicle::enumerate_vehicles(connected_vehicles, all_veh_ptrs);
-    std::ranges::for_each(connected_vehicles, [](std::pair<vehicle* const, bool>& veh_pair) {
-        veh_pair.first->idle(veh_pair.second);
+    auto idle_order = connected_vehicles | std::views::keys | std::ranges::to<std::vector>();
+    std::ranges::sort(idle_order, std::less{}, &vehicle::abs_ms_location);
+    std::ranges::for_each(idle_order, [&connected_vehicles](vehicle* veh) {
+        veh->idle(connected_vehicles.at(veh));
     });
 }
 
