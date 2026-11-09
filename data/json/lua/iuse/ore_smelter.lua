@@ -129,6 +129,7 @@ local examine_full = function(params)
       return
     end
 
+    map:set_furn_at(params.pos, SMELTER_EMPTY:int_id())
     local contained_ores = {}
     for _, ore_type in ipairs(ALL_ORES) do
         local ore_type_str = ore_type:str()
@@ -143,13 +144,11 @@ local examine_full = function(params)
             end
         end
     end
-    map:set_furn_at(params.pos, SMELTER_EMPTY:int_id())
     map:erase_furn_var_at(params.pos, VKEY_STARTED)
     gapi.add_msg(MSG_RETRIEVE)
 end
 
 return {
     examine_empty = examine_empty,
-    examine_full = examine_full,
-    ALL_ORES = ALL_ORES
+    examine_full = examine_full
 }
