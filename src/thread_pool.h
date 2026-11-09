@@ -114,7 +114,6 @@ class cata_thread_pool
 
         /** Enqueue a callable for execution on a worker thread. */
         void submit( std::function<void()> task );
-        void submit( const rng_deterministic_key &key, std::function<void()> task );
 
         /**
          * Enqueue a callable that returns a value and get a future for its result.
@@ -146,26 +145,19 @@ class cata_thread_pool
             return fut;
         }
 
+        /// submit_returning(), drawing from the deterministic stream `key` names when one is active.
         template<typename F, typename... Args>
         auto submit_returning( const rng_deterministic_key &key, F &&f, Args &&...args )
         -> std::future<std::invoke_result_t<std::decay_t<F>, std::decay_t<Args>...>> {
-            using R = std::invoke_result_t<std::decay_t<F>, std::decay_t<Args>...>;
-            auto task = std::make_shared<std::packaged_task<R()>>(
-                            std::bind( std::forward<F>( f ), std::forward<Args>( args )... )
-                        );
-            auto fut = task->get_future();
-            const auto deterministic_seed = rng_deterministic_seed_for_current_context( key );
-            if( num_workers() == 0 ) {
-                if( deterministic_seed ) {
-                    [[maybe_unused]] const auto scope = rng_deterministic_task_scope( *deterministic_seed );
-                    ( *task )();
-                } else {
-                    ( *task )();
+            const auto seed = rng_deterministic_seed_for_current_context( key );
+            auto bound = std::bind( std::forward<F>( f ), std::forward<Args>( args )... );
+            return submit_returning( [seed, task = std::move( bound )]() mutable {
+                auto scope = std::optional<rng_deterministic_task_scope> {};
+                if( seed ) {
+                    scope.emplace( *seed );
                 }
-            } else {
-                submit( key, [task]() { ( *task )(); } );
-            }
-            return fut;
+                return task();
+            } );
         }
 
     private:
@@ -244,9 +236,7 @@ auto parallel_for( const int begin, const int end, F &&f ) -> void
     for( auto chunk = 0; chunk < chunks; ++chunk ) {
         const auto chunk_begin = begin + ( n * chunk / chunks );
         const auto chunk_end = begin + ( n * ( chunk + 1 ) / chunks );
-        pool.submit( { .stream = thread_pool_detail::parallel_for_seed_stream,
-                       .id = static_cast<std::uint64_t>( chunk_begin ) },
-        [&latch, &run_chunk, chunk_begin, chunk_end]() {
+        pool.submit( [&latch, &run_chunk, chunk_begin, chunk_end]() {
             run_chunk( chunk_begin, chunk_end );
             latch.count_down();
         } );
@@ -303,9 +293,7 @@ auto parallel_for_chunked( const int begin, const int end, const int chunk_size,
     for( auto chunk = 0; chunk < num_chunks; ++chunk ) {
         const auto chunk_begin = begin + chunk * chunk_size;
         const auto chunk_end = std::min( chunk_begin + chunk_size, end );
-        pool.submit( { .stream = thread_pool_detail::parallel_for_chunked_seed_stream,
-                       .id = static_cast<std::uint64_t>( chunk_begin ) },
-        [&latch, &run_chunk, chunk_begin, chunk_end]() {
+        pool.submit( [&latch, &run_chunk, chunk_begin, chunk_end]() {
             run_chunk( chunk_begin, chunk_end );
             latch.count_down();
         } );

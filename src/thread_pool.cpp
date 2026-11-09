@@ -87,21 +87,6 @@ void cata_thread_pool::submit( std::function<void()> task )
     cv_.notify_one();
 }
 
-auto cata_thread_pool::submit( const rng_deterministic_key &key,
-                               std::function<void()> task ) -> void
-{
-    const auto deterministic_seed = rng_deterministic_seed_for_current_context( key );
-    if( deterministic_seed ) {
-        auto wrapped_task = [task = std::move( task ), deterministic_seed]() {
-            [[maybe_unused]] const auto scope = rng_deterministic_task_scope( *deterministic_seed );
-            task();
-        };
-        submit( std::move( wrapped_task ) );
-    } else {
-        submit( std::move( task ) );
-    }
-}
-
 cata_thread_pool &get_thread_pool()
 {
     // Worker count is read once at first call (the static pool is constructed
