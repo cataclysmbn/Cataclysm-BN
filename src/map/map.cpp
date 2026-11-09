@@ -39,6 +39,7 @@
 #include "flag.h"
 #include "flat_set.h"
 #include "fluid_grid.h"
+#include "fov_z_range.h"
 #include "fragment_cloud.h"
 #include "fungal_effects.h"
 #include "game.h"
@@ -6312,9 +6313,13 @@ auto map::update_visibility_cache(const int zlev, const std::function<void()>& w
             }
         };
 
+        const auto in_z_range = [&](const int z) {
+            return z == zlev || fov_z_in_range(z, player_pos.z());
+        };
         auto visibility_download_levels = std::vector<int>{};
-        std::ranges::copy(std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1),
-                          std::back_inserter(visibility_download_levels));
+        std::ranges::copy_if(
+            std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1),
+            std::back_inserter(visibility_download_levels), in_z_range);
         const auto rebuild_seen_cache = m_last_seen_cache_origin != player_pos;
         const auto gpu_visibility_work = cata_gpu::begin_gpu_visibility(
             gpu_device,
@@ -6350,6 +6355,11 @@ auto map::update_visibility_cache(const int zlev, const std::function<void()>& w
             std::fill(origin_cache.camera_cache.begin(), origin_cache.camera_cache.end(), 0.0f);
             m_last_seen_cache_origin = player_pos;
         }
+        for (const auto z : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
+            if (!in_z_range(z)) {
+                std::ranges::fill(get_cache(z).visibility_cache, lit_level::BLANK);
+            }
+        }
         mark_visibility_caches_clean();
         mark_overmap_seen_from_visibility(get_cache_ref(zlev));
         return;
@@ -6380,6 +6390,12 @@ auto map::update_visibility_cache(const int zlev, const std::function<void()>& w
         level_cache& vc_cache = get_cache(z);
         auto& visibility_cache = vc_cache.visibility_cache;
         const auto dz = std::abs(z - player_pos.z());
+
+        // Levels beyond FOV_3D_Z_RANGE are not seen; skip the per-tile light evaluation.
+        if (z != zlev && !fov_z_in_range(z, player_pos.z())) {
+            std::ranges::fill(visibility_cache, lit_level::BLANK);
+            continue;
+        }
 
         // Fill visibility_cache.  apparent_light_at is read-only per tile.
         if (parallel_enabled && parallel_map_cache) {
@@ -8716,6 +8732,10 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
               static_cast<int64_t>(gpu_transparency_residency_invalid_levels.size()));
 
     const tripoint_bub_ms& p = g->u.bub_pos();
+    /// Levels within FOV_3D_Z_RANGE of the player, plus the requested level.
+    const auto in_z_range = [&p, zlev](const int z) {
+        return z == zlev || fov_z_in_range(z, p.z());
+    };
     auto force_seen_rebuild_for_gpu_residency = false;
 #if defined(CATA_SDL)
     SDL_GPUDevice* const gpu_device = use_sdl_gpu_compute ? cata_gpu::get_device() : nullptr;
@@ -8737,7 +8757,10 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
     if (!skip_lightmap) {
         ZoneScopedN("Phase4_lightmap_prepare");
         invalidate_lightmap_caches_if_light_state_changed();
-        auto needs_lightmap_dispatch = [this](const int z) { return get_cache(z).lightmap_dirty; };
+        // Levels beyond FOV_3D_Z_RANGE keep lightmap_dirty and rebuild once in range.
+        auto needs_lightmap_dispatch = [this, &in_z_range](const int z) {
+            return get_cache(z).lightmap_dirty && in_z_range(z);
+        };
         std::ranges::copy_if(
             std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1),
             std::back_inserter(dirty_lightmap_levels), needs_lightmap_dispatch);
@@ -8874,6 +8897,9 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
                     auto& c = get_cache(z);
                     std::ranges::fill(c.colored_light_cache, 0u);
                     c.colored_light_cache_active = false;
+                    // Colored light of a level skipped for FOV_3D_Z_RANGE is lost; rebuild it
+                    // once in range.
+                    if (!in_z_range(z)) { c.lightmap_dirty = true; }
                 }
 
                 if (dirty_lightmap_levels.size() > 1 && parallel_enabled && parallel_map_cache) {
