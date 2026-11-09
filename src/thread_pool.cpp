@@ -19,9 +19,9 @@ bool is_pool_worker_thread()
 cata_thread_pool::cata_thread_pool( unsigned int num_workers )
 {
     workers_.reserve( num_workers );
-    for( auto i = 0u; i < num_workers; ++i ) {
-        workers_.emplace_back( [this, i]() {
-            worker_loop( i );
+    for( unsigned int i = 0; i < num_workers; ++i ) {
+        workers_.emplace_back( [this]() {
+            worker_loop();
         } );
     }
 }
@@ -38,7 +38,7 @@ cata_thread_pool::~cata_thread_pool()
     }
 }
 
-auto cata_thread_pool::worker_loop( const unsigned int worker_index ) -> void
+void cata_thread_pool::worker_loop()
 {
     tl_is_worker_thread = true;
     // Windows installs signal handlers per-thread for hardware exception signals
@@ -47,16 +47,13 @@ auto cata_thread_pool::worker_loop( const unsigned int worker_index ) -> void
     // On POSIX the signal disposition is process-wide, so this is a no-op.
     init_crash_handlers();
 
-    // Seed this worker independently. Keyed task scopes make deterministic
-    // runs independent of worker scheduling.
-    const auto seed = rng_deterministic_seed_active() ?
-                      rng_deterministic_seed_for( { .stream = 0x776f726b65725f5fULL,
-                              .id = worker_index } ) :
-                      static_cast<unsigned int>(
-                          static_cast<unsigned int>( std::hash<std::thread::id> {}(
-                                      std::this_thread::get_id() ) ) ^
-                          static_cast<unsigned int>(
-                              std::chrono::high_resolution_clock::now().time_since_epoch().count() ) );
+    // Seed this worker's thread-local RNG so compute_plan() calls do not
+    // race on the main thread's global engine (P-5).
+    // Mix thread ID with current time for a unique-ish seed per worker.
+    const unsigned int seed =
+        static_cast<unsigned int>( std::hash<std::thread::id> {}( std::this_thread::get_id() ) ) ^
+        static_cast<unsigned int>(
+            std::chrono::high_resolution_clock::now().time_since_epoch().count() );
     rng_set_worker_seed( seed );
 
     while( true ) {

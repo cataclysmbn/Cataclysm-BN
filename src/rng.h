@@ -54,7 +54,6 @@ auto rng_set_deterministic_seed( unsigned int seed ) -> void;
 auto rng_clear_deterministic_seed() -> void;
 auto rng_deterministic_seed_active() -> bool;
 auto rng_deterministic_seed_value() -> std::optional<unsigned int>;
-auto rng_deterministic_seed_for( const rng_deterministic_key &key ) -> unsigned int;
 auto rng_deterministic_child_seed( unsigned int parent_seed,
                                    const rng_deterministic_key &key ) -> unsigned int;
 auto rng_deterministic_seed_for_current_context(

@@ -169,7 +169,7 @@ class cata_thread_pool
         }
 
     private:
-        auto worker_loop( unsigned int worker_index ) -> void;
+        void worker_loop();
 
         std::vector<std::thread> workers_;
         std::deque<std::function<void()>> queue_;
