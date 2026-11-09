@@ -811,6 +811,7 @@ int main( int argc, char *argv[] )
         replay::start();
         if( !state_hash_log_path.empty() ) { replay::configure_state_hash_log( state_hash_log_path ); }
     } catch( const std::exception &err ) {
+        replay::discard();
         std::cerr << "Cataclysm BN: " << err.what() << '\n';
         return 1;
     }

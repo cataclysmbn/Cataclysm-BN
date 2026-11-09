@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <filesystem>
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -17,6 +18,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
+#include <system_error>
 #include <utility>
 
 namespace replay {
@@ -449,6 +451,13 @@ auto finish() -> void {
 }
 
 auto stop() -> void { state() = replay_state{}; }
+
+auto discard() -> void {
+    const auto created = is_recording() && state().started ? state().path : std::string{};
+    stop();
+    auto ignored = std::error_code{};
+    if (!created.empty()) { std::filesystem::remove(created, ignored); }
+}
 
 auto record_input_event(const input_event& event, const input_boundary_metadata& boundary) -> void {
     auto& current = state();
