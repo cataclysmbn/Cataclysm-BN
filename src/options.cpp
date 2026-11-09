@@ -20,6 +20,7 @@
 #include "debug.h"
 #include "enum_bitset.h"
 #include "filesystem.h"
+#include "fov_z_range.h"
 #include "fstream_utils.h"
 #include "game.h"
 #include "game_constants.h"
@@ -4074,7 +4075,8 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
             } else if( iter.first == "TERMINAL_X" || iter.first == "TERMINAL_Y" ) {
                 terminal_size_changed = true;
             }
-            if( iter.first == "COLORED_LIGHTING" || iter.first == "USE_TILES" ) {
+            if( iter.first == "COLORED_LIGHTING" || iter.first == "USE_TILES" ||
+                iter.first == "FOV_3D_Z_RANGE" ) {
                 colored_lighting_changed = true;
             }
         }
@@ -4100,6 +4102,9 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
             }
             if( ingame && colored_lighting_changed ) {
                 g->m.invalidate_lightmap_caches();
+                for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; ++z ) {
+                    g->m.set_seen_cache_dirty( z );
+                }
             }
             g->on_options_changed();
         } else {
@@ -4239,6 +4244,7 @@ void options_manager::cache_to_globals()
     message_ttl = ::get_option<int>( "MESSAGE_TTL" );
     message_cooldown = ::get_option<int>( "MESSAGE_COOLDOWN" );
     angled_sunlight_shadows = ::get_option<bool>( "FOV_3D_OCCLUSION" );
+    fov_3d_z_range = ::get_option<int>( "FOV_3D_Z_RANGE" );
     const auto prevent_occlusion_option = ::get_option<std::string>( "PREVENT_OCCLUSION" );
     prevent_occlusion = prevent_occlusion_option == "off" ? 0 : prevent_occlusion_option == "on" ? 1 :
                         2;

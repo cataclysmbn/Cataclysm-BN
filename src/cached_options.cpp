@@ -1,5 +1,6 @@
 #include "cached_options.h"
 
+#include "fov_z_range.h"
 #include "options.h"
 
 bool test_mode = false;
@@ -17,6 +18,7 @@ bool display_mod_source;
 bool display_object_ids;
 bool trigdist;
 bool angled_sunlight_shadows = false;
+int fov_3d_z_range = 5;
 int prevent_occlusion = 2;
 bool prevent_occlusion_retract = true;
 bool prevent_occlusion_transp = true;
