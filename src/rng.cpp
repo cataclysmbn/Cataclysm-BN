@@ -259,14 +259,6 @@ auto rng_deterministic_seed_active() -> bool
     return has_deterministic_seed().load( std::memory_order_acquire );
 }
 
-auto rng_deterministic_seed_value() -> std::optional<unsigned int>
-{
-    if( !rng_deterministic_seed_active() ) {
-        return std::nullopt;
-    }
-    return deterministic_seed().load( std::memory_order_relaxed );
-}
-
 auto rng_deterministic_child_seed( const unsigned int parent_seed,
                                    const rng_deterministic_key &key ) -> unsigned int
 {
