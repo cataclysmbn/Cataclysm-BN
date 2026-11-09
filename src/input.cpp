@@ -725,9 +725,12 @@ input_event input_manager::get_input_event()
     try {
         if( const auto recorded = replay::next_input_event( boundary ) ) {
             pump_events();
-            // A native read leaves the key here, and some menus open on it.
+            // A native read leaves the key here, and some menus open on it. Curses keeps only the
+            // first byte of a multi-byte key in the event, but leaves its code point here.
             if( recorded->type == input_event_t::keyboard ) {
-                previously_pressed_key = recorded->get_first_input();
+                const auto code_point = UTF8_getch( recorded->text );
+                previously_pressed_key = code_point == UNKNOWN_UNICODE ? recorded->get_first_input() :
+                                         static_cast<int>( code_point );
             }
             return *recorded;
         }
