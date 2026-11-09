@@ -254,6 +254,7 @@ auto read_event(const JsonObject& object) -> replay_event {
         strict_int(object, "shortcut_last_used_action_counter", 0);
 #endif
     auto boundary = object.get_object("boundary");
+    boundary.allow_omitted_members();
     result.boundary.context = boundary.get_string("context");
     result.boundary.timeout_ms = strict_int(boundary, "timeout_ms", -1);
     result.boundary.pointer_space = boundary.get_string("pointer_space", "");
@@ -274,6 +275,9 @@ auto read_record(const bool header) -> void {
         auto stream = std::istringstream(line);
         auto input = JsonIn(stream);
         auto object = input.get_object();
+        // Another build may write fields this one does not read, such as Android's shortcut
+        // counter. Reporting them would open a popup that reads the replay mid-record.
+        object.allow_omitted_members();
         const auto kind = object.get_string("kind");
         if (strict_int64(object, "version") != format_version) {
             throw std::runtime_error("Unsupported replay version");
