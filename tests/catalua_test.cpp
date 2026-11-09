@@ -1407,6 +1407,9 @@ TEST_CASE("lua_delete_dimension_keeps_despawned_monsters_until_turn_cleanup", "[
     REQUIRE(g->delete_dimension(dim));
     CHECK_FALSE(attacker_ref.expired());
     CHECK(attacker.is_dead());
+    CHECK(MAPBUFFER_REGISTRY.find(dim) == nullptr);
+    g->cleanup_dead();
+    CHECK(attacker_ref.expired());
 }
 
 TEST_CASE("lua_dimension_target_z_limits", "[lua]") {
