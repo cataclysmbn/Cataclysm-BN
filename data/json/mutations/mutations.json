@@ -809,7 +809,7 @@
     "changes_to": [ "SLEEPY2", "MET_RAT" ],
     "starting_trait": true,
     "types": [ "SLEEP" ],
-    "category": [ "BEAST", "CHIMERA", "MOUSE" ],
+    "category": [ "BEAST", "CHIMERA", "MOUSE", "MEDICAL" ],
     "fatigue_modifier": 0.333,
     "fatigue_regen_modifier": 0.333
   },
@@ -1175,8 +1175,7 @@
     "points": -3,
     "description": "You randomly fall asleep without any reason.",
     "starting_trait": true,
-    "valid": false,
-    "category": [ "MEDICAL" ]
+    "valid": false
   },
   {
     "type": "mutation",
