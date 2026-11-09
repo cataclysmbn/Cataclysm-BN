@@ -43,8 +43,8 @@
 #include "overmap_types.h"
 #include "overmapbuffer.h"
 #include "player_activity.h"
+#include "presentation_rng.h"
 #include "regional_settings.h"
-#include "rng.h"
 #include "sdltiles.h"
 #include "sounds.h"
 #include "string_formatter.h"
@@ -943,7 +943,8 @@ static void draw_ascii(
                 } else {
                     iter->second.count++;
                     // Randomly change to new NPC's color
-                    if (iter->second.color != np_color && one_in(iter->second.count)) {
+                    if (iter->second.color != np_color
+                        && presentation_rng(1, iter->second.count) == 1) {
                         iter->second.color = np_color;
                     }
                 }
@@ -979,7 +980,8 @@ static void draw_ascii(
             } else {
                 iter->second.count++;
                 // Randomly change to new NPC's color
-                if (iter->second.color != np_color && one_in(iter->second.count)) {
+                if (iter->second.color != np_color
+                    && presentation_rng(1, iter->second.count) == 1) {
                     iter->second.color = np_color;
                 }
             }

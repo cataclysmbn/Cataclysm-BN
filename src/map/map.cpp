@@ -79,6 +79,7 @@
 #include "player.h"
 #include "point.h"
 #include "point_float.h"
+#include "presentation_rng.h"
 #include "profile.h"
 #include "projectile.h"
 #include "rng.h"
@@ -6671,7 +6672,7 @@ auto map::draw_maptile(
     if (curr_trap.can_see(p, g->u)) {
         tercol = curr_trap.color;
         if (curr_trap.sym == '%') {
-            switch (rng(1, 5)) {
+            switch (presentation_rng(1, 5)) {
                 case 1:
                     sym = '*';
                     break;
@@ -6700,7 +6701,7 @@ auto map::draw_maptile(
             // Do nothing, a '&' indicates invisible fields.
         } else if (field_symbol == "*") {
             // A random symbol.
-            switch (rng(1, 5)) {
+            switch (presentation_rng(1, 5)) {
                 case 1:
                     sym = '*';
                     break;

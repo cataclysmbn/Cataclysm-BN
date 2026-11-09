@@ -31,6 +31,7 @@
 #include "line.h"
 #include "options.h"
 #include "popup.h"
+#include "presentation_rng.h"
 #include "rng.h"
 #include "string_formatter.h"
 #include "string_input_popup.h"
@@ -1915,11 +1916,13 @@ void scrollingcombattext::add( point pos, direction p_oDir,
         } else {
             //reserve Left/Right for creature hp display
             if( p_oDir == ( iso_mode ? direction::SOUTHEAST : direction::EAST ) ) {
-                p_oDir = ( one_in( 2 ) ) ? ( iso_mode ? direction::EAST : direction::NORTHEAST ) :
+                p_oDir = presentation_rng( 0, 1 ) == 0 ?
+                         ( iso_mode ? direction::EAST : direction::NORTHEAST ) :
                          ( iso_mode ? direction::SOUTH : direction::SOUTHEAST );
 
             } else if( p_oDir == ( iso_mode ? direction::NORTHWEST : direction::WEST ) ) {
-                p_oDir = ( one_in( 2 ) ) ? ( iso_mode ? direction::NORTH : direction::NORTHWEST ) :
+                p_oDir = presentation_rng( 0, 1 ) == 0 ?
+                         ( iso_mode ? direction::NORTH : direction::NORTHWEST ) :
                          ( iso_mode ? direction::WEST : direction::SOUTHWEST );
             }
         }
