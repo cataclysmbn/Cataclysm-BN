@@ -6079,7 +6079,7 @@ void overmap::spawn_ores(const tripoint_abs_omt& p) {
         add_note(local_pos, string_format("Signs of %s ore nearby.", note_text));
         if (!(MAPBUFFER_REGISTRY.get(dimension_id_).lookup_submap(target_sub))) {
             // No overmap to replace, set the terrain and bail.
-            ter_set(local_pos, oter_id("omt_ore_vein_" + chosen + directions[rand() % 4]));
+            ter_set(local_pos, oter_id("omt_ore_vein_" + chosen + random_entry_ref(directions)));
             return;
         }
         /* Theres already overmap there, crap, hacky replace time!
@@ -6087,7 +6087,7 @@ void overmap::spawn_ores(const tripoint_abs_omt& p) {
          * function, if there is one, I couldnt find it. Bascially "regenerates" an OM tile.
          */
         map& here = get_map();
-        owning_omb.ter_set(p, oter_id("omt_ore_vein_" + chosen + directions[rand() % 4]));
+        owning_omb.ter_set(p, oter_id("omt_ore_vein_" + chosen + random_entry_ref(directions)));
         mapbuffer generated_buffer;
         generated_buffer.set_dimension_id(dimension_id_);
         mapgen_constructor generated_map(generated_buffer);
