@@ -366,3 +366,20 @@ TEST_CASE("playback leaves the pressed key for menus that open on it", "[replay]
     CHECK(inp_mngr.get_input_event().text == "한");
     CHECK(inp_mngr.get_previously_pressed_key() == 0xD55C);
 }
+
+TEST_CASE("replay ignores record fields it does not know", "[replay][input]") {
+    const auto fixture = replay_fixture{};
+    fixture.write(
+        R"({"kind":"header","format":"cataclysm-bn-replay","version":1,"rng_seed":7,"client":"x"})"
+        "\n"
+        R"({"kind":"input","version":1,"type":"keyboard","sequence":[107],"modifiers":[],"mouse_pos":[0,0],"text":"","edit":"","edit_refresh":false,"shortcut_last_used_action_counter":3,"boundary":{"context":"GAME","actions":["MOVE_N"],"layout":"x"}})"
+        "\n"
+        R"({"kind":"end","version":1,"events":1})"
+        "\n");
+    replay::configure_playback(fixture.path.string());
+    REQUIRE_NOTHROW(replay::start());
+    const auto event = replay::next_input_event({.context = "GAME", .actions = {"MOVE_N"}});
+    REQUIRE(event);
+    CHECK(event->get_first_input() == 'k');
+    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
+}
