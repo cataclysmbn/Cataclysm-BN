@@ -57,3 +57,6 @@ game.add_hook("on_make_mapgen_factory_list", function(params)
   params.results:insert(#params.results + 1, "lab_1side_ice")
   params.results:insert(#params.results + 1, "lab_finale_1level_ice")
 end)
+
+game.examine_functions["ORE_SMELTER_EMPTY"] = function(...) return mod.ore_smelter.examine_empty(...) end
+game.examine_functions["ORE_SMELTER_FULL"] = function(...) return mod.ore_smelter.examine_full(...) end

@@ -272,6 +272,52 @@
   },
   {
     "type": "furniture",
+    "id": "f_ore_smelter_empty",
+    "name": "ore smelter",
+    "description": "A rock smelter designed to melt raw ores into ingots.",
+    "symbol": "U",
+    "color": "brown",
+    "move_cost_mod": -1,
+    "coverage": 90,
+    "required_str": -1,
+    "examine_action": "lua:ORE_SMELTER_EMPTY",
+    "max_volume": "150 L",
+    "flags": [ "CONTAINER", "FIRE_CONTAINER", "PLACE_ITEM", "EASY_DECONSTRUCT", "MINEABLE" ],
+    "deconstruct": { "items": [ { "item": "rock", "count": 40 }, { "item": "material_soil", "count": 2 } ] },
+    "bash": {
+      "str_min": 25,
+      "str_max": 180,
+      "sound": "crash!",
+      "sound_fail": "whump!",
+      "items": [ { "item": "rock", "count": [ 15, 30 ] }, { "item": "material_soil", "count": [ 0, 1 ] } ],
+      "ranged": { "reduction": [ 50, 50 ], "destroy_threshold": 50 }
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_ore_smelter_full",
+    "name": "filled ore smelter",
+    "looks_like": "f_ore_smelter_empty",
+    "description": "A rock smelter designed to melt raw ores into ingots.",
+    "symbol": "U",
+    "color": "brown_red",
+    "move_cost_mod": -1,
+    "coverage": 90,
+    "required_str": -1,
+    "examine_action": "lua:ORE_SMELTER_FULL",
+    "flags": [ "NOITEM", "SEALED", "CONTAINER", "FIRE_CONTAINER", "SUPPRESS_SMOKE", "PLACE_ITEM", "MINEABLE" ],
+    "deconstruct": { "items": [ { "item": "rock", "count": 40 }, { "item": "material_soil", "count": 2 } ] },
+    "bash": {
+      "str_min": 25,
+      "str_max": 180,
+      "sound": "crash!",
+      "sound_fail": "whump!",
+      "items": [ { "item": "rock", "count": [ 15, 30 ] }, { "item": "material_soil", "count": [ 0, 1 ] } ],
+      "ranged": { "reduction": [ 50, 50 ], "destroy_threshold": 50 }
+    }
+  },
+  {
+    "type": "furniture",
     "id": "f_kiln_metal_empty",
     "name": "metal charcoal kiln",
     "description": "A metal kiln designed to burn wood and organic material into charcoal in absence of oxygen.",
