@@ -350,13 +350,19 @@ TEST_CASE("playback leaves the pressed key for menus that open on it", "[replay]
         .pointer_space = "cell",
 #endif
     };
+    // Curses keeps the first UTF-8 byte of a multi-byte key and reports its code point as pressed.
+    auto hangul = input_event(0xED, input_event_t::keyboard);
+    hangul.text = "한";
     replay::configure_recording(fixture.path.string(), {.rng_seed = 9});
     replay::start();
     replay::record_input_event(input_event('r', input_event_t::keyboard), boundary);
+    replay::record_input_event(hangul, boundary);
     replay::finish();
 
     replay::configure_playback(fixture.path.string());
     replay::start();
     CHECK(inp_mngr.get_input_event().get_first_input() == 'r');
     CHECK(inp_mngr.get_previously_pressed_key() == 'r');
+    CHECK(inp_mngr.get_input_event().text == "한");
+    CHECK(inp_mngr.get_previously_pressed_key() == 0xD55C);
 }
