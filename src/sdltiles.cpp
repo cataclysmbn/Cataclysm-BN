@@ -20,6 +20,7 @@
 #    include "get_version.h"
 #    include "hash_utils.h"
 #    include "input.h"
+#    include "input_pending.h"
 #    include "json.h"
 #    include "make_static.h"
 #    include "map/mapbuffer.h"
@@ -72,6 +73,7 @@
 #    include <stdexcept>
 #    include <type_traits>
 #    include <unordered_map>
+#    include <utility>
 #    include <vector>
 
 #if defined(__linux__)
@@ -3964,10 +3966,19 @@ input_event input_manager::get_input_event()
     // however, the refresh call has not effect when nothing has been drawn, so
     // we can skip it if `needupdate` is false to improve performance during mouse
     // move events.
-    if( needupdate ) {
+    // A deferred frame is drawn once the queued keys are read without input, e.g. a lone modifier.
+    auto deferred = main_prompt_reads_input && should_defer_redraw_for_queued_input();
+    if( needupdate && !deferred ) {
         ZoneScopedN( "sdl_input_wrefresh" );
         wrefresh( catacurses::stdscr );
     }
+    const auto draw_deferred = [&] {
+        if( std::exchange( deferred, false ) )
+        {
+            ui_manager::redraw_invalidated();
+            wrefresh( catacurses::stdscr );
+        }
+    };
 
     if( inputdelay < 0 ) {
         ZoneScopedN( "sdl_input_wait_blocking" );
@@ -3976,6 +3987,7 @@ input_event input_manager::get_input_event()
             if( last_input.type != input_event_t::error ) {
                 break;
             }
+            draw_deferred();
             SDL_Delay( 1 );
         } while( last_input.type == input_event_t::error );
     } else if( inputdelay > 0 ) {
@@ -3989,6 +4001,7 @@ input_event input_manager::get_input_event()
             if( last_input.type != input_event_t::error ) {
                 break;
             }
+            draw_deferred();
             SDL_Delay( 1 );
             timedout = endtime >= starttime + inputdelay;
             if( timedout ) {

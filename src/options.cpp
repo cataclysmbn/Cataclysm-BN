@@ -2275,6 +2275,12 @@ void options_manager::add_options_graphics()
          true
        );
 
+    add( "DEFER_REDRAW_ON_QUEUED_INPUT", graphics,
+         translate_marker( "Skip redraw while keys are queued" ),
+         translate_marker( "If true, skips drawing a frame when another key press is already waiting, e.g. while holding a movement key.  The last frame is always drawn, and frames are never skipped when safe mode stops you." ),
+         true
+       );
+
     add( "NIGHT_VISION_DEFAULT_COLOR", graphics, translate_marker( "Night Vision Default Colors" ),
     translate_marker( "Choose from default night vision colors." ), {
         { "#2eab01", translate_marker( "Green" ) },
