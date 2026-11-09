@@ -58,6 +58,8 @@ auto start() -> void;
 auto finish() -> void;
 /// Best-effort cleanup for shutdown paths; use finish() when errors matter.
 auto stop() -> void;
+/// stop(), and delete the recording start() created, for a launch that fails after start().
+auto discard() -> void;
 auto record_input_event(const input_event& event, const input_boundary_metadata& boundary = {})
     -> void;
 auto next_input_event(const input_boundary_metadata& expected_boundary = {})

@@ -274,6 +274,29 @@ TEST_CASE("replay does not overwrite recordings or accept unfinished playback", 
     CHECK_FALSE(replay::is_enabled());
 }
 
+TEST_CASE("discard deletes only a recording that start created", "[replay][input]") {
+    const auto fixture = replay_fixture{};
+    replay::configure_recording(fixture.path.string(), {.rng_seed = 7});
+    replay::start();
+    replay::discard();
+    CHECK_FALSE(replay::is_enabled());
+    CHECK_FALSE(std::filesystem::exists(fixture.path));
+
+    fixture.write(header);
+    replay::configure_recording(fixture.path.string(), {.rng_seed = 7});
+    CHECK_THROWS(replay::start());
+    replay::configure_recording(fixture.path.string(), {.rng_seed = 7});
+    replay::discard();
+    CHECK(fixture.read() == header);
+
+    fixture.write(header + timeout_event);
+    replay::configure_playback(fixture.path.string());
+    replay::start();
+    replay::discard();
+    CHECK_FALSE(replay::is_enabled());
+    CHECK(fixture.read() == header + timeout_event);
+}
+
 TEST_CASE("replay returns recorded external text instead of reading it again", "[replay][input]") {
     const auto fixture = replay_fixture{};
     const auto boundary = replay::input_boundary_metadata{.context = "GAME"};
