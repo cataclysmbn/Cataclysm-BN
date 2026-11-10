@@ -122,15 +122,17 @@ auto submap_load_manager::request_load(
     req.begin = begin;
     req.end = end;
     requests_[handle] = std::move(req);
+    ++simulated_generation_;
     return handle;
 }
 
 auto submap_load_manager::update_request(
     const load_request_handle handle, const point_abs_sm& begin, const point_abs_sm& end) -> void {
     auto it = requests_.find(handle);
-    if (it == requests_.end()) { return; }
+    if (it == requests_.end() || (it->second.begin == begin && it->second.end == end)) { return; }
     it->second.begin = begin;
     it->second.end = end;
+    ++simulated_generation_;
 }
 
 auto submap_load_manager::update_lazy_border_focus(
@@ -158,6 +160,7 @@ void submap_load_manager::release_load(load_request_handle handle) {
         lazy_omt_last_credit_turn_ = -1;
     }
     requests_.erase(handle);
+    ++simulated_generation_;
 }
 
 auto submap_load_manager::compute_desired_set() const -> key_set {
@@ -182,6 +185,7 @@ auto submap_load_manager::compute_desired_set() const -> key_set {
 }
 
 auto submap_load_manager::rebuild_simulated_submaps_by_dimension(const key_set& simulated) -> void {
+    ++simulated_generation_;
     simulated_submaps_by_dimension_.clear();
     for (const auto& [dim_id, pos] : simulated) {
         simulated_submaps_by_dimension_[dim_id].push_back(pos);
@@ -1072,6 +1076,7 @@ void submap_load_manager::flush_prev_desired() {
     prev_desired_.clear();
     prev_simulated_.clear();
     simulated_submaps_by_dimension_.clear();
+    ++simulated_generation_;
     prev_requests_.clear();
     retained_omts_.clear();
     retained_omt_index_.clear();
