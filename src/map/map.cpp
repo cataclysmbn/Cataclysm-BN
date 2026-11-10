@@ -465,6 +465,8 @@ auto map::bind_dimension(const dimension_id& dim) -> void {
     bound_dimension_ = dim;
     refresh_active_submap_view();
     if (changed) {
+        // Cached buffer needs to be cleared as it is bound on a per-dimension basis
+        bound_buffer_ = nullptr;
         // Cached vehicle pointers belong to the old buffer, which may now be unloaded.
         dirty_vehicle_list.clear();
         for (auto z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; ++z) { clear_vehicle_list(z); }
