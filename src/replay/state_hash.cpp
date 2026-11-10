@@ -21,7 +21,6 @@
 namespace replay {
 namespace {
 
-constexpr auto state_hash_version = 1;
 /// Squares around the avatar, on its z-level, whose terrain, furniture, fields and items are
 /// hashed.
 constexpr auto map_radius = std::size_t{30};
@@ -85,35 +84,6 @@ auto map_text() -> std::string {
 
 } // namespace
 
-auto hash_game_state() -> state_hash {
-    return {
-        .turn = to_turn<int>(calendar::turn),
-        .parts =
-            {
-                {.name = "rng", .digest = digest_of(rng_text())},
-                {.name = "avatar", .digest = digest_of(serialized(get_avatar()))},
-                {.name = "monsters", .digest = digest_of(monsters_text())},
-                {.name = "npcs", .digest = digest_of(npcs_text())},
-                {.name = "map", .digest = digest_of(map_text())},
-            },
-    };
-}
-
-auto format_state_hash(const std::size_t step, const state_hash& hash) -> std::string {
-    auto stream = std::ostringstream{};
-    auto json = JsonOut(stream);
-    json.start_object();
-    json.member("kind", "state");
-    json.member("step", step);
-    json.member("turn", hash.turn);
-    json.member("parts");
-    json.start_object();
-    for (const auto& part : hash.parts) { json.member(part.name, part.digest); }
-    json.end_object();
-    json.end_object();
-    return stream.str();
-}
-
 auto configure_state_hash_log(const std::string& path) -> void {
     auto& log = log_state();
     if (log.stream.is_open()) { throw std::runtime_error("State hash log is already configured"); }
@@ -123,7 +93,6 @@ auto configure_state_hash_log(const std::string& path) -> void {
     json.start_object();
     json.member("kind", "header");
     json.member("format", "cataclysm-bn-state-hash");
-    json.member("version", state_hash_version);
     json.end_object();
     log.stream << '\n' << std::flush;
     if (!log.stream) { throw std::runtime_error("Could not write state hash log: " + path); }
@@ -132,7 +101,21 @@ auto configure_state_hash_log(const std::string& path) -> void {
 auto log_state_hash() -> void {
     auto& log = log_state();
     if (!log.stream.is_open()) { return; }
-    log.stream << format_state_hash(++log.step, hash_game_state()) << '\n' << std::flush;
+    auto json = JsonOut(log.stream);
+    json.start_object();
+    json.member("kind", "state");
+    json.member("step", ++log.step);
+    json.member("turn", to_turn<int>(calendar::turn));
+    json.member("parts");
+    json.start_object();
+    json.member("rng", digest_of(rng_text()));
+    json.member("avatar", digest_of(serialized(get_avatar())));
+    json.member("monsters", digest_of(monsters_text()));
+    json.member("npcs", digest_of(npcs_text()));
+    json.member("map", digest_of(map_text()));
+    json.end_object();
+    json.end_object();
+    log.stream << '\n' << std::flush;
 }
 
 auto stop_state_hash_log() -> void { log_state() = state_log{}; }
