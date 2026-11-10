@@ -105,15 +105,9 @@ struct failure {
     std::vector<trait_id> mut;
     itype_id item_name;
     std::string reason;
-};
 
-namespace std {
-template <> struct less<failure> {
-    auto operator()(const failure& lhs, const failure& rhs) const -> bool {
-        return lhs.prof < rhs.prof;
-    }
+    auto operator<(const failure& rhs) const -> bool { return prof < rhs.prof; }
 };
-} // namespace std
 
 // TODO: According to profiling (interrupt, backtrace, wait a few seconds, repeat) with a sample
 // size of 20, 70% of the time is due to the call to Character::set_mutation in try_set_traits.

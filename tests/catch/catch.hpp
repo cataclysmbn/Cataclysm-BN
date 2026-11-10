@@ -918,6 +918,7 @@ constexpr auto operator "" _catch_sr( char const* rawChars, std::size_t size ) n
 // start catch_meta.hpp
 
 
+#include <new>
 #include <type_traits>
 
 namespace Catch {

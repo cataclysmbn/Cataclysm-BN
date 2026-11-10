@@ -36,6 +36,8 @@ CataclysmBN をビルドするには、以下のライブラリと開発用ヘ�
 
 ## ビルド環境
 
+1つのビルドツリーにはタイル、curses（`-DCURSES=ON -DTILES=OFF`）、プロトコルエンジン `cataclysm-bn-mcp`（`linux-mcp` プリセット、`-DMCP=ON`）のいずれか1つだけが入ります。
+
 最新バージョンのソースコード tarball は [git](https://github.com/cataclysmbn/Cataclysm-BN) から取得できます。
 
 ```sh

@@ -63,9 +63,12 @@ auto print_button( const catacurses::window &w, const button_options &opts ) -> 
    cmake --preset linux-full
    cmake --build --preset linux-full --target cataclysm-bn-tiles cata_test-tiles
    ```
+   On XDG builds, run validation games with both `--userdir <profile>/` and `--configdir <profile>/config/`; check the config directory with `--paths` first. Never change or restore personal configuration without a known baseline.
 4. Add/update Catch2 tests in `tests/` and run checks:
    ```sh
    ./out/build/linux-full/tests/cata_test-tiles "[optional-filter]"
+   # whole suite as shards (also for cata_test-mcp); see docs/en/dev/guides/testing.md
+   build-scripts/run-linux-test-shards.ts --mode file-tags --jobs 4 ./out/build/linux-full/tests/cata_test-tiles -- --use-colour no --rng-seed 1 --gpu-backend=software
    ./build-scripts/lint-json.sh
    ./out/build/linux-full/cataclysm-bn-tiles --check-mods
    deno task docs:gen  # when lua_annotations.lua or docs/en/mod/lua/reference/lua.md conflict
