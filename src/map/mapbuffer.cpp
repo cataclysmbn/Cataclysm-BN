@@ -721,6 +721,10 @@ auto mapbuffer_abs_tile_view::passable_with_vehicle(const optional_vpart_positio
     return move_cost_with_vehicle(vp) != 0;
 }
 
+auto mapbuffer_abs_tile_view::has_flag(ter_bitflags flag) const -> bool {
+    return get_ter_t().has_flag(flag) || get_furn_t().has_flag(flag);
+}
+
 mapbuffer_abs_tile_with_vehicle_view::mapbuffer_abs_tile_with_vehicle_view(
     const mapbuffer_abs_tile_view& tile, const optional_vpart_position& vehicle_part)
     : tile_(tile),
@@ -1272,6 +1276,7 @@ void mapbuffer::unload_omt(const tripoint_abs_omt& omt_addr, bool save) {
 }
 
 auto mapbuffer::lookup_submap(const tripoint_abs_sm& p) -> submap* {
+    ZoneScoped;
     // Fast path: submap already resident in memory.
     auto* resident_sm = static_cast<submap*>(nullptr);
     { resident_sm = lookup_submap_in_memory(p); }

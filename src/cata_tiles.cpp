@@ -1988,6 +1988,7 @@ void cata_tiles::set_draw_scale( float scale )
 
 std::optional<tile_search_result> cata_tiles::tile_type_search( const tile_search_params &tile )
 {
+    ZoneScoped;
     auto [id, category, subcategory, subtile, rota] = tile;
     std::optional<tile_lookup_res> res = find_tile_looks_like( id, category );
     const tile_type *tt = nullptr;
@@ -3572,6 +3573,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                 const bool in_vis_bounds = ( y >= min_visible_y && y <= max_visible_y && x >= min_visible_x &&
                                              x <= max_visible_x );
                 for( int z = center.z(); z >= -OVERMAP_DEPTH; z-- ) {
+                    ZoneScopedN( "cata_tiles_queue_draw_points" );
                     const auto &ch = here.access_cache( z );
 
                     const tripoint_bub_ms pos( temp_x, temp_y, z );
@@ -3631,6 +3633,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                         const auto height_3d = ( pos.z() - center.z() ) * tileset_ptr->get_zlevel_height();
 
                         for( const auto i : std::views::iota( 0, 4 ) ) {
+                            ZoneScopedN( "cata_tiles_queue_draw_points_set_invisible" );
                             const tripoint np = pos.raw() + neighborhood[i];
                             invisible[1 + i] = np.y < min_visible_y || np.y > max_visible_y ||
                                                np.x < min_visible_x || np.x > max_visible_x ||
@@ -3843,6 +3846,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
 
     const auto memorize_live_terrain = [&]( const tripoint_bub_ms & p,
     const bool( &invisible )[5] ) {
+        ZoneScopedN( "memorize_live_terrain" );
         if( invisible[0] ) {
             return;
         }
@@ -3873,6 +3877,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
 
     const auto memorize_live_furniture = [&]( const tripoint_bub_ms & p,
     const bool( &invisible )[5] ) {
+        ZoneScopedN( "memorize_live_furniture" );
         if( invisible[0] ) {
             return;
         }
@@ -3901,6 +3906,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
 
     const auto memorize_live_trap = [&]( const tripoint_bub_ms & p,
     const bool( &invisible )[5] ) {
+        ZoneScopedN( "memorize_live_trap" );
         if( invisible[0] ) {
             return;
         }
@@ -3953,6 +3959,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
 
     const auto memorize_live_vehicle = [&]( const tripoint_bub_ms & p,
     const bool( &invisible )[5] ) {
+        ZoneScopedN( "memorize_live_vehicle" );
         if( invisible[0] ) {
             return;
         }
@@ -4062,6 +4069,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
             }
         };
         const auto memorize_full_scan_point = [&]( const point_bub_ms & mem_p ) {
+            ZoneScopedN( "memorize_full_scan_point" );
             const auto mem_x = mem_p.x();
             const auto mem_y = mem_p.y();
             lit_level lighting = _cz.visibility_cache[_cz.idx( mem_x, mem_y )];
@@ -5046,6 +5054,7 @@ bool cata_tiles::draw_tile_at( const tile_type &tile, point_bub_ms p,
                                int overlay_count, int retract,
                                const render_light_tint &light_tint )
 {
+    ZoneScoped;
     draw_sprite_at( tile, p, loc_rand, /*fg:*/ false, rota, bg_tint, ll,
                     apply_visual_effects, overlay_count, nullptr, retract,
                     TILESET_NO_WARP, light_tint );
@@ -5081,6 +5090,7 @@ bool cata_tiles::would_apply_vision_effects( const visibility_type visibility ) 
 bool cata_tiles::apply_vision_effects( const tripoint_bub_ms &pos,
                                        const visibility_type visibility )
 {
+    ZoneScoped;
     if( !would_apply_vision_effects( visibility ) ) {
         return false;
     }
@@ -5159,6 +5169,7 @@ std::optional<memorized_terrain_tile>
 
 bool cata_tiles::has_memory_at( const tripoint_bub_ms &p )
 {
+    ZoneScoped;
     if( !g->u.should_show_map_memory() ) {
         return false;
     }
@@ -5166,15 +5177,14 @@ bool cata_tiles::has_memory_at( const tripoint_bub_ms &p )
     const auto abs = bub_to_abs( p );
     // Check overlay slot (furniture, vpart, trap) and terrain slot separately,
     // since terrain is now stored in its own slot and may be the only memory present.
-    if( !g->u.get_memorized_tile( abs ).tile.empty() ) {
-        return true;
-    }
-    return !g->u.get_terrain_tile( abs ).tile.empty();
+    return !g->u.get_memorized_tile( abs ).tile.empty() ||
+           !g->u.get_terrain_tile( abs ).tile.empty();
 }
 
 auto cata_tiles::get_ter_memory_at( const tripoint_bub_ms &p ) ->
 std::optional<memorized_terrain_tile>
 {
+    ZoneScoped;
     if( !g->u.should_show_map_memory() ) {
         return std::nullopt;
     }
@@ -5189,23 +5199,27 @@ std::optional<memorized_terrain_tile>
 auto cata_tiles::get_furn_memory_at( const tripoint_bub_ms &p ) ->
 std::optional<memorized_terrain_tile>
 {
+    ZoneScoped;
     return get_map_memory_of_at<furn_t>( p );
 }
 
 auto cata_tiles::get_trap_memory_at( const tripoint_bub_ms &p ) ->
 std::optional<memorized_terrain_tile>
 {
+    ZoneScoped;
     return get_map_memory_of_at<trap>( p );
 }
 
 auto cata_tiles::get_vpart_memory_at( const tripoint_bub_ms &p ) ->
 std::optional<memorized_terrain_tile>
 {
+    ZoneScoped;
     return get_map_memory_of_at<vpart_info>( p );
 }
 
 bool cata_tiles::draw_block( const tripoint_bub_ms &p, SDL_Color color, int scale )
 {
+    ZoneScoped;
     SDL_Rect rect;
     rect.h = tile_width / scale;
     rect.w = tile_height / scale;
@@ -5241,6 +5255,7 @@ bool cata_tiles::draw_block( const tripoint_bub_ms &p, SDL_Color color, int scal
 bool cata_tiles::draw_terrain( const tripoint_bub_ms &p, const lit_level ll, int &height_3d,
                                const bool ( &invisible )[5], int z_drop )
 {
+    ZoneScoped;
     map &here = get_map();
     const auto override = terrain_override.find( p );
     const bool overridden = override != terrain_override.end();
@@ -5254,7 +5269,8 @@ bool cata_tiles::draw_terrain( const tripoint_bub_ms &p, const lit_level ll, int
         }
     }
 
-    const ter_id &t = here.ter( p );
+    const auto tile = here.get_tile_view_at( p );
+    const auto t = tile ? tile->get_ter() : t_null;
     const auto [bgCol, fgCol] = get_terrain_color( t.obj(), here, p );
 
     // first memorize the actual terrain
@@ -5341,6 +5357,7 @@ bool cata_tiles::draw_terrain( const tripoint_bub_ms &p, const lit_level ll, int
 bool cata_tiles::draw_furniture( const tripoint_bub_ms &p, const lit_level ll, int &height_3d,
                                  const bool ( &invisible )[5], int z_drop )
 {
+    ZoneScoped;
     const auto override = furniture_override.find( p );
     const bool overridden = override != furniture_override.end();
     bool neighborhood_overridden = overridden;
@@ -5442,6 +5459,7 @@ bool cata_tiles::draw_furniture( const tripoint_bub_ms &p, const lit_level ll, i
 bool cata_tiles::draw_trap( const tripoint_bub_ms &p, const lit_level ll, int &height_3d,
                             const bool ( &invisible )[5], int z_drop )
 {
+    ZoneScoped;
     const auto override = trap_override.find( p );
     const bool overridden = override != trap_override.end();
     bool neighborhood_overridden = overridden;
@@ -5455,17 +5473,23 @@ bool cata_tiles::draw_trap( const tripoint_bub_ms &p, const lit_level ll, int &h
     }
 
     map &here = get_map();
-    const trap &tr = here.tr_at( p );
+    auto trap_at = [&]( const tripoint_bub_ms & q ) -> trap {
+        std::optional<mapbuffer_abs_tile_view> tile = here.get_tile_view_at( q );
+        if( !tile ) { return tr_null.obj(); }
+        return tile.value().get_trap_t();
+    };
+
+    const trap &tr = trap_at( p );
     const trap_id &tr_id = tr.loadid;
     auto [bgCol, fgCol] = get_trap_color( tr, here, p );
 
     // first memorize the actual trap
     if( tr_id && !invisible[0] && tr_id.obj().can_see( p, g->u ) ) {
         const int neighborhood[4] = {
-            static_cast<int>( here.tr_at( p + point_south ).loadid ),
-            static_cast<int>( here.tr_at( p + point_east ).loadid ),
-            static_cast<int>( here.tr_at( p + point_west ).loadid ),
-            static_cast<int>( here.tr_at( p + point_north ).loadid )
+            static_cast<int>( trap_at( p + point_south ).loadid ),
+            static_cast<int>( trap_at( p + point_east ).loadid ),
+            static_cast<int>( trap_at( p + point_west ).loadid ),
+            static_cast<int>( trap_at( p + point_north ).loadid )
         };
         int subtile = 0;
         int rotation = 0;
@@ -5491,7 +5515,7 @@ bool cata_tiles::draw_trap( const tripoint_bub_ms &p, const lit_level ll, int &h
             const auto tr_at = [&]( const tripoint_bub_ms & q, const bool invis ) -> trap_id {
                 const auto it = trap_override.find( q );
                 return it != trap_override.end() ? it->second :
-                ( !overridden || !invis ) ? here.tr_at( tripoint_bub_ms( q ) ).loadid : tr_null;
+                ( !overridden || !invis ) ? trap_at( tripoint_bub_ms( q ) ).loadid : tr_null;
             };
             const int neighborhood[4] = {
                 static_cast<int>( tr_at( p + point_south, invisible[1] ) ),
@@ -5529,6 +5553,7 @@ bool cata_tiles::draw_trap( const tripoint_bub_ms &p, const lit_level ll, int &h
 bool cata_tiles::draw_graffiti( const tripoint_bub_ms &p, const lit_level ll, int &height_3d,
                                 const bool ( &invisible )[5], int z_drop )
 {
+    ZoneScoped;
     const auto override = graffiti_override.find( p );
     const bool overridden = override != graffiti_override.end();
     if( overridden ? !override->second : ( invisible[0] ||
@@ -5548,14 +5573,24 @@ bool cata_tiles::draw_graffiti( const tripoint_bub_ms &p, const lit_level ll, in
 bool cata_tiles::draw_field_or_item( const tripoint_bub_ms &p, const lit_level ll, int &height_3d,
                                      const bool ( &invisible )[5], int z_drop )
 {
+    ZoneScoped;
     if( z_drop > OVERMAP_HEIGHT + OVERMAP_DEPTH ) {
         return false;
     }
     const auto fld_override = field_override.find( p );
     const bool fld_overridden = fld_override != field_override.end();
     map &here = get_map();
+    auto field_at = [&]( const tripoint_bub_ms & q, const bool invis ) -> field_type_id {
+        const auto it = field_override.find( q );
+        if( it != field_override.end() ) { return it->second; }
+        if( invis && fld_overridden ) { return fd_null; }
+        std::optional<mapbuffer_abs_tile_view> tile = here.get_tile_view_at( q );
+        if( !tile ) { return fd_null; }
+        return tile.value().get_field().displayed_field_type();
+    };
+
     const field_type_id &fld = fld_overridden ?
-                               fld_override->second : here.field_at( p ).displayed_field_type();
+                               fld_override->second : field_at( p, invisible[0] );
 
     bool ret_draw_field = false;
     bool ret_draw_items = false;
@@ -5563,11 +5598,6 @@ bool cata_tiles::draw_field_or_item( const tripoint_bub_ms &p, const lit_level l
         const lit_level lit = fld_overridden ? lit_level::LIT : ll;
         const bool nv = !fld_overridden;
 
-        auto field_at = [&]( const tripoint_bub_ms & q, const bool invis ) -> field_type_id {
-            const auto it = field_override.find( q );
-            return it != field_override.end() ? it->second :
-            ( !fld_overridden || !invis ) ? here.field_at( q ).displayed_field_type() : fd_null;
-        };
         // for rotation information
         const int neighborhood[4] = {
             static_cast<int>( field_at( p + point_south, invisible[1] ) ),
@@ -5672,6 +5702,7 @@ bool cata_tiles::draw_field_or_item( const tripoint_bub_ms &p, const lit_level l
 bool cata_tiles::draw_vpart( const tripoint_bub_ms &p, lit_level ll, int &height_3d,
                              const bool ( &invisible )[5], int z_drop )
 {
+    ZoneScoped;
     const auto override = vpart_override.find( p );
     const bool overridden = override != vpart_override.end();
     map &here = get_map();
@@ -5910,6 +5941,7 @@ bool cata_tiles::draw_vpart( const tripoint_bub_ms &p, lit_level ll, int &height
 bool cata_tiles::draw_critter_at( const tripoint_bub_ms &p, lit_level ll, int &height_3d,
                                   const bool ( &invisible )[5], int z_drop )
 {
+    ZoneScoped;
     bool result;
     bool is_player;
     bool sees_player;
@@ -6055,6 +6087,7 @@ bool cata_tiles::draw_critter_at( const tripoint_bub_ms &p, lit_level ll, int &h
 bool cata_tiles::draw_zone_mark( const tripoint_bub_ms &p, lit_level ll, int &height_3d,
                                  const bool ( &invisible )[5], int z_drop )
 {
+    ZoneScoped;
     if( invisible[0] ) {
         return false;
     }
@@ -6084,10 +6117,23 @@ bool cata_tiles::draw_zone_mark( const tripoint_bub_ms &p, lit_level ll, int &he
 bool cata_tiles::draw_zombie_revival_indicators( const tripoint_bub_ms &pos, const lit_level /*ll*/,
         int &/*height_3d*/, const bool ( &invisible )[5], int z_drop )
 {
+    ZoneScoped;
     map &here = get_map();
     if( tileset_ptr->find_tile_type( ZOMBIE_REVIVAL_INDICATOR ) && !invisible[0] &&
         !item_override.contains( pos ) && here.could_see_items( tripoint_bub_ms( pos ), g->u ) ) {
-        for( auto &i : here.i_at( tripoint_bub_ms( pos ) ) ) {
+
+        const auto i_at = [&]( const tripoint_bub_ms & p ) -> const location_vector<item>& {
+            std::optional<mapbuffer_abs_tile_view> tile = here.get_tile_view_at( p );
+            if( !tile )
+            {
+                return {};
+            } else
+            {
+                return tile->get_items();
+            }
+        };
+
+        for( auto &i : i_at( pos ) ) {
             if( i->is_corpse() ) {
                 if( i->can_revive() || ( i->get_mtype()->zombify_into && !i->has_flag( flag_PULPED ) ) ) {
                     const tile_search_params tile { ZOMBIE_REVIVAL_INDICATOR, C_NONE, empty_string, 0, 0 };
@@ -6816,6 +6862,8 @@ void cata_tiles::void_monster_override()
 }
 bool cata_tiles::has_draw_override( const tripoint_bub_ms &p ) const
 {
+
+    ZoneScoped;
     return radiation_override.contains( p ) ||
            terrain_override.contains( p ) ||
            furniture_override.contains( p ) ||
@@ -7191,12 +7239,16 @@ void cata_tiles::init_light()
 void cata_tiles::get_terrain_orientation( const tripoint_bub_ms &p, int &rota, int &subtile,
         const std::map<tripoint_bub_ms, ter_id> &ter_override, const bool ( &invisible )[5] )
 {
+    ZoneScoped;
     map &here = get_map();
     const bool overridden = ter_override.contains( p );
     const auto ter = [&]( const tripoint_bub_ms & q, const bool invis ) -> ter_id {
         const auto override = ter_override.find( q );
-        return override != ter_override.end() ? override->second :
-        ( !overridden || !invis ) ? here.ter( q ) : t_null;
+        if( override != ter_override.end() ) { return override->second; }
+        if( overridden && invis ) { return t_null; }
+        std::optional<mapbuffer_abs_tile_view> tile = here.get_tile_view_at( q );
+        if( !tile ) { return t_null; }
+        return tile.value().get_ter();
     };
 
     // get terrain at x,y
