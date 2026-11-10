@@ -16,6 +16,11 @@ void clear_npcs();
 void clear_fields(int zlevel);
 void clear_items(int zlevel);
 void clear_map();
+#    if defined(CATA_MCP)
+/// Makes the open air above the ground the uniform submaps the game generates for it, as
+/// `clear_map` leaves every square written to.
+auto make_open_air_uniform() -> void;
+#    endif
 void clear_overmap();
 void put_player_underground();
 auto move_player_out_of_the_way() -> void;
