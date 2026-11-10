@@ -1366,6 +1366,15 @@ class game : public submap_load_listener
         // currently ineligible because of nearby simulation state.
         time_point next_activity_fixed_window_check_ = calendar::turn_zero;
         bool activity_fixed_window_force_normal_turn_ = false;
+#if defined(CATA_MCP)
+    public:
+        /// Forgets the fixed-window skip state, as starting a game does, for a clock that was set back.
+        auto reset_activity_fixed_window() -> void {
+            next_activity_fixed_window_check_ = calendar::turn_zero;
+            activity_fixed_window_force_normal_turn_ = false;
+        }
+    private:
+#endif
 
         // Consecutive turns each dynamic condition has been continuously met.
         // Trigger fires once the count reaches DYNAMIC_BUBBLE_GRACE; resets to 0 immediately
