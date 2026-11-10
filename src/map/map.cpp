@@ -463,10 +463,10 @@ auto map::resize(int new_mapsize) -> void {
 auto map::bind_dimension(const dimension_id& dim) -> void {
     const auto changed = bound_dimension_ != dim;
     bound_dimension_ = dim;
+    // Cached buffer needs to be cleared as it is bound on a per-dimension basis
+    bound_buffer_ = nullptr;
     refresh_active_submap_view();
     if (changed) {
-        // Cached buffer needs to be cleared as it is bound on a per-dimension basis
-        bound_buffer_ = nullptr;
         // Cached vehicle pointers belong to the old buffer, which may now be unloaded.
         dirty_vehicle_list.clear();
         for (auto z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; ++z) { clear_vehicle_list(z); }
