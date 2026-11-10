@@ -1,4 +1,5 @@
 #include "animation.h"
+#include "mcp_hooks.h"
 
 #include "avatar.h"
 #include "cached_options.h"
@@ -352,16 +353,18 @@ void explosion_handler::draw_explosion( const tripoint_bub_ms &p, const int r, c
 }
 #else
 void explosion_handler::draw_explosion( const tripoint_bub_ms &p, const int r, const nc_color &col,
-                                        const std::string & )
+                                        const std::string &MCP_ONLY( name ) )
 {
+    MCP_ONLY( engine_client::presentation::record_explosion( p, r, col, name ); return; )
     draw_explosion_curses( *g, p, r, col );
 }
 #endif
 
-void explosion_handler::draw_custom_explosion( const tripoint_bub_ms &,
+void explosion_handler::draw_custom_explosion( const tripoint_bub_ms &MCP_ONLY( p ),
         const std::map<tripoint_bub_ms, nc_color> &all_area,
         const std::string &exp_name )
 {
+    MCP_ONLY( engine_client::presentation::record_custom_explosion( p, all_area, exp_name ); return; )
 #if !defined(TILES)
     ( void )exp_name;
 #endif
@@ -582,8 +585,10 @@ void game::draw_bullet( const tripoint_bub_ms &t, const int i,
 #else
 void game::draw_bullet( const tripoint_bub_ms &t, const int i,
                         const std::vector<tripoint_bub_ms> &trajectory,
-                        const char bullet, const std::string & )
+                        const char bullet, const std::string &MCP_ONLY( custom_sprite ) )
 {
+    MCP_ONLY( engine_client::presentation::record_bullet( { .at = t, .index = i, .bullet = bullet, .custom_sprite = custom_sprite } );
+              return; )
     refresh_player_visibility_cache_if_needed();
     draw_bullet_curses( m, t, bullet, &trajectory[i] );
 }
@@ -680,7 +685,7 @@ auto draw_bullet_trajectories_curses( game &g,
 
 void draw_bullet_trajectories( const draw_bullet_trajectories_options &options )
 {
-    if( options.trajectories.empty() ) {
+    if( protocol_engine || options.trajectories.empty() ) {
         return;
     }
 
@@ -800,6 +805,8 @@ void game::draw_hit_mon( const tripoint_bub_ms &p, const monster &m, const bool 
 #else
 void game::draw_hit_mon( const tripoint_bub_ms &p, const monster &m, const bool dead )
 {
+    // A client learns of a hit from `entity.damaged`.
+    MCP_ONLY( return; )
     draw_hit_mon_curses( p, m, u, dead );
 }
 #endif
@@ -845,6 +852,7 @@ void game::draw_hit_player( const Character &p, const int dam )
 #else
 void game::draw_hit_player( const Character &who, const int dam )
 {
+    MCP_ONLY( return; )
     draw_hit_player_curses( *this, who, dam );
 }
 #endif
@@ -986,6 +994,7 @@ void game::draw_line( const tripoint_bub_ms &p, const std::vector<tripoint_bub_m
 #else
 void draw_line_of( const draw_sprite_line_options &options )
 {
+    MCP_ONLY( engine_client::presentation::record_line( options ); return; )
     g->draw_line( options.p, options.points );
 }
 void game::draw_line( const tripoint_bub_ms &/*p*/, const std::vector<tripoint_bub_ms> &points )
@@ -1413,7 +1422,7 @@ namespace ranged
 {
 void draw_cone_aoe( const tripoint_bub_ms &origin, const std::map<tripoint_bub_ms, double> &aoe )
 {
-    if( test_mode ) {
+    if( protocol_engine || test_mode ) {
         return;
     }
 
