@@ -31,10 +31,17 @@ struct rng_deterministic_key {
     std::uint64_t id = 0;
 };
 
+struct rng_task_context {
+    cata_default_random_engine engine;
+    unsigned int seed = 0;
+    std::uint64_t child_counter = 0;
+};
+
+/// Draws from an engine seeded with `seed` until destroyed; with no seed, changes nothing.
 class rng_deterministic_task_scope
 {
     public:
-        explicit rng_deterministic_task_scope( unsigned int seed );
+        explicit rng_deterministic_task_scope( std::optional<unsigned int> seed );
         ~rng_deterministic_task_scope();
 
         rng_deterministic_task_scope( const rng_deterministic_task_scope & ) = delete;
@@ -42,11 +49,7 @@ class rng_deterministic_task_scope
         -> rng_deterministic_task_scope & = delete; // *NOPAD*
 
     private:
-        bool old_has_task_engine_ = false;
-        cata_default_random_engine old_task_engine_;
-        bool old_has_task_context_ = false;
-        std::uint64_t old_task_context_seed_ = 0;
-        std::uint64_t old_task_child_counter_ = 0;
+        std::optional<rng_task_context> old_;
 };
 
 auto rng_get_engine() -> cata_default_random_engine &; // *NOPAD*
@@ -99,6 +102,13 @@ inline int roll_remainder( float value )
 }
 
 int djb2_hash( const unsigned char *input );
+
+/// Deterministic task id for work at point `p` of a dimension.
+template<typename Point>
+auto rng_task_id( const std::string &dimension, const Point &p ) -> std::uint64_t
+{
+    return std::hash<Point> {}( p ) ^ ( std::hash<std::string> {}( dimension ) << 1 );
+}
 
 double rng_normal( double lo, double hi );
 

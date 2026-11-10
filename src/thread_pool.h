@@ -1,7 +1,6 @@
 #pragma once
 
 #include <algorithm>
-#include <cstdint>
 #include <condition_variable>
 #include <deque>
 #include <exception>
@@ -10,54 +9,12 @@
 #include <latch>
 #include <memory>
 #include <mutex>
-#include <optional>
 #include <thread>
 #include <type_traits>
 #include <utility>
 #include <vector>
 
 #include "rng.h"
-
-namespace thread_pool_detail
-{
-
-constexpr auto parallel_for_seed_stream = std::uint64_t { 0x706172666f725f5f };
-constexpr auto parallel_for_chunked_seed_stream = std::uint64_t { 0x7061726368756e6b };
-
-/// Runs `f( index )` under the call's deterministic child seed, when one is active.
-template<typename F>
-auto run_seeded_index( F &f, const std::optional<unsigned int> &call_seed,
-                       const std::uint64_t stream, const int index ) -> void
-{
-    if( call_seed ) {
-        const auto seed = rng_deterministic_child_seed( *call_seed, {
-            .stream = stream, .id = static_cast<std::uint64_t>( index )
-        } );
-        [[maybe_unused]] const auto scope = rng_deterministic_task_scope( seed );
-        f( index );
-    } else {
-        f( index );
-    }
-}
-
-/// Runs `run_index` over [chunk_begin, chunk_end), recording the first exception.
-template<typename F>
-auto run_index_chunk( F &run_index, const int chunk_begin, const int chunk_end,
-                      std::exception_ptr &first_exception, std::mutex &exception_mutex ) -> void
-{
-    try {
-        for( auto index = chunk_begin; index < chunk_end; ++index ) {
-            run_index( index );
-        }
-    } catch( ... ) {
-        auto lock = std::lock_guard<std::mutex>( exception_mutex );
-        if( !first_exception ) {
-            first_exception = std::current_exception();
-        }
-    }
-}
-
-} // namespace thread_pool_detail
 
 /**
  * Persistent thread pool for parallelizing game work.
@@ -132,7 +89,7 @@ class cata_thread_pool
             auto task = std::make_shared<std::packaged_task<R()>>(
                             std::bind( std::forward<F>( f ), std::forward<Args>( args )... )
                         );
-            auto fut = task->get_future();
+            std::future<R> fut = task->get_future();
             if( num_workers() == 0 ) {
                 // Single-core fallback: execute synchronously on the calling thread
                 // to avoid enqueuing work that would never be processed by a worker.
@@ -147,15 +104,10 @@ class cata_thread_pool
 
         /// submit_returning(), drawing from the deterministic stream `key` names when one is active.
         template<typename F, typename... Args>
-        auto submit_returning( const rng_deterministic_key &key, F &&f, Args &&...args )
-        -> std::future<std::invoke_result_t<std::decay_t<F>, std::decay_t<Args>...>> {
-            const auto seed = rng_deterministic_seed_for_current_context( key );
-            auto bound = std::bind( std::forward<F>( f ), std::forward<Args>( args )... );
-            return submit_returning( [seed, task = std::move( bound )]() mutable {
-                auto scope = std::optional<rng_deterministic_task_scope> {};
-                if( seed ) {
-                    scope.emplace( *seed );
-                }
+        auto submit_returning( const rng_deterministic_key &key, F &&f, Args &&...args ) {
+            return submit_returning( [seed = rng_deterministic_seed_for_current_context( key ),
+                 task = std::bind( std::forward<F>( f ), std::forward<Args>( args )... )]() mutable {
+                const auto scope = rng_deterministic_task_scope( seed );
                 return task();
             } );
         }
@@ -172,6 +124,20 @@ class cata_thread_pool
 
 /** Returns the process-lifetime thread pool (lazy-initialized, thread-safe). */
 cata_thread_pool &get_thread_pool();
+
+namespace thread_pool_detail
+{
+/// Wraps `f` so that each index draws from its own child of the call's deterministic seed, when one is active.
+template<typename F>
+auto seeded( const std::uint64_t stream, F &f )
+{
+    return [&f, stream, call_seed = rng_next_deterministic_call_seed( stream )]( const int index ) {
+        const auto child = [&]( const unsigned int seed ) { return rng_deterministic_child_seed( seed, { .stream = stream, .id = static_cast<std::uint64_t>( index ) } ); };
+        const auto scope = rng_deterministic_task_scope( call_seed.transform( child ) );
+        f( index );
+    };
+}
+} // namespace thread_pool_detail
 
 /**
  * Returns true when the calling thread is a pool worker thread.
@@ -195,56 +161,57 @@ bool is_pool_worker_thread();
  * F must be callable as  void F(int index)
  */
 template<typename F>
-auto parallel_for( const int begin, const int end, F &&f ) -> void
+void parallel_for( int begin, int end, F &&body )
 {
-    const auto n = end - begin;
+    const int n = end - begin;
     if( n <= 0 ) {
         return;
     }
+    const auto f = thread_pool_detail::seeded( 0x706172666f725f5f, body );
 
-    const auto call_seed = rng_next_deterministic_call_seed(
-                               thread_pool_detail::parallel_for_seed_stream );
-    const auto run_index = [&f, &call_seed]( const int index ) {
-        thread_pool_detail::run_seeded_index( f, call_seed, thread_pool_detail::parallel_for_seed_stream,
-                                              index );
-    };
-
+    // Short-circuit: single item — run directly with no dispatch overhead.
     if( n == 1 ) {
-        run_index( begin );
+        f( begin );
         return;
     }
 
-    auto &pool = get_thread_pool();
-    const auto worker_count = static_cast<int>( pool.num_workers() );
+    cata_thread_pool &pool = get_thread_pool();
+    const int nw = static_cast<int>( pool.num_workers() );
+
     // Workers must not wait for nested tasks queued to their own saturated pool.
-    if( worker_count == 0 || is_pool_worker_thread() ) {
-        for( auto index = begin; index < end; ++index ) {
-            run_index( index );
+    if( nw == 0 || is_pool_worker_thread() ) {
+        for( int i = begin; i < end; ++i ) {
+            f( i );
         }
         return;
     }
 
-    const auto chunks = std::min( n, worker_count );
-    auto first_exception = std::exception_ptr{};
-    auto exception_mutex = std::mutex{};
-    const auto run_chunk = [&]( const int chunk_begin, const int chunk_end ) {
-        thread_pool_detail::run_index_chunk( run_index, chunk_begin, chunk_end, first_exception,
-                                             exception_mutex );
-    };
+    const int chunks = std::min( n, nw );
+    std::latch latch( chunks );
+    std::exception_ptr first_ex;
+    std::mutex         ex_mutex;
 
-    auto latch = std::latch( chunks );
-    for( auto chunk = 0; chunk < chunks; ++chunk ) {
-        const auto chunk_begin = begin + ( n * chunk / chunks );
-        const auto chunk_end = begin + ( n * ( chunk + 1 ) / chunks );
-        pool.submit( [&latch, &run_chunk, chunk_begin, chunk_end]() {
-            run_chunk( chunk_begin, chunk_end );
+    for( int c = 0; c < chunks; ++c ) {
+        const int chunk_begin = begin + ( n * c / chunks );
+        const int chunk_end   = begin + ( n * ( c + 1 ) / chunks );
+        pool.submit( [&latch, &f, &first_ex, &ex_mutex, chunk_begin, chunk_end]() {
+            try {
+                for( int i = chunk_begin; i < chunk_end; ++i ) {
+                    f( i );
+                }
+            } catch( ... ) {
+                std::lock_guard<std::mutex> lock( ex_mutex );
+                if( !first_ex ) {
+                    first_ex = std::current_exception();
+                }
+            }
             latch.count_down();
         } );
     }
 
     latch.wait();
-    if( first_exception ) {
-        std::rethrow_exception( first_exception );
+    if( first_ex ) {
+        std::rethrow_exception( first_ex );
     }
 }
 
@@ -258,49 +225,50 @@ auto parallel_for( const int begin, const int end, F &&f ) -> void
  * F must be callable as  void F(int index)
  */
 template<typename F>
-auto parallel_for_chunked( const int begin, const int end, const int chunk_size, F &&f ) -> void
+void parallel_for_chunked( int begin, int end, int chunk_size, F &&body )
 {
     if( end <= begin || chunk_size <= 0 ) {
         return;
     }
+    const auto f = thread_pool_detail::seeded( 0x7061726368756e6b, body );
 
-    auto &pool = get_thread_pool();
-    const auto worker_count = static_cast<int>( pool.num_workers() );
-    const auto n = end - begin;
-    const auto num_chunks = ( n + chunk_size - 1 ) / chunk_size;
-    const auto call_seed = rng_next_deterministic_call_seed(
-                               thread_pool_detail::parallel_for_chunked_seed_stream );
-    const auto run_index = [&f, &call_seed]( const int index ) {
-        thread_pool_detail::run_seeded_index( f, call_seed,
-                                              thread_pool_detail::parallel_for_chunked_seed_stream, index );
-    };
+    cata_thread_pool &pool = get_thread_pool();
+    const int nw = static_cast<int>( pool.num_workers() );
 
-    if( worker_count == 0 || num_chunks <= 1 || is_pool_worker_thread() ) {
-        for( auto index = begin; index < end; ++index ) {
-            run_index( index );
+    const int n = end - begin;
+    const int num_chunks = ( n + chunk_size - 1 ) / chunk_size;
+
+    if( nw == 0 || num_chunks <= 1 || is_pool_worker_thread() ) {
+        for( int i = begin; i < end; ++i ) {
+            f( i );
         }
         return;
     }
 
-    auto first_exception = std::exception_ptr{};
-    auto exception_mutex = std::mutex{};
-    const auto run_chunk = [&]( const int chunk_begin, const int chunk_end ) {
-        thread_pool_detail::run_index_chunk( run_index, chunk_begin, chunk_end, first_exception,
-                                             exception_mutex );
-    };
+    std::latch latch( num_chunks );
+    std::exception_ptr first_ex;
+    std::mutex         ex_mutex;
 
-    auto latch = std::latch( num_chunks );
-    for( auto chunk = 0; chunk < num_chunks; ++chunk ) {
-        const auto chunk_begin = begin + chunk * chunk_size;
-        const auto chunk_end = std::min( chunk_begin + chunk_size, end );
-        pool.submit( [&latch, &run_chunk, chunk_begin, chunk_end]() {
-            run_chunk( chunk_begin, chunk_end );
+    for( int c = 0; c < num_chunks; ++c ) {
+        const int chunk_begin = begin + c * chunk_size;
+        const int chunk_end   = std::min( chunk_begin + chunk_size, end );
+        pool.submit( [&latch, &f, &first_ex, &ex_mutex, chunk_begin, chunk_end]() {
+            try {
+                for( int i = chunk_begin; i < chunk_end; ++i ) {
+                    f( i );
+                }
+            } catch( ... ) {
+                std::lock_guard<std::mutex> lock( ex_mutex );
+                if( !first_ex ) {
+                    first_ex = std::current_exception();
+                }
+            }
             latch.count_down();
         } );
     }
 
     latch.wait();
-    if( first_exception ) {
-        std::rethrow_exception( first_exception );
+    if( first_ex ) {
+        std::rethrow_exception( first_ex );
     }
 }
