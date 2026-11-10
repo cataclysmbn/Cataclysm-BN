@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <chrono>
 #include <cmath>
 #include <filesystem>
 #include <memory>
@@ -560,9 +561,15 @@ void loading_ui::proceed()
 
 void loading_ui::show()
 {
+    const auto new_context = ui == nullptr;
     init();
 
-    if( menu != nullptr ) {
+    // Presenting a frame is slow, more so when it waits for the display with VSync on, while
+    // most entries take far less than a frame. So only a new context is always drawn.
+    static auto last_redraw = std::chrono::steady_clock::time_point{};
+    const auto now = std::chrono::steady_clock::now();
+    if( menu != nullptr && ( new_context || now - last_redraw >= std::chrono::milliseconds( 100 ) ) ) {
+        last_redraw = now;
         ui_manager::redraw();
         refresh_display();
         inp_mngr.pump_events();
