@@ -6122,7 +6122,7 @@ bool cata_tiles::draw_zombie_revival_indicators( const tripoint_bub_ms &pos, con
     if( tileset_ptr->find_tile_type( ZOMBIE_REVIVAL_INDICATOR ) && !invisible[0] &&
         !item_override.contains( pos ) && here.could_see_items( tripoint_bub_ms( pos ), g->u ) ) {
 
-        const auto i_at = [&]( const tripoint_bub_ms & p ) -> const location_vector<item> & {
+        const auto i_at = [&]( const tripoint_bub_ms & p ) -> const location_vector<item>& { // *NOPAD*
             std::optional<mapbuffer_abs_tile_view> tile = here.get_tile_view_at( p );
             if( !tile )
             {
