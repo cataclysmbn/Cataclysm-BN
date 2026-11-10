@@ -587,9 +587,8 @@ auto load_mapgen_function(
         if (!jio.has_object("object")) {
             jio.throw_error(R"(mapgen with method "json" must define key "object")");
         }
-        JsonObject jo = jio.get_object("object");
-        const json_source_location jsrc = jo.get_source_location();
-        jo.allow_omitted_members();
+        // Only the location is needed here; the object is parsed during setup.
+        const json_source_location jsrc = jio.get_member_source_location("object");
         return std::make_shared<mapgen_function_json>(jsrc, mgweight, offset, total);
     } else if (mgtype == "lua") {
         if (!jio.has_string("luamethod")) {
@@ -614,9 +613,8 @@ static void load_nested_mapgen(const JsonObject& jio, const std::string& id_base
     if (mgtype == "json") {
         if (jio.has_object("object")) {
             int weight = jio.get_int("weight", 1000);
-            JsonObject jo = jio.get_object("object");
-            const json_source_location jsrc = jo.get_source_location();
-            jo.allow_omitted_members();
+            // Only the location is needed here; the object is parsed during setup.
+            const json_source_location jsrc = jio.get_member_source_location("object");
             nested_mapgen[id_base].add(std::make_shared<mapgen_function_json_nested>(jsrc), weight);
         } else {
             debugmsg("Nested mapgen: Invalid mapgen function (missing \"object\" object)",
@@ -632,9 +630,8 @@ static void load_update_mapgen(const JsonObject& jio, const std::string& id_base
     const std::string mgtype = jio.get_string("method");
     if (mgtype == "json") {
         if (jio.has_object("object")) {
-            JsonObject jo = jio.get_object("object");
-            const json_source_location jsrc = jo.get_source_location();
-            jo.allow_omitted_members();
+            // Only the location is needed here; the object is parsed during setup.
+            const json_source_location jsrc = jio.get_member_source_location("object");
             update_mapgen[id_base].push_back(std::make_unique<update_mapgen_function_json>(jsrc));
         } else {
             debugmsg("Update mapgen: Invalid mapgen function (missing \"object\" object)",
@@ -3487,44 +3484,42 @@ auto mapgen_function_json_base::setup_common(const JsonObject& jo) -> bool {
                 "format: rows: must have %d rows, not %d; check mapgensize if applicable",
                 total_size.y(), parray.size()));
         }
-        for (int c = m_offset.y(); c < expected_dim.y(); c++) {
-            const std::string row = parray.get_string(c);
-            std::vector<map_key> row_keys;
-            for (const std::string& key : utf8_display_split(row)) { row_keys.emplace_back(key); }
-            if (row_keys.size() < static_cast<size_t>(expected_dim.x())) {
+        const auto check_row_size = [&](const int c, const size_t columns) {
+            if (columns < static_cast<size_t>(expected_dim.x())) {
                 parray.throw_error(string_format(
                     "  format: row %d must have at least %d columns, not %d", c + 1,
-                    expected_dim.x(), row_keys.size()));
+                    expected_dim.x(), columns));
             }
-            if (row_keys.size() != static_cast<size_t>(total_size.x())) {
+            if (columns != static_cast<size_t>(total_size.x())) {
                 parray.throw_error(string_format(
                     "  format: row %d must have %d columns, not %d; check mapgensize if applicable",
-                    c + 1, total_size.x(), row_keys.size()));
+                    c + 1, total_size.x(), columns));
             }
-            for (int i = m_offset.x(); i < expected_dim.x(); i++) {
+        };
+        using terrain_iter = decltype(keys_with_terrain.cend());
+        using placing_iter = decltype(format_placings.cend());
+        const auto place_cell =
+            [&](const int c, const int i, const std::string& key_str, const terrain_iter iter_ter,
+                const placing_iter fpi) {
                 const auto p = point_rel_ms(i, c) - m_offset;
-                const map_key key = row_keys[i];
-                const auto iter_ter = keys_with_terrain.find(key);
-                const auto fpi = format_placings.find(key);
-
-                const bool has_terrain = iter_ter != keys_with_terrain.end();
-                const bool has_placing = fpi != format_placings.end();
+                const bool has_terrain = iter_ter != keys_with_terrain.cend();
+                const bool has_placing = fpi != format_placings.cend();
 
                 if (!has_terrain && !fallback_terrain_exists) {
                     parray.string_error(
                         string_format(
                             "format: rows: row %d column %d: "
                             "'%s' is not in 'terrain', and no 'fill_ter' is set!",
-                            c + 1, i + 1, key.str),
+                            c + 1, i + 1, key_str),
                         c, i + 1);
                 }
-                if (!has_terrain && !has_placing && key.str != " " && key.str != ".") {
+                if (!has_terrain && !has_placing && key_str != " " && key_str != ".") {
                     try {
                         parray.string_error(
                             string_format(
                                 "format: rows: row %d column %d: "
                                 "'%s' has no terrain, furniture, or other definition",
-                                c + 1, i + 1, key.str),
+                                c + 1, i + 1, key_str),
                             c, i + 1);
                     } catch (const JsonError& e) { debugmsg("(json-error)\n%s", e.what()); }
                 }
@@ -3532,6 +3527,40 @@ auto mapgen_function_json_base::setup_common(const JsonObject& jo) -> bool {
                     jmapgen_place where(p);
                     for (auto& what : fpi->second) { objects.add(where, what); }
                 }
+            };
+        /// Lookups for single-byte keys, resolved on first use. Almost all rows are plain ASCII.
+        struct ascii_key_lookup {
+            bool resolved = false;
+            terrain_iter terrain;
+            placing_iter placing;
+        };
+        auto ascii_lookups = std::array<ascii_key_lookup, 128>{};
+        const auto is_printable_ascii = [](const char ch) { return ch >= 0x20 && ch < 0x7f; };
+        for (int c = m_offset.y(); c < expected_dim.y(); c++) {
+            const std::string row = parray.get_string(c);
+            if (std::ranges::all_of(row, is_printable_ascii)) {
+                // utf8_display_split always yields at least one (possibly empty) glyph.
+                check_row_size(c, std::max<size_t>(row.size(), 1));
+                for (int i = m_offset.x(); i < expected_dim.x(); i++) {
+                    const auto ch = row[i];
+                    auto& lookup = ascii_lookups[static_cast<unsigned char>(ch)];
+                    if (!lookup.resolved) {
+                        const auto key = map_key(std::string(1, ch));
+                        lookup =
+                            {.resolved = true,
+                             .terrain = keys_with_terrain.find(key),
+                             .placing = format_placings.find(key)};
+                    }
+                    place_cell(c, i, std::string(1, ch), lookup.terrain, lookup.placing);
+                }
+                continue;
+            }
+            std::vector<map_key> row_keys;
+            for (const std::string& key : utf8_display_split(row)) { row_keys.emplace_back(key); }
+            check_row_size(c, row_keys.size());
+            for (int i = m_offset.x(); i < expected_dim.x(); i++) {
+                const map_key& key = row_keys[i];
+                place_cell(c, i, key.str, keys_with_terrain.find(key), format_placings.find(key));
             }
         }
         fallback_terrain_exists = true;
@@ -3622,10 +3651,18 @@ void mapgen_function_json_base::check_common(const std::string& oter_name) const
 }
 
 void jmapgen_objects::finalize() {
+    using namespace std::views;
+    namespace ranges = std::ranges;
     for (const auto& obj : objects) { obj.second->finalize(); }
-    std::stable_sort(objects.begin(), objects.end(), [](const jmapgen_obj& l, const jmapgen_obj& r) {
-        return l.second->phase() < r.second->phase();
-    });
+    // phase() is virtual, so evaluate it once per object instead of once per comparison.
+    const auto phases =
+        objects | transform([](const jmapgen_obj& obj) { return obj.second->phase(); })
+        | ranges::to<std::vector>();
+    if (ranges::is_sorted(phases)) { return; }
+    auto order = iota(size_t{0}, objects.size()) | ranges::to<std::vector>();
+    ranges::stable_sort(order, {}, [&phases](const size_t i) { return phases[i]; });
+    objects = order | transform([this](const size_t i) { return std::move(objects[i]); })
+            | ranges::to<std::vector>();
 }
 
 void jmapgen_objects::check(
