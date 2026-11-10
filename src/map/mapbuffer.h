@@ -15,6 +15,7 @@
 #include "vehicle/vpart_position.h"
 
 #include <array>
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -878,6 +879,23 @@ private:
     auto for_each_simulated_submap_position(
         const std::function<void(const tripoint_abs_sm&)>& fn,
         std::optional<int> zlev = std::nullopt) const -> void;
+    struct simulated_submap_entry {
+        tripoint_abs_sm pos;
+        submap* sm;
+    };
+    /// for_each_simulated_submap() targets, valid while the generations below still match.
+    struct simulated_submap_cache {
+        std::uint64_t loader_generation = 0;
+        std::uint64_t added_generation = 0;
+        std::uint64_t removed_generation = 0;
+        /// Positions follow the loaded submaps (index fallback) or some are not loaded yet.
+        bool tracks_additions = false;
+        std::vector<simulated_submap_entry> entries;
+    };
+    std::optional<simulated_submap_cache> simulated_submap_cache_;
+    /// Bumped when `submaps` gains (possibly on a worker thread) or loses entries.
+    std::atomic<std::uint64_t> submaps_added_generation_ = 0;
+    std::atomic<std::uint64_t> submaps_removed_generation_ = 0;
     submap_map_t submaps;
     Creature_tracker creature_tracker_;
     std::list<shared_ptr_fast<npc>> active_npcs_;
