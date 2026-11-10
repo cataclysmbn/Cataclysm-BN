@@ -120,4 +120,4 @@ JSON 데이터의 중복을 줄이기 위해 일부 타입은 기존 타입에�
 - gates.cpp에서 generic_factory 줄을 찾으세요. 다음과 같이 보입니다:
   `generic_factory<gate_data> gates_data( "gate type", "handle", "other_handles" );`
 - generic_factory 줄이 있으므로 copy-from을 지원한다고 결론을 내릴 수 있습니다.
-- generic_factoy가 없으면 copy-from을 지원하지 않습니다. 예를 들어 vitamin 타입의 경우 (위 단계를 반복하면 [vitamin.cpp](https://github.com/cataclysmbn/Cataclysm-BN/tree/main/src/vitamin.cpp)에 generic_factoy가 포함되어 있지 않음을 알 수 있습니다)
+- generic_factoy가 없으면 copy-from을 지원하지 않습니다. 예를 들어 vitamin 타입의 경우 (위 단계를 반복하면 [vitamin.cpp](https://github.com/cataclysmbn/Cataclysm-BN/tree/main/src/item/vitamin.cpp)에 generic_factoy가 포함되어 있지 않음을 알 수 있습니다)
