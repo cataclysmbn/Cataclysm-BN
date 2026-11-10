@@ -900,7 +900,7 @@
     "id": "debug_full_protection",
     "name": [ "Full protection" ],
     "desc": [ "This prevents all damage via enchantments!" ],
-    "base_enchantments": [ { "values": [ { "value": "ARMOR", "multiply": -100 } ] } ],
+    "base_enchantments": [ { "values": [ { "value": "ARMOR", "multiply": -100 } ] } ]
   },
   {
     "type": "effect_type",
