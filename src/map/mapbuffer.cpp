@@ -1,5 +1,6 @@
 #include "mapbuffer.h"
 
+#include "../overmap/omdata.h"
 #include "../overmap/overmapbuffer.h"
 #include "avatar.h"
 #include "batch_turns.h"
@@ -1203,7 +1204,11 @@ void mapbuffer::unload_omt(const tripoint_abs_omt& omt_addr, bool save) {
             {base, base + point_rel_sm::east(), base + point_rel_sm::south(),
              base + point_rel_sm::south_east()}};
 
-        bool all_uniform = true;
+        bool all_uniform =
+            !get_overmapbuffer(get_dimension_id())
+                 .ter(omt_addr)
+                 ->has_flag(oter_flags::cant_be_uniform);
+
         for (const tripoint_abs_sm& addr : addrs) {
             const auto it = submaps.find(addr);
             if (it != submaps.end() && it->second && !it->second->is_uniform) {
