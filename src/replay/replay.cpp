@@ -6,7 +6,6 @@
 
 #include <algorithm>
 #include <array>
-#include <cctype>
 #include <filesystem>
 #include <fstream>
 #include <functional>
@@ -163,88 +162,13 @@ auto read_type(const std::string& type) -> input_event_t {
     throw std::runtime_error("Unknown input event type: " + type);
 }
 
-auto strict_int64(const JsonObject& object, const std::string& name) -> std::int64_t {
-    auto* const value = object.get_raw(name);
-    if (!value->test_number()) { object.throw_error(name + " must be an integer"); }
-    const auto start = value->tell();
-    value->skip_number();
-    const auto spelling = value->substr(start, value->tell() - start);
-    if (spelling.find_first_of(".eE") != std::string::npos) {
-        object.throw_error(name + " must be an integer");
-    }
-    return object.get_member(name).get_int64();
-}
-
-auto strict_int(const JsonObject& object, const std::string& name) -> int {
-    const auto value = strict_int64(object, name);
-    if (value < std::numeric_limits<int>::min() || value > std::numeric_limits<int>::max()) {
-        object.throw_error(name + " is outside the supported integer range");
-    }
-    return static_cast<int>(value);
-}
-
-auto strict_int(const JsonObject& object, const std::string& name, const int fallback) -> int {
-    return object.has_member(name) ? strict_int(object, name) : fallback;
-}
-
-auto strict_integer_array_spelling(const std::string& text) -> bool {
-    auto index = std::size_t{0};
-    const auto skip_whitespace = [&]() {
-        while (index < text.size() && std::isspace(static_cast<unsigned char>(text[index])) != 0) {
-            ++index;
-        }
-    };
-    skip_whitespace();
-    if (index == text.size() || text[index++] != '[') { return false; }
-    skip_whitespace();
-    if (index < text.size() && text[index] == ']') {
-        ++index;
-        skip_whitespace();
-        return index == text.size();
-    }
-    while (index < text.size()) {
-        if (text[index] == '-') { ++index; }
-        if (index == text.size() || !std::isdigit(static_cast<unsigned char>(text[index]))) {
-            return false;
-        }
-        while (index < text.size() && std::isdigit(static_cast<unsigned char>(text[index])) != 0) {
-            ++index;
-        }
-        skip_whitespace();
-        if (index < text.size() && text[index] == ',') {
-            ++index;
-            skip_whitespace();
-            continue;
-        }
-        if (index < text.size() && text[index] == ']') {
-            ++index;
-            skip_whitespace();
-            return index == text.size();
-        }
-        return false;
-    }
-    return false;
-}
-
-auto strict_int_array(const JsonObject& object, const std::string& name) -> std::vector<int> {
-    auto array = object.get_array(name);
-    auto spelling = array.str();
-    const auto end = spelling.find(']');
-    if (end == std::string::npos) { object.throw_error(name + " must be an array"); }
-    spelling.resize(end + 1);
-    if (!strict_integer_array_spelling(spelling)) {
-        object.throw_error(name + " must contain only integers");
-    }
-    return object.get_int_array(name);
-}
-
 auto read_event(const JsonObject& object) -> replay_event {
     auto result = replay_event{};
     auto& event = result.event;
     event.type = read_type(object.get_string("type"));
-    event.sequence = strict_int_array(object, "sequence");
-    event.modifiers = strict_int_array(object, "modifiers");
-    const auto position = strict_int_array(object, "mouse_pos");
+    event.sequence = object.get_int_array("sequence");
+    event.modifiers = object.get_int_array("modifiers");
+    const auto position = object.get_int_array("mouse_pos");
     if (position.size() != 2) { throw std::runtime_error("mouse_pos requires two coordinates"); }
     event.mouse_pos = point(position[0], position[1]);
     event.text = object.get_string("text");
@@ -252,12 +176,12 @@ auto read_event(const JsonObject& object) -> replay_event {
     event.edit_refresh = object.get_bool("edit_refresh");
 #if defined(__ANDROID__)
     event.shortcut_last_used_action_counter =
-        strict_int(object, "shortcut_last_used_action_counter", 0);
+        object.get_int("shortcut_last_used_action_counter", 0);
 #endif
     auto boundary = object.get_object("boundary");
     boundary.allow_omitted_members();
     result.boundary.context = boundary.get_string("context");
-    result.boundary.timeout_ms = strict_int(boundary, "timeout_ms", -1);
+    result.boundary.timeout_ms = boundary.get_int("timeout_ms", -1);
     result.boundary.pointer_space = boundary.get_string("pointer_space", "");
     result.boundary.actions = boundary.get_string_array("actions");
     boundary.finish();
@@ -280,14 +204,14 @@ auto read_record(const bool header) -> void {
         // counter. Reporting them would open a popup that reads the replay mid-record.
         object.allow_omitted_members();
         const auto kind = object.get_string("kind");
-        if (strict_int64(object, "version") != format_version) {
+        if (object.get_member("version").get_int64() != format_version) {
             throw std::runtime_error("Unsupported replay version");
         }
         if (header) {
             if (kind != "header" || object.get_string("format") != "cataclysm-bn-replay") {
                 throw std::runtime_error("First record must be a cataclysm-bn-replay header");
             }
-            const auto seed = strict_int64(object, "rng_seed");
+            const auto seed = object.get_member("rng_seed").get_int64();
             if (seed <= 0 || seed > std::numeric_limits<unsigned int>::max()) {
                 throw std::runtime_error("RNG seed must be a nonzero 32-bit unsigned integer");
             }
@@ -298,7 +222,7 @@ auto read_record(const bool header) -> void {
             current.next_text = replay_text{
                 .source = object.get_string("source"), .text = object.get_string("text")};
         } else if (kind == "end") {
-            const auto count = strict_int64(object, "events");
+            const auto count = object.get_member("events").get_int64();
             if (count < 0 || static_cast<std::uint64_t>(count) != current.events) {
                 throw std::runtime_error("End record input count does not match playback");
             }
