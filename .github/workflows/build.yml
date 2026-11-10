@@ -332,7 +332,7 @@ jobs:
       - name: Install build dependencies (mac)
         if: runner.os == 'macOS'
         run: |
-          HOMEBREW_NO_AUTO_UPDATE=yes HOMEBREW_NO_INSTALL_CLEANUP=yes brew install sdl3 sdl3_image sdl3_ttf sdl3_mixer gettext parallel astyle sqlite3 zlib ncurses flac pkg-config dylibbundler
+          HOMEBREW_NO_AUTO_UPDATE=yes HOMEBREW_NO_INSTALL_CLEANUP=yes brew install llvm sdl3 sdl3_image sdl3_ttf sdl3_mixer gettext parallel astyle sqlite3 zlib ncurses flac pkg-config dylibbundler
           python3 -m venv ./venv
           source ./venv/bin/activate
           pip3 install mac_alias==2.2.0 dmgbuild==1.6.1 biplist polib luaparser
@@ -348,6 +348,17 @@ jobs:
           cmake: true
           ninja: true
           setup-cpp: false
+
+      - name: Use LLVM's compiler and libc++ (mac)
+        if: runner.os == 'macOS'
+        run: |
+          # Apple's libc++ lacks C++23 ranges the game uses: build with LLVM's and link it into the game, players have no Homebrew.
+          llvm=$(brew --prefix llvm)
+          echo "CC=$llvm/bin/clang" >> "$GITHUB_ENV"
+          echo "CXX=$llvm/bin/clang++" >> "$GITHUB_ENV"
+          echo "CXXFLAGS=-D_LIBCPP_DISABLE_AVAILABILITY -include $GITHUB_WORKSPACE/src/libcxx_enumerate.h" >> "$GITHUB_ENV"
+          # Exporting only main keeps dyld from mixing these C++ symbols with those of the system libc++ that macOS frameworks load.
+          echo "LDFLAGS=-nostdlib++ $llvm/lib/c++/libc++.a $llvm/lib/c++/libc++abi.a -Wl,-exported_symbol,_main" >> "$GITHUB_ENV"
 
       - name: Setup ccache (mac)
         if: runner.os == 'macOS'
