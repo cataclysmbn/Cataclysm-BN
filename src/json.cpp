@@ -26,6 +26,45 @@
 // JSON parsing and serialization tools for Cataclysm-DDA.
 // For documentation, see the included header, json.h.
 
+namespace
+{
+
+/// Like std::istream::get(), but reads straight from the buffer while the stream is good.
+auto consume_char( std::istream &s ) -> void
+{
+    if( !s.good() ) {
+        s.get();
+        return;
+    }
+    if( s.rdbuf()->sbumpc() == std::char_traits<char>::eof() ) {
+        s.setstate( std::ios_base::eofbit | std::ios_base::failbit );
+    }
+}
+
+/// Like std::istream::get( ch ), but reads straight from the buffer while the stream is good.
+auto read_char( std::istream &s, char &ch ) -> void
+{
+    if( !s.good() ) {
+        s.get( ch );
+        return;
+    }
+    const auto c = s.rdbuf()->sbumpc();
+    if( c == std::char_traits<char>::eof() ) {
+        s.setstate( std::ios_base::eofbit | std::ios_base::failbit );
+        return;
+    }
+    ch = static_cast<char>( c );
+}
+
+/// Like `static_cast<bool>( std::istream::get( ch ) )`, but reads straight from the buffer while the stream is good.
+auto read_char_ok( std::istream &s, char &ch ) -> bool
+{
+    read_char( s, ch );
+    return !s.fail();
+}
+
+} // namespace
+
 static bool is_whitespace( char ch )
 {
     // These are all the valid whitespace characters allowed by RFC 4627.
@@ -85,25 +124,51 @@ JsonObject::JsonObject( JsonIn &j )
     // cache the position of the value for each member
     jsin->start_object();
     while( !jsin->end_object() ) {
-        std::string n = jsin->get_member_name();
-        int p = jsin->tell();
-        if( positions.contains( n ) ) {
+        auto n = jsin->get_member_name();
+        const auto p = jsin->tell();
+        const auto iter = std::ranges::lower_bound( positions, n, std::less<>(),
+                          &json_member_position::name );
+        if( iter != positions.end() && iter->name == n ) {
             j.error( "duplicate entry in json object" );
         }
-        positions[n] = p;
+        positions.insert( iter, json_member_position{ .name = std::move( n ), .offset = p } );
         jsin->skip_value();
     }
+#ifndef CATA_IN_TOOL
+    visited_members.assign( positions.size(), false );
+#endif
     end_ = jsin->tell();
     final_separator = jsin->get_ate_separator();
 }
 
-void JsonObject::mark_visited( const std::string &name ) const
+auto JsonObject::find_member( const std::string &name ) const ->
+std::vector<json_member_position>::const_iterator
+{
+    const auto iter = std::ranges::lower_bound( positions, name, std::less<>(),
+                      &json_member_position::name );
+    if( iter != positions.end() && iter->name == name ) {
+        return iter;
+    }
+    return positions.end();
+}
+
+void JsonObject::mark_visited_at( const size_t index ) const
 {
 #ifndef CATA_IN_TOOL
-    visited_members.emplace( name );
+    if( index < visited_members.size() ) {
+        visited_members[index] = true;
+    }
 #else
-    static_cast<void>( name );
+    static_cast<void>( index );
 #endif
+}
+
+void JsonObject::mark_visited( const std::string &name ) const
+{
+    const auto iter = find_member( name );
+    if( iter != positions.end() ) {
+        mark_visited_at( static_cast<size_t>( iter - positions.begin() ) );
+    }
 }
 
 void JsonObject::report_unvisited() const
@@ -116,9 +181,9 @@ void JsonObject::report_unvisited() const
         && !std::uncaught_exceptions()
     ) {
         reported_unvisited_members = true;
-        for( const std::pair<const std::string, int> &p : positions ) {
-            const std::string &name = p.first;
-            if( !visited_members.contains( name ) && !name.starts_with( "//" ) ) {
+        for( size_t i = 0; i < positions.size(); ++i ) {
+            const std::string &name = positions[i].name;
+            if( !visited_members[i] && !name.starts_with( "//" ) ) {
                 try {
                     throw_error( string_format( "Invalid or misplaced field name \"%s\" in JSON data", name ), name );
                 } catch( const JsonError &e ) {
@@ -166,7 +231,7 @@ int JsonObject::verify_position( const std::string &name,
         // so it will never indicate a valid member position
         return 0;
     }
-    const auto iter = positions.find( name );
+    const auto iter = find_member( name );
     if( iter == positions.end() ) {
         if( throw_exception ) {
             jsin->seek( start );
@@ -176,12 +241,12 @@ int JsonObject::verify_position( const std::string &name,
         // so it will never indicate a valid member position
         return 0;
     }
-    return iter->second;
+    return iter->offset;
 }
 
 bool JsonObject::has_member( const std::string &name ) const
 {
-    return positions.contains( name );
+    return find_member( name ) != positions.end();
 }
 
 std::string JsonObject::line_number() const
@@ -328,6 +393,18 @@ JsonIn *JsonObject::get_raw( const std::string &name ) const
     mark_visited( name );
     jsin->seek( pos );
     return jsin;
+}
+
+auto JsonObject::get_member_source_location( const std::string &name ) const -> json_source_location
+{
+    const auto pos = verify_position( name );
+    mark_visited( name );
+    auto loc = json_source_location{ .path = jsin->get_path(), .offset = pos };
+    if( !loc.path ) {
+        jsin->seek( pos );
+        jsin->error( "JsonObject::get_member_source_location called but the path is unknown" );
+    }
+    return loc;
 }
 
 json_source_location JsonObject::get_source_location() const
@@ -856,7 +933,7 @@ void JsonIn::eat_whitespace()
         }
     }
     while( is_whitespace( peek() ) ) {
-        stream->get();
+        consume_char( *stream );
     }
 }
 
@@ -891,7 +968,7 @@ void JsonIn::skip_separator()
         if( ate_separator ) {
             error( "duplicate comma" );
         }
-        stream->get();
+        consume_char( *stream );
         ate_separator = true;
     } else if( ch == ']' || ch == '}' || ch == ':' ) {
         // okay
@@ -920,7 +997,7 @@ void JsonIn::skip_pair_separator()
 {
     char ch;
     eat_whitespace();
-    stream->get( ch );
+    read_char( *stream, ch );
     if( ch != ':' ) {
         std::stringstream err;
         err << "expected pair separator ':', not '" << ch << "'";
@@ -935,7 +1012,7 @@ void JsonIn::skip_string()
 {
     char ch;
     eat_whitespace();
-    stream->get( ch );
+    read_char( *stream, ch );
     if( ch != '"' ) {
         std::stringstream err;
         err << "expecting string but found '" << ch << "'";
@@ -952,9 +1029,9 @@ void JsonIn::skip_string()
         }
     }
     while( stream->good() ) {
-        stream->get( ch );
+        read_char( *stream, ch );
         if( ch == '\\' ) {
-            stream->get( ch );
+            read_char( *stream, ch );
             continue;
         } else if( ch == '"' ) {
             break;
@@ -969,6 +1046,28 @@ void JsonIn::skip_value()
 {
     eat_whitespace();
     char ch = peek();
+    if( ( ch == '{' || ch == '[' ) && stream->good() ) {
+        const auto start = tell();
+        if( const auto found = skipped_values.find( start ); found != skipped_values.end() ) {
+            seek( found->second.end );
+            ate_separator = found->second.ate_separator;
+            return;
+        }
+        if( ch == '{' ) {
+            skip_object();
+        } else {
+            skip_array();
+        }
+        // Small values are cheaper to rescan than to remember.
+        constexpr auto min_remembered_size = 64;
+        if( stream->good() ) {
+            const auto end = tell();
+            if( end - start >= min_remembered_size ) {
+                skipped_values.emplace( start, skipped_value{ .end = end, .ate_separator = ate_separator } );
+            }
+        }
+        return;
+    }
     // it's either a string '"'
     if( ch == '"' ) {
         skip_string();
@@ -1056,15 +1155,19 @@ void JsonIn::skip_null()
 
 void JsonIn::skip_number()
 {
-    char ch;
     eat_whitespace();
     // skip all of (+-0123456789.eE)
-    while( stream->good() ) {
-        stream->get( ch );
-        if( ch != '+' && ch != '-' && ( ch < '0' || ch > '9' ) &&
-            ch != 'e' && ch != 'E' && ch != '.' ) {
-            stream->unget();
-            break;
+    const auto is_number_char = []( const int c ) {
+        return c == '+' || c == '-' || ( c >= '0' && c <= '9' ) || c == 'e' || c == 'E' || c == '.';
+    };
+    if( stream->good() ) {
+        auto *const buf = stream->rdbuf();
+        auto c = buf->sgetc();
+        for( ; is_number_char( c ); c = buf->sgetc() ) {
+            buf->sbumpc();
+        }
+        if( c == std::char_traits<char>::eof() ) {
+            stream->setstate( std::ios_base::eofbit | std::ios_base::failbit );
         }
     }
     end_value();
@@ -1220,7 +1323,7 @@ std::string JsonIn::get_string()
     bool success = false;
     do {
         // the first character had better be a '"'
-        stream->get( ch );
+        read_char( *stream, ch );
         if( !stream->good() ) {
             err = "read operation failed";
             break;
@@ -1447,12 +1550,12 @@ number_sci_notation JsonIn::get_any_number()
     char ch;
     int mod_e = 0;
     eat_whitespace();
-    if( !stream->get( ch ) ) {
+    if( !read_char_ok( *stream, ch ) ) {
         error( "unexpected end of input", 0 );
     }
     ret.negative = ch == '-';
     if( ret.negative ) {
-        if( !stream->get( ch ) ) {
+        if( !read_char_ok( *stream, ch ) ) {
             error( "unexpected end of input", 0 );
         }
     } else if( ch != '.' && ( ch < '0' || ch > '9' ) ) {
@@ -1463,38 +1566,38 @@ number_sci_notation JsonIn::get_any_number()
     }
     if( ch == '0' ) {
         // allow a single leading zero in front of a '.' or 'e'/'E'
-        if( stream->get( ch ) && ch >= '0' && ch <= '9' ) {
+        if( read_char_ok( *stream, ch ) && ch >= '0' && ch <= '9' ) {
             error( "leading zeros not allowed", -1 );
         }
     }
     while( ch >= '0' && ch <= '9' ) {
         ret.integral *= 10;
         ret.integral += ( ch - '0' );
-        if( !stream->get( ch ) ) {
+        if( !read_char_ok( *stream, ch ) ) {
             break;
         }
     }
     if( ch == '.' ) {
-        while( stream->get( ch ) && ch >= '0' && ch <= '9' ) {
+        while( read_char_ok( *stream, ch ) && ch >= '0' && ch <= '9' ) {
             ret.fract *= 10;
             ret.fract += ( ch - '0' );
             mod_e -= 1;
         }
     }
     if( *stream && ( ch == 'e' || ch == 'E' ) ) {
-        if( !stream->get( ch ) ) {
+        if( !read_char_ok( *stream, ch ) ) {
             error( "unexpected end of input", 0 );
         }
         const bool neg = ch == '-';
         if( neg || ch == '+' ) {
-            if( !stream->get( ch ) ) {
+            if( !read_char_ok( *stream, ch ) ) {
                 error( "unexpected end of input", 0 );
             }
         }
         while( ch >= '0' && ch <= '9' ) {
             ret.integral_exp *= 10;
             ret.integral_exp += ( ch - '0' );
-            if( !stream->get( ch ) ) {
+            if( !read_char_ok( *stream, ch ) ) {
                 break;
             }
         }
@@ -1503,8 +1606,9 @@ number_sci_notation JsonIn::get_any_number()
         }
     }
     // unget the final non-number character (probably a separator)
-    if( *stream && !stream->eof() ) {
-        stream->unget();
+    if( *stream && !stream->eof() &&
+        stream->rdbuf()->sungetc() == std::char_traits<char>::eof() ) {
+        stream->setstate( std::ios_base::badbit );
     }
     end_value();
     ret.fract_exp += ret.integral_exp + mod_e;
@@ -1557,7 +1661,7 @@ void JsonIn::start_array()
 {
     eat_whitespace();
     if( peek() == '[' ) {
-        stream->get();
+        consume_char( *stream );
         ate_separator = false;
         return;
     } else {
@@ -1573,7 +1677,7 @@ bool JsonIn::end_array()
 {
     eat_whitespace();
     if( peek() == ']' ) {
-        stream->get();
+        consume_char( *stream );
         end_value();
         return true;
     } else {
@@ -1586,7 +1690,7 @@ void JsonIn::start_object()
 {
     eat_whitespace();
     if( peek() == '{' ) {
-        stream->get();
+        consume_char( *stream );
         ate_separator = false; // not that we want to
         return;
     } else {
@@ -1602,7 +1706,7 @@ bool JsonIn::end_object()
 {
     eat_whitespace();
     if( peek() == '}' ) {
-        stream->get();
+        consume_char( *stream );
         end_value();
         return true;
     } else {
@@ -2419,10 +2523,10 @@ JsonIn &JsonValue::seek() const
 
 JsonValue JsonObject::get_member( const std::string &name ) const
 {
-    const auto iter = positions.find( name );
+    const auto iter = find_member( name );
     if( !jsin || iter == positions.end() ) {
         throw_error( "missing required field \"" + name + "\" in object: " + str() );
     }
-    mark_visited( name );
-    return JsonValue( *jsin, iter->second );
+    mark_visited_at( static_cast<size_t>( iter - positions.begin() ) );
+    return JsonValue( *jsin, iter->offset );
 }
