@@ -6,9 +6,12 @@
 #include <chrono>
 #include <cmath>
 #include <filesystem>
+#include <future>
 #include <memory>
 #include <optional>
 #include <ranges>
+#include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -25,6 +28,7 @@
 #include "sdltiles.h"
 #include "sdl_wrappers.h"
 #include "string_utils.h"
+#include "thread_pool.h"
 #include "translations.h"
 #include "ui.h"
 #include "ui_manager.h"
@@ -212,6 +216,49 @@ auto choose_loading_image_paths() -> std::vector<std::string>
     return candidates;
 }
 
+/// Loading images being decoded on worker threads before they are shown, by path.
+auto pending_loading_images() -> std::unordered_map<std::string, std::future<SDL_Surface_Ptr>>
+        & // *NOPAD*
+{
+    static auto images = std::unordered_map<std::string, std::future<SDL_Surface_Ptr>> {};
+    return images;
+}
+
+/// Starts decoding the image at `path` on a worker thread. Each loading context shows another
+/// image, and decoding one on the spot holds the main thread up for tens of milliseconds.
+/// Images decoded ahead earlier are dropped, except the one at `current_path`.
+auto decode_loading_image_ahead( const std::string &path,
+const std::string &current_path = {} ) -> void {
+    auto &pool = get_thread_pool();
+    if( pool.num_workers() == 0 )
+    {
+        return;
+    }
+    std::erase_if( pending_loading_images(), [&]( const auto & pending )
+    {
+        return pending.first != path && pending.first != current_path;
+    } );
+    if( !pending_loading_images().contains( path ) )
+    {
+        pending_loading_images().emplace( path, pool.submit_returning( [path]() {
+            return load_image( path.c_str() );
+        } ) );
+    }
+}
+
+/// The decoded image at `path`: the one decoded ahead if that is about done, else decoded now.
+auto take_loading_image( const std::string &path ) -> SDL_Surface_Ptr
+{
+    if( auto pending = pending_loading_images().extract( path ) ) {
+        // Give a decode that is under way the time it takes, but do not queue behind other work.
+        constexpr auto patience = std::chrono::milliseconds( 100 );
+        if( pending.mapped().wait_for( patience ) == std::future_status::ready ) {
+            return pending.mapped().get();
+        }
+    }
+    return load_image( path.c_str() );
+}
+
 auto get_loading_image_cache( loading_image_cache &cache,
                               const std::string &loading_image_path ) -> const loading_image_cache *
 {
@@ -230,7 +277,7 @@ auto get_loading_image_cache( loading_image_cache &cache,
     cache.attempted = true;
 
     try {
-        auto surface = load_image( loading_image_path.c_str() );
+        auto surface = take_loading_image( loading_image_path );
         cache.image_size = point( surface->w, surface->h );
         cache.texture = CreateTextureFromSurface( get_sdl_renderer(), surface );
     } catch( const std::exception &err ) {
@@ -373,6 +420,8 @@ auto advance_loading_image( loading_image_selection_state &state ) -> bool
 
     state.current_path = state.paths[state.next_path++];
     state.current_author = get_loading_image_author( state.current_path );
+    const auto &next_path = state.paths[state.next_path < state.paths.size() ? state.next_path : 0];
+    decode_loading_image_ahead( next_path, state.current_path );
     return true;
 }
 
@@ -468,12 +517,24 @@ loading_ui::loading_ui( bool display )
     if( display && !test_mode ) {
         menu = std::make_unique<uilist>();
         menu->settext( _( "Loading" ) );
+#if defined( TILES )
+        // Pick the images now, so that the first one is being decoded by the time it is shown.
+        if( get_option<bool>( "LOADING_SCREEN_IMAGES" ) && can_choose_loading_image_path() ) {
+            loading_image_selection.paths = choose_loading_image_paths();
+            loading_image_selection.next_path = 0;
+            loading_image_selection.lookup_attempted = true;
+            if( !loading_image_selection.paths.empty() ) {
+                decode_loading_image_ahead( loading_image_selection.paths.front() );
+            }
+        }
+#endif
     }
 }
 
 loading_ui::~loading_ui()
 {
 #if defined( TILES )
+    pending_loading_images().clear();
     clear_sdl_display_buffer_before_redraw();
 #endif
 }
