@@ -17,6 +17,14 @@
 #include "debug.h"
 #include "filesystem.h"
 #include "input.h"
+#include "mcp_hooks.h"
+#if defined(CATA_MCP)
+#include "path_info.h"
+#include "options.h"
+#endif
+#if defined( CATA_MCP )
+#include "loading_ui_client.h"
+#endif
 #include "mod_manager.h"
 #include "output.h"
 #include "point.h"
@@ -56,7 +64,7 @@ std::optional<point>
 namespace
 {
 
-#if defined( TILES )
+#if defined( TILES ) || defined( CATA_MCP )
 
 auto log_loading_image( const std::string &message ) -> void
 {
@@ -211,6 +219,8 @@ auto choose_loading_image_paths() -> std::vector<std::string>
     return candidates;
 }
 
+#endif
+#if defined( TILES )
 auto get_loading_image_cache( loading_image_cache &cache,
                               const std::string &loading_image_path ) -> const loading_image_cache *
 {
@@ -358,7 +368,7 @@ struct sdl_render_state_guard {
 
 } // namespace
 
-#if defined( TILES )
+#if defined( TILES ) || defined( CATA_MCP )
 auto advance_loading_image( loading_image_selection_state &state ) -> bool
 {
     if( state.paths.empty() ) {
@@ -375,6 +385,8 @@ auto advance_loading_image( loading_image_selection_state &state ) -> bool
     return true;
 }
 
+#endif
+#if defined( TILES )
 auto loading_image_splash::draw_current_loading_image() -> bool
 {
     while( !this->selection_state->current_path.empty() ) {
@@ -470,8 +482,52 @@ loading_ui::loading_ui( bool display )
     }
 }
 
+#if defined( CATA_MCP )
+namespace
+{
+auto loading_observer = game_client::loading_observer {};
+} // namespace
+
+auto game_client::set_loading_observer( const loading_observer observer ) -> void { ::loading_observer = observer; }
+
+void loading_ui::report()
+{
+    if( menu == nullptr || loading_observer == nullptr ) { return; }
+    reported = true;
+    auto &selection = loading_image_selection;
+    if( get_option<bool>( "LOADING_SCREEN_IMAGES" ) ) {
+        if( !selection.lookup_attempted && can_choose_loading_image_path() ) {
+            selection.paths = choose_loading_image_paths();
+            selection.next_path = 0;
+            selection.lookup_attempted = true;
+        }
+        if( !loading_image_selected && selection.lookup_attempted ) {
+            loading_image_selected = true;
+            advance_loading_image( selection );
+        }
+    }
+    auto progress = game_client::loading_progress{ .title = menu->text };
+    for( const auto &entry : menu->entries ) {
+        progress.entries.push_back( remove_color_tags( entry.txt ) );
+    }
+    progress.index = static_cast<std::size_t>( std::max( menu->selected, 0 ) );
+    if( !selection.current_path.empty() ) {
+        // The client knows the base path, not the working directory this path was found from.
+        const auto path = std::filesystem::path( selection.current_path ).lexically_normal();
+        const auto relative = path.lexically_relative( std::filesystem::path(
+                                  PATH_INFO::base_path() ).lexically_normal() );
+        progress.image = {
+            .path = ( relative.empty() || *relative.begin() == ".." ? path : relative ).generic_string(),
+            .author = selection.current_author
+        };
+    }
+    loading_observer( progress );
+}
+#endif
+
 loading_ui::~loading_ui()
 {
+    MCP_ONLY( if( reported && loading_observer != nullptr ) { loading_observer( { .done = true } ); } )
 #if defined( TILES )
     clear_sdl_display_buffer_before_redraw();
 #endif
@@ -489,6 +545,7 @@ void loading_ui::new_context( const std::string &desc )
     if( menu != nullptr ) {
         menu->reset();
         menu->settext( desc );
+        MCP_ONLY( loading_image_selected = false; )
         ui = nullptr;
         ui_splash = nullptr;
     }
@@ -566,5 +623,6 @@ void loading_ui::show()
         ui_manager::redraw();
         refresh_display();
         inp_mngr.pump_events();
+        MCP_ONLY( report(); )
     }
 }
