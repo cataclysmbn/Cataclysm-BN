@@ -162,10 +162,6 @@ auto read_event(const JsonObject& object) -> replay_event {
     event.text = object.get_string("text");
     event.edit = object.get_string("edit");
     event.edit_refresh = object.get_bool("edit_refresh");
-#if defined(__ANDROID__)
-    event.shortcut_last_used_action_counter =
-        object.get_int("shortcut_last_used_action_counter", 0);
-#endif
     auto boundary = object.get_object("boundary");
     boundary.allow_omitted_members();
     result.boundary.context = boundary.get_string("context");
@@ -188,8 +184,6 @@ auto read_record(const bool header) -> void {
         auto stream = std::istringstream(line);
         auto input = JsonIn(stream);
         auto object = input.get_object();
-        // Another build may write fields this one does not read, such as Android's shortcut
-        // counter. Reporting them would open a popup that reads the replay mid-record.
         object.allow_omitted_members();
         const auto kind = object.get_string("kind");
         if (header) {
@@ -363,9 +357,6 @@ auto record_input_event(const input_event& event, const input_boundary_metadata&
         json.member("text", event.text);
         json.member("edit", event.edit);
         json.member("edit_refresh", event.edit_refresh);
-#if defined(__ANDROID__)
-        json.member("shortcut_last_used_action_counter", event.shortcut_last_used_action_counter);
-#endif
         json.member("boundary");
         json.start_object();
         json.member("context", boundary.context);
