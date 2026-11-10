@@ -30,7 +30,7 @@ auto weight_units() -> const char* {
 }
 
 auto volume_units_abbr() -> const char* {
-    const std::string vol_units = get_option<std::string>("VOLUME_UNITS");
+    const auto vol_units = get_option<std::string>("VOLUME_UNITS");
     if (vol_units == "c") {
         return pgettext("Volume unit", "c");
     } else if (vol_units == "l") {
@@ -41,7 +41,7 @@ auto volume_units_abbr() -> const char* {
 }
 
 auto volume_units_long() -> const char* {
-    const std::string vol_units = get_option<std::string>("VOLUME_UNITS");
+    const auto vol_units = get_option<std::string>("VOLUME_UNITS");
     if (vol_units == "c") {
         return _("cup");
     } else if (vol_units == "l") {
@@ -52,7 +52,7 @@ auto volume_units_long() -> const char* {
 }
 
 auto convert_velocity(int velocity, const units_type vel_units) -> double {
-    const std::string type = get_option<std::string>("USE_METRIC_SPEEDS");
+    const auto type = get_option<std::string>("USE_METRIC_SPEEDS");
     if (vel_units == VU_VEHICLE) {
         const double meters_per_second = static_cast<double>(velocity) / 100.0;
         if (type == "mph") { return meters_per_second * 2.23694; }
@@ -85,7 +85,7 @@ auto convert_volume(int volume) -> double { return convert_volume(volume, nullpt
 auto convert_volume(int volume, int* out_scale) -> double {
     double ret = volume;
     int scale = 0;
-    const std::string vol_units = get_option<std::string>("VOLUME_UNITS");
+    const auto vol_units = get_option<std::string>("VOLUME_UNITS");
     if (vol_units == "c") {
         ret *= 0.004;
         scale = 1;

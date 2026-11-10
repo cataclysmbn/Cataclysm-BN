@@ -113,7 +113,7 @@ void mission::clear_all() { world_missions.clear(); }
 
 void mission::on_creature_death(Creature& poor_dead_dude) {
     if (poor_dead_dude.is_hallucination()) { return; }
-    monster* mon = dynamic_cast<monster*>(&poor_dead_dude);
+    auto* mon = dynamic_cast<monster*>(&poor_dead_dude);
     if (mon != nullptr) {
         if (mon->is_nemesis()) {
             // The nemesis monster doesn't have a mission attached because it's an overmap horde.
@@ -374,7 +374,7 @@ auto mission::is_complete(const character_id& _npc_id) const -> bool {
         case MGOAL_FIND_MONSTER:
             if (npc_id.is_valid() && npc_id != _npc_id) { return false; }
             return g->get_creature_if([&](const Creature& critter) {
-                const monster* const mon_ptr = dynamic_cast<const monster*>(&critter);
+                const auto* const mon_ptr = dynamic_cast<const monster*>(&critter);
                 return mon_ptr && mon_ptr->mission_id == uid;
             });
 

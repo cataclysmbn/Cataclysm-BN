@@ -473,7 +473,7 @@ template <class T> void conditional_t<T>::set_mission_goal(const JsonObject& jo)
     condition = [mission_goal_str](const T& d) {
         mission* miss = d.beta->chatbin.mission_selected;
         if (!miss) { return false; }
-        const mission_goal mgoal = io::string_to_enum<mission_goal>(mission_goal_str);
+        const auto mgoal = io::string_to_enum<mission_goal>(mission_goal_str);
         return miss->get_type().goal == mgoal;
     };
 }

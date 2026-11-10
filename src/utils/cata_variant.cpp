@@ -5,13 +5,13 @@
 #include "mutation.h"
 
 template <size_t I> static auto is_valid_impl_2(const std::string& s) -> bool {
-    constexpr cata_variant_type T = static_cast<cata_variant_type>(I);
+    constexpr auto T = static_cast<cata_variant_type>(I);
     return cata_variant_detail::convert<T>::is_valid(s);
 }
 
 template <size_t... I>
 constexpr auto is_valid_impl(const cata_variant& v, std::index_sequence<I...>) -> bool {
-    constexpr size_t num_types = static_cast<size_t>(cata_variant_type::num_types);
+    constexpr auto num_types = static_cast<size_t>(cata_variant_type::num_types);
     constexpr std::array<bool (*)(const std::string&), num_types> is_valid_helpers = {
         {is_valid_impl_2<I>...}};
     // No match
@@ -19,7 +19,7 @@ constexpr auto is_valid_impl(const cata_variant& v, std::index_sequence<I...>) -
 }
 
 auto cata_variant::is_valid() const -> bool {
-    constexpr size_t num_types = static_cast<size_t>(cata_variant_type::num_types);
+    constexpr auto num_types = static_cast<size_t>(cata_variant_type::num_types);
     return is_valid_impl(*this, std::make_index_sequence<num_types>{});
 }
 

@@ -82,8 +82,7 @@ void node_t::load(const JsonObject& jo, const std::string&) {
         optional(jo, was_loaded, "children", new_data.children);
     }
     if (jo.has_string("strategy")) {
-        std::unordered_map<std::string, const strategy_t*>::iterator new_strategy =
-            behavior::strategy_map.find(jo.get_string("strategy"));
+        auto new_strategy = behavior::strategy_map.find(jo.get_string("strategy"));
         if (new_strategy != strategy_map.end()) {
             strategy = new_strategy->second;
         } else {
