@@ -1304,7 +1304,6 @@ void npc::execute_action( npc_action action )
             act_noop();
             return;
         default: {
-            ZoneScopedN( "npc_exec_unknown" );
             debugmsg( "Unknown NPC action (%d)", action );
         }
 
@@ -1319,7 +1318,6 @@ void npc::execute_action( npc_action action )
 void npc::act_pause()
 {
     ZoneScoped;
-    ZoneScopedN( "npc_exec_pause" );
     move_pause();
     return;
 }
@@ -1327,14 +1325,12 @@ void npc::act_pause()
 void npc::act_reload()
 {
     ZoneScoped;
-    ZoneScopedN( "npc_exec_reload" );
     do_reload( primary_weapon() );
 }
 
 void npc::act_investigate_sound()
 {
     ZoneScoped;
-    ZoneScopedN( "npc_exec_investigate_sound" );
     auto cur_pos = bub_pos();
     update_path( abs_to_bub( ai_cache.s_abs_pos ) );
     move_to_next();
@@ -1346,7 +1342,6 @@ void npc::act_investigate_sound()
 void npc::act_return_to_guard_pos()
 {
     ZoneScoped;
-    ZoneScopedN( "npc_exec_return_to_guard_pos" );
     const auto local_guard_pos = abs_to_bub( *ai_cache.guard_pos );
     update_path( local_guard_pos );
     if( bub_pos() == local_guard_pos || path.empty() ) {
@@ -1362,7 +1357,6 @@ void npc::act_sleep()
 {
     ZoneScoped;
     Character &player_character = get_player_character();
-    ZoneScopedN( "npc_exec_sleep" );
     // TODO: Allow stims when not too tired
     auto sleep_or_move = [this, &player_character]( tripoint_abs_ms target_pos ) {
         // TODO: Handle empty path better
@@ -1412,7 +1406,6 @@ void npc::act_sleep()
 void npc::act_pickup()
 {
     ZoneScoped;
-    ZoneScopedN( "npc_exec_pickup" );
     pick_up_item();
     return;
 }
@@ -1420,7 +1413,6 @@ void npc::act_pickup()
 void npc::act_heal()
 {
     ZoneScoped;
-    ZoneScopedN( "npc_exec_heal" );
     heal_self();
     return;
 }
@@ -1428,7 +1420,6 @@ void npc::act_heal()
 void npc::act_use_painkiller()
 {
     ZoneScoped;
-    ZoneScopedN( "npc_exec_use_painkiller" );
     use_painkiller();
     return;
 }
@@ -1436,7 +1427,6 @@ void npc::act_use_painkiller()
 void npc::act_drop_items()
 {
     ZoneScoped;
-    ZoneScopedN( "npc_exec_drop_items" );
     /* NPCs can't choose this action anymore, but at least it works */
     drop_invalid_inventory();
     /* drop_items is still broken
@@ -1451,7 +1441,6 @@ void npc::act_flee()
 {
     ZoneScoped;
     auto tar = good_escape_direction( false );
-    ZoneScopedN( "npc_exec_flee" );
     if( path.empty() ) {
         move_to( tar );
     } else {
@@ -1465,7 +1454,6 @@ void npc::act_reach_attack()
     ZoneScoped;
     auto *cur = current_target();
     auto tar = cur != nullptr ? cur->bub_pos() : bub_pos();
-    ZoneScopedN( "npc_exec_reach_attack" );
     if( can_use_offensive_cbm() ) {
         activate_bionic_by_id( bio_hydraulics );
     }
@@ -1479,7 +1467,6 @@ void npc::act_melee()
     auto *cur = current_target();
     auto tar = cur != nullptr ? cur->bub_pos() : bub_pos();
     Character &player_character = get_player_character();
-    ZoneScopedN( "npc_exec_melee" );
     update_path( tar );
     if( path.size() > 1 ) {
         move_to_next();
@@ -1499,7 +1486,6 @@ void npc::act_melee()
 void npc::act_aim()
 {
     ZoneScoped;
-    ZoneScopedN( "npc_exec_aim" );
     gun_mode mode = cbm_active.is_null() ? primary_weapon().gun_current_mode() :
                     cbm_fake_active->gun_current_mode();
     if( !mode ) {
@@ -1520,7 +1506,6 @@ void npc::act_shoot()
     ZoneScoped;
     auto *cur = current_target();
     auto tar = cur != nullptr ? cur->bub_pos() : bub_pos();
-    ZoneScopedN( "npc_exec_shoot" );
     gun_mode mode = cbm_active.is_null() ? primary_weapon().gun_current_mode() :
                     cbm_fake_active->gun_current_mode();
     if( !mode ) {
@@ -1550,7 +1535,6 @@ void npc::act_look_for_player()
 {
     ZoneScoped;
     Character &player_character = get_player_character();
-    ZoneScopedN( "npc_exec_look_for_player" );
     if( saw_player_recently() && last_player_seen_pos && sees( *last_player_seen_pos ) ) {
         update_path( *last_player_seen_pos );
         move_to_next();
@@ -1563,7 +1547,6 @@ void npc::act_look_for_player()
 void npc::act_heal_player()
 {
     ZoneScoped;
-    ZoneScopedN( "npc_exec_heal_player" );
     player *patient = dynamic_cast<player *>( current_ally() );
     if( patient ) {
         update_path( patient->bub_pos() );
@@ -1583,7 +1566,6 @@ void npc::act_follow_player()
 {
     ZoneScoped;
     Character &player_character = get_player_character();
-    ZoneScopedN( "npc_exec_follow_player" );
     update_path( player_character.bub_pos() );
     move_mode = rules.has_flag( ally_rule::move_own_pace ) ?
                 ( ( static_cast<int>( path.size() ) > follow_distance() * 4 ) ? CMM_RUN : CMM_WALK ) :
@@ -1606,7 +1588,6 @@ void npc::act_follow_embarked()
     ZoneScoped;
     Character &player_character = get_player_character();
     map &here = get_map();
-    ZoneScopedN( "npc_exec_follow_embarked" );
     move_mode = rules.has_flag( ally_rule::move_own_pace ) ?
                 ( ( static_cast<int>( path.size() ) > follow_distance() * 4 ) ? CMM_RUN : CMM_WALK ) :
                 player_character.get_movement_mode();
@@ -1716,7 +1697,6 @@ void npc::act_follow_embarked()
 void npc::act_talk_to_player()
 {
     ZoneScoped;
-    ZoneScopedN( "npc_exec_talk_to_player" );
     talk_to_u();
     moves = 0;
     return;
@@ -1726,7 +1706,6 @@ void npc::act_mug_player()
 {
     ZoneScoped;
     Character &player_character = get_player_character();
-    ZoneScopedN( "npc_exec_mug_player" );
     mug_player( player_character );
     return;
 }
@@ -1734,7 +1713,6 @@ void npc::act_mug_player()
 void npc::act_goto_to_this_pos()
 {
     ZoneScoped;
-    ZoneScopedN( "npc_exec_goto_to_this_pos" );
     if( !goto_to_this_pos.has_value() ) {
         debugmsg( "npc_goto_to_this_pos set to true, but no target set" );
         return;
@@ -1752,7 +1730,6 @@ void npc::act_goto_to_this_pos()
 void npc::act_goto_destination()
 {
     ZoneScoped;
-    ZoneScopedN( "npc_exec_goto_destination" );
     go_to_omt_destination();
     return;
 }
@@ -1760,7 +1737,6 @@ void npc::act_goto_destination()
 void npc::act_avoid_friendly_fire()
 {
     ZoneScoped;
-    ZoneScopedN( "npc_exec_avoid_friendly_fire" );
     avoid_friendly_fire();
     return;
 }
@@ -1768,7 +1744,6 @@ void npc::act_avoid_friendly_fire()
 void npc::act_escape_explosion()
 {
     ZoneScoped;
-    ZoneScopedN( "npc_exec_escape_explosion" );
     escape_explosion();
     return;
 }
@@ -1776,7 +1751,6 @@ void npc::act_escape_explosion()
 void npc::act_player_activity()
 {
     ZoneScoped;
-    ZoneScopedN( "npc_exec_player_activity" );
     do_player_activity();
     return;
 }
@@ -1784,7 +1758,6 @@ void npc::act_player_activity()
 void npc::act_undecided()
 {
     ZoneScoped;
-    ZoneScopedN( "npc_exec_undecided" );
     complain();
     move_pause();
     return;
@@ -1793,7 +1766,6 @@ void npc::act_undecided()
 void npc::act_noop()
 {
     ZoneScoped;
-    ZoneScopedN( "npc_exec_noop" );
     add_msg( m_debug, "%s skips turn (noop)", disp_name() );
     return;
 }
