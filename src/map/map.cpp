@@ -7345,13 +7345,33 @@ auto map::get_dir_circle(const tripoint_bub_ms& f, const tripoint_bub_ms& t) con
     return circle;
 }
 
+namespace {
+
+/// Marks every cache of level @p z dirty because new submaps loaded there.
+auto mark_level_loaded(map& m, const int z) -> void {
+    m.set_transparency_cache_dirty(z);
+    m.set_floor_cache_dirty(z);
+    m.set_outside_cache_dirty(z);
+    m.set_absorption_cache_dirty(z);
+    m.set_seen_cache_dirty(z);
+    m.set_pathfinding_cache_dirty(z);
+    m.set_suspension_cache_dirty(z);
+    m.set_vehicle_cache_dirty(z);
+}
+
+} // namespace
+
 void map::load(const point_abs_sm& w, const bool update_vehicle, const bool pump_events) {
     funnel_locations_.clear();
     set_abs_sub(w);
+    // Mark each level once after the loop instead of once per loaded submap.
     for (const auto p : bubble_submaps()) {
-        loadn(p, update_vehicle);
+        loadn(p, update_vehicle, true);
         MAPBUFFER_REGISTRY.get(bound_dimension_).actualize_submap(map_local_to_abs(*this, p));
         if (pump_events) { inp_mngr.pump_events(); }
+    }
+    for (const auto z : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
+        mark_level_loaded(*this, z);
     }
     refresh_active_submap_view();
     validate_active_submap_view_complete("map::load");
@@ -7865,14 +7885,7 @@ void map::loadn(const tripoint_bub_sm& grid, const bool update_vehicles, const b
                 .pathfinding = true,
             });
         } else {
-            set_transparency_cache_dirty(grid.z());
-            set_floor_cache_dirty(grid.z());
-            set_outside_cache_dirty(grid.z());
-            set_absorption_cache_dirty(grid.z());
-            set_seen_cache_dirty(grid.z());
-            set_pathfinding_cache_dirty(grid.z());
-            set_suspension_cache_dirty(grid.z());
-            set_vehicle_cache_dirty(grid.z());
+            mark_level_loaded(*this, grid.z());
         }
     }
     // Overlay boundary terrain on the edge tiles of this submap if it sits at the
