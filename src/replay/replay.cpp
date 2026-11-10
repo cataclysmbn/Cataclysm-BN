@@ -122,29 +122,29 @@ auto boundaries_match(
     return recorded.context == actual.context && timeout_matches && actions_match;
 }
 
-auto event_type_name(const input_event_t type) -> std::string {
-    switch (type) {
-        case input_event_t::keyboard:
-            return "keyboard";
-        case input_event_t::gamepad:
-            return "gamepad";
-        case input_event_t::mouse:
-            return "mouse";
-        case input_event_t::timeout:
-            return "timeout";
-        case input_event_t::error:
-            return "idle";
-    }
-    throw std::runtime_error("Error input events cannot be recorded");
+struct event_type_name {
+    input_event_t type;
+    std::string_view name;
+};
+
+constexpr auto event_type_names = std::array<event_type_name, 5>{{
+    {input_event_t::keyboard, "keyboard"},
+    {input_event_t::gamepad, "gamepad"},
+    {input_event_t::mouse, "mouse"},
+    {input_event_t::timeout, "timeout"},
+    {input_event_t::error, "idle"},
+}};
+
+auto event_type_text(const input_event_t type) -> std::string {
+    return std::string{std::ranges::find(event_type_names, type, &event_type_name::type)->name};
 }
 
-auto read_type(const std::string& type) -> input_event_t {
-    if (type == "keyboard") { return input_event_t::keyboard; }
-    if (type == "gamepad") { return input_event_t::gamepad; }
-    if (type == "mouse") { return input_event_t::mouse; }
-    if (type == "timeout") { return input_event_t::timeout; }
-    if (type == "idle") { return input_event_t::error; }
-    throw std::runtime_error("Unknown input event type: " + type);
+auto read_type(const std::string& name) -> input_event_t {
+    const auto found = std::ranges::find(event_type_names, name, &event_type_name::name);
+    if (found == event_type_names.end()) {
+        throw std::runtime_error("Unknown input event type: " + name);
+    }
+    return found->type;
 }
 
 auto read_event(const JsonObject& object) -> replay_event {
@@ -189,12 +189,12 @@ auto read_record(const bool header) -> void {
         // counter. Reporting them would open a popup that reads the replay mid-record.
         object.allow_omitted_members();
         const auto kind = object.get_string("kind");
-        if (object.get_member("version").get_int64() != format_version) {
-            throw std::runtime_error("Unsupported replay version");
-        }
         if (header) {
             if (kind != "header" || object.get_string("format") != "cataclysm-bn-replay") {
                 throw std::runtime_error("First record must be a cataclysm-bn-replay header");
+            }
+            if (object.get_member("version").get_int64() != format_version) {
+                throw std::runtime_error("Unsupported replay version");
             }
             const auto seed = object.get_member("rng_seed").get_int64();
             if (seed <= 0 || seed > std::numeric_limits<unsigned int>::max()) {
@@ -226,22 +226,21 @@ auto read_record(const bool header) -> void {
     } catch (const std::exception& error) { fail(error.what()); }
 }
 
-auto write_header() -> void {
-    auto& current = state();
-    auto json = JsonOut(current.recording);
-    json.start_object();
-    json.member("kind", "header");
-    json.member("format", "cataclysm-bn-replay");
-    json.member("version", format_version);
-    json.member("rng_seed", current.metadata.rng_seed);
-    json.end_object();
-    current.recording << '\n' << std::flush;
-}
-
 auto flush_record() -> void {
     auto& current = state();
     current.recording << '\n' << std::flush;
     if (!current.recording) { throw std::runtime_error("Could not write replay: " + current.path); }
+}
+
+/// Write one `{"kind":...}` record line; `members` adds the rest.
+auto write_record(const std::string& kind, const auto& members) -> void {
+    auto& current = state();
+    auto json = JsonOut(current.recording);
+    json.start_object();
+    json.member("kind", kind);
+    members(json);
+    json.end_object();
+    flush_record();
 }
 
 auto ensure_next() -> void {
@@ -297,7 +296,11 @@ auto start() -> void {
             if (!current.recording) {
                 throw std::runtime_error("Could not create new replay file: " + current.path);
             }
-            write_header();
+            write_record("header", [&](JsonOut& json) {
+                json.member("format", "cataclysm-bn-replay");
+                json.member("version", format_version);
+                json.member("rng_seed", current.metadata.rng_seed);
+            });
             if (!current.recording) { throw std::runtime_error("Could not write replay header"); }
         } else {
             current.playback.open(current.path, std::ios::in | std::ios::binary);
@@ -326,13 +329,7 @@ auto finish() -> void {
     }
     try {
         if (is_recording()) {
-            auto json = JsonOut(current.recording);
-            json.start_object();
-            json.member("kind", "end");
-            json.member("version", format_version);
-            json.member("events", current.events);
-            json.end_object();
-            flush_record();
+            write_record("end", [&](JsonOut& json) { json.member("events", current.events); });
             current.recording.close();
             if (current.recording.fail()) {
                 throw std::runtime_error("Could not close replay recording");
@@ -363,34 +360,29 @@ auto record_input_event(const input_event& event, const input_boundary_metadata&
     auto& current = state();
     if (!is_recording()) { return; }
     if (!current.started) { throw std::runtime_error("Replay recording has not been started"); }
-    const auto type = event_type_name(event.type);
-    auto json = JsonOut(current.recording);
-    json.start_object();
-    json.member("kind", "input");
-    json.member("version", format_version);
-    json.member("type", type);
-    json.member("sequence", event.sequence);
-    json.member("modifiers", event.modifiers);
-    json.member("mouse_pos");
-    json.start_array();
-    json.write(event.mouse_pos.x);
-    json.write(event.mouse_pos.y);
-    json.end_array();
-    json.member("text", event.text);
-    json.member("edit", event.edit);
-    json.member("edit_refresh", event.edit_refresh);
+    write_record("input", [&](JsonOut& json) {
+        json.member("type", event_type_text(event.type));
+        json.member("sequence", event.sequence);
+        json.member("modifiers", event.modifiers);
+        json.member("mouse_pos");
+        json.start_array();
+        json.write(event.mouse_pos.x);
+        json.write(event.mouse_pos.y);
+        json.end_array();
+        json.member("text", event.text);
+        json.member("edit", event.edit);
+        json.member("edit_refresh", event.edit_refresh);
 #if defined(__ANDROID__)
-    json.member("shortcut_last_used_action_counter", event.shortcut_last_used_action_counter);
+        json.member("shortcut_last_used_action_counter", event.shortcut_last_used_action_counter);
 #endif
-    json.member("boundary");
-    json.start_object();
-    json.member("context", boundary.context);
-    json.member("actions", boundary.actions);
-    json.member("timeout_ms", boundary.timeout_ms);
-    json.member("pointer_space", boundary.pointer_space);
-    json.end_object();
-    json.end_object();
-    flush_record();
+        json.member("boundary");
+        json.start_object();
+        json.member("context", boundary.context);
+        json.member("actions", boundary.actions);
+        json.member("timeout_ms", boundary.timeout_ms);
+        json.member("pointer_space", boundary.pointer_space);
+        json.end_object();
+    });
     ++current.events;
 }
 
@@ -424,14 +416,10 @@ auto external_text(const std::string& source, const std::function<auto()->std::s
     if (!current.started) { throw std::runtime_error("Replay has not been started"); }
     if (is_recording()) {
         auto text = read();
-        auto json = JsonOut(current.recording);
-        json.start_object();
-        json.member("kind", "text");
-        json.member("version", format_version);
-        json.member("source", source);
-        json.member("text", text);
-        json.end_object();
-        flush_record();
+        write_record("text", [&](JsonOut& json) {
+            json.member("source", source);
+            json.member("text", text);
+        });
         return text;
     }
     ensure_next();
