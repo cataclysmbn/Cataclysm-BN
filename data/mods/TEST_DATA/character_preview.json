@@ -1,0 +1,18 @@
+[
+  {
+    "type": "mutation",
+    "id": "test_preview_trait",
+    "name": "TEST preview trait",
+    "description": "A visible inert preview trait.",
+    "points": 0
+  },
+  {
+    "type": "mutation",
+    "id": "test_preview_active_trait",
+    "name": "TEST active preview trait",
+    "description": "A visible powered preview trait without gameplay modifiers.",
+    "points": 0,
+    "active": true,
+    "starts_active": true
+  }
+]
