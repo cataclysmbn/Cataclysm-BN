@@ -416,7 +416,7 @@
     "max_range": 8,
     "min_aoe": 1,
     "max_aoe": 1,
-    "effect_str": "stun",
+    "effect_str": "stunned",
     "min_duration": 3000,
     "max_duration": 6000
   },
