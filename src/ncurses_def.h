@@ -1,5 +1,5 @@
 #pragma once
-#if !(defined(TILES) || defined(_WIN32))
+#if defined(CATA_MCP) || !(defined(TILES) || defined(_WIN32))
 
 #include "hsv_color.h"
 #include "color_loader.h"
