@@ -73,7 +73,7 @@ TEST_CASE("replay preserves every input field and a clean end marker", "[replay]
     for (const auto& event : events) { replay::record_input_event(event, boundary); }
     replay::finish();
     CHECK(fixture.read().find("\"kind\":\"end\"") != std::string::npos);
-    replay::configure_playback(fixture.path.string(), {.rng_seed = 8675309});
+    replay::configure_playback(fixture.path.string());
     replay::start();
     CHECK(replay::playback_metadata().rng_seed == 8675309);
     for (const auto& expected : events) {
@@ -299,7 +299,7 @@ TEST_CASE("replay rejects mouse events recorded in another pointer space", "[rep
     CHECK_THROWS_WITH(replay::next_input_event(pixels), Catch::Matchers::Contains("pointer_space"));
 }
 
-TEST_CASE("replay rejects a zero or mismatched seed and invalid end counts", "[replay][input]") {
+TEST_CASE("replay rejects a zero seed and invalid end counts", "[replay][input]") {
     const auto fixture = replay_fixture{};
     CHECK_THROWS_WITH(replay::configure_recording(fixture.path.string(), {}),
                       Catch::Matchers::Contains("nonzero"));
@@ -308,8 +308,6 @@ TEST_CASE("replay rejects a zero or mismatched seed and invalid end counts", "[r
         header
         + R"({"kind":"end","version":1,"events":1})"
           "\n");
-    replay::configure_playback(fixture.path.string(), {.rng_seed = 8});
-    CHECK_THROWS_WITH(replay::start(), Catch::Matchers::Contains("expected metadata"));
     replay::configure_playback(fixture.path.string());
     CHECK_THROWS_WITH(replay::start(), Catch::Matchers::Contains("input count does not match"));
 }

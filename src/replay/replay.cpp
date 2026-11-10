@@ -38,7 +38,6 @@ struct replay_state {
     bool ended = false;
     std::string path;
     session_metadata metadata;
-    std::optional<session_metadata> expected_metadata;
     std::ofstream recording;
     std::ifstream playback;
     std::optional<replay_event> next;
@@ -270,19 +269,11 @@ auto configure_playback(const std::string& path) -> void {
     state().path = path;
 }
 
-auto configure_playback(const std::string& path, session_metadata expected) -> void {
-    configure_playback(path);
-    state().expected_metadata = expected;
-}
-
 auto playback_metadata() -> const session_metadata& { return state().metadata; } // *NOPAD*
 auto configured_mode() -> mode { return state().active_mode; }
 auto is_enabled() -> bool { return configured_mode() != mode::none; }
 auto is_recording() -> bool { return configured_mode() == mode::record; }
 auto is_playing() -> bool { return configured_mode() == mode::playback; }
-auto session_rng_seed(const unsigned int seed) -> unsigned int {
-    return is_enabled() ? playback_metadata().rng_seed : seed;
-}
 
 auto start() -> void {
     auto& current = state();
@@ -308,10 +299,6 @@ auto start() -> void {
                 throw std::runtime_error("Could not open replay file: " + current.path);
             }
             read_record(true);
-            if (current.expected_metadata
-                && current.expected_metadata->rng_seed != current.metadata.rng_seed) {
-                throw std::runtime_error("Replay header does not match expected metadata");
-            }
             ensure_next();
         }
         current.started = true;
