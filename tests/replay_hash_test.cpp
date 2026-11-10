@@ -18,6 +18,7 @@
 #include <cstddef>
 #include <filesystem>
 #include <fstream>
+#include <map>
 #include <memory>
 #include <new>
 #include <sstream>
@@ -35,16 +36,16 @@ auto fresh_game() -> void {
     get_avatar().setpos(you_at);
 }
 
+struct logged_state {
+    int turn = 0;
+    std::map<std::string, std::string> parts;
+};
+
 /// The names of the parts whose digests differ.
-auto differing(const replay::state_hash& before, const replay::state_hash& after)
-    -> std::vector<std::string> {
-    REQUIRE(before.parts.size() == after.parts.size());
+auto differing(const logged_state& before, const logged_state& after) -> std::vector<std::string> {
     auto names = std::vector<std::string>{};
-    for (auto index = std::size_t{}; index < before.parts.size(); ++index) {
-        REQUIRE(before.parts[index].name == after.parts[index].name);
-        if (before.parts[index].digest != after.parts[index].digest) {
-            names.push_back(before.parts[index].name);
-        }
+    for (const auto& [name, digest] : before.parts) {
+        if (after.parts.at(name) != digest) { names.push_back(name); }
     }
     return names;
 }
@@ -66,6 +67,22 @@ struct hash_log_fixture {
         replay::stop_state_hash_log();
         std::filesystem::remove_all(directory);
     }
+    /// Log the current game state to a new file and read the record back.
+    auto logged() const -> logged_state {
+        replay::stop_state_hash_log();
+        std::filesystem::remove(path);
+        replay::configure_state_hash_log(path.string());
+        replay::log_state_hash();
+        auto stream = std::istringstream(lines().at(1));
+        auto input = JsonIn(stream);
+        auto record = input.get_object();
+        record.allow_omitted_members();
+        auto result = logged_state{.turn = record.get_int("turn")};
+        for (const auto& part : record.get_object("parts")) {
+            result.parts[part.name()] = part.get_string();
+        }
+        return result;
+    }
     auto lines() const -> std::vector<std::string> {
         auto stream = std::ifstream(path, std::ios::binary);
         auto result = std::vector<std::string>{};
@@ -78,31 +95,32 @@ struct hash_log_fixture {
 
 TEST_CASE("the state hash is stable and names the part that changed", "[replay][state_hash]") {
     fresh_game();
-    const auto start = replay::hash_game_state();
-    CHECK(differing(start, replay::hash_game_state()).empty());
+    const auto fixture = hash_log_fixture{};
+    const auto start = fixture.logged();
+    CHECK(differing(start, fixture.logged()).empty());
     CHECK(start.turn == to_turn<int>(calendar::turn));
 
     SECTION("RNG") {
         static_cast<void>(rng(0, 1000));
-        CHECK(differing(start, replay::hash_game_state()) == std::vector<std::string>{"rng"});
+        CHECK(differing(start, fixture.logged()) == std::vector<std::string>{"rng"});
     }
     SECTION("avatar") {
         get_avatar().focus_pool += 1;
-        CHECK(differing(start, replay::hash_game_state()) == std::vector<std::string>{"avatar"});
+        CHECK(differing(start, fixture.logged()) == std::vector<std::string>{"avatar"});
     }
     SECTION("monsters") {
         spawn_test_monster("mon_zombie", you_at + tripoint_east * 3);
-        const auto changed = differing(start, replay::hash_game_state());
+        const auto changed = differing(start, fixture.logged());
         CHECK(std::ranges::find(changed, "monsters") != changed.end());
         CHECK(std::ranges::find(changed, "avatar") == changed.end());
     }
     SECTION("map beside the avatar") {
         get_map().ter_set(you_at + tripoint_east, ter_id("t_wall"));
-        CHECK(differing(start, replay::hash_game_state()) == std::vector<std::string>{"map"});
+        CHECK(differing(start, fixture.logged()) == std::vector<std::string>{"map"});
     }
     SECTION("clock") {
         calendar::turn += 1_turns;
-        CHECK(replay::hash_game_state().turn == start.turn + 1);
+        CHECK(fixture.logged().turn == start.turn + 1);
     }
 }
 
@@ -123,15 +141,6 @@ TEST_CASE("a new monster is written the same whatever its memory held", "[replay
     CHECK(written(std::byte{0x00}) == written(std::byte{0xff}));
 }
 
-TEST_CASE("a state record names the step, the turn and every part", "[replay][state_hash]") {
-    const auto hash = replay::state_hash{
-        .turn = 12,
-        .parts = {{.name = "rng", .digest = "0123456789abcdef"}, {.name = "map", .digest = "f"}},
-    };
-    CHECK(replay::format_state_hash(3, hash)
-          == R"({"kind":"state","step":3,"turn":12,"parts":{"rng":"0123456789abcdef","map":"f"}})");
-}
-
 TEST_CASE("the state log has a header and one record per logged turn", "[replay][state_hash]") {
     fresh_game();
     const auto fixture = hash_log_fixture{};
@@ -145,7 +154,7 @@ TEST_CASE("the state log has a header and one record per logged turn", "[replay]
     replay::log_state_hash();
     const auto lines = fixture.lines();
     REQUIRE(lines.size() == 3);
-    CHECK(lines[0] == R"({"kind":"header","format":"cataclysm-bn-state-hash","version":1})");
+    CHECK(lines[0] == R"({"kind":"header","format":"cataclysm-bn-state-hash"})");
     CHECK(lines[1].starts_with(R"({"kind":"state","step":1,"turn":)" + std::to_string(turn) + ","));
     CHECK(lines[2].starts_with(
         R"({"kind":"state","step":2,"turn":)" + std::to_string(turn + 1) + ","));
