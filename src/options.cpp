@@ -1018,14 +1018,14 @@ bool options_manager::cOpt::is_hidden() const
 
         case COPT_POSIX_CURSES_HIDE:
             // Check if we on windows and using wincurses.
-#if defined(TILES) || defined(_WIN32)
+#if defined(TILES) || defined(_WIN32) || defined(CATA_MCP)
             return false;
 #else
             return true;
 #endif
 
         case COPT_NO_SOUND_HIDE:
-#if !defined(SDL_SOUND) // If not defined, we have no sound support.
+#if !defined(SDL_SOUND) && !defined(CATA_MCP) // If not defined, we have no sound support.
             return true;
 #else
             return false;
@@ -3593,7 +3593,7 @@ options_manager::PageItem::fmt_tooltip( const Group &group,
             std::string ret = string_format( "%s #%s",
                                              opt.getTooltip(),
                                              opt.getDefaultText() );
-#if defined(TILES) || defined(_WIN32)
+#if defined(TILES) || defined(_WIN32) || defined(CATA_MCP)
             if( opt_name == "TERMINAL_X" ) {
                 int new_window_width = 0;
                 new_window_width = projected_window_width();
@@ -4225,7 +4225,12 @@ void options_manager::cache_to_globals()
     display_mod_source = ::get_option<bool>( "MOD_SOURCE" );
     display_object_ids = ::get_option<bool>( "SHOW_IDS" );
     trigdist = ::get_option<bool>( "CIRCLEDIST" );
-#if defined(TILES)
+#if defined(CATA_MCP)
+    // A protocol client draws tiles from the published map, colored light included.
+    use_tiles = false;
+    colored_lighting = ::get_option<bool>( "COLORED_LIGHTING" );
+    use_tiles_overmap = false;
+#elif defined(TILES)
     use_tiles = ::get_option<bool>( "USE_TILES" );
     colored_lighting = use_tiles && ::get_option<bool>( "COLORED_LIGHTING" );
     use_tiles_overmap = ::get_option<bool>( "USE_TILES_OVERMAP" );
@@ -4310,7 +4315,7 @@ void options_manager::cache_to_globals()
 
     similarity_threshold = ::get_option<float>( "MERGE_COMESTIBLES_THRESHOLD" );
 
-#if defined(SDL_SOUND)
+#if defined(SDL_SOUND) || defined(CATA_MCP)
     sounds::sound_enabled = ::get_option<bool>( "SOUND_ENABLED" );
 #endif
 
