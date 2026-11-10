@@ -1,8 +1,16 @@
 #pragma once
 
+#if defined(CATA_MCP)
+#include "point.h"
+#endif
+
 namespace game_ui
 {
 void init_ui();
+#if defined(CATA_MCP)
+/// Resizes the terminal as a window resize would, so the terrain window shows `cells`.
+auto resize_terrain_window( point cells ) -> void;
+#endif
 } // namespace game_ui
 
 // defined in sdltiles.cpp

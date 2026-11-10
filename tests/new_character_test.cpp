@@ -209,6 +209,15 @@ TEST_CASE("starting_items", "[slow]") {
     std::set<failure> failures;
 
     avatar& ch = get_avatar();
+#if defined(CATA_MCP)
+    // The case replaces the avatar and the scenario; later cases get them back as they were.
+    auto original = std::move(ch);
+    const auto* const original_scenario = g->scen;
+    const auto restore = on_out_of_scope([&] {
+        get_avatar() = std::move(original);
+        g->scen = original_scenario;
+    });
+#endif
 
     ch = get_sanitized_player();
 
