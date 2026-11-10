@@ -235,11 +235,15 @@ local function tick_morale_traits()
     return
   end
 
+  local claustrophobic = you:has_trait(trait_claustrophobia)
+  local agoraphobic = you:has_trait(trait_agoraphobia)
+  if not claustrophobic and not agoraphobic then return end
+
   local here = gapi.get_map()
   local pos = you:get_pos_ms()
   local is_outside = here:is_outside(pos)
 
-  if you:has_trait(trait_claustrophobia) then
+  if claustrophobic then
     if not is_outside then
       apply_penalty(you, morale_indoor_misery, 15)
       if gapi.rng(1, 5) == 1 then drain_focus(you, 1, 20) end
@@ -248,7 +252,7 @@ local function tick_morale_traits()
     end
   end
 
-  if you:has_trait(trait_agoraphobia) then
+  if agoraphobic then
     if is_outside then
       apply_penalty(you, morale_outdoor_misery, 15)
       if gapi.rng(1, 5) == 1 then drain_focus(you, 1, 20) end
