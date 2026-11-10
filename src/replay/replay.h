@@ -11,7 +11,7 @@
 
 namespace replay {
 
-inline constexpr auto format_version = std::uint32_t{1};
+inline constexpr auto format_version = std::uint32_t{2};
 
 enum class mode {
     none,

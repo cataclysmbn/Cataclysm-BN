@@ -44,10 +44,10 @@ struct replay_fixture {
 };
 
 const auto header = std::string{
-    R"({"kind":"header","format":"cataclysm-bn-replay","version":1,"rng_seed":7})"
+    R"({"kind":"header","format":"cataclysm-bn-replay","version":2,"rng_seed":7})"
     "\n"};
 const auto timeout_event = std::string{
-    R"({"kind":"input","version":1,"type":"timeout","sequence":[],"modifiers":[],"mouse_pos":[0,0],"text":"","edit":"","edit_refresh":false,"boundary":{"context":"GAME","actions":["MOVE_N"]}})"
+    R"({"kind":"input","type":"timeout","sequence":[],"modifiers":[],"mouse_pos":[0,0],"text":"","edit":"","edit_refresh":false,"boundary":{"context":"GAME","actions":["MOVE_N"]}})"
     "\n"};
 
 } // namespace
@@ -99,7 +99,7 @@ TEST_CASE("replay rejects invalid headers without changing RNG", "[replay][input
               R"({"kind":"header","format":"cataclysm-bn-replay","version":99,"rng_seed":7})"
               "\n"},
           std::string{
-              R"({"kind":"header","format":"cataclysm-bn-replay","version":1,"rng_seed":-1})"
+              R"({"kind":"header","format":"cataclysm-bn-replay","version":2,"rng_seed":-1})"
               "\n"}}) {
         fixture.write(text);
         replay::configure_playback(fixture.path.string());
@@ -306,7 +306,7 @@ TEST_CASE("replay rejects a zero seed and invalid end counts", "[replay][input]"
     CHECK_FALSE(replay::is_enabled());
     fixture.write(
         header
-        + R"({"kind":"end","version":1,"events":1})"
+        + R"({"kind":"end","events":1})"
           "\n");
     replay::configure_playback(fixture.path.string());
     CHECK_THROWS_WITH(replay::start(), Catch::Matchers::Contains("input count does not match"));
@@ -342,7 +342,7 @@ TEST_CASE("playback leaves the pressed key for menus that open on it", "[replay]
 TEST_CASE("replay ignores record fields it does not know", "[replay][input]") {
     const auto fixture = replay_fixture{};
     fixture.write(
-        R"({"kind":"header","format":"cataclysm-bn-replay","version":1,"rng_seed":7,"client":"x"})"
+        R"({"kind":"header","format":"cataclysm-bn-replay","version":2,"rng_seed":7,"client":"x"})"
         "\n"
         R"({"kind":"input","version":1,"type":"keyboard","sequence":[107],"modifiers":[],"mouse_pos":[0,0],"text":"","edit":"","edit_refresh":false,"shortcut_last_used_action_counter":3,"boundary":{"context":"GAME","actions":["MOVE_N"],"layout":"x"}})"
         "\n"
