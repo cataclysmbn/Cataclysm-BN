@@ -509,7 +509,9 @@ void player_activity::do_turn( player &p )
     * Auto-needs block
     * Should happen before activity or it may fail du to 0 moves
     */
-    if( *this && type->will_refuel_fires() ) {
+    // Activity skip windows only run while no fire burns in the simulated area.
+    const auto skipping_time = p.is_avatar() && get_avatar().in_skip_state;
+    if( *this && type->will_refuel_fires() && !skipping_time ) {
         try_fuel_fire( *this, p );
     }
     if( action_time_scale::once_every_this_tick( 30_minutes ) ) {
