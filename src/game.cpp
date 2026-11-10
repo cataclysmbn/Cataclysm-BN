@@ -3324,13 +3324,6 @@ void game::set_critter_died()
     critter_died = true;
 }
 
-static int maptile_field_intensity( maptile &mt, field_type_id fld )
-{
-    auto field_ptr = mt.find_field( fld );
-
-    return field_ptr == nullptr ? 0 : field_ptr->get_field_intensity();
-}
-
 int get_heat_radiation( const tripoint_bub_ms &location, bool direct )
 {
     // Direct heat from fire sources
@@ -3342,32 +3335,49 @@ int get_heat_radiation( const tripoint_bub_ms &location, bool direct )
     map &here = get_map();
     // Convert it to an int id once, instead of 139 times per turn
     const field_type_id fd_fire_int = fd_fire.id();
-    for( const tripoint_bub_ms &dest : here.points_in_radius( location, 6 ) ) {
-        int heat_intensity = 0;
-
-        maptile mt = here.maptile_at( tripoint_bub_ms( dest ) );
-
-        int ffire = maptile_field_intensity( mt, fd_fire_int );
-        if( ffire > 0 ) {
-            heat_intensity = ffire;
-        } else  {
-            heat_intensity = mt.get_ter()->heat_radiation;
-        }
-        if( heat_intensity == 0 ) {
-            // No heat source here
-            continue;
-        }
-        if( player_character.bub_pos() == location ) {
-            if( !here.pl_line_of_sight( dest, -1 ) ) {
+    const auto range = here.points_in_radius( location, 6 );
+    if( range.size() == 0 ) {
+        return 0;
+    }
+    const auto min_x = range.min().x();
+    const auto min_y = range.min().y();
+    const auto max_x = range.max().x();
+    const auto max_y = range.max().y();
+    const auto z = range.min().z();
+    // Look up each submap once and its fields only when it has any.
+    for( auto smx = min_x / SEEX; smx <= max_x / SEEX; ++smx ) {
+        for( auto smy = min_y / SEEY; smy <= max_y / SEEY; ++smy ) {
+            const submap *sm = here.get_submap_at( tripoint_bub_ms( smx * SEEX, smy * SEEY, z ) );
+            if( sm == nullptr ) {
                 continue;
             }
-        } else if( !here.sees( location, dest, -1 ) ) {
-            continue;
+            for( auto x = std::max( min_x, smx * SEEX ); x <= std::min( max_x, smx * SEEX + SEEX - 1 ); ++x ) {
+                for( auto y = std::max( min_y, smy * SEEY ); y <= std::min( max_y, smy * SEEY + SEEY - 1 );
+                     ++y ) {
+                    const auto local = point_sm_ms( x - smx * SEEX, y - smy * SEEY );
+                    const field_entry *fire = sm->field_count == 0 ? nullptr :
+                                              sm->get_field( local ).find_field( fd_fire_int );
+                    const auto ffire = fire == nullptr ? 0 : fire->get_field_intensity();
+                    const auto heat_intensity = ffire > 0 ? ffire : sm->get_ter( local )->heat_radiation;
+                    if( heat_intensity == 0 ) {
+                        // No heat source here
+                        continue;
+                    }
+                    const auto dest = tripoint_bub_ms( x, y, z );
+                    if( player_character.bub_pos() == location ) {
+                        if( !here.pl_line_of_sight( dest, -1 ) ) {
+                            continue;
+                        }
+                    } else if( !here.sees( location, dest, -1 ) ) {
+                        continue;
+                    }
+                    // Ensure fire_dist >= 1 to avoid divide-by-zero errors.
+                    const int fire_dist = std::max( 1, square_dist( dest, location ) );
+                    temp_mod += 6 * heat_intensity * heat_intensity / fire_dist;
+                    best_fire = std::max( best_fire, heat_intensity );
+                }
+            }
         }
-        // Ensure fire_dist >= 1 to avoid divide-by-zero errors.
-        const int fire_dist = std::max( 1, square_dist( dest, location ) );
-        temp_mod += 6 * heat_intensity * heat_intensity / fire_dist;
-        best_fire = std::max( best_fire, heat_intensity );
     }
     if( direct ) {
         return best_fire;
