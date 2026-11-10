@@ -10,6 +10,8 @@
 
 #if defined( TILES )
 struct loading_image_cache;
+#endif
+#if defined( TILES ) || defined( CATA_MCP )
 struct loading_image_selection_state {
     std::vector<std::string> paths;
     std::size_t next_path = 0;
@@ -61,6 +63,12 @@ class loading_ui
         std::unique_ptr<loading_image_splash> ui_splash;
 #if defined( TILES )
         loading_image_selection_state loading_image_selection;
+#elif defined( CATA_MCP )
+        loading_image_selection_state loading_image_selection;
+        bool loading_image_selected = false;
+        bool reported = false;
+        /// Tells the loading observer this step.
+        void report();
 #endif
 
         void init();
