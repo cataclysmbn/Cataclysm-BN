@@ -8057,15 +8057,19 @@ void map::spawn_monsters_submap_group(
 }
 
 void map::spawn_monsters_submap(const tripoint_bub_sm& gp, bool ignore_sight) {
+    auto& obuf = get_overmapbuffer(bound_dimension_);
     // Load unloaded monsters
     // TODO: fix point types
-    get_overmapbuffer(bound_dimension_).spawn_monster(map_local_to_abs(*this, gp));
+    obuf.spawn_monster(map_local_to_abs(*this, gp));
 
     // Only spawn new monsters after existing monsters are loaded.
     // TODO: fix point types
-    auto groups = get_overmapbuffer(bound_dimension_).groups_at(map_local_to_abs(*this, gp));
+    auto groups = obuf.groups_at(map_local_to_abs(*this, gp));
     for (auto& mgp : groups) { spawn_monsters_submap_group(gp, *mgp, ignore_sight); }
 
+    // The cached view skips the buffer lookup for the common submap without spawns.
+    const auto view = active_submaps_.get_submap_view(point_rel_sm(gp.x(), gp.y()), gp.z());
+    if (view && view->get_submap().spawns.empty()) { return; }
     submap* const current_submap = get_mapbuffer().lookup_submap_in_memory(
         map_local_to_abs(*this, gp));
     if (current_submap == nullptr) { return; }
