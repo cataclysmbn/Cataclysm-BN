@@ -611,6 +611,17 @@
     "default": 5
   },
   {
+    "type": "OPTION",
+    "name": "SCENT_SPREAD_ONLY_NEAR_TRACKERS",
+    "stype": "bool",
+    "scope": "global",
+    "page": "performance",
+    "group": "reality_bubble",
+    "menu_text": "Spread Scent Only Near Trackers",
+    "tooltip": "Spread your scent only when a monster that tracks by smell is in the reality bubble within one z-level of you.  You still leave scent where you stand.  Disable to spread scent every turn.",
+    "default": true
+  },
+  {
     "type": "OPTION_GROUP",
     "id": "submap_loading",
     "page": "performance",
