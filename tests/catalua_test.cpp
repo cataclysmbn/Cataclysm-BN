@@ -44,6 +44,7 @@
 #include "overmap/overmapbuffer_registry.h"
 #include "player_activity.h"
 #include "player_helpers.h"
+#include "scenario.h"
 #include "sqlite3.h"
 #include "state_helpers.h"
 #include "string_formatter.h"
@@ -446,6 +447,50 @@ TEST_CASE("lua_global_functions", "[lua]") {
     REQUIRE(lua_npc_avatar_name == "nil");
 }
 
+TEST_CASE("lua_scenario_binding", "[lua]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    sol::state lua = make_lua_state();
+
+    sol::table test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    // Restore the active scenario after the test: leaving g->scen null makes
+    // avatar::store omit the "scenario" member, which fails later save/load
+    // round-trips with "Tried to use non-existent scenario '(null)'".
+    const auto scen_cleanup = on_out_of_scope([]() { set_scenario(scenario::generic()); });
+
+    // Use a dedicated test scenario so the checks below do not depend on the
+    // point balance of real scenarios such as "hunted_start".
+    const auto test_scenario_json = std::string(R"({
+        "id": "test_lua_binding",
+        "name": "Test Scenario",
+        "points": -3,
+        "description": "Scenario used to test the Lua scenario bindings.",
+        "start_name": "Test Start",
+        "allowed_locs": [ "sloc_house" ],
+        "forced_traits": [ "HAS_NEMESIS" ],
+        "flags": [ "LONE_START" ]
+    })");
+    auto stream = std::istringstream(test_scenario_json);
+    auto jsin = JsonIn(stream);
+    scenario::load_scenario(jsin.get_object(), "test");
+
+    set_scenario(&string_id<scenario>("test_lua_binding").obj());
+    run_lua_test_script(lua, "scenario_binding_test.lua");
+    CHECK(test_data.get<bool>("has_scenario"));
+    CHECK(test_data.get<std::string>("scenario_id") == "test_lua_binding");
+    CHECK(test_data.get<int>("point_cost") == -3);
+    CHECK(test_data.get<int>("forced_count") == 1);
+    CHECK(test_data.get<bool>("has_nemesis"));
+    CHECK(test_data.get<bool>("has_flag"));
+
+    // Without a scenario, gapi.get_scenario() returns nil
+    set_scenario(nullptr);
+    sol::object res = lua["gapi"]["get_scenario"]();
+    CHECK(res.get_type() == sol::type::lua_nil);
+}
+
 TEST_CASE("lua_weather_override_can_expire", "[lua][weather]") {
     clear_all_state();
     sol::state lua = make_lua_state();
@@ -799,6 +844,89 @@ TEST_CASE("lua_nearby_omt_creature_queries_return_active_creatures", "[lua][crea
     CHECK(test_data.get<int>("monster_count") == 1);
     CHECK(test_data.get<bool>("found_expected_npc"));
     CHECK(test_data.get<bool>("found_expected_monster"));
+}
+
+TEST_CASE("lua_character_get_items_if_filters_items", "[lua][character][item]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    auto lua = make_lua_state();
+
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    auto& player = get_avatar();
+    player.i_add(item::spawn("bread"));
+    player.i_add(item::spawn("apple"));
+    auto char_forge = item::spawn("char_forge");
+    char_forge->charges = 0;
+    player.i_add(std::move(char_forge));
+    player.wear_item(item::spawn("tshirt"), false);
+    player.wield(item::spawn("rock"));
+    test_data["character"] = &player;
+
+    run_lua_test_script(lua, "character_get_items_if_test.lua");
+
+    // all_count covers inventory + worn + wielded; the type filters pin the worn and wielded items.
+    CHECK(test_data.get<int>("all_count") == 5);
+    CHECK(test_data.get<int>("food_count") == 2);
+    CHECK(test_data.get<int>("food_category_count") == 2);
+    CHECK(test_data.get<int>("wielded_rock_count") == 1);
+    CHECK(test_data.get<int>("worn_tshirt_count") == 1);
+    CHECK(test_data.get<int>("flag_count") == 1);
+    CHECK(test_data.get<int>("combined_count") == 2);
+    CHECK(test_data.get<int>("worn_count") == 1);
+    CHECK(test_data.get<int>("wielded_count") == 1);
+    CHECK(test_data.get<int>("not_worn_count") == 4);
+    // the flashlight spawns empty, so need_charges excludes it
+    CHECK(test_data.get<int>("charged_tools_count") == 4);
+    CHECK(test_data.get<int>("empty_char_forge_count") == 0);
+    CHECK(test_data.get<int>("any_char_forge_count") == 1);
+    CHECK(test_data.get<int>("removed_food_count") == 2);
+    CHECK(test_data.get<int>("after_remove_count") == 3);
+    CHECK(test_data.get<int>("removed_by_object_count") == 1);
+    CHECK(test_data.get<int>("by_object_count") == 1);
+    CHECK(test_data.get<std::string>("type_str") == "rock");
+    CHECK(test_data.get<std::string>("id_type") == "userdata");
+    CHECK(test_data.get<bool>("id_eq") == true);
+    CHECK(test_data.get<int>("by_table") == 1);
+}
+
+TEST_CASE("lua_gapi_get_items_if_filters_map_items", "[lua][item][map]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    auto lua = make_lua_state();
+
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    auto& here = get_map();
+    const auto pos = get_avatar().bub_pos();
+    const auto far_pos = tripoint_bub_ms(pos.x() + 2, pos.y(), pos.z());
+    here.i_clear(pos);
+    here.i_clear(far_pos);
+    here.add_item_or_charges(pos, item::spawn("bread"));
+    here.add_item_or_charges(pos, item::spawn("rock"));
+    here.add_item_or_charges(far_pos, item::spawn("apple"));
+    auto bag = item::spawn("bag_plastic");
+    bag->put_in(item::spawn("banana"));
+    here.add_item_or_charges(far_pos, std::move(bag));
+    test_data["pos"] = pos;
+
+    run_lua_test_script(lua, "gapi_get_items_if_test.lua");
+
+    CHECK(test_data.get<int>("food_count") == 1);
+    CHECK(test_data.get<int>("food_radius2_count") == 3);
+    CHECK(test_data.get<int>("rock_count") == 1);
+    CHECK(test_data.get<int>("all_count") == 5);
+    // the banana inside the plastic bag at far_pos is found too
+    CHECK(test_data.get<int>("contained_food_count") == 1);
+    // the sacrifice flow removed the only food within radius 1 (the bread at pos)
+    CHECK(test_data.get<std::string>("sacrificed") == "bread (fresh) (2)");
+    CHECK(test_data.get<int>("food_after_sacrifice") == 0);
+    CHECK(here.i_at(pos).size() == 1);
+
+    here.i_clear(pos);
+    here.i_clear(far_pos);
 }
 
 TEST_CASE("lua_npc_move_to_binding_moves_real_npc", "[lua][npc]") {

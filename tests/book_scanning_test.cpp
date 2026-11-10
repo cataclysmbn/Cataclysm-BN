@@ -3,12 +3,15 @@
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catch/catch.hpp"
+#include "character_functions.h"
 #include "digital_media.h"
+#include "game.h"
 #include "inventory.h"
 #include "item.h"
 #include "item_contents.h"
 #include "itype.h"
 #include "json.h"
+#include "map/map.h"
 #include "map_helpers.h"
 #include "player_activity.h"
 #include "player_helpers.h"
@@ -16,6 +19,7 @@
 #include "recipe_dictionary.h"
 #include "skill.h"
 #include "state_helpers.h"
+#include "text_snippets.h"
 
 #include <sstream>
 
@@ -29,6 +33,137 @@ auto finish_scan(avatar& who) -> void {
     REQUIRE(who.activity->is_null());
 }
 } // namespace
+
+TEST_CASE("scanning_preserves_distinct_snippets", "[digital_media][book_scanning]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    set_time(calendar::turn_zero + 12_hours);
+    auto& who = get_avatar();
+    clear_character(who);
+    auto& reader = who.i_add(item::spawn("wrist_comp_budget"));
+    reader.ammo_set(itype_id("battery"), 10);
+    auto& text = who.i_add(item::spawn("test_scannable_snippet"));
+    REQUIRE_FALSE(text.is_book());
+    REQUIRE(text.is_armor());
+    REQUIRE(is_scannable_text(text));
+    auto identities = std::vector<std::string>{};
+    for (const auto& id :
+         {snippet_id("test_scannable_snippet_first"),
+          snippet_id("test_scannable_snippet_second")}) {
+        text.set_snippet(id);
+        REQUIRE(start_book_scan(who, reader, text));
+        finish_scan(who);
+        CHECK_FALSE(is_digital_file(text));
+        CHECK(text.snip_id == id);
+        auto& file = reader.contents.back();
+        CHECK(file.snip_id == id);
+        CHECK(file.info_string().find(SNIPPET.get_snippet_ref_by_id(id).translated())
+              != std::string::npos);
+        CHECK(file.typeId() == itype_id("digital_scanned_text"));
+        CHECK(file.type_name() == "digital copy of " + text.type_name());
+        CHECK_FALSE(file.is_armor());
+        CHECK_FALSE(file.is_tool());
+        CHECK(file.type->use_methods.empty());
+        CHECK(file.volume() == 1_ml);
+        CHECK(file.weight() == 0_gram);
+        CHECK(digital_reader_for(who, file));
+        CHECK_FALSE(is_scannable_text(file));
+        CHECK_FALSE(start_book_scan(who, reader, text));
+        identities.push_back(file.get_var("DIGITAL_FILE_ID"));
+    }
+    REQUIRE(identities.size() == 2);
+    CHECK(identities.front() != identities.back());
+    CHECK(reader.contents.num_item_stacks() == 2);
+
+    auto& card = who.i_add(item::spawn("sd_memory_card"));
+    REQUIRE(upload_digital_files(who, {.source = reader, .destination = card}) == 2);
+    auto output = std::ostringstream{};
+    auto writer = JsonOut(output);
+    card.serialize(writer);
+    auto input = std::istringstream(output.str());
+    auto parser = JsonIn(input);
+    const auto loaded = item::spawn(parser);
+    auto& other_reader = who.i_add(item::spawn("wrist_comp_budget"));
+    other_reader.ammo_set(itype_id("battery"), 10);
+    REQUIRE(download_digital_files(other_reader, *loaded, who) == 2);
+    CHECK(other_reader.contents.front().snip_id == reader.contents.front().snip_id);
+    CHECK(other_reader.contents.back().snip_id == reader.contents.back().snip_id);
+    CHECK(other_reader.contents.front().type_name() == "digital copy of " + text.type_name());
+    CHECK(other_reader.contents.front().typeId() == itype_id("digital_scanned_text"));
+    CHECK(download_digital_files(other_reader, *loaded, who) == 0);
+
+    auto& rag = who.i_add(item::spawn("rag"));
+    CHECK_FALSE(is_scannable_text(rag));
+    CHECK_FALSE(start_book_scan(who, reader, rag));
+}
+
+TEST_CASE("scanned_books_can_be_read_in_darkness", "[digital_media][book_scanning][reading]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    set_time(calendar::turn_zero + 12_hours);
+    auto& who = get_avatar();
+    clear_character(who);
+    auto& reader = who.i_add(item::spawn("wrist_comp_budget"));
+    reader.ammo_set(itype_id("battery"), 10);
+    auto& book = who.i_add(item::spawn("test_scannable_book"));
+    REQUIRE(start_book_scan(who, reader, book));
+    finish_scan(who);
+    REQUIRE_FALSE(reader.contents.empty());
+    auto& file = reader.contents.front();
+    REQUIRE(is_digital_file(file));
+    who.do_read(&file);
+    REQUIRE(who.has_identified(file.typeId()));
+
+    set_time(calendar::turn_zero);
+    constexpr auto pos = tripoint_bub_ms(60, 60, 0);
+    g->place_player(pos);
+    auto& here = get_map();
+    here.ter_set(pos, ter_id("t_floor"));
+    here.furn_set(pos, furn_id("f_null"));
+    here.ter_set(pos + tripoint_above, ter_id("t_flat_roof"));
+    here.invalidate_map_cache(pos.z());
+    here.build_map_cache(pos.z());
+    here.update_visibility_cache(pos.z());
+    REQUIRE_FALSE(character_funcs::can_see_fine_details(who));
+
+    auto reasons = std::vector<std::string>{};
+    SECTION("a powered screen allows normal speed reading and learning") {
+        CHECK(who.get_book_reader(book, reasons) == nullptr);
+        reasons.clear();
+        CHECK(who.get_book_reader(file, reasons) == &who);
+        CHECK(reasons.empty());
+        const auto dark_reading_time = who.time_to_read(file, who);
+        CHECK(who.time_to_read(book, who) > dark_reading_time);
+        auto& lamp = who.i_add(item::spawn("atomic_lamp"));
+        REQUIRE(character_funcs::can_see_fine_details(who));
+        CHECK(who.time_to_read(file, who) == dark_reading_time);
+        const auto removed_lamp = lamp.detach();
+        REQUIRE_FALSE(character_funcs::can_see_fine_details(who));
+
+        REQUIRE(who.read(&file, true));
+        REQUIRE_FALSE(who.activity->is_null());
+        for (auto turn = 0; turn < 300 && !who.activity->is_null(); ++turn) {
+            calendar::turn += 1_turns;
+            who.moves = 100;
+            who.activity->do_turn(who);
+        }
+        CHECK(who.activity->is_null());
+        CHECK(who.get_skill_level_object(skill_id("electronics")).exercise() > 0);
+    }
+    SECTION("a screen still requires power") {
+        reader.ammo_unset();
+        CHECK(who.get_book_reader(file, reasons) == nullptr);
+    }
+    SECTION("a screen cannot overcome blindness") {
+        who.add_effect(efftype_id("blind"), 1_hours);
+        REQUIRE(who.is_blind());
+        CHECK(who.get_book_reader(file, reasons) == nullptr);
+    }
+    SECTION("a screen still requires reading glasses") {
+        who.toggle_trait(trait_id("HYPEROPIC"));
+        CHECK(who.get_book_reader(file, reasons) == nullptr);
+    }
+}
 
 TEST_CASE(
     "scanned_books_retain_their_contents_as_transferable_digital_files",

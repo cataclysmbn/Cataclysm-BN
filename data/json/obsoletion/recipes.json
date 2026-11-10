@@ -61,11 +61,6 @@
   },
   {
     "type": "recipe",
-    "result": "lightstrip_inactive",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
     "result": "milk",
     "id_suffix": "from_powder",
     "obsolete": true

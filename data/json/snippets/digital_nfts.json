@@ -1,0 +1,68 @@
+[
+  {
+    "type": "snippet",
+    "category": "digital_nft_artwork",
+    "text": [
+      {
+        "id": "digital_nft_artwork_ape",
+        "text": "A bored-looking ape wears sunglasses and a sailor's cap.  The attached receipt records a sale for $250,000.  A saved argument underneath insists that copying the image is not the same as owning it.  You make a copy.  The ape looks just as bored."
+      },
+      {
+        "id": "digital_nft_artwork_rock",
+        "text": "A gray oval sits on a beige background.  The artist's statement calls it a radical exploration of digital scarcity.  The owner paid a quarter of a million dollars for it.  You have recently encountered several real rocks, all of them more useful."
+      },
+      {
+        "id": "digital_nft_artwork_link",
+        "text": "The certificate lists a purchase price of $250,000 and promises that ownership will endure forever.  The artwork itself has been replaced by a cached error page: 'This account has exceeded its hosting allowance.'  Eternity apparently required a monthly subscription."
+      },
+      {
+        "id": "digital_nft_artwork_zombie",
+        "text": "A pixel-art zombie wears a gold crown.  Its last owner described the $250,000 purchase as 'getting in early.'  A note promises exclusive access to future zombie-themed events.  You suspect admission is now free."
+      }
+    ]
+  },
+  {
+    "type": "snippet",
+    "category": "digital_nft_real_estate",
+    "text": [
+      {
+        "id": "digital_nft_real_estate_penthouse",
+        "text": "A brochure advertises a $950,000 virtual penthouse with panoramic views and no physical footprint.  The cached tour shows a sofa, a swimming pool, and a wall of framed receipts.  None of it provides shelter from actual weather."
+      },
+      {
+        "id": "digital_nft_real_estate_mall",
+        "text": "This deed grants ownership of a premium storefront in an online shopping district.  Its selling point was proximity to an internationally famous shoe brand.  The last support ticket asks why there are no customers.  The ticket remains open."
+      },
+      {
+        "id": "digital_nft_real_estate_bunker",
+        "text": "The listing promises a 'future-proof digital bunker' for discerning investors.  A cached screenshot shows a steel door in a fluorescent green hillside.  The seller guaranteed protection against market volatility.  Protection against the end of civilization was not mentioned."
+      },
+      {
+        "id": "digital_nft_real_estate_landlord",
+        "text": "A spreadsheet projects decades of rental income from this virtual plot.  A red annotation warns that the initial investment must never be sold at a loss.  The plot's neighbors, tenants, and property-management company have all ceased to exist, but the spreadsheet still balances."
+      }
+    ]
+  },
+  {
+    "type": "snippet",
+    "category": "digital_nft_collectible",
+    "text": [
+      {
+        "id": "digital_nft_collectible_sword",
+        "text": "A rotating golden sword trails animated flames.  The certificate promises that its owner will be able to use it in every game that joins the project.  A $75,000 receipt is attached.  You cannot use it in this one."
+      },
+      {
+        "id": "digital_nft_collectible_ticket",
+        "text": "An animated admission ticket flashes 'LIFETIME VIP ACCESS.'  The accompanying invitation offers a private party aboard a yacht, with an open bar and a presentation on building lasting wealth.  The event was postponed indefinitely shortly before the emergency broadcasts began."
+      },
+      {
+        "id": "digital_nft_collectible_cat",
+        "text": "A tiny animated cat has a rainbow tail and a serial number.  The saved sales pitch describes it as one of only twelve with this exact combination of whiskers.  Someone paid $75,000 to ensure that nobody else could claim to have paid $75,000 for this particular cat."
+      },
+      {
+        "id": "digital_nft_collectible_hands",
+        "text": "Two glittering hands squeeze a diamond.  A note beneath the image reads 'WE ARE NEVER SELLING.'  The transaction history ends several days before the Cataclysm.  The owner appears to have kept their promise."
+      }
+    ]
+  }
+]

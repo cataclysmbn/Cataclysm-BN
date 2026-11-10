@@ -671,6 +671,18 @@
   },
   {
     "type": "construction",
+    "id": "constr_ore_smelter_empty",
+    "group": "build_ore_smelter",
+    "category": "FURN",
+    "required_skills": [ [ "fabrication", 3 ] ],
+    "time": "120 m",
+    "components": [ [ [ "rock", 40 ] ], [ [ "material_soil", 2 ] ] ],
+    "pre_note": "Can be deconstructed without tools.",
+    "pre_special": "check_empty",
+    "post_furniture": "f_ore_smelter_empty"
+  },
+  {
+    "type": "construction",
     "id": "constr_kiln_metal_empty",
     "group": "build_metal_charcoal_kiln",
     "category": "FURN",

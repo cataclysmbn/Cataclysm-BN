@@ -94,7 +94,6 @@ ignorable = {
     "emit",
     "enchantment",
     "event_transformation",
-    "event_statistic",
     "EXTERNAL_OPTION",
     "hit_range",
     "ITEM_BLACKLIST",
@@ -161,7 +160,6 @@ automatically_convertible = {
     "CONTAINER",
     "dream",
     "ENGINE",
-    "event_statistic",
     "faction",
     "furniture",
     "GENERIC",
@@ -197,7 +195,7 @@ automatically_convertible = {
     "WHEEL",
     "help",
     "weather_type",
-    "world_type"
+    "world_type",
     "enchantment_flag",
     "named_color",
     "nested_category",
@@ -301,11 +299,13 @@ def extract_martial_art(state, item):
     if "initiate" in item:
         writestr(state, item["initiate"], format_strings=True,
                  comment=f"Initiate message for martial art '{name}'")
-    onhit_buffs = item.get("onhit_buffs", list())
-    static_buffs = item.get("static_buffs", list())
-    onmove_buffs = item.get("onmove_buffs", list())
-    ondodge_buffs = item.get("ondodge_buffs", list())
-    buffs = onhit_buffs + static_buffs + onmove_buffs + ondodge_buffs
+    # Keep in sync with the buff event arrays in martialart::load.
+    buff_fields = (
+        "static_buffs", "onmove_buffs", "onpause_buffs", "onhit_buffs",
+        "onattack_buffs", "ondodge_buffs", "onblock_buffs", "ongethit_buffs",
+        "onmiss_buffs", "oncrit_buffs", "onkill_buffs",
+    )
+    buffs = [buff for field in buff_fields for buff in item.get(field, [])]
     for buff in buffs:
         writestr(state, buff["name"])
         if buff["name"] == item["name"]:
@@ -540,14 +540,10 @@ def extract_map_feature_description(state, item):
 
 
 def extract_monster_attack(state, item):
-    if "hit_dmg_u" in item:
-        writestr(state, item.get("hit_dmg_u"))
-    if "hit_dmg_npc" in item:
-        writestr(state, item.get("hit_dmg_npc"))
-    if "no_dmg_msg_u" in item:
-        writestr(state, item.get("no_dmg_msg_u"))
-    if "no_dmg_msg_npc" in item:
-        writestr(state, item.get("no_dmg_msg_npc"))
+    for field in ("hit_dmg_u", "hit_dmg_npc", "no_dmg_msg_u", "no_dmg_msg_npc",
+                  "miss_msg_u", "miss_msg_npc", "bounce_msg_u", "bounce_msg_npc"):
+        if field in item:
+            writestr(state, item[field])
 
 
 def extract_recipe(state, item):
@@ -911,7 +907,15 @@ def extract_nested_category(state, item):
     if "description" in item:
         writestr(state, item["description"],
                  comment=f"Name for nested category '{nested_name}'")
-
+                 
+def extract_event_statistic(state, item):
+    stat_id = item.get("id")
+    writestr(state, item.get("name"),
+             comment=f"Name of event statistic '{stat_id}'")
+    desc = item.get("description")
+    has_plural = isinstance(desc, dict) and ("str_pl" in desc or "str_sp" in desc)
+    writestr(state, desc, pl_fmt=has_plural,
+             comment=f"Description of character stats near achievments for '{stat_id}'")
 
 # these objects need to have their strings specially extracted
 extract_specials = {
@@ -953,6 +957,8 @@ extract_specials = {
     "enchantment_value": extract_enchantment_value,
     "enchantment_vision": extract_enchantment_vision,
     "relicgen": extract_relicgen, 
+    "nested_category": extract_nested_category,
+    "event_statistic": extract_event_statistic,    
 }
 
 
@@ -1078,7 +1084,16 @@ use_action_msgs = {
     "holster_msg",
     "holster_prompt",
     "verb",
-    "gerund"
+    "gerund",
+    "training_msg",
+    "no_charges_message",
+    "set_charges_msg",
+    "start_message",
+    "already_charged_message",
+    "need_battery_message",
+    "underwater_message",
+    "exhausted_message",
+    "fully_charged_message"
 }
 
 
@@ -1086,9 +1101,8 @@ def extract_use_action_msgs(state, use_action, it_name):
     """Extract messages for iuse_actor objects. """
     for f in sorted(use_action_msgs):
         if type(use_action) is dict and f in use_action:
-            if it_name:
-                writestr(state, use_action[f],
-                  comment=f"Use action {f} for {it_name}.")
+            comment = f"Use action {f} for {it_name}." if it_name else f"Use action {f}."
+            writestr(state, use_action[f], comment=comment)
     # Recursively check sub objects as they may contain more messages.
     if type(use_action) is list:
         for i in use_action:
@@ -1149,6 +1163,18 @@ def extract_json(state, item):
     if "use_action" in item:
         extract_use_action_msgs(state, item["use_action"], item.get("name"))
         wrote = True
+    if object_type in ("TOOL", "TOOL_ARMOR") and "revert_msg" in item:
+        writestr(state, item["revert_msg"], format_strings=True,
+                 comment=f"Reversion message for {name}.")
+        wrote = True
+    if object_type == "furniture" and len(item.get("active", [])) == 2:
+        active_type, active_data = item["active"]
+        if active_type in ("charge_watcher", "steady_consumer", "countdown"):
+            transform = active_data.get("transform", {})
+            if "msg" in transform:
+                writestr(state, transform["msg"],
+                         comment=f"Transformation message for {name}.")
+                wrote = True
     if "conditional_names" in item:
         for cname in item["conditional_names"]:
             c = f"Conditional name for {name} when {cname['type']} matches {cname['condition']}"
@@ -1277,9 +1303,14 @@ def extract_json(state, item):
     if "verb" in item:
        writestr(state, item["verb"])
        wrote = True
-    if "special_attacks" in item:
-        special_attacks = item["special_attacks"]
+    for special_attacks in (item.get("special_attacks", []),
+                            item.get("extend", {}).get("special_attacks", [])):
         for special_attack in special_attacks:
+            if not isinstance(special_attack, dict):
+                continue
+            attack_type = special_attack.get("attack_type", special_attack.get("type", "monster_attack"))
+            if attack_type in ("monster_attack", "melee", "bite"):
+                extract_monster_attack(state, special_attack)
             if "description" in special_attack:
                 writestr(state, special_attack["description"])
                 wrote = True

@@ -11,22 +11,6 @@
     "extend": { "flags": [ "GENOME_DRIVE" ] }
   },
   {
-    "id": "digital_genome_sample_black_rat",
-    "copy-from": "digital_genome_sample",
-    "type": "GENERIC",
-    "name": { "str": "genome sample" },
-    "container": "usb_drive",
-    "item_vars": { "specimen_sample": "mon_black_rat", "specimen_sample_progress": "2", "specimen_name": "black rat" }
-  },
-  {
-    "id": "digital_genome_sample_wolf_mutant_huge",
-    "copy-from": "digital_genome_sample",
-    "type": "GENERIC",
-    "name": { "str": "genome sample" },
-    "container": "usb_drive",
-    "item_vars": { "specimen_sample": "mon_wolf_mutant_huge", "specimen_sample_progress": "5", "specimen_name": "dire wolf" }
-  },
-  {
     "abstract": "digital_instruction",
     "copy-from": "software",
     "type": "BOOK",
@@ -137,6 +121,43 @@
     "type": "GENERIC",
     "name": { "str": "digital text" },
     "extend": { "flags": [ "SNIPPET_NEEDS_LITERACY" ] }
+  },
+  {
+    "id": "digital_scanned_text",
+    "copy-from": "digital_collection",
+    "type": "GENERIC",
+    "name": { "str": "scanned text file" },
+    "description": "A digital scan of text or images from an object."
+  },
+  {
+    "id": "digital_nft_artwork",
+    "copy-from": "digital_text",
+    "type": "GENERIC",
+    "name": { "str": "NFT artwork" },
+    "description": "A cached image and a certificate claiming exclusive ownership of a non-fungible token.  Someone paid a fortune for this before the Cataclysm, and has likely struggled to sell it ever since.",
+    "price": "250000 USD",
+    "price_postapoc": "0 cent",
+    "snippet_category": "digital_nft_artwork"
+  },
+  {
+    "id": "digital_nft_real_estate",
+    "copy-from": "digital_text",
+    "type": "GENERIC",
+    "name": { "str": "virtual real-estate NFT" },
+    "description": "A deed to an expensive parcel of virtual land.  Even if the the servers hosting it hadn't been sold off ages ago, a virtual roof over your head won't keep out the rain.",
+    "price": "950000 USD",
+    "price_postapoc": "0 cent",
+    "snippet_category": "digital_nft_real_estate"
+  },
+  {
+    "id": "digital_nft_collectible",
+    "copy-from": "digital_text",
+    "type": "GENERIC",
+    "name": { "str": "NFT collectible" },
+    "description": "A limited-edition digital collectible with an long transaction history.  Its original owner considered it a retirement fund, its last owner paid a few bucks for it.  It has not become any more edible since then.",
+    "price": "75000 USD",
+    "price_postapoc": "0 cent",
+    "snippet_category": "digital_nft_collectible"
   },
   {
     "id": "digital_home_video",

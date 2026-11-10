@@ -2,7 +2,7 @@
   {
     "id": "ACT_SCAN_BOOK",
     "type": "activity_type",
-    "verb": "scanning a book",
+    "verb": "scanning reading material",
     "rooted": true,
     "suspendable": false,
     "verbose_tooltip": false,

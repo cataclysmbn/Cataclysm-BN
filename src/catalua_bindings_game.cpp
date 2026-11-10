@@ -5,6 +5,7 @@
 #include "catalua_bindings_utils.h"
 #include "catalua_coord.h"
 #include "catalua_impl.h"
+#include "catalua_item_filters.h"
 #include "catalua_log.h"
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
@@ -23,6 +24,7 @@
 #include "npc.h"
 #include "options.h"
 #include "overmap/overmapbuffer.h"
+#include "scenario.h"
 #include "sol/forward.hpp"
 #include "sol/sol.hpp"
 #include "units_temperature.h"
@@ -496,6 +498,8 @@ void cata::detail::reg_game_api( sol::state &lua )
 
     luna::set_fx( lib, "get_avatar", &get_avatar );
     luna::set_fx( lib, "get_map", &get_map );
+    DOC( "Returns the scenario the current game started with, or nil if no game is active." );
+    luna::set_fx( lib, "get_scenario", []() -> const scenario * { return get_scenario(); } );
     luna::set_fx( lib, "bub_to_abs",
                   sol::overload(
                       []( const tripoint_bub_ms & p ) -> tripoint_abs_ms { return bub_to_abs( p ); },
@@ -839,6 +843,76 @@ void cata::detail::reg_game_api( sol::state &lua )
             }
             return res.get<bool>();
         }, title, radius, failure );
+    } );
+
+    DOC( "Returns items on the map within a radius of a point, matching every given filter, as an array of Item.  " );
+    DOC( "Items inside containers on the ground are included.  " );
+    DOC( "Takes a table where each key is a filter; unknown keys show a debug message and are ignored. Available filters:  " );
+    DOC( "* `pos` (Tripoint): Center point to search around.  " );
+    DOC( "* `radius` (integer, optional): Search radius in tiles. Defaults to the pickup range.  " );
+    DOC( "* `category` (string or string[]): Item category id is one of these, e.g. \"food\".  " );
+    DOC( "* `type` (ItemTypeId or ItemTypeId[]): Item type is one of these.  " );
+    DOC( "* `is_food` (boolean): Whether the item is food.  " );
+    DOC( "* `flags` (FlagId or FlagId[]): Item has at least one of these flags.  " );
+    DOC( "* `need_charges` (boolean): Tool items must have charges left.  " );
+    DOC( "* `has_charges` (table): { id = ItemTypeId, amount = integer }: item type is `id` and has at least `amount` charges.  " );
+    DOC( "The `worn` and `wielded` filters only apply to `Character:get_items_if` and are ignored here." );
+    luna::set_fx( lib, "get_items_if", []( sol::this_state s, sol::table filters ) -> sol::table {
+        sol::state_view lua( s );
+        const auto pos = filters["pos"].get<tripoint_bub_ms>();
+        const auto radius = filters.get_or<int>( "radius", PICKUP_RANGE );
+        const auto parsed = item_filters_from_lua( filters, { "pos", "radius" } );
+        if( parsed.worn || parsed.wielded )
+        {
+            debugmsg( "`worn`/`wielded` filters are not applicable to map items and were ignored" );
+        }
+        auto out = lua.create_table();
+        auto idx = 1;
+        auto collect = [&]( item * node ) -> void {
+            if( matches_item_filters( parsed, *node ) )
+            {
+                out[idx++] = node;
+            }
+        };
+        for( const auto pt : g->m.points_in_radius( pos, radius ) )
+        {
+            for( const auto *it : g->m.i_at( pt ) ) {
+                // visit_items covers the item itself and everything inside its containers
+                const_cast<item *>( it )->visit_items( [&collect]( item * node, item * ) -> VisitResponse {
+                    collect( node );
+                    return VisitResponse::NEXT;
+                } );
+            }
+        }
+        return out;
+    } );
+
+    DOC( "Opens an item selection menu listing the player's inventory and nearby items that match the given filters, and returns the chosen item or nil.  " );
+    DOC( "Takes a table with keys:  " );
+    DOC( "* `title` (string): Menu title.  " );
+    DOC( "* `failure` (string): Message shown when no item passes the filter.  " );
+    DOC( "* `radius` (integer, optional): Search radius for nearby items. Defaults to the pickup range.  " );
+    DOC( "* plus any filter key accepted by `gapi.get_items_if` (e.g. `category`, `type`, `is_food`, `flags`, `need_charges`, `has_charges`).  " );
+    DOC( "Containers whose contents match a filter are listed as well; the returned item is then the container itself." );
+    luna::set_fx( lib, "inv_map_splice_if", []( sol::table opts ) -> item* {
+        auto title = opts.get<std::string>( "title" );
+        auto failure = opts.get<std::string>( "failure" );
+        auto radius = opts.get_or<int>( "radius", PICKUP_RANGE );
+        const auto parsed = item_filters_from_lua( opts, { "title", "failure", "radius" } );
+        const auto matches = [&parsed]( const item & e ) -> bool {
+            auto found = false;
+            // visit_items covers the item itself and everything inside its containers
+            const_cast<item &>( e ).visit_items( [&]( item * node, item * ) -> VisitResponse {
+                if( matches_item_filters( parsed, *node ) )
+                {
+                    found = true;
+                    return VisitResponse::ABORT;
+                }
+                return VisitResponse::NEXT;
+            } );
+            return found;
+        };
+        return g->inv_map_splice( matches, title, radius, failure );
     } );
 
     DOC( "Runs a function editing the player's inventory and nearby items.  " );

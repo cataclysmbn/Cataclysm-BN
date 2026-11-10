@@ -124,7 +124,8 @@
         "need_charges": 1,
         "transform_charges": 1,
         "need_charges_msg": "The control laptop's batteries need more charge.",
-        "type": "transform"
+        "type": "transform",
+        "menu_text": "Turn on screen light"
       },
       {
         "target": "control_laptop_music",
@@ -205,7 +206,8 @@
         "active": true,
         "need_charges": 1,
         "need_charges_msg": "The wrist computer's charge is too low.",
-        "type": "transform"
+        "type": "transform",
+        "menu_text": "Turn on flashlight"
       },
       {
         "//": "40 xp/hr.  Tier 1, 0-3 skill, higher-tier EXP since requires power.",
@@ -338,7 +340,8 @@
         "active": true,
         "need_charges": 1,
         "need_charges_msg": "The wrist computer's charge is too low.",
-        "type": "transform"
+        "type": "transform",
+        "menu_text": "Turn on flashlight"
       },
       "CAMERA",
       "WEATHER_TOOL",
@@ -631,7 +634,8 @@
         "need_charges": 1,
         "transform_charges": 1,
         "need_charges_msg": "The laptop's batteries need more charge.",
-        "type": "transform"
+        "type": "transform",
+        "menu_text": "Turn on screen light"
       },
       {
         "target": "laptop_music",

@@ -493,6 +493,14 @@ detached_ptr<item> Item_modifier::modify( detached_ptr<item> &&new_item ) const
         return std::move( new_item );
     }
 
+    for( const flag_id &flag : custom_flags ) {
+        new_item->set_flag( flag );
+    }
+
+    for( const auto &fn : postprocess_fns ) {
+        new_item = fn( std::move( new_item ) );
+    }
+
     new_item->set_damage( rng( damage.first, damage.second ) * itype::damage_scale );
     // no need for dirt if it's a bow
     if( new_item->is_gun() && !new_item->has_flag( flag_PRIMITIVE_RANGED_WEAPON ) &&
@@ -627,14 +635,6 @@ detached_ptr<item> Item_modifier::modify( detached_ptr<item> &&new_item ) const
         for( detached_ptr<item> &it : contentitems ) {
             new_item->put_in( std::move( it ) );
         }
-    }
-
-    for( const flag_id &flag : custom_flags ) {
-        new_item->set_flag( flag );
-    }
-
-    for( const auto &fn : postprocess_fns ) {
-        new_item = fn( std::move( new_item ) );
     }
     return std::move( new_item );
 }

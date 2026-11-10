@@ -2381,7 +2381,7 @@ std::unique_ptr<iuse_actor> fireweapon_off_actor::clone() const
     return std::make_unique<fireweapon_off_actor>( *this );
 }
 
-int fireweapon_off_actor::use( player &p, item &it, bool t, const tripoint_bub_ms & ) const
+int fireweapon_off_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &pos ) const
 {
     if( t ) {
         return 0;
@@ -2396,7 +2396,7 @@ int fireweapon_off_actor::use( player &p, item &it, bool t, const tripoint_bub_m
     if( rng( 0, 10 ) - it.damage_level( 4 ) > success_chance && !p.is_underwater() ) {
         if( noise > 0 ) {
             sound_event se;
-            se.origin = p.bub_pos();
+            se.origin = pos;
             se.volume = noise;
             se.category = sounds::sound_t::combat;
             se.description = _( success_message );
@@ -2436,10 +2436,12 @@ ret_val<bool> fireweapon_off_actor::can_use( const Character &p, const item &it,
 
 void fireweapon_on_actor::load( const JsonObject &obj )
 {
+    held_message                    = obj.get_string( "held_message", "hsss" );
     noise_message                   = obj.get_string( "noise_message", "hsss" );
     voluntary_extinguish_message    = obj.get_string( "voluntary_extinguish_message" );
     charges_extinguish_message      = obj.get_string( "charges_extinguish_message" );
     water_extinguish_message        = obj.get_string( "water_extinguish_message" );
+    noise_variant                   = obj.get_string( "noise_variant", "default" );
     noise                           = obj.get_int( "noise", 0 );
     noise_chance                    = obj.get_int( "noise_chance", 1 );
     auto_extinguish_chance          = obj.get_int( "auto_extinguish_chance", 0 );
@@ -2453,7 +2455,7 @@ std::unique_ptr<iuse_actor> fireweapon_on_actor::clone() const
     return std::make_unique<fireweapon_on_actor>( *this );
 }
 
-int fireweapon_on_actor::use( player &p, item &it, bool t, const tripoint_bub_ms & ) const
+int fireweapon_on_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &pos ) const
 {
     bool extinguish = true;
     if( it.charges == 0 ) {
@@ -2481,17 +2483,19 @@ int fireweapon_on_actor::use( player &p, item &it, bool t, const tripoint_bub_ms
     } else if( one_in( noise_chance ) ) {
         if( noise > 0 ) {
             sound_event se;
-            se.origin = p.bub_pos();
+            se.origin = pos;
             se.volume = noise;
-            se.category = sounds::sound_t::combat;
+            se.category = sounds::sound_t::activity;
             se.description = _( noise_message );
+            se.id = "tool";
+            se.variant = noise_variant;
             se.from_player = p.is_avatar();
             se.from_npc = !se.from_player;
             se.faction = p.get_faction()->id;
             se.monfaction = p.get_faction()->mon_faction;
             sounds::sound( se );
         }
-        p.add_msg_if_player( _( noise_message ) );
+        p.add_msg_if_player( _( held_message ) );
     }
 
     return it.type->charges_to_use();
@@ -2513,7 +2517,7 @@ std::unique_ptr<iuse_actor> manualnoise_actor::clone() const
     return std::make_unique<manualnoise_actor>( *this );
 }
 
-int manualnoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms & ) const
+int manualnoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &pos ) const
 {
     if( t ) {
         return 0;
@@ -2528,7 +2532,7 @@ int manualnoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &
         p.moves -= moves;
         if( noise > 0 ) {
             sound_event se;
-            se.origin = p.bub_pos();
+            se.origin = pos;
             se.volume = noise;
             se.category = sounds::sound_t::activity;
             se.description = noise_message.empty() ? _( "Hsss" ) : _( noise_message );
@@ -2555,6 +2559,45 @@ ret_val<bool> manualnoise_actor::can_use( const Character &, const item &it, boo
     }
 
     return ret_val<bool>::make_success();
+}
+
+void passivenoise_actor::load( const JsonObject &obj )
+{
+    held_message                    = obj.get_string( "held_message", "hsss" );
+    noise_message                   = obj.get_string( "noise_message", "hsss" );
+    noise_variant                   = obj.get_string( "noise_variant", "default" );
+    noise                           = obj.get_int( "noise", 0 );
+    noise_chance                    = obj.get_int( "noise_chance", 1 );
+}
+
+std::unique_ptr<iuse_actor> passivenoise_actor::clone() const
+{
+    return std::make_unique<passivenoise_actor>( *this );
+}
+
+int passivenoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &pos ) const
+{
+    // Make noise over time or force when used
+    if( ( t && one_in( noise_chance ) ) || !t ) {
+        if( noise > 0 ) {
+            sound_event se;
+            se.origin = pos;
+            se.volume = noise;
+            se.category = sounds::sound_t::activity;
+            se.description = _( noise_message );
+            se.id = "tool";
+            se.variant = noise_variant;
+            se.from_player = p.is_avatar();
+            se.from_npc = !se.from_player;
+            se.faction = p.get_faction()->id;
+            se.monfaction = p.get_faction()->mon_faction;
+            sounds::sound( se );
+        }
+        if( p.has_item( it ) ) {
+            p.add_msg_if_player( _( held_message ) );
+        }
+    }
+    return 0;
 }
 
 std::unique_ptr<iuse_actor> musical_instrument_actor::clone() const
@@ -5661,7 +5704,8 @@ auto cloning_syringe_iuse::use( player &p, item &it, bool /*t*/,
                           m->in_species( species_SKELETON );
     if( m->has_flag( MF_CANT_CLONE ) || in_bad_species ) {
         add_msg( m_info,
-                 _( "The %s emits two error beeps.  This creature can't provide a valid sample." ) );
+                 _( "The %s emits two error beeps.  This creature can't provide a valid sample." ),
+                 it.display_name() );
         return 0;
     }
 
@@ -5690,12 +5734,12 @@ auto cloning_syringe_iuse::use( player &p, item &it, bool /*t*/,
                 progress++;
                 sample->set_var( "specimen_sample_progress", std::to_string( progress ) );
                 sample->erase_var( "DIGITAL_FILE_ID" );
-                add_msg( m_info, "Progress: %d/%d for genome sample.", progress, size );
+                add_msg( m_info, _( "Progress: %d/%d for genome sample." ), progress, size );
                 if( progress == size ) {
-                    add_msg( m_good, "Sample is complete." );
+                    add_msg( m_good, _( "Sample is complete." ) );
                 }
             } else {
-                add_msg( "Sample is already complete." );
+                add_msg( _( "Sample is already complete." ) );
             }
 
             return charges_to_use;
@@ -5712,9 +5756,9 @@ auto cloning_syringe_iuse::use( player &p, item &it, bool /*t*/,
     destination->put_in( std::move( sample ) );
 
     if( size > 1 ) {
-        add_msg( m_info, "Progress: 1/%d for genome sample.", size );
+        add_msg( m_info, _( "Progress: 1/%d for genome sample." ), size );
     } else {
-        add_msg( m_good, "Sample is complete." );
+        add_msg( m_good, _( "Sample is complete." ) );
     }
 
     return charges_to_use;
@@ -5771,9 +5815,9 @@ auto dna_editor_iuse::use( player &p, item &it, bool /*t*/,
 
     uilist menu;
     menu.text = string_format( _( "What to do with the %s?" ), selected_sample->display_name() );
-    menu.addentry( 0, true, 'e', "Examine sample" );
+    menu.addentry( 0, true, 'e', _( "Examine sample" ) );
     menu.addentry( 1, p.has_charges( itype_mutagen, 1 ) &&
-                   p.has_charges( itype_biomaterial, 1 ), 'i', "Research upgrade" );
+                   p.has_charges( itype_biomaterial, 1 ), 'i', _( "Research upgrade" ) );
     auto storage = digital_genome_storage( p );
     std::erase_if( storage, [&selected_sample]( const auto * media ) {
         return std::ranges::any_of( media->contents.all_items_top(), [&selected_sample](
@@ -5782,7 +5826,7 @@ auto dna_editor_iuse::use( player &p, item &it, bool /*t*/,
         } );
     } );
     menu.addentry( 2, !storage.empty(), 'c', _( "Copy sample file" ) );
-    menu.addentry( 3, p.has_charges( itype_biomaterial, 1 ), 'p', "Produce DNA" );
+    menu.addentry( 3, p.has_charges( itype_biomaterial, 1 ), 'p', _( "Produce DNA" ) );
     menu.query();
     if( menu.ret < 0 ) {
         return 0;
@@ -5798,7 +5842,7 @@ auto dna_editor_iuse::use( player &p, item &it, bool /*t*/,
 
         popup(
             _( "Examination Results:\n\nSample Name: %s\nSize Class: %s\nWeight: %.0fkg\nVolume: %.0fl" ),
-            selected_sample->get_var( "specimen_name" ),
+            cloning_utils::specimen_name( specimen_id, selected_sample->get_var( "specimen_name" ) ),
             size_str,
             static_cast<double>( to_kilogram( newmon.get_weight() ) ),
             static_cast<double>( to_liter( newmon.get_volume() ) )
@@ -5814,7 +5858,7 @@ auto dna_editor_iuse::use( player &p, item &it, bool /*t*/,
         const auto mons = upgrade_group.obj().monsters;
 
         if( mons.empty() ) {
-            popup( "A message pops up on the genome editor indicating there are no further mutations possible for this sample." );
+            popup( _( "A message pops up on the genome editor indicating there are no further mutations possible for this sample." ) );
             return 0;
         }
 
@@ -5849,7 +5893,7 @@ auto dna_editor_iuse::use( player &p, item &it, bool /*t*/,
 
         // chance of failure when converting DNA
         if( rng( 1, 100 ) < 80 ) {
-            add_msg( m_bad, "The research produced no result." );
+            add_msg( m_bad, _( "The research produced no result." ) );
             return charges_to_use;
         }
 
@@ -5870,7 +5914,9 @@ auto dna_editor_iuse::use( player &p, item &it, bool /*t*/,
     } else if( menu.ret == 3 ) {
         p.use_charges( itype_biomaterial, 1 );
         const std::string msg = string_format( _( "You produce a unit of %s DNA." ),
-                                               selected_sample->get_var( "specimen_name" ) );
+                                               cloning_utils::specimen_name(
+                                                       mtype_id( selected_sample->get_var( "specimen_sample" ) ),
+                                                       selected_sample->get_var( "specimen_name" ) ) );
         add_msg( msg );
 
         detached_ptr<item> dna = item::spawn( itype_id( "dna" ), calendar::turn, 1 );
@@ -6430,7 +6476,7 @@ int train_skill_actor::use( player &p, item &i, bool, const tripoint_bub_ms & ) 
         return 0;
     }
 
-    p.add_msg_if_player( training_msg );
+    p.add_msg_if_player( _( training_msg ) );
     // using metadata is the easiest way to transfer this over to the activity handler and also allow it to function as furniture
     p.set_value( "training_iuse_skill", training_skill );
     p.set_value( "training_iuse_skill_xp", std::to_string( training_skill_xp ) );

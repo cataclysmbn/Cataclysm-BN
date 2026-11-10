@@ -128,6 +128,8 @@
 
 using character_funcs::base_comfort_value;
 
+using char_item_filter_fn = std::function<bool( const item & )>;
+
 struct dealt_projectile_attack;
 
 static const activity_id ACT_MOVE_ITEMS( "ACT_MOVE_ITEMS" );
@@ -11455,6 +11457,28 @@ std::vector<item *> Character::all_items( bool need_charges ) const
     } );
 }
 
+auto Character::get_items_if( const std::vector<std::function<bool( const item & )>> &filters )
+const -> std::vector<item *>
+{
+    return items_with( [&filters]( const item & it ) {
+        return std::ranges::all_of( filters, [&it]( const auto & filter ) { return filter( it ); } );
+    } );
+}
+
+auto Character::remove_items_if( const std::vector<char_item_filter_fn> &filters ) ->
+std::vector<detached_ptr<item>>
+{
+    std::vector<detached_ptr<item>> removed;
+    remove_items_with( [&removed, &filters]( detached_ptr<item> &&it ) -> VisitResponse {
+        if( std::ranges::all_of( filters, [&it]( const auto & filter ) { return filter( *it ); } ) )
+        {
+            removed.push_back( std::move( it ) );
+        }
+        return VisitResponse::NEXT;
+    } );
+    return removed;
+}
+
 bool Character::has_charges( const itype_id &it, int quantity,
                              const std::function<bool( const item & )> &filter ) const
 {
@@ -13138,26 +13162,26 @@ bool Character::studied_all_recipes( const itype &book ) const
 recipe_subset Character::get_recipes_from_books( const inventory &crafting_inv,
         const recipe_filter &filter ) const
 {
-    recipe_subset res;
+    auto res = recipe_subset{};
 
-    for( const auto &stack : crafting_inv.const_slice() ) {
-        const item &candidate = *stack->front();
-
-        const auto digital_recipes = digital_recipe_references( candidate, *this );
+    crafting_inv.visit_items( [&]( const item * candidate ) {
+        const auto digital_recipes = digital_recipe_references( *candidate, *this );
         if( filter ) {
             res.include_if( digital_recipes, filter );
         } else {
             res.include( digital_recipes );
         }
 
-        for( std::pair<const recipe *, int> recipe_entry :
-             candidate.get_available_recipes( *this ) ) {
+        for( const auto &recipe_entry : candidate->get_available_recipes( *this ) ) {
             if( filter && !filter( *recipe_entry.first ) ) {
                 continue;
             }
             res.include( recipe_entry.first, recipe_entry.second );
         }
-    }
+        // Installed files are handled through the reader's power and encryption checks.
+        return candidate->has_flag( flag_id( "DIGITAL_STORAGE" ) ) ?
+               VisitResponse::SKIP : VisitResponse::NEXT;
+    } );
 
     return res;
 }

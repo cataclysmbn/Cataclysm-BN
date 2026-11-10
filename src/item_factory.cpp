@@ -1139,6 +1139,7 @@ void Item_factory::init()
     add_actor( std::make_unique<unpack_actor>() );
     add_actor( std::make_unique<countdown_actor>() );
     add_actor( std::make_unique<manualnoise_actor>() );
+    add_actor( std::make_unique<passivenoise_actor>() );
     add_actor( std::make_unique<musical_instrument_actor>() );
     add_actor( std::make_unique<deploy_furn_actor>() );
     add_actor( std::make_unique<place_monster_iuse>() );
@@ -1365,6 +1366,11 @@ void Item_factory::check_definitions() const
             for( auto &b : type->seed->byproducts ) {
                 if( !has_template( b ) ) {
                     msg += string_format( "invalid byproduct id %s\n", b.c_str() );
+                }
+            }
+            for( const auto &flag : type->seed->harvest_inherit_flags ) {
+                if( !flag.is_valid() ) {
+                    msg += string_format( "invalid harvest inheritance flag %s\n", flag.c_str() );
                 }
             }
         }
@@ -2487,6 +2493,8 @@ void Item_factory::load( islot_seed &slot, const JsonObject &jo, const std::stri
     assign( jo, "seeds", slot.spawn_seeds );
     assign( jo, "byproducts", slot.byproducts );
     assign( jo, "required_terrain_flag", slot.required_terrain_flag );
+    assign( jo, "harvest_inherit_flags", slot.harvest_inherit_flags );
+    assign( jo, "harvest_inherit_poison", slot.harvest_inherit_poison );
 }
 
 void Item_factory::load( islot_container &slot, const JsonObject &jo, const std::string & )
@@ -3398,6 +3406,20 @@ auto load_active( std::vector<ItemFn> &xs, const JsonObject &obj ) -> bool
     return result;
 }
 
+auto load_item_vars( std::vector<ItemFn> &xs, const JsonObject &obj ) -> bool
+{
+    const bool result = obj.has_array( "vars" );
+    for( const JsonObject &jobj : obj.get_array( "vars" ) ) {
+        std::string name = jobj.get_string( "name" );
+        std::string val = jobj.get_string( "value" );
+        xs.emplace_back( [name, val]( detached_ptr<item> &&it ) {
+            it->set_var( name, val );
+            return std::move( it );
+        } );
+    }
+    return result;
+}
+
 } // namespace
 
 void Item_factory::add_entry( Item_group &ig, const JsonObject &obj )
@@ -3444,6 +3466,7 @@ void Item_factory::add_entry( Item_group &ig, const JsonObject &obj )
     use_modifier |= load_sub_ref( modifier.container, obj, "container", ig );
     use_modifier |= load_sub_ref( modifier.contents, obj, "contents", ig );
     use_modifier |= load_active( modifier.postprocess_fns, obj );
+    use_modifier |= load_item_vars( modifier.postprocess_fns, obj );
 
     std::vector<std::string> custom_flags;
     use_modifier |= load_string( custom_flags, obj, "custom-flags" );
