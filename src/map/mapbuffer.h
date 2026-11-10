@@ -821,6 +821,11 @@ public:
         }
     }
 
+    /// Changes whenever a submap is added to this buffer.
+    auto submaps_added_generation() const -> std::uint64_t { return submaps_added_generation_; }
+    /// Changes whenever a submap is removed from this buffer.
+    auto submaps_removed_generation() const -> std::uint64_t { return submaps_removed_generation_; }
+
     auto loaded_submap_count() const -> std::size_t {
         std::lock_guard<std::recursive_mutex> lk(submaps_mutex_);
         return submaps.size();
@@ -893,9 +898,10 @@ private:
         std::vector<simulated_submap_entry> entries;
     };
     std::optional<simulated_submap_cache> simulated_submap_cache_;
-    /// Bumped when `submaps` gains (possibly on a worker thread) or loses entries.
-    std::atomic<std::uint64_t> submaps_added_generation_ = 0;
-    std::atomic<std::uint64_t> submaps_removed_generation_ = 0;
+    /// Set to a new process-wide value when `submaps` gains (possibly on a worker thread) or loses
+    /// entries.
+    std::atomic<std::uint64_t> submaps_added_generation_;
+    std::atomic<std::uint64_t> submaps_removed_generation_;
     submap_map_t submaps;
     Creature_tracker creature_tracker_;
     std::list<shared_ptr_fast<npc>> active_npcs_;
