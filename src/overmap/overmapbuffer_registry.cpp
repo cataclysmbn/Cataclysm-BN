@@ -4,7 +4,6 @@
 // in this translation unit only.
 #include "overmap.h"
 #include "overmapbuffer.h"
-#include "rng.h"
 #include "thread_pool.h"
 
 #include <functional>
@@ -23,12 +22,6 @@
 namespace {
 
 auto primary_dimension_id() -> dimension_id { return dimension_id(); }
-
-auto dimension_seed_id(const dimension_id& dim_id) -> std::uint64_t {
-    const auto raw = dim_id.str();
-    return static_cast<std::uint64_t>(
-        djb2_hash(reinterpret_cast<const unsigned char*>(raw.c_str())));
-}
 
 class overmapbuffer_registry {
 public:
@@ -112,7 +105,7 @@ auto save_all_overmapbuffers() -> void {
 
     for_each_overmapbuffer([&futures](const dimension_id& dim_id, overmapbuffer& buf) {
         futures.push_back(get_thread_pool().submit_returning(
-            {.stream = 0x736176655f6f6d5f, .id = dimension_seed_id(dim_id)},
+            {.stream = 0x736176655f6f6d5f, .id = std::hash<std::string>{}(dim_id.str())},
             [dim_id, &buf]() { buf.save(dim_id); }));
     });
 

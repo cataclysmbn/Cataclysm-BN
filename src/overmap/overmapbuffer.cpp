@@ -62,15 +62,6 @@ class map_extra;
 template <typename _Mutex> using write_lock = std::unique_lock<_Mutex>;
 template <typename _Mutex> using read_lock = std::shared_lock<_Mutex>;
 
-namespace {
-auto overmap_task_id(const dimension_id& dim_id, const point_abs_om& loc) -> std::uint64_t {
-    const auto raw = dim_id.str();
-    return static_cast<std::uint64_t>(djb2_hash(reinterpret_cast<const unsigned char*>(raw.c_str())))
-         ^ static_cast<std::uint64_t>(static_cast<std::uint32_t>(loc.x()))
-         ^ (static_cast<std::uint64_t>(static_cast<std::uint32_t>(loc.y())) << 32);
-}
-} // namespace
-
 overmapbuffer::overmapbuffer() {}
 
 const city_reference city_reference::invalid{nullptr, tripoint_abs_sm(), -1};
@@ -149,7 +140,8 @@ void overmapbuffer::generate(const std::vector<point_abs_om>& locs) {
         futures.push_back(
             {loc,
              get_thread_pool().submit_returning(
-                 {.stream = 0x6f7665726d61705f, .id = overmap_task_id(dim_id, loc)}, [loc, dim_id] {
+                 {.stream = 0x6f7665726d61705f, .id = rng_task_id(dim_id.str(), loc)},
+                 [loc, dim_id] {
                      auto om = std::make_unique<overmap>(loc, dim_id);
                      om->populate(dim_id);
                      return om;
@@ -1324,9 +1316,7 @@ auto overmapbuffer::find_all_async(const tripoint_abs_omt& origin, const omt_fin
                 return result;
             };
 
-        auto task = get_thread_pool().submit_returning(
-            {.stream = 0x66696e645f6f6d5f, .id = overmap_task_id(dimension_id_, task_om)},
-            task_func, task_om, std::move(task_omts));
+        auto task = get_thread_pool().submit_returning(task_func, task_om, std::move(task_omts));
 
         tasks.push_back(std::move(task));
 
