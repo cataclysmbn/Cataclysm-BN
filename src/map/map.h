@@ -2432,10 +2432,13 @@ private:
         // 64-bit key: two tripoints packed as 29 bits each (12x + 12y + 5z).
         // Handles coordinates up to 4095 per axis — safe for g_mapsize up to ~340.
         int64_t key = 0;
-        char value = -1; // -1 = empty/miss
+        uint32_t generation = 0; // Valid only while equal to skew_vision_generation.
+        char value = -1;         // -1 = empty/miss
     };
-    static constexpr std::size_t vision_cache_slots = 1 << 17; // 131072 entries (~1.5 MB)
+    static constexpr std::size_t vision_cache_slots = 1 << 17; // 131072 entries (~2 MB)
     mutable std::vector<vision_cache_slot> skew_vision_cache;
+    /// Incremented to clear skew_vision_cache without rewriting it.
+    uint32_t skew_vision_generation = 1;
     // shared_mutex allows concurrent cache reads (common case)
     // while still serialising inserts.  Use shared_lock for reads and
     // unique_lock for writes in map::sees().

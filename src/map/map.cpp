@@ -6940,7 +6940,7 @@ auto map::sees(
     {
         std::shared_lock<std::shared_mutex> lock(*skew_vision_cache_mutex);
         const auto& slot = skew_vision_cache[slot_idx];
-        if (slot.key == key && slot.value >= 0) { return slot.value > 0; }
+        if (slot.key == key && slot.generation == skew_vision_generation) { return slot.value > 0; }
     }
 
     bool visible = true;
@@ -6966,7 +6966,10 @@ auto map::sees(
                   });
         {
             std::unique_lock<std::shared_mutex> lock(*skew_vision_cache_mutex);
-            skew_vision_cache[slot_idx] = {key, static_cast<char>(visible ? 1 : 0)};
+            skew_vision_cache[slot_idx] =
+                {.key = key,
+                 .generation = skew_vision_generation,
+                 .value = static_cast<char>(visible ? 1 : 0)};
         }
         return visible;
     }
@@ -7002,7 +7005,10 @@ auto map::sees(
         });
     {
         std::unique_lock<std::shared_mutex> lock(*skew_vision_cache_mutex);
-        skew_vision_cache[slot_idx] = {key, static_cast<char>(visible ? 1 : 0)};
+        skew_vision_cache[slot_idx] =
+            {.key = key,
+             .generation = skew_vision_generation,
+             .value = static_cast<char>(visible ? 1 : 0)};
     }
     return visible;
 }
@@ -8857,7 +8863,10 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
     }
 
     seen_cache_dirty |= build_vision_transparency_cache(get_player_character());
-    if (seen_cache_dirty) { skew_vision_cache.assign(vision_cache_slots, vision_cache_slot{}); }
+    if (seen_cache_dirty && ++skew_vision_generation == 0) {
+        skew_vision_cache.assign(vision_cache_slots, vision_cache_slot{});
+        skew_vision_generation = 1;
+    }
     const auto need_seen_rebuild =
         seen_cache_dirty || force_seen_rebuild_for_gpu_residency || m_last_seen_cache_origin != p;
     TracyPlot("Map Need Seen Rebuild", need_seen_rebuild ? int64_t{1} : int64_t{0});
