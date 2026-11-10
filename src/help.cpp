@@ -190,7 +190,10 @@ void help::display_help()
                             size_t pos2 = line_proc.find( ">", pos, 1 );
 
                             std::string action = line_proc.substr( pos + 7, pos2 - pos - 7 );
-                            auto replace = "<color_light_blue>" + press_x( look_up_action( action ), "", "" ) + "</color>";
+                            // Keep legacy help tokens working in existing translations.
+                            const auto help_action = action == "construction" ? ACTION_CONSTRUCT :
+                                                     action == "reload" ? ACTION_RELOAD_ITEM : look_up_action( action );
+                            auto replace = "<color_light_blue>" + press_x( help_action, "", "" ) + "</color>";
 
                             if( replace.empty() ) {
                                 debugmsg( "Help json: Unknown action: %s", action );
