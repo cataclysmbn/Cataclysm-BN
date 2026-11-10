@@ -15,6 +15,9 @@ env:
   VERSION: "v${{ inputs.major }}.${{ inputs.minor }}.${{ inputs.patch }}"
 
 jobs:
+  mods:
+    uses: ./.github/workflows/registry-mods-summary.yml
+
   release:
     name: Create Release
     runs-on: ubuntu-slim
