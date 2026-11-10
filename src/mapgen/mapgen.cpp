@@ -2291,8 +2291,9 @@ public:
 
     void check(const std::string& oter_name, const mapgen_parameters& parameters) const override {
         id.check(oter_name, parameters);
+        if (!palette.is_valid()) { return; }
         for (const auto& ter_id : id.all_possible_results(parameters)) {
-            if (ter_id->has_flag("NO_PAINT") && palette.is_valid()) {
+            if (ter_id->has_flag("NO_PAINT")) {
                 debugmsg("mapgen %s uses paint on %s when it has flag `NO_PAINT`", oter_name,
                          ter_id);
             }
@@ -2383,8 +2384,9 @@ public:
 
     void check(const std::string& oter_name, const mapgen_parameters& parameters) const override {
         id.check(oter_name, parameters);
+        if (!palette.is_valid()) { return; }
         for (const auto& ter_id : id.all_possible_results(parameters)) {
-            if (ter_id->has_flag("NO_PAINT") && palette.is_valid()) {
+            if (ter_id->has_flag("NO_PAINT")) {
                 debugmsg("mapgen %s uses paint on %s when it has flag `NO_PAINT`", oter_name,
                          ter_id);
             }
