@@ -93,11 +93,13 @@
 #include <list>
 #include <map>
 #include <memory>
+#include <numeric>
 #include <optional>
 #include <ranges>
 #include <set>
 #include <stdexcept>
 #include <unordered_map>
+#include <unordered_set>
 
 static const itype_id itype_avgas("avgas");
 static const itype_id itype_diesel("diesel");
@@ -2969,9 +2971,12 @@ auto jmapgen_objects::check_bounds(const jmapgen_place& place, const JsonObject&
     return common_check_bounds(place.x, place.y, mapgensize, jso);
 }
 
+void jmapgen_objects::reserve(const size_t count) { objects.reserve(objects.size() + count); }
+
 void jmapgen_objects::add(
     const jmapgen_place& place, const shared_ptr_fast<const jmapgen_piece>& piece) {
     objects.emplace_back(place, piece);
+    unique_pieces.clear();
 }
 
 template <typename PieceType> void jmapgen_objects::load_objects(JsonArray parray) {
@@ -3473,25 +3478,34 @@ auto mapgen_function_json_base::setup_common(const JsonObject& jo) -> bool {
         assert(expected_dim.x() >= 0);
         assert(expected_dim.y() >= 0);
 
-        parray = jo.get_array("rows");
-        if (static_cast<int>(parray.size()) < expected_dim.y()) {
-            parray.throw_error(string_format(
-                "format: rows: must have at least %d rows, not %d", expected_dim.y(),
-                parray.size()));
+        // Read rows in one pass; the indexed array is only needed to report errors.
+        auto rows = std::vector<std::string>{};
+        {
+            JsonIn& rows_in = *jo.get_raw("rows");
+            rows_in.start_array();
+            while (!rows_in.end_array()) { rows.push_back(rows_in.get_string()); }
         }
-        if (static_cast<int>(parray.size()) != total_size.y()) {
-            parray.throw_error(string_format(
+        const auto rows_array = [&]() -> JsonArray& {
+            if (parray.empty()) { parray = jo.get_array("rows"); }
+            return parray;
+        };
+        if (static_cast<int>(rows.size()) < expected_dim.y()) {
+            rows_array().throw_error(string_format(
+                "format: rows: must have at least %d rows, not %d", expected_dim.y(), rows.size()));
+        }
+        if (static_cast<int>(rows.size()) != total_size.y()) {
+            rows_array().throw_error(string_format(
                 "format: rows: must have %d rows, not %d; check mapgensize if applicable",
-                total_size.y(), parray.size()));
+                total_size.y(), rows.size()));
         }
         const auto check_row_size = [&](const int c, const size_t columns) {
             if (columns < static_cast<size_t>(expected_dim.x())) {
-                parray.throw_error(string_format(
+                rows_array().throw_error(string_format(
                     "  format: row %d must have at least %d columns, not %d", c + 1,
                     expected_dim.x(), columns));
             }
             if (columns != static_cast<size_t>(total_size.x())) {
-                parray.throw_error(string_format(
+                rows_array().throw_error(string_format(
                     "  format: row %d must have %d columns, not %d; check mapgensize if applicable",
                     c + 1, total_size.x(), columns));
             }
@@ -3506,7 +3520,7 @@ auto mapgen_function_json_base::setup_common(const JsonObject& jo) -> bool {
                 const bool has_placing = fpi != format_placings.cend();
 
                 if (!has_terrain && !fallback_terrain_exists) {
-                    parray.string_error(
+                    rows_array().string_error(
                         string_format(
                             "format: rows: row %d column %d: "
                             "'%s' is not in 'terrain', and no 'fill_ter' is set!",
@@ -3515,7 +3529,7 @@ auto mapgen_function_json_base::setup_common(const JsonObject& jo) -> bool {
                 }
                 if (!has_terrain && !has_placing && key_str != " " && key_str != ".") {
                     try {
-                        parray.string_error(
+                        rows_array().string_error(
                             string_format(
                                 "format: rows: row %d column %d: "
                                 "'%s' has no terrain, furniture, or other definition",
@@ -3535,22 +3549,42 @@ auto mapgen_function_json_base::setup_common(const JsonObject& jo) -> bool {
             placing_iter placing;
         };
         auto ascii_lookups = std::array<ascii_key_lookup, 128>{};
+        const auto lookup_ascii = [&](const char ch) -> const ascii_key_lookup& {
+            auto& lookup = ascii_lookups[static_cast<unsigned char>(ch)];
+            if (!lookup.resolved) {
+                const auto key = map_key(std::string(1, ch));
+                lookup =
+                    {.resolved = true,
+                     .terrain = keys_with_terrain.find(key),
+                     .placing = format_placings.find(key)};
+            }
+            return lookup;
+        };
         const auto is_printable_ascii = [](const char ch) { return ch >= 0x20 && ch < 0x7f; };
+        // Reserve room for the placings of ASCII rows up front instead of growing per square.
+        auto placing_count = size_t{0};
         for (int c = m_offset.y(); c < expected_dim.y(); c++) {
-            const std::string row = parray.get_string(c);
+            const std::string& row = rows[c];
+            if (row.size() < static_cast<size_t>(expected_dim.x())
+                || !std::ranges::all_of(row, is_printable_ascii)) {
+                continue;
+            }
+            for (int i = m_offset.x(); i < expected_dim.x(); i++) {
+                const auto& lookup = lookup_ascii(row[i]);
+                if (lookup.placing != format_placings.cend()) {
+                    placing_count += lookup.placing->second.size();
+                }
+            }
+        }
+        objects.reserve(placing_count);
+        for (int c = m_offset.y(); c < expected_dim.y(); c++) {
+            const std::string& row = rows[c];
             if (std::ranges::all_of(row, is_printable_ascii)) {
                 // utf8_display_split always yields at least one (possibly empty) glyph.
                 check_row_size(c, std::max<size_t>(row.size(), 1));
                 for (int i = m_offset.x(); i < expected_dim.x(); i++) {
                     const auto ch = row[i];
-                    auto& lookup = ascii_lookups[static_cast<unsigned char>(ch)];
-                    if (!lookup.resolved) {
-                        const auto key = map_key(std::string(1, ch));
-                        lookup =
-                            {.resolved = true,
-                             .terrain = keys_with_terrain.find(key),
-                             .placing = format_placings.find(key)};
-                    }
+                    const auto& lookup = lookup_ascii(ch);
                     place_cell(c, i, std::string(1, ch), lookup.terrain, lookup.placing);
                 }
                 continue;
@@ -3650,30 +3684,71 @@ void mapgen_function_json_base::check_common(const std::string& oter_name) const
     objects.check(oter_name, parameters);
 }
 
+namespace {
+
+/// Visits each distinct piece once, in order of first appearance.
+/// Pieces from palettes are shared by every map square that uses their key.
+template <typename Objects, typename Fn>
+auto for_each_unique_piece(const Objects& objects, Fn&& fn) -> void {
+    auto seen = std::unordered_set<const jmapgen_piece*>{};
+    const jmapgen_piece* previous = nullptr;
+    for (const auto& obj : objects) {
+        const auto* const piece = obj.second.get();
+        if (piece == previous) { continue; }
+        previous = piece;
+        if (seen.insert(piece).second) { fn(*piece); }
+    }
+}
+
+} // namespace
+
 void jmapgen_objects::finalize() {
     using namespace std::views;
     namespace ranges = std::ranges;
-    for (const auto& obj : objects) { obj.second->finalize(); }
-    // phase() is virtual, so evaluate it once per object instead of once per comparison.
+    unique_pieces.clear();
+    for_each_unique_piece(objects, [this](const jmapgen_piece& piece) {
+        piece.finalize();
+        unique_pieces.push_back(&piece);
+    });
+    // phase() is virtual, so evaluate it once per object. There are only a few phases,
+    // so a stable counting sort avoids comparison sorting large object lists.
     const auto phases =
         objects | transform([](const jmapgen_obj& obj) { return obj.second->phase(); })
         | ranges::to<std::vector>();
     if (ranges::is_sorted(phases)) { return; }
-    auto order = iota(size_t{0}, objects.size()) | ranges::to<std::vector>();
-    ranges::stable_sort(order, {}, [&phases](const size_t i) { return phases[i]; });
-    objects = order | transform([this](const size_t i) { return std::move(objects[i]); })
-            | ranges::to<std::vector>();
+    constexpr auto phase_count = static_cast<size_t>(mapgen_phase::faction_ownership) + 1;
+    auto offsets = std::array<size_t, phase_count + 1>{};
+    for (const auto phase : phases) { ++offsets[static_cast<size_t>(phase) + 1]; }
+    std::partial_sum(offsets.begin(), offsets.end(), offsets.begin());
+    auto sorted = std::vector<jmapgen_obj>(objects.size());
+    for (size_t i = 0; i < objects.size(); ++i) {
+        sorted[offsets[static_cast<size_t>(phases[i])]++] = std::move(objects[i]);
+    }
+    objects = std::move(sorted);
 }
+
 
 void jmapgen_objects::check(
     const std::string& oter_name, const mapgen_parameters& parameters) const {
-    for (const jmapgen_obj& obj : objects) { obj.second->check(oter_name, parameters); }
+    if (unique_pieces.empty()) {
+        for_each_unique_piece(objects, [&](const jmapgen_piece& piece) {
+            piece.check(oter_name, parameters);
+        });
+        return;
+    }
+    for (const auto* const piece : unique_pieces) { piece->check(oter_name, parameters); }
 }
 
 void jmapgen_objects::merge_parameters_into(
     mapgen_parameters& params, const std::string& outer_context) const {
-    for (const jmapgen_obj& obj : objects) {
-        obj.second->merge_parameters_into(params, outer_context);
+    if (unique_pieces.empty()) {
+        for_each_unique_piece(objects, [&](const jmapgen_piece& piece) {
+            piece.merge_parameters_into(params, outer_context);
+        });
+        return;
+    }
+    for (const auto* const piece : unique_pieces) {
+        piece->merge_parameters_into(params, outer_context);
     }
 }
 

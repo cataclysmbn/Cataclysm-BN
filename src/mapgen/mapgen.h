@@ -367,6 +367,8 @@ struct jmapgen_objects {
     void finalize();
 
     void merge_parameters_into(mapgen_parameters&, const std::string& outer_context) const;
+    /// Makes room for `count` more objects.
+    void reserve(size_t count);
 
     void apply(const mapgendata& dat) const;
     static auto default_rotate(const point_omt_ms& pt) -> point_omt_ms { return pt; }
@@ -386,6 +388,9 @@ private:
      */
     using jmapgen_obj = std::pair<jmapgen_place, shared_ptr_fast<const jmapgen_piece>>;
     std::vector<jmapgen_obj> objects;
+    /// Distinct pieces of `objects` in order of first use, computed by finalize().
+    /// Palette pieces are shared by every map square using their key.
+    std::vector<const jmapgen_piece*> unique_pieces;
     point_rel_ms m_offset;
     point_rel_ms mapgensize;
     point_rel_ms total_size;
