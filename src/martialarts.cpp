@@ -1494,18 +1494,11 @@ struct cat_order {
     }
 };
 
-bool ma_style_callback::key( const input_context &ctxt, const input_event &event, int entnum,
-                             uilist * )
+namespace
 {
-    const std::string &action = ctxt.input_to_action( event );
-    if( action != "SHOW_DESCRIPTION" ) {
-        return false;
-    }
-    matype_id style_selected;
-    const size_t index = entnum;
-    if( index >= offset && index - offset < styles.size() ) {
-        style_selected = styles[index - offset];
-    }
+/// The text of a style's "more info" window.
+auto style_description_text( const matype_id &style_selected ) -> std::string
+{
     if( !style_selected.str().empty() ) {
         const martialart &ma = style_selected.obj();
 
@@ -1656,9 +1649,43 @@ bool ma_style_callback::key( const input_context &ctxt, const input_event &event
             buffer += enumerate_as_string( mutations );
         }
 
+        return replace_colors( buffer );
+    }
+    return {};
+}
+} // namespace
+
+#if defined(CATA_MCP)
+auto ma_style_callback::row_details( const uilist &menu,
+                                     const int entry_index ) const -> uilist_row_details
+{
+    // The text walks every item, so only the highlighted style carries it.
+    const auto index = static_cast<size_t>( entry_index );
+    if( entry_index != menu.selected || index < offset || index - offset >= styles.size() ) {
+        return {};
+    }
+    return { .description = style_description_text( styles[index - offset] ) };
+}
+#endif
+
+bool ma_style_callback::key( const input_context &ctxt, const input_event &event, int entnum,
+                             uilist * )
+{
+    const std::string &action = ctxt.input_to_action( event );
+    if( action != "SHOW_DESCRIPTION" ) {
+        return false;
+    }
+    matype_id style_selected;
+    const size_t index = entnum;
+    if( index >= offset && index - offset < styles.size() ) {
+        style_selected = styles[index - offset];
+    }
+    if( !style_selected.str().empty() ) {
+        const martialart &ma = style_selected.obj();
+
         catacurses::window w;
 
-        const std::string text = replace_colors( buffer );
+        const std::string text = style_description_text( style_selected );
         int width = 0;
         int height = 0;
         int iLines = 0;

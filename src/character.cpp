@@ -1,4 +1,5 @@
 #include "character.h"
+#include "mcp_hooks.h"
 
 #include "action.h"
 #include "action_time_scale.h"
@@ -2061,6 +2062,11 @@ float Character::night_vision_sight_range() const
 void Character::recalc_sight_limits()
 {
     ZoneScopedN( "recalc_sight_limits" );
+#if defined(CATA_MCP)
+    const auto previous_limit = sight_max;
+    const auto previous_modes = vision_mode_cache;
+    const auto previous_nv = nv_range;
+#endif
     sight_max = 9999;
     vision_mode_cache.reset();
 
@@ -2138,6 +2144,14 @@ void Character::recalc_sight_limits()
                has_effect_with_flag( flag_EFFECT_CLAIRVOYANCE ) ) {
         vision_mode_cache.set( VISION_CLAIRVOYANCE );
     }
+#if defined(CATA_MCP)
+    // Invalidate only changed native actor inputs, including changes hidden by
+    // the final visibility threshold/range clamps. Inactive actors are not owners.
+    if( g && this == &get_avatar() && ( previous_limit != sight_max ||
+                                        previous_modes != vision_mode_cache || previous_nv != nv_range ) ) {
+        get_map().invalidate_visibility_caches();
+    }
+#endif
 }
 
 namespace vision
@@ -10119,6 +10133,9 @@ void Character::apply_damage( Creature *source, item *source_weapon, item *sourc
         debugmsg( "Wacky body part hurt!" );
         hurt = bodypart_id( "torso" );
     }
+#if defined(CATA_MCP)
+    engine_client::presentation::record_damage( { .hurt = *this, .part = hurt, .amount = dam } );
+#endif
 
     mod_pain( dam / 2 );
 
@@ -12218,12 +12235,22 @@ bool Character::knows_trap( const tripoint_bub_ms &pos ) const
 void Character::add_known_trap( const tripoint_bub_ms &pos, const trap &t )
 {
     const auto p = bub_to_abs( pos );
+#if defined(CATA_MCP)
+    const auto previous = known_traps.find( p );
+    const auto changed = t.is_null() ? previous != known_traps.end() :
+                         previous == known_traps.end() || previous->second != t.id.str();
+#endif
     if( t.is_null() ) {
         known_traps.erase( p );
     } else {
         // TODO: known_traps should map to a trap_str_id
         known_traps[p] = t.id.str();
     }
+#if defined(CATA_MCP)
+    if( changed && g && this == &get_avatar() ) {
+        get_map().set_memory_seen_cache_dirty( pos );
+    }
+#endif
 }
 
 bool Character::avoid_trap( const tripoint_bub_ms &pos, const trap &tr ) const
@@ -12324,11 +12351,49 @@ std::vector<std::string> Character::short_description_parts() const
     return result;
 }
 
+#if defined(CATA_MCP)
+auto Character::equipment_facts( const int visibility_cap ) const ->
+std::vector<engine_client::fact>
+{
+    auto facts = std::vector<engine_client::fact> {};
+    if( is_armed() ) {
+        facts.push_back( { .kind = "wielding", .label = _( "Wielding: " ), .text = primary_weapon().tname(),
+                           .color = c_red } );
+    }
+    const std::string worn_str = enumerate_as_string( worn.begin(), worn.end(),
+    []( const item * const & it ) {
+        return it->tname();
+    } );
+    if( !worn_str.empty() ) {
+        facts.push_back( { .kind = "wearing", .label = _( "Wearing: " ), .text = worn_str, .color = c_light_gray } );
+    }
+    const auto trait_str = visible_mutations( visibility_cap );
+    if( !trait_str.empty() ) {
+        facts.push_back( { .kind = "traits", .label = _( "Traits: " ), .text = trait_str, .color = c_light_gray } );
+    }
+    return facts;
+}
+#endif
+
 std::string Character::short_description() const
 {
     return join( short_description_parts(), ";   " );
 }
 
+#if defined(CATA_MCP)
+auto Character::info_facts() const -> std::vector<engine_client::fact>
+{
+    const auto bar = ::get_hp_bar( get_hp(), get_hp_max(), false );
+    auto facts = std::vector<engine_client::fact> {};
+    facts.push_back( { .kind = "hp", .text = bar.first, .color = bar.second,
+    .values = { { "hp", get_hp() }, { "max", get_hp_max() } } } );
+    facts.push_back( { .kind = "creature", .text = string_format( _( "You (%s)" ), name ), .color = basic_symbol_color() } );
+    const int visibility_cap = 0; // no cap
+    std::ranges::copy( equipment_facts( visibility_cap ), std::back_inserter( facts ) );
+    return facts;
+}
+
+#endif
 auto Character::print_info( const catacurses::window &w, int vStart, int vLines,
                             int column ) const -> int
 {

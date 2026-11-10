@@ -815,6 +815,10 @@ class npc : public player
 
         nc_color basic_symbol_color() const override;
         int print_info( const catacurses::window &w, int line, int vLines, int column ) const override;
+#if defined(CATA_MCP)
+        /// What `print_info` prints, a fact per line.
+        auto info_facts() const -> std::vector<engine_client::fact>;
+#endif
         std::string opinion_text() const;
         int faction_display( const catacurses::window &fac_w, int width ) const;
 

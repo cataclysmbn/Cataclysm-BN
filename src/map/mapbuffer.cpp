@@ -27,6 +27,7 @@
 #include "map_mutation_hooks.h"
 #include "mapdata.h"
 #include "mapgen/mapgen_constructor.h"
+#include "mcp_hooks.h"
 #include "messages.h"
 #include "mongroup.h"
 #include "monster.h"
@@ -1730,6 +1731,14 @@ auto mapbuffer::set_ter(
 
     tile->sm->set_ter(tile->local, terrain);
     invalidate_active_terrain_set_caches(p, old_id, terrain);
+#if defined(CATA_MCP)
+    if (const auto local =
+            engine_client::presentation::collecting()
+                ? active_reality_bubble_local(p)
+                : std::nullopt) {
+        engine_client::presentation::record_terrain_change(*local, old_id, terrain);
+    }
+#endif
     return true;
 }
 
@@ -1769,6 +1778,14 @@ auto mapbuffer::set_furn(const tripoint_abs_ms& p, const mapbuffer_set_furn_opti
         .old_furniture = old_id,
         .new_furniture = new_id,
     });
+#if defined(CATA_MCP)
+    if (const auto local =
+            engine_client::presentation::collecting()
+                ? active_reality_bubble_local(p)
+                : std::nullopt) {
+        engine_client::presentation::record_furniture_change(*local, old_id, new_id);
+    }
+#endif
     return true;
 }
 
@@ -2219,7 +2236,11 @@ auto mapbuffer::set_field_intensity(
     if (field_ptr != nullptr) {
         const auto adjusted =
             (options.isoffset ? field_ptr->get_field_intensity() : 0) + options.intensity;
-        if (adjusted > 0) { return field_ptr->set_field_intensity(adjusted); }
+        if (adjusted > 0) {
+            const auto set = field_ptr->set_field_intensity(adjusted);
+            MCP_ONLY(tell_field_changed(p, options.type);)
+            return set;
+        }
         remove_field(p, options.type, options.lookup);
         return 0;
     }
@@ -2258,6 +2279,9 @@ auto mapbuffer::add_field(const tripoint_abs_ms& p, const mapbuffer_add_field_op
     }
 
     invalidate_active_field_add_caches(p, options.type);
+#if defined(CATA_MCP)
+    tell_field_changed(p, options.type);
+#endif
     return true;
 }
 
@@ -2271,6 +2295,9 @@ auto mapbuffer::remove_field(
 
     --tile->sm->field_count;
     invalidate_active_field_remove_caches(p, type);
+#if defined(CATA_MCP)
+    tell_field_changed(p, type);
+#endif
     return true;
 }
 
@@ -2867,6 +2894,16 @@ auto mapbuffer::partial_con_remove(const tripoint_abs_ms& p, const mapbuffer_loo
     return tile->sm->partial_constructions.erase(tripoint_sm_ms(tile->local, p.z())) > 0;
 }
 
+#if defined(CATA_MCP)
+auto mapbuffer::tell_field_changed(const tripoint_abs_ms& p, const field_type_id& type) const
+    -> void {
+    if (!engine_client::presentation::collecting()) { return; }
+    if (const auto local = active_reality_bubble_local(p)) {
+        engine_client::presentation::record_field(*local, type);
+    }
+}
+
+#endif
 auto mapbuffer::active_reality_bubble_local(const tripoint_abs_ms& p) const
     -> std::optional<tripoint_bub_ms> {
     if (g == nullptr) { return std::nullopt; }
