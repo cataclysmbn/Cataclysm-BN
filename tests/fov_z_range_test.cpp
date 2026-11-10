@@ -7,6 +7,7 @@
 #include "map/lightmap.h"
 #include "map/map.h"
 #include "preload_config.h"
+#include "sounds.h"
 #include "state_helpers.h"
 #include "weather/weather.h"
 
@@ -136,9 +137,16 @@ TEST_CASE("fov_z_range_limits_vision_levels", "[vision][fov_z_range]") {
         CHECK_FALSE(at_z(limited, 1).lightmap_dirty);
     }
 
-    SECTION("sound absorption is built on every level regardless of the range") {
-        CHECK_FALSE(at_z(limited, 3).absorption_dirty);
-        CHECK_FALSE(at_z(limited, OVERMAP_HEIGHT).absorption_dirty);
+    SECTION("sound absorption outside the range is built when a sound starts there") {
+        CHECK_FALSE(at_z(limited, 1).absorption_dirty);
+        CHECK(at_z(limited, 3).absorption_dirty);
+        sounds::sound(
+            {.volume = 50,
+             .origin = tripoint_bub_ms(60, 60, 3),
+             .category = sounds::sound_t::movement,
+             .description = "footsteps",
+             .from_player = true});
+        CHECK_FALSE(get_map().access_cache(3).absorption_cache_dirty.any());
     }
 
     SECTION("levels inside the range are computed as with the full range") {
