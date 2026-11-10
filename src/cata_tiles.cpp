@@ -64,17 +64,21 @@
 #    include "string_formatter.h"
 #    include "string_id.h"
 #    include "string_utils.h"
+#    include "thread_pool.h"
 #    include "tileray.h"
+#    include "tileset_loading.h"
 #    include "translations.h"
 #    include "trap.h"
 #    include "travel/travel_destination.h"
 #    include "type_id.h"
+#    include "utils/memory_stream.h"
 #    include "vehicle/veh_type.h"
 #    include "vehicle/vehicle.h"
 #    include "vehicle/vehicle_part.h"
 #    include "vehicle/vpart_position.h"
 #    include "weather/weather.h"
 #    include "weighted_list.h"
+#    include "worldfactory.h"
 
 #    include <algorithm>
 #    include <array>
@@ -84,6 +88,7 @@
 #    include <cstddef>
 #    include <cstdint>
 #    include <fstream>
+#    include <future>
 #    include <iterator>
 #    include <limits>
 #    include <optional>
@@ -92,7 +97,10 @@
 #    include <stdexcept>
 #    include <string_view>
 #    include <tuple>
+#    include <unordered_map>
 #    include <unordered_set>
+#    include <utility>
+#    include <vector>
 
 #define dbg(x) DebugLogFL((x),DC::SDL)
 
@@ -577,12 +585,12 @@ static size_t get_surface_hash( SDL_Surface *surf, const SDL_Rect *rect )
     const int dx = rect->w;
     const int dy = rect->h;
 
+    // Hash whole rows at a time: hashing pixel by pixel dominated tileset loading.
     for( int y = 0; y < dy; ++y ) {
         const auto offset = static_cast<uint32_t>( ( ( y + rect->y ) * surf->w ) + rect->x );
-        auto pData = static_cast<uint32_t *>( surf->pixels ) + offset;
-        for( int x = 0; x < dx; ++x, ++pData ) {
-            cata::hash_combine( hash, *pData );
-        }
+        const auto *const row = reinterpret_cast<const char *>(
+                                    static_cast<const uint32_t *>( surf->pixels ) + offset );
+        cata::hash_combine( hash, std::string_view( row, static_cast<size_t>( dx ) * sizeof( uint32_t ) ) );
     }
 
     if( SDL_MUSTLOCK( surf ) ) {
@@ -1182,11 +1190,14 @@ bool tileset_loader::copy_surface_to_dynamic_atlas(
             this->offset + ( pos.x / sprite_width ) +
             ( pos.y / sprite_height ) * ( tile_atlas_width / sprite_width );
 
-        SDL_FillSurfaceRect( st_surf, nullptr, SDL_MapRGBA( SDL_GetPixelFormatDetails( st_surf->format ),
-                             nullptr, 255, 255, 255, 0 ) );
+        // The staging surface only ever grows, so stick to the part this sprite uses: after a
+        // sheet of big sprites, clearing and hashing all of it costs many times the sprite.
+        SDL_FillSurfaceRect( st_surf, &st_sub_rect,
+                             SDL_MapRGBA( SDL_GetPixelFormatDetails( st_surf->format ),
+                                          nullptr, 255, 255, 255, 0 ) );
         SDL_BlitSurface( surf.get(), &src_rect, st_surf, &st_sub_rect );
 
-        const auto surf_hash = get_surface_hash( st_surf, nullptr );
+        const auto surf_hash = get_surface_hash( st_surf, &st_sub_rect );
 
         auto atl_tex = ts.tileset_atlas->get_or_create_sprite( sprite_width, sprite_height,
         surf_hash, [&]( SDL_Surface * dstSurf, const SDL_Rect * dstRect ) {
@@ -1847,9 +1858,62 @@ static void extend_vector_by( std::vector<T> &vec, const size_t additional_size 
     vec.resize( vec.size() + additional_size );
 }
 
+namespace
+{
+
+/// Tilesheet images being decoded on worker threads ahead of their use, by path.
+using pending_image_map = std::unordered_map<std::string, std::future<SDL_Surface_Ptr>>;
+
+auto pending_images() -> pending_image_map & // *NOPAD*
+{
+    static auto images = pending_image_map{};
+    return images;
+}
+
+/// Starts decoding the images at `paths` on worker threads, for @ref take_image to pick up.
+/// Decoding is a large part of loading a tileset and does not need the main thread.
+auto decode_images_ahead( const std::vector<std::string> &paths ) -> void
+{
+    auto &pool = get_thread_pool();
+    if( pool.num_workers() == 0 ) {
+        return;
+    }
+    for( const auto &path : paths ) {
+        if( !pending_images().contains( path ) ) {
+            pending_images().emplace( path, pool.submit_returning( [path]() { return load_image( path.c_str() ); } ) );
+        }
+    }
+}
+
+/// Paths of the tilesheet images that the "tiles-new" entries of a tile config refer to.
+auto tilesheet_image_paths( const JsonObject &config,
+                            const std::string &tileset_root ) -> std::vector<std::string>
+{
+    auto paths = std::vector<std::string> {};
+    for( const JsonObject &tile_part_def : config.get_array( "tiles-new" ) ) {
+        tile_part_def.allow_omitted_members();
+        auto path = tileset_root + '/' + tile_part_def.get_string( "file" );
+        if( file_exist( path ) ) {
+            paths.push_back( std::move( path ) );
+        }
+    }
+    return paths;
+}
+
+/// The decoded image at `path`, either from @ref decode_images_ahead or decoded right now.
+auto take_image( const std::string &path ) -> SDL_Surface_Ptr
+{
+    if( auto pending = pending_images().extract( path ) ) {
+        return pending.mapped().get();
+    }
+    return load_image( path.c_str() );
+}
+
+} // namespace
+
 void tileset_loader::load_tileset( const std::string &img_path, const bool pump_events )
 {
-    const SDL_Surface_Ptr tile_atlas = load_image( img_path.c_str() );
+    const SDL_Surface_Ptr tile_atlas = take_image( img_path );
     assert( tile_atlas );
     tile_atlas_width = tile_atlas->w;
 
@@ -2213,11 +2277,11 @@ void tileset_loader::load( const std::string &tileset_id, const bool precheck,
     std::string img_path = tileset_root + '/' + tileset_path;
 
     dbg( DL::Info ) << "Attempting to Load JSON file " << json_path;
-    std::ifstream config_file( json_path.c_str(), std::ifstream::in | std::ifstream::binary );
-
-    if( !config_file.good() ) {
+    if( !file_exist( json_path ) ) {
         throw std::runtime_error( std::string( "Failed to open tile info json: " ) + json_path );
     }
+    // Tile configs are big; reading from memory lets the JSON parser scan them directly.
+    memory_istream config_file( read_entire_file( json_path ) );
 
     JsonIn config_json( config_file );
     JsonObject config = config_json.get_object();
@@ -2264,11 +2328,10 @@ void tileset_loader::load( const std::string &tileset_id, const bool precheck,
             continue;
         }
         dbg( DL::Info ) << "Attempting to Load JSON file " << json_path;
-        std::ifstream mod_config_file( json_path.c_str(), std::ifstream::in | std::ifstream::binary );
-
-        if( !mod_config_file.good() ) {
+        if( !file_exist( json_path ) ) {
             throw std::runtime_error( std::string( "Failed to open tile info json: " ) + json_path );
         }
+        memory_istream mod_config_file( read_entire_file( json_path ) );
 
         JsonIn mod_config_json( mod_config_file );
 
@@ -2331,10 +2394,70 @@ void tileset_loader::load( const std::string &tileset_id, const bool precheck,
 #endif
 }
 
+auto tileset_loading::decode_images_ahead() -> void
+{
+    if( !tilecontext || !use_tiles ) {
+        return;
+    }
+    const auto tileset_id = get_option<std::string>( "TILES" );
+    const auto *const current = tilecontext->current_tileset();
+    if( current != nullptr && current->get_tileset_id() == tileset_id ) {
+        // Loaded already. Should it get reloaded anyway, the images are decoded then.
+        return;
+    }
+    const auto tset_iter = TILESETS.find( tileset_id );
+    if( tset_iter == TILESETS.end() ) {
+        return;
+    }
+    const auto &tileset_root = tset_iter->second;
+    auto json_conf = std::string{};
+    auto tileset_path = std::string{};
+    get_tile_information( tileset_root + '/' + PATH_INFO::tileset_conf(), json_conf, tileset_path );
+    const auto json_path = tileset_root + '/' + json_conf;
+    if( !file_exist( json_path ) ) {
+        return;
+    }
+    try {
+        memory_istream config_file( read_entire_file( json_path ) );
+        JsonIn config_json( config_file );
+        const auto config = config_json.get_object();
+        config.allow_omitted_members();
+        if( config.has_array( "tiles-new" ) ) {
+            ::decode_images_ahead( tilesheet_image_paths( config, tileset_root ) );
+        }
+    } catch( const JsonError & ) {
+        // Loading the tileset reports what is wrong with its config.
+    }
+}
+
+auto tileset_loading::discard_images_decoded_ahead() -> void
+{
+    pending_images().clear();
+}
+
+auto tileset_loading::load_for_active_world() -> void
+{
+    if( !tilecontext || !use_tiles ) {
+        return;
+    }
+    tilecontext->load_tileset(
+        get_option<std::string>( "TILES" ),
+        world_generator->active_world->info->active_mod_order,
+        /*precheck=*/false,
+        /*force=*/false,
+        /*pump_events=*/true
+    );
+}
+
 void tileset_loader::load_internal( const JsonObject &config, const std::string &tileset_root,
                                     const std::string &img_path, const bool pump_events )
 {
+    // Images not used after all (a tile definition failed to load) are dropped here.
+    const auto drop_pending_images = on_out_of_scope( []() {
+        pending_images().clear();
+    } );
     if( config.has_array( "tiles-new" ) ) {
+        decode_images_ahead( tilesheet_image_paths( config, tileset_root ) );
         // new system, several entries
         // When loading multiple tileset images this defines where
         // the tiles from the most recently loaded image start from.
