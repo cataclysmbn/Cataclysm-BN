@@ -18,6 +18,8 @@ Before writing **ANY** code, verify:
 - prefer function-local `using namespace std::views;` and use `transform`/`filter` unqualified.
 - prefer function-local `namespace ranges = std::ranges;` and use `ranges::*` without `std::`
 - prefer method/function references over lambdas whenever possible, e.g. `transform( &vpart_position::part_index )` instead of `transform( []( const auto &vp ) { return vp.part_index(); } )`.
+- new files **MUST** be in subdir so it will be clang-format'd
+- read `docs/` and `justfile`
 
 ## Coding Convention
 
