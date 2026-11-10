@@ -12,6 +12,8 @@
 #include "map/map.h"
 #include "map/mapbuffer.h"
 #include "map/submap.h"
+#include "monster.h"
+#include "mtype.h"
 #include "options.h"
 #include "output.h"
 #include "profile.h"
@@ -215,6 +217,12 @@ void scent_map::update( const tripoint_bub_ms &center, map &m )
         player_last_position.emplace( center );
         player_last_moved = calendar::turn;
     } else if( player_last_moved + 1000_turns < calendar::turn ) {
+        return;
+    }
+    // Only smelling monsters read the scent map; the player still deposits scent each turn.
+    const auto smells_here = [&]( const monster & mon ) { return mon.has_flag( MF_SMELLS ) && std::abs( mon.bub_pos().z() - center.z() ) <= SCENT_MAP_Z_REACH; };
+    if( get_option<bool>( "SCENT_SPREAD_ONLY_NEAR_TRACKERS" ) &&
+        std::ranges::none_of( g->all_monsters(), smells_here ) ) {
         return;
     }
 
