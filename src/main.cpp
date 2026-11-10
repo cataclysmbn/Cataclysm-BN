@@ -276,6 +276,13 @@ int main( int argc, char *argv[] )
         const char *section_default = nullptr;
         const char *section_map_sharing = "Map sharing";
         const char *section_user_directory = "User directories";
+        const auto path_argument = []( std::string & path ) {
+            return [&path]( int num_args, const char **params ) -> int {
+                if( num_args < 1 || *params[0] == '\0' ) { return -1; }
+                path = params[0];
+                return 1;
+            };
+        };
         const std::array<arg_handler, 20> first_pass_arguments = {{
                 {
                     "--seed", "<string of letters and or numbers>",
@@ -296,31 +303,19 @@ int main( int argc, char *argv[] )
                     "--replay-record", "<jsonl path>",
                     "Record input and the deterministic RNG seed to a new replay file",
                     section_default,
-                    [&replay_record_path]( int num_args, const char **params ) -> int {
-                        if( num_args < 1 || *params[0] == '\0' ) { return -1; }
-                        replay_record_path = params[0];
-                        return 1;
-                    }
+                    path_argument( replay_record_path ),
                 },
                 {
                     "--replay-play", "<jsonl path>",
                     "Play recorded input without waiting for a human",
                     section_default,
-                    [&replay_play_path]( int num_args, const char **params ) -> int {
-                        if( num_args < 1 || *params[0] == '\0' ) { return -1; }
-                        replay_play_path = params[0];
-                        return 1;
-                    }
+                    path_argument( replay_play_path ),
                 },
                 {
                     "--state-hash-log", "<jsonl path>",
                     "Write hashes of the game state after every turn to a new file, to compare runs",
                     section_default,
-                    [&state_hash_log_path]( int num_args, const char **params ) -> int {
-                        if( num_args < 1 || *params[0] == '\0' ) { return -1; }
-                        state_hash_log_path = params[0];
-                        return 1;
-                    }
+                    path_argument( state_hash_log_path ),
                 },
                 {
                     "--jsonverify", nullptr,
@@ -802,13 +797,12 @@ int main( int argc, char *argv[] )
         if( !replay_record_path.empty() ) {
             replay::configure_recording( replay_record_path, {.rng_seed = replay_seed} );
         } else if( !replay_play_path.empty() ) {
-            if( seed_explicit ) {
-                replay::configure_playback( replay_play_path, {.rng_seed = replay_seed} );
-            } else {
-                replay::configure_playback( replay_play_path );
-            }
+            replay::configure_playback( replay_play_path );
         }
         replay::start();
+        if( replay::is_playing() && seed_explicit && replay::playback_metadata().rng_seed != replay_seed ) {
+            throw std::runtime_error( "Replay header does not match the --seed argument" );
+        }
         if( !state_hash_log_path.empty() ) { replay::configure_state_hash_log( state_hash_log_path ); }
     } catch( const std::exception &err ) {
         replay::discard();
@@ -898,7 +892,7 @@ int main( int argc, char *argv[] )
 #endif
 
     if( replay::is_enabled() ) {
-        rng_set_deterministic_seed( replay::session_rng_seed( replay_seed ) );
+        rng_set_deterministic_seed( replay::playback_metadata().rng_seed );
     } else {
         rng_set_engine_seed( seed );
     }
