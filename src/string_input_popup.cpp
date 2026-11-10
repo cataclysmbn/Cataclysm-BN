@@ -542,15 +542,7 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
                 if( action == "TEXT.PASTE" ) {
 #if defined(TILES)
                     if( edit.empty() ) {
-                        entered = replay::external_text_or_exit( "clipboard", []() {
-                            auto text = std::string{};
-                            char *const clip = SDL_GetClipboardText();
-                            if( clip ) {
-                                text = clip;
-                                SDL_free( clip );
-                            }
-                            return text;
-                        } );
+                        entered = replay::external_text_or_exit( "clipboard", replay::clipboard_text );
                     }
 #endif
                 } else if( action == "TEXT.INPUT_FROM_FILE" ) {

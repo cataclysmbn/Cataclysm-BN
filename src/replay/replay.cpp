@@ -19,6 +19,10 @@
 #include <system_error>
 #include <utility>
 
+#if defined(TILES)
+#    include <SDL3/SDL.h>
+#endif
+
 namespace replay {
 namespace {
 
@@ -424,6 +428,18 @@ auto external_text_or_exit(
         return external_text(source, read);
     } catch (const std::runtime_error& error) { exit_with_failure(error); }
 }
+
+#if defined(TILES)
+auto clipboard_text() -> std::string {
+    auto text = std::string{};
+    char* const clip = SDL_GetClipboardText();
+    if (clip) {
+        text = clip;
+        SDL_free(clip);
+    }
+    return text;
+}
+#endif
 
 auto exit_with_failure(const std::runtime_error& error) -> void {
     DebugLog(DL::Error, DC::Main) << error.what();
