@@ -6356,6 +6356,8 @@ auto map::update_visibility_cache(const int zlev, const std::function<void()>& w
             m_last_seen_cache_origin = player_pos;
         }
         for (const auto z : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
+            // The rebuild invalidated every level on the GPU; levels left out rebuild in range.
+            if (rebuild_seen_cache) { get_cache(z).seen_cache_dirty = false; }
             if (!in_z_range(z)) {
                 std::ranges::fill(get_cache(z).visibility_cache, lit_level::BLANK);
             }
