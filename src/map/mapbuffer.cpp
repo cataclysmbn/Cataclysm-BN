@@ -1491,6 +1491,7 @@ auto mapbuffer::mark_submap_caches_dirty(const mapbuffer_mark_submap_caches_dirt
     if (options.begin.x() >= options.end.x() || options.begin.y() >= options.end.y()) { return; }
 
     const auto max = point_abs_sm(options.end.x() - 1, options.end.y() - 1);
+    auto lk = std::lock_guard<std::recursive_mutex>(submaps_mutex_);
     for (const auto pos : point_range<point_abs_sm>(options.begin, max)) {
         auto* const sm = lookup_submap_in_memory(tripoint_abs_sm(pos, options.zlev));
         if (sm == nullptr) { continue; }
