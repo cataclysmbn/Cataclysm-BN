@@ -2181,8 +2181,15 @@
       "pet": "The %s nudges you gently with its muzzle.",
       "tamer_traits": [ [ "ANIMALEMPATH" ] ]
     },
-    "pet_training": { "hp_mult": 1.3, "melee_mult": 1.2, "dodge_mult": 1.05, "max_level": 4, "min_skill": 4 },
-    "flags": [ "SEES", "HEARS", "SMELLS", "PET_MOUNTABLE", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "BLEED", "ATTACKMON" ]
+    "pet_training": {
+      "hp_mult": 1.3,
+      "melee_mult": 1.2,
+      "dodge_mult": 1.05,
+      "max_level": 4,
+      "min_skill": 4,
+      "level_flags": [ { "level": 1, "flags": [ "COMBAT_MOUNT" ] } ]
+    },
+    "flags": [ "SEES", "HEARS", "SMELLS", "PET_MOUNTABLE", "ANIMAL", "PET_WONT_FOLLOW", "PATH_AVOID_DANGER_1", "WARM", "BLEED", "ATTACKMON" ]
   },
   {
     "id": "mon_muskrat",
