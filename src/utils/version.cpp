@@ -51,7 +51,7 @@ auto build_date_iso() -> std::string {
 }
 } // namespace
 
-const char* getVersionString() {
+auto getVersionString() -> const char* {
     static const std::string version_string = []() {
         return std::string(VERSION) + " (" + build_date_iso() + ")";
     }();

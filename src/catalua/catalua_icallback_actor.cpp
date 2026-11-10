@@ -29,7 +29,8 @@ void lua_iuse_actor::load(const JsonObject&) {
     // TODO: custom data
 }
 
-int lua_iuse_actor::use(player& who, item& itm, bool tick, const tripoint_bub_ms& pos) const {
+auto lua_iuse_actor::use(player& who, item& itm, bool tick, const tripoint_bub_ms& pos) const
+    -> int {
     if (tick) {
         // Legacy tick is no longer supported; use game.istate_functions on_tick instead.
         return 0;
@@ -50,8 +51,9 @@ int lua_iuse_actor::use(player& who, item& itm, bool tick, const tripoint_bub_ms
     return 1;
 }
 
-ret_val<bool> lua_iuse_actor::can_use(
-    const Character& who, const item& item, bool, const tripoint_bub_ms& pos) const {
+auto lua_iuse_actor::can_use(
+    const Character& who, const item& item, bool, const tripoint_bub_ms& pos) const
+    -> ret_val<bool> {
     if (can_use_func != sol::lua_nil) {
         sol::state_view lua(can_use_func.lua_state());
         auto params = lua.create_table();
@@ -66,7 +68,7 @@ ret_val<bool> lua_iuse_actor::can_use(
     return ret_val<bool>::make_success();
 }
 
-std::unique_ptr<iuse_actor> lua_iuse_actor::clone() const {
+auto lua_iuse_actor::clone() const -> std::unique_ptr<iuse_actor> {
     return std::make_unique<lua_iuse_actor>(*this);
 }
 
@@ -115,7 +117,7 @@ void lua_iwieldable_actor::call_on_unwield(Character& who, item& it) const {
     }
 }
 
-bool lua_iwieldable_actor::call_can_wield(const Character& who, const item& it) const {
+auto lua_iwieldable_actor::call_can_wield(const Character& who, const item& it) const -> bool {
     if (can_wield_func == sol::lua_nil) { return true; }
     try {
         sol::state_view lua(can_wield_func.lua_state());
@@ -132,7 +134,7 @@ bool lua_iwieldable_actor::call_can_wield(const Character& who, const item& it) 
     return true;
 }
 
-bool lua_iwieldable_actor::call_can_unwield(const Character& who, const item& it) const {
+auto lua_iwieldable_actor::call_can_unwield(const Character& who, const item& it) const -> bool {
     if (can_unwield_func == sol::lua_nil) { return true; }
     try {
         sol::state_view lua(can_unwield_func.lua_state());
@@ -189,7 +191,7 @@ void lua_iwearable_actor::call_on_takeoff(Character& who, item& it) const {
     }
 }
 
-bool lua_iwearable_actor::call_can_wear(const Character& who, const item& it) const {
+auto lua_iwearable_actor::call_can_wear(const Character& who, const item& it) const -> bool {
     if (can_wear_func == sol::lua_nil) { return true; }
     try {
         sol::state_view lua(can_wear_func.lua_state());
@@ -206,7 +208,7 @@ bool lua_iwearable_actor::call_can_wear(const Character& who, const item& it) co
     return true;
 }
 
-bool lua_iwearable_actor::call_can_takeoff(const Character& who, const item& it) const {
+auto lua_iwearable_actor::call_can_takeoff(const Character& who, const item& it) const -> bool {
     if (can_takeoff_func == sol::lua_nil) { return true; }
     try {
         sol::state_view lua(can_takeoff_func.lua_state());
@@ -290,7 +292,7 @@ lua_istate_actor::lua_istate_actor(
       on_drop_func(std::move(on_drop)),
       on_puff_func(std::move(on_puff)) {}
 
-bool lua_istate_actor::has_on_tick() const { return on_tick_func != sol::lua_nil; }
+auto lua_istate_actor::has_on_tick() const -> bool { return on_tick_func != sol::lua_nil; }
 
 auto lua_istate_actor::call_on_tick(Character& who, item& it, const tripoint_bub_ms& pos) const
     -> void {
@@ -322,7 +324,8 @@ void lua_istate_actor::call_on_pickup(Character& who, item& it) const {
     }
 }
 
-bool lua_istate_actor::call_on_drop(Character& who, item& it, const tripoint_bub_ms& pos) const {
+auto lua_istate_actor::call_on_drop(Character& who, item& it, const tripoint_bub_ms& pos) const
+    -> bool {
     if (on_drop_func == sol::lua_nil) { return false; }
     try {
         sol::state_view lua(on_drop_func.lua_state());
@@ -420,7 +423,8 @@ lua_imelee_actor::lua_imelee_actor(
       on_block_func(std::move(on_block)),
       on_miss_func(std::move(on_miss)) {}
 
-bool lua_imelee_actor::call_on_melee_attack(Character& who, Creature& target, item& it) const {
+auto lua_imelee_actor::call_on_melee_attack(Character& who, Creature& target, item& it) const
+    -> bool {
     if (on_melee_attack_func == sol::lua_nil) { return true; }
     try {
         sol::state_view lua(on_melee_attack_func.lua_state());
@@ -498,8 +502,8 @@ lua_iranged_actor::lua_iranged_actor(
       can_fire_func(std::move(can_fire)),
       can_reload_func(std::move(can_reload)) {}
 
-bool lua_iranged_actor::call_on_fire(
-    Character& who, item& gun, const tripoint_bub_ms& target, int shots) const {
+auto lua_iranged_actor::call_on_fire(
+    Character& who, item& gun, const tripoint_bub_ms& target, int shots) const -> bool {
     if (on_fire_func == sol::lua_nil) { return true; }
     try {
         sol::state_view lua(on_fire_func.lua_state());
@@ -532,7 +536,7 @@ void lua_iranged_actor::call_on_reload(Character& who, item& it) const {
     }
 }
 
-bool lua_iranged_actor::call_can_fire(const Character& who, const item& gun) const {
+auto lua_iranged_actor::call_can_fire(const Character& who, const item& gun) const -> bool {
     if (can_fire_func == sol::lua_nil) { return true; }
     try {
         sol::state_view lua(can_fire_func.lua_state());
@@ -549,7 +553,7 @@ bool lua_iranged_actor::call_can_fire(const Character& who, const item& gun) con
     return true;
 }
 
-bool lua_iranged_actor::call_can_reload(const Character& who, const item& it) const {
+auto lua_iranged_actor::call_can_reload(const Character& who, const item& it) const -> bool {
     if (can_reload_func == sol::lua_nil) { return true; }
     try {
         sol::state_view lua(can_reload_func.lua_state());
@@ -743,8 +747,8 @@ void lua_itrap_actor::call_on_trigger_aftermath(
     }
 }
 
-bool lua_itrap_actor::call_can_trigger(
-    const Character& who, const trap& trap, const tripoint_bub_ms& loc) const {
+auto lua_itrap_actor::call_can_trigger(
+    const Character& who, const trap& trap, const tripoint_bub_ms& loc) const -> bool {
     if (can_trigger_func == sol::lua_nil) { return true; }
     try {
         sol::state_view lua(can_trigger_func.lua_state());
@@ -787,8 +791,8 @@ void lua_monster_callback_actor::call_on_tame(Character& who, monster& pet) cons
     }
 }
 
-std::vector<lua_menu_entry> lua_monster_callback_actor::call_get_examine_menu_entries(
-    Character& who, monster& monster) const {
+auto lua_monster_callback_actor::call_get_examine_menu_entries(
+    Character& who, monster& monster) const -> std::vector<lua_menu_entry> {
     if (get_examine_menu_entries_func == sol::lua_nil) { return std::vector<lua_menu_entry>(); }
     try {
         sol::state_view lua(get_examine_menu_entries_func.lua_state());
@@ -880,7 +884,7 @@ lua_ispell_actor::lua_ispell_actor(
       on_try_cast_func(std::move(on_try_cast)),
       on_cast_func(std::move(on_cast)) {}
 
-bool lua_ispell_actor::call_on_try_cast(Character& who, spell& sp) const {
+auto lua_ispell_actor::call_on_try_cast(Character& who, spell& sp) const -> bool {
     if (on_try_cast_func == sol::lua_nil) { return true; }
     try {
         sol::state_view lua(on_try_cast_func.lua_state());

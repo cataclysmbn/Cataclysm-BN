@@ -16,7 +16,7 @@ enum status_t : char;
  */
 class oracle_t {};
 
-status_t return_running(const oracle_t*);
+auto return_running(const oracle_t*) -> status_t;
 
 extern std::unordered_map<std::string, std::function<status_t(const oracle_t*)>> predicate_map;
 

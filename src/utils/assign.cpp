@@ -18,7 +18,7 @@ void report_strict_violation(
 }
 
 
-bool assign(const JsonObject& jo, const std::string& name, bool& val, bool) {
+auto assign(const JsonObject& jo, const std::string& name, bool& val, bool) -> bool {
     bool out;
 
     if (!jo.read(name, out)) { return false; }
@@ -28,9 +28,9 @@ bool assign(const JsonObject& jo, const std::string& name, bool& val, bool) {
     return true;
 }
 
-bool assign(
+auto assign(
     const JsonObject& jo, const std::string& name, units::volume& val, bool, const units::volume lo,
-    const units::volume hi) {
+    const units::volume hi) -> bool {
     const auto parse = [&name](const JsonObject& obj, units::volume& out) {
         if (obj.has_int(name)) {
             obj.show_warning(
@@ -98,9 +98,9 @@ bool assign(
     return true;
 }
 
-bool assign(
+auto assign(
     const JsonObject& jo, const std::string& name, units::mass& val, bool, const units::mass lo,
-    const units::mass hi) {
+    const units::mass hi) -> bool {
     const auto parse = [&name](const JsonObject& obj, units::mass& out) {
         if (obj.has_int(name)) {
             obj.show_warning(
@@ -154,9 +154,9 @@ bool assign(
     return true;
 }
 
-bool assign(
+auto assign(
     const JsonObject& jo, const std::string& name, units::money& val, bool, const units::money lo,
-    const units::money hi) {
+    const units::money hi) -> bool {
     const auto parse = [&name](const JsonObject& obj, units::money& out) {
         if (obj.has_int(name)) {
             obj.show_warning(
@@ -210,9 +210,9 @@ bool assign(
     return true;
 }
 
-bool assign(
+auto assign(
     const JsonObject& jo, const std::string& name, units::energy& val, bool, const units::energy lo,
-    const units::energy hi) {
+    const units::energy hi) -> bool {
     const auto parse = [&name](const JsonObject& obj, units::energy& out) {
         if (obj.has_int(name)) {
             obj.show_warning(
@@ -295,9 +295,9 @@ auto assign(
     return assign_unit_common(jo, name, val, parse, strict, lo, hi);
 }
 
-bool assign(
+auto assign(
     const JsonObject& jo, const std::string& name, units::probability& val, bool strict,
-    const units::probability lo, const units::probability hi) {
+    const units::probability lo, const units::probability hi) -> bool {
     const auto parse = [&name](const JsonObject& obj, units::probability& out) {
         if (obj.has_string(name)) {
             long double tmp;
@@ -324,9 +324,9 @@ bool assign(
     return assign_unit_common(jo, name, val, parse, strict, lo, hi);
 }
 
-bool assign(
+auto assign(
     const JsonObject& jo, const std::string& name, units::temperature& val, bool strict,
-    const units::temperature lo, const units::temperature hi) {
+    const units::temperature lo, const units::temperature hi) -> bool {
     const auto parse = [&name](const JsonObject& obj, units::temperature& out) {
         if (obj.has_string(name)) {
             long double value;
@@ -358,7 +358,7 @@ bool assign(
     return assign_unit_common(jo, name, val, parse, strict, lo, hi);
 }
 
-bool assign(const JsonObject& jo, const std::string& name, nc_color& val, const bool) {
+auto assign(const JsonObject& jo, const std::string& name, nc_color& val, const bool) -> bool {
     if (!jo.has_member(name)) { return false; }
     const nc_color out = color_from_string(jo.get_string(name));
     if (out == c_unset) { jo.throw_error("invalid color name", name); }
@@ -367,9 +367,9 @@ bool assign(const JsonObject& jo, const std::string& name, nc_color& val, const 
     return true;
 }
 
-bool assign(
+auto assign(
     const JsonObject& jo, const std::string& name, damage_instance& val, bool strict,
-    const damage_instance& lo, const damage_instance& hi) {
+    const damage_instance& lo, const damage_instance& hi) -> bool {
     // What we'll eventually be returning for the damage instance
     damage_instance out;
 
@@ -620,8 +620,9 @@ void assign_dmg_relative(
     }
 }
 
-bool assign(
-    const JsonObject& jo, const std::string& name, data_vars::data_set& val, const bool strict) {
+auto assign(
+    const JsonObject& jo, const std::string& name, data_vars::data_set& val, const bool strict)
+    -> bool {
     static_cast<void>(strict);
     for (const JsonMember member : jo.get_object(name)) {
         val[member.name()] = member.get_string();

@@ -55,7 +55,7 @@ void vitamin::load(const JsonObject& jo, const std::string& src) {
     for (std::string e : jo.get_array("flags")) { flags_.insert(e); }
 }
 
-const std::vector<vitamin>& vitamin::all() { return all_vitamins.get_all(); }
+auto vitamin::all() -> const std::vector<vitamin>& { return all_vitamins.get_all(); }
 
 void vitamin::check_consistency() { all_vitamins.check(); }
 
@@ -76,7 +76,7 @@ void vitamin::check() const {
 
 void vitamin::reset() { all_vitamins.reset(); }
 
-int vitamin::severity(int qty) const {
+auto vitamin::severity(int qty) const -> int {
     for (int i = 0; i != static_cast<int>(disease_.size()); ++i) {
         if ((qty >= disease_[i].first && qty <= disease_[i].second)
             || (qty <= disease_[i].first && qty >= disease_[i].second)) {
@@ -94,7 +94,7 @@ int vitamin::severity(int qty) const {
 
 
 namespace io {
-template <> std::string enum_to_string<vitamin_type>(vitamin_type data) {
+template <> auto enum_to_string<vitamin_type>(vitamin_type data) -> std::string {
     switch (data) {
         case vitamin_type::VITAMIN:
             return "vitamin";

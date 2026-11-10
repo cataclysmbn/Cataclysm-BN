@@ -7,15 +7,15 @@
 #include <iostream>
 #include <stdexcept>
 
-char cata::string_formatter::consume_next_input() {
+auto cata::string_formatter::consume_next_input() -> char {
     return current_index_in_format < format.size() ? format[current_index_in_format++] : '\0';
 }
 
-char cata::string_formatter::get_current_input() const {
+auto cata::string_formatter::get_current_input() const -> char {
     return current_index_in_format < format.size() ? format[current_index_in_format] : '\0';
 }
 
-bool cata::string_formatter::consume_next_input_if(const char c) {
+auto cata::string_formatter::consume_next_input_if(const char c) -> bool {
     if (c == get_current_input()) {
         consume_next_input();
         return true;
@@ -31,12 +31,12 @@ void cata::string_formatter::read_flags() {
     }
 }
 
-bool cata::string_formatter::has_digit() const {
+auto cata::string_formatter::has_digit() const -> bool {
     const char c = get_current_input();
     return c >= '0' && c <= '9';
 }
 
-std::optional<int> cata::string_formatter::read_argument_index() {
+auto cata::string_formatter::read_argument_index() -> std::optional<int> {
     const char c = get_current_input();
     // can't use has_digit because '0' is not allowed as first character
     if (c >= '1' && c <= '9') {
@@ -53,7 +53,7 @@ std::optional<int> cata::string_formatter::read_argument_index() {
     }
 }
 
-int cata::string_formatter::parse_integer() {
+auto cata::string_formatter::parse_integer() -> int {
     int result = 0;
     while (has_digit()) {
         // TODO: Check for overflow
@@ -62,7 +62,7 @@ int cata::string_formatter::parse_integer() {
     return result;
 }
 
-std::optional<int> cata::string_formatter::read_number_or_argument_index() {
+auto cata::string_formatter::read_number_or_argument_index() -> std::optional<int> {
     if (consume_next_input_if('*')) {
         if (!has_digit()) { return current_argument_index++; }
         const int index = parse_integer() - 1; // format specifiers are 1-based
@@ -73,9 +73,11 @@ std::optional<int> cata::string_formatter::read_number_or_argument_index() {
     return std::nullopt;
 }
 
-std::optional<int> cata::string_formatter::read_width() { return read_number_or_argument_index(); }
+auto cata::string_formatter::read_width() -> std::optional<int> {
+    return read_number_or_argument_index();
+}
 
-std::optional<int> cata::string_formatter::read_precision() {
+auto cata::string_formatter::read_precision() -> std::optional<int> {
     if (!consume_next_input_if('.')) { return std::nullopt; }
     current_format.push_back('.');
     return read_number_or_argument_index();
@@ -94,7 +96,7 @@ void cata::string_formatter::throw_error(const std::string& msg) const {
     throw std::runtime_error(err);
 }
 
-std::string cata::handle_string_format_error() {
+auto cata::handle_string_format_error() -> std::string {
     try {
         throw;
     } catch (const std::exception& err) { return err.what(); }

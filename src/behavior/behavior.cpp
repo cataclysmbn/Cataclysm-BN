@@ -22,7 +22,7 @@ void node_t::set_predicate(std::function<status_t(const oracle_t*)> new_predicat
 void node_t::set_goal(const std::string& new_goal) { _goal = new_goal; }
 void node_t::add_child(const node_t* new_child) { children.push_back(new_child); }
 
-behavior_return node_t::tick(const oracle_t* subject) const {
+auto node_t::tick(const oracle_t* subject) const -> behavior_return {
     assert(predicate);
     if (children.empty()) {
         return {predicate(subject), this};
@@ -37,15 +37,17 @@ behavior_return node_t::tick(const oracle_t* subject) const {
     }
 }
 
-std::string node_t::goal() const { return _goal; }
+auto node_t::goal() const -> std::string { return _goal; }
 
-std::string tree::tick(const oracle_t* subject) {
+auto tree::tick(const oracle_t* subject) -> std::string {
     behavior_return result = root->tick(subject);
     active_node = result.result == running ? result.selection : nullptr;
     return goal();
 }
 
-std::string tree::goal() const { return active_node == nullptr ? "idle" : active_node->goal(); }
+auto tree::goal() const -> std::string {
+    return active_node == nullptr ? "idle" : active_node->goal();
+}
 
 void tree::add(const node_t* new_node) { root = new_node; }
 

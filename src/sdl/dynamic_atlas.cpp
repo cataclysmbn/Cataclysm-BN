@@ -18,12 +18,12 @@
 
 detail::texture_packer::~texture_packer() = default;
 
-template <typename T> static T round_up(T n, T m) {
+template <typename T> static auto round_up(T n, T m) -> T {
     if (m == 0) { return n; }
     return ((n + m - 1) / m) * m;
 }
 
-static bool use_texture_streaming() {
+static auto use_texture_streaming() -> bool {
     static std::unordered_map<std::string, bool> auto_values = {
         {SDL_SOFTWARE_RENDERER, false},
         {SDL_GPU_RENDERER, true},
@@ -63,7 +63,7 @@ struct stripe_texture_packer final: detail::texture_packer {
           y_remainder(bounds.h),
           min_size(min_size) {}
 
-    std::optional<SDL_Rect> pack(const uint32_t width, const uint32_t height) override {
+    auto pack(const uint32_t width, const uint32_t height) -> std::optional<SDL_Rect> override {
 
         if (std::cmp_greater(width, bounds.w) || std::cmp_greater(height, bounds.h)) {
             return std::nullopt;
@@ -114,7 +114,7 @@ struct null_texture_packer final: detail::texture_packer {
         : texture_packer(bounds),
           has_contents(false) {}
 
-    std::optional<SDL_Rect> pack(const uint32_t width, const uint32_t height) override {
+    auto pack(const uint32_t width, const uint32_t height) -> std::optional<SDL_Rect> override {
         if (has_contents || std::cmp_greater(width, bounds.w)
             || std::cmp_greater(height, bounds.h)) {
             return std::nullopt;
@@ -296,7 +296,7 @@ auto dynamic_atlas::create_sprite(
     return atl_tex;
 }
 
-atlas_texture dynamic_atlas::allocate_sprite_internal(const int w, const int h) {
+auto dynamic_atlas::allocate_sprite_internal(const int w, const int h) -> atlas_texture {
     constexpr auto get_texture =
         [](const SDL_Texture_SharedPtr& tex, const SDL_Rect& r, const int actual_w,
            const int actual_h) {

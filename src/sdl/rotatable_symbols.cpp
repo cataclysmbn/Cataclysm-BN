@@ -17,9 +17,9 @@ struct rotatable_symbol {
     uint32_t symbol;
     std::array<uint32_t, 3> rotated_symbol;
 
-    bool operator<(const uint32_t& rhs) const { return symbol < rhs; }
+    auto operator<(const uint32_t& rhs) const -> bool { return symbol < rhs; }
 
-    bool operator<(const rotatable_symbol& rhs) const { return symbol < rhs.symbol; }
+    auto operator<(const rotatable_symbol& rhs) const -> bool { return symbol < rhs.symbol; }
 };
 
 std::vector<rotatable_symbol> symbols;
@@ -70,7 +70,7 @@ void load(const JsonObject& jo, const std::string& src) {
 
 void reset() { symbols.clear(); }
 
-uint32_t get(const uint32_t& symbol, int n) {
+auto get(const uint32_t& symbol, int n) -> uint32_t {
     n = std::abs(n) % 4;
 
     if (n == 0) { return symbol; }

@@ -7,7 +7,7 @@
 #include <utility>
 
 
-point point::rotate(int turns, point dim) const {
+auto point::rotate(int turns, point dim) const -> point {
     assert(turns >= 0);
     assert(turns <= 4);
 
@@ -23,23 +23,23 @@ point point::rotate(int turns, point dim) const {
     return *this;
 }
 
-std::string point::to_string() const {
+auto point::to_string() const -> std::string {
     std::ostringstream os;
     os << *this;
     return os.str();
 }
 
-std::string tripoint::to_string() const {
+auto tripoint::to_string() const -> std::string {
     std::ostringstream os;
     os << *this;
     return os.str();
 }
 
-std::ostream& operator<<(std::ostream& os, point pos) {
+auto operator<<(std::ostream& os, point pos) -> std::ostream& {
     return os << "(" << pos.x << "," << pos.y << ")";
 }
 
-std::ostream& operator<<(std::ostream& os, const tripoint& pos) {
+auto operator<<(std::ostream& os, const tripoint& pos) -> std::ostream& {
     return os << "(" << pos.x << "," << pos.y << "," << pos.z << ")";
 }
 
@@ -61,7 +61,8 @@ spiral_generator_impl::spiral_generator_impl(point center, int min_dist, int max
     p = is_center_included ? center : center + point{x, y};
 }
 
-spiral_generator_impl spiral_generator_impl::exhausted(point center, int min_dist, int max_dist) {
+auto spiral_generator_impl::exhausted(point center, int min_dist, int max_dist)
+    -> spiral_generator_impl {
     auto q = spiral_generator_impl(center, min_dist, max_dist);
     q.i = q.n;
     return q;
@@ -69,7 +70,7 @@ spiral_generator_impl spiral_generator_impl::exhausted(point center, int min_dis
 
 spiral_generator_impl::operator bool() const noexcept { return i < n; }
 
-bool spiral_generator_impl::next() {
+auto spiral_generator_impl::next() -> bool {
     if (i >= n) { return false; }
 
     if (i++ < 0) {
@@ -90,9 +91,9 @@ bool spiral_generator_impl::next() {
     return true;
 }
 
-const point& spiral_generator_impl::current() const { return p; }
+auto spiral_generator_impl::current() const -> const point& { return p; }
 
-bool spiral_generator_impl::operator==(const spiral_generator_impl& other) const {
+auto spiral_generator_impl::operator==(const spiral_generator_impl& other) const -> bool {
     return i == other.i && center == other.center && min_dist == other.min_dist
         && max_dist == other.max_dist;
 }

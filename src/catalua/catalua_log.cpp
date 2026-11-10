@@ -19,7 +19,7 @@ void lua_log_handler::add(LuaLogLevel level, std::string&& text) {
 
 void lua_log_handler::clear() { entries.clear(); }
 
-lua_log_handler& get_lua_log_instance() {
+auto get_lua_log_instance() -> lua_log_handler& {
     static lua_log_handler log;
     return log;
 }

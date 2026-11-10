@@ -34,7 +34,7 @@
 #include <unordered_map>
 #include <utility>
 
-mission mission_type::create(const character_id& npc_id) const {
+auto mission_type::create(const character_id& npc_id) const -> mission {
     mission ret;
     ret.uid = g->assign_mission_id();
     ret.type = this;
@@ -56,11 +56,11 @@ mission mission_type::create(const character_id& npc_id) const {
     return ret;
 }
 
-std::string mission_type::tname() const { return name.translated(); }
+auto mission_type::tname() const -> std::string { return name.translated(); }
 
 static std::unordered_map<int, mission> world_missions;
 
-mission* mission::reserve_new(const mission_type_id& type, const character_id& npc_id) {
+auto mission::reserve_new(const mission_type_id& type, const character_id& npc_id) -> mission* {
     auto tmp = mission_type::get(type)->create(npc_id);
     if (npc_id.is_valid()) {
         const npc* giver = g->find_npc(npc_id);
@@ -71,14 +71,14 @@ mission* mission::reserve_new(const mission_type_id& type, const character_id& n
     return &miss;
 }
 
-mission* mission::find(int id) {
+auto mission::find(int id) -> mission* {
     const auto iter = world_missions.find(id);
     if (iter != world_missions.end()) { return &iter->second; }
     debugmsg("requested mission with uid %d does not exist", id);
     return nullptr;
 }
 
-std::vector<mission*> mission::get_all_active() {
+auto mission::get_all_active() -> std::vector<mission*> {
     std::vector<mission*> ret;
     ret.reserve(world_missions.size());
     for (auto& pr : world_missions) { ret.push_back(&pr.second); }
@@ -93,7 +93,7 @@ void mission::process_all() {
     for (auto& e : world_missions) { e.second.process(); }
 }
 
-std::vector<mission*> mission::to_ptr_vector(const std::vector<int>& vec) {
+auto mission::to_ptr_vector(const std::vector<int>& vec) -> std::vector<mission*> {
     std::vector<mission*> result;
     for (auto& id : vec) {
         const auto miss = find(id);
@@ -102,7 +102,7 @@ std::vector<mission*> mission::to_ptr_vector(const std::vector<int>& vec) {
     return result;
 }
 
-std::vector<int> mission::to_uid_vector(const std::vector<mission*>& vec) {
+auto mission::to_uid_vector(const std::vector<mission*>& vec) -> std::vector<int> {
     std::vector<int> result;
     result.reserve(vec.size());
     for (auto& miss : vec) { result.push_back(miss->uid); }
@@ -174,8 +174,9 @@ void mission::on_talk_with_npc(const character_id& npc_id) {
     }
 }
 
-mission* mission::reserve_random(
-    const mission_origin origin, const tripoint_abs_omt& p, const character_id& npc_id) {
+auto mission::reserve_random(
+    const mission_origin origin, const tripoint_abs_omt& p, const character_id& npc_id)
+    -> mission* {
     const auto type = mission_type::get_random_id(origin, p);
     if (type.is_null()) { return nullptr; }
     return mission::reserve_new(type, npc_id);
@@ -321,7 +322,7 @@ void mission::wrap_up() {
     });
 }
 
-bool mission::is_complete(const character_id& _npc_id) const {
+auto mission::is_complete(const character_id& _npc_id) const -> bool {
     if (status == mission_status::success) { return true; }
 
     auto& u = g->u;
@@ -464,17 +465,17 @@ void mission::get_all_item_group_matches(
     }
 }
 
-bool mission::has_deadline() const { return deadline != calendar::start_of_cataclysm; }
+auto mission::has_deadline() const -> bool { return deadline != calendar::start_of_cataclysm; }
 
-time_point mission::get_deadline() const { return deadline; }
+auto mission::get_deadline() const -> time_point { return deadline; }
 
-std::string mission::get_description() const { return type->description.translated(); }
+auto mission::get_description() const -> std::string { return type->description.translated(); }
 
-bool mission::has_target() const { return target != overmap::invalid_tripoint; }
+auto mission::has_target() const -> bool { return target != overmap::invalid_tripoint; }
 
-const tripoint_abs_omt& mission::get_target() const { return target; }
+auto mission::get_target() const -> const tripoint_abs_omt& { return target; }
 
-const mission_type& mission::get_type() const {
+auto mission::get_type() const -> const mission_type& {
     if (type == nullptr) {
         debugmsg("Null mission type");
         return mission_type::get_all().front();
@@ -483,21 +484,21 @@ const mission_type& mission::get_type() const {
     return *type;
 }
 
-bool mission::has_follow_up() const { return !follow_up.is_null(); }
+auto mission::has_follow_up() const -> bool { return !follow_up.is_null(); }
 
-mission_type_id mission::get_follow_up() const { return follow_up; }
+auto mission::get_follow_up() const -> mission_type_id { return follow_up; }
 
-int mission::get_value() const { return value; }
+auto mission::get_value() const -> int { return value; }
 
-int mission::get_id() const { return uid; }
+auto mission::get_id() const -> int { return uid; }
 
-const itype_id& mission::get_item_id() const { return item_id; }
+auto mission::get_item_id() const -> const itype_id& { return item_id; }
 
 auto mission::get_dimension() const -> const dimension_id& { return dimension_id_; }
 
-bool mission::has_failed() const { return status == mission_status::failure; }
+auto mission::has_failed() const -> bool { return status == mission_status::failure; }
 
-bool mission::in_progress() const { return status == mission_status::in_progress; }
+auto mission::in_progress() const -> bool { return status == mission_status::in_progress; }
 
 void mission::process() {
     if (!in_progress()) { return; }
@@ -509,21 +510,21 @@ void mission::process() {
     }
 }
 
-character_id mission::get_npc_id() const { return npc_id; }
+auto mission::get_npc_id() const -> character_id { return npc_id; }
 
-const std::vector<std::pair<int, itype_id>>& mission::get_likely_rewards() const {
+auto mission::get_likely_rewards() const -> const std::vector<std::pair<int, itype_id>>& {
     return type->likely_rewards;
 }
 
-bool mission::has_generic_rewards() const { return type->has_generic_rewards; }
+auto mission::has_generic_rewards() const -> bool { return type->has_generic_rewards; }
 
 void mission::set_target(const tripoint_abs_omt& p) { target = p; }
 
 void mission::set_target_npc_id(const character_id& npc_id) { target_npc_id = npc_id; }
 
-bool mission::is_assigned() const { return player_id.is_valid() || legacy_no_player_id; }
+auto mission::is_assigned() const -> bool { return player_id.is_valid() || legacy_no_player_id; }
 
-character_id mission::get_assigned_player_id() const { return player_id; }
+auto mission::get_assigned_player_id() const -> character_id { return player_id; }
 
 void mission::set_player_id_legacy_0c(character_id id) {
     if (!legacy_no_player_id || player_id.is_valid()) {
@@ -534,17 +535,17 @@ void mission::set_player_id_legacy_0c(character_id id) {
     }
 }
 
-std::string mission::name() {
+auto mission::name() -> std::string {
     if (type == nullptr) { return "NULL"; }
     return type->tname();
 }
 
-mission_type_id mission::mission_id() {
+auto mission::mission_id() -> mission_type_id {
     if (type == nullptr) { return mission_type_id("NULL"); }
     return type->id;
 }
 
-std::string mission::dialogue_for_topic(const std::string& in_topic) const {
+auto mission::dialogue_for_topic(const std::string& in_topic) const -> std::string {
     // The internal keys are pretty ugly, it's better to translate them here than globally
     static const std::map<std::string, std::string> topic_translation = {
         {{"TALK_MISSION_DESCRIBE", "describe"},
@@ -592,7 +593,8 @@ mission::mission(): deadline(calendar::start_of_cataclysm) {
 void mission::register_kill_needed() { monster_kill_goal++; }
 
 namespace io {
-template <> std::string enum_to_string<mission::mission_status>(mission::mission_status data) {
+template <>
+auto enum_to_string<mission::mission_status>(mission::mission_status data) -> std::string {
     switch (data) {
         // *INDENT-OFF*
         case mission::mission_status::yet_to_start:
@@ -613,10 +615,10 @@ template <> std::string enum_to_string<mission::mission_status>(mission::mission
 
 } // namespace io
 
-mission::mission_status mission::status_from_string(const std::string& s) {
+auto mission::status_from_string(const std::string& s) -> mission::mission_status {
     return io::string_to_enum<mission::mission_status>(s);
 }
 
-std::string mission::status_to_string(mission::mission_status st) {
+auto mission::status_to_string(mission::mission_status st) -> std::string {
     return io::enum_to_string<mission::mission_status>(st);
 }

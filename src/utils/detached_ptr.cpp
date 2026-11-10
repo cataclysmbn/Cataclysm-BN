@@ -10,7 +10,8 @@ template <typename T> detached_ptr<T>::detached_ptr(detached_ptr&& source) noexc
     source.ptr = nullptr;
 }
 
-template <typename T> detached_ptr<T>& detached_ptr<T>::operator=(detached_ptr&& source) noexcept {
+template <typename T>
+auto detached_ptr<T>::operator=(detached_ptr&& source) noexcept -> detached_ptr<T>& {
     if (ptr) { ptr->destroy(); }
     ptr = source.ptr;
     source.ptr = nullptr;
@@ -33,7 +34,7 @@ template <typename T> detached_ptr<T>::~detached_ptr() {
     if (ptr) { ptr->destroy(); }
 }
 
-template <typename T> T* detached_ptr<T>::get() const {
+template <typename T> auto detached_ptr<T>::get() const -> T* {
     if (!*this) {
         debugmsg("Attempted to resolve invalid detached_ptr");
         return &null_item_reference();
@@ -43,28 +44,28 @@ template <typename T> T* detached_ptr<T>::get() const {
 
 template <typename T> detached_ptr<T>::operator bool() const { return !!*this; }
 
-template <typename T> bool detached_ptr<T>::operator!() const { return !ptr; }
+template <typename T> auto detached_ptr<T>::operator!() const -> bool { return !ptr; }
 
-template <typename T> T& detached_ptr<T>::operator*() const { return *get(); }
+template <typename T> auto detached_ptr<T>::operator*() const -> T& { return *get(); }
 
-template <typename T> T* detached_ptr<T>::operator->() const { return get(); }
+template <typename T> auto detached_ptr<T>::operator->() const -> T* { return get(); }
 
-template <typename T> bool detached_ptr<T>::operator==(const T& against) const {
+template <typename T> auto detached_ptr<T>::operator==(const T& against) const -> bool {
     return ptr == &against;
 }
 
-template <typename T> bool detached_ptr<T>::operator==(const T* against) const {
+template <typename T> auto detached_ptr<T>::operator==(const T* against) const -> bool {
     return ptr == against;
 }
 
 template <typename T>
 template <typename U>
-bool detached_ptr<T>::operator!=(const U against) const {
+auto detached_ptr<T>::operator!=(const U against) const -> bool {
     return !(*this == against);
 }
 
 template <typename T> detached_ptr<T>::detached_ptr(T* obj) { ptr = obj; }
-template <typename T> T* detached_ptr<T>::release() {
+template <typename T> auto detached_ptr<T>::release() -> T* {
     T* ret = ptr;
     ptr = nullptr;
     return ret;

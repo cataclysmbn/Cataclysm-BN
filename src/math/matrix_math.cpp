@@ -2,7 +2,7 @@
 
 namespace matrices {
 
-matrix_3d rotation_z_axis(units::angle angle) {
+auto rotation_z_axis(units::angle angle) -> matrix_3d {
     return matrix_3d({cos(angle), -sin(angle), 0, sin(angle), cos(angle), 0, 0, 0, 1});
 }
 

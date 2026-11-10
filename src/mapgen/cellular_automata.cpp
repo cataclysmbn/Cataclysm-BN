@@ -1,7 +1,7 @@
 #include "cellular_automata.h"
 
-int CellularAutomata::neighbor_count(
-    const std::vector<std::vector<int>>& cells, point size, point p) {
+auto CellularAutomata::neighbor_count(
+    const std::vector<std::vector<int>>& cells, point size, point p) -> int {
     int neighbors = 0;
     for (int ni = -1; ni <= 1; ni++) {
         for (int nj = -1; nj <= 1; nj++) {
@@ -18,9 +18,9 @@ int CellularAutomata::neighbor_count(
 
     return neighbors;
 }
-std::vector<std::vector<int>> CellularAutomata::generate_cellular_automaton(
+auto CellularAutomata::generate_cellular_automaton(
     point size, const int alive, const int iterations, const int birth_limit,
-    const int stasis_limit) {
+    const int stasis_limit) -> std::vector<std::vector<int>> {
     std::vector<std::vector<int>> current(size.x, std::vector<int>(size.y, 0));
     std::vector<std::vector<int>> next(size.x, std::vector<int>(size.y, 0));
 

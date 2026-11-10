@@ -30,7 +30,7 @@ const bodypart_str_id body_part_foot_l("foot_l");
 const bodypart_str_id body_part_leg_r("leg_r");
 const bodypart_str_id body_part_foot_r("foot_r");
 
-side opposite_side(side s) {
+auto opposite_side(side s) -> side {
     switch (s) {
         case side::BOTH:
             return side::BOTH;
@@ -48,7 +48,7 @@ side opposite_side(side s) {
 
 namespace io {
 
-template <> std::string enum_to_string<side>(side data) {
+template <> auto enum_to_string<side>(side data) -> std::string {
     switch (data) {
         // *INDENT-OFF*
         case side::LEFT:
@@ -65,7 +65,7 @@ template <> std::string enum_to_string<side>(side data) {
     abort();
 }
 
-template <> std::string enum_to_string<body_part>(body_part data) {
+template <> auto enum_to_string<body_part>(body_part data) -> std::string {
     switch (data) {
         case body_part::bp_torso:
             return "TORSO";
@@ -107,7 +107,7 @@ generic_factory<body_part_type> body_part_factory("body part");
 } // namespace
 IMPLEMENT_STRING_AND_INT_IDS(body_part_type, body_part_factory);
 
-bool is_legacy_bodypart_id(const std::string& id) {
+auto is_legacy_bodypart_id(const std::string& id) -> bool {
     static const std::vector<std::string> legacy_body_parts = {
         "TORSO",  "HEAD",  "EYES",  "MOUTH",  "ARM_L",  "ARM_R",  "HAND_L",
         "HAND_R", "LEG_L", "LEG_R", "FOOT_L", "FOOT_R", "NUM_BP",
@@ -116,7 +116,7 @@ bool is_legacy_bodypart_id(const std::string& id) {
     return std::ranges::find(legacy_body_parts, id) != legacy_body_parts.end();
 }
 
-static body_part legacy_id_to_enum(const std::string& legacy_id) {
+static auto legacy_id_to_enum(const std::string& legacy_id) -> body_part {
     static const std::unordered_map<std::string, body_part> body_parts = {
         {"TORSO", bp_torso},
         {"HEAD", bp_head},
@@ -155,9 +155,9 @@ static body_part legacy_id_to_enum(const std::string& legacy_id) {
     return iter->second;
 }
 
-body_part get_body_part_token(const std::string& id) { return legacy_id_to_enum(id); }
+auto get_body_part_token(const std::string& id) -> body_part { return legacy_id_to_enum(id); }
 
-const bodypart_str_id& convert_bp(body_part bp) {
+auto convert_bp(body_part bp) -> const bodypart_str_id& {
     static const std::vector<bodypart_str_id> body_parts =
         {bodypart_str_id("torso"),  bodypart_str_id("head"),   bodypart_str_id("eyes"),
          bodypart_str_id("mouth"),  bodypart_str_id("arm_l"),  bodypart_str_id("arm_r"),
@@ -172,7 +172,7 @@ const bodypart_str_id& convert_bp(body_part bp) {
     return body_parts[static_cast<size_t>(bp)];
 }
 
-static const body_part_type& get_bp(body_part bp) { return convert_bp(bp).obj(); }
+static auto get_bp(body_part bp) -> const body_part_type& { return convert_bp(bp).obj(); }
 
 void body_part_type::load_bp(const JsonObject& jo, const std::string& src) {
     body_part_factory.load(jo, src);
@@ -269,71 +269,73 @@ void body_part_type::check() const {
     }
 }
 
-std::string body_part_name(body_part bp, int number) {
+auto body_part_name(body_part bp, int number) -> std::string {
     return body_part_name(convert_bp(bp), number);
 }
 
-std::string body_part_name(const bodypart_id& bp, int number) {
+auto body_part_name(const bodypart_id& bp, int number) -> std::string {
     // See comments in `body_part_type::load` about why these two strings are
     // not a single translation object with plural enabled.
     return number > 1 ? bp->name_multiple.translated() : bp->name.translated();
 }
 
-std::string body_part_name_accusative(body_part bp, int number) {
+auto body_part_name_accusative(body_part bp, int number) -> std::string {
     return body_part_name_accusative(convert_bp(bp), number);
 }
 
-std::string body_part_name_accusative(const bodypart_id& bp, int number) {
+auto body_part_name_accusative(const bodypart_id& bp, int number) -> std::string {
     // See comments in `body_part_type::load` about why these two strings are
     // not a single translation object with plural enabled.
     return number > 1 ? bp->accusative_multiple.translated() : bp->accusative.translated();
 }
 
-std::string body_part_name_as_heading(body_part bp, int number) {
+auto body_part_name_as_heading(body_part bp, int number) -> std::string {
     return body_part_name_as_heading(convert_bp(bp), number);
 }
 
-std::string body_part_name_as_heading(const bodypart_id& bp, int number) {
+auto body_part_name_as_heading(const bodypart_id& bp, int number) -> std::string {
     // See comments in `body_part_type::load` about why these two strings are
     // not a single translation object with plural enabled.
     return number > 1 ? bp->name_as_heading_multiple.translated() : bp->name_as_heading.translated();
 }
 
-std::string body_part_hp_bar_ui_text(const bodypart_id& bp) { return _(bp->hp_bar_ui_text); }
+auto body_part_hp_bar_ui_text(const bodypart_id& bp) -> std::string {
+    return _(bp->hp_bar_ui_text);
+}
 
-std::string encumb_text(body_part bp) {
+auto encumb_text(body_part bp) -> std::string {
     const std::string& txt = get_bp(bp).encumb_text;
     return !txt.empty() ? _(txt) : txt;
 }
 
-bodypart_str_id random_body_part(bool main_parts_only) {
+auto random_body_part(bool main_parts_only) -> bodypart_str_id {
     const auto& part = human_anatomy->random_body_part();
     return main_parts_only ? part->main_part : part.id();
 }
 
-body_part mutate_to_main_part(body_part bp) { return get_bp(bp).main_part->token; }
+auto mutate_to_main_part(body_part bp) -> body_part { return get_bp(bp).main_part->token; }
 
-body_part opposite_body_part(body_part bp) { return get_bp(bp).opposite_part->token; }
+auto opposite_body_part(body_part bp) -> body_part { return get_bp(bp).opposite_part->token; }
 
 bodypart::bodypart(): bodypart(new fake_item_location()) {};
 
-bodypart_id bodypart::get_id() const { return id; }
+auto bodypart::get_id() const -> bodypart_id { return id; }
 
-bodypart_str_id bodypart::get_str_id() const { return id; }
+auto bodypart::get_str_id() const -> bodypart_str_id { return id; }
 
 void bodypart::set_hp_to_max() { hp_cur = hp_max; }
 
-bool bodypart::is_at_max_hp() const { return hp_cur == hp_max; }
+auto bodypart::is_at_max_hp() const -> bool { return hp_cur == hp_max; }
 
-int bodypart::get_hp_cur() const { return hp_cur; }
+auto bodypart::get_hp_cur() const -> int { return hp_cur; }
 
-int bodypart::get_hp_max() const { return hp_max; }
+auto bodypart::get_hp_max() const -> int { return hp_max; }
 
-int bodypart::get_healed_total() const { return healed_total; }
+auto bodypart::get_healed_total() const -> int { return healed_total; }
 
-int bodypart::get_damage_bandaged() const { return damage_bandaged; }
+auto bodypart::get_damage_bandaged() const -> int { return damage_bandaged; }
 
-int bodypart::get_damage_disinfected() const { return damage_disinfected; }
+auto bodypart::get_damage_disinfected() const -> int { return damage_disinfected; }
 
 void bodypart::set_hp_cur(int set) { hp_cur = set; }
 
@@ -355,14 +357,14 @@ void bodypart::mod_damage_bandaged(int mod) { damage_bandaged += mod; }
 
 void bodypart::mod_damage_disinfected(int mod) { damage_disinfected += mod; }
 
-body_part_set& body_part_set::unify_set(const body_part_set& rhs) {
+auto body_part_set::unify_set(const body_part_set& rhs) -> body_part_set& {
     for (auto i = rhs.parts.begin(); i != rhs.parts.end(); i++) {
         if (parts.count(*i) == 0) { parts.insert(*i); }
     }
     return *this;
 }
 
-body_part_set& body_part_set::intersect_set(const body_part_set& rhs) {
+auto body_part_set::intersect_set(const body_part_set& rhs) -> body_part_set& {
     for (auto it = parts.begin(); it < parts.end();) {
         if (rhs.parts.count(*it) == 0) {
             it = parts.erase(it);
@@ -373,14 +375,14 @@ body_part_set& body_part_set::intersect_set(const body_part_set& rhs) {
     return *this;
 }
 
-body_part_set& body_part_set::substract_set(const body_part_set& rhs) {
+auto body_part_set::substract_set(const body_part_set& rhs) -> body_part_set& {
     for (auto j = rhs.parts.begin(); j != rhs.parts.end(); j++) {
         if (parts.count(*j) > 0) { parts.erase(*j); }
     }
     return *this;
 }
 
-body_part_set body_part_set::make_intersection(const body_part_set& rhs) const {
+auto body_part_set::make_intersection(const body_part_set& rhs) const -> body_part_set {
     body_part_set new_intersection;
     new_intersection.parts = parts;
     new_intersection.intersect_set(rhs);
@@ -424,7 +426,7 @@ void bodypart::deserialize(JsonIn& jsin) {
 
 void bodypart::set_location(location<item>* loc) { wielding.wielded.set_loc_hack(loc); }
 
-bool bodypart::is_affected_by_temperature() const {
+auto bodypart::is_affected_by_temperature() const -> bool {
     // TODO This should be defined at json level
     return bodypart_id(id) != bodypart_id("eyes");
 }
@@ -433,7 +435,7 @@ wield_status::wield_status(wield_status&& source) noexcept: wielded(source.wield
     wielded = source.wielded.release();
 }
 
-wield_status& wield_status::operator=(wield_status&& source) noexcept {
+auto wield_status::operator=(wield_status&& source) noexcept -> wield_status& {
     wielded = source.wielded.release();
     return *this;
 }

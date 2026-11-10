@@ -55,19 +55,19 @@ auto mutation_type_check_consistency() -> void {
     }
 }
 
-bool mutation_type_exists(const std::string& id) { return mutation_types.contains(id); }
+auto mutation_type_exists(const std::string& id) -> bool { return mutation_types.contains(id); }
 
-bool mutation_type_is_mandatory(const std::string& id) {
+auto mutation_type_is_mandatory(const std::string& id) -> bool {
     auto it = mutation_types.find(id);
     return it != mutation_types.end() && it->second.mandatory_one;
 }
 
-bool mutation_type_swaps_on_conflict(const std::string& id) {
+auto mutation_type_swaps_on_conflict(const std::string& id) -> bool {
     auto it = mutation_types.find(id);
     return it != mutation_types.end() && (it->second.swap_on_conflict || it->second.mandatory_one);
 }
 
-int mutation_type_random_chance(const std::string& id) {
+auto mutation_type_random_chance(const std::string& id) -> int {
     auto it = mutation_types.find(id);
     return it != mutation_types.end() ? it->second.random_chance : 0;
 }
@@ -95,7 +95,7 @@ auto get_default_mutations_for_types() -> std::vector<mutation_type_default> {
     return defaults | to<std::vector>();
 }
 
-std::vector<std::string> get_all_mutation_type_ids() {
+auto get_all_mutation_type_ids() -> std::vector<std::string> {
     std::vector<std::string> ret;
     ret.reserve(mutation_types.size());
     std::ranges::transform(mutation_types, std::back_inserter(ret), [](const auto& kv) {
@@ -104,7 +104,7 @@ std::vector<std::string> get_all_mutation_type_ids() {
     return ret;
 }
 
-std::vector<trait_id> get_mutations_in_type(const std::string& id) {
+auto get_mutations_in_type(const std::string& id) -> std::vector<trait_id> {
     std::vector<trait_id> ret;
     for (const mutation_branch& it : mutation_branch::get_all()) {
         if (it.types.contains(id)) { ret.push_back(it.id); }
@@ -112,7 +112,7 @@ std::vector<trait_id> get_mutations_in_type(const std::string& id) {
     return ret;
 }
 
-std::vector<trait_id> get_mutations_in_types(const std::set<std::string>& ids) {
+auto get_mutations_in_types(const std::set<std::string>& ids) -> std::vector<trait_id> {
     std::vector<trait_id> ret;
     for (const std::string& it : ids) {
         std::vector<trait_id> this_id = get_mutations_in_type(it);

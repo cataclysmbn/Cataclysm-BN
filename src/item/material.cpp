@@ -33,7 +33,7 @@ material_type::material_type()
          to_translation("very damaged"), to_translation("thoroughly damaged")};
 }
 
-static mat_burn_data load_mat_burn_data(const JsonObject& jsobj) {
+static auto load_mat_burn_data(const JsonObject& jsobj) -> mat_burn_data {
     mat_burn_data bd;
     assign(jsobj, "immune", bd.immune);
     assign(jsobj, "volume_per_turn", bd.volume_per_turn);
@@ -129,25 +129,25 @@ void material_type::check() const {
     }
 }
 
-material_id material_type::ident() const { return id; }
+auto material_type::ident() const -> material_id { return id; }
 
-std::string material_type::name() const { return _name.translated(); }
+auto material_type::name() const -> std::string { return _name.translated(); }
 
-std::optional<itype_id> material_type::salvaged_into() const { return _salvaged_into; }
+auto material_type::salvaged_into() const -> std::optional<itype_id> { return _salvaged_into; }
 
-itype_id material_type::repaired_with() const { return _repaired_with; }
+auto material_type::repaired_with() const -> itype_id { return _repaired_with; }
 
-int material_type::bash_resist() const { return _bash_resist; }
+auto material_type::bash_resist() const -> int { return _bash_resist; }
 
-int material_type::cut_resist() const { return _cut_resist; }
+auto material_type::cut_resist() const -> int { return _cut_resist; }
 
-int material_type::bullet_resist() const { return _bullet_resist; }
+auto material_type::bullet_resist() const -> int { return _bullet_resist; }
 
-std::string material_type::bash_dmg_verb() const { return _bash_dmg_verb.translated(); }
+auto material_type::bash_dmg_verb() const -> std::string { return _bash_dmg_verb.translated(); }
 
-std::string material_type::cut_dmg_verb() const { return _cut_dmg_verb.translated(); }
+auto material_type::cut_dmg_verb() const -> std::string { return _cut_dmg_verb.translated(); }
 
-std::string material_type::dmg_adj(int damage) const {
+auto material_type::dmg_adj(int damage) const -> std::string {
     if (damage <= 0) {
         // not damaged (+/- reinforced)
         return std::string();
@@ -158,43 +158,43 @@ std::string material_type::dmg_adj(int damage) const {
     return _dmg_adj[damage_index].translated();
 }
 
-int material_type::acid_resist() const { return _acid_resist; }
+auto material_type::acid_resist() const -> int { return _acid_resist; }
 
-int material_type::elec_resist() const { return _elec_resist; }
+auto material_type::elec_resist() const -> int { return _elec_resist; }
 
-int material_type::fire_resist() const { return _fire_resist; }
+auto material_type::fire_resist() const -> int { return _fire_resist; }
 
-int material_type::chip_resist() const { return _chip_resist; }
+auto material_type::chip_resist() const -> int { return _chip_resist; }
 
-float material_type::specific_heat_liquid() const { return _specific_heat_liquid; }
+auto material_type::specific_heat_liquid() const -> float { return _specific_heat_liquid; }
 
-float material_type::specific_heat_solid() const { return _specific_heat_solid; }
+auto material_type::specific_heat_solid() const -> float { return _specific_heat_solid; }
 
-float material_type::latent_heat() const { return _latent_heat; }
+auto material_type::latent_heat() const -> float { return _latent_heat; }
 
-int material_type::freeze_point() const { return _freeze_point; }
+auto material_type::freeze_point() const -> int { return _freeze_point; }
 
-int material_type::density() const { return _density; }
+auto material_type::density() const -> int { return _density; }
 
-std::optional<int> material_type::wind_resist() const { return _wind_resist; }
+auto material_type::wind_resist() const -> std::optional<int> { return _wind_resist; }
 
-bool material_type::edible() const { return _edible; }
+auto material_type::edible() const -> bool { return _edible; }
 
-bool material_type::rotting() const { return _rotting; }
+auto material_type::rotting() const -> bool { return _rotting; }
 
-bool material_type::soft() const { return _soft; }
+auto material_type::soft() const -> bool { return _soft; }
 
-bool material_type::reinforces() const { return _reinforces; }
+auto material_type::reinforces() const -> bool { return _reinforces; }
 
-const mat_burn_data& material_type::burn_data(size_t intensity) const {
+auto material_type::burn_data(size_t intensity) const -> const mat_burn_data& {
     return _burn_data[std::min<size_t>(intensity, _burn_data.size()) - 1];
 }
 
-const mat_burn_products& material_type::burn_products() const { return _burn_products; }
+auto material_type::burn_products() const -> const mat_burn_products& { return _burn_products; }
 
-const material_id_list& material_type::compact_accepts() const { return _compact_accepts; }
+auto material_type::compact_accepts() const -> const material_id_list& { return _compact_accepts; }
 
-const mat_compacts_into& material_type::compacts_into() const { return _compacts_into; }
+auto material_type::compacts_into() const -> const mat_compacts_into& { return _compacts_into; }
 
 void materials::load(const JsonObject& jo, const std::string& src) { material_data.load(jo, src); }
 
@@ -202,9 +202,9 @@ void materials::check() { material_data.check(); }
 
 void materials::reset() { material_data.reset(); }
 
-material_list materials::get_all() { return material_data.get_all(); }
+auto materials::get_all() -> material_list { return material_data.get_all(); }
 
-material_list materials::get_compactable() {
+auto materials::get_compactable() -> material_list {
     material_list all = get_all();
     material_list compactable;
     std::ranges::copy_if(all, std::back_inserter(compactable), [](const material_type& mt) {
@@ -213,7 +213,7 @@ material_list materials::get_compactable() {
     return compactable;
 }
 
-std::set<material_id> materials::get_rotting() {
+auto materials::get_rotting() -> std::set<material_id> {
     static generic_factory<material_type>::Version version;
     static std::set<material_id> rotting;
 

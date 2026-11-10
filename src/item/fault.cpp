@@ -12,10 +12,10 @@
 static std::map<fault_id, fault> faults_all;
 
 /** @relates string_id */
-template <> bool string_id<fault>::is_valid() const { return faults_all.contains(*this); }
+template <> auto string_id<fault>::is_valid() const -> bool { return faults_all.contains(*this); }
 
 /** @relates string_id */
-template <> const fault& string_id<fault>::obj() const {
+template <> auto string_id<fault>::obj() const -> const fault& {
     const auto found = faults_all.find(*this);
     if (found == faults_all.end()) {
         debugmsg("Tried to get invalid fault: %s", c_str());
@@ -70,7 +70,7 @@ void fault::load_fault(const JsonObject& jo) {
     }
 }
 
-const std::map<fault_id, fault>& fault::all() { return faults_all; }
+auto fault::all() -> const std::map<fault_id, fault>& { return faults_all; }
 
 void fault::reset() { faults_all.clear(); }
 

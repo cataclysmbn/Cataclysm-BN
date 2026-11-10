@@ -27,7 +27,7 @@ void apply_base_faction(const monfaction& base, monfaction& faction);
 static auto resolve_attitude_map(const monfaction& source, const mfaction_id& other) -> mf_attitude;
 
 /** @relates int_id */
-template <> const monfaction& int_id<monfaction>::obj() const {
+template <> auto int_id<monfaction>::obj() const -> const monfaction& {
     if (static_cast<size_t>(_id) >= faction_list.size()) {
         debugmsg("invalid monfaction id %d", _id);
         return mfaction_id(0).obj();
@@ -37,10 +37,10 @@ template <> const monfaction& int_id<monfaction>::obj() const {
 }
 
 /** @relates int_id */
-template <> const string_id<monfaction>& int_id<monfaction>::id() const { return obj().id; }
+template <> auto int_id<monfaction>::id() const -> const string_id<monfaction>& { return obj().id; }
 
 /** @relates string_id */
-template <> int_id<monfaction> string_id<monfaction>::id() const {
+template <> auto string_id<monfaction>::id() const -> int_id<monfaction> {
     const auto& iter = faction_map.find(*this);
     if (iter == faction_map.end()) {
         debugmsg("invalid monfaction id %s", c_str());
@@ -50,18 +50,22 @@ template <> int_id<monfaction> string_id<monfaction>::id() const {
 }
 
 /** @relates string_id */
-template <> const monfaction& string_id<monfaction>::obj() const { return id().obj(); }
+template <> auto string_id<monfaction>::obj() const -> const monfaction& { return id().obj(); }
 
 /** @relates int_id */
-template <> bool int_id<monfaction>::is_valid() const { return faction_map.contains(this->id()); }
+template <> auto int_id<monfaction>::is_valid() const -> bool {
+    return faction_map.contains(this->id());
+}
 
 /** @relates string_id */
-template <> bool string_id<monfaction>::is_valid() const { return faction_map.contains(*this); }
+template <> auto string_id<monfaction>::is_valid() const -> bool {
+    return faction_map.contains(*this);
+}
 
 /** @relates int_id */
 template <> int_id<monfaction>::int_id(const string_id<monfaction>& id): _id(id.id()) {}
 
-mfaction_id monfactions::get_or_add_faction(const mfaction_str_id& id) {
+auto monfactions::get_or_add_faction(const mfaction_str_id& id) -> mfaction_id {
     auto found = faction_map.find(id);
     if (found == faction_map.end()) {
         faction_attitude_table.clear();
@@ -89,7 +93,7 @@ static void apply_base_faction(mfaction_id base, mfaction_id faction_id) {
     }
 }
 
-mf_attitude monfaction::attitude(const mfaction_id& other) const {
+auto monfaction::attitude(const mfaction_id& other) const -> mf_attitude {
     const auto source_index = loadid.to_i();
     const auto target_index = other.to_i();
     if (faction_attitude_table_width > 0 && source_index >= 0 && target_index >= 0
@@ -229,7 +233,7 @@ void add_to_attitude_map(
     }
 }
 
-template <> std::string io::enum_to_string<mf_attitude>(mf_attitude att) {
+template <> auto io::enum_to_string<mf_attitude>(mf_attitude att) -> std::string {
     switch (att) {
         case MFA_BY_MOOD:
             return "ByMood";

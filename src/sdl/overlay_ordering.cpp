@@ -20,7 +20,7 @@ void load_overlay_ordering_into_array(
     }
 }
 
-int get_overlay_order_of_mutation(const std::string& mutation_id_string) {
+auto get_overlay_order_of_mutation(const std::string& mutation_id_string) -> int {
     auto it = base_mutation_overlay_ordering.find(mutation_id_string);
     auto it2 = tileset_mutation_overlay_ordering.find(mutation_id_string);
     int value = 9999;

@@ -77,7 +77,7 @@ void ammo_effect::check() const {
     }
 }
 
-size_t ammo_effect::count() { return all_ammo_effects.size(); }
+auto ammo_effect::count() -> size_t { return all_ammo_effects.size(); }
 
 void ammo_effects::load(const JsonObject& jo, const std::string& src) {
     all_ammo_effects.load(jo, src);
@@ -94,6 +94,8 @@ void ammo_effects::check_consistency() { all_ammo_effects.check(); }
 
 void ammo_effects::reset() { all_ammo_effects.reset(); }
 
-const std::vector<ammo_effect>& ammo_effects::get_all() { return all_ammo_effects.get_all(); }
+auto ammo_effects::get_all() -> const std::vector<ammo_effect>& {
+    return all_ammo_effects.get_all();
+}
 
 ammo_effect_id AE_NULL;

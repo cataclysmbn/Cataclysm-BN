@@ -65,4 +65,4 @@ void live_view::show(const tripoint_bub_ms& p) {
     ui->mark_resize();
 }
 
-bool live_view::is_enabled() { return ui != nullptr; }
+auto live_view::is_enabled() -> bool { return ui != nullptr; }

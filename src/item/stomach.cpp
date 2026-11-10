@@ -36,13 +36,13 @@ void nutrients::max_in_place(const nutrients& r) {
     }
 }
 
-int nutrients::get_vitamin(const vitamin_id& vit) const {
+auto nutrients::get_vitamin(const vitamin_id& vit) const -> int {
     auto it = vitamins.find(vit);
     if (it == vitamins.end()) { return 0; }
     return it->second;
 }
 
-bool nutrients::operator==(const nutrients& r) const {
+auto nutrients::operator==(const nutrients& r) const -> bool {
     if (kcal != r.kcal) { return false; }
     // Can't just use vitamins == r.vitamins, because there might be zero
     // entries in the map, which need to compare equal to missing entries.
@@ -53,7 +53,7 @@ bool nutrients::operator==(const nutrients& r) const {
     return true;
 }
 
-nutrients& nutrients::operator+=(const nutrients& r) {
+auto nutrients::operator+=(const nutrients& r) -> nutrients& {
     kcal += r.kcal;
     for (const std::pair<const vitamin_id, int>& vit : r.vitamins) {
         vitamins[vit.first] += vit.second;
@@ -61,7 +61,7 @@ nutrients& nutrients::operator+=(const nutrients& r) {
     return *this;
 }
 
-nutrients& nutrients::operator-=(const nutrients& r) {
+auto nutrients::operator-=(const nutrients& r) -> nutrients& {
     kcal -= r.kcal;
     for (const std::pair<const vitamin_id, int>& vit : r.vitamins) {
         vitamins[vit.first] -= vit.second;
@@ -69,13 +69,13 @@ nutrients& nutrients::operator-=(const nutrients& r) {
     return *this;
 }
 
-nutrients& nutrients::operator*=(int r) {
+auto nutrients::operator*=(int r) -> nutrients& {
     kcal *= r;
     for (std::pair<const vitamin_id, int>& vit : vitamins) { vit.second *= r; }
     return *this;
 }
 
-nutrients& nutrients::operator/=(int r) {
+auto nutrients::operator/=(int r) -> nutrients& {
     kcal = divide_round_up(kcal, r);
     for (std::pair<const vitamin_id, int>& vit : vitamins) {
         vit.second = divide_round_up(vit.second, r);
@@ -108,7 +108,7 @@ void stomach_contents::ingest(const food_summary& ingested) {
     ate();
 }
 
-food_summary stomach_contents::digest(const needs_rates& metabolic_rates, int five_mins) {
+auto stomach_contents::digest(const needs_rates& metabolic_rates, int five_mins) -> food_summary {
     food_summary digested{};
     stomach_digest_rates rates = get_digest_rates(metabolic_rates);
 
@@ -130,7 +130,8 @@ food_summary stomach_contents::digest(const needs_rates& metabolic_rates, int fi
 
 void stomach_contents::empty() { nutr = nutrients{}; }
 
-stomach_digest_rates stomach_contents::get_digest_rates(const needs_rates& metabolic_rates) {
+auto stomach_contents::get_digest_rates(const needs_rates& metabolic_rates)
+    -> stomach_digest_rates {
     stomach_digest_rates rates;
     rates.min_vitamin = 1;
     rates.percent_vitamin = 1.0f / 6.0f;
@@ -149,11 +150,11 @@ void stomach_contents::mod_calories(int cal) {
     nutr.kcal += cal;
 }
 
-int stomach_contents::get_calories() const { return nutr.kcal; }
+auto stomach_contents::get_calories() const -> int { return nutr.kcal; }
 
 void stomach_contents::ate() { last_ate = calendar::turn; }
 
-time_duration stomach_contents::time_since_ate() const { return calendar::turn - last_ate; }
+auto stomach_contents::time_since_ate() const -> time_duration { return calendar::turn - last_ate; }
 
 // sets default stomach contents when starting the game
 void Character::initialize_stomach_contents() { stomach = stomach_contents(); }

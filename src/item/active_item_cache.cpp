@@ -62,7 +62,7 @@ void active_item_cache::add(item& it) {
     target_list.emplace_back(it);
 }
 
-bool active_item_cache::empty() const {
+auto active_item_cache::empty() const -> bool {
     return std::ranges::all_of(active_items, [](const auto& active_queue) {
         return std::ranges::
             none_of(active_queue.second.items, [](const cache_reference<item>& active_item) {
@@ -84,7 +84,7 @@ auto active_item_cache::count() const -> active_item_count {
     return result;
 }
 
-std::vector<item*> active_item_cache::get() {
+auto active_item_cache::get() -> std::vector<item*> {
     std::vector<item*> all_cached_items;
     for (auto& kv : active_items) {
         active_item_queue& queue = kv.second;
@@ -112,7 +112,7 @@ auto active_item_cache::get_const() const -> std::vector<const item*> {
     return all_cached_items;
 }
 
-std::vector<item*> active_item_cache::get_for_processing() {
+auto active_item_cache::get_for_processing() -> std::vector<item*> {
     auto items_to_process = std::vector<item*>{};
     get_for_processing(items_to_process);
     return items_to_process;
@@ -180,7 +180,7 @@ auto active_item_cache::get_for_processing(std::vector<item*>& items_to_process)
     }
 }
 
-std::vector<item*> active_item_cache::get_special(special_item_type type) {
+auto active_item_cache::get_special(special_item_type type) -> std::vector<item*> {
     std::vector<item*> matching_items;
     for (const cache_reference<item>& it : special_items[type]) {
         if (it) { matching_items.push_back(&*it); }

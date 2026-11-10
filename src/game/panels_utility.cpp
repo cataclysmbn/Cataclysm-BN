@@ -5,14 +5,14 @@
 
 #include <unordered_map>
 
-std::string trunc_ellipse(const std::string& input, unsigned int trunc) {
+auto trunc_ellipse(const std::string& input, unsigned int trunc) -> std::string {
     if (utf8_width(input) > static_cast<int>(trunc)) {
         return utf8_truncate(input, trunc - 1) + "…";
     }
     return input;
 }
 
-nc_color color_compare_base(int base, int value) {
+auto color_compare_base(int base, int value) -> nc_color {
     if (base < value) {
         return c_green;
     } else if (value < base) {
@@ -22,7 +22,7 @@ nc_color color_compare_base(int base, int value) {
     }
 }
 
-std::string value_trimmed(int value, int maximum) {
+auto value_trimmed(int value, int maximum) -> std::string {
     if (value > maximum) {
         return "++";
     } else {
@@ -30,7 +30,7 @@ std::string value_trimmed(int value, int maximum) {
     }
 }
 
-nc_color focus_color(int focus) {
+auto focus_color(int focus) -> nc_color {
     if (focus < 25) {
         return c_red;
     } else if (focus < 50) {

@@ -20,8 +20,8 @@ template <typename T, bool error_if_null>
 location_ptr<T, error_if_null>::location_ptr(location<T>* loc): loc(loc) {};
 
 template <typename T, bool error_if_null>
-location_ptr<T, error_if_null>& location_ptr<T, error_if_null>::
-operator=(detached_ptr<T>&& source) {
+auto location_ptr<T, error_if_null>::operator=(detached_ptr<T>&& source)
+    -> location_ptr<T, error_if_null>& {
     if (!source) {
         release();
         return *this;
@@ -46,8 +46,8 @@ operator=(detached_ptr<T>&& source) {
 }
 
 template <typename T, bool error_if_null>
-location_ptr<T, error_if_null>& location_ptr<T, error_if_null>::
-operator=(location_ptr<T, true>&& source) {
+auto location_ptr<T, error_if_null>::operator=(location_ptr<T, true>&& source)
+    -> location_ptr<T, error_if_null>& {
     if (ptr) {
         ptr->remove_location();
         ptr->destroy();
@@ -60,8 +60,8 @@ operator=(location_ptr<T, true>&& source) {
 }
 
 template <typename T, bool error_if_null>
-location_ptr<T, error_if_null>& location_ptr<T, error_if_null>::
-operator=(location_ptr<T, false>&& source) {
+auto location_ptr<T, error_if_null>::operator=(location_ptr<T, false>&& source)
+    -> location_ptr<T, error_if_null>& {
     if (ptr) {
         ptr->remove_location();
         ptr->destroy();
@@ -77,7 +77,7 @@ template <typename T, bool error_if_null> location_ptr<T, error_if_null>::~locat
 }
 
 template <typename T, bool error_if_null>
-detached_ptr<T> location_ptr<T, error_if_null>::swap(detached_ptr<T>&& with) {
+auto location_ptr<T, error_if_null>::swap(detached_ptr<T>&& with) -> detached_ptr<T> {
     if (!with) { return release(); }
 
     if (&*loc == with->saved_loc) {
@@ -93,7 +93,7 @@ detached_ptr<T> location_ptr<T, error_if_null>::swap(detached_ptr<T>&& with) {
 }
 
 template <typename T, bool error_if_null>
-detached_ptr<T> location_ptr<T, error_if_null>::release() {
+auto location_ptr<T, error_if_null>::release() -> detached_ptr<T> {
     if (!ptr) { return detached_ptr<T>(); }
     ptr->remove_location();
     T* obj = ptr;
@@ -101,7 +101,7 @@ detached_ptr<T> location_ptr<T, error_if_null>::release() {
     return detached_ptr<T>(obj);
 }
 
-template <typename T, bool error_if_null> T* location_ptr<T, error_if_null>::get() const {
+template <typename T, bool error_if_null> auto location_ptr<T, error_if_null>::get() const -> T* {
     if (!*this) {
         if (error_if_null) { debugmsg("Attempted to resolve invalid location_ptr"); }
         return &null_item_reference(); // TODO! more than items
@@ -113,31 +113,34 @@ template <typename T, bool error_if_null> location_ptr<T, error_if_null>::operat
     return !!*this;
 }
 
-template <typename T, bool error_if_null> bool location_ptr<T, error_if_null>::operator!() const {
+template <typename T, bool error_if_null>
+auto location_ptr<T, error_if_null>::operator!() const -> bool {
     return !ptr;
 }
 
-template <typename T, bool error_if_null> T& location_ptr<T, error_if_null>::operator*() const {
+template <typename T, bool error_if_null>
+auto location_ptr<T, error_if_null>::operator*() const -> T& {
     return *get();
 }
 
-template <typename T, bool error_if_null> T* location_ptr<T, error_if_null>::operator->() const {
+template <typename T, bool error_if_null>
+auto location_ptr<T, error_if_null>::operator->() const -> T* {
     return get();
 }
 
 template <typename T, bool error_if_null>
-bool location_ptr<T, error_if_null>::operator==(const T& against) const {
+auto location_ptr<T, error_if_null>::operator==(const T& against) const -> bool {
     return ptr == &against;
 }
 
 template <typename T, bool error_if_null>
-bool location_ptr<T, error_if_null>::operator==(const T* against) const {
+auto location_ptr<T, error_if_null>::operator==(const T* against) const -> bool {
     return ptr == against;
 }
 
 template <typename T, bool error_if_null>
 template <typename U>
-bool location_ptr<T, error_if_null>::operator!=(const U against) const {
+auto location_ptr<T, error_if_null>::operator!=(const U against) const -> bool {
     return !(*this == against);
 }
 
@@ -156,7 +159,7 @@ void location_ptr<T, error_if_null>::set_loc_hack(location<T>* new_loc) {
 }
 
 template <typename T, bool error_if_null>
-location<T>* location_ptr<T, error_if_null>::get_loc_hack() const {
+auto location_ptr<T, error_if_null>::get_loc_hack() const -> location<T>* {
     return &*loc;
 }
 
