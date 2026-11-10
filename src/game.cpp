@@ -3082,7 +3082,7 @@ auto game::run_activity_cadence_boundary() -> void
     weather.clear_temp_cache();
     weather.update_weather();
     reset_light_level();
-    m.invalidate_lightmap_caches();
+    // The lightmap rebuilds when its light source signature changes (map::build_map_cache).
     m.invalidate_visibility_caches();
     mon_info_cache_dirty = true;
     if( action_time_scale::once_every_this_tick( activity_time_cadence::fixed_window() ) ) {
