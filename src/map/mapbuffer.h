@@ -821,6 +821,11 @@ public:
         }
     }
 
+    /// Changes whenever a submap is added to this buffer.
+    auto submaps_added_generation() const -> std::uint64_t { return submaps_added_generation_; }
+    /// Changes whenever a submap is removed from this buffer.
+    auto submaps_removed_generation() const -> std::uint64_t { return submaps_removed_generation_; }
+
     auto loaded_submap_count() const -> std::size_t {
         std::lock_guard<std::recursive_mutex> lk(submaps_mutex_);
         return submaps.size();

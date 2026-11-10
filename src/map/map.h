@@ -2267,6 +2267,21 @@ protected:
     auto refresh_active_submap_view() -> void;
     auto validate_active_submap_view_complete(const char* context) const -> void;
 
+    /// Bubble submap pointers for get_submap_at, valid while the buffer, origin and the
+    /// buffer's removal generation match; additions matter only while a slot is empty.
+    /// Rebuilt on the main thread only.
+    struct bubble_submap_index {
+        const mapbuffer* buffer = nullptr;
+        point_abs_sm origin;
+        std::uint64_t added_generation = 0;
+        std::uint64_t removed_generation = 0;
+        bool tracks_additions = true;
+        std::vector<submap*> submaps;
+    };
+    bubble_submap_index bubble_index_;
+    auto bubble_index_valid() const -> bool;
+    auto refresh_bubble_submap_index() -> void;
+
 public:
     auto get_field(const tripoint_bub_ms& p) -> field&;
 
