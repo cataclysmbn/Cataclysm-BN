@@ -9224,8 +9224,8 @@ void Character::shout( std::string msg, bool order )
         }
     } else {
         add_msg_if_player( m_info, string_format( _( "You yell \"%s\"" ), msg ) );
-        msg = is_player() ? _( string_format( "yourself yell \"%s\"",
-                                              msg ) ) : string_format( _( "yell \"%s\"" ), msg );
+        msg = is_player() ? string_format( _( "yourself yell \"%s\"" ),
+                                           msg ) : string_format( _( "yell \"%s\"" ), msg );
     }
 
 
