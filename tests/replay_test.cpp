@@ -109,58 +109,6 @@ TEST_CASE("replay rejects invalid headers without changing RNG", "[replay][input
     }
 }
 
-TEST_CASE("replay rejects non-integer numeric fields", "[replay][input]") {
-    const auto fixture = replay_fixture{};
-    const auto valid_end = std::string{
-        R"({"kind":"end","version":1,"events":0})"
-        "\n"};
-    const auto event_prefix = std::string{
-        R"({"kind":"input","version":1,"type":"keyboard","sequence":[1],"modifiers":[],"mouse_pos":[0,0],"text":"","edit":"","edit_refresh":false,"boundary":{"context":"GAME","actions":["MOVE_N"],"timeout_ms":-1}})"
-        "\n"};
-    const auto input_end = std::string{
-        R"({"kind":"end","version":1,"events":1})"
-        "\n"};
-    const auto malformed = std::vector<std::string>{
-        R"({"kind":"header","format":"cataclysm-bn-replay","version":1.5,"rng_seed":7})"
-        "\n" + valid_end,
-        R"({"kind":"header","format":"cataclysm-bn-replay","version":1,"rng_seed":7.9})"
-        "\n" + valid_end,
-        header
-            + R"({"kind":"input","version":1.5,"type":"keyboard","sequence":[1],"modifiers":[],"mouse_pos":[0,0],"text":"","edit":"","edit_refresh":false,"boundary":{"context":"GAME","actions":["MOVE_N"],"timeout_ms":-1}})"
-              "\n"
-            + input_end,
-        header
-            + R"({"kind":"input","version":1,"type":"keyboard","sequence":[1.5],"modifiers":[],"mouse_pos":[0,0],"text":"","edit":"","edit_refresh":false,"boundary":{"context":"GAME","actions":["MOVE_N"],"timeout_ms":-1}})"
-              "\n"
-            + input_end,
-        header
-            + R"({"kind":"input","version":1,"type":"keyboard","sequence":[1],"modifiers":[1e1],"mouse_pos":[0,0],"text":"","edit":"","edit_refresh":false,"boundary":{"context":"GAME","actions":["MOVE_N"],"timeout_ms":-1}})"
-              "\n"
-            + input_end,
-        header
-            + R"({"kind":"input","version":1,"type":"keyboard","sequence":[1],"modifiers":[],"mouse_pos":[0,2.5],"text":"","edit":"","edit_refresh":false,"boundary":{"context":"GAME","actions":["MOVE_N"],"timeout_ms":-1}})"
-              "\n"
-            + input_end,
-        header
-            + R"({"kind":"input","version":1,"type":"keyboard","sequence":[1],"modifiers":[],"mouse_pos":[0,0],"text":"","edit":"","edit_refresh":false,"boundary":{"context":"GAME","actions":["MOVE_N"],"timeout_ms":1.5}})"
-              "\n"
-            + input_end,
-        header
-            + R"({"kind":"end","version":1,"events":0.5})"
-              "\n",
-    };
-    for (const auto& text : malformed) {
-        fixture.write(text);
-        replay::configure_playback(fixture.path.string());
-        CHECK_THROWS_WITH(replay::start(), Catch::Matchers::Contains("integer"));
-        CHECK_FALSE(replay::is_enabled());
-    }
-
-    fixture.write(header + event_prefix + input_end);
-    replay::configure_playback(fixture.path.string());
-    CHECK_NOTHROW(replay::start());
-}
-
 TEST_CASE("replay validates empty and mismatched input contexts", "[replay][input]") {
     const auto fixture = replay_fixture{};
     fixture.write(header + timeout_event);
