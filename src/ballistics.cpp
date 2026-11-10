@@ -16,6 +16,7 @@
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "mcp_hooks.h"
 #if defined(TILES)
 #   include "cata_tiles.h"
 #   include "sdltiles.h"
@@ -77,6 +78,25 @@ static const std::string flag_THIN_OBSTACLE( "THIN_OBSTACLE" );
 static const flag_id flag_FLY_STRAIGHT( "FLY_STRAIGHT" );
 
 thread_local int projectile_animation_suppression_depth = 0;
+
+#if defined(CATA_MCP)
+namespace
+{
+thread_local auto last_projectile_group = std::uint64_t { 0 };
+/// The multishot in progress.
+thread_local auto projectile_group = std::optional<std::uint64_t> {};
+} // namespace
+
+scoped_projectile_group::scoped_projectile_group() : outer_( projectile_group )
+{
+    projectile_group = ++last_projectile_group;
+}
+
+scoped_projectile_group::~scoped_projectile_group()
+{
+    projectile_group = outer_;
+}
+#endif
 
 scoped_projectile_animation_suppression::scoped_projectile_animation_suppression()
 {
@@ -185,6 +205,7 @@ void drop_or_embed_projectile( dealt_projectile_attack &attack )
 
         map &here = get_map();
         if( drop && do_drop ) {
+            MCP_ONLY( engine_client::presentation::record_landing( *drop, attack.end_point ); )
             here.add_item_or_charges( attack.end_point, std::move( drop ) );
         }
 
@@ -310,8 +331,10 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
                         Creature *origin, item *source_weapon, const vehicle *in_veh,
                         const bool suppress_damage_messages ) -> dealt_projectile_attack
 {
-    const bool do_animation = get_option<bool>( "ANIMATION_PROJECTILES" ) &&
-                              projectile_animation_suppression_depth == 0;
+    const bool do_animation = protocol_engine || ( get_option<bool>( "ANIMATION_PROJECTILES" ) &&
+                              projectile_animation_suppression_depth == 0 );
+    // The multishot this attack is a pellet of, presented together once they all flew.
+    MCP_ONLY( const auto flight = engine_client::presentation::flight_scope{ projectile_group }; )
 
     double range = rl_dist( source, target_arg );
 
@@ -519,7 +542,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
         // relative to YOUR position, which may not be the gunman's position.
         if( do_animation && !do_draw_line ) {
             // TODO: Make this draw thrown item/launched grenade/arrow
-            if( projectile_skip_current_frame >= projectile_skip_calculation ) {
+            if( protocol_engine || projectile_skip_current_frame >= projectile_skip_calculation ) {
                 g->draw_bullet( tp, static_cast<int>( i ), trajectory, bullet, custom_bullet_sprite );
                 projectile_skip_current_frame = 0;
                 // If we missed recalculate the skip factor so they spread out.
@@ -619,6 +642,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
                 continue;
             }
             attack.missed_by = cur_missed_by;
+            MCP_ONLY( const auto before_hit = engine_client::presentation::mark(); )
             if( mon != nullptr ) {
                 mon->deal_projectile_attack( null_source ? nullptr : origin, source_weapon, attack, true );
             } else {
@@ -627,6 +651,8 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
             // Critter can still dodge the projectile
             // In this case hit_critter won't be set
             if( attack.hit_critter != nullptr ) {
+                MCP_ONLY( engine_client::presentation::record_hit( { .at = tp, .struck = attack.hit_critter, .mark = before_hit } );
+                        )
                 last_hit_critter = attack.hit_critter;
                 if( mon != nullptr ) {
                     hit_monsters.push_back( std::make_pair( *mon, attack ) );
@@ -654,9 +680,12 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
         } else {
             // Track damage before processing so we'll know if we actually hit any cover.
             const float dmg_before_penetration = proj.impact.total_damage();
+            MCP_ONLY( const auto before_hit = engine_client::presentation::mark(); )
             here.shoot( source, tp, proj, !no_item_damage && tp == target );
             const float dmg_after_penetration = proj.impact.total_damage();
             has_momentum = dmg_after_penetration > 0 || ( no_damage && here.passable( tp ) );
+            MCP_ONLY( if( dmg_before_penetration > dmg_after_penetration || ( !has_momentum &&
+            here.impassable( tp ) ) ) { engine_client::presentation::record_hit( { .at = tp, .mark = before_hit } ); } )
             // We lost momentum from hitting something, penalize range.
             if( dmg_before_penetration > dmg_after_penetration ) {
                 apply_overpenetration_penalty( is_projectile_modify_overpenetration );

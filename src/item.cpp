@@ -5250,6 +5250,28 @@ void item::on_map_placement( const tripoint_abs_ms &abs_pos )
     }
 }
 
+#if defined(CATA_MCP)
+auto item::tname_passive() const -> std::string
+{
+    struct rot_state {
+        item *target;
+        time_duration rot;
+        time_point last_rot_check;
+    };
+    auto *self = const_cast<item *>( this );
+    auto saved = std::vector<rot_state> { { self, rot, last_rot_check } };
+    for( item *contained : self->contents.all_items_ptr() ) {
+        saved.push_back( { contained, contained->rot, contained->last_rot_check } );
+    }
+    auto name = tname();
+    for( const auto &state : saved ) {
+        state.target->rot = state.rot;
+        state.target->last_rot_check = state.last_rot_check;
+    }
+    return name;
+}
+
+#endif
 std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int truncate ) const
 {
     int dirt_level = get_var( "dirt", 0 ) / 2000;

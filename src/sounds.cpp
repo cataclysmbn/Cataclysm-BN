@@ -1,4 +1,5 @@
 #include "sounds.h"
+#include "mcp_hooks.h"
 
 #include "active_tile_data.h"
 #include "avatar.h"
@@ -2774,7 +2775,18 @@ void sounds::process_sound_markers( Character *who )
             }
 
             // skip some sounds to avoid message spam
+#if defined(CATA_MCP)
+            const auto described = describe_sound( element.sound.category,
+                                                   element.sound.origin == who->bub_pos() );
+            // The avatar's own voice has its message from the action ("You yell ..."), not from here.
+            const auto own_voice = element.sound.from_player && element.sound.origin == who->bub_pos() &&
+                                   ( element.sound.category == sound_t::alert || element.sound.category == sound_t::order ||
+                                     element.sound.category == sound_t::speech );
+            [[maybe_unused]] const auto logged = described || own_voice;
+            if( described ) {
+#else
             if( describe_sound( element.sound.category, element.sound.origin == who->bub_pos() ) ) {
+#endif
                 game_message_type severity = m_info;
                 if( element.sound.category == sound_t::combat || element.sound.category == sound_t::alarm ) {
                     severity = m_warning;
@@ -2824,6 +2836,8 @@ void sounds::process_sound_markers( Character *who )
             // Place footstep markers.
             if( element.sound.origin == who->bub_pos() || who->sees( element.sound.origin ) ) {
                 // If we are or can see the source, don't draw a marker.
+                MCP_ONLY( engine_client::presentation::record_sound( { .text = description, .volume = db_vol, .origin = element.sound.origin, .logged = logged } );
+                        )
                 continue;
             }
 
@@ -2850,9 +2864,19 @@ void sounds::process_sound_markers( Character *who )
             }
 
             // Then place the sound marker in a random one.
+#if defined(CATA_MCP)
+            auto marker = std::optional<tripoint_bub_ms>();
+#endif
             if( !unseen_points.empty() ) {
+#if defined(CATA_MCP)
+                marker = random_entry( unseen_points );
+                sound_markers.emplace( *marker, element.sound );
+#else
                 sound_markers.emplace( random_entry( unseen_points ), element.sound );
+#endif
             }
+            MCP_ONLY( engine_client::presentation::record_sound( { .text = description, .volume = db_vol, .origin = element.sound.origin, .marker = marker, .logged = logged } );
+                    )
         }
     }
     // Volume gets reset to zero later in the turn order after the player has acted.
@@ -3017,7 +3041,7 @@ std::string sounds::sound_at( const tripoint_bub_ms &location )
     return _( "a sound" );
 }
 
-#if defined(SDL_SOUND)
+#if defined(SDL_SOUND) || defined(CATA_MCP)
 void sfx::do_vehicle_engine_sfx()
 {
     if( test_mode ) {
@@ -3371,7 +3395,8 @@ void sfx::generate_gun_sound( const tripoint_bub_ms &source, const item &firing,
 
     end_sfx_timestamp = std::chrono::high_resolution_clock::now();
     sfx_time = end_sfx_timestamp - start_sfx_timestamp;
-    if( std::chrono::duration_cast<std::chrono::milliseconds> ( sfx_time ).count() < 80 ) {
+    if( !protocol_engine &&
+        std::chrono::duration_cast<std::chrono::milliseconds> ( sfx_time ).count() < 80 ) {
         return;
     }
     int heard_volume = get_heard_volume( source, origin_vol );
@@ -3402,7 +3427,11 @@ void sfx::generate_gun_sound( const tripoint_bub_ms &source, const item &firing,
         }
     }
 
+#if defined(CATA_MCP)
+    sfx::play_paced_sound( { .id = selected_sound, .variant = weapon_id.str(), .volume = heard_volume, .angle = angle, .stacks = true, .wait_ms = 80 } );
+#else
     play_variant_sound( selected_sound, weapon_id.str(), heard_volume, angle, 0.8, 1.2, true );
+#endif
     start_sfx_timestamp = std::chrono::high_resolution_clock::now();
 }
 
@@ -3679,7 +3708,8 @@ void sfx::do_footstep()
 
     end_sfx_timestamp = std::chrono::high_resolution_clock::now();
     sfx_time = end_sfx_timestamp - start_sfx_timestamp;
-    if( std::chrono::duration_cast<std::chrono::milliseconds> ( sfx_time ).count() > 400 ) {
+    if( protocol_engine ||
+        std::chrono::duration_cast<std::chrono::milliseconds> ( sfx_time ).count() > 400 ) {
         const avatar &player_character = get_avatar();
         // Take footsteps at 60dB.
         int heard_volume = sfx::get_heard_volume( player_character.bub_pos(), 60 );
@@ -3787,7 +3817,11 @@ void sfx::do_footstep()
         };
 
         const auto play_plmove_sound_variant = [&]( const std::string & variant ) {
+#if defined(CATA_MCP)
+            sfx::play_paced_sound( { .id = "plmove", .variant = variant, .volume = heard_volume, .wait_ms = 400 } );
+#else
             play_variant_sound( "plmove", variant, heard_volume, 0_degrees, 0.8, 1.2 );
+#endif
             start_sfx_timestamp = std::chrono::high_resolution_clock::now();
         };
 
@@ -3855,6 +3889,14 @@ void sfx::do_obstacle( const std::string &obst )
         "t_water_pool",
         "t_sewage",
     };
+#if defined(CATA_MCP)
+    // An obstacle's sound delays the next footstep.
+    const auto variant = sfx::has_variant_sound( "plmove",
+                         obst ) ? obst : water.contains( obst ) ? std::string( "walk_water" ) :
+                         std::string( "clear_obstacle" );
+    sfx::play_paced_sound( { .id = "plmove", .variant = variant, .volume = heard_volume } );
+    return;
+#endif
     if( sfx::has_variant_sound( "plmove", obst ) ) {
         play_variant_sound( "plmove", obst, heard_volume, 0_degrees, 0.8, 1.2 );
     } else if( water.contains( obst ) ) {

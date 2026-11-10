@@ -66,6 +66,7 @@
 #include "mapdata.h"
 #include "mapgen/mapgen_async.h"
 #include "math_defines.h"
+#include "mcp_hooks.h"
 #include "memory_fast.h"
 #include "messages.h"
 #include "mission.h"
@@ -6296,6 +6297,9 @@ auto map::update_visibility_cache(const int zlev, const std::function<void()>& w
         }
     }
 #endif
+#if defined(CATA_MCP)
+    map_perception::visibility_refreshed();
+#endif
     visibility_variables_cache = make_visibility_variables(zlev);
 
 #if defined(CATA_SDL)
@@ -6507,7 +6511,11 @@ void map::draw(const catacurses::window& w, const tripoint_bub_ms& center) {
 
     g->reset_light_level();
 
-    update_visibility_cache(center.z());
+    // The protocol engine remembers what map perception acquires and never what a frame shows.
+    if (!protocol_engine || !get_visibility_variables_cache().variables_set
+        || get_cache_ref(center.z()).visibility_cache_dirty) {
+        update_visibility_cache(center.z());
+    }
     const visibility_variables& cache = get_visibility_variables_cache();
 
     const level_cache& draw_lc = get_cache_ref(center.z());
@@ -6558,7 +6566,7 @@ void map::draw(const catacurses::window& w, const tripoint_bub_ms& center) {
         return true;
     };
 
-    drawsq_params params = drawsq_params().memorize(true);
+    drawsq_params params = drawsq_params().memorize(!protocol_engine);
     for (int wy = 0; wy < wnd_h; wy++) {
         for (int wx = 0; wx < wnd_w; wx++) {
             wmove(w, point(wx, wy));
@@ -6586,6 +6594,8 @@ void map::draw(const catacurses::window& w, const tripoint_bub_ms& center) {
             draw_from_above(w, tripoint_bub_ms(p.xy(), p.z() - 1), tile_below, params);
         }
     }
+
+    if (protocol_engine) { return; }
 
     // Memorize off-screen tiles
     half_open_rectangle<point_bub_ms> display(offs.xy(), offs.xy() + point_rel_ms(wnd_w, wnd_h));
@@ -9566,6 +9576,9 @@ auto map::mark_visibility_cache_dirty(const int zlev) -> void {
     if (!inbounds_z(zlev)) { return; }
     get_cache(zlev).visibility_cache_dirty = true;
     visibility_caches_dirty_ = true;
+#if defined(CATA_MCP)
+    map_perception::invalidate_visibility(*this);
+#endif
 }
 
 auto map::mark_visibility_caches_clean() -> void {
@@ -9729,6 +9742,7 @@ void map::invalidate_visibility_caches() {
 }
 
 void map::set_memory_seen_cache_dirty(const tripoint_bub_ms& p) {
+    MCP_ONLY(map_perception::invalidate_cell(*this, p);)
     level_cache& ch = get_cache(p.z());
     const int offset = p.x() + p.y() * ch.cache_x;
     if (offset >= 0 && offset < ch.cache_x * ch.cache_y) {
@@ -9743,6 +9757,7 @@ void map::set_memory_seen_cache_dirty(const tripoint_bub_ms& p) {
 }
 
 auto map::set_memory_seen_cache_dirty(const int zlev) -> void {
+    MCP_ONLY(map_perception::invalidate_all(*this);)
     level_cache& ch = get_cache(zlev);
     ch.map_memory_seen_cache.reset();
     ch.map_memory_seen_cache_dirty_points.clear();

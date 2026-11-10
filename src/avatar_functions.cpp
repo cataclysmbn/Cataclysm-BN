@@ -1,4 +1,5 @@
 #include "avatar_functions.h"
+#include "mcp_hooks.h"
 
 #include "activity_handlers.h"
 #include "avatar.h"
@@ -444,6 +445,7 @@ void gunmod_add( avatar &you, item &gun, item &mod )
 
     do {
         requery = false;
+        MCP_ONLY( for( auto row = 0; row < static_cast<int>( prompt.entries.size() ); row++ ) { prompt.entries[row].retval = row; } )
         prompt.query();
         if( prompt.ret < 0 ) {
             you.add_msg_if_player( _( "Never mind." ) );

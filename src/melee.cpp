@@ -1,4 +1,6 @@
 #include "melee.h"
+#include "mcp_hooks.h"
+#include "technique_reference.h"
 
 #include "avatar.h"
 #include "avatar_action.h"
@@ -811,6 +813,8 @@ auto technique_unavailable_reason( Character &self, Creature &target,
     return {};
 }
 
+} // namespace
+
 auto show_technique_reference_popup( const std::string &text ) -> void
 {
     auto window = catacurses::window();
@@ -847,9 +851,26 @@ auto show_technique_reference_popup( const std::string &text ) -> void
         wnoutrefresh( window );
     } );
 
+#if defined(CATA_MCP)
+    const auto interaction = game_client::interaction_scope( ict, [&]() {
+        return game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::custom,
+            .title = _( "Technique Reference" ),
+            .message = remove_color_tags( text ),
+            .allow_cancel = true,
+        };
+    } );
+
+#endif
     while( true ) {
         ui_manager::redraw();
+#if defined(CATA_MCP)
+        const auto action = game_client::action_of( ict, ict.handle_input(), []( const std::string & ) {
+            return std::string();
+        } );
+#else
         const auto action = ict.handle_input();
+#endif
 
         if( action == "QUIT" ) {
             break;
@@ -871,11 +892,20 @@ auto show_technique_reference_popup( const std::string &text ) -> void
     }
 }
 
+namespace
+{
+
 class technique_help_callback : public uilist_callback
 {
     public:
         explicit technique_help_callback( std::string text ) : reference_text( std::move( text ) ) {}
 
+#if defined(CATA_MCP)
+        std::vector<uilist_key> keys() const override {
+            return { { .key = KEY_F( 1 ), .name = _( "Technique reference" ) } };
+        }
+
+#endif
         bool key( const input_context &ctxt, const input_event &event, int,
                   uilist * ) override {
             if( ctxt.input_to_action( event ) == "HELP_KEYBINDINGS" ||
