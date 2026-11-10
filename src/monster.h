@@ -49,6 +49,10 @@ class player;
 struct dealt_projectile_attack;
 struct pathfinding_settings;
 struct trap;
+namespace food_lure
+{
+struct lure_tile;
+} // namespace food_lure
 
 template<typename T>
 class detached_ptr;
@@ -270,14 +274,18 @@ class monster : public Creature, public location_visitable<monster>
             const std::vector<npc *> *npcs;
             const faction_snap_t *faction_snap;
             const hostile_fac_map_t *hostile_fac_map;
+            /// Lure food tiles; when null, compute_plan() scans the map itself (main thread only).
+            const std::vector<food_lure::lure_tile> *lure_tiles;
             constexpr compute_plan_context() noexcept
                 : monsters( nullptr ), npcs( nullptr ), faction_snap( nullptr ),
-                  hostile_fac_map( nullptr ) {}
+                  hostile_fac_map( nullptr ), lure_tiles( nullptr ) {}
             constexpr compute_plan_context( const std::vector<monster *> *m,
                                             const std::vector<npc *> *n,
                                             const faction_snap_t *fs,
-                                            const hostile_fac_map_t *hfm )
-            noexcept : monsters( m ), npcs( n ), faction_snap( fs ), hostile_fac_map( hfm ) {}
+                                            const hostile_fac_map_t *hfm,
+                                            const std::vector<food_lure::lure_tile> *lt = nullptr )
+            noexcept : monsters( m ), npcs( n ), faction_snap( fs ), hostile_fac_map( hfm ),
+                lure_tiles( lt ) {}
         };
 
         /**
