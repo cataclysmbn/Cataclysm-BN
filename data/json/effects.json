@@ -1639,6 +1639,15 @@
   },
   {
     "type": "effect_type",
+    "id": "mon_feeding",
+    "name": [ "Feeding" ],
+    "desc": [ "This animal is busy eating.  It dodges poorly and does not see far until it finishes or is disturbed." ],
+    "rating": "bad",
+    "max_duration": "5 m",
+    "show_in_info": true
+  },
+  {
+    "type": "effect_type",
     "id": "contacts",
     "name": [ "Contact Lenses" ],
     "desc": [ "You are wearing contact lenses." ],

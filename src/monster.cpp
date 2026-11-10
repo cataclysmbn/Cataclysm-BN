@@ -148,6 +148,7 @@ static const efftype_id effect_hit_by_player( "hit_by_player" );
 static const efftype_id effect_in_pit( "in_pit" );
 static const efftype_id effect_lightsnare( "lightsnare" );
 static const efftype_id effect_migo_atmosphere( "migo_atmosphere" );
+static const efftype_id effect_mon_feeding( "mon_feeding" );
 static const efftype_id effect_monster_armor( "monster_armor" );
 static const efftype_id effect_monster_disarmed( "monster_disarmed" );
 static const efftype_id effect_no_sight( "no_sight" );
@@ -2846,6 +2847,8 @@ void monster::apply_damage( Creature *source, item *source_weapon, item *source_
         }
 
         process_trigger( mon_trigger::HURT, 1 + ( dam / 3 ), attacker_faction );
+        // Getting hurt interrupts a meal.
+        remove_effect( effect_mon_feeding );
 
         if( source != nullptr && !aggro_character && !source->is_monster() && !source->is_fake() ) {
             trigger_character_aggro( "hurt" );

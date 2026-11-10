@@ -1638,6 +1638,12 @@ void monster::execute_action( const monster_action_t &action )
         return;
     }
 
+    // Eating comes before move_effects so that a monster caught in a trap keeps eating.
+    if( food_lure::process_feeding( *this ) ) {
+        moves = 0;
+        return;
+    }
+
     // move_effects — may prevent movement this tick.
     // TODO: Move this to attack_at/move_to/etc. functions
     bool attacking = false;

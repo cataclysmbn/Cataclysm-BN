@@ -12,8 +12,10 @@
 #include "item.h"
 #include "itype.h"
 #include "map/map.h"
+#include "messages.h"
 #include "monster.h"
 #include "mtype.h"
+#include "translations.h"
 
 namespace food_lure
 {
@@ -54,6 +56,7 @@ auto seeks_food( const monster &mon ) -> bool
 namespace
 {
 
+const auto effect_mon_feeding = efftype_id( "mon_feeding" );
 const auto effect_well_fed = efftype_id( "well_fed" );
 
 auto append_tiles_near( map &here, const tripoint_bub_ms &center,
@@ -83,6 +86,34 @@ auto is_held_pet_food( const mtype &type, const item &held ) -> bool
 {
     return matches_pet_food( type, held ) ||
            ( !held.is_container_empty() && matches_pet_food( type, held.get_contained() ) );
+}
+
+auto find_wanted_food_here( const monster &mon ) -> item *
+{
+    auto &here = get_map();
+    const auto pos = mon.bub_pos();
+    if( !here.has_items( pos ) ) {
+        return nullptr;
+    }
+    const auto feeder = here.has_flag_furn( "PET_FEEDER", pos );
+    for( item *it : here.i_at( pos ) ) {
+        if( it->is_comestible() && wants_food( mon, *it, feeder ) ) {
+            return it;
+        }
+    }
+    return nullptr;
+}
+
+auto eat_one( const tripoint_bub_ms &pos, const item &food ) -> void
+{
+    auto &here = get_map();
+    auto consumed = 1;
+    const auto id = food.typeId();
+    if( food.count_by_charges() ) {
+        here.use_charges( pos, 0, id, consumed );
+    } else {
+        here.use_amount( pos, 0, id, consumed );
+    }
 }
 
 } // namespace
@@ -171,6 +202,42 @@ auto pick_lure_goal( const lure_goal_query &query ) -> std::optional<tripoint_bu
 auto holds_position( const monster &mon ) -> bool
 {
     return rl_dist( mon.bub_pos(), g->u.bub_pos() ) <= 1 && is_lured_by_held_food( mon, g->u );
+}
+
+auto process_feeding( monster &mon ) -> bool
+{
+    if( !seeks_food( mon ) ) {
+        return false;
+    }
+    const auto *food = find_wanted_food_here( mon );
+    const auto seen = g->u.sees( mon );
+    if( mon.has_effect( effect_mon_feeding ) ) {
+        // Fleeing, chasing or being led away leaves the meal unfinished.
+        if( food == nullptr || !mon.is_wandering() ) {
+            mon.remove_effect( effect_mon_feeding );
+            return false;
+        }
+        const auto started = mon.get_effect( effect_mon_feeding ).get_start_time();
+        if( calendar::turn - started < feeding_time ) {
+            return true;
+        }
+        if( seen ) {
+            add_msg( _( "The %1$s finishes eating the %2$s." ), mon.name(), food->tname() );
+        }
+        eat_one( mon.bub_pos(), *food );
+        mon.remove_effect( effect_mon_feeding );
+        mon.add_effect( effect_well_fed, well_fed_duration );
+        return true;
+    }
+    if( food == nullptr || mon.has_effect( effect_well_fed ) || !mon.is_wandering() ) {
+        return false;
+    }
+    if( seen ) {
+        add_msg( _( "The %1$s starts eating the %2$s." ), mon.name(), food->tname() );
+    }
+    // Margin so that the effect cannot run out before the meal completes.
+    mon.add_effect( effect_mon_feeding, feeding_time + 1_minutes );
+    return true;
 }
 
 } // namespace food_lure

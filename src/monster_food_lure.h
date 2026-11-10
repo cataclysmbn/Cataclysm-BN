@@ -4,6 +4,7 @@
 #include <span>
 #include <vector>
 
+#include "calendar.h"
 #include "coordinates.h"
 
 class Character;
@@ -17,6 +18,10 @@ namespace food_lure
 
 /// Maximum distance at which a monster notices lure food.
 inline constexpr auto lure_radius = 8;
+/// Time a monster spends eating one unit of food before it becomes well fed.
+inline constexpr auto feeding_time = 1_minutes;
+/// Duration of the well fed effect granted by any meal.
+inline constexpr auto well_fed_duration = 24_hours;
 
 /// Comestibles lying on one tile, gathered on the main thread for monster planning.
 struct lure_tile {
@@ -69,5 +74,9 @@ auto pick_lure_goal( const lure_goal_query &query ) -> std::optional<tripoint_bu
 
 /// Whether the monster should stay put instead of wandering, e.g. next to someone holding food.
 auto holds_position( const monster &mon ) -> bool;
+
+/// Starts, continues, interrupts or finishes a meal on the monster's own tile.
+/// Eating never tames. Returns true when eating took the monster's turn.
+auto process_feeding( monster &mon ) -> bool;
 
 } // namespace food_lure
