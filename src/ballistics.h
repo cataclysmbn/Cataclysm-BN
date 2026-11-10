@@ -2,12 +2,33 @@
 
 #include "coordinates.h"
 
+#if defined(CATA_MCP)
+#include <cstdint>
+#include <optional>
+#endif
+
 class Creature;
 class item;
 class dispersion_sources;
 class vehicle;
 struct dealt_projectile_attack;
 struct projectile;
+
+#if defined(CATA_MCP)
+/// The pellets of one multishot fly one after another and are presented together: every projectile
+/// fact of an attack made while the scope lives carries its group.
+class scoped_projectile_group
+{
+    public:
+        scoped_projectile_group();
+        ~scoped_projectile_group();
+
+        scoped_projectile_group( const scoped_projectile_group & ) = delete;
+        auto operator=( const scoped_projectile_group & ) -> scoped_projectile_group & = delete; // *NOPAD*
+    private:
+        std::optional<std::uint64_t> outer_;
+};
+#endif
 
 class scoped_projectile_animation_suppression
 {

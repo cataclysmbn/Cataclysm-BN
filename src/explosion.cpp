@@ -1,6 +1,7 @@
 #include "explosion.h" // IWYU pragma: associated
 
 #include "animation.h"
+#include "mcp_hooks.h"
 #include "avatar.h"
 #include "ballistics.h"
 #include "bodypart.h"
@@ -390,6 +391,12 @@ class ExplosionProcess
         float cur_relative_time;
         long long last_update_ms;
         bool request_redraw;
+#if defined(CATA_MCP)
+        /// What the engine clients are told about this blast, one logical time step at a time.
+        std::string presentation_id;
+        std::vector<tripoint_bub_ms> frame_blast;
+        std::vector<tripoint_bub_ms> frame_shrapnel;
+#endif
     public:
         void run();
 
@@ -459,7 +466,7 @@ class ExplosionProcess
             event_queue.emplace( cur_relative_time + delay + std::numeric_limits<float>::epsilon(), event );
         }
         auto is_animated() const -> bool {
-            if( test_mode || get_option<int>( "ANIMATION_DELAY" ) <= 0 ) { return false; }
+            if( test_mode || protocol_engine || get_option<int>( "ANIMATION_DELAY" ) <= 0 ) { return false; }
 
             const int skip_after = get_option<int>( "SKIP_EXPLOSION_ANIMATION_AFTER" );
             return skip_after == 0 || get_explosion_queue().get_count() <= skip_after;
@@ -613,6 +620,9 @@ bool ExplosionProcess::process_next()
         }
     }
     update_timings();
+    // A client is told the blast a logical time step at a time, so events run step by step here.
+    MCP_ONLY( cur_relative_time = event_queue.top().first; )
+    MCP_ONLY( engine_client::presentation::begin_blast_step(); )
 
     while( !event_queue.empty() && cur_relative_time >= event_queue.top().first ) {
         const auto &event = event_queue.top().second;
@@ -644,6 +654,11 @@ bool ExplosionProcess::process_next()
         };
         event_queue.pop();
     }
+    MCP_ONLY(
+        engine_client::presentation::record_blast_frame( presentation_id, frame_blast, frame_shrapnel );
+        frame_blast.clear();
+        frame_shrapnel.clear();
+    )
 
     return true;
 }
@@ -657,6 +672,7 @@ void ExplosionProcess::project_shrapnel( const tripoint_bub_ms position )
     if( is_occluded( center, position ) ) {
         return;
     }
+    MCP_ONLY( frame_shrapnel.push_back( position ); )
 
     projectile fragment = shrapnel.value();
     fragment.add_effect( ammo_effect_NULL_SOURCE );
@@ -727,6 +743,7 @@ void ExplosionProcess::project_shrapnel( const tripoint_bub_ms position )
     if( is_animated() ) {
         std::vector<tripoint_bub_ms> buf = line_to( position, center );
         buf.resize( 2 );
+        MCP_ONLY( const auto presenting = map_perception::presentation_scope{}; )
         g->draw_line( position, buf );
     }
     request_redraw |= true;
@@ -739,6 +756,7 @@ void ExplosionProcess::blast_tile( const tripoint_bub_ms position, const int rl_
     if( is_occluded( center, position ) ) {
         return;
     }
+    MCP_ONLY( frame_blast.push_back( position ); )
 
     map &here = get_map();
 
@@ -1186,6 +1204,8 @@ void ExplosionProcess::run()
 {
     fill_maps();
     init_event_queue();
+    MCP_ONLY( presentation_id = engine_client::presentation::begin_blast( center, blast_radius,
+                                is_fiery ); )
 
     // We need to temporary disable it because
     //   larger explosions may end up filling
@@ -1199,12 +1219,14 @@ void ExplosionProcess::run()
     while( process_next() ) {
         // No need to redraw in testing mode
         if( request_redraw && is_animated() ) {
+            MCP_ONLY( const auto presenting = map_perception::presentation_scope{}; )
             ui_manager::redraw();
             refresh_display();
             request_redraw = false;
         }
         update_timings();
     };
+    MCP_ONLY( engine_client::presentation::end_blast( presentation_id ); )
 
     // Reenable disabled options
     if( disable_minimap ) {

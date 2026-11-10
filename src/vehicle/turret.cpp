@@ -12,6 +12,7 @@
 #include "itype.h"
 #include "map/field_type.h"
 #include "map/map.h"
+#include "mcp_hooks.h"
 #include "messages.h"
 #include "npc.h"
 #include "player.h"
@@ -396,6 +397,9 @@ void vehicle::turrets_set_targeting() {
                     : _("manual (turret control unit required for auto mode)"));
         }
 
+        MCP_ONLY(for (auto row = 0; row < static_cast<int>(menu.entries.size()); row++) {
+            menu.entries[row].retval = row;
+        })
         menu.query();
         if (menu.ret < 0 || static_cast<size_t>(menu.ret) >= turrets.size()) { break; }
 

@@ -230,6 +230,11 @@ public:
      */
     auto active_dimensions() const -> std::vector<dimension_id>;
 
+#if defined(CATA_MCP)
+    /// Number of live load requests. Zero when nothing holds a load handle.
+    auto request_count() const -> std::size_t { return requests_.size(); }
+#endif
+
     /**
      * Return all active load requests whose source is not reality_bubble.
      *

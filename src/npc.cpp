@@ -1,4 +1,5 @@
 #include "npc.h"
+#include "mcp_hooks.h"
 
 #include "action_time_scale.h"
 #include "auto_pickup.h"
@@ -776,7 +777,15 @@ auto npc::setpos_impl( const tripoint_abs_ms &new_pos, const bool preserve_movem
     if( is_active() ) {
         get_mapbuffer().update_active_npc_pos( *this, new_pos );
     }
+#if defined(CATA_MCP)
+    const auto from = bub_pos();
+#endif
     Character::setpos( new_pos );
+#if defined(CATA_MCP)
+    if( old_pos != new_pos ) {
+        engine_client::presentation::record_move( { .mover = *this, .from = from, .to = bub_pos() } );
+    }
+#endif
     if( old_pos != new_pos && !preserve_movement_state ) {
         clear_transient_movement_state_after_reposition();
     }
@@ -2520,6 +2529,32 @@ nc_color npc::basic_symbol_color() const
     return c_pink;
 }
 
+#if defined(CATA_MCP)
+auto npc::info_facts() const -> std::vector<engine_client::fact>
+{
+    const auto bar = get_hp_bar( hp_percentage(), 100 );
+    auto facts = std::vector<engine_client::fact> {};
+    facts.push_back( { .kind = "hp", .text = bar.first, .color = bar.second } );
+    facts.push_back( { .kind = "creature", .text = name, .color = basic_symbol_color() } );
+    if( const auto goal = npc_attitude_name( get_attitude() ); !goal.empty() ) {
+        facts.push_back( { .kind = "goal", .text = goal, .color = basic_symbol_color() } );
+    }
+    const auto res = Creature::get_attitude_ui_data( attitude_to( g->u ) );
+    const auto aware = sees( g->u );
+    facts.push_back( { .kind = "senses", .text = aware ? _( "Aware of your presence" ) : _( "Unaware of you" ),
+                       .color = aware ? c_yellow : c_green } );
+    facts.push_back( { .kind = "attitude", .text = res.first.translated(), .color = res.second } );
+    if( display_object_ids ) {
+        facts.push_back( { .kind = "object_id", .text = string_format( "[%s]", myclass ), .color = c_light_blue } );
+    }
+    const int per = g->u.get_per();
+    const int dist = rl_dist( g->u.bub_pos(), bub_pos() );
+    const int visibility_cap = per <= 1 ? INT_MAX : std::round( dist * dist / 20.0 / ( per - 1 ) );
+    std::ranges::copy( equipment_facts( visibility_cap ), std::back_inserter( facts ) );
+    return facts;
+}
+
+#endif
 auto npc::print_info( const catacurses::window &w, int line, int vLines, int column ) const -> int
 {
     const int last_line = line + vLines;
@@ -2774,6 +2809,9 @@ void npc::die( Creature *nkiller )
         // *only* set to true in this function!
         return;
     }
+#if defined(CATA_MCP)
+    engine_client::presentation::record_death( *this );
+#endif
     // Need to unboard from vehicle before dying, otherwise
     // the vehicle code cannot find us
     if( in_vehicle ) {
