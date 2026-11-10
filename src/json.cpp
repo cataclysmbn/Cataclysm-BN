@@ -817,10 +817,19 @@ void add_array_to_set( std::set<std::string> &s, const JsonObject &json, const s
 
 int JsonIn::tell()
 {
+    if( stream->good() ) {
+        return static_cast<int>( stream->rdbuf()->pubseekoff( 0, std::ios_base::cur, std::ios_base::in ) );
+    }
     return stream->tellg();
 }
 char JsonIn::peek()
 {
+    if( stream->good() ) {
+        const auto c = stream->rdbuf()->sgetc();
+        if( c != std::char_traits<char>::eof() ) {
+            return static_cast<char>( c );
+        }
+    }
     return static_cast<char>( stream->peek() );
 }
 bool JsonIn::good()
@@ -837,6 +846,15 @@ void JsonIn::seek( int pos )
 
 void JsonIn::eat_whitespace()
 {
+    if( stream->good() ) {
+        auto *const buf = stream->rdbuf();
+        for( auto c = buf->sgetc(); c != std::char_traits<char>::eof(); c = buf->sgetc() ) {
+            if( !is_whitespace( static_cast<char>( c ) ) ) {
+                return;
+            }
+            buf->sbumpc();
+        }
+    }
     while( is_whitespace( peek() ) ) {
         stream->get();
     }
@@ -922,6 +940,16 @@ void JsonIn::skip_string()
         std::stringstream err;
         err << "expecting string but found '" << ch << "'";
         error( err.str(), -1 );
+    }
+    if( stream->good() ) {
+        // Fast path: consume plain characters directly from the buffer.
+        auto *const buf = stream->rdbuf();
+        for( auto c = buf->sgetc(); c != std::char_traits<char>::eof(); c = buf->sgetc() ) {
+            if( c == '\\' || c == '"' || c == '\r' || c == '\n' ) {
+                break;
+            }
+            buf->sbumpc();
+        }
     }
     while( stream->good() ) {
         stream->get( ch );
@@ -1203,6 +1231,14 @@ std::string JsonIn::get_string()
         }
         // add chars to the string, one at a time
         do {
+            if( stream->good() ) {
+                // Fast path: append printable ASCII directly from the buffer.
+                auto *const buf = stream->rdbuf();
+                for( auto c = buf->sgetc(); c >= 0x20 && c < 0x7f && c != '"' && c != '\\'; c = buf->sgetc() ) {
+                    s += static_cast<char>( c );
+                    buf->sbumpc();
+                }
+            }
             ch = stream->peek();
             if( !stream->good() ) {
                 err = "read operation failed";
