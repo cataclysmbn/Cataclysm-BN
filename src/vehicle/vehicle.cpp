@@ -2089,8 +2089,15 @@ auto vehicle::install_part(const tripoint_mnt_veh& dp, vehicle_part&& new_part) 
         }
     }
 
+    const auto* const old_parts = parts.data();
     parts.push_back(std::move(new_part));
-    refresh_locations_hack();
+    // Item locations only refer to this vehicle and the part's hack_id, so existing parts only
+    // need refreshing when the vector reallocated.
+    if (parts.data() != old_parts) {
+        refresh_locations_hack();
+    } else {
+        parts.back().refresh_locations_hack(this);
+    }
     auto& pt = parts.back();
     pt.set_vehicle_hack(this);
 
