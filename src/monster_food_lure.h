@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <span>
 #include <vector>
 
@@ -44,5 +45,29 @@ auto seeks_food( const monster &mon ) -> bool;
 
 /// Collects comestible tiles around every monster in `critters` that seeks food.
 auto collect_lure_tiles( map &here, std::span<monster *const> critters ) -> lure_snapshot;
+
+/// Collects comestible tiles around a single monster.
+auto collect_lure_tiles_near( map &here, const monster &mon ) -> lure_snapshot;
+
+/// Whether `mon` eats `food`. Pets only eat pet food lying on a `PET_FEEDER`.
+auto wants_food( const monster &mon, const item &food, bool on_feeder ) -> bool;
+
+/// Whether `who` wields pet food that draws the domestic `mon` toward them.
+auto is_lured_by_held_food( const monster &mon, const Character &who ) -> bool;
+
+struct lure_goal_query {
+    const monster &mon;
+    std::span<const lure_tile> tiles;
+    /// Result of is_lured_by_held_food() for the avatar.
+    bool lured_by_player = false;
+    tripoint_bub_ms player_pos;
+};
+
+/// Where food draws the monster: its own food tile first, then a holder of pet food, then the
+/// nearest visible food tile.
+auto pick_lure_goal( const lure_goal_query &query ) -> std::optional<tripoint_bub_ms>;
+
+/// Whether the monster should stay put instead of wandering, e.g. next to someone holding food.
+auto holds_position( const monster &mon ) -> bool;
 
 } // namespace food_lure

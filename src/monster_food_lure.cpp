@@ -2,9 +2,13 @@
 
 #include <algorithm>
 #include <functional>
+#include <ranges>
 #include <unordered_set>
 
+#include "avatar.h"
 #include "character.h"
+#include "game.h"
+#include "line.h"
 #include "item.h"
 #include "itype.h"
 #include "map/map.h"
@@ -47,34 +51,126 @@ auto seeks_food( const monster &mon ) -> bool
     return !mon.is_hallucination() && ( is_domestic( *mon.type ) || !mon.type->diet.empty() );
 }
 
+namespace
+{
+
+const auto effect_well_fed = efftype_id( "well_fed" );
+
+auto append_tiles_near( map &here, const tripoint_bub_ms &center,
+                        std::unordered_set<tripoint_bub_ms> &visited, lure_snapshot &tiles ) -> void
+{
+    for( const auto &p : here.points_in_radius( center, lure_radius ) ) {
+        if( !visited.insert( p ).second || !here.has_items( p ) ) {
+            continue;
+        }
+        auto foods = std::vector<const item *> {};
+        for( const item *it : here.i_at( p ) ) {
+            if( it->is_comestible() ) {
+                foods.push_back( it );
+            }
+        }
+        if( !foods.empty() ) {
+            tiles.push_back( {
+                .pos = p,
+                .feeder = here.has_flag_furn( "PET_FEEDER", p ),
+                .foods = std::move( foods ),
+            } );
+        }
+    }
+}
+
+auto is_held_pet_food( const mtype &type, const item &held ) -> bool
+{
+    return matches_pet_food( type, held ) ||
+           ( !held.is_container_empty() && matches_pet_food( type, held.get_contained() ) );
+}
+
+} // namespace
+
 auto collect_lure_tiles( map &here, std::span<monster *const> critters ) -> lure_snapshot
 {
     auto visited = std::unordered_set<tripoint_bub_ms> {};
     auto tiles = lure_snapshot{};
     for( const auto *critter : critters ) {
-        if( critter == nullptr || critter->is_dead() || !seeks_food( *critter ) ) {
-            continue;
-        }
-        for( const auto &p : here.points_in_radius( critter->bub_pos(), lure_radius ) ) {
-            if( !visited.insert( p ).second || !here.has_items( p ) ) {
-                continue;
-            }
-            auto foods = std::vector<const item *> {};
-            for( const item *it : here.i_at( p ) ) {
-                if( it->is_comestible() ) {
-                    foods.push_back( it );
-                }
-            }
-            if( !foods.empty() ) {
-                tiles.push_back( {
-                    .pos = p,
-                    .feeder = here.has_flag_furn( "PET_FEEDER", p ),
-                    .foods = std::move( foods ),
-                } );
-            }
+        if( critter != nullptr && !critter->is_dead() && seeks_food( *critter ) ) {
+            append_tiles_near( here, critter->bub_pos(), visited, tiles );
         }
     }
     return tiles;
+}
+
+auto collect_lure_tiles_near( map &here, const monster &mon ) -> lure_snapshot
+{
+    auto visited = std::unordered_set<tripoint_bub_ms> {};
+    auto tiles = lure_snapshot{};
+    if( seeks_food( mon ) ) {
+        append_tiles_near( here, mon.bub_pos(), visited, tiles );
+    }
+    return tiles;
+}
+
+auto wants_food( const monster &mon, const item &food, const bool on_feeder ) -> bool
+{
+    if( mon.friendly != 0 ) {
+        return on_feeder && matches_pet_food( *mon.type, food );
+    }
+    return matches_pet_food( *mon.type, food ) || matches_diet( *mon.type, food );
+}
+
+auto is_lured_by_held_food( const monster &mon, const Character &who ) -> bool
+{
+    namespace ranges = std::ranges;
+    if( !is_domestic( *mon.type ) || mon.is_hallucination() ||
+        rl_dist( mon.bub_pos(), who.bub_pos() ) > lure_radius ||
+        !accepts_tamer( *mon.type, who ) ) {
+        return false;
+    }
+    const auto is_lure = [&]( const item * held ) { return is_held_pet_food( *mon.type, *held ); };
+    return ranges::any_of( who.wielded_items(), is_lure ) &&
+           mon.attitude( &who ) != MATT_ATTACK && mon.sees( who );
+}
+
+auto pick_lure_goal( const lure_goal_query &query ) -> std::optional<tripoint_bub_ms>
+{
+    using namespace std::views;
+    namespace ranges = std::ranges;
+    const auto &mon = query.mon;
+    const auto pos = mon.bub_pos();
+
+    auto food_tiles = std::vector<tripoint_bub_ms> {};
+    if( !mon.has_effect( effect_well_fed ) ) {
+        const auto in_reach = [&]( const lure_tile & t ) {
+            return t.pos.z() == pos.z() && rl_dist( pos, t.pos ) <= lure_radius;
+        };
+        const auto has_wanted = [&]( const lure_tile & t ) {
+            const auto wanted = [&]( const item * f ) { return wants_food( mon, *f, t.feeder ); };
+            return ranges::any_of( t.foods, wanted );
+        };
+        food_tiles = query.tiles
+                     | filter( in_reach )
+                     | filter( has_wanted )
+                     | transform( &lure_tile::pos )
+                     | ranges::to<std::vector>();
+        ranges::sort( food_tiles, {}, [&]( const auto & p ) { return rl_dist( pos, p ); } );
+    }
+
+    if( !food_tiles.empty() && food_tiles.front() == pos ) {
+        return pos;
+    }
+    if( query.lured_by_player ) {
+        return rl_dist( pos, query.player_pos ) <= 1 ? pos : query.player_pos;
+    }
+    const auto seen = [&]( const tripoint_bub_ms & p ) { return mon.sees( p ); };
+    const auto visible = ranges::find_if( food_tiles, seen );
+    if( visible == food_tiles.end() ) {
+        return std::nullopt;
+    }
+    return *visible;
+}
+
+auto holds_position( const monster &mon ) -> bool
+{
+    return rl_dist( mon.bub_pos(), g->u.bub_pos() ) <= 1 && is_lured_by_held_food( mon, g->u );
 }
 
 } // namespace food_lure
