@@ -13,7 +13,10 @@ else
     K_FRAMEWORK_PATH=DYLD_FALLBACK_FRAMEWORK_PATH
 fi
 
-if [[ -f cataclysm-bn ]]; then
+if [[ -e bn-client ]]; then
+    export ${K_LIBRARY_PATH}=. ${K_FRAMEWORK_PATH}=.
+    ./bn-client
+elif [[ -f cataclysm-bn ]]; then
     V_SHELL_SCRIPT="export PATH=${PATH} ${K_LIBRARY_PATH}=. ${K_FRAMEWORK_PATH}=.; cd '${PWD}' && ./cataclysm-bn; exit"
     osascript -e "tell application \"Terminal\" to activate do script \"${V_SHELL_SCRIPT}\""
 else

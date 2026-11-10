@@ -7,6 +7,13 @@ list(FILTER CATACLYSM_BN_SOURCES EXCLUDE REGEX "/src/(lua|sol|third-party)/")
 
 list(REMOVE_ITEM CATACLYSM_BN_SOURCES ${MAIN_CPP} ${MESSAGES_CPP})
 
+# Native builds do not contain the protocol engine; it has no terminal of its own.
+if (MCP)
+    list(FILTER CATACLYSM_BN_SOURCES EXCLUDE REGEX "/src/(ncurses_def|wincurse)\\.cpp$")
+else ()
+    list(FILTER CATACLYSM_BN_SOURCES EXCLUDE REGEX "/src/(mcp_[^/]*|engine_client[^/]*|client_(command|input|interaction|memory|shortcut)|game_session|map_perception|target_screen|tile_parts)\\.cpp$")
+endif ()
+
 # Lua binding translation units are template-heavy and primarily run at startup;
 # compile them with no optimization to reduce build times.
 file(GLOB CATALUA_BINDINGS_SOURCES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/src/catalua_bindings*.cpp)
@@ -246,4 +253,27 @@ if (CURSES)
     if (COMMAND cata_copy_windows_lavapipe_runtime)
         cata_copy_windows_lavapipe_runtime(cataclysm-bn)
     endif()
+endif ()
+
+# Build the headless protocol engine if requested
+if (MCP)
+    add_library(cataclysm-bn-mcp-common OBJECT
+            ${CATACLYSM_BN_SOURCES}
+            ${CATACLYSM_BN_HEADERS})
+    target_include_directories(cataclysm-bn-mcp-common INTERFACE ${CMAKE_SOURCE_DIR}/src)
+    setup_common_target_properties(cataclysm-bn-mcp-common)
+    target_link_libraries(cataclysm-bn-mcp-common PUBLIC nlohmann_json::nlohmann_json)
+
+    if (WIN32)
+        add_definitions(-DUSE_WINMAIN)
+        target_link_libraries(cataclysm-bn-mcp-common PUBLIC ws2_32)
+        add_executable(cataclysm-bn-mcp WIN32 ${MAIN_CPP} ${MESSAGES_CPP} ${RESOURCE_RC})
+    else ()
+        add_executable(cataclysm-bn-mcp ${MAIN_CPP} ${MESSAGES_CPP})
+    endif ()
+    target_link_libraries(cataclysm-bn-mcp PRIVATE cataclysm-bn-mcp-common)
+
+    if (RELEASE)
+        install(TARGETS cataclysm-bn-mcp RUNTIME)
+    endif ()
 endif ()
