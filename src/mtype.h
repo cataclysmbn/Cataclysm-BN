@@ -356,6 +356,8 @@ struct mtype {
 
         // Pet food category this monster is in
         pet_food_data petfood;
+        /// Materials of comestibles this monster will seek out and eat from the ground.
+        std::set<material_id> diet;
 
         struct pet_training_level_flags {
             int level = 0;

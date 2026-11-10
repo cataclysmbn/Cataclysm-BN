@@ -879,6 +879,7 @@ void mtype::load( const JsonObject &jo, const std::string &src )
 
     // Load pet food data
     optional( jo, was_loaded, "petfood", petfood );
+    optional( jo, was_loaded, "diet", diet, auto_flags_reader<material_id> {} );
 
     if( jo.has_object( "pet_training" ) ) {
         JsonObject pt = jo.get_object( "pet_training" );
@@ -1607,6 +1608,11 @@ void MonsterGenerator::check_monster_definitions() const
         for( auto &m : mon.mat ) {
             if( m.str() == "null" || !m.is_valid() ) {
                 debugmsg( "monster %s has unknown material: %s", mon.id.c_str(), m.c_str() );
+            }
+        }
+        for( const auto &m : mon.diet ) {
+            if( !m.is_valid() ) {
+                debugmsg( "monster %s has unknown diet material: %s", mon.id.c_str(), m.c_str() );
             }
         }
         if( !mon.revert_to_itype.is_empty() && !mon.revert_to_itype.is_valid() ) {
