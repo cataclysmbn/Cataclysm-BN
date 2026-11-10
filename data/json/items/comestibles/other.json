@@ -38,7 +38,7 @@
     "name": "honey comb",
     "weight": "150 g",
     "color": "yellow",
-    "use_action": "HONEYCOMB",
+    "use_action": ["HONEYCOMB", "PETFOOD"],
     "comestible_type": "FOOD",
     "symbol": "%",
     "quench": 2,
@@ -48,7 +48,8 @@
     "price_postapoc": "3 USD",
     "material": "honey",
     "volume": "250 ml",
-    "fun": 9
+    "fun": 9,
+	"petfood": [ "BEEFOOD" ]
   },
   {
     "type": "COMESTIBLE",
@@ -145,7 +146,7 @@
     "name": { "str": "mycus fruit" },
     "weight": "354 g",
     "color": "light_gray",
-    "use_action": "MYCUS",
+    "use_action": [ "MYCUS", "PETFOOD" ],
     "comestible_type": "FOOD",
     "symbol": "%",
     "quench": 80,
@@ -158,6 +159,7 @@
     "volume": "250 ml",
     "stack_size": 4,
     "flags": [ "MYCUS_OK", "NO_BLOAT" ],
+    "petfood": [ "MYCUSFOOD" ],
     "fun": 30,
     "vitamins": [ [ "fruit_allergen", 1 ] ]
   },

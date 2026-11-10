@@ -353,7 +353,13 @@
     "harvest": "arachnid_bee",
     "anger_triggers": [ "HURT", "FRIEND_DIED", "PLAYER_CLOSE" ],
     "death_function": [ "NORMAL" ],
-    "flags": [ "SEES", "SMELLS", "FLIES", "STUMBLES", "SWARMS", "GROUP_MORALE", "CANPLAY", "PATH_AVOID_FIRE", "LOUDMOVES" ]
+    "petfood": {
+      "food": [ "BEEFOOD" ],
+      "feed": "The %s seems to like you!",
+      "pet": "The %s buzzes happily",
+      "tamer_traits": [ [ "THRESH_INSECT" ] ]
+    },
+    "flags": [ "SEES", "SMELLS", "FLIES", "STUMBLES", "SWARMS", "GROUP_MORALE", "CANPLAY", "PATH_AVOID_FIRE", "LOUDMOVES", "PET_MOUNTABLE" ]
   },
   {
     "id": "mon_centipede_small",

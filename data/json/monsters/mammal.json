@@ -147,6 +147,13 @@
     "//": "220 days gestation period, the mother and cubs remain together for 16-17 months.",
     "baby_flags": [ "SPRING" ],
     "special_attacks": [ [ "EAT_FOOD", 2400 ] ],
+    "petfood": {
+      "food": [ "DOGFOOD" ],
+      "feed": "The %s seems to like you!",
+      "pet": "The %s looks at you with big puppy eyes.",
+      "tamer_traits": [ [ "THRESH_URSINE" ] ]
+    },
+    "pet_training": { "hp_mult": 1.3, "melee_mult": 1.25, "dodge_mult": 1.1, "max_level": 5, "min_skill": 6 },
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "BLEED", "BASHES", "ATTACKMON" ],
     "upgrades": { "half_life": 42, "into": "mon_bear_armored" }
   },
@@ -211,6 +218,13 @@
     "fear_triggers": [ "PLAYER_CLOSE" ],
     "death_function": [ "NORMAL" ],
     "special_attacks": [ [ "EAT_FOOD", 14400 ] ],
+    "petfood": {
+      "food": [ "DOGFOOD" ],
+      "feed": "The %s sniffs the food, then nibbles it cautiously.",
+      "pet": "The %s chatters at you, no longer afraid.",
+      "tamer_traits": [ [ "THRESH_RAT" ] ]
+    },
+    "pet_training": { "hp_mult": 1.05, "melee_mult": 1.05, "dodge_mult": 1.2, "max_level": 1 },
     "flags": [ "SEES", "SMELLS", "HEARS", "WARM", "SWIMS", "ANIMAL", "STUMBLES", "PATH_AVOID_DANGER_1" ]
   },
   {
@@ -330,6 +344,13 @@
     "placate_triggers": [ "MEAT" ],
     "death_function": [ "NORMAL" ],
     "harvest": "mammal_small_fur",
+    "petfood": {
+      "food": [ "CATFOOD" ],
+      "feed": "The %s sniffs the food, then eats it daintily.",
+      "pet": "The %s purrs as you pet it.",
+      "tamer_traits": [ [ "THRESH_FELINE" ] ]
+    },
+    "pet_training": { "hp_mult": 1.15, "melee_mult": 1.2, "dodge_mult": 1.25, "max_level": 3 },
     "flags": [ "SEES", "HEARS", "GOODHEARING", "SMELLS", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "HIT_AND_RUN" ]
   },
   {
@@ -677,6 +698,13 @@
     "placate_triggers": [ "MEAT" ],
     "death_function": [ "NORMAL" ],
     "harvest": "mammal_fur",
+    "petfood": {
+      "food": [ "CATFOOD" ],
+      "feed": "The %s regards you with golden eyes, then accepts the food.",
+      "pet": "The %s allows you to stroke its fur.",
+      "tamer_traits": [ [ "THRESH_FELINE" ] ]
+    },
+    "pet_training": { "hp_mult": 1.25, "melee_mult": 1.25, "dodge_mult": 1.2, "max_level": 4, "min_skill": 4 },
     "flags": [
       "SEES",
       "HEARS",
@@ -836,6 +864,13 @@
     "fear_triggers": [ "SOUND" ],
     "placate_triggers": [ "MEAT" ],
     "death_function": [ "NORMAL" ],
+    "petfood": {
+      "food": [ "DOGFOOD" ],
+      "feed": "The %s eyes you warily, then cautiously accepts the food.",
+      "pet": "The %s allows you to touch it, watching you intently.",
+      "tamer_traits": [ [ "THRESH_LUPINE" ] ]
+    },
+    "pet_training": { "hp_mult": 1.2, "melee_mult": 1.2, "dodge_mult": 1.15, "max_level": 4, "min_skill": 4 },
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "KEENNOSE", "BLEED" ]
   },
   {
@@ -1869,6 +1904,12 @@
     "fear_triggers": [ "SOUND", "PLAYER_CLOSE" ],
     "placate_triggers": [ "MEAT" ],
     "death_function": [ "NORMAL" ],
+    "petfood": {
+      "food": [ "DOGFOOD" ],
+      "feed": "The %s eyes you warily, then accepts the food.",
+      "pet": "The %s allows you to touch it, watching you intently."
+    },
+    "pet_training": { "hp_mult": 1.15, "melee_mult": 1.15, "dodge_mult": 1.2, "max_level": 3 },
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "HIT_AND_RUN", "KEENNOSE", "BLEED" ]
   },
   {
@@ -1901,6 +1942,12 @@
     "fear_triggers": [ "SOUND", "PLAYER_CLOSE" ],
     "placate_triggers": [ "MEAT" ],
     "death_function": [ "NORMAL" ],
+    "petfood": {
+      "food": [ "DOGFOOD" ],
+      "feed": "The %s takes the food with a wily grin.",
+      "pet": "The %s rubs against your leg."
+    },
+    "pet_training": { "hp_mult": 1.15, "melee_mult": 1.2, "dodge_mult": 1.2, "max_level": 3 },
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "HIT_AND_RUN", "KEENNOSE", "BLEED" ]
   },
   {
@@ -2128,6 +2175,13 @@
     "//": "Baby moose don't actually exist (yet), but autumn is their mating season so baby_flags is defined so that they get angry then",
     "harvest": "mammal_large_fur",
     "special_attacks": [ [ "EAT_CROP", 7200 ] ],
+    "petfood": {
+      "food": [ "CATTLEFOOD" ],
+      "feed": "The %s lowers its great head and accepts the food.",
+      "pet": "The %s nudges you gently with its muzzle.",
+      "tamer_traits": [ [ "ANIMALEMPATH" ] ]
+    },
+    "pet_training": { "hp_mult": 1.3, "melee_mult": 1.2, "dodge_mult": 1.05, "max_level": 4, "min_skill": 4 },
     "flags": [ "SEES", "HEARS", "SMELLS", "PET_MOUNTABLE", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "BLEED", "ATTACKMON" ]
   },
   {
@@ -2452,6 +2506,13 @@
     "path_settings": { "max_dist": 10 },
     "anger_triggers": [ "PLAYER_WEAK", "FRIEND_ATTACKED", "FRIEND_DIED" ],
     "death_function": [ "NORMAL" ],
+    "petfood": {
+      "food": [ "DOGFOOD" ],
+      "feed": "The %s hesitates, then takes the food.",
+      "pet": "The %s squeaks softly at you.",
+      "tamer_traits": [ [ "THRESH_RAT" ] ]
+    },
+    "pet_training": { "hp_mult": 1.1, "melee_mult": 1.1, "dodge_mult": 1.15, "max_level": 2 },
     "flags": [ "SEES", "SMELLS", "HEARS", "WARM", "SWIMS", "ANIMAL", "PATH_AVOID_DANGER_1", "STUMBLES" ]
   },
   {

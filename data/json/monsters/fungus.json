@@ -172,6 +172,13 @@
     "harvest": "fungaloid",
     "special_attacks": [ [ "FUNGUS", 30 ] ],
     "death_function": [ "FUNGUS", "NORMAL" ],
+    "petfood": {
+      "food": [ "MYCUSFOOD" ],
+      "feed": "The %s eagerly consumes the fruit.",
+      "pet": "The %s regards you with something like trust.",
+      "tamer_traits": [ [ "THRESH_MYCUS" ] ]
+    },
+    "pet_training": { "hp_mult": 1.15, "melee_mult": 1.15, "dodge_mult": 1.1, "max_level": 3 },
     "flags": [ "STUMBLES", "POISON", "NO_BREATHE", "NOHEAD" ]
   },
   {
@@ -286,6 +293,13 @@
     "harvest": "fungaloid",
     "special_attacks": [ [ "FUNGUS_GROWTH", 10000 ] ],
     "death_function": [ "NORMAL" ],
+    "petfood": {
+      "food": [ "MYCUSFOOD" ],
+      "feed": "The %s gobbles up the fruit.",
+      "pet": "The %s burbles happily at you.",
+      "tamer_traits": [ [ "THRESH_MYCUS" ] ]
+    },
+    "pet_training": { "hp_mult": 1.1, "melee_mult": 1.1, "dodge_mult": 1.1, "max_level": 2 },
     "flags": [ "HEARS", "POISON", "NO_BREATHE", "NOHEAD" ]
   },
   {
