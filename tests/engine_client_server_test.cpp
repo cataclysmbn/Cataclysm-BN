@@ -687,6 +687,43 @@ TEST_CASE("screen-scoped invokes queue behind the running command", "[engine_cli
     }
 }
 
+TEST_CASE(
+    "an invoke queued for a drawn screen is stale_screen once another of its kind opens",
+    "[engine_client_server]") {
+    /// A native view that reads input without a screen scope, so the engine draws it.
+    struct drawn_screen {
+        input_context context{"YESNO"};
+        game_client::input_context_scope input{context, "YESNO"};
+        drawn_screen() {
+            context.register_action("YES");
+            game_client::begin_input_boundary();
+        }
+    };
+    auto screen = std::optional<drawn_screen>{};
+    screen.emplace();
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    const auto screen_id = top_screen(*test.authority.boundary()).screen_id;
+    const auto yes = [&](const std::string& n) {
+        return rpc(
+            "bn.command.submit",
+            R"({"epoch":")" + test.authority.epoch() + R"(","expect":{"screen_id":")" + screen_id
+                + R"("},"operation":{"kind":"invoke","affordance_id":"YES"}})",
+            n);
+    };
+    REQUIRE(test.pump(hello + subscribe + batch_of({yes("3"), yes("4")})));
+    test.run_native_input();
+    // The first key closed the view; a new one of the same category reads input now.
+    screen.reset();
+    screen.emplace();
+    CHECK_FALSE(test.pump(""));
+    const auto out = test.output.str();
+    CHECK(count_of(out, R"("stage":"completed")") == 1);
+    CHECK(
+        count_of(out, R"("stage":"rejected","stage_text":"Refused.","error":"stale_screen")") == 1);
+    CHECK(test.queued.empty());
+}
+
 namespace {
 /// The map is the top screen: a running game whose input context is the map's, with a move action.
 struct map_boundary {

@@ -853,6 +853,26 @@ static bool can_pickup_at( const tripoint_bub_ms &p )
     return ( here.has_items( p ) && !here.has_flag( flag_SEALED, p ) ) || veh_has_items;
 }
 
+#if defined(CATA_MCP)
+namespace
+{
+/// Whether `^` would use the controls at `p` rather than first drive, dismount or take the vehicle the avatar is in.
+auto can_control_vehicle_at( const tripoint_bub_ms &p ) -> bool
+{
+    static const auto fuel_type_animal = itype_id( "animal" );
+    const auto &you = get_avatar();
+    const auto &here = get_map();
+    const auto own = here.veh_at( you.bub_pos() );
+    const auto takes_own = you.in_vehicle && own && ( own.part_with_feature( "CONTROLS", true ) ||
+                           ( own.part_with_feature( "CONTROL_ANIMAL", true ) &&
+                             own->vehicle().has_engine_type( fuel_type_animal, false ) &&
+                             own->vehicle().has_harnessed_animal() ) );
+    return !you.controlling_vehicle && g->remoteveh() == nullptr && !you.is_mounted() && !takes_own &&
+           here.veh_at( p ).part_with_feature( "CONTROLS", true ).has_value();
+}
+} // namespace
+
+#endif
 bool can_interact_at( action_id action, const tripoint_bub_ms &p )
 {
     map &here = get_map();
@@ -880,6 +900,10 @@ bool can_interact_at( action_id action, const tripoint_bub_ms &p )
         case ACTION_PICKUP_ALL:
         case ACTION_PICKUP_FEET:
             return can_pickup_at( p );
+#if defined(CATA_MCP)
+        case ACTION_CONTROL_VEHICLE:
+            return can_control_vehicle_at( p );
+#endif
         default:
             return false;
     }
@@ -940,7 +964,13 @@ auto make_register_actions( std::vector<uilist_entry> &entries, const input_cont
 {
     return [&]( std::vector<action_id> &&names ) -> void {
         const auto fn = [&]( action_id name ) -> uilist_entry {
+#if defined(CATA_MCP)
+            auto entry = uilist_entry{ name, true, hotkey_for_action( name ), ctxt.get_action_name( action_ident( name ) ) };
+            entry.action_id = action_ident( name );
+            return entry;
+#else
             return { name, true, hotkey_for_action( name ), ctxt.get_action_name( action_ident( name ) ) };
+#endif
         };
         std::ranges::transform( names, std::back_inserter( entries ), fn );
     };

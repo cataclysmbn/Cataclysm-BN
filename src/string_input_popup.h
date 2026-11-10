@@ -18,6 +18,13 @@ class ui_adaptor;
 class utf8_wrapper;
 struct point;
 
+#if defined(CATA_MCP)
+namespace game_client
+{
+struct interaction_snapshot;
+} // namespace game_client
+
+#endif
 /**
  * Shows a window querying the user for input.
  *
@@ -281,6 +288,12 @@ class string_input_popup // NOLINT(cata-xy)
         /**@}*/
 
         std::map<long, std::function<bool()>> callbacks;
+#if defined(CATA_MCP)
+        /// True when the caller's own screen shows the field, so the field is no screen of its own.
+        bool embedded = false;
+        /// Adds the rows of the screen around this input field to the interaction it publishes.
+        std::function < auto( game_client::interaction_snapshot & )->void > extend_interaction;
+#endif
 };
 
 

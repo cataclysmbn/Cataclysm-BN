@@ -1,0 +1,496 @@
+#if defined(CATA_MCP)
+
+#    include "avatar.h"
+#    include "calendar.h"
+#    include "cata_utility.h"
+#    include "catch/catch.hpp"
+#    include "client_command.h"
+#    include "client_input.h"
+#    include "client_interaction.h"
+#    include "client_memory.h"
+#    include "client_memory_scope.h"
+#    include "cursesdef.h"
+#    include "cursesport.h"
+#    include "engine_client_contract.h"
+#    include "game.h"
+#    include "input.h"
+#    include "map_helpers.h"
+#    include "output.h"
+#    include "state_helpers.h"
+
+#    include <algorithm>
+#    include <string>
+#    include <utility>
+
+namespace {
+
+struct memory_screen_guard {
+    const game_client::memory::scoped_state memory;
+    const int termx = TERMX;
+    const int termy = TERMY;
+
+    ~memory_screen_guard() {
+        TERMX = termx;
+        TERMY = termy;
+    }
+};
+
+} // namespace
+
+TEST_CASE("memory_screen_guard leaves a borrowed compositor intact", "[client][mcp]") {
+    const auto outer = game_client::memory::scoped_state{};
+    game_client::memory::resize(7, 3);
+    catacurses::stdscr = catacurses::newwin(3, 7, point_zero);
+    catacurses::mvwprintw(catacurses::stdscr, point_zero, "x");
+    catacurses::wrefresh(catacurses::stdscr);
+    const auto borrowed = catacurses::stdscr;
+    { const auto guard = memory_screen_guard{}; }
+    CHECK(game_client::memory::screen_size() == point(7, 3));
+    CHECK(game_client::memory::snapshot().cells[0].text == "x");
+    CHECK(catacurses::stdscr.get<cata_cursesport::WINDOW>()
+          == borrowed.get<cata_cursesport::WINDOW>());
+    CHECK(catacurses::stdscr.get<cata_cursesport::WINDOW>()->width == 7);
+}
+
+TEST_CASE(
+    "a view without a structured interaction publishes its composed screen", "[client][mcp]") {
+    auto guard = memory_screen_guard{};
+    TERMX = 20;
+    TERMY = 4;
+    game_client::memory::resize(TERMX, TERMY);
+    catacurses::stdscr = catacurses::newwin(TERMY, TERMX, point_zero);
+    catacurses::newscr = catacurses::stdscr;
+    catacurses::mvwprintw(catacurses::stdscr, point(1, 0), "Strength:    8");
+    catacurses::mvwprintw(catacurses::stdscr, point(1, 2), "Press ESC");
+    catacurses::wrefresh(catacurses::stdscr);
+
+    SECTION("a menu-like screen shows its text and the actions that drive it") {
+        auto context = input_context{"CHARACTER_SCREEN_TEST"};
+        context.register_action("QUIT");
+        const auto input_scope = game_client::input_context_scope{context, "CHARACTER_SCREEN_TEST"};
+        game_client::begin_input_boundary();
+        const auto boundary = engine_client::capture_boundary({.epoch = "epoch:screen"});
+        REQUIRE(boundary);
+        REQUIRE(boundary->interaction);
+        CHECK(boundary->interaction->context == "CHARACTER_SCREEN_TEST");
+        const auto wire = engine_client::serialize_boundary(*boundary);
+        CHECK(wire.find(R"("id":"canvas:screen")") != std::string::npos);
+        CHECK(wire.find("Strength:    8") != std::string::npos);
+        CHECK(boundary->interaction->choices.empty());
+        REQUIRE(boundary->actions.size() == 1);
+        CHECK(std::ranges::find(boundary->actions.front().keys, "ESC")
+              != boundary->actions.front().keys.end());
+    }
+    SECTION("the map itself is not a screen") {
+        auto context = input_context{"DEFAULTMODE"};
+        context.register_action("QUIT");
+        const auto input_scope = game_client::input_context_scope{context, "DEFAULTMODE"};
+        game_client::begin_input_boundary();
+        const auto boundary = engine_client::capture_boundary({.epoch = "epoch:screen"});
+        REQUIRE(boundary);
+        CHECK_FALSE(boundary->interaction);
+    }
+    SECTION("a blank screen has nothing to show") {
+        catacurses::werase(catacurses::stdscr);
+        catacurses::wrefresh(catacurses::stdscr);
+        auto context = input_context{"BLANK_SCREEN_TEST"};
+        context.register_action("QUIT");
+        const auto input_scope = game_client::input_context_scope{context, "BLANK_SCREEN_TEST"};
+        game_client::begin_input_boundary();
+        const auto boundary = engine_client::capture_boundary({.epoch = "epoch:screen"});
+        REQUIRE(boundary);
+        CHECK_FALSE(boundary->interaction);
+    }
+}
+
+TEST_CASE("generic memory client composes overlapping windows", "[client][mcp]") {
+    auto guard = memory_screen_guard{};
+    TERMX = 8;
+    TERMY = 4;
+    game_client::memory::resize(TERMX, TERMY);
+    catacurses::stdscr = catacurses::newwin(TERMY, TERMX, point_zero);
+    catacurses::newscr = catacurses::stdscr;
+
+    catacurses::mvwprintw(catacurses::stdscr, point_zero, "base");
+    catacurses::wrefresh(catacurses::stdscr);
+    const auto overlay = catacurses::newwin(1, 3, point(1, 1));
+    catacurses::mvwprintw(overlay, point_zero, "界");
+    catacurses::wrefresh(overlay);
+
+    const auto screen = game_client::memory::snapshot();
+    CHECK(screen.width == 8);
+    CHECK(screen.height == 4);
+    CHECK(screen.cells[9].text == "界");
+    CHECK(screen.cells[10].text.empty());
+    CHECK(screen.cells[0].text == "b");
+}
+
+TEST_CASE("cursesport ignores writes to invalid windows", "[client][mcp]") {
+    const auto invalid = catacurses::window{};
+    CHECK_NOTHROW(catacurses::waddch(invalid, 'x'));
+
+    const auto valid = catacurses::newwin(1, 1, point_zero);
+    CHECK_NOTHROW(catacurses::waddch(valid, 'x'));
+    const auto* const native = valid.get<cata_cursesport::WINDOW>();
+    REQUIRE(native != nullptr);
+    CHECK(native->line[0].chars[0].ch == "x");
+}
+
+TEST_CASE("generic memory client reports cursor and resize bounds", "[client][mcp]") {
+    auto guard = memory_screen_guard{};
+    TERMX = 6;
+    TERMY = 3;
+    game_client::memory::resize(TERMX, TERMY);
+    catacurses::stdscr = catacurses::newwin(TERMY, TERMX, point_zero);
+    catacurses::newscr = catacurses::stdscr;
+    catacurses::wmove(catacurses::stdscr, point(3, 2));
+    catacurses::curs_set(1);
+
+    const auto screen = game_client::memory::snapshot();
+    CHECK(screen.cursor.x == 3);
+    CHECK(screen.cursor.y == 2);
+    CHECK(screen.cursor_visible);
+
+    game_client::memory::resize(3, 2);
+    const auto resized = game_client::memory::snapshot();
+    CHECK(resized.width == 3);
+    CHECK(resized.height == 2);
+    CHECK(resized.cursor.x < 3);
+    CHECK(resized.cursor.y < 2);
+}
+
+TEST_CASE("generic memory client keeps source and virtual cursors separate", "[client][mcp]") {
+    auto guard = memory_screen_guard{};
+    TERMX = 8;
+    TERMY = 4;
+    game_client::memory::resize(TERMX, TERMY);
+    catacurses::stdscr = catacurses::newwin(TERMY, TERMX, point_zero);
+    catacurses::newscr = catacurses::newwin(TERMY, TERMX, point_zero);
+    const auto overlay = catacurses::newwin(2, 3, point(2, 1));
+    catacurses::wmove(catacurses::stdscr, point_zero);
+    catacurses::wmove(overlay, point(1, 0));
+    catacurses::wredrawln(overlay, 0, 1);
+    const auto* const dirty_overlay = overlay.get<cata_cursesport::WINDOW>();
+    REQUIRE(dirty_overlay != nullptr);
+    CHECK(dirty_overlay->draw);
+    CHECK(dirty_overlay->line[0].touched);
+    catacurses::wnoutrefresh(overlay);
+
+    const auto* const source = catacurses::stdscr.get<cata_cursesport::WINDOW>();
+    const auto* const virtual_screen = catacurses::newscr.get<cata_cursesport::WINDOW>();
+    REQUIRE(source != nullptr);
+    REQUIRE(virtual_screen != nullptr);
+    CHECK(source->cursor == point_zero);
+    CHECK(virtual_screen->cursor == point(3, 1));
+    CHECK(dirty_overlay->draw == false);
+
+    game_client::memory::set_input_provider([](const int /*timeout*/) {
+        return input_event('x', input_event_t::keyboard);
+    });
+    const auto event = inp_mngr.get_input_event();
+    CHECK(event.get_first_input() == 'x');
+    CHECK(virtual_screen->cursor == point(3, 1));
+}
+
+TEST_CASE("generic memory client projects offset coordinate input", "[client][mcp][input]") {
+    auto guard = memory_screen_guard{};
+    REQUIRE(g != nullptr);
+    TERMX = 8;
+    TERMY = 4;
+    game_client::memory::resize(TERMX, TERMY);
+    const auto restore_terrain = restore_on_out_of_scope<catacurses::window>(g->w_terrain);
+    const auto restore_view = restore_on_out_of_scope<tripoint_bub_ms>(g->ter_view_p);
+    const auto capture = catacurses::newwin(2, 4, point(2, 1));
+    g->w_terrain = capture;
+    const auto me = get_avatar().bub_pos();
+    g->ter_view_p = me;
+
+    auto context = input_context("MCP_COORDINATE_TEST");
+    context.register_action("ANY_INPUT");
+    context.register_action("COORDINATE");
+    game_client::memory::set_input_provider([](const int /*timeout*/) {
+        auto event = input_event(MOUSE_BUTTON_LEFT, input_event_t::mouse);
+        event.mouse_pos = point(4, 2);
+        return event;
+    });
+    CHECK(context.handle_input() == "ANY_INPUT");
+    const auto projected = context.get_coordinates(capture);
+    REQUIRE(projected.has_value());
+    CHECK(projected->xy() == me.xy());
+    CHECK(g->w_terrain == capture);
+}
+
+TEST_CASE(
+    "a travel click selects the clicked square through the real input context",
+    "[client][mcp][input][engine_client_contract]") {
+    auto guard = memory_screen_guard{};
+    REQUIRE(g != nullptr);
+    clear_all_state();
+    TERMX = 8;
+    TERMY = 4;
+    game_client::memory::resize(TERMX, TERMY);
+    const auto restore_terrain = restore_on_out_of_scope<catacurses::window>(g->w_terrain);
+    const auto restore_view = restore_on_out_of_scope<tripoint_bub_ms>(g->ter_view_p);
+    const auto capture = catacurses::newwin(2, 4, point(2, 1));
+    g->w_terrain = capture;
+    auto& you = get_avatar();
+    const auto me = you.bub_pos();
+    g->ter_view_p = me;
+    const auto frame = engine_client::current_bubble_frame();
+    const auto target = [&](const int x, const int y, const int z = 0) {
+        const auto at = you.bub_pos();
+        return engine_client::travel_operation{
+            .target =
+                {.dim = frame.dim, .x = frame.x + at.x() + x, .y = frame.y + at.y() + y, .z = z}};
+    };
+    const auto clicks_project_back = [&]() {
+        auto context = input_context("MCP_TRAVEL_TEST");
+        context.register_action("ANY_INPUT");
+        context.register_action("COORDINATE");
+        for (const auto& square : {point(-2, -1), point(-1, 0), point(0, -1), point(1, 0)}) {
+            const auto click = engine_client::travel_click(target(square.x, square.y));
+            REQUIRE(click);
+            const auto resolved = game_client::resolve_input_command(*click, point(8, 4));
+            REQUIRE(resolved);
+            game_client::memory::set_input_provider([&](const int /*timeout*/) {
+                return *resolved;
+            });
+            CHECK(context.handle_input() == "ANY_INPUT");
+            const auto projected = context.get_coordinates(capture);
+            REQUIRE(projected);
+            CHECK(projected->xy() == you.bub_pos().xy() + point_rel_ms(square));
+        }
+    };
+
+    SECTION("the click projects back to the same bubble square") { clicks_project_back(); }
+    SECTION("the click projects back to the same square after a step without a draw") {
+        you.setpos(me + tripoint_east);
+        clicks_project_back();
+        you.setpos(me);
+    }
+    SECTION("a square outside the terrain window has no click") {
+        CHECK_FALSE(engine_client::travel_click(target(-3, 0)));
+        CHECK_FALSE(engine_client::travel_click(target(2, 0)));
+        CHECK_FALSE(engine_client::travel_click(target(0, -2)));
+        CHECK_FALSE(engine_client::travel_click(target(0, 1)));
+    }
+    SECTION("another level or dimension has no click") {
+        CHECK_FALSE(engine_client::travel_click(target(0, 0, 1)));
+        auto elsewhere = target(0, 0);
+        elsewhere.target.dim = frame.dim + "_elsewhere";
+        CHECK_FALSE(engine_client::travel_click(elsewhere));
+    }
+}
+
+TEST_CASE(
+    "a travel click on a closed door beside the avatar moves into it, as native movement opens it",
+    "[client][mcp][input][engine_client_contract]") {
+    auto guard = memory_screen_guard{};
+    REQUIRE(g != nullptr);
+    clear_all_state();
+    TERMX = 20;
+    TERMY = 10;
+    game_client::memory::resize(TERMX, TERMY);
+    const auto restore_terrain = restore_on_out_of_scope<catacurses::window>(g->w_terrain);
+    const auto restore_view = restore_on_out_of_scope<tripoint_bub_ms>(g->ter_view_p);
+    g->w_terrain = catacurses::newwin(9, 15, point(2, 1));
+    const auto me = get_avatar().bub_pos();
+    g->ter_view_p = me;
+    auto& here = get_map();
+    const auto frame = engine_client::current_bubble_frame();
+    const auto target = [&](const tripoint_bub_ms& at) {
+        return engine_client::travel_operation{
+            .target = {.dim = frame.dim, .x = frame.x + at.x(), .y = frame.y + at.y(), .z = at.z()}};
+    };
+    here.ter_set(me + tripoint_east, ter_id("t_door_c"));
+    here.ter_set(me + tripoint_east * 3, ter_id("t_door_c"));
+    here.ter_set(me + tripoint_west, ter_id("t_floor"));
+    here.ter_set(me + tripoint_north, ter_id("t_door_locked"));
+
+    SECTION("a closed door beside the avatar is a move into it") {
+        const auto click = engine_client::travel_click(target(me + tripoint_east));
+        REQUIRE(click);
+        CHECK(click->action == "RIGHT");
+        CHECK_FALSE(click->mouse_position);
+    }
+    SECTION("a locked door beside the avatar is a move into it, which says that it is locked") {
+        const auto click = engine_client::travel_click(target(me + tripoint_north));
+        REQUIRE(click);
+        CHECK(click->action == "UP");
+        CHECK_FALSE(click->mouse_position);
+    }
+    SECTION("a door further away and open floor stay a click") {
+        for (const auto& at : {me + tripoint_east * 3, me + tripoint_west}) {
+            const auto click = engine_client::travel_click(target(at));
+            REQUIRE(click);
+            CHECK(click->action.empty());
+            CHECK(click->mouse_position);
+        }
+    }
+}
+
+TEST_CASE(
+    "every action the default mode offers resolves to that action",
+    "[client][mcp][input][engine_client_contract]") {
+    const auto guard = memory_screen_guard{};
+    TERMX = 8;
+    TERMY = 4;
+    game_client::memory::resize(TERMX, TERMY);
+    catacurses::stdscr = catacurses::newwin(TERMY, TERMX, point_zero);
+    catacurses::newscr = catacurses::stdscr;
+    auto context = get_default_mode_input_context();
+    auto offered = std::vector<game_client::input_action>{};
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        offered = game_client::available_input_actions();
+        auto idle = input_event{};
+        idle.type = input_event_t::timeout;
+        return idle;
+    });
+    context.handle_input(0);
+    REQUIRE_FALSE(offered.empty());
+    // The action menu runs an action by id whether or not a key is bound to it.
+    REQUIRE(std::ranges::any_of(offered, [](const auto& action) {
+        return action.bindings.empty();
+    }));
+    for (const auto& action : offered) {
+        // The keybindings help opens its own menu instead of returning the action.
+        if (action.id == "HELP_KEYBINDINGS") { continue; }
+        auto resolved = std::expected<input_event, std::string>{};
+        game_client::memory::set_input_provider([&](const int /*timeout*/) {
+            auto command = game_client::input_command{};
+            command.action = action.id;
+            resolved = game_client::resolve_input_command(command, point(8, 4));
+            if (resolved) { return *resolved; }
+            // An unresolvable action must not leave the context waiting for a valid input.
+            auto idle = input_event{};
+            idle.type = input_event_t::timeout;
+            return idle;
+        });
+        INFO(action.id);
+        const auto result = context.handle_input();
+        CHECK(resolved.has_value());
+        CHECK(result == action.id);
+    }
+}
+
+TEST_CASE(
+    "a context click is the right button and the wheel is an action run by id",
+    "[client][mcp][input][engine_client_contract]") {
+    auto guard = memory_screen_guard{};
+    REQUIRE(g != nullptr);
+    TERMX = 8;
+    TERMY = 4;
+    game_client::memory::resize(TERMX, TERMY);
+    const auto restore_terrain = restore_on_out_of_scope<catacurses::window>(g->w_terrain);
+    const auto restore_view = restore_on_out_of_scope<tripoint_bub_ms>(g->ter_view_p);
+    g->w_terrain = catacurses::newwin(2, 4, point(2, 1));
+    const auto me = get_avatar().bub_pos();
+    g->ter_view_p = me;
+    const auto frame = engine_client::current_bubble_frame();
+    const auto click = engine_client::travel_click(
+        {.target = {.dim = frame.dim, .x = frame.x + me.x() - 1, .y = frame.y + me.y(), .z = me.z()},
+         .button = "right"});
+    REQUIRE(click);
+    const auto resolved = game_client::resolve_input_command(*click, point(8, 4));
+    REQUIRE(resolved);
+    CHECK(resolved->type == input_event_t::mouse);
+    CHECK(resolved->get_first_input() == MOUSE_BUTTON_RIGHT);
+
+    // The wheel is an action of the active context, run by its id like any other.
+    auto context = input_context("MCP_WHEEL_TEST");
+    context.register_action("SCROLL_UP");
+    context.register_action("SCROLL_DOWN");
+    const auto active = game_client::input_context_scope(context, "MCP_WHEEL_TEST");
+    for (const auto* action : {"SCROLL_UP", "SCROLL_DOWN"}) {
+        auto input = game_client::input_command{};
+        input.action = action;
+        const auto step = game_client::resolve_input_command(input, point(8, 4));
+        REQUIRE(step);
+        CHECK(step->action == action);
+        game_client::memory::set_input_provider([&](const int /*timeout*/) { return *step; });
+        CHECK(context.handle_input() == action);
+    }
+    // An action the context does not register stays unresolvable.
+    auto unknown = game_client::input_command{};
+    unknown.action = "SELECT";
+    CHECK_FALSE(game_client::resolve_input_command(unknown, point(8, 4)));
+}
+
+TEST_CASE(
+    "describing a square prints the native mouse view and changes nothing",
+    "[client][mcp][engine_client_contract]") {
+    auto guard = memory_screen_guard{};
+    REQUIRE(g != nullptr);
+    clear_map();
+    TERMX = 80;
+    TERMY = 30;
+    game_client::memory::resize(TERMX, TERMY);
+    catacurses::stdscr = catacurses::newwin(TERMY, TERMX, point_zero);
+    const auto restore_terrain = restore_on_out_of_scope<catacurses::window>(g->w_terrain);
+    const auto restore_view = restore_on_out_of_scope<tripoint_bub_ms>(g->ter_view_p);
+    g->w_terrain = catacurses::newwin(21, 21, point_zero);
+    const auto you = get_avatar().bub_pos();
+    g->ter_view_p = you;
+    const auto frame = engine_client::current_bubble_frame();
+    const auto epoch = std::string{"epoch:test"};
+    const auto boundary = game_client::
+        opaque_interaction_id("boundary", {epoch, std::to_string(game_client::current_input_id())});
+    const auto at = [&](const int dx) {
+        return engine_client::describe_request{
+            .epoch = epoch,
+            .boundary_id = boundary,
+            .target =
+                {.dim = frame.dim,
+                 .x = frame.x + you.x() + dx,
+                 .y = frame.y + you.y(),
+                 .z = you.z()}};
+    };
+    const auto turn = calendar::turn;
+
+    const auto here = engine_client::describe_tile(at(0), epoch);
+    REQUIRE(here);
+    CHECK_FALSE(here->parts.empty());
+    CHECK(std::ranges::none_of(here->parts, [](const auto& part) {
+        return part.kind.empty() || part.text.empty();
+    }));
+    CHECK(engine_client::describe_tile(at(1), epoch));
+    CHECK(get_avatar().bub_pos() == you);
+    CHECK(calendar::turn == turn);
+
+    auto stale = at(0);
+    stale.boundary_id = "boundary:old";
+    REQUIRE_FALSE(engine_client::describe_tile(stale, epoch));
+    CHECK(
+        engine_client::describe_tile(stale, epoch).error() == engine_client::error::stale_boundary);
+    auto other_epoch = at(0);
+    other_epoch.epoch = "epoch:other";
+    CHECK(engine_client::describe_tile(other_epoch, epoch).error()
+          == engine_client::error::stale_epoch);
+    CHECK(engine_client::describe_tile(at(40), epoch).error()
+          == engine_client::error::validation_failed);
+}
+
+TEST_CASE("memory events pass through the real input context", "[client][mcp][input]") {
+    const auto guard = memory_screen_guard{};
+    TERMX = 8;
+    TERMY = 4;
+    game_client::memory::resize(TERMX, TERMY);
+    catacurses::stdscr = catacurses::newwin(TERMY, TERMX, point_zero);
+    catacurses::newscr = catacurses::stdscr;
+    auto context = input_context("MCP_TEST");
+    context.register_action("ANY_INPUT");
+    const auto original = game_client::active_input_context();
+    auto observed = game_client::input_context_view{};
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        observed = game_client::active_input_context();
+        return input_event('x', input_event_t::keyboard);
+    });
+
+    CHECK(context.handle_input() == "ANY_INPUT");
+    CHECK(context.get_raw_input().get_first_input() == 'x');
+    CHECK(observed.context == &context);
+    CHECK(observed.category == "MCP_TEST");
+    CHECK(game_client::active_input_context().context == original.context);
+}
+
+#endif // CATA_MCP

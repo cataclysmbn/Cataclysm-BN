@@ -1,0 +1,114 @@
+[
+  {
+    "type": "client_shortcut",
+    "id": "inventory",
+    "action": "inventory",
+    "icon": "inventory",
+    "glyph": "🎒",
+    "order": 10
+  },
+  {
+    "type": "client_shortcut",
+    "id": "character",
+    "action": "player_data",
+    "icon": "character",
+    "glyph": "👤",
+    "order": 20
+  },
+  {
+    "type": "client_shortcut",
+    "id": "crafting",
+    "action": "craft",
+    "icon": "crafting",
+    "glyph": "🔨",
+    "order": 30
+  },
+  {
+    "type": "client_shortcut",
+    "id": "construction",
+    "action": "construct",
+    "icon": "construction",
+    "glyph": "🏠",
+    "order": 40
+  },
+  {
+    "type": "client_shortcut",
+    "id": "map",
+    "action": "map",
+    "icon": "map",
+    "glyph": "🗺",
+    "order": 50
+  },
+  {
+    "type": "client_shortcut",
+    "id": "look",
+    "action": "look",
+    "icon": "look",
+    "glyph": "🔍",
+    "order": 60
+  },
+  {
+    "type": "client_shortcut",
+    "id": "wait",
+    "action": "wait",
+    "icon": "wait",
+    "glyph": "⌛",
+    "order": 70
+  },
+  {
+    "type": "client_shortcut",
+    "id": "sleep",
+    "action": "sleep",
+    "icon": "sleep",
+    "glyph": "💤",
+    "order": 80
+  },
+  {
+    "type": "client_shortcut",
+    "id": "pickup",
+    "action": "pickup",
+    "icon": "pickup",
+    "glyph": "✋",
+    "order": 90
+  },
+  {
+    "type": "client_shortcut",
+    "id": "wield",
+    "action": "wield",
+    "icon": "wield",
+    "glyph": "⚔",
+    "order": 100
+  },
+  {
+    "type": "client_shortcut",
+    "id": "wear",
+    "action": "wear",
+    "icon": "wear",
+    "glyph": "👕",
+    "order": 110
+  },
+  {
+    "type": "client_shortcut",
+    "id": "main_menu",
+    "action": "main_menu",
+    "icon": "menu",
+    "glyph": "☰",
+    "order": 120
+  },
+  {
+    "type": "client_shortcut",
+    "id": "options",
+    "action": "open_options",
+    "icon": "options",
+    "glyph": "⚙",
+    "order": 130
+  },
+  {
+    "type": "client_shortcut",
+    "id": "help",
+    "action": "HELP_KEYBINDINGS",
+    "icon": "help",
+    "glyph": "❓",
+    "order": 140
+  }
+]

@@ -16,6 +16,7 @@
 #include "input.h"
 #include "inventory.h"
 #include "make_static.h"
+#include "mcp_hooks.h"
 #include "options.h"
 #include "output.h"
 #include "string_formatter.h"
@@ -910,9 +911,12 @@ void show_bionics_ui( Character &who )
                     ui.mark_resize();
                     if( tmp->powered ) {
                         who.deactivate_bionic( *tmp );
+                        MCP_ONLY( if( who.is_avatar() ) { map_perception::acquire(); } )
                     } else {
                         bool close_ui = false;
                         who.activate_bionic( *tmp, false, &close_ui );
+                        // Another manager input can erase transient illumination.
+                        MCP_ONLY( if( who.is_avatar() ) { map_perception::acquire(); } )
                         // Clear the menu if we are firing a bionic gun
                         if( close_ui || tmp->ammo_count > 0 ) {
                             break;

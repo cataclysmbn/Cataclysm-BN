@@ -1,4 +1,8 @@
 #include "debug.h"
+#include "mcp_hooks.h"
+#if defined(CATA_MCP)
+#include "debug_test_support.h"
+#endif
 #include "debug_log_capture.h"
 
 #include <algorithm>
@@ -378,9 +382,72 @@ static void debug_error_prompt(
     ctxt.register_manual_key( 'I' );
     ctxt.register_manual_key( ' ' );
 #endif
+#if defined(CATA_MCP)
+    auto ctxt = input_context( "DEBUG_MSG" );
+    const auto continue_id = game_client::opaque_interaction_id( "debug-choice",
+    {filename, line, "continue"} );
+    const auto ignore_id = game_client::opaque_interaction_id( "debug-choice",
+    {filename, line, "ignore"} );
+    // Diagnostic/metadata bytes are literal data, not markup. Strip only trusted fragments,
+    // before interpolating runtime values such as the backtrace path.
+    auto interaction_message = std::string( "\n\n " ) + remove_color_tags(
+                                   _( "An error has occurred!  Written below is the error report:" ) ) +
+                               "\n -----------------------------------------------------------\n";
+    interaction_message += formatted_report;
+    interaction_message += " -----------------------------------------------------------\n";
+#if defined(BACKTRACE)
+    interaction_message += " " + string_format(
+                               remove_color_tags( _( "See %s for a full stack backtrace" ) ),
+                               PATH_INFO::debug() ) + "\n";
+#endif
+    interaction_message += " " + remove_color_tags(
+                               _( "Press <color_white>space bar</color> to continue the game." ) ) + "\n";
+    interaction_message += " " + remove_color_tags(
+                               _( "Press <color_white>I</color> (or <color_white>i</color>) to also ignore this particular message in the future." ) )
+                           +
+                           "\n";
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        auto snapshot = game_client::interaction_snapshot{};
+        snapshot.kind = game_client::interaction_kind::choices;
+        snapshot.title = _( "An error has occurred!" );
+        snapshot.message = interaction_message;
+        const auto choice = []( const auto & id, const auto & label ) {
+            auto result = game_client::interaction_choice{};
+            result.id = id;
+            result.label = label;
+            return result;
+        };
+        snapshot.choices = { choice( continue_id, _( "Continue" ) ),
+                             choice( ignore_id, _( "Ignore" ) )
+                           };
+        return snapshot;
+    } );
+#endif
     for( bool stop = false; !stop && !dont_debugmsg; ) {
         ui_manager::redraw();
+#if defined(CATA_MCP)
+        auto event = input_event {};
+        {
+            const auto active_context = game_client::input_context_scope( ctxt, ctxt.category_name(),
+                                        inp_mngr.get_timeout() );
+            event = inp_mngr.get_input_event();
+        }
+        auto key = event.get_first_input();
+        if( event.interaction ) {
+            const auto valid = game_client::validate_interaction_event( ctxt, *event.interaction );
+            if( !valid ) {
+                throw std::runtime_error( "Semantic interaction rejected: " + valid.error() );
+            }
+            if( event.interaction->target_id == continue_id ) {
+                key = ' ';
+            } else if( event.interaction->target_id == ignore_id ) {
+                key = 'I';
+            }
+        }
+        switch( key ) {
+#else
         switch( inp_mngr.get_input_event().get_first_input() ) {
+#endif
 #if defined(TILES)
             case 'c':
             case 'C':
@@ -525,6 +592,68 @@ struct repetition_folder {
 static thread_local repetition_folder rep_folder;
 static void output_repetitions( std::ostream &out );
 
+#if defined(CATA_MCP)
+namespace debug_test_support
+{
+
+struct scoped_state::saved_state {
+    std::set<std::string> ignored;
+    repetition_folder repetition;
+    std::vector<buffered_prompt_info> buffered;
+    std::vector<buffered_prompt_info> workers;
+    bool buffering = false;
+    bool error = false;
+    bool capture = false;
+    bool suppress = false;
+    bool testing = false;
+    enum_bitset<DL> levels;
+    enum_bitset<DC> classes;
+    std::string text;
+    std::ostringstream log;
+};
+
+scoped_state::scoped_state() : saved_( std::make_unique<saved_state>() )
+{
+    // Allocate and acquire the worker lock before changing any state. Swaps preserve
+    // owned queue/report storage and the stream's formatting and error state.
+    auto lock = std::lock_guard( g_worker_prompts_mutex );
+    saved_->ignored.swap( ignored_messages );
+    std::swap( saved_->repetition, rep_folder );
+    saved_->buffered.swap( buffered_prompts() );
+    saved_->workers.swap( g_worker_thread_prompts );
+    saved_->buffering = buffering_debugmsgs.exchange( false );
+    saved_->error = error_observed.exchange( false );
+    saved_->capture = std::exchange( capturing, false );
+    saved_->suppress = std::exchange( dont_debugmsg, false );
+    saved_->testing = std::exchange( test_mode, false );
+    saved_->levels = debugLevel;
+    saved_->classes = debugClass;
+    debugLevel.set( DL::Error );
+    saved_->text.swap( captured );
+    saved_->log.swap( captured_log );
+}
+
+scoped_state::~scoped_state() noexcept
+{
+    auto lock = std::lock_guard( g_worker_prompts_mutex );
+    saved_->ignored.swap( ignored_messages );
+    std::swap( saved_->repetition, rep_folder );
+    saved_->buffered.swap( buffered_prompts() );
+    saved_->workers.swap( g_worker_thread_prompts );
+    buffering_debugmsgs = saved_->buffering;
+    error_observed = saved_->error;
+    capturing = saved_->capture;
+    dont_debugmsg = saved_->suppress;
+    test_mode = saved_->testing;
+    debugLevel = saved_->levels;
+    debugClass = saved_->classes;
+    saved_->text.swap( captured );
+    saved_->log.swap( captured_log );
+}
+
+} // namespace debug_test_support
+
+#endif
 void realDebugmsg( const char *filename, const char *line, const char *funcname,
                    const DL debug_level, const std::string &text )
 {

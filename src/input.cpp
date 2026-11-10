@@ -1,5 +1,6 @@
 #include "input.h"
 
+#include "mcp_hooks.h"
 #include <algorithm>
 #include <cctype>
 #include <fstream>
@@ -77,7 +78,7 @@ static std::string int_to_str( int number )
 
 bool is_mouse_enabled()
 {
-#if defined(_WIN32) && !defined(TILES)
+#if defined(_WIN32) && !defined(TILES) && !defined(CATA_MCP)
     return false;
 #else
     return true;
@@ -709,6 +710,9 @@ auto reading_context = static_cast<input_context *>( nullptr );
 
 input_event input_manager::get_input_event()
 {
+    MCP_ONLY( game_client::begin_input_boundary(); )
+    MCP_ONLY( reading_context = const_cast<input_context *>
+                                ( game_client::active_input_context().context ); )
     if( !replay::is_enabled() ) {
         return read_native_input_event();
     }
@@ -784,7 +788,9 @@ void input_context::register_action( const std::string &action_descriptor,
         handling_coordinate_input = true;
     }
 
-    registered_actions.push_back( action_descriptor );
+    MCP_ONLY( if( !std::ranges::contains( registered_actions, action_descriptor ) ) ) {
+        registered_actions.push_back( action_descriptor );
+    }
     if( !name.empty() ) {
         action_name_overrides[action_descriptor] = name;
     }
@@ -987,8 +993,27 @@ const std::string &input_context::handle_input( const int timeout )
             ZoneScopedN( "input_context_get_input_event" );
             const auto reading = restore_on_out_of_scope<input_context *>( reading_context );
             reading_context = this;
+            MCP_ONLY( const auto active_context = game_client::input_context_scope( *this, category,
+                                                  inp_mngr.get_timeout() ); )
             next_action = inp_mngr.get_input_event();
         }
+#if defined(CATA_MCP)
+        // The map view carries out a client's pickup, drop or square action itself (game::handle_action); it has no widget.
+        if( category == "DEFAULTMODE" && ( engine_client::item_operation_of( next_action ) ||
+                                           engine_client::tile_operation_of( next_action ) ||
+                                           engine_client::mode_operation_of( next_action ) ) ) {
+            result = &ANY_INPUT;
+            break;
+        }
+        if( next_action.interaction ) {
+            const auto valid = game_client::validate_interaction_event( *this, *next_action.interaction );
+            if( !valid ) {
+                throw std::runtime_error( "Semantic interaction rejected: " + valid.error() );
+            }
+            result = &ANY_INPUT;
+            break;
+        }
+#endif
         if( next_action.type == input_event_t::timeout ) {
             result = &TIMEOUT;
             break;
@@ -996,6 +1021,13 @@ const std::string &input_context::handle_input( const int timeout )
 
         const auto &action = [&]() -> const std::string & {
             ZoneScopedN( "input_context_input_to_action" );
+#if defined(CATA_MCP)
+            if( !next_action.action.empty() )
+            {
+                const auto found = std::ranges::find( registered_actions, next_action.action );
+                return found != registered_actions.end() ? *found : CATA_ERROR;
+            }
+#endif
             return input_to_action( next_action );
         }();
 
@@ -1186,6 +1218,7 @@ action_id input_context::display_menu( const bool permit_execute_action )
     size_t display_height = 0;
     size_t legwidth = 0;
     string_input_popup spopup;
+    MCP_ONLY( spopup.embedded = true; )
     // ignore hardcoded keys in string input popup
     for( const std::pair<const fallback_action, int> &v : fallback_keys ) {
         spopup.callbacks[v.second] = []() {
@@ -1524,7 +1557,7 @@ void input_manager::wait_for_any_key()
     }
 }
 
-#if !(defined(TILES) || defined(_WIN32))
+#if !(defined(TILES) || defined(_WIN32) || defined(CATA_MCP))
 // Also specify that we don't have a gamepad plugged in.
 bool gamepad_available()
 {
@@ -1552,6 +1585,21 @@ std::optional<tripoint_bub_ms> input_context::get_coordinates( const catacurses:
 
     const point_bub_ms p = view_offset - ( view_size / 2 - coordinate );
     return tripoint_bub_ms( p, g->get_levz() );
+}
+#endif
+
+#if defined(CATA_MCP)
+auto input_context::action_name_source( const std::string &action_id ) const ->
+std::optional<std::reference_wrapper<const translation>> // *NOPAD*
+{
+    const auto action_override = action_name_overrides.find( action_id );
+    if( action_override != action_name_overrides.end() ) { return std::cref( action_override->second ); }
+    const auto &attributes = inp_mngr.get_action_attributes( action_id, category );
+    if( !attributes.name.empty() ) { return std::cref( attributes.name ); }
+    // A local unnamed action masks the global binding, but keeps its native label fallback.
+    const auto &defaults = inp_mngr.get_action_attributes( action_id, default_context_id );
+    if( !defaults.name.empty() ) { return std::cref( defaults.name ); }
+    return std::nullopt;
 }
 #endif
 

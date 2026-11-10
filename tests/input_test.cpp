@@ -92,3 +92,14 @@ TEST_CASE("manual combat default bindings reserve backtab for the toggle", "[inp
     CHECK(toggle_key == inp_mngr.get_keycode("BACKTAB"));
     CHECK(removed_manual_attack_key == 0);
 }
+#if defined(CATA_MCP)
+
+TEST_CASE("an action registered twice is one action of its context", "[input]") {
+    auto context = input_context("TEST_REGISTER_TWICE");
+    context.register_action("HELP_KEYBINDINGS");
+    context.register_action("CONFIRM");
+    context.register_action("HELP_KEYBINDINGS");
+    CHECK(context.get_registered_actions_copy()
+          == std::vector<std::string>{"HELP_KEYBINDINGS", "CONFIRM"});
+}
+#endif

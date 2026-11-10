@@ -6,6 +6,7 @@
 
 #include "cached_options.h"
 #include "catacharset.h"
+#include "mcp_hooks.h"
 #include "ime.h"
 #include "input.h"
 #include "output.h"
@@ -260,6 +261,88 @@ std::shared_ptr<ui_adaptor> query_popup::create_or_get_adaptor( bool disable_bel
     return ui;
 }
 
+#if defined(CATA_MCP)
+auto query_popup::make_interaction( const input_context &ctxt ) const ->
+game_client::interaction_snapshot // *NOPAD*
+{
+    auto snapshot = game_client::interaction_snapshot{
+        .kind = game_client::interaction_kind::choices,
+        .message = remove_color_tags( text ),
+        .allow_cancel = cancel,
+    };
+    snapshot.choices.reserve( options.size() + ( ( anykey || cancel ) && options.empty() ? 1 : 0 ) );
+    auto seen = std::map<std::string, int> {};
+    for( auto index = std::size_t{ 0 }; index < options.size(); ++index ) {
+        const auto &option = options[index];
+        const auto label = ctxt.get_action_name( option.action );
+        // A row is known by its action; options that share one are told apart by their order among them.
+        const auto count = seen[option.action]++;
+        snapshot.choices.push_back( {
+            .id = "option:" + std::to_string( index ),
+            .label = remove_color_tags( label ),
+            .selected = index == cur,
+            .highlighted = index == cur,
+            .action_id = option.action,
+            .identity = "option:" + option.action + ( count == 0 ? "" : "#" + std::to_string( count ) ),
+        } );
+    }
+    if( anykey ) {
+        // The key itself cannot travel as a choice: a client names it, as keybinding files do. The message
+        // already says what the key is for.
+        snapshot.field = game_client::interaction_field{ .id = "field:key", .type = "key" };
+    }
+    if( ( anykey || cancel ) && options.empty() ) {
+        const auto action = anykey ? "ANY_INPUT" : "QUIT";
+        const auto label = anykey ? _( "Press any key" ) : _( "OK" );
+        snapshot.choices.push_back( {
+            .id = "acknowledge",
+            .label = label,
+            .selected = true,
+            .highlighted = true,
+            .action_id = action,
+        } );
+        if( anykey ) { snapshot.any_key_choice_id = "acknowledge"; }
+    }
+    return snapshot;
+}
+
+auto query_popup::apply_interaction( result &res ) -> bool
+{
+    if( !res.evt.interaction ) { return false; }
+    const auto &interaction = *res.evt.interaction;
+    if( interaction.operation == game_client::interaction_operation::cancel ) {
+        res.action = "QUIT";
+        res.wait_input = false;
+    } else if( interaction.operation == game_client::interaction_operation::fill ) {
+        const auto key = interaction.value;
+        const auto code = inp_mngr.get_keycode( key );
+        res.evt = input_event( code != 0 ? code : static_cast<int>( UTF8_getch( key ) ),
+                               input_event_t::keyboard );
+        res.evt.text = code == 0 ? key : std::string{};
+        res.action = "ANY_INPUT";
+        res.wait_input = false;
+    } else if( interaction.operation == game_client::interaction_operation::choose ) {
+        if( interaction.target_id == "acknowledge" ) {
+            res.action = anykey ? "ANY_INPUT" : "QUIT";
+            res.wait_input = false;
+        } else {
+            const auto selected_option = std::ranges::find_if( options, [&]( const auto & option ) {
+                const auto index = static_cast<std::size_t>( &option - options.data() );
+                return interaction.target_id == "option:" + std::to_string( index );
+            } );
+            if( selected_option != options.end() ) {
+                cur = static_cast<std::size_t>( std::distance( options.begin(), selected_option ) );
+                res.action = options[cur].action;
+                res.wait_input = !options[cur].filter( res.evt );
+            }
+        }
+    } else {
+        return false;
+    }
+    return true;
+}
+#endif
+
 query_popup::result query_popup::query_once()
 {
     if( !anykey && !cancel && options.empty() ) {
@@ -295,10 +378,13 @@ query_popup::result query_popup::query_once()
         ctxt.register_action( "QUIT" );
     }
 
+    MCP_ONLY( const auto screen = engine_client::screen_scope( ctxt, "popup" ); )
     result res;
     // Assign outside construction of `res` to ensure execution order
     res.wait_input = !anykey;
     do {
+        MCP_ONLY( const auto interaction = game_client::interaction_scope( ctxt, [this, &ctxt]() { return make_interaction( ctxt ); } );
+                )
         res.action = ctxt.handle_input();
         res.evt = ctxt.get_raw_input();
     } while(
@@ -308,6 +394,7 @@ query_popup::result query_popup::query_once()
         ( res.evt.type == input_event_t::keyboard && res.evt.sequence.empty() )
     );
 
+    MCP_ONLY( if( apply_interaction( res ) ) { return res; } )
     if( cancel && res.action == "QUIT" ) {
         res.wait_input = false;
     } else if( res.action == "LEFT" ) {

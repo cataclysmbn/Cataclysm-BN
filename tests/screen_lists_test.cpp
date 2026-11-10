@@ -1,0 +1,114 @@
+#if defined(CATA_MCP)
+
+#    include "avatar.h"
+#    include "bionics.h"
+#    include "catch/catch.hpp"
+#    include "client_command.h"
+#    include "client_input.h"
+#    include "client_interaction.h"
+#    include "client_memory.h"
+#    include "client_memory_scope.h"
+#    include "client_screen_support.h"
+#    include "color.h"
+#    include "cursesdef.h"
+#    include "cursesport.h"
+#    include "engine_client_component.h"
+#    include "game.h"
+#    include "game_constants.h"
+#    include "input.h"
+#    include "item.h"
+#    include "map/map.h"
+#    include "map_helpers.h"
+#    include "map_item_stack.h"
+#    include "mission.h"
+#    include "output.h"
+#    include "player_helpers.h"
+#    include "state_helpers.h"
+
+#    include <algorithm>
+#    include <functional>
+#    include <memory>
+#    include <string>
+#    include <vector>
+
+namespace {
+
+/// Test-only member access reaches the item list, which only the `V` action of the main loop opens.
+/// Explicit instantiation permits the member pointer without changing the game header.
+struct list_items_tag {
+    friend auto list_items_call(list_items_tag, const std::vector<map_item_stack>& stacks) -> void;
+};
+template <auto Member> struct list_items_access {
+    friend auto list_items_call(list_items_tag, const std::vector<map_item_stack>& stacks) -> void {
+        static_cast<void>((g.get()->*Member)(stacks));
+    }
+};
+template struct list_items_access<&game::list_items>;
+
+} // namespace
+
+using namespace client_screen_test;
+
+namespace {
+auto column(const game_client::interaction_choice& choice, const std::string& key) -> std::string {
+    const auto found =
+        std::ranges::find(choice.columns, key, &game_client::interaction_column::key);
+    REQUIRE(found != choice.columns.end());
+    return found->value;
+}
+} // namespace
+
+
+TEST_CASE(
+    "the item list shows the items around and moves its cursor to a chosen one",
+    "[client][interaction][mcp][screens]") {
+    clear_all_state();
+    clear_map();
+    auto& you = get_avatar();
+    clear_character(you, false);
+    const auto lighter_pos = you.bub_pos() + tripoint_east;
+    const auto knife_pos = you.bub_pos() + tripoint_east * 2;
+    get_map().add_item(lighter_pos, item::spawn("lighter", calendar::turn));
+    get_map().add_item(knife_pos, item::spawn("knife_combat", calendar::turn));
+    const auto& lighter = get_map().i_at(lighter_pos).only_item();
+    const auto& knife = get_map().i_at(knife_pos).only_item();
+    const auto stacks = std::vector<map_item_stack>{
+        map_item_stack(&lighter, tripoint_rel_ms(1, 0, 0)),
+        map_item_stack(&knife, tripoint_rel_ms(2, 0, 0)),
+    };
+    const auto guard = screen_guard{};
+    auto stage = 0;
+    open_screen(
+        [&] { list_items_call(list_items_tag{}, stacks); },
+        [&](const auto& snapshot) {
+            switch (stage++) {
+                case 0: {
+                    CHECK(snapshot.context == "LIST_ITEMS");
+                    const auto items = rows_with(snapshot, "item:");
+                    REQUIRE(items.size() == 2);
+                    const auto nearest = row(snapshot, items.front());
+                    CHECK(nearest->label.find("lighter") != std::string::npos);
+                    CHECK(nearest->highlighted);
+                    CHECK_FALSE(nearest->description.empty());
+                    CHECK(nearest->columns.front().value == "1");
+                    CHECK_FALSE(row(snapshot, items.back())->highlighted);
+                    return choose(snapshot, items.back());
+                }
+                case 1: {
+                    const auto items = rows_with(snapshot, "item:");
+                    const auto farthest = row(snapshot, items.back());
+                    CHECK(farthest->label.find("knife") != std::string::npos);
+                    CHECK(farthest->highlighted);
+                    CHECK_FALSE(row(snapshot, items.front())->highlighted);
+                    CHECK(row(snapshot, "action:EXAMINE") != snapshot.choices.end());
+                    return cancel(snapshot);
+                }
+                default:
+                    FAIL("unexpected extra screen " << snapshot.context);
+            }
+            return input_event{};
+        });
+    CHECK(stage == 2);
+}
+
+#endif // CATA_MCP

@@ -420,6 +420,8 @@ TEST_CASE("lua_class_members", "[lua]") {
 }
 
 TEST_CASE("lua_global_functions", "[lua]") {
+    // The avatar name derives the save id, so a randomized name must not outlive the test.
+    const auto restore_name = restore_on_out_of_scope<std::string>(get_avatar().name);
     sol::state lua = make_lua_state();
 
     // Create global table for test
@@ -1658,6 +1660,7 @@ TEST_CASE("failed dimension deletion preserves saved metadata", "[lua]") {
     clear_all_state();
     initialize_dimension_test_storage();
     const auto target_dimension_id = dimension_id("lua\\test_failed_delete");
+    const auto original_map_size = get_map().getmapsize();
     g->place_player_overmap(tripoint_abs_omt(tripoint_zero));
 
     auto* const active_world = g->get_active_world();
@@ -1674,6 +1677,7 @@ TEST_CASE("failed dimension deletion preserves saved metadata", "[lua]") {
         unload_overmapbuffer_dimension(target_dimension_id);
         auto input = std::istringstream(original_save.str());
         g->unserialize(input);
+        get_map().resize(original_map_size);
         clear_all_state();
     });
 
