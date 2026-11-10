@@ -159,18 +159,18 @@ void achievement::add_kill_requirement(const JsonObject& inner, const std::strin
     }
     if (inner.has_string("monster")) {
         const mtype_id victim = static_cast<mtype_id>(inner.get_string("monster"));
-        const achievement_comparison compare = inner.get_enum_value<achievement_comparison>("is");
+        const auto compare = inner.get_enum_value<achievement_comparison>("is");
         const int count = inner.get_int("count");
 
         kill_requirements_[victim] = std::make_pair(compare, count);
     } else if (inner.has_string("species")) {
         const species_id victim = static_cast<species_id>(inner.get_string("species"));
-        const achievement_comparison compare = inner.get_enum_value<achievement_comparison>("is");
+        const auto compare = inner.get_enum_value<achievement_comparison>("is");
         const int count = inner.get_int("count");
 
         species_kill_requirements_[victim] = std::make_pair(compare, count);
     } else {
-        const achievement_comparison compare = inner.get_enum_value<achievement_comparison>("is");
+        const auto compare = inner.get_enum_value<achievement_comparison>("is");
         const int count = inner.get_int("count");
 
         kill_requirements_[mtype_id::NULL_ID()] = std::make_pair(compare, count);
@@ -191,7 +191,7 @@ void achievement::add_skill_requirements(const JsonObject& jo, const std::string
 
 void achievement::add_skill_requirement(const JsonObject& inner, const std::string&) {
     const skill_id skill = static_cast<skill_id>(inner.get_string("skill"));
-    const achievement_comparison compare = inner.get_enum_value<achievement_comparison>("is");
+    const auto compare = inner.get_enum_value<achievement_comparison>("is");
     const int count = inner.get_int("level");
 
     skill_requirements_[skill] = std::make_pair(compare, count);

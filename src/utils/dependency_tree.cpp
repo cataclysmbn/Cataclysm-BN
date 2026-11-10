@@ -134,8 +134,7 @@ auto dependency_node::get_dependencies_as_nodes() const -> std::vector<dependenc
     }
 
     // sort from the back!
-    for (std::vector<dependency_node*>::reverse_iterator it = dependencies.rbegin();
-         it != dependencies.rend(); ++it) {
+    for (auto it = dependencies.rbegin(); it != dependencies.rend(); ++it) {
         if (!std::ranges::contains(ret, *it)) { ret.push_back(*it); }
     }
 
@@ -334,8 +333,7 @@ void dependency_tree::strong_connect(dependency_node* dnode) {
     connection_stack.push(dnode);
     dnode->on_stack = true;
 
-    for (std::vector<dependency_node*>::iterator it = dnode->parents.begin();
-         it != dnode->parents.end(); ++it) {
+    for (auto it = dnode->parents.begin(); it != dnode->parents.end(); ++it) {
         if ((*it)->index < 0) {
             strong_connect(*it);
             dnode->lowlink = std::min(dnode->lowlink, (*it)->lowlink);

@@ -234,7 +234,7 @@ void mod_ui::try_rem(size_t selection, std::vector<mod_id>& active_list) {
         auto rem = std::ranges::find(active_list, i);
         if (rem != active_list.end()) { active_list.erase(rem); }
     }
-    std::vector<mod_id>::iterator rem = std::ranges::find(active_list, sel_string);
+    auto rem = std::ranges::find(active_list, sel_string);
     if (rem != active_list.end()) { active_list.erase(rem); }
 }
 

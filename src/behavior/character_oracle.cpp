@@ -41,7 +41,7 @@ auto character_oracle_t::needs_food_badly() const -> status_t {
 }
 
 auto character_oracle_t::can_wear_warmer_clothes() const -> status_t {
-    const player* p = dynamic_cast<const player*>(subject);
+    const auto* p = dynamic_cast<const player*>(subject);
     // Check inventory for wearable warmer clothes, greedily.
     // Don't consider swapping clothes yet, just evaluate adding clothes.
     for (const auto& i : subject->inv_const_slice()) {

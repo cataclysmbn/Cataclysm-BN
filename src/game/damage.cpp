@@ -235,7 +235,7 @@ resistances::resistances(const item& armor, bool to_self) {
     // Armors protect, but all items can resist
     if (to_self || armor.is_armor()) {
         for (int i = 0; i < NUM_DT; i++) {
-            damage_type dt = static_cast<damage_type>(i);
+            auto dt = static_cast<damage_type>(i);
             set_resist(dt, armor.damage_resist(dt, to_self));
         }
     }
@@ -544,7 +544,7 @@ auto assign(const JsonObject& jo, const std::string& name, resistances& val, boo
         JsonObject jo_relative = err.get_member(name);
         const resistances tmp = load_resistances_instance(err);
         for (size_t i = 0; i < val.flat.size(); i++) {
-            damage_type dt = static_cast<damage_type>(i);
+            auto dt = static_cast<damage_type>(i);
             auto iter = tmp.flat.find(dt);
             if (iter != tmp.flat.end()) { val.flat[dt] += iter->second; }
         }
@@ -554,7 +554,7 @@ auto assign(const JsonObject& jo, const std::string& name, resistances& val, boo
         JsonObject jo_proportional = err.get_member(name);
         resistances tmp = load_resistances_instance(err);
         for (size_t i = 0; i < val.flat.size(); i++) {
-            damage_type dt = static_cast<damage_type>(i);
+            auto dt = static_cast<damage_type>(i);
             auto iter = tmp.flat.find(dt);
             if (iter != tmp.flat.end()) { val.flat[dt] *= iter->second; }
         }
