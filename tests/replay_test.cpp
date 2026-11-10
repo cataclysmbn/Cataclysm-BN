@@ -3,6 +3,7 @@
 #if defined(CATA_MCP)
 #    include "avatar.h"
 #    include "client_memory.h"
+#    include "engine_client_mode.h"
 #    include "game.h"
 #    include "game_constants.h"
 #    include "options_helpers.h"
@@ -145,6 +146,26 @@ TEST_CASE("replay plays back an invoke with every argument", "[replay][input][in
     const auto played = replay::next_input_event(boundary);
     REQUIRE(played);
     CHECK(played->interaction == event.interaction);
+    replay::finish();
+}
+
+TEST_CASE("replay plays back a mode set to a named value", "[replay][input][interaction]") {
+    const auto fixture = replay_fixture{};
+    const auto boundary =
+        replay::input_boundary_metadata{.context = "DEFAULTMODE", .actions = {"UP"}};
+    const auto event = engine_client::mode_operation_event({.mode = "safe_mode", .value = "off"});
+    replay::configure_recording(fixture.path.string(), 7);
+    replay::start();
+    replay::record_input_event(event, boundary);
+    replay::finish();
+    replay::configure_playback(fixture.path.string());
+    replay::start();
+    const auto played = replay::next_input_event(boundary);
+    REQUIRE(played);
+    const auto mode = engine_client::mode_operation_of(*played);
+    REQUIRE(mode);
+    CHECK(mode->mode == "safe_mode");
+    CHECK(mode->value == "off");
     replay::finish();
 }
 
@@ -371,6 +392,37 @@ TEST_CASE(
     CHECK(polls == 3);
     CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
     replay::finish();
+}
+
+TEST_CASE("hit animations neither read nor record input", "[replay][input][client][animation]") {
+    const auto fixture = replay_fixture{};
+    const auto cleanup = on_out_of_scope([]() {
+        replay::stop();
+        game_client::memory::set_input_provider({});
+        clear_all_state();
+    });
+    const auto delay = override_option("ANIMATION_DELAY", "0");
+    clear_all_state();
+    const auto restore_width = restore_on_out_of_scope<int>(TERRAIN_WINDOW_WIDTH);
+    const auto restore_height = restore_on_out_of_scope<int>(TERRAIN_WINDOW_HEIGHT);
+    const auto restore_x = restore_on_out_of_scope<int>(POSX);
+    const auto restore_y = restore_on_out_of_scope<int>(POSY);
+    TERRAIN_WINDOW_WIDTH = 11;
+    TERRAIN_WINDOW_HEIGHT = 11;
+    POSX = 5;
+    POSY = 5;
+    REQUIRE(is_valid_in_w_terrain(point(POSX, POSY)));
+    auto polls = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout_ms*/) {
+        ++polls;
+        return input_event{};
+    });
+    replay::configure_recording(fixture.path.string(), 123);
+    replay::start();
+    g->draw_hit_player(get_avatar(), 5);
+    replay::finish();
+    CHECK(polls == 0);
+    CHECK(fixture.read().find("\"kind\":\"input\"") == std::string::npos);
 }
 
 TEST_CASE(

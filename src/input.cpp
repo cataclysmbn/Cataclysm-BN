@@ -998,6 +998,13 @@ const std::string &input_context::handle_input( const int timeout )
             next_action = inp_mngr.get_input_event();
         }
 #if defined(CATA_MCP)
+        // The map view carries out a client's pickup, drop or square action itself (game::handle_action); it has no widget.
+        if( category == "DEFAULTMODE" && ( engine_client::item_operation_of( next_action ) ||
+                                           engine_client::tile_operation_of( next_action ) ||
+                                           engine_client::mode_operation_of( next_action ) ) ) {
+            result = &ANY_INPUT;
+            break;
+        }
         if( next_action.interaction ) {
             const auto valid = game_client::validate_interaction_event( *this, *next_action.interaction );
             if( !valid ) {

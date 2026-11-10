@@ -12,6 +12,7 @@
 #    include "color.h"
 #    include "cursesdef.h"
 #    include "cursesport.h"
+#    include "engine_client_component.h"
 #    include "game.h"
 #    include "game_constants.h"
 #    include "input.h"

@@ -378,6 +378,7 @@ query_popup::result query_popup::query_once()
         ctxt.register_action( "QUIT" );
     }
 
+    MCP_ONLY( const auto screen = engine_client::screen_scope( ctxt, "popup" ); )
     result res;
     // Assign outside construction of `res` to ensure execution order
     res.wait_input = !anykey;

@@ -2148,7 +2148,12 @@ bool game::do_turn()
     // dynamic light state in build_map_cache and from explicit map mutations.
     {
         ZoneScopedN( "do_turn_invalidate_visibility" );
+#if defined(CATA_MCP)
+        reset_light_level();
+        map_perception::invalidate_stale_visibility( m );
+#else
         m.invalidate_visibility_caches();
+#endif
         mon_info_cache_dirty = true;
     }
 
@@ -2219,6 +2224,7 @@ bool game::do_turn()
         ZoneScopedN( "do_turn_weather_update" );
         weather.update_weather();
         reset_light_level();
+        MCP_ONLY( map_perception::invalidate_stale_visibility( m ); )
     }
 
     {
@@ -2386,6 +2392,8 @@ bool game::do_turn()
         ZoneScopedN( "do_turn_monster_visibility_cache" );
         m.build_map_cache( get_levz(), false );
     }
+    // The avatar sees the turn as this rebuild shows it whether or not a client draws it.
+    MCP_ONLY( map_perception::acquire( { .build_caches = false } ); )
     // This has to be done after updating our map caches, as sound propagation relies on terrain.
     if( !soundperf ) {
         ZoneScopedN( "do_turn_sound_before_monsters" );
@@ -3026,6 +3034,7 @@ auto game::run_activity_skip_batch_turns( const int skipped_turns ) -> void
 
     {
         ZoneScopedN( "activity_fixed_window_batch_submaps" );
+        MCP_ONLY( const auto field_turns = engine_client::presentation::field_watch{}; )
         MAPBUFFER_REGISTRY.for_each( [&]( const dimension_id & dim, mapbuffer & mb ) {
             if( pocket_simulation_level == pocket_sim_level::off && !dim.is_empty() ) {
                 return;
@@ -3775,7 +3784,7 @@ input_context get_default_mode_input_context()
     ctxt.register_action( "debug_sound_walls" );
     ctxt.register_action( "debug_hour_timer" );
     ctxt.register_action( "debug_mode" );
-    if( use_tiles ) {
+    if( use_tiles || protocol_engine ) {
         ctxt.register_action( "zoom_out" );
         ctxt.register_action( "zoom_in" );
     }
@@ -6032,6 +6041,8 @@ void game::world_tick()
 
     const auto fire_spread = reality_bubble_fire_spread;
     const auto do_emits = action_time_scale::once_every_this_tick( 10_seconds );
+    // The field turn changes fields in place; a client is told what the avatar sees of it.
+    MCP_ONLY( const auto field_turn = engine_client::presentation::field_watch{}; )
 
     if( !fire_spread ) {
         fire_loader.clear( submap_loader );
@@ -8156,7 +8167,7 @@ void game::moving_vehicle_dismount( const tripoint_bub_ms &dest_loc )
     }
 }
 
-void game::control_vehicle()
+void game::control_vehicle( MCP_ONLY( const std::optional<tripoint_bub_ms> &where ) )
 {
     static const itype_id fuel_type_animal( "animal" );
     int veh_part = -1;
@@ -8222,8 +8233,8 @@ void game::control_vehicle()
         if( num_valid_controls < 1 ) {
             add_msg( _( "No vehicle controls found." ) );
             return;
-        } else if( num_valid_controls > 1 ) {
-            vehicle_position = choose_adjacent( _( "Control vehicle where?" ) );
+        } else if( MCP_ONLY( where || ) num_valid_controls > 1 ) {
+            vehicle_position = MCP_ONLY( where ? where : ) choose_adjacent( _( "Control vehicle where?" ) );
             if( !vehicle_position ) {
                 return;
             }
@@ -9118,6 +9129,206 @@ void game::draw_look_around_cursor( const tripoint_bub_ms &lp, const visibility_
     }
 }
 
+#if defined(CATA_MCP)
+namespace
+{
+/// What the look view says of how well the avatar sees a square.
+auto visibility_message( const visibility_type visibility ) -> std::string
+{
+    switch( visibility ) {
+        case VIS_CLEAR:
+            return _( "Clearly visible." );
+        case VIS_BOOMER:
+            return _( "A bright pink blur." );
+        case VIS_BOOMER_DARK:
+            return _( "A pink blur." );
+        case VIS_DARK:
+            return _( "Darkness." );
+        case VIS_LIT:
+            return _( "Bright light." );
+        case VIS_HIDDEN:
+            return _( "Unseen." );
+    }
+    return {};
+}
+
+struct colored_text {
+    std::string text;
+    nc_color color;
+};
+
+/// How hard a square is to cross, with the trailing space the native view pads it with.
+auto move_cost_label( const tripoint_bub_ms &lp ) -> colored_text
+{
+    const auto move_cost = get_map().move_cost( lp );
+    return move_cost == 0 ? colored_text{ _( "Impassable " ), c_light_red } :
+           colored_text{ string_format( _( "Move cost: %d " ), move_cost * 50 ), c_light_gray };
+}
+
+/// How well lit a square is.
+auto light_label( const tripoint_bub_ms &lp ) -> colored_text
+{
+    const auto light = get_light_level( std::max( 1.0,
+                                        LIGHT_AMBIENT_LIT - get_map().ambient_light_at( lp ) + 1.0 ) );
+    return { light.first, light.second };
+}
+
+/// What the furniture on a square can dispense; empty when it dispenses nothing.
+auto dispense_label( const tripoint_bub_ms &lp, const furn_t &furniture ) -> std::string
+{
+    if( !furniture.fluid_grid || furniture.fluid_grid->role != fluid_grid_role::tank ||
+        !furniture.fluid_grid->allow_output ) { return {}; }
+    auto dispensable_liquids = std::vector<std::string> {};
+    if( furniture.fluid_grid->universal_liquids ) {
+        const auto *vars = get_map().furn_vars( lp );
+        const auto assigned_liquid = vars == nullptr ? std::string{} :
+                                     vars->get( "fluid_grid_assigned_liquid", "" );
+        if( !assigned_liquid.empty() ) {
+            dispensable_liquids.emplace_back( item::nname( itype_id( assigned_liquid ) ) );
+        }
+    } else {
+        dispensable_liquids = furniture.fluid_grid->allowed_liquids |
+        std::views::transform( []( const itype_id & liquid ) {
+            return item::nname( liquid );
+        } ) | std::ranges::to<std::vector>();
+    }
+    return dispensable_liquids.empty() ?
+           _( "Can dispense any allowed liquid; the type is assigned when filled." ) :
+           string_format( _( "Can dispense: %s." ), join( dispensable_liquids, ", " ) );
+}
+
+/// What lies below a square that has no floor; nullopt when it has one.
+auto below_label( const tripoint_bub_ms &lp ) -> std::optional<std::string>
+{
+    map &m = get_map();
+    if( lp.z() <= -OVERMAP_DEPTH || m.has_floor( lp ) ) { return std::nullopt; }
+    const auto below = tripoint_bub_ms( lp.xy(), lp.z() - 1 );
+    auto tile_below = m.tername( below );
+    if( m.has_furn( below ) ) { tile_below += ", " + m.furnname( below ); }
+    return m.has_floor_or_support( lp ) ? string_format( _( "Below: %s; Walkable" ), tile_below ) :
+           string_format( _( "Below: %s; No support" ), tile_below );
+}
+
+/// Whether the field is a fire kept in a container, which tells its fuel instead of its name.
+auto burns_in_container( const tripoint_bub_ms &lp, const field_type_id &type ) -> bool
+{
+    map &m = get_map();
+    return type.obj().has_fire && ( m.has_flag( TFLAG_FIRE_CONTAINER, lp ) ||
+                                    m.ter( lp ) == t_pit_shallow || m.ter( lp ) == t_pit );
+}
+
+/// The name of a field on a square; a fire in a container tells its fuel.
+auto field_label( const tripoint_bub_ms &lp, const field_type_id &type,
+                  const field_entry &entry ) -> std::string
+{
+    return burns_in_container( lp, type ) ? get_fire_fuel_string( lp ) : entry.name();
+}
+
+/// The trap on a square the avatar can see, or an unfinished construction.
+auto trap_label( const tripoint_bub_ms &lp ) -> std::optional<colored_text>
+{
+    map &m = get_map();
+    const trap &tr = m.tr_at( lp );
+    if( !tr.can_see( lp, get_avatar() ) ) { return std::nullopt; }
+    partial_con *pc = m.partial_con_at( lp );
+    return colored_text{ pc &&tr.loadid == tr_unfinished_construction ?
+                         string_format( _( "Unfinished task: %s, %d%% complete" ), pc->id.obj().group->name(),
+                                        pc->counter / 100000 ) : tr.name(), tr.color };
+}
+
+/// What the avatar makes out of the items on a square.
+struct item_listing {
+    struct entry {
+        std::string name;
+        int count = 0;
+        nc_color color;
+    };
+    enum class sight { none, closed_container, blind, listed };
+    sight seen = sight::none;
+    std::vector<entry> entries = {};
+};
+
+auto item_listing_of( const tripoint_bub_ms &lp ) -> item_listing
+{
+    map &m = get_map();
+    avatar &u = get_avatar();
+    if( !m.sees_some_items( lp, u ) ) { return {}; }
+    if( m.has_flag( "CONTAINER", lp ) && !m.could_see_items( lp, u ) ) {
+        return { .seen = item_listing::sight::closed_container };
+    }
+    if( ( u.has_effect( effect_blind ) || u.worn_with_flag( flag_BLIND ) ) && u.clairvoyance() < 1 ) {
+        return { .seen = item_listing::sight::blind };
+    }
+    auto names = std::map<std::string, std::pair<int, nc_color>> {};
+    for( auto &entry : m.i_at( lp ) ) {
+        ++names[entry->tname()].first;
+        names[entry->tname()].second = entry->color_in_inventory();
+    }
+    auto result = item_listing{ .seen = item_listing::sight::listed };
+    for( const auto &[name, seen] : names ) { result.entries.push_back( { name, seen.first, seen.second } ); }
+    return result;
+}
+
+/// How an item listing names `entry`: its name, and how many when there are several alike.
+auto item_label( const item_listing::entry &entry ) -> std::string
+{
+    return entry.count > 1 ? string_format(
+               pgettext( "%s is the name of the item.  %d is the quantity of that item.",
+                         "%s [%d]" ), entry.name, entry.count ) : entry.name;
+}
+
+auto more_items_label() -> std::string { return _( "More items here…" ); }
+auto closed_container_label() -> std::string { return _( "You cannot see what is inside of it." ); }
+auto blind_items_label() -> std::string { return _( "There's something there, but you can't see what it is." ); }
+
+/// The inscription on a square, labeled as the native view labels it.
+auto graffiti_label( const tripoint_bub_ms &lp ) -> std::optional<std::string>
+{
+    map &m = get_map();
+    if( !m.has_graffiti_at( lp ) ) { return std::nullopt; }
+    return string_format( m.ter( lp ) == t_grave_new ? _( "Graffiti: %s" ) : _( "Inscription: %s" ),
+                          m.graffiti_at( lp ) );
+}
+
+/// What the avatar hears of a square: from it, or from the levels above and below.
+auto heard_sounds( const tripoint_bub_ms &lp ) -> std::vector<std::string>
+{
+    if( const auto sound = sounds::sound_at( lp ); !sound.empty() ) {
+        return { string_format( _( "You heard %s from here." ), sound ) };
+    }
+    auto heard = std::vector<std::string> {};
+    // Other z-levels, from the lowest.
+    for( auto level = tripoint_bub_ms( lp.xy(), -OVERMAP_DEPTH ); level.z() <= OVERMAP_HEIGHT;
+         ++level.z() ) {
+        if( level.z() == lp.z() ) { continue; }
+        if( const auto sound = sounds::sound_at( level ); !sound.empty() ) {
+            heard.push_back( string_format( level.z() > lp.z() ? _( "You heard %s from above." ) :
+                                            _( "You heard %s from below." ), sound ) );
+        }
+    }
+    return heard;
+}
+} // namespace
+
+auto engine_client::sense_of( const Creature &who ) -> sensed_creature
+{
+    const auto &u = get_avatar();
+    const auto special = u.sees_with_specials( who );
+    auto result = sensed_creature{};
+    if( special != enchantment_vision_id::NULL_ID() ) {
+        if( special->use_normal_mon_tile() ) {
+            result.normal = true;
+        } else {
+            result.lines.emplace_back( special->get_mon_desc( who ) );
+        }
+    } else if( u.sees_with_infrared( who ) ) {
+        who.describe_infrared( result.lines );
+    }
+    return result;
+}
+
+#endif
+
 void game::print_all_tile_info( const tripoint_bub_ms &lp, const catacurses::window &w_look,
                                 const std::string &area_name, int column,
                                 int &line,
@@ -9461,6 +9672,166 @@ void game::print_graffiti_info( const tripoint_bub_ms &lp, const catacurses::win
                         m.graffiti_at( lp ) );
     }
 }
+
+#if defined(CATA_MCP)
+namespace
+{
+using engine_client::fact;
+
+/// What the look view prints of the terrain, furniture and cover on a square.
+auto terrain_facts( const tripoint_bub_ms &lp ) -> std::vector<fact>
+{
+    map &m = get_map();
+    avatar &u = get_avatar();
+    auto facts = std::vector<fact> {};
+    const auto &terrain = m.ter( lp ).obj();
+    const oter_id &cur_ter_m = get_overmapbuffer( g->get_current_dimension_id() ).ter( tripoint_abs_omt(
+                                   project_to<coords::omt>( bub_to_abs( lp ) ) ) );
+    const auto move_cost = move_cost_label( lp );
+    const auto light = light_label( lp );
+    facts.push_back( { .kind = "location", .text = cur_ter_m->get_name(),
+                       .color = cur_ter_m->get_color( uistate.overmap_show_land_use_codes ) } );
+    facts.push_back( { .kind = "move_cost", .text = move_cost.text, .color = move_cost.color,
+    .values = { { "move_cost", m.move_cost( lp ) * 50 } } } );
+    facts.push_back( { .kind = "terrain", .text = m.tername( lp ), .color = terrain.color(), .id = terrain.id.str() } );
+    facts.push_back( { .kind = "light", .text = light.text, .color = light.color } );
+    if( const auto description = terrain.description.translated(); !description.empty() ) {
+        facts.push_back( { .kind = "description", .text = description, .color = c_light_gray } );
+    }
+    if( m.has_furn( lp ) ) {
+        const auto &furniture = m.furn( lp ).obj();
+        facts.push_back( { .kind = "furniture", .text = m.furnname( lp ), .color = furniture.color(),
+                           .id = furniture.id.str() } );
+        if( const auto description = furniture.description.translated(); !description.empty() ) {
+            facts.push_back( { .kind = "description", .text = description, .color = c_light_gray } );
+        }
+        if( const auto dispense = dispense_label( lp, furniture ); !dispense.empty() ) {
+            facts.push_back( { .kind = "dispenser", .text = dispense, .color = c_light_gray } );
+        }
+    }
+    if( const auto concealment = m.coverage( lp ); concealment > 0 ) {
+        facts.push_back( { .kind = "concealment", .text = string_format( _( "Concealment: %d%%" ), concealment ),
+        .color = c_dark_gray, .values = { { "percent", concealment } } } );
+    }
+    const auto cover = m.has_furn( lp ) ? m.furn( lp ).obj().bash.ranged->block_unaimed_chance :
+                       terrain.bash.ranged->block_unaimed_chance;
+    if( cover > 0_pct ) {
+        facts.push_back( { .kind = "cover", .text = string_format( _( "Cover: %d%%" ), cover / 1_pct ),
+        .color = c_dark_gray, .values = { { "percent", cover / 1_pct } } } );
+    }
+    if( const auto features = m.features( lp ); !features.empty() ) {
+        facts.push_back( { .kind = "features", .text = features, .color = c_dark_gray } );
+    }
+    if( const auto signage = m.get_signage( lp ); !signage.empty() ) {
+        facts.push_back( { .kind = "sign", .text = string_format( _( "Sign: %s" ), u.has_trait( trait_ILLITERATE ) ? "???" : signage ),
+                           .color = c_light_gray } );
+    }
+    if( const auto below = below_label( lp ) ) {
+        facts.push_back( { .kind = "below", .text = *below, .color = c_dark_gray } );
+    }
+    return facts;
+}
+
+/// What the look view prints of the fields and trap on a square.
+auto field_facts( const tripoint_bub_ms &lp ) -> std::vector<fact>
+{
+    auto facts = std::vector<fact> {};
+    for( const auto &[type, entry] : get_map().field_at( lp ) ) {
+        facts.push_back( { .kind = "field", .text = field_label( lp, type, entry ), .color = entry.color(),
+        .id = entry.get_field_type().id().str(), .values = { { "intensity", entry.get_field_intensity() } } } );
+    }
+    if( const auto trap = trap_label( lp ) ) {
+        facts.push_back( { .kind = "trap", .text = trap->text, .color = trap->color, .id = get_map().tr_at( lp ).id.str() } );
+    }
+    return facts;
+}
+
+/// What the look view prints of the vehicle part on a square and the parts mounted with it.
+auto vehicle_facts( const optional_vpart_position &vp ) -> std::vector<fact>
+{
+    auto facts = std::vector<fact> {};
+    if( !vp ) { return facts; }
+    facts.push_back( { .kind = "vehicle", .text = vp->vehicle().name, .color = c_white } );
+    const auto mounted = vp->vehicle().parts_at_relative( vp->mount(), true );
+    for( const auto &[index, part] : std::views::enumerate( mounted ) ) {
+        const auto label = part_list_label_of( vp->vehicle(), part, false );
+        facts.push_back( { .kind = "vehicle_part", .text = label.open + label.name + label.close,
+                           .detail = index != 0 ? std::string{} : vp->is_inside() ? _( "Interior" ) : _( "Exterior" ) } );
+    }
+    if( const auto label = vp.get_label() ) { facts.push_back( { .kind = "vehicle_part", .text = string_format( _( "Label: %s" ), *label ) } ); }
+    return facts;
+}
+
+/// What the look view prints of the items on a square: a line per name, with how many alike. The wire keeps to
+/// `item_limit` of them and says there are more.
+auto item_facts( const tripoint_bub_ms &lp ) -> std::vector<fact>
+{
+    constexpr auto item_limit = 12;
+    const auto listing = item_listing_of( lp );
+    auto facts = std::vector<fact> {};
+    switch( listing.seen ) {
+        case item_listing::sight::none:
+            break;
+        case item_listing::sight::closed_container:
+            facts.push_back( { .kind = "item", .text = closed_container_label() } );
+            break;
+        case item_listing::sight::blind:
+            facts.push_back( { .kind = "item", .text = blind_items_label(), .color = c_yellow } );
+            break;
+        case item_listing::sight::listed:
+            for( const auto &entry : listing.entries | std::views::take( item_limit ) ) {
+                facts.push_back( { .kind = "item", .text = item_label( entry ), .color = entry.color,
+                .values = { { "count", entry.count } } } );
+            }
+            if( const auto listed = static_cast<int>( listing.entries.size() ); listed > item_limit ) {
+                facts.push_back( { .kind = "more_items", .text = more_items_label(), .color = c_yellow,
+                .values = { { "more", listed - item_limit } } } );
+            }
+            break;
+    }
+    return facts;
+}
+
+auto append( std::vector<fact> &facts, std::vector<fact> &&more ) -> void
+{
+    std::ranges::move( more, std::back_inserter( facts ) );
+}
+} // namespace
+
+auto engine_client::tile_parts( const tripoint_bub_ms &lp ) -> std::vector<tile_part>
+{
+    map &m = get_map();
+    avatar &u = get_avatar();
+    const auto &cache = m.get_visibility_variables_cache();
+    const auto inbounds = m.inbounds( lp );
+    const auto visibility = inbounds ? m.get_visibility( m.apparent_light_at( lp, cache ),
+                            cache ) : VIS_HIDDEN;
+    const Creature *const creature = g->critter_at( lp, true );
+    auto facts = std::vector<fact> {};
+    if( visibility == VIS_CLEAR ) {
+        append( facts, terrain_facts( lp ) );
+        append( facts, field_facts( lp ) );
+        if( creature != nullptr && ( u.sees( *creature ) || creature == &u ) ) { append( facts, creature_facts( *creature ) ); }
+        append( facts, vehicle_facts( m.veh_at( lp ) ) );
+        append( facts, item_facts( lp ) );
+        if( const auto label = graffiti_label( lp ) ) {
+            facts.push_back( { .kind = "inscription", .text = *label, .color = c_light_gray } );
+        }
+    } else {
+        facts.push_back( { .kind = "visibility", .text = visibility_message( visibility ), .color = c_light_gray } );
+        if( creature != nullptr ) {
+            const auto sensed = sense_of( *creature );
+            if( sensed.normal ) { append( facts, creature_facts( *creature ) ); }
+            for( const auto &line : sensed.lines ) { facts.push_back( { .kind = "creature", .text = line } ); }
+        }
+    }
+    if( inbounds ) {
+        for( const auto &heard : heard_sounds( lp ) ) { facts.push_back( { .kind = "sound", .text = heard } ); }
+    }
+    return to_parts( facts );
+}
+
+#endif
 
 bool game::check_zone( const zone_type_id &type, const tripoint_bub_ms &where ) const
 {
@@ -9821,6 +10192,105 @@ void game::zones_manager()
         wnoutrefresh( w_zones );
     } );
 
+#if defined(CATA_MCP)
+    // A zone is named by its type and area, and by how many alike precede it.
+    const auto zone_row_id = [&]( const std::size_t index ) {
+        const auto id_of = [&]( const zone_data & zone ) {
+            return "zone:" + zone.get_type().str() + ":" + zone.get_start_point().to_string() + ":" +
+                   zone.get_end_point().to_string();
+        };
+        const auto own = id_of( zones[index].get() );
+        const auto alike = std::ranges::count_if( zones | std::views::take( index ), [&](
+        const auto & ref ) {
+            return id_of( ref.get() ) == own;
+        } );
+        return alike == 0 ? own : own + "#" + std::to_string( alike );
+    };
+    static constexpr auto display_actions = std::array{ "SHOW_ALL_ZONES", "TOGGLE_ZONE_OVERLAY", "debug_submap_grid" };
+    const auto zones_screen = engine_client::screen_scope( ctxt, "zones", {
+        .view = [&]( const engine_client::boundary_state & )
+        {
+            namespace ec = engine_client;
+            const auto here = u.abs_pos();
+            const auto zone_row = [&]( const std::size_t i ) {
+                const auto &zone = zones[i].get();
+                const auto center = zone.get_center_point();
+                return ec::row{
+                    .id = zone_row_id( i ), .label = zone.get_name(),
+                    .columns = {
+                        { .key = "type", .label = _( "Type" ), .value = mgr.get_name_from_type( zone.get_type() ) },
+                        { .key = "distance", .label = _( "Distance" ), .value = std::to_string( static_cast<int>( trig_dist( here, center ) ) ) },
+                        { .key = "direction", .label = _( "Direction" ), .value = direction_name_short( direction_from( here, center ) ) },
+                        { .key = "vehicle", .label = _( "Vehicle" ), .value = zone.get_is_vehicle() ? _( "Yes" ) : _( "No" ) },
+                    },
+                    .toggled = zone.get_enabled(),
+                };
+            };
+            const auto toggled = [&]( const std::string & id ) {
+                return ( id == "SHOW_ALL_ZONES" && show_all_zones ) ||
+                       ( id == "TOGGLE_ZONE_OVERLAY" && show_zone_overlay ) ||
+                       ( id == "debug_submap_grid" && ( debug_submap_grid_overlay || zone_submap_grid_overlay ) );
+            };
+            auto list_stats = std::vector<ec::panel_stat> {};
+            if( zone_cnt == 0 ) {
+                list_stats.push_back( { .key = "none", .label = _( "No Zones defined." ) } );
+            }
+            auto parts = std::vector<ec::component> {
+                ec::panel( {
+                    .id = "zones:list", .title = _( "Zones" ), .stats = std::move( list_stats ),
+                    .child = ec::list( {
+                        .id = "zones:rows",
+                        .rows = std::views::iota( std::size_t{ 0 }, zones.size() ) | std::views::transform( zone_row ) | std::ranges::to<std::vector>(),
+                        .selection = "single", .activate = "zones:pick",
+                    } ),
+                } ),
+            };
+            if( zone_cnt > 0 && zones[active_index].get().has_options() ) {
+                const auto descriptions = zones[active_index].get().get_options().get_descriptions();
+                parts.push_back( ec::panel( {
+                    .id = "zones:options", .title = _( "Options" ),
+                    .stats = std::views::iota( std::size_t{ 0 }, descriptions.size() ) | std::views::transform( [&]( const std::size_t i )
+                    {
+                        return ec::panel_stat{ .key = "option:" + std::to_string( i ), .label = remove_color_tags( descriptions[i].first ), .value = remove_color_tags( descriptions[i].second ) };
+                    } ) | std::ranges::to<std::vector>(),
+                } ) );
+            }
+            parts.push_back( ec::list( {
+                .id = "zones:display",
+                .rows = display_actions | std::views::transform( [&]( const std::string & id )
+                {
+                    return ec::row{ .id = id, .label = remove_color_tags( ctxt.get_action_name( id ) ), .hotkey = ctxt.key_bound_to( id ), .toggled = toggled( id ) };
+                } ) | std::ranges::to<std::vector>(),
+                .selection = "single", .activate = "zones:toggle",
+            } ) );
+            auto denials = std::vector<ec::denial> {};
+            if( zone_cnt == 0 ) {
+                for( const auto *id : { "REMOVE_ZONE", "CONFIRM", "SHOW_ZONE_ON_MAP", "ENABLE_ZONE", "DISABLE_ZONE" } ) {
+                    denials.push_back( { .id = id, .reason = _( "No Zones defined." ) } );
+                }
+            }
+            if( zone_cnt < 2 ) {
+                for( const auto *id : { "MOVE_ZONE_UP", "MOVE_ZONE_DOWN" } ) {
+                    denials.push_back( { .id = id, .reason = _( "There is no other zone to swap with." ) } );
+                }
+            }
+            return ec::screen_view{
+                .title = _( "Zones" ),
+                .root = ec::split( { .id = "zones", .children = std::move( parts ) } ),
+                .affordances = {
+                    ec::invoke_affordance( { .id = "zones:pick", .label = _( "Select" ), .args = { .row = ec::row_shape{ .component_id = "zones:rows" } }, .role = "select" } ),
+                    ec::invoke_affordance( { .id = "zones:toggle", .label = _( "Toggle" ), .args = { .row = ec::row_shape{ .component_id = "zones:display" } } } ),
+                },
+                .denials = std::move( denials ),
+                .focus_component = "zones:rows",
+                .focus_row = zone_cnt > 0 ? zone_row_id( active_index ) : std::string{},
+                // Natively the window covers the sidebar beside the map it outlines.
+                .dock = "overlapping",
+            };
+        }
+    } );
+#endif
+
     zones_manager_open = true;
     do {
         if( action == "ADD_ZONE" ) {
@@ -10030,6 +10500,22 @@ void game::zones_manager()
 
         //Wait for input
         action = ctxt.handle_input();
+#if defined(CATA_MCP)
+        // A client picks a zone, which the native cursor moves to, or a display toggle, which runs its action.
+        if( const auto call = engine_client::invoked( ctxt.get_raw_input() ); call && call->args.row ) {
+            const auto &row = *call->args.row;
+            action = call->affordance_id == "zones:toggle" &&
+                     std::ranges::contains( display_actions, row ) ? row : std::string{};
+            if( call->affordance_id == "zones:pick" ) {
+                const auto at = std::views::iota( std::size_t{ 0 }, zones.size() );
+                if( const auto found = std::ranges::find( at, row, zone_row_id ); found != at.end() ) {
+                    active_index = static_cast<int>( *found );
+                    // Enter on a zone opens its edit menu, as the native key does.
+                    action = call->activates ? "CONFIRM" : "";
+                }
+            }
+        }
+#endif
     } while( action != "QUIT" );
     zones_manager_open = false;
     ctxt.reset_timeout();
@@ -10072,7 +10558,7 @@ std::optional<tripoint_bub_ms> game::look_around( look_around_mode mode )
 
 look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
                                       const tripoint_bub_ms &start_point, bool has_first_point, bool select_zone, bool peeking,
-                                      bool is_moving_zone, const tripoint_bub_ms &end_point, look_around_mode mode )
+                                      bool is_moving_zone, const tripoint_bub_ms &end_point, look_around_mode /*mode*/ )
 {
     bVMonsterLookFire = false;
     temp_exit_fullscreen();
@@ -10250,6 +10736,35 @@ look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
     }
     mark_main_ui_adaptor_resize();
 #endif
+#if defined(CATA_MCP)
+    const auto position_of = []( const tripoint_bub_ms & position ) {
+        return game_client::interaction_position{ .x = position.x(), .y = position.y(), .z = position.z() };
+    };
+    const auto minimum = tripoint_bub_ms( 0, 0, -OVERMAP_DEPTH );
+    const auto maximum = tripoint_bub_ms( g_mapsize_x - 1, g_mapsize_y - 1, OVERMAP_HEIGHT );
+    const auto look_screen = engine_client::screen_scope( ctxt, "look", {
+        .view = [&]( const engine_client::boundary_state & )
+        {
+            return target_screen::screen_of( {
+                .title = _( "Look Around" ),
+                .target = {
+                    .source = position_of( u.bub_pos() ),
+                    .cursor = position_of( lp ),
+                    .minimum_position = position_of( minimum ),
+                    .maximum_position = position_of( maximum ),
+                    .range = std::max( g_mapsize_x, g_mapsize_y ),
+                    .distance_metric = "square",
+                    .status = is_moving_zone ? "zone_move" : !select_zone ? "look" :
+                    has_first_point ? "zone_second" : "zone_first",
+                    .status_text = is_moving_zone ? _( "Moving zone." ) : !select_zone ? std::string() :
+                    has_first_point ? _( "Select second point." ) : _( "Select first point." ),
+                    .parts = engine_client::tile_parts( lp ),
+                },
+                .ctxt = ctxt,
+            } );
+        },
+    } );
+#endif
     do {
         u.view_offset = center - u.bub_pos();
         if( select_zone ) {
@@ -10287,6 +10802,14 @@ look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
             action = ctxt.handle_input();
         }
         ( void ) zone_blink; // kept for callback signature
+#if defined(CATA_MCP)
+        // The screen's move only names squares inside its bounds; anything else was refused. Like the native
+        // mouse it moves the cursor, not the view.
+        if( const auto moved = target_screen::moved_to( ctxt.get_raw_input() ) ) {
+            lp = *moved;
+            continue;
+        }
+#endif
         if( action == "LIST_ITEMS" ) {
             list_items_monsters();
         } else if( action == "TOGGLE_FAST_SCROLL" ) {
@@ -12203,6 +12726,18 @@ game::vmenu_ret game::list_monsters( const std::vector<Creature *> &monster_list
 
     return game::vmenu_ret::QUIT;
 }
+
+#if defined(CATA_MCP)
+auto game::choose_fire_target( const Creature &target ) -> bool
+{
+    if( rl_dist( u.bub_pos(), target.bub_pos() ) > u.primary_weapon().gun_range( &u ) ) {
+        return false;
+    }
+    u.last_target = shared_from( target );
+    u.recoil = MAX_RECOIL;
+    return true;
+}
+#endif
 
 void game::drop()
 {

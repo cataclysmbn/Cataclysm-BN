@@ -393,6 +393,11 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
 
     _canceled = false;
     _confirmed = false;
+#if defined(CATA_MCP)
+    // A drawing-only call reads no input, so it is no screen of its own.
+    auto screen = std::optional<engine_client::screen_scope> {};
+    if( !draw_only && !embedded ) { screen.emplace( *ctxt, "text_input" ); }
+#endif
     do {
         if( _position < 0 ) {
             _position = 0;

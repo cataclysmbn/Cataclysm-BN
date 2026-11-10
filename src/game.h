@@ -950,7 +950,17 @@ class game : public submap_load_listener
         bool grabbed_veh_move( const tripoint_rel_ms &dp );
         auto grabbed_furn_move( const tripoint_rel_ms &dp ) -> bool;
 
+#if defined(CATA_MCP)
+        /// Aims the next shot at @p target from scratch, as firing at it from the creature list does;
+        /// false when it is beyond the range of the wielded gun.
+        auto choose_fire_target( const Creature &target ) -> bool;
+#endif
+#if defined(CATA_MCP)
+        /// Uses vehicle controls  '^'; @p where picks the adjacent controls the native prompt would ask for.
+        auto control_vehicle( const std::optional<tripoint_bub_ms> &where = std::nullopt ) -> void;
+#else
         void control_vehicle(); // Use vehicle controls  '^'
+#endif
         void examine( const tripoint_bub_ms &p ); // Examine nearby terrain  'e'
         void examine();
 

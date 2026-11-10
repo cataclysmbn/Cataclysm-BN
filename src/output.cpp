@@ -413,6 +413,15 @@ void scrollable_text( const std::function<catacurses::window()> &init_window,
         wnoutrefresh( w );
     } );
 
+    MCP_ONLY( const auto screen = engine_client::screen_scope( ctxt, "scrollable_text", { .view = [&]( const engine_client::boundary_state & )
+    {
+        return engine_client::screen_view{
+            .title = title,
+            .root = engine_client::component{ .id = "text:body", .body = engine_client::text_body{ .markup = text } },
+        };
+    }
+                                                                                        } ); )
+
     std::string action;
     do {
         ui_manager::redraw();
@@ -1888,6 +1897,8 @@ void scrollingcombattext::add( point pos, direction p_oDir,
                                const std::string &p_sText2, const game_message_type p_gmt2,
                                const std::string &p_sType )
 {
+    MCP_ONLY( engine_client::presentation::record_text( pos, p_oDir, p_sType, p_sText, p_gmt, p_sText2,
+              p_gmt2 ); )
     // TODO: A non-hack
     if( test_mode ) {
         return;

@@ -426,6 +426,25 @@ static bool handle_emote( player &u, efftype_id effect, int emote_choice )
     return true;
 }
 
+#if defined(CATA_MCP)
+auto can_chat_with( const Character &you, const npc &guy ) -> bool
+{
+    // TODO: Get rid of the z-level check when z-level vision gets "better"
+    return you.bub_pos().z() == guy.bub_pos().z() && you.sees( guy.bub_pos() ) &&
+           rl_dist( you.bub_pos(), guy.bub_pos() ) <= SEEX * 2;
+}
+
+auto refuse_faceless_speech( Character &you ) -> bool
+{
+    if( !you.has_trait( trait_PROF_FOODP ) || you.is_wearing( itype_id( "foodperson_mask" ) ) ||
+        you.is_wearing( itype_id( "foodperson_mask_on" ) ) ) {
+        return false;
+    }
+    you.add_msg_if_player( m_warning, to_translation( "You can't speak without your face!" ) );
+    return true;
+}
+
+#endif
 void game::chat()
 {
     int volume = u.get_shout_volume();

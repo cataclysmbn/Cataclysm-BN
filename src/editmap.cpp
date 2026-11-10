@@ -1,4 +1,5 @@
 #include "editmap.h"
+#include "mcp_hooks.h"
 
 #include "avatar.h"
 #include "calendar.h"
@@ -337,6 +338,119 @@ shared_ptr_fast<ui_adaptor> editmap::create_or_get_ui_adaptor()
     return current_ui;
 }
 
+#if defined(CATA_MCP)
+namespace
+{
+
+/// What differs between the map editor screens: their title and target status.
+struct editmap_screen {
+    std::string title;
+    std::string status;
+};
+
+/// What the map editor tells of the square under its cursor: the terrain, furniture, fields, trap, what stands on it
+/// and its items, with their ids.
+auto editmap_parts( const tripoint_bub_ms &at ) -> std::vector<engine_client::tile_part>
+{
+    auto &here = get_map();
+    auto facts = std::vector<engine_client::fact> {};
+    const auto &terrain = here.ter( at ).obj();
+    facts.push_back( { .kind = "terrain", .text = terrain.name(), .id = terrain.id.str(),
+    .values = { { "move_cost", terrain.movecost } } } );
+    if( here.furn( at ).to_i() > 0 ) {
+        const auto &furniture = here.furn( at ).obj();
+        facts.push_back( { .kind = "furniture", .text = furniture.name(), .id = furniture.id.str(),
+        .values = { { "move_cost", furniture.movecost } } } );
+    }
+    for( const auto &fld : here.get_field( at ) ) {
+        const auto &entry = fld.second;
+        facts.push_back( { .kind = "field", .text = remove_color_tags( entry.name() ),
+                           .id = entry.get_field_type().id().str(),
+        .values = { { "intensity", entry.get_field_intensity() },
+            { "age", to_turns<int>( entry.get_field_age() ) }
+        } } );
+    }
+    if( const auto &trap = here.tr_at( at ); trap.loadid != tr_null ) {
+        facts.push_back( { .kind = "trap", .text = trap.name(), .id = trap.id.str() } );
+    }
+    if( const auto *critter = g->critter_at( at ) ) {
+        facts.push_back( { .kind = "creature", .text = critter->disp_name() } );
+    } else if( const auto vp = here.veh_at( at ) ) {
+        facts.push_back( { .kind = "vehicle", .text = vp->vehicle().name } );
+    }
+    if( const auto items = here.i_at( at ); !items.empty() ) {
+        facts.push_back( { .kind = "item", .text = ( *items.begin() )->tname(),
+        .values = { { "count", static_cast<int>( items.size() ) } } } );
+    }
+    return engine_client::to_parts( facts );
+}
+
+/// A bubble square as the interaction model holds it.
+auto position_of( const tripoint_bub_ms &position ) -> game_client::interaction_position
+{
+    return { .x = position.x(), .y = position.y(), .z = position.z() };
+}
+
+/// The rectangle that holds `squares`, which lie on one z-level.
+auto corners_of( const auto &squares ) -> game_client::interaction_target_mark::corners
+{
+    namespace ranges = std::ranges;
+    using namespace std::views;
+    const auto xs = ranges::minmax( squares | transform( []( const tripoint_bub_ms & p ) { return p.x(); } ) );
+    const auto ys = ranges::minmax( squares | transform( []( const tripoint_bub_ms & p ) { return p.y(); } ) );
+    const auto z = ( *ranges::begin( squares ) ).z();
+    return { .min = { .x = xs.min, .y = ys.min, .z = z }, .max = { .x = xs.max, .y = ys.max, .z = z } };
+}
+
+/// What the native overlay highlights besides the cursor: the target list, whose mapgen border is the edge of a
+/// rectangle while a selection takes any shape, and the corners it marks around a mapgen preview.
+auto editmap_marks( const editmap &em ) -> std::vector<game_client::interaction_target_mark>
+{
+    namespace ranges = std::ranges;
+    using namespace std::views;
+    auto marks = std::vector<game_client::interaction_target_mark> {};
+    if( !em.target_list.empty() ) {
+        marks.push_back( em.target_list_role == "selection"
+                         ? game_client::interaction_target_mark{ .role = em.target_list_role, .squares = em.target_list | transform( position_of ) | ranges::to<std::vector>() }
+                         : game_client::interaction_target_mark{ .role = em.target_list_role, .rect = corners_of( em.target_list ) } );
+    }
+    if( const auto stamp = em.hilights.find( "mapgentgt" );
+        stamp != em.hilights.end() && !stamp->second.points.empty() ) {
+        marks.push_back( { .role = "stamp", .rect = corners_of( stamp->second.points | keys ) } );
+    }
+    return marks;
+}
+
+/// The map editor as a client sees it: the cursor with the native bounds, the tile under it and what the overlay
+/// highlights; its actions are the input context's.
+auto editmap_view( const editmap &em, const input_context &ctxt,
+                   const editmap_screen &screen ) -> engine_client::screen_view
+{
+    return target_screen::screen_of( {
+        .title = screen.title,
+        .target = {
+            .source = position_of( get_player_character().bub_pos() ),
+            .cursor = position_of( em.target ),
+            .minimum_position = game_client::interaction_position{ .x = 0, .y = 0, .z = -OVERMAP_DEPTH },
+            .maximum_position = game_client::interaction_position{ .x = g_mapsize_x - 1, .y = g_mapsize_y - 1, .z = OVERMAP_HEIGHT },
+            .range = std::max( g_mapsize_x, g_mapsize_y ),
+            .distance_metric = "square",
+            .status = screen.status,
+            .parts = editmap_parts( em.target ),
+            .marks = editmap_marks( em ),
+        },
+        .stats = { {
+                .key = "show_all", .label = remove_color_tags( ctxt.get_action_name( "EDITMAP_SHOW_ALL" ) ),
+                .value = em.uberdraw ? _( "On" ) : _( "Off" ), .tone = em.uberdraw ? "good" : ""
+            }
+        },
+        .ctxt = ctxt,
+    } );
+}
+
+} // namespace
+
+#endif
 std::optional<tripoint_bub_ms> editmap::edit()
 {
     restore_on_out_of_scope<tripoint_rel_ms> view_offset_prev( g->u.view_offset );
@@ -375,6 +489,15 @@ std::optional<tripoint_bub_ms> editmap::edit()
     restore_on_out_of_scope<std::string> info_txt_prev( info_txt_curr );
     restore_on_out_of_scope<std::string> info_title_prev( info_title_curr );
 
+#if defined(CATA_MCP)
+    // One screen for the whole session, so a key queued against it is not refused as stale.
+    const auto screen = engine_client::screen_scope( ctxt, "editmap", {
+        .view = [&]( const engine_client::boundary_state & )
+        {
+            return editmap_view( *this, ctxt, { .title = _( "Map editor" ), .status = "editmap" } );
+        },
+    } );
+#endif
     do {
         if( target_list.empty() ) {
             target_list.push_back( target ); // 'editmap.target_list' always has point 'editmap.target' at least
@@ -402,6 +525,16 @@ std::optional<tripoint_bub_ms> editmap::edit()
         ui_manager::redraw();
 
         action = ctxt.handle_input( get_option<int>( "BLINK_SPEED" ) );
+#if defined(CATA_MCP)
+        if( const auto clicked = target_screen::moved_to( ctxt.get_raw_input() ) ) {
+            origin += *clicked - target;
+            target = *clicked;
+            recalc_target( editshape );
+            action.clear();
+        } else {
+            action = game_client::action_of( ctxt, action, []( const std::string & ) { return std::string(); } );
+        }
+#endif
 
         if( action == "EDIT_TERRAIN" ) {
             edit_feature<ter_t>();
@@ -1603,6 +1736,18 @@ int editmap::select_shape( shapetype shape, int mode )
     restore_on_out_of_scope<std::string> info_txt_prev( info_txt_curr );
     restore_on_out_of_scope<std::string> info_title_prev( info_title_curr );
 
+#if defined(CATA_MCP)
+    // One screen for the whole session, so a key queued against it is not refused as stale.
+    const auto screen = engine_client::screen_scope( ctxt, "editmap_shape", {
+        .view = [&]( const engine_client::boundary_state & )
+        {
+            return editmap_view( *this, ctxt, {
+                .title = moveall ? _( "Moving selection" ) : _( "Resizing selection" ),
+                .status = moveall ? "editmap_shape_move" : "editmap_shape_resize",
+            } );
+        },
+    } );
+#endif
     do {
         if( moveall ) {
             info_txt_curr = string_format( pgettext( "keybinding descriptions", "%s, %s, %s, %s, %s" ),
@@ -1627,6 +1772,16 @@ int editmap::select_shape( shapetype shape, int mode )
         do_ui_invalidation();
         ui_manager::redraw();
         action = ctxt.handle_input( get_option<int>( "BLINK_SPEED" ) );
+#if defined(CATA_MCP)
+        if( const auto clicked = target_screen::moved_to( ctxt.get_raw_input() ) ) {
+            origin += moveall ? *clicked - target : tripoint_rel_ms::zero();
+            target = *clicked;
+            update = true;
+            action.clear();
+        } else {
+            action = game_client::action_of( ctxt, action, []( const std::string & ) { return std::string(); } );
+        }
+#endif
         if( action == "RESIZE" ) {
             if( !moveall ) {
                 const int offset = 16;
@@ -1983,8 +2138,23 @@ void editmap::mapgen_retarget()
     } );
     restore_on_out_of_scope<std::string> info_txt_prev( info_txt_curr );
     restore_on_out_of_scope<std::string> info_title_prev( info_title_curr );
+#if defined(CATA_MCP)
+    restore_on_out_of_scope<std::string> target_list_role_prev( target_list_role );
+    target_list_role = "omt_border";
+#endif
 
     blink = true;
+#if defined(CATA_MCP)
+    // One screen for the whole session, so a key queued against it is not refused as stale.
+    const auto screen = engine_client::screen_scope( ctxt, "editmap_mapgen", {
+        .view = [&]( const engine_client::boundary_state & )
+        {
+            return editmap_view( *this, ctxt, {
+                .title = pgettext( "map generator", "Mapgen: Moving target" ), .status = "editmap_retarget",
+            } );
+        },
+    } );
+#endif
     do {
         info_txt_curr = string_format( pgettext( "keybinding descriptions", "%s, %s" ),
                                        ctxt.describe_key_and_name( "CONFIRM" ),
@@ -1994,9 +2164,20 @@ void editmap::mapgen_retarget()
 
         ui_manager::redraw();
         action = ctxt.handle_input( get_option<int>( "BLINK_SPEED" ) );
+#if defined(CATA_MCP)
+        const auto clicked = target_screen::moved_to( ctxt.get_raw_input() );
+        if( !clicked ) {
+            action = game_client::action_of( ctxt, action, []( const std::string & ) { return std::string(); } );
+        }
+        const std::optional<tripoint_rel_ms> vec = clicked ? std::nullopt : ctxt.get_direction( action );
+        if( clicked || vec ) {
+            auto ptarget = clicked ? *clicked :
+                           target + vec->xy() * coords::map_squares_per( coords::scale::overmap_terrain );
+#else
         if( const std::optional<tripoint_rel_ms> vec = ctxt.get_direction( action ) ) {
             auto vec_ms = vec->xy() * coords::map_squares_per( coords::scale::overmap_terrain );
             auto ptarget = target + vec_ms;
+#endif
             if( editmap_boundaries().contains( ptarget ) &&
                 editmap_boundaries().contains( ptarget + point( SEEX, SEEY ) ) ) {
                 target = ptarget;
@@ -2013,7 +2194,8 @@ void editmap::mapgen_retarget()
             }
         }
         blink = action == "TIMEOUT" ? !blink : true;
-    } while( action != "QUIT" && action != "CONFIRM" );
+    }
+    while( action != "QUIT" && action != "CONFIRM" );
     if( action != "CONFIRM" ) {
         target = origm;
     }
@@ -2055,6 +2237,10 @@ void editmap::edit_mapgen()
     } );
     restore_on_out_of_scope<std::string> info_txt_prev( info_txt_curr );
     restore_on_out_of_scope<std::string> info_title_prev( info_title_curr );
+#if defined(CATA_MCP)
+    restore_on_out_of_scope<std::string> target_list_role_prev( target_list_role );
+    target_list_role = "omt_border";
+#endif
     map &here = get_map();
 
     do {
