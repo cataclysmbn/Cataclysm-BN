@@ -1700,6 +1700,7 @@ void explosion_funcs::regular( const queued_explosion &qe )
                                             _( "the shrapnel" );
             std::string damage_description = ( pr.second > 0 ) ?
                                              string_format( _( "taking %d damage" ), pr.second ) :
+                                             critter->is_player() ? _( "but take no damage" ) :
                                              _( "but takes no damage" );
             if( critter->is_player() ) {
                 add_msg( _( "You are hit by %s, %s." ),
