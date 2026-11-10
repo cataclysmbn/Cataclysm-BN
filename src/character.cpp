@@ -12252,7 +12252,7 @@ bool Character::can_hear( const tripoint_bub_ms &source, const int volume ) cons
     if( source == bub_pos() ) {
         return true;
     }
-    const auto cache = get_map().get_cache_ref( bub_pos().z() );
+    const auto &cache = get_map().get_cache_ref( bub_pos().z() );
     const int dist = rl_dist( source, bub_pos() );
     const float volume_multiplier = hearing_ability();
     // terrain absorption at the characters location.
