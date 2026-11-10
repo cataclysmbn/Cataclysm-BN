@@ -88,10 +88,9 @@ auto is_held_pet_food( const mtype &type, const item &held ) -> bool
            ( !held.is_container_empty() && matches_pet_food( type, held.get_contained() ) );
 }
 
-auto find_wanted_food_here( const monster &mon ) -> item *
+auto find_wanted_food_at( const monster &mon, const tripoint_bub_ms &pos ) -> item *
 {
     auto &here = get_map();
-    const auto pos = mon.bub_pos();
     if( !here.has_items( pos ) ) {
         return nullptr;
     }
@@ -204,12 +203,17 @@ auto holds_position( const monster &mon ) -> bool
     return rl_dist( mon.bub_pos(), g->u.bub_pos() ) <= 1 && is_lured_by_held_food( mon, g->u );
 }
 
+auto is_feeding( const monster &mon ) -> bool
+{
+    return mon.has_effect( effect_mon_feeding );
+}
+
 auto process_feeding( monster &mon ) -> bool
 {
     if( !seeks_food( mon ) ) {
         return false;
     }
-    const auto *food = find_wanted_food_here( mon );
+    const auto *food = find_wanted_food_at( mon, mon.bub_pos() );
     const auto seen = g->u.sees( mon );
     if( mon.has_effect( effect_mon_feeding ) ) {
         // Fleeing, chasing or being led away leaves the meal unfinished.

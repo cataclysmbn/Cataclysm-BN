@@ -50,6 +50,7 @@
 #include "mondefense.h"
 #include "monfaction.h"
 #include "mongroup.h"
+#include "monster_food_lure.h"
 #include "morale_types.h"
 #include "mtype.h"
 #include "mutation.h"
@@ -1544,7 +1545,10 @@ bool monster::avoid_trap( const tripoint_bub_ms & /* pos */, const trap &tr ) co
     if( digging() || flies() ) {
         return true;
     }
-    return dice( 3, static_cast<int>( get_dodge_base() + 1 ) ) >= dice( 3, tr.get_avoidance() );
+    // Dodge can be negative, but rng() swaps reversed bounds, so fewer than one side would make
+    // the roll less predictable instead of worse.
+    const auto sides = std::max( 1, static_cast<int>( get_dodge() + 1 ) );
+    return dice( 3, sides ) >= dice( 3, tr.get_avoidance() );
 }
 
 bool monster::has_flag( const m_flag f ) const
@@ -1649,15 +1653,21 @@ int monster::sight_range( const int light_level ) const
         return 1;
     }
     static const int default_daylight = default_daylight_level();
-    if( light_level == 0 ) {
-        return type->vision_night;
-    } else if( light_level == default_daylight ) {
-        return type->vision_day;
+    const auto range = [&]() {
+        if( light_level == 0 ) {
+            return type->vision_night;
+        } else if( light_level == default_daylight ) {
+            return type->vision_day;
+        }
+        return ( light_level * type->vision_day + ( default_daylight - light_level ) *
+                 type->vision_night ) / default_daylight;
     }
-    int range = light_level * type->vision_day + ( default_daylight - light_level ) *
-                type->vision_night;
-    range /= default_daylight;
+    ();
 
+    // An animal busy eating keeps its head down.
+    if( food_lure::is_feeding( *this ) ) {
+        return std::max( 1, range / food_lure::feeding_sight_divisor );
+    }
     return range;
 }
 

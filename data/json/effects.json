@@ -1644,6 +1644,7 @@
     "desc": [ "This animal is busy eating.  It dodges poorly and does not see far until it finishes or is disturbed." ],
     "rating": "bad",
     "max_duration": "5 m",
+    "base_mods": { "dodge_mod": [ -3 ] },
     "show_in_info": true
   },
   {

@@ -22,6 +22,8 @@ inline constexpr auto lure_radius = 8;
 inline constexpr auto feeding_time = 1_minutes;
 /// Duration of the well fed effect granted by any meal.
 inline constexpr auto well_fed_duration = 24_hours;
+/// Sight range is divided by this while eating.
+inline constexpr auto feeding_sight_divisor = 2;
 
 /// Comestibles lying on one tile, gathered on the main thread for monster planning.
 struct lure_tile {
@@ -74,6 +76,9 @@ auto pick_lure_goal( const lure_goal_query &query ) -> std::optional<tripoint_bu
 
 /// Whether the monster should stay put instead of wandering, e.g. next to someone holding food.
 auto holds_position( const monster &mon ) -> bool;
+
+/// Whether the monster is eating.
+auto is_feeding( const monster &mon ) -> bool;
 
 /// Starts, continues, interrupts or finishes a meal on the monster's own tile.
 /// Eating never tames. Returns true when eating took the monster's turn.
