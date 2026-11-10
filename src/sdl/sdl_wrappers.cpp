@@ -13,7 +13,7 @@
 
 #    define dbg(x) DebugLogFL((x), DC::SDL)
 
-bool printErrorIf(const bool condition, const char* const message) {
+auto printErrorIf(const bool condition, const char* const message) -> bool {
     if (!condition) { return false; }
     dbg(DL::Error) << message << ": " << SDL_GetError();
     return true;
@@ -45,9 +45,9 @@ void RenderCopy(
                  "SDL_RenderTexture failed");
 }
 
-SDL_Texture_Ptr CreateTexture(
+auto CreateTexture(
     const SDL_Renderer_Ptr& renderer, SDL_PixelFormat format, SDL_TextureAccess access, int w,
-    int h) {
+    int h) -> SDL_Texture_Ptr {
     if (!renderer) {
         dbg(DL::Error) << "Tried to create texture with a null renderer";
         return SDL_Texture_Ptr();
@@ -58,8 +58,8 @@ SDL_Texture_Ptr CreateTexture(
     return result;
 }
 
-SDL_Texture_Ptr CreateTextureFromSurface(
-    const SDL_Renderer_Ptr& renderer, const SDL_Surface_Ptr& surface) {
+auto CreateTextureFromSurface(const SDL_Renderer_Ptr& renderer, const SDL_Surface_Ptr& surface)
+    -> SDL_Texture_Ptr {
     if (!renderer) {
         dbg(DL::Error) << "Tried to create texture with a null renderer";
         return SDL_Texture_Ptr();
@@ -112,7 +112,7 @@ void SetTextureBlendMode(const SDL_Texture_Ptr& texture, SDL_BlendMode blendMode
                  "SDL_SetTextureBlendMode failed");
 }
 
-bool SetTextureColorMod(const SDL_Texture_Ptr& texture, Uint32 r, Uint32 g, Uint32 b) {
+auto SetTextureColorMod(const SDL_Texture_Ptr& texture, Uint32 r, Uint32 g, Uint32 b) -> bool {
     if (!texture) {
         dbg(DL::Error) << "Tried to use a null texture";
         return true;
@@ -139,7 +139,7 @@ void GetRenderDrawBlendMode(const SDL_Renderer_Ptr& renderer, SDL_BlendMode& ble
                  "SDL_GetRenderDrawBlendMode failed");
 }
 
-SDL_Surface_Ptr load_image(const char* const path) {
+auto load_image(const char* const path) -> SDL_Surface_Ptr {
     assert(path);
     SDL_Surface_Ptr result(IMG_Load(path));
     if (!result) {
@@ -171,7 +171,8 @@ void RenderClear(const SDL_Renderer_Ptr& renderer) {
     printErrorIf(!SDL_RenderClear(renderer.get()), "SDL_RenderClear failed");
 }
 
-SDL_Surface_Ptr CreateSurface(const SDL_PixelFormat format, const int width, const int height) {
+auto CreateSurface(const SDL_PixelFormat format, const int width, const int height)
+    -> SDL_Surface_Ptr {
     SDL_Surface_Ptr surface(SDL_CreateSurface(width, height, format));
     throwErrorIf(!surface, "Failed to create surface");
     return surface;

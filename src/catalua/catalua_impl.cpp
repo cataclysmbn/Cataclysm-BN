@@ -13,7 +13,7 @@
 #include <stdexcept>
 #include <utility>
 
-sol::state make_lua_state() {
+auto make_lua_state() -> sol::state {
     sol::state lua;
 
     lua.open_libraries(
@@ -105,7 +105,7 @@ void check_func_result(sol::protected_function_result& res) {
     }
 }
 
-bool is_number_integer(sol::state_view lua, const sol::object& val) {
+auto is_number_integer(sol::state_view lua, const sol::object& val) -> bool {
     if (val.get_type() != sol::type::number) {
         throw std::runtime_error("is_number_integer: called on a non-number type");
     }
@@ -130,7 +130,7 @@ bool is_number_integer(sol::state_view lua, const sol::object& val) {
     }
 }
 
-std::optional<std::string> get_luna_type(const sol::object& val) {
+auto get_luna_type(const sol::object& val) -> std::optional<std::string> {
     sol::state_view lua(val.lua_state());
     if (val.get_type() == sol::type::userdata) {
         sol::protected_function glt = lua.script("return function(a) return a:get_luna_type() end");
@@ -147,7 +147,7 @@ std::optional<std::string> get_luna_type(const sol::object& val) {
     return std::nullopt;
 }
 
-bool compare_values(const sol::object& a, const sol::object& b) {
+auto compare_values(const sol::object& a, const sol::object& b) -> bool {
     sol::state_view lua(a.lua_state());
     sol::type type = a.get_type();
     if (type != b.get_type()) { return false; }
@@ -185,7 +185,7 @@ bool compare_values(const sol::object& a, const sol::object& b) {
     return retval.as<bool>();
 }
 
-sol::object find_equivalent_key(const sol::table& t, sol::object desired_key) {
+auto find_equivalent_key(const sol::table& t, sol::object desired_key) -> sol::object {
     sol::object ret = sol::nil;
     t.for_each([&](const sol::object& key, const sol::object&) {
         if (ret != sol::nil) { return; }
@@ -194,7 +194,7 @@ sol::object find_equivalent_key(const sol::table& t, sol::object desired_key) {
     return ret;
 }
 
-bool compare_tables(sol::table a, sol::table b) {
+auto compare_tables(sol::table a, sol::table b) -> bool {
     if (a.size() != b.size()) { return false; }
 
     bool are_equal = true;

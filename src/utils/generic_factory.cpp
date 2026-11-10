@@ -1,6 +1,7 @@
 #include "generic_factory.h"
 
-bool one_char_symbol_reader(const JsonObject& jo, const std::string& member_name, int& sym, bool) {
+auto one_char_symbol_reader(const JsonObject& jo, const std::string& member_name, int& sym, bool)
+    -> bool {
     std::string sym_as_string;
     if (!jo.read(member_name, sym_as_string)) { return false; }
     if (sym_as_string.size() != 1) {
@@ -10,8 +11,8 @@ bool one_char_symbol_reader(const JsonObject& jo, const std::string& member_name
     return true;
 }
 
-bool unicode_codepoint_from_symbol_reader(
-    const JsonObject& jo, const std::string& member_name, uint32_t& member, bool) {
+auto unicode_codepoint_from_symbol_reader(
+    const JsonObject& jo, const std::string& member_name, uint32_t& member, bool) -> bool {
     int sym_as_int;
     std::string sym_as_string;
     if (!jo.read(member_name, sym_as_string, false)) {

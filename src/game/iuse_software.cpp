@@ -15,7 +15,8 @@
 #include <map>
 #include <string>
 
-bool play_videogame(const std::string& function_name, std::string& end_message, int& score) {
+auto play_videogame(const std::string& function_name, std::string& end_message, int& score)
+    -> bool {
     if (function_name == "null") {
         score = 30;
         return true; // generic game

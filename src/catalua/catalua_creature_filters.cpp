@@ -20,7 +20,7 @@ struct FilterContext {
 };
 } // namespace
 
-static bool filter_limit(FilterContext& context, size_t limit) {
+static auto filter_limit(FilterContext& context, size_t limit) -> bool {
     if (context.output.size() > limit) {
         context.past_limit = true;
         return false;
@@ -28,31 +28,33 @@ static bool filter_limit(FilterContext& context, size_t limit) {
     return true;
 }
 
-static bool filter_type_ids(const FilterContext& context, const std::unordered_set<mtype_id>& ids) {
+static auto filter_type_ids(const FilterContext& context, const std::unordered_set<mtype_id>& ids)
+    -> bool {
     return ids.contains(context.mon->type->id);
 }
 
-static bool filter_faction_ids(
-    const FilterContext& context, const std::unordered_set<mfaction_id>& ids) {
+static auto filter_faction_ids(
+    const FilterContext& context, const std::unordered_set<mfaction_id>& ids) -> bool {
     return ids.contains(context.mon->faction);
 }
 
-static bool filter_flags(const FilterContext& context, const std::unordered_set<m_flag>& ids) {
+static auto filter_flags(const FilterContext& context, const std::unordered_set<m_flag>& ids)
+    -> bool {
     for (const auto& flag : ids) {
         if (context.mon->has_flag(flag)) { return true; }
     }
     return false;
 }
 
-static bool filter_species_ids(
-    const FilterContext& context, const std::unordered_set<species_id>& ids) {
+static auto filter_species_ids(
+    const FilterContext& context, const std::unordered_set<species_id>& ids) -> bool {
     for (const auto& ms : context.mon->type->species) {
         if (ids.contains(ms)) { return true; }
     }
     return false;
 }
 
-static bool filter_sees(const FilterContext& context, const std::vector<Creature*>& mons) {
+static auto filter_sees(const FilterContext& context, const std::vector<Creature*>& mons) -> bool {
     const auto mon_pos = context.mon->abs_pos();
     for (const auto& other_mon : mons) {
         if (mon_pos != other_mon->abs_pos() && other_mon->sees(*context.mon)) { return true; }
@@ -60,8 +62,9 @@ static bool filter_sees(const FilterContext& context, const std::vector<Creature
     return false;
 }
 
-static bool filter_within_range_of(
-    const FilterContext& context, float range, const std::vector<Creature*> other_monsters) {
+static auto filter_within_range_of(
+    const FilterContext& context, float range, const std::vector<Creature*> other_monsters)
+    -> bool {
     auto mpos = context.mon->abs_pos();
     for (const auto& other_mon : other_monsters) {
         if (mpos == other_mon->abs_pos()) { continue; }
@@ -70,7 +73,8 @@ static bool filter_within_range_of(
     return false;
 }
 
-static bool filter_hostile_to(const FilterContext& context, const std::vector<Creature*>& mons) {
+static auto filter_hostile_to(const FilterContext& context, const std::vector<Creature*>& mons)
+    -> bool {
     const auto mpos = context.mon->abs_pos();
     for (const auto& other_mon : mons) {
         if (mpos == other_mon->abs_pos()) { continue; }
@@ -140,7 +144,7 @@ static const std::unordered_map<
          }},
 };
 
-std::vector<monster*> filter_monsters_from_lua(const sol::table& filters) {
+auto filter_monsters_from_lua(const sol::table& filters) -> std::vector<monster*> {
     ZoneScoped;
     std::vector<monster*> monsters;
     FilterContext context = {.mon = nullptr, .output = monsters};

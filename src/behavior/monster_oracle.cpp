@@ -9,16 +9,16 @@
 
 namespace behavior {
 
-status_t monster_oracle_t::has_special() const {
+auto monster_oracle_t::has_special() const -> status_t {
     if (subject->shortest_special_cooldown() == 0) { return running; }
     return failure;
 }
 
-status_t monster_oracle_t::not_hallucination() const {
+auto monster_oracle_t::not_hallucination() const -> status_t {
     return subject->is_hallucination() ? failure : running;
 }
 
-status_t monster_oracle_t::items_available() const {
+auto monster_oracle_t::items_available() const -> status_t {
     if (!get_map().has_flag(TFLAG_SEALED, subject->bub_pos())
         && get_map().has_items(subject->bub_pos())) {
         return running;

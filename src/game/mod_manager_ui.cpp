@@ -13,7 +13,7 @@
 
 mod_ui::mod_ui(mod_manager& mman): active_manager(mman), mm_tree(active_manager.get_tree()) {}
 
-std::string mod_ui::get_information(const MOD_INFORMATION* mod) {
+auto mod_ui::get_information(const MOD_INFORMATION* mod) -> std::string {
     if (mod == nullptr) { return ""; }
 
     std::string info;
@@ -112,7 +112,7 @@ struct conflict_pair {
     mod_id with;
 };
 
-static std::string fmt_conflicts(const std::vector<conflict_pair>& list) {
+static auto fmt_conflicts(const std::vector<conflict_pair>& list) -> std::string {
     std::string ret;
 
     for (const conflict_pair& elem : list) {
@@ -145,7 +145,7 @@ static void check_conflicts(
     for (const auto& elem : active_list) { check_conflict(mod, elem, ret); }
 }
 
-ret_val<bool> mod_ui::try_add(const mod_id& mod_to_add, std::vector<mod_id>& active_list) {
+auto mod_ui::try_add(const mod_id& mod_to_add, std::vector<mod_id>& active_list) -> ret_val<bool> {
     if (std::ranges::contains(active_list, mod_to_add)) {
         // The same mod can not be added twice. That makes no sense.
         return ret_val<bool>::make_failure(_("The mod is already on the list."));
@@ -276,7 +276,7 @@ void mod_ui::try_shift(char direction, size_t& selection, std::vector<mod_id>& a
     selection += selshift;
 }
 
-bool mod_ui::can_shift_up(size_t selection, const std::vector<mod_id>& active_list) {
+auto mod_ui::can_shift_up(size_t selection, const std::vector<mod_id>& active_list) -> bool {
     // error catch for out of bounds
     if (selection >= active_list.size()) { return false; }
     // dependencies of this active element
@@ -297,7 +297,7 @@ bool mod_ui::can_shift_up(size_t selection, const std::vector<mod_id>& active_li
     return !newsel_id->core && !newsel_is_dependency;
 }
 
-bool mod_ui::can_shift_down(size_t selection, const std::vector<mod_id>& active_list) {
+auto mod_ui::can_shift_down(size_t selection, const std::vector<mod_id>& active_list) -> bool {
     // error catch for out of bounds
     if (selection >= active_list.size()) { return false; }
     std::vector<mod_id> dependents = mm_tree.get_dependents_of_X_as_strings(active_list[selection]);

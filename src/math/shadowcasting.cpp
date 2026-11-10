@@ -20,7 +20,7 @@
 
 // ── four_quadrants ────────────────────────────────────────────────────────────
 
-std::string four_quadrants::to_string() const {
+auto four_quadrants::to_string() const -> std::string {
     return string_format(
         "(%.2f,%.2f,%.2f,%.2f)", (*this)[quadrant::NE], (*this)[quadrant::SE],
         (*this)[quadrant::SW], (*this)[quadrant::NW]);
@@ -73,7 +73,7 @@ static void rebuild_zdist_table() {
     }
 }
 
-static int zdist_lookup(int dx, int dy, int dz) noexcept {
+static auto zdist_lookup(int dx, int dy, int dz) noexcept -> int {
     return s_zdist_table
         [static_cast<size_t>(dy) * (s_zdist_Z + 1) * (s_zdist_R + 1)
          + static_cast<size_t>(dz) * (s_zdist_R + 1) + dx];
@@ -110,7 +110,7 @@ template <bool UseAtomic> static void atomic_float_max(float& cell, float val) n
 // Fast integer square-root for distances ≤ MAX_VIEW_DISTANCE.
 // Schraudolph-Newton method; matches rl_dist() truncation behaviour.
 // Only used when g_max_view_distance ≤ 60.  See lightmap.cpp for derivation.
-template <int start, int iterations> static int fast_rl_dist(tripoint to) {
+template <int start, int iterations> static auto fast_rl_dist(tripoint to) -> int {
     if (!trigdist) { return square_dist(tripoint_zero, to); }
 
     int val = to.x * to.x + to.y * to.y + to.z * to.z;
@@ -129,7 +129,7 @@ template <int start, int iterations> static int fast_rl_dist(tripoint to) {
 // direction (i.e. the quadrant the viewer stands in relative to the target).
 // Assumes x != 0 || y != 0.
 // NOLINTNEXTLINE(cata-xy)
-static constexpr quadrant quadrant_from_x_y(int x, int y) {
+static constexpr auto quadrant_from_x_y(int x, int y) -> quadrant {
     return (x > 0) ? ((y > 0) ? quadrant::NW : quadrant::SW)
                    : ((y > 0) ? quadrant::NE : quadrant::SE);
 }
@@ -143,13 +143,13 @@ struct octant_xform {
     int xx, xy, yx, yy;
 
     // Map octant-local (dx, dy) to actual (x, y) relative to offset.
-    constexpr point apply(int dx, int dy) const noexcept {
+    constexpr auto apply(int dx, int dy) const noexcept -> point {
         return {dx * xx + dy * xy, dx * yx + dy * yy};
     }
 
     // The quadrant from which light approaches tiles seen via this octant.
     // Formula: quadrant_from_x_y( -(xx+xy), -(yx+yy) )
-    constexpr quadrant source_quadrant() const noexcept {
+    constexpr auto source_quadrant() const noexcept -> quadrant {
         return quadrant_from_x_y(-xx - xy, -yx - yy);
     }
 };
@@ -158,7 +158,7 @@ struct octant_xform_3d {
     int xx, xy, xz, yx, yy, yz, zz;
 
     // Map octant-local (dx, dy, dz) to world offset.
-    constexpr tripoint apply(int dx, int dy, int dz) const noexcept {
+    constexpr auto apply(int dx, int dy, int dz) const noexcept -> tripoint {
         return {
             dx * xx + dy * xy + dz * xz, dx * yx + dy * yy + dz * yz,
             dz * zz // xz == yz == 0 always in current usage
@@ -166,7 +166,7 @@ struct octant_xform_3d {
     }
 
     // Quadrant for the XY plane component (same formula as cast_zlight).
-    constexpr quadrant source_quadrant() const noexcept {
+    constexpr auto source_quadrant() const noexcept -> quadrant {
         return quadrant_from_x_y(xx + xy, yx + yy);
     }
 };

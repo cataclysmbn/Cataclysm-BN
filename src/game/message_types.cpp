@@ -2,7 +2,7 @@
 
 #include "string_formatter.h"
 
-const std::vector<std::pair<game_message_type, const char*>>& msg_type_and_names() {
+auto msg_type_and_names() -> const std::vector<std::pair<game_message_type, const char*>>& {
     static const std::vector<std::pair<game_message_type, const char*>> type_n_names = {
         {m_good, translate_marker_context("message type", "good")},
         {m_bad, translate_marker_context("message type", "bad")},
@@ -15,7 +15,7 @@ const std::vector<std::pair<game_message_type, const char*>>& msg_type_and_names
     return type_n_names;
 }
 
-bool msg_type_from_name(game_message_type& type, const std::string& name) {
+auto msg_type_from_name(game_message_type& type, const std::string& name) -> bool {
     for (const auto& p : msg_type_and_names()) {
         if (name == pgettext("message type", p.second)) {
             type = p.first;

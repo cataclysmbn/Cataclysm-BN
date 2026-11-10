@@ -124,7 +124,7 @@ void memorial_logger::load(std::istream& fin) {
  * and returns the resulting string. Used for saving and for writing out to the
  * memorial file.
  */
-std::string memorial_logger::dump() const {
+auto memorial_logger::dump() const -> std::string {
     static const char* eol = cata_files::eol();
     std::string output;
 
@@ -172,7 +172,7 @@ void memorial_logger::write(std::ostream& file, const std::string& epitaph) cons
     file << string_format(_("In memory of: %s"), u.name) << eol;
     if (!epitaph.empty()) { // Don't record empty epitaphs
         //~ The "%s" will be replaced by an epitaph as displayed in the memorial files. Replace the
-        //quotation marks as appropriate for your language.
+        // quotation marks as appropriate for your language.
         file << string_format(pgettext("epitaph", "\"%s\""), epitaph) << eol << eol;
     }
     //~ First parameter: Pronoun, second parameter: a profession name (with article)

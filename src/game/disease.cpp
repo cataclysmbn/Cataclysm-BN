@@ -35,7 +35,9 @@ void disease_type::load(const JsonObject& jo, const std::string&) {
     }
 }
 
-const std::vector<disease_type>& disease_type::get_all() { return disease_factory.get_all(); }
+auto disease_type::get_all() -> const std::vector<disease_type>& {
+    return disease_factory.get_all();
+}
 
 void disease_type::check_disease_consistency() {
     for (const disease_type& dis : get_all()) {

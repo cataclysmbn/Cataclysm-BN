@@ -6,7 +6,7 @@
 #include "calendar.h"
 #include "enums.h"
 
-template <> std::string io::enum_to_string<Attitude>(Attitude att) {
+template <> auto io::enum_to_string<Attitude>(Attitude att) -> std::string {
     switch (att) {
         case Attitude::A_HOSTILE:
             return "Hostile";
@@ -23,7 +23,7 @@ template <> std::string io::enum_to_string<Attitude>(Attitude att) {
     abort();
 }
 
-template <> std::string io::enum_to_string<creature_size>(creature_size data) {
+template <> auto io::enum_to_string<creature_size>(creature_size data) -> std::string {
     switch (data) {
         case creature_size::tiny:
             return "TINY";
@@ -42,7 +42,7 @@ template <> std::string io::enum_to_string<creature_size>(creature_size data) {
     abort();
 }
 
-template <> std::string io::enum_to_string<moon_phase>(moon_phase data) {
+template <> auto io::enum_to_string<moon_phase>(moon_phase data) -> std::string {
     switch (data) {
         case moon_phase::MOON_NEW:
             return "MOON_NEW";

@@ -14,7 +14,7 @@ static const itype_id itype_UPS("UPS");
 namespace {
 using ammo_map_t = std::unordered_map<ammotype, ammunition_type>;
 
-ammo_map_t& all_ammunition_types() {
+auto all_ammunition_types() -> ammo_map_t& {
     static ammo_map_t the_map;
     return the_map;
 }
@@ -27,12 +27,12 @@ void ammunition_type::load_ammunition_type(const JsonObject& jsobj) {
 }
 
 /** @relates string_id */
-template <> bool string_id<ammunition_type>::is_valid() const {
+template <> auto string_id<ammunition_type>::is_valid() const -> bool {
     return all_ammunition_types().contains(*this);
 }
 
 /** @relates string_id */
-template <> const ammunition_type& string_id<ammunition_type>::obj() const {
+template <> auto string_id<ammunition_type>::obj() const -> const ammunition_type& {
     const auto& the_map = all_ammunition_types();
 
     const auto it = the_map.find(*this);
@@ -59,4 +59,4 @@ void ammunition_type::check_consistency() {
     }
 }
 
-std::string ammunition_type::name() const { return _(name_); }
+auto ammunition_type::name() const -> std::string { return _(name_); }

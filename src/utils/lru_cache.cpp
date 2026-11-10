@@ -10,7 +10,7 @@
 #include <string>
 
 template <typename Key, typename Value>
-Value lru_cache<Key, Value>::get(const Key& pos, const Value& default_) const {
+auto lru_cache<Key, Value>::get(const Key& pos, const Value& default_) const -> Value {
     auto found = map.find(pos);
     if (found != map.end()) { return found->second->second; }
     return default_;
@@ -56,7 +56,7 @@ template <typename Key, typename Value> void lru_cache<Key, Value>::clear() {
 }
 
 template <typename Key, typename Value>
-const std::list<typename lru_cache<Key, Value>::Pair>& lru_cache<Key, Value>::list() const {
+auto lru_cache<Key, Value>::list() const -> const std::list<typename lru_cache<Key, Value>::Pair>& {
     return ordered_list;
 }
 

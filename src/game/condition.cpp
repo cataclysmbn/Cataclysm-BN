@@ -47,7 +47,8 @@ class recipe;
 static const efftype_id effect_currently_busy("currently_busy");
 static const trait_flag_str_id flag_MUTATION_THRESHOLD("MUTATION_THRESHOLD");
 // throws an error on failure, so no need to return
-std::string get_talk_varname(const JsonObject& jo, const std::string& member, bool check_value) {
+auto get_talk_varname(const JsonObject& jo, const std::string& member, bool check_value)
+    -> std::string {
     if (check_value && !jo.has_string("value")) {
         jo.throw_error("invalid " + member + " condition in " + jo.str());
     }

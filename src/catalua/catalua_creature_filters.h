@@ -5,4 +5,4 @@
 
 class monster;
 
-std::vector<monster*> filter_monsters_from_lua(const sol::table& filters);
+auto filter_monsters_from_lua(const sol::table& filters) -> std::vector<monster*>;

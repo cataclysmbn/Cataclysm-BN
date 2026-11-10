@@ -26,7 +26,7 @@ static std::map<clothing_mod_type, std::vector<clothing_mod>> clothing_mods_by_t
 
 namespace io {
 
-template <> std::string enum_to_string<clothing_mod_type>(clothing_mod_type data) {
+template <> auto enum_to_string<clothing_mod_type>(clothing_mod_type data) -> std::string {
     switch (data) {
         // *INDENT-OFF*
         case clothing_mod_type_acid:
@@ -88,7 +88,7 @@ void clothing_mod::load(const JsonObject& jo, const std::string&) {
     }
 }
 
-float clothing_mod::get_mod_val(const clothing_mod_type& type, const item& it) const {
+auto clothing_mod::get_mod_val(const clothing_mod_type& type, const item& it) const -> float {
     const int thickness = it.get_thickness();
     const int coverage = it.get_avg_coverage();
     // This way ensures that items under a liter won't truncate down to 0 before it can reach
@@ -108,14 +108,14 @@ float clothing_mod::get_mod_val(const clothing_mod_type& type, const item& it) c
     return result;
 }
 
-bool clothing_mod::has_mod_type(const clothing_mod_type& type) const {
+auto clothing_mod::has_mod_type(const clothing_mod_type& type) const -> bool {
     for (auto& mv : mod_values) {
         if (mv.type == type) { return true; }
     }
     return false;
 }
 
-size_t clothing_mod::count() { return all_clothing_mods.size(); }
+auto clothing_mod::count() -> size_t { return all_clothing_mods.size(); }
 
 void clothing_mods::load(const JsonObject& jo, const std::string& src) {
     all_clothing_mods.load(jo, src);
@@ -126,9 +126,11 @@ void clothing_mods::reset() {
     clothing_mods_by_type.clear();
 }
 
-const std::vector<clothing_mod>& clothing_mods::get_all() { return all_clothing_mods.get_all(); }
+auto clothing_mods::get_all() -> const std::vector<clothing_mod>& {
+    return all_clothing_mods.get_all();
+}
 
-const std::vector<clothing_mod>& clothing_mods::get_all_with(clothing_mod_type type) {
+auto clothing_mods::get_all_with(clothing_mod_type type) -> const std::vector<clothing_mod>& {
     const auto iter = clothing_mods_by_type.find(type);
     if (iter != clothing_mods_by_type.end()) {
         return iter->second;
@@ -143,6 +145,6 @@ const std::vector<clothing_mod>& clothing_mods::get_all_with(clothing_mod_type t
     }
 }
 
-std::string clothing_mods::string_from_clothing_mod_type(clothing_mod_type type) {
+auto clothing_mods::string_from_clothing_mod_type(clothing_mod_type type) -> std::string {
     return io::enum_to_string<clothing_mod_type>(type);
 }

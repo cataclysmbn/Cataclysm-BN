@@ -10,7 +10,7 @@
  * @param ch The char to check.
  * @return true if the char is allowed in a name, false if not.
  */
-bool is_char_allowed(int ch) {
+auto is_char_allowed(int ch) -> bool {
 #if defined(_MSC_VER)
     // This hardcoded check and rejection of \t is in here because
     // std::isprint on Windows with MSVC has a bug where it considers

@@ -24,9 +24,9 @@
  *
  * Returns the number of drops (clamped so it never exceeds current_intensity).
  */
-static int compute_field_decay(
+static auto compute_field_decay(
     int current_intensity, int half_life_turns, int current_age_turns, int elapsed_turns,
-    int& out_remaining_age) {
+    int& out_remaining_age) -> int {
     if (half_life_turns <= 0 || current_intensity <= 0) {
         out_remaining_age = current_age_turns + elapsed_turns;
         return 0;

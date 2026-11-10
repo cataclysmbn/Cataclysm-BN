@@ -82,7 +82,9 @@ void world_types::finalize_all() {
     }
 }
 
-const std::vector<world_type>& world_types::get_all() { return world_type_factory.get_all(); }
+auto world_types::get_all() -> const std::vector<world_type>& {
+    return world_type_factory.get_all();
+}
 
 void world_types::check_consistency() { world_type_factory.check(); }
 
@@ -90,4 +92,4 @@ void world_types::load(const JsonObject& jo, const std::string& src) {
     world_type_factory.load(jo, src);
 }
 
-const world_type_id& world_types::get_default() { return default_world_type_id; }
+auto world_types::get_default() -> const world_type_id& { return default_world_type_id; }

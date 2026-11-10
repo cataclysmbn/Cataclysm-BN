@@ -19,7 +19,7 @@
 static std::map<harvest_id, harvest_list> harvest_all;
 
 /** @relates string_id */
-template <> const harvest_list& string_id<harvest_list>::obj() const {
+template <> auto string_id<harvest_list>::obj() const -> const harvest_list& {
     const auto found = harvest_all.find(*this);
     if (found == harvest_all.end()) {
         debugmsg("Tried to get invalid harvest list: %s", c_str());
@@ -30,24 +30,26 @@ template <> const harvest_list& string_id<harvest_list>::obj() const {
 }
 
 /** @relates string_id */
-template <> bool string_id<harvest_list>::is_valid() const { return harvest_all.contains(*this); }
+template <> auto string_id<harvest_list>::is_valid() const -> bool {
+    return harvest_all.contains(*this);
+}
 
 harvest_list::harvest_list(): id_(harvest_id::NULL_ID()) {}
 
-const harvest_id& harvest_list::id() const { return id_; }
+auto harvest_list::id() const -> const harvest_id& { return id_; }
 
-std::string harvest_list::message() const { return SNIPPET.expand(message_.translated()); }
+auto harvest_list::message() const -> std::string { return SNIPPET.expand(message_.translated()); }
 
-bool harvest_list::is_null() const { return id_ == harvest_id::NULL_ID(); }
+auto harvest_list::is_null() const -> bool { return id_ == harvest_id::NULL_ID(); }
 
-bool harvest_list::has_entry_type(const std::string& type) const {
+auto harvest_list::has_entry_type(const std::string& type) const -> bool {
     for (const harvest_entry& entry : entries()) {
         if (entry.type == type) { return true; }
     }
     return false;
 }
 
-harvest_entry harvest_entry::load(const JsonObject& jo, const std::string& src) {
+auto harvest_entry::load(const JsonObject& jo, const std::string& src) -> harvest_entry {
     const bool strict = is_strict_enabled(src);
 
     harvest_entry ret;
@@ -64,8 +66,8 @@ harvest_entry harvest_entry::load(const JsonObject& jo, const std::string& src) 
     return ret;
 }
 
-const harvest_id& harvest_list::load(
-    const JsonObject& jo, const std::string& src, const std::string& force_id) {
+auto harvest_list::load(const JsonObject& jo, const std::string& src, const std::string& force_id)
+    -> const harvest_id& {
     harvest_list ret;
     if (jo.has_string("id")) {
         ret.id_ = harvest_id(jo.get_string("id"));
@@ -99,7 +101,7 @@ void harvest_list::finalize_all() {
 
 void harvest_list::reset() { harvest_all.clear(); }
 
-const std::map<harvest_id, harvest_list>& harvest_list::all() { return harvest_all; }
+auto harvest_list::all() -> const std::map<harvest_id, harvest_list>& { return harvest_all; }
 
 void harvest_list::check_consistency() {
     for (const auto& pr : harvest_all) {
@@ -140,19 +142,23 @@ void harvest_list::check_consistency() {
     }
 }
 
-std::list<harvest_entry>::const_iterator harvest_list::begin() const { return entries().begin(); }
+auto harvest_list::begin() const -> std::list<harvest_entry>::const_iterator {
+    return entries().begin();
+}
 
-std::list<harvest_entry>::const_iterator harvest_list::end() const { return entries().end(); }
+auto harvest_list::end() const -> std::list<harvest_entry>::const_iterator {
+    return entries().end();
+}
 
-std::list<harvest_entry>::const_reverse_iterator harvest_list::rbegin() const {
+auto harvest_list::rbegin() const -> std::list<harvest_entry>::const_reverse_iterator {
     return entries().rbegin();
 }
 
-std::list<harvest_entry>::const_reverse_iterator harvest_list::rend() const {
+auto harvest_list::rend() const -> std::list<harvest_entry>::const_reverse_iterator {
     return entries().rend();
 }
 
-std::string harvest_list::describe(int at_skill) const {
+auto harvest_list::describe(int at_skill) const -> std::string {
     if (empty()) { return ""; }
 
     return enumerate_as_string(

@@ -45,38 +45,40 @@ all look identical.
 // Multi-octave Simplex noise
 // For each octave, a higher frequency/lower amplitude function will be added to the original.
 // The higher the persistence [0-1], the more of each succeeding octave will be added.
-float octave_noise_2d(float octaves, float persistence, float scale, float x, float y);
-float octave_noise_3d(float octaves, float persistence, float scale, float x, float y, float z);
-float octave_noise_4d(
-    float octaves, float persistence, float scale, float x, float y, float z, float w);
+auto octave_noise_2d(float octaves, float persistence, float scale, float x, float y) -> float;
+auto octave_noise_3d(float octaves, float persistence, float scale, float x, float y, float z)
+    -> float;
+auto octave_noise_4d(
+    float octaves, float persistence, float scale, float x, float y, float z, float w) -> float;
 
 // Scaled Multi-octave Simplex noise
 // The result will be between the two parameters passed.
-float scaled_octave_noise_2d(
-    float octaves, float persistence, float scale, float loBound, float hiBound, float x, float y);
-float scaled_octave_noise_3d(
+auto scaled_octave_noise_2d(
+    float octaves, float persistence, float scale, float loBound, float hiBound, float x, float y)
+    -> float;
+auto scaled_octave_noise_3d(
     float octaves, float persistence, float scale, float loBound, float hiBound, float x, float y,
-    float z);
-float scaled_octave_noise_4d(
+    float z) -> float;
+auto scaled_octave_noise_4d(
     float octaves, float persistence, float scale, float loBound, float hiBound, float x, float y,
-    float z, float w);
+    float z, float w) -> float;
 
 // Scaled Raw Simplex noise
 // The result will be between the two parameters passed.
-float scaled_raw_noise_2d(float loBound, float hiBound, float x, float y);
-float scaled_raw_noise_3d(float loBound, float hiBound, float x, float y, float z);
-float scaled_raw_noise_4d(float loBound, float hiBound, float x, float y, float z, float w);
+auto scaled_raw_noise_2d(float loBound, float hiBound, float x, float y) -> float;
+auto scaled_raw_noise_3d(float loBound, float hiBound, float x, float y, float z) -> float;
+auto scaled_raw_noise_4d(float loBound, float hiBound, float x, float y, float z, float w) -> float;
 
 // Raw Simplex noise - a single noise value.
-float raw_noise_2d(float x, float y);
-float raw_noise_3d(float x, float y, float z);
-float raw_noise_4d(float x, float y, float, float w);
+auto raw_noise_2d(float x, float y) -> float;
+auto raw_noise_3d(float x, float y, float z) -> float;
+auto raw_noise_4d(float x, float y, float, float w) -> float;
 
-int fastfloor(float x);
+auto fastfloor(float x) -> int;
 
-float dot(const int* g, float x, float y);
-float dot(const int* g, float x, float y, float z);
-float dot(const int* g, float x, float y, float z, float w);
+auto dot(const int* g, float x, float y) -> float;
+auto dot(const int* g, float x, float y, float z) -> float;
+auto dot(const int* g, float x, float y, float z, float w) -> float;
 
 // The gradients are the midpoints of the vertices of a cube.
 static const int grad3[12][3] =

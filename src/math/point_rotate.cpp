@@ -22,7 +22,8 @@ auto rotate(const tripoint& p, point dim, int turns) -> tripoint {
     return {rotate(p.xy(), dim, turns), p.z};
 }
 
-tripoint_bub_ms rotate_point_sm(const tripoint_bub_ms& p, const tripoint_bub_ms& orig, int turns) {
+auto rotate_point_sm(const tripoint_bub_ms& p, const tripoint_bub_ms& orig, int turns)
+    -> tripoint_bub_ms {
     const tripoint_rel_ms p_sm = p - orig.xy();
     const auto rd = p_sm.xy().rotate(turns, point(SEEX * 2, SEEY * 2));
 

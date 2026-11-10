@@ -45,13 +45,13 @@ void perk::add_enchantment(enchantment& nench) {
     enchantments.emplace_back(enchantment(nench));
 }
 
-std::vector<enchantment> perk::get_enchantments() const { return enchantments; }
+auto perk::get_enchantments() const -> std::vector<enchantment> { return enchantments; }
 
-bool perk::is_hidden() const { return hidden; }
+auto perk::is_hidden() const -> bool { return hidden; }
 
-std::string perk::get_name() const { return name.translated(); }
+auto perk::get_name() const -> std::string { return name.translated(); }
 
-std::string perk::get_description() const {
+auto perk::get_description() const -> std::string {
     std::ostringstream oss;
     oss << description.translated() << "\n";
     oss << "\n" << _("Effects:") << "\n";
@@ -65,7 +65,7 @@ std::string perk::get_description() const {
     return added_string ? oss.str() : description.translated();
 }
 
-std::string perk::get_category() const { return category.translated(); }
+auto perk::get_category() const -> std::string { return category.translated(); }
 
 void perk::load_perks(const JsonObject& jo, const std::string& src) { all_perks.load(jo, src); }
 
@@ -86,4 +86,4 @@ void perk::check_consistency() { all_perks.check(); }
 
 void perk::reset() { all_perks.reset(); }
 
-std::vector<perk> perk::get_all() { return all_perks.get_all(); }
+auto perk::get_all() -> std::vector<perk> { return all_perks.get_all(); }

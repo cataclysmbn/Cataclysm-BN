@@ -57,6 +57,8 @@ advanced_inv_listitem::advanced_inv_listitem(const item_category* cat)
       stacks(),
       cat(cat) {}
 
-bool advanced_inv_listitem::is_category_header() const { return items.empty() && cat != nullptr; }
+auto advanced_inv_listitem::is_category_header() const -> bool {
+    return items.empty() && cat != nullptr;
+}
 
-bool advanced_inv_listitem::is_item_entry() const { return !items.empty(); }
+auto advanced_inv_listitem::is_item_entry() const -> bool { return !items.empty(); }

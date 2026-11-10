@@ -5,7 +5,7 @@
 #include "gamemode_tutorial.h"
 #include "translations.h"
 
-std::string special_game_name(special_game_type id) {
+auto special_game_name(special_game_type id) -> std::string {
     switch (id) {
         case special_game_type::NONE:
         case special_game_type::NUM_SPECIAL_GAME_TYPES:
@@ -19,7 +19,7 @@ std::string special_game_name(special_game_type id) {
     }
 }
 
-std::unique_ptr<special_game> get_special_game(special_game_type id) {
+auto get_special_game(special_game_type id) -> std::unique_ptr<special_game> {
     std::unique_ptr<special_game> ret;
     switch (id) {
         case special_game_type::NONE:
