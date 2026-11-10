@@ -36,7 +36,8 @@ In order to compile localization files, you'll also need `gettext` package.
 
 ## Build Environment
 
-A build tree holds one of Tiles, curses (`-DCURSES=ON -DTILES=OFF`) or the protocol engine `cataclysm-bn-mcp` (the `linux-mcp` preset, `-DMCP=ON`).
+A build tree holds one of Tiles, curses (`-DCURSES=ON -DTILES=OFF`) or the protocol engine `cataclysm-bn-mcp` (the `linux-mcp` preset, `-DMCP=ON`). See
+[Engine and clients](../../explanation/engine_clients.md).
 
 You can obtain the source code tarball for the latest version from
 [git](https://github.com/cataclysmbn/Cataclysm-BN).
