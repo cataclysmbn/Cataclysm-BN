@@ -1383,6 +1383,35 @@ TEST_CASE("lua_dimension_failed_travel_save_can_retry", "[lua][sqlite]") {
     CHECK(g->get_current_dimension_id() == dim);
 }
 
+TEST_CASE("lua_delete_dimension_keeps_despawned_monsters_until_turn_cleanup", "[lua]") {
+    clear_all_state();
+    initialize_dimension_test_storage();
+    const auto dim = dimension_id("lua_test_delete_keeps_monsters");
+    const auto cleanup = dimension_test_cleanup({dim});
+    g->place_player_overmap(tripoint_abs_omt::zero());
+    const auto return_pos = get_avatar().abs_pos();
+    auto lua = make_lua_state();
+    lua["opts"] = lua.create_table_with(
+        "dimension_id", dim.str(), "world_type", "pocket_dimension", "target_omt",
+        tripoint_abs_omt(88, 88, 0), "bounds_min_omt", tripoint_abs_omt(88, 88, 0),
+        "bounds_max_omt", tripoint_abs_omt(90, 90, 0));
+    REQUIRE(lua.safe_script("return gapi.place_player_dimension_at(opts)").get<bool>());
+    auto& attacker =
+        spawn_test_monster("mon_zombie", get_avatar().bub_pos() + tripoint_rel_ms::east());
+    const auto attacker_ref = weak_ptr_fast<monster>(g->shared_from(attacker));
+    REQUIRE_FALSE(attacker_ref.expired());
+
+    // A death hook can return home and delete the attacker's dimension during its attack.
+    lua["home"] = lua.create_table_with("dimension_id", "", "target_ms", return_pos);
+    REQUIRE(lua.safe_script("return gapi.place_player_dimension_at(home)").get<bool>());
+    REQUIRE(g->delete_dimension(dim));
+    CHECK_FALSE(attacker_ref.expired());
+    CHECK(attacker.is_dead());
+    CHECK(MAPBUFFER_REGISTRY.find(dim) == nullptr);
+    g->cleanup_dead();
+    CHECK(attacker_ref.expired());
+}
+
 TEST_CASE("lua_dimension_target_z_limits", "[lua]") {
     auto lua = make_lua_state();
     const auto original_dimension = g->get_current_dimension_id();
