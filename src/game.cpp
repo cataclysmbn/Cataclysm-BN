@@ -14043,6 +14043,10 @@ void game::resize_reality_bubble_to( int new_size )
         active_npc.erase( out_of_range.begin(), out_of_range.end() );
     }
 
+    // While a save is being read there is no live reality bubble and the player position is
+    // not known yet, so there is nothing to reload: the load brings the map in afterwards.
+    const auto reading_save = saving_blocked_by_failed_load && !m.has_active_load_region();
+
     // Release submap loader requests so load_map() recreates them with the new bounds.
     release_active_load_regions();
 
@@ -14052,6 +14056,20 @@ void game::resize_reality_bubble_to( int new_size )
     init_bubble_config( new_size );
     m.resize( g_mapsize );
     reality_bubble_radius_ = g_half_mapsize;
+
+    const auto discard_bubble_sized_state = []() {
+        // Discard pathfinding objects sized for the old bubble.
+        Pathfinding::clear_pool();
+#if defined(TILES)
+        if( tilecontext ) {
+            tilecontext->reset_minimap();
+        }
+#endif
+    };
+    if( reading_save ) {
+        discard_bubble_sized_state();
+        return;
+    }
 
     // Compute the new top-left abs_sub so load_map centers on the player.
     const auto new_abs_sub = player_abs_sm.xy() +
@@ -14104,15 +14122,7 @@ void game::resize_reality_bubble_to( int new_size )
     m.invalidate_map_cache( get_levz() );
     m.build_map_cache( get_levz() );
 
-    // Discard pathfinding objects sized for the old bubble.
-    Pathfinding::clear_pool();
-
-
-#if defined(TILES)
-    if( tilecontext ) {
-        tilecontext->reset_minimap();
-    }
-#endif
+    discard_bubble_sized_state();
 }
 
 void game::resize_reality_bubble()
