@@ -11343,6 +11343,30 @@ auto Character::bodytemp_modifier_traits_floor() const -> units::temperature_del
     return mod;
 }
 
+namespace
+{
+/// Climate control enchantment values of one body part.
+struct climate_ids {
+    enchantment_value_id cooling;
+    enchantment_value_id heating;
+};
+
+/// Builds the enchantment value ids of @p id once.
+auto climate_ids_for( const bodypart_id &id ) -> const climate_ids & // *NOPAD*
+{
+    static auto cache = std::unordered_map<bodypart_str_id, climate_ids> {};
+    auto found = cache.find( id.id() );
+    if( found == cache.end() ) {
+        const auto part = to_upper_case( id.id().str() );
+        found = cache.emplace( id.id(), climate_ids{
+            .cooling = enchantment_value_id( "CLIMATE_CONTROL_COOLING_" + part ),
+            .heating = enchantment_value_id( "CLIMATE_CONTROL_HEATING_" + part ),
+        } ).first;
+    }
+    return found->second;
+}
+} // namespace
+
 auto Character::temp_corrected_by_climate_control( units::temperature temperature,
         bodypart_id id ) ->
 units::temperature
@@ -11355,7 +11379,7 @@ units::temperature
     };
     if( temperature > BODYTEMP_NORM ) {
         temperature = temperature - enchantment_bonus( temperature,
-                      enchantment_value_id( "CLIMATE_CONTROL_COOLING_" + to_upper_case( id.id().str() ) ) );
+                      climate_ids_for( id ).cooling );
         if( in_climate_control() ) {
             temperature = temperature - units::from_legacy_bodypart_temp_delta( 1250 );
         }
@@ -11365,7 +11389,7 @@ units::temperature
             temperature = temperature + units::from_legacy_bodypart_temp_delta( 1250 );
         }
         temperature = temperature + enchantment_bonus( temperature,
-                      enchantment_value_id( "CLIMATE_CONTROL_HEATING_" + to_upper_case( id.id().str() ) ) );
+                      climate_ids_for( id ).heating );
         return std::min( BODYTEMP_NORM, temperature );
     }
     return temperature;
