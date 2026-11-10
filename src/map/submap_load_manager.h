@@ -225,6 +225,9 @@ public:
      */
     auto simulated_submaps(const dimension_id& dim_id) const -> std::span<const point_abs_sm>;
 
+    /// Changes whenever the requests or the simulated_submaps() index change.
+    auto simulated_generation() const -> std::uint64_t { return simulated_generation_; }
+
     /**
      * Return the set of dimension IDs that have at least one active request.
      */
@@ -384,6 +387,7 @@ private:
     std::vector<std::pair<load_request_handle, submap_load_request>> prev_requests_;
 
     std::map<dimension_id, std::vector<point_abs_sm>> simulated_submaps_by_dimension_;
+    std::uint64_t simulated_generation_ = 0;
 
     point lazy_omt_preload_direction_ = point_zero;
     std::optional<lazy_omt_focus> lazy_omt_focus_;

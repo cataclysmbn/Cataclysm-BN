@@ -494,6 +494,42 @@ TEST_CASE(
     CHECK(loader.loaded_count() == 0);
 }
 
+TEST_CASE("simulated_submaps_follow_loads_unloads_and_requests", "[simulation][submap_loader]") {
+    clear_all_state();
+    put_player_underground();
+
+    auto& dim = MAPBUFFER_REGISTRY.get(TEST_DIM_ID);
+    const auto first = tripoint_abs_sm{400, 400, 0};
+    const auto second = tripoint_abs_sm{401, 400, 0};
+    const auto handle = submap_loader.request_load(
+        load_request_source::reality_bubble, TEST_DIM_ID, first.xy(),
+        first.xy() + point_rel_sm(2, 1));
+    const auto cleanup = on_out_of_scope([&]() {
+        submap_loader.release_load(handle);
+        MAPBUFFER_REGISTRY.unload_dimension(TEST_DIM_ID);
+    });
+    const auto simulated = [&]() {
+        auto result = std::vector<tripoint_abs_sm>{};
+        dim.for_each_simulated_submap([&](const tripoint_abs_sm& pos, submap& /*sm*/) {
+            result.push_back(pos);
+        });
+        std::ranges::sort(result, std::less<>{});
+        return result;
+    };
+
+    make_blank_submap(dim, first);
+    CHECK(simulated() == std::vector{first});
+
+    make_blank_submap(dim, second);
+    CHECK(simulated() == std::vector{first, second});
+
+    submap_loader.update_request(handle, second.xy(), second.xy() + point_rel_sm(1, 1));
+    CHECK(simulated() == std::vector{second});
+
+    dim.unload_omt(project_to<coords::omt>(second), false);
+    CHECK(simulated().empty());
+}
+
 // ── Test 3 ────────────────────────────────────────────────────────────────────
 // Verify that fire in a non-primary dimension does not affect the primary
 // dimension when process_fields_in_submap() is called with the secondary
