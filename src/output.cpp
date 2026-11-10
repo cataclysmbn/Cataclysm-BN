@@ -1,4 +1,5 @@
 #include "output.h"
+#include "mcp_hooks.h"
 
 #include <algorithm>
 #include <cerrno>
@@ -411,6 +412,15 @@ void scrollable_text( const std::function<catacurses::window()> &init_window,
         .viewport_pos( std::min( beg_line, max_beg_line ) ).viewport_size( text_h ).apply( w );
         wnoutrefresh( w );
     } );
+
+    MCP_ONLY( const auto screen = engine_client::screen_scope( ctxt, "scrollable_text", { .view = [&]( const engine_client::boundary_state & )
+    {
+        return engine_client::screen_view{
+            .title = title,
+            .root = engine_client::component{ .id = "text:body", .body = engine_client::text_body{ .markup = text } },
+        };
+    }
+                                                                                        } ); )
 
     std::string action;
     do {
@@ -1887,6 +1897,8 @@ void scrollingcombattext::add( point pos, direction p_oDir,
                                const std::string &p_sText2, const game_message_type p_gmt2,
                                const std::string &p_sType )
 {
+    MCP_ONLY( engine_client::presentation::record_text( pos, p_oDir, p_sType, p_sText, p_gmt, p_sText2,
+              p_gmt2 ); )
     // TODO: A non-hack
     if( test_mode ) {
         return;
@@ -2197,7 +2209,7 @@ std::string format_volume( const units::volume &volume, int width, bool *out_tru
 // In non-SDL mode, width/height is just what's specified in the menu
 #if !defined(TILES)
 // We need to override these for Windows console resizing
-#   if !defined(_WIN32)
+#   if !defined(_WIN32) && !defined(CATA_MCP)
 int get_terminal_width()
 {
     int width = get_option<int>( "TERMINAL_X" );

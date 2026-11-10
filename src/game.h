@@ -950,7 +950,17 @@ class game : public submap_load_listener
         bool grabbed_veh_move( const tripoint_rel_ms &dp );
         auto grabbed_furn_move( const tripoint_rel_ms &dp ) -> bool;
 
+#if defined(CATA_MCP)
+        /// Aims the next shot at @p target from scratch, as firing at it from the creature list does;
+        /// false when it is beyond the range of the wielded gun.
+        auto choose_fire_target( const Creature &target ) -> bool;
+#endif
+#if defined(CATA_MCP)
+        /// Uses vehicle controls  '^'; @p where picks the adjacent controls the native prompt would ask for.
+        auto control_vehicle( const std::optional<tripoint_bub_ms> &where = std::nullopt ) -> void;
+#else
         void control_vehicle(); // Use vehicle controls  '^'
+#endif
         void examine( const tripoint_bub_ms &p ); // Examine nearby terrain  'e'
         void examine();
 
@@ -1059,13 +1069,39 @@ class game : public submap_load_listener
         auto has_activity_skip_relevant_vehicle() -> bool;
         auto has_activity_skip_active_fire() -> bool;
         auto run_activity_skip_batch_turns( int skipped_turns ) -> void;
+#if defined(CATA_MCP)
+    public:
+#endif
         auto handle_wait_activity_redraw( bool force = false ) -> void;
+#if defined(CATA_MCP)
+    private:
+#endif
         auto run_activity_cadence_boundary() -> void;
         void handle_key_blocking_activity(); // Abort reading etc.
         void open_consume_item_menu(); // Custom menu for consuming specific group of items
         bool handle_action();
         bool try_get_right_click_action( action_id &act, const tripoint_bub_ms &mouse_target );
+#if defined(CATA_MCP)
+    public:
+#endif
         bool try_get_left_click_action( action_id &act, const tripoint_bub_ms &mouse_target );
+#if defined(CATA_MCP)
+    public:
+        /// The route a first click planned, nearest square first, ending at the clicked square.
+        auto get_destination_preview() const -> const std::vector<tripoint_bub_ms>& { // *NOPAD*
+            return destination_preview;
+        }
+        /// The square the terrain window is centered on: the one the last draw centered it on while looking,
+        /// else where the next draw will center it, since the avatar moves and the map shifts between draws.
+        auto terrain_view_center() const -> point_bub_ms;
+        /// The squares of the current level the terrain window shows, so a click can select them.
+        auto click_window() const -> std::optional<half_open_rectangle<point_bub_ms>>;
+        /// The terrain window cell whose click selects `target`; nullopt when it is not shown.
+        auto click_cell_of( const tripoint_bub_ms &target ) const -> std::optional<point>;
+        auto debug_hour_timer_enabled() const -> bool { return debug_hour_timer.is_enabled(); }
+        auto reset_safe_mode_warning() -> void { safe_mode_warning_logged = false; }
+    private:
+#endif
 
         void item_action_menu(); // Displays item action menu
 
@@ -1119,6 +1155,9 @@ class game : public submap_load_listener
                 using IRLTimeMs = std::chrono::time_point<std::chrono::system_clock, std::chrono::milliseconds>;
                 void toggle();
                 void print_time();
+#if defined(CATA_MCP)
+                auto is_enabled() const -> bool { return enabled; }
+#endif
             private:
                 bool enabled = false;
                 std::optional<IRLTimeMs> start_time = std::nullopt;
@@ -1336,7 +1375,13 @@ class game : public submap_load_listener
         /// is set and before bind_dimension().
         auto activate_dimension_state( const dimension_id &new_dim_id,
                                        const dimension_id &old_dim_id ) -> void;
+#if defined(CATA_MCP)
+    public:
+#endif
         auto release_active_load_regions() -> void;
+#if defined(CATA_MCP)
+    private:
+#endif
         auto update_active_load_regions( const dimension_id &dim_id,
                                          const point_abs_sm &begin,
                                          const point_abs_sm &end ) -> void;

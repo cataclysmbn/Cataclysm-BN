@@ -212,6 +212,12 @@ class ui_adaptor
         static void redraw();
         static void redraw_invalidated();
         static void screen_resized();
+#if defined(CATA_MCP)
+        /* The areas in console cells of the UIs that are not the background, bottom first */
+        static auto layer_areas() -> std::vector<rectangle<point>>; // *NOPAD*
+        /* Marks the UI as what the others are drawn over (the map and the sidebar) */
+        void set_background() { background = true; }
+#endif
     private:
         static void invalidation_consistency_and_optimization();
 
@@ -231,6 +237,9 @@ class ui_adaptor
         point cursor_pos;
 
         bool disabling_uis_below;
+#if defined(CATA_MCP)
+        bool background = false;
+#endif
         bool is_debug_message_ui;
 
         mutable bool invalidated;

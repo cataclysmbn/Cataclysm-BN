@@ -1,5 +1,16 @@
 #include "cata_utility.h"
 #include "catch/catch.hpp"
+#if defined(CATA_MCP)
+#    include "avatar.h"
+#    include "client_memory.h"
+#    include "engine_client_mode.h"
+#    include "game.h"
+#    include "game_constants.h"
+#    include "options_helpers.h"
+#    include "output.h"
+#    include "player_activity.h"
+#    include "state_helpers.h"
+#endif
 #include "input.h"
 #include "path_info.h"
 #include "replay/replay.h"
@@ -109,6 +120,87 @@ TEST_CASE("replay rejects invalid headers without changing RNG", "[replay][input
     }
 }
 
+#if defined(CATA_MCP)
+TEST_CASE("replay plays back an invoke with every argument", "[replay][input][interaction]") {
+    const auto fixture = replay_fixture{};
+    const auto boundary =
+        replay::input_boundary_metadata{.context = "ADVANCED_INVENTORY", .actions = {"UP"}};
+    auto event = input_event{};
+    event.type = input_event_t::interaction;
+    event.interaction = game_client::interaction_event{
+        .operation = game_client::interaction_operation::invoke,
+        .schema_id = "ADVANCED_INVENTORY",
+        .target_id = "aim:move",
+        .arguments = game_client::interaction_arguments{
+            .row = "item:1",
+            .count = -3,
+            .text = "rock",
+            .position = game_client::interaction_position{.x = 1, .y = -2, .z = 0},
+            .pane = "pane:right"}};
+    replay::configure_recording(fixture.path.string(), {.rng_seed = 7});
+    replay::start();
+    replay::record_input_event(event, boundary);
+    replay::finish();
+    replay::configure_playback(fixture.path.string());
+    replay::start();
+    const auto played = replay::next_input_event(boundary);
+    REQUIRE(played);
+    CHECK(played->interaction == event.interaction);
+    replay::finish();
+}
+
+TEST_CASE("replay plays back a mode set to a named value", "[replay][input][interaction]") {
+    const auto fixture = replay_fixture{};
+    const auto boundary =
+        replay::input_boundary_metadata{.context = "DEFAULTMODE", .actions = {"UP"}};
+    const auto event = engine_client::mode_operation_event({.mode = "safe_mode", .value = "off"});
+    replay::configure_recording(fixture.path.string(), {.rng_seed = 7});
+    replay::start();
+    replay::record_input_event(event, boundary);
+    replay::finish();
+    replay::configure_playback(fixture.path.string());
+    replay::start();
+    const auto played = replay::next_input_event(boundary);
+    REQUIRE(played);
+    const auto mode = engine_client::mode_operation_of(*played);
+    REQUIRE(mode);
+    CHECK(mode->mode == "safe_mode");
+    CHECK(mode->value == "off");
+    replay::finish();
+}
+
+TEST_CASE("replay rejects malformed invokes", "[replay][input][interaction]") {
+    const auto fixture = replay_fixture{};
+    const auto end = std::string{
+        R"({"kind":"end","events":1})"
+        "\n"};
+    const auto prefix = std::string{
+        R"({"kind":"input","type":"interaction","sequence":[],"modifiers":[],"mouse_pos":[0,0],"text":"","edit":"","edit_refresh":false,"interaction":{"operation":"invoke","schema_id":"GAME",)"};
+    const auto suffix = std::string{
+        R"(},"boundary":{"context":"GAME","actions":["ANY_INPUT"],"timeout_ms":-1}})"
+        "\n"};
+    const auto malformed = std::vector<std::string>{
+        // no arguments
+        R"("target_id":"aim:move","value":"")",
+        // no affordance
+        R"("target_id":"","value":"","arguments":{})",
+        // the payload members of other operations
+        R"("target_id":"aim:move","value":"text","arguments":{})",
+    };
+    for (const auto& payload : malformed) {
+        INFO(payload);
+        fixture.write(header + prefix + payload + suffix + end);
+        replay::configure_playback(fixture.path.string());
+        CHECK_THROWS(replay::start());
+        CHECK_FALSE(replay::is_enabled());
+    }
+    fixture.write(
+        header + prefix + R"("target_id":"aim:move","value":"","arguments":{})" + suffix + end);
+    replay::configure_playback(fixture.path.string());
+    CHECK_NOTHROW(replay::start());
+}
+
+#endif
 TEST_CASE("replay validates empty and mismatched input contexts", "[replay][input]") {
     const auto fixture = replay_fixture{};
     fixture.write(header + timeout_event);
@@ -298,6 +390,142 @@ TEST_CASE("replay rejects mouse events recorded in another pointer space", "[rep
         replay::input_boundary_metadata{.context = "GAME", .pointer_space = "pixel"};
     CHECK_THROWS_WITH(replay::next_input_event(pixels), Catch::Matchers::Contains("pointer_space"));
 }
+
+#if defined(CATA_MCP)
+TEST_CASE(
+    "replay preserves activity polls through the shared input gateway", "[replay][input][client]") {
+    const auto fixture = replay_fixture{};
+    const auto cleanup = on_out_of_scope([]() {
+        replay::stop();
+        game_client::memory::set_input_provider({});
+    });
+    auto context = input_context("REPLAY_ACTIVITY_POLL");
+    context.register_action("ANY_INPUT");
+    auto polls = 0;
+    game_client::memory::set_input_provider([&](const int timeout) {
+        ++polls;
+        if (timeout == 0) { return input_event{}; }
+        if (timeout > 0) {
+            auto event = input_event{};
+            event.type = input_event_t::timeout;
+            return event;
+        }
+        return input_event('x', input_event_t::keyboard);
+    });
+    replay::configure_recording(fixture.path.string(), {.rng_seed = 123});
+    replay::start();
+    CHECK(context.handle_input(0) == "ANY_INPUT");
+    CHECK(context.get_raw_input().type == input_event_t::error);
+    CHECK(context.handle_input(25) == "TIMEOUT");
+    CHECK(context.handle_input(-1) == "ANY_INPUT");
+    CHECK(context.get_raw_input().text.empty());
+    CHECK(polls == 3);
+    replay::finish();
+
+    replay::configure_playback(fixture.path.string());
+    replay::start();
+    CHECK(context.handle_input(0) == "ANY_INPUT");
+    CHECK(context.get_raw_input().type == input_event_t::error);
+    CHECK(context.handle_input(25) == "TIMEOUT");
+    CHECK(context.handle_input(-1) == "ANY_INPUT");
+    CHECK(context.get_raw_input().get_first_input() == 'x');
+    CHECK(polls == 3);
+    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
+    replay::finish();
+}
+
+TEST_CASE("hit animations neither read nor record input", "[replay][input][client][animation]") {
+    const auto fixture = replay_fixture{};
+    const auto cleanup = on_out_of_scope([]() {
+        replay::stop();
+        game_client::memory::set_input_provider({});
+        clear_all_state();
+    });
+    const auto delay = override_option("ANIMATION_DELAY", "0");
+    clear_all_state();
+    const auto restore_width = restore_on_out_of_scope<int>(TERRAIN_WINDOW_WIDTH);
+    const auto restore_height = restore_on_out_of_scope<int>(TERRAIN_WINDOW_HEIGHT);
+    const auto restore_x = restore_on_out_of_scope<int>(POSX);
+    const auto restore_y = restore_on_out_of_scope<int>(POSY);
+    TERRAIN_WINDOW_WIDTH = 11;
+    TERRAIN_WINDOW_HEIGHT = 11;
+    POSX = 5;
+    POSY = 5;
+    REQUIRE(is_valid_in_w_terrain(point(POSX, POSY)));
+    auto polls = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout_ms*/) {
+        ++polls;
+        return input_event{};
+    });
+    replay::configure_recording(fixture.path.string(), {.rng_seed = 123});
+    replay::start();
+    g->draw_hit_player(get_avatar(), 5);
+    replay::finish();
+    CHECK(polls == 0);
+    CHECK(fixture.read().find("\"kind\":\"input\"") == std::string::npos);
+}
+
+TEST_CASE(
+    "recording and playback poll activities at each simulation boundary",
+    "[replay][input][client][activity]") {
+    const auto fixture = replay_fixture{};
+    const auto original_bubble_size = g_reality_bubble_size;
+    const auto restore_new_game = restore_on_out_of_scope(g->new_game);
+    // This test exercises activity input polling, not automatic simulation-window resizing.
+    const auto normal_bubble =
+        override_option("REALITY_BUBBLE_SIZE", std::to_string(original_bubble_size));
+    const auto no_mobile_bubble = override_option("ACTIVITY_MOBILE_BUBBLE_SIZE", "0");
+    const auto no_idle_bubble = override_option("ACTIVITY_IDLE_BUBBLE_SIZE", "0");
+    const auto no_underground_bubble = override_option("UNDERGROUND_BUBBLE_SIZE", "0");
+    const auto no_vehicle_bubble = override_option("VEHICLE_BUBBLE_SIZE", "0");
+    const auto no_combat_bubble = override_option("COMBAT_BUBBLE_SIZE", "0");
+    const auto cleanup = on_out_of_scope([]() {
+        replay::stop();
+        game_client::memory::set_input_provider({});
+        clear_all_state();
+    });
+    const auto setup_activity = [] {
+        clear_all_state();
+        auto& you = get_avatar();
+        g->new_game = true;
+        you.set_moves(100);
+        you.assign_activity(activity_id("ACT_WAIT"), 100000);
+        REQUIRE(you.activity);
+    };
+
+    setup_activity();
+    auto recorded_polls = 0;
+    game_client::memory::set_input_provider([&](const int timeout_ms) {
+        CHECK(timeout_ms == 0);
+        ++recorded_polls;
+        return input_event{};
+    });
+    replay::configure_recording(fixture.path.string(), {.rng_seed = 123});
+    replay::start();
+    for (const auto simulation_boundary : {0, 1, 2}) {
+        CAPTURE(simulation_boundary);
+        CHECK_FALSE(g->do_turn());
+        CHECK(g_reality_bubble_size == original_bubble_size);
+    }
+    replay::finish();
+    CHECK(recorded_polls == 3);
+    CHECK(fixture.read().find("\"type\":\"idle\"") != std::string::npos);
+
+    setup_activity();
+    game_client::memory::set_input_provider([](const int /*timeout_ms*/) -> input_event {
+        throw std::runtime_error("playback must not read live input");
+    });
+    replay::configure_playback(fixture.path.string());
+    replay::start();
+    for (const auto simulation_boundary : {0, 1, 2}) {
+        CAPTURE(simulation_boundary);
+        CHECK_FALSE(g->do_turn());
+        CHECK(g_reality_bubble_size == original_bubble_size);
+    }
+    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
+    replay::finish();
+}
+#endif
 
 TEST_CASE("replay rejects a zero seed and invalid end counts", "[replay][input]") {
     const auto fixture = replay_fixture{};

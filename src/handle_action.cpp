@@ -11,6 +11,7 @@
 #include "bionics_ui.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "mcp_hooks.h"
 #include "catacharset.h"
 #include "catalua.h"
 #include "catalua_hooks.h"
@@ -692,12 +693,14 @@ inline static void pldrive( point_rel_veh d )
     return pldrive( tripoint_rel_veh( d, 0 ) );
 }
 
-static void open()
+/// Opens what is at `target`, else at the square the player is asked for.
+static void open( MCP_ONLY( const std::optional<tripoint_bub_ms> &target ) )
 {
     player &u = g->u;
-    const std::optional<tripoint_bub_ms> openp_ = choose_adjacent_highlight( _( "Open where?" ),
-            pgettext( "no door, gate, curtain, etc.", "There is nothing that can be opened nearby." ),
-            ACTION_OPEN, false );
+    const std::optional<tripoint_bub_ms> openp_ = MCP_ONLY( target ? target : )
+            choose_adjacent_highlight( _( "Open where?" ),
+                                       pgettext( "no door, gate, curtain, etc.", "There is nothing that can be opened nearby." ),
+                                       ACTION_OPEN, false );
 
     if( !openp_ ) {
         return;
@@ -729,6 +732,7 @@ static void open()
 
         if( here.has_flag( flag_LOCKED, openp ) ) {
             add_msg( m_info, _( "The door is locked!" ) );
+            MCP_ONLY( sfx::play_variant_sound( "menu_error", "default", 100 ); )
             return;
         } else if( tid.obj().close ) {
             // if the following message appears unexpectedly, the prior check was for t_door_o
@@ -1932,6 +1936,10 @@ void game::open_consume_item_menu()
 bool game::handle_action()
 {
     ZoneScopedN( "handle_action" );
+    MCP_ONLY(
+        map_perception::acquire();
+    const auto acquire_after_action = on_out_of_scope( []() { map_perception::acquire(); } );
+    )
     std::string action;
     input_context ctxt;
     action_id act = ACTION_NULL;
@@ -1941,6 +1949,7 @@ bool game::handle_action()
         // Check if we have an auto-move destination
         if( u.has_destination() ) {
             ZoneScopedN( "handle_action_get_auto_move" );
+            MCP_ONLY( bn::mcp::publish_step(); )
             act = u.get_next_auto_move_direction();
             if( act == ACTION_NULL ) {
                 add_msg( m_info, _( "Auto-move canceled" ) );
@@ -1976,6 +1985,75 @@ bool game::handle_action()
         uquit = QUIT_DIED;
         return false;
     }
+
+#if defined(CATA_MCP)
+    // A pickup or drop a client chose from the rows of the map view, as the native menus start it.
+    if( const auto item = engine_client::item_operation_of( ctxt.get_raw_input() );
+        item && !u.is_dead_state() ) {
+        user_action_counter += 1;
+        u.clear_destination();
+        destination_preview.clear();
+        // The session checked the row as it took the command, so a missing row is a replay that diverged.
+        if( !engine_client::run_item_operation( *item ) ) {
+            throw std::runtime_error( "Item operation rejected: row " + item->item_id +
+                                      " is gone or holds less" );
+        }
+        u.mod_moves( -current_turn.moves_elapsed() );
+        return true;
+    }
+
+    // A mode a client set to a named value, as the native key does when it lands on that value.
+    if( const auto mode = engine_client::mode_operation_of( ctxt.get_raw_input() );
+        mode && !u.is_dead_state() ) {
+        user_action_counter += 1;
+        u.clear_destination();
+        destination_preview.clear();
+        // The session checked the mode and the value as it took the command, so a miss is a replay that diverged.
+        if( !engine_client::run_mode_operation( *mode ) ) {
+            throw std::runtime_error( "Mode operation rejected: " + mode->mode + " cannot be set to " +
+                                      mode->value );
+        }
+        u.mod_moves( -current_turn.moves_elapsed() );
+        return true;
+    }
+
+    // An action a client chose from the context menu of a map square, as the native action on that square.
+    if( const auto tile = engine_client::tile_operation_of( ctxt.get_raw_input() );
+        tile && !u.is_dead_state() ) {
+        user_action_counter += 1;
+        u.clear_destination();
+        destination_preview.clear();
+        mouse_target = tile->at;
+        if( tile->action_id == "talk" ) {
+            if( auto *const who = critter_at<npc>( tile->at ); who && !refuse_faceless_speech( u ) ) {
+                who->talk_to_u();
+            }
+            return false;
+        }
+        if( tile->action_id == "look" ) {
+            auto center = tile->at;
+            look_around( true, center, tile->at, false, false, false );
+            return false;
+        }
+        if( tile->action_id == "travel" ) {
+            // As two left clicks: the first plans the route, the second starts walking it.
+            try_get_left_click_action( act, tile->at );
+            if( !try_get_left_click_action( act, tile->at ) ) {
+                return false;
+            }
+        } else if( tile->action_id == "attack" ) {
+            act = get_movement_action_from_delta( tile->at - u.bub_pos(), iso_rotate::yes );
+        } else if( tile->action_id == "fire" ) {
+            // As firing at a creature chosen from the creature list.
+            if( const auto *const target = critter_at<Creature>( tile->at ) ) {
+                choose_fire_target( *target );
+            }
+            act = ACTION_FIRE;
+        } else {
+            act = look_up_action( tile->action_id );
+        }
+    }
+#endif
 
     if( act == ACTION_NULL ) {
         ZoneScopedN( "handle_action_resolve_action" );
@@ -2413,10 +2491,10 @@ bool game::handle_action()
                         add_msg( m_info, _( "You can't open things while you're riding." ) );
                         break;
                     } else {
-                        open();
+                        open( MCP_ONLY( mouse_target ) );
                     }
                 } else {
-                    open();
+                    open( MCP_ONLY( mouse_target ) );
                 }
                 break;
 
@@ -2796,7 +2874,7 @@ bool game::handle_action()
                 } else if( u.is_mounted() ) {
                     u.dismount();
                 } else {
-                    control_vehicle();
+                    control_vehicle( MCP_ONLY( mouse_target ) );
                 }
                 break;
 
