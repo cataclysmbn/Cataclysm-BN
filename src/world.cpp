@@ -16,6 +16,7 @@
 #include "sqlite3.h"
 #include "sqlite_file_prefix.h"
 #include "worldfactory.h"
+#include "utils/memory_stream.h"
 #include "zlib.h"
 
 #include <algorithm>
@@ -484,7 +485,8 @@ auto read_from_db( sqlite3 *db, const std::string &path, file_read_fn reader,
             throw std::runtime_error( "Unknown compression format: " + compression );
         }
 
-        std::istringstream stream( dataString );
+        // JSON is parsed much faster from a memory stream than from a string stream.
+        memory_istream stream( std::move( dataString ) );
         reader( stream );
         sqlite3_finalize( stmt );
     } else {
