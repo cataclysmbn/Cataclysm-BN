@@ -234,16 +234,17 @@ auto rng_next_deterministic_call_seed( const std::uint64_t stream ) -> std::opti
 }
 
 rng_deterministic_task_scope::rng_deterministic_task_scope( const std::optional<unsigned int> seed )
-    : old_( tl_task )
 {
     if( seed ) {
-        tl_task = rng_task_context{ .engine = cata_default_random_engine( *seed ), .seed = *seed };
+        old_ = std::exchange( tl_task, rng_task_context{ .engine = cata_default_random_engine( *seed ), .seed = *seed } );
     }
 }
 
 rng_deterministic_task_scope::~rng_deterministic_task_scope()
 {
-    tl_task = old_;
+    if( old_ ) {
+        tl_task = *old_;
+    }
 }
 
 void rng_set_engine_seed( unsigned int seed )

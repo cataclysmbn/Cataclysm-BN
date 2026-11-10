@@ -49,7 +49,8 @@ class rng_deterministic_task_scope
         -> rng_deterministic_task_scope & = delete; // *NOPAD*
 
     private:
-        std::optional<rng_task_context> old_;
+        /// The context this scope replaced, when it set one.
+        std::optional<std::optional<rng_task_context>> old_;
 };
 
 auto rng_get_engine() -> cata_default_random_engine &; // *NOPAD*
