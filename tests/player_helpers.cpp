@@ -20,6 +20,7 @@
 #include "pimpl.h"
 #include "player.h"
 #include "player_activity.h"
+#include "skill.h"
 #include "stomach.h"
 #include "string_id.h"
 #include "type_id.h"
@@ -81,7 +82,10 @@ void clear_character(player& dummy, bool debug_storage) {
     // and sets hunger, thirst, fatigue and such to zero
     dummy.environmental_revert_effect();
 
-    dummy.clear_skills();
+    // Clearing a level keeps the practice toward the next one, which a new character does not have.
+    for (const auto& skill : Skill::skills) {
+        dummy.get_skill_level_object(skill.ident()) = SkillLevel{};
+    }
     dummy.clear_morale();
     dummy.activity->set_to_null();
     // Make sure any lingering safe references from the activity are removed
