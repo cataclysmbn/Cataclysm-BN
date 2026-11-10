@@ -8837,7 +8837,10 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
     {
         ZoneScopedN("Phase3_sound_absorption");
         // Absorption cache relies upon the floor, outside, and vehicle caches all being completed.
-        for (int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++) { build_absorption_cache(z); }
+        // Other levels are built when a sound starts there.
+        for (int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++) {
+            if (in_z_range(z)) { build_absorption_cache(z); }
+        }
     }
 
     seen_cache_dirty |= build_vision_transparency_cache(get_player_character());
