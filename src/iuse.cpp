@@ -2278,7 +2278,7 @@ int iuse::note_bionics( player *p, item *it, bool t, const tripoint_bub_ms &pos 
             }
         }
         if( charges ) {
-            p->add_msg_if_player( m_bad, "Your %s doesn't have enough power for the %s", it->tname(),
+            p->add_msg_if_player( m_bad, _( "Your %s doesn't have enough power for the %s" ), it->tname(),
                                   corpse->display_name().c_str() );
             no_charges = true;
             break;
@@ -3619,7 +3619,7 @@ int iuse::molotov_lit( player *p, item *it, bool t, const tripoint_bub_ms &pos )
         return 0;
     } else if( !t ) {
         if( p->has_item( *it ) ) {
-            if( !query_yn( "Really smash it on yourself?" ) ) {
+            if( !query_yn( _( "Really smash it on yourself?" ) ) ) {
                 p->add_msg_if_player( m_info, _( "You should probably throw it instead." ) );
                 return 0;
             }

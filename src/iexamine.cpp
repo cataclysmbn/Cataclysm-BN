@@ -795,7 +795,7 @@ class atm_menu
                 return false;
             }
 
-            add_msg( m_info, "amount: %d", amount );
+            add_msg( m_info, _( "amount: %d" ), amount );
             u.use_charges( itype_cash_card, amount );
             u.cash += amount;
             u.moves -= to_turns<int>( 10_seconds );

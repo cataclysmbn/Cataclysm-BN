@@ -1873,10 +1873,12 @@ void Character::process_bionic( bionic &bio )
             if( !bleeding_list.empty() ) {
                 effect *e = bleeding_list[0];
                 if( e->get_intensity() > 1 ) {
-                    add_msg_if_player( "Your %s slow the bleeding on your %s", bio.info().name, e->get_bp()->name );
+                    add_msg_if_player( _( "Your %s slow the bleeding on your %s" ),
+                                       bio.info().name, e->get_bp()->name );
                     e->mod_intensity( -1, false );
                 } else {
-                    add_msg_if_player( "Your %s staunch the bleeding on your %s", bio.info().name, e->get_bp()->name );
+                    add_msg_if_player( _( "Your %s staunch the bleeding on your %s" ),
+                                       bio.info().name, e->get_bp()->name );
                     e->set_removed();
                 }
             }

@@ -1909,11 +1909,11 @@ void item::basic_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
                     req.push_back( string_format( _( "%s %d <color_magenta>(Can't use!)</color>" ), _( "strength" ),
                                                   get_min_str() ) );
                 } else if( ranged::get_str_draw_penalty( *this, viewer ) < 0.75f ) {
-                    req.push_back( string_format( "%s %d <color_red>(Damage/Range 0.5x, Dispersion 2.0x)</color>",
+                    req.push_back( string_format( _( "%s %d <color_red>(Damage/Range 0.5x, Dispersion 2.0x)</color>" ),
                                                   _( "strength" ), get_min_str() ) );
                 } else {
-                    req.push_back( string_format( "%s %d <color_yellow>(Damage/Range 0.75x)</color>", _( "strength" ),
-                                                  get_min_str() ) );
+                    req.push_back( string_format( _( "%s %d <color_yellow>(Damage/Range 0.75x)</color>" ),
+                                                  _( "strength" ), get_min_str() ) );
                 }
             } else {
                 req.push_back( string_format( "%s %d", _( "strength" ), get_min_str() ) );
@@ -2768,7 +2768,7 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
     }
 
     if( mod->ammo_required() > 1 ) {
-        info.emplace_back( "AMMO", string_format( "Uses <stat>%i</stat> ammo per shot",
+        info.emplace_back( "AMMO", string_format( _( "Uses <stat>%i</stat> ammo per shot" ),
                            mod->ammo_required() ) );
     }
 
@@ -3718,8 +3718,9 @@ void item::bionic_info( std::vector<iteminfo> &info, const iteminfo_query *parts
 
     if( !bid->required_bionics.empty() ) {
         for( const bionic_id &req_bid : bid->required_bionics ) {
-            info.emplace_back( "CBM", string_format( "* This CBM requires another CBM to also be installed: %s",
-                               req_bid->name ) );
+            info.emplace_back( "CBM", string_format(
+                                   _( "* This CBM requires another CBM to also be installed: %s" ),
+                                   req_bid->name ) );
         }
     }
 
@@ -11478,7 +11479,7 @@ detached_ptr<item> item::process_internal( detached_ptr<item> &&self, player *ca
     }
     if( self->has_flag( flag_WATER_DISABLE ) && carrier && carrier->is_underwater() ) {
         ZoneScopedN( "item_process_water_disable" );
-        carrier->add_msg_if_player( "Your %s gurgles and splutters.", self->tname() );
+        carrier->add_msg_if_player( _( "Your %s gurgles and splutters." ), self->tname() );
         self->revert( carrier );
         self->deactivate();
         return std::move( self );
