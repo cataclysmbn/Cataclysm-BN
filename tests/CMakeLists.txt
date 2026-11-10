@@ -59,6 +59,19 @@ if (BUILD_TESTING)
     endif ()
 
     if (MCP)
+        # These two need the real message log; the others link fake_messages.cpp.
+        set(CATA_TEST_REAL_MESSAGES map_perception_bionics_boundary_test.cpp bionics_fuel_observation_test.cpp)
+        list(FILTER CATACLYSM_BN_TEST_SOURCES EXCLUDE REGEX "/tests/(map_perception_bionics_boundary|bionics_fuel_observation)_test\\.cpp$")
+        add_executable(cata_test-mcp-messages test_main.cpp map_helpers.cpp player_helpers.cpp
+            state_helpers.cpp options_helpers.cpp tile_helpers.cpp ${CATA_TEST_REAL_MESSAGES}
+            ${CMAKE_SOURCE_DIR}/src/messages.cpp)
+        target_link_libraries(cata_test-mcp-messages PRIVATE cataclysm-bn-mcp-common)
+        target_compile_options(cata_test-mcp-messages PRIVATE ${CATCH2_COMPILE_OPTIONS})
+        add_test(
+            NAME test-mcp-messages
+            COMMAND sh -c "$<TARGET_FILE:cata_test-mcp-messages> --rng-seed 424242"
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
         add_executable(cata_test-mcp ${CATACLYSM_BN_TEST_SOURCES})
         target_link_libraries(cata_test-mcp PRIVATE cataclysm-bn-mcp-common)
         target_compile_options(cata_test-mcp PRIVATE ${CATCH2_COMPILE_OPTIONS})

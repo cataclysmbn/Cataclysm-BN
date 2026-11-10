@@ -1025,7 +1025,7 @@ bool options_manager::cOpt::is_hidden() const
 #endif
 
         case COPT_NO_SOUND_HIDE:
-#if !defined(SDL_SOUND) // If not defined, we have no sound support.
+#if !defined(SDL_SOUND) && !defined(CATA_MCP) // If not defined, we have no sound support.
             return true;
 #else
             return false;
@@ -4315,7 +4315,7 @@ void options_manager::cache_to_globals()
 
     similarity_threshold = ::get_option<float>( "MERGE_COMESTIBLES_THRESHOLD" );
 
-#if defined(SDL_SOUND)
+#if defined(SDL_SOUND) || defined(CATA_MCP)
     sounds::sound_enabled = ::get_option<bool>( "SOUND_ENABLED" );
 #endif
 

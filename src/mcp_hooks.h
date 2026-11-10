@@ -18,11 +18,20 @@ inline constexpr auto protocol_engine = true;
 #   include "sounds.h"
 #   include "technique_reference.h"
 #   include "client_choice.h"
-#   include "client_command.h"
 #   include "client_input.h"
 #   include "client_interaction.h"
+#   include "engine_client_component.h"
+#   include "engine_client_contract.h"
+#   include "engine_client_presentation.h"
+#   include "engine_client_session.h"
+#   include "engine_client_world.h"
+#   include "game_session.h"
 #   include "loading_ui_client.h"
+#   include "map_perception.h"
+#   include "sdlsound.h"
+#   include "target_screen.h"
 #   include "tile_parts.h"
+#   include "vehicle/vehicle_display.h"
 #else
 #   define MCP_ONLY(...)
 inline constexpr auto protocol_engine = false;

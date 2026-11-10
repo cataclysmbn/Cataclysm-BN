@@ -5,6 +5,8 @@
 #include "cuboid_rectangle.h"
 #include "cursesdef.h"
 #include "cursesport.h"
+#include "engine_client_session.h"
+#include "engine_client_world.h"
 #include "game.h"
 #include "game_constants.h"
 #include "game_ui.h"
@@ -39,6 +41,8 @@ auto catacurses::init_interface() -> void
     const auto width = std::max( { FULL_SCREEN_WIDTH, memory::minimum_terminal.x, get_option<int>( "TERMINAL_X" ) } );
     const auto height = std::max( { FULL_SCREEN_HEIGHT, memory::minimum_terminal.y, get_option<int>( "TERMINAL_Y" ) } );
     memory::initialize( width, height );
+    engine_client::process_session().set_world_capture( &engine_client::world::capture_world,
+            &engine_client::world::capture_patch );
 }
 
 auto catacurses::endwin() -> void
@@ -76,7 +80,7 @@ auto gamepad_available() -> bool { return false; }
 auto input_manager::read_native_input_event() -> input_event
 {
     memory::set_timeout( get_timeout() );
-    const auto result = memory::read_input();
+    const auto result = engine_client::process_session().delivered( memory::read_input() );
     previously_pressed_key = result.type == input_event_t::keyboard ? result.get_first_input() : 0;
     return result;
 }

@@ -384,7 +384,7 @@
     {
       "name": "linux-mcp",
       "configurePreset": "linux-mcp",
-      "targets": [ "cataclysm-bn-mcp", "cata_test-mcp" ],
+      "targets": [ "cataclysm-bn-mcp", "cata_test-mcp", "cata_test-mcp-messages" ],
       "description": "Build the protocol engine and its tests."
     },
     {

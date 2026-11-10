@@ -329,3 +329,4 @@ jobs:
       - name: run tests
         run: |
           ./out/build/linux-mcp/tests/cata_test-mcp --use-colour yes --rng-seed time --error-format=github-action
+          ./out/build/linux-mcp/tests/cata_test-mcp-messages --use-colour yes --rng-seed 424242 --error-format=github-action
