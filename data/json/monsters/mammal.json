@@ -1942,11 +1942,7 @@
     "fear_triggers": [ "SOUND", "PLAYER_CLOSE" ],
     "placate_triggers": [ "MEAT" ],
     "death_function": [ "NORMAL" ],
-    "petfood": {
-      "food": [ "DOGFOOD" ],
-      "feed": "The %s takes the food with a wily grin.",
-      "pet": "The %s rubs against your leg."
-    },
+    "petfood": { "food": [ "DOGFOOD" ], "feed": "The %s takes the food with a wily grin.", "pet": "The %s rubs against your leg." },
     "pet_training": { "hp_mult": 1.15, "melee_mult": 1.2, "dodge_mult": 1.2, "max_level": 3 },
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "HIT_AND_RUN", "KEENNOSE", "BLEED" ]
   },
@@ -2189,7 +2185,18 @@
       "min_skill": 4,
       "level_flags": [ { "level": 1, "flags": [ "COMBAT_MOUNT" ] } ]
     },
-    "flags": [ "SEES", "HEARS", "SMELLS", "PET_MOUNTABLE", "ANIMAL", "PET_WONT_FOLLOW", "PATH_AVOID_DANGER_1", "WARM", "BLEED", "ATTACKMON" ]
+    "flags": [
+      "SEES",
+      "HEARS",
+      "SMELLS",
+      "PET_MOUNTABLE",
+      "ANIMAL",
+      "PET_WONT_FOLLOW",
+      "PATH_AVOID_DANGER_1",
+      "WARM",
+      "BLEED",
+      "ATTACKMON"
+    ]
   },
   {
     "id": "mon_muskrat",

@@ -359,7 +359,18 @@
       "pet": "The %s buzzes happily",
       "tamer_traits": [ [ "THRESH_INSECT" ] ]
     },
-    "flags": [ "SEES", "SMELLS", "FLIES", "STUMBLES", "SWARMS", "GROUP_MORALE", "CANPLAY", "PATH_AVOID_FIRE", "LOUDMOVES", "PET_MOUNTABLE" ]
+    "flags": [
+      "SEES",
+      "SMELLS",
+      "FLIES",
+      "STUMBLES",
+      "SWARMS",
+      "GROUP_MORALE",
+      "CANPLAY",
+      "PATH_AVOID_FIRE",
+      "LOUDMOVES",
+      "PET_MOUNTABLE"
+    ]
   },
   {
     "id": "mon_centipede_small",
