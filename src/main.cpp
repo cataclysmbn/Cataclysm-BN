@@ -37,6 +37,7 @@
 #include "runtime_handlers.h"
 #include "string_formatter.h"
 #include "main_menu.h"
+#include "mcp_hooks.h"
 #include "mapsharing.h"
 #include "options.h"
 #include "output.h"
@@ -123,7 +124,7 @@ int start_logger( const char *app_name )
 
 #endif //__ANDROID__
 
-#if !defined(_WIN32)
+#if !defined(_WIN32) && !defined(CATA_MCP)
 #if defined(TILES)
 [[ noreturn ]]
 static void signal_handler( int )
@@ -232,6 +233,7 @@ int main( int argc, char *argv[] )
     auto replay_record_path = std::string{};
     auto replay_play_path = std::string{};
     auto state_hash_log_path = std::string{};
+    MCP_ONLY( auto contract_record_path = std::string{}; )
     bool verifyexit = false;
     bool check_mods = false;
     auto check_mods_mode = init::check_mods_mode::default_mods;
@@ -283,7 +285,7 @@ int main( int argc, char *argv[] )
                 return 1;
             };
         };
-        const std::array<arg_handler, 20> first_pass_arguments = {{
+        const std::array < arg_handler, MCP_ONLY( 1 + ) 20 > first_pass_arguments = {{
                 {
                     "--seed", "<string of letters and or numbers>",
                     "Sets the random number generator's seed value",
@@ -317,6 +319,14 @@ int main( int argc, char *argv[] )
                     section_default,
                     path_argument( state_hash_log_path ),
                 },
+#if defined(CATA_MCP)
+                {
+                    "--contract-record", "<jsonl path>",
+                    "Write every publication of the client contract, its events and the snapshot it leaves, to a new file",
+                    section_default,
+                    path_argument( contract_record_path ),
+                },
+#endif
                 {
                     "--jsonverify", nullptr,
                     "Checks the BN json files",
@@ -720,6 +730,7 @@ int main( int argc, char *argv[] )
         }
     }
 
+    MCP_ONLY( if( !test_mode ) { bn::mcp::start_session(); } )
     preload_config::load();
 
     std::string current_path = std::filesystem::current_path().string();
@@ -869,7 +880,7 @@ int main( int argc, char *argv[] )
             DebugLog( DL::Error, DC::Main ) << "Error while initializing the interface: " << err.what();
             return 1;
         }
-#if defined(SDL_SOUND) && !defined(TILES)
+#if ( defined(SDL_SOUND) && !defined(TILES) ) || defined(CATA_MCP)
         init_sound();
         atexit( shutdown_sound );
         load_soundset();
@@ -896,6 +907,7 @@ int main( int argc, char *argv[] )
     } else {
         rng_set_engine_seed( seed );
     }
+    MCP_ONLY( if( !contract_record_path.empty() ) { engine_client::process_session().record_to( contract_record_path ); } )
 
     g = std::make_unique<game>();
     // First load and initialize everything that does not
@@ -958,7 +970,7 @@ int main( int argc, char *argv[] )
 
     catacurses::curs_set( 0 ); // Invisible cursor here, because MAPBUFFER.load() is crash-prone
 
-#if !defined(_WIN32)
+#if !defined(_WIN32) && !defined(CATA_MCP)
     struct sigaction sigIntHandler;
     sigIntHandler.sa_handler = signal_handler;
     sigemptyset( &sigIntHandler.sa_mask );
@@ -970,7 +982,9 @@ int main( int argc, char *argv[] )
     replay_buffered_debugmsg_prompts();
 
     while( true ) {
+        MCP_ONLY( game_session::set_running( false ); )
         if( !world.empty() ) {
+            MCP_ONLY( game_session::set_phase( "loading" ); )
             if( !g->load( world ) ) {
                 break;
             }
@@ -985,9 +999,15 @@ int main( int argc, char *argv[] )
 
         shared_ptr_fast<ui_adaptor> ui = g->create_or_get_main_ui_adaptor();
         options_manager::cache_balance_options();
+        MCP_ONLY( game_session::set_running( true ); )
         while( !g->do_turn() ) { replay::log_state_hash(); }
+        MCP_ONLY( game_session::set_running( false ); )
     }
 
+    MCP_ONLY(
+        game_session::set_phase( "shutting_down" );
+        engine_client::process_session().interrupt( engine_client::error::not_ready );
+    )
     exit_handler( replay::is_enabled() ? 0 : -999 );
     return 0;
 }
