@@ -66,6 +66,10 @@ auto external_text(const std::string& source, const std::function<auto()->std::s
 /// `external_text` for game code, which has no way to recover from a broken replay.
 auto external_text_or_exit(
     const std::string& source, const std::function<auto()->std::string>& read) -> std::string;
+#if defined(TILES)
+/// The text on the system clipboard, empty when it holds none.
+auto clipboard_text() -> std::string;
+#endif
 /// Reports a replay failure and ends the game with exit code 1.
 [[noreturn]] auto exit_with_failure(const std::runtime_error& error) -> void;
 
