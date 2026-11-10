@@ -28,6 +28,7 @@ inline constexpr auto protocol_engine = true;
 #   include "game_session.h"
 #   include "loading_ui_client.h"
 #   include "map_perception.h"
+#   include "mcp_session.h"
 #   include "sdlsound.h"
 #   include "target_screen.h"
 #   include "tile_parts.h"

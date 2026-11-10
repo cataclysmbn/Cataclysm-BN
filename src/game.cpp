@@ -2630,6 +2630,7 @@ void game::process_activity()
             restore_debug_infinite_speed_moves( before_avatar_moves );
         }
     }
+    MCP_ONLY( if( u.activity ) { bn::mcp::publish_activity(); } )
 }
 
 auto game::debug_infinite_speed_can_freeze_time() const -> bool

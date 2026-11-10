@@ -1949,6 +1949,7 @@ bool game::handle_action()
         // Check if we have an auto-move destination
         if( u.has_destination() ) {
             ZoneScopedN( "handle_action_get_auto_move" );
+            MCP_ONLY( bn::mcp::publish_step(); )
             act = u.get_next_auto_move_direction();
             if( act == ACTION_NULL ) {
                 add_msg( m_info, _( "Auto-move canceled" ) );

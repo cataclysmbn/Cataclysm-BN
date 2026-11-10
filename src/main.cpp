@@ -730,6 +730,7 @@ int main( int argc, char *argv[] )
         }
     }
 
+    MCP_ONLY( if( !test_mode ) { bn::mcp::start_session(); } )
     preload_config::load();
 
     std::string current_path = std::filesystem::current_path().string();

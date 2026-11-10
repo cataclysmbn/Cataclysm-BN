@@ -14,6 +14,7 @@
 #include "input.h"
 #include "json.h"
 #include "map/map.h"
+#include "mcp_session.h"
 #include "ncurses_def.h"
 #include "options.h"
 #include "output.h"
@@ -47,6 +48,7 @@ auto catacurses::init_interface() -> void
 
 auto catacurses::endwin() -> void
 {
+    bn::mcp::finish_session();
     memory::shutdown();
 }
 
