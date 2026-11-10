@@ -129,6 +129,29 @@ the appropriate JSON file.
 }
 ```
 
+### Client_shortcuts
+
+A button of the shortcut bar a client shows beside the map. The engine publishes the label and bound key from the action's input context.
+
+| Identifier | Description                                                      |
+| ---------- | ---------------------------------------------------------------- |
+| id         | Unique ID. Loading the same id again replaces the entry.         |
+| action     | Registered action of the main game context that the button runs. |
+| icon       | Opaque sprite id a client may map to its own art.                |
+| glyph      | Symbol drawn when the client has no art for `icon`.              |
+| order      | Buttons sort by this value, then by load order.                  |
+
+```json
+{
+  "type": "client_shortcut",
+  "id": "inventory",
+  "action": "inventory",
+  "icon": "inventory",
+  "glyph": "🎒",
+  "order": 10
+}
+```
+
 ### Body_parts
 
 | Identifier        | Description                                                                                                                                                                                                                                                                             |
