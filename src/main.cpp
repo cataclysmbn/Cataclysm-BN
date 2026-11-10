@@ -37,6 +37,7 @@
 #include "runtime_handlers.h"
 #include "string_formatter.h"
 #include "main_menu.h"
+#include "mcp_hooks.h"
 #include "mapsharing.h"
 #include "options.h"
 #include "output.h"
@@ -123,7 +124,7 @@ int start_logger( const char *app_name )
 
 #endif //__ANDROID__
 
-#if !defined(_WIN32)
+#if !defined(_WIN32) && !defined(CATA_MCP)
 #if defined(TILES)
 [[ noreturn ]]
 static void signal_handler( int )
@@ -956,7 +957,7 @@ int main( int argc, char *argv[] )
 
     catacurses::curs_set( 0 ); // Invisible cursor here, because MAPBUFFER.load() is crash-prone
 
-#if !defined(_WIN32)
+#if !defined(_WIN32) && !defined(CATA_MCP)
     struct sigaction sigIntHandler;
     sigIntHandler.sa_handler = signal_handler;
     sigemptyset( &sigIntHandler.sa_mask );

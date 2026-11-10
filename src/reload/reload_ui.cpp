@@ -47,6 +47,14 @@ class reload_callback: public uilist_callback {
 public:
     explicit reload_callback(reload_callback_context context): context(std::move(context)) {}
 
+#if defined(CATA_MCP)
+    auto keys() const -> std::vector<uilist_key> override {
+        if (!context.can_partial_reload) { return {}; }
+        return {{.key = KEY_LEFT, .name = _("Reload less")},
+                {.key = KEY_RIGHT, .name = _("Reload more")}};
+    }
+
+#endif
     auto key(const input_context&, const input_event& event, int index, uilist* menu)
         -> bool override {
         const auto current_key = event.get_first_input();
