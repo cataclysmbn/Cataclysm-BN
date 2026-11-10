@@ -1503,6 +1503,18 @@ TEST_CASE("avatar_setpos_updates_map_from_absolute_position") {
     CHECK(g->update_map(you) == point_rel_sm::zero());
 }
 
+TEST_CASE("test_map_spans_only_the_requested_reality_bubble", "[map][submap_loader]") {
+    clear_all_state();
+    g->place_player_overmap(tripoint_abs_omt::zero());
+    auto& you = get_avatar();
+    // Leave enough overmap tiles behind that the loader evicts some while they could still be on
+    // the map.
+    for (auto step = 0; step < 8; ++step) {
+        you.setpos(you.abs_pos() + tripoint_rel_ms(-2 * SEEX, -2 * SEEY, 0));
+    }
+    CHECK(get_map().getmapsize() == g_mapsize);
+}
+
 TEST_CASE("monster_tracker_uses_absolute_positions") {
     clear_all_state();
 
