@@ -104,26 +104,11 @@ auto boundary_mismatch_message(
     const auto recorded_actions = gameplay_actions(recorded.actions);
     const auto actual_actions = gameplay_actions(actual.actions);
     if (recorded_actions != actual_actions) {
-        auto missing = std::vector<std::string>{};
-        auto unexpected = std::vector<std::string>{};
-        std::ranges::copy_if(recorded_actions, std::back_inserter(missing), [&](const auto& action) {
-            return std::ranges::find(actual_actions, action) == actual_actions.end();
-        });
-        std::ranges::
-            copy_if(actual_actions, std::back_inserter(unexpected), [&](const auto& action) {
-                return std::ranges::find(recorded_actions, action) == recorded_actions.end();
-            });
-        if (!missing.empty()) {
-            output << " missing gameplay actions [";
-            append_action_list(output, missing);
-            output << ']';
-        }
-        if (!unexpected.empty()) {
-            output << " unexpected gameplay actions [";
-            append_action_list(output, unexpected);
-            output << ']';
-        }
-        if (missing.empty() && unexpected.empty()) { output << " gameplay action order differs"; }
+        output << " gameplay actions recorded=[";
+        append_action_list(output, recorded_actions);
+        output << "], actual=[";
+        append_action_list(output, actual_actions);
+        output << ']';
     }
     return output.str();
 }

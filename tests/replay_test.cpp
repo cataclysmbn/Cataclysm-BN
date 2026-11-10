@@ -146,7 +146,7 @@ TEST_CASE(
         CHECK_THROWS_WITH(
             replay::next_input_event(
                 {.context = "GAME", .actions = {"WAIT", "zoom_out", "toggle_zone_overlay"}}),
-            Catch::Matchers::Contains("missing gameplay actions ['MOVE_N']"));
+            Catch::Matchers::Contains("gameplay actions recorded=['MOVE_N'], actual=['WAIT']"));
     }
     SECTION("timeout differences are diagnosed") {
         CHECK_THROWS_WITH(
