@@ -154,5 +154,30 @@
       ],
       "ranged": { "reduction": [ 12, 12 ], "destroy_threshold": 40, "block_unaimed_chance": "50%" }
     }
+  },
+  {
+    "type": "furniture",
+    "id": "f_trough",
+    "name": "feeding trough",
+    "description": "A low, open wooden box for animal feed.  Tamed animals will step into it to eat pet food placed inside, and ignore food lying elsewhere.",
+    "symbol": "u",
+    "color": "brown",
+    "move_cost_mod": 2,
+    "coverage": 20,
+    "required_str": 8,
+    "flags": [ "TRANSPARENT", "FLAMMABLE", "PLACE_ITEM", "ORGANIC", "SHORT", "PET_FEEDER" ],
+    "deconstruct": { "items": [ { "item": "2x4", "count": 4 }, { "item": "wood_panel", "count": 2 }, { "item": "nail", "charges": 16 } ] },
+    "bash": {
+      "str_min": 10,
+      "str_max": 35,
+      "sound": "smash!",
+      "sound_fail": "whump.",
+      "items": [
+        { "item": "2x4", "count": [ 1, 3 ] },
+        { "item": "nail", "charges": [ 2, 8 ] },
+        { "item": "splinter", "count": [ 1, 3 ] }
+      ],
+      "ranged": { "reduction": [ 6, 6 ], "destroy_threshold": 35, "block_unaimed_chance": "25%" }
+    }
   }
 ]
