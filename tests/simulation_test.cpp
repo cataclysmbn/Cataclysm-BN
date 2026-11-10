@@ -530,6 +530,23 @@ TEST_CASE("simulated_submaps_follow_loads_unloads_and_requests", "[simulation][s
     CHECK(simulated().empty());
 }
 
+TEST_CASE("recreated_dimension_buffers_get_new_submap_generations", "[simulation]") {
+    // map::get_submap_at trusts its bubble index while the buffer address and generations match.
+    // A buffer created again, possibly at the same address, must not repeat the old generations.
+    clear_all_state();
+    const auto generations = []() {
+        const auto& dim = MAPBUFFER_REGISTRY.get(TEST_DIM_ID);
+        return std::array{dim.submaps_added_generation(), dim.submaps_removed_generation()};
+    };
+    MAPBUFFER_REGISTRY.unload_dimension(TEST_DIM_ID);
+    const auto first = generations();
+    MAPBUFFER_REGISTRY.unload_dimension(TEST_DIM_ID);
+    const auto second = generations();
+    MAPBUFFER_REGISTRY.unload_dimension(TEST_DIM_ID);
+    CHECK(second[0] != first[0]);
+    CHECK(second[1] != first[1]);
+}
+
 // ── Test 3 ────────────────────────────────────────────────────────────────────
 // Verify that fire in a non-primary dimension does not affect the primary
 // dimension when process_fields_in_submap() is called with the secondary
