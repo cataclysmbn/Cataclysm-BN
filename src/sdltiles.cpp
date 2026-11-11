@@ -1468,6 +1468,7 @@ static bool draw_window( Font_Ptr &font, const catacurses::window &w, point offs
 
     // TODO: Get this from UTF system to make sure it is exactly the kind of space we need
     static const std::string space_string = " ";
+    const auto ascii_lines_routine = get_option<bool>( "USE_DRAW_ASCII_LINES_ROUTINE" );
 
     bool update = false;
     for( int j = 0; j < win->height; j++ ) {
@@ -1483,6 +1484,18 @@ static bool draw_window( Font_Ptr &font, const catacurses::window &w, point offs
 
         update = true;
         win->line[j].touched = false;
+        const int drawy = offset.y + j * font->height;
+        // Adjacent spaces with one background color are filled with a single rect.
+        auto blank_x = 0;
+        auto blank_count = 0;
+        auto blank_bg = catacurses::black;
+        const auto fill_blanks = [&]() {
+            if( blank_count > 0 ) {
+                geometry->rect( renderer, point( blank_x, drawy ), font->width * blank_count, font->height,
+                                color_as_sdl( blank_bg ) );
+                blank_count = 0;
+            }
+        };
         for( int i = 0; i < win->width; i++ ) {
             const int fbx = win->pos.x + i;
             if( fbx >= static_cast<int>( framebuffer[fby].chars.size() ) ) {
@@ -1493,7 +1506,6 @@ static bool draw_window( Font_Ptr &font, const catacurses::window &w, point offs
             const cursecell &cell = win->line[j].chars[i];
 
             const int drawx = offset.x + i * font->width;
-            const int drawy = offset.y + j * font->height;
             if( drawx + font->width > WindowWidth || drawy + font->height > WindowHeight ) {
                 // Outside of the display area, would not render anyway
                 continue;
@@ -1514,10 +1526,15 @@ static bool draw_window( Font_Ptr &font, const catacurses::window &w, point offs
 
             // Spaces are used a lot, so this does help noticeably
             if( cell.ch == space_string ) {
-                geometry->rect( renderer, point( drawx, drawy ), font->width, font->height,
-                                color_as_sdl( cell.BG ) );
+                if( blank_count == 0 || drawx != blank_x + blank_count * font->width || cell.BG != blank_bg ) {
+                    fill_blanks();
+                    blank_x = drawx;
+                    blank_bg = cell.BG;
+                }
+                blank_count++;
                 continue;
             }
+            fill_blanks();
             const int codepoint = UTF8_getch( cell.ch );
             const catacurses::base_color FG = cell.FG;
             const catacurses::base_color BG = cell.BG;
@@ -1526,7 +1543,7 @@ static bool draw_window( Font_Ptr &font, const catacurses::window &w, point offs
                 // utf8_width() may return a negative width
                 continue;
             }
-            bool use_draw_ascii_lines_routine = get_option<bool>( "USE_DRAW_ASCII_LINES_ROUTINE" );
+            bool use_draw_ascii_lines_routine = ascii_lines_routine;
             unsigned char uc = static_cast<unsigned char>( cell.ch[0] );
             switch( codepoint ) {
                 case LINE_XOXO_UNICODE:
@@ -1589,6 +1606,7 @@ static bool draw_window( Font_Ptr &font, const catacurses::window &w, point offs
                 font->OutputChar( renderer, geometry, cell.ch, point( drawx, drawy ), FG );
             }
         }
+        fill_blanks();
     }
     win->draw = false; //We drew the window, mark it as so
     //Keeping track of last drawn window and tilemode zoom level
