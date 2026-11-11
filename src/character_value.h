@@ -58,6 +58,10 @@ class character_value
         int max_value;
 
         int get_amount( const Character &ch ) const;
+
+        translation desc;
+        std::string get_desc() const;
+
         // Needed for bindings
         auto operator==( const character_value &rhs ) const -> bool { return id == rhs.id; }
         auto operator<( const character_value &rhs ) const -> bool { return id < rhs.id; }

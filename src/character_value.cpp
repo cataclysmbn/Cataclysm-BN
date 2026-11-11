@@ -34,6 +34,7 @@ void character_value::load_character_values( const JsonObject &jo, const std::st
 
 void character_value::load( const JsonObject &jo, const std::string &src )
 {
+    optional( jo, was_loaded, "desc", desc );
     optional( jo, was_loaded, "hardcode_value", hardcode_value,
               enum_flags_reader<hardcode_character_value>( "hardcode_character_value" ),
               hardcode_character_value::none );
@@ -132,6 +133,11 @@ int character_value::get_amount( const Character &ch ) const
             break;
     }
     return std::max( std::min( res, max_value ), min_value );
+}
+
+std::string character_value::get_desc() const
+{
+    return desc.translated();
 }
 
 template<> struct enum_traits<character_value::hardcode_character_value> {

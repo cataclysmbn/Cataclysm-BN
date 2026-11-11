@@ -67,6 +67,53 @@ auto enchantment::get_effect_string(bool is_item) const -> std::vector<std::stri
     std::vector<std::string> result;
     bool describe = false;
     result.push_back(cond_string);
+
+    for (const auto [ench_val_id, effectors] : complex_values_add) {
+        for (const auto effector : effectors) {
+            // Effectors should never have a value of 0
+            const std::string color = effector.second > 0 ? "green" : "red";
+            const std::string effect_desc = effector.first->get_desc();
+            if (!effect_desc.empty()) {
+                describe = true;
+                result.push_back(string_format(
+                    _("  <color_%1s>%2s (Affected by %s3)"), color, ench_val_id->get_desc(),
+                    effector.first->get_desc()));
+            } else {
+                value_effects[ench_val_id] += (effector.second > 0 ? 1 : -1);
+            }
+        }
+    }
+    for (const auto [ench_val_id, effectors] : complex_values_multiply) {
+        for (const auto effector : effectors) {
+            // Effectors should never have a value of 0
+            const std::string color = effector.second > 0 ? "green" : "red";
+            const std::string effect_desc = effector.first->get_desc();
+            if (!effect_desc.empty()) {
+                describe = true;
+                result.push_back(string_format(
+                    _("  <color_%1s>%2s (Affected by %s3)"), color, ench_val_id->get_desc(),
+                    effector.first->get_desc()));
+            } else {
+                value_effects[ench_val_id] += (effector.second > 0 ? 1 : -1);
+            }
+        }
+    }
+    for (const auto [ench_val_id, effectors] : complex_values_max) {
+        for (const auto effector : effectors) {
+            // Effectors should never have a value of 0
+            const std::string color = effector.second > 0 ? "green" : "red";
+            const std::string effect_desc = effector.first->get_desc();
+            if (!effect_desc.empty()) {
+                describe = true;
+                result.push_back(string_format(
+                    _("  <color_%1s>%2s (Affected by %s3)"), color, ench_val_id->get_desc(),
+                    effector.first->get_desc()));
+            } else {
+                value_effects[ench_val_id] += (effector.second > 0 ? 1 : -1);
+            }
+        }
+    }
+
     for (const auto [ench_id, goodbad] : value_effects) {
         const std::string color = goodbad > 0 ? "green" : goodbad < 0 ? "red" : "magenta";
         result.push_back(string_format("  <color_%s>%s</color>", color, ench_id->get_desc()));
