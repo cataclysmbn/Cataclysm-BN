@@ -1758,10 +1758,16 @@ void cata_cursesport::curses_drawwindow( const catacurses::window &w )
         // Special font for the terrain window
         update = draw_window( overmap_font, w );
     } else if( g && w == g->w_pixel_minimap && pixel_minimap_option ) {
-        // ensure the space the minimap covers is "dirtied".
-        // this is necessary when it's the only part of the sidebar being drawn
-        // TODO: Figure out how to properly make the minimap code do whatever it is this does
-        draw_window( font, w );
+        // ensure the space the minimap covers is "dirtied", so text drawn there later is not skipped as unchanged.
+        // the window cells are not drawn: clear_window_area paints over them anyway
+        invalidate_framebuffer_proportion( win );
+        const auto fb_height = std::min( win->height,
+                                         static_cast<int>( terminal_framebuffer.size() ) - win->pos.y );
+        const auto fb_width = terminal_framebuffer.empty() ? 0 : std::min( win->width,
+                              static_cast<int>( terminal_framebuffer[0].chars.size() ) - win->pos.x );
+        invalidate_framebuffer( terminal_framebuffer, win->pos, std::max( fb_width, 0 ),
+                                std::max( fb_height, 0 ) );
+        win->draw = false;
 
         // Make sure the entire minimap window is black before drawing.
         clear_window_area( w );
