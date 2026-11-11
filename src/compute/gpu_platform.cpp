@@ -13,6 +13,7 @@
 #    include <SDL3/SDL_properties.h>
 #    include <algorithm>
 #    include <array>
+#    include <chrono>
 #    include <cstddef>
 #    include <cstdlib>
 #    include <filesystem>
@@ -20,6 +21,7 @@
 #    include <ranges>
 #    include <string>
 #    include <string_view>
+#    include <thread>
 #    include <utility>
 #    include <vector>
 
@@ -27,6 +29,16 @@ namespace cata_gpu {
 
 auto compute_shader_entrypoint(SDL_GPUShaderFormat const format) -> char const* {
     return format == SDL_GPU_SHADERFORMAT_MSL ? "main0" : "main";
+}
+
+auto wait_for_fence(SDL_GPUDevice* const device, SDL_GPUFence* const fence) -> bool {
+    // Poll for a bounded time; a lost device then reports its error through the blocking wait.
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds{100};
+    while (!SDL_QueryGPUFence(device, fence) && std::chrono::steady_clock::now() < deadline) {
+        std::this_thread::yield();
+    }
+    // Returns at once for a signaled fence and lets SDL release finished command buffers.
+    return SDL_WaitForGPUFences(device, true, &fence, 1);
 }
 
 namespace {
