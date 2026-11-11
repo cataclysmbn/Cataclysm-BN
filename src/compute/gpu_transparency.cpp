@@ -575,7 +575,7 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
     auto wait_succeeded = true;
     {
         ZoneScopedN("gpu_transparency_fence_wait");
-        wait_succeeded = SDL_WaitForGPUFences(device, true, &fence, 1);
+        wait_succeeded = wait_for_fence(device, fence);
     }
     SDL_ReleaseGPUFence(device, fence);
     if (!wait_succeeded) {
