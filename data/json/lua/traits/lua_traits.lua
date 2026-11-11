@@ -151,6 +151,26 @@ local function clutter_penalty(count)
   return math.min(steps * 2, max_penalty)
 end
 
+local has_tick_trait = false
+---@type integer?
+local tick_trait_generation = nil
+
+--- The 1-turn trait tick runs only for an avatar with one of these traits; the answer is kept until a
+--- trait changes or another game or avatar starts.
+---@return boolean
+local function needs_trait_tick()
+  local generation = gapi.trait_generation()
+  if generation ~= tick_trait_generation then
+    tick_trait_generation = generation
+    local you = gapi.get_avatar()
+    has_tick_trait = you ~= nil
+      and (you:has_trait(trait_nyctophobia) or you:has_trait(trait_claustrophobia) or you:has_trait(trait_agoraphobia))
+  end
+  return has_tick_trait
+end
+
+local function forget_trait_tick() tick_trait_generation = nil end
+
 local function tick_nyctophobia()
   ---@type Avatar
   local you = gapi.get_avatar()
@@ -343,6 +363,8 @@ function lua_traits.register(mod)
   mod.on_nyctophobia_tick = tick_nyctophobia
   mod.on_morale_traits_tick = tick_morale_traits
   mod.on_clutter_intolerant_tick = tick_clutter_intolerant
+  mod.needs_trait_tick = needs_trait_tick
+  mod.forget_trait_tick = forget_trait_tick
 end
 
 return lua_traits
