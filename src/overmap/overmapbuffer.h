@@ -505,6 +505,10 @@ public:
      * p is an absolute *submap* coordinate.
      */
     void spawn_monster(const tripoint_abs_sm& p);
+    /// Submaps inside [begin, end) on any z-level that hold stored monsters or a non-empty monster
+    /// group: the only submaps spawn_monster and groups_at can act on.
+    auto populated_submaps(const point_abs_sm& begin, const point_abs_sm& end)
+        -> std::vector<tripoint_abs_sm>;
     /**
      * Discard all monster_map entries at submap p without placing them.
      * Used at load time to purge stale entries for in-bubble submaps that
