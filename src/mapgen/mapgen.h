@@ -11,6 +11,7 @@
 #include "type_id.h"
 
 #include <cstddef>
+#include <functional>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -268,8 +269,10 @@ public:
      * similar to objects, but it uses key to get the actual position where to place things
      * out of the json "bitmap" (which is used to paint the terrain/furniture).
      */
+    /// Pieces are shared with every mapgen function that uses the palette. Those are set
+    /// up on several threads at once, hence the thread-safe pointers.
     using placing_map =
-        std::unordered_map<map_key, std::vector<shared_ptr_fast<const jmapgen_piece>>>;
+        std::unordered_map<map_key, std::vector<std::shared_ptr<const jmapgen_piece>>>;
 
     std::unordered_set<map_key> keys_with_terrain;
     placing_map format_placings;
@@ -347,7 +350,12 @@ struct jmapgen_objects {
 
     auto check_bounds(const jmapgen_place& place, const JsonObject& jso) -> bool;
 
-    void add(const jmapgen_place& place, const shared_ptr_fast<const jmapgen_piece>& piece);
+    /// Places `piece` at `place`, keeping the piece alive.
+    void add(const jmapgen_place& place, const std::shared_ptr<const jmapgen_piece>& piece);
+    /// Keeps `piece` alive for as long as these objects, for use with the overload below.
+    void own(const std::shared_ptr<const jmapgen_piece>& piece);
+    /// Places `piece` at `place`. The piece has to be kept alive by @ref own.
+    void add(const jmapgen_place& place, const jmapgen_piece& piece);
 
     /**
      * PieceType must be inheriting from jmapgen_piece. It must have constructor that accepts a
@@ -385,12 +393,12 @@ struct jmapgen_objects {
 private:
     /**
      * Combination of where to place something and what to place.
+     * Most pieces are placed on many squares, so they are owned once, by `pieces`.
      */
-    using jmapgen_obj = std::pair<jmapgen_place, shared_ptr_fast<const jmapgen_piece>>;
+    using jmapgen_obj = std::pair<jmapgen_place, const jmapgen_piece*>;
     std::vector<jmapgen_obj> objects;
-    /// Distinct pieces of `objects` in order of first use, computed by finalize().
-    /// Palette pieces are shared by every map square using their key.
-    std::vector<const jmapgen_piece*> unique_pieces;
+    /// The pieces of `objects`, in order of first use. Distinct once finalize() ran.
+    std::vector<std::shared_ptr<const jmapgen_piece>> pieces;
     point_rel_ms m_offset;
     point_rel_ms mapgensize;
     point_rel_ms total_size;
@@ -404,6 +412,11 @@ public:
     auto calc_index(const point_rel_ms& p) const -> size_t;
     auto has_vehicle_collision(const mapgendata& dat, const point_rel_ms& offset) const -> bool;
 
+    /// File holding this mapgen's definition, or null if unknown.
+    auto source_path() const -> const std::string*;
+    /// Parses the definition unless that was done already. Throws on malformed JSON.
+    void setup_common();
+
 private:
     pimpl<json_source_location> jsrcloc;
 
@@ -411,7 +424,6 @@ protected:
     explicit mapgen_function_json_base(const json_source_location& jsrcloc);
     virtual ~mapgen_function_json_base();
 
-    void setup_common();
     auto setup_common(const JsonObject& jo) -> bool;
     void setup_setmap(const JsonArray& parray);
     // Returns true if the mapgen qualifies at this point already
@@ -530,7 +542,9 @@ auto has_mapgen_for(const std::string& key) -> bool;
 /*
  * Sets the above after init, and initializes mapgen_function_json instances as well
  */
-void calculate_mapgen_weights(); // throws
+/// Sets up all mapgen functions. `meanwhile`, if given, is run on the calling thread while
+/// worker threads parse their JSON; it must leave the game data they read alone.
+void calculate_mapgen_weights(const std::function<void()>& meanwhile = {}); // throws
 
 void check_mapgen_definitions();
 
