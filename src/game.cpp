@@ -3141,6 +3141,16 @@ auto game::try_activity_fixed_window_skip() -> bool
     return true;
 }
 
+namespace
+{
+
+/// Real time of the last wait redraw; redraws closer than ACTIVITY_REDRAW_INTERVAL_MS to it are skipped.
+auto last_wait_redraw = std::chrono::steady_clock::time_point {};
+/// A due map redraw that the throttle dropped; the next unthrottled redraw draws the map.
+auto wait_map_redraw_pending = false;
+
+} // namespace
+
 auto game::handle_wait_activity_redraw( const bool force ) -> void
 {
     const auto player_is_sleeping = u.has_effect( effect_sleep );
@@ -3168,10 +3178,16 @@ auto game::handle_wait_activity_redraw( const bool force ) -> void
     }
     if( wait_redraw ) {
         ZoneScopedN( "wait_redraw" );
-        if( force || first_redraw_since_waiting_started ||
-            action_time_scale::once_every_this_tick( std::min( 1_minutes, wait_refresh_rate ) ) ) {
-            if( force || first_redraw_since_waiting_started ||
-                action_time_scale::once_every_this_tick( wait_refresh_rate ) ) {
+        const auto now = std::chrono::steady_clock::now();
+        // Per-turn redraws (autodrive) keep every frame; slower cadences redraw at most once per interval.
+        const auto throttled = wait_refresh_rate > 1_turns &&
+                               now - last_wait_redraw < std::chrono::milliseconds(
+                                   get_option<int>( "ACTIVITY_REDRAW_INTERVAL_MS" ) );
+        wait_map_redraw_pending = wait_map_redraw_pending || force ||
+                                  action_time_scale::once_every_this_tick( wait_refresh_rate );
+        if( first_redraw_since_waiting_started || ( !throttled && ( wait_map_redraw_pending ||
+                action_time_scale::once_every_this_tick( std::min( 1_minutes, wait_refresh_rate ) ) ) ) ) {
+            if( wait_map_redraw_pending || first_redraw_since_waiting_started ) {
                 ui_manager::redraw();
             }
 
@@ -3181,10 +3197,13 @@ auto game::handle_wait_activity_redraw( const bool force ) -> void
             ui_manager::redraw();
             refresh_display();
             first_redraw_since_waiting_started = false;
+            wait_map_redraw_pending = false;
+            last_wait_redraw = now;
         }
     } else {
         wait_popup.reset();
         first_redraw_since_waiting_started = true;
+        wait_map_redraw_pending = false;
     }
 }
 

@@ -135,6 +135,19 @@
     "max": 300
   },
   {
+    "type": "OPTION",
+    "name": "ACTIVITY_REDRAW_INTERVAL_MS",
+    "stype": "int",
+    "scope": "global",
+    "page": "performance",
+    "group": "rem_act_perf",
+    "menu_text": "Activity Redraw Interval",
+    "tooltip": "Minimum real time in milliseconds between the map redraws of a long wait or activity.  0 redraws every 5 game minutes.",
+    "default": 250,
+    "min": 0,
+    "max": 5000
+  },
+  {
     "type": "OPTION_GROUP",
     "id": "lod_monster",
     "page": "performance",
