@@ -8125,9 +8125,32 @@ void map::spawn_monsters_submap(const tripoint_bub_sm& gp, bool ignore_sight) {
     current_submap->spawns.clear();
 }
 
+namespace {
+
+/// Bubble submaps that hold stored monsters, a monster group or mapgen spawn points: the only ones
+/// spawn_monsters_submap can act on.
+auto submaps_with_spawns(const map& m, const tripoint_range<tripoint_bub_sm>& bubble)
+    -> std::vector<tripoint_bub_sm> {
+    const auto populated =
+        get_overmapbuffer(m.get_bound_dimension())
+            .populated_submaps(
+                m.get_abs_sub(), m.get_abs_sub() + point_rel_sm(m.getmapsize(), m.getmapsize()));
+    const auto has_spawns = [&](const tripoint_bub_sm& gp) {
+        const auto abs = map_local_to_abs(m, gp);
+        const auto view = m.active_submap_view(abs);
+        return !view || !view->get_submap().spawns.empty()
+            || std::binary_search(populated.begin(), populated.end(), abs);
+    };
+    return bubble | std::views::filter(has_spawns) | std::ranges::to<std::vector>();
+}
+
+} // namespace
+
 void map::spawn_monsters(bool ignore_sight) {
     ZoneScoped;
-    for (const auto gp : bubble_submaps()) { spawn_monsters_submap(gp, ignore_sight); }
+    for (const auto gp : submaps_with_spawns(*this, bubble_submaps())) {
+        spawn_monsters_submap(gp, ignore_sight);
+    }
 }
 
 auto map::spawn_monsters_new_submaps(const point_rel_sm& shift_amount) -> void {
@@ -8139,7 +8162,7 @@ auto map::spawn_monsters_new_submaps(const point_rel_sm& shift_amount) -> void {
         spawn_monsters(false);
         return;
     }
-    for (const auto gp : bubble_submaps()) {
+    for (const auto gp : submaps_with_spawns(*this, bubble_submaps())) {
         if (inbounds(gp + shift_amount)) { spawn_monsters_submap(gp, false); }
     }
 }
