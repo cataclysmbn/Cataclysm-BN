@@ -99,6 +99,26 @@ TEST_CASE("wild_animal_walks_to_food_it_eats", "[monster][food_lure]") {
         weasel.add_effect(effect_well_fed, 1_hours);
         CHECK(weasel.compute_plan().goal != food_pos);
     }
+    SECTION("food it can see is noticed up to the lure radius") {
+        const auto far_food = mon_pos + tripoint_rel_ms(food_lure::lure_radius, 0, 0);
+        place_food(far_food, "meat");
+        CHECK(weasel.compute_plan().goal == far_food);
+    }
+    SECTION("food beyond the lure radius is ignored") {
+        const auto too_far = mon_pos + tripoint_rel_ms(food_lure::lure_radius + 1, 0, 0);
+        place_food(too_far, "meat");
+        CHECK(weasel.compute_plan().goal != too_far);
+    }
+}
+
+TEST_CASE("flying_animal_comes_down_to_food", "[monster][food_lure]") {
+    prepare_daylight_map();
+    get_map().build_map_cache(1);
+    auto& turkey = spawn_test_monster("mon_turkey", mon_pos + tripoint_rel_ms(0, 0, 1));
+    REQUIRE(turkey.flies());
+    place_food(food_pos, "wheat");
+
+    CHECK(turkey.compute_plan().goal == food_pos);
 }
 
 TEST_CASE("pets_only_eat_pet_food_from_a_feeder", "[monster][food_lure]") {

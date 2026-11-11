@@ -59,25 +59,55 @@ namespace
 const auto effect_mon_feeding = efftype_id( "mon_feeding" );
 const auto effect_well_fed = efftype_id( "well_fed" );
 
-auto append_tiles_near( map &here, const tripoint_bub_ms &center,
+/// Z-levels on which a monster looks for food.
+struct level_span {
+    int lowest;
+    int highest;
+};
+
+/// A flier in the sky above ground also looks down through open air, so it can land on food.
+/// Underground levels cannot be seen from the sky, so the search stops at ground level.
+auto lure_levels( const monster &mon ) -> level_span
+{
+    const auto z = mon.bub_pos().z();
+    if( !mon.flies() || z <= 0 ) {
+        return { .lowest = z, .highest = z };
+    }
+    return { .lowest = std::max( 0, z - lure_radius ), .highest = z };
+}
+
+auto in_lure_reach( const monster &mon, const tripoint_bub_ms &p ) -> bool
+{
+    const auto levels = lure_levels( mon );
+    const auto pos = mon.bub_pos();
+    return p.z() >= levels.lowest && p.z() <= levels.highest &&
+           rl_dist( pos.xy(), p.xy() ) <= lure_radius;
+}
+
+auto append_tiles_near( map &here, const monster &mon,
                         std::unordered_set<tripoint_bub_ms> &visited, lure_snapshot &tiles ) -> void
 {
-    for( const auto &p : here.points_in_radius( center, lure_radius ) ) {
-        if( !visited.insert( p ).second || !here.has_items( p ) ) {
-            continue;
-        }
-        auto foods = std::vector<const item *> {};
-        for( const item *it : here.i_at( p ) ) {
-            if( it->is_comestible() ) {
-                foods.push_back( it );
+    const auto levels = lure_levels( mon );
+    const auto pos = mon.bub_pos();
+    for( auto z = levels.highest; z >= levels.lowest; --z ) {
+        const auto center = tripoint_bub_ms( pos.xy(), z );
+        for( const auto &p : here.points_in_radius( center, lure_radius ) ) {
+            if( !visited.insert( p ).second || !here.has_items( p ) ) {
+                continue;
             }
-        }
-        if( !foods.empty() ) {
-            tiles.push_back( {
-                .pos = p,
-                .feeder = here.has_flag_furn( "PET_FEEDER", p ),
-                .foods = std::move( foods ),
-            } );
+            auto foods = std::vector<const item *> {};
+            for( const item *it : here.i_at( p ) ) {
+                if( it->is_comestible() ) {
+                    foods.push_back( it );
+                }
+            }
+            if( !foods.empty() ) {
+                tiles.push_back( {
+                    .pos = p,
+                    .feeder = here.has_flag_furn( "PET_FEEDER", p ),
+                    .foods = std::move( foods ),
+                } );
+            }
         }
     }
 }
@@ -123,7 +153,7 @@ auto collect_lure_tiles( map &here, std::span<monster *const> critters ) -> lure
     auto tiles = lure_snapshot{};
     for( const auto *critter : critters ) {
         if( critter != nullptr && !critter->is_dead() && seeks_food( *critter ) ) {
-            append_tiles_near( here, critter->bub_pos(), visited, tiles );
+            append_tiles_near( here, *critter, visited, tiles );
         }
     }
     return tiles;
@@ -134,7 +164,7 @@ auto collect_lure_tiles_near( map &here, const monster &mon ) -> lure_snapshot
     auto visited = std::unordered_set<tripoint_bub_ms> {};
     auto tiles = lure_snapshot{};
     if( seeks_food( mon ) ) {
-        append_tiles_near( here, mon.bub_pos(), visited, tiles );
+        append_tiles_near( here, mon, visited, tiles );
     }
     return tiles;
 }
@@ -169,9 +199,7 @@ auto pick_lure_goal( const lure_goal_query &query ) -> std::optional<tripoint_bu
 
     auto food_tiles = std::vector<tripoint_bub_ms> {};
     if( !mon.has_effect( effect_well_fed ) ) {
-        const auto in_reach = [&]( const lure_tile & t ) {
-            return t.pos.z() == pos.z() && rl_dist( pos, t.pos ) <= lure_radius;
-        };
+        const auto in_reach = [&]( const lure_tile & t ) { return in_lure_reach( mon, t.pos ); };
         const auto has_wanted = [&]( const lure_tile & t ) {
             const auto wanted = [&]( const item * f ) { return wants_food( mon, *f, t.feeder ); };
             return ranges::any_of( t.foods, wanted );

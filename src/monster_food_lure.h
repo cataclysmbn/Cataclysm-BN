@@ -16,8 +16,9 @@ struct mtype;
 namespace food_lure
 {
 
-/// Maximum distance at which a monster notices lure food.
-inline constexpr auto lure_radius = 8;
+/// Upper bound on the horizontal distance at which a monster notices lure food. Sight decides
+/// the actual distance; this caps the per-turn tile scan.
+inline constexpr auto lure_radius = 16;
 /// Time a monster spends eating one unit of food before it becomes well fed.
 inline constexpr auto feeding_time = 1_minutes;
 /// Duration of the well fed effect granted by any meal.
