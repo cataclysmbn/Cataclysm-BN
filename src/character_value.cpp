@@ -38,12 +38,22 @@ void character_value::load( const JsonObject &jo, const std::string &src )
               enum_flags_reader<hardcode_character_value>( "hardcode_character_value" ),
               hardcode_character_value::none );
     optional( jo, was_loaded, "var_value", character_var_value, "" );
+    optional( jo, was_loaded, "min_value", min_value, INT_MIN );
+    optional( jo, was_loaded, "max_value", max_value, INT_MAX );
 }
 
 void character_value::check() const
 {
-    if( character_var_value == "" && hardcode_value == hardcode_character_value::none ) {
+    if( character_var_value.empty() && hardcode_value == hardcode_character_value::none ) {
         debugmsg( "Character Value %s lacks any value, it will always be 0.", id.str() );
+    }
+    if( !character_var_value.empty() && hardcode_value != hardcode_character_value::none ) {
+        debugmsg( "Character Value %s has two values, defaulting to only %s.", id.str(),
+                  character_var_value );
+    }
+    if( min_value > max_value ) {
+        debugmsg( "Character Value %s has greater min value then max value, it will be capped to `min_value`",
+                  id.str() );
     }
 }
 
@@ -57,75 +67,71 @@ auto character_value::get_all() -> std::vector<character_value>
 
 void character_value::reset() { all_character_values.reset(); }
 
-/** Sums the two terms, being careful to not trigger overflow.
- * Doesn't handle underflow.
- *
- * @param a The first addend.
- * @param b The second addend.
- * @return the sum of the addends, but truncated to std::numeric_limits<int>::max().
- */
-template <typename T>
-static T sum_no_wrap( T a, T b )
-{
-    if( a > std::numeric_limits<T>::max() - b ||
-        b > std::numeric_limits<T>::max() - a ) {
-        return std::numeric_limits<T>::max();
-    }
-    return a + b;
-}
-
 int character_value::get_amount( const Character &ch ) const
 {
+    int res = 0;
     if( character_var_value != "" ) {
-        int def = 0;
-        return ch.get_value( character_var_value, def );
+        ch.get_value( character_var_value, res );
     }
     switch( hardcode_value ) {
         case hardcode_character_value::strength:
-            return ch.get_str();
+            res = ch.get_str();
+            break;
         case hardcode_character_value::dexterity:
-            return ch.get_dex();
+            res = ch.get_dex();
+            break;
         case hardcode_character_value::intelligence:
-            return ch.get_int();
+            res = ch.get_int();
+            break;
         case hardcode_character_value::perception:
-            return ch.get_per();
+            res = ch.get_per();
+            break;
         case hardcode_character_value::health_points: {
             int max = 0;
             for( const std::pair<const bodypart_str_id, bodypart> &elem : ch.get_body() ) {
                 max = std::max( max, elem.second.get_hp_cur() );
             }
-            return max;
+            res = max;
+            break;
         }
         case hardcode_character_value::mana:
-            return ch.magic->available_mana();
+            res = ch.magic->available_mana();
+            break;
         case hardcode_character_value::stamina:
-            return ch.get_stamina();
+            res = ch.get_stamina();
+            break;
         case hardcode_character_value::bionic_power:
-            return units::to_kilojoule( ch.get_power_level() );
+            res = units::to_kilojoule( ch.get_power_level() );
+            break;
         case hardcode_character_value::fatigue:
-            // The / 2 is to prevent int overflows if it also has an internal battery
-            return item::INFINITE_CHARGES / 2;
+            res = ch.get_fatigue();
+            break;
         case hardcode_character_value::thirst:
-            // You could technically do thirst_levels::dead here, but that seems insane
-            return item::INFINITE_CHARGES / 2;
+            res = ch.get_thirst();
+            break;
         case hardcode_character_value::pain:
-            // One can always be in more pain
-            return item::INFINITE_CHARGES / 2;
+            res = ch.get_pain();
+            break;
         case hardcode_character_value::radiation:
-            // One can always be more irradiated
-            return item::INFINITE_CHARGES / 2;
+            res = ch.get_rad();
+            break;
         case hardcode_character_value::health:
-            return ch.get_healthy();
+            res = ch.get_healthy();
+            break;
         case hardcode_character_value::hunger:
-            return ch.get_stored_kcal();
+            res = ceil( 100 - ch.get_kcal_percent() * 100 );
+            break;
         case hardcode_character_value::morale:
-            return ch.get_morale_level();
+            res = ch.get_morale_level();
+            break;
         case hardcode_character_value::focus:
-            return ch.focus_pool;
+            res = ch.focus_pool;
+            break;
         case hardcode_character_value::none:
-            return 0;
+            res = 0;
+            break;
     }
-    return 0;
+    return std::max( std::min( res, max_value ), min_value );
 }
 
 template<> struct enum_traits<character_value::hardcode_character_value> {

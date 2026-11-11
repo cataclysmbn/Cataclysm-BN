@@ -25,6 +25,7 @@
 #include "units.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <memory>
 #include <set>
@@ -293,8 +294,12 @@ void enchantment::load(const JsonObject& jo, const std::string&) {
                     const character_value_id& char_val_id = character_value_id(
                         nested_value_obj.get_string("val"));
                     const double amount = nested_value_obj.get_float("per");
-                    std::map<character_value_id, double> res = {{char_val_id, amount}};
-                    complex_values_add.emplace(value, res);
+                    if (!complex_values_add.contains(value)) {
+                        std::map<character_value_id, double> res = {{char_val_id, amount}};
+                        complex_values_add.emplace(value, res);
+                    } else {
+                        complex_values_add[value][char_val_id] = amount;
+                    }
                 }
             }
             if (value_obj.has_member("multiply")) {
@@ -305,8 +310,12 @@ void enchantment::load(const JsonObject& jo, const std::string&) {
                     const character_value_id& char_val_id = character_value_id(
                         nested_value_obj.get_string("val"));
                     const double amount = nested_value_obj.get_float("per");
-                    std::map<character_value_id, double> res = {{char_val_id, amount}};
-                    complex_values_multiply.emplace(value, res);
+                    if (!complex_values_add.contains(value)) {
+                        std::map<character_value_id, double> res = {{char_val_id, amount}};
+                        complex_values_add.emplace(value, res);
+                    } else {
+                        complex_values_add[value][char_val_id] = amount;
+                    }
                 }
             }
             if (value_obj.has_member("max")) {
@@ -317,8 +326,12 @@ void enchantment::load(const JsonObject& jo, const std::string&) {
                     const character_value_id& char_val_id = character_value_id(
                         nested_value_obj.get_string("val"));
                     const double amount = nested_value_obj.get_float("per");
-                    std::map<character_value_id, double> res = {{char_val_id, amount}};
-                    complex_values_max.emplace(value, res);
+                    if (!complex_values_max.contains(value)) {
+                        std::map<character_value_id, double> res = {{char_val_id, amount}};
+                        complex_values_max.emplace(value, res);
+                    } else {
+                        complex_values_max[value][char_val_id] = amount;
+                    }
                 }
             }
         }
@@ -436,7 +449,7 @@ void enchantment::force_add(const enchantment& rhs, bool merge_complex) {
         }
     }
 
-    if( merge_complex ) {
+    if (merge_complex) {
         for (const auto& pair_values : rhs.complex_values_add) {
             if (complex_values_add.contains(pair_values.first)) {
                 for (const auto& nested_pair_values : pair_values.second) {
@@ -520,13 +533,13 @@ void enchantment::force_add(const enchantment& rhs, const Character& merger) {
     }
     for (const auto& pair_values : rhs.complex_values_multiply) {
         for (const auto& nested_pair_values : pair_values.second) {
-            values_multiply[pair_values.first] += int(round(
+            values_multiply[pair_values.first] += int(floor(
                 double(nested_pair_values.first->get_amount(merger)) * nested_pair_values.second));
         }
     }
     for (const auto& pair_values : rhs.complex_values_add) {
         for (const auto& nested_pair_values : pair_values.second) {
-            int val = int(round(
+            int val = int(floor(
                 double(nested_pair_values.first->get_amount(merger)) * nested_pair_values.second));
             if (values_max[pair_values.first] < val) { values_max[pair_values.first] = val; }
         }

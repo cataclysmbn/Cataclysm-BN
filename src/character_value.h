@@ -53,6 +53,9 @@ class character_value
         hardcode_character_value hardcode_value = hardcode_character_value::none;
         // Character variable value, key for the string string map, of which the second value should be an int
         std::string character_var_value;
+        // Limits on the value; Permits balancing
+        int min_value;
+        int max_value;
 
         int get_amount( const Character &ch ) const;
         // Needed for bindings
