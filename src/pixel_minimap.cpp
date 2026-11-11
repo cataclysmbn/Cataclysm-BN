@@ -134,52 +134,63 @@ SDL_Color get_critter_color( Creature *critter, int flicker, int mixture )
 
 } // namespace
 
-// a texture pool to avoid recreating textures every time player changes their view
-// at most 142 out of 144 textures can be in use due to regular player movement
+// a texture atlas with one slot per submap chunk, so updating any number of chunks
+//  needs a single render target switch (each switch between chunk textures stalled the renderer)
+// at most 142 out of 144 slots can be in use due to regular player movement
 //  (moving from submap corner to new corner) with MAPSIZE = 11
-// textures are dumped when the player moves more than one submap in one update
+// slots are dumped when the player moves more than one submap in one update
 //  (teleporting, z-level change) to prevent running out of the remaining pool
 class pixel_minimap::shared_texture_pool
 {
     public:
-        shared_texture_pool( const std::function<SDL_Texture_Ptr()> &generator, const int mapsize ) {
-            const size_t pool_size = static_cast<size_t>( mapsize + 1 ) * ( mapsize + 1 );
+        shared_texture_pool( const SDL_Renderer_Ptr &renderer, point chunk_size, const int mapsize ) :
+            chunk_size( chunk_size ), columns( mapsize + 1 ) {
+            const size_t pool_size = static_cast<size_t>( columns ) * columns;
 
-            texture_pool.reserve( pool_size );
+            atlas = create_cache_texture( renderer, columns * chunk_size.x, columns * chunk_size.y );
+            SetTextureBlendMode( atlas, SDL_BLENDMODE_BLEND );
             inactive_index.reserve( pool_size );
 
             for( size_t i = 0; i < pool_size; ++i ) {
-                texture_pool.emplace_back( generator() );
                 inactive_index.push_back( i );
             }
         }
 
-        //reserves a texture from the inactive group and returns tracking info
-        SDL_Texture_Ptr request_tex( size_t &index ) {
-            index = invalid_texture_index;
+        //reserves a slot from the inactive group
+        auto request_slot() -> size_t {
+            if( !atlas ) {
+                return invalid_slot;
+            }
             if( inactive_index.empty() ) {
                 debugmsg( "Ran out of available textures in the pool." );
                 //shouldn't be happening, but minimap will just be default color instead of crashing
-                return nullptr;
+                return invalid_slot;
             }
-            index = inactive_index.back();
+            const auto index = inactive_index.back();
             inactive_index.pop_back();
-            return std::move( texture_pool[index] );
+            return index;
         }
 
-        //releases the provided texture back into the inactive pool to be used again
+        //releases the provided slot back into the inactive pool to be used again
         //called automatically in the submap cache destructor
-        void release_tex( size_t index, SDL_Texture_Ptr &&ptr ) {
-            if( index == invalid_texture_index || index >= texture_pool.size() || !ptr ) {
-                return;
+        auto release_slot( size_t index ) -> void {
+            if( index != invalid_slot ) {
+                inactive_index.push_back( index );
             }
-            inactive_index.push_back( index );
-            texture_pool[index] = std::move( ptr );
         }
+
+        auto slot_rect( size_t index ) const -> SDL_FRect {
+            const auto x = static_cast<int>( index % columns ) * chunk_size.x;
+            const auto y = static_cast<int>( index / columns ) * chunk_size.y;
+            return SDL_FRect{ float( x ), float( y ), float( chunk_size.x ), float( chunk_size.y ) };
+        }
+
+        static constexpr auto invalid_slot = std::numeric_limits<size_t>::max();
+        SDL_Texture_Ptr atlas;
 
     private:
-        static constexpr auto invalid_texture_index = std::numeric_limits<size_t>::max();
-        std::vector<SDL_Texture_Ptr> texture_pool;
+        point chunk_size;
+        int columns;
         std::vector<size_t> inactive_index;
 };
 
@@ -188,31 +199,30 @@ struct pixel_minimap::submap_cache {
     std::array<SDL_Color, SEEX *SEEY> minimap_colors = {};
     //checks if the submap has been looked at by the minimap routine
     bool touched;
-    //the texture updates are drawn to
-    SDL_Texture_Ptr chunk_tex;
-    //the submap being handled
+    //the atlas slot updates are drawn to
     size_t texture_index;
-    //the list of updates to apply to the texture
-    //reduces render target switching to once per submap
+    //the list of updates to apply to the slot
+    //reduces render target switching to once per frame
     std::vector<point_sm_ms> update_list;
-    //flag used to indicate that the texture needs to be cleared before first use
+    //flag used to indicate that the slot needs to be cleared before first use
     bool ready;
     shared_texture_pool &pool;
 
     //reserve the SEEX * SEEY submap tiles
     submap_cache( shared_texture_pool &pool ) :
         touched( false ),
+        texture_index( pool.request_slot() ),
         ready( false ),
         pool( pool ) {
-        chunk_tex = pool.request_tex( texture_index );
     }
 
-    //handle the release of the borrowed texture
+    //handle the release of the borrowed slot
     ~submap_cache() {
-        pool.release_tex( texture_index, std::move( chunk_tex ) );
+        pool.release_slot( texture_index );
     }
 
-    submap_cache( submap_cache && ) = default;
+    // a moved-from cache would release its slot twice
+    submap_cache( submap_cache && ) = delete;
 
     SDL_Color &color_at( point_sm_ms p ) {
         return minimap_colors[p.y() * SEEX + p.x()];
@@ -278,25 +288,36 @@ void pixel_minimap::clear_unused_cache()
 //the render target will be set back to display_buffer after all submaps are updated
 void pixel_minimap::flush_cache_updates()
 {
+    auto target_set = false;
     std::ranges::for_each( cache, [&]( auto & mcp ) {
         if( mcp.second.update_list.empty() ) {
             return;
         }
-        if( !mcp.second.chunk_tex ) {
+        if( mcp.second.texture_index == shared_texture_pool::invalid_slot ) {
             mcp.second.update_list.clear();
             return;
         }
 
-        SetRenderTarget( renderer, mcp.second.chunk_tex );
+        if( !target_set ) {
+            target_set = true;
+            SetRenderTarget( renderer, tex_pool->atlas );
+        }
+        const auto slot = tex_pool->slot_rect( mcp.second.texture_index );
+        const auto slot_pos = point( static_cast<int>( slot.x ), static_cast<int>( slot.y ) );
 
         if( !mcp.second.ready ) {
             mcp.second.ready = true;
 
+            // clear the slot like RenderClear cleared a whole chunk texture
+            auto blend_mode = SDL_BLENDMODE_NONE;
+            GetRenderDrawBlendMode( renderer, blend_mode );
+            SetRenderDrawBlendMode( renderer, SDL_BLENDMODE_NONE );
             SetRenderDrawColor( renderer, 0x00, 0x00, 0x00, 0x00 );
-            RenderClear( renderer );
+            RenderFillRect( renderer, &slot );
+            SetRenderDrawBlendMode( renderer, blend_mode );
 
             for( const auto p : submap_tiles() ) {
-                const auto tile_pos = projector->get_tile_pos( p.raw(), { SEEX, SEEY } );
+                const auto tile_pos = slot_pos + projector->get_tile_pos( p.raw(), { SEEX, SEEY } );
                 const auto tile_size = projector->get_tile_size();
 
                 geometry->rect( renderer, tile_pos, tile_size.x, tile_size.y, SDL_Color() );
@@ -304,7 +325,7 @@ void pixel_minimap::flush_cache_updates()
         }
 
         std::ranges::for_each( mcp.second.update_list, [&]( const auto p ) {
-            const auto tile_pos = projector->get_tile_pos( p.raw(), { SEEX, SEEY } );
+            const auto tile_pos = slot_pos + projector->get_tile_pos( p.raw(), { SEEX, SEEY } );
             const auto tile_color = mcp.second.color_at( p );
 
             if( pixel_size.x == 1 && pixel_size.y == 1 ) {
@@ -439,13 +460,7 @@ void pixel_minimap::set_screen_rect( const SDL_Rect &screen_rect )
 
     const point chunk_size = projector->get_tiles_size( { SEEX, SEEY } );
 
-    const auto chunk_texture_generator = [&chunk_size, this]() {
-        SDL_Texture_Ptr result = create_cache_texture( renderer, chunk_size.x, chunk_size.y );
-        SetTextureBlendMode( result, SDL_BLENDMODE_BLEND );
-        return result;
-    };
-
-    tex_pool = std::make_unique<shared_texture_pool>( chunk_texture_generator, current_mapsize );
+    tex_pool = std::make_unique<shared_texture_pool>( renderer, chunk_size, current_mapsize );
     built_view_tiles_count = view_tiles_count;
     built_mapsize = current_mapsize;
 }
@@ -497,7 +512,7 @@ void pixel_minimap::render_cache( const tripoint_bub_ms &center )
             return;
         }
 
-        if( !elem.second.chunk_tex ) {
+        if( elem.second.texture_index == shared_texture_pool::invalid_slot ) {
             return;
         }
 
@@ -516,7 +531,8 @@ void pixel_minimap::render_cache( const tripoint_bub_ms &center )
 
         const SDL_FRect fchunk{ float( chunk_rect.x ), float( chunk_rect.y ),
                                 float( chunk_rect.w ), float( chunk_rect.h ) };
-        RenderCopy( renderer, elem.second.chunk_tex, nullptr, &fchunk );
+        const auto slot = tex_pool->slot_rect( elem.second.texture_index );
+        RenderCopy( renderer, tex_pool->atlas, &slot, &fchunk );
     } );
 }
 
