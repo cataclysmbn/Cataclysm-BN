@@ -1,0 +1,7 @@
+[
+  {
+    "type": "character_value",
+    "id": "morale",
+    "hardcode_value": "MORALE"
+  }
+]

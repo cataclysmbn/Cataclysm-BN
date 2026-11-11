@@ -32,7 +32,8 @@ public:
     auto add(const enchantment& rhs) -> bool;
 
     // adds two enchantments together and ignores their conditions
-    void force_add(const enchantment& rhs);
+    void force_add(const enchantment& rhs, bool merge_complex = true);
+    void force_add(const enchantment& rhs, const Character& merger);
 
     // Check if the enchantment has a certain value
     auto has_value(enchantment_value_id value) const -> bool;
@@ -118,11 +119,14 @@ private:
 
     // values that add to the base value
     std::map<enchantment_value_id, int> values_add;
+    std::map<enchantment_value_id, std::map<character_value_id, double>> complex_values_add;
     // values that get multiplied to the base value
     // multipliers add to each other instead of multiply against themselves
     std::map<enchantment_value_id, double> values_multiply;
+    std::map<enchantment_value_id, std::map<character_value_id, double>> complex_values_multiply;
     // values from which the highest value is chosen
     std::map<enchantment_value_id, int> values_max;
+    std::map<enchantment_value_id, std::map<character_value_id, double>> complex_values_max;
 
     std::vector<fake_spell> hit_me_effect;
     std::vector<fake_spell> hit_you_effect;

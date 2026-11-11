@@ -3,6 +3,7 @@
 #include "bodypart.h"
 #include "calendar.h"
 #include "character.h"
+#include "character_value.h"
 #include "creature.h"
 #include "debug.h"
 #include "effect.h"
@@ -282,18 +283,44 @@ void enchantment::load(const JsonObject& jo, const std::string&) {
              auto_flags_reader<enchantment_vision_id>{});
 
     if (jo.has_array("values")) {
-        for (const JsonObject value_obj : jo.get_array("values")) {
+        for (const JsonObject& value_obj : jo.get_array("values")) {
             enchantment_value_id value = enchantment_value_id(value_obj.get_string("value"));
-            const int add = value_obj.get_int("add", 0);
-            const double mult = value_obj.get_float("multiply", 0.0);
-            const double max = value_obj.get_int("max", 0);
-            if (add != 0) { values_add.emplace(value, add); }
-            if (mult != 0.0) {
-                // Limit precision to minimize inconsistencies between platforms / compilers
-                const double mul = static_cast<int>(std::round(mult * 100'000)) / 100'000.0;
-                values_multiply.emplace(value, mul);
+            if (value_obj.has_member("add")) {
+                if (value_obj.has_int("add")) {
+                    values_add.emplace(value, value_obj.get_int("add"));
+                } else {
+                    const JsonObject& nested_value_obj = value_obj.get_object("add");
+                    const character_value_id& char_val_id = character_value_id(
+                        nested_value_obj.get_string("val"));
+                    const double amount = nested_value_obj.get_float("per");
+                    std::map<character_value_id, double> res = {{char_val_id, amount}};
+                    complex_values_add.emplace(value, res);
+                }
             }
-            if (max != 0) { values_max.emplace(value, max); }
+            if (value_obj.has_member("multiply")) {
+                if (value_obj.has_int("multiply")) {
+                    values_multiply.emplace(value, value_obj.get_float("multiply"));
+                } else {
+                    const JsonObject& nested_value_obj = value_obj.get_object("multiply");
+                    const character_value_id& char_val_id = character_value_id(
+                        nested_value_obj.get_string("val"));
+                    const double amount = nested_value_obj.get_float("per");
+                    std::map<character_value_id, double> res = {{char_val_id, amount}};
+                    complex_values_multiply.emplace(value, res);
+                }
+            }
+            if (value_obj.has_member("max")) {
+                if (value_obj.has_int("max")) {
+                    values_max.emplace(value, value_obj.get_int("max"));
+                } else {
+                    const JsonObject& nested_value_obj = value_obj.get_object("max");
+                    const character_value_id& char_val_id = character_value_id(
+                        nested_value_obj.get_string("val"));
+                    const double amount = nested_value_obj.get_float("per");
+                    std::map<character_value_id, double> res = {{char_val_id, amount}};
+                    complex_values_max.emplace(value, res);
+                }
+            }
         }
     }
     if (jo.has_array("flags")) {
@@ -393,7 +420,7 @@ auto enchantment::add(const enchantment& rhs) -> bool {
     return true;
 }
 
-void enchantment::force_add(const enchantment& rhs) {
+void enchantment::force_add(const enchantment& rhs, bool merge_complex) {
     for (const auto& pair_values : rhs.values_add) {
         values_add[pair_values.first] += pair_values.second;
     }
@@ -406,6 +433,39 @@ void enchantment::force_add(const enchantment& rhs) {
     for (const auto& pair_values : rhs.values_max) {
         if (values_max[pair_values.first] < pair_values.second) {
             values_max[pair_values.first] = pair_values.second;
+        }
+    }
+
+    for (const auto& pair_values : rhs.complex_values_add) {
+        if (complex_values_add.contains(pair_values.first)) {
+            for (const auto& nested_pair_values : pair_values.second) {
+                complex_values_add[pair_values.first][nested_pair_values.first] +=
+                    nested_pair_values.second;
+            }
+        } else {
+            complex_values_add[pair_values.first] = pair_values.second;
+        }
+    }
+
+    for (const auto& pair_values : rhs.complex_values_multiply) {
+        if (complex_values_multiply.contains(pair_values.first)) {
+            for (const auto& nested_pair_values : pair_values.second) {
+                complex_values_multiply[pair_values.first][nested_pair_values.first] +=
+                    nested_pair_values.second;
+            }
+        } else {
+            complex_values_multiply[pair_values.first] = pair_values.second;
+        }
+    }
+
+    for (const auto& pair_values : rhs.complex_values_max) {
+        if (complex_values_max.contains(pair_values.first)) {
+            for (const auto& nested_pair_values : pair_values.second) {
+                complex_values_max[pair_values.first][nested_pair_values.first] +=
+                    nested_pair_values.second;
+            }
+        } else {
+            complex_values_max[pair_values.first] = pair_values.second;
         }
     }
 
@@ -445,6 +505,29 @@ void enchantment::force_add(const enchantment& rhs) {
             }
         }
         if (remains > 0) { flags[ench_flag_id] += remains; }
+    }
+}
+
+void enchantment::force_add(const enchantment& rhs, const Character& merger) {
+    force_add(rhs, false);
+    for (const auto& pair_values : rhs.complex_values_add) {
+        for (const auto& nested_pair_values : pair_values.second) {
+            values_add[pair_values.first] += int(floor(
+                double(nested_pair_values.first->get_amount(merger)) * nested_pair_values.second));
+        }
+    }
+    for (const auto& pair_values : rhs.complex_values_multiply) {
+        for (const auto& nested_pair_values : pair_values.second) {
+            values_multiply[pair_values.first] += int(round(
+                double(nested_pair_values.first->get_amount(merger)) * nested_pair_values.second));
+        }
+    }
+    for (const auto& pair_values : rhs.complex_values_add) {
+        for (const auto& nested_pair_values : pair_values.second) {
+            int val = int(round(
+                double(nested_pair_values.first->get_amount(merger)) * nested_pair_values.second));
+            if (values_max[pair_values.first] < val) { values_max[pair_values.first] = val; }
+        }
     }
 }
 
