@@ -1331,6 +1331,7 @@ void options_manager::cOpt::setValue( int iSetIn )
     if( iSet < iMin || iSet > iMax ) {
         iSet = iDefault;
     }
+    calendar::invalidate_time_config_cache();
 }
 
 //set value
@@ -1373,6 +1374,7 @@ void options_manager::cOpt::setValue( const std::string &sSetIn )
             debugmsg( "invalid floating point option: %s", sSetIn );
         }
     }
+    calendar::invalidate_time_config_cache();
 }
 
 /** Fill a mapping with values.
@@ -4080,6 +4082,7 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
     if( lang_changed ) {
         set_language();
     }
+    calendar::invalidate_time_config_cache();
     calendar::set_eternal_season( ::get_option<bool>( "ETERNAL_SEASON" ) );
     calendar::set_season_length( ::get_option<int>( "SEASON_LENGTH" ) );
 
@@ -4169,6 +4172,7 @@ std::string options_manager::migrateOptionValue( const std::string &name,
 
 void options_manager::cache_to_globals()
 {
+    calendar::invalidate_time_config_cache();
     enum_bitset<DL> levels;
     levels.set( DL::Error );
     for( const debug_log_level &e : debug_log_levels ) {
@@ -4381,4 +4385,5 @@ void options_manager::set_world_options( options_container *options )
     } else {
         world_options = options;
     }
+    calendar::invalidate_time_config_cache();
 }
