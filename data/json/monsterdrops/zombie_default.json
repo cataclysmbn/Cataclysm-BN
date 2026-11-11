@@ -258,12 +258,7 @@
       },
       { "distribution": [ { "group": "harddrugs", "prob": 25 }, { "group": "baddrugs", "prob": 75 } ], "prob": 10 },
       {
-        "distribution": [
-          { "item": "usb_drive", "prob": 50 },
-          { "item": "mobile_memory_card", "prob": 10 },
-          { "item": "mobile_memory_card_used", "prob": 10 },
-          { "item": "mobile_memory_card_encrypted", "prob": 5 }
-        ],
+        "distribution": [ { "group": "digital_storage_media", "prob": 70 }, { "group": "digital_storage_media_encrypted", "prob": 5 } ],
         "prob": 10
       },
       {

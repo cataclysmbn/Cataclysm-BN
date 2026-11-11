@@ -284,14 +284,13 @@
       [ "antenna", 25 ],
       { "group": "ammo_any_batteries_full", "prob": 50 },
       [ "mp3", 40 ],
-      [ "usb_drive", 10 ],
+      { "group": "digital_storage_media", "prob": 20 },
       [ "manual_electronics", 20 ],
       [ "cable", 60 ],
       [ "cell_phone", 1 ],
       [ "smart_phone", 90 ],
       [ "wrist_comp_budget", 30 ],
-      [ "wristwatch", 60 ],
-      [ "mobile_memory_card_used", 10 ]
+      [ "wristwatch", 60 ]
     ]
   },
   {

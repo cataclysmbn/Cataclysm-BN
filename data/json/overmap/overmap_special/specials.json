@@ -54,11 +54,13 @@
     "overmaps": [
       { "point": [ 0, 0, 0 ], "overmap": "motel_twd_1_north" },
       { "point": [ 1, 0, 0 ], "overmap": "motel_twd_2_north" },
-      { "point": [ 0, 0, 1 ], "overmap": "motel_twd_second_floor_north" }
+      { "point": [ 0, 0, 1 ], "overmap": "motel_twd_1_f1_north" },
+      { "point": [ 1, 0, 1 ], "overmap": "motel_twd_2_f1_north" },
+      { "point": [ 0, 0, 2 ], "overmap": "motel_twd_1_f2_north" }
     ],
     "connections": [
-      { "point": [ 0, -1, 0 ], "connection": "local_road", "from": [ 0, 0, 0 ] },
-      { "point": [ 1, -1, 0 ], "connection": "local_road", "from": [ 1, 0, 0 ] }
+      { "point": [ 0, -1, 0 ], "connection": "local_road", "from": [ 0, 0, 0 ], "existing": true },
+      { "point": [ 1, -1, 0 ], "connection": "local_road", "from": [ 1, 0, 0 ], "existing": true }
     ],
     "locations": [ "land" ],
     "city_distance": [ 8, 30 ],
@@ -69,20 +71,42 @@
     "type": "overmap_special",
     "id": "Motel",
     "overmaps": [
-      { "point": [ 0, 0, 0 ], "overmap": "motel_entrance_north" },
-      { "point": [ 0, 0, 1 ], "overmap": "motel_entrance_roof_north" },
-      { "point": [ -1, 0, 0 ], "overmap": "motel_1_north" },
-      { "point": [ -1, 0, 1 ], "overmap": "motel_1_roof_north" },
-      { "point": [ -1, 1, 0 ], "overmap": "motel_2_north" },
-      { "point": [ -1, 1, 1 ], "overmap": "motel_2_roof_north" },
-      { "point": [ 0, 1, 0 ], "overmap": "motel_3_north" },
-      { "point": [ 0, 1, 1 ], "overmap": "motel_3_roof_north" }
+      { "point": [ 1, 0, 0 ], "overmap": "motel_entrance_no_sidewalk_north" },
+      { "point": [ 0, 0, 0 ], "overmap": "motel_1_no_sidewalk_north" },
+      { "point": [ 0, 1, 0 ], "overmap": "motel_2_no_sidewalk_north" },
+      { "point": [ 1, 1, 0 ], "overmap": "motel_3_no_sidewalk_north" },
+      { "point": [ 1, 0, 1 ], "overmap": "motel_entrance_roof_north" },
+      { "point": [ 0, 0, 1 ], "overmap": "motel_1_roof_north" },
+      { "point": [ 0, 1, 1 ], "overmap": "motel_2_roof_north" },
+      { "point": [ 1, 1, 1 ], "overmap": "motel_3_roof_north" }
     ],
-    "connections": [ { "point": [ 0, -1, 0 ], "connection": "local_road", "from": [ 0, 0, 0 ] } ],
+    "connections": [ { "point": [ 2, 0, 0 ], "connection": "local_road", "from": [ 1, 0, 0 ], "existing": true } ],
     "locations": [ "land" ],
     "city_distance": [ 8, 30 ],
     "occurrences": [ 0, 2 ],
     "flags": [ "CLASSIC", "ELECTRIC_GRID" ]
+  },
+  {
+    "type": "overmap_special",
+    "id": "2fMotel",
+    "overmaps": [
+      { "point": [ 1, 0, 0 ], "overmap": "motel_entrance_no_sidewalk_north" },
+      { "point": [ 0, 0, 0 ], "overmap": "motel_1_no_sidewalk_north" },
+      { "point": [ 0, 1, 0 ], "overmap": "motel_2_no_sidewalk_north" },
+      { "point": [ 1, 1, 0 ], "overmap": "motel_3_no_sidewalk_north" },
+      { "point": [ 1, 0, 1 ], "overmap": "2fmotel_entrance_f2_north" },
+      { "point": [ 0, 0, 1 ], "overmap": "2fmotel_1_f2_north" },
+      { "point": [ 0, 1, 1 ], "overmap": "2fmotel_2_f2_north" },
+      { "point": [ 1, 1, 1 ], "overmap": "2fmotel_3_f2_north" },
+      { "point": [ 0, 0, 2 ], "overmap": "2fmotel_1_r_north" },
+      { "point": [ 0, 1, 2 ], "overmap": "2fmotel_2_r_north" },
+      { "point": [ 1, 1, 2 ], "overmap": "2fmotel_3_r_north" }
+    ],
+    "connections": [ { "point": [ 2, 0, 0 ], "connection": "local_road", "from": [ 1, 0, 0 ], "existing": true } ],
+    "locations": [ "land" ],
+    "city_distance": [ 8, 40 ],
+    "occurrences": [ 0, 2 ],
+    "flags": [ "CLASSIC", "URBAN", "ELECTRIC_GRID" ]
   },
   {
     "type": "overmap_special",
@@ -1194,7 +1218,7 @@
     "id": "Evac Shelter Vandalized",
     "overmaps": [
       { "point": [ 0, 0, 0 ], "overmap": "shelter_vandal_north" },
-      { "point": [ 0, 0, -1 ], "overmap": "shelter_under_north" },
+      { "point": [ 0, 0, -1 ], "overmap": "shelter_vandal_under_north" },
       { "point": [ 0, 0, 1 ], "overmap": "shelter_roof_north" }
     ],
     "connections": [ { "point": [ 0, -1, 0 ], "connection": "local_road", "from": [ 0, 0, 0 ] } ],
@@ -1209,7 +1233,7 @@
     "id": "Evac Shelter Vandalized 2",
     "overmaps": [
       { "point": [ 0, 0, 0 ], "overmap": "shelter_1_vandal_north" },
-      { "point": [ 0, 0, -1 ], "overmap": "shelter_under_north" },
+      { "point": [ 0, 0, -1 ], "overmap": "shelter_vandal_under_north" },
       { "point": [ 0, 0, 1 ], "overmap": "shelter_roof_1_north" }
     ],
     "connections": [ { "point": [ 0, -1, 0 ], "connection": "local_road", "from": [ 0, 0, 0 ] } ],
@@ -1224,7 +1248,7 @@
     "id": "Evac Shelter Vandalized 3",
     "overmaps": [
       { "point": [ 0, 0, 0 ], "overmap": "shelter_2_vandal_north" },
-      { "point": [ 0, 0, -1 ], "overmap": "shelter_under_north" },
+      { "point": [ 0, 0, -1 ], "overmap": "shelter_vandal_under_north" },
       { "point": [ 0, 0, 1 ], "overmap": "shelter_roof_2_north" }
     ],
     "connections": [ { "point": [ 0, -1, 0 ], "connection": "local_road", "from": [ 0, 0, 0 ] } ],
@@ -2087,6 +2111,7 @@
       { "point": [ 4, 6, 0 ], "overmap": "ranch_camp_59_north" },
       { "point": [ 4, 6, 1 ], "overmap": "ranch_camp_59_z1_north" },
       { "point": [ 5, 6, 0 ], "overmap": "ranch_camp_60_north" },
+      { "point": [ 5, 6, 1 ], "overmap": "ranch_camp_60_z1_north" },
       { "point": [ 6, 6, 0 ], "overmap": "ranch_camp_61_north" },
       { "point": [ 7, 6, 0 ], "overmap": "ranch_camp_62_north" },
       { "point": [ 8, 6, 0 ], "overmap": "ranch_camp_63_north" },
@@ -3025,28 +3050,6 @@
     "city_sizes": [ 3, 12 ],
     "occurrences": [ 50, 100 ],
     "flags": [ "CLASSIC", "UNIQUE", "URBAN", "ELECTRIC_GRID" ]
-  },
-  {
-    "type": "overmap_special",
-    "id": "2fMotel",
-    "overmaps": [
-      { "point": [ 0, 0, 0 ], "overmap": "2fmotel_entrance_north" },
-      { "point": [ -1, 0, 0 ], "overmap": "2fmotel_1_north" },
-      { "point": [ -1, 1, 0 ], "overmap": "2fmotel_2_north" },
-      { "point": [ 0, 1, 0 ], "overmap": "2fmotel_3_north" },
-      { "point": [ 0, 0, 1 ], "overmap": "2fmotel_entrance_f2_north" },
-      { "point": [ -1, 0, 1 ], "overmap": "2fmotel_1_f2_north" },
-      { "point": [ -1, 1, 1 ], "overmap": "2fmotel_2_f2_north" },
-      { "point": [ 0, 1, 1 ], "overmap": "2fmotel_3_f2_north" },
-      { "point": [ -1, 0, 2 ], "overmap": "2fmotel_1_r_north" },
-      { "point": [ -1, 1, 2 ], "overmap": "2fmotel_2_r_north" },
-      { "point": [ 0, 1, 2 ], "overmap": "2fmotel_3_r_north" }
-    ],
-    "connections": [ { "point": [ 0, -1, 0 ], "connection": "local_road", "from": [ 0, 0, 0 ] } ],
-    "locations": [ "land" ],
-    "city_distance": [ 8, 40 ],
-    "occurrences": [ 0, 2 ],
-    "flags": [ "CLASSIC", "URBAN", "ELECTRIC_GRID" ]
   },
   {
     "type": "overmap_special",

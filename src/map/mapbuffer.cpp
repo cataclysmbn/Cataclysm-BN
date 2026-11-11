@@ -1,5 +1,6 @@
 #include "mapbuffer.h"
 
+#include "../overmap/omdata.h"
 #include "../overmap/overmapbuffer.h"
 #include "avatar.h"
 #include "batch_turns.h"
@@ -721,6 +722,10 @@ auto mapbuffer_abs_tile_view::passable_with_vehicle(const optional_vpart_positio
     return move_cost_with_vehicle(vp) != 0;
 }
 
+auto mapbuffer_abs_tile_view::has_flag(ter_bitflags flag) const -> bool {
+    return get_ter_t().has_flag(flag) || get_furn_t().has_flag(flag);
+}
+
 mapbuffer_abs_tile_with_vehicle_view::mapbuffer_abs_tile_with_vehicle_view(
     const mapbuffer_abs_tile_view& tile, const optional_vpart_position& vehicle_part)
     : tile_(tile),
@@ -1199,7 +1204,11 @@ void mapbuffer::unload_omt(const tripoint_abs_omt& omt_addr, bool save) {
             {base, base + point_rel_sm::east(), base + point_rel_sm::south(),
              base + point_rel_sm::south_east()}};
 
-        bool all_uniform = true;
+        bool all_uniform =
+            !get_overmapbuffer(get_dimension_id())
+                 .ter(omt_addr)
+                 ->has_flag(oter_flags::cant_be_uniform);
+
         for (const tripoint_abs_sm& addr : addrs) {
             const auto it = submaps.find(addr);
             if (it != submaps.end() && it->second && !it->second->is_uniform) {
@@ -1272,6 +1281,7 @@ void mapbuffer::unload_omt(const tripoint_abs_omt& omt_addr, bool save) {
 }
 
 auto mapbuffer::lookup_submap(const tripoint_abs_sm& p) -> submap* {
+    ZoneScoped;
     // Fast path: submap already resident in memory.
     auto* resident_sm = static_cast<submap*>(nullptr);
     { resident_sm = lookup_submap_in_memory(p); }

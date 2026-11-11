@@ -626,15 +626,15 @@ void show_armor_layers_ui( Character &who )
         if( bp.id() ) {
             mvwprintz( w_sort_left, point( 0, cont_h - 6 ), c_white, _( "Total Protection:" ) );
             mvwprintz( w_sort_left, point( 2, cont_h - 5 ), c_light_gray,
-                       _( "Bash: " + std::to_string( who.get_armor_bash( bp ) ) ) );
+                       _( "Bash: " ) + std::to_string( who.get_armor_bash( bp ) ) );
             mvwprintz( w_sort_left, point( 2, cont_h - 4 ), c_light_gray,
-                       _( "Cut: " + std::to_string( who.get_armor_cut( bp ) ) ) );
+                       _( "Cut: " ) + std::to_string( who.get_armor_cut( bp ) ) );
             // Assuming that float armor values are rounded and not floored or truncated
             mvwprintz( w_sort_left, point( 2, cont_h - 3 ), c_light_gray,
-                       _( "Stab: " + std::to_string( static_cast<int>( std::round( who.get_armor_cut(
-                                   bp ) * 0.8f ) ) ) ) );
+                       _( "Stab: " ) + std::to_string( static_cast<int>( std::round( who.get_armor_cut(
+                                   bp ) * 0.8f ) ) ) );
             mvwprintz( w_sort_left, point( 2, cont_h - 2 ), c_light_gray,
-                       _( "Ballistic: " + std::to_string( who.get_armor_bullet( bp ) ) ) );
+                       _( "Ballistic: " ) + std::to_string( who.get_armor_bullet( bp ) ) );
         }
 
         // Left footer

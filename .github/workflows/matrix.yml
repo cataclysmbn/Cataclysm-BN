@@ -75,7 +75,7 @@ jobs:
         include:
           - title: clang, curses
             preset: ci-curses
-            os: ubuntu-latest
+            os: ubuntu-24.04
             tiles: 0
             test-stage: 1
             ccache_limit: 2G
@@ -84,7 +84,7 @@ jobs:
 
           - title: clang, tiles, i18n
             preset: ci-tiles
-            os: ubuntu-latest
+            os: ubuntu-24.04
             tiles: 1
             ccache_limit: 2G
             ccache_key: linux-clang-tiles

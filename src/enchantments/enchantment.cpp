@@ -811,6 +811,16 @@ void enchantment::check(std::set<enchantment_condition_type> incompatible_cond_t
             }
         }
     }
+    for (const auto spell : hit_me_effect) {
+        if (!spell.id.is_valid()) {
+            problems.push_back(string_format("\nspell id %s does not exist", spell.id.str()));
+        }
+    }
+    for (const auto spell : hit_you_effect) {
+        if (!spell.id.is_valid()) {
+            problems.push_back(string_format("\nspell id %s does not exist", spell.id.str()));
+        }
+    }
     if (!problems.empty()) {
         debugmsg("%s %s has: %s", ench_desc, id.c_str(),
                  enumerate_as_string(problems, enumeration_conjunction::none));

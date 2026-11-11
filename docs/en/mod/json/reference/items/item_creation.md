@@ -707,6 +707,8 @@ can be planted:
     "seeds": false, // (optional, default is true). If true, harvesting the plant will spawn seeds (the same type as the item used to plant). If false only the fruits are spawned, no seeds.
     "fruit_div": 2, // (optional, default is 1). Final amount of fruit charges produced is divided by this number. Works only if fruit item is counted by charges.
     "byproducts": ["withered", "straw_pile"], // A list of further items that should spawn upon harvest.
+    "harvest_inherit_flags": ["HIDDEN_POISON", "HIDDEN_HALLU"], // Optional, default: []. Flags present on the planted item to copy to harvested fruits and seeds, excluding byproducts. Works with any required_terrain_flag.
+    "harvest_inherit_poison": true, // Optional, default: false. Copy the planted item's poison value to harvested fruits and seeds, excluding byproducts. Independent of flag inheritance.
     "plant_name": "sunflower", // The name of the plant that grows from this seed. This is only used as information displayed to the user.
     "grow" : 91 // A time duration: how long it takes for a plant to fully mature. Based around a 91 day season length (roughly a real world season) to give better accuracy for longer season lengths
                 // Note that growing time is later converted based upon the season_length option, basing it around 91 is just for accuracy purposes
@@ -1054,12 +1056,14 @@ All object defined use actions support the following two types.
     "type": "fireweapon_on", // Function for active (burning) fire based weapons.
     "noise_chance": 1, // The chance (one in X) that the item will make a noise, rolled on each turn.
     "noise": 0, // The sound volume it makes, if it makes a noise at all. If 0, no sound is made, but the noise message is still printed.
-    "noise_message": "Your No. 9 hisses.", // The message / sound description (if noise is > 0), that appears when the item makes a sound.
+    "held_message": "Your No. 9 hisses.", // The message / sound description (if noise is > 0), that appears when the item makes a sound and player is wielding it.
+    "noise_message": "hsss.", // Sound description when heard from another tile, e.g. wielded by an NPC.
     "voluntary_extinguish_message": "Your No. 9 goes dark.", // Message that appears when the item is turned of by player.
     "charges_extinguish_message": "Out of ammo!", // Message that appears when the item runs out of charges.
     "water_extinguish_message": "Your No. 9 hisses in the water and goes out.", // Message that appears if the character walks into water and the fire of the item is extinguished.
     "auto_extinguish_chance": 0, // If > 0, this is the (one in X) chance that the item goes out on its own.
     "auto_extinguish_message": "Your No. 9 cuts out!" // Message that appears if the item goes out on its own (only required if auto_extinguish_chance is > 0).
+    "noise_variant": "fireweapon_lit" // sound variant for soundpacks, pair with id `tool`
 },
 "use_action": {
     "type": "musical_instrument", // The character plays an instrument (this item) while walking around.
@@ -1192,6 +1196,14 @@ All object defined use actions support the following two types.
 "use_action": {
     "type": "paint_stuff_cfg",  // Configures how it paints using paint stuff
     "color_swap": true          // Allow the color to be swapped to any other named color
+}
+"use_action": {
+  "type": "passivenoise", // Emits noise periodically, used mainly with active items such as chainsaws
+  "noise": 90, // Noise in decibels
+  "noise_chance": 10, // Percent chance to trigger per turn
+  "held_message": "The chainsaws rumble." // Message to display if player is holding the item
+  "noise_message": "a chainsaw rumbling." // Sound string when heard from another tile
+  "noise_variant": "chainsaw" // sound variant for soundpacks, pair with id `tool`
 }
 ```
 

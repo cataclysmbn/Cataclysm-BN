@@ -463,8 +463,8 @@
       [ "gelbox", 5 ],
       [ "microcentrifuge", 5 ],
       [ "dna_editor", 3 ],
-      [ "genome_drive_black_rat", 5 ],
-      [ "genome_drive_wolf_mutant_huge", 5 ],
+      { "group": "digital_genome_sample_black_rat", "prob": 5 },
+      { "group": "digital_genome_sample_wolf_mutant_huge", "prob": 5 },
       [ "beaker", 5 ],
       [ "gradcylinder", 5 ],
       [ "test_tube_micro", 5 ],
@@ -524,7 +524,7 @@
       [ "multitool", 10 ],
       [ "screwdriver_set", 10 ],
       [ "flashlight", 10 ],
-      [ "mobile_memory_card_science", 40 ],
+      { "group": "digital_storage_media_encrypted", "prob": 40 },
       [ "camera_pro", 2 ],
       [ "element", 5 ],
       [ "light_battery_cell", 10 ],
@@ -535,7 +535,8 @@
       [ "clamp", 10 ],
       [ "wrench", 10 ],
       [ "bionic_scanner", 5 ],
-      { "collection": [ { "item": "delivery_drone_item" }, { "item": "remotevehcontrol", "prob": 50 } ], "prob": 25 }
+      { "collection": [ { "item": "delivery_drone_item" }, { "item": "remotevehcontrol", "prob": 50 } ], "prob": 25 },
+      { "collection": [ { "item": "combat_drone_item" }, { "item": "remotevehcontrol", "prob": 50 } ], "prob": 5 }
     ]
   },
   {

@@ -7,6 +7,8 @@ mod.storage = storage
 
 game.iuse_functions["VOLTMETER"] = function(...) return mod.voltmeter.menu(...) end
 game.iuse_functions["sonar_scan"] = function(...) return mod.sonar_scan(...) end
+---@param params ItemUseParams
+game.iuse_functions["CORRUPTED_FILE"] = function(params) return mod.corrupted_file.open(params) end
 game.iuse_functions["ARTIFACT_ANALYZER"] = function(...) return mod.artifact_analyzer.menu(...) end
 game.iuse_functions["OBJ_VAR_VIEWER"] = function(...) return mod.item_var_viewer.menu(...) end
 game.examine_functions["PLUMBING_SHOWER_EXAMINE"] = function(...) return mod.plumbing.examine_shower(...) end
@@ -55,3 +57,6 @@ game.add_hook("on_make_mapgen_factory_list", function(params)
   params.results:insert(#params.results + 1, "lab_1side_ice")
   params.results:insert(#params.results + 1, "lab_finale_1level_ice")
 end)
+
+game.examine_functions["ORE_SMELTER_EMPTY"] = function(...) return mod.ore_smelter.examine_empty(...) end
+game.examine_functions["ORE_SMELTER_FULL"] = function(...) return mod.ore_smelter.examine_full(...) end

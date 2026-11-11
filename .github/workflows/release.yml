@@ -15,6 +15,9 @@ env:
   EXPECTED_NIGHTLY_ASSET_COUNT: 15
 
 jobs:
+  mods:
+    uses: ./.github/workflows/registry-mods-summary.yml
+
   metadata:
     runs-on: ubuntu-slim
     outputs:

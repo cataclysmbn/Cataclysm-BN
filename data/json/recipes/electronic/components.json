@@ -1,6 +1,33 @@
 [
   {
     "type": "recipe",
+    "result": "sd_memory_card",
+    "category": "CC_ELECTRONIC",
+    "subcategory": "CSC_ELECTRONIC_COMPONENTS",
+    "skill_used": "electronics",
+    "skills_required": [ "computer", 5 ],
+    "difficulty": 5,
+    "time": "1 h",
+    "book_learn": [ [ "manual_electronics", 5 ], [ "recipe_lab_elec", 5 ] ],
+    "using": [ [ "soldering_standard", 20 ] ],
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 } ],
+    "components": [ [ [ "RAM", 1 ] ], [ [ "cable", 1 ] ], [ [ "e_scrap", 1 ] ], [ [ "plastic_chunk", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "usb_drive",
+    "category": "CC_ELECTRONIC",
+    "subcategory": "CSC_ELECTRONIC_COMPONENTS",
+    "skill_used": "electronics",
+    "skills_required": [ "computer", 2 ],
+    "difficulty": 2,
+    "time": "25 m",
+    "using": [ [ "soldering_standard", 5 ] ],
+    "qualities": [ { "id": "SCREW", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 } ],
+    "components": [ [ [ "RAM", 1 ] ], [ [ "e_scrap", 2 ] ], [ [ "plastic_chunk", 2 ] ], [ [ "cable", 2 ] ] ]
+  },
+  {
+    "type": "recipe",
     "result": "motor_micro",
     "category": "CC_ELECTRONIC",
     "subcategory": "CSC_ELECTRONIC_COMPONENTS",

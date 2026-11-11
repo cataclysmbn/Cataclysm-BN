@@ -1514,7 +1514,7 @@
     "move_cost_mod": -1,
     "coverage": 10,
     "required_str": -1,
-    "active": [ "charger", { "power": 15 } ],
+    "active": [ "charger", { "power": 60 } ],
     "flags": [ "TRANSPARENT", "EASY_DECONSTRUCT" ],
     "deconstruct": { "items": [ { "item": "battery_charger", "count": 1 } ] },
     "bash": {
@@ -2346,6 +2346,7 @@
     "coverage": 30,
     "deconstruct": { "items": [ { "item": "minifridge", "count": 1 } ] },
     "max_volume": "75 L",
+    "required_str": 5,
     "extend": { "flags": [ "TRANSPARENT" ] },
     "bash": {
       "str_min": 18,

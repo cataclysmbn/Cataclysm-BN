@@ -379,8 +379,9 @@ std::string achievement::kill_ui_text( achievement_completion completion,
     for( const auto& [m_id, pair] : kill_requirements() ) {
         auto& [comp, count] = pair;
         std::string cur_kills;
-        std::string mon_name = m_id == mtype_id::NULL_ID() ? count > 1 ? "monsters" : "monster" :
-                               m_id->nname( count );
+        std::string mon_name = m_id == mtype_id::NULL_ID()
+                               ? vpgettext( "achievement kill requirement", "monster", "monsters", count )
+                               : m_id->nname( count );
         int kill_count = 0;
         std::string progress;
         bool comp_pass = false;
@@ -408,7 +409,7 @@ std::string achievement::kill_ui_text( achievement_completion completion,
                 break;
             case achievement_comparison::anything:
                 kill_status = achievement_completion::completed;
-                cur_kills = string_format( "Kill any number of %s", mon_name );
+                cur_kills = string_format( _( "Kill any number of %s" ), mon_name );
                 break;
             default:
                 kill_status = achievement_completion::completed;
@@ -456,7 +457,7 @@ std::string achievement::kill_ui_text( achievement_completion completion,
                 break;
             case achievement_comparison::anything:
                 kill_status = achievement_completion::completed;
-                cur_kills = string_format( "Kill any number of %s", fac_name );
+                cur_kills = string_format( _( "Kill any number of %s" ), fac_name );
                 break;
             default:
                 kill_status = achievement_completion::completed;

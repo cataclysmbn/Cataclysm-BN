@@ -349,7 +349,12 @@
           { "id": "mon_feral_soldier_rifle", "fg": 242 },
           { "id": "mon_feral_soldier_lmg", "fg": 243 },
           { "id": "mon_feral_soldier_shotgun", "fg": 244 },
-          { "id": "mon_feral_soldier_sniper", "fg": 245 }
+          { "id": "mon_feral_soldier_sniper", "fg": 245 },
+          {
+            "id": "fd_physical_static",
+            "fg": [ { "weight": 1, "sprite": 246 }, { "weight": 1, "sprite": 248 }, { "weight": 1, "sprite": 249 } ]
+          },
+          { "id": "mon_signal_maw", "fg": 247 }
         ],
         "sprite_width": 32,
         "sprite_height": 32

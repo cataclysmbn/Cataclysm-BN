@@ -467,10 +467,10 @@
     "page": "performance",
     "group": "reality_bubble",
     "menu_text": "Visibility Scaling",
-    "tooltip": "Controls how clear-air visibility attenuation scales with the reality bubble.  Perfect scales directly with the current bubble size.  Smart keeps visibility near the size 6 baseline while still giving small bubbles less range and large  bubbles more range.  None keeps visibility at the size 6 baseline and only uses bubble size as a hard view cap.",
+    "tooltip": "Controls how clear-air visibility attenuation scales with the reality bubble.  Perfect scales directly with the current bubble size.  Smart keeps visibility near the size 6 baseline while still giving small bubbles less range and large bubbles more range.  None keeps visibility at the size 6 baseline and only uses bubble size as a hard view cap.",
     "default": "smart",
     "items": [
-      { "value": "perfect", "label": "Perfect Scaale" },
+      { "value": "perfect", "label": "Perfect Scale" },
       { "value": "smart", "label": "Smart Scale" },
       { "value": "none", "label": "No Scale" }
     ]

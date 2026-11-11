@@ -1,0 +1,92 @@
+[
+  {
+    "abstract": "digital_martial_arts_video",
+    "copy-from": "digital_instruction",
+    "type": "BOOK",
+    "name": { "str": "martial arts training video" },
+    "description": "A saved series of martial arts lessons with demonstrations and practice drills.",
+    "time": "10 m",
+    "intelligence": 9,
+    "use_action": "MA_MANUAL"
+  },
+  {
+    "id": "digital_aikido_video",
+    "copy-from": "digital_martial_arts_video",
+    "type": "BOOK",
+    "name": { "str_sp": "aikido training videos" },
+    "description": "Recorded aikido lessons demonstrating falls, joint locks, and throws.  The instructor repeats each movement slowly before showing it with a partner.",
+    "martial_art": "style_aikido"
+  },
+  {
+    "id": "digital_boxing_video",
+    "copy-from": "digital_martial_arts_video",
+    "type": "BOOK",
+    "name": { "str_sp": "boxing training videos" },
+    "description": "A boxing coach demonstrates footwork, punches, and defensive movements, then leads a series of shadowboxing drills.",
+    "martial_art": "style_boxing"
+  },
+  {
+    "id": "digital_eskrima_video",
+    "copy-from": "digital_martial_arts_video",
+    "type": "BOOK",
+    "name": { "str_sp": "eskrima training videos" },
+    "description": "Saved eskrima lessons covering striking angles, parries, and disarms with sticks and blades.  Close-up demonstrations make the instructors' hand movements easier to follow.",
+    "martial_art": "style_eskrima"
+  },
+  {
+    "id": "digital_fencing_video",
+    "copy-from": "digital_martial_arts_video",
+    "type": "BOOK",
+    "name": { "str_sp": "fencing training videos" },
+    "description": "A series of fencing lessons demonstrating guards, lunges, parries, and ripostes.  Slow-motion replays show the timing of each exchange.",
+    "martial_art": "style_fencing"
+  },
+  {
+    "id": "digital_judo_video",
+    "copy-from": "digital_martial_arts_video",
+    "type": "BOOK",
+    "name": { "str_sp": "judo training videos" },
+    "description": "Recorded judo classes covering breakfalls, balance, grips, and throws.  Each technique is demonstrated from several angles, followed by drills to practice it.",
+    "martial_art": "style_judo"
+  },
+  {
+    "id": "digital_karate_video",
+    "copy-from": "digital_martial_arts_video",
+    "type": "BOOK",
+    "name": { "str_sp": "karate training videos" },
+    "description": "A Shotokan karate instructor demonstrates stances, blocks, punches, and kicks.  The lessons include guided practice and explanations of how to apply the movements.",
+    "martial_art": "style_karate"
+  },
+  {
+    "id": "digital_kickboxing_video",
+    "copy-from": "digital_martial_arts_video",
+    "type": "BOOK",
+    "name": { "str_sp": "kickboxing training videos" },
+    "description": "A saved kickboxing course covering footwork, combinations, and defense.  Timed drills alternate punches and kicks with reminders to keep your guard up.",
+    "martial_art": "style_kickboxing"
+  },
+  {
+    "id": "digital_krav_maga_video",
+    "copy-from": "digital_martial_arts_video",
+    "type": "BOOK",
+    "name": { "str_sp": "Krav Maga training videos" },
+    "description": "A series of Krav Maga lessons demonstrating strikes, escapes, and defenses against armed attackers.  The instructor stresses decisive movement and finding a way out.",
+    "martial_art": "style_krav_maga"
+  },
+  {
+    "id": "digital_muay_thai_video",
+    "copy-from": "digital_martial_arts_video",
+    "type": "BOOK",
+    "name": { "str_sp": "Muay Thai training videos" },
+    "description": "Recorded Muay Thai lessons showing punches, kicks, elbows, knees, and clinch work.  Pad drills demonstrate how to combine the techniques.",
+    "martial_art": "style_muay_thai"
+  },
+  {
+    "id": "digital_taekwondo_video",
+    "copy-from": "digital_martial_arts_video",
+    "type": "BOOK",
+    "name": { "str_sp": "taekwondo training videos" },
+    "description": "A taekwondo instructor leads lessons on stances, kicks, and footwork.  Slow demonstrations and repeated drills emphasize balance and control.",
+    "martial_art": "style_taekwondo"
+  }
+]

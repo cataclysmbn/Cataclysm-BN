@@ -480,6 +480,11 @@ bool scenario::is_locked_bionic( const bionic_id &bionic ) const
     return _forced_bionics.contains( bionic );
 }
 
+auto scenario::get_locked_bionics() const -> std::set<bionic_id>
+{
+    return _forced_bionics;
+}
+
 bool scenario::is_forbidden_trait( const trait_id &trait ) const
 {
     return _forbidden_traits.contains( trait );
@@ -503,6 +508,51 @@ bool scenario::forbids_bionics() const
 bool scenario::forbids_spells() const
 {
     return _forbids_spells;
+}
+
+auto scenario::allowed_traits() const -> const std::set<trait_id> &
+{
+    return _allowed_traits;
+}
+
+auto scenario::forbidden_traits() const -> const std::set<trait_id> &
+{
+    return _forbidden_traits;
+}
+
+auto scenario::allowed_bionics() const -> const std::set<bionic_id> &
+{
+    return _allowed_bionics;
+}
+
+auto scenario::forbidden_bionics() const -> const std::set<bionic_id> &
+{
+    return _forbidden_bionics;
+}
+
+auto scenario::allowed_spells() const -> const std::set<spell_id> &
+{
+    return _allowed_spells;
+}
+
+auto scenario::forbidden_spells() const -> const std::set<spell_id> &
+{
+    return _forbidden_spells;
+}
+
+auto scenario::forced_spells() const -> const std::set<spell_id> &
+{
+    return _forced_spells;
+}
+
+auto scenario::get_flags() const -> const std::set<std::string> &
+{
+    return flags;
+}
+
+auto scenario::allowed_start_locations() const -> const std::vector<start_location_id> &
+{
+    return _allowed_locs;
 }
 
 bool scenario::has_flag( const std::string &flag ) const

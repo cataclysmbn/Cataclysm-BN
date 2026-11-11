@@ -99,12 +99,12 @@
     "symbol": "/",
     "color": "yellow",
     "ammo": "battery",
-    "charges_per_use": 5,
+    "charges_per_use": 1,
     "use_action": {
       "type": "transform",
       "active": true,
       "target": "carver_on",
-      "msg": "You turn on the electric carver.",
+      "msg": "The electric carver's serrated blades start buzzing!",
       "moves": 80,
       "transform_charges": 1,
       "need_dry": true
@@ -125,8 +125,18 @@
     "charges_per_use": 0,
     "revert_to": "carver_off",
     "qualities": [ [ "CUT", 1 ], [ "BUTCHER", 25 ] ],
-    "revert_msg": "Your electric carver goes quiet",
-    "use_action": { "type": "transform", "target": "carver_off", "msg": "You turn off the electric carver." },
+    "revert_msg": "Your electric carver goes quiet.",
+    "use_action": [
+      { "type": "transform", "target": "carver_off", "msg": "You turn off the electric carver." },
+      {
+        "type": "passivenoise",
+        "noise": 80,
+        "noise_chance": 10,
+        "held_message": "The electric carver buzzes.",
+        "noise_message": "a carver buzzing.",
+        "noise_variant": "circsaw"
+      }
+    ],
     "flags": [ "MESSY", "TRADER_AVOID", "NONCONDUCTIVE", "WATER_DISABLE", "COMBAT_NPC_USE", "COMBAT_NPC_ON" ],
     "magazine_well": "500 ml"
   },

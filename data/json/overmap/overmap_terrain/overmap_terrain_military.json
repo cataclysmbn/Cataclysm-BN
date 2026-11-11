@@ -58,7 +58,7 @@
   },
   {
     "type": "overmap_terrain",
-    "id": "shelter_under",
+    "id": [ "shelter_under", "shelter_vandal_under" ],
     "name": "evac shelter",
     "sym": "+",
     "color": "white",

@@ -1,0 +1,42 @@
+[
+  {
+    "type": "palette",
+    "id": "parametrized_walls_palette",
+    "//": "Intended as a palette for randomized interior and exterior walls",
+    "parameters": {
+      "interior_wall_type": {
+        "type": "ter_str_id",
+        "default": {
+          "distribution": [
+            [ "t_wall_b", 5 ],
+            [ "t_wall_g", 5 ],
+            [ "t_wall_p", 1 ],
+            [ "t_wall_P", 1 ],
+            [ "t_wall_r", 3 ],
+            [ "t_wall_w", 15 ],
+            [ "t_wall_y", 3 ],
+            [ "t_brick_wall", 2 ]
+          ]
+        }
+      },
+      "exterior_wall_type": {
+        "type": "ter_str_id",
+        "default": {
+          "distribution": [
+            [ "t_brick_wall", 4 ],
+            [ "t_wall_wood", 2 ],
+            [ "t_wall_w", 4 ],
+            [ "t_concrete_wall", 2 ],
+            [ "t_strconc_wall", 1 ],
+            [ "t_sconc_wall", 1 ]
+          ]
+        }
+      }
+    },
+    "terrain": {
+      "|": { "param": "interior_wall_type", "fallback": "t_wall_w" },
+      "#": { "param": "exterior_wall_type", "fallback": "t_brick_wall" }
+    },
+    "nested": { "#": { "chunks": [ [ "shelter_graffiti", 1 ], [ "general_graffiti", 1 ], [ "null", 598 ] ] } }
+  }
+]

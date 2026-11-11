@@ -392,7 +392,7 @@
   {
     "type": "item_action",
     "id": "EINKTABLETPC",
-    "name": { "str": "Use" }
+    "name": { "str": "Access file system" }
   },
   {
     "type": "item_action",
@@ -527,7 +527,7 @@
   {
     "type": "item_action",
     "id": "PLAY_GAME",
-    "name": { "str": "Play" }
+    "name": { "str": "Play game" }
   },
   {
     "type": "item_action",
@@ -597,7 +597,7 @@
   {
     "type": "item_action",
     "id": "dna_editor",
-    "name": { "str": "Inspect genome drive" }
+    "name": { "str": "Inspect genome samples" }
   },
   {
     "type": "item_action",
@@ -667,7 +667,7 @@
   {
     "type": "item_action",
     "id": "PORTABLE_GAME",
-    "name": { "ctxt": "PORTABLE_GAME", "str": "Play" }
+    "name": { "ctxt": "PORTABLE_GAME", "str": "Play game" }
   },
   {
     "type": "item_action",
@@ -942,6 +942,11 @@
   {
     "type": "item_action",
     "id": "manualnoise",
+    "name": { "str": "Make some noise" }
+  },
+  {
+    "type": "item_action",
+    "id": "passivenoise",
     "name": { "str": "Make some noise" }
   },
   {
