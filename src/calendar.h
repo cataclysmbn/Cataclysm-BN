@@ -136,6 +136,11 @@ void register_dim_time_config( const std::string &dim_id, const dim_time_config 
 void set_active_world_type( const std::string &world_type_id );
 
 /**
+ * Drop the cached sunrise/sunset config. Call it whenever the SUNRISE_* or SUNSET_* options change.
+ */
+void invalidate_time_config_cache();
+
+/**
  * @returns ratio of actual season length (a world option) to default season length. This
  * should be used to convert JSON values (that assume the default for the season length
  * option) to actual in-game length.
