@@ -436,36 +436,38 @@ void enchantment::force_add(const enchantment& rhs, bool merge_complex) {
         }
     }
 
-    for (const auto& pair_values : rhs.complex_values_add) {
-        if (complex_values_add.contains(pair_values.first)) {
-            for (const auto& nested_pair_values : pair_values.second) {
-                complex_values_add[pair_values.first][nested_pair_values.first] +=
-                    nested_pair_values.second;
+    if( merge_complex ) {
+        for (const auto& pair_values : rhs.complex_values_add) {
+            if (complex_values_add.contains(pair_values.first)) {
+                for (const auto& nested_pair_values : pair_values.second) {
+                    complex_values_add[pair_values.first][nested_pair_values.first] +=
+                        nested_pair_values.second;
+                }
+            } else {
+                complex_values_add[pair_values.first] = pair_values.second;
             }
-        } else {
-            complex_values_add[pair_values.first] = pair_values.second;
         }
-    }
 
-    for (const auto& pair_values : rhs.complex_values_multiply) {
-        if (complex_values_multiply.contains(pair_values.first)) {
-            for (const auto& nested_pair_values : pair_values.second) {
-                complex_values_multiply[pair_values.first][nested_pair_values.first] +=
-                    nested_pair_values.second;
+        for (const auto& pair_values : rhs.complex_values_multiply) {
+            if (complex_values_multiply.contains(pair_values.first)) {
+                for (const auto& nested_pair_values : pair_values.second) {
+                    complex_values_multiply[pair_values.first][nested_pair_values.first] +=
+                        nested_pair_values.second;
+                }
+            } else {
+                complex_values_multiply[pair_values.first] = pair_values.second;
             }
-        } else {
-            complex_values_multiply[pair_values.first] = pair_values.second;
         }
-    }
 
-    for (const auto& pair_values : rhs.complex_values_max) {
-        if (complex_values_max.contains(pair_values.first)) {
-            for (const auto& nested_pair_values : pair_values.second) {
-                complex_values_max[pair_values.first][nested_pair_values.first] +=
-                    nested_pair_values.second;
+        for (const auto& pair_values : rhs.complex_values_max) {
+            if (complex_values_max.contains(pair_values.first)) {
+                for (const auto& nested_pair_values : pair_values.second) {
+                    complex_values_max[pair_values.first][nested_pair_values.first] +=
+                        nested_pair_values.second;
+                }
+            } else {
+                complex_values_max[pair_values.first] = pair_values.second;
             }
-        } else {
-            complex_values_max[pair_values.first] = pair_values.second;
         }
     }
 
