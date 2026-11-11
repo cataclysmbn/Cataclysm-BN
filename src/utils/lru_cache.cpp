@@ -3,10 +3,10 @@
 #include "coordinates.h"
 #include "memory_fast.h"
 #include "point.h"
+#include "utils/memory_stream.h"
 
 #include <cstddef>
 #include <iterator>
-#include <sstream>
 #include <string>
 
 template <typename Key, typename Value>
@@ -64,4 +64,4 @@ auto lru_cache<Key, Value>::list() const -> const std::list<typename lru_cache<K
 template class lru_cache<tripoint, int>;
 template class lru_cache<tripoint_abs_ms, int>;
 template class lru_cache<point, char>;
-template class lru_cache<std::string, shared_ptr_fast<std::istringstream>>;
+template class lru_cache<std::string, shared_ptr_fast<memory_istream>>;

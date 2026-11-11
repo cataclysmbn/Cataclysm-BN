@@ -1,6 +1,7 @@
 #include "json.h"
 
 #include <algorithm>
+#include <array>
 #include <bitset>
 #include <cmath> // pow
 #include <cstdint>
@@ -14,12 +15,14 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <typeinfo>
 #include <utility>
 #include <vector>
 
 #include "cached_options.h"
 #include "cata_utility.h"
 #include "debug.h"
+#include "utils/memory_stream.h"
 #include "string_formatter.h"
 #include "string_utils.h"
 
@@ -54,6 +57,63 @@ auto read_char( std::istream &s, char &ch ) -> void
         return;
     }
     ch = static_cast<char>( c );
+}
+
+/// The stream's buffer if it is a memory_streambuf, whose unread bytes can be scanned directly.
+auto memory_buffer( std::istream &s ) -> memory_streambuf *
+{
+    auto *const buf = s.rdbuf();
+    if( buf != nullptr && typeid( *buf ) == typeid( memory_streambuf ) ) {
+        return static_cast<memory_streambuf *>( buf );
+    }
+    return nullptr;
+}
+
+/// Length of the leading run of `text` for which `pred` holds.
+template<typename Pred>
+auto run_length( const std::string_view text, Pred pred ) -> size_t
+{
+    return static_cast<size_t>( std::ranges::find_if_not( text, pred ) - text.begin() );
+}
+
+/// Length of the UTF-8 sequence starting `text`, or 0 if get_escaped_or_unicode would reject it.
+auto utf8_sequence_length( const std::string_view text ) -> size_t
+{
+    if( text.empty() ) {
+        return 0;
+    }
+    const auto lead = static_cast<unsigned char>( text.front() );
+    const auto [continuations, mask] = [&]() -> std::array<uint32_t, 2> {
+        if( lead >= 0xFC )
+        {
+            return { 5, 0x01 };
+        } else if( lead >= 0xF8 )
+        {
+            return { 4, 0x03 };
+        } else if( lead >= 0xF0 )
+        {
+            return { 3, 0x07 };
+        } else if( lead >= 0xE0 )
+        {
+            return { 2, 0x0f };
+        } else if( lead >= 0xC0 )
+        {
+            return { 1, 0x1f };
+        }
+        return { 0, 0 };
+    }();
+    if( continuations == 0 || text.size() <= continuations ) {
+        return 0;
+    }
+    auto unicode = static_cast<uint32_t>( lead & mask );
+    for( size_t i = 1; i <= continuations; ++i ) {
+        const auto uc = static_cast<unsigned char>( text[i] );
+        if( uc < 0x80 || uc >= 0xC0 ) {
+            return 0;
+        }
+        unicode = ( unicode << 6 ) | ( uc & 0x3f );
+    }
+    return unicode > 0x10FFFF ? 0 : continuations + 1;
 }
 
 /// Like `static_cast<bool>( std::istream::get( ch ) )`, but reads straight from the buffer while the stream is good.
@@ -923,7 +983,14 @@ void JsonIn::seek( int pos )
 
 void JsonIn::eat_whitespace()
 {
-    if( stream->good() ) {
+    if( auto *const mem = stream->good() ? memory_buffer( *stream ) : nullptr ) {
+        const auto unread = mem->unread();
+        const auto length = run_length( unread, is_whitespace );
+        mem->advance( length );
+        if( length < unread.size() ) {
+            return;
+        }
+    } else if( stream->good() ) {
         auto *const buf = stream->rdbuf();
         for( auto c = buf->sgetc(); c != std::char_traits<char>::eof(); c = buf->sgetc() ) {
             if( !is_whitespace( static_cast<char>( c ) ) ) {
@@ -1018,7 +1085,12 @@ void JsonIn::skip_string()
         err << "expecting string but found '" << ch << "'";
         error( err.str(), -1 );
     }
-    if( stream->good() ) {
+    if( auto *const mem = stream->good() ? memory_buffer( *stream ) : nullptr ) {
+        // Fast path: skip plain characters in one scan.
+        mem->advance( run_length( mem->unread(), []( const char c ) {
+            return c != '\\' && c != '"' && c != '\r' && c != '\n';
+        } ) );
+    } else if( stream->good() ) {
         // Fast path: consume plain characters directly from the buffer.
         auto *const buf = stream->rdbuf();
         for( auto c = buf->sgetc(); c != std::char_traits<char>::eof(); c = buf->sgetc() ) {
@@ -1047,24 +1119,33 @@ void JsonIn::skip_value()
     eat_whitespace();
     char ch = peek();
     if( ( ch == '{' || ch == '[' ) && stream->good() ) {
-        const auto start = tell();
-        if( const auto found = skipped_values.find( start ); found != skipped_values.end() ) {
-            seek( found->second.end );
-            ate_separator = found->second.ate_separator;
-            return;
-        }
-        if( ch == '{' ) {
-            skip_object();
-        } else {
-            skip_array();
-        }
-        // Small values are cheaper to rescan than to remember.
-        constexpr auto min_remembered_size = 64;
-        if( stream->good() ) {
-            const auto end = tell();
-            if( end - start >= min_remembered_size ) {
-                skipped_values.emplace( start, skipped_value{ .end = end, .ate_separator = ate_separator } );
+        const auto skip_remembered = [&]( auto & remembered ) {
+            using remembered_value = typename std::remove_reference_t<decltype( remembered )>::mapped_type;
+            const auto start = tell();
+            if( const auto found = remembered.find( start ); found != remembered.end() ) {
+                seek( found->second.end );
+                ate_separator = found->second.ate_separator;
+                return;
             }
+            if( ch == '{' ) {
+                skip_object();
+            } else {
+                skip_array();
+            }
+            // Small values are cheaper to rescan than to remember.
+            constexpr auto min_remembered_size = 64;
+            if( stream->good() ) {
+                const auto end = tell();
+                if( end - start >= min_remembered_size ) {
+                    remembered.emplace( start, remembered_value{ .end = end, .ate_separator = ate_separator } );
+                }
+            }
+        };
+        // Memory buffers keep what was skipped across JsonIn instances, e.g. from loading to finalizing.
+        if( auto *const mem = memory_buffer( *stream ) ) {
+            skip_remembered( mem->skipped_json_values() );
+        } else {
+            skip_remembered( skipped_values );
         }
         return;
     }
@@ -1334,7 +1415,27 @@ std::string JsonIn::get_string()
         }
         // add chars to the string, one at a time
         do {
-            if( stream->good() ) {
+            if( auto *const mem = stream->good() ? memory_buffer( *stream ) : nullptr ) {
+                // Fast path: append runs of printable ASCII and valid UTF-8 at once.
+                while( true ) {
+                    const auto unread = mem->unread();
+                    auto length = run_length( unread, []( const char c ) {
+                        return c >= 0x20 && c < 0x7f && c != '"' && c != '\\';
+                    } );
+                    while( length < unread.size() && static_cast<unsigned char>( unread[length] ) >= 0x80 ) {
+                        const auto sequence = utf8_sequence_length( unread.substr( length ) );
+                        if( sequence == 0 ) {
+                            break;
+                        }
+                        length += sequence;
+                    }
+                    s.append( unread.data(), length );
+                    mem->advance( length );
+                    if( length == 0 ) {
+                        break;
+                    }
+                }
+            } else if( stream->good() ) {
                 // Fast path: append printable ASCII directly from the buffer.
                 auto *const buf = stream->rdbuf();
                 for( auto c = buf->sgetc(); c >= 0x20 && c < 0x7f && c != '"' && c != '\\'; c = buf->sgetc() ) {
