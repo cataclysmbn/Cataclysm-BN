@@ -455,6 +455,43 @@ void enchantment::serialize(JsonOut& jsout) const {
         if (val_mult != 0) { jsout.member("multiply", val_mult); }
         jsout.end_object();
     }
+    for (const auto [ench_val_id, effectors] : complex_values_add) {
+        for (const auto effector : effectors) {
+            jsout.start_object();
+            jsout.member("value", ench_val_id.str());
+            jsout.member("add");
+            jsout.start_object();
+            jsout.member("val", effector.first);
+            jsout.member("per", effector.second);
+            jsout.end_object();
+            jsout.end_object();
+        }
+    }
+    for (const auto [ench_val_id, effectors] : complex_values_multiply) {
+        for (const auto effector : effectors) {
+            jsout.start_object();
+            jsout.member("value", ench_val_id.str());
+            jsout.member("multiply");
+            jsout.start_object();
+            jsout.member("val", effector.first);
+            jsout.member("per", effector.second);
+            jsout.end_object();
+            jsout.end_object();
+        }
+    }
+    for (const auto [ench_val_id, effectors] : complex_values_max) {
+        for (const auto effector : effectors) {
+            jsout.start_object();
+            jsout.member("value", ench_val_id.str());
+            jsout.member("max");
+            jsout.start_object();
+            jsout.member("val", effector.first);
+            jsout.member("per", effector.second);
+            jsout.end_object();
+            jsout.end_object();
+        }
+    }
+
     jsout.end_array();
 
     jsout.member("flags");

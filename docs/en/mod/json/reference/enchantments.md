@@ -138,8 +138,8 @@ Syntax for single entry:
   // Alternatively, all of these can be based off character resources
   "add": {
     "val": "hungry", // Scale based off hunger
-    "per": 0.1       // Every 10 hunger, add 1 to the value
-  }
+    "per": 0.1 // Every 10 hunger, add 1 to the value
+  },
 
   // Multiplicative bonus. Optional, default is 0.
   "multiply": -0.3
