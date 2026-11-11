@@ -111,6 +111,17 @@
   },
   {
     "type": "OPTION",
+    "name": "ACTIVITY_SKIP_NPC_AI_CADENCE",
+    "stype": "bool",
+    "scope": "global",
+    "page": "performance",
+    "group": "rem_act_perf",
+    "menu_text": "Calm NPC Danger Checks Every 5 Turns",
+    "tooltip": "During activity skip, NPCs without danger, target or sound alert reassess danger every 5 turns instead of every turn.",
+    "default": true
+  },
+  {
+    "type": "OPTION",
     "name": "ACTIVITY_SKIP_STAT_UPDATE_TICKS",
     "stype": "int",
     "scope": "global",

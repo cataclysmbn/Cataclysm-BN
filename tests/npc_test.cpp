@@ -4,6 +4,7 @@
 #include "../src/vehicle/vpart_position.h"
 #include "avatar.h"
 #include "calendar.h"
+#include "cata_utility.h"
 #include "catch/catch.hpp"
 #include "coordinates.h"
 #include "faction.h"
@@ -15,6 +16,7 @@
 #include "map/field_type.h"
 #include "map_helpers.h"
 #include "memory_fast.h"
+#include "monster.h"
 #include "npc.h"
 #include "npc_class.h"
 #include "numeric_interval.h"
@@ -558,4 +560,29 @@ TEST_CASE("random npc spawn chance") {
     CHECK(npc_overmap::spawn_chance_in_hour(2 * days_in_year, 1.0) == Approx(0.5 / 24.0));
     CHECK(npc_overmap::spawn_chance_in_hour(4 * days_in_year, 1.0) == Approx(0.25 / 24.0));
     CHECK(npc_overmap::spawn_chance_in_hour(8 * days_in_year, 1.0) == Approx(0.125 / 24.0));
+}
+
+TEST_CASE("calm_npc_reassesses_danger_every_5_turns_in_activity_skip", "[npc]") {
+    clear_all_state();
+    build_test_map(ter_id("t_floor"));
+    g->faction_manager_ptr->create_if_needed();
+    clear_npcs();
+    clear_creatures();
+    auto& you = get_avatar();
+    g->place_player(tripoint_bub_ms(60, 60, 0));
+    set_time(calendar::turn_zero + 12_hours + 1_turns);
+    auto& guy = spawn_npc(you.bub_pos() + point(5, 0), "test_talker");
+    guy.set_attitude(NPCATT_NULL);
+    guy.regen_ai_cache();
+    REQUIRE(guy.current_target() == nullptr);
+
+    const auto skip_state = restore_on_out_of_scope<bool>(you.in_skip_state);
+    you.in_skip_state = true;
+    auto& zombie = spawn_test_monster("mon_zombie", guy.bub_pos() + point(2, 0));
+    guy.move();
+    CHECK(guy.current_target() == nullptr);
+
+    set_time(calendar::turn_zero + 12_hours + 5_turns);
+    guy.move();
+    CHECK(guy.current_target() == static_cast<Creature*>(&zombie));
 }
