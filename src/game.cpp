@@ -14742,7 +14742,13 @@ void game::vertical_move( int movez, bool force, bool peeking )
     bool rope_ladder = false;
     // TODO: Remove the stairfinding, make the mapgen gen aligned maps
     // Don't check can_fly here, flight was handled earlier and doing that would just embed you in a wall instead
-    const bool special_move = climbing || swimming;
+    const bool on_stairs =
+        m.has_flag( TFLAG_GOES_UP, g->u.bub_pos() ) ||
+        m.has_flag( TFLAG_GOES_DOWN, g->u.bub_pos() ) ||
+        m.has_flag( TFLAG_RAMP, g->u.bub_pos() ) ||
+        m.has_flag( TFLAG_RAMP_UP, g->u.bub_pos() ) ||
+        m.has_flag( TFLAG_RAMP_DOWN, g->u.bub_pos() );
+    const bool special_move = climbing || swimming || ( can_fly && !on_stairs );
 
     if( !force && !special_move ) {
         const std::optional<tripoint_bub_ms> pnt = find_or_make_stairs( m, z_after, rope_ladder,
