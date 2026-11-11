@@ -2747,3 +2747,7 @@ nc_color bodytemp_color( const Character &c, const bodypart_str_id &bp );
 
 /** Returns true if the player has a psyshield artifact, or sometimes if wearing tinfoil */
 bool has_psy_protection( const Character &c, int partial_chance );
+
+/// Counter that changes whenever the traits of a character may change: a mutation is gained or
+/// lost, or an enchantment grants or removes one. Lua caches of trait checks compare it.
+auto character_trait_generation() -> int;

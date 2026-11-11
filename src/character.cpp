@@ -9439,6 +9439,18 @@ mutation_category_id Character::get_highest_category() const
     return sMaxCat;
 }
 
+namespace
+{
+
+auto trait_generation = 0;
+
+} // namespace
+
+auto character_trait_generation() -> int
+{
+    return trait_generation;
+}
+
 void Character::recalculate_enchantment_cache()
 {
     const enchantment old_ench_sources = enchantment( *&*enchantment_cache );
@@ -9520,6 +9532,9 @@ void Character::recalculate_enchantment_cache()
 
     enchantment_cache->activate_effects( *this );
     enchantment_cache->deactivate_removed_effects( *this, old_ench_sources );
+    if( enchantment_cache->get_mutations() != old_ench_sources.get_mutations() ) {
+        ++trait_generation;
+    }
 
     rebuild_mutation_cache();
 
@@ -11851,6 +11866,7 @@ void Character::on_mutation_gain( const trait_id &mid )
     magic->on_mutation_gain( mid, *this );
     update_type_of_scent( mid );
     recalculate_enchantment_cache(); // mutations can have enchantments
+    ++trait_generation;
 }
 
 void Character::on_mutation_loss( const trait_id &mid )
@@ -11859,6 +11875,7 @@ void Character::on_mutation_loss( const trait_id &mid )
     magic->on_mutation_loss( mid );
     update_type_of_scent( mid, false );
     recalculate_enchantment_cache(); // mutations can have enchantments
+    ++trait_generation;
 }
 
 void Character::on_stat_change( const std::string &stat, int value )
