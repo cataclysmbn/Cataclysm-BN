@@ -28,6 +28,7 @@
 #include "sol/forward.hpp"
 #include "sol/sol.hpp"
 #include "units_temperature.h"
+#include "utils/trait_generation.h"
 #include "weather/weather.h"
 
 #include <algorithm>
@@ -553,6 +554,8 @@ void cata::detail::reg_game_api( sol::state &lua )
     luna::set_fx( lib, "reset_dimension", []( const std::string & dim_id ) -> bool {
         return g->reset_dimension( dimension_id( dim_id ) );
     } );
+    DOC( "Returns a counter that changes whenever the traits of a character may change: a mutation is gained or lost, or an enchantment grants or removes one." );
+    luna::set_fx( lib, "trait_generation", &character_trait_generation );
     luna::set_fx( lib, "current_turn", []() -> time_point { return calendar::turn; } );
     luna::set_fx( lib, "turn_zero", []() -> time_point { return calendar::turn_zero; } );
     luna::set_fx( lib, "before_time_starts", []() -> time_point { return calendar::before_time_starts; } );

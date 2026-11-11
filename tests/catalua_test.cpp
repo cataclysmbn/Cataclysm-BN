@@ -3558,3 +3558,26 @@ TEST_CASE("lua_hook_wiring_mon_effect_removed", "[lua]") {
     CHECK(*cre_ptr == static_cast<Creature*>(&mon));
     CHECK(*eff_ptr != nullptr);
 }
+
+TEST_CASE("lua_trait_tick_cache_follows_mutation_changes", "[lua][morale]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    auto& you = get_avatar();
+    auto& lua = DynamicDataLoader::get_instance().lua->lua;
+    const auto call = [&lua](const std::string& fn) -> bool {
+        // Other tests may replace game.mod_runtime and the hook lists; the module stays loaded.
+        const auto res = lua.safe_script(
+            "local mod = {} package.loaded['lua/traits/lua_traits'].register(mod) return mod." + fn
+                + "()",
+            sol::script_pass_on_error);
+        REQUIRE(res.valid());
+        return res.get_type() == sol::type::boolean && res.get<bool>();
+    };
+    call("forget_trait_tick");
+
+    CHECK_FALSE(call("needs_trait_tick"));
+    you.set_mutation(trait_id("AGORAPHOBIA"));
+    CHECK(call("needs_trait_tick"));
+    you.unset_mutation(trait_id("AGORAPHOBIA"));
+    CHECK_FALSE(call("needs_trait_tick"));
+}
