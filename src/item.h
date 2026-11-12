@@ -1015,6 +1015,8 @@ class item : public location_visitable<item>, public game_object<item>
 
         /** true if a parent container keeps this item from rotting */
         auto is_in_preserving_container() const -> bool;
+        /// Storage flag of the vehicle part holding this item, or nullopt outside vehicle cargo.
+        auto vehicle_storage_temperature() const -> std::optional<temperature_flag>;
 
         /**
          * Whether the item has enough rot that it should get removed.
