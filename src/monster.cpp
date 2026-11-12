@@ -1258,7 +1258,7 @@ auto pet_taming_description( const monster &mon ) -> std::string
     if( !pet_armors.empty() ) {
         const itype *const example = *std::ranges::min_element( pet_armors, {},
         []( const itype * t ) { return t->nname( 1 ).size(); } );
-        ss += string_format( "  %s: %s\n", _( "Pet armor" ), example->nname( 1 ) );
+        ss += string_format( _( "It can wear pet armor such as %s." ), example->nname( 1 ) ) + "\n";
     }
 
     return ss;

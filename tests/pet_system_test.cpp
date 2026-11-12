@@ -439,7 +439,7 @@ TEST_CASE("extended description shows taming food and pet armor for a tamable mo
     CHECK(desc.find("Taming it requires:") != std::string::npos);
     CHECK(desc.find("Food: dog food") != std::string::npos);
     CHECK(desc.find("Survival: 3") != std::string::npos);
-    CHECK(desc.find("Pet armor: ") != std::string::npos);
+    CHECK(desc.find("It can wear pet armor such as ") != std::string::npos);
     CHECK(desc.find("It cannot be tamed.") == std::string::npos);
 }
 
