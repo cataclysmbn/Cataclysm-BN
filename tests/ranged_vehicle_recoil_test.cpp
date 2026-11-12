@@ -19,7 +19,7 @@
 
 TEST_CASE("firing_from_a_vehicle_applies_recoil_to_the_vehicle", "[vehicle][gun]") {
     clear_all_state();
-    rng_set_engine_seed(0);
+    rng_set_engine_seed(1);
 
     auto& here = get_map();
     auto& player_character = get_avatar();
@@ -48,7 +48,7 @@ TEST_CASE("firing_from_a_vehicle_applies_recoil_to_the_vehicle", "[vehicle][gun]
 
 TEST_CASE("vehicle gun recoil scaling factor can disable vehicle thrust", "[vehicle][gun]") {
     clear_all_state();
-    rng_set_engine_seed(0);
+    rng_set_engine_seed(1);
 
     override_option vehicle_gun_recoil_factor("VEHICLE_GUN_RECOIL_FACTOR", "0.0");
 
@@ -105,7 +105,7 @@ TEST_CASE(
     "gun"
     "]") {
     clear_all_state();
-    rng_set_engine_seed(0);
+    rng_set_engine_seed(1);
 
     override_option vehicle_gun_recoil_factor("VEHICLE_GUN_RECOIL_FACTOR", "10.0");
 
@@ -164,7 +164,7 @@ TEST_CASE(
     "gun"
     "]") {
     clear_all_state();
-    rng_set_engine_seed(0);
+    rng_set_engine_seed(1);
 
     auto& here = get_map();
     auto& player_character = get_avatar();
@@ -224,7 +224,7 @@ TEST_CASE(
         [&](const vproto_id& vehicle_type, const units::angle facing, const tripoint_bub_ms& target,
             const std::optional<tripoint_bub_ms>& shot_origin) -> recoil_result {
         clear_all_state();
-        rng_set_engine_seed(0);
+        rng_set_engine_seed(1);
 
         auto& here = get_map();
         auto& player_character = get_avatar();

@@ -12593,6 +12593,12 @@ bool Character::knows_recipe( const recipe *rec ) const
     return get_learned_recipes().contains( *rec );
 }
 
+void Character::forget_all_recipes()
+{
+    *learned_recipes = recipe_subset();
+    *autolearn_skills_stamp = SkillLevelMap();
+}
+
 void Character::learn_recipe( const recipe *const rec )
 {
     if( rec->never_learn ) {

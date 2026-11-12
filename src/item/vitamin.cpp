@@ -1,0 +1,113 @@
+#include "vitamin.h"
+
+#include "calendar.h"
+#include "debug.h"
+#include "effect.h"
+#include "enum_conversions.h"
+#include "generic_factory.h"
+#include "json.h"
+#include "string_id.h"
+#include "type_id.h"
+#include "type_id_implement.h"
+#include "units.h"
+#include "units_serde.h"
+
+#include <algorithm>
+#include <cstdlib>
+#include <map>
+#include <memory>
+
+namespace {
+generic_factory<vitamin> all_vitamins("Vitamins");
+}
+
+IMPLEMENT_STRING_AND_INT_IDS(vitamin, all_vitamins);
+
+void vitamin::load_vitamin(const JsonObject& jo, const std::string& src) {
+    // TODO: Make this default maybe?
+    // This is here because otherwise game.cpp will segfault on start when trying to get
+    // Values from the unprepared generic factories
+    all_vitamins.load(jo, src);
+}
+
+void vitamin::load(const JsonObject& jo, const std::string& src) {
+    const bool strict = is_strict_enabled(src);
+    mandatory(jo, false, "name", name_);
+    mandatory(jo, false, "vit_type", type_);
+    mandatory(jo, false, "rate", rate_);
+    deficiency_ =
+        jo.has_string("deficiency")
+            ? efftype_id(jo.get_string("deficiency"))
+            : efftype_id::NULL_ID();
+    excess_ = jo.has_string("excess") ? efftype_id(jo.get_string("excess")) : efftype_id::NULL_ID();
+    mandatory(jo, false, "min", min_);
+    assign(jo, "max", max_, strict, 0);
+
+
+    for (JsonArray e : jo.get_array("disease")) {
+        disease_.emplace_back(e.get_int(0), e.get_int(1));
+    }
+
+    for (JsonArray e : jo.get_array("disease_excess")) {
+        disease_excess_.emplace_back(e.get_int(0), e.get_int(1));
+    }
+
+    for (std::string e : jo.get_array("flags")) { flags_.insert(e); }
+}
+
+auto vitamin::all() -> const std::vector<vitamin>& { return all_vitamins.get_all(); }
+
+void vitamin::check_consistency() { all_vitamins.check(); }
+
+void vitamin::check() const {
+    if (rate_ < 0_turns) { debugmsg("vitamin %s has negative consumption rate", id.c_str()); }
+    if (!(deficiency_.is_null() || deficiency_.is_valid())) {
+        debugmsg("vitamin %s has unknown deficiency %s", id.c_str(), deficiency_.c_str());
+    } else if (!deficiency_.is_null() && !deficiency_->is_permanent()) {
+        debugmsg("vitamin %s has non-permanent deficiency effect %s", id.c_str(),
+                 deficiency_.c_str());
+    }
+    if (!(excess_.is_null() || excess_.is_valid())) {
+        debugmsg("vitamin %s has unknown excess %s", id.c_str(), excess_.c_str());
+    } else if (!excess_.is_null() && !excess_->is_permanent()) {
+        debugmsg("vitamin %s has non-permanent excess effect %s", id.c_str(), excess_.c_str());
+    }
+}
+
+void vitamin::reset() { all_vitamins.reset(); }
+
+auto vitamin::severity(int qty) const -> int {
+    for (int i = 0; i != static_cast<int>(disease_.size()); ++i) {
+        if ((qty >= disease_[i].first && qty <= disease_[i].second)
+            || (qty <= disease_[i].first && qty >= disease_[i].second)) {
+            return i + 1;
+        }
+    }
+    for (int i = 0; i != static_cast<int>(disease_excess_.size()); ++i) {
+        if ((qty >= disease_excess_[i].first && qty <= disease_excess_[i].second)
+            || (qty <= disease_excess_[i].first && qty >= disease_excess_[i].second)) {
+            return -i - 1;
+        }
+    }
+    return 0;
+}
+
+
+namespace io {
+template <> auto enum_to_string<vitamin_type>(vitamin_type data) -> std::string {
+    switch (data) {
+        case vitamin_type::VITAMIN:
+            return "vitamin";
+        case vitamin_type::TOXIN:
+            return "toxin";
+        case vitamin_type::DRUG:
+            return "drug";
+        case vitamin_type::COUNTER:
+            return "counter";
+        case vitamin_type::num_vitamin_types:
+            break;
+    }
+    debugmsg("Invalid vitamin_type");
+    abort();
+}
+} // namespace io

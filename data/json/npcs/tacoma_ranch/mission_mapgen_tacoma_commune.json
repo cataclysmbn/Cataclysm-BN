@@ -502,7 +502,7 @@
         "  w..................w  ",
         "  ....................  ",
         "  ....................  ",
-        "  ....................  ",
+        "  ......:......:......  ",
         "  ....................  ",
         "  ....................  ",
         "  ....................  ",
@@ -521,9 +521,10 @@
         "t": "t_dirtfloor",
         "b": "t_dirtfloor",
         "w": "t_wall_wood",
-        "+": "t_door_c"
+        "+": "t_door_c",
+        ":": "t_dirtfloor"
       },
-      "furniture": { "R": "f_rack", "r": "f_rack", "t": "f_table", "b": "f_makeshift_bed" },
+      "furniture": { "R": "f_rack", "r": "f_rack", "t": "f_table", "b": "f_makeshift_bed", ":": "f_olight_nogrid" },
       "items": {
         "R": { "item": "supplies_mechanics", "chance": 100, "repeat": [ 3, 6 ] },
         "r": { "item": "tools_mechanic", "chance": 100, "repeat": [ 2, 4 ] }
@@ -949,21 +950,32 @@
         "                        ",
         "                        ",
         " wwwww+wwwww            ",
-        " w.........w            ",
-        " w.........w            ",
-        " w.........w            ",
-        " w.........w            ",
-        " w.........w            ",
-        " w.........w            ",
-        " w.........w            ",
-        " w.........w            ",
-        " w.........w            ",
-        " w.........w            ",
-        " w.........w            ",
+        " wb.bb.bb.bw            ",
+        " wb.bb.bb.bw            ",
+        " wb.bb.bb.bw            ",
+        " wb.bb:bb.bw            ",
+        " wb.......bw            ",
+        " wb...Ert.bw            ",
+        " wb.......bw            ",
+        " wb.bb:bb.bw            ",
+        " wb.bb.bb.bw            ",
+        " wb.bb.bb.bw            ",
+        " wb.bb.bb.bw            ",
         " wwwww+wwwww            ",
         "                        "
       ],
-      "terrain": { ".": "t_dirtfloor", "w": "t_window", "+": "t_door_c" }
+      "terrain": {
+        ".": "t_dirtfloor",
+        "t": "t_dirtfloor",
+        "r": "t_dirtfloor",
+        "b": "t_dirtfloor",
+        "E": "t_dirtfloor",
+        ":": "t_dirtfloor",
+        "w": "t_window",
+        "+": "t_door_c"
+      },
+      "furniture": { "t": "f_table", "r": "f_rack_wood", "b": "f_planter", "E": "f_standing_tank", ":": "f_olight_nogrid" },
+      "place_item": [ { "item": "g_shovel", "x": 7, "y": 16 } ]
     }
   },
   {
