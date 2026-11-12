@@ -3,6 +3,7 @@
 #include <set>
 #include <string>
 
+#include "color.h"
 #include "catalua_type_operators.h"
 #include "translations.h"
 #include "type_id.h"
@@ -449,6 +450,8 @@ class json_flag
         /** The tag to be displayed on the item's display name when it has this flag */
         auto tag() const -> const translation & { return tag_; } // *NOPAD*
 
+        auto tag_color() const -> nc_color { return tag_color_; }
+
         /** The flag's modifier on the fun value of comestibles */
         int taste_mod() const {
             return taste_mod_;
@@ -473,6 +476,7 @@ class json_flag
         bool inherit_ = true;
         bool craft_inherit_ = false;
         std::string requires_flag_;
+        nc_color tag_color_ = c_light_gray;
         translation tag_;
         int taste_mod_ = 0;
 
