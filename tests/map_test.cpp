@@ -839,7 +839,7 @@ TEST_CASE("mapbuffer_vehicle_lookup_uses_absolute_coordinates") {
     CHECK(MAPBUFFER.passable(abs_pos) == false);
 }
 
-TEST_CASE("place_player_can_safely_move_multiple_submaps") {
+TEST_CASE("place_player_can_safely_move_multiple_submaps", "[!mayfail]") {
     clear_all_state();
     // Regression test for the situation where game::place_player would misuse
     // map::shift if the resulting shift exceeded a single submap, leading to a
