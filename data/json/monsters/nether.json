@@ -77,7 +77,8 @@
       "UNCANNY_DODGE",
       "CAN_OPEN_DOORS",
       "PATH_AVOID_DANGER_2",
-      "PRIORITIZE_TARGETS"
+      "PRIORITIZE_TARGETS",
+      "NO_VEHICLE_COLLISION"
     ]
   },
   {

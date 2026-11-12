@@ -217,6 +217,7 @@ enum m_flag : int {
     MF_CANT_TRAIN,            // This monster can't be trained for combat
     MF_POLICE_EYEBOT,            // A drone capable of summoning reinforcements, see mattack::photograph
     MF_IRRADIATED,         // Melee attacks can inflict radiation
+    MF_NO_VEHICLE_COLLISION, // Vehicles pass through this monster without hitting it.
 
     MF_MAX                  // Sets the length of the flags - obviously must be LAST
 };
