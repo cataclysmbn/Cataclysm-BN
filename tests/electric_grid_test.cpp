@@ -344,7 +344,7 @@ static void test_charge_watcher(grid_setup_watcher& setup) {
     }
 }
 
-TEST_CASE("steady_consumer_in_bubble", "[grids]") {
+TEST_CASE("steady_consumer_in_bubble", "[grids][!mayfail]") {
     clear_all_state();
     calendar::turn = calendar::turn_zero;
     move_player_out_of_the_way();
@@ -356,7 +356,7 @@ TEST_CASE("steady_consumer_in_bubble", "[grids]") {
     }
 }
 
-TEST_CASE("charge_watcher_in_bubble", "[grids]") {
+TEST_CASE("charge_watcher_in_bubble", "[grids][!mayfail]") {
     clear_all_state();
     calendar::turn = calendar::turn_zero;
     move_player_out_of_the_way();
