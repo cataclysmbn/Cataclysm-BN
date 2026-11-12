@@ -2,11 +2,14 @@
 #include "flag.h"
 #include "item.h"
 #include "item_group.h"
+#include "itype.h"
 #include "profession.h"
+#include "requirements.h"
 #include "stringmaker.h"
 
 #include <algorithm>
 #include <memory>
+#include <set>
 #include <utility>
 #include <vector>
 
@@ -199,4 +202,27 @@ TEST_CASE("item_modifier modifies charges for item", "[item_group]") {
             }
         }
     }
+}
+
+/// An item migration replaces an old item id with a new one in all item groups and requirements.
+/// Finalization uses an index to find the groups and requirements that contain the old id.
+/// TEST_DATA/item_migration.json has a group with the old id in an inline sub-group, a
+/// requirement, and a chain: first -> middle -> final. All of them must end with the final id.
+/// Migrations run in the order their ids were first read, so the file mentions "first" first.
+TEST_CASE("item migrations replace items in item groups and requirements", "[item_group]") {
+    const auto group = item_group_id("test_migration_group");
+    const auto first = itype_id("test_migration_first");
+    const auto middle = itype_id("test_migration_middle");
+    const auto final_id = itype_id("test_migration_final");
+    REQUIRE(first < middle);
+
+    CHECK_FALSE(item_group::group_contains_item(group, first));
+    CHECK_FALSE(item_group::group_contains_item(group, middle));
+    CHECK(item_group::group_contains_item(group, final_id));
+    const auto spawned = item_group::every_possible_item_from(group);
+    CHECK(spawned == std::set<const itype*>{&final_id.obj()});
+
+    const auto& requirement = requirement_id("test_migration_requirement").obj();
+    CHECK(requirement.get_tools().front().front().type == final_id);
+    CHECK(requirement.get_components().front().front().type == final_id);
 }
