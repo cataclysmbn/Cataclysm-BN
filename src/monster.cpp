@@ -1232,8 +1232,9 @@ auto pet_taming_description( const monster &mon ) -> std::string
         return ss;
     }
 
-    ss += string_format( _( "It can be tamed with %s." ),
-                         enumerate_as_string( foods, enumeration_conjunction::or_ ) ) + "\n";
+    ss += std::string( _( "Taming it requires:" ) ) + "\n";
+    ss += string_format( "  %s: %s\n", _( "Food" ),
+                         enumerate_as_string( foods, enumeration_conjunction::or_ ) );
 
     if( !petfood.tamer_traits.empty() ) {
         std::vector<std::string> trait_reqs;
@@ -1242,13 +1243,12 @@ auto pet_taming_description( const monster &mon ) -> std::string
             []( const trait_id & trait ) { return trait.obj().name(); },
             enumeration_conjunction::or_ ) );
         }
-        ss += string_format( _( "Taming it requires %s." ),
-                             enumerate_as_string( trait_reqs, enumeration_conjunction::and_ ) ) + "\n";
+        ss += string_format( "  %s: %s\n", _( "Traits" ),
+                             enumerate_as_string( trait_reqs, enumeration_conjunction::and_ ) );
     }
 
     if( mon.type->pet_training && mon.type->pet_training->min_skill > 0 ) {
-        ss += string_format( _( "Taming it requires survival skill %d." ),
-                             mon.type->pet_training->min_skill ) + "\n";
+        ss += string_format( "  %s: %d\n", _( "Survival" ), mon.type->pet_training->min_skill );
     }
 
     const auto pet_armors = item_controller->find( [&mon]( const itype & t ) {
@@ -1258,7 +1258,7 @@ auto pet_taming_description( const monster &mon ) -> std::string
     if( !pet_armors.empty() ) {
         const itype *const example = *std::ranges::min_element( pet_armors, {},
         []( const itype * t ) { return t->nname( 1 ).size(); } );
-        ss += string_format( _( "It can wear pet armor such as %s." ), example->nname( 1 ) ) + "\n";
+        ss += string_format( "  %s: %s\n", _( "Pet armor" ), example->nname( 1 ) );
     }
 
     return ss;

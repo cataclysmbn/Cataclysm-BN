@@ -436,9 +436,10 @@ TEST_CASE("extended description shows taming food and pet armor for a tamable mo
 
     const std::string desc = mon.extended_description();
     INFO(desc);
-    CHECK(desc.find("It can be tamed with dog food.") != std::string::npos);
-    CHECK(desc.find("Taming it requires survival skill 3.") != std::string::npos);
-    CHECK(desc.find("pet armor") != std::string::npos);
+    CHECK(desc.find("Taming it requires:") != std::string::npos);
+    CHECK(desc.find("Food: dog food") != std::string::npos);
+    CHECK(desc.find("Survival: 3") != std::string::npos);
+    CHECK(desc.find("Pet armor: ") != std::string::npos);
     CHECK(desc.find("It cannot be tamed.") == std::string::npos);
 }
 
@@ -448,11 +449,12 @@ TEST_CASE("extended description shows required traits for a monster with tamer_t
 
     const std::string desc = mon.extended_description();
     INFO(desc);
-    CHECK(desc.find("It can be tamed with dog food.") != std::string::npos);
-    CHECK(desc.find("Taming it requires") != std::string::npos);
+    CHECK(desc.find("Taming it requires:") != std::string::npos);
+    CHECK(desc.find("Food: dog food") != std::string::npos);
+    CHECK(desc.find("Traits: ") != std::string::npos);
     CHECK(desc.find("Animal Empathy") != std::string::npos);
     CHECK(desc.find("Bear") != std::string::npos);
-    CHECK(desc.find("Taming it requires survival skill 6.") != std::string::npos);
+    CHECK(desc.find("Survival: 6") != std::string::npos);
 }
 
 TEST_CASE("adult bear is mountable but the cub is not", "[pet][monster]") {
