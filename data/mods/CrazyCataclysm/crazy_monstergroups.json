@@ -38,6 +38,8 @@
     "type": "monstergroup",
     "name": "GROUP_FOREST",
     "monsters": [
+      { "monster": "mon_coyote", "freq": 1, "cost_multiplier": 2, "pack_size": [ 20, 30 ] },
+      { "monster": "mon_coyote_wolf", "freq": 1, "cost_multiplier": 2, "pack_size": [ 20, 30 ] },
       {
         "monster": "mon_bear_smoky",
         "freq": 1,

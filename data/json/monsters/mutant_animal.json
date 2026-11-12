@@ -1,5 +1,25 @@
 [
   {
+    "id": "mon_duck_of_wishes",
+    "type": "MONSTER",
+    "name": { "str": "duck of wishes" },
+    "description": "A strangely vibrant duck with an uncanny knack for staying just out of reach.  Its feathers shimmer with colors that seem to change whenever you blink.  You have a feeling it's being held down by it's weight from swallowing something valuable.",
+    "copy-from": "mon_duck",
+    "looks_like": "mon_duck",
+    "color": "yellow",
+    "speed": 220,
+    "morale": -50,
+    "death_drops": "duck_of_wishes_drops",
+    "petfood": {
+      "food": [ "BIRDFOOD" ],
+      "feed": "The %s eyes your bird feed, then decides that you have granted his wish.",
+      "pet": "The %s waddles after you, glancing back as if waiting for another wish."
+    },
+    "pet_training": { "hp_mult": 1.05, "melee_mult": 1.05, "dodge_mult": 1.1, "max_level": 3 },
+    "extend": { "flags": [ "HARDTOSHOOT", "NO_VEHICLE_COLLISION", "UNCANNY_DODGE" ] },
+    "delete": { "flags": [ "FLIES" ] }
+  },
+  {
     "id": "mon_cat_mutant_prism",
     "type": "MONSTER",
     "name": { "str": "iridescent cat" },

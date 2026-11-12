@@ -2788,6 +2788,7 @@
     "default": "mon_null",
     "is_animal": true,
     "monsters": [
+      { "monster": "mon_duck_of_wishes", "freq": 1, "cost_multiplier": 0 },
       { "monster": "mon_duck", "freq": 50, "cost_multiplier": 0 },
       { "monster": "mon_goose_canadian", "freq": 50, "cost_multiplier": 0 }
     ]
