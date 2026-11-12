@@ -426,6 +426,7 @@ TEST_CASE("pet armor volume filter boundary is exclusive at 55 L", "[pet][armor]
 // Extended description: taming requirements
 // -----------------------------------------------------------------------
 
+static const mtype_id mon_bear("mon_bear");
 static const mtype_id mon_bear_cub("mon_bear_cub");
 static const mtype_id mon_zombie("mon_zombie");
 
@@ -452,6 +453,15 @@ TEST_CASE("extended description shows required traits for a monster with tamer_t
     CHECK(desc.find("Animal Empathy") != std::string::npos);
     CHECK(desc.find("Bear") != std::string::npos);
     CHECK(desc.find("Taming it requires survival skill 6.") != std::string::npos);
+}
+
+TEST_CASE("adult bear is mountable but the cub is not", "[pet][monster]") {
+    clear_all_state();
+    monster &bear = spawn_test_monster(mon_bear.str(), mon_pos);
+    monster &cub = spawn_test_monster(mon_bear_cub.str(), tripoint_bub_ms(11, 10, 0));
+
+    CHECK(bear.has_flag(m_flag::MF_PET_MOUNTABLE));
+    CHECK_FALSE(cub.has_flag(m_flag::MF_PET_MOUNTABLE));
 }
 
 TEST_CASE("extended description says the monster cannot be tamed when it has no pet food", "[pet][monster]") {
