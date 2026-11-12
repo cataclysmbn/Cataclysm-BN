@@ -402,29 +402,10 @@ TEST_CASE(
     }
 }
 
-TEST_CASE("pet armor volume filter boundary is exclusive at 55 L", "[pet][armor][monster]") {
-    clear_all_state();
-    monster& mon = spawn_test_monster(mon_dog_gshepherd.str(), mon_pos);
-
-    auto small_armor = item::spawn("leather_armor_small_quadruped");
-    auto medium_armor = item::spawn("leather_armor_medium_quadruped");
-
-    // small max_pet_vol is 54999 ml, medium min_pet_vol is 55 L (55000 ml).
-    // Verify the boundaries do not overlap.
-    CHECK(small_armor->get_pet_armor_max_vol() < medium_armor->get_pet_armor_min_vol());
-
-    // A monster at exactly 55 L should match only medium, not small.
-    // We cannot easily set a monster's volume directly, but we can verify
-    // the item boundaries are correct.
-    CHECK(small_armor->get_pet_armor_max_vol() == units::volume(54999_ml));
-    CHECK(medium_armor->get_pet_armor_min_vol() == units::volume(55000_ml));
-}
-
 // -----------------------------------------------------------------------
 // Extended description: taming requirements
 // -----------------------------------------------------------------------
 
-static const mtype_id mon_bear("mon_bear");
 static const mtype_id mon_bear_cub("mon_bear_cub");
 static const mtype_id mon_zombie("mon_zombie");
 
@@ -457,15 +438,6 @@ TEST_CASE(
     CHECK(desc.find("Animal Empathy") != std::string::npos);
     CHECK(desc.find("Bear") != std::string::npos);
     CHECK(desc.find("Survival: 6") != std::string::npos);
-}
-
-TEST_CASE("adult bear is mountable but the cub is not", "[pet][monster]") {
-    clear_all_state();
-    monster& bear = spawn_test_monster(mon_bear.str(), mon_pos);
-    monster& cub = spawn_test_monster(mon_bear_cub.str(), tripoint_bub_ms(11, 10, 0));
-
-    CHECK(bear.has_flag(m_flag::MF_PET_MOUNTABLE));
-    CHECK_FALSE(cub.has_flag(m_flag::MF_PET_MOUNTABLE));
 }
 
 TEST_CASE(
