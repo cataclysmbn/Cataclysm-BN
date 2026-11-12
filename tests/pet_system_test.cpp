@@ -373,16 +373,16 @@ TEST_CASE(
 // Replicates the filter lambda from monexamine::pet_armor_loc so we can
 // verify which armor items are compatible with a given monster without
 // opening the UI menu.
-static auto armor_matches( const monster &z, const item &it ) -> bool
-{
-    return z.type->bodytype == it.get_pet_armor_bodytype() &&
-           z.get_volume() >= it.get_pet_armor_min_vol() &&
-           z.get_volume() <= it.get_pet_armor_max_vol();
+static auto armor_matches(const monster& z, const item& it) -> bool {
+    return z.type->bodytype == it.get_pet_armor_bodytype()
+        && z.get_volume() >= it.get_pet_armor_min_vol()
+        && z.get_volume() <= it.get_pet_armor_max_vol();
 }
 
-TEST_CASE("pet armor volume filter matches correct size for German shepherd", "[pet][armor][monster]") {
+TEST_CASE(
+    "pet armor volume filter matches correct size for German shepherd", "[pet][armor][monster]") {
     clear_all_state();
-    monster &mon = spawn_test_monster(mon_dog_gshepherd.str(), mon_pos);
+    monster& mon = spawn_test_monster(mon_dog_gshepherd.str(), mon_pos);
 
     // German shepherd: base volume 35 L, bodytype "quadruped".
     // Small quadruped armor: 1 L – 54999 ml. Medium: 55 L – 1000 L.
@@ -395,9 +395,7 @@ TEST_CASE("pet armor volume filter matches correct size for German shepherd", "[
     CHECK(small_armor->is_pet_armor());
     CHECK(medium_armor->is_pet_armor());
 
-    SECTION("small armor matches a 35 L quadruped") {
-        CHECK(armor_matches(mon, *small_armor));
-    }
+    SECTION("small armor matches a 35 L quadruped") { CHECK(armor_matches(mon, *small_armor)); }
 
     SECTION("medium armor does not match a 35 L quadruped") {
         CHECK_FALSE(armor_matches(mon, *medium_armor));
@@ -406,7 +404,7 @@ TEST_CASE("pet armor volume filter matches correct size for German shepherd", "[
 
 TEST_CASE("pet armor volume filter boundary is exclusive at 55 L", "[pet][armor][monster]") {
     clear_all_state();
-    monster &mon = spawn_test_monster(mon_dog_gshepherd.str(), mon_pos);
+    monster& mon = spawn_test_monster(mon_dog_gshepherd.str(), mon_pos);
 
     auto small_armor = item::spawn("leather_armor_small_quadruped");
     auto medium_armor = item::spawn("leather_armor_medium_quadruped");
@@ -430,9 +428,11 @@ static const mtype_id mon_bear("mon_bear");
 static const mtype_id mon_bear_cub("mon_bear_cub");
 static const mtype_id mon_zombie("mon_zombie");
 
-TEST_CASE("extended description shows taming food and pet armor for a tamable monster", "[pet][monster]") {
+TEST_CASE(
+    "extended description shows taming food and pet armor for a tamable monster",
+    "[pet][monster]") {
     clear_all_state();
-    monster &mon = spawn_test_monster(mon_dog.str(), mon_pos);
+    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos);
 
     const std::string desc = mon.extended_description();
     INFO(desc);
@@ -443,9 +443,11 @@ TEST_CASE("extended description shows taming food and pet armor for a tamable mo
     CHECK(desc.find("It cannot be tamed.") == std::string::npos);
 }
 
-TEST_CASE("extended description shows required traits for a monster with tamer_traits", "[pet][monster]") {
+TEST_CASE(
+    "extended description shows required traits for a monster with tamer_traits",
+    "[pet][monster]") {
     clear_all_state();
-    monster &mon = spawn_test_monster(mon_bear_cub.str(), mon_pos);
+    monster& mon = spawn_test_monster(mon_bear_cub.str(), mon_pos);
 
     const std::string desc = mon.extended_description();
     INFO(desc);
@@ -459,16 +461,18 @@ TEST_CASE("extended description shows required traits for a monster with tamer_t
 
 TEST_CASE("adult bear is mountable but the cub is not", "[pet][monster]") {
     clear_all_state();
-    monster &bear = spawn_test_monster(mon_bear.str(), mon_pos);
-    monster &cub = spawn_test_monster(mon_bear_cub.str(), tripoint_bub_ms(11, 10, 0));
+    monster& bear = spawn_test_monster(mon_bear.str(), mon_pos);
+    monster& cub = spawn_test_monster(mon_bear_cub.str(), tripoint_bub_ms(11, 10, 0));
 
     CHECK(bear.has_flag(m_flag::MF_PET_MOUNTABLE));
     CHECK_FALSE(cub.has_flag(m_flag::MF_PET_MOUNTABLE));
 }
 
-TEST_CASE("extended description says the monster cannot be tamed when it has no pet food", "[pet][monster]") {
+TEST_CASE(
+    "extended description says the monster cannot be tamed when it has no pet food",
+    "[pet][monster]") {
     clear_all_state();
-    monster &mon = spawn_test_monster(mon_zombie.str(), mon_pos);
+    monster& mon = spawn_test_monster(mon_zombie.str(), mon_pos);
 
     const std::string desc = mon.extended_description();
     INFO(desc);
