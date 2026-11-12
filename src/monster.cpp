@@ -1253,7 +1253,7 @@ auto pet_taming_description( const monster &mon ) -> std::string
 
     const auto pet_armors = item_controller->find( [&mon]( const itype & t ) {
         return t.pet_armor && mon.type->bodytype == t.pet_armor->bodytype &&
-               mon.get_volume() >= t.pet_armor->min_vol && mon.get_volume() <= t.pet_armor->max_vol;
+               mon.get_volume() >= t.pet_armor->min_vol && mon.get_volume() < t.pet_armor->max_vol;
     } );
     if( !pet_armors.empty() ) {
         const itype *const example = *std::ranges::min_element( pet_armors, {},

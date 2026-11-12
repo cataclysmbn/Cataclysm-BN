@@ -376,7 +376,7 @@ TEST_CASE(
 static auto armor_matches(const monster& z, const item& it) -> bool {
     return z.type->bodytype == it.get_pet_armor_bodytype()
         && z.get_volume() >= it.get_pet_armor_min_vol()
-        && z.get_volume() <= it.get_pet_armor_max_vol();
+        && z.get_volume() < it.get_pet_armor_max_vol();
 }
 
 TEST_CASE(
