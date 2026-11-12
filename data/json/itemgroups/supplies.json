@@ -659,6 +659,14 @@
     ]
   },
   {
+    "id": "writing_utensils",
+    "type": "item_group",
+    "items": [
+      { "item": "permanent_marker", "prob": 8, "charges": [ 0, 500 ] },
+      { "item": "pen", "prob": 64, "charges": [ 80, 100 ] }
+    ]
+  },
+  {
     "id": "autodoc_supplies",
     "type": "item_group",
     "subtype": "collection",
