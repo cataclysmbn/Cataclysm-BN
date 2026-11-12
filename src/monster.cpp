@@ -74,6 +74,7 @@
 #include "weather/weather.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <iterator>
 #include <limits>
@@ -1195,6 +1196,76 @@ int monster::print_info( const catacurses::window &w, int vStart, int vLines, in
     return ++vStart;
 }
 
+namespace
+{
+
+/// Converts a petfood category id like "DOGFOOD" into a display name like "dog food".
+auto petfood_category_display_name( const std::string &category ) -> std::string
+{
+    std::string pretty;
+    pretty.reserve( category.size() + 1 );
+    for( const char c : category ) {
+        pretty += c == '_' ? ' ' : static_cast<char>( std::tolower( static_cast<unsigned char>( c ) ) );
+    }
+    const size_t food_pos = pretty.find( "food", 1 );
+    if( food_pos != std::string::npos ) {
+        pretty.insert( food_pos, " " );
+    }
+    return pretty;
+}
+
+/// Builds the "what it takes to tame this monster" text for the extended description.
+auto pet_taming_description( const monster &mon ) -> std::string
+{
+    std::string ss;
+    const pet_food_data &petfood = mon.type->petfood;
+
+    std::vector<std::string> foods;
+    for( const std::string &category : petfood.food ) {
+        if( category != "NULL" ) {
+            foods.emplace_back( petfood_category_display_name( category ) );
+        }
+    }
+
+    if( foods.empty() ) {
+        ss += std::string( _( "It cannot be tamed." ) ) + "\n";
+        return ss;
+    }
+
+    ss += string_format( _( "It can be tamed with %s." ),
+                         enumerate_as_string( foods, enumeration_conjunction::or_ ) ) + "\n";
+
+    if( !petfood.tamer_traits.empty() ) {
+        std::vector<std::string> trait_reqs;
+        for( const TraitSet &trait_set : petfood.tamer_traits ) {
+            trait_reqs.emplace_back( enumerate_as_string( trait_set.begin(), trait_set.end(),
+            []( const trait_id & trait ) { return trait.obj().name(); },
+            enumeration_conjunction::or_ ) );
+        }
+        ss += string_format( _( "Taming it requires %s." ),
+                             enumerate_as_string( trait_reqs, enumeration_conjunction::and_ ) ) + "\n";
+    }
+
+    if( mon.type->pet_training && mon.type->pet_training->min_skill > 0 ) {
+        ss += string_format( _( "Taming it requires survival skill %d." ),
+                             mon.type->pet_training->min_skill ) + "\n";
+    }
+
+    const auto pet_armors = item_controller->find( [&mon]( const itype & t ) {
+        return t.pet_armor && mon.type->bodytype == t.pet_armor->bodytype &&
+               mon.get_volume() >= t.pet_armor->min_vol && mon.get_volume() <= t.pet_armor->max_vol;
+    } );
+    if( !pet_armors.empty() ) {
+        const itype *const example = *std::ranges::min_element( pet_armors, {},
+        []( const itype * t ) { return t->nname( 1 ).size(); } );
+        ss += string_format( _( "It can wear pet armor such as %s." ), example->nname( 1 ) ) + "\n";
+    }
+
+    return ss;
+}
+
+} // namespace
+
 std::string monster::extended_description() const
 {
     std::string ss;
@@ -1356,6 +1427,8 @@ std::string monster::extended_description() const
                              static_cast<int>( convert_weight( get_carried_weight() ) ),
                              static_cast<int>( convert_weight( weight_capacity() ) ) );
     }
+
+    ss += pet_taming_description( *this );
 
     if( training_level > 0 && type->pet_training ) {
         const auto training_adj = []( float ratio ) -> const std::string {

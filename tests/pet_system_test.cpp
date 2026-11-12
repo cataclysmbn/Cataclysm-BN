@@ -3,6 +3,7 @@
 #include "calendar.h"
 #include "catch/catch.hpp"
 #include "game.h"
+#include "item.h"
 #include "map_helpers.h"
 #include "memory_fast.h"
 #include "monster.h"
@@ -23,6 +24,7 @@ static const efftype_id effect_pet("pet");
 static const efftype_id effect_well_fed("well_fed");
 
 static const mtype_id mon_dog("mon_dog");
+static const mtype_id mon_dog_gshepherd("mon_dog_gshepherd");
 
 static const skill_id skill_survival("survival");
 
@@ -362,4 +364,102 @@ TEST_CASE(
 
     activity_handlers::train_pet_finish(&act, &p);
     CHECK_FALSE(mon.has_effect(effect_ai_waiting));
+}
+
+// -----------------------------------------------------------------------
+// Pet armor volume filter
+// -----------------------------------------------------------------------
+
+// Replicates the filter lambda from monexamine::pet_armor_loc so we can
+// verify which armor items are compatible with a given monster without
+// opening the UI menu.
+static auto armor_matches( const monster &z, const item &it ) -> bool
+{
+    return z.type->bodytype == it.get_pet_armor_bodytype() &&
+           z.get_volume() >= it.get_pet_armor_min_vol() &&
+           z.get_volume() <= it.get_pet_armor_max_vol();
+}
+
+TEST_CASE("pet armor volume filter matches correct size for German shepherd", "[pet][armor][monster]") {
+    clear_all_state();
+    monster &mon = spawn_test_monster(mon_dog_gshepherd.str(), mon_pos);
+
+    // German shepherd: base volume 35 L, bodytype "quadruped".
+    // Small quadruped armor: 1 L – 54999 ml. Medium: 55 L – 1000 L.
+    INFO("monster volume: " << mon.get_volume());
+    CHECK(mon.type->bodytype == "quadruped");
+
+    auto small_armor = item::spawn("leather_armor_small_quadruped");
+    auto medium_armor = item::spawn("leather_armor_medium_quadruped");
+
+    CHECK(small_armor->is_pet_armor());
+    CHECK(medium_armor->is_pet_armor());
+
+    SECTION("small armor matches a 35 L quadruped") {
+        CHECK(armor_matches(mon, *small_armor));
+    }
+
+    SECTION("medium armor does not match a 35 L quadruped") {
+        CHECK_FALSE(armor_matches(mon, *medium_armor));
+    }
+}
+
+TEST_CASE("pet armor volume filter boundary is exclusive at 55 L", "[pet][armor][monster]") {
+    clear_all_state();
+    monster &mon = spawn_test_monster(mon_dog_gshepherd.str(), mon_pos);
+
+    auto small_armor = item::spawn("leather_armor_small_quadruped");
+    auto medium_armor = item::spawn("leather_armor_medium_quadruped");
+
+    // small max_pet_vol is 54999 ml, medium min_pet_vol is 55 L (55000 ml).
+    // Verify the boundaries do not overlap.
+    CHECK(small_armor->get_pet_armor_max_vol() < medium_armor->get_pet_armor_min_vol());
+
+    // A monster at exactly 55 L should match only medium, not small.
+    // We cannot easily set a monster's volume directly, but we can verify
+    // the item boundaries are correct.
+    CHECK(small_armor->get_pet_armor_max_vol() == units::volume(54999_ml));
+    CHECK(medium_armor->get_pet_armor_min_vol() == units::volume(55000_ml));
+}
+
+// -----------------------------------------------------------------------
+// Extended description: taming requirements
+// -----------------------------------------------------------------------
+
+static const mtype_id mon_bear_cub("mon_bear_cub");
+static const mtype_id mon_zombie("mon_zombie");
+
+TEST_CASE("extended description shows taming food and pet armor for a tamable monster", "[pet][monster]") {
+    clear_all_state();
+    monster &mon = spawn_test_monster(mon_dog.str(), mon_pos);
+
+    const std::string desc = mon.extended_description();
+    INFO(desc);
+    CHECK(desc.find("It can be tamed with dog food.") != std::string::npos);
+    CHECK(desc.find("Taming it requires survival skill 3.") != std::string::npos);
+    CHECK(desc.find("pet armor") != std::string::npos);
+    CHECK(desc.find("It cannot be tamed.") == std::string::npos);
+}
+
+TEST_CASE("extended description shows required traits for a monster with tamer_traits", "[pet][monster]") {
+    clear_all_state();
+    monster &mon = spawn_test_monster(mon_bear_cub.str(), mon_pos);
+
+    const std::string desc = mon.extended_description();
+    INFO(desc);
+    CHECK(desc.find("It can be tamed with dog food.") != std::string::npos);
+    CHECK(desc.find("Taming it requires") != std::string::npos);
+    CHECK(desc.find("Animal Empathy") != std::string::npos);
+    CHECK(desc.find("Bear") != std::string::npos);
+    CHECK(desc.find("Taming it requires survival skill 6.") != std::string::npos);
+}
+
+TEST_CASE("extended description says the monster cannot be tamed when it has no pet food", "[pet][monster]") {
+    clear_all_state();
+    monster &mon = spawn_test_monster(mon_zombie.str(), mon_pos);
+
+    const std::string desc = mon.extended_description();
+    INFO(desc);
+    CHECK(desc.find("It cannot be tamed.") != std::string::npos);
+    CHECK(desc.find("It can be tamed with") == std::string::npos);
 }
