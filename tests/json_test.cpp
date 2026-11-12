@@ -2,9 +2,11 @@
 #include "cached_options.h"
 #include "cata_utility.h"
 #include "catch/catch.hpp"
+#include "debug.h"
 #include "json.h"
 #include "string_formatter.h"
 #include "type_id.h"
+#include "utils/memory_stream.h"
 
 #include <list>
 #include <sstream>
@@ -883,4 +885,122 @@ TEST_CASE("serialize_doubles", "[json]") {
             test_number_roundtrip(dbl, eps, 4);
         }
     }
+}
+
+namespace {
+
+/// Sample file for the parser tests. Its members are not in name order. "a" and "c" are longer
+/// than 64 bytes, so the parser remembers where they end when it skips them.
+const auto parse_sample = std::string(R"({
+  "d": -1.5e3,
+  "a": {
+    "y": { "name": "a nested value that is long enough to be cached", "n": 7 },
+    "x": [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22 ]
+  },
+  "b": "caf\u00e9 \"q\" \u6f22 é\n",
+  "c": [ { "k": "v", "pad": "padding padding padding padding padding padding padding" } ]
+})");
+
+struct parsed_sample {
+    std::vector<std::string> names;
+    double d = 0;
+    int x_sum = 0;
+    std::string y_name;
+    int y_n = 0;
+    std::string b;
+    std::string c_k;
+
+    auto operator==(const parsed_sample&) const -> bool = default; // *NOPAD*
+};
+
+auto read_nested_a(const JsonObject& a, parsed_sample& out) -> void {
+    const auto y = a.get_object("y");
+    out.y_name = y.get_string("name");
+    out.y_n = y.get_int("n");
+    for (const auto v : a.get_array("x")) { out.x_sum += v.get_int(); }
+}
+
+auto parse_sample_from(std::istream& stream) -> parsed_sample {
+    auto jsin = JsonIn(stream);
+    const auto jo = jsin.get_object();
+    auto out = parsed_sample{};
+    for (const auto member : jo) { out.names.push_back(member.name()); }
+    out.d = jo.get_float("d");
+    read_nested_a(jo.get_object("a"), out);
+    out.b = jo.get_string("b");
+    for (const auto c : jo.get_array("c")) {
+        const auto co = c.get_object();
+        co.allow_omitted_members();
+        out.c_k = co.get_string("k");
+        co.get_string("pad");
+    }
+    return out;
+}
+
+} // namespace
+
+/// The game reads data files into memory_istream. The parser has a faster path for it that reads
+/// the buffer directly. The test parses the same text through std::istringstream and through
+/// memory_istream, and both must give the same values.
+TEST_CASE("json_memory_stream_parses_like_string_stream", "[json]") {
+    auto string_stream = std::istringstream(parse_sample);
+    auto memory_stream = memory_istream(parse_sample);
+
+    const auto expected = parse_sample_from(string_stream);
+    CHECK(expected.names == std::vector<std::string>{"a", "b", "c", "d"});
+    CHECK(expected.d == -1500.0);
+    CHECK(expected.x_sum == 253);
+    CHECK(expected.y_name == "a nested value that is long enough to be cached");
+    CHECK(expected.y_n == 7);
+    CHECK(expected.b == "café \"q\" 漢 é\n");
+    CHECK(expected.c_k == "v");
+    CHECK(parse_sample_from(memory_stream) == expected);
+}
+
+/// When the parser skips a long value, it remembers where the value ends. Two readers on the
+/// same memory_istream share these records. Deferred data loading uses a second reader like
+/// this. The test skips "a" in the first reader, reads "a" in a second reader, and then
+/// continues in the first. Both must read the correct values.
+TEST_CASE("json_reader_reuses_values_skipped_by_another_reader", "[json]") {
+    auto stream = memory_istream(parse_sample);
+    auto first = JsonIn(stream, std::string("sample.json"));
+    const auto top = first.get_object();
+    top.allow_omitted_members();
+    const auto a_location = top.get_member_source_location("a");
+
+    // A second reader over the same buffer, as deferred data loading does.
+    auto second = JsonIn(stream, a_location);
+    auto out = parsed_sample{};
+    read_nested_a(second.get_object(), out);
+    CHECK(out.x_sum == 253);
+    CHECK(out.y_name == "a nested value that is long enough to be cached");
+    CHECK(out.y_n == 7);
+
+    // The first reader still reads members after the skipped ones.
+    CHECK(top.get_string("b") == "café \"q\" 漢 é\n");
+    CHECK(top.get_float("d") == -1500.0);
+}
+
+/// JsonObject sorts its members, so it checks for duplicate names itself. A file with two "b"
+/// members must give an error.
+TEST_CASE("json_object_rejects_duplicate_members", "[json]") {
+    auto stream = memory_istream(R"({ "b": 1, "a": 2, "b": 3 })");
+    auto jsin = JsonIn(stream);
+    CHECK_THROWS_WITH(jsin.get_object(), Catch::Contains("duplicate entry in json object"));
+}
+
+/// When a JsonObject is destroyed, it reports the members that the code did not read. Read
+/// members are marked by their position in the sorted list. The test reads "a" and "c" and
+/// leaves "b". Only "b" must be reported. Members that start with "//" are comments.
+TEST_CASE("json_object_reports_only_unvisited_members", "[json]") {
+    const auto message = capture_debugmsg_during([]() {
+        auto stream = memory_istream(R"({ "c": 1, "a": 2, "b": 3, "// note": 4 })");
+        auto jsin = JsonIn(stream, std::string("sample.json"));
+        const auto jo = jsin.get_object();
+        jo.get_int("a");
+        jo.get_int("c");
+    });
+    const auto reported = std::string("Invalid or misplaced field name");
+    CHECK(message.find(reported + R"( "b")") != std::string::npos);
+    CHECK(message.find(reported) == message.rfind(reported));
 }
