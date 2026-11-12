@@ -1,0 +1,48 @@
+[
+  {
+    "type": "item_group",
+    "id": "banknotes",
+    "items": [
+      { "item": "money_bundle", "prob": 23 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "coins",
+    "items": [
+      { "item": "coin_quarter", "prob": 13 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "cash_register_full",
+    "items": [ { "group": "banknotes", "prob": 80, "count": [ 5, 33 ] }, { "group": "coins", "prob": 80, "count": [ 5, 33 ] } ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "cash_register_looted",
+    "items": [
+      { "group": "banknotes", "prob": 15, "count": [ 1, 2 ] },
+      { "group": "coins", "prob": 50, "count": [ 1, 10 ] },
+      [ "survnote", 4 ]
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "cash_register_empty",
+    "items": [ [ "survnote", 5 ] ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "distribution",
+    "id": "cash_register_random",
+    "items": [
+      { "group": "cash_register_full", "prob": 40 },
+      { "group": "cash_register_looted", "prob": 45 },
+      { "group": "cash_register_empty", "prob": 15 }
+    ]
+  }
+]
