@@ -274,10 +274,6 @@
     "//": "SUS item groups are collections that contain a reasonable realistic distribution of items that might spawn in a given storage furniture.",
     "//2": "Returns a single news magazine.",
     "subtype": "distribution",
-    "entries": [
-      { "item": "mag_news", "prob": 1 },
-      { "item": "news_regional", "prob": 1 },
-      { "item": "mag_glam", "prob": 1 }
-    ]
+    "entries": [ { "item": "mag_news", "prob": 1 }, { "item": "news_regional", "prob": 1 }, { "item": "mag_glam", "prob": 1 } ]
   }
 ]

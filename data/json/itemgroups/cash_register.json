@@ -2,16 +2,12 @@
   {
     "type": "item_group",
     "id": "banknotes",
-    "items": [
-      { "item": "money_bundle", "prob": 23 }
-    ]
+    "items": [ { "item": "money_bundle", "prob": 23 } ]
   },
   {
     "type": "item_group",
     "id": "coins",
-    "items": [
-      { "item": "coin_quarter", "prob": 13 }
-    ]
+    "items": [ { "item": "coin_quarter", "prob": 13 } ]
   },
   {
     "type": "item_group",
