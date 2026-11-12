@@ -279,5 +279,5 @@
       { "item": "news_regional", "prob": 1 },
       { "item": "mag_glam", "prob": 1 }
     ]
-  },
+  }
 ]
