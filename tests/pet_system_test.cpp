@@ -419,7 +419,9 @@ TEST_CASE(
     INFO(desc);
     CHECK(desc.find("Taming it requires:") != std::string::npos);
     CHECK(desc.find("Food: dog food") != std::string::npos);
-    CHECK(desc.find("Survival: 3") != std::string::npos);
+    // The training minimum belongs to the training section, not the taming one.
+    CHECK(desc.find("Training it requires:") != std::string::npos);
+    CHECK(desc.find("Survival: 3") > desc.find("Training it requires:"));
     CHECK(desc.find("It can wear pet armor such as ") != std::string::npos);
     CHECK(desc.find("It cannot be tamed.") == std::string::npos);
 }
@@ -505,8 +507,11 @@ TEST_CASE(
 
     const std::string desc = mon.extended_description();
     INFO(desc);
+    // Tame skill requirement sits in the taming section, training skill in its own.
     CHECK(desc.find("Speaking: 2") != std::string::npos);
-    CHECK(desc.find("Melee: 3") != std::string::npos);
+    CHECK(desc.find("Speaking: 2") < desc.find("Training it requires:"));
+    CHECK(desc.find("Training it requires:") != std::string::npos);
+    CHECK(desc.find("Melee: 3") > desc.find("Training it requires:"));
     CHECK(desc.find("Survival:") == std::string::npos);
 }
 

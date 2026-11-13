@@ -1215,8 +1215,8 @@ auto petfood_category_display_name( const std::string &category ) -> std::string
     return pretty;
 }
 
-/// Builds the "what it takes to tame this monster" text for the extended description.
-auto pet_taming_description( const monster &mon ) -> std::string
+/// Builds the "what it takes to tame and train this monster" text for the extended description.
+auto pet_requirements_description( const monster &mon ) -> std::string
 {
     std::string ss;
     const pet_food_data &petfood = mon.type->petfood;
@@ -1253,6 +1253,7 @@ auto pet_taming_description( const monster &mon ) -> std::string
     }
 
     if( mon.type->pet_training && mon.type->pet_training->min_skill > 0 ) {
+        ss += std::string( _( "Training it requires:" ) ) + "\n";
         ss += string_format( "  %s: %d\n", mon.type->pet_training->skill->name(),
                              mon.type->pet_training->min_skill );
     }
@@ -1434,7 +1435,7 @@ std::string monster::extended_description() const
                              static_cast<int>( convert_weight( weight_capacity() ) ) );
     }
 
-    ss += pet_taming_description( *this );
+    ss += pet_requirements_description( *this );
 
     if( training_level > 0 && type->pet_training ) {
         const auto training_adj = []( float ratio ) -> const std::string {
