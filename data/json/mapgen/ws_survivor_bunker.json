@@ -1,6 +1,7 @@
 [
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "om_terrain": [ "ws_survivor_bunker_f0" ],
     "object": {
       "predecessor_mapgen": "forest",
@@ -35,7 +36,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "om_terrain": [ "ws_survivor_bunker_f-1" ],
     "object": {
       "fill_ter": "t_dirt_underground",
@@ -97,7 +99,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "om_terrain": [ "ws_survivor_bunker_f-1" ],
     "weight": 400,
     "//": "A bunker that's come a bit further along",
@@ -169,10 +172,7 @@
         "k": { "item": "oa_ig_sb_water", "chance": 90 },
         "R": [ { "item": "lmoe_guns", "chance": 80 }, { "item": "ammo", "chance": 5, "repeat": [ 3, 7 ] } ],
         "T": { "item": "dining", "chance": 30 },
-        "u": [
-          { "item": "cannedfood", "chance": 20, "repeat": [ 1, 5 ] },
-          { "item": "pasta", "chance": 10, "repeat": [ 1, 3 ] }
-        ],
+        "u": [ { "item": "cannedfood", "chance": 20, "repeat": [ 1, 5 ] }, { "item": "pasta", "chance": 10, "repeat": [ 1, 3 ] } ],
         "W": { "item": "fireplace_fill", "chance": 70, "repeat": [ 1, 3 ] }
       },
       "place_item": [ { "item": "ash", "x": 13, "y": 13 }, { "item": "survnote", "x": 13, "y": 11 } ],
