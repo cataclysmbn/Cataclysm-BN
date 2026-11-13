@@ -1102,6 +1102,7 @@ Multiple death functions can be used. Not all combinations make sense.
 - `NO_BREED` Creature doesn't reproduce even though it has reproduction data - useful when using
   copy-from to make child versions of adult creatures
 - `NO_FUNG_DMG` Creature is immune to fungal spores and can't be fungalized.
+- `NO_VEHICLE_COLLISION` Vehicles pass through the monster without hitting or damaging it.
 - `PAY_BOT` Creature can be turned into a pet for a limited time in exchange of e-money.
 - `PET_MOUNTABLE` Creature can be ridden or attached to an harness.
 - `PET_HARNESSABLE`Creature can be attached to an harness.

@@ -217,6 +217,7 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_CANT_TRAIN: return "CANT_TRAIN";
         case MF_POLICE_EYEBOT: return "POLICE_EYEBOT";
         case MF_IRRADIATED: return "IRRADIATED";
+        case MF_NO_VEHICLE_COLLISION: return "NO_VEHICLE_COLLISION";
         // *INDENT-ON*
         case m_flag::MF_MAX:
             break;
