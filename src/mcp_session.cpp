@@ -96,7 +96,6 @@ auto redirect_stdout_to_stderr() -> bool
 #endif
 }
 
-
 auto has_input() -> bool
 {
     return !state().events.empty();
@@ -114,14 +113,10 @@ auto submit_events( const std::vector<key_event> &requests ) -> bool
     return true;
 }
 
-
-
-
 auto resize_viewport( const int cols, const int rows ) -> void
 {
     game_ui::resize_terrain_window( { cols, rows } );
 }
-
 
 constexpr auto heartbeat_interval = std::chrono::seconds( 2 );
 
@@ -254,13 +249,11 @@ auto provide_input( const int timeout_ms ) -> input_event
         if( !session.events.empty() ) {
             const auto request = std::move( session.events.front() );
             session.events.pop_front();
-            if( const auto event = game_client::resolve_input_command( request,
-                                   game_client::memory::screen_size() ) ) {
-                return *event;
-            } else {
-                session.events.clear();
-                if( const auto leader = controller() ) { leader->protocol.reject_pending(); }
-            }
+            const auto event = game_client::resolve_input_command( request,
+                               game_client::memory::screen_size() );
+            if( event ) { return *event; }
+            session.events.clear();
+            if( const auto leader = controller() ) { leader->protocol.reject_pending( event.error() ); }
         }
         // A zero-timeout poll is a running activity checking for interruption, not input being
         // awaited: the command stays open and the activity continues to its end. Requests that
@@ -300,8 +293,6 @@ auto report_loading( const game_client::loading_progress &progress ) -> void
         leader->protocol.notify_loading( progress, leader->out );
     }
 }
-
-
 
 } // namespace
 
@@ -385,6 +376,8 @@ auto finish_session() -> void
     if( !session.started ) {
         return;
     }
+    // A deferred tool result is answered before the frame that holds it is finished.
+    if( const auto leader = controller() ) { leader->protocol.finish_pending( leader->out, std::cerr ); }
 #if defined(_WIN32)
     if( const auto leader = controller() ) {
         static_cast<void>( leader->protocol.finish( leader->out ) );
