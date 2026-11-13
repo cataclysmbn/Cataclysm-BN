@@ -8135,6 +8135,18 @@ auto submaps_with_spawns(const map& m, const tripoint_range<tripoint_bub_sm>& bu
         get_overmapbuffer(m.get_bound_dimension())
             .populated_submaps(
                 m.get_abs_sub(), m.get_abs_sub() + point_rel_sm(m.getmapsize(), m.getmapsize()));
+    // A complete active view lists the bubble submaps in bubble order. Its sequential reads let the
+    // CPU overlap the cache misses on each submap's spawn list.
+    if (const auto views = m.active_submap_views(); views.size() == bubble.size()) {
+        return views | std::views::filter([&](const auto& v) {
+                   return !v.get_submap().spawns.empty()
+                       || std::binary_search(populated.begin(), populated.end(), v.abs_pos());
+               })
+             | std::views::transform([&](const auto& v) {
+                   return abs_to_map_local(m, v.abs_pos());
+               })
+             | std::ranges::to<std::vector>();
+    }
     const auto has_spawns = [&](const tripoint_bub_sm& gp) {
         const auto abs = map_local_to_abs(m, gp);
         const auto view = m.active_submap_view(abs);
