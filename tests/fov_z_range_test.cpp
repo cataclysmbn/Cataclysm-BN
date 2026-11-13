@@ -182,3 +182,31 @@ TEST_CASE("lighting_follows_floors_changed_before_a_skip_lightmap_build", "[visi
     here.build_map_cache(0);
     CHECK(here.ambient_light_at(pos) == Approx(open_sky));
 }
+
+TEST_CASE("lighting_follows_floors_changed_outside_the_z_range", "[vision][fov_z_range]") {
+    // Checks that floors changed on a level outside FOV_3D_Z_RANGE reach the lighting pass later.
+    // A roof at z=2 is added while the range is 0, so the next build dispatches no lighting.
+    // Once the range covers z=1, the light under the roof must match a full rebuild.
+    const auto scope = vision_scope{preload_config::get_compute_accel()};
+    setup_daylight();
+    auto& here = get_map();
+    const auto below_roof = g->u.bub_pos() + tripoint_rel_ms::above();
+    rebuild_vision(OVERMAP_LAYERS);
+    const auto open_sky = here.ambient_light_at(below_roof);
+    fov_3d_z_range = 0;
+    for (auto dx = -6; dx <= 6; ++dx) {
+        for (auto dy = -6; dy <= 6; ++dy) {
+            here.ter_set(tripoint_bub_ms(60 + dx, 60 + dy, 2), ter_id("t_flat_roof"));
+        }
+    }
+    here.build_map_cache(0);
+    // No level in range is dirty, so this build dispatches no lighting.
+    REQUIRE_FALSE(here.access_cache(0).lightmap_dirty);
+    REQUIRE(here.access_cache(1).lightmap_dirty);
+    fov_3d_z_range = OVERMAP_LAYERS;
+    here.build_map_cache(0);
+    const auto light = here.ambient_light_at(below_roof);
+    CHECK(light < open_sky);
+    rebuild_vision(OVERMAP_LAYERS);
+    CHECK(light == Approx(here.ambient_light_at(below_roof)));
+}
