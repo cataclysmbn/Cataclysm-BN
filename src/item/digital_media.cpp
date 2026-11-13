@@ -63,6 +63,12 @@ auto copy_digital_file(item& file, item& destination) -> bool {
 
 auto is_digital_file(const item& file) -> bool { return file.has_flag(flag_id("DIGITAL")); }
 
+auto is_digital_reading_material(const item& file) -> bool {
+    return is_digital_file(file)
+        && (file.is_book() || !file.snip_id.is_null() || !file.type->snippet_category.empty()
+            || file.has_var("description"));
+}
+
 auto digital_reader_can_access_storage(const item& reader, const item& storage) -> bool {
     namespace ranges = std::ranges;
     const auto required_ports = storage.get_var("digital_storage_ports");
@@ -144,6 +150,22 @@ auto download_digital_files(item& reader, item& media, Character& who) -> int {
         if (copy_digital_file(*file, reader)) { ++copied; }
     }
     record_digital_genome_samples(who, reader);
+    return copied;
+}
+
+auto download_digital_reading_material(item& reader, item& media, Character& who) -> int {
+    if (&reader == &media || !digital_reader_ready(reader, who)
+        || !digital_reader_can_access_storage(reader, media)
+        || !media.has_flag(flag_id("DIGITAL_STORAGE")) || media.has_flag(flag_MC_ENCRYPTED)) {
+        return 0;
+    }
+    migrate_legacy_digital_media(reader);
+    initialize_digital_media(media);
+    if (media.has_flag(flag_MC_ENCRYPTED)) { return 0; }
+    auto copied = 0;
+    for (auto* file : media.contents.all_items_top()) {
+        if (is_digital_reading_material(*file) && copy_digital_file(*file, reader)) { ++copied; }
+    }
     return copied;
 }
 

@@ -6255,6 +6255,75 @@ auto browse_digital_files( player &who, item &reader ) -> void
 int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos )
 {
     initialize_digital_media( *it );
+    const bool is_eink_tablet = it->get_var( "digital_reader_mode" ) == "books_and_snippets";
+    if( is_eink_tablet && t ) { return 0; }
+    if( is_eink_tablet && !p->is_mounted() && !p->is_npc() ) {
+        auto files = std::vector<item *> {};
+        auto menu = uilist{};
+        menu.text = _( "Books and saved text on the tablet:" );
+        for( auto *file : it->contents.all_items_top() ) {
+            if( is_digital_reading_material( *file ) ) {
+                menu.addentry( static_cast<int>( files.size() ), true, MENU_AUTOASSIGN,
+                               file->display_name() );
+                files.push_back( file );
+            }
+        }
+        menu.addentry( static_cast<int>( files.size() ), true, 'l',
+                       _( "Load books and saved text from SD card" ) );
+        if( files.empty() ) {
+            menu.text = _( "The tablet has no books or saved text." );
+        }
+        menu.query();
+        if( menu.ret < 0 ) {
+            return 0;
+        }
+        if( menu.ret == static_cast<int>( files.size() ) ) {
+            auto *you = p->as_avatar();
+            if( you == nullptr ) { return 0; }
+            const auto compatible_sd = [it]( const auto & storage ) {
+                return is_digital_storage_media( storage )
+                       && digital_reader_can_access_storage( *it, storage );
+            };
+            auto *storage = game_menus::inv::titled_filter_menu( compatible_sd, *you,
+                            _( "Select SD card" ) );
+            if( storage == nullptr ) { return 0; }
+            const auto copied = download_digital_reading_material( *it, *storage, *p );
+            if( copied > 0 ) {
+                p->add_msg_if_player( m_good, vgettext( "You load %d book or saved text file onto the tablet.",
+                                                        "You load %d books or saved text files onto the tablet.",
+                                                        copied ), copied );
+                p->mod_moves( -to_moves<int>( 2_seconds ) );
+            } else {
+                p->add_msg_if_player( m_info, _( "That SD card has no new books or saved text." ) );
+            }
+            return copied > 0 ? it->type->charges_to_use() : 0;
+        }
+        auto *file = files[menu.ret];
+        auto actions = uilist{};
+        actions.title = file->display_name();
+        actions.addentry( 0, true, 'r', file->is_book() ? _( "Read book" ) : _( "Read saved text" ) );
+        actions.addentry( 1, true, 'd', _( "Delete file" ) );
+        actions.query();
+        if( actions.ret == 0 ) {
+            if( file->is_book() ) {
+                if( auto *you = p->as_avatar() ) {
+                    you->read( file );
+                }
+            } else {
+                const auto description = iteminfo_query( std::vector{ iteminfo_parts::DESCRIPTION } );
+                popup( "%s", file->info_string( description, 1, temperature_flag::TEMP_NORMAL ) );
+            }
+            return it->type->charges_to_use();
+        }
+        if( actions.ret == 1 && p->query_yn( _( "Delete %s from the tablet?" ), file->display_name() ) ) {
+            const auto name = file->display_name();
+            it->contents.remove_top( file );
+            p->mod_moves( -to_moves<int>( 2_seconds ) );
+            p->add_msg_if_player( m_info, _( "You delete %s from the tablet." ), name );
+            return it->type->charges_to_use();
+        }
+        return 0;
+    }
     if( t ) {
         if( it->type->can_use( "MP3_ON" ) || it->get_var( "EIPC_MUSIC_ON" ).empty() ) {
             return 0;

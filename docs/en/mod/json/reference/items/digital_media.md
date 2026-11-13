@@ -1,8 +1,9 @@
 # Digital media
 
 Digital files are items stored inside USB drives, SD cards, hard drives, or a reader. The
-e-ink tablet, laptops, wrist computers, and smartphones provide a **Download
-data from storage media** action that copies files into internal storage.
+e-ink tablet loads books and saved text from SD cards. Laptops, wrist computers,
+and smartphones provide a **Download data from storage media** action that copies
+files into internal storage.
 **Browse digital files** offers information, study, and item actions for
 installed files. Only options supported by the selected file are shown. Each
 use action appears under its configured name; cooldown and availability details

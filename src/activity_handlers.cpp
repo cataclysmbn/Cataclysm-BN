@@ -3438,7 +3438,11 @@ void activity_handlers::read_do_turn( player_activity *act, player *p )
             act->set_to_null();
             return;
         }
-        if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
+        const auto drain_interval_minutes = std::max<int64_t>( 1,
+                                            reader->get().get_var( "digital_read_charge_interval_minutes",
+                                                    int64_t{ 1 } ) );
+        const auto drain_interval = time_duration::from_minutes( drain_interval_minutes );
+        if( action_time_scale::once_every_this_tick( drain_interval ) ) {
             auto &device = reader->get();
             p->consume_charges( device, device.type->charges_to_use() );
         }
