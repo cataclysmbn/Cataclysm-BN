@@ -229,7 +229,7 @@
     "type": "start_location",
     "id": "sloc_lmoe_empty",
     "name": "LMOE shelter (underground)",
-    "terrain": [ "lmoe_under_empty" ]
+    "terrain": [ "lmoe_under_safe" ]
   },
   {
     "type": "start_location",
