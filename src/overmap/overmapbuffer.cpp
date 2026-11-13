@@ -721,11 +721,11 @@ auto overmapbuffer::seen(const tripoint_abs_omt& p) -> bool {
 
 void overmapbuffer::set_seen(const tripoint_abs_omt& p, bool seen) {
     const overmap_with_local_coords om_loc = get_om_global(p);
-    if (is_ot_match("empty_rock", ter(p), ot_match_type::type)
-        && !(om_loc.om->seen(om_loc.local))) {
+    auto& was_seen = om_loc.om->seen(om_loc.local);
+    if (!was_seen && is_ot_match("empty_rock", ter(p), ot_match_type::type)) {
         om_loc.om->spawn_ores(p);
     }
-    om_loc.om->seen(om_loc.local) = seen;
+    was_seen = seen;
 }
 
 auto overmapbuffer::ter(const tripoint_abs_omt& p) -> const oter_id& {
