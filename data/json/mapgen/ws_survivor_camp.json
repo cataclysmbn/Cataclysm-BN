@@ -50,7 +50,8 @@
     ]
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "om_terrain": [ "ws_survivor_camp" ],
     "weight": 1000,
     "object": {
@@ -103,7 +104,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "om_terrain": [ "ws_survivor_camp" ],
     "weight": 10,
     "object": {
@@ -153,7 +155,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "om_terrain": [ "ws_survivor_camp" ],
     "weight": 200,
     "object": {
@@ -202,10 +205,7 @@
         "s": { "item": "sc_loot_equipment", "chance": 30 },
         "w": { "item": "stash_wood", "chance": 30 }
       },
-      "place_monster": [
-        { "monster": "mon_mi_go", "x": 11, "y": 10 },
-        { "monster": "mon_mi_go_slaver", "x": 12, "y": 8 }
-      ],
+      "place_monster": [ { "monster": "mon_mi_go", "x": 11, "y": 10 }, { "monster": "mon_mi_go_slaver", "x": 12, "y": 8 } ],
       "place_vehicles": [ { "vehicle": "surv_car", "x": 11, "y": 4, "chance": 20, "status": -1, "rotation": 270 } ]
     }
   }
