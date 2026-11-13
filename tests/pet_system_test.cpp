@@ -464,126 +464,103 @@ TEST_CASE(
 static const skill_id skill_melee("melee");
 static const skill_id skill_speech("speech");
 
-TEST_CASE(
-    "pet tame and training skills default to survival with no tame requirement",
-    "[pet][monster][skill]") {
+TEST_CASE("configurable pet tame and training skills", "[pet][monster][skill]") {
     clear_all_state();
     monster& mon = spawn_test_monster(mon_dog.str(), mon_pos);
+    avatar& p = get_avatar();
+    move_player_out_of_the_way();
     REQUIRE(mon.type->pet_training.has_value());
-    CHECK(mon.type->petfood.tame_skill == skill_survival);
-    CHECK(mon.type->petfood.tame_min_skill == 0);
-    CHECK(mon.type->pet_training->skill == skill_survival);
-    // No minimum level means any character meets the taming skill requirement.
-    avatar& p = get_avatar();
-    p.set_skill_level(skill_survival, 0);
-    CHECK(mon.type->petfood.tame_skill_requirement_met(p));
-}
 
-TEST_CASE(
-    "tame_skill_requirement_met gates on the configured tame skill and level",
-    "[pet][monster][skill]") {
-    clear_all_state();
-    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos);
-    static mtype custom_type = *mon.type;
-    custom_type.petfood.tame_skill = skill_speech;
-    custom_type.petfood.tame_min_skill = 2;
-
-    avatar& p = get_avatar();
-    p.set_skill_level(skill_speech, 0);
-    p.set_skill_level(skill_survival, 10);
-    CHECK_FALSE(custom_type.petfood.tame_skill_requirement_met(p));
-    p.set_skill_level(skill_speech, 2);
-    CHECK(custom_type.petfood.tame_skill_requirement_met(p));
-}
-
-TEST_CASE(
-    "extended description reflects custom tame and training skills", "[pet][monster][skill]") {
-    clear_all_state();
-    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos);
     // Local copy of the type so the shared monster data is not mutated.
-    // static so the pointer outlives the creature tracker cleanup.
+    // static so the pointer outlives the creature tracker cleanup; re-copied
+    // from the fresh monster type in each section that uses it.
     static mtype custom_type = *mon.type;
-    custom_type.petfood.tame_skill = skill_speech;
-    custom_type.petfood.tame_min_skill = 2;
-    custom_type.pet_training->skill = skill_melee;
-    mon.type = &custom_type;
 
-    const std::string desc = mon.extended_description();
-    INFO(desc);
-    // Tame skill requirement sits in the taming section, training skill in its own.
-    CHECK(desc.find("Speaking: 2") != std::string::npos);
-    CHECK(desc.find("Speaking: 2") < desc.find("<color_yellow>Training</color> it requires:"));
-    CHECK(desc.find("<color_yellow>Training</color> it requires:") != std::string::npos);
-    CHECK(desc.find("Melee: 3") > desc.find("<color_yellow>Training</color> it requires:"));
-    CHECK(desc.find("Survival:") == std::string::npos);
-}
+    SECTION("defaults are survival with no tame skill requirement") {
+        CHECK(mon.type->petfood.tame_skill == skill_survival);
+        CHECK(mon.type->petfood.tame_min_skill == 0);
+        CHECK(mon.type->pet_training->skill == skill_survival);
+        // No minimum level means any character meets the taming skill requirement.
+        p.set_skill_level(skill_survival, 0);
+        CHECK(mon.type->petfood.tame_skill_requirement_met(p));
+    }
 
-TEST_CASE(
-    "extended description omits the tame skill line when no minimum is required",
-    "[pet][monster][skill]") {
-    clear_all_state();
-    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos);
+    SECTION("tame requirement gates on the configured skill and level") {
+        custom_type = *mon.type;
+        custom_type.petfood.tame_skill = skill_speech;
+        custom_type.petfood.tame_min_skill = 2;
+        p.set_skill_level(skill_speech, 0);
+        p.set_skill_level(skill_survival, 10);
+        CHECK_FALSE(custom_type.petfood.tame_skill_requirement_met(p));
+        p.set_skill_level(skill_speech, 2);
+        CHECK(custom_type.petfood.tame_skill_requirement_met(p));
+    }
 
-    const std::string desc = mon.extended_description();
-    INFO(desc);
-    // Dog has no tame_min_skill, so only the training requirement is listed.
-    CHECK(desc.find("Survival: 3") != std::string::npos);
-    CHECK(desc.find("Skill:") == std::string::npos);
-}
+    SECTION("extended description reflects custom tame and training skills") {
+        custom_type = *mon.type;
+        custom_type.petfood.tame_skill = skill_speech;
+        custom_type.petfood.tame_min_skill = 2;
+        custom_type.pet_training->skill = skill_melee;
+        mon.type = &custom_type;
 
-TEST_CASE(
-    "train_pet_finish gates on the monster's training skill, not survival",
-    "[pet][monster][training][activity][skill]") {
-    clear_all_state();
-    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos);
-    mon.make_pet();
-    mon.add_effect(effect_well_fed, 24_hours);
-    mon.training_level = 0;
-    REQUIRE(mon.type->pet_training.has_value());
+        const std::string desc = mon.extended_description();
+        INFO(desc);
+        // Tame skill requirement sits in the taming section, training skill in its own.
+        CHECK(desc.find("Speaking: 2") != std::string::npos);
+        CHECK(desc.find("Speaking: 2") < desc.find("<color_yellow>Training</color> it requires:"));
+        CHECK(desc.find("Melee: 3") > desc.find("<color_yellow>Training</color> it requires:"));
+        CHECK(desc.find("Survival:") == std::string::npos);
+    }
 
-    static mtype custom_type = *mon.type;
-    custom_type.pet_training->skill = skill_melee;
-    mon.type = &custom_type;
+    SECTION("extended description separates the blocks and omits tame skill by default") {
+        const std::string desc = mon.extended_description();
+        INFO(desc);
+        // Dog has no tame_min_skill, so only the training requirement is listed,
+        // under its own heading and separated by blank lines.
+        CHECK(desc.find("Survival: 3") > desc.find("<color_yellow>Training</color> it requires:"));
+        CHECK(desc.find("\n\n<color_yellow>Training</color> it requires:") != std::string::npos);
+        CHECK(desc.find("Survival: 3\n\n") != std::string::npos);
+        CHECK(desc.find("Skill:") == std::string::npos);
+    }
 
-    avatar& p = get_avatar();
-    move_player_out_of_the_way();
-    // High survival but melee below the minimum: training must fail.
-    p.set_skill_level(skill_survival, 25);
-    p.set_skill_level(skill_melee, mon.type->pet_training->min_skill - 1);
+    SECTION("train_pet_finish gates on the training skill, not survival") {
+        mon.make_pet();
+        mon.add_effect(effect_well_fed, 24_hours);
+        mon.training_level = 0;
+        custom_type = *mon.type;
+        custom_type.pet_training->skill = skill_melee;
+        mon.type = &custom_type;
 
-    player_activity act(ACT_TRAIN_PET);
-    act.monsters.push_back(g->shared_from(mon));
-    act.str_values.push_back(mon.get_name());
+        // High survival but melee below the minimum: training must fail.
+        p.set_skill_level(skill_survival, 25);
+        p.set_skill_level(skill_melee, mon.type->pet_training->min_skill - 1);
 
-    activity_handlers::train_pet_finish(&act, &p);
-    CHECK(mon.training_level == 0);
-    CHECK(mon.has_effect(effect_well_fed));
-}
+        player_activity act(ACT_TRAIN_PET);
+        act.monsters.push_back(g->shared_from(mon));
+        act.str_values.push_back(mon.get_name());
 
-TEST_CASE(
-    "train_pet_finish succeeds with the training skill even at zero survival",
-    "[pet][monster][training][activity][skill]") {
-    clear_all_state();
-    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos);
-    mon.make_pet();
-    mon.add_effect(effect_well_fed, 24_hours);
-    mon.training_level = 0;
-    REQUIRE(mon.type->pet_training.has_value());
+        activity_handlers::train_pet_finish(&act, &p);
+        CHECK(mon.training_level == 0);
+        CHECK(mon.has_effect(effect_well_fed));
+    }
 
-    static mtype custom_type = *mon.type;
-    custom_type.pet_training->skill = skill_melee;
-    mon.type = &custom_type;
+    SECTION("train_pet_finish succeeds with the training skill even at zero survival") {
+        mon.make_pet();
+        mon.add_effect(effect_well_fed, 24_hours);
+        mon.training_level = 0;
+        custom_type = *mon.type;
+        custom_type.pet_training->skill = skill_melee;
+        mon.type = &custom_type;
 
-    avatar& p = get_avatar();
-    move_player_out_of_the_way();
-    // Survival 0, but melee 25 guarantees success: 10*25=250 >= rng(0,100).
-    p.set_skill_level(skill_survival, 0);
-    p.set_skill_level(skill_melee, 25);
+        // Survival 0, but melee 25 guarantees success: 10*25=250 >= rng(0,100).
+        p.set_skill_level(skill_survival, 0);
+        p.set_skill_level(skill_melee, 25);
 
-    player_activity act(ACT_TRAIN_PET);
-    act.monsters.push_back(g->shared_from(mon));
-    act.str_values.push_back(mon.get_name());
+        player_activity act(ACT_TRAIN_PET);
+        act.monsters.push_back(g->shared_from(mon));
+        act.str_values.push_back(mon.get_name());
 
-    activity_handlers::train_pet_finish(&act, &p);
-    CHECK(mon.training_level == 1);
+        activity_handlers::train_pet_finish(&act, &p);
+        CHECK(mon.training_level == 1);
+    }
 }
