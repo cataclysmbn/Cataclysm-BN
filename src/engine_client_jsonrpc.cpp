@@ -260,20 +260,22 @@ std::expected<void, output_error>
     if( !value ) { return {}; }
     if( value->bytes().empty() || ( !batch_ && count_ != 0 ) ) {
         failure_ = output_error::invalid_value;
-    } else {
-        // A batch always owes its closing bracket plus this response's opening '[' or ','.
-        const auto overhead = batch_ ? size_t{ 2 } :
-                              size_t{ 0 };
-        if( bytes_.size() + overhead > maximum_frame_bytes ||
-            value->bytes().size() > maximum_frame_bytes - bytes_.size() - overhead ) {
-            failure_ = output_error::resource_limit;
-        }
+    } else if( !fits( *value ) ) {
+        failure_ = output_error::resource_limit;
     }
     if( failure_ ) { bytes_.clear(); return std::unexpected( *failure_ ); }
     if( batch_ ) { bytes_.push_back( count_ == 0 ? '[' : ',' ); }
     bytes_.append( value->bytes() );
     ++count_;
     return {};
+}
+auto response_frame::fits( const response &value ) const -> bool
+{
+    // A batch always owes its closing bracket plus this response's opening '[' or ','.
+    const auto overhead = batch_ ? size_t{ 2 } :
+                          size_t{ 0 };
+    return bytes_.size() + overhead <= maximum_frame_bytes &&
+           value.bytes().size() <= maximum_frame_bytes - bytes_.size() - overhead;
 }
 auto response_frame::finish() &&
 -> std::expected<std::optional<std::string>, output_error> // *NOPAD*
