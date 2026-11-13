@@ -3,7 +3,7 @@
     "id": "mon_duck_of_wishes",
     "type": "MONSTER",
     "name": { "str": "duck of wishes" },
-    "description": "A strangely vibrant duck with an uncanny knack for staying just out of reach.  Its feathers shimmer with colors that seem to change whenever you blink.  You have a feeling it's being held down by it's weight from swallowing something valuable.",
+    "description": "A strangely vibrant duck with an uncanny knack for staying just out of reach.  Its feathers shimmer with colors that seem to change whenever you blink.  You have a feeling it's being held down by its weight from swallowing something valuable.",
     "copy-from": "mon_duck",
     "looks_like": "mon_duck",
     "color": "yellow",
