@@ -12,6 +12,7 @@
 #include "coordinates.h"
 #include "cursesdef.h"
 #include "damage.h"
+#include "data_vars.h"
 #include "debug.h"
 #include "effect.h"
 #include "enums.h"
@@ -1925,7 +1926,7 @@ auto Creature::get_value_as_int( const std::string &key ) const -> std::optional
     return string_utils::string_to_int( get_value( key ) );
 }
 
-auto Creature::get_values_map() const -> const std::unordered_map<std::string, std::string> &
+auto Creature::get_values_map() const -> const data_vars::data_set &
 {
     return values;
 }

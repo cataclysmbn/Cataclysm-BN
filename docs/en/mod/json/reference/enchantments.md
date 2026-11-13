@@ -133,9 +133,13 @@ Syntax for single entry:
   "value": "VALUE_ID_STRING",
 
   // Additive bonus. Optional integer number, default is 0.
-  // Ignored for:
-  // METABOLISM, MANA_REGEN, STAMINA_CAP, STAMINA_REGEN, THIRST, FATIGUE
   "add": 13,
+
+  // Alternatively, all of these can be based off character resources
+  "add": {
+    "val": "hungry", // Scale based off hunger
+    "per": 0.1 // Every 10 hunger, add 1 to the value
+  },
 
   // Multiplicative bonus. Optional, default is 0.
   "multiply": -0.3

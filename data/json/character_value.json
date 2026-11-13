@@ -1,0 +1,92 @@
+[
+  {
+    "type": "character_value",
+    "id": "strength",
+    "hardcode_value": "STR",
+    "desc": "current strength level"
+  },
+  {
+    "type": "character_value",
+    "id": "dexterity",
+    "hardcode_value": "DEX",
+    "desc": "current dexterity level"
+  },
+  {
+    "type": "character_value",
+    "id": "intelligence",
+    "hardcode_value": "INT",
+    "desc": "current intelligence level"
+  },
+  {
+    "type": "character_value",
+    "id": "perception",
+    "hardcode_value": "PER",
+    "desc": "current perception level"
+  },
+  {
+    "type": "character_value",
+    "id": "health",
+    "hardcode_value": "HEALTH",
+    "desc": "current health value"
+  },
+  {
+    "type": "character_value",
+    "id": "health_points",
+    "hardcode_value": "HP",
+    "desc": "current maximum limb health value"
+  },
+  {
+    "type": "character_value",
+    "id": "mana",
+    "hardcode_value": "MANA",
+    "desc": "current mana stores"
+  },
+  {
+    "type": "character_value",
+    "id": "stamina",
+    "hardcode_value": "STAMINA",
+    "desc": "current stamina value"
+  },
+  {
+    "type": "character_value",
+    "id": "bionic_power",
+    "hardcode_value": "BIONIC_POWER",
+    "desc": "current bionic power levels"
+  },
+  {
+    "type": "character_value",
+    "id": "fatigue",
+    "hardcode_value": "FATIGUE",
+    "desc": "sleepyness"
+  },
+  {
+    "type": "character_value",
+    "id": "thirst",
+    "hardcode_value": "THIRST",
+    "desc": "how thirsty you are"
+  },
+  {
+    "type": "character_value",
+    "id": "pain",
+    "hardcode_value": "PAIN",
+    "desc": "how much pain you could be in"
+  },
+  {
+    "type": "character_value",
+    "id": "hunger",
+    "hardcode_value": "HUNGER",
+    "desc": "how hungry you are"
+  },
+  {
+    "type": "character_value",
+    "id": "morale",
+    "hardcode_value": "MORALE",
+    "desc": "current morale level"
+  },
+  {
+    "type": "character_value",
+    "id": "focus",
+    "hardcode_value": "FOCUS",
+    "desc": "current focus level"
+  }
+]

@@ -3,6 +3,7 @@
 #include "bodypart.h"
 #include "calendar.h"
 #include "character.h"
+#include "character_value.h"
 #include "creature.h"
 #include "debug.h"
 #include "effect.h"
@@ -24,6 +25,7 @@
 #include "units.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <memory>
 #include <set>
@@ -65,6 +67,53 @@ auto enchantment::get_effect_string(bool is_item) const -> std::vector<std::stri
     std::vector<std::string> result;
     bool describe = false;
     result.push_back(cond_string);
+
+    for (const auto [ench_val_id, effectors] : complex_values_add) {
+        for (const auto effector : effectors) {
+            // Effectors should never have a value of 0
+            const std::string color = effector.second > 0 ? "green" : "red";
+            const std::string effect_desc = effector.first->get_desc();
+            if (!effect_desc.empty()) {
+                describe = true;
+                result.push_back(string_format(
+                    _("  <color_%1s>%2s (Affected by %s3)"), color, ench_val_id->get_desc(),
+                    effector.first->get_desc()));
+            } else {
+                value_effects[ench_val_id] += (effector.second > 0 ? 1 : -1);
+            }
+        }
+    }
+    for (const auto [ench_val_id, effectors] : complex_values_multiply) {
+        for (const auto effector : effectors) {
+            // Effectors should never have a value of 0
+            const std::string color = effector.second > 0 ? "green" : "red";
+            const std::string effect_desc = effector.first->get_desc();
+            if (!effect_desc.empty()) {
+                describe = true;
+                result.push_back(string_format(
+                    _("  <color_%1s>%2s (Affected by %s3)"), color, ench_val_id->get_desc(),
+                    effector.first->get_desc()));
+            } else {
+                value_effects[ench_val_id] += (effector.second > 0 ? 1 : -1);
+            }
+        }
+    }
+    for (const auto [ench_val_id, effectors] : complex_values_max) {
+        for (const auto effector : effectors) {
+            // Effectors should never have a value of 0
+            const std::string color = effector.second > 0 ? "green" : "red";
+            const std::string effect_desc = effector.first->get_desc();
+            if (!effect_desc.empty()) {
+                describe = true;
+                result.push_back(string_format(
+                    _("  <color_%1s>%2s (Affected by %s3)"), color, ench_val_id->get_desc(),
+                    effector.first->get_desc()));
+            } else {
+                value_effects[ench_val_id] += (effector.second > 0 ? 1 : -1);
+            }
+        }
+    }
+
     for (const auto [ench_id, goodbad] : value_effects) {
         const std::string color = goodbad > 0 ? "green" : goodbad < 0 ? "red" : "magenta";
         result.push_back(string_format("  <color_%s>%s</color>", color, ench_id->get_desc()));
@@ -282,18 +331,56 @@ void enchantment::load(const JsonObject& jo, const std::string&) {
              auto_flags_reader<enchantment_vision_id>{});
 
     if (jo.has_array("values")) {
-        for (const JsonObject value_obj : jo.get_array("values")) {
+        for (const JsonObject& value_obj : jo.get_array("values")) {
             enchantment_value_id value = enchantment_value_id(value_obj.get_string("value"));
-            const int add = value_obj.get_int("add", 0);
-            const double mult = value_obj.get_float("multiply", 0.0);
-            const double max = value_obj.get_int("max", 0);
-            if (add != 0) { values_add.emplace(value, add); }
-            if (mult != 0.0) {
-                // Limit precision to minimize inconsistencies between platforms / compilers
-                const double mul = static_cast<int>(std::round(mult * 100'000)) / 100'000.0;
-                values_multiply.emplace(value, mul);
+            if (value_obj.has_member("add")) {
+                if (value_obj.has_int("add")) {
+                    values_add.emplace(value, value_obj.get_int("add"));
+                } else {
+                    const JsonObject& nested_value_obj = value_obj.get_object("add");
+                    const character_value_id& char_val_id = character_value_id(
+                        nested_value_obj.get_string("val"));
+                    const double amount = nested_value_obj.get_float("per");
+                    if (!complex_values_add.contains(value)) {
+                        std::map<character_value_id, double> res = {{char_val_id, amount}};
+                        complex_values_add.emplace(value, res);
+                    } else {
+                        complex_values_add[value][char_val_id] = amount;
+                    }
+                }
             }
-            if (max != 0) { values_max.emplace(value, max); }
+            if (value_obj.has_member("multiply")) {
+                if (value_obj.has_int("multiply")) {
+                    values_multiply.emplace(value, value_obj.get_float("multiply"));
+                } else {
+                    const JsonObject& nested_value_obj = value_obj.get_object("multiply");
+                    const character_value_id& char_val_id = character_value_id(
+                        nested_value_obj.get_string("val"));
+                    const double amount = nested_value_obj.get_float("per");
+                    if (!complex_values_add.contains(value)) {
+                        std::map<character_value_id, double> res = {{char_val_id, amount}};
+                        complex_values_add.emplace(value, res);
+                    } else {
+                        complex_values_add[value][char_val_id] = amount;
+                    }
+                }
+            }
+            if (value_obj.has_member("max")) {
+                if (value_obj.has_int("max")) {
+                    values_max.emplace(value, value_obj.get_int("max"));
+                } else {
+                    const JsonObject& nested_value_obj = value_obj.get_object("max");
+                    const character_value_id& char_val_id = character_value_id(
+                        nested_value_obj.get_string("val"));
+                    const double amount = nested_value_obj.get_float("per");
+                    if (!complex_values_max.contains(value)) {
+                        std::map<character_value_id, double> res = {{char_val_id, amount}};
+                        complex_values_max.emplace(value, res);
+                    } else {
+                        complex_values_max[value][char_val_id] = amount;
+                    }
+                }
+            }
         }
     }
     if (jo.has_array("flags")) {
@@ -368,6 +455,43 @@ void enchantment::serialize(JsonOut& jsout) const {
         if (val_mult != 0) { jsout.member("multiply", val_mult); }
         jsout.end_object();
     }
+    for (const auto [ench_val_id, effectors] : complex_values_add) {
+        for (const auto effector : effectors) {
+            jsout.start_object();
+            jsout.member("value", ench_val_id.str());
+            jsout.member("add");
+            jsout.start_object();
+            jsout.member("val", effector.first);
+            jsout.member("per", effector.second);
+            jsout.end_object();
+            jsout.end_object();
+        }
+    }
+    for (const auto [ench_val_id, effectors] : complex_values_multiply) {
+        for (const auto effector : effectors) {
+            jsout.start_object();
+            jsout.member("value", ench_val_id.str());
+            jsout.member("multiply");
+            jsout.start_object();
+            jsout.member("val", effector.first);
+            jsout.member("per", effector.second);
+            jsout.end_object();
+            jsout.end_object();
+        }
+    }
+    for (const auto [ench_val_id, effectors] : complex_values_max) {
+        for (const auto effector : effectors) {
+            jsout.start_object();
+            jsout.member("value", ench_val_id.str());
+            jsout.member("max");
+            jsout.start_object();
+            jsout.member("val", effector.first);
+            jsout.member("per", effector.second);
+            jsout.end_object();
+            jsout.end_object();
+        }
+    }
+
     jsout.end_array();
 
     jsout.member("flags");
@@ -393,7 +517,7 @@ auto enchantment::add(const enchantment& rhs) -> bool {
     return true;
 }
 
-void enchantment::force_add(const enchantment& rhs) {
+void enchantment::force_add(const enchantment& rhs, bool merge_complex) {
     for (const auto& pair_values : rhs.values_add) {
         values_add[pair_values.first] += pair_values.second;
     }
@@ -406,6 +530,41 @@ void enchantment::force_add(const enchantment& rhs) {
     for (const auto& pair_values : rhs.values_max) {
         if (values_max[pair_values.first] < pair_values.second) {
             values_max[pair_values.first] = pair_values.second;
+        }
+    }
+
+    if (merge_complex) {
+        for (const auto& pair_values : rhs.complex_values_add) {
+            if (complex_values_add.contains(pair_values.first)) {
+                for (const auto& nested_pair_values : pair_values.second) {
+                    complex_values_add[pair_values.first][nested_pair_values.first] +=
+                        nested_pair_values.second;
+                }
+            } else {
+                complex_values_add[pair_values.first] = pair_values.second;
+            }
+        }
+
+        for (const auto& pair_values : rhs.complex_values_multiply) {
+            if (complex_values_multiply.contains(pair_values.first)) {
+                for (const auto& nested_pair_values : pair_values.second) {
+                    complex_values_multiply[pair_values.first][nested_pair_values.first] +=
+                        nested_pair_values.second;
+                }
+            } else {
+                complex_values_multiply[pair_values.first] = pair_values.second;
+            }
+        }
+
+        for (const auto& pair_values : rhs.complex_values_max) {
+            if (complex_values_max.contains(pair_values.first)) {
+                for (const auto& nested_pair_values : pair_values.second) {
+                    complex_values_max[pair_values.first][nested_pair_values.first] +=
+                        nested_pair_values.second;
+                }
+            } else {
+                complex_values_max[pair_values.first] = pair_values.second;
+            }
         }
     }
 
@@ -445,6 +604,29 @@ void enchantment::force_add(const enchantment& rhs) {
             }
         }
         if (remains > 0) { flags[ench_flag_id] += remains; }
+    }
+}
+
+void enchantment::force_add(const enchantment& rhs, const Character& merger) {
+    force_add(rhs, false);
+    for (const auto& pair_values : rhs.complex_values_add) {
+        for (const auto& nested_pair_values : pair_values.second) {
+            values_add[pair_values.first] += int(floor(
+                double(nested_pair_values.first->get_amount(merger)) * nested_pair_values.second));
+        }
+    }
+    for (const auto& pair_values : rhs.complex_values_multiply) {
+        for (const auto& nested_pair_values : pair_values.second) {
+            values_multiply[pair_values.first] += int(floor(
+                double(nested_pair_values.first->get_amount(merger)) * nested_pair_values.second));
+        }
+    }
+    for (const auto& pair_values : rhs.complex_values_add) {
+        for (const auto& nested_pair_values : pair_values.second) {
+            int val = int(floor(
+                double(nested_pair_values.first->get_amount(merger)) * nested_pair_values.second));
+            if (values_max[pair_values.first] < val) { values_max[pair_values.first] = val; }
+        }
     }
 }
 
