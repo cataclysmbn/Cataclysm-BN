@@ -1,3 +1,4 @@
+#include "avatar.h"
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catch/catch.hpp"
@@ -6,6 +7,7 @@
 #include "game_constants.h"
 #include "map/lightmap.h"
 #include "map/map.h"
+#include "map_helpers.h"
 #include "preload_config.h"
 #include "sounds.h"
 #include "state_helpers.h"
@@ -160,4 +162,23 @@ TEST_CASE("fov_z_range_limits_vision_levels", "[vision][fov_z_range]") {
             return ll != lit_level::BLANK;
         }));
     }
+}
+
+TEST_CASE("lighting_follows_floors_changed_before_a_skip_lightmap_build", "[vision]") {
+    // Checks that floors removed before a cache build without lightmap do not keep shading.
+    // A roof at z=1 shades the player at noon.  wipe_map_terrain() removes the roof and builds
+    // the caches with skip_lightmap.  The next full build must give the open-sky light again.
+    const auto scope = vision_scope{preload_config::get_compute_accel()};
+    setup_daylight();
+    auto& here = get_map();
+    const auto pos = g->u.bub_pos();
+    rebuild_vision(OVERMAP_LAYERS);
+    const auto open_sky = here.ambient_light_at(pos);
+    build_tower(1);
+    rebuild_vision(OVERMAP_LAYERS);
+    REQUIRE(here.ambient_light_at(pos) < open_sky);
+
+    wipe_map_terrain();
+    here.build_map_cache(0);
+    CHECK(here.ambient_light_at(pos) == Approx(open_sky));
 }
