@@ -6032,7 +6032,8 @@ auto show_monster_collection( player &who, const item &reader ) -> void
     for( const auto &[id, quality] : photos ) {
         const auto specimen = monster( id );
         menu.addentry( static_cast<int>( descriptions.size() ), true, MENU_AUTOASSIGN,
-                       string_format( "%s [%s]", specimen.name(), photo_quality_name( quality ) ) );
+                       string_format( "%s [%s]", specimen.name(),
+                                      quality < 0 ? _( "genome sample" ) : photo_quality_name( quality ) ) );
         descriptions.push_back( specimen.type->get_description() );
     }
     while( true ) {
@@ -6090,6 +6091,50 @@ auto delete_files_from_storage( player &who, item &reader ) -> void
         storage->contents.remove_top( file );
         who.add_msg_if_player( m_info, _( "You delete %s from the storage device." ), name );
     }
+}
+
+auto wipe_storage_media( player &who, item &reader ) -> bool
+{
+    auto *you = who.as_avatar();
+    if( you == nullptr ) {
+        return false;
+    }
+    const auto filter = [&reader]( const auto & media ) {
+        return &media != &reader && is_digital_storage_media( media );
+    };
+    auto *storage = game_menus::inv::titled_filter_menu( filter, *you,
+                    _( "Select storage media to wipe" ) );
+    if( storage == nullptr ) {
+        return false;
+    }
+    if( !digital_reader_can_access_storage( reader, *storage ) ) {
+        who.add_msg_if_player( m_info, _( "This reader is not compatible with that storage device." ) );
+        return false;
+    }
+    if( !who.query_yn( _( "Wipe %s?  All files and encrypted data on it will be deleted." ),
+                       storage->tname() ) ) {
+        return false;
+    }
+    if( !wipe_digital_storage( *storage ) ) {
+        return false;
+    }
+    who.mod_moves( -to_moves<int>( 2_seconds ) );
+    who.add_msg_if_player( m_good, _( "You wipe the %s." ), storage->tname() );
+    return true;
+}
+
+auto wipe_reader_storage( player &who, item &reader ) -> bool
+{
+    if( !who.query_yn( _( "Wipe %s?  All files and saved data on it will be deleted." ),
+                       reader.tname() ) ) {
+        return false;
+    }
+    if( !wipe_digital_storage( reader ) ) {
+        return false;
+    }
+    who.mod_moves( -to_moves<int>( 2_seconds ) );
+    who.add_msg_if_player( m_good, _( "You wipe the %s." ), reader.tname() );
+    return true;
 }
 
 auto browse_digital_files( player &who, item &reader ) -> void
@@ -6239,7 +6284,8 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
 
         enum {
             ei_invalid, ei_recipe, ei_books, ei_uploaded_photos, ei_monsters, ei_download, ei_decrypt,
-            ei_files, ei_export, ei_encrypt, ei_delete_storage, ei_scan_book
+            ei_files, ei_export, ei_encrypt, ei_delete_storage, ei_wipe_storage, ei_wipe_reader,
+            ei_scan_book
         };
 
         if( p->is_underwater() ) {
@@ -6256,6 +6302,8 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
                                   _( "You'll need to put on reading glasses before you can see the screen." ) );
             return 0;
         }
+
+        record_digital_genome_samples( *p, *it );
 
         uilist amenu;
 
@@ -6296,6 +6344,8 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
         []( const auto * file ) { return is_digital_file( *file ); } );
         amenu.addentry( ei_export, has_files, 'e', _( "Copy files to storage media" ) );
         amenu.addentry( ei_delete_storage, true, 'x', _( "Delete files from storage media" ) );
+        amenu.addentry( ei_wipe_storage, true, 'z', _( "Wipe storage media" ) );
+        amenu.addentry( ei_wipe_reader, true, 'v', _( "Wipe this device's storage" ) );
 
         amenu.addentry( ei_encrypt, true, 's', _( "Encrypt storage media" ) );
 
@@ -6327,6 +6377,14 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
         if( choice == ei_delete_storage ) {
             delete_files_from_storage( *p, *it );
             return it->type->charges_to_use();
+        }
+
+        if( choice == ei_wipe_storage ) {
+            return wipe_storage_media( *p, *it ) ? it->type->charges_to_use() : 0;
+        }
+
+        if( choice == ei_wipe_reader ) {
+            return wipe_reader_storage( *p, *it ) ? it->type->charges_to_use() : 0;
         }
 
         if( choice == ei_files ) {
@@ -7355,7 +7413,7 @@ int iuse::camera( player *p, item *it, bool, const tripoint_bub_ms & )
     migrate_legacy_digital_media( *it );
     const auto saved_collection = find_camera_photo_collection( *it );
     auto *collection = saved_collection ? &saved_collection->get() : nullptr;
-    enum {c_shot, c_photos, c_monsters, c_upload};
+    enum {c_shot, c_photos, c_monsters, c_upload, c_wipe};
 
     // CAMERA_NPC_PHOTOS is old save variable
     const auto found_extended_photos = collection &&
@@ -7378,12 +7436,17 @@ int iuse::camera( player *p, item *it, bool, const tripoint_bub_ms & )
         }
         amenu.addentry( c_upload, true, 'u', _( "Upload photos to memory card" ) );
     }
+    amenu.addentry( c_wipe, true, 'w', _( "Wipe this camera's storage" ) );
 
     amenu.query();
     const int choice = amenu.ret;
 
     if( choice < 0 ) {
         return 0;
+    }
+
+    if( c_wipe == choice ) {
+        return wipe_reader_storage( *p, *it ) ? it->type->charges_to_use() : 0;
     }
 
     if( c_shot == choice ) {
