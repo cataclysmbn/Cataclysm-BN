@@ -2488,6 +2488,13 @@ auto invalidate_lighting_transparency_levels(std::vector<int> const& levels) -> 
     refresh_transparency_valid_flag();
 }
 
+auto invalidate_lighting_floor_inputs() -> void {
+    auto& inputs = s_lighting_resources.inputs;
+    inputs.floor_valid = false;
+    inputs.vehicle_floor_valid = false;
+    inputs.vehicle_obscured_valid = false;
+}
+
 auto resident_lighting_ready_for_visibility(resident_lighting_visibility_params const& p) -> bool {
     if (p.device == nullptr || p.cache_x <= 0 || p.cache_y <= 0 || p.z_count <= 0) { return false; }
 

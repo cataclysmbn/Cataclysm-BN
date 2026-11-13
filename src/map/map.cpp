@@ -8766,6 +8766,10 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
     if (skip_lightmap && use_sdl_gpu_compute && gpu_transparency_dirty) {
         cata_gpu::invalidate_lighting_transparency_levels(gpu_transparency_dirty_levels);
     }
+    if (skip_lightmap && use_sdl_gpu_compute
+        && (gpu_floor_dirty || gpu_vehicle_floor_dirty || gpu_vehicle_obscured_dirty)) {
+        cata_gpu::invalidate_lighting_floor_inputs();
+    }
     if (!use_sdl_gpu_compute && gpu_transparency_dirty) { invalidate_lightmap_caches(); }
 #else
     if (gpu_transparency_dirty) { invalidate_lightmap_caches(); }

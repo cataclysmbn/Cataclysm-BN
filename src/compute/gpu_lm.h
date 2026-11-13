@@ -212,6 +212,9 @@ auto prepare_lighting_transparency_output(prepare_lighting_transparency_output_p
 auto mark_lighting_transparency_level_updated(int zlev) -> void;
 auto lighting_transparency_level_is_valid(int zlev) -> bool;
 auto invalidate_lighting_transparency_levels(std::vector<int> const& levels) -> void;
+// Mark resident floor, vehicle floor and vehicle obscured inputs stale.  A cache build that
+// skips the lightmap clears their CPU dirty flags, so the next lighting build must upload them.
+auto invalidate_lighting_floor_inputs() -> void;
 
 struct resident_lighting_visibility_params {
     SDL_GPUDevice* device = nullptr;
