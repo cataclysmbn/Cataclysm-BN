@@ -4,7 +4,7 @@
     "type": "GENERIC",
     "category": "veh_parts",
     "name": { "str": "rebar grate" },
-    "description": "Interlocked sections of rebar that allows for light and effective reinforcement of vehicle sections.",
+    "description": "Interlocked sections of rebar that allow for light and effective reinforcement of vehicle sections.",
     "weight": "2200 g",
     "volume": "3 L",
     "price": "750 cent",

@@ -228,7 +228,7 @@
     "type": "COMESTIBLE",
     "name": { "str": "bleached makeshift bandage" },
     "copy-from": "bandages",
-    "description": "Simple cloth bandages.  It is white, as real bandages should be.",
+    "description": "Simple cloth bandages.  They are white, as real bandages should be.",
     "price_postapoc": "150 cent",
     "flags": [ "NO_INGEST" ],
     "use_action": { "type": "heal", "bandages_power": 3, "bleed": 0.75, "move_cost": 300 }
@@ -238,7 +238,7 @@
     "type": "COMESTIBLE",
     "name": { "str": "boiled makeshift bandage" },
     "copy-from": "bandages",
-    "description": "Simple cloth bandages.  It was boiled to make it more sterile.",
+    "description": "Simple cloth bandages.  They were boiled to make them more sterile.",
     "price_postapoc": "150 cent",
     "flags": [ "NO_INGEST" ],
     "use_action": { "type": "heal", "bandages_power": 3, "bleed": 0.75, "move_cost": 300 }

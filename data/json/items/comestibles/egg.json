@@ -113,7 +113,7 @@
     "quench": 3,
     "healthy": 1,
     "calories": 87,
-    "description": "An egg belonging to one of reptile species found in New England.",
+    "description": "An egg belonging to one of the reptile species found in New England.",
     "price": "250 cent",
     "price_postapoc": "50 cent",
     "material": [ "egg" ],
@@ -167,7 +167,7 @@
     "copy-from": "egg_insect",
     "color": "white",
     "symbol": "%",
-    "description": "A egg from a giant spider, a bit bigger than a chicken one.  Incredibly gross."
+    "description": "An egg from a giant spider, a bit bigger than a chicken one.  Incredibly gross."
   },
   {
     "type": "COMESTIBLE",
@@ -179,7 +179,7 @@
     "spoils_in": "5 days",
     "healthy": -2,
     "quench": 3,
-    "description": "A egg from a giant roach, a bit bigger than a chicken one.  Incredibly gross.",
+    "description": "An egg from a giant roach, a bit bigger than a chicken one.  Incredibly gross.",
     "price": "80 cent",
     "material": [ "egg" ],
     "rot_spawn": "GROUP_EGG_ROACH",
@@ -202,7 +202,7 @@
     "symbol": "o",
     "spoils_in": "5 days",
     "quench": 3,
-    "description": "A egg from a locust, a bit bigger than a chicken one.",
+    "description": "An egg from a locust, a bit bigger than a chicken one.",
     "rot_spawn": "GROUP_EGG_LOCUST"
   },
   {

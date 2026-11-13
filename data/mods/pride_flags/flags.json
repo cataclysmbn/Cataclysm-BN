@@ -58,7 +58,7 @@
     "type": "ARMOR",
     "copy-from": "american_flag",
     "name": { "str": "Lesbian pride flag" },
-    "description": "A lesbian pride flag.  The dark orange represents gender non-conformity, the orange represents independence, the white represents unique relationships to womanhood, pink represents serenity and peace, and the dark rose represents feminimity.",
+    "description": "A lesbian pride flag.  The dark orange represents gender non-conformity, the orange represents independence, the white represents unique relationships to womanhood, pink represents serenity and peace, and the dark rose represents femininity.",
     "color": "light_red",
     "flags": [ "SUPER_FANCY" ]
   },
@@ -94,7 +94,7 @@
     "type": "ARMOR",
     "copy-from": "american_flag",
     "name": { "str": "Genderfluid pride flag" },
-    "description": "A genderfluid pride flag.  The pink represents feminimity, the white represents lack of gender, the purple represents androgyny, the black represents all other genders, and the blue represents masculinity.",
+    "description": "A genderfluid pride flag.  The pink represents femininity, the white represents lack of gender, the purple represents androgyny, the black represents all other genders, and the blue represents masculinity.",
     "color": "blue",
     "flags": [ "SUPER_FANCY" ]
   },

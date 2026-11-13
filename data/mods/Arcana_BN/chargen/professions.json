@@ -452,7 +452,7 @@
     "type": "profession",
     "id": "arcanist_dragonblood_aspirant",
     "name": "Dragonblood Aspirant",
-    "description": "You had been a apprentice within the Sanguine Order, in particular a sect that sought to research mastery over creatures from Beyond.  Your mentor and peers did not live to see this research bear fruit, leaving you to pursue what they left incomplete.",
+    "description": "You had been an apprentice within the Sanguine Order, in particular a sect that sought to research mastery over creatures from Beyond.  Your mentor and peers did not live to see this research bear fruit, leaving you to pursue what they left incomplete.",
     "points": 6,
     "skills": [
       { "level": 2, "name": "swimming" },

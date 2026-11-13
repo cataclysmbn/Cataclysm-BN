@@ -39,7 +39,7 @@
     "id": "electrolaser_conversion",
     "type": "GUNMOD",
     "name": { "str": "electrolaser conversion" },
-    "description": "A set of high-tech electronics and optics.  These converts a laser weapon into a less-lethal electrolaser capable of stunning targets, at the cost of a decreased damage output and increased power consumption.",
+    "description": "A set of high-tech electronics and optics.  These convert a laser weapon into a less-lethal electrolaser capable of stunning targets, at the cost of a decreased damage output and increased power consumption.",
     "weight": "380 g",
     "volume": "1 L",
     "price": "840 USD",
