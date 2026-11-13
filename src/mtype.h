@@ -24,6 +24,7 @@
 #include <vector>
 
 class lua_monster_callback_actor;
+class Character;
 class Creature;
 class monster;
 struct dealt_projectile_attack;
@@ -251,6 +252,11 @@ struct pet_food_data {
     std::string feed;
     /// Skill used when taming this monster; defaults to "survival".
     skill_id tame_skill = skill_id( "survival" );
+    /// Minimum level of tame_skill required to tame this monster; 0 means no skill requirement.
+    int tame_min_skill = 0;
+
+    /// True when the character meets the taming skill requirement (always true when tame_min_skill is 0).
+    auto tame_skill_requirement_met( const Character &ch ) const -> bool;
 
     bool was_loaded = false;
     void load( const JsonObject &jo );

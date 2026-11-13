@@ -1248,7 +1248,9 @@ auto pet_taming_description( const monster &mon ) -> std::string
                              enumerate_as_string( trait_reqs, enumeration_conjunction::and_ ) );
     }
 
-    ss += string_format( "  %s: %s\n", _( "Skill" ), petfood.tame_skill->name() );
+    if( petfood.tame_min_skill > 0 ) {
+        ss += string_format( "  %s: %d\n", petfood.tame_skill->name(), petfood.tame_min_skill );
+    }
 
     if( mon.type->pet_training && mon.type->pet_training->min_skill > 0 ) {
         ss += string_format( "  %s: %d\n", mon.type->pet_training->skill->name(),

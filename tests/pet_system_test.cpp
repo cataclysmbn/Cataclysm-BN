@@ -459,12 +459,36 @@ TEST_CASE(
 static const skill_id skill_melee("melee");
 static const skill_id skill_speech("speech");
 
-TEST_CASE("pet tame and training skills default to survival", "[pet][monster][skill]") {
+TEST_CASE(
+    "pet tame and training skills default to survival with no tame requirement",
+    "[pet][monster][skill]") {
     clear_all_state();
     monster& mon = spawn_test_monster(mon_dog.str(), mon_pos);
     REQUIRE(mon.type->pet_training.has_value());
     CHECK(mon.type->petfood.tame_skill == skill_survival);
+    CHECK(mon.type->petfood.tame_min_skill == 0);
     CHECK(mon.type->pet_training->skill == skill_survival);
+    // No minimum level means any character meets the taming skill requirement.
+    avatar& p = get_avatar();
+    p.set_skill_level(skill_survival, 0);
+    CHECK(mon.type->petfood.tame_skill_requirement_met(p));
+}
+
+TEST_CASE(
+    "tame_skill_requirement_met gates on the configured tame skill and level",
+    "[pet][monster][skill]") {
+    clear_all_state();
+    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos);
+    static mtype custom_type = *mon.type;
+    custom_type.petfood.tame_skill = skill_speech;
+    custom_type.petfood.tame_min_skill = 2;
+
+    avatar& p = get_avatar();
+    p.set_skill_level(skill_speech, 0);
+    p.set_skill_level(skill_survival, 10);
+    CHECK_FALSE(custom_type.petfood.tame_skill_requirement_met(p));
+    p.set_skill_level(skill_speech, 2);
+    CHECK(custom_type.petfood.tame_skill_requirement_met(p));
 }
 
 TEST_CASE(
@@ -475,14 +499,28 @@ TEST_CASE(
     // static so the pointer outlives the creature tracker cleanup.
     static mtype custom_type = *mon.type;
     custom_type.petfood.tame_skill = skill_speech;
+    custom_type.petfood.tame_min_skill = 2;
     custom_type.pet_training->skill = skill_melee;
     mon.type = &custom_type;
 
     const std::string desc = mon.extended_description();
     INFO(desc);
-    CHECK(desc.find("Skill: Speaking") != std::string::npos);
+    CHECK(desc.find("Speaking: 2") != std::string::npos);
     CHECK(desc.find("Melee: 3") != std::string::npos);
     CHECK(desc.find("Survival:") == std::string::npos);
+}
+
+TEST_CASE(
+    "extended description omits the tame skill line when no minimum is required",
+    "[pet][monster][skill]") {
+    clear_all_state();
+    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos);
+
+    const std::string desc = mon.extended_description();
+    INFO(desc);
+    // Dog has no tame_min_skill, so only the training requirement is listed.
+    CHECK(desc.find("Survival: 3") != std::string::npos);
+    CHECK(desc.find("Skill:") == std::string::npos);
 }
 
 TEST_CASE(
