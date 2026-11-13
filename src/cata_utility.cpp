@@ -16,6 +16,7 @@
 #include "enum_conversions.h"
 #include "filesystem.h"
 #include "json.h"
+#include "utils/memory_stream.h"
 #include "options.h"
 #include "output.h"
 #include "rng.h"
@@ -541,10 +542,15 @@ bool read_from_file( const std::string &path, file_read_fn reader, bool optional
         if( !fin.is_open() ) {
             throw std::runtime_error( "opening file failed" );
         }
-        reader( *fin );
+        // Hand the contents out from memory: most readers parse JSON, which seeks and tells
+        // a lot. That is slow on file streams and has a much faster path on memory.
+        auto buffer = std::ostringstream{};
+        buffer << ( *fin ).rdbuf();
         if( fin.bad() ) {
             throw std::runtime_error( "reading file failed" );
         }
+        auto contents = memory_istream( std::move( buffer ).str() );
+        reader( contents );
         return true;
 
     } catch( const std::exception &err ) {

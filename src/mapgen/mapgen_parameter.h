@@ -1,7 +1,11 @@
 #pragma once
 
 #include "cata_variant.h"
-#include "memory_fast.h"
+
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 struct mapgen_arguments;
 struct mapgen_parameters;
@@ -44,8 +48,9 @@ private:
     mapgen_parameter_scope scope_;
     cata_variant_type type_;
     // Using a pointer here mostly to move the definition of mapgen_value to the
-    // cpp file
-    shared_ptr_fast<const mapgen_value<std::string>> default_;
+    // cpp file. Parameters are copied out of palettes by mapgen functions that are
+    // set up on several threads at once, hence the thread-safe pointer.
+    std::shared_ptr<const mapgen_value<std::string>> default_;
 };
 
 struct mapgen_parameters {

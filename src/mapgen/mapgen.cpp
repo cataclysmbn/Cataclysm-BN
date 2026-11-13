@@ -86,18 +86,24 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
+#include <exception>
 #include <functional>
+#include <latch>
 #include <list>
 #include <map>
 #include <memory>
+#include <mutex>
+#include <numeric>
 #include <optional>
 #include <ranges>
 #include <set>
 #include <stdexcept>
 #include <unordered_map>
+#include <unordered_set>
 
 static const itype_id itype_avgas("avgas");
 static const itype_id itype_diesel("diesel");
@@ -324,6 +330,12 @@ public:
      * the **current** value of @ref mapgen_function::weight. This value may have
      * changed since it was first added, so this is needed to recalculate the weighted list.
      */
+    /// Calls `fn` with each mapgen function that @ref setup is going to set up.
+    template <typename Fn> auto for_each_pending(Fn&& fn) const -> void {
+        for (const auto& ptr : mapgens_) {
+            if (ptr->weight >= 1) { fn(*ptr); }
+        }
+    }
     void setup() {
         for (const std::shared_ptr<mapgen_function>& ptr : mapgens_) {
             const int weight = ptr->weight;
@@ -386,6 +398,10 @@ public:
     void reset() {
         mapgens_.clear();
         any_direct_lua_generator_ = false;
+    }
+    /// @see mapgen_basic_container::for_each_pending
+    template <typename Fn> auto for_each_pending(Fn&& fn) const -> void {
+        for (const auto& omw : mapgens_) { omw.second.for_each_pending(fn); }
     }
     /// @see mapgen_basic_container::setup
     void setup() {
@@ -491,12 +507,95 @@ void call_mapgen_function(std::string name, mapgendata& dat, bool nested, const 
     }
 }
 
+namespace {
+
+/// Calls `task(i)` for each `i < count` from the thread pool's workers and the calling thread.
+/// Indices are handed out one at a time, which suits tasks of very different sizes.
+/// The calling thread first runs `meanwhile`, if there is one, while the workers get going.
+/// Rethrows the first exception a task threw, or else `meanwhile`, once all threads are done.
+template <typename Task>
+auto run_on_all_threads(const size_t count, Task&& task, const std::function<void()>& meanwhile)
+    -> void {
+    auto next = std::atomic<size_t>{0};
+    auto first_error = std::exception_ptr{};
+    auto error_mutex = std::mutex{};
+    const auto work = [&]() {
+        for (auto i = next.fetch_add(1); i < count; i = next.fetch_add(1)) {
+            try {
+                task(i);
+            } catch (...) {
+                next.store(count);
+                const auto lock = std::lock_guard(error_mutex);
+                if (!first_error) { first_error = std::current_exception(); }
+            }
+        }
+    };
+    auto& pool = get_thread_pool();
+    const auto helpers =
+        is_pool_worker_thread() || count < 2
+            ? size_t{0}
+            : std::min<size_t>(pool.num_workers(), count - 1);
+    auto done = std::latch(static_cast<std::ptrdiff_t>(helpers));
+    for (size_t i = 0; i < helpers; ++i) {
+        pool.submit([&]() {
+            work();
+            done.count_down();
+        });
+    }
+    auto meanwhile_error = std::exception_ptr{};
+    if (meanwhile) {
+        try {
+            meanwhile();
+        } catch (...) { meanwhile_error = std::current_exception(); }
+    }
+    work();
+    done.wait();
+    if (first_error) { std::rethrow_exception(first_error); }
+    if (meanwhile_error) { std::rethrow_exception(meanwhile_error); }
+}
+
+/// Parses the JSON of every mapgen function that is about to be set up, on all threads.
+/// That is nearly all the work of setting them up: the regular pass that follows finds
+/// them ready. Functions are grouped by file, as each file is read through one stream.
+auto setup_json_mapgens_in_parallel(const std::function<void()>& meanwhile) -> void {
+    using functions = std::vector<mapgen_function_json_base*>;
+    auto by_file = std::unordered_map<std::string_view, functions>{};
+    auto seen = std::unordered_set<const mapgen_function_json_base*>{};
+    const auto add = [&](mapgen_function_json_base* const func) {
+        if (func == nullptr || !seen.insert(func).second) { return; }
+        if (const auto* const path = func->source_path()) { by_file[*path].push_back(func); }
+    };
+    oter_mapgen.for_each_pending([&](mapgen_function& func) {
+        add(dynamic_cast<mapgen_function_json_base*>(&func));
+    });
+    for (const auto& entry : nested_mapgen) {
+        for (const auto& nested : entry.second) { add(nested.obj.get()); }
+    }
+    for (const auto& entry : update_mapgen) {
+        for (const auto& update : entry.second) { add(update.get()); }
+    }
+    auto files = by_file | std::views::values | std::ranges::to<std::vector>();
+    // Biggest files first, so that threads run out of work at about the same time.
+    std::ranges::sort(files, std::ranges::greater{}, &functions::size);
+    run_on_all_threads(
+        files.size(),
+        [&](const size_t i) {
+            for (auto* const func : files[i]) { func->setup_common(); }
+        },
+        meanwhile);
+    drain_worker_thread_debugmsgs();
+}
+
+} // namespace
+
 /*
  * setup mapgen_basic_container::weights_ which mapgen uses to diceroll. Also setup
  * mapgen_function_json
  */
-void calculate_mapgen_weights() // TODO: rename as it runs jsonfunction setup too
+void calculate_mapgen_weights(const std::function<void()>& meanwhile) // TODO: rename as it runs
+                                                                      // jsonfunction setup too
 {
+    setup_json_mapgens_in_parallel(meanwhile);
     oter_mapgen.setup();
     // Not really calculate weights, but let's keep it here for now
     for (auto& pr : nested_mapgen) {
@@ -551,11 +650,29 @@ void check_mapgen_definitions() {
  * Tiny little namespace to hold error messages
  */
 namespace mapgen_defer {
-std::string member;
-std::string message;
-bool defer;
-JsonObject jsi;
+// Per thread, as mapgen functions are set up on several threads at once.
+thread_local std::string member;
+thread_local std::string message;
+thread_local bool defer;
+thread_local JsonObject jsi;
 } // namespace mapgen_defer
+
+namespace {
+
+/// Guards the registries that setting up mapgen functions adds to (inline item groups and
+/// color palettes), since that happens on several threads at once.
+auto shared_registry_mutex() -> std::mutex& { // *NOPAD*
+    static auto mutex = std::mutex{};
+    return mutex;
+}
+
+/// Defines the color palette given inline by a mapgen object.
+auto define_inline_color_palette(const JsonObject& jsi) -> mpalette_id {
+    const auto lock = std::lock_guard(shared_registry_mutex());
+    return MapgenColorPalette::define_new_palette(jsi);
+}
+
+} // namespace
 
 static void set_mapgen_defer(
     const JsonObject& jsi, const std::string& member, const std::string& message) {
@@ -587,9 +704,8 @@ auto load_mapgen_function(
         if (!jio.has_object("object")) {
             jio.throw_error(R"(mapgen with method "json" must define key "object")");
         }
-        JsonObject jo = jio.get_object("object");
-        const json_source_location jsrc = jo.get_source_location();
-        jo.allow_omitted_members();
+        // Only the location is needed here; the object is parsed during setup.
+        const json_source_location jsrc = jio.get_member_source_location("object");
         return std::make_shared<mapgen_function_json>(jsrc, mgweight, offset, total);
     } else if (mgtype == "lua") {
         if (!jio.has_string("luamethod")) {
@@ -614,9 +730,8 @@ static void load_nested_mapgen(const JsonObject& jio, const std::string& id_base
     if (mgtype == "json") {
         if (jio.has_object("object")) {
             int weight = jio.get_int("weight", 1000);
-            JsonObject jo = jio.get_object("object");
-            const json_source_location jsrc = jo.get_source_location();
-            jo.allow_omitted_members();
+            // Only the location is needed here; the object is parsed during setup.
+            const json_source_location jsrc = jio.get_member_source_location("object");
             nested_mapgen[id_base].add(std::make_shared<mapgen_function_json_nested>(jsrc), weight);
         } else {
             debugmsg("Nested mapgen: Invalid mapgen function (missing \"object\" object)",
@@ -632,9 +747,8 @@ static void load_update_mapgen(const JsonObject& jio, const std::string& id_base
     const std::string mgtype = jio.get_string("method");
     if (mgtype == "json") {
         if (jio.has_object("object")) {
-            JsonObject jo = jio.get_object("object");
-            const json_source_location jsrc = jo.get_source_location();
-            jo.allow_omitted_members();
+            // Only the location is needed here; the object is parsed during setup.
+            const json_source_location jsrc = jio.get_member_source_location("object");
             update_mapgen[id_base].push_back(std::make_unique<update_mapgen_function_json>(jsrc));
         } else {
             debugmsg("Update mapgen: Invalid mapgen function (missing \"object\" object)",
@@ -1268,7 +1382,7 @@ public:
         }
     };
 
-    mapgen_value(): is_null_(true), source_(make_shared_fast<null_source>()) {}
+    mapgen_value(): is_null_(true), source_(std::make_shared<null_source>()) {}
 
     explicit mapgen_value(const std::string& s) { init_string(s); }
 
@@ -1285,17 +1399,17 @@ public:
     explicit mapgen_value(const JsonObject& jo) { init_object(jo); }
 
     template <typename S> void init_string(const S& s) {
-        source_ = make_shared_fast<id_source>(s);
+        source_ = std::make_shared<id_source>(s);
         is_null_ = is_null_helper(s);
     }
 
     void init_object(const JsonObject& jo) {
         if (jo.has_member("param")) {
-            source_ = make_shared_fast<param_source>(jo);
+            source_ = std::make_shared<param_source>(jo);
         } else if (jo.has_member("distribution")) {
-            source_ = make_shared_fast<distribution_source>(jo);
+            source_ = std::make_shared<distribution_source>(jo);
         } else if (jo.has_member("switch")) {
-            source_ = make_shared_fast<switch_source>(jo);
+            source_ = std::make_shared<switch_source>(jo);
         } else {
             jo.throw_error(
                 R"(Expected member "param", "distribution", or "switch" in mapgen object)");
@@ -1326,7 +1440,7 @@ public:
 
 private:
     bool is_null_ = false;
-    shared_ptr_fast<const value_source> source_;
+    std::shared_ptr<const value_source> source_;
 };
 
 namespace io {
@@ -1356,13 +1470,13 @@ mapgen_parameter::mapgen_parameter(
     const mapgen_value<std::string>& def, cata_variant_type type, mapgen_parameter_scope scope)
     : scope_(scope),
       type_(type),
-      default_(make_shared_fast<mapgen_value<std::string>>(def)) {}
+      default_(std::make_shared<mapgen_value<std::string>>(def)) {}
 
 void mapgen_parameter::deserialize(JsonIn& jsin) {
     JsonObject jo = jsin.get_object();
     optional(jo, false, "scope", scope_, mapgen_parameter_scope::overmap_special);
     jo.read("type", type_, true);
-    default_ = make_shared_fast<mapgen_value<std::string>>(jo.get_member("default"));
+    default_ = std::make_shared<mapgen_value<std::string>>(jo.get_member("default"));
 }
 
 auto mapgen_parameter::type() const -> cata_variant_type { return type_; }
@@ -1487,11 +1601,11 @@ public:
 template <typename Value> class jmapgen_constrained: public jmapgen_piece {
 public:
     jmapgen_constrained(
-        shared_ptr_fast<const jmapgen_piece> und, const std::vector<mapgen_constraint<Value>>& cons)
+        std::shared_ptr<const jmapgen_piece> und, const std::vector<mapgen_constraint<Value>>& cons)
         : underlying_piece(std::move(und)),
           constraints(cons) {}
 
-    shared_ptr_fast<const jmapgen_piece> underlying_piece;
+    std::shared_ptr<const jmapgen_piece> underlying_piece;
     std::vector<mapgen_constraint<Value>> constraints;
 
     auto phase() const -> mapgen_phase override { return underlying_piece->phase(); }
@@ -1856,7 +1970,11 @@ public:
     jmapgen_int chance;
     jmapgen_item_group(const JsonObject& jsi): chance(jsi, "chance", 1, 1) {
         JsonValue group = jsi.get_member("item");
-        group_id = item_group::load_item_group(group, "collection");
+        {
+            // Inline groups are added to the item group registry.
+            const auto lock = std::lock_guard(shared_registry_mutex());
+            group_id = item_group::load_item_group(group, "collection");
+        }
         repeat = jmapgen_int(jsi, "repeat", 1, 1);
     }
     void check(const std::string& context, const mapgen_parameters&) const override {
@@ -1885,7 +2003,12 @@ public:
         if (group.is_empty() == ity.is_empty()) {
             jsi.throw_error("must provide either item or group");
         }
-        if (!group.is_empty() && !group.is_valid()) {
+        const auto group_is_valid = [&]() {
+            // Other threads may be adding inline groups to the item group registry.
+            const auto lock = std::lock_guard(shared_registry_mutex());
+            return group.is_valid();
+        };
+        if (!group.is_empty() && !group_is_valid()) {
             set_mapgen_defer(jsi, "group", "no such item group");
         }
         if (!ity.is_empty() && !ity.is_valid()) {
@@ -2243,7 +2366,7 @@ public:
         // Used in simple cases
         assign(jsi, "palette", palette);
 
-        if (jsi.has_array("colors")) { palette = MapgenColorPalette::define_new_palette(jsi); }
+        if (jsi.has_array("colors")) { palette = define_inline_color_palette(jsi); }
     }
 
     jmapgen_furniture(const JsonValue& jsv) {
@@ -2254,9 +2377,7 @@ public:
             if (jsi.has_member("furn")) {
                 id = mapgen_value<furn_id>(jsi.get_member("furn"));
                 assign(jsi, "palette", palette);
-                if (jsi.has_array("colors")) {
-                    palette = MapgenColorPalette::define_new_palette(jsi);
-                }
+                if (jsi.has_array("colors")) { palette = define_inline_color_palette(jsi); }
             } else {
                 // If this object is using parameters distributions etc
                 id = mapgen_value<furn_id>(jsi);
@@ -2312,7 +2433,7 @@ public:
     jmapgen_terrain(const JsonObject& jsi): jmapgen_terrain(jsi.get_member("ter")) {
         // Used in simple cases
         assign(jsi, "palette", palette);
-        if (jsi.has_array("colors")) { palette = MapgenColorPalette::define_new_palette(jsi); }
+        if (jsi.has_array("colors")) { palette = define_inline_color_palette(jsi); }
     }
     jmapgen_terrain(const JsonValue& jsv) {
         // Okay so we have an object
@@ -2322,9 +2443,7 @@ public:
             if (jsi.has_member("ter")) {
                 id = mapgen_value<ter_id>(jsi.get_member("ter"));
                 assign(jsi, "palette", palette);
-                if (jsi.has_array("colors")) {
-                    palette = MapgenColorPalette::define_new_palette(jsi);
-                }
+                if (jsi.has_array("colors")) { palette = define_inline_color_palette(jsi); }
             } else {
                 // If this object is using parameters distributions etc
                 id = mapgen_value<ter_id>(jsi);
@@ -2864,6 +2983,9 @@ public:
     }
     auto phase() const -> mapgen_phase override { return mapgen_phase::nested_mapgen; }
     auto finalize() const -> void override {
+        // Palettes share this piece between mapgen functions set up on different threads.
+        static auto mutex = std::mutex{};
+        const auto lock = std::lock_guard(mutex);
         resolved_entries.clear();
         resolved_else_entries.clear();
         resolved_entries_valid = false;
@@ -2972,9 +3094,20 @@ auto jmapgen_objects::check_bounds(const jmapgen_place& place, const JsonObject&
     return common_check_bounds(place.x, place.y, mapgensize, jso);
 }
 
+void jmapgen_objects::reserve(const size_t count) { objects.reserve(objects.size() + count); }
+
 void jmapgen_objects::add(
-    const jmapgen_place& place, const shared_ptr_fast<const jmapgen_piece>& piece) {
-    objects.emplace_back(place, piece);
+    const jmapgen_place& place, const std::shared_ptr<const jmapgen_piece>& piece) {
+    own(piece);
+    add(place, *piece);
+}
+
+void jmapgen_objects::own(const std::shared_ptr<const jmapgen_piece>& piece) {
+    pieces.push_back(piece);
+}
+
+void jmapgen_objects::add(const jmapgen_place& place, const jmapgen_piece& piece) {
+    objects.emplace_back(place, &piece);
 }
 
 template <typename PieceType> void jmapgen_objects::load_objects(JsonArray parray) {
@@ -2983,7 +3116,7 @@ template <typename PieceType> void jmapgen_objects::load_objects(JsonArray parra
         where.offset(m_offset);
 
         if (check_bounds(where, jsi)) {
-            add(where, make_shared_fast<PieceType>(jsi));
+            add(where, std::make_shared<PieceType>(jsi));
         } else {
             jsi.allow_omitted_members();
         }
@@ -3000,7 +3133,7 @@ template <> void jmapgen_objects::load_objects<jmapgen_loot>(JsonArray parray) {
             continue;
         }
 
-        auto loot = make_shared_fast<jmapgen_loot>(jsi);
+        auto loot = std::make_shared<jmapgen_loot>(jsi);
         auto rate = get_option<float>("ITEM_SPAWNRATE");
 
         if (where.repeat.valmax != 1) {
@@ -3025,7 +3158,7 @@ void jmapgen_objects::load_objects(const JsonObject& jsi, const std::string& mem
 
 template <typename PieceType>
 void load_place_mapings(const JsonObject& jobj, mapgen_palette::placing_map::mapped_type& vect) {
-    vect.push_back(make_shared_fast<PieceType>(jobj));
+    vect.push_back(std::make_shared<PieceType>(jobj));
 }
 
 /*
@@ -3056,7 +3189,7 @@ void load_place_mapings_string(
     const JsonValue& value, mapgen_palette::placing_map::mapped_type& vect) {
     if (value.test_string() || value.test_object()) {
         try {
-            vect.push_back(make_shared_fast<PieceType>(value));
+            vect.push_back(std::make_shared<PieceType>(value));
         } catch (const std::runtime_error& err) {
             // Using the json object here adds nice formatting and context information
             value.throw_error(err.what());
@@ -3065,7 +3198,7 @@ void load_place_mapings_string(
         for (const JsonValue entry : value.get_array()) {
             if (entry.test_string()) {
                 try {
-                    vect.push_back(make_shared_fast<PieceType>(entry));
+                    vect.push_back(std::make_shared<PieceType>(entry));
                 } catch (const std::runtime_error& err) {
                     // Using the json object here adds nice formatting and context information
                     entry.throw_error(err.what());
@@ -3087,7 +3220,7 @@ void load_place_mapings_alternatively(
     if (!value.test_array()) {
         load_place_mapings_string<PieceType>(value, vect);
     } else {
-        auto alter = make_shared_fast<jmapgen_alternatively<PieceType>>();
+        auto alter = std::make_shared<jmapgen_alternatively<PieceType>>();
         for (const JsonValue entry : value.get_array()) {
             if (entry.test_string()) {
                 try {
@@ -3196,9 +3329,9 @@ void mapgen_palette::check() {
         std::string this_context = string_format("parameter %s in %s", param.first, context);
         param.second.check(no_parameters, this_context);
     }
-    for (const std::pair<const map_key, std::vector<shared_ptr_fast<const jmapgen_piece>>>& p :
+    for (const std::pair<const map_key, std::vector<std::shared_ptr<const jmapgen_piece>>>& p :
          format_placings) {
-        for (const shared_ptr_fast<const jmapgen_piece>& j : p.second) {
+        for (const std::shared_ptr<const jmapgen_piece>& j : p.second) {
             j->check(context, parameters);
         }
     }
@@ -3277,14 +3410,14 @@ void mapgen_palette::add(const mapgen_palette& rh, const add_palette_context& co
     }
     for (const auto& placing : rh.format_placings) {
         const std::vector<mapgen_constraint<palette_id>>& constraints = context.constraints;
-        std::vector<shared_ptr_fast<const jmapgen_piece>> constrained_placings = placing.second;
+        std::vector<std::shared_ptr<const jmapgen_piece>> constrained_placings = placing.second;
         if (!constraints.empty()) {
-            for (shared_ptr_fast<const jmapgen_piece>& piece : constrained_placings) {
-                piece = make_shared_fast<
+            for (std::shared_ptr<const jmapgen_piece>& piece : constrained_placings) {
+                piece = std::make_shared<
                     jmapgen_constrained<palette_id>>(std::move(piece), constraints);
             }
         }
-        std::vector<shared_ptr_fast<const jmapgen_piece>>& these_placings =
+        std::vector<std::shared_ptr<const jmapgen_piece>>& these_placings =
             format_placings[placing.first];
         these_placings
             .insert(these_placings.end(), constrained_placings.begin(), constrained_placings.end());
@@ -3361,7 +3494,7 @@ auto mapgen_palette::load_internal(
         p.second.erase(
             std::remove_if(
                 p.second.begin(), p.second.end(),
-                [](const shared_ptr_fast<const jmapgen_piece>& placing) {
+                [](const std::shared_ptr<const jmapgen_piece>& placing) {
                     return placing->is_nop();
                 }),
             p.second.end());
@@ -3392,6 +3525,10 @@ auto mapgen_function_json::setup_internal(const JsonObject& jo) -> bool {
     }
 
     return fill_ter != t_null || predecessor_mapgen != oter_str_id::NULL_ID();
+}
+
+auto mapgen_function_json_base::source_path() const -> const std::string* {
+    return jsrcloc->path.get();
 }
 
 auto mapgen_function_json_nested::setup_internal(const JsonObject& jo) -> bool {
@@ -3476,62 +3613,132 @@ auto mapgen_function_json_base::setup_common(const JsonObject& jo) -> bool {
         assert(expected_dim.x() >= 0);
         assert(expected_dim.y() >= 0);
 
-        parray = jo.get_array("rows");
-        if (static_cast<int>(parray.size()) < expected_dim.y()) {
-            parray.throw_error(string_format(
-                "format: rows: must have at least %d rows, not %d", expected_dim.y(),
-                parray.size()));
+        // Read rows in one pass; the indexed array is only needed to report errors.
+        auto rows = std::vector<std::string>{};
+        {
+            JsonIn& rows_in = *jo.get_raw("rows");
+            rows_in.start_array();
+            while (!rows_in.end_array()) { rows.push_back(rows_in.get_string()); }
         }
-        if (static_cast<int>(parray.size()) != total_size.y()) {
-            parray.throw_error(string_format(
+        const auto rows_array = [&]() -> JsonArray& {
+            if (parray.empty()) { parray = jo.get_array("rows"); }
+            return parray;
+        };
+        if (static_cast<int>(rows.size()) < expected_dim.y()) {
+            rows_array().throw_error(string_format(
+                "format: rows: must have at least %d rows, not %d", expected_dim.y(), rows.size()));
+        }
+        if (static_cast<int>(rows.size()) != total_size.y()) {
+            rows_array().throw_error(string_format(
                 "format: rows: must have %d rows, not %d; check mapgensize if applicable",
-                total_size.y(), parray.size()));
+                total_size.y(), rows.size()));
         }
-        for (int c = m_offset.y(); c < expected_dim.y(); c++) {
-            const std::string row = parray.get_string(c);
-            std::vector<map_key> row_keys;
-            for (const std::string& key : utf8_display_split(row)) { row_keys.emplace_back(key); }
-            if (row_keys.size() < static_cast<size_t>(expected_dim.x())) {
-                parray.throw_error(string_format(
+        const auto check_row_size = [&](const int c, const size_t columns) {
+            if (columns < static_cast<size_t>(expected_dim.x())) {
+                rows_array().throw_error(string_format(
                     "  format: row %d must have at least %d columns, not %d", c + 1,
-                    expected_dim.x(), row_keys.size()));
+                    expected_dim.x(), columns));
             }
-            if (row_keys.size() != static_cast<size_t>(total_size.x())) {
-                parray.throw_error(string_format(
+            if (columns != static_cast<size_t>(total_size.x())) {
+                rows_array().throw_error(string_format(
                     "  format: row %d must have %d columns, not %d; check mapgensize if applicable",
-                    c + 1, total_size.x(), row_keys.size()));
+                    c + 1, total_size.x(), columns));
             }
-            for (int i = m_offset.x(); i < expected_dim.x(); i++) {
+        };
+        using terrain_iter = decltype(keys_with_terrain.cend());
+        using placing_iter = decltype(format_placings.cend());
+        const auto place_cell =
+            [&](const int c, const int i, const std::string& key_str, const terrain_iter iter_ter,
+                const placing_iter fpi) {
                 const auto p = point_rel_ms(i, c) - m_offset;
-                const map_key key = row_keys[i];
-                const auto iter_ter = keys_with_terrain.find(key);
-                const auto fpi = format_placings.find(key);
-
-                const bool has_terrain = iter_ter != keys_with_terrain.end();
-                const bool has_placing = fpi != format_placings.end();
+                const bool has_terrain = iter_ter != keys_with_terrain.cend();
+                const bool has_placing = fpi != format_placings.cend();
 
                 if (!has_terrain && !fallback_terrain_exists) {
-                    parray.string_error(
+                    rows_array().string_error(
                         string_format(
                             "format: rows: row %d column %d: "
                             "'%s' is not in 'terrain', and no 'fill_ter' is set!",
-                            c + 1, i + 1, key.str),
+                            c + 1, i + 1, key_str),
                         c, i + 1);
                 }
-                if (!has_terrain && !has_placing && key.str != " " && key.str != ".") {
+                if (!has_terrain && !has_placing && key_str != " " && key_str != ".") {
                     try {
-                        parray.string_error(
+                        rows_array().string_error(
                             string_format(
                                 "format: rows: row %d column %d: "
                                 "'%s' has no terrain, furniture, or other definition",
-                                c + 1, i + 1, key.str),
+                                c + 1, i + 1, key_str),
                             c, i + 1);
                     } catch (const JsonError& e) { debugmsg("(json-error)\n%s", e.what()); }
                 }
                 if (has_placing) {
                     jmapgen_place where(p);
-                    for (auto& what : fpi->second) { objects.add(where, what); }
+                    for (const auto& what : fpi->second) { objects.add(where, *what); }
                 }
+            };
+        // Squares only refer to the pieces of their key, which are kept alive once per key.
+        const auto own_pieces = [&](const placing_iter fpi) {
+            if (fpi != format_placings.cend()) {
+                for (const auto& what : fpi->second) { objects.own(what); }
+            }
+        };
+        /// Lookups for single-byte keys, resolved on first use. Almost all rows are plain ASCII.
+        struct ascii_key_lookup {
+            bool resolved = false;
+            terrain_iter terrain;
+            placing_iter placing;
+        };
+        auto ascii_lookups = std::array<ascii_key_lookup, 128>{};
+        const auto lookup_ascii = [&](const char ch) -> const ascii_key_lookup& {
+            auto& lookup = ascii_lookups[static_cast<unsigned char>(ch)];
+            if (!lookup.resolved) {
+                const auto key = map_key(std::string(1, ch));
+                lookup =
+                    {.resolved = true,
+                     .terrain = keys_with_terrain.find(key),
+                     .placing = format_placings.find(key)};
+                own_pieces(lookup.placing);
+            }
+            return lookup;
+        };
+        const auto is_printable_ascii = [](const char ch) { return ch >= 0x20 && ch < 0x7f; };
+        // Reserve room for the placings of ASCII rows up front instead of growing per square.
+        auto placing_count = size_t{0};
+        for (int c = m_offset.y(); c < expected_dim.y(); c++) {
+            const std::string& row = rows[c];
+            if (row.size() < static_cast<size_t>(expected_dim.x())
+                || !std::ranges::all_of(row, is_printable_ascii)) {
+                continue;
+            }
+            for (int i = m_offset.x(); i < expected_dim.x(); i++) {
+                const auto& lookup = lookup_ascii(row[i]);
+                if (lookup.placing != format_placings.cend()) {
+                    placing_count += lookup.placing->second.size();
+                }
+            }
+        }
+        objects.reserve(placing_count);
+        for (int c = m_offset.y(); c < expected_dim.y(); c++) {
+            const std::string& row = rows[c];
+            if (std::ranges::all_of(row, is_printable_ascii)) {
+                // utf8_display_split always yields at least one (possibly empty) glyph.
+                check_row_size(c, std::max<size_t>(row.size(), 1));
+                for (int i = m_offset.x(); i < expected_dim.x(); i++) {
+                    const auto ch = row[i];
+                    const auto& lookup = lookup_ascii(ch);
+                    place_cell(c, i, std::string(1, ch), lookup.terrain, lookup.placing);
+                }
+                continue;
+            }
+            std::vector<map_key> row_keys;
+            for (const std::string& key : utf8_display_split(row)) { row_keys.emplace_back(key); }
+            check_row_size(c, row_keys.size());
+            for (int i = m_offset.x(); i < expected_dim.x(); i++) {
+                const map_key& key = row_keys[i];
+                const auto placing = format_placings.find(key);
+                own_pieces(placing);
+                place_cell(c, i, key.str, keys_with_terrain.find(key), placing);
             }
         }
         fallback_terrain_exists = true;
@@ -3622,22 +3829,40 @@ void mapgen_function_json_base::check_common(const std::string& oter_name) const
 }
 
 void jmapgen_objects::finalize() {
-    for (const auto& obj : objects) { obj.second->finalize(); }
-    std::stable_sort(objects.begin(), objects.end(), [](const jmapgen_obj& l, const jmapgen_obj& r) {
-        return l.second->phase() < r.second->phase();
-    });
+    using namespace std::views;
+    namespace ranges = std::ranges;
+    // Keep each piece once, in order of first use.
+    {
+        auto seen = std::unordered_set<const jmapgen_piece*>{};
+        std::erase_if(pieces, [&](const auto& piece) { return !seen.insert(piece.get()).second; });
+    }
+    for (const auto& piece : pieces) { piece->finalize(); }
+    // phase() is virtual, so evaluate it once per object. There are only a few phases,
+    // so a stable counting sort avoids comparison sorting large object lists.
+    const auto phases =
+        objects | transform([](const jmapgen_obj& obj) { return obj.second->phase(); })
+        | ranges::to<std::vector>();
+    if (ranges::is_sorted(phases)) { return; }
+    constexpr auto phase_count = static_cast<size_t>(mapgen_phase::faction_ownership) + 1;
+    auto offsets = std::array<size_t, phase_count + 1>{};
+    for (const auto phase : phases) { ++offsets[static_cast<size_t>(phase) + 1]; }
+    std::partial_sum(offsets.begin(), offsets.end(), offsets.begin());
+    auto sorted = std::vector<jmapgen_obj>(objects.size());
+    for (size_t i = 0; i < objects.size(); ++i) {
+        sorted[offsets[static_cast<size_t>(phases[i])]++] = objects[i];
+    }
+    objects = std::move(sorted);
 }
+
 
 void jmapgen_objects::check(
     const std::string& oter_name, const mapgen_parameters& parameters) const {
-    for (const jmapgen_obj& obj : objects) { obj.second->check(oter_name, parameters); }
+    for (const auto& piece : pieces) { piece->check(oter_name, parameters); }
 }
 
 void jmapgen_objects::merge_parameters_into(
     mapgen_parameters& params, const std::string& outer_context) const {
-    for (const jmapgen_obj& obj : objects) {
-        obj.second->merge_parameters_into(params, outer_context);
-    }
+    for (const auto& piece : pieces) { piece->merge_parameters_into(params, outer_context); }
 }
 
 /////////////////////////////////////////////////////////////////////////////////

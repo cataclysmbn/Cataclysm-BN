@@ -47,6 +47,7 @@
 #include "trap.h"
 #include "ui_manager.h"
 #include "units_mass.h"
+#include "utils/memory_stream.h"
 #include "vehicle/veh_type.h"
 #include "vehicle/vehicle.h"
 #include "vehicle/vehicle_part.h"
@@ -1301,7 +1302,7 @@ auto mapbuffer::lookup_submap(const tripoint_abs_sm& p) -> submap* {
     try {
         bool found = false;
         if (!pending_data.empty()) {
-            std::istringstream iss(pending_data);
+            memory_istream iss(pending_data);
             JsonIn jsin(iss);
             deserialize_into_vec(jsin, loaded, already_loaded);
             found = true;
@@ -3323,7 +3324,7 @@ auto mapbuffer::preload_omt(const tripoint_abs_omt& omt_addr) -> bool {
     }
 
     if (!pending_data.empty()) {
-        std::istringstream iss(pending_data);
+        memory_istream iss(pending_data);
         JsonIn jsin(iss);
         deserialize_into_vec(jsin, loaded, already_loaded);
     } else {

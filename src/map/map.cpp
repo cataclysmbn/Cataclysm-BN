@@ -7327,13 +7327,34 @@ auto map::get_dir_circle(const tripoint_bub_ms& f, const tripoint_bub_ms& t) con
     return circle;
 }
 
+namespace {
+
+/// Marks every cache of a whole z-level dirty, as needed once its submaps were replaced.
+auto mark_level_caches_dirty(map& m, const int zlev) -> void {
+    m.set_transparency_cache_dirty(zlev);
+    m.set_floor_cache_dirty(zlev);
+    m.set_outside_cache_dirty(zlev);
+    m.set_absorption_cache_dirty(zlev);
+    m.set_seen_cache_dirty(zlev);
+    m.set_pathfinding_cache_dirty(zlev);
+    m.set_suspension_cache_dirty(zlev);
+    m.set_vehicle_cache_dirty(zlev);
+}
+
+} // namespace
+
 void map::load(const point_abs_sm& w, const bool update_vehicle, const bool pump_events) {
     funnel_locations_.clear();
     set_abs_sub(w);
     for (const auto p : bubble_submaps()) {
-        loadn(p, update_vehicle);
+        // Every submap is replaced, so whole levels are marked dirty once below
+        // instead of once per submap.
+        loadn(p, update_vehicle, true);
         MAPBUFFER_REGISTRY.get(bound_dimension_).actualize_submap(map_local_to_abs(*this, p));
         if (pump_events) { inp_mngr.pump_events(); }
+    }
+    for (const auto zlev : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
+        mark_level_caches_dirty(*this, zlev);
     }
     refresh_active_submap_view();
     validate_active_submap_view_complete("map::load");
@@ -7847,14 +7868,7 @@ void map::loadn(const tripoint_bub_sm& grid, const bool update_vehicles, const b
                 .pathfinding = true,
             });
         } else {
-            set_transparency_cache_dirty(grid.z());
-            set_floor_cache_dirty(grid.z());
-            set_outside_cache_dirty(grid.z());
-            set_absorption_cache_dirty(grid.z());
-            set_seen_cache_dirty(grid.z());
-            set_pathfinding_cache_dirty(grid.z());
-            set_suspension_cache_dirty(grid.z());
-            set_vehicle_cache_dirty(grid.z());
+            mark_level_caches_dirty(*this, grid.z());
         }
     }
     // Overlay boundary terrain on the edge tiles of this submap if it sits at the

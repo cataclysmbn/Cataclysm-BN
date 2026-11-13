@@ -61,6 +61,7 @@
 #include "mapgen/mapgen_color_palette.h"
 #include "martialarts.h"
 #include "material.h"
+#include "utils/memory_stream.h"
 #include "mission.h"
 #include "mod_manager.h"
 #include "monfaction.h"
@@ -116,19 +117,38 @@
 #include <fstream>
 #include <iterator>
 #include <memory>
+#include <mutex>
 #include <ranges>
 #include <set>
 #include <sstream> // for throwing errors
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #if defined(TILES)
 #  include "mod_tileset.h"
+#  include "tileset_loading.h"
 #endif
 
+namespace
+{
+
+/// Data files read since the last finalization. Finalization re-parses parts of them
+/// (deferred objects, mapgen), so keeping the streams lets it reuse both their contents
+/// and the JSON structure already scanned while loading.
+using loaded_files = std::unordered_map<std::string, shared_ptr_fast<memory_istream>>;
+
+auto loaded_data_files() -> loaded_files & // *NOPAD*
+{
+    static auto files = loaded_files{};
+    return files;
+}
+
+} // namespace
+
 struct DynamicDataLoader::cached_streams {
-    lru_cache<std::string, shared_ptr_fast<std::istringstream>> cache;
+    lru_cache<std::string, shared_ptr_fast<memory_istream>> cache;
 };
 
 DynamicDataLoader::DynamicDataLoader()
@@ -160,14 +180,25 @@ shared_ptr_fast<std::istream> DynamicDataLoader::get_cached_stream( const std::s
 {
     assert( !finalized && "Cannot open data file after finalization." );
     assert( stream_cache && "Stream cache is only available during finalization" );
-    shared_ptr_fast<std::istringstream> cached = stream_cache->cache.get( path, nullptr );
+    // Threads finalizing data in parallel each stick to their own files, so only
+    // files outside the registry need the lock.
+    if( const auto loaded = loaded_data_files().find( path ); loaded != loaded_data_files().end() ) {
+        // Only the registry holds it, so nobody else is reading from it.
+        if( loaded->second.use_count() == 1 ) {
+            return loaded->second;
+        }
+        return make_shared_fast<memory_istream>( loaded->second->contents() );
+    }
+    static auto cache_mutex = std::mutex{};
+    const auto lock = std::lock_guard( cache_mutex );
+    shared_ptr_fast<memory_istream> cached = stream_cache->cache.get( path, nullptr );
     // Create a new stream if the file is not opened yet, or if some code is still
     // using the previous stream (in such case, `cached` and `stream_cache` have
     // two references to the stream, hence the test for > 2).
     if( !cached ) {
-        cached = make_shared_fast<std::istringstream>( read_entire_file( path ) );
+        cached = make_shared_fast<memory_istream>( read_entire_file( path ) );
     } else if( cached.use_count() > 2 ) {
-        cached = make_shared_fast<std::istringstream>( cached->str() );
+        cached = make_shared_fast<memory_istream>( cached->contents() );
     }
     stream_cache->cache.insert( 8, path, cached );
     return cached;
@@ -542,18 +573,12 @@ void DynamicDataLoader::load_data_from_path( const std::string &path, const std:
     // iterate over each file
     for( auto &files_i : files ) {
         const std::string &file = files_i;
-        // open the file as a stream
-        cata_ifstream infile = std::move( cata_ifstream().mode( cata_ios_mode::binary ).open( file ) );
-        // and stuff it into ram
-        std::istringstream iss(
-            std::string(
-                ( std::istreambuf_iterator<char>( *infile ) ),
-                std::istreambuf_iterator<char>()
-            )
-        );
+        // read the whole file into ram
+        auto stream = make_shared_fast<memory_istream>( read_entire_file( file ) );
+        loaded_data_files().insert_or_assign( file, stream );
         try {
             // parse it
-            JsonIn jsin( iss, file );
+            JsonIn jsin( *stream, file );
             load_all_from_json( jsin, src, ui, path, file );
         } catch( const JsonError &err ) {
             throw std::runtime_error( err.what() );
@@ -593,6 +618,7 @@ void DynamicDataLoader::load_all_from_json( JsonIn &jsin, const std::string &src
 void DynamicDataLoader::unload_data()
 {
     finalized = false;
+    loaded_data_files().clear();
 
     //Moved to the top as a temp hack until vehicles are made into game objects
     vehicle_prototype::reset();
@@ -715,6 +741,7 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
 
     on_out_of_scope reset_stream_cache( [this]() {
         stream_cache.reset();
+        loaded_data_files().clear();
     } );
     stream_cache = std::make_unique<cached_streams>();
 
@@ -758,7 +785,18 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
             { _( "Start locations" ), &start_locations::finalize_all },
             { _( "Zone manager" ), &zone_manager::reset_manager },
             { _( "Vehicle prototypes" ), &vehicle_prototype::finalize },
-            { _( "Mapgen weights" ), &calculate_mapgen_weights },
+            {
+                _( "Mapgen weights" ), []()
+                {
+#if defined(TILES)
+                    // Loading the tileset needs this thread, but none of the game data that
+                    // the worker threads are busy with, so it fills the wait for them.
+                    calculate_mapgen_weights( &tileset_loading::load_for_active_world );
+#else
+                    calculate_mapgen_weights();
+#endif
+                }
+            },
             { _( "Mapgen parameters" ), &overmap_specials::finalize_mapgen_parameters },
             {
                 _( "Monster types" ), []()
@@ -935,6 +973,13 @@ static void load_and_finalize_packs( loading_ui &ui, const std::string &msg,
     }
 
     DynamicDataLoader &loader = DynamicDataLoader::get_instance();
+
+#if defined(TILES)
+    // The tileset loads last, but decoding its images can start now on idle threads.
+    tileset_loading::decode_images_ahead();
+    const auto discard_tileset_images = on_out_of_scope(
+                                            &tileset_loading::discard_images_decoded_ahead );
+#endif
 
     cata::lua_sidebar_widgets::clear_widgets();
     loader.lua = cata::make_wrapped_state();
