@@ -62,6 +62,7 @@
 #include "profile.h"
 #include "projectile.h"
 #include "rng.h"
+#include "skill.h"
 #include "sounds.h"
 #include "string_formatter.h"
 #include "string_id.h"
@@ -1247,8 +1248,11 @@ auto pet_taming_description( const monster &mon ) -> std::string
                              enumerate_as_string( trait_reqs, enumeration_conjunction::and_ ) );
     }
 
+    ss += string_format( "  %s: %s\n", _( "Skill" ), petfood.tame_skill->name() );
+
     if( mon.type->pet_training && mon.type->pet_training->min_skill > 0 ) {
-        ss += string_format( "  %s: %d\n", _( "Survival" ), mon.type->pet_training->min_skill );
+        ss += string_format( "  %s: %d\n", mon.type->pet_training->skill->name(),
+                             mon.type->pet_training->min_skill );
     }
 
     const auto pet_armors = item_controller->find( [&mon]( const itype & t ) {

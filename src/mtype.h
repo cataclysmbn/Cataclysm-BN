@@ -249,6 +249,8 @@ struct pet_food_data {
     std::set<TraitSet> tamer_traits;
     std::string pet;
     std::string feed;
+    /// Skill used when taming this monster; defaults to "survival".
+    skill_id tame_skill = skill_id( "survival" );
 
     bool was_loaded = false;
     void load( const JsonObject &jo );
@@ -370,6 +372,8 @@ struct mtype {
             float dodge = 1.15f;
             int max_level = 3;
             int min_skill = 3;
+            /// Skill used when training this monster as a pet; defaults to "survival".
+            skill_id skill = skill_id( "survival" );
             std::vector<pet_training_level_flags> level_flags;
         };
         // Per-level stat multipliers when this monster is trained as a pet.

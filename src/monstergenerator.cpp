@@ -24,6 +24,7 @@
 #include "mtype.h"
 #include "options.h"
 #include "rng.h"
+#include "skill.h"
 #include "string_id.h"
 #include "translations.h"
 #include "units.h"
@@ -752,6 +753,7 @@ void pet_food_data::load( const JsonObject &jo )
     optional( jo, was_loaded, "feed", feed );
     optional( jo, was_loaded, "pet", pet );
     optional( jo, was_loaded, "tamer_traits", tamer_traits );
+    optional( jo, was_loaded, "tame_skill", tame_skill, skill_id( "survival" ) );
 }
 
 void pet_food_data::deserialize( JsonIn &jsin )
@@ -888,6 +890,7 @@ void mtype::load( const JsonObject &jo, const std::string &src )
         pt.read( "dodge_mult", ptm.dodge );
         pt.read( "max_level", ptm.max_level );
         pt.read( "min_skill", ptm.min_skill );
+        pt.read( "skill", ptm.skill );
         if( pt.has_array( "level_flags" ) ) {
             for( JsonObject lf_obj : pt.get_array( "level_flags" ) ) {
                 pet_training_level_flags lf;
