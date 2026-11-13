@@ -3579,7 +3579,7 @@
     "type": "overmap_special",
     "id": "ws_survivor_camp_place",
     "overmaps": [ { "point": [ 0, 0, 0 ], "overmap": "ws_survivor_camp_north" } ],
-    "locations": [ "wilderness" ],
+    "locations": [ "field" ],
     "city_distance": [ 25, -1 ],
     "occurrences": [ 40, 100 ],
     "flags": [ "CLASSIC", "UNIQUE" ]

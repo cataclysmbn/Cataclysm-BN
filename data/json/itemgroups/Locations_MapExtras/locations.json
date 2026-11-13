@@ -2877,8 +2877,12 @@
   },
   {
     "type": "item_group",
+    "subtype": "distribution",
     "id": "oa_ig_sb_water",
-    "items": [ { "item": "water", "prob": 30, "charges-min": 0, "charges-max": 200, "container-item": "keg" } ]
+    "items": [
+      { "item": "water_clean", "prob": 30, "charges": [ 50, 200 ], "container-item": "keg" },
+      { "item": "water_clean", "prob": 70, "charges": [ 0, 50 ], "container-item": "keg" }
+    ]
   },
   {
     "type": "item_group",
