@@ -4827,7 +4827,7 @@
     "type": "TOOL",
     "name": { "str": "e-ink tablet PC" },
     "description": "A tablet PC using an efficient color e-ink display.  It stores books and saved text for reading.",
-    "use_action": ["EINKTABLETPC", "TOGGLE_UPS_CHARGING"],
+    "use_action": [ "EINKTABLETPC", "TOGGLE_UPS_CHARGING" ],
     "item_vars": {
       "digital_reader_ports": "SD",
       "digital_reader_mode": "books_and_snippets",
