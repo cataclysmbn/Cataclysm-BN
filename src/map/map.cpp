@@ -3287,7 +3287,7 @@ void map::decay_fields_and_scent(const time_duration& amount) {
     for (const auto p : bubble_submaps()) {
         level_cache& smz_cache = get_cache(p.z());
         const auto abs_sm = map_local_to_abs(*this, p);
-        const auto cur_submap = get_mapbuffer().lookup_submap_in_memory(abs_sm);
+        const auto cur_submap = get_submap_at(project_to<coords::ms>(p));
         if (cur_submap == nullptr) { continue; }
         int to_proc = cur_submap->field_count;
         if (to_proc < 1) {
