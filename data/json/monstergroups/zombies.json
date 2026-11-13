@@ -249,7 +249,7 @@
     "monsters": [
       { "monster": "mon_zombie_soldier", "freq": 170, "cost_multiplier": 0, "starts": 500 },
       { "monster": "mon_zombie_tough", "freq": 75, "cost_multiplier": 0 },
-      { "monster": "mon_feral_prepper", "freq": 150, "cost_multiplier": 5 },
+      { "monster": "mon_feral_prepper", "freq": 150, "cost_multiplier": 5, "starts": 250 },
       { "monster": "mon_feral_survivalist", "freq": 75, "cost_multiplier": 10 },
       { "monster": "mon_feral_militia", "freq": 60, "cost_multiplier": 10, "starts": 500 },
       { "monster": "mon_feral_jackboot", "freq": 45, "cost_multiplier": 10, "starts": 500, "pack_size": [ 1, 2 ] },
