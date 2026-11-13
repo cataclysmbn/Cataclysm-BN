@@ -127,6 +127,8 @@ class response_frame
         response_frame( response_frame &&other ) noexcept;
         auto operator=( response_frame &&other ) noexcept -> response_frame &; // *NOPAD*
         auto append( const std::optional<response> &value ) -> std::expected<void, output_error>;
+        /// Whether `value` fits the bytes the frame has left. Appending one that does not fit fails the frame.
+        auto fits( const response &value ) const -> bool;
         /// No responses (e.g. all notifications) returns nullopt, not an empty JSON array.
         auto finish() && -> std::expected<std::optional<std::string>, output_error>; // *NOPAD*
     private:
