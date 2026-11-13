@@ -230,6 +230,21 @@
   },
   {
     "type": "overmap_special",
+    "id": "LMOE Shelter Safe",
+    "//": "Specifically for the starting scenarios so that the player's starting lmoe doesn't have enemies",
+    "overmaps": [
+      { "point": [ 0, 0, 0 ], "overmap": "lmoe_north" },
+      { "point": [ 0, 0, 1 ], "overmap": "lmoe_roof_north" },
+      { "point": [ 0, 0, -1 ], "overmap": "lmoe_under_safe_north" }
+    ],
+    "locations": [ "forest_without_trail" ],
+    "city_distance": [ 25, -1 ],
+    "city_sizes": [ 0, 12 ],
+    "occurrences": [ 1, 1 ],
+    "flags": [ "CLASSIC", "ELECTRIC_GRID", "GLOBALLY_UNIQUE" ]
+  },
+  {
+    "type": "overmap_special",
     "id": "Sewage Treatment Plant",
     "overmaps": [
       { "point": [ 0, -1, 0 ], "overmap": "road_end_north" },
