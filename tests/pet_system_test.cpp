@@ -417,13 +417,13 @@ TEST_CASE(
 
     const std::string desc = mon.extended_description();
     INFO(desc);
-    CHECK(desc.find("Taming it requires:") != std::string::npos);
+    CHECK(desc.find("<color_yellow>Taming</color> it requires:") != std::string::npos);
     CHECK(desc.find("Food: dog food") != std::string::npos);
     // The training minimum belongs to the training section, not the taming one,
     // and the two blocks are separated by a blank line.
-    CHECK(desc.find("Training it requires:") != std::string::npos);
-    CHECK(desc.find("Survival: 3") > desc.find("Training it requires:"));
-    CHECK(desc.find("\n\nTraining it requires:") != std::string::npos);
+    CHECK(desc.find("<color_yellow>Training</color> it requires:") != std::string::npos);
+    CHECK(desc.find("Survival: 3") > desc.find("<color_yellow>Training</color> it requires:"));
+    CHECK(desc.find("\n\n<color_yellow>Training</color> it requires:") != std::string::npos);
     CHECK(desc.find("Survival: 3\n\n") != std::string::npos);
     CHECK(desc.find("It can wear pet armor such as ") != std::string::npos);
     CHECK(desc.find("It cannot be tamed.") == std::string::npos);
@@ -437,7 +437,7 @@ TEST_CASE(
 
     const std::string desc = mon.extended_description();
     INFO(desc);
-    CHECK(desc.find("Taming it requires:") != std::string::npos);
+    CHECK(desc.find("<color_yellow>Taming</color> it requires:") != std::string::npos);
     CHECK(desc.find("Food: dog food") != std::string::npos);
     CHECK(desc.find("Traits: ") != std::string::npos);
     CHECK(desc.find("Animal Empathy") != std::string::npos);
@@ -512,9 +512,9 @@ TEST_CASE(
     INFO(desc);
     // Tame skill requirement sits in the taming section, training skill in its own.
     CHECK(desc.find("Speaking: 2") != std::string::npos);
-    CHECK(desc.find("Speaking: 2") < desc.find("Training it requires:"));
-    CHECK(desc.find("Training it requires:") != std::string::npos);
-    CHECK(desc.find("Melee: 3") > desc.find("Training it requires:"));
+    CHECK(desc.find("Speaking: 2") < desc.find("<color_yellow>Training</color> it requires:"));
+    CHECK(desc.find("<color_yellow>Training</color> it requires:") != std::string::npos);
+    CHECK(desc.find("Melee: 3") > desc.find("<color_yellow>Training</color> it requires:"));
     CHECK(desc.find("Survival:") == std::string::npos);
 }
 

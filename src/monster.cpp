@@ -1233,7 +1233,7 @@ auto pet_requirements_description( const monster &mon ) -> std::string
         return ss;
     }
 
-    ss += std::string( _( "Taming it requires:" ) ) + "\n";
+    ss += std::string( _( "<color_yellow>Taming</color> it requires:" ) ) + "\n";
     ss += string_format( "  %s: %s\n", _( "Food" ),
                          enumerate_as_string( foods, enumeration_conjunction::or_ ) );
 
@@ -1254,7 +1254,7 @@ auto pet_requirements_description( const monster &mon ) -> std::string
 
     if( mon.type->pet_training && mon.type->pet_training->min_skill > 0 ) {
         ss += "\n";
-        ss += std::string( _( "Training it requires:" ) ) + "\n";
+        ss += std::string( _( "<color_yellow>Training</color> it requires:" ) ) + "\n";
         ss += string_format( "  %s: %d\n", mon.type->pet_training->skill->name(),
                              mon.type->pet_training->min_skill );
         ss += "\n";
