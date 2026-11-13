@@ -40,6 +40,9 @@
     "entries": [
       { "item": "dog_whistle", "prob": 10 },
       { "item": "pet_carrier", "prob": 30 },
+      { "item": "bola_net_launcher", "prob": 30 },
+      { "item": "net_cartridge", "prob": 30 },
+      { "item": "bola_cartridge", "prob": 30 },
       { "item": "rubber_armor_small_quadruped", "prob": 30 },
       { "item": "dogfood", "prob": 50, "container-item": "can_medium" },
       { "item": "catfood", "prob": 50, "container-item": "can_food" },
