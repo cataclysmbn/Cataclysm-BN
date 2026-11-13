@@ -3,7 +3,7 @@
     "id": "mon_orc_warrior",
     "type": "MONSTER",
     "name": "Orc Warrior",
-    "description": "A big, badly behaved brutish humanoid.  Armed with a sword and possessing more than enough strength to use it to deadly effect, you don't want to be in the way of one when its angry.  It's also well armored, alongside a hide one might slightly exaggerate as being ironlike.  Generally less intelligent than goblins, but it's ill advised to mention that.",
+    "description": "A big, badly behaved brutish humanoid.  Armed with a sword and possessing more than enough strength to use it to deadly effect, you don't want to be in the way of one when it's angry.  It's also well armored, alongside a hide one might slightly exaggerate as being ironlike.  Generally less intelligent than goblins, but it's ill advised to mention that.",
     "default_faction": "orcs",
     "bodytype": "human",
     "species": [ "ORC" ],

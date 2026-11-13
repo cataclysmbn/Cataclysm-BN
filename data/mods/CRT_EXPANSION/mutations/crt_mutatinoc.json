@@ -35,7 +35,7 @@
     "points": 4,
     "visibility": -1,
     "ugliness": -1,
-    "description": "You eyes are a pleasant shade of hypnotic scarlet.  People feel mildly persuaded by you.",
+    "description": "Your eyes are a pleasant shade of hypnotic scarlet.  People feel mildly persuaded by you.",
     "prereqs": [ "BEAUTIFUL" ],
     "cancels": [ "BIRD_EYE", "LIZ_EYE", "FEL_EYE", "URSINE_EYE", "COMPOUND_EYES", "ELFAEYES" ],
     "category": [ "VAMP" ],

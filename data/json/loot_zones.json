@@ -367,7 +367,7 @@
     "id": "NO_NPC_PICKUP",
     "type": "LOOT_ZONE",
     "name": { "str": "No NPC Pickup", "ctxt": "zone name NO_NPC_PICKUP" },
-    "description": "Friendly NPCs don't pickup items inside the zone.",
+    "description": "Friendly NPCs don't pick up items inside the zone.",
     "color": "dark_gray"
   },
   {

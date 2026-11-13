@@ -722,7 +722,7 @@
     "id": "plays_book",
     "type": "BOOK",
     "name": { "str": "book of plays", "str_pl": "books of plays" },
-    "description": "A collection of plays by various authors from around the world, including scripts by Wilde, Beckett, Checkov, and Shakespeare.",
+    "description": "A collection of plays by various authors from around the world, including scripts by Wilde, Beckett, Chekhov, and Shakespeare.",
     "copy-from": "paperback_novel",
     "price": "1150 cent"
   },

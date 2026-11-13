@@ -24,7 +24,7 @@
     "symbol": "3",
     "color": "red",
     "name": { "str": "flaming fist" },
-    "description": "A heavy metal guard that covers the fist and increases striking power, with stout padding underneath to protect the wearers hand.  It has been enchanted to emit dark magical flames that only harm enemies.",
+    "description": "A heavy metal guard that covers the fist and increases striking power, with stout padding underneath to protect the wearer's hand.  It has been enchanted to emit dark magical flames that only harm enemies.",
     "looks_like": "cestus",
     "material": [ "steel", "leather" ],
     "volume": "500 ml",

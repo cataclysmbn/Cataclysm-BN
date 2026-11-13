@@ -4,7 +4,7 @@
     "type": "TOOL",
     "category": "tools",
     "name": { "str": "jump pad deployer" },
-    "description": "A tool that uses science to generate a trampoline made of energy which disipates in 5 seconds.  You can use it to reach a ledge and climb up.",
+    "description": "A tool that uses science to generate a trampoline made of energy which dissipates in 5 seconds.  You can use it to reach a ledge and climb up.",
     "weight": "200 g",
     "volume": "500 ml",
     "price": "2300 USD",

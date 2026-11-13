@@ -46,7 +46,7 @@
     "id": "t_dimensional_lens_array_platform",
     "looks_like": "t_rad_platform",
     "name": "dimensional lens array platform",
-    "description": "A slightly-elevated panel overlooking the exotic machinery attached to it, with a ruined control panel hanging from the ceiling.  A faint glow permeates it, as though charged with otherworldly energy left bottled up and unreleased.  There might still be away to activate it, whatever it does.  Or just take it apart and hopefully salvage the reason for coming here.",
+    "description": "A slightly-elevated panel overlooking the exotic machinery attached to it, with a ruined control panel hanging from the ceiling.  A faint glow permeates it, as though charged with otherworldly energy left bottled up and unreleased.  There might still be a way to activate it, whatever it does.  Or just take it apart and hopefully salvage the reason for coming here.",
     "symbol": "0",
     "color": "light_blue",
     "move_cost": 2,

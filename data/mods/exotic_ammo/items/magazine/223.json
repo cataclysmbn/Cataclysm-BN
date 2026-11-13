@@ -20,7 +20,7 @@
     "looks_like": "stanag30",
     "type": "MAGAZINE",
     "name": { "str_sp": "LW-56 magazine" },
-    "description": "A 56-round polymer magazine for Leadworks LLC 223 firearms.  It's compact design makes it surprisingly easy to store.  Lightweight and reliable but somewhat more difficult to reload.",
+    "description": "A 56-round polymer magazine for Leadworks LLC 223 firearms.  Its compact design makes it surprisingly easy to store.  Lightweight and reliable but somewhat more difficult to reload.",
     "weight": "340 g",
     "volume": "750 ml",
     "price": "142 USD",

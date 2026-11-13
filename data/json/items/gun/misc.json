@@ -99,7 +99,7 @@
     "copy-from": "rifle_auto",
     "type": "GUN",
     "name": { "str": "old guard NTSR" },
-    "description": "The new threat service rifle, an M4A1 modified by military remnants to fire and accept magazines for most common military rifle calibers at the cost of higher weight and worsened ballistics and handling. Designed for a new battlefield where scavenging ammo is a neccesity and logistics are difficult.",
+    "description": "The new threat service rifle, an M4A1 modified by military remnants to fire and accept magazines for most common military rifle calibers at the cost of higher weight and worsened ballistics and handling. Designed for a new battlefield where scavenging ammo is a necessity and logistics are difficult.",
     "weight": "3760 g",
     "volume": "1850 ml",
     "barrel_volume": "250 ml",

@@ -220,7 +220,7 @@
     "type": "GENERIC",
     "category": "deployables",
     "name": { "str": "double-barreled shotgun trap" },
-    "description": "This is a simple tripwire is attached to the trigger of a loaded double-barreled shotgun.  When pulled, the shotgun fires, discharging both barrels into the target.",
+    "description": "This is a simple tripwire attached to the trigger of a loaded double-barreled shotgun.  When pulled, the shotgun fires, discharging both barrels into the target.",
     "weight": "3500 g",
     "volume": "3 L",
     "price": "250 USD",
@@ -243,7 +243,7 @@
     "copy-from": "shotgun_trap",
     "type": "GENERIC",
     "name": { "str": "shotgun trap" },
-    "description": "This is a simple tripwire is attached to the trigger of a loaded single-barreled shotgun.  When pulled, the shotgun fires.",
+    "description": "This is a simple tripwire attached to the trigger of a loaded single-barreled shotgun.  When pulled, the shotgun fires.",
     "weight": "2600 g",
     "volume": "2500 ml",
     "use_action": {

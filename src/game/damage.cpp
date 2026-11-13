@@ -1,0 +1,570 @@
+#include "damage.h"
+
+#include "assign.h"
+#include "cata_utility.h"
+#include "debug.h"
+#include "enum_conversions.h"
+#include "item.h"
+#include "json.h"
+#include "monster.h"
+#include "mtype.h"
+#include "translations.h"
+
+#include <algorithm>
+#include <cstddef>
+#include <map>
+#include <numeric>
+#include <utility>
+
+auto damage_unit::operator==(const damage_unit& other) const -> bool {
+    return type == other.type && amount == other.amount && res_pen == other.res_pen
+        && res_mult == other.res_mult && damage_multiplier == other.damage_multiplier;
+}
+
+auto damage_unit::get_internal_name() const -> const std::string {
+    switch (type) {
+        case DT_NULL:
+            return "NULL";
+        case DT_TRUE:
+            return "TRUE";
+        case DT_BIOLOGICAL:
+            return "BIOLOGICAL";
+        case DT_BASH:
+            return "BASH";
+        case DT_CUT:
+            return "CUT";
+        case DT_ACID:
+            return "ACID";
+        case DT_STAB:
+            return "STAB";
+        case DT_HEAT:
+            return "HEAT";
+        case DT_COLD:
+            return "COLD";
+        case DT_DARK:
+            return "DARK";
+        case DT_LIGHT:
+            return "LIGHT";
+        case DT_PSI:
+            return "PSI";
+        case DT_ELECTRIC:
+            return "ELECTRIC";
+        case DT_BULLET:
+            return "BULLET";
+        case NUM_DT:
+            return std::to_string(NUM_DT);
+    }
+}
+auto damage_unit::get_name() const -> const std::string {
+    switch (type) {
+        case DT_NULL:
+            return "Null";
+        case DT_TRUE:
+            return "True";
+        case DT_BIOLOGICAL:
+            return "Biological";
+        case DT_BASH:
+            return "Bash";
+        case DT_CUT:
+            return "Cut";
+        case DT_ACID:
+            return "Acid";
+        case DT_STAB:
+            return "Pierce";
+        case DT_HEAT:
+            return "Heat";
+        case DT_COLD:
+            return "Cold";
+        case DT_DARK:
+            return "Dark";
+        case DT_LIGHT:
+            return "Light";
+        case DT_PSI:
+            return "Psionic";
+        case DT_ELECTRIC:
+            return "Electric";
+        case DT_BULLET:
+            return "Ballistic";
+        case NUM_DT:
+            return std::to_string(NUM_DT);
+    }
+    return std::to_string(NUM_DT);
+}
+
+damage_instance::damage_instance() = default;
+auto damage_instance::physical(float bash, float cut, float stab, float arpen) -> damage_instance {
+    damage_instance d;
+    d.add_damage(DT_BASH, bash, arpen);
+    d.add_damage(DT_CUT, cut, arpen);
+    d.add_damage(DT_STAB, stab, arpen);
+    return d;
+}
+damage_instance::damage_instance(
+    damage_type dt, float amt, float arpen, float arpen_mult, float dmg_mult) {
+    add_damage(dt, amt, arpen, arpen_mult, dmg_mult);
+}
+
+void damage_instance::add_damage(
+    damage_type dt, float amt, float arpen, float arpen_mult, float dmg_mult) {
+    damage_unit du(dt, amt, arpen, arpen_mult, dmg_mult);
+    add(du);
+}
+
+void damage_instance::mult_damage(double multiplier, bool pre_armor) {
+    if (multiplier <= 0.0) { clear(); }
+
+    if (pre_armor) {
+        for (auto& elem : damage_units) { elem.amount *= multiplier; }
+    } else {
+        for (auto& elem : damage_units) { elem.damage_multiplier *= multiplier; }
+    }
+}
+auto damage_instance::type_damage(damage_type dt) const -> float {
+    float ret = 0;
+    for (const auto& elem : damage_units) {
+        if (elem.type == dt) { ret += elem.amount * elem.damage_multiplier; }
+    }
+    return ret;
+}
+// This returns the damage from this damage_instance. The damage done to the target will be reduced
+// by their armor.
+auto damage_instance::total_damage() const -> float {
+    float ret = 0;
+    for (const auto& elem : damage_units) { ret += elem.amount * elem.damage_multiplier; }
+    return ret;
+}
+void damage_instance::clear() { damage_units.clear(); }
+
+auto damage_instance::empty() const -> bool { return damage_units.empty(); }
+
+void damage_instance::add(const damage_instance& added_di) {
+    for (auto& added_du : added_di.damage_units) { add(added_du); }
+}
+
+void damage_instance::add(const damage_unit& new_du) {
+    auto iter = std::ranges::find_if(damage_units, [&new_du](const damage_unit& du) {
+        return du.type == new_du.type;
+    });
+    if (iter == damage_units.end()) {
+        damage_units.emplace_back(new_du);
+    } else {
+        damage_unit& du = *iter;
+        // Actually combining two instances of damage is complex and ambiguous
+        // So let's just add/multiply the values
+        du.amount += new_du.amount;
+        du.res_pen += new_du.res_pen;
+
+        du.damage_multiplier *= new_du.damage_multiplier;
+        du.res_mult *= new_du.res_mult;
+    }
+}
+
+auto damage_instance::get_armor_pen(damage_type dt) const -> float {
+    float ret = 0;
+    for (const auto& elem : damage_units) {
+        if (elem.type == dt) { ret = elem.res_pen; }
+    }
+    return ret;
+}
+
+auto damage_instance::get_armor_mult(damage_type dt) const -> float {
+    float ret = 1;
+    for (const auto& elem : damage_units) {
+        if (elem.type == dt) { ret = elem.res_mult; }
+    }
+    return ret;
+}
+
+auto damage_instance::has_armor_piercing() const -> bool {
+    for (const auto& elem : damage_units) {
+        if (elem.res_pen != 0.0 || elem.res_mult != 1.0) { return true; }
+    }
+    return false;
+}
+
+auto damage_instance::begin() -> std::vector<damage_unit>::iterator { return damage_units.begin(); }
+
+auto damage_instance::begin() const -> std::vector<damage_unit>::const_iterator {
+    return damage_units.begin();
+}
+
+auto damage_instance::end() -> std::vector<damage_unit>::iterator { return damage_units.end(); }
+
+auto damage_instance::end() const -> std::vector<damage_unit>::const_iterator {
+    return damage_units.end();
+}
+
+auto damage_instance::operator==(const damage_instance& other) const -> bool {
+    return damage_units == other.damage_units;
+}
+
+void damage_instance::deserialize(JsonIn& jsin) {
+    // TODO: Clean up
+    if (jsin.test_object()) {
+        JsonObject jo = jsin.get_object();
+        *this = load_damage_instance(jo);
+    } else if (jsin.test_array()) {
+        *this = load_damage_instance(jsin.get_array());
+    } else {
+        jsin.error("Expected object or array for damage_instance");
+    }
+}
+
+dealt_damage_instance::dealt_damage_instance() { dealt_dams.fill(0); }
+
+void dealt_damage_instance::set_damage(damage_type dt, int amount) {
+    if (dt < 0 || dt >= NUM_DT) {
+        debugmsg("Tried to set invalid damage type %d. NUM_DT is %d", dt, NUM_DT);
+        return;
+    }
+
+    dealt_dams[dt] = amount;
+}
+auto dealt_damage_instance::type_damage(damage_type dt) const -> int {
+    if (static_cast<size_t>(dt) < dealt_dams.size()) { return dealt_dams[dt]; }
+
+    return 0;
+}
+auto dealt_damage_instance::total_damage() const -> int {
+    return std::accumulate(dealt_dams.begin(), dealt_dams.end(), 0);
+}
+
+resistances::resistances() = default;
+
+resistances::resistances(const item& armor, bool to_self) {
+    // Armors protect, but all items can resist
+    if (to_self || armor.is_armor()) {
+        for (int i = 0; i < NUM_DT; i++) {
+            auto dt = static_cast<damage_type>(i);
+            set_resist(dt, armor.damage_resist(dt, to_self));
+        }
+    }
+}
+
+void resistances::set_resist(damage_type dt, float amount) { flat[dt] = amount; }
+auto resistances::type_resist(damage_type dt) const -> float {
+    auto iter = flat.find(dt);
+    if (iter != flat.end()) { return iter->second; }
+    return 0.0f;
+}
+auto resistances::get_effective_resist(const damage_unit& du) const -> float {
+    return std::max(type_resist(du.type) - du.res_pen, 0.0f) * du.res_mult;
+}
+
+auto resistances::combined_with(const resistances& other) const -> resistances {
+    resistances ret = *this;
+    for (const auto& pr : other.flat) { ret.flat[pr.first] += pr.second; }
+
+    return ret;
+}
+
+template <> auto io::enum_to_string<damage_type>(damage_type dt) -> std::string {
+    // Using a switch instead of name_by_dt because otherwise the game freezes during launch
+    switch (dt) {
+        case DT_NULL:
+            return "DT_NULL";
+        case DT_TRUE:
+            return "DT_TRUE";
+        case DT_BIOLOGICAL:
+            return "DT_BIOLOGICAL";
+        case DT_BASH:
+            return "DT_BASH";
+        case DT_CUT:
+            return "DT_CUT";
+        case DT_ACID:
+            return "DT_ACID";
+        case DT_STAB:
+            return "DT_STAB";
+        case DT_HEAT:
+            return "DT_HEAT";
+        case DT_COLD:
+            return "DT_COLD";
+        case DT_DARK:
+            return "DT_DARK";
+        case DT_LIGHT:
+            return "DT_LIGHT";
+        case DT_PSI:
+            return "DT_PSI";
+        case DT_ELECTRIC:
+            return "DT_ELECTRIC";
+        case DT_BULLET:
+            return "DT_BULLET";
+        case NUM_DT:
+            break;
+    }
+    debugmsg("Invalid damage_type");
+    abort();
+}
+
+static const std::map<std::string, damage_type> dt_map = {
+    {translate_marker_context("damage type", "true"), DT_TRUE},
+    {translate_marker_context("damage type", "biological"), DT_BIOLOGICAL},
+    {translate_marker_context("damage type", "bash"), DT_BASH},
+    {translate_marker_context("damage type", "cut"), DT_CUT},
+    {translate_marker_context("damage type", "acid"), DT_ACID},
+    {translate_marker_context("damage type", "stab"), DT_STAB},
+    {translate_marker_context("damage_type", "bullet"), DT_BULLET},
+    {translate_marker_context("damage type", "heat"), DT_HEAT},
+    {translate_marker_context("damage type", "cold"), DT_COLD},
+    {translate_marker_context("damage type", "dark"), DT_DARK},
+    {translate_marker_context("damage type", "light"), DT_LIGHT},
+    {translate_marker_context("damage type", "psionic"), DT_PSI},
+    {translate_marker_context("damage type", "electric"), DT_ELECTRIC}};
+
+auto get_dt_map() -> const std::map<std::string, damage_type>& { return dt_map; }
+
+auto dt_by_name(const std::string& name) -> damage_type {
+    const auto& iter = dt_map.find(name);
+    if (iter == dt_map.end()) { return DT_NULL; }
+
+    return iter->second;
+}
+
+auto name_by_dt(const damage_type& dt) -> std::string {
+    auto iter = dt_map.cbegin();
+    while (iter != dt_map.cend()) {
+        if (iter->second == dt) { return pgettext("damage type", iter->first.c_str()); }
+        iter++;
+    }
+    static const std::string err_msg("dt_not_found");
+    return err_msg;
+}
+
+auto skill_by_dt(damage_type dt) -> const skill_id& {
+    static skill_id skill_bashing("bashing");
+    static skill_id skill_cutting("cutting");
+    static skill_id skill_stabbing("stabbing");
+
+    switch (dt) {
+        case DT_BASH:
+            return skill_bashing;
+
+        case DT_CUT:
+            return skill_cutting;
+
+        case DT_STAB:
+            return skill_stabbing;
+
+        default:
+            return skill_id::NULL_ID();
+    }
+}
+
+static auto load_damage_unit(const JsonObject& curr) -> damage_unit {
+    damage_type dt = dt_by_name(curr.get_string("damage_type"));
+    if (dt == DT_NULL) { curr.throw_error("Invalid damage type"); }
+
+    float amount = curr.get_float("amount", 0);
+    float arpen = curr.get_float("armor_penetration", 0);
+    float armor_mul = curr.get_float("armor_multiplier", 1.0f);
+    float damage_mul = curr.get_float("damage_multiplier", 1.0f);
+
+    // Legacy
+    float unc_armor_mul = curr.get_float("constant_armor_multiplier", 1.0f);
+    float unc_damage_mul = curr.get_float("constant_damage_multiplier", 1.0f);
+
+    return damage_unit(dt, amount, arpen, armor_mul * unc_armor_mul, damage_mul * unc_damage_mul);
+}
+
+static auto load_damage_unit_inherit(const JsonObject& curr, const damage_instance& parent)
+    -> damage_unit {
+    damage_unit ret = load_damage_unit(curr);
+
+    const std::vector<damage_unit>& parent_damage = parent.damage_units;
+    auto du_iter = std::ranges::find_if(parent_damage, [&ret](const damage_unit& dmg) {
+        return dmg.type == ret.type;
+    });
+
+    if (du_iter == parent_damage.end()) { return ret; }
+
+    const damage_unit& parent_du = *du_iter;
+
+    if (!curr.has_float("amount")) { ret.amount = parent_du.amount; }
+    if (!curr.has_float("armor_penetration")) { ret.res_pen = parent_du.res_pen; }
+    if (!curr.has_float("armor_multiplier")) { ret.res_mult = parent_du.res_mult; }
+    if (!curr.has_float("damage_multiplier")) {
+        ret.damage_multiplier = parent_du.damage_multiplier;
+    }
+
+    return ret;
+}
+
+static auto blank_damage_instance() -> damage_instance {
+    damage_instance ret;
+
+    for (int i = 0; i < NUM_DT; ++i) { ret.add_damage(static_cast<damage_type>(i), 0.0f); }
+
+    return ret;
+}
+
+auto load_damage_instance(const JsonObject& jo) -> damage_instance {
+    return load_damage_instance_inherit(jo, blank_damage_instance());
+}
+
+auto load_damage_instance(const JsonArray& jarr) -> damage_instance {
+    return load_damage_instance_inherit(jarr, blank_damage_instance());
+}
+
+
+auto load_damage_instance_inherit(const JsonObject& jo, const damage_instance& parent)
+    -> damage_instance {
+    damage_instance di;
+    if (jo.has_array("values")) {
+        for (const JsonObject curr : jo.get_array("values")) {
+            di.damage_units.push_back(load_damage_unit_inherit(curr, parent));
+        }
+    } else if (jo.has_string("damage_type")) {
+        di.damage_units.push_back(load_damage_unit_inherit(jo, parent));
+    }
+
+    return di;
+}
+
+auto load_damage_instance_inherit(const JsonArray& jarr, const damage_instance& parent)
+    -> damage_instance {
+    damage_instance di;
+    for (const JsonObject curr : jarr) {
+        di.damage_units.push_back(load_damage_unit_inherit(curr, parent));
+    }
+
+    return di;
+}
+
+namespace {
+
+struct DamageMapping {
+    std::string name;
+    damage_type type;
+};
+
+constexpr auto physical_damage_mappings = std::array<DamageMapping, 4>{{
+    {
+        .name = "bash",
+        .type = DT_BASH,
+    },
+    {
+        .name = "cut",
+        .type = DT_CUT,
+    },
+    {
+        .name = "stab",
+        .type = DT_STAB,
+    },
+    {
+        .name = "bullet",
+        .type = DT_BULLET,
+    },
+}};
+constexpr auto non_physical_damage_mappings = std::array<DamageMapping, 8>{{
+    {
+        .name = "biological",
+        .type = DT_BIOLOGICAL,
+    },
+    {
+        .name = "acid",
+        .type = DT_ACID,
+    },
+    {
+        .name = "heat",
+        .type = DT_HEAT,
+    },
+    {
+        .name = "cold",
+        .type = DT_COLD,
+    },
+    {
+        .name = "dark",
+        .type = DT_DARK,
+    },
+    {
+        .name = "light",
+        .type = DT_LIGHT,
+    },
+    {
+        .name = "psi",
+        .type = DT_PSI,
+    },
+    {
+        .name = "electric",
+        .type = DT_ELECTRIC,
+    },
+}};
+
+auto get_float_optional(
+    const JsonObject& jo, const std::string& name,
+    const std::optional<float> fallback = std::nullopt) -> std::optional<float> {
+    return jo.has_member(name) ? std::make_optional<float>(jo.get_float(name, 0.0f)) : fallback;
+}
+
+} // namespace
+
+auto load_damage_map(const JsonObject& jo) -> std::map<damage_type, float> {
+    const auto all_fallback = get_float_optional(jo, "all");
+    const auto physical_fallback = get_float_optional(jo, "physical", all_fallback);
+    const auto non_phys_fallback = get_float_optional(jo, "non_physical", all_fallback);
+
+    auto ret = std::map<damage_type, float>{};
+
+    for (const auto& mapping : physical_damage_mappings) {
+        auto value = get_float_optional(jo, mapping.name).or_else([&] {
+            return physical_fallback;
+        });
+        if (value) { ret[mapping.type] = *value; }
+    }
+    for (const auto& mapping : non_physical_damage_mappings) {
+        auto value = get_float_optional(jo, mapping.name).or_else([&] {
+            return non_phys_fallback;
+        });
+        if (value) { ret[mapping.type] = *value; }
+    }
+    // DT_TRUE should never be resisted
+    ret[DT_TRUE] = 0.0f;
+    return ret;
+}
+
+auto load_resistances_instance(const JsonObject& jo) -> resistances {
+    resistances ret;
+    ret.flat = load_damage_map(jo);
+    return ret;
+}
+
+auto assign(const JsonObject& jo, const std::string& name, resistances& val, bool /*strict*/)
+    -> bool {
+    // Object via which to report errors which differs for proportional/relative
+    // values
+    JsonObject err = jo;
+    err.allow_omitted_members();
+    JsonObject relative = jo.get_object("relative");
+    relative.allow_omitted_members();
+    JsonObject proportional = jo.get_object("proportional");
+    proportional.allow_omitted_members();
+
+    if (relative.has_member(name)) {
+        err = relative;
+        JsonObject jo_relative = err.get_member(name);
+        const resistances tmp = load_resistances_instance(err);
+        for (size_t i = 0; i < val.flat.size(); i++) {
+            auto dt = static_cast<damage_type>(i);
+            auto iter = tmp.flat.find(dt);
+            if (iter != tmp.flat.end()) { val.flat[dt] += iter->second; }
+        }
+
+    } else if (proportional.has_member(name)) {
+        err = relative;
+        JsonObject jo_proportional = err.get_member(name);
+        resistances tmp = load_resistances_instance(err);
+        for (size_t i = 0; i < val.flat.size(); i++) {
+            auto dt = static_cast<damage_type>(i);
+            auto iter = tmp.flat.find(dt);
+            if (iter != tmp.flat.end()) { val.flat[dt] *= iter->second; }
+        }
+
+    } else if (jo.has_object(name)) {
+        JsonObject jo_inner = jo.get_object(name);
+        val = load_resistances_instance(jo_inner);
+    }
+
+    // TODO: Check for change - ie. `strict` check support
+
+    return true;
+}

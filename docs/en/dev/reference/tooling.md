@@ -213,7 +213,7 @@ add `CATA_CLANG_TIDY_PLUGIN=ON` to cmake flags when configuring the build.
 To run the plugin on a single file, run following command on project root:
 
 ```sh
-$ ./build-scripts/clang-tidy-wrapper.sh -fix src/achievement.cpp
+$ ./build-scripts/clang-tidy-wrapper.sh -fix src/event/achievement.cpp
 ```
 
 To run the plugin on multiple files, use [GNU parallel](https://www.gnu.org/software/parallel/):

@@ -178,7 +178,7 @@
     "id": "bolt_triffid",
     "copy-from": "bolt_stinger",
     "name": { "str": "triffid bolt" },
-    "description": "A simple fletched wooden crossbow bolt with a tip carved from an alien plants stinger.  It paralyzes enemies it hits and stands a decent chance of remaining intact once fired.",
+    "description": "A simple fletched wooden crossbow bolt with a tip carved from an alien plant's stinger.  It paralyzes enemies it hits and stands a decent chance of remaining intact once fired.",
     "material": [ "wood" ],
     "effects": [ "PARALYZEPOISON" ]
   },

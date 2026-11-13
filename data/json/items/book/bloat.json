@@ -208,7 +208,7 @@
     "id": "novel_crime_murdergrape",
     "type": "BOOK",
     "name": { "str": "Murdered by the Grapevine", "str_pl": "copies of Murdered by the Grapevine" },
-    "description": "This cheap paperback tells the story of a mob boss done in by mere suspicion.  She never breaks a confidence, never rats out an accomplice, and never turns her back on a friend.  Nonetheless her grip on the reigns of the underworld is eroded by rumor and paranoia.",
+    "description": "This cheap paperback tells the story of a mob boss done in by mere suspicion.  She never breaks a confidence, never rats out an accomplice, and never turns her back on a friend.  Nonetheless her grip on the reins of the underworld is eroded by rumor and paranoia.",
     "copy-from": "paperback_novel"
   },
   {
@@ -222,7 +222,7 @@
     "id": "novel_spy_rocketsci",
     "type": "BOOK",
     "name": { "str": "Lies, Damn Lies, and Rocket Science", "str_pl": "copies of Lies, Damn Lies, and Rocket Science" },
-    "description": "This spy novel tells the story of a jaded rocket scientist looking for redemption in all the wrong places.  As selling state secrets becomes her career, she learns there isn't much of difference between a double-agent and a triple-agent.",
+    "description": "This spy novel tells the story of a jaded rocket scientist looking for redemption in all the wrong places.  As selling state secrets becomes her career, she learns there isn't much of a difference between a double-agent and a triple-agent.",
     "copy-from": "paperback_novel"
   },
   {

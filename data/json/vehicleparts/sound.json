@@ -9,7 +9,7 @@
     "broken_color": "light_gray",
     "damage_modifier": 10,
     "durability": 50,
-    "description": "A metal pipe that reduces some of noise of the engine.",
+    "description": "A metal pipe that reduces some of the noise of the engine.",
     "bonus": 40,
     "item": "muffler",
     "requirements": {

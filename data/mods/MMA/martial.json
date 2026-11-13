@@ -50,7 +50,7 @@
     "looks_like": "manual_karate",
     "type": "GENERIC",
     "name": { "str_sp": "Pocket Monster Encyclopedia" },
-    "description": "This encyclopedia contains a detailed listing of the strengths and techniques of various fictional monsters and how to apply them the in a real fight.",
+    "description": "This encyclopedia contains a detailed listing of the strengths and techniques of various fictional monsters and how to apply them in a real fight.",
     "book_data": { "martial_art": "style_mma_pokken" }
   },
   {

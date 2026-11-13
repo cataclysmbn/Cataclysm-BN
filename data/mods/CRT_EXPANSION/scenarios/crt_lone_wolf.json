@@ -3,7 +3,7 @@
     "type": "profession",
     "id": "crt_lonewolf_t3",
     "name": "C.R.I.T. Lone Wolf",
-    "description": "STR 10 recommended.  You are fully armored badass granted the full authority of a U.S Marshal.  Sent in as the one man army capable of handling anything.  Dropped into warzones, you singlehandedly laid out entire battalions by yourself.  Time to hang them all.",
+    "description": "STR 10 recommended.  You are a fully armored badass granted the full authority of a U.S Marshal.  Sent in as the one man army capable of handling anything.  Dropped into warzones, you singlehandedly laid out entire battalions by yourself.  Time to hang them all.",
     "traits": [ "MARTIAL_CRT", "PROF_FED", "PROF_MILITARY" ],
     "CBMs": [
       "bio_weight",
@@ -118,7 +118,7 @@
     "type": "profession",
     "id": "crt_lonewolf_t1",
     "name": "C.R.I.T. Hunter",
-    "description": "You were recently recruited into the CRIT Lone Wolf training program. While you are barely trained at all, they still sent you out there just like the rest of the team. Maybe you stand a chance though, a better chance then the medics that is.",
+    "description": "You were recently recruited into the CRIT Lone Wolf training program. While you are barely trained at all, they still sent you out there just like the rest of the team. Maybe you stand a chance though, a better chance than the medics that is.",
     "traits": [ "MARTIAL_CRT", "PROF_MILITARY" ],
     "points": 5,
     "skills": [

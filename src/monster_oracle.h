@@ -1,7 +1,7 @@
 #pragma once
 
 #include "behavior.h"
-#include "behavior_oracle.h"
+#include "behavior/behavior_oracle.h"
 
 class monster;
 

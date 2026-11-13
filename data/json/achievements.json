@@ -195,7 +195,7 @@
     "id": "achievement_mutation_threshold_feline",
     "type": "achievement",
     "name": { "str": "[Mutation] Nine Lives" },
-    "description": "It wasn't monday you hated, it was the grind.  You are now a post-threshold Feline mutant.",
+    "description": "It wasn't Monday you hated, it was the grind.  You are now a post-threshold Feline mutant.",
     "hidden_by": [ "achievement_mutation_threshold_feline" ],
     "requirements": [ { "event_statistic": "num_avatar_mutation_threshold_feline", "is": ">=", "target": 1 } ]
   },
@@ -374,7 +374,7 @@
     "id": "achievement_lvl_10_bashing",
     "type": "achievement",
     "name": { "str": "[Skill] Stone Age" },
-    "description": "The cudgel was humanity's first tool.  And it may be it's last, so why not master it?",
+    "description": "The cudgel was humanity's first tool.  And it may be its last, so why not master it?",
     "skill_requirements": [ { "skill": "bashing", "is": ">=", "level": 10 } ],
     "requirements": [ { "event_statistic": "num_gains_bashing", "is": "anything" } ],
     "hidden_by": [ "achievement_lvl_5_bashing" ]
@@ -383,7 +383,7 @@
     "id": "achievement_lvl_5_computer",
     "type": "achievement",
     "name": { "str": "[Skill] Hack the Planet" },
-    "description": "This OS has a back door.  there is always a back door.",
+    "description": "This OS has a back door.  There is always a back door.",
     "skill_requirements": [ { "skill": "computer", "is": ">=", "level": 5 } ],
     "requirements": [ { "event_statistic": "num_gains_computer", "is": "anything" } ]
   },
@@ -604,7 +604,7 @@
     "id": "achievement_lvl_5_rifle",
     "type": "achievement",
     "name": { "str": "[Skill] Rifleman" },
-    "description": "This is my rifle.  there are many like it, but this one is mine.  My rifle is my best friend.  It is my life.  I must master it as I must master my life.",
+    "description": "This is my rifle.  There are many like it, but this one is mine.  My rifle is my best friend.  It is my life.  I must master it as I must master my life.",
     "skill_requirements": [ { "skill": "rifle", "is": ">=", "level": 5 } ],
     "requirements": [ { "event_statistic": "num_gains_rifle", "is": "anything" } ]
   },

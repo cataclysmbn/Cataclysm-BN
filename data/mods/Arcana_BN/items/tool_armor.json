@@ -38,7 +38,7 @@
     "type": "TOOL_ARMOR",
     "category": "tools",
     "name": { "str": "bolstered iridescent brooch" },
-    "description": "A hand-crafted disc brooch made from a strange, unearthly material vaguely resembling mother-of-pearl  Elemental magic has been woven into its structure, converting it into a primitive magic item.  Using it will reduce all incoming damage by 25%.  It will take a long time to recharge after each use, and activating it also fatigues the user.  It can hold up to 5 uses, each use takes 45 hours to charge.",
+    "description": "A hand-crafted disc brooch made from a strange, unearthly material vaguely resembling mother-of-pearl.  Elemental magic has been woven into its structure, converting it into a primitive magic item.  Using it will reduce all incoming damage by 25%.  It will take a long time to recharge after each use, and activating it also fatigues the user.  It can hold up to 5 uses, each use takes 45 hours to charge.",
     "price_postapoc": "20 USD",
     "max_charges": 225,
     "charges_per_use": 45,
@@ -770,7 +770,7 @@
     "copy-from": "meteoric_talisman",
     "repairs_like": "meteoric_talisman",
     "name": { "str": "meteoric talisman (on)", "str_pl": "meteoric talismans (on)" },
-    "description": "An ornate necklace with a small charm resembling a round shield, made from a hard iridescent metal.  It is currently activate, insulating you against electrical attacks.",
+    "description": "An ornate necklace with a small charm resembling a round shield, made from a hard iridescent metal.  It is currently active, insulating you against electrical attacks.",
     "turns_per_charge": 15,
     "revert_to": "meteoric_talisman",
     "use_action": {

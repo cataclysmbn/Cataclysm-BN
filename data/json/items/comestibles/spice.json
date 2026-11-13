@@ -161,7 +161,7 @@
     "copy-from": "spice",
     "type": "COMESTIBLE",
     "name": { "str_sp": "mustard powder" },
-    "description": "A fragnant yellow powder.  Not edible in this form.",
+    "description": "A fragrant yellow powder.  Not edible in this form.",
     "color": "red"
   },
   {

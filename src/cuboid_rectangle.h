@@ -2,7 +2,7 @@
 
 #include "cata_utility.h"
 #include "point.h"
-#include "point_traits.h"
+#include "math/point_traits.h"
 
 // The following templates check existence of parent class and template type
 // argument's member with the template parameter list, since GCC 5 and earlier

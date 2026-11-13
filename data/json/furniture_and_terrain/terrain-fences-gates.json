@@ -41,7 +41,7 @@
     "type": "terrain",
     "id": "t_portcullis",
     "name": "makeshift portcullis",
-    "description": "An immense gateway scrapped together with various bits of steel and metal scraps.",
+    "description": "An immense gateway scraped together with various bits of steel and metal scraps.",
     "symbol": "&",
     "color": "cyan",
     "move_cost": 0,

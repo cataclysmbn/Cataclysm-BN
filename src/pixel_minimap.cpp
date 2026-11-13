@@ -16,7 +16,7 @@
 #    include "map/mapdata.h"
 #    include "math_defines.h"
 #    include "monster.h"
-#    include "pixel_minimap_projectors.h"
+#    include "sdl/pixel_minimap_projectors.h"
 #    include "sdl_utils.h"
 #    include "vehicle/vehicle.h"
 #    include "vehicle/vehicle_part.h"
