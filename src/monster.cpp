@@ -1253,9 +1253,11 @@ auto pet_requirements_description( const monster &mon ) -> std::string
     }
 
     if( mon.type->pet_training && mon.type->pet_training->min_skill > 0 ) {
+        ss += "\n";
         ss += std::string( _( "Training it requires:" ) ) + "\n";
         ss += string_format( "  %s: %d\n", mon.type->pet_training->skill->name(),
                              mon.type->pet_training->min_skill );
+        ss += "\n";
     }
 
     const auto pet_armors = item_controller->find( [&mon]( const itype & t ) {
