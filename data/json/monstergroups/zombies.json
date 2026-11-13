@@ -247,18 +247,17 @@
     "name": "GROUP_PREPPER_HOUSE",
     "default": "mon_zombie",
     "monsters": [
-      { "monster": "mon_zombie_tough", "freq": 180, "cost_multiplier": 0 },
-      { "monster": "mon_zombie_survivor", "freq": 400, "cost_multiplier": 0 },
-      { "monster": "mon_zombie_survivor_elite", "freq": 20, "cost_multiplier": 25, "starts": 720 },
-      { "monster": "mon_zombie_darkfield", "freq": 4, "cost_multiplier": 20, "starts": 500 },
-      { "monster": "mon_skeleton_necro", "freq": 4, "cost_multiplier": 20, "starts": 500 },
-      { "monster": "mon_skeleton_master", "freq": 1, "cost_multiplier": 25, "starts": 1000 },
-      { "monster": "mon_zombie_necro", "freq": 4, "cost_multiplier": 20, "starts": 500 },
-      { "monster": "mon_zombie_master", "freq": 1, "cost_multiplier": 25, "starts": 1000 },
-      { "monster": "mon_feral_survivalist", "starts": 250, "freq": 5, "cost_multiplier": 1 },
-      { "monster": "mon_feral_prepper", "starts": 500, "freq": 4, "cost_multiplier": 5 },
-      { "monster": "mon_feral_militia", "starts": 500, "freq": 1, "cost_multiplier": 10 },
-      { "monster": "mon_feral_jackboot", "starts": 500, "freq": 1, "cost_multiplier": 10 }
+      { "monster": "mon_zombie_soldier", "freq": 170, "cost_multiplier": 0, "starts": 500 },
+      { "monster": "mon_zombie_tough", "freq": 75, "cost_multiplier": 0 },
+      { "monster": "mon_feral_prepper", "freq": 150, "cost_multiplier": 5 },
+      { "monster": "mon_feral_survivalist", "freq": 75, "cost_multiplier": 10 },
+      { "monster": "mon_feral_militia", "freq": 60, "cost_multiplier": 10, "starts": 500 },
+      { "monster": "mon_feral_jackboot", "freq": 45, "cost_multiplier": 10, "starts": 500, "pack_size": [ 1, 2 ] },
+      { "monster": "mon_feral_armored_mace", "freq": 85, "cost_multiplier": 0 },
+      { "monster": "mon_feral_armored_battleaxe", "freq": 85, "cost_multiplier": 0 },
+      { "monster": "mon_zombie_survivor", "freq": 170, "cost_multiplier": 0 },
+      { "monster": "mon_zombie_survivor_elite", "freq": 60, "cost_multiplier": 10, "starts": 720 },
+      { "monster": "mon_zombie_darkfield", "freq": 25, "cost_multiplier": 20, "starts": 500 }
     ]
   },
   {
