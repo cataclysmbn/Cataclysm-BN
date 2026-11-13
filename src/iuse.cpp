@@ -4828,6 +4828,17 @@ auto iuse::mop( player *p, item *it, bool, const tripoint_bub_ms & ) -> int
     return it->type->charges_to_use();
 }
 
+int iuse::relic( player *p, item *it, bool, const tripoint_bub_ms &loc )
+{
+    if( it->relic_data ) {
+        it->relic_data->activate( *p, loc );
+    }
+    if( it->type->relic_data ) {
+        it->type->relic_data->activate( *p, loc );
+    }
+    return it->type->charges_to_use();
+}
+
 int iuse::artifact( player *p, item *it, bool, const tripoint_bub_ms & )
 {
     if( p->is_npc() ) {

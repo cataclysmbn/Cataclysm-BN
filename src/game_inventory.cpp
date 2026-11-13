@@ -640,7 +640,7 @@ class comestible_inventory_preset : public inventory_selector_preset
 
         std::string get_denial( const item *loc ) const override {
             const item &med = !( *loc ).is_container_empty() && ( *loc ).get_contained().is_medication() &&
-                              ( *loc ).get_contained().type->has_use() ? ( *loc ).get_contained() : *loc;
+                              ( *loc ).get_contained().has_use() ? ( *loc ).get_contained() : *loc;
 
             if( loc->made_of( LIQUID ) && !g->m.has_flag( flag_LIQUIDCONT, loc->bub_pos() ) ) {
                 return _( "Can't drink spilt liquids" );
@@ -858,7 +858,7 @@ class activatable_inventory_preset : public pickup_inventory_preset
             if( get_option<bool>( "INV_USE_ACTION_NAMES" ) ) {
                 append_cell( [ this ]( const item * loc ) {
                     const item &it = !( *loc ).is_container_empty() && ( *loc ).get_contained().is_medication() &&
-                                     ( *loc ).get_contained().type->has_use() ? ( *loc ).get_contained() : *loc;
+                                     ( *loc ).get_contained().has_use() ? ( *loc ).get_contained() : *loc;
                     return string_format( "<color_light_green>%s</color>", get_action_name( it ) );
                 }, _( "ACTION" ) );
             }
@@ -866,15 +866,15 @@ class activatable_inventory_preset : public pickup_inventory_preset
 
         bool is_shown( const item *loc ) const override {
             if( !( *loc ).is_container_empty() && ( *loc ).get_contained().is_medication() &&
-                ( *loc ).get_contained().type->has_use() ) {
+                ( *loc ).get_contained().has_use() ) {
                 return true;
             }
-            return loc->type->has_use();
+            return loc->has_use();
         }
 
         std::string get_denial( const item *loc ) const override {
             const item &it = !( *loc ).is_container_empty() && ( *loc ).get_contained().is_medication() &&
-                             ( *loc ).get_contained().type->has_use() ? ( *loc ).get_contained() : *loc;
+                             ( *loc ).get_contained().has_use() ? ( *loc ).get_contained() : *loc;
             const auto &uses = it.type->use_methods;
 
             if( uses.size() == 1 ) {

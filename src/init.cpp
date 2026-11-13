@@ -5,7 +5,6 @@
 #include "ammo.h"
 #include "ammo_effect.h"
 #include "anatomy.h"
-#include "artifact.h"
 #include "ascii_art.h"
 #include "behavior.h"
 #include "bionics.h"
@@ -83,6 +82,7 @@
 #include "profession.h"
 #include "recipe_dictionary.h"
 #include "recipe_groups.h"
+#include "relicgen.h"
 #include "regional_settings.h"
 #include "requirements.h"
 #include "rotatable_symbols.h"
@@ -491,6 +491,7 @@ void DynamicDataLoader::initialize()
     add( "achievement", &achievement::load_achievement );
     add( "named_color", &RGBColor::load_named_color );
     add( "perk", &perk::load_perks );
+    add( "relicgen", &relicgen::load_relicgens );
     add( "vehicle_blacklist", &vehicle_prototype::load_vehicle_blacklist );
 #if defined(TILES)
     add( "mod_tileset", &load_mod_tileset );
@@ -698,6 +699,7 @@ void DynamicDataLoader::unload_data()
     l10n_data::unload_mod_catalogues();
     RGBColor::unload_names();
     perk::reset();
+    relicgen::reset();
 #if defined(TILES)
     reset_mod_tileset();
 #endif
@@ -783,6 +785,7 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
             { _( "Localization" ), &l10n_data::load_mod_catalogues },
             { _( "Enchantments" ), &enchantment::finalize_all },
             { _( "Perks" ), &perk::finalize_all },
+            { _( "Relicgen" ), &relicgen::finalize_all },
 #if defined(TILES)
             { _( "Tileset" ), &load_tileset },
 #endif
@@ -892,6 +895,7 @@ void DynamicDataLoader::check_consistency( loading_ui &ui )
             { _( "Factions" ), &faction_template::check_consistency },
             { _( "Effects" ), &effect_type::check_consistency },
             { _( "Perks" ), &perk::check_consistency },
+            { _( "Relicgen" ), &relicgen::check_consistency },
         }
     };
 
@@ -1055,16 +1059,12 @@ void init::load_core_bn_modfiles()
     );
 }
 
-void init::load_world_modfiles( loading_ui &ui, const world *world,
-                                const std::string &artifacts_file )
+void init::load_world_modfiles( loading_ui &ui, const world *world )
 {
     clear_loaded_data();
 
     auto &mods = world->info->active_mod_order;
     mods = normalize_mod_load_order( mods );
-
-    // TODO: get rid of artifacts
-    load_artifacts( world, artifacts_file );
 
     // this code does not care about mod dependencies,
     // it assumes that those dependencies are static and

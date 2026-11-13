@@ -198,10 +198,9 @@ void load_core_bn_modfiles();
 /**
  * Load & finalize modlist needed for the current world.
  * @param ui structure for load progress display
- * @param artifact_file file with per-world artifact definitions
  * @throw std::exception if the loaded data is not valid.
  */
-void load_world_modfiles( loading_ui &ui, const world *world, const std::string &artifacts_file );
+void load_world_modfiles( loading_ui &ui, const world *world );
 
 /**
  * Load soundpack.

@@ -363,6 +363,7 @@ static const trait_id trait_WEBBED( "WEBBED" );
 
 static const std::string flag_PLOWABLE( "PLOWABLE" );
 static const std::string iuse_TOGGLE_UPS_CHARGING( "TOGGLE_UPS_CHARGING" );
+static const std::string iuse_RELIC( "RELIC" );
 
 static const mtype_id mon_player_blob( "mon_player_blob" );
 static const mtype_id mon_shadow_snake( "mon_shadow_snake" );
@@ -380,6 +381,8 @@ static const activity_id ACT_ASSIST( "ACT_ASSIST" );
 static const enchantment_flag_id ench_flag_NO_THERMAL_WAKE( "NO_THERMAL_WAKE" );
 static const enchantment_flag_id ench_flag_NO_DAMAGE_WAKE( "NO_DAMAGE_WAKE" );
 static const enchantment_flag_id ench_flag_FIRE_FIELD_IMMUNE( "FIRE_FIELD_IMMUNE" );
+static const enchantment_flag_id ench_flag_PSYSHIELD( "PSYSHIELD" );
+static const enchantment_flag_id ench_flag_ELECTRIC_IMMUNE( "ELECTRIC_IMMUNE" );
 static const enchantment_flag_id ench_flag_BLIND( "BLIND" );
 static const enchantment_flag_id ench_flag_ELECTROSENSE( "ELECTROSENSE" );
 static const enchantment_flag_id ench_flag_VIEW_DRONE_CAM( "VIEW_DRONE_CAM" );
@@ -7575,7 +7578,7 @@ bool Character::is_immune_damage( const damage_type dt ) const
             return has_effect_with_flag( flag_EFFECT_PSI_IMMUNE ) ||
                    worn_with_flag( flag_PSI_IMMUNE );
         case DT_ELECTRIC:
-            return has_active_bionic( bio_faraday ) ||
+            return has_enchantment_flag( ench_flag_ELECTRIC_IMMUNE ) ||
                    worn_with_flag( flag_ELECTRIC_IMMUNE ) ||
                    has_artifact_with( AEP_RESIST_ELECTRICITY ) ||
                    has_effect_with_flag( flag_EFFECT_ELECTRIC_IMMUNE );
@@ -8769,6 +8772,11 @@ bool Character::invoke_item( item *used, const std::string &method, const tripoi
         iuse::toggle_ups_charging( this->as_player(), used, false, pt );
         return true;
     }
+    if( method == iuse_RELIC ) {
+        int charges_used = iuse::relic( this->as_player(), used, false, pt );
+        return consume_charges( *used, charges_used );
+    }
+
     item *actually_used = used->get_usable_item( method );
     if( actually_used == nullptr ) {
         debugmsg( "Tried to invoke a method %s on item %s, which doesn't have this method",
@@ -12614,7 +12622,7 @@ bool Character::can_learn_by_disassembly( const recipe &rec ) const
 
 bool has_psy_protection( const Character &c, int partial_chance )
 {
-    return c.has_artifact_with( AEP_PSYSHIELD ) ||
+    return c.has_artifact_with( AEP_PSYSHIELD ) || c.has_enchantment_flag( ench_flag_PSYSHIELD ) ||
            ( c.worn_with_flag( flag_PSYSHIELD_PARTIAL ) && one_in( partial_chance ) );
 }
 

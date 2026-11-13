@@ -130,6 +130,16 @@
     "info": "<good>Prevents damage from open fires</good>"
   },
   {
+    "id": "ELECTRIC_IMMUNE",
+    "type": "enchantment_flag",
+    "info": "<good>Protects against all electic attacks</good>"
+  },
+  {
+    "id": "PSYSHIELD",
+    "type": "enchantment_flag",
+    "info": "<good>Protects the mental state from otherworldly assaults</good>"
+  },
+  {
     "id": "NO_THERMAL_WAKE",
     "type": "enchantment_flag",
     "info": "<bad>Prevents waking up from overheating</bad>"
@@ -148,5 +158,10 @@
     "id": "NO_READING_COMPLEXITY_PENALTY",
     "type": "enchantment_flag",
     "info": "<good>Prevents penalties from reading books you cannot easily understand</good>"
+  },
+  {
+    "id": "EVIL",
+    "type": "enchantment_flag",
+    "info": "<bad>Grants an addictive power</bad>"
   }
 ]

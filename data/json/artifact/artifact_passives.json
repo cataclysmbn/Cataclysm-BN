@@ -1,0 +1,260 @@
+[
+  {
+    "//": "Todo: AEP_EXTINGUISH, AEP_BAD_WEATHER",
+    "type": "enchantment",
+    "id": "AEP_STR_UP",
+    "values": [ { "value": "STRENGTH", "add": 4 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_STR_DOWN",
+    "values": [ { "value": "STRENGTH", "add": -3 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_DEX_UP",
+    "values": [ { "value": "DEXTERITY", "add": 4 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_DEX_DOWN",
+    "values": [ { "value": "DEXTERITY", "add": -3 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_PER_UP",
+    "values": [ { "value": "PERCEPTION", "add": 4 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_PER_DOWN",
+    "values": [ { "value": "PERCEPTION", "add": -3 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_INT_UP",
+    "values": [ { "value": "INTELLIGENCE", "add": 4 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_INT_DOWN",
+    "values": [ { "value": "INTELLIGENCE", "add": -3 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_ALL_UP",
+    "values": [
+      { "value": "STRENGTH", "add": 2 },
+      { "value": "DEXTERITY", "add": 2 },
+      { "value": "PERCEPTION", "add": 2 },
+      { "value": "INTELLIGENCE", "add": 2 }
+    ],
+    "has": "WIELD"
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_ALL_DOWN",
+    "values": [
+      { "value": "STRENGTH", "add": -2 },
+      { "value": "DEXTERITY", "add": -2 },
+      { "value": "PERCEPTION", "add": -2 },
+      { "value": "INTELLIGENCE", "add": -2 }
+    ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_SPEED_UP",
+    "values": [ { "value": "SPEED", "add": 20 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_SPEED_DOWN",
+    "values": [ { "value": "SPEED", "add": -20 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_PBLUE",
+    "ench_effects": [ { "effect": "artifact_pblue", "intensity": 1 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_INVISIBLE",
+    "ench_effects": [ { "effect": "invisibility", "intensity": 1 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_CLAIRVOYANCE",
+    "values": [ { "value": "CLAIRVOYANCE", "max": 3 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_CLAIRVOYANCE_PLUS",
+    "values": [ { "value": "CLAIRVOYANCE", "max": 8 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_CLAIRVOYANCE_SUPER",
+    "values": [ { "value": "CLAIRVOYANCE", "max": 40 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_STEALTH",
+    "flags": [ "SILENT" ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_GLOW",
+    "values": [ { "value": "LUMINATION", "max": 25 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_PSYSHIELD",
+    "flags": [ "PSYSHIELD" ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_RESIST_ELECTRICITY",
+    "flags": [ "ELECTRIC_IMMUNE" ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_CARRY_MORE",
+    "values": [ { "value": "CARRY_WEIGHT", "add": 22500 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_SMOKE",
+    "emitter": "emit_AEP_SMOKE"
+  },
+  {
+    "type": "SPELL",
+    "id": "AEP_EVIL_SPELL",
+    "name": "EEEEEEVVVVVIIIIILLLL!",
+    "description": "You debugged in this spell!  It makes you evil for 30 minutes.",
+    "valid_targets": [ "hostile", "ally", "self" ],
+    "flags": [ "NO_EXPLOSION_VFX" ],
+    "effect": "target_attack",
+    "effect_str": "evil",
+    "min_duration": 180000,
+    "max_duration": 180000
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_EVIL",
+    "intermittent_activation": { "effects": [ { "frequency": "15 minutes", "spell_effects": [ { "id": "AEP_EVIL_SPELL" } ] } ] },
+    "flags": [ "EVIL" ]
+  },
+  {
+    "type": "SPELL",
+    "id": "AEP_ATTENTION_SPELL",
+    "name": "Being Watched",
+    "description": "Grants nether attention for 30 minutes.",
+    "valid_targets": [ "self" ],
+    "flags": [ "NO_EXPLOSION_VFX" ],
+    "effect": "target_attack",
+    "effect_str": "attention",
+    "min_duration": 180000,
+    "max_duration": 180000
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_ATTENTION",
+    "intermittent_activation": { "effects": [ { "frequency": "15 minutes", "spell_effects": [ { "id": "AEP_ATTENTION_SPELL" } ] } ] }
+  },
+  {
+    "id": "AEP_SAP_LIFE_SPELL",
+    "type": "SPELL",
+    "name": { "str": "Sap Life" },
+    "description": "This creates the effect that heals the caster.",
+    "valid_targets": [ "self" ],
+    "effect": "target_attack",
+    "min_damage": -1,
+    "max_damage": -3,
+    "flags": [ "NO_EXPLOSION_VFX", "RANDOM_DAMAGE", "SILENT" ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_SAP_LIFE",
+    "hit_you_effect": [ { "id": "AEP_SAP_LIFE_SPELL", "hit_self": true } ]
+  },
+  {
+    "id": "AEP_SNAKES_SPELL",
+    "type": "SPELL",
+    "name": { "str": "Snaaaake!" },
+    "description": "Creates a shadow snake.",
+    "valid_targets": [ "ground" ],
+    "message": "",
+    "flags": [ "NO_EXPLOSION_VFX", "PERMANENT" ],
+    "effect": "summon",
+    "effect_str": "mon_shadow_snake",
+    "min_damage": 1,
+    "max_damage": 1,
+    "min_aoe": 2,
+    "max_aoe": 2
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_SNAKES",
+    "hit_me_effect": [
+      {
+        "id": "AEP_SNAKES_SPELL",
+        "hit_self": false,
+        "once_in": 5,
+        "message": "A snake sprouts from your body!",
+        "npc_message": "A snake sprouts from %1$s's body!"
+      }
+    ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_HUNGER",
+    "values": [ { "value": "METABOLISM", "multiply": 0.25 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_THIRST",
+    "values": [ { "value": "THIRST", "multiply": 0.25 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_SCHIZO",
+    "mutations": [ "SCHIZOPHRENIC" ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_RADIOACTIVE",
+    "ench_effects": [ { "effect": "artifact_rads", "intensity": 1 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_MUTAGENIC",
+    "//": "Reuse the AEA spell for conveinence.",
+    "intermittent_activation": { "effects": [ { "frequency": "16 hours", "spell_effects": [ { "id": "AEA_MUTATE" } ] } ] }
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_FORCE_TELEPORT",
+    "//": "Reuse the AEA spell for conveinence.",
+    "intermittent_activation": { "effects": [ { "frequency": "1 hours", "spell_effects": [ { "id": "AEA_TELEPORT" } ] } ] }
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_MOVEMENT_NOISE",
+    "values": [ { "value": "NOISE", "multiply": 1.0 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_SICK",
+    "ench_effects": [ { "effect": "artifact_sickness", "intensity": 1 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_FUN",
+    "ench_effects": [ { "effect": "artifact_fun", "intensity": 1 } ]
+  },
+  {
+    "type": "enchantment",
+    "id": "AEP_NULL",
+    "//": "Yes this is suppost to be empty deal with it"
+  }
+]

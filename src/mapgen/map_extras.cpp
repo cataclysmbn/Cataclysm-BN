@@ -35,6 +35,7 @@
 #include "point.h"
 #include "point_float.h"
 #include "regional_settings.h"
+#include "relicgen.h"
 #include "rng.h"
 #include "string_formatter.h"
 #include "string_id.h"
@@ -1656,7 +1657,8 @@ static auto mx_portal_in(mapgen_constructor& m, const tripoint_abs_omt& abs_offs
             artifact_natural_property prop = static_cast<artifact_natural_property>(
                 rng(ARTPROP_NULL + 1, ARTPROP_MAX - 1));
             m.create_anomaly(pos, prop);
-            m.spawn_natural_artifact(pos + point_rel_ms{rng(-1, 1), rng(-1, 1)}, prop);
+            m.spawn_artifact(
+                pos + point_rel_ms{rng(-1, 1), rng(-1, 1)}, relicgen::relicgen_from_natural(prop));
             break;
         }
     }

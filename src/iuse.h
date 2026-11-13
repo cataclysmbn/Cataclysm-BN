@@ -198,6 +198,9 @@ int disassemble( player *, item *, bool, const tripoint_bub_ms & );
    It examines the item's artifact-specific properties.
    See artifact.h for a list.                        */
 int artifact( player *, item *, bool, const tripoint_bub_ms & );
+// RELIC
+// Calls all relic effects
+int relic( player *, item *, bool, const tripoint_bub_ms & );
 
 // Helper for listening to music, might deserve a better home, but not sure where.
 void play_music( player &p, const tripoint_bub_ms &source, int volume, int max_morale );

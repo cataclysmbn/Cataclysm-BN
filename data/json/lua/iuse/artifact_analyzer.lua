@@ -39,8 +39,13 @@ local collect_artifacts = function(who)
   return artifacts
 end
 
+local flag_SECRET_ENCHANTMENTS = JsonFlagId.new("SECRET_ENCHANTMENTS")
 ---@type fun(it: Item): string
 local describe_artifact = function(it)
+  if it:has_flag(flag_SECRET_ENCHANTMENTS) then
+    it:unset_flag(flag_SECRET_ENCHANTMENTS)
+    return locale.gettext("The effects have been pernamently revealed on this item")
+  end
   local itype_id = it:get_type()
   local itype = itype_id:obj()
   if not itype then return locale.gettext("Unable to read artifact data.") end
