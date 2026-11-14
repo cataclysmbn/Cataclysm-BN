@@ -1786,4 +1786,8 @@ TEST_CASE("clear_map_moves_load_region_to_bubble", "[map]") {
 
     const auto center = m.get_abs_sub() + point_rel_sm(g_mapsize / 2, g_mapsize / 2);
     CHECK(submap_loader.is_simulated(m.get_bound_dimension(), center));
+    // Test processes start with a MAPSIZE map, which is larger than g_mapsize. Retained submaps
+    // outside the region can be evicted while the map still uses them.
+    const auto corner = m.get_abs_sub() + point_rel_sm(m.getmapsize() - 1, m.getmapsize() - 1);
+    CHECK(submap_loader.is_simulated(m.get_bound_dimension(), corner));
 }
