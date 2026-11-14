@@ -10,7 +10,8 @@
   "craft_inherit": true, // Items made with it will keep this flag
   "requires_flag": true, // Used by vehicle part flags, requires another part with this ID on the tile
   "inherit": true, // Item mods will pass this flag down to the item
-  "tag": "string" // Translatable string appended to the item's UI display name, if the item has this flag
+  "tag": "string", // Translatable string appended to the item's UI display name, if the item has this flag
+  "dynamic_color": "c_brown" // Curses color string to use in inventory when this flag is dynamically applied to an item
 }
 ```
 
