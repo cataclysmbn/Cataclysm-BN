@@ -53,6 +53,7 @@
 #include "string_formatter.h"
 #include "string_id.h"
 #include "string_utils.h"
+#include "takeoff_cost.h"
 #include "translations.h"
 #include "trap.h"
 #include "units.h"
@@ -766,6 +767,8 @@ std::vector<detached_ptr<item>> obtain_and_tokenize_items( player &p, std::list<
                 items.pop_front();
                 continue;
             }
+            // consumed_moves already includes the takeoff cost
+            p.mod_moves( takeoff_move_cost );
         } else if( ait.loc->count_by_charges() ) {
             res.push_back( p.reduce_charges( const_cast<item *>( &*ait.loc ), ait.count ) );
         } else {

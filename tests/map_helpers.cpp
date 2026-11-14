@@ -3,6 +3,7 @@
 #include "../src/map/map.h"
 #include "../src/map/mapdata.h"
 #include "../src/map/submap.h"
+#include "../src/map/submap_load_manager.h"
 #include "../src/overmap/overmapbuffer.h"
 #include "avatar.h"
 #include "calendar.h"
@@ -114,6 +115,22 @@ void clear_overmap() {
 }
 
 void clear_map() {
+    // map::load and map::resize change the map without its reality bubble load request.  A stale
+    // request stops the load manager from simulating the map and lets it evict submaps in use.
+    auto& here = get_map();
+    const auto origin = here.get_abs_sub();
+    const auto far_corner = origin + point_rel_sm(g_mapsize - 1, g_mapsize - 1);
+    const auto is_requested = [&](const point_abs_sm& p) {
+        return submap_loader
+            .is_properly_requested(here.get_bound_dimension(), tripoint_abs_sm(p, 0));
+    };
+    const auto is_stale =
+        here.getmapsize() != g_mapsize || !is_requested(origin) || !is_requested(far_corner);
+    if (here.has_active_load_region() && is_stale) {
+        here.resize(g_mapsize);
+        g->load_map(origin);
+    }
+
     // Fields can spread between z-levels and affect later tests' lighting.
     for (auto z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; ++z) { clear_fields(z); }
     wipe_map_terrain();

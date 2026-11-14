@@ -426,6 +426,18 @@ hint_rating rate_action_eat( const avatar &you, const item &it )
     if( !you.can_consume( it ) ) {
         return hint_rating::cant;
     }
+    const auto &fuel = you.get_consumable_from( const_cast<item &>( it ) );
+    if( !fuel.is_comestible() ) {
+        // Bionic fuel: the consume menu denies it without fuel space, a full furnace wastes it
+        switch( you.get_cbm_rechargeable_with( fuel ) ) {
+            case rechargeable_cbm::furnace:
+                return you.is_max_power() ? hint_rating::iffy : hint_rating::good;
+            case rechargeable_cbm::other:
+                return you.get_fuel_capacity( fuel.typeId() ) > 0 ? hint_rating::good : hint_rating::cant;
+            default:
+                return hint_rating::good;
+        }
+    }
 
     const ret_val<edible_rating> rating = you.will_eat( it );
     if( rating.success() ) {

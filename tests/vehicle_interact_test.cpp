@@ -6,6 +6,7 @@
 #include "calendar.h"
 #include "catch/catch.hpp"
 #include "coordinates.h"
+#include "debug.h"
 #include "game.h"
 #include "inventory.h"
 #include "item.h"
@@ -146,4 +147,35 @@ TEST_CASE("debug_hammerspace_installs_full_vehicle_battery", "[vehicle][veh_inte
 
     REQUIRE(installed_battery != all_parts.end());
     CHECK(installed_battery->part().ammo_remaining() == installed_battery->part().ammo_capacity());
+}
+
+TEST_CASE(
+    "installing_boardable_part_under_boarded_player_does_not_reboard", "[vehicle][veh_interact]") {
+    clear_all_state();
+
+    map& here = get_map();
+    avatar& you = get_avatar();
+    clear_avatar();
+    you.toggle_trait(trait_DEBUG_HS);
+    you.set_body();
+
+    const tripoint_bub_ms vehicle_origin(60, 60, 0);
+    vehicle* veh_ptr = here.add_vehicle(vproto_id("bicycle"), vehicle_origin, 0_degrees, 0, 0);
+    REQUIRE(veh_ptr != nullptr);
+    REQUIRE(here.veh_at(vehicle_origin).part_with_feature(VPFLAG_BOARDABLE, true));
+    here.board_vehicle(vehicle_origin, &you);
+    REQUIRE(you.in_vehicle);
+
+    const auto reference_pos = map_local_to_abs(here, vehicle_origin);
+    you.assign_activity(ACT_VEHICLE, 1, static_cast<int>('i'));
+    you.activity->values = {reference_pos.x(), reference_pos.y(), reference_pos.z(), 0, 0, 0, 0};
+    you.activity->str_values.push_back("ladder_3");
+    for (const tripoint_abs_ms& p : veh_ptr->get_points(true)) {
+        you.activity->coord_set.insert(p);
+    }
+
+    const auto dmsg = capture_debugmsg_during([&]() { veh_interact::complete_vehicle(you); });
+
+    CHECK(dmsg.empty());
+    CHECK(you.in_vehicle);
 }
