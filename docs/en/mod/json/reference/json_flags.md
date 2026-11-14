@@ -672,6 +672,8 @@ List of known flags, used in both `terrain.json` and `furniture.json`.
 - `AUTODOC_COUCH` This furniture can be a couch for a furniture with the `autodoc` examine action.
 - `BLOCKSDOOR` This will boost map terrain's resistance to bashing if `str_*_blocked` is set (see
   `map_bash_info`)
+- `PET_FEEDER` Tamed monsters eat pet food placed on this furniture, and only food on furniture with
+  this flag. They must stand on the tile to eat.
 
 ## Generic
 

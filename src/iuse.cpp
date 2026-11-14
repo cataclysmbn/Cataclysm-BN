@@ -67,6 +67,7 @@
 #include "monattack.h"
 #include "mongroup.h"
 #include "monster.h"
+#include "monster_food_lure.h"
 #include "morale_types.h"
 #include "mtype.h"
 #include "mutation.h"
@@ -1506,39 +1507,17 @@ int iuse::petfood( player *p, item *it, bool, const tripoint_bub_ms & )
             return 0;
         }
 
-        //check to see if the item has a petfood data entry deterimine if the item can be fed to a bet
-        bool can_feed = false;
         const pet_food_data &petfood = mon.type->petfood;
-        const std::set<std::string> &itemfood = it->get_comestible()->petfood;
-        if( !petfood.food.empty() ) {
-            for( const std::string &food : petfood.food ) {
-                if( itemfood.contains( food ) ) {
-                    can_feed = true;
-                    break;
-                }
-            }
-        }
-
-        //if the item cannot be fed, give a message to the player and return
-        if( !can_feed ) {
+        if( !food_lure::matches_pet_food( *mon.type, *it ) ) {
             p->add_msg_if_player( _( "The %s doesn't want that kind of food." ),
                                   mon.type->nname() );
             return 0;
         }
 
-        if( !petfood.tamer_traits.empty() ) {
-            for( const TraitSet &trait_set : petfood.tamer_traits ) {
-                if( !p->has_one_of_traits( trait_set ) ) {
-                    can_feed = false;
-                } else {
-                    can_feed = true;
-                }
-            }
-            if( !can_feed ) {
-                p->add_msg_if_player( _( "The %s does not trust your kind." ),
-                                      mon.type->nname() );
-                return 0;
-            }
+        if( !food_lure::accepts_tamer( *mon.type, *p ) ) {
+            p->add_msg_if_player( _( "The %s does not trust your kind." ),
+                                  mon.type->nname() );
+            return 0;
         }
 
         if( mon.type->id == mon_dog_thing ) {

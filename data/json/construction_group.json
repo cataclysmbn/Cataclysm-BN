@@ -226,6 +226,11 @@
   },
   {
     "type": "construction_group",
+    "id": "build_trough",
+    "name": "Build Feeding Trough"
+  },
+  {
+    "type": "construction_group",
     "id": "build_cupboard",
     "name": "Build Cupboard"
   },

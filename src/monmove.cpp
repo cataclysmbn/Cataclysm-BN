@@ -30,6 +30,7 @@
 #include "messages.h"
 #include "monfaction.h"
 #include "monster.h" // IWYU pragma: associated
+#include "monster_food_lure.h"
 #include "monster_hallucination.h"
 #include "monster_oracle.h"
 #include "mtype.h"
@@ -533,6 +534,8 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
                         local_morale < type->morale;
     bool swarms       = lod_tier <= lod_group_morale_max_tier && has_flag( MF_SWARMS );
     auto mood   = attitude();
+    // Domestic animals approach someone holding their pet food instead of shying away.
+    const auto lured_by_player = food_lure::is_lured_by_held_food( *this, g->u );
 
     // GAIN-B: call rate_target once.  It applies the terrain LOS blocker cache,
     // then runs the real sight check; player
@@ -557,7 +560,9 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
                             result.aggro_triggers.push_back( "proximity" );
                         }
                     }
-                    local_morale -= fears_hostile_near;
+                    if( !lured_by_player ) {
+                        local_morale -= fears_hostile_near;
+                    }
                     if( angers_mating_season > 0 ) {
                         bool mating_angry = false;
                         season_type season = season_of_year( calendar::turn );
@@ -870,6 +875,9 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
         // else: no restore needed — the original else-branch was always a no-op.
     }
 
+    // Pet food in the player's hands outweighs fear of the player, but not of other threats.
+    const auto lure_overrides_target = lured_by_player && target == &g->u;
+
     if( has_effect( effect_dragging ) ) {
 
         if( type->has_special_attack( "OPERATE" ) ) {
@@ -904,7 +912,9 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
         const auto att_to_target = attitude_to( *target );
         local_observed_target = target;
         local_observed_target_pos = dest;
-        if( att_to_target == Attitude::A_HOSTILE && !fleeing ) {
+        if( lure_overrides_target ) {
+            // The food lure below picks the goal.
+        } else if( att_to_target == Attitude::A_HOSTILE && !fleeing ) {
             local_goal = dest;
             local_goal_kind = monster_plan_goal_kind::target_last_known;
         } else if( fleeing ) {
@@ -979,6 +989,29 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
                 if( !has_flag( MF_FACTION_MEMORY ) && local_anger != type->agro ) {
                     local_anger += ( local_anger < type->agro ) ? 1 : -1;
                 }
+            }
+        }
+    }
+
+    {
+        ZoneScopedN( "cp_food_lure" );
+        const auto busy = has_effect( effect_dragging ) ||
+                          local_goal_kind == monster_plan_goal_kind::target_last_known ||
+                          ( target != nullptr && fleeing && !lure_overrides_target );
+        if( !busy && food_lure::seeks_food( *this ) ) {
+            auto local_tiles = food_lure::lure_snapshot{};
+            if( ctx.lure_tiles == nullptr ) {
+                local_tiles = food_lure::collect_lure_tiles_near( g->m, *this );
+            }
+            const auto lure_goal = food_lure::pick_lure_goal( {
+                .mon = *this,
+                .tiles = ctx.lure_tiles != nullptr ? *ctx.lure_tiles : local_tiles,
+                .lured_by_player = lured_by_player,
+                .player_pos = g->u.bub_pos(),
+            } );
+            if( lure_goal ) {
+                local_goal = *lure_goal;
+                local_goal_kind = monster_plan_goal_kind::none;
             }
         }
     }
@@ -1163,6 +1196,13 @@ monster_action_t monster::decide_action() const
         return action;
     }
     if( vp && has_effect( effect_harnessed ) ) {
+        action.kind      = monster_action_kind::idle;
+        action.move_cost = moves;
+        return action;
+    }
+
+    // Food keeps the monster in place: next to someone holding its pet food.
+    if( wandering && food_lure::holds_position( *this ) ) {
         action.kind      = monster_action_kind::idle;
         action.move_cost = moves;
         return action;
@@ -1595,6 +1635,12 @@ void monster::execute_action( const monster_action_t &action )
     }
 
     if( moves < 0 ) {
+        return;
+    }
+
+    // Eating comes before move_effects so that a monster caught in a trap keeps eating.
+    if( food_lure::process_feeding( *this ) ) {
+        moves = 0;
         return;
     }
 
