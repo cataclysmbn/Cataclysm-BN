@@ -72,6 +72,7 @@
 #include "player.h"
 #include "player_activity.h"
 #include "popup.h"
+#include "presentation_rng.h"
 #include "profile.h"
 #include "ranged.h"
 #include "rng.h"
@@ -338,7 +339,8 @@ static void generate_weather_anim_frame( const weather_type_id &wtype, weather_p
 
     const int dropCount = static_cast<int>( iEnd.x * iEnd.y * anim.factor );
     for( int i = 0; i < dropCount; i++ ) {
-        const point iRand{ rng( iStart.x, iEnd.x - 1 ), rng( iStart.y, iEnd.y - 1 ) };
+        const point iRand{ presentation_rng( iStart.x, iEnd.x - 1 ),
+                           presentation_rng( iStart.y, iEnd.y - 1 ) };
         const point_bub_ms map( iRand + offset );
 
         if( !map_cache.inbounds( map ) ) {

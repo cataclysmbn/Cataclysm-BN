@@ -6,9 +6,20 @@
 #include "stringmaker.h"
 
 #include <algorithm>
+#include <array>
+#include <cstddef>
 #include <memory>
+#include <new>
 #include <utility>
 #include <vector>
+
+TEST_CASE("a new item group starts unchecked whatever its memory held", "[item_group]") {
+    alignas(Item_group) auto storage = std::array<std::byte, sizeof(Item_group)>{};
+    storage.fill(std::byte{0x01});
+    auto* const group = new (storage.data()) Item_group(Item_group::G_COLLECTION, 100, 0, 0);
+    CHECK_FALSE(group->checked);
+    std::destroy_at(group);
+}
 
 TEST_CASE("item group ammo loading unwraps packaged ammunition", "[item_group]") {
     const auto packaged = GENERATE(false, true);

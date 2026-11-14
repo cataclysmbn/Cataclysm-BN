@@ -14,6 +14,8 @@
 #include <utility>
 #include <vector>
 
+#include "rng.h"
+
 /**
  * Persistent thread pool for parallelizing game work.
  *
@@ -100,6 +102,16 @@ class cata_thread_pool
             return fut;
         }
 
+        /// submit_returning(), drawing from the deterministic stream `key` names when one is active.
+        template<typename F, typename... Args>
+        auto submit_returning( const rng_deterministic_key &key, F &&f, Args &&...args ) {
+            return submit_returning( [seed = rng_deterministic_seed_for_current_context( key ),
+                 task = std::bind( std::forward<F>( f ), std::forward<Args>( args )... )]() mutable {
+                const auto scope = rng_deterministic_task_scope( seed );
+                return task();
+            } );
+        }
+
     private:
         void worker_loop();
 
@@ -112,6 +124,20 @@ class cata_thread_pool
 
 /** Returns the process-lifetime thread pool (lazy-initialized, thread-safe). */
 cata_thread_pool &get_thread_pool();
+
+namespace thread_pool_detail
+{
+/// Wraps `f` so that each index draws from its own child of the call's deterministic seed, when one is active.
+template<typename F>
+auto seeded( const std::uint64_t stream, F &f )
+{
+    return [&f, stream, call_seed = rng_next_deterministic_call_seed( stream )]( const int index ) {
+        const auto child = [&]( const unsigned int seed ) { return rng_deterministic_child_seed( seed, { .stream = stream, .id = static_cast<std::uint64_t>( index ) } ); };
+        const auto scope = rng_deterministic_task_scope( call_seed.transform( child ) );
+        f( index );
+    };
+}
+} // namespace thread_pool_detail
 
 /**
  * Returns true when the calling thread is a pool worker thread.
@@ -135,12 +161,13 @@ bool is_pool_worker_thread();
  * F must be callable as  void F(int index)
  */
 template<typename F>
-void parallel_for( int begin, int end, F &&f )
+void parallel_for( int begin, int end, F &&body )
 {
     const int n = end - begin;
     if( n <= 0 ) {
         return;
     }
+    const auto f = thread_pool_detail::seeded( 0x706172666f725f5f, body );
 
     // Short-circuit: single item — run directly with no dispatch overhead.
     if( n == 1 ) {
@@ -198,11 +225,12 @@ void parallel_for( int begin, int end, F &&f )
  * F must be callable as  void F(int index)
  */
 template<typename F>
-void parallel_for_chunked( int begin, int end, int chunk_size, F &&f )
+void parallel_for_chunked( int begin, int end, int chunk_size, F &&body )
 {
     if( end <= begin || chunk_size <= 0 ) {
         return;
     }
+    const auto f = thread_pool_detail::seeded( 0x7061726368756e6b, body );
 
     cata_thread_pool &pool = get_thread_pool();
     const int nw = static_cast<int>( pool.num_workers() );

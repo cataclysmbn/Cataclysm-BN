@@ -682,3 +682,20 @@ TEST_CASE("separate_overmap_tile_context_keeps_independent_scale", "[overmap][zo
 }
 
 #endif // TILES
+
+TEST_CASE("ore veins face the direction the game seed picks", "[overmap][deterministic_rng]") {
+    clear_all_state();
+    auto& omb = ACTIVE_OVERMAP_BUFFER;
+    // Far from the loaded map, so seeing the rock only changes the overmap.
+    const auto p = tripoint_abs_omt(140, 140, -5);
+    const auto vein_once_seen = [&omb, &p]() {
+        omb.set_seen(p, false);
+        omb.ter_set(p, oter_id("empty_rock"));
+        rng_set_engine_seed(77);
+        omb.set_seen(p, true);
+        return omb.ter(p).id().str();
+    };
+    const auto first = vein_once_seen();
+    REQUIRE(first.starts_with("omt_ore_vein_"));
+    for (auto repeat = 0; repeat < 8; ++repeat) { CHECK(vein_once_seen() == first); }
+}

@@ -14,6 +14,7 @@
 #include <utility>
 
 #include "action.h"
+#include "cata_utility.h"
 #include "catacharset.h"
 #include "cursesdef.h"
 #include "debug.h"
@@ -28,6 +29,8 @@
 #include "path_info.h"
 #include "popup.h"
 #include "profile.h"
+#include "replay/replay.h"
+#include "runtime_handlers.h"
 #include "string_formatter.h"
 #include "string_input_popup.h"
 #include "string_utils.h"
@@ -698,6 +701,49 @@ const std::string &input_context::input_to_action( const input_event &inp ) cons
     return CATA_ERROR;
 }
 
+namespace
+{
+/// The context whose handle_input is reading an event; replay records it as the boundary.
+auto reading_context = static_cast<input_context *>( nullptr );
+} // namespace
+
+input_event input_manager::get_input_event()
+{
+    if( !replay::is_enabled() ) {
+        return read_native_input_event();
+    }
+    const auto boundary = replay::input_boundary_metadata{
+        .context = reading_context ? reading_context->category_name() : std::string{},
+        .actions = reading_context ? reading_context->get_registered_actions_copy() : std::vector<std::string>{},
+        .timeout_ms = get_timeout(),
+#if defined(TILES)
+        .pointer_space = "pixel",
+#else
+        .pointer_space = "cell",
+#endif
+    };
+    try {
+        if( const auto recorded = replay::next_input_event( boundary ) ) {
+            pump_events();
+            // A native read leaves the key here, and some menus open on it. Curses keeps only the
+            // first byte of a multi-byte key in the event, but leaves its code point here.
+            if( recorded->type == input_event_t::keyboard ) {
+                const auto code_point = UTF8_getch( recorded->text );
+                previously_pressed_key = code_point == UNKNOWN_UNICODE ? recorded->get_first_input() :
+                                         static_cast<int>( code_point );
+            }
+            return *recorded;
+        }
+        auto event = read_native_input_event();
+        replay::record_input_event( event, boundary );
+        return event;
+    } catch( const replay::completed & ) {
+        exit_handler( 0 );
+    } catch( const std::runtime_error &error ) {
+        replay::exit_with_failure( error );
+    }
+}
+
 #if defined(__ANDROID__)
 std::list<input_context *> input_context::input_context_stack;
 
@@ -939,6 +985,8 @@ const std::string &input_context::handle_input( const int timeout )
     while( true ) {
         {
             ZoneScopedN( "input_context_get_input_event" );
+            const auto reading = restore_on_out_of_scope<input_context *>( reading_context );
+            reading_context = this;
             next_action = inp_mngr.get_input_event();
         }
         if( next_action.type == input_event_t::timeout ) {

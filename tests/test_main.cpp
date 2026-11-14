@@ -232,7 +232,8 @@ static void init_global_game_state(
     g->u = avatar();
     g->u.create(character_type::NOW);
 
-    g->m = map();
+    // Match the reality bubble the submap loader requests, or the map holds submaps it frees.
+    g->m = map(g_mapsize);
     disable_mapgen = true;
 
     g->m.load(g->m.get_abs_sub(), false);

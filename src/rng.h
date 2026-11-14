@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cstdint>
 #include <functional>
 #include <iosfwd>
 #include <optional>
@@ -24,7 +25,43 @@ struct tripoint;
 void rng_set_engine_seed( unsigned int seed );
 
 using cata_default_random_engine = std::minstd_rand0;
-cata_default_random_engine &rng_get_engine();
+
+struct rng_deterministic_key {
+    std::uint64_t stream = 0;
+    std::uint64_t id = 0;
+};
+
+struct rng_task_context {
+    cata_default_random_engine engine;
+    unsigned int seed = 0;
+    std::uint64_t child_counter = 0;
+};
+
+/// Draws from an engine seeded with `seed` until destroyed; with no seed, changes nothing.
+class rng_deterministic_task_scope
+{
+    public:
+        explicit rng_deterministic_task_scope( std::optional<unsigned int> seed );
+        ~rng_deterministic_task_scope();
+
+        rng_deterministic_task_scope( const rng_deterministic_task_scope & ) = delete;
+        auto operator=( const rng_deterministic_task_scope & )
+        -> rng_deterministic_task_scope & = delete; // *NOPAD*
+
+    private:
+        /// The context this scope replaced, when it set one.
+        std::optional<std::optional<rng_task_context>> old_;
+};
+
+auto rng_get_engine() -> cata_default_random_engine &; // *NOPAD*
+auto rng_set_deterministic_seed( unsigned int seed ) -> void;
+auto rng_clear_deterministic_seed() -> void;
+auto rng_deterministic_seed_active() -> bool;
+auto rng_deterministic_child_seed( unsigned int parent_seed,
+                                   const rng_deterministic_key &key ) -> unsigned int;
+auto rng_deterministic_seed_for_current_context(
+    const rng_deterministic_key &key ) -> std::optional<unsigned int>;
+auto rng_next_deterministic_call_seed( std::uint64_t stream ) -> std::optional<unsigned int>;
 unsigned int rng_bits();
 
 /**
@@ -66,6 +103,13 @@ inline int roll_remainder( float value )
 }
 
 int djb2_hash( const unsigned char *input );
+
+/// Deterministic task id for work at point `p` of a dimension.
+template<typename Point>
+auto rng_task_id( const std::string &dimension, const Point &p ) -> std::uint64_t
+{
+    return std::hash<Point> {}( p ) ^ ( std::hash<std::string> {}( dimension ) << 1 );
+}
 
 double rng_normal( double lo, double hi );
 

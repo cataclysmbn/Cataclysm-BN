@@ -398,6 +398,7 @@ monster::monster() : corpse_components( new monster_component_item_location( thi
     mission_id = -1;
     no_extra_death_drops = false;
     dead = false;
+    staircount = 0;
     death_drops = true;
     made_footstep = false;
     hallucination = false;

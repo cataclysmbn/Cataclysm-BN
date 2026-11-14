@@ -31,6 +31,7 @@
 #include "overmapbuffer_registry.h"
 #include "popup.h"
 #include "profile.h"
+#include "replay/replay.h"
 #include "rng.h"
 #include "simple_pathfinding.h"
 #include "string_formatter.h"
@@ -116,6 +117,11 @@ void overmapbuffer::create_custom_overmap(const point_abs_om& p, overmap_special
 }
 
 void overmapbuffer::generate(const std::vector<point_abs_om>& locs) {
+    // An overmap reads its neighbors, so in a replay each one is finished before the next starts.
+    if (replay::is_enabled() && locs.size() > 1) {
+        std::ranges::for_each(locs, [this](const auto& loc) { generate({loc}); });
+        return;
+    }
     struct pending {
         point_abs_om loc;
         std::future<std::unique_ptr<overmap>> future;
@@ -132,11 +138,14 @@ void overmapbuffer::generate(const std::vector<point_abs_om>& locs) {
         // advances each iteration, creating a latent race if threads outlive the loop.
         auto dim_id = dimension_id_;
         futures.push_back(
-            {loc, get_thread_pool().submit_returning([loc, dim_id] {
-                 auto om = std::make_unique<overmap>(loc, dim_id);
-                 om->populate(dim_id);
-                 return om;
-             })});
+            {loc,
+             get_thread_pool().submit_returning(
+                 {.stream = 0x6f7665726d61705f, .id = rng_task_id(dim_id.str(), loc)},
+                 [loc, dim_id] {
+                     auto om = std::make_unique<overmap>(loc, dim_id);
+                     om->populate(dim_id);
+                     return om;
+                 })});
     }
 
     // Non-blocking scan: insert each overmap as soon as its future is ready rather
@@ -1168,7 +1177,7 @@ struct find_task_generator {
 auto overmapbuffer::find_all(const tripoint_abs_omt& origin, const omt_find_params& params)
     -> std::vector<tripoint_abs_omt> {
     const auto concurrency = std::max(1u, std::thread::hardware_concurrency() - 1);
-    if (params.force_sync || concurrency == 1) {
+    if (params.force_sync || concurrency == 1 || replay::is_enabled()) {
         return find_all_sync(origin, params);
     } else {
         return find_all_async(origin, params);
