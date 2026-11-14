@@ -1763,3 +1763,27 @@ TEST_CASE("bubble_guard_frees_other_dimension_submap_at_bubble_position") {
     CHECK(errors.empty());
     CHECK(buffer.lookup_submap_in_memory(sm_pos) == nullptr);
 }
+
+TEST_CASE("clear_map_moves_load_region_to_bubble", "[map]") {
+    // Checks that clear_map puts the load region back on the reality bubble after a test moves the
+    // map with map::load. The region covers the bubble at origin O, then the map loads at
+    // O + (mapsize, 0). After clear_map, the bubble center must be simulated, so later tests
+    // process its items and do not evict its submaps.
+    clear_all_state();
+    auto& m = get_map();
+    const auto old_abs_sub = m.get_abs_sub();
+    const auto had_region = m.has_active_load_region();
+    const auto bubble_size = point_rel_sm(g_mapsize, g_mapsize);
+    const auto cleanup = on_out_of_scope([&]() {
+        m.load(old_abs_sub, true);
+        clear_map();
+        if (!had_region) { m.release_active_load_region(); }
+    });
+    m.update_active_load_region(old_abs_sub, old_abs_sub + bubble_size);
+
+    m.load(old_abs_sub + point_rel_sm(m.getmapsize(), 0), true);
+    clear_map();
+
+    const auto center = m.get_abs_sub() + point_rel_sm(g_mapsize / 2, g_mapsize / 2);
+    CHECK(submap_loader.is_simulated(m.get_bound_dimension(), center));
+}
