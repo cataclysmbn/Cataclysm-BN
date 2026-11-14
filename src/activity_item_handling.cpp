@@ -1,3 +1,4 @@
+#include "zone_sorting.h"
 #include "activity_actor_definitions.h"
 #include "activity_handlers.h" // IWYU pragma: associated
 #include "avatar.h"
@@ -2579,8 +2580,8 @@ void activity_on_turn_move_loot( player_activity &act, player &p )
 
         // the boolean in this pair being true indicates the item is from a vehicle storage space
         auto items = std::vector<std::pair<item *, bool>>();
-        vehicle *src_veh, *dest_veh;
-        int src_part, dest_part;
+        vehicle *src_veh;
+        int src_part;
 
         //Check source for cargo part
         //map_stack and vehicle_stack are different types but inherit from item_stack
@@ -2623,54 +2624,11 @@ void activity_on_turn_move_loot( player_activity &act, player &p )
                 continue;
             }
 
-            const zone_type_id id = mgr.get_near_zone_type_for_item( thisitem, abspos,
-                                    ACTIVITY_SEARCH_DISTANCE );
-
-            // checks whether the item is already on correct loot zone or not
-            // if it is, we can skip such item, if not we move the item to correct pile
-            // think empty bag on food pile, after you ate the content
-            if( mgr.has( id, src ) ) {
-                continue;
-            }
-
-            const std::unordered_set<tripoint_abs_ms> &dest_set = mgr.get_near( id, abspos,
-                    ACTIVITY_SEARCH_DISTANCE,
-                    &thisitem );
-            for( const auto &dest : dest_set ) {
-                const auto dest_loc = abs_to_bub( dest );
-
-                //Check destination for cargo part
-                if( const std::optional<vpart_reference> vp = here.veh_at( dest_loc ).part_with_feature( "CARGO",
-                        false ) ) {
-                    dest_veh = &vp->vehicle();
-                    dest_part = vp->part_index();
-                } else {
-                    dest_veh = nullptr;
-                    dest_part = -1;
-                }
-
-                // skip tiles with inaccessible furniture, like filled charcoal kiln
-                if( !here.can_put_items_ter_furn( dest_loc ) ||
-                    static_cast<int>( here.i_at( dest_loc ).size() ) >= MAX_ITEM_IN_SQUARE ) {
-                    continue;
-                }
-
-                units::volume free_space;
-                // if there's a vehicle with space do not check the tile beneath
-                if( dest_veh ) {
-                    free_space = dest_veh->free_volume( dest_part );
-                } else {
-                    free_space = here.free_volume( dest_loc );
-                }
-                // check free space at destination
-                if( free_space >= thisitem.volume() ) {
-                    move_item( p, thisitem, thisitem.count(), src_loc, dest_loc );
-
-                    // moved item away from source so decrement
-                    if( num_processed > 0 ) {
-                        --num_processed;
-                    }
-                    break;
+            const auto destination = zone_sorting_destination( thisitem, abspos, ACTIVITY_SEARCH_DISTANCE );
+            if( destination && *destination != src ) {
+                move_item( p, thisitem, thisitem.count(), src_loc, abs_to_bub( *destination ) );
+                if( num_processed > 0 ) {
+                    --num_processed;
                 }
             }
             if( p.moves <= 0 ) {
@@ -2883,7 +2841,7 @@ static std::unordered_set<tripoint_abs_ms> generic_multi_activity_locations( pla
         }
     } else if( act_id != ACT_FETCH_REQUIRED ) {
         zone_type_id zone_type = get_zone_for_act( tripoint_bub_ms::zero(), mgr, act_id );
-        src_set = mgr.get_near( zone_type_id( zone_type ), abspos, ACTIVITY_SEARCH_DISTANCE );
+        src_set = zone_activity_points( zone_type, abspos, ACTIVITY_SEARCH_DISTANCE );
         // multiple construction will form a list of targets based on blueprint zones and unfinished constructions
         if( act_id == ACT_MULTIPLE_CONSTRUCTION ) {
             static const zone_type_id zone_type_CONSTRUCTION_IGNORE( "CONSTRUCTION_IGNORE" );
@@ -3007,7 +2965,7 @@ static requirement_check_result generic_multi_activity_check_requirement( player
 
     bool &can_do_it = act_info.can_do;
     const do_activity_reason &reason = act_info.reason;
-    const zone_data *zone = mgr.get_zone_at( src_abs, get_zone_for_act( src_loc, mgr, act_id ) );
+    const zone_data *zone = zone_activity_at( src_abs, get_zone_for_act( src_loc, mgr, act_id ) );
 
     const bool needs_to_be_in_zone = act_id == ACT_FETCH_REQUIRED ||
                                      act_id == ACT_MULTIPLE_FARM ||
@@ -3328,7 +3286,7 @@ static bool generic_multi_activity_do( player &p, const activity_id &act_id,
     zone_manager &mgr = zone_manager::get_manager();
 
     const do_activity_reason &reason = act_info.reason;
-    const zone_data *zone = mgr.get_zone_at( src, get_zone_for_act( src_loc, mgr, act_id ) );
+    const zone_data *zone = zone_activity_at( src, get_zone_for_act( src_loc, mgr, act_id ) );
     map &here = get_map();
     // something needs to be done, now we are there.
     // it was here earlier, in the space of one turn, maybe it got harvested by someone else.
@@ -3479,7 +3437,7 @@ bool generic_multi_activity_handler( player_activity &act, player &p, bool check
             }
             const auto route = route_adjacent( p, src_loc );
             if( route.empty() ) {
-                const zone_data *zone = mgr.get_zone_at( src, get_zone_for_act( src_loc, mgr,
+                const zone_data *zone = zone_activity_at( src, get_zone_for_act( src_loc, mgr,
                                         activity_to_restore ) );
                 // can't get there, can't do anything, skip it
                 if( is_multi_construction ) {
@@ -3515,7 +3473,7 @@ bool generic_multi_activity_handler( player_activity &act, player &p, bool check
 
         if( square_dist( p.bub_pos(), src_loc ) > 1 ) {
             auto route = route_adjacent( p, src_loc );
-            const zone_data *zone = mgr.get_zone_at( src, get_zone_for_act( src_loc, mgr,
+            const zone_data *zone = zone_activity_at( src, get_zone_for_act( src_loc, mgr,
                                     activity_to_restore ) );
 
             // check if we found path to source / adjacent tile
@@ -3560,7 +3518,7 @@ bool generic_multi_activity_handler( player_activity &act, player &p, bool check
             activity_to_restore != ACT_MOVE_LOOT &&
             activity_to_restore != ACT_FETCH_REQUIRED &&
             !character_funcs::can_see_fine_details( p ) ) {
-            const zone_data *zone = mgr.get_zone_at( src, get_zone_for_act( src_loc, mgr,
+            const zone_data *zone = zone_activity_at( src, get_zone_for_act( src_loc, mgr,
                                     activity_to_restore ) );
             p.add_msg_if_player( m_info, _( "It is too dark to work here." ) );
             if( is_multi_construction ) {

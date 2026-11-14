@@ -1,5 +1,6 @@
 #include "item_category.h"
 
+#include <algorithm>
 #include <set>
 
 #include "generic_factory.h"
@@ -90,4 +91,20 @@ std::optional<zone_type_id> item_category::priority_zone( const item &it ) const
 int item_category::sort_rank() const
 {
     return sort_rank_;
+}
+
+auto item_category::zone_types() -> std::vector<zone_type_id>
+{
+    auto result = std::vector<zone_type_id>();
+    for( const auto &category : item_category_factory.get_all() ) {
+        if( const auto id = category.zone(); id && !std::ranges::contains( result, *id ) ) {
+            result.push_back( *id );
+        }
+        for( const auto &priority : category.zone_priority_ ) {
+            if( !std::ranges::contains( result, priority.id ) ) {
+                result.push_back( priority.id );
+            }
+        }
+    }
+    return result;
 }

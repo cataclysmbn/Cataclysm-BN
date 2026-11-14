@@ -1,3 +1,4 @@
+#include "zone_sorting.h"
 #include "action.h"
 #include "advanced_inv.h"
 #include "animation.h"
@@ -1449,13 +1450,16 @@ static void loot()
                                  u.bub_pos() ) ? ConstructPlots : 0;
 
     flags |= g->check_near_zone( zone_type_id( "CHOP_TREES" ), u.bub_pos() ) ? Multichoptrees : 0;
-    flags |= g->check_near_zone( zone_type_id( "LOOT_WOOD" ), u.bub_pos() ) ? Multichopplanks : 0;
+    flags |= !zone_activity_points( zone_type_id( "LOOT_WOOD" ),
+                                    u.abs_pos() ).empty() ? Multichopplanks : 0;
     flags |= g->check_near_zone( zone_type_id( "VEHICLE_DECONSTRUCT" ),
                                  u.bub_pos() ) ? Multideconvehicle : 0;
     flags |= g->check_near_zone( zone_type_id( "VEHICLE_REPAIR" ),
                                  u.bub_pos() ) ? Multirepairvehicle : 0;
-    flags |= g->check_near_zone( zone_type_id( "LOOT_CORPSE" ), u.bub_pos() ) ? MultiButchery : 0;
-    flags |= g->check_near_zone( zone_type_id( "LOOT_CORPSE" ), u.bub_pos() ) ? MultiDissect : 0;
+    flags |= !zone_activity_points( zone_type_id( "LOOT_CORPSE" ),
+                                    u.abs_pos() ).empty() ? MultiButchery : 0;
+    flags |= !zone_activity_points( zone_type_id( "LOOT_CORPSE" ),
+                                    u.abs_pos() ).empty() ? MultiDissect : 0;
     flags |= g->check_near_zone( zone_type_id( "MINING" ), u.bub_pos() ) ? MultiMining : 0;
     if( flags == 0 ) {
         add_msg( m_info, _( "There is no compatible zone nearby." ) );

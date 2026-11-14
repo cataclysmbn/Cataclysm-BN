@@ -1,0 +1,126 @@
+[
+  {
+    "type": "LOOT_ZONE",
+    "id": "test_mod_parts_storage",
+    "name": "Mod parts",
+    "color": "white"
+  },
+  {
+    "type": "ITEM_CATEGORY",
+    "id": "test_mod_parts",
+    "name": "MOD PARTS",
+    "sort_rank": 0,
+    "zone": "test_mod_parts_storage"
+  },
+  {
+    "type": "LOOT_ZONE",
+    "id": "test_priority_storage",
+    "name": "Priority storage"
+  },
+  {
+    "type": "ITEM_CATEGORY",
+    "id": "test_priority_category",
+    "name": "Priority test category",
+    "sort_rank": 0,
+    "zone": "LOOT_OTHER",
+    "priority_zones": [ { "id": "test_priority_storage", "flags": [ "FIREWOOD" ] } ]
+  },
+  {
+    "type": "ITEM_CATEGORY",
+    "id": "test_zone_workshop",
+    "name": "ZONE TEST WORKSHOP",
+    "sort_rank": 0,
+    "zone": "LOOT_WORKSHOP_TOOLS"
+  },
+  {
+    "type": "ITEM_CATEGORY",
+    "id": "test_zone_entry",
+    "name": "ZONE TEST ENTRY",
+    "sort_rank": 0,
+    "zone": "LOOT_ENTRY_TOOLS"
+  },
+  {
+    "type": "ITEM_CATEGORY",
+    "id": "test_zone_books",
+    "name": "ZONE TEST BOOKS",
+    "sort_rank": 0,
+    "zone": "LOOT_BOOKS"
+  },
+  {
+    "type": "GENERIC",
+    "id": "test_zone_hammer",
+    "name": "TEST hammer",
+    "description": "A stable item for zone sorting tests.",
+    "category": "test_zone_workshop",
+    "weight": "100 g",
+    "volume": "500 ml",
+    "symbol": "?",
+    "color": "white"
+  },
+  {
+    "type": "GENERIC",
+    "id": "test_zone_crowbar",
+    "name": "TEST crowbar",
+    "description": "A stable item for zone sorting tests.",
+    "category": "test_zone_entry",
+    "weight": "100 g",
+    "volume": "500 ml",
+    "symbol": "?",
+    "color": "white"
+  },
+  {
+    "type": "GENERIC",
+    "id": "test_zone_book",
+    "name": "TEST book",
+    "description": "A stable item for zone sorting tests.",
+    "category": "test_zone_books",
+    "weight": "100 g",
+    "volume": "500 ml",
+    "symbol": "?",
+    "color": "white"
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "test_zone_food",
+    "name": "TEST food",
+    "description": "A stable comestible for zone sorting tests.",
+    "category": "food",
+    "weight": "100 g",
+    "volume": "250 ml",
+    "symbol": "%",
+    "color": "white",
+    "comestible_type": "FOOD",
+    "calories": 100,
+    "charges": 1,
+    "spoils_in": "2 days"
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "test_zone_drink",
+    "name": "TEST drink",
+    "description": "A stable comestible for zone sorting tests.",
+    "category": "food",
+    "weight": "100 g",
+    "volume": "250 ml",
+    "symbol": "%",
+    "color": "white",
+    "comestible_type": "DRINK",
+    "calories": 100,
+    "charges": 1
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "test_zone_perishable_drink",
+    "name": "TEST perishable drink",
+    "description": "A stable comestible for zone sorting tests.",
+    "category": "food",
+    "weight": "100 g",
+    "volume": "250 ml",
+    "symbol": "%",
+    "color": "white",
+    "comestible_type": "DRINK",
+    "calories": 100,
+    "charges": 1,
+    "spoils_in": "2 days"
+  }
+]

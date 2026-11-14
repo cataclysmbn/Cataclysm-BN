@@ -59,6 +59,8 @@ struct uilist_entry {
     bool enabled = true;
     // If true, will never darken this option, even when disabled
     bool force_color = false;
+    /// Include this entry in nonempty text searches.
+    bool filterable = true;
     // Keycode from (int)getch(). Setting to MENU_AUTOASSIGN will automagically pick first free character: 1-9 a-z A-Z
     int hotkey = MENU_AUTOASSIGN;
     // Entry text

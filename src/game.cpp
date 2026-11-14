@@ -185,6 +185,8 @@
 #include "world.h"
 #include "world_type.h"
 #include "worldfactory.h"
+#include "zone_ui.h"
+#include "zone_groups.h"
 
 #include <algorithm>
 #include <bitset>
@@ -9451,43 +9453,73 @@ bool game::is_zone_submap_grid_overlay_enabled() const
     return zone_submap_grid_overlay;
 }
 
-static void zones_manager_shortcuts( const catacurses::window &w_info, const bool overlay_enabled,
-                                     const bool submap_grid_enabled )
+auto zone_edit_entries( const zone_data &zone ) -> std::vector<uilist_entry>
+{
+    auto entries = std::vector<uilist_entry>();
+    const auto loot = dynamic_cast<const loot_options *>( &zone.get_options() );
+    const auto manual_filter = loot && !loot->uses_categories();
+    entries.emplace_back( 1, true, MENU_AUTOASSIGN, _( "Edit name" ) );
+    entries.emplace_back( 2, true, MENU_AUTOASSIGN, _( "Edit type" ) );
+    if( manual_filter ) {
+        entries.emplace_back( 3, true, MENU_AUTOASSIGN, _( "Edit filter" ) );
+    } else if( !loot && zone.get_options().has_options() ) {
+        entries.emplace_back( 3, true, MENU_AUTOASSIGN, _( "Edit options" ) );
+    }
+    entries.emplace_back( 4, !zone.get_is_vehicle(), MENU_AUTOASSIGN, _( "Edit position" ) );
+    // TODO: Enable moving vzone after vehicle zone can be bigger than 1*1
+    entries.emplace_back( 5, !zone.get_is_vehicle(), MENU_AUTOASSIGN, _( "Move position" ) );
+    return entries;
+}
+
+auto zone_shortcut_labels()
+-> std::array<std::array<std::string, 2>, 5> // *NOPAD*
+{
+    const auto key = []( const std::string & text ) { return shortcut_text( c_light_green, text ); };
+    return {{
+            { key( _( "<A>dd" ) ), key( _( "<R>emove" ) ) },
+            { key( _( "<E>nable" ) ), key( _( "<D>isable" ) ) },
+            { key( _( "<+-> Move up/down" ) ), key( _( "<Enter>-Edit" ) ) },
+            { key( _( "<S>how all / hide distant" ) ), key( _( "<M>ap" ) ) },
+            { key( _( "<O> - Toggle Overlays" ) ), key( _( "<G> - Submap grid" ) ) }
+        }};
+}
+
+namespace
+{
+
+auto zones_manager_shortcuts( const catacurses::window &w_info ) -> void
 {
     werase( w_info );
-
-    int tmpx = 1;
-    tmpx += shortcut_print( w_info, point( tmpx, 0 ), c_white, c_light_green, _( "<A>dd" ) ) + 2;
-    tmpx += shortcut_print( w_info, point( tmpx, 0 ), c_white, c_light_green, _( "<R>emove" ) ) + 2;
-    tmpx += shortcut_print( w_info, point( tmpx, 0 ), c_white, c_light_green, _( "<E>nable" ) ) + 2;
-    shortcut_print( w_info, point( tmpx, 0 ), c_white, c_light_green, _( "<D>isable" ) );
-
-    tmpx = 1;
-    tmpx += shortcut_print( w_info, point( tmpx, 1 ), c_white, c_light_green,
-                            _( "<+-> Move up/down" ) ) + 2;
-    shortcut_print( w_info, point( tmpx, 1 ), c_white, c_light_green, _( "<Enter>-Edit" ) );
-
-    tmpx = 1;
-    tmpx += shortcut_print( w_info, point( tmpx, 2 ), c_white, c_light_green,
-                            _( "<S>how all / hide distant" ) ) + 2;
-    shortcut_print( w_info, point( tmpx, 2 ), c_white, c_light_green, _( "<M>ap" ) );
-
-    tmpx = 1;
-    const nc_color overlay_color = overlay_enabled ? c_light_green : c_white;
-    shortcut_print( w_info, point( tmpx, 3 ), c_white, overlay_color,
-                    _( "<O> - Toggle Overlays" ) );
-    tmpx += shortcut_print( w_info, point( tmpx, 3 ), c_white, c_light_green, "  " ) + 1;
-    const nc_color submap_color = submap_grid_enabled ? c_light_green : c_white;
-    shortcut_print( w_info, point( tmpx, 3 ), c_white, submap_color,
-                    _( "<G> - Submap grid" ) );
-
+    const auto lines = zone_shortcut_labels();
+    auto column_width = 0;
+    for( const auto &line : lines ) {
+        column_width = std::max( column_width, utf8_width( line[0], true ) );
+    }
+    for( const auto y : std::views::iota( 0, static_cast<int>( lines.size() ) ) ) {
+        auto color = c_white;
+        print_colored_text( w_info, point( 1, y ), color, c_white, lines[y][0] );
+        print_colored_text( w_info, point( column_width + 3, y ), color, c_white, lines[y][1] );
+    }
     wnoutrefresh( w_info );
 }
 
-static void zones_manager_draw_borders( const catacurses::window &w_border,
-                                        const catacurses::window &w_info_border,
-                                        const int iInfoHeight, const int width )
+} // namespace
+
+namespace
 {
+
+struct zone_border_options {
+    int info_height;
+    int width;
+    int shortcuts_height;
+};
+
+auto zones_manager_draw_borders( const catacurses::window &w_border,
+                                 const catacurses::window &w_info_border,
+                                 const zone_border_options &options ) -> void
+{
+    const auto iInfoHeight = options.info_height;
+    const auto width = options.width;
     for( int i = 1; i < TERMX; ++i ) {
         if( i < width ) {
             mvwputch( w_border, point( i, 0 ), c_light_gray, LINE_OXOX ); // -
@@ -9509,7 +9541,7 @@ static void zones_manager_draw_borders( const catacurses::window &w_border,
     mvwputch( w_border, point( width - 1, TERMY - iInfoHeight - 1 ), c_light_gray,
               LINE_XOXX ); // -|
 
-    mvwprintz( w_border, point( 2, 0 ), c_white, _( "Zones manager" ) );
+    mvwprintz( w_border, point( 2, 0 ), c_white, _( "Zone Manager" ) );
     wnoutrefresh( w_border );
 
     for( int j = 0; j < iInfoHeight - 1; ++j ) {
@@ -9523,8 +9555,16 @@ static void zones_manager_draw_borders( const catacurses::window &w_border,
 
     mvwputch( w_info_border, point( 0, iInfoHeight - 1 ), c_light_gray, LINE_XXOO );
     mvwputch( w_info_border, point( width - 1, iInfoHeight - 1 ), c_light_gray, LINE_XOOX );
+    const auto separator_y = iInfoHeight - options.shortcuts_height - 2;
+    for( const auto x : std::views::iota( 1, width - 1 ) ) {
+        mvwputch( w_info_border, point( x, separator_y ), c_light_gray, LINE_OXOX );
+    }
+    mvwputch( w_info_border, point( 0, separator_y ), c_light_gray, LINE_XXXO );
+    mvwputch( w_info_border, point( width - 1, separator_y ), c_light_gray, LINE_XOXX );
     wnoutrefresh( w_info_border );
 }
+
+} // namespace
 
 void game::zones_manager()
 {
@@ -9532,8 +9572,14 @@ void game::zones_manager()
 
     u.view_offset = tripoint_rel_ms::zero();
 
-    const int zone_ui_height = 12;
-    const int zone_options_height = 7;
+    auto zone_ui_height = 14;
+    const auto shortcuts_height = 5;
+    auto zone_options_height = 6;
+    auto details_lines = std::vector<std::string>();
+    auto details_headings = std::set<int>();
+    auto details_filters = std::set<int>();
+    auto details_offset = 0;
+    const zone_data *details_zone = nullptr;
 
     const int width = 45;
 
@@ -9556,18 +9602,21 @@ void game::zones_manager()
         }
         offsetX = get_option<std::string>( "SIDEBAR_POSITION" ) != "left" ?
                   TERMX - width : 0;
-        const int w_zone_height = TERMY - zone_ui_height;
+        const auto layout = make_zone_panel_layout( TERMY, details_lines.size() );
+        zone_ui_height = layout.footer_height;
+        zone_options_height = layout.details_height;
+        const auto w_zone_height = layout.list_height;
         max_rows = w_zone_height - 2;
         w_zones = catacurses::newwin( w_zone_height - 2, width - 2,
                                       point( offsetX + 1, 1 ) );
         w_zones_border = catacurses::newwin( w_zone_height, width,
                                              point( offsetX, 0 ) );
-        w_zones_info = catacurses::newwin( zone_ui_height - zone_options_height - 1,
-                                           width - 2, point( offsetX + 1, w_zone_height ) );
+        w_zones_info = catacurses::newwin( shortcuts_height, width - 2,
+                                           point( offsetX + 1, TERMY - shortcuts_height - 1 ) );
         w_zones_info_border = catacurses::newwin( zone_ui_height, width,
                               point( offsetX, w_zone_height ) );
-        w_zones_options = catacurses::newwin( zone_options_height - 1, width - 2,
-                                              point( offsetX + 1, TERMY - zone_options_height ) );
+        w_zones_options = catacurses::newwin( zone_options_height, width - 2,
+                                              point( offsetX + 1, w_zone_height ) );
 
         ui.position( point( offsetX, 0 ), point( width, TERMY ) );
     } );
@@ -9589,6 +9638,8 @@ void game::zones_manager()
     ctxt.register_action( "TOGGLE_ZONE_OVERLAY" );
     ctxt.register_action( "debug_submap_grid" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
+    ctxt.register_action( "PAGE_UP" );
+    ctxt.register_action( "PAGE_DOWN" );
 
     auto &mgr = zone_manager::get_manager();
     int start_index = 0;
@@ -9613,32 +9664,89 @@ void game::zones_manager()
             }
         }
         zone_cnt = static_cast<int>( zones.size() );
+        details_zone = nullptr;
+        details_offset = 0;
         return zones;
     };
 
     auto zones = get_zones();
 
-    auto zones_manager_options = [&]() {
-        werase( w_zones_options );
-
-        if( zone_cnt > 0 ) {
-            const auto &zone = zones[active_index].get();
-
-            if( zone.has_options() ) {
-                const auto &descriptions = zone.get_options().get_descriptions();
-
-                // NOLINTNEXTLINE(cata-use-named-point-constants)
-                mvwprintz( w_zones_options, point( 1, 0 ), c_white, _( "Options" ) );
-
-                int y = 1;
-                for( const auto &desc : descriptions ) {
-                    mvwprintz( w_zones_options, point( 3, y ), c_white, desc.first );
-                    mvwprintz( w_zones_options, point( 20, y ), c_white, desc.second );
-                    y++;
+    auto refresh_details = [&]() {
+        details_lines.clear();
+        details_headings.clear();
+        details_filters.clear();
+        const auto zone = zone_cnt > 0 ? &zones[active_index].get() : nullptr;
+        if( zone != details_zone ) {
+            details_offset = 0;
+            details_zone = zone;
+        }
+        if( zone ) {
+            const auto append = [&]( const std::string & text ) {
+                const auto lines = foldstring( text, width - 4 );
+                details_lines.insert( details_lines.end(), lines.begin(), lines.end() );
+            };
+            const auto heading = [&]( const std::string & text ) {
+                details_headings.insert( details_lines.size() );
+                append( text );
+            };
+            heading( std::ranges::contains( zone_creation_rules(), zone->get_type() ) ?
+                     _( "Zone rules:" ) : _( "Zone type:" ) );
+            const auto loot = dynamic_cast<const loot_options *>( &zone->get_options() );
+            const auto category_storage = loot && loot->uses_categories();
+            if( !category_storage ) {
+                append( mgr.get_name_from_type( zone->get_type() ) );
+            }
+            if( zone->has_options() ) {
+                if( !category_storage ) {
+                    details_lines.emplace_back();
+                    if( loot ) {
+                        heading( _( "Filter:" ) );
+                    }
+                }
+                for( const auto &desc : zone->get_options().get_descriptions() ) {
+                    const auto lines = wrap_zone_filter( desc.first + desc.second, width - 4 );
+                    if( loot && !category_storage ) {
+                        for( auto row = details_lines.size(); row < details_lines.size() + lines.size(); ++row ) {
+                            details_filters.insert( row );
+                        }
+                    }
+                    details_lines.insert( details_lines.end(), lines.begin(), lines.end() );
                 }
             }
         }
+        const auto layout = make_zone_panel_layout( TERMY, details_lines.size() );
+        if( layout.details_height != zone_options_height ) {
+            ui.mark_resize();
+        }
+        const auto overflow = static_cast<int>( details_lines.size() ) > layout.details_height;
+        const auto visible = layout.details_height - ( overflow ? 1 : 0 );
+        details_offset = std::clamp( details_offset, 0,
+                                     std::max( 0, static_cast<int>( details_lines.size() ) - visible ) );
+    };
 
+    auto zones_manager_options = [&]() {
+        werase( w_zones_options );
+        const auto overflow = static_cast<int>( details_lines.size() ) > getmaxy( w_zones_options );
+        const auto visible = getmaxy( w_zones_options ) - ( overflow ? 1 : 0 );
+        for( const auto y : std::views::iota( 0, visible ) ) {
+            const auto index = y + details_offset;
+            if( index >= static_cast<int>( details_lines.size() ) ) {
+                break;
+            }
+            mvwprintz( w_zones_options, point( 1, y ),
+                       details_headings.contains( index ) ? c_light_gray : c_white,
+                       "%s", details_lines[index] );
+            if( details_filters.contains( index ) ) {
+                for( const auto byte : zone_filter_prefixes( details_lines[index] ) ) {
+                    const auto x = 1 + utf8_width( details_lines[index].substr( 0, byte ) );
+                    mvwprintz( w_zones_options, point( x, y ), c_yellow, "%s",
+                               details_lines[index].substr( byte, 2 ) );
+                }
+            }
+        }
+        if( overflow ) {
+            mvwprintz( w_zones_options, point( 1, visible ), c_light_cyan, "%s", _( "PgUp/PgDn: details" ) );
+        }
         wnoutrefresh( w_zones_options );
     };
 
@@ -9727,9 +9835,9 @@ void game::zones_manager()
         if( !show ) {
             return;
         }
-        zones_manager_draw_borders( w_zones_border, w_zones_info_border, zone_ui_height, width );
-        zones_manager_shortcuts( w_zones_info, g->show_zone_overlay,
-                                 g->debug_submap_grid_overlay || zone_submap_grid_overlay );
+        zones_manager_draw_borders( w_zones_border, w_zones_info_border,
+        { .info_height = zone_ui_height, .width = width, .shortcuts_height = shortcuts_height } );
+        zones_manager_shortcuts( w_zones_info );
 
         if( zone_cnt == 0 ) {
             werase( w_zones );
@@ -9760,78 +9868,103 @@ void game::zones_manager()
                         colorLine = ( zone.get_enabled() ) ? c_light_green : c_green;
                     }
 
-                    //Draw Zone name
-                    mvwprintz( w_zones, point( 3, iNum - start_index ), colorLine,
-                               trim_by_length( zone.get_name(), 15 ) );
-
-                    //Draw Type name
-                    mvwprintz( w_zones, point( 20, iNum - start_index ), colorLine,
-                               mgr.get_name_from_type( zone.get_type() ) );
-
-                    auto center = zone.get_center_point();
-
-                    //Draw direction + distance
-                    mvwprintz( w_zones, point( 32, iNum - start_index ), colorLine, "%*d %s",
-                               5, static_cast<int>( trig_dist( player_absolute_pos, center ) ),
-                               direction_name_short( direction_from( player_absolute_pos,
-                                                     center ) ) );
-
-                    //Draw Vehicle Indicator
-                    mvwprintz( w_zones, point( 41, iNum - start_index ), colorLine,
+                    const auto center = zone.get_center_point();
+                    const auto location = string_format( "%d %s",
+                                                         static_cast<int>( trig_dist( player_absolute_pos, center ) ),
+                                                         direction_name_short( direction_from( player_absolute_pos, center ) ) );
+                    const auto layout = make_zone_row_layout( getmaxx( w_zones ), location );
+                    const auto row = iNum - start_index;
+                    mvwprintz( w_zones, point( 3, row ), colorLine, "%s",
+                               trim_by_length( zone.get_name(), layout.name_width ) );
+                    mvwprintz( w_zones, point( layout.location_x, row ), colorLine, "%s", location );
+                    mvwprintz( w_zones, point( layout.vehicle_x, row ), colorLine, "%s",
                                zone.get_is_vehicle() ? "*" : "" );
                 }
                 iNum++;
             }
 
-            // Display zone options
-            zones_manager_options();
         }
 
+        zones_manager_options();
         wnoutrefresh( w_zones );
     } );
 
     zones_manager_open = true;
     do {
         if( action == "ADD_ZONE" ) {
-            do { // not a loop, just for quick bailing out if canceled
-                const auto maybe_id = mgr.query_type();
-                if( !maybe_id.has_value() ) {
+            auto previous_selection = zone_category_selection();
+            while( true ) {
+                const auto selection = query_zone_creation( previous_selection );
+                if( !selection ) {
                     break;
                 }
-
-                const zone_type_id &id = maybe_id.value();
-                auto options = zone_options::create( id );
-
-                if( !options->query_at_creation() ) {
+                const auto single_type = std::get_if<zone_type_id>( &*selection );
+                const auto selected = std::get_if<zone_category_selection>( &*selection );
+                struct pending_zone {
+                    zone_type_id type;
+                    std::string name;
+                    shared_ptr_fast<zone_options> options;
+                };
+                auto pending = std::vector<pending_zone>();
+                if( single_type || !selected->categories.empty() ) {
+                    const auto id = single_type ? *single_type : zone_storage_type( selected->categories );
+                    auto options = zone_options::create( id );
+                    if( !single_type && id == zone_type_id( "LOOT_CUSTOM" ) ) {
+                        auto storage = make_shared_fast<loot_options>();
+                        storage->set_categories( selected->categories );
+                        options = storage;
+                    } else if( !options->query_at_creation() ) {
+                        continue;
+                    }
+                    auto default_name = options->get_zone_name_suggestion();
+                    if( default_name.empty() ) {
+                        default_name = id->name();
+                    }
+                    const auto name = mgr.query_name( default_name );
+                    if( !name ) {
+                        break;
+                    }
+                    pending.push_back( { .type = id, .name = *name, .options = options } );
+                }
+                auto canceled = false;
+                const auto rules = selected ? selected->rules : std::vector<zone_type_id>();
+                for( const auto &rule : rules ) {
+                    const auto name = mgr.query_name( rule->name() );
+                    if( !name ) {
+                        canceled = true;
+                        break;
+                    }
+                    pending.push_back( { .type = rule, .name = *name,
+                                         .options = zone_options::create( rule ) } );
+                }
+                if( canceled ) {
+                    continue;
+                }
+                if( pending.empty() ) {
                     break;
                 }
-
-                auto default_name = options->get_zone_name_suggestion();
-                if( default_name.empty() ) {
-                    default_name = mgr.get_name_from_type( id );
-                }
-                const auto maybe_name = mgr.query_name( default_name );
-                if( !maybe_name.has_value() ) {
-                    break;
-                }
-                const std::string &name = maybe_name.value();
-
-                current_zone_type = id;
-                current_bp_options = std::dynamic_pointer_cast<const blueprint_options>( options );
-                std::optional<std::pair<tripoint_abs_ms, tripoint_abs_ms>> position;
-                position = query_position();
+                current_zone_type = pending.front().type;
+                current_bp_options = std::dynamic_pointer_cast<const blueprint_options>(
+                                         pending.front().options );
+                const auto position = query_position();
                 if( !position ) {
                     break;
                 }
-
-                mgr.add( name, id, g->u.get_faction()->id, false, true, position->first,
-                         position->second, options );
+                for( const auto &entry : pending ) {
+                    mgr.add( entry.name, entry.type, g->u.get_faction()->id, false, true,
+                             position->first, position->second, entry.options );
+                }
 
                 zones = get_zones();
                 active_index = zone_cnt - 1;
 
                 stuff_changed = true;
-            } while( false );
+                break;
+            }
+        } else if( action == "PAGE_UP" ) {
+            details_offset -= std::max( 1, zone_options_height - 2 );
+        } else if( action == "PAGE_DOWN" ) {
+            details_offset += std::max( 1, zone_options_height - 2 );
         } else if( action == "SHOW_ALL_ZONES" ) {
             show_all_zones = !show_all_zones;
             zones = get_zones();
@@ -9866,13 +9999,7 @@ void game::zones_manager()
 
                 uilist as_m;
                 as_m.text = _( "What do you want to change:" );
-                as_m.entries.emplace_back( 1, true, '1', _( "Edit name" ) );
-                as_m.entries.emplace_back( 2, true, '2', _( "Edit type" ) );
-                as_m.entries.emplace_back( 3, zone.get_options().has_options(), '3',
-                                           zone.get_type() == zone_type_id( "LOOT_CUSTOM" ) ? _( "Edit filter" ) : _( "Edit options" ) );
-                as_m.entries.emplace_back( 4, !zone.get_is_vehicle(), '4', _( "Edit position" ) );
-                // TODO: Enable moving vzone after vehicle zone can be bigger than 1*1
-                as_m.entries.emplace_back( 5, !zone.get_is_vehicle(), '5', _( "Move position" ) );
+                as_m.entries = zone_edit_entries( zone );
                 as_m.query();
 
                 switch( as_m.ret ) {
@@ -9993,6 +10120,7 @@ void game::zones_manager()
         // call to `ui_manager::redraw`.
         //NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
         zone_blink = zone_cnt > 0;
+        refresh_details();
         g->invalidate_main_ui_adaptor();
 
         ui_manager::redraw();
