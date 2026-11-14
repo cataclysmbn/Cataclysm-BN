@@ -4920,6 +4920,13 @@ nc_color item::color_in_inventory( const player &p ) const
             // "just for fun" book that they haven't read yet
             ret = c_magenta;
         }
+    } else {
+        for( const auto flag : get_flags() ) {
+            if( !flag->tag_color() != c_light_gray ) {
+                ret = flag->tag_color();
+                break;
+            }
+        }
     }
     return ret;
 }
