@@ -1785,7 +1785,7 @@
     "skill_used": "cooking",
     "difficulty": 3,
     "time": "10 m",
-    "book_learn": [ [ "cookbook_east_asian", 3 ] ],
+    "book_learn": [ [ "cookbook_east_asian", 2 ] ],
     "autolearn": true,
     "batch_time_factors": [ 80, 5 ],
     "qualities": [ { "id": "BOIL", "level": 1 }, { "id": "CUT", "level": 1 } ],
