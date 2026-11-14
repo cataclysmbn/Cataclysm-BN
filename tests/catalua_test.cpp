@@ -929,6 +929,53 @@ TEST_CASE("lua_gapi_get_items_if_filters_map_items", "[lua][item][map]") {
     here.i_clear(far_pos);
 }
 
+TEST_CASE("lua_get_items_if_addiction_type_and_material_filters", "[lua][item]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    auto lua = make_lua_state();
+
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    auto& player = get_avatar();
+    player.i_add(item::spawn("bread"));
+    player.i_add(item::spawn("beer"));
+    player.i_add(item::spawn("crack"));
+    player.wield(item::spawn("rock"));
+
+    auto& here = get_map();
+    const auto pos = player.bub_pos();
+    here.i_clear(pos);
+    // add_item, not add_item_or_charges: dropping a liquid (beer) would spill it via on_drop
+    here.add_item(pos, item::spawn("beer"));
+    REQUIRE( here.i_at(pos).size() == 1 );
+    test_data["character"] = &player;
+    test_data["pos"] = pos;
+
+    run_lua_test_script(lua, "items_if_addiction_material_test.lua");
+
+    // only the beer has the alcohol addiction type, via enum value or string
+    CHECK(test_data.get<int>("alcohol_enum_count") == 1);
+    CHECK(test_data.get<int>("alcohol_str_count") == 1);
+    // beer (alcohol) + crack
+    CHECK(test_data.get<int>("drug_and_alcohol_count") == 2);
+    // only the bread is a comestible without an addiction type
+    CHECK(test_data.get<int>("no_addiction_count") == 1);
+    // only the wielded rock is made of stone
+    CHECK(test_data.get<int>("stone_count") == 1);
+    CHECK(test_data.get<int>("alcohol_mat_count") == 1);
+    // bread (wheat) + rock (stone)
+    CHECK(test_data.get<int>("wheat_or_stone_count") == 2);
+    // combined is_food + alcohol: just the beer
+    CHECK(test_data.get<int>("food_alcohol_count") == 1);
+    // map-side queries use the same filters
+    CHECK(test_data.get<int>("map_beer_count") == 1);
+    CHECK(test_data.get<int>("map_alcohol_mat_count") == 1);
+    CHECK(test_data.get<int>("map_crack_count") == 0);
+
+    here.i_clear(pos);
+}
+
 TEST_CASE("lua_npc_move_to_binding_moves_real_npc", "[lua][npc]") {
     clear_all_state();
     auto lua = make_lua_state();
