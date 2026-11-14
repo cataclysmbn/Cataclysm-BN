@@ -62,6 +62,7 @@
 #include "profile.h"
 #include "projectile.h"
 #include "rng.h"
+#include "skill.h"
 #include "sounds.h"
 #include "string_formatter.h"
 #include "string_id.h"
@@ -1214,8 +1215,8 @@ auto petfood_category_display_name( const std::string &category ) -> std::string
     return pretty;
 }
 
-/// Builds the "what it takes to tame this monster" text for the extended description.
-auto pet_taming_description( const monster &mon ) -> std::string
+/// Builds the "what it takes to tame and train this monster" text for the extended description.
+auto pet_requirements_description( const monster &mon ) -> std::string
 {
     std::string ss;
     const pet_food_data &petfood = mon.type->petfood;
@@ -1232,7 +1233,7 @@ auto pet_taming_description( const monster &mon ) -> std::string
         return ss;
     }
 
-    ss += std::string( _( "Taming it requires:" ) ) + "\n";
+    ss += std::string( _( "<color_yellow>Taming</color> it requires:" ) ) + "\n";
     ss += string_format( "  %s: %s\n", _( "Food" ),
                          enumerate_as_string( foods, enumeration_conjunction::or_ ) );
 
@@ -1247,8 +1248,16 @@ auto pet_taming_description( const monster &mon ) -> std::string
                              enumerate_as_string( trait_reqs, enumeration_conjunction::and_ ) );
     }
 
+    if( petfood.tame_min_skill > 0 ) {
+        ss += string_format( "  %s: %d\n", petfood.tame_skill->name(), petfood.tame_min_skill );
+    }
+
     if( mon.type->pet_training && mon.type->pet_training->min_skill > 0 ) {
-        ss += string_format( "  %s: %d\n", _( "Survival" ), mon.type->pet_training->min_skill );
+        ss += "\n";
+        ss += std::string( _( "<color_yellow>Training</color> it requires:" ) ) + "\n";
+        ss += string_format( "  %s: %d\n", mon.type->pet_training->skill->name(),
+                             mon.type->pet_training->min_skill );
+        ss += "\n";
     }
 
     const auto pet_armors = item_controller->find( [&mon]( const itype & t ) {
@@ -1428,7 +1437,7 @@ std::string monster::extended_description() const
                              static_cast<int>( convert_weight( weight_capacity() ) ) );
     }
 
-    ss += pet_taming_description( *this );
+    ss += pet_requirements_description( *this );
 
     if( training_level > 0 && type->pet_training ) {
         const auto training_adj = []( float ratio ) -> const std::string {

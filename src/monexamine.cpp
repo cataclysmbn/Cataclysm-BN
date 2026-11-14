@@ -25,6 +25,7 @@
 #include "player_activity.h"
 #include "point.h"
 #include "rng.h"
+#include "skill.h"
 #include "string_formatter.h"
 #include "string_input_popup.h"
 #include "translations.h"
@@ -515,10 +516,10 @@ bool monexamine::pet_menu( monster &z )
     } else if( z.training_level >= z.type->pet_training->max_level ) {
         amenu.addentry( train_combat_pet, false, '[', _( "Train %s (level %d/%d - fully trained)" ),
                         pet_name, z.training_level, z.type->pet_training->max_level );
-    } else if( get_player_character().get_skill_level( skill_survival ) <
+    } else if( get_player_character().get_skill_level( z.type->pet_training->skill ) <
                z.type->pet_training->min_skill ) {
-        amenu.addentry( train_combat_pet, false, '[', _( "Train %s (requires survival %d)" ), pet_name,
-                        z.type->pet_training->min_skill );
+        amenu.addentry( train_combat_pet, false, '[', _( "Train %s (requires %s %d)" ), pet_name,
+                        z.type->pet_training->skill->name(), z.type->pet_training->min_skill );
     } else if( !z.has_effect( effect_well_fed ) ) {
         amenu.addentry( train_combat_pet, false, '[', _( "Train %s (requires well-fed)" ), pet_name );
     } else {
