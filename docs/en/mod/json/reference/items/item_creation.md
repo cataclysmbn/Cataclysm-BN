@@ -48,6 +48,7 @@
   { "id": "THRUST", "damage": { "values": [ { "damage_type": "stab", "amount": 45 } ] } }
 ],
 "flags": ["VARSIZE"],                        // Indicates special effects, see json_flags.md
+"drained_resource": "ups",                   // Extra character resource that count be drained in addition to internal batteries
 "environmental_protection_with_filter": 6,   // the resistance to environmental effects if an item (for example a gas mask) requires a filter to operate and this filter is installed. Used in combination with use_action 'GASMASK' and 'DIVE_TANK'
 "magazine_well": 0,                          // Volume above which the magazine starts to protrude from the item and add extra volume
 "magazines": [                               // Magazines types for each ammo type (if any) which can be used to reload this item
@@ -544,7 +545,7 @@ Guns can be defined like this:
 "burst": 5,                // Number of shots fired in burst mode
 "handling": 15,            // Modifier in how quick the gun recovers from recoil. 20 is baseline, below that is worse and above is better. Scales with '2 - 2.0 => 0' by default, for example 15 handling would be '2 - 1.5 => 0.5' increase to recoil and 30 would be '2 - 3.0 => -1' reduction to recoil
 "clip_size": 100,          // Maximum amount of ammo that can be loaded
-"ups_charges": 0,          // Additionally to the normal ammo (if any), a gun can require some charges from an UPS. This also works on mods. Attaching a mod with ups_charges will add/increase ups drain on the weapon.
+"resource_charges": [ { "id": "ups", "charges": 0 } ], // Additionally to the normal ammo (if any), a gun can require some charges from an character resource ( I.E. UPS ). This also works on mods. Attaching a mod with ups_charges will add/increase all present drains on the weapon.
 "ammo_to_fire" 1,          // Amount of ammo used per shot, separate from any UPS cost that may be given to the weapon.
 // The legacy item flags `FIRE_20`, `FIRE_50`, and `FIRE_100` are still permitted and will override `ammo_to_fire` if present.
 "reload": 450,             // Amount of time to reload, 100 = 1 second = 1 "turn". Default 100.
@@ -631,8 +632,8 @@ Gun mods can be defined like this:
 "speed": 100,                  // Optional field increasing or decreasing base ammo speed in meters per second. Speed of sound is taken at 343 meters per second.
 "range_modifier": 2,           // Optional field increasing or decreasing base gun range
 "recoil_modifier": -100,       // Optional field increasing or decreasing base gun recoil
-"ups_charges_modifier": 200,   // Optional field increasing or decreasing base gun UPS consumption (per shot) by adding given value
-"ups_charges_multiplier": 2.5, // Optional field increasing or decreasing base gun UPS consumption (per shot) by multiplying by given value
+"ups_charges_modifier": 200,   // Optional field increasing or decreasing base gun external resource ( I.E. UPS ) consumption (per shot) by adding given value
+"ups_charges_multiplier": 2.5, // Optional field increasing or decreasing base gun external resource ( I.E. UPS ) consumption (per shot) by multiplying by given value
 "ammo_to_fire_modifier": 200,   // Optional field increasing or decreasing amount of main ammo consumed per shot by adding given value
 "ammo_to_fire_multiplier": 2.5, // Optional field increasing or decreasing main ammo consumed per shot by multiplying by given value
 "reload_modifier": -10,        // Optional field increasing or decreasing base gun reload time in percent
@@ -689,7 +690,7 @@ gunmod_data:
 "charges_per_use": 1, // Charges consumed per tool use
 "turns_per_charge": 20, // Charges consumed over time, deprecated in favor of power_draw
 "power_draw": 50,       // Energy consumption rate in mW
-"ups_eff_mult": 2,       // Multiplier for UPS efficiency
+"ups_eff_mult": 2,       // Multiplier for UPS ( or other character resource ) efficiency
 "ups_recharge_rate": 10,       // The power output for UPS recharging of items
 "ammo": [ "NULL" ],       // Ammo types used for reloading
 "revert_to": "torch_done", // Transforms into item when charges are expended

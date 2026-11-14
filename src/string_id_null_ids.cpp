@@ -13,6 +13,7 @@
 MAKE_CLASS_NULL_ID( activity_type, "ACT_NULL" )
 MAKE_CLASS_NULL_ID( ammunition_type, "NULL" )
 MAKE_CLASS_NULL_ID( anatomy, "null_anatomy" )
+MAKE_CLASS_NULL_ID( character_resource, "null" )
 MAKE_CLASS_NULL_ID( disease_type, "null" )
 MAKE_CLASS_NULL_ID( effect_type, "null" )
 MAKE_CLASS_NULL_ID( enchantment, "null" )

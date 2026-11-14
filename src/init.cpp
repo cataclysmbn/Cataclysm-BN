@@ -13,6 +13,7 @@
 #include "cata_utility.h"
 #include "catalua.h"
 #include "catalua_impl.h"
+#include "character_resource.h"
 #include "clothing_mod.h"
 #include "clzones.h"
 #include "construction.h"
@@ -308,6 +309,7 @@ void DynamicDataLoader::initialize()
     add( "enchantment_flag", &enchantment_flag::load_enchantment_flags );
     add( "enchantment_condition", &enchantment_condition::load_enchantment_conditions );
     add( "enchantment_vision", &enchantment_vision::load_enchantment_vision );
+    add( "character_resource", &character_resource::load_character_resources );
     add( "hit_range", &Creature::load_hit_range );
     add( "scent_type", &scent_type::load_scent_type );
     add( "disease_type", &disease_type::load_disease_type );
@@ -608,6 +610,7 @@ void DynamicDataLoader::unload_data()
     bionic_data::reset();
     body_part_type::reset();
     charge_removal_blacklist::reset();
+    character_resource::reset();
     clear_techniques_and_martial_arts();
     clothing_mods::reset();
     construction_categories::reset();
@@ -883,6 +886,7 @@ void DynamicDataLoader::check_consistency( loading_ui &ui )
             { _( "Enchantment Flags" ), &enchantment_flag::check_consistency },
             { _( "Enchantment Conditions" ), &enchantment_condition::check_consistency },
             { _( "Enchantment Vision" ), &enchantment_vision::check_consistency },
+            { _( "Character Resource" ), &character_resource::check_consistency },
             { _( "Transformations" ), &event_transformation::check_consistency },
             { _( "Statistics" ), &event_statistic::check_consistency },
             { _( "Scent types" ), &scent_type::check_scent_consistency },
