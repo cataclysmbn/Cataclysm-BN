@@ -6,7 +6,7 @@
 #include "catalua_luna_doc.h"
 
 #include "avatar.h"
-#include "catalua_creature_filters.h"
+#include "catalua/catalua_creature_filters.h"
 #include "creature_tracker.h"
 #include "game.h"
 #include "monster.h"

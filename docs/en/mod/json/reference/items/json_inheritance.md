@@ -144,5 +144,5 @@ To find out if this is the case, do the following:
 - Since the generic_factory line is present, you can now conclude that it supports copy-from.
 - If you don't find generic_factoy present, it does not support copy-from, as is the case for type
   vitamin (repeat the above steps and find that
-  [vitamin.cpp](https://github.com/cataclysmbn/Cataclysm-BN/tree/main/src/vitamin.cpp) does not
+  [vitamin.cpp](https://github.com/cataclysmbn/Cataclysm-BN/tree/main/src/item/vitamin.cpp) does not
   contain generic_factoy)

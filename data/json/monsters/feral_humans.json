@@ -211,7 +211,7 @@
     "id": "mon_feral_labsecurity_flashlight",
     "type": "MONSTER",
     "name": { "str": "feral security guard" },
-    "description": "At first glance, this disheveled figure could almost pass for a survivor, but the bloodshot eyes give them away as one of those to have gone feral.  Their uniform suggests that this was at some point a security guard, brandishing a stun gun in one hand while a clutching a flashlight in the other.",
+    "description": "At first glance, this disheveled figure could almost pass for a survivor, but the bloodshot eyes give them away as one of those to have gone feral.  Their uniform suggests that this was at some point a security guard, brandishing a stun gun in one hand while clutching a flashlight in the other.",
     "default_faction": "zombie",
     "looks_like": "chud",
     "bodytype": "human",

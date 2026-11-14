@@ -164,7 +164,7 @@ sudo dnf install clang-devel llvm-devel clang-tools-extra-devel
 단일 파일에서 플러그인을 실행하려면 프로젝트 루트에서 다음 명령을 실행합니다:
 
 ```sh
-$ ./build-scripts/clang-tidy-wrapper.sh -fix src/achievement.cpp
+$ ./build-scripts/clang-tidy-wrapper.sh -fix src/event/achievement.cpp
 ```
 
 여러 파일에서 플러그인을 실행하려면 [GNU parallel](https://www.gnu.org/software/parallel/)을 사용합니다:

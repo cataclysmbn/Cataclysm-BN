@@ -11,9 +11,9 @@
 #include "legacy_pathfinding.h"
 #include "monster.h"
 #include "point.h"
-#include "poly_serialized.h"
 #include "sounds.h"
 #include "type_id.h"
+#include "utils/poly_serialized.h"
 
 #include <algorithm>
 #include <cstddef>

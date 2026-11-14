@@ -1550,7 +1550,7 @@
     "id": "coffee_substitute_sweetened",
     "copy-from": "coffee_substitute",
     "name": { "str": "sweet coffee substitute" },
-    "description": "Homemade not-coffee created from the Kentucky coffeetree, just like the Meskwaki tribe!  Doesn't actually have any caffeine, and is very bitter, but it'll pass in a pinch.  The added sweetness neutralize the bitterness somewhat.",
+    "description": "Homemade not-coffee created from the Kentucky coffeetree, just like the Meskwaki tribe!  Doesn't actually have any caffeine, and is very bitter, but it'll pass in a pinch.  The added sweetness neutralizes the bitterness somewhat.",
     "price": "110 cent",
     "price_postapoc": "35 cent",
     "calories": 90,

@@ -7,7 +7,14 @@
         "file": "crazy_monsters.png",
         "sprite_width": 32,
         "sprite_height": 32,
-        "tiles": [ { "id": "mon_zombie_clown_lube", "fg": 0 }, { "id": "mon_zombie_clown_glue", "fg": 1 } ]
+        "tiles": [
+          { "id": "mon_zombie_clown_lube", "fg": 0 },
+          { "id": "mon_zombie_clown_glue", "fg": 1 },
+          {
+            "id": "mon_duck_of_wishes",
+            "fg": [ { "weight": 1, "sprite": 2 }, { "weight": 1, "sprite": 3 }, { "weight": 1, "sprite": 4 } ]
+          }
+        ]
       }
     ]
   }

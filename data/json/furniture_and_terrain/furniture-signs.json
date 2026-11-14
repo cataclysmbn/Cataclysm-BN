@@ -51,7 +51,7 @@
     "id": "f_sign_warning",
     "name": "warning sign",
     "symbol": "P",
-    "description": "A triangle-shaped sign on a post meant to indicate something important or hazard.",
+    "description": "A triangle-shaped sign on a post meant to indicate something important or a hazard.",
     "color": "red",
     "examine_action": "sign",
     "looks_like": "f_sign",

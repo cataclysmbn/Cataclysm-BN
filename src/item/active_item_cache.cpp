@@ -1,0 +1,189 @@
+#include "active_item_cache.h"
+
+#include "calendar.h"
+#include "item.h"
+#include "safe_reference.h"
+
+#include <algorithm>
+#include <utility>
+
+static auto reset_queue_state(active_item_queue& queue) -> void {
+    queue.cursor = 0;
+    queue.processing_credit = 0;
+    queue.last_processed_turn = 0;
+}
+
+void active_item_cache::remove(const item* it) {
+    for (auto& [processing_speed, queue] : active_items) {
+        static_cast<void>(processing_speed);
+        auto count = 0;
+        std::erase_if(queue.items, [it, &count, &queue](const auto& active_item) {
+            if (!active_item) {
+                count++;
+                return true;
+            }
+            const auto target = &*active_item;
+            if (!target || target == it) {
+                if (count >= queue.cursor) { queue.cursor = std::max(0, queue.cursor - 1); }
+                count++;
+                return true;
+            }
+            count++;
+            return false;
+        });
+        if (queue.items.empty()) { reset_queue_state(queue); }
+    }
+    const auto remove_special = [this, it](const special_item_type type) {
+        auto& items = special_items[type];
+        std::erase_if(items, [it](const auto& ref) { return ref == it; });
+    };
+    remove_special(special_item_type::corpse);
+    remove_special(special_item_type::bionic_scannable_corpse);
+    remove_special(special_item_type::explosive);
+}
+
+void active_item_cache::add(item& it) {
+    // If the item is already in the cache for some reason, don't add a second reference
+    auto& queue = active_items[it.processing_speed()];
+    auto& target_list = queue.items;
+    const auto references_item = [&it](const auto& active_item) { return active_item == it; };
+    if (std::ranges::any_of(target_list, references_item)) { return; }
+    const auto is_cached_elsewhere = [&queue, &references_item](const auto& active_entry) {
+        return &active_entry.second != &queue
+            && std::ranges::any_of(active_entry.second.items, references_item);
+    };
+    if (std::ranges::any_of(active_items, is_cached_elsewhere)) { remove(&it); }
+    if (target_list.empty()) { queue.last_processed_turn = to_turn<int>(calendar::turn); }
+    if (it.can_revive()) { special_items[special_item_type::corpse].emplace_back(it); }
+    if (it.is_corpse()) {
+        special_items[special_item_type::bionic_scannable_corpse].emplace_back(it);
+    }
+    if (it.get_use("explosion")) { special_items[special_item_type::explosive].emplace_back(it); }
+    target_list.emplace_back(it);
+}
+
+auto active_item_cache::empty() const -> bool {
+    return std::ranges::all_of(active_items, [](const auto& active_queue) {
+        return std::ranges::
+            none_of(active_queue.second.items, [](const cache_reference<item>& active_item) {
+                return static_cast<bool>(active_item);
+            });
+    });
+}
+
+auto active_item_cache::count() const -> active_item_count {
+    auto result = active_item_count{};
+    for (const auto& active_entry : active_items) {
+        const auto& active_queue = active_entry.second;
+        for (const cache_reference<item>& active_item : active_queue.items) {
+            if (!active_item) { continue; }
+            ++result.total;
+            if (active_item->goes_bad()) { ++result.rottable; }
+        }
+    }
+    return result;
+}
+
+auto active_item_cache::get() -> std::vector<item*> {
+    std::vector<item*> all_cached_items;
+    for (auto& kv : active_items) {
+        active_item_queue& queue = kv.second;
+        for (auto it = queue.items.begin(); it != queue.items.end();) {
+            if (*it) {
+                all_cached_items.push_back(&**it);
+                ++it;
+            } else {
+                it = queue.items.erase(it);
+            }
+        }
+        if (queue.items.empty()) { reset_queue_state(queue); }
+    }
+    return all_cached_items;
+}
+
+auto active_item_cache::get_const() const -> std::vector<const item*> {
+    auto all_cached_items = std::vector<const item*>{};
+    for (const auto& kv : active_items) {
+        const active_item_queue& queue = kv.second;
+        for (const auto& active_item : queue.items) {
+            if (active_item) { all_cached_items.push_back(&*active_item); }
+        }
+    }
+    return all_cached_items;
+}
+
+auto active_item_cache::get_for_processing() -> std::vector<item*> {
+    auto items_to_process = std::vector<item*>{};
+    get_for_processing(items_to_process);
+    return items_to_process;
+}
+
+auto active_item_cache::get_for_processing(std::vector<item*>& items_to_process) -> void {
+    items_to_process.clear();
+    for (auto& kv : active_items) {
+        // The algorithm here is a bit weird. We're going to process a fraction of the list at a
+        // time, keeping track of where we are in the list with a simple int. But, the list could
+        // change between each run. As such the number will be reduced when items are removed from
+        // it (in ::remove) to prevent skips.
+        active_item_queue& queue = kv.second;
+
+        if (queue.items.empty()) { // Prevents a div by 0 in the modulo operations
+            reset_queue_state(queue);
+            continue;
+        }
+
+        const int processing_speed = std::max(1, kv.first);
+        const int queue_size = static_cast<int>(queue.items.size());
+        int num_to_process = queue_size;
+        const int current_turn = to_turn<int>(calendar::turn);
+        if (processing_speed > 1) {
+            // For slow queues, preserve the average processing interval instead of forcing one
+            // item per active submap every turn.
+            const int64_t elapsed_turns = std::max(0, current_turn - queue.last_processed_turn);
+            queue.last_processed_turn = current_turn;
+            const int64_t processing_period = static_cast<int64_t>(processing_speed) + 1;
+            queue.processing_credit += elapsed_turns * queue_size;
+            num_to_process = static_cast<int>(
+                std::min<int64_t>(queue_size, queue.processing_credit / processing_period));
+            queue.processing_credit %= processing_period;
+            if (num_to_process <= 0) { continue; }
+        } else {
+            queue.processing_credit = 0;
+            queue.last_processed_turn = current_turn;
+        }
+        num_to_process = std::min(num_to_process, queue_size);
+
+        auto it = queue.items.begin();
+
+        queue.cursor = queue.cursor % queue.items.size(); // Make sure the key isn't larger than the
+                                                          // array
+        std::advance(it, queue.cursor);
+
+        queue.cursor += num_to_process;
+        int remaining_slots = static_cast<int>(queue.items.size());
+        while (num_to_process > 0 && remaining_slots > 0) {
+            --remaining_slots;
+            if (*it) {
+                items_to_process.push_back(&**it);
+                --num_to_process;
+                ++it;
+            } else {
+                // The item has been destroyed, so remove the reference from the cache
+                it = queue.items.erase(it);
+                if (queue.items.empty()) {
+                    reset_queue_state(queue);
+                    break;
+                }
+            }
+            if (it == queue.items.end()) { it = queue.items.begin(); }
+        }
+    }
+}
+
+auto active_item_cache::get_special(special_item_type type) -> std::vector<item*> {
+    std::vector<item*> matching_items;
+    for (const cache_reference<item>& it : special_items[type]) {
+        if (it) { matching_items.push_back(&*it); }
+    }
+    return matching_items;
+}

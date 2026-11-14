@@ -150,7 +150,7 @@
     "id": "mon_leech_root_runner",
     "type": "MONSTER",
     "name": { "str": "root runner" },
-    "description": "This clump of woody vegetation hastily clambers around in a lizard-like fashion.  Three translucent scale-leaves stand tall on the backside of the creature, and the thin ridges within them periodically glow through some unknown mean.  It's seemingly a symbiote of the nearby alien ferns, and looks ready to defend them with its life.",
+    "description": "This clump of woody vegetation hastily clambers around in a lizard-like fashion.  Three translucent scale-leaves stand tall on the backside of the creature, and the thin ridges within them periodically glow through some unknown means.  It's seemingly a symbiote of the nearby alien ferns, and looks ready to defend them with its life.",
     "default_faction": "leech_plant",
     "species": [ "LEECH_PLANT" ],
     "volume": "4000 ml",

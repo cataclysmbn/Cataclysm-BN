@@ -4491,7 +4491,7 @@ void activity_handlers::train_pet_finish( player_activity *act, player *p )
         }
     } else {
         p->add_msg_if_player( m_neutral,
-                              _( "Training your %s takes time, it seems they are making a bit of progress at least." ),
+                              _( "Training your %s takes time, but they haven't learned anything new yet." ),
                               act->str_values[0] );
     }
     act->set_to_null();

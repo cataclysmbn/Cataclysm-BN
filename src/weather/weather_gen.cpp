@@ -8,10 +8,10 @@
 #include "generic_factory.h"
 #include "generic_readers.h"
 #include "json.h"
+#include "math/simplexnoise.h"
 #include "math_defines.h"
 #include "point.h"
 #include "rng.h"
-#include "simplexnoise.h"
 #include "weather.h"
 
 #include <algorithm>

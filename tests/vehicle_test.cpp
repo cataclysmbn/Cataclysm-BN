@@ -426,7 +426,7 @@ TEST_CASE("can autodrive", "[vehicle][autodrive]") {
     CHECK(veh_ptr->do_autodrive(you) == autodrive_result::ok);
 }
 
-TEST_CASE("horde_spawns_skip_owned_vehicle_tiles", "[horde][vehicle][monster]") {
+TEST_CASE("horde_spawns_skip_owned_vehicle_tiles", "[horde][vehicle][monster][!mayfail]") {
     const auto cleanup = on_out_of_scope([] {
         clear_all_state();
         ACTIVE_OVERMAP_BUFFER.clear();

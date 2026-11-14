@@ -233,7 +233,7 @@
     "type": "BIONIC_ITEM",
     "name": { "str": "Cable Charger System CBM Mk. II" },
     "looks_like": "bio_int_enhancer",
-    "description": "This is a military-grade electronic port and power converter system which are surgically mounted above your hip, it has ten times higher throughput than basic version.  While active, it will recharge bionic power when connected to a power source via cable.",
+    "description": "This is a military-grade electronic port and power converter system which is surgically mounted above your hip.  It has ten times higher throughput than the basic version.  While active, it will recharge bionic power when connected to a power source via cable.",
     "price": "8000 USD",
     "weight": "500 g",
     "difficulty": 9
@@ -1082,7 +1082,7 @@
     "type": "BIONIC_ITEM",
     "name": { "str": "Underwater Propellers CBM" },
     "looks_like": "bio_int_enhancer",
-    "description": "A set of underwater propellers that can be extended or retracted from the users upper torso.  When extended, they grant increased movement speeds if the user is submerged.",
+    "description": "A set of underwater propellers that can be extended or retracted from the user's upper torso.  When extended, they grant increased movement speeds if the user is submerged.",
     "price": "200 USD",
     "weight": "1000 g",
     "difficulty": 4
@@ -1373,7 +1373,7 @@
     "copy-from": "bionic_general",
     "type": "BIONIC_ITEM",
     "name": { "str": "Deployable Grenade Launcher CBM" },
-    "description": "Your right hand can fold inward to reveal a mechanism capable of igniting and firing 40mm grenades across medium distances with great accuracy due built in ballistic calculator.",
+    "description": "Your right hand can fold inward to reveal a mechanism capable of igniting and firing 40mm grenades across medium distances with great accuracy due to a built-in ballistic calculator.",
     "price": "1 kUSD",
     "difficulty": 5
   },

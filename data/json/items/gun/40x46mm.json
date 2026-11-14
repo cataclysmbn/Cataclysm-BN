@@ -178,7 +178,7 @@
     "copy-from": "launcher_base",
     "type": "GUN",
     "name": { "str": "deployed grenade launcher" },
-    "description": "A grenade launcher mounted onto your right-hand wrist.  It contains integrated ballistic calculator and quick load mechanism.  Adaptive caliber allow to load most types grenades.",
+    "description": "A grenade launcher mounted onto your right-hand wrist.  It contains an integrated ballistic calculator and a quick load mechanism.  Its adaptive caliber allows most types of grenades to be loaded.",
     "volume": "2250 ml",
     "price": "0 cent",
     "to_hit": -2,

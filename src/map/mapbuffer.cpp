@@ -1204,20 +1204,12 @@ void mapbuffer::unload_omt(const tripoint_abs_omt& omt_addr, bool save) {
             {base, base + point_rel_sm::east(), base + point_rel_sm::south(),
              base + point_rel_sm::south_east()}};
 
-        bool all_uniform =
-            !get_overmapbuffer(get_dimension_id())
-                 .ter(omt_addr)
-                 ->has_flag(oter_flags::cant_be_uniform);
-
         for (const tripoint_abs_sm& addr : addrs) {
             const auto it = submaps.find(addr);
-            if (it != submaps.end() && it->second && !it->second->is_uniform) {
-                all_uniform = false;
-                break;
-            }
+            if (it != submaps.end() && it->second && !it->second->is_uniform) { break; }
         }
 
-        if (!all_uniform && !disable_mapgen) {
+        if (!disable_mapgen) {
             std::ostringstream buf;
             {
                 JsonOut jsout(buf);
@@ -3430,7 +3422,6 @@ auto mapbuffer::run_omt_pillar_post_pass(const point_abs_omt& omt_pos) -> void {
         point_rel_sm::south(),
         point_rel_sm::south_east(),
     });
-
     auto lk = std::lock_guard<std::recursive_mutex>(submaps_mutex_);
     struct vertical_transition_link_request {
         tripoint_abs_sm target_pos;
@@ -3451,11 +3442,18 @@ auto mapbuffer::run_omt_pillar_post_pass(const point_abs_omt& omt_pos) -> void {
 
     for (const auto zlev : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
         const auto omt_addr = tripoint_abs_omt(omt_pos, zlev);
+        bool can_be_uniform =
+            !get_overmapbuffer(get_dimension_id())
+                 .ter(omt_addr)
+                 ->has_flag(oter_flags::cant_be_uniform);
+
         const auto base = project_to<coords::sm>(omt_addr);
         for (const auto& offset : offsets) {
             const auto sm_pos = base + offset;
             auto* const sub_here = lookup_submap_in_memory(sm_pos);
             if (sub_here == nullptr) { continue; }
+
+            if (sub_here->is_uniform) { sub_here->is_uniform = can_be_uniform; }
 
             auto* const sub_below =
                 zlev > -OVERMAP_DEPTH ? lookup_submap_in_memory(sm_pos + tripoint_below) : nullptr;

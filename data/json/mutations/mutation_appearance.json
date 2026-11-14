@@ -120,7 +120,7 @@
     "id": "hair_mohawk",
     "type": "mutation",
     "name": { "str": "Hair style: mohawk" },
-    "description": "Hair buzzes at the sides",
+    "description": "Hair buzzed at the sides",
     "apperance_description": "mohawk",
     "points": 0,
     "starting_trait": true,

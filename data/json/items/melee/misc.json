@@ -24,7 +24,7 @@
     "name": { "str": "scourge" },
     "type": "GENERIC",
     "copy-from": "bullwhip",
-    "description": "The \"cat 'o nine tails\", a handle with nine short leather whips each sporting a razor-sharp metal tip.  This ancient instrument of torture causes massive bleeding but is an ineffecient weapon by design.",
+    "description": "The \"cat 'o nine tails\", a handle with nine short leather whips each sporting a razor-sharp metal tip.  This ancient instrument of torture causes massive bleeding but is an inefficient weapon by design.",
     "weight": "900 g",
     "volume": "1 L",
     "price": "48 USD",

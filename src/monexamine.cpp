@@ -878,7 +878,7 @@ static item *pet_armor_loc( monster &z )
     auto filter = [z]( const item & it ) {
         return z.type->bodytype == it.get_pet_armor_bodytype() &&
                z.get_volume() >= it.get_pet_armor_min_vol() &&
-               z.get_volume() <= it.get_pet_armor_max_vol();
+               z.get_volume() < it.get_pet_armor_max_vol();
     };
 
     return game_menus::inv::titled_filter_menu( filter, get_avatar(), _( "Pet armor" ), "",
