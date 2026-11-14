@@ -501,6 +501,10 @@ void cata_tiles::load_tileset(
     loader.load( tileset_id, precheck, /*pump_events=*/pump_events );
     tileset_ptr = std::move( new_tileset_ptr );
     tileset_mod_list_stamp = mod_list;
+    tile_iso = tileset_ptr->is_iso();
+    if( tilecontext.get() == this ) {
+        ::tile_iso = tile_iso;
+    }
 
     set_draw_scale( 16 );
 
@@ -2232,7 +2236,7 @@ void tileset_loader::load( const std::string &tileset_id, const bool precheck,
         ts.tile_width = curr_info.get_int( "width" );
         ts.zlevel_height = curr_info.get_int( "zlevel_height", 0 );
         ts.zlevel_height = 0;
-        tile_iso = curr_info.get_bool( "iso", false );
+        ts.iso = curr_info.get_bool( "iso", false );
         ts.tile_pixelscale = curr_info.get_float( "pixelscale", 1.0f );
         ts.prevent_occlusion_min_dist = curr_info.get_float( "retract_dist_min", -1.0f );
         ts.prevent_occlusion_min_dist = -1.0f;
