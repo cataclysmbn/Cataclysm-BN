@@ -1049,6 +1049,7 @@ use_action_msgs = {
     "message",
     "friendly_msg",
     "hostile_msg",
+    "failure_msg",
     "need_fire_msg",
     "need_charges_msg",
     "non_interactive_msg",

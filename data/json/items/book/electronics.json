@@ -266,6 +266,13 @@
     "copy-from": "schematics_generic"
   },
   {
+    "id": "schematics_handy_hauler",
+    "type": "BOOK",
+    "name": { "str_sp": "handy hauler schematics" },
+    "description": "Assembly plans, design specs, and technical drawings for the handy hauler.  Most of this is useless to you, but you could use the assembly plans to re-assemble the robot from salvaged parts.",
+    "copy-from": "schematics_generic"
+  },
+  {
     "id": "schematics_secubot",
     "type": "BOOK",
     "name": { "str_sp": "TALON schematics" },
