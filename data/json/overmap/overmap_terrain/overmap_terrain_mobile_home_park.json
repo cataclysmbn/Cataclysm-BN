@@ -1,0 +1,124 @@
+[
+  {
+    "type": "overmap_terrain",
+    "id": "trailer_commercial_10",
+    "copy-from": "s_grocery",
+    "name": "convenience store",
+    "delete": { "flags": [ "SIDEWALK" ] }
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "trailer_commercial_10_roof",
+    "copy-from": "s_grocery_roof",
+    "name": "convenience store roof"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "trailer_commercial_00",
+    "copy-from": "s_laundromat",
+    "delete": { "flags": [ "SIDEWALK" ] }
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "trailer_commercial_00_roof",
+    "copy-from": "s_laundromat_roof"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "trailer_public_10",
+    "copy-from": "generic_city_building_no_sidewalk",
+    "name": "pavilion",
+    "sym": "A",
+    "color": "i_green"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "trailer_public_10_roof",
+    "copy-from": "generic_city_building_roof",
+    "name": "pavilion roof",
+    "sym": "A",
+    "color": "i_green"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "prefab",
+    "name": "mobile home",
+    "copy-from": "generic_city_house_no_sidewalk",
+    "spawns": { "group": "GROUP_NULL", "population": [ 1, 1 ], "chance": 100 }
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "prefab_roof",
+    "name": "mobile home roof",
+    "copy-from": "generic_city_house_roof"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "trailer_hub_10",
+    "name": "administration building",
+    "sym": "A",
+    "color": "cyan",
+    "copy-from": "generic_city_house_no_sidewalk"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "trailer_hub_10_roof",
+    "name": "administration building roof",
+    "sym": "A",
+    "color": "cyan",
+    "copy-from": "generic_city_house_roof"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "trailer_road", "trailer_road_1parkway", "trailer_road_2parkway" ],
+    "copy-from": "road_abstract",
+    "extras": "road",
+    "sym": "│"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "trailer_hub_11",
+    "copy-from": "trailer_road",
+    "sym": "─"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "trailer_road_turn",
+    "copy-from": "trailer_road",
+    "sym": "┐"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "trailer_road_3way",
+    "copy-from": "trailer_road",
+    "sym": "┬"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "trailer_hub_01",
+    "copy-from": "trailer_road",
+    "name": "mobile home park entrance",
+    "sym": "┼"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "trailer_caravan_00", "trailer_caravan_10", "trailer_caravan_01", "trailer_caravan_11" ],
+    "copy-from": "s_lot",
+    "name": "caravan parking",
+    "delete": { "flags": [ "SIDEWALK", "NO_ROTATE" ] }
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "trailer_public_00", "trailer_public_00_roof" ],
+    "copy-from": "generic_city_building_no_sidewalk",
+    "name": "garbage collection point",
+    "sym": "D",
+    "color": "i_brown"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "trailer_hub_00",
+    "copy-from": "s_lot",
+    "delete": { "flags": [ "SIDEWALK", "NO_ROTATE" ] }
+  }
+]
