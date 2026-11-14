@@ -229,7 +229,7 @@
         { "vehicle": "parkinglotbasic", "x": 67, "y": 78, "chance": 20 },
         { "vehicle": "parkinglotbasic", "x": 67, "y": 84, "chance": 20 },
         { "vehicle": "parkinglotbasic", "x": 67, "y": 90, "chance": 20 },
-        { "vehicle": "bus", "x": 39, "y": 83, "chance": 60, "rotation": 270 }
+        { "vehicle": "city_bus_variants", "x": 39, "y": 83, "chance": 60, "rotation": 270 }
       ]
     }
   },

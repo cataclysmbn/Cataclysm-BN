@@ -1,0 +1,50 @@
+[
+  {
+    "id": "vehicle_ladder",
+    "type": "GENERIC",
+    "name": { "str": "vehicle ladder" },
+    "description": "A steel ladder for installation in a vehicle.  Stack framed ladders in the same column on adjacent decks to climb upward or downward through the vehicle.",
+    "weight": "20000 g",
+    "volume": "15 L",
+    "price": "55 USD",
+    "price_postapoc": "1 USD",
+    "material": [ "steel" ],
+    "symbol": "]",
+    "color": "light_gray",
+    "category": "veh_parts",
+    "bashing": 20,
+    "to_hit": -5
+  },
+  {
+    "id": "vehicle_ladder_wood",
+    "type": "GENERIC",
+    "name": { "str": "wooden vehicle ladder" },
+    "description": "A wooden ladder for installation in a vehicle.  Stack framed ladders in the same column on adjacent decks to climb upward or downward through the vehicle.",
+    "weight": "8000 g",
+    "volume": "15 L",
+    "price": "35 USD",
+    "price_postapoc": "1 USD",
+    "material": [ "wood" ],
+    "symbol": "]",
+    "color": "brown",
+    "category": "veh_parts",
+    "bashing": 16,
+    "to_hit": -5
+  },
+  {
+    "id": "vehicle_stairs",
+    "type": "GENERIC",
+    "name": { "str": "vehicle stair assembly", "str_pl": "vehicle stair assemblies" },
+    "description": "A compact steel assembly that can be installed as vehicle stairs or their upper landing.  Install one assembly on each of two adjacent decks to connect them.",
+    "weight": "20000 g",
+    "volume": "15 L",
+    "price": "55 USD",
+    "price_postapoc": "1 USD",
+    "material": [ "steel" ],
+    "symbol": "]",
+    "color": "light_gray",
+    "category": "veh_parts",
+    "bashing": 20,
+    "to_hit": -5
+  }
+]

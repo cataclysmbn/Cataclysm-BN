@@ -15,6 +15,7 @@
 #include "point.h"
 #include "rng.h"
 
+class optional_vpart_position;
 
 // A struct defining abilities of the actor and how to respond to various terrain features
 struct PathfindingSettings {
@@ -62,6 +63,9 @@ struct PathfindingSettings {
 
     // A map of tiles that have an extra G-cost assigned to them. Used for potential fields, preclosed tiles, etc.
     std::unordered_map<point_abs_ms, float> extra_g_costs;
+
+    /// Physical landing represented by the destination of an intermediate ramp approach.
+    std::optional<tripoint_abs_ms> ramp_landing;
 
     bool operator==( const PathfindingSettings &rhs ) const = default;
     int z_move_type() const;
@@ -274,7 +278,8 @@ class Pathfinding
         //   and scan for new changes.
         // Only process OPEN_AIR changes if `update_open_air` is true. OPEN_AIR tiles are numerous on higher Z levels
         //   so they're expensive to go over and update. Do only for fliers.
-        static void update_z_caches( bool update_open_air );
+        static void update_z_caches( bool update_open_air,
+                                     const optional_vpart_position &ramp_source );
 
         // Get a reference to ZCache for this level
         static std::vector<ZLevelChange> &get_z_cache( const int z );

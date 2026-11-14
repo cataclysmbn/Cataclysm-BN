@@ -76,6 +76,7 @@
 #include "npc.h"
 #include "options.h"
 #include "output.h"
+#include "pathfinding.h"
 #include "player.h"
 #include "point.h"
 #include "point_float.h"
@@ -684,7 +685,11 @@ void map::set_floor_cache_dirty(const int zlev) {
 }
 
 void map::set_vehicle_cache_dirty(const int zlev) {
-    if (inbounds_z(zlev)) { get_cache(zlev).vehicle_caches_dirty = true; }
+    if (inbounds_z(zlev)) {
+        if (!is_pool_worker_thread()) { Pathfinding::mark_dirty_z_cache(); }
+        get_cache(zlev).vehicle_caches_dirty = true;
+        get_cache(zlev).vehicle_floor_cache_dirty = true;
+    }
     if (inbounds_z(zlev + 1)) { get_cache(zlev + 1).vehicle_floor_cache_dirty = true; }
 }
 
@@ -827,6 +832,7 @@ void map::add_vehicle_to_cache(vehicle* veh) {
     for (const vpart_reference& vpr : veh->get_all_parts()) {
         if (vpr.part().removed) { continue; }
         const auto p = abs_to_map_local(*this, veh->abs_part_location(vpr.part()));
+        if (inbounds(p)) { invalidate_max_populated_zlev(p.z()); }
         int part = veh->part_with_feature(vpr.part_index(), VPFLAG_LADDER, true);
         if (part != -1) {
             // NOTE: This cache may need to be submapfied at some point
@@ -1398,6 +1404,7 @@ auto map::move_vehicle(vehicle& veh, const tripoint_rel_ms& dp, const tileray& f
         // prevent vehicle bouncing after the first collision
         if (vertical && velocity_before < 0 && coll_velocity > 0) {
             veh.vertical_velocity = 0; // also affects `coll_velocity` and thus exits the loop
+            veh.is_falling = false;
         }
 
     } while (
@@ -1706,6 +1713,7 @@ auto map::vehicle_vehicle_collision(
 
     epicenter2.x() /= coll_parts_cnt;
     epicenter2.y() /= coll_parts_cnt;
+    epicenter2.z() /= coll_parts_cnt;
 
     if (dmg2_part > 100) {
         // Shake vehicle because of collision
@@ -2015,6 +2023,7 @@ auto map::displace_vehicle(vehicle& veh, const tripoint_rel_ms& dp) -> bool {
     // Capture the old footprint in absolute submap coordinates BEFORE parts
     // are updated by advance_precalc_mounts.  The player may shift the map
     // origin below, so bubble coordinates would be stale by on_vehicle_moved().
+    const auto local_height = vehicle_has_local_height(veh);
     auto veh_sm_min = tripoint_abs_sm(INT_MAX, INT_MAX, INT_MAX);
     auto veh_sm_max = tripoint_abs_sm(INT_MIN, INT_MIN, INT_MIN);
 
@@ -2030,7 +2039,11 @@ auto map::displace_vehicle(vehicle& veh, const tripoint_rel_ms& dp) -> bool {
     };
 
     for (const vpart_reference& vpr : veh.get_all_parts()) {
-        if (!vpr.part().removed) { expand_bounds(src, vpr.part()); }
+        if (!vpr.part().removed) {
+            expand_bounds(src, vpr.part());
+            const auto p = abs_to_map_local(*this, veh.abs_part_location(vpr.part()));
+            if (local_height && inbounds(p) && has_items(p)) { support_dirty(p); }
+        }
     }
 
     veh.shed_loose_parts();
@@ -2688,6 +2701,38 @@ auto map::combined_movecost(
     return (cost1 + cost2 + modifier) * mults[match] / 2;
 }
 
+auto map::ramp_offset(const tripoint_bub_ms& from, const tripoint_bub_ms& to) const -> int {
+    return from.xy() == to.xy() ? 0 : ramp_offset(veh_at(from), tripoint_bub_ms(to.xy(), from.z()));
+}
+
+auto map::ramp_offset(const optional_vpart_position& source, const tripoint_bub_ms& pos) const
+    -> int {
+    const auto terrain_offset = [&](const auto& p) {
+        return has_flag(TFLAG_RAMP_UP, p) ? 1 : has_flag(TFLAG_RAMP_DOWN, p) ? -1 : 0;
+    };
+    if (source) {
+        const auto& veh = source->vehicle();
+        const auto deck = source->mount().z();
+        const auto same_deck = [&](const auto& vp) {
+            return vp && &vp->vehicle() == &veh && vp->mount().z() == deck;
+        };
+        const auto current = veh_at(pos);
+        if (same_deck(current) && current.part_with_feature(VPFLAG_BOARDABLE, true)) { return 0; }
+        const auto contact =
+            !veh.wheelcache.empty() ? veh.cpart(veh.wheelcache.front()).mount.z()
+            : !veh.floating.empty()
+                ? veh.cpart(veh.floating.front()).mount.z()
+                : veh.min_mount_z();
+        const auto height = deck - contact;
+        const auto dz = height == 0 ? 0 : terrain_offset(pos - tripoint(0, 0, height));
+        const auto landing = veh_at(pos + tripoint(0, 0, dz));
+        if (dz != 0 && same_deck(landing)) {
+            return landing.part_with_feature(VPFLAG_BOARDABLE, true) ? dz : 0;
+        }
+    }
+    return terrain_offset(pos);
+}
+
 auto map::valid_move(
     const tripoint_bub_ms& from, const tripoint_bub_ms& to, const bool bash, const bool flying,
     const bool via_ramp) const -> bool {
@@ -2718,7 +2763,7 @@ auto map::climb_difficulty(const tripoint_bub_ms& p) const -> int {
         .value_or(INT_MAX);
 }
 
-auto map::has_floor(const tripoint_bub_ms& p, bool visible_only) const -> bool {
+auto map::has_floor(const tripoint_bub_ms& p, bool visible_only, bool terrain_only) const -> bool {
     if (p.z() < -OVERMAP_DEPTH || p.z() > OVERMAP_HEIGHT) { return false; }
 
     point_sm_ms l;
@@ -2729,10 +2774,32 @@ auto map::has_floor(const tripoint_bub_ms& p, bool visible_only) const -> bool {
         const int smy = divide_round_to_minus_infinity(p.y(), SEEY);
         sm->rebuild_floor_cache(*this, tripoint_bub_sm(smx, smy, p.z()));
     }
-    return sm->floor_cache[l.x()][l.y()] || (!visible_only && has_flag(TFLAG_Z_TRANSPARENT, p));
+    return sm->floor_cache[l.x()][l.y()] || (!visible_only && has_flag(TFLAG_Z_TRANSPARENT, p))
+        || (!terrain_only
+            && get_mapbuffer().vehicle_floor_between(
+                map_local_to_abs(*this, p), map_local_to_abs(*this, p + tripoint_rel_ms::below())));
 }
 
-auto map::floor_between(const tripoint_bub_ms& first, const tripoint_bub_ms& second) const -> bool {
+auto map::floor_between(
+    const tripoint_bub_ms& first, const tripoint_bub_ms& second, const bool vehicle_only) const
+    -> bool {
+    if (first == second) { return false; }
+    if (vehicle_only && square_dist(first, second) > 1) {
+        auto previous = first;
+        auto blocked = false;
+        bresenham(first.raw(), second.raw(), 0, 0, [&](const auto& raw) {
+            const auto next = tripoint_bub_ms(raw);
+            blocked = floor_between(previous, next, true);
+            previous = next;
+            return !blocked;
+        });
+        return blocked;
+    }
+    if (get_mapbuffer().vehicle_floor_between(
+            map_local_to_abs(*this, first), map_local_to_abs(*this, second))) {
+        return true;
+    }
+    if (vehicle_only) { return false; }
     int diff = std::abs(first.z() - second.z());
     if (diff == 0) { // There's never a floor between two tiles on the same level
         return false;
@@ -2743,12 +2810,14 @@ auto map::floor_between(const tripoint_bub_ms& first, const tripoint_bub_ms& sec
         return true;
     }
     int upper = std::max(first.z(), second.z());
-    if (first.xy() == second.xy()) { return has_floor(tripoint_bub_ms(first.xy(), upper)); }
-    return has_floor(tripoint_bub_ms(first.xy(), upper))
-        && has_floor(tripoint_bub_ms(second.xy(), upper));
+    if (first.xy() == second.xy()) {
+        return has_floor(tripoint_bub_ms(first.xy(), upper), false, true);
+    }
+    return has_floor(tripoint_bub_ms(first.xy(), upper), false, true)
+        && has_floor(tripoint_bub_ms(second.xy(), upper), false, true);
 }
 
-auto map::supports_above(const tripoint_bub_ms& p) const -> bool {
+auto map::supports_above(const tripoint_bub_ms& p, const vehicle* ignored_vehicle) const -> bool {
     const maptile tile = maptile_at(tripoint_bub_ms(p));
     const ter_t& ter = tile.get_ter_t();
     if (ter.movecost == 0) { return true; }
@@ -2759,7 +2828,8 @@ auto map::supports_above(const tripoint_bub_ms& p) const -> bool {
         if (frn.movecost < 0) { return true; }
     }
 
-    return veh_at(p).has_value();
+    const auto vp = veh_at(p);
+    return vp && &vp->vehicle() != ignored_vehicle;
 }
 
 auto map::has_floor_or_support(const tripoint_bub_ms& p) const -> bool {
@@ -2968,6 +3038,9 @@ void map::process_falling() {
 }
 
 auto map::has_flag(const std::string& flag, const tripoint_bub_ms& p) const -> bool {
+    if (flag == "GOES_UP" || flag == "GOES_DOWN") {
+        return inbounds(p) && get_mapbuffer().has_flag(flag, map_local_to_abs(*this, p));
+    }
     return has_flag_ter_or_furn(flag, p); // Does bound checking
 }
 
@@ -2999,6 +3072,9 @@ auto map::has_flag_ter_or_furn(const std::string& flag, const tripoint_bub_ms& p
 }
 
 auto map::has_flag(const ter_bitflags flag, const tripoint_bub_ms& p) const -> bool {
+    if (flag == TFLAG_NO_FLOOR || flag == TFLAG_GOES_UP || flag == TFLAG_GOES_DOWN) {
+        return inbounds(p) && get_mapbuffer().has_flag(flag, map_local_to_abs(*this, p));
+    }
     return has_flag_ter_or_furn(flag, p); // Does bound checking
 }
 
@@ -5962,6 +6038,9 @@ auto map::tr_at(const tripoint_bub_ms& p) const -> const trap& {
     if (current_submap == nullptr) { return tr_null.obj(); }
 
     if (current_submap->get_ter(l).obj().trap != tr_null) {
+        if (current_submap->get_ter(l).obj().trap == tr_ledge && has_floor(p)) {
+            return tr_null.obj();
+        }
         return current_submap->get_ter(l).obj().trap.obj();
     }
 
@@ -6934,6 +7013,11 @@ auto map::sees(
         // Please someone make bresenham work with typed points, I'm running out of willpower
         bresenham(F.xy().raw(), T.xy().raw(), bresenham_slope,
                   [this, &visible, &T, &last_point](const point& new_point) {
+                      if (floor_between(tripoint_bub_ms(last_point, T.z()),
+                                        tripoint_bub_ms(point_bub_ms(new_point), T.z()), true)) {
+                          visible = false;
+                          return false;
+                      }
                       // Exit before checking the last square, it's still visible even if opaque.
                       if (new_point.x == T.x() && new_point.y == T.y()) { return false; }
                       if (!this->is_transparent(tripoint_bub_ms(point_bub_ms(new_point), T.z()))
@@ -6957,6 +7041,10 @@ auto map::sees(
     bresenham(
         F.raw(), T.raw(), bresenham_slope, 0,
         [this, &visible, &T, &last_point](const tripoint& new_point) {
+            if (floor_between(last_point, tripoint_bub_ms(new_point), true)) {
+                visible = false;
+                return false;
+            }
             // Exit before checking the last square if it's not a vertical transition,
             // it's still visible even if opaque.
             if (new_point == T.raw() && last_point.z() == T.z()) { return false; }
@@ -6970,9 +7058,9 @@ auto map::sees(
                 }
             } else {
                 const int max_z = std::max(new_point.z, last_point.z());
-                if ((has_floor(tripoint_bub_ms{new_point.x, new_point.y, max_z}, true)
+                if ((has_floor(tripoint_bub_ms{new_point.x, new_point.y, max_z}, true, true)
                      || !is_transparent(tripoint_bub_ms{new_point.x, new_point.y, last_point.z()}))
-                    && (has_floor({last_point.xy(), max_z}, true)
+                    && (has_floor({last_point.xy(), max_z}, true, true)
                         || !is_transparent({last_point.xy(), new_point.z}))) {
                     visible = false;
                     return false;
@@ -7243,6 +7331,13 @@ auto map::clear_path(
 auto map::obstructed_by_vehicle_rotation(
     const tripoint_bub_ms& from, const tripoint_bub_ms& to) const -> bool {
     if (!inbounds(from) || !inbounds(to)) { return false; }
+    if (from.xy() != to.xy() && floor_between(from, to, true)) { return true; }
+    const auto source = veh_at(from);
+    const auto target = veh_at(to);
+    if (from.z() != to.z() && source && target && square_dist(from, to) <= 1
+        && &source->vehicle() == &target->vehicle() && source->mount().z() == target->mount().z()) {
+        return !source->vehicle().allowed_move(source->mount(), target->mount());
+    }
 
     if (from.z() != to.z()) {
         // Split it into two checks, one for each z level
@@ -8313,13 +8408,12 @@ void map::build_obstacle_cache(
     }
     const auto start_sm = project_to<coords::sm>(start);
     const auto end_sm = project_to<coords::sm>(end);
-    VehicleList vehs = get_vehicles(start_sm, end_sm);
+    VehicleList vehs = get_vehicles({start_sm.xy(), -OVERMAP_DEPTH}, {end_sm.xy(), OVERMAP_HEIGHT});
     const inclusive_cuboid<tripoint_bub_ms> bounds(start, end);
     // Cache all the vehicle stuff in one loop
     for (auto& v : vehs) {
         for (const vpart_reference& vp : v.v->get_all_parts()) {
-            auto p = v.pos + vp.part().precalc[0];
-            if (p.z() != start.z()) { break; }
+            auto p = v.pos + vp.part().precalc[0] + tripoint_rel_ms(0, 0, vp.mount().z());
             if (!bounds.contains(p)) { continue; }
 
             if (vp.obstacle_at_part()) { obstacle_cache[p.x() * cache_sy + p.y()] = 1000.0f; }
@@ -8466,7 +8560,7 @@ static void vehicle_caching_internal(level_cache& zch, const vpart_reference& vp
     if (!v->allowed_light(t, vp.mount())) {
         obscured_cache[zch.idx(part_pos.x(), part_pos.y())].nw = true;
     }
-    if (!v->allowed_move(t, vp.mount())) {
+    if (!v->allowed_move(t, tripoint_mnt_veh(vp.mount().xy(), t.z()))) {
         obstructed_cache[zch.idx(part_pos.x(), part_pos.y())].nw = true;
     }
 
@@ -8474,7 +8568,7 @@ static void vehicle_caching_internal(level_cache& zch, const vpart_reference& vp
     if (!v->allowed_light(t, vp.mount())) {
         obscured_cache[zch.idx(part_pos.x(), part_pos.y())].ne = true;
     }
-    if (!v->allowed_move(t, vp.mount())) {
+    if (!v->allowed_move(t, tripoint_mnt_veh(vp.mount().xy(), t.z()))) {
         obstructed_cache[zch.idx(part_pos.x(), part_pos.y())].ne = true;
     }
 
@@ -8483,7 +8577,7 @@ static void vehicle_caching_internal(level_cache& zch, const vpart_reference& vp
         if (!v->allowed_light(t, vp.mount())) {
             obscured_cache[zch.idx(part_pos.x() - 1, part_pos.y() + 1)].ne = true;
         }
-        if (!v->allowed_move(t, vp.mount())) {
+        if (!v->allowed_move(t, tripoint_mnt_veh(vp.mount().xy(), t.z()))) {
             obstructed_cache[zch.idx(part_pos.x() - 1, part_pos.y() + 1)].ne = true;
         }
     }
@@ -8493,7 +8587,7 @@ static void vehicle_caching_internal(level_cache& zch, const vpart_reference& vp
         if (!v->allowed_light(t, vp.mount())) {
             obscured_cache[zch.idx(part_pos.x() + 1, part_pos.y() + 1)].nw = true;
         }
-        if (!v->allowed_move(t, vp.mount())) {
+        if (!v->allowed_move(t, tripoint_mnt_veh(vp.mount().xy(), t.z()))) {
             obstructed_cache[zch.idx(part_pos.x() + 1, part_pos.y() + 1)].nw = true;
         }
     }
@@ -8514,11 +8608,23 @@ void map::do_vehicle_caching(int z) {
     if (ch.vehicle_list.empty() && inbounds_z(z + 1)) {
         get_cache(z + 1).vehicle_floor_cache_dirty = false;
     }
-    for (vehicle* v : ch.vehicle_list) {
+    for (const auto& owner : get_vehicles()) {
+        auto* const v = owner.v;
+        if (v->abs_sm_pos.z() != z && std::ranges::none_of(v->get_all_parts(), [&](const auto& vp) {
+                return !vp.part().removed && v->abs_sm_pos.z() + vp.mount().z() == z;
+            })) {
+            continue;
+        }
         for (const vpart_reference& vp : v->get_all_parts()) {
             const tripoint_bub_ms& part_pos = v->bub_part_location(vp.part());
             if (!inbounds(part_pos) || vp.part().removed) { continue; }
             vehicle_caching_internal(get_cache(part_pos.z()), vp, v);
+            if (vp.mount().z() > v->min_mount_z() && vp.has_feature(VPFLAG_BOARDABLE)
+                && !vp.part().is_broken()) {
+                auto& deck_cache = get_cache(part_pos.z());
+                deck_cache.vehicle_floor_cache[deck_cache.idx(part_pos.x(), part_pos.y())] = true;
+                deck_cache.has_any_vehicle_floor = true;
+            }
             if (part_pos.z() < OVERMAP_HEIGHT) {
                 level_cache& ch_above = get_cache(part_pos.z() + 1);
                 vehicle_caching_internal_above(ch_above, vp, v);
@@ -8527,6 +8633,7 @@ void map::do_vehicle_caching(int z) {
         }
     }
     ch.vehicle_caches_dirty = false;
+    ch.vehicle_floor_cache_dirty = false;
 }
 
 void map::build_map_cache(const int zlev, bool skip_lightmap) {
@@ -8667,7 +8774,7 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
         ZoneScopedN("Phase3_vehicles");
         for (int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++) {
             // If one cache is dirty redo the entire cache for simplicity
-            if (get_cache(z).vehicle_caches_dirty
+            if (get_cache(z).vehicle_caches_dirty || get_cache(z).vehicle_floor_cache_dirty
                 || (inbounds_z(z + 1) && get_cache(z + 1).vehicle_floor_cache_dirty)) {
                 add_gpu_dirty_level(gpu_transparency_dirty_levels, z);
                 add_gpu_dirty_level(gpu_transparency_residency_invalid_levels, z);
@@ -9828,6 +9935,14 @@ auto map::calc_max_populated_zlev() -> int {
                    return !view.get_submap().is_uniform;
                })) {
             max_z = zlev;
+        }
+    }
+
+    for (const auto& owner : get_vehicles()) {
+        for (const auto& vp : owner.v->get_all_parts()) {
+            if (vp.part().removed) { continue; }
+            const auto pos = abs_to_map_local(*this, owner.v->abs_part_location(vp.part()));
+            if (inbounds(pos)) { max_z = std::max(max_z, pos.z()); }
         }
     }
 

@@ -1901,7 +1901,7 @@ bool construct::check_empty_ramp_low( const tripoint_bub_ms &p )
 bool construct::check_ceiling( const tripoint_bub_ms &p )
 {
     map &here = get_map();
-    return check_empty( p ) && here.has_floor( p + tripoint_above );
+    return check_empty( p ) && here.has_floor( p + tripoint_above, false, true );
 }
 
 void construct::done_trunk_plank( const tripoint_bub_ms &/*p*/ )

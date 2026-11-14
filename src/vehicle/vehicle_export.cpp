@@ -89,6 +89,7 @@ auto json_export::vehicle(JsonOut& json, const class vehicle& v) -> void {
         json.start_object(true);
         json.member("x", pos.x());
         json.member("y", pos.y());
+        if (pos.z() != 0) { json.member("z", pos.z()); }
         json_parts_write(json, parts);
         json.end_object();
     }

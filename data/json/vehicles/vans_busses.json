@@ -1935,6 +1935,80 @@
     ]
   },
   {
+    "id": "bus_double_decker",
+    "type": "vehicle",
+    "name": "Double-Decker Bus",
+    "color_palette": "car_standard",
+    "//": "The normal bus chassis, drivetrain, doors, and seating footprint with a second passenger deck.  Stairs are beside the rear entrance at (-7, 2).  The upper deck supplies the lower deck's overhead cover.",
+    "blueprint_origin": { "x": 11, "y": 1 },
+    "palette": {
+      "a": [ "frame_horizontal", "board_sw" ],
+      "b": [ "frame_vertical", "windshield" ],
+      "c": [ "frame_vertical", "board_vertical" ],
+      "d": [ "frame_horizontal", "windshield" ],
+      "e": [ "frame_nw", "halfboard_nw", "wheel_mount_medium_steerable", "wheel_wide" ],
+      "f": [ "frame_horizontal_2", "seat" ],
+      "g": [ "frame_horizontal_2", "board_horizontal" ],
+      "h": [ "frame_horizontal_2", "halfboard_horizontal_2", "headlight" ],
+      "i": [ "frame_vertical_2", "aisle_vertical" ],
+      "j": [ "frame_vertical_2", "trunk_floor" ],
+      "k": [ "frame_vertical_2", "aisle_horizontal" ],
+      "n": [ "frame_horizontal", "windshield", "inboard_mirror" ],
+      "q": [ "frame_horizontal", "beeper", "board_se" ],
+      "r": [ "frame_ne", "halfboard_ne", "wheel_mount_medium_steerable", "wheel_wide" ],
+      "t": [ "frame_vertical", "windshield", { "part": "tank", "fuel": "diesel" } ],
+      "w": [ "frame_horizontal", "wheel_mount_medium", "wheel_wide", "windshield" ],
+      "+": [ "frame_vertical", "door" ],
+      "<": [ "frame_horizontal_2", "vehicle_stairs" ],
+      "D": [ "frame_vertical_2", "seat", "controls", "dashboard", "vehicle_clock", "vehicle_alarm", "horn_car" ],
+      "E": [ "frame_cover", "halfboard_cover", "diesel_engine_v6", "alternator_truck", "battery_car" ],
+      "A": [ "frame_horizontal", "board_sw", "roof" ],
+      "B": [ "frame_vertical", "windshield", "roof" ],
+      "C": [ "frame_horizontal_2", "seat", "roof" ],
+      "F": [ "frame_horizontal", "windshield", "roof" ],
+      "I": [ "frame_vertical_2", "aisle_vertical", "roof" ],
+      "J": [ "frame_vertical_2", "trunk_floor", "roof" ],
+      "K": [ "frame_vertical_2", "aisle_horizontal", "roof" ],
+      "L": [ "frame_nw", "halfboard_nw", "roof" ],
+      "Q": [ "frame_horizontal", "board_se", "roof" ],
+      "R": [ "frame_ne", "halfboard_ne", "roof" ],
+      ">": [ "frame_horizontal_2", "vehicle_stair_landing", "roof" ]
+    },
+    "blueprint": [
+      {
+        "z": 0,
+        "rows": [
+          "abbbbwbbbbcbde",
+          "dfffffffffgDdh",
+          "bfijiiiiijiinE",
+          "dfff<ffffffkdh",
+          "qbbb+wbbbtt+dr"
+        ]
+      },
+      {
+        "z": 1,
+        "rows": [
+          "ABBBBBBBBBBBBL",
+          "FCCCCCCCCCCCFF",
+          "BCIJIIIIIJIIIF",
+          "FCCC>CCCCCCKFF",
+          "QBBBBBBBBBBBBR"
+        ]
+      }
+    ],
+    "parts": [ { "x": 1, "y": -2, "z": 0, "part": "wing_mirror_left" }, { "x": 1, "y": 4, "z": 0, "part": "wing_mirror_right" } ],
+    "items": [
+      { "x": -2, "y": 0, "z": 0, "chance": 35, "item_groups": [ "bus_common" ] },
+      { "x": -4, "y": 2, "z": 0, "chance": 35, "item_groups": [ "bus_common" ] },
+      { "x": -6, "y": 0, "z": 0, "chance": 35, "item_groups": [ "bus_common" ] },
+      { "x": -9, "y": 2, "z": 0, "chance": 35, "item_groups": [ "bus_common" ] },
+      { "x": -2, "y": 0, "z": 1, "chance": 35, "item_groups": [ "bus_common" ] },
+      { "x": -4, "y": 2, "z": 1, "chance": 35, "item_groups": [ "bus_common" ] },
+      { "x": -6, "y": 0, "z": 1, "chance": 35, "item_groups": [ "bus_common" ] },
+      { "x": -9, "y": 2, "z": 1, "chance": 35, "item_groups": [ "bus_common" ] }
+    ]
+  },
+  {
     "id": "bus_tour",
     "type": "vehicle",
     "name": "Tour Bus",

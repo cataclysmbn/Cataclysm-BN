@@ -72,6 +72,12 @@ struct mapbuffer_lookup_options {
     mapbuffer_lookup_mode mode = mapbuffer_lookup_mode::simulated_only;
 };
 
+struct mapbuffer_floor_options {
+    bool visible_only = false;
+    bool terrain_only = false;
+    mapbuffer_lookup_options lookup = {.mode = mapbuffer_lookup_mode::resident_only};
+};
+
 struct mapbuffer_valid_move_options {
     bool bash = false;
     bool flying = false;
@@ -463,6 +469,10 @@ public:
         -> std::optional<int>;
     auto passable(const tripoint_abs_ms& p, mapbuffer_lookup_options options = {})
         -> std::optional<bool>;
+    /// Physical support includes live vehicle decks; terrain/vehicle physics can exclude them.
+    auto has_floor(const tripoint_abs_ms& p, const mapbuffer_floor_options& options = {}) -> bool;
+    /// Read physical additional-deck boundaries between adjacent absolute tiles.
+    auto vehicle_floor_between(const tripoint_abs_ms& first, const tripoint_abs_ms& second) -> bool;
     auto valid_move(
         const tripoint_abs_ms& from, const tripoint_abs_ms& to,
         mapbuffer_valid_move_options options = {}) -> bool;
