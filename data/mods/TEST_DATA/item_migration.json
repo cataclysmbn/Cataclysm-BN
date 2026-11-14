@@ -1,0 +1,36 @@
+[
+  {
+    "id": "test_migration_group",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [ { "item": "test_migration_first" }, { "collection": [ { "item": "test_migration_first" } ] } ]
+  },
+  {
+    "id": "test_migration_requirement",
+    "type": "requirement",
+    "tools": [ [ [ "test_migration_first", -1 ] ] ],
+    "components": [ [ [ "test_migration_first", 1 ] ] ]
+  },
+  {
+    "id": "test_migration_first",
+    "type": "MIGRATION",
+    "replace": "test_migration_middle"
+  },
+  {
+    "id": "test_migration_middle",
+    "type": "MIGRATION",
+    "replace": "test_migration_final"
+  },
+  {
+    "id": "test_migration_middle",
+    "copy-from": "test_rag",
+    "type": "TOOL",
+    "name": { "str": "test migration middle item" }
+  },
+  {
+    "id": "test_migration_final",
+    "copy-from": "test_rag",
+    "type": "TOOL",
+    "name": { "str": "test migration final item" }
+  }
+]
