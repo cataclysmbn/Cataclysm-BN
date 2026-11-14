@@ -4157,7 +4157,10 @@ std::optional<tripoint_bub_ms> input_context::get_coordinates( const catacurses:
 
     const point screen_pos = coordinate - win_min;
     point_bub_ms p;
-    if( tile_iso && use_tiles ) {
+    const auto iso = capture_win == g->w_overmap
+                     ? use_tiles_overmap && overmap_tilecontext && overmap_tilecontext->tile_iso
+                     : tile_iso;
+    if( iso && use_tiles ) {
         const float win_mid_x = win_min.x + win_size.x / 2.0f;
         const float win_mid_y = -win_min.y + win_size.y / 2.0f;
         const int screen_col = std::round( ( screen_pos.x - win_mid_x ) / ( fw / 2.0 ) );
