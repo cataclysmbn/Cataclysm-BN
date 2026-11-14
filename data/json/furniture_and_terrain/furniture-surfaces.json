@@ -426,7 +426,7 @@
     "type": "furniture",
     "id": "f_coffee_table",
     "name": "coffee table",
-    "description": "a low table for livingrooms.  Examine it to tip it onto its side, to slow down the horde in a pinch.",
+    "description": "a low table for living rooms.  Examine it to tip it onto its side, to slow down the horde in a pinch.",
     "symbol": "#",
     "color": "red",
     "looks_like": "f_table",

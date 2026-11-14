@@ -188,7 +188,7 @@
     "id": "bot_mininuke_hack",
     "type": "TOOL",
     "name": { "str": "inactive mininuke hack" },
-    "description": "This is an inactive mininuke hack.  Many times as large as a normal manhack, a mininuke hack contains a mininuke and attack by flying at their target and detonating.  Use this item to reprogram and activate the mininuke hack.  Electronics and computer skill determines if the targeting matrix is reprogrammed successfully.  An inhumanly strong user could also deploy it remotely by throwing it, which might give you a head start if it's programmed incorrectly.",
+    "description": "This is an inactive mininuke hack.  Many times as large as a normal manhack, a mininuke hack contains a mininuke and attacks by flying at their target and detonating.  Use this item to reprogram and activate the mininuke hack.  Electronics and computer skill determines if the targeting matrix is reprogrammed successfully.  An inhumanly strong user could also deploy it remotely by throwing it, which might give you a head start if it's programmed incorrectly.",
     "weight": "24600 g",
     "volume": "18550 ml",
     "price": "26775 USD",

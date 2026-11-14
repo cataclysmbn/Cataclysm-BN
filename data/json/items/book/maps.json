@@ -246,7 +246,7 @@
     "copy-from": "abstractmap",
     "type": "GENERIC",
     "name": { "str": "tourist guide" },
-    "description": "This is glossy printed pamphlet for tourists that details local hotels and attractions.",
+    "description": "This is a glossy printed pamphlet for tourists that details local hotels and attractions.",
     "color": "blue",
     "use_action": {
       "type": "reveal_map",
@@ -271,7 +271,7 @@
     "copy-from": "abstractmap",
     "type": "GENERIC",
     "name": { "str": "restaurant guide" },
-    "description": "This is glossy printed pamphlet that details dining establishments in the local area.  Printed by the Chamber of Commerce, it lists the addresses of all the best diners and bars.  Using it will add points of interest to your map.",
+    "description": "This is a glossy printed pamphlet that details dining establishments in the local area.  Printed by the Chamber of Commerce, it lists the addresses of all the best diners and bars.  Using it will add points of interest to your map.",
     "color": "pink",
     "use_action": {
       "type": "reveal_map",

@@ -354,7 +354,8 @@
             "id": "fd_physical_static",
             "fg": [ { "weight": 1, "sprite": 246 }, { "weight": 1, "sprite": 248 }, { "weight": 1, "sprite": 249 } ]
           },
-          { "id": "mon_signal_maw", "fg": 247 }
+          { "id": "mon_signal_maw", "fg": 247 },
+          { "id": "assorted_bugs", "fg": 250 }
         ],
         "sprite_width": 32,
         "sprite_height": 32

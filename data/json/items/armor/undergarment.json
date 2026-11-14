@@ -459,7 +459,7 @@
     "id": "thermal_shirt",
     "type": "ARMOR",
     "name": { "str": "thermal shirt" },
-    "description": "A lightweight, form-fitting long-sleeved spandex undershirt that helps maintains body temperature.",
+    "description": "A lightweight, form-fitting long-sleeved spandex undershirt that helps maintain body temperature.",
     "weight": "92 g",
     "volume": "250 ml",
     "price": "32 USD",

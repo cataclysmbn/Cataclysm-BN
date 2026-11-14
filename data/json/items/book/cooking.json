@@ -548,7 +548,7 @@
     "type": "BOOK",
     "copy-from": "base_book",
     "name": { "str": "Winemaking for Beginners", "str_pl": "copies of Winemaking for Beginners" },
-    "description": "Winemaking, is an art form.  This book teaches you how to crayon within the lines.",
+    "description": "Winemaking is an art form.  This book teaches you how to crayon within the lines.",
     "weight": "500 g",
     "volume": "1 L",
     "price": "40 USD",

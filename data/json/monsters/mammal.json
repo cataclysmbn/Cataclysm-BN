@@ -79,6 +79,7 @@
     "harvest": "mammal_fur",
     "special_attacks": [ [ "EAT_FOOD", 7200 ] ],
     "upgrades": { "age_grow": 480, "into": "mon_bear" },
+    "delete": { "flags": [ "PET_MOUNTABLE" ] },
     "petfood": {
       "food": [ "DOGFOOD" ],
       "feed": "The %s seems to like you!",
@@ -110,6 +111,7 @@
     "melee_dice_sides": 6,
     "melee_cut": 4,
     "dodge": 3,
+    "mountable_pixels_up": 17,
     "armor_bash": 2,
     "vision_day": 30,
     "vision_night": 10,
@@ -131,7 +133,7 @@
       "tamer_traits": [ [ "THRESH_URSINE" ] ]
     },
     "pet_training": { "hp_mult": 1.3, "melee_mult": 1.25, "dodge_mult": 1.1, "max_level": 5, "min_skill": 6 },
-    "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "BLEED", "BASHES", "ATTACKMON" ],
+    "flags": [ "SEES", "HEARS", "SMELLS", "PET_MOUNTABLE", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "BLEED", "BASHES", "ATTACKMON" ],
     "upgrades": { "half_life": 42, "into": "mon_bear_armored" }
   },
   {
@@ -461,7 +463,7 @@
     "type": "MONSTER",
     "copy-from": "mon_cat",
     "name": "Siamese cat",
-    "description": "This cat has the distinctive dark extremeties of a Siamese, first native to Asia but a common domestic breed in North America.",
+    "description": "This cat has the distinctive dark extremities of a Siamese, first native to Asia but a common domestic breed in North America.",
     "reproduction": { "baby_monster": "mon_cat_siamese_kitten", "baby_count": 4, "baby_timer": 60 }
   },
   {

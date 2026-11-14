@@ -208,7 +208,7 @@
     "id": "arrow_triffid",
     "copy-from": "arrow_stinger",
     "name": { "str": "triffid arrow" },
-    "description": "A simple fletched wooden arrow shaft with an arrowhead carved from an alien plants stinger.  It paralyzes enemies it hits and stands a somewhat low chance of remaining intact once fired.",
+    "description": "A simple fletched wooden arrow shaft with an arrowhead carved from an alien plant's stinger.  It paralyzes enemies it hits and stands a somewhat low chance of remaining intact once fired.",
     "material": [ "wood" ],
     "effects": [ "PARALYZEPOISON" ]
   },

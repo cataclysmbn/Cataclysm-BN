@@ -105,7 +105,7 @@
     "looks_like": "m1a",
     "type": "GUN",
     "name": { "str": "SVD" },
-    "description": "A Soviet semi-automatic designated marksman rifle, chambered in 7.612x54mmR.  Originated during the Cold War, since phased out in Russia and Ukraine in favor of the SVDM and UAR-10, respectively.",
+    "description": "A Soviet semi-automatic designated marksman rifle, chambered in 7.62x54mmR.  Originated during the Cold War, since phased out in Russia and Ukraine in favor of the SVDM and UAR-10, respectively.",
     "weight": "4300 g",
     "volume": "2500 ml",
     "barrel_volume": "750 ml",

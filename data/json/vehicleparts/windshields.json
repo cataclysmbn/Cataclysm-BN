@@ -61,7 +61,7 @@
     "broken_symbol": "0",
     "color": "light_cyan",
     "damage_modifier": 75,
-    "description": "A translucent sheet of rigid that lets you see outside the vehicle.  Bit more durable than glass.",
+    "description": "A translucent sheet of rigid material that lets you see outside the vehicle.  Bit more durable than glass.",
     "durability": 100,
     "flags": [ "OVER", "WINDSHIELD", "OBSTACLE", "WINDOW" ],
     "item": "rigid_plastic_sheet",

@@ -133,7 +133,7 @@
         "v": "t_floor",
         "u": "t_floor",
         "s": "t_floor",
-        ":": "t_floor_olight"
+        ":": "t_floor"
       },
       "furniture": {
         "c": "f_counter",
@@ -144,7 +144,8 @@
         "k": "f_wood_keg",
         "v": "f_fvat_empty",
         "u": "f_cupboard",
-        "s": "f_sink"
+        "s": "f_sink",
+        ":": "f_olight_nogrid"
       },
       "items": { "r": { "item": "cleaning", "chance": 100, "repeat": [ 3, 6 ] } },
       "place_item": [
@@ -269,7 +270,8 @@
         "                        ",
         "                        "
       ],
-      "terrain": { ".": "t_floor", "w": "t_wall_wood", "+": "t_door_c", ":": "t_floor_olight" }
+      "terrain": { ".": "t_floor", ":": "t_floor", "w": "t_wall_wood", "+": "t_door_c" },
+      "furniture": { ":": "f_olight_nogrid" }
     }
   },
   {
@@ -282,8 +284,8 @@
         "                        ",
         "                        ",
         "         CttC           ",
-        "         CttC           ",
-        "    CtC         k       ",
+        "    CtC  CttC           ",
+        "                k       ",
         "           CtC  k       ",
         "    CtC         k  s    ",
         "                v  s    ",
@@ -679,9 +681,9 @@
         "c": "t_floor",
         "t": "t_floor",
         "r": "t_floor",
-        ":": "t_floor_olight"
+        ":": "t_floor"
       },
-      "furniture": { "C": "f_counter", "c": "f_cupboard", "t": "f_table", "r": "f_rack_wood" },
+      "furniture": { "C": "f_counter", "c": "f_cupboard", "t": "f_table", "r": "f_rack_wood", ":": "f_olight_nogrid" },
       "items": { "r": { "item": "drugs_heal_simple", "chance": 100, "repeat": [ 3, 6 ] } },
       "place_npcs": [ { "class": "ranch_nurse_1", "x": 5, "y": 16 } ]
     }
@@ -753,7 +755,8 @@
         "                     ",
         "                     "
       ],
-      "terrain": { ".": "t_floor", "w": "t_wall_wood", "+": "t_door_c", "[": "t_window_boarded_noglass", ":": "t_floor_olight" }
+      "terrain": { ".": "t_floor", "w": "t_wall_wood", "+": "t_door_c", "[": "t_window_boarded_noglass", ":": "t_floor" },
+      "furniture": { ":": "f_olight_nogrid" }
     }
   },
   {
@@ -1101,13 +1104,13 @@
         " wwwwww                 ",
         " w....wwww[[[wwww       ",
         " [....w........rw       ",
-        " [....+........rw       ",
+        " [.:..+........rw       ",
         " w....w..tt.tt.rw       ",
-        " wwwwww..tt.tt..[       ",
+        " wwwwww..tt:tt..[       ",
         "      w..tt.tt.rw       ",
         "      +........rw       ",
         "      w........rw       ",
-        "      www.....www       ",
+        "      www..:..www       ",
         "        w.....w         ",
         "        w..c..w         ",
         "        [..c..+         ",
@@ -1122,9 +1125,10 @@
         "[": "t_window_boarded_noglass",
         "c": "t_floor",
         "t": "t_floor",
-        "r": "t_floor"
+        "r": "t_floor",
+        ":": "t_floor"
       },
-      "furniture": { "c": "f_counter", "t": "f_table", "r": "f_rack" },
+      "furniture": { "c": "f_counter", "t": "f_table", "r": "f_rack", ":": "f_olight_nogrid" },
       "place_npcs": [ { "class": "ranch_scavenger_1", "x": 10, "y": 20 } ]
     }
   },

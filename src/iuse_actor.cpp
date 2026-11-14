@@ -5722,6 +5722,8 @@ auto cloning_syringe_iuse::use( player &p, item &it, bool /*t*/,
     const mtype_id &id = m->type->id;
     const std::string id_str = id.str();
 
+    p.set_knows_creature_type( id );
+
     add_msg( m_good, _( "The %s beeps softly.  You successfully gathered a sample from the %s!" ),
              it.display_name(), m->name() );
 

@@ -24,6 +24,7 @@
 #include <vector>
 
 class lua_monster_callback_actor;
+class Character;
 class Creature;
 class monster;
 struct dealt_projectile_attack;
@@ -217,6 +218,7 @@ enum m_flag : int {
     MF_CANT_TRAIN,            // This monster can't be trained for combat
     MF_POLICE_EYEBOT,            // A drone capable of summoning reinforcements, see mattack::photograph
     MF_IRRADIATED,         // Melee attacks can inflict radiation
+    MF_NO_VEHICLE_COLLISION, // Vehicles pass through this monster without hitting it.
 
     MF_MAX                  // Sets the length of the flags - obviously must be LAST
 };
@@ -249,6 +251,13 @@ struct pet_food_data {
     std::set<TraitSet> tamer_traits;
     std::string pet;
     std::string feed;
+    /// Skill used when taming this monster; defaults to "survival".
+    skill_id tame_skill = skill_id( "survival" );
+    /// Minimum level of tame_skill required to tame this monster; 0 means no skill requirement.
+    int tame_min_skill = 0;
+
+    /// True when the character meets the taming skill requirement (always true when tame_min_skill is 0).
+    auto tame_skill_requirement_met( const Character &ch ) const -> bool;
 
     bool was_loaded = false;
     void load( const JsonObject &jo );
@@ -370,6 +379,8 @@ struct mtype {
             float dodge = 1.15f;
             int max_level = 3;
             int min_skill = 3;
+            /// Skill used when training this monster as a pet; defaults to "survival".
+            skill_id skill = skill_id( "survival" );
             std::vector<pet_training_level_flags> level_flags;
         };
         // Per-level stat multipliers when this monster is trained as a pet.
