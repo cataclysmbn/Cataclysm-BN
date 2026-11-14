@@ -1,4 +1,5 @@
 #include "monster.h"
+#include "mcp_hooks.h"
 
 #include "action_time_scale.h"
 #include "avatar.h"
@@ -523,8 +524,14 @@ auto monster::setpos( const tripoint_abs_ms &p ) -> void
     }
 
     const auto wandering = is_wandering();
+#if defined(CATA_MCP)
+    const auto from = bub_pos();
+#endif
     g->update_zombie_pos( *this, p );
     pos_abs = p;
+#if defined(CATA_MCP)
+    engine_client::presentation::record_move( { .mover = *this, .from = from, .to = bub_pos() } );
+#endif
     if( has_effect( effect_ridden ) && mounted_player && mounted_player->abs_pos() != pos_abs ) {
         add_msg( m_debug, "Ridden monster %s moved independently and dumped player", get_name() );
         mounted_player->forced_dismount();
@@ -1123,6 +1130,57 @@ static std::optional<std::pair<std::string, nc_color>> action_readiness_descript
     return std::make_pair( string_format( _( "It will be ready in %d turns." ), turns ),
                            c_light_green );
 }
+
+#if defined(CATA_MCP)
+auto monster::info_facts() const -> std::vector<engine_client::fact>
+{
+    auto facts = std::vector<engine_client::fact> {};
+    auto bar_color = c_white;
+    auto bar = std::string {};
+    get_HP_Bar( bar_color, bar );
+    facts.push_back( { .kind = "hp", .text = bar, .color = bar_color } );
+    facts.push_back( { .kind = "creature", .text = name(), .color = basic_symbol_color(), .id = type->id.str() } );
+    if( const auto effects = get_effect_status(); !effects.empty() ) {
+        facts.push_back( { .kind = "effects", .text = effects } );
+    }
+    const auto att = get_attitude();
+    facts.push_back( { .kind = "attitude", .text = att.first, .color = att.second } );
+    const auto sees_you = sees( g->u );
+    facts.push_back( { .kind = "senses", .text = sees_you ? _( "Can see to your current location" ) :
+                       _( "Can't see to your current location" ), .color = sees_you ? c_red : c_green } );
+    const auto speed_desc = speed_description( speed_rating(), has_flag( MF_IMMOBILE ) );
+    facts.push_back( { .kind = "speed", .text = speed_desc.first, .color = speed_desc.second } );
+    if( const auto ready = action_readiness_description( *this ) ) {
+        facts.push_back( { .kind = "readiness", .text = ready->first, .color = ready->second } );
+    }
+    if( debug_mode ) {
+        facts.push_back( { .kind = "difficulty", .text = _( " Difficulty " ) + std::to_string( type->difficulty ),
+        .color = c_light_gray, .values = { { "difficulty", type->difficulty } } } );
+        facts.push_back( { .kind = "moves", .text = string_format( _( "Moves: %d  Speed: %d" ), get_moves(), get_speed() ),
+        .color = c_light_gray, .values = { { "moves", get_moves() }, { "speed", get_speed() } } } );
+    }
+    if( display_mod_source ) {
+        const auto mod_src = enumerate_as_string( type->src.begin(),
+        type->src.end(), []( const std::pair<mtype_id, mod_id> &source ) {
+            return string_format( "'%s'", source.second->name() );
+        }, enumeration_conjunction::arrow );
+        facts.push_back( { .kind = "origin", .text = string_format( _( "Origin: %s" ), mod_src ), .color = c_cyan } );
+    }
+    if( display_object_ids ) {
+        facts.push_back( { .kind = "object_id", .text = string_format( "[%s]", type->id.str() ), .color = c_light_blue } );
+    }
+    facts.push_back( { .kind = "description", .text = type->get_description(), .color = c_light_gray } );
+    if( has_effect( effect_ridden ) && mounted_player ) {
+        facts.push_back( { .kind = "rider", .text = string_format( _( "Rider: %s" ), mounted_player->disp_name() ),
+                           .color = c_white } );
+    }
+    if( size_bonus > 0 ) {
+        facts.push_back( { .kind = "size", .text = string_format( _( "It is %s." ), size_names.at( get_size() ) ),
+                           .color = c_light_gray } );
+    }
+    return facts;
+}
+#endif
 
 int monster::print_info( const catacurses::window &w, int vStart, int vLines, int column ) const
 {
@@ -2818,13 +2876,16 @@ void monster::set_hp( const int hp )
 }
 
 void monster::apply_damage( Creature *source, item *source_weapon, item *source_projectile,
-                            bodypart_id /*bp*/,
+                            bodypart_id MCP_ONLY( bp )/*bp*/,
                             int dam,
                             const bool /*bypass_med*/ )
 {
     if( is_dead_state() ) {
         return;
     }
+#if defined(CATA_MCP)
+    engine_client::presentation::record_damage( { .hurt = *this, .part = bp, .amount = dam } );
+#endif
     hp -= dam;
     if( hp < 1 ) {
         set_killer( source );
@@ -3775,6 +3836,10 @@ void monster::die( Creature *nkiller )
         mounted_player->forced_dismount();
     }
     g->set_critter_died();
+#if defined(CATA_MCP)
+    // The creature tracker stops finding a dead monster, and with it the ID the client knows it by.
+    engine_client::presentation::record_death( *this );
+#endif
     dead = true;
     set_killer( nkiller );
     if( !death_drops ) {

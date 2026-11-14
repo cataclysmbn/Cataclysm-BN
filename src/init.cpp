@@ -14,6 +14,11 @@
 #include "catalua.h"
 #include "catalua_impl.h"
 #include "clothing_mod.h"
+#include "mcp_hooks.h"
+#if defined(CATA_MCP)
+#include "client_render_hooks.h"
+#include "client_shortcut.h"
+#endif
 #include "clzones.h"
 #include "construction.h"
 #include "construction_category.h"
@@ -312,6 +317,11 @@ void DynamicDataLoader::initialize()
     add( "scent_type", &scent_type::load_scent_type );
     add( "disease_type", &disease_type::load_disease_type );
     add( "ascii_art", &ascii_art::load_ascii_art );
+#if defined(CATA_MCP)
+    add( "client_shortcut", &client_shortcuts::load );
+#else
+    add( "client_shortcut", &load_ignored_type );
+#endif
 
     // json/colors.json would be listed here, but it's loaded before the others (see init_colors())
     // Non Static Function Access
@@ -494,6 +504,8 @@ void DynamicDataLoader::initialize()
     add( "vehicle_blacklist", &vehicle_prototype::load_vehicle_blacklist );
 #if defined(TILES)
     add( "mod_tileset", &load_mod_tileset );
+#elif defined(CATA_MCP)
+    add( "mod_tileset", &game_client::load_mod_tileset );
 #else
     // No TILES - no tilesets
     add( "mod_tileset", &load_ignored_type );
@@ -609,6 +621,7 @@ void DynamicDataLoader::unload_data()
     body_part_type::reset();
     charge_removal_blacklist::reset();
     clear_techniques_and_martial_arts();
+    MCP_ONLY( client_shortcuts::reset(); game_client::reset_mod_tileset(); )
     clothing_mods::reset();
     construction_categories::reset();
     construction_groups::reset();

@@ -1,4 +1,5 @@
 #include "bionics.h"
+#include "mcp_hooks.h"
 
 #include "action.h"
 #include "action_time_scale.h"
@@ -1567,6 +1568,7 @@ itype_id Character::find_remote_fuel( bool look_only )
                 continue;
             case state_grid: {
                 if( !nonchar.point_valid() ) {
+                    MCP_ONLY( if( look_only ) { continue; } )
                     debugmsg( "Cable_data was not properly initialized or cable map points were not set" );
                     add_msg_if_player( m_bad, _( "You notice the cable has come loose!" ) );
                     cable->reset_cable( this );
@@ -1584,6 +1586,7 @@ itype_id Character::find_remote_fuel( bool look_only )
             }
             case state_vehicle: {
                 if( !nonchar.point_valid() ) {
+                    MCP_ONLY( if( look_only ) { continue; } )
                     debugmsg( "Cable_data was not properly initialized or cable map points were not set" );
                     add_msg_if_player( m_bad, _( "You notice the cable has come loose!" ) );
                     cable->reset_cable( this );

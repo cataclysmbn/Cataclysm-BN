@@ -12,6 +12,7 @@
 #include "character_effects.h"
 #include "character_functions.h"
 #include "character_id.h"
+#include "mcp_hooks.h"
 #include "clzones.h"
 #include "color.h"
 #include "condition.h"
@@ -425,6 +426,25 @@ static bool handle_emote( player &u, efftype_id effect, int emote_choice )
     return true;
 }
 
+#if defined(CATA_MCP)
+auto can_chat_with( const Character &you, const npc &guy ) -> bool
+{
+    // TODO: Get rid of the z-level check when z-level vision gets "better"
+    return you.bub_pos().z() == guy.bub_pos().z() && you.sees( guy.bub_pos() ) &&
+           rl_dist( you.bub_pos(), guy.bub_pos() ) <= SEEX * 2;
+}
+
+auto refuse_faceless_speech( Character &you ) -> bool
+{
+    if( !you.has_trait( trait_PROF_FOODP ) || you.is_wearing( itype_id( "foodperson_mask" ) ) ||
+        you.is_wearing( itype_id( "foodperson_mask_on" ) ) ) {
+        return false;
+    }
+    you.add_msg_if_player( m_warning, to_translation( "You can't speak without your face!" ) );
+    return true;
+}
+
+#endif
 void game::chat()
 {
     int volume = u.get_shout_volume();
@@ -2187,6 +2207,7 @@ talk_topic dialogue::opt( dialogue_window &d_win, const std::string &npc_name,
     }
     auto selected_response = size_t{ 0 };
 
+    MCP_ONLY( input_context ctxt( "DIALOGUE_CHOOSE_RESPONSE" ); )
 #if defined(__ANDROID__)
     input_context ctxt( "DIALOGUE_CHOOSE_RESPONSE" );
     for( size_t i = 0; i < responses.size(); i++ ) {
@@ -2216,6 +2237,8 @@ talk_topic dialogue::opt( dialogue_window &d_win, const std::string &npc_name,
         d_win.refresh_response_display();
         do {
             ui_manager::redraw();
+            MCP_ONLY( const auto reading = game_client::input_context_scope( ctxt, ctxt.category_name(),
+                                           inp_mngr.get_timeout() ); )
             ch = inp_mngr.get_input_event().get_first_input();
             if( ch == KEY_UP ) {
                 if( selected_response > 0 ) {

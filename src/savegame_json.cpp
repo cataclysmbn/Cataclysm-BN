@@ -2,6 +2,7 @@
 // functions are serialization functions.  This allows IWYU to check the
 // includes in such headers.
 #include "active_item_cache.h"
+#include "mcp_hooks.h"
 #include "activity_actor.h"
 #include "assign.h"
 #include "auto_pickup.h"
@@ -4104,6 +4105,7 @@ void map_memory::load_legacy( JsonIn &jsin )
     }
     jsin.end_array();
 
+    MCP_ONLY( replaced(); )
     for( const std::pair<const tripoint_abs_ms, mig_elem> &elem : elems ) {
         const auto cp = project_remain<coords::sm>( elem.first );
         shared_ptr_fast<mm_submap> sm = find_submap( cp.quotient_tripoint );

@@ -105,15 +105,9 @@ struct failure {
     std::vector<trait_id> mut;
     itype_id item_name;
     std::string reason;
-};
 
-namespace std {
-template <> struct less<failure> {
-    auto operator()(const failure& lhs, const failure& rhs) const -> bool {
-        return lhs.prof < rhs.prof;
-    }
+    auto operator<(const failure& rhs) const -> bool { return prof < rhs.prof; }
 };
-} // namespace std
 
 // TODO: According to profiling (interrupt, backtrace, wait a few seconds, repeat) with a sample
 // size of 20, 70% of the time is due to the call to Character::set_mutation in try_set_traits.
@@ -215,6 +209,15 @@ TEST_CASE("starting_items", "[slow]") {
     std::set<failure> failures;
 
     avatar& ch = get_avatar();
+#if defined(CATA_MCP)
+    // The case replaces the avatar and the scenario; later cases get them back as they were.
+    auto original = std::move(ch);
+    const auto* const original_scenario = g->scen;
+    const auto restore = on_out_of_scope([&] {
+        get_avatar() = std::move(original);
+        g->scen = original_scenario;
+    });
+#endif
 
     ch = get_sanitized_player();
 

@@ -304,3 +304,29 @@ jobs:
       android-localize: false
       upload-artifacts: true
     secrets: inherit
+
+  mcp:
+    name: MCP engine
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mold ccache gettext libsqlite3-dev zlib1g-dev
+      - uses: aminya/setup-cpp@v1
+        with:
+          compiler: llvm-${{ env.LLVM_VERSION }}
+          cmake: true
+          ninja: true
+          setup-cpp: false
+      - name: build
+        run: |
+          cmake --preset linux-mcp
+          cmake --build --preset linux-mcp
+      - name: run tests
+        run: |
+          ./out/build/linux-mcp/tests/cata_test-mcp --use-colour yes --rng-seed time --error-format=github-action
+          ./out/build/linux-mcp/tests/cata_test-mcp-messages --use-colour yes --rng-seed 424242 --error-format=github-action

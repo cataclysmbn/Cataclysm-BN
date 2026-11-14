@@ -1819,7 +1819,14 @@ private:
     const std::string popup_distractions_hint;
     const std::string assign_hotkey_hint;
     const int assign_hotkey_hint_width;
+#if defined(CATA_MCP)
+    const std::vector<uilist_key> key_rows;
+    static constexpr int no_fold_width = 4096;
+#endif
     int info_scroll;
+#if defined(CATA_MCP)
+    auto spell_info_text(const spell& sp, int info_width) const -> std::string;
+#endif
     auto draw_spell_info(const spell& sp, const uilist* menu) -> void;
     auto update_categories(
         uilist* menu, const spell_selector_category_id& requested_category, bool rebuild_topology)
@@ -1837,6 +1844,9 @@ public:
         const std::set<int>& reserved_invlets;
         std::string distraction_action_hint;
         std::string assign_hotkey_action_hint;
+#if defined(CATA_MCP)
+        std::vector<uilist_key> key_rows;
+#endif
         bool casting_ignore = false;
     };
 
@@ -1853,7 +1863,43 @@ public:
               string_format("[%s] %s", opts.distraction_action_hint, _("Popup Distractions"))),
           assign_hotkey_hint(string_format(_("Assign Hotkey [%s]"), opts.assign_hotkey_action_hint)),
           assign_hotkey_hint_width(utf8_width(assign_hotkey_hint)),
-          casting_ignore(opts.casting_ignore) {}
+#if defined(CATA_MCP)
+          key_rows(std::move(opts.key_rows)),
+#endif
+          casting_ignore(opts.casting_ignore) {
+    }
+#if defined(CATA_MCP)
+    auto keys() const -> std::vector<uilist_key> override { return key_rows; }
+    auto row_details(const uilist& /*menu*/, const int entry_index) const
+        -> uilist_row_details override {
+        const auto index = static_cast<std::size_t>(entry_index);
+        if (entry_index < 0 || index >= known_spells.size() || index >= categories.spells.size()) {
+            return {};
+        }
+        const auto& sp = *known_spells[index];
+        auto columns = std::vector<uilist_detail_column>{
+            {.key = "spell_level",
+             .label = _("Spell Level"),
+             .value = std::to_string(sp.get_level())},
+            {.key = "failure_chance",
+             .label = _("Failure Chance"),
+             .value = remove_color_tags(sp.colorized_fail_percent(guy))},
+            {.key = "casting_cost",
+             .label = _("Casting Cost"),
+             .value = string_format("%s %s", sp.energy_cost_string(guy), sp.energy_string())},
+            {.key = "casting_time",
+             .label = _("Casting Time"),
+             .value = moves_to_string(sp.casting_time(guy))},
+            {.key = "range",
+             .label = _("Range"),
+             .value = sp.range() <= 0 ? _("self") : std::to_string(sp.range())},
+        };
+        return {.description = spell_info_text(sp, no_fold_width),
+                .columns = std::move(columns),
+                .favorite = categories.spells[index].favorite,
+                .identity = "spell:" + sp.id().str()};
+    }
+#endif
     auto key(const input_context& ctxt, const input_event& event, int entnum, uilist* menu)
         -> bool override {
         const auto& action = ctxt.input_to_action(event);
@@ -2053,6 +2099,10 @@ static auto enumerate_traits(const std::set<trait_id> st) -> std::string {
 }
 
 
+#if defined(CATA_MCP)
+auto spellcasting_callback::spell_info_text(const spell& sp, const int info_width) const
+    -> std::string {
+#else
 auto spellcasting_callback::draw_spell_info(const spell& sp, const uilist* menu) -> void {
     const int h_offset = menu->w_width - menu->pad_right + 1;
     // includes spaces on either side for readability
@@ -2061,9 +2111,13 @@ auto spellcasting_callback::draw_spell_info(const spell& sp, const uilist* menu)
     const int h_col1 = h_offset + 1;
     const int h_col2 = h_offset + (info_width / 2);
     const catacurses::window w_menu = menu->window;
+#endif
     // various pieces of spell data mean different things depending on the effect of the spell
     const std::string fx = sp.effect();
+#if defined(CATA_MCP)
+#else
     int line = 2;
+#endif
     nc_color gray = c_light_gray;
     nc_color light_green = c_light_green;
     nc_color yellow = c_yellow;
@@ -2150,13 +2204,25 @@ auto spellcasting_callback::draw_spell_info(const spell& sp, const uilist* menu)
             string_format(_("Only affects the monsters: %s"), target_ids));
     }
 
+#if defined(CATA_MCP)
+    // A random-damage spell rolls on every call; its range keeps the text stable between reads.
+    const auto random_damage = sp.has_flag(spell_flag::RANDOM_DAMAGE);
+    const int damage = random_damage ? 0 : sp.damage_as_character(guy);
+    const auto summoned = random_damage ? sp.damage_string(guy) : std::to_string(sp.damage());
+    const int summoned_count = random_damage ? 2 : sp.damage();
+#else
     const int damage = sp.damage_as_character(guy);
+#endif
     std::string damage_string;
     std::string aoe_string;
     // if it's any type of attack spell, the stats are normal.
     if (fx == "target_attack" || fx == "projectile_attack" || fx == "cone_attack"
         || fx == "line_attack") {
+#if defined(CATA_MCP)
+        if (damage > 0 || (random_damage && damage == 0)) {
+#else
         if (damage > 0) {
+#endif
             damage_string = string_format(
                 "%s: %s %s", _("Damage"), colorize(sp.damage_string(guy), sp.damage_type_color()),
                 colorize(sp.damage_type_string(), sp.damage_type_color()));
@@ -2179,12 +2245,21 @@ auto spellcasting_callback::draw_spell_info(const spell& sp, const uilist* menu)
         if (sp.aoe() > 0) { aoe_string = string_format("%s: %d", _("Variance"), sp.aoe()); }
     } else if (fx == "spawn_item") {
         damage_string = string_format(
+#if defined(CATA_MCP)
+            "%s %s %s", _("Spawn"), summoned,
+            item::nname(itype_id(sp.effect_data()), summoned_count));
+#else
             "%s %d %s", _("Spawn"), sp.damage(),
             item::nname(itype_id(sp.effect_data()), sp.damage()));
+#endif
     } else if (fx == "summon") {
         damage_string = string_format(
+#if defined(CATA_MCP)
+            "%s %s %s", _("Summon"), summoned, _(monster(mtype_id(sp.effect_data())).get_name()));
+#else
             "%s %d %s", _("Summon"), sp.damage(),
             _(monster(mtype_id(sp.effect_data())).get_name()));
+#endif
         aoe_string = string_format("%s: %d", _("Spell Radius"), sp.aoe());
     } else if (fx == "ter_transform") {
         aoe_string = string_format("%s: %s", _("Spell Radius"), sp.aoe_string());
@@ -2222,7 +2297,22 @@ auto spellcasting_callback::draw_spell_info(const spell& sp, const uilist* menu)
         }
     }
 
+#if defined(CATA_MCP)
+    return oss.str();
+}
+
+auto spellcasting_callback::draw_spell_info(const spell& sp, const uilist* menu) -> void {
+    const int h_offset = menu->w_width - menu->pad_right + 1;
+    // includes spaces on either side for readability
+    const int info_width = menu->pad_right - 4;
+    const int win_height = menu->w_height;
+    const int h_col1 = h_offset + 1;
+    const catacurses::window w_menu = menu->window;
+    std::vector<std::string> to_print_list =
+        foldstring(spell_info_text(sp, info_width), info_width - 1);
+#else
     std::vector<std::string> to_print_list = foldstring(oss.str(), info_width - 1);
+#endif
 
     const int total_lines = to_print_list.size();
     if (info_scroll > total_lines) {
@@ -2322,6 +2412,17 @@ auto known_magic::select_spell(Character& guy) -> int {
     const auto reserved_invlets = spell_selector_reserved_invlets(spell_input_context);
     auto used_invlets = sanitize_invlets(reserved_invlets);
 
+#if defined(CATA_MCP)
+    auto key_rows = std::vector<uilist_key>{};
+    const auto add_key_row = [&](const std::string& action, std::string name) {
+        const auto keys = spell_input_context.keys_bound_to(action);
+        if (!keys.empty()) { key_rows.push_back({.key = keys.front(), .name = std::move(name)}); }
+    };
+    add_key_row(toggle_favorite_action, _("Toggle favorite"));
+    add_key_row(toggle_distractions_action, _("Toggle casting distractions"));
+    add_key_row(assign_spell_hotkey_action, _("Assign spell hotkey"));
+
+#endif
     auto cb = spellcasting_callback({
         .magic = *this,
         .guy = guy,
@@ -2331,6 +2432,9 @@ auto known_magic::select_spell(Character& guy) -> int {
         .reserved_invlets = reserved_invlets,
         .distraction_action_hint = spell_input_context.get_desc(toggle_distractions_action, 1),
         .assign_hotkey_action_hint = spell_input_context.get_desc(assign_spell_hotkey_action, 1),
+#if defined(CATA_MCP)
+        .key_rows = key_rows,
+#endif
         .casting_ignore = casting_ignore,
     });
 
@@ -2428,6 +2532,87 @@ static auto color_number(const float num) -> std::string {
     }
 }
 
+#if defined(CATA_MCP)
+struct spellbook_stat_row {
+    std::string label;
+    int base;
+    float increment;
+    int final_value;
+};
+
+struct spellbook_stats {
+    /// The colored damage type, empty when the spell has none to show.
+    std::string damage_type;
+    std::vector<spellbook_stat_row> rows;
+};
+
+static auto spellbook_stats_of(const spell_type& sp) -> spellbook_stats {
+    const std::string fx = sp.effect_name;
+    std::string damage_string;
+    std::string aoe_string;
+    auto stats = spellbook_stats{};
+    if (fx == "target_attack" || fx == "projectile_attack" || fx == "cone_attack"
+        || fx == "line_attack") {
+        damage_string = _("Damage");
+        aoe_string = _("AoE");
+        if (sp.min_damage > 0 && sp.max_damage > 0) {
+            const spell fake_spell(sp.id);
+            stats.damage_type =
+                colorize(fake_spell.damage_type_string(), fake_spell.damage_type_color());
+        }
+    } else if (fx == "spawn_item" || fx == "summon_monster") {
+        damage_string = _("Spawned");
+    } else if (fx == "recover_energy") {
+        damage_string = _("Recover");
+    } else if (fx == "teleport_random") {
+        aoe_string = _("Variance");
+    } else if (fx == "area_pull" || fx == "area_push" || fx == "ter_transform") {
+        aoe_string = _("AoE");
+    }
+
+    auto& rows = stats.rows;
+    if (sp.max_damage != 0 && sp.min_damage != 0 && !damage_string.empty()) {
+        rows.emplace_back(damage_string, sp.min_damage, sp.damage_increment, sp.max_damage);
+    }
+    if (sp.max_range != 0 && sp.min_range != 0) {
+        rows.emplace_back(_("Range"), sp.min_range, sp.range_increment, sp.max_range);
+    }
+    if (sp.min_aoe != 0 && sp.max_aoe != 0 && !aoe_string.empty()) {
+        rows.emplace_back(aoe_string, sp.min_aoe, sp.aoe_increment, sp.max_aoe);
+    }
+    if (sp.min_duration != 0 && sp.max_duration != 0) {
+        rows.emplace_back(_("Duration"), sp.min_duration, static_cast<float>(sp.duration_increment),
+                          sp.max_duration);
+    }
+    rows.emplace_back(
+        _("Cast Cost"), sp.base_energy_cost, sp.energy_increment, sp.final_energy_cost);
+    rows.emplace_back(
+        _("Cast Time"), sp.base_casting_time, sp.casting_time_increment, sp.final_casting_time);
+    return stats;
+}
+
+static auto spellbook_class_name(const spell_type& sp) -> std::string {
+    return sp.spell_class == trait_NONE ? _("Classless") : sp.spell_class->name();
+}
+
+/// The spellbook panel as text for clients that cannot see the menu's window.
+static auto spellbook_info_text(const spell_type& sp) -> std::string {
+    const auto stats = spellbook_stats_of(sp);
+    auto text = string_format(
+        "%s (%s)\n%s\n%s: %d %s: %d", colorize(sp.name, c_light_green), spellbook_class_name(sp),
+        sp.description, _("Difficulty"), sp.difficulty, _("Max Level"), sp.max_level);
+    if (!stats.damage_type.empty()) {
+        text += string_format("\n%s: %s", _("Damage Type"), stats.damage_type);
+    }
+    for (const auto& row : stats.rows) {
+        text += string_format(
+            "\n%s: %s %s %s", row.label, color_number(row.base), color_number(row.increment),
+            color_number(row.final_value));
+    }
+    return text;
+}
+
+#endif
 static void draw_spellbook_info(const spell_type& sp, uilist* menu) {
     const int width = menu->pad_left - 4;
     const int start_x = 2;
@@ -2526,6 +2711,14 @@ static void draw_spellbook_info(const spell_type& sp, uilist* menu) {
     }
 }
 
+#if defined(CATA_MCP)
+auto spellbook_callback::row_details(const uilist& /*menu*/, const int entry_index) const
+    -> uilist_row_details {
+    if (entry_index < 0 || static_cast<size_t>(entry_index) >= spells.size()) { return {}; }
+    return {.description = spellbook_info_text(spells[entry_index])};
+}
+
+#endif
 void spellbook_callback::refresh(uilist* menu) {
     mvwputch(menu->window, point(menu->pad_left, 0), c_magenta, LINE_OXXX);
     mvwputch(menu->window, point(menu->pad_left, menu->w_height - 1), c_magenta, LINE_XXOX);

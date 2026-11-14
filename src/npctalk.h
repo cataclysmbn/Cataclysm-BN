@@ -2,6 +2,9 @@
 
 #include "type_id.h"
 
+#if defined(CATA_MCP)
+class Character;
+#endif
 class npc;
 class time_duration;
 
@@ -96,3 +99,9 @@ int calc_skill_training_cost( const npc &p, const skill_id &skill );
 time_duration calc_ma_style_training_time( const npc &, const matype_id & /* id */ );
 int calc_ma_style_training_cost( const npc &p, const matype_id & /* id */ );
 
+#if defined(CATA_MCP)
+/// Whether @p you can talk to @p guy now, as the chat menu lists the people it offers to talk to.
+auto can_chat_with( const Character &you, const npc &guy ) -> bool;
+/// Says so and returns true when @p you has no face to speak with, as the chat menu refuses.
+auto refuse_faceless_speech( Character &you ) -> bool;
+#endif

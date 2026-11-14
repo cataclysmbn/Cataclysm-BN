@@ -63,6 +63,21 @@ TEST_CASE("sound_filter_key_distinguishes_noise_fear", "[sound]") {
     CHECK(filter_keys.size() == 2);
 }
 
+#if defined(CATA_MCP)
+TEST_CASE("a cleared test state hears no sound of the test before", "[sound]") {
+    clear_all_state();
+    sounds::sound(
+        {.volume = 50,
+         .origin = tripoint_bub_ms(60, 60, 0),
+         .category = sounds::sound_t::movement,
+         .description = "gasping"});
+    clear_all_state();
+    auto& here = get_map();
+    here.batch_flood_fill_sounds();
+    CHECK(here.m_sound_cache.sound_instances.empty());
+}
+
+#endif
 TEST_CASE("queued_sounds_outside_resized_map_are_discarded", "[sound][resize]") {
     auto& here = get_map();
     const auto old_size = here.getmapsize();
@@ -106,22 +121,40 @@ TEST_CASE("sounds_keep_absolute_positions_when_reality_bubble_resizes", "[sound]
     auto& here = get_map();
     auto& you = get_avatar();
     const auto original_position = you.abs_pos();
+#if defined(CATA_MCP)
+    const auto original_map_size = here.getmapsize();
+    // Cleanup resizes to the option value, so pin it to the bubble this test started with.
+    const auto original_bubble =
+        override_option("REALITY_BUBBLE_SIZE", std::to_string(g_reality_bubble_size));
+#endif
     const auto original_map_origin = here.get_abs_sub();
     const auto cleanup = on_out_of_scope([&]() {
         sounds::reset_sounds();
         sounds::clear_floodfill_que(true);
         // Re-applying a bubble size re-centers the map on the player, so restore
+#if defined(CATA_MCP)
+        // the player position first, then restore the initial map window so tests
+        // sharing this process see the same map origin and scale as at process start.
+#else
         // the player position first.  Drive the resize machinery through the
         // initial global bubble state (REALITY_BUBBLE_SIZE 4 matches the
         // g_reality_bubble_size/g_mapsize globals the test process starts with),
         // then restore the initial map window so tests sharing this process see
         // the same map origin and scale as at process start.
+#endif
         you.setpos(original_position);
+#if defined(CATA_MCP)
+#else
         {
             const auto initial_bubble = override_option("REALITY_BUBBLE_SIZE", "4");
-            g->on_options_changed();
+#endif
+        g->on_options_changed();
+#if defined(CATA_MCP)
+        here.resize(original_map_size);
+#else
         }
         here.resize(MAPSIZE);
+#endif
         here.load(original_map_origin, false);
         clear_all_state();
     });

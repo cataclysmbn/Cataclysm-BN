@@ -21,6 +21,9 @@
 #include <cassert>
 #include <iterator>
 #include <memory>
+#if defined(CATA_MCP)
+#    include <ranges>
+#endif
 #include <string>
 #include <utility>
 #include <vector>
@@ -40,9 +43,23 @@ void wipe_map_terrain() {
     const int mapsize = here.getmapsize() * SEEX;
     for (int z = -2; z <= OVERMAP_HEIGHT; ++z) {
         const ter_id terrain = z == 0 ? t_grass : z < 0 ? t_rock : t_open_air;
+#if defined(CATA_MCP)
+        for (int x = 0; x < mapsize; x += SEEX) {
+            for (int y = 0; y < mapsize; y += SEEY) {
+                // Only tiles that differ need the costly set(), which also marks their level's
+                // caches dirty; a level left as it was keeps caches that already match it.
+                const auto* const sm = g->m.get_submap_at(tripoint_bub_ms{x, y, z});
+                for (const auto p : submap_tiles()) {
+                    if (sm != nullptr && sm->get_ter(p) == terrain && sm->get_furn(p) == f_null) {
+                        continue;
+                    }
+                    g->m.set(tripoint_bub_ms{x + p.x(), y + p.y(), z}, terrain, f_null);
+                }
+#else
         for (int x = 0; x < mapsize; ++x) {
             for (int y = 0; y < mapsize; ++y) {
                 g->m.set(tripoint_bub_ms{x, y, z}, terrain, f_null);
+#endif
             }
         }
     }
@@ -103,8 +120,20 @@ void clear_fields(const int zlevel) {
 
 void clear_items(const int zlevel) {
     const int mapsize = g->m.getmapsize() * SEEX;
+#if defined(CATA_MCP)
+    for (int x = 0; x < mapsize; x += SEEX) {
+        for (int y = 0; y < mapsize; y += SEEY) {
+            const auto* const sm = g->m.get_submap_at(tripoint_bub_ms{x, y, zlevel});
+            for (const auto p : submap_tiles()) {
+                // i_clear() on an empty unlit square would only refresh its submap's indexes.
+                if (sm != nullptr && sm->get_items(p).empty() && sm->get_lum(p) == 0) { continue; }
+                g->m.i_clear(tripoint_bub_ms{x + p.x(), y + p.y(), zlevel});
+            }
+        }
+#else
     for (int x = 0; x < mapsize; ++x) {
         for (int y = 0; y < mapsize; ++y) { g->m.i_clear(tripoint_bub_ms{x, y, zlevel}); }
+#endif
     }
 }
 
@@ -122,12 +151,37 @@ void clear_map() {
     g->m.clear_traps();
     // Limit the slower item cleanup to the levels used by most tests.
     for (int z = -2; z <= 0; ++z) { clear_items(z); }
+#if defined(CATA_MCP)
+    // A resident submap outside the bubble keeps its active items' processing turns, which a
+    // test that sets the clock back would replay differently.
+    auto& buffer = g->m.get_mapbuffer();
+    const auto active = buffer.get_submaps_with_active_items() | std::ranges::to<std::vector>();
+    for (const auto& sm : active) {
+        for (const auto p : submap_tiles()) { buffer.clear_items(project_combine(sm, p)); }
+    }
+#endif
     // Reset the distribution grid tracker so that stale grids from a previous
     // test's Catch2 WHEN section do not bleed into the next run.  The tracker
     // is a global singleton; grid_at() rebuilds on demand, so clearing here is safe.
     get_distribution_grid_tracker().clear();
 }
 
+#if defined(CATA_MCP)
+auto make_open_air_uniform() -> void {
+    auto& here = get_map();
+    for (const auto z : std::views::iota(1, OVERMAP_HEIGHT + 1)) {
+        for (const auto y : std::views::iota(0, here.getmapsize())) {
+            for (const auto x : std::views::iota(0, here.getmapsize())) {
+                auto* const sm = here.get_submap_at(tripoint_bub_ms(x * SEEX, y * SEEY, z));
+                if (sm == nullptr) { continue; }
+                sm->set_all_ter(t_open_air);
+                sm->is_uniform = true;
+            }
+        }
+    }
+}
+
+#endif
 void put_player_underground() {
     // Make sure the player doesn't block the path of the monster being tested.
     g->u.setpos(map_local_to_abs(

@@ -1513,6 +1513,7 @@ TEST_CASE("test_map_spans_only_the_requested_reality_bubble", "[map][submap_load
         you.setpos(you.abs_pos() + tripoint_rel_ms(-2 * SEEX, -2 * SEEY, 0));
     }
     CHECK(get_map().getmapsize() == g_mapsize);
+    clear_all_state();
 }
 
 TEST_CASE("monster_tracker_uses_absolute_positions") {

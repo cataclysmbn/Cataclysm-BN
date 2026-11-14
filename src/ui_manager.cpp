@@ -91,6 +91,20 @@ ui_adaptor::~ui_adaptor()
     }
 }
 
+#if defined(CATA_MCP)
+auto ui_adaptor::layer_areas() -> std::vector<rectangle<point>>
+{
+    auto result = std::vector<rectangle<point>> {};
+    for( const ui_adaptor &ui : ui_stack ) {
+        if( !ui.background && ui.dimensions.p_max.x > ui.dimensions.p_min.x &&
+            ui.dimensions.p_max.y > ui.dimensions.p_min.y ) {
+            result.push_back( ui.dimensions );
+        }
+    }
+    return result;
+}
+#endif
+
 void ui_adaptor::position_from_window( const catacurses::window &win )
 {
     if( !win ) {

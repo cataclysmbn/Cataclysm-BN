@@ -1,4 +1,5 @@
 #include "avatar_action.h"
+#include "mcp_hooks.h"
 
 #include "action.h"
 #include "activity_actor_definitions.h"
@@ -774,8 +775,10 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
                m.ter( dest_loc ) == t_door_locked_alarm || m.ter( dest_loc ) == t_door_locked_interior ) {
         // Don't drain move points for learning something you could learn just by looking
         add_msg( _( "That door is locked!" ) );
+        MCP_ONLY( sfx::play_variant_sound( "menu_error", "default", 100 ); )
     } else if( m.ter( dest_loc ) == t_door_bar_locked ) {
         add_msg( _( "You rattle the bars but the door is locked!" ) );
+        MCP_ONLY( sfx::play_variant_sound( "menu_error", "default", 100 ); )
     }
     return false;
 }

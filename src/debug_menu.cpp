@@ -1,4 +1,5 @@
 #include "debug_menu.h"
+#include "mcp_hooks.h"
 
 // IWYU pragma: no_include <cxxabi.h>
 
@@ -246,18 +247,18 @@ static int info_uilist( bool display_all_entries = true )
             { uilist_entry( DEBUG_DISPLAY_WEATHER, true, 'w', _( "Display weather" ) ) },
             { uilist_entry( DEBUG_DISPLAY_SCENTS, true, 'S', _( "Display overmap scents" ) ) },
             { uilist_entry( DEBUG_DISPLAY_DISTRIBUTION_GRIDS, true, 'G', _( "Display overmap distribution grids" ) ) },
-            { uilist_entry( DEBUG_DISPLAY_SCENTS_LOCAL, true, 's', _( "Toggle display local scents" ) ) },
-            { uilist_entry( DEBUG_DISPLAY_SCENTS_TYPE_LOCAL, true, 'y', _( "Toggle display local scents type" ) ) },
-            { uilist_entry( DEBUG_DISPLAY_TEMP, true, 'T', _( "Toggle display temperature" ) ) },
-            { uilist_entry( DEBUG_DISPLAY_VEHICLE_AI, true, 'V', _( "Toggle display vehicle autopilot overlay" ) ) },
-            { uilist_entry( DEBUG_DISPLAY_VISIBILITY, true, 'v', _( "Toggle display visibility" ) ) },
-            { uilist_entry( DEBUG_DISPLAY_LIGHTING, true, 'l', _( "Toggle display lighting" ) ) },
-            { uilist_entry( DEBUG_DISPLAY_TRANSPARENCY, true, 'p', _( "Toggle display transparency" ) ) },
-            { uilist_entry( DEBUG_DISPLAY_OUTSIDE, true, 'O', _( "Toggle display outside/sheltered/indoors" ) ) },
-            { uilist_entry( DEBUG_DISPLAY_RADIATION, true, 'R', _( "Toggle display radiation" ) ) },
-            { uilist_entry( DEBUG_DISPLAY_SUBMAP_GRID, true, 'o', _( "Toggle display submap grid" ) ) },
-            { uilist_entry( DEBUG_DISPLAY_TERRAIN_SOUND_ABSORPTION, true, 'Q', _( "Toggle display terrain sound absorption" ) ) },
-            { uilist_entry( DEBUG_DISPLAY_SOUND_WALLS, true, 'q', _( "Toggle display sound walls" ) ) },
+            { uilist_entry( DEBUG_DISPLAY_SCENTS_LOCAL, true, 's', _( "Toggle display local scents" ) ) MCP_ONLY( .with_toggled( g->display_overlay_state( ACTION_DISPLAY_SCENT ) ) ) },
+            { uilist_entry( DEBUG_DISPLAY_SCENTS_TYPE_LOCAL, true, 'y', _( "Toggle display local scents type" ) ) MCP_ONLY( .with_toggled( g->display_overlay_state( ACTION_DISPLAY_SCENT_TYPE ) ) ) },
+            { uilist_entry( DEBUG_DISPLAY_TEMP, true, 'T', _( "Toggle display temperature" ) ) MCP_ONLY( .with_toggled( g->display_overlay_state( ACTION_DISPLAY_TEMPERATURE ) ) ) },
+            { uilist_entry( DEBUG_DISPLAY_VEHICLE_AI, true, 'V', _( "Toggle display vehicle autopilot overlay" ) ) MCP_ONLY( .with_toggled( g->display_overlay_state( ACTION_DISPLAY_VEHICLE_AI ) ) ) },
+            { uilist_entry( DEBUG_DISPLAY_VISIBILITY, true, 'v', _( "Toggle display visibility" ) ) MCP_ONLY( .with_toggled( g->display_overlay_state( ACTION_DISPLAY_VISIBILITY ) ) ) },
+            { uilist_entry( DEBUG_DISPLAY_LIGHTING, true, 'l', _( "Toggle display lighting" ) ) MCP_ONLY( .with_toggled( g->display_overlay_state( ACTION_DISPLAY_LIGHTING ) ) ) },
+            { uilist_entry( DEBUG_DISPLAY_TRANSPARENCY, true, 'p', _( "Toggle display transparency" ) ) MCP_ONLY( .with_toggled( g->display_overlay_state( ACTION_DISPLAY_TRANSPARENCY ) ) ) },
+            { uilist_entry( DEBUG_DISPLAY_OUTSIDE, true, 'O', _( "Toggle display outside/sheltered/indoors" ) ) MCP_ONLY( .with_toggled( g->display_overlay_state( ACTION_DISPLAY_OUTSIDE ) ) ) },
+            { uilist_entry( DEBUG_DISPLAY_RADIATION, true, 'R', _( "Toggle display radiation" ) ) MCP_ONLY( .with_toggled( g->display_overlay_state( ACTION_DISPLAY_RADIATION ) ) ) },
+            { uilist_entry( DEBUG_DISPLAY_SUBMAP_GRID, true, 'o', _( "Toggle display submap grid" ) ) MCP_ONLY( .with_toggled( g->debug_submap_grid_overlay ) ) },
+            { uilist_entry( DEBUG_DISPLAY_TERRAIN_SOUND_ABSORPTION, true, 'Q', _( "Toggle display terrain sound absorption" ) ) MCP_ONLY( .with_toggled( g->display_overlay_state( ACTION_DISPLAY_SOUND_ABSORPTION ) ) ) },
+            { uilist_entry( DEBUG_DISPLAY_SOUND_WALLS, true, 'q', _( "Toggle display sound walls" ) ) MCP_ONLY( .with_toggled( g->display_overlay_state( ACTION_DISPLAY_SOUND_WALLS ) ) ) },
 #if defined(TILES)
             { uilist_entry( ACTION_TOGGLE_ZONE_OVERLAY, true, 'z', _( "Toggle zone overlay" ) ) },
 #endif
@@ -273,7 +274,7 @@ static int info_uilist( bool display_all_entries = true )
             { uilist_entry( DEBUG_SHOW_WORKER_MSG, true, 0, _( "Show debug message (worker thread)" ) ) },
             { uilist_entry( DEBUG_CRASH_WORKER, true, 0, _( "Crash worker thread (test crash handling)" ) ) },
             { uilist_entry( DEBUG_RELOAD_TRANSLATIONS, true, 'L', _( "Reload translations" ) ) },
-            { uilist_entry( DEBUG_DISPLAY_NPC_PATH, true, 'n', _( "Toggle NPC pathfinding on map" ) ) },
+            { uilist_entry( DEBUG_DISPLAY_NPC_PATH, true, 'n', _( "Toggle NPC pathfinding on map" ) ) MCP_ONLY( .with_toggled( g->debug_pathfinding ) ) },
             { uilist_entry( DEBUG_PRINT_FACTION_INFO, true, 'f', _( "Print faction info to console" ) ) },
             { uilist_entry( DEBUG_PRINT_NPC_MAGIC, true, 'M', _( "Print NPC magic info to console" ) ) },
             { uilist_entry( DEBUG_TEST_WEATHER, true, 'W', _( "Test weather" ) ) },

@@ -1,5 +1,6 @@
 #include "string_input_popup.h"
 
+#include "mcp_hooks.h"
 #include <cctype>
 #include <optional>
 
@@ -392,6 +393,11 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
 
     _canceled = false;
     _confirmed = false;
+#if defined(CATA_MCP)
+    // A drawing-only call reads no input, so it is no screen of its own.
+    auto screen = std::optional<engine_client::screen_scope> {};
+    if( !draw_only && !embedded ) { screen.emplace( *ctxt, "text_input" ); }
+#endif
     do {
         if( _position < 0 ) {
             _position = 0;
@@ -435,11 +441,61 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
             return _text;
         }
 
+#if defined(CATA_MCP)
+        const auto field = [this, &ret, printable]() {
+            auto snapshot = game_client::interaction_snapshot{
+                .kind = game_client::interaction_kind::field,
+                .title = remove_color_tags( _title ),
+                .message = remove_color_tags( _description ),
+                .allow_cancel = true,
+                .field = game_client::interaction_field{
+                    .id = "field:value",
+                    .label = remove_color_tags( _title ),
+                    .description = remove_color_tags( _description ),
+                    .value = ret.str(),
+                    .type = _only_digits ? "integer" : "text",
+                    .max_length = _max_length,
+                    .printable = printable,
+                },
+            };
+            if( extend_interaction ) { extend_interaction( snapshot ); }
+            return snapshot;
+        };
+        auto interaction = std::optional<game_client::interaction_scope> {};
+        if( !embedded ) { interaction.emplace( *ctxt, field ); }
+#endif
         const std::string action = ctxt->handle_input();
         const input_event ev = ctxt->get_raw_input();
+        MCP_ONLY( interaction.reset(); )
         ch = ev.type == input_event_t::keyboard ? ev.get_first_input() : 0;
         _handled = true;
 
+#if defined(CATA_MCP)
+        if( ev.interaction &&
+            ev.interaction->operation == game_client::interaction_operation::cancel ) {
+            _text.clear();
+            _position = -1;
+            _canceled = true;
+            return _text;
+        }
+        if( ev.interaction && ev.interaction->operation == game_client::interaction_operation::fill ) {
+            ret = utf8_wrapper( ev.interaction->value );
+            _position = ret.length();
+            edit = utf8_wrapper{};
+            ctxt->set_edittext( {} );
+            if( *ev.interaction->submit ) {
+                add_to_history( ret.str() );
+                _confirmed = true;
+                _text = ret.str();
+                if( !_hist_use_uilist ) {
+                    _hist_str_ind = 0;
+                    _session_str_entered.clear();
+                }
+                return _text;
+            }
+            continue;
+        }
+#endif
         if( callbacks[ch] ) {
             if( callbacks[ch]() ) {
                 continue;

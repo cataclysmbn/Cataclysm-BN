@@ -1,4 +1,5 @@
 #include "map_memory.h"
+#include "mcp_hooks.h"
 
 #include "cuboid_rectangle.h"
 #include "debug.h"
@@ -13,6 +14,17 @@
 const memorized_terrain_tile mm_submap::default_tile { "", 0, 0 };
 const int mm_submap::default_symbol = 0;
 
+#if defined(CATA_MCP)
+namespace
+{
+auto edit_count = std::uint64_t { 0 };
+auto owner_count = std::uint64_t { 0 };
+} // namespace
+
+auto mm_submap::edits() -> std::uint64_t { return edit_count; }
+auto mm_submap::note_edit() -> void { ++edit_count; }
+
+#endif
 // MM_SIZE = g_mapsize * 2 (runtime; used inline where needed)
 
 #define dbg(x) DebugLog((x),DC::MapMem)
@@ -35,9 +47,15 @@ bool mm_region::is_empty() const
 
 map_memory::map_memory()
 {
+    MCP_ONLY( replaced(); )
     clear_cache();
 }
 
+#if defined(CATA_MCP)
+auto map_memory::revision() const -> memory_revision { return { .owner = owner, .edits = mm_submap::edits() }; }
+auto map_memory::replaced() -> void { owner = ++owner_count; }
+
+#endif
 const memorized_terrain_tile &map_memory::get_tile( const tripoint_abs_ms &pos )
 {
     const auto p = project_remain<coords::sm>( pos );
@@ -114,6 +132,27 @@ void map_memory::clear_memorized_tile( const tripoint_abs_ms &pos )
     sm.set_terrain_tile( p.remainder, mm_submap::default_tile );
 }
 
+#if defined(CATA_MCP)
+std::vector<tripoint_abs_ms> map_memory::memorized_positions() const
+{
+    auto result = std::vector<tripoint_abs_ms> {};
+    for( const auto &[sm_pos, sm] : submaps ) {
+        if( !sm || sm->is_empty() ) { continue; }
+        for( const auto y : std::views::iota( 0, SEEY ) ) {
+            for( const auto x : std::views::iota( 0, SEEX ) ) {
+                const auto local = point_sm_ms( x, y );
+                if( sm->tile( local ) != mm_submap::default_tile ||
+                    sm->terrain_tile( local ) != mm_submap::default_tile ||
+                    sm->symbol( local ) != mm_submap::default_symbol ) {
+                    result.push_back( project_combine( sm_pos, local ) );
+                }
+            }
+        }
+    }
+    return result;
+}
+
+#endif
 bool map_memory::prepare_region( const tripoint_abs_ms &p1, const tripoint_abs_ms &p2 )
 {
     assert( p1.z() == p2.z() );
@@ -270,6 +309,7 @@ mm_submap &map_memory::get_submap( const tripoint_abs_sm &sm_pos )
 void map_memory::load( const tripoint_abs_ms &pos )
 {
     clear_cache();
+    MCP_ONLY( replaced(); )
 
     const int mm_size = g_mapsize * 2;
     const auto sm = project_to<coords::sm>( pos );
@@ -289,6 +329,7 @@ bool map_memory::save( const tripoint_abs_ms &pos )
     const auto sm_center = project_to<coords::sm>( pos );
 
     clear_cache();
+    MCP_ONLY( replaced(); )
 
     dbg( DL::Info ) << "N submaps before save: " << submaps.size();
 
@@ -354,6 +395,7 @@ bool map_memory::save( const tripoint_abs_ms &pos )
 void map_memory::clear()
 {
     clear_cache();
+    MCP_ONLY( replaced(); )
     submaps.clear();
     dbg( DL::Info ) << "[CLEAR] Done.";
 }

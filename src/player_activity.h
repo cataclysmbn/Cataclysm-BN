@@ -111,6 +111,12 @@ class player_activity
             return moves_left;
         }
 
+#if defined(CATA_MCP)
+        auto get_moves_total() const -> int {
+            return actor ? actor->progress.get_moves_total() : moves_total;
+        }
+
+#endif
         bool complete() const {
             if( actor ) {
                 return actor->progress.complete();

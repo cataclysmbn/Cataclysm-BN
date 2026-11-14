@@ -2,6 +2,7 @@
 
 #include <set>
 #include <string>
+#include <vector>
 
 #include "catalua_type_operators.h"
 #include "type_id.h"

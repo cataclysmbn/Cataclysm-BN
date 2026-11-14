@@ -2,6 +2,9 @@
 
 #include "debug.h"
 #include "json.h"
+#if defined(CATA_MCP)
+#    include "client_interaction_data.h"
+#endif
 #include "runtime_handlers.h"
 
 #include <algorithm>
@@ -130,13 +133,16 @@ struct event_type_name {
     std::string_view name;
 };
 
-constexpr auto event_type_names = std::array<event_type_name, 5>{{
+constexpr auto event_type_names = std::to_array<event_type_name>({
     {input_event_t::keyboard, "keyboard"},
     {input_event_t::gamepad, "gamepad"},
     {input_event_t::mouse, "mouse"},
     {input_event_t::timeout, "timeout"},
+#if defined(CATA_MCP)
+    {input_event_t::interaction, "interaction"},
+#endif
     {input_event_t::error, "idle"},
-}};
+});
 
 auto event_type_text(const input_event_t type) -> std::string {
     return std::string{std::ranges::find(event_type_names, type, &event_type_name::type)->name};
@@ -150,6 +156,110 @@ auto read_type(const std::string& name) -> input_event_t {
     return found->type;
 }
 
+#if defined(CATA_MCP)
+auto read_position(JsonObject position) -> game_client::interaction_position {
+    const auto result = game_client::interaction_position{
+        .x = position.get_int("x"),
+        .y = position.get_int("y"),
+        .z = position.get_int("z"),
+    };
+    position.finish();
+    return result;
+}
+
+auto write_position(JsonOut& json, const game_client::interaction_position& position) -> void {
+    json.member("position");
+    json.start_object();
+    json.member("x", position.x);
+    json.member("y", position.y);
+    json.member("z", position.z);
+    json.end_object();
+}
+
+auto read_invoke_arguments(JsonObject object) -> game_client::interaction_arguments {
+    auto result = game_client::interaction_arguments{};
+    if (object.has_member("row")) { result.row = object.get_string("row"); }
+    if (object.has_member("count")) { result.count = object.get_member("count").get_int64(); }
+    if (object.has_member("text")) { result.text = object.get_string("text"); }
+    if (object.has_member("position")) {
+        result.position = read_position(object.get_object("position"));
+    }
+    if (object.has_member("pane")) { result.pane = object.get_string("pane"); }
+    object.finish();
+    return result;
+}
+
+auto write_invoke_arguments(JsonOut& json, const game_client::interaction_arguments& arguments)
+    -> void {
+    json.member("arguments");
+    json.start_object();
+    if (arguments.row) { json.member("row", *arguments.row); }
+    if (arguments.count) { json.member("count", *arguments.count); }
+    if (arguments.text) { json.member("text", *arguments.text); }
+    if (arguments.position) { write_position(json, *arguments.position); }
+    if (arguments.pane) { json.member("pane", *arguments.pane); }
+    json.end_object();
+}
+
+auto read_interaction(JsonObject semantic) -> game_client::interaction_event {
+    const auto operation = game_client::parse_interaction_operation(
+        semantic.get_string("operation"));
+    if (!operation) { semantic.throw_error("Unknown semantic interaction operation"); }
+    using game_client::interaction_operation;
+    auto payload = game_client::interaction_event{
+        .operation = *operation,
+        .schema_id = semantic.get_string("schema_id", ""),
+        .target_id = semantic.get_string("target_id", ""),
+        .value = semantic.get_string("value", ""),
+    };
+    if (*operation != interaction_operation::invoke && payload.schema_id.empty()) {
+        semantic.throw_error("schema_id must not be empty");
+    }
+    if (*operation == interaction_operation::fill) {
+        if (!semantic.has_member("submit")) {
+            semantic.throw_error("fill requires explicit submit");
+        }
+        payload.submit = semantic.get_bool("submit");
+    } else if (*operation == interaction_operation::set_count) {
+        const auto count = semantic.get_member("count").get_int64();
+        if (count < 0) { semantic.throw_error("count must not be negative"); }
+        payload.count = static_cast<std::uint64_t>(count);
+    } else if (*operation == interaction_operation::set_target) {
+        payload.position = read_position(semantic.get_object("position"));
+    } else if (*operation == interaction_operation::invoke) {
+        if (!semantic.has_member("arguments")) {
+            semantic.throw_error("invoke requires arguments");
+        }
+        payload.arguments = read_invoke_arguments(semantic.get_object("arguments"));
+    }
+    semantic.finish();
+    const auto needs_target =
+        *operation == interaction_operation::choose || *operation == interaction_operation::fill
+        || *operation == interaction_operation::set_count
+        || *operation == interaction_operation::invoke;
+    const auto takes_value = *operation == interaction_operation::fill;
+    const auto invalid_shape =
+        (needs_target && payload.target_id.empty()) || (!takes_value && !payload.value.empty())
+        || (*operation == interaction_operation::cancel && !payload.target_id.empty());
+    if (invalid_shape) { throw std::runtime_error("Invalid semantic interaction payload"); }
+    return payload;
+}
+
+auto write_interaction(JsonOut& json, const game_client::interaction_event& interaction) -> void {
+    json.member("interaction");
+    json.start_object();
+    json.member("operation", game_client::interaction_operation_name(interaction.operation));
+    json.member("schema_id", interaction.schema_id);
+    json.member("target_id", interaction.target_id);
+    json.member("value", interaction.value);
+    if (interaction.submit) { json.member("submit", *interaction.submit); }
+    if (interaction.count) { json.member("count", *interaction.count); }
+    if (interaction.position) { write_position(json, *interaction.position); }
+    if (interaction.arguments) { write_invoke_arguments(json, *interaction.arguments); }
+    json.end_object();
+}
+#endif
+
 auto read_event(const JsonObject& object) -> replay_event {
     auto result = replay_event{};
     auto& event = result.event;
@@ -162,6 +272,12 @@ auto read_event(const JsonObject& object) -> replay_event {
     event.text = object.get_string("text");
     event.edit = object.get_string("edit");
     event.edit_refresh = object.get_bool("edit_refresh");
+#if defined(CATA_MCP)
+    event.action = object.get_string("action", "");
+    if (event.type == input_event_t::interaction) {
+        event.interaction = read_interaction(object.get_object("interaction"));
+    }
+#endif
     auto boundary = object.get_object("boundary");
     boundary.allow_omitted_members();
     result.boundary.context = boundary.get_string("context");
@@ -357,6 +473,10 @@ auto record_input_event(const input_event& event, const input_boundary_metadata&
         json.member("text", event.text);
         json.member("edit", event.edit);
         json.member("edit_refresh", event.edit_refresh);
+#if defined(CATA_MCP)
+        if (!event.action.empty()) { json.member("action", event.action); }
+        if (event.interaction) { write_interaction(json, *event.interaction); }
+#endif
         json.member("boundary");
         json.start_object();
         json.member("context", boundary.context);
