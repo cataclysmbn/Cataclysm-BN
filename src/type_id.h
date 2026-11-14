@@ -83,6 +83,12 @@ using gun_mode_id = string_id<gun_mode>;
 class harvest_list;
 using harvest_id = string_id<harvest_list>;
 
+class hunting_bait;
+using hunting_bait_id = string_id<hunting_bait>;
+
+class hunting_habitat;
+using hunting_habitat_id = string_id<hunting_habitat>;
+
 class item_category;
 using item_category_id = string_id<item_category>;
 
