@@ -1266,6 +1266,34 @@ class npc : public player
         std::map<std::string, time_point> complaints;
 
         npc_short_term_cache ai_cache;
+        // Action handlers dispatched from execute_action (defined in npcmove.cpp)
+        void act_pause();
+        void act_reload();
+        void act_investigate_sound();
+        void act_return_to_guard_pos();
+        void act_sleep();
+        void act_pickup();
+        void act_heal();
+        void act_use_painkiller();
+        void act_drop_items();
+        void act_flee();
+        void act_reach_attack();
+        void act_melee();
+        void act_aim();
+        void act_shoot();
+        void act_look_for_player();
+        void act_heal_player();
+        void act_follow_player();
+        void act_follow_embarked();
+        void act_talk_to_player();
+        void act_mug_player();
+        void act_goto_to_this_pos();
+        void act_goto_destination();
+        void act_avoid_friendly_fire();
+        void act_escape_explosion();
+        void act_player_activity();
+        void act_undecided();
+        void act_noop();
         auto clear_transient_movement_state_after_reposition() -> void;
         auto setpos_impl( const tripoint_abs_ms &pos, bool preserve_movement_state ) -> void;
         auto setpos_preserving_movement_state( const tripoint_bub_ms &pos ) -> void;
