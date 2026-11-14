@@ -33,6 +33,8 @@
     "subcategory": "CSC_FOOD_NESTED",
     "description": "Common soup pots and chowders.",
     "nested_category_data": [
+      "chili",
+      "birria",
       "soup_meat",
       "soup_blood",
       "soup_fish",
@@ -325,6 +327,7 @@
       "brownie",
       "brownie_weed",
       "donut_holes",
+      "churros",
       "pancakes",
       "choc_pancakes",
       "fruit_pancakes",
