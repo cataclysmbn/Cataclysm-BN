@@ -9,12 +9,14 @@
 #include "catalua_log.h"
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
+#include "character.h"
 #include "creature_tracker.h"
 #include "distribution_grid.h"
 #include "game.h"
 #include "iexamine.h"
 #include "init.h"
 #include "inventory.h"
+#include "kill_tracker.h"
 #include "line.h"
 #include "lua_action_menu.h"
 #include "map/lightmap.h"
@@ -818,6 +820,36 @@ void cata::detail::reg_game_api( sol::state &lua )
     bool controlled ) {
         g->fling_creature( &c, dir, force, controlled );
     } );
+
+    DOC( "Gets the kill count from the `kill_tracker`, this has the same limits as tracked STK kills" );
+    DOC( "Takes a table with: " );
+    DOC( "* `who` (character): NPC/Avatar to get kills for, currently there is only one global pool, may change eventually." );
+    DOC( "* `mon_ids` (mtype_id[], optional): Monster ids to sum up" );
+    DOC( "* `species_ids` (species_id[], optional): Species ids to sum up" );
+    luna::set_fx( lib, "get_kill_count", []( sol::table opts ) -> int {
+        // Currently unused, required because character based kill trackers is planned
+        // And this enforces a parameter that is needed in the future.
+        auto &who = *opts.get<Character *>( "who" );
+
+        int result = 0;
+        const auto &kill_tracker = g->get_kill_tracker();
+        for( auto &&[key, value] : opts )
+        {
+            const auto keystr = key.as<std::string>();
+            if( keystr == "mon_ids" ) {
+                for( const auto &mon_id : value.as<std::vector<mtype_id>>() ) {
+                    result += kill_tracker.kill_count( mon_id );
+                }
+            }
+            if( keystr == "species_ids" ) {
+                for( const auto &species_id : value.as<std::vector<species_id>>() ) {
+                    result += kill_tracker.kill_count( species_id );
+                }
+            }
+        }
+        return result;
+    } );
+
     DOC( "Opens an item selection menu listing the player's inventory and nearby items that pass a filter, and returns the chosen item or nil.  " );
     DOC( "Takes a table with keys:  " );
     DOC( "* `title` (string): Menu title.  " );
