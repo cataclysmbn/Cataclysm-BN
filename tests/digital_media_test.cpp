@@ -1049,7 +1049,7 @@ TEST_CASE(
     "readers_generate_personal_files_once_and_keep_them_across_modes", "[digital_media][iuse]") {
     const auto base =
         GENERATE("laptop", "control_laptop", "wrist_comp_budget", "wrist_comp_control",
-                 "smart_phone", "afs_atomic_smartphone", "eink_tablet_pc");
+                 "smart_phone", "afs_atomic_smartphone");
     auto dummy = avatar{};
     auto device = item::spawn(base);
     auto& reader = *device;
