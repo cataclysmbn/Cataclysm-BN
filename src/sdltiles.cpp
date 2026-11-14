@@ -20,6 +20,7 @@
 #    include "get_version.h"
 #    include "hash_utils.h"
 #    include "input.h"
+#    include "input_pending.h"
 #    include "json.h"
 #    include "make_static.h"
 #    include "map/mapbuffer.h"
@@ -72,6 +73,7 @@
 #    include <stdexcept>
 #    include <type_traits>
 #    include <unordered_map>
+#    include <utility>
 #    include <vector>
 
 #if defined(__linux__)
@@ -1466,6 +1468,7 @@ static bool draw_window( Font_Ptr &font, const catacurses::window &w, point offs
 
     // TODO: Get this from UTF system to make sure it is exactly the kind of space we need
     static const std::string space_string = " ";
+    const auto ascii_lines_routine = get_option<bool>( "USE_DRAW_ASCII_LINES_ROUTINE" );
 
     bool update = false;
     for( int j = 0; j < win->height; j++ ) {
@@ -1481,6 +1484,18 @@ static bool draw_window( Font_Ptr &font, const catacurses::window &w, point offs
 
         update = true;
         win->line[j].touched = false;
+        const int drawy = offset.y + j * font->height;
+        // Adjacent spaces with one background color are filled with a single rect.
+        auto blank_x = 0;
+        auto blank_count = 0;
+        auto blank_bg = catacurses::black;
+        const auto fill_blanks = [&]() {
+            if( blank_count > 0 ) {
+                geometry->rect( renderer, point( blank_x, drawy ), font->width * blank_count, font->height,
+                                color_as_sdl( blank_bg ) );
+                blank_count = 0;
+            }
+        };
         for( int i = 0; i < win->width; i++ ) {
             const int fbx = win->pos.x + i;
             if( fbx >= static_cast<int>( framebuffer[fby].chars.size() ) ) {
@@ -1491,7 +1506,6 @@ static bool draw_window( Font_Ptr &font, const catacurses::window &w, point offs
             const cursecell &cell = win->line[j].chars[i];
 
             const int drawx = offset.x + i * font->width;
-            const int drawy = offset.y + j * font->height;
             if( drawx + font->width > WindowWidth || drawy + font->height > WindowHeight ) {
                 // Outside of the display area, would not render anyway
                 continue;
@@ -1512,10 +1526,15 @@ static bool draw_window( Font_Ptr &font, const catacurses::window &w, point offs
 
             // Spaces are used a lot, so this does help noticeably
             if( cell.ch == space_string ) {
-                geometry->rect( renderer, point( drawx, drawy ), font->width, font->height,
-                                color_as_sdl( cell.BG ) );
+                if( blank_count == 0 || drawx != blank_x + blank_count * font->width || cell.BG != blank_bg ) {
+                    fill_blanks();
+                    blank_x = drawx;
+                    blank_bg = cell.BG;
+                }
+                blank_count++;
                 continue;
             }
+            fill_blanks();
             const int codepoint = UTF8_getch( cell.ch );
             const catacurses::base_color FG = cell.FG;
             const catacurses::base_color BG = cell.BG;
@@ -1524,7 +1543,7 @@ static bool draw_window( Font_Ptr &font, const catacurses::window &w, point offs
                 // utf8_width() may return a negative width
                 continue;
             }
-            bool use_draw_ascii_lines_routine = get_option<bool>( "USE_DRAW_ASCII_LINES_ROUTINE" );
+            bool use_draw_ascii_lines_routine = ascii_lines_routine;
             unsigned char uc = static_cast<unsigned char>( cell.ch[0] );
             switch( codepoint ) {
                 case LINE_XOXO_UNICODE:
@@ -1587,6 +1606,7 @@ static bool draw_window( Font_Ptr &font, const catacurses::window &w, point offs
                 font->OutputChar( renderer, geometry, cell.ch, point( drawx, drawy ), FG );
             }
         }
+        fill_blanks();
     }
     win->draw = false; //We drew the window, mark it as so
     //Keeping track of last drawn window and tilemode zoom level
@@ -1756,10 +1776,16 @@ void cata_cursesport::curses_drawwindow( const catacurses::window &w )
         // Special font for the terrain window
         update = draw_window( overmap_font, w );
     } else if( g && w == g->w_pixel_minimap && pixel_minimap_option ) {
-        // ensure the space the minimap covers is "dirtied".
-        // this is necessary when it's the only part of the sidebar being drawn
-        // TODO: Figure out how to properly make the minimap code do whatever it is this does
-        draw_window( font, w );
+        // ensure the space the minimap covers is "dirtied", so text drawn there later is not skipped as unchanged.
+        // the window cells are not drawn: clear_window_area paints over them anyway
+        invalidate_framebuffer_proportion( win );
+        const auto fb_height = std::min( win->height,
+                                         static_cast<int>( terminal_framebuffer.size() ) - win->pos.y );
+        const auto fb_width = terminal_framebuffer.empty() ? 0 : std::min( win->width,
+                              static_cast<int>( terminal_framebuffer[0].chars.size() ) - win->pos.x );
+        invalidate_framebuffer( terminal_framebuffer, win->pos, std::max( fb_width, 0 ),
+                                std::max( fb_height, 0 ) );
+        win->draw = false;
 
         // Make sure the entire minimap window is black before drawing.
         clear_window_area( w );
@@ -3964,10 +3990,19 @@ input_event input_manager::get_input_event()
     // however, the refresh call has not effect when nothing has been drawn, so
     // we can skip it if `needupdate` is false to improve performance during mouse
     // move events.
-    if( needupdate ) {
+    // A deferred frame is drawn once the queued keys are read without input, e.g. a lone modifier.
+    auto deferred = main_prompt_reads_input && should_defer_redraw_for_queued_input();
+    if( needupdate && !deferred ) {
         ZoneScopedN( "sdl_input_wrefresh" );
         wrefresh( catacurses::stdscr );
     }
+    const auto draw_deferred = [&] {
+        if( std::exchange( deferred, false ) )
+        {
+            ui_manager::redraw_invalidated();
+            wrefresh( catacurses::stdscr );
+        }
+    };
 
     if( inputdelay < 0 ) {
         ZoneScopedN( "sdl_input_wait_blocking" );
@@ -3976,6 +4011,7 @@ input_event input_manager::get_input_event()
             if( last_input.type != input_event_t::error ) {
                 break;
             }
+            draw_deferred();
             SDL_Delay( 1 );
         } while( last_input.type == input_event_t::error );
     } else if( inputdelay > 0 ) {
@@ -3989,6 +4025,7 @@ input_event input_manager::get_input_event()
             if( last_input.type != input_event_t::error ) {
                 break;
             }
+            draw_deferred();
             SDL_Delay( 1 );
             timedout = endtime >= starttime + inputdelay;
             if( timedout ) {

@@ -1,6 +1,7 @@
 #include "action_time_scale.h"
 #include "active_item_cache.h"
 #include "activity_handlers.h"
+#include "avatar.h"
 #include "bionics.h"
 #include "bodypart.h"
 #include "calendar.h"
@@ -923,7 +924,15 @@ void npc::move()
                         warning_sound.danger_pos );
         }
     }
-    regen_ai_cache();
+    // Calm NPCs reassess danger every 5 turns inside activity skip windows.
+    const auto calm = ai_cache.danger_assessment <= 0.0f && ai_cache.sound_alerts.empty() &&
+                      ai_cache.target.expired() && ai_cache.dangerous_explosives.empty();
+    if( calm && get_avatar().in_skip_state && !calendar::once_every( 5_turns ) &&
+        get_option<bool>( "ACTIVITY_SKIP_NPC_AI_CADENCE" ) ) {
+        ai_cache.warn_about_queue.clear();
+    } else {
+        regen_ai_cache();
+    }
     adjust_power_cbms();
     // NPCs under operation should just stay still
     if( activity->id() == activity_id( "ACT_OPERATION" ) ) {

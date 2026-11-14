@@ -2488,6 +2488,13 @@ auto invalidate_lighting_transparency_levels(std::vector<int> const& levels) -> 
     refresh_transparency_valid_flag();
 }
 
+auto invalidate_lighting_floor_inputs() -> void {
+    auto& inputs = s_lighting_resources.inputs;
+    inputs.floor_valid = false;
+    inputs.vehicle_floor_valid = false;
+    inputs.vehicle_obscured_valid = false;
+}
+
 auto resident_lighting_ready_for_visibility(resident_lighting_visibility_params const& p) -> bool {
     if (p.device == nullptr || p.cache_x <= 0 || p.cache_y <= 0 || p.z_count <= 0) { return false; }
 
@@ -2685,7 +2692,7 @@ auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) ->
     auto wait_succeeded = true;
     {
         ZoneScopedN("gpu_lm_shift_fence_wait");
-        wait_succeeded = SDL_WaitForGPUFences(p.device, true, &fence, 1);
+        wait_succeeded = wait_for_fence(p.device, fence);
     }
     SDL_ReleaseGPUFence(p.device, fence);
     if (!wait_succeeded) {
@@ -3659,7 +3666,7 @@ auto finish_gpu_lighting(SDL_GPUDevice* const device, gpu_lighting_work const& w
     if (pending.fence != nullptr) {
         auto wait_succeeded = true;
         ZoneScopedN("gpu_lm_fence_wait");
-        wait_succeeded = SDL_WaitForGPUFences(device, true, &pending.fence, 1);
+        wait_succeeded = wait_for_fence(device, pending.fence);
         SDL_ReleaseGPUFence(device, pending.fence);
         pending.fence = nullptr;
         if (!wait_succeeded) {
@@ -4183,7 +4190,7 @@ auto finish_gpu_visibility(SDL_GPUDevice* const device, gpu_visibility_work cons
     auto wait_succeeded = true;
     {
         ZoneScopedN("gpu_visibility_fence_wait");
-        wait_succeeded = SDL_WaitForGPUFences(device, true, &pending.fence, 1);
+        wait_succeeded = wait_for_fence(device, pending.fence);
     }
     SDL_ReleaseGPUFence(device, pending.fence);
     pending.fence = nullptr;
@@ -4498,7 +4505,7 @@ auto finish_gpu_sight_pairs(
     auto wait_succeeded = true;
     {
         ZoneScopedN("gpu_sight_fence_wait");
-        wait_succeeded = SDL_WaitForGPUFences(device, true, &pending.fence, 1);
+        wait_succeeded = wait_for_fence(device, pending.fence);
     }
     SDL_ReleaseGPUFence(device, pending.fence);
     pending.fence = nullptr;

@@ -3511,3 +3511,63 @@ TEST_CASE("lua_hook_wiring_mon_effect_removed", "[lua]") {
     CHECK(*cre_ptr == static_cast<Creature*>(&mon));
     CHECK(*eff_ptr != nullptr);
 }
+
+TEST_CASE("lua_morale_traits_tick_penalizes_only_phobic_avatar", "[lua][morale]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    auto& you = get_avatar();
+    auto& here = get_map();
+    here.build_map_cache(you.bub_pos().z());
+    REQUIRE(here.is_outside(you.bub_pos()));
+    const auto outdoor_misery = morale_type("morale_outdoor_misery");
+
+    auto& lua = DynamicDataLoader::get_instance().lua->lua;
+    const auto tick = [&lua]() {
+        // Other tests may replace game.mod_runtime; the module stays loaded.
+        const auto res = lua.safe_script(
+            "local mod = {} package.loaded['lua/traits/lua_traits'].register(mod) "
+            "mod.on_morale_traits_tick()",
+            sol::script_pass_on_error);
+        if (!res.valid()) { WARN(res.get<sol::error>().what()); }
+        return res.valid();
+    };
+
+    REQUIRE(tick());
+    CHECK_FALSE(you.has_morale(outdoor_misery));
+
+    you.set_mutation(trait_id("AGORAPHOBIA"));
+    REQUIRE(tick());
+    CHECK(you.has_morale(outdoor_misery));
+}
+
+TEST_CASE("lua_trait_tick_cache_follows_mutation_changes", "[lua][morale]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    auto& you = get_avatar();
+    auto& lua = DynamicDataLoader::get_instance().lua->lua;
+    const auto call = [&lua](const std::string& fn) -> bool {
+        // Other tests may replace game.mod_runtime and the hook lists; the module stays loaded.
+        const auto res = lua.safe_script(
+            "local mod = {} package.loaded['lua/traits/lua_traits'].register(mod) return mod." + fn
+                + "()",
+            sol::script_pass_on_error);
+        REQUIRE(res.valid());
+        return res.get_type() == sol::type::boolean && res.get<bool>();
+    };
+    const auto changes = std::make_shared<int>(0);
+    const auto [list, idx] =
+        push_hook(lua, "on_character_mutation_changed", [changes, &call, &you](sol::table params) {
+            CHECK(params["character"].get<sol::optional<Character*>>().value_or(nullptr) == &you);
+            ++*changes;
+            call("forget_trait_tick");
+        });
+    hook_cleanup hooks{list, idx};
+    call("forget_trait_tick");
+
+    CHECK_FALSE(call("needs_trait_tick"));
+    you.set_mutation(trait_id("AGORAPHOBIA"));
+    CHECK(*changes > 0);
+    CHECK(call("needs_trait_tick"));
+    you.unset_mutation(trait_id("AGORAPHOBIA"));
+    CHECK_FALSE(call("needs_trait_tick"));
+}

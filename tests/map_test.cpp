@@ -699,6 +699,41 @@ TEST_CASE("field_intensity_can_make_a_tile_impassable", "[map][field][movement]"
     CHECK(here.move_cost(pos) == 0);
 }
 
+TEST_CASE("map_load_marks_every_level_dirty", "[map]") {
+    clear_all_state();
+    auto& here = get_map();
+    here.build_map_cache(0);
+    REQUIRE_FALSE(here.access_cache(0).transparency_cache_dirty.any());
+
+    here.load(here.get_abs_sub(), false);
+    for (const auto z : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
+        CAPTURE(z);
+        const auto& cache = here.access_cache(z);
+        CHECK(cache.transparency_cache_dirty.all());
+        CHECK(cache.floor_cache_dirty.all());
+        CHECK(cache.outside_cache_dirty.all());
+        CHECK(cache.absorption_cache_dirty.all());
+        CHECK(cache.seen_cache_dirty);
+    }
+}
+
+/// Puts one zombie spawn point on a submap far from the avatar, at bubble (100, 100, 0).
+/// spawn_monsters must find that submap and place the zombie within 3 tiles of the point.
+TEST_CASE("spawn_monsters_places_submap_spawn_points", "[map][spawn]") {
+    clear_all_state();
+    auto& here = get_map();
+    const auto spawn_pos = tripoint_bub_ms(100, 100, 0);
+    here.add_spawn(mtype_id("mon_zombie"), 1, spawn_pos);
+
+    here.spawn_monsters(true);
+
+    auto near_spawn = 0;
+    for (const monster& m : g->all_monsters()) {
+        near_spawn += rl_dist(m.bub_pos(), spawn_pos) <= 3;
+    }
+    CHECK(near_spawn == 1);
+}
+
 TEST_CASE(
     "liquid_drop_on_independent_map_consumes_its_source_item",
     "[map][item][liquid][field][fluid_regression]") {

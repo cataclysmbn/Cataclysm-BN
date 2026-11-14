@@ -1,5 +1,6 @@
 #include "calendar.h"
 #include "catch/catch.hpp"
+#include "options_helpers.h"
 #include "state_helpers.h"
 
 #include <string>
@@ -220,4 +221,15 @@ TEST_CASE("current daylight level", "[sun][daylight][equinox][solstice]") {
         CHECK(100.0f == sunlight(autumn + 12_hours));
         CHECK(75.0f == sunlight(winter + 12_hours));
     }
+}
+
+TEST_CASE("sunrise follows changed sunrise options", "[sun]") {
+    clear_all_state();
+    const time_point noon = calendar::turn_zero + 12_hours;
+    const time_point original = sunrise(noon);
+    {
+        override_option sunrise_equinox("SUNRISE_EQUINOX", "8");
+        CHECK(sunrise(noon) == calendar::turn_zero + 8_hours);
+    }
+    CHECK(sunrise(noon) == original);
 }

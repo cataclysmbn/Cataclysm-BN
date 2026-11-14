@@ -3,6 +3,7 @@
 #include "catch/catch.hpp"
 #include "game.h"
 #include "map_helpers.h"
+#include "options_helpers.h"
 #include "scent_map.h"
 #include "state_helpers.h"
 #include "vehicle/veh_type.h"
@@ -141,8 +142,56 @@ TEST_CASE("scent_blockers_ignore_vehicle_parts_outside_cache", "[scent]") {
     CHECK(scent_transfer[MAPSIZE_Y] == 1);
 }
 
+TEST_CASE("scent_spreads_only_near_trackers", "[scent]") {
+    clear_all_state();
+    const auto origin = tripoint_bub_ms(60, 60, 0);
+    g->place_player(origin);
+    g->scent.reset();
+    g->scent.set(origin, 1000, scenttype_id("sc_human"));
+    const auto spreads = [&] {
+        g->scent.update(origin, get_map());
+        return g->scent.get(origin + tripoint_east) > 0;
+    };
+
+    SECTION("option on without a tracker skips diffusion") {
+        override_option opt("SCENT_SPREAD_ONLY_NEAR_TRACKERS", "true");
+        CHECK_FALSE(spreads());
+        CHECK(g->scent.get(origin) == 1000);
+    }
+    SECTION("option on with a tracker diffuses") {
+        override_option opt("SCENT_SPREAD_ONLY_NEAR_TRACKERS", "true");
+        spawn_test_monster("mon_zombie", origin + tripoint(10, 0, 0));
+        CHECK(spreads());
+    }
+    SECTION("option off diffuses") {
+        override_option opt("SCENT_SPREAD_ONLY_NEAR_TRACKERS", "false");
+        CHECK(spreads());
+    }
+}
+
+TEST_CASE("scent_does_not_diffuse_through_walls", "[scent]") {
+    clear_all_state();
+    override_option opt("SCENT_SPREAD_ONLY_NEAR_TRACKERS", "false");
+    const auto origin = tripoint_bub_ms(60, 60, 0);
+    g->place_player(origin);
+    auto& here = get_map();
+
+    // Closed ring of brick wall (NO_SCENT) at Chebyshev distance 3 around the origin.
+    for (const auto& p : here.points_in_radius(origin, 3)) {
+        if (square_dist(p, origin) == 3) { here.ter_set(p, t_brick_wall); }
+    }
+    g->scent.reset();
+    g->scent.set(origin, 1000, scenttype_id("sc_human"));
+    for (auto i = 0; i < 10; ++i) { g->scent.update(origin, here); }
+
+    CHECK(g->scent.get(origin + tripoint(2, 0, 0)) > 0);
+    CHECK(g->scent.get(origin + tripoint(4, 0, 0)) == 0);
+    CHECK(g->scent.get(origin + tripoint(0, -4, 0)) == 0);
+}
+
 TEST_CASE("scent_matches_old", "[.]") {
     clear_all_state();
+    override_option opt("SCENT_SPREAD_ONLY_NEAR_TRACKERS", "false");
     tripoint_bub_ms origin(60, 60, 0);
 
     g->place_player(origin);

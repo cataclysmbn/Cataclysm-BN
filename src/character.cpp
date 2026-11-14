@@ -9437,6 +9437,18 @@ mutation_category_id Character::get_highest_category() const
     return sMaxCat;
 }
 
+namespace
+{
+
+auto run_mutation_changed_hooks( Character &who ) -> void
+{
+    cata::run_hooks( "on_character_mutation_changed", [&]( auto & params ) {
+        params["character"] = &who;
+    } );
+}
+
+} // namespace
+
 void Character::recalculate_enchantment_cache()
 {
     const enchantment old_ench_sources = enchantment( *&*enchantment_cache );
@@ -9518,6 +9530,9 @@ void Character::recalculate_enchantment_cache()
 
     enchantment_cache->activate_effects( *this );
     enchantment_cache->deactivate_removed_effects( *this, old_ench_sources );
+    if( enchantment_cache->get_mutations() != old_ench_sources.get_mutations() ) {
+        run_mutation_changed_hooks( *this );
+    }
 
     rebuild_mutation_cache();
 
@@ -11343,6 +11358,30 @@ auto Character::bodytemp_modifier_traits_floor() const -> units::temperature_del
     return mod;
 }
 
+namespace
+{
+/// Climate control enchantment values of one body part.
+struct climate_ids {
+    enchantment_value_id cooling;
+    enchantment_value_id heating;
+};
+
+/// Builds the enchantment value ids of @p id once.
+auto climate_ids_for( const bodypart_id &id ) -> const climate_ids & // *NOPAD*
+{
+    static auto cache = std::unordered_map<bodypart_str_id, climate_ids> {};
+    auto found = cache.find( id.id() );
+    if( found == cache.end() ) {
+        const auto part = to_upper_case( id.id().str() );
+        found = cache.emplace( id.id(), climate_ids{
+            .cooling = enchantment_value_id( "CLIMATE_CONTROL_COOLING_" + part ),
+            .heating = enchantment_value_id( "CLIMATE_CONTROL_HEATING_" + part ),
+        } ).first;
+    }
+    return found->second;
+}
+} // namespace
+
 auto Character::temp_corrected_by_climate_control( units::temperature temperature,
         bodypart_id id ) ->
 units::temperature
@@ -11355,7 +11394,7 @@ units::temperature
     };
     if( temperature > BODYTEMP_NORM ) {
         temperature = temperature - enchantment_bonus( temperature,
-                      enchantment_value_id( "CLIMATE_CONTROL_COOLING_" + to_upper_case( id.id().str() ) ) );
+                      climate_ids_for( id ).cooling );
         if( in_climate_control() ) {
             temperature = temperature - units::from_legacy_bodypart_temp_delta( 1250 );
         }
@@ -11365,7 +11404,7 @@ units::temperature
             temperature = temperature + units::from_legacy_bodypart_temp_delta( 1250 );
         }
         temperature = temperature + enchantment_bonus( temperature,
-                      enchantment_value_id( "CLIMATE_CONTROL_HEATING_" + to_upper_case( id.id().str() ) ) );
+                      climate_ids_for( id ).heating );
         return std::min( BODYTEMP_NORM, temperature );
     }
     return temperature;
@@ -11826,6 +11865,7 @@ void Character::on_mutation_gain( const trait_id &mid )
     magic->on_mutation_gain( mid, *this );
     update_type_of_scent( mid );
     recalculate_enchantment_cache(); // mutations can have enchantments
+    run_mutation_changed_hooks( *this );
 }
 
 void Character::on_mutation_loss( const trait_id &mid )
@@ -11834,6 +11874,7 @@ void Character::on_mutation_loss( const trait_id &mid )
     magic->on_mutation_loss( mid );
     update_type_of_scent( mid, false );
     recalculate_enchantment_cache(); // mutations can have enchantments
+    run_mutation_changed_hooks( *this );
 }
 
 void Character::on_stat_change( const std::string &stat, int value )
@@ -12252,7 +12293,7 @@ bool Character::can_hear( const tripoint_bub_ms &source, const int volume ) cons
     if( source == bub_pos() ) {
         return true;
     }
-    const auto cache = get_map().get_cache_ref( bub_pos().z() );
+    const auto &cache = get_map().get_cache_ref( bub_pos().z() );
     const int dist = rl_dist( source, bub_pos() );
     const float volume_multiplier = hearing_ability();
     // terrain absorption at the characters location.

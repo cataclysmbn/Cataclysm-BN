@@ -844,6 +844,12 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_character_try_move", []( const sol::table & ) {} );
 
+    DOC( "Called when the traits of a character change: a mutation is gained or lost, or an enchantment grants or removes one.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `character` (Character)  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_character_mutation_changed", []( const sol::table & ) {} );
+
     DOC( "Called when character stat gets reset.  " );
     DOC( "The hook receives a table with keys:  " );
     DOC( "* `character` (Character)  " );

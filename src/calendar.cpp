@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <cassert>
 #include <cmath>
 #include <cstddef>
@@ -48,6 +49,18 @@ namespace
 {
 std::unordered_map<std::string, calendar::dim_time_config> dim_time_registry;
 std::string active_dim_id_for_time;
+
+/// A dimension time config with the world option fallbacks already applied.
+struct resolved_time_config : calendar::dim_time_config {
+    std::array<int, 4> sunrise_hours;
+    std::array<int, 4> sunset_hours;
+};
+/// Bumped whenever the inputs of a resolved config change. Each thread refills its own cache.
+std::atomic<int> time_config_generation{ 0 };
+struct resolved_time_cache_t {
+    int generation = -1;
+    std::unordered_map<std::string, resolved_time_config> configs;
+};
 } // namespace
 
 namespace calendar
@@ -55,16 +68,23 @@ namespace calendar
 void register_dim_time_config( const std::string &dim_id, const dim_time_config &cfg )
 {
     dim_time_registry[dim_id] = cfg;
+    invalidate_time_config_cache();
+}
+
+void invalidate_time_config_cache()
+{
+    ++time_config_generation;
 }
 
 void set_active_world_type( const std::string &world_type_id )
 {
     active_dim_id_for_time = world_type_id;
+    invalidate_time_config_cache();
 }
 } // namespace calendar
 
 // Returns the effective time config for a dimension, falling back to world options.
-static calendar::dim_time_config get_effective_time_config( const std::string &dim_id )
+static calendar::dim_time_config get_dim_time_config( const std::string &dim_id )
 {
     if( !dim_id.empty() ) {
         auto it = dim_time_registry.find( dim_id );
@@ -98,6 +118,23 @@ static std::array<int, 4> resolve_sunset_hours( const calendar::dim_time_config 
     auto su = cfg.sunset_summer  >= 0 ? cfg.sunset_summer  : ::get_option<int>( "SUNSET_SUMMER" );
     auto wi = cfg.sunset_winter  >= 0 ? cfg.sunset_winter  : ::get_option<int>( "SUNSET_WINTER" );
     return { { eq, su, eq, wi } };
+}
+
+// Returns the cached time config of a dimension. Options are read once per cache fill.
+static const resolved_time_config &get_effective_time_config( const std::string &dim_id )
+{
+    thread_local resolved_time_cache_t cache;
+    if( cache.generation != time_config_generation ) {
+        cache.generation = time_config_generation;
+        cache.configs.clear();
+    }
+    const auto it = cache.configs.find( dim_id );
+    if( it != cache.configs.end() ) {
+        return it->second;
+    }
+    const auto cfg = get_dim_time_config( dim_id );
+    return cache.configs.emplace( dim_id, resolved_time_config{
+        cfg, resolve_sunrise_hours( cfg ), resolve_sunset_hours( cfg ) } ).first->second;
 }
 
 moon_phase get_moon_phase( const time_point &p )
@@ -145,7 +182,7 @@ time_point sunrise( const time_point &p )
 
 time_point sunrise( const time_point &p, const std::string &dim_id )
 {
-    return calc_sun_event( p, resolve_sunrise_hours( get_effective_time_config( dim_id ) ) );
+    return calc_sun_event( p, get_effective_time_config( dim_id ).sunrise_hours );
 }
 
 time_point sunset( const time_point &p )
@@ -155,7 +192,7 @@ time_point sunset( const time_point &p )
 
 time_point sunset( const time_point &p, const std::string &dim_id )
 {
-    return calc_sun_event( p, resolve_sunset_hours( get_effective_time_config( dim_id ) ) );
+    return calc_sun_event( p, get_effective_time_config( dim_id ).sunset_hours );
 }
 
 time_point night_time( const time_point &p )
@@ -171,7 +208,7 @@ time_point daylight_time( const time_point &p )
 
 bool is_night( const time_point &p )
 {
-    const auto cfg = get_effective_time_config( active_dim_id_for_time );
+    const auto &cfg = get_effective_time_config( active_dim_id_for_time );
     if( cfg.permanent_night ) {
         return true;
     }
@@ -187,7 +224,7 @@ bool is_night( const time_point &p )
 
 bool is_day( const time_point &p )
 {
-    const auto cfg = get_effective_time_config( active_dim_id_for_time );
+    const auto &cfg = get_effective_time_config( active_dim_id_for_time );
     if( cfg.permanent_daylight ) {
         return true;
     }
@@ -203,7 +240,7 @@ bool is_day( const time_point &p )
 
 bool is_dusk( const time_point &p )
 {
-    const auto cfg = get_effective_time_config( active_dim_id_for_time );
+    const auto &cfg = get_effective_time_config( active_dim_id_for_time );
     if( cfg.permanent_daylight || cfg.permanent_night ) {
         return false;
     }
@@ -215,7 +252,7 @@ bool is_dusk( const time_point &p )
 
 bool is_dawn( const time_point &p )
 {
-    const auto cfg = get_effective_time_config( active_dim_id_for_time );
+    const auto &cfg = get_effective_time_config( active_dim_id_for_time );
     if( cfg.permanent_daylight || cfg.permanent_night ) {
         return false;
     }

@@ -151,6 +151,23 @@ local function clutter_penalty(count)
   return math.min(steps * 2, max_penalty)
 end
 
+---@type boolean?
+local has_tick_trait = nil
+
+--- The 1-turn trait tick runs only for an avatar with one of these traits; the answer is kept until a
+--- trait changes or another game or avatar starts.
+---@return boolean
+local function needs_trait_tick()
+  if has_tick_trait == nil then
+    local you = gapi.get_avatar()
+    has_tick_trait = you ~= nil
+      and (you:has_trait(trait_nyctophobia) or you:has_trait(trait_claustrophobia) or you:has_trait(trait_agoraphobia))
+  end
+  return has_tick_trait
+end
+
+local function forget_trait_tick() has_tick_trait = nil end
+
 local function tick_nyctophobia()
   ---@type Avatar
   local you = gapi.get_avatar()
@@ -235,11 +252,15 @@ local function tick_morale_traits()
     return
   end
 
+  local claustrophobic = you:has_trait(trait_claustrophobia)
+  local agoraphobic = you:has_trait(trait_agoraphobia)
+  if not claustrophobic and not agoraphobic then return end
+
   local here = gapi.get_map()
   local pos = you:get_pos_ms()
   local is_outside = here:is_outside(pos)
 
-  if you:has_trait(trait_claustrophobia) then
+  if claustrophobic then
     if not is_outside then
       apply_penalty(you, morale_indoor_misery, 15)
       if gapi.rng(1, 5) == 1 then drain_focus(you, 1, 20) end
@@ -248,7 +269,7 @@ local function tick_morale_traits()
     end
   end
 
-  if you:has_trait(trait_agoraphobia) then
+  if agoraphobic then
     if is_outside then
       apply_penalty(you, morale_outdoor_misery, 15)
       if gapi.rng(1, 5) == 1 then drain_focus(you, 1, 20) end
@@ -343,6 +364,8 @@ function lua_traits.register(mod)
   mod.on_nyctophobia_tick = tick_nyctophobia
   mod.on_morale_traits_tick = tick_morale_traits
   mod.on_clutter_intolerant_tick = tick_clutter_intolerant
+  mod.needs_trait_tick = needs_trait_tick
+  mod.forget_trait_tick = forget_trait_tick
 end
 
 return lua_traits

@@ -111,6 +111,17 @@
   },
   {
     "type": "OPTION",
+    "name": "ACTIVITY_SKIP_NPC_AI_CADENCE",
+    "stype": "bool",
+    "scope": "global",
+    "page": "performance",
+    "group": "rem_act_perf",
+    "menu_text": "Calm NPC Danger Checks Every 5 Turns",
+    "tooltip": "During activity skip, NPCs without danger, target or sound alert reassess danger every 5 turns instead of every turn.",
+    "default": true
+  },
+  {
+    "type": "OPTION",
     "name": "ACTIVITY_SKIP_STAT_UPDATE_TICKS",
     "stype": "int",
     "scope": "global",
@@ -122,6 +133,19 @@
     "default_android": 300,
     "min": 1,
     "max": 300
+  },
+  {
+    "type": "OPTION",
+    "name": "ACTIVITY_REDRAW_INTERVAL_MS",
+    "stype": "int",
+    "scope": "global",
+    "page": "performance",
+    "group": "rem_act_perf",
+    "menu_text": "Activity Redraw Interval",
+    "tooltip": "Minimum real time in milliseconds between the map redraws of a long wait or activity.  0 redraws every 5 game minutes.",
+    "default": 250,
+    "min": 0,
+    "max": 5000
   },
   {
     "type": "OPTION_GROUP",
@@ -264,6 +288,20 @@
     "page": "performance",
     "title": "3D Field of Vision",
     "desc": "Configure three-dimensional visibility across z-levels."
+  },
+  {
+    "type": "OPTION",
+    "name": "FOV_3D_Z_RANGE",
+    "stype": "int",
+    "scope": "global",
+    "page": "performance",
+    "group": "fov_3d",
+    "menu_text": "Vertical range of 3D field of vision",
+    "tooltip": "How many levels up and down the experimental 3D field of vision reaches. (This many levels up, this many levels down.)  3D vision of the full height of the world can slow the game down a lot.  Seeing fewer Z-levels is faster.",
+    "default": 5,
+    "default_android": 3,
+    "min": 0,
+    "max": 21
   },
   {
     "type": "OPTION",
@@ -595,6 +633,17 @@
     "min": 1,
     "max": 30,
     "default": 5
+  },
+  {
+    "type": "OPTION",
+    "name": "SCENT_SPREAD_ONLY_NEAR_TRACKERS",
+    "stype": "bool",
+    "scope": "global",
+    "page": "performance",
+    "group": "reality_bubble",
+    "menu_text": "Spread Scent Only Near Trackers",
+    "tooltip": "Spread your scent only when a monster that tracks by smell is in the reality bubble within one z-level of you.  You still leave scent where you stand.  Disable to spread scent every turn.",
+    "default": true
   },
   {
     "type": "OPTION_GROUP",

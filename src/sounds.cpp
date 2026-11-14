@@ -471,6 +471,7 @@ void map::cull_heard_sounds()
 // Fear nothing but the consequences of your own poor decisions.
 void map::flood_fill_sound( const sound_event soundevent, const int zlev )
 {
+    build_absorption_cache( zlev );
     const auto &map_cache = get_cache( zlev );
     const auto &absorption_cache = map_cache.absorption_cache;
     const auto &outside_cache = map_cache.outside_cache;
@@ -892,6 +893,11 @@ void map::batch_flood_fill_sounds()
     ZoneScoped;
     // Our que of sound events to flood fill
     auto &batch_que = sound_batch_floodfill_que;
+    for( const auto &queued : batch_que ) {
+        if( inbounds( queued.origin ) ) {
+            build_absorption_cache( queued.origin.z() );
+        }
+    }
     const bool is_winter =  season_of_year( calendar::turn ) == WINTER;
     const auto &snowbonus = ( is_winter ) ? SOUND_ABSORPTION_SNOW_BONUS : SOUND_ABSORPTION_OPEN_FIELD;
 

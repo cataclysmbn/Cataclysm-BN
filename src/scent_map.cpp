@@ -12,6 +12,8 @@
 #include "map/map.h"
 #include "map/mapbuffer.h"
 #include "map/submap.h"
+#include "monster.h"
+#include "mtype.h"
 #include "options.h"
 #include "output.h"
 #include "profile.h"
@@ -217,6 +219,12 @@ void scent_map::update( const tripoint_bub_ms &center, map &m )
     } else if( player_last_moved + 1000_turns < calendar::turn ) {
         return;
     }
+    // Only smelling monsters read the scent map; the player still deposits scent each turn.
+    const auto smells_here = [&]( const monster & mon ) { return mon.has_flag( MF_SMELLS ) && std::abs( mon.bub_pos().z() - center.z() ) <= SCENT_MAP_Z_REACH; };
+    if( get_option<bool>( "SCENT_SPREAD_ONLY_NEAR_TRACKERS" ) &&
+        std::ranges::none_of( g->all_monsters(), smells_here ) ) {
+        return;
+    }
 
     //the block and reduce scent properties are folded into a single scent_transfer value here
     //block=0 reduce=1 normal=5
@@ -252,8 +260,8 @@ void scent_map::update( const tripoint_bub_ms &center, map &m )
 
     // The new scent flag searching function. Should be wayyy faster than the old one.
     m.scent_blockers( scent_transfer, st_sy,
-                      tripoint_bub_ms( scentmap_minx - 1, scentmap_miny - 1, -OVERMAP_DEPTH ),
-                      tripoint_bub_ms( scentmap_maxx + 1, scentmap_maxy + 1, OVERMAP_HEIGHT ) );
+                      tripoint_bub_ms( scentmap_minx - 1, scentmap_miny - 1, center.z() ),
+                      tripoint_bub_ms( scentmap_maxx + 1, scentmap_maxy + 1, center.z() ) );
 
     for( int x = 0; x < SCENT_RADIUS * 2 + 3; ++x ) {
         sum_3_scent_y[0][x] = 0;

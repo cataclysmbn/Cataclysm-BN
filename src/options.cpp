@@ -20,6 +20,7 @@
 #include "debug.h"
 #include "enum_bitset.h"
 #include "filesystem.h"
+#include "fov_z_range.h"
 #include "fstream_utils.h"
 #include "game.h"
 #include "game_constants.h"
@@ -1361,6 +1362,7 @@ void options_manager::cOpt::setValue( float fSetIn )
 //set value
 void options_manager::cOpt::setValue( int iSetIn )
 {
+    calendar::invalidate_time_config_cache();
     if( sType != "int" ) {
         debugmsg( "tried to set an int value to a %s option", sType );
         return;
@@ -1374,6 +1376,7 @@ void options_manager::cOpt::setValue( int iSetIn )
 //set value
 void options_manager::cOpt::setValue( const std::string &sSetIn )
 {
+    calendar::invalidate_time_config_cache();
     if( sType == "string_select" ) {
         if( getItemPos( sSetIn ) != -1 ) {
             sSet = sSetIn;
@@ -2271,6 +2274,12 @@ void options_manager::add_options_graphics()
 
     add( "FORCE_REDRAW", graphics, translate_marker( "Force redraw" ),
          translate_marker( "If true, forces the game to redraw at least once per turn." ),
+         true
+       );
+
+    add( "DEFER_REDRAW_ON_QUEUED_INPUT", graphics,
+         translate_marker( "Skip redraw while keys are queued" ),
+         translate_marker( "If true, skips drawing a frame when another key press is already waiting, e.g. while holding a movement key.  The last frame is always drawn, and frames are never skipped when safe mode stops you." ),
          true
        );
 
@@ -4074,7 +4083,8 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
             } else if( iter.first == "TERMINAL_X" || iter.first == "TERMINAL_Y" ) {
                 terminal_size_changed = true;
             }
-            if( iter.first == "COLORED_LIGHTING" || iter.first == "USE_TILES" ) {
+            if( iter.first == "COLORED_LIGHTING" || iter.first == "USE_TILES" ||
+                iter.first == "FOV_3D_Z_RANGE" ) {
                 colored_lighting_changed = true;
             }
         }
@@ -4100,6 +4110,9 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
             }
             if( ingame && colored_lighting_changed ) {
                 g->m.invalidate_lightmap_caches();
+                for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; ++z ) {
+                    g->m.set_seen_cache_dirty( z );
+                }
             }
             g->on_options_changed();
         } else {
@@ -4118,6 +4131,7 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
     if( lang_changed ) {
         set_language();
     }
+    calendar::invalidate_time_config_cache();
     calendar::set_eternal_season( ::get_option<bool>( "ETERNAL_SEASON" ) );
     calendar::set_season_length( ::get_option<int>( "SEASON_LENGTH" ) );
 
@@ -4207,6 +4221,7 @@ std::string options_manager::migrateOptionValue( const std::string &name,
 
 void options_manager::cache_to_globals()
 {
+    calendar::invalidate_time_config_cache();
     enum_bitset<DL> levels;
     levels.set( DL::Error );
     for( const debug_log_level &e : debug_log_levels ) {
@@ -4239,6 +4254,7 @@ void options_manager::cache_to_globals()
     message_ttl = ::get_option<int>( "MESSAGE_TTL" );
     message_cooldown = ::get_option<int>( "MESSAGE_COOLDOWN" );
     angled_sunlight_shadows = ::get_option<bool>( "FOV_3D_OCCLUSION" );
+    fov_3d_z_range = ::get_option<int>( "FOV_3D_Z_RANGE" );
     const auto prevent_occlusion_option = ::get_option<std::string>( "PREVENT_OCCLUSION" );
     prevent_occlusion = prevent_occlusion_option == "off" ? 0 : prevent_occlusion_option == "on" ? 1 :
                         2;
@@ -4414,6 +4430,7 @@ options_manager::options_container options_manager::get_world_defaults() const
 
 void options_manager::set_world_options( options_container *options )
 {
+    calendar::invalidate_time_config_cache();
     if( options == nullptr ) {
         world_options.reset();
     } else {

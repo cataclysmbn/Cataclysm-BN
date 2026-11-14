@@ -39,6 +39,7 @@
 #include "flag.h"
 #include "flat_set.h"
 #include "fluid_grid.h"
+#include "fov_z_range.h"
 #include "fragment_cloud.h"
 #include "fungal_effects.h"
 #include "game.h"
@@ -3286,7 +3287,7 @@ void map::decay_fields_and_scent(const time_duration& amount) {
     for (const auto p : bubble_submaps()) {
         level_cache& smz_cache = get_cache(p.z());
         const auto abs_sm = map_local_to_abs(*this, p);
-        const auto cur_submap = get_mapbuffer().lookup_submap_in_memory(abs_sm);
+        const auto cur_submap = get_submap_at(project_to<coords::ms>(p));
         if (cur_submap == nullptr) { continue; }
         int to_proc = cur_submap->field_count;
         if (to_proc < 1) {
@@ -6312,9 +6313,13 @@ auto map::update_visibility_cache(const int zlev, const std::function<void()>& w
             }
         };
 
+        const auto in_z_range = [&](const int z) {
+            return z == zlev || fov_z_in_range(z, player_pos.z());
+        };
         auto visibility_download_levels = std::vector<int>{};
-        std::ranges::copy(std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1),
-                          std::back_inserter(visibility_download_levels));
+        std::ranges::copy_if(
+            std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1),
+            std::back_inserter(visibility_download_levels), in_z_range);
         const auto rebuild_seen_cache = m_last_seen_cache_origin != player_pos;
         const auto gpu_visibility_work = cata_gpu::begin_gpu_visibility(
             gpu_device,
@@ -6350,6 +6355,13 @@ auto map::update_visibility_cache(const int zlev, const std::function<void()>& w
             std::fill(origin_cache.camera_cache.begin(), origin_cache.camera_cache.end(), 0.0f);
             m_last_seen_cache_origin = player_pos;
         }
+        for (const auto z : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
+            // The rebuild invalidated every level on the GPU; levels left out rebuild in range.
+            if (rebuild_seen_cache) { get_cache(z).seen_cache_dirty = false; }
+            if (!in_z_range(z)) {
+                std::ranges::fill(get_cache(z).visibility_cache, lit_level::BLANK);
+            }
+        }
         mark_visibility_caches_clean();
         mark_overmap_seen_from_visibility(get_cache_ref(zlev));
         return;
@@ -6380,6 +6392,12 @@ auto map::update_visibility_cache(const int zlev, const std::function<void()>& w
         level_cache& vc_cache = get_cache(z);
         auto& visibility_cache = vc_cache.visibility_cache;
         const auto dz = std::abs(z - player_pos.z());
+
+        // Levels beyond FOV_3D_Z_RANGE are not seen; skip the per-tile light evaluation.
+        if (z != zlev && !fov_z_in_range(z, player_pos.z())) {
+            std::ranges::fill(visibility_cache, lit_level::BLANK);
+            continue;
+        }
 
         // Fill visibility_cache.  apparent_light_at is read-only per tile.
         if (parallel_enabled && parallel_map_cache) {
@@ -6922,7 +6940,7 @@ auto map::sees(
     {
         std::shared_lock<std::shared_mutex> lock(*skew_vision_cache_mutex);
         const auto& slot = skew_vision_cache[slot_idx];
-        if (slot.key == key && slot.value >= 0) { return slot.value > 0; }
+        if (slot.key == key && slot.generation == skew_vision_generation) { return slot.value > 0; }
     }
 
     bool visible = true;
@@ -6948,7 +6966,10 @@ auto map::sees(
                   });
         {
             std::unique_lock<std::shared_mutex> lock(*skew_vision_cache_mutex);
-            skew_vision_cache[slot_idx] = {key, static_cast<char>(visible ? 1 : 0)};
+            skew_vision_cache[slot_idx] =
+                {.key = key,
+                 .generation = skew_vision_generation,
+                 .value = static_cast<char>(visible ? 1 : 0)};
         }
         return visible;
     }
@@ -6984,7 +7005,10 @@ auto map::sees(
         });
     {
         std::unique_lock<std::shared_mutex> lock(*skew_vision_cache_mutex);
-        skew_vision_cache[slot_idx] = {key, static_cast<char>(visible ? 1 : 0)};
+        skew_vision_cache[slot_idx] =
+            {.key = key,
+             .generation = skew_vision_generation,
+             .value = static_cast<char>(visible ? 1 : 0)};
     }
     return visible;
 }
@@ -7327,13 +7351,33 @@ auto map::get_dir_circle(const tripoint_bub_ms& f, const tripoint_bub_ms& t) con
     return circle;
 }
 
+namespace {
+
+/// Marks every cache of level @p z dirty because new submaps loaded there.
+auto mark_level_loaded(map& m, const int z) -> void {
+    m.set_transparency_cache_dirty(z);
+    m.set_floor_cache_dirty(z);
+    m.set_outside_cache_dirty(z);
+    m.set_absorption_cache_dirty(z);
+    m.set_seen_cache_dirty(z);
+    m.set_pathfinding_cache_dirty(z);
+    m.set_suspension_cache_dirty(z);
+    m.set_vehicle_cache_dirty(z);
+}
+
+} // namespace
+
 void map::load(const point_abs_sm& w, const bool update_vehicle, const bool pump_events) {
     funnel_locations_.clear();
     set_abs_sub(w);
+    // Mark each level once after the loop instead of once per loaded submap.
     for (const auto p : bubble_submaps()) {
-        loadn(p, update_vehicle);
+        loadn(p, update_vehicle, true);
         MAPBUFFER_REGISTRY.get(bound_dimension_).actualize_submap(map_local_to_abs(*this, p));
         if (pump_events) { inp_mngr.pump_events(); }
+    }
+    for (const auto z : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
+        mark_level_loaded(*this, z);
     }
     refresh_active_submap_view();
     validate_active_submap_view_complete("map::load");
@@ -7847,14 +7891,7 @@ void map::loadn(const tripoint_bub_sm& grid, const bool update_vehicles, const b
                 .pathfinding = true,
             });
         } else {
-            set_transparency_cache_dirty(grid.z());
-            set_floor_cache_dirty(grid.z());
-            set_outside_cache_dirty(grid.z());
-            set_absorption_cache_dirty(grid.z());
-            set_seen_cache_dirty(grid.z());
-            set_pathfinding_cache_dirty(grid.z());
-            set_suspension_cache_dirty(grid.z());
-            set_vehicle_cache_dirty(grid.z());
+            mark_level_loaded(*this, grid.z());
         }
     }
     // Overlay boundary terrain on the edge tiles of this submap if it sits at the
@@ -8020,15 +8057,19 @@ void map::spawn_monsters_submap_group(
 }
 
 void map::spawn_monsters_submap(const tripoint_bub_sm& gp, bool ignore_sight) {
+    auto& obuf = get_overmapbuffer(bound_dimension_);
     // Load unloaded monsters
     // TODO: fix point types
-    get_overmapbuffer(bound_dimension_).spawn_monster(map_local_to_abs(*this, gp));
+    obuf.spawn_monster(map_local_to_abs(*this, gp));
 
     // Only spawn new monsters after existing monsters are loaded.
     // TODO: fix point types
-    auto groups = get_overmapbuffer(bound_dimension_).groups_at(map_local_to_abs(*this, gp));
+    auto groups = obuf.groups_at(map_local_to_abs(*this, gp));
     for (auto& mgp : groups) { spawn_monsters_submap_group(gp, *mgp, ignore_sight); }
 
+    // The cached view skips the buffer lookup for the common submap without spawns.
+    const auto view = active_submaps_.get_submap_view(point_rel_sm(gp.x(), gp.y()), gp.z());
+    if (view && view->get_submap().spawns.empty()) { return; }
     submap* const current_submap = get_mapbuffer().lookup_submap_in_memory(
         map_local_to_abs(*this, gp));
     if (current_submap == nullptr) { return; }
@@ -8084,9 +8125,44 @@ void map::spawn_monsters_submap(const tripoint_bub_sm& gp, bool ignore_sight) {
     current_submap->spawns.clear();
 }
 
+namespace {
+
+/// Bubble submaps that hold stored monsters, a monster group or mapgen spawn points: the only ones
+/// spawn_monsters_submap can act on.
+auto submaps_with_spawns(const map& m, const tripoint_range<tripoint_bub_sm>& bubble)
+    -> std::vector<tripoint_bub_sm> {
+    const auto populated =
+        get_overmapbuffer(m.get_bound_dimension())
+            .populated_submaps(
+                m.get_abs_sub(), m.get_abs_sub() + point_rel_sm(m.getmapsize(), m.getmapsize()));
+    // A complete active view lists the bubble submaps in bubble order. Its sequential reads let the
+    // CPU overlap the cache misses on each submap's spawn list.
+    if (const auto views = m.active_submap_views(); views.size() == bubble.size()) {
+        return views | std::views::filter([&](const auto& v) {
+                   return !v.get_submap().spawns.empty()
+                       || std::binary_search(populated.begin(), populated.end(), v.abs_pos());
+               })
+             | std::views::transform([&](const auto& v) {
+                   return abs_to_map_local(m, v.abs_pos());
+               })
+             | std::ranges::to<std::vector>();
+    }
+    const auto has_spawns = [&](const tripoint_bub_sm& gp) {
+        const auto abs = map_local_to_abs(m, gp);
+        const auto view = m.active_submap_view(abs);
+        return !view || !view->get_submap().spawns.empty()
+            || std::binary_search(populated.begin(), populated.end(), abs);
+    };
+    return bubble | std::views::filter(has_spawns) | std::ranges::to<std::vector>();
+}
+
+} // namespace
+
 void map::spawn_monsters(bool ignore_sight) {
     ZoneScoped;
-    for (const auto gp : bubble_submaps()) { spawn_monsters_submap(gp, ignore_sight); }
+    for (const auto gp : submaps_with_spawns(*this, bubble_submaps())) {
+        spawn_monsters_submap(gp, ignore_sight);
+    }
 }
 
 auto map::spawn_monsters_new_submaps(const point_rel_sm& shift_amount) -> void {
@@ -8098,7 +8174,7 @@ auto map::spawn_monsters_new_submaps(const point_rel_sm& shift_amount) -> void {
         spawn_monsters(false);
         return;
     }
-    for (const auto gp : bubble_submaps()) {
+    for (const auto gp : submaps_with_spawns(*this, bubble_submaps())) {
         if (inbounds(gp + shift_amount)) { spawn_monsters_submap(gp, false); }
     }
 }
@@ -8531,6 +8607,7 @@ void map::do_vehicle_caching(int z) {
 
 void map::build_map_cache(const int zlev, bool skip_lightmap) {
     ZoneScoped;
+    refresh_bubble_submap_index();
 #if defined(CATA_SDL)
     const auto use_sdl_gpu_compute = cata_compute::uses_sdl_gpu_compute();
 #endif
@@ -8701,6 +8778,10 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
     if (skip_lightmap && use_sdl_gpu_compute && gpu_transparency_dirty) {
         cata_gpu::invalidate_lighting_transparency_levels(gpu_transparency_dirty_levels);
     }
+    if (skip_lightmap && use_sdl_gpu_compute
+        && (gpu_floor_dirty || gpu_vehicle_floor_dirty || gpu_vehicle_obscured_dirty)) {
+        cata_gpu::invalidate_lighting_floor_inputs();
+    }
     if (!use_sdl_gpu_compute && gpu_transparency_dirty) { invalidate_lightmap_caches(); }
 #else
     if (gpu_transparency_dirty) { invalidate_lightmap_caches(); }
@@ -8716,6 +8797,10 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
               static_cast<int64_t>(gpu_transparency_residency_invalid_levels.size()));
 
     const tripoint_bub_ms& p = g->u.bub_pos();
+    /// Levels within FOV_3D_Z_RANGE of the player, plus the requested level.
+    const auto in_z_range = [&p, zlev](const int z) {
+        return z == zlev || fov_z_in_range(z, p.z());
+    };
     auto force_seen_rebuild_for_gpu_residency = false;
 #if defined(CATA_SDL)
     SDL_GPUDevice* const gpu_device = use_sdl_gpu_compute ? cata_gpu::get_device() : nullptr;
@@ -8737,7 +8822,10 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
     if (!skip_lightmap) {
         ZoneScopedN("Phase4_lightmap_prepare");
         invalidate_lightmap_caches_if_light_state_changed();
-        auto needs_lightmap_dispatch = [this](const int z) { return get_cache(z).lightmap_dirty; };
+        // Levels beyond FOV_3D_Z_RANGE keep lightmap_dirty and rebuild once in range.
+        auto needs_lightmap_dispatch = [this, &in_z_range](const int z) {
+            return get_cache(z).lightmap_dirty && in_z_range(z);
+        };
         std::ranges::copy_if(
             std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1),
             std::back_inserter(dirty_lightmap_levels), needs_lightmap_dispatch);
@@ -8812,11 +8900,17 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
     {
         ZoneScopedN("Phase3_sound_absorption");
         // Absorption cache relies upon the floor, outside, and vehicle caches all being completed.
-        for (int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++) { build_absorption_cache(z); }
+        // Other levels are built when a sound starts there.
+        for (int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++) {
+            if (in_z_range(z)) { build_absorption_cache(z); }
+        }
     }
 
     seen_cache_dirty |= build_vision_transparency_cache(get_player_character());
-    if (seen_cache_dirty) { skew_vision_cache.assign(vision_cache_slots, vision_cache_slot{}); }
+    if (seen_cache_dirty && ++skew_vision_generation == 0) {
+        skew_vision_cache.assign(vision_cache_slots, vision_cache_slot{});
+        skew_vision_generation = 1;
+    }
     const auto need_seen_rebuild =
         seen_cache_dirty || force_seen_rebuild_for_gpu_residency || m_last_seen_cache_origin != p;
     TracyPlot("Map Need Seen Rebuild", need_seen_rebuild ? int64_t{1} : int64_t{0});
@@ -8874,6 +8968,9 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
                     auto& c = get_cache(z);
                     std::ranges::fill(c.colored_light_cache, 0u);
                     c.colored_light_cache_active = false;
+                    // Colored light of a level skipped for FOV_3D_Z_RANGE is lost; rebuild it
+                    // once in range.
+                    if (!in_z_range(z)) { c.lightmap_dirty = true; }
                 }
 
                 if (dirty_lightmap_levels.size() > 1 && parallel_enabled && parallel_map_cache) {
@@ -8951,12 +9048,45 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
     }
 }
 
+auto map::bubble_index_valid() const -> bool {
+    const auto& buffer = get_mapbuffer();
+    const auto& index = bubble_index_;
+    return index.buffer == &buffer && index.origin == abs_sub
+        && index.removed_generation == buffer.submaps_removed_generation()
+        && (!index.tracks_additions || index.added_generation == buffer.submaps_added_generation())
+        && index.submaps.size()
+               == static_cast<std::size_t>(OVERMAP_LAYERS * my_MAPSIZE * my_MAPSIZE);
+}
+
+auto map::refresh_bubble_submap_index() -> void {
+    if (bubble_index_valid()) { return; }
+    auto& buffer = get_mapbuffer();
+    // Read the generations first: a worker changing the buffer during the scan leaves it stale.
+    bubble_index_.added_generation = buffer.submaps_added_generation();
+    bubble_index_.removed_generation = buffer.submaps_removed_generation();
+    bubble_index_.buffer = &buffer;
+    bubble_index_.origin = abs_sub;
+    bubble_index_.submaps.clear();
+    for (const auto z : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
+        for (const auto x : std::views::iota(0, my_MAPSIZE)) {
+            for (const auto y : std::views::iota(0, my_MAPSIZE)) {
+                bubble_index_.submaps.push_back(buffer.lookup_submap_in_memory(
+                    map_local_to_abs(*this, tripoint_bub_sm(x, y, z))));
+            }
+        }
+    }
+    bubble_index_.tracks_additions = std::ranges::contains(bubble_index_.submaps, nullptr);
+}
+
 auto map::get_submap_at(const tripoint_bub_ms& p) const -> submap* {
     ZoneScoped;
     if (inbounds(p)) {
-        const auto abs_sm_pos =
-            map_local_to_abs(*this, tripoint_bub_sm(p.x() / SEEX, p.y() / SEEY, p.z()));
-        return get_mapbuffer().lookup_submap_in_memory(abs_sm_pos);
+        const auto smp = tripoint_bub_sm(p.x() / SEEX, p.y() / SEEY, p.z());
+        if (bubble_index_valid()) {
+            return bubble_index_.submaps[static_cast<std::size_t>(
+                ((smp.z() + OVERMAP_DEPTH) * my_MAPSIZE + smp.x()) * my_MAPSIZE + smp.y())];
+        }
+        return get_mapbuffer().lookup_submap_in_memory(map_local_to_abs(*this, smp));
     }
     if (get_mapbuffer().is_outside_pocket_dimension_bounds(map_local_to_abs(*this, p))) {
         // Outside dimension bounds — genuinely invalid position.

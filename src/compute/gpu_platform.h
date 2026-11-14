@@ -16,6 +16,10 @@ auto get_device() -> SDL_GPUDevice*;
 // backends keep the HLSL entry point name.
 auto compute_shader_entrypoint(SDL_GPUShaderFormat format) -> char const*;
 
+/// SDL_WaitForGPUFences for one fence, but polls it first: the blocking wait of some drivers
+/// wakes up about 1 ms after the GPU signals, which is a large share of a short compute submit.
+auto wait_for_fence(SDL_GPUDevice* device, SDL_GPUFence* fence) -> bool;
+
 } // namespace cata_gpu
 
 #endif // defined( CATA_SDL )
