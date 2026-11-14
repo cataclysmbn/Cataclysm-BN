@@ -440,7 +440,9 @@ TEST_CASE(
     REQUIRE(*bytes);
     CHECK((**bytes).size() == rpc::maximum_frame_bytes);
     auto overflow = rpc::response_frame(true);
+    CHECK(overflow.fits(**exact));
     REQUIRE(overflow.append(*exact));
+    CHECK_FALSE(overflow.fits(**tiny));
     const auto failure = overflow.append(*tiny);
     REQUIRE_FALSE(failure);
     CHECK(failure.error() == rpc::output_error::resource_limit);

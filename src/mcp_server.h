@@ -22,6 +22,11 @@ namespace bn::mcp
 /// MCP transports the same commands used by other clients.
 using key_event = game_client::input_command;
 
+/// What a tool returns: `json` is a JSON object, its structured content; `text` is shown to the agent.
+struct screen_snapshot {
+    std::string json = {};
+    std::string text = {};
+};
 
 struct mcp_host {
     /// Deliver events through the active game input pipeline, then redraw the client.
@@ -48,6 +53,9 @@ class server
         static constexpr auto default_max_frame_bytes = std::size_t { 1024 * 1024 };
 
         struct options {
+            std::string name = "cataclysm-bright-nights";
+            std::string version = "development";
+            std::string protocol_version = "2025-11-25";
             std::size_t max_frame_bytes = default_max_frame_bytes;
             /// The wall clock that paces activity publication; unset means the steady clock.
             std::function < auto() -> std::chrono::steady_clock::time_point > now;
@@ -82,8 +90,11 @@ class server
         /// publications have taken a fifth of the time; the next publication carries their facts.
         auto publish_activity( std::ostream &out ) -> bool;
 
+        /// Answer the deferred `bn.press` or `bn.interact` with what the input boundary shows now.
+        auto finish_pending( std::ostream &out, std::ostream &err ) -> void;
+
         /// Reject the remainder of a batch whose next input is invalid in the current context.
-        auto reject_pending() -> void;
+        auto reject_pending( std::string error = {} ) -> void;
 
         /// Interrupt what is outstanding and write the notifications that caused. For shutdown.
         auto finish( std::ostream &out ) -> bool;
@@ -104,10 +115,19 @@ class server
         auto held_frames() const -> std::size_t;
         auto held_bytes() const -> std::size_t;
 
-
     private:
+        /// A `bn.press` or `bn.interact` answered at the next input boundary.
+        struct deferred_response {
+            engine_client::jsonrpc::request_id id;
+            /// The command of a `bn.interact`, whose answer is the top screen; empty for `bn.press`.
+            std::optional<engine_client::result_request> command;
+            std::string error;
+        };
         mcp_host host_;
         options options_;
+        bool initialize_requested_ = false;
+        bool initialized_ = false;
+        std::optional<deferred_response> pending_response_;
         bool pump_mode_ = false;
         bool polling_ = false;
         bool eof_ = false;
@@ -168,8 +188,10 @@ class server
         auto write_held( std::ostream &out ) -> bool;
         /// Drop the held frames a snapshot replaces: all but the command stages.
         auto drop_held_events() -> void;
-        auto deliver_input() -> bool;
+        auto deliver_input() -> std::expected<void, engine_client::error>;
         auto direct( const engine_client::jsonrpc::request &request ) ->
+        std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::jsonrpc::output_error>;
+        auto mcp_dispatch( const engine_client::jsonrpc::request &request ) ->
         std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::jsonrpc::output_error>;
         auto process_requests( std::ostream &out, std::ostream &err ) -> bool;
         auto dispatch( std::string_view line, std::ostream &out, std::ostream &err ) -> bool;

@@ -1,4 +1,5 @@
 #include "engine_client_wire.h"
+#include "engine_client_wire_json.h"
 
 #include <algorithm>
 #include <charconv>
@@ -11,46 +12,22 @@
 
 namespace engine_client
 {
-namespace
-{
-using json = nlohmann::json;
 
 auto require( const bool condition ) -> void
 {
     if( !condition ) { throw decode_error::invalid_params; }
 }
-/// Length in Unicode scalar values, which is what the schema's maxLength counts.
-auto scalar_count( const std::string &text ) -> std::size_t
+auto members( const nlohmann::json &value, const std::initializer_list<const char *> required,
+              const std::initializer_list<const char *> optional ) -> void
 {
-    return static_cast<std::size_t>( std::ranges::count_if( text, []( const char byte ) {
-        return ( static_cast<unsigned char>( byte ) & 0xC0 ) != 0x80;
-    } ) );
-}
-/// The value must be an object whose members are all listed; `required` ones must be present.
-auto members( const json &value, const std::initializer_list<const char *> required,
-const std::initializer_list<const char *> optional = {} ) -> void {
     require( value.is_object() );
-    for( const auto &entry : value.items() )
-    {
+    for( const auto &entry : value.items() ) {
         require( std::ranges::find( required, entry.key() ) != required.end() ||
                  std::ranges::find( optional, entry.key() ) != optional.end() );
     }
     for( const auto *name : required ) { require( value.contains( name ) ); }
 }
-auto text( const json &object, const char *name ) -> std::string
-{
-    const auto &value = object.at( name );
-    require( value.is_string() );
-    return value.get<std::string>();
-}
-auto id( const json &object, const char *name ) -> std::string
-{
-    auto value = text( object, name );
-    require( !value.empty() && scalar_count( value ) <= maximum_id_bytes );
-    return value;
-}
-/// An integer, or an integral float such as 1.0 (JSON Schema `integer`), within [low, high].
-auto integer( const json &object, const char *name, const std::int64_t low,
+auto integer( const nlohmann::json &object, const char *name, const std::int64_t low,
               const std::int64_t high )
 -> std::int64_t
 {
@@ -71,6 +48,30 @@ auto integer( const json &object, const char *name, const std::int64_t low,
              std::fabs( real ) <= 9007199254740991.0 );
     require( real >= static_cast<double>( low ) && real <= static_cast<double>( high ) );
     return static_cast<std::int64_t>( real );
+}
+
+namespace
+{
+using json = nlohmann::json;
+
+/// Length in Unicode scalar values, which is what the schema's maxLength counts.
+auto scalar_count( const std::string &text ) -> std::size_t
+{
+    return static_cast<std::size_t>( std::ranges::count_if( text, []( const char byte ) {
+        return ( static_cast<unsigned char>( byte ) & 0xC0 ) != 0x80;
+    } ) );
+}
+auto text( const json &object, const char *name ) -> std::string
+{
+    const auto &value = object.at( name );
+    require( value.is_string() );
+    return value.get<std::string>();
+}
+auto id( const json &object, const char *name ) -> std::string
+{
+    auto value = text( object, name );
+    require( !value.empty() && scalar_count( value ) <= maximum_id_bytes );
+    return value;
 }
 auto counter_of( const json &object, const char *name ) -> counter
 {
