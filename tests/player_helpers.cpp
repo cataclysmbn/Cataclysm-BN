@@ -83,9 +83,9 @@ void clear_character(player& dummy, bool debug_storage) {
 
     dummy.clear_skills();
     dummy.clear_morale();
-    dummy.activity->set_to_null();
-    // Make sure any lingering safe references from the activity are removed
-    dummy.activity->targets.clear();
+    // Replace the activity: set_to_null keeps index, values and targets for a continued read.
+    dummy.activity = std::make_unique<player_activity>();
+    dummy.backlog.clear();
     dummy.reset_chargen_attributes();
     dummy.set_pain(0);
     dummy.reset_bonuses();
