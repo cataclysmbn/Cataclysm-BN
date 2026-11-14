@@ -611,7 +611,7 @@ TEST_CASE("vehicle_rotation_reverse") {
     }
 }
 
-TEST_CASE("broken_door_and_lock_can_be_removed", "[vehicle]") {
+TEST_CASE("door_lock_removal_rules", "[vehicle]") {
     clear_all_state();
     const auto origin = tripoint_bub_ms(60, 60, 0);
     auto* veh_ptr = get_map().add_vehicle(vproto_id("cross_split_test"), origin, 0_degrees, 0, 0);
@@ -628,6 +628,12 @@ TEST_CASE("broken_door_and_lock_can_be_removed", "[vehicle]") {
     // DOORS CAN SPAWN OPEN GUYS
     if (door_part.open) { door_part.open = false; }
     REQUIRE_FALSE(door_part.open);
+
+    lock_part.enabled = true;
+    CHECK_FALSE(veh_ptr->can_unmount(lock_idx));
+    door_part.open = true;
+    CHECK(veh_ptr->can_unmount(lock_idx));
+    door_part.open = false;
 
     REQUIRE(veh_ptr->mod_hp(door_part, -(door_part.hp() + 1), DT_BASH));
     REQUIRE(veh_ptr->mod_hp(lock_part, -(lock_part.hp() + 1), DT_BASH));
