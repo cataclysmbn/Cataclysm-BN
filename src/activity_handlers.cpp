@@ -4462,7 +4462,7 @@ void activity_handlers::train_pet_finish( player_activity *act, player *p )
 {
     auto mon = act->monsters[0].lock();
     if( mon && mon->type->pet_training &&
-        p->get_skill_level( skill_survival ) < mon->type->pet_training->min_skill ) {
+        p->get_skill_level( mon->type->pet_training->skill ) < mon->type->pet_training->min_skill ) {
         p->add_msg_if_player( m_bad,
                               _( "You lack the skill to train %s effectively." ),
                               act->str_values[0] );
@@ -4476,7 +4476,9 @@ void activity_handlers::train_pet_finish( player_activity *act, player *p )
     mon->remove_effect( effect_well_fed );
     mon->remove_effect( effect_ai_waiting );
     auto const bonded = p->getID() == mon->bonded_character_id;
-    auto skill_rating = 10 * p->get_skill_level( skill_survival );
+    const skill_id pet_skill = mon->type->pet_training ? mon->type->pet_training->skill :
+                               skill_survival;
+    auto skill_rating = 10 * p->get_skill_level( pet_skill );
     if( bonded ) { skill_rating *= 2; }
     if( skill_rating >= 100 || skill_rating >= rng( 0, 100 ) ) {
         if( mon && mon->type->pet_training ) {

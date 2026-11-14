@@ -1541,6 +1541,12 @@ int iuse::petfood( player *p, item *it, bool, const tripoint_bub_ms & )
             }
         }
 
+        if( !petfood.tame_skill_requirement_met( *p ) ) {
+            p->add_msg_if_player( _( "You are not skilled enough to tame the %s (requires %s %d)." ),
+                                  mon.get_name(), petfood.tame_skill->name(), petfood.tame_min_skill );
+            return 0;
+        }
+
         if( mon.type->id == mon_dog_thing ) {
             p->deal_damage( &mon, bodypart_id( "hand_r" ), damage_instance( DT_CUT, rng( 1, 10 ) ) );
             p->add_msg_if_player( m_bad, _( "You want to feed it the pet food, but it bites your fingers!" ) );
