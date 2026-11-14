@@ -13,6 +13,7 @@
 #include "construction_partial.h"
 #include "coordinates.h"
 #include "data_vars.h"
+#include "debug.h"
 #include "enums.h"
 #include "game.h"
 #include "game_constants.h"
@@ -1735,4 +1736,30 @@ TEST_CASE("flammable_fields_can_be_ignited", "[map][field][fire]") {
     REQUIRE(fire != nullptr);
     CHECK(fire->get_field_intensity() == std::max(2, intensity));
     CHECK(fire->get_field_age() == -10_minutes * intensity);
+}
+
+TEST_CASE("bubble_guard_frees_other_dimension_submap_at_bubble_position") {
+    // Checks that unload_omt and save with delete free a submap from another dimension at a reality
+    // bubble position. The reality bubble is in the primary dimension, so it holds no submap of
+    // "unload_omt_test_dim". Freeing the "unload_omt_test_dim" submap at the bubble origin must
+    // log no error and remove it from memory.
+    clear_all_state();
+
+    static const dimension_id dim_id("unload_omt_test_dim");
+    auto& buffer = MAPBUFFER_REGISTRY.get(dim_id);
+    const auto cleanup = on_out_of_scope([&]() { MAPBUFFER_REGISTRY.unload_dimension(dim_id); });
+    const auto sm_pos = g->m.get_abs_sub() + tripoint_rel_sm(0, 0, 0);
+    REQUIRE(g->m.inbounds(sm_pos));
+    auto* const sm = add_absolute_test_submap(buffer, sm_pos, ter_id("t_rock"));
+    REQUIRE(sm != nullptr);
+    // save() frees uniform submaps without writing them to disk.
+    sm->is_uniform = true;
+
+    const auto errors = capture_debugmsg_during([&]() {
+        SECTION("unload_omt") { buffer.unload_omt(project_to<coords::omt>(sm_pos), false); }
+        SECTION("save with delete") { buffer.save(true, false, false); }
+    });
+
+    CHECK(errors.empty());
+    CHECK(buffer.lookup_submap_in_memory(sm_pos) == nullptr);
 }
