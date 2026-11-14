@@ -182,6 +182,79 @@ TEST_CASE("digital_storage_accepts_files_only", "[digital_media][item]") {
     CHECK_FALSE(media->contents.empty());
 }
 
+TEST_CASE("wiping_storage_erases_files_encryption_and_legacy_data", "[digital_media][wipe]") {
+    const auto media_id =
+        GENERATE("usb_drive", "sd_memory_card", "hard_drive", "genome_drive_black_rat");
+    auto media = item::spawn(media_id);
+    const auto ports = media->get_var("digital_storage_ports");
+    media->set_var("item_note", "Keep this drive");
+    media->set_var("MC_EXTENDED_PHOTOS", "old photos");
+    media->set_var("MC_MONSTER_PHOTOS", ",mon_zombie,3,");
+    media->set_flag(flag_MC_ENCRYPTED);
+    media->set_flag(flag_MC_HAS_DATA);
+    media->put_in(item::spawn("test_digital_instruction"));
+
+    REQUIRE(wipe_digital_storage(*media));
+    if (std::string_view(media_id) == "genome_drive_black_rat") {
+        CHECK(media->typeId() == itype_id("usb_drive"));
+    }
+    CHECK(media->contents.empty());
+    CHECK_FALSE(media->has_flag(flag_MC_ENCRYPTED));
+    CHECK_FALSE(media->has_flag(flag_MC_HAS_DATA));
+    CHECK_FALSE(media->has_var("MC_EXTENDED_PHOTOS"));
+    CHECK_FALSE(media->has_var("MC_MONSTER_PHOTOS"));
+    CHECK_FALSE(media->has_var("specimen_sample"));
+    CHECK(media->get_var("digital_storage_ports") == ports);
+    CHECK(media->get_var("item_note") == "Keep this drive");
+    initialize_digital_media(*media);
+    CHECK(media->contents.empty());
+    const auto loaded = reload_item(*media);
+    initialize_digital_media(*loaded);
+    CHECK(loaded->contents.empty());
+
+    auto physical = item::spawn("bottle_plastic");
+    CHECK_FALSE(wipe_digital_storage(*physical));
+}
+
+TEST_CASE("wiping_reader_storage_clears_local_files_and_legacy_records", "[digital_media][wipe]") {
+    auto reader = item::spawn("wrist_comp_budget");
+    reader->ammo_set(itype_id("battery"), 10);
+    const auto ports = reader->get_var("digital_reader_ports");
+    reader->set_var("EIPC_RECIPES", "recipe");
+    reader->set_var("EIPC_EXTENDED_PHOTOS", "photos");
+    reader->set_var("EINK_MONSTER_PHOTOS", ",mon_zombie,3,");
+    reader->set_var("EIPC_MUSIC_ON", "1");
+    reader->put_in(item::spawn("test_digital_instruction"));
+
+    REQUIRE(wipe_digital_storage(*reader));
+    CHECK(reader->contents.empty());
+    CHECK_FALSE(reader->has_var("EIPC_RECIPES"));
+    CHECK_FALSE(reader->has_var("EIPC_EXTENDED_PHOTOS"));
+    CHECK_FALSE(reader->has_var("EINK_MONSTER_PHOTOS"));
+    CHECK_FALSE(reader->has_var("EIPC_MUSIC_ON"));
+    CHECK(digital_monster_photos(*reader).empty());
+    CHECK(reader->get_var("digital_reader_ports") == ports);
+    CHECK(reader->ammo_remaining() == 10);
+    initialize_digital_media(*reader);
+    CHECK(reader->contents.empty());
+    const auto loaded = reload_item(*reader);
+    initialize_digital_media(*loaded);
+    CHECK(loaded->contents.empty());
+}
+
+TEST_CASE("wiping_camera_storage_clears_saved_photos", "[digital_media][wipe][camera]") {
+    auto camera = item::spawn("camera_pro");
+    auto& album = camera_photo_collection(*camera);
+    album.set_var("CAMERA_MONSTER_PHOTOS", ",mon_zombie,4,");
+    CHECK(find_camera_photo_collection(*camera));
+    CHECK(digital_monster_photos(*camera).contains(mtype_id("mon_zombie")));
+
+    REQUIRE(wipe_digital_storage(*camera));
+    CHECK(camera->contents.empty());
+    CHECK_FALSE(find_camera_photo_collection(*camera));
+    CHECK(digital_monster_photos(*camera).empty());
+}
+
 TEST_CASE("saved_text_files_survive_copying_and_loading", "[digital_media][savegame]") {
     clear_all_state();
     const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
@@ -976,7 +1049,7 @@ TEST_CASE(
     "readers_generate_personal_files_once_and_keep_them_across_modes", "[digital_media][iuse]") {
     const auto base =
         GENERATE("laptop", "control_laptop", "wrist_comp_budget", "wrist_comp_control",
-                 "smart_phone", "afs_atomic_smartphone", "eink_tablet_pc");
+                 "smart_phone", "afs_atomic_smartphone");
     auto dummy = avatar{};
     auto device = item::spawn(base);
     auto& reader = *device;
@@ -1119,6 +1192,44 @@ TEST_CASE(
     CHECK(card->contents.front().get_var("CAMERA_EXTENDED_PHOTOS") == first);
 }
 
+TEST_CASE("genome_samples_reveal_monsters_in_the_reader_collection", "[digital_media][genome]") {
+    auto dummy = avatar{};
+    auto drive = item::spawn("usb_drive");
+    auto sample = item::spawn("digital_genome_sample");
+    sample->set_var("specimen_sample", "mon_black_rat");
+    sample->set_var("specimen_sample_progress", "1");
+    drive->put_in(std::move(sample));
+    auto reader = item::spawn("wrist_comp_budget");
+    reader->ammo_set(itype_id("battery"), 10);
+    CHECK(digital_monster_photos(*reader).empty());
+    CHECK_FALSE(dummy.get_known_monsters().contains(mtype_id("mon_black_rat")));
+    REQUIRE(download_digital_files(*reader, *drive, dummy) == 1);
+    CHECK(digital_monster_photos(*reader).at(mtype_id("mon_black_rat")) == -1);
+    CHECK(dummy.get_known_monsters().contains(mtype_id("mon_black_rat")));
+
+    auto album = item::spawn("digital_camera_photo_collection");
+    album->set_var("CAMERA_MONSTER_PHOTOS", ",mon_black_rat,4,");
+    reader->put_in(std::move(album));
+    CHECK(digital_monster_photos(*reader).at(mtype_id("mon_black_rat")) == 4);
+    CHECK(wipe_digital_storage(*drive));
+    CHECK(digital_monster_photos(*reader).at(mtype_id("mon_black_rat")) == 4);
+}
+
+TEST_CASE("installed_genome_samples_can_update_the_creatures_tab", "[digital_media][genome]") {
+    auto dummy = avatar{};
+    auto reader = item::spawn("wrist_comp_budget");
+    auto sample = item::spawn("digital_genome_sample");
+    sample->set_var("specimen_sample", "mon_black_rat");
+    reader->put_in(std::move(sample));
+    auto invalid = item::spawn("digital_genome_sample");
+    invalid->set_var("specimen_sample", "missing_monster");
+    reader->put_in(std::move(invalid));
+
+    record_digital_genome_samples(dummy, *reader);
+    CHECK(dummy.get_known_monsters().contains(mtype_id("mon_black_rat")));
+    CHECK_FALSE(dummy.get_known_monsters().contains(mtype_id("missing_monster")));
+}
+
 TEST_CASE(
     "legacy_genome_drives_migrate_to_copyable_sample_files", "[digital_media][genome][savegame]") {
     const auto drive_id =
@@ -1156,6 +1267,7 @@ TEST_CASE(
     auto& reader = *device;
     reader.ammo_set(itype_id("battery"), 10);
     REQUIRE(download_digital_files(reader, *drive, dummy) == 1);
+    CHECK(digital_monster_photos(reader).contains(mtype_id(specimen)));
     CHECK(download_digital_files(reader, *drive, dummy) == 0);
     drive = reload_item(*drive);
     initialize_digital_media(*drive);

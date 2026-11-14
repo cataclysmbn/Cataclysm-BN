@@ -1,8 +1,9 @@
 # Digital media
 
 Digital files are items stored inside USB drives, SD cards, hard drives, or a reader. The
-e-ink tablet, laptops, wrist computers, and smartphones provide a **Download
-data from storage media** action that copies files into internal storage.
+e-ink tablet loads books and saved text from SD cards. Laptops, wrist computers,
+and smartphones provide a **Download data from storage media** action that copies
+files into internal storage.
 **Browse digital files** offers information, study, and item actions for
 installed files. Only options supported by the selected file are shown. Each
 use action appears under its configured name; cooldown and availability details
@@ -15,6 +16,15 @@ reader must be powered. Existing destination files are retained, and the origina
 files stay on the reader. Copies preserve their entry counts, metadata, and file
 identities, including shared cooldowns. The media can then be imported onto
 another reader. Encrypted media are excluded from the destination picker.
+
+**Wipe storage media** deletes every file and legacy data record on a selected
+USB drive, SD card, or hard drive, and removes its encryption. The reader must
+support that media's port. The action asks for confirmation and leaves the
+device itself intact. Wiped media remain empty when accessed again.
+**Wipe this device's storage** deletes the reader's installed files, saved
+photos, recipe records, and monster collection. It also asks for confirmation;
+the device keeps its battery charge and storage ports.
+Digital cameras offer the same wipe action for their local photo storage.
 
 Readers connect to removable storage through `digital_reader_ports`, a comma-separated
 list matched against the storage's `digital_storage_ports`. USB drives use `USB`,
@@ -266,6 +276,11 @@ Camera photographs and monster collection entries are viewed through the
 camera or their saved camera photo collection. Viewing either kind of photo can
 improve morale, with a shared ten-minute cooldown per character. Synthetic
 digital photo albums and their morale action have been removed.
+Genome sample files copied from USB drives or SD cards onto a reader also reveal
+their specimens in the reader's monster collection. If a photo of the same
+creature is available, the collection shows its photo quality.
+Collecting a genome sample or opening its file on a reader also records that
+creature in the character's Creatures tab, as taking a photo does.
 
 ## First-pass limits
 

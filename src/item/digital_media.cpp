@@ -63,6 +63,12 @@ auto copy_digital_file(item& file, item& destination) -> bool {
 
 auto is_digital_file(const item& file) -> bool { return file.has_flag(flag_id("DIGITAL")); }
 
+auto is_digital_reading_material(const item& file) -> bool {
+    return is_digital_file(file)
+        && (file.is_book() || !file.snip_id.is_null() || !file.type->snippet_category.empty()
+            || file.has_var("description"));
+}
+
 auto digital_reader_can_access_storage(const item& reader, const item& storage) -> bool {
     namespace ranges = std::ranges;
     const auto required_ports = storage.get_var("digital_storage_ports");
@@ -130,7 +136,7 @@ auto initialize_digital_media(item& media) -> void {
     if (media.has_flag(flag_MC_MOBILE)) { media.set_flag(flag_MC_HAS_DATA); }
 }
 
-auto download_digital_files(item& reader, item& media, const Character& who) -> int {
+auto download_digital_files(item& reader, item& media, Character& who) -> int {
     if (&reader == &media || !digital_reader_ready(reader, who)
         || !digital_reader_can_access_storage(reader, media)
         || !media.has_flag(flag_id("DIGITAL_STORAGE")) || media.has_flag(flag_MC_ENCRYPTED)) {
@@ -143,7 +149,32 @@ auto download_digital_files(item& reader, item& media, const Character& who) -> 
     for (auto* file : media.contents.all_items_top()) {
         if (copy_digital_file(*file, reader)) { ++copied; }
     }
+    record_digital_genome_samples(who, reader);
     return copied;
+}
+
+auto download_digital_reading_material(item& reader, item& media, Character& who) -> int {
+    if (&reader == &media || !digital_reader_ready(reader, who)
+        || !digital_reader_can_access_storage(reader, media)
+        || !media.has_flag(flag_id("DIGITAL_STORAGE")) || media.has_flag(flag_MC_ENCRYPTED)) {
+        return 0;
+    }
+    migrate_legacy_digital_media(reader);
+    initialize_digital_media(media);
+    if (media.has_flag(flag_MC_ENCRYPTED)) { return 0; }
+    auto copied = 0;
+    for (auto* file : media.contents.all_items_top()) {
+        if (is_digital_reading_material(*file) && copy_digital_file(*file, reader)) { ++copied; }
+    }
+    return copied;
+}
+
+auto record_digital_genome_samples(Character& who, const item& storage) -> void {
+    for (const auto* file : storage.contents.all_items_top()) {
+        if (!is_digital_file(*file)) { continue; }
+        const auto id = mtype_id(file->get_var("specimen_sample"));
+        if (id.is_valid()) { who.set_knows_creature_type(id); }
+    }
 }
 
 auto is_digital_storage_media(const item& media) -> bool {
@@ -162,6 +193,26 @@ auto set_digital_media_encryption(item& media, bool encrypted) -> bool {
     } else {
         media.unset_flag(flag_MC_ENCRYPTED);
     }
+    return true;
+}
+
+auto wipe_digital_storage(item& storage) -> bool {
+    if (!storage.has_flag(flag_id("DIGITAL_STORAGE"))) { return false; }
+    migrate_legacy_digital_media(storage);
+    storage.contents.clear_items();
+    for (const auto* variable :
+         {"MC_MUSIC", "MC_PHOTOS", "MC_RECIPE", "MC_EXTENDED_PHOTOS", "MC_MONSTER_PHOTOS",
+          "EIPC_MUSIC", "EIPC_PHOTOS", "EIPC_EXTENDED_PHOTOS", "EIPC_RECIPES",
+          "EINK_MONSTER_PHOTOS", "CAMERA_EXTENDED_PHOTOS", "CAMERA_NPC_PHOTOS",
+          "CAMERA_MONSTER_PHOTOS", "CAMERA_COLLECTION_ID", "DIGITAL_SELECTED_MUSIC",
+          "specimen_sample", "specimen_sample_progress", "specimen_name"}) {
+        storage.erase_var(variable);
+    }
+    if (storage.has_var("EIPC_MUSIC_ON")) { storage.deactivate(); }
+    storage.erase_var("EIPC_MUSIC_ON");
+    storage.unset_flag(flag_MC_ENCRYPTED);
+    storage.unset_flag(flag_MC_HAS_DATA);
+    storage.set_var("DIGITAL_INITIALIZED", 1);
     return true;
 }
 
@@ -329,7 +380,10 @@ auto digital_monster_photos(const item& reader) -> std::map<mtype_id, int> {
     append(reader.get_var("EINK_MONSTER_PHOTOS"));
     append(reader.get_var("CAMERA_MONSTER_PHOTOS"));
     for (const auto* file : reader.contents.all_items_top()) {
-        if (is_digital_file(*file)) { append(file->get_var("CAMERA_MONSTER_PHOTOS")); }
+        if (!is_digital_file(*file)) { continue; }
+        append(file->get_var("CAMERA_MONSTER_PHOTOS"));
+        const auto specimen_id = mtype_id(file->get_var("specimen_sample"));
+        if (specimen_id.is_valid()) { result.try_emplace(specimen_id, -1); }
     }
     return result;
 }

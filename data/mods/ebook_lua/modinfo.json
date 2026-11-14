@@ -7,6 +7,7 @@
     "description": "Adding e-book system on tablet PC",
     "category": "content",
     "lua_api_version": 2,
+    "obsolete": true,
     "dependencies": [ "bn" ]
   }
 ]

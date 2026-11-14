@@ -21,6 +21,7 @@
     "skill_used": "electronics",
     "skills_required": [ "computer", 2 ],
     "difficulty": 2,
+    "autolearn": true,
     "time": "25 m",
     "using": [ [ "soldering_standard", 5 ] ],
     "qualities": [ { "id": "SCREW", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 } ],
