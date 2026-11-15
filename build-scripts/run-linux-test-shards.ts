@@ -62,19 +62,19 @@ const fixedShards: Shard[] = [
   {
     name: "00-vehicle-rails-basic",
     filters: ["vehicle_rail_movement_basic*"],
-    estimatedSeconds: 215,
+    estimatedSeconds: 8,
     compute: "cpu",
   },
   {
     name: "09-vehicle-rails-fork",
     filters: ["vehicle_rail_movement_fork"],
-    estimatedSeconds: 180,
+    estimatedSeconds: 5,
     compute: "cpu",
   },
   {
     name: "19-vehicle-rails-shifting",
     filters: ["vehicle_rail_movement_shifting*"],
-    estimatedSeconds: 200,
+    estimatedSeconds: 16,
     compute: "cpu",
   },
   {
@@ -84,42 +84,101 @@ const fixedShards: Shard[] = [
       "[#shadowcasting_test] ~[.]",
       "[#zlevel_visibility_cache_test] ~[.]",
     ],
-    estimatedSeconds: 250,
+    estimatedSeconds: 187,
     compute: "gpu_software",
   },
   {
     name: "21-vehicle-efficiency",
     filters: ["[#vehicle_efficiency_test] ~[.]"],
-    estimatedSeconds: 260,
+    estimatedSeconds: 12,
     compute: "cpu",
   },
   {
     name: "22-starting-items",
     filters: ["starting_items"],
-    estimatedSeconds: 220,
+    estimatedSeconds: 24,
     compute: "cpu",
   },
   {
     name: "29-vehicle-rails-other",
     filters: ["vehicle_rail_movement_derailed,vehicle_rail_movement_ramp"],
-    estimatedSeconds: 120,
+    estimatedSeconds: 18,
+    compute: "cpu",
+  },
+  // Each Lua dimension test takes 40-200 s, so they do not share one shard with the rest of catalua_test.
+  {
+    name: "23-lua-dimension",
+    filters: ["[#catalua_test] ~[slow] ~[.] lua_dimension*"],
+    estimatedSeconds: 393,
+    compute: "cpu",
+  },
+  {
+    name: "24-lua-pocket-dimension",
+    filters: ["[#catalua_test] ~[slow] ~[.] lua_pocket_dimension*"],
+    estimatedSeconds: 199,
+    compute: "cpu",
+  },
+  {
+    name: "25-lua-dimension-other",
+    filters: [
+      `[#catalua_test] ~[slow] ~[.] "*dimension*" ~"lua_dimension*" ~"lua_pocket_dimension*"`,
+    ],
+    estimatedSeconds: 371,
     compute: "cpu",
   },
 ]
 
+/** Seconds per file tag on a Windows CI runner. Unlisted tags take about 6 s. */
 const tagWeights = new Map<string, number>([
-  ["[#enchantment_test]", 350],
-  ["[#vehicle_test]", 150],
-  ["[#vehicle_ramp_test]", 100],
-  ["[#map_test]", 100],
-  ["[#crafting_test]", 120],
-  ["[#weather_test]", 80],
-  ["[#json_test]", 70],
-  ["[#overmap_test]", 55],
-  ["[#generic_factory_test]", 35],
-  ["[#catalua_test]", 30],
-  ["[#vehicle_drag_test]", 18],
+  ["[#catalua_test]", 95],
+  ["[#map_test]", 457],
+  ["[#enchantment_test]", 276],
+  ["[#crafting_test]", 135],
+  ["[#electric_grid_test]", 122],
+  ["[#digital_media_test]", 108],
+  ["[#iteminfo_test]", 94],
+  ["[#rot_test]", 88],
+  ["[#overmap_test]", 77],
+  ["[#visitable_remove_test]", 74],
+  ["[#pet_system_test]", 72],
+  ["[#book_scanning_test]", 72],
+  ["[#simulation_test]", 69],
+  ["[#cultivated_harvest_test]", 67],
+  ["[#reading_test]", 65],
+  ["[#vehicle_test]", 62],
+  ["[#char_edible_rating_test]", 59],
+  ["[#monster_test]", 57],
+  ["[#speed_test]", 56],
+  ["[#magic_spell_test]", 56],
+  ["[#monster_attack_test]", 55],
+  ["[#char_healing_test]", 55],
+  ["[#vehicle_ramp_test]", 53],
+  ["[#char_stamina_test]", 52],
+  ["[#throwing_test]", 51],
+  ["[#reload_magazine_test]", 50],
+  ["[#melee_dodge_hit_test]", 50],
+  ["[#consume_hook_test]", 49],
+  ["[#item_tname_test]", 47],
+  ["[#explosion_balance_test]", 44],
+  ["[#projectile_test]", 41],
+  ["[#iuse_test]", 41],
+  ["[#monster_grab_balance_test]", 40],
+  ["[#npc_talk_test]", 38],
+  ["[#sound_mechanics_test]", 35],
+  ["[#effective_dps_test]", 34],
+  ["[#reload_selection_test]", 34],
+  ["[#reloading_test]", 33],
+  ["[#ranged_aiming_test]", 32],
+  ["[#water_movement_test]", 30],
 ])
+
+const slowTagWeights = new Map<string, number>([
+  ["[#stomach_contents_test]", 136],
+  ["[#weather_test]", 24],
+])
+
+/** Name filters that move tests out of their file tag shard into fixed shards. */
+const tagExclusions = new Map<string, string>([["[#catalua_test]", ` ~"*dimension*"`]])
 
 const specialTagPattern =
   /^\[#(vehicle_(efficiency|rails)|vision|shadowcasting|zlevel_visibility_cache)_test\]$/
@@ -198,8 +257,12 @@ const distributeWorkItems = (items: Shard[], shardCount: number): Shard[] => {
 
 const tagWorkItem = (tag: string, prefix: "slow" | "non-slow"): Shard => ({
   name: tag,
-  filters: [prefix === "slow" ? `[slow] ~starting_items ${tag}` : `~[slow] ~[.] ${tag}`],
-  estimatedSeconds: tagWeights.get(tag) ?? 10,
+  filters: [
+    prefix === "slow"
+      ? `[slow] ~starting_items ${tag}`
+      : `~[slow] ~[.] ${tag}${tagExclusions.get(tag) ?? ""}`,
+  ],
+  estimatedSeconds: (prefix === "slow" ? slowTagWeights : tagWeights).get(tag) ?? 6,
   compute: "cpu",
 })
 

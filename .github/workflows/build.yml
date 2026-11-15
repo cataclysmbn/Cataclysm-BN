@@ -921,7 +921,7 @@ jobs:
             build-scripts/run-linux-test-shards.ts `
             --mode file-tags `
             --jobs 4 `
-            --non-slow-shards 8 `
+            --non-slow-shards 12 `
             --shard-group "${{ matrix.group }}" `
             out/build/windows-tiles-sounds-x64-msvc/tests/cata_test-tiles.exe `
             -- `
