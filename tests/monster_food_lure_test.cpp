@@ -13,6 +13,9 @@
 #include "state_helpers.h"
 #include "type_id.h"
 
+#include <algorithm>
+#include <vector>
+
 namespace {
 
 const auto effect_mon_feeding = efftype_id("mon_feeding");
@@ -108,6 +111,43 @@ TEST_CASE("wild_animal_walks_to_food_it_eats", "[monster][food_lure]") {
         const auto too_far = mon_pos + tripoint_rel_ms(food_lure::lure_radius + 1, 0, 0);
         place_food(too_far, "meat");
         CHECK(weasel.compute_plan().goal != too_far);
+    }
+}
+
+TEST_CASE("food_search_runs_once_per_period", "[monster][food_lure]") {
+    namespace ranges = std::ranges;
+    prepare_daylight_map();
+    auto& weasel = spawn_test_monster("mon_weasel", mon_pos);
+    place_food(food_pos, "meat");
+    auto critters = std::vector<monster*>{&weasel};
+    const auto finds_food = [&]() {
+        const auto tiles = food_lure::collect_lure_tiles(get_map(), critters);
+        return ranges::contains(tiles, food_pos, &food_lure::lure_tile::pos);
+    };
+
+    auto search_turns = 0;
+    for (auto i = 0; i < food_lure::search_period; ++i) {
+        const auto searching = food_lure::is_search_turn(weasel);
+        search_turns += searching ? 1 : 0;
+        CHECK(finds_food() == searching);
+        calendar::turn += 1_turns;
+    }
+    CHECK(search_turns == 1);
+
+    while (food_lure::is_search_turn(weasel)) { calendar::turn += 1_turns; }
+    SECTION("the goal it already walks toward stays known between searches") {
+        weasel.set_goal(food_pos);
+        CHECK(finds_food());
+    }
+    SECTION("the meal on its own tile stays known between searches") {
+        place_food(mon_pos, "meat");
+        const auto tiles = food_lure::collect_lure_tiles(get_map(), critters);
+        CHECK(ranges::contains(tiles, mon_pos, &food_lure::lure_tile::pos));
+    }
+    SECTION("a well fed animal does not search at all") {
+        while (!food_lure::is_search_turn(weasel)) { calendar::turn += 1_turns; }
+        weasel.add_effect(effect_well_fed, 1_hours);
+        CHECK_FALSE(finds_food());
     }
 }
 

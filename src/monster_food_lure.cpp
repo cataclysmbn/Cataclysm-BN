@@ -1,6 +1,7 @@
 #include "monster_food_lure.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <functional>
 #include <ranges>
 #include <unordered_set>
@@ -84,32 +85,50 @@ auto in_lure_reach( const monster &mon, const tripoint_bub_ms &p ) -> bool
            rl_dist( pos.xy(), p.xy() ) <= lure_radius;
 }
 
+/// Adds the comestibles on `p` to `tiles`, once per tile. Tiles without items are not hashed.
+auto append_tile( map &here, const tripoint_bub_ms &p,
+                  std::unordered_set<tripoint_bub_ms> &visited, lure_snapshot &tiles ) -> void
+{
+    if( !here.has_items( p ) || !visited.insert( p ).second ) {
+        return;
+    }
+    auto foods = std::vector<const item *> {};
+    for( const item *it : here.i_at( p ) ) {
+        if( it->is_comestible() ) {
+            foods.push_back( it );
+        }
+    }
+    if( !foods.empty() ) {
+        tiles.push_back( {
+            .pos = p,
+            .feeder = here.has_flag_furn( "PET_FEEDER", p ),
+            .foods = std::move( foods ),
+        } );
+    }
+}
+
 auto append_tiles_near( map &here, const monster &mon,
                         std::unordered_set<tripoint_bub_ms> &visited, lure_snapshot &tiles ) -> void
 {
     const auto levels = lure_levels( mon );
     const auto pos = mon.bub_pos();
+    // Pets only eat from feeders, so tiles without furniture hold nothing for them.
+    const auto feeders_only = mon.friendly != 0;
     for( auto z = levels.highest; z >= levels.lowest; --z ) {
         const auto center = tripoint_bub_ms( pos.xy(), z );
         for( const auto &p : here.points_in_radius( center, lure_radius ) ) {
-            if( !visited.insert( p ).second || !here.has_items( p ) ) {
+            if( feeders_only && !here.has_furn( p ) ) {
                 continue;
             }
-            auto foods = std::vector<const item *> {};
-            for( const item *it : here.i_at( p ) ) {
-                if( it->is_comestible() ) {
-                    foods.push_back( it );
-                }
-            }
-            if( !foods.empty() ) {
-                tiles.push_back( {
-                    .pos = p,
-                    .feeder = here.has_flag_furn( "PET_FEEDER", p ),
-                    .foods = std::move( foods ),
-                } );
-            }
+            append_tile( here, p, visited, tiles );
         }
     }
+}
+
+/// Whether a search can give the monster a food goal at all.
+auto is_hungry_seeker( const monster &mon ) -> bool
+{
+    return seeks_food( mon ) && !mon.has_effect( effect_well_fed );
 }
 
 auto is_held_pet_food( const mtype &type, const item &held ) -> bool
@@ -151,9 +170,16 @@ auto collect_lure_tiles( map &here, std::span<monster *const> critters ) -> lure
 {
     auto visited = std::unordered_set<tripoint_bub_ms> {};
     auto tiles = lure_snapshot{};
-    for( const auto *critter : critters ) {
-        if( critter != nullptr && !critter->is_dead() && seeks_food( *critter ) ) {
+    for( auto *critter : critters ) {
+        if( critter == nullptr || critter->is_dead() || !is_hungry_seeker( *critter ) ) {
+            continue;
+        }
+        if( is_search_turn( *critter ) ) {
             append_tiles_near( here, *critter, visited, tiles );
+        } else {
+            // Between searches only the meal underfoot and the remembered goal matter.
+            append_tile( here, critter->bub_pos(), visited, tiles );
+            append_tile( here, critter->move_target(), visited, tiles );
         }
     }
     return tiles;
@@ -163,10 +189,18 @@ auto collect_lure_tiles_near( map &here, const monster &mon ) -> lure_snapshot
 {
     auto visited = std::unordered_set<tripoint_bub_ms> {};
     auto tiles = lure_snapshot{};
-    if( seeks_food( mon ) ) {
+    if( is_hungry_seeker( mon ) ) {
         append_tiles_near( here, mon, visited, tiles );
     }
     return tiles;
+}
+
+auto is_search_turn( const monster &mon ) -> bool
+{
+    // The address spreads the monsters over the period, so they do not all search on one turn.
+    const auto offset = static_cast<int>( ( reinterpret_cast<std::uintptr_t>( &mon ) >> 6 ) %
+                                          search_period );
+    return ( to_turn<int>( calendar::turn ) + offset ) % search_period == 0;
 }
 
 auto wants_food( const monster &mon, const item &food, const bool on_feeder ) -> bool
@@ -181,12 +215,12 @@ auto is_lured_by_held_food( const monster &mon, const Character &who ) -> bool
 {
     namespace ranges = std::ranges;
     if( !is_domestic( *mon.type ) || mon.is_hallucination() ||
-        rl_dist( mon.bub_pos(), who.bub_pos() ) > lure_radius ||
-        !accepts_tamer( *mon.type, who ) ) {
+        rl_dist( mon.bub_pos(), who.bub_pos() ) > lure_radius ) {
         return false;
     }
+    // Most of the time nothing is held, so the cheapest test goes first.
     const auto is_lure = [&]( const item * held ) { return is_held_pet_food( *mon.type, *held ); };
-    return ranges::any_of( who.wielded_items(), is_lure ) &&
+    return ranges::any_of( who.wielded_items(), is_lure ) && accepts_tamer( *mon.type, who ) &&
            mon.attitude( &who ) != MATT_ATTACK && mon.sees( who );
 }
 
@@ -199,7 +233,10 @@ auto pick_lure_goal( const lure_goal_query &query ) -> std::optional<tripoint_bu
 
     auto food_tiles = std::vector<tripoint_bub_ms> {};
     if( !mon.has_effect( effect_well_fed ) ) {
-        const auto in_reach = [&]( const lure_tile & t ) { return in_lure_reach( mon, t.pos ); };
+        const auto in_reach = [&]( const lure_tile & t ) {
+            return ( query.full_search || t.pos == pos || t.pos == query.current_goal ) &&
+                   in_lure_reach( mon, t.pos );
+        };
         const auto has_wanted = [&]( const lure_tile & t ) {
             const auto wanted = [&]( const item * f ) { return wants_food( mon, *f, t.feeder ); };
             return ranges::any_of( t.foods, wanted );
@@ -218,9 +255,18 @@ auto pick_lure_goal( const lure_goal_query &query ) -> std::optional<tripoint_bu
     if( query.lured_by_player ) {
         return rl_dist( pos, query.player_pos ) <= 1 ? pos : query.player_pos;
     }
+    if( food_tiles.empty() ) {
+        return std::nullopt;
+    }
+    if( !query.full_search ) {
+        // Only the remembered goal is left, which the monster saw on its search turn.
+        return food_tiles.front();
+    }
+    // Food behind walls must not cost a line of sight check per tile.
+    const auto nearest = food_tiles | take( max_sight_checks );
     const auto seen = [&]( const tripoint_bub_ms & p ) { return mon.sees( p ); };
-    const auto visible = ranges::find_if( food_tiles, seen );
-    if( visible == food_tiles.end() ) {
+    const auto visible = ranges::find_if( nearest, seen );
+    if( visible == nearest.end() ) {
         return std::nullopt;
     }
     return *visible;
@@ -241,9 +287,12 @@ auto process_feeding( monster &mon ) -> bool
     if( !seeks_food( mon ) ) {
         return false;
     }
+    const auto feeding = mon.has_effect( effect_mon_feeding );
+    if( !feeding && ( mon.has_effect( effect_well_fed ) || !mon.is_wandering() ) ) {
+        return false;
+    }
     const auto *food = find_wanted_food_at( mon, mon.bub_pos() );
-    const auto seen = g->u.sees( mon );
-    if( mon.has_effect( effect_mon_feeding ) ) {
+    if( feeding ) {
         // Fleeing, chasing or being led away leaves the meal unfinished.
         if( food == nullptr || !mon.is_wandering() ) {
             mon.remove_effect( effect_mon_feeding );
@@ -253,7 +302,7 @@ auto process_feeding( monster &mon ) -> bool
         if( calendar::turn - started < feeding_time ) {
             return true;
         }
-        if( seen ) {
+        if( g->u.sees( mon ) ) {
             add_msg( _( "The %1$s finishes eating the %2$s." ), mon.name(), food->tname() );
         }
         eat_one( mon.bub_pos(), *food );
@@ -261,10 +310,10 @@ auto process_feeding( monster &mon ) -> bool
         mon.add_effect( effect_well_fed, well_fed_duration );
         return true;
     }
-    if( food == nullptr || mon.has_effect( effect_well_fed ) || !mon.is_wandering() ) {
+    if( food == nullptr ) {
         return false;
     }
-    if( seen ) {
+    if( g->u.sees( mon ) ) {
         add_msg( _( "The %1$s starts eating the %2$s." ), mon.name(), food->tname() );
     }
     // Margin so that the effect cannot run out before the meal completes.

@@ -1008,6 +1008,8 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
                 .tiles = ctx.lure_tiles != nullptr ? *ctx.lure_tiles : local_tiles,
                 .lured_by_player = lured_by_player,
                 .player_pos = g->u.bub_pos(),
+                .current_goal = goal,
+                .full_search = ctx.lure_tiles == nullptr || food_lure::is_search_turn( *this ),
             } );
             if( lure_goal ) {
                 local_goal = *lure_goal;

@@ -19,6 +19,11 @@ namespace food_lure
 /// Upper bound on the horizontal distance at which a monster notices lure food. Sight decides
 /// the actual distance; this caps the per-turn tile scan.
 inline constexpr auto lure_radius = 16;
+/// A monster scans its surroundings for food once per this many turns. In between it only
+/// checks its own tile and the food tile it already walks toward.
+inline constexpr auto search_period = 6;
+/// Line of sight is tested for at most this many of the nearest food tiles per search.
+inline constexpr auto max_sight_checks = 8;
 /// Time a monster spends eating one unit of food before it becomes well fed.
 inline constexpr auto feeding_time = 1_minutes;
 /// Duration of the well fed effect granted by any meal.
@@ -51,10 +56,14 @@ auto accepts_tamer( const mtype &type, const Character &tamer ) -> bool;
 /// Whether the monster can be drawn to food at all.
 auto seeks_food( const monster &mon ) -> bool;
 
-/// Collects comestible tiles around every monster in `critters` that seeks food.
+/// Whether the monster scans its surroundings for food on the current turn.
+auto is_search_turn( const monster &mon ) -> bool;
+
+/// Collects comestible tiles for every hungry monster in `critters` that seeks food: the full
+/// surroundings on its search turn, otherwise only its own tile and its current goal.
 auto collect_lure_tiles( map &here, std::span<monster *const> critters ) -> lure_snapshot;
 
-/// Collects comestible tiles around a single monster.
+/// Collects comestible tiles around a single monster, regardless of the search turn.
 auto collect_lure_tiles_near( map &here, const monster &mon ) -> lure_snapshot;
 
 /// Whether `mon` eats `food`. Pets only eat pet food lying on a `PET_FEEDER`.
@@ -69,6 +78,11 @@ struct lure_goal_query {
     /// Result of is_lured_by_held_food() for the avatar.
     bool lured_by_player = false;
     tripoint_bub_ms player_pos;
+    /// Where the monster currently heads; kept as the goal between searches while food is there.
+    tripoint_bub_ms current_goal;
+    /// Whether `tiles` covers the surroundings. When false, only the monster's own tile and
+    /// `current_goal` are considered.
+    bool full_search = true;
 };
 
 /// Where food draws the monster: its own food tile first, then a holder of pet food, then the
