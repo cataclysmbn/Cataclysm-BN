@@ -6,54 +6,41 @@
 #include "item.h"
 #include "item_category.h"
 #include "itype.h"
+#include "locations.h"
 #include "map/map.h"
 #include "material.h"
 #include "options.h"
 #include "rng.h"
 #include "rot.h"
+#include "rot/rot_calculation.h"
 #include "units_temperature.h"
 #include "weather/weather.h"
 #include "weather/weather_gen.h"
 
 #include <algorithm>
+#include <limits>
+#include <optional>
+#include <typeinfo>
 
 namespace {
 
 const auto itemcat_drugs = item_category_id("drugs");
 const auto itemcat_food = item_category_id("food");
 
+/// Perishability is intrinsic: neither processing nor ingredient ownership changes it.
+auto shelf_life_of(const item& value) -> std::optional<rot::shelf_life> {
+    if (value.is_corpse() ? !value.made_of_any(materials::get_rotting()) : !value.is_food()) {
+        return std::nullopt;
+    }
+    return rot::shelf_life::from_duration(
+        value.is_food() ? value.get_comestible()->spoils : 24_hours);
+}
+
 } // namespace
 
-namespace item_internal {
-auto goes_bad_temp_cache = false;
-const item* goes_bad_temp_cache_for = nullptr;
-inline auto goes_bad_cache_fetch() -> bool { return goes_bad_temp_cache; }
-inline auto goes_bad_cache_set(const item* i) -> void {
-    goes_bad_temp_cache = i->goes_bad();
-    goes_bad_temp_cache_for = i;
-}
-inline auto goes_bad_cache_unset() -> void {
-    goes_bad_temp_cache = false;
-    goes_bad_temp_cache_for = nullptr;
-}
-inline auto goes_bad_cache_is_for(const item* i) -> bool { return goes_bad_temp_cache_for == i; }
-
-struct scoped_goes_bad_cache {
-    scoped_goes_bad_cache(item* i) { goes_bad_cache_set(i); }
-    ~scoped_goes_bad_cache() { goes_bad_cache_unset(); }
-};
-} // namespace item_internal
-
 auto item::goes_bad() const -> bool {
-    if (item_internal::goes_bad_cache_is_for(this)) {
-        return item_internal::goes_bad_cache_fetch();
-    }
-    if (has_flag(flag_PROCESSING)) { return false; }
-    if (is_corpse()) {
-        // Corpses rot only if they are made of rotting materials
-        return made_of_any(materials::get_rotting());
-    }
-    return is_food() && get_comestible()->spoils != 0_turns;
+    // Preserve this legacy processing predicate; shelf_life_of describes capability.
+    return !has_flag(flag_PROCESSING) && shelf_life_of(*this).has_value();
 }
 
 auto item::goes_bad_after_opening(bool strict) const -> bool {
@@ -73,7 +60,7 @@ auto item::goes_bad_after_opening(bool strict) const -> bool {
 }
 
 auto item::is_in_preserving_container() const -> bool {
-    for (const item* parent = parent_item(); parent != nullptr; parent = parent->parent_item()) {
+    for (const auto* parent = parent_item(); parent != nullptr; parent = parent->parent_item()) {
         if (parent->type && parent->type->container && parent->type->container->preserves) {
             return true;
         }
@@ -82,7 +69,7 @@ auto item::is_in_preserving_container() const -> bool {
 }
 
 auto item::is_in_sealing_container() const -> bool {
-    for (const item* parent = parent_item(); parent != nullptr; parent = parent->parent_item()) {
+    for (const auto* parent = parent_item(); parent != nullptr; parent = parent->parent_item()) {
         if (parent->type && parent->type->container && parent->type->container->seals) {
             return true;
         }
@@ -92,49 +79,114 @@ auto item::is_in_sealing_container() const -> bool {
 
 auto item::mark_rot_checked_now() -> void { last_rot_check = calendar::turn; }
 
-auto item::get_shelf_life() const -> time_duration {
-    if (goes_bad()) {
-        if (is_food()) {
-            return get_comestible()->spoils;
-        } else if (is_corpse()) {
-            return 24_hours;
+item::scoped_component_rot::scoped_component_rot(item* value, component_rot_state state)
+    : target(state == component_rot_state::none ? nullptr : value) {
+    if (target) { target->borrowed_rot_state = state; }
+}
+
+item::scoped_component_rot::~scoped_component_rot() {
+    if (target) { target->borrowed_rot_state = component_rot_state::none; }
+}
+
+auto item::component_rot_status() const -> component_rot_state {
+    auto state = component_rot_state::none;
+    for (const auto* value = this; value != nullptr;) {
+        if (value->borrowed_rot_state != component_rot_state::none && !value->has_position()) {
+            if (value->borrowed_rot_state == component_rot_state::snapshot) {
+                return component_rot_state::snapshot;
+            }
+            state = component_rot_state::live;
         }
+        // One cast per ancestor: this runs for every rot read on the processing hot path.
+        const auto* const container = dynamic_cast<const contents_item_location*>(
+            value->loc ? value->loc : value->saved_loc);
+        const auto* const parent = container ? container->parent() : nullptr;
+        if (parent && typeid(*container) == typeid(component_item_location)) {
+            if (!parent->is_craft()) { return component_rot_state::snapshot; }
+            state = component_rot_state::live;
+        }
+        value = parent;
     }
-    return 0_turns;
+    return state;
+}
+
+auto item::rot_is_suspended() const -> bool {
+    return has_flag(flag_PROCESSING) || component_rot_status() == component_rot_state::snapshot;
+}
+
+auto item::restart_rot_after_snapshot() -> void {
+    mark_rot_checked_now();
+    // Processing flags in a completed record describe history, not a running machine.
+    unset_flag(flag_PROCESSING);
+    // Contents become live together.  Separate component records remain snapshots.
+    for (auto* content : contents.all_items_ptr()) {
+        content->mark_rot_checked_now();
+        content->unset_flag(flag_PROCESSING);
+    }
+}
+
+auto item::copy_rot_from(const item& source) -> void {
+    rot = source.rot;
+    last_rot_check = source.last_rot_check;
+    if (source.component_rot_status() == component_rot_state::snapshot) {
+        mark_rot_checked_now();
+        unset_flag(flag_PROCESSING);
+    }
+}
+
+auto item::get_shelf_life() const -> time_duration {
+    const auto lifetime = shelf_life_of(*this);
+    return lifetime ? lifetime->duration() : 0_turns;
 }
 
 auto item::get_relative_rot() const -> double {
-    // Components are frozen in time, when they are returned they are new items
-    if (has_flag(flag_id("COMPONENT"))) { return rot / get_shelf_life(); }
-    if (goes_bad()) {
+    const auto lifetime = shelf_life_of(*this);
+    if (!lifetime) { return 0.0; }
+    const auto state = component_rot_status();
+    // Retain the old getter-only behavior for loose legacy COMPONENT flags, but
+    // in-progress craft materials are live even if add_component applied that flag.
+    const auto legacy_record = state == component_rot_state::none && has_flag(flag_id("COMPONENT"));
+    if (state != component_rot_state::snapshot && !legacy_record) {
         const_cast<item*>(this)->update_rot_from_location(temperature_flag::TEMP_NORMAL);
-        return rot / get_shelf_life();
     }
-    return 0;
+    return lifetime->relative_rot(rot);
 }
 
+auto item::is_fresh() const -> bool { return goes_bad() && get_relative_rot() < 0.1; }
+
+auto item::is_going_bad() const -> bool { return get_relative_rot() > 0.9; }
+
+auto item::rotten() const -> bool { return get_relative_rot() > 1.0; }
+
+auto item::get_rot() const -> time_duration {
+    const_cast<item*>(this)->update_rot_from_location(temperature_flag::TEMP_NORMAL);
+    return rot;
+}
+
+auto item::mod_rot(const time_duration& val) -> void { rot = rot::accumulate(rot, val); }
+
 auto item::set_relative_rot(double val) -> void {
-    if (goes_bad()) {
-        rot = get_shelf_life() * val;
-        // calc_rot uses last_rot_check (when it's not turn_zero) instead of bday.
-        // this makes sure the rotting starts from now, not from bday.
-        // if this item is the result of smoking or milling don't do this, we want to start from
-        // bday.
-        if (!has_flag(flag_PROCESSING_RESULT)) { last_rot_check = calendar::turn; }
+    const auto lifetime = shelf_life_of(*this);
+    if (!lifetime || has_flag(flag_PROCESSING)) { return; }
+    const auto value = lifetime->from_relative(val);
+    if (!value) {
+        debugmsg("Invalid relative rot: %g", val);
+        return;
     }
+    rot = *value;
+    // Processing results start at their production time, not at inspection time.
+    if (!has_flag(flag_PROCESSING_RESULT)) { mark_rot_checked_now(); }
 }
 
 auto item::set_rot(time_duration val) -> void { rot = val; }
 
 auto item::spoilage_sort_order() const -> int {
-    const item* subject;
+    const auto* subject = this;
     constexpr auto bottom = std::numeric_limits<int>::max();
 
     if (type->container && !contents.empty()) {
         if (type->container->preserves) { return bottom - 3; }
         subject = &contents.front();
-    } else {
-        subject = this;
     }
 
     if (subject->goes_bad()) { return to_turns<int>(subject->get_shelf_life() - subject->rot); }
@@ -152,30 +204,58 @@ auto item::spoilage_sort_order() const -> int {
 }
 
 auto item::calc_rot(time_point time, const units::temperature temp) const -> time_duration {
-    // Avoid needlessly calculating already rotten things.  Corpses should
-    // always rot away and food rots away at twice the shelf life.  If the food
-    // is in a sealed container they won't rot away, this avoids needlessly
-    // calculating their rot in that case.
-    if (!is_corpse() && get_shelf_life() != 0_turns && rot / get_shelf_life() > 2.0) {
-        return 0_seconds;
-    }
+    const auto lifetime = shelf_life_of(*this);
+    if (!lifetime || rot_is_suspended() || is_in_preserving_container()) { return 0_turns; }
+    return calc_rot_interval(time, temp, *lifetime);
+}
 
-    // rot modifier
-    auto factor = get_option<float>("ROT_RATE");
-    if (is_corpse() && has_flag(flag_FIELD_DRESS)) { factor *= 0.75f; }
-
-    auto added_rot = 0_seconds;
-    // simulation of different age of food at the start of the game and good/bad storage
-    // conditions by applying starting variation bonus/penalty of +/- 20% of base shelf-life
-    // positive = food was produced some time before calendar::start and/or bad storage
-    // negative = food was stored in good conditions before calendar::start
+auto item::calc_rot_interval(
+    time_point time, units::temperature temp, const rot::shelf_life& lifetime) const
+    -> time_duration {
+    // Sealed food past twice its shelf life needs no further aging; corpses do.
+    if (!is_corpse() && lifetime.relative_rot(rot) > 2.0) { return 0_turns; }
+    auto variation = 0_turns;
+    // Preserve the first-update RNG draw and its +/-20% starting freshness range.
     if (last_rot_check <= calendar::start_of_cataclysm) {
-        const auto spoil_variation = get_shelf_life() * 0.2f;
-        added_rot += rng(-spoil_variation, spoil_variation);
+        const auto bound = lifetime.duration() * 0.2f;
+        variation = rng(-bound, bound);
     }
-    const auto time_delta = time - last_rot_check;
-    added_rot += factor * time_delta / 1_hours * get_hourly_rotpoints_at_temp(temp) * 1_turns;
-    return added_rot;
+    return rot::increment({
+        .elapsed = time - last_rot_check,
+        .temperature = temp,
+        .rate = get_option<float>("ROT_RATE"),
+        .field_dressed_corpse = is_corpse() && has_flag(flag_FIELD_DRESS),
+        .initial_variation = variation,
+    });
+}
+
+namespace {
+
+auto temperature_flag_to_highest_temperature(temperature_flag temperature) -> units::temperature {
+    switch (temperature) {
+        case temperature_flag::TEMP_NORMAL:
+        case temperature_flag::TEMP_HEATER:
+            return units::temperature_max;
+        case temperature_flag::TEMP_FRIDGE:
+            return temperatures::fridge;
+        case temperature_flag::TEMP_FREEZER:
+            return temperatures::freezer;
+        case temperature_flag::TEMP_ROOT_CELLAR:
+            return temperatures::root_cellar;
+    }
+
+    return units::temperature_max;
+}
+
+} // namespace
+
+
+auto item::minimum_freshness_duration(temperature_flag temperature) const -> time_duration {
+    if (is_in_preserving_container()) { return calendar::INDEFINITELY_LONG_DURATION; }
+    const auto lifetime = shelf_life_of(*this);
+    if (!lifetime || !type->comestible) { return calendar::INDEFINITELY_LONG_DURATION; }
+    return lifetime->minimum_freshness(
+        rot, temperature_flag_to_highest_temperature(temperature), get_option<float>("ROT_RATE"));
 }
 
 auto item::mod_last_rot_check(time_duration processing_duration) -> void {
@@ -189,6 +269,7 @@ auto item::mod_last_rot_check(time_duration processing_duration) -> void {
 }
 
 auto item::has_rotten_away() const -> bool {
+    if (!shelf_life_of(*this)) { return false; }
     if (is_corpse() && !can_revive()) {
         return get_rot() > 10_days;
     } else {
@@ -199,6 +280,8 @@ auto item::has_rotten_away() const -> bool {
 auto item::process_rot(detached_ptr<item>&& self, const absolute_rot_process_options& options)
     -> detached_ptr<item> {
     if (!self) { return std::move(self); }
+    const auto lifetime = shelf_life_of(*self);
+    if (!lifetime || self->rot_is_suspended()) { return std::move(self); }
     if (self->is_in_preserving_container()) {
         self->mark_rot_checked_now();
         return std::move(self);
@@ -210,8 +293,7 @@ auto item::process_rot(detached_ptr<item>&& self, const absolute_rot_process_opt
     if (self->is_corpse() && !self->can_revive()) {
         rotted_away = self->rot > 10_days;
     } else {
-        const auto shelf_life = self->get_shelf_life();
-        rotted_away = self->is_food() && shelf_life != 0_turns && self->rot / shelf_life > 2.0;
+        rotted_away = self->is_food() && lifetime->relative_rot(self->rot) > 2.0;
     }
     if (rotted_away && options.carrier == nullptr && !options.seals) {
         return detached_ptr<item>();
@@ -225,7 +307,9 @@ auto item::process_rot(detached_ptr<item>&& self, const tripoint_bub_ms& pos)
         std::move(self), false, pos, nullptr, temperature_flag::TEMP_NORMAL, get_weather());
 }
 
-static auto clip_by_temperature_flag(units::temperature temperature, temperature_flag flag)
+namespace {
+
+auto clip_by_temperature_flag(units::temperature temperature, temperature_flag flag)
     -> units::temperature {
     switch (flag) {
         case temperature_flag::TEMP_NORMAL:
@@ -246,8 +330,6 @@ static auto clip_by_temperature_flag(units::temperature temperature, temperature
     }
     return temperature;
 }
-
-namespace {
 
 struct rot_location {
     tripoint_bub_ms pos;
@@ -276,7 +358,10 @@ auto item::rot_temperature(const temperature_flag fallback) const -> units::temp
 }
 
 auto item::update_rot_from_location(const temperature_flag temperature) -> void {
-    if (!goes_bad() || last_rot_check == calendar::turn) { return; }
+    if (!goes_bad() || last_rot_check == calendar::turn
+        || component_rot_status() == component_rot_state::snapshot) {
+        return;
+    }
     if (is_in_preserving_container()) {
         mark_rot_checked_now();
         return;
@@ -293,11 +378,18 @@ auto item::update_rot(
         .position = bub_to_abs(pos),
         .temperature = flag,
         .weather = &weather,
-        .local_temperature = g != nullptr && !g->new_game ? get_map().get_temperature(pos) : 0,
+        // bub_to_abs above already requires a live game/avatar.
+        .local_temperature = !g->new_game ? get_map().get_temperature(pos) : 0,
     });
 }
 
 auto item::update_rot(const rot_context& context) -> void {
+    const auto lifetime = shelf_life_of(*this);
+    if (!lifetime || rot_is_suspended()) { return; }
+    if (is_in_preserving_container()) {
+        mark_rot_checked_now();
+        return;
+    }
     const auto now = calendar::turn;
 
     // if player debug menu'd the time backward it breaks stuff, just reset the
@@ -315,17 +407,16 @@ auto item::update_rot(const rot_context& context) -> void {
     const auto temp = current_rot_temperature(context);
 
     auto time = last_rot_check;
-    item_internal::scoped_goes_bad_cache _cache(this);
 
     if (now - time > 1_hours) {
         // This code is for items that were left out of reality bubble for long time
 
         const auto& wgen = weather.get_cur_weather_gen();
-        const auto seed = g != nullptr ? g->get_seed() : 0;
+        // get_cur_weather_gen() above requires a live game.
+        const auto seed = g->get_seed();
         // It's a modifier, so we need to subtract 0_f
         const auto local_mod =
-            units::from_fahrenheit(g != nullptr && g->new_game ? 0 : context.local_temperature)
-            - 0_f;
+            units::from_fahrenheit(g->new_game ? 0 : context.local_temperature) - 0_f;
 
         // Process the past of this item since the last time it was processed
         while (now - time > 1_hours) {
@@ -346,7 +437,7 @@ auto item::update_rot(const rot_context& context) -> void {
                 clip_by_temperature_flag(env_temperature_raw, context.temperature);
 
             // Calculate item rot
-            rot += calc_rot(time, env_temperature_clipped);
+            rot = rot::accumulate(rot, calc_rot_interval(time, env_temperature_clipped, *lifetime));
             last_rot_check = time;
         }
     }
@@ -354,7 +445,7 @@ auto item::update_rot(const rot_context& context) -> void {
     // Remaining <1 h from above
     // and items that are held near the player
     if (now - time > smallest_interval) {
-        rot += calc_rot(now, temp);
+        rot = rot::accumulate(rot, calc_rot_interval(now, temp, *lifetime));
         last_rot_check = now;
     }
 }
