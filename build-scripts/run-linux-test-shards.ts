@@ -233,7 +233,7 @@ const ensureFilenameTags = (testOpts: string[]): string[] =>
   testOpts.includes("--filenames-as-tags") ? testOpts : ["--filenames-as-tags", ...testOpts]
 
 export const extractFileTags = (text: string): string[] =>
-  [...text.matchAll(/\[#.*?_test\]/g)].map((match) => match[0]).toSorted()
+  [...text.matchAll(/\[#[^\]]+\]/g)].map((match) => match[0]).toSorted()
     .filter((tag, index, tags) => index === 0 || tag !== tags[index - 1])
 
 const distributeWorkItems = (items: Shard[], shardCount: number): Shard[] => {
@@ -446,7 +446,11 @@ const run = async (options: Options): Promise<number> => {
 }
 
 Deno.test("extractFileTags returns sorted unique file tags", () => {
-  assertEquals(extractFileTags("x [#b_test] [foo] [#a_test] [#b_test]"), ["[#a_test]", "[#b_test]"])
+  assertEquals(extractFileTags("x [#b_test] [foo] [#a_test] [#data_vars] [#b_test]"), [
+    "[#a_test]",
+    "[#b_test]",
+    "[#data_vars]",
+  ])
 })
 
 Deno.test("buildShardPlan keeps visibility out of CPU shards", () => {
