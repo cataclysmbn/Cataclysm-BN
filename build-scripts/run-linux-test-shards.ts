@@ -9,7 +9,7 @@
  */
 
 import { Command } from "@cliffy/command"
-import { assertEquals } from "@std/assert"
+import { assertEquals, assertThrows } from "@std/assert"
 import { pooledMap } from "@std/async"
 import { emptyDir, ensureDir } from "@std/fs"
 import { basename, join } from "@std/path"
@@ -21,6 +21,7 @@ type Options = {
   jobs: number | "auto"
   slowShards: number
   nonSlowShards: number | "auto"
+  shardGroup: ShardGroup
   dryRun: boolean
   testBin: string
   testOpts: string[]
@@ -31,6 +32,12 @@ type Shard = {
   filters: string[]
   estimatedSeconds: number
   compute: "cpu" | "gpu_software"
+}
+
+/** One of `count` CI jobs that split the shards; `index` starts at 1. */
+type ShardGroup = {
+  index: number
+  count: number
 }
 
 type CommandResult = {
@@ -222,6 +229,25 @@ export const buildShardPlan = (
   ].toSorted((a, b) => b.estimatedSeconds - a.estimatedSeconds || a.name.localeCompare(b.name))
 }
 
+export const parseShardGroup = (value: string): ShardGroup => {
+  const match = /^([1-9][0-9]*)\/([1-9][0-9]*)$/.exec(value)
+  const group = match && { index: Number(match[1]), count: Number(match[2]) }
+  if (!group || group.index > group.count) {
+    throw new Error(`--shard-group must be i/n with 1 <= i <= n: ${value}`)
+  }
+  return group
+}
+
+/** Gives each shard, heaviest first, to the group with the least estimated time. */
+export const selectShardGroup = (shards: Shard[], { index, count }: ShardGroup): Shard[] => {
+  const loads = Array.from({ length: count }, () => 0)
+  return shards.filter((shard) => {
+    const target = loads.indexOf(Math.min(...loads))
+    loads[target] += shard.estimatedSeconds
+    return target === index - 1
+  })
+}
+
 const prepareShardDir = async (): Promise<{ path: string; cleanup: () => Promise<void> }> => {
   const configured = Deno.env.get("CATA_TEST_SHARD_DIR")
   if (configured) {
@@ -330,7 +356,10 @@ const run = async (options: Options): Promise<number> => {
     }
 
     const { allTags, slowTags, testOpts } = await discoverTags(parsed, shardDir.path)
-    const shards = buildShardPlan(allTags, slowTags, parsed.nonSlowShards, parsed.slowShards)
+    const shards = selectShardGroup(
+      buildShardPlan(allTags, slowTags, parsed.nonSlowShards, parsed.slowShards),
+      parsed.shardGroup,
+    )
     await writeShardFiles(shardDir.path, shards)
     if (parsed.dryRun) {
       for (const shard of shards.toSorted((a, b) => a.name.localeCompare(b.name))) {
@@ -372,6 +401,22 @@ Deno.test("buildShardPlan keeps visibility on its GPU shard", () => {
   assertEquals(visibility?.compute, "gpu_software")
 })
 
+Deno.test("selectShardGroup gives every shard to exactly one group", () => {
+  const shards = buildShardPlan(["[#enchantment_test]", "[#map_test]", "[#tiny_test]"], [], 6, 1)
+  const groups = [1, 2, 3].map((index) => selectShardGroup(shards, { index, count: 3 }))
+  assertEquals(
+    groups.flat().map((shard) => shard.name).toSorted(),
+    shards.map((s) => s.name).toSorted(),
+  )
+  assertEquals(groups.every((group) => group.length > 0), true)
+})
+
+Deno.test("parseShardGroup rejects an index above the group count", () => {
+  assertEquals(parseShardGroup("2/3"), { index: 2, count: 3 })
+  assertThrows(() => parseShardGroup("4/3"))
+  assertThrows(() => parseShardGroup("0/3"))
+})
+
 if (import.meta.main) {
   try {
     const { options, args, literal } = await new Command()
@@ -382,6 +427,9 @@ if (import.meta.main) {
       .option("--slow-shards <slowShards:string>", "accepted for compatibility", { default: "4" })
       .option("--non-slow-shards <nonSlowShards:string>", "generated CPU shards, or auto", {
         default: "auto",
+      })
+      .option("--shard-group <shardGroup:string>", "run only group i of n, for example 2/3", {
+        default: "1/1",
       })
       .option("--dry-run", "print shard filters without running tests")
       .arguments("[testBin:string] [...testOpts:string]")
@@ -400,6 +448,7 @@ if (import.meta.main) {
         jobs,
         slowShards: parsePositiveInt("--slow-shards", options.slowShards),
         nonSlowShards,
+        shardGroup: parseShardGroup(options.shardGroup),
         dryRun: Boolean(options.dryRun),
         testBin: args[0] ?? defaultTestBin,
         testOpts: testOpts.length > 0 ? testOpts : defaultTestOpts,

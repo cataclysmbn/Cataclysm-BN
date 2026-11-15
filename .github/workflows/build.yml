@@ -60,10 +60,15 @@ on:
         type: boolean
         default: true
       run-tests:
-        description: "Build and run tests when supported by the selected platform"
+        description: "Build tests when supported by the selected platform"
         required: false
         type: boolean
         default: false
+      windows-test-groups:
+        description: "Run Windows tests in one job per group, as JSON: [\"1/3\", \"2/3\", \"3/3\"]. Needs run-tests and a Windows-only matrix-json."
+        required: false
+        type: string
+        default: "[]"
       android-localize:
         description: "Build Android assets with localization"
         required: false
@@ -117,7 +122,8 @@ jobs:
       - name: Upload generated shaders
         uses: actions/upload-artifact@v4
         with:
-          name: generated-shaders
+          # A caller can use this workflow more than once in one run.
+          name: generated-shaders-${{ fromJSON(inputs.matrix-json)[0].artifact }}
           path: data/shaders/
           if-no-files-found: error
 
@@ -138,7 +144,7 @@ jobs:
       - name: Download generated shaders
         uses: actions/download-artifact@v4
         with:
-          name: generated-shaders
+          name: generated-shaders-${{ fromJSON(inputs.matrix-json)[0].artifact }}
           path: data/shaders
 
       - name: Download translation artifacts
@@ -867,39 +873,59 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
 
-      - name: Run sharded tests (desktop)
-        if: inputs.run-tests && (runner.os == 'Windows' || (runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')))
+      - name: Upload test executable (windows msvc)
+        if: runner.os == 'Windows' && inputs.run-tests && inputs.windows-test-groups != '[]'
+        uses: actions/upload-artifact@v4
+        with:
+          name: cata-test-${{ matrix.artifact }}
+          path: |
+            out/build/windows-tiles-sounds-x64-msvc/tests/cata_test-tiles.exe
+            out/build/windows-tiles-sounds-x64-msvc/tests/cata_test-tiles.pdb
+            out/build/windows-tiles-sounds-x64-msvc/tests/mesa/
+          if-no-files-found: error
+          retention-days: 1
+
+  # Split Windows tests over several runners. One runner takes about 16 min for all shards.
+  windows-tests:
+    needs: builds
+    if: inputs.run-tests && inputs.windows-test-groups != '[]'
+    strategy:
+      fail-fast: false
+      matrix:
+        group: ${{ fromJSON(inputs.windows-test-groups) }}
+    name: ${{ fromJSON(inputs.matrix-json)[0].name }} tests ${{ matrix.group }}
+    runs-on: ${{ fromJSON(inputs.matrix-json)[0].os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.checkout-ref }}
+
+      - name: Download generated shaders
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-shaders-${{ fromJSON(inputs.matrix-json)[0].artifact }}
+          path: data/shaders
+
+      - name: Download test executable
+        uses: actions/download-artifact@v4
+        with:
+          name: cata-test-${{ fromJSON(inputs.matrix-json)[0].artifact }}
+          path: out/build/windows-tiles-sounds-x64-msvc/tests
+
+      - uses: denoland/setup-deno@v2
+
+      - name: Run sharded tests
         shell: pwsh
         run: |
-          $ErrorActionPreference = "Stop"
-          $buildDir = if ($IsWindows) {
-            "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc"
-          } else {
-            "${{ github.workspace }}/build"
-          }
-          $exeName = if ("${{ matrix.tiles }}" -eq "true") { "cata_test-tiles" } else { "cata_test" }
-          if ($IsWindows) {
-            $exeName = "$exeName.exe"
-          }
-          $testBin = Join-Path $buildDir (Join-Path "tests" $exeName)
-          if (-not (Test-Path $testBin)) {
-            throw "Missing test executable: $testBin"
-          }
-
-          $testOpts = @(
-            "--min-duration", "20",
-            "--use-colour", "yes",
-            "--rng-seed", "time",
-            "--error-format=github-action"
-          )
-          if ($IsLinux -and "${{ matrix.tiles }}" -eq "true") {
-            $testOpts += "--gpu-backend=software"
-          }
           deno run --allow-read --allow-write --allow-run --allow-env `
             build-scripts/run-linux-test-shards.ts `
             --mode file-tags `
             --jobs 4 `
             --non-slow-shards 8 `
-            $testBin `
+            --shard-group "${{ matrix.group }}" `
+            out/build/windows-tiles-sounds-x64-msvc/tests/cata_test-tiles.exe `
             -- `
-            @testOpts
+            --min-duration 20 `
+            --use-colour yes `
+            --rng-seed time `
+            --error-format=github-action
