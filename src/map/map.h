@@ -613,7 +613,7 @@ struct sound_filter_key {
 
     // Ignore sounds of this category or less. Defaults to weather.
     sounds::sound_t category = sounds::sound_t::weather;
-    mfaction_str_id monfaction = mfaction_str_id("");
+    mfaction_str_id monfaction;
     // Not currently implimented, does this monster belong to an NPC faction? i.e., a robot owned by
     // some survivors, someones dog, etc. faction_id npc_faction = faction_id( "no_faction" ); Is
     // the monster something like a zombie that uses simpler logic and gets angry at everything.
@@ -639,11 +639,10 @@ template <> struct std::hash<sound_filter_key> {
         using std::size_t;
         using std::string;
         const int cat_int = static_cast<int>(key.category);
-        const std::string stringfac = static_cast<std::string>(key.monfaction.str());
 
         std::size_t seed = 0;
         hash_combine(seed, cat_int);
-        hash_combine(seed, stringfac);
+        hash_combine(seed, key.monfaction);
         hash_combine(seed, key.horde_monster);
         hash_combine(seed, key.ignore_movement);
         hash_combine(seed, key.noise_fear);

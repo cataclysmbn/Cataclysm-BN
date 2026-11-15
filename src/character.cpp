@@ -402,6 +402,32 @@ static const enchantment_value_id ench_val_PAIN_GAIN( "PAIN_GAIN" );
 static const enchantment_value_id ench_val_PAIN_LOSS( "PAIN_LOSS" );
 static const enchantment_value_id ench_val_CHRONIC_PAIN_MOD( "CHRONIC_PAIN_MOD" );
 static const enchantment_value_id ench_val_PERCEIVED_PAIN_MOD( "PERCEIVED_PAIN_MOD" );
+static const enchantment_value_id ench_val_BLISTER_COUNT( "BLISTER_COUNT" );
+static const enchantment_value_id ench_val_BODYTEMP_MAX( "BODYTEMP_MAX" );
+static const enchantment_value_id ench_val_BODYTEMP_MIN( "BODYTEMP_MIN" );
+static const enchantment_value_id ench_val_BODYTEMP_SLEEP( "BODYTEMP_SLEEP" );
+static const enchantment_value_id ench_val_CARRY_STORAGE( "CARRY_STORAGE" );
+static const enchantment_value_id ench_val_CARRY_WEIGHT( "CARRY_WEIGHT" );
+static const enchantment_value_id ench_val_CLAIRVOYANCE( "CLAIRVOYANCE" );
+static const enchantment_value_id ench_val_EFFECTIVE_FOCUS( "EFFECTIVE_FOCUS" );
+static const enchantment_value_id ench_val_FALL_DAMAGE_MULT( "FALL_DAMAGE_MULT" );
+static const enchantment_value_id ench_val_FATIGUE( "FATIGUE" );
+static const enchantment_value_id ench_val_FLAT_MOVE_COST( "FLAT_MOVE_COST" );
+static const enchantment_value_id ench_val_HEALTHY_MULT( "HEALTHY_MULT" );
+static const enchantment_value_id ench_val_HEARING( "HEARING" );
+static const enchantment_value_id ench_val_LUMINATION( "LUMINATION" );
+static const enchantment_value_id ench_val_MENDING_MULT( "MENDING_MULT" );
+static const enchantment_value_id ench_val_MOVE_COST( "MOVE_COST" );
+static const enchantment_value_id ench_val_NIGHT_VISION( "NIGHT_VISION" );
+static const enchantment_value_id ench_val_OBSTACLE_MOVE_COST( "OBSTACLE_MOVE_COST" );
+static const enchantment_value_id ench_val_OVERMAP_SIGHT( "OVERMAP_SIGHT" );
+static const enchantment_value_id ench_val_READING_SPEED( "READING_SPEED" );
+static const enchantment_value_id ench_val_SLEEP_PAIN_THRESH( "SLEEP_PAIN_THRESH" );
+static const enchantment_value_id ench_val_STAMINA_CAP( "STAMINA_CAP" );
+static const enchantment_value_id ench_val_STAMINA_REGEN( "STAMINA_REGEN" );
+static const enchantment_value_id ench_val_STEALTH( "STEALTH" );
+static const enchantment_value_id ench_val_SWIM_MOVE_COST( "SWIM_MOVE_COST" );
+static const enchantment_value_id ench_val_THIRST( "THIRST" );
 
 static const enchantment_value_id ench_val_WEIGHTMOD_WORN( "WEIGHTMOD_WORN" );
 static const enchantment_value_id ench_val_WEIGHTMOD_BODY( "WEIGHTMOD_BODY" );
@@ -995,7 +1021,7 @@ int Character::overmap_sight_range( int light_level ) const
         multiplier += 1;
     }
 
-    sight += bonus_from_enchantments( sight, enchantment_value_id( "OVERMAP_SIGHT" ) );
+    sight += bonus_from_enchantments( sight, ench_val_OVERMAP_SIGHT );
     sight = std::round( sight * multiplier );
     return std::max( sight, 3 );
 }
@@ -1012,7 +1038,7 @@ int Character::clairvoyance() const
         max = 3;
     }
 
-    int ench = bonus_from_enchantments( 0.0, enchantment_value_id( "CLAIRVOYANCE" ) );
+    int ench = bonus_from_enchantments( 0.0, ench_val_CLAIRVOYANCE );
     if( ench > 0 ) {
         max = std::max( ench, max );
     }
@@ -1060,7 +1086,7 @@ void Character::react_to_felt_pain( int intensity )
     if( has_effect( effect_sleep ) && !has_effect( effect_narcosis ) ) {
         int pain_thresh = rng( 3, 5 );
 
-        pain_thresh += bonus_from_enchantments( pain_thresh, enchantment_value_id( "SLEEP_PAIN_THRESH" ) );
+        pain_thresh += bonus_from_enchantments( pain_thresh, ench_val_SLEEP_PAIN_THRESH );
 
         pain_thresh = std::max( 1, pain_thresh );
 
@@ -1188,7 +1214,7 @@ int Character::swim_speed() const
     // base swim speed.
     ret = ( 440 * mutation_value( "movecost_swim_modifier" ) ) + weight_carried() /
           ( 60_gram / mutation_value( "movecost_swim_modifier" ) ) - 50 * get_skill_level( skill_swimming );
-    ret += bonus_from_enchantments( ret, enchantment_value_id( "SWIM_MOVE_COST" ) );
+    ret += bonus_from_enchantments( ret, ench_val_SWIM_MOVE_COST );
 
     /** @EFFECT_STR increases swim speed bonus from PAWS */
     if( has_trait( trait_PAWS ) ) {
@@ -2049,7 +2075,7 @@ float Character::night_vision_sight_range() const
         best = std::max( best, mut->night_vision_range );
     }
     return std::max( best, float( bonus_from_enchantments( 0,
-                                  enchantment_value_id( "NIGHT_VISION" ) ) ) );
+                                  ench_val_NIGHT_VISION ) ) );
 }
 
 // This must be called when any of the following change:
@@ -3292,7 +3318,7 @@ units::mass Character::weight_capacity() const
     /** @EFFECT_STR increases carrying capacity */
     ret += get_str() * 4_kilogram;
     ret *= mutation_value( "weight_capacity_modifier" );
-    ret += bonus_from_enchantments( ret / 1_gram, enchantment_value_id( "CARRY_WEIGHT" ) ) * 1_gram;
+    ret += bonus_from_enchantments( ret / 1_gram, ench_val_CARRY_WEIGHT ) * 1_gram;
 
     units::mass worn_weight_bonus = 0_gram;
     for( const item * const &it : worn ) {
@@ -3346,7 +3372,7 @@ units::volume Character::volume_capacity_reduced_by(
     }
 
     ret *= mutation_value( "packmule_modifier" );
-    ret += bonus_from_enchantments( ret / 1_ml, enchantment_value_id( "CARRY_STORAGE" ) ) * 1_ml;
+    ret += bonus_from_enchantments( ret / 1_ml, ench_val_CARRY_STORAGE ) * 1_ml;
 
     return std::max( ret, 0_ml );
 }
@@ -4464,7 +4490,7 @@ int Character::read_speed( bool return_stat_effect ) const
     int ret = to_moves<int>( 1_minutes ) - to_moves<int>( 3_seconds ) * ( intel - 8 );
 
     ret *= mutation_value( "reading_speed_multiplier" );
-    ret += bonus_from_enchantments( ret, enchantment_value_id( "READING_SPEED" ) );
+    ret += bonus_from_enchantments( ret, ench_val_READING_SPEED );
 
     if( ret < to_moves<int>( 1_seconds ) ) {
         ret = to_moves<int>( 1_seconds );
@@ -5668,7 +5694,7 @@ void Character::regen( int rate_multiplier )
     float heal_rate = healing_rate( rest ) * to_turns<int>( 5_minutes );
     const float broken_regen_mod_pre = 0.25 + mutation_value( "mending_modifier" );
     const float broken_regen_mod = clamp( broken_regen_mod_pre + bonus_from_enchantments(
-            broken_regen_mod_pre, enchantment_value_id( "MENDING_MULT" ) ), 0.0, 1.0 );
+            broken_regen_mod_pre, ench_val_MENDING_MULT ), 0.0, 1.0 );
     if( heal_rate > 0.0f ) {
         const int heal = roll_remainder( rate_multiplier * heal_rate );
 
@@ -5765,7 +5791,7 @@ void Character::update_health( int external_modifiers )
     // Apply enchantment healthy_rate as a multiplier to the target health level
     // healthy_rate > 1.0 boosts health toward max, < 1.0 reduces it toward negative
     effective_healthy_mod += bonus_from_enchantments( effective_healthy_mod,
-                             enchantment_value_id( "HEALTHY_MULT" ) );
+                             ench_val_HEALTHY_MULT );
 
     // Health tends toward healthy_mod.
     // For small differences, it changes 4 points per day
@@ -6034,7 +6060,7 @@ needs_rates Character::calc_needs_rates() const
     rates.thirst = get_option< float >( player_thirst_rate );
     static const std::string thirst_modifier( "thirst_modifier" );
     rates.thirst *= 1.0f + mutation_value( thirst_modifier );
-    rates.thirst += bonus_from_enchantments( rates.thirst, enchantment_value_id( "THIRST" ) );
+    rates.thirst += bonus_from_enchantments( rates.thirst, ench_val_THIRST );
     if( worn_with_flag( flag_SLOWS_THIRST ) ) {
         rates.thirst *= 0.7f;
     }
@@ -6043,7 +6069,7 @@ needs_rates Character::calc_needs_rates() const
     rates.fatigue = get_option< float >( player_fatigue_rate );
     static const std::string fatigue_modifier( "fatigue_modifier" );
     rates.fatigue *= 1.0f + mutation_value( fatigue_modifier );
-    rates.fatigue += bonus_from_enchantments( rates.fatigue, enchantment_value_id( "FATIGUE" ) );
+    rates.fatigue += bonus_from_enchantments( rates.fatigue, ench_val_FATIGUE );
 
     // Note: intentionally not in metabolic rate
     if( has_recycler ) {
@@ -6791,7 +6817,7 @@ void apply_blisters( Character &chr, const bodypart_id &bp, BodyTemperatureModif
                         std::max( static_cast<int>( std::sqrt( body_mods.heat_radiation - 111 ) ), 0 ) : 0;
 
     blister_count += chr.bonus_from_enchantments( blister_count,
-                     enchantment_value_id( "BLISTER_COUNT" ),
+                     ench_val_BLISTER_COUNT,
                      true );
 
     if( body_mods.fire_armor_per_bp.empty() && blister_count > 0 ) {
@@ -7743,7 +7769,7 @@ int Character::visibility( bool, int ) const
                here.has_flag( "MINEABLE", bub_pos() ) ) ) {
         stealth_modifier += camo_modifier;
     }
-    stealth_modifier += bonus_from_enchantments( stealth_modifier, enchantment_value_id( "STEALTH" ) );
+    stealth_modifier += bonus_from_enchantments( stealth_modifier, ench_val_STEALTH );
 
     return clamp( 100 - stealth_modifier, 20, 160 );
 }
@@ -7791,7 +7817,7 @@ float Character::active_light() const
     lumination = std::max( lumination, mut_lum );
 
     lumination = std::max( lumination, float( bonus_from_enchantments( 0,
-                           enchantment_value_id( "LUMINATION" ) ) ) );
+                           ench_val_LUMINATION ) ) );
 
     if( lumination < 25 && has_artifact_with( AEP_GLOW ) ) {
         lumination = 25;
@@ -8644,7 +8670,7 @@ int Character::get_stamina_max() const
     const int baseMaxStamina = get_option< int >( player_max_stamina );
     int maxStamina = baseMaxStamina;
     maxStamina *= Character::mutation_value( max_stamina_modifier );
-    maxStamina += bonus_from_enchantments( maxStamina, enchantment_value_id( "STAMINA_CAP" ) );
+    maxStamina += bonus_from_enchantments( maxStamina, ench_val_STAMINA_CAP );
     return std::max( baseMaxStamina / 10, maxStamina );
 }
 
@@ -8747,7 +8773,7 @@ void Character::update_stamina( int turns )
     // max stamina modifers from mutation also affect stamina multi
     float stamina_multiplier = 1.0f + mutation_value( stamina_regen_modifier ) +
                                ( mutation_value( "max_stamina_modifier" ) - 1.0f ) +
-                               bonus_from_enchantments( 1.0, enchantment_value_id( "STAMINA_REGEN" ) );
+                               bonus_from_enchantments( 1.0, ench_val_STAMINA_REGEN );
     // But mouth encumbrance interferes, even with mutated stamina.
     stamina_recovery += stamina_multiplier * std::max( 1.0f,
                         base_regen_rate - ( encumb( body_part_mouth ) / 5.0f ) );
@@ -11381,8 +11407,8 @@ auto Character::bodytemp_modifier_traits( bool overheated ) const -> units::temp
         return units::from_legacy_bodypart_temp_delta(
             bonus_from_enchantments( units::to_legacy_bodypart_temp_delta( base ), value ) );
     };
-    mod += overheated ? enchantment_bonus( mod, enchantment_value_id( "BODYTEMP_MIN" ) ) :
-           enchantment_bonus( mod, enchantment_value_id( "BODYTEMP_MAX" ) );
+    mod += overheated ? enchantment_bonus( mod, ench_val_BODYTEMP_MIN ) :
+           enchantment_bonus( mod, ench_val_BODYTEMP_MAX );
     return mod;
 }
 
@@ -11397,7 +11423,7 @@ auto Character::bodytemp_modifier_traits_floor() const -> units::temperature_del
         return units::from_legacy_bodypart_temp_delta(
             bonus_from_enchantments( units::to_legacy_bodypart_temp_delta( base ), value ) );
     };
-    mod += enchantment_bonus( mod, enchantment_value_id( "BODYTEMP_SLEEP" ) );
+    mod += enchantment_bonus( mod, ench_val_BODYTEMP_SLEEP );
     return mod;
 }
 
@@ -11946,7 +11972,7 @@ int Character::adjust_for_focus( int amount ) const
 {
     int effective_focus = focus_pool;
     effective_focus += bonus_from_enchantments( effective_focus,
-                       enchantment_value_id( "EFFECTIVE_FOCUS" ) );
+                       ench_val_EFFECTIVE_FOCUS );
 
     if( has_trait( trait_FASTLEARNER ) ) {
         effective_focus += 15;
@@ -12080,7 +12106,7 @@ int Character::run_cost( int base_cost, bool diag ) const
     if( !is_mounted() ) {
         if( movecost > 100 ) {
             movecost *= mutation_value( "movecost_obstacle_modifier" );
-            movecost += bonus_from_enchantments( movecost, enchantment_value_id( "OBSTACLE_MOVE_COST" ) );
+            movecost += bonus_from_enchantments( movecost, ench_val_OBSTACLE_MOVE_COST );
             if( movecost < 100 ) {
                 movecost = 100;
             }
@@ -12100,7 +12126,7 @@ int Character::run_cost( int base_cost, bool diag ) const
         movecost *= mutation_value( "movecost_modifier" );
         if( flatground ) {
             movecost *= mutation_value( "movecost_flatground_modifier" );
-            movecost += bonus_from_enchantments( movecost, enchantment_value_id( "FLAT_MOVE_COST" ) );
+            movecost += bonus_from_enchantments( movecost, ench_val_FLAT_MOVE_COST );
         }
         if( has_trait( trait_PADDED_FEET ) && !is_wearing_shoes() ) {
             movecost *= .9f;
@@ -12154,7 +12180,7 @@ int Character::run_cost( int base_cost, bool diag ) const
             movecost += 10 * footwear_factor();
         }
 
-        movecost += bonus_from_enchantments( movecost, enchantment_value_id( "MOVE_COST" ) );
+        movecost += bonus_from_enchantments( movecost, ench_val_MOVE_COST );
         movecost /= running_move_cost_modifier();
 
         if( movecost < 20.0 ) {
@@ -12364,7 +12390,7 @@ float Character::hearing_ability() const
     volume_multiplier *= Character::mutation_value( "hearing_modifier" );
 
     volume_multiplier += bonus_from_enchantments( volume_multiplier,
-                         enchantment_value_id( "HEARING" ) );
+                         ench_val_HEARING );
 
     if( has_effect( effect_deaf ) ) {
         // Scale linearly up to 30 minutes
@@ -12906,7 +12932,7 @@ float Character::fall_damage_mod() const
 
     ret *= mutation_value( "falling_damage_multiplier" );
 
-    ret += bonus_from_enchantments( ret, enchantment_value_id( "FALL_DAMAGE_MULT" ) );
+    ret += bonus_from_enchantments( ret, ench_val_FALL_DAMAGE_MULT );
     // TODO: Bonus for Judo, mutations. Penalty for heavy weight (including mutations)
     return std::max( 0.0f, ret );
 }
