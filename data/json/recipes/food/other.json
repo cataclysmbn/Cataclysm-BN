@@ -8,7 +8,7 @@
     "difficulty": 1,
     "time": "10 m",
     "charges": 8,
-    "book_learn": [ [ "cookbook_mexican", 1 ] ],
+    "book_learn": [ [ "cookbook_mexican", 0 ] ],
     "qualities": [ { "id": "CUT", "level": 1 } ],
     "components": [
       [ [ "tomato", 2 ], [ "irradiated_tomato", 2 ] ],
@@ -562,7 +562,7 @@
     "skill_used": "cooking",
     "difficulty": 2,
     "time": "9 m",
-    "book_learn": [ [ "cookbook_mexican", 2 ] ],
+    "book_learn": [ [ "cookbook_mexican", 1 ] ],
     "autolearn": true,
     "batch_time_factors": [ 80, 1 ],
     "qualities": [ { "id": "COOK", "level": 2 }, { "id": "CUT", "level": 1 } ],
