@@ -687,6 +687,7 @@ auto enchantment::get_value_max(const enchantment_value_id value) const -> int {
 }
 
 auto enchantment::calc_bonus(enchantment_value_id value, double base, bool round) const -> double {
+    if (values_add.empty() && values_multiply.empty() && values_max.empty()) { return 0.0; }
     double add = value->can_add ? get_value_add(value) : 0.0;
     double mul = value->can_mult ? get_value_multiply(value) : 0.0;
     double max = value->can_max ? get_value_max(value) : 0.0;
