@@ -15,6 +15,7 @@
 #include "rng.h"
 #include "string_formatter.h"
 #include "translations.h"
+#include "utils/time_config_generation.h"
 
 /** How much light moon provides per lit-up quarter (Full-moon light is four times this value) */
 static constexpr double moonlight_per_quarter = 2.25;
@@ -75,6 +76,8 @@ void invalidate_time_config_cache()
 {
     ++time_config_generation;
 }
+
+auto option_generation() -> int { return time_config_generation; }
 
 void set_active_world_type( const std::string &world_type_id )
 {
