@@ -1545,10 +1545,7 @@ bool monster::avoid_trap( const tripoint_bub_ms & /* pos */, const trap &tr ) co
     if( digging() || flies() ) {
         return true;
     }
-    // Dodge can be negative, but rng() swaps reversed bounds, so fewer than one side would make
-    // the roll less predictable instead of worse.
-    const auto sides = std::max( 1, static_cast<int>( get_dodge() + 1 ) );
-    return dice( 3, sides ) >= dice( 3, tr.get_avoidance() );
+    return dice( 3, static_cast<int>( get_dodge_base() + 1 ) ) >= dice( 3, tr.get_avoidance() );
 }
 
 bool monster::has_flag( const m_flag f ) const
