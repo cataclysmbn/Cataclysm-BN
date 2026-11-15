@@ -124,6 +124,7 @@
 #include "npc.h"
 #include "npc_class.h"
 #include "options.h"
+#include "utils/cached_option.h"
 #include "output.h"
 #include "overmap/omdata.h"
 #include "overmap/overmap.h"
@@ -323,6 +324,7 @@ auto fling_bash_damage( const Creature &c, const float flvel ) -> int
 static const activity_id ACT_OPERATION( "ACT_OPERATION" );
 static const activity_id ACT_AUTODRIVE( "ACT_AUTODRIVE" );
 static const activity_id ACT_CRAFT( "ACT_CRAFT" );
+static const activity_id ACT_AIM( "ACT_AIM" );
 static const activity_id ACT_VEHICLE_DECONSTRUCTION( "ACT_VEHICLE_DECONSTRUCTION" );
 static const activity_id ACT_VEHICLE_REPAIR( "ACT_VEHICLE_REPAIR" );
 
@@ -2583,7 +2585,7 @@ void game::process_voluntary_act_interrupt()
     // If player is performing a task and a monster is dangerously close, warn them
     // regardless of previous safemode warnings.
     // Distraction Manager can change this.
-    if( ( has_activity || is_travelling ) && !u.has_activity( activity_id( "ACT_AIM" ) ) &&
+    if( ( has_activity || is_travelling ) && !u.has_activity( ACT_AIM ) &&
         !u.activity->is_distraction_ignored( distraction_type::hostile_spotted_near ) ) {
         Creature *hostile_critter = is_hostile_very_close();
         if( hostile_critter != nullptr ) {
@@ -2880,8 +2882,10 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
             }
             m.spawn_monsters( false );
         }
-        if( get_option<bool>( "AUTOSAVE" ) &&
-            action_time_scale::once_every_this_tick( 1_turns * get_option<int>( "AUTOSAVE_TURNS" ) ) &&
+        thread_local auto autosave_enabled = cached_option<bool> { .name = "AUTOSAVE" };
+        thread_local auto autosave_turns = cached_option<int> { .name = "AUTOSAVE_TURNS" };
+        if( autosave_enabled.get() &&
+            action_time_scale::once_every_this_tick( 1_turns * autosave_turns.get() ) &&
             !u.is_dead_state() ) {
             autosave();
         }
