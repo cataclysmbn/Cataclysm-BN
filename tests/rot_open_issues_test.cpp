@@ -23,7 +23,7 @@
 #include "output.h"
 #include "recipe.h"
 #include "recipe_dictionary.h"
-#include "state_helpers.h"
+#include "rot_test_state.h"
 #include "type_id.h"
 #include "weather/weather.h"
 
@@ -37,22 +37,6 @@
 // Each test names the issue it comes from, so a still-failing test points at an unfixed issue.
 
 namespace {
-
-struct open_issue_state {
-    restore_on_out_of_scope<time_point> time{calendar::turn};
-    restore_on_out_of_scope<units::temperature> temperature{get_weather().temperature};
-
-    open_issue_state() {
-        clear_all_state();
-        calendar::turn = calendar::start_of_cataclysm + 1_hours;
-        get_weather().temperature = 18_c;
-        get_weather().clear_temp_cache();
-    }
-    ~open_issue_state() {
-        clear_all_state();
-        get_weather().clear_temp_cache();
-    }
-};
 
 constexpr auto station = tripoint_bub_ms(65, 65, 0);
 
@@ -125,7 +109,7 @@ auto finish_recipe(const recipe_id& id, std::vector<detached_ptr<item>> ingredie
 TEST_CASE(
     "Smoking rack output is not made of rotten food",
     "[rot][open_issue][smoking][issue_10689][issue_1499]") {
-    const auto state = open_issue_state();
+    const auto state = rot_test_state(1_hours);
     const auto start = calendar::turn;
     auto& here = get_map();
     const auto ids = smokable_ids();
@@ -163,7 +147,7 @@ TEST_CASE(
 }
 
 TEST_CASE("Mill output is not made of rotten food", "[rot][open_issue][smoking][issue_10689]") {
-    const auto state = open_issue_state();
+    const auto state = rot_test_state(1_hours);
     const auto start = calendar::turn;
     auto& here = get_map();
     const auto ids = millable_ids();
@@ -195,7 +179,7 @@ TEST_CASE("Mill output is not made of rotten food", "[rot][open_issue][smoking][
 TEST_CASE(
     "Preserved food recipes do not list rotten ingredients",
     "[rot][open_issue][crafting][issue_10757]") {
-    const auto state = open_issue_state();
+    const auto state = rot_test_state(1_hours);
     const auto recipes = restore_on_out_of_scope(
         const_cast<recipe_subset&>(get_avatar().get_learned_recipes()));
     const auto recipe_name =
@@ -234,7 +218,7 @@ TEST_CASE(
 TEST_CASE(
     "A nonperishable ingredient is never listed as rotten",
     "[rot][open_issue][ingredients][issue_10757]") {
-    const auto state = open_issue_state();
+    const auto state = rot_test_state(1_hours);
     const auto start = calendar::turn;
     const auto ids = nonperishable_ids();
     REQUIRE_FALSE(ids.empty());
@@ -256,7 +240,7 @@ TEST_CASE(
 
 TEST_CASE(
     "Decayed zombie corpses leave no zombie pheromone", "[rot][open_issue][corpse][issue_5296]") {
-    const auto state = open_issue_state();
+    const auto state = rot_test_state(1_hours);
     calendar::turn = calendar::start_of_cataclysm + 91_days;
     auto&& monsters = MonsterGenerator::generator().get_all_mtypes();
     auto dropping_pheromone = std::vector<mtype_id>();
@@ -295,7 +279,7 @@ TEST_CASE(
 TEST_CASE(
     "Perishable items placed by mapgen are fresh when the map is generated",
     "[rot][open_issue][mapgen][issue_9834]") {
-    const auto state = open_issue_state();
+    const auto state = rot_test_state(1_hours);
     calendar::turn = calendar::start_of_cataclysm + 91_days;
     const auto global_spawn_rate = override_option("ITEM_SPAWNRATE", "1.0");
     const auto food_spawn_rate = override_option("SPAWN_RATE_food", "1.0");
@@ -329,7 +313,7 @@ TEST_CASE(
 TEST_CASE(
     "Eating from a container reports no location error and leaves the container usable",
     "[rot][open_issue][container][issue_10683]") {
-    const auto state = open_issue_state();
+    const auto state = rot_test_state(1_hours);
     const auto container_food = GENERATE("can_beans", "can_peach", "jar_pickle_glass");
     CAPTURE(container_food);
     if (!itype_id(container_food).is_valid()) { return; }
@@ -344,7 +328,7 @@ TEST_CASE(
 TEST_CASE(
     "Using up part of a sealed container's food unseals it",
     "[rot][open_issue][container][issue_3588]") {
-    const auto state = open_issue_state();
+    const auto state = rot_test_state(1_hours);
     const auto sealed = GENERATE("jar_glass_sealed", "can_medium");
     CAPTURE(sealed);
     auto container = item::spawn(itype_id(sealed), calendar::turn);
@@ -363,7 +347,7 @@ TEST_CASE(
 TEST_CASE(
     "Storage information for perishable food follows the item's location",
     "[rot][open_issue][info][issue_2362]") {
-    const auto state = open_issue_state();
+    const auto state = rot_test_state(1_hours);
     const auto text = [](const std::vector<iteminfo>& info) {
         auto joined = std::string();
         for (const auto& entry : info) { joined += entry.sName; }

@@ -10,7 +10,7 @@
 #include "recipe.h"
 #include "recipe_dictionary.h"
 #include "requirements.h"
-#include "state_helpers.h"
+#include "rot_test_state.h"
 #include "units_temperature.h"
 #include "weather/weather.h"
 
@@ -20,18 +20,6 @@
 #include <vector>
 
 namespace {
-
-struct rot_interface_state {
-    restore_on_out_of_scope<time_point> time{calendar::turn};
-
-    rot_interface_state() {
-        clear_all_state();
-        calendar::turn = calendar::start_of_cataclysm + 91_days;
-        get_weather().temperature = 18_c;
-        get_weather().clear_temp_cache();
-    }
-    ~rot_interface_state() { clear_all_state(); }
-};
 
 auto fresh_food() -> detached_ptr<item> {
     auto food = item::spawn("test_rot_food", calendar::turn);
@@ -48,7 +36,7 @@ auto freshness_info(item& food) -> std::string {
 } // namespace
 
 TEST_CASE("Food freshness labels match how much the food has spoiled", "[rot][interface]") {
-    const auto state = rot_interface_state();
+    const auto state = rot_test_state();
     auto food = fresh_food();
 
     CHECK(food->goes_bad());
@@ -107,7 +95,7 @@ TEST_CASE("Food freshness labels match how much the food has spoiled", "[rot][in
 TEST_CASE(
     "Smoked or milled food ages from when it was made, not when it was checked",
     "[rot][interface]") {
-    const auto state = rot_interface_state();
+    const auto state = rot_test_state();
     const auto processing_result = GENERATE(false, true);
     auto food = fresh_food();
     if (processing_result) { food->set_flag(flag_id("PROCESSING_RESULT")); }
@@ -117,7 +105,7 @@ TEST_CASE(
 }
 
 TEST_CASE("An unfinished recipe does not preserve food in an open container", "[rot][interface]") {
-    const auto state = rot_interface_state();
+    const auto state = rot_test_state();
     auto& here = get_map();
     const auto pos = tripoint_bub_ms(65, 65, 0);
     auto food = fresh_food();
@@ -135,7 +123,7 @@ TEST_CASE("An unfinished recipe does not preserve food in an open container", "[
 }
 
 TEST_CASE("Missing container data does not crash food removal", "[rot][boundary]") {
-    const auto state = rot_interface_state();
+    const auto state = rot_test_state();
     auto& here = get_map();
     const auto pos = tripoint_bub_ms(65, 65, 0);
     here.set_temperature(pos, 0);
@@ -157,7 +145,7 @@ TEST_CASE("Missing container data does not crash food removal", "[rot][boundary]
 }
 
 TEST_CASE("Food storage affects when it spoils and how it is sorted", "[rot][interface]") {
-    const auto state = rot_interface_state();
+    const auto state = rot_test_state();
     const auto bottom = std::numeric_limits<int>::max();
 
     auto plain_food = fresh_food();
@@ -221,7 +209,7 @@ TEST_CASE("Food storage affects when it spoils and how it is sorted", "[rot][int
 TEST_CASE(
     "Food descriptions explain its freshness based on the player's cooking skill",
     "[rot][freshness]") {
-    const auto state = rot_interface_state();
+    const auto state = rot_test_state();
     auto& you = get_avatar();
     you.clear_skills();
 
@@ -257,7 +245,7 @@ TEST_CASE(
 
 TEST_CASE(
     "Combining food portions averages their spoilage according to quantity", "[rot][interface]") {
-    const auto state = rot_interface_state();
+    const auto state = rot_test_state();
 
     auto first = item::spawn("test_rot_food", calendar::turn, 2);
     auto second = item::spawn("test_rot_food", calendar::turn, 1);
@@ -276,7 +264,7 @@ TEST_CASE(
 }
 
 TEST_CASE("Cooked food is as spoiled as its most spoiled ingredient", "[rot][crafting]") {
-    const auto state = rot_interface_state();
+    const auto state = rot_test_state();
     const auto recipes = restore_on_out_of_scope(
         const_cast<recipe_subset&>(get_avatar().get_learned_recipes()));
     const auto recipe_name = recipe_id("meat_cooked");

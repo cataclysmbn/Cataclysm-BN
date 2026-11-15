@@ -14,7 +14,7 @@
 #include "recipe.h"
 #include "recipe_dictionary.h"
 #include "requirements.h"
-#include "state_helpers.h"
+#include "rot_test_state.h"
 #include "units_temperature.h"
 #include "vehicle/vehicle.h"
 #include "vehicle/vehicle_part.h"
@@ -28,21 +28,10 @@
 
 namespace {
 
-struct lifecycle_state {
-    restore_on_out_of_scope<time_point> time{calendar::turn};
-    restore_on_out_of_scope<units::temperature> temperature{get_weather().temperature};
-
+struct lifecycle_state: rot_test_state {
     lifecycle_state() {
-        clear_all_state();
-        calendar::turn = calendar::start_of_cataclysm + 91_days;
         get_map().set_temperature(tripoint_bub_ms::zero(), 0);
         get_map().set_temperature(tripoint_bub_ms(60, 60, 0), 0);
-        get_weather().temperature = 18_c;
-        get_weather().clear_temp_cache();
-    }
-    ~lifecycle_state() {
-        clear_all_state();
-        get_weather().clear_temp_cache();
     }
 };
 

@@ -11,7 +11,7 @@
 #include "recipe.h"
 #include "recipe_dictionary.h"
 #include "requirements.h"
-#include "state_helpers.h"
+#include "rot_test_state.h"
 #include "units_temperature.h"
 #include "weather/weather.h"
 
@@ -23,22 +23,6 @@
 #include <vector>
 
 namespace {
-
-struct ingredient_test_state {
-    restore_on_out_of_scope<time_point> time{calendar::turn};
-    restore_on_out_of_scope<units::temperature> temperature{get_weather().temperature};
-
-    ingredient_test_state() {
-        clear_all_state();
-        calendar::turn = calendar::start_of_cataclysm + 1_hours;
-        get_weather().temperature = 18_c;
-        get_weather().clear_temp_cache();
-    }
-    ~ingredient_test_state() {
-        clear_all_state();
-        get_weather().clear_temp_cache();
-    }
-};
 
 auto finish_recipe(const recipe_id& id, std::vector<detached_ptr<item>> ingredients)
     -> item& // *NOPAD*
@@ -59,7 +43,7 @@ auto finish_recipe(const recipe_id& id, std::vector<detached_ptr<item>> ingredie
 TEST_CASE(
     "Nonperishable ingredients stay unspoiled when cooked on day 22",
     "[rot][crafting][ingredients][issue_10181]") {
-    const auto state = ingredient_test_state();
+    const auto state = rot_test_state(1_hours);
     const auto recipes = restore_on_out_of_scope(
         const_cast<recipe_subset&>(get_avatar().get_learned_recipes()));
     const auto recipe_name = GENERATE("cornbread", "pemmican", "sausagegravy");
@@ -112,7 +96,7 @@ TEST_CASE(
 TEST_CASE(
     "Loading an old save does not make nonperishable ingredients rotten",
     "[rot][ingredients][save][issue_10181]") {
-    const auto state = ingredient_test_state();
+    const auto state = rot_test_state(1_hours);
     // Rot-related fields from the sausage gravy in the issue's attached save.
     // No positive rot is stored on the three nonperishable ingredients.
     auto input = std::istringstream(R"({
@@ -144,7 +128,7 @@ TEST_CASE(
 TEST_CASE(
     "Nonperishable food stays unspoiled before and after it becomes an ingredient",
     "[rot][ingredients][issue_10181]") {
-    const auto state = ingredient_test_state();
+    const auto state = rot_test_state(1_hours);
     const auto type =
         GENERATE("test_rot_nonperishable", "flour", "cornmeal", "lard", "water_clean");
     auto ingredient = item::spawn(itype_id(type), calendar::turn, 1);

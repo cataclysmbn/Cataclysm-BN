@@ -13,7 +13,7 @@
 #include "map/submap.h"
 #include "map_helpers.h"
 #include "rot.h"
-#include "state_helpers.h"
+#include "rot_test_state.h"
 #include "vehicle/vehicle.h"
 #include "vehicle/vehicle_part.h"
 #include "weather/weather.h"
@@ -23,17 +23,9 @@
 
 namespace {
 
-struct rot_state {
-    restore_on_out_of_scope<time_point> time{calendar::turn};
-    rot_state() {
-        clear_all_state();
-        calendar::turn = calendar::start_of_cataclysm + 91_days;
-        // clear_map() leaves submap temperature modifiers from other tests intact.
-        get_map().set_temperature(tripoint_bub_ms(65, 65, 0), 0);
-        get_weather().temperature = 18_c;
-        get_weather().clear_temp_cache();
-    }
-    ~rot_state() { clear_all_state(); }
+struct rot_state: rot_test_state {
+    // clear_map() leaves submap temperature modifiers from other tests intact.
+    rot_state() { get_map().set_temperature(tripoint_bub_ms(65, 65, 0), 0); }
 };
 
 /// Model stale or inconsistent location metadata without invalid item pointers.
