@@ -13,6 +13,29 @@
   },
   {
     "type": "recipe",
+    "result": "churros",
+    "category": "CC_FOOD",
+    "subcategory": "CSC_FOOD_SNACK",
+    "skill_used": "cooking",
+    "difficulty": 2,
+    "charges": 4,
+    "time": "20 m",
+    "book_learn": [ [ "cookbook_mexican", 2 ], [ "baking_book", 3 ] ],
+    "batch_time_factors": [ 80, 5 ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "COOK", "level": 2 } ],
+    "tools": [ [ [ "surface_heat", 8, "LIST" ] ], [ [ "frying_oil", 1, "LIST" ] ] ],
+    "components": [
+      [ [ "flour", 10 ] ],
+      [ [ "water", 1 ], [ "water_clean", 1 ] ],
+      [ [ "eggs_small_dry", 1, "LIST" ] ],
+      [ [ "sugar", 5 ] ],
+      [ [ "cinnamon", 1 ] ],
+      [ [ "salt", 1 ] ],
+      [ [ "fry_oil", 2, "LIST" ] ]
+    ]
+  },
+  {
+    "type": "recipe",
     "result": "chips2",
     "category": "CC_FOOD",
     "subcategory": "CSC_FOOD_SNACK",
@@ -54,6 +77,7 @@
     "difficulty": 3,
     "time": "16 m",
     "autolearn": true,
+    "book_learn": [ [ "cookbook_mexican", 2 ] ],
     "batch_time_factors": [ 80, 5 ],
     "qualities": [ { "id": "CUT", "level": 1 }, { "id": "COOK", "level": 2 } ],
     "tools": [ [ [ "surface_heat", 8, "LIST" ] ], [ [ "frying_oil", 1, "LIST" ] ] ],
@@ -71,7 +95,7 @@
     "batch_time_factors": [ 80, 5 ],
     "qualities": [ { "id": "CUT", "level": 1 }, { "id": "COOK", "level": 2 } ],
     "tools": [ [ [ "surface_heat", 3, "LIST" ] ] ],
-    "components": [ [ [ "cheese_any", 1, "LIST" ] ], [ [ "nachos", 3 ] ] ]
+    "components": [ [ [ "can_cheese", 1 ], [ "cheese_any", 1, "LIST" ] ], [ [ "nachos", 3 ] ] ]
   },
   {
     "type": "recipe",
@@ -101,7 +125,7 @@
     "tools": [ [ [ "surface_heat", 3, "LIST" ] ] ],
     "components": [
       [ [ "meat_red", 1, "LIST" ], [ "dry_meat", 1 ], [ "can_chicken", 1 ] ],
-      [ [ "cheese_any", 1, "LIST" ] ],
+      [ [ "can_cheese", 1 ], [ "cheese_any", 1, "LIST" ] ],
       [ [ "nachos", 3 ] ]
     ]
   },
