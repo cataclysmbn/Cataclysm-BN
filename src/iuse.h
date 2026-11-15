@@ -265,9 +265,9 @@ class iuse_actor
          */
         virtual std::string get_name() const;
 
-        void set_name( std::string name ) {
+        void set_name( const translation &name ) {
             use_local_display_name = true;
-            display_name = to_translation( name );
+            display_name = name;
         }
 
         /**

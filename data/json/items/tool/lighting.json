@@ -112,7 +112,7 @@
       "active": true,
       "transform_charges": 1,
       "need_fire": 1,
-      "menu_text": "Light",
+      "menu_text": { "str": "Light", "ctxt": "item action" },
       "type": "transform"
     }
   },
