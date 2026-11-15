@@ -338,7 +338,7 @@ struct rot_location {
 
 /// Where @p it rots and the storage flag there; unplaced items use @p fallback at the origin.
 auto rot_location_of(const item& it, const temperature_flag fallback) -> rot_location {
-    if (it.is_loaded() && it.has_position()) {
+    if (it.is_loaded()) {
         return {.pos = it.bub_pos(), .flag = rot::temp::for_location(get_map(), it)};
     }
     return {.pos = tripoint_bub_ms::zero(), .flag = fallback};
