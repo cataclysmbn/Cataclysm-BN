@@ -47,6 +47,25 @@ public:
 
 } // namespace
 
+TEST_CASE("Rot location fallbacks tolerate inconsistent metadata", "[rot][boundary]") {
+    const auto state = rot_state();
+    const auto kind = GENERATE(
+        item_location_type::vehicle, item_location_type::container, item_location_type::invalid);
+    auto storage = location_vector<item>(new reported_location(kind));
+    storage.push_back(item::spawn("test_rot_food"));
+    const auto* food = storage.front();
+    auto temperature = temperature_flag::TEMP_FREEZER;
+    const auto diagnostic = capture_debugmsg_during([&]() {
+        temperature = rot::temp::for_location(get_map(), *food);
+    });
+    CHECK(temperature == temperature_flag::TEMP_NORMAL);
+    if (kind == item_location_type::container) {
+        CHECK(diagnostic.empty());
+    } else {
+        CHECK_FALSE(diagnostic.empty());
+    }
+}
+
 TEST_CASE("Vehicle parts without cargo use ambient rot temperature", "[rot][boundary]") {
     const auto state = rot_state();
     auto& here = get_map();
@@ -70,6 +89,37 @@ TEST_CASE("Location removal falls back when a reported loaded tile is missing", 
     calendar::turn += 20_minutes;
     food->prepare_for_location_removal();
     CHECK(food->get_rot() == 20_minutes);
+}
+
+TEST_CASE(
+    "Corrupt item types are retained and diagnosed before location removal", "[rot][boundary]") {
+    const auto state = rot_state();
+    const auto on_map = GENERATE(false, true);
+    auto food = item::spawn("test_rot_food");
+    auto* const original = food.get();
+    const auto* const type = food->type;
+    const auto pos = tripoint_bub_ms(65, 65, 0);
+    if (on_map) { get_map().add_item(pos, std::move(food)); }
+    original->type = nullptr;
+    const auto restore_type = on_out_of_scope([&]() { original->type = type; });
+    const auto message = capture_debugmsg_during([&]() {
+        if (on_map) {
+            auto& buffer = MAPBUFFER_REGISTRY.get(get_map().get_bound_dimension());
+            const auto sm_pos = project_to<coords::sm>(bub_to_abs(pos));
+            auto* sm = buffer.lookup_submap_in_memory(sm_pos);
+            REQUIRE(sm != nullptr);
+            sm->last_touched = calendar::turn - 1_turns;
+            buffer.actualize_submap(sm_pos);
+        } else {
+            food = item::actualize_rot(std::move(food), {.position = bub_to_abs(pos)});
+        }
+    });
+    CHECK(message.find("null") != std::string::npos);
+    if (on_map) {
+        CHECK(&get_map().i_at(pos).only_item() == original);
+    } else {
+        CHECK(food.get() == original);
+    }
 }
 
 TEST_CASE("Legacy rot entry points accumulate elapsed rot", "[rot][boundary]") {
@@ -148,6 +198,82 @@ TEST_CASE(
     food->set_relative_rot(0.0);
     CHECK(food->minimum_freshness_duration(temperature_flag::TEMP_FRIDGE)
           == calendar::INDEFINITELY_LONG_DURATION);
+}
+
+TEST_CASE(
+    "Item removal preserves ownership when callbacks transfer or replace items",
+    "[rot][ownership]") {
+    const auto state = rot_state();
+    const auto operation =
+        GENERATE("drop", "hold", "move", "reattach", "restore", "replace", "replace_after_drop",
+                 "replace_after_hold", "replace_after_move");
+    const auto count = GENERATE(1, 2);
+    const auto pos = tripoint_bub_ms(65, 65, 0);
+    const auto destination = pos + tripoint_east;
+    auto& here = get_map();
+    auto first = item::spawn("test_rot_remains");
+    const auto* const identity = first.get();
+    here.add_item(pos, std::move(first));
+    if (count == 2) { here.add_item(pos, item::spawn("test_rot_remains")); }
+    auto local = point_sm_ms();
+    auto& items = here.get_submap_at(pos, local)->get_items(local);
+    auto held = detached_ptr<item>();
+    auto visits = 0;
+    const auto diagnostic = capture_debugmsg_during([&]() {
+        items.remove_with([&](detached_ptr<item>&& it) {
+            ++visits;
+            if (it.get() != identity) { return std::move(it); }
+            const auto op = std::string_view(operation);
+            if (op == "drop") {
+                it = detached_ptr<item>();
+            } else if (op == "hold") {
+                held = std::move(it);
+            } else if (op == "move") {
+                here.add_item(destination, std::move(it));
+            } else if (op == "reattach") {
+                here.add_item(pos, std::move(it));
+            } else if (op == "restore") {
+                auto* subject = it.get();
+                here.add_item(destination, std::move(it));
+                return subject->detach();
+            } else {
+                if (op == "replace_after_drop") {
+                    it = detached_ptr<item>();
+                } else if (op == "replace_after_hold") {
+                    held = std::move(it);
+                } else if (op == "replace_after_move") {
+                    here.add_item(destination, std::move(it));
+                }
+                return item::spawn("test_rot_remains");
+            }
+            return detached_ptr<item>();
+        });
+    });
+    CAPTURE(operation, count);
+    const auto op = std::string_view(operation);
+    CHECK(visits == count);
+    const auto remains = op == "reattach" || op == "restore" || op.starts_with("replace");
+    CHECK(items.size() == static_cast<size_t>(count - (remains ? 0 : 1)));
+    // Replacing an item the callback did not take is rejected; after taking it, it is supported.
+    CHECK(diagnostic.empty() == (op != "replace"));
+    if (op.starts_with("replace_after")) { CHECK(items.front() != identity); }
+    if (held) { CHECK_FALSE(held->has_position()); }
+    if (op == "move") { CHECK(&here.i_at(destination).only_item() == identity); }
+    for (const auto* it : items) { CHECK(it->abs_pos() == bub_to_abs(pos)); }
+}
+
+TEST_CASE("Item traversal stops if its callback destroys the location", "[rot][ownership]") {
+    const auto state = rot_state();
+    auto items = location_vector<item>(new reported_location(item_location_type::map));
+    items.push_back(item::spawn("test_rot_remains"));
+    items.push_back(item::spawn("test_rot_remains"));
+    auto visits = 0;
+    items.remove_with([&](detached_ptr<item>&& it) {
+        ++visits;
+        items.on_destroy();
+        return std::move(it);
+    });
+    CHECK(visits == 1);
 }
 
 TEST_CASE("Removing items from a destroyed location is rejected", "[rot][ownership]") {

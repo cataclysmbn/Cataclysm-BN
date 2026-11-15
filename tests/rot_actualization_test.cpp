@@ -125,6 +125,42 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "Item removal callbacks may append items while keeping the current item",
+    "[item][rot][regression]") {
+    const auto restore_time = restore_on_out_of_scope(calendar::turn);
+    const auto cleanup = on_out_of_scope(clear_all_state);
+    clear_all_state();
+    calendar::turn = calendar::start_of_cataclysm + 91_days;
+    auto& here = get_map();
+    const auto pos = tripoint_bub_ms(60, 60, 0);
+    auto first = item::spawn("test_rot_remains");
+    const auto* identity = first.get();
+    here.add_item(pos, std::move(first));
+    auto local = point_sm_ms();
+    auto* sm = here.get_submap_at(pos, local);
+    REQUIRE(sm != nullptr);
+    auto& items = sm->get_items(local);
+    const auto padding = fill_spare_item_capacity(pos);
+    auto visits = 0;
+    items.remove_with([&](detached_ptr<item>&& it) {
+        if (it.get() == identity) {
+            ++visits;
+            for (const auto ignored : std::views::iota(0, 64)) {
+                static_cast<void>(ignored);
+                here.add_item(pos, item::spawn("test_rot_remains"));
+            }
+        }
+        return std::move(it);
+    });
+    CHECK(visits == 1);
+    CHECK(items.size() == 65 + padding);
+    CHECK(std::ranges::count(items, identity) == 1);
+    CHECK(std::ranges::all_of(items, [&](const auto* it) {
+        return it->has_position() && it->abs_pos() == bub_to_abs(pos);
+    }));
+}
+
+TEST_CASE(
     "Item rot actualization leaves map side effects to its caller",
     "[item][rot][corpse][property]") {
     const auto age = GENERATE(10.0, 11.0);
