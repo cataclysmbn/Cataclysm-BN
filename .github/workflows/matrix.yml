@@ -255,6 +255,26 @@ jobs:
           path: build/tests/cata_test${{ matrix.tiles == 1 && '-tiles' || '' }}
           if-no-files-found: ignore
 
+  # Windows has its own call so that its test jobs do not wait for the macOS and Android builds.
+  cache-warm-windows:
+    needs: skip-duplicates
+    if: ${{ github.event_name == 'push' && needs.skip-duplicates.outputs.should_skip_platform != 'true' }}
+    uses: ./.github/workflows/build.yml
+    with:
+      version-label: experimental
+      mode: ci
+      matrix-json: |
+        [
+          { "name": "Windows MSVC", "platform": "windows", "artifact": "windows-tiles-x64-msvc", "os": "windows-2022", "arch": "x64", "tiles": true, "sound": true, "ext": "zip", "content-type": "application/zip" }
+        ]
+      download-translations: false
+      bundle-tilesets: false
+      package-artifacts: false
+      run-tests: true
+      windows-test-groups: '["1/3", "2/3", "3/3"]'
+      upload-artifacts: false
+    secrets: inherit
+
   cache-warm-builds:
     needs: skip-duplicates
     if: ${{ github.event_name == 'push' && needs.skip-duplicates.outputs.should_skip_platform != 'true' }}
@@ -264,7 +284,6 @@ jobs:
       mode: ci
       matrix-json: |
         [
-          { "name": "Windows MSVC", "platform": "windows", "artifact": "windows-tiles-x64-msvc", "os": "windows-2022", "arch": "x64", "tiles": true, "sound": true, "ext": "zip", "content-type": "application/zip" },
           { "name": "macOS Curses", "platform": "macos", "artifact": "osx-curses-x64", "os": "macos-15-intel", "preset": "osx-curses-x64-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
           { "name": "macOS Tiles", "platform": "macos", "artifact": "osx-tiles-x64", "os": "macos-15-intel", "preset": "osx-tiles-x64-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
           { "name": "macOS Curses ARM", "platform": "macos", "artifact": "osx-curses-arm", "os": "macos-15", "preset": "osx-curses-arm-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
@@ -279,6 +298,27 @@ jobs:
       upload-artifacts: false
     secrets: inherit
 
+  windows-builds:
+    needs: skip-duplicates
+    if: ${{ github.event_name != 'push' && needs.skip-duplicates.outputs.should_skip_platform != 'true' }}
+    uses: ./.github/workflows/build.yml
+    with:
+      version-label: experimental
+      mode: ci
+      artifact-label: pr-${{ github.event.pull_request.number || github.run_id }}
+      matrix-json: |
+        [
+          { "name": "Windows MSVC", "platform": "windows", "artifact": "windows-tiles-x64-msvc", "os": "windows-2022", "arch": "x64", "tiles": true, "sound": true, "ext": "zip", "content-type": "application/zip", "upload-artifact": true }
+        ]
+      download-translations: false
+      bundle-tilesets: false
+      bundle-registry-mods: false
+      package-artifacts: true
+      run-tests: true
+      windows-test-groups: '["1/3", "2/3", "3/3"]'
+      upload-artifacts: true
+    secrets: inherit
+
   builds:
     needs: skip-duplicates
     if: ${{ github.event_name != 'push' && needs.skip-duplicates.outputs.should_skip_platform != 'true' }}
@@ -289,7 +329,6 @@ jobs:
       artifact-label: pr-${{ github.event.pull_request.number || github.run_id }}
       matrix-json: |
         [
-          { "name": "Windows MSVC", "platform": "windows", "artifact": "windows-tiles-x64-msvc", "os": "windows-2022", "arch": "x64", "tiles": true, "sound": true, "ext": "zip", "content-type": "application/zip", "upload-artifact": true },
           { "name": "macOS Curses", "platform": "macos", "artifact": "osx-curses-x64", "os": "macos-15-intel", "preset": "osx-curses-x64-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
           { "name": "macOS Tiles", "platform": "macos", "artifact": "osx-tiles-x64", "os": "macos-15-intel", "preset": "osx-tiles-x64-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage", "upload-artifact": true },
           { "name": "macOS Curses ARM", "platform": "macos", "artifact": "osx-curses-arm", "os": "macos-15", "preset": "osx-curses-arm-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },

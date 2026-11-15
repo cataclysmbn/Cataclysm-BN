@@ -29,6 +29,10 @@ if (BUILD_TESTING)
         endif ()
 
         set_target_properties( cata_test-tiles PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}" )
+        if (MSVC AND CATA_MSVC_FAST_LINK)
+            # CI runs the tests on other runners without the object files that a FASTLINK PDB needs for backtraces.
+            target_link_options(cata_test-tiles PRIVATE /DEBUG:FULL)
+        endif ()
         if (COMMAND cata_copy_windows_lavapipe_runtime)
             cata_copy_windows_lavapipe_runtime(cata_test-tiles)
         endif()
