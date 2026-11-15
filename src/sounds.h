@@ -604,7 +604,7 @@ struct sound_event {
     std::string variant = std::string( "default" );
     // NPC and monster faction of the source creature, if applicable. Do not set for sounds not from creatures.
     faction_id faction = faction_id( "no_faction" );
-    mfaction_str_id monfaction = mfaction_str_id( "" );
+    mfaction_str_id monfaction;
 };
 
 
