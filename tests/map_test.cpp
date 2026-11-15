@@ -6,6 +6,7 @@
 #include "avatar.h"
 #include "avatar_action.h"
 #include "bodypart.h"
+#include "cached_options.h"
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catch/catch.hpp"
@@ -1788,6 +1789,47 @@ TEST_CASE("clear_map_moves_load_region_to_bubble", "[map]") {
     CHECK(submap_loader.is_simulated(m.get_bound_dimension(), center));
     // Test processes start with a MAPSIZE map, which is larger than g_mapsize. Retained submaps
     // outside the region can be evicted while the map still uses them.
+    const auto corner = m.get_abs_sub() + point_rel_sm(m.getmapsize() - 1, m.getmapsize() - 1);
+    CHECK(submap_loader.is_simulated(m.get_bound_dimension(), corner));
+}
+
+TEST_CASE("map_shift_load_region_covers_the_whole_map", "[map]") {
+    // Checks that the load region covers the whole map after the avatar moves to another submap.
+    // Test processes start with a MAPSIZE map, which is larger than g_mapsize. With a MAPSIZE map
+    // and an active load region, the avatar moves from (60, 60) to (10, 10), so update_map shifts
+    // the map. Then the far corner of the map must be simulated, or its retained submaps can be
+    // evicted while the map uses them.
+    clear_all_state();
+    auto& m = get_map();
+    auto& you = get_avatar();
+    const auto old_position = you.abs_pos();
+    const auto old_size = m.getmapsize();
+    const auto old_abs_sub = m.get_abs_sub();
+    const auto had_region = m.has_active_load_region();
+    // Turn off the lazy border. update_map makes a lazy border request, and
+    // release_active_load_region keeps it. A kept request covers no simulated region, so later
+    // tests see unsimulated submaps.
+    const auto restore_lazy_border = restore_on_out_of_scope(lazy_border_enabled);
+    lazy_border_enabled = false;
+    const auto cleanup = on_out_of_scope([&]() {
+        you.setpos(old_position);
+        m.resize(old_size);
+        m.load(old_abs_sub, false);
+        clear_map();
+        if (!had_region) {
+            m.release_active_load_region();
+            // update_map ran submap_loader.update(), so clear its caches of the released region.
+            submap_loader.drain_lazy_loads();
+            submap_loader.flush_prev_desired();
+        }
+    });
+    m.resize(MAPSIZE);
+    m.load(old_abs_sub, false);
+    REQUIRE(m.getmapsize() > g_mapsize);
+    m.update_active_load_region(old_abs_sub, old_abs_sub + point_rel_sm(MAPSIZE, MAPSIZE));
+
+    you.setpos(tripoint_bub_ms{10, 10, 0});
+
     const auto corner = m.get_abs_sub() + point_rel_sm(m.getmapsize() - 1, m.getmapsize() - 1);
     CHECK(submap_loader.is_simulated(m.get_bound_dimension(), corner));
 }
