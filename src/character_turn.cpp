@@ -46,6 +46,15 @@
 
 #include <algorithm>
 
+static const enchantment_value_id ench_val_BODYTEMP_SPEED( "BODYTEMP_SPEED" );
+static const enchantment_value_id ench_val_BONUS_DODGE( "BONUS_DODGE" );
+static const enchantment_value_id ench_val_DEXTERITY( "DEXTERITY" );
+static const enchantment_value_id ench_val_INTELLIGENCE( "INTELLIGENCE" );
+static const enchantment_value_id ench_val_PERCEPTION( "PERCEPTION" );
+static const enchantment_value_id ench_val_SCENT( "SCENT" );
+static const enchantment_value_id ench_val_SPEED( "SPEED" );
+static const enchantment_value_id ench_val_STRENGTH( "STRENGTH" );
+
 static const trait_id trait_ACIDBLOOD( "ACIDBLOOD" );
 static const trait_id trait_ARACHNID_ARMS_OK( "ARACHNID_ARMS_OK" );
 static const trait_id trait_ARACHNID_ARMS( "ARACHNID_ARMS" );
@@ -191,7 +200,7 @@ void Character::recalc_speed_bonus()
         }
         float temperature_speed_modifier = mutation_value( "temperature_speed_modifier" );
         temperature_speed_modifier += bonus_from_enchantments( temperature_speed_modifier,
-                                      enchantment_value_id( "BODYTEMP_SPEED" ) );
+                                      ench_val_BODYTEMP_SPEED );
         if( temperature_speed_modifier != 0 ) {
             const auto player_local_temp = units::to_fahrenheit( get_weather().get_temperature( abs_pos() ) );
             if( has_trait( trait_COLDBLOOD4 ) || player_local_temp < 65 ) {
@@ -216,7 +225,7 @@ void Character::recalc_speed_bonus()
     }
     {
         ZoneScopedN( "enchantment_speed" );
-        double ench_bonus = enchantment_cache->calc_bonus( enchantment_value_id( "SPEED" ), get_speed() );
+        double ench_bonus = enchantment_cache->calc_bonus( ench_val_SPEED, get_speed() );
         mod_speed_bonus( ench_bonus );
     }
 }
@@ -250,7 +259,7 @@ void Character::process_turn()
         drop_invalid_inventory();
     }
     // Didn't just pick something up
-    last_item = itype_id( "null" );
+    last_item = itype_id::NULL_ID();
 
     // Roll mutation and bionic side effects once per calendar turn, as for effects
     action_time_scale::for_each_calendar_turn_this_tick( [this] {
@@ -322,7 +331,7 @@ void Character::process_turn()
         for( const trait_id &mut : get_mutations() ) {
             norm_scent *= mut.obj().scent_modifier;
         }
-        norm_scent += bonus_from_enchantments( norm_scent, enchantment_value_id( "SCENT" ) );
+        norm_scent += bonus_from_enchantments( norm_scent, ench_val_SCENT );
 
         norm_scent = std::max( 0, norm_scent );
         // Scent increases fast at first, and slows down as it approaches normal levels.
@@ -895,18 +904,18 @@ void Character::reset_stats()
 
     {
         ZoneScopedN( "enchantment_stat_bonuses" );
-        mod_str_bonus( enchantment_cache->calc_bonus( enchantment_value_id( "STRENGTH" ), get_str_base(),
+        mod_str_bonus( enchantment_cache->calc_bonus( ench_val_STRENGTH, get_str_base(),
                        true ) );
-        mod_dex_bonus( enchantment_cache->calc_bonus( enchantment_value_id( "DEXTERITY" ), get_dex_base(),
+        mod_dex_bonus( enchantment_cache->calc_bonus( ench_val_DEXTERITY, get_dex_base(),
                        true ) );
-        mod_per_bonus( enchantment_cache->calc_bonus( enchantment_value_id( "PERCEPTION" ), get_per_base(),
+        mod_per_bonus( enchantment_cache->calc_bonus( ench_val_PERCEPTION, get_per_base(),
                        true ) );
-        mod_int_bonus( enchantment_cache->calc_bonus( enchantment_value_id( "INTELLIGENCE" ),
+        mod_int_bonus( enchantment_cache->calc_bonus( ench_val_INTELLIGENCE,
                        get_int_base(),
                        true ) );
     }
     mod_num_dodges_bonus( enchantment_cache->calc_bonus(
-                              enchantment_value_id( "BONUS_DODGE" ),
+                              ench_val_BONUS_DODGE,
                               get_num_dodges_base(),
                               true
                           ) );

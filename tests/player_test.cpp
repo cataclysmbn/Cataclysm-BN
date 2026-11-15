@@ -14,6 +14,7 @@
 #include "map/field_type.h"
 #include "map_helpers.h"
 #include "morale_types.h"
+#include "options_helpers.h"
 #include "player.h"
 #include "player_activity.h"
 #include "player_helpers.h"
@@ -736,4 +737,22 @@ TEST_CASE("clear_character_leaves_no_activity_state", "[activity]") {
     CHECK(dummy.activity->is_null());
     CHECK(dummy.activity->index == 0);
     CHECK(dummy.backlog.empty());
+}
+
+TEST_CASE("chronic_pain_follows_option_changes", "[pain]") {
+    // Checks that get_pain() reads CHRONIC_PAIN again after the option changes.
+    // A torso at half hp gives no pain while CHRONIC_PAIN is off, and some pain while it is on.
+    clear_all_state();
+    auto& guy = *get_player_character().as_player();
+    clear_character(guy, true);
+    guy.set_pain(0);
+    guy.set_part_hp_cur(bodypart_id("torso"), guy.get_part_hp_max(bodypart_id("torso")) / 2);
+    {
+        const auto chronic = override_option("CHRONIC_PAIN", "false");
+        CHECK(guy.get_pain() == 0);
+    }
+    {
+        const auto chronic = override_option("CHRONIC_PAIN", "true");
+        CHECK(guy.get_pain() > 0);
+    }
 }

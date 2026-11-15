@@ -71,6 +71,7 @@
 #include "mutation.h"
 #include "npc.h"
 #include "options.h"
+#include "utils/cached_option.h"
 #include "output.h"
 #include "overlay_ordering.h"
 #include "overmap/omdata.h"
@@ -128,6 +129,7 @@
 #include <ostream>
 #include <ranges>
 #include <type_traits>
+#include <unordered_map>
 #include <vector>
 
 using character_funcs::base_comfort_value;
@@ -1174,7 +1176,8 @@ int Character::get_pain() const
 {
     int pain = Creature::get_pain();
     pain += bonus_from_enchantments( pain, ench_val_PAIN_MOD );
-    if( get_option<bool>( "CHRONIC_PAIN" ) ) {
+    thread_local auto chronic_pain = cached_option<bool> { .name = "CHRONIC_PAIN" };
+    if( chronic_pain.get() ) {
         pain =  std::max( pain, min_pain( *this ) );
         pain += bonus_from_enchantments( pain, ench_val_CHRONIC_PAIN_MOD );
     }
@@ -4301,7 +4304,12 @@ int Character::get_skill_level( const skill_id &ident, const bool no_enchant ) c
     if( no_enchant ) {
         return skill_level;
     }
-    auto ench_id = enchantment_value_id( "SKILL_LEVEL_" + to_upper_case( ident.str() ) );
+    thread_local auto ench_ids = std::unordered_map<skill_id, enchantment_value_id> {};
+    auto found = ench_ids.find( ident );
+    if( found == ench_ids.end() ) {
+        found = ench_ids.emplace( ident, "SKILL_LEVEL_" + to_upper_case( ident.str() ) ).first;
+    }
+    const auto &ench_id = found->second;
     if( ench_id.is_valid() ) {
         skill_level += bonus_from_enchantments( skill_level, ench_id );
     }
