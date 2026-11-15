@@ -1356,6 +1356,7 @@ void options_manager::cOpt::setValue( float fSetIn )
     if( fSet < fMin || fSet > fMax ) {
         fSet = fDefault;
     }
+    calendar::invalidate_time_config_cache();
 }
 
 //set value
