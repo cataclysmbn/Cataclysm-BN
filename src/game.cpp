@@ -712,6 +712,7 @@ void game::setup( bool load_world_modfiles )
     new_game = true;
     next_activity_fixed_window_check_ = calendar::turn_zero;
     activity_fixed_window_force_normal_turn_ = false;
+    reset_skip_bodytemp_cache();
     saving_blocked_by_failed_load = false;
     uquit = QUIT_NO;   // We haven't quit the game
     bVMonsterLookFire = true;
