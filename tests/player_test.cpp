@@ -4,6 +4,7 @@
 #include "avatar.h"
 #include "avatar_action.h"
 #include "bodypart.h"
+#include "cached_options.h"
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catch/catch.hpp"
@@ -20,6 +21,7 @@
 #include "state_helpers.h"
 #include "units.h"
 #include "units_temperature.h"
+#include "utils/skip_bodytemp_cache.h"
 #include "weather/weather.h"
 
 #include <array>
@@ -647,6 +649,54 @@ TEST_CASE("update_bodytemp keeps the body intact for a single step.", "[bodytemp
         CHECK(part.get_str_id() == bp_id.id());
         CHECK(part.get_temp_cur() >= BODYTEMP_FREEZING);
         CHECK(part.get_temp_cur() <= BODYTEMP_SCORCHING);
+    }
+}
+
+// Light a fire 2 tiles away and check torso temp_conv on the next turns.
+// An activity skip reads the fire only after ACTIVITY_SKIP_STAT_UPDATE_TICKS (60 s here).
+TEST_CASE("skip_bodytemp_reads_new_heat_after_stat_update_interval", "[bodytemp][activity]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    calendar::turn = calendar::turn_zero + 12_hours;
+    auto& you = get_avatar();
+    auto& here = get_map();
+    guarantee_neutral_weather(you, get_weather());
+    const auto skip_state = restore_on_out_of_scope<bool>(you.in_skip_state);
+    const auto interval = restore_on_out_of_scope<time_duration>(activity_skip_stat_update_ticks);
+    activity_skip_stat_update_ticks = 60_seconds;
+    const auto torso_conv = [&]() { return you.get_part(body_part_torso).get_temp_conv(); };
+    const auto step = [&](const time_duration& dt) {
+        calendar::turn += dt;
+        you.update_bodytemp(here, get_weather());
+    };
+
+    SECTION("skipping keeps the old inputs until the interval ends") {
+        you.in_skip_state = true;
+        step(1_turns);
+        const auto before = torso_conv();
+        here.add_field(you.bub_pos() + point(2, 0), fd_fire, 3);
+        step(1_turns);
+        CHECK(torso_conv() == before);
+        step(60_turns);
+        CHECK(torso_conv() > before);
+    }
+
+    SECTION("normal turns read the fire at once") {
+        step(1_turns);
+        const auto before = torso_conv();
+        here.add_field(you.bub_pos() + point(2, 0), fd_fire, 3);
+        step(1_turns);
+        CHECK(torso_conv() > before);
+    }
+
+    SECTION("skipping reads the fire at once after reset_skip_bodytemp_cache") {
+        you.in_skip_state = true;
+        step(1_turns);
+        const auto before = torso_conv();
+        here.add_field(you.bub_pos() + point(2, 0), fd_fire, 3);
+        reset_skip_bodytemp_cache();
+        step(1_turns);
+        CHECK(torso_conv() > before);
     }
 }
 
