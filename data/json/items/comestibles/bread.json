@@ -21,6 +21,15 @@
     "fun": 4
   },
   {
+    "type": "COMESTIBLE",
+    "copy-from": "donut_holes",
+    "id": "churros",
+    "name": { "str_sp": "churros" },
+    "description": "Crisp strips of fried dough coated in cinnamon sugar.  A popular sweet street food across Latin America and Spain.",
+    "calories": 240,
+    "fun": 6
+  },
+  {
     "id": "sourdough_young_uncovered",
     "type": "COMESTIBLE",
     "category": "food",

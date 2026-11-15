@@ -319,6 +319,20 @@
   },
   {
     "type": "COMESTIBLE",
+    "copy-from": "cola",
+    "id": "pilk",
+    "name": "pilk",
+    "container": "bottle_plastic",
+    "weight": "250 g",
+    "volume": "250 ml",
+    "spoils_in": "1 day",
+    "material": [ "milk", "junk" ],
+    "primary_material": "milk",
+    "fun": 2,
+    "description": "A questionable blend of cola and milk.  It looks worse than it tastes, which is not saying much."
+  },
+  {
+    "type": "COMESTIBLE",
     "id": "cola_syrup",
     "name": { "str_sp": "dark cola soda syrup" },
     "weight": "260 g",
