@@ -1216,6 +1216,7 @@ double effect::get_percentage( const std::string &arg, int val, bool reduced ) c
 bool effect::activated( const time_point &when, const std::string &arg, int val, bool reduced,
                         double mod ) const
 {
+    if( val == 0 && !eff_type->mod_data_types.contains( arg ) ) { return false; }
     auto &mod_data = eff_type->mod_data;
     auto found_top_base = mod_data.find( std::make_tuple( "base_mods", reduced, arg, "chance_top" ) );
     auto found_top_scale = mod_data.find( std::make_tuple( "scaling_mods", reduced, arg,
