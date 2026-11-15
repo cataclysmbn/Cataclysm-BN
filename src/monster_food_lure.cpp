@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <functional>
 #include <ranges>
+#include <string>
 #include <unordered_set>
 
 #include "avatar.h"
@@ -85,11 +86,18 @@ auto in_lure_reach( const monster &mon, const tripoint_bub_ms &p ) -> bool
            rl_dist( pos.xy(), p.xy() ) <= lure_radius;
 }
 
+const auto flag_CONTAINER = std::string( "CONTAINER" );
+
 /// Adds the comestibles on `p` to `tiles`, once per tile. Tiles without items are not hashed.
+/// Food that no monster can stand on, or that lies in a sealed container, is left out.
 auto append_tile( map &here, const tripoint_bub_ms &p,
                   std::unordered_set<tripoint_bub_ms> &visited, lure_snapshot &tiles ) -> void
 {
-    if( !here.has_items( p ) || !visited.insert( p ).second ) {
+    if( !here.has_items( p ) || !visited.insert( p ).second || here.impassable( p ) ) {
+        return;
+    }
+    const auto enclosed = here.has_flag_ter_or_furn( flag_CONTAINER, p );
+    if( enclosed && here.has_flag_ter_or_furn( TFLAG_SEALED, p ) ) {
         return;
     }
     auto foods = std::vector<const item *> {};
@@ -102,6 +110,7 @@ auto append_tile( map &here, const tripoint_bub_ms &p,
         tiles.push_back( {
             .pos = p,
             .feeder = here.has_flag_furn( "PET_FEEDER", p ),
+            .enclosed = enclosed,
             .foods = std::move( foods ),
         } );
     }
@@ -131,6 +140,19 @@ auto is_hungry_seeker( const monster &mon ) -> bool
     return seeks_food( mon ) && !mon.has_effect( effect_well_fed );
 }
 
+/// Tiles for one monster: its surroundings on a search turn, otherwise only the meal underfoot
+/// and the goal it already heads for.
+auto append_tiles_for( map &here, const monster &mon, const tripoint_bub_ms &goal,
+                       std::unordered_set<tripoint_bub_ms> &visited, lure_snapshot &tiles ) -> void
+{
+    if( is_search_turn( mon ) ) {
+        append_tiles_near( here, mon, visited, tiles );
+    } else {
+        append_tile( here, mon.bub_pos(), visited, tiles );
+        append_tile( here, goal, visited, tiles );
+    }
+}
+
 auto is_held_pet_food( const mtype &type, const item &held ) -> bool
 {
     return matches_pet_food( type, held ) ||
@@ -152,15 +174,13 @@ auto find_wanted_food_at( const monster &mon, const tripoint_bub_ms &pos ) -> it
     return nullptr;
 }
 
-auto eat_one( const tripoint_bub_ms &pos, const item &food ) -> void
+/// Consumes one unit of exactly the chosen item, not of another stack of the same type.
+auto eat_one( const tripoint_bub_ms &pos, item &food ) -> void
 {
-    auto &here = get_map();
-    auto consumed = 1;
-    const auto id = food.typeId();
-    if( food.count_by_charges() ) {
-        here.use_charges( pos, 0, id, consumed );
+    if( food.count_by_charges() && food.charges > 1 ) {
+        food.mod_charges( -1 );
     } else {
-        here.use_amount( pos, 0, id, consumed );
+        get_map().i_rem( pos, &food );
     }
 }
 
@@ -174,32 +194,34 @@ auto collect_lure_tiles( map &here, std::span<monster *const> critters ) -> lure
         if( critter == nullptr || critter->is_dead() || !is_hungry_seeker( *critter ) ) {
             continue;
         }
-        if( is_search_turn( *critter ) ) {
-            append_tiles_near( here, *critter, visited, tiles );
-        } else {
-            // Between searches only the meal underfoot and the remembered goal matter.
-            append_tile( here, critter->bub_pos(), visited, tiles );
-            append_tile( here, critter->move_target(), visited, tiles );
-        }
+        append_tiles_for( here, *critter, critter->move_target(), visited, tiles );
     }
     return tiles;
 }
 
-auto collect_lure_tiles_near( map &here, const monster &mon ) -> lure_snapshot
+auto collect_lure_tiles_near( map &here, const monster &mon,
+                              const tripoint_bub_ms &goal ) -> lure_snapshot
 {
     auto visited = std::unordered_set<tripoint_bub_ms> {};
     auto tiles = lure_snapshot{};
     if( is_hungry_seeker( mon ) ) {
-        append_tiles_near( here, mon, visited, tiles );
+        append_tiles_for( here, mon, goal, visited, tiles );
     }
     return tiles;
 }
 
 auto is_search_turn( const monster &mon ) -> bool
 {
-    // The address spreads the monsters over the period, so they do not all search on one turn.
-    const auto offset = static_cast<int>( ( reinterpret_cast<std::uintptr_t>( &mon ) >> 6 ) %
-                                          search_period );
+    // The position spreads the monsters over the period, so they do not all search on one turn.
+    // It is the same on every run of a save, unlike the address of the monster.
+    const auto p = mon.abs_pos();
+    auto hash = static_cast<std::uint32_t>( p.x() ) * 73856093u ^
+                static_cast<std::uint32_t>( p.y() ) * 19349663u ^
+                static_cast<std::uint32_t>( p.z() ) * 83492791u;
+    hash ^= hash >> 16;
+    hash *= 0x45d9f3bu;
+    hash ^= hash >> 16;
+    const auto offset = static_cast<int>( hash % search_period );
     return ( to_turn<int>( calendar::turn ) + offset ) % search_period == 0;
 }
 
@@ -234,8 +256,9 @@ auto pick_lure_goal( const lure_goal_query &query ) -> std::optional<tripoint_bu
     auto food_tiles = std::vector<tripoint_bub_ms> {};
     if( !mon.has_effect( effect_well_fed ) ) {
         const auto in_reach = [&]( const lure_tile & t ) {
+            // Food inside an open container shows only from next to it, as it does for the player.
             return ( query.full_search || t.pos == pos || t.pos == query.current_goal ) &&
-                   in_lure_reach( mon, t.pos );
+                   ( !t.enclosed || rl_dist( pos, t.pos ) <= 1 ) && in_lure_reach( mon, t.pos );
         };
         const auto has_wanted = [&]( const lure_tile & t ) {
             const auto wanted = [&]( const item * f ) { return wants_food( mon, *f, t.feeder ); };
@@ -291,7 +314,7 @@ auto process_feeding( monster &mon ) -> bool
     if( !feeding && ( mon.has_effect( effect_well_fed ) || !mon.is_wandering() ) ) {
         return false;
     }
-    const auto *food = find_wanted_food_at( mon, mon.bub_pos() );
+    auto *food = find_wanted_food_at( mon, mon.bub_pos() );
     if( feeding ) {
         // Fleeing, chasing or being led away leaves the meal unfinished.
         if( food == nullptr || !mon.is_wandering() ) {

@@ -36,6 +36,8 @@ struct lure_tile {
     tripoint_bub_ms pos;
     /// Whether the tile holds furniture flagged `PET_FEEDER`.
     bool feeder = false;
+    /// Whether the tile is a container, which shows its contents only to adjacent monsters.
+    bool enclosed = false;
     /// Valid only during the planning pass that receives the snapshot.
     std::vector<const item *> foods;
 };
@@ -56,15 +58,17 @@ auto accepts_tamer( const mtype &type, const Character &tamer ) -> bool;
 /// Whether the monster can be drawn to food at all.
 auto seeks_food( const monster &mon ) -> bool;
 
-/// Whether the monster scans its surroundings for food on the current turn.
+/// Whether the monster scans its surroundings for food on the current turn. The turn depends on
+/// the position of the monster, so that a save plays out the same way on every run.
 auto is_search_turn( const monster &mon ) -> bool;
 
 /// Collects comestible tiles for every hungry monster in `critters` that seeks food: the full
 /// surroundings on its search turn, otherwise only its own tile and its current goal.
 auto collect_lure_tiles( map &here, std::span<monster *const> critters ) -> lure_snapshot;
 
-/// Collects comestible tiles around a single monster, regardless of the search turn.
-auto collect_lure_tiles_near( map &here, const monster &mon ) -> lure_snapshot;
+/// Collects comestible tiles for a single monster that heads for `goal`, by the same rule.
+auto collect_lure_tiles_near( map &here, const monster &mon,
+                              const tripoint_bub_ms &goal ) -> lure_snapshot;
 
 /// Whether `mon` eats `food`. Pets only eat pet food lying on a `PET_FEEDER`.
 auto wants_food( const monster &mon, const item &food, bool on_feeder ) -> bool;

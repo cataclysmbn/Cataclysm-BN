@@ -1001,7 +1001,7 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
         if( !busy && food_lure::seeks_food( *this ) ) {
             auto local_tiles = food_lure::lure_snapshot{};
             if( ctx.lure_tiles == nullptr ) {
-                local_tiles = food_lure::collect_lure_tiles_near( g->m, *this );
+                local_tiles = food_lure::collect_lure_tiles_near( g->m, *this, goal );
             }
             const auto lure_goal = food_lure::pick_lure_goal( {
                 .mon = *this,
@@ -1009,7 +1009,7 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
                 .lured_by_player = lured_by_player,
                 .player_pos = g->u.bub_pos(),
                 .current_goal = goal,
-                .full_search = ctx.lure_tiles == nullptr || food_lure::is_search_turn( *this ),
+                .full_search = food_lure::is_search_turn( *this ),
             } );
             if( lure_goal ) {
                 local_goal = *lure_goal;

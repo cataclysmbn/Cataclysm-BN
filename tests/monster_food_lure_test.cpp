@@ -51,6 +51,12 @@ auto act(monster& mon) -> void {
     mon.move();
 }
 
+/// Plans on the turn on which the monster scans its surroundings for food.
+auto search_plan(const monster& mon) -> monster_plan_t {
+    while (!food_lure::is_search_turn(mon)) { calendar::turn += 1_turns; }
+    return mon.compute_plan();
+}
+
 } // namespace
 
 TEST_CASE("food_lure_matches_diet_pet_food_and_tamer", "[monster][food_lure]") {
@@ -91,26 +97,54 @@ TEST_CASE("wild_animal_walks_to_food_it_eats", "[monster][food_lure]") {
 
     SECTION("food outside its diet is ignored") {
         place_food(food_pos, "cattlefodder");
-        CHECK(weasel.compute_plan().goal != food_pos);
+        CHECK(search_plan(weasel).goal != food_pos);
     }
     SECTION("food in its diet becomes the goal") {
         place_food(food_pos, "meat");
-        CHECK(weasel.compute_plan().goal == food_pos);
+        CHECK(search_plan(weasel).goal == food_pos);
     }
     SECTION("a well fed animal ignores food") {
         place_food(food_pos, "meat");
         weasel.add_effect(effect_well_fed, 1_hours);
-        CHECK(weasel.compute_plan().goal != food_pos);
+        CHECK(search_plan(weasel).goal != food_pos);
     }
     SECTION("food it can see is noticed up to the lure radius") {
         const auto far_food = mon_pos + tripoint_rel_ms(food_lure::lure_radius, 0, 0);
         place_food(far_food, "meat");
-        CHECK(weasel.compute_plan().goal == far_food);
+        CHECK(search_plan(weasel).goal == far_food);
     }
     SECTION("food beyond the lure radius is ignored") {
         const auto too_far = mon_pos + tripoint_rel_ms(food_lure::lure_radius + 1, 0, 0);
         place_food(too_far, "meat");
-        CHECK(weasel.compute_plan().goal != too_far);
+        CHECK(search_plan(weasel).goal != too_far);
+    }
+    SECTION("food is not noticed between search turns") {
+        place_food(food_pos, "meat");
+        while (food_lure::is_search_turn(weasel)) { calendar::turn += 1_turns; }
+        CHECK(weasel.compute_plan().goal != food_pos);
+    }
+}
+
+TEST_CASE("food_out_of_reach_is_no_lure", "[monster][food_lure]") {
+    prepare_daylight_map();
+    auto& weasel = spawn_test_monster("mon_weasel", mon_pos);
+    const auto next_pos = mon_pos + tripoint_rel_ms(1, 0, 0);
+
+    SECTION("food on furniture that cannot be walked on is ignored") {
+        get_map().furn_set(food_pos, furn_str_id("f_rack"));
+        REQUIRE(get_map().impassable(food_pos));
+        place_food(food_pos, "meat");
+        CHECK(search_plan(weasel).goal != food_pos);
+    }
+    SECTION("food in a container is not seen from a distance") {
+        get_map().furn_set(food_pos, furn_str_id("f_cupboard"));
+        place_food(food_pos, "meat");
+        CHECK(search_plan(weasel).goal != food_pos);
+    }
+    SECTION("food in a container is seen from next to it") {
+        get_map().furn_set(next_pos, furn_str_id("f_cupboard"));
+        place_food(next_pos, "meat");
+        CHECK(search_plan(weasel).goal == next_pos);
     }
 }
 
@@ -158,7 +192,7 @@ TEST_CASE("flying_animal_comes_down_to_food", "[monster][food_lure]") {
     REQUIRE(turkey.flies());
     place_food(food_pos, "wheat");
 
-    CHECK(turkey.compute_plan().goal == food_pos);
+    CHECK(search_plan(turkey).goal == food_pos);
 }
 
 TEST_CASE("pets_only_eat_pet_food_from_a_feeder", "[monster][food_lure]") {
@@ -168,17 +202,17 @@ TEST_CASE("pets_only_eat_pet_food_from_a_feeder", "[monster][food_lure]") {
 
     SECTION("pet food on the floor is ignored") {
         place_food(food_pos, "dogfood");
-        CHECK(dog.compute_plan().goal != food_pos);
+        CHECK(search_plan(dog).goal != food_pos);
     }
     SECTION("diet food on a feeder is ignored") {
         get_map().furn_set(food_pos, furn_str_id("f_trough"));
         place_food(food_pos, "meat");
-        CHECK(dog.compute_plan().goal != food_pos);
+        CHECK(search_plan(dog).goal != food_pos);
     }
     SECTION("pet food on a feeder becomes the goal") {
         get_map().furn_set(food_pos, furn_str_id("f_trough"));
         place_food(food_pos, "dogfood");
-        CHECK(dog.compute_plan().goal == food_pos);
+        CHECK(search_plan(dog).goal == food_pos);
     }
 }
 
