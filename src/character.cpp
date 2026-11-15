@@ -6349,6 +6349,27 @@ struct BodyTemperatureModifiers {
     std::map<bodypart_id, int> wind_res_per_bp;
 };
 
+namespace
+{
+
+/// Body temperature inputs that an activity skip reuses until the next stat update.
+struct skip_bodytemp_inputs {
+    bool valid = false;
+    tripoint_abs_ms pos;
+    time_point computed_at;
+    /// Holds no clothing maps: worn items can be destroyed before the next refresh.
+    BodyTemperatureModifiers mods;
+};
+
+auto skip_bodytemp_cache = skip_bodytemp_inputs {};
+
+} // namespace
+
+auto reset_skip_bodytemp_cache() -> void
+{
+    skip_bodytemp_cache = skip_bodytemp_inputs {};
+}
+
 std::map<bodypart_id, int> get_wind_resistance( const Character &chr,
         const std::map<bodypart_id, std::vector<const item *>> &clothing_map,
         const std::map<bodypart_id, std::vector<const item *>> &bonus_clothing_map )
@@ -6906,6 +6927,15 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
         }
         return;
     }
+    auto &cache = skip_bodytemp_cache;
+    const auto skipping = this == &g->u && g->u.in_skip_state;
+    if( skipping && cache.valid && cache.pos == abs_pos() &&
+        calendar::turn >= cache.computed_at &&
+        calendar::turn < cache.computed_at + activity_skip_stat_update_ticks ) {
+        equalize_temperature( *this );
+        update_bodytemp_bps( *this, cache.mods );
+        return;
+    }
     const auto _bub_pos = bub_pos();
     const w_point &weather_point = get_weather().get_precise();
     auto body_mods = BodyTemperatureModifiers();
@@ -6963,6 +6993,15 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
                                     body_mods.clothing_map_bonus
                                 );
 
+    cache.valid = skipping;
+    if( skipping ) {
+        cache.pos = abs_pos();
+        cache.computed_at = calendar::turn;
+        cache.mods = body_mods;
+        cache.mods.fire_armor_per_bp = get_armor_fire( body_mods.clothing_map );
+        cache.mods.clothing_map.clear();
+        cache.mods.clothing_map_bonus.clear();
+    }
     update_bodytemp_bps( *this, body_mods );
 }
 
