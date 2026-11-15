@@ -26,6 +26,7 @@ static const itype_id itype_veggy( "veggy" );
 static const itype_id itype_veggy_tainted( "veggy_tainted" );
 
 static const species_id MOLLUSK( "MOLLUSK" );
+static const species_id species_ALL( "ALL" );
 
 mtype::mtype()
 {
@@ -125,7 +126,7 @@ bool mtype::in_category( const std::string &category ) const
 
 bool mtype::in_species( const species_id &spec ) const
 {
-    if( spec == species_id( "ALL" ) ) {
+    if( spec == species_ALL ) {
         return true;
     }
     return species.contains( spec );
