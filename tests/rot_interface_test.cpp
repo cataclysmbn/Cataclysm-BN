@@ -241,6 +241,11 @@ TEST_CASE(
     }
     food->set_relative_rot(0.95);
     CHECK(freshness_info(*food).find("just") != std::string::npos);
+
+    // A skilled cook sees that food sealed in a preserving container does not spoil.
+    auto jar = item::spawn("test_rot_preserving");
+    jar->put_in(std::move(food));
+    CHECK(freshness_info(jar->contents.front()).find("won't spoil") != std::string::npos);
 }
 
 TEST_CASE(

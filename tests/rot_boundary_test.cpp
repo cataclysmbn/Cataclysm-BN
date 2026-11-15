@@ -142,6 +142,38 @@ TEST_CASE("Legacy rot entry points accumulate elapsed rot", "[rot][boundary]") {
     CHECK(food->get_rot() == 20_minutes);
 }
 
+// Local map heat speeds up catch-up rot, except while the game starts and the map is not ready.
+// A 2 h catch-up with a +40 F tile modifier rots more than one at +0 F during play,
+// and the same as +0 F while g->new_game is set.
+TEST_CASE("Legacy rot entry points ignore local heat while the game starts", "[rot][boundary]") {
+    const auto state = rot_state();
+    const auto entry = GENERATE(0, 1, 2);
+    const auto pos = tripoint_bub_ms(65, 65, 0);
+    const auto start = calendar::turn;
+    const auto rot_after = [&](const bool starting, const int heat) {
+        const auto restore_starting = restore_on_out_of_scope(g->new_game);
+        g->new_game = starting;
+        get_map().set_temperature(pos, heat);
+        calendar::turn = start;
+        auto food = item::spawn("test_rot_food");
+        food->set_relative_rot(0.0);
+        calendar::turn = start + 2_hours;
+        const auto flag = temperature_flag::TEMP_NORMAL;
+        if (entry == 0) {
+            food->update_rot(pos, flag, get_weather());
+        } else if (entry == 1) {
+            food = item::actualize_rot(std::move(food), pos, flag, get_weather());
+        } else {
+            food = item::process_rot(std::move(food), false, pos, nullptr, flag, get_weather());
+        }
+        REQUIRE(food);
+        return food->get_rot();
+    };
+    const auto cool = rot_after(false, 0);
+    CHECK(rot_after(false, 40) > cool);
+    CHECK(rot_after(true, 40) == cool);
+}
+
 TEST_CASE(
     "Direct rot processing retains nonperishables and preserving container contents",
     "[rot][boundary]") {
