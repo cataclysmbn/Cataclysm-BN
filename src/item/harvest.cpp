@@ -131,7 +131,7 @@ void harvest_list::check_consistency() {
                              || entry.type == "blood" || entry.type == "offal"
                              || entry.type == "bionic" || entry.type == "bionic_group")) {
                     if (!item_valid) { errorlist += ", "; }
-                    errorlist += entry.type;
+                    errorlist += string_format("entry type %s is invalid", entry.type);
                 }
             }
             return errorlist;
