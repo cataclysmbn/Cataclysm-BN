@@ -21,7 +21,7 @@ permissions:
 
 env:
   DENO_DIR: /home/runner/.cache/deno
-  LLVM_VERSION: "22"
+  CLANG_FORMAT_VERSION: "22.1.8"
 
 jobs:
   autofix:
@@ -36,17 +36,10 @@ jobs:
       - env: { DEBIAN_FRONTEND: noninteractive }
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends astyle gettext
-
-      - name: Setup C++ format tools
-        uses: aminya/setup-cpp@v1
-        with:
-          compiler: llvm-${{ env.LLVM_VERSION }}
-          clang-format: ${{ env.LLVM_VERSION }}
-          cmake: true
-          ninja: true
-          ccache: true
-          setup-cpp: false
+          sudo apt-get install -y --no-install-recommends astyle gettext cmake ninja-build g++-14 pipx
+          pipx install clang-format==${{ env.CLANG_FORMAT_VERSION }}
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          echo "CXX=g++-14" >> "$GITHUB_ENV"
 
       - name: Show clang-format version
         run: clang-format --version
