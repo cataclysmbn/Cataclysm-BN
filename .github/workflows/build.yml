@@ -226,23 +226,25 @@ jobs:
         if: runner.os == 'Windows'
         uses: lukka/get-cmake@v3.31.6
 
-      - name: Export GitHub Actions cache environment variables
-        if: runner.os == 'Windows'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            core.exportVariable("ACTIONS_CACHE_URL", process.env.ACTIONS_CACHE_URL || "")
-            core.exportVariable("ACTIONS_RESULTS_URL", process.env.ACTIONS_RESULTS_URL || "")
-            core.exportVariable("ACTIONS_RUNTIME_TOKEN", process.env.ACTIONS_RUNTIME_TOKEN || "")
-
+      # vcpkg removed its x-gha backend. Keep binary packages in a files cache instead.
       - name: Configure vcpkg binary cache (windows msvc)
         if: runner.os == 'Windows'
+        id: vcpkg-cache-dir
         run: |
-          $mode = "readwrite"
-          if ("${{ github.event_name }}" -eq "pull_request") {
-            $mode = "read"
-          }
-          "VCPKG_BINARY_SOURCES=clear;x-gha,$mode" >> $env:GITHUB_ENV
+          $dir = "${{ runner.temp }}\vcpkg-binary-cache"
+          New-Item -ItemType Directory -Force $dir | Out-Null
+          "VCPKG_BINARY_SOURCES=clear;files,$dir,readwrite" >> $env:GITHUB_ENV
+          "dir=$dir" >> $env:GITHUB_OUTPUT
+          "image=$env:ImageVersion" >> $env:GITHUB_OUTPUT
+
+      - name: Restore vcpkg binary cache (windows msvc)
+        if: runner.os == 'Windows'
+        id: vcpkg-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ steps.vcpkg-cache-dir.outputs.dir }}
+          # Runner image updates can change the MSVC version and so the vcpkg ABI hashes.
+          key: vcpkg-${{ matrix.artifact }}-${{ steps.vcpkg-cache-dir.outputs.image }}-${{ hashFiles('msvc-full-features/vcpkg.json', '.github/vcpkg_triplets/**') }}
 
       - name: Install vcpkg
         if: runner.os == 'Windows'
@@ -502,6 +504,13 @@ jobs:
             -DJSON_FORMAT=OFF `
             -DCATA_FORMAT_TARGETS=OFF `
             -DCMAKE_INSTALL_MESSAGE=NEVER
+
+      - name: Save vcpkg binary cache (windows msvc)
+        if: runner.os == 'Windows' && github.event_name != 'pull_request' && steps.vcpkg-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ steps.vcpkg-cache-dir.outputs.dir }}
+          key: ${{ steps.vcpkg-cache.outputs.cache-primary-key }}
 
       - name: Build CBN (windows msvc)
         if: runner.os == 'Windows'
