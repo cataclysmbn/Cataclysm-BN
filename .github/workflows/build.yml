@@ -477,12 +477,14 @@ jobs:
           $localize = "False"
           $tests = "False"
           $release = "ON"
+          $fastLink = "OFF"
           if ("${{ inputs.download-translations }}" -eq "true") {
             $localize = "True"
           }
           if ("${{ inputs.mode }}" -eq "ci") {
             $buildType = "RelWithDebInfo"
             $release = "OFF"
+            $fastLink = "ON"
           }
           if ("${{ inputs.run-tests }}" -eq "true") {
             $tests = "True"
@@ -501,6 +503,7 @@ jobs:
             -DSOUND=True `
             "-DTESTS=$tests" `
             "-DRELEASE=$release" `
+            "-DCATA_MSVC_FAST_LINK=$fastLink" `
             -DJSON_FORMAT=OFF `
             -DCATA_FORMAT_TARGETS=OFF `
             -DCMAKE_INSTALL_MESSAGE=NEVER
