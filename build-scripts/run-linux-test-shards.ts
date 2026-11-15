@@ -345,6 +345,7 @@ const discoverTags = async (
     ...testOpts,
     `--user-dir=${join(shardDir, "discovery")}`,
     "--list-tags",
+    "~[slow] ~[.]",
   ], discoveryEnv)
   if (all.stderr) {
     console.error(all.stderr)
