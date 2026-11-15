@@ -13,7 +13,9 @@
 #include "map_helpers.h"
 #include "morale_types.h"
 #include "player.h"
+#include "player_activity.h"
 #include "player_helpers.h"
+#include "skill.h"
 #include "state_helpers.h"
 #include "units.h"
 #include "units_temperature.h"
@@ -637,4 +639,38 @@ TEST_CASE("player_move_through_vehicle_holes") {
     avatar_action::move(get_avatar(), get_map(), point_rel_ms::north_west());
 
     CHECK(get_avatar().bub_pos() == pos);
+}
+
+TEST_CASE("clear_skills_resets_exercise_and_highest_level", "[skill]") {
+    // Checks that clear_skills leaves no training progress from an earlier test.
+    // Level 3 electronics with 232 exercise must become level 0, exercise 0 and highest level 0.
+    clear_all_state();
+    auto& dummy = get_avatar();
+    auto& electronics = dummy.get_skill_level_object(skill_id("electronics"));
+    electronics.level(3);
+    electronics.train(232, true);
+    REQUIRE(electronics.exercise(true) == 232);
+
+    dummy.clear_skills();
+
+    CHECK(electronics.level() == 0);
+    CHECK(electronics.exercise(true) == 0);
+    CHECK(electronics.highestLevel() == 0);
+}
+
+TEST_CASE("clear_character_leaves_no_activity_state", "[activity]") {
+    // Checks that clear_character removes all activity state from an earlier test.
+    // A stopped activity with index 7 and one backlog entry must become a fresh activity with
+    // index 0 and an empty backlog, so a continued read does not reuse index 7.
+    clear_all_state();
+    auto& dummy = get_avatar();
+    dummy.assign_activity(std::make_unique<player_activity>(activity_id("ACT_WAIT"), 100, 7));
+    dummy.activity->set_to_null();
+    dummy.backlog.emplace_front(std::make_unique<player_activity>(activity_id("ACT_WAIT"), 100));
+
+    clear_character(dummy);
+
+    CHECK(dummy.activity->is_null());
+    CHECK(dummy.activity->index == 0);
+    CHECK(dummy.backlog.empty());
 }

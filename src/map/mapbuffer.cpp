@@ -1140,7 +1140,7 @@ void mapbuffer::remove_submap(tripoint_abs_sm addr) {
         return;
     }
     // Safety: skip freeing if submap still in bubble
-    if (g != nullptr && m_target->second) {
+    if (g != nullptr && m_target->second && g->m.get_bound_dimension() == dimension_id_) {
         const submap* doomed = m_target->second.get();
         const map& here = g->m;
         if (here.inbounds(addr)) {
@@ -1250,7 +1250,8 @@ void mapbuffer::unload_omt(const tripoint_abs_omt& omt_addr, bool save) {
     // Safety: skip freeing submaps that map::grid[] still references.
     // This prevents use-after-free when submap_loader eviction races with
     // map::shift() / copy_grid() during large map shifts (e.g. pocket entry).
-    if (g != nullptr) {
+    // Only the bubble's own dimension can alias grid[]; other dimensions share coordinates.
+    if (g != nullptr && g->m.get_bound_dimension() == dimension_id_) {
         const map& here = g->m;
         to_delete.remove_if([&](const tripoint_abs_sm& p) {
             const auto it = submaps.find(p);
