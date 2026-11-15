@@ -7,6 +7,7 @@
 
 #include "calendar.h"
 #include "options.h"
+#include "utils/time_config_generation.h"
 
 namespace action_time_scale
 {
@@ -18,35 +19,65 @@ inline constexpr auto base_moves_per_turn = 100;
 
 inline auto calendar_turns_this_tick() -> int;
 
-inline auto scaled_action_factor( const char *option_id ) -> int
+/// Time scale option values, read again only after an option change.
+struct scale_options {
+    int generation = -1;
+    int time_action = 0;
+    int player_action = 0;
+    int npc_action = 0;
+    int monster_speed = 0;
+    int vehicle_control = 0;
+    int activity_progress = 0;
+    int overmap_horde = 0;
+};
+
+inline auto get_scale_options() -> const scale_options &
 {
-    return get_option<int>( "TIME_ACTION_SCALE" ) * get_option<int>( option_id );
+    thread_local auto cache = scale_options{};
+    const auto generation = calendar::option_generation();
+    if( cache.generation != generation ) {
+        cache = scale_options{
+            .generation = generation,
+            .time_action = get_option<int>( "TIME_ACTION_SCALE" ),
+            .player_action = get_option<int>( "PLAYER_ACTION_SCALE" ),
+            .npc_action = get_option<int>( "NPC_ACTION_SCALE" ),
+            .monster_speed = get_option<int>( "MONSTER_SPEED" ),
+            .vehicle_control = get_option<int>( "VEHICLE_CONTROL_SCALE" ),
+            .activity_progress = get_option<int>( "ACTIVITY_PROGRESS_SCALE" ),
+            .overmap_horde = get_option<int>( "OVERMAP_HORDE_SCALE" ),
+        };
+    }
+    return cache;
 }
 
-inline auto scaled_tick_action_factor( const char *option_id ) -> int
+inline auto scaled_action_factor( const int scale ) -> int
 {
-    return std::max( percent_denominator, get_option<int>( "TIME_ACTION_SCALE" ) ) *
-           get_option<int>( option_id );
+    return get_scale_options().time_action * scale;
+}
+
+inline auto scaled_tick_action_factor( const int scale ) -> int
+{
+    return std::max( percent_denominator, get_scale_options().time_action ) * scale;
 }
 
 inline auto player_action_factor() -> int
 {
-    return scaled_action_factor( "PLAYER_ACTION_SCALE" );
+    return scaled_action_factor( get_scale_options().player_action );
 }
 
 inline auto player_tick_action_factor() -> int
 {
-    return scaled_tick_action_factor( "PLAYER_ACTION_SCALE" );
+    return scaled_tick_action_factor( get_scale_options().player_action );
 }
 
 inline auto npc_action_factor() -> int
 {
-    return scaled_action_factor( "NPC_ACTION_SCALE" );
+    return scaled_action_factor( get_scale_options().npc_action );
 }
 
 inline auto npc_tick_action_factor() -> int
 {
-    return scaled_tick_action_factor( "NPC_ACTION_SCALE" );
+    return scaled_tick_action_factor( get_scale_options().npc_action );
 }
 
 template<typename CharacterLike>
@@ -63,28 +94,27 @@ inline auto character_tick_action_factor( const CharacterLike &who ) -> int
 
 inline auto monster_action_factor() -> int
 {
-    return scaled_action_factor( "MONSTER_SPEED" );
+    return scaled_action_factor( get_scale_options().monster_speed );
 }
 
 inline auto monster_tick_action_factor() -> int
 {
-    return scaled_tick_action_factor( "MONSTER_SPEED" );
+    return scaled_tick_action_factor( get_scale_options().monster_speed );
 }
 
 inline auto vehicle_control_factor() -> int
 {
-    return scaled_action_factor( "VEHICLE_CONTROL_SCALE" );
+    return scaled_action_factor( get_scale_options().vehicle_control );
 }
 
 inline auto vehicle_control_tick_factor() -> int
 {
-    return scaled_tick_action_factor( "VEHICLE_CONTROL_SCALE" );
+    return scaled_tick_action_factor( get_scale_options().vehicle_control );
 }
 
 inline auto overmap_horde_factor() -> int64_t
 {
-    return static_cast<int64_t>( monster_action_factor() ) *
-           get_option<int>( "OVERMAP_HORDE_SCALE" );
+    return static_cast<int64_t>( monster_action_factor() ) * get_scale_options().overmap_horde;
 }
 
 inline auto scaled_overmap_horde_speed( const double base_speed ) -> double
@@ -95,12 +125,12 @@ inline auto scaled_overmap_horde_speed( const double base_speed ) -> double
 
 inline auto activity_progress_factor() -> int
 {
-    return scaled_action_factor( "ACTIVITY_PROGRESS_SCALE" );
+    return scaled_action_factor( get_scale_options().activity_progress );
 }
 
 inline auto activity_tick_progress_factor() -> int
 {
-    return scaled_tick_action_factor( "ACTIVITY_PROGRESS_SCALE" );
+    return scaled_tick_action_factor( get_scale_options().activity_progress );
 }
 
 inline auto scaled_moves( const int base_moves, const int action_factor ) -> int
@@ -278,7 +308,7 @@ inline auto once_every_this_tick( const time_duration &event_frequency ) -> bool
 
 inline auto calendar_turns_for_remainder( const int turn_remainder ) -> int
 {
-    const auto global_scale = get_option<int>( "TIME_ACTION_SCALE" );
+    const auto global_scale = get_scale_options().time_action;
     if( global_scale >= percent_denominator ) {
         return 1;
     }
@@ -294,7 +324,7 @@ inline auto set_calendar_turns_this_tick_to_next_tick( const int turn_remainder 
 
 inline auto calendar_turns_for_next_tick( int &turn_remainder ) -> int
 {
-    const auto global_scale = get_option<int>( "TIME_ACTION_SCALE" );
+    const auto global_scale = get_scale_options().time_action;
     if( global_scale >= percent_denominator ) {
         turn_remainder = 0;
         return 1;
