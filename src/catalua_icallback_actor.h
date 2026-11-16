@@ -277,11 +277,11 @@ class lua_itrap_actor : public lua_icallback_actor_base
                        );
 
         /** Returns false to prevent triggering the trap. */
-        bool call_can_trigger( const Character &who, const trap &trap, const tripoint_bub_ms &loc ) const;
+        bool call_can_trigger( const Creature &who, const trap &trap, const tripoint_bub_ms &loc ) const;
         /** Called after triggering. */
-        void call_on_trigger( Character &who, trap &trap, const tripoint_bub_ms &loc ) const;
+        void call_on_trigger( Creature &who, trap &trap, const tripoint_bub_ms &loc ) const;
         /** Called after trap aftermath. */
-        void call_on_trigger_aftermath( Character &who, trap &trap, const tripoint_bub_ms &loc ) const;
+        void call_on_trigger_aftermath( Creature &who, trap &trap, const tripoint_bub_ms &loc ) const;
 
 };
 

@@ -253,7 +253,7 @@
   },
   {
     "type": "recipe",
-    "result": "tripwire_fire",
+    "result": "tripwire_incendiary",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_TRAPS",
     "skill_used": "traps",
@@ -298,18 +298,6 @@
   },
   {
     "type": "recipe",
-    "result": "snare_net",
-    "category": "CC_OTHER",
-    "subcategory": "CSC_OTHER_TRAPS",
-    "skill_used": "traps",
-    "difficulty": 2,
-    "time": "5 m",
-    "autolearn": true,
-    "using": [ [ "cordage", 6 ] ],
-    "components": [ [ [ "net", 1 ] ], [ [ "spring", 1 ] ] ]
-  },
-  {
-    "type": "recipe",
     "result": "snare_spear",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_TRAPS",
@@ -325,30 +313,6 @@
       [ [ "spear_spike", 2 ], [ "spear_knife", 2 ], [ "spear_wood", 2 ] ],
       [ [ "spring", 1 ] ],
       [ [ "plastic_chunk", 4 ], [ "scrap", 4 ] ]
-    ]
-  },
-  {
-    "type": "recipe",
-    "result": "landmine_shrapnel",
-    "category": "CC_OTHER",
-    "subcategory": "CSC_OTHER_TRAPS",
-    "skill_used": "traps",
-    "skills_required": [ "mechanics", 3 ],
-    "difficulty": 5,
-    "time": "10 m",
-    "reversible": true,
-    "book_learn": [ [ "manual_traps_mil", 5 ] ],
-    "qualities": [ { "id": "SCREW", "level": 1 } ],
-    "components": [
-      [ [ "adhesive", 1, "LIST" ] ],
-      [
-        [ "canister_empty", 1 ],
-        [ "scrap", 3 ],
-        [ "steel_chunk", 1 ],
-        [ "clay_canister", 1 ],
-        [ "can_food_unsealed", 1 ]
-      ],
-      [ [ "bearing", 100 ], [ "nail", 40 ], [ "scrap", 8 ] ]
     ]
   },
   {
@@ -369,21 +333,6 @@
       [ [ "canister_empty", 1 ], [ "clay_canister", 1 ], [ "can_food_unsealed", 1 ] ],
       [ [ "adhesive", 1, "LIST" ] ]
     ]
-  },
-  {
-    "type": "recipe",
-    "result": "thresher",
-    "category": "CC_OTHER",
-    "subcategory": "CSC_OTHER_TRAPS",
-    "skill_used": "traps",
-    "skills_required": [ "mechanics", 3 ],
-    "difficulty": 4,
-    "time": "8 m",
-    "reversible": true,
-    "decomp_learn": 3,
-    "book_learn": [ [ "manual_mechanics", 3 ], [ "manual_traps", 3 ], [ "howto_traps", 3 ] ],
-    "qualities": [ { "id": "WRENCH", "level": 1 } ],
-    "components": [ [ [ "motor", 1 ] ], [ [ "blade", 3 ] ], [ [ "tripwire", 1 ] ] ]
   },
   {
     "type": "recipe",
@@ -426,7 +375,7 @@
   },
   {
     "type": "recipe",
-    "result": "bot_hatch",
+    "result": "manhack_hatch",
     "id_suffix": "from_manhack",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_TRAPS",
@@ -446,7 +395,7 @@
   },
   {
     "type": "recipe",
-    "result": "bot_hatch",
+    "result": "manhack_hatch",
     "id_suffix": "fabricated",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_TRAPS",

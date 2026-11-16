@@ -748,7 +748,7 @@
   },
   {
     "type": "trap",
-    "id": "tr_tripwire_fire",
+    "id": "tr_tripwire_incendiary",
     "name": "incendiary tripwire",
     "color": "light_red",
     "symbol": "^",
@@ -756,11 +756,10 @@
     "visibility": 6,
     "avoidance": 4,
     "difficulty": 2,
-    "action": "spell",
-    "spell_data": { "id": "spell_trap_tripwire_fire" },
+    "action": "lua",
     "remove_on_trigger": true,
-    "trigger_items": [ "tripwire_fire" ],
-    "drops": [ "tripwire_fire" ],
+    "//": "Incendiary charge is consumed on use; disarming an unfired trap recovers it via drops.",
+    "drops": [ "tripwire_incendiary" ],
     "vehicle_data": { "sound_volume": "40 dB", "sound": "Whoosh!", "sound_type": "fire", "sound_variant": "default" }
   },
   {
@@ -773,10 +772,9 @@
     "visibility": 6,
     "avoidance": 4,
     "difficulty": 2,
-    "action": "spell",
-    "spell_data": { "id": "spell_trap_tripwire_acid" },
+    "action": "lua",
     "remove_on_trigger": true,
-    "trigger_items": [ "tripwire_acid" ],
+    "//": "Acid charge is consumed on use; disarming an unfired trap recovers it via drops.",
     "drops": [ "tripwire_acid" ],
     "vehicle_data": { "sound_volume": "30 dB", "sound": "Hiss!", "sound_type": "movement", "sound_variant": "default" }
   },
@@ -790,27 +788,11 @@
     "visibility": 6,
     "avoidance": 4,
     "difficulty": 3,
-    "action": "spell",
-    "spell_data": { "id": "spell_trap_tripwire_shock" },
+    "action": "lua",
     "remove_on_trigger": true,
-    "trigger_items": [ "tripwire_shock" ],
+    "//": "Charge is consumed on use; disarming an unfired trap recovers it via drops.",
     "drops": [ "tripwire_shock" ],
     "vehicle_data": { "sound_volume": "40 dB", "sound": "Crackle!", "sound_type": "combat", "sound_variant": "default" }
-  },
-  {
-    "type": "trap",
-    "id": "tr_snare_net",
-    "trigger_weight": "100 g",
-    "name": "net snare",
-    "color": "brown",
-    "symbol": "^",
-    "visibility": 3,
-    "avoidance": 6,
-    "difficulty": 3,
-    "action": "snare_light",
-    "remove_on_trigger": true,
-    "drops": [ "snare_net" ],
-    "vehicle_data": { "sound_volume": "40 dB", "sound": "Snap!", "sound_type": "combat", "sound_variant": "snare" }
   },
   {
     "type": "trap",
@@ -822,56 +804,10 @@
     "visibility": 2,
     "avoidance": 8,
     "difficulty": 5,
-    "action": "snare_heavy",
+    "action": "lua",
     "remove_on_trigger": true,
     "drops": [ "snare_spear" ],
-    "vehicle_data": { "sound_volume": "50 dB", "sound": "Snap!", "sound_type": "combat", "sound_variant": "snare" }
-  },
-  {
-    "type": "trap",
-    "id": "tr_landmine_shrapnel",
-    "trigger_weight": "200 g",
-    "name": "shrapnel land mine",
-    "color": "red",
-    "symbol": "^",
-    "visibility": 1,
-    "avoidance": 14,
-    "difficulty": 10,
-    "action": "landmine",
-    "remove_on_trigger": true,
-    "drops": [ "landmine_shrapnel" ],
-    "vehicle_data": {
-      "do_explosion": true,
-      "damage": 400,
-      "shrapnel": 30,
-      "sound_volume": "40 dB",
-      "sound": "Boom!",
-      "sound_type": "explosion",
-      "sound_variant": "default"
-    }
-  },
-  {
-    "type": "trap",
-    "id": "tr_landmine_shrapnel_buried",
-    "trigger_weight": "200 g",
-    "name": "buried shrapnel land mine",
-    "color": "red",
-    "symbol": "^",
-    "visibility": 0,
-    "avoidance": 16,
-    "difficulty": 12,
-    "action": "landmine",
-    "remove_on_trigger": true,
-    "drops": [ "landmine_shrapnel" ],
-    "vehicle_data": {
-      "do_explosion": true,
-      "damage": 400,
-      "shrapnel": 30,
-      "sound_volume": "40 dB",
-      "sound": "Boom!",
-      "sound_type": "explosion",
-      "sound_variant": "default"
-    }
+    "vehicle_data": { "sound_volume": "50 dB", "sound": "Crunch!", "sound_type": "combat", "sound_variant": "snare" }
   },
   {
     "type": "trap",
@@ -883,11 +819,10 @@
     "visibility": 1,
     "avoidance": 14,
     "difficulty": 10,
-    "action": "spell",
-    "spell_data": { "id": "spell_trap_mine_incendiary" },
+    "action": "lua",
     "remove_on_trigger": true,
     "drops": [ "mine_incendiary" ],
-    "vehicle_data": { "sound_volume": "40 dB", "sound": "Boom!", "sound_type": "explosion", "sound_variant": "default" }
+    "vehicle_data": { "sound_volume": "40 dB", "sound": "Whoosh!", "sound_type": "fire", "sound_variant": "default" }
   },
   {
     "type": "trap",
@@ -899,43 +834,10 @@
     "visibility": 0,
     "avoidance": 16,
     "difficulty": 12,
-    "action": "spell",
-    "spell_data": { "id": "spell_trap_mine_incendiary" },
+    "action": "lua",
     "remove_on_trigger": true,
     "drops": [ "mine_incendiary" ],
-    "vehicle_data": { "sound_volume": "40 dB", "sound": "Boom!", "sound_type": "explosion", "sound_variant": "default" }
-  },
-  {
-    "type": "trap",
-    "id": "tr_thresher_engine",
-    "trigger_weight": "200 g",
-    "name": "thresher engine",
-    "color": "light_red",
-    "symbol": "_",
-    "visibility": 0,
-    "avoidance": 0,
-    "difficulty": 4,
-    "trap_radius": 1,
-    "action": "none",
-    "drops": [ "motor", "blade", "blade", "blade", "tripwire" ]
-  },
-  {
-    "type": "trap",
-    "id": "tr_thresher",
-    "name": "thresher blade",
-    "color": "cyan",
-    "symbol": "\\",
-    "visibility": 0,
-    "avoidance": 4,
-    "difficulty": 99,
-    "action": "blade",
-    "vehicle_data": {
-      "damage": 400,
-      "sound_volume": "20 dB",
-      "sound": "Swinnng!",
-      "sound_type": "smash_success",
-      "sound_variant": "hit_vehicle"
-    }
+    "vehicle_data": { "sound_volume": "40 dB", "sound": "Whoosh!", "sound_type": "fire", "sound_variant": "default" }
   },
   {
     "type": "trap",
@@ -947,10 +849,9 @@
     "visibility": 5,
     "avoidance": 6,
     "difficulty": 6,
-    "action": "spell",
-    "spell_data": { "id": "spell_trap_emp" },
+    "action": "lua",
     "remove_on_trigger": true,
-    "trigger_items": [ "emp_trap" ],
+    "//": "EMP charge is consumed on use; disarming an unfired trap recovers it via drops.",
     "drops": [ "emp_trap" ],
     "vehicle_data": { "sound_volume": "40 dB", "sound": "Crackle!", "sound_type": "combat", "sound_variant": "default" }
   },
@@ -970,31 +871,17 @@
   },
   {
     "type": "trap",
-    "id": "tr_bot_hatch",
+    "id": "tr_manhack_hatch",
     "trigger_weight": "200 g",
-    "name": "bot hatch",
+    "name": "manhack hatch",
     "color": "light_green",
     "symbol": "_",
     "visibility": 1,
     "avoidance": 8,
     "difficulty": 6,
-    "trap_radius": 1,
     "action": "lua",
     "remove_on_trigger": true,
-    "drops": [ "bot_hatch" ]
-  },
-  {
-    "type": "trap",
-    "id": "tr_bot_hatch_ring",
-    "trigger_weight": "200 g",
-    "name": "bot hatch perimeter",
-    "color": "light_green",
-    "symbol": "\\",
-    "visibility": 0,
-    "avoidance": 8,
-    "difficulty": 99,
-    "action": "lua",
-    "remove_on_trigger": true
+    "drops": [ "manhack_hatch" ]
   },
   {
     "type": "trap",
@@ -1009,7 +896,20 @@
     "difficulty": 8,
     "action": "lua",
     "remove_on_trigger": false,
-    "trigger_items": [ "tesla_wire" ],
+    "//": "Reusable while the grid has power; must not list trigger_items or each zap would spawn a duplicate item.",
     "drops": [ "tesla_wire" ]
+  },
+  {
+    "id": "snare_trigger",
+    "type": "TOOL",
+    "name": "snare trigger",
+    "description": "This is a stick that has been cut into a trigger mechanism for a snare trap.",
+    "weight": "850 g",
+    "volume": "1 L",
+    "price": "0 USD",
+    "to_hit": -1,
+    "material": "wood",
+    "symbol": ";",
+    "color": "brown"
   }
 ]

@@ -324,7 +324,7 @@
     "to_hit": -1
   },
   {
-    "id": "tripwire_fire",
+    "id": "tripwire_incendiary",
     "type": "GENERIC",
     "category": "deployables",
     "name": { "str": "incendiary tripwire trap" },
@@ -340,7 +340,7 @@
     "use_action": {
       "type": "place_trap",
       "needs_solid_neighbor": true,
-      "trap": "tr_tripwire_fire",
+      "trap": "tr_tripwire_incendiary",
       "moves": 175,
       "practice": 3,
       "done_message": "You string up the incendiary tripwire."
@@ -393,28 +393,6 @@
     }
   },
   {
-    "id": "snare_net",
-    "type": "GENERIC",
-    "category": "deployables",
-    "name": { "str": "net snare trap" },
-    "description": "A net on a spring-loaded frame, staked to the ground.  When something steps on it, the net snaps shut around its leg, holding it in place until it breaks free.",
-    "weight": "1200 g",
-    "volume": "2 L",
-    "price": "10 USD",
-    "price_postapoc": "50 cent",
-    "to_hit": -1,
-    "material": [ "plastic", "aluminum" ],
-    "symbol": ";",
-    "color": "brown",
-    "use_action": {
-      "type": "place_trap",
-      "trap": "tr_snare_net",
-      "moves": 200,
-      "practice": 4,
-      "done_message": "You set the net snare."
-    }
-  },
-  {
     "id": "snare_spear",
     "type": "GENERIC",
     "category": "deployables",
@@ -438,36 +416,11 @@
     }
   },
   {
-    "id": "landmine_shrapnel",
-    "type": "GENERIC",
-    "category": "deployables",
-    "name": { "str": "shrapnel land mine" },
-    "description": "A homemade anti-personnel mine packed with extra shrapnel instead of raw explosive.  It is triggered when stepped upon.  If you are carrying a shovel, you will have the option of burying it.",
-    "weight": "2100 g",
-    "volume": "500 ml",
-    "price": "45 USD",
-    "price_postapoc": "5 USD",
-    "to_hit": -1,
-    "bashing": 5,
-    "material": "steel",
-    "symbol": ";",
-    "color": "dark_gray",
-    "use_action": {
-      "type": "place_trap",
-      "bury_question": "Bury the shrapnel land mine?",
-      "bury": { "trap": "tr_landmine_shrapnel_buried", "moves": 275, "practice": 7, "done_message": "You bury the shrapnel land mine." },
-      "trap": "tr_landmine_shrapnel",
-      "moves": 200,
-      "practice": 4,
-      "done_message": "You set the shrapnel land mine."
-    }
-  },
-  {
     "id": "mine_incendiary",
     "type": "GENERIC",
     "category": "deployables",
     "name": { "str": "incendiary mine" },
-    "description": "A homemade incendiary mine that bursts into flame and blast when stepped upon.  If you are carrying a shovel, you will have the option of burying it.",
+    "description": "A homemade incendiary mine that bursts into flames when stepped upon, setting its tile and the surrounding tiles on fire.  If you are carrying a shovel, you will have the option of burying it.",
     "weight": "2500 g",
     "volume": "500 ml",
     "price": "55 USD",
@@ -485,31 +438,6 @@
       "moves": 200,
       "practice": 4,
       "done_message": "You set the incendiary mine."
-    }
-  },
-  {
-    "id": "thresher",
-    "type": "GENERIC",
-    "category": "deployables",
-    "name": { "str": "thresher trap" },
-    "description": "Several machetes mounted radially on a motor, with a pressure plate controlling its throttle.  When triggered, the blades spin wildly, hitting anything on or next to the device.  The trap forms a 3x3 area of effect.",
-    "weight": "3181 g",
-    "volume": "6 L",
-    "price": "70 USD",
-    "price_postapoc": "20 USD",
-    "to_hit": -4,
-    "bashing": 6,
-    "cutting": 18,
-    "material": "steel",
-    "symbol": ";",
-    "color": "light_gray",
-    "use_action": {
-      "type": "place_trap",
-      "outer_layer_trap": "tr_thresher",
-      "trap": "tr_thresher_engine",
-      "moves": 400,
-      "practice": 12,
-      "done_message": "You set the thresher %d squares away."
     }
   },
   {
@@ -558,11 +486,11 @@
     }
   },
   {
-    "id": "bot_hatch",
+    "id": "manhack_hatch",
     "type": "GENERIC",
     "category": "deployables",
-    "name": { "str": "bot hatch trap" },
-    "description": "A small floor compartment holding an inactive bot.  When an enemy steps on it or next to it, the compartment opens and releases the bot.  The trap forms a 3x3 area of effect and is used up once triggered.",
+    "name": { "str": "manhack hatch trap" },
+    "description": "A small floor compartment holding an inactive manhack.  When an enemy steps on it, the compartment opens and releases the manhack, which is friendly to you.  The trap is used up once triggered.",
     "weight": "3200 g",
     "volume": "2 L",
     "price": "80 USD",
@@ -573,11 +501,10 @@
     "color": "light_green",
     "use_action": {
       "type": "place_trap",
-      "outer_layer_trap": "tr_bot_hatch_ring",
-      "trap": "tr_bot_hatch",
+      "trap": "tr_manhack_hatch",
       "moves": 300,
       "practice": 6,
-      "done_message": "You install the bot hatch %d squares away."
+      "done_message": "You install the manhack hatch."
     }
   },
   {
