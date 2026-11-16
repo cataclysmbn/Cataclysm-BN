@@ -12,10 +12,11 @@ runs:
     - shell: bash
       env: { FOR: "${{ inputs.for }}" }
       run: |
-        # The runner image already has the shared libraries that the test executables link.
-        packages=(mesa-vulkan-drivers xvfb)
-        if [ "$FOR" = "build" ]; then
-          packages+=(libncursesw5-dev mold gettext parallel libsqlite3-dev zlib1g-dev libvulkan-dev
+        if [ "$FOR" = "test" ]; then
+          # The runner image already has the shared libraries that the test executables link.
+          packages=(mesa-vulkan-drivers xvfb)
+        else
+          packages=(libncursesw5-dev mold gettext parallel libsqlite3-dev zlib1g-dev libvulkan-dev
             autoconf autoconf-archive automake libtool libltdl-dev
             libasound2-dev libpulse-dev libaudio-dev libjack-dev libsndio-dev libx11-dev
             libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxtst-dev libxkbcommon-dev
@@ -27,4 +28,6 @@ runs:
         fi
         sudo apt-get update
         sudo apt-get install -y "${packages[@]}"
-        sudo locale-gen en_US.UTF-8 fr_FR.UTF-8 ru_RU.UTF-8
+        if [ "$FOR" = "test" ]; then
+          sudo locale-gen en_US.UTF-8 fr_FR.UTF-8 ru_RU.UTF-8
+        fi

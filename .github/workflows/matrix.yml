@@ -120,7 +120,6 @@ jobs:
         uses: aminya/setup-cpp@v1
         with:
           compiler: llvm-${{ env.LLVM_VERSION }}
-          clang-format: ${{ env.LLVM_VERSION }}
           cmake: true
           ninja: true
           setup-cpp: false
