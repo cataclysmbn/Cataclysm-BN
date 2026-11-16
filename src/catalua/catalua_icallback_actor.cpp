@@ -909,7 +909,7 @@ void lua_ispell_actor::call_on_cast(Character& who, spell& sp, tripoint_bub_ms& 
         auto params = lua.create_table();
         params["char"] = &who;
         params["spell"] = &sp;
-        params["target_pos"] = &target_pos;
+        params["target_pos"] = cata::detail::lua_coords::to_lua(target_pos);
         sol::protected_function_result res = on_cast_func(params);
         check_func_result(res);
     } catch (std::runtime_error& e) {
