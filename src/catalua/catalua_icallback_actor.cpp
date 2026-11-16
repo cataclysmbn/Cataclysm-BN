@@ -715,8 +715,7 @@ lua_itrap_actor::lua_itrap_actor(
       on_trigger_func(std::move(on_trigger)),
       on_trigger_aftermath_func(std::move(on_trigger_aftermath)) {}
 
-void lua_itrap_actor::call_on_trigger(
-    Creature& who, trap& trap, const tripoint_bub_ms& loc) const {
+void lua_itrap_actor::call_on_trigger(Creature& who, trap& trap, const tripoint_bub_ms& loc) const {
     if (on_trigger_func == sol::lua_nil) { return; }
     try {
         sol::state_view lua(on_trigger_func.lua_state());

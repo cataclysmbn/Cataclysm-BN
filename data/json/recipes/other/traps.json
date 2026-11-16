@@ -260,10 +260,7 @@
     "difficulty": 2,
     "time": "5 m",
     "autolearn": true,
-    "components": [
-      [ [ "tripwire", 1 ] ],
-      [ [ "grenade_inc", 1 ], [ "molotov", 1 ], [ "molotov_lit", 1 ] ]
-    ]
+    "components": [ [ [ "tripwire", 1 ] ], [ [ "grenade_inc", 1 ], [ "molotov", 1 ], [ "molotov_lit", 1 ] ] ]
   },
   {
     "type": "recipe",
@@ -274,11 +271,7 @@
     "difficulty": 2,
     "time": "5 m",
     "autolearn": true,
-    "components": [
-      [ [ "tripwire", 1 ] ],
-      [ [ "acid", 2 ] ],
-      [ [ "canister_empty", 1 ], [ "bottle_glass", 1 ], [ "jar_glass", 1 ] ]
-    ]
+    "components": [ [ [ "tripwire", 1 ] ], [ [ "acid", 2 ] ], [ [ "canister_empty", 1 ], [ "bottle_glass", 1 ], [ "jar_glass", 1 ] ] ]
   },
   {
     "type": "recipe",
@@ -290,11 +283,7 @@
     "time": "10 m",
     "autolearn": true,
     "qualities": [ { "id": "SCREW", "level": 1 } ],
-    "components": [
-      [ [ "tripwire", 1 ] ],
-      [ [ "cable", 2 ] ],
-      [ [ "battery", 1 ], [ "battery_car", 1 ] ]
-    ]
+    "components": [ [ [ "tripwire", 1 ] ], [ [ "cable", 2 ] ], [ [ "battery", 1 ], [ "battery_car", 1 ] ] ]
   },
   {
     "type": "recipe",
@@ -347,12 +336,7 @@
     "decomp_learn": 4,
     "autolearn": true,
     "qualities": [ { "id": "SCREW", "level": 1 } ],
-    "components": [
-      [ [ "tripwire", 1 ] ],
-      [ [ "cable", 2 ] ],
-      [ [ "amplifier", 1 ] ],
-      [ [ "battery", 1 ], [ "battery_car", 1 ] ]
-    ]
+    "components": [ [ [ "tripwire", 1 ] ], [ [ "cable", 2 ] ], [ [ "amplifier", 1 ] ], [ [ "battery", 1 ], [ "battery_car", 1 ] ] ]
   },
   {
     "type": "recipe",
@@ -367,11 +351,7 @@
     "decomp_learn": 3,
     "autolearn": true,
     "qualities": [ { "id": "WRENCH", "level": 1 }, { "id": "CUT", "level": 1 } ],
-    "components": [
-      [ [ "pipe", 2 ] ],
-      [ [ "hose", 1 ] ],
-      [ [ "plastic_chunk", 2 ], [ "scrap", 2 ] ]
-    ]
+    "components": [ [ [ "pipe", 2 ] ], [ [ "hose", 1 ] ], [ [ "plastic_chunk", 2 ], [ "scrap", 2 ] ] ]
   },
   {
     "type": "recipe",
@@ -387,11 +367,7 @@
     "decomp_learn": 3,
     "autolearn": true,
     "qualities": [ { "id": "SCREW", "level": 1 } ],
-    "components": [
-      [ [ "bot_manhack", 1 ] ],
-      [ [ "scrap", 2 ] ],
-      [ [ "plastic_chunk", 2 ] ]
-    ]
+    "components": [ [ [ "bot_manhack", 1 ] ], [ [ "scrap", 2 ] ], [ [ "plastic_chunk", 2 ] ] ]
   },
   {
     "type": "recipe",
