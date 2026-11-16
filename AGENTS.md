@@ -45,6 +45,7 @@ auto print_button( const catacurses::window &w, const button_options &opts ) -> 
 - Modern C++23. Keep unused parameter names as comments: `bool /*is_avatar*/`.
 - Avoid modifying headers with >10 usages (SHOULD NOT); add a new header with pure functions.
 - New files go in a subdirectory so clang-format covers them.
+- After you move code into a subdirectory, run `just fmt-return <paths>` and `just fmt-auto <paths>` on the moved files.
 - Check matcher semantics before using string prefixes: `OtMatchType.PREFIX` / `is_ot_match` take the base token without trailing `_` (`"robofachq"`); the matcher itself requires the `_`.
 - Bug fixes keep requested behavior and visible content; fix the cause instead of disabling the feature, unless the user asks to remove it.
 
