@@ -1,0 +1,30 @@
+name: Install Linux dependencies
+description: Install the Ubuntu packages that Linux builds or test runs need
+
+inputs:
+  for:
+    description: "`build` installs the development packages, `test` installs only what test executables load"
+    default: build
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env: { FOR: "${{ inputs.for }}" }
+      run: |
+        # The runner image already has the shared libraries that the test executables link.
+        packages=(mesa-vulkan-drivers xvfb)
+        if [ "$FOR" = "build" ]; then
+          packages+=(libncursesw5-dev mold gettext parallel libsqlite3-dev zlib1g-dev libvulkan-dev
+            autoconf autoconf-archive automake libtool libltdl-dev
+            libasound2-dev libpulse-dev libaudio-dev libjack-dev libsndio-dev libx11-dev
+            libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxtst-dev libxkbcommon-dev
+            libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev libegl1-mesa-dev libdbus-1-dev
+            libibus-1.0-dev libudev-dev libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev
+            libfreetype-dev libharfbuzz-dev
+            libtiff-dev libavif-dev libwebp-dev libjpeg-dev libjxl-dev
+            libflac-dev libvorbis-dev libxmp-dev libmpg123-dev libwavpack-dev)
+        fi
+        sudo apt-get update
+        sudo apt-get install -y "${packages[@]}"
+        sudo locale-gen en_US.UTF-8 fr_FR.UTF-8 ru_RU.UTF-8
