@@ -948,7 +948,7 @@ TEST_CASE("lua_get_items_if_addiction_type_and_material_filters", "[lua][item]")
     here.i_clear(pos);
     // add_item, not add_item_or_charges: dropping a liquid (beer) would spill it via on_drop
     here.add_item(pos, item::spawn("beer"));
-    REQUIRE( here.i_at(pos).size() == 1 );
+    REQUIRE(here.i_at(pos).size() == 1);
     test_data["character"] = &player;
     test_data["pos"] = pos;
 
