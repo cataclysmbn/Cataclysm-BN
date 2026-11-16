@@ -41,7 +41,7 @@
     "durability": 75,
     "description": "A small horn.  Use the vehicle controls and select the honk option to make noise.",
     "folded_volume": "250 ml",
-    "bonus": 45,
+    "bonus": 55,
     "item": "horn_bicycle",
     "requirements": {
       "install": { "skills": [ [ "mechanics", 0 ] ], "time": "150 s", "using": [ [ "vehicle_screw", 1 ] ] },
@@ -62,7 +62,7 @@
     "damage_modifier": 10,
     "durability": 100,
     "description": "A horn.  Use the vehicle controls and select the honk option to make noise.",
-    "bonus": 100,
+    "bonus": 110,
     "item": "horn_car",
     "requirements": {
       "install": { "skills": [ [ "mechanics", 2 ] ], "time": "150 s", "using": [ [ "vehicle_screw", 1 ] ] },
@@ -87,7 +87,7 @@
     "damage_modifier": 10,
     "durability": 125,
     "description": "A powerful truck horn.  Use the vehicle controls and select the honk option to make noise.",
-    "bonus": 120,
+    "bonus": 122,
     "item": "horn_big",
     "requirements": {
       "install": { "skills": [ [ "mechanics", 2 ] ], "time": "150 s", "using": [ [ "vehicle_screw", 1 ] ] },
@@ -112,7 +112,7 @@
     "damage_modifier": 10,
     "durability": 175,
     "description": "An enormous ship air horn.  Use the vehicle controls and select the honk option to make a deafening noise.",
-    "bonus": 1000,
+    "bonus": 190,
     "item": "horn_ship",
     "requirements": {
       "install": { "skills": [ [ "mechanics", 3 ] ], "time": "600 s", "using": [ [ "vehicle_screw", 1 ] ] },
