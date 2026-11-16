@@ -25,18 +25,18 @@ const auto itemcat_food = item_category_id("food");
 } // namespace
 
 namespace item_internal {
-bool goes_bad_temp_cache = false;
+auto goes_bad_temp_cache = false;
 const item* goes_bad_temp_cache_for = nullptr;
-inline bool goes_bad_cache_fetch() { return goes_bad_temp_cache; }
-inline void goes_bad_cache_set(const item* i) {
+inline auto goes_bad_cache_fetch() -> bool { return goes_bad_temp_cache; }
+inline auto goes_bad_cache_set(const item* i) -> void {
     goes_bad_temp_cache = i->goes_bad();
     goes_bad_temp_cache_for = i;
 }
-inline void goes_bad_cache_unset() {
+inline auto goes_bad_cache_unset() -> void {
     goes_bad_temp_cache = false;
     goes_bad_temp_cache_for = nullptr;
 }
-inline bool goes_bad_cache_is_for(const item* i) { return goes_bad_temp_cache_for == i; }
+inline auto goes_bad_cache_is_for(const item* i) -> bool { return goes_bad_temp_cache_for == i; }
 
 struct scoped_goes_bad_cache {
     scoped_goes_bad_cache(item* i) { goes_bad_cache_set(i); }
@@ -44,7 +44,7 @@ struct scoped_goes_bad_cache {
 };
 } // namespace item_internal
 
-bool item::goes_bad() const {
+auto item::goes_bad() const -> bool {
     if (item_internal::goes_bad_cache_is_for(this)) {
         return item_internal::goes_bad_cache_fetch();
     }
@@ -56,7 +56,7 @@ bool item::goes_bad() const {
     return is_food() && get_comestible()->spoils != 0_turns;
 }
 
-bool item::goes_bad_after_opening(bool strict) const {
+auto item::goes_bad_after_opening(bool strict) const -> bool {
     // check if this item is explicitly a canning-type item: eg, it preserves contents
     if (strict) {
         if (type->container && type->container->preserves && !contents.empty()
@@ -92,7 +92,7 @@ auto item::is_in_sealing_container() const -> bool {
 
 auto item::mark_rot_checked_now() -> void { last_rot_check = calendar::turn; }
 
-time_duration item::get_shelf_life() const {
+auto item::get_shelf_life() const -> time_duration {
     if (goes_bad()) {
         if (is_food()) {
             return get_comestible()->spoils;
@@ -103,7 +103,7 @@ time_duration item::get_shelf_life() const {
     return 0_turns;
 }
 
-double item::get_relative_rot() const {
+auto item::get_relative_rot() const -> double {
     // Components are frozen in time, when they are returned they are new items
     if (has_flag(flag_id("COMPONENT"))) { return rot / get_shelf_life(); }
     if (goes_bad()) {
@@ -113,7 +113,7 @@ double item::get_relative_rot() const {
     return 0;
 }
 
-void item::set_relative_rot(double val) {
+auto item::set_relative_rot(double val) -> void {
     if (goes_bad()) {
         rot = get_shelf_life() * val;
         // calc_rot uses last_rot_check (when it's not turn_zero) instead of bday.
@@ -124,11 +124,11 @@ void item::set_relative_rot(double val) {
     }
 }
 
-void item::set_rot(time_duration val) { rot = val; }
+auto item::set_rot(time_duration val) -> void { rot = val; }
 
-int item::spoilage_sort_order() const {
+auto item::spoilage_sort_order() const -> int {
     const item* subject;
-    constexpr int bottom = std::numeric_limits<int>::max();
+    constexpr auto bottom = std::numeric_limits<int>::max();
 
     if (type->container && !contents.empty()) {
         if (type->container->preserves) { return bottom - 3; }
@@ -164,21 +164,21 @@ auto item::calc_rot(time_point time, const units::temperature temp) const -> tim
     auto factor = get_option<float>("ROT_RATE");
     if (is_corpse() && has_flag(flag_FIELD_DRESS)) { factor *= 0.75f; }
 
-    time_duration added_rot = 0_seconds;
+    auto added_rot = 0_seconds;
     // simulation of different age of food at the start of the game and good/bad storage
     // conditions by applying starting variation bonus/penalty of +/- 20% of base shelf-life
     // positive = food was produced some time before calendar::start and/or bad storage
     // negative = food was stored in good conditions before calendar::start
     if (last_rot_check <= calendar::start_of_cataclysm) {
-        time_duration spoil_variation = get_shelf_life() * 0.2f;
+        const auto spoil_variation = get_shelf_life() * 0.2f;
         added_rot += rng(-spoil_variation, spoil_variation);
     }
-    time_duration time_delta = time - last_rot_check;
+    const auto time_delta = time - last_rot_check;
     added_rot += factor * time_delta / 1_hours * get_hourly_rotpoints_at_temp(temp) * 1_turns;
     return added_rot;
 }
 
-void item::mod_last_rot_check(time_duration processing_duration) {
+auto item::mod_last_rot_check(time_duration processing_duration) -> void {
     if (!has_own_flag(flag_PROCESSING)) {
         debugmsg("mod_last_rot_check called on non smoking item: %s", tname());
         return;
@@ -188,7 +188,7 @@ void item::mod_last_rot_check(time_duration processing_duration) {
     last_rot_check += processing_duration;
 }
 
-bool item::has_rotten_away() const {
+auto item::has_rotten_away() const -> bool {
     if (is_corpse() && !can_revive()) {
         return get_rot() > 10_days;
     } else {
@@ -225,8 +225,8 @@ auto item::process_rot(detached_ptr<item>&& self, const tripoint_bub_ms& pos)
         std::move(self), false, pos, nullptr, temperature_flag::TEMP_NORMAL, get_weather());
 }
 
-static units::temperature clip_by_temperature_flag(
-    units::temperature temperature, temperature_flag flag) {
+static auto clip_by_temperature_flag(units::temperature temperature, temperature_flag flag)
+    -> units::temperature {
     switch (flag) {
         case temperature_flag::TEMP_NORMAL:
             // Just use the temperature normally
@@ -275,7 +275,7 @@ auto item::rot_temperature(const temperature_flag fallback) const -> units::temp
     return current_rot_temperature({.position = bub_to_abs(loc.pos), .temperature = loc.flag});
 }
 
-void item::update_rot_from_location(const temperature_flag temperature) {
+auto item::update_rot_from_location(const temperature_flag temperature) -> void {
     if (!goes_bad() || last_rot_check == calendar::turn) { return; }
     if (is_in_preserving_container()) {
         mark_rot_checked_now();
