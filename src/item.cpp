@@ -189,6 +189,7 @@ static const trait_flag_str_id trait_flag_CANNIBAL( "CANNIBAL" );
 static const trait_id trait_CARNIVORE( "CARNIVORE" );
 static const trait_id trait_ILLITERATE( "ILLITERATE" );
 static const trait_id trait_LIGHTWEIGHT( "LIGHTWEIGHT" );
+static const trait_id trait_PROJUNK2( "PROJUNK2" );
 static const trait_id trait_TOLERANCE( "TOLERANCE" );
 static const trait_id trait_WOOLALLERGY( "WOOLALLERGY" );
 
@@ -805,6 +806,12 @@ void item::set_damage( int qty )
 {
     on_damage( qty - damage_, DT_TRUE );
     damage_ = std::max( std::min( qty, max_damage() ), min_damage() );
+}
+
+auto item::vehicle_storage_temperature() const -> std::optional<temperature_flag>
+{
+    const auto vehicle_loc = dynamic_cast<const vehicle_item_location *>( loc );
+    return vehicle_loc != nullptr ? std::optional( vehicle_loc->storage_temperature() ) : std::nullopt;
 }
 
 auto item::prepare_for_location_removal() -> void
@@ -1909,11 +1916,11 @@ void item::basic_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
                     req.push_back( string_format( _( "%s %d <color_magenta>(Can't use!)</color>" ), _( "strength" ),
                                                   get_min_str() ) );
                 } else if( ranged::get_str_draw_penalty( *this, viewer ) < 0.75f ) {
-                    req.push_back( string_format( "%s %d <color_red>(Damage/Range 0.5x, Dispersion 2.0x)</color>",
+                    req.push_back( string_format( _( "%s %d <color_red>(Damage/Range 0.5x, Dispersion 2.0x)</color>" ),
                                                   _( "strength" ), get_min_str() ) );
                 } else {
-                    req.push_back( string_format( "%s %d <color_yellow>(Damage/Range 0.75x)</color>", _( "strength" ),
-                                                  get_min_str() ) );
+                    req.push_back( string_format( _( "%s %d <color_yellow>(Damage/Range 0.75x)</color>" ),
+                                                  _( "strength" ), get_min_str() ) );
                 }
             } else {
                 req.push_back( string_format( "%s %d", _( "strength" ), get_min_str() ) );
@@ -2071,6 +2078,14 @@ void item::food_info( const item *food_item, std::vector<iteminfo> &info,
     const std::pair<int, int> fun_for_food_item = you.fun_for( *food_item );
     if( fun_for_food_item.first != 0 && parts->test( iteminfo_parts::FOOD_JOY ) ) {
         info.emplace_back( "FOOD", _( "Enjoyability: " ), fun_for_food_item.first );
+    }
+
+    const auto healthy = food_item->get_comestible()->healthy;
+    // PROJUNK2 characters get no negative healthy effect, see Character::consume_effects
+    const auto ignores_healthy = healthy < 0 && you.has_trait( trait_PROJUNK2 ) &&
+                                 !food_item->has_flag( flag_NO_INGEST );
+    if( healthy != 0 && !ignores_healthy && parts->test( iteminfo_parts::FOOD_HEALTHY ) ) {
+        info.emplace_back( "FOOD", _( "Healthy: " ), healthy );
     }
 
     if( parts->test( iteminfo_parts::FOOD_PORTIONS ) ) {
@@ -2768,7 +2783,7 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
     }
 
     if( mod->ammo_required() > 1 ) {
-        info.emplace_back( "AMMO", string_format( "Uses <stat>%i</stat> ammo per shot",
+        info.emplace_back( "AMMO", string_format( _( "Uses <stat>%i</stat> ammo per shot" ),
                            mod->ammo_required() ) );
     }
 
@@ -3718,8 +3733,9 @@ void item::bionic_info( std::vector<iteminfo> &info, const iteminfo_query *parts
 
     if( !bid->required_bionics.empty() ) {
         for( const bionic_id &req_bid : bid->required_bionics ) {
-            info.emplace_back( "CBM", string_format( "* This CBM requires another CBM to also be installed: %s",
-                               req_bid->name ) );
+            info.emplace_back( "CBM", string_format(
+                                   _( "* This CBM requires another CBM to also be installed: %s" ),
+                                   req_bid->name ) );
         }
     }
 
@@ -4913,6 +4929,13 @@ nc_color item::color_in_inventory( const player &p ) const
             // "just for fun" book that they haven't read yet
             ret = c_magenta;
         }
+    } else {
+        for( const auto flag : get_flags() ) {
+            if( !flag->tag_color() != c_light_gray ) {
+                ret = flag->tag_color();
+                break;
+            }
+        }
     }
     return ret;
 }
@@ -5389,6 +5412,9 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
         } else {
             tagtext += _( " (scanned)" );
         }
+    }
+    if( const auto paint = iuse_paint_stuff::try_get_paint_color( *this ); paint && *paint != RGBColor{} ) {
+        tagtext += string_format( " (%s)", paint->friendly_name() );
     }
     if( has_flag( flag_ETHEREAL_ITEM ) ) {
         tagtext += string_format( _( " (%s turns)" ), get_var( "ethereal" ) );
@@ -11478,7 +11504,7 @@ detached_ptr<item> item::process_internal( detached_ptr<item> &&self, player *ca
     }
     if( self->has_flag( flag_WATER_DISABLE ) && carrier && carrier->is_underwater() ) {
         ZoneScopedN( "item_process_water_disable" );
-        carrier->add_msg_if_player( "Your %s gurgles and splutters.", self->tname() );
+        carrier->add_msg_if_player( _( "Your %s gurgles and splutters." ), self->tname() );
         self->revert( carrier );
         self->deactivate();
         return std::move( self );

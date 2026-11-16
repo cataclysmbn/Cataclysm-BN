@@ -1,6 +1,6 @@
 #pragma once
 
-#include "point_traits.h"
+#include "math/point_traits.h"
 
 struct point;
 struct tripoint;

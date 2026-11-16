@@ -3438,7 +3438,11 @@ void activity_handlers::read_do_turn( player_activity *act, player *p )
             act->set_to_null();
             return;
         }
-        if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
+        const auto drain_interval_minutes = std::max<int64_t>( 1,
+                                            reader->get().get_var( "digital_read_charge_interval_minutes",
+                                                    int64_t{ 1 } ) );
+        const auto drain_interval = time_duration::from_minutes( drain_interval_minutes );
+        if( action_time_scale::once_every_this_tick( drain_interval ) ) {
             auto &device = reader->get();
             p->consume_charges( device, device.type->charges_to_use() );
         }
@@ -4458,7 +4462,7 @@ void activity_handlers::train_pet_finish( player_activity *act, player *p )
 {
     auto mon = act->monsters[0].lock();
     if( mon && mon->type->pet_training &&
-        p->get_skill_level( skill_survival ) < mon->type->pet_training->min_skill ) {
+        p->get_skill_level( mon->type->pet_training->skill ) < mon->type->pet_training->min_skill ) {
         p->add_msg_if_player( m_bad,
                               _( "You lack the skill to train %s effectively." ),
                               act->str_values[0] );
@@ -4472,7 +4476,9 @@ void activity_handlers::train_pet_finish( player_activity *act, player *p )
     mon->remove_effect( effect_well_fed );
     mon->remove_effect( effect_ai_waiting );
     auto const bonded = p->getID() == mon->bonded_character_id;
-    auto skill_rating = 10 * p->get_skill_level( skill_survival );
+    const skill_id pet_skill = mon->type->pet_training ? mon->type->pet_training->skill :
+                               skill_survival;
+    auto skill_rating = 10 * p->get_skill_level( pet_skill );
     if( bonded ) { skill_rating *= 2; }
     if( skill_rating >= 100 || skill_rating >= rng( 0, 100 ) ) {
         if( mon && mon->type->pet_training ) {
@@ -4491,7 +4497,7 @@ void activity_handlers::train_pet_finish( player_activity *act, player *p )
         }
     } else {
         p->add_msg_if_player( m_neutral,
-                              _( "Training your %s takes time, it seems they are making a bit of progress at least." ),
+                              _( "Training your %s takes time, but they haven't learned anything new yet." ),
                               act->str_values[0] );
     }
     act->set_to_null();

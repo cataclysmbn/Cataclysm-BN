@@ -6,7 +6,7 @@
     "symbol": "X",
     "broken_symbol": "*",
     "damage_modifier": 150,
-    "description": "A reinforced ram.  Place at the edge of vehicle to reduce damage taken in collisions, and to increase damaged delivered in collisions, if the ram is the first vehicle part to collide.",
+    "description": "A reinforced ram.  Place at the edge of vehicle to reduce damage taken in collisions, and to increase damage delivered in collisions, if the ram is the first vehicle part to collide.",
     "requirements": {
       "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
       "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },

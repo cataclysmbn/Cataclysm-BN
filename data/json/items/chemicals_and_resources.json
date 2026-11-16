@@ -871,7 +871,7 @@
     "name": { "str": "chunk of gold ore", "str_pl": "chunks of gold ore" },
     "color": "yellow",
     "looks_like": "steel_lump",
-    "description": "A small, dense chunk of what seems to be quartz,but what interests you is the gold interlaced. With the right knowhow, it could be smelted into usable metal.",
+    "description": "A small, dense chunk of what seems to be quartz, but what interests you is the gold interlaced. With the right knowhow, it could be smelted into usable metal.",
     "volume": "500 ml",
     "//": "19.3 grams/cc for gold density, so we'll just assume a 25% density with the rest as quartz [2.65 grams/cc] and round for nice-ness.",
     "weight": "3500 g",

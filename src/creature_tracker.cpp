@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <iterator>
 #include <ostream>
 #include <string>
 #include <utility>
@@ -229,6 +230,13 @@ void Creature_tracker::remove( const monster &critter )
     remove_from_location_map( critter );
     removed_.push_back( *iter );
     monsters_list.erase( iter );
+}
+
+void Creature_tracker::adopt_removed( Creature_tracker &other )
+{
+    std::ranges::move( other.monsters_list, std::back_inserter( removed_ ) );
+    std::ranges::move( other.removed_, std::back_inserter( removed_ ) );
+    other.clear();
 }
 
 void Creature_tracker::clear()

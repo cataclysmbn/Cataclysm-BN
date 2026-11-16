@@ -48,6 +48,9 @@ Linker flags used by all builds:
 /NXCOMPAT     same as above
 No need to force /TLBID:1 because is default
 
+CATA_MSVC_FAST_LINK replaces /DEBUG with /DEBUG:FASTLINK and skips /OPT:ICF.
+CI uses it because CI does not publish its PDB files.
+
 #]=======================================================================]
 
 # Path has changed, so this configure run will find cl.exe
@@ -68,10 +71,14 @@ add_compile_definitions(
     LOCALIZE
     USE_VCPKG
 )
+option(CATA_MSVC_FAST_LINK "Link with /DEBUG:FASTLINK and without /OPT:ICF" OFF)
+if(CATA_MSVC_FAST_LINK)
+    add_link_options(/DEBUG:FASTLINK)
+else()
+    add_link_options(/DEBUG /OPT:ICF)
+endif()
 add_link_options(
-    /DEBUG
     /OPT:REF
-    /OPT:ICF
     /LTCG:OFF
     /MANIFEST:NO
     /INCREMENTAL:NO

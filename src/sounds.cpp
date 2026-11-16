@@ -2741,15 +2741,19 @@ void sounds::process_sound_markers( Character *who )
             const int db_vol = mdBspl_to_dBspl( tile_vol - passive_sound_dampening );
             // See if we need to wake someone up
             // Remember we are working with dB spl volumes instead of tile volumes and dB spl is a logarithmic unit. 60dB is normal conversation, 80-100 is a car horn, ~160 is a gunshot, 180+ can kill a human.
-            // Noise past +10 dB should automatically wake up normal sleepers.
-            // Noise past +40 dB should automatically wake up heavy sleepers.
-            // Noise past +60 dB will cause pain and should automatically wake up heavy sleeper 2.
+            // Noise past ambient + 10 dB should automatically wake up normal sleepers.
+            // Noise past ambient + 40 dB should automatically wake up heavy sleepers.
+            // Noise past ambient + 60 dB will cause pain and should automatically wake up heavy sleeper 2.
             if( who->has_effect( effect_sleep ) ) {
                 const int diff_db_vol = mdBspl_to_dBspl( tile_vol - passive_sound_dampening - tile_vol );
-                int wake_up_vol = 10;
+                // Double ambient sound
+                int wake_up_vol = 10 + ambient_vol;
                 wake_up_vol += who->bonus_from_enchantments( wake_up_vol, ench_val_SLEEP_DB_RESIST );
 
-                if( rng( wake_up_vol / 2, wake_up_vol ) <= db_vol && !who->has_effect( effect_narcosis ) ) {
+                // For players sake anything below ambient should never wake them up
+                int minval = ambient_vol > wake_up_vol ? wake_up_vol / 2 : ambient_vol;
+                int maxval = wake_up_vol;
+                if( rng( minval, maxval ) <= db_vol && !who->has_effect( effect_narcosis ) ) {
                     who->wake_up();
                     who->add_msg_if_player( m_warning, _( "Something is making noise." ) );
                 } else {

@@ -28,17 +28,24 @@ using digital_reader_reference = std::optional<std::reference_wrapper<item>>;
 
 /// Digital files are only usable while installed on a powered reader.
 auto is_digital_file( const item &file ) -> bool;
+auto is_digital_reading_material( const item &file ) -> bool;
 auto digital_reader_ready( const item &reader, const Character &who ) -> bool;
 auto digital_reader_can_access_storage( const item &reader, const item &storage ) -> bool;
 auto digital_reader_for( const Character &who, const item &file ) -> digital_reader_reference;
 /// Roll the media's JSON item group once, preserving legacy initialized cards.
 auto initialize_digital_media( item &media ) -> void;
 /// Copy files without consuming the source or duplicating identical files.
-auto download_digital_files( item &reader, item &media, const Character &who ) -> int;
+auto download_digital_files( item &reader, item &media, Character &who ) -> int;
+/// Copy only books and saved text from compatible storage onto a reader.
+auto download_digital_reading_material( item &reader, item &media, Character &who ) -> int;
+/// Record valid genome sample files in the character's Creatures tab.
+auto record_digital_genome_samples( Character &who, const item &storage ) -> void;
 auto is_digital_storage_media( const item &media ) -> bool;
 auto is_writable_digital_media( const item &media ) -> bool;
 /// Encrypt or decrypt removable storage without changing its type or files.
 auto set_digital_media_encryption( item &media, bool encrypted ) -> bool;
+/// Erase all files and legacy data from digital storage, including readers and encrypted media.
+auto wipe_digital_storage( item &storage ) -> bool;
 /// Copy one selected file, or all files, from a powered reader to unencrypted storage.
 auto upload_digital_files( const Character &who, const digital_file_upload_options &opts ) -> int;
 /// Convert old photo/music counters to files without changing their quantities.
@@ -52,7 +59,7 @@ auto camera_photo_collection( item &camera ) -> item &; // *NOPAD*
 auto find_camera_photo_collection( item &camera ) -> digital_reader_reference;
 /// Finish a capture, updating its count and copy identity so newer versions can be copied.
 auto update_camera_photo_collection( item &camera, int count ) -> void;
-/// Best available photograph of each monster across all collections on a device.
+/// Best photograph quality per monster; -1 means a genome sample without a photograph.
 auto digital_monster_photos( const item &reader ) -> std::map<mtype_id, int>;
 auto digital_music_on( const item &reader ) -> digital_music_summary;
 auto digital_music_playing( const item &reader ) -> digital_music_summary;

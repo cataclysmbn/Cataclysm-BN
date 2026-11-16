@@ -480,6 +480,12 @@ void spell_type::check_consistency() {
                          sp_t.id.c_str(), sp_t.effect_str);
             }
         }
+        if (sp_t.effect_name == "target_attack") {
+            if (!sp_t.effect_str.empty() && !efftype_id(sp_t.effect_str).is_valid()) {
+                debugmsg("ERROR %s specifies an effect, but effect %s is not valid",
+                         sp_t.id.c_str(), sp_t.effect_str);
+            }
+        }
         std::set<spell_id> spell_effect_list;
         if (spell_infinite_loop_check(spell_effect_list, sp_t.id)) {
             debugmsg("ERROR: %s has infinite loop in extra_effects", sp_t.id.c_str());

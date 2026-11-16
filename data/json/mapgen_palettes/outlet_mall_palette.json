@@ -216,20 +216,6 @@
       "×": "f_triple_bunkbed"
     },
     "vendingmachines": { "V": {  } },
-    "toilets": { "U": {  } },
-    "nested": {
-      "я": {
-        "chunks": [
-          [ "null", 50 ],
-          [ "roof_2x2_utilities", 50 ],
-          [ "roof_2x2_utilities_b", 15 ],
-          [ "roof_2x2_utilities_c", 15 ],
-          [ "roof_2x2_utilities_d", 15 ],
-          [ "roof_2x2_infrastructure", 15 ],
-          [ "roof_2x2_infrastructure_1", 5 ],
-          [ "roof_2x2_infrastructure_2", 40 ]
-        ]
-      }
-    }
+    "toilets": { "U": {  } }
   }
 ]

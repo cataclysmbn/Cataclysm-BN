@@ -2322,6 +2322,8 @@ class Character : public Creature, public location_visitable<Character>
         const recipe_subset &get_learned_recipes() const;
 
         bool knows_recipe( const recipe *rec ) const;
+        /** Forgets every learned recipe; autolearned ones are re-evaluated on next query. */
+        void forget_all_recipes();
         void learn_recipe( const recipe *rec );
         bool can_learn_by_disassembly( const recipe &rec ) const;
 

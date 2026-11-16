@@ -92,6 +92,7 @@
 #include "string_formatter.h"
 #include "string_id.h"
 #include "string_utils.h"
+#include "takeoff_cost.h"
 #include "text_snippets.h"
 #include "thread_pool.h"
 #include "translations.h"
@@ -3804,7 +3805,7 @@ bool Character::takeoff( item &it, std::vector<detached_ptr<item>> *res )
                            it.tname() );
 
     // TODO: Make this variable
-    mod_moves( -250 );
+    mod_moves( -takeoff_move_cost );
 
     recalc_sight_limits();
     reset_encumbrance();
@@ -9223,9 +9224,9 @@ void Character::shout( std::string msg, bool order )
             shout = "default";
         }
     } else {
-        add_msg_if_player( m_info, _( string_format( "You yell \"%s\"", msg ) ) );
-        msg = is_player() ? _( string_format( "yourself yell \"%s\"",
-                                              msg ) ) : _( string_format( "yell \"%s\"", msg ) );
+        add_msg_if_player( m_info, string_format( _( "You yell \"%s\"" ), msg ) );
+        msg = is_player() ? string_format( _( "yourself yell \"%s\"" ),
+                                           msg ) : string_format( _( "yell \"%s\"" ), msg );
     }
 
 
@@ -12590,6 +12591,12 @@ const recipe_subset &Character::get_learned_recipes() const
 bool Character::knows_recipe( const recipe *rec ) const
 {
     return get_learned_recipes().contains( *rec );
+}
+
+void Character::forget_all_recipes()
+{
+    *learned_recipes = recipe_subset();
+    *autolearn_skills_stamp = SkillLevelMap();
 }
 
 void Character::learn_recipe( const recipe *const rec )

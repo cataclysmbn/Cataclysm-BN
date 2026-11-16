@@ -957,5 +957,15 @@
     "id": "ceramicdisks",
     "type": "MIGRATION",
     "replace": "dragonskin"
+  },
+  {
+    "id": "digital_genome_sample_black_rat",
+    "type": "MIGRATION",
+    "replace": "digital_genome_sample"
+  },
+  {
+    "id": "digital_genome_sample_wolf_mutant_huge",
+    "type": "MIGRATION",
+    "replace": "digital_genome_sample"
   }
 ]
