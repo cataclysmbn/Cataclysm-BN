@@ -15,6 +15,10 @@ fmt-json *FILES:
 fmt-return *PATHS:
     build-scripts/format-trailing-return.sh {{PATHS}}
 
+# Use `auto` for declarations whose type the initializer already names.
+fmt-auto *PATHS:
+    TIDY_CHECK=modernize-use-auto build-scripts/format-trailing-return.sh {{PATHS}}
+
 fmt-docs:
     build-scripts/fmt.sh docs
 
