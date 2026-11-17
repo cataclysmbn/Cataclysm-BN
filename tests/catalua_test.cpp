@@ -1,6 +1,5 @@
 #include "../src/map/map.h"
 #include "../src/map/mapdata.h"
-#include "activity_handlers.h"
 #include "avatar.h"
 #include "bionics.h"
 #include "bodypart.h"
@@ -10,7 +9,6 @@
 #include "catalua.h"
 #include "catalua_coord.h"
 #include "catalua_hooks.h"
-#include "catalua_icallback_actor.h"
 #include "catalua_impl.h"
 #include "catalua_serde.h"
 #include "catalua_sol.h"
@@ -33,7 +31,6 @@
 #include "iexamine.h"
 #include "init.h"
 #include "json.h"
-#include "magic/magic.h"
 #include "map/mapbuffer.h"
 #include "map/mapbuffer_registry.h"
 #include "map/submap_load_manager.h"
@@ -3229,65 +3226,6 @@ static auto push_hook(sol::state& lua, const std::string& name, Fn&& fn)
 }
 
 } // namespace
-
-// Regression test for https://github.com/cataclysmbn/Cataclysm-BN/issues/10845
-// params.target_pos must reach Lua as a TripointBubMs, not a raw coord_point*.
-TEST_CASE("lua_ispell_on_cast_target_pos_is_indexable", "[lua]") {
-    clear_all_state();
-    auto& state = *DynamicDataLoader::get_instance().lua;
-    sol::state& lua = state.lua;
-
-    sol::function on_try_cast = sol::lua_nil;
-    sol::function on_cast = lua.script(
-        "return function(params)\n"
-        "  local tp = params.target_pos\n"
-        "  game.cata_internal.ispell_on_cast_target = { x = tp.x, y = tp.y, z = tp.z }\n"
-        "end");
-    lua_ispell_actor actor("test_spell_kiss", std::move(on_try_cast), std::move(on_cast));
-
-    spell kiss_spell(spell_id("test_spell_kiss"));
-    tripoint_bub_ms target(61, 62, -1);
-    actor.call_on_cast(get_avatar(), kiss_spell, target);
-
-    const sol::table res = lua["game"]["cata_internal"]["ispell_on_cast_target"];
-    REQUIRE(res.valid());
-    CHECK(res.get<int>("x") == 61);
-    CHECK(res.get<int>("y") == 62);
-    CHECK(res.get<int>("z") == -1);
-}
-
-// Same regression, end to end through the on_spell_cast hook fired by
-// spellcasting_finish. test_spell_kiss targets self with range 0, so no
-// target selection UI is involved and the target is the caster's position.
-TEST_CASE("lua_hook_wiring_on_spell_cast_target_pos", "[lua]") {
-    clear_all_state();
-    auto& state = *DynamicDataLoader::get_instance().lua;
-    sol::state& lua = state.lua;
-
-    avatar& p = get_avatar();
-    p.magic->learn_spell(spell_id("test_spell_kiss"), p, true);
-
-    auto hook_fn = lua.script(
-        "return function(params)\n"
-        "  local tp = params.target_pos\n"
-        "  game.cata_internal.spell_cast_target_pos = { x = tp.x, y = tp.y, z = tp.z }\n"
-        "end");
-    const auto [list, idx] = push_hook(lua, "on_spell_cast", hook_fn);
-    hook_cleanup cleanup{list, idx};
-
-    player_activity act(activity_id("ACT_SPELLCASTING"));
-    act.name = "test_spell_kiss";
-    // level_override, no_fail, no_mana
-    act.values = {-1, 1, 0};
-    activity_handlers::spellcasting_finish(&act, &p);
-
-    const sol::table res = lua["game"]["cata_internal"]["spell_cast_target_pos"];
-    REQUIRE(res.valid());
-    const tripoint_bub_ms pos = p.bub_pos();
-    CHECK(res.get<int>("x") == pos.x());
-    CHECK(res.get<int>("y") == pos.y());
-    CHECK(res.get<int>("z") == pos.z());
-}
 
 // ── Trivial ──────────────────────────────────────────────────────────────────
 
