@@ -124,6 +124,23 @@ TEST_CASE("the state hash is stable and names the part that changed", "[replay][
     }
 }
 
+TEST_CASE("a new monster is written the same whatever its memory held", "[replay][state_hash]") {
+    fresh_game();
+    const auto written = [](const std::byte fill) {
+        alignas(monster) auto storage = std::array<std::byte, sizeof(monster)>{};
+        storage.fill(fill);
+        // The constructor rolls attack cooldowns.
+        rng_set_engine_seed(1);
+        auto* const critter = new (storage.data()) monster(mtype_id("mon_zombie"));
+        auto text = std::ostringstream{};
+        auto json = JsonOut(text);
+        critter->serialize(json);
+        std::destroy_at(critter);
+        return text.str();
+    };
+    CHECK(written(std::byte{0x00}) == written(std::byte{0xff}));
+}
+
 TEST_CASE("the state log has a header and one record per logged turn", "[replay][state_hash]") {
     fresh_game();
     const auto fixture = hash_log_fixture{};
