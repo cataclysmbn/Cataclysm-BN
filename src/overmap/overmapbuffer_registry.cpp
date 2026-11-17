@@ -104,9 +104,9 @@ auto save_all_overmapbuffers() -> void {
     futures.reserve(8); // most games have at most a handful of dimensions
 
     for_each_overmapbuffer([&futures](const dimension_id& dim_id, overmapbuffer& buf) {
-        futures.push_back(get_thread_pool().submit_returning([dim_id, &buf]() {
-            buf.save(dim_id);
-        }));
+        futures.push_back(get_thread_pool().submit_returning(
+            {.stream = 0x736176655f6f6d5f, .id = std::hash<std::string>{}(dim_id.str())},
+            [dim_id, &buf]() { buf.save(dim_id); }));
     });
 
     std::ranges::for_each(futures, [](auto& f) { f.get(); });
