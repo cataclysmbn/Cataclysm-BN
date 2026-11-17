@@ -170,3 +170,21 @@ TEST_CASE("the state log refuses to overwrite a file or open twice", "[replay][s
     replay::configure_state_hash_log(other.string());
     CHECK_THROWS(replay::configure_state_hash_log((fixture.directory / "third.jsonl").string()));
 }
+
+TEST_CASE("a recipe subset is written in id order", "[replay][state_hash]") {
+    auto subset = recipe_subset{};
+    auto expected = std::vector<std::string>{};
+    for (const auto& [id, entry] : recipe_dict) {
+        subset.include(&entry);
+        expected.push_back(id.str());
+    }
+    REQUIRE(expected.size() > 1);
+    std::ranges::sort(expected);
+    auto written = std::ostringstream{};
+    auto json = JsonOut(written);
+    serialize(subset, json);
+    auto sorted = std::ostringstream{};
+    auto sorted_json = JsonOut(sorted);
+    sorted_json.write(expected);
+    CHECK(written.str() == sorted.str());
+}
