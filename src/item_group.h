@@ -147,7 +147,7 @@ class Item_spawn_data
         int probability;
 
         // Weather it was checked already
-        bool checked;
+        bool checked = false;
 };
 
 using ItemFn = std::function < detached_ptr<item> ( detached_ptr<item> &&it ) >;
