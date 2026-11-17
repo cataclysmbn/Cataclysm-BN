@@ -132,11 +132,14 @@ void overmapbuffer::generate(const std::vector<point_abs_om>& locs) {
         // advances each iteration, creating a latent race if threads outlive the loop.
         auto dim_id = dimension_id_;
         futures.push_back(
-            {loc, get_thread_pool().submit_returning([loc, dim_id] {
-                 auto om = std::make_unique<overmap>(loc, dim_id);
-                 om->populate(dim_id);
-                 return om;
-             })});
+            {loc,
+             get_thread_pool().submit_returning(
+                 {.stream = 0x6f7665726d61705f, .id = rng_task_id(dim_id.str(), loc)},
+                 [loc, dim_id] {
+                     auto om = std::make_unique<overmap>(loc, dim_id);
+                     om->populate(dim_id);
+                     return om;
+                 })});
     }
 
     // Non-blocking scan: insert each overmap as soon as its future is ready rather
