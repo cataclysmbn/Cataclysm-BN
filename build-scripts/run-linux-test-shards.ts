@@ -386,16 +386,55 @@ const runShard = async (
     `--user-dir=${userDir}`,
     filter,
   ], { CATA_TEST_COMPUTE_ACCELERATION: compute })
-  if (result.stdout) {
-    console.log(result.stdout.trimEnd())
-  }
-  if (result.stderr) {
-    console.error(result.stderr.trimEnd())
-  }
   const elapsed = Math.round((Date.now() - start) / 1000)
-  console.log(`Finished shard ${shard.name} in ${elapsed}s with status ${result.code}`)
+  const output = `${result.stdout.trimEnd()}\n${result.stderr.trimEnd()}`.trim()
+  const finished = `Finished shard ${shard.name} in ${elapsed}s with status ${result.code}`
+  const ci = Deno.env.get("GITHUB_ACTIONS") === "true"
+  if (result.code === 0) {
+    console.log(ci ? `::group::${finished}\n${output}\n::endgroup::` : `${output}\n${finished}`)
+    return 0
+  }
+  const summary = [
+    ...extractFailureLines(output),
+    `${finished}. Rerun: ${rerunCommand(basename(options.testBin), filter, output)}`,
+  ].join("\n")
+  console.log(`${output}\n${finished}`)
+  console.log(
+    ci ? `::error title=Test shard ${shard.name} failed::${escapeWorkflowData(summary)}` : summary,
+  )
   return result.code
 }
+
+/** Builds a command that reruns one shard with the seed of its failed run. */
+export const rerunCommand = (testBin: string, filter: string, output: string): string => {
+  const seed = output.match(/Randomness seeded to: (\d+)/)?.[1]
+  return [testBin, "-#", ...(seed ? [`--rng-seed ${seed}`] : []), `"${filter}"`].join(" ")
+}
+
+const failureLinePattern =
+  /Failed test case: |: FAILED:|^ERROR |\(continued from above\) ERROR:|Terminated: |test cases:.*failed|Treating result as failure/
+
+/**
+ * Picks the lines that name the failed test and its error from one shard's test output.
+ * Test names and errors come first, so many failed assertions cannot push them out of the cap.
+ */
+export const extractFailureLines = (output: string): string[] => {
+  const lines = [
+    ...new Set(
+      output.replaceAll(/\x1b\[[0-9;]*m/g, "").split(/\r?\n/)
+        .map((line) => line.trim().replace(/^\d\d:\d\d:\d\d\.\d+ /, ""))
+        .filter((line) =>
+          failureLinePattern.test(line) && !line.endsWith("(error message will follow backtrace)")
+        ),
+    ),
+  ]
+  const isAssertion = (line: string) => line.includes(": FAILED:")
+  return [...lines.filter((line) => !isAssertion(line)), ...lines.filter(isAssertion)].slice(0, 30)
+}
+
+/** Escapes text for the message part of a GitHub Actions workflow command. */
+const escapeWorkflowData = (text: string): string =>
+  text.replaceAll("%", "%25").replaceAll("\r", "%0D").replaceAll("\n", "%0A")
 
 const run = async (options: Options): Promise<number> => {
   const parsed = await normalizedOptions(options)
@@ -445,6 +484,48 @@ const run = async (options: Options): Promise<number> => {
     await shardDir.cleanup()
   }
 }
+
+Deno.test("extractFailureLines keeps test name and error, drops passing output and backtrace", () => {
+  const stdout = [
+    "\x1b[1;32mAll tests passed\x1b[0m (4722604 assertions in 126 test cases)",
+    "Failed test case: spell effect - summon (error logged)",
+    "Treating result as failure due to error logged during tests.",
+  ]
+  const stderr = [
+    "04:04:24.468 ERROR DEBUGMSG : monfaction.cpp:46 [id] (error message will follow backtrace)",
+    "    cata_test-tiles(+0x4df6a4a) [0x55d39f116a4a]",
+    "(continued from above) ERROR: invalid monfaction id null",
+    "04:04:25.001 ERROR DEBUGMSG : monfaction.cpp:46 [id] invalid monfaction id null",
+    "04:04:26.001 ERROR DEBUGMSG : monfaction.cpp:46 [id] invalid monfaction id null",
+    "04:04:27.001 ERROR GAME : map.cpp:9 [f] bad map",
+  ]
+  assertEquals(extractFailureLines([...stdout, ...stderr].join("\n")), [
+    "Failed test case: spell effect - summon (error logged)",
+    "Treating result as failure due to error logged during tests.",
+    "(continued from above) ERROR: invalid monfaction id null",
+    "ERROR DEBUGMSG : monfaction.cpp:46 [id] invalid monfaction id null",
+    "ERROR GAME : map.cpp:9 [f] bad map",
+  ])
+})
+
+Deno.test("extractFailureLines keeps test name and error when 40 assertions fail", () => {
+  const asserts = Array.from({ length: 40 }, (_, i) => `a_test.cpp:${i}: FAILED:`)
+  const output = [...asserts, "Failed test case: a (assertion failed)", "12:00:00.000 ERROR : x"]
+  const lines = extractFailureLines(output.join("\n"))
+  assertEquals(lines.length, 30)
+  assertEquals(lines.slice(0, 3), [
+    "Failed test case: a (assertion failed)",
+    "ERROR : x",
+    "a_test.cpp:0: FAILED:",
+  ])
+})
+
+Deno.test("rerunCommand adds filename tags and the seed of the failed run", () => {
+  assertEquals(
+    rerunCommand("cata_test-tiles", "~[slow] ~[.] [#map_test]", "Randomness seeded to: 1794888166"),
+    `cata_test-tiles -# --rng-seed 1794888166 "~[slow] ~[.] [#map_test]"`,
+  )
+})
 
 Deno.test("extractFileTags returns sorted unique file tags", () => {
   assertEquals(extractFileTags("x [#b_test] [foo] [#a_test] [#data_vars] [#b_test]"), [
