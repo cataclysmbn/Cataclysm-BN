@@ -905,7 +905,7 @@ static auto is_summon_friendly(const spell& sp) -> bool {
 }
 
 static auto add_summoned_mon(
-    const mtype_id& id, const mfaction_id& faction, const tripoint_bub_ms& pos,
+    const mtype_id& id, const mfaction_str_id& faction, const tripoint_bub_ms& pos,
     const time_duration& time, const spell& sp) -> bool {
     monster* const mon_ptr = g->place_critter_at(id, pos);
     if (!mon_ptr) { return false; }
@@ -913,8 +913,8 @@ static auto add_summoned_mon(
     monster& spawned_mon = *mon_ptr;
     if (is_summon_friendly(sp)) {
         spawned_mon.friendly = INT_MAX;
-        if (faction.is_valid() && faction != mfaction_str_id::NULL_ID().id()) {
-            spawned_mon.faction = faction;
+        if (faction != mfaction_str_id::NULL_ID()) {
+            spawned_mon.faction = faction.id();
         }
     } else {
         spawned_mon.friendly = 0;
@@ -934,11 +934,11 @@ void spell_effect::spawn_summoned_monster(
     size_t num_mons = std::abs(sp.damage());
     const time_duration summon_time = sp.duration_turns();
     bool sound_played = false;
-    mfaction_id faction_id = mfaction_str_id::NULL_ID().id();
+    mfaction_str_id faction_id = mfaction_str_id::NULL_ID();
     if (caster.is_avatar() || caster.is_npc()) {
         faction_id = caster.as_character()->get_faction()->mon_faction;
     } else if (caster.is_monster()) {
-        faction_id = caster.as_monster()->faction;
+        faction_id = caster.as_monster()->faction.id();
     }
     while (num_mons > 0 && !area.empty()) {
         const size_t mon_spot = rng(0, area.size() - 1);
