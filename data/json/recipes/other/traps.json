@@ -329,14 +329,29 @@
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_TRAPS",
     "skill_used": "traps",
-    "skills_required": [ "electronics", 2 ],
-    "difficulty": 4,
-    "time": "15 m",
+    "skills_required": [ "electronics", 3 ],
+    "difficulty": 5,
+    "time": "30 m",
     "reversible": true,
-    "decomp_learn": 4,
+    "decomp_learn": 5,
     "autolearn": true,
     "qualities": [ { "id": "SCREW", "level": 1 } ],
-    "components": [ [ [ "tripwire", 1 ] ], [ [ "cable", 2 ] ], [ [ "amplifier", 1 ] ], [ [ "battery", 1 ], [ "battery_car", 1 ] ] ]
+    "components": [
+      [ [ "tripwire", 1 ] ],
+      [ [ "adhesive", 1, "LIST" ], [ "cordage", 1, "LIST" ] ],
+      [
+        [ "scrap", 3 ],
+        [ "can_food_unsealed", 1 ],
+        [ "can_drink_unsealed", 1 ],
+        [ "clay_canister", 1 ],
+        [ "canister_empty", 1 ]
+      ],
+      [ [ "solder_wire", 5 ] ],
+      [ [ "battery_car", 1 ] ],
+      [ [ "platinum_small", 4 ] ],
+      [ [ "amplifier", 1 ], [ "power_supply", 1 ] ],
+      [ [ "cable", 5 ] ]
+    ]
   },
   {
     "type": "recipe",
@@ -368,28 +383,6 @@
     "autolearn": true,
     "qualities": [ { "id": "SCREW", "level": 1 } ],
     "components": [ [ [ "bot_manhack", 1 ] ], [ [ "scrap", 2 ] ], [ [ "plastic_chunk", 2 ] ] ]
-  },
-  {
-    "type": "recipe",
-    "result": "manhack_hatch",
-    "id_suffix": "fabricated",
-    "category": "CC_OTHER",
-    "subcategory": "CSC_OTHER_TRAPS",
-    "skill_used": "traps",
-    "skills_required": [ [ "electronics", 3 ], [ "mechanics", 2 ] ],
-    "difficulty": 5,
-    "time": "30 m",
-    "reversible": true,
-    "decomp_learn": 5,
-    "book_learn": [ [ "manual_traps_mil", 5 ] ],
-    "qualities": [ { "id": "SCREW", "level": 1 }, { "id": "WRENCH", "level": 1 } ],
-    "components": [
-      [ [ "motor", 1 ] ],
-      [ [ "battery", 1 ], [ "battery_car", 1 ] ],
-      [ [ "cable", 2 ] ],
-      [ [ "plastic_chunk", 4 ], [ "scrap", 4 ] ],
-      [ [ "spring", 1 ] ]
-    ]
   },
   {
     "type": "recipe",
