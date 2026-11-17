@@ -56,6 +56,19 @@
   },
   {
     "type": "recipe",
+    "result": "hunting_snare",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_TRAPS",
+    "skill_used": "traps",
+    "difficulty": 1,
+    "time": "10 m",
+    "autolearn": true,
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "using": [ [ "cordage", 1 ] ],
+    "components": [ [ [ "stick", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
     "result": "tripwire",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_TRAPS",

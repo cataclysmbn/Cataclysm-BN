@@ -1,0 +1,85 @@
+[
+  {
+    "type": "monstergroup",
+    "name": "GROUP_HUNTING_FOREST",
+    "//": "Prey that can wander into a baited hunting trap in woodland.  Only frequencies and season conditions are used.",
+    "default": "mon_null",
+    "is_animal": true,
+    "monsters": [
+      { "monster": "mon_rabbit", "freq": 100, "cost_multiplier": 1 },
+      { "monster": "mon_squirrel", "freq": 120, "cost_multiplier": 1 },
+      { "monster": "mon_chipmunk", "freq": 70, "cost_multiplier": 1, "conditions": [ "SPRING", "SUMMER", "AUTUMN" ] },
+      { "monster": "mon_hare", "freq": 40, "cost_multiplier": 1 },
+      { "monster": "mon_groundhog", "freq": 30, "cost_multiplier": 1, "conditions": [ "SPRING", "SUMMER", "AUTUMN" ] },
+      { "monster": "mon_opossum", "freq": 40, "cost_multiplier": 1 },
+      { "monster": "mon_raccoon", "freq": 40, "cost_multiplier": 1 },
+      { "monster": "mon_fox_red", "freq": 20, "cost_multiplier": 1 },
+      { "monster": "mon_fox_gray", "freq": 20, "cost_multiplier": 1 },
+      { "monster": "mon_grouse", "freq": 50, "cost_multiplier": 1 },
+      { "monster": "mon_turkey", "freq": 20, "cost_multiplier": 1 },
+      { "monster": "mon_coyote", "freq": 10, "cost_multiplier": 1 },
+      { "monster": "mon_bobcat", "freq": 5, "cost_multiplier": 1 },
+      { "monster": "mon_deer", "freq": 15, "cost_multiplier": 1 },
+      { "monster": "mon_deer_fawn", "freq": 5, "cost_multiplier": 1, "conditions": [ "SPRING", "SUMMER" ] },
+      { "monster": "mon_boar_wild", "freq": 8, "cost_multiplier": 1 }
+    ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_HUNTING_WETLAND",
+    "//": "Prey that can wander into a baited hunting trap in marshes and bogs.  Only frequencies and season conditions are used.",
+    "default": "mon_null",
+    "is_animal": true,
+    "monsters": [
+      { "monster": "mon_muskrat", "freq": 100, "cost_multiplier": 1 },
+      { "monster": "mon_mink", "freq": 40, "cost_multiplier": 1 },
+      { "monster": "mon_beaver", "freq": 30, "cost_multiplier": 1 },
+      { "monster": "mon_otter", "freq": 20, "cost_multiplier": 1 },
+      { "monster": "mon_raccoon", "freq": 40, "cost_multiplier": 1 },
+      { "monster": "mon_rabbit", "freq": 30, "cost_multiplier": 1 },
+      { "monster": "mon_duck", "freq": 80, "cost_multiplier": 1, "conditions": [ "SPRING", "SUMMER", "AUTUMN" ] },
+      {
+        "monster": "mon_goose_canadian",
+        "freq": 40,
+        "cost_multiplier": 1,
+        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
+      },
+      { "monster": "mon_deer", "freq": 10, "cost_multiplier": 1 },
+      { "monster": "mon_boar_wild", "freq": 8, "cost_multiplier": 1 }
+    ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_HUNTING_FIELD",
+    "//": "Prey that can wander into a baited hunting trap in fields and farmland.  Only frequencies and season conditions are used.",
+    "default": "mon_null",
+    "is_animal": true,
+    "monsters": [
+      { "monster": "mon_rabbit", "freq": 120, "cost_multiplier": 1 },
+      { "monster": "mon_hare", "freq": 60, "cost_multiplier": 1 },
+      { "monster": "mon_groundhog", "freq": 60, "cost_multiplier": 1, "conditions": [ "SPRING", "SUMMER", "AUTUMN" ] },
+      { "monster": "mon_lemming", "freq": 20, "cost_multiplier": 1 },
+      { "monster": "mon_pheasant", "freq": 50, "cost_multiplier": 1 },
+      { "monster": "mon_turkey", "freq": 30, "cost_multiplier": 1 },
+      { "monster": "mon_crow", "freq": 30, "cost_multiplier": 1 },
+      { "monster": "mon_fox_red", "freq": 20, "cost_multiplier": 1 },
+      { "monster": "mon_coyote", "freq": 10, "cost_multiplier": 1 },
+      { "monster": "mon_deer", "freq": 10, "cost_multiplier": 1 }
+    ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_HUNTING_RURAL",
+    "//": "Prey that can wander into a baited hunting trap around sparse housing.  Only frequencies and season conditions are used.",
+    "default": "mon_null",
+    "is_animal": true,
+    "monsters": [
+      { "monster": "mon_rabbit", "freq": 80, "cost_multiplier": 1 },
+      { "monster": "mon_squirrel", "freq": 100, "cost_multiplier": 1 },
+      { "monster": "mon_opossum", "freq": 60, "cost_multiplier": 1 },
+      { "monster": "mon_raccoon", "freq": 60, "cost_multiplier": 1 },
+      { "monster": "mon_crow", "freq": 40, "cost_multiplier": 1 },
+      { "monster": "mon_groundhog", "freq": 30, "cost_multiplier": 1, "conditions": [ "SPRING", "SUMMER", "AUTUMN" ] }
+    ]
+  }
+]

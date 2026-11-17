@@ -33,6 +33,7 @@ title: Traps
   "benign": true,                // This means it's not a trap meant to be set off but something harmless like a rollmat or funnel, so won't ask the player if they're really sure about stepping into it, and monsters with the `PATH_AVOID_DANGER_2` monflag won't care about avoiding these. Using this with an `action` that can actually cause harm is a Bad Idea
   "funnel_radius": 200           // Used for funnels, when it's raining this trap will collect water at a rate based on this value, automatically filling empty container items placed on the same tile as it
   "floor_bedding_warmth": -1000, // Used for rollmats and the like, bonus warmth offered by this terrain/furniture when used to sleep.
+  "hunting": { "min_size": "TINY", "max_size": "SMALL", "efficiency": 1.0 } // Lets players set bait on this trap to catch wildlife over time, see below
 },
 ```
 
@@ -97,3 +98,65 @@ The following actions are available as defined in trapfunc.cpp:
   spell effects can be expected to work properly with this.
 - `snake` - Similar to `shadow` trap effect, summons shadow snakes nearby. Main difference is NPCs
   and monsters are capable of setting it off.
+
+#### hunting
+
+A trap with a `hunting` object can be baited by examining it. While bait is set, wildlife may wander
+into the trap even when the map around it is not loaded. On a catch, the bait is eaten and the
+prey's corpse is left on the trap, aged from the moment it was caught. A trap with
+`remove_on_trigger` is sprung by the catch: it is removed and leaves its `drops`, as if disarmed.
+
+| Field        | Default   | Description                                           |
+| ------------ | --------- | ----------------------------------------------------- |
+| `min_size`   | `"TINY"`  | Smallest prey the trap can hold.                      |
+| `max_size`   | `"SMALL"` | Largest prey the trap can hold.                       |
+| `efficiency` | `1.0`     | Multiplier on the catch rate. Must be greater than 0. |
+
+Catches follow a Poisson process: the chance of a catch over a period `t` is `1 - exp(-rate * t)`,
+so the outcome does not depend on how often the trap is checked. The rate per day is the product
+of:
+
+- the surrounding habitat's `catch_rate`, averaged over the trap's overmap tile (counted twice) and
+  its eight neighbours;
+- the bait's `attraction`;
+- the trap's `efficiency`;
+- the local cover around the trap (natural ground and vegetation within 6 tiles), from 0 to 1;
+- the trapper's traps skill, from 0.75 at level 0 to 1.5 at level 15;
+- the distance to the player, 0 within 6 tiles and 1 beyond 30 tiles.
+
+Bait stops luring prey once it is rotten. Prey is drawn from the habitat's monster group using the
+entries' `freq` and season `conditions`; prey the trap cannot hold or the bait does not lure keeps
+its share of the roll, so a poor match catches less rather than catching something else.
+
+Bait is an ordinary item on the trap's tile that carries the hunting state. Taking it away by any
+means leaves an empty trap that catches nothing; picking it up strips its bait state. Removing or
+replacing the trap also releases the bait.
+
+### hunting_habitat
+
+Maps overmap land use codes to the prey available to baited hunting traps.
+
+```json
+{
+  "type": "hunting_habitat",
+  "id": "forest",
+  "land_use_codes": ["forest", "brushland"], // Each land use code may belong to only one habitat
+  "prey_group": "GROUP_HUNTING_FOREST", // Monster group prey is drawn from
+  "catch_rate": 0.5 // Expected catches per day with neutral bait, trap, skill and full cover
+}
+```
+
+### hunting_bait
+
+Lists the items that can be set as bait on a hunting trap.
+
+```json
+{
+  "type": "hunting_bait",
+  "id": "seeds",
+  "items": ["acorns", "birdfood"], // Each item may belong to only one bait
+  "attraction": 1.0, // Multiplier on the catch rate
+  "species": ["BIRD"], // Prey species this bait lures
+  "monsters": ["mon_squirrel"] // Prey this bait lures, on top of `species`. With both empty, the bait lures any prey
+}
+```
