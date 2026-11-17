@@ -2032,7 +2032,7 @@ static void draw_messages_classic( avatar &, const catacurses::window &w )
     wnoutrefresh( w );
 }
 
-#if defined(TILES)
+#if defined(TILES) || defined(CATA_MCP)
 static void draw_mminimap( avatar &, const catacurses::window &w )
 {
     werase( w );
@@ -2461,7 +2461,7 @@ static std::vector<window_panel> initialize_default_classic_panels()
     ret.emplace_back( draw_simple_compass, translate_marker( "Sim.Compass" ), 1, 44, false );
 
     ret.emplace_back( draw_messages_classic, translate_marker( "Log" ), -2, 44, true );
-#if defined(TILES)
+#if defined(TILES) || defined(CATA_MCP)
     ret.emplace_back( draw_mminimap, translate_marker( "Map" ), -1, 44, true,
                       default_render, true );
 #endif // TILES
@@ -2490,7 +2490,7 @@ static std::vector<window_panel> initialize_default_compact_panels()
     ret.emplace_back( draw_compass, translate_marker( "Compass" ), 8, 32, true );
     ret.emplace_back( draw_compass, translate_marker( "Comp.Compass" ), 3, 32, false );
     ret.emplace_back( draw_simple_compass, translate_marker( "Sim.Compass" ), 1, 32, false );
-#if defined(TILES)
+#if defined(TILES) || defined(CATA_MCP)
     ret.emplace_back( draw_mminimap, translate_marker( "Map" ), -1, 32, true,
                       default_render, true );
 #endif // TILES
@@ -2526,7 +2526,7 @@ static std::vector<window_panel> initialize_default_label_narrow_panels()
     ret.emplace_back( draw_compass_padding, translate_marker( "Comp.Compass" ), 3, 32,
                       false );
     ret.emplace_back( draw_simple_compass, translate_marker( "Sim.Compass" ), 1, 32, false );
-#if defined(TILES)
+#if defined(TILES) || defined(CATA_MCP)
     ret.emplace_back( draw_mminimap, translate_marker( "Map" ), -1, 32, true,
                       default_render, true );
 #endif // TILES
@@ -2563,7 +2563,7 @@ static std::vector<window_panel> initialize_default_label_panels()
     ret.emplace_back( draw_compass_padding, translate_marker( "Comp.Compass" ), 3, 44,
                       false );
     ret.emplace_back( draw_simple_compass, translate_marker( "Sim.Compass" ), 1, 44, false );
-#if defined(TILES)
+#if defined(TILES) || defined(CATA_MCP)
     ret.emplace_back( draw_mminimap, translate_marker( "Map" ), -1, 44, true,
                       default_render, true );
 #endif // TILES

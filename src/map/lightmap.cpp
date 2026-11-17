@@ -85,6 +85,69 @@ auto has_vertical_light_blocker(const level_cache& cache, const int x, const int
     return cache.floor_cache[idx] || cache.vehicle_floor_cache[idx];
 }
 
+#if defined(CATA_MCP)
+static constexpr auto DAYLIGHT_DIFFUSION_PASSES = 16;
+
+/// Spreads daylight seeds into the covered transparent tiles around them, pass for pass as the GPU
+/// lm_daylight_diffuse shader does, and raises lm to the result. Seeds are never lowered.
+auto diffuse_daylight(level_cache& cache, std::vector<float> seeds) -> void {
+    constexpr auto cardinals = std::array{point_north, point_south, point_east, point_west};
+    const auto transparent_at = [&](const point p) {
+        return p.x >= 0 && p.y >= 0 && p.x < cache.cache_x && p.y < cache.cache_y
+            && cache.transparency_cache[cache.idx(p.x, p.y)] > LIGHT_TRANSPARENCY_SOLID;
+    };
+    // Only covered tiles within the pass count of a transparent seed can receive light.
+    auto active = std::vector<point>{};
+    auto reached = std::vector<char>(seeds.size(), 0);
+    auto frontier = std::vector<point>{};
+    for (const auto x : std::views::iota(0, cache.cache_x)) {
+        for (const auto y : std::views::iota(0, cache.cache_y)) {
+            if (seeds[cache.idx(x, y)] > 0.0f && transparent_at({x, y})) {
+                frontier.emplace_back(x, y);
+            }
+            reached[cache.idx(x, y)] = seeds[cache.idx(x, y)] > 0.0f;
+        }
+    }
+    for (auto step = 0; step < DAYLIGHT_DIFFUSION_PASSES; ++step) {
+        auto next = std::vector<point>{};
+        for (const auto& from : frontier) {
+            for (const auto offset : cardinals) {
+                const auto to = from + offset;
+                if (transparent_at(to) && !reached[cache.idx(to.x, to.y)]) {
+                    reached[cache.idx(to.x, to.y)] = 1;
+                    next.push_back(to);
+                    active.push_back(to);
+                }
+            }
+        }
+        frontier = std::move(next);
+    }
+    auto next_seeds = seeds;
+    for (const auto pass : std::views::iota(0, DAYLIGHT_DIFFUSION_PASSES)) {
+        const auto air_decay = std::exp(-LIGHT_TRANSPARENCY_OPEN_AIR);
+        const auto decay =
+            pass == 0 ? air_decay
+                      : air_decay * static_cast<float>(pass) / static_cast<float>(pass + 1);
+        for (const auto& p : active) {
+            const auto best = std::ranges::fold_left(
+                cardinals | std::views::transform([&](const auto offset) { return p + offset; })
+                    | std::views::filter(transparent_at) | std::views::transform([&](const auto n) {
+                          return seeds[cache.idx(n.x, n.y)];
+                      })
+                    | std::views::filter([](const float v) { return v > LIGHT_AMBIENT_LOW; }),
+                seeds[cache.idx(p.x, p.y)],
+                [&](const float a, const float v) { return std::max(a, v * decay); });
+            next_seeds[cache.idx(p.x, p.y)] = best < LIGHT_AMBIENT_LOW ? 0.0f : best;
+        }
+        seeds.swap(next_seeds);
+    }
+    for (const auto& p : active) {
+        const auto idx = cache.idx(p.x, p.y);
+        cache.lm[idx] = std::max(cache.lm[idx], seeds[idx]);
+    }
+}
+
+#endif
 struct vehicle_external_light_cache_scope {
     level_cache& cache;
     std::vector<std::pair<std::size_t, float>> transparency_restore;
@@ -1129,6 +1192,14 @@ void map::build_sunlight_cache(int pzlev) {
     const int zlev_max =
         clamp(calc_max_populated_zlev() + 1, std::min(OVERMAP_HEIGHT, pzlev + 1), OVERMAP_HEIGHT);
 
+#if defined(CATA_MCP)
+    // Nothing is populated above zlev_max, so the sky reaches every square there; the GPU lights
+    // these levels too.
+    for (const auto zlev : std::views::iota(zlev_max + 1, OVERMAP_HEIGHT + 1)) {
+        std::ranges::fill(get_cache(zlev).lm, g->natural_light_level(0));
+    }
+
+#endif
     // true if all previous z-levels are fully transparent to light (no floors, transparency >= air)
     bool fully_outside = true;
 
@@ -1271,6 +1342,37 @@ void map::build_sunlight_cache(int pzlev) {
                 });
         }
     }
+#if defined(CATA_MCP)
+
+    if (!m_solar.direct_active) { return; }
+    // Covered columns get no seed; the rest take their sun state, as the GPU ambient pass does.
+    const auto max_shadow_light =
+        static_cast<float>(default_daylight_level()) * SOLAR_SHADOW_SCATTER;
+    const auto shadow_light_level =
+        std::max(LIGHT_AMBIENT_LOW, std::min(g->natural_light_level(0), max_shadow_light));
+    auto covered = std::vector<char>(get_cache_ref(zlev_max).lm.size(), 0);
+    for (int zlev = zlev_max; zlev >= -OVERMAP_DEPTH; zlev--) {
+        auto& cache = get_cache(zlev);
+        auto seeds = std::vector<float>(covered.size(), 0.0f);
+        const auto daylight = g->natural_light_level(zlev);
+        auto any_seed = false;
+        for (const auto x : std::views::iota(0, cache.cache_x)) {
+            for (const auto y : std::views::iota(0, cache.cache_y)) {
+                const auto idx = cache.idx(x, y);
+                if (covered[idx]) { continue; }
+                const auto state = direct_sunlight_state_at(point_bub_ms(x, y), zlev);
+                seeds[idx] =
+                    state == direct_sunlight_state::direct ? daylight
+                    : state == direct_sunlight_state::shadow
+                        ? shadow_light_level
+                        : 0.0f;
+                any_seed |= seeds[idx] > 0.0f;
+                covered[idx] |= has_vertical_light_blocker(cache, x, y);
+            }
+        }
+        if (any_seed) { diffuse_daylight(cache, std::move(seeds)); }
+    }
+#endif
 }
 
 void map::generate_lightmap(const int zlev) {
@@ -2161,6 +2263,185 @@ void map::restore_vision_transparency_cache(
 static const light_model k_sight_model =
     {sight_calc, sight_check, update_light, nullptr, sight_from_lookup, accumulate_transparency};
 
+#if defined(CATA_MCP)
+namespace {
+
+auto diagonal_blocked(const level_cache& cache, const point& from, const point& to) -> bool {
+    const auto delta = to - from;
+    if (delta.x == 0 || delta.y == 0) { return false; }
+    const auto& blocks =
+        cache.vehicle_obscured_cache
+            [delta.y < 0 ? cache.idx(from.x, from.y) : cache.idx(to.x, to.y)];
+    return delta.x == delta.y ? blocks.nw : blocks.ne;
+}
+
+auto has_vehicle_diagonal_block(const level_cache& cache) -> bool {
+    return std::ranges::any_of(cache.vehicle_obscured_cache, [](const auto& blocks) {
+        return blocks.nw || blocks.ne;
+    });
+}
+
+/// `std::lround` without the library call: halves round away from zero, as the GPU rays do.
+auto round_away(const float value) -> int {
+    return static_cast<int>(value + (value < 0.0f ? -0.5f : 0.5f));
+}
+
+auto has_opaque_tile(const level_cache& cache) -> bool {
+    return std::ranges::any_of(cache.transparency_cache, [](const float transparency) {
+        return transparency <= LIGHT_TRANSPARENCY_SOLID;
+    });
+}
+
+/// Summed-area table of opaque tiles, to ask whether any lies in a rectangle.
+struct opaque_sums {
+    int stride;
+    std::vector<int> sums;
+
+    explicit opaque_sums(const level_cache& cache)
+        : stride(cache.cache_y + 1),
+          sums(static_cast<size_t>((cache.cache_x + 1) * stride), 0) {
+        for (const auto x : std::views::iota(0, cache.cache_x)) {
+            for (const auto y : std::views::iota(0, cache.cache_y)) {
+                const auto opaque =
+                    cache.transparency_cache[cache.idx(x, y)] <= LIGHT_TRANSPARENCY_SOLID;
+                sums[at(x + 1, y + 1)] =
+                    sums[at(x, y + 1)] + sums[at(x + 1, y)] - sums[at(x, y)] + (opaque ? 1 : 0);
+            }
+        }
+    }
+
+    auto at(const int x, const int y) const -> size_t {
+        return static_cast<size_t>(x * stride + y);
+    }
+
+    /// Inclusive bounds, already inside the cache.
+    auto any_in(const point& lo, const point& hi) const -> bool {
+        return sums[at(hi.x + 1, hi.y + 1)] - sums[at(lo.x, hi.y + 1)] - sums[at(hi.x + 1, lo.y)]
+                 + sums[at(lo.x, lo.y)]
+             > 0;
+    }
+};
+
+} // namespace
+
+/// Lets each tile that is not open air inherit the best seen value of its transparent neighbours,
+/// as the GPU surface pass does, so glancing surfaces do not depend on the compute backend. Reads
+/// a snapshot, so the inheritance never cascades. Levels with a vehicle diagonal block take
+/// the GPU centre ray instead of the shadowcast, since the two disagree about where those cut
+/// sight. Elsewhere the shadowcast is clipped to the centre ray only where an opaque tile can
+/// make them differ.
+void map::apply_seen_surfaces(const tripoint_bub_ms& origin) {
+    ZoneScopedN("apply_seen_surfaces");
+    const auto round_nearest = [](const float value) {
+        return static_cast<int>(std::lround(value));
+    };
+    const auto ray_seen = [&](const tripoint_bub_ms& target) {
+        const auto& target_cache = get_cache_ref(target.z());
+        const auto delta = target - origin;
+        const auto dist = rl_dist(origin, target);
+        if (dist > g_max_view_distance) { return 0.0f; }
+        const auto steps = std::max(
+            {std::abs(delta.x()), std::abs(delta.y()),
+             static_cast<int>(std::ceil(static_cast<float>(std::abs(delta.z())) * Z_LEVEL_SCALE)),
+             1});
+        const auto crosses_floor = [&](const int k) -> bool {
+            const auto t = (static_cast<float>(k) + 0.5f) / static_cast<float>(std::abs(delta.z()));
+            const auto floor_z = delta.z() > 0 ? origin.z() + k + 1 : origin.z() - k;
+            if (floor_z < -OVERMAP_DEPTH || floor_z > OVERMAP_HEIGHT) { return false; }
+            const auto& floor = get_cache_ref(floor_z);
+            return floor.floor_cache[floor.idx(
+                std::clamp(origin.x() + round_nearest(static_cast<float>(delta.x()) * t), 0,
+                           target_cache.cache_x - 1),
+                std::clamp(origin.y() + round_nearest(static_cast<float>(delta.y()) * t), 0,
+                           target_cache.cache_y - 1))];
+        };
+        if (std::ranges::any_of(std::views::iota(0, std::abs(delta.z())), crosses_floor)) {
+            return 0.0f;
+        }
+        const auto step_tile = [&](const int i) {
+            const auto t = static_cast<float>(i) / static_cast<float>(steps);
+            return tripoint_bub_ms(
+                std::clamp(origin.x() + round_nearest(static_cast<float>(delta.x()) * t), 0,
+                           target_cache.cache_x - 1),
+                std::clamp(origin.y() + round_nearest(static_cast<float>(delta.y()) * t), 0,
+                           target_cache.cache_y - 1),
+                std::clamp(origin.z() + round_nearest(static_cast<float>(delta.z()) * t),
+                           -OVERMAP_DEPTH, OVERMAP_HEIGHT));
+        };
+        auto avg_transparency = LIGHT_TRANSPARENCY_OPEN_AIR;
+        for (const auto i : std::views::iota(1, steps)) {
+            const auto prev = step_tile(i - 1);
+            const auto cur = step_tile(i);
+            const auto& cur_cache = get_cache_ref(cur.z());
+            if (diagonal_blocked(cur_cache, point(prev.x(), prev.y()), point(cur.x(), cur.y()))) {
+                return 0.0f;
+            }
+            const auto transparency = cur_cache.transparency_cache[cur_cache.idx(cur.x(), cur.y())];
+            if (transparency <= LIGHT_TRANSPARENCY_SOLID) { return 0.0f; }
+            avg_transparency =
+                (static_cast<float>(i - 1) * avg_transparency + transparency)
+                / static_cast<float>(i);
+        }
+        return std::exp(-avg_transparency * static_cast<float>(dist));
+    };
+    for (const auto z : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
+        auto& cache = get_cache(z);
+        const auto has_diagonal = has_vehicle_diagonal_block(cache);
+        const auto any_seen = std::ranges::any_of(cache.seen_cache, [](const float seen) {
+            return seen > 0.0f;
+        });
+        if (has_diagonal || (any_seen && has_opaque_tile(cache))) {
+            const auto sums = opaque_sums(cache);
+            // The shadowcast can only err where an opaque tile lies in the box the ray spans.
+            const auto may_differ = [&](const int x, const int y) {
+                return has_diagonal
+                    || (cache.seen_cache[cache.idx(x, y)] > 0.0f
+                        && sums.any_in(
+                            {std::max(std::min(x, origin.x()) - 1, 0),
+                             std::max(std::min(y, origin.y()) - 1, 0)},
+                            {std::min(std::max(x, origin.x()) + 1, cache.cache_x - 1),
+                             std::min(std::max(y, origin.y()) + 1, cache.cache_y - 1)}));
+            };
+            for (const auto x : std::views::iota(0, cache.cache_x)) {
+                for (const auto y : std::views::iota(0, cache.cache_y)) {
+                    if (tripoint_bub_ms(x, y, z) != origin && may_differ(x, y)) {
+                        cache.seen_cache[cache.idx(x, y)] = ray_seen({x, y, z});
+                    }
+                }
+            }
+        }
+        const auto raw = cache.seen_cache;
+        const auto blocked_diagonal = [&](const point& from, const point& to) {
+            return diagonal_blocked(cache, from, to);
+        };
+        const auto* const roof =
+            z < origin.z() && z < OVERMAP_HEIGHT ? &get_cache(z + 1).vehicle_floor_cache : nullptr;
+        for (const auto x : std::views::iota(0, cache.cache_x)) {
+            for (const auto y : std::views::iota(0, cache.cache_y)) {
+                const auto idx = cache.idx(x, y);
+                if (cache.transparency_cache[idx] == LIGHT_TRANSPARENCY_OPEN_AIR
+                    || tripoint_bub_ms(x, y, z) == origin) {
+                    continue;
+                }
+                const auto inherited = std::ranges::fold_left(
+                    eight_adjacent_offsets | std::views::transform([&](const auto offset) {
+                        return point(x, y) + offset;
+                    }) | std::views::filter([&](const auto n) {
+                        return n.x >= 0 && n.y >= 0 && n.x < cache.cache_x && n.y < cache.cache_y
+                            && cache.transparency_cache[cache.idx(n.x, n.y)]
+                                   > LIGHT_TRANSPARENCY_SOLID
+                            && !blocked_diagonal(n, point(x, y));
+                    }) | std::views::transform([&](const auto n) {
+                        return raw[cache.idx(n.x, n.y)];
+                    }),
+                    raw[idx], [](const float a, const float b) { return std::max(a, b); });
+                cache.seen_cache[idx] = roof != nullptr && (*roof)[idx] ? 0.0f : inherited;
+            }
+        }
+    }
+}
+
+#endif
 /**
  * Calculates the Field Of View for the provided map from the given x, y
  * coordinates. Returns a lightmap for a result where the values represent a
@@ -2282,10 +2563,15 @@ void map::build_seen_cache(const tripoint_bub_ms& origin, const int target_z) {
                     const int n_cross = static_cast<int>(std::abs(dz));
                     for (int k = 0; k < n_cross; ++k) {
                         const float t = (static_cast<float>(k) + 0.5f) / std::abs(dz);
+#if defined(CATA_MCP)
+                        const int fx = new_origin.x() + round_away(t * dx);
+                        const int fy = new_origin.y() + round_away(t * dy);
+#else
                         const int fx = static_cast<int>(
                             std::lround(static_cast<float>(new_origin.x()) + t * dx));
                         const int fy = static_cast<int>(
                             std::lround(static_cast<float>(new_origin.y()) + t * dy));
+#endif
                         const int floor_z =
                             (dz < 0.0f) ? static_cast<int>(new_origin.z()) - k
                                         : static_cast<int>(new_origin.z()) + k + 1;
@@ -2305,9 +2591,15 @@ void map::build_seen_cache(const tripoint_bub_ms& origin, const int target_z) {
                 int oy = new_origin.y();
                 int oz = new_origin.z();
                 for (int s = 1; s < steps; ++s) {
+#if defined(CATA_MCP)
+                    const int cx = new_origin.x() + round_away(s * sx);
+                    const int cy = new_origin.y() + round_away(s * sy);
+                    const int cz = new_origin.z() + round_away(s * sz);
+#else
                     const int cx = static_cast<int>(std::lround(new_origin.x() + s * sx));
                     const int cy = static_cast<int>(std::lround(new_origin.y() + s * sy));
                     const int cz = static_cast<int>(std::lround(new_origin.z() + s * sz));
+#endif
                     if (cz < -OVERMAP_DEPTH || cz > OVERMAP_HEIGHT) { continue; }
                     if (cx >= 0 && cy >= 0) {
                         if (oz != cz && oz > -OVERMAP_DEPTH && cz < OVERMAP_HEIGHT) {
@@ -2344,10 +2636,15 @@ void map::build_seen_cache(const tripoint_bub_ms& origin, const int target_z) {
                 const int n_cross = static_cast<int>(std::abs(dz));
                 for (int k = 0; k < n_cross; ++k) {
                     const float t = (static_cast<float>(k) + 0.5f) / std::abs(dz);
+#if defined(CATA_MCP)
+                    const int fx = new_origin.x() + round_away(t * dx);
+                    const int fy = new_origin.y() + round_away(t * dy);
+#else
                     const int fx = static_cast<int>(
                         std::lround(static_cast<float>(new_origin.x()) + t * dx));
                     const int fy = static_cast<int>(
                         std::lround(static_cast<float>(new_origin.y()) + t * dy));
+#endif
                     const int floor_z =
                         (dz < 0.0f) ? static_cast<int>(new_origin.z()) - k
                                     : static_cast<int>(new_origin.z()) + k + 1;
@@ -2419,8 +2716,16 @@ void map::build_seen_cache(const tripoint_bub_ms& origin, const int target_z) {
                         // Both share the same Z_LEVEL_SCALE constant; if that constant or the
                         // DDA distance formula changes, this threshold must be updated to match.
                         const float new_origin_vis = new_origin_seen[tile_idx];
+#if defined(CATA_MCP)
+                        if (new_origin_vis > 0.0f) {
+#else
                         if (!vert_blocked[tile_idx] && new_origin_vis > 0.0f) {
+#endif
                             if (use_3d_shadowcasting) {
+#if defined(CATA_MCP)
+                                if (is_3d_clear(x, y, z)) { sc = new_origin_vis; }
+                            } else if (!vert_blocked[tile_idx]) {
+#else
                                 const float fdz = static_cast<float>(std::abs(z - new_origin.z()));
                                 const float fdh = static_cast<float>(std::max(
                                     std::abs(x - new_origin.x()), std::abs(y - new_origin.y())));
@@ -2428,6 +2733,7 @@ void map::build_seen_cache(const tripoint_bub_ms& origin, const int target_z) {
                                     sc = new_origin_vis;
                                 }
                             } else {
+#endif
                                 sc = new_origin_vis;
                             }
                         }
@@ -2537,6 +2843,10 @@ void map::build_seen_cache(const tripoint_bub_ms& origin, const int target_z) {
         }
     }
 
+#if defined(CATA_MCP)
+    apply_seen_surfaces(new_origin);
+
+#endif
     if (new_origin.z() == target_z) {
         restore_vision_transparency_cache(
             get_player_character().bub_pos(), target_z, vision_restore_cache,

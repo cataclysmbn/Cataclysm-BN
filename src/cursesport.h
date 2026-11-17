@@ -1,7 +1,7 @@
 #pragma once
 
 #include <utility>
-#if defined(TILES) || defined(_WIN32)
+#if defined(TILES) || defined(_WIN32) || defined(CATA_MCP)
 
 #include <array>
 #include <string>

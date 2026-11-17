@@ -1,5 +1,6 @@
-#if defined(TILES) || defined(_WIN32)
+#if defined(TILES) || defined(_WIN32) || defined(CATA_MCP)
 #include "cursesport.h"
+#include "mcp_hooks.h"
 
 #include <cstdint>
 #include <memory>
@@ -185,6 +186,16 @@ void catacurses::wnoutrefresh( const window &win_ )
 {
     cata_cursesport::WINDOW *const win = win_.get<cata_cursesport::WINDOW>();
     // TODO: log win == nullptr
+#if defined(CATA_MCP)
+    if( win != nullptr && newscr && newscr != win_ ) {
+        const auto cursor = win->pos + win->cursor;
+        const auto *const screen = newscr.get<cata_cursesport::WINDOW>();
+        if( screen != nullptr && cursor.x >= 0 && cursor.y >= 0 && cursor.x < screen->width
+            && cursor.y < screen->height ) {
+            wmove( newscr, cursor );
+        }
+    }
+#endif
     if( win != nullptr && win->draw ) {
         cata_cursesport::curses_drawwindow( win_ );
     }
@@ -208,8 +219,17 @@ void catacurses::doupdate()
     refresh_display();
 }
 
-void catacurses::wredrawln( const window &/*win*/, int /*beg_line*/, int /*num_lines*/ )
+void catacurses::wredrawln( const window &MCP_ONLY( win_ )/*win*/,
+                            int MCP_ONLY( beg_line )/*beg_line*/, int MCP_ONLY( num_lines )/*num_lines*/ )
 {
+#if defined(CATA_MCP)
+    auto *const win = win_.get<cata_cursesport::WINDOW>();
+    if( win == nullptr || num_lines <= 0 ) { return; }
+    const auto first_line = std::clamp( beg_line, 0, win->height );
+    const auto last_line = std::clamp( beg_line + num_lines, first_line, win->height );
+    for( auto line = first_line; line < last_line; ++line ) { win->line[line].touched = true; }
+    if( first_line < last_line ) { win->draw = true; }
+#endif
     /**
      * This is a no-op for non-curses implementations. wincurse.cpp doesn't
      * use windows console for rendering, and sdltiles.cpp doesn't either.
@@ -269,6 +289,7 @@ inline cata_cursesport::cursecell *cur_cell( cata_cursesport::WINDOW *win )
 //The core printing function, prints characters to the array, and sets colors
 inline void printstring( cata_cursesport::WINDOW *win, const std::string &text )
 {
+    MCP_ONLY( if( win == nullptr ) { return; } )
     using cata_cursesport::cursecell;
     win->draw = true;
     int len = text.length();
@@ -484,9 +505,11 @@ int catacurses::getcury( const window &win )
     return win ? win.get<cata_cursesport::WINDOW>()->cursor.y : 0;
 }
 
+#if !defined(CATA_MCP)
 void catacurses::curs_set( int )
 {
 }
+#endif
 
 void catacurses::wattron( const window &win_, const nc_color &attrs )
 {

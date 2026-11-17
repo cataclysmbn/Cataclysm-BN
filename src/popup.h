@@ -15,6 +15,12 @@
 #include "string_formatter.h"
 
 class ui_adaptor;
+#if defined(CATA_MCP)
+namespace game_client
+{
+struct interaction_snapshot;
+}
+#endif
 
 /**
  * UI class for displaying messages or querying player input with popups.
@@ -236,6 +242,12 @@ class query_popup
                     int max_width, int horz_padding );
         void invalidate_ui() const;
         void init() const;
+#if defined(CATA_MCP)
+        auto make_interaction( const input_context &context ) const
+        -> game_client::interaction_snapshot;
+        /// Carries out a client's choice; false when the event is not one.
+        auto apply_interaction( result &response ) -> bool;
+#endif
 
         template <typename ...Args>
         static void assert_format( const std::string &, Args &&... ) {

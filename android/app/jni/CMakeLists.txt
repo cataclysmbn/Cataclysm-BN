@@ -23,6 +23,7 @@ endif()
 
 file(GLOB_RECURSE CATACLYSM_BN_SOURCES CONFIGURE_DEPENDS "${CATA_SRC_DIR}/*.cpp")
 list(FILTER CATACLYSM_BN_SOURCES EXCLUDE REGEX "/src/(lua|sol|third-party)/")
+list(FILTER CATACLYSM_BN_SOURCES EXCLUDE REGEX "/src/(mcp_[^/]*|engine_client[^/]*|client_(command|input|interaction|memory|shortcut)|game_session|map_perception|target_screen|tile_parts)\\.cpp$")
 file(GLOB LUA_SOURCES CONFIGURE_DEPENDS "${CATA_SRC_DIR}/lua/*.c")
 file(GLOB SQLITE_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/sqlite3/sqlite3.c")
 file(GLOB CATALUA_BINDINGS_SOURCES CONFIGURE_DEPENDS "${CATA_SRC_DIR}/catalua_bindings*.cpp")

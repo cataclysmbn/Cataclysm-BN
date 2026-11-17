@@ -1,4 +1,5 @@
 #include "avatar.h"
+#include "mcp_hooks.h"
 
 #include "action.h"
 #include "bodypart.h"
@@ -244,11 +245,21 @@ bool avatar::save_map_memory()
 void avatar::load_map_memory()
 {
     player_map_memory->load( abs_pos() );
+#if defined(CATA_MCP)
+    if( g && this == &get_avatar() ) {
+        map_perception::reset();
+    }
+#endif
 }
 
 void avatar::clear_map_memory()
 {
     player_map_memory->clear();
+#if defined(CATA_MCP)
+    if( g && this == &get_avatar() ) {
+        map_perception::reset();
+    }
+#endif
 }
 
 void avatar::prepare_map_memory_region( const tripoint_abs_ms &p1, const tripoint_abs_ms &p2 )
@@ -264,12 +275,32 @@ const memorized_terrain_tile &avatar::get_memorized_tile( const tripoint_abs_ms 
 void avatar::memorize_tile( const tripoint_abs_ms &pos, const std::string &ter, const int subtile,
                             const int rotation )
 {
+#if defined(CATA_MCP)
+    if( map_perception::presenting() ) {
+        return;
+    }
+#endif
     player_map_memory->memorize_tile( pos, ter, subtile, rotation );
+#if defined(CATA_MCP)
+    if( g && this == &get_avatar() ) {
+        map_perception::memory_changed( pos );
+    }
+#endif
 }
 
 void avatar::memorize_symbol( const tripoint_abs_ms &pos, const int symbol )
 {
+#if defined(CATA_MCP)
+    if( map_perception::presenting() ) {
+        return;
+    }
+#endif
     player_map_memory->memorize_symbol( pos, symbol );
+#if defined(CATA_MCP)
+    if( g && this == &get_avatar() ) {
+        map_perception::memory_changed( pos );
+    }
+#endif
 }
 
 int avatar::get_memorized_symbol( const tripoint_abs_ms &p ) const
@@ -280,7 +311,17 @@ int avatar::get_memorized_symbol( const tripoint_abs_ms &p ) const
 void avatar::memorize_terrain_tile( const tripoint_abs_ms &pos, const std::string &ter,
                                     const int subtile, const int rotation )
 {
+#if defined(CATA_MCP)
+    if( map_perception::presenting() ) {
+        return;
+    }
+#endif
     player_map_memory->memorize_terrain_tile( pos, ter, subtile, rotation );
+#if defined(CATA_MCP)
+    if( g && this == &get_avatar() ) {
+        map_perception::memory_changed( pos );
+    }
+#endif
 }
 
 memorized_terrain_tile avatar::get_terrain_tile( const tripoint_abs_ms &pos ) const
@@ -290,13 +331,45 @@ memorized_terrain_tile avatar::get_terrain_tile( const tripoint_abs_ms &pos ) co
 
 void avatar::clear_memorized_overlay( const tripoint_abs_ms &pos )
 {
+#if defined(CATA_MCP)
+    if( map_perception::presenting() ) {
+        return;
+    }
+#endif
     player_map_memory->clear_memorized_overlay( pos );
+#if defined(CATA_MCP)
+    if( g && this == &get_avatar() ) {
+        map_perception::memory_changed( pos );
+    }
+#endif
 }
 
 void avatar::clear_memorized_tile( const tripoint_abs_ms &pos )
 {
+#if defined(CATA_MCP)
+    if( map_perception::presenting() ) {
+        return;
+    }
+#endif
     player_map_memory->clear_memorized_tile( pos );
+#if defined(CATA_MCP)
+    if( g && this == &get_avatar() ) {
+        map_perception::memory_changed( pos );
+    }
+#endif
 }
+
+#if defined(CATA_MCP)
+std::vector<tripoint_abs_ms> avatar::memorized_positions() const
+{
+    return player_map_memory->memorized_positions();
+}
+
+auto avatar::map_memory_revision() const -> memory_revision
+{
+    return player_map_memory->revision();
+}
+#endif
 
 bool avatar::has_memorized_tile_for_autodrive( const tripoint_abs_ms &p ) const
 {
