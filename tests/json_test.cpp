@@ -66,6 +66,26 @@ TEST_CASE("serialize_set", "[json]") {
     test_serialization(enum_set, string_format(R"([%d])", static_cast<int>(bp_foot_l)));
 }
 
+TEST_CASE("read_jsonc", "[json]") {
+    // Comments may appear between tokens; "//" and "/*" inside strings stay text.
+    auto iss = std::istringstream(R"(// head
+        { /* a */ "s": "// not /* a comment", "xs": [ 1, 2, ], // tail
+          "n": 3, /* multi
+          line **/ })");
+    auto jsin = JsonIn(iss);
+    auto jo = jsin.get_object();
+    CHECK(jo.get_string("s") == "// not /* a comment");
+    CHECK(jo.get_int_array("xs") == std::vector<int>{1, 2});
+    CHECK(jo.get_int("n") == 3);
+    jo.finish();
+
+    for (const auto* bad : {"[ /* unterminated", "[ / 1 ]"}) {
+        auto bad_iss = std::istringstream(bad);
+        auto bad_jsin = JsonIn(bad_iss);
+        CHECK_THROWS_AS(bad_jsin.get_array(), JsonError);
+    }
+}
+
 template <typename Matcher>
 static void test_translation_text_style_check(Matcher&& matcher, const std::string& json) {
     std::istringstream iss(json);
