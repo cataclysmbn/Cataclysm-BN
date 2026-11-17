@@ -13,6 +13,7 @@
 #include "overmap/omdata.h"
 #include "point.h"
 #include "profile.h"
+#include "replay/replay.h"
 #include "thread_pool.h"
 
 #include <algorithm>
@@ -424,7 +425,11 @@ auto submap_load_manager::reap_lazy_omt_jobs() -> void {
     auto generated_omt_columns = horizontal_omt_set{};
     std::erase_if(lazy_omt_futures_, [&](auto& entry) {
         auto& [key, future] = entry;
-        if (future.wait_for(std::chrono::seconds(0)) != std::future_status::ready) { return false; }
+        // A replay applies every load at the same point, however long the worker took.
+        if (!replay::is_enabled()
+            && future.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
+            return false;
+        }
         auto result = complete_lazy_omt_result_on_main_thread(key, future.get());
         if (apply_lazy_omt_result(key, result)) {
             generated = true;
