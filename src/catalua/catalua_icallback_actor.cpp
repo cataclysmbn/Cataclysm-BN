@@ -715,8 +715,7 @@ lua_itrap_actor::lua_itrap_actor(
       on_trigger_func(std::move(on_trigger)),
       on_trigger_aftermath_func(std::move(on_trigger_aftermath)) {}
 
-void lua_itrap_actor::call_on_trigger(
-    Character& who, trap& trap, const tripoint_bub_ms& loc) const {
+void lua_itrap_actor::call_on_trigger(Creature& who, trap& trap, const tripoint_bub_ms& loc) const {
     if (on_trigger_func == sol::lua_nil) { return; }
     try {
         sol::state_view lua(on_trigger_func.lua_state());
@@ -732,7 +731,7 @@ void lua_itrap_actor::call_on_trigger(
 }
 
 void lua_itrap_actor::call_on_trigger_aftermath(
-    Character& who, trap& trap, const tripoint_bub_ms& loc) const {
+    Creature& who, trap& trap, const tripoint_bub_ms& loc) const {
     if (on_trigger_aftermath_func == sol::lua_nil) { return; }
     try {
         sol::state_view lua(on_trigger_aftermath_func.lua_state());
@@ -748,7 +747,7 @@ void lua_itrap_actor::call_on_trigger_aftermath(
 }
 
 auto lua_itrap_actor::call_can_trigger(
-    const Character& who, const trap& trap, const tripoint_bub_ms& loc) const -> bool {
+    const Creature& who, const trap& trap, const tripoint_bub_ms& loc) const -> bool {
     if (can_trigger_func == sol::lua_nil) { return true; }
     try {
         sol::state_view lua(can_trigger_func.lua_state());
