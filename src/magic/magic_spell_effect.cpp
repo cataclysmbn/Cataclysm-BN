@@ -913,9 +913,7 @@ static auto add_summoned_mon(
     monster& spawned_mon = *mon_ptr;
     if (is_summon_friendly(sp)) {
         spawned_mon.friendly = INT_MAX;
-        if (faction != mfaction_str_id::NULL_ID()) {
-            spawned_mon.faction = faction.id();
-        }
+        if (faction != mfaction_str_id::NULL_ID()) { spawned_mon.faction = faction.id(); }
     } else {
         spawned_mon.friendly = 0;
     }
