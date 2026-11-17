@@ -6,6 +6,7 @@
 #include "calendar.h"
 #include "character.h"
 #include "character_martial_arts.h"
+#include "character_resource.h"
 #include "creature.h"
 #include "flag.h"
 #include "flag_trait.h"
@@ -1014,7 +1015,10 @@ int ammo_count_for( const Character &who, const item &gun )
         return item::INFINITE_CHARGES;
     }
     int ammo_drain = gun.ammo_required();
-    int energy_drain = gun.get_gun_ups_drain();
+    int external_charges = item::INFINITE_CHARGES;
+    for( const auto &[resource, amount] : gun.get_gun_resources_used() ) {
+        external_charges = std::min( resource->get_charges( who ) / amount, external_charges );
+    }
 
     units::energy power = units::from_kilojoule( who.charges_of( itype_UPS ) );
     int total_ammo = gun.ammo_remaining();
@@ -1032,14 +1036,9 @@ int ammo_count_for( const Character &who, const item &gun )
         }
     }
 
-    if( ammo_drain > 0 && energy_drain > 0 ) {
+    if( ammo_drain > 0 ) {
         // Both UPS and ammo, lower is limiting.
-        return std::min( total_ammo / ammo_drain, power / units::from_kilojoule( energy_drain ) );
-    } else if( energy_drain > 0 ) {
-        //Only one of the two, it is limiting.
-        return power / units::from_kilojoule( energy_drain );
-    } else if( ammo_drain > 0 ) {
-        return total_ammo / ammo_drain;
+        return std::min( total_ammo / ammo_drain, external_charges );
     } else {
         // Effectively infinite ammo.
         return item::INFINITE_CHARGES;
