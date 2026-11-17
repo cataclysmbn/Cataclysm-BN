@@ -6,6 +6,7 @@
 import time
 import json
 import os
+import re
 import itertools
 import subprocess
 from optparse import OptionParser
@@ -1536,7 +1537,7 @@ def extract_all_from_dir(state, dir):
             log_verbose(f"Skipping file (skiplist): '{f}'")
         elif full_name in ignore_files:
             log_verbose(f"Skipping file (ignored): '{f}'")
-        elif f.endswith(".json"):
+        elif f.endswith((".json", ".jsonc")):
             if not options.tracked_only or full_name in git_files_list:
                 extract_all_from_json_file(state, full_name)
             else:
@@ -1552,13 +1553,21 @@ def extract_all_from_dir(state, dir):
         extract_all_from_dir(state, os.path.join(dir, d))
 
 
+def strip_jsonc(text):
+    "Drop comments and trailing commas outside strings."
+    text = re.sub(r'("(?:\\.|[^"\\])*")|//[^\n]*|/\*.*?\*/',
+                  lambda m: m.group(1) or " ", text, flags=re.S)
+    return re.sub(r'("(?:\\.|[^"\\])*")|,(?=\s*[]}])',
+                  lambda m: m.group(1) or "", text)
+
+
 def extract_all_from_json_file(state, json_file):
     "Extract translatable strings from every object in the specified JSON file."
     state.current_source_file = json_file
     log_verbose(f"Loading {json_file}")
 
     with open(json_file, encoding="utf-8") as fp:
-        jsondata = json.load(fp)
+        jsondata = json.loads(strip_jsonc(fp.read()))
     # it's either an array of objects, or a single object
     try:
         if hasattr(jsondata, "keys"):
