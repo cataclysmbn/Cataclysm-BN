@@ -176,9 +176,11 @@ jobs:
         uses: lukka/run-cmake@v10
         with:
           configurePreset: ${{ matrix.preset }}
-          configurePresetAdditionalArgs: "['-DUSE_PREFIX_DATA_DIR=OFF', '-DCATA_FORMAT_TARGETS=OFF']"
+          configurePresetAdditionalArgs: "['-DUSE_PREFIX_DATA_DIR=OFF', '-DCATA_FORMAT_TARGETS=OFF', '-DCMAKE_JOB_POOLS=link=1', '-DCMAKE_JOB_POOL_LINK=link']"
           buildPreset: ${{ matrix.preset }}
-          buildPresetAdditionalArgs: "['-j', '2']"
+          # The largest file needs about 2.5 GB to compile, so four jobs fit in the 16 GB runner.
+          # The link pool above lets only one link run at a time.
+          buildPresetAdditionalArgs: "['-j', '4']"
 
       - name: run JSON formatting check (test-stage only)
         if: ${{ env.SKIP == 'false' && env.TEST_STAGE == '1' }}
