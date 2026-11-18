@@ -43,6 +43,7 @@
     "type": "overmap_terrain",
     "id": "prefab",
     "name": "mobile home",
+    "looks_like": "trailerparksmall0",
     "copy-from": "generic_city_house_no_sidewalk",
     "spawns": { "group": "GROUP_NULL", "population": [ 1, 1 ], "chance": 100 }
   },
@@ -50,6 +51,7 @@
     "type": "overmap_terrain",
     "id": "prefab_roof",
     "name": "mobile home roof",
+    "looks_like": "trailerparksmall0_roof_north",
     "copy-from": "generic_city_house_roof"
   },
   {
