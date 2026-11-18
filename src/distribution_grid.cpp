@@ -76,6 +76,7 @@ void distribution_grid::update( time_point to )
 static itype_id itype_battery( "battery" );
 int distribution_grid::mod_resource( int amt, bool recurse )
 {
+    cached_maximum_amount_here_needs_update = true;
     std::vector<vehicle *> connected_vehicles;
     for( const auto &c : contents ) {
         for( const tile_location &loc : c.second ) {
@@ -142,6 +143,27 @@ int distribution_grid::mod_resource( int amt, bool recurse )
     } );
 
     return amt;
+}
+
+int distribution_grid::get_resource_capacity() const
+{
+    if( cached_maximum_amount_here && !cached_maximum_amount_here_needs_update ) {
+        return *cached_maximum_amount_here;
+    } else {
+        cached_maximum_amount_here = 0;
+        cached_maximum_amount_here_needs_update = false;
+    }
+    for( const auto &c : contents ) {
+        for( const tile_location &loc : c.second ) {
+            battery_tile *battery = active_tiles::furn_at<battery_tile>( loc.absolute, mb );
+            if( battery != nullptr ) {
+                if( cached_maximum_amount_here ) {
+                    cached_maximum_amount_here = *cached_maximum_amount_here + battery->max_stored;
+                }
+            }
+        }
+    }
+    return *cached_maximum_amount_here;
 }
 
 int distribution_grid::get_resource( bool recurse ) const

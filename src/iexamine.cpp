@@ -8236,10 +8236,17 @@ void iexamine::check_power( player &, const tripoint_bub_ms &examp )
     tripoint_abs_ms abspos( bub_to_abs( examp ) );
     battery_tile *battery = active_tiles::furn_at<battery_tile>( abspos );
     if( battery != nullptr ) {
-        add_msg( m_info, _( "This battery stores %d kJ of electric power." ), battery->get_resource() );
+        add_msg( m_info,
+                 _( "This battery stores %d out of %d kJ of electric power." ),
+                 battery->get_resource(), battery->max_stored );
     }
-    int amt = get_distribution_grid_tracker().grid_at( abspos ).get_resource();
-    add_msg( m_info, _( "This electric grid stores %d kJ of electric power." ), amt );
+    const auto grid = get_distribution_grid_tracker().grid_at( abspos );
+    int tot_amt = grid.get_resource();
+    int loc_amt = grid.get_resource( false );
+    int max_amt = grid.get_resource_capacity();
+    add_msg( m_info,
+             _( "This electric grid locally stores %d out of %d kJ, and has connections to %d kJ of electric power." ),
+             loc_amt, max_amt, tot_amt - loc_amt );
 }
 
 void iexamine::power_portal( player &p, const tripoint_bub_ms &examp )

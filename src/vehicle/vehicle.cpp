@@ -833,16 +833,15 @@ void vehicle::init_state(
         }
 
         if (pt.is_reactor()) {
+            const auto& fuel_type = pt.info().fuel_type;
             if (veh_fuel_mult == 100) { // Mint condition vehicle
-                pt.ammo_set(itype_plut_cell, pt.ammo_capacity());
+                pt.ammo_set(fuel_type, pt.ammo_capacity());
             } else if (one_in(2) && veh_fuel_mult > 0) { // Randomize charge a bit
-                pt.ammo_set(itype_plut_cell,
-                            pt.ammo_capacity() * (veh_fuel_mult + rng(0, 10)) / 100);
+                pt.ammo_set(fuel_type, pt.ammo_capacity() * (veh_fuel_mult + rng(0, 10)) / 100);
             } else if (one_in(2) && veh_fuel_mult > 0) {
-                pt.ammo_set(itype_plut_cell,
-                            pt.ammo_capacity() * (veh_fuel_mult - rng(0, 10)) / 100);
+                pt.ammo_set(fuel_type, pt.ammo_capacity() * (veh_fuel_mult - rng(0, 10)) / 100);
             } else {
-                pt.ammo_set(itype_plut_cell, pt.ammo_capacity() * veh_fuel_mult / 100);
+                pt.ammo_set(fuel_type, pt.ammo_capacity() * veh_fuel_mult / 100);
             }
         }
 
@@ -5263,6 +5262,22 @@ void vehicle::power_parts(int turns) {
     int delta_energy_bat = power_to_energy_bat(epower, 1_turns);
     int storage_deficit_bat = std::
         max(0, fuel_capacity(fuel_type_battery) - fuel_left(fuel_type_battery) - delta_energy_bat);
+    // If there are reactors also include demand from connected vehicles and distribution grids
+    if (!reactors.empty()) {
+        using tvr = distribution_graph::traverse_visitor_result;
+        auto charge_veh = [&storage_deficit_bat](vehicle& veh) {
+            g->u.add_msg_if_player(m_debug, "CHv: %d", storage_deficit_bat);
+            storage_deficit_bat +=
+                veh.fuel_capacity(fuel_type_battery) - veh.fuel_left(fuel_type_battery);
+            return tvr::continue_further;
+        };
+        auto charge_grid = [&storage_deficit_bat](distribution_grid& grid) {
+            g->u.add_msg_if_player(m_debug, "CHg: %d", storage_deficit_bat);
+            storage_deficit_bat += (grid.get_resource_capacity() - grid.get_resource(false));
+            return tvr::continue_further;
+        };
+        distribution_graph::traverse(*this, charge_veh, charge_grid);
+    }
     // Reactors trigger only on demand. If we'd otherwise run out of power, see
     // if we can spin up the reactors.
     if (!reactors.empty() && storage_deficit_bat > 0) {

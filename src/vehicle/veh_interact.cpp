@@ -1287,6 +1287,10 @@ void veh_interact::do_refill() {
                 if (obj.typeId() == fuel_type_battery && can_reload) {
                     msg = _("You cannot recharge a vehicle battery with handheld batteries");
                     return false;
+                } else {
+                    if (obj.is_container() && !obj.contents.empty()) {
+                        return pt.can_reload(&obj.contents.front());
+                    }
                 }
                 return can_reload;
             }
@@ -3153,7 +3157,7 @@ void veh_interact::complete_vehicle(Character& who) {
                 }
 
             } else if (pt.is_fuel_store()) {
-                auto qty = src->charges;
+                auto qty = !src->contents.empty() ? src->contents.front().charges : src->charges;
                 pt.base->reload(who, *src, qty);
 
                 //~ 1$s vehicle name, 2$s reactor name
