@@ -386,7 +386,7 @@
     "time": "80 m",
     "batch_time_factors": [ 50, 4 ],
     "autolearn": [ [ "cooking", 6 ] ],
-    "book_learn": [ [ "brewing_cookbook", 3 ], [ "winemaking_beginner", 3 ] ],
+    "book_learn": [ [ "cookbook_east_asian", 3 ], [ "brewing_cookbook", 3 ], [ "winemaking_beginner", 3 ] ],
     "qualities": [ { "id": "CUT", "level": 1 }, { "id": "COOK", "level": 2 } ],
     "components": [
       [ [ "water", 3 ], [ "water_clean", 3 ] ],

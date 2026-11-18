@@ -2,6 +2,7 @@
 
 #include <cstdint>
 
+#include "coordinates.h"
 #include "point.h"
 
 class Creature;

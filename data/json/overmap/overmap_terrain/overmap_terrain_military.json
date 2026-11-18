@@ -99,6 +99,16 @@
     "sym": "+",
     "color": "red",
     "see_cost": 2,
+    "spawns": { "group": "GROUP_PREPPER_HOUSE", "population": [ 2, 12 ], "chance": 50 },
+    "flags": [ "KNOWN_UP", "SOURCE_PEOPLE", "SOURCE_SAFETY", "SOURCE_GUN", "SOURCE_AMMO", "SOURCE_FOOD" ]
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "lmoe_under_safe",
+    "name": "LMOE shelter",
+    "sym": "+",
+    "color": "red",
+    "see_cost": 2,
     "flags": [ "KNOWN_UP", "SOURCE_PEOPLE", "SOURCE_SAFETY", "SOURCE_GUN", "SOURCE_AMMO", "SOURCE_FOOD" ]
   },
   {

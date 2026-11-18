@@ -978,6 +978,8 @@ class item : public location_visitable<item>, public game_object<item>
         auto update_rot( const tripoint_bub_ms &pos, temperature_flag temperature,
                          const weather_manager &weather_generator ) -> void;
         auto update_rot( const rot_context &context ) -> void;
+        /// Temperature that update_rot currently applies; unplaced items use @p fallback.
+        auto rot_temperature( temperature_flag fallback ) const -> units::temperature;
 
         /** Get @ref rot value relative to shelf life (or 0 if item does not spoil) */
         double get_relative_rot() const;
@@ -1015,6 +1017,8 @@ class item : public location_visitable<item>, public game_object<item>
 
         /** true if a parent container keeps this item from rotting */
         auto is_in_preserving_container() const -> bool;
+        /// Storage flag of the vehicle part holding this item, or nullopt outside vehicle cargo.
+        auto vehicle_storage_temperature() const -> std::optional<temperature_flag>;
 
         /**
          * Whether the item has enough rot that it should get removed.

@@ -15,7 +15,7 @@
     "copy-from": "pants_army",
     "type": "ARMOR",
     "name": { "str_sp": "C.R.I.T. trousers" },
-    "description": "C.R.I.T. standard-issue trousers.  Durable, lightweight and has ample storage.  Super-flex neoprene keeps one warm in moderately cold weather.",
+    "description": "C.R.I.T. standard-issue trousers.  Durable, lightweight and have ample storage.  Super-flex neoprene keeps one warm in moderately cold weather.",
     "color": "light_gray",
     "material": [ "neoprene", "kevlar" ],
     "warmth": 25,

@@ -204,7 +204,7 @@ static void assert_encumbrance(npc& shooter, int encumbrance) {
 
 static constexpr tripoint_bub_ms shooter_pos(60, 60, 0);
 
-TEST_CASE("unskilled_shooter_accuracy", "[ranged][balance][slow][!mayfail]") {
+TEST_CASE("unskilled_shooter_accuracy", "[ranged][balance][slow]") {
     clear_all_state();
     standard_npc shooter("Shooter", shooter_pos, {}, 0, 8, 8, 8, 7);
     equip_shooter(
@@ -214,13 +214,13 @@ TEST_CASE("unskilled_shooter_accuracy", "[ranged][balance][slow][!mayfail]") {
 
     SECTION("an unskilled shooter with an inaccurate pistol") {
         arm_character(shooter, "glock_19");
-        test_shooting_scenario(shooter, 4, 5, 15);
-        test_fast_shooting(shooter, 40, 0.3);
+        test_shooting_scenario(shooter, 4, 3, 15);
+        test_fast_shooting(shooter, 40, 0.1);
     }
     SECTION("an unskilled shooter with an inaccurate rifle") {
         arm_character(shooter, "m1918");
-        test_shooting_scenario(shooter, 5, 9, 25);
-        test_fast_shooting(shooter, 50, 0.2);
+        test_shooting_scenario(shooter, 5, 5, 25);
+        test_fast_shooting(shooter, 50, 0.15);
     }
 }
 

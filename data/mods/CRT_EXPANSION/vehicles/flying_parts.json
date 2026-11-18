@@ -5,7 +5,7 @@
     "looks_like": "airship_balloon",
     "type": "vehicle_part",
     "name": "C.R.I.T. airship balloon",
-    "description": "A balloon interspaced with solar cells that provides lift, but requires aircraft propellers for horizontal momentum. While weaker then solar panels, they make up for it in quantity",
+    "description": "A balloon interspaced with solar cells that provides lift, but requires aircraft propellers for horizontal momentum. While weaker than solar panels, they make up for it in quantity",
     "item": "crt_airship_balloon_item",
     "height": 90,
     "requirements": {

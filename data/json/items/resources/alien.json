@@ -44,7 +44,7 @@
     "copy-from": "alien_pod_resin",
     "type": "TOOL",
     "name": { "str": "alien organ pod" },
-    "description": "This is a large pod.  What appear to be human organs can be seen floating instead, like some sort of morbid trophy.  Activate to tear it open and see what's inside, if you really want to.",
+    "description": "This is a large pod.  What appear to be human organs can be seen floating inside, like some sort of morbid trophy.  Activate to tear it open and see what's inside, if you really want to.",
     "color": "yellow",
     "use_action": { "type": "unpack", "group": "migo_organ_pod_contents" },
     "extend": { "flags": [ "ALLOWS_REMOTE_USE" ] }

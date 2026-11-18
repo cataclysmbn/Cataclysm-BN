@@ -814,7 +814,7 @@ item *game_menus::inv::consume_food( player &p )
     }
 
     return inv_internal( p, comestible_filtered_inventory_preset( p, []( const item & it ) {
-        return ( it.is_comestible() && it.get_comestible()->comesttype == "FOOD" ) ||
+        return !it.is_comestible() || it.get_comestible()->comesttype == "FOOD" ||
                it.has_flag( flag_USE_EAT_VERB );
     } ),
     _( "Consume food" ), 1,

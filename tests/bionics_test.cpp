@@ -2,6 +2,7 @@
 #include "bionics.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
+#include "examine_item_menu.h"
 #include "item.h"
 #include "itype.h"
 #include "pimpl.h"
@@ -76,6 +77,18 @@ TEST_CASE("bionics", "[bionics] [item]") {
             "battery" // old-school
         };
         for (auto it : always) { test_consumable_charges(dummy, it, true, true); }
+        CHECK(examine_item_menu::rate_action_eat(
+                  dummy, *item::spawn_temporary("battery", calendar::start_of_cataclysm, 100))
+              == examine_item_menu::hint_rating::good);
+        auto cell = item::spawn("light_battery_cell");
+        cell->ammo_set(cell->ammo_default(), -1);
+        CHECK(examine_item_menu::rate_action_eat(dummy, *cell)
+              == examine_item_menu::hint_rating::good);
+        dummy.set_value(
+            "battery", std::to_string(dummy.get_total_fuel_capacity(itype_id("battery"))));
+        CHECK(examine_item_menu::rate_action_eat(
+                  dummy, *item::spawn_temporary("battery", calendar::start_of_cataclysm, 100))
+              == examine_item_menu::hint_rating::cant);
 
         static const std::list<std::string> never = {
             "flashlight",  // !is_magazine()
@@ -84,6 +97,18 @@ TEST_CASE("bionics", "[bionics] [item]") {
             "battery_car"  // NO_UNLOAD, is_magazine()
         };
         for (auto it : never) { test_consumable_ammo(dummy, it, false, false); }
+    }
+
+    SECTION("bio_furnace") {
+        give_and_activate_bionic(dummy, bionic_id("bio_furnace"));
+        const auto& rag = *item::spawn_temporary("rag");
+        REQUIRE(dummy.get_cbm_rechargeable_with(rag) == rechargeable_cbm::furnace);
+
+        CHECK(
+            examine_item_menu::rate_action_eat(dummy, rag) == examine_item_menu::hint_rating::good);
+        dummy.set_power_level(dummy.get_max_power_level());
+        CHECK(
+            examine_item_menu::rate_action_eat(dummy, rag) == examine_item_menu::hint_rating::iffy);
     }
 
     // TODO: bio_cable

@@ -250,7 +250,7 @@
     "copy-from": "arcana_note_base",
     "type": "GENERIC",
     "name": { "str": "blood-stained note" },
-    "description": "An scrap of paper marred by old, dried blood.",
+    "description": "A scrap of paper marred by old, dried blood.",
     "snippet_category": "note_sanguine"
   },
   {
@@ -274,7 +274,7 @@
     "copy-from": "arcana_note_base",
     "type": "GENERIC",
     "name": { "str": "blood-stained note" },
-    "description": "An scrap of paper marred by old, dried blood.",
+    "description": "A scrap of paper marred by old, dried blood.",
     "snippet_category": "note_sanguine_tenet"
   },
   {
@@ -298,7 +298,7 @@
     "copy-from": "arcana_note_base",
     "type": "GENERIC",
     "name": { "str": "blood-stained note" },
-    "description": "An scrap of paper marred by old, dried blood.",
+    "description": "A scrap of paper marred by old, dried blood.",
     "snippet_category": "note_sanguine_hint"
   },
   {
@@ -413,7 +413,7 @@
     "weight": "60 g",
     "volume": "100 ml",
     "price_postapoc": "210 cent",
-    "description": "A carefully-gathered collection of papers outlining sacred rites and vital practices, mixing various religious practices attested to a order dedicated protecting humanity from dangerous magic.  It details the studies of an experienced mage hunter.  It can be used instead of The Cleansing Flame for recipes that require the book as a reference tool."
+    "description": "A carefully-gathered collection of papers outlining sacred rites and vital practices, mixing various religious practices attested to an order dedicated to protecting humanity from dangerous magic.  It details the studies of an experienced mage hunter.  It can be used instead of The Cleansing Flame for recipes that require the book as a reference tool."
   },
   {
     "id": "index_sacrifice",
@@ -496,7 +496,7 @@
     "price": "1000 USD",
     "price_postapoc": "0 cent",
     "name": { "str": "inscribed clay tablet" },
-    "description": "A small clay tablet, inscribed with discourses on otherworldly matters in eccentric writing.  Much of it is near-illegible and pertains more to philosophy than any practical matters, but the right person might be able to gleam something useful out of it.",
+    "description": "A small clay tablet, inscribed with discourses on otherworldly matters in eccentric writing.  Much of it is near-illegible and pertains more to philosophy than any practical matters, but the right person might be able to glean something useful out of it.",
     "flags": [ "NO_SALVAGE", "TRADER_AVOID", "MAGIC_FOCUS", "MISSION_ITEM" ]
   },
   {

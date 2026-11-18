@@ -7,7 +7,7 @@
     "sym": "#",
     "color": "light_blue",
     "see_cost": 1,
-    "flags": [ "NO_ROTATE", "LAKE_SHORE", "SOURCE_DRINK" ],
+    "flags": [ "NO_ROTATE", "LAKE_SHORE", "SOURCE_DRINK", "CANT_BE_UNIFORM" ],
     "mapgen": [ { "method": "builtin", "name": "lake_shore" } ]
   },
   {
@@ -39,7 +39,7 @@
     "color": "blue",
     "see_cost": 1,
     "spawns": { "group": "GROUP_RIVER", "population": [ 1, 3 ], "chance": 15 },
-    "flags": [ "NO_ROTATE", "LAKE", "SOURCE_DRINK" ]
+    "flags": [ "NO_ROTATE", "LAKE", "SOURCE_DRINK", "CANT_BE_UNIFORM" ]
   },
   {
     "type": "overmap_terrain",
@@ -49,7 +49,7 @@
     "sym": "#",
     "color": "blue",
     "see_cost": 1,
-    "flags": [ "NO_ROTATE", "LAKE", "SOURCE_DRINK" ]
+    "flags": [ "NO_ROTATE", "LAKE", "SOURCE_DRINK", "CANT_BE_UNIFORM" ]
   },
   {
     "type": "overmap_terrain",
@@ -59,7 +59,7 @@
     "sym": "#",
     "color": "cyan",
     "see_cost": 1,
-    "flags": [ "NO_ROTATE", "LAKE", "SOURCE_DRINK" ]
+    "flags": [ "NO_ROTATE", "LAKE", "SOURCE_DRINK", "CANT_BE_UNIFORM" ]
   },
   {
     "type": "overmap_terrain",

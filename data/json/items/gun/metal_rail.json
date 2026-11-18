@@ -4,7 +4,7 @@
     "copy-from": "rifle_magnetic",
     "type": "GUN",
     "name": { "str": "heavy rail rifle" },
-    "description": "This overpowered and overengineered variant of the ferromagnetic rail rifle was designed to deliver electromagnetically-driven obliteration right through whatever obstacles that lies in front of it, be it buildings, vehicles or hordes of walking dead.  However, the hefty bulk and weight of this weapon compared to most contemporary rifles makes it unfeasible to fire without supporting it properly; not to mention that it consumes UPS charges at a tremendous rate, making it impractical for use in prolonged engagements.  Unlike the handheld variant, this weapon has an internal feeder designed to make reloading easier.",
+    "description": "This overpowered and overengineered variant of the ferromagnetic rail rifle was designed to deliver electromagnetically-driven obliteration right through whatever obstacles that lie in front of it, be it buildings, vehicles or hordes of walking dead.  However, the hefty bulk and weight of this weapon compared to most contemporary rifles makes it unfeasible to fire without supporting it properly; not to mention that it consumes UPS charges at a tremendous rate, making it impractical for use in prolonged engagements.  Unlike the handheld variant, this weapon has an internal feeder designed to make reloading easier.",
     "weight": "15 kg",
     "volume": "5 L",
     "price": "9000 USD",

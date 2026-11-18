@@ -53,6 +53,7 @@
 #include "string_formatter.h"
 #include "string_id.h"
 #include "string_utils.h"
+#include "takeoff_cost.h"
 #include "translations.h"
 #include "trap.h"
 #include "units.h"
@@ -549,7 +550,9 @@ static std::list<pickup::act_item> convert_to_items( Character &p,
                 res.emplace_back( *it, qty, it->obtain_cost( p, qty ) );
             }
         } else {
-            res.emplace_back( *loc, count, p.is_wielding( *loc ) ? 0 : loc->obtain_cost( p ) );
+            const auto cost = p.is_wielding( *loc ) ? 0 : p.is_worn( *loc ) ? takeoff_move_cost :
+                              loc->obtain_cost( p );
+            res.emplace_back( *loc, count, cost );
         }
     }
 
@@ -609,8 +612,7 @@ std::list<act_item> reorder_for_dropping( Character &p, const drop_locations &dr
             } );
 
             if( iter == worn.end() ) {
-                // TODO: Use a calculated cost
-                worn.emplace_front( *dit, dit->count(), dit->obtain_cost( p ) );
+                worn.emplace_front( *dit, dit->count(), takeoff_move_cost );
             }
         }
     }
@@ -766,6 +768,8 @@ std::vector<detached_ptr<item>> obtain_and_tokenize_items( player &p, std::list<
                 items.pop_front();
                 continue;
             }
+            // Refund the takeoff() moves because consumed_moves already has them
+            p.mod_moves( takeoff_move_cost );
         } else if( ait.loc->count_by_charges() ) {
             res.push_back( p.reduce_charges( const_cast<item *>( &*ait.loc ), ait.count ) );
         } else {

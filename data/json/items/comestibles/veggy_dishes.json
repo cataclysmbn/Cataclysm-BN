@@ -694,7 +694,7 @@
     "quench": 15,
     "healthy": 2,
     "calories": 250,
-    "description": "Salad with all kind of vegetables.",
+    "description": "Salad with all kinds of vegetables.",
     "price": "350 cent",
     "price_postapoc": "1 USD",
     "material": [ "veggy" ],
