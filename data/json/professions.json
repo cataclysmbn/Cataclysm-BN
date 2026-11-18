@@ -8615,7 +8615,7 @@
   {
     "type": "profession",
     "id": "gang_scrapper",
-    "name": "Gang Scrapper",
+    "name": "Gang Scrappers",
     "description": "You and three of the guys from the construction crew used to settle neighborhood disputes with a show of force. When the world fell apart, you grabbed what you could from the job site, rounded up the crew, and decided the block belonged to you. Between your tools, your know-how, and a little chemical courage, you aim to keep it that way.",
     "points": 6,
     "skills": [
