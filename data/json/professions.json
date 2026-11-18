@@ -8625,12 +8625,13 @@
       { "level": 2, "name": "pistol" },
       { "level": 3, "name": "melee" }
     ],
+    "vehicle": "cube_van",
     "items": {
       "both": {
         "entries": [
           { "item": "pants_cargo" },
           { "item": "tank_top" },
-          { "item": "jacket_jean" },
+          { "item": "bandana_head" },
           { "item": "socks" },
           { "item": "boots_steel" },
           { "item": "gloves_work" },
@@ -8640,9 +8641,7 @@
           { "item": "slingpack" },
           { "item": "meth" },
           { "item": "ref_lighter" },
-          { "item": "beer", "count": [ 1, 4 ] },
-          { "item": "glock_19", "ammo-item": "9mm", "container-item": "holster", "charges": 15 },
-          { "item": "glockmag", "ammo-item": "9mm", "charges": 15 }
+          { "item": "beer", "count": [ 1, 4 ] }
         ]
       },
       "male": { "entries": [ { "item": "boxer_shorts" } ] },

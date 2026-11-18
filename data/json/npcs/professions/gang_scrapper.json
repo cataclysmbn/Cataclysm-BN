@@ -10,9 +10,9 @@
       { "group": "Appearance_demographics" }
     ],
     "common": false,
-    "worn_override": "NC_PROF_GANG_SCRAPPER_worn",
-    "carry_override": "NC_PROF_GANG_SCRAPPER_carry",
-    "weapon_override": "NC_PROF_GANG_SCRAPPER_melee",
+    "worn_override": "NC_PROF_GANG_SCRAPPER_1_worn",
+    "carry_override": "NC_PROF_GANG_SCRAPPER_1_carry",
+    "weapon_override": "NC_PROF_GANG_SCRAPPER_1_melee",
     "bonus_str": { "rng": [ 2, 4 ] },
     "bonus_dex": { "rng": [ -1, 1 ] },
     "bonus_int": { "rng": [ 0, 2 ] },
@@ -34,9 +34,9 @@
       { "group": "Appearance_demographics" }
     ],
     "common": false,
-    "worn_override": "NC_PROF_GANG_SCRAPPER_worn",
-    "carry_override": "NC_PROF_GANG_SCRAPPER_carry",
-    "weapon_override": "NC_PROF_GANG_SCRAPPER_melee",
+    "worn_override": "NC_PROF_GANG_SCRAPPER_2_worn",
+    "carry_override": "NC_PROF_GANG_SCRAPPER_2_carry",
+    "weapon_override": "NC_PROF_GANG_SCRAPPER_2_melee",
     "bonus_str": { "rng": [ 0, 2 ] },
     "bonus_dex": { "rng": [ 0, 2 ] },
     "bonus_int": { "rng": [ 1, 3 ] },
@@ -58,9 +58,9 @@
       { "group": "Appearance_demographics" }
     ],
     "common": false,
-    "worn_override": "NC_PROF_GANG_SCRAPPER_worn",
-    "carry_override": "NC_PROF_GANG_SCRAPPER_carry",
-    "weapon_override": "NC_PROF_GANG_SCRAPPER_melee",
+    "worn_override": "NC_PROF_GANG_SCRAPPER_3_worn",
+    "carry_override": "NC_PROF_GANG_SCRAPPER_3_carry",
+    "weapon_override": "NC_PROF_GANG_SCRAPPER_3_melee",
     "bonus_str": { "rng": [ 1, 3 ] },
     "bonus_dex": { "rng": [ -1, 1 ] },
     "bonus_int": { "rng": [ -1, 1 ] },
@@ -74,17 +74,17 @@
   {
     "type": "npc_class",
     "id": "NC_PROF_GANG_SCRAPPER_4",
-    "name": { "str": "Scrapper Laborer" },
-    "job_description": "We stick together. That's how we made it this far.",
+    "name": { "str": "Scrapper Salvager" },
+    "job_description": "I can haul the heavy stuff and find a use for whatever's left over.",
     "traits": [
       { "group": "BG_survival_story_UNIVERSAL" },
       { "group": "NPC_starting_traits" },
       { "group": "Appearance_demographics" }
     ],
     "common": false,
-    "worn_override": "NC_PROF_GANG_SCRAPPER_worn",
-    "carry_override": "NC_PROF_GANG_SCRAPPER_carry",
-    "weapon_override": "NC_PROF_GANG_SCRAPPER_melee",
+    "worn_override": "NC_PROF_GANG_SCRAPPER_4_worn",
+    "carry_override": "NC_PROF_GANG_SCRAPPER_4_carry",
+    "weapon_override": "NC_PROF_GANG_SCRAPPER_4_melee",
     "bonus_str": { "rng": [ 1, 3 ] },
     "bonus_dex": { "rng": [ -1, 1 ] },
     "bonus_int": { "rng": [ -1, 1 ] },
@@ -92,16 +92,12 @@
     "skills": [
       { "skill": "fabrication", "bonus": { "rng": [ 1, 3 ] } },
       { "skill": "mechanics", "bonus": { "rng": [ 1, 2 ] } },
-      {
-        "skill": "gun",
-        "bonus": { "rng": [ 0, 2 ] },
-        "//": "One of the crew has some experience with the group's handgun."
-      }
+      { "skill": "melee", "bonus": { "rng": [ 1, 3 ] } }
     ]
   },
   {
     "type": "item_group",
-    "id": "NC_PROF_GANG_SCRAPPER_worn",
+    "id": "NC_PROF_GANG_SCRAPPER_1_worn",
     "subtype": "collection",
     "entries": [
       { "item": "hat_hard" },
@@ -110,26 +106,111 @@
       { "item": "socks" },
       { "item": "boots_steel" },
       { "item": "gloves_work" },
-      { "item": "wristwatch" }
+      { "item": "wristwatch" },
+      { "item": "fanny" },
+      { "item": "tool_belt", "contents-item": [ "wrench", "screwdriver", "multitool" ] }
     ]
   },
   {
     "type": "item_group",
-    "id": "NC_PROF_GANG_SCRAPPER_carry",
+    "id": "NC_PROF_GANG_SCRAPPER_1_carry",
+    "subtype": "collection",
+    "entries": [ { "item": "duct_tape" }, { "item": "smart_phone" }, { "item": "beer", "count": [ 1, 3 ] } ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_PROF_GANG_SCRAPPER_1_melee",
+    "subtype": "distribution",
+    "entries": [ { "item": "bat_metal" } ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_PROF_GANG_SCRAPPER_2_worn",
     "subtype": "collection",
     "entries": [
-      { "item": "tool_belt", "contents-item": [ "hammer", "screwdriver", "wrench" ] },
-      { "item": "duct_tape" },
-      { "item": "smart_phone" },
-      { "item": "meth" },
-      { "item": "ref_lighter" },
-      { "item": "beer", "count": [ 1, 3 ] }
+      { "item": "jumpsuit" },
+      { "item": "hat_hard_hooded" },
+      { "item": "goggles_welding", "custom-flags": [ "no_auto_equip" ] },
+      { "item": "socks" },
+      { "item": "boots_steel" },
+      { "item": "gloves_work" },
+      { "item": "duffelbag" }
     ]
   },
   {
     "type": "item_group",
-    "id": "NC_PROF_GANG_SCRAPPER_melee",
+    "id": "NC_PROF_GANG_SCRAPPER_2_carry",
+    "subtype": "collection",
+    "entries": [
+      { "item": "medium_battery_cell", "ammo-item": "battery", "charges": 500, "container-item": "welder" },
+      { "item": "duct_tape" },
+      { "item": "ref_lighter" },
+      { "item": "meth" },
+      { "item": "smart_phone" },
+      { "item": "voltmeter" }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_PROF_GANG_SCRAPPER_2_melee",
     "subtype": "distribution",
-    "entries": [ { "item": "hammer" }, { "item": "crowbar" }, { "item": "wrench" } ]
+    "entries": [ { "item": "hammer_sledge_short" } ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_PROF_GANG_SCRAPPER_3_worn",
+    "subtype": "collection",
+    "entries": [
+      { "item": "hat_hard" },
+      { "item": "jacket_flannel" },
+      { "item": "jeans" },
+      { "item": "socks" },
+      { "item": "boots_steel" },
+      { "item": "gloves_work" },
+      { "item": "wristwatch" },
+      { "item": "slingpack" }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_PROF_GANG_SCRAPPER_3_carry",
+    "subtype": "collection",
+    "entries": [
+      { "item": "tool_belt", "contents-item": [ "hammer", "saw", "hatchet" ] },
+      { "item": "nail", "charges": 40 },
+      { "group": "snacks" }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_PROF_GANG_SCRAPPER_3_melee",
+    "subtype": "distribution",
+    "entries": [ { "item": "crowbar" } ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_PROF_GANG_SCRAPPER_4_worn",
+    "subtype": "collection",
+    "entries": [
+      { "item": "hat_hard" },
+      { "item": "hoodie" },
+      { "item": "pants_cargo" },
+      { "item": "socks" },
+      { "item": "boots_steel" },
+      { "item": "gloves_work" },
+      { "item": "slingpack" }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_PROF_GANG_SCRAPPER_4_carry",
+    "subtype": "collection",
+    "entries": [ { "item": "pickaxe" }, { "item": "shovel" }, { "item": "duct_tape" }, { "item": "smart_phone" } ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_PROF_GANG_SCRAPPER_4_melee",
+    "subtype": "distribution",
+    "entries": [ { "item": "hammer_sledge" } ]
   }
 ]
