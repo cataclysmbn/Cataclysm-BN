@@ -31,7 +31,7 @@
   },
   {
     "type": "overmap_location",
-    "id": "sky",
+    "id": "open_air",
     "terrains": [ "open_air" ]
   },
   {
