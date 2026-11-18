@@ -241,8 +241,7 @@
         "min_volume": "250 ml",
         "max_volume": "1 L",
         "flags": [ "SHEATH_KNIFE", "SHEATH_SWORD" ]
-      },
-      "CROWBAR"
+      }
     ],
     "qualities": [
       [ "HAMMER", 3 ],
