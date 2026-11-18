@@ -354,16 +354,11 @@ bool Single_item_creator::remove_item( const itype_id &itemid )
             return true;
         }
     }
-    if( type == S_ITEM ) {
-        if( itemid.str() == id ) {
-            type = S_NONE;
-            return true;
-        }
-    } else if( type == S_ITEM_GROUP ) {
-        Item_spawn_data *isd = item_controller->get_group( item_group_id( id ) );
-        if( isd != nullptr ) {
-            isd->remove_item( itemid );
-        }
+    // Referenced item groups are visited directly by Item_factory::finalize_item_blacklist,
+    // so recursing into them here would only repeat the same work.
+    if( type == S_ITEM && itemid.str() == id ) {
+        type = S_NONE;
+        return true;
     }
     return type == S_NONE;
 }
@@ -385,12 +380,9 @@ bool Single_item_creator::replace_item( const itype_id &itemid, const itype_id &
             id = replacementid.str();
             return true;
         }
-    } else if( type == S_ITEM_GROUP ) {
-        Item_spawn_data *isd = item_controller->get_group( item_group_id( id ) );
-        if( isd != nullptr ) {
-            isd->replace_item( itemid, replacementid, "in itemgroup " + id );
-        }
     }
+    // Referenced item groups are visited directly by Item_factory::finalize_item_blacklist,
+    // so recursing into them here would only repeat the same work.
     return type == S_NONE;
 }
 
@@ -491,6 +483,14 @@ detached_ptr<item> Item_modifier::modify( detached_ptr<item> &&new_item ) const
 {
     if( new_item->is_null() ) {
         return std::move( new_item );
+    }
+
+    for( const flag_id &flag : custom_flags ) {
+        new_item->set_flag( flag );
+    }
+
+    for( const auto &fn : postprocess_fns ) {
+        new_item = fn( std::move( new_item ) );
     }
 
     new_item->set_damage( rng( damage.first, damage.second ) * itype::damage_scale );
@@ -627,14 +627,6 @@ detached_ptr<item> Item_modifier::modify( detached_ptr<item> &&new_item ) const
         for( detached_ptr<item> &it : contentitems ) {
             new_item->put_in( std::move( it ) );
         }
-    }
-
-    for( const flag_id &flag : custom_flags ) {
-        new_item->set_flag( flag );
-    }
-
-    for( const auto &fn : postprocess_fns ) {
-        new_item = fn( std::move( new_item ) );
     }
     return std::move( new_item );
 }

@@ -44,6 +44,7 @@
 #include "overmap/overmapbuffer_registry.h"
 #include "player_activity.h"
 #include "player_helpers.h"
+#include "scenario.h"
 #include "sqlite3.h"
 #include "state_helpers.h"
 #include "string_formatter.h"
@@ -444,6 +445,50 @@ TEST_CASE("lua_global_functions", "[lua]") {
     REQUIRE(lua_monster_avatar_name == "nil");
     REQUIRE(lua_character_avatar_name == expected_name);
     REQUIRE(lua_npc_avatar_name == "nil");
+}
+
+TEST_CASE("lua_scenario_binding", "[lua]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    sol::state lua = make_lua_state();
+
+    sol::table test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    // Restore the active scenario after the test: leaving g->scen null makes
+    // avatar::store omit the "scenario" member, which fails later save/load
+    // round-trips with "Tried to use non-existent scenario '(null)'".
+    const auto scen_cleanup = on_out_of_scope([]() { set_scenario(scenario::generic()); });
+
+    // Use a dedicated test scenario so the checks below do not depend on the
+    // point balance of real scenarios such as "hunted_start".
+    const auto test_scenario_json = std::string(R"({
+        "id": "test_lua_binding",
+        "name": "Test Scenario",
+        "points": -3,
+        "description": "Scenario used to test the Lua scenario bindings.",
+        "start_name": "Test Start",
+        "allowed_locs": [ "sloc_house" ],
+        "forced_traits": [ "HAS_NEMESIS" ],
+        "flags": [ "LONE_START" ]
+    })");
+    auto stream = std::istringstream(test_scenario_json);
+    auto jsin = JsonIn(stream);
+    scenario::load_scenario(jsin.get_object(), "test");
+
+    set_scenario(&string_id<scenario>("test_lua_binding").obj());
+    run_lua_test_script(lua, "scenario_binding_test.lua");
+    CHECK(test_data.get<bool>("has_scenario"));
+    CHECK(test_data.get<std::string>("scenario_id") == "test_lua_binding");
+    CHECK(test_data.get<int>("point_cost") == -3);
+    CHECK(test_data.get<int>("forced_count") == 1);
+    CHECK(test_data.get<bool>("has_nemesis"));
+    CHECK(test_data.get<bool>("has_flag"));
+
+    // Without a scenario, gapi.get_scenario() returns nil
+    set_scenario(nullptr);
+    sol::object res = lua["gapi"]["get_scenario"]();
+    CHECK(res.get_type() == sol::type::lua_nil);
 }
 
 TEST_CASE("lua_weather_override_can_expire", "[lua][weather]") {
@@ -1336,6 +1381,35 @@ TEST_CASE("lua_dimension_failed_travel_save_can_retry", "[lua][sqlite]") {
     REQUIRE(retried.valid());
     CHECK(retried.get<bool>());
     CHECK(g->get_current_dimension_id() == dim);
+}
+
+TEST_CASE("lua_delete_dimension_keeps_despawned_monsters_until_turn_cleanup", "[lua]") {
+    clear_all_state();
+    initialize_dimension_test_storage();
+    const auto dim = dimension_id("lua_test_delete_keeps_monsters");
+    const auto cleanup = dimension_test_cleanup({dim});
+    g->place_player_overmap(tripoint_abs_omt::zero());
+    const auto return_pos = get_avatar().abs_pos();
+    auto lua = make_lua_state();
+    lua["opts"] = lua.create_table_with(
+        "dimension_id", dim.str(), "world_type", "pocket_dimension", "target_omt",
+        tripoint_abs_omt(88, 88, 0), "bounds_min_omt", tripoint_abs_omt(88, 88, 0),
+        "bounds_max_omt", tripoint_abs_omt(90, 90, 0));
+    REQUIRE(lua.safe_script("return gapi.place_player_dimension_at(opts)").get<bool>());
+    auto& attacker =
+        spawn_test_monster("mon_zombie", get_avatar().bub_pos() + tripoint_rel_ms::east());
+    const auto attacker_ref = weak_ptr_fast<monster>(g->shared_from(attacker));
+    REQUIRE_FALSE(attacker_ref.expired());
+
+    // A death hook can return home and delete the attacker's dimension during its attack.
+    lua["home"] = lua.create_table_with("dimension_id", "", "target_ms", return_pos);
+    REQUIRE(lua.safe_script("return gapi.place_player_dimension_at(home)").get<bool>());
+    REQUIRE(g->delete_dimension(dim));
+    CHECK_FALSE(attacker_ref.expired());
+    CHECK(attacker.is_dead());
+    CHECK(MAPBUFFER_REGISTRY.find(dim) == nullptr);
+    g->cleanup_dead();
+    CHECK(attacker_ref.expired());
 }
 
 TEST_CASE("lua_dimension_target_z_limits", "[lua]") {

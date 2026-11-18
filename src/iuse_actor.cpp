@@ -16,6 +16,7 @@
 #include "cached_options.h"
 #include "calendar.h"
 #include "cata_utility.h"
+#include "catacharset.h"
 #include "catalua_hooks.h"
 #include "catalua_icallback_actor.h"
 #include "catalua_sol.h"
@@ -115,6 +116,7 @@
 #include <functional>
 #include <iterator>
 #include <list>
+#include <locale>
 #include <memory>
 #include <ranges>
 #include <ret_val.h>
@@ -2441,6 +2443,7 @@ void fireweapon_on_actor::load( const JsonObject &obj )
     voluntary_extinguish_message    = obj.get_string( "voluntary_extinguish_message" );
     charges_extinguish_message      = obj.get_string( "charges_extinguish_message" );
     water_extinguish_message        = obj.get_string( "water_extinguish_message" );
+    noise_variant                   = obj.get_string( "noise_variant", "default" );
     noise                           = obj.get_int( "noise", 0 );
     noise_chance                    = obj.get_int( "noise_chance", 1 );
     auto_extinguish_chance          = obj.get_int( "auto_extinguish_chance", 0 );
@@ -2484,8 +2487,10 @@ int fireweapon_on_actor::use( player &p, item &it, bool t, const tripoint_bub_ms
             sound_event se;
             se.origin = pos;
             se.volume = noise;
-            se.category = sounds::sound_t::combat;
+            se.category = sounds::sound_t::activity;
             se.description = _( noise_message );
+            se.id = "tool";
+            se.variant = noise_variant;
             se.from_player = p.is_avatar();
             se.from_npc = !se.from_player;
             se.faction = p.get_faction()->id;
@@ -2562,6 +2567,7 @@ void passivenoise_actor::load( const JsonObject &obj )
 {
     held_message                    = obj.get_string( "held_message", "hsss" );
     noise_message                   = obj.get_string( "noise_message", "hsss" );
+    noise_variant                   = obj.get_string( "noise_variant", "default" );
     noise                           = obj.get_int( "noise", 0 );
     noise_chance                    = obj.get_int( "noise_chance", 1 );
 }
@@ -2579,8 +2585,10 @@ int passivenoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms 
             sound_event se;
             se.origin = pos;
             se.volume = noise;
-            se.category = sounds::sound_t::combat;
+            se.category = sounds::sound_t::activity;
             se.description = _( noise_message );
+            se.id = "tool";
+            se.variant = noise_variant;
             se.from_player = p.is_avatar();
             se.from_npc = !se.from_player;
             se.faction = p.get_faction()->id;
@@ -5388,13 +5396,13 @@ int sew_advanced_actor::use( player &p, item &it, bool, const tripoint_bub_ms & 
 
         bool enab = false;
         std::string prompt;
-        // TODO: Fix for UTF-8 strings
-        // TODO: find other places where this is used and make a global function for all
-        static const auto tolower = []( std::string t ) {
-            if( !t.empty() ) {
-                t.front() = std::tolower( t.front() );
+        const auto tolower = []( std::string t ) {
+            if( t.empty() ) {
+                return t;
             }
-            return t;
+            auto text = utf8_to_wstr( _( t ) );
+            text.front() = std::tolower( text.front(), std::locale() );
+            return wstr_to_utf8( text );
         };
         const bool already_resized = mod.has_flag( flag_resized_large ) ||
                                      mod.has_flag( flag_resized_small );
@@ -5713,6 +5721,8 @@ auto cloning_syringe_iuse::use( player &p, item &it, bool /*t*/,
 
     const mtype_id &id = m->type->id;
     const std::string id_str = id.str();
+
+    p.set_knows_creature_type( id );
 
     add_msg( m_good, _( "The %s beeps softly.  You successfully gathered a sample from the %s!" ),
              it.display_name(), m->name() );

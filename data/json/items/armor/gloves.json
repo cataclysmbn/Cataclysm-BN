@@ -566,7 +566,7 @@
     "copy-from": "gloves_plate",
     "type": "ARMOR",
     "name": { "str": "pair of superalloy armored gauntlets", "str_pl": "pairs of superalloy armored gauntlets" },
-    "description": "An set of armor-plated leather gloves, made with lightweight superalloy.",
+    "description": "A set of armor-plated leather gloves, made with lightweight superalloy.",
     "material": [ "superalloy", "leather" ],
     "color": "light_cyan",
     "encumbrance": 20,

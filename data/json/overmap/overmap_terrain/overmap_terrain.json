@@ -33,6 +33,12 @@
   },
   {
     "type": "overmap_terrain",
+    "abstract": "generic_city_building_roof",
+    "copy-from": "generic_city_building_no_sidewalk",
+    "extend": { "flags": [ "SIDEWALK" ] }
+  },
+  {
+    "type": "overmap_terrain",
     "id": "park",
     "name": "park",
     "sym": "O",
@@ -491,6 +497,14 @@
     "color": "light_blue",
     "see_cost": 5,
     "mondensity": 2
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "survivor_forest_camp" ],
+    "name": "survivor forest camp",
+    "sym": "+",
+    "color": "green",
+    "see_cost": 5
   },
   {
     "type": "overmap_terrain",

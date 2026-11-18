@@ -1,5 +1,29 @@
 [
   {
+    "id": "duck_of_wishes_drops",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      {
+        "distribution": [ { "group": "rare", "prob": 1 }, { "group": "science", "prob": 1 }, { "group": "military", "prob": 1 } ]
+      },
+      {
+        "distribution": [ { "group": "rare", "prob": 1 }, { "group": "science", "prob": 1 }, { "group": "military", "prob": 1 } ]
+      },
+      {
+        "distribution": [ { "group": "rare", "prob": 1 }, { "group": "science", "prob": 1 }, { "group": "military", "prob": 1 } ]
+      },
+      {
+        "distribution": [ { "group": "rare", "prob": 1 }, { "group": "science", "prob": 1 }, { "group": "military", "prob": 1 } ],
+        "prob": 50
+      },
+      {
+        "distribution": [ { "group": "rare", "prob": 1 }, { "group": "science", "prob": 1 }, { "group": "military", "prob": 1 } ],
+        "prob": 25
+      }
+    ]
+  },
+  {
     "id": "grenades",
     "type": "item_group",
     "items": [ [ "debug_grenade", 5 ] ]

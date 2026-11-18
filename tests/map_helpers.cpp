@@ -122,6 +122,15 @@ void clear_map() {
     g->m.clear_traps();
     // Limit the slower item cleanup to the levels used by most tests.
     for (int z = -2; z <= 0; ++z) { clear_items(z); }
+    // Tests that call map::load move the bubble but not its load region. Outside the region, items
+    // are not processed and retained submaps of the bubble can be evicted. Cover the whole map,
+    // which is larger than g_mapsize in tests. Move the region before the grid reset, so that
+    // grids built by its load events do not stay cached.
+    if (g->m.has_active_load_region()) {
+        const auto begin = g->m.get_abs_sub();
+        const auto size = g->m.getmapsize();
+        g->m.update_active_load_region(begin, begin + point_rel_sm(size, size));
+    }
     // Reset the distribution grid tracker so that stale grids from a previous
     // test's Catch2 WHEN section do not bleed into the next run.  The tracker
     // is a global singleton; grid_at() rebuilds on demand, so clearing here is safe.

@@ -179,7 +179,7 @@
     "type": "GUN",
     "weapon_category": [ "SUBMACHINE_GUNS", "AUTOLOADING" ],
     "name": "C.R.I.T. CQB Standard Issue",
-    "description": "A simple combination gun.  This military-grade semi-auto carbine couples the mid-range versatility of the 9mm with the power of the 12 gauge shotgun.  To further compliment the CQB aspect, the stock is built to amplify the user's force and the rugged construction with tonfa-like grip can handle bashing in enemy heads.  An integrated magazine makes it a pain to reload, but keeps your clip from ejecting accidently.",
+    "description": "A simple combination gun.  This military-grade semi-auto carbine couples the mid-range versatility of the 9mm with the power of the 12 gauge shotgun.  To further complement the CQB aspect, the stock is built to amplify the user's force and the rugged construction with tonfa-like grip can handle bashing in enemy heads.  An integrated magazine makes it a pain to reload, but keeps your clip from ejecting accidently.",
     "weight": "1650 g",
     "volume": "750 ml",
     "price": "10 kUSD",

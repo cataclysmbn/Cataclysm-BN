@@ -425,7 +425,7 @@
     "type": "BOOK",
     "copy-from": "base_book",
     "name": { "str": "Machinery's Handbook", "str_pl": "copies of Machinery's Handbook" },
-    "description": "This classic reference work contains extensive, dense chapters and tables on materials, metrology, toolmaking, gears, threading and more.  This recent edition includes extensive data on what were the latest techniques in additive manufacturing.  If you need to know how best complete a certain machining operation, the answer lies somewhere in these pages.",
+    "description": "This classic reference work contains extensive, dense chapters and tables on materials, metrology, toolmaking, gears, threading and more.  This recent edition includes extensive data on what were the latest techniques in additive manufacturing.  If you need to know how best to complete a certain machining operation, the answer lies somewhere in these pages.",
     "weight": "500 g",
     "volume": "500 ml",
     "price": "80 USD",

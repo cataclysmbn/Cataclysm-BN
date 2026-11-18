@@ -311,7 +311,7 @@ void cata::detail::reg_creature( sol::state &lua )
         DOC( "Removes an arbitrary entry using the same key format as set_value." );
         SET_FX_T( remove_value, void( const std::string & ) );
         DOC( "Retrieves an arbitrary entry using the same key format as set_value." );
-        SET_FX_T( get_value, std::string( const std::string & ) const );
+        luna::set_fx( ut, "get_value", []( const Creature & cr, const std::string & key ) { return cr.get_value( key ); } );
         DOC( "Returns all stored creature vars as a table mapping each key (string) to its value (string), as written by set_value." );
         luna::set_fx( ut, "values_table", []( const Creature & cr, sol::this_state state )
         {

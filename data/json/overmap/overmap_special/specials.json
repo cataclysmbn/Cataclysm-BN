@@ -230,6 +230,21 @@
   },
   {
     "type": "overmap_special",
+    "id": "LMOE Shelter Safe",
+    "//": "Specifically for the starting scenarios so that the player's starting LMOE doesn't have enemies.",
+    "overmaps": [
+      { "point": [ 0, 0, 0 ], "overmap": "lmoe_north" },
+      { "point": [ 0, 0, 1 ], "overmap": "lmoe_roof_north" },
+      { "point": [ 0, 0, -1 ], "overmap": "lmoe_under_safe_north" }
+    ],
+    "locations": [ "forest_without_trail" ],
+    "city_distance": [ 25, -1 ],
+    "city_sizes": [ 0, 12 ],
+    "occurrences": [ 1, 1 ],
+    "flags": [ "CLASSIC", "ELECTRIC_GRID", "GLOBALLY_UNIQUE" ]
+  },
+  {
+    "type": "overmap_special",
     "id": "Sewage Treatment Plant",
     "overmaps": [
       { "point": [ 0, -1, 0 ], "overmap": "road_end_north" },
@@ -2111,6 +2126,7 @@
       { "point": [ 4, 6, 0 ], "overmap": "ranch_camp_59_north" },
       { "point": [ 4, 6, 1 ], "overmap": "ranch_camp_59_z1_north" },
       { "point": [ 5, 6, 0 ], "overmap": "ranch_camp_60_north" },
+      { "point": [ 5, 6, 1 ], "overmap": "ranch_camp_60_z1_north" },
       { "point": [ 6, 6, 0 ], "overmap": "ranch_camp_61_north" },
       { "point": [ 7, 6, 0 ], "overmap": "ranch_camp_62_north" },
       { "point": [ 8, 6, 0 ], "overmap": "ranch_camp_63_north" },
@@ -3563,10 +3579,19 @@
     "type": "overmap_special",
     "id": "ws_survivor_camp_place",
     "overmaps": [ { "point": [ 0, 0, 0 ], "overmap": "ws_survivor_camp_north" } ],
-    "locations": [ "wilderness" ],
+    "locations": [ "field" ],
     "city_distance": [ 25, -1 ],
     "occurrences": [ 40, 100 ],
     "flags": [ "CLASSIC", "UNIQUE" ]
+  },
+  {
+    "type": "overmap_special",
+    "id": "survivor_forest_camp",
+    "overmaps": [ { "point": [ 0, 0, 0 ], "overmap": "survivor_forest_camp_north" } ],
+    "locations": [ "forest_center" ],
+    "city_distance": [ 10, 80 ],
+    "occurrences": [ 75, 100 ],
+    "flags": [ "CLASSIC", "UNIQUE", "WILDERNESS" ]
   },
   {
     "type": "overmap_special",

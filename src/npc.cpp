@@ -49,6 +49,7 @@
 #include "morale_types.h"
 #include "mtype.h"
 #include "mutation.h"
+#include "npc_attitude_message.h"
 #include "npc_class.h"
 #include "options.h"
 #include "output.h"
@@ -3684,11 +3685,29 @@ npc_attitude npc::get_attitude() const
     return attitude;
 }
 
+auto visible_attitude_change( const npc &guy,
+                              const attitude_change &change ) -> std::optional<attitude_group_change>
+{
+    if( change.to == NPCATT_ACTIVITY ) {
+        return std::nullopt;
+    }
+    const auto from = change.from == NPCATT_ACTIVITY ? change.before_activity : change.from;
+    const auto groups = attitude_group_change{
+        .from = guy.get_attitude_group( from ),
+        .to = guy.get_attitude_group( change.to ),
+    };
+    if( groups.from == groups.to ) {
+        return std::nullopt;
+    }
+    return groups;
+}
+
 void npc::set_attitude( npc_attitude new_attitude )
 {
     if( new_attitude == attitude ) {
         return;
     }
+    const auto before_activity = previous_attitude;
     previous_attitude = attitude;
     if( new_attitude == NPCATT_FLEE ) {
         new_attitude = NPCATT_FLEE_TEMP;
@@ -3699,10 +3718,13 @@ void npc::set_attitude( npc_attitude new_attitude )
 
     add_msg( m_debug, "%s changes attitude from %s to %s",
              name, npc_attitude_id( attitude ), npc_attitude_id( new_attitude ) );
-    attitude_group new_group = get_attitude_group( new_attitude );
-    attitude_group old_group = get_attitude_group( attitude );
-    if( new_group != old_group && !is_fake() && g->u.sees( *this ) ) {
-        switch( new_group ) {
+    const auto change = visible_attitude_change( *this, {
+        .from = attitude,
+        .to = new_attitude,
+        .before_activity = before_activity,
+    } );
+    if( change && !is_fake() && g->u.sees( *this ) ) {
+        switch( change->to ) {
             case attitude_group::hostile:
                 add_msg_if_npc( m_bad, _( "<npcname> gets angry!" ) );
                 break;
@@ -3710,9 +3732,9 @@ void npc::set_attitude( npc_attitude new_attitude )
                 add_msg_if_npc( m_warning, _( "<npcname> gets scared!" ) );
                 break;
             default:
-                if( old_group == attitude_group::hostile ) {
+                if( change->from == attitude_group::hostile ) {
                     add_msg_if_npc( m_good, _( "<npcname> calms down." ) );
-                } else if( old_group == attitude_group::fearful ) {
+                } else if( change->from == attitude_group::fearful ) {
                     add_msg_if_npc( _( "<npcname> is no longer afraid." ) );
                 }
                 break;

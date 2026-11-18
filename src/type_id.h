@@ -66,6 +66,9 @@ using enchantment_condition_id = string_id<enchantment_condition>;
 class enchantment_vision;
 using enchantment_vision_id = string_id<enchantment_vision>;
 
+class character_value;
+using character_value_id = string_id<character_value>;
+
 class fault;
 using fault_id = string_id<fault>;
 

@@ -202,7 +202,8 @@
         "noise": 100,
         "noise_chance": 10,
         "held_message": "The hedge trimmer rumbles.",
-        "noise_message": "a hedge trimmer rumbling."
+        "noise_message": "a hedge trimmer rumbling.",
+        "noise_variant": "chainsaw"
       }
     ],
     "qualities": [ [ "CUT", 1 ], [ "BUTCHER", -60 ] ],

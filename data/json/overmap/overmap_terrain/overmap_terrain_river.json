@@ -8,7 +8,7 @@
     "color": "blue",
     "see_cost": 1,
     "spawns": { "group": "GROUP_RIVER", "population": [ 1, 3 ], "chance": 15 },
-    "flags": [ "RIVER", "NO_ROTATE", "SOURCE_DRINK" ]
+    "flags": [ "RIVER", "NO_ROTATE", "SOURCE_DRINK", "CANT_BE_UNIFORM" ]
   },
   {
     "type": "overmap_terrain",
