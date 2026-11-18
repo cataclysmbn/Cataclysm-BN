@@ -2746,12 +2746,13 @@ void sounds::process_sound_markers( Character *who )
             // Noise past ambient + 60 dB will cause pain and should automatically wake up heavy sleeper 2.
             if( who->has_effect( effect_sleep ) ) {
                 const int diff_db_vol = mdBspl_to_dBspl( tile_vol - passive_sound_dampening - tile_vol );
-                // Double ambient sound
-                int wake_up_vol = 10 + ambient_vol;
+                // ambient_vol is in mdB, but db_vol and wake_up_vol are in dB.
+                const int ambient_db = mdBspl_to_dBspl( ambient_vol );
+                int wake_up_vol = 10 + ambient_db;
                 wake_up_vol += who->bonus_from_enchantments( wake_up_vol, ench_val_SLEEP_DB_RESIST );
 
                 // For players sake anything below ambient should never wake them up
-                int minval = ambient_vol > wake_up_vol ? wake_up_vol / 2 : ambient_vol;
+                int minval = ambient_db > wake_up_vol ? wake_up_vol / 2 : ambient_db;
                 int maxval = wake_up_vol;
                 if( rng( minval, maxval ) <= db_vol && !who->has_effect( effect_narcosis ) ) {
                     who->wake_up();
