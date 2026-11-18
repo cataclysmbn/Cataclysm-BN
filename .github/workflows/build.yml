@@ -23,6 +23,11 @@ on:
         required: false
         type: string
         default: ""
+      shader-artifact:
+        description: "Name of a generated-shaders artifact that the caller already uploaded in this run (empty generates one)"
+        required: false
+        type: string
+        default: ""
       matrix-json:
         description: "Build matrix include entries as JSON"
         required: false
@@ -107,6 +112,7 @@ env:
 jobs:
   shader-artifacts:
     name: Generate shader artifacts
+    if: inputs.shader-artifact == ''
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -129,6 +135,8 @@ jobs:
 
   builds:
     needs: shader-artifacts
+    # Run when the caller provides the shaders and shader-artifacts is skipped.
+    if: ${{ !cancelled() && needs.shader-artifacts.result != 'failure' }}
     strategy:
       fail-fast: false
       matrix:
@@ -144,7 +152,7 @@ jobs:
       - name: Download generated shaders
         uses: actions/download-artifact@v4
         with:
-          name: generated-shaders-${{ fromJSON(inputs.matrix-json)[0].artifact }}
+          name: ${{ inputs.shader-artifact || format('generated-shaders-{0}', fromJSON(inputs.matrix-json)[0].artifact) }}
           path: data/shaders
 
       - name: Download translation artifacts
@@ -890,7 +898,7 @@ jobs:
   # Split Windows tests over several runners. One runner takes about 16 min for all shards.
   windows-tests:
     needs: builds
-    if: inputs.run-tests && inputs.windows-test-groups != '[]'
+    if: ${{ !cancelled() && needs.builds.result == 'success' && inputs.run-tests && inputs.windows-test-groups != '[]' }}
     strategy:
       fail-fast: false
       matrix:
@@ -905,7 +913,7 @@ jobs:
       - name: Download generated shaders
         uses: actions/download-artifact@v4
         with:
-          name: generated-shaders-${{ fromJSON(inputs.matrix-json)[0].artifact }}
+          name: ${{ inputs.shader-artifact || format('generated-shaders-{0}', fromJSON(inputs.matrix-json)[0].artifact) }}
           path: data/shaders
 
       - name: Download test executable

@@ -301,12 +301,13 @@ jobs:
 
   # Windows has its own call so that its test jobs do not wait for the macOS and Android builds.
   cache-warm-windows:
-    needs: skip-duplicates
+    needs: [skip-duplicates, shader-artifacts]
     if: ${{ github.event_name == 'push' && needs.skip-duplicates.outputs.should_skip_platform != 'true' }}
     uses: ./.github/workflows/build.yml
     with:
       version-label: experimental
       mode: ci
+      shader-artifact: generated-shaders-ci
       matrix-json: |
         [
           { "name": "Windows MSVC", "platform": "windows", "artifact": "windows-tiles-x64-msvc", "os": "windows-2022", "arch": "x64", "tiles": true, "sound": true, "ext": "zip", "content-type": "application/zip" }
@@ -320,12 +321,13 @@ jobs:
     secrets: inherit
 
   cache-warm-builds:
-    needs: skip-duplicates
+    needs: [skip-duplicates, shader-artifacts]
     if: ${{ github.event_name == 'push' && needs.skip-duplicates.outputs.should_skip_platform != 'true' }}
     uses: ./.github/workflows/build.yml
     with:
       version-label: experimental
       mode: ci
+      shader-artifact: generated-shaders-ci
       matrix-json: |
         [
           { "name": "macOS Curses", "platform": "macos", "artifact": "osx-curses-x64", "os": "macos-15-intel", "preset": "osx-curses-x64-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
@@ -343,12 +345,13 @@ jobs:
     secrets: inherit
 
   windows-builds:
-    needs: skip-duplicates
+    needs: [skip-duplicates, shader-artifacts]
     if: ${{ github.event_name != 'push' && needs.skip-duplicates.outputs.should_skip_platform != 'true' }}
     uses: ./.github/workflows/build.yml
     with:
       version-label: experimental
       mode: ci
+      shader-artifact: generated-shaders-ci
       artifact-label: pr-${{ github.event.pull_request.number || github.run_id }}
       matrix-json: |
         [
@@ -364,12 +367,13 @@ jobs:
     secrets: inherit
 
   builds:
-    needs: skip-duplicates
+    needs: [skip-duplicates, shader-artifacts]
     if: ${{ github.event_name != 'push' && needs.skip-duplicates.outputs.should_skip_platform != 'true' }}
     uses: ./.github/workflows/build.yml
     with:
       version-label: experimental
       mode: ci
+      shader-artifact: generated-shaders-ci
       artifact-label: pr-${{ github.event.pull_request.number || github.run_id }}
       # macOS runners are scarce. PRs build one x64 and one ARM config; pushes to main build all four.
       matrix-json: |
