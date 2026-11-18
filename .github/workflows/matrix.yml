@@ -337,7 +337,7 @@ jobs:
       download-translations: false
       bundle-tilesets: false
       package-artifacts: false
-      run-tests: true
+      run-tests: false # macOS test executables never run
       android-localize: false
       upload-artifacts: false
     secrets: inherit
@@ -382,7 +382,7 @@ jobs:
       bundle-tilesets: false
       bundle-registry-mods: false
       package-artifacts: true
-      run-tests: true
+      run-tests: false # macOS test executables never run
       android-localize: false
       upload-artifacts: true
     secrets: inherit
