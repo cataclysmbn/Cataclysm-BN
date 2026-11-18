@@ -68,6 +68,8 @@ jobs:
 
   varied_builds:
     needs: [skip-duplicates, shader-artifacts]
+    # actions: write lets the job delete its old ccache copy.
+    permissions: { actions: write, contents: read }
     strategy:
       fail-fast: ${{ github.ref_name == 'main' }}
       matrix:
@@ -224,6 +226,14 @@ jobs:
           if-no-files-found: error
           compression-level: 0
 
+      # Delete the old ccache copy before the post step saves the new one.
+      # Two copies of every cache do not fit in the 10 GB limit, and GitHub then evicts other caches.
+      - name: Delete old ccache copy
+        if: ${{ env.SKIP == 'false' && github.event_name != 'pull_request' }}
+        continue-on-error: true
+        env: { GH_TOKEN: "${{ github.token }}", GH_REPO: "${{ github.repository }}", PREFIX: "ccache-${{ matrix.ccache_key }}-${{ github.ref_name }}-" }
+        run: gh cache list --ref "$GITHUB_REF" --key "$PREFIX" --json id --jq '.[].id' | xargs -r -n1 gh cache delete
+
   # Split Linux tests over two runners. One runner takes about 12 min for all shards.
   linux-tests:
     needs: [skip-duplicates, varied_builds]
@@ -304,6 +314,7 @@ jobs:
   # Windows has its own call so that its test jobs do not wait for the macOS and Android builds.
   cache-warm-windows:
     needs: [skip-duplicates, shader-artifacts]
+    permissions: { actions: write, contents: read }
     if: ${{ github.event_name == 'push' && needs.skip-duplicates.outputs.should_skip_platform != 'true' }}
     uses: ./.github/workflows/build.yml
     with:
@@ -324,6 +335,7 @@ jobs:
 
   cache-warm-builds:
     needs: [skip-duplicates, shader-artifacts]
+    permissions: { actions: write, contents: read }
     if: ${{ github.event_name == 'push' && needs.skip-duplicates.outputs.should_skip_platform != 'true' }}
     uses: ./.github/workflows/build.yml
     with:

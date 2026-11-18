@@ -895,6 +895,18 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
+      # Delete the old ccache copy before the post step saves the new one.
+      # Two copies of every cache do not fit in the 10 GB limit, and GitHub then evicts other caches.
+      - name: Delete old ccache copy
+        if: github.event_name != 'pull_request'
+        continue-on-error: true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PREFIX: ccache-${{ runner.os == 'Windows' && format('windows-{0}-{1}', matrix.artifact, inputs.mode) || matrix.artifact }}-${{ github.ref_name }}-
+        run: gh cache list --ref "$GITHUB_REF" --key "$PREFIX" --json id --jq '.[].id' | xargs -r -n1 gh cache delete
+
   # Split Windows tests over several runners. One runner takes about 16 min for all shards.
   windows-tests:
     needs: builds
