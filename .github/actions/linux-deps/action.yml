@@ -9,12 +9,22 @@ inputs:
 runs:
   using: composite
   steps:
-    - shell: bash
-      env: { FOR: "${{ inputs.for }}" }
+    # Ubuntu mirrors sometimes send packages at about 50 kB/s, so keep the downloaded packages in the cache.
+    - id: restore
+      uses: actions/cache/restore@v4
+      with:
+        path: ~/.cache/apt-archives
+        key: apt-${{ runner.os }}-${{ runner.arch }}
+        restore-keys: apt-${{ runner.os }}-${{ runner.arch }}-
+
+    - id: install
+      shell: bash
+      env: { FOR: "${{ inputs.for }}", KEY: "apt-${{ runner.os }}-${{ runner.arch }}" }
       run: |
+        # The runner image already has the shared libraries that the test executables link.
+        test_packages=(mesa-vulkan-drivers xvfb)
         if [ "$FOR" = "test" ]; then
-          # The runner image already has the shared libraries that the test executables link.
-          packages=(mesa-vulkan-drivers xvfb)
+          packages=("${test_packages[@]}")
         else
           packages=(libncursesw5-dev mold gettext parallel libsqlite3-dev zlib1g-dev libvulkan-dev
             autoconf autoconf-archive automake libtool libltdl-dev
@@ -26,8 +36,24 @@ runs:
             libtiff-dev libavif-dev libwebp-dev libjpeg-dev libjxl-dev
             libflac-dev libvorbis-dev libxmp-dev libmpg123-dev libwavpack-dev)
         fi
+        archives="$HOME/.cache/apt-archives"
+        mkdir -p "$archives/partial"
         sudo apt-get update
-        sudo apt-get install -y "${packages[@]}"
+        sudo apt-get install -y -o Dir::Cache::Archives="$archives" "${packages[@]}"
+        # Test jobs do not run on main, so main build jobs also download the test packages into the cache.
+        sudo apt-get install -y --download-only -o Dir::Cache::Archives="$archives" "${test_packages[@]}"
+        # Drop package versions that the mirrors no longer have, so the cache does not grow.
+        sudo apt-get autoclean -o Dir::Cache::Archives="$archives"
+        # apt leaves a root-only lock file, and the cache save step cannot read it.
+        sudo chown -R "$(id -u):$(id -g)" "$archives"
+        echo "key=$KEY-$(ls "$archives"/*.deb 2>/dev/null | sha256sum | cut -c1-16)" >> "$GITHUB_OUTPUT"
         if [ "$FOR" = "test" ]; then
           sudo locale-gen en_US.UTF-8 fr_FR.UTF-8 ru_RU.UTF-8
         fi
+
+    # Save from main only, and only when the package set changed.
+    - if: github.ref_name == 'main' && steps.install.outputs.key != steps.restore.outputs.cache-matched-key
+      uses: actions/cache/save@v4
+      with:
+        path: ~/.cache/apt-archives
+        key: ${{ steps.install.outputs.key }}
