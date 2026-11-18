@@ -1183,6 +1183,8 @@ void cata::detail::reg_character( sol::state &lua )
         DOC( "* `flags` (FlagId or FlagId[]): Item has at least one of these flags.  " );
         DOC( "* `need_charges` (boolean): Tool items must have charges left.  " );
         DOC( "* `has_charges` (table): { id = ItemTypeId, amount = integer }: item type is `id` and has at least `amount` charges.  " );
+        DOC( "* `addiction_type` (AddictionType, string, or array of those): Comestible's addiction type is one of these, e.g. `AddictionType.ALCOHOL` or `\"alcohol\"`.  " );
+        DOC( "* `material` (MaterialTypeId, string, or array of those): Item is made of at least one of these materials, e.g. `\"stone\"`.  " );
         DOC( "* `worn` (boolean): Whether the item is worn.  " );
         DOC( "* `wielded` (boolean): Whether the item is wielded." );
         luna::set_fx( ut, "get_items_if", []( const UT_CLASS & c, sol::table filters ) -> std::vector<item *> {

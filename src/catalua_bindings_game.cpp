@@ -856,6 +856,8 @@ void cata::detail::reg_game_api( sol::state &lua )
     DOC( "* `flags` (FlagId or FlagId[]): Item has at least one of these flags.  " );
     DOC( "* `need_charges` (boolean): Tool items must have charges left.  " );
     DOC( "* `has_charges` (table): { id = ItemTypeId, amount = integer }: item type is `id` and has at least `amount` charges.  " );
+    DOC( "* `addiction_type` (AddictionType, string, or array of those): Comestible's addiction type is one of these, e.g. `AddictionType.ALCOHOL` or `\"alcohol\"`.  " );
+    DOC( "* `material` (MaterialTypeId, string, or array of those): Item is made of at least one of these materials, e.g. `\"stone\"`.  " );
     DOC( "The `worn` and `wielded` filters only apply to `Character:get_items_if` and are ignored here." );
     luna::set_fx( lib, "get_items_if", []( sol::this_state s, sol::table filters ) -> sol::table {
         sol::state_view lua( s );
@@ -892,7 +894,7 @@ void cata::detail::reg_game_api( sol::state &lua )
     DOC( "* `title` (string): Menu title.  " );
     DOC( "* `failure` (string): Message shown when no item passes the filter.  " );
     DOC( "* `radius` (integer, optional): Search radius for nearby items. Defaults to the pickup range.  " );
-    DOC( "* plus any filter key accepted by `gapi.get_items_if` (e.g. `category`, `type`, `is_food`, `flags`, `need_charges`, `has_charges`).  " );
+    DOC( "* plus any filter key accepted by `gapi.get_items_if` (e.g. `category`, `type`, `is_food`, `flags`, `need_charges`, `has_charges`, `addiction_type`, `material`).  " );
     DOC( "Containers whose contents match a filter are listed as well; the returned item is then the container itself." );
     luna::set_fx( lib, "inv_map_splice_if", []( sol::table opts ) -> item* {
         auto title = opts.get<std::string>( "title" );
