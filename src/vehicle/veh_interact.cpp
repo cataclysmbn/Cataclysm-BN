@@ -3157,13 +3157,7 @@ void veh_interact::complete_vehicle(Character& who) {
                 }
 
             } else if (pt.is_fuel_store()) {
-                if( src->typeId() != pt.info().fuel_type ) {
-                    src->contents.front().attempt_detach([&](detached_ptr<item>&& it) {
-                        return pt.base->reload(who, *it, it->charges);
-                    });
-                    
-                }
-                auto qty = src->charges;
+                auto qty = !src->contents.empty() ? src->contents.front().charges : src->charges;
                 pt.base->reload(who, *src, qty);
 
                 //~ 1$s vehicle name, 2$s reactor name
