@@ -268,5 +268,24 @@
     "category": "veh_parts",
     "price": "60 USD",
     "price_postapoc": "1 USD"
+  },
+  {
+    "type": "TOOL",
+    "id": "hydrogen_cell",
+    "name": { "str": "hydrogen fuel cell" },
+    "description": "A device that produces electricity from reacting hydrogen with oxygen in the air.  Less common after all-electric cars became widespread, and less practical after the apocalypse.  Maybe it'll make a comeback, given giant mutated bugs offer an untapped fuel source.",
+    "weight": "20 kg",
+    "to_hit": -4,
+    "color": "light_cyan",
+    "looks_like": "condensor_coil",
+    "symbol": ":",
+    "material": [ "aluminum", "steel" ],
+    "volume": "25 L",
+    "bashing": 7,
+    "category": "veh_parts",
+    "price": "400 USD",
+    "price_postapoc": "25 USD",
+    "ammo": "c_hydrogen",
+    "max_charges": 1000
   }
 ]

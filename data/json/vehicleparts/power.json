@@ -362,5 +362,39 @@
       { "item": "lead", "charges": [ 12, 18 ] }
     ],
     "damage_reduction": { "all": 75 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "hydrogen_cell_part",
+    "name": { "str": "hydrogen fuel cell" },
+    "symbol": "O",
+    "color": "light_gray",
+    "broken_symbol": "#",
+    "broken_color": "dark_gray",
+    "damage_modifier": 80,
+    "durability": 240,
+    "description": "A fuel cell that runs on hydrogen.  When loaded and turned on it will generate electrical power.",
+    "//": "50% efficiency, as per the bionic version.",
+    "power": 50,
+    "epower": 100000,
+    "fuel_type": "c_hydrogen_gas",
+    "item": "hydrogen_cell",
+    "location": "fuel_source",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 4 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 4 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 6 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_electronics", 2 ] ]
+      }
+    },
+    "flags": [ "REACTOR" ],
+    "breaks_into": [
+      { "item": "steel_lump", "count": [ 6, 11 ] },
+      { "item": "steel_chunk", "count": [ 6, 11 ] },
+      { "item": "scrap", "count": [ 6, 11 ] }
+    ],
+    "damage_reduction": { "all": 20 }
   }
 ]
