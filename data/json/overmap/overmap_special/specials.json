@@ -2907,6 +2907,7 @@
   {
     "type": "overmap_special",
     "id": "Trailer Park",
+    "//": "Pretty much replaced by the mutable mobile home park",
     "overmaps": [
       { "point": [ 0, 0, 0 ], "overmap": "trailerparksmall0_north" },
       { "point": [ 0, 0, 1 ], "overmap": "trailerparksmall0_roof_north" },
@@ -2919,7 +2920,7 @@
     "locations": [ "wilderness" ],
     "city_distance": [ 4, 15 ],
     "city_sizes": [ -1, 12 ],
-    "occurrences": [ 0, 3 ],
+    "occurrences": [ 0, 0 ],
     "flags": [ "CLASSIC", "URBAN", "ELECTRIC_GRID" ]
   },
   {
