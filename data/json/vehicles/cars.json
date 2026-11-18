@@ -1570,11 +1570,7 @@
         "y": 2,
         "parts": [ "xlframe_ne", "halfboard_ne", "headlight", "wheel_mount_medium_steerable", "wheel" ]
       },
-      {
-        "x": -2,
-        "y": 0,
-        "parts": [ "xlframe_vertical", "windshield_horizontal_front", "medium_storage_battery" ]
-      },
+      { "x": -2, "y": 0, "parts": [ "xlframe_vertical", "windshield_horizontal_front", "medium_storage_battery" ] },
       { "x": -2, "y": 1, "parts": [ "xlframe_vertical", "windshield_horizontal_front", "medium_storage_battery" ] },
       { "x": -2, "y": -1, "parts": [ "xlframe_vertical", "halfboard_vertical_left" ] },
       { "x": -2, "y": 2, "parts": [ "xlframe_vertical", "halfboard_vertical_right" ] },
