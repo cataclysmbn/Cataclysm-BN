@@ -549,11 +549,14 @@ void iexamine::gaspump( player &p, const tripoint_bub_ms &examp )
 void iexamine::translocator( player &, const tripoint_bub_ms &examp )
 {
     // TODO: fix point types
-    const tripoint_abs_omt omt_loc( project_to<coords::omt>( bub_to_abs( examp ) ) );
     avatar &player_character = get_avatar();
-    const bool activated = player_character.translocators->knows_translocator( omt_loc );
+    const auto loc = translocator_location{
+        .dim = player_character.get_dimension(),
+        .pos = project_to<coords::omt>( bub_to_abs( examp ) ),
+    };
+    const bool activated = player_character.translocators->knows_translocator( loc );
     if( !activated ) {
-        g->u.translocators->activate_teleporter( omt_loc, examp );
+        g->u.translocators->activate_teleporter( loc );
         add_msg( m_info, _( "Translocator gate active." ) );
     } else {
         const int choice = uilist( _( "Do what with Translocator?" ), {
@@ -565,7 +568,7 @@ void iexamine::translocator( player &, const tripoint_bub_ms &examp )
             player_character.invoke_item( vtm );
         } else if( choice == 1 ) {
             if( query_yn( _( "Deactivate this Translocator?" ) ) ) {
-                g->u.translocators->deactivate_teleporter( omt_loc, examp );
+                g->u.translocators->deactivate_teleporter( loc );
             }
         } else {
             add_msg( _( "Never mind." ) );
