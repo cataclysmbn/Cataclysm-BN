@@ -6,6 +6,7 @@
 #include "game.h"
 #include "morale_types.h"
 #include "rng.h"
+#include "timed_event.h"
 
 #include <ranges>
 #include <string>
@@ -13,19 +14,31 @@
 
 namespace {
 
-/// Waits 2 hours in the field in clear 18 C weather at TIME_ACTION_SCALE @p scale. The avatar
-/// starts with a 3 hour test_high effect (+25 morale) and a decaying food morale bonus. The RNG
-/// starts from the same seed for every scale.
-auto wait_at_scale(const int scale) -> wait_end_state {
+/// Weather and length of one wait.
+struct wait_conditions {
+    std::string weather = "clear";
+    units::temperature temperature = 18_c;
+    time_duration duration = 2_hours;
+    bool skip_windows = true;
+};
+
+/// Waits in the field under @p conditions at TIME_ACTION_SCALE @p scale. The avatar starts with
+/// a 3 hour test_high effect (+25 morale) and a decaying food morale bonus. The RNG starts from
+/// the same seed for every scale.
+auto wait_at_scale(const int scale, const wait_conditions& conditions = {}) -> wait_end_state {
     const auto skip_options = skip_window_options{};
     const auto action_scale = override_option("TIME_ACTION_SCALE", std::to_string(scale));
     setup_wait_scene(wait_scene::field);
-    hold_weather(weather_type_id("clear"), 18_c);
+    hold_weather(weather_type_id(conditions.weather), conditions.temperature);
+    // A timed event in the next 5 minutes blocks the skip window.
+    for (auto t = 5_minutes; !conditions.skip_windows && t <= conditions.duration; t += 5_minutes) {
+        g->timed_events.add(TIMED_EVENT_NULL, calendar::turn + t);
+    }
     rng_set_engine_seed(1);
     g->u.add_effect(efftype_id("test_high"), 3_hours);
     g->u.add_morale(morale_type("morale_food_good"), 20, 20, 3_hours, 1_hours);
 
-    const auto state = wait_through_activity(2_hours);
+    const auto state = wait_through_activity(conditions.duration);
     INFO(state.error_or(""));
     REQUIRE(state.has_value());
     return *state;
@@ -86,4 +99,30 @@ TEST_CASE("wait ends on time when a monster appears", "[activity][fixed_window]"
     REQUIRE(state.has_value());
     CHECK(g->num_creatures() == 2);
     CHECK(to_turn<int>(state->turn) == to_turn<int>(end_turn));
+}
+
+// Body temperature converges and rain wets once per call, so a 10-turn tick needs 10 calls, inside
+// and outside skip windows.
+TEST_CASE(
+    "waiting in cold or rain gives the same body state at TIME_ACTION_SCALE 100 and 10",
+    "[activity][fixed_window][speed]") {
+    const auto [weather, temperature] = GENERATE(table<std::string, units::temperature>({
+        {"clear", -10_c},
+        {"rain", 10_c},
+    }));
+    const auto skip_windows = GENERATE(true, false);
+    CAPTURE(weather, skip_windows);
+    const auto conditions = wait_conditions{
+        .weather = weather,
+        .temperature = temperature,
+        // Without skip windows scale 100 takes 1 do_turn call per turn.
+        .duration = skip_windows ? 1_hours : 10_minutes,
+        .skip_windows = skip_windows,
+    };
+    const auto exact = wait_at_scale(100, conditions);
+    const auto coarse = wait_at_scale(10, conditions);
+    REQUIRE(coarse.tick_turns == 10);
+    // Without skip windows each 10-turn tick is one do_turn call.
+    if (!skip_windows) { REQUIRE(coarse.do_turn_calls == to_turns<int>(10_minutes) / 10); }
+    check_same_body(exact, coarse);
 }
