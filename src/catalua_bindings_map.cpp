@@ -368,12 +368,14 @@ void cata::detail::reg_map( sol::state &lua )
             return wrapped.v->drain( fuel, amount );
         } );
         DOC( "Drains up to `amount` charges from the onboard batteries. Returns the charges actually drained." );
-        luna::set_fx( ut, "drain_batteries", []( const wrapped_vehicle & wrapped, const int amount ) -> int {
+        luna::set_fx( ut, "drain_batteries", []( const wrapped_vehicle & wrapped,
+        const int amount ) -> int {
             if( wrapped.v == nullptr ) { return 0; }
             return wrapped.v->drain( itype_id( "battery" ), amount );
         } );
         DOC( "Charges the onboard batteries by up to `amount`. Returns the charges actually added." );
-        luna::set_fx( ut, "charge_batteries", []( const wrapped_vehicle & wrapped, const int amount ) -> int {
+        luna::set_fx( ut, "charge_batteries", []( const wrapped_vehicle & wrapped,
+        const int amount ) -> int {
             if( wrapped.v == nullptr ) { return 0; }
             return wrapped.v->charge_battery( amount, false );
         } );
