@@ -93,24 +93,20 @@ auto item::is_in_sealing_container() const -> bool {
 auto item::mark_rot_checked_now() -> void { last_rot_check = calendar::turn; }
 
 auto item::get_shelf_life() const -> time_duration {
-    if (goes_bad()) {
-        if (is_food()) {
-            return get_comestible()->spoils;
-        } else if (is_corpse()) {
-            return 24_hours;
-        }
-    }
-    return 0_turns;
+    // don't use goes_bad(): food in smoker/mill has PROCESSING flag so it's always false
+    // therefore rot / get_shelf_life() = rot / 0 = always rots
+    if (is_corpse()) { return made_of_any(materials::get_rotting()) ? 24_hours : 0_turns; }
+    return is_food() ? get_comestible()->spoils : 0_turns;
 }
 
 auto item::get_relative_rot() const -> double {
+    const auto shelf_life = get_shelf_life();
+    if (shelf_life <= 0_turns) { return 0; }
     // Components are frozen in time, when they are returned they are new items
-    if (has_flag(flag_id("COMPONENT"))) { return rot / get_shelf_life(); }
-    if (goes_bad()) {
+    if (goes_bad() && !has_flag(flag_id("COMPONENT"))) {
         const_cast<item*>(this)->update_rot_from_location(temperature_flag::TEMP_NORMAL);
-        return rot / get_shelf_life();
     }
-    return 0;
+    return rot / shelf_life;
 }
 
 auto item::set_relative_rot(double val) -> void {
