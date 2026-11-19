@@ -875,7 +875,8 @@ TEST_CASE("craft catch-up uses activity progress scale", "[crafting][speed]") {
     REQUIRE(craft_item->get_counter() == 0);
 
     const auto elapsed_turns = 10;
-    calendar::turn += time_duration::from_turns(elapsed_turns);
+    // The last turn is the current tick, which gets its progress from moves.
+    calendar::turn += time_duration::from_turns(elapsed_turns + 1);
     dummy.activity->init_all_moves(dummy);
 
     const auto base_total_moves = std::max(1, recipe.batch_time(1, 1.0f, 0));
