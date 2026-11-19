@@ -252,6 +252,33 @@ class scoped_calendar_turns_this_tick
             delete;
 };
 
+/// Calls `fn` once for each calendar turn of the current tick, oldest turn first.
+/// Each call sees `calendar::turn` at that turn and a tick length of 1.
+/// `fn` returns false to skip the remaining turns.
+/// With a tick length of 1 it calls `fn` once and changes nothing.
+template<typename Fn>
+inline auto for_each_calendar_turn_this_tick( Fn &&fn ) -> void
+{
+    const auto turns = calendar_turns_this_tick();
+    if( turns <= 1 ) {
+        fn();
+        return;
+    }
+    struct turn_restore {
+        time_point last_turn = calendar::turn;
+        ~turn_restore() { calendar::turn = last_turn; }
+    };
+    const auto restore = turn_restore{};
+    const auto tick_scope = scoped_calendar_turns_this_tick( 1 );
+    for( auto turn = restore.last_turn - time_duration::from_turns( turns - 1 );
+         turn <= restore.last_turn; turn += 1_turns ) {
+        calendar::turn = turn;
+        if( !fn() ) {
+            break;
+        }
+    }
+}
+
 inline auto calendar_duration_this_tick() -> time_duration
 {
     return time_duration::from_turns( calendar_turns_this_tick() );
