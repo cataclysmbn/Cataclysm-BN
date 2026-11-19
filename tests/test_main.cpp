@@ -20,6 +20,7 @@
 #include "../src/map/map.h"
 #include "../src/overmap/overmap.h"
 #include "../src/overmap/overmapbuffer.h"
+#include "action_time_scale.h"
 #include "avatar.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
@@ -305,6 +306,11 @@ struct CataListener: Catch::TestEventListenerBase {
         TestEventListenerBase::sectionStarting(sectionInfo);
         // Initialize the cata RNG with the Catch seed for reproducible tests
         rng_set_engine_seed(m_config->rngSeed());
+        // Catch starts the root section once per run through a test case, one run per leaf section.
+        if (sectionInfo.lineInfo == currentTestCaseInfo->lineInfo) {
+            // A wait at TIME_ACTION_SCALE below 100 leaves a tick length above 1 for the next test
+            action_time_scale::set_calendar_turns_this_tick(1);
+        }
     }
 
     auto assertionEnded(Catch::AssertionStats const& assertionStats) -> bool override {
