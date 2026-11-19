@@ -8614,6 +8614,44 @@
   },
   {
     "type": "profession",
+    "id": "gang_scrapper",
+    "name": "Gang Scrappers",
+    "description": "You and three of the guys from the construction crew used to settle neighborhood disputes with a show of force. When the world fell apart, you grabbed what you could from the job site, rounded up the crew, and decided the block belonged to you. Between your tools, your know-how, and a little chemical courage, you aim to keep it that way.",
+    "points": 6,
+    "skills": [
+      { "level": 3, "name": "fabrication" },
+      { "level": 2, "name": "mechanics" },
+      { "level": 2, "name": "gun" },
+      { "level": 2, "name": "pistol" },
+      { "level": 3, "name": "melee" }
+    ],
+    "vehicle": "cube_van",
+    "items": {
+      "both": {
+        "entries": [
+          { "item": "pants_cargo" },
+          { "item": "tank_top" },
+          { "item": "bandana_head" },
+          { "item": "socks" },
+          { "item": "boots_steel" },
+          { "item": "gloves_work" },
+          { "item": "wristwatch" },
+          { "item": "tool_belt", "contents-item": [ "hammer", "screwdriver", "wrench" ] },
+          { "item": "multitool" },
+          { "item": "slingpack" },
+          { "item": "meth" },
+          { "item": "ref_lighter" },
+          { "item": "beer", "count": [ 1, 4 ] }
+        ]
+      },
+      "male": { "entries": [ { "item": "boxer_shorts" } ] },
+      "female": { "entries": [ { "item": "panties" }, { "item": "bra" } ] }
+    },
+    "npcs": [ "NC_PROF_GANG_SCRAPPER_1", "NC_PROF_GANG_SCRAPPER_2", "NC_PROF_GANG_SCRAPPER_3", "NC_PROF_GANG_SCRAPPER_4" ],
+    "flags": [ "SCEN_ONLY" ]
+  },
+  {
+    "type": "profession",
     "id": "exterminator",
     "name": "Exterminator",
     "description": "Before the world fell apart, you were the first line of defense against roaches, rats, and worse. Armed with sprays, traps, and a healthy dose of stubbornness, you knew every trick in the book for clearing infestations. Now, your skills have never been more relevant - the pests are bigger, meaner, and sometimes hungry for you.",

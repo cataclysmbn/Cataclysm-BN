@@ -28,7 +28,7 @@
       "sloc_church",
       "sloc_cemetery"
     ],
-    "professions": [ "neighborhood_watch" ],
+    "professions": [ "neighborhood_watch", "gang_scrapper" ],
     "add_professions": true,
     "start_name": "In Town",
     "flags": [ "CITY_START" ]
@@ -100,7 +100,7 @@
       "sloc_school",
       "sloc_mansion"
     ],
-    "professions": [ "neighborhood_watch" ],
+    "professions": [ "neighborhood_watch", "gang_scrapper" ],
     "add_professions": true,
     "start_name": "In Town",
     "surround_groups": [ [ "GROUP_BLACK_ROAD", 70.0 ] ],
@@ -151,7 +151,7 @@
     "flags": [ "INFECTED", "CITY_START" ],
     "id": "infected",
     "points": -4,
-    "professions": [ "neighborhood_watch" ],
+    "professions": [ "neighborhood_watch", "gang_scrapper" ],
     "add_professions": true,
     "start_name": "In Town",
     "allowed_locs": [
@@ -214,7 +214,7 @@
     "flags": [ "FIRE_START", "CITY_START" ],
     "id": "fire",
     "points": -2,
-    "professions": [ "neighborhood_watch" ],
+    "professions": [ "neighborhood_watch", "gang_scrapper" ],
     "add_professions": true,
     "start_name": "In Town",
     "allowed_locs": [
@@ -515,7 +515,8 @@
       "monster_hunter",
       "monster_slayer",
       "gyro_pilot",
-      "bird_pilot"
+      "bird_pilot",
+      "gang_scrapper"
     ]
   },
   {
@@ -558,7 +559,8 @@
       "monster_hunter",
       "monster_slayer",
       "gyro_pilot",
-      "bird_pilot"
+      "bird_pilot",
+      "gang_scrapper"
     ]
   },
   {
@@ -582,7 +584,8 @@
       "politician",
       "unemployed",
       "necropolis_vault_contractor",
-      "neighborhood_watch"
+      "neighborhood_watch",
+      "gang_scrapper"
     ]
   },
   {
