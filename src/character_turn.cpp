@@ -25,6 +25,7 @@
 #include "map/mapbuffer.h"
 #include "map/mapbuffer_registry.h"
 #include "map/submap.h"
+#include "map/submap_cache_query.h"
 #include "map_iterator.h"
 #include "morale.h"
 #include "mutation.h"
@@ -1305,7 +1306,19 @@ void search_surroundings( Character &who )
     // Search for traps in a larger area than before because this is the only
     // way we can "find" traps that aren't marked as visible.
     // Detection formula takes care of likelihood of seeing within this range.
-    for( const auto &tp : here.points_in_radius( who.bub_pos(), 5 ) ) {
+    const auto search_area = here.points_in_radius( who.bub_pos(), 5 );
+    // The loop below acts only on tiles with a trap. Skip it when the area has none.
+    const auto has_trap = search_area.size() > 0 && any_cached_tile_in( here, {
+        .min = search_area.min(),
+        .max = search_area.max(),
+        .cache = &submap::trap_cache,
+    }, []( const submap & sm, const point_sm_ms & local ) {
+        return sm.get_effective_trap( local ) != tr_null;
+    } );
+    if( !has_trap ) {
+        return;
+    }
+    for( const auto &tp : search_area ) {
         const trap &tr = here.tr_at( tp );
         if( tr.is_null() || tp == who.bub_pos() ) {
             continue;
