@@ -205,7 +205,7 @@ TEST_CASE(
 
 TEST_CASE(
     "Storage information for perishable food follows the item's location",
-    "[rot][open_issue][info][issue_2362][!mayfail]") {
+    "[rot][open_issue][info][issue_2362]") {
     const auto state = rot_test_state(1_hours);
     const auto text = [](const std::vector<iteminfo>& info) {
         auto joined = std::string();

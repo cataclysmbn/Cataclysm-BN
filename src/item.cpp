@@ -4562,9 +4562,26 @@ void item::enchantment_info( std::vector<iteminfo> &info, const iteminfo_query &
     }
     insert_separation_line( info );
 }
+
+namespace
+{
+
+/// Returns nullopt for items outside the reality bubble.
+auto storage_temperature( const item &it ) -> std::optional<temperature_flag>
+{
+    if( !it.is_loaded() ) {
+        return std::nullopt;
+    }
+    return rot::temp::for_location( get_map(), it );
+}
+
+} // namespace
+
 std::vector<iteminfo> item::info() const
 {
-    return info( iteminfo_query::no_conditions, 1, temperature_flag::TEMP_NORMAL );
+    const auto temperature = storage_temperature( *this );
+    return temperature ? info( *temperature )
+           : info( iteminfo_query::no_conditions, 1, temperature_flag::TEMP_NORMAL );
 }
 
 std::vector<iteminfo> item::info( int batch ) const
@@ -4662,7 +4679,8 @@ std::vector<iteminfo> item::info( const iteminfo_query &parts_ref, int batch,
 
 std::string item::info_string() const
 {
-    return info_string( iteminfo_query::all, 1 );
+    return info_string( iteminfo_query::all, 1,
+                        storage_temperature( *this ).value_or( temperature_flag::TEMP_NORMAL ) );
 }
 
 std::string item::info_string( const iteminfo_query &parts, int batch,
