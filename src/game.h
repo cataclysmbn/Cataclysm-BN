@@ -1034,6 +1034,9 @@ class game : public submap_load_listener
          */
         void win();
 
+        /// Clears the skip window state, so the next do_turn may start a skip window. Tests use it.
+        auto reset_activity_fixed_window() -> void;
+
     private:
         void perhaps_add_random_npc();
 
