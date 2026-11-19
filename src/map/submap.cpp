@@ -297,6 +297,15 @@ auto submap::contains_vehicle(vehicle* veh) -> bool {
     return match != vehicles.end();
 }
 
+namespace {
+
+/// Tiles with x varying fastest, the order of the position caches.
+const auto submap_tiles_in_index_order =
+    std::views::iota(0, SEEX* SEEY)
+    | std::views::transform([](int i) -> point_sm_ms { return {i % SEEX, i / SEEX}; });
+
+} // namespace
+
 void submap::rotate(int turns) {
     turns = turns % 4;
 
@@ -393,21 +402,19 @@ void submap::rotate(int turns) {
 
     // Tile data was moved in-place by swap_soa_tile, bypassing set_trap/set_furn.
     // Rebuild position caches from scratch now that all arrays are in their final state.
-    trap_cache.clear();
+    rebuild_trap_cache();
     field_cache.clear();
     emitter_cache = std::nullopt;
-    std::ranges::for_each(
-        std::views::iota(0, SEEX * SEEY) | std::views::transform([](int i) -> point_sm_ms {
-            return {i % SEEX, i / SEEX};
-        }),
-        [this](const point_sm_ms& p) {
-            if (trp[p.x()][p.y()] != tr_null) {
-                trap_cache.push_back(p);
-            } else if (ter[p.x()][p.y()].obj().trap != tr_null) {
-                trap_cache.push_back(p);
-            }
-            if (fld[p.x()][p.y()].displayed_field_type()) { field_cache.push_back(p); }
-        });
+    std::ranges::for_each(submap_tiles_in_index_order, [this](const point_sm_ms& p) {
+        if (fld[p.x()][p.y()].displayed_field_type()) { field_cache.push_back(p); }
+    });
+}
+
+auto submap::rebuild_trap_cache() -> void {
+    trap_cache.clear();
+    std::ranges::copy_if(
+        submap_tiles_in_index_order, std::back_inserter(trap_cache),
+        [this](const point_sm_ms& p) { return get_effective_trap(p) != tr_null; });
 }
 
 
