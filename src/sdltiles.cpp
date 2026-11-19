@@ -108,7 +108,6 @@ std::shared_ptr<cata_tiles> overmap_tilecontext;
 static Uint64 lastupdate = 0;
 static uint32_t interval = 25;
 static bool needupdate = false;
-static bool need_invalidate_framebuffers = false;
 static bool clear_display_buffer_before_redraw = false;
 static const std::string empty_string;
 
@@ -279,15 +278,7 @@ static void WinCreate()
     }
 #endif
     // Initialize framebuffer caches
-    terminal_framebuffer.resize( TERMINAL_HEIGHT );
-    for( int i = 0; i < TERMINAL_HEIGHT; i++ ) {
-        terminal_framebuffer[i].chars.assign( TERMINAL_WIDTH, cursecell( "" ) );
-    }
-
-    oversized_framebuffer.resize( TERMINAL_HEIGHT );
-    for( int i = 0; i < TERMINAL_HEIGHT; i++ ) {
-        oversized_framebuffer[i].chars.assign( TERMINAL_WIDTH, cursecell( "" ) );
-    }
+    reinitialize_framebuffer();
 
     format = SDL_GetWindowPixelFormat( ::window.get() );
     throwErrorIf( format == SDL_PIXELFORMAT_UNKNOWN, "SDL_GetWindowPixelFormat failed" );
@@ -566,8 +557,8 @@ void reinitialize_framebuffer( const bool force_invalidate )
     static int prev_height = -1;
     static int prev_width = -1;
     //Re-initialize the framebuffer with new values.
-    const int new_height = std::max( { TERMY, OVERMAP_WINDOW_HEIGHT, TERRAIN_WINDOW_HEIGHT } );
-    const int new_width = std::max( { TERMX, OVERMAP_WINDOW_WIDTH, TERRAIN_WINDOW_WIDTH } );
+    const auto new_height = std::max( { TERMINAL_HEIGHT, OVERMAP_WINDOW_HEIGHT, TERRAIN_WINDOW_HEIGHT } );
+    const auto new_width = std::max( { TERMINAL_WIDTH, OVERMAP_WINDOW_WIDTH, TERRAIN_WINDOW_WIDTH } );
     if( new_height != prev_height || new_width != prev_width ) {
         prev_height = new_height;
         prev_width = new_width;
@@ -579,8 +570,7 @@ void reinitialize_framebuffer( const bool force_invalidate )
         for( int i = 0; i < new_height; i++ ) {
             terminal_framebuffer[i].chars.assign( new_width, cursecell( "" ) );
         }
-    } else if( force_invalidate || need_invalidate_framebuffers ) {
-        need_invalidate_framebuffers = false;
+    } else if( force_invalidate ) {
         invalidate_framebuffer( oversized_framebuffer );
         invalidate_framebuffer( terminal_framebuffer );
     }
@@ -2112,7 +2102,7 @@ bool handle_resize( int w, int h )
         WindowHeight = h;
         TERMINAL_WIDTH = WindowWidth / fontwidth / scaling_factor;
         TERMINAL_HEIGHT = WindowHeight / fontheight / scaling_factor;
-        need_invalidate_framebuffers = true;
+        reinitialize_framebuffer( true );
         catacurses::stdscr = catacurses::newwin( TERMINAL_HEIGHT, TERMINAL_WIDTH, point_zero );
         throwErrorIf( !SetupRenderTarget(), "SetupRenderTarget failed" );
         game_ui::init_ui();
