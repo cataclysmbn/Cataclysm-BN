@@ -1,6 +1,9 @@
 #include "../src/map/map.h"
 #include "behavior.h"
 #include "behavior_strategy.h"
+#if defined(CATA_MCP)
+#    include "cata_utility.h"
+#endif
 #include "catch/catch.hpp"
 #include "character_oracle.h"
 #include "item.h"
@@ -136,6 +139,9 @@ TEST_CASE("behavior_tree", "[behavior]") {
 // Make assertions about loaded behaviors.
 TEST_CASE("check_npc_behavior_tree", "[npc][behavior]") {
     clear_all_state();
+#if defined(CATA_MCP)
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+#endif
     behavior::tree npc_needs;
     npc_needs.add(&string_id<behavior::node_t>("npc_needs").obj());
     npc& test_npc = spawn_npc({50, 50, 0}, "test_talker");

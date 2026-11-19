@@ -34,4 +34,19 @@ cmake \
   -DCATA_CLANG_TIDY_PLUGIN=ON
 
 ninja -C "$BUILD_PATH" -j"$NUM_JOBS" CataAnalyzerPlugin
-ln -s "$BUILD_PATH/compile_commands.json" compile_commands.json	
+
+# The native build leaves out the protocol engine sources; take their commands from an MCP configuration.
+cmake \
+  -B "$BUILD_PATH-mcp" \
+  -G Ninja \
+  -DBACKTRACE=ON \
+  -DCMAKE_C_COMPILER=/usr/bin/clang \
+  -DCMAKE_CXX_COMPILER=/usr/bin/clang++ \
+  -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+  -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
+  -DLIBBACKTRACE="${LIBBACKTRACE:-0}" \
+  -DLUA=ON \
+  -DMCP=ON
+
+jq -s '.[0] + .[1] | unique_by(.file)' \
+  "$BUILD_PATH/compile_commands.json" "$BUILD_PATH-mcp/compile_commands.json" > compile_commands.json

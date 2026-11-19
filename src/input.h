@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <map>
 #include <string>
@@ -13,6 +14,9 @@
 #include <list>
 #endif
 
+#if defined(CATA_MCP)
+#include "client_interaction_data.h"
+#endif
 #include "coordinates.h"
 #include "translations.h"
 
@@ -99,6 +103,9 @@ enum class input_event_t : int  {
     keyboard,
     gamepad,
     mouse
+#if defined(CATA_MCP)
+    , interaction
+#endif
 };
 
 /**
@@ -126,6 +133,11 @@ struct input_event {
     std::string text;
     std::string edit;
     bool edit_refresh;
+#if defined(CATA_MCP)
+    /// A registered action to run by id, as the action menu does for actions without a key binding.
+    std::string action;
+    std::optional<game_client::interaction_event> interaction;
+#endif
 
 #if defined(__ANDROID__)
     // Used exclusively by the quick shortcuts to determine how stale a shortcut is
@@ -188,6 +200,11 @@ struct input_event {
             }
         }
 
+#if defined(CATA_MCP)
+        if( !( interaction == other.interaction ) ) {
+            return false;
+        }
+#endif
         return true;
     }
 };
@@ -679,6 +696,22 @@ class input_context
          * Get the human-readable name for an action.
          */
         std::string get_action_name( const std::string &action_id ) const;
+#if defined(CATA_MCP)
+        /// Borrowed native name source for admission before materializing metadata labels.
+        /// Invalidated by changes to this context or the input manager's action registry.
+        auto action_name_source( const std::string &action_id ) const
+        -> std::optional<std::reference_wrapper<const translation>>;
+        /// Allocation-free metadata traversal; lifetime is that of this context.
+        auto registered_actions_view() const -> const std::vector<std::string> & { // *NOPAD*
+            return registered_actions;
+        }
+        /// Tells this context from an earlier one at the same address. A copy keeps it.
+        auto instance() const -> std::uint64_t { return instance_; }
+    private:
+        inline static auto last_instance = std::uint64_t { 0 };
+        std::uint64_t instance_ = ++last_instance;
+    public:
+#endif
 
         /* For the future, something like this might be nice:
          * const std::string register_action(const std::string& action_descriptor, x, y, width, height);

@@ -12,6 +12,7 @@
 #include "character_effects.h"
 #include "character_functions.h"
 #include "character_id.h"
+#include "mcp_hooks.h"
 #include "clzones.h"
 #include "color.h"
 #include "condition.h"
@@ -2187,6 +2188,7 @@ talk_topic dialogue::opt( dialogue_window &d_win, const std::string &npc_name,
     }
     auto selected_response = size_t{ 0 };
 
+    MCP_ONLY( input_context ctxt( "DIALOGUE_CHOOSE_RESPONSE" ); )
 #if defined(__ANDROID__)
     input_context ctxt( "DIALOGUE_CHOOSE_RESPONSE" );
     for( size_t i = 0; i < responses.size(); i++ ) {
@@ -2216,6 +2218,8 @@ talk_topic dialogue::opt( dialogue_window &d_win, const std::string &npc_name,
         d_win.refresh_response_display();
         do {
             ui_manager::redraw();
+            MCP_ONLY( const auto reading = game_client::input_context_scope( ctxt, ctxt.category_name(),
+                                           inp_mngr.get_timeout() ); )
             ch = inp_mngr.get_input_event().get_first_input();
             if( ch == KEY_UP ) {
                 if( selected_response > 0 ) {

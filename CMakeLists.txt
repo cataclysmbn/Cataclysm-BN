@@ -31,6 +31,7 @@ cmake_dependent_option(DYNAMIC_ATLAS
     TILES OFF
 )
 option(CURSES "Build curses version." "ON")
+option(MCP "Build the headless protocol engine cataclysm-bn-mcp instead of a native game." "OFF")
 option(SOUND "Support for in-game sounds & music." "OFF")
 option(BACKTRACE "Support for printing stack backtraces on crash" "ON")
 option(LIBBACKTRACE "Print backtrace with libbacktrace." "OFF")
@@ -208,6 +209,17 @@ if (TILES)
     set(CURSES OFF)
 endif ()
 
+# The protocol engine draws nothing and plays nothing itself, so it needs neither SDL nor curses.
+if (MCP)
+    set(TILES OFF)
+    set(CURSES OFF)
+    set(SOUND OFF)
+    add_definitions(-DCATA_MCP)
+    # A seed plays the same game with every libstdc++: version 16 changed std::generate_canonical, and with it every
+    # random float, unless this keeps the earlier definition.
+    add_definitions(-D_GLIBCXX_USE_OLD_GENERATE_CANONICAL)
+endif ()
+
 if (TILES OR CURSES OR SOUND)
     set(CATA_SDL ON CACHE BOOL
         "Link SDL3 core for GPU platform services used by existing game targets." FORCE)
@@ -263,6 +275,7 @@ message(STATUS "DYNAMIC_LINKING               : ${DYNAMIC_LINKING}")
 message(STATUS "TILES                         : ${TILES}")
 message(STATUS "DYNAMIC_ATLAS                 : ${DYNAMIC_ATLAS}")
 message(STATUS "CURSES                        : ${CURSES}")
+message(STATUS "MCP                           : ${MCP}")
 message(STATUS "SOUND                         : ${SOUND}")
 message(STATUS "BACKTRACE                     : ${BACKTRACE}")
 message(STATUS "LIBBACKTRACE                  : ${LIBBACKTRACE}")
@@ -789,6 +802,15 @@ if (CCACHE_FOUND AND CATA_CCACHE)
     set(CMAKE_CXX_COMPILER_LAUNCHER ${CATA_CCACHE_CMD})
     set(CMAKE_C_LINKER_LAUNCHER     ${CATA_CCACHE_CMD})
     set(CMAKE_CXX_LINKER_LAUNCHER   ${CATA_CCACHE_CMD})
+endif ()
+
+if (MCP)
+    # Wire protocol JSON for the engine client; header-only.
+    FetchContent_Declare(
+        nlohmann_json
+        URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz
+        URL_HASH SHA256=42f6e95cad6ec532fd372391373363b62a14af6d771056dbfc86160e6dfff7aa)
+    FetchContent_MakeAvailable(nlohmann_json)
 endif ()
 
 add_subdirectory(src)

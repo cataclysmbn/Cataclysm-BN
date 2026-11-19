@@ -36,6 +36,8 @@ CataclysmBN을 빌드하려면 다음 라이브러리와 개발 헤더가 설치
 
 ## 빌드 환경
 
+빌드 트리 하나에는 타일, curses(`-DCURSES=ON -DTILES=OFF`), 프로토콜 엔진 `cataclysm-bn-mcp`(`linux-mcp` 프리셋, `-DMCP=ON`) 중 하나만 들어갑니다.
+
 [git](https://github.com/cataclysmbn/Cataclysm-BN)에서 최신 버전의 소스 코드 tarball을 받을 수 있습니다.
 
 ```sh
