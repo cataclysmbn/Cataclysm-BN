@@ -52,9 +52,9 @@ class options_manager
         options_manager();
 
         void addOptionToPage( const std::string &name, const std::string &page );
-        void cache_to_globals(); // cache some options to globals due to heavy usage
 
     public:
+        void cache_to_globals(); // cache some options to globals due to heavy usage
         enum copt_hide_t {
             /** Don't hide this option */
             COPT_NO_HIDE,

@@ -1,6 +1,8 @@
 #include "activity_skip_wait_helpers.h"
 
 #include "../src/map/map.h"
+#include "../src/overmap/overmap.h"
+#include "../src/overmap/overmapbuffer.h"
 #include "action_time_scale.h"
 #include "avatar.h"
 #include "effect.h"
@@ -44,6 +46,8 @@ auto build_town() -> void {
 auto setup_wait_scene(const wait_scene scene) -> void {
     clear_all_state();
     g->place_player(tripoint_bub_ms(30, 66, 0));
+    // Hordes and group spawns walk into the scene, interrupt the wait and can kill the avatar.
+    ACTIVE_OVERMAP_BUFFER.get_om_global(g->u.abs_omt_pos()).om->clear_mon_groups();
     calendar::turn = calendar::turn_zero + 12_hours;
     if (scene == wait_scene::town) { build_town(); }
 

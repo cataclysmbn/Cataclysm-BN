@@ -1,0 +1,152 @@
+name: bench-wait
+
+on:
+  push:
+    branches: ["bench/**"]
+  workflow_dispatch:
+
+permissions: { contents: read }
+
+env: { LLVM_VERSION: "22", CATA_TEST_COMPUTE_ACCELERATION: cpu }
+
+jobs:
+  bench:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 2 }
+
+      - name: install dependencies
+        run: |
+          sudo apt-get -o Acquire::Retries=5 update
+          sudo apt-get -o Acquire::Retries=5 install -y libncursesw5-dev mold gettext parallel libsqlite3-dev zlib1g-dev autoconf autoconf-archive automake libtool libltdl-dev valgrind gdb
+          sudo apt-get -o Acquire::Retries=5 install -y libasound2-dev libpulse-dev libaudio-dev libjack-dev libsndio-dev libx11-dev \
+            libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxtst-dev libxkbcommon-dev \
+            libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev libegl1-mesa-dev libdbus-1-dev \
+            libibus-1.0-dev libudev-dev libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev \
+            libfreetype-dev libharfbuzz-dev libvulkan-dev
+          sudo locale-gen en_US.UTF-8
+
+      - uses: aminya/setup-cpp@v1
+        with:
+          compiler: llvm-${{ env.LLVM_VERSION }}
+          cmake: true
+          ninja: true
+          setup-cpp: false
+
+      - run: bash ./build-scripts/requirements.sh
+
+      - uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: linux-clang-curses-${{ github.ref_name }}
+          restore-keys: |
+            linux-clang-curses-${{ github.ref_name }}
+            linux-clang-curses-
+          max-size: 2G
+
+      # The parent commit is built first in the same build directory, so that ccache and ninja reuse work.
+      # ../parent only provides data/ as working directory for the parent binary.
+      - name: build
+        run: |
+          if git cat-file -e HEAD^:tests/activity_skip_wait_timing_test.cpp; then
+            git worktree add --detach ../parent HEAD^
+            git checkout --detach HEAD^
+            cmake --preset ci-curses -DUSE_PREFIX_DATA_DIR=OFF -DCATA_FORMAT_TARGETS=OFF
+            cmake --build build --target cata_test -j 4
+            cp build/tests/cata_test build/tests/cata_test.parent
+            git checkout --detach "$GITHUB_SHA"
+          fi
+          cmake --preset ci-curses -DUSE_PREFIX_DATA_DIR=OFF -DCATA_FORMAT_TARGETS=OFF
+          cmake --build build --target cata_test -j 4
+
+      - name: machine
+        run: |
+          nproc
+          lscpu | sed -n 1,20p
+
+      # Wait 600 minutes in the field and town scenes. TIME_ACTION_SCALE=S runs 100/S calendar turns per tick.
+      # Runs are sequential: two test processes in one directory lock the world database.
+      # The parent and HEAD binaries run in the same job, so their timings compare on the same CPU.
+      - name: tick sweep
+        run: |
+          export PROFILE_WAIT_MINUTES=600
+          revs="head"
+          expected=36
+          if [ -x build/tests/cata_test.parent ]; then revs="parent head"; expected=72; fi
+          # One invocation normally takes 10 to 30 s. A hung one is traced with gdb, killed with SIGKILL
+          # (Catch2 handles SIGTERM) and retried, at most 3 tries.
+          run_wait() {
+            local r=$1 v=$2 rev=$3 try pid status
+            echo "round=$r scale=$v rev=$rev"
+            for try in 1 2 3; do
+              if [ "$rev" = parent ]; then
+                (cd ../parent && PROFILE_OPTS="TIME_ACTION_SCALE=$v" exec "$GITHUB_WORKSPACE/build/tests/cata_test.parent" -w NoTests --rng-seed $r "activity skip wait timing") > run.log 2>&1 &
+              else
+                PROFILE_OPTS="TIME_ACTION_SCALE=$v" ./build/tests/cata_test -w NoTests --rng-seed $r "activity skip wait timing" > run.log 2>&1 &
+              fi
+              pid=$!
+              timeout 180 tail --pid=$pid -f /dev/null || true
+              if kill -0 $pid 2> /dev/null; then
+                sudo timeout -k 10 120 gdb -p $pid -batch -ex 'thread apply all bt 40' > "hang-r${r}-s${v}-${rev}-try${try}.txt" 2>&1 || true
+                head -n 120 "hang-r${r}-s${v}-${rev}-try${try}.txt" >&2
+                kill -KILL $pid 2> /dev/null || true
+                wait $pid || true
+                echo "round=$r scale=$v rev=$rev exit=hang try=$try"
+                continue
+              fi
+              status=0
+              wait $pid || status=$?
+              sed -n '/PROFILE wait/p;/died/p;/FAILED/p' run.log
+              if [ "$status" -ne 0 ]; then
+                echo "round=$r scale=$v rev=$rev exit=$status"
+                tail -n 30 run.log >&2
+              fi
+              return
+            done
+          }
+          for r in 1 2 3 4 5 6 7 8 9; do for v in 100 10; do for rev in $revs; do
+            run_wait $r $v $rev
+          done; done; done | tee sweep.txt
+          test "$(sed -n "/PROFILE wait/p" sweep.txt | wc -l)" -ge "$((expected - 8))"
+
+      - name: summary
+        run: |
+          awk '
+            /^round=.* rev=/ && !/exit=/ { for (i = 1; i <= NF; i++) { split($i, kv, "="); if (kv[1] == "scale") scale = kv[2]; if (kv[1] == "rev") rev = kv[2] } }
+            /PROFILE wait/ { for (i = 1; i <= NF; i++) { split($i, kv, "="); if (kv[1] == "scene") scene = kv[2]; if (kv[1] == "per_turn_ms") ms = kv[2] }
+              k = rev " " scene " " scale; n[k]++; v[k, n[k]] = ms }
+            END { for (k in n) { m = n[k]
+                for (i = 1; i <= m; i++) a[i] = v[k, i] + 0
+                for (i = 2; i <= m; i++) { x = a[i]; for (j = i - 1; j >= 1 && a[j] > x; j--) a[j + 1] = a[j]; a[j + 1] = x }
+                med = m % 2 ? a[(m + 1) / 2] : (a[m / 2] + a[m / 2 + 1]) / 2
+                split(k, p, " "); printf "rev=%s scene=%s scale=%s n=%d median_ms=%.4f min_ms=%.4f\n", p[1], p[2], p[3], m, med, a[1] } }
+          ' sweep.txt | sort | tee summary.txt
+          { echo '```'; cat summary.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
+      # Instruction counts inside the activity skip loop only; inclusive shares per function.
+      - name: callgrind
+        continue-on-error: true
+        run: |
+          export PROFILE_WAIT_MINUTES=60
+          for sc in field town; do
+            PROFILE_WAIT_SCENE=$sc timeout 80m valgrind --tool=callgrind --collect-atstart=no \
+              --toggle-collect='*execute_activity_fixed_window_skip*' \
+              --callgrind-out-file=callgrind.$sc.out \
+              ./build/tests/cata_test -w NoTests "activity skip wait timing" > callgrind.$sc.log 2>&1 || true
+          done
+          for sc in field town; do
+            sed -n '/PROFILE wait/p;/FAILED/p' callgrind.$sc.log
+            callgrind_annotate --inclusive=yes --threshold=99 callgrind.$sc.out | cut -c1-220 | head -400 | tee annotate.$sc.txt
+          done
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bench-wait-${{ github.sha }}
+          path: |
+            sweep.txt
+            hang-*.txt
+            annotate.*.txt
+            callgrind.*.log
+            callgrind.*.out
