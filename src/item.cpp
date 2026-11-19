@@ -455,8 +455,7 @@ item::item( const item &source ) : game_object<item>( source ), contents( this )
     mission_id = source.mission_id;
     player_id = source.player_id;
     encumbrance_update_ = source.encumbrance_update_;
-    rot = source.rot;
-    last_rot_check = source.last_rot_check;
+    copy_rot_from( source );
     bday = source.bday;
     owner = source.owner;
     old_owner = source.old_owner;
@@ -507,8 +506,7 @@ item &item::operator=( const item &source )
     mission_id = source.mission_id;
     player_id = source.player_id;
     encumbrance_update_ = source.encumbrance_update_;
-    rot = source.rot;
-    last_rot_check = source.last_rot_check;
+    copy_rot_from( source );
     bday = source.bday;
     owner = source.owner;
     old_owner = source.old_owner;
@@ -783,6 +781,14 @@ auto item::vehicle_storage_temperature() const -> std::optional<temperature_flag
 
 auto item::prepare_for_location_removal() -> void
 {
+    // The item now has its own location, so drop the state of the stack it came from.
+    if( has_position() ) {
+        borrowed_rot_state = component_rot_state::none;
+    }
+    if( component_rot_status() == component_rot_state::snapshot ) {
+        restart_rot_after_snapshot();
+        return;
+    }
     if( is_in_preserving_container() ) {
         mark_rot_checked_now();
         return;
@@ -898,6 +904,7 @@ bool item::attempt_split( int qty,
                                    vehicle_loc != nullptr ? vehicle_loc->storage_temperature() :
                                    rot::temp::for_location( get_map(), *this );
     detached_ptr<item> det = unsafe_split( qty );
+    const auto borrowed_rot = scoped_component_rot( det.get(), component_rot_status() );
     if( det && split_from_preserving_container ) {
         det->mark_rot_checked_now();
     }
@@ -906,7 +913,8 @@ bool item::attempt_split( int qty,
     }
     if( !det ) {
         if( charges == 0 && has_position() ) {
-            detach().release();
+            // The split charge rotted away and the stack is empty, so delete it.
+            detach();
         }
         return false;
     }
@@ -1383,7 +1391,7 @@ static std::string get_freshness_description( const item &food_item,
     avatar &you = get_avatar();
     const auto real_time_left = food_item.is_in_preserving_container()
                                 ? calendar::INDEFINITELY_LONG_DURATION
-                                : rot::time_to_rot( time_left, food_item.rot_temperature( temperature ) );
+                                : rot::time_to_rot( to_turns<int64_t>( time_left ), food_item.rot_temperature( temperature ) );
     if( real_time_left < calendar::INDEFINITELY_LONG_DURATION ) {
         time_left = real_time_left;
     } else if( you.can_estimate_rot() ) {
@@ -6481,41 +6489,6 @@ int item::get_comestible_fun() const
     return static_cast<int>( get_var( "comestible_fun", static_cast<double>( fun ) ) );
 }
 
-namespace
-{
-
-auto temperature_flag_to_highest_temperature( temperature_flag temperature ) -> units::temperature
-{
-    switch( temperature ) {
-        case temperature_flag::TEMP_NORMAL:
-        case temperature_flag::TEMP_HEATER:
-            return units::temperature_max;
-        case temperature_flag::TEMP_FRIDGE:
-            return temperatures::fridge;
-        case temperature_flag::TEMP_FREEZER:
-            return temperatures::freezer;
-        case temperature_flag::TEMP_ROOT_CELLAR:
-            return temperatures::root_cellar;
-    }
-
-    return units::temperature_max;
-}
-
-} // namespace
-
-time_duration item::minimum_freshness_duration( temperature_flag temperature ) const
-{
-    if( is_in_preserving_container() ) {
-        return calendar::INDEFINITELY_LONG_DURATION;
-    }
-    if( !type->comestible ) {
-        return calendar::INDEFINITELY_LONG_DURATION;
-    }
-    const auto t = rot::time_to_rot( type->comestible->spoils - rot,
-                                     temperature_flag_to_highest_temperature( temperature ) );
-    return t < calendar::INDEFINITELY_LONG_DURATION ? scale_by_rot_rate( t ) : t;
-}
-
 units::volume item::get_storage() const
 {
     const islot_armor *armor = find_armor_data();
@@ -9936,6 +9909,9 @@ auto item::actualize_rot( detached_ptr<item> &&self,
             debugmsg( "actualize_rot: skipping item with %s type at %s",
                       self->type ? "null-type" : "null", context.position.to_string() );
         }
+        return std::move( self );
+    }
+    if( self->component_rot_status() == component_rot_state::snapshot ) {
         return std::move( self );
     }
     if( self->goes_bad() ) {
