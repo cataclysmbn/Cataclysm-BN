@@ -58,6 +58,7 @@
 #include "trap.h"
 #include "units.h"
 #include "utils/algo.h"
+#include "utils/scaled_by.h"
 #include "value_ptr.h"
 #include "vehicle/veh_type.h"
 #include "vehicle/vehicle.h"
@@ -1023,7 +1024,11 @@ static bool vehicle_activity( player &p, const tripoint_bub_ms &src_loc, int vpi
     const vpart_info &vp = veh->part_info( vpindex );
     if( type == 'r' ) {
         const vehicle_part &part = veh->part( vpindex );
-        time_to_take = vp.repair_time( p ) * part.damage() / part.max_damage();
+        time_to_take = utils::scaled_by( {
+            .total = vp.repair_time( p ),
+            .cur = part.damage(),
+            .max = part.max_damage(),
+        } );
     } else if( type == 'o' ) {
         time_to_take = vp.removal_time( p );
     }
