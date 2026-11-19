@@ -884,6 +884,43 @@ TEST_CASE("craft catch-up uses activity progress scale", "[crafting][speed]") {
     CHECK(craft_item->get_counter() == expected_counter);
 }
 
+TEST_CASE(
+    "craft gets no catch-up progress for the turns of the current tick", "[crafting][speed]") {
+    clear_all_state();
+    static const auto test_recipe = recipe_id("nodachi");
+
+    auto& dummy = get_avatar();
+    clear_avatar();
+    set_time(midday);
+    dummy.set_mutation(trait_DEBUG_HS);
+    dummy.set_body();
+    dummy.set_mutation(trait_DEBUG_STORAGE);
+    dummy.i_add(item::spawn(itype_id("atomic_lamp")));
+    REQUIRE(character_funcs::can_see_fine_details(dummy));
+
+    auto command = craft_command(&*test_recipe, 1, false, &dummy);
+    auto* craft_item = dummy.start_craft(command, dummy.bub_pos());
+    REQUIRE(craft_item);
+    REQUIRE(dummy.activity);
+
+    // One 1-turn tick of crafting, as in game::do_turn: the turn advances, then the activity acts.
+    // game::reload_npcs recalculates all moves early in a tick, before the activity acts.
+    const auto craft_one_turn = [&](const bool reload) {
+        calendar::turn += 1_turns;
+        const auto before = craft_item->get_counter();
+        if (reload) { dummy.activity->init_all_moves(dummy); }
+        dummy.set_moves(100);
+        dummy.activity->do_turn(dummy);
+        return craft_item->get_counter() - before;
+    };
+    craft_one_turn(false);
+    const auto plain_turn = craft_one_turn(false);
+    const auto reload_turn = craft_one_turn(true);
+    REQUIRE(plain_turn > 0);
+    // Expected: the same progress. Catch-up for the current turn would add one more turn of it.
+    CHECK(std::abs(reload_turn - plain_turn) <= 1);
+}
+
 TEST_CASE("craft progress uses activity scale", "[crafting][speed]") {
     clear_all_state();
     const auto global_scale = override_option("TIME_ACTION_SCALE", "50");
