@@ -87,6 +87,42 @@ TEST_CASE(
     CHECK(exact.effect_durations.at("happy:num_bp") == coarse.effect_durations.at("happy:num_bp"));
 }
 
+TEST_CASE(
+    "waiting in cold or rain gives the same body state at TIME_ACTION_SCALE 100 and 10",
+    "[activity][fixed_window][speed]") {
+    const auto skip_options = skip_window_options{};
+    const auto wait_in =
+        [](const int scale, const weather_type_id& weather, const units::temperature temperature) {
+            const auto action_scale = override_option("TIME_ACTION_SCALE", std::to_string(scale));
+            setup_wait_scene(wait_scene::field);
+            hold_weather(weather, temperature);
+            rng_set_engine_seed(1);
+            const auto state = wait_through_activity(1_hours);
+            INFO(state.error_or(""));
+            REQUIRE(state.has_value());
+            return *state;
+        };
+    // Body temperature converges and rain wets once per call, so a 10-turn tick needs 10 calls.
+    const auto check_same_body =
+        [&](const weather_type_id& weather, const units::temperature temperature) {
+            const auto exact = wait_in(100, weather, temperature);
+            const auto coarse = wait_in(10, weather, temperature);
+            INFO("scale 100: " << describe(exact));
+            INFO("scale 10: " << describe(coarse));
+            REQUIRE(coarse.tick_turns == 10);
+            CHECK(std::abs(exact.morale - coarse.morale) <= 1);
+            for (const auto& [bp, body_temperature] : exact.body_temperature) {
+                CAPTURE(bp.str());
+                CHECK(std::abs(units::to_millidegree_celsius(body_temperature)
+                               - units::to_millidegree_celsius(coarse.body_temperature.at(bp)))
+                      <= 50);
+            }
+        };
+
+    SECTION("cold") { check_same_body(weather_type_id("clear"), -10_c); }
+    SECTION("rain") { check_same_body(weather_type_id("rain"), 10_c); }
+}
+
 TEST_CASE("waiting with a dead avatar returns an error", "[activity][fixed_window]") {
     // A dead avatar made the next do_turn open the last words prompt, which never returns in a
     // test. The helper must return an error before it calls do_turn: set head and torso HP to 0,
