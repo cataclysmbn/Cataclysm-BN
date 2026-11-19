@@ -2253,8 +2253,21 @@ void monster::process_triggers()
     } );
 
     process_trigger( mon_trigger::FIRE, [this]() {
+        const auto area = g->m.points_in_radius( bub_pos(), 3 );
+        // A submap with field_count == 0 holds no field. The 7x7 area is smaller than a submap,
+        // so the submaps at its four corners are all the submaps it touches.
+        const auto has_fields = [&area]( const int x, const int y ) {
+            const auto *sm = g->m.get_submap_at( tripoint_bub_ms( x, y, area.min().z() ) );
+            return sm != nullptr && sm->field_count > 0;
+        };
+        if( !has_fields( area.min().x(), area.min().y() ) &&
+            !has_fields( area.max().x(), area.min().y() ) &&
+            !has_fields( area.min().x(), area.max().y() ) &&
+            !has_fields( area.max().x(), area.max().y() ) ) {
+            return 0;
+        }
         int ret = 0;
-        for( const auto &p : g->m.points_in_radius( bub_pos(), 3 ) ) {
+        for( const auto &p : area ) {
             ret += 5 * g->m.get_field_intensity( p, fd_fire );
         }
         return ret;
