@@ -3006,12 +3006,17 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
         explosion_handler::get_explosion_queue().execute();
         cleanup_dead();
 
-        if( get_levz() >= 0 && !u.is_underwater() ) {
-            handle_weather_effects( weather.weather_id, false );
-        }
-        u.update_bodytemp( m, weather );
-        character_funcs::update_body_wetness( u, get_weather().get_precise() );
-        u.apply_wetness_morale( weather.temperature );
+        // These step, roll or converge once per call, so a multi-turn tick calls them per turn.
+        action_time_scale::for_each_calendar_turn_this_tick( [&] {
+            if( get_levz() >= 0 && !u.is_underwater() )
+            {
+                handle_weather_effects( weather.weather_id, false );
+            }
+            u.update_bodytemp( m, weather );
+            character_funcs::update_body_wetness( u, get_weather().get_precise() );
+            u.apply_wetness_morale( weather.temperature );
+            return true;
+        } );
         u.volume = 0;
 
         if( !activity_continues || ( !u.in_sleep_state() && u.activity->complete() ) ) {
