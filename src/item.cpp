@@ -379,7 +379,7 @@ static const item *get_most_rotten_component( const item &craft )
 {
     const item *most_rotten = nullptr;
     for( const item * const &it : craft.get_components() ) {
-        if( it->goes_bad() ) {
+        if( it->get_shelf_life() > 0_turns ) {
             if( !most_rotten || it->get_relative_rot() > most_rotten->get_relative_rot() ) {
                 most_rotten = it;
             }

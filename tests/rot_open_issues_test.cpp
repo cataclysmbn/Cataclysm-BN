@@ -110,7 +110,7 @@ auto finish_recipe(const recipe_id& id, std::vector<detached_ptr<item>> ingredie
 
 TEST_CASE(
     "Smoking rack and mill output is not made of rotten food",
-    "[rot][open_issue][smoking][issue_10689][issue_1499][!mayfail]") {
+    "[rot][open_issue][smoking][issue_10689][issue_1499]") {
     const auto state = rot_test_state(1_hours);
     const auto start = calendar::turn;
     auto& here = get_map();
@@ -150,7 +150,7 @@ TEST_CASE(
 
 TEST_CASE(
     "Preserved food recipes do not list rotten ingredients",
-    "[rot][open_issue][crafting][issue_10757][!mayfail]") {
+    "[rot][open_issue][crafting][issue_10757]") {
     const auto state = rot_test_state(1_hours);
     const auto recipes = restore_on_out_of_scope(
         const_cast<recipe_subset&>(get_avatar().get_learned_recipes()));
@@ -182,7 +182,7 @@ TEST_CASE(
 
 TEST_CASE(
     "A nonperishable ingredient is never listed as rotten",
-    "[rot][open_issue][ingredients][issue_10757][!mayfail]") {
+    "[rot][open_issue][ingredients][issue_10757]") {
     const auto state = rot_test_state(1_hours);
     const auto start = calendar::turn;
     const auto ids = nonperishable_ids();
