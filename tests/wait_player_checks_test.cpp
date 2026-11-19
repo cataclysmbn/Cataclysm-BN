@@ -9,6 +9,7 @@
 #include "map/map.h"
 #include "player_activity.h"
 #include "state_helpers.h"
+#include "trap.h"
 #include "weather/weather.h"
 
 namespace {
@@ -72,5 +73,18 @@ TEST_CASE("wait_feeds_a_fire_that_starts_mid_wait", "[activity][fire]") {
     wait_one_turn();
     CHECK(planks_at(pile) == 2);
     CHECK(planks_at(fire) == 1);
+    clear_all_state();
+}
+
+// Checks that a new trap ends the skip of the trap search: the avatar spots a tr_pit (visibility 0)
+// set 2 tiles away mid-wait on the next turn, as 8 perception spots it on every roll.
+TEST_CASE("wait_spots_a_trap_that_appears_mid_wait", "[activity][trap]") {
+    const auto trap_pos = start_wait() + point(2, 0);
+    for (auto i = 0; i < 3; ++i) { wait_one_turn(); }
+    CHECK_FALSE(g->u.knows_trap(trap_pos));
+
+    g->m.trap_set(trap_pos, tr_pit);
+    wait_one_turn();
+    CHECK(g->u.knows_trap(trap_pos));
     clear_all_state();
 }
