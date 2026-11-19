@@ -79,8 +79,10 @@
 #include "recipe.h"
 #include "recipe_dictionary.h"
 #include "relic.h"
+#include "relicgen.h"
 #include "requirements.h"
 #include "rng.h"
+#include "safe_reference.h"
 #include "scenario.h"
 #include "skill.h"
 #include "stats_tracker.h"
@@ -2715,9 +2717,17 @@ void item::io( Archive &archive )
 {
 
     itype_id orig; // original ID as loaded from JSON
+    bool load_relicdata = true;
     const auto load_type = [&]( const std::string & id ) {
         orig = itype_id( id );
-        convert( item_controller->migrate_id( orig ) );
+        if( !orig.is_valid() && orig.str().starts_with( "artifact_" ) ) {
+            detached_ptr<item> ref = relicgen_id( "default" )->generate_relic();
+            relic_data = ref->relic_data;
+            convert( ref->typeId() );
+            load_relicdata = false;
+        } else {
+            convert( item_controller->migrate_id( orig ) );
+        }
     };
 
     const auto load_curammo = [this]( const std::string & id ) {
@@ -2808,7 +2818,9 @@ void item::io( Archive &archive )
     archive.io( "light_dir", light.direction, nolight.direction );
 
     static const cata::value_ptr<relic> null_relic_ptr = nullptr;
-    archive.io( "relic_data", relic_data, null_relic_ptr );
+    if( load_relicdata ) {
+        archive.io( "relic_data", relic_data, null_relic_ptr );
+    }
 
     if constexpr( Archive::is_input::value ) {
         auto dim = dimension_info{};

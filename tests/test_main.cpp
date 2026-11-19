@@ -227,7 +227,7 @@ static void init_global_game_state(
     calendar::set_season_length(get_option<int>("SEASON_LENGTH"));
 
     loading_ui ui(false);
-    init::load_world_modfiles(ui, g->get_active_world(), SAVE_ARTIFACTS);
+    init::load_world_modfiles(ui, g->get_active_world());
 
     g->u = avatar();
     g->u.create(character_type::NOW);

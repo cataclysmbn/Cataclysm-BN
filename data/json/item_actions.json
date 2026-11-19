@@ -576,6 +576,11 @@
   },
   {
     "type": "item_action",
+    "id": "RELIC",
+    "name": { "str": "Use" }
+  },
+  {
+    "type": "item_action",
     "id": "RPGDIE",
     "name": { "str": "Roll die" }
   },

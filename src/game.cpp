@@ -701,7 +701,7 @@ void game::setup( bool load_world_modfiles )
     } );
 
     if( load_world_modfiles ) {
-        init::load_world_modfiles( ui, get_active_world(), SAVE_ARTIFACTS );
+        init::load_world_modfiles( ui, get_active_world() );
     }
 
     init_bubble_config();
@@ -1653,8 +1653,6 @@ bool game::cleanup_at_end()
         // Save the factions', missions and set the NPC's overmap coordinates
         // Npcs are saved in the overmap.
         save_factions_missions_npcs(); //missions need to be saved as they are global for all saves.
-        // save artifacts.
-        save_artifacts();
 
         // and the overmap, and the local map.
         save_maps(); //Omap also contains the npcs who need to be saved.
@@ -4370,11 +4368,6 @@ bool game::save_dimension_data()
     }, _( "dimension data" ) );
 }
 
-bool game::save_artifacts()
-{
-    return ::save_artifacts( get_active_world(), SAVE_ARTIFACTS );
-}
-
 bool game::save_maps()
 {
     try {
@@ -4467,7 +4460,6 @@ bool game::save( bool quitting )
         cata::run_on_game_save_hooks( *DynamicDataLoader::get_instance().lua );
         reset_save_ids( time( nullptr ), quitting );
         if( !save_factions_missions_npcs() ||
-            !save_artifacts() ||
             !save_maps() ||
             !save_player_data() ||
             !get_auto_pickup().save_character() ||

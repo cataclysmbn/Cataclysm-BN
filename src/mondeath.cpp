@@ -614,7 +614,7 @@ void mdeath::amigara( monster &z )
         add_msg( _( "Your obsession with the fault fades away…" ) );
     }
 
-    g->m.spawn_artifact( z.bub_pos() );
+    g->m.spawn_artifact( z.bub_pos(), relicgen_id( "default" ) );
 }
 
 void mdeath::thing( monster &z )

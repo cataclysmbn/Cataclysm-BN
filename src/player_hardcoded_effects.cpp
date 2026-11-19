@@ -111,6 +111,7 @@ static const trait_id trait_SCHIZOPHRENIC( "SCHIZOPHRENIC" );
 static const trait_id trait_THRESH_MYCUS( "THRESH_MYCUS" );
 static const trait_id trait_WATERSLEEP( "WATERSLEEP" );
 
+static const enchantment_flag_id ench_flag_EVIL( "EVIL" );
 static const enchantment_flag_id ench_flag_INTERNAL_ALARMCLOCK( "INTERNAL_ALARMCLOCK" );
 static const enchantment_flag_id ench_flag_SLEEP_SIGHT( "SLEEP_SIGHT" );
 static const enchantment_flag_id ench_flag_NO_LIGHT_WAKE( "NO_LIGHT_WAKE" );
@@ -585,7 +586,8 @@ void Character::hardcoded_effects( effect &it )
     } else if( id == effect_evil ) {
         // Worn or wielded; diminished effects
         bool lesserEvil = primary_weapon().has_effect_when_wielded( AEP_EVIL ) ||
-                          primary_weapon().has_effect_when_carried( AEP_EVIL );
+                          primary_weapon().has_effect_when_carried( AEP_EVIL ) ||
+                          has_enchantment_flag( ench_flag_EVIL );
         for( auto &w : worn ) {
             if( w->has_effect_when_worn( AEP_EVIL ) ) {
                 lesserEvil = true;
