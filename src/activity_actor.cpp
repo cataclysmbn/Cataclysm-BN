@@ -2215,10 +2215,12 @@ void craft_activity_actor::calc_all_moves( player_activity &act, Character &who 
 
     // Catch-up: apply time elapsed while NPC was outside the reality bubble.
     // last_turn_nr >= 0 means start() already ran in a previous session.
-    if( last_turn_nr >= 0 && current_turn > last_turn_nr ) {
+    // The turns of this tick are not elapsed time: do_turn adds their progress from moves.
+    const auto elapsed_turns = current_turn - last_turn_nr -
+                               action_time_scale::calendar_turns_this_tick();
+    if( last_turn_nr >= 0 && elapsed_turns > 0 ) {
         item *craft_item = find_in_progress_craft( act, who );
         if( craft_item ) {
-            const int elapsed_turns = current_turn - last_turn_nr;
             const double base_total_moves = std::max( 1, rec->batch_time( batch_size, 1.0f, 0 ) );
             // No live crafting modifiers are applied while outside the reality bubble.
             const auto moves_elapsed = action_time_scale::activity_progress_for_turns( elapsed_turns );
