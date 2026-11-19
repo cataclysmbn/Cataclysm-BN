@@ -398,6 +398,8 @@ def extract_effect_type(state, item):
 
 
 def extract_gun(state, item):
+    if "use_action" in item:
+        extract_use_action_msgs(state, item["use_action"], item.get("name"))
     if "name" in item:
         item_name = item.get("name")
         if item["type"] in needs_plural:
@@ -424,6 +426,8 @@ def extract_gun(state, item):
 
 
 def extract_gunmod(state, item):
+    if "use_action" in item:
+        extract_use_action_msgs(state, item["use_action"], item.get("name"))
     if "name" in item:
         item_name = item.get("name")
         if item["type"] in needs_plural:
