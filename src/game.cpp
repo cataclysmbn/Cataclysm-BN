@@ -2094,6 +2094,29 @@ auto game::reset_activity_fixed_window() -> void
     time_action_scale_turn_remainder = 0;
 }
 
+namespace
+{
+
+/// Applies weather to the avatar and updates its body temperature and wetness once per calendar
+/// turn of the tick. Each call steps, rolls or converges once, so a 10-turn tick needs 10 calls.
+auto update_weather_and_body( const bool decay_fields ) -> void
+{
+    auto &weather = get_weather();
+    auto &you = get_avatar();
+    action_time_scale::for_each_calendar_turn_this_tick( [&] {
+        if( g->get_levz() >= 0 && !you.is_underwater() )
+        {
+            handle_weather_effects( weather.weather_id, decay_fields );
+        }
+        you.update_bodytemp( get_map(), weather );
+        character_funcs::update_body_wetness( you, weather.get_precise() );
+        you.apply_wetness_morale( weather.temperature );
+        return true;
+    } );
+}
+
+} // namespace
+
 // MAIN GAME LOOP
 // Returns true if game is over (death, saved, quit, etc)
 bool game::do_turn()
@@ -2477,21 +2500,14 @@ bool game::do_turn()
         refresh_display();
     }
 
-    if( get_levz() >= 0 && !u.is_underwater() ) {
-        ZoneScopedN( "do_turn_weather_effects" );
-        handle_weather_effects( weather.weather_id );
+    {
+        ZoneScopedN( "do_turn_weather_bodytemp_wetness" );
+        update_weather_and_body( true );
     }
 
     {
         ZoneScopedN( "do_turn_wait_activity_redraw" );
         handle_wait_activity_redraw();
-    }
-
-    {
-        ZoneScopedN( "do_turn_bodytemp_wetness" );
-        u.update_bodytemp( m, weather );
-        character_funcs::update_body_wetness( u, get_weather().get_precise() );
-        u.apply_wetness_morale( weather.temperature );
     }
 
     if( !u.is_deaf() ) {
@@ -3009,12 +3025,7 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
         explosion_handler::get_explosion_queue().execute();
         cleanup_dead();
 
-        if( get_levz() >= 0 && !u.is_underwater() ) {
-            handle_weather_effects( weather.weather_id, false );
-        }
-        u.update_bodytemp( m, weather );
-        character_funcs::update_body_wetness( u, get_weather().get_precise() );
-        u.apply_wetness_morale( weather.temperature );
+        update_weather_and_body( false );
         u.volume = 0;
 
         if( !activity_continues || ( !u.in_sleep_state() && u.activity->complete() ) ) {
