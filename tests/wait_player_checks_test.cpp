@@ -7,8 +7,11 @@
 #include "item.h"
 #include "map/field_type.h"
 #include "map/map.h"
+#include "map/mapdata.h"
+#include "map/submap.h"
 #include "player_activity.h"
 #include "state_helpers.h"
+#include "trap.h"
 #include "weather/weather.h"
 
 namespace {
@@ -75,5 +78,40 @@ TEST_CASE("wait_feeds_a_fire_that_starts_mid_wait", "[activity][fire]") {
     wait_one_turn();
     CHECK(planks_at(pile) == 2);
     CHECK(planks_at(fire) == 1);
+    clear_all_state();
+}
+
+// Checks that a wait spots a trap that appears mid-wait in the search radius on the next turn.
+// The wait skips the trap search while no trap is in the radius, so a new trap must end the skip.
+// tr_pit has visibility 0, so an avatar with 8 perception spots it 2 tiles away on every roll.
+TEST_CASE("wait_spots_a_trap_that_appears_mid_wait", "[activity][trap]") {
+    const auto pos = start_wait();
+
+    SECTION("trap set with trap_set") {
+        const auto trap_pos = pos + point(2, 0);
+        for (auto i = 0; i < 3; ++i) { wait_one_turn(); }
+        CHECK_FALSE(g->u.knows_trap(trap_pos));
+
+        g->m.trap_set(trap_pos, tr_pit);
+        wait_one_turn();
+        CHECK(g->u.knows_trap(trap_pos));
+    }
+
+    SECTION("terrain trap from a whole-submap terrain fill") {
+        // Mapgen fills uniform submaps with set_all_ter, for example open air with tr_ledge.
+        // The avatar stands on a submap corner, so the tile to the west is on another submap.
+        const auto trap_pos = pos + point_west;
+        wait_one_turn();
+        CHECK_FALSE(g->u.knows_trap(trap_pos));
+
+        submap* sm = g->m.get_submap_at(trap_pos);
+        REQUIRE(sm != nullptr);
+        REQUIRE(sm != g->m.get_submap_at(pos));
+        sm->set_all_ter(ter_str_id("t_pit").id());
+        g->m.invalidate_map_cache(pos.z());
+        g->m.build_map_cache(pos.z(), true);
+        wait_one_turn();
+        CHECK(g->u.knows_trap(trap_pos));
+    }
     clear_all_state();
 }
