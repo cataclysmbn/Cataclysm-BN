@@ -29,6 +29,7 @@
 #include "craft_command.h"
 #include "creature.h"
 #include "damage.h"
+#include "digital_media.h"
 #include "debug.h"
 #include "detached_ptr.h"
 #include "disease.h"
@@ -87,11 +88,13 @@
 #include "scent_map.h"
 #include "skill.h"
 #include "skill_boost.h"
+#include "sol/sol.hpp"
 #include "sounds.h"
 #include "stomach.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "string_utils.h"
+#include "takeoff_cost.h"
 #include "text_snippets.h"
 #include "thread_pool.h"
 #include "translations.h"
@@ -127,6 +130,8 @@
 #include <vector>
 
 using character_funcs::base_comfort_value;
+
+using char_item_filter_fn = std::function<bool( const item & )>;
 
 struct dealt_projectile_attack;
 
@@ -278,8 +283,8 @@ static const bionic_id bio_faraday( "bio_faraday" );
 static const bionic_id bio_flashlight( "bio_flashlight" );
 static const bionic_id bio_gills( "bio_gills" );
 static const bionic_id bio_ground_sonar( "bio_ground_sonar" );
+static const bionic_id bio_heat_absorb( "bio_heat_absorb" );
 static const bionic_id bio_heatsink( "bio_heatsink" );
-static const bionic_id bio_infrared( "bio_infrared" );
 static const bionic_id bio_jointservo( "bio_jointservo" );
 static const bionic_id bio_laser( "bio_laser" );
 static const bionic_id bio_leukocyte( "bio_leukocyte" );
@@ -287,17 +292,14 @@ static const bionic_id bio_lighter( "bio_lighter" );
 static const bionic_id bio_membrane( "bio_membrane" );
 static const bionic_id bio_memory( "bio_memory" );
 static const bionic_id bio_night_vision( "bio_night_vision" );
-static const bionic_id bio_ods( "bio_ods" );
 static const bionic_id bio_railgun( "bio_railgun" );
 static const bionic_id bio_recycler( "bio_recycler" );
+static const bionic_id bio_shock( "bio_shock" );
 static const bionic_id bio_shock_absorber( "bio_shock_absorber" );
 static const bionic_id bio_synaptic_regen( "bio_synaptic_regen" );
 static const bionic_id bio_tattoo_led( "bio_tattoo_led" );
 static const bionic_id bio_tools( "bio_tools" );
 static const bionic_id bio_ups( "bio_ups" );
-
-// Aftershock stuff!
-static const bionic_id afs_bio_linguistic_coprocessor( "afs_bio_linguistic_coprocessor" );
 
 static const trait_id trait_BARK( "BARK" );
 static const trait_id trait_BIRD_EYE( "BIRD_EYE" );
@@ -3604,6 +3606,37 @@ ret_val<bool> Character::can_wear( const item &it, bool with_equip_change ) cons
         }
     }
 
+    if( it.requires_slots() ) {
+        std::map<flag_id, int> remaining_required_slots = it.get_required_slots();
+        bool had_conflict = false;
+        for( auto &i : worn ) {
+            for( const auto &flag : remaining_required_slots | std::views::keys ) {
+                const std::map<flag_id, int> has_slots = i->get_provided_slots();
+                if( has_slots.contains( flag ) ) {
+                    remaining_required_slots[flag] -= has_slots.at( flag );
+                }
+                if( i->requires_slots() ) {
+                    const std::map<flag_id, int> &used_slots = i->get_required_slots();
+                    if( used_slots.contains( flag ) ) {
+                        remaining_required_slots[flag] += used_slots.at( flag );
+                        had_conflict = true;
+                    }
+                }
+            }
+        }
+        for( const auto &rem : remaining_required_slots | std::views::values ) {
+            if( rem > 0 ) {
+                if( had_conflict ) {
+                    return ret_val<bool>::make_failure(
+                               _( "Can't wear more mounted armor pieces then compatible mount spots!" ) );
+                } else {
+                    return ret_val<bool>::make_failure(
+                               _( "Can't wear mounted armor pieces without a compatible mount!" ) );
+                }
+            }
+        }
+    }
+
     if( amount_worn( it.typeId() ) >= MAX_WORN_PER_TYPE ) {
         return ret_val<bool>::make_failure( _( "Can't wear %i or more %s at once." ),
                                             MAX_WORN_PER_TYPE + 1, it.tname( MAX_WORN_PER_TYPE + 1 ) );
@@ -3711,9 +3744,15 @@ ret_val<bool> Character::can_takeoff( const item &it, bool dropping ) const
         }
     }
     if( dropping && !get_dependent_worn_items( it ).empty() ) {
-        return ret_val<bool>::make_failure( !is_npc() ?
-                                            _( "You can't take off power armor while wearing other power armor components." ) :
-                                            _( "<npcname> can't take off power armor while wearing other power armor components." ) );
+        if( it.has_flag( flag_POWERARMOR_EXO ) ) {
+            return ret_val<bool>::make_failure( !is_npc() ?
+                                                _( "You can't take off power armor while wearing other power armor components." ) :
+                                                _( "<npcname> can't take off power armor while wearing other power armor components." ) );
+        } else {
+            return ret_val<bool>::make_failure( !is_npc() ?
+                                                _( "You can't take off a plate carrier while wearing armor plates." ) :
+                                                _( "<npcname> can't take off a plate carrier while wearing armor plates." ) );
+        }
     }
     if( it.has_flag( flag_NO_TAKEOFF ) ) {
         return ret_val<bool>::make_failure( !is_npc() ?
@@ -3768,7 +3807,7 @@ bool Character::takeoff( item &it, std::vector<detached_ptr<item>> *res )
                            it.tname() );
 
     // TODO: Make this variable
-    mod_moves( -250 );
+    mod_moves( -takeoff_move_cost );
 
     recalc_sight_limits();
     reset_encumbrance();
@@ -7887,7 +7926,9 @@ float Character::rest_quality() const
         }
 
         // rest_quality() theoretically gets called every 5 minutes, so these messages should display once every 90 minutes on average
-        if( !activity->get_suppress_comfort() && !has_effect( effect_sleep ) && one_in( 18 ) ) {
+        // Additionally only print messages if we could actually benefit from healing OR if we're actually trying to sleep.
+        if( !activity->get_suppress_comfort() && !has_effect( effect_sleep ) &&
+            ( has_activity( ACT_TRY_SLEEP ) || hp_percentage() < 100 ) && one_in( 18 ) ) {
             if( comfort >= character_funcs::comfort_level::very_comfortable ) {
                 add_msg_if_player( _( "Resting here is very comfortable." ) );
             } else if( comfort >= character_funcs::comfort_level::comfortable ) {
@@ -8741,6 +8782,11 @@ bool Character::invoke_item( item *used, const std::string &method, const tripoi
         return false;
     }
 
+    if( is_digital_file( *actually_used ) && !digital_reader_for( *this, *actually_used ) ) {
+        add_msg_if_player( m_info, _( "You need to install this file on a powered reader first." ) );
+        return false;
+    }
+
     int charges_used = actually_used->type->invoke( *this->as_player(), *actually_used, pt, method );
     if( charges_used == 0 ) {
         return false;
@@ -9183,9 +9229,9 @@ void Character::shout( std::string msg, bool order )
             shout = "default";
         }
     } else {
-        add_msg_if_player( m_info, _( string_format( "You yell \"%s\"", msg ) ) );
-        msg = is_player() ? _( string_format( "yourself yell \"%s\"",
-                                              msg ) ) : _( string_format( "yell \"%s\"", msg ) );
+        add_msg_if_player( m_info, string_format( _( "You yell \"%s\"" ), msg ) );
+        msg = is_player() ? string_format( _( "yourself yell \"%s\"" ),
+                                           msg ) : string_format( _( "yell \"%s\"" ), msg );
     }
 
 
@@ -9407,13 +9453,13 @@ void Character::recalculate_enchantment_cache()
     visit_items( [&]( const item * it ) {
         for( const enchantment &ench : it->get_enchantments( true ) ) {
             if( ench.is_active( *this, *it ) ) {
-                enchantment_cache->force_add( ench );
+                enchantment_cache->force_add( ench, *this );
                 enchantment_sources.emplace_back( &ench, it );
             }
         }
         for( const enchantment &ench : it->get_enchantments( false ) ) {
             if( ench.is_active( *this, *it ) ) {
-                enchantment_cache->force_add( ench );
+                enchantment_cache->force_add( ench, *this );
                 enchantment_sources.emplace_back( &ench, it );
             }
         }
@@ -9427,13 +9473,13 @@ void Character::recalculate_enchantment_cache()
         for( const enchantment_id &ench_id : mut.enchantments ) {
             const enchantment &ench = ench_id.obj();
             if( ench.is_active( *this, mut.activated && mut_map.second.powered ) ) {
-                enchantment_cache->force_add( ench );
+                enchantment_cache->force_add( ench, *this );
                 enchantment_sources.emplace_back( &ench, &mut_map );
             }
         }
         for( const enchantment &ench : mut.mut_enchantments ) {
             if( ench.is_active( *this, mut.activated && mut_map.second.powered ) ) {
-                enchantment_cache->force_add( ench );
+                enchantment_cache->force_add( ench, *this );
                 enchantment_sources.emplace_back( &ench, &mut_map );
             }
         }
@@ -9446,14 +9492,14 @@ void Character::recalculate_enchantment_cache()
             const enchantment &ench = ench_id.obj();
             if( ench.is_active( *this, bio.powered &&
                                 bid->has_flag( STATIC( flag_id( "BIONIC_TOGGLED" ) ) ) ) ) {
-                enchantment_cache->force_add( ench );
+                enchantment_cache->force_add( ench, *this );
                 enchantment_sources.emplace_back( &ench, &bio );
             }
         }
         for( const enchantment &ench : bid->bio_enchantments ) {
             if( ench.is_active( *this, bio.powered &&
                                 bid->has_flag( STATIC( flag_id( "BIONIC_TOGGLED" ) ) ) ) ) {
-                enchantment_cache->force_add( ench );
+                enchantment_cache->force_add( ench, *this );
                 enchantment_sources.emplace_back( &ench, &bio );
             }
         }
@@ -9463,7 +9509,7 @@ void Character::recalculate_enchantment_cache()
         const effect &eff = eff_by_part.begin()->second;
         for( const enchantment &ench : eff.get_enchantments() ) {
             if( ench.is_active( *this, true ) ) {
-                enchantment_cache->force_add( ench );
+                enchantment_cache->force_add( ench, *this );
             }
         }
     }
@@ -9471,7 +9517,7 @@ void Character::recalculate_enchantment_cache()
     for( const auto &perk_id : get_perks() ) {
         for( const enchantment &ench : perk_id->get_enchantments() ) {
             if( ench.is_active( *this, true ) ) {
-                enchantment_cache->force_add( ench );
+                enchantment_cache->force_add( ench, *this );
             }
         }
     }
@@ -9944,22 +9990,37 @@ void Character::on_hit( Creature *source, bodypart_id bp_hit,
     }
 
     bool u_see = g->u.sees( *this );
-    units::energy trigger_cost_base = bio_ods->power_trigger;
-    if( has_active_bionic( bio_ods ) && get_power_level() >= trigger_cost_base * 4 ) {
+    units::energy trigger_cost = bio_shock->power_trigger;
+    if( has_active_bionic( bio_shock ) && get_power_level() >= bio_shock->power_trigger ) {
         if( is_player() ) {
-            add_msg( m_good, _( "Your offensive defense system shocks %s in mid-attack!" ),
+            add_msg( m_good, _( "Your electroshock unit shocks %s in mid-attack!" ),
                      source->disp_name() );
         } else if( u_see ) {
-            add_msg( _( "%1$s's offensive defense system shocks %2$s in mid-attack!" ),
+            add_msg( _( "%1$s's electroshock unit shocks %2$s in mid-attack!" ),
                      disp_name(),
                      source->disp_name() );
         }
-        int shock = rng( 1, 4 );
-        mod_power_level( -shock * trigger_cost_base );
-        damage_instance ods_shock_damage;
-        ods_shock_damage.add_damage( DT_ELECTRIC, shock * 5 );
+        mod_power_level( -bio_shock->power_trigger );
+        damage_instance bio_shock_damage;
+        bio_shock_damage.add_damage( DT_ELECTRIC, rng( 5, 10 ) );
         // Should hit body part used for attack
-        source->deal_damage( this, bodypart_id( "torso" ), ods_shock_damage );
+        source->deal_damage( this, bodypart_id( "torso" ), bio_shock_damage );
+    }
+    if( has_active_bionic( bio_heat_absorb ) && get_power_level() >= bio_heat_absorb->power_trigger &&
+        source->is_warm() ) {
+        if( is_player() ) {
+            add_msg( m_good, _( "You drain %s's body heat in mid-attack!" ),
+                     source->disp_name() );
+        } else if( u_see ) {
+            add_msg( _( "%1$s's drains %s's body heat in mid-attack!" ),
+                     disp_name(),
+                     source->disp_name() );
+        }
+        mod_power_level( bio_heat_absorb->power_trigger );
+        damage_instance bio_heat_absorb_damage;
+        bio_heat_absorb_damage.add_damage( DT_COLD, 3 );
+        // Should hit body part used for attack
+        source->deal_damage( this, bodypart_id( "torso" ), bio_heat_absorb_damage );
     }
     if( !wearing_something_on( bp_hit ) &&
         ( has_trait( trait_SPINES ) || has_trait( trait_QUILLS ) ) ) {
@@ -11394,6 +11455,28 @@ std::vector<item *> Character::all_items( bool need_charges ) const
     } );
 }
 
+auto Character::get_items_if( const std::vector<std::function<bool( const item & )>> &filters )
+const -> std::vector<item *>
+{
+    return items_with( [&filters]( const item & it ) {
+        return std::ranges::all_of( filters, [&it]( const auto & filter ) { return filter( it ); } );
+    } );
+}
+
+auto Character::remove_items_if( const std::vector<char_item_filter_fn> &filters ) ->
+std::vector<detached_ptr<item>>
+{
+    std::vector<detached_ptr<item>> removed;
+    remove_items_with( [&removed, &filters]( detached_ptr<item> &&it ) -> VisitResponse {
+        if( std::ranges::all_of( filters, [&it]( const auto & filter ) { return filter( *it ); } ) )
+        {
+            removed.push_back( std::move( it ) );
+        }
+        return VisitResponse::NEXT;
+    } );
+    return removed;
+}
+
 bool Character::has_charges( const itype_id &it, int quantity,
                              const std::function<bool( const item & )> &filter ) const
 {
@@ -12521,6 +12604,12 @@ bool Character::knows_recipe( const recipe *rec ) const
     return get_learned_recipes().contains( *rec );
 }
 
+void Character::forget_all_recipes()
+{
+    *learned_recipes = recipe_subset();
+    *autolearn_skills_stamp = SkillLevelMap();
+}
+
 void Character::learn_recipe( const recipe *const rec )
 {
     if( rec->never_learn ) {
@@ -13083,19 +13172,26 @@ bool Character::studied_all_recipes( const itype &book ) const
 recipe_subset Character::get_recipes_from_books( const inventory &crafting_inv,
         const recipe_filter &filter ) const
 {
-    recipe_subset res;
+    auto res = recipe_subset{};
 
-    for( const auto &stack : crafting_inv.const_slice() ) {
-        const item &candidate = *stack->front();
+    crafting_inv.visit_items( [&]( const item * candidate ) {
+        const auto digital_recipes = digital_recipe_references( *candidate, *this );
+        if( filter ) {
+            res.include_if( digital_recipes, filter );
+        } else {
+            res.include( digital_recipes );
+        }
 
-        for( std::pair<const recipe *, int> recipe_entry :
-             candidate.get_available_recipes( *this ) ) {
+        for( const auto &recipe_entry : candidate->get_available_recipes( *this ) ) {
             if( filter && !filter( *recipe_entry.first ) ) {
                 continue;
             }
             res.include( recipe_entry.first, recipe_entry.second );
         }
-    }
+        // Installed files are handled through the reader's power and encryption checks.
+        return candidate->has_flag( flag_id( "DIGITAL_STORAGE" ) ) ?
+               VisitResponse::SKIP : VisitResponse::NEXT;
+    } );
 
     return res;
 }

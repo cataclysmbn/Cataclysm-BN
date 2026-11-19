@@ -452,7 +452,7 @@ bool melee_actor::call( monster &z ) const
     const int acc = accuracy >= 0 ? accuracy : static_cast<int>( z.get_melee() );
     int hitspread = target->deal_melee_attack( &z, dice( acc, 10 ) );
 
-    if( hitspread < 0 ) {
+    if( hitspread < 0 || target->uncanny_dodge() ) {
         auto msg_type = target->is_avatar() ? m_warning : m_info;
         sfx::play_variant_sound( "mon_bite", "bite_miss", sfx::get_heard_volume( z.bub_pos(), 50 ),
                                  sfx::get_heard_angle( z.bub_pos() ) );
@@ -483,6 +483,13 @@ bool melee_actor::call( monster &z ) const
                                  sfx::get_heard_angle( z.bub_pos() ) );
         target->add_msg_player_or_npc( m_neutral, no_dmg_msg_u, no_dmg_msg_npc, z.name(),
                                        body_part_name_accusative( bp_hit ) );
+    }
+    // Deal radiation damage unless resisted/immune, bypass protection depending on if we broke through armor
+    if( z.has_flag( MF_IRRADIATED ) ) {
+        Character *ch = target->as_character();
+        if( ch != nullptr ) {
+            ch->irradiate( damage.total_damage(), damage_total > 0 );
+        }
     }
     if( throw_strength > 0 && !target->has_flag( MF_IMMOBILE ) ) {
         auto msg_type = target->attitude_to( g->u ) == Attitude::A_FRIENDLY ? m_bad : m_neutral;

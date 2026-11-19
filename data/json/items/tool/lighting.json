@@ -130,6 +130,7 @@
     "material": [ "veggy" ],
     "symbol": ",",
     "color": "white",
+    "light_color": "#ffb05f",
     "initial_charges": 100,
     "max_charges": 100,
     "charges_per_use": 1,
@@ -254,6 +255,7 @@
     "description": "This is a small gasoline powered lantern.  It does not provide much light, but it lasts a long time.  It is turned on.  Use it to turn it off.",
     "turns_per_charge": 60,
     "revert_to": "gasoline_lantern",
+    "light_color": "#ffb05f",
     "use_action": { "target": "gasoline_lantern", "msg": "The lantern is extinguished.", "menu_text": "Turn off", "type": "transform" },
     "flags": [ "LIGHT_20", "TRADER_AVOID", "ALLOWS_REMOTE_USE" ]
   },
@@ -262,7 +264,7 @@
     "type": "TOOL",
     "category": "tools_farming",
     "name": { "str": "glowstick" },
-    "description": "This is a small blue light glowstick.  Use it to bend the plastic and break the glass cylinder inside to start the reaction.  It will produce a small amount of light.",
+    "description": "This is a small green light glowstick.  Use it to bend the plastic and break the glass cylinder inside to start the reaction.  It will produce a small amount of light.",
     "weight": "29 g",
     "volume": "250 ml",
     "price": "1 USD",
@@ -270,7 +272,7 @@
     "to_hit": -1,
     "material": "plastic",
     "symbol": ";",
-    "color": "light_blue",
+    "color": "light_green",
     "initial_charges": 1400,
     "max_charges": 1400,
     "use_action": {
@@ -309,7 +311,8 @@
     "to_hit": -1,
     "material": "plastic",
     "symbol": ";",
-    "color": "light_blue",
+    "color": "light_green",
+    "light_color": "#5fff5f",
     "initial_charges": 1400,
     "max_charges": 1400,
     "turns_per_charge": 30,
@@ -347,6 +350,7 @@
     "name": { "str": "active flare" },
     "description": "This burning magnesium flare is producing light.  It will last for about a half hour before burning out.",
     "color": "white",
+    "light_color": "#ff5f5f",
     "turns_per_charge": 6,
     "revert_to": "handflare_dead",
     "revert_msg": "The flare sputters out",
@@ -411,37 +415,43 @@
     "to_hit": 2,
     "bashing": 1,
     "material": [ "plastic", "aluminum" ],
-    "symbol": ";"
+    "symbol": ";",
+    "ammo": "battery",
+    "magazines": [ [ "battery", [ "light_battery_cell", "light_minus_battery_cell" ] ] ]
   },
   {
     "id": "lightstrip",
     "type": "TOOL",
-    "name": { "str": "lightstrip" },
+    "name": { "str": "lightstrip (on)", "str_pl": "lightstrips (on)" },
     "copy-from": "lightstrip_base",
-    "description": "This is a light-emitting circuit that has been wired directly to a battery.  It provides some weak light and can't be turned off until the battery dies.",
+    "description": "This is a makeshift light-emitting circuit and a couple wires.  It's currently connected to a battery, providing some weak light.",
     "color": "green",
     "power_draw": 1000,
-    "revert_to": "lightstrip_inactive",
-    "revert_msg": "The lightstrip dies.",
-    "flags": [ "LIGHT_4", "NO_UNLOAD", "NO_RELOAD" ]
-  },
-  {
-    "//": "This doesn't make too much sense, flavor-wise, but it's the best I can come up with.  Put it on the todo list.",
-    "id": "lightstrip_inactive",
-    "type": "TOOL",
-    "name": { "str": "lightstrip (inactive)", "str_pl": "lightstrips (inactive)" },
-    "copy-from": "lightstrip_base",
-    "description": "This is a light-emitting circuit that can be wired directly to a battery.  It provides some weak light and can't be turned off until the battery dies.",
-    "color": "white",
-    "ammo": "battery",
     "use_action": {
-      "target": "lightstrip",
-      "msg": "You irreversibly activate the lightstrip.",
-      "active": true,
-      "need_charges": 1,
+      "target": "lightstrip_inactive",
+      "msg": "You disconnect the lightstrip from its battery.",
+      "menu_text": "Turn off",
       "type": "transform"
     },
-    "magazines": [ [ "battery", [ "light_battery_cell", "light_minus_battery_cell" ] ] ]
+    "revert_to": "lightstrip_inactive",
+    "revert_msg": "The lightstrip dies.",
+    "flags": [ "LIGHT_4" ]
+  },
+  {
+    "id": "lightstrip_inactive",
+    "type": "TOOL",
+    "name": { "str": "lightstrip" },
+    "copy-from": "lightstrip_base",
+    "description": "This is a makeshift light-emitting circuit and a couple wires, that if connected to a battery will provide a weak source of light.",
+    "color": "white",
+    "use_action": {
+      "target": "lightstrip",
+      "msg": "You connect the lightstrip to its battery.",
+      "active": true,
+      "need_charges": 1,
+      "transform_charges": 1,
+      "type": "transform"
+    }
   },
   {
     "id": "oil_lamp",
@@ -481,6 +491,7 @@
     "description": "This is an oil fueled lamp.  It does not provide much light, but it lasts a long time.  It is turned on.  Use it to turn it off.",
     "turns_per_charge": 240,
     "revert_to": "oil_lamp",
+    "light_color": "#ffb05f",
     "use_action": { "target": "oil_lamp", "msg": "The lantern is extinguished.", "menu_text": "Turn off", "type": "transform" },
     "flags": [ "LIGHT_20", "TRADER_AVOID", "FIRE", "ALLOWS_REMOTE_USE", "WATER_EXTINGUISH" ]
   },
@@ -516,6 +527,7 @@
     "name": { "str": "acetylene lamp (on)", "str_pl": "acetylene lamps (on)" },
     "turns_per_charge": 240,
     "revert_to": "oxylamp",
+    "light_color": "#ffb05f",
     "use_action": { "menu_text": "Turn off", "type": "transform", "msg": "The %s is extinguished", "target": "oxylamp" },
     "flags": [ "LIGHT_30" ]
   },

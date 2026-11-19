@@ -99,7 +99,9 @@
         { "om_terrain": "silo", "om_terrain_match_type": "TYPE" },
         { "om_terrain": "shelter", "om_terrain_match_type": "TYPE" },
         "police",
-        "mil_base_road_entrance"
+        "mil_base_road_entrance",
+        "mil_airfield",
+        "mil_barracks"
       ],
       "message": "You add roads and facilities to your map."
     }
@@ -244,7 +246,7 @@
     "copy-from": "abstractmap",
     "type": "GENERIC",
     "name": { "str": "tourist guide" },
-    "description": "This is glossy printed pamphlet for tourists that details local hotels and attractions.",
+    "description": "This is a glossy printed pamphlet for tourists that details local hotels and attractions.",
     "color": "blue",
     "use_action": {
       "type": "reveal_map",
@@ -269,7 +271,7 @@
     "copy-from": "abstractmap",
     "type": "GENERIC",
     "name": { "str": "restaurant guide" },
-    "description": "This is glossy printed pamphlet that details dining establishments in the local area.  Printed by the Chamber of Commerce, it lists the addresses of all the best diners and bars.  Using it will add points of interest to your map.",
+    "description": "This is a glossy printed pamphlet that details dining establishments in the local area.  Printed by the Chamber of Commerce, it lists the addresses of all the best diners and bars.  Using it will add points of interest to your map.",
     "color": "pink",
     "use_action": {
       "type": "reveal_map",
@@ -368,8 +370,13 @@
     "copy-from": "abstractmap",
     "type": "GENERIC",
     "name": { "str": "satellite map" },
-    "description": "This is a printed satellite map of the local area.  Due to it's low quality and lack of map legend, you are unable to recognise most buildings.  Using it will add terrain and roads to your map.",
+    "description": "An offline satellite map of the local area.  Due to its low quality and lack of map legend, you are unable to recognise most buildings.",
     "color": "light_gray",
+    "material": [  ],
+    "weight": "0 g",
+    "volume": "1 ml",
+    "container": "null",
+    "flags": [ "DIGITAL", "IRREMOVABLE", "NO_DROP" ],
     "use_action": {
       "type": "reveal_map",
       "radius": 90,

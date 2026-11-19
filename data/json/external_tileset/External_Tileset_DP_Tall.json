@@ -71,7 +71,8 @@
           { "id": "mon_anomaly_boss", "fg": 51 },
           { "id": "mon_talon_m2hb", "fg": 52 },
           { "id": [ "bot_talon_m2hb", "overlay_wielded_bot_talon_m2hb" ], "fg": 53 },
-          { "id": [ "broken_talon_m2hb", "overlay_wielded_broken_talon_m2hb" ], "fg": 54 }
+          { "id": [ "broken_talon_m2hb", "overlay_wielded_broken_talon_m2hb" ], "fg": 54 },
+          { "id": "mon_hallu_hatman", "fg": 55 }
         ],
         "sprite_width": 64,
         "sprite_height": 80,

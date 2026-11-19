@@ -134,7 +134,7 @@
       "nested": {
         "1": {
           "chunks": [
-            [ "null", 60 ],
+            [ "null", 30 ],
             [ "room_10x10_woodworker_E", 30 ],
             [ "room_10x10_recording_studio_E", 30 ],
             [ "room_10x10_guns_E", 10 ],
@@ -143,7 +143,7 @@
         },
         "2": {
           "chunks": [
-            [ "null", 50 ],
+            [ "null", 30 ],
             [ "room_6x6_brewer_E", 10 ],
             [ "room_6x6_junk_E", 30 ],
             [ "room_6x6_office_E", 30 ],

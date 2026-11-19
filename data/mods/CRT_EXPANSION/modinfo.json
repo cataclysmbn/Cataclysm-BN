@@ -5,7 +5,7 @@
     "name": "<color_red>C.R.I.T. Expansion</color>",
     "authors": [ "Soupster89", "Wishduck" ],
     "maintainers": [ "Zlorthishen", "Wishduck" ],
-    "description": "Adds the Catastrophe Response and Investigation Team (C.R.I.T.), with includes additional professions, guns/mods, WIP enemies, mutations, martial arts, melee weapons, and some QOL changes.",
+    "description": "Adds the Catastrophe Response and Investigation Team (C.R.I.T.), which includes additional professions, guns/mods, WIP enemies, mutations, martial arts, melee weapons, and some QOL changes.",
     "category": "content",
     "dependencies": [ "bn" ]
   }

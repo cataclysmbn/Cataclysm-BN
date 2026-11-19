@@ -1,5 +1,38 @@
 [
   {
+    "id": "spell_ghost_in_the_machine_static_bolt",
+    "type": "SPELL",
+    "name": { "str": "Static Bolt" },
+    "description": "Fires a bolt that bursts into physical static, briefly inducing hallucinations in anyone caught in the field.",
+    "effect": "projectile_attack",
+    "valid_targets": [ "hostile", "ally", "ground" ],
+    "flags": [ "SILENT", "NO_FAIL", "NO_EXPLOSION_VFX" ],
+    "sprite": "fd_dazzling",
+    "min_range": 12,
+    "max_range": 12,
+    "min_aoe": 2,
+    "max_aoe": 2,
+    "field_id": "fd_physical_static",
+    "field_chance": 1,
+    "min_field_intensity": 1,
+    "max_field_intensity": 1,
+    "base_casting_time": 100
+  },
+  {
+    "id": "spell_ghost_in_the_machine_blink",
+    "type": "SPELL",
+    "name": { "str": "Static Blink" },
+    "description": "The caster dissolves into static and teleports a short distance.",
+    "effect": "teleport_random",
+    "valid_targets": [ "self" ],
+    "flags": [ "NO_EXPLOSION_VFX", "SILENT", "NO_FAIL" ],
+    "min_range": 2,
+    "max_range": 2,
+    "min_aoe": 4,
+    "max_aoe": 4,
+    "base_casting_time": 100
+  },
+  {
     "id": "pain_damage",
     "type": "SPELL",
     "name": { "str": "Debug Pain" },
@@ -614,5 +647,37 @@
     "base_casting_time": 3,
     "effect": "summon",
     "effect_str": "mon_task_force_shade"
+  },
+  {
+    "id": "fpf_boss_shockwave",
+    "type": "SPELL",
+    "name": "Smartbomb Generator",
+    "description": "AOE energy blast.",
+    "sprite": "fd_laser",
+    "effect": "target_attack",
+    "extra_effects": [ { "id": "fpf_boss_shockwave_teleport" } ],
+    "valid_targets": [ "hostile", "ground", "none" ],
+    "effect_str": "stunned",
+    "flags": [ "LOUD", "NO_FAIL", "RANDOM_DAMAGE", "RANDOM_DURATION" ],
+    "min_damage": 12,
+    "max_damage": 18,
+    "min_aoe": 7,
+    "max_aoe": 7,
+    "min_duration": 200,
+    "max_duration": 300,
+    "base_casting_time": 200,
+    "damage_type": "fire"
+  },
+  {
+    "type": "SPELL",
+    "id": "fpf_boss_shockwave_teleport",
+    "name": { "str": "Smartbomb Teleport" },
+    "description": "And this teleports the caster, counts as a safe teleport.",
+    "message": "",
+    "effect": "teleport_random",
+    "valid_targets": [ "self" ],
+    "flags": [ "NO_EXPLOSION_VFX", "SILENT" ],
+    "min_range": 5,
+    "max_range": 8
   }
 ]

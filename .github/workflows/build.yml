@@ -30,8 +30,8 @@ on:
         default: |
           [
             { "name": "Windows MSVC", "platform": "windows", "artifact": "windows-tiles-x64-msvc", "os": "windows-2022", "arch": "x64", "tiles": true, "sound": true, "ext": "zip", "content-type": "application/zip" },
-            { "name": "Linux Tiles", "platform": "linux", "artifact": "linux-tiles-x64", "os": "ubuntu-latest", "tiles": true, "sound": true, "ext": "tar.gz", "content-type": "application/gzip" },
-            { "name": "Linux Curses", "platform": "linux", "artifact": "linux-curses-x64", "os": "ubuntu-latest", "tiles": false, "sound": false, "ext": "tar.gz", "content-type": "application/gzip" },
+            { "name": "Linux Tiles", "platform": "linux", "artifact": "linux-tiles-x64", "os": "ubuntu-24.04", "tiles": true, "sound": true, "ext": "tar.gz", "content-type": "application/gzip" },
+            { "name": "Linux Curses", "platform": "linux", "artifact": "linux-curses-x64", "os": "ubuntu-24.04", "tiles": false, "sound": false, "ext": "tar.gz", "content-type": "application/gzip" },
             { "name": "macOS Curses", "platform": "macos", "artifact": "osx-curses-x64", "os": "macos-15-intel", "preset": "osx-curses-x64-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
             { "name": "macOS Tiles", "platform": "macos", "artifact": "osx-tiles-x64", "os": "macos-15-intel", "preset": "osx-tiles-x64-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
             { "name": "macOS Curses ARM", "platform": "macos", "artifact": "osx-curses-arm", "os": "macos-15", "preset": "osx-curses-arm-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
@@ -60,10 +60,15 @@ on:
         type: boolean
         default: true
       run-tests:
-        description: "Build and run tests when supported by the selected platform"
+        description: "Build tests when supported by the selected platform"
         required: false
         type: boolean
         default: false
+      windows-test-groups:
+        description: "Run Windows tests in one job per group, as JSON: [\"1/3\", \"2/3\", \"3/3\"]. Needs run-tests and a Windows-only matrix-json."
+        required: false
+        type: string
+        default: "[]"
       android-localize:
         description: "Build Android assets with localization"
         required: false
@@ -117,7 +122,8 @@ jobs:
       - name: Upload generated shaders
         uses: actions/upload-artifact@v4
         with:
-          name: generated-shaders
+          # A caller can use this workflow more than once in one run.
+          name: generated-shaders-${{ fromJSON(inputs.matrix-json)[0].artifact }}
           path: data/shaders/
           if-no-files-found: error
 
@@ -138,7 +144,7 @@ jobs:
       - name: Download generated shaders
         uses: actions/download-artifact@v4
         with:
-          name: generated-shaders
+          name: generated-shaders-${{ fromJSON(inputs.matrix-json)[0].artifact }}
           path: data/shaders
 
       - name: Download translation artifacts
@@ -226,23 +232,25 @@ jobs:
         if: runner.os == 'Windows'
         uses: lukka/get-cmake@v3.31.6
 
-      - name: Export GitHub Actions cache environment variables
-        if: runner.os == 'Windows'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            core.exportVariable("ACTIONS_CACHE_URL", process.env.ACTIONS_CACHE_URL || "")
-            core.exportVariable("ACTIONS_RESULTS_URL", process.env.ACTIONS_RESULTS_URL || "")
-            core.exportVariable("ACTIONS_RUNTIME_TOKEN", process.env.ACTIONS_RUNTIME_TOKEN || "")
-
+      # vcpkg removed its x-gha backend. Keep binary packages in a files cache instead.
       - name: Configure vcpkg binary cache (windows msvc)
         if: runner.os == 'Windows'
+        id: vcpkg-cache-dir
         run: |
-          $mode = "readwrite"
-          if ("${{ github.event_name }}" -eq "pull_request") {
-            $mode = "read"
-          }
-          "VCPKG_BINARY_SOURCES=clear;x-gha,$mode" >> $env:GITHUB_ENV
+          $dir = "${{ runner.temp }}\vcpkg-binary-cache"
+          New-Item -ItemType Directory -Force $dir | Out-Null
+          "VCPKG_BINARY_SOURCES=clear;files,$dir,readwrite" >> $env:GITHUB_ENV
+          "dir=$dir" >> $env:GITHUB_OUTPUT
+          "image=$env:ImageVersion" >> $env:GITHUB_OUTPUT
+
+      - name: Restore vcpkg binary cache (windows msvc)
+        if: runner.os == 'Windows'
+        id: vcpkg-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ steps.vcpkg-cache-dir.outputs.dir }}
+          # Runner image updates can change the MSVC version and so the vcpkg ABI hashes.
+          key: vcpkg-${{ matrix.artifact }}-${{ steps.vcpkg-cache-dir.outputs.image }}-${{ hashFiles('msvc-full-features/vcpkg.json', '.github/vcpkg_triplets/**') }}
 
       - name: Install vcpkg
         if: runner.os == 'Windows'
@@ -475,12 +483,14 @@ jobs:
           $localize = "False"
           $tests = "False"
           $release = "ON"
+          $fastLink = "OFF"
           if ("${{ inputs.download-translations }}" -eq "true") {
             $localize = "True"
           }
           if ("${{ inputs.mode }}" -eq "ci") {
             $buildType = "RelWithDebInfo"
             $release = "OFF"
+            $fastLink = "ON"
           }
           if ("${{ inputs.run-tests }}" -eq "true") {
             $tests = "True"
@@ -499,9 +509,17 @@ jobs:
             -DSOUND=True `
             "-DTESTS=$tests" `
             "-DRELEASE=$release" `
+            "-DCATA_MSVC_FAST_LINK=$fastLink" `
             -DJSON_FORMAT=OFF `
             -DCATA_FORMAT_TARGETS=OFF `
             -DCMAKE_INSTALL_MESSAGE=NEVER
+
+      - name: Save vcpkg binary cache (windows msvc)
+        if: runner.os == 'Windows' && github.event_name != 'pull_request' && steps.vcpkg-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ steps.vcpkg-cache-dir.outputs.dir }}
+          key: ${{ steps.vcpkg-cache.outputs.cache-primary-key }}
 
       - name: Build CBN (windows msvc)
         if: runner.os == 'Windows'
@@ -855,39 +873,59 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
 
-      - name: Run sharded tests (desktop)
-        if: inputs.run-tests && (runner.os == 'Windows' || (runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')))
+      - name: Upload test executable (windows msvc)
+        if: runner.os == 'Windows' && inputs.run-tests && inputs.windows-test-groups != '[]'
+        uses: actions/upload-artifact@v4
+        with:
+          name: cata-test-${{ matrix.artifact }}
+          path: |
+            out/build/windows-tiles-sounds-x64-msvc/tests/cata_test-tiles.exe
+            out/build/windows-tiles-sounds-x64-msvc/tests/cata_test-tiles.pdb
+            out/build/windows-tiles-sounds-x64-msvc/tests/mesa/
+          if-no-files-found: error
+          retention-days: 1
+
+  # Split Windows tests over several runners. One runner takes about 16 min for all shards.
+  windows-tests:
+    needs: builds
+    if: inputs.run-tests && inputs.windows-test-groups != '[]'
+    strategy:
+      fail-fast: false
+      matrix:
+        group: ${{ fromJSON(inputs.windows-test-groups) }}
+    name: ${{ fromJSON(inputs.matrix-json)[0].name }} tests ${{ matrix.group }}
+    runs-on: ${{ fromJSON(inputs.matrix-json)[0].os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.checkout-ref }}
+
+      - name: Download generated shaders
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-shaders-${{ fromJSON(inputs.matrix-json)[0].artifact }}
+          path: data/shaders
+
+      - name: Download test executable
+        uses: actions/download-artifact@v4
+        with:
+          name: cata-test-${{ fromJSON(inputs.matrix-json)[0].artifact }}
+          path: out/build/windows-tiles-sounds-x64-msvc/tests
+
+      - uses: denoland/setup-deno@v2
+
+      - name: Run sharded tests
         shell: pwsh
         run: |
-          $ErrorActionPreference = "Stop"
-          $buildDir = if ($IsWindows) {
-            "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc"
-          } else {
-            "${{ github.workspace }}/build"
-          }
-          $exeName = if ("${{ matrix.tiles }}" -eq "true") { "cata_test-tiles" } else { "cata_test" }
-          if ($IsWindows) {
-            $exeName = "$exeName.exe"
-          }
-          $testBin = Join-Path $buildDir (Join-Path "tests" $exeName)
-          if (-not (Test-Path $testBin)) {
-            throw "Missing test executable: $testBin"
-          }
-
-          $testOpts = @(
-            "--min-duration", "20",
-            "--use-colour", "yes",
-            "--rng-seed", "time",
-            "--error-format=github-action"
-          )
-          if ($IsLinux -and "${{ matrix.tiles }}" -eq "true") {
-            $testOpts += "--gpu-backend=software"
-          }
           deno run --allow-read --allow-write --allow-run --allow-env `
             build-scripts/run-linux-test-shards.ts `
             --mode file-tags `
             --jobs 4 `
-            --non-slow-shards 8 `
-            $testBin `
+            --non-slow-shards 12 `
+            --shard-group "${{ matrix.group }}" `
+            out/build/windows-tiles-sounds-x64-msvc/tests/cata_test-tiles.exe `
             -- `
-            @testOpts
+            --min-duration 20 `
+            --use-colour yes `
+            --rng-seed time `
+            --error-format=github-action

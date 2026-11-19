@@ -1,5 +1,29 @@
 [
   {
+    "id": "duck_of_wishes_drops",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      {
+        "distribution": [ { "group": "rare", "prob": 1 }, { "group": "science", "prob": 1 }, { "group": "military", "prob": 1 } ]
+      },
+      {
+        "distribution": [ { "group": "rare", "prob": 1 }, { "group": "science", "prob": 1 }, { "group": "military", "prob": 1 } ]
+      },
+      {
+        "distribution": [ { "group": "rare", "prob": 1 }, { "group": "science", "prob": 1 }, { "group": "military", "prob": 1 } ]
+      },
+      {
+        "distribution": [ { "group": "rare", "prob": 1 }, { "group": "science", "prob": 1 }, { "group": "military", "prob": 1 } ],
+        "prob": 50
+      },
+      {
+        "distribution": [ { "group": "rare", "prob": 1 }, { "group": "science", "prob": 1 }, { "group": "military", "prob": 1 } ],
+        "prob": 25
+      }
+    ]
+  },
+  {
     "id": "grenades",
     "type": "item_group",
     "items": [ [ "debug_grenade", 5 ] ]
@@ -8,7 +32,7 @@
     "id": "skeltal_drops",
     "type": "item_group",
     "subtype": "collection",
-    "entries": [ { "item": "milk", "prob": 50 } ]
+    "entries": [ { "item": "tophat", "prob": 100, "damage": [ 1, 4 ] }, { "item": "milk", "prob": 50 } ]
   },
   {
     "id": "skeltal_monster_weapon",

@@ -71,12 +71,18 @@
         "item": {
           "subtype": "distribution",
           "entries": [
-            { "item": "modularvest", "prob": 20 },
-            { "item": "dragonskinempty", "prob": 5 },
+            {
+              "distribution": [
+                { "item": "ballistic_vest_light", "prob": 25 },
+                { "item": "ballistic_vest_esapi", "prob": 50 },
+                { "item": "ballistic_vest_heavy", "prob": 25 }
+              ],
+              "prob": 20
+            },
             { "item": "kevlar", "prob": 10 },
             { "item": "kevlar_plate", "count": [ 1, 6 ], "prob": 10 },
-            { "item": "ceramic_armor", "count": [ 1, 6 ], "prob": 10 },
-            { "item": "ceramicdisks", "count": [ 2, 12 ], "prob": 1 }
+            { "item": "hard_steel_armor", "count": [ 1, 6 ], "prob": 5 },
+            { "item": "ceramic_armor", "count": [ 1, 6 ], "prob": 10 }
           ]
         },
         "repeat": [ 1, 3 ],

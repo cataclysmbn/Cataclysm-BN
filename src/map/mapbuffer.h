@@ -9,6 +9,7 @@
 #include "mapgen/mapgen_functions.h"
 #include "memory_fast.h"
 #include "point.h"
+#include "profile.h"
 #include "submap_load_manager.h"
 #include "type_id.h"
 #include "vehicle/vpart_position.h"
@@ -199,6 +200,7 @@ public:
     auto passable_ter_furn() const -> bool;
     auto move_cost_with_vehicle(const optional_vpart_position& vp) const -> int;
     auto passable_with_vehicle(const optional_vpart_position& vp) const -> bool;
+    auto has_flag(ter_bitflags flag) const -> bool;
 
 private:
     tripoint_abs_sm abs_sm_;
@@ -641,6 +643,7 @@ public:
      * Thread-safe: may be called from background worker threads (under gen_mutex).
      */
     auto lookup_submap_in_memory(const tripoint_abs_sm& p) -> submap* {
+        ZoneScoped;
         std::lock_guard<std::recursive_mutex> lk(submaps_mutex_);
         const auto iter = submaps.find(p);
         return iter != submaps.end() ? iter->second.get() : nullptr;

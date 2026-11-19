@@ -252,6 +252,84 @@
   },
   {
     "type": "item_group",
+    "id": "memorial",
+    "subtype": "collection",
+    "entries": [
+      { "item": "photo_album", "prob": 75 },
+      { "item": "candle", "prob": 50, "charges": [ 1, 6 ] },
+      {
+        "distribution": [
+          { "group": "religious_books", "prob": 20 },
+          { "item": "bead_necklace", "prob": 20 },
+          { "item": "bead_bracelet", "prob": 20 },
+          { "item": "holy_symbol", "prob": 20 },
+          { "item": "candlestick", "prob": 20 }
+        ]
+      },
+      {
+        "distribution": [
+          { "collection": [ { "item": "american_flag", "prob": 70 }, { "item": "beret", "prob": 33 } ], "prob": 10 },
+          {
+            "collection": [
+              { "item": "ceramic_mug", "prob": 50 },
+              { "group": "liquor_and_spirits", "prob": 20 },
+              { "group": "wines_worthy", "prob": 10 },
+              { "item": "cigar", "prob": 20 },
+              { "item": "hat_ball", "prob": 20 },
+              { "group": "jewelry_accessories", "prob": 50 },
+              { "group": "clothing_glasses", "prob": 50 },
+              { "item": "foodperson_mask", "prob": 1, "charges": [ 0, 500 ] }
+            ],
+            "prob": 70
+          },
+          {
+            "collection": [
+              { "item": "teddy_bear", "custom-flags": [ "FILTHY" ], "damage": [ 0, 3 ], "prob": 50 },
+              { "item": "hat_ball", "prob": 20 },
+              { "item": "baseball", "prob": 20 },
+              { "item": "roller_shoes_off", "prob": 10 },
+              { "item": "gold_medal", "prob": 20 },
+              { "item": "silver_medal", "prob": 20 },
+              { "item": "bronze_medal", "prob": 20 },
+              { "item": "story_book", "prob": 50 },
+              { "item": "hairpin", "prob": 20 },
+              { "item": "barrette", "prob": 20 },
+              { "item": "many_years_old_newspaper", "prob": 20 }
+            ],
+            "prob": 5
+          },
+          {
+            "collection": [
+              { "item": "dog_whistle", "prob": 50 },
+              { "item": "dog_whistle_wood", "prob": 25 },
+              { "item": "leather_armor_small_quadruped", "prob": 50 },
+              { "item": "bone", "prob": 50 }
+            ],
+            "prob": 15
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "hoarder",
+    "//": "Items that might be found scattered around the home of a hoarder.",
+    "type": "item_group",
+    "subtype": "distribution",
+    "items": [
+      { "group": "trash", "prob": 100 },
+      { "group": "cleaning", "prob": 20 },
+      { "group": "dishes_dining", "prob": 20 },
+      { "group": "dishes_utility", "prob": 10 },
+      { "group": "child_items", "prob": 10 },
+      { "group": "SUS_bathroom_sink", "prob": 10 },
+      { "group": "bed", "prob": 10 },
+      { "group": "games", "prob": 5 },
+      { "group": "SUS_junk_drawer", "prob": 1 }
+    ]
+  },
+  {
+    "type": "item_group",
     "id": "livingroom",
     "ammo": 50,
     "magazine": 100,
@@ -378,7 +456,7 @@
       { "item": "portable_game", "prob": 8 },
       { "item": "game_watch", "prob": 2 },
       { "item": "deck_of_cards", "prob": 2 },
-      { "item": "usb_drive", "prob": 5 },
+      { "group": "digital_storage_media", "prob": 13 },
       { "group": "alcohol", "prob": 163 },
       { "item": "cell_phone", "prob": 1 },
       { "item": "smart_phone", "prob": 20 },
@@ -393,7 +471,6 @@
       { "item": "laptop", "prob": 10 },
       { "item": "file", "prob": 5 },
       { "item": "eink_tablet_pc", "prob": 2 },
-      { "item": "mobile_memory_card", "prob": 8 },
       { "item": "camera", "prob": 3 },
       { "item": "gum", "prob": 30 },
       { "item": "caff_gum", "prob": 3 },
@@ -906,7 +983,7 @@
       { "item": "afs_atomic_smartphone", "prob": 1 },
       { "item": "eink_tablet_pc", "prob": 2 },
       { "item": "smart_lamp", "prob": 2 },
-      { "item": "mobile_memory_card", "prob": 8 },
+      { "group": "digital_storage_media", "prob": 13 },
       { "item": "lighter", "prob": 60 },
       { "item": "ref_lighter", "prob": 2 },
       { "item": "electric_lighter", "prob": 2 },
@@ -923,7 +1000,6 @@
       { "item": "portable_game", "prob": 8 },
       { "item": "game_watch", "prob": 2 },
       { "item": "deck_of_cards", "prob": 2 },
-      { "item": "usb_drive", "prob": 5 },
       { "item": "firecracker_pack", "prob": 5 },
       { "item": "firecracker", "prob": 5 },
       { "item": "fried_seeds", "prob": 30 },

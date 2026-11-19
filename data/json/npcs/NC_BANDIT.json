@@ -101,7 +101,25 @@
       { "item": "armor_larmor", "prob": 5 },
       { "item": "armor_plarmor", "prob": 5 },
       { "item": "kevlar", "prob": 5 },
-      { "item": "modularvest", "prob": 5 },
+      {
+        "collection": [
+          {
+            "distribution": [
+              { "item": "ballistic_vest_light", "prob": 25 },
+              { "item": "ballistic_vest_esapi", "prob": 50 },
+              { "item": "ballistic_vest_heavy", "prob": 25 }
+            ]
+          },
+          {
+            "distribution": [
+              { "item": "null", "prob": 50 },
+              { "item": "scrap_ballistic_plate", "prob": 25 },
+              { "item": "steel_ballistic_plate", "prob": 25 }
+            ]
+          }
+        ],
+        "prob": 5
+      },
       { "item": "flotation_vest_sandbag", "prob": 5 },
       { "item": "armor_trench", "prob": 5 }
     ]

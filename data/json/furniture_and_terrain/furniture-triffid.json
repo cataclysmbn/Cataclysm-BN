@@ -24,7 +24,7 @@
     "name": "brambles",
     "symbol": "#",
     "bgcolor": "brown",
-    "description": "A wall of tangled roots blocks the path here, you'd have destroy it to get past.",
+    "description": "A wall of tangled roots blocks the path here, you'd have to destroy it to get past.",
     "move_cost_mod": -1,
     "coverage": 60,
     "required_str": -1,

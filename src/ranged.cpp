@@ -836,9 +836,6 @@ static double occupied_tile_fraction( creature_size target_size )
 
 double Creature::ranged_target_size( bool shot ) const
 {
-    if( const_cast<Creature &>( *this ).uncanny_dodge() ) {
-        return 0.0;
-    }
     bool is_crouched = false;
     bool is_prone = false;
     if( Character *ch = const_cast<Creature &>( *this ).as_character() ) {
@@ -3824,7 +3821,9 @@ void target_ui::recalc_aim_turning_penalty()
     } else {
         // Raise it proportionally to how much
         // the player has to turn from previous aiming point
-        const double recoil_per_degree = MAX_RECOIL / 180.0;
+        // Player has worse recoil control until 4 skill in marksmanship
+        const double skill_penalty = std::max( 0.0, 4.0 - you->get_skill_level( skill_gun ) );
+        const double recoil_per_degree = skill_penalty * MAX_RECOIL / 180.0;
         const units::angle angle_curr = coord_to_angle( src, curr_recoil_pos );
         const units::angle angle_desired = coord_to_angle( src, dst );
         const units::angle phi = normalize( angle_curr - angle_desired );
@@ -4825,8 +4824,8 @@ double ranged::aim_per_move( const Character &who, const item &gun, double recoi
     // If the player can point shoot give them an extremely high multiplier while recoil is above half of max.
     if( get_point_shoot_modifier( who, gun ) > 0 && recoil > ( MAX_RECOIL / 2 ) ) {
         aim_speed *= get_point_shoot_modifier( who, gun );
-        // Make sure the aim speed can't exceed 75% of max recoil.
-        aim_speed = std::min( aim_speed, MAX_RECOIL * 0.75 );
+        // Make sure the aim speed can't exceed 50% of max recoil.
+        aim_speed = std::min( aim_speed, MAX_RECOIL * 0.5 );
     } else {
         // Scale rate logistically as recoil goes from MAX_RECOIL to 0.
         aim_speed *= 1.0 - logarithmic_range( 0, MAX_RECOIL, recoil );
@@ -4842,8 +4841,8 @@ double ranged::aim_per_move( const Character &who, const item &gun, double recoi
     // To prevent a bug where aiming does not proceed at all because the aiming speed drops below the game's minimum limit (5.0) due to debuffs (such as Cursed Artifacts),
     // so applying the max value once more.
     aim_speed = std::max( 5.0, aim_speed + ench_aim_bonus );
-    // Bypass the sight limit if the player can point shoot.
-    if( get_point_shoot_modifier( who, gun ) > 0 ) {
+    // Bypass the sight limit while the player is point shoot.
+    if( get_point_shoot_modifier( who, gun ) > 0 && recoil > ( MAX_RECOIL / 2 ) ) {
         return aim_speed;
     }
     // Never improve by more than the currently used sights permit.
@@ -4858,8 +4857,8 @@ bool ranged::is_amateur( const Character &who, const item &gun )
 
     skill_id gun_skill = gun.gun_skill();
     bool amateur = true;
-    // If you have 1 or above for the specific gun skill you don't get the penalty
-    if( who.get_skill_level( gun_skill ) >= 1 ) {
+    // If you have 2 or above for the specific gun skill you don't get the penalty
+    if( who.get_skill_level( gun_skill ) >= 2 ) {
         amateur = false;
     }
     // If you have 4 or above for marksmanship skill in general you don't get the penalty

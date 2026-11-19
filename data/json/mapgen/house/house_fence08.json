@@ -16,7 +16,7 @@
         "^^#             #^^^^^^^",
         "^^#           zz#^^^^^^^",
         "^^#          zzz#^^^^^^^",
-        "^^#  #       ####^^^^^^^",
+        "^^#  #1      ####^^^^^^^",
         "^^#          #  #^^^^^^^",
         "^^#          # !#^^^^^^^",
         "^^#          +  #^^^^^^^",
@@ -32,7 +32,18 @@
         "^^^^^^^^^^^^^^^^^^^^^^^^",
         "^^^^^^^^^^^^^^^^^^^^^^^^"
       ],
-      "furniture": { "!": "f_home_furnace", "$": "f_glass_cabinet", "%": "f_armchair" }
+      "furniture": { "!": "f_home_furnace", "$": "f_glass_cabinet", "%": "f_armchair" },
+      "nested": {
+        "1": {
+          "chunks": [
+            [ "null", 25 ],
+            [ "7x7_tent_indoors", 25 ],
+            [ "7x7_band_practice_open", 25 ],
+            [ "6x6_electronics_open", 25 ],
+            [ "6x6_sewing_open", 25 ]
+          ]
+        }
+      }
     }
   },
   {

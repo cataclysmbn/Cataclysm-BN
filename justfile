@@ -15,6 +15,10 @@ fmt-json *FILES:
 fmt-return *PATHS:
     build-scripts/format-trailing-return.sh {{PATHS}}
 
+# Use `auto` for declarations whose type the initializer already names.
+fmt-auto *PATHS:
+    TIDY_CHECK=modernize-use-auto build-scripts/format-trailing-return.sh {{PATHS}}
+
 fmt-docs:
     build-scripts/fmt.sh docs
 
@@ -36,5 +40,9 @@ hooks-setup:
 [positional-arguments]
 playtest *args:
     deno run --allow-read --allow-write --allow-run --allow-env scripts/playtest.ts "$@"
+
+# Download the latest .po files from Transifex (needs `tx` and TX_TOKEN): just pull-po [LANG,...].
+pull-po *LANGS:
+    tx pull --force --all {{ if LANGS == '' { '' } else { '--languages ' + replace(LANGS, ' ', ',') } }}
 
 check: lint

@@ -64,6 +64,7 @@
     "color": "light_gray",
     "price_postapoc": "1250 cent",
     "material": [ "aluminum" ],
+    "flags": [ "DURABLE_MELEE" ],
     "qualities": [ [ "HAMMER", 1 ] ]
   },
   {
@@ -105,7 +106,8 @@
     "description": "A baseball bat with several nails driven through it, an excellent melee weapon.",
     "weight": "1159 g",
     "cutting": 4,
-    "flags": [ "STAB" ],
+    "material": [ "wood", "steel" ],
+    "flags": [ "STAB", "DURABLE_MELEE", "NONCONDUCTIVE" ],
     "price_postapoc": "1750 cent"
   },
   {
@@ -847,7 +849,7 @@
     "type": "GENERIC",
     "copy-from": "shillelagh",
     "name": { "str": "shillelagh fake" },
-    "description": "A fake shillelagh massproduced as a souvenir for tourists.  This knotty stick has not been cured in a chimney like a traditional shillelagh but has had fake black soot painted on.",
+    "description": "A fake shillelagh mass-produced as a souvenir for tourists.  This knotty stick has not been cured in a chimney like a traditional shillelagh but has had fake black soot painted on.",
     "price": "25 USD",
     "price_postapoc": "50 cent",
     "repairs_like": "shillelagh",
@@ -1040,7 +1042,7 @@
     "copy-from": "bat",
     "type": "TOOL",
     "name": { "str": "battletorch", "str_pl": "battletorches" },
-    "description": "This is sturdy wood bat, wrapped in gasoline-soaked rags and flame-resistant Nomex fabric.  Light it, and the ball game will REALLY heat up.  You'll need a lighter or matches to light it.",
+    "description": "This is a sturdy wood bat, wrapped in gasoline-soaked rags and flame-resistant Nomex fabric.  Light it, and the ball game will REALLY heat up.  You'll need a lighter or matches to light it.",
     "relative": { "weight": "250 g" },
     "material": [ "wood", "nomex" ],
     "initial_charges": 100,

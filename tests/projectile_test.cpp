@@ -75,6 +75,8 @@ TEST_CASE("projectiles_through_obstacles", "[projectile]") {
         REQUIRE(here.inbounds(pt));
         here.ter_set(pt, ter_id("t_dirt"));
         here.furn_set(pt, furn_id("f_null"));
+        here.set_transparency_cache_dirty(pt);
+        here.build_map_cache(pt.z());
         REQUIRE_FALSE(g->critter_at(pt));
         REQUIRE(here.is_transparent(pt));
     }

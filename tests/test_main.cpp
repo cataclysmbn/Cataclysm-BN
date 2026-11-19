@@ -321,6 +321,24 @@ struct CataListener: Catch::TestEventListenerBase {
 
         return TestEventListenerBase::assertionEnded(assertionStats);
     }
+
+    auto testCaseStarting(Catch::TestCaseInfo const& info) -> void override {
+        TestEventListenerBase::testCaseStarting(info);
+        error_seen_before_case = debug_has_error_been_observed();
+    }
+
+    /// Names the test case that failed or logged the first error, so CI can report it.
+    auto testCaseEnded(Catch::TestCaseStats const& stats) -> void override {
+        const auto error_logged = !error_seen_before_case && debug_has_error_been_observed();
+        const auto assertion_failed = stats.totals.assertions.failed > 0;
+        if (assertion_failed || error_logged) {
+            cata_printf("Failed test case: %s (%s)\n", stats.testInfo.name.c_str(),
+                        assertion_failed ? "assertion failed" : "error logged");
+        }
+        TestEventListenerBase::testCaseEnded(stats);
+    }
+
+    bool error_seen_before_case = false;
 };
 
 CATCH_REGISTER_LISTENER(CataListener)

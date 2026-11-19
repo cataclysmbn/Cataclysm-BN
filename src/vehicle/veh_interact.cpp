@@ -1287,6 +1287,10 @@ void veh_interact::do_refill() {
                 if (obj.typeId() == fuel_type_battery && can_reload) {
                     msg = _("You cannot recharge a vehicle battery with handheld batteries");
                     return false;
+                } else {
+                    if (obj.is_container() && !obj.contents.empty()) {
+                        return pt.can_reload(&obj.contents.front());
+                    }
                 }
                 return can_reload;
             }
@@ -2505,10 +2509,14 @@ void veh_interact::display_stats() const {
                weight_units());
     if (veh->has_lift()) {
         // convert newton to kg.
-        units::mass lift_as_mass = units::from_newton(
-            veh->total_lift(true, false, !veh->engine_on));
-        print_stat(_("Maximum Lift: <color_light_blue>%5.0f</color> %s"),
-                   convert_weight(lift_as_mass), weight_units());
+        units::mass active_lift_as_mass = units::from_newton(
+            veh->total_lift(true, false, !veh->engine_on, false));
+        units::mass passive_lift_as_mass = units::from_newton(
+            veh->total_lift(true, false, !veh->engine_on, true));
+        print_stat(
+            _("Maximum Lift (act/idle): (<color_light_blue>%5.0f</color>, <color_light_blue>%5.0f</color>) %s"),
+            convert_weight(active_lift_as_mass), convert_weight(passive_lift_as_mass),
+            weight_units());
         if (veh->has_part("WING")) {
             print_stat(_("Liftoff Speed: <color_light_blue>%3d</color> %s"),
                        veh->get_takeoff_speed(), velocity_units(VU_VEHICLE));
@@ -3100,7 +3108,9 @@ void veh_interact::complete_vehicle(Character& who) {
 
             // TODO: allow boarding for non-players as well.
             player* const pl = g->critter_at<player>(vehp);
-            if (vpinfo.has_flag(VPFLAG_BOARDABLE) && pl) { here.board_vehicle(vehp, pl); }
+            if (vpinfo.has_flag(VPFLAG_BOARDABLE) && pl && !pl->in_vehicle) {
+                here.board_vehicle(vehp, pl);
+            }
 
             who.add_msg_if_player(
                 m_good, _("You install a %1$s into the %2$s."), veh->part(partnum).name(),
@@ -3147,7 +3157,7 @@ void veh_interact::complete_vehicle(Character& who) {
                 }
 
             } else if (pt.is_fuel_store()) {
-                auto qty = src->charges;
+                auto qty = !src->contents.empty() ? src->contents.front().charges : src->charges;
                 pt.base->reload(who, *src, qty);
 
                 //~ 1$s vehicle name, 2$s reactor name

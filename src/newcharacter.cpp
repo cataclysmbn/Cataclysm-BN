@@ -4371,7 +4371,7 @@ void Character::clear_mutations()
 void Character::clear_skills()
 {
     for( auto &sk : *_skills ) {
-        sk.second.level( 0 );
+        sk.second = SkillLevel{};
     }
 }
 

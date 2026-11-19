@@ -125,10 +125,10 @@
       ],
       "palettes": [ "basement_empty" ],
       "nested": {
-        "1": { "chunks": [ [ "null", 80 ], [ "room_9x9_recroom_W", 40 ], [ "room_9x9_cellar_W", 20 ], [ "room_9x9_weed_W", 5 ] ] },
+        "1": { "chunks": [ [ "null", 40 ], [ "room_9x9_recroom_W", 40 ], [ "room_9x9_cellar_W", 20 ], [ "room_9x9_weed_W", 5 ] ] },
         "2": {
           "chunks": [
-            [ "null", 90 ],
+            [ "null", 30 ],
             [ "5x5_holdout_S", 2 ],
             [ "5x5_sauna_S", 10 ],
             [ "5x5_gym_S", 20 ],

@@ -334,6 +334,7 @@
     ],
     "death_function": [ "MELT" ],
     "death_drops": {  },
+    "mountable_pixels_up": 24,
     "extend": {
       "flags": [
         "SEES",
@@ -383,6 +384,7 @@
     "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1 } ],
     "death_function": [ "MELT" ],
     "death_drops": {  },
+    "mountable_pixels_up": 42,
     "extend": {
       "flags": [
         "PATH_AVOID_DANGER_2",
@@ -431,6 +433,7 @@
     "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1 } ],
     "death_drops": {  },
     "special_attacks": [ [ "RANGED_PULL", 20 ], [ "LUNGE", 10 ] ],
+    "mountable_pixels_up": 21,
     "extend": {
       "flags": [
         "SEES",
@@ -528,6 +531,7 @@
     "death_function": [ "MELT" ],
     "death_drops": "mon_bound_glyph_death_drops_universal",
     "revert_to_itype": "summon_yugg_bound",
+    "mountable_pixels_up": 38,
     "extend": {
       "flags": [
         "PATH_AVOID_DANGER_2",
@@ -672,6 +676,7 @@
     "death_drops": "mon_bound_glyph_death_drops_universal",
     "revert_to_itype": "summon_flying_polyp_bound",
     "special_attacks": [ { "type": "bite", "cooldown": 20, "damage_max_instance": [ { "damage_type": "dark", "amount": 20 } ] } ],
+    "mountable_pixels_up": 53,
     "extend": {
       "flags": [
         "SEES",
@@ -830,6 +835,7 @@
     "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1 } ],
     "death_drops": {  },
     "death_function": [ "MELT" ],
+    "mountable_pixels_up": 7,
     "extend": {
       "flags": [
         "PATH_AVOID_DANGER_2",

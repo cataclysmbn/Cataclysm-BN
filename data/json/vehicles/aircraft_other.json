@@ -2335,5 +2335,27 @@
         ]
       }
     ]
+  },
+  {
+    "id": "combat_drone",
+    "type": "vehicle",
+    "name": "Small Combat Drone",
+    "blueprint": [ "#" ],
+    "parts": [
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [
+          "frame_carbon_cross",
+          "small_storage_battery",
+          "engine_electric_small",
+          "robot_controls",
+          "omnicam",
+          "carbon_box_small",
+          "bomber controls",
+          "drone_rotors"
+        ]
+      }
+    ]
   }
 ]

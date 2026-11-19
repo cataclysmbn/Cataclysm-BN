@@ -1,5 +1,46 @@
 [
   {
+    "id": "mon_zombie_radiation_1",
+    "copy-from": "mon_zombie_hazmat",
+    "looks_like": "mon_irradiated_wanderer_1",
+    "type": "MONSTER",
+    "name": { "str": "glowing zombie" },
+    "description": "An eerie glow emanates from this zombie's charred flesh, melted scraps of some sort of protective suit clinging to its body.",
+    "luminance": 8,
+    "regenerates": 1,
+    "regeneration_modifiers": [ { "effect": "corroding", "base_mod": -1 }, { "effect": "onfire", "base_mod": -1 } ],
+    "special_attacks": [ { "type": "bite", "cooldown": 5 }, [ "GRAB", 7 ], [ "scratch", 20 ] ],
+    "death_drops": "radiation_zombie_death_drops",
+    "fungalize_into": "mon_zombie_fungus",
+    "upgrades": { "half_life": 14, "into": "mon_zombie_radiation_2" },
+    "proportional": { "hp": 1.25, "armor_bash": 2, "armor_cut": 2, "armor_bullet": 2 },
+    "relative": { "speed": 15, "dodge": 1, "melee_skill": 1, "melee_dice": 1 },
+    "extend": { "flags": [ "IRRADIATED" ] },
+    "delete": { "flags": [ "NO_FUNG_DMG" ] }
+  },
+  {
+    "id": "mon_zombie_radiation_2",
+    "copy-from": "mon_zombie_radiation_1",
+    "looks_like": "mon_charred_nightmare",
+    "type": "MONSTER",
+    "name": { "str": "radioactive husk" },
+    "description": "This creature looks more like a blackened, burnt corpse than a zombie, roiling fumes of toxic gas spilling out from between half-exposed ribs and a bright radioactive glow shining from within.",
+    "//": "Todo: replace with nuke gas if we rig it so tile radiation decays over time.",
+    "emit_fields": [ { "emit_id": "emit_toxic_stream_small", "delay": "1 s" } ],
+    "special_attacks": [
+      {
+        "type": "bite",
+        "cooldown": 5,
+        "damage_max_instance": [ { "damage_type": "stab", "amount": 12, "armor_multiplier": 0.8 } ]
+      },
+      [ "GRAB", 7 ],
+      { "id": "scratch", "damage_max_instance": [ { "damage_type": "cut", "amount": 12, "armor_multiplier": 0.8 } ] }
+    ],
+    "proportional": { "hp": 1.5, "armor_bash": 1.5, "armor_cut": 1.5, "armor_bullet": 1.5, "luminance": 3, "regenerates": 5 },
+    "relative": { "speed": 20, "dodge": 1, "melee_dice": -1, "melee_dice_sides": 3, "melee_cut": 5 },
+    "delete": { "upgrades": { "half_life": 14, "into": "mon_zombie_radiation_2" } }
+  },
+  {
     "id": "mon_charred_nightmare",
     "type": "MONSTER",
     "name": { "str": "charred nightmare" },
@@ -34,7 +75,7 @@
     ],
     "death_drops": "mon_necropolis_general_death_drops",
     "death_function": [ "MELT" ],
-    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "GROUP_BASH", "NOGIB", "POISON" ]
+    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "GROUP_BASH", "NOGIB", "POISON", "IRRADIATED" ]
   },
   {
     "id": "mon_irradiated_wanderer_1",
@@ -67,7 +108,7 @@
     "special_attacks": [ [ "LUNGE", 20 ] ],
     "death_drops": "mon_necropolis_general_death_drops",
     "death_function": [ "MELT" ],
-    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "GROUP_BASH", "NOGIB", "POISON" ]
+    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "GROUP_BASH", "NOGIB", "POISON", "IRRADIATED" ]
   },
   {
     "id": "mon_irradiated_wanderer_2",
@@ -101,7 +142,7 @@
     "special_attacks": [ [ "LUNGE", 15 ] ],
     "death_drops": "mon_necropolis_general_death_drops",
     "death_function": [ "MELT" ],
-    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "GROUP_BASH", "NOGIB", "POISON" ]
+    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "GROUP_BASH", "NOGIB", "POISON", "IRRADIATED" ]
   },
   {
     "id": "mon_irradiated_wanderer_3",
@@ -135,7 +176,7 @@
     "special_attacks": [ [ "LUNGE", 10 ] ],
     "death_drops": "mon_necropolis_general_death_drops",
     "death_function": [ "MELT" ],
-    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "GROUP_BASH", "NOGIB", "POISON" ]
+    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "GROUP_BASH", "NOGIB", "POISON", "IRRADIATED" ]
   },
   {
     "id": "mon_irradiated_wanderer_4",
@@ -169,6 +210,6 @@
     "special_attacks": [ [ "LUNGE", 5 ] ],
     "death_drops": "mon_necropolis_general_death_drops",
     "death_function": [ "MELT" ],
-    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "GROUP_BASH", "NOGIB", "POISON" ]
+    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "GROUP_BASH", "NOGIB", "POISON", "IRRADIATED" ]
   }
 ]

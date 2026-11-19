@@ -106,41 +106,9 @@
           { "id": "overlay_worn_pants_tacticool", "fg": 81 },
           { "id": [ "jacket_tacticool", "overlay_wielded_jacket_tacticool" ], "fg": 82 },
           { "id": "overlay_worn_jacket_tacticool", "fg": 83 },
-          {
-            "id": [
-              "modularvest",
-              "overlay_wielded_modularvest",
-              "modularvestsuper",
-              "overlay_wielded_modularvestsuper",
-              "modularvesthard",
-              "overlay_wielded_modularvesthard",
-              "modularveststeel",
-              "overlay_wielded_modularveststeel",
-              "modularvestceramic",
-              "overlay_wielded_modularvestceramic"
-            ],
-            "fg": 84
-          },
-          {
-            "id": [
-              "overlay_male_worn_modularvest",
-              "overlay_male_worn_modularvestsuper",
-              "overlay_male_worn_modularvesthard",
-              "overlay_male_worn_modularveststeel",
-              "overlay_male_worn_modularvestceramic"
-            ],
-            "fg": 85
-          },
-          {
-            "id": [
-              "overlay_female_worn_modularvest",
-              "overlay_female_worn_modularvestsuper",
-              "overlay_female_worn_modularvesthard",
-              "overlay_female_worn_modularveststeel",
-              "overlay_female_worn_modularvestceramic"
-            ],
-            "fg": 86
-          },
+          { "id": [ "ballistic_vest_light", "overlay_wielded_ballistic_vest_light" ], "fg": 84 },
+          { "id": "overlay_male_worn_ballistic_vest_light", "fg": 85 },
+          { "id": "overlay_female_worn_ballistic_vest_light", "fg": 86 },
           {
             "id": [ "exosuit_military", "overlay_wielded_exosuit_military", "exosuit_military_on", "overlay_wielded_exosuit_military_on" ],
             "fg": 87
@@ -252,7 +220,20 @@
           { "id": "overlay_wielded_SVD", "fg": 165 },
           { "id": "PKM", "fg": 166 },
           { "id": "overlay_wielded_PKM", "fg": 167 },
-          { "id": [ "billybass", "overlay_wielded_billybass" ], "fg": 168 }
+          { "id": [ "billybass", "overlay_wielded_billybass" ], "fg": 168 },
+          { "id": [ "ballistic_vest_esapi", "overlay_wielded_ballistic_vest_esapi" ], "fg": 169 },
+          { "id": "overlay_male_worn_ballistic_vest_esapi", "fg": 170 },
+          { "id": "overlay_female_worn_ballistic_vest_esapi", "fg": 171 },
+          { "id": [ "ballistic_vest_heavy", "overlay_wielded_ballistic_vest_heavy" ], "fg": 172 },
+          { "id": "overlay_male_worn_ballistic_vest_heavy", "fg": 173 },
+          { "id": "overlay_female_worn_ballistic_vest_heavy", "fg": 174 },
+          { "id": "mon_feral_fpf_boss", "fg": 175, "bg": 30 },
+          { "id": [ "tshirt_cropped", "overlay_wielded_tshirt_cropped" ], "fg": 176 },
+          { "id": "overlay_female_worn_tshirt_cropped", "fg": 177 },
+          { "id": "overlay_male_worn_tshirt_cropped", "fg": 178 },
+          { "id": [ "gold_chain", "overlay_wielded_gold_chain" ], "fg": 179 },
+          { "id": "overlay_worn_gold_chain", "fg": 180 },
+          { "id": "survivor_forest_camp", "fg": 181, "rotates": false }
         ],
         "sprite_width": 32,
         "sprite_height": 32

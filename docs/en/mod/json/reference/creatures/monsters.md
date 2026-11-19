@@ -353,6 +353,12 @@ Intensity of the grab effect applied by this monster. Defaults to 1, is only use
 a GRAB special attack and the GRABS flag. A monster with grab_strength = n applies a grab as if it
 was n zombies. A player with max(Str,Dex)<=n has no chance of breaking that grab.
 
+## "uncanny_dodge_cost"
+
+(integer, optional)
+
+How many moves it costs this monster to uncanny dodge. Defaults to 100, is only useful for monster with the UNCANNY_DODGE flag.
+
 ## "melee_cut"
 
 (integer, optional)

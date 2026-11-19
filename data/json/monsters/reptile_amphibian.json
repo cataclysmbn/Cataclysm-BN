@@ -112,6 +112,13 @@
     "fear_triggers": [ "PLAYER_CLOSE" ],
     "placate_triggers": [ "PLAYER_WEAK" ],
     "death_function": [ "NORMAL" ],
+    "petfood": {
+      "food": [ "DOGFOOD" ],
+      "feed": "The %s unhinges its jaw and swallows the food whole.",
+      "pet": "The %s coils calmly around your arm.",
+      "tamer_traits": [ [ "THRESH_SERPENT" ] ]
+    },
+    "pet_training": { "hp_mult": 1.1, "melee_mult": 1.15, "dodge_mult": 1.1, "max_level": 3 },
     "flags": [ "SEES", "HEARS", "SMELLS", "BADVENOM", "HARDTOSHOOT", "SWIMS", "ANIMAL" ]
   },
   {
@@ -158,6 +165,13 @@
     "death_function": [ "NORMAL" ],
     "reproduction": { "baby_egg": "egg_reptile", "baby_count": 3, "baby_timer": 10 },
     "baby_flags": [ "SPRING" ],
+    "petfood": {
+      "food": [ "DOGFOOD" ],
+      "feed": "The %s hisses, then slowly takes the food.",
+      "pet": "The %s lets you stroke its scales without striking.",
+      "tamer_traits": [ [ "THRESH_SERPENT" ] ]
+    },
+    "pet_training": { "hp_mult": 1.25, "melee_mult": 1.25, "dodge_mult": 1.1, "max_level": 4, "min_skill": 4 },
     "flags": [ "SEES", "HEARS", "SMELLS", "BADVENOM", "HARDTOSHOOT", "SWIMS" ]
   },
   {

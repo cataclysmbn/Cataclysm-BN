@@ -702,14 +702,14 @@
   },
   {
     "type": "recipe",
-    "result": "mobile_memory_card_used",
+    "result": "sd_memory_card",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_OTHER",
     "skill_used": "computer",
     "difficulty": 2,
     "time": "20 m",
     "using": [ [ "coding_standard", 120 ], [ "utility_software_standard", -1 ] ],
-    "components": [ [ [ "mobile_memory_card", 1 ], [ "mobile_memory_card_encrypted", 1 ] ] ]
+    "components": [ [ [ "sd_memory_card", 1 ] ] ]
   },
   {
     "result": "software_medical",
@@ -725,7 +725,7 @@
     "time": "6 h",
     "book_learn": [ [ "reference_firstaid1", 8 ] ],
     "using": [ [ "coding_standard", 120 ], [ "math_software_standard", -1 ] ],
-    "components": [ [ [ "usb_drive", 1 ], [ "mobile_memory_card_used", 1 ] ] ]
+    "components": [ [ [ "usb_drive", 1 ], [ "sd_memory_card", 1 ] ] ]
   },
   {
     "result": "software_math",
@@ -742,7 +742,7 @@
     "time": "6 h",
     "book_learn": [ [ "reference_cooking", 8 ] ],
     "using": [ [ "coding_standard", 120 ] ],
-    "components": [ [ [ "usb_drive", 1 ], [ "mobile_memory_card_used", 1 ] ] ]
+    "components": [ [ [ "usb_drive", 1 ], [ "sd_memory_card", 1 ] ] ]
   },
   {
     "result": "software_useless",
@@ -757,7 +757,7 @@
     "autolearn": true,
     "time": "1 h",
     "using": [ [ "coding_standard", 120 ] ],
-    "components": [ [ [ "usb_drive", 1 ], [ "mobile_memory_card_used", 1 ] ] ]
+    "components": [ [ [ "usb_drive", 1 ], [ "sd_memory_card", 1 ] ] ]
   },
   {
     "type": "recipe",
@@ -765,10 +765,11 @@
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_OTHER",
     "skill_used": "computer",
-    "difficulty": 8,
+    "difficulty": 10,
+    "container": "usb_drive",
     "time": "4 h",
     "using": [ [ "coding_standard", 120 ], [ "hacking_standard", -1 ] ],
-    "components": [ [ [ "paper", 25 ] ] ]
+    "components": [ [ [ "usb_drive", 1 ] ] ]
   },
   {
     "result": "cot",
