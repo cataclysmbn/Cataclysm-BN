@@ -1,0 +1,1331 @@
+#include "npc_ai.h"
+
+#include "action_time_scale.h"
+#include "active_item_cache.h"
+#include "activity_handlers.h"
+#include "bionics.h"
+#include "bodypart.h"
+#include "calendar.h"
+#include "catalua.h"
+#include "catalua_coord.h"
+#include "catalua_hooks.h"
+#include "catalua_impl.h"
+#include "catalua_sol.h"
+#include "character.h"
+#include "character_functions.h"
+#include "character_id.h"
+#include "character_turn.h"
+#include "clzones.h"
+#include "creature_tracker.h"
+#include "damage.h"
+#include "debug.h"
+#include "dispersion.h"
+#include "effect.h"
+#include "enums.h"
+#include "explosion.h"
+#include "flag.h"
+#include "game.h"
+#include "game_constants.h"
+#include "gates.h"
+#include "gun_mode.h"
+#include "init.h"
+#include "item.h"
+#include "item_contents.h"
+#include "item_functions.h"
+#include "itype.h"
+#include "iuse.h"
+#include "iuse_actor.h"
+#include "line.h"
+#include "map/field.h"
+#include "map/field_type.h"
+#include "map/map.h"
+#include "map/mapdata.h"
+#include "map_iterator.h"
+#include "messages.h"
+#include "mission.h"
+#include "monster.h"
+#include "mtype.h"
+#include "npc.h" // IWYU pragma: associated
+#include "npc_class.h"
+#include "npctalk.h"
+#include "options.h"
+#include "overmap/overmap.h"
+#include "overmap/overmap_location.h"
+#include "overmap/overmapbuffer.h"
+#include "overmap/overmapbuffer_registry.h"
+#include "player_activity.h"
+#include "pldata.h"
+#include "profile.h"
+#include "projectile.h"
+#include "ranged.h"
+#include "reload/reload.h"
+#include "reload/reload_selection.h"
+#include "ret_val.h"
+#include "rng.h"
+#include "sounds.h"
+#include "stomach.h"
+#include "translations.h"
+#include "type_id.h"
+#include "units.h"
+#include "utils/algo.h"
+#include "value_ptr.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+#include "vehicle/vpart_range.h"
+#include "visitable.h"
+
+#include <algorithm>
+#include <cfloat>
+#include <climits>
+#include <cmath>
+#include <cstdlib>
+#include <iterator>
+#include <memory>
+#include <numeric>
+#include <ostream>
+#include <tuple>
+
+std::string npc_action_name(npc_action action);
+void print_action(const char* prepend, npc_action action);
+
+#include <unordered_set>
+
+namespace {
+
+auto report_missing_lua_npc_ai(const std::string& method) -> void {
+    static auto warned = std::unordered_set<std::string>{};
+    if (!warned.insert(method).second) { return; }
+    debugmsg("Lua NPC AI function '%s' is not defined", method);
+}
+
+auto report_invalid_lua_npc_ai_return(
+    const std::string& method, const sol::object& value, sol::state& lua) -> void {
+    static auto warned = std::unordered_set<std::string>{};
+    if (!warned.insert(method).second) { return; }
+    const auto type_name = get_luna_type(value);
+    const auto raw_name = type_name.value_or(std::string(sol::type_name(lua, value.get_type())));
+    debugmsg("Lua NPC AI function '%s' returned %s, expected boolean or nil", method, raw_name);
+}
+
+auto run_lua_npc_ai(npc& who) -> bool {
+    if (!who.myclass.is_valid()) { return false; }
+
+    const auto& lua_method = who.myclass.obj().lua_ai;
+    if (!lua_method) { return false; }
+
+    auto* lua_state = DynamicDataLoader::get_instance().lua.get();
+    if (lua_state == nullptr) { return false; }
+
+    sol::state& lua = lua_state->lua;
+    sol::object ref = lua.globals()["game"]["npc_ai_functions"][*lua_method];
+    if (ref.get_type() != sol::type::function) {
+        report_missing_lua_npc_ai(*lua_method);
+        return false;
+    }
+
+    auto func = ref.as<sol::protected_function>();
+    sol::protected_function_result res = func(&who);
+    check_func_result(res);
+    if (!res.valid()) { return false; }
+
+    const auto value = res.get<sol::object>();
+    if (value.get_type() == sol::type::lua_nil) { return false; }
+    if (value.get_type() != sol::type::boolean) {
+        report_invalid_lua_npc_ai_return(*lua_method, value, lua);
+        return false;
+    }
+
+    return value.as<bool>();
+}
+
+} // namespace
+
+bool compare_sound_alert(const dangerous_sound& sound_a, const dangerous_sound& sound_b) {
+    if (sound_a.type != sound_b.type) { return sound_a.type < sound_b.type; }
+    return sound_a.volume < sound_b.volume;
+}
+
+static bool clear_shot_reach(
+    const tripoint_bub_ms& from, const tripoint_bub_ms& to, bool check_ally = true) {
+    ZoneScopedN("clear_shot_reach");
+    std::vector<tripoint_bub_ms> path = line_to(from, to);
+    tripoint_bub_ms target_point = path.back();
+    path.pop_back();
+    if (path.empty()) { return true; }
+    tripoint_bub_ms& last_point = path[0];
+    for (const tripoint_bub_ms& p : path) {
+        Creature* inter = g->critter_at(p);
+        if (check_ally && inter != nullptr) {
+            return false;
+        } else if (get_map().impassable(p) && !get_map().has_flag("MOUNTABLE", p)) {
+            return false;
+        } else if (get_map().obstructed_by_vehicle_rotation(last_point, p)) {
+            return false;
+        }
+        last_point = p;
+    }
+
+    return !get_map().obstructed_by_vehicle_rotation(last_point, target_point);
+}
+
+tripoint_bub_ms npc::good_escape_direction(bool include_pos) {
+    map& here = get_map();
+    if (path.empty()) {
+        zone_type_id retreat_zone = zone_type_id("NPC_RETREAT");
+        const zone_manager& mgr = zone_manager::get_manager();
+        std::optional<tripoint_abs_ms> retreat_target =
+            mgr.get_nearest(retreat_zone, abs_pos(), 60, fac_id);
+        if (retreat_target && *retreat_target != abs_pos()) {
+            update_path(abs_to_bub(tripoint_abs_ms(*retreat_target)));
+            if (!path.empty()) { return path[0]; }
+        }
+    }
+
+    std::vector<tripoint_bub_ms> candidates;
+
+    const auto rate_pt = [&](const tripoint_bub_ms& pt, const float threat_val) {
+        if (!can_move_to(pt, !rules.has_flag(ally_rule::allow_bash))) { return MAX_FLOAT; }
+        float rating = threat_val;
+        for (const auto& e : here.field_at(pt)) {
+            if (is_dangerous_field(e.second)) {
+                // TODO: Rate fire higher than smoke
+                rating += e.second.get_field_intensity();
+            }
+        }
+        return rating;
+    };
+
+    float best_rating = include_pos ? rate_pt(bub_pos(), 0.0f) : FLT_MAX;
+    candidates.emplace_back(bub_pos());
+
+    for (direction pt_dir : npc_threat_dir) {
+        const tripoint_bub_ms& pt = bub_pos() + displace_XY(pt_dir);
+        float cur_rating = rate_pt(pt, ai_cache.threat_map[std::to_underlying(pt_dir)]);
+        if (cur_rating == best_rating) {
+            candidates.emplace_back(bub_pos() + displace_XY(pt_dir));
+        } else if (cur_rating < best_rating) {
+            candidates.clear();
+            candidates.emplace_back(bub_pos() + displace_XY(pt_dir));
+            best_rating = cur_rating;
+        }
+    }
+    return random_entry(candidates);
+}
+
+bool npc::sees_dangerous_field(const tripoint_bub_ms& p) const {
+    return is_dangerous_fields(get_map().field_at(p));
+}
+
+bool npc::could_move_onto(const tripoint_bub_ms& p) const {
+    map& here = get_map();
+    if (!here.passable(p)) { return false; }
+
+    if (!sees_dangerous_field(p)) { return true; }
+
+    const auto fields_here = here.field_at(bub_pos());
+    for (const auto& e : here.field_at(p)) {
+        if (!is_dangerous_field(e.second)) { continue; }
+
+        const auto* entry_here = fields_here.find_field(e.first);
+        if (entry_here == nullptr
+            || entry_here->get_field_intensity() < e.second.get_field_intensity()) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+std::vector<sphere> npc::find_dangerous_explosives() const {
+    std::vector<sphere> result;
+
+    const auto active_items = get_map().get_active_items_in_radius(
+        bub_pos(), g_max_view_distance, special_item_type::explosive);
+
+    for (const auto& elem : active_items) {
+        const auto use = elem->type->get_use("explosion");
+
+        if (!use) { continue; }
+
+        if (!sees(elem->bub_pos())) {
+            continue; // We can't worry about what we can't see.
+        }
+
+        const explosion_iuse* actor = dynamic_cast<const explosion_iuse*>(use->get_actor_ptr());
+        const int safe_range = actor->explosion.safe_range();
+
+        if (rl_dist(abs_pos(), elem->abs_pos()) >= safe_range) {
+            continue; // Far enough.
+        }
+
+        const int turns_to_evacuate = 2 * safe_range / speed_rating();
+
+        if (elem->charges > turns_to_evacuate) {
+            continue; // Consider only imminent dangers.
+        }
+
+        result.emplace_back(elem->bub_pos().raw(), safe_range);
+    }
+
+    return result;
+}
+
+float npc::evaluate_enemy(const Creature& target) const {
+    ZoneScopedN("evaluate_enemy");
+    if (target.is_monster()) {
+        const monster& mon = dynamic_cast<const monster&>(target);
+        float diff = static_cast<float>(mon.type->difficulty);
+        return std::min(diff, NPC_DANGER_MAX);
+    } else if (target.is_npc() || target.is_player()) {
+        return std::min(character_danger(dynamic_cast<const player&>(target)), NPC_DANGER_MAX);
+    } else {
+        return 0.0f;
+    }
+}
+
+static bool too_close(
+    const tripoint_bub_ms& critter_pos, const tripoint_bub_ms& ally_pos, const int def_radius) {
+    return rl_dist(critter_pos, ally_pos) <= def_radius;
+}
+
+void npc::assess_danger() {
+    ZoneScoped;
+    auto has_mutation_attitude_rules = false;
+    for (const trait_id& mut : get_mutations()) {
+        const auto& mutation = mut.obj();
+        if (!mutation.anger_relations.empty() || !mutation.ignored_by.empty()) {
+            has_mutation_attitude_rules = true;
+            break;
+        }
+    }
+    // True if this NPC has traits/effects that cause monster::attitude() to return a
+    // result different from what a generic NPC would get.  When false, we can use each
+    // monster's per-npcmove-pass cached attitude instead of recomputing it.
+    const auto has_special_attitude_traits =
+        guaranteed_hostile() || is_hallucination() || has_mutation_attitude_rules
+        || has_trait(trait_ANIMALEMPATH) || has_trait(trait_ANIMALEMPATH2)
+        || has_trait(trait_ANIMALDISCORD) || has_trait(trait_ANIMALDISCORD2)
+        || has_trait(trait_PROF_FERAL) || has_trait(trait_BEE) || has_trait(trait_FLOWERS)
+        || has_trait(trait_THRESH_MYCUS) || has_trait(trait_MYCUS_FRIEND)
+        || has_trait(trait_PHEROMONE_MAMMAL) || has_trait(trait_PHEROMONE_INSECT)
+        || has_trait(trait_TERRIFYING) || has_effect(effect_attention)
+        || has_effect(effect_feral_infighting_punishment);
+
+    float assessment = 0.0f;
+    float highest_priority = 1.0f;
+    int def_radius = rules.has_flag(ally_rule::follow_close) ? follow_distance() : 6;
+
+    // Radius we can attack without moving
+    int max_range;
+    if (confident_range_cache) {
+        max_range = *confident_range_cache;
+    } else {
+        invalidate_range_cache();
+        max_range = *confident_range_cache;
+    }
+
+    Character& player_character = get_player_character();
+    // NPCs will hold back from charging if they get in trouble.
+    const bool self_defense_only =
+        rules.engagement == combat_engagement::NO_MOVE
+        || rules.engagement == combat_engagement::NONE || emergency();
+    const bool no_fighting = rules.has_flag(ally_rule::forbid_engage);
+    // Companion NPCs will additionally break off to return to the player when in trouble if not
+    // already ordered to.
+    const bool must_retreat =
+        is_walking_with() && (emergency() || rules.has_flag(ally_rule::follow_close))
+        && !too_close(bub_pos(), player_character.bub_pos(), follow_distance());
+
+    // Set this for non-companion NPCs too so all NPCs will switch to self-defense if low on stamina
+    // or wounded.
+    if (rules.engagement == combat_engagement::FREE_FIRE) {
+        def_radius = std::max(6, max_range);
+    } else if (self_defense_only) {
+        def_radius = max_range;
+    } else if (no_fighting) {
+        def_radius = 1;
+    }
+
+    const auto ok_by_rules =
+        [max_range, def_radius, this,
+         &player_character](const Creature& c, int dist, int scaled_dist) {
+            // If we're forbidden to attack, no need to check engagement rules
+            if (rules.has_flag(ally_rule::forbid_engage)) { return false; }
+            switch (rules.engagement) {
+                case combat_engagement::NONE:
+                    return false;
+                case combat_engagement::CLOSE:
+                    // Either close to player or close enough that we can reach it and close to us
+                    return (dist <= max_range && scaled_dist <= def_radius * 0.5)
+                        || too_close(c.bub_pos(), player_character.bub_pos(), def_radius);
+                case combat_engagement::WEAK:
+                    return c.get_hp() <= average_damage_dealt();
+                case combat_engagement::HIT:
+                    return c.has_effect(effect_hit_by_player);
+                case combat_engagement::NO_MOVE:
+                    return dist <= max_range;
+                case combat_engagement::FREE_FIRE:
+                    return dist <= max_range;
+                case combat_engagement::ALL:
+                    return true;
+            }
+
+            return true;
+        };
+    std::array<float, 27> cur_threat_map{};
+    // start with a decayed version of last turn's map
+    for (direction threat_dir : npc_threat_dir) {
+        cur_threat_map[std::to_underlying(threat_dir)] =
+            0.25f * ai_cache.threat_map[std::to_underlying(threat_dir)];
+    }
+    map& here = get_map();
+    // cache string_id -> int_id conversion before hot loop
+    const field_type_id fd_fire = ::fd_fire;
+    // first, check if we're about to be consumed by fire
+    // `map::get_field` checks field_count first, so in general case (no fire) it provides an early
+    // exit
+    for (const tripoint_bub_ms& pt : here.points_in_radius(bub_pos(), 6)) {
+        if (pt == bub_pos() || !here.get_field(pt, fd_fire)
+            || here.has_flag(TFLAG_FIRE_CONTAINER, pt)) {
+            continue;
+        }
+        const int dist = rl_dist(bub_pos(), pt);
+        cur_threat_map[std::to_underlying(direction_from(bub_pos(), pt))] +=
+            2.0f * (NPC_DANGER_MAX - dist);
+        if (dist < 3 && !has_effect(effect_npc_fire_bad)) {
+            warn_about("fire_bad", 1_minutes);
+            add_effect(effect_npc_fire_bad, 5_turns);
+            path.clear();
+        }
+    }
+
+    // Find our Character friends and enemies.
+    // NPC friends are cached across turns; only rebuild when faction membership or active NPC
+    // list changes (tracked via g_npc_friends_dirty_version).
+    std::vector<weak_ptr_fast<Creature>> hostile_guys;
+    auto friend_positions = std::vector<tripoint_bub_ms>{};
+    const auto remember_friend_position = [&](const weak_ptr_fast<Creature>& guy) {
+        if (auto ally = guy.lock()) { friend_positions.push_back(ally->bub_pos()); }
+    };
+    {
+        ZoneScopedN("npc_friend_enemy_scan");
+        const uint32_t current_version = g_npc_friends_dirty_version.load(
+            std::memory_order_relaxed);
+        const bool friends_dirty = (ai_cache.npc_friends_version != current_version);
+        if (friends_dirty) { ai_cache.cached_npc_friends.clear(); }
+        for (const shared_ptr_fast<npc>& npc_ptr : g->raw_npcs()) {
+            const npc& guy = *npc_ptr;
+            if (&guy == this || guy.is_dead()) { continue; }
+            if (has_faction_relationship(guy, npc_factions::watch_your_back)) {
+                if (friends_dirty) {
+                    ai_cache.cached_npc_friends.emplace_back(g->shared_from(guy));
+                }
+            } else if (attitude_to(guy) != Attitude::A_NEUTRAL && sees(guy.bub_pos())) {
+                hostile_guys.emplace_back(g->shared_from(guy));
+            }
+        }
+        if (friends_dirty) { ai_cache.npc_friends_version = current_version; }
+        for (const weak_ptr_fast<Creature>& guy : ai_cache.cached_npc_friends) {
+            ai_cache.friends.emplace_back(guy);
+            remember_friend_position(guy);
+        }
+    }
+    if (sees(player_character.bub_pos())) {
+        if (is_enemy()) {
+            hostile_guys.emplace_back(g->shared_from(player_character));
+        } else if (is_friendly(player_character)) {
+            auto player_ref = g->shared_from(player_character);
+            friend_positions.push_back(player_character.bub_pos());
+            ai_cache.friends.emplace_back(player_ref);
+        }
+    }
+
+    const auto npc_monster_faction = get_monster_faction();
+    {
+        ZoneScopedN("assess_all_monsters");
+        for (const shared_ptr_fast<monster>& mon_ptr : g->critter_tracker->get_monsters_list()) {
+            if (mon_ptr->is_dead()) { continue; }
+            monster& critter = *mon_ptr;
+            const auto dist = rl_dist_fast(bub_pos(), critter.bub_pos());
+            if (dist > default_daylight_level()) { continue; }
+            Attitude att;
+            if (!has_special_attitude_traits
+                && critter.cached_npc_attitude_epoch == g_npcmove_attitude_epoch
+                && critter.cached_npc_attitude_faction == npc_monster_faction) {
+                ZoneScopedN("npc_monster_attitude_cache_hit");
+                att = critter.cached_npc_attitude;
+            } else {
+                ZoneScopedN("npc_monster_attitude_cache_miss");
+                att = has_special_attitude_traits
+                        ? critter.attitude_to(*this)
+                        : critter.generic_npc_attitude_to(npc_monster_faction);
+                if (!has_special_attitude_traits) {
+                    critter.cached_npc_attitude_epoch = g_npcmove_attitude_epoch;
+                    critter.cached_npc_attitude_faction = npc_monster_faction;
+                    critter.cached_npc_attitude = att;
+                }
+            }
+            if (att == Attitude::A_FRIENDLY) {
+                ai_cache.friends.emplace_back(g->shared_from(critter));
+                friend_positions.push_back(critter.bub_pos());
+                continue;
+            }
+            // Skip non-hostile monsters entirely — includes MATT_IGNORE, MATT_FLEE, and
+            // MATT_FOLLOW (tracking but not yet attacking; take neutral attitude at face value).
+            if (att != Attitude::A_HOSTILE) { continue; }
+            // Character::sees() includes short-range special senses; do not replace it
+            // with a terrain-only LOS cache here.
+            if (!sees(critter)) { continue; }
+            float critter_threat = evaluate_enemy(critter);
+            // warn and consider the odds for distant enemies
+            if ((is_enemy() || !critter.friendly)) {
+                assessment += critter_threat;
+                if (critter_threat > (8.0f + personality.bravery + rng(0, 5))) {
+                    warn_about("monster", 10_minutes, critter.type->nname(), dist,
+                               critter.bub_pos());
+                }
+            }
+            if (must_retreat || no_fighting) { continue; }
+            // ignore targets behind glass even if we can see them
+            if (!clear_shot_reach(bub_pos(), critter.bub_pos(), false)) { continue; }
+
+            float scaled_distance = std::max(1.0f, dist / critter.speed_rating());
+            float hp_percent = 1.0f - static_cast<float>(critter.get_hp()) / critter.get_hp_max();
+            float critter_danger =
+                std::max(critter_threat * (hp_percent * 0.5f + 0.5f), NPC_DANGER_VERY_LOW);
+            ai_cache.total_danger += critter_danger / scaled_distance;
+
+            // don't ignore monsters that are too close or too close to an ally if we can move
+            bool is_too_close = dist <= def_radius;
+            for (const tripoint_bub_ms& ally_pos : friend_positions) {
+                if (is_too_close || self_defense_only) { break; }
+                is_too_close |= too_close(critter.bub_pos(), ally_pos, def_radius);
+            }
+            // ignore distant monsters that our rules prevent us from attacking
+            if (!is_too_close && is_player_ally() && !ok_by_rules(critter, dist, scaled_distance)) {
+                continue;
+            }
+            // prioritize the biggest, nearest threats, or the biggest threats that are threatening
+            // us or an ally
+            // critter danger is always at least NPC_DANGER_VERY_LOW
+            float priority = std::
+                max(critter_danger - 2.0f * (scaled_distance - 1.0f),
+                    is_too_close ? critter_danger : 0.0f);
+            cur_threat_map[std::to_underlying(direction_from(bub_pos(), critter.bub_pos()))] +=
+                priority;
+            if (priority > highest_priority) {
+                highest_priority = priority;
+                ai_cache.target = g->shared_from(critter);
+                ai_cache.danger = critter_danger;
+            }
+        }
+    } // assess_all_monsters
+
+    if (assessment == 0.0 && hostile_guys.empty()) {
+        ai_cache.danger_assessment = assessment;
+        return;
+    }
+    const auto handle_hostile =
+        [&](const Character& foe, float foe_threat, const std::string& bogey,
+            const std::string& warning) {
+            int dist = rl_dist(bub_pos(), foe.bub_pos());
+            if (foe_threat > (8.0f + personality.bravery + rng(0, 5))) {
+                warn_about("monster", 10_minutes, bogey, dist, foe.bub_pos());
+            }
+
+            int scaled_distance = std::max(1, (100 * dist) / foe.get_speed());
+            ai_cache.total_danger += foe_threat / scaled_distance;
+            if (must_retreat || no_fighting) { return 0.0f; }
+            // ignore targets behind glass even if we can see them
+            if (!clear_shot_reach(bub_pos(), foe.bub_pos(), false)) { return 0.0f; }
+            bool is_too_close = dist <= def_radius;
+            for (const weak_ptr_fast<Creature>& guy : ai_cache.friends) {
+                if (self_defense_only) { break; }
+                if (auto ally = guy.lock()) {
+                    is_too_close |= too_close(foe.bub_pos(), ally->bub_pos(), def_radius);
+                    if (is_too_close) { break; }
+                }
+            }
+
+            if (!is_player_ally() || is_too_close || ok_by_rules(foe, dist, scaled_distance)) {
+                float priority = std::
+                    max(foe_threat - 2.0f * (scaled_distance - 1),
+                        is_too_close ? std::max(foe_threat, NPC_DANGER_VERY_LOW) : 0.0f);
+                cur_threat_map[std::to_underlying(direction_from(bub_pos(), foe.bub_pos()))] +=
+                    priority;
+                if (priority > highest_priority) {
+                    warn_about(warning, 1_minutes);
+                    highest_priority = priority;
+                    ai_cache.danger = foe_threat;
+                    ai_cache.target = g->shared_from(foe);
+                }
+            }
+            return foe_threat;
+        };
+
+    for (const weak_ptr_fast<Creature>& guy : hostile_guys) {
+        player* foe = dynamic_cast<player*>(guy.lock().get());
+        if (foe && foe->is_npc()) {
+            assessment += handle_hostile(*foe, evaluate_enemy(*foe), "bandit", "kill_npc");
+        }
+    }
+
+    for (const weak_ptr_fast<Creature>& guy : ai_cache.friends) {
+        player* ally = dynamic_cast<player*>(guy.lock().get());
+        if (!(ally && ally->is_npc())) { continue; }
+        float guy_threat = evaluate_enemy(*ally);
+        float min_danger = assessment >= NPC_DANGER_VERY_LOW ? NPC_DANGER_VERY_LOW : -10.0f;
+        assessment = std::max(min_danger, assessment - guy_threat * 0.5f);
+    }
+
+    if (sees(player_character.bub_pos())) {
+        // Mod for the player
+        // cap player difficulty at 150
+        float player_diff = evaluate_enemy(player_character);
+        if (is_enemy()) {
+            assessment += handle_hostile(player_character, player_diff, "maniac", "kill_player");
+        } else if (is_friendly(player_character)) {
+            float min_danger = assessment >= NPC_DANGER_VERY_LOW ? NPC_DANGER_VERY_LOW : -10.0f;
+            assessment = std::max(min_danger, assessment - player_diff * 0.5f);
+            ai_cache.friends.emplace_back(g->shared_from(player_character));
+        }
+    }
+    assessment *= 0.1f;
+    if (!has_effect(effect_npc_run_away) && !has_effect(effect_npc_fire_bad)) {
+        float my_diff = evaluate_enemy(*this);
+        if ((my_diff * 0.5f + personality.bravery + rng(0, 10)) < assessment) {
+            time_duration run_away_for = 5_turns + 1_turns * rng(0, 5);
+            warn_about("run_away", run_away_for);
+            add_effect(effect_npc_run_away, run_away_for);
+            path.clear();
+        }
+    }
+    // update the threat cache
+    for (size_t i = 0; i < 8; i++) {
+        direction threat_dir = npc_threat_dir[i];
+        direction dir_right = npc_threat_dir[(i + 1) % 8];
+        direction dir_left = npc_threat_dir[(i + 7) % 8];
+        ai_cache.threat_map[std::to_underlying(threat_dir)] =
+            cur_threat_map[std::to_underlying(threat_dir)]
+            + 0.1f
+                  * (cur_threat_map[std::to_underlying(dir_right)]
+                     + cur_threat_map[std::to_underlying(dir_left)]);
+    }
+    if (assessment <= 2.0f) {
+        assessment = -10.0f + 5.0f * assessment; // Low danger if no monsters around
+    }
+    ai_cache.danger_assessment = assessment;
+}
+
+float npc::character_danger(const Character& u) const {
+    float ret = 0.0;
+    bool u_gun = u.primary_weapon().is_gun();
+    bool my_gun = primary_weapon().is_gun();
+    double u_weap_val = npc_ai::wielded_value(u);
+    const double& my_weap_val = ai_cache.my_weapon_value;
+    if (u_gun && !my_gun) { u_weap_val *= 1.5f; }
+    ret += u_weap_val;
+
+    static const bodypart_id torso_id("torso");
+    ret += hp_percentage() * get_hp_max(torso_id) / 100.0 / my_weap_val;
+
+    ret += my_gun ? u.get_dodge() / 2 : u.get_dodge();
+
+    ret *= std::max(0.5, u.get_speed() / 100.0);
+
+    add_msg(m_debug, "%s danger: %1f", u.disp_name(), ret);
+    return ret;
+}
+
+void npc::regen_ai_cache() {
+    ZoneScoped;
+    map& here = get_map();
+    auto i = std::begin(ai_cache.sound_alerts);
+    while (i != std::end(ai_cache.sound_alerts)) {
+        if (sees(abs_to_bub(i->abs_pos))) {
+            i = ai_cache.sound_alerts.erase(i);
+            if (ai_cache.sound_alerts.size() == 1) { path.clear(); }
+        } else {
+            ++i;
+        }
+    }
+    float old_assessment = ai_cache.danger_assessment;
+    ai_cache.friends.clear();
+    ai_cache.target = shared_ptr_fast<Creature>();
+    ai_cache.ally = shared_ptr_fast<Creature>();
+    ai_cache.can_heal.clear_all();
+    ai_cache.danger = 0.0f;
+    ai_cache.total_danger = 0.0f;
+    ai_cache.my_weapon_value = npc_ai::wielded_value(*this);
+    ai_cache.dangerous_explosives = find_dangerous_explosives();
+    ai_cache.warn_about_queue.clear();
+
+    assess_danger();
+    if (old_assessment > NPC_DANGER_VERY_LOW && ai_cache.danger_assessment <= 0) {
+        warn_about("relax", 30_minutes);
+    } else if (old_assessment <= 0.0f && ai_cache.danger_assessment > NPC_DANGER_VERY_LOW) {
+        warn_about("general_danger");
+    }
+    // Non-allied NPCs with a completed mission should move to the player
+    if (!is_player_ally() && !is_stationary(true)) {
+        Character& player_character = get_player_character();
+        for (auto& miss : chatbin.missions_assigned) {
+            if (miss->is_complete(getID())) {
+                // unless the player found an item and already told the NPC he wanted to keep it
+                const mission_goal& mgoal = miss->get_type().goal;
+                if ((mgoal == MGOAL_FIND_ITEM || mgoal == MGOAL_FIND_ANY_ITEM
+                     || mgoal == MGOAL_FIND_ITEM_GROUP)
+                    && has_effect(effect_npc_player_looking)) {
+                    continue;
+                }
+                if (abs_omt_pos() != player_character.abs_omt_pos()) {
+                    goal = player_character.abs_omt_pos();
+                }
+                set_attitude(NPCATT_TALK);
+                break;
+            }
+        }
+    }
+}
+
+void npc::move() {
+    ZoneScoped;
+    // don't just return from this function without doing something
+    // that will eventually subtract moves, or change the NPC to a different type of action.
+    // because this will result in an infinite loop
+    if (attitude == NPCATT_FLEE) {
+        set_attitude(NPCATT_FLEE_TEMP); // Only run for so many hours
+    } else if (attitude == NPCATT_FLEE_TEMP && !has_effect(effect_npc_flee_player)) {
+        set_attitude(NPCATT_NULL);
+    }
+    if (!ai_cache.warn_about_queue.empty()) {
+        // Sound off about sound warnings right before we regenerate the AI cache, but after we
+        // apply sounds to NPC AIs.
+        for (auto& warning_sound : ai_cache.warn_about_queue) {
+            warn_about(warning_sound.type, warning_sound.duration, warning_sound.name,
+                       warning_sound.range, warning_sound.danger_pos);
+        }
+    }
+    npc_ai::regen_ai_cache(*this);
+    adjust_power_cbms();
+    // NPCs under operation should just stay still
+    if (activity->id() == activity_id("ACT_OPERATION")) {
+        execute_action(npc_player_activity);
+        return;
+    }
+
+    const auto starting_moves = get_moves();
+    if (run_lua_npc_ai(*this)) {
+        if (get_moves() == starting_moves) { set_moves(0); }
+        return;
+    }
+
+    npc_action action = npc_undecided;
+
+    static const std::string no_target_str = "none";
+    const Creature* target = current_target();
+    const std::string& target_name = target != nullptr ? target->disp_name() : no_target_str;
+    add_msg(
+        m_debug, "NPC %s: target = %s, danger = %.1f, range = %d", name, target_name,
+        ai_cache.danger,
+        primary_weapon().is_gun()
+            ? confident_shoot_range(primary_weapon(), ranged::recoil_total(*this))
+            : primary_weapon().reach_range(*this));
+
+    Character& player_character = get_player_character();
+    // faction opinion determines if it should consider you hostile
+    if (!is_enemy() && guaranteed_hostile() && sees(player_character)) {
+        if (is_player_ally()) { mutiny(); }
+        add_msg(m_debug, "NPC %s turning hostile because is guaranteed_hostile()", name);
+        if (op_of_u.fear > 10 + personality.aggression + personality.bravery) {
+            set_attitude(NPCATT_FLEE_TEMP); // We don't want to take u on!
+        } else {
+            set_attitude(NPCATT_KILL); // Yeah, we think we could take you!
+        }
+    }
+
+    /* This bypasses the logic to determine the npc action, but this all needs to be rewritten
+     * anyway.
+     * NPC won't avoid dangerous terrain while accompanying the player inside a vehicle to keep
+     * them from inadvertently getting themselves run over and/or cause vehicle related errors.
+     * NPCs flee from uncontained fires within 3 tiles
+     */
+    if (!in_vehicle && (sees_dangerous_field(bub_pos()) || has_effect(effect_npc_fire_bad))) {
+        if (sees_dangerous_field(bub_pos())) { path.clear(); }
+        const auto escape_dir = good_escape_direction(sees_dangerous_field(bub_pos()));
+        if (escape_dir != bub_pos()) {
+            move_to(escape_dir);
+            return;
+        }
+    }
+
+    // TODO: Place player-aiding actions here, with a weight
+
+    /* NPCs are fairly suicidal so at this point we will do a quick check to see if
+     * something nasty is going to happen.
+     */
+
+    if (is_enemy() && vehicle_danger(avoidance_vehicles_radius) > 0) {
+        // TODO: Think about how this actually needs to work, for now assume flee from player
+        ai_cache.target = g->shared_from(player_character);
+    }
+
+    map& here = get_map();
+    if (!ai_cache.dangerous_explosives.empty()) {
+        ZoneScopedN("npc_escape_explode_selector");
+        action = npc_escape_explosion;
+    } else if (target == &player_character && attitude == NPCATT_FLEE_TEMP) {
+        ZoneScopedN("npc_fleeing_selector");
+        action = npc_ai::method_of_fleeing(*this);
+    } else if (has_effect(effect_npc_run_away)) {
+        ZoneScopedN("npc_fleeing_selector");
+        action = npc_ai::method_of_fleeing(*this);
+    } else if (has_effect(effect_asthma)
+               && (has_charges(itype_inhaler, 1) || has_charges(itype_oxygen_tank, 1)
+                   || has_charges(itype_smoxygen_tank, 1))) {
+        action = npc_heal;
+    } else if (target != nullptr && ai_cache.danger > 0) {
+        ZoneScopedN("npc_attack_selector");
+        action = npc_ai::method_of_attack(*this);
+    } else if (!ai_cache.sound_alerts.empty() && !is_walking_with()) {
+        ZoneScopedN("npc_investigate_sound_selector");
+        auto cur_s_abs_pos = ai_cache.s_abs_pos;
+        if (!ai_cache.guard_pos) { ai_cache.guard_pos = abs_pos(); }
+        if (ai_cache.sound_alerts.size() > 1) {
+            std::sort(ai_cache.sound_alerts.begin(), ai_cache.sound_alerts.end(),
+                      compare_sound_alert);
+            if (ai_cache.sound_alerts.size() > 10) { ai_cache.sound_alerts.resize(10); }
+        }
+        action = npc_investigate_sound;
+        if (ai_cache.sound_alerts.front().abs_pos != cur_s_abs_pos) {
+            ai_cache.stuck = 0;
+            ai_cache.s_abs_pos = ai_cache.sound_alerts.front().abs_pos;
+        } else if (ai_cache.stuck > 10) {
+            ai_cache.stuck = 0;
+            if (ai_cache.sound_alerts.size() == 1) {
+                ai_cache.sound_alerts.clear();
+                action = npc_return_to_guard_pos;
+            } else {
+                ai_cache.s_abs_pos = ai_cache.sound_alerts.at(1).abs_pos;
+            }
+        }
+        if (action == npc_investigate_sound) {
+            add_msg(m_debug, "NPC %s: investigating sound at x(%d) y(%d)", name,
+                    ai_cache.s_abs_pos.x(), ai_cache.s_abs_pos.y());
+        }
+    } else {
+        ZoneScopedN("npc_idle_selector");
+        if (sleep_at_this_pos.has_value()) { action = npc_sleep; }
+        // No present danger
+        deactivate_combat_cbms();
+
+        // Deactivate Armor & Weapons
+        for (auto& elem : worn) {
+            ZoneScopedN("npc_disable_combat_selector");
+            // The is_active() part was taken from is_wearing_active_power_armor
+            if (elem->has_flag(flag_COMBAT_NPC_USE) && elem->has_flag(flag_COMBAT_NPC_ON)) {
+                if (elem->get_use("transform")) {
+                    invoke_item(elem, "transform");
+                    recalculate_enchantment_cache();
+                } else if (elem->get_use("set_transform")) {
+                    invoke_item(elem, "set_transform");
+                    recalculate_enchantment_cache();
+                }
+            }
+        }
+        item& weapon = primary_weapon();
+        if (!weapon.is_null() && weapon.has_flag(flag_COMBAT_NPC_USE)
+            && weapon.has_flag(flag_COMBAT_NPC_ON)) {
+            ZoneScopedN("npc_disable_weapon_selector");
+            if (weapon.get_use("transform")) {
+                invoke_item(&weapon, "transform");
+                recalculate_enchantment_cache();
+            } else if (weapon.get_use("fireweapon_on")) {
+                invoke_item(&weapon, "fireweapon_on");
+                recalculate_enchantment_cache();
+            }
+        }
+
+
+        action = npc_ai::address_needs(*this);
+        print_action("address_needs %s", action);
+
+        if (action == npc_undecided) {
+            action = npc_ai::address_player(*this);
+            print_action("address_player %s", action);
+        }
+        if (ai_cache.sound_alerts.empty() && ai_cache.guard_pos) {
+            auto return_guard_pos = *ai_cache.guard_pos;
+            add_msg(m_debug, "NPC %s: returning to guard spot at x(%d) y(%d)", name,
+                    return_guard_pos.x(), return_guard_pos.y());
+            action = npc_return_to_guard_pos;
+        }
+    }
+
+    if (action == npc_undecided && sleep_at_this_pos.has_value()) { action = npc_sleep; }
+
+    if (action == npc_undecided && is_walking_with() && goto_to_this_pos) {
+        action = npc_goto_to_this_pos;
+    }
+
+    // check if in vehicle before doing any other follow activities
+    if (action == npc_undecided && is_walking_with() && player_character.in_vehicle
+        && !in_vehicle) {
+        action = npc_follow_embarked;
+    }
+
+    if (action == npc_undecided && is_walking_with() && rules.has_flag(ally_rule::follow_close)
+        && rl_dist(bub_pos(), player_character.bub_pos()) > follow_distance()) {
+        action = npc_follow_player;
+    }
+
+    if (action == npc_undecided && attitude == NPCATT_ACTIVITY) {
+        if (has_stashed_activity()) {
+            if (!check_outbounds_activity(get_stashed_activity())) {
+                assign_stashed_activity();
+            } else {
+                // wait a turn, because next turn, the object of our activity
+                // may have been loaded in.
+                set_moves(0);
+            }
+            return;
+        }
+        std::vector<tripoint_bub_ms> activity_route = get_auto_move_route();
+        if (!activity_route.empty() && !has_destination_activity()) {
+            tripoint_bub_ms final_destination;
+            if (destination_point) {
+                final_destination = abs_to_bub(*destination_point);
+            } else {
+                final_destination = activity_route.back();
+            }
+            update_path(final_destination);
+            if (!path.empty()) {
+                move_to_next();
+                return;
+            }
+        }
+        if (has_destination_activity()) {
+            start_destination_activity();
+            action = npc_player_activity;
+        } else if (has_player_activity()) {
+            action = npc_player_activity;
+        }
+    }
+    if (action == npc_undecided) {
+        // an interrupted activity can cause this situation. stops allied NPCs zooming off
+        // like random NPCs
+        if (attitude == NPCATT_ACTIVITY && !activity) {
+            revert_after_activity();
+            if (is_ally(player_character)) {
+                attitude = NPCATT_FOLLOW;
+                mission = NPC_MISSION_NULL;
+            }
+        }
+        if (is_stationary(true)) {
+            // if we're in a vehicle, stay in the vehicle
+            if (in_vehicle) {
+                action = npc_pause;
+                goal = abs_omt_pos();
+            } else {
+                action = goal == abs_omt_pos() ? npc_pause : npc_goto_destination;
+            }
+        } else if (has_new_items) {
+            scan_new_items();
+            return;
+        } else if (!fetching_item) {
+            find_item();
+            print_action("find_item %s", action);
+        }
+
+        // check if in vehicle before rushing off to fetch things
+        if (is_walking_with() && player_character.in_vehicle) {
+            action = npc_follow_embarked;
+        } else if (fetching_item) {
+            // Set to true if find_item() found something
+            action = npc_pickup;
+        } else if (is_following()) {
+            // No items, so follow the player?
+            action = npc_follow_player;
+        }
+        // Friendly NPCs who are followers/ doing tasks for the player should never get here.
+        // This will revert them to a dynamic NPC state.
+        if (action == npc_undecided) {
+            // Do our long-term action
+            action = npc_ai::long_term_goal_action(*this);
+            print_action("long_term_goal_action %s", action);
+        }
+    }
+
+    /* Sometimes we'll be following the player at this point, but close enough that
+     * "following" means standing still.  If that's the case, if there are any
+     * monsters around, we should attack them after all!
+     *
+     * If we are following a embarked player and we are in a vehicle then shoot anyway
+     * as we are most likely riding shotgun
+     */
+    if (ai_cache.danger > 0 && target != nullptr
+        && ((action == npc_follow_embarked && in_vehicle)
+            || (action == npc_follow_player
+                && (rl_dist(bub_pos(), player_character.bub_pos()) <= follow_distance()
+                    || bub_pos().z() != player_character.bub_pos().z())))) {
+        action = npc_ai::method_of_attack(*this);
+    }
+
+    add_msg(m_debug, "%s chose action %s.", name, npc_action_name(action));
+    {
+        ZoneScopedN("npc_execute_action");
+        execute_action(action);
+    }
+}
+
+npc_action npc::method_of_fleeing() {
+    if (in_vehicle) { return npc_undecided; }
+    return npc_flee;
+}
+
+npc_action npc::method_of_attack() {
+    Character& player_character = get_player_character();
+    Creature* critter = current_target();
+    if (critter == nullptr) {
+        // This function shouldn't be called...
+        debugmsg("Ran npc::method_of_attack without a target!");
+        return npc_pause;
+    }
+
+    auto tar = critter->bub_pos();
+    int dist = rl_dist(bub_pos(), tar);
+    const bool has_los = clear_shot_reach(bub_pos(), tar, false);
+    const bool same_z = tar.z() == bub_pos().z();
+    const int cur_recoil = ranged::recoil_total(*this);
+
+    // TODO: Change the in_vehicle check to actual "are we driving" check
+    const bool dont_move =
+        in_vehicle || rules.engagement == combat_engagement::NO_MOVE
+        || rules.engagement == combat_engagement::FREE_FIRE;
+    // NPCs engage in free fire can move to avoid allies, but not if they're in a vehicle
+    const bool dont_move_ff = in_vehicle || rules.engagement == combat_engagement::NO_MOVE;
+    bool can_use_gun =
+        ((!is_player_ally() || rules.has_flag(ally_rule::use_guns))
+         && (ai_cache.danger >= 3 || emergency() || dist < 0));
+    bool use_silent = (is_player_ally() && rules.has_flag(ally_rule::use_silent));
+    const bool not_engaged_yet =
+        !critter->has_effect(effect_hit_by_player) && rules.engagement == combat_engagement::HIT;
+
+    // if there's enough of a threat to be here, power up the combat CBMs
+    activate_combat_cbms();
+
+    // Activate Armor & Weapons
+    for (auto& elem : worn) {
+        // The is_active() part was taken from is_wearing_active_power_armor
+        if (elem->has_flag(flag_COMBAT_NPC_USE) && !elem->has_flag(flag_COMBAT_NPC_ON)) {
+            if (elem->get_use("transform")) {
+                invoke_item(elem, "transform");
+            } else if (elem->get_use("set_transform")) {
+                invoke_item(elem, "set_transform");
+            }
+        }
+    }
+    item& weapon = primary_weapon();
+    if (!weapon.is_null() && weapon.has_flag(flag_COMBAT_NPC_USE)
+        && !weapon.has_flag(flag_COMBAT_NPC_ON)) {
+
+        if (weapon.get_use("transform")) {
+            invoke_item(&weapon, "transform");
+        } else if (weapon.get_use("fireweapon_off")) {
+            invoke_item(&weapon, "fireweapon_off");
+        }
+    }
+
+    if (emergency() && alt_attack()) {
+        add_msg(m_debug, "%s is trying an alternate attack", disp_name());
+        return npc_noop;
+    }
+
+    // TODO: Add a time check now that wielding takes a lot of time
+    if (wield_better_weapon()) {
+        add_msg(m_debug, "%s is changing weapons", disp_name());
+        return npc_noop;
+    }
+
+    gun_mode g_mode =
+        cbm_active.is_null()
+            ? primary_weapon().gun_current_mode()
+            : cbm_fake_active->gun_current_mode();
+    if (!can_use_gun || dist == 0
+        || (g_mode
+            && ((use_silent && !g_mode->is_silent())
+                || (item_funcs::shots_remaining(*this, *g_mode) < g_mode.qty)))) {
+        g_mode = gun_mode();
+    }
+
+    // reach attacks are silent and consume no ammo so prefer these if available
+    int reach_range = primary_weapon().reach_range(*this);
+    if (reach_range > 1 && reach_range >= dist && clear_shot_reach(bub_pos(), tar)) {
+        add_msg(m_debug, "%s is trying a reach attack", disp_name());
+        return npc_reach_attack;
+    }
+
+    // if the best mode is within the confident range try for a shot
+    if (g_mode && sees(*critter) && has_los && g_mode->gun_range(true) >= dist
+        && confident_gun_mode_range(g_mode, cur_recoil) >= dist) {
+        if (wont_hit_friend(tar, *g_mode, false)) {
+            add_msg(m_debug, "%s is trying to shoot someone", disp_name());
+            return npc_shoot;
+
+        } else {
+            if (!dont_move_ff) {
+                add_msg(m_debug, "%s is trying to avoid friendly fire", disp_name());
+                return npc_avoid_friendly_fire;
+            }
+        }
+    }
+
+    if (!primary_weapon().ammo_sufficient() && can_reload_current()) {
+        add_msg(m_debug, "%s is reloading", disp_name());
+        return npc_reload;
+    }
+
+    if (dist == 1 && same_z) {
+        add_msg(m_debug, "%s is trying a melee attack", disp_name());
+        return npc_melee;
+    }
+
+    // TODO: Needs a check for transparent but non-passable tiles on the way
+    int effective_range =
+        g_mode ? confident_gun_mode_range(g_mode, ranged::get_most_accurate_sight(*this, *g_mode))
+               : 0;
+    if (g_mode && sees(*critter) && ranged::aim_per_move(*this, *g_mode, recoil) > 0
+        && effective_range >= dist) {
+        add_msg(m_debug, "%s is aiming", disp_name());
+        if (critter->is_player() && player_character.sees(*this)) {
+            add_msg(m_bad, _("%s takes aim at you!"), disp_name());
+        }
+        return npc_aim;
+    }
+    add_msg(m_debug, "%s can't figure out what to do", disp_name());
+    return (dont_move || !same_z || not_engaged_yet) ? npc_undecided : npc_melee;
+}
+
+npc_action npc::address_needs() { return address_needs(ai_cache.danger); }
+
+npc_action npc::address_needs(float danger) {
+    ZoneScoped;
+    Character& player_character = get_player_character();
+    // rng because NPCs are not meant to be hypervigilant hawks that notice everything
+    // and swing into action with alarming alacrity.
+    // no sometimes they are just looking the other way, sometimes they hestitate.
+    // ( also we can get huge performance boosts )
+    if (one_in(3)) {
+        ZoneScopedN("npc_address_needs_try_to_heal");
+        healing_options try_to_fix_me = patient_assessment(*this);
+        if (try_to_fix_me.any_true()) {
+            if (!use_bionic_by_id(bio_nanobots)) {
+                ai_cache.can_heal = has_healing_options(try_to_fix_me);
+                if (ai_cache.can_heal.any_true()) { return npc_heal; }
+            }
+        } else {
+            deactivate_bionic_by_id(bio_nanobots);
+        }
+        if (get_skill_level(skill_firstaid) > 0) {
+            if (is_player_ally()) {
+                healing_options try_to_fix_other = patient_assessment(player_character);
+                if (try_to_fix_other.any_true()) {
+                    ai_cache.can_heal = has_healing_options(try_to_fix_other);
+                    if (ai_cache.can_heal.any_true()) {
+                        ai_cache.ally = g->shared_from(player_character);
+                        return npc_heal_player;
+                    }
+                }
+            }
+            for (const npc& guy : g->all_npcs()) {
+                if (&guy == this || !guy.is_ally(*this) || guy.bub_pos().z() != bub_pos().z()
+                    || !sees(guy)) {
+                    continue;
+                }
+                healing_options try_to_fix_other = patient_assessment(guy);
+                if (try_to_fix_other.any_true()) {
+                    ai_cache.can_heal = has_healing_options(try_to_fix_other);
+                    if (ai_cache.can_heal.any_true()) {
+                        ai_cache.ally = g->shared_from(guy);
+                        return npc_heal_player;
+                    }
+                }
+            }
+        }
+    }
+
+    if (one_in(3)) {
+        ZoneScopedN("npc_address_needs_bio_painkiller");
+        if (get_perceived_pain() >= 15) {
+            if (!activate_bionic_by_id(bio_painkiller) && has_painkiller() && !took_painkiller()) {
+                return npc_use_painkiller;
+            }
+        } else {
+            deactivate_bionic_by_id(bio_painkiller);
+        }
+    }
+
+    if (one_in(3) && can_reload_current()) {
+        ZoneScopedN("npc_address_needs_reload_gun");
+        return npc_reload;
+    }
+
+    {
+        ZoneScopedN("npc_address_needs_reload_cbm");
+        check_or_reload_cbm();
+    }
+
+    item& reloadable = find_reloadable();
+    if (!reloadable.is_null()) {
+        do_reload(reloadable);
+        return npc_noop;
+    }
+
+    // Extreme thirst or hunger, bypass safety check.
+    if (get_thirst() > thirst_levels::dehydrated
+        || get_stored_kcal() + stomach.get_calories() < max_stored_kcal() * 0.75) {
+        ZoneScopedN("npc_address_needs_food");
+        if (consume_food()) { return npc_noop; }
+    }
+    // Does the hallucination needs to disappear ?
+    if (is_hallucination() && player_character.sees(*this)) {
+        ZoneScopedN("npc_address_needs_hallu");
+        if (!player_character.has_effect(effect_hallu)) { die(nullptr); }
+    }
+
+    if (danger > NPC_DANGER_VERY_LOW) { return npc_undecided; }
+
+    if (one_in(3)
+        && (get_thirst() > thirst_levels::thirsty
+            || get_stored_kcal() + stomach.get_calories() < max_stored_kcal() * 0.95)) {
+        ZoneScopedN("npc_address_needs_food");
+        if (consume_food()) { return npc_noop; }
+    }
+
+    if (one_in(3) && wants_to_recharge_cbm() && recharge_cbm()) { return npc_noop; }
+
+    if (one_in(3) && find_corpse_to_pulp()) {
+        if (!do_pulp()) { move_to_next(); }
+        return npc_noop;
+    }
+
+    if (one_in(3) && adjust_worn()) { return npc_noop; }
+
+    const auto could_sleep = [&]() {
+        if (danger <= 0.01) {
+            if (get_fatigue() >= fatigue_levels::tired) {
+                return true;
+            } else if (is_walking_with() && player_character.in_sleep_state()
+                       && get_fatigue() > (fatigue_levels::tired / 2)) {
+                return true;
+            }
+        }
+        return false;
+    };
+    // TODO: More risky attempts at sleep when exhausted
+    if (one_in(3) && could_sleep()) {
+        if (!is_player_ally()) {
+            // TODO: Make tired NPCs handle sleep offscreen
+            set_fatigue(0);
+            return npc_undecided;
+        }
+
+        if (rules.has_flag(ally_rule::allow_sleep) || get_fatigue() > fatigue_levels::massive) {
+            return npc_sleep;
+        } else if (player_character.in_sleep_state()) {
+            // TODO: "Guard me while I sleep" command
+            return npc_sleep;
+        }
+    }
+    // TODO: Mutation & trait related needs
+    // e.g. finding glasses; getting out of sunlight if we're an albino; etc.
+
+    return npc_undecided;
+}
+
+npc_action npc::address_player() {
+    Character& player_character = get_player_character();
+    if ((attitude == NPCATT_TALK) && sees(player_character)) {
+        if (player_character.in_sleep_state()) {
+            // Leave sleeping characters alone.
+            return npc_undecided;
+        }
+        if (rl_dist(bub_pos(), player_character.bub_pos()) <= 6) {
+            return npc_talk_to_player; // Close enough to talk to you
+        } else {
+            if (one_in(10)) { say("<lets_talk>"); }
+            return npc_follow_player;
+        }
+    }
+
+    if (attitude == NPCATT_MUG && sees(player_character)) {
+        if (one_in(3)) { say(_("Don't move a <swear> muscle…")); }
+        return npc_mug_player;
+    }
+
+    if (attitude == NPCATT_WAIT_FOR_LEAVE) {
+        patience--;
+        if (patience <= 0) {
+            patience = 0;
+            set_attitude(NPCATT_KILL);
+            return npc_noop;
+        }
+        return npc_undecided;
+    }
+
+    if (attitude == NPCATT_FLEE_TEMP) { return npc_flee; }
+
+    if (attitude == NPCATT_LEAD) {
+        if (rl_dist(bub_pos(), player_character.bub_pos()) >= 12 || !sees(player_character)) {
+            int intense = get_effect_int(effect_catch_up);
+            if (intense < 10) {
+                say("<keep_up>");
+                add_effect(effect_catch_up, 5_turns);
+                return npc_pause;
+            } else {
+                say("<im_leaving_you>");
+                set_attitude(NPCATT_NULL);
+                return npc_pause;
+            }
+        } else if (has_omt_destination()) {
+            return npc_goto_destination;
+        } else { // At goal. Now, waiting on nearby player
+            return npc_pause;
+        }
+    }
+    return npc_undecided;
+}
+
+npc_action npc::long_term_goal_action() {
+    add_msg(m_debug, "long_term_goal_action()");
+
+    if (mission == NPC_MISSION_SHOPKEEP || mission == NPC_MISSION_SHELTER
+        || (is_player_ally() && mission != NPC_MISSION_TRAVELLING)) {
+        return npc_pause; // Shopkeepers just stay put.
+    }
+
+    if (!has_omt_destination()) { set_omt_destination(); }
+
+    if (has_omt_destination()) {
+        if (mission != NPC_MISSION_TRAVELLING) {
+            set_mission(NPC_MISSION_TRAVELLING);
+            set_attitude(attitude);
+        }
+        return npc_goto_destination;
+    }
+
+    return npc_undecided;
+}
+
+namespace npc_ai {
+auto assess_danger(npc& who) -> void { who.assess_danger(); }
+auto regen_ai_cache(npc& who) -> void { who.regen_ai_cache(); }
+auto method_of_fleeing(npc& who) -> npc_action { return who.method_of_fleeing(); }
+auto method_of_attack(npc& who) -> npc_action { return who.method_of_attack(); }
+auto address_needs(npc& who) -> npc_action { return who.address_needs(); }
+auto address_needs(npc& who, float danger) -> npc_action { return who.address_needs(danger); }
+auto address_player(npc& who) -> npc_action { return who.address_player(); }
+auto long_term_goal_action(npc& who) -> npc_action { return who.long_term_goal_action(); }
+} // namespace npc_ai
