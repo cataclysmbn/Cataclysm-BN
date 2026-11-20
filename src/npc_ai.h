@@ -6,6 +6,7 @@
 #include "type_id.h"
 
 #include <string>
+#include <vector>
 
 enum npc_action : int {
     npc_undecided = 0,
@@ -110,6 +111,8 @@ inline constexpr float NPC_DANGER_MAX = 150.0f;
 inline constexpr float MAX_FLOAT = 5000000000.0f;
 
 inline constexpr int avoidance_vehicles_radius = 5;
+
+inline const std::vector<bionic_id> health_cbms = {{bio_leukocyte, bio_plutfilter}};
 
 namespace npc_ai {
 /// AI decision seam: each free function takes the npc it decides for.
