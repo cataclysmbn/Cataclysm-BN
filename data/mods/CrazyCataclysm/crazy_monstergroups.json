@@ -1,6 +1,11 @@
 [
   {
     "type": "monstergroup",
+    "name": "GROUP_POND_BIRD",
+    "monsters": [ { "monster": "mon_duck_of_wishes", "freq": 8, "cost_multiplier": 0 } ]
+  },
+  {
+    "type": "monstergroup",
     "name": "GROUP_ZOMBIE",
     "monsters": [
       { "monster": "mon_zombie_clown_lube", "freq": 2, "cost_multiplier": 2 },
@@ -38,6 +43,9 @@
     "type": "monstergroup",
     "name": "GROUP_FOREST",
     "monsters": [
+      { "monster": "mon_duck_of_wishes", "freq": 1, "cost_multiplier": 0 },
+      { "monster": "mon_coyote", "freq": 1, "cost_multiplier": 2, "pack_size": [ 20, 30 ] },
+      { "monster": "mon_coyote_wolf", "freq": 1, "cost_multiplier": 2, "pack_size": [ 20, 30 ] },
       {
         "monster": "mon_bear_smoky",
         "freq": 1,

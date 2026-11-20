@@ -216,7 +216,8 @@
   {
     "type": "tool_quality",
     "id": "PRY",
-    "name": { "str": "prying", "ctxt": "tool quality name" }
+    "name": { "str": "prying", "ctxt": "tool quality name" },
+    "usages": [ [ 1, [ "CROWBAR" ] ] ]
   },
   {
     "type": "tool_quality",

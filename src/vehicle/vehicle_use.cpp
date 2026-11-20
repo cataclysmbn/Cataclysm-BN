@@ -9,6 +9,7 @@
 #include "character_functions.h"
 #include "clzones.h"
 #include "color.h"
+#include "cultivated_harvest.h"
 #include "debug.h"
 #include "enums.h"
 #include "game.h"
@@ -984,6 +985,7 @@ auto vehicle::fold_up() -> bool {
     if (can_be_folded) {
         folding_veh_item->set_var("weight", to_milligram(total_mass()));
         folding_veh_item->set_var("volume", total_folded_volume() / units::legacy_volume_factor);
+        folding_veh_item->set_var("vehicle_id", type.str());
         // remove "folded" from name to allow for more flexibility with folded vehicle names. also
         // lowers first character
         folding_veh_item->set_var("name", to_lower_case(name));
@@ -1459,14 +1461,12 @@ void vehicle::operate_reaper() {
             continue;
         }
         g->m.furn_set(reaper_pos, f_null);
-        // Secure the seed type before i_clear destroys the item.
-        const itype& seed_type = *(*seed)->type;
+        auto harvest = get_cultivated_harvest(
+            **seed,
+            {.plant_count = plant_produced, .seed_count = seed_produced, .byproducts = false});
         seed = map_stack::iterator(); // clear the seed iterator to prevent warnings
         g->m.i_clear(reaper_pos);
-        for (auto& i :
-             iexamine::get_harvest_items(seed_type, plant_produced, seed_produced, false)) {
-            g->m.add_item_or_charges(reaper_pos, std::move(i));
-        }
+        for (auto& i : harvest) { g->m.add_item_or_charges(reaper_pos, std::move(i)); }
         sound_event se;
         se.origin = reaper_pos;
         se.volume = rng(50, 80);

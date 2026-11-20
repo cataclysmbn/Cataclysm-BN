@@ -1,5 +1,15 @@
 [
   {
+    "id": "ACT_SCAN_BOOK",
+    "type": "activity_type",
+    "verb": "scanning reading material",
+    "rooted": true,
+    "suspendable": false,
+    "verbose_tooltip": false,
+    "bubble_size_effect": "idle",
+    "rest_amount": 0.1
+  },
+  {
     "id": "ACT_RELOAD",
     "type": "activity_type",
     "verb": "reloading",

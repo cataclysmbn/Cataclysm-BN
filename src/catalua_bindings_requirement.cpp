@@ -57,9 +57,9 @@ void cata::detail::reg_requirement( sol::state &lua )
         } );
 
         DOC( "Multiply requirements by a scalar (e.g. for batch crafting)" );
-        ut[sol::meta_function::multiplication] = []( const requirement_data & req, unsigned scalar ) -> requirement_data {
-            return req * scalar;
-        };
+        luna::set_fx( ut, sol::meta_function::multiplication, []( const requirement_data & req, unsigned scalar ) -> requirement_data {
+            return req *scalar;
+        } );
 
         reg_serde_functions( ut );
     }

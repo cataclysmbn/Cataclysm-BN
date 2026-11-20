@@ -201,7 +201,7 @@
     "category": "weapons",
     "weapon_category": [ "KNIVES" ],
     "name": { "str": "RM42 fighting knife", "str_pl": "RM42 fighting knives" },
-    "description": "This matte black Rivtech combat dagger features a long double-edged blade converging to a spear-point and a distinctive slip-resistant grip with low-profile grooves to affix to a firearm.  Improving on the design of the legendary Fairbarn-Sykes dagger with new materials, it was very popular in films and among collectors due to its fearsome appearance.",
+    "description": "This matte black Rivtech combat dagger features a long double-edged blade converging to a spear-point and a distinctive slip-resistant grip with low-profile grooves to affix to a firearm.  Improving on the design of the legendary Fairbairn-Sykes dagger with new materials, it was very popular in films and among collectors due to its fearsome appearance.",
     "weight": "188 g",
     "volume": "750 ml",
     "price": "450 USD",
@@ -482,7 +482,7 @@
     "symbol": "/",
     "color": "light_gray",
     "name": { "str_sp": "jian" },
-    "description": "This is an ancient Chinese doubled-edged straight sword, with an ornate guard and a tassel attached to the pommel.  One of the four major weapons in folklore, alongside the dao sabre, qiang spear, and gun staff.",
+    "description": "This is an ancient Chinese double-edged straight sword, with an ornate guard and a tassel attached to the pommel.  One of the four major weapons in folklore, alongside the dao sabre, qiang spear, and gun staff.",
     "price": "1 kUSD",
     "price_postapoc": "40 USD",
     "material": "steel",
@@ -500,7 +500,7 @@
     "type": "GENERIC",
     "copy-from": "jian",
     "name": { "str_sp": "jian replica" },
-    "description": "This is an ancient Chinese doubled-edged straight sword.  The sword is quite worn, and bent at an odd angle.",
+    "description": "This is an ancient Chinese double-edged straight sword.  The sword is quite worn, and bent at an odd angle.",
     "price_postapoc": "750 cent",
     "material": "budget_steel",
     "repairs_like": "jian",
@@ -513,7 +513,7 @@
     "type": "GENERIC",
     "copy-from": "jian",
     "name": { "str_sp": "jian fake" },
-    "description": "This is a dull, cheaply made replica of an ancient Chinese doubled-edged straight sword, with an ornate guard.",
+    "description": "This is a dull, cheaply made replica of an ancient Chinese double-edged straight sword, with an ornate guard.",
     "price": "100 USD",
     "price_postapoc": "50 cent",
     "material": "aluminum",
@@ -1117,7 +1117,7 @@
     "type": "TOOL",
     "copy-from": "fencing_foil_sharpened",
     "name": { "str": "electrified foil (off)", "str_pl": "electrified foils (off)" },
-    "description": "The modifications made to this fencing foil may not be sporting, but they might give you an edge in this final competition.  Extra effort has been made to insulate the grip and a high voltage stun gun has been attached to the guard, wired through the electronic scoring circuit to the tip.  Activate the switch to elecrocute your foes!",
+    "description": "The modifications made to this fencing foil may not be sporting, but they might give you an edge in this final competition.  Extra effort has been made to insulate the grip and a high voltage stun gun has been attached to the guard, wired through the electronic scoring circuit to the tip.  Activate the switch to electrocute your foes!",
     "ammo": "battery",
     "price_postapoc": "1250 cent",
     "use_action": {
@@ -1534,21 +1534,20 @@
     "symbol": "/",
     "color": "red",
     "ammo": "gasoline",
-    "max_charges": 800,
-    "charges_per_use": 75,
+    "max_charges": 1000,
+    "charges_per_use": 5,
     "techniques": [ "WBLOCK_1", "SPIN", "SWEEP" ],
-    "qualities": [ [ "AXE", 4 ] ],
     "crafting_speed_modifier": 1.25,
     "use_action": {
       "type": "transform",
       "active": true,
       "target": "cs_lajatang_on",
-      "msg": "You turn on the chainsaw lajatang.",
+      "msg": "With a roar, the chainsaws leap to life!",
       "moves": 80,
       "transform_charges": 5,
       "need_dry": true
     },
-    "flags": [ "NONCONDUCTIVE", "POWERED", "ALWAYS_TWOHAND", "COMBAT_NPC_USE" ]
+    "flags": [ "SHEATH_SPEAR", "NONCONDUCTIVE", "ALWAYS_TWOHAND", "COMBAT_NPC_USE" ]
   },
   {
     "id": "cs_lajatang_on",
@@ -1560,16 +1559,27 @@
     "cutting": 140,
     "to_hit": -1,
     "revert_to": "cs_lajatang_off",
-    "revert_msg": "Your chainsaw lajatang goes quiet",
-    "use_action": { "type": "transform", "target": "cs_lajatang_off", "msg": "You turn off the chainsaw lajatang." },
-    "qualities": [ [ "BUTCHER", -250 ] ],
-    "turns_per_charge": 1,
+    "revert_msg": "Your chainsaw lajatang goes quiet.",
+    "use_action": [
+      { "type": "transform", "target": "cs_lajatang_off", "msg": "You turn off the chainsaw lajatang." },
+      {
+        "type": "passivenoise",
+        "noise": 110,
+        "noise_chance": 10,
+        "held_message": "The chainsaws rumble.",
+        "noise_message": "the rumbling of chainsaws.",
+        "noise_variant": "chainsaw"
+      }
+    ],
+    "qualities": [ [ "AXE", 4 ], [ "BUTCHER", -250 ] ],
+    "turns_per_charge": 2,
     "charges_per_use": 0,
     "flags": [
       "MESSY",
       "FRAGILE_MELEE",
       "TRADER_AVOID",
       "NONCONDUCTIVE",
+      "POWERED",
       "ALWAYS_TWOHAND",
       "WATER_DISABLE",
       "COMBAT_NPC_USE",
@@ -1593,20 +1603,19 @@
     "symbol": "/",
     "color": "red",
     "ammo": "battery",
-    "charges_per_use": 375,
+    "charges_per_use": 1,
     "techniques": [ "WBLOCK_1", "SPIN", "SWEEP" ],
-    "qualities": [ [ "AXE", 4 ] ],
     "crafting_speed_modifier": 1.25,
     "use_action": {
       "type": "transform",
       "active": true,
       "target": "ecs_lajatang_on",
-      "msg": "You turn on the chainsaw lajatang.",
+      "msg": "With a buzz, the chainsaws leap to life!",
       "moves": 80,
-      "transform_charges": 5,
+      "transform_charges": 1,
       "need_dry": true
     },
-    "flags": [ "NONCONDUCTIVE", "POWERED", "ALWAYS_TWOHAND", "COMBAT_NPC_USE" ],
+    "flags": [ "SHEATH_SPEAR", "NONCONDUCTIVE", "ALWAYS_TWOHAND", "COMBAT_NPC_USE" ],
     "magazines": [ [ "battery", [ "heavy_battery_cell" ] ] ],
     "magazine_well": "1000 ml"
   },
@@ -1619,17 +1628,28 @@
     "to_hit": -1,
     "bashing": 4,
     "cutting": 140,
-    "power_draw": 4000000,
+    "power_draw": 340000,
     "charges_per_use": 0,
     "revert_to": "ecs_lajatang_off",
-    "revert_msg": "Your chainsaw lajatang goes quiet",
-    "use_action": { "type": "transform", "target": "ecs_lajatang_off", "msg": "You turn off the chainsaw lajatang." },
-    "qualities": [ [ "BUTCHER", -250 ] ],
+    "revert_msg": "Your chainsaw lajatang goes quiet.",
+    "use_action": [
+      { "type": "transform", "target": "ecs_lajatang_off", "msg": "You turn off the chainsaw lajatang." },
+      {
+        "type": "passivenoise",
+        "noise": 90,
+        "noise_chance": 10,
+        "held_message": "The chainsaws rumble.",
+        "noise_message": "the rumbling of chainsaws.",
+        "noise_variant": "circsaw"
+      }
+    ],
+    "qualities": [ [ "AXE", 4 ], [ "BUTCHER", -250 ] ],
     "flags": [
       "MESSY",
       "DURABLE_MELEE",
       "TRADER_AVOID",
       "NONCONDUCTIVE",
+      "POWERED",
       "ALWAYS_TWOHAND",
       "WATER_DISABLE",
       "COMBAT_NPC_USE",
@@ -1758,21 +1778,20 @@
     "symbol": "/",
     "color": "light_gray",
     "ammo": "gasoline",
-    "charges_per_use": 75,
-    "max_charges": 450,
-    "qualities": [ [ "AXE", 4 ] ],
+    "charges_per_use": 5,
+    "max_charges": 500,
     "crafting_speed_modifier": 1.25,
     "use_action": {
       "type": "transform",
       "active": true,
       "target": "combatsaw_on",
-      "msg": "You turn on the combat chainsaw.",
+      "msg": "With a snarl, the combat chainsaw screams to life!",
       "moves": 60,
       "transform_charges": 5,
       "need_dry": true
     },
     "techniques": [ "WBLOCK_1", "SWEEP" ],
-    "flags": [ "ALWAYS_TWOHAND", "POWERED", "COMBAT_NPC_USE" ]
+    "flags": [ "SHEATH_SWORD", "ALWAYS_TWOHAND", "COMBAT_NPC_USE" ]
   },
   {
     "id": "combatsaw_on",
@@ -1785,10 +1804,29 @@
     "turns_per_charge": 4,
     "charges_per_use": 0,
     "revert_to": "combatsaw_off",
-    "qualities": [ [ "BUTCHER", -120 ] ],
-    "revert_msg": "Your combat chainsaw goes quiet",
-    "use_action": { "type": "transform", "target": "combatsaw_off", "msg": "You turn off the combat chainsaw." },
-    "flags": [ "MESSY", "DURABLE_MELEE", "TRADER_AVOID", "ALWAYS_TWOHAND", "WATER_DISABLE", "COMBAT_NPC_USE", "COMBAT_NPC_ON" ]
+    "qualities": [ [ "AXE", 4 ], [ "BUTCHER", -120 ] ],
+    "revert_msg": "Your combat chainsaw goes quiet.",
+    "use_action": [
+      { "type": "transform", "target": "combatsaw_off", "msg": "You turn off the combat chainsaw." },
+      {
+        "type": "passivenoise",
+        "noise": 110,
+        "noise_chance": 10,
+        "held_message": "The combat chainsaw growls.",
+        "noise_message": "a chainsaw growling.",
+        "noise_variant": "chainsaw"
+      }
+    ],
+    "flags": [
+      "MESSY",
+      "DURABLE_MELEE",
+      "TRADER_AVOID",
+      "ALWAYS_TWOHAND",
+      "POWERED",
+      "WATER_DISABLE",
+      "COMBAT_NPC_USE",
+      "COMBAT_NPC_ON"
+    ]
   },
   {
     "id": "e_combatsaw_off",
@@ -1807,20 +1845,19 @@
     "symbol": "/",
     "color": "light_gray",
     "ammo": "battery",
-    "charges_per_use": 375,
-    "qualities": [ [ "AXE", 4 ] ],
+    "charges_per_use": 1,
     "crafting_speed_modifier": 1.25,
     "use_action": {
       "type": "transform",
       "active": true,
       "target": "e_combatsaw_on",
-      "msg": "You turn on the combat chainsaw.",
+      "msg": "With a snarl, the electric combat chainsaw screams to life!",
       "moves": 60,
-      "transform_charges": 5,
+      "transform_charges": 1,
       "need_dry": true
     },
     "techniques": [ "WBLOCK_1", "SWEEP" ],
-    "flags": [ "ALWAYS_TWOHAND", "POWERED", "COMBAT_NPC_USE" ],
+    "flags": [ "SHEATH_SWORD", "ALWAYS_TWOHAND", "COMBAT_NPC_USE" ],
     "magazines": [ [ "battery", [ "medium_battery_cell" ] ] ],
     "magazine_well": "500 ml"
   },
@@ -1832,13 +1869,32 @@
     "description": "This electric combat chainsaw is on, and is continuously draining power.  Use it to turn it off.",
     "to_hit": 1,
     "cutting": 82,
-    "power_draw": 2000000,
+    "power_draw": 170000,
     "charges_per_use": 0,
     "revert_to": "e_combatsaw_off",
-    "qualities": [ [ "BUTCHER", -120 ] ],
-    "revert_msg": "Your combat chainsaw goes quiet",
-    "use_action": { "type": "transform", "target": "e_combatsaw_off", "msg": "You turn off the combat chainsaw." },
-    "flags": [ "MESSY", "DURABLE_MELEE", "TRADER_AVOID", "ALWAYS_TWOHAND", "WATER_DISABLE", "COMBAT_NPC_USE", "COMBAT_NPC_ON" ],
+    "qualities": [ [ "AXE", 4 ], [ "BUTCHER", -120 ] ],
+    "revert_msg": "Your combat chainsaw goes quiet.",
+    "use_action": [
+      { "type": "transform", "target": "e_combatsaw_off", "msg": "You turn off the combat chainsaw." },
+      {
+        "type": "passivenoise",
+        "noise": 90,
+        "noise_chance": 10,
+        "held_message": "The electric combat chainsaw buzzes.",
+        "noise_message": "a chainsaw buzzing.",
+        "noise_variant": "circsaw"
+      }
+    ],
+    "flags": [
+      "MESSY",
+      "DURABLE_MELEE",
+      "TRADER_AVOID",
+      "ALWAYS_TWOHAND",
+      "POWERED",
+      "WATER_DISABLE",
+      "COMBAT_NPC_USE",
+      "COMBAT_NPC_ON"
+    ],
     "magazine_well": "500 ml"
   },
   {
@@ -2022,7 +2078,7 @@
     "copy-from": "machete",
     "looks_like": "makeshift_machete",
     "name": { "str": "bone cleaver" },
-    "description": "This shortsword is carved from a large chunk of bone set in a wooden haft, and is capable of slicing foes in with swiftness and efficiency.",
+    "description": "This shortsword is carved from a large chunk of bone set in a wooden haft, and is capable of slicing foes with swiftness and efficiency.",
     "material": [ "bone_heavy", "wood" ],
     "proportional": { "weight": 0.8, "cutting": 0.9 }
   },
@@ -2077,12 +2133,13 @@
       {
         "type": "fireweapon_on",
         "noise_chance": 25,
-        "noise_message": "The shishkebab crackles as flames whip along its edge.",
+        "held_message": "The shishkebab crackles as flames whip along its edge.",
         "auto_extinguish_chance": 300,
         "auto_extinguish_message": "The flame sputters, then dies with a faint hiss.",
         "voluntary_extinguish_message": "You shut it down. The flame gutters out.",
         "charges_extinguish_message": "The fuel runs dry. The flame gutters and dies in an instant.",
-        "water_extinguish_message": "Your shishkebab hisses in the water and goes out."
+        "water_extinguish_message": "Your shishkebab hisses in the water and goes out.",
+        "noise_variant": "fireweapon_lit"
       },
       { "type": "firestarter", "moves": 30 }
     ],
@@ -2136,10 +2193,11 @@
       {
         "type": "fireweapon_on",
         "noise_chance": 35,
-        "noise_message": "The Sun shines brightly.",
+        "held_message": "The Sun shines brightly.",
         "voluntary_extinguish_message": "The Sun sets.",
         "charges_extinguish_message": "The Light Fades.",
-        "water_extinguish_message": "Your sword hisses in the water and goes out."
+        "water_extinguish_message": "Your sword hisses in the water and goes out.",
+        "noise_variant": "fireweapon_lit"
       },
       { "type": "firestarter", "moves": 30 }
     ],
@@ -2193,10 +2251,11 @@
       {
         "type": "fireweapon_on",
         "noise_chance": 35,
-        "noise_message": "Your blade burns for combat!",
+        "held_message": "Your blade burns for combat!",
         "voluntary_extinguish_message": "Run away!",
         "charges_extinguish_message": "Thy strength fades!",
-        "water_extinguish_message": "Your sword hisses in the water and goes out."
+        "water_extinguish_message": "Your sword hisses in the water and goes out.",
+        "noise_variant": "fireweapon_lit"
       },
       { "type": "firestarter", "moves": 30 }
     ],
@@ -2252,10 +2311,11 @@
       {
         "type": "fireweapon_on",
         "noise_chance": 35,
-        "noise_message": "Das Feuer um deine Schwertklinge leuchtet hell!",
+        "held_message": "Das Feuer um deine Schwertklinge leuchtet hell!",
         "voluntary_extinguish_message": "Die Flamme deines Schwertes erlischt.",
         "charges_extinguish_message": "Deinem Flammenschwert ist der Brennstoff ausgegangen!",
-        "water_extinguish_message": "Dein Schwert zischt und erlischt."
+        "water_extinguish_message": "Dein Schwert zischt und erlischt.",
+        "noise_variant": "fireweapon_lit"
       },
       { "type": "firestarter", "moves": 30 }
     ],

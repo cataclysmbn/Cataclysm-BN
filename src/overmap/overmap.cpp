@@ -1463,6 +1463,7 @@ struct mutable_overmap_placement_rule {
     std::optional<bool> rotate;
     std::optional<point_abs_om> om_pos;
     std::vector<mutable_overmap_placement_rule_piece> pieces;
+    std::vector<overmap_special_connection> connections;
     // NOLINTNEXTLINE(cata-serialize)
     std::vector<std::pair<rel_pos_dir, const mutable_overmap_terrain_join*>> outward_joins;
     int_distribution max = int_distribution(INT_MAX);
@@ -1498,6 +1499,7 @@ struct mutable_overmap_placement_rule {
                 piece.overmap = &it->second;
             }
         }
+        std::ranges::for_each(connections, &overmap_special_connection::finalize);
         outward_joins.clear();
         for (const mutable_overmap_placement_rule_piece& piece : pieces) {
             const mutable_overmap_terrain& ter = *piece.overmap;
@@ -1548,6 +1550,16 @@ struct mutable_overmap_placement_rule {
             throw std::runtime_error(
                 string_format("phase of %s has chunk with zero pieces", context));
         }
+        for (const auto& connection : connections) {
+            if (!connection.connection.is_valid()) {
+                debugmsg("invalid connection id %s in phase of %s", connection.connection.str(),
+                         context);
+            }
+            if (connection.from && connection.initial_dir == cube_direction::last) {
+                debugmsg("invalid connection direction at %s in phase of %s",
+                         connection.p.to_string(), context);
+            }
+        }
         int min_max = max.minimum();
         if (min_max < 0) {
             debugmsg("phase of %s specifies max which might be as low as %d; this should "
@@ -1580,6 +1592,7 @@ struct mutable_overmap_placement_rule {
         } else {
             jo.throw_error(R"(placement rule must specify at least one of "overmap" or "chunk")");
         }
+        jo.read("connections", connections);
         jo.read("join", required_join);
         jo.read("scale", scale);
         jo.read("z", z);
@@ -2344,6 +2357,18 @@ struct mutable_overmap_special_data: overmap_special_data {
                 for (const mutable_overmap_piece_candidate& piece : pieces) {
                     const mutable_overmap_terrain& ter = *piece.overmap;
                     add_ter(ter, piece.pos, piece.rot, satisfy_result.suppressed_joins);
+                }
+                for (const auto& connection : rule->parent->connections) {
+                    const auto connection_pos = origin + om_direction::rotate(connection.p, rot);
+                    const auto connection_dir =
+                        connection.initial_dir == cube_direction::last
+                            ? cube_direction::last
+                            : connection.initial_dir + rot;
+                    if (overmap::inbounds(connection_pos)) {
+                        connections_placed.push_back(
+                            {.connection = connection.connection,
+                             .where = {.p = connection_pos, .dir = connection_dir}});
+                    }
                 }
             } else {
                 unresolved.postpone(next_pos);

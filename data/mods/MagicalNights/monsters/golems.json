@@ -228,7 +228,7 @@
     "id": "mon_orchigolem",
     "type": "MONSTER",
     "name": "orichalcum golem",
-    "description": "A large, humanoid golem made from orichalcum.  It's arms are fashioned into sharp blades.",
+    "description": "A large, humanoid golem made from orichalcum.  Its arms are fashioned into sharp blades.",
     "default_faction": "robot",
     "bodytype": "human",
     "species": [ "ROBOT" ],

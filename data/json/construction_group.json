@@ -151,6 +151,11 @@
   },
   {
     "type": "construction_group",
+    "id": "build_ore_smelter",
+    "name": "Build Ore Smelter"
+  },
+  {
+    "type": "construction_group",
     "id": "build_charcoal_kiln",
     "name": "Build Charcoal Kiln"
   },

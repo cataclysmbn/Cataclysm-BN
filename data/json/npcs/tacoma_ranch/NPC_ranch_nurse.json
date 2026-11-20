@@ -116,15 +116,6 @@
       "success": "We'll go through this pretty quickly but it does help.",
       "success_lie": "What good does this do us?",
       "failure": "It was a lost cause anyways…"
-    },
-    "end": {
-      "update_mapgen": [
-        {
-          "om_terrain": "ranch_camp_50",
-          "place_furniture": [ { "furn": "f_rack_wood", "x": 13, "y": 21 } ],
-          "place_item": [ { "item": "bandages", "x": 13, "y": 21, "amount": [ 1, 3 ] }, { "item": "aspirin", "x": 13, "y": 21, "amount": 2 } ]
-        }
-      ]
     }
   },
   {
@@ -153,7 +144,7 @@
       "update_mapgen": [
         {
           "om_terrain": "ranch_camp_50",
-          "place_item": [ { "item": "hotplate", "x": 13, "y": 21, "amount": 3 }, { "item": "manual_first_aid", "x": 13, "y": 21 } ]
+          "place_item": [ { "item": "hotplate", "x": 17, "y": 21, "amount": 1 }, { "item": "manual_first_aid", "x": 18, "y": 21 } ]
         }
       ]
     }
@@ -179,9 +170,6 @@
       "success": "Thank you for your assistance.",
       "success_lie": "What good does this do us?",
       "failure": "It was a lost cause anyways…"
-    },
-    "end": {
-      "update_mapgen": [ { "om_terrain": "ranch_camp_50", "place_item": [ { "item": "vitamins", "x": 13, "y": 21, "amount": 2 } ] } ]
     }
   },
   {
@@ -207,13 +195,7 @@
       "failure": "It was a lost cause anyways…"
     },
     "end": {
-      "update_mapgen": [
-        {
-          "om_terrain": "ranch_camp_50",
-          "place_nested": [ { "chunks": [ "tacoma_commune_clinic_12" ], "x": 0, "y": 0 } ],
-          "place_item": [ { "item": "char_purifier", "x": 13, "y": 21, "amount": [ 1, 3 ] } ]
-        }
-      ]
+      "update_mapgen": [ { "om_terrain": "ranch_camp_50", "place_nested": [ { "chunks": [ "tacoma_commune_clinic_12" ], "x": 0, "y": 0 } ] } ]
     }
   },
   {
@@ -242,7 +224,7 @@
         {
           "om_terrain": "ranch_camp_50",
           "place_nested": [ { "chunks": [ "tacoma_commune_clinic_13" ], "x": 0, "y": 0 } ],
-          "place_item": [ { "item": "chemistry_set", "x": 13, "y": 21 } ]
+          "place_item": [ { "item": "chemistry_set", "x": 17, "y": 21 } ]
         },
         {
           "om_terrain": "ranch_camp_50_z1",
@@ -281,8 +263,7 @@
             { "furn": "f_rack_wood", "x": 16, "y": 12 },
             { "furn": "f_rack_wood", "x": 16, "y": 13 },
             { "furn": "f_rack_wood", "x": 16, "y": 14 }
-          ],
-          "place_item": [ { "item": "mask_filter", "x": 13, "y": 21, "amount": [ 2, 6 ] } ]
+          ]
         }
       ]
     }
@@ -314,11 +295,10 @@
         {
           "om_terrain": "ranch_camp_50",
           "place_items": [
-            { "chance": 100, "item": "cleaning", "x": 16, "y": 12, "repeat": [ 1, 3 ] },
-            { "chance": 100, "item": "cleaning", "x": 16, "y": 13, "repeat": [ 1, 3 ] },
-            { "chance": 100, "item": "cleaning", "x": 16, "y": 14, "repeat": [ 1, 3 ] }
-          ],
-          "place_item": [ { "item": "gloves_rubber", "x": 13, "y": 21, "amount": [ 2, 3 ] } ]
+            { "chance": 100, "item": "cleaning", "x": 16, "y": 12, "repeat": [ 2, 4 ] },
+            { "chance": 100, "item": "cleaning", "x": 16, "y": 13, "repeat": [ 2, 4 ] },
+            { "chance": 100, "item": "cleaning", "x": 16, "y": 14, "repeat": [ 2, 4 ] }
+          ]
         }
       ]
     }
@@ -346,13 +326,7 @@
       "failure": "It was a lost cause anyways…"
     },
     "end": {
-      "update_mapgen": [
-        {
-          "om_terrain": "ranch_camp_50",
-          "place_nested": [ { "chunks": [ "tacoma_commune_clinic_14" ], "x": 0, "y": 0 } ],
-          "place_item": [ { "item": "scalpel", "x": 13, "y": 21, "amount": 2 } ]
-        }
-      ]
+      "update_mapgen": [ { "om_terrain": "ranch_camp_50", "place_nested": [ { "chunks": [ "tacoma_commune_clinic_14" ], "x": 0, "y": 0 } ] } ]
     }
   },
   {
@@ -381,7 +355,7 @@
         {
           "om_terrain": "ranch_camp_50",
           "place_nested": [ { "chunks": [ "tacoma_commune_clinic_15" ], "x": 0, "y": 0 } ],
-          "place_item": [ { "item": "emergency_book", "x": 13, "y": 21 } ]
+          "place_item": [ { "item": "emergency_book", "x": 18, "y": 21 } ]
         }
       ]
     }
@@ -407,9 +381,6 @@
       "success": "Thank you for your assistance.",
       "success_lie": "What good does this do us?",
       "failure": "It was a lost cause anyways…"
-    },
-    "end": {
-      "update_mapgen": [ { "om_terrain": "ranch_camp_50", "place_item": [ { "item": "syringe", "x": 13, "y": 21, "amount": [ 4, 8 ] } ] } ]
     }
   }
 ]

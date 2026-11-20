@@ -761,6 +761,24 @@
   },
   {
     "type": "effect_type",
+    "id": "lightsnare",
+    "name": [ "Stuck in a light snare" ],
+    "desc": [ "You can't move until you get free!" ],
+    "apply_message": "You are snared!",
+    "rating": "bad",
+    "show_in_info": true
+  },
+  {
+    "type": "effect_type",
+    "id": "heavysnare",
+    "name": [ "Stuck in a heavy snare" ],
+    "desc": [ "You can't move until you get free!" ],
+    "apply_message": "You are snared!",
+    "rating": "bad",
+    "show_in_info": true
+  },
+  {
+    "type": "effect_type",
     "id": "beartrap",
     "name": [ "Stuck in beartrap" ],
     "desc": [ "You can't move until you get free!" ],
@@ -894,6 +912,20 @@
     "name": [ "Irradiation triangle" ],
     "desc": [ "This irradiates you every 15 minutes while aboveground so long as you have it in your inventory!" ],
     "base_mods": { "rad_min": [ 1 ], "rad_max": [ 3 ], "rad_tick": [ 900 ] }
+  },
+  {
+    "type": "effect_type",
+    "id": "debug_full_protection",
+    "name": [ "Full protection" ],
+    "desc": [ "This prevents all damage via enchantments!" ],
+    "base_enchantments": [ { "values": [ { "value": "ARMOR", "multiply": -100 } ] } ]
+  },
+  {
+    "type": "effect_type",
+    "id": "debug_feather_fall",
+    "name": [ "Feather Fall" ],
+    "desc": [ "Feather Fall" ],
+    "base_enchantments": [ { "values": [ { "value": "FALL_DAMAGE_MULT", "add": -1000 } ] } ]
   },
   {
     "type": "effect_type",

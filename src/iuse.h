@@ -243,6 +243,7 @@ class iuse_actor
         virtual ret_val<bool> can_use( const Character &, const item &, bool,
                                        const tripoint_bub_ms & ) const;
         virtual void info( const item &, std::vector<iteminfo> & ) const {}
+        virtual bool activatable() const { return true; }
         /**
          * Returns a deep copy of this object. Example implementation:
          * \code
@@ -264,9 +265,9 @@ class iuse_actor
          */
         virtual std::string get_name() const;
 
-        void set_name( std::string name ) {
+        void set_name( const translation &name ) {
             use_local_display_name = true;
-            display_name = to_translation( name );
+            display_name = name;
         }
 
         /**
@@ -293,6 +294,7 @@ struct use_function {
 
         int call( player &, item &, bool, const tripoint_bub_ms & ) const;
         ret_val<bool> can_call( const Character &, const item &, bool t, const tripoint_bub_ms &pos ) const;
+        bool activatable() const { return actor->activatable(); }
 
         iuse_actor *get_actor_ptr() {
             return actor.get();

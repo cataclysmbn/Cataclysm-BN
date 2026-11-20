@@ -25,7 +25,7 @@
   },
   {
     "id": "3006_incendiary",
-    "copy-from": "3006",
+    "copy-from": "3006fmj",
     "type": "AMMO",
     "name": { "str": ".30-06 M14A1 tracer" },
     "description": "Armor piercing incendiary .30-06 M14A1 ammunition containing tracer rounds to help keep the weapon they are fired from on target.  It penetrates all but the strongest body armor with ease.",

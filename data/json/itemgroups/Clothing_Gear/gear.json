@@ -27,7 +27,7 @@
       [ "legpouch_large", 5 ],
       [ "mask_bal", 10 ],
       [ "mask_gas", 10 ],
-      [ "ballistic_vest_esapi", 15 ],
+      { "group": "standard_ballistic_vests_and_plates", "prob": 15 },
       [ "smokebomb", 5 ],
       [ "suppressor", 25 ],
       [ "suppressor_compact", 20 ],
@@ -57,7 +57,8 @@
       [ "kevlar", 40 ],
       [ "mask_gas", 20 ],
       [ "shield_riot", 20 ],
-      [ "dragonskin", 5 ]
+      [ "dragonskin", 5 ],
+      { "group": "standard_ballistic_vests_and_plates", "prob": 5 }
     ]
   },
   {

@@ -323,6 +323,7 @@
     "type": "vehicle_part",
     "id": "trunk",
     "name": { "str": "trunk" },
+    "description": "A large, enclosed cargo space that you can walk over.",
     "flags": [ "CARGO", "LOCKABLE_CARGO", "COVERED", "BOARDABLE" ]
   },
   {
@@ -386,6 +387,7 @@
     "type": "vehicle_part",
     "id": "trunk_flat",
     "name": { "str": "flat trunk" },
+    "description": "A low cargo box with a hatch on top.  It holds less than a trunk and can't be walked through, but it doesn't need a roof over it to stay aerodynamic.",
     "looks_like": "hatch",
     "size": "100 L",
     "flags": [ "OBSTACLE", "HALF_BOARD", "NO_ROOF_NEEDED", "CARGO", "LOCKABLE_CARGO" ],
@@ -742,5 +744,20 @@
       { "item": "motor_tiny", "prob": 25 }
     ],
     "damage_reduction": { "all": 32 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "carbon_box_small",
+    "copy-from": "basketsm",
+    "name": { "str": "small carbon fiber box" },
+    "durability": 90,
+    "folded_volume": "1 L",
+    "item": "sheet_carbon",
+    "location": "center",
+    "requirements": {
+      "repair": { "skills": [ [ "mechanics", 1 ] ], "time": "30 m", "using": [ [ "adhesive", 1 ], [ "vehicle_repair_carbon", 3 ] ] }
+    },
+    "extend": { "flags": [ "SHOCK_RESISTANT" ] },
+    "breaks_into": "ig_vp_carbon"
   }
 ]

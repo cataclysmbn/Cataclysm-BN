@@ -348,7 +348,7 @@
     "copy-from": "shot_abstract",
     "looks_like": "shot_00",
     "type": "AMMO",
-    "name": { "str": "purifying 00 shot" },
+    "name": { "str": "purifying 12ga 00 shot" },
     "description": "A handloaded shotgun shell, loaded with precious metals.  The addition of consecrated essence enhances its impact and focuses it into a burst of white-hot light when fired.  Immolates targets on impact and bypasses mundane armor, while leaving behind a dazzling glow.",
     "//": "Likely rare to non-existent before the cataclysm.",
     "price": "0 cent",

@@ -1,0 +1,707 @@
+#include "recipe_dictionary.h"
+
+#include "cata_utility.h"
+#include "debug.h"
+#include "fmtlib_core.h"
+#include "init.h"
+#include "input.h"
+#include "item.h"
+#include "item_factory.h"
+#include "iteminfo_query.h"
+#include "itype.h"
+#include "json.h"
+#include "make_static.h"
+#include "output.h"
+#include "player.h"
+#include "requirements.h"
+#include "skill.h"
+#include "string_id.h"
+#include "string_utils.h"
+#include "uistate.h"
+#include "units.h"
+#include "utils/algo.h"
+#include "value_ptr.h"
+
+#include <algorithm>
+#include <iterator>
+#include <memory>
+#include <ranges>
+#include <unordered_map>
+#include <utility>
+
+const flag_id flag_VARSIZE("VARSIZE");
+
+recipe_dictionary recipe_dict;
+
+namespace {
+
+void delete_if(std::map<recipe_id, recipe>& data, const std::function<bool(const recipe&)>& pred) {
+    for (auto it = data.begin(); it != data.end();) {
+        if (pred(it->second)) {
+            it = data.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+
+} // namespace
+
+static recipe null_recipe;
+static std::set<const recipe*> null_match;
+
+static DynamicDataLoader::deferred_json deferred;
+
+template <> auto string_id<recipe>::obj() const -> const recipe& {
+    const auto iter = recipe_dict.recipes.find(*this);
+    if (iter != recipe_dict.recipes.end()) {
+        if (iter->second.obsolete) { return null_recipe; }
+        return iter->second;
+    }
+    if (*this != NULL_ID()) { debugmsg("invalid recipe id \"%s\"", c_str()); }
+    return null_recipe;
+}
+
+template <> auto string_id<recipe>::is_valid() const -> bool {
+    return recipe_dict.recipes.contains(*this);
+}
+
+auto recipe_dictionary::get_uncraft(const itype_id& id) -> const recipe& {
+    auto iter = recipe_dict.uncraft.find(recipe_id(id.str()));
+    return iter != recipe_dict.uncraft.end() ? iter->second : null_recipe;
+}
+
+auto recipe_filter_by_component(const itype_id& c) -> recipe_filter {
+    return [c](const recipe& r) {
+        for (const auto& opts : r.simple_requirements().get_components()) {
+            for (const item_comp& comp : opts) {
+                if (comp.type == c) { return true; }
+            }
+        }
+        return false;
+    };
+}
+
+// searches for left-anchored partial match in the relevant recipe requirements set
+template <class group> auto search_reqs(group gp, const std::string& txt) -> bool {
+    return std::any_of(gp.begin(), gp.end(), [&](const typename group::value_type& opts) {
+        return std::
+            any_of(opts.begin(), opts.end(), [&](const typename group::value_type::value_type& e) {
+                return lcmatch(e.to_string(), txt);
+            });
+    });
+}
+// template specialization to make component searches easier
+template <>
+auto search_reqs(std::vector<std::vector<item_comp>> gp, const std::string& txt) -> bool {
+    return std::any_of(gp.begin(), gp.end(), [&](const std::vector<item_comp>& opts) {
+        return std::any_of(opts.begin(), opts.end(), [&](const item_comp& ic) {
+            return lcmatch(item::nname(ic.type), txt);
+        });
+    });
+}
+
+auto recipe_subset::favorite() const -> std::vector<const recipe*> {
+    std::vector<const recipe*> res;
+
+    std::copy_if(recipes.begin(), recipes.end(), std::back_inserter(res), [&](const recipe* r) {
+        if ((!*r && !r->is_nested()) || r->obsolete) { return false; }
+        return uistate.favorite_recipes.contains(r->ident());
+    });
+
+    return res;
+}
+
+auto recipe_subset::hidden() const -> std::vector<const recipe*> {
+    std::vector<const recipe*> res;
+
+    std::copy_if(recipes.begin(), recipes.end(), std::back_inserter(res), [&](const recipe* r) {
+        if ((!*r && !r->is_nested()) || r->obsolete) { return false; }
+        return uistate.hidden_recipes.contains(r->ident());
+    });
+
+    return res;
+}
+
+auto recipe_subset::recent() const -> std::vector<const recipe*> {
+    std::vector<const recipe*> res;
+
+    for (auto rec_id = uistate.recent_recipes.rbegin(); rec_id != uistate.recent_recipes.rend();
+         ++rec_id) {
+        std::copy_if(
+            recipes.begin(), recipes.end(), std::back_inserter(res), [&rec_id](const recipe* r) {
+                return (*r || r->is_nested()) && !(*rec_id != r->ident() || r->obsolete);
+            });
+    }
+
+    return res;
+}
+
+auto recipe_subset::nested() const -> std::vector<const recipe*> {
+    std::vector<const recipe*> res;
+
+    std::copy_if(recipes.begin(), recipes.end(), std::back_inserter(res), [&](const recipe* r) {
+        if ((!*r && !r->is_nested()) || r->obsolete) { return false; }
+        return r->is_nested();
+    });
+
+    return res;
+}
+
+auto recipe_subset::expanded() const -> std::vector<const recipe*> {
+    std::vector<const recipe*> res;
+
+    std::copy_if(recipes.begin(), recipes.end(), std::back_inserter(res), [&](const recipe* r) {
+        if ((!*r && !r->is_nested()) || r->obsolete) { return false; }
+        return uistate.expanded_recipes.find(r->ident()) != uistate.expanded_recipes.end();
+    });
+
+    return res;
+}
+
+auto recipe_subset::search(
+    const search_type key, const std::string& txt, const std::function<bool(int)>* cond,
+    bool mode) const -> std::vector<const recipe*> {
+    std::vector<const recipe*> res;
+
+    std::copy_if(recipes.begin(), recipes.end(), std::back_inserter(res), [&](const recipe* r) {
+        if (!*r || r->obsolete) { return false; }
+
+        bool match = true;
+        switch (key) {
+            case search_type::name:
+                match = lcmatch(r->result_name(/*decorated=*/true), txt);
+                break;
+
+            case search_type::tool:
+                match = search_reqs(r->simple_requirements().get_tools(), txt);
+                break;
+
+            case search_type::component:
+                match = search_reqs(r->simple_requirements().get_components(), txt);
+                break;
+
+            case search_type::quality:
+                if (cond) {
+                    const auto& gp = r->simple_requirements().get_qualities();
+                    match = std::any_of(gp.begin(), gp.end(), [&](const auto& opts) {
+                        return std::any_of(opts.begin(), opts.end(), [&](const auto& e) {
+                            return lcmatch(e.to_string(), txt) && (*cond)(e.level);
+                        });
+                    });
+                } else {
+                    match = search_reqs(r->simple_requirements().get_qualities(), txt);
+                }
+                break;
+
+            case search_type::reversible: {
+                match = r->is_reversible();
+                break;
+            }
+
+            case search_type::skill:
+                if (cond) {
+                    const auto& skills = r->required_skills;
+                    match =
+                        std::any_of(
+                            skills.begin(), skills.end(),
+                            [&](const auto pair) {
+                                return lcmatch(pair.first->name(), txt) && (*cond)(pair.second);
+                            })
+                        || lcmatch(r->skill_used->name(), txt) && (*cond)(r->difficulty);
+                } else {
+                    match = lcmatch(r->required_skills_string(nullptr, true, false), txt);
+                }
+                break;
+
+            case search_type::primary_skill:
+                match =
+                    lcmatch(r->skill_used->name(), txt) && (cond ? (*cond)(r->difficulty) : true);
+                break;
+
+            case search_type::byproduct:
+                if (!r->has_byproducts()) {
+                    match = false;
+                } else {
+                    const auto& byproducts = r->byproducts;
+                    match = std::any_of(
+                        byproducts.begin(), byproducts.end(),
+                        [&](const std::pair<itype_id, int>& e) {
+                            return lcmatch(e.first->nname(e.second), txt)
+                                && (cond ? (*cond)(e.second) : true);
+                        });
+                    break;
+                }
+                break;
+
+            case search_type::quality_result: {
+                const auto& quals = r->result()->qualities;
+                match = std::
+                    any_of(quals.begin(), quals.end(), [&](const std::pair<quality_id, int>& e) {
+                        return lcmatch(e.first->name, txt) && (cond ? (*cond)(e.second) : true);
+                    });
+                break;
+            }
+
+            case search_type::damage_total: {
+                if (!cond) { break; }
+                match = (*cond)(
+                    r->result()->melee[DT_BASH] + r->result()->melee[DT_CUT]
+                    + r->result()->melee[DT_STAB]);
+                break;
+            }
+
+            case search_type::damage_bash: {
+                if (!cond) { break; }
+                match = (*cond)(r->result()->melee[DT_BASH]);
+                break;
+            }
+
+            case search_type::damage_cut: {
+                if (!cond) { break; }
+                match = (*cond)(r->result()->melee[DT_CUT]);
+                break;
+            }
+
+            case search_type::damage_pierce: {
+                if (!cond) { break; }
+                match = (*cond)(r->result()->melee[DT_STAB]);
+                break;
+            }
+
+            case search_type::protection_bash: {
+                if (!cond) { break; }
+                const auto& armor = r->result()->armor;
+                if (!armor) {
+                    match = false;
+                    break;
+                }
+                match = (*cond)(armor->resistance.type_resist(DT_BASH));
+                break;
+            }
+
+            case search_type::protection_cut: {
+                if (!cond) { break; }
+                const auto& armor = r->result()->armor;
+                if (!armor) {
+                    match = false;
+                    break;
+                }
+                match = (*cond)(armor->resistance.type_resist(DT_CUT));
+                break;
+            }
+
+            case search_type::protection_ballistic: {
+                if (!cond) { break; }
+                const auto& armor = r->result()->armor;
+                if (!armor) {
+                    match = false;
+                    break;
+                }
+                match = (*cond)(armor->resistance.type_resist(DT_BULLET));
+                break;
+            }
+
+            case search_type::protection_acid: {
+                if (!cond) { break; }
+                const auto& armor = r->result()->armor;
+                if (!armor) {
+                    match = false;
+                    break;
+                }
+                const detached_ptr<item> result = r->create_result();
+                match = (*cond)(result->acid_resist())
+                     || (*cond)(result->acid_resist(false, result->get_base_env_resist_w_filter()));
+                break;
+            }
+
+            case search_type::protection_fire: {
+                if (!cond) { break; }
+                const auto& armor = r->result()->armor;
+                if (!armor) {
+                    match = false;
+                    break;
+                }
+                const detached_ptr<item> result = r->create_result();
+                match = (*cond)(result->fire_resist())
+                     || (*cond)(result->fire_resist(false, result->get_base_env_resist_w_filter()));
+                break;
+            }
+
+            case search_type::protection_env: {
+                if (!cond) { break; }
+                const auto& armor = r->result()->armor;
+                if (!armor) {
+                    match = false;
+                    break;
+                }
+                match = (*cond)(armor->env_resist) || (*cond)(armor->env_resist_w_filter);
+                break;
+            }
+
+            case search_type::warmth: {
+                if (!cond) { break; }
+                const auto& armor = r->result()->armor;
+                if (!armor) {
+                    match = false;
+                    break;
+                }
+                match = (*cond)(armor->warmth);
+                break;
+            }
+
+            case search_type::storage: {
+                if (!cond) { break; }
+                const auto& armor = r->result()->armor;
+                if (!armor) {
+                    match = false;
+                    break;
+                }
+                match = (*cond)(units::to_liter(armor->storage));
+                break;
+            }
+
+            case search_type::encumbrance: {
+                if (!cond) { break; }
+                const auto& armor = r->result()->armor;
+                if (!armor) {
+                    match = false;
+                    break;
+                }
+                const bool resize = r->result()->has_flag(flag_VARSIZE);
+                const auto& data = armor->data;
+                match = std::any_of(data.begin(), data.end(), [&](const armor_portion_data& e) {
+                    // This formula is from item.cpp, get_encumber_when_containing, consider putting
+                    // that into a separate function
+                    return resize ? (*cond)(std::max(e.encumber / 2, e.encumber - 10))
+                                  : (*cond)(e.encumber);
+                });
+                break;
+            }
+
+            case search_type::description_result: {
+                const detached_ptr<item> result = r->create_result();
+                match = lcmatch(
+                    remove_color_tags(result->info_string(iteminfo_query::no_conditions)), txt);
+                break;
+            }
+        }
+        return match == mode;
+    });
+
+    return res;
+}
+
+recipe_subset::recipe_subset(const recipe_subset& src, const std::vector<const recipe*>& recipes) {
+    for (const auto elem : recipes) { include(elem, src.get_custom_difficulty(elem)); }
+}
+
+auto recipe_subset::reduce(
+    const search_type key, const std::string& txt, const std::function<bool(int)>* cond,
+    bool mode) const -> recipe_subset {
+    return recipe_subset(*this, search(key, txt, cond, mode));
+}
+auto recipe_subset::intersection(const recipe_subset& subset) const -> recipe_subset {
+    std::vector<const recipe*> intersection_result;
+    std::set_intersection(
+        this->begin(), this->end(), subset.begin(), subset.end(),
+        std::back_inserter(intersection_result));
+    return recipe_subset(*this, intersection_result);
+}
+auto recipe_subset::difference(const recipe_subset& subset) const -> recipe_subset {
+    std::vector<const recipe*> difference_result;
+    std::set_difference(
+        this->begin(), this->end(), subset.begin(), subset.end(),
+        std::back_inserter(difference_result));
+    return recipe_subset(*this, difference_result);
+}
+
+auto recipe_subset::search_result(const itype_id& item) const -> std::vector<const recipe*> {
+    std::vector<const recipe*> res;
+
+    std::copy_if(recipes.begin(), recipes.end(), std::back_inserter(res), [&](const recipe* r) {
+        if (r->obsolete) { return false; }
+        return item == r->result() || (r->has_byproducts() && r->byproducts.contains(item));
+    });
+
+    return res;
+}
+
+auto recipe_subset::empty_category(const std::string& cat, const std::string& subcat) const
+    -> bool {
+    if (subcat == "CSC_*_FAVORITE") {
+        return uistate.favorite_recipes.empty();
+    } else if (subcat == "CSC_*_RECENT") {
+        return uistate.recent_recipes.empty();
+    } else if (subcat == "CSC_*_HIDDEN") {
+        return uistate.hidden_recipes.empty();
+    } else if (subcat == "CSC_*_NESTED") {
+        return !std::ranges::any_of(recipes, [](const recipe* r) {
+            return *r && !r->obsolete && r->is_nested();
+        });
+    }
+
+    auto iter = category.find(cat);
+    if (iter != category.end()) {
+        if (subcat.empty()) {
+            return false;
+        } else {
+            for (auto& e : iter->second) {
+                if (e->subcategory == subcat) { return false; }
+            }
+        }
+    }
+    return true;
+}
+
+auto recipe_subset::in_category(const std::string& cat, const std::string& subcat) const
+    -> std::vector<const recipe*> {
+    std::vector<const recipe*> res;
+    auto iter = category.find(cat);
+    if (iter != category.end()) {
+        if (subcat.empty()) {
+            std::copy_if(iter->second.begin(), iter->second.end(), std::back_inserter(res),
+                         [&](const recipe* e) { return !e->obsolete && !e->is_nested(); });
+        } else {
+            std::copy_if(
+                iter->second.begin(), iter->second.end(), std::back_inserter(res),
+                [&subcat](const recipe* e) {
+                    if (e->obsolete) { return false; }
+                    return e->subcategory == subcat;
+                });
+        }
+    }
+    return res;
+}
+
+auto recipe_subset::of_component(const itype_id& id) const -> const std::set<const recipe*>& {
+    auto iter = component.find(id);
+    return iter != component.end() ? iter->second : null_match;
+}
+
+void recipe_dictionary::load_recipe(const JsonObject& jo, const std::string& src) {
+    load(jo, src, recipe_dict.recipes);
+}
+
+void recipe_dictionary::load_uncraft(const JsonObject& jo, const std::string& src) {
+    load(jo, src, recipe_dict.uncraft);
+}
+
+void recipe_dictionary::load_nested_category(const JsonObject& jo, const std::string& src) {
+    load(jo, src, recipe_dict.recipes);
+}
+
+auto recipe_dictionary::load(
+    const JsonObject& jo, const std::string& src, std::map<recipe_id, recipe>& out) -> recipe& {
+    recipe r;
+
+    // defer entries dependent upon as-yet unparsed definitions
+    if (jo.has_string("copy-from")) {
+        auto base = recipe_id(jo.get_string("copy-from"));
+        if (!out.contains(base)) {
+            deferred.emplace_back(jo.get_source_location(), src);
+            jo.allow_omitted_members();
+            return null_recipe;
+        }
+        r = out[base];
+    }
+
+    r.load(jo, src);
+
+    if (!r.src.empty() && r.src.back().first != r.ident()) { r.src.clear(); }
+    r.src.emplace_back(r.ident(), mod_id(src));
+
+    return out[r.ident()] = std::move(r);
+}
+
+auto recipe_dictionary::size() const -> size_t { return recipes.size(); }
+
+auto recipe_dictionary::begin() const -> std::map<recipe_id, recipe>::const_iterator {
+    return recipes.begin();
+}
+
+auto recipe_dictionary::end() const -> std::map<recipe_id, recipe>::const_iterator {
+    return recipes.end();
+}
+
+auto recipe_dictionary::is_item_on_loop(const itype_id& i) const -> bool {
+    return items_on_loops.contains(i);
+}
+
+void recipe_dictionary::finalize_internal(std::map<recipe_id, recipe>& obj) {
+    for (auto& elem : obj) {
+        elem.second.finalize();
+        inp_mngr.pump_events();
+    }
+    // remove any blacklisted or invalid recipes...
+    delete_if([](const recipe& elem) {
+        if (elem.is_blacklisted()) { return true; }
+
+        if (elem.obsolete) { return false; }
+
+        const std::string error = elem.get_consistency_error();
+
+        if (!error.empty()) { debugmsg("Recipe %s %s.", elem.ident().c_str(), error.c_str()); }
+
+        return !error.empty();
+    });
+}
+
+void recipe_dictionary::find_items_on_loops() {
+    // Check for infinite recipe loops in food (which are problematic for
+    // nutrient calculations).
+    //
+    // Start by building a directed graph of itypes to potential components of
+    // those itypes.
+    items_on_loops.clear();
+    std::unordered_map<itype_id, std::vector<itype_id>> potential_components_of;
+    for (const itype* i : item_controller->all()) {
+        if (!i->comestible || i->has_flag(STATIC(flag_id("NUTRIENT_OVERRIDE")))) { continue; }
+        std::vector<itype_id>& potential_components = potential_components_of[i->get_id()];
+        for (const recipe_id& rec : i->recipes) {
+            const requirement_data requirements = rec->simple_requirements();
+            const requirement_data::alter_item_comp_vector& component_requirements =
+                requirements.get_components();
+
+            for (const std::vector<item_comp>& component_options : component_requirements) {
+                for (const item_comp& component_option : component_options) {
+                    potential_components.push_back(component_option.type);
+                }
+            }
+        }
+    }
+
+    // Now check that graph for loops
+    std::vector<std::vector<itype_id>> loops = cata::find_cycles(potential_components_of);
+    for (const std::vector<itype_id>& loop : loops) {
+        std::string error_message = "loop in comestible recipes detected: " + loop.back().str();
+        for (const itype_id& i : loop) {
+            error_message += " -> " + i.str();
+            items_on_loops.insert(i);
+        }
+        error_message +=
+            ".  Such loops can be broken by either removing or altering "
+            "recipes or marking one of the items involved with the NUTRIENT_OVERRIDE "
+            "flag";
+        debugmsg(error_message);
+    }
+}
+
+void recipe_dictionary::finalize() {
+    DynamicDataLoader::get_instance().load_deferred(deferred);
+
+    // remove abstract recipes
+    delete_if([](const recipe& element) { return element.abstract; });
+
+    finalize_internal(recipe_dict.recipes);
+    finalize_internal(recipe_dict.uncraft);
+
+    for (auto& e : recipe_dict.recipes) {
+        auto& r = e.second;
+
+        if (r.obsolete) { continue; }
+
+        for (const auto& bk : r.booksets) {
+            const itype* booktype = &*bk.first;
+            const int req = bk.second > 0 ? bk.second : std::max(booktype->book->req, r.difficulty);
+            const auto desc = book_recipe{
+                .recipe = &r,
+                .skill_level = req,
+                .name = translation::to_translation(r.result_name()),
+                .hidden = false};
+            booktype->book->recipes.insert(desc);
+        }
+
+        // if reversible and no specific uncraft recipe exists use this recipe
+        if (r.is_reversible() && !recipe_dict.uncraft.contains(recipe_id(r.result().str()))) {
+            recipe_dict.uncraft[recipe_id(r.result().str())] = r;
+        }
+    }
+
+    // add pseudo uncrafting recipes
+    for (const itype* e : item_controller->all()) {
+        const itype_id id = e->get_id();
+        const recipe_id rid = recipe_id(id.str());
+
+        // books that don't already have an uncrafting recipe
+        if (e->book && !recipe_dict.uncraft.contains(rid) && e->volume > 0_ml) {
+            int pages = std::max(1, static_cast<int>(e->volume / 12.5_ml));
+            auto& bk = recipe_dict.uncraft[rid];
+            bk.ident_ = rid;
+            bk.result_ = id;
+            bk.reversible = true;
+            bk.requirements_ = *requirement_id("uncraft_book") * pages;
+            // TODO: allow specifying time in requirement_data
+            bk.time = pages * 10;
+        }
+    }
+
+    // Cache auto-learn recipes and blueprints
+    for (const auto& e : recipe_dict.recipes) {
+        if (e.second.autolearn) { recipe_dict.autolearn.insert(&e.second); }
+    }
+
+    recipe_dict.find_items_on_loops();
+}
+
+void recipe_dictionary::reset() {
+    deferred.clear();
+    recipe_dict.blueprints.clear();
+    recipe_dict.autolearn.clear();
+    recipe_dict.recipes.clear();
+    recipe_dict.uncraft.clear();
+    recipe_dict.items_on_loops.clear();
+}
+
+void recipe_dictionary::delete_if(const std::function<bool(const recipe&)>& pred) {
+    ::delete_if(recipe_dict.recipes, pred);
+    ::delete_if(recipe_dict.uncraft, pred);
+}
+
+void recipe_subset::include(const recipe* r, int custom_difficulty) {
+    if (custom_difficulty < 0) { custom_difficulty = r->difficulty; }
+    // We always prefer lower difficulty for the subset, but we save it only if it's not default
+    if (recipes.contains(r)) {
+        const auto iter = difficulties.find(r);
+        // See if we need to lower the difficulty of the existing recipe
+        if (iter != difficulties.end() && custom_difficulty < iter->second) {
+            if (custom_difficulty != r->difficulty) {
+                iter->second = custom_difficulty; // Added again with lower difficulty
+            } else {
+                difficulties.erase(iter); // No need to keep the default difficulty. Free some
+                                          // memory
+            }
+        } else if (custom_difficulty < r->difficulty) {
+            difficulties[r] = custom_difficulty; // Added again with lower difficulty
+        }
+    } else {
+        // add recipe to category and component caches
+        for (const auto& opts : r->simple_requirements().get_components()) {
+            for (const item_comp& comp : opts) { component[comp.type].insert(r); }
+        }
+        category[r->category].insert(r);
+        // Set the difficulty is it's not the default
+        if (custom_difficulty != r->difficulty) { difficulties[r] = custom_difficulty; }
+        // insert the recipe
+        recipes.insert(r);
+        ids.insert(r->ident());
+    }
+}
+
+void recipe_subset::include(const recipe_subset& subset) {
+    for (const auto& elem : subset) { include(elem, subset.get_custom_difficulty(elem)); }
+}
+
+auto recipe_subset::get_custom_difficulty(const recipe* r) const -> int {
+    const auto iter = difficulties.find(r);
+    if (iter != difficulties.end()) { return iter->second; }
+    return r->difficulty;
+}
+
+void recipe_dictionary::resolve_lua_callbacks(
+    const std::map<std::string, std::unique_ptr<lua_recipe_actor>>& actors) const {
+    for (auto& recipe_pair : recipes) {
+        auto it = actors.find(recipe_pair.first.str());
+        if (it != actors.end()) { recipe_pair.second.lua_callbacks = it->second.get(); }
+    }
+}

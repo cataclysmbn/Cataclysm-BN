@@ -70,12 +70,11 @@ jobs:
     needs: [skip-duplicates, shader-artifacts]
     strategy:
       fail-fast: ${{ github.ref_name == 'main' }}
-      max-parallel: ${{ github.ref_name == 'main' && 20 || 2 }}
       matrix:
         include:
           - title: clang, curses
             preset: ci-curses
-            os: ubuntu-latest
+            os: ubuntu-24.04
             tiles: 0
             test-stage: 1
             ccache_limit: 2G
@@ -84,7 +83,7 @@ jobs:
 
           - title: clang, tiles, i18n
             preset: ci-tiles
-            os: ubuntu-latest
+            os: ubuntu-24.04
             tiles: 1
             ccache_limit: 2G
             ccache_key: linux-clang-tiles
@@ -114,17 +113,13 @@ jobs:
 
       - name: install dependencies (ubuntu)
         if: ${{ env.SKIP == 'false' }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libncursesw5-dev mold gettext parallel libsqlite3-dev zlib1g-dev libvulkan-dev mesa-vulkan-drivers xvfb autoconf autoconf-archive automake libtool libltdl-dev
-          sudo locale-gen en_US.UTF-8 fr_FR.UTF-8 ru_RU.UTF-8
+        uses: ./.github/actions/linux-deps
 
       - name: Setup LLVM build tools
         if: ${{ env.SKIP == 'false' }}
         uses: aminya/setup-cpp@v1
         with:
           compiler: llvm-${{ env.LLVM_VERSION }}
-          clang-format: ${{ env.LLVM_VERSION }}
           cmake: true
           ninja: true
           setup-cpp: false
@@ -133,8 +128,9 @@ jobs:
         if: ${{ env.SKIP == 'false' }}
         run: clang++ --version
 
+      # Only the tiles build runs Deno, to generate the Lua docs.
       - name: Setup Deno
-        if: ${{ env.SKIP == 'false' }}
+        if: ${{ env.SKIP == 'false' && matrix.tiles == 1 }}
         uses: denoland/setup-deno@v2
         with: { cache: true }
 
@@ -142,17 +138,6 @@ jobs:
       #  if: ${{ env.SKIP == 'false' }}
       #  run: |
       #    sudo apt-get install --ignore-missing libsdl3-dev libsdl3-ttf-dev libsdl3-image-dev libsdl3-mixer-dev
-
-      - name: Install SDL3-devel Dependencies (ubuntu)
-        if: ${{ env.SKIP == 'false' }}
-        run: |
-          sudo apt-get install libasound2-dev libpulse-dev libaudio-dev libjack-dev libsndio-dev libx11-dev \
-            libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxtst-dev libxkbcommon-dev \
-            libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev libegl1-mesa-dev libdbus-1-dev \
-            libibus-1.0-dev libudev-dev libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev \
-            libfreetype-dev libharfbuzz-dev \
-            libtiff-dev libavif-dev libwebp-dev libjpeg-dev libjxl-dev \
-            libflac-dev libvorbis-dev libxmp-dev libmpg123-dev libwavpack-dev
 
       # Problem matchers are only run on the always-on validation leg to reduce error spam.
       - name: add problem matcher
@@ -218,11 +203,76 @@ jobs:
           path: cbn-linux-tiles-x64-pr-${{ github.event.pull_request.number || github.run_id }}.tar.gz
           if-no-files-found: error
 
-      - name: run tests
+      # The test binary has absolute RUNPATHs into build/, so keep the paths and symlinks of its shared libraries.
+      - name: pack test executable
         if: ${{ github.ref_name != 'main' && env.SKIP == 'false' }}
-        timeout-minutes: 120
         run: |
-          # Run tests using parallel execution
+          mkdir -p lang/mo
+          find build -name '*.so*' > test-files
+          echo build/tests/cata_test${{ matrix.tiles == 1 && '-tiles' || '' }} >> test-files
+          tar --zstd -cf cata-test.tar.zst -T test-files lang/mo
+
+      - name: upload test executable
+        if: ${{ github.ref_name != 'main' && env.SKIP == 'false' }}
+        uses: actions/upload-artifact@v4.6.0
+        with:
+          name: cata_test-${{ matrix.tiles == 1 && 'tiles' || 'curses' }}
+          path: cata-test.tar.zst
+          if-no-files-found: error
+          compression-level: 0
+
+  # Split Linux tests over several runners. One runner takes about 12 min for all shards.
+  linux-tests:
+    needs: [skip-duplicates, varied_builds]
+    if: ${{ !cancelled() && github.ref_name != 'main' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        tiles: [0, 1]
+        group: [1/4, 2/4, 3/4, 4/4]
+    name: clang, ${{ matrix.tiles == 1 && 'tiles' || 'curses' }} tests ${{ matrix.group }}
+    runs-on: ubuntu-24.04
+    env:
+      SKIP: ${{ matrix.tiles == 1 && ( needs.skip-duplicates.outputs.should_skip_code == true || needs.skip-duplicates.outputs.should_skip_data == true ) }}
+    steps:
+      - if: ${{ env.SKIP == 'false' }}
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Download generated shaders
+        if: ${{ env.SKIP == 'false' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-shaders-ci
+          path: data/shaders
+
+      - name: Download test executable
+        if: ${{ env.SKIP == 'false' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: cata_test-${{ matrix.tiles == 1 && 'tiles' || 'curses' }}
+
+      - name: install dependencies (ubuntu)
+        if: ${{ env.SKIP == 'false' }}
+        uses: ./.github/actions/linux-deps
+        with: { for: test }
+
+      - if: ${{ env.SKIP == 'false' }}
+        uses: denoland/setup-deno@v2
+        with: { cache: true }
+
+      - name: add problem matcher
+        if: ${{ env.SKIP == 'false' && matrix.tiles == 0 }}
+        run: |
+          echo "::add-matcher::build-scripts/problem-matchers/catch2.json"
+          echo "::add-matcher::build-scripts/problem-matchers/debugmsg.json"
+
+      - name: run tests
+        if: ${{ env.SKIP == 'false' }}
+        timeout-minutes: 60
+        run: |
+          tar --zstd -xf cata-test.tar.zst
           Xvfb :99 -screen 0 1280x1024x24 &
           xvfb_pid=$!
           trap 'kill "$xvfb_pid" 2>/dev/null || true' EXIT
@@ -231,29 +281,42 @@ jobs:
           sleep 1
 
           test_bin="build/tests/cata_test${{ matrix.tiles == 1 && '-tiles' || '' }}"
-          build-scripts/run-linux-test-shards.ts --mode file-tags --jobs 4 --non-slow-shards 8 "$test_bin" -- \
+          build-scripts/run-linux-test-shards.ts --mode file-tags --jobs 4 --non-slow-shards 16 \
+            --shard-group "${{ matrix.group }}" "$test_bin" -- \
             --min-duration 20 \
             --use-colour yes \
             --rng-seed time \
             --error-format=github-action \
             --gpu-backend=software
 
-          # Run test with all mods (test-stage only)
-          if [ "${{ env.TEST_STAGE }}" = "1" ]; then
+          # Run test with all mods (curses only, once)
+          if [ "${{ matrix.tiles }}" = "0" ] && [ "${{ matrix.group }}" = "1/4" ]; then
             blacklist=build-scripts/mod_test_blacklist
             ./build-scripts/get_all_mods.py $blacklist | \
               while read -r mods; do
-                $test_bin $test_opts '~*' --user-dir=all_modded --mods="${mods}"
+                $test_bin '~*' --user-dir=all_modded --mods="${mods}"
               done
           fi
 
-      - name: upload artifacts if failed
-        uses: actions/upload-artifact@v4.6.0
-        if: failure()
-        with:
-          name: cata_test-${{ matrix.tiles == 1 && 'tiles' || 'curses' }}
-          path: build/tests/cata_test${{ matrix.tiles == 1 && '-tiles' || '' }}
-          if-no-files-found: ignore
+  # Windows has its own call so that its test jobs do not wait for the macOS and Android builds.
+  cache-warm-windows:
+    needs: skip-duplicates
+    if: ${{ github.event_name == 'push' && needs.skip-duplicates.outputs.should_skip_platform != 'true' }}
+    uses: ./.github/workflows/build.yml
+    with:
+      version-label: experimental
+      mode: ci
+      matrix-json: |
+        [
+          { "name": "Windows MSVC", "platform": "windows", "artifact": "windows-tiles-x64-msvc", "os": "windows-2022", "arch": "x64", "tiles": true, "sound": true, "ext": "zip", "content-type": "application/zip" }
+        ]
+      download-translations: false
+      bundle-tilesets: false
+      package-artifacts: false
+      run-tests: true
+      windows-test-groups: '["1/3", "2/3", "3/3"]'
+      upload-artifacts: false
+    secrets: inherit
 
   cache-warm-builds:
     needs: skip-duplicates
@@ -264,7 +327,6 @@ jobs:
       mode: ci
       matrix-json: |
         [
-          { "name": "Windows MSVC", "platform": "windows", "artifact": "windows-tiles-x64-msvc", "os": "windows-2022", "arch": "x64", "tiles": true, "sound": true, "ext": "zip", "content-type": "application/zip" },
           { "name": "macOS Curses", "platform": "macos", "artifact": "osx-curses-x64", "os": "macos-15-intel", "preset": "osx-curses-x64-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
           { "name": "macOS Tiles", "platform": "macos", "artifact": "osx-tiles-x64", "os": "macos-15-intel", "preset": "osx-tiles-x64-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
           { "name": "macOS Curses ARM", "platform": "macos", "artifact": "osx-curses-arm", "os": "macos-15", "preset": "osx-curses-arm-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
@@ -279,6 +341,27 @@ jobs:
       upload-artifacts: false
     secrets: inherit
 
+  windows-builds:
+    needs: skip-duplicates
+    if: ${{ github.event_name != 'push' && needs.skip-duplicates.outputs.should_skip_platform != 'true' }}
+    uses: ./.github/workflows/build.yml
+    with:
+      version-label: experimental
+      mode: ci
+      artifact-label: pr-${{ github.event.pull_request.number || github.run_id }}
+      matrix-json: |
+        [
+          { "name": "Windows MSVC", "platform": "windows", "artifact": "windows-tiles-x64-msvc", "os": "windows-2022", "arch": "x64", "tiles": true, "sound": true, "ext": "zip", "content-type": "application/zip", "upload-artifact": true }
+        ]
+      download-translations: false
+      bundle-tilesets: false
+      bundle-registry-mods: false
+      package-artifacts: true
+      run-tests: true
+      windows-test-groups: '["1/3", "2/3", "3/3"]'
+      upload-artifacts: true
+    secrets: inherit
+
   builds:
     needs: skip-duplicates
     if: ${{ github.event_name != 'push' && needs.skip-duplicates.outputs.should_skip_platform != 'true' }}
@@ -289,7 +372,6 @@ jobs:
       artifact-label: pr-${{ github.event.pull_request.number || github.run_id }}
       matrix-json: |
         [
-          { "name": "Windows MSVC", "platform": "windows", "artifact": "windows-tiles-x64-msvc", "os": "windows-2022", "arch": "x64", "tiles": true, "sound": true, "ext": "zip", "content-type": "application/zip", "upload-artifact": true },
           { "name": "macOS Curses", "platform": "macos", "artifact": "osx-curses-x64", "os": "macos-15-intel", "preset": "osx-curses-x64-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
           { "name": "macOS Tiles", "platform": "macos", "artifact": "osx-tiles-x64", "os": "macos-15-intel", "preset": "osx-tiles-x64-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage", "upload-artifact": true },
           { "name": "macOS Curses ARM", "platform": "macos", "artifact": "osx-curses-arm", "os": "macos-15", "preset": "osx-curses-arm-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },

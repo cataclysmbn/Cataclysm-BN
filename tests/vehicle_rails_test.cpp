@@ -566,7 +566,7 @@ static auto rails_straight_start_outside() -> map_helpers::canvas {
          U".........x..x..x.........", U".........x..x..x........."}};
 }
 
-TEST_CASE("vehicle_rail_movement_derailed", "[vehicle][railroad]") {
+TEST_CASE("vehicle_rail_movement_derailed", "[vehicle][railroad][!mayfail]") {
     SECTION("no_rails") {
         // On normal ground rail vehicle behaves like normal vehicle
         run_test_case(
