@@ -633,8 +633,16 @@ auto vehicle::part_collision(const vehicle_part_collision_options& options) -> v
         ret.type = veh_coll_bashable;
         terrain_collision_data(p, bash_floor, mass2, part_dens, e);
         ret.target_name = here.disp_name(p);
-    } else if (here.impassable_ter_furn(p)
-               || (bash_floor && !here.has_flag_ter_or_furn(TFLAG_NO_FLOOR, p))) {
+    } else if (
+        here.impassable_ter_furn(p)
+        || (bash_floor && !here.has_flag_ter_or_furn(TFLAG_NO_FLOOR, p))
+        // A walkable floor is a horizontal obstruction if it splits a stacked mount.
+        || (!vert_coll && parts[part].mount.z() > min_mount_z()
+            && relative_parts.contains(parts[part].mount + tripoint_below)
+            && here.has_floor(p, here.has_flag_ter(TFLAG_RAMP_DOWN, p), true)
+            && !(here.has_flag_ter(TFLAG_SWIMMABLE, p)
+                 && here.has_flag_ter(TFLAG_SWIMMABLE, p + tripoint_below)
+                 && !here.has_flag_furn(TFLAG_SUN_ROOF_ABOVE, p + tripoint_below)))) {
         // not destructible
         ret.type = veh_coll_other;
         mass2 = 1000;
