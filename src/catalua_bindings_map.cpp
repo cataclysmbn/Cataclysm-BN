@@ -331,6 +331,8 @@ void cata::detail::reg_map( sol::state &lua )
 
         DOC( "Returns the vehicle origin tile in local map-square coordinates." );
         luna::set_fx( ut, "pos", []( const wrapped_vehicle & wrapped ) -> tripoint_bub_ms { return wrapped.pos; } );
+        DOC( "Returns true if the wrapped vehicle still exists, false if the handle is invalid (e.g. the vehicle was destroyed)." );
+        luna::set_fx( ut, "is_valid", []( const wrapped_vehicle & wrapped ) -> bool { return wrapped.v != nullptr; } );
         DOC( "Returns the vehicle prototype id string." );
         luna::set_fx( ut, "type", []( const wrapped_vehicle & wrapped ) -> std::string {
             if( wrapped.v == nullptr ) { return ""; }
