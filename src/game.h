@@ -587,12 +587,12 @@ class game : public submap_load_listener
         npc *find_npc( character_id id );
         /** Makes any nearby NPCs on the overmap active. */
         void load_npcs();
-    private:
         /** Resizes the reality bubble to an explicit target size.
          *  Safe to call mid-session: despawns out-of-range entities, flushes the
          *  submap load-manager work, rebuilds map grid and all dependent caches.
          */
         void resize_reality_bubble_to( int new_size );
+    private:
 
         /** Resizes the reality bubble to match the current REALITY_BUBBLE_SIZE option.
          *  Also clears in_activity_bubble_ so the normal size takes effect immediately.
