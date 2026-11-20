@@ -3990,7 +3990,7 @@
     "type": "keybinding",
     "id": "IGNORE",
     "category": "YN_IGNORE_QUERY",
-    "name": "Ignore further promts and finish",
+    "name": "Ignore further prompts and finish",
     "bindings": [ { "input_method": "keyboard", "key": "I" }, { "input_method": "keyboard", "key": "i" } ]
   },
   {

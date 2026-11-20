@@ -136,7 +136,7 @@
   {
     "type": "COMESTIBLE",
     "id": "dandelionburdock_fried",
-    "name": { "str": "fried dandelions and burdocks", "str_pl": "fried dandelions burdocks" },
+    "name": { "str_sp": "fried dandelions and burdocks" },
     "color": "green",
     "spoils_in": "3 days",
     "comestible_type": "FOOD",

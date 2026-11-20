@@ -1067,7 +1067,7 @@
     "intensity_levels": [
       { "name": "swirl of meth smoke", "translucency": 5 },
       { "name": "meth smoke", "color": "light_gray" },
-      { "name": "thick meth  smoke", "color": "dark_gray" }
+      { "name": "thick meth smoke", "color": "dark_gray" }
     ],
     "npc_complain": { "chance": 20, "issue": "meth_smoke", "duration": "30 minutes", "speech": "<meth_smoke>" },
     "decay_amount_factor": 5,

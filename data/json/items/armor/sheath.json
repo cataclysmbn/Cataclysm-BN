@@ -175,7 +175,7 @@
   {
     "id": "sheath",
     "type": "ARMOR",
-    "name": { "str": "sheath", "str_pl": "sheathes" },
+    "name": { "str": "sheath" },
     "description": "A leather sheath for holding knives and other small blades.  It is easy to use without much practice.  Activate to sheathe/draw a weapon.",
     "weight": "200 g",
     "volume": "500 ml",
@@ -203,7 +203,7 @@
     "id": "sheath_birchbark",
     "copy-from": "sheath",
     "type": "ARMOR",
-    "name": { "str": "birchbark sheath", "str_pl": "birchbark sheathes" },
+    "name": { "str": "birchbark sheath" },
     "description": "A hand made sheath made from birch bark, for holding knives and other small blades.  Activate to sheathe/draw a weapon.",
     "price": "15 USD",
     "material": [ "wood" ],
