@@ -1,0 +1,19 @@
+[
+  {
+    "id": "SUS_fridge_survivor",
+    "type": "item_group",
+    "//": "SUS item groups are collections that contain a reasonable realistic distribution of items that might spawn in a given storage furniture.",
+    "//2": "This group is for a refrigerator which can be found in survivor/bandits locations.",
+    "//3": "It contains mostly canned foods.",
+    "subtype": "collection",
+    "entries": [
+      { "group": "big_canned_food", "count": [ 3, 6 ], "prob": 40 },
+      { "group": "foodintincan", "count": [ 4, 8 ], "prob": 80 },
+      { "group": "condiments", "count": [ 1, 2 ], "prob": 25 },
+      { "group": "preserved_food", "count": [ 3, 6 ], "prob": 40 },
+      { "group": "fridge_drinks_random", "count": [ 3, 7 ], "prob": 75 },
+      { "group": "alcohol_bottled_canned", "count": [ 2, 4 ], "prob": 30 },
+      { "item": "water_clean", "container-item": "bottle_plastic", "prob": 65, "count": [ 2, 6 ] }
+    ]
+  },
+]
