@@ -132,6 +132,9 @@ public:
         is_uniform = false;
         emitter_cache = std::nullopt;
         frn[p.x()][p.y()] = furn;
+        frn_vars[p].erase(TINT_COLOR_FG_VAR_NAME);
+        frn_vars[p].erase(TINT_COLOR_BG_VAR_NAME);
+        frn_vars[p].erase(TINT_COLOR_VAR_NAME);
         frn_vars[p].merge(furn->default_vars);
         if (furn != f_null) { return; }
         frn_vars.erase(p);
@@ -140,6 +143,12 @@ public:
     void set_all_furn(const furn_id& furn) {
         std::fill_n(&frn[0][0], elements, furn);
         emitter_cache = std::nullopt;
+        for (auto& [pt, vars] : frn_vars) {
+            vars.erase(TINT_COLOR_FG_VAR_NAME);
+            vars.erase(TINT_COLOR_BG_VAR_NAME);
+            vars.erase(TINT_COLOR_VAR_NAME);
+            vars.merge(furn->default_vars);
+        }
         if (furn != f_null) { return; }
         // Reset furniture vars on clear
         frn_vars.clear();
@@ -151,12 +160,20 @@ public:
         is_uniform = false;
         emitter_cache = std::nullopt;
         ter[p.x()][p.y()] = terr;
+        ter_vars[p].erase(TINT_COLOR_FG_VAR_NAME);
+        ter_vars[p].erase(TINT_COLOR_BG_VAR_NAME);
+        ter_vars[p].erase(TINT_COLOR_VAR_NAME);
         if (terr->trap != tr_null) { trap_cache.push_back(p); }
     }
 
     void set_all_ter(const ter_id& terr) {
         std::fill_n(&ter[0][0], elements, terr);
         emitter_cache = std::nullopt;
+        for (auto& [pt, vars] : ter_vars) {
+            vars.erase(TINT_COLOR_FG_VAR_NAME);
+            vars.erase(TINT_COLOR_BG_VAR_NAME);
+            vars.erase(TINT_COLOR_VAR_NAME);
+        }
     }
 
     auto get_radiation(const point_sm_ms& p) const -> int { return rad[p.x()][p.y()]; }
