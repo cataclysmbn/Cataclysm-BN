@@ -150,6 +150,7 @@ mod.add_anchor_to_list = function(pos)
   mod.save_anchor_omt()
 end
 
+---@param params {user: Character, item: Item, pos: TripointBubMs}
 mod.iuse_function_anchor = function(params)
   local who = params.user
   local item = params.item
@@ -172,10 +173,9 @@ mod.iuse_function_anchor = function(params)
 
     mod.add_anchor_to_list(player_omt)
 
-    gapi.add_msg("The teleporter anchor was placed at ")
-    gapi.add_msg(anchor_omt)
+    gapi.add_msg(string.format(locale.gettext("The teleporter anchor was placed at %s."), anchor_omt))
   else
-    gapi.add_msg("Can only be placed on a square with no existing furniture.")
+    gapi.add_msg(locale.gettext("Can only be placed on a square with no existing furniture."))
     return 0
   end
   return 1
@@ -197,6 +197,7 @@ mod.add_station_to_list = function(pos)
   mod.save_station_pos(num)
 end
 
+---@param params {user: Character, item: Item, pos: TripointBubMs}
 mod.iuse_function_station = function(params)
   local who = params.user
   local item = params.item
@@ -220,7 +221,7 @@ mod.iuse_function_station = function(params)
     gapi.get_map():set_furn_at(player_map_pos, FurnId.new(a[1]):int_id())
     mod.add_station_to_list(player_omt)
   else
-    gapi.add_msg("Can only be placed on a square with no existing furniture.")
+    gapi.add_msg(locale.gettext("Can only be placed on a square with no existing furniture."))
     return 0
   end
 
@@ -273,6 +274,7 @@ mod.do_station_charge = function(choose, grid, power_available, chosen_station_l
   end
 end
 
+---@param pos TripointBubMs
 mod.charge_stations_from_grid = function(pos)
   local abs_pos = gapi.bub_to_abs(pos)
   local abs_omt = abs_pos:to_omt()
@@ -290,7 +292,8 @@ mod.charge_stations_from_grid = function(pos)
     local j = 1
     for i in pairs(mod.station_list) do
       if mod.station_list[i][3] == abs_omt then
-        local a = tostring(j) .. "Station with charge " .. tostring(mod.station_list[i][2])
+        local a =
+          string.format(locale.gettext("%s Station with charge %s"), tostring(j), tostring(mod.station_list[i][2]))
         ui_charge:add(j, a)
         chosen_station_list[j] = i
         j = j + 1
@@ -312,25 +315,33 @@ mod.charge_stations_from_grid = function(pos)
   end
 end
 
+---@param who Character
+---@param anchor TripointAbsOmt
+---@param distance number
+---@param teleporter_list_key table<integer, integer>
+---@param picked_teleporter integer
 mod.teleport_to_target = function(who, anchor, distance, teleporter_list_key, picked_teleporter)
   local a = teleporter_list_key[picked_teleporter]
   print(a)
   local removed_charge = -distance
   mod.station_list[a][2] = mod.station_list[a][2] + removed_charge
 
-  gapi.add_msg("Teleporting Player to " .. tostring(anchor))
+  gapi.add_msg(string.format(locale.gettext("Teleporting player to %s."), tostring(anchor)))
   gapi.add_msg(
-    "Station at: "
-      .. tostring(mod.station_list[teleporter_list_key[picked_teleporter]][3])
-      .. "now has "
-      .. mod.station_list[teleporter_list_key[picked_teleporter]][2]
-      .. " units of charge left"
+    string.format(
+      locale.gettext("Station at %s now has %s charge remaining."),
+      tostring(mod.station_list[a][3]),
+      tostring(mod.station_list[a][2])
+    )
   )
   --need exposed debug teleport for this to function
   gapi.place_player_overmap_at(anchor)
   return 1
 end
 
+---@param who Character
+---@param eidx integer
+---@param pos TripointBubMs
 mod.pick_teleporter = function(who, eidx, pos)
   local abs_pos = gapi.bub_to_abs(pos)
   local abs_omt = abs_pos:to_omt()
@@ -344,10 +355,11 @@ mod.pick_teleporter = function(who, eidx, pos)
   local j = 1
   for i in pairs(mod.station_list) do
     if mod.station_list[i][2] > distance then
-      local a = "Teleporter at "
-        .. tostring(mod.station_list[i][3])
-        .. "with charge "
-        .. tostring(mod.station_list[i][2])
+      local a = string.format(
+        locale.gettext("Teleporter at %s with charge %s"),
+        tostring(mod.station_list[i][3]),
+        tostring(mod.station_list[i][2])
+      )
       ui_pick_teleporter:add(j, a)
       teleporter_list_key[j] = i
 
@@ -378,6 +390,8 @@ mod.pick_teleporter = function(who, eidx, pos)
   end
 end
 
+---@param who Character
+---@param pos TripointBubMs
 mod.pick_teleport_destination = function(who, pos)
   local ui_teleport = UiList.new()
   local abs_pos = gapi.bub_to_abs(pos)
@@ -386,11 +400,10 @@ mod.pick_teleport_destination = function(who, pos)
 
   for i in pairs(mod.anchor_list) do
     local anchor = mod.anchor_list[i]
-    if not anchor then
-      goto continue_pick_anchor
-    end
+    if not anchor then goto continue_pick_anchor end
     local distance = abs_omt:rl_dist(anchor)
-    local a = "Coordinates: " .. tostring(mod.anchor_list[i]) .. "  Distance: " .. tostring(distance)
+    local a =
+      string.format(locale.gettext("Coordinates: %s  Distance: %s"), tostring(mod.anchor_list[i]), tostring(distance))
     ui_teleport:add(i, a)
     ::continue_pick_anchor::
   end
@@ -413,29 +426,27 @@ mod.get_anchor_distance = function(pos, i)
   return distance
 end
 
+---@param pos TripointBubMs
 mod.create_network_message = function(pos)
-  local b = [[Stations:
-]]
+  local b = locale.gettext("Stations:") .. "\n"
   for i in pairs(mod.station_list) do
-    local a = "Station: " .. tostring(i)
-    a = a .. " Last updated: " .. tostring(mod.station_list[i][1])
-    a = a .. " Charge: " .. tostring(mod.station_list[i][2])
-    a = a .. " Position: " .. tostring(mod.station_list[i][3])
-    a = a .. [[
-]]
+    local a = string.format(
+      locale.gettext("Station: %s Last updated: %s Charge: %s Position: %s"),
+      tostring(i),
+      tostring(mod.station_list[i][1]),
+      tostring(mod.station_list[i][2]),
+      tostring(mod.station_list[i][3])
+    ) .. "\n"
     print(a)
     b = b .. a
   end
-  b = b .. [[------------------------------
-
-Anchors:
-]]
+  b = b .. "------------------------------\n\n" .. locale.gettext("Anchors:") .. "\n"
   for i in pairs(mod.anchor_list) do
-    local a = ""
-    a = a .. " Position: " .. tostring(mod.anchor_list[i])
-    a = a .. " Distance: " .. mod.get_anchor_distance(pos, i)
-    a = a .. [[
-]]
+    local a = string.format(
+      locale.gettext(" Position: %s Distance: %s"),
+      tostring(mod.anchor_list[i]),
+      tostring(mod.get_anchor_distance(pos, i))
+    ) .. "\n"
     print(a)
     b = b .. a
   end
@@ -451,16 +462,15 @@ mod.network_info = function(pos)
 end
 
 mod.show_readme_info = function()
-  local modinfo = [[
-Teleporters - the future, today!
+  local modinfo = string.format(
+    locale.gettext([[Teleporters - the future, today!
 
 Teleporter stations provide the teleportation service,
 while anchors function as targets.
 This controller is used to teleport to an anchor from
 anywhere, provided you have enough power in a station.
 
-The stations fill passively, the current rate is
-]] .. charge_multiplier .. [[ units per hour.
+The stations fill passively at a rate of %s charge per hour.
 
 You can also fill the stations from the grid,
 using this controller, by standing on the same overmap
@@ -468,8 +478,11 @@ tile as the station you wish to fill, and drawing
 from the grid on that specific overmap. If multiple
 stations are present, you can pick which one to fill.
 
-The current rate is ]] .. power_charge_kj_multiplier .. [[kJ per 1 unit
-of charge. Both rates can be changed in the config. ]]
+The current rate is %s kJ per charge unit.
+Both rates can be changed in the config. ]]),
+    tostring(charge_multiplier),
+    tostring(power_charge_kj_multiplier)
+  )
   ui.popup(modinfo, Color.c_white)
   return 0
 end
