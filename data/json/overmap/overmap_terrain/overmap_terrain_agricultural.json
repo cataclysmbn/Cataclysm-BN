@@ -207,12 +207,7 @@
   },
   {
     "type": "overmap_terrain",
-    "id": [
-      "farmland_straight",
-      "farmland_turn",
-      "farmland_turn_inside",
-      "farmland_U"
-    ],
+    "id": [ "farmland_straight", "farmland_turn", "farmland_turn_inside", "farmland_U" ],
     "copy-from": "generic_rural_building",
     "looks_like": "farm_lot_wire_straight_v",
     "name": "farm field"
@@ -750,5 +745,5 @@
     "copy-from": "generic_rural_building",
     "name": "chicken coop roof",
     "sym": "o"
-  },
+  }
 ]
