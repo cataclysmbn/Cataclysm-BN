@@ -42,7 +42,7 @@
   {
     "type": "construction_group",
     "id": "build_a_bellow",
-    "name": "Build a bellow"
+    "name": "Build Bellows"
   },
   {
     "type": "construction_group",
@@ -1332,7 +1332,7 @@
   {
     "type": "construction_group",
     "id": "place_microcentrifuge",
-    "name": "Plug In  Microcentrifuge"
+    "name": "Plug In Microcentrifuge"
   },
   {
     "type": "construction_group",
@@ -1402,7 +1402,7 @@
   {
     "type": "construction_group",
     "id": "place_vaccuum_sealer",
-    "name": "Plug In Vaccuum Sealer"
+    "name": "Plug In Vacuum Sealer"
   },
   {
     "type": "construction_group",
