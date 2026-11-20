@@ -400,7 +400,9 @@ mod.pick_teleport_destination = function(who, pos)
 
   for i in pairs(mod.anchor_list) do
     local anchor = mod.anchor_list[i]
-    if not anchor then goto continue_pick_anchor end
+    if not anchor then
+      goto continue_pick_anchor
+    end
     local distance = abs_omt:rl_dist(anchor)
     local a =
       string.format(locale.gettext("Coordinates: %s  Distance: %s"), tostring(mod.anchor_list[i]), tostring(distance))
