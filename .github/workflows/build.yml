@@ -23,6 +23,11 @@ on:
         required: false
         type: string
         default: ""
+      shader-artifact:
+        description: "Name of a generated-shaders artifact that the caller already uploaded in this run (empty generates one)"
+        required: false
+        type: string
+        default: ""
       matrix-json:
         description: "Build matrix include entries as JSON"
         required: false
@@ -107,6 +112,7 @@ env:
 jobs:
   shader-artifacts:
     name: Generate shader artifacts
+    if: inputs.shader-artifact == ''
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -129,6 +135,8 @@ jobs:
 
   builds:
     needs: shader-artifacts
+    # Run when the caller provides the shaders and shader-artifacts is skipped.
+    if: ${{ !cancelled() && needs.shader-artifacts.result != 'failure' }}
     strategy:
       fail-fast: false
       matrix:
@@ -144,7 +152,7 @@ jobs:
       - name: Download generated shaders
         uses: actions/download-artifact@v4
         with:
-          name: generated-shaders-${{ fromJSON(inputs.matrix-json)[0].artifact }}
+          name: ${{ inputs.shader-artifact || format('generated-shaders-{0}', fromJSON(inputs.matrix-json)[0].artifact) }}
           path: data/shaders
 
       - name: Download translation artifacts
@@ -251,6 +259,8 @@ jobs:
           path: ${{ steps.vcpkg-cache-dir.outputs.dir }}
           # Runner image updates can change the MSVC version and so the vcpkg ABI hashes.
           key: vcpkg-${{ matrix.artifact }}-${{ steps.vcpkg-cache-dir.outputs.image }}-${{ hashFiles('msvc-full-features/vcpkg.json', '.github/vcpkg_triplets/**') }}
+          # vcpkg rebuilds only the packages whose ABI hash changed, so an older image's cache still helps.
+          restore-keys: vcpkg-${{ matrix.artifact }}-
 
       - name: Install vcpkg
         if: runner.os == 'Windows'
@@ -885,10 +895,22 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
+      # Delete the old ccache copy before the post step saves the new one.
+      # Two copies of every cache do not fit in the 10 GB limit, and GitHub then evicts other caches.
+      - name: Delete old ccache copy
+        if: github.event_name != 'pull_request'
+        continue-on-error: true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PREFIX: ccache-${{ runner.os == 'Windows' && format('windows-{0}-{1}', matrix.artifact, inputs.mode) || matrix.artifact }}-${{ github.ref_name }}-
+        run: gh cache list --ref "$GITHUB_REF" --key "$PREFIX" --json id --jq '.[].id' | xargs -r -n1 gh cache delete
+
   # Split Windows tests over several runners. One runner takes about 16 min for all shards.
   windows-tests:
     needs: builds
-    if: inputs.run-tests && inputs.windows-test-groups != '[]'
+    if: ${{ !cancelled() && needs.builds.result == 'success' && inputs.run-tests && inputs.windows-test-groups != '[]' }}
     strategy:
       fail-fast: false
       matrix:
@@ -903,7 +925,7 @@ jobs:
       - name: Download generated shaders
         uses: actions/download-artifact@v4
         with:
-          name: generated-shaders-${{ fromJSON(inputs.matrix-json)[0].artifact }}
+          name: ${{ inputs.shader-artifact || format('generated-shaders-{0}', fromJSON(inputs.matrix-json)[0].artifact) }}
           path: data/shaders
 
       - name: Download test executable

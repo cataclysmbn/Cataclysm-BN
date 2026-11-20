@@ -68,6 +68,8 @@ jobs:
 
   varied_builds:
     needs: [skip-duplicates, shader-artifacts]
+    # actions: write lets the job delete its old ccache copy.
+    permissions: { actions: write, contents: read }
     strategy:
       fail-fast: ${{ github.ref_name == 'main' }}
       matrix:
@@ -93,6 +95,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       ZSTD_CLEVEL: 3
+      CCACHE_SLOPPINESS: include_file_ctime,include_file_mtime,time_macros,pch_defines
       TILES: ${{ matrix.tiles }}
       TEST_STAGE: ${{ matrix.test-stage }}
       SKIP: ${{ matrix.always-run != true && ( needs.skip-duplicates.outputs.should_skip_code == true || needs.skip-duplicates.outputs.should_skip_data == true ) }}
@@ -175,9 +178,11 @@ jobs:
         uses: lukka/run-cmake@v10
         with:
           configurePreset: ${{ matrix.preset }}
-          configurePresetAdditionalArgs: "['-DUSE_PREFIX_DATA_DIR=OFF', '-DCATA_FORMAT_TARGETS=OFF']"
+          configurePresetAdditionalArgs: "['-DUSE_PREFIX_DATA_DIR=OFF', '-DCATA_FORMAT_TARGETS=OFF', '-DCMAKE_JOB_POOLS=link=1', '-DCMAKE_JOB_POOL_LINK=link']"
           buildPreset: ${{ matrix.preset }}
-          buildPresetAdditionalArgs: "['-j', '2']"
+          # The largest file needs about 2.5 GB to compile, so four jobs fit in the 16 GB runner.
+          # The link pool above lets only one link run at a time.
+          buildPresetAdditionalArgs: "['-j', '4']"
 
       - name: run JSON formatting check (test-stage only)
         if: ${{ env.SKIP == 'false' && env.TEST_STAGE == '1' }}
@@ -221,7 +226,15 @@ jobs:
           if-no-files-found: error
           compression-level: 0
 
-  # Split Linux tests over several runners. One runner takes about 12 min for all shards.
+      # Delete the old ccache copy before the post step saves the new one.
+      # Two copies of every cache do not fit in the 10 GB limit, and GitHub then evicts other caches.
+      - name: Delete old ccache copy
+        if: ${{ env.SKIP == 'false' && github.event_name != 'pull_request' }}
+        continue-on-error: true
+        env: { GH_TOKEN: "${{ github.token }}", GH_REPO: "${{ github.repository }}", PREFIX: "ccache-${{ matrix.ccache_key }}-${{ github.ref_name }}-" }
+        run: gh cache list --ref "$GITHUB_REF" --key "$PREFIX" --json id --jq '.[].id' | xargs -r -n1 gh cache delete
+
+  # Split Linux tests over two runners. One runner takes about 12 min for all shards.
   linux-tests:
     needs: [skip-duplicates, varied_builds]
     if: ${{ !cancelled() && github.ref_name != 'main' }}
@@ -229,7 +242,7 @@ jobs:
       fail-fast: false
       matrix:
         tiles: [0, 1]
-        group: [1/4, 2/4, 3/4, 4/4]
+        group: [1/2, 2/2]
     name: clang, ${{ matrix.tiles == 1 && 'tiles' || 'curses' }} tests ${{ matrix.group }}
     runs-on: ubuntu-24.04
     env:
@@ -290,7 +303,7 @@ jobs:
             --gpu-backend=software
 
           # Run test with all mods (curses only, once)
-          if [ "${{ matrix.tiles }}" = "0" ] && [ "${{ matrix.group }}" = "1/4" ]; then
+          if [ "${{ matrix.tiles }}" = "0" ] && [ "${{ matrix.group }}" = "1/2" ]; then
             blacklist=build-scripts/mod_test_blacklist
             ./build-scripts/get_all_mods.py $blacklist | \
               while read -r mods; do
@@ -300,12 +313,14 @@ jobs:
 
   # Windows has its own call so that its test jobs do not wait for the macOS and Android builds.
   cache-warm-windows:
-    needs: skip-duplicates
+    needs: [skip-duplicates, shader-artifacts]
+    permissions: { actions: write, contents: read }
     if: ${{ github.event_name == 'push' && needs.skip-duplicates.outputs.should_skip_platform != 'true' }}
     uses: ./.github/workflows/build.yml
     with:
       version-label: experimental
       mode: ci
+      shader-artifact: generated-shaders-ci
       matrix-json: |
         [
           { "name": "Windows MSVC", "platform": "windows", "artifact": "windows-tiles-x64-msvc", "os": "windows-2022", "arch": "x64", "tiles": true, "sound": true, "ext": "zip", "content-type": "application/zip" }
@@ -319,12 +334,14 @@ jobs:
     secrets: inherit
 
   cache-warm-builds:
-    needs: skip-duplicates
+    needs: [skip-duplicates, shader-artifacts]
+    permissions: { actions: write, contents: read }
     if: ${{ github.event_name == 'push' && needs.skip-duplicates.outputs.should_skip_platform != 'true' }}
     uses: ./.github/workflows/build.yml
     with:
       version-label: experimental
       mode: ci
+      shader-artifact: generated-shaders-ci
       matrix-json: |
         [
           { "name": "macOS Curses", "platform": "macos", "artifact": "osx-curses-x64", "os": "macos-15-intel", "preset": "osx-curses-x64-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
@@ -336,18 +353,19 @@ jobs:
       download-translations: false
       bundle-tilesets: false
       package-artifacts: false
-      run-tests: true
+      run-tests: false # macOS test executables never run
       android-localize: false
       upload-artifacts: false
     secrets: inherit
 
   windows-builds:
-    needs: skip-duplicates
+    needs: [skip-duplicates, shader-artifacts]
     if: ${{ github.event_name != 'push' && needs.skip-duplicates.outputs.should_skip_platform != 'true' }}
     uses: ./.github/workflows/build.yml
     with:
       version-label: experimental
       mode: ci
+      shader-artifact: generated-shaders-ci
       artifact-label: pr-${{ github.event.pull_request.number || github.run_id }}
       matrix-json: |
         [
@@ -363,26 +381,26 @@ jobs:
     secrets: inherit
 
   builds:
-    needs: skip-duplicates
+    needs: [skip-duplicates, shader-artifacts]
     if: ${{ github.event_name != 'push' && needs.skip-duplicates.outputs.should_skip_platform != 'true' }}
     uses: ./.github/workflows/build.yml
     with:
       version-label: experimental
       mode: ci
+      shader-artifact: generated-shaders-ci
       artifact-label: pr-${{ github.event.pull_request.number || github.run_id }}
+      # macOS runners are scarce. PRs build one x64 and one ARM config; pushes to main build all four.
       matrix-json: |
         [
-          { "name": "macOS Curses", "platform": "macos", "artifact": "osx-curses-x64", "os": "macos-15-intel", "preset": "osx-curses-x64-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
           { "name": "macOS Tiles", "platform": "macos", "artifact": "osx-tiles-x64", "os": "macos-15-intel", "preset": "osx-tiles-x64-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage", "upload-artifact": true },
           { "name": "macOS Curses ARM", "platform": "macos", "artifact": "osx-curses-arm", "os": "macos-15", "preset": "osx-curses-arm-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
-          { "name": "macOS Tiles ARM", "platform": "macos", "artifact": "osx-tiles-arm", "os": "macos-15", "preset": "osx-tiles-arm-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
           { "name": "Android ARM64", "platform": "android", "artifact": "android-x64", "os": "ubuntu-latest", "android": "arm64", "tiles": true, "sound": true, "ext": "apk", "content-type": "application/apk", "upload-artifact": true }
         ]
       download-translations: false
       bundle-tilesets: false
       bundle-registry-mods: false
       package-artifacts: true
-      run-tests: true
+      run-tests: false # macOS test executables never run
       android-localize: false
       upload-artifacts: true
     secrets: inherit
