@@ -1204,12 +1204,17 @@ void mapbuffer::unload_omt(const tripoint_abs_omt& omt_addr, bool save) {
             {base, base + point_rel_sm::east(), base + point_rel_sm::south(),
              base + point_rel_sm::south_east()}};
 
+        bool all_uniform = true;
+
         for (const tripoint_abs_sm& addr : addrs) {
             const auto it = submaps.find(addr);
-            if (it != submaps.end() && it->second && !it->second->is_uniform) { break; }
+            if (it != submaps.end() && it->second && !it->second->is_uniform) {
+                all_uniform = false;
+                break;
+            }
         }
 
-        if (!disable_mapgen) {
+        if (!all_uniform && !disable_mapgen) {
             std::ostringstream buf;
             {
                 JsonOut jsout(buf);
