@@ -551,7 +551,7 @@
     "type": "TOOL",
     "category": "tools",
     "name": { "str": "Prototype CMHP-9000" },
-    "description": "You dont really know what this is, it appears to be filled with paint. But the paint seems to be shimmering and switching colors as you look at it. Use this tool to make graffiti on the floor or to paint objects.",
+    "description": "You don't really know what this is, it appears to be filled with paint. But the paint seems to be shimmering and switching colors as you look at it. Use this tool to make graffiti on the floor or to paint objects.",
     "weight": "340 g",
     "volume": "250 ml",
     "looks_like": "spray_can",

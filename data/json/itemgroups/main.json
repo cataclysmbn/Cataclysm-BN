@@ -391,5 +391,21 @@
       { "item": "bolt_steel_target", "prob": 100 },
       { "item": "bolt_steel_bodkin", "prob": 100 }
     ]
+  },
+  {
+    "type": "item_group",
+    "id": "makeshift_archery_ammo",
+    "//": "archery ammo, that can be crafted, and can be find in random survivor camps",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "arrow_fire_hardened_fletched", "prob": 100, "count": [ 10, 30 ] },
+      { "item": "arrow_heavy_fire_hardened_fletched", "prob": 50, "count": [ 10, 30 ] },
+      { "item": "arrow_wood_heavy", "prob": 100, "count": [ 10, 30 ] },
+      { "item": "arrow_metal_sharpened_fletched", "prob": 100, "count": [ 10, 30 ] },
+      { "item": "arrow_small_game_fletched", "prob": 50, "count": [ 10, 30 ] },
+      { "item": "arrow_wood", "prob": 100, "count": [ 10, 30 ] },
+      { "item": "arrow_field_point_fletched", "prob": 100, "count": [ 10, 30 ] },
+      { "item": "arrow_heavy_field_point_fletched", "prob": 100, "count": [ 10, 30 ] }
+    ]
   }
 ]

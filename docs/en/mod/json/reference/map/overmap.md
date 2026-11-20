@@ -502,6 +502,22 @@ north edge of this overmap (again, 'north' is a relative term, that will rotate 
 rotated) in the same way as connections are built for fixed specials. 'Existing' connections are not
 supported for mutable specials.
 
+Placement rules can also declare point-based connections. The coordinates are relative to the
+rule's origin and rotate with the rule, including when it places a multi-tile chunk:
+
+```json
+{
+  "overmap": "where_road_connects",
+  "connections": [{ "point": [2, 0, 0], "connection": "local_road" }]
+}
+```
+
+The optional `from` point supplies an initial direction, as it does for fixed specials. Omitting
+`from` creates a disconnected connection: it can connect the specified point to an existing road
+from any direction, without requiring a connection to the placed overmap itself. If no existing
+connection can be reached, an undirected connection does not create a road stub. These rule-level
+connections can be used alongside directional connections on individual overmaps.
+
 #### Layout phases
 
 After all the joins and overmaps are defined, the manner in which the special is laid out is given

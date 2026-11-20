@@ -4,6 +4,7 @@
 #include "bodypart.h"
 #include "calendar.h"
 #include "catacharset.h"
+#include "character.h"
 #include "creature.h"
 #include "damage.h"
 #include "debug.h"
@@ -24,6 +25,7 @@
 #include "mtype.h"
 #include "options.h"
 #include "rng.h"
+#include "skill.h"
 #include "string_id.h"
 #include "translations.h"
 #include "units.h"
@@ -217,6 +219,7 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_CANT_TRAIN: return "CANT_TRAIN";
         case MF_POLICE_EYEBOT: return "POLICE_EYEBOT";
         case MF_IRRADIATED: return "IRRADIATED";
+        case MF_NO_VEHICLE_COLLISION: return "NO_VEHICLE_COLLISION";
         // *INDENT-ON*
         case m_flag::MF_MAX:
             break;
@@ -752,6 +755,13 @@ void pet_food_data::load( const JsonObject &jo )
     optional( jo, was_loaded, "feed", feed );
     optional( jo, was_loaded, "pet", pet );
     optional( jo, was_loaded, "tamer_traits", tamer_traits );
+    optional( jo, was_loaded, "tame_skill", tame_skill, skill_id( "survival" ) );
+    optional( jo, was_loaded, "tame_min_skill", tame_min_skill );
+}
+
+auto pet_food_data::tame_skill_requirement_met( const Character &ch ) const -> bool
+{
+    return tame_min_skill <= 0 || ch.get_skill_level( tame_skill ) >= tame_min_skill;
 }
 
 void pet_food_data::deserialize( JsonIn &jsin )
@@ -888,6 +898,7 @@ void mtype::load( const JsonObject &jo, const std::string &src )
         pt.read( "dodge_mult", ptm.dodge );
         pt.read( "max_level", ptm.max_level );
         pt.read( "min_skill", ptm.min_skill );
+        pt.read( "skill", ptm.skill );
         if( pt.has_array( "level_flags" ) ) {
             for( JsonObject lf_obj : pt.get_array( "level_flags" ) ) {
                 pet_training_level_flags lf;

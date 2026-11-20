@@ -4820,5 +4820,18 @@
     "type": "BIONIC_ITEM",
     "name": { "str": "Obsolete Bionic" },
     "description": "The effects of this bionic in the code have been replaced with Memory Coprocessor, so this should no longer spawn.  If you're still finding these in the wild, update your mods."
+  },
+  {
+    "id": "eink_tablet_pc_music",
+    "copy-from": "eink_tablet_pc",
+    "type": "TOOL",
+    "name": { "str": "e-ink tablet PC" },
+    "description": "A tablet PC using an efficient color e-ink display.  It stores books and saved text for reading.",
+    "use_action": [ "EINKTABLETPC", "TOGGLE_UPS_CHARGING" ],
+    "item_vars": {
+      "digital_reader_ports": "SD",
+      "digital_reader_mode": "books_and_snippets",
+      "digital_read_charge_interval_minutes": "2"
+    }
   }
 ]

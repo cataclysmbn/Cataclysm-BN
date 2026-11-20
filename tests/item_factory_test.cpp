@@ -2,10 +2,13 @@
 
 #include "catch/catch.hpp"
 #include "item_factory.h"
+#include "itype.h"
 #include "json.h"
+#include "type_id.h"
 
 #include <fstream>
 #include <memory>
+#include <ranges>
 
 namespace item_factory_test {
 
@@ -118,6 +121,22 @@ TEST_CASE("load_tool_use_action", "[item_factory]") {
 
     all_test_items.allow_omitted_members();
     file.close();
+}
+
+/// Checks that every item with prying quality offers the "Pry crate, window or door" action.
+/// Door examine and the activate menu look only for that action, so a crash axe (prying 2) could
+/// not pry (#10930). Walks every loaded item type with PRY >= 1, e.g. crash_axe, and expects the
+/// CROWBAR use.
+TEST_CASE("items_with_prying_quality_can_pry", "[item_factory]") {
+    using namespace std::views;
+    const auto pry = quality_id("PRY");
+    const auto has_pry = [&](const itype* type) -> bool {
+        return type->qualities.contains(pry) && type->qualities.at(pry) > 0;
+    };
+    for (const auto* type : item_controller->all() | filter(has_pry)) {
+        CAPTURE(type->get_id());
+        CHECK(type->can_use("CROWBAR"));
+    }
 }
 
 auto get_item(Item_factory& test_factory, const std::string& name) -> const itype* { // *NOPAD*

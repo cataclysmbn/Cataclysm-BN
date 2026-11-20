@@ -455,6 +455,44 @@ TEST_CASE("mutable_overmap_placement", "[overmap][slow]") {
     }
 }
 
+TEST_CASE("mutable_placement_rule_connections", "[overmap][mutable_connections]") {
+    const auto special_id = overmap_special_id(
+        GENERATE("test_mutable_disconnected_connection", "test_mutable_directed_connection"));
+    const auto rotation =
+        GENERATE(om_direction::type::north, om_direction::type::east, om_direction::type::south,
+                 om_direction::type::west);
+    REQUIRE(special_id.is_valid());
+    const auto directed = special_id.str() == "test_mutable_directed_connection";
+    auto om = std::make_unique<overmap>(point_abs_om());
+    const auto origin = tripoint_om_omt(90, 90, 0);
+    const auto endpoint = origin + om_direction::rotate(tripoint_rel_omt(3, 0, 0), rotation);
+    const auto road = origin + om_direction::rotate(tripoint_rel_omt(7, 0, 0), rotation);
+    for (auto x = 80; x <= 100; ++x) {
+        for (auto y = 80; y <= 100; ++y) {
+            om->ter_set(tripoint_om_omt(x, y, 0), oter_id("field"));
+        }
+    }
+    auto existing_road = false;
+    SECTION("connect to an existing road") {
+        existing_road = true;
+        om->ter_set(road, oter_id("road_nesw"));
+    }
+    SECTION("without an existing road only directed connections make a stub") {}
+
+    const auto placed = om->place_special(*special_id, origin, rotation, city{}, false, true);
+    REQUIRE(placed.size() == 3);
+    CHECK(om->ter(origin) == oter_id("field"));
+    CHECK(
+        is_ot_match("road", om->ter(endpoint), ot_match_type::type) == (existing_road || directed));
+    if (existing_road) {
+        for (auto offset = 3; offset <= 7; ++offset) {
+            const auto pos =
+                origin + om_direction::rotate(tripoint_rel_omt(offset, 0, 0), rotation);
+            CHECK(is_ot_match("road", om->ter(pos), ot_match_type::type));
+        }
+    }
+}
+
 namespace {
 
 const auto road_start = tripoint_abs_omt(50, 50, 0);

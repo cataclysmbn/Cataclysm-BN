@@ -1182,7 +1182,7 @@
       [ "two_way_radio", 10 ],
       [ "UPS_off", 3 ],
       [ "umbrella", 3 ],
-      [ "usb_drive", 3 ],
+      { "group": "digital_storage_media", "prob": 3 },
       [ "V8", 3 ],
       [ "vac_sealer", 1 ],
       [ "vaccine_shot", 4 ],

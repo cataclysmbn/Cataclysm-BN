@@ -3,7 +3,7 @@
     "id": "bipod",
     "type": "GUNMOD",
     "name": { "str": "bipod" },
-    "description": "Bipods are commonly used on rifles and machine guns to provide a forward rest and reduce motion.  Although they noticably improve handling and precision they are slow to equip and usable only on certain mountable surfaces such as window frames and mounds of dirt.",
+    "description": "Bipods are commonly used on rifles and machine guns to provide a forward rest and reduce motion.  Although they noticeably improve handling and precision they are slow to equip and usable only on certain mountable surfaces such as window frames and mounds of dirt.",
     "weight": "400 g",
     "volume": "500 ml",
     "price": "680 USD",
@@ -32,7 +32,7 @@
     "copy-from": "bipod",
     "type": "GUNMOD",
     "name": { "str": "modified bipod" },
-    "description": "Bipods are commonly used on rifles and machine guns to provide a forward rest and reduce motion.  Although they noticably improve handling and precision they are slow to equip and usable only on certain mountable surfaces such as window frames and mounds of dirt.  This one was modified and customized to mount on pretty much any weapon, if you so want.",
+    "description": "Bipods are commonly used on rifles and machine guns to provide a forward rest and reduce motion.  Although they noticeably improve handling and precision they are slow to equip and usable only on certain mountable surfaces such as window frames and mounds of dirt.  This one was modified and customized to mount on pretty much any weapon, if you so want.",
     "mod_target_category": [
       [ "PISTOLS" ],
       [ "REVOLVERS" ],

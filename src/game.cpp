@@ -5877,10 +5877,9 @@ void game::cleanup_dead()
         }
     }
 
-    if( monster_is_dead ) {
-        // From here on, pointers to creatures get invalidated as dead creatures get removed.
-        critter_tracker->remove_dead();
-    }
+    // From here on, pointers to dead and removed creatures get invalidated.  Run it every turn
+    // so creatures removed without dying (despawned, deleted dimensions) are freed too.
+    critter_tracker->remove_dead();
 
     if( npc_is_dead ) {
         for( auto it = active_npc.begin(); it != active_npc.end(); ) {
@@ -6787,6 +6786,11 @@ void game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
                         ZoneScopedN( "monmove_controlled_move" );
                         critter.move();
                     }
+                }
+                // The action can despawn the monster, e.g. when it kills the player and a death
+                // hook moves the player to another dimension.
+                if( critter.is_dead() ) {
+                    break;
                 }
                 {
                     ZoneScopedN( "monmove_process_triggers" );
@@ -11352,7 +11356,7 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
                 if( iter->vIG.size() > 1 ) {
                     sText += string_format( "[%d/%d] (%d) ", iThisPage + 1, iter->vIG.size(), iter->totalcount );
                 }
-                sText += iter->example->tname();
+                sText += iter->vIG[iThisPage].example->tname();
                 if( iter->vIG[iThisPage].count > 1 ) {
                     sText += string_format( "[%d]", iter->vIG[iThisPage].count );
                 }
@@ -11396,9 +11400,9 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
             werase( w_item_info );
 
             if( iItemNum > 0 && activeItem ) {
-                const item &loc = *activeItem->example;
+                const item &loc = *activeItem->vIG[page_num].example;
                 temperature_flag temperature = rot::temp::for_location( m, loc );
-                std::vector<iteminfo> this_item = activeItem->example->info( temperature );
+                std::vector<iteminfo> this_item = loc.info( temperature );
                 std::vector<iteminfo> item_info_dummy;
 
                 item_info_data dummy( "", "", this_item, item_info_dummy, iScrollPos );
@@ -11417,8 +11421,9 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
         if( iItemNum > 0 && activeItem ) {
             // print info window title: < item name >
             mvwprintw( w_item_info, point( 2, 0 ), "< " );
-            trim_and_print( w_item_info, point( 4, 0 ), width - 8, activeItem->example->color_in_inventory(),
-                            activeItem->example->display_name() );
+            const item &active_example = *activeItem->vIG[page_num].example;
+            trim_and_print( w_item_info, point( 4, 0 ), width - 8, active_example.color_in_inventory(),
+                            active_example.display_name() );
             wprintw( w_item_info, " >" );
             // move the cursor to the selected item (for screen readers)
             ui.set_cursor( w_items, point( 1, iActive - iStartPos ) );
@@ -11466,7 +11471,7 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
             addcategory = !sort_radius;
         } else if( action == "EXAMINE" && !filtered_items.empty() && activeItem ) {
             std::vector<iteminfo> dummy;
-            const item *example_item = activeItem->example;
+            const item *example_item = activeItem->vIG[page_num].example;
             // TODO: const_item_location
             const item &loc = *example_item;
             temperature_flag temperature = rot::temp::for_location( m, loc );
@@ -14743,7 +14748,13 @@ void game::vertical_move( int movez, bool force, bool peeking )
     bool rope_ladder = false;
     // TODO: Remove the stairfinding, make the mapgen gen aligned maps
     // Don't check can_fly here, flight was handled earlier and doing that would just embed you in a wall instead
-    const bool special_move = climbing || swimming;
+    const bool on_stairs =
+        m.has_flag( TFLAG_GOES_UP, u.bub_pos() ) ||
+        m.has_flag( TFLAG_GOES_DOWN, u.bub_pos() ) ||
+        m.has_flag( TFLAG_RAMP, u.bub_pos() ) ||
+        m.has_flag( TFLAG_RAMP_UP, u.bub_pos() ) ||
+        m.has_flag( TFLAG_RAMP_DOWN, u.bub_pos() );
+    const bool special_move = climbing || swimming || ( can_fly && !on_stairs );
 
     if( !force && !special_move ) {
         const std::optional<tripoint_bub_ms> pnt = find_or_make_stairs( m, z_after, rope_ladder,
@@ -14994,6 +15005,10 @@ auto game::delete_dimension( const dimension_id &dim_id, const bool remove_zones
         grid_trackers_.erase( tracker_it );
     }
 
+    // A Lua death hook can delete the attacker's dimension while the attack is on the stack.
+    if( auto *const buffer = MAPBUFFER_REGISTRY.find( dim_id ) ) {
+        critter_tracker->adopt_removed( buffer->creature_tracker() );
+    }
     MAPBUFFER_REGISTRY.unload_dimension( dim_id );
     unload_overmapbuffer_dimension( dim_id );
 

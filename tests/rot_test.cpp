@@ -872,6 +872,35 @@ TEST_CASE("Contained item keeps parent location while temporarily detached") {
     CHECK(checked);
 }
 
+TEST_CASE("Running engine heater warms vehicle cargo location", "[item][rot]") {
+    auto fixture = make_storage(vpart_id("box"), true);
+    REQUIRE(
+        fixture.veh->install_part(tripoint_mnt_veh::zero(), vpart_id("engine_electric_small"), true)
+        >= 0);
+    add_sashimi_to_vehicle_part(*fixture.veh, fixture.part_index);
+    const auto& food = fixture.veh->get_items(fixture.part_index).only_item();
+
+    fixture.veh->engine_on = false;
+    CHECK(rot::temp::for_location(get_map(), food) == temperature_flag::TEMP_NORMAL);
+
+    fixture.veh->engine_on = true;
+    CHECK(rot::temp::for_location(get_map(), food) == temperature_flag::TEMP_HEATER);
+    CHECK(rot::temp::for_part(*fixture.veh, fixture.part_index) == temperature_flag::TEMP_HEATER);
+}
+
+TEST_CASE("Vehicle cargo temperature does not need the vehicle on the map", "[item][rot]") {
+    // Merging wrecks spills cargo from a vehicle that is not in the map's vehicle cache yet.
+    auto fixture = make_storage(vpart_id("minifridge"), true);
+    auto container = item::spawn("bag_plastic");
+    REQUIRE(container->contents.insert_item(item::spawn("sashimi")).success());
+    REQUIRE_FALSE(fixture.veh->add_item(fixture.part_index, std::move(container)));
+    const auto& food = fixture.veh->get_items(fixture.part_index).only_item().contents.front();
+
+    const auto off_map = get_map().detach_vehicle(fixture.veh);
+    REQUIRE(off_map != nullptr);
+    CHECK(rot::temp::for_location(get_map(), food) == temperature_flag::TEMP_FRIDGE);
+}
+
 TEST_CASE("Sealed containers keep rotten nested contents on location removal", "[item][rot]") {
     prepare_map_storage_test();
     const auto pos = tripoint_bub_ms(60, 60, 0);

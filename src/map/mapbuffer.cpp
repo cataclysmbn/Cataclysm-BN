@@ -1,5 +1,6 @@
 #include "mapbuffer.h"
 
+#include "../overmap/omdata.h"
 #include "../overmap/overmapbuffer.h"
 #include "avatar.h"
 #include "batch_turns.h"
@@ -721,6 +722,10 @@ auto mapbuffer_abs_tile_view::passable_with_vehicle(const optional_vpart_positio
     return move_cost_with_vehicle(vp) != 0;
 }
 
+auto mapbuffer_abs_tile_view::has_flag(ter_bitflags flag) const -> bool {
+    return get_ter_t().has_flag(flag) || get_furn_t().has_flag(flag);
+}
+
 mapbuffer_abs_tile_with_vehicle_view::mapbuffer_abs_tile_with_vehicle_view(
     const mapbuffer_abs_tile_view& tile, const optional_vpart_position& vehicle_part)
     : tile_(tile),
@@ -1135,7 +1140,7 @@ void mapbuffer::remove_submap(tripoint_abs_sm addr) {
         return;
     }
     // Safety: skip freeing if submap still in bubble
-    if (g != nullptr && m_target->second) {
+    if (g != nullptr && m_target->second && g->m.get_bound_dimension() == dimension_id_) {
         const submap* doomed = m_target->second.get();
         const map& here = g->m;
         if (here.inbounds(addr)) {
@@ -1200,6 +1205,7 @@ void mapbuffer::unload_omt(const tripoint_abs_omt& omt_addr, bool save) {
              base + point_rel_sm::south_east()}};
 
         bool all_uniform = true;
+
         for (const tripoint_abs_sm& addr : addrs) {
             const auto it = submaps.find(addr);
             if (it != submaps.end() && it->second && !it->second->is_uniform) {
@@ -1249,7 +1255,8 @@ void mapbuffer::unload_omt(const tripoint_abs_omt& omt_addr, bool save) {
     // Safety: skip freeing submaps that map::grid[] still references.
     // This prevents use-after-free when submap_loader eviction races with
     // map::shift() / copy_grid() during large map shifts (e.g. pocket entry).
-    if (g != nullptr) {
+    // Only the bubble's own dimension can alias grid[]; other dimensions share coordinates.
+    if (g != nullptr && g->m.get_bound_dimension() == dimension_id_) {
         const map& here = g->m;
         to_delete.remove_if([&](const tripoint_abs_sm& p) {
             const auto it = submaps.find(p);
@@ -1272,6 +1279,7 @@ void mapbuffer::unload_omt(const tripoint_abs_omt& omt_addr, bool save) {
 }
 
 auto mapbuffer::lookup_submap(const tripoint_abs_sm& p) -> submap* {
+    ZoneScoped;
     // Fast path: submap already resident in memory.
     auto* resident_sm = static_cast<submap*>(nullptr);
     { resident_sm = lookup_submap_in_memory(p); }
@@ -3491,7 +3499,6 @@ auto mapbuffer::run_omt_pillar_post_pass(const point_abs_omt& omt_pos) -> void {
         point_rel_sm::south(),
         point_rel_sm::south_east(),
     });
-
     auto lk = std::lock_guard<std::recursive_mutex>(submaps_mutex_);
     struct vertical_transition_link_request {
         tripoint_abs_sm target_pos;
@@ -3512,11 +3519,18 @@ auto mapbuffer::run_omt_pillar_post_pass(const point_abs_omt& omt_pos) -> void {
 
     for (const auto zlev : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
         const auto omt_addr = tripoint_abs_omt(omt_pos, zlev);
+        bool can_be_uniform =
+            !get_overmapbuffer(get_dimension_id())
+                 .ter(omt_addr)
+                 ->has_flag(oter_flags::cant_be_uniform);
+
         const auto base = project_to<coords::sm>(omt_addr);
         for (const auto& offset : offsets) {
             const auto sm_pos = base + offset;
             auto* const sub_here = lookup_submap_in_memory(sm_pos);
             if (sub_here == nullptr) { continue; }
+
+            if (sub_here->is_uniform) { sub_here->is_uniform = can_be_uniform; }
 
             auto* const sub_below =
                 zlev > -OVERMAP_DEPTH ? lookup_submap_in_memory(sm_pos + tripoint_below) : nullptr;

@@ -188,5 +188,41 @@
       { "item": "paper", "charges": [ 50, 150 ] },
       { "item": "evac_pamphlet", "prob": 10 }
     ]
+  },
+  {
+    "id": "SUS_evac_shelter_sink_used",
+    "type": "item_group",
+    "subtype": "collection",
+    "//": "Contains the same things that sinks normally have but with reduced rates for the more useful stuff, and the first aid kit will spawn partially depleted of supplies (additional 20% reduction for stuff exclusive to deluxe kit), chance of someone having stashed hard drugs here too.",
+    "entries": [
+      { "item": "soap", "charges": [ 0, 5 ] },
+      { "item": "brush", "prob": 90 },
+      { "item": "bleach", "prob": 25 },
+      { "item": "ammonia", "prob": 10 },
+      { "item": "mirror", "prob": 12 },
+      {
+        "collection": [
+          { "item": "medical_tape", "charges": [ 0, 10 ] },
+          { "item": "disinfectant", "charges": [ 0, 5 ], "container-item": "bottle_plastic_small" },
+          { "item": "bandages", "charges": [ 0, 3 ] },
+          { "item": "medical_gauze", "charges": [ 0, 3 ] },
+          { "item": "booklet_firstaid", "prob": 50 },
+          {
+            "collection": [
+              { "item": "aspirin", "charges": [ 0, 5 ] },
+              { "item": "saline", "charges": [ 0, 5 ], "container-item": "bottle_plastic_small" },
+              { "item": "gloves_medical", "prob": 50 },
+              { "item": "mask_dust", "prob": 50 },
+              { "item": "scissors", "prob": 50 }
+            ],
+            "prob": 20
+          }
+        ],
+        "prob": 60
+      },
+      { "distribution": [ { "group": "baddrugs", "prob": 50 }, { "group": "smokedrugs", "prob": 50 } ], "prob": 60 },
+      { "item": "paper", "charges": [ 10, 50 ] },
+      { "distribution": [ { "item": "evac_pamphlet", "prob": 10 }, { "item": "survnote", "prob": 50 } ], "prob": 10 }
+    ]
   }
 ]

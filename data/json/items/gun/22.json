@@ -4,7 +4,7 @@
     "copy-from": "smg_base",
     "type": "GUN",
     "name": { "str_sp": "American-180" },
-    "description": "The American-180 is a submachine gun developed in the 1960's that fires .22 LR, unusual for an SMG.  Though the round is low-powered, the high rate of fire and large magazine makes the 180 a formidable weapon.",
+    "description": "The American-180 is a submachine gun developed in the 1960's that fires .22 LR, unusual for an SMG.  Though the round is low-powered, the high rate of fire and large magazine make the 180 a formidable weapon.",
     "weight": "2600 g",
     "volume": "1250 ml",
     "price": "1630 USD",
