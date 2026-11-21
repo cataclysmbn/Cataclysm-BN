@@ -221,7 +221,7 @@
     "copy-from": "mon_turret_light",
     "name": { "str": "mini turret" },
     "description": "A compact sentry gun built in a hurry, with a lot of confidence and not much else.  It will never be upgraded, and nobody will ever call it sturdy, but it sets up fast and fires fast.  What it lacks in armour it makes up for in enthusiasm.  Chambered in .22 LR.",
-    "looks_like": "mon_turret_mini",
+    "looks_like": "mon_turret_light",
     "diff": 3,
     "volume": "5000 ml",
     "weight": "5 kg",
