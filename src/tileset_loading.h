@@ -5,8 +5,8 @@
 namespace tileset_loading
 {
 
-/// Starts decoding the images of the tileset in use on worker threads, unless that tileset
-/// is loaded already. The tileset picks the decoded images up when it loads.
+/// Starts decoding the images of the tilesets in use (TILES and OVERMAP_TILES) on worker
+/// threads, except a tileset that is loaded already. The tileset picks the decoded images up when it loads.
 auto decode_images_ahead() -> void;
 /// Drops the images decoded ahead that no tileset picked up.
 auto discard_images_decoded_ahead() -> void;

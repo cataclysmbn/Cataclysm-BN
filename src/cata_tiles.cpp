@@ -2399,13 +2399,14 @@ void tileset_loader::load( const std::string &tileset_id, const bool precheck,
 #endif
 }
 
-auto tileset_loading::decode_images_ahead() -> void
+namespace
 {
-    if( !tilecontext || !use_tiles ) {
-        return;
-    }
-    const auto tileset_id = get_option<std::string>( "TILES" );
-    const auto *const current = tilecontext->current_tileset();
+
+/// Starts decoding the images of tileset `tileset_id`, unless `context` has it loaded already.
+auto decode_tileset_images_ahead( const cata_tiles *const context,
+                                  const std::string &tileset_id ) -> void
+{
+    const auto *const current = context == nullptr ? nullptr : context->current_tileset();
     if( current != nullptr && current->get_tileset_id() == tileset_id ) {
         // Loaded already. Should it get reloaded anyway, the images are decoded then.
         return;
@@ -2435,6 +2436,21 @@ auto tileset_loading::decode_images_ahead() -> void
     }
 }
 
+} // namespace
+
+auto tileset_loading::decode_images_ahead() -> void
+{
+    if( !tilecontext || !use_tiles ) {
+        return;
+    }
+    const auto tileset_id = get_option<std::string>( "TILES" );
+    decode_tileset_images_ahead( tilecontext.get(), tileset_id );
+    const auto overmap_tileset_id = get_option<std::string>( "OVERMAP_TILES" );
+    if( use_tiles_overmap && overmap_tileset_id != tileset_id ) {
+        decode_tileset_images_ahead( overmap_tilecontext.get(), overmap_tileset_id );
+    }
+}
+
 auto tileset_loading::discard_images_decoded_ahead() -> void
 {
     pending_images().clear();
@@ -2457,12 +2473,17 @@ auto tileset_loading::load_for_active_world() -> void
 void tileset_loader::load_internal( const JsonObject &config, const std::string &tileset_root,
                                     const std::string &img_path, const bool pump_events )
 {
-    // Images not used after all (a tile definition failed to load) are dropped here.
-    const auto drop_pending_images = on_out_of_scope( []() {
-        pending_images().clear();
+    const auto image_paths = config.has_array( "tiles-new" ) ?
+                             tilesheet_image_paths( config, tileset_root ) : std::vector<std::string> {};
+    // Images of this config not used after all (a tile definition failed to load) are dropped
+    // here. Images decoded ahead for another tileset stay.
+    const auto drop_pending_images = on_out_of_scope( [&image_paths]() {
+        for( const auto &path : image_paths ) {
+            pending_images().erase( path );
+        }
     } );
     if( config.has_array( "tiles-new" ) ) {
-        decode_images_ahead( tilesheet_image_paths( config, tileset_root ) );
+        decode_images_ahead( image_paths );
         // new system, several entries
         // When loading multiple tileset images this defines where
         // the tiles from the most recently loaded image start from.
