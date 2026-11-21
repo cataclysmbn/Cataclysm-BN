@@ -1541,7 +1541,8 @@ static bool can_reload_item_or_mods( const avatar &you, const item &itm )
             return true;
         }
     }
-    return itm.is_reloadable() && you.can_reload( itm );
+    return itm.is_container() && itm.is_container_full() ? true :
+           itm.is_reloadable() && you.can_reload( itm );
 }
 
 
@@ -1553,6 +1554,11 @@ void avatar_action::reload( item &loc, bool prompt, bool empty )
     // bows etc. do not need to reload. select favorite ammo for them instead
     if( it->has_flag( flag_RELOAD_AND_SHOOT ) ) {
         ranged::prompt_select_default_ammo_for( u, *it );
+        return;
+    }
+
+    if( it->is_container() && it->is_container_full() ) {
+        add_msg( m_info, _( "The %s is already full!" ), it->tname() );
         return;
     }
 
@@ -1614,6 +1620,12 @@ void avatar_action::reload( item &loc, bool prompt, bool empty )
         return;
     }
 
+    if( opt.target->is_container() && opt.qty() <= 0 ) {
+        add_msg( m_info, _( "You can't fit any more %s in the %s." ),
+                 opt.ammo->tname(), opt.target->tname() );
+        return;
+    }
+
     if( opt ) {
         int moves = opt.moves();
         if( it->get_var( "dirt", 0 ) > 7800 ) {
@@ -1628,6 +1640,7 @@ void avatar_action::reload( item &loc, bool prompt, bool empty )
             u.activity->targets.emplace_back( opt.target );
         }
         u.activity->targets.emplace_back( opt.ammo );
+        u.activity->values.push_back( opt.store_container_as_item );
     }
 }
 
@@ -1722,6 +1735,7 @@ void avatar_action::reload_weapon( bool try_everything )
                                opt.qty() ) );
             u.activity->targets.emplace_back( turret.base() );
             u.activity->targets.emplace_back( opt.ammo );
+            u.activity->values.push_back( opt.store_container_as_item );
         }
         return;
     }

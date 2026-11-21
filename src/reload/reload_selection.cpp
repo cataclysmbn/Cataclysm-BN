@@ -1,6 +1,7 @@
 #include "reload_selection.h"
 
 #include "item.h"
+#include "options.h"
 #include "player.h"
 
 #include <algorithm>
@@ -24,6 +25,16 @@ auto order_ammo(std::vector<item_reload_option>& options) -> void {
 
 auto prepare(const player& who, item& base, selection_options options) -> selection_result {
     auto discovery = reload::discover_ammo(who, base, options.discovery);
+    if (base.is_container() && get_option<bool>("RELOAD_CONTAINER_AMMO_COMESTIBLES_ONLY")) {
+        std::erase_if(discovery.options, [](const item_reload_option& option) {
+            const auto* source = option.ammo;
+            const auto* reloadable_source =
+                source->is_ammo_container() && !option.store_container_as_item
+                    ? &source->contents.front()
+                    : source;
+            return !reloadable_source->is_ammo() && !reloadable_source->is_comestible();
+        });
+    }
     if (discovery.options.empty() && !base.is_holster()) {
         if (!base.is_magazine() && !base.magazine_integral() && !base.magazine_current()) {
             return {.outcome = selection_outcome::missing_magazine};
