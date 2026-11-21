@@ -23,6 +23,7 @@ class computer;
 class field_entry;
 class item;
 class mapbuffer;
+class mapbuffer_abs_tile_view;
 class mapgendata;
 class submap;
 struct trap;
@@ -62,6 +63,8 @@ public:
     auto get_abs_omt() const -> tripoint_abs_omt;
     auto get_bound_dimension() const -> const dimension_id&;
     auto get_buffer() const -> mapbuffer&;
+    /// Read this constructor's unpublished tiles or resident neighboring levels without loading.
+    auto get_abs_tile(const tripoint_abs_ms& pos) const -> std::optional<mapbuffer_abs_tile_view>;
 
     auto points_on_zlevel() const -> point_range<point_omt_ms>;
     auto points_in_rectangle(const point_omt_ms& from, const point_omt_ms& to) const

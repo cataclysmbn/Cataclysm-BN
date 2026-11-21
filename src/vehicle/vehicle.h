@@ -13,6 +13,7 @@
 #include "type_id.h"
 
 #include <array>
+#include <expected>
 #include <functional>
 #include <map>
 #include <optional>
@@ -612,6 +613,8 @@ public:
 
     // check if certain part can be mounted at certain position (not accounting frame direction)
     auto can_mount(const tripoint_mnt_veh& dp, const vpart_id& id) const -> bool;
+    auto min_mount_z() const -> int { return mount_min.z(); }
+    auto max_mount_z() const -> int { return mount_max.z(); }
 
     // check if certain part can be unmounted
     auto can_unmount(int p) const -> bool;
@@ -649,8 +652,7 @@ public:
     void remove_tracked_flag();
     // remove a vehicle specified by a list of part indices
     auto remove_carried_vehicle(const std::vector<int>& carried_parts) -> bool;
-    // split the current vehicle into up to four vehicles if they have no connection other
-    // than the structure part at exclude
+    /// Split off all structural components disconnected by excluding this part.
     auto find_and_split_vehicles(int exclude) -> bool;
     // relocate passengers to the same part on a new vehicle
     void relocate_passengers(const std::vector<Character*>& passengers);
@@ -801,7 +803,7 @@ public:
      *  @return part index or -1 if no part
      */
     auto next_part_to_close(int p, bool outside = false) const -> int;
-    auto all_standalone_parts() const -> std::vector<int>;
+    auto all_standalone_parts(std::optional<int> z = std::nullopt) const -> std::vector<int>;
     // returns indices of all parts in the given location slot
     auto all_parts_at_location(const std::string& location) const -> std::vector<int>;
     // shifts an index to next available of that type for NPC activities
@@ -830,7 +832,8 @@ public:
         units::angle dir, const tripoint_mnt_veh& pivot, const tripoint_rel_ms& p,
         tripoint_mnt_veh& q) const;
 
-    auto mount_to_bubble(const tripoint_mnt_veh& mount) const -> tripoint_bub_ms;
+    auto mount_to_bubble(const tripoint_mnt_veh& mount, bool terrain = false) const
+        -> tripoint_bub_ms;
     auto mount_to_bubble(const tripoint_mnt_veh& mount, const tripoint_rel_veh& offset) const
         -> tripoint_bub_ms;
 
@@ -990,6 +993,8 @@ public:
 
     // get the total mass of vehicle, including cargo and passengers
     auto total_mass() const -> units::mass;
+    /// Local wheel support relative to the unrounded loaded center-of-mass height.
+    auto stability() const -> double;
 
     // Gets the center of mass calculated for precalc[0] coordinates
     auto rotated_center_of_mass() const -> tripoint_mnt_veh;
@@ -1740,6 +1745,7 @@ public:
 
 private:
     mutable units::mass mass_cache;
+    mutable double mass_z_moment = 0.0;
     // cached pivot point
     mutable tripoint_mnt_veh pivot_cache;
     /*
@@ -1898,3 +1904,18 @@ private:
     // Persisted across saves so cross-dimension processing survives reload.
     dimension_id dimension_id_;
 };
+
+/// Nonzero permanent local height, not a planar vehicle deformed by terrain.
+auto vehicle_has_local_height(const vehicle& veh) -> bool;
+
+enum class vehicle_step_failure { unpaired, unavailable, outside_domain, blocked };
+
+/// Empty success means no endpoint; an error must not authorize terrain/rope fallback.
+/// Live, actor-independent topology. No loading, boarding, or other world mutation.
+auto vehicle_stair_at(mapbuffer& buffer, const tripoint_abs_ms& from, int dz)
+    -> std::expected<std::optional<tripoint_abs_ms>, vehicle_step_failure>;
+
+/// Stability factor applied by the land and water velocity calculations.
+constexpr auto vehicle_ground_stability_multiplier(double stability) -> double {
+    return 0.25 + 0.75 * stability;
+}

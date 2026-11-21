@@ -65,6 +65,9 @@ static constexpr bool is_inf( float x )
 namespace
 {
 
+auto cached_ramp_vehicle = static_cast<const vehicle *>( nullptr );
+auto cached_ramp_deck = 0;
+
 struct pathfinding_tile {
     ter_id terrain;
     furn_id furniture;
@@ -367,14 +370,18 @@ std::vector<Pathfinding::ZLevelChange> &Pathfinding::get_z_cache( const int z )
     return Pathfinding::z_caches[z + OVERMAP_DEPTH];
 }
 
-void Pathfinding::update_z_caches( bool update_open_air )
+void Pathfinding::update_z_caches( bool update_open_air,
+                                   const optional_vpart_position &ramp_source )
 {
     const map &here = get_map();
     auto &buffer = MAPBUFFER_REGISTRY.get( here.get_bound_dimension() );
 
     auto cur_z_area = project_to<coords::ms>( here.get_abs_sub() );
+    const auto *ramp_vehicle = ramp_source ? &ramp_source->vehicle() : nullptr;
+    const auto ramp_deck = ramp_source ? ramp_source->mount().z() : 0;
 
     if( !Pathfinding::z_caches_dirty && cur_z_area == Pathfinding::z_area &&
+        cached_ramp_vehicle == ramp_vehicle && cached_ramp_deck == ramp_deck &&
         ( !update_open_air || Pathfinding::z_caches_include_open_air ) ) {
         return;
     }
@@ -397,8 +404,20 @@ void Pathfinding::update_z_caches( bool update_open_air )
                 continue;
             }
             const auto &cur_ter = cur_tile->get_ter_t();
+            const auto ramp = here.ramp_offset( ramp_source, bubble_pos );
 
-            if( update_open_air && cur_ter.has_flag( TFLAG_NO_FLOOR ) ) {
+            const auto vp = here.veh_at( bubble_pos );
+            if( vp && ( vp.part_with_feature( "VEHICLE_STAIRS_UP", false ) ||
+                        vp.part_with_feature( "VEHICLE_STAIRS_DOWN", false ) ) ) {
+                for( const auto dz : {-1, 1} ) {
+                    if( const auto to = vehicle_stair_at( buffer, abs_pos, dz ).value_or( std::nullopt ) ) {
+                        get_z_cache( to->z() ).push_back( {.from = abs_pos, .to = *to,
+                                                           .type = ZLevelChange::Type::STAIRS} );
+                    }
+                }
+                continue;
+            }
+            if( update_open_air && !buffer.has_floor( abs_pos ) ) {
                 // Open air
                 const auto below_us = bubble_pos + tripoint_rel_ms::below();
                 const auto below_us_abs = abs_pos + tripoint_rel_ms::below();
@@ -482,7 +501,7 @@ void Pathfinding::update_z_caches( bool update_open_air )
                         break;
                     }
                 }
-            } else if( cur_ter.has_flag( TFLAG_RAMP_UP ) ) {
+            } else if( ramp > 0 ) {
                 const auto above_us = cur + tripoint_above;
 
                 if( !here.inbounds_z( above_us.z() ) ) {
@@ -492,7 +511,7 @@ void Pathfinding::update_z_caches( bool update_open_air )
                 const ZLevelChange ramp_up = ZLevelChange{ .from = abs_pos, .to = abs_pos + tripoint_rel_ms::above(),
                                                            .type = Pathfinding::ZLevelChange::Type::RAMP };
                 Pathfinding::get_z_cache( z + 1 ).push_back( ramp_up );
-            } else if( cur_ter.has_flag( TFLAG_RAMP_DOWN ) ) {
+            } else if( ramp < 0 ) {
                 const auto below_us = cur + tripoint_below;
 
                 if( !here.inbounds_z( below_us.z() ) ) {
@@ -507,6 +526,8 @@ void Pathfinding::update_z_caches( bool update_open_air )
     }
 
     Pathfinding::z_area = cur_z_area;
+    cached_ramp_vehicle = ramp_vehicle;
+    cached_ramp_deck = ramp_deck;
     Pathfinding::z_caches_dirty = false;
     Pathfinding::z_caches_include_open_air = update_open_air;
 }
@@ -656,7 +677,8 @@ Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
         }
 
         const tripoint_abs_ms next_point_with_z = tripoint_abs_ms( next_point, this->z );
-        const auto next_tile = tile_reader.get_tile_with_vehicle( next_point_with_z );
+        const auto next_tile = tile_reader.get_tile_with_vehicle( next_point == this->dest ?
+                               this->settings.ramp_landing.value_or( next_point_with_z ) : next_point_with_z );
         const auto next_vp = next_tile ? next_tile->vehicle_part() :
                              optional_vpart_position( std::nullopt );
         const auto *next_vehicle = next_vp ? &next_vp->vehicle() : nullptr;
@@ -690,14 +712,17 @@ Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
                 const bool is_valid_to_step_into_veh =
                     cur_vehicle == nullptr ?
                     true :
-                    cur_vehicle->allowed_move( cur_vehicle->abs_to_mount( cur_point_with_z ),
-                                               cur_vehicle->abs_to_mount( next_point_with_z ) );
+                    cur_vehicle->allowed_move( new_tile.vehicle_part->mount(),
+                                               cur_vehicle == next_vehicle ? next_vp->mount() :
+                                               tripoint_mnt_veh( cur_vehicle->abs_to_mount( next_point_with_z ).xy(),
+                                                       new_tile.vehicle_part->mount().z() ) );
 
                 const bool is_valid_to_step_out_of_veh =
                     next_vehicle == nullptr ?
                     true :
-                    next_vehicle->allowed_move( next_vehicle->abs_to_mount( cur_point_with_z ),
-                                                next_vehicle->abs_to_mount( next_point_with_z ) );
+                    next_vehicle->allowed_move( cur_vehicle == next_vehicle ? new_tile.vehicle_part->mount() :
+                                                tripoint_mnt_veh( next_vehicle->abs_to_mount( cur_point_with_z ).xy(),
+                                                        next_vp->mount().z() ), next_vp->mount() );
 
                 is_move_valid &= is_valid_to_step_into_veh;
                 is_move_valid &= is_valid_to_step_out_of_veh;
@@ -734,7 +759,8 @@ Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
                              0.0;
                 }
 
-                if( care_about_traps && !std::isinf( cur_g ) ) {
+                if( care_about_traps && !std::isinf( cur_g ) &&
+                    ( terrain.trap != tr_ledge || !buffer.has_floor( cur_point_with_z ) ) ) {
                     const trap &maybe_ter_trap = terrain.trap.obj();
                     const trap &maybe_trap = maybe_ter_trap.is_benign() ? new_tile.trap.obj() : maybe_ter_trap;
                     const bool is_trap = !maybe_trap.is_benign();
@@ -742,7 +768,7 @@ Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
                     cur_g += is_trap ? this->settings.trap_cost : 0.0;
                 }
 
-                const bool is_ledge = terrain.has_flag( TFLAG_NO_FLOOR );
+                const bool is_ledge = !buffer.has_floor( cur_point_with_z );
                 if( is_ledge && !this->settings.can_fly ) {
                     // Close ledges outright for non-fliers
                     cur_g += INFINITY;
@@ -1001,7 +1027,9 @@ std::vector<tripoint_abs_ms> Pathfinding::get_route_3d(
     // Instead, we will **only** consider taking z_changes that bring us closer to target's Z level.
     const bool we_go_up = to.z() > from.z();
 
-    Pathfinding::update_z_caches( path_settings.can_fly );
+    const auto &here = get_map();
+    const auto target = here.veh_at( abs_to_map_local( here, to ) );
+    auto ramp_source = target ? target : here.veh_at( abs_to_map_local( here, from ) );
 
     // Determine our Z-path
     std::vector<ZLevelChange> z_path;
@@ -1010,6 +1038,7 @@ std::vector<tripoint_abs_ms> Pathfinding::get_route_3d(
         point_abs_ms cur_origin_point = to.xy();
 
         while( cur_origin.z() != from.z() ) {
+            Pathfinding::update_z_caches( path_settings.can_fly, ramp_source );
             Pathfinding::ZLevelChange best_z_change;
             std::tuple<bool, int, tripoint_abs_ms> cache_pair{ we_go_up, path_settings.z_move_type(), cur_origin };
 
@@ -1019,7 +1048,9 @@ std::vector<tripoint_abs_ms> Pathfinding::get_route_3d(
                 std::vector<Pathfinding::ZLevelChange> candidates;
 
                 for( const Pathfinding::ZLevelChange &z_change : Pathfinding::get_z_cache( cur_origin.z() ) ) {
-                    bool can_be_taken = true;
+                    const auto landing = here.veh_at( abs_to_map_local( here, z_change.to ) );
+                    bool can_be_taken = !landing || !ramp_source || &landing->vehicle() != &ramp_source->vehicle() ||
+                                        landing->mount().z() == ramp_source->mount().z();
                     switch( z_change.type ) {
                         case Pathfinding::ZLevelChange::Type::STAIRS:
                             can_be_taken &= path_settings.can_climb_stairs || path_settings.can_fly;
@@ -1119,7 +1150,13 @@ std::vector<tripoint_abs_ms> Pathfinding::get_route_3d(
                 Pathfinding::cached_closest_z_changes.insert_or_assign( cache_pair, best_z_change );
             }
 
+            const auto landing = here.veh_at( abs_to_map_local( here, best_z_change.to ) );
             z_path.push_back( best_z_change );
+            if( best_z_change.type != ZLevelChange::Type::RAMP ) {
+                ramp_source = here.veh_at( abs_to_map_local( here, best_z_change.from ) );
+            } else if( landing.part_with_feature( VPFLAG_BOARDABLE, true ) ) {
+                ramp_source = landing;
+            }
 
             constexpr auto unreasonable_z_hops = 1000;
             if( z_path.size() > unreasonable_z_hops ) {
@@ -1140,9 +1177,18 @@ std::vector<tripoint_abs_ms> Pathfinding::get_route_3d(
         while( !z_path.empty() ) {
             const Pathfinding::ZLevelChange next = z_path.back();
 
+            auto approach_settings = path_settings;
+            const auto placeholder = here.veh_at( next.from );
+            const auto landing = here.veh_at( next.to );
+            if( next.type == ZLevelChange::Type::RAMP && !path_settings.can_fly &&
+                placeholder && landing && &placeholder->vehicle() == &landing->vehicle() &&
+                placeholder->mount().z() != landing->mount().z() ) {
+                approach_settings.ramp_landing = next.to;
+            }
+
             const std::vector<tripoint_abs_ms> path_segment = Pathfinding::get_route_2d(
                         cur_pos, next.from.xy(), next.from.z(),
-                        path_settings, route_settings );
+                        approach_settings, route_settings );
             if( path_segment.empty() ) {
                 // Give up early based on our inability to path to that z-change
                 result.clear();

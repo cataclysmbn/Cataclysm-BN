@@ -333,14 +333,15 @@ bool monster::can_reach_to( const tripoint_bub_ms &p ) const
     }
 
     const bool is_going_up = p.z() > bub_pos().z();
+    const auto vp = here.veh_at( bub_pos() );
     if( is_going_up ) {
-        const bool has_up_ramp = here.has_flag( TFLAG_RAMP_UP, p + tripoint_below );
+        const bool has_up_ramp = here.ramp_offset( vp, p + tripoint_below ) > 0;
         const bool has_stairs = here.has_flag( TFLAG_GOES_UP, bub_pos() );
         const bool can_fly_there = flies() && here.has_flag( TFLAG_NO_FLOOR, p );
 
         return has_up_ramp || has_stairs || can_fly_there;
     } else {
-        const bool has_down_ramp = here.has_flag( TFLAG_RAMP_DOWN, p + tripoint_above );
+        const bool has_down_ramp = here.ramp_offset( vp, p + tripoint_above ) < 0;
         const bool has_stairs = here.has_flag( TFLAG_GOES_DOWN, bub_pos() );
         const bool can_fly_there = flies() && here.has_flag( TFLAG_NO_FLOOR, bub_pos() );
 
@@ -1301,13 +1302,13 @@ monster_action_t monster::decide_action() const
 
             auto via_ramp = false;
             auto ramp_offset = tripoint_zero;
-            if( here.has_flag( TFLAG_RAMP_UP, candidate ) ) {
+            if( here.ramp_offset( pos, candidate ) > 0 ) {
                 via_ramp = true;
-                candidate.z() += 1;
+                candidate.z() = pos.z() + 1;
                 ramp_offset = tripoint_below;
-            } else if( here.has_flag( TFLAG_RAMP_DOWN, candidate ) ) {
+            } else if( here.ramp_offset( pos, candidate ) < 0 ) {
                 via_ramp = true;
-                candidate.z() -= 1;
+                candidate.z() = pos.z() - 1;
                 ramp_offset = tripoint_above;
             }
 
@@ -2811,9 +2812,9 @@ void monster::stumble()
     const bool avoid_water = has_flag( MF_NO_BREATHE ) && !swims() && !has_flag( MF_AQUATIC );
     for( const auto &dest : here.points_in_radius( bub_pos(), 1 ) ) {
         if( dest != bub_pos() ) {
-            if( here.has_flag( TFLAG_RAMP_DOWN, dest ) ) {
+            if( here.ramp_offset( bub_pos(), dest ) < 0 ) {
                 valid_stumbles.emplace_back( dest.xy(), dest.z() - 1 );
-            } else if( here.has_flag( TFLAG_RAMP_UP, dest ) ) {
+            } else if( here.ramp_offset( bub_pos(), dest ) > 0 ) {
                 valid_stumbles.emplace_back( dest.xy(), dest.z() + 1 );
             } else {
                 valid_stumbles.push_back( dest );

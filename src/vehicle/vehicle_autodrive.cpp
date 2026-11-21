@@ -329,7 +329,7 @@ private:
     auto_navigation_data data;
 
     void compute_coordinates();
-    auto check_drivable(tripoint_bub_ms pt) const -> bool;
+    auto check_drivable(tripoint_bub_ms pt, bool body = false) const -> bool;
     void compute_obstacles();
     auto compute_profile(orientation facing) const -> vehicle_profile;
     void compute_valid_positions();
@@ -573,8 +573,18 @@ auto vehicle::autodrive_controller::compute_profile(orientation facing) const ->
 // Return true if the map tile at the given position (in map coordinates)
 // can be driven on (not an obstacle).
 // The logic should match what is in vehicle::part_collision().
-auto vehicle::autodrive_controller::check_drivable(tripoint_bub_ms pt) const -> bool {
+auto vehicle::autodrive_controller::check_drivable(tripoint_bub_ms pt, bool body) const -> bool {
     const map& here = get_map();
+    if (!body) {
+        const auto lowest = driven_veh.min_mount_z();
+        for (const auto& part : driven_veh.parts) {
+            if (!part.removed && part.mount.z() != lowest
+                && !check_drivable(pt + tripoint_rel_ms(0, 0, part.mount.z()), true)) {
+                return false;
+            }
+        }
+        pt.z() += lowest;
+    }
 
     // check if another vehicle is there; tiles occupied by the current
     // vehicle are evidently drivable
@@ -591,7 +601,7 @@ auto vehicle::autodrive_controller::check_drivable(tripoint_bub_ms pt) const -> 
     const tripoint_abs_omt pt_omt = project_to<coords::omt>(pt_abs);
     // only check visibility for the current OMT, we'll check other OMTs when
     // we reach them
-    if (pt_omt == data.current_omt) {
+    if (!body && pt_omt.xy() == data.current_omt.xy()) {
         // driver must see the tile or have seen it before in order to plan a route over it
         if (!driver.sees(pt)) {
             if (!driver.is_avatar()) {
@@ -610,7 +620,7 @@ auto vehicle::autodrive_controller::check_drivable(tripoint_bub_ms pt) const -> 
     if (critter && driver.sees(*critter)) { return false; }
 
     // don't drive over visible traps
-    if (here.can_see_trap_at(pt, driver)) { return false; }
+    if (!body && here.can_see_trap_at(pt, driver)) { return false; }
 
     // check for furniture that hinders movement; furniture with 0 move cost
     // can be driven on
@@ -619,6 +629,7 @@ auto vehicle::autodrive_controller::check_drivable(tripoint_bub_ms pt) const -> 
 
     const ter_id terrain = here.ter(pt);
     if (terrain == t_null) { return false; }
+    if (body) { return terrain.obj().movecost > 0 && terrain.obj().has_flag(TFLAG_NO_FLOOR); }
     // open air is an obstacle to non-flying vehicles; it is drivable
     // for flying vehicles
     if (terrain == t_open_air) { return data.air_ok; }
@@ -924,6 +935,7 @@ void vehicle::autodrive_controller::check_safe_speed() {
 auto vehicle::autodrive_controller::check_collision_zone(orientation turn_dir)
     -> collision_check_result {
     const auto veh_pos = driven_veh.bub_ms_location();
+    const auto eye_pos = tripoint_bub_ms(veh_pos.xy(), driver.bub_pos().z());
 
     // first check if we have any visibility in front, to prevent blind driving
     tileray face_dir = driven_veh.face;
@@ -931,7 +943,7 @@ auto vehicle::autodrive_controller::check_collision_zone(orientation turn_dir)
     const point forward_offset(face_dir.dx(), face_dir.dy());
     bool blind = true;
     for (point p : data.profile(to_orientation(face_dir.dir())).collision_points) {
-        if (driver.sees(veh_pos + forward_offset + p)) { blind = false; }
+        if (driver.sees(eye_pos + forward_offset + p)) { blind = false; }
     }
     if (blind) { return collision_check_result::no_visibility; }
 
@@ -959,7 +971,7 @@ auto vehicle::autodrive_controller::check_collision_zone(orientation turn_dir)
         for (point p : profile.collision_points) { collision_zone.insert(p + offset); }
     }
     for (point p : collision_zone) {
-        if (!driver.sees(veh_pos + p)) { return collision_check_result::slow_down; }
+        if (!driver.sees(eye_pos + p)) { return collision_check_result::slow_down; }
         if (!check_drivable(veh_pos + p)) { return collision_check_result::slow_down; }
     }
     return collision_check_result::ok;

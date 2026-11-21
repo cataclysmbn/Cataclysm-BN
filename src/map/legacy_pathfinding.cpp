@@ -196,6 +196,8 @@ struct legacy_pathfinding_tile {
     const vehicle* vehicle_ptr_ = nullptr;
     int vehicle_part = -1;
     int move_cost = 0;
+    bool has_floor = false;
+    bool stairs = false;
 
     auto vehicle_ptr() const -> const vehicle* { return vehicle_ptr_; }
 
@@ -217,10 +219,13 @@ auto get_legacy_pathfinding_tile(const map& here, const tripoint_abs_ms& p)
     return legacy_pathfinding_tile{
         .terrain = tile.get_ter(),
         .furniture = tile.get_furn(),
-        .trap = tile.get_trap(),
+        .trap = here.tr_at(bubble_pos).loadid,
         .vehicle_ptr_ = vehicle,
         .vehicle_part = vehicle_part,
         .move_cost = here.move_cost_internal(furniture, terrain, vehicle, vehicle_part),
+        .has_floor = here.has_floor(bubble_pos),
+        .stairs =
+            here.has_flag(TFLAG_GOES_UP, bubble_pos) || here.has_flag(TFLAG_GOES_DOWN, bubble_pos),
     };
 }
 
@@ -237,10 +242,9 @@ auto get_pf_special_from_tile(const legacy_pathfinding_tile& tile) -> pf_special
 
     if (tile.vehicle_ptr() != nullptr) { cur_value |= PF_VEHICLE; }
 
-    if (!tile.trap.obj().is_benign() || !terrain.trap.obj().is_benign()) { cur_value |= PF_TRAP; }
+    if (!tile.trap.obj().is_benign()) { cur_value |= PF_TRAP; }
 
-    if (terrain.has_flag(TFLAG_GOES_DOWN) || terrain.has_flag(TFLAG_GOES_UP)
-        || terrain.has_flag(TFLAG_RAMP) || terrain.has_flag(TFLAG_RAMP_UP)
+    if (tile.stairs || terrain.has_flag(TFLAG_RAMP) || terrain.has_flag(TFLAG_RAMP_UP)
         || terrain.has_flag(TFLAG_RAMP_DOWN)) {
         cur_value |= PF_UPDOWN;
     }
@@ -379,15 +383,25 @@ auto map::route(
 
             int part = p_tile->part_index();
             const vehicle* veh = p_tile->vehicle_ptr();
+            if (floor_between(abs_to_map_local(*this, cur), abs_to_map_local(*this, p), true)) {
+                continue;
+            }
             if (cur_veh
-                && !cur_veh->allowed_move(cur_veh->abs_to_mount(cur), cur_veh->abs_to_mount(p))) {
+                && !cur_veh->allowed_move(
+                    cur_veh->cpart(cur_tile->part_index()).mount,
+                    veh == cur_veh
+                        ? veh->cpart(part).mount
+                        : tripoint_mnt_veh(cur_veh->abs_to_mount(p).xy(),
+                                           cur_veh->cpart(cur_tile->part_index()).mount.z()))) {
                 // Trying to squeeze through a vehicle hole, skip this movement but don't close the
                 // tile as other paths may lead to it
                 continue;
             }
 
             if (veh && veh != cur_veh
-                && !veh->allowed_move(veh->abs_to_mount(cur), veh->abs_to_mount(p))) {
+                && !veh->allowed_move(
+                    tripoint_mnt_veh(veh->abs_to_mount(cur).xy(), veh->cpart(part).mount.z()),
+                    veh->cpart(part).mount)) {
                 // Same as above but moving into rather than out of a vehicle
                 continue;
             }
@@ -487,15 +501,16 @@ auto map::route(
                 }
 
                 if (trapavoid && p_special & PF_TRAP) {
-                    const auto& ter_trp = terrain.trap.obj();
-                    const auto& trp = ter_trp.is_benign() ? p_tile->trap.obj() : ter_trp;
+                    const auto& trp = p_tile->trap.obj();
                     if (!trp.is_benign()) {
                         // For now make them detect all traps
-                        if (terrain.has_flag(TFLAG_NO_FLOOR)) {
+                        if (!p_tile->has_floor) {
                             // Special case - ledge in z-levels
                             // Warning: really expensive, needs a cache
                             const auto below = p + tripoint_rel_ms::below();
-                            if (buffer.valid_move(p, below, {.flying = true})) {
+                            if (!floor_between(abs_to_map_local(*this, cur),
+                                               abs_to_map_local(*this, below), true)
+                                && buffer.valid_move(p, below, {.flying = true})) {
                                 const auto below_tile = buffer.get_abs_tile(below);
                                 if (below_tile
                                     && !below_tile->get_ter_t().has_flag(TFLAG_NO_FLOOR)) {
@@ -538,6 +553,18 @@ auto map::route(
 
         if (!cur_tile) { continue; }
         const auto& parent_terrain = cur_tile->terrain.obj();
+        if (cur_veh
+            && (cur_veh->part_with_feature(cur_tile->part_index(), "VEHICLE_STAIRS_UP", false) >= 0
+                || cur_veh->part_with_feature(cur_tile->part_index(), "VEHICLE_STAIRS_DOWN", false)
+                       >= 0)) {
+            const auto source_g = layer.gscore[parent_index];
+            for (const auto dz : {-1, 1}) {
+                const auto dest = vehicle_stair_at(buffer, cur, dz).value_or(std::nullopt);
+                if (!dest || dest->z() < min.z() || dest->z() > max.z()) { continue; }
+                pf.add_point(source_g + 2, source_g + 2 + 2 * rl_dist(*dest, t), cur, *dest);
+            }
+            continue;
+        }
         if (settings.allow_climb_stairs && cur.z() > min.z()
             && parent_terrain.has_flag(TFLAG_GOES_DOWN)) {
             tripoint_abs_ms dest(cur.xy(), cur.z() - 1);
@@ -562,6 +589,10 @@ auto map::route(
             for (size_t it = 0; it < 8; it++) {
                 const tripoint_abs_ms
                     above(cur.x() + x_offset[it], cur.y() + y_offset[it], cur.z() + 1);
+                if (floor_between(
+                        abs_to_map_local(*this, cur), abs_to_map_local(*this, above), true)) {
+                    continue;
+                }
                 pf.add_point(layer.gscore[parent_index] + 4,
                              layer.score[parent_index] + 4 + 2 * rl_dist(above, t), cur, above);
             }

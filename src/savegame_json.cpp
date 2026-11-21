@@ -3085,6 +3085,7 @@ void vehicle_part::deserialize( JsonIn &jsin )
 
     data.read( "mount_dx", mount.x() );
     data.read( "mount_dy", mount.y() );
+    data.read( "mount_dz", mount.z() );
     data.read( "open", open );
     int direction_int;
     data.read( "direction", direction_int );
@@ -3170,6 +3171,7 @@ void vehicle_part::serialize( JsonOut &json ) const
     json.member( "base", base );
     json.member( "mount_dx", mount.x() );
     json.member( "mount_dy", mount.y() );
+    json.member( "mount_dz", mount.z() );
     json.member( "open", open );
     json.member( "direction", std::lround( to_degrees( direction ) ) );
     json.member( "blood", blood );
