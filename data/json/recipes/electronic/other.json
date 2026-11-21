@@ -815,20 +815,17 @@
     "reversible": true,
     "autolearn": [ [ "mechanics", 3 ], [ "computer", 3 ] ],
     "using": [ [ "soldering_standard", 14 ] ],
-    "qualities": [
-      { "id": "SCREW", "level": 1 },
-      { "id": "WRENCH", "level": 1 }
-    ],
+    "qualities": [ { "id": "SCREW", "level": 1 }, { "id": "WRENCH", "level": 1 } ],
     "components": [
-    [ [ "ai_module", 1 ] ],
-    [ [ "targeting_module", 1 ] ],
-    [ [ "sensor_module", 1 ] ],
-    [ [ "medium_battery_cell", 1 ] ],
-    [ [ "power_supply", 1 ] ],
-    [ [ "robot_controls", 1 ] ],
-    [ [ "sw_22", 1 ] ],
-    [ [ "bucket", 1 ] ]
-  ]
+      [ [ "ai_module", 1 ] ],
+      [ [ "targeting_module", 1 ] ],
+      [ [ "sensor_module", 1 ] ],
+      [ [ "medium_battery_cell", 1 ] ],
+      [ [ "power_supply", 1 ] ],
+      [ [ "robot_controls", 1 ] ],
+      [ [ "sw_22", 1 ] ],
+      [ [ "bucket", 1 ] ]
+    ]
   },
   {
     "type": "recipe",
