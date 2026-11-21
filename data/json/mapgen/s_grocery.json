@@ -5,6 +5,7 @@
     "om_terrain": [ "s_grocery" ],
     "weight": 500,
     "object": {
+      "place_item": [ { "item": "bot_handy_hauler", "x": [ 4, 5 ], "y": [ 20, 22 ], "chance": 3 } ],
       "rows": [
         "sssssssssssssssssssssss'",
         "ssWWWWWWWWssssssssssssss",
@@ -181,6 +182,7 @@
     "om_terrain": "s_grocery_1",
     "object": {
       "fill_ter": "t_floor",
+      "place_item": [ { "item": "bot_handy_hauler", "x": [ 18, 20 ], "y": [ 20, 20 ], "chance": 3 } ],
       "rows": [
         "           ss          '",
         "           ss           ",
