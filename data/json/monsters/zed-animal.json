@@ -73,6 +73,7 @@
     "harvest": "zombie_leather",
     "special_attacks": [ { "type": "bite", "cooldown": 5 } ],
     "death_function": [ "NORMAL" ],
+    "fungalize_into": "mon_fungal_dog",
     "upgrades": { "half_life": 28, "into_group": "GROUP_ZOMBIE_DOG_UPGRADE" },
     "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "POISON", "NO_BREATHE", "REVIVES" ]
   },

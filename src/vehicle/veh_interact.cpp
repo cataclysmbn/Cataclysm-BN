@@ -42,6 +42,7 @@
 #include "ui_manager.h"
 #include "units.h"
 #include "units_utility.h"
+#include "utils/scaled_by.h"
 #include "value_ptr.h"
 #include "veh_type.h"
 #include "veh_utils.h"
@@ -138,7 +139,11 @@ auto veh_interact::serialize_activity() -> std::unique_ptr<player_activity> {
                 if (pt->is_broken()) {
                     time = vp->install_time(you);
                 } else if (pt->base->max_damage() > 0) {
-                    time = vp->repair_time(you) * pt->base->damage() / pt->base->max_damage();
+                    time = utils::scaled_by({
+                        .total = vp->repair_time(you),
+                        .cur = pt->base->damage(),
+                        .max = pt->base->max_damage(),
+                    });
                 }
             }
             break;
@@ -1173,7 +1178,11 @@ void veh_interact::do_repair() {
             if (!vp.repair_requirements().is_empty() && pt.base->max_damage() > 0) {
                 ok = format_reqs(
                     nmsg, vp.repair_requirements() * pt.base->damage_level(4), vp.repair_skills,
-                    vp.repair_time(you) * pt.base->damage() / pt.base->max_damage());
+                    utils::scaled_by({
+                        .total = vp.repair_time(you),
+                        .cur = pt.base->damage(),
+                        .max = pt.base->max_damage(),
+                    }));
             } else {
                 nmsg += colorize(_("This part cannot be repaired"), c_light_red);
                 ok = false;

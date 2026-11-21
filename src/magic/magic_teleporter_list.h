@@ -2,7 +2,9 @@
 
 #include "coordinates.h"
 #include "point.h"
+#include "type_id.h"
 
+#include <compare>
 #include <map>
 #include <optional>
 #include <set>
@@ -12,10 +14,17 @@ class Character;
 class JsonIn;
 class JsonOut;
 
+/// Translocator gate position. Same OMT coordinates in other dimensions are different gates.
+struct translocator_location {
+    dimension_id dim;
+    tripoint_abs_omt pos;
+    auto operator<=>(const translocator_location&) const -> std::weak_ordering = default;
+};
+
 class teleporter_list {
 private:
     // OMT locations of all known teleporters
-    std::map<tripoint_abs_omt, std::string> known_teleporters;
+    std::map<translocator_location, std::string> known_teleporters;
     // ui for selection of desired teleport location.
     // returns overmap tripoint, or nullopt if canceled
     auto choose_teleport_location() -> std::optional<tripoint_abs_omt>;
@@ -24,11 +33,10 @@ private:
     auto place_avatar_overmap(Character& you, const tripoint_abs_omt& omt_pt) const -> bool;
 
 public:
-    auto knows_translocator(const tripoint_abs_omt& omt_pos) const -> bool;
+    auto knows_translocator(const translocator_location& loc) const -> bool;
     // adds teleporter to known_teleporters and does any other activation necessary
-    auto activate_teleporter(const tripoint_abs_omt& omt_pt, const tripoint_bub_ms& local_pt)
-        -> bool;
-    void deactivate_teleporter(const tripoint_abs_omt& omt_pt, const tripoint_bub_ms& local_pt);
+    auto activate_teleporter(const translocator_location& loc) -> bool;
+    void deactivate_teleporter(const translocator_location& loc);
 
     // calls the necessary functions to select translocator location
     // and teleports the target(s) there

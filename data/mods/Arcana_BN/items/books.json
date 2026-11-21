@@ -112,7 +112,7 @@
   {
     "id": "book_hexenhammer",
     "type": "BOOK",
-    "name": { "str": "The Cleansing Flame", "str_pl": "copies of The Cleansing Flame" },
+    "name": { "str": "The Cleansing Flame", "str_pl": "copies of The Cleansing Flame", "ctxt": "book title" },
     "description": "A book written by some esoteric religious order, dedicated to destroying the otherworldly things intruding upon this realm.  The tools of their trade rely on a sanctioned form of magic, using \"consecrated\" essence they deemed safe to use.",
     "snippet_category": [
       {

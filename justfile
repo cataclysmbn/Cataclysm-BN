@@ -43,6 +43,6 @@ playtest *args:
 
 # Download the latest .po files from Transifex (needs `tx` and TX_TOKEN): just pull-po [LANG,...].
 pull-po *LANGS:
-    tx pull --force --all {{ if LANGS == '' { '' } else { '--languages ' + replace(LANGS, ' ', ',') } }}
+    tx pull --force {{ if LANGS == '' { '--all' } else { '--languages ' + replace(LANGS, ' ', ',') } }}
 
 check: lint

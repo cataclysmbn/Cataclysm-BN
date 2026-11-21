@@ -95,6 +95,28 @@
     "flags": [ "VARSIZE", "POCKETS", "ALLOWS_WINGS" ]
   },
   {
+    "id": "overalls",
+    "type": "ARMOR",
+    "name": { "str": "overalls" },
+    "description": "Hard-wearing blue work overalls with plenty of pockets.  Built for long days of building, repairing and tinkering.",
+    "weight": "410 g",
+    "volume": "2500 ml",
+    "price": "60 USD",
+    "price_postapoc": "50 cent",
+    "to_hit": -3,
+    "material": [ "cotton" ],
+    "symbol": "[",
+    "looks_like": "fishing_waders",
+    "color": "blue",
+    "covers": [ "legs", "torso" ],
+    "coverage": 80,
+    "encumbrance": 2,
+    "storage": "2 L",
+    "warmth": 10,
+    "material_thickness": 1,
+    "flags": [ "VARSIZE", "POCKETS", "ALLOWS_WINGS" ]
+  },
+  {
     "id": "robofac_jumpsuit",
     "repairs_like": "jumpsuit",
     "type": "ARMOR",

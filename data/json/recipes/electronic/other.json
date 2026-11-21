@@ -805,6 +805,30 @@
   },
   {
     "type": "recipe",
+    "result": "bot_turret_mini",
+    "category": "CC_ELECTRONIC",
+    "subcategory": "CSC_ELECTRONIC_OTHER",
+    "skill_used": "electronics",
+    "skills_required": [ [ "mechanics", 4 ], [ "computer", 4 ] ],
+    "difficulty": 5,
+    "time": "20 m",
+    "reversible": true,
+    "autolearn": [ [ "mechanics", 3 ], [ "computer", 3 ] ],
+    "using": [ [ "soldering_standard", 14 ] ],
+    "qualities": [ { "id": "SCREW", "level": 1 }, { "id": "WRENCH", "level": 1 } ],
+    "components": [
+      [ [ "ai_module", 1 ] ],
+      [ [ "targeting_module", 1 ] ],
+      [ [ "sensor_module", 1 ] ],
+      [ [ "medium_battery_cell", 1 ] ],
+      [ [ "power_supply", 1 ] ],
+      [ [ "robot_controls", 1 ] ],
+      [ [ "sw_22", 1 ] ],
+      [ [ "bucket", 1 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
     "result": "bot_turret_light",
     "category": "CC_ELECTRONIC",
     "subcategory": "CSC_ELECTRONIC_OTHER",

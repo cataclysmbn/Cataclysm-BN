@@ -11,6 +11,7 @@
 #include <deque>
 #include <filesystem>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <vector>
 #include <iterator>
@@ -161,12 +162,26 @@ std::string read_entire_file( const std::string &path )
     if( !infile.is_open() ) {
         return "";
     }
-    std::string ret = std::string( std::istreambuf_iterator<char>( *infile ),
-                                   std::istreambuf_iterator<char>() );
+    // Read in one go when the size is known, avoiding repeated buffer growth.
+    auto &in = *infile;
+    in.seekg( 0, std::ios::end );
+    const auto size = static_cast<std::streamoff>( in.tellg() );
+    if( size >= 0 ) {
+        in.seekg( 0, std::ios::beg );
+        auto ret = std::string( static_cast<size_t>( size ), '\0' );
+        in.read( ret.data(), size );
+        if( !in.fail() ) {
+            return ret;
+        }
+    }
+    in.clear();
+    in.seekg( 0, std::ios::beg );
+    auto buffer = std::ostringstream{};
+    buffer << in.rdbuf();
     if( infile.fail() ) {
         return "";
     }
-    return ret;
+    return std::move( buffer ).str();
 }
 
 namespace

@@ -89,8 +89,8 @@
     "copy-from": "medium_quadruped_armor",
     "color": "green",
     "name": {
-      "str": "boiled leather medium quadruped barding with caprison",
-      "str_pl": "boiled leather medium quadruped bardings with caprison"
+      "str": "boiled leather medium quadruped barding with caparison",
+      "str_pl": "boiled leather medium quadruped bardings with caparison"
     },
     "description": "A full barding for medium quadrupeds consisting of boiled leather and cloth undercovering.  This caparison is depicting a battle between a monstrous dragon and regal griffin.  You could put this on a friendly medium quadruped.",
     "price": "300 USD",
