@@ -5,8 +5,11 @@
 #include "int_id.h"
 #include "json.h"
 #include "map/field.h"
+#include "map/mapdata.h"
+#include "trap.h"
 #include "type_id.h"
 
+#include <algorithm>
 #include <sstream>
 
 TEST_CASE("const furniture variables are separate from terrain variables", "[submap]") {
@@ -137,4 +140,29 @@ TEST_CASE(
     restored.get_field(pos).add_field(fd_electricity, 1, 0_turns);
     CHECK_FALSE(spark->electricity_conducted);
     CHECK(spark->get_field_age() == (conducted ? 0_turns : 1_turns));
+}
+
+// Checks that whole-submap fills list every trap tile in trap_cache, which trap searches read:
+// set_all_ter( t_pit ) lists all SEEX * SEEY tiles, as t_pit carries tr_pit. set_all_traps( tr_null
+// ) keeps those terrain traps listed, and lists nothing on trap-free terrain.
+TEST_CASE("whole_submap_fills_list_every_trap_tile_in_trap_cache", "[submap][trap]") {
+    auto sm = submap(tripoint_abs_sm::zero(), {});
+    REQUIRE(sm.trap_cache.empty());
+    const auto lists_every_tile = [&] {
+        return std::ranges::all_of(submap_tiles(), [&](const point_sm_ms& p) {
+            return std::ranges::contains(sm.trap_cache, p);
+        });
+    };
+
+    SECTION("terrain with a trap") {
+        sm.set_all_ter(ter_str_id("t_pit").id());
+        CHECK(lists_every_tile());
+        sm.set_all_traps(tr_null);
+        CHECK(lists_every_tile());
+    }
+    SECTION("null trap on trap-free terrain") {
+        sm.set_all_ter(ter_str_id("t_dirt").id());
+        sm.set_all_traps(tr_null);
+        CHECK(sm.trap_cache.empty());
+    }
 }

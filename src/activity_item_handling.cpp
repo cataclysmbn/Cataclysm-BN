@@ -31,6 +31,8 @@
 #include "map/map.h"
 #include "map/map_selector.h"
 #include "map/mapdata.h"
+#include "map/submap.h"
+#include "map/submap_cache_query.h"
 #include "map/utils/map_utils.h"
 #include "map_iterator.h"
 #include "messages.h"
@@ -3669,6 +3671,26 @@ static std::optional<tripoint_bub_ms> find_best_fire( const std::vector<tripoint
     return best_fire;
 }
 
+namespace
+{
+
+/// Returns true when a fire field is on a tile within PICKUP_RANGE of `center`, at any intensity.
+/// Reads `submap::field_cache` instead of each tile in range.
+auto has_fire_field_near( const tripoint_bub_ms &center ) -> bool
+{
+    const auto offset = tripoint_rel_ms( PICKUP_RANGE, PICKUP_RANGE, 0 );
+    const auto fd_fire_id = fd_fire.id();
+    return any_cached_tile_in( get_map(), {
+        .min = center - offset,
+        .max = center + offset,
+        .cache = &submap::field_cache,
+    }, [&]( const submap & sm, const point_sm_ms & local ) {
+        return sm.get_field( local ).find_field( fd_fire_id ) != nullptr;
+    } );
+}
+
+} // namespace
+
 static inline bool has_clear_path_to_pickup_items( const tripoint_bub_ms &from,
         const tripoint_bub_ms &to )
 {
@@ -3805,6 +3827,10 @@ bool find_auto_consume( player &p, const consume_type type )
 void try_fuel_fire( player_activity &act, player &p, const bool starting_fire )
 {
     const auto pos = p.bub_pos();
+    // find_best_fire only picks fire fields in PICKUP_RANGE. Without one there is nothing to feed.
+    if( !starting_fire && !has_fire_field_near( pos ) ) {
+        return;
+    }
     auto adjacent = closest_points_first( pos, PICKUP_RANGE );
     adjacent.erase( adjacent.begin() );
     map &here = get_map();

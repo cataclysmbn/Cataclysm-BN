@@ -16,6 +16,7 @@
 #include "monster.h"
 #include "monster_action.h"
 #include "monster_hallucination.h"
+#include "mtype.h"
 #include "options.h"
 #include "options_helpers.h"
 #include "player.h"
@@ -195,6 +196,37 @@ TEST_CASE("MONSTER_SPEED scales monster move credit", "[monster][speed]") {
                  / action_time_scale::factor_denominator);
     CHECK(test_monster.get_speed_base() == base_speed);
     CHECK(test_monster.type->speed == base_speed);
+}
+
+TEST_CASE("fire_fear_trigger_counts_fire_within_three_tiles", "[monster][trigger]") {
+    clear_all_state();
+    move_player_out_of_the_way();
+    auto& here = get_map();
+    build_test_map(ter_id("t_pavement"));
+
+    // The cow stands on the first column of a submap (x = 48 is a submap border), so the
+    // three-tile area also covers the submap to the west. Cows fear fire through the MAMMAL
+    // species. Each fire tile lowers morale by 5 * intensity; morale can drift back by 1.
+    const auto cow_pos = tripoint_bub_ms(SEEX * 4, 60, 0);
+    auto& cow = spawn_test_monster("mon_cow", cow_pos);
+    REQUIRE(cow.type->has_fear_trigger(mon_trigger::FIRE));
+    const auto calm = cow.type->morale;
+    const auto morale_after_triggers = [&cow, calm] {
+        cow.morale = calm;
+        cow.anger = cow.type->agro;
+        cow.process_triggers();
+        return cow.morale;
+    };
+
+    SECTION("no field near the cow leaves morale unchanged") {
+        CHECK(morale_after_triggers() == calm);
+    }
+    SECTION("fire three tiles away on the next submap lowers morale") {
+        REQUIRE(here.add_field(cow_pos + tripoint_rel_ms(-3, 0, 0), fd_fire, 2));
+        const auto morale = morale_after_triggers();
+        CHECK(morale >= calm - 10);
+        CHECK(morale <= calm - 9);
+    }
 }
 
 TEST_CASE("monster ammo slots accept configured alternate ammo items", "[monster][ammo]") {
