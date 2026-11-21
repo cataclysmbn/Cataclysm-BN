@@ -9508,8 +9508,8 @@
   {
     "type": "profession",
     "id": "tf2_engineer",
-    "name": "Private Military Engineer",
-    "description": "Twenty years of building things in places nobody sane would build them, always for a private military outfit that insisted on painting everything one of two colours.  You never did learn why the other colour kept showing up to ruin your work, or why you kept getting hired back after the same dispute.  Your gear was always torn down within minutes, usually by a very polite man who nobody else noticed.  You stopped taking it personally around the fortieth rebuild.  Retirement was supposed to be quiet.  Now that the world's ended, nobody's picking sides by colour any more.",
+    "name": "Corporate Security Engineer",
+    "description": "You worked the private sector for years, doing everything from construction in far-flung locations to personally designing autonomous security networks.  You've planned jobsites around corporate espionage, competitors hiring rival contractors to commit sabotage, and worse.  Your latest contract, a hands-on job as a foreman at an old gravel quarry, ended when the workers didn't show up, and a rival company's mercenaries turned up as shambling corpses instead of saboteurs.",
     "points": 7,
     "age": { "min": 30, "max": 60 },
     "skills": [
