@@ -542,10 +542,15 @@ bool read_from_file( const std::string &path, file_read_fn reader, bool optional
         if( !fin.is_open() ) {
             throw std::runtime_error( "opening file failed" );
         }
-        reader( *fin );
+        // Hand the contents out from memory: most readers parse JSON, which seeks and tells
+        // a lot. That is slow on file streams and has a much faster path on memory.
+        auto buffer = std::ostringstream{};
+        buffer << ( *fin ).rdbuf();
         if( fin.bad() ) {
             throw std::runtime_error( "reading file failed" );
         }
+        auto contents = memory_istream( std::move( buffer ).str() );
+        reader( contents );
         return true;
 
     } catch( const std::exception &err ) {
@@ -557,11 +562,7 @@ bool read_from_file( const std::string &path, file_read_fn reader, bool optional
 bool read_from_file_json( const std::string &path, file_read_json_fn reader, bool optional )
 {
     return read_from_file( path, [&]( std::istream & fin ) {
-        // Parse from memory: JsonIn seeks and tells a lot, which is slow on file streams.
-        auto buffer = std::ostringstream{};
-        buffer << fin.rdbuf();
-        auto contents = memory_istream( std::move( buffer ).str() );
-        JsonIn jsin( contents, path );
+        JsonIn jsin( fin, path );
         reader( jsin );
     }, optional );
 }
