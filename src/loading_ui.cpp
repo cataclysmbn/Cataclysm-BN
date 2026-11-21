@@ -232,6 +232,9 @@ auto get_loading_image_cache( loading_image_cache &cache,
         auto surface = load_image( loading_image_path.c_str() );
         cache.image_size = point( surface->w, surface->h );
         cache.texture = CreateTextureFromSurface( get_sdl_renderer(), surface );
+        if( cache.texture ) {
+            SDL_SetTextureScaleMode( cache.texture.get(), SDL_SCALEMODE_LINEAR );
+        }
     } catch( const std::exception &err ) {
         log_loading_image( string_format( "failed to load image '%s': %s", loading_image_path,
                                           err.what() ) );
@@ -337,7 +340,7 @@ struct sdl_render_state_guard {
             SDL_GetRenderClipRect( renderer.get(), &*clip_rect );
         }
         SDL_SetRenderClipRect( renderer.get(), nullptr );
-        SDL_SetRenderLogicalPresentation( renderer.get(), 0, 0, present );
+        SDL_SetRenderLogicalPresentation( renderer.get(), 0, 0, SDL_LOGICAL_PRESENTATION_DISABLED );
         SDL_SetRenderScale( renderer.get(), 1.0f, 1.0f );
         SDL_SetRenderViewport( renderer.get(), nullptr );
     }
@@ -346,7 +349,7 @@ struct sdl_render_state_guard {
         if( logical_size.x > 0 && logical_size.y > 0 ) {
             SDL_SetRenderLogicalPresentation( renderer.get(), logical_size.x, logical_size.y, present );
         } else {
-            SDL_SetRenderLogicalPresentation( renderer.get(), 0, 0, present );
+            SDL_SetRenderLogicalPresentation( renderer.get(), 0, 0, SDL_LOGICAL_PRESENTATION_DISABLED );
             SDL_SetRenderScale( renderer.get(), scale_x, scale_y );
             SDL_SetRenderViewport( renderer.get(), &viewport );
         }
