@@ -637,7 +637,7 @@
       { "point": [ -1, -3, 0 ], "overmap": "dirt_road_3way_west" },
       { "point": [ -2, -3, 0 ], "overmap": "farm_lot_wire_straight_v_west" },
       { "point": [ -3, -3, 0 ], "overmap": "farm_lot_wire_straight_v_east" },
-      { "point": [ -1, -2, 0 ], "overmap": "dirt_road_turn1_forest_west" },
+      { "point": [ -1, -2, 0 ], "overmap": "dirt_road_turn_forest_south" },
       { "point": [ -2, -2, 0 ], "overmap": "farm_lot_wire_turn_v_west" },
       { "point": [ -3, -2, 0 ], "overmap": "farm_lot_wire_turn_h_north" },
       { "point": [ 0, -2, 0 ], "overmap": "dirt_road_turn_forest_north" },
@@ -2971,7 +2971,7 @@
     "id": "rural_house_turn",
     "overmaps": [
       { "point": [ 0, 1, 0 ], "overmap": "dirt_road_forest_north" },
-      { "point": [ 0, 2, 0 ], "overmap": "dirt_road_turn1_forest_west" },
+      { "point": [ 0, 2, 0 ], "overmap": "dirt_road_turn_forest_south" },
       { "point": [ 1, 2, 0 ], "overmap": "house_farm_west" },
       { "point": [ 1, 2, 1 ], "overmap": "house_farm_roof_west" }
     ],
@@ -2987,8 +2987,8 @@
     "overmaps": [
       { "point": [ 0, 1, 0 ], "overmap": "dirt_road_forest_north" },
       { "point": [ 0, 2, 0 ], "overmap": "dirt_road_3way_forest_east" },
-      { "point": [ -1, 2, 0 ], "overmap": "yard_south" },
-      { "point": [ 0, 3, 0 ], "overmap": "dirt_road_turn1_forest_west" },
+      { "point": [ -1, 2, 0 ], "overmap": "yard_east" },
+      { "point": [ 0, 3, 0 ], "overmap": "dirt_road_turn_forest_south" },
       { "point": [ 1, 3, 0 ], "overmap": "house_farm_west" },
       { "point": [ 1, 3, 1 ], "overmap": "house_farm_roof_west" }
     ],
