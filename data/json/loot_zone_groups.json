@@ -1,0 +1,152 @@
+[
+  {
+    "type": "LOOT_ZONE_GROUP",
+    "id": "food",
+    "name": "Food and drinks",
+    "sort_order": 0,
+    "kind": "storage",
+    "categories": [ "LOOT_FOOD", "LOOT_PFOOD", "LOOT_DRINK", "LOOT_PDRINK", "LOOT_COOKING_INGREDIENTS" ]
+  },
+  {
+    "type": "LOOT_ZONE_GROUP",
+    "id": "weapons",
+    "name": "Weapons and ammunition",
+    "sort_order": 10,
+    "kind": "storage",
+    "categories": [ "LOOT_GUNS", "LOOT_WEAPONS", "LOOT_AMMO", "LOOT_MAGAZINES", "LOOT_MODS" ]
+  },
+  {
+    "type": "LOOT_ZONE_GROUP",
+    "id": "tools",
+    "name": "Tools",
+    "sort_order": 20,
+    "kind": "storage",
+    "categories": [
+      "LOOT_WORKSHOP_TOOLS",
+      "LOOT_ENTRY_TOOLS",
+      "LOOT_COOKING_TOOLS",
+      "LOOT_CHEMISTRY_TOOLS",
+      "LOOT_FARM_TOOLS",
+      "LOOT_TOOLS"
+    ]
+  },
+  {
+    "type": "LOOT_ZONE_GROUP",
+    "id": "materials",
+    "name": "Materials",
+    "sort_order": 30,
+    "kind": "storage",
+    "categories": [
+      "LOOT_SCRAP_WOOD",
+      "LOOT_SCRAP_METAL",
+      "LOOT_SCRAP_PLASTIC",
+      "LOOT_SCRAP_GLASS",
+      "LOOT_SCRAP_CERAMICS",
+      "LOOT_SCRAP_FABRIC"
+    ]
+  },
+  {
+    "type": "LOOT_ZONE_GROUP",
+    "id": "technology",
+    "name": "Technology and spare parts",
+    "sort_order": 40,
+    "kind": "storage",
+    "categories": [ "LOOT_VEHICLE_PARTS", "LOOT_SPARE_PARTS", "LOOT_BATTERY", "LOOT_ELECTRONICS", "LOOT_SCRAP_ELECTRONICS" ]
+  },
+  {
+    "type": "LOOT_ZONE_GROUP",
+    "id": "household",
+    "name": "Household and belongings",
+    "sort_order": 50,
+    "kind": "storage",
+    "categories": [ "LOOT_CLOTHING", "LOOT_DEPLOYABLES", "LOOT_VALUABLES", "LOOT_CONTAINERS", "LOOT_OTHER" ]
+  },
+  {
+    "type": "LOOT_ZONE_GROUP",
+    "id": "medicine",
+    "name": "Medicine and enhancements",
+    "sort_order": 60,
+    "kind": "storage",
+    "categories": [ "LOOT_DRUGS", "LOOT_BIONICS", "LOOT_MUTAGENS" ]
+  },
+  {
+    "type": "LOOT_ZONE_GROUP",
+    "id": "books",
+    "name": "Books and maps",
+    "sort_order": 70,
+    "kind": "storage",
+    "categories": [ "LOOT_BOOKS", "LOOT_MAP" ]
+  },
+  {
+    "type": "LOOT_ZONE_GROUP",
+    "id": "special",
+    "name": "Special items",
+    "sort_order": 80,
+    "kind": "storage",
+    "categories": [ "LOOT_ARTIFACTS", "LOOT_SPELLBOOKS" ]
+  },
+  {
+    "type": "LOOT_ZONE_GROUP",
+    "id": "supplies",
+    "name": "Raw materials and supplies",
+    "sort_order": 90,
+    "kind": "storage",
+    "categories": [ "LOOT_SOIL", "LOOT_WOOD", "LOOT_ROCKS", "LOOT_SEEDS", "LOOT_CHEMICAL", "LOOT_FUEL" ]
+  },
+  {
+    "type": "LOOT_ZONE_GROUP",
+    "id": "remains",
+    "name": "Corpses",
+    "sort_order": 100,
+    "kind": "storage",
+    "categories": [ "LOOT_CORPSE" ]
+  },
+  {
+    "type": "LOOT_ZONE_GROUP",
+    "id": "fieldwork",
+    "name": "Field work",
+    "sort_order": 160,
+    "kind": "activity",
+    "categories": [ "CHOP_TREES", "FARM_PLOT", "MINING", "FISHING_SPOT" ]
+  },
+  {
+    "type": "LOOT_ZONE_GROUP",
+    "id": "construction",
+    "name": "Construction",
+    "sort_order": 170,
+    "kind": "activity",
+    "categories": [ "CONSTRUCTION_BLUEPRINT", "CONSTRUCTION_IGNORE" ]
+  },
+  {
+    "type": "LOOT_ZONE_GROUP",
+    "id": "vehicles",
+    "name": "Vehicles",
+    "sort_order": 130,
+    "kind": "activity",
+    "categories": [ "VEHICLE_DECONSTRUCT", "VEHICLE_REPAIR", "VEHICLE_PATROL" ]
+  },
+  {
+    "type": "LOOT_ZONE_GROUP",
+    "id": "sustenance",
+    "name": "Automatic food and fire",
+    "sort_order": 140,
+    "kind": "activity",
+    "categories": [ "AUTO_EAT", "AUTO_DRINK", "SOURCE_FIREWOOD" ]
+  },
+  {
+    "type": "LOOT_ZONE_GROUP",
+    "id": "npc",
+    "name": "NPC behavior",
+    "sort_order": 150,
+    "kind": "activity",
+    "categories": [ "NPC_INVESTIGATE_ONLY", "NPC_NO_INVESTIGATE", "NPC_RETREAT" ]
+  },
+  {
+    "type": "LOOT_ZONE_GROUP",
+    "id": "rules",
+    "name": "Area rules",
+    "sort_order": 180,
+    "kind": "rules",
+    "categories": [ "LOOT_UNSORTED", "LOOT_DUMP", "LOOT_IGNORE", "LOOT_IGNORE_FAVORITES", "NO_AUTO_PICKUP", "NO_NPC_PICKUP" ]
+  }
+]

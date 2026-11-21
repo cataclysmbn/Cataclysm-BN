@@ -2039,6 +2039,18 @@ void options_manager::add_options_interface()
 
     add_empty_line();
 
+    add( "USE_ZONE_MANAGER", interface, translate_marker( "Use zone manager" ),
+         translate_marker( "Use category checkboxes when creating zones. If disabled, show the standard zone type list. Existing zones and sorting behavior are unchanged." ),
+         true
+       );
+
+    add( "ZONE_CATEGORY_DISPLAY_LIMIT", interface, translate_marker( "Zone category display limit" ),
+         translate_marker( "Maximum number of categories shown in zone details. Additional categories are summarized as 'and others'. Set to 0 to show all categories. This does not affect sorting." ),
+         0, 1000, 8
+       );
+
+    add_empty_line();
+
     add( "SIDEBAR_POSITION", interface, translate_marker( "Sidebar position" ),
          translate_marker( "Switch between sidebar on the left or on the right side.  Requires restart." ),
          //~ sidebar position
