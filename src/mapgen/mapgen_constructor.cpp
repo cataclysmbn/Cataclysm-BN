@@ -387,6 +387,7 @@ auto mapgen_constructor::ter_set(const point_omt_ms& p, const ter_id& terrain) -
     const auto [sm, local] = tile_at(p);
     if (sm == nullptr || sm->get_ter(local) == terrain) { return false; }
     sm->set_ter(local, terrain);
+    sm->get_ter_vars(local).erase_color_vars();
     return true;
 }
 
@@ -394,6 +395,7 @@ auto mapgen_constructor::furn_set(const point_omt_ms& p, const furn_id& furnitur
     const auto [sm, local] = tile_at(p);
     if (sm == nullptr || sm->get_furn(local) == furniture) { return false; }
     sm->set_furn(local, furniture);
+    sm->get_furn_vars(local).erase_color_vars();
     const auto& new_furniture = furniture.obj();
     const auto& plumbing = new_furniture.fluid_grid;
     if (plumbing && plumbing->role == fluid_grid_role::fixture && !plumbing->universal_liquids

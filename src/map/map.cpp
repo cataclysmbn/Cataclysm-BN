@@ -3143,6 +3143,8 @@ void map::make_rubble(
     if (overwrite) {
         ter_set(p, floor_type);
         furn_set(p, rubble_type);
+        ter_vars(p)->erase_color_vars();
+        furn_vars(p)->erase_color_vars();
     } else {
         // First see if there is existing furniture to destroy
         if (is_bashable_furn(p)) { destroy_furn(p, true); }
@@ -3533,6 +3535,8 @@ void map::collapse_at(
         const tripoint_bub_ms tabove(p.xy(), p.z() + 1);
         ter_set(tabove, t_open_air);
         furn_set(tabove, f_null);
+        ter_vars(tabove)->erase_color_vars();
+        furn_vars(tabove)->erase_color_vars();
         propagate_suspension_check(tabove);
     }
     // it would be great to check if collapsing ceilings smashed through the floor, but
@@ -3798,6 +3802,7 @@ auto map::bash_ter_success(const tripoint_bub_ms& p, const bash_params& params) 
 
         ter_set(p, t_open_air);
     }
+    ter_vars(p)->erase_color_vars();
 
     spawn_items(p, item_group::items_from(bash.drop_group, calendar::turn));
 
@@ -3934,6 +3939,7 @@ auto map::bash_furn_success(const tripoint_bub_ms& p, const bash_params& params)
             spawn_items(p, item_group::items_from(bash.drop_group, calendar::turn));
             release_avatar_grabbed_furniture_if_destroyed(p, furnid, bash.furn_set);
             furn_set(p, bash.furn_set);
+            furn_vars(p)->erase_color_vars();
         } else {
             // Take the tent down
             const int rad = tentp->second.obj().bash.collapse_radius;
@@ -3957,6 +3963,7 @@ auto map::bash_furn_success(const tripoint_bub_ms& p, const bash_params& params)
                         release_avatar_grabbed_furniture_if_destroyed(
                             pt, furn_obj, recur_bash.furn_set);
                         furn_set(pt, recur_bash.furn_set);
+                        furn_vars(pt)->erase_color_vars();
                         break;
                     }
                 }
