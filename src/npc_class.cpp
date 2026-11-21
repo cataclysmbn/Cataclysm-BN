@@ -226,6 +226,7 @@ void npc_class::load( const JsonObject &jo, const std::string & )
 {
     mandatory( jo, was_loaded, "name", name );
     mandatory( jo, was_loaded, "job_description", job_description );
+    optional( jo, was_loaded, "description", description );
 
     optional( jo, was_loaded, "common", common, true );
     bonus_str = load_distribution( jo, "bonus_str" );
@@ -339,6 +340,11 @@ const npc_class_id &npc_class::random_common()
 std::string npc_class::get_name() const
 {
     return name.translated();
+}
+
+auto npc_class::get_description() const -> std::string
+{
+    return description.translated();
 }
 
 std::string npc_class::get_job_description() const

@@ -6,7 +6,38 @@ tableOfContents:
 
 ## Writing Dialogues
 
-TODO: document the "npc" structure, used to load NPC template
+NPC templates (`"type": "npc"`) accept an optional, translatable `"description"` for a character's
+biography, history, or other authored background. It appears in the character's extended description
+when examining them. This text describes the character rather than their current health, equipment,
+or attitude, which are displayed separately.
+
+```json
+{
+  "type": "npc",
+  "id": "station_keeper",
+  "name_unique": "Alex",
+  "description": "Before the Cataclysm, Alex kept the town's radio station running.",
+  "class": "NC_NONE",
+  "attitude": 0,
+  "mission": 0,
+  "chat": "TALK_DONE"
+}
+```
+
+Translation objects such as `{ "ctxt": "NPC biography", "str": "..." }` are also supported.
+Descriptions are optional; existing content does not need to supply one. New saves retain the NPC
+template ID so its biography remains available after loading. NPCs from older saves, or from
+templates removed by a mod, use their class description if one is available.
+
+The player can write a multiline description in the **Overview** tab of character creation: cycle to
+**Description** and confirm to open the editor. In game, open the character screen (`@`) and use
+**Edit character description** (`d` by default). The editor displays the save and cancel bindings.
+Canceling leaves the text unchanged; saving an empty description clears it. Player descriptions are
+stored in saves and character templates and are not translated.
+
+Descriptions support color tags such as `<color_red>Former firefighter</color>`. The editor shows
+the tags literally, without Lua syntax highlighting; hover panels, the chargen preview, and
+extended descriptions render their colors. Untagged description text is dark gray.
 
 Dialogues work like state machines. They start with a certain topic (the NPC says something), the
 player character can respond (choosing one of several responses), and that response sets the new
@@ -20,6 +51,18 @@ NPC missions are controlled by a separate but related JSON structure and are doc
 ## NPC classes
 
 NPC classes are defined as `"type": "npc_class"` entries (see `data/json/npcs/classes.json`).
+
+### "description"
+
+(string or translation object, optional)
+
+A fallback biography for NPCs of this class, including randomly generated NPCs. A description on the
+individual NPC template takes precedence. This field is separate from `"job_description"`, which is
+dialogue spoken by an NPC about their job.
+
+```json
+"description": "They once repaired radios for a living."
+```
 
 ### "lua_ai"
 
