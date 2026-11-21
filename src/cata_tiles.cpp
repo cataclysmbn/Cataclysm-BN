@@ -7587,9 +7587,9 @@ void cata_tiles::do_tile_loading_report( const std::function<void( std::string )
     }
     tile_loading_report( items, C_ITEM, out, "" );
 
-    auto mtypes = MonsterGenerator::generator().get_all_mtypes();
-    lr_generic( mtypes.begin(), mtypes.end(), []( const std::vector<mtype>::iterator & m ) {
-        return ( *m ).id.str();
+    const auto &mtypes = MonsterGenerator::generator().get_all_mtypes();
+    lr_generic( mtypes.begin(), mtypes.end(), []( const auto & m ) {
+        return m->id.str();
     }, C_MONSTER, out, "" );
     tile_loading_report<vpart_info>( vpart_info::get_all().size(), C_VEHICLE_PART, out, "vp_" );
     tile_loading_report<trap>( trap::count(), C_TRAP, out, "" );
@@ -7623,12 +7623,12 @@ void cata_tiles::lr_generic( Iter begin, Iter end, Func id_func, TILE_CATEGORY c
     for( ; begin != end; ++begin ) {
         const std::string id_string = id_func( begin );
 
-        if( !tileset_ptr->find_tile_type( prefix + id_string ) &&
-            !find_tile_looks_like( id_string, category ) ) {
-            missing_list.append( id_string + " " );
-        } else if( !tileset_ptr->find_tile_type( prefix + id_string ) ) {
-            missing_with_looks_like_list.append( id_string + " " );
+        if( tileset_ptr->find_tile_type( prefix + id_string ) ) {
+            continue;
         }
+        auto &list = find_tile_looks_like( id_string, category ) ? missing_with_looks_like_list :
+                     missing_list;
+        list.append( id_string + " " );
     }
     out( "Missing " + TILE_CATEGORY_IDS[category] + ": " + missing_list );
     out( "Missing " + TILE_CATEGORY_IDS[category] + " (but looks_like tile exists): " +
