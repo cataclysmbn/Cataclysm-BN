@@ -58,5 +58,25 @@
     "material": [ "bone" ],
     "weight": "1 g",
     "volume": "1 ml"
+  },
+  {
+    "type": "MONSTER",
+    "id": "mon_test_rot_inorganic",
+    "copy-from": "mon_test_rot_corpse",
+    "name": { "str": "nonrotting test corpse source" },
+    "material": [ "steel" ]
+  },
+  {
+    "type": "harvest",
+    "id": "test_rot_harvest",
+    "entries": [ { "drop": "test_rot_remains", "type": "bone", "base_num": [ 64, 64 ], "max": 64 } ]
+  },
+  {
+    "type": "MONSTER",
+    "id": "mon_test_rot_corpse",
+    "copy-from": "debug_mon",
+    "name": { "str": "rot test corpse source" },
+    "harvest": "test_rot_harvest",
+    "flags": [ "IMMOBILE" ]
   }
 ]

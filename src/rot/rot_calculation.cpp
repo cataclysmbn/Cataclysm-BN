@@ -2,8 +2,11 @@
 
 #include "weather/weather.h"
 
+#include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstdint>
+#include <limits>
 
 namespace {
 
@@ -44,18 +47,62 @@ auto get_hourly_rotpoints_at_temp(const units::temperature temp) -> int {
 
 namespace rot {
 
-/// Real time for @p remaining_rot to accumulate at @p temp; INDEFINITELY_LONG_DURATION if it never
-/// does.
-auto time_to_rot(const time_duration remaining_rot, const units::temperature temp)
-    -> time_duration {
-    if (remaining_rot <= 0_turns) { return 0_turns; }
-    const auto rot_per_hour = get_hourly_rotpoints_at_temp(temp);
-    if (rot_per_hour <= 0) { return calendar::INDEFINITELY_LONG_DURATION; }
-    // Rot is counted in room temperature turns, so scale it by the rot speed at temp.
-    const auto turns = to_turns<double>(remaining_rot) * to_turns<double>(1_hours) / rot_per_hour;
-    return turns < to_turns<double>(calendar::INDEFINITELY_LONG_DURATION)
-             ? time_duration::from_turns(static_cast<int>(turns))
-             : calendar::INDEFINITELY_LONG_DURATION;
+shelf_life::shelf_life(time_duration value): value_(value) {}
+
+auto shelf_life::from_duration(time_duration value) -> std::optional<shelf_life> {
+    if (value <= 0_turns) { return std::nullopt; }
+    return shelf_life(value);
+}
+
+auto shelf_life::duration() const -> time_duration { return value_; }
+
+auto shelf_life::relative_rot(time_duration accumulated) const -> double {
+    return accumulated / value_;
+}
+
+auto shelf_life::from_relative(double fraction) const
+    -> std::expected<time_duration, relative_rot_error> {
+    if (!std::isfinite(fraction)) { return std::unexpected(relative_rot_error::non_finite); }
+    const auto scale = to_turns<double>(value_);
+    if (fraction < std::numeric_limits<int>::min() / scale
+        || fraction > std::numeric_limits<int>::max() / scale) {
+        return std::unexpected(relative_rot_error::out_of_range);
+    }
+    return time_duration::from_turns(static_cast<int>(scale * fraction));
+}
+
+auto shelf_life::minimum_freshness(
+    time_duration accumulated, units::temperature temperature, float rate) const -> time_duration {
+    return time_to_rot(
+        to_turns<int64_t>(value_) - to_turns<int64_t>(accumulated), temperature, rate);
+}
+
+auto time_to_rot(int64_t remaining, units::temperature temperature, float rate) -> time_duration {
+    const auto per_hour = get_hourly_rotpoints_at_temp(temperature) * static_cast<double>(rate);
+    if (per_hour <= 0) { return calendar::INDEFINITELY_LONG_DURATION; }
+    if (remaining <= 0) { return 0_turns; }
+    const auto turns = static_cast<double>(remaining) * to_turns<int64_t>(1_hours) / per_hour;
+    return time_duration::from_turns(
+        static_cast<int>(std::min(turns, to_turns<double>(calendar::INDEFINITELY_LONG_DURATION))));
+}
+
+auto increment(const interval_options& options) -> time_duration {
+    // Round down after field dressing and again after the rot rate.
+    // Use int64_t so large inputs do not overflow.
+    const auto factor = options.rate * (options.field_dressed_corpse ? 0.75 : 1.0);
+    const auto adjusted = static_cast<int64_t>(to_turns<double>(options.elapsed) * factor);
+    const auto added = static_cast<int64_t>(
+        static_cast<double>(adjusted) / to_turns<int>(1_hours)
+        * get_hourly_rotpoints_at_temp(options.temperature));
+    const auto total = added + to_turns<int64_t>(options.initial_variation);
+    return time_duration::from_turns(static_cast<int>(std::clamp<int64_t>(
+        total, std::numeric_limits<int>::min(), std::numeric_limits<int>::max())));
+}
+
+auto accumulate(time_duration current, time_duration added) -> time_duration {
+    const auto total = to_turns<int64_t>(current) + to_turns<int64_t>(added);
+    return time_duration::from_turns(static_cast<int>(std::clamp<int64_t>(
+        total, std::numeric_limits<int>::min(), std::numeric_limits<int>::max())));
 }
 
 } // namespace rot

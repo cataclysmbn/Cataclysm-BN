@@ -83,6 +83,11 @@ struct damage_unit;
 struct fire_data;
 class weather_manager;
 
+namespace rot
+{
+class shelf_life;
+}
+
 enum damage_type : int;
 enum clothing_mod_type : int;
 
@@ -1031,9 +1036,7 @@ class item : public location_visitable<item>, public game_object<item>
             const_cast<item *>( this )->update_rot_from_location( temperature_flag::TEMP_NORMAL );
             return rot;
         }
-        void mod_rot( const time_duration &val ) {
-            rot += val;
-        }
+        auto mod_rot( const time_duration &val ) -> void;
 
         /** Time for this item to be fully fermented. */
         time_duration brewing_time() const;
@@ -2440,6 +2443,27 @@ class item : public location_visitable<item>, public game_object<item>
         auto get_relic_recharge_scheme() const -> std::vector<relic_recharge>;
 
     private:
+        enum class component_rot_state : unsigned char { none, live, snapshot };
+        // Rot state of the stack that a split charge came from, set only during the callback.
+        // Not copied or saved.
+        component_rot_state borrowed_rot_state = component_rot_state::none;
+        class scoped_component_rot
+        {
+                cache_reference<item> target;
+            public:
+                scoped_component_rot( item *value, component_rot_state state );
+                ~scoped_component_rot();
+                scoped_component_rot( const scoped_component_rot &/*source*/ ) = delete;
+                auto operator=( const scoped_component_rot &/*source*/ ) -> scoped_component_rot & =
+                    delete; // *NOPAD*
+        };
+        auto component_rot_status() const -> component_rot_state;
+        auto rot_is_suspended() const -> bool;
+        auto restart_rot_after_snapshot() -> void;
+        auto copy_rot_from( const item &source ) -> void;
+        auto calc_rot_interval( time_point time, units::temperature temperature,
+                                const rot::shelf_life &shelf_life ) const -> time_duration;
+
         struct absolute_rot_process_options {
             bool seals = false;
             player *carrier = nullptr;

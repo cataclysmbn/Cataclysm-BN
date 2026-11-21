@@ -47,7 +47,7 @@ auto for_location( const map &m, const item &loc ) -> temperature_flag
             // The location names its vehicle; the map cache misses vehicles not placed on it yet.
             const auto flag = loc.vehicle_storage_temperature();
             if( !flag ) {
-                debugmsg( "Item %s is in a vehicle without a vehicle location", loc.tname() );
+                debugmsg( "Item %s is in a vehicle without a vehicle location", loc.typeId().str() );
                 return temperature_flag::TEMP_NORMAL;
             }
             return *flag;
