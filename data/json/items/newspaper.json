@@ -235,5 +235,56 @@
         "text": "Cybercop 3D movie poster — a sci-fi cop dives into a simulated reality to stop dangerous hackers."
       }
     ]
+  },
+  {
+    "type": "GENERIC",
+    "id": "genemod_clinic_notes",
+    "category": "books",
+    "symbol": "`",
+    "name": { "str": "genemod clinic paperwork" },
+    "description": "A scrap of paper from the genemod clinic with its logo on the top page, the paperwork itself presumably written by a random employee.",
+    "price": 0,
+    "price_postapoc": 0,
+    "material": [ "paper" ],
+    "weight": "3 g",
+    "volume": "5 ml",
+    "snippet_category": [
+      {
+        "id": "genemod_clinic_notes_dead_pet",
+        "text": "VAT REQUEST APPROVED: Client has provided sufficient remains for domestic companion reconstruction. Payment cleared under the household continuity package. Advise technician to preserve cosmetic familiarity where possible; minor temperament drift is considered acceptable under the pet restoration waiver."
+      },
+      {
+        "id": "genemod_clinic_notes_dead_relative",
+        "text": "VAT REQUEST DENIED: Human relative reconstruction cannot be approved under current ethics policy. Client was informed that grief, inheritance disputes, and unresolved family matters do not constitute medical necessity. Do not escalate without written authorization from Ethics and Legal."
+      },
+      {
+        "id": "genemod_clinic_notes_complaint",
+        "text": "CUSTOMER SERVICE LOG: Patient reports unexpected secondary eyelids after the procedure. Patient claims they selected 'night vision only'. Review waiver section 14-C before responding. Do not admit fault in writing."
+      },
+      {
+        "id": "genemod_clinic_notes_temperament_drift",
+        "text": "CUSTOMER SERVICE LOG: Client reports restored pet displays unacceptable temperament drift, including prolonged staring, refusal to answer to its original name, and attempting to open interior doors after midnight. Client insists the animal 'knows what we did'. Review household continuity waiver before responding. Do not offer refund."
+      },
+      {
+        "id": "genemod_clinic_notes_legal_notice",
+        "text": "LEGAL NOTICE: Client asked why all secubots on the premises are fitted with mounted M16A1 rifles. Standard response is that the units are present for patient safety, staff safety, asset protection, and containment assurance. Do not mention the lab incident unless directly subpoenaed."
+      },
+      {
+        "id": "genemod_clinic_notes_kennel_general",
+        "text": "KENNEL LOG: Void kitten transferred to low-light enclosure after staff reported missing reflections. Iridescent kitten cleared for client viewing, but do not photograph under fluorescent bulbs. Cockatrice remains under bite hood and mirror ban pending temperament review. REMINDER: Do not house anything labeled 'experimental companion' besides the specified acceptance criteria."
+      },
+      {
+        "id": "genemod_clinic_notes_kennel_rats",
+        "text": "KENNEL LOG: Smart rats are thriving in their experimental habitat. They have been observed using tools, solving puzzles, and communicating with each other in complex ways. The lead technician has noted that they seem to be developing a rudimentary culture, with different groups exhibiting distinct behaviors and preferences. We will continue to monitor their progress and adjust their environment as needed to support their development. These may be promising for a future line of low-maintenance, high-intelligence companions."
+      },
+      {
+        "id": "genemod_clinic_notes_manifest",
+        "text": "SUPPLY MANIFEST: Biomaterial precursors, broad-spectrum antibiotics, analgesics, anti-rejection meds, sedatives, antiseptics, wound dressings, disposable gowns still have about 2 weeks of supply.  Inventory is checked and restocked on a weekly basis. Contact logistics if supplies run low or if you have any questions about the manifest."
+      },
+      {
+        "id": "genemod_clinic_notes_cloning_for_dummies",
+        "text": "TRAINING MANUAL: The things you'll need to get started with cloning - a sample of the pet's DNA, a vat of biomaterial, and a standing tank.  The process is simple: First, ensure you have the following: genome drive, genome workstation, cloning vat, universal growth medium, and an artificial womb. These will all be provided to you by your instructor. After ensuring the artificial womb is sterilized at an autoclave, you can get started with the rest of the project. Using the provided genome drive at a genetic workstation with universal growth medium can produce viable DNA. Inject the DNA into the artificial womb, and gently place it into the tank. Ensure that a steady current is supplied to the tank, or it may result in failures. Now just wait for the new pet to grow!  It should be noted that the new pet may not be an exact replica of the original, and may have some minor temperament drift. It's also possible for the vat to produce unexpected failure results. Please dispose of these according to the provided chart. If you have any questions about the process, please contact a technician."
+      }
+    ]
   }
 ]
