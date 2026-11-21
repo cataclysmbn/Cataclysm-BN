@@ -35,10 +35,14 @@ Example:
     // Supported image extensions are .png, .jpg, .jpeg, .bmp, .gif, and .webp.
     // The author credit is taken from the image filename before the first underscore, e.g. "foo_rest.png" displays "by foo" in white text with a black outline.
     "loading_images": ["load_1.png", "load_2.png", "some_directory"],
-    // Mod version string. This is for users' and maintainers' convenience, so you can use whatever is most convenient here (e.g. date).
-    "version": "2021-12-02",
+    // Mod version string. Use strict semantic versioning: MAJOR.MINOR.PATCH[-PRERELEASE][+BUILD].
+    "version": "1.2.3",
     // List of mod's dependencies. Dependencies are guaranteed to be loaded before the mod is loaded.
-    "dependencies": ["bn", "zed_templates"],
+    // You can also use a project.json-style object when you want to annotate exact dependency versions.
+    "dependencies": {
+      "bn": "0.7.0",
+      "zed_templates": "1.2.3"
+    },
     // List of mods that are incompatible with this mod.
     "conflicts": ["worse_zeds"],
     // Special flag for core game data, can only be used by total overhaul mods. Only 1 core mod can be loaded at a time.
