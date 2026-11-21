@@ -98,7 +98,7 @@
     "id": "overalls",
     "type": "ARMOR",
     "name": { "str": "overalls" },
-    "description": "Hard-wearing blue work overalls with plenty of pockets. Built for long days of building, repairing and tinkering.",
+    "description": "Hard-wearing blue work overalls with plenty of pockets.  Built for long days of building, repairing and tinkering.",
     "weight": "410 g",
     "volume": "2500 ml",
     "price": "60 USD",

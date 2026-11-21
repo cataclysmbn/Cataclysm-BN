@@ -772,6 +772,7 @@
     "material": [ "steel", "plastic" ],
     "symbol": ";",
     "color": "light_green",
+    "looks_like": "bot_turret_light",
     "use_action": {
       "type": "place_monster",
       "monster_id": "mon_turret_mini",

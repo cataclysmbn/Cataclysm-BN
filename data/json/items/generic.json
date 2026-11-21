@@ -3428,7 +3428,8 @@
     "name": { "str": "broken mini turret" },
     "weight": "5 kg",
     "volume": "5 L",
-    "copy-from": "broken_turret"
+    "copy-from": "broken_turret",
+    "looks_like": "broken_turret_light"
   },
   {
     "type": "GENERIC",
