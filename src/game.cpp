@@ -2088,6 +2088,13 @@ auto game::advance_time_action_tick() -> int
     return calendar_turns;
 }
 
+auto game::reset_activity_fixed_window() -> void
+{
+    next_activity_fixed_window_check_ = calendar::turn_zero;
+    activity_fixed_window_force_normal_turn_ = false;
+    time_action_scale_turn_remainder = 0;
+}
+
 // MAIN GAME LOOP
 // Returns true if game is over (death, saved, quit, etc)
 bool game::do_turn()
