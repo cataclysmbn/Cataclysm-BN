@@ -1733,7 +1733,7 @@ void Character::suffer()
     if( is_underwater() ) {
         suffer_while_underwater();
     }
-    if( get_option<bool>( "CROWD_CRUSH" ) && has_effect( effect_grabbed ) ) {
+    if( has_effect( effect_grabbed ) && get_option<bool>( "CROWD_CRUSH" ) ) {
         suffer_while_grabbed( *this );
     }
 

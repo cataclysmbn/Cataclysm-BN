@@ -4,14 +4,17 @@
 #include "avatar.h"
 #include "avatar_action.h"
 #include "bodypart.h"
+#include "cached_options.h"
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catch/catch.hpp"
 #include "game.h"
 #include "hash_utils.h"
 #include "item.h"
+#include "map/field_type.h"
 #include "map_helpers.h"
 #include "morale_types.h"
+#include "options_helpers.h"
 #include "player.h"
 #include "player_activity.h"
 #include "player_helpers.h"
@@ -19,6 +22,7 @@
 #include "state_helpers.h"
 #include "units.h"
 #include "units_temperature.h"
+#include "utils/skip_bodytemp_cache.h"
 #include "weather/weather.h"
 
 #include <array>
@@ -40,6 +44,31 @@ TEST_CASE("floor_clothing_warmth_preserves_partial_volumes", "[bodytemp]") {
     CHECK(Character::floor_item_warmth(pos) == units::from_legacy_bodypart_temp_delta(90));
     here.add_item_or_charges(pos, item::spawn("test_hazmat_suit"));
     CHECK(Character::floor_item_warmth(pos) == units::from_legacy_bodypart_temp_delta(16410));
+}
+
+TEST_CASE("heat_radiation_sums_visible_sources_across_submaps", "[bodytemp]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    calendar::turn = calendar::turn_zero + 12_hours;
+    auto& here = get_map();
+    // x = 59 and x = 60 lie in different submaps.
+    const auto pos = tripoint_bub_ms(59, 60, 0);
+    g->place_player(pos);
+    here.add_field(pos + point(2, 0), fd_fire, 2);
+    here.ter_set(pos + point(-2, 2), ter_id("t_lava"));
+    // Outside the radius of 6.
+    here.add_field(pos + point(8, 0), fd_fire, 3);
+    // Behind a wall.
+    here.ter_set(pos + point(0, -2), ter_id("t_lava"));
+    for (auto x = -1; x <= 1; ++x) { here.ter_set(pos + point(x, -1), ter_id("t_rock_wall")); }
+    here.invalidate_map_cache(0);
+    here.build_map_cache(0);
+
+    // 6 * intensity^2 / distance per visible source.
+    CHECK(get_heat_radiation(pos, false) == 6 * 2 * 2 / 2 + 6 * 3 * 3 / 2);
+    CHECK(get_heat_radiation(pos, true) == 3);
+    const auto other = pos + point(1, 1);
+    CHECK(get_heat_radiation(other, false) == 6 * 2 * 2 / 1 + 6 * 3 * 3 / 3);
 }
 
 TEST_CASE("wetness_morale_interpolates_body_temperature", "[bodytemp][morale]") {
@@ -624,6 +653,43 @@ TEST_CASE("update_bodytemp keeps the body intact for a single step.", "[bodytemp
     }
 }
 
+// Light a fire 2 tiles away while skipping: torso temp_conv keeps the old value for 1 turn, then
+// reads the fire after ACTIVITY_SKIP_STAT_UPDATE_TICKS (60 s here), after
+// reset_skip_bodytemp_cache, or when skipping stops.
+TEST_CASE("skip_bodytemp_reads_new_heat_after_stat_update_interval", "[bodytemp][activity]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    calendar::turn = calendar::turn_zero + 12_hours;
+    auto& you = get_avatar();
+    auto& here = get_map();
+    guarantee_neutral_weather(you, get_weather());
+    const auto skip_state = restore_on_out_of_scope<bool>(you.in_skip_state);
+    const auto interval = restore_on_out_of_scope<time_duration>(activity_skip_stat_update_ticks);
+    activity_skip_stat_update_ticks = 60_seconds;
+    const auto torso_conv = [&]() { return you.get_part(body_part_torso).get_temp_conv(); };
+    const auto step = [&](const time_duration& dt) {
+        calendar::turn += dt;
+        you.update_bodytemp(here, get_weather());
+    };
+    you.in_skip_state = true;
+    step(1_turns);
+    const auto before = torso_conv();
+    here.add_field(you.bub_pos() + point(2, 0), fd_fire, 3);
+    step(1_turns);
+    CHECK(torso_conv() == before);
+
+    SECTION("after the interval") { step(60_turns); }
+    SECTION("after reset_skip_bodytemp_cache") {
+        reset_skip_bodytemp_cache();
+        step(1_turns);
+    }
+    SECTION("after skipping stops") {
+        you.in_skip_state = false;
+        step(1_turns);
+    }
+    CHECK(torso_conv() > before);
+}
+
 TEST_CASE("player_move_through_vehicle_holes") {
 
     clear_all_state();
@@ -673,4 +739,22 @@ TEST_CASE("clear_character_leaves_no_activity_state", "[activity]") {
     CHECK(dummy.activity->is_null());
     CHECK(dummy.activity->index == 0);
     CHECK(dummy.backlog.empty());
+}
+
+TEST_CASE("chronic_pain_follows_option_changes", "[pain]") {
+    // Checks that get_pain() reads CHRONIC_PAIN again after the option changes.
+    // A torso at half hp gives no pain while CHRONIC_PAIN is off, and some pain while it is on.
+    clear_all_state();
+    auto& guy = *get_player_character().as_player();
+    clear_character(guy, true);
+    guy.set_pain(0);
+    guy.set_part_hp_cur(bodypart_id("torso"), guy.get_part_hp_max(bodypart_id("torso")) / 2);
+    {
+        const auto chronic = override_option("CHRONIC_PAIN", "false");
+        CHECK(guy.get_pain() == 0);
+    }
+    {
+        const auto chronic = override_option("CHRONIC_PAIN", "true");
+        CHECK(guy.get_pain() > 0);
+    }
 }

@@ -613,7 +613,7 @@ struct sound_filter_key {
 
     // Ignore sounds of this category or less. Defaults to weather.
     sounds::sound_t category = sounds::sound_t::weather;
-    mfaction_str_id monfaction = mfaction_str_id("");
+    mfaction_str_id monfaction;
     // Not currently implimented, does this monster belong to an NPC faction? i.e., a robot owned by
     // some survivors, someones dog, etc. faction_id npc_faction = faction_id( "no_faction" ); Is
     // the monster something like a zombie that uses simpler logic and gets angry at everything.
@@ -639,11 +639,10 @@ template <> struct std::hash<sound_filter_key> {
         using std::size_t;
         using std::string;
         const int cat_int = static_cast<int>(key.category);
-        const std::string stringfac = static_cast<std::string>(key.monfaction.str());
 
         std::size_t seed = 0;
         hash_combine(seed, cat_int);
-        hash_combine(seed, stringfac);
+        hash_combine(seed, key.monfaction);
         hash_combine(seed, key.horde_monster);
         hash_combine(seed, key.ignore_movement);
         hash_combine(seed, key.noise_fear);
@@ -2267,6 +2266,21 @@ protected:
     auto refresh_active_submap_view() -> void;
     auto validate_active_submap_view_complete(const char* context) const -> void;
 
+    /// Bubble submap pointers for get_submap_at, valid while the buffer, origin and the
+    /// buffer's removal generation match; additions matter only while a slot is empty.
+    /// Rebuilt on the main thread only.
+    struct bubble_submap_index {
+        const mapbuffer* buffer = nullptr;
+        point_abs_sm origin;
+        std::uint64_t added_generation = 0;
+        std::uint64_t removed_generation = 0;
+        bool tracks_additions = true;
+        std::vector<submap*> submaps;
+    };
+    bubble_submap_index bubble_index_;
+    auto bubble_index_valid() const -> bool;
+    auto refresh_bubble_submap_index() -> void;
+
 public:
     auto get_field(const tripoint_bub_ms& p) -> field&;
 
@@ -2432,10 +2446,13 @@ private:
         // 64-bit key: two tripoints packed as 29 bits each (12x + 12y + 5z).
         // Handles coordinates up to 4095 per axis — safe for g_mapsize up to ~340.
         int64_t key = 0;
-        char value = -1; // -1 = empty/miss
+        uint32_t generation = 0; // Valid only while equal to skew_vision_generation.
+        char value = -1;         // -1 = empty/miss
     };
-    static constexpr std::size_t vision_cache_slots = 1 << 17; // 131072 entries (~1.5 MB)
+    static constexpr std::size_t vision_cache_slots = 1 << 17; // 131072 entries (~2 MB)
     mutable std::vector<vision_cache_slot> skew_vision_cache;
+    /// Incremented to clear skew_vision_cache without rewriting it.
+    uint32_t skew_vision_generation = 1;
     // shared_mutex allows concurrent cache reads (common case)
     // while still serialising inserts.  Use shared_lock for reads and
     // unique_lock for writes in map::sees().

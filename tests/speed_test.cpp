@@ -55,6 +55,19 @@ TEST_CASE("Character regains moves each turn", "[speed]") {
     CHECK(guy.get_moves() == 100);
 }
 
+// Reads the factor before and after option overrides, so a cached factor must follow each change:
+// 100 * 100 by default, 50 * 50 under the overrides, 100 * 100 again after them.
+TEST_CASE("Action scale factors follow option changes", "[speed]") {
+    const auto default_factor = action_time_scale::player_action_factor();
+    REQUIRE(default_factor == 100 * 100);
+    {
+        const auto global_scale = override_option("TIME_ACTION_SCALE", "50");
+        const auto player_scale = override_option("PLAYER_ACTION_SCALE", "50");
+        CHECK(action_time_scale::player_action_factor() == 50 * 50);
+    }
+    CHECK(action_time_scale::player_action_factor() == default_factor);
+}
+
 TEST_CASE("Player action scale modifies move gain", "[speed]") {
     clear_all_state();
     const auto global_scale = override_option("TIME_ACTION_SCALE", "50");

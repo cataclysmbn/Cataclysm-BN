@@ -209,6 +209,7 @@ void WORLDINFO::load_legacy_options( std::istream &fin )
 bool WORLDINFO::load_options()
 {
     WORLD_OPTIONS = get_options().get_world_defaults();
+    calendar::invalidate_time_config_cache();
 
     using namespace std::placeholders;
     const auto path = folder_path() + "/" + PATH_INFO::worldoptions();

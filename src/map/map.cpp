@@ -3287,7 +3287,7 @@ void map::decay_fields_and_scent(const time_duration& amount) {
     for (const auto p : bubble_submaps()) {
         level_cache& smz_cache = get_cache(p.z());
         const auto abs_sm = map_local_to_abs(*this, p);
-        const auto cur_submap = get_mapbuffer().lookup_submap_in_memory(abs_sm);
+        const auto cur_submap = get_submap_at(project_to<coords::ms>(p));
         if (cur_submap == nullptr) { continue; }
         int to_proc = cur_submap->field_count;
         if (to_proc < 1) {
@@ -6928,7 +6928,7 @@ auto map::sees(
     {
         std::shared_lock<std::shared_mutex> lock(*skew_vision_cache_mutex);
         const auto& slot = skew_vision_cache[slot_idx];
-        if (slot.key == key && slot.value >= 0) { return slot.value > 0; }
+        if (slot.key == key && slot.generation == skew_vision_generation) { return slot.value > 0; }
     }
 
     bool visible = true;
@@ -6954,7 +6954,10 @@ auto map::sees(
                   });
         {
             std::unique_lock<std::shared_mutex> lock(*skew_vision_cache_mutex);
-            skew_vision_cache[slot_idx] = {key, static_cast<char>(visible ? 1 : 0)};
+            skew_vision_cache[slot_idx] =
+                {.key = key,
+                 .generation = skew_vision_generation,
+                 .value = static_cast<char>(visible ? 1 : 0)};
         }
         return visible;
     }
@@ -6990,7 +6993,10 @@ auto map::sees(
         });
     {
         std::unique_lock<std::shared_mutex> lock(*skew_vision_cache_mutex);
-        skew_vision_cache[slot_idx] = {key, static_cast<char>(visible ? 1 : 0)};
+        skew_vision_cache[slot_idx] =
+            {.key = key,
+             .generation = skew_vision_generation,
+             .value = static_cast<char>(visible ? 1 : 0)};
     }
     return visible;
 }
@@ -8090,9 +8096,44 @@ void map::spawn_monsters_submap(const tripoint_bub_sm& gp, bool ignore_sight) {
     current_submap->spawns.clear();
 }
 
+namespace {
+
+/// Bubble submaps that hold stored monsters, a monster group or mapgen spawn points: the only ones
+/// spawn_monsters_submap can act on.
+auto submaps_with_spawns(const map& m, const tripoint_range<tripoint_bub_sm>& bubble)
+    -> std::vector<tripoint_bub_sm> {
+    const auto populated =
+        get_overmapbuffer(m.get_bound_dimension())
+            .populated_submaps(
+                m.get_abs_sub(), m.get_abs_sub() + point_rel_sm(m.getmapsize(), m.getmapsize()));
+    // A complete active view lists the bubble submaps in bubble order. Its sequential reads let the
+    // CPU overlap the cache misses on each submap's spawn list.
+    if (const auto views = m.active_submap_views(); views.size() == bubble.size()) {
+        return views | std::views::filter([&](const auto& v) {
+                   return !v.get_submap().spawns.empty()
+                       || std::binary_search(populated.begin(), populated.end(), v.abs_pos());
+               })
+             | std::views::transform([&](const auto& v) {
+                   return abs_to_map_local(m, v.abs_pos());
+               })
+             | std::ranges::to<std::vector>();
+    }
+    const auto has_spawns = [&](const tripoint_bub_sm& gp) {
+        const auto abs = map_local_to_abs(m, gp);
+        const auto view = m.active_submap_view(abs);
+        return !view || !view->get_submap().spawns.empty()
+            || std::binary_search(populated.begin(), populated.end(), abs);
+    };
+    return bubble | std::views::filter(has_spawns) | std::ranges::to<std::vector>();
+}
+
+} // namespace
+
 void map::spawn_monsters(bool ignore_sight) {
     ZoneScoped;
-    for (const auto gp : bubble_submaps()) { spawn_monsters_submap(gp, ignore_sight); }
+    for (const auto gp : submaps_with_spawns(*this, bubble_submaps())) {
+        spawn_monsters_submap(gp, ignore_sight);
+    }
 }
 
 auto map::spawn_monsters_new_submaps(const point_rel_sm& shift_amount) -> void {
@@ -8104,7 +8145,7 @@ auto map::spawn_monsters_new_submaps(const point_rel_sm& shift_amount) -> void {
         spawn_monsters(false);
         return;
     }
-    for (const auto gp : bubble_submaps()) {
+    for (const auto gp : submaps_with_spawns(*this, bubble_submaps())) {
         if (inbounds(gp + shift_amount)) { spawn_monsters_submap(gp, false); }
     }
 }
@@ -8537,6 +8578,7 @@ void map::do_vehicle_caching(int z) {
 
 void map::build_map_cache(const int zlev, bool skip_lightmap) {
     ZoneScoped;
+    refresh_bubble_submap_index();
 #if defined(CATA_SDL)
     const auto use_sdl_gpu_compute = cata_compute::uses_sdl_gpu_compute();
 #endif
@@ -8822,7 +8864,10 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
     }
 
     seen_cache_dirty |= build_vision_transparency_cache(get_player_character());
-    if (seen_cache_dirty) { skew_vision_cache.assign(vision_cache_slots, vision_cache_slot{}); }
+    if (seen_cache_dirty && ++skew_vision_generation == 0) {
+        skew_vision_cache.assign(vision_cache_slots, vision_cache_slot{});
+        skew_vision_generation = 1;
+    }
     const auto need_seen_rebuild =
         seen_cache_dirty || force_seen_rebuild_for_gpu_residency || m_last_seen_cache_origin != p;
     TracyPlot("Map Need Seen Rebuild", need_seen_rebuild ? int64_t{1} : int64_t{0});
@@ -8957,12 +9002,45 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
     }
 }
 
+auto map::bubble_index_valid() const -> bool {
+    const auto& buffer = get_mapbuffer();
+    const auto& index = bubble_index_;
+    return index.buffer == &buffer && index.origin == abs_sub
+        && index.removed_generation == buffer.submaps_removed_generation()
+        && (!index.tracks_additions || index.added_generation == buffer.submaps_added_generation())
+        && index.submaps.size()
+               == static_cast<std::size_t>(OVERMAP_LAYERS * my_MAPSIZE * my_MAPSIZE);
+}
+
+auto map::refresh_bubble_submap_index() -> void {
+    if (bubble_index_valid()) { return; }
+    auto& buffer = get_mapbuffer();
+    // Read the generations first: a worker changing the buffer during the scan leaves it stale.
+    bubble_index_.added_generation = buffer.submaps_added_generation();
+    bubble_index_.removed_generation = buffer.submaps_removed_generation();
+    bubble_index_.buffer = &buffer;
+    bubble_index_.origin = abs_sub;
+    bubble_index_.submaps.clear();
+    for (const auto z : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
+        for (const auto x : std::views::iota(0, my_MAPSIZE)) {
+            for (const auto y : std::views::iota(0, my_MAPSIZE)) {
+                bubble_index_.submaps.push_back(buffer.lookup_submap_in_memory(
+                    map_local_to_abs(*this, tripoint_bub_sm(x, y, z))));
+            }
+        }
+    }
+    bubble_index_.tracks_additions = std::ranges::contains(bubble_index_.submaps, nullptr);
+}
+
 auto map::get_submap_at(const tripoint_bub_ms& p) const -> submap* {
     ZoneScoped;
     if (inbounds(p)) {
-        const auto abs_sm_pos =
-            map_local_to_abs(*this, tripoint_bub_sm(p.x() / SEEX, p.y() / SEEY, p.z()));
-        return get_mapbuffer().lookup_submap_in_memory(abs_sm_pos);
+        const auto smp = tripoint_bub_sm(p.x() / SEEX, p.y() / SEEY, p.z());
+        if (bubble_index_valid()) {
+            return bubble_index_.submaps[static_cast<std::size_t>(
+                ((smp.z() + OVERMAP_DEPTH) * my_MAPSIZE + smp.x()) * my_MAPSIZE + smp.y())];
+        }
+        return get_mapbuffer().lookup_submap_in_memory(map_local_to_abs(*this, smp));
     }
     if (get_mapbuffer().is_outside_pocket_dimension_bounds(map_local_to_abs(*this, p))) {
         // Outside dimension bounds — genuinely invalid position.

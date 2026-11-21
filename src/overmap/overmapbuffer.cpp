@@ -721,11 +721,11 @@ auto overmapbuffer::seen(const tripoint_abs_omt& p) -> bool {
 
 void overmapbuffer::set_seen(const tripoint_abs_omt& p, bool seen) {
     const overmap_with_local_coords om_loc = get_om_global(p);
-    if (is_ot_match("empty_rock", ter(p), ot_match_type::type)
-        && !(om_loc.om->seen(om_loc.local))) {
+    auto& was_seen = om_loc.om->seen(om_loc.local);
+    if (!was_seen && is_ot_match("empty_rock", ter(p), ot_match_type::type)) {
         om_loc.om->spawn_ores(p);
     }
-    om_loc.om->seen(om_loc.local) = seen;
+    was_seen = seen;
 }
 
 auto overmapbuffer::ter(const tripoint_abs_omt& p) -> const oter_id& {
@@ -1681,6 +1681,34 @@ void overmapbuffer::spawn_monster(const tripoint_abs_sm& p) {
             if (placed) { placed->on_load(); }
         });
     om.monster_map->erase(current_submap_loc);
+}
+
+auto overmapbuffer::populated_submaps(const point_abs_sm& begin, const point_abs_sm& end)
+    -> std::vector<tripoint_abs_sm> {
+    auto result = std::vector<tripoint_abs_sm>{};
+    const auto inside = [&](const point_abs_sm& p) {
+        return p.x() >= begin.x() && p.y() >= begin.y() && p.x() < end.x() && p.y() < end.y();
+    };
+    const auto om_begin = project_to<coords::om>(begin);
+    const auto om_end = project_to<coords::om>(end - point_rel_sm(1, 1));
+    for (auto omx = om_begin.x(); omx <= om_end.x(); ++omx) {
+        for (auto omy = om_begin.y(); omy <= om_end.y(); ++omy) {
+            const auto& om = get(point_abs_om(omx, omy));
+            const auto to_abs = [&](const tripoint_om_sm& p) {
+                return project_combine(om.pos(), p);
+            };
+            for (const auto& [p, critter] : *om.monster_map) {
+                if (inside(to_abs(p).xy())) { result.push_back(to_abs(p)); }
+            }
+            for (const auto& [p, group] : om.zg) {
+                if (!group.empty() && inside(to_abs(p).xy())) { result.push_back(to_abs(p)); }
+            }
+        }
+    }
+    // coord_point has operator< and == only, so the classic algorithms are used.
+    std::sort(result.begin(), result.end());
+    result.erase(std::unique(result.begin(), result.end()), result.end());
+    return result;
 }
 
 void overmapbuffer::discard_monster_map(const tripoint_abs_sm& p) {
