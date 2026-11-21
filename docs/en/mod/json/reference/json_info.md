@@ -63,6 +63,9 @@ Examples:
 "//" : "comment", // Preferred method of leaving comments inside json files.
 ```
 
+The game also loads `.jsonc` files. Files with either extension can have `//` and `/* */` comments
+and trailing commas.
+
 Some json strings are extracted for translation, for example item names, descriptions, etc. The
 exact extraction is handled in `lang/extract_json_strings.py`. Apart from the obvious way of writing
 a string without translation context, the string can also have an optional translation context (and

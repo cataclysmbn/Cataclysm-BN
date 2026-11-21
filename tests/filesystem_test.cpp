@@ -3,11 +3,25 @@
 #include "filesystem.h"
 #include "fstream_utils.h"
 #include "game.h"
+#include "mod_manager.h"
 #include "path_info.h"
 #include "string_formatter.h"
 #include "world.h"
 
 #include <sstream>
+
+TEST_CASE("load_jsonc_modinfo", "[filesystem][json]") {
+    const auto dir = g->get_active_world()->info->folder_path() + "/jsonc_mod_" + get_pid_string();
+    REQUIRE(assure_dir_exist(dir));
+    const auto cleanup = on_out_of_scope([&dir]() { remove_tree(dir); });
+    REQUIRE(write_to_file(dir + "/modinfo.jsonc", [](std::ostream& out) {
+        out << R"([ /* comment */ { "type": "MOD_INFO", "id": "jsonc_test", "name": "JSONC",
+            "description": "Test", "category": "misc_additions" }, ] // tail)";
+    }));
+    const auto mods = mod_management::load_mods_from(dir);
+    REQUIRE(mods.size() == 1);
+    CHECK(mods.front().ident == mod_id("jsonc_test"));
+}
 
 static auto str_to_hex(const std::string& s) -> std::string {
     std::stringstream ss;

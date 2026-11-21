@@ -502,6 +502,12 @@ void DynamicDataLoader::initialize()
 #endif
 }
 
+namespace
+{
+/// Data files may be plain JSON or JSON with comments.
+auto is_json_file( const std::string &path ) -> bool { return path.ends_with( ".json" ) || path.ends_with( ".jsonc" ); }
+} // namespace
+
 void DynamicDataLoader::load_data_from_path( const std::string &path, const std::string &src,
         loading_ui &ui, const bool mod_interactions )
 {
@@ -521,8 +527,8 @@ void DynamicDataLoader::load_data_from_path( const std::string &path, const std:
             for( mod_id mod_info_id : mods ) {
                 std::string mod_interact_path = general_mod_interact_path + "/" + mod_info_id.str();
                 if( dir_exist( mod_interact_path ) ) {
-                    str_vec mod_compat_files = get_files_from_path( ".json", mod_interact_path, true, true );
-                    files.insert( files.end(), mod_compat_files.begin(), mod_compat_files.end() );
+                    std::ranges::copy_if( get_files_from_path( ".json", mod_interact_path, true ),
+                                          std::back_inserter( files ), is_json_file );
                 }
             }
         }
@@ -530,7 +536,8 @@ void DynamicDataLoader::load_data_from_path( const std::string &path, const std:
             return;
         }
     } else {
-        files = get_files_from_path_exclude( ".json", "mod_interactions", path, true, true );
+        files = get_files_from_path_exclude( ".json", "mod_interactions", path, true )
+                | std::views::filter( is_json_file ) | std::ranges::to<std::vector>();
     }
 
     if( files.empty() ) {
