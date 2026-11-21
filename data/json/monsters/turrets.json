@@ -216,6 +216,38 @@
     ]
   },
   {
+    "id": "mon_turret_mini",
+    "type": "MONSTER",
+    "copy-from": "mon_turret_light",
+    "name": { "str": "mini turret" },
+    "description": "A compact sentry gun built in a hurry, with a lot of confidence and not much else.  It will never be upgraded, and nobody will ever call it sturdy, but it sets up fast and fires fast.  What it lacks in armour it makes up for in enthusiasm.  Chambered in .22 LR.",
+    "looks_like": "mon_turret_mini",
+    "diff": 3,
+    "volume": "5000 ml",
+    "weight": "5 kg",
+    "hp": 20,
+    "armor_bash": 5,
+    "armor_cut": 5,
+    "armor_bullet": 5,
+    "armor_fire": 3,
+    "vision_day": 13,
+    "revert_to_itype": "bot_turret_mini",
+    "starting_ammo": { "22_lr": 50 },
+    "special_attacks": [
+      {
+        "type": "gun",
+        "cooldown": 1,
+        "move_cost": 250,
+        "gun_type": "22_turret_fake",
+        "fake_skills": [ [ "gun", 3 ], [ "pistol", 3 ] ],
+        "fake_str": 12,
+        "fake_dex": 8,
+        "ranges": [ [ 0, 13, "DEFAULT" ] ],
+        "targeting_sound": "\"Beep-boop!\""
+      }
+    ]
+  },
+  {
     "id": "mon_robofac_turret_light",
     "type": "MONSTER",
     "copy-from": "mon_turret_light",

@@ -9504,5 +9504,46 @@
       "male": [ "boxer_shorts", "undershirt" ],
       "female": [ "bra", "panties" ]
     }
+  },
+  {
+    "type": "profession",
+    "id": "tf2_engineer",
+    "name": "Private Military Engineer",
+    "description": "Twenty years of building things in places nobody sane would build them, always for a private military outfit that insisted on painting everything one of two colours.  You never did learn why the other colour kept showing up to ruin your work, or why you kept getting hired back after the same dispute.  Your gear was always torn down within minutes, usually by a very polite man who nobody else noticed.  You stopped taking it personally around the fortieth rebuild.  Retirement was supposed to be quiet.  Now that the world's ended, nobody's picking sides by colour any more.",
+    "points": 7,
+    "age": { "min": 30, "max": 60 },
+    "skills": [
+      { "level": 4, "name": "fabrication" },
+      { "level": 4, "name": "mechanics" },
+      { "level": 4, "name": "electronics" },
+      { "level": 4, "name": "computer" },
+      { "level": 2, "name": "gun" },
+      { "level": 2, "name": "shotgun" }
+    ],
+    "items": {
+      "both": {
+        "items": [
+          "hat_hard",
+          "gloves_rubber",
+          "undershirt",
+          "longshirt",
+          "overalls",
+          "socks",
+          "boots_steel",
+          "knee_pads",
+          "goggles_welding"
+        ],
+        "entries": [
+          { "item": "bot_turret_mini", "custom-flags": [ "auto_wield" ] },
+          { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
+          { "item": "mossberg_500", "ammo-item": "shot_00", "charges": 6, "contents-item": "shoulder_strap" },
+          { "item": "bandolier_shotgun", "contents-group": "bandolier_shotgun_hunter" },
+          { "item": "wrench" },
+          { "item": "22_lr", "charges": 50 }
+        ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "sports_bra", "boxer_shorts" ]
+    }
   }
 ]
