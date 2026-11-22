@@ -109,7 +109,7 @@ jobs:
     name: Generate shader artifacts
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ inputs.checkout-ref }}
 
@@ -120,7 +120,7 @@ jobs:
         run: bash build-scripts/generate-shaders.sh
 
       - name: Upload generated shaders
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           # A caller can use this workflow more than once in one run.
           name: generated-shaders-${{ fromJSON(inputs.matrix-json)[0].artifact }}
@@ -137,19 +137,19 @@ jobs:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ inputs.checkout-ref }}
 
       - name: Download generated shaders
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: generated-shaders-${{ fromJSON(inputs.matrix-json)[0].artifact }}
           path: data/shaders
 
       - name: Download translation artifacts
         if: inputs.download-translations
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: translations
           path: .
@@ -230,7 +230,8 @@ jobs:
 
       - name: Install stable CMake
         if: runner.os == 'Windows'
-        uses: lukka/get-cmake@v3.31.6
+        uses: lukka/get-cmake@v4.3.0
+        with: { cmakeVersion: 3.31.6 }
 
       # vcpkg removed its x-gha backend. Keep binary packages in a files cache instead.
       - name: Configure vcpkg binary cache (windows msvc)
@@ -246,7 +247,7 @@ jobs:
       - name: Restore vcpkg binary cache (windows msvc)
         if: runner.os == 'Windows'
         id: vcpkg-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: ${{ steps.vcpkg-cache-dir.outputs.dir }}
           # Runner image updates can change the MSVC version and so the vcpkg ABI hashes.
@@ -413,7 +414,7 @@ jobs:
 
       - name: Upload documentation artifact
         if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64' && inputs.version-label == 'experimental'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: lua-docs
           if-no-files-found: error
@@ -516,7 +517,7 @@ jobs:
 
       - name: Save vcpkg binary cache (windows msvc)
         if: runner.os == 'Windows' && github.event_name != 'pull_request' && steps.vcpkg-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: ${{ steps.vcpkg-cache-dir.outputs.dir }}
           key: ${{ steps.vcpkg-cache.outputs.cache-primary-key }}
@@ -643,7 +644,7 @@ jobs:
       # Android builds
       - name: Set up JDK 11 (android)
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
-        uses: actions/setup-java@v4.1.0
+        uses: actions/setup-java@v5
         with:
           java-version: "11"
           distribution: "adopt"
@@ -837,7 +838,7 @@ jobs:
       # Upload artifacts
       - name: Upload packaged build artifact
         if: inputs.upload-artifacts && matrix.upload-artifact == true
-        uses: actions/upload-artifact@v4.6.0
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ inputs.artifact-label != '' && format('{0}-{1}', matrix.artifact, inputs.artifact-label) || matrix.artifact }}
           path: ${{ runner.os == 'Windows' && format('cataclysmbn-{0}/', inputs.version-label) || format('cbn-{0}-{1}.{2}', matrix.artifact, inputs.version-label, matrix.ext) }}
@@ -875,7 +876,7 @@ jobs:
 
       - name: Upload test executable (windows msvc)
         if: runner.os == 'Windows' && inputs.run-tests && inputs.windows-test-groups != '[]'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: cata-test-${{ matrix.artifact }}
           path: |
@@ -896,18 +897,18 @@ jobs:
     name: ${{ fromJSON(inputs.matrix-json)[0].name }} tests ${{ matrix.group }}
     runs-on: ${{ fromJSON(inputs.matrix-json)[0].os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ inputs.checkout-ref }}
 
       - name: Download generated shaders
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: generated-shaders-${{ fromJSON(inputs.matrix-json)[0].artifact }}
           path: data/shaders
 
       - name: Download test executable
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: cata-test-${{ fromJSON(inputs.matrix-json)[0].artifact }}
           path: out/build/windows-tiles-sounds-x64-msvc/tests
