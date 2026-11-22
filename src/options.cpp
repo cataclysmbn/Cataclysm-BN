@@ -480,44 +480,6 @@ auto parse_option_definition( const JsonObject &jo ) -> option_definition
     return option;
 }
 
-auto capture_option_values( const options_manager::options_container &container )
--> std::map<std::string, std::string>
-{
-    auto values = std::map<std::string, std::string>();
-    for( const auto &[name, opt] : container ) {
-        values.emplace( name, opt.getValue( true ) );
-    }
-    return values;
-}
-
-auto restore_option_values( const std::map<std::string, std::string> &values,
-                            options_manager::options_container &container ) -> void
-{
-    for( const auto &[name, value] : values ) {
-        if( container.contains( name ) ) {
-            container[name].setValue( value );
-        }
-    }
-}
-
-auto sync_snapshot_keys( const options_manager::options_container &current,
-                         options_manager::options_container &snapshot ) -> void
-{
-    for( const auto &[name, option] : current ) {
-        if( !snapshot.contains( name ) ) {
-            snapshot.emplace( name, option );
-        }
-    }
-
-    for( auto iter = snapshot.begin(); iter != snapshot.end(); ) {
-        if( current.contains( iter->first ) ) {
-            ++iter;
-        } else {
-            iter = snapshot.erase( iter );
-        }
-    }
-}
-
 } // namespace
 
 void options_manager::enable_json( const std::string &lvar )

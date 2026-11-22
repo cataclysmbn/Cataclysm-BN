@@ -583,7 +583,8 @@ auto omt_submap_index(const point_omt_sm& local) -> std::optional<std::size_t> {
     return static_cast<std::size_t>(local.x() + local.y() * 2);
 }
 
-auto vertical_transition_target_below(const ter_id& source) -> std::optional<ter_id> {
+[[maybe_unused]] auto vertical_transition_target_below(const ter_id& source)
+    -> std::optional<ter_id> {
     static const auto t_stairs_down_no_roof = ter_id("t_stairs_down_no_roof");
     static const auto t_stairs_down_underwater = ter_id("t_stairs_down_underwater");
     static const auto t_stairs_up_underwater = ter_id("t_stairs_up_underwater");
@@ -603,7 +604,8 @@ auto vertical_transition_target_below(const ter_id& source) -> std::optional<ter
     return std::nullopt;
 }
 
-auto vertical_transition_target_above(const ter_id& source) -> std::optional<ter_id> {
+[[maybe_unused]] auto vertical_transition_target_above(const ter_id& source)
+    -> std::optional<ter_id> {
     static const auto t_stairs_down = ter_id("t_stairs_down");
     static const auto t_stairs_up_underwater = ter_id("t_stairs_up_underwater");
     static const auto t_stairs_down_underwater = ter_id("t_stairs_down_underwater");

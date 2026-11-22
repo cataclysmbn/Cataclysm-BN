@@ -14,8 +14,6 @@
 #    include <utility>
 #    include <vector>
 
-#    define dbg(x) DebugLogFL((x), DC::SDL)
-
 detail::texture_packer::~texture_packer() = default;
 
 template <typename T> static auto round_up(T n, T m) -> T {

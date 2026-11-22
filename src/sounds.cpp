@@ -71,8 +71,6 @@
 #   if defined(_WIN32) && !defined(_MSC_VER)
 #       include "mingw.thread.h"
 #   endif
-
-#   define dbg(x) DebugLogFL((x),DC::SDL)
 #endif
 
 weather_type_id previous_weather;
