@@ -44,7 +44,15 @@ jobs:
               echo "::error::TX_TOKEN is required to pull translations in the upstream repository"
               exit 1
             fi
-            tx pull --force --all
+            # A template push from the same main commit can make downloads fail while Transifex updates the resource.
+            for attempt in 1 2 3; do
+              tx pull --force --all && break
+              if [ "$attempt" = 3 ]; then
+                exit 1
+              fi
+              echo "::warning::tx pull failed on attempt $attempt, retrying in 60 s"
+              sleep 60
+            done
           else
             cat > lang/po/en_US.po <<'EOF'
           msgid ""
