@@ -611,7 +611,31 @@
           "mx_sewer_pipesI": 30,
           "mx_sewer_pipesJ": 30
         }
-      }
+      },
+      "agricultural": {
+        "chance": 38,
+        "extras": {
+          "mx_point_burned_ground": 500,
+          "mx_point_dead_vegetation": 500,
+          "mx_casings": 200,
+          "mx_nest_wasp": 25,
+          "mx_mass_grave": 50,
+          "mx_jabberwock": 2,
+          "mx_grave": 50,
+          "mx_supplydrop": 2,
+          "mx_collegekids": 30,
+          "mx_drugdeal": 30,
+          "mx_corpses": 30,
+          "mx_portal": 10,
+          "mx_portal_in": 10,
+          "mx_science": 5,
+          "mx_military": 4,
+          "mx_surrounded_vehicle": 2,
+          "mx_helicopter": 2,
+          "mx_aircraft": 2,
+          "mx_survivor": 2
+        }
+      },
     },
     "city": {
       "shop_radius": 30,
