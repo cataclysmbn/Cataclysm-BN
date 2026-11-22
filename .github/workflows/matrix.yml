@@ -68,6 +68,8 @@ jobs:
 
   varied_builds:
     needs: [skip-duplicates, shader-artifacts]
+    # actions: write lets the job delete its old ccache copy.
+    permissions: { actions: write, contents: read }
     strategy:
       fail-fast: ${{ github.ref_name == 'main' }}
       matrix:
@@ -103,6 +105,7 @@ jobs:
         if: ${{ env.SKIP == 'false' }}
         uses: actions/checkout@v5
         with:
+          persist-credentials: false
           fetch-depth: 1
 
       - name: Download generated shaders
@@ -118,7 +121,7 @@ jobs:
 
       - name: Setup LLVM build tools
         if: ${{ env.SKIP == 'false' }}
-        uses: aminya/setup-cpp@v1
+        uses: aminya/setup-cpp@15a6bd8cf39030f88b5da3d203a829ec4eea4955 # v1
         with:
           compiler: llvm-${{ env.LLVM_VERSION }}
           cmake: true
@@ -132,7 +135,7 @@ jobs:
       # Only the tiles build runs Deno, to generate the Lua docs.
       - name: Setup Deno
         if: ${{ env.SKIP == 'false' && matrix.tiles == 1 }}
-        uses: denoland/setup-deno@v2
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
         with: { cache: true }
 
       #- name: Install SDL3 (ubuntu)
@@ -155,7 +158,7 @@ jobs:
 
       - name: Setup ccache
         if: ${{ env.SKIP == 'false' }}
-        uses: hendrikmuhs/ccache-action@v1.2
+        uses: hendrikmuhs/ccache-action@e91f31892a1d1b8c44424b1a94c0b7f52d337168 # v1.2
         with:
           key: ${{ matrix.ccache_key }}-${{ github.ref_name }}
           restore-keys: |
@@ -173,7 +176,7 @@ jobs:
 
       - name: Configure and Build with CMake
         if: ${{ env.SKIP == 'false' }}
-        uses: lukka/run-cmake@v10
+        uses: lukka/run-cmake@5d55ea7949e25f69f0ecb516d8d572297e03a956 # v10
         with:
           configurePreset: ${{ matrix.preset }}
           configurePresetAdditionalArgs: "['-DUSE_PREFIX_DATA_DIR=OFF', '-DCATA_FORMAT_TARGETS=OFF', '-DCMAKE_JOB_POOLS=link=1', '-DCMAKE_JOB_POOL_LINK=link']"
@@ -224,6 +227,18 @@ jobs:
           if-no-files-found: error
           compression-level: 0
 
+      # Delete the old ccache copy before the post step saves the new one.
+      # Two copies of every cache do not fit in the 10 GB limit, and GitHub then evicts other caches.
+      - name: Delete old ccache copy
+        if: ${{ env.SKIP == 'false' && github.event_name == 'push' }}
+        continue-on-error: true
+        env: {
+          GH_TOKEN: "${{ github.token }}",
+          GH_REPO: "${{ github.repository }}",
+          PREFIX: "ccache-${{ matrix.ccache_key }}-${{ github.ref_name }}-",
+        }
+        run: gh cache list --ref "$GITHUB_REF" --key "$PREFIX" --json id --jq '.[].id' | xargs -r -n1 gh cache delete
+
   # Split Linux tests over two runners. One runner takes about 12 min for all shards.
   linux-tests:
     needs: [skip-duplicates, varied_builds]
@@ -262,7 +277,7 @@ jobs:
         with: { for: test }
 
       - if: ${{ env.SKIP == 'false' }}
-        uses: denoland/setup-deno@v2
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
         with: { cache: true }
 
       - name: add problem matcher
@@ -304,6 +319,7 @@ jobs:
   # Windows has its own call so that its test jobs do not wait for the macOS and Android builds.
   cache-warm-windows:
     needs: [skip-duplicates, shader-artifacts]
+    permissions: { actions: write, contents: read }
     if: ${{ github.event_name == 'push' && needs.skip-duplicates.outputs.should_skip_platform != 'true' }}
     uses: ./.github/workflows/build.yml
     with:
@@ -324,6 +340,7 @@ jobs:
 
   cache-warm-builds:
     needs: [skip-duplicates, shader-artifacts]
+    permissions: { actions: write, contents: read }
     if: ${{ github.event_name == 'push' && needs.skip-duplicates.outputs.should_skip_platform != 'true' }}
     uses: ./.github/workflows/build.yml
     with:
