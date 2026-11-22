@@ -171,7 +171,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           CDDA_TILESETS_REPO: I-am-Erk/CDDA-Tilesets
-          CDDA_TILESETS_RELEASE: "2026-05-03"
+          CDDA_TILESETS_RELEASE: "2026-03-29"
           CDDA_TILESETS: UltimateCataclysm ChibiUltica Ultica_iso
         shell: bash
         run: |
