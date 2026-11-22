@@ -1,11 +1,9 @@
 #include "catch/catch.hpp"
 #include "json.h"
+#include "options.h"
 
 #include <algorithm>
 #include <sstream>
-#define private public
-#include "options.h"
-#undef private
 
 TEST_CASE("json_option_definitions_are_loaded", "[options][json]") {
     auto& prompt_on_death = get_options().get_option("PROMPT_ON_CHARACTER_DEATH");
@@ -50,9 +48,9 @@ TEST_CASE("json_option_definitions_are_loaded", "[options][json]") {
     auto& fov_3d_z_range = get_options().get_option("SKEW_VISION_CACHE_SIZE");
     CHECK(fov_3d_z_range.getType() == "int");
 #if defined(__ANDROID__)
-    CHECK(fov_3d_z_range.iDefault == 65536);
+    CHECK_THAT(fov_3d_z_range.getDefaultText(false), Catch::StartsWith("Default: 65536 "));
 #else
-    CHECK(fov_3d_z_range.iDefault == 262144);
+    CHECK_THAT(fov_3d_z_range.getDefaultText(false), Catch::StartsWith("Default: 262144 "));
 #endif
 
     auto& world_end = get_options().get_option("WORLD_END");
