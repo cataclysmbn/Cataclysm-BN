@@ -870,8 +870,6 @@ static constexpr auto max_visual_spill_tiles = 90;
 struct spilled_liquid_field_candidate {
     int distance = 0;
     tripoint_bub_ms pos = tripoint_bub_ms::zero();
-
-    auto operator<=>(const spilled_liquid_field_candidate&) const = default; // *NOPAD*
 };
 
 static constexpr std::array<std::pair<int, int>, 8> spilled_liquid_adjacent_offsets = {{

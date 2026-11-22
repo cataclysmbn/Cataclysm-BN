@@ -78,6 +78,8 @@ auto enum_to_string<enchantment_condition_type>(enchantment_condition_type data)
             return "item_and_character";
         case enchantment_condition_type::GLOBAL:
             return "global";
+        case enchantment_condition_type::NUM_CONDITIONS:
+            break;
     }
     debugmsg("Invalid enchantment_condition_type; Defaulting to `global`");
     return "global";
