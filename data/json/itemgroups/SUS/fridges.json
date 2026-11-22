@@ -15,5 +15,5 @@
       { "group": "alcohol_bottled_canned", "count": [ 2, 4 ], "prob": 30 },
       { "item": "water_clean", "container-item": "bottle_plastic", "prob": 65, "count": [ 2, 6 ] }
     ]
-  }
+  },
 ]
