@@ -4909,7 +4909,7 @@ nc_color item::color_in_inventory( const player &p ) const
         }
     } else {
         for( const auto flag : get_flags() ) {
-            if( !flag->tag_color() != c_light_gray ) {
+            if( flag->tag_color() != c_light_gray ) {
                 ret = flag->tag_color();
                 break;
             }
