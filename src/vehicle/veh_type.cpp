@@ -405,7 +405,7 @@ void vpart_info::load_vehicle_parts(const JsonObject& jo, const std::string& src
 /**
  * Reads in a vehicle part from a JsonObject.
  */
-void vpart_info::load(const JsonObject& jo, const std::string& src) {
+void vpart_info::load(const JsonObject& jo, const std::string& /*src*/) {
 
     assign(jo, "name", name_);
     assign(jo, "item", item);

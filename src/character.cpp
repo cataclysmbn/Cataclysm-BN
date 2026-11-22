@@ -6376,7 +6376,7 @@ std::map<bodypart_id, int> get_wind_resistance( const Character &chr,
 }
 
 
-void warn_temp_change( Character &chr, const bodypart_id &bp, units::temperature temp_before,
+void warn_temp_change( Character &/*chr*/, const bodypart_id &bp, units::temperature temp_before,
                        units::temperature temp_after )
 {
     // Warn the player if condition worsens

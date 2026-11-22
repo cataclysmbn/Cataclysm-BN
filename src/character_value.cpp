@@ -33,7 +33,7 @@ void character_value::load_character_values( const JsonObject &jo, const std::st
     all_character_values.load( jo, src );
 }
 
-void character_value::load( const JsonObject &jo, const std::string &src )
+void character_value::load( const JsonObject &jo, const std::string &/*src*/ )
 {
     optional( jo, was_loaded, "desc", desc );
     optional( jo, was_loaded, "hardcode_value", hardcode_value,

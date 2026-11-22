@@ -3906,7 +3906,7 @@ void sfx::play_ambient_variant_sound( const std::string &, const std::string &, 
                                       double, int ) { }
 void sfx::play_activity_sound( const std::string &, const std::string &, int ) { }
 void sfx::end_activity_sounds() { }
-void sfx::generate_gun_sound( const tripoint_bub_ms &, const item &, const short &origin_vol ) { }
+void sfx::generate_gun_sound( const tripoint_bub_ms &, const item &, const short &/*origin_vol*/ ) { }
 void sfx::generate_melee_sound( const tripoint_bub_ms &, const tripoint_bub_ms &, bool, bool,
                                 const std::string & ) { }
 void sfx::do_hearing_loss( int ) { }

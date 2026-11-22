@@ -6681,7 +6681,7 @@ void game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
     auto monmove_action_move = int64_t{ 0 };
     auto monmove_action_attack = int64_t{ 0 };
     auto monmove_action_other = int64_t{ 0 };
-    const auto record_monmove_action = [&]( const monster & critter,
+    const auto record_monmove_action = [&]( const monster & /*critter*/,
     const monster_action_t &action ) {
         if( action.needs_repath ) {
             ++monmove_action_repath_requests;
@@ -10048,7 +10048,7 @@ std::optional<tripoint_bub_ms> game::look_around( look_around_mode mode )
 
 look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
                                       const tripoint_bub_ms &start_point, bool has_first_point, bool select_zone, bool peeking,
-                                      bool is_moving_zone, const tripoint_bub_ms &end_point, look_around_mode mode )
+                                      bool is_moving_zone, const tripoint_bub_ms &end_point, look_around_mode /*mode*/ )
 {
     bVMonsterLookFire = false;
     temp_exit_fullscreen();
