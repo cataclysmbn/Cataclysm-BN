@@ -12,6 +12,17 @@
   },
   {
     "type": "COMESTIBLE",
+    "id": "fungus_milk_raw",
+    "name": { "str_sp": "raw fungus milk" },
+    "copy-from": "milk",
+    "spoils_in": "3 days",
+    "price": "19 cent",
+    "price_postapoc": "50 cent",
+	"flags": [ "UNSAFE_CONSUME", "MYCUS_OK" ],
+    "description": "This liquid looks like gray milk and smells of mushrooms."
+  },
+  {
+    "type": "COMESTIBLE",
     "id": "milk_UHT",
     "name": { "str_sp": "shelf stable milk" },
     "spoils_in": "2 days",
