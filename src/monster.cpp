@@ -1908,6 +1908,11 @@ Attitude monster::attitude_to( const Creature &other ) const
             // Zombies ignoring a feral survivor aren't quite the same as friendly
             // Ignore actually-friendly zombies/ferals but not other friendlies like reprogramed bots
             return Attitude::A_FRIENDLY;
+        } else if( g->u.has_trait( trait_THRESH_MYCUS ) &&
+                   ( ( friendly != 0 && m->type->in_species( FUNGUS ) ) ||
+                     ( m->friendly != 0 && type->in_species( FUNGUS ) ) ) ) {
+            // A mycus survivor's pets are accepted by wild fungus, and vice versa
+            return Attitude::A_FRIENDLY;
         } else if( ( friendly == 0 && m->friendly == 0 && faction_att == MFA_HATE ) ) {
             // Stuff that hates a specific faction will always attack that faction
             return Attitude::A_HOSTILE;
