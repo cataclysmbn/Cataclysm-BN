@@ -540,10 +540,6 @@ void map::player_in_field(player& u) {
 
 auto map::creature_in_field(Creature& critter, const bool movement_only) -> void {
     static const auto effect_downed = efftype_id("downed");
-    static const auto flag_NOSLIP = flag_id("NOSLIP");
-    static const auto ench_flag_NOSLIP = enchantment_flag_id("NOSLIP");
-    static const auto body_part_foot_l = bodypart_id("foot_l");
-    static const auto body_part_foot_r = bodypart_id("foot_r");
 
     bool in_vehicle = false;
     bool inside_vehicle = false;

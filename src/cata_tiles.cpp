@@ -4209,7 +4209,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
         half_open_rectangle<point> maprect( mappos.raw(), mappos.raw() + point( mapsize,
                                             mapsize ) );
 
-        const auto is_map = [mappos, maprect]( const tripoint & p ) {
+        const auto is_map = [maprect]( const tripoint & p ) {
             if( !maprect.contains( p.xy() ) ) {
                 return false;
             }

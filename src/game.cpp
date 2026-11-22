@@ -5866,7 +5866,7 @@ void game::cleanup_dead()
 {
     // Dead monsters need to stay in the tracker until everything else that needs to die does so
     // This is because dying monsters can still interact with other dying monsters (@ref Creature::killer)
-    bool monster_is_dead = critter_tracker->kill_marked_for_death();
+    critter_tracker->kill_marked_for_death();
 
     bool npc_is_dead = false;
     // can't use all_npcs as that does not include dead ones

@@ -1538,7 +1538,7 @@ class repair_inventory_preset: public inventory_selector_preset
                 return ret;
             }, _( "MATERIALS AVAILABLE" ) );
 
-            append_cell( [ this, actor ]( const item * loc ) {
+            append_cell( [ actor ]( const item * loc ) {
                 const auto amt = actor->get_material_amt_needed( *loc, true );
                 return string_format( _( "%d" ), amt );
             }, _( "NEED" ) );
