@@ -4555,7 +4555,7 @@ void item::enchantment_info( std::vector<iteminfo> &info, const iteminfo_query &
         return;
     }
     insert_separation_line( info );
-    for( const enchantment ench : enchs ) {
+    for( const enchantment &ench : enchs ) {
         for( std::string str : ench.get_effect_string( true ) ) {
             info.emplace_back( "DESCRIPTION", str );
         }

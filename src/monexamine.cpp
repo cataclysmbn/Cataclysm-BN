@@ -660,7 +660,7 @@ bool monexamine::pet_menu( monster &z )
     const auto cb_actor = z.get_lua_callbacks();
     if( cb_actor ) {
         const auto entries = cb_actor->call_get_examine_menu_entries( you, z );
-        for( const auto entry : entries ) {
+        for( const auto &entry : entries ) {
             if( entry.valid() ) {
                 lua_entries.push_back( entry );
             }
@@ -669,7 +669,7 @@ bool monexamine::pet_menu( monster &z )
 
     const auto hook_results = cata::run_hooks( "on_monster_get_examine_menu_entries",
     [&]( auto & params ) { params["avatar"] = &you; params["monster"] = &z; } );
-    for( const auto results = cata::get_hook_results( hook_results ); const auto result : results ) {
+    for( const auto results = cata::get_hook_results( hook_results ); const auto &result : results ) {
         if( !result.is<sol::table>() ) { continue; }
 
         const sol::table &entries_table = result.as<sol::table>();
@@ -693,7 +693,7 @@ bool monexamine::pet_menu( monster &z )
     } );
 
     int last_int = COUNT - 1;
-    for( const auto entry : lua_entries ) {
+    for( const auto &entry : lua_entries ) {
         last_int++;
         lua_entries_map.emplace( last_int, entry );
         amenu.addentry( last_int, true, ' ', entry.menu_label );
@@ -1062,7 +1062,7 @@ bool monexamine::mfriend_menu( monster &z )
     const auto cb_actor = z.get_lua_callbacks();
     if( cb_actor ) {
         const auto entries = cb_actor->call_get_examine_menu_entries( you, z );
-        for( const auto entry : entries ) {
+        for( const auto &entry : entries ) {
             if( entry.valid() ) {
                 lua_entries.push_back( entry );
             }
@@ -1071,7 +1071,7 @@ bool monexamine::mfriend_menu( monster &z )
 
     const auto hook_results = cata::run_hooks( "on_monster_get_examine_menu_entries",
     [&]( auto & params ) { params["avatar"] = &you; params["monster"] = &z; } );
-    for( const auto results = cata::get_hook_results( hook_results ); const auto result : results ) {
+    for( const auto results = cata::get_hook_results( hook_results ); const auto &result : results ) {
         if( !result.is<sol::table>() ) { continue; }
 
         const sol::table &entries_table = result.as<sol::table>();
@@ -1095,7 +1095,7 @@ bool monexamine::mfriend_menu( monster &z )
     } );
 
     int last_int = COUNT - 1;
-    for( const auto entry : lua_entries ) {
+    for( const auto &entry : lua_entries ) {
         last_int++;
         lua_entries_map.emplace( last_int, entry );
         amenu.addentry( last_int, true, ' ', entry.menu_label );
