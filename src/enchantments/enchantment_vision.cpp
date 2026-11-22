@@ -26,7 +26,7 @@ void enchantment_vision::load_enchantment_vision(const JsonObject& jo, const std
     all_enchantment_vision.load(jo, src);
 }
 
-void enchantment_vision::load(const JsonObject& jo, const std::string& src) {
+void enchantment_vision::load(const JsonObject& jo, const std::string& /*src*/) {
     mandatory(jo, was_loaded, "desc", desc);
     optional(jo, was_loaded, "distance", max_distance, -1);
     optional(jo, was_loaded, "same_z_level", same_zlev, false);

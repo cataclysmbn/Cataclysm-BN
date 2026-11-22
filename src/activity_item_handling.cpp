@@ -2409,7 +2409,7 @@ static bool butcher_corpse_activity( player &p, const tripoint_bub_ms &src_loc,
 }
 
 static bool dissect_corpse_activity( player &p, const tripoint_bub_ms &src_loc,
-                                     const do_activity_reason &reason )
+                                     const do_activity_reason &/*reason*/ )
 {
     map &here = get_map();
     map_stack items = here.i_at( src_loc );

@@ -8178,7 +8178,7 @@ static bool hackveh( player &p, item &it, vehicle &veh )
     return success;
 }
 
-static vehicle *pickveh( const tripoint_bub_ms &center )
+static vehicle *pickveh( const tripoint_bub_ms &/*center*/ )
 {
     static const std::string ctrl = "REMOTE_CONTROLS";
     uilist pmenu;

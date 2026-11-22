@@ -37,7 +37,7 @@ generic_factory<enchantment> enchant_factory("enchantment");
 
 IMPLEMENT_STRING_AND_INT_IDS(enchantment, enchant_factory);
 
-auto enchantment::get_effect_string(bool is_item) const -> std::vector<std::string> {
+auto enchantment::get_effect_string(bool /*is_item*/) const -> std::vector<std::string> {
     std::string cond_string;
     if (conditions.empty()) { cond_string = _("At all times"); }
     for (const enchantment_condition_id cond_id : conditions) {
