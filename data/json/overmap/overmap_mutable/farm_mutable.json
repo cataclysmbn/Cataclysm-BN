@@ -462,7 +462,7 @@
             { "overmap": "farmland_ew", "pos": [ 2, 8, 0 ] },
             { "overmap": "farmland_ne", "pos": [ 1, 8, 0 ] }
           ],
-          "max": { "poisson": 1 }
+          "max": { "poisson": 0.3 }
         },
         {
           "name": "farmland_9x9_3way",
@@ -783,7 +783,8 @@
             { "overmap": "hayfield_s", "pos": [ -2, 3, 0 ] },
             { "overmap": "hayfield_L_nw", "pos": [ -1, 3, 0 ] }
           ],
-          "weight": 1
+          "weight": 1,
+          "max": { "poisson": 0.3 }
         },
         {
           "name": "farmland_edge_large_2",
@@ -825,7 +826,8 @@
             { "overmap": "farmland_ew", "pos": [ -3, 3, 0 ] },
             { "overmap": "farmland_ne", "pos": [ -4, 3, 0 ] }
           ],
-          "weight": 1
+          "weight": 1,
+          "max": { "poisson": 0.3 }
         }
       ],
       [
@@ -857,7 +859,8 @@
             { "overmap": "hayfield_s", "pos": [ -2, 3, 0 ] },
             { "overmap": "hayfield_L_nw", "pos": [ -1, 3, 0 ] }
           ],
-          "weight": 1
+          "weight": 1,
+          "max": { "poisson": 0.3 }
         },
         {
           "name": "farmland_edge_small_L_2",
@@ -878,7 +881,8 @@
             { "overmap": "farmland_ew", "pos": [ -2, 2, 0 ] },
             { "overmap": "farmland_nw", "pos": [ -1, 2, 0 ] }
           ],
-          "weight": 1
+          "weight": 1,
+          "max": { "poisson": 0.3 }
         }
       ],
       [
@@ -906,7 +910,8 @@
             { "overmap": "orchard", "pos": [ 3, 3, 0 ] },
             { "overmap": "orchard", "pos": [ 4, 3, 0 ] }
           ],
-          "weight": 1
+          "weight": 1,
+          "max": { "poisson": 0.3 }
         },
         {
           "name": "farmland_edge_small_R_2",
@@ -932,7 +937,8 @@
             { "overmap": "farmland_ew", "pos": [ 3, 3, 0 ] },
             { "overmap": "farmland_nw", "pos": [ 4, 3, 0 ] }
           ],
-          "weight": 1
+          "weight": 1,
+          "max": { "poisson": 0.3 }
         }
       ],
       [
@@ -957,7 +963,8 @@
             { "overmap": "hayfield_L_nw", "pos": [ 1, 3, 0 ] },
             { "overmap": "air_extra_n", "pos": [ 0, 0, 10 ] }
           ],
-          "weight": 1
+          "weight": 1,
+          "max": { "poisson": 0.3 }
         },
         {
           "name": "extra_4x4_crop",
@@ -980,7 +987,8 @@
             { "overmap": "farmland_ne", "pos": [ -2, 3, 0 ] },
             { "overmap": "air_extra_n", "pos": [ 0, 0, 10 ] }
           ],
-          "weight": 1
+          "weight": 1,
+          "max": { "poisson": 0.3 }
         },
         {
           "name": "extra_4x2_barn",
@@ -1003,7 +1011,8 @@
             { "overmap": "2farm_5", "pos": [ 2, 0, 0 ] },
             { "overmap": "air_extra_s", "pos": [ 0, 0, 10 ] }
           ],
-          "weight": 1
+          "weight": 1,
+          "max": { "poisson": 0.3 }
         }
       ],
       [
