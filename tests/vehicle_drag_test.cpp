@@ -45,7 +45,7 @@ static void clear_game_drag(const ter_id& terrain) {
     here.build_map_cache(0, true);
 }
 
-static auto setup_drag_test(const vproto_id& veh_id) -> vehicle* { // *NOPAD*
+static auto setup_drag_test(const vproto_id& veh_id) -> vehicle* {
     const tripoint_bub_ms map_starting_point(60, 60, 0);
     vehicle* veh_ptr = get_map().add_vehicle(veh_id, map_starting_point, -90_degrees, 0, 0);
 

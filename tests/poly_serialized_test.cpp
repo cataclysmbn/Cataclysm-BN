@@ -13,7 +13,7 @@ public:
     virtual void deserialize(JsonIn& jsin) = 0;
     virtual auto get_type() const -> std::string = 0;
 
-    static auto create(std::string type) -> has_type*; // *NOPAD*
+    static auto create(std::string type) -> has_type*;
 };
 
 class has_int: public has_type {
@@ -34,7 +34,7 @@ public:
     auto get_type() const -> std::string override { return "has_float"; }
 };
 
-auto has_type::create(std::string type) -> has_type* { // *NOPAD*
+auto has_type::create(std::string type) -> has_type* {
     if (type == "has_int") {
         return new has_int();
     } else if (type == "has_float") {

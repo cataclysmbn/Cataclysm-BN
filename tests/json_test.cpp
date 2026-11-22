@@ -910,7 +910,7 @@ struct parsed_sample {
     std::string b;
     std::string c_k;
 
-    auto operator==(const parsed_sample&) const -> bool = default; // *NOPAD*
+    auto operator==(const parsed_sample&) const -> bool = default;
 };
 
 auto read_nested_a(const JsonObject& a, parsed_sample& out) -> void {

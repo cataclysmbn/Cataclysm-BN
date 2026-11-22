@@ -23,11 +23,9 @@ public:
         setg(data_.data(), data_.data(), data_.data() + data_.size());
     }
     memory_streambuf(const memory_streambuf&) = delete;
-    auto operator=(const memory_streambuf&) -> memory_streambuf& = delete; // *NOPAD*
+    auto operator=(const memory_streambuf&) -> memory_streambuf& = delete;
 
-    auto contents() const -> const std::string& { // *NOPAD*
-        return data_;
-    }
+    auto contents() const -> const std::string& { return data_; }
     auto unread() const -> std::string_view {
         return {gptr(), static_cast<size_t>(egptr() - gptr())};
     }
@@ -38,7 +36,7 @@ public:
     /// Moves to offset `pos`, which must not exceed `contents().size()`.
     auto seek_to(const size_t pos) -> void { setg(eback(), eback() + pos, egptr()); }
     /// JSON values skipped so far by start offset, shared by every JsonIn reading this buffer.
-    auto skipped_json_values() -> std::unordered_map<int, skipped_json_value>& { // *NOPAD*
+    auto skipped_json_values() -> std::unordered_map<int, skipped_json_value>& {
         return skipped_json_values_;
     }
 
@@ -82,9 +80,7 @@ public:
         rdbuf(&buffer_);
     }
 
-    auto contents() const -> const std::string& { // *NOPAD*
-        return buffer_.contents();
-    }
+    auto contents() const -> const std::string& { return buffer_.contents(); }
 
 private:
     memory_streambuf buffer_;

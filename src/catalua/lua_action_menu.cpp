@@ -10,8 +10,7 @@
 
 namespace cata::lua_action_menu {
 namespace {
-auto entries_storage() -> std::vector<entry>& // *NOPAD*
-{
+auto entries_storage() -> std::vector<entry>& {
     static auto entries = std::vector<entry>{};
     return entries;
 }
@@ -63,10 +62,7 @@ auto register_entry(const entry_options& opts) -> void {
 
 auto clear_entries() -> void { entries_storage().clear(); }
 
-auto get_entries() -> const std::vector<entry>& // *NOPAD*
-{
-    return entries_storage();
-}
+auto get_entries() -> const std::vector<entry>& { return entries_storage(); }
 
 auto run_entry(const std::string& id) -> bool {
     auto& entries = entries_storage();

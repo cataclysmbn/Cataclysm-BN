@@ -18,7 +18,7 @@ struct test_rect {
     int w;
     int h;
 
-    auto operator<=>(const test_rect&) const = default; // *NOPAD*
+    auto operator<=>(const test_rect&) const = default;
 };
 
 auto make_temp_tripoint_range() -> tripoint_range<tripoint_bub_ms> {

@@ -9,7 +9,7 @@ public:
         this->next();
     }
 
-    auto get() const -> const point& override { return current_point; } // *NOPAD*
+    auto get() const -> const point& override { return current_point; }
 
     auto next() -> bool override {
         current_point = point(dist(engine), dist(engine));
@@ -31,7 +31,7 @@ public:
         this->next();
     }
 
-    auto get() const -> const tripoint& override { return current_point; } // *NOPAD*
+    auto get() const -> const tripoint& override { return current_point; }
 
     auto next() -> bool override {
         current_point = tripoint(xy_dist(engine), xy_dist(engine), z_dist(engine));

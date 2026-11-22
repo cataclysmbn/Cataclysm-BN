@@ -1051,9 +1051,7 @@ auto weather_manager::get_cur_weather_gen() const -> const weather_generator& {
 }
 
 auto weather_manager::get_omt_weather_override(
-    const tripoint_abs_omt& location,
-    const time_point& when) const -> const weather_type_id* // *NOPAD*
-{
+    const tripoint_abs_omt& location, const time_point& when) const -> const weather_type_id* {
     const auto iter = omt_weather_overrides.find(location.xy());
     if (iter == omt_weather_overrides.end()) { return nullptr; }
     if (is_omt_weather_override_expired(iter->second, when)) { return nullptr; }

@@ -344,8 +344,7 @@ auto find_camera_photo_collection(item& camera) -> digital_reader_reference {
     return std::nullopt;
 }
 
-auto camera_photo_collection(item& camera) -> item& // *NOPAD*
-{
+auto camera_photo_collection(item& camera) -> item& {
     if (const auto file = find_camera_photo_collection(camera)) { return file->get(); }
     auto file = item::spawn("digital_camera_photo_collection", camera.birthday());
     identify_digital_file(*file);
