@@ -9530,6 +9530,7 @@ auto map::is_map_cache_valid(const int zlev) -> bool {
             || ch.seen_cache_dirty || ch.lightmap_dirty || ch.outside_cache_dirty.any()
             || ch.suspension_cache_dirty;
     }
+    return false;
 }
 
 void map::invalidate_map_cache(const int zlev) {
