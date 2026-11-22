@@ -29,7 +29,6 @@
 #include "bodypart.h"
 #include "cached_options.h"
 #include "calendar.h"
-#include "cata_unreachable.h"
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "catalua.h"
@@ -6336,7 +6335,7 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp_bub )
                         case climb_result::one_way_unclimbable:
                             return _( "You probably won't be able to get back up.  Climb down?" );
                     }
-                    cata::unreachable();
+                    std::unreachable();
                 };
                 add_msg( m_debug, "climb_cost: %d", climb_cost.value_or( -1 ) );
                 const auto result = get_climb_result();
