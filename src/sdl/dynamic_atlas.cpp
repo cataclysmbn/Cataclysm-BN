@@ -104,6 +104,8 @@ struct stripe_texture_packer final: detail::texture_packer {
 
         return rect;
     }
+
+    auto full() const -> bool override { return false; }
 };
 
 struct null_texture_packer final: detail::texture_packer {
@@ -122,6 +124,8 @@ struct null_texture_packer final: detail::texture_packer {
         has_contents = true;
         return bounds;
     };
+
+    auto full() const -> bool override { return has_contents; }
 };
 
 auto dynamic_atlas::update_staging_area(staging_area& staging, const int width, const int height)
@@ -146,14 +150,16 @@ auto dynamic_atlas::get_staging_area(const int width, const int height)
     return update_staging_area(user_staging, width, height);
 }
 
-auto dynamic_atlas::assign_id_internal(const size_t id, const atlas_texture& tex) -> bool {
-    const auto it = std::ranges::find_if(sheets, [&](const sprite_sheet& s) {
-        return s.texture.get() == std::get<0>(tex).get();
-    });
-    if (it == sheets.end()) { return false; }
-    int sheet_index = std::distance(sheets.begin(), it);
+auto dynamic_atlas::find_sheet(const SDL_Texture_SharedPtr& tex) -> sprite_sheet* {
+    const auto it = sheet_indices.find(tex.get());
+    return it == sheet_indices.end() ? nullptr : &sheets[it->second];
+}
 
-    auto [iter, ok] = sprite_ids.emplace(id, std::make_pair(sheet_index, std::get<1>(tex)));
+auto dynamic_atlas::assign_id_internal(const size_t id, const atlas_texture& tex) -> bool {
+    const auto it = sheet_indices.find(std::get<0>(tex).get());
+    if (it == sheet_indices.end()) { return false; }
+
+    auto [iter, ok] = sprite_ids.emplace(id, std::make_pair(it->second, std::get<1>(tex)));
     return ok;
 }
 
@@ -216,11 +222,8 @@ void dynamic_atlas::end_batch() {
 }
 
 auto dynamic_atlas::readback_find(const texture& tex) -> std::tuple<bool, SDL_Surface*, SDL_Rect> {
-    const auto it = std::ranges::find_if(sheets, [&](const sprite_sheet& s) {
-        return s.texture == tex.sdl_texture_ptr;
-    });
-
-    if (it == sheets.end()) { return std::make_tuple(false, nullptr, SDL_Rect{}); }
+    const auto* const sheet = find_sheet(tex.sdl_texture_ptr);
+    if (sheet == nullptr) { return std::make_tuple(false, nullptr, SDL_Rect{}); }
 
     SDL_Rect rect(
         static_cast<int>(tex.srcrect.x), //
@@ -229,7 +232,7 @@ auto dynamic_atlas::readback_find(const texture& tex) -> std::tuple<bool, SDL_Su
         static_cast<int>(tex.srcrect.h)  //
     );
 
-    return std::make_tuple(true, it->surface.get(), rect);
+    return std::make_tuple(true, sheet->surface.get(), rect);
 }
 
 auto dynamic_atlas::get_or_create_sprite(
@@ -251,11 +254,8 @@ auto dynamic_atlas::create_sprite(
     auto& [tex, dstRect] = atl_tex;
 
     if (is_batching) {
-        const auto it = std::ranges::find_if(sheets, [&](const sprite_sheet& s) {
-            return s.texture == tex;
-        });
-        if (it == sheets.end()) { debugmsg("Failed to find dynamic atlas surface"); }
-        const auto surf = it->surface.get();
+        const auto* const sheet = find_sheet(tex);
+        const auto surf = sheet == nullptr ? nullptr : sheet->surface.get();
         if (surf == nullptr) {
             debugmsg("Dynamic atlas surface missing");
         } else {
@@ -305,7 +305,10 @@ auto dynamic_atlas::allocate_sprite_internal(const int w, const int h) -> atlas_
             return atlas_texture{tex, r2};
         };
 
-    for (auto& s : sheets) {
+    while (first_open_sheet < sheets.size() && sheets[first_open_sheet].packer->full()) {
+        ++first_open_sheet;
+    }
+    for (auto& s : sheets | std::views::drop(first_open_sheet)) {
         auto p = s.packer->pack(w, h);
         if (p.has_value()) {
             s.dirty = true;
@@ -352,6 +355,7 @@ auto dynamic_atlas::allocate_sprite_internal(const int w, const int h) -> atlas_
         .atlas_width = tex_width,
         .atlas_height = tex_height,
         .dirty = true};
+    sheet_indices.emplace(tex, static_cast<int>(sheets.size()));
     const auto& entry = sheets.emplace_back(std::move(s));
 
     const auto rect = entry.packer->pack(w, h);
@@ -372,6 +376,10 @@ void dynamic_atlas::readback_dump(const std::string& s) {
 }
 
 
-void dynamic_atlas::clear() { sheets.clear(); }
+void dynamic_atlas::clear() {
+    sheets.clear();
+    sheet_indices.clear();
+    first_open_sheet = 0;
+}
 
 #endif

@@ -128,6 +128,7 @@
 
 #if defined(TILES)
 #  include "mod_tileset.h"
+#  include "tileset_loading.h"
 #endif
 
 namespace
@@ -960,6 +961,13 @@ static void load_and_finalize_packs( loading_ui &ui, const std::string &msg,
     }
 
     DynamicDataLoader &loader = DynamicDataLoader::get_instance();
+
+#if defined(TILES)
+    // The tileset loads last, but decoding its images can start now on idle threads.
+    tileset_loading::decode_images_ahead();
+    const auto discard_tileset_images = on_out_of_scope(
+                                            &tileset_loading::discard_images_decoded_ahead );
+#endif
 
     cata::lua_sidebar_widgets::clear_widgets();
     loader.lua = cata::make_wrapped_state();
