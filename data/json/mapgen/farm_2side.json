@@ -1,6 +1,7 @@
 [
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "om_terrain": [ [ "2farm_4", "2farm_3", "2farm_2", "2farm_1" ], [ "2farm_8", "2farm_7", "2farm_6", "2farm_5" ] ],
     "object": {
       "fill_ter": "t_dirtmound",
@@ -104,7 +105,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "om_terrain": [ [ "2farm_roof_4", "2farm_loft_3" ] ],
     "object": {
       "fill_ter": "t_floor",
@@ -147,7 +149,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "om_terrain": [ "2farm_roof_3" ],
     "object": {
       "fill_ter": "t_shingle_flat_roof",
@@ -182,7 +185,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "om_terrain": [ [ "2farm_6_1" ] ],
     "object": {
       "fill_ter": "t_shingle_flat_roof",
@@ -217,7 +221,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "om_terrain": [ [ "2farm_6_2" ] ],
     "object": {
       "fill_ter": "t_shingle_flat_roof",
@@ -252,7 +257,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "om_terrain": [ [ "2farm_6_3" ] ],
     "object": {
       "fill_ter": "t_shingle_flat_roof",
@@ -287,7 +293,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "om_terrain": [
       [ "null", "null", "2farm_10", "2farm_9" ],
       [ "2farm_16", "2farm_15", "2farm_14", "2farm_13" ],
@@ -398,7 +405,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "om_terrain": [ [ "2farm_12", "2farm_11" ] ],
     "object": {
       "fill_ter": "t_floor",
@@ -441,15 +449,14 @@
       "furniture": { "ü": "f_gunsafe_ml" },
       "nested": { "]": { "chunks": [ "garden_3x3_1" ] } },
       "place_loot": [ { "item": "television", "x": 44, "y": 10, "chance": 100 }, { "item": "stereo", "x": 44, "y": 9, "chance": 50 } ],
-      "items": {
-        "ü": { "item": "guns_hunting_safe", "chance": 100 }
-      },
+      "items": { "ü": { "item": "guns_hunting_safe", "chance": 100 } },
       "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 24, 47 ], "y": [ 2, 21 ], "repeat": [ 2, 4 ] } ],
       "place_vehicles": [ { "vehicle": "pickup", "x": 36, "y": 4, "rotation": 90 } ]
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "om_terrain": [ "2farm_roof_11" ],
     "object": {
       "fill_ter": "t_shingle_flat_roof",

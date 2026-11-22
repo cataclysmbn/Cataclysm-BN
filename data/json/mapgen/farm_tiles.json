@@ -1095,12 +1095,8 @@
       ],
       "palettes": [ "standard_domestic_palette" ],
       "terrain": { "#": "t_wall_log", "-": "t_concrete" },
-      "furniture": {
-        "ü": "f_gunsafe_ml"
-      },
-      "items": {
-        "ü": { "item": "guns_hunting_safe", "chance": 100 },
-      },
+      "furniture": { "ü": "f_gunsafe_ml" },
+      "items": { "ü": { "item": "guns_hunting_safe", "chance": 100 } },
       "place_nested": [
         {
           "chunks": [
@@ -1154,12 +1150,8 @@
       ],
       "palettes": [ "standard_domestic_palette" ],
       "terrain": { "#": "t_wall_log", "-": "t_concrete", "Ŧ": "t_railing" },
-      "furniture": {
-        "ü": "f_gunsafe_ml"
-      },
-      "items": {
-        "ü": { "item": "guns_hunting_safe", "chance": 100 },
-      },
+      "furniture": { "ü": "f_gunsafe_ml" },
+      "items": { "ü": { "item": "guns_hunting_safe", "chance": 100 } },
       "place_nested": [
         {
           "chunks": [
@@ -1213,12 +1205,8 @@
       ],
       "palettes": [ "standard_domestic_palette" ],
       "terrain": { "#": "t_wall_log", "-": "t_concrete", "Ŧ": "t_railing" },
-      "furniture": {
-        "ü": "f_gunsafe_ml"
-      },
-      "items": {
-        "ü": { "item": "guns_hunting_safe", "chance": 100 },
-      },
+      "furniture": { "ü": "f_gunsafe_ml" },
+      "items": { "ü": { "item": "guns_hunting_safe", "chance": 100 } },
       "place_nested": [
         {
           "chunks": [
@@ -1271,12 +1259,8 @@
       ],
       "palettes": [ "standard_domestic_palette" ],
       "terrain": { "#": "t_wall_log", "-": "t_concrete", "Ŧ": "t_railing" },
-      "furniture": {
-        "ü": "f_gunsafe_ml"
-      },
-      "items": {
-        "ü": { "item": "guns_hunting_safe", "chance": 100 },
-      },
+      "furniture": { "ü": "f_gunsafe_ml" },
+      "items": { "ü": { "item": "guns_hunting_safe", "chance": 100 } },
       "place_nested": [
         {
           "chunks": [
@@ -1330,12 +1314,8 @@
       ],
       "palettes": [ "standard_domestic_palette" ],
       "terrain": { "#": "t_wall_log", "-": "t_concrete", "Ŧ": "t_railing" },
-      "furniture": {
-        "ü": "f_gunsafe_ml"
-      },
-      "items": {
-        "ü": { "item": "guns_hunting_safe", "chance": 100 },
-      },
+      "furniture": { "ü": "f_gunsafe_ml" },
+      "items": { "ü": { "item": "guns_hunting_safe", "chance": 100 } },
       "place_nested": [
         {
           "chunks": [

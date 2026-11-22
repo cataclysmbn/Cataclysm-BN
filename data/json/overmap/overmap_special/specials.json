@@ -488,7 +488,7 @@
       { "point": [ 0, 6, 0 ], "overmap": "2farm_24_north" },
       { "point": [ 1, 6, 0 ], "overmap": "2farm_23_north" },
       { "point": [ 2, 6, 0 ], "overmap": "2farm_22_north" },
-      { "point": [ 3, 6, 0 ], "overmap": "2farm_21_north" },
+      { "point": [ 3, 6, 0 ], "overmap": "2farm_21_north" }
     ],
     "connections": [ { "point": [ 1, 2, 0 ], "connection": "local_road" } ],
     "locations": [ "field" ],

@@ -52,5 +52,5 @@
       }
     },
     "terrain": { "=": { "param": "carpet_color_type", "fallback": "t_carpet_red" } }
-  },
+  }
 ]

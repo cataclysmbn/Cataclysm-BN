@@ -1030,5 +1030,5 @@
       { "item": "honeycomb", "count": [ 2, 4 ], "prob": 10 },
       { "item": "honey_glassed", "count": -1, "prob": 10 }
     ]
-  },
+  }
 ]

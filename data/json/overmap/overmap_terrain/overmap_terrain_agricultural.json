@@ -802,12 +802,9 @@
   },
   {
     "type": "overmap_terrain",
-    "id": [
-      "farm_stills_3_2nd",
-      "farm_stills_3_roof",
-    ],
+    "id": [ "farm_stills_3_2nd", "farm_stills_3_roof" ],
     "copy-from": "generic_rural_building",
     "name": "farm house",
     "sym": "^"
-  },
+  }
 ]

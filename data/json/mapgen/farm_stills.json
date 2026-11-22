@@ -1,6 +1,7 @@
 [
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "om_terrain": [
       [ "farm_stills_4", "farm_stills_3", "farm_stills_2", "farm_stills_1" ],
       [ "farm_stills_8", "farm_stills_7", "farm_stills_6", "farm_stills_5" ],
@@ -138,7 +139,7 @@
           { "item": "tools_common", "chance": 50 }
         ],
         "‡": [ { "item": "moonshine_brew", "chance": 65 } ],
-        "ü": { "item": "guns_hunting_safe", "chance": 100 },
+        "ü": { "item": "guns_hunting_safe", "chance": 100 }
       },
       "place_item": [
         { "item": "still", "x": 29, "y": 33, "amount": 1 },
@@ -149,7 +150,8 @@
   },
   {
     "om_terrain": [ [ "farm_stills_3_2nd" ], [ "farm_stills_7_roof" ] ],
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "object": {
       "fill_ter": "t_floor",
       "rows": [
@@ -220,7 +222,8 @@
   },
   {
     "om_terrain": "farm_stills_3_roof",
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "object": {
       "fill_ter": "t_shingle_flat_roof",
       "rows": [
@@ -254,7 +257,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "om_terrain": "farm_stills_3_basement",
     "object": {
       "fill_ter": "t_dirtfloor",
