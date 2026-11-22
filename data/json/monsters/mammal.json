@@ -396,7 +396,7 @@
     "placate_triggers": [ "MEAT", "PLAYER_WEAK" ],
     "death_function": [ "NORMAL" ],
     "harvest": "mammal_tiny",
-	"fungalize_into": "mon_fungal_cat",
+    "fungalize_into": "mon_fungal_cat",
     "reproduction": { "baby_monster": "mon_cat_kitten", "baby_count": 4, "baby_timer": 60 },
     "petfood": {
       "food": [ "CATFOOD" ],
@@ -684,7 +684,7 @@
       "pet": "The %s allows you to stroke its fur.",
       "tamer_traits": [ [ "THRESH_FELINE" ] ]
     },
-	"fungalize_into": "mon_fungal_cougar",
+    "fungalize_into": "mon_fungal_cougar",
     "pet_training": { "hp_mult": 1.25, "melee_mult": 1.25, "dodge_mult": 1.2, "max_level": 4, "min_skill": 4 },
     "flags": [
       "SEES",
@@ -767,7 +767,7 @@
     "anger_triggers": [ "HURT" ],
     "fear_triggers": [ "PLAYER_CLOSE" ],
     "placate_triggers": [ "PLAYER_WEAK" ],
-	"fungalize_into": "mon_fungal_cow",
+    "fungalize_into": "mon_fungal_cow",
     "death_drops": { "subtype": "collection", "groups": [ [ "cow", 25 ] ], "//": "25% chance of an item from group cow" },
     "death_function": [ "NORMAL" ],
     "harvest": "mammal_large_leather",
@@ -808,7 +808,7 @@
     "placate_triggers": [ "MEAT" ],
     "death_function": [ "NORMAL" ],
     "harvest": "mammal_fur",
-	"fungalize_into": "mon_fungal_coyote",
+    "fungalize_into": "mon_fungal_coyote",
     "petfood": {
       "food": [ "DOGFOOD" ],
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
@@ -2691,7 +2691,7 @@
     "anger_triggers": [ "STALK", "FRIEND_ATTACKED", "FRIEND_DIED", "PLAYER_WEAK", "PLAYER_CLOSE" ],
     "placate_triggers": [ "MEAT" ],
     "death_function": [ "NORMAL" ],
-	"fungalize_into": "mon_fungal_wolf",
+    "fungalize_into": "mon_fungal_wolf",
     "petfood": {
       "food": [ "DOGFOOD" ],
       "feed": "The %s eyes you warily, then cautiously accepts the food.",

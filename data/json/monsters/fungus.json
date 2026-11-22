@@ -811,7 +811,7 @@
     "melee_skill": 6,
     "melee_dice": 2,
     "melee_dice_sides": 10,
-	"mountable_pixels_up": 17,
+    "mountable_pixels_up": 17,
     "dodge": 1,
     "armor_bash": 6,
     "armor_cut": 4,
@@ -820,7 +820,7 @@
     "harvest": "fungaloid",
     "special_attacks": [ [ "FUNGUS", 30 ], { "type": "bite", "cooldown": 5 } ],
     "death_function": [ "FUNGUS", "NORMAL" ],
-	"starting_ammo": { "fungus_milk_raw": 40 },
+    "starting_ammo": { "fungus_milk_raw": 40 },
     "petfood": {
       "food": [ "MYCUSFOOD" ],
       "feed": "The %s eats the fruit in one bite.",
@@ -841,8 +841,8 @@
       "PATH_AVOID_DANGER_1",
       "POISON",
       "NO_BREATHE",
-	  "PET_MOUNTABLE",
-	  "MILKABLE"
+      "PET_MOUNTABLE",
+      "MILKABLE"
     ]
   },
   {
