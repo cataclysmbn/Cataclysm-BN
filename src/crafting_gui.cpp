@@ -630,7 +630,7 @@ static std::vector<std::string> recipe_info(
         }
         if( !recp.autolearn_requirements.empty() ) {
             oss << _( "Autolearn when all are met:\n" );
-            for( const auto [skill, level] : recp.autolearn_requirements ) {
+            for( const auto &[skill, level] : recp.autolearn_requirements ) {
                 oss << string_format( _( "  Skill %s at level %s\n" ), skill->name(), level );
             }
         }
@@ -2039,7 +2039,7 @@ static void draw_recipe_tabs( const catacurses::window &w, const std::string &ta
             std::string real_tab;
             std::vector<std::string> tabs;
 
-            for( const auto tab_val : craft_cat_list ) {
+            for( const auto &tab_val : craft_cat_list ) {
                 if( unread[tab_val] ) {
                     tabs.push_back( normalized_names[tab_val] + " ⁺" );
                     if( tab_val == tab ) {
