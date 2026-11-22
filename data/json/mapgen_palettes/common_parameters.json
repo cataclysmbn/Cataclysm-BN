@@ -38,5 +38,19 @@
       "#": { "param": "exterior_wall_type", "fallback": "t_brick_wall" }
     },
     "nested": { "#": { "chunks": [ [ "shelter_graffiti", 1 ], [ "general_graffiti", 1 ], [ "null", 598 ] ] } }
-  }
+  },
+  {
+    "type": "palette",
+    "id": "parametrized_carpets_palette",
+    "//": "Use to randomly assign carpet colors",
+    "parameters": {
+      "carpet_color_type": {
+        "type": "ter_str_id",
+        "default": {
+          "distribution": [ [ "t_carpet_red", 1 ], [ "t_carpet_green", 1 ], [ "t_carpet_purple", 1 ], [ "t_carpet_yellow", 1 ] ]
+        }
+      }
+    },
+    "terrain": { "=": { "param": "carpet_color_type", "fallback": "t_carpet_red" } }
+  },
 ]
