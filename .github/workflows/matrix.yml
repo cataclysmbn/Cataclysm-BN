@@ -51,7 +51,7 @@ jobs:
     name: Generate shader artifacts
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Build shadercross
         uses: ./.github/actions/build-shadercross
@@ -60,7 +60,7 @@ jobs:
         run: bash build-scripts/generate-shaders.sh
 
       - name: Upload generated shaders
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: generated-shaders-ci
           path: data/shaders/
@@ -100,13 +100,13 @@ jobs:
     steps:
       - name: checkout repository
         if: ${{ env.SKIP == 'false' }}
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 1
 
       - name: Download generated shaders
         if: ${{ env.SKIP == 'false' }}
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: generated-shaders-ci
           path: data/shaders
@@ -197,7 +197,7 @@ jobs:
 
       - name: upload Linux tiles playtest package
         if: ${{ success() && env.SKIP == 'false' && matrix.upload-artifact == true }}
-        uses: actions/upload-artifact@v4.6.0
+        uses: actions/upload-artifact@v6
         with:
           name: linux-tiles-x64-pr-${{ github.event.pull_request.number || github.run_id }}
           path: cbn-linux-tiles-x64-pr-${{ github.event.pull_request.number || github.run_id }}.tar.gz
@@ -214,7 +214,7 @@ jobs:
 
       - name: upload test executable
         if: ${{ github.ref_name != 'main' && env.SKIP == 'false' }}
-        uses: actions/upload-artifact@v4.6.0
+        uses: actions/upload-artifact@v6
         with:
           name: cata_test-${{ matrix.tiles == 1 && 'tiles' || 'curses' }}
           path: cata-test.tar.zst
@@ -236,20 +236,20 @@ jobs:
       SKIP: ${{ matrix.tiles == 1 && ( needs.skip-duplicates.outputs.should_skip_code == true || needs.skip-duplicates.outputs.should_skip_data == true ) }}
     steps:
       - if: ${{ env.SKIP == 'false' }}
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 1
 
       - name: Download generated shaders
         if: ${{ env.SKIP == 'false' }}
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: generated-shaders-ci
           path: data/shaders
 
       - name: Download test executable
         if: ${{ env.SKIP == 'false' }}
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: cata_test-${{ matrix.tiles == 1 && 'tiles' || 'curses' }}
 
