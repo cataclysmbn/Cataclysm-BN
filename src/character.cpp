@@ -2038,8 +2038,8 @@ float Character::night_vision_sight_range() const
     float best = 0;
     if( worn_with_flag( flag_GNVE_EFFECT ) ) {
         best = 18.0;
-    } else if( worn_with_flag( flag_RECON_VISION ) || is_mounted() &&
-               mounted_creature->has_flag( MF_MECH_RECON_VISION ) ||
+    } else if( worn_with_flag( flag_RECON_VISION ) || ( is_mounted() &&
+               mounted_creature->has_flag( MF_MECH_RECON_VISION ) ) ||
                worn_with_flag( flag_GNV_EFFECT ) || has_effect_with_flag( flag_EFFECT_NIGHT_VISION ) ) {
         best = 10.0;
     }

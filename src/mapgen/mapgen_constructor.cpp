@@ -1117,7 +1117,7 @@ auto mapgen_constructor::detach_vehicle(vehicle* veh) -> std::unique_ptr<vehicle
         sm->vehicles.erase(iter);
         result->detach();
         result->refresh_position();
-        return std::move(result);
+        return result;
     }
     debugmsg("detach_vehicle can't find it!  name=%s, submap:%d,%d,%d", veh->name,
              veh->abs_sm_pos.x(), veh->abs_sm_pos.y(), veh->abs_sm_pos.z());
