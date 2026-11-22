@@ -55,14 +55,14 @@
 class ui_adaptor;
 
 #if defined(CATA_SDL)
-#   if !defined(SDL_MAIN_HANDLED)
-#       define SDL_MAIN_HANDLED
-#   endif
 #   include <SDL3/SDL.h>
 #   include "compute/gpu_platform.h"
 #   include "platform/sdl_video.h"
 #endif
 #if defined(TILES)
+#   if !defined(SDL_MAIN_HANDLED)
+#       define SDL_MAIN_HANDLED
+#   endif
 #   include <SDL3/SDL_main.h>
 #   include "sdl_wrappers.h"
 #endif
