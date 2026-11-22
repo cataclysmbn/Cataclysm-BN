@@ -1,7 +1,6 @@
 [
   {
-    "type": "mapgen",
-    "method": "json",
+    "type": "mapgen", "method": "json",
     "om_terrain": [ [ "farm_3", "null", "farm_1" ], [ "farm_6", "farm_5", "farm_4" ], [ "farm_9", "farm_8", "farm_7" ] ],
     "weight": 250,
     "object": {
@@ -81,7 +80,7 @@
         "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF "
       ],
       "palettes": [ "farm" ],
-      "terrain": { "│": "t_hole" },
+      "terrain": { "│": "t_open_air" },
       "place_item": [
         { "item": "straw_pile", "x": [ 3, 5 ], "y": [ 5, 7 ], "amount": [ 0, 8 ] },
         { "item": "cattlefodder", "x": [ 3, 5 ], "y": [ 5, 7 ], "amount": [ 0, 4 ] },
@@ -95,8 +94,7 @@
     }
   },
   {
-    "type": "mapgen",
-    "method": "json",
+    "type": "mapgen", "method": "json",
     "om_terrain": [ [ "farm_2" ] ],
     "weight": 500,
     "object": {
@@ -119,9 +117,9 @@
         "!_!__!~!.#1 6| hfh     #",
         "!______!.#2 6|||||||+||#",
         "!______!.#|+||rrr T   d#",
-        "!_!__!_!.#B`t| h     @@o",
-        "!______!.#B``+       @@#",
-        "!qq__qq!.#8S8|RRR  E  d#",
+        "!_!__!_!.#B't| h     @@o",
+        "!______!.#B''+       @@#",
+        "!üq__qq!.#8S8|RRR  E  d#",
         "!!!**!!!.##o########oo##",
         ",,,,,...................",
         "..............u.........",
@@ -130,13 +128,17 @@
       "palettes": [ "standard_domestic_palette", "standard_domestic_lino_bathroom" ],
       "terrain": {
         "!": "t_wall_wood",
-        "`": "t_linoleum_gray",
         ",": "t_region_soil",
         "0": "t_water_pump",
         "$": "t_region_shrub_decorative",
+        "'": { "param": "linoleum_color_bathroom", "fallback": "t_linoleum_gray" },
         "q": "t_dirtfloor",
         "_": "t_dirtfloor",
+        "ü": "t_dirtfloor",
         "~": "t_dirtmoundfloor"
+      },
+      "furniture": {
+        "ü": "f_gunsafe_ml"
       },
       "items": {
         "q": [
@@ -144,14 +146,13 @@
           { "item": "mechanics", "chance": 40 },
           { "item": "home_hw", "chance": 50 },
           { "item": "tools_common", "chance": 50 }
-        ]
-      },
-      "place_monsters": [ { "monster": "GROUP_ZOMBIE", "x": [ 2, 21 ], "y": [ 2, 21 ] } ]
+        ],
+        "ü": { "item": "guns_hunting_safe", "chance": 100 },
+      }
     }
   },
   {
-    "type": "mapgen",
-    "method": "json",
+    "type": "mapgen", "method": "json",
     "om_terrain": [ [ "farm_2" ] ],
     "//": "NPC version",
     "weight": 50,
@@ -175,9 +176,9 @@
         "!_!__!~!.#1 6| hfh     #",
         "!______!.#2 6|||||||+||#",
         "!______!.#|+||rrr T   d#",
-        "!_!__!_!.#B`t| h     @@o",
-        "!______!.#B``+       @@#",
-        "!qq__qq!.#8S8|RRR  E  d#",
+        "!_!__!_!.#B't| h     @@o",
+        "!______!.#B''+       @@#",
+        "!üq__qq!.#8S8|RRR  E  d#",
         "!!!**!!!.##o########oo##",
         ",,,,,...................",
         "..............u.........",
@@ -187,32 +188,35 @@
       "terrain": {
         "o": [ "t_window_boarded", "t_window_boarded_noglass" ],
         "!": "t_wall_wood",
-        "`": "t_linoleum_gray",
         ",": "t_region_soil",
         "0": "t_water_pump",
         "$": "t_region_shrub_decorative",
+        "'": { "param": "linoleum_color_bathroom", "fallback": "t_linoleum_gray" },
         "q": "t_dirtfloor",
         "_": "t_dirtfloor",
+        "ü": "t_dirtfloor",
         "~": "t_dirtmoundfloor"
       },
+      "furniture": {
+        "ü": "f_gunsafe_ml"
+      },
       "items": {
-        " ": { "item": "trash", "chance": 7 },
+        " ": { "item": "SUS_trash_floor", "chance": 7 },
         "F": { "item": "SUS_fridge_survivor", "chance": 100 },
         "q": [
           { "item": "tools_earthworking", "chance": 65 },
           { "item": "mechanics", "chance": 40 },
           { "item": "home_hw", "chance": 50 },
           { "item": "tools_common", "chance": 50 }
-        ]
+        ],
+        "ü": { "item": "guns_hunting_safe", "chance": 100 },
       },
       "place_npcs": [ { "class": "farmer", "x": 12, "y": 3 } ]
     }
   },
   {
-    "type": "mapgen",
-    "method": "json",
+    "type": "mapgen", "method": "json",
     "om_terrain": [ [ "farm_3_roof", "farm_2_roof" ] ],
-    "weight": 250,
     "object": {
       "fill_ter": "t_shingle_flat_roof",
       "rows": [
@@ -224,19 +228,19 @@
         "  ,,,,,,,,,,,,,,,,,,,                           ",
         "  ,,,,,,,,,,,,,,,,,,,                           ",
         "  ,,,,,,,,,,,,,,,,,,,                           ",
-        "  ,,,,,,,,,,,,,,,,,,,                     |22223",
-        "  ,,,,,,,,,,,,,,,,,,,                     |....3",
-        "  ,,,,,,,,,,,,,,,,,,,            |22222222|....3",
-        "  ,,,,,,,,,,,,,,,,,,,   ,,,,,,,, |.............3",
-        "  ,,,,,,,,,,,,,,,,,,,   ,,,,,,,, |............~3",
-        "  ,,,,,,,,,,,,,,,,,,,   ,,,,,,,, |.............3",
-        "  ,,,,,,,,,,,,,,,,,,,   ,,,,,,,, |.&...........3",
-        "  ,,,,,,,,,,,,,,,,,,,   ,,,,,,,, |.............3",
-        "  ,,,,,,,,,,,,,,,,,,,   ,,,,,,,, |.............3",
-        "  ,,,,,,,,,,,,,,,,,,,   ,,,,,,,, |.............3",
-        "  ,,,,,,,,,,,,,,,,,,,   ,,,,,,,, |.=.........:.3",
-        "  ,,,,,,,,,,,,,,,,,,,   ,,,,,,,, |.............3",
-        "  ,,,,,,,,,,,,,,,,,,,   ,,,,,,,, |-------------3",
+        "  ,,,,,,,,,,,,,,,,,,,                     ------",
+        "  ,,,,,,,,,,,,,,,,,,,                     -....-",
+        "  ,,,,,,,,,,,,,,,,,,,            ----------....-",
+        "  ,,,,,,,,,,,,,,,,,,,   ,,,,,,,, -.............-",
+        "  ,,,,,,,,,,,,,,,,,,,   ,,,,,,,, -............~-",
+        "  ,,,,,,,,,,,,,,,,,,,   ,,,,,,,, -.............-",
+        "  ,,,,,,,,,,,,,,,,,,,   ,,,,,,,, -.&...........-",
+        "  ,,,,,,,,,,,,,,,,,,,   ,,,,,,,, -.............-",
+        "  ,,,,,,,,,,,,,,,,,,,   ,,,,,,,, -.............-",
+        "  ,,,,,,,,,,,,,,,,,,,   ,,,,,,,, -.............-",
+        "  ,,,,,,,,,,,,,,,,,,,   ,,,,,,,, -.=.........:.-",
+        "  ,,,,,,,,,,,,,,,,,,,   ,,,,,,,, -.............-",
+        "  ,,,,,,,,,,,,,,,,,,,   ,,,,,,,, ---------------",
         "  ,,,,,,,,,,,,,,,,,,,                           ",
         "                                                ",
         "                                                "
@@ -246,11 +250,9 @@
     }
   },
   {
-    "type": "mapgen",
-    "method": "json",
+    "type": "mapgen", "method": "json",
     "om_terrain": [ [ "farm_1_silo" ] ],
     "//": "Grain silo copy of silo in ranch_camp_57",
-    "weight": 250,
     "object": {
       "fill_ter": "t_dirtfloor",
       "rows": [
@@ -283,17 +285,15 @@
       "items": { "r": { "item": "farming_tools", "chance": 25 } },
       "item": {
         "_": [ { "item": "straw_pile", "chance": 3 }, { "item": "cattlefodder", "chance": 2 } ],
-        "f": { "item": "corn", "chance": 40, "repeat": 10 }
+        "f": { "item": "cattlefodder", "chance": 40, "repeat": 10 }
       },
       "sealed_item": { "D": { "item": { "item": "seed_oats" }, "furniture": "f_plant_seedling", "chance": 70 } },
       "palettes": [ "farm" ]
     }
   },
   {
-    "type": "mapgen",
-    "method": "json",
+    "type": "mapgen", "method": "json",
     "om_terrain": [ [ "farm_1_silo_1" ] ],
-    "weight": 250,
     "object": {
       "rows": [
         "      III               ",
@@ -305,7 +305,7 @@
         "    IoooooI............ ",
         "    IIIoIII............ ",
         "      III  ............ ",
-        "       <                ",
+        "       ≷                ",
         "                        ",
         "                        ",
         "                        ",
@@ -321,15 +321,13 @@
         "                        ",
         "                        "
       ],
-      "terrain": { "I": "t_wall_metal", "o": "t_open_air_rooved", "<": "t_ladder_up_down", ".": "t_shingle_flat_roof" },
+      "terrain": { "I": "t_wall_metal", "o": "t_open_air_rooved", "≷": "t_ladder_up_down", ".": "t_shingle_flat_roof" },
       "palettes": [ "roof_palette" ]
     }
   },
   {
-    "type": "mapgen",
-    "method": "json",
+    "type": "mapgen", "method": "json",
     "om_terrain": [ [ "farm_1_silo_2" ] ],
-    "weight": 250,
     "object": {
       "rows": [
         "      III               ",
@@ -341,7 +339,7 @@
         "    IoooooI             ",
         "    IIIoIII             ",
         "      III               ",
-        "       <                ",
+        "       ≷                ",
         "                        ",
         "                        ",
         "                        ",
@@ -357,15 +355,13 @@
         "                        ",
         "                        "
       ],
-      "terrain": { "I": "t_wall_metal", "o": "t_open_air_rooved", "<": "t_ladder_up_down" },
+      "terrain": { "I": "t_wall_metal", "o": "t_open_air_rooved", "≷": "t_ladder_up_down" },
       "palettes": [ "roof_palette" ]
     }
   },
   {
-    "type": "mapgen",
-    "method": "json",
+    "type": "mapgen", "method": "json",
     "om_terrain": [ [ "farm_1_silo_roof" ] ],
-    "weight": 250,
     "object": {
       "rows": [
         "      ...               ",
@@ -377,7 +373,7 @@
         "    .......             ",
         "    .......             ",
         "      ...               ",
-        "       <                ",
+        "       v                ",
         "                        ",
         "                        ",
         "                        ",
@@ -393,16 +389,14 @@
         "                        ",
         "                        "
       ],
-      "terrain": { ".": "t_shingle_flat_roof", "<": "t_ladder_down" },
+      "terrain": { ".": "t_shingle_flat_roof" },
       "palettes": [ "roof_palette" ]
     }
   },
   {
-    "type": "mapgen",
-    "method": "json",
+    "type": "mapgen", "method": "json",
     "om_terrain": [ [ "farm_1_coop" ] ],
     "//": "Chicken Coop",
-    "weight": 250,
     "object": {
       "fill_ter": "t_dirtfloor",
       "rows": [
@@ -451,11 +445,9 @@
     }
   },
   {
-    "type": "mapgen",
-    "method": "json",
+    "type": "mapgen", "method": "json",
     "om_terrain": [ [ "farm_1_coop_roof" ] ],
     "//": "Chicken Coop",
-    "weight": 250,
     "object": {
       "rows": [
         "                        ",
@@ -488,11 +480,9 @@
     }
   },
   {
-    "type": "mapgen",
-    "method": "json",
+    "type": "mapgen", "method": "json",
     "om_terrain": [ [ "farm_1_greenhouse" ] ],
     "//": "Greenhouse",
-    "weight": 250,
     "object": {
       "fill_ter": "t_dirt",
       "rows": [
@@ -547,10 +537,8 @@
     }
   },
   {
-    "type": "mapgen",
-    "method": "json",
+    "type": "mapgen", "method": "json",
     "om_terrain": [ [ "farm_1_greenhouse_roof" ] ],
-    "weight": 250,
     "object": {
       "rows": [
         "                        ",
@@ -570,6 +558,89 @@
         "                        ",
         "                        ",
         "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        "
+      ],
+      "palettes": [ "roof_palette" ]
+    }
+  },
+  {
+    "type": "mapgen", "method": "json",
+    "om_terrain": [ [ "farm_1_apiary" ] ],
+    "//": "Apiary",
+    "object": {
+      "fill_ter": "t_dirt",
+      "rows": [
+        "                        ",
+        "                        ",
+        "     FFFFFFFFFFFFFFFFFF ",
+        "     F         ,      F ",
+        "     F ⬡⬡  ⬡⬡  ⬡⬡  ⬡⬡ F ",
+        ",,,  F ⬡⬡  ⬡⬡  ⬡⬡  ⬡⬡ F ",
+        ",,,,,g,,,,,     ,,    F ",
+        "  ,,,g,,,,   ,        F ",
+        "     F ⬡⬡  ⬡⬡  ⬡⬡  ⬡⬡ F ",
+        "   , F ⬡⬡  ⬡⬡  ⬡⬡  ⬡⬡ F ",
+        "     F               ,F ",
+        "    ,FFFFFFFFFFFFFFFFFF ",
+        "     ,,                 ",
+        "           ,      ##### ",
+        "               , ♦#r♠♥# ",
+        "                ,,+___# ",
+        "                  ##### ",
+        "                        ",
+        " FFFFFFFFFFFFFFFFFFFFFF ",
+        " F                    F ",
+        " F  DDDDDDDDDDDDDDDD  F ",
+        " F                    F ",
+        " F  DDDDDDDDDDDDDDDD  F ",
+        " F                    F "
+      ],
+      "terrain": { "♥": "t_machinery_light" },
+      "items": {
+        "♠": [
+          { "item": "hive", "chance": 50, "repeat": [ 2, 4 ] },
+          { "item": "home_hw", "chance": 50 },
+          { "item": "tools_common", "chance": 50 }
+        ],
+        "r": { "item": "honey_market_stall", "repeat": [ 4, 12 ] }
+      },
+      "furniture": { "♠": "f_locker", "♦": "f_woodchips", "⬡": [ [ "f_hive_ready", 5 ], [ "f_hive_young", 95 ] ] },
+      "sealed_item": { "D": { "item": { "item": "seed_corn" }, "furniture": "f_plant_seedling", "chance": 70 } },
+      "palettes": [ "farm" ],
+      "place_monster": [
+        { "monster": "mon_beekeeper", "x": [ 6, 21 ], "y": [ 3, 10 ], "pack_size": 1, "chance": 10 },
+        { "group": "GROUP_BEE", "x": [ 6, 21 ], "y": [ 3, 10 ], "pack_size": [ 2, 4 ], "chance": 20 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen", "method": "json",
+    "om_terrain": [ [ "farm_1_apiary_roof" ] ],
+    "object": {
+      "rows": [
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                  ..... ",
+        "                  ...=. ",
+        "                  ..... ",
+        "                  ..... ",
         "                        ",
         "                        ",
         "                        ",
