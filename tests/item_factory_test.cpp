@@ -139,7 +139,7 @@ TEST_CASE("items_with_prying_quality_can_pry", "[item_factory]") {
     }
 }
 
-auto get_item(Item_factory& test_factory, const std::string& name) -> const itype* { // *NOPAD*
+auto get_item(Item_factory& test_factory, const std::string& name) -> const itype* {
     std::vector<const itype*> test_items = test_factory.find([&name](const itype& item) {
         return item.get_id() == itype_id(name);
     });

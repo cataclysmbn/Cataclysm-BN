@@ -2851,8 +2851,7 @@ public:
             return else_entries;
         }
     }
-    auto get_resolved_entries(const mapgendata& dat) const
-        -> const nested_mapgen_ref_list& { // *NOPAD*
+    auto get_resolved_entries(const mapgendata& dat) const -> const nested_mapgen_ref_list& {
         if (neighbor_oters.test(dat) && neighbor_joins.test(dat)
             && neighbor_connections.test(dat)) {
             ensure_resolved(entries, resolved_entries, resolved_entries_valid);

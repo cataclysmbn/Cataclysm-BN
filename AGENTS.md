@@ -8,7 +8,7 @@ Read `docs/` and `justfile` first. Large legacy codebase: search for an existing
 const auto foo = 3; //< **MUST** use `auto`; `const` before `auto`.
 
 auto bar() -> int; //< **MUST** use trailing return types, also in aliases: std::function<auto( int ) -> bool>.
-auto baz() -> int&; // *NOPAD*  //< **MUST** append `// *NOPAD*` to reference/pointer returns and `<=>` (astyle bug).
+auto baz() -> int&; // *NOPAD*  //< **MUST** append `// *NOPAD*` to reference/pointer returns and `<=>` in astyle files (`src/*.cpp`, `src/*.h`; astyle bug). Never in clang-format files (subdirectories, `tests/`).
 auto qux() -> int { return 42; } //< **MUST** use single-line functions and lambdas whenever possible.
 
 auto qux = my_struct{ .a = 1, .b = 2 }; //< **MUST** use designated initializers.

@@ -249,7 +249,7 @@ template <> auto string_id<stat_test_obj>::id() const -> int_id<stat_test_obj> {
     return stat_test_obj_factory.convert(*this, stat_int_id_null);
 }
 template <> int_id<stat_test_obj>::int_id(const string_id<stat_test_obj>& id): _id(id.id()) {}
-template <> auto string_id<stat_test_obj>::obj() const -> const stat_test_obj& { // *NOPAD*
+template <> auto string_id<stat_test_obj>::obj() const -> const stat_test_obj& {
     return stat_test_obj_factory.obj(*this);
 }
 

@@ -1376,9 +1376,7 @@ auto points_in_range(const mapgen_constructor& m) -> point_range<point_omt_ms> {
 
 auto random_point(
     const point_range<point_omt_ms>& range,
-    const std::function<bool(const point_omt_ms&)>& predicate)
-    -> std::optional<point_omt_ms> // *NOPAD*
-{
+    const std::function<bool(const point_omt_ms&)>& predicate) -> std::optional<point_omt_ms> {
     for (const auto unused : std::views::iota(0, 10)) {
         (void)unused;
         const auto p = point_omt_ms(
@@ -1392,9 +1390,7 @@ auto random_point(
 }
 
 auto random_point(
-    const mapgen_constructor& m,
-    const std::function<bool(const point_omt_ms&)>& predicate)
-    -> std::optional<point_omt_ms> // *NOPAD*
-{
+    const mapgen_constructor& m, const std::function<bool(const point_omt_ms&)>& predicate)
+    -> std::optional<point_omt_ms> {
     return random_point(points_in_range(m), predicate);
 }

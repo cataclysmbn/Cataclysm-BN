@@ -132,7 +132,7 @@ static void build_map_from_canvas(const map_helpers::canvas& canvas, const tripo
 //     5. Displace it into desired position
 static auto add_moving_vehicle(
     map& here, const std::string& veh_id, tripoint_bub_ms vehicle_pos, units::angle face_dir)
-    -> vehicle& { // *NOPAD*
+    -> vehicle& {
     tripoint_bub_ms initial_veh_pos(g_mapsize_x * 3 / 4, g_mapsize_y * 3 / 4, 0);
     vehicle* veh_ptr = here.add_vehicle(vproto_id(veh_id), initial_veh_pos, face_dir, 45, 0);
     REQUIRE(veh_ptr != nullptr);

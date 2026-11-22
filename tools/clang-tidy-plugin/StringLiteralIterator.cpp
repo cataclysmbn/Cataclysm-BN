@@ -76,7 +76,7 @@ auto StringLiteralIterator::operator!=(const StringLiteralIterator& rhs) const -
     return !operator==(rhs);
 }
 
-auto StringLiteralIterator::operator+=(ptrdiff_t inc) -> StringLiteralIterator& { // *NOPAD*
+auto StringLiteralIterator::operator+=(ptrdiff_t inc) -> StringLiteralIterator& {
     if (inc == 0) {
         return *this;
     } else if (inc > 0) {
@@ -108,7 +108,7 @@ auto StringLiteralIterator::operator+=(ptrdiff_t inc) -> StringLiteralIterator& 
     return *this;
 }
 
-auto StringLiteralIterator::operator-=(ptrdiff_t dec) -> StringLiteralIterator& { // *NOPAD*
+auto StringLiteralIterator::operator-=(ptrdiff_t dec) -> StringLiteralIterator& {
     return operator+=(-dec);
 }
 
@@ -122,9 +122,7 @@ auto StringLiteralIterator::operator-(ptrdiff_t dec) const -> StringLiteralItera
     return operator+(-dec);
 }
 
-auto StringLiteralIterator::operator++() -> StringLiteralIterator& {
-    return operator+=(1);
-} // *NOPAD*
+auto StringLiteralIterator::operator++() -> StringLiteralIterator& { return operator+=(1); }
 
 auto StringLiteralIterator::operator++(int) -> StringLiteralIterator {
     StringLiteralIterator ret = *this;
@@ -132,9 +130,7 @@ auto StringLiteralIterator::operator++(int) -> StringLiteralIterator {
     return ret;
 }
 
-auto StringLiteralIterator::operator--() -> StringLiteralIterator& {
-    return operator-=(1);
-} // *NOPAD*
+auto StringLiteralIterator::operator--() -> StringLiteralIterator& { return operator-=(1); }
 
 auto StringLiteralIterator::operator--(int) -> StringLiteralIterator {
     StringLiteralIterator ret = *this;

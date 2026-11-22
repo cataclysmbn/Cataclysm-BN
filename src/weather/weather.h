@@ -212,8 +212,8 @@ public:
     bool eternal_seasons = false;
 
     auto get_omt_weather_override(
-        const tripoint_abs_omt& location,
-        const time_point& when = calendar::turn) const -> const weather_type_id*; // *NOPAD*
+        const tripoint_abs_omt& location, const time_point& when = calendar::turn) const
+        -> const weather_type_id*;
     auto has_omt_weather_override(
         const tripoint_abs_omt& location, const time_point& when = calendar::turn) const -> bool;
     auto set_omt_weather_override(const omt_weather_override_options& opts) -> void;

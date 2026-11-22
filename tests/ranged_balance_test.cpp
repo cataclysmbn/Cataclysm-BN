@@ -43,8 +43,7 @@ private:
     double _chance;
 };
 
-template <class T>
-auto operator<<(std::ostream& os, const std::vector<T>& v) -> std::ostream& { // *NOPAD*
+template <class T> auto operator<<(std::ostream& os, const std::vector<T>& v) -> std::ostream& {
     os << "[";
     for (typename std::vector<T>::const_iterator ii = v.begin(); ii != v.end(); ++ii) {
         os << " " << *ii;
@@ -53,8 +52,7 @@ auto operator<<(std::ostream& os, const std::vector<T>& v) -> std::ostream& { //
     return os;
 }
 
-auto operator<<(std::ostream& stream, const dispersion_sources& sources)
-    -> std::ostream& { // *NOPAD*
+auto operator<<(std::ostream& stream, const dispersion_sources& sources) -> std::ostream& {
     if (!sources.normal_sources.empty()) { stream << "Normal: " << sources.normal_sources << '\n'; }
     if (!sources.linear_sources.empty()) { stream << "Linear: " << sources.linear_sources << '\n'; }
     if (!sources.multipliers.empty()) { stream << "Mult: " << sources.multipliers << '\n'; }

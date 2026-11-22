@@ -252,9 +252,7 @@ public:
     overmap(const point_abs_om& p, const dimension_id& dim_id = dimension_id());
     ~overmap();
 
-    auto get_dimension_id() const -> const dimension_id& { // *NOPAD*
-        return dimension_id_;
-    }
+    auto get_dimension_id() const -> const dimension_id& { return dimension_id_; }
 
     /**
      * Create content in the overmap.
