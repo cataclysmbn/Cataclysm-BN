@@ -260,6 +260,8 @@ jobs:
           path: ${{ steps.vcpkg-cache-dir.outputs.dir }}
           # Runner image updates can change the MSVC version and so the vcpkg ABI hashes.
           key: vcpkg-${{ matrix.artifact }}-${{ steps.vcpkg-cache-dir.outputs.image }}-${{ hashFiles('msvc-full-features/vcpkg.json', '.github/vcpkg_triplets/**') }}
+          # vcpkg rebuilds only the packages whose ABI hash changed, so an older image's cache still helps.
+          restore-keys: vcpkg-${{ matrix.artifact }}-
 
       - name: Install vcpkg
         if: runner.os == 'Windows'
