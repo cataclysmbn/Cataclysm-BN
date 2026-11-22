@@ -1,4 +1,5 @@
 #include "ranged.h"
+#include "ranged/aim_until_ready.h"
 
 #include "activity_actor_definitions.h"
 #include "animation.h"
@@ -2014,6 +2015,14 @@ static void do_aim( avatar &you, const item &relevant, const double min_recoil )
     }
 }
 
+auto ranged::aim_until_ready( avatar &you, const aim_until_ready_options &opts ) -> void
+{
+    while( you.moves > 0 && you.recoil > opts.threshold &&
+           you.recoil - opts.sight_dispersion > opts.min_recoil ) {
+        do_aim( you, opts.relevant, opts.min_recoil );
+    }
+}
+
 struct confidence_rating {
     double aim_level;
     char symbol;
@@ -3992,10 +4001,12 @@ bool target_ui::action_aim_and_shoot( const std::string &action )
     set_last_target();
     apply_aim_turning_penalty();
     const double min_recoil = ranged::calculate_aim_cap( *you, dst );
-    do {
-        do_aim( *you, relevant ? *relevant : null_item_reference(), min_recoil );
-    } while( you->moves > 0 && you->recoil > aim_threshold &&
-             you->recoil - sight_dispersion > min_recoil );
+    ranged::aim_until_ready( *you, {
+        .relevant = relevant ? *relevant : null_item_reference(),
+        .threshold = aim_threshold,
+        .sight_dispersion = sight_dispersion,
+        .min_recoil = min_recoil,
+    } );
 
     // If we made it under the aim threshold, go ahead and fire.
     // Also fire if we're at our best aim level already.
