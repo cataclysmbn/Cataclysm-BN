@@ -1,7 +1,6 @@
 #include "shadowcasting.h" // IWYU pragma: associated
 
 #include "cached_options.h"
-#include "cata_unreachable.h"
 #include "game_constants.h"
 #include "line.h"
 #include "map/lightmap.h"
@@ -17,6 +16,7 @@
 #include <cstdint>
 #include <cstring>
 #include <mutex>
+#include <utility>
 
 // ── four_quadrants ────────────────────────────────────────────────────────────
 
@@ -236,7 +236,7 @@ static void castLight(
             case quadrant::SW:
                 return p.x > 1 && p.y < sy - 1 && blocked_array[(p.x - 1) * sy + p.y + 1].ne;
             default:
-                cata::unreachable();
+                std::unreachable();
         }
     };
 
@@ -456,7 +456,7 @@ static void cast_zlight_segment(
             case quadrant::SW:
                 return p.x > 1 && p.y < bc.sy - 1 && bc.at(p.x - 1, p.y + 1).ne;
             default:
-                cata::unreachable();
+                std::unreachable();
         }
     };
 

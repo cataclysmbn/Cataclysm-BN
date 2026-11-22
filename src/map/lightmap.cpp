@@ -3,7 +3,6 @@
 #include "avatar.h"
 #include "cached_options.h"
 #include "calendar.h"
-#include "cata_unreachable.h"
 #include "cata_utility.h"
 #include "character.h"
 #include "coordinates.h"
