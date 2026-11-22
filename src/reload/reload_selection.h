@@ -12,7 +12,7 @@ struct selection_options {
     /** Ask the player to choose even when discovery finds only one option. */
     bool prompt = false;
     /** Filters passed to `reload::discover_ammo`. */
-    reload::discovery_options discovery;
+    reload::discovery_options discovery = {};
 };
 
 /** What the caller must do next with a `selection_result`. */
@@ -36,7 +36,7 @@ struct selection_result {
     /** Chosen option. Valid only when `outcome` is `automatic`. */
     item_reload_option selected{};
     /** Options for the player. Filled only when `outcome` is `interaction_required`. */
-    std::vector<item_reload_option> options;
+    std::vector<item_reload_option> options = {};
 };
 
 /**

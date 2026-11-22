@@ -12155,7 +12155,7 @@ void Character::place_corpse( const tripoint_abs_omt &om_target )
     detached_ptr<item> body = item::make_corpse( mtype_id::NULL_ID(), calendar::turn, name );
     for( auto &itm : tmp ) {
         get_mapbuffer().add_item_or_charges( fin, std::move( itm ), {
-            .lookup = mapbuffer_lookup_mode::load_or_generate,
+            .lookup = { .mode = mapbuffer_lookup_mode::load_or_generate },
         } );
     }
     for( const bionic &bio : get_bionic_collection() ) {
@@ -12164,7 +12164,7 @@ void Character::place_corpse( const tripoint_abs_omt &om_target )
         }
     }
     get_mapbuffer().add_item_or_charges( fin, std::move( body ), {
-        .lookup = mapbuffer_lookup_mode::load_or_generate,
+        .lookup = { .mode = mapbuffer_lookup_mode::load_or_generate },
     } );
 }
 
