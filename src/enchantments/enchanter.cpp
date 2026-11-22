@@ -365,13 +365,12 @@ void iexamine::enchanter(player& p, const tripoint_bub_ms& pos) {
     int index = enchanter::enchantment_selector_menu(infos, p, *to_ench);
     if (index != -1) {
         auto info = infos[index];
-        int moves =
+        const auto moves =
             to_moves<int>(info.time_to_enchant)
             * std::max(
                 1,
                 (info.volume_time_effect ? int(to_ench->base_volume() / info.volume_per_time) : 1));
-        p.assign_activity(
-            std::make_unique<player_activity>(std::make_unique<enchant_activity_actor>(
-                *to_ench, furn_id.id(), info.id, to_moves<int>(info.time_to_enchant))));
+        p.assign_activity(std::make_unique<player_activity>(
+            std::make_unique<enchant_activity_actor>(*to_ench, furn_id.id(), info.id, moves)));
     }
 }
