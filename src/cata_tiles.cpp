@@ -5937,7 +5937,7 @@ bool cata_tiles::draw_critter_at( const tripoint_bub_ms &p, lit_level ll, int &h
                                   const bool ( &invisible )[5], int z_drop )
 {
     ZoneScoped;
-    bool result;
+    bool result = false;
     bool is_player;
     bool sees_player;
     Attitude attitude;
@@ -6117,18 +6117,11 @@ bool cata_tiles::draw_zombie_revival_indicators( const tripoint_bub_ms &pos, con
     if( tileset_ptr->find_tile_type( ZOMBIE_REVIVAL_INDICATOR ) && !invisible[0] &&
         !item_override.contains( pos ) && here.could_see_items( tripoint_bub_ms( pos ), g->u ) ) {
 
-        const auto i_at = [&]( const tripoint_bub_ms & p ) -> const location_vector<item>& { // *NOPAD*
-            std::optional<mapbuffer_abs_tile_view> tile = here.get_tile_view_at( p );
-            if( !tile )
-            {
-                return {};
-            } else
-            {
-                return tile->get_items();
-            }
-        };
-
-        for( auto &i : i_at( pos ) ) {
+        const auto tile = here.get_tile_view_at( pos );
+        if( !tile ) {
+            return false;
+        }
+        for( auto &i : tile->get_items() ) {
             if( i->is_corpse() ) {
                 if( i->can_revive() || ( i->get_mtype()->zombify_into && !i->has_flag( flag_PULPED ) ) ) {
                     const tile_search_params tile { ZOMBIE_REVIVAL_INDICATOR, C_NONE, empty_string, 0, 0 };
