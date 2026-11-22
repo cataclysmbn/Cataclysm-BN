@@ -684,6 +684,7 @@
       "pet": "The %s allows you to stroke its fur.",
       "tamer_traits": [ [ "THRESH_FELINE" ] ]
     },
+	"fungalize_into": "mon_fungal_cougar",
     "pet_training": { "hp_mult": 1.25, "melee_mult": 1.25, "dodge_mult": 1.2, "max_level": 4, "min_skill": 4 },
     "flags": [
       "SEES",
