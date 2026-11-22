@@ -1387,7 +1387,6 @@ int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int max_sho
         // Iterate over every damage type
         for( auto &projectile_damage : projectile.impact ) {
             int base_damage = projectile_damage.amount;
-            int base_penetrate = projectile_damage.res_pen;
             int ench_damage_bonus = who.bonus_from_enchantments( base_damage,
                                     enchantment_value_id( "RANGED_DAMAGE_" + projectile_damage.get_internal_name() ) );
             int ench_penetrate_bonus = who.bonus_from_enchantments( base_damage,
@@ -1844,7 +1843,6 @@ dealt_projectile_attack throw_item( Character &who, const tripoint_bub_ms &targe
     const int move_cost = ranged::throw_cost( who, thrown );
     who.mod_moves( -move_cost );
 
-    const int throwing_skill = who.get_skill_level( skill_throw );
     const units::volume volume = thrown.volume();
     const units::mass weight = thrown.weight();
 

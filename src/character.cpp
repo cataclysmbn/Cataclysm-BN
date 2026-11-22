@@ -9986,7 +9986,6 @@ void Character::on_hit( Creature *source, bodypart_id bp_hit,
     }
 
     bool u_see = g->u.sees( *this );
-    units::energy trigger_cost = bio_shock->power_trigger;
     if( has_active_bionic( bio_shock ) && get_power_level() >= bio_shock->power_trigger ) {
         if( is_player() ) {
             add_msg( m_good, _( "Your electroshock unit shocks %s in mid-attack!" ),

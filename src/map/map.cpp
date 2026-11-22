@@ -7781,7 +7781,6 @@ void map::loadn(const tripoint_bub_sm& grid, const bool update_vehicles, const b
     ZoneValue(static_cast<uint64_t>(grid.z() + OVERMAP_DEPTH));
 
     const auto grid_abs_sub = map_local_to_abs(*this, tripoint_bub_sm(grid));
-    auto& dim_buf = MAPBUFFER_REGISTRY.get(bound_dimension_);
 
     // For out-of-bounds areas in bounded dimensions, use uniform boundary terrain
     // submaps instead of nullptr.  We check in-memory only (no DB lookup) because
@@ -8586,10 +8585,6 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
     auto normalize_gpu_dirty_levels = [](auto& levels) {
         std::ranges::sort(levels);
         levels.erase(std::ranges::unique(levels).begin(), levels.end());
-    };
-    auto level_has_vehicle_floor = [](const level_cache& ch) {
-        ZoneScopedN("Level_Has_Vehicle_Floor");
-        return ch.has_any_vehicle_floor;
     };
 
     // Refresh the shared weather-transparency lookup table once, serially,

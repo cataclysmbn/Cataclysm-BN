@@ -424,7 +424,7 @@ static auto mx_helicopter(mapgen_constructor& m, const tripoint_abs_omt& abs_off
     if (!wreckage) { debugmsg("Map extra helicopter failed to spawn at ( %s, %s ).", x1, y1); }
 
     // During mapgen, m is the constructor surface while vpart_position::pos() uses get_map().
-    const auto local_part_pos = [&m](const vehicle& wreckage, const vpart_reference& vp) {
+    const auto local_part_pos = [](const vehicle& wreckage, const vpart_reference& vp) {
         return project_remain<coords::omt>(wreckage.abs_part_location(vp.part())).remainder;
     };
 
@@ -604,7 +604,7 @@ static auto mx_aircraft(mapgen_constructor& m, const tripoint_abs_omt& abs_offse
     if (!wreckage) { debugmsg("Map extra aircraft failed to spawn at ( %s, %s ).", x1, y1); }
 
     // During mapgen, m is the constructor surface while vpart_position::pos() uses get_map().
-    const auto local_part_pos = [&m](const vehicle& wreckage, const vpart_reference& vp) {
+    const auto local_part_pos = [](const vehicle& wreckage, const vpart_reference& vp) {
         return project_remain<coords::omt>(wreckage.abs_part_location(vp.part())).remainder;
     };
 

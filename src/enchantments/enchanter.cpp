@@ -156,7 +156,6 @@ auto enchantment_selector_menu(std::vector<enchant_info> options, Character& use
     auto crafting_inv = user.crafting_inventory(true);
     int width = 0;
     int height = 0;
-    int item_info_width = 0;
     catacurses::window w_ench;
     catacurses::window w_info;
     ui_adaptor ui;
@@ -214,7 +213,6 @@ auto enchantment_selector_menu(std::vector<enchant_info> options, Character& use
             info_lines = total_lines;
             info_scroll_max = std::min(total_lines, info_scroll + height);
             for (int i = info_scroll; i < info_scroll_max; ++i) {
-                auto dummy = c_white;
                 trim_and_print(w_info, point(2, i - info_scroll + 1), width, c_white, info[i]);
             }
 

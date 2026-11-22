@@ -56,7 +56,6 @@ static auto find_valid_teleporters_omt(const tripoint_abs_omt& omt_pt)
     // this is the top left hand square of the global absolute coordinate
     // of the overmap terrain we want to try to teleport to.
     // an OMT is SEEX * SEEY in size
-    const auto sm_pt = project_to<coords::sm>(omt_pt.xy());
     mapbuffer& buf = get_map().get_mapbuffer();
     auto omt_view = buf.get_abs_omt_view(omt_pt, {.mode = mapbuffer_lookup_mode::load_from_disk});
 

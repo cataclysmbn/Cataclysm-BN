@@ -2542,7 +2542,6 @@ void map::build_seen_cache(const tripoint_bub_ms& origin, const int target_z) {
             blocked_restore_cache);
     }
 
-    const auto remote_vehicle = g->remoteveh();
     tripoint_bub_ms cam_pos = new_origin;
     bool requires_camera = true;
     if (const auto remote_vehicle = g->remoteveh()) {

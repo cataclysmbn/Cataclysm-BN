@@ -3434,7 +3434,7 @@ auto mapbuffer::run_omt_pillar_post_pass(const point_abs_omt& omt_pos) -> void {
         point_sm_ms local;
         ter_id desired;
     };
-    const auto ensure_vertical_transition_link =
+    [[maybe_unused]] const auto ensure_vertical_transition_link =
         [&](const vertical_transition_link_request& request) {
             auto* const target_sm = lookup_submap_in_memory(request.target_pos);
             if (target_sm == nullptr

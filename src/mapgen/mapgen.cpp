@@ -5578,14 +5578,6 @@ auto map::add_vehicle(
     const std::variant<vgroup_id, vproto_id>& type_, const tripoint_bub_ms& p,
     const units::angle dir, const int veh_fuel, const int veh_status, const bool merge_wrecks,
     std::optional<bool> locked, std::optional<bool> has_keys) -> vehicle* {
-    constexpr auto pos_selector = []<typename T>(const T& v, int z) -> tripoint_bub_ms {
-        if constexpr (std::is_same_v<T, point_bub_ms>) {
-            return tripoint_bub_ms(v, z);
-        } else {
-            return v;
-        }
-    };
-
     constexpr auto type_selector = []<typename T>(const T& v) -> vproto_id {
         if constexpr (std::is_same_v<T, vgroup_id>) {
             return v.obj().pick();

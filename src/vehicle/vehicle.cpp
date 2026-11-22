@@ -123,7 +123,6 @@ static const flag_id f_VEHICLE_NO_HOTWIRE("VEHICLE_NO_HOTWIRE");
 static const flag_id f_VEHICLE_HOTWIRE("VEHICLE_HOTWIRE");
 
 static const std::string str_DOOR_LOCKING("DOOR_LOCKING");
-static const std::string str_OPENCLOSE_INSIDE("OPENCLOSE_INSIDE");
 static const std::string str_PERPETUAL("PERPETUAL");
 constexpr auto battery_charge_bucket_count = 101;
 
@@ -5187,7 +5186,6 @@ auto vehicle::total_solar_epower_w() const -> int {
 }
 
 auto vehicle::total_wind_epower_w() const -> int {
-    map& here = get_map();
     const oter_id& cur_om_ter =
         get_overmapbuffer(dimension_id_).ter(project_to<coords::omt>(abs_ms_location()));
     const weather_manager& weather = get_weather();
