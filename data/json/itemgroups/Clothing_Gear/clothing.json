@@ -734,7 +734,7 @@
       {
         "distribution": [
           { "collection": [ { "group": "clothing_work_pants" }, { "group": "clothing_work_torso" } ], "prob": 75 },
-          { "item": "jumpsuit", "prob": 25 }
+          { "distribution": [ { "item": "jumpsuit", "prob": 50 }, { "item": "overalls", "prob": 50 } ], "prob": 25 }
         ]
       }
     ]
@@ -777,6 +777,7 @@
       [ "boots_steel", 50 ],
       [ "fishing_waders", 20 ],
       [ "jumpsuit", 20 ],
+      [ "overalls", 20 ],
       [ "apron_leather", 20 ],
       [ "mask_filter", 20 ],
       [ "hat_hard", 50 ],
@@ -2413,6 +2414,7 @@
       { "item": "boots_steel", "prob": 50 },
       { "item": "boots_hiking", "prob": 10 },
       { "item": "jumpsuit", "prob": 20 },
+      { "item": "overalls", "prob": 20 },
       { "item": "gloves_rubber", "prob": 20 },
       { "item": "gloves_leather", "prob": 45 },
       { "item": "gloves_work", "prob": 45 },

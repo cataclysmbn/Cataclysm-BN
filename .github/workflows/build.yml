@@ -171,8 +171,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           CDDA_TILESETS_REPO: I-am-Erk/CDDA-Tilesets
-          CDDA_TILESETS_RELEASE: "2026-05-03"
-          CDDA_TILESETS: UltimateCataclysm ChibiUltica
+          CDDA_TILESETS_RELEASE: "2026-03-29"
+          CDDA_TILESETS: UltimateCataclysm ChibiUltica Ultica_iso
         shell: bash
         run: |
           set -euo pipefail
@@ -196,7 +196,7 @@ jobs:
 
           Source repository: https://github.com/I-am-Erk/CDDA-Tilesets
           Source release: https://github.com/I-am-Erk/CDDA-Tilesets/releases/tag/2026-05-03
-          Bundled assets: UltimateCataclysm.zip, ChibiUltica.zip
+          Bundled assets: UltimateCataclysm.zip, ChibiUltica.zip, Ultica_iso.zip
 
           The CDDA-Tilesets repository states that Cataclysm: Dark Days Ahead and
           the Ultimate Cataclysm tileset are volunteer contributions under the
@@ -265,14 +265,15 @@ jobs:
 
       - name: Setup ccache (Windows)
         if: runner.os == 'Windows'
-        uses: hendrikmuhs/ccache-action@v1.2
+        # v1.2.20 installs ccache 4.9. With ccache 4.13, MSVC fails on test files that use a PCH (error C1010).
+        uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2.20
         with:
-          # Build mode changes MSVC compiler inputs.
-          key: windows-${{ matrix.artifact }}-${{ inputs.mode }}-${{ github.ref_name }}
+          # Build mode changes MSVC compiler inputs. Change the ccache version in the key together with the action.
+          key: windows-ccache4.9-${{ matrix.artifact }}-${{ inputs.mode }}-${{ github.ref_name }}
           restore-keys: |
-            windows-${{ matrix.artifact }}-${{ inputs.mode }}-${{ github.ref_name }}
-            windows-${{ matrix.artifact }}-${{ inputs.mode }}-main
-            windows-${{ matrix.artifact }}-${{ inputs.mode }}-
+            windows-ccache4.9-${{ matrix.artifact }}-${{ inputs.mode }}-${{ github.ref_name }}
+            windows-ccache4.9-${{ matrix.artifact }}-${{ inputs.mode }}-main
+            windows-ccache4.9-${{ matrix.artifact }}-${{ inputs.mode }}-
           max-size: 3G
           verbose: 2
           save: ${{ github.event_name != 'pull_request' }}

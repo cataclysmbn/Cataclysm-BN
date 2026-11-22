@@ -963,6 +963,7 @@
     "placate_triggers": [ "MEAT" ],
     "death_function": [ "NORMAL" ],
     "death_drops": "mon_dog_death_drops",
+    "fungalize_into": "mon_fungal_dog",
     "petfood": {
       "food": [ "DOGFOOD" ],
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",

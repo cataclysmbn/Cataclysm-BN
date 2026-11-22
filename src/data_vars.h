@@ -11,6 +11,10 @@ namespace data_vars
 template<typename T>
 using type_converter_t = typename type_converter<T>::type;
 
+static const std::string TINT_COLOR_VAR_NAME( "tint_color" );
+static const std::string TINT_COLOR_FG_VAR_NAME( "tint_color_fg" );
+static const std::string TINT_COLOR_BG_VAR_NAME( "tint_color_bg" );
+
 class data_set
 {
     public:
@@ -108,6 +112,12 @@ class data_set
         void clear() { _data.clear(); }
         void erase( const key_type &name ) { _data.erase( name ); }
         void erase( const iterator it ) { _data.erase( it ); }
+        /// Erases data var colors, this is universal enough that it was included
+        void erase_color_vars() {
+            _data.erase( TINT_COLOR_FG_VAR_NAME );
+            _data.erase( TINT_COLOR_BG_VAR_NAME );
+            _data.erase( TINT_COLOR_VAR_NAME );
+        }
 
     private:
         storage _data;

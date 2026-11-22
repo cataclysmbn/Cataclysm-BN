@@ -1684,7 +1684,7 @@
       "both": {
         "items": [
           "tank_top",
-          "jeans",
+          "overalls",
           "socks",
           "gloves_work",
           "boots",
@@ -9503,6 +9503,47 @@
       },
       "male": [ "boxer_shorts", "undershirt" ],
       "female": [ "bra", "panties" ]
+    }
+  },
+  {
+    "type": "profession",
+    "id": "tf2_engineer",
+    "name": "Corporate Security Engineer",
+    "description": "You worked the private sector for years, doing everything from construction in far-flung locations to personally designing autonomous security networks.  You've planned jobsites around corporate espionage, competitors hiring rival contractors to commit sabotage, and worse.  Your latest contract, a hands-on job as a foreman at an old gravel quarry, ended when the workers didn't show up, and a rival company's mercenaries turned up as shambling corpses instead of saboteurs.",
+    "points": 7,
+    "age": { "min": 30, "max": 60 },
+    "skills": [
+      { "level": 4, "name": "fabrication" },
+      { "level": 4, "name": "mechanics" },
+      { "level": 4, "name": "electronics" },
+      { "level": 4, "name": "computer" },
+      { "level": 2, "name": "gun" },
+      { "level": 2, "name": "shotgun" }
+    ],
+    "items": {
+      "both": {
+        "items": [
+          "hat_hard",
+          "gloves_rubber",
+          "undershirt",
+          "longshirt",
+          "overalls",
+          "socks",
+          "boots_steel",
+          "knee_pads",
+          "goggles_welding"
+        ],
+        "entries": [
+          { "item": "bot_turret_mini", "custom-flags": [ "auto_wield" ] },
+          { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
+          { "item": "mossberg_500", "ammo-item": "shot_00", "charges": 6, "contents-item": "shoulder_strap" },
+          { "item": "bandolier_shotgun", "contents-group": "bandolier_shotgun_hunter" },
+          { "item": "wrench" },
+          { "item": "22_lr", "charges": 50 }
+        ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "sports_bra", "boxer_shorts" ]
     }
   }
 ]

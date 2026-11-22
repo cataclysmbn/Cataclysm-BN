@@ -1,0 +1,14 @@
+[
+  {
+    "type": "mod_tileset",
+    "compatibility": [ "UNDEAD_PEOPLE_BASE", "UNDEAD_PEOPLE" ],
+    "tiles-new": [
+      {
+        "file": "external_tileset/extra_monsters.png",
+        "tiles": [ { "id": "mon_fungal_dog", "fg": 0, "rotates": false } ],
+        "sprite_width": 32,
+        "sprite_height": 32
+      }
+    ]
+  }
+]

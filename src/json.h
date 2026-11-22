@@ -10,6 +10,7 @@
 #include <stdexcept>
 #include <string>
 #include <type_traits>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 #include <optional>
@@ -170,9 +171,18 @@ struct number_sci_notation {
 class JsonIn
 {
     private:
+        /// Where an already skipped object or array ends.
+        struct skipped_value {
+            int end = 0;
+            bool ate_separator = false;
+        };
+
         std::istream *stream;
         shared_ptr_fast<std::string> path;
         bool ate_separator = false;
+        /// Objects and arrays skipped so far, keyed by start offset. Indexing a nested JsonObject
+        /// skips values its parent already skipped, so this avoids rescanning them.
+        std::unordered_map<int, skipped_value> skipped_values;
 
         void skip_separator();
         void skip_pair_separator();
@@ -924,20 +934,31 @@ class JsonOut
  * the JsonObject is destroyed.  Calling str() also suppresses it (on the basis
  * that you may be intending to re-parse that string later).
  */
+/// Name and stream offset of a JSON object member value.
+struct json_member_position {
+    std::string name;
+    int offset = 0;
+};
+
 class JsonObject
 {
     private:
-        std::map<std::string, int> positions;
+        /// Members sorted by name, matching the iteration order of the former std::map.
+        std::vector<json_member_position> positions;
         int start;
         int end_;
         bool final_separator = false;
 #ifndef CATA_IN_TOOL
-        mutable std::set<std::string> visited_members;
+        /// Parallel to `positions`.
+        mutable std::vector<bool> visited_members;
         mutable bool report_unvisited_members = true;
         mutable bool reported_unvisited_members = false;
 #endif
         void mark_visited( const std::string &name ) const;
+        void mark_visited_at( size_t index ) const;
         void report_unvisited() const;
+        auto find_member( const std::string &name ) const ->
+        std::vector<json_member_position>::const_iterator;
 
         JsonIn *jsin;
         int verify_position( const std::string &name,
@@ -977,6 +998,8 @@ class JsonObject
         JsonIn *get_raw( const std::string &name ) const;
         JsonValue get_member( const std::string &name ) const;
         json_source_location get_source_location() const;
+        /// Location of a member value without indexing it. The member must exist.
+        auto get_member_source_location( const std::string &name ) const -> json_source_location;
 
         // values by name
         // variants with no fallback throw an error if the name is not found.
@@ -1408,8 +1431,8 @@ class JsonObject::const_iterator
             return *this;
         }
         JsonMember operator*() const {
-            object_.mark_visited( iter_->first );
-            return JsonMember( iter_->first, JsonValue( *object_.jsin, iter_->second ) );
+            object_.mark_visited_at( static_cast<size_t>( iter_ - object_.positions.begin() ) );
+            return JsonMember( iter_->name, JsonValue( *object_.jsin, iter_->offset ) );
         }
 
         friend bool operator==( const const_iterator &lhs, const const_iterator &rhs ) {

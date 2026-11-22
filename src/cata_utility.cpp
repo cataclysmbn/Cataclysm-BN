@@ -16,6 +16,7 @@
 #include "enum_conversions.h"
 #include "filesystem.h"
 #include "json.h"
+#include "utils/memory_stream.h"
 #include "options.h"
 #include "output.h"
 #include "rng.h"
@@ -556,7 +557,11 @@ bool read_from_file( const std::string &path, file_read_fn reader, bool optional
 bool read_from_file_json( const std::string &path, file_read_json_fn reader, bool optional )
 {
     return read_from_file( path, [&]( std::istream & fin ) {
-        JsonIn jsin( fin, path );
+        // Parse from memory: JsonIn seeks and tells a lot, which is slow on file streams.
+        auto buffer = std::ostringstream{};
+        buffer << fin.rdbuf();
+        auto contents = memory_istream( std::move( buffer ).str() );
+        JsonIn jsin( contents, path );
         reader( jsin );
     }, optional );
 }

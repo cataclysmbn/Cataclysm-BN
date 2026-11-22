@@ -72,7 +72,14 @@
           { "id": "mon_talon_m2hb", "fg": 52 },
           { "id": [ "bot_talon_m2hb", "overlay_wielded_bot_talon_m2hb" ], "fg": 53 },
           { "id": [ "broken_talon_m2hb", "overlay_wielded_broken_talon_m2hb" ], "fg": 54 },
-          { "id": "mon_hallu_hatman", "fg": 55 }
+          { "id": "mon_hallu_hatman", "fg": 55 },
+          {
+            "id": "mon_turret_mini",
+            "fg": [ { "weight": 30, "sprite": 56 }, { "weight": 30, "sprite": 57 } ],
+            "animated": true
+          },
+          { "id": [ "bot_turret_mini", "overlay_wielded_bot_turret_mini" ], "fg": 58 },
+          { "id": [ "broken_turret_mini", "overlay_wielded_broken_turret_mini" ], "fg": 59 }
         ],
         "sprite_width": 64,
         "sprite_height": 80,

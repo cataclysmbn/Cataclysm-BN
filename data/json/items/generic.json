@@ -3422,6 +3422,17 @@
   },
   {
     "type": "GENERIC",
+    "id": "broken_turret_mini",
+    "symbol": ",",
+    "color": "green",
+    "name": { "str": "broken mini turret" },
+    "weight": "5 kg",
+    "volume": "5 L",
+    "copy-from": "broken_turret",
+    "looks_like": "broken_turret_light"
+  },
+  {
+    "type": "GENERIC",
     "id": "broken_turret_light",
     "symbol": ",",
     "color": "green",

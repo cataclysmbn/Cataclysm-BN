@@ -2045,7 +2045,7 @@
   {
     "type": "effect_type",
     "id": "toxin_buildup",
-    "name": [ "", "Weird feeling", "Otherwordly feeling", "Mutagenic cascade" ],
+    "name": [ "", "Weird feeling", "Otherworldly feeling", "Mutagenic cascade" ],
     "desc": [
       "",
       "You don't feel entirely like yourself.",

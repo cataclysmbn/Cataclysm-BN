@@ -208,5 +208,15 @@
     "min_cycle_recoil": 39,
     "magazine_well": "250 ml",
     "magazines": [ [ "22", [ "wp22mag" ] ] ]
+  },
+  {
+    "id": "22_turret_fake",
+    "copy-from": "walther_p22",
+    "type": "GUN",
+    "name": { "str_sp": "Walther P22" },
+    "description": "If you see it - it is bug!",
+    "modes": [ [ "DEFAULT", "semi", 1 ] ],
+    "clip_size": 50,
+    "magazines": [  ]
   }
 ]
