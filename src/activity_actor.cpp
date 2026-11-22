@@ -253,11 +253,6 @@ void aim_activity_actor::finish( player_activity &act, Character &who )
         return;
     }
 
-    if( ranged::targetable_creatures( who, weapon->gun_range( &who ) ).empty() ) {
-        restore_view();
-        return;
-    }
-
     // re-enter aiming UI with same parameters
     std::unique_ptr<aim_activity_actor> aim_actor = std::make_unique<aim_activity_actor>();
     aim_actor->abort_if_no_targets = true;

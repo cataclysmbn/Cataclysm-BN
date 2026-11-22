@@ -2017,10 +2017,10 @@ static void do_aim( avatar &you, const item &relevant, const double min_recoil )
 
 auto ranged::aim_until_ready( avatar &you, const aim_until_ready_options &opts ) -> void
 {
-    do {
+    while( you.moves > 0 && you.recoil > opts.threshold &&
+           you.recoil - opts.sight_dispersion > opts.min_recoil ) {
         do_aim( you, opts.relevant, opts.min_recoil );
-    } while( you.moves > 0 && you.recoil > opts.threshold &&
-             you.recoil - opts.sight_dispersion > opts.min_recoil );
+    }
 }
 
 struct confidence_rating {
