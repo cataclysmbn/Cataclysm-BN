@@ -23,6 +23,11 @@ on:
         required: false
         type: string
         default: ""
+      shader-artifact:
+        description: "Name of a generated-shaders artifact that the caller already uploaded in this run (empty generates one)"
+        required: false
+        type: string
+        default: ""
       matrix-json:
         description: "Build matrix include entries as JSON"
         required: false
@@ -107,10 +112,12 @@ env:
 jobs:
   shader-artifacts:
     name: Generate shader artifacts
+    if: inputs.shader-artifact == ''
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
         with:
+          persist-credentials: false
           ref: ${{ inputs.checkout-ref }}
 
       - name: Build shadercross
@@ -129,6 +136,8 @@ jobs:
 
   builds:
     needs: shader-artifacts
+    # Without this condition, GitHub skips this job when the caller gives the shaders and skips shader-artifacts.
+    if: ${{ !cancelled() && needs.shader-artifacts.result != 'failure' }}
     strategy:
       fail-fast: false
       matrix:
@@ -139,12 +148,13 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
+          persist-credentials: false
           ref: ${{ inputs.checkout-ref }}
 
       - name: Download generated shaders
         uses: actions/download-artifact@v7
         with:
-          name: generated-shaders-${{ fromJSON(inputs.matrix-json)[0].artifact }}
+          name: ${{ inputs.shader-artifact || format('generated-shaders-{0}', fromJSON(inputs.matrix-json)[0].artifact) }}
           path: data/shaders
 
       - name: Download translation artifacts
@@ -154,7 +164,7 @@ jobs:
           name: translations
           path: .
 
-      - uses: denoland/setup-deno@v2
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
 
       - name: Create VERSION.TXT
         shell: bash
@@ -212,13 +222,13 @@ jobs:
       # Windows MSVC setup
       - name: Setup MSVC environment
         if: runner.os == 'Windows'
-        uses: ilammy/msvc-dev-cmd@v1
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1
         with:
           arch: x64
 
       - name: Setup msys2 (windows msvc)
         if: runner.os == 'Windows'
-        uses: msys2/setup-msys2@v2
+        uses: msys2/setup-msys2@3c51bf698df1e37b2261f53cb67797b97761185c # v2
         with:
           msystem: mingw64
           install: gettext
@@ -230,7 +240,7 @@ jobs:
 
       - name: Install stable CMake
         if: runner.os == 'Windows'
-        uses: lukka/get-cmake@v4.3.0
+        uses: lukka/get-cmake@b78306120111dc2522750771cfd09ee7ca723687 # v4.3.0
         with: { cmakeVersion: 3.31.6 }
 
       # vcpkg removed its x-gha backend. Keep binary packages in a files cache instead.
@@ -252,10 +262,12 @@ jobs:
           path: ${{ steps.vcpkg-cache-dir.outputs.dir }}
           # Runner image updates can change the MSVC version and so the vcpkg ABI hashes.
           key: vcpkg-${{ matrix.artifact }}-${{ steps.vcpkg-cache-dir.outputs.image }}-${{ hashFiles('msvc-full-features/vcpkg.json', '.github/vcpkg_triplets/**') }}
+          # vcpkg rebuilds only the packages whose ABI hash changed, so an older image's cache still helps.
+          restore-keys: vcpkg-${{ matrix.artifact }}-
 
       - name: Install vcpkg
         if: runner.os == 'Windows'
-        uses: lukka/run-vcpkg@main
+        uses: lukka/run-vcpkg@d4e6061274d7ffb3e33694898aed9fb6ece66310 # main
         id: runvcpkg
         with:
           vcpkgDirectory: "${{ github.workspace }}/../b/vcpkg"
@@ -269,7 +281,7 @@ jobs:
         # v1.2.20 installs ccache 4.9. With ccache 4.13, MSVC fails on test files that use a PCH (error C1010).
         uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2.20
         with:
-          # Build mode changes MSVC compiler inputs. Change the ccache version in the key together with the action.
+          # Build mode changes MSVC compiler inputs. Change the ccache version in the key and in "Delete old ccache copy" together with the action.
           key: windows-ccache4.9-${{ matrix.artifact }}-${{ inputs.mode }}-${{ github.ref_name }}
           restore-keys: |
             windows-ccache4.9-${{ matrix.artifact }}-${{ inputs.mode }}-${{ github.ref_name }}
@@ -298,7 +310,7 @@ jobs:
 
       - name: Setup LLVM build tools (Linux)
         if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')
-        uses: aminya/setup-cpp@v1
+        uses: aminya/setup-cpp@15a6bd8cf39030f88b5da3d203a829ec4eea4955 # v1
         with:
           compiler: llvm-${{ env.LLVM_VERSION }}
           cmake: true
@@ -327,7 +339,7 @@ jobs:
 
       - name: Setup ccache (Linux)
         if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')
-        uses: hendrikmuhs/ccache-action@v1.2
+        uses: hendrikmuhs/ccache-action@e91f31892a1d1b8c44424b1a94c0b7f52d337168 # v1.2
         with:
           key: ${{ matrix.artifact }}-${{ github.ref_name }}
           restore-keys: |
@@ -352,7 +364,7 @@ jobs:
 
       - name: Setup C++ build tools (mac)
         if: runner.os == 'macOS'
-        uses: aminya/setup-cpp@v1
+        uses: aminya/setup-cpp@15a6bd8cf39030f88b5da3d203a829ec4eea4955 # v1
         with:
           compiler: apple-clang
           cmake: true
@@ -361,7 +373,7 @@ jobs:
 
       - name: Setup ccache (mac)
         if: runner.os == 'macOS'
-        uses: hendrikmuhs/ccache-action@v1.2
+        uses: hendrikmuhs/ccache-action@e91f31892a1d1b8c44424b1a94c0b7f52d337168 # v1.2
         with:
           key: ${{ matrix.artifact }}-${{ github.ref_name }}
           restore-keys: |
@@ -379,7 +391,7 @@ jobs:
       # Build with CMake (Linux)
       - name: Configure and Build with CMake (Linux)
         if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')
-        uses: lukka/run-cmake@v10
+        uses: lukka/run-cmake@5d55ea7949e25f69f0ecb516d8d572297e03a956 # v10
         with:
           configurePreset: ${{ matrix.tiles && 'dist-tiles' || 'dist-curses' }}
           configurePresetAdditionalArgs: ${{ inputs.run-tests && '["-DCATA_FORMAT_TARGETS=OFF", "-DTESTS=ON"]' || '["-DCATA_FORMAT_TARGETS=OFF"]' }}
@@ -387,7 +399,7 @@ jobs:
 
       - name: Setup EmmyLua checker
         if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64'
-        uses: scarf005/emmylua_check_action@v1.0.3
+        uses: scarf005/emmylua_check_action@c649f22256fc0d39e7abd7d9728b1efd7fab03a7 # v1.0.3
         with:
           version: ${{ env.EMMYLUA_CHECK_VERSION }}
           token: ${{ github.token }}
@@ -596,7 +608,7 @@ jobs:
 
       - name: Configure and Build with CMake (macOS)
         if: runner.os == 'macOS'
-        uses: lukka/run-cmake@v10
+        uses: lukka/run-cmake@5d55ea7949e25f69f0ecb516d8d572297e03a956 # v10
         with:
           configurePreset: ${{ matrix.preset }}
           configurePresetAdditionalArgs: ${{ inputs.run-tests && '["-DCATA_FORMAT_TARGETS=OFF", "-DTESTS=ON"]' || '["-DCATA_FORMAT_TARGETS=OFF"]' }}
@@ -664,7 +676,7 @@ jobs:
 
       - name: Setup C++ build tools (android host)
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
-        uses: aminya/setup-cpp@v1
+        uses: aminya/setup-cpp@15a6bd8cf39030f88b5da3d203a829ec4eea4955 # v1
         with:
           cmake: true
           ninja: true
@@ -676,7 +688,7 @@ jobs:
 
       - name: Setup ccache (android)
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
-        uses: hendrikmuhs/ccache-action@v1.2
+        uses: hendrikmuhs/ccache-action@e91f31892a1d1b8c44424b1a94c0b7f52d337168 # v1.2
         with:
           key: ${{ matrix.artifact }}-${{ github.ref_name }}
           restore-keys: |
@@ -887,10 +899,22 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
+      # Delete the old ccache copy before the post step saves the new one.
+      # Two copies of every cache do not fit in the 10 GB limit, and GitHub then evicts other caches.
+      - name: Delete old ccache copy
+        if: github.event_name == 'push'
+        continue-on-error: true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PREFIX: ccache-${{ runner.os == 'Windows' && format('windows-ccache4.9-{0}-{1}', matrix.artifact, inputs.mode) || matrix.artifact }}-${{ github.ref_name }}-
+        run: gh cache list --ref "$GITHUB_REF" --key "$PREFIX" --json id --jq '.[].id' | xargs -r -n1 gh cache delete
+
   # Split Windows tests over several runners. One runner takes about 16 min for all shards.
   windows-tests:
     needs: builds
-    if: inputs.run-tests && inputs.windows-test-groups != '[]'
+    if: ${{ !cancelled() && needs.builds.result == 'success' && inputs.run-tests && inputs.windows-test-groups != '[]' }}
     strategy:
       fail-fast: false
       matrix:
@@ -900,12 +924,13 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
+          persist-credentials: false
           ref: ${{ inputs.checkout-ref }}
 
       - name: Download generated shaders
         uses: actions/download-artifact@v7
         with:
-          name: generated-shaders-${{ fromJSON(inputs.matrix-json)[0].artifact }}
+          name: ${{ inputs.shader-artifact || format('generated-shaders-{0}', fromJSON(inputs.matrix-json)[0].artifact) }}
           path: data/shaders
 
       - name: Download test executable
@@ -914,7 +939,7 @@ jobs:
           name: cata-test-${{ fromJSON(inputs.matrix-json)[0].artifact }}
           path: out/build/windows-tiles-sounds-x64-msvc/tests
 
-      - uses: denoland/setup-deno@v2
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
 
       - name: Run sharded tests
         shell: pwsh
