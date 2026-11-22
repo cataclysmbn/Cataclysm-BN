@@ -18,6 +18,7 @@
 #include "visitable.h"
 
 #include <optional>
+#include <utility>
 #include <vector>
 
 namespace
@@ -183,4 +184,5 @@ std::string io::enum_to_string<character_value::hardcode_character_value>
         case character_value::hardcode_character_value::none:
             return "NONE";
     }
+    std::unreachable();
 }
