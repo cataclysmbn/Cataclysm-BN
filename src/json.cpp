@@ -16,6 +16,7 @@
 #include <sstream>
 #include <string>
 #include <typeinfo>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -945,7 +946,8 @@ bool JsonArray::has_object( const size_t i ) const
     return jsin->test_object();
 }
 
-void add_array_to_set( std::set<std::string> &s, const JsonObject &json, const std::string &name )
+void add_array_to_set( std::unordered_set<std::string> &s, const JsonObject &json,
+                       const std::string &name )
 {
     for( const std::string line : json.get_array( name ) ) {
         s.insert( line );

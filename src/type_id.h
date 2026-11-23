@@ -124,7 +124,7 @@ class monfaction;
 using mfaction_id = int_id<monfaction>;
 using mfaction_str_id = string_id<monfaction>;
 
-struct MonsterGroup;
+class MonsterGroup;
 using mongroup_id = string_id<MonsterGroup>;
 
 class morale_type_data;

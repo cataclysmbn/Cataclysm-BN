@@ -321,7 +321,7 @@ void DynamicDataLoader::initialize()
     add( "mutation", &mutation_branch::load_trait );
     add( "furniture", &load_furniture );
     add( "terrain", &load_terrain );
-    add( "monstergroup", &MonsterGroupManager::LoadMonsterGroup );
+    add( "monstergroup", &MonsterGroup::load_monster_groups );
     add( "MONSTER_BLACKLIST", &MonsterGroupManager::LoadMonsterBlacklist );
     add( "MONSTER_WHITELIST", &MonsterGroupManager::LoadMonsterWhitelist );
     add( "speech", &load_speech );
@@ -665,7 +665,7 @@ void DynamicDataLoader::unload_data()
     mission_type::reset();
     monfactions::reset();
     MonsterGenerator::generator().reset();
-    MonsterGroupManager::ClearMonsterGroups();
+    MonsterGroup::reset();
     morale_type_data::reset();
     mutation_branch::reset_all();
     mutation_category_trait::reset();
@@ -791,7 +791,7 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
                     MonsterGenerator::generator().finalize_mtypes();
                 }
             },
-            { _( "Monster groups" ), &MonsterGroupManager::FinalizeMonsterGroups },
+            { _( "Monster groups" ), &MonsterGroup::finalize_all },
             { _( "Monster factions" ), &monfactions::finalize },
             { _( "Factions" ), &npc_factions::finalize },
             { _( "Constructions" ), &constructions::finalize },
@@ -868,7 +868,7 @@ void DynamicDataLoader::check_consistency( loading_ui &ui )
                     MonsterGenerator::generator().check_monster_definitions();
                 }
             },
-            { _( "Monster groups" ), &MonsterGroupManager::check_group_definitions },
+            { _( "Monster groups" ), &MonsterGroup::check_consistency },
             { _( "Furniture and terrain" ), &check_furniture_and_terrain },
             { _( "Constructions" ), &constructions::check_consistency },
             { _( "Construction sequences" ), &constructions::check_consistency },
