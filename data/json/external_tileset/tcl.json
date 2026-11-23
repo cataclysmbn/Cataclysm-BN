@@ -5,7 +5,7 @@
     "tiles-new": [
       {
         "file": "external_tileset/tcl.png",
-        "tiles": [         
+        "tiles": [
           { "id": "lab_surface_parking_blockA0", "fg": [ 55, 56, 58, 57 ], "rotates": true },
           { "id": "lab_surface_parking_blockA1", "fg": [ 59, 60, 62, 61 ], "rotates": true },
           { "id": "lab_surface_parking_blockA2", "fg": [ 63, 64, 66, 65 ], "rotates": true },
