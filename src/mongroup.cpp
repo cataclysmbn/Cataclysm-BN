@@ -349,6 +349,7 @@ class mongroup_time_reader : public generic_typed_reader<mongroup_time_reader>
 class mongroup_entry_reader : public generic_typed_reader<mongroup_entry_reader>
 {
     public:
+        bool override = false;
         mutable int auto_weight = 0;
         MonsterGroupEntry get_next( JsonIn &jin ) const {
             float mon_upgrade_factor = get_option<float>( "MONSTER_UPGRADE_FACTOR" );
@@ -398,6 +399,7 @@ class mongroup_entry_reader : public generic_typed_reader<mongroup_entry_reader>
                 } );
             }
         }
+        bool override_on_copy_from() const { return override; }
 };
 } // namespace
 
@@ -421,6 +423,7 @@ void MonsterGroup::load( const JsonObject &jo, const std::string & /*src*/ )
     // Or legacy auto total, but needs to go down the legacy load route
     optional( jo, was_loaded, "default", defaultMonster, mtype_id::NULL_ID() );
     auto reader = mongroup_entry_reader();
+    reader.override = allow_override;
     optional( jo, was_loaded, "monsters", monsters, reader );
     if( freq_total == 1000 && reader.auto_weight > 0 ) {
         freq_total = reader.auto_weight;
