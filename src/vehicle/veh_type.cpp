@@ -886,16 +886,15 @@ auto scale_time(const std::map<skill_id, int>& sk, int mv, const Character& who)
 
     auto time_norm = mv;
     if (!sk.empty()) {
-        const auto lvl =
-            std::accumulate(sk.begin(), sk.end(), 0, [&who](int lhs, const auto& rhs) {
-                return lhs
-                     + std::max(
-                           std::min(who.get_skill_level(rhs.first), MAX_SKILL) - rhs.second, 0);
-            });
+        const auto lvl = std::accumulate(sk.begin(), sk.end(), 0, [&who](int lhs, const auto& rhs) {
+            return lhs
+                 + std::max(std::min(who.get_skill_level(rhs.first), MAX_SKILL) - rhs.second, 0);
+        });
         // 10% per excess level (reduced proportionally if >1 skill required) with max 50% reduction
         // 10% reduction per assisting NPC
-        time_norm = mv * (1.0 - std::min(static_cast<double>(lvl) / sk.size() / 10.0, 0.5))
-                  * (10 - character_funcs::get_crafting_helpers(who, 3).size()) / 10;
+        time_norm =
+            mv * (1.0 - std::min(static_cast<double>(lvl) / sk.size() / 10.0, 0.5))
+            * (10 - character_funcs::get_crafting_helpers(who, 3).size()) / 10;
         time_norm +=
             who.bonus_from_enchantments(time_norm, enchantment_value_id("CONSTRUCTION_SPEED_VEH"));
     }
