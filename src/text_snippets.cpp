@@ -62,7 +62,9 @@ void snippet_library::add_snippet_from_json( const std::string &category, const 
             jo.throw_error( "Null snippet id specified", "id" );
         }
         if( snippets_by_id.contains( id ) ) {
-            jo.throw_error( "Duplicate snippet id", "id" );
+            // Duplicate snippet ids are not a fatal error. Log that there is a duplicate and continue.
+            debugmsg( "Duplicate snippet id: %s", id.c_str() );
+            return;
         }
         snippets_by_category[category].ids.emplace_back( id );
         snippets_by_id[id] = text;
