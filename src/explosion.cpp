@@ -2079,8 +2079,10 @@ void explosion_funcs::resonance_cascade( const queued_explosion &qe )
                 case 13:
                 case 14:
                 case 15: {
-                    MonsterGroupResult spawn_details = MonsterGroupManager::GetResultFromGroup( GROUP_NETHER );
-                    g->place_critter_at( spawn_details.name, dest );
+                    auto spawn_details_vec = MonsterGroupManager::GetResultFromGroup( GROUP_NETHER );
+                    for( auto spawn_details : spawn_details_vec ) {
+                        g->place_critter_at( spawn_details.name, dest );
+                    }
                     break;
                 }
                 case 16:

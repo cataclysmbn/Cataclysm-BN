@@ -28,8 +28,8 @@ struct MonsterGroupEntry {
     mongroup_id monster_group;
     int frequency;
     int cost_multiplier;
-    int pack_minimum;
-    int pack_maximum;
+    int pack_minimum = 1;
+    int pack_maximum = 1;
     std::vector<std::string> conditions;
     time_duration starts;
     time_duration ends;
@@ -71,7 +71,6 @@ class MonsterGroup
         // Generic Factory
         mongroup_id id;
         bool was_loaded = false;
-        bool use_automatic_sizing = true;
 
         // Data
         mtype_id defaultMonster;
@@ -190,8 +189,9 @@ class MonsterGroupManager
     public:
         static void LoadMonsterBlacklist( const JsonObject &jo );
         static void LoadMonsterWhitelist( const JsonObject &jo );
-        static MonsterGroupResult GetResultFromGroup( const mongroup_id &group, int *quantity = nullptr,
-                bool use_pack_size = false );
+        static std::vector<MonsterGroupResult> GetResultFromGroup( const mongroup_id &group,
+                int *quantity = nullptr,
+                bool use_pack_size = false, bool from_subgroup = false );
         static bool IsMonsterInGroup( const mongroup_id &group, const mtype_id &monster );
         static bool isValidMonsterGroup( const mongroup_id &group );
         static const mongroup_id &Monster2Group( const mtype_id &monster );

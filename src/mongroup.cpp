@@ -113,20 +113,13 @@ void set_evolved_montype( const MonsterGroup &group, mtype_id &montype )
 } // namespace
 
 //Quantity is adjusted directly as a side effect of this function
-MonsterGroupResult MonsterGroupManager::GetResultFromGroup(
-    const mongroup_id &group_name, int *quantity, bool use_pack_size )
+std::vector<MonsterGroupResult> MonsterGroupManager::GetResultFromGroup(
+    const mongroup_id &group_name, int *quantity, bool use_pack_size, bool from_subgroup )
 {
     auto &group = GetUpgradedMonsterGroup( group_name );
     int spawn_chance = rng( 1, group.freq_total ); //Default 1000 unless specified
     //Our spawn details specify, by default, a single instance of the default monster
-    MonsterGroupResult spawn_details = MonsterGroupResult( group.defaultMonster, 1 );
-
-    if( group.defaultMonster != mtype_id::NULL_ID() ) {
-        int count = 0;
-        auto montype = group.defaultMonster;
-        set_evolved_montype( group, montype );
-        spawn_details = MonsterGroupResult( montype, 1 );
-    }
+    std::vector<MonsterGroupResult> spawn_details;
 
     bool monster_found = false;
     // Loop invariant values
@@ -194,24 +187,30 @@ MonsterGroupResult MonsterGroupManager::GetResultFromGroup(
             valid_entry = false;
         }
 
+        const int pack_size = use_pack_size ||
+                              it->pack_maximum > 1 ? rng( it->pack_minimum, it->pack_maximum ) : 1;
         //If the entry was valid, check to see if we actually spawn it
         if( valid_entry ) {
             //If the monsters frequency is greater than the spawn_chance, select this spawn rule
             if( it->frequency >= spawn_chance ) {
-                int pack_size = 1;
-                if( use_pack_size || it->pack_maximum > 1 ) {
-                    pack_size = rng( it->pack_minimum, it->pack_maximum );
+                if( !it->name.is_null() ) {
+                    auto montype = it->name;
+                    set_evolved_montype( group, montype );
+                    spawn_details.push_back( MonsterGroupResult( montype, pack_size ) );
+                    //And if a quantity pointer with remaining value was passed, will modify the external value as a side effect
+                    //We will reduce it by the spawn rule's cost multiplier
+                    if( quantity ) {
+                        *quantity -= std::max( 1, it->cost_multiplier * spawn_details.back().pack_size );
+                    }
+                    monster_found = true;
+                } else {
+                    for( int i = 0; i < pack_size; i++ ) {
+                        std::vector<MonsterGroupResult> tmp_grp =
+                            GetResultFromGroup( it->monster_group, quantity, false, true );
+                        spawn_details.insert( spawn_details.end(), tmp_grp.begin(), tmp_grp.end() );
+                    }
+                    monster_found = true;
                 }
-                int count = 0;
-                auto montype = it->name;
-                set_evolved_montype( group, montype );
-                spawn_details = MonsterGroupResult( montype, pack_size );
-                //And if a quantity pointer with remaining value was passed, will modify the external value as a side effect
-                //We will reduce it by the spawn rule's cost multiplier
-                if( quantity ) {
-                    *quantity -= std::max( 1, it->cost_multiplier * spawn_details.pack_size );
-                }
-                monster_found = true;
                 //Otherwise, subtract the frequency from spawn result for the next loop around
             } else {
                 spawn_chance -= it->frequency;
@@ -220,8 +219,14 @@ MonsterGroupResult MonsterGroupManager::GetResultFromGroup(
     }
 
     // Force quantity to decrement regardless of whether we found a monster.
-    if( quantity && !monster_found ) {
+    if( quantity && !monster_found && !from_subgroup ) {
         ( *quantity )--;
+    }
+
+    if( spawn_details.empty() && group.defaultMonster != mtype_id::NULL_ID() ) {
+        auto montype = group.defaultMonster;
+        set_evolved_montype( group, montype );
+        spawn_details = { MonsterGroupResult( montype, 1 ) };
     }
 
     return spawn_details;
@@ -343,16 +348,19 @@ class mongroup_time_reader : public generic_typed_reader<mongroup_time_reader>
 
 class mongroup_entry_reader : public generic_typed_reader<mongroup_entry_reader>
 {
-    private:
-        const bool legacy;
     public:
-        mongroup_entry_reader( bool legacy = false ) : legacy( legacy ) {}
+        mutable int auto_weight = 0;
         MonsterGroupEntry get_next( JsonIn &jin ) const {
             float mon_upgrade_factor = get_option<float>( "MONSTER_UPGRADE_FACTOR" );
 
             MonsterGroupEntry entry;
             JsonObject jo = jin.get_object();
-            mandatory( jo, false, legacy ? "freq" : "weight", entry.frequency );
+            if( jo.has_int( "weight" ) ) {
+                mandatory( jo, false, "weight", entry.frequency );
+                auto_weight += entry.frequency;
+            } else {
+                mandatory( jo, false, "freq", entry.frequency );
+            }
             optional( jo, false, "monster", entry.name, mtype_id::NULL_ID() );
             optional( jo, false, "monster_group", entry.monster_group, mongroup_id::NULL_ID() );
             optional( jo, false, "cost_multiplier", entry.cost_multiplier, 1 );
@@ -401,24 +409,26 @@ void MonsterGroup::load( const JsonObject &jo, const std::string & /*src*/ )
         *this = id.obj();
         was_loaded = true;
     }
-    if( use_automatic_sizing ) {
-        freq_total = -1;
-    }
     optional( jo, was_loaded, "is_animal", is_animal, false );
     optional( jo, was_loaded, "replacement_time", monster_group_time, 1_days );
     optional( jo, was_loaded, "evolve_chance", evolve_chance, 0 );
     optional( jo, was_loaded, "evolve_repeat", evolve_repeat, 0 );
     optional( jo, was_loaded, "is_safe", is_safe, false );
-    optional( jo, was_loaded, "freq_total", freq_total, -1 );
+    optional( jo, was_loaded, "freq_total", freq_total, 1000 );
     optional( jo, was_loaded, "replace_monster_group", replace_monster_group, false );
     optional( jo, was_loaded, "new_monster_group_id", new_monster_group, mongroup_id::NULL_ID() );
 
     // This means we use legacy freq based logic
     // Or legacy auto total, but needs to go down the legacy load route
     optional( jo, was_loaded, "default", defaultMonster, mtype_id::NULL_ID() );
-    use_automatic_sizing = jo.get_bool( "auto_total", freq_total == -1 );
-    optional( jo, was_loaded, "monsters", monsters, mongroup_entry_reader( use_automatic_sizing ) );
-    if( use_automatic_sizing ) {
+    auto reader = mongroup_entry_reader();
+    optional( jo, was_loaded, "monsters", monsters, reader );
+    if( freq_total == 1000 && reader.auto_weight > 0 ) {
+        freq_total = reader.auto_weight;
+    } else {
+        freq_total += reader.auto_weight;
+    }
+    if( jo.get_bool( "auto_total", false ) ) {
         freq_total = 0;
         for( MonsterGroupEntry &mon : monsters ) {
             freq_total += mon.frequency;

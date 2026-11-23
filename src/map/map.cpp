@@ -7991,15 +7991,16 @@ void map::spawn_monsters_submap_group(
     if (pop) {
         // Populate the group from its population variable.
         for (int m = 0; m < pop; m++) {
-            MonsterGroupResult spawn_details =
-                MonsterGroupManager::GetResultFromGroup(group.type, &pop);
-            if (!spawn_details.name) { continue; }
-            monster tmp(spawn_details.name);
+            auto spawn_details_vec = MonsterGroupManager::GetResultFromGroup(group.type, &pop);
+            for (auto spawn_details : spawn_details_vec) {
+                if (!spawn_details.name) { continue; }
+                monster tmp(spawn_details.name);
 
-            // If a monster came from a horde population, configure them to always be willing to
-            // rejoin a horde.
-            if (group.horde) { tmp.set_horde_attraction(MHA_ALWAYS); }
-            for (int i = 0; i < spawn_details.pack_size; i++) { group.monsters.push_back(tmp); }
+                // If a monster came from a horde population, configure them to always be willing to
+                // rejoin a horde.
+                if (group.horde) { tmp.set_horde_attraction(MHA_ALWAYS); }
+                for (int i = 0; i < spawn_details.pack_size; i++) { group.monsters.push_back(tmp); }
+            }
         }
     }
 
