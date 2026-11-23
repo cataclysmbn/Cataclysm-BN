@@ -456,11 +456,14 @@ auto read_from_db( sqlite3 *db, const std::string &path, file_read_fn reader,
         dbg( DL::Error ) << "Failed to prepare statement: " << sqlite3_errmsg( db ) << '\n';
         throw std::runtime_error( "DB query failed" );
     }
+    // Also runs when the reader throws; an open statement hides newer writes from later reads.
+    const auto finalize = on_out_of_scope( [&]() {
+        sqlite3_finalize( stmt );
+    } );
 
     if( sqlite3_bind_text( stmt, sqlite3_bind_parameter_index( stmt, ":path" ), path.c_str(), -1,
                            SQLITE_TRANSIENT ) != SQLITE_OK ) {
         dbg( DL::Error ) << "Failed to bind parameter: " << sqlite3_errmsg( db ) << '\n';
-        sqlite3_finalize( stmt );
         throw std::runtime_error( "DB query failed" );
     }
 
@@ -472,7 +475,6 @@ auto read_from_db( sqlite3 *db, const std::string &path, file_read_fn reader,
         std::string compression = compression_raw ? reinterpret_cast<const char *>( compression_raw ) : "";
 
         if( blobData == nullptr ) {
-            sqlite3_finalize( stmt );
             return false; // Return an empty string if there's no data
         }
 
@@ -488,10 +490,8 @@ auto read_from_db( sqlite3 *db, const std::string &path, file_read_fn reader,
         // JSON is parsed much faster from a memory stream than from a string stream.
         memory_istream stream( std::move( dataString ) );
         reader( stream );
-        sqlite3_finalize( stmt );
     } else {
         auto err = sqlite3_errmsg( db );
-        sqlite3_finalize( stmt );
 
         if( !optional ) {
             dbg( DL::Error ) << "Failed to execute query: " << err << '\n';
