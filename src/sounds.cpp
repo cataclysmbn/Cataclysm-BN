@@ -71,8 +71,6 @@
 #   if defined(_WIN32) && !defined(_MSC_VER)
 #       include "mingw.thread.h"
 #   endif
-
-#   define dbg(x) DebugLogFL((x),DC::SDL)
 #endif
 
 weather_type_id previous_weather;
@@ -2745,7 +2743,6 @@ void sounds::process_sound_markers( Character *who )
             // Noise past ambient + 40 dB should automatically wake up heavy sleepers.
             // Noise past ambient + 60 dB will cause pain and should automatically wake up heavy sleeper 2.
             if( who->has_effect( effect_sleep ) ) {
-                const int diff_db_vol = mdBspl_to_dBspl( tile_vol - passive_sound_dampening - tile_vol );
                 // ambient_vol is in mdB, but db_vol and wake_up_vol are in dB.
                 const int ambient_db = mdBspl_to_dBspl( ambient_vol );
                 int wake_up_vol = 10 + ambient_db;
@@ -3907,7 +3904,7 @@ void sfx::play_ambient_variant_sound( const std::string &, const std::string &, 
                                       double, int ) { }
 void sfx::play_activity_sound( const std::string &, const std::string &, int ) { }
 void sfx::end_activity_sounds() { }
-void sfx::generate_gun_sound( const tripoint_bub_ms &, const item &, const short &origin_vol ) { }
+void sfx::generate_gun_sound( const tripoint_bub_ms &, const item &, const short &/*origin_vol*/ ) { }
 void sfx::generate_melee_sound( const tripoint_bub_ms &, const tripoint_bub_ms &, bool, bool,
                                 const std::string & ) { }
 void sfx::do_hearing_loss( int ) { }

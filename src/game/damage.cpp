@@ -54,6 +54,7 @@ auto damage_unit::get_internal_name() const -> const std::string {
         case NUM_DT:
             return std::to_string(NUM_DT);
     }
+    std::unreachable();
 }
 auto damage_unit::get_name() const -> const std::string {
     switch (type) {

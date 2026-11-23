@@ -24,7 +24,7 @@ void enchantment_condition::load_enchantment_conditions(
     all_enchantment_conditions.load(jo, src);
 }
 
-void enchantment_condition::load(const JsonObject& jo, const std::string& src) {
+void enchantment_condition::load(const JsonObject& jo, const std::string& /*src*/) {
     mandatory(jo, was_loaded, "condition_type", cond_type,
               enum_flags_reader<enchantment_condition_type>("enchantment_condition_type"));
     mandatory(jo, was_loaded, "condition_function", condition_function);
@@ -78,6 +78,8 @@ auto enum_to_string<enchantment_condition_type>(enchantment_condition_type data)
             return "item_and_character";
         case enchantment_condition_type::GLOBAL:
             return "global";
+        case enchantment_condition_type::NUM_CONDITIONS:
+            break;
     }
     debugmsg("Invalid enchantment_condition_type; Defaulting to `global`");
     return "global";

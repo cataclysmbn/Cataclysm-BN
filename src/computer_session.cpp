@@ -237,7 +237,6 @@ static item *pick_usb()
 
 static void remove_submap_turrets()
 {
-    map &here = get_map();
     for( monster &critter : g->all_monsters() ) {
         // Check 1) same overmap coords, 2) turret, 3) hostile
         if( project_to<coords::omt>( critter.abs_pos() ) == project_to<coords::omt>( g->u.abs_pos() ) &&

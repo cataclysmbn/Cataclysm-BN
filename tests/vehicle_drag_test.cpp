@@ -34,6 +34,8 @@ static void clear_game_drag(const ter_id& terrain) {
     // Move player somewhere safe
     CHECK(!player_character.in_vehicle);
     player_character.setpos(tripoint_bub_ms::zero());
+    // Moving the player can spawn monsters from overmap groups on the test track. Remove them.
+    clear_creatures();
     // Blind the player to avoid needless drawing-related overhead
     player_character.add_effect(effect_blind, 365_days, bodypart_str_id::NULL_ID());
     // Make sure the ST is 8 so that muscle powered results are consistent
@@ -45,7 +47,7 @@ static void clear_game_drag(const ter_id& terrain) {
     here.build_map_cache(0, true);
 }
 
-static auto setup_drag_test(const vproto_id& veh_id) -> vehicle* { // *NOPAD*
+static auto setup_drag_test(const vproto_id& veh_id) -> vehicle* {
     const tripoint_bub_ms map_starting_point(60, 60, 0);
     vehicle* veh_ptr = get_map().add_vehicle(veh_id, map_starting_point, -90_degrees, 0, 0);
 

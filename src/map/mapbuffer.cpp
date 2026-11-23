@@ -47,6 +47,7 @@
 #include "trap.h"
 #include "ui_manager.h"
 #include "units_mass.h"
+#include "utils/memory_stream.h"
 #include "vehicle/veh_type.h"
 #include "vehicle/vehicle.h"
 #include "vehicle/vehicle_part.h"
@@ -585,7 +586,8 @@ auto omt_submap_index(const point_omt_sm& local) -> std::optional<std::size_t> {
     return static_cast<std::size_t>(local.x() + local.y() * 2);
 }
 
-auto vertical_transition_target_below(const ter_id& source) -> std::optional<ter_id> {
+[[maybe_unused]] auto vertical_transition_target_below(const ter_id& source)
+    -> std::optional<ter_id> {
     static const auto t_stairs_down_no_roof = ter_id("t_stairs_down_no_roof");
     static const auto t_stairs_down_underwater = ter_id("t_stairs_down_underwater");
     static const auto t_stairs_up_underwater = ter_id("t_stairs_up_underwater");
@@ -605,7 +607,8 @@ auto vertical_transition_target_below(const ter_id& source) -> std::optional<ter
     return std::nullopt;
 }
 
-auto vertical_transition_target_above(const ter_id& source) -> std::optional<ter_id> {
+[[maybe_unused]] auto vertical_transition_target_above(const ter_id& source)
+    -> std::optional<ter_id> {
     static const auto t_stairs_down = ter_id("t_stairs_down");
     static const auto t_stairs_up_underwater = ter_id("t_stairs_up_underwater");
     static const auto t_stairs_down_underwater = ter_id("t_stairs_down_underwater");
@@ -1309,7 +1312,7 @@ auto mapbuffer::lookup_submap(const tripoint_abs_sm& p) -> submap* {
     try {
         bool found = false;
         if (!pending_data.empty()) {
-            std::istringstream iss(pending_data);
+            memory_istream iss(pending_data);
             JsonIn jsin(iss);
             deserialize_into_vec(jsin, loaded, already_loaded);
             found = true;
@@ -3331,7 +3334,7 @@ auto mapbuffer::preload_omt(const tripoint_abs_omt& omt_addr) -> bool {
     }
 
     if (!pending_data.empty()) {
-        std::istringstream iss(pending_data);
+        memory_istream iss(pending_data);
         JsonIn jsin(iss);
         deserialize_into_vec(jsin, loaded, already_loaded);
     } else {
@@ -3436,7 +3439,7 @@ auto mapbuffer::run_omt_pillar_post_pass(const point_abs_omt& omt_pos) -> void {
         point_sm_ms local;
         ter_id desired;
     };
-    const auto ensure_vertical_transition_link =
+    [[maybe_unused]] const auto ensure_vertical_transition_link =
         [&](const vertical_transition_link_request& request) {
             auto* const target_sm = lookup_submap_in_memory(request.target_pos);
             if (target_sm == nullptr

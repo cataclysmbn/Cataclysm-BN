@@ -123,7 +123,6 @@ static const flag_id f_VEHICLE_NO_HOTWIRE("VEHICLE_NO_HOTWIRE");
 static const flag_id f_VEHICLE_HOTWIRE("VEHICLE_HOTWIRE");
 
 static const std::string str_DOOR_LOCKING("DOOR_LOCKING");
-static const std::string str_OPENCLOSE_INSIDE("OPENCLOSE_INSIDE");
 static const std::string str_PERPETUAL("PERPETUAL");
 constexpr auto battery_charge_bucket_count = 101;
 
@@ -545,7 +544,7 @@ auto vehicle::player_in_control(const Character& who) const -> bool {
     return remote_controlled(who);
 }
 
-auto vehicle::remote_controlled(const Character& who) const -> bool {
+auto vehicle::remote_controlled(const Character& /*who*/) const -> bool {
     vehicle* veh = g->remoteveh();
     if (veh != this) { return false; }
 
@@ -2088,8 +2087,15 @@ auto vehicle::install_part(const tripoint_mnt_veh& dp, vehicle_part&& new_part) 
         }
     }
 
+    const auto* const old_parts = parts.data();
     parts.push_back(std::move(new_part));
-    refresh_locations_hack();
+    // Item locations only refer to this vehicle and the part's hack_id, so existing parts only
+    // need refreshing when the vector reallocated.
+    if (parts.data() != old_parts) {
+        refresh_locations_hack();
+    } else {
+        parts.back().refresh_locations_hack(this);
+    }
     auto& pt = parts.back();
     pt.set_vehicle_hack(this);
 
@@ -5187,7 +5193,6 @@ auto vehicle::total_solar_epower_w() const -> int {
 }
 
 auto vehicle::total_wind_epower_w() const -> int {
-    map& here = get_map();
     const oter_id& cur_om_ter =
         get_overmapbuffer(dimension_id_).ter(project_to<coords::omt>(abs_ms_location()));
     const weather_manager& weather = get_weather();

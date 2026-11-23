@@ -1019,5 +1019,16 @@
       { "item": "noodles_fast", "prob": 30 },
       { "item": "milkshake_fastfood", "prob": 15 }
     ]
+  },
+  {
+    "type": "item_group",
+    "id": "honey_market_stall",
+    "subtype": "collection",
+    "entries": [
+      { "item": "honey_bottled", "charges": -1, "prob": 20 },
+      { "item": "honey_glassed", "count": -1, "prob": 20 },
+      { "item": "honeycomb", "count": [ 2, 4 ], "prob": 10 },
+      { "item": "honey_glassed", "count": -1, "prob": 10 }
+    ]
   }
 ]

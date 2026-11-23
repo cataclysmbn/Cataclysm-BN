@@ -2191,7 +2191,6 @@ void activity_handlers::start_fire_finish( player_activity *act, player *p )
     }
     p->practice( skill_survival, act->index, 5 );
 
-    map &here = get_map();
     firestarter_actor::resolve_firestarter_use( *p, abs_to_bub( act->placement ) );
     act->set_to_null();
 }

@@ -118,6 +118,7 @@
 #include <fstream>
 #include <iterator>
 #include <memory>
+#include <mutex>
 #include <ranges>
 #include <set>
 #include <sstream> // for throwing errors
@@ -180,6 +181,8 @@ shared_ptr_fast<std::istream> DynamicDataLoader::get_cached_stream( const std::s
 {
     assert( !finalized && "Cannot open data file after finalization." );
     assert( stream_cache && "Stream cache is only available during finalization" );
+    // Threads finalizing data in parallel each stick to their own files, so only
+    // files outside the registry need the lock.
     if( const auto loaded = loaded_data_files().find( path ); loaded != loaded_data_files().end() ) {
         // Only the registry holds it, so nobody else is reading from it.
         if( loaded->second.use_count() == 1 ) {
@@ -187,6 +190,8 @@ shared_ptr_fast<std::istream> DynamicDataLoader::get_cached_stream( const std::s
         }
         return make_shared_fast<memory_istream>( loaded->second->contents() );
     }
+    static auto cache_mutex = std::mutex{};
+    const auto lock = std::lock_guard( cache_mutex );
     shared_ptr_fast<memory_istream> cached = stream_cache->cache.get( path, nullptr );
     // Create a new stream if the file is not opened yet, or if some code is still
     // using the previous stream (in such case, `cached` and `stream_cache` have
@@ -783,7 +788,18 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
             { _( "Start locations" ), &start_locations::finalize_all },
             { _( "Zone manager" ), &zone_manager::reset_manager },
             { _( "Vehicle prototypes" ), &vehicle_prototype::finalize },
-            { _( "Mapgen weights" ), &calculate_mapgen_weights },
+            {
+                _( "Mapgen weights" ), []()
+                {
+#if defined(TILES)
+                    // Loading the tileset needs this thread, but none of the game data that
+                    // the worker threads are busy with, so it fills the wait for them.
+                    calculate_mapgen_weights( &tileset_loading::load_for_active_world );
+#else
+                    calculate_mapgen_weights();
+#endif
+                }
+            },
             { _( "Mapgen parameters" ), &overmap_specials::finalize_mapgen_parameters },
             {
                 _( "Monster types" ), []()
@@ -1180,8 +1196,6 @@ auto init::check_mods_for_errors( loading_ui &ui, const std::vector<mod_id> &opt
             load_and_finalize_packs( ui, _( "Checking mods" ), mods_list );
         } catch( const std::exception &err ) {
             std::cerr << "Error loading data: " << err.what() << '\n';
-        } catch( const JsonError &err ) {
-            debugmsg( "(json-error)\n%s", err.what() );
         }
 
         std::string world_name = world_generator->active_world->info->world_name;

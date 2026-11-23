@@ -5,7 +5,16 @@
     "tiles-new": [
       {
         "file": "external_tileset/extra_monsters.png",
-        "tiles": [ { "id": "mon_fungal_dog", "fg": 0, "rotates": false } ],
+        "tiles": [
+          { "id": "mon_fungal_dog", "fg": 0, "rotates": false },
+          { "id": "corpse_mon_fungal_dog", "fg": 1, "rotates": false },
+          { "id": "mon_fungal_cat", "fg": 2, "rotates": false },
+          { "id": "corpse_mon_fungal_cat", "fg": 3, "rotates": false },
+          { "id": "mon_fungal_coyote", "fg": 4, "rotates": false },
+          { "id": "corpse_mon_fungal_coyote", "fg": 5, "rotates": false },
+          { "id": "mon_fungal_wolf", "fg": 6, "rotates": false },
+          { "id": "corpse_mon_fungal_wolf", "fg": 7, "rotates": false }
+        ],
         "sprite_width": 32,
         "sprite_height": 32
       }

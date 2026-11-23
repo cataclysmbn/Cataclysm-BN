@@ -29,7 +29,6 @@
 #include "bodypart.h"
 #include "cached_options.h"
 #include "calendar.h"
-#include "cata_unreachable.h"
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "catalua.h"
@@ -1807,7 +1806,6 @@ static void apply_lock_picking_tool( player &p, item *it, const tripoint_bub_ms 
 
 static bool pick_lock( player &p, const tripoint_bub_ms &examp )
 {
-    map &here = get_map();
 
     if( p.has_bionic( bio_lockpick ) ) {
         if( p.get_power_level() >= bio_lockpick->power_activate ) {
@@ -6103,7 +6101,7 @@ auto can_jump_over_tile_impl( const player &p, const tripoint_bub_ms &examp_bub 
         return false;
     }
 
-    if( const auto blocking_creature = buffer.creature_at( jump_state.dest ) ) {
+    if( buffer.creature_at( jump_state.dest ) ) {
         return false;
     }
 
@@ -6336,7 +6334,7 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp_bub )
                         case climb_result::one_way_unclimbable:
                             return _( "You probably won't be able to get back up.  Climb down?" );
                     }
-                    cata::unreachable();
+                    std::unreachable();
                 };
                 add_msg( m_debug, "climb_cost: %d", climb_cost.value_or( -1 ) );
                 const auto result = get_climb_result();
