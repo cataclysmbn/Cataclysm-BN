@@ -3740,7 +3740,7 @@ void activity_handlers::operation_do_turn( player_activity *act, player *p )
 
             if( p->has_bionic( bid ) ) {
                 p->perform_uninstall( bid, act->values[difficulty_value], act->values[success_value],
-                                      units::from_joule( act->values[max_power_value] ), act->values[pl_skill_value] );
+                                      act->values[pl_skill_value] );
             } else {
                 debugmsg( _( "Tried to uninstall %s, but you don't have this bionic installed." ), bid.c_str() );
                 p->remove_effect( effect_under_op );

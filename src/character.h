@@ -1165,8 +1165,7 @@ class Character : public Creature, public location_visitable<Character>
         bool uninstall_bionic( const bionic_id &b_id, Character &installer, bool autodoc = false,
                                int skill_level = -1 );
         /**Succes or failure of removal happens here*/
-        void perform_uninstall( bionic_id bid, int difficulty, int success, const units::energy &power_lvl,
-                                int pl_skill );
+        void perform_uninstall( bionic_id bid, int difficulty, int success, int pl_skill );
         /**When a player fails the surgery*/
         void bionics_uninstall_failure( int difficulty, int success, float adjusted_skill );
 

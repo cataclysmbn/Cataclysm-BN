@@ -2352,7 +2352,7 @@ bool Character::uninstall_bionic( const bionic_id &b_id, Character &installer, b
 
     int success = chance_of_success - rng( 1, 100 );
     if( installer.has_trait( trait_DEBUG_BIONICS ) ) {
-        perform_uninstall( b_id, difficulty, success, b_id->capacity, pl_skill );
+        perform_uninstall( b_id, difficulty, success, pl_skill );
         return true;
     }
     assign_activity( ACT_OPERATION, to_moves<int>( difficulty * 20_minutes ) );
@@ -2378,8 +2378,7 @@ bool Character::uninstall_bionic( const bionic_id &b_id, Character &installer, b
     return true;
 }
 
-void Character::perform_uninstall( bionic_id bid, int difficulty, int success,
-                                   const units::energy &power_lvl, int pl_skill )
+void Character::perform_uninstall( bionic_id bid, int difficulty, int success, int pl_skill )
 {
     map &here = get_map();
     if( success > 0 ) {
@@ -2394,9 +2393,6 @@ void Character::perform_uninstall( bionic_id bid, int difficulty, int success,
         if( const auto *lcb = bid.obj().lua_callbacks ) {
             lcb->call_on_removed( *this, bid );
         }
-
-        // remove power bank provided by bionic
-        mod_max_power_level( -power_lvl );
 
         detached_ptr<item> cbm;
         if( bid->itype().is_valid() && !bid.obj().has_flag( flag_BIONIC_FAULTY ) ) {
@@ -2471,8 +2467,6 @@ bool Character::uninstall_bionic( const bionic &target_cbm, monster &installer, 
             add_msg( m_mixed, _( "Successfully removed %s." ), target_cbm.info().name );
         }
 
-        // remove power bank provided by bionic
-        patient.mod_max_power_level( -target_cbm.info().capacity );
         patient.remove_bionic( target_cbm.id );
         const itype_id iid = itemtype.is_valid() &&
                              !target_cbm.info().has_flag( flag_BIONIC_FAULTY ) ? itemtype : itype_burnt_out_bionic;
