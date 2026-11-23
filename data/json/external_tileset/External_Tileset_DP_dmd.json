@@ -233,7 +233,9 @@
           { "id": "overlay_male_worn_tshirt_cropped", "fg": 178 },
           { "id": [ "gold_chain", "overlay_wielded_gold_chain" ], "fg": 179 },
           { "id": "overlay_worn_gold_chain", "fg": 180 },
-          { "id": "survivor_forest_camp", "fg": 181, "rotates": false }
+          { "id": "survivor_forest_camp", "fg": 181, "rotates": false },
+          { "id": "ws_survivor_bunker_f0", "fg": 182, "rotates": false },
+          { "id": "ws_survivor_bunker_f-1", "fg": 183, "rotates": false }
         ],
         "sprite_width": 32,
         "sprite_height": 32
