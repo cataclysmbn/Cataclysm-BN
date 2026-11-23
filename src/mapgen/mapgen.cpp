@@ -97,7 +97,6 @@
 #include <map>
 #include <memory>
 #include <mutex>
-#include <numeric>
 #include <optional>
 #include <ranges>
 #include <set>
@@ -3093,8 +3092,6 @@ auto jmapgen_objects::check_bounds(const jmapgen_place& place, const JsonObject&
     return common_check_bounds(place.x, place.y, mapgensize, jso);
 }
 
-void jmapgen_objects::reserve(const size_t count) { objects.reserve(objects.size() + count); }
-
 void jmapgen_objects::add(
     const jmapgen_place& place, const std::shared_ptr<const jmapgen_piece>& piece) {
     own(piece);
@@ -3612,62 +3609,68 @@ auto mapgen_function_json_base::setup_common(const JsonObject& jo) -> bool {
         assert(expected_dim.x() >= 0);
         assert(expected_dim.y() >= 0);
 
-        // Read rows in one pass; the indexed array is only needed to report errors.
-        auto rows = std::vector<std::string>{};
-        {
-            JsonIn& rows_in = *jo.get_raw("rows");
-            rows_in.start_array();
-            while (!rows_in.end_array()) { rows.push_back(rows_in.get_string()); }
+        parray = jo.get_array("rows");
+        if (static_cast<int>(parray.size()) < expected_dim.y()) {
+            parray.throw_error(string_format(
+                "format: rows: must have at least %d rows, not %d", expected_dim.y(),
+                parray.size()));
         }
-        const auto rows_array = [&]() -> JsonArray& {
-            if (parray.empty()) { parray = jo.get_array("rows"); }
-            return parray;
-        };
-        if (static_cast<int>(rows.size()) < expected_dim.y()) {
-            rows_array().throw_error(string_format(
-                "format: rows: must have at least %d rows, not %d", expected_dim.y(), rows.size()));
-        }
-        if (static_cast<int>(rows.size()) != total_size.y()) {
-            rows_array().throw_error(string_format(
+        if (static_cast<int>(parray.size()) != total_size.y()) {
+            parray.throw_error(string_format(
                 "format: rows: must have %d rows, not %d; check mapgensize if applicable",
-                total_size.y(), rows.size()));
+                total_size.y(), parray.size()));
         }
-        const auto check_row_size = [&](const int c, const size_t columns) {
-            if (columns < static_cast<size_t>(expected_dim.x())) {
-                rows_array().throw_error(string_format(
+        // Look up each key once per mapgen instead of once per square. Squares only refer to
+        // the pieces of their key, so keep those alive once, on first lookup.
+        auto lookups = std::unordered_map<
+            std::string,
+            std::pair<decltype(keys_with_terrain.cend()), decltype(format_placings.cend())>>{};
+        for (int c = m_offset.y(); c < expected_dim.y(); c++) {
+            const std::string row = parray.get_string(c);
+            std::vector<map_key> row_keys;
+            for (const std::string& key : utf8_display_split(row)) { row_keys.emplace_back(key); }
+            if (row_keys.size() < static_cast<size_t>(expected_dim.x())) {
+                parray.throw_error(string_format(
                     "  format: row %d must have at least %d columns, not %d", c + 1,
-                    expected_dim.x(), columns));
+                    expected_dim.x(), row_keys.size()));
             }
-            if (columns != static_cast<size_t>(total_size.x())) {
-                rows_array().throw_error(string_format(
+            if (row_keys.size() != static_cast<size_t>(total_size.x())) {
+                parray.throw_error(string_format(
                     "  format: row %d must have %d columns, not %d; check mapgensize if applicable",
-                    c + 1, total_size.x(), columns));
+                    c + 1, total_size.x(), row_keys.size()));
             }
-        };
-        using terrain_iter = decltype(keys_with_terrain.cend());
-        using placing_iter = decltype(format_placings.cend());
-        const auto place_cell =
-            [&](const int c, const int i, const std::string& key_str, const terrain_iter iter_ter,
-                const placing_iter fpi) {
+            for (int i = m_offset.x(); i < expected_dim.x(); i++) {
                 const auto p = point_rel_ms(i, c) - m_offset;
-                const bool has_terrain = iter_ter != keys_with_terrain.cend();
-                const bool has_placing = fpi != format_placings.cend();
+                const map_key& key = row_keys[i];
+                auto [lookup, inserted] = lookups.try_emplace(key.str);
+                if (inserted) {
+                    lookup->second = {keys_with_terrain.find(key), format_placings.find(key)};
+                    if (lookup->second.second != format_placings.end()) {
+                        for (const auto& what : lookup->second.second->second) {
+                            objects.own(what);
+                        }
+                    }
+                }
+                const auto [iter_ter, fpi] = lookup->second;
+
+                const bool has_terrain = iter_ter != keys_with_terrain.end();
+                const bool has_placing = fpi != format_placings.end();
 
                 if (!has_terrain && !fallback_terrain_exists) {
-                    rows_array().string_error(
+                    parray.string_error(
                         string_format(
                             "format: rows: row %d column %d: "
                             "'%s' is not in 'terrain', and no 'fill_ter' is set!",
-                            c + 1, i + 1, key_str),
+                            c + 1, i + 1, key.str),
                         c, i + 1);
                 }
-                if (!has_terrain && !has_placing && key_str != " " && key_str != ".") {
+                if (!has_terrain && !has_placing && key.str != " " && key.str != ".") {
                     try {
-                        rows_array().string_error(
+                        parray.string_error(
                             string_format(
                                 "format: rows: row %d column %d: "
                                 "'%s' has no terrain, furniture, or other definition",
-                                c + 1, i + 1, key_str),
+                                c + 1, i + 1, key.str),
                             c, i + 1);
                     } catch (const JsonError& e) { debugmsg("(json-error)\n%s", e.what()); }
                 }
@@ -3675,69 +3678,6 @@ auto mapgen_function_json_base::setup_common(const JsonObject& jo) -> bool {
                     jmapgen_place where(p);
                     for (const auto& what : fpi->second) { objects.add(where, *what); }
                 }
-            };
-        // Squares only refer to the pieces of their key, which are kept alive once per key.
-        const auto own_pieces = [&](const placing_iter fpi) {
-            if (fpi != format_placings.cend()) {
-                for (const auto& what : fpi->second) { objects.own(what); }
-            }
-        };
-        /// Lookups for single-byte keys, resolved on first use. Almost all rows are plain ASCII.
-        struct ascii_key_lookup {
-            bool resolved = false;
-            terrain_iter terrain;
-            placing_iter placing;
-        };
-        auto ascii_lookups = std::array<ascii_key_lookup, 128>{};
-        const auto lookup_ascii = [&](const char ch) -> const ascii_key_lookup& {
-            auto& lookup = ascii_lookups[static_cast<unsigned char>(ch)];
-            if (!lookup.resolved) {
-                const auto key = map_key(std::string(1, ch));
-                lookup =
-                    {.resolved = true,
-                     .terrain = keys_with_terrain.find(key),
-                     .placing = format_placings.find(key)};
-                own_pieces(lookup.placing);
-            }
-            return lookup;
-        };
-        const auto is_printable_ascii = [](const char ch) { return ch >= 0x20 && ch < 0x7f; };
-        // Reserve room for the placings of ASCII rows up front instead of growing per square.
-        auto placing_count = size_t{0};
-        for (int c = m_offset.y(); c < expected_dim.y(); c++) {
-            const std::string& row = rows[c];
-            if (row.size() < static_cast<size_t>(expected_dim.x())
-                || !std::ranges::all_of(row, is_printable_ascii)) {
-                continue;
-            }
-            for (int i = m_offset.x(); i < expected_dim.x(); i++) {
-                const auto& lookup = lookup_ascii(row[i]);
-                if (lookup.placing != format_placings.cend()) {
-                    placing_count += lookup.placing->second.size();
-                }
-            }
-        }
-        objects.reserve(placing_count);
-        for (int c = m_offset.y(); c < expected_dim.y(); c++) {
-            const std::string& row = rows[c];
-            if (std::ranges::all_of(row, is_printable_ascii)) {
-                // utf8_display_split always yields at least one (possibly empty) glyph.
-                check_row_size(c, std::max<size_t>(row.size(), 1));
-                for (int i = m_offset.x(); i < expected_dim.x(); i++) {
-                    const auto ch = row[i];
-                    const auto& lookup = lookup_ascii(ch);
-                    place_cell(c, i, std::string(1, ch), lookup.terrain, lookup.placing);
-                }
-                continue;
-            }
-            std::vector<map_key> row_keys;
-            for (const std::string& key : utf8_display_split(row)) { row_keys.emplace_back(key); }
-            check_row_size(c, row_keys.size());
-            for (int i = m_offset.x(); i < expected_dim.x(); i++) {
-                const map_key& key = row_keys[i];
-                const auto placing = format_placings.find(key);
-                own_pieces(placing);
-                place_cell(c, i, key.str, keys_with_terrain.find(key), placing);
             }
         }
         fallback_terrain_exists = true;
@@ -3836,21 +3776,15 @@ void jmapgen_objects::finalize() {
         std::erase_if(pieces, [&](const auto& piece) { return !seen.insert(piece.get()).second; });
     }
     for (const auto& piece : pieces) { piece->finalize(); }
-    // phase() is virtual, so evaluate it once per object. There are only a few phases,
-    // so a stable counting sort avoids comparison sorting large object lists.
+    // phase() is virtual, so evaluate it once per object instead of once per comparison.
     const auto phases =
         objects | transform([](const jmapgen_obj& obj) { return obj.second->phase(); })
         | ranges::to<std::vector>();
     if (ranges::is_sorted(phases)) { return; }
-    constexpr auto phase_count = static_cast<size_t>(mapgen_phase::faction_ownership) + 1;
-    auto offsets = std::array<size_t, phase_count + 1>{};
-    for (const auto phase : phases) { ++offsets[static_cast<size_t>(phase) + 1]; }
-    std::partial_sum(offsets.begin(), offsets.end(), offsets.begin());
-    auto sorted = std::vector<jmapgen_obj>(objects.size());
-    for (size_t i = 0; i < objects.size(); ++i) {
-        sorted[offsets[static_cast<size_t>(phases[i])]++] = objects[i];
-    }
-    objects = std::move(sorted);
+    auto order = iota(size_t{0}, objects.size()) | ranges::to<std::vector>();
+    ranges::stable_sort(order, {}, [&phases](const size_t i) { return phases[i]; });
+    objects = order | transform([this](const size_t i) { return objects[i]; })
+            | ranges::to<std::vector>();
 }
 
 

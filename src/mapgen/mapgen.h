@@ -375,8 +375,6 @@ struct jmapgen_objects {
     void finalize();
 
     void merge_parameters_into(mapgen_parameters&, const std::string& outer_context) const;
-    /// Makes room for `count` more objects.
-    void reserve(size_t count);
 
     void apply(const mapgendata& dat) const;
     static auto default_rotate(const point_omt_ms& pt) -> point_omt_ms { return pt; }
