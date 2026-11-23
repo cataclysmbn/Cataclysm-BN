@@ -10,6 +10,7 @@
 #include <stdexcept>
 #include <string>
 #include <type_traits>
+#include <unordered_set>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -1503,7 +1504,8 @@ Res JsonObject::get_tags( const std::string &name ) const
  * Get an array member from json with name name.  For each element of that
  * array (which should be a string) add it to the given set.
  */
-void add_array_to_set( std::set<std::string> &, const JsonObject &json, const std::string &name );
+void add_array_to_set( std::unordered_set<std::string> &, const JsonObject &json,
+                       const std::string &name );
 
 /* JsonSerializer
  * ==============

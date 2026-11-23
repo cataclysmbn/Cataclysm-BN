@@ -25,10 +25,11 @@ using FreqDef_iter = FreqDef::iterator;
 
 struct MonsterGroupEntry {
     mtype_id name;
+    mongroup_id monster_group;
     int frequency;
     int cost_multiplier;
-    int pack_minimum;
-    int pack_maximum;
+    int pack_minimum = 1;
+    int pack_maximum = 1;
     std::vector<std::string> conditions;
     time_duration starts;
     time_duration ends;
@@ -36,9 +37,11 @@ struct MonsterGroupEntry {
         return ends <= 0_turns;
     }
 
-    MonsterGroupEntry( const mtype_id &id, int new_freq, int new_cost,
+    MonsterGroupEntry() = default;
+    MonsterGroupEntry( const mtype_id &id, const mongroup_id &mgroup_id, int new_freq, int new_cost,
                        int new_pack_min, int new_pack_max, const time_duration &new_starts, const time_duration &new_ends )
         : name( id )
+        , monster_group( mgroup_id )
         , frequency( new_freq )
         , cost_multiplier( new_cost )
         , pack_minimum( new_pack_min )
@@ -62,23 +65,39 @@ struct MonsterGroupResult {
     }
 };
 
-struct MonsterGroup {
-    mongroup_id name;
-    mtype_id defaultMonster;
-    FreqDef  monsters;
-    int evolve_chance = 0;
-    int evolve_repeat = 0;
-    bool IsMonsterInGroup( const mtype_id &id ) const;
-    bool is_animal = false;
-    // replaces this group after a period of
-    // time when exploring an unexplored portion of the map
-    bool replace_monster_group = false;
-    mongroup_id new_monster_group;
-    time_duration monster_group_time = 0_turns;
-    bool is_safe = false; /// Used for @ref mongroup::is_safe()
-    int freq_total = 0; // Default 1000 unless specified - max number to roll for spawns
+class MonsterGroup
+{
+    public:
+        // Generic Factory
+        mongroup_id id;
+        bool was_loaded = false;
 
-    LUA_TYPE_OPS( MonsterGroup, name );
+        // Data
+        mtype_id defaultMonster;
+        FreqDef  monsters;
+        int evolve_chance = 0;
+        int evolve_repeat = 0;
+        bool IsMonsterInGroup( const mtype_id &id ) const;
+        bool is_animal = false;
+        // replaces this group after a period of
+        // time when exploring an unexplored portion of the map
+        bool replace_monster_group = false;
+        mongroup_id new_monster_group = mongroup_id::NULL_ID();
+        time_duration monster_group_time = 0_turns;
+        bool is_safe = false; /// Used for @ref mongroup::is_safe()
+        int freq_total = 0; // Default 1000 unless specified - max number to roll for spawns
+
+        LUA_TYPE_OPS( MonsterGroup, id );
+
+        void load( const JsonObject &jo, const std::string &src );
+        void finalize();
+        void check() const;
+        static void load_monster_groups( const JsonObject &jo, const std::string &src );
+        static void finalize_all();
+        static void check_consistency();
+        static void reset();
+
+        static std::vector<MonsterGroup> get_all();
 };
 
 struct mongroup {
@@ -168,12 +187,11 @@ struct mongroup {
 class MonsterGroupManager
 {
     public:
-        static void LoadMonsterGroup( const JsonObject &jo );
         static void LoadMonsterBlacklist( const JsonObject &jo );
         static void LoadMonsterWhitelist( const JsonObject &jo );
-        static void FinalizeMonsterGroups();
-        static MonsterGroupResult GetResultFromGroup( const mongroup_id &group, int *quantity = nullptr,
-                bool use_pack_size = false );
+        static std::vector<MonsterGroupResult> GetResultFromGroup( const mongroup_id &group,
+                int *quantity = nullptr,
+                bool use_pack_size = false, bool from_subgroup = false );
         static bool IsMonsterInGroup( const mongroup_id &group, const mtype_id &monster );
         static bool isValidMonsterGroup( const mongroup_id &group );
         static const mongroup_id &Monster2Group( const mtype_id &monster );
@@ -187,19 +205,7 @@ class MonsterGroupManager
          */
         static const mtype_id &GetRandomMonsterFromGroup( const mongroup_id &group );
 
-        static void check_group_definitions();
-
-        static void ClearMonsterGroups();
-
         static bool monster_is_blacklisted( const mtype_id &m );
 
         static bool is_animal( const mongroup_id &group );
-
-    private:
-        static std::map<mongroup_id, MonsterGroup> monsterGroupMap;
-        using t_string_set = std::set<std::string>;
-        static t_string_set monster_blacklist;
-        static t_string_set monster_whitelist;
-        static t_string_set monster_categories_blacklist;
-        static t_string_set monster_categories_whitelist;
 };
