@@ -31,6 +31,8 @@ class computer_session
         /** Returns true if the player successfully hacks the computer. Security = -1 defaults to
          *  the main system security. */
         bool hack_attempt( Character &who, int Security = -1 );
+        auto effective_security( int Security ) const -> int;
+        void warn_if_unhackable( const Character &who, int Security );
 
         // Called by use()
         void activate_function( computer_action action );

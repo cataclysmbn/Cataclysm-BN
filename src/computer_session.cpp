@@ -43,6 +43,7 @@
 #include "type_id.h"
 #include "ui.h"
 #include "ui_manager.h"
+#include "utils/success_chance.h"
 
 #include <algorithm>
 #include <cstdlib>
@@ -114,6 +115,7 @@ void computer_session::use()
             return;
         }
         print_error( "%s", comp.access_denied );
+        warn_if_unhackable( g->u, comp.security );
         switch( query_ynq( _( "Bypass security?" ) ) ) {
             case ynq::quit:
                 reset_terminal();
@@ -171,6 +173,7 @@ void computer_session::use()
         // Once you trip the security, you have to roll every time you want to do something
         if( current.security + comp.alerts > 0 ) {
             print_error( _( "Password required." ) );
+            warn_if_unhackable( g->u, current.security );
             if( query_bool( _( "Hack into system?" ) ) ) {
                 if( !hack_attempt( g->u, current.security ) ) {
                     activate_random_failure();
@@ -192,32 +195,34 @@ void computer_session::use()
     reset_terminal(); // This should have been done by now, but just in case.
 }
 
+auto computer_session::effective_security( const int Security ) const -> int
+{
+    // Every time you dig for lab notes, (or, in future, do other suspicious stuff?)
+    // +2 dice to the system's hack-resistance
+    // So practical max files from a given terminal = 5, at 10 Computer
+    return Security + std::max( 0, comp.alerts * 2 );
+}
+
+void computer_session::warn_if_unhackable( const Character &who, const int Security )
+{
+    if( !success_chance::computer_hack( success_chance::hacker_of( who ).best(),
+                                        effective_security( Security ) ) ) {
+        print_error(
+            _( "Your computer skill and intelligence are too low to ever bypass this security." ) );
+    }
+}
+
 bool computer_session::hack_attempt( Character &who, int Security )
 {
     if( Security == -1 ) {
         Security = comp.security;    // Set to main system security if no value passed
     }
     const int hack_skill = who.get_skill_level( skill_computer );
-
-    // Every time you dig for lab notes, (or, in future, do other suspicious stuff?)
-    // +2 dice to the system's hack-resistance
-    // So practical max files from a given terminal = 5, at 10 Computer
-    if( comp.alerts > 0 ) {
-        Security += ( comp.alerts * 2 );
-    }
+    Security = effective_security( Security );
 
     who.moves -= 10 * ( 5 + Security * 2 ) / std::max( 1, hack_skill + 1 );
-    int player_roll = hack_skill;
-    ///\EFFECT_INT <8 randomly penalizes hack attempts, 50% of the time
-    if( who.int_cur < 8 && one_in( 2 ) ) {
-        player_roll -= rng( 0, 8 - who.int_cur );
-        ///\EFFECT_INT >8 randomly benefits hack attempts, 33% of the time
-    } else if( who.int_cur > 8 && one_in( 3 ) ) {
-        player_roll += rng( 0, who.int_cur - 8 );
-    }
-
-    ///\EFFECT_COMPUTER increases chance of successful hack attempt, vs Security level
-    bool successful_attempt = ( dice( player_roll, 6 ) >= dice( Security, 6 ) );
+    const bool successful_attempt = success_chance::computer_hack( success_chance::hacker_of( who ),
+                                    Security );
     who.practice( skill_computer, successful_attempt ? ( 15 + Security * 3 ) : 7 );
     return successful_attempt;
 }
