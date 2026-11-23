@@ -52,7 +52,15 @@ TEST_CASE("failed save load blocks saving over the broken save", "[save][load]")
 /// radius up and left of the map corner. After the load, that submap must still be unloaded.
 TEST_CASE("loading a save loads the map only around the saved player position", "[save][load]") {
     clear_all_state();
-    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    // Move the bubble back. Later tests expect submaps such as (200,200) outside it.
+    const auto origin = get_map().get_abs_sub();
+    const auto start_pos = get_avatar().abs_pos();
+    const auto cleanup = on_out_of_scope([&]() {
+        // setpos recenters the bubble on the player, so load the old origin after it.
+        g->u.setpos(start_pos);
+        g->load_map(origin);
+        clear_all_state();
+    });
 
     const auto player_omt = tripoint_abs_omt(100, 100, 0);
     g->place_player_overmap(player_omt);
