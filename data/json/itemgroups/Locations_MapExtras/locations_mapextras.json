@@ -30,9 +30,9 @@
       { "group": "baddrugs", "prob": 90 },
       {
         "distribution": [
-          { "group": "guns_pistol_common", "prob": 50 },
-          { "group": "guns_shotgun_common", "prob": 15 },
-          { "group": "guns_smg_common", "prob": 35 },
+          { "group": "carried_guns_pistol_common", "prob": 50 },
+          { "group": "carried_guns_shotgun_common", "prob": 10 },
+          { "group": "carried_guns_smg_common", "prob": 10 },
           { "group": "weapons", "prob": 50 },
           { "group": "gunmod_common", "prob": 25 },
           { "group": "gunmod_rare", "prob": 10 },
