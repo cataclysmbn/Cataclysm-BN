@@ -2747,6 +2747,7 @@ auto overmap::populate(const dimension_id& dim_id, overmap_special_batch& enable
     try {
         open(dim_id, enabled_specials);
     } catch (const std::exception& err) {
+        load_failed = true;
         debugmsg("overmap %s failed to load: %s", loc.to_string(), err.what());
     }
 }
@@ -6573,6 +6574,7 @@ auto overmap::open(const dimension_id& dim_id, overmap_special_batch& enabled_sp
 
 // Note: this may throw io errors from std::ofstream
 auto overmap::save(const dimension_id& dim_id) const -> void {
+    if (load_failed) { return; }
     g->get_active_world()
         ->write_overmap_player_visibility(dim_id.str(), loc, [&](std::ostream& stream) {
             serialize_view(stream);

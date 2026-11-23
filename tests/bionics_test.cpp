@@ -315,8 +315,6 @@ TEST_CASE("microreactor_installation_paths", "[bionics][reactor]") {
     }
 }
 
-// Installs two power storage CBMs (100 kJ and 250 kJ) and uninstalls the 100 kJ one.
-// The uninstall must subtract its capacity one time only, so 250 kJ remains.
 TEST_CASE("bionic_uninstall_removes_its_power_capacity_once", "[bionics]") {
     clear_all_state();
     player& dummy = get_avatar();
@@ -331,8 +329,6 @@ TEST_CASE("bionic_uninstall_removes_its_power_capacity_once", "[bionics]") {
     CHECK(dummy.get_max_power_level() == 250_kJ);
 }
 
-// Saves an NPC with -2 kJ of bionic power and capacity, as old saves can contain.
-// The load must not throw, and must reset both values to 0.
 TEST_CASE("npc_with_negative_bionic_power_loads_with_zero_power", "[bionics][npc]") {
     clear_all_state();
     npc saved;

@@ -440,6 +440,8 @@ private:
     std::vector<shared_ptr_fast<npc>> npcs;
 
     bool nullbool = false;
+    /// True when the save data of this overmap did not load. `save` then keeps that data.
+    bool load_failed = false;
     point_abs_om loc;
     dimension_id dimension_id_;
 
