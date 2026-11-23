@@ -95,7 +95,7 @@
         "text": "Put her out of her misery.",
         "topic": "TALK_DONE",
         "condition": { "days_since_cataclysm": 160 },
-        "effect": { "npc_die": { "remove_corpse": false, "supress_message": true } }
+        "effect": "npc_die"
       },
       {
         "text": "<end_talking>  Bye, Sera.",
@@ -126,7 +126,7 @@
         "text": "Put her out of her misery.",
         "topic": "TALK_DONE",
         "condition": { "days_since_cataclysm": 160 },
-        "effect": { "npc_die": { "remove_corpse": false, "supress_message": true } }
+        "effect": "npc_die"
       }
     ]
   },

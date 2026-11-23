@@ -1,6 +1,7 @@
 [
   {
     "type": "mapgen",
+    "method": "json",
     "om_terrain": [
       [ "collective_center_1", "collective_center_2", "collective_center_3", "collective_center_4", "collective_center_5" ]
     ],
@@ -57,6 +58,7 @@
   },
   {
     "type": "mapgen",
+    "method": "json",
     "om_terrain": [
       [ "collective_center_6", "collective_center_7", "collective_center_8", "collective_center_9", "collective_center_10" ]
     ],
@@ -140,6 +142,7 @@
   },
   {
     "type": "mapgen",
+    "method": "json",
     "om_terrain": [
       [
         "collective_center_11",
@@ -219,6 +222,7 @@
   },
   {
     "type": "mapgen",
+    "method": "json",
     "om_terrain": [
       [
         "collective_center_16",
@@ -282,6 +286,7 @@
   },
   {
     "type": "mapgen",
+    "method": "json",
     "om_terrain": [
       [
         "collective_center_21",
@@ -331,6 +336,7 @@
   },
   {
     "type": "mapgen",
+    "method": "json",
     "om_terrain": [
       [
         "collective_center_26",

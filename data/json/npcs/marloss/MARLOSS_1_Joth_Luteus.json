@@ -97,7 +97,7 @@
         "text": "Put him out of his misery.",
         "topic": "TALK_DONE",
         "condition": { "days_since_cataclysm": 160 },
-        "effect": { "npc_die": { "remove_corpse": false, "supress_message": true } }
+        "effect": "npc_die"
       },
       {
         "text": "<end_talking> Bye, Joth.",
@@ -145,7 +145,7 @@
     "dynamic_line": {
       "days_since_cataclysm": 81,
       "no": {
-        "concatenate": [
+        "and": [
           "Huh?\"   Like a corpse rising again, he unburies his face from the pile and glares at you, eyes still unfocused.  \"I'm trying to sleep.  What could you possibly need me ",
           {
             "u_has_trait": "MARLOSS",
@@ -206,7 +206,7 @@
         "text": "Put him out of his misery.",
         "topic": "TALK_DONE",
         "condition": { "days_since_cataclysm": 160 },
-        "effect": { "npc_die": { "remove_corpse": false, "supress_message": true } }
+        "effect": "npc_die"
       }
     ]
   },

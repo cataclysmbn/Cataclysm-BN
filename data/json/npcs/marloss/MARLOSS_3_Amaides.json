@@ -97,7 +97,7 @@
         "text": "Put him out of his misery.",
         "topic": "TALK_DONE",
         "condition": { "days_since_cataclysm": 160 },
-        "effect": { "npc_die": { "remove_corpse": false, "supress_message": true } }
+        "effect": "npc_die"
       }
     ]
   },
@@ -131,7 +131,7 @@
         "text": "Put him out of his misery.",
         "topic": "TALK_DONE",
         "condition": { "days_since_cataclysm": 160 },
-        "effect": { "npc_die": { "remove_corpse": false, "supress_message": true } }
+        "effect": "npc_die"
       },
       { "text": "Nevermind?", "topic": "TALK_DONE" }
     ]
