@@ -90,6 +90,28 @@ const MonsterGroup &MonsterGroupManager::GetUpgradedMonsterGroup( const mongroup
     return *groupptr;
 }
 
+namespace
+{
+void set_evolved_montype( const MonsterGroup &group, mtype_id &montype )
+{
+    int count = 0;
+    while( count < group.evolve_repeat ) {
+        if( rng( 0, 100 ) < group.evolve_chance ) {
+            if( montype->upgrade_into ) {
+                //If we upgrade into a blacklisted monster, treat it as though we are non-upgradeable
+                if( MonsterGroupManager::monster_is_blacklisted( montype->upgrade_into ) ) {
+                    count = group.evolve_repeat;
+                }
+                montype = montype->upgrade_into;
+            } else {
+                montype = MonsterGroupManager::GetRandomMonsterFromGroup( montype->upgrade_group );
+            }
+        }
+        count++;
+    }
+}
+} // namespace
+
 //Quantity is adjusted directly as a side effect of this function
 MonsterGroupResult MonsterGroupManager::GetResultFromGroup(
     const mongroup_id &group_name, int *quantity, bool use_pack_size )
@@ -102,20 +124,7 @@ MonsterGroupResult MonsterGroupManager::GetResultFromGroup(
     if( group.defaultMonster != mtype_id::NULL_ID() ) {
         int count = 0;
         auto montype = group.defaultMonster;
-        while( count < group.evolve_repeat ) {
-            if( rng( 0, 100 ) < group.evolve_chance ) {
-                if( montype->upgrade_into ) {
-                    //If we upgrade into a blacklisted monster, treat it as though we are non-upgradeable
-                    if( MonsterGroupManager::monster_is_blacklisted( montype->upgrade_into ) ) {
-                        count = group.evolve_repeat;
-                    }
-                    montype = montype->upgrade_into;
-                } else {
-                    montype = MonsterGroupManager::GetRandomMonsterFromGroup( montype->upgrade_group );
-                }
-            }
-            count++;
-        }
+        set_evolved_montype( group, montype );
         spawn_details = MonsterGroupResult( montype, 1 );
     }
 
@@ -195,20 +204,7 @@ MonsterGroupResult MonsterGroupManager::GetResultFromGroup(
                 }
                 int count = 0;
                 auto montype = it->name;
-                while( count < group.evolve_repeat ) {
-                    if( rng( 0, 100 ) < group.evolve_chance ) {
-                        if( montype->upgrade_into ) {
-                            //If we upgrade into a blacklisted monster, treat it as though we are non-upgradeable
-                            if( MonsterGroupManager::monster_is_blacklisted( montype->upgrade_into ) ) {
-                                count = group.evolve_repeat;
-                            }
-                            montype = montype->upgrade_into;
-                        } else {
-                            montype = MonsterGroupManager::GetRandomMonsterFromGroup( montype->upgrade_group );
-                        }
-                    }
-                    count++;
-                }
+                set_evolved_montype( group, montype );
                 spawn_details = MonsterGroupResult( montype, pack_size );
                 //And if a quantity pointer with remaining value was passed, will modify the external value as a side effect
                 //We will reduce it by the spawn rule's cost multiplier
