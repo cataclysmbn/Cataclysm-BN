@@ -3219,6 +3219,8 @@ void map::make_rubble(
     if (overwrite) {
         ter_set(p, floor_type);
         furn_set(p, rubble_type);
+        ter_vars(p)->erase_color_vars();
+        furn_vars(p)->erase_color_vars();
     } else {
         // First see if there is existing furniture to destroy
         if (is_bashable_furn(p)) { destroy_furn(p, true); }
@@ -3609,6 +3611,8 @@ void map::collapse_at(
         const tripoint_bub_ms tabove(p.xy(), p.z() + 1);
         ter_set(tabove, t_open_air);
         furn_set(tabove, f_null);
+        ter_vars(tabove)->erase_color_vars();
+        furn_vars(tabove)->erase_color_vars();
         propagate_suspension_check(tabove);
     }
     // it would be great to check if collapsing ceilings smashed through the floor, but
@@ -3874,6 +3878,7 @@ auto map::bash_ter_success(const tripoint_bub_ms& p, const bash_params& params) 
 
         ter_set(p, t_open_air);
     }
+    ter_vars(p)->erase_color_vars();
 
     spawn_items(p, item_group::items_from(bash.drop_group, calendar::turn));
 
@@ -4010,6 +4015,7 @@ auto map::bash_furn_success(const tripoint_bub_ms& p, const bash_params& params)
             spawn_items(p, item_group::items_from(bash.drop_group, calendar::turn));
             release_avatar_grabbed_furniture_if_destroyed(p, furnid, bash.furn_set);
             furn_set(p, bash.furn_set);
+            furn_vars(p)->erase_color_vars();
         } else {
             // Take the tent down
             const int rad = tentp->second.obj().bash.collapse_radius;
@@ -4033,6 +4039,7 @@ auto map::bash_furn_success(const tripoint_bub_ms& p, const bash_params& params)
                         release_avatar_grabbed_furniture_if_destroyed(
                             pt, furn_obj, recur_bash.furn_set);
                         furn_set(pt, recur_bash.furn_set);
+                        furn_vars(pt)->erase_color_vars();
                         break;
                     }
                 }
@@ -7428,13 +7435,34 @@ auto map::get_dir_circle(const tripoint_bub_ms& f, const tripoint_bub_ms& t) con
     return circle;
 }
 
+namespace {
+
+/// Marks every cache of a whole z-level dirty, as needed once its submaps were replaced.
+auto mark_level_caches_dirty(map& m, const int zlev) -> void {
+    m.set_transparency_cache_dirty(zlev);
+    m.set_floor_cache_dirty(zlev);
+    m.set_outside_cache_dirty(zlev);
+    m.set_absorption_cache_dirty(zlev);
+    m.set_seen_cache_dirty(zlev);
+    m.set_pathfinding_cache_dirty(zlev);
+    m.set_suspension_cache_dirty(zlev);
+    m.set_vehicle_cache_dirty(zlev);
+}
+
+} // namespace
+
 void map::load(const point_abs_sm& w, const bool update_vehicle, const bool pump_events) {
     funnel_locations_.clear();
     set_abs_sub(w);
     for (const auto p : bubble_submaps()) {
-        loadn(p, update_vehicle);
+        // Every submap is replaced, so whole levels are marked dirty once below
+        // instead of once per submap.
+        loadn(p, update_vehicle, true);
         MAPBUFFER_REGISTRY.get(bound_dimension_).actualize_submap(map_local_to_abs(*this, p));
         if (pump_events) { inp_mngr.pump_events(); }
+    }
+    for (const auto zlev : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
+        mark_level_caches_dirty(*this, zlev);
     }
     refresh_active_submap_view();
     validate_active_submap_view_complete("map::load");
@@ -7869,7 +7897,6 @@ void map::loadn(const tripoint_bub_sm& grid, const bool update_vehicles, const b
     ZoneValue(static_cast<uint64_t>(grid.z() + OVERMAP_DEPTH));
 
     const auto grid_abs_sub = map_local_to_abs(*this, tripoint_bub_sm(grid));
-    auto& dim_buf = MAPBUFFER_REGISTRY.get(bound_dimension_);
 
     // For out-of-bounds areas in bounded dimensions, use uniform boundary terrain
     // submaps instead of nullptr.  We check in-memory only (no DB lookup) because
@@ -7948,14 +7975,7 @@ void map::loadn(const tripoint_bub_sm& grid, const bool update_vehicles, const b
                 .pathfinding = true,
             });
         } else {
-            set_transparency_cache_dirty(grid.z());
-            set_floor_cache_dirty(grid.z());
-            set_outside_cache_dirty(grid.z());
-            set_absorption_cache_dirty(grid.z());
-            set_seen_cache_dirty(grid.z());
-            set_pathfinding_cache_dirty(grid.z());
-            set_suspension_cache_dirty(grid.z());
-            set_vehicle_cache_dirty(grid.z());
+            mark_level_caches_dirty(*this, grid.z());
         }
     }
     // Overlay boundary terrain on the edge tiles of this submap if it sits at the
@@ -8079,15 +8099,16 @@ void map::spawn_monsters_submap_group(
     if (pop) {
         // Populate the group from its population variable.
         for (int m = 0; m < pop; m++) {
-            MonsterGroupResult spawn_details =
-                MonsterGroupManager::GetResultFromGroup(group.type, &pop);
-            if (!spawn_details.name) { continue; }
-            monster tmp(spawn_details.name);
+            auto spawn_details_vec = MonsterGroupManager::GetResultFromGroup(group.type, &pop);
+            for (auto spawn_details : spawn_details_vec) {
+                if (!spawn_details.name) { continue; }
+                monster tmp(spawn_details.name);
 
-            // If a monster came from a horde population, configure them to always be willing to
-            // rejoin a horde.
-            if (group.horde) { tmp.set_horde_attraction(MHA_ALWAYS); }
-            for (int i = 0; i < spawn_details.pack_size; i++) { group.monsters.push_back(tmp); }
+                // If a monster came from a horde population, configure them to always be willing to
+                // rejoin a horde.
+                if (group.horde) { tmp.set_horde_attraction(MHA_ALWAYS); }
+                for (int i = 0; i < spawn_details.pack_size; i++) { group.monsters.push_back(tmp); }
+            }
         }
     }
 
@@ -8686,10 +8707,6 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
     auto normalize_gpu_dirty_levels = [](auto& levels) {
         std::ranges::sort(levels);
         levels.erase(std::ranges::unique(levels).begin(), levels.end());
-    };
-    auto level_has_vehicle_floor = [](const level_cache& ch) {
-        ZoneScopedN("Level_Has_Vehicle_Floor");
-        return ch.has_any_vehicle_floor;
     };
 
     // Refresh the shared weather-transparency lookup table once, serially,
@@ -9635,6 +9652,7 @@ auto map::is_map_cache_valid(const int zlev) -> bool {
             || ch.seen_cache_dirty || ch.lightmap_dirty || ch.outside_cache_dirty.any()
             || ch.suspension_cache_dirty;
     }
+    return false;
 }
 
 void map::invalidate_map_cache(const int zlev) {

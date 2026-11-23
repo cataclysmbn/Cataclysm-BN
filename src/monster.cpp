@@ -559,8 +559,10 @@ void monster::poly( const mtype_id &id )
         entry.cooldown = sa.second->cooldown;
     }
     faction = type->default_faction;
+    ammo = type->starting_ammo;
     upgrades = type->upgrades;
     reproduces = type->reproduces;
+    aggro_character = type->aggro_character;
 
     // HACK: We should know if the monster is in the bubble instead of checking it like this
     auto &tracker = get_mapbuffer().creature_tracker();
@@ -1907,6 +1909,11 @@ Attitude monster::attitude_to( const Creature &other ) const
                            m->type->in_species( ZOMBIE ) ) ) {
             // Zombies ignoring a feral survivor aren't quite the same as friendly
             // Ignore actually-friendly zombies/ferals but not other friendlies like reprogramed bots
+            return Attitude::A_FRIENDLY;
+        } else if( g->u.has_trait( trait_THRESH_MYCUS ) &&
+                   ( ( friendly != 0 && m->type->in_species( FUNGUS ) ) ||
+                     ( m->friendly != 0 && type->in_species( FUNGUS ) ) ) ) {
+            // A mycus survivor's pets are accepted by wild fungus, and vice versa
             return Attitude::A_FRIENDLY;
         } else if( ( friendly == 0 && m->friendly == 0 && faction_att == MFA_HATE ) ) {
             // Stuff that hates a specific faction will always attack that faction
@@ -4302,6 +4309,18 @@ bool monster::make_fungus()
 
     const std::string old_name = name();
     poly( type->fungalize_into );
+
+    // A fungalized pet only stays loyal to a mycus survivor; otherwise it
+    // reverts to a wild fungus hostile to the player.
+    if( friendly != 0 && !g->u.has_trait( trait_THRESH_MYCUS ) &&
+        !g->u.has_trait( trait_MYCUS_FRIEND ) ) {
+        friendly = 0;
+        remove_effect( effect_pet );
+        get_mapbuffer().creature_tracker().update_faction( *this );
+        if( g->u.sees( bub_pos() ) ) {
+            add_msg( m_warning, _( "The %s turns on you!" ), name() );
+        }
+    }
 
     if( g->u.sees( bub_pos() ) ) {
         add_msg( m_info, _( "The spores transform %1$s into a %2$s!" ),

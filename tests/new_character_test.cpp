@@ -30,8 +30,7 @@
 
 auto reset_scenario(avatar& u, const scenario* scen) -> void;
 
-static auto operator<<(std::ostream& s, const std::vector<trait_id>& v)
-    -> std::ostream& { // *NOPAD*
+static auto operator<<(std::ostream& s, const std::vector<trait_id>& v) -> std::ostream& {
     for (const auto& e : v) { s << e.c_str() << " "; }
     return s;
 }

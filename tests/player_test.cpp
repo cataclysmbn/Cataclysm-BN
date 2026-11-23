@@ -108,16 +108,14 @@ constexpr std::array<temperature_threshold, 7> bodytemps = {
 
 #undef t
 
-auto operator<<(std::ostream& os, const body_part_temp& bpt) -> std::ostream&;  // *NOPAD*
-auto operator<<(std::ostream& os, const body_part_temp& bpt) -> std::ostream& { // *NOPAD*
+auto operator<<(std::ostream& os, const body_part_temp& bpt) -> std::ostream&;
+auto operator<<(std::ostream& os, const body_part_temp& bpt) -> std::ostream& {
     // Stringify the temperature to avoid Catch adding hex
     return os << std::to_string(bpt.temperature);
 }
 
-auto operator<<(std::ostream& os, const std::vector<body_part_temp>& bpts)
-    -> std::ostream&; // *NOPAD*
-auto operator<<(std::ostream& os, const std::vector<body_part_temp>& bpts)
-    -> std::ostream& { // *NOPAD*
+auto operator<<(std::ostream& os, const std::vector<body_part_temp>& bpts) -> std::ostream&;
+auto operator<<(std::ostream& os, const std::vector<body_part_temp>& bpts) -> std::ostream& {
     os << "[";
     for (const auto& e : bpts) { os << e << ","; }
     return os << "]\n";
@@ -130,8 +128,8 @@ public:
     temperatures_wrapper(const base_type& base): base_type(base) {}
 };
 
-auto operator<<(std::ostream& os, const temperatures_wrapper& arr) -> std::ostream&;  // *NOPAD*
-auto operator<<(std::ostream& os, const temperatures_wrapper& arr) -> std::ostream& { // *NOPAD*
+auto operator<<(std::ostream& os, const temperatures_wrapper& arr) -> std::ostream&;
+auto operator<<(std::ostream& os, const temperatures_wrapper& arr) -> std::ostream& {
     os << "[\n";
     for (size_t i = 0; i < arr.size() / 2; i++) { os << string_format("%6d, ", arr[i]); }
     // Ugly split like that because otherwise it gets wrapped seemingly randomly

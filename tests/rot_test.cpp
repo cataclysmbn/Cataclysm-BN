@@ -86,7 +86,7 @@ static auto add_backpack_with_sashimi_to_vehicle_part(vehicle& veh, const int pa
     REQUIRE_FALSE(veh.add_item(part_index, make_backpack_with_sashimi()));
 }
 
-static auto nested_sashimi_in(item& container) -> item*; // *NOPAD*
+static auto nested_sashimi_in(item& container) -> item*;
 
 static auto make_plastic_bag_with_sashimi() -> detached_ptr<item> {
     auto bag = item::spawn("bag_plastic");
@@ -107,8 +107,7 @@ static auto make_sealed_carton_with_rotten_nested_sashimi() -> detached_ptr<item
     return carton;
 }
 
-static auto nested_sashimi_in(item& container) -> item* // *NOPAD*
-{
+static auto nested_sashimi_in(item& container) -> item* {
     namespace ranges = std::ranges;
     using namespace std::views;
     const auto nested_food =
@@ -168,8 +167,7 @@ static auto completed_items(Character& who, const itype_id& type) -> std::vector
     return who.items_with([&type](const item& it) { return it.typeId() == type; });
 }
 
-static auto move_to_inventory_with_attempt_detach(item& stored) -> item* // *NOPAD*
-{
+static auto move_to_inventory_with_attempt_detach(item& stored) -> item* {
     item* carried = nullptr;
     stored.attempt_detach([&carried](detached_ptr<item>&& it) {
         carried = &get_avatar().i_add(std::move(it));

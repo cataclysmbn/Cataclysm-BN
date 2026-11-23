@@ -331,10 +331,55 @@ void cata::detail::reg_map( sol::state &lua )
 
         DOC( "Returns the vehicle origin tile in local map-square coordinates." );
         luna::set_fx( ut, "pos", []( const wrapped_vehicle & wrapped ) -> tripoint_bub_ms { return wrapped.pos; } );
+        DOC( "Returns true if the wrapped vehicle still exists, false if the handle is invalid (e.g. the vehicle was destroyed)." );
+        luna::set_fx( ut, "is_valid", []( const wrapped_vehicle & wrapped ) -> bool { return wrapped.v != nullptr; } );
         DOC( "Returns the vehicle prototype id string." );
         luna::set_fx( ut, "type", []( const wrapped_vehicle & wrapped ) -> std::string {
             if( wrapped.v == nullptr ) { return ""; }
             return wrapped.v->type.str();
+        } );
+        DOC( "Returns the vehicle's display name, or an empty string if the handle is invalid." );
+        luna::set_fx( ut, "name", []( const wrapped_vehicle & wrapped ) -> std::string {
+            if( wrapped.v == nullptr ) { return ""; }
+            return wrapped.v->name;
+        } );
+        DOC( "Returns the vehicle's facing in degrees (0 = east, 90 = north), or 0 if the handle is invalid." );
+        luna::set_fx( ut, "facing", []( const wrapped_vehicle & wrapped ) -> double {
+            if( wrapped.v == nullptr ) { return 0.0; }
+            return units::to_degrees( wrapped.v->face.dir() );
+        } );
+        DOC( "Returns true if the vehicle is locked, false otherwise (also false if the handle is invalid)." );
+        luna::set_fx( ut, "is_locked", []( const wrapped_vehicle & wrapped ) -> bool {
+            if( wrapped.v == nullptr ) { return false; }
+            return wrapped.v->is_locked;
+        } );
+        DOC( "Locks or unlocks the vehicle. Does nothing if the handle is invalid." );
+        luna::set_fx( ut, "set_locked", []( wrapped_vehicle & wrapped, const bool locked ) {
+            if( wrapped.v == nullptr ) { return; }
+            wrapped.v->is_locked = locked;
+        } );
+        DOC( "Returns the charges of the given fuel type left in the vehicle (e.g. ItypeId.new(\"battery\")), or 0 if the handle is invalid." );
+        luna::set_fx( ut, "fuel_left", []( const wrapped_vehicle & wrapped, const itype_id & fuel ) -> int {
+            if( wrapped.v == nullptr ) { return 0; }
+            return wrapped.v->fuel_left( fuel );
+        } );
+        DOC( "Drains up to `amount` charges of the given fuel type from the vehicle. Returns the charges actually drained." );
+        luna::set_fx( ut, "drain_fuel", []( const wrapped_vehicle & wrapped, const itype_id & fuel,
+        const int amount ) -> int {
+            if( wrapped.v == nullptr ) { return 0; }
+            return wrapped.v->drain( fuel, amount );
+        } );
+        DOC( "Drains up to `amount` charges from the onboard batteries. Returns the charges actually drained." );
+        luna::set_fx( ut, "drain_batteries", []( const wrapped_vehicle & wrapped,
+        const int amount ) -> int {
+            if( wrapped.v == nullptr ) { return 0; }
+            return wrapped.v->drain( itype_id( "battery" ), amount );
+        } );
+        DOC( "Charges the onboard batteries by up to `amount`. Returns the charges actually added." );
+        luna::set_fx( ut, "charge_batteries", []( const wrapped_vehicle & wrapped,
+        const int amount ) -> int {
+            if( wrapped.v == nullptr ) { return 0; }
+            return wrapped.v->charge_battery( amount, false );
         } );
     }
 

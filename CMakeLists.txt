@@ -415,6 +415,9 @@ if (CATA_SDL)
                     EXCLUDE_FROM_ALL
             )
             FetchContent_MakeAvailable(SDL3)
+            # SDL compiles with a PCH. Clang writes a timestamp into it, so ccache misses every SDL file on every build.
+            target_compile_options(SDL3-shared PRIVATE
+                    "$<$<COMPILE_LANG_AND_ID:C,Clang,AppleClang>:SHELL:-Xclang -fno-pch-timestamp>")
             if (DYNAMIC_LINKING)
                 install(TARGETS SDL3-shared DESTINATION lib)
             endif ()

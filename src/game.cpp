@@ -5866,7 +5866,7 @@ void game::cleanup_dead()
 {
     // Dead monsters need to stay in the tracker until everything else that needs to die does so
     // This is because dying monsters can still interact with other dying monsters (@ref Creature::killer)
-    bool monster_is_dead = critter_tracker->kill_marked_for_death();
+    critter_tracker->kill_marked_for_death();
 
     bool npc_is_dead = false;
     // can't use all_npcs as that does not include dead ones
@@ -6681,7 +6681,7 @@ void game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
     auto monmove_action_move = int64_t{ 0 };
     auto monmove_action_attack = int64_t{ 0 };
     auto monmove_action_other = int64_t{ 0 };
-    const auto record_monmove_action = [&]( const monster & critter,
+    const auto record_monmove_action = [&]( const monster & /*critter*/,
     const monster_action_t &action ) {
         if( action.needs_repath ) {
             ++monmove_action_repath_requests;
@@ -8136,8 +8136,15 @@ void game::control_vehicle()
             veh_part = vp->part_index();
         }
     }
-    if( veh != nullptr && veh->player_in_control( u ) &&
-        veh->avail_part_with_feature( veh_part, "CONTROLS", true ) >= 0 ) {
+    if( veh != nullptr && veh_part < 0 ) {
+        // Remote control: the player is not standing on the vehicle, so there is no part to
+        // check for controls. player_in_control() verifies the remote link (and drops it if lost).
+        if( !veh->player_in_control( u ) ) {
+            return;
+        }
+        veh->use_controls( tripoint_bub_ms( u.bub_pos() ) );
+    } else if( veh != nullptr && veh->player_in_control( u ) &&
+               veh->avail_part_with_feature( veh_part, "CONTROLS", true ) >= 0 ) {
         veh->use_controls( tripoint_bub_ms( u.bub_pos() ) );
     } else if( veh && veh->player_in_control( u ) &&
                veh->avail_part_with_feature( veh_part, "CONTROL_ANIMAL", true ) >= 0 ) {
@@ -10041,7 +10048,7 @@ std::optional<tripoint_bub_ms> game::look_around( look_around_mode mode )
 
 look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
                                       const tripoint_bub_ms &start_point, bool has_first_point, bool select_zone, bool peeking,
-                                      bool is_moving_zone, const tripoint_bub_ms &end_point, look_around_mode mode )
+                                      bool is_moving_zone, const tripoint_bub_ms &end_point, look_around_mode /*mode*/ )
 {
     bVMonsterLookFire = false;
     temp_exit_fullscreen();
@@ -14044,6 +14051,10 @@ void game::resize_reality_bubble_to( int new_size )
         active_npc.erase( out_of_range.begin(), out_of_range.end() );
     }
 
+    // While a save is being read there is no live reality bubble and the player position is
+    // not known yet, so there is nothing to reload: the load brings the map in afterwards.
+    const auto reading_save = saving_blocked_by_failed_load && !m.has_active_load_region();
+
     // Release submap loader requests so load_map() recreates them with the new bounds.
     release_active_load_regions();
 
@@ -14053,6 +14064,20 @@ void game::resize_reality_bubble_to( int new_size )
     init_bubble_config( new_size );
     m.resize( g_mapsize );
     reality_bubble_radius_ = g_half_mapsize;
+
+    const auto discard_bubble_sized_state = []() {
+        // Discard pathfinding objects sized for the old bubble.
+        Pathfinding::clear_pool();
+#if defined(TILES)
+        if( tilecontext ) {
+            tilecontext->reset_minimap();
+        }
+#endif
+    };
+    if( reading_save ) {
+        discard_bubble_sized_state();
+        return;
+    }
 
     // Compute the new top-left abs_sub so load_map centers on the player.
     const auto new_abs_sub = player_abs_sm.xy() +
@@ -14105,15 +14130,7 @@ void game::resize_reality_bubble_to( int new_size )
     m.invalidate_map_cache( get_levz() );
     m.build_map_cache( get_levz() );
 
-    // Discard pathfinding objects sized for the old bubble.
-    Pathfinding::clear_pool();
-
-
-#if defined(TILES)
-    if( tilecontext ) {
-        tilecontext->reset_minimap();
-    }
-#endif
+    discard_bubble_sized_state();
 }
 
 void game::resize_reality_bubble()

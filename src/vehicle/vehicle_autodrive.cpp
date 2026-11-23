@@ -658,7 +658,6 @@ auto vehicle::autodrive_controller::check_drivable(tripoint_bub_ms pt, bool body
 }
 
 void vehicle::autodrive_controller::compute_obstacles() {
-    const map& here = get_map();
     for (int dx = 0; dx < NAV_VIEW_SIZE_X; dx++) {
         for (int dy = 0; dy < NAV_VIEW_SIZE_Y; dy++) {
             // TODO: store z-values in the nav map and retrieve here (needed for ramp navigation)

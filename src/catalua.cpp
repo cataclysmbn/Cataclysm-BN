@@ -427,8 +427,6 @@ void init_global_state_tables( lua_state &state, const std::vector<mod_id> &modl
     };
 
     gt["add_lua_condition"] = [&lua]( const std::string & condition_name, const sol::object & entry ) {
-        auto *L = lua.lua_state();
-
         if( entry.is<sol::table>() ) {
             auto table = entry.as<sol::table>();
             sol::protected_function global = sol::lua_nil;

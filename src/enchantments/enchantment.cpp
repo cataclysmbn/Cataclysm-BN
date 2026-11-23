@@ -37,7 +37,7 @@ generic_factory<enchantment> enchant_factory("enchantment");
 
 IMPLEMENT_STRING_AND_INT_IDS(enchantment, enchant_factory);
 
-auto enchantment::get_effect_string(bool is_item) const -> std::vector<std::string> {
+auto enchantment::get_effect_string(bool /*is_item*/) const -> std::vector<std::string> {
     std::string cond_string;
     if (conditions.empty()) { cond_string = _("At all times"); }
     for (const enchantment_condition_id cond_id : conditions) {
@@ -46,21 +46,21 @@ auto enchantment::get_effect_string(bool is_item) const -> std::vector<std::stri
     }
 
     std::map<enchantment_value_id, int> value_effects;
-    for (const auto [ench_id, effect] : values_add) {
+    for (const auto& [ench_id, effect] : values_add) {
         if (effect > 0) {
             value_effects[ench_id] += (ench_id->increase_good) ? 1 : -1;
         } else if (effect < 0) {
             value_effects[ench_id] += (ench_id->increase_good) ? -1 : 1;
         }
     }
-    for (const auto [ench_id, effect] : values_multiply) {
+    for (const auto& [ench_id, effect] : values_multiply) {
         if (effect > 0) {
             value_effects[ench_id] += (ench_id->increase_good) ? 1 : -1;
         } else if (effect < 0) {
             value_effects[ench_id] += (ench_id->increase_good) ? -1 : 1;
         }
     }
-    for (const auto [ench_id, effect] : values_max) {
+    for (const auto& [ench_id, effect] : values_max) {
         // Value max fundamentally cant be bad
         value_effects[ench_id] += 1;
     }
@@ -68,8 +68,8 @@ auto enchantment::get_effect_string(bool is_item) const -> std::vector<std::stri
     bool describe = false;
     result.push_back(cond_string);
 
-    for (const auto [ench_val_id, effectors] : complex_values_add) {
-        for (const auto effector : effectors) {
+    for (const auto& [ench_val_id, effectors] : complex_values_add) {
+        for (const auto& effector : effectors) {
             // Effectors should never have a value of 0
             const std::string color = effector.second > 0 ? "green" : "red";
             const std::string effect_desc = effector.first->get_desc();
@@ -83,8 +83,8 @@ auto enchantment::get_effect_string(bool is_item) const -> std::vector<std::stri
             }
         }
     }
-    for (const auto [ench_val_id, effectors] : complex_values_multiply) {
-        for (const auto effector : effectors) {
+    for (const auto& [ench_val_id, effectors] : complex_values_multiply) {
+        for (const auto& effector : effectors) {
             // Effectors should never have a value of 0
             const std::string color = effector.second > 0 ? "green" : "red";
             const std::string effect_desc = effector.first->get_desc();
@@ -98,8 +98,8 @@ auto enchantment::get_effect_string(bool is_item) const -> std::vector<std::stri
             }
         }
     }
-    for (const auto [ench_val_id, effectors] : complex_values_max) {
-        for (const auto effector : effectors) {
+    for (const auto& [ench_val_id, effectors] : complex_values_max) {
+        for (const auto& effector : effectors) {
             // Effectors should never have a value of 0
             const std::string color = effector.second > 0 ? "green" : "red";
             const std::string effect_desc = effector.first->get_desc();
@@ -119,7 +119,7 @@ auto enchantment::get_effect_string(bool is_item) const -> std::vector<std::stri
         result.push_back(string_format("  <color_%s>%s</color>", color, ench_id->get_desc()));
         describe = true;
     }
-    for (const auto [eff_id, intense] : ench_effects) {
+    for (const auto& [eff_id, intense] : ench_effects) {
         if (!eff_id->is_show_in_info()) { continue; }
         effect_rating rating = eff_id->get_rating();
         const std::string color =
@@ -161,7 +161,7 @@ auto enchantment::get_effect_string(bool is_item) const -> std::vector<std::stri
             string_format(_("  <color_%s>Gives mutation %s</color>"), color, trait_id->name()));
         describe = true;
     }
-    for (const auto [flag, _] : flags) {
+    for (const auto& [flag, _] : flags) {
         result.push_back(string_format("  %s", flag->info));
         describe = true;
     }
@@ -384,7 +384,7 @@ void enchantment::load(const JsonObject& jo, const std::string&) {
         }
     }
     if (jo.has_array("flags")) {
-        for (const auto flag : jo.get_string_array("flags")) {
+        for (const auto& flag : jo.get_string_array("flags")) {
             flags[enchantment_flag_id(flag)] = 1;
         }
     }
@@ -455,8 +455,8 @@ void enchantment::serialize(JsonOut& jsout) const {
         if (val_mult != 0) { jsout.member("multiply", val_mult); }
         jsout.end_object();
     }
-    for (const auto [ench_val_id, effectors] : complex_values_add) {
-        for (const auto effector : effectors) {
+    for (const auto& [ench_val_id, effectors] : complex_values_add) {
+        for (const auto& effector : effectors) {
             jsout.start_object();
             jsout.member("value", ench_val_id.str());
             jsout.member("add");
@@ -467,8 +467,8 @@ void enchantment::serialize(JsonOut& jsout) const {
             jsout.end_object();
         }
     }
-    for (const auto [ench_val_id, effectors] : complex_values_multiply) {
-        for (const auto effector : effectors) {
+    for (const auto& [ench_val_id, effectors] : complex_values_multiply) {
+        for (const auto& effector : effectors) {
             jsout.start_object();
             jsout.member("value", ench_val_id.str());
             jsout.member("multiply");
@@ -479,8 +479,8 @@ void enchantment::serialize(JsonOut& jsout) const {
             jsout.end_object();
         }
     }
-    for (const auto [ench_val_id, effectors] : complex_values_max) {
-        for (const auto effector : effectors) {
+    for (const auto& [ench_val_id, effectors] : complex_values_max) {
+        for (const auto& effector : effectors) {
             jsout.start_object();
             jsout.member("value", ench_val_id.str());
             jsout.member("max");
@@ -993,12 +993,12 @@ void enchantment::check(std::set<enchantment_condition_type> incompatible_cond_t
             }
         }
     }
-    for (const auto spell : hit_me_effect) {
+    for (const auto& spell : hit_me_effect) {
         if (!spell.id.is_valid()) {
             problems.push_back(string_format("\nspell id %s does not exist", spell.id.str()));
         }
     }
-    for (const auto spell : hit_you_effect) {
+    for (const auto& spell : hit_you_effect) {
         if (!spell.id.is_valid()) {
             problems.push_back(string_format("\nspell id %s does not exist", spell.id.str()));
         }

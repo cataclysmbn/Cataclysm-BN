@@ -7,8 +7,7 @@
 
 namespace cata::lua_sidebar_widgets {
 namespace {
-auto widgets_storage() -> std::vector<widget_entry>& // *NOPAD*
-{
+auto widgets_storage() -> std::vector<widget_entry>& {
     static auto widgets = std::vector<widget_entry>{};
     return widgets;
 }
@@ -58,13 +57,9 @@ auto register_widget(const widget_options& opts) -> void {
 
 auto clear_widgets() -> void { widgets_storage().clear(); }
 
-auto get_widgets() -> const std::vector<widget_entry>& // *NOPAD*
-{
-    return widgets_storage();
-}
+auto get_widgets() -> const std::vector<widget_entry>& { return widgets_storage(); }
 
-auto find_widget(const std::string_view id) -> const widget_entry* // *NOPAD*
-{
+auto find_widget(const std::string_view id) -> const widget_entry* {
     auto& widgets = widgets_storage();
     auto match = std::ranges::find(widgets, id, &widget_entry::id);
     if (match == widgets.end()) { return nullptr; }

@@ -337,6 +337,40 @@ TEST_CASE("taking_control_of_vehicle_without_engine", "[vehicle]") {
     CHECK(!player_character.activity);
 }
 
+// Regression test for #10906: while a vehicle was remote controlled, game::control_vehicle()
+// looked up controls with part index -1 (reading parts[-1]) instead of opening the controls menu.
+TEST_CASE("control_vehicle_while_remote_controlling_opens_vehicle_controls", "[vehicle]") {
+    clear_all_state();
+    auto& here = get_map();
+    auto& player_character = get_avatar();
+    auto* veh_ptr =
+        here.add_vehicle(vproto_id("bubble_car"), tripoint_bub_ms(60, 60, 0), 0_degrees, 0, 0);
+    REQUIRE(veh_ptr != nullptr);
+    // Spawned vehicles can be locked; a locked vehicle never shows the controls menu.
+    veh_ptr->is_locked = false;
+
+    // Stand away from the vehicle, so there is no vehicle part under the player.
+    player_character.setpos(tripoint_bub_ms(70, 60, 0));
+    REQUIRE_FALSE(here.veh_at(player_character.bub_pos()));
+
+    // Take control the same way the remote drone controller does: activate it, then set the
+    // vehicle.
+    auto remote = item::spawn(itype_id("remotevehcontrol"));
+    remote->activate();
+    player_character.i_add(std::move(remote));
+    g->setremoteveh(veh_ptr);
+    REQUIRE(veh_ptr->player_in_control(player_character));
+
+    // Opening a menu is reported as a debug message in test mode, so this shows that the
+    // vehicle controls menu was reached.
+    const auto debug_msg = capture_debugmsg_during([&]() { g->control_vehicle(); });
+    CHECK_THAT(debug_msg, Catch::Contains("Tried to open UI in test mode"));
+    CHECK(g->remoteveh() == veh_ptr);
+
+    g->setremoteveh(nullptr);
+    here.destroy_vehicle(veh_ptr);
+}
+
 TEST_CASE("moving_flying_vehicle_can_use_wait_menu", "[vehicle][wait]") {
     clear_all_state();
     const auto origin = tripoint_bub_ms(60, 60, 0);

@@ -1,6 +1,7 @@
 #include "action_time_scale.h"
 #include "active_item_cache.h"
 #include "activity_handlers.h"
+#include "avatar.h"
 #include "bionics.h"
 #include "bodypart.h"
 #include "calendar.h"
@@ -854,7 +855,6 @@ float npc::character_danger( const Character &u ) const
 void npc::regen_ai_cache()
 {
     ZoneScoped;
-    map &here = get_map();
     auto i = std::begin( ai_cache.sound_alerts );
     while( i != std::end( ai_cache.sound_alerts ) ) {
         if( sees( abs_to_bub( i->abs_pos ) ) ) {
@@ -923,7 +923,16 @@ void npc::move()
                         warning_sound.danger_pos );
         }
     }
-    regen_ai_cache();
+    // Calm NPCs reassess danger every 5 turns inside activity skip windows.
+    const auto calm = ai_cache.danger_assessment <= 0.0f && ai_cache.sound_alerts.empty() &&
+                      ai_cache.target.expired() && ai_cache.dangerous_explosives.empty();
+    if( calm && get_avatar().in_skip_state &&
+        !action_time_scale::once_every_this_tick( 5_turns ) &&
+        get_option<bool>( "ACTIVITY_SKIP_NPC_AI_CADENCE" ) ) {
+        ai_cache.warn_about_queue.clear();
+    } else {
+        regen_ai_cache();
+    }
     adjust_power_cbms();
     // NPCs under operation should just stay still
     if( activity->id() == activity_id( "ACT_OPERATION" ) ) {
@@ -991,7 +1000,6 @@ void npc::move()
         ai_cache.target = g->shared_from( player_character );
     }
 
-    map &here = get_map();
     if( !ai_cache.dangerous_explosives.empty() ) {
         ZoneScopedN( "npc_escape_explode_selector" );
         action = npc_escape_explosion;
@@ -3888,7 +3896,7 @@ bool npc::do_player_activity()
     const auto moves_before = moves;
     {
         ZoneScopedN( "npc_do_player_activity_loop" );
-        auto activity_turns = 0;
+        [[maybe_unused]] auto activity_turns = 0;
         while( moves > 0 && activity && *activity ) {
             activity->do_turn( *this );
             activity_turns++;
@@ -4622,7 +4630,6 @@ void npc::reach_omt_destination()
     if( !omt_path.empty() ) {
         omt_path.clear();
     }
-    map &here = get_map();
     if( is_travelling() ) {
         guard_pos = abs_pos();
         goal = no_goal_point;

@@ -2059,14 +2059,11 @@ auto spellcasting_callback::draw_spell_info(const spell& sp, const uilist* menu)
     const int info_width = menu->pad_right - 4;
     const int win_height = menu->w_height;
     const int h_col1 = h_offset + 1;
-    const int h_col2 = h_offset + (info_width / 2);
     const catacurses::window w_menu = menu->window;
     // various pieces of spell data mean different things depending on the effect of the spell
     const std::string fx = sp.effect();
-    int line = 2;
     nc_color gray = c_light_gray;
     nc_color light_green = c_light_green;
-    nc_color yellow = c_yellow;
 
     const auto spell_class = sp.spell_class();
     const auto spell_class_name =
@@ -2233,7 +2230,6 @@ auto spellcasting_callback::draw_spell_info(const spell& sp, const uilist* menu)
     int info_scroll_max;
     info_scroll_max = std::min(total_lines, info_scroll + win_height - 3);
     for (int i = info_scroll; i < info_scroll_max; ++i) {
-        auto dummy = c_white;
         trim_and_print(
             w_menu, point(h_col1, i - info_scroll + 2), info_width - 1, c_white, to_print_list[i]);
     }

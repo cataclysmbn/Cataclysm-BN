@@ -44,7 +44,7 @@ auto cata::detail::reg_monster_groups( sol::state &lua ) -> void
             luna::no_constructor
         );
 
-        SET_MEMB( name );
+        luna::set_prop( ut, "name", []( const UT_CLASS & x ) -> mongroup_id { return x.id; } );
         SET_MEMB( defaultMonster );
         SET_MEMB( monsters );
         SET_MEMB( is_animal );

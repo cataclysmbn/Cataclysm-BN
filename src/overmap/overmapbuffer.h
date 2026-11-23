@@ -166,9 +166,7 @@ public:
      * registry when creating the slot; used to route I/O to the correct
      * dimension subdirectory without reading global state.
      */
-    auto get_dimension_id() const -> const dimension_id& { // *NOPAD*
-        return dimension_id_;
-    }
+    auto get_dimension_id() const -> const dimension_id& { return dimension_id_; }
     auto set_dimension_id(const dimension_id& id) -> void { dimension_id_ = id; }
 
     /**

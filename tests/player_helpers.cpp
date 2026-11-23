@@ -135,7 +135,7 @@ void process_activity(player& dummy) {
     } while (dummy.activity);
 }
 
-auto spawn_npc(const tripoint_bub_ms& p, const std::string& npc_class) -> npc& { // *NOPAD*
+auto spawn_npc(const tripoint_bub_ms& p, const std::string& npc_class) -> npc& {
     const string_id<npc_template> test_guy(npc_class);
     const character_id model_id = g->m.place_npc(p, test_guy, true);
     g->load_npcs();

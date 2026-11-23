@@ -399,6 +399,7 @@ auto mapgen_constructor::ter_set(const point_omt_ms& p, const ter_id& terrain) -
     const auto [sm, local] = tile_at(p);
     if (sm == nullptr || sm->get_ter(local) == terrain) { return false; }
     sm->set_ter(local, terrain);
+    sm->get_ter_vars(local).erase_color_vars();
     return true;
 }
 
@@ -406,6 +407,7 @@ auto mapgen_constructor::furn_set(const point_omt_ms& p, const furn_id& furnitur
     const auto [sm, local] = tile_at(p);
     if (sm == nullptr || sm->get_furn(local) == furniture) { return false; }
     sm->set_furn(local, furniture);
+    sm->get_furn_vars(local).erase_color_vars();
     const auto& new_furniture = furniture.obj();
     const auto& plumbing = new_furniture.fluid_grid;
     if (plumbing && plumbing->role == fluid_grid_role::fixture && !plumbing->universal_liquids
@@ -906,8 +908,11 @@ auto mapgen_constructor::place_spawns(
             p.y() = rng(p1.y(), p2.y());
             --tries;
         } while (impassable(p) && tries > 0);
-        auto spawn_details = MonsterGroupManager::GetResultFromGroup(group, &num);
-        add_spawn(spawn_details.name, spawn_details.pack_size, p, friendly, -1, mission_id, name);
+        auto spawn_details_vec = MonsterGroupManager::GetResultFromGroup(group, &num);
+        for (auto& spawn_details : spawn_details_vec) {
+            add_spawn(spawn_details.name, spawn_details.pack_size, p, friendly, -1, mission_id,
+                      name);
+        }
     }
 }
 
@@ -1144,7 +1149,7 @@ auto mapgen_constructor::detach_vehicle(vehicle* veh) -> std::unique_ptr<vehicle
         sm->vehicles.erase(iter);
         result->detach();
         result->refresh_position();
-        return std::move(result);
+        return result;
     }
     debugmsg("detach_vehicle can't find it!  name=%s, submap:%d,%d,%d", veh->name,
              veh->abs_sm_pos.x(), veh->abs_sm_pos.y(), veh->abs_sm_pos.z());
@@ -1403,9 +1408,7 @@ auto points_in_range(const mapgen_constructor& m) -> point_range<point_omt_ms> {
 
 auto random_point(
     const point_range<point_omt_ms>& range,
-    const std::function<bool(const point_omt_ms&)>& predicate)
-    -> std::optional<point_omt_ms> // *NOPAD*
-{
+    const std::function<bool(const point_omt_ms&)>& predicate) -> std::optional<point_omt_ms> {
     for (const auto unused : std::views::iota(0, 10)) {
         (void)unused;
         const auto p = point_omt_ms(
@@ -1419,9 +1422,7 @@ auto random_point(
 }
 
 auto random_point(
-    const mapgen_constructor& m,
-    const std::function<bool(const point_omt_ms&)>& predicate)
-    -> std::optional<point_omt_ms> // *NOPAD*
-{
+    const mapgen_constructor& m, const std::function<bool(const point_omt_ms&)>& predicate)
+    -> std::optional<point_omt_ms> {
     return random_point(points_in_range(m), predicate);
 }
