@@ -1741,6 +1741,27 @@ TEST_CASE("failed dimension deletion preserves saved metadata", "[lua]") {
 }
 #endif
 
+/// A player who made a new character after a session in a pocket dimension started inside that
+/// pocket, at overworld coordinates outside the pocket bounds. The active dimension of the last
+/// session was still set when the new game started.
+///
+/// Enter a pocket and call `game::setup`, the step before each new game and each load. Check that
+/// the overworld is the active dimension. Then load the save made before the pocket, to restore
+/// the factions and the reality bubble size for later tests.
+TEST_CASE("resets the active dimension to the overworld in game setup", "[dimension]") {
+    clear_all_state();
+    initialize_dimension_test_storage();
+    const auto dim = dimension_id("test_setup_reset");
+    const auto cleanup = dimension_test_cleanup({dim});
+    REQUIRE(g->save(false));
+    enter_test_pocket(dim, tripoint_abs_omt(24, 24, 0));
+
+    g->setup(false);
+
+    CHECK(g->get_current_dimension_id().is_empty());
+    REQUIRE(g->load(save_t::from_save_id(get_avatar().get_save_id())));
+}
+
 TEST_CASE("lua_dimension_cleanup_preserves_portal_load_requests", "[lua]") {
     clear_all_state();
     initialize_dimension_test_storage();

@@ -733,6 +733,8 @@ void game::setup( bool load_world_modfiles )
         guy->get_mapbuffer().remove_active_npc( *guy );
     }
     active_npc.clear();
+    // Leave the dimension of the last session, so that a new game starts in the overworld.
+    set_active_dimension_id( dimension_id() );
     faction_manager_ptr->clear();
     mission::clear_all();
     Messages::clear_messages();
