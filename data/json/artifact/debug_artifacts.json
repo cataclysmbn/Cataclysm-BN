@@ -232,5 +232,14 @@
     "weight": "400 g",
     "volume": "500 ml",
     "relic_data": { "passive_effects": [ { "values": [ { "value": "OVERKILL", "add": 10000 } ] } ] }
+  },
+  {
+    "id": "debug_gps_device",
+    "type": "TOOL",
+    "copy-from": "gps_device",
+    "name": { "str": "debug gps pinpointer" },
+    "description": "Durable handheld GPS unit built for outdoor navigation.  Activate to acquire satellite lock and search the database.  This one has encryption keys for military-grade satellites, allowing a much greater search range.",
+    "use_action": { "type": "gps_device", "radius": 1200, "additional_charges_per_tile": 0.001 },
+    "magazines": [ [ "battery", [ "medium_battery_cell" ] ] ]
   }
 ]
