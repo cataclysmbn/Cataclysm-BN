@@ -375,8 +375,7 @@ class mongroup_entry_reader : public generic_typed_reader<mongroup_entry_reader>
             if( entry.name.is_null() && entry.monster_group.is_null() ) {
                 jo.throw_error( "Monster group requires definition of one of `monster` or `monster_group`" );
             } else if( !entry.name.is_null() && !entry.monster_group.is_null() ) {
-                // FIXME: I dont know why this path goes when `name` is not null and `monster_group` is
-                // jo.throw_error( "Monster group requires definition of only one of `monster` or `monster_group`" );
+                jo.throw_error( "Monster group requires definition of only one of `monster` or `monster_group`" );
             }
             entry.starts *= mon_upgrade_factor;
             entry.ends *= mon_upgrade_factor;
