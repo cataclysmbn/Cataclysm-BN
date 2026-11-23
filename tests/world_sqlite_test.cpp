@@ -399,8 +399,6 @@ TEST_CASE("sqlite map database accepts concurrent map reads", "[world][sqlite]")
     CHECK(all_read.load(std::memory_order_relaxed));
 }
 
-// Writes "old", reads it with a reader that throws, writes "new", then reads again.
-// The second read must return "new": the failed read must not keep its view of the database.
 TEST_CASE("sqlite_read_that_throws_does_not_hide_later_writes", "[world][sqlite]") {
     auto* const w = g->get_active_world();
     REQUIRE(w->info->world_save_format == save_format::V2_COMPRESSED_SQLITE3);
