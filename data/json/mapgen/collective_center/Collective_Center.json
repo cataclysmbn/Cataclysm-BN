@@ -123,19 +123,19 @@
           { "item": "snacks", "chance": 50, "repeat": [ 1, 3 ] }
         ],
         "o": [
-          { "item": "maps", "chance": 10 },
-          { "item": "SUS_business_bookcase", "chance": 20 },
-          { "item": "SUS_engineering_bookcase", "chance": 5 },
-          { "item": "SUS_crafts_bookcase", "chance": 15 },
-          { "item": "SUS_cooking_bookcase", "chance": 15 },
-          { "item": "SUS_tailoring_bookcase", "chance": 15 },
-          { "item": "SUS_computers_bookcase", "chance": 10 },
-          { "item": "SUS_electronics_bookcase", "chance": 5 },
-          { "item": "SUS_historical_manufacturing_bookcase", "chance": 5 },
-          { "item": "SUS_chemistry_bookcase", "chance": 5 },
-          { "item": "SUS_medicine_bookcase", "chance": 10 },
-          { "item": "SUS_bushcraft_bookcase", "chance": 10 },
-          { "item": "SUS_fiction_bookcase", "chance": 25 }
+          { "item": "maps", "chance": 5 },
+          { "item": "SUS_business_bookcase", "chance": 10 },
+          { "item": "SUS_engineering_bookcase", "chance": 3 },
+          { "item": "SUS_crafts_bookcase", "chance": 8 },
+          { "item": "SUS_cooking_bookcase", "chance": 8 },
+          { "item": "SUS_tailoring_bookcase", "chance": 8 },
+          { "item": "SUS_computers_bookcase", "chance": 5 },
+          { "item": "SUS_electronics_bookcase", "chance": 3 },
+          { "item": "SUS_historical_manufacturing_bookcase", "chance": 3 },
+          { "item": "SUS_chemistry_bookcase", "chance": 3 },
+          { "item": "SUS_medicine_bookcase", "chance": 5 },
+          { "item": "SUS_bushcraft_bookcase", "chance": 5 },
+          { "item": "SUS_fiction_bookcase", "chance": 13 }
         ]
       }
     }
@@ -199,23 +199,23 @@
       "items": {
         "D": { "item": "SUS_trash_trashcan", "chance": 60 },
         "o": [
-          { "item": "maps", "chance": 10 },
-          { "item": "SUS_business_bookcase", "chance": 20 },
-          { "item": "SUS_engineering_bookcase", "chance": 5 },
-          { "item": "SUS_crafts_bookcase", "chance": 15 },
-          { "item": "SUS_cooking_bookcase", "chance": 15 },
-          { "item": "SUS_tailoring_bookcase", "chance": 15 },
-          { "item": "SUS_computers_bookcase", "chance": 10 },
-          { "item": "SUS_electronics_bookcase", "chance": 5 },
-          { "item": "SUS_historical_manufacturing_bookcase", "chance": 5 },
-          { "item": "SUS_chemistry_bookcase", "chance": 5 },
-          { "item": "SUS_medicine_bookcase", "chance": 10 },
-          { "item": "SUS_bushcraft_bookcase", "chance": 10 },
-          { "item": "SUS_fiction_bookcase", "chance": 25 },
-          { "item": "book_martial", "chance": 5 },
-          { "item": "SUS_office_desk", "chance": 5 },
-          { "item": "SUS_janitors_closet", "chance": 5 },
-          { "item": "SUS_office_filing_cabinet", "chance": 15 }
+          { "item": "maps", "chance": 5 },
+          { "item": "SUS_business_bookcase", "chance": 10 },
+          { "item": "SUS_engineering_bookcase", "chance": 3 },
+          { "item": "SUS_crafts_bookcase", "chance": 8 },
+          { "item": "SUS_cooking_bookcase", "chance": 8 },
+          { "item": "SUS_tailoring_bookcase", "chance": 8 },
+          { "item": "SUS_computers_bookcase", "chance": 5 },
+          { "item": "SUS_electronics_bookcase", "chance": 3 },
+          { "item": "SUS_historical_manufacturing_bookcase", "chance": 3 },
+          { "item": "SUS_chemistry_bookcase", "chance": 3 },
+          { "item": "SUS_medicine_bookcase", "chance": 5 },
+          { "item": "SUS_bushcraft_bookcase", "chance": 5 },
+          { "item": "SUS_fiction_bookcase", "chance": 13 },
+          { "item": "book_martial", "chance": 3 },
+          { "item": "SUS_office_desk", "chance": 3 },
+          { "item": "SUS_janitors_closet", "chance": 3 },
+          { "item": "SUS_office_filing_cabinet", "chance": 8 }
         ]
       }
     }
