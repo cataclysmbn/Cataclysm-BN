@@ -341,7 +341,7 @@ class legacy_supporting_unit_reader : generic_typed_reader<T>
             if( jo.has_string( member_name ) ) {
                 member = read_from_json_string<T>( *jo.get_raw( member_name ), type_units );
             } else if( legacy_scale != T{} && jo.has_int( member_name ) ) {
-                jo.show_warning( "Legacy unit values used, support will be removed eventually.", member_name );
+                jo.show_warning( "Legacy unit values used, support will be removed eventually.", member_name, true );
                 member = jo.get_int( member_name ) * legacy_scale;
             } else {
                 return false;
