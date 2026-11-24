@@ -345,9 +345,9 @@ class legacy_supporting_unit_reader : generic_typed_reader<T>
                                  true );
                 member = jo.get_int( member_name ) * legacy_scale;
             } else {
+                jo.throw_error( "Units must be a unit value string, or a legacy integer scalar.", member_name );
                 return false;
             }
-            jo.throw_error( "Units must be a unit value string, or a legacy integer scalar.", member_name );
             return true;
         }
         units::volume get_next( JsonIn &jin ) const {
