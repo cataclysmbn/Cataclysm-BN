@@ -231,14 +231,16 @@ auto mapgen_constructor::generate(
         if (spawns.group && x_in_y(odds_after_density, 100)) {
             int pop = spawn_count * rng(spawns.population.min, spawns.population.max);
             for (; pop > 0; pop--) {
-                MonsterGroupResult spawn_details =
+                std::vector<MonsterGroupResult> spawn_details_vec =
                     MonsterGroupManager::GetResultFromGroup(spawns.group, &pop);
-                if (!spawn_details.name) { continue; }
-                if (const std::optional<point_omt_ms> pt =
-                        random_point(*this, [this](const point_omt_ms& n) {
-                            return passable(n);
-                        })) {
-                    add_spawn(spawn_details.name, spawn_details.pack_size, *pt);
+                for (MonsterGroupResult& spawn_details : spawn_details_vec) {
+                    if (!spawn_details.name) { continue; }
+                    if (const std::optional<point_omt_ms> pt =
+                            random_point(*this, [this](const point_omt_ms& n) {
+                                return passable(n);
+                            })) {
+                        add_spawn(spawn_details.name, spawn_details.pack_size, *pt);
+                    }
                 }
             }
         }
@@ -2153,10 +2155,12 @@ public:
 
         mongroup_id chosen_group = m_id.get(dat);
         if (!chosen_group.is_null()) {
-            MonsterGroupResult spawn_details =
+            std::vector<MonsterGroupResult> spawn_details_vec =
                 MonsterGroupManager::GetResultFromGroup(chosen_group, nullptr, use_pack_size);
-            dat.m.add_spawn(spawn_details.name, spawn_count * pack_size.get(), {x.get(), y.get()},
-                            friendly, -1, mission_id, name);
+            for (MonsterGroupResult spawn_details : spawn_details_vec) {
+                dat.m.add_spawn(spawn_details.name, spawn_count * pack_size.get(),
+                                {x.get(), y.get()}, friendly, -1, mission_id, name);
+            }
         } else {
             mtype_id chosen_type = ids.pick()->get(dat);
             if (!chosen_type.is_null()) {
@@ -5571,9 +5575,13 @@ void map::place_spawns(
         } while (impassable(p) && tries > 0);
 
         // Pick a monster type
-        MonsterGroupResult spawn_details = MonsterGroupManager::GetResultFromGroup(group, &num);
+        std::vector<MonsterGroupResult> spawn_details_vec =
+            MonsterGroupManager::GetResultFromGroup(group, &num);
 
-        add_spawn(spawn_details.name, spawn_details.pack_size, {p}, friendly, -1, mission_id, name);
+        for (MonsterGroupResult spawn_details : spawn_details_vec) {
+            add_spawn(spawn_details.name, spawn_details.pack_size, {p}, friendly, -1, mission_id,
+                      name);
+        }
     }
 }
 

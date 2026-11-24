@@ -896,8 +896,11 @@ auto mapgen_constructor::place_spawns(
             p.y() = rng(p1.y(), p2.y());
             --tries;
         } while (impassable(p) && tries > 0);
-        auto spawn_details = MonsterGroupManager::GetResultFromGroup(group, &num);
-        add_spawn(spawn_details.name, spawn_details.pack_size, p, friendly, -1, mission_id, name);
+        auto spawn_details_vec = MonsterGroupManager::GetResultFromGroup(group, &num);
+        for (auto& spawn_details : spawn_details_vec) {
+            add_spawn(spawn_details.name, spawn_details.pack_size, p, friendly, -1, mission_id,
+                      name);
+        }
     }
 }
 

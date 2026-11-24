@@ -4053,6 +4053,38 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
         }
     };
 
+    const auto memorize_live_field = [&]( const tripoint_bub_ms & p,
+    const bool( &invisible )[5] ) {
+        ZoneScopedN( "memorize_live_field" );
+        if( invisible[0] ) {
+            return;
+        }
+        auto field_at = [&]( const tripoint_bub_ms & q, const bool invis ) -> field_type_id {
+            std::optional<mapbuffer_abs_tile_view> tile = here.get_tile_view_at( q );
+            if( !tile ) { return fd_null; }
+            return tile.value().get_field().displayed_field_type();
+        };
+
+        const auto &fld = field_at( p, invisible[0] );
+        if( !fld->display_field ) {
+            return;
+        }
+        const int neighborhood[4] = {
+            static_cast<int>( field_at( p + point_south, invisible[1] ) ),
+            static_cast<int>( field_at( p + point_east, invisible[2] ) ),
+            static_cast<int>( field_at( p + point_west, invisible[3] ) ),
+            static_cast<int>( field_at( p + point_north, invisible[4] ) )
+        };
+
+        int subtile = 0;
+        int rotation = 0;
+        get_tile_values( fld.to_i(), neighborhood, subtile, rotation );
+
+        if( here.check_seen_cache( p ) ) {
+            g->u.memorize_tile( bub_to_abs( p ), fld.id().str(), subtile, rotation );
+        }
+    };
+
     const auto memorize_live_trap = [&]( const tripoint_bub_ms & p,
     const bool( &invisible )[5] ) {
         ZoneScopedN( "memorize_live_trap" );
@@ -4214,6 +4246,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                 memorize_live_furniture( p, invisible );
                 memorize_live_trap( p, invisible );
                 memorize_live_vehicle( p, invisible );
+                memorize_live_field( p, invisible );
                 here.check_and_set_seen_cache( p );
             }
         };
@@ -5359,6 +5392,13 @@ std::optional<memorized_terrain_tile>
     return get_map_memory_of_at<trap>( p );
 }
 
+auto cata_tiles::get_field_memory_at( const tripoint_bub_ms &p ) ->
+std::optional<memorized_terrain_tile>
+{
+    ZoneScoped;
+    return get_map_memory_of_at<field_type>( p );
+}
+
 auto cata_tiles::get_vpart_memory_at( const tripoint_bub_ms &p ) ->
 std::optional<memorized_terrain_tile>
 {
@@ -5765,7 +5805,22 @@ bool cata_tiles::draw_field_or_item( const tripoint_bub_ms &p, const lit_level l
         ret_draw_field = draw_from_id_string(
                              tile, p, bgCol, fgCol,
                              lit, nv, z_drop, false );
+        if( here.check_seen_cache( p ) ) {
+            g->u.memorize_tile( bub_to_abs( p ), tile.id, subtile, rotation );
+        }
+    } else if( invisible[0] ) {
+        // try drawing memory if invisible and not overridden
+        const auto ret = get_field_memory_at( p );
+        if( ret.has_value() ) {
+            const auto& [tile_id, subtile, rotation] = ret.value();
+            const tile_search_params tile { tile_id, C_FIELD, empty_string, subtile, rotation };
+            const auto [bgCol, fgCol] = get_field_color( here.field_at( p ), here, p );
+            return draw_from_id_string(
+                       tile, p, bgCol, fgCol,
+                       lit_level::MEMORIZED, true, z_drop, false, height_3d );
+        }
     }
+
     if( fld.obj().display_items ) {
         const auto it_override = item_override.find( p );
         const bool it_overridden = it_override != item_override.end();

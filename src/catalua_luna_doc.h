@@ -98,7 +98,7 @@ struct omt_find_params;
 struct oter_t;
 struct species_type;
 struct trap;
-struct MonsterGroup;
+class MonsterGroup;
 struct uilist_entry;
 struct book_recipe;
 struct MonsterGroupEntry;

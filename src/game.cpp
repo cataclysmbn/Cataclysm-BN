@@ -733,6 +733,8 @@ void game::setup( bool load_world_modfiles )
         guy->get_mapbuffer().remove_active_npc( *guy );
     }
     active_npc.clear();
+    // Leave the dimension of the last session, so that a new game starts in the overworld.
+    set_active_dimension_id( dimension_id() );
     faction_manager_ptr->clear();
     mission::clear_all();
     Messages::clear_messages();
@@ -2082,6 +2084,13 @@ auto game::advance_time_action_tick() -> int
     action_time_scale::set_calendar_turns_this_tick( calendar_turns );
     calendar::turn += time_duration::from_turns( calendar_turns );
     return calendar_turns;
+}
+
+auto game::reset_activity_fixed_window() -> void
+{
+    next_activity_fixed_window_check_ = calendar::turn_zero;
+    activity_fixed_window_force_normal_turn_ = false;
+    time_action_scale_turn_remainder = 0;
 }
 
 // MAIN GAME LOOP

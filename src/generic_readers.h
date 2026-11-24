@@ -161,7 +161,9 @@ class generic_typed_reader
             // you have to implement a specialization of your container type, so above for
             // existing specializations in namespace reader_detail.
             if( jo.has_member( member_name ) ) {
-                reader_detail::handler<C>().clear( container );
+                if( override_on_copy_from() ) {
+                    reader_detail::handler<C>().clear( container );
+                }
                 derived.insert_values_from( jo, member_name, container );
                 return true;
             } else if( !was_loaded ) {
@@ -201,7 +203,9 @@ class generic_typed_reader
             // you have to implement a specialization of your container type, so above for
             // existing specializations in namespace reader_detail.
             if( jo.has_member( member_name ) ) {
-                reader_detail::handler<C>().clear( container );
+                if( derived.override_on_copy_from() ) {
+                    reader_detail::handler<C>().clear( container );
+                }
                 derived.insert_values_from( jo, member_name, container );
                 return true;
             } else if( !was_loaded ) {
@@ -286,6 +290,7 @@ class generic_typed_reader
                    handle_proportional( jo, member_name, member ) ||
                    do_relative( jo, member_name, member );
         }
+        bool override_on_copy_from() const { return true; }
 };
 
 /**
