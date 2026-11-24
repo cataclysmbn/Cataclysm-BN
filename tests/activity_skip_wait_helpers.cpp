@@ -46,9 +46,15 @@ auto build_town() -> void {
 auto setup_wait_scene(const wait_scene scene) -> void {
     clear_all_state();
     g->place_player(tripoint_bub_ms(30, 66, 0));
-    // Hordes and group spawns walk into the scene, interrupt the wait and can kill the avatar.
-    // place_player already spawned some of them.
-    ACTIVE_OVERMAP_BUFFER.get_om_global(g->u.abs_omt_pos()).om->clear_mon_groups();
+    // Need to clear all sources of monsters (e.g. anthills) or the skip window will end.
+    const auto map_omts = point_range<point_abs_omt>(
+        project_to<coords::omt>(g->m.get_abs_sub()),
+        project_to<coords::omt>(
+            g->m.get_abs_sub() + point_rel_sm(g->m.getmapsize() - 1, g->m.getmapsize() - 1)));
+    for (const auto omt : map_omts) {
+        ACTIVE_OVERMAP_BUFFER.get_om_global(omt).om->clear_mon_groups();
+    }
+    g->m.clear_spawns();
     clear_creatures();
     calendar::turn = calendar::turn_zero + 12_hours;
     if (scene == wait_scene::town) { build_town(); }

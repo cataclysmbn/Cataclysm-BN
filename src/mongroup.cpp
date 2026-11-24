@@ -373,9 +373,7 @@ class mongroup_entry_reader : public generic_typed_reader<mongroup_entry_reader>
                 entry.pack_minimum = packarr.next_int();
                 entry.pack_maximum = packarr.next_int();
             }
-            if( entry.name.is_null() && entry.monster_group.is_null() ) {
-                jo.throw_error( "Monster group requires definition of one of `monster` or `monster_group`" );
-            } else if( !entry.name.is_null() && !entry.monster_group.is_null() ) {
+            if( !entry.name.is_null() && !entry.monster_group.is_null() ) {
                 jo.throw_error( "Monster group requires definition of only one of `monster` or `monster_group`" );
             }
             entry.starts *= mon_upgrade_factor;
@@ -510,10 +508,6 @@ void MonsterGroup::check() const
         if( !mge.monster_group.is_valid() && !mge.monster_group.is_null() ) {
             // mon_null should not be valid here
             debugmsg( "monster group %s contains unknown monster group %s", id.str(), mge.monster_group.str() );
-        }
-        if( mge.monster_group.is_null() && mge.name.is_null() ) {
-            debugmsg( "monster group %s contains no valid monster or monster group; How did you manage that?",
-                      id.str() );
         }
     }
 
