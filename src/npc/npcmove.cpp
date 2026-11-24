@@ -117,11 +117,11 @@ static const std::unordered_map<std::string, npc_action> npc_action_map = {
 };
 
 
-std::string npc_action_name(npc_action action);
+auto npc_action_name(npc_action action) -> std::string;
 
 void print_action(const char* prepend, npc_action action);
 
-bool compare_sound_alert(const dangerous_sound& sound_a, const dangerous_sound& sound_b);
+auto compare_sound_alert(const dangerous_sound& sound_a, const dangerous_sound& sound_b) -> bool;
 
 
 void npc::execute_action(const std::string& action_str) {
@@ -436,7 +436,7 @@ void npc::act_look_for_player() {
 
 void npc::act_heal_player() {
     ZoneScoped;
-    player* patient = dynamic_cast<player*>(current_ally());
+    auto* patient = dynamic_cast<player*>(current_ally());
     if (patient) {
         update_path(patient->bub_pos());
         if (path.size() == 1) { // We're adjacent to u, and thus can heal u
@@ -645,7 +645,7 @@ void npc::act_noop() {
 }
 
 
-double npc::confidence_mult() const {
+auto npc::confidence_mult() const -> double {
     if (!is_player_ally() || is_player()) { return 1.0f; }
 
     switch (rules.aim) {
@@ -662,7 +662,7 @@ double npc::confidence_mult() const {
     return 1.0f;
 }
 
-int npc::confident_shoot_range(const item& it, int recoil) const {
+auto npc::confident_shoot_range(const item& it, int recoil) const -> int {
     if (!it.is_gun()) { return 0; }
     const auto gun_mode_cmp =
         [](const std::pair<gun_mode_id, gun_mode>& lhs,
@@ -676,7 +676,7 @@ int npc::confident_shoot_range(const item& it, int recoil) const {
     return confident_gun_mode_range((*best).second, recoil);
 }
 
-int npc::confident_gun_mode_range(const gun_mode& gun, int at_recoil) const {
+auto npc::confident_gun_mode_range(const gun_mode& gun, int at_recoil) const -> int {
     if (!gun || gun.melee()) { return 0; }
 
     const std::optional<shape_factory> shaped = ranged::get_shape_factory(*gun.target);
@@ -697,7 +697,7 @@ int npc::confident_gun_mode_range(const gun_mode& gun, int at_recoil) const {
     return std::max<int>(confident_range, 1);
 }
 
-int npc::confident_throw_range(const item& thrown, Creature* target) const {
+auto npc::confident_throw_range(const item& thrown, Creature* target) const -> int {
     double average_dispersion = ranged::throwing_dispersion(*this, thrown, target, false) / 2.0;
     double even_chance_range =
         (target == nullptr ? 0.5 : target->ranged_target_size()) / average_dispersion;
@@ -748,7 +748,7 @@ auto item::ideal_ranged_dps(const Character& who, std::optional<gun_mode>& mode)
 }
 
 // Index defaults to -1, i.e., wielded weapon
-bool npc::wont_hit_friend(const tripoint_bub_ms& tar, const item& it, bool throwing) const {
+auto npc::wont_hit_friend(const tripoint_bub_ms& tar, const item& it, bool throwing) const -> bool {
     // TODO: Get actual dispersion instead of extracting it (badly) from confident range
     int confident =
         throwing ? confident_throw_range(it, nullptr)
@@ -790,7 +790,7 @@ bool npc::wont_hit_friend(const tripoint_bub_ms& tar, const item& it, bool throw
     return true;
 }
 
-bool npc::enough_time_to_reload(const item& gun) const {
+auto npc::enough_time_to_reload(const item& gun) const -> bool {
     int rltime =
         item_reload_cost(gun, *item::spawn_temporary(gun.ammo_default()), gun.ammo_capacity());
     const float turns_til_reloaded = static_cast<float>(rltime) / get_speed();
@@ -817,7 +817,7 @@ bool npc::enough_time_to_reload(const item& gun) const {
     return turns_til_reloaded < turns_til_reached;
 }
 
-bool npc::aim() {
+auto npc::aim() -> bool {
     gun_mode mode =
         cbm_active.is_null()
             ? primary_weapon().gun_current_mode()
@@ -842,7 +842,7 @@ bool npc::aim() {
 }
 
 
-bool npc::do_player_activity() {
+auto npc::do_player_activity() -> bool {
     ZoneScopedN("npc_do_player_activity");
 
     const auto old_moves = moves;
@@ -915,7 +915,7 @@ static void npc_throw(npc& np, item& it, const tripoint_bub_ms& pos) {
     np.clear_npc_ai_info_cache(npc_ai_info::range);
 }
 
-bool npc::alt_attack() {
+auto npc::alt_attack() -> bool {
     if ((is_player_ally() && !rules.has_flag(ally_rule::use_grenades)) || is_hallucination()) {
         return false;
     }
@@ -1119,7 +1119,7 @@ void npc::mug_player(Character& mark) {
 }
 
 
-std::string npc_action_name(npc_action action) {
+auto npc_action_name(npc_action action) -> std::string {
     switch (action) {
         case npc_undecided:
             return "Undecided";
@@ -1182,30 +1182,30 @@ void print_action(const char* prepend, npc_action action) {
     if (action != npc_undecided) { add_msg(m_debug, prepend, npc_action_name(action)); }
 }
 
-const Creature* npc::current_target() const {
+auto npc::current_target() const -> const Creature* {
     // TODO: Arguably we should return a shared_ptr to ensure that the returned
     // object stays alive while the caller uses it.  Not doing that for now.
     return ai_cache.target.lock().get();
 }
 
-Creature* npc::current_target() {
+auto npc::current_target() -> Creature* {
     // TODO: As above.
     return ai_cache.target.lock().get();
 }
 
-const Creature* npc::current_ally() const {
+auto npc::current_ally() const -> const Creature* {
     // TODO: Arguably we should return a shared_ptr to ensure that the returned
     // object stays alive while the caller uses it.  Not doing that for now.
     return ai_cache.ally.lock().get();
 }
 
-Creature* npc::current_ally() {
+auto npc::current_ally() -> Creature* {
     // TODO: As above.
     return ai_cache.ally.lock().get();
 }
 
 // Maybe TODO: Move to Character method and use map methods
-static bodypart_str_id bp_affected(npc& who, const efftype_id& effect_type) {
+static auto bp_affected(npc& who, const efftype_id& effect_type) -> bodypart_str_id {
     bodypart_str_id ret = bodypart_str_id::NULL_ID();
     int highest_intensity = INT_MIN;
     for (const body_part bp : all_body_parts) {
@@ -1219,7 +1219,7 @@ static bodypart_str_id bp_affected(npc& who, const efftype_id& effect_type) {
     return ret;
 }
 
-static std::string distance_string(int range) {
+static auto distance_string(int range) -> std::string {
     if (range < 6) {
         return "<danger_close_distance>";
     } else if (range < 11) {
@@ -1286,9 +1286,9 @@ void npc::warn_about(
     }
 }
 
-bool npc::complain_about(
+auto npc::complain_about(
     const std::string& issue, const time_duration& dur, const std::string& speech, const bool force,
-    const sounds::sound_t priority) {
+    const sounds::sound_t priority) -> bool {
     // Don't have a default constructor for time_point, so accessing it in the
     // complaints map is a bit difficult, those lambdas should cover it.
     const auto complain_since = [this](const std::string& key, const time_duration& d) {
@@ -1319,7 +1319,7 @@ bool npc::complain_about(
     return false;
 }
 
-bool npc::complain() {
+auto npc::complain() -> bool {
     static const std::string infected_string = "infected";
     static const std::string fatigue_string = "fatigue";
     static const std::string bite_string = "bite";

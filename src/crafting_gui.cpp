@@ -25,7 +25,7 @@
 #include "map/map.h"
 #include "messages.h"
 #include "mod_manager.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "options.h"
 #include "output.h"
 #include "player.h"

@@ -87,10 +87,10 @@
 #include <tuple>
 #include <unordered_map>
 
-std::string npc_action_name(npc_action action);
+auto npc_action_name(npc_action action) -> std::string;
 void print_action(const char* prepend, npc_action action);
 
-bool npc::update_path(const tripoint_bub_ms& p, const bool no_bashing, bool force) {
+auto npc::update_path(const tripoint_bub_ms& p, const bool no_bashing, bool force) -> bool {
     ZoneScopedN("npc_update_path");
     ZoneValue(rl_dist(bub_pos(), p));
 
@@ -134,11 +134,11 @@ bool npc::update_path(const tripoint_bub_ms& p, const bool no_bashing, bool forc
     return false;
 }
 
-bool npc::can_open_door(const tripoint_bub_ms& p, const bool inside) const {
+auto npc::can_open_door(const tripoint_bub_ms& p, const bool inside) const -> bool {
     return !rules.has_flag(ally_rule::avoid_doors) && get_map().can_open_door(this, p, inside);
 }
 
-bool npc::can_move_to(const tripoint_bub_ms& p, bool no_bashing) const {
+auto npc::can_move_to(const tripoint_bub_ms& p, bool no_bashing) const -> bool {
     map& here = get_map();
     // Allow moving into any bashable spots, but penalize them during pathing
     // Doors are not passable for hallucinations
@@ -255,7 +255,7 @@ void npc::move_to(const tripoint_bub_ms& pt, bool no_bashing, std::set<tripoint_
 
         // Let NPCs push each other when non-hostile
         // TODO: Have them attack each other when hostile
-        npc* np = dynamic_cast<npc*>(critter);
+        auto* np = dynamic_cast<npc*>(critter);
         if (!is_hallucination() && np != nullptr && !np->in_sleep_state()) {
             std::unique_ptr<std::set<tripoint_bub_ms>> newnomove;
             std::set<tripoint_bub_ms>* realnomove;
@@ -623,12 +623,12 @@ void npc::look_for_player(const Character& sought) {
     */
 }
 
-bool npc::saw_player_recently() const {
+auto npc::saw_player_recently() const -> bool {
     return last_player_seen_pos && get_map().inbounds(*last_player_seen_pos)
         && last_seen_player_turn > 0;
 }
 
-bool npc::has_omt_destination() const { return goal != no_goal_point; }
+auto npc::has_omt_destination() const -> bool { return goal != no_goal_point; }
 
 void npc::reach_omt_destination() {
     if (!omt_path.empty()) { omt_path.clear(); }
@@ -709,7 +709,7 @@ void npc::set_omt_destination() {
     surface_omt_loc.z() = 0;
 
     // also, don't bother looking if the CITY_SIZE is 0, just go somewhere at random
-    const int city_size = get_option<int>("CITY_SIZE");
+    const auto city_size = get_option<int>("CITY_SIZE");
     if (city_size == 0) {
         goal = surface_omt_loc + point(rng(-90, 90), rng(-90, 90));
         return;

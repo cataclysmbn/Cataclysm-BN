@@ -32,7 +32,7 @@
 #include "mission.h"
 #include "mongroup.h"
 #include "note_label_utils.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "omdata.h"
 #include "options.h"
 #include "output.h"

@@ -13,7 +13,7 @@
 #include "init.h"
 #include "item.h"
 #include "json.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "type_id_implement.h"
 #include "rng.h"
 

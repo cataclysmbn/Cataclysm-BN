@@ -12,7 +12,7 @@
 #include "json.h"
 #include "line.h"
 #include "mtype.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "output.h"
 #include "overmap/overmapbuffer.h"
 #include "overmap/overmapbuffer_registry.h"

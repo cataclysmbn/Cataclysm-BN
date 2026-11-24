@@ -25,7 +25,7 @@
 #include "mtype.h"
 #include "mutation.h"
 #include "name.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "options.h"
 #include "overmap/overmapbuffer.h"
 #include "profile.h"

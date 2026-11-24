@@ -7,7 +7,7 @@
 #include "itype.h"
 #include "map/field_type.h"
 #include "map_helpers.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "projectile.h"
 #include "ranged.h"
 #include "rng.h"

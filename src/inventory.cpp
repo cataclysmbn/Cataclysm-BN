@@ -20,7 +20,7 @@
 #include "map_iterator.h"
 #include "material.h"
 #include "messages.h" //for rust message
-#include "npc.h"
+#include "npc/npc.h"
 #include "options.h"
 #include "player.h"
 #include "point.h"

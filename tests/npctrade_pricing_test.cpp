@@ -1,7 +1,7 @@
 #include "calendar.h"
 #include "catch/catch.hpp"
 #include "item.h"
-#include "npctrade.h"
+#include "npc/npctrade.h"
 #include "state_helpers.h"
 
 #include <string>

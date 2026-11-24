@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "dialogue_win.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "player.h"
 #include "translations.h"
 #include "type_id.h"

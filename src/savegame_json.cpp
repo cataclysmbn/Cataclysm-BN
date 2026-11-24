@@ -64,9 +64,9 @@
 #include "mtype.h"
 #include "mutation.h"
 #include "newcharacter.h"
-#include "npc.h"
-#include "npc_class.h"
-#include "npc_favor.h" // IWYU pragma: associated
+#include "npc/npc.h"
+#include "npc/npc_class.h"
+#include "npc/npc_favor.h" // IWYU pragma: associated
 #include "options.h"
 #include "overmap/overmapbuffer.h"
 #include "pickup_token.h"

@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "cursesdef.h"
-#include "npctrade.h"
+#include "npc/npctrade.h"
 
 class item;
 class npc;

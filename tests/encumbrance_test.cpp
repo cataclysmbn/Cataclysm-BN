@@ -6,7 +6,7 @@
 #include "game.h"
 #include "item.h"
 #include "material.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "player.h"
 #include "state_helpers.h"
 #include "type_id.h"

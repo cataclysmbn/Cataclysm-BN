@@ -15,7 +15,7 @@
 #include "map_helpers.h"
 #include "material.h"
 #include "monster.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "player.h"
 #include "player_helpers.h"
 #include "projectile.h"

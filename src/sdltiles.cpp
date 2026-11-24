@@ -25,7 +25,7 @@
 #    include "map/mapbuffer.h"
 #    include "mission.h"
 #    include "mongroup.h"
-#    include "npc.h"
+#    include "npc/npc.h"
 #    include "options.h"
 #    include "output.h"
 #    include "overmap/note_label_utils.h"

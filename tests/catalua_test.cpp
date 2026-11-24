@@ -37,7 +37,7 @@
 #include "map_helpers.h"
 #include "mapgen/mapgen_constructor.h"
 #include "monster.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "options.h"
 #include "overmap/overmap_special.h"
 #include "overmap/overmapbuffer.h"

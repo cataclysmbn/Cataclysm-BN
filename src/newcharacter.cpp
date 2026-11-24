@@ -50,7 +50,7 @@
 #include "monster.h"
 #include "mutation.h"
 #include "name.h"
-#include "npc_class.h"
+#include "npc/npc_class.h"
 #include "options.h"
 #include "output.h"
 #include "path_info.h"

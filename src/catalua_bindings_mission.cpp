@@ -10,7 +10,7 @@
 #include "avatar.h"
 #include "coordinates.h"
 #include "mission.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "itype.h"
 #include "type_id.h"
 

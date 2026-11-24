@@ -4,7 +4,7 @@
 #include "effect.h"
 #include "enum_conversions.h"
 #include "enums.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "player_activity.h"
 #include "type_id.h"
 

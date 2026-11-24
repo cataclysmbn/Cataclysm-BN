@@ -30,7 +30,7 @@
 #include "mapgen/mapgen_constructor.h"
 #include "messages.h"
 #include "monster.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "options.h"
 #include "options_helpers.h"
 #include "player_activity.h"

@@ -69,7 +69,7 @@
 #include "morale_types.h"
 #include "mtype.h"
 #include "mutation.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "options.h"
 #include "output.h"
 #include "overlay_ordering.h"

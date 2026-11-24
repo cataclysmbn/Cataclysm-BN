@@ -78,7 +78,7 @@
 #include "monster.h"
 #include "morale_types.h"
 #include "mtype.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "output.h"
 #include "overmap/omdata.h"
 #include "overmap/overmapbuffer.h"

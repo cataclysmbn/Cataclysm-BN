@@ -24,7 +24,7 @@
 #include "messages.h"
 #include "monster.h"
 #include "mtype.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "player.h"
 #include "point.h"
 #include "ranged.h"

@@ -12,7 +12,7 @@
 #include "map/field_type.h"
 #include "map_helpers.h"
 #include "monster.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "options_helpers.h"
 #include "player_activity.h"
 #include "player_helpers.h"

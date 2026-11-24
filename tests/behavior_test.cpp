@@ -8,7 +8,7 @@
 #include "monster.h"
 #include "monster_oracle.h"
 #include "mtype.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "player.h"
 #include "player_helpers.h"
 #include "state_helpers.h"

@@ -1,18 +1,18 @@
 #pragma once
 
-#include <string>
-
 #include "type_id.h"
+
+#include <string>
 
 class JsonIn;
 class JsonOut;
 
 enum npc_favor_type {
     FAVOR_NULL,
-    FAVOR_GENERAL, // We owe you... a favor?
-    FAVOR_CASH, // We owe cash (or goods of equivalent value)
-    FAVOR_ITEM, // We owe a specific item
-    FAVOR_TRAINING,// We owe skill or style training
+    FAVOR_GENERAL,  // We owe you... a favor?
+    FAVOR_CASH,     // We owe cash (or goods of equivalent value)
+    FAVOR_ITEM,     // We owe a specific item
+    FAVOR_TRAINING, // We owe skill or style training
     NUM_FAVOR_TYPES
 };
 
@@ -29,8 +29,6 @@ struct npc_favor {
         skill = skill_id::NULL_ID();
     }
 
-    void serialize( JsonOut &json ) const;
-    void deserialize( JsonIn &jsin );
+    void serialize(JsonOut& json) const;
+    void deserialize(JsonIn& jsin);
 };
-
-

@@ -2,7 +2,7 @@
 #include "catch/catch.hpp"
 #include "morale.h"
 #include "morale_types.h"
-#include "npc.h"
+#include "npc/npc.h"
 
 TEST_CASE("player_morale_from_effects_consistent", "[morale][effect][slow]") {
     npc dummy;

@@ -36,7 +36,7 @@
 #include "morale_types.h"
 #include "mtype.h"
 #include "mutation.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "player.h"
 #include "player_activity.h"
 #include "pldata.h"

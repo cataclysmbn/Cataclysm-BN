@@ -7,7 +7,7 @@
 #include "map/map.h"
 #include "map_iterator.h"
 #include "monster.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "vehicle/vehicle.h"
 #include "vehicle/vpart_position.h"
 

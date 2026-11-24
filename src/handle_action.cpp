@@ -63,7 +63,7 @@
 #include "mtype.h"
 #include "mutation.h"
 #include "mutation_ui.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "options.h"
 #include "output.h"
 #include "overmap/overmap_ui.h"

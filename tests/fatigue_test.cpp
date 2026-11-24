@@ -2,7 +2,7 @@
 #include "catch/catch.hpp"
 #include "coordinates.h"
 #include "enums.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "state_helpers.h"
 
 #include <algorithm>

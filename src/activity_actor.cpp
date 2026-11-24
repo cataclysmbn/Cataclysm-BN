@@ -37,7 +37,7 @@
 #include "map/mapdata.h"
 #include "map_iterator.h"
 #include "messages.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "options.h"
 #include "pickup.h"
 #include "player.h"

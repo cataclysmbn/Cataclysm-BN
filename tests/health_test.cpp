@@ -1,7 +1,7 @@
 #include "calendar.h"
 #include "catch/catch.hpp"
 #include "enums.h"
-#include "npc.h"
+#include "npc/npc.h"
 
 #include <algorithm>
 #include <array>

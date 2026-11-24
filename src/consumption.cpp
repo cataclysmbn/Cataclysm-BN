@@ -27,7 +27,7 @@
 #include "morale_types.h"
 #include "mtype.h"
 #include "mutation.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "options.h"
 #include "pickup.h"
 #include "player.h" // IWYU pragma: associated

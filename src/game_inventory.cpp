@@ -28,7 +28,7 @@
 #include "iuse_actor.h"
 #include "map/map.h"
 #include "material.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "options.h"
 #include "output.h"
 #include "player.h"

@@ -8,7 +8,7 @@
 #include "itype.h"
 #include "map/map.h"
 #include "map_helpers.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "overmap/overmapbuffer_registry.h"
 #include "player_activity.h"
 #include "player_helpers.h"

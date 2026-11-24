@@ -53,7 +53,7 @@
 #include "mission.h"
 #include "mod_manager.h"
 #include "mongroup.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "numeric_interval.h"
 #include "options.h"
 #include "overmap/omdata.h"

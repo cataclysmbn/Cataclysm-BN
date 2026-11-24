@@ -23,7 +23,7 @@
 #include "map/submap.h"
 #include "mapgendata.h"
 #include "mongroup.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "options.h"
 #include "overmap/omdata.h"
 #include "point.h"

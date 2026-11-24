@@ -88,7 +88,7 @@
 #include <ostream>
 #include <tuple>
 
-std::string npc_action_name(npc_action action);
+auto npc_action_name(npc_action action) -> std::string;
 void print_action(const char* prepend, npc_action action);
 
 #include <unordered_set>
@@ -143,13 +143,13 @@ auto run_lua_npc_ai(npc& who) -> bool {
 
 } // namespace
 
-bool compare_sound_alert(const dangerous_sound& sound_a, const dangerous_sound& sound_b) {
+auto compare_sound_alert(const dangerous_sound& sound_a, const dangerous_sound& sound_b) -> bool {
     if (sound_a.type != sound_b.type) { return sound_a.type < sound_b.type; }
     return sound_a.volume < sound_b.volume;
 }
 
-static bool clear_shot_reach(
-    const tripoint_bub_ms& from, const tripoint_bub_ms& to, bool check_ally = true) {
+static auto clear_shot_reach(
+    const tripoint_bub_ms& from, const tripoint_bub_ms& to, bool check_ally = true) -> bool {
     ZoneScopedN("clear_shot_reach");
     std::vector<tripoint_bub_ms> path = line_to(from, to);
     tripoint_bub_ms target_point = path.back();
@@ -171,10 +171,10 @@ static bool clear_shot_reach(
     return !get_map().obstructed_by_vehicle_rotation(last_point, target_point);
 }
 
-tripoint_bub_ms npc::good_escape_direction(bool include_pos) {
+auto npc::good_escape_direction(bool include_pos) -> tripoint_bub_ms {
     map& here = get_map();
     if (path.empty()) {
-        zone_type_id retreat_zone = zone_type_id("NPC_RETREAT");
+        auto retreat_zone = zone_type_id("NPC_RETREAT");
         const zone_manager& mgr = zone_manager::get_manager();
         std::optional<tripoint_abs_ms> retreat_target =
             mgr.get_nearest(retreat_zone, abs_pos(), 60, fac_id);
@@ -215,11 +215,11 @@ tripoint_bub_ms npc::good_escape_direction(bool include_pos) {
     return random_entry(candidates);
 }
 
-bool npc::sees_dangerous_field(const tripoint_bub_ms& p) const {
+auto npc::sees_dangerous_field(const tripoint_bub_ms& p) const -> bool {
     return is_dangerous_fields(get_map().field_at(p));
 }
 
-bool npc::could_move_onto(const tripoint_bub_ms& p) const {
+auto npc::could_move_onto(const tripoint_bub_ms& p) const -> bool {
     map& here = get_map();
     if (!here.passable(p)) { return false; }
 
@@ -239,7 +239,7 @@ bool npc::could_move_onto(const tripoint_bub_ms& p) const {
     return true;
 }
 
-std::vector<sphere> npc::find_dangerous_explosives() const {
+auto npc::find_dangerous_explosives() const -> std::vector<sphere> {
     std::vector<sphere> result;
 
     const auto active_items = get_map().get_active_items_in_radius(
@@ -254,7 +254,7 @@ std::vector<sphere> npc::find_dangerous_explosives() const {
             continue; // We can't worry about what we can't see.
         }
 
-        const explosion_iuse* actor = dynamic_cast<const explosion_iuse*>(use->get_actor_ptr());
+        const auto* actor = dynamic_cast<const explosion_iuse*>(use->get_actor_ptr());
         const int safe_range = actor->explosion.safe_range();
 
         if (rl_dist(abs_pos(), elem->abs_pos()) >= safe_range) {
@@ -273,11 +273,11 @@ std::vector<sphere> npc::find_dangerous_explosives() const {
     return result;
 }
 
-float npc::evaluate_enemy(const Creature& target) const {
+auto npc::evaluate_enemy(const Creature& target) const -> float {
     ZoneScopedN("evaluate_enemy");
     if (target.is_monster()) {
-        const monster& mon = dynamic_cast<const monster&>(target);
-        float diff = static_cast<float>(mon.type->difficulty);
+        const auto& mon = dynamic_cast<const monster&>(target);
+        auto diff = static_cast<float>(mon.type->difficulty);
         return std::min(diff, NPC_DANGER_MAX);
     } else if (target.is_npc() || target.is_player()) {
         return std::min(character_danger(dynamic_cast<const player&>(target)), NPC_DANGER_MAX);
@@ -286,8 +286,9 @@ float npc::evaluate_enemy(const Creature& target) const {
     }
 }
 
-static bool too_close(
-    const tripoint_bub_ms& critter_pos, const tripoint_bub_ms& ally_pos, const int def_radius) {
+static auto too_close(
+    const tripoint_bub_ms& critter_pos, const tripoint_bub_ms& ally_pos, const int def_radius)
+    -> bool {
     return rl_dist(critter_pos, ally_pos) <= def_radius;
 }
 
@@ -620,7 +621,7 @@ void npc::assess_danger() {
     ai_cache.danger_assessment = assessment;
 }
 
-float npc::character_danger(const Character& u) const {
+auto npc::character_danger(const Character& u) const -> float {
     float ret = 0.0;
     bool u_gun = u.primary_weapon().is_gun();
     bool my_gun = primary_weapon().is_gun();
@@ -709,11 +710,11 @@ void npc::move() {
         }
     }
     // Calm NPCs reassess danger every 5 turns inside activity skip windows.
-    const auto calm = ai_cache.danger_assessment <= 0.0f && ai_cache.sound_alerts.empty() &&
-                      ai_cache.target.expired() && ai_cache.dangerous_explosives.empty();
-    if (calm && get_avatar().in_skip_state &&
-        !action_time_scale::once_every_this_tick(5_turns) &&
-        get_option<bool>("ACTIVITY_SKIP_NPC_AI_CADENCE")) {
+    const auto calm =
+        ai_cache.danger_assessment <= 0.0f && ai_cache.sound_alerts.empty()
+        && ai_cache.target.expired() && ai_cache.dangerous_explosives.empty();
+    if (calm && get_avatar().in_skip_state && !action_time_scale::once_every_this_tick(5_turns)
+        && get_option<bool>("ACTIVITY_SKIP_NPC_AI_CADENCE")) {
         ai_cache.warn_about_queue.clear();
     } else {
         npc_ai::regen_ai_cache(*this);
@@ -988,12 +989,12 @@ void npc::move() {
     }
 }
 
-npc_action npc::method_of_fleeing() {
+auto npc::method_of_fleeing() -> npc_action {
     if (in_vehicle) { return npc_undecided; }
     return npc_flee;
 }
 
-npc_action npc::method_of_attack() {
+auto npc::method_of_attack() -> npc_action {
     Character& player_character = get_player_character();
     Creature* critter = current_target();
     if (critter == nullptr) {
@@ -1116,9 +1117,9 @@ npc_action npc::method_of_attack() {
     return (dont_move || !same_z || not_engaged_yet) ? npc_undecided : npc_melee;
 }
 
-npc_action npc::address_needs() { return address_needs(ai_cache.danger); }
+auto npc::address_needs() -> npc_action { return address_needs(ai_cache.danger); }
 
-npc_action npc::address_needs(float danger) {
+auto npc::address_needs(float danger) -> npc_action {
     ZoneScoped;
     Character& player_character = get_player_character();
     // rng because NPCs are not meant to be hypervigilant hawks that notice everything
@@ -1253,7 +1254,7 @@ npc_action npc::address_needs(float danger) {
     return npc_undecided;
 }
 
-npc_action npc::address_player() {
+auto npc::address_player() -> npc_action {
     Character& player_character = get_player_character();
     if ((attitude == NPCATT_TALK) && sees(player_character)) {
         if (player_character.in_sleep_state()) {
@@ -1306,7 +1307,7 @@ npc_action npc::address_player() {
     return npc_undecided;
 }
 
-npc_action npc::long_term_goal_action() {
+auto npc::long_term_goal_action() -> npc_action {
     add_msg(m_debug, "long_term_goal_action()");
 
     if (mission == NPC_MISSION_SHOPKEEP || mission == NPC_MISSION_SHELTER

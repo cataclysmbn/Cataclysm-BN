@@ -11,7 +11,7 @@
 #include "make_static.h"
 #include "material.h"
 #include "mod_manager.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "output.h"
 #include "ranged.h"
 #include "recipe.h"

@@ -12,7 +12,7 @@
 #include "map/mapbuffer.h"
 #include "map/submap.h"
 #include "monster.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "player.h"
 #include "rot.h"
 #include "vehicle/veh_type.h"

@@ -87,7 +87,7 @@
 #include <tuple>
 #include <unordered_map>
 
-std::string npc_action_name(npc_action action);
+auto npc_action_name(npc_action action) -> std::string;
 void print_action(const char* prepend, npc_action action);
 
 namespace {
@@ -107,7 +107,7 @@ struct ratio_index {
     ratio_index(double R, int I): ratio(R), index(I) {}
 };
 
-static bool wants_to_reload(const npc& who, const item& it) {
+static auto wants_to_reload(const npc& who, const item& it) -> bool {
     if (!who.can_reload(it)) { return false; }
 
     const int required = it.ammo_required();
@@ -118,7 +118,7 @@ static bool wants_to_reload(const npc& who, const item& it) {
     return remaining < required || remaining < it.ammo_capacity();
 }
 
-static bool wants_to_reload_with(const item& weap, const item& ammo, bool danger) {
+static auto wants_to_reload_with(const item& weap, const item& ammo, bool danger) -> bool {
     // Only reload loose ammo if gun has integral magazine or not in danger.
     bool combat_reload = !ammo.is_magazine() && (danger || weap.magazine_integral());
     // If in danger, only swap magazines if ammo is both greater and it's sufficient for a shot
@@ -156,7 +156,7 @@ void npc::check_or_reload_cbm() {
     return;
 }
 
-item& npc::find_reloadable() {
+auto npc::find_reloadable() -> item& {
     if (get_npc_ai_info_cache(npc_ai_info::reloadables) >= 0.0) {
         add_msg(m_debug, "Cancelling reload check as cache is not negative.");
         return null_item_reference();
@@ -185,17 +185,17 @@ item& npc::find_reloadable() {
     return null_item_reference();
 }
 
-const item& npc::find_reloadable() const {
+auto npc::find_reloadable() const -> const item& {
     return const_cast<const item&>(const_cast<npc*>(this)->find_reloadable());
 }
 
-bool npc::can_reload_current() {
+auto npc::can_reload_current() -> bool {
     if (!primary_weapon().is_gun() || !wants_to_reload(*this, primary_weapon())) { return false; }
 
     return static_cast<bool>(find_usable_ammo(primary_weapon()));
 }
 
-item* npc::find_usable_ammo(item& weap) {
+auto npc::find_usable_ammo(item& weap) -> item* {
     if (!can_reload(weap)) { return nullptr; }
 
     auto loc = reload_selection::prepare(*this, weap).selected.ammo;
@@ -204,7 +204,7 @@ item* npc::find_usable_ammo(item& weap) {
     return loc;
 }
 
-item* npc::find_usable_ammo(item& weap) const {
+auto npc::find_usable_ammo(item& weap) const -> item* {
     return const_cast<npc*>(this)->find_usable_ammo(weap);
 }
 
@@ -232,7 +232,7 @@ void npc::deactivate_combat_cbms() {
     cbm_fake_toggled.release();
 }
 
-bool npc::activate_bionic_by_id(const bionic_id& cbm_id, bool eff_only) {
+auto npc::activate_bionic_by_id(const bionic_id& cbm_id, bool eff_only) -> bool {
     if (has_bionic(cbm_id)) {
         bionic& bio = get_bionic_state(cbm_id);
         if (!bio.powered) { return activate_bionic(bio, eff_only); }
@@ -240,7 +240,7 @@ bool npc::activate_bionic_by_id(const bionic_id& cbm_id, bool eff_only) {
     return false;
 }
 
-bool npc::use_bionic_by_id(const bionic_id& cbm_id, bool eff_only) {
+auto npc::use_bionic_by_id(const bionic_id& cbm_id, bool eff_only) -> bool {
     if (has_bionic(cbm_id)) {
         bionic& bio = get_bionic_state(cbm_id);
         if (bio.powered) {
@@ -252,7 +252,7 @@ bool npc::use_bionic_by_id(const bionic_id& cbm_id, bool eff_only) {
     return false;
 }
 
-bool npc::deactivate_bionic_by_id(const bionic_id& cbm_id, bool eff_only) {
+auto npc::deactivate_bionic_by_id(const bionic_id& cbm_id, bool eff_only) -> bool {
     if (has_bionic(cbm_id)) {
         bionic& bio = get_bionic_state(cbm_id);
         if (bio.powered) { return deactivate_bionic(bio, eff_only); }
@@ -260,7 +260,7 @@ bool npc::deactivate_bionic_by_id(const bionic_id& cbm_id, bool eff_only) {
     return false;
 }
 
-bool npc::wants_to_recharge_cbm() {
+auto npc::wants_to_recharge_cbm() -> bool {
     const units::energy curr_power = get_power_level();
     const float allowed_ratio = static_cast<int>(rules.cbm_recharge) / 100.0f;
     const units::energy max_pow_allowed = get_max_power_level() * allowed_ratio;
@@ -275,12 +275,12 @@ bool npc::wants_to_recharge_cbm() {
     return false;
 }
 
-bool npc::can_use_offensive_cbm() const {
+auto npc::can_use_offensive_cbm() const -> bool {
     const float allowed_ratio = static_cast<int>(rules.cbm_reserve) / 100.0f;
     return get_power_level() > get_max_power_level() * allowed_ratio;
 }
 
-bool npc::consume_cbm_items(const std::function<bool(const item&)>& filter) {
+auto npc::consume_cbm_items(const std::function<bool(const item&)>& filter) -> bool {
     const_invslice slice = inv.const_slice();
     int index = -1;
     for (size_t i = 0; i < slice.size(); i++) {
@@ -298,7 +298,7 @@ bool npc::consume_cbm_items(const std::function<bool(const item&)>& filter) {
     return old_moves != moves;
 }
 
-bool npc::recharge_cbm() {
+auto npc::recharge_cbm() -> bool {
     // non-allied NPCs don't consume resources to recharge
     if (!is_player_ally()) {
         mod_power_level(get_max_power_level());
@@ -364,7 +364,7 @@ bool npc::recharge_cbm() {
     return false;
 }
 
-healing_options npc::patient_assessment(const Character& c) {
+auto npc::patient_assessment(const Character& c) -> healing_options {
     healing_options try_to_fix;
     try_to_fix.clear_all();
 
@@ -392,8 +392,8 @@ healing_options npc::patient_assessment(const Character& c) {
     return try_to_fix;
 }
 
-static std::optional<tripoint_bub_ms> nearest_passable(
-    const tripoint_bub_ms& p, const tripoint_bub_ms& closest_to) {
+static auto nearest_passable(const tripoint_bub_ms& p, const tripoint_bub_ms& closest_to)
+    -> std::optional<tripoint_bub_ms> {
     map& here = get_map();
     if (here.passable(p)) { return p; }
 
@@ -687,7 +687,7 @@ void npc::pick_up_item() {
     has_new_items = true;
 }
 
-template <typename T> std::vector<item*> npc_pickup_from_stack(npc& who, T& items) {
+template <typename T> auto npc_pickup_from_stack(npc& who, T& items) -> std::vector<item*> {
     const bool whitelisting = who.has_item_whitelist();
     auto volume_allowed = who.volume_capacity() - who.volume_carried();
     auto weight_allowed = who.weight_capacity() - who.weight_carried();
@@ -717,12 +717,12 @@ template <typename T> std::vector<item*> npc_pickup_from_stack(npc& who, T& item
     return picked_up;
 }
 
-std::vector<item*> npc::pick_up_item_map(const tripoint_bub_ms& where) {
+auto npc::pick_up_item_map(const tripoint_bub_ms& where) -> std::vector<item*> {
     map_stack stack = get_map().i_at(where);
     return npc_pickup_from_stack(*this, stack);
 }
 
-std::vector<item*> npc::pick_up_item_vehicle(vehicle& veh, int part_index) {
+auto npc::pick_up_item_vehicle(vehicle& veh, int part_index) -> std::vector<item*> {
     auto stack = veh.get_items(part_index);
     return npc_pickup_from_stack(*this, stack);
 }
@@ -837,7 +837,7 @@ void npc::drop_items(units::mass drop_weight, units::volume drop_volume, int min
     update_worst_item_value();
 }
 
-bool npc::find_corpse_to_pulp() {
+auto npc::find_corpse_to_pulp() -> bool {
     Character& player_character = get_player_character();
     if ((is_player_ally()
          && (!rules.has_flag(ally_rule::allow_pulp) || player_character.in_vehicle))
@@ -910,7 +910,7 @@ bool npc::find_corpse_to_pulp() {
     return corpse != nullptr;
 }
 
-bool npc::do_pulp() {
+auto npc::do_pulp() -> bool {
     if (!pulp_location) { return false; }
 
     if (rl_dist(*pulp_location, bub_pos()) > 1 || pulp_location->z() != bub_pos().z()) {
@@ -924,7 +924,7 @@ bool npc::do_pulp() {
     return moves != old_moves;
 }
 
-bool npc::wield_better_weapon() {
+auto npc::wield_better_weapon() -> bool {
     const Creature* critter = current_target();
     const int dist = critter ? rl_dist(bub_pos(), critter->bub_pos()) : -1;
 
@@ -1176,7 +1176,7 @@ void npc::use_painkiller() {
     }
 }
 
-static float rate_food(const item& it, int want_nutr, int want_quench) {
+static auto rate_food(const item& it, int want_nutr, int want_quench) -> float {
     const auto& food = it.get_comestible();
     if (!food) { return 0.0f; }
 
@@ -1244,7 +1244,7 @@ static float rate_food(const item& it, int want_nutr, int want_quench) {
     return weight;
 }
 
-bool npc::consume_food() {
+auto npc::consume_food() -> bool {
     if (is_hallucination()) {
         move_pause();
         return false;
@@ -1334,7 +1334,7 @@ void npc::do_reload(item& it) {
     clear_npc_ai_info_cache(npc_ai_info::range);
 }
 
-bool npc::adjust_worn() {
+auto npc::adjust_worn() -> bool {
     bool any_broken = false;
     for (const bodypart_id& bp : get_all_body_parts()) {
         if (is_limb_broken(bp)) {

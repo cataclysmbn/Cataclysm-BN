@@ -10,7 +10,7 @@
 #include "mapgen/mapgen_functions.h"
 #include "messages.h"
 #include "mission.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "overmap/omdata.h"
 #include "overmap/overmap.h"
 #include "overmap/overmapbuffer.h"
