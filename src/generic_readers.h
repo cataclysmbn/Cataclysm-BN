@@ -344,8 +344,10 @@ class legacy_supporting_unit_reader : generic_typed_reader<T>
                 jo.show_warning( "Legacy unit values used, support will be removed eventually.", member_name,
                                  true );
                 member = jo.get_int( member_name ) * legacy_scale;
-            } else {
+            } else if( jo.has_member( member_name ) ) {
                 jo.throw_error( "Units must be a unit value string, or a legacy integer scalar.", member_name );
+                return false;
+            } else {
                 return false;
             }
             return true;
