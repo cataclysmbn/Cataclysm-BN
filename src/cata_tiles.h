@@ -891,6 +891,8 @@ class cata_tiles
         static auto get_ter_memory_at( const tripoint_bub_ms &p ) -> std::optional<memorized_terrain_tile>;
         static auto get_furn_memory_at( const tripoint_bub_ms &p ) -> std::optional<memorized_terrain_tile>;
         static auto get_trap_memory_at( const tripoint_bub_ms &p ) -> std::optional<memorized_terrain_tile>;
+        static auto get_field_memory_at( const tripoint_bub_ms &p ) ->
+        std::optional<memorized_terrain_tile>;
         static auto get_vpart_memory_at( const tripoint_bub_ms &p ) ->
         std::optional<memorized_terrain_tile>;
 
