@@ -8541,6 +8541,15 @@ bool item::ammo_sufficient( int qty ) const
     return ammo_remaining() >= ammo_required() * qty;
 }
 
+auto item::use_ups_charges( int qty, const tripoint_bub_ms &pos ) -> int
+{
+    const int ups_eff_mult = type->tool->ups_eff_mult;
+    const int used = std::min( qty, ammo_remaining() * ups_eff_mult );
+    const int rand_increase = x_in_y( used % ups_eff_mult, ups_eff_mult );
+    ammo_consume( used / ups_eff_mult + rand_increase, pos );
+    return used;
+}
+
 int item::ammo_consume( int qty, const tripoint_bub_ms &pos )
 {
     if( qty < 0 ) {

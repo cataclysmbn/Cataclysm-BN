@@ -87,6 +87,7 @@ static const activity_id ACT_CRAFT( "ACT_CRAFT" );
 static const efftype_id effect_contacts( "contacts" );
 
 static const itype_id itype_plut_cell( "plut_cell" );
+static const itype_id itype_UPS( "UPS" );
 
 static const skill_id skill_cooking( "cooking" );
 static const skill_id skill_electronics( "electronics" );
@@ -1788,7 +1789,7 @@ namespace crafting
 {
 
 static std::vector<avail_tool_comp>
-find_tool_component( const Character *player_with_inv, const std::vector<tool_comp> &tools,
+find_tool_component( Character *player_with_inv, const std::vector<tool_comp> &tools,
                      int batch,
                      const inventory &map_inv, cost_adjustment charge_mod )
 {
@@ -1820,6 +1821,7 @@ find_tool_component( const Character *player_with_inv, const std::vector<tool_co
             const std::pair<int, int> &expected_count = calc_charges( *it );
             const int count = expected_count.first;
             const int ideal = expected_count.second;
+            const size_t options_before = available_tools.size();
             if( player_with_inv ) {
                 if( player_with_inv->has_charges( type, count ) ) {
                     int total_charges = player_with_inv->charges_of( type );
@@ -1831,6 +1833,15 @@ find_tool_component( const Character *player_with_inv, const std::vector<tool_co
                 int total_charges = map_inv.charges_of( type );
                 comp_selection<tool_comp> sel( usage_from::map, *it );
                 available_tools.emplace_back( sel, total_charges, ideal );
+            }
+            // Use the crafting inventory when neither source has enough charges.
+            // Example: a UPS-modded forge on the ground and a carried UPS, or an enchantment tool.
+            if( available_tools.size() == options_before && player_with_inv ) {
+                const inventory &crafting_inv = player_with_inv->crafting_inventory();
+                if( crafting_inv.has_charges( type, count ) ) {
+                    comp_selection<tool_comp> sel( usage_from::both, *it );
+                    available_tools.emplace_back( sel, crafting_inv.charges_of( type ), ideal );
+                }
             }
         } else if( ( player_with_inv && player_with_inv->has_amount( type, 1 ) )
                    || map_inv.has_tools( type, 1 ) ) {
@@ -1893,7 +1904,7 @@ query_tool_selection( const std::vector<avail_tool_comp> &available_tools,
     for( const avail_tool_comp &tool : available_tools ) {
         const itype_id &comp_type = tool.comp.comp.type;
         if( tool.ideal > 1 ) {
-            const char *format = tool.comp.use_from == usage_from::map
+            const char *format = tool.comp.use_from != usage_from::player
                                  ? _( "%s (%d/%d charges nearby)" )
                                  : _( "%s (%d/%d charges on person)" );
             std::string str = string_format( format,
@@ -1901,7 +1912,7 @@ query_tool_selection( const std::vector<avail_tool_comp> &available_tools,
                                              tool.charges );
             tmenu.addentry( str );
         } else {
-            std::string str = tool.comp.use_from == usage_from::map
+            std::string str = tool.comp.use_from != usage_from::player
                               ? item::nname( comp_type ) + _( " (nearby)" )
                               : item::nname( comp_type );
             tmenu.addentry( str );
@@ -1923,7 +1934,7 @@ query_tool_selection( const std::vector<avail_tool_comp> &available_tools,
 
 comp_selection<tool_comp>
 select_tool_component( const std::vector<tool_comp> &tools, int batch, const inventory &map_inv,
-                       const Character *player_with_inv,
+                       Character *player_with_inv,
                        bool can_cancel,
                        const std::string &hotkeys,
                        cost_adjustment adjustment )
@@ -1936,7 +1947,7 @@ select_tool_component( const std::vector<tool_comp> &tools, int batch, const inv
 
 comp_selection<tool_comp>
 select_tool_component( const std::vector<tool_comp> &tools, int batch, const inventory &map_inv,
-                       const Character *player_with_inv,
+                       Character *player_with_inv,
                        bool can_cancel )
 {
     return select_tool_component( tools, batch, map_inv, player_with_inv, can_cancel, DEFAULT_HOTKEYS,
@@ -1988,32 +1999,29 @@ bool Character::craft_consume_tools( item &craft, int mulitplier, bool start_cra
         itype_id type = tool_sel.comp.type;
         if( tool_sel.comp.count > 0 ) {
             const int count = calc_charges( tool_sel.comp.count );
+            bool enough = true;
             switch( tool_sel.use_from ) {
                 case usage_from::player:
-                    if( !has_charges( type, count ) ) {
-                        add_msg_player_or_npc(
-                            _( "You have insufficient %s charges and can't continue crafting" ),
-                            _( "<npcname> has insufficient %s charges and can't continue crafting" ),
-                            item::nname( type ) );
-                        craft.set_tools_to_continue( false );
-                        return false;
-                    }
+                    enough = has_charges( type, count );
                     break;
                 case usage_from::map:
-                    if( !map_inv.has_charges( type, count ) ) {
-                        add_msg_player_or_npc(
-                            _( "You have insufficient %s charges and can't continue crafting" ),
-                            _( "<npcname> has insufficient %s charges and can't continue crafting" ),
-                            item::nname( type ) );
-                        craft.set_tools_to_continue( false );
-                        return false;
-                    }
+                    enough = map_inv.has_charges( type, count );
                     break;
                 case usage_from::both:
+                    enough = crafting_inventory().has_charges( type, count );
+                    break;
                 case usage_from::none:
                 case usage_from::cancel:
                 case usage_from::num_usages_from:
                     break;
+            }
+            if( !enough ) {
+                add_msg_player_or_npc(
+                    _( "You have insufficient %s charges and can't continue crafting" ),
+                    _( "<npcname> has insufficient %s charges and can't continue crafting" ),
+                    item::nname( type ) );
+                craft.set_tools_to_continue( false );
+                return false;
             }
         } else if( !has_amount( type, 1 ) && !map_inv.has_tools( type, 1 ) ) {
             add_msg_player_or_npc(
@@ -2047,7 +2055,23 @@ void Character::consume_tools( map &m, const comp_selection<tool_comp> &tool, in
         return;
     }
 
+    const itype_id &type = tool.comp.type;
     int quantity = tool.comp.count * batch;
+    if( tool.use_from == usage_from::both ) {
+        const int from_player = std::min( quantity, charges_of( type ) );
+        use_charges( type, from_player );
+        quantity -= from_player;
+        m.use_charges( origin, radius, type, quantity, return_true<item> );
+        // Draw the rest of a UPS-modded tool's charges from any UPS in reach.
+        const bool ups_modded = crafting_inventory().has_item_with( [&type]( const item & it ) {
+            return it.typeId() == type && it.has_flag( flag_USE_UPS );
+        } );
+        if( quantity > 0 && ups_modded ) {
+            m.use_charges( origin, radius, itype_UPS, quantity, return_true<item> );
+            use_charges( itype_UPS, quantity );
+        }
+        return;
+    }
     if( tool.use_from & usage_from::player ) {
         use_charges( tool.comp.type, quantity );
     }
