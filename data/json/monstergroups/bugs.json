@@ -74,6 +74,7 @@
   {
     "type": "monstergroup",
     "name": "GROUP_LOCUST",
+    "default": "mon_locust_nymph",
     "monsters": [ { "monster": "mon_locust_nymph", "weight": 5 }, { "monster": "mon_locust", "weight": 5, "starts": "30 days" } ]
   },
   {
@@ -273,6 +274,7 @@
   {
     "type": "monstergroup",
     "name": "GROUP_WORM",
+    "default": "mon_worm",
     "monsters": [ { "monster": "mon_worm", "weight": 5 }, { "monster": "mon_graboid", "weight": 2, "starts": "28 days" } ]
   }
 ]
