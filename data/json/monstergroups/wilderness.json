@@ -21,19 +21,7 @@
     "default": "mon_null",
     "is_animal": true,
     "monsters": [
-      { "monster_group": "GROUP_WILDERNESS_FOREST_MAMMAL", "weight": 75, "conditions": [ "SPRING", "SUMMER", "AUTUMN" ] },
-      {
-        "monster_group": "GROUP_WILDERNESS_FOREST_MAMMAL",
-        "weight": 75,
-        "ends": "12 days",
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster_group": "GROUP_WILDERNESS_FOREST_MAMMAL",
-        "weight": 75,
-        "ends": "28 days",
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
+      { "monster_group": "GROUP_WILDERNESS_FOREST_MAMMAL", "weight": 225, "conditions": [ "SPRING", "SUMMER", "AUTUMN" ] },
       {
         "monster_group": "GROUP_WILDERNESS_FOREST_MAMMAL",
         "weight": 75,
@@ -46,19 +34,7 @@
         "ends": "360 days",
         "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
       },
-      { "monster_group": "GROUP_WILDERNESS_FOREST_MAMMAL_WINTER", "weight": 75, "conditions": [ "WINTER" ] },
-      {
-        "monster_group": "GROUP_WILDERNESS_FOREST_MAMMAL_WINTER",
-        "weight": 75,
-        "ends": "12 days",
-        "conditions": [ "WINTER" ]
-      },
-      {
-        "monster_group": "GROUP_WILDERNESS_FOREST_MAMMAL_WINTER",
-        "weight": 75,
-        "ends": "28 days",
-        "conditions": [ "WINTER" ]
-      },
+      { "monster_group": "GROUP_WILDERNESS_FOREST_MAMMAL_WINTER", "weight": 225, "conditions": [ "WINTER" ] },
       {
         "monster_group": "GROUP_WILDERNESS_FOREST_MAMMAL_WINTER",
         "weight": 75,
