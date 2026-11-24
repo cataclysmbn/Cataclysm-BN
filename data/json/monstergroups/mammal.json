@@ -9,6 +9,7 @@
     "name": "GROUP_BEARS",
     "type": "monstergroup",
     "is_animal": true,
+    "default": "mon_bear",
     "monsters": [
       { "monster": "mon_bear", "weight": 150, "cost_multiplier": 2 },
       { "monster": "mon_bear_cub", "weight": 50, "ends": "124 days", "conditions": [ "SPRING", "SUMMER" ] },
@@ -19,6 +20,7 @@
     "name": "GROUP_PIGS",
     "type": "monstergroup",
     "is_animal": true,
+    "default": "mon_pig",
     "monsters": [
       { "monster": "mon_pig", "weight": 150, "cost_multiplier": 2 },
       { "monster": "mon_pig_piglet", "weight": 25, "pack_size": [ 1, 2 ], "ends": "28 days" },
@@ -29,6 +31,7 @@
     "name": "GROUP_SHEEPS",
     "type": "monstergroup",
     "is_animal": true,
+    "default": "mon_sheep",
     "monsters": [
       { "monster": "mon_sheep", "weight": 150, "cost_multiplier": 2 },
       { "monster": "mon_sheep_lamb", "weight": 25, "ends": "28 days", "conditions": [ "SPRING", "SUMMER" ] },
@@ -126,6 +129,7 @@
     "name": "GROUP_HORSES",
     "type": "monstergroup",
     "is_animal": true,
+    "default": "mon_horse",
     "monsters": [
       { "monster": "mon_horse", "weight": 150, "cost_multiplier": 2 },
       { "monster": "mon_horse_foal", "weight": 50, "ends": "124 days" },
@@ -146,6 +150,7 @@
     "name": "GROUP_BOARS",
     "type": "monstergroup",
     "is_animal": true,
+    "default": "mon_boar_wild",
     "monsters": [
       { "monster": "mon_boar_wild", "weight": 150, "cost_multiplier": 2 },
       { "monster": "mon_boar_wild_piglet", "weight": 50, "pack_size": [ 1, 6 ], "ends": "56 days" },
@@ -162,6 +167,7 @@
     "name": "GROUP_DEERS",
     "type": "monstergroup",
     "is_animal": true,
+    "default": "mon_deer",
     "monsters": [
       { "monster": "mon_deer", "weight": 150, "cost_multiplier": 2 },
       { "monster": "mon_deer_fawn", "weight": 25, "ends": "28 days", "conditions": [ "SPRING", "SUMMER", "AUTUMN" ] },
@@ -194,6 +200,7 @@
     "name": "GROUP_DEER_MUT_SPIDERS",
     "type": "monstergroup",
     "is_animal": true,
+    "default": "mon_deer_mutant_spider",
     "//": "Mutant deer are better prepared to protect/escape with their spawn than normal deer, so, contrary to normal wildlife, their spawn becomes more common as time goes on.",
     "monsters": [
       { "monster": "mon_deer_mutant_spider", "weight": 150, "cost_multiplier": 2 },
@@ -221,6 +228,7 @@
     "name": "GROUP_COWS",
     "type": "monstergroup",
     "is_animal": true,
+    "default": "mon_cow",
     "monsters": [
       { "monster": "mon_cow", "weight": 150, "cost_multiplier": 2 },
       { "monster": "mon_cow_calf", "weight": 50, "ends": "28 days" },
