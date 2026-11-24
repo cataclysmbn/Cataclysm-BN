@@ -192,6 +192,11 @@ jobs:
           git diff --exit-code -- '*.json'
           tools/dialogue_validator.py data/json/npcs/* data/json/npcs/*/* data/json/npcs/*/*/*
 
+      - name: Download loading screens
+        if: ${{ success() && env.SKIP == 'false' && matrix.upload-artifact == true }}
+        continue-on-error: true
+        run: bash build-scripts/fetch-loading-screens.sh
+
       - name: create Linux tiles playtest package
         if: ${{ success() && env.SKIP == 'false' && matrix.upload-artifact == true }}
         env:
