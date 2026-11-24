@@ -3956,8 +3956,8 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
             }
 
             case FILL: {
-                auto drinks_inv = p.items_with( []( const item & it ) {
-                    return it.made_of( LIQUID );
+                auto drinks_inv = p.items_with( [&pos_abs_ms]( const item & it ) {
+                    return it.made_of( LIQUID ) && fluid_grid::tank_allows_liquid( pos_abs_ms, it.typeId() );
                 } );
                 if( drinks_inv.empty() ) {
                     add_msg( m_info, _( "You don't have any liquids to fill the %s with." ), keg_name );
