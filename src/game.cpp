@@ -2851,7 +2851,17 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
     const auto starting_activity = u.activity->id();
     auto activity_monsters = activity_monmove_cache {};
     const auto requested_turns = to_turns<int>( duration );
-    while( skipped_turns < requested_turns ) {
+    // A monster or NPC that appears stops the fast-forward. Time for this turn already passed, so
+    // finish the turn for the player first.
+    auto window_ends = false;
+    const auto end_window = [&]( const char *reason ) {
+        activity_fixed_window_force_normal_turn_ = true;
+        window_ends = true;
+        if( log_activity_skip_state ) {
+            add_msg( reason );
+        }
+    };
+    while( !window_ends && skipped_turns < requested_turns ) {
         if( is_game_over() || ( ( !u.activity || !*u.activity ) && !u.in_sleep_state() ) ) {
             if( log_activity_skip_state ) {
                 add_msg( "Activity lost, cannot skip time" );
@@ -2894,22 +2904,11 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
         }
         perhaps_add_random_npc();
         if( npcs_dirty || critter_tracker->size() != monster_count ) {
-            activity_fixed_window_force_normal_turn_ = true;
-            if( log_activity_skip_state ) {
-                add_msg( "NPC added, cannot skip time" );
-            }
-            break;
+            end_window( "NPC added, cannot skip time" );
         }
 
         debug_hour_timer.print_time();
         process_voluntary_act_interrupt();
-        if( ( ( !u.activity || !*u.activity ) && !u.in_sleep_state() ) ) {
-            if( log_activity_skip_state ) {
-                add_msg( "Lost activity, cannot skip time" );
-            }
-            break;
-        }
-
         process_activity();
         if( is_game_over() ) {
             if( log_activity_skip_state ) {
@@ -2917,12 +2916,8 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
             }
             break;
         }
-        if( npcs_dirty || critter_tracker->size() != monster_count ) {
-            activity_fixed_window_force_normal_turn_ = true;
-            if( log_activity_skip_state ) {
-                add_msg( "NPC or monster added, cannot skip time" );
-            }
-            break;
+        if( !window_ends && ( npcs_dirty || critter_tracker->size() != monster_count ) ) {
+            end_window( "NPC or monster added, cannot skip time" );
         }
         const auto activity_continues = ( u.activity && *u.activity &&
                                           u.activity->id() == starting_activity ) ||
@@ -2939,7 +2934,7 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
         []( const shared_ptr_fast<npc> &guy ) {
             return guy && !guy->is_dead();
         } );
-        if( critter_tracker->size() > 0 || has_active_npcs ) {
+        if( !window_ends && ( critter_tracker->size() > 0 || has_active_npcs ) ) {
             if( !activity_skip_sound_skip ) {
                 sounds::process_sounds();
             }
@@ -2951,11 +2946,7 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
                 if( !activity_skip_mon_skip ) {
                     monmove( monster_activity_ai_mode::activity_skip, &activity_monsters );
                     if( critter_tracker->size() != monster_count ) {
-                        activity_fixed_window_force_normal_turn_ = true;
-                        if( log_activity_skip_state ) {
-                            add_msg( "Monster added, cannot skip time" );
-                        }
-                        break;
+                        end_window( "Monster added, cannot skip time" );
                     }
                 } else {
                     for( const shared_ptr_fast<monster> &mon_ptr : critter_tracker->get_monsters_list() ) {
@@ -2966,15 +2957,11 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
                     }
                 }
             }
-            if( has_active_npcs ) {
+            if( has_active_npcs && !window_ends ) {
                 if( !activity_skip_npc_skip ) {
                     npcmove();
                     if( npcs_dirty || critter_tracker->size() != monster_count ) {
-                        activity_fixed_window_force_normal_turn_ = true;
-                        if( log_activity_skip_state ) {
-                            add_msg( "NPC or monster added, cannot skip time" );
-                        }
-                        break;
+                        end_window( "NPC or monster added, cannot skip time" );
                     }
                 } else {
                     for( npc &guy : g->all_npcs() ) {
