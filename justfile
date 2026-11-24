@@ -36,6 +36,10 @@ lint-dialogue:
 hooks-setup:
     prek install
 
+# Download loading screen images into data/.
+loading-screens:
+    build-scripts/fetch-loading-screens.sh
+
 # Download and launch a PR tiles build: just playtest [--os OS] <PR URL>.
 [positional-arguments]
 playtest *args:

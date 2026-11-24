@@ -176,6 +176,12 @@ jobs:
           commit url: https://github.com/${{ github.repository }}/commit/${{ github.sha }}
           EOL
 
+      - name: Download loading screens
+        if: matrix.tiles == true
+        continue-on-error: ${{ inputs.mode == 'ci' }}
+        shell: bash
+        run: bash build-scripts/fetch-loading-screens.sh
+
       - name: Bundle CDDA tilesets
         if: matrix.tiles == true && inputs.bundle-tilesets
         env:

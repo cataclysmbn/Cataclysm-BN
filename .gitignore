@@ -26,6 +26,10 @@ test_user_dir*
 /data/*.template
 /data/mods/user-default-mods.json
 /data/shaders/
+# Downloaded by build-scripts/fetch-loading-screens.sh
+/data/json/loading/
+/data/mods/*/loading/
+/data/mods/gunchair/scarf_gunchair.png
 /dep/
 /doxygen_doc/html/*
 /doxygen_doc/latex/*
