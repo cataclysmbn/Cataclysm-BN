@@ -1709,6 +1709,9 @@ void MonsterGenerator::check_monster_definitions() const
                           mon.baby_egg.c_str(), mon.id.c_str() );
             }
         }
+        for( const auto &[_, special] : mon.special_attacks ) {
+            special->check( mon.id );
+        }
     }
 }
 

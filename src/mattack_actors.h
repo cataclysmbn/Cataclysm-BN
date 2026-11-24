@@ -208,6 +208,7 @@ class gun_actor : public mattack_actor
 
         void load_internal( const JsonObject &obj, const std::string &src ) override;
         bool call( monster & ) const override;
+        void check( const mtype_id &src ) const override;
         std::unique_ptr<mattack_actor> clone() const override;
 };
 
