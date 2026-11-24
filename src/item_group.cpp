@@ -168,8 +168,11 @@ void Single_item_creator::check_consistency( const std::string &context ) const
     } else {
         debugmsg( "Unknown type of Single_item_creator: %d", static_cast<int>( type ) );
     }
+    // Spawning every item is only needed to validate ammo and container compatibility.
     if( modifier ) {
         modifier->check_consistency( context );
+    }
+    if( modifier && ( modifier->ammo || modifier->container ) ) {
         for( auto &item : every_item_modified( false ) ) {
             if( modifier && modifier->ammo != nullptr ) {
                 for( auto &ammo : modifier->ammo->every_item_modified() ) {

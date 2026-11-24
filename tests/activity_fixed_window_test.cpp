@@ -30,6 +30,7 @@ static const auto act_wait = activity_id("ACT_WAIT");
 static auto prepare_fixed_window_wait(const time_duration& duration) -> void {
     clear_all_state();
 
+    g->reset_activity_fixed_window();
     g->timed_events = timed_event_manager{};
     static auto next_start_turn = calendar::turn_zero + 12_hours;
     calendar::turn = next_start_turn;

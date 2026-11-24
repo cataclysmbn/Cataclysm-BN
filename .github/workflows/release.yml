@@ -28,7 +28,7 @@ jobs:
       source_sha: ${{ steps.env_vars.outputs.source_sha }}
       changelog_fetch_depth: ${{ steps.env_vars.outputs.changelog_fetch_depth }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - id: env_vars
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -95,7 +95,7 @@ jobs:
             echo "release_exists=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ needs.metadata.outputs.source_sha }}
           fetch-depth: ${{ needs.metadata.outputs.changelog_fetch_depth }}

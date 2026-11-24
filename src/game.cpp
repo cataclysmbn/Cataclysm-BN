@@ -733,6 +733,8 @@ void game::setup( bool load_world_modfiles )
         guy->get_mapbuffer().remove_active_npc( *guy );
     }
     active_npc.clear();
+    // Leave the dimension of the last session, so that a new game starts in the overworld.
+    set_active_dimension_id( dimension_id() );
     faction_manager_ptr->clear();
     mission::clear_all();
     Messages::clear_messages();
@@ -2084,6 +2086,13 @@ auto game::advance_time_action_tick() -> int
     return calendar_turns;
 }
 
+auto game::reset_activity_fixed_window() -> void
+{
+    next_activity_fixed_window_check_ = calendar::turn_zero;
+    activity_fixed_window_force_normal_turn_ = false;
+    time_action_scale_turn_remainder = 0;
+}
+
 // MAIN GAME LOOP
 // Returns true if game is over (death, saved, quit, etc)
 bool game::do_turn()
@@ -2842,7 +2851,17 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
     const auto starting_activity = u.activity->id();
     auto activity_monsters = activity_monmove_cache {};
     const auto requested_turns = to_turns<int>( duration );
-    while( skipped_turns < requested_turns ) {
+    // A monster or NPC that appears stops the fast-forward. Time for this turn already passed, so
+    // finish the turn for the player first.
+    auto window_ends = false;
+    const auto end_window = [&]( const char *reason ) {
+        activity_fixed_window_force_normal_turn_ = true;
+        window_ends = true;
+        if( log_activity_skip_state ) {
+            add_msg( reason );
+        }
+    };
+    while( !window_ends && skipped_turns < requested_turns ) {
         if( is_game_over() || ( ( !u.activity || !*u.activity ) && !u.in_sleep_state() ) ) {
             if( log_activity_skip_state ) {
                 add_msg( "Activity lost, cannot skip time" );
@@ -2885,22 +2904,11 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
         }
         perhaps_add_random_npc();
         if( npcs_dirty || critter_tracker->size() != monster_count ) {
-            activity_fixed_window_force_normal_turn_ = true;
-            if( log_activity_skip_state ) {
-                add_msg( "NPC added, cannot skip time" );
-            }
-            break;
+            end_window( "NPC added, cannot skip time" );
         }
 
         debug_hour_timer.print_time();
         process_voluntary_act_interrupt();
-        if( ( ( !u.activity || !*u.activity ) && !u.in_sleep_state() ) ) {
-            if( log_activity_skip_state ) {
-                add_msg( "Lost activity, cannot skip time" );
-            }
-            break;
-        }
-
         process_activity();
         if( is_game_over() ) {
             if( log_activity_skip_state ) {
@@ -2908,12 +2916,8 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
             }
             break;
         }
-        if( npcs_dirty || critter_tracker->size() != monster_count ) {
-            activity_fixed_window_force_normal_turn_ = true;
-            if( log_activity_skip_state ) {
-                add_msg( "NPC or monster added, cannot skip time" );
-            }
-            break;
+        if( !window_ends && ( npcs_dirty || critter_tracker->size() != monster_count ) ) {
+            end_window( "NPC or monster added, cannot skip time" );
         }
         const auto activity_continues = ( u.activity && *u.activity &&
                                           u.activity->id() == starting_activity ) ||
@@ -2930,7 +2934,7 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
         []( const shared_ptr_fast<npc> &guy ) {
             return guy && !guy->is_dead();
         } );
-        if( critter_tracker->size() > 0 || has_active_npcs ) {
+        if( !window_ends && ( critter_tracker->size() > 0 || has_active_npcs ) ) {
             if( !activity_skip_sound_skip ) {
                 sounds::process_sounds();
             }
@@ -2942,11 +2946,7 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
                 if( !activity_skip_mon_skip ) {
                     monmove( monster_activity_ai_mode::activity_skip, &activity_monsters );
                     if( critter_tracker->size() != monster_count ) {
-                        activity_fixed_window_force_normal_turn_ = true;
-                        if( log_activity_skip_state ) {
-                            add_msg( "Monster added, cannot skip time" );
-                        }
-                        break;
+                        end_window( "Monster added, cannot skip time" );
                     }
                 } else {
                     for( const shared_ptr_fast<monster> &mon_ptr : critter_tracker->get_monsters_list() ) {
@@ -2957,15 +2957,11 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
                     }
                 }
             }
-            if( has_active_npcs ) {
+            if( has_active_npcs && !window_ends ) {
                 if( !activity_skip_npc_skip ) {
                     npcmove();
                     if( npcs_dirty || critter_tracker->size() != monster_count ) {
-                        activity_fixed_window_force_normal_turn_ = true;
-                        if( log_activity_skip_state ) {
-                            add_msg( "NPC or monster added, cannot skip time" );
-                        }
-                        break;
+                        end_window( "NPC or monster added, cannot skip time" );
                     }
                 } else {
                     for( npc &guy : g->all_npcs() ) {
@@ -5866,7 +5862,7 @@ void game::cleanup_dead()
 {
     // Dead monsters need to stay in the tracker until everything else that needs to die does so
     // This is because dying monsters can still interact with other dying monsters (@ref Creature::killer)
-    bool monster_is_dead = critter_tracker->kill_marked_for_death();
+    critter_tracker->kill_marked_for_death();
 
     bool npc_is_dead = false;
     // can't use all_npcs as that does not include dead ones
@@ -6681,7 +6677,7 @@ void game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
     auto monmove_action_move = int64_t{ 0 };
     auto monmove_action_attack = int64_t{ 0 };
     auto monmove_action_other = int64_t{ 0 };
-    const auto record_monmove_action = [&]( const monster & critter,
+    const auto record_monmove_action = [&]( const monster & /*critter*/,
     const monster_action_t &action ) {
         if( action.needs_repath ) {
             ++monmove_action_repath_requests;
@@ -8136,8 +8132,15 @@ void game::control_vehicle()
             veh_part = vp->part_index();
         }
     }
-    if( veh != nullptr && veh->player_in_control( u ) &&
-        veh->avail_part_with_feature( veh_part, "CONTROLS", true ) >= 0 ) {
+    if( veh != nullptr && veh_part < 0 ) {
+        // Remote control: the player is not standing on the vehicle, so there is no part to
+        // check for controls. player_in_control() verifies the remote link (and drops it if lost).
+        if( !veh->player_in_control( u ) ) {
+            return;
+        }
+        veh->use_controls( tripoint_bub_ms( u.bub_pos() ) );
+    } else if( veh != nullptr && veh->player_in_control( u ) &&
+               veh->avail_part_with_feature( veh_part, "CONTROLS", true ) >= 0 ) {
         veh->use_controls( tripoint_bub_ms( u.bub_pos() ) );
     } else if( veh && veh->player_in_control( u ) &&
                veh->avail_part_with_feature( veh_part, "CONTROL_ANIMAL", true ) >= 0 ) {
@@ -10041,7 +10044,7 @@ std::optional<tripoint_bub_ms> game::look_around( look_around_mode mode )
 
 look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
                                       const tripoint_bub_ms &start_point, bool has_first_point, bool select_zone, bool peeking,
-                                      bool is_moving_zone, const tripoint_bub_ms &end_point, look_around_mode mode )
+                                      bool is_moving_zone, const tripoint_bub_ms &end_point, look_around_mode /*mode*/ )
 {
     bVMonsterLookFire = false;
     temp_exit_fullscreen();
@@ -14044,6 +14047,10 @@ void game::resize_reality_bubble_to( int new_size )
         active_npc.erase( out_of_range.begin(), out_of_range.end() );
     }
 
+    // While a save is being read there is no live reality bubble and the player position is
+    // not known yet, so there is nothing to reload: the load brings the map in afterwards.
+    const auto reading_save = saving_blocked_by_failed_load && !m.has_active_load_region();
+
     // Release submap loader requests so load_map() recreates them with the new bounds.
     release_active_load_regions();
 
@@ -14053,6 +14060,20 @@ void game::resize_reality_bubble_to( int new_size )
     init_bubble_config( new_size );
     m.resize( g_mapsize );
     reality_bubble_radius_ = g_half_mapsize;
+
+    const auto discard_bubble_sized_state = []() {
+        // Discard pathfinding objects sized for the old bubble.
+        Pathfinding::clear_pool();
+#if defined(TILES)
+        if( tilecontext ) {
+            tilecontext->reset_minimap();
+        }
+#endif
+    };
+    if( reading_save ) {
+        discard_bubble_sized_state();
+        return;
+    }
 
     // Compute the new top-left abs_sub so load_map centers on the player.
     const auto new_abs_sub = player_abs_sm.xy() +
@@ -14105,15 +14126,7 @@ void game::resize_reality_bubble_to( int new_size )
     m.invalidate_map_cache( get_levz() );
     m.build_map_cache( get_levz() );
 
-    // Discard pathfinding objects sized for the old bubble.
-    Pathfinding::clear_pool();
-
-
-#if defined(TILES)
-    if( tilecontext ) {
-        tilecontext->reset_minimap();
-    }
-#endif
+    discard_bubble_sized_state();
 }
 
 void game::resize_reality_bubble()

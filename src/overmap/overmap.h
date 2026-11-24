@@ -252,9 +252,7 @@ public:
     overmap(const point_abs_om& p, const dimension_id& dim_id = dimension_id());
     ~overmap();
 
-    auto get_dimension_id() const -> const dimension_id& { // *NOPAD*
-        return dimension_id_;
-    }
+    auto get_dimension_id() const -> const dimension_id& { return dimension_id_; }
 
     /**
      * Create content in the overmap.
@@ -442,6 +440,8 @@ private:
     std::vector<shared_ptr_fast<npc>> npcs;
 
     bool nullbool = false;
+    /// True when the save data of this overmap did not load. `save` then keeps that data.
+    bool load_failed = false;
     point_abs_om loc;
     dimension_id dimension_id_;
 

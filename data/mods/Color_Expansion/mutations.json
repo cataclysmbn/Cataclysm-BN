@@ -236,7 +236,7 @@
   {
     "type": "mutation",
     "id": "SKIN_BUBBLEGUM",
-    "name": { "str": "Skin color: bubblegun" },
+    "name": { "str": "Skin color: bubblegum" },
     "description": "Your skin is a vivid pink.",
     "apperance_description": "pink",
     "points": 0,

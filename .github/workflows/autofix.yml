@@ -31,7 +31,7 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - env: { DEBIAN_FRONTEND: noninteractive }
         run: |
@@ -48,7 +48,7 @@ jobs:
         with: { cache: true }
 
       - name: cache deno dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ env.DENO_DIR }}
           key: deno-${{ hashFiles('deno.lock') }}
@@ -124,7 +124,7 @@ jobs:
 
       - name: Checkout base docs warning script
         if: always() && github.event.pull_request.head.ref != github.event.repository.default_branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 1
           sparse-checkout: |
@@ -188,3 +188,23 @@ jobs:
           ( github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'synchronize' )
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      # label PRs that tick the AI checkbox or have an Assisted-by trailer, and assign them to the reviewer
+      - name: Label AI-assisted PR
+        if: >-
+          always() &&
+          ( github.event.action == 'opened' || github.event.action == 'edited' || github.event.action == 'reopened' || github.event.action == 'synchronize' )
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          REVIEWER: scarf005
+        run: |
+          body_ai="$(gh api "repos/$REPO/pulls/$PR" --jq '(.body // "") | test("(^|\n)\\s*- \\[[xX]\\] This PR used AI assistance")')"
+          commit_ai="$(gh api --paginate "repos/$REPO/pulls/$PR/commits" --jq 'any(.[]; .commit.message | test("(^|\n)Assisted-by:"; "i"))')"
+          case "$body_ai $commit_ai" in *true*) ;; *) exit 0 ;; esac
+          gh api "repos/$REPO/issues/$PR/labels" -f "labels[]=AI" --silent
+          if [ "$AUTHOR" != "$REVIEWER" ]; then
+            gh api "repos/$REPO/issues/$PR/assignees" -f "assignees[]=$REVIEWER" --silent
+          fi

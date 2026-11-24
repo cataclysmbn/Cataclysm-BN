@@ -5,6 +5,8 @@
 #include "examine_item_menu.h"
 #include "item.h"
 #include "itype.h"
+#include "json.h"
+#include "npc.h"
 #include "pimpl.h"
 #include "player.h"
 #include "player_helpers.h"
@@ -15,6 +17,7 @@
 #include <climits>
 #include <list>
 #include <memory>
+#include <sstream>
 #include <string>
 
 static void clear_bionics(player& p) {
@@ -310,4 +313,35 @@ TEST_CASE("microreactor_installation_paths", "[bionics][reactor]") {
         dummy.add_bionic(bio_reactor);
         CHECK(dummy.has_bionic(bio_reactor));
     }
+}
+
+TEST_CASE("bionic_uninstall_removes_its_power_capacity_once", "[bionics]") {
+    clear_all_state();
+    player& dummy = get_avatar();
+    clear_bionics(dummy);
+    const auto small_storage = bionic_id("bio_power_storage");
+    dummy.add_bionic(small_storage);
+    dummy.add_bionic(bionic_id("bio_power_storage_mkII"));
+    REQUIRE(dummy.get_max_power_level() == 350_kJ);
+
+    dummy.perform_uninstall(small_storage, 0, 100, 10);
+
+    CHECK(dummy.get_max_power_level() == 250_kJ);
+}
+
+TEST_CASE("npc_with_negative_bionic_power_loads_with_zero_power", "[bionics][npc]") {
+    clear_all_state();
+    npc saved;
+    saved.set_max_power_level(-2_kJ);
+    saved.set_power_level(-2_kJ);
+    std::ostringstream out;
+    JsonOut jsout(out);
+    saved.serialize(jsout);
+
+    std::istringstream in(out.str());
+    JsonIn jsin(in);
+    npc loaded;
+    REQUIRE_NOTHROW(loaded.deserialize(jsin));
+    CHECK(loaded.get_power_level() == 0_J);
+    CHECK(loaded.get_max_power_level() == 0_J);
 }

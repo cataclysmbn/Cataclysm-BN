@@ -587,12 +587,12 @@ class game : public submap_load_listener
         npc *find_npc( character_id id );
         /** Makes any nearby NPCs on the overmap active. */
         void load_npcs();
-    private:
         /** Resizes the reality bubble to an explicit target size.
          *  Safe to call mid-session: despawns out-of-range entities, flushes the
          *  submap load-manager work, rebuilds map grid and all dependent caches.
          */
         void resize_reality_bubble_to( int new_size );
+    private:
 
         /** Resizes the reality bubble to match the current REALITY_BUBBLE_SIZE option.
          *  Also clears in_activity_bubble_ so the normal size takes effect immediately.
@@ -950,7 +950,6 @@ class game : public submap_load_listener
         bool grabbed_veh_move( const tripoint_rel_ms &dp );
         auto grabbed_furn_move( const tripoint_rel_ms &dp ) -> bool;
 
-        void control_vehicle(); // Use vehicle controls  '^'
         void examine( const tripoint_bub_ms &p ); // Examine nearby terrain  'e'
         void examine();
 
@@ -965,6 +964,7 @@ class game : public submap_load_listener
         void butcher(); // Butcher a corpse  'B'
         void dissect(); // dissect a corpse
     public:
+        void control_vehicle(); // Use vehicle controls  '^'
         // Places the player at the specified point; hurts feet, lists items etc.
         auto place_player( const tripoint_bub_ms &dest ) -> point_rel_sm;
         void place_player_overmap( const tripoint_abs_omt &om_dest );
@@ -1033,6 +1033,9 @@ class game : public submap_load_listener
          * Marks the game as won. Doesn't end the game.
          */
         void win();
+
+        /// Clears the skip window state, so the next do_turn may start a skip window. Tests use it.
+        auto reset_activity_fixed_window() -> void;
 
     private:
         void perhaps_add_random_npc();

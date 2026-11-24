@@ -346,7 +346,7 @@
     "id": "flask_yeast",
     "type": "GENERIC",
     "category": "cooking_ingredients",
-    "name": { "str_sp": "small sealed yeast culture" },
+    "name": { "str": "small sealed yeast culture" },
     "description": "A sealed flask holding sanitized yeast wort.  You may harvest the yeast inside when it's done culturing.",
     "weight": "250 g",
     "volume": "250 ml",
@@ -372,7 +372,7 @@
   {
     "id": "jar_yeast",
     "type": "GENERIC",
-    "name": { "str_sp": "sealed yeast culture" },
+    "name": { "str": "sealed yeast culture" },
     "description": "A sealed jar holding sanitized yeast wort.  You may harvest the yeast inside when it's done culturing.",
     "copy-from": "flask_yeast",
     "looks_like": "jar_glass_sealed",
@@ -393,7 +393,7 @@
   {
     "id": "clay_yeast",
     "type": "GENERIC",
-    "name": { "str_sp": "sealed yeast culture" },
+    "name": { "str": "sealed yeast culture" },
     "description": "A sealed clay bowl holding sanitized yeast wort.  You may harvest the yeast inside when it's done culturing.",
     "copy-from": "wild_clay_yeast",
     "use_action": {
@@ -411,7 +411,7 @@
   {
     "id": "jar_3l_glass_yeast",
     "type": "GENERIC",
-    "name": { "str_sp": "large sealed yeast culture" },
+    "name": { "str": "large sealed yeast culture" },
     "description": "A sealed 3L glass jar holding sanitized yeast wort.  You may harvest the yeast inside when it's done culturing.",
     "copy-from": "jar_yeast",
     "looks_like": "jar_3l_glass_sealed",
@@ -432,7 +432,7 @@
   {
     "id": "wild_yeast",
     "type": "GENERIC",
-    "name": { "str_sp": "sealed wild yeast culture" },
+    "name": { "str": "sealed wild yeast culture" },
     "description": "Mixture of water, sugar and fruits with some naturally occurring yeast, that will eventually produce a more sizable yeast culture.",
     "copy-from": "jar_yeast",
     "use_action": {
@@ -449,7 +449,7 @@
   {
     "id": "wild_clay_yeast",
     "type": "GENERIC",
-    "name": { "str_sp": "sealed wild yeast culture" },
+    "name": { "str": "sealed wild yeast culture" },
     "description": "Mixture of water, sugar and fruits with some naturally occurring yeast, that will eventually produce a more sizable yeast culture.",
     "copy-from": "jar_yeast",
     "looks_like": "bowl_clay",

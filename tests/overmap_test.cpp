@@ -5,6 +5,7 @@
 #include "coordinates.h"
 #include "debug.h"
 #include "enums.h"
+#include "filesystem.h"
 #include "fluid_grid.h"
 #include "game.h"
 #include "game_constants.h"
@@ -19,6 +20,7 @@
 #include "rng.h"
 #include "state_helpers.h"
 #include "type_id.h"
+#include "world.h"
 
 #include <algorithm>
 #include <array>
@@ -682,3 +684,20 @@ TEST_CASE("separate_overmap_tile_context_keeps_independent_scale", "[overmap][zo
 }
 
 #endif // TILES
+
+TEST_CASE("overmap_that_failed_to_load_is_not_saved", "[overmap]") {
+    clear_all_state();
+    const auto pos = point_abs_om(40, 40);
+    const auto dim = dimension_id("overmap_failed_load_" + get_pid_string());
+    auto& w = *g->get_active_world();
+    REQUIRE(w.write_overmap(dim.str(), pos, [](std::ostream& out) { out << "not an overmap"; }));
+
+    const auto om = std::make_unique<overmap>(pos, dim);
+    const auto message = capture_debugmsg_during([&]() { om->populate(dim); });
+    REQUIRE(message.contains("failed to load"));
+    om->save(dim);
+
+    auto saved = std::string();
+    w.read_overmap(dim.str(), pos, [&](std::istream& in) { std::getline(in, saved); });
+    CHECK(saved == "not an overmap");
+}

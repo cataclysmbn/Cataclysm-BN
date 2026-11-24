@@ -867,7 +867,7 @@ bool npc::do_player_activity() {
     const auto moves_before = moves;
     {
         ZoneScopedN("npc_do_player_activity_loop");
-        auto activity_turns = 0;
+        [[maybe_unused]] auto activity_turns = 0;
         while (moves > 0 && activity && *activity) {
             activity->do_turn(*this);
             activity_turns++;

@@ -16,7 +16,7 @@ jobs:
           sudo apt-get install python3-pip
           sudo pip3 install --break-system-packages polib
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: "Check printf format string in translations"
         run: ./tools/check_po_printf_format.py

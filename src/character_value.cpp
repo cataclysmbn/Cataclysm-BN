@@ -18,6 +18,7 @@
 #include "visitable.h"
 
 #include <optional>
+#include <utility>
 #include <vector>
 
 namespace
@@ -32,7 +33,7 @@ void character_value::load_character_values( const JsonObject &jo, const std::st
     all_character_values.load( jo, src );
 }
 
-void character_value::load( const JsonObject &jo, const std::string &src )
+void character_value::load( const JsonObject &jo, const std::string &/*src*/ )
 {
     optional( jo, was_loaded, "desc", desc );
     optional( jo, was_loaded, "hardcode_value", hardcode_value,
@@ -183,4 +184,5 @@ std::string io::enum_to_string<character_value::hardcode_character_value>
         case character_value::hardcode_character_value::none:
             return "NONE";
     }
+    std::unreachable();
 }

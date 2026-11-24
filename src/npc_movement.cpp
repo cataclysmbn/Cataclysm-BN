@@ -632,7 +632,6 @@ bool npc::has_omt_destination() const { return goal != no_goal_point; }
 
 void npc::reach_omt_destination() {
     if (!omt_path.empty()) { omt_path.clear(); }
-    map& here = get_map();
     if (is_travelling()) {
         guard_pos = abs_pos();
         goal = no_goal_point;

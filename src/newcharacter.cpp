@@ -3009,7 +3009,6 @@ tab_direction set_magic( avatar &u, points_left &points )
         // Write the hint as to upgrade costs
         const bool knows = u.magic->knows_spell( current_spell );
         const int cost = knows ? current_spell->increase_points : current_spell->starting_points;
-        const int level = knows ? u.magic->get_spell( current_spell ).get_level() : 0;
         // We have two different strings to pluralize, so we have to use two
         // translation calls.
         const nc_color color = points.trait_points_left() >= cost ? COL_SKILL_USED : c_light_red;

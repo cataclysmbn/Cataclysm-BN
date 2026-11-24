@@ -26,7 +26,7 @@
 
 struct city;
 class overmap_land_use_code;
-struct MonsterGroup;
+class MonsterGroup;
 
 using overmap_land_use_code_id = string_id<overmap_land_use_code>;
 class JsonObject;

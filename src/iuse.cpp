@@ -8178,7 +8178,7 @@ static bool hackveh( player &p, item &it, vehicle &veh )
     return success;
 }
 
-static vehicle *pickveh( const tripoint_bub_ms &center )
+static vehicle *pickveh( const tripoint_bub_ms &/*center*/ )
 {
     static const std::string ctrl = "REMOTE_CONTROLS";
     uilist pmenu;
@@ -8801,7 +8801,6 @@ int iuse::weather_tool( player *p, item *it, bool, const tripoint_bub_ms & )
     /* Possibly used twice. Worth spending the time to precalculate. */
     const auto player_local_temp = weather.get_temperature( p->abs_pos() );
 
-    map &here = get_map();
     if( it->typeId() == itype_weather_reader ) {
         p->add_msg_if_player( m_neutral, _( "The %s's monitor slowly outputs the data…" ),
                               it->tname() );

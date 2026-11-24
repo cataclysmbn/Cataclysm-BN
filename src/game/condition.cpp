@@ -84,9 +84,7 @@ template <class T>
 void conditional_t<T>::set_has_any_trait(
     const JsonObject& jo, const std::string& member, bool is_npc) {
     std::vector<trait_id> traits_to_check;
-    for (auto&& f : jo.get_string_array(member)) { // *NOPAD*
-        traits_to_check.emplace_back(f);
-    }
+    for (auto&& f : jo.get_string_array(member)) { traits_to_check.emplace_back(f); }
     condition = [traits_to_check, is_npc](const T& d) {
         player* actor = d.alpha;
         if (is_npc) { actor = dynamic_cast<player*>(d.beta); }

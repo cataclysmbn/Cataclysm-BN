@@ -3,6 +3,7 @@
 #include "action_time_scale.h"
 #include "active_item_cache.h"
 #include "activity_handlers.h"
+#include "avatar.h"
 #include "bionics.h"
 #include "bodypart.h"
 #include "calendar.h"
@@ -641,7 +642,6 @@ float npc::character_danger(const Character& u) const {
 
 void npc::regen_ai_cache() {
     ZoneScoped;
-    map& here = get_map();
     auto i = std::begin(ai_cache.sound_alerts);
     while (i != std::end(ai_cache.sound_alerts)) {
         if (sees(abs_to_bub(i->abs_pos))) {
@@ -708,7 +708,16 @@ void npc::move() {
                        warning_sound.range, warning_sound.danger_pos);
         }
     }
-    npc_ai::regen_ai_cache(*this);
+    // Calm NPCs reassess danger every 5 turns inside activity skip windows.
+    const auto calm = ai_cache.danger_assessment <= 0.0f && ai_cache.sound_alerts.empty() &&
+                      ai_cache.target.expired() && ai_cache.dangerous_explosives.empty();
+    if (calm && get_avatar().in_skip_state &&
+        !action_time_scale::once_every_this_tick(5_turns) &&
+        get_option<bool>("ACTIVITY_SKIP_NPC_AI_CADENCE")) {
+        ai_cache.warn_about_queue.clear();
+    } else {
+        npc_ai::regen_ai_cache(*this);
+    }
     adjust_power_cbms();
     // NPCs under operation should just stay still
     if (activity->id() == activity_id("ACT_OPERATION")) {
@@ -772,7 +781,6 @@ void npc::move() {
         ai_cache.target = g->shared_from(player_character);
     }
 
-    map& here = get_map();
     if (!ai_cache.dangerous_explosives.empty()) {
         ZoneScopedN("npc_escape_explode_selector");
         action = npc_escape_explosion;

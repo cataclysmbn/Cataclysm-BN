@@ -10,7 +10,7 @@ static void cata_assert(bool expr) {
 }
 
 namespace map_helpers {
-auto canvas_legend::entry(char32_t c) const -> const std::string& { // *NOPAD*
+auto canvas_legend::entry(char32_t c) const -> const std::string& {
     auto it = data.find(c);
     cata_assert(it != data.end());
     return it->second;

@@ -19,7 +19,7 @@ static void advance_turn(Character& guy) {
     calendar::turn += 1_turns;
 }
 
-static auto give_item(Character& guy, const std::string& item_id) -> item& { // *NOPAD*
+static auto give_item(Character& guy, const std::string& item_id) -> item& {
     detached_ptr<item> det = item::spawn(item_id);
     item& ret = *det;
     guy.i_add(std::move(det));
@@ -27,7 +27,7 @@ static auto give_item(Character& guy, const std::string& item_id) -> item& { // 
     return ret;
 }
 
-static auto wear_item(Character& guy, const std::string& item_id) -> item& { // *NOPAD*
+static auto wear_item(Character& guy, const std::string& item_id) -> item& {
     detached_ptr<item> det = item::spawn(item_id);
     item& ret = *det;
     guy.wear_item(std::move(det), false);

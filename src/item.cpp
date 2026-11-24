@@ -4544,9 +4544,9 @@ void item::final_info( std::vector<iteminfo> &info, const iteminfo_query &parts_
     }
 }
 
-void item::enchantment_info( std::vector<iteminfo> &info, const iteminfo_query &parts_ref,
-                             int batch,
-                             bool debug ) const
+void item::enchantment_info( std::vector<iteminfo> &info, const iteminfo_query &/*parts_ref*/,
+                             int /*batch*/,
+                             bool /*debug*/ ) const
 {
     std::vector<enchantment> enchs = get_enchantments( true );
     std::vector<enchantment> enchs_2 = get_enchantments( false );
@@ -4555,7 +4555,7 @@ void item::enchantment_info( std::vector<iteminfo> &info, const iteminfo_query &
         return;
     }
     insert_separation_line( info );
-    for( const enchantment ench : enchs ) {
+    for( const enchantment &ench : enchs ) {
         for( std::string str : ench.get_effect_string( true ) ) {
             info.emplace_back( "DESCRIPTION", str );
         }
@@ -4909,7 +4909,7 @@ nc_color item::color_in_inventory( const player &p ) const
         }
     } else {
         for( const auto flag : get_flags() ) {
-            if( !flag->tag_color() != c_light_gray ) {
+            if( flag->tag_color() != c_light_gray ) {
                 ret = flag->tag_color();
                 break;
             }

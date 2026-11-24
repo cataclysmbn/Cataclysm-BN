@@ -5,6 +5,7 @@
     "name": "innawoods",
     "description": "This mod removes all urban locations and lets you live in the woods.  Remember to set `CITY_SIZE` = 0",
     "category": "total_conversion",
-    "dependencies": [ "bn" ]
+    "dependencies": [ "bn" ],
+    "loading_images": [ "loading/" ]
   }
 ]
