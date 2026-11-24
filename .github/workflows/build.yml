@@ -281,15 +281,17 @@ jobs:
         # v1.2.20 installs ccache 4.9. With ccache 4.13, MSVC fails on test files that use a PCH (error C1010).
         uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2.20
         with:
-          # Build mode changes MSVC compiler inputs. Change the ccache version in the key and in "Delete old ccache copy" together with the action.
-          key: windows-ccache4.9-${{ matrix.artifact }}-${{ inputs.mode }}-${{ github.ref_name }}
+          # Share this cache between CI and release builds. Both compile the same objects with the Release config.
+          # Save it only from CI builds. Release builds do not compile tests, and evict-old-files would drop the test objects.
+          # Change the ccache version in the key and in "Delete old ccache copy" together with the action.
+          key: windows-ccache4.9-${{ matrix.artifact }}-${{ github.ref_name }}
           restore-keys: |
-            windows-ccache4.9-${{ matrix.artifact }}-${{ inputs.mode }}-${{ github.ref_name }}
-            windows-ccache4.9-${{ matrix.artifact }}-${{ inputs.mode }}-main
-            windows-ccache4.9-${{ matrix.artifact }}-${{ inputs.mode }}-
+            windows-ccache4.9-${{ matrix.artifact }}-${{ github.ref_name }}
+            windows-ccache4.9-${{ matrix.artifact }}-main
           max-size: 3G
+          evict-old-files: job
           verbose: 2
-          save: ${{ github.event_name != 'pull_request' }}
+          save: ${{ github.event_name != 'pull_request' && inputs.mode == 'ci' }}
 
       - name: Configure ccache for MSVC
         if: runner.os == 'Windows'
@@ -347,6 +349,9 @@ jobs:
             ${{ matrix.artifact }}-main
             ${{ matrix.artifact }}-
           max-size: 500M
+          # Release and CI builds share this key but compile different files. Evict only in CI builds,
+          # here and in the mac and android steps, so a release save keeps the CI objects.
+          evict-old-files: ${{ inputs.mode == 'ci' && 'job' || '' }}
           verbose: 2
           save: ${{ github.event_name != 'pull_request' }}
 
@@ -381,6 +386,7 @@ jobs:
             ${{ matrix.artifact }}-main
             ${{ matrix.artifact }}-
           max-size: 500M
+          evict-old-files: ${{ inputs.mode == 'ci' && 'job' || '' }}
           verbose: 2
           save: ${{ github.event_name != 'pull_request' }}
 
@@ -493,7 +499,6 @@ jobs:
         env:
           VCPKG_OVERLAY_TRIPLETS: ${{ github.workspace }}\.github\vcpkg_triplets
         run: |
-          $buildType = "Release"
           $localize = "False"
           $tests = "False"
           $release = "ON"
@@ -502,7 +507,6 @@ jobs:
             $localize = "True"
           }
           if ("${{ inputs.mode }}" -eq "ci") {
-            $buildType = "RelWithDebInfo"
             $release = "OFF"
             $fastLink = "ON"
           }
@@ -512,7 +516,7 @@ jobs:
           cmake -G Ninja `
             -S "${{ github.workspace }}" `
             -B "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc" `
-            "-DCMAKE_BUILD_TYPE=$buildType" `
+            -DCMAKE_BUILD_TYPE=Release `
             -DCMAKE_PROJECT_INCLUDE_BEFORE="${{ github.workspace }}/build-scripts/windows-tiles-sounds-x64-msvc.cmake" `
             -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/build-scripts/MSVC.cmake" `
             -DVCPKG_TARGET_TRIPLET=x64-windows-static `
@@ -696,6 +700,7 @@ jobs:
             ${{ matrix.artifact }}-main
             ${{ matrix.artifact }}-
           max-size: 2G
+          evict-old-files: ${{ inputs.mode == 'ci' && 'job' || '' }}
           verbose: 2
           save: ${{ github.event_name != 'pull_request' }}
 
@@ -902,13 +907,13 @@ jobs:
       # Delete the old ccache copy before the post step saves the new one.
       # Two copies of every cache do not fit in the 10 GB limit, and GitHub then evicts other caches.
       - name: Delete old ccache copy
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && (runner.os != 'Windows' || inputs.mode == 'ci')
         continue-on-error: true
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          PREFIX: ccache-${{ runner.os == 'Windows' && format('windows-ccache4.9-{0}-{1}', matrix.artifact, inputs.mode) || matrix.artifact }}-${{ github.ref_name }}-
+          PREFIX: ccache-${{ runner.os == 'Windows' && format('windows-ccache4.9-{0}', matrix.artifact) || matrix.artifact }}-${{ github.ref_name }}-
         run: gh cache list --ref "$GITHUB_REF" --key "$PREFIX" --json id --jq '.[].id' | xargs -r -n1 gh cache delete
 
   # Split Windows tests over several runners. One runner takes about 16 min for all shards.
