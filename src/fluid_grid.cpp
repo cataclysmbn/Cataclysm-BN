@@ -1853,8 +1853,8 @@ auto tank_allows_liquid( const tripoint_abs_ms &p, const itype_id &liquid_type )
     }
     const auto &furn = sm->get_furn( local_pos ).obj();
     if( !furn.fluid_grid || furn.fluid_grid->role != fluid_grid_role::tank ||
-        !furn.fluid_grid->universal_liquids ||
-        !furn.fluid_grid->allows_liquid( liquid_type ) ) {
+        ( !furn.fluid_grid->universal_liquids &&
+          !furn.fluid_grid->allows_liquid( liquid_type ) ) ) {
         return false;
     }
     auto &vars = sm->get_furn_vars( local_pos );
@@ -1877,8 +1877,8 @@ auto assign_tank_liquid( const tripoint_abs_ms &p, const itype_id &liquid_type )
     }
     const auto &furn = sm->get_furn( local_pos ).obj();
     if( !furn.fluid_grid || furn.fluid_grid->role != fluid_grid_role::tank ||
-        !furn.fluid_grid->universal_liquids ||
-        !furn.fluid_grid->allows_liquid( liquid_type ) ) {
+        ( !furn.fluid_grid->universal_liquids &&
+          !furn.fluid_grid->allows_liquid( liquid_type ) ) ) {
         return false;
     }
     auto &vars = sm->get_furn_vars( local_pos );
