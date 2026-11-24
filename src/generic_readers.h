@@ -325,6 +325,35 @@ class translation_reader : public generic_typed_reader<translation_reader>
 using string_reader = auto_flags_reader<>;
 
 template <typename T>
+class legacy_supporting_unit_reader : generic_typed_reader<T>
+{
+    private:
+        const std::vector<std::pair<std::string, T>> &type_units;
+        T legacy_scale;
+    protected:
+        legacy_supporting_unit_reader( const std::vector<std::pair<std::string, T>> &type_units,
+                                       const T legacy_scale = {} )
+            : type_units( type_units ), legacy_scale( legacy_scale )
+        {}
+    public:
+        bool operator()( const JsonObject &jo, const std::string &member_name,
+                         T &member, bool /* was_loaded */ ) const {
+            if( jo.has_string( member_name ) ) {
+                member = read_from_json_string<T>( *jo.get_raw( member_name ), type_units );
+            } else if( legacy_scale != T{} && jo.has_int( member_name ) ) {
+                jo.show_warning( "Legacy unit values used, support will be removed eventually.", member_name );
+                member = jo.get_int( member_name ) * legacy_scale;
+            } else {
+                return false;
+            }
+            return true;
+        }
+        units::volume get_next( JsonIn &jin ) const {
+            return read_from_json_string<units::volume>( jin, type_units );
+        }
+};
+
+template <typename T>
 class unit_reader : generic_typed_reader<T>
 {
     private:
@@ -347,11 +376,11 @@ class unit_reader : generic_typed_reader<T>
         }
 };
 
-class volume_reader : public unit_reader<units::volume>
+class volume_reader : public legacy_supporting_unit_reader<units::volume>
 {
     public:
         volume_reader()
-            : unit_reader( units::volume_units )
+            : legacy_supporting_unit_reader( units::volume_units, units::legacy_volume_factor )
         {}
 };
 
@@ -462,21 +491,6 @@ class string_id_reader : public generic_typed_reader<string_id_reader<T>>
             return string_id<T>( jin.get_string() );
         }
 };
-
-/**
- * Reads a volume value from legacy format: JSON contains a integer which represents multiples
- * of `units::legacy_volume_factor` (250 ml).
- */
-inline bool legacy_volume_reader( const JsonObject &jo, const std::string &member_name,
-                                  units::volume &value, bool )
-{
-    int legacy_value;
-    if( !jo.read( member_name, legacy_value ) ) {
-        return false;
-    }
-    value = legacy_value * units::legacy_volume_factor;
-    return true;
-}
 
 /**
  * Loads string_id from JSON
