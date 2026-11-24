@@ -21,6 +21,7 @@
 #include <cassert>
 #include <iterator>
 #include <memory>
+#include <ranges>
 #include <string>
 #include <utility>
 #include <vector>
@@ -101,6 +102,22 @@ void clear_fields(const int zlevel) {
     }
 }
 
+/// Removes fields outside the loaded map. A fire left there by map generation stops waits from
+/// fast-forwarding.
+static auto clear_simulated_fields() -> void {
+    MAPBUFFER_REGISTRY.for_each([](const dimension_id&, mapbuffer& mb) {
+        mb.for_each_simulated_submap([&](const tripoint_abs_sm& sm_pos, submap& sm) {
+            for (const auto local : std::vector{sm.field_cache}) {
+                const auto types =
+                    sm.get_field(local) | std::views::keys | std::ranges::to<std::vector>();
+                for (const auto& type : types) {
+                    mb.remove_field(project_combine(sm_pos, local), type);
+                }
+            }
+        });
+    });
+}
+
 void clear_items(const int zlevel) {
     const int mapsize = g->m.getmapsize() * SEEX;
     for (int x = 0; x < mapsize; ++x) {
@@ -116,6 +133,7 @@ void clear_overmap() {
 void clear_map() {
     // Fields can spread between z-levels and affect later tests' lighting.
     for (auto z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; ++z) { clear_fields(z); }
+    clear_simulated_fields();
     wipe_map_terrain();
     clear_npcs();
     clear_creatures();
