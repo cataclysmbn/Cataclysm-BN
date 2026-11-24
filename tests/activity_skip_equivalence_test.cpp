@@ -1,3 +1,4 @@
+#include "../src/map/map.h"
 #include "activity_skip_wait_helpers.h"
 #include "activity_time_cadence.h"
 #include "avatar.h"
@@ -68,4 +69,21 @@ TEST_CASE(
     };
     REQUIRE(effect_names(exact) == effect_names(coarse));
     CHECK(exact.effect_durations.at("happy:num_bp") == coarse.effect_durations.at("happy:num_bp"));
+}
+
+/// A chicken appears at the first spawn check of a 10 minute wait. The wait still ends after
+/// exactly 10 minutes.
+TEST_CASE("wait ends on time when a monster appears", "[activity][fixed_window]") {
+    const auto skip_options = skip_window_options{};
+    const auto action_scale = override_option("TIME_ACTION_SCALE", "100");
+    setup_wait_scene(wait_scene::field);
+    hold_weather(weather_type_id("clear"), 18_c);
+    g->m.add_spawn(mtype_id("mon_chicken"), 1, tripoint_bub_ms(60, 30, 0));
+    const auto end_turn = calendar::turn + 10_minutes;
+
+    const auto state = wait_through_activity(10_minutes);
+    INFO(state.error_or(""));
+    REQUIRE(state.has_value());
+    CHECK(g->num_creatures() == 2);
+    CHECK(to_turn<int>(state->turn) == to_turn<int>(end_turn));
 }
