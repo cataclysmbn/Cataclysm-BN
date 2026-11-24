@@ -325,52 +325,28 @@ class translation_reader : public generic_typed_reader<translation_reader>
 using string_reader = auto_flags_reader<>;
 
 template <typename T>
-class legacy_supporting_unit_reader : generic_typed_reader<T>
-{
-    private:
-        const std::vector<std::pair<std::string, T>> &type_units;
-        T legacy_scale;
-    protected:
-        legacy_supporting_unit_reader( const std::vector<std::pair<std::string, T>> &type_units,
-                                       const T legacy_scale = {} )
-            : type_units( type_units ), legacy_scale( legacy_scale )
-        {}
-    public:
-        bool operator()( const JsonObject &jo, const std::string &member_name,
-                         T &member, bool /* was_loaded */ ) const {
-            if( jo.has_string( member_name ) ) {
-                member = read_from_json_string<T>( *jo.get_raw( member_name ), type_units );
-            } else if( legacy_scale != T{} && jo.has_int( member_name ) ) {
-                jo.show_warning( "Legacy unit values used, support will be removed eventually.", member_name,
-                                 true );
-                member = jo.get_int( member_name ) * legacy_scale;
-            } else if( jo.has_member( member_name ) ) {
-                jo.throw_error( "Units must be a unit value string, or a legacy integer scalar.", member_name );
-                return false;
-            } else {
-                return false;
-            }
-            return true;
-        }
-        units::volume get_next( JsonIn &jin ) const {
-            return read_from_json_string<units::volume>( jin, type_units );
-        }
-};
-
-template <typename T>
 class unit_reader : generic_typed_reader<T>
 {
     private:
         const std::vector<std::pair<std::string, T>> &type_units;
+        const T legacy_scale;
     protected:
-        unit_reader( const std::vector<std::pair<std::string, T>> &type_units )
-            : type_units( type_units )
+        unit_reader( const std::vector<std::pair<std::string, T>> &type_units, const T legacy_scale = T{} )
+            : type_units( type_units ), legacy_scale( legacy_scale )
         {}
     public:
         bool operator()( const JsonObject &jo, const std::string &member_name,
                          T &member, bool /* was_loaded */ ) const {
             if( !jo.has_member( member_name ) ) {
                 return false;
+            }
+            if constexpr( requires { requires units::quantity_details<typename T::unit_type>::common_zero_point::value; } ) {
+                if( legacy_scale != T{} && jo.has_int( member_name ) ) {
+                    jo.show_warning( "Legacy unit values used, support will be removed eventually.", member_name,
+                                     true );
+                    member = jo.get_int( member_name ) * legacy_scale;
+                    return true;
+                }
             }
             member = read_from_json_string<T>( *jo.get_raw( member_name ), type_units );
             return true;
@@ -380,11 +356,11 @@ class unit_reader : generic_typed_reader<T>
         }
 };
 
-class volume_reader : public legacy_supporting_unit_reader<units::volume>
+class volume_reader : public unit_reader<units::volume>
 {
     public:
         volume_reader()
-            : legacy_supporting_unit_reader( units::volume_units, units::legacy_volume_factor )
+            : unit_reader( units::volume_units, units::legacy_volume_factor )
         {}
 };
 
