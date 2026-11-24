@@ -166,6 +166,7 @@ jobs:
             ${{ matrix.ccache_key }}-main
             ${{ matrix.ccache_key }}-
           max-size: ${{ matrix.ccache_limit }}
+          evict-old-files: job
           verbose: 2
           save: ${{ github.event_name != 'pull_request' }}
 
