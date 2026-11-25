@@ -696,7 +696,7 @@ There is no limit.
 
 ##### UNCANNY_DODGE
 
-0-1 chance to dodge bullets. `base_value` is 0.
+0-100 chance to dodge bullets. `base_value` is 0.
 Each uncanny dodge takes 100 stamina.
 Any values below 0 or above 1 will have the same effect as at 0 and at 1 respectively
 
@@ -708,7 +708,7 @@ to dodge roll.
 
 ##### FORCEFIELD
 
-0-1 chance to block damage of a damage type. `base_value` is 0.
+0-100 chance to block damage of a damage type. `base_value` is 0.
 
 | Set         | Values                                                 | Use                            |
 | ----------- | ------------------------------------------------------ | ------------------------------ |
