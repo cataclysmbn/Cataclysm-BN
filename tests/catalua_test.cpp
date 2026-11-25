@@ -2392,6 +2392,12 @@ auto check_tile_vars_test_results(const sol::table& test_data) -> void {
     CHECK(test_data.get<bool>("ter_set_ok"));
     CHECK(test_data.get<std::string>("ter_value") == "ter_value");
 
+    const sol::table furn_table = test_data["furn_table"];
+    CHECK(furn_table.get<std::string>("cpp_key") == "cpp_value");
+    CHECK(furn_table.get<std::string>("lua_key") == "furn_value");
+    const sol::table ter_table = test_data["ter_table"];
+    CHECK(ter_table.get<std::string>("lua_key") == "ter_value");
+
     CHECK(test_data.get<bool>("ter_erase_ok"));
     CHECK_FALSE(test_data.get<bool>("ter_erase_again"));
     CHECK_FALSE(test_data.get<bool>("ter_has_after_erase"));

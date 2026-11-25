@@ -15,6 +15,9 @@ test_data.ter_default = target:get_ter_var_at(pos, "lua_key")
 test_data.ter_set_ok = target:set_ter_var_at(pos, "lua_key", "ter_value")
 test_data.ter_value = target:get_ter_var_at(pos, "lua_key")
 
+test_data.furn_table = target:get_furn_vars_table_at(pos)
+test_data.ter_table = target:get_ter_vars_table_at(pos)
+
 test_data.ter_erase_ok = target:erase_ter_var_at(pos, "lua_key")
 test_data.ter_erase_again = target:erase_ter_var_at(pos, "lua_key")
 test_data.ter_has_after_erase = target:has_ter_var_at(pos, "lua_key")
