@@ -311,6 +311,14 @@ static constexpr int DANGEROUS_PROXIMITY = 5;
 namespace
 {
 
+/// Whether to simulate @p dim. With pocket simulation off, simulate only the primary dimension
+/// and the dimension that holds the player.
+auto simulates_dimension( const dimension_id &dim ) -> bool
+{
+    return pocket_simulation_level != pocket_sim_level::off || dim.is_empty() ||
+           dim == get_map().get_bound_dimension();
+}
+
 auto fling_bash_damage( const Creature &c, const float flvel ) -> int
 {
     return creature_throw::flung_creature_bash_damage( c.get_size(),
@@ -2734,7 +2742,7 @@ auto activity_skip_fire_submaps() -> activity_skip_fire_submap_list
 {
     auto fire_submaps = activity_skip_fire_submap_list{};
     MAPBUFFER_REGISTRY.for_each( [&]( const dimension_id & dim, mapbuffer & mb ) {
-        if( pocket_simulation_level == pocket_sim_level::off && !dim.is_empty() ) {
+        if( !simulates_dimension( dim ) ) {
             return;
         }
         mb.for_each_simulated_submap( [&]( const tripoint_abs_sm & pos, submap & sm ) {
@@ -3056,7 +3064,7 @@ auto game::run_activity_skip_batch_turns( const int skipped_turns,
     {
         ZoneScopedN( "activity_fixed_window_batch_submaps" );
         MAPBUFFER_REGISTRY.for_each( [&]( const dimension_id & dim, mapbuffer & mb ) {
-            if( pocket_simulation_level == pocket_sim_level::off && !dim.is_empty() ) {
+            if( !simulates_dimension( dim ) ) {
                 return;
             }
             mb.for_each_simulated_submap( [&]( const tripoint_abs_sm & pos, submap & sm ) {
@@ -6088,11 +6096,9 @@ void game::world_tick()
         ZoneScopedN( "world_tick_dimension" );
         ZoneText( dim.c_str(), dim.str().size() );
 
-        // When pocket simulation is disabled, skip all non-primary dimensions.
-        // The primary dimension always uses dim == "" (empty string).
         // none/minimal/moderate distinctions are deferred to a future PR —
         // for now any setting other than "off" runs the full simulation path.
-        if( pocket_simulation_level == pocket_sim_level::off && !dim.is_empty() ) {
+        if( !simulates_dimension( dim ) ) {
             return;
         }
 
