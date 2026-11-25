@@ -155,11 +155,11 @@ release tag and contract hash in `.github/workflows/build.yml` together.
 Terrain and furniture definitions can select connections and facing independently. These fields
 are game data, not tile-entry fields, and work with any tileset:
 
-| Field | Meaning |
-| --- | --- |
-| `connect_groups` | Groups this object belongs to. |
-| `connects_to` | Groups that determine its connection shape. |
-| `rotates_to` | Groups that determine its facing. Terrain checks terrain; furniture checks both terrain and furniture. |
+| Field            | Meaning                                                                                                |
+| ---------------- | ------------------------------------------------------------------------------------------------------ |
+| `connect_groups` | Groups this object belongs to.                                                                         |
+| `connects_to`    | Groups that determine its connection shape.                                                            |
+| `rotates_to`     | Groups that determine its facing. Terrain checks terrain; furniture checks both terrain and furniture. |
 
 Declare custom groups before using them:
 

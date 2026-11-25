@@ -7472,7 +7472,7 @@ void cata_tiles::get_terrain_orientation( const tripoint_bub_ms &p, int &rota, i
         val = here.get_known_connections( p, *info.connect_to_groups, ter_override );
     }
     const auto targets = here.get_known_rotates_to( p,
-        info.rotate_to_groups.value_or( ter_connection_groups{} ), ter_override );
+                         info.rotate_to_groups.value_or( ter_connection_groups{} ), ter_override );
     get_rotation_and_subtile( val, rota, subtile, targets );
 }
 
@@ -7502,7 +7502,7 @@ void cata_tiles::get_rotation_and_subtile( const char val, int &rotation, int &s
         const auto second = vertical ? 4 : 1;
         static constexpr int facing[4] = { 3, 1, 0, 2 };
         const auto side = facing[( ( rotation_targets & first ) ? 1 : 0 ) |
-                                 ( ( rotation_targets & second ) ? 2 : 0 )];
+                                                                ( ( rotation_targets & second ) ? 2 : 0 )];
         rotation += ( subtile == edge ? 2 : 4 ) * side;
     }
 }
@@ -7517,7 +7517,7 @@ void cata_tiles::get_connect_values( const tripoint_bub_ms &p, int &subtile, int
                              here.get_known_connections( p, *info.connect_to_groups, overrides ) :
                              here.get_known_connections( p, connect_group, overrides );
     const auto targets = here.get_known_rotates_to( p,
-        info.rotate_to_groups.value_or( ter_connection_groups{} ), overrides );
+                         info.rotate_to_groups.value_or( ter_connection_groups{} ), overrides );
     get_rotation_and_subtile( connections, rotation, subtile, targets );
 }
 
@@ -7531,7 +7531,7 @@ void cata_tiles::get_furn_connect_values( const tripoint_bub_ms &p, int &subtile
                              here.get_known_connections_f( p, *info.connect_to_groups, overrides ) :
                              here.get_known_connections_f( p, connect_group, overrides );
     const auto targets = here.get_known_rotates_to_f( p,
-        info.rotate_to_groups.value_or( ter_connection_groups{} ), {}, overrides );
+                         info.rotate_to_groups.value_or( ter_connection_groups{} ), {}, overrides );
     get_rotation_and_subtile( connections, rotation, subtile, targets );
 }
 
@@ -7554,10 +7554,10 @@ void cata_tiles::get_tile_values_with_ter( const tripoint_bub_ms &p, const int t
     auto &here = get_map();
     const auto &info = furn_id( t ).obj();
     const auto targets = here.get_known_rotates_to_f( p,
-        info.rotate_to_groups.value_or( ter_connection_groups{} ), terrain_override, furniture_override );
+                         info.rotate_to_groups.value_or( ter_connection_groups{} ), terrain_override, furniture_override );
     if( info.connect_to_groups ) {
         const auto connections = here.get_known_connections_f( p, *info.connect_to_groups,
-            furniture_override );
+                                 furniture_override );
         get_rotation_and_subtile( connections, rotation, subtile, targets );
     } else {
         auto connections = 0;
