@@ -69,6 +69,38 @@ TEST_CASE("heat_radiation_sums_visible_sources_across_submaps", "[bodytemp]") {
     CHECK(get_heat_radiation(other, false) == 6 * 2 * 2 / 1 + 6 * 3 * 3 / 3);
 }
 
+/// Checks that get_heat_radiation uses the hotter of the fire and the terrain on one tile.
+/// Fire 3 on ground gives a direct heat of 3. Fire 1 on lava (heat 3) also gives 3, and the
+/// total heat equals the total from the same lava tile without fire.
+TEST_CASE("heat_radiation_takes_hotter_of_fire_and_terrain", "[bodytemp]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    calendar::turn = calendar::turn_zero + 12_hours;
+    auto& here = get_map();
+    const auto pos = tripoint_bub_ms(60, 60, 0);
+    const auto source = pos + point(2, 0);
+    const auto rebuild = [&here]() {
+        here.invalidate_map_cache(0);
+        here.build_map_cache(0);
+    };
+    g->place_player(pos);
+
+    here.add_field(source, fd_fire, 3);
+    rebuild();
+    CHECK(get_heat_radiation(pos, true) == 3);
+    here.remove_field(source, fd_fire);
+
+    here.ter_set(source, ter_id("t_lava"));
+    rebuild();
+    const auto lava_only = get_heat_radiation(pos, false);
+    REQUIRE(lava_only > 0);
+    here.add_field(source, fd_fire, 1);
+    REQUIRE(here.get_field_intensity(source, fd_fire) == 1);
+    rebuild();
+    CHECK(get_heat_radiation(pos, true) == 3);
+    CHECK(get_heat_radiation(pos, false) == lava_only);
+}
+
 TEST_CASE("wetness_morale_interpolates_body_temperature", "[bodytemp][morale]") {
     clear_all_state();
     const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
