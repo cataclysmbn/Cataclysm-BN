@@ -164,6 +164,9 @@ struct w_map {
 
 bool is_valid_in_w_terrain( point p );
 
+/// Submaps that a skip window processes every tick.
+using activity_skip_fire_submap_list = std::vector<std::pair<dimension_id, tripoint_abs_sm>>;
+
 // There is only one game instance, so losing a few bytes of memory
 // due to padding is not much of a concern.
 // NOLINTNEXTLINE(clang-analyzer-optin.performance.Padding)
@@ -1060,8 +1063,8 @@ class game : public submap_load_listener
         auto can_activity_fixed_window_skip( const time_duration &duration ) -> bool;
         auto has_activity_skip_blocking_npc_state() -> bool;
         auto has_activity_skip_relevant_vehicle() -> bool;
-        auto has_activity_skip_active_fire() -> bool;
-        auto run_activity_skip_batch_turns( int skipped_turns ) -> void;
+        auto run_activity_skip_batch_turns( int skipped_turns,
+                                            const activity_skip_fire_submap_list &fire_submaps ) -> void;
         auto handle_wait_activity_redraw( bool force = false ) -> void;
         auto run_activity_cadence_boundary() -> void;
         void handle_key_blocking_activity(); // Abort reading etc.

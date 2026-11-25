@@ -131,7 +131,7 @@ TEST_CASE(
 }
 
 // Issue 11046: the avatar refuels the fireplace from a firewood source, so the fire burns for the
-// whole hour. While a fire burns, the game runs every turn on its own and skips no time.
+// whole hour. The wait still skips time in 5-minute windows.
 TEST_CASE("waiting next to a refueled fireplace skips time", "[activity][fixed_window]") {
     const auto skip_options = skip_window_options{};
     const auto action_scale = override_option("TIME_ACTION_SCALE", "100");

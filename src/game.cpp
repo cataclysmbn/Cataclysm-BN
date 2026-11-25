@@ -2716,41 +2716,59 @@ auto game::has_activity_skip_relevant_vehicle() -> bool
     } );
 }
 
-auto game::has_activity_skip_active_fire() -> bool
+namespace
 {
-    const auto submap_has_active_fire = []( const submap & sm ) {
-        if( sm.field_count == 0 ) {
-            return false;
-        }
-        for( const auto &local : sm.field_cache ) {
-            const auto &curfield = sm.get_field( local );
-            for( const auto &field_pair : curfield ) {
-                const auto &cur = field_pair.second;
-                if( cur.is_field_alive() && cur.get_field_type().obj().has_fire ) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    };
 
-    auto has_fire = false;
+auto submap_has_fire( const submap &sm ) -> bool
+{
+    return sm.field_count > 0 && std::ranges::any_of( sm.field_cache, [&]( const point_sm_ms & local ) {
+        return std::ranges::any_of( sm.get_field( local ), []( const auto & field_pair ) {
+            const auto &cur = field_pair.second;
+            return cur.is_field_alive() && cur.get_field_type().obj().has_fire;
+        } );
+    } );
+}
+
+/// Simulated submaps with a fire.
+auto activity_skip_fire_submaps() -> activity_skip_fire_submap_list
+{
+    auto fire_submaps = activity_skip_fire_submap_list{};
     MAPBUFFER_REGISTRY.for_each( [&]( const dimension_id & dim, mapbuffer & mb ) {
-        if( has_fire || ( pocket_simulation_level == pocket_sim_level::off && !dim.is_empty() ) ) {
+        if( pocket_simulation_level == pocket_sim_level::off && !dim.is_empty() ) {
             return;
         }
-        mb.for_each_simulated_submap( [&]( const tripoint_abs_sm &, submap & sm ) {
-            if( has_fire ) {
-                return;
-            }
-            if( submap_has_active_fire( sm ) ) {
-                has_fire = true;
-                return;
+        mb.for_each_simulated_submap( [&]( const tripoint_abs_sm & pos, submap & sm ) {
+            if( submap_has_fire( sm ) ) {
+                fire_submaps.emplace_back( dim, pos );
             }
         } );
     } );
-    return has_fire;
+    return fire_submaps;
 }
+
+/// Adds the simulated neighbors of listed submaps that a fire has reached. A new submap first runs
+/// the batch step for the @p skipped_turns of the window that passed before it joined.
+auto add_activity_skip_fire_neighbors( activity_skip_fire_submap_list &fire_submaps,
+                                       const int skipped_turns ) -> void
+{
+    // Fire moves at most one tile per turn, so a fire that leaves a submap is in one of its 26
+    // neighbors.
+    for( auto i = std::size_t{ 0 }, listed = fire_submaps.size(); i < listed; ++i ) {
+        const auto [dim, pos] = fire_submaps[i];
+        auto &mb = MAPBUFFER_REGISTRY.get( dim );
+        for( const auto &nbr : tripoint_range<tripoint_abs_sm>( pos + tripoint_rel_sm( -1, -1, -1 ),
+                pos + tripoint_rel_sm( 1, 1, 1 ) ) ) {
+            auto *sm = mb.get_submap( nbr );
+            if( sm && submap_has_fire( *sm ) &&
+                !std::ranges::contains( fire_submaps, std::pair{ dim, nbr } ) ) {
+                run_submap_batch_turns( *sm, skipped_turns );
+                fire_submaps.emplace_back( dim, nbr );
+            }
+        }
+    }
+}
+
+} // namespace
 
 auto game::can_activity_fixed_window_skip( const time_duration &duration ) -> bool
 {
@@ -2816,12 +2834,6 @@ auto game::can_activity_fixed_window_skip( const time_duration &duration ) -> bo
         }
         return false;
     }
-    if( has_activity_skip_active_fire() ) {
-        if( log_activity_skip_state ) {
-            add_msg( "Fire is being processed, cannot skip time" );
-        }
-        return false;
-    }
     if( has_activity_skip_relevant_vehicle() ) {
         return false;
     }
@@ -2868,6 +2880,8 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
     const auto starting_activity = u.activity->id();
     auto activity_monsters = activity_monmove_cache {};
     const auto requested_turns = to_turns<int>( duration );
+    // The window processes the fields of submaps with a fire every tick.
+    auto fire_submaps = activity_skip_fire_submaps();
     // A monster or NPC that appears stops the fast-forward. Time for this turn already passed, so
     // finish the turn for the player first.
     auto window_ends = false;
@@ -2927,6 +2941,14 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
         debug_hour_timer.print_time();
         process_voluntary_act_interrupt();
         process_activity();
+        std::ranges::for_each( fire_submaps, [&]( const auto & fire_submap ) {
+            const auto &[dim, pos] = fire_submap;
+            auto &mb = MAPBUFFER_REGISTRY.get( dim );
+            if( auto *sm = mb.lookup_submap_in_memory( pos ) ) {
+                process_fields_in_submap( dim, *sm, pos, mb );
+            }
+        } );
+        add_activity_skip_fire_neighbors( fire_submaps, skipped_turns );
         if( is_game_over() ) {
             if( log_activity_skip_state ) {
                 add_msg( "You died, cannot skip time" );
@@ -3020,11 +3042,12 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
         }
     }
     handle_bulk_weather_field_decay( weather.weather_id, skipped_turns );
-    run_activity_skip_batch_turns( skipped_turns );
+    run_activity_skip_batch_turns( skipped_turns, fire_submaps );
     return skipped_turns;
 }
 
-auto game::run_activity_skip_batch_turns( const int skipped_turns ) -> void
+auto game::run_activity_skip_batch_turns( const int skipped_turns,
+        const activity_skip_fire_submap_list &fire_submaps ) -> void
 {
     if( skipped_turns <= 0 ) {
         return;
@@ -3036,8 +3059,17 @@ auto game::run_activity_skip_batch_turns( const int skipped_turns ) -> void
             if( pocket_simulation_level == pocket_sim_level::off && !dim.is_empty() ) {
                 return;
             }
-            mb.for_each_simulated_submap( [&]( const tripoint_abs_sm &, submap & sm ) {
-                run_submap_batch_turns( sm, skipped_turns );
+            mb.for_each_simulated_submap( [&]( const tripoint_abs_sm & pos, submap & sm ) {
+                if( !std::ranges::contains( fire_submaps, std::pair{ dim, pos } ) ) {
+                    run_submap_batch_turns( sm, skipped_turns );
+                } else {
+                    // The window processed the fields of this submap every tick.
+                    std::ranges::for_each( sm.vehicles, []( const auto & veh ) {
+                        if( veh ) {
+                            veh->update_time( calendar::turn, true );
+                        }
+                    } );
+                }
                 sm.last_touched = calendar::turn;
             } );
         } );
