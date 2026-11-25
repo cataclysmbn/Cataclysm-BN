@@ -55,6 +55,7 @@
 #include "value_ptr.h"
 #include "vehicle/veh_type.h"
 #include "vehicle/vehicle.h"
+#include "vehicle/vehicle_display.h"
 #include "vehicle/vehicle_grab.h"
 #include "vehicle/vehicle_part.h"
 #include "vehicle/vehicle_throw.h"
@@ -756,10 +757,9 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
         // Also revealing the nearby tiles to the player
         if( you.is_blind() ) {
             if( m.veh_at( dest_loc ) ) {
-                char part_mod = 0;
-                const vpart_id &vp_id = m.veh_at( dest_loc )->vehicle().part_id_string( m.veh_at(
-                                            dest_loc )->part_index(), false, part_mod );
-                you.memorize_tile( bub_to_abs( dest_loc ), "vp_" + vp_id.str(), 0, 0 );
+                const auto vp = m.veh_at( dest_loc );
+                const auto display = vp->vehicle().get_display_of_tile( vp->mount() );
+                you.memorize_tile( bub_to_abs( dest_loc ), display.get_tileset_id(), 0, 0 );
             } else {
                 if( m.has_furn( dest_loc ) ) {
                     you.memorize_tile( bub_to_abs( dest_loc ), m.furn( dest_loc ).id().str(), 0, 0 );

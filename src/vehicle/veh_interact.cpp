@@ -657,7 +657,8 @@ auto veh_interact::cant_do(char mode) -> task_reason {
                 const vpart_info& displayed_vpart = veh->part(displayed_part).info();
                 // Does the displayed part have different shapes?
                 valid_target =
-                    vpart_shapes[displayed_vpart.name() + displayed_vpart.item.str()].size() > 1;
+                    displayed_vpart.variants.size() > 1
+                    || vpart_shapes[displayed_vpart.name() + displayed_vpart.item.str()].size() > 1;
             }
             break;
         }
@@ -2021,6 +2022,23 @@ void veh_interact::do_change_shape() {
     vehicle_part& part = veh->part(veh->part_displayed_at(veh->part(cpart).mount));
     const vpart_info& part_info = part.info();
 
+    if (!part_info.variants.empty()) {
+        auto menu = uilist{};
+        menu.text = _("Choose shape:");
+        auto ids = std::vector<std::string>{};
+        for (const auto& [id, variant] : part_info.variants) {
+            menu.addentry(ids.size(), true, -1, variant.get_label());
+            ids.push_back(id);
+        }
+        menu.query();
+        if (menu.ret >= 0 && static_cast<std::size_t>(menu.ret) < ids.size()) {
+            part.set_variant(ids[menu.ret]);
+            part.proxy_part_id = vpart_id::NULL_ID();
+            part.proxy_sym = '\0';
+        }
+        return;
+    }
+
     using v_shapes = std::vector<const vpart_info*, std::allocator<const vpart_info*>>;
     const v_shapes& shapes = vpart_shapes[part_info.name() + part_info.item.str()];
 
@@ -2304,8 +2322,7 @@ void veh_interact::display_veh() {
         const int p = structural_part;
         const auto part_direction = normalize(
             270_degrees + veh->part_display_direction(p) - veh->face.dir());
-        const auto part_face = tileray(part_direction);
-        const auto sym = part_face.dir_symbol(veh->part_sym(p));
+        const auto sym = veh->part_sym(p, false, part_direction);
         nc_color col = veh->part_color(p);
 
         const auto q = (veh->part(p).mount - vehicle_cursor).xy().rotate(3);
@@ -2314,7 +2331,7 @@ void veh_interact::display_veh() {
             col = hilite(col);
             cpart = p;
         }
-        mvwputch(w_disp, h_size + q.raw(), col, special_symbol(sym));
+        mvwputch(w_disp, h_size + q.raw(), col, sym);
     }
 
     const int hw = getmaxx(w_disp) / 2;
@@ -2337,11 +2354,9 @@ void veh_interact::display_veh() {
     if (cpart >= 0) {
         const auto part_direction = normalize(
             270_degrees + veh->part_display_direction(cpart) - veh->face.dir());
-        const auto part_face = tileray(part_direction);
-        sym = part_face.dir_symbol(veh->part_sym(cpart));
+        sym = veh->part_sym(cpart, false, part_direction);
     }
-    mvwputch(w_disp, point(hw, hh), obstruct ? red_background(col) : hilite(col),
-             special_symbol(sym));
+    mvwputch(w_disp, point(hw, hh), obstruct ? red_background(col) : hilite(col), sym);
     wnoutrefresh(w_disp);
 }
 

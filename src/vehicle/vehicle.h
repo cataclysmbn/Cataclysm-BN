@@ -33,6 +33,7 @@ class monster;
 class nc_color;
 class npc;
 class player;
+struct vpart_display;
 class vehicle;
 struct vehicle_part;
 class mapbuffer;
@@ -853,8 +854,10 @@ public:
     auto index_of_part(const vehicle_part* part, bool check_removed = false) const -> int;
 
     // get symbol for map
-    auto part_sym(int p, bool exact = false) const -> char;
-    auto part_id_string(int p, bool roof, char& part_mod) const -> vpart_id;
+    auto part_sym(
+        int p, bool exact = false, std::optional<units::angle> facing = std::nullopt) const -> int;
+    auto get_display_of_tile(const tripoint_mnt_veh& mount, bool roof = false) const
+        -> vpart_display;
     auto part_display_direction(int p, bool roof = false) const -> units::angle;
 
     // get color for map

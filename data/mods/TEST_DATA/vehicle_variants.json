@@ -1,0 +1,114 @@
+[
+  {
+    "type": "vehicle_part",
+    "id": "test_variant_frame",
+    "copy-from": "frame",
+    "name": "test variant frame",
+    "looks_like": "frame_vertical",
+    "variants": [
+      { "id": "vertical", "label": "Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
+      { "id": "cross", "label": "Cross", "symbols": "+", "symbols_broken": "x" },
+      { "id": "literal", "label": "Literal", "symbols": "h", "symbols_broken": "u" }
+    ],
+    "variants_bases": [ { "id": "black", "label": "Black" } ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "test_variant_inherited",
+    "copy-from": "test_variant_frame"
+  },
+  {
+    "type": "vehicle_part",
+    "id": "test_variant_ascii",
+    "copy-from": "test_variant_frame",
+    "looks_like": ""
+  },
+  {
+    "type": "vehicle_part",
+    "id": "test_variant_empty",
+    "copy-from": "frame",
+    "name": "test empty variant",
+    "looks_like": "",
+    "variants": [ { "id": "", "label": "Plain", "symbols": "h", "symbols_broken": "u" } ]
+  },
+  {
+    "type": "vehicle",
+    "id": "test_variant_vehicle",
+    "name": "test variant vehicle",
+    "parts": [
+      { "x": 0, "y": 0, "parts": [ "test_variant_frame#cross" ] },
+      { "x": 1, "y": 0, "parts": [ { "part": "test_variant_frame#black_vertical" } ] },
+      { "x": 2, "y": 0, "parts": [ "test_variant_frame" ] },
+      { "x": 3, "y": 0, "parts": [ "frame_vertical" ] }
+    ]
+  },
+  {
+    "type": "vehicle",
+    "id": "test_variant_blueprint",
+    "name": "test variant blueprint",
+    "blueprint_origin": { "x": 0, "y": 0 },
+    "blueprint": [ "ab" ],
+    "palette": { "a": [ "test_variant_frame#cross" ], "b": [ { "part": "test_variant_frame#black_vertical" } ] }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "test_variant_legacy_default",
+    "copy-from": "frame_vertical",
+    "variant_default": "",
+    "variants": [ { "id": "cosmetic", "label": "Cosmetic", "symbols": "x", "symbols_broken": "x" } ]
+  },
+  {
+    "type": "vehicle",
+    "id": "test_variant_legacy_grid",
+    "name": "test legacy variant grid",
+    "parts": [
+      { "x": 0, "y": 0, "parts": [ "frame_vertical", "door_front_left" ] },
+      { "x": 1, "y": 0, "parts": [ "frame_vertical", "windshield_nw" ] },
+      { "x": 2, "y": 0, "parts": [ "frame_vertical_2", "roof" ] },
+      { "x": 3, "y": 0, "parts": [ "frame_horizontal", "seat" ] },
+      { "x": 4, "y": 0, "parts": [ "test_variant_legacy_default" ] },
+      { "x": 5, "y": 0, "parts": [ "test_variant_cleared" ] }
+    ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "test_variant_cleared",
+    "copy-from": "test_variant_legacy_default",
+    "variants": [  ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "test_variant_cycle",
+    "copy-from": "test_variant_frame",
+    "looks_like": "test_variant_cycle"
+  },
+  {
+    "type": "vehicle_part",
+    "id": "test_variant_heavy",
+    "copy-from": "test_variant_frame",
+    "looks_like": "",
+    "variants": [ { "id": "horizontal", "label": "Horizontal", "symbols": "━", "symbols_broken": "┃" } ],
+    "variants_bases": [  ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "test_variant_explicit_default",
+    "copy-from": "test_variant_frame",
+    "variants": [
+      { "id": "", "label": "Plain", "symbols": "h", "symbols_broken": "u" },
+      { "id": "cross", "label": "Cross", "symbols": "+", "symbols_broken": "x" }
+    ],
+    "variants_bases": [  ],
+    "variant_default": "cross"
+  },
+  {
+    "type": "vehicle",
+    "id": "test_variant_default_choices",
+    "name": "test default and empty variants",
+    "parts": [
+      { "x": 0, "y": 0, "parts": [ "test_variant_explicit_default" ] },
+      { "x": 1, "y": 0, "parts": [ "test_variant_explicit_default#" ] },
+      { "x": 2, "y": 0, "parts": [ "test_variant_explicit_default#cross" ] }
+    ]
+  }
+]

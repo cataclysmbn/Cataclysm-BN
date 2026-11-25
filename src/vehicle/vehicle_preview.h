@@ -10,6 +10,7 @@
 #include <optional>
 
 class vehicle;
+struct vpart_display;
 
 #if defined(TILES)
 
@@ -70,18 +71,9 @@ private:
     bool saved_original_zoom = false;
     float original_zoom = DEFAULT_ZOOM;
 
-    /**
-     * Draw a single vehicle part at the given pixel position.
-     * @param vp_id The vehicle part type to draw
-     * @param pixel_pos Position in pixels (SDL coordinates)
-     * @param part_mod 0=normal, 1=open, 2=broken
-     * @param veh_facing Vehicle facing direction
-     * @param bg_color Background color tint (for painting)
-     * @param fg_color Foreground color tint (for painting)
-     */
+    /// Draw one resolved appearance using the preview camera and real paint colors.
     void draw_vpart_at_pixel(
-        const vpart_id& vp_id, point pixel_pos, int part_mod, units::angle veh_facing,
-        const tint_config& bg_color = {}, const tint_config& fg_color = {});
+        const vpart_display& display, point pixel_pos, const color_tint_pair& colors);
 
     /** Draw a highlight overlay at the given pixel position */
     void draw_highlight_at_pixel(point pixel_pos);

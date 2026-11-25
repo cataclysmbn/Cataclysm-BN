@@ -145,6 +145,45 @@ Note: this field does not support copy from, it must be defined on each object
 ]
 ```
 
+### Appearance variants
+
+A variant selects the symbols and sprites of a physical part. Define the available
+appearances in `variants`:
+
+```jsonc
+"variants": [
+  { "id": "vertical", "label": "Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
+  { "id": "cross", "label": "Cross", "symbols": "+", "symbols_broken": "x" }
+]
+```
+
+- `id`: appearance ID; must not contain `#`.
+- `label`: translated name in the shape menu.
+- `symbols` and `symbols_broken`: one single-cell Unicode character for all
+  directions, or eight characters in N, NE, E, SE, S, SW, W, NW order.
+- `variant_default`: default ID; defaults to the first entry in `variants`.
+- `variants_bases`: prefixes additional copies of the variants. For example,
+  `{ "id": "black", "label": "Black" }` adds `black_vertical` and `black_cross`.
+
+`copy-from` inherits variants. An explicit `variants` array replaces the inherited
+list; `[]` clears it. An explicit `variants_bases` array replaces inherited prefixes.
+Set `"variant_default": ""` without an empty-ID entry to retain legacy symbols and
+untagged sprites until an appearance is selected. Existing `symbol` and `shapes`
+definitions remain supported.
+
+Vehicle prototypes select an appearance with `"part_id#variant_id"` in strings,
+object-form parts or blueprint palettes. Omitting the suffix selects the default;
+`"part_id#"` selects the empty-ID variant, if defined. Saves store the choice
+separately from the physical ID. Missing or unknown saved choices use the default;
+exports retain non-default choices, including an explicit empty ID.
+
+Tilesets bind variants as `vp_part_id_variant_id`. Lookup tries the full variant,
+then shorter underscore-separated prefixes, then `vp_part_id`. If these fail,
+it follows `looks_like` with the full original variant. Furniture and terrain
+fallbacks remain supported, including `furniture_id_var_variant_id`. Open and
+broken subtiles work as usual. Variants do not change construction, add equipment
+or infer neighbouring geometry.
+
 ### Vehicles
 
 See also `vehicles_spawning.md`

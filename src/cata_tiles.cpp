@@ -75,6 +75,7 @@
 #    include "utils/memory_stream.h"
 #    include "vehicle/veh_type.h"
 #    include "vehicle/vehicle.h"
+#    include "vehicle/vehicle_display.h"
 #    include "vehicle/vehicle_part.h"
 #    include "vehicle/vpart_position.h"
 #    include "weather/weather.h"
@@ -2091,7 +2092,9 @@ std::optional<tile_search_result> cata_tiles::tile_type_search( const tile_searc
                 col = mt.color;
             }
         } else if( category == C_VEHICLE_PART ) {
-            const vpart_id vpid( found_id.substr( 3 ) );
+            const auto separator = found_id.rfind( '#' );
+            const vpart_id vpid( found_id.size() >= 3 ? found_id.substr( 3,
+                                 separator == std::string::npos ? separator : separator - 3 ) : "" );
             if( vpid.is_valid() ) {
                 const vpart_info &v = vpid.obj();
 
@@ -2102,10 +2105,24 @@ std::optional<tile_search_result> cata_tiles::tile_type_search( const tile_searc
                 } else {
                     sym = v.sym;
                 }
+                auto variant = v.variants.find( separator == std::string::npos ? "" :
+                                                found_id.substr( separator + 1 ) );
+                if( variant == v.variants.end() ) {
+                    variant = v.variants.find( v.variant_default );
+                }
+                if( variant != v.variants.end() && subtile != open_ ) {
+                    sym = variant->second.get_symbol( 270_degrees - units::from_degrees( rota ),
+                                                      subtile == broken );
+                    if( sym == U'━' ) {
+                        sym = '=';
+                    } else if( sym == U'┃' ) {
+                        sym = 'H';
+                    }
+                }
                 subtile = -1;
 
                 tileray face = tileray( units::from_degrees( rota ) );
-                sym = special_symbol( face.dir_symbol( sym ) );
+                sym = variant != v.variants.end() ? sym : special_symbol( face.dir_symbol( sym ) );
                 rota = 0;
 
                 col = v.color;
@@ -4151,12 +4168,10 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
         }
         const auto &veh = vp->vehicle();
         const auto veh_part = vp->part_index();
-        auto part_mod = char{ 0 };
-        const auto &vp_id = veh.part_id_string( veh_part, false, part_mod );
-        const auto subtile = part_mod == 1 ? open_ : part_mod == 2 ? broken : 0;
-        const auto rotation = static_cast<int>( std::round( to_degrees( veh.part_display_direction(
-                veh_part, false ) ) ) );
-        const auto vpname = std::string( "vp_" ) + vp_id.str();
+        const auto display = veh.get_display_of_tile( veh.cpart( veh_part ).mount, false );
+        const auto subtile = display.is_open ? open_ : display.is_broken ? broken : 0;
+        const auto rotation = static_cast<int>( std::round( to_degrees( display.direction ) ) );
+        const auto vpname = display.get_tileset_id();
         auto &you = get_avatar();
         const auto abs_pos = bub_to_abs( p );
         if( veh.forward_velocity() ) {
@@ -4537,6 +4552,25 @@ auto cata_tiles::find_tile_looks_like( const std::string &id, TILE_CATEGORY cate
         return std::nullopt;
     }
 
+    const auto separator = category == C_VEHICLE_PART ? id.rfind( '#' ) : std::string::npos;
+    if( separator != std::string::npos ) {
+        const auto base = id.substr( 0, separator );
+        auto variant = id.substr( separator + 1 );
+        while( !variant.empty() ) {
+            if( auto found = find_tile_with_season( base + "_" + variant ) ) {
+                return found;
+            }
+            const auto end = variant.rfind( '_' );
+            if( end == std::string::npos ) {
+                break;
+            }
+            variant.resize( end );
+        }
+        if( auto found = find_tile_with_season( base ) ) {
+            return found;
+        }
+    }
+
     // Note on memory management:
     // This method must returns pointers to the objects (std::string *id  and tile_type * tile)
     // that are valid when this metod returns. Ideally they should have the lifetime
@@ -4586,14 +4620,37 @@ auto cata_tiles::find_tile_looks_like( const std::string &id, TILE_CATEGORY cate
 
         case C_VEHICLE_PART: {
             // vehicle parts start with vp_ for their tiles, but not their IDs
-            auto base_id = id.substr( 3 );
+            if( !id.starts_with( "vp_" ) ) {
+                return std::nullopt;
+            }
+            const auto base_id = id.substr( 3, separator == std::string::npos ? separator : separator - 3 );
             const vpart_id base_vpid( base_id );
             if( !base_vpid.is_valid() ) {  // Fixed Fallback
+                if( separator != std::string::npos ) {
+                    return std::nullopt;
+                }
                 return find_tile_looks_like( base_id, C_FURNITURE, looks_like_jumps_limit - 1 )
                        .or_else( [ &, this] { return find_tile_looks_like( base_id, C_TERRAIN, looks_like_jumps_limit - 1 ); } );
             }
-            return find_tile_looks_like( "vp_" + base_vpid.obj().looks_like, category,
-                                         looks_like_jumps_limit - 1 );
+            const auto &looks_like = base_vpid.obj().looks_like;
+            if( looks_like.empty() ) {
+                return std::nullopt;
+            }
+            const auto suffix = separator == std::string::npos ? "" : id.substr( separator );
+            if( auto found = find_tile_looks_like( "vp_" + looks_like + suffix, category,
+                                                   looks_like_jumps_limit - 1 )
+                             .or_else( [ &, this] { return find_tile_looks_like( looks_like + suffix, category, looks_like_jumps_limit - 1 ); } ) ) {
+                return found;
+            }
+            if( looks_like_jumps_limit > 1 && suffix.size() > 1 ) {
+                const auto variant = suffix.substr( 1 );
+                if( auto found = find_tile_with_season( looks_like + ( variant.front() == '_' ? "" : "_var_" ) +
+                                                        variant ) ) {
+                    return found;
+                }
+            }
+            return find_tile_looks_like( looks_like, C_FURNITURE, looks_like_jumps_limit - 1 )
+                   .or_else( [ &, this] { return find_tile_looks_like( looks_like, C_TERRAIN, looks_like_jumps_limit - 1 ); } );
         }
         case C_ITEM: {
             itype_id iid = itype_id( id );
@@ -5341,7 +5398,9 @@ std::optional<memorized_terrain_tile>
         return std::nullopt;
     }
 
-    const auto actual_part = t.tile.substr( 3 );
+    const auto separator = t.tile.find( '#' );
+    const auto actual_part = t.tile.substr( 3,
+                                           separator == std::string::npos ? separator : separator - 3 );
     if( !string_id<vpart_info>( actual_part ).is_valid() ) {
         return std::nullopt;
     }
@@ -5921,7 +5980,6 @@ bool cata_tiles::draw_vpart( const tripoint_bub_ms &p, lit_level ll, int &height
 
         // Gets the visible part, should work fine once tileset vp_ids are updated to work with the vehicle part json ids
         // get the vpart_id
-        char part_mod = 0;
         const Creature *critter = g->critter_at( p, true );
         const auto displayed_part_is_roof_hidden = [&]() {
             const auto displayed_part = vp.part_displayed();
@@ -5995,11 +6053,10 @@ bool cata_tiles::draw_vpart( const tripoint_bub_ms &p, lit_level ll, int &height
             bgCol = res.first;
             fgCol = res.second;
         }
-        const vpart_id &vp_id = veh.part_id_string( veh_part, use_roof_variant, part_mod );
-        const int subtile = part_mod == 1 ? open_ : part_mod == 2 ? broken : 0;
-        const auto rotation = static_cast<int>( std::round( to_degrees( veh.part_display_direction(
-                veh_part, use_roof_variant ) ) ) );
-        const std::string vpname = "vp_" + vp_id.str();
+        const auto display = veh.get_display_of_tile( veh.cpart( veh_part ).mount, use_roof_variant );
+        const int subtile = display.is_open ? open_ : display.is_broken ? broken : 0;
+        const auto rotation = static_cast<int>( std::round( to_degrees( display.direction ) ) );
+        const auto vpname = display.get_tileset_id();
         avatar &you = get_avatar();
         // Always clear while moving — the check_seen_cache gate would miss residual
         // stationary memory once map_memory_seen_cache is set by draw_from_id_string,
@@ -6057,7 +6114,6 @@ bool cata_tiles::draw_vpart( const tripoint_bub_ms &p, lit_level ll, int &height
             // entire vehicle remains visible (player hand-wavingly "knows" where their vehicle is).
             const vehicle &veh = vp->vehicle();
             const int veh_part = vp->part_index();
-            char part_mod = 0;
             const Creature *critter = g->critter_at( p, true );
             const auto displayed_part_is_roof_hidden = [&]() {
                 const auto displayed_part = vp.part_displayed();
@@ -6078,11 +6134,10 @@ bool cata_tiles::draw_vpart( const tripoint_bub_ms &p, lit_level ll, int &height
                 bgCol = res.first;
                 fgCol = res.second;
             }
-            const vpart_id &vp_id = veh.part_id_string( veh_part, use_roof_variant, part_mod );
-            const int subtile = part_mod == 1 ? open_ : part_mod == 2 ? broken : 0;
-            const auto rotation = static_cast<int>( std::round( to_degrees( veh.part_display_direction(
-                    veh_part, use_roof_variant ) ) ) );
-            const std::string vpname = "vp_" + vp_id.str();
+            const auto display = veh.get_display_of_tile( veh.cpart( veh_part ).mount, use_roof_variant );
+            const int subtile = display.is_open ? open_ : display.is_broken ? broken : 0;
+            const auto rotation = static_cast<int>( std::round( to_degrees( display.direction ) ) );
+            const auto vpname = display.get_tileset_id();
             if( !veh.forward_velocity() ) {
                 get_avatar().memorize_tile( bub_to_abs( p ), vpname, subtile, rotation );
             }

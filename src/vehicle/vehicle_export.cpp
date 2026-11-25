@@ -30,12 +30,18 @@ auto is_plain_id(const vehicle_part* p) -> bool {
     return !p->is_turret() && (!p->is_tank() || p->ammo_current().is_null());
 }
 
+auto part_with_variant(const vehicle_part& part) -> std::string {
+    const auto& id = part.proxy_part_id.is_null() ? part.info().get_id() : part.proxy_part_id;
+    return id.str()
+         + (part.proxy_part_id.is_null() && part.variant != part.info().variant_default
+                ? "#" + part.variant
+                : "");
+}
+
 auto json_part_write(JsonOut& json, const vehicle_part* p) -> void {
-    const auto& id =
-        p->proxy_part_id == vpart_id::NULL_ID() ? p->info().get_id() : p->proxy_part_id;
     const auto& ammo_type = p->ammo_current();
 
-    json.member("part", id);
+    json.member("part", part_with_variant(*p));
     if (p->is_tank()) {
         json.member("fuel", ammo_type);
     } else if (p->is_turret()) {
@@ -58,7 +64,7 @@ auto json_parts_write(JsonOut& json, const refs& parts) -> void {
         for (const auto* p : parts) {
             if (p->info().get_id().str().contains("door_lock")) { continue; }
             if (is_plain_id(p)) {
-                json.write(p->info().get_id());
+                json.write(part_with_variant(*p));
             } else {
                 json.start_object();
                 json_part_write(json, p);

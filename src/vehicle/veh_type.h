@@ -11,6 +11,7 @@
 #include "type_id.h"
 #include "units.h"
 #include "units_angle.h"
+#include "vpart_variant.h"
 #include "weighted_list.h"
 
 #include <array>
@@ -220,6 +221,11 @@ public:
 
     RGBColorPair default_color = {};
     std::optional<RGBColor> light_color;
+    /// Empty for legacy definitions using symbol/shapes.
+    std::map<std::string, vpart_variant> variants;
+    std::string variant_default;
+    std::vector<std::pair<std::string, std::string>> variants_bases;
+
     /**
      * Symbol of part which will be translated as follows:
      * y, u, n, b to NW, NE, SE, SW lines correspondingly
@@ -453,6 +459,7 @@ struct vehicle_prototype {
     struct part_def {
         tripoint_mnt_veh pos;
         vpart_id part;
+        std::optional<std::string> variant;
         int with_ammo = 0;
         std::set<itype_id> ammo_types;
         std::pair<int, int> ammo_qty = {-1, -1};
