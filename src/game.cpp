@@ -3397,7 +3397,7 @@ int get_heat_radiation( const tripoint_bub_ms &location, bool direct )
                     const field_entry *fire = sm->field_count == 0 ? nullptr :
                                               sm->get_field( local ).find_field( fd_fire_int );
                     const auto ffire = fire == nullptr ? 0 : fire->get_field_intensity();
-                    const auto heat_intensity = ffire > 0 ? ffire : sm->get_ter( local )->heat_radiation;
+                    const auto heat_intensity = std::max( ffire, sm->get_ter( local )->heat_radiation );
                     if( heat_intensity == 0 ) {
                         // No heat source here
                         continue;
