@@ -622,6 +622,20 @@ TEST_CASE("bionic_scanner_inside_worn_container_marks_corpse_stack", "[iuse][bio
     CHECK(scanner_ptr->ammo_remaining() == 90);
 }
 
+TEST_CASE("recharges_battery_from_ups_in_tool_without_ammo_type", "[iuse][ups]") {
+    clear_avatar();
+    auto& you = get_avatar();
+    auto tool = item::spawn("test_tool_without_ammo", calendar::turn);
+    tool->put_in(item::spawn("light_battery_cell", calendar::turn));
+    tool->set_flag(flag_USE_UPS);
+    auto& tool_ref = you.i_add(std::move(tool));
+    you.i_add(item::spawn("UPS_off", calendar::turn, 500));
+
+    you.process_items();
+
+    CHECK(tool_ref.ammo_remaining() > 0);
+}
+
 TEST_CASE("eyedrops", "[iuse][eyedrops]") {
     avatar dummy;
     detached_ptr<item> det =
