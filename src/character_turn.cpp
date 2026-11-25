@@ -129,6 +129,13 @@ auto character_has_adjacent_grabbed_target( const Character &who ) -> bool
     return false;
 }
 
+// Charge the magazine directly, since a mod-defined tool type may not accept its battery ammo
+auto charge_target( item &it ) -> item & // *NOPAD*
+{
+    auto *mag = it.magazine_current();
+    return mag ? *mag : it;
+}
+
 } // namespace
 
 void Character::recalc_speed_bonus()
@@ -1013,7 +1020,7 @@ void Character::process_items( int turns )
     bool update_required = get_check_encumbrance();
     for( item *&w : worn ) {
         if( w->has_flag( flag_USE_UPS ) && needs_elec_charges( w ) ) {
-            active_worn_items.push_back( w );
+            active_worn_items.push_back( &charge_target( *w ) );
         }
         if( w->has_flag( flag_IS_UPS ) ) {
             ch_UPS += std::min( w->ammo_remaining() * w->type->tool->ups_eff_mult,
@@ -1033,7 +1040,7 @@ void Character::process_items( int turns )
     }
     int ch_UPS_used = 0;
     if( weapon_active && ch_UPS_used < ch_UPS ) {
-        auto weap = &primary_weapon();
+        auto weap = &charge_target( primary_weapon() );
         int used = std::min( ch_UPS, weap->ammo_capacity() - weap->ammo_remaining() );
         ch_UPS -= used;
         ch_UPS_used += used;
@@ -1053,7 +1060,7 @@ void Character::process_items( int turns )
         if( ch_UPS <= 0 ) {
             break;
         }
-        item &it = inv.find_item( index );
+        auto &it = charge_target( inv.find_item( index ) );
         int used = std::min( ch_UPS, it.ammo_capacity() - it.ammo_remaining() );
         ch_UPS -= used;
         ch_UPS_used += used;
