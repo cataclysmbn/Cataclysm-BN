@@ -5400,7 +5400,7 @@ std::optional<memorized_terrain_tile>
 
     const auto separator = t.tile.find( '#' );
     const auto actual_part = t.tile.substr( 3,
-                                           separator == std::string::npos ? separator : separator - 3 );
+                                            separator == std::string::npos ? separator : separator - 3 );
     if( !string_id<vpart_info>( actual_part ).is_valid() ) {
         return std::nullopt;
     }
