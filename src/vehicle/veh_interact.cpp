@@ -153,6 +153,7 @@ auto veh_interact::serialize_activity() -> std::unique_ptr<player_activity> {
             break;
     }
     if (you.has_trait(trait_DEBUG_HT)) { time = 1; }
+    time = std::max(1, time);
     std::unique_ptr<player_activity> res =
         std::make_unique<player_activity>(ACT_VEHICLE, time, static_cast<int>(sel_cmd));
 

@@ -3086,6 +3086,12 @@ void options_manager::add_options_world_default()
          0, 1000, 100, COPT_NO_HIDE, "%i%%"
        );
 
+    add( "VEHICLE_WORK_SCALING", world_default,
+         translate_marker( "Vehicle work speed percentage" ),
+         translate_marker( "Sets the time of vehicle part installation, repair, and removal in percents.  '50' is two times faster than default, '200' is two times longer.  '0' makes vehicle work instant." ),
+         0, 1000, 100, COPT_NO_HIDE, "%i%%"
+       );
+
 
     add( "CRAFTING_SPEED_MULT", world_default, translate_marker( "Crafting speed percentage" ),
          translate_marker( "Sets default crafting speed in percents.  '50' is two times faster than default, '200' is two times longer.  '0' makes crafting instant." ),

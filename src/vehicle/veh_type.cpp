@@ -18,6 +18,7 @@
 #include "itype.h"
 #include "json.h"
 #include "map/mapdata.h"
+#include "options.h"
 #include "output.h"
 #include "player.h"
 #include "requirements.h"
@@ -39,7 +40,9 @@
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
+#include <limits>
 #include <memory>
 #include <numeric>
 #include <string>
@@ -876,23 +879,31 @@ auto vpart_info::repair_requirements() const -> requirement_data {
 
 auto vpart_info::is_repairable() const -> bool { return !repair_requirements().is_empty(); }
 
-static auto scale_time(const std::map<skill_id, int>& sk, int mv, const Character& who) -> int {
-    if (sk.empty()) { return mv; }
+namespace {
+auto scale_time(const std::map<skill_id, int>& sk, int mv, const Character& who) -> int {
+    const auto scaling = get_option<int>("VEHICLE_WORK_SCALING");
+    if (scaling == 0) { return mv > 0 ? 1 : 0; }
 
-    const int lvl = std::
-        accumulate(sk.begin(), sk.end(), 0, [&who](int lhs, const std::pair<skill_id, int>& rhs) {
+    auto time_norm = mv;
+    if (!sk.empty()) {
+        const auto lvl = std::accumulate(sk.begin(), sk.end(), 0, [&who](int lhs, const auto& rhs) {
             return lhs
                  + std::max(std::min(who.get_skill_level(rhs.first), MAX_SKILL) - rhs.second, 0);
         });
-    // 10% per excess level (reduced proportionally if >1 skill required) with max 50% reduction
-    // 10% reduction per assisting NPC
-    int time_norm =
-        mv * (1.0 - std::min(static_cast<double>(lvl) / sk.size() / 10.0, 0.5))
-        * (10 - character_funcs::get_crafting_helpers(who, 3).size()) / 10;
-    time_norm +=
-        who.bonus_from_enchantments(time_norm, enchantment_value_id("CONSTRUCTION_SPEED_VEH"));
-    return time_norm;
+        // 10% per excess level (reduced proportionally if >1 skill required) with max 50% reduction
+        // 10% reduction per assisting NPC
+        time_norm =
+            mv * (1.0 - std::min(static_cast<double>(lvl) / sk.size() / 10.0, 0.5))
+            * (10 - character_funcs::get_crafting_helpers(who, 3).size()) / 10;
+        time_norm +=
+            who.bonus_from_enchantments(time_norm, enchantment_value_id("CONSTRUCTION_SPEED_VEH"));
+    }
+
+    const auto scaled = static_cast<int64_t>(time_norm) * scaling / 100;
+    time_norm = static_cast<int>(std::min<int64_t>(scaled, std::numeric_limits<int>::max()));
+    return mv > 0 ? std::max(1, time_norm) : time_norm;
 }
+} // namespace
 
 auto vpart_info::install_time(const Character& who) const -> int {
     return scale_time(install_skills, install_moves, who);

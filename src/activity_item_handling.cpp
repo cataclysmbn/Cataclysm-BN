@@ -1024,13 +1024,13 @@ static bool vehicle_activity( player &p, const tripoint_bub_ms &src_loc, int vpi
     const vpart_info &vp = veh->part_info( vpindex );
     if( type == 'r' ) {
         const vehicle_part &part = veh->part( vpindex );
-        time_to_take = utils::scaled_by( {
+        time_to_take = std::max( 1, utils::scaled_by( {
             .total = vp.repair_time( p ),
             .cur = part.damage(),
             .max = part.max_damage(),
-        } );
+        } ) );
     } else if( type == 'o' ) {
-        time_to_take = vp.removal_time( p );
+        time_to_take = std::max( 1, vp.removal_time( p ) );
     }
     p.assign_activity( ACT_VEHICLE, time_to_take, static_cast<int>( type ) );
     // so , NPCs can remove the last part on a position, then there is no vehicle there anymore,
