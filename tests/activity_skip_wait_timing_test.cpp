@@ -36,9 +36,10 @@ auto override_options(const std::string& list) -> std::vector<std::unique_ptr<ov
 
 } // namespace
 
-/// Waits PROFILE_WAIT_MINUTES (default 60) in the field and town scenes through the wait activity
-/// on a map of production size. Prints one line per scene with milliseconds per calendar turn.
-/// PROFILE_WAIT_SCENE=field|town runs one scene. PROFILE_OPTS="NAME=value,..." overrides options.
+/// Waits PROFILE_WAIT_MINUTES (default 60) in the field, town, fireplace and hay fire scenes
+/// through the wait activity on a map of production size. Prints one line per scene with
+/// milliseconds per calendar turn. PROFILE_WAIT_SCENE=field|town|fireplace|hay_fire runs one scene.
+/// PROFILE_OPTS="NAME=value,..." overrides options.
 /// A scene where the avatar dies or the wait ends early fails and prints no result line.
 TEST_CASE("activity skip wait timing", "[.][benchmark][activity]") {
     const auto minutes = std::stoi(env_or("PROFILE_WAIT_MINUTES", "60"));
@@ -56,7 +57,9 @@ TEST_CASE("activity skip wait timing", "[.][benchmark][activity]") {
     g->resize_reality_bubble_to(get_option<int>("REALITY_BUBBLE_SIZE"));
 
     for (const auto& [scene, name] :
-         {std::pair{wait_scene::field, "field"}, std::pair{wait_scene::town, "town"}}) {
+         {std::pair{wait_scene::field, "field"}, std::pair{wait_scene::town, "town"},
+          std::pair{wait_scene::fireplace, "fireplace"},
+          std::pair{wait_scene::hay_fire, "hay_fire"}}) {
         if (!only_scene.empty() && only_scene != name) { continue; }
         setup_wait_scene(scene);
         REQUIRE(get_map().getmapsize() == g_mapsize);

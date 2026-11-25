@@ -2,6 +2,7 @@
 
 #include "bodypart.h"
 #include "calendar.h"
+#include "coordinates.h"
 #include "game_constants.h"
 #include "options_helpers.h"
 #include "type_id.h"
@@ -16,7 +17,19 @@ enum class wait_scene : int {
     field,
     /// Field with two-storey brick houses on both sides of the street and 12 cows.
     town,
+    /// Field with a fireplace next to the avatar, lit with a splinter and fed from 30 2x4s.
+    fireplace,
+    /// Field with a row of 24 hay bales 24 tiles south of the avatar. The first 12 bales lie in one
+    /// submap and the other 12 in the next one. The 10th bale burns.
+    hay_fire,
 };
+
+/// Fire tile and firewood pile of the fireplace scene, relative to the avatar.
+inline const auto fireplace_fire = tripoint_rel_ms(1, 0, 0);
+inline const auto fireplace_pile = tripoint_rel_ms(0, 1, 0);
+/// West end of the hay row of the hay fire scene, relative to the avatar.
+inline const auto hay_row_start = tripoint_rel_ms(-6, 24, 0);
+inline constexpr auto hay_row_length = 24;
 
 /// Options that let the skip window run in a test map. Keep an instance alive during the wait.
 struct skip_window_options {
