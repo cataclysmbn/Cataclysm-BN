@@ -253,31 +253,50 @@
     "copy-from": "seat_abstract",
     "id": "seat",
     "symbol": "#",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "shapes": [
+      { "direction": "windshield_front", "symbol": "#", "symbol_broken": "*", "looks_like": "seat" },
+      { "direction": "back_left", "symbol": "#", "symbol_broken": "*", "looks_like": "seat" },
+      { "direction": "back_right", "symbol": "#", "symbol_broken": "*", "looks_like": "seat" },
+      { "direction": "swivel_chair_front", "symbol": "#", "symbol_broken": "*", "looks_like": "seat" },
+      { "direction": "back_front", "symbol": "#", "symbol_broken": "*", "looks_like": "seat" },
+      { "direction": "back_vertical_right", "symbol": "#", "symbol_broken": "*", "looks_like": "seat" },
+      { "direction": "back_vertical_left", "symbol": "#", "symbol_broken": "*", "looks_like": "seat" }
+    ]
   },
   {
     "copy-from": "seat_leather_abstract",
     "id": "seat_leather",
     "symbol": "#",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "shapes": [
+      { "direction": "windshield_front", "symbol": "#", "symbol_broken": "*", "looks_like": "seat_leather" },
+      { "direction": "rear", "symbol": "#", "symbol_broken": "*", "looks_like": "seat_leather" }
+    ]
   },
   {
     "copy-from": "reclining_seat_abstract",
     "id": "reclining_seat",
     "symbol": "#",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "shapes": [ { "direction": "windshield_front", "symbol": "#", "symbol_broken": "*", "looks_like": "reclining_seat" } ]
   },
   {
     "copy-from": "reclining_seat_leather_abstract",
     "id": "reclining_seat_leather",
     "symbol": "#",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "shapes": [ { "direction": "windshield_front", "symbol": "#", "symbol_broken": "*", "looks_like": "reclining_seat_leather" } ]
   },
   {
     "copy-from": "saddle_abstract",
     "id": "saddle",
     "symbol": "#",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "shapes": [
+      { "direction": "scooter", "symbol": "#", "symbol_broken": "*", "looks_like": "saddle" },
+      { "direction": "appearance_saddle_motor", "symbol": "#", "symbol_broken": "*", "looks_like": "saddle_motor" }
+    ]
   },
   {
     "copy-from": "saddle_abstract",
@@ -289,7 +308,8 @@
     "copy-from": "saddle_abstract",
     "id": "saddle_motor",
     "symbol": "#",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "shapes": [ { "direction": "appearance_saddle_scooter", "symbol": "#", "symbol_broken": "*", "looks_like": "saddle_scooter" } ]
   },
   {
     "copy-from": "folding_seat_abstract",

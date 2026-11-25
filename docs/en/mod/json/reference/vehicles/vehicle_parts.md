@@ -139,11 +139,15 @@ Note: this field does not support copy from, it must be defined on each object
   {
     "direction": "left",     // What is appended to the id, so wing_metal would become wing_metal_left. Additionally is appended to the looks_like field
     "symbol": "y",           // Same as the symbol definition above
-    "broken_symbol": "y",    // Same as the broken symbol definition above
+    "symbol_broken": "y",    // Broken symbol for this shape
     "looks_like": "board_nw" // Same as the looks_like definition above, overwrites changes from direction
   },
 ]
 ```
+
+Shapes are ordinary part IDs, such as `frame_vertical`. Use those IDs in vehicle
+prototypes and `copy-from`. A shape’s `looks_like` changes graphic fallback, not
+its physical inheritance. Existing IDs remain available when new shapes are added.
 
 ### Vehicles
 

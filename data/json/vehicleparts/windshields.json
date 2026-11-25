@@ -81,19 +81,40 @@
     "symbol": "\"",
     "type": "vehicle_part",
     "shapes": [
-      { "direction": "nw", "symbol": "y" },
-      { "direction": "ne", "symbol": "u" },
+      { "direction": "nw", "symbol": "y", "looks_like": "windshield" },
+      { "direction": "ne", "symbol": "u", "looks_like": "windshield" },
       { "direction": "sw", "symbol": "b" },
       { "direction": "se", "symbol": "n" },
-      { "direction": "nw_edge", "symbol": "y" },
-      { "direction": "ne_edge", "symbol": "u" },
-      { "direction": "sw_edge", "symbol": "b" },
-      { "direction": "se_edge", "symbol": "n" },
-      { "direction": "vertical_left", "symbol": "j" },
-      { "direction": "vertical_right", "symbol": "H" },
+      { "direction": "nw_edge", "symbol": "y", "looks_like": "windshield" },
+      { "direction": "ne_edge", "symbol": "u", "looks_like": "windshield" },
+      { "direction": "sw_edge", "symbol": "b", "looks_like": "windshield" },
+      { "direction": "se_edge", "symbol": "n", "looks_like": "windshield" },
+      { "direction": "vertical_left", "symbol": "j", "looks_like": "windshield" },
+      { "direction": "vertical_right", "symbol": "H", "looks_like": "windshield" },
       { "direction": "horizontal_front", "symbol": "T" },
-      { "direction": "horizontal_front_edge", "symbol": "^" },
-      { "direction": "horizontal_rear", "symbol": "B" }
+      { "direction": "horizontal_front_edge", "symbol": "^", "looks_like": "windshield" },
+      { "direction": "horizontal_rear", "symbol": "B", "looks_like": "windshield" },
+      { "direction": "left", "symbol": "\"", "symbol_broken": "0", "looks_like": "windshield" },
+      { "direction": "cover_left", "symbol": "\"", "symbol_broken": "0", "looks_like": "windshield" },
+      { "direction": "right", "symbol": "\"", "symbol_broken": "0", "looks_like": "windshield" },
+      { "direction": "cover_right", "symbol": "\"", "symbol_broken": "0", "looks_like": "windshield" },
+      { "direction": "wheel_left", "symbol": "\"", "symbol_broken": "0", "looks_like": "windshield" },
+      { "direction": "wheel_right", "symbol": "\"", "symbol_broken": "0", "looks_like": "windshield" },
+      { "direction": "full_left", "symbol": "j", "symbol_broken": "0", "looks_like": "windshield" },
+      { "direction": "full_right", "symbol": "H", "symbol_broken": "0", "looks_like": "windshield" },
+      { "direction": "full_wheel_left", "symbol": "j", "symbol_broken": "0", "looks_like": "windshield" },
+      { "direction": "full_wheel_right", "symbol": "H", "symbol_broken": "0", "looks_like": "windshield" },
+      { "direction": "full_vertical_right", "symbol": "\"", "symbol_broken": "0", "looks_like": "windshield" },
+      { "direction": "full_vertical_left", "symbol": "\"", "symbol_broken": "0", "looks_like": "windshield" },
+      {
+        "direction": "horizontal_rear_edge",
+        "symbol": "\"",
+        "symbol_broken": "0",
+        "looks_like": "windshield_horizontal_rear"
+      },
+      { "direction": "vertical_2_left", "symbol": "\"", "symbol_broken": "0", "looks_like": "windshield" },
+      { "direction": "vertical_2_right", "symbol": "\"", "symbol_broken": "0", "looks_like": "windshield" },
+      { "direction": "full_horizontal_rear_edge", "symbol": "\"", "symbol_broken": "0", "looks_like": "windshield" }
     ]
   },
   {
@@ -131,7 +152,20 @@
       { "direction": "vertical_left", "symbol": "[" },
       { "direction": "vertical_right", "symbol": "]" },
       { "direction": "horizontal_front", "symbol": "h" },
-      { "direction": "horizontal_rear_edge", "symbol": "B" }
+      { "direction": "horizontal_rear_edge", "symbol": "B" },
+      { "direction": "cover_left", "symbol": "T", "symbol_broken": "0", "looks_like": "reinforced_windshield" },
+      {
+        "direction": "full_vertical_left",
+        "symbol": "T",
+        "symbol_broken": "0",
+        "looks_like": "reinforced_windshield"
+      },
+      {
+        "direction": "full_vertical_right",
+        "symbol": "T",
+        "symbol_broken": "0",
+        "looks_like": "reinforced_windshield"
+      }
     ]
   }
 ]

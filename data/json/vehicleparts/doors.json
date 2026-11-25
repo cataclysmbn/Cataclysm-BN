@@ -428,7 +428,8 @@
     "flags": [ "OPAQUE", "OBSTACLE", "OPENABLE", "MULTISQUARE", "BOARDABLE" ],
     "breaks_into": "ig_vp_sheet_metal",
     "damage_reduction": { "all": 24 },
-    "default_color": "#622625"
+    "default_color": "#622625",
+    "shapes": [ { "direction": "front", "symbol": "+", "symbol_broken": "&", "looks_like": "door_shutter" } ]
   },
   {
     "type": "vehicle_part",
@@ -452,7 +453,13 @@
     "flags": [ "OBSTACLE", "OPENABLE", "MULTISQUARE", "BOARDABLE", "WINDOW" ],
     "breaks_into": "ig_vp_frame",
     "damage_reduction": { "all": 26 },
-    "default_color": "#622625"
+    "default_color": "#622625",
+    "shapes": [
+      { "direction": "nw", "symbol": "+", "symbol_broken": "&", "looks_like": "door_sliding" },
+      { "direction": "front_right", "symbol": "+", "symbol_broken": "&", "looks_like": "door_sliding" },
+      { "direction": "sw", "symbol": "+", "symbol_broken": "&", "looks_like": "door_sliding" },
+      { "direction": "se", "symbol": "+", "symbol_broken": "&", "looks_like": "door_sliding" }
+    ]
   },
   {
     "copy-from": "door_sliding",
@@ -495,7 +502,13 @@
     "flags": [ "OBSTACLE", "OPENABLE", "MULTISQUARE", "BOARDABLE", "LOW_FINAL_AIR_DRAG", "NO_ROOF_NEEDED", "WINDOW" ],
     "breaks_into": "ig_vp_frame",
     "damage_reduction": { "all": 25 },
-    "default_color": "#622625"
+    "default_color": "#622625",
+    "shapes": [
+      { "direction": "front", "symbol": "+", "symbol_broken": "&", "looks_like": "door_trunk" },
+      { "direction": "wheel_left", "symbol": "+", "symbol_broken": "&", "looks_like": "door_trunk" },
+      { "direction": "wheel_right", "symbol": "+", "symbol_broken": "&", "looks_like": "door_trunk" },
+      { "direction": "horizontal_2", "symbol": "+", "symbol_broken": "&", "looks_like": "door_trunk" }
+    ]
   },
   {
     "copy-from": "door_trunk",
@@ -572,21 +585,35 @@
     "symbol": "+",
     "type": "vehicle_part",
     "shapes": [
-      { "direction": "front_left", "symbol": "y" },
-      { "direction": "front_right", "symbol": "u" },
+      { "direction": "front_left", "symbol": "y", "looks_like": "door" },
+      { "direction": "front_right", "symbol": "u", "looks_like": "door" },
       { "direction": "vertical_left", "symbol": "L" },
-      { "direction": "vertical_right", "symbol": "R" },
+      { "direction": "vertical_right", "symbol": "R", "looks_like": "door" },
       { "direction": "rear_left", "symbol": "b" },
       { "direction": "rear_right", "symbol": "n" },
       { "direction": "door_front", "symbol": "T" },
-      { "direction": "door_rear", "symbol": "B" }
+      { "direction": "door_rear", "symbol": "B" },
+      { "direction": "right", "symbol": "+", "symbol_broken": "&", "looks_like": "door" },
+      { "direction": "left", "symbol": "+", "symbol_broken": "&", "looks_like": "door" },
+      { "direction": "nw", "symbol": "+", "symbol_broken": "&", "looks_like": "door" },
+      { "direction": "ne", "symbol": "u", "symbol_broken": "&", "looks_like": "door" },
+      { "direction": "rear", "symbol": "+", "symbol_broken": "&", "looks_like": "door" },
+      { "direction": "sw", "symbol": "+", "symbol_broken": "&", "looks_like": "door" },
+      { "direction": "se", "symbol": "+", "symbol_broken": "&", "looks_like": "door" },
+      { "direction": "full_left", "symbol": "+", "symbol_broken": "&", "looks_like": "door" },
+      { "direction": "full_right", "symbol": "+", "symbol_broken": "&", "looks_like": "door" },
+      { "direction": "front", "symbol": "+", "symbol_broken": "&", "looks_like": "door" }
     ]
   },
   {
     "copy-from": "door_opaque_abstract",
     "id": "door_opaque",
     "symbol": "+",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "shapes": [
+      { "direction": "full_right", "symbol": "+", "symbol_broken": "&", "looks_like": "door_opaque" },
+      { "direction": "rear", "symbol": "+", "symbol_broken": "&", "looks_like": "door_opaque" }
+    ]
   },
   {
     "copy-from": "door_carbon_abstract",
@@ -617,33 +644,55 @@
     "id": "hddoor",
     "symbol": "+",
     "type": "vehicle_part",
-    "shapes": [ { "direction": "left", "symbol": "L" }, { "direction": "right", "symbol": "R" } ]
+    "shapes": [
+      { "direction": "left", "symbol": "L" },
+      { "direction": "right", "symbol": "R" },
+      { "direction": "full_right", "symbol": "+", "symbol_broken": "&", "looks_like": "hddoor" }
+    ]
   },
   {
     "copy-from": "hddoor_opaque_abstract",
     "id": "hddoor_opaque",
     "symbol": "+",
     "type": "vehicle_part",
-    "shapes": [ { "direction": "left", "symbol": "L" }, { "direction": "right", "symbol": "R" } ]
+    "shapes": [
+      { "direction": "left", "symbol": "L" },
+      { "direction": "right", "symbol": "R" },
+      { "direction": "rear", "symbol": "+", "symbol_broken": "&", "looks_like": "hddoor_opaque" }
+    ]
   },
   {
     "copy-from": "door_internal_abstract",
     "id": "door_internal",
     "symbol": "+",
     "type": "vehicle_part",
-    "shapes": [ { "direction": "left", "symbol": "L" }, { "direction": "right", "symbol": "R" } ]
+    "shapes": [
+      { "direction": "left", "symbol": "L" },
+      { "direction": "right", "symbol": "R" },
+      { "direction": "front", "symbol": "+", "symbol_broken": "&", "looks_like": "door_internal" },
+      { "direction": "rear", "symbol": "+", "symbol_broken": "&", "looks_like": "door_internal" }
+    ]
   },
   {
     "copy-from": "hatch_abstract",
     "id": "hatch",
     "symbol": "+",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "shapes": [
+      { "direction": "horizontal_rear", "symbol": "+", "symbol_broken": "&", "looks_like": "hatch" },
+      { "direction": "front", "symbol": "+", "symbol_broken": "&", "looks_like": "hatch" }
+    ]
   },
   {
     "copy-from": "hatch_opaque_abstract",
     "id": "hatch_opaque",
     "symbol": "+",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "shapes": [
+      { "direction": "rear", "symbol": "+", "symbol_broken": "&", "looks_like": "hatch_opaque" },
+      { "direction": "right", "symbol": "+", "symbol_broken": "&", "looks_like": "hatch_opaque" },
+      { "direction": "left", "symbol": "+", "symbol_broken": "&", "looks_like": "hatch_opaque" }
+    ]
   },
   {
     "copy-from": "door_internal_carbon_abstract",
