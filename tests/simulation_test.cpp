@@ -7,12 +7,15 @@
 #include "catch/catch.hpp"
 #include "coordinates.h"
 #include "fire_spread_loader.h"
+#include "game.h"
 #include "map/field.h"
 #include "map/field_type.h"
+#include "map/map.h"
 #include "map/mapbuffer.h"
 #include "map/mapbuffer_registry.h"
 #include "map/submap_fields.h"
 #include "map_helpers.h"
+#include "options_helpers.h"
 #include "point.h"
 #include "rng.h"
 #include "state_helpers.h"
@@ -550,4 +553,39 @@ TEST_CASE("batch_turns_decay_plain_display_liquid_fields", "[simulation][field][
     CHECK(sm->get_field(spill_pt).find_field(water_field) == nullptr);
 
     MAPBUFFER.unload_omt(project_to<coords::omt>(FAR_SM_POS), false);
+}
+
+/// Checks that an electricity field next to the player decays in a pocket dimension while
+/// POCKET_SIMULATION_LEVEL is "off" (issue 11040). At this level the world tick skipped every
+/// pocket dimension, also the one that holds the player. The test enters a new dimension, adds the
+/// field, runs 100 turns and expects no field.
+TEST_CASE(
+    "decays fields in the player's pocket dimension while pocket simulation is off",
+    "[simulation][field]") {
+    clear_all_state();
+    const auto no_autosave = override_option("AUTOSAVE", "false");
+    const auto pocket_sim = restore_on_out_of_scope(pocket_simulation_level);
+    pocket_simulation_level = pocket_sim_level::off;
+    const auto dim = dimension_id("sim_test_pocket_dim");
+    const auto origin = player_reality_bubble_origin();
+    const auto cleanup = on_out_of_scope([&]() {
+        g->travel_to_dimension(dimension_id(), world_type_id(), std::nullopt, origin);
+        g->delete_dimension(dim);
+        clear_all_state();
+    });
+    REQUIRE(g->travel_to_dimension(dim, world_type_id("default"), std::nullopt, origin));
+    clear_creatures();
+    auto& here = get_map();
+    const auto pos = bub_to_abs(get_avatar().bub_pos() + tripoint_rel_ms(4, 0, 0));
+    const auto has_electricity = [&]() {
+        return here.get_field(abs_to_bub(pos), fd_electricity) != nullptr;
+    };
+    here.add_field(abs_to_bub(pos), fd_electricity, 3);
+    REQUIRE(has_electricity());
+
+    for (auto turn = 0; turn < 100; ++turn) {
+        get_avatar().set_moves(0);
+        g->do_turn();
+    }
+    CHECK_FALSE(has_electricity());
 }
