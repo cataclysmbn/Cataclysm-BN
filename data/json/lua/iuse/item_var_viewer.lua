@@ -1,15 +1,17 @@
 local ui = require("lib.ui")
 
 ---@alias StoredVars table<string, string>
----@alias ItemVarViewerSubject Item | Avatar | Character | Monster | Npc
+---@alias ItemVarViewerSubject Item | Avatar | Character | Monster | Npc | TripointBubMs
 
 ---@class ItemVarViewerChoice
----@field type "item" | "player" | "monster" | "npc" | "ground_item"
+---@field type "item" | "player" | "monster" | "npc" | "ground_item" | "terrain" | "furniture"
 ---@field subject ItemVarViewerSubject
 ---@field subject_name string
 ---@field get_vars fun(): StoredVars
 
 local viewer = {}
+
+local f_null = FurnId.new("f_null"):int_id()
 
 ---@param text string?
 ---@param color string?
@@ -85,6 +87,14 @@ local function set_subject_var(selected, key, value)
     subject:set_var_str(key, value)
     return
   end
+  if selected.type == "terrain" then
+    gapi.get_map():set_ter_var_at(selected.subject --[[@as TripointBubMs]], key, value)
+    return
+  end
+  if selected.type == "furniture" then
+    gapi.get_map():set_furn_var_at(selected.subject --[[@as TripointBubMs]], key, value)
+    return
+  end
   local subject = selected.subject
   ---@cast subject Creature
   subject:set_value(key, value)
@@ -98,6 +108,14 @@ local function remove_subject_var(selected, key)
     local subject = selected.subject
     ---@cast subject Item
     subject:erase_var(key)
+    return
+  end
+  if selected.type == "terrain" then
+    gapi.get_map():erase_ter_var_at(selected.subject --[[@as TripointBubMs]], key)
+    return
+  end
+  if selected.type == "furniture" then
+    gapi.get_map():erase_furn_var_at(selected.subject --[[@as TripointBubMs]], key)
     return
   end
   local subject = selected.subject
@@ -211,6 +229,60 @@ local function manage_vars(selected)
       remove_var(selected)
     end
   end
+end
+
+---@param map Map
+---@param pt TripointBubMs
+---@return ItemVarViewerChoice[]
+local function tile_choices(map, pt)
+  ---@type ItemVarViewerChoice[]
+  local tile = {
+    {
+      type = "terrain",
+      subject = pt,
+      subject_name = map:get_ter_at(pt):obj():name(),
+      get_vars = function() return map:get_ter_vars_table_at(pt) end,
+    },
+  }
+  local furn = map:get_furn_at(pt)
+  if furn ~= f_null then
+    table.insert(tile, {
+      type = "furniture",
+      subject = pt,
+      subject_name = furn:obj():name(),
+      get_vars = function() return map:get_furn_vars_table_at(pt) end,
+    })
+  end
+  return tile
+end
+
+---@param choice ItemVarViewerChoice
+---@return string
+local function tile_label(choice)
+  local is_terrain = choice.type == "terrain"
+  return string.format(
+    "%s %s %s",
+    color_text(is_terrain and locale.gettext("Terrain") or locale.gettext("Furniture"), is_terrain and "brown" or "cyan"),
+    color_text(choice.subject_name, "white"),
+    color_text(string.format("[%d vars]", count_vars(choice.get_vars())), "light_gray")
+  )
+end
+
+---@param map Map
+---@return ItemVarViewerChoice?
+local function pick_tile_choice(map)
+  local pt = gapi.look_around()
+  if not pt then return nil end
+  local tile = tile_choices(map, pt)
+  if #tile == 1 then return tile[1] end
+  local menu = UiList.new()
+  menu:title(color_text(locale.gettext("Item var viewer"), "yellow"))
+  for idx, choice in ipairs(tile) do
+    menu:add(idx - 1, tile_label(choice))
+  end
+  local picked = menu:query()
+  if picked < 0 then return nil end
+  return tile[picked + 1]
 end
 
 ---@type fun(params: ItemUseParams): integer
@@ -329,6 +401,9 @@ viewer.menu = function(params)
         push_choice(npc_label, npc_choice)
       end
     end
+    for _, tile_choice in ipairs(tile_choices(map, pt)) do
+      if count_vars(tile_choice.get_vars()) > 0 then push_choice(tile_label(tile_choice), tile_choice) end
+    end
   end
 
   for _, pt in ipairs(points) do
@@ -362,11 +437,15 @@ viewer.menu = function(params)
     return 0
   end
 
+  local pick_tile_id = next_id
+  menu:add(pick_tile_id, color_text(locale.gettext("Pick terrain or furniture..."), "light_gray"))
+
   local choice = menu:query()
   if choice < 0 then return 0 end
 
   ---@type ItemVarViewerChoice?
   local selected = choices[choice + 1]
+  if choice == pick_tile_id then selected = pick_tile_choice(map) end
   if not selected then return 0 end
 
   return manage_vars(selected)
