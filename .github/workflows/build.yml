@@ -225,6 +225,62 @@ jobs:
           for that notice.
           EOF
 
+      - name: Bundle BN UltiCa replacements
+        if: matrix.tiles == true && inputs.bundle-tilesets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TILESETS_REPO: midgardormr/UltiCa-BN
+          TILESETS_RELEASE: "ultica-bn-133a8a8e5c16"
+          TILESETS: UltimateCataclysm ChibiUltica Altica
+          TILESETS_COMPATIBILITY_SHA256: "6145b04416dfd03bc5d4c8896e3af0b77726100e5782aae6188838385c2e3122"
+        shell: bash
+        run: |
+          set -euo pipefail
+          download_dir="$RUNNER_TEMP/bn-tilesets"
+          rm -rf "$download_dir"
+          mkdir -p "$download_dir"
+
+          for tileset in $TILESETS; do
+            gh release download "$TILESETS_RELEASE" \
+              --repo "$TILESETS_REPO" \
+              --pattern "$tileset.zip" \
+              --dir "$download_dir" \
+              --clobber
+          done
+
+          gh release download "$TILESETS_RELEASE" \
+            --repo "$TILESETS_REPO" --pattern SHA256SUMS \
+            --dir "$download_dir" --clobber
+          python3 build-scripts/check-tileset-compatibility.py \
+            --archives-only --archives "$download_dir"
+          for tileset in $TILESETS; do
+            rm -rf "gfx/$tileset"
+            unzip -q "$download_dir/$tileset.zip" -d gfx
+          done
+          python3 build-scripts/check-tileset-compatibility.py \
+            --gfx gfx --archives "$download_dir" --release "$TILESETS_RELEASE" \
+            --contract "$TILESETS_COMPATIBILITY_SHA256"
+
+          cat >gfx/UltiCa-BN-CREDITS.txt <<EOF
+          Bundled UltiCa tilesets for Bright Nights
+          =========================================
+
+          Source repository: https://github.com/$TILESETS_REPO
+          Source release: https://github.com/$TILESETS_REPO/releases/tag/$TILESETS_RELEASE
+          Upstream artwork: https://github.com/I-am-Erk/CDDA-Tilesets
+          Bundled assets: UltimateCataclysm.zip, ChibiUltica.zip, Altica.zip
+
+          The CDDA-Tilesets repository states that Cataclysm: Dark Days Ahead and
+          the Ultimate Cataclysm tileset are volunteer contributions under the
+          Creative Commons Attribution-ShareAlike 3.0 Unported License:
+          http://creativecommons.org/licenses/by-sa/3.0/
+
+          Per the tileset metadata, further sprite credits are maintained in the
+          source repository under gfx/UltimateCataclysm and gfx.  ChibiUltica also
+          includes Dungeon Crawl: Stone Soup sprites under CC0; see its tileset.txt
+          for that notice.
+          EOF
+
       # Windows MSVC setup
       - name: Setup MSVC environment
         if: runner.os == 'Windows'

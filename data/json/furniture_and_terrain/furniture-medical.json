@@ -159,7 +159,8 @@
       ],
       "//": "Variable reduction since might hit more or less material.",
       "ranged": { "reduction": [ 25, 50 ], "destroy_threshold": 80 }
-    }
+    },
+    "connects_to": [  ]
   },
   {
     "type": "furniture",

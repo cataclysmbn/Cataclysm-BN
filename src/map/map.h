@@ -1245,6 +1245,20 @@ public:
         const tripoint_bub_ms& p, int connect_group,
         const std::map<tripoint_bub_ms, furn_id>& override = {}) const -> uint8_t;
 
+    auto get_known_connections(
+        const tripoint_bub_ms& p, const ter_connection_groups& groups,
+        const std::map<tripoint_bub_ms, ter_id>& override = {}) const -> uint8_t;
+    auto get_known_connections_f(
+        const tripoint_bub_ms& p, const ter_connection_groups& groups,
+        const std::map<tripoint_bub_ms, furn_id>& override = {}) const -> uint8_t;
+    auto get_known_rotates_to(
+        const tripoint_bub_ms& p, const ter_connection_groups& groups,
+        const std::map<tripoint_bub_ms, ter_id>& override = {}) const -> uint8_t;
+    auto get_known_rotates_to_f(
+        const tripoint_bub_ms& p, const ter_connection_groups& groups,
+        const std::map<tripoint_bub_ms, ter_id>& terrain_override = {},
+        const std::map<tripoint_bub_ms, furn_id>& furniture_override = {}) const -> uint8_t;
+
     auto get_harvest(const tripoint_bub_ms& p) const -> const harvest_id&;
     /**
      * Returns names of the items that would be dropped.

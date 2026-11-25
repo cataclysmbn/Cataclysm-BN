@@ -324,6 +324,7 @@ void DynamicDataLoader::initialize()
     add( "mutation_category", &mutation_category_trait::load );
     add( "mutation_type", &load_mutation_type );
     add( "mutation", &mutation_branch::load_trait );
+    add( "connect_group", &connect_group::load );
     add( "furniture", &load_furniture );
     add( "terrain", &load_terrain );
     add( "monstergroup", &MonsterGroup::load_monster_groups );

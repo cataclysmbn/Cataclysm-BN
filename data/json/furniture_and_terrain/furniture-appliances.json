@@ -194,7 +194,8 @@
       ],
       "//": "Variable reduction since might hit more or less material.",
       "ranged": { "reduction": [ 9, 18 ], "destroy_threshold": 50, "block_unaimed_chance": "50%" }
-    }
+    },
+    "connects_to": [  ]
   },
   {
     "type": "furniture",
@@ -675,7 +676,8 @@
       ],
       "//": "Variable reduction since might hit more or less material.",
       "ranged": { "reduction": [ 9, 18 ], "destroy_threshold": 50, "block_unaimed_chance": "50%" }
-    }
+    },
+    "connects_to": [  ]
   },
   {
     "type": "furniture",
@@ -708,7 +710,8 @@
       ],
       "//": "Variable reduction since might hit more or less material.",
       "ranged": { "reduction": [ 4, 8 ], "destroy_threshold": 30, "block_unaimed_chance": "50%" }
-    }
+    },
+    "connects_to": [  ]
   },
   {
     "type": "furniture",
@@ -747,7 +750,8 @@
       "CATEGORYIDS": "[ \"CSC_FOOD_MEAT\", \"CSC_FOOD_VEGGI\", \"CSC_FOOD_PASTA\" ]",
       "CHARGE_PER_MIN": "10",
       "CHARGE_START": "10"
-    }
+    },
+    "connects_to": [  ]
   },
   {
     "type": "furniture",
@@ -788,7 +792,8 @@
       "CHARGE_PER_MIN": "5",
       "CHARGE_START": "5",
       "TIME_MULT": "0.75"
-    }
+    },
+    "connects_to": [  ]
   },
   {
     "type": "furniture",
@@ -824,7 +829,8 @@
       ],
       "//": "Variable reduction since might hit more or less material.",
       "ranged": { "reduction": [ 4, 8 ], "destroy_threshold": 30, "block_unaimed_chance": "50%" }
-    }
+    },
+    "connects_to": [  ]
   },
   {
     "type": "furniture",
@@ -2174,7 +2180,8 @@
     "transforms_into": "f_fridge",
     "prompt": "Switch on the fridge.",
     "message": "You switch on the fridge.",
-    "color": "light_cyan"
+    "color": "light_cyan",
+    "connects_to": [  ]
   },
   {
     "type": "furniture",
@@ -2188,7 +2195,8 @@
     "prompt": "Switch off the fridge.",
     "message": "You switch off the fridge.",
     "active": [ "charge_watcher", { "min_power": 30, "transform": { "id": "f_fridge_on", "msg": "The fridge starts up." } } ],
-    "color": "light_cyan"
+    "color": "light_cyan",
+    "connects_to": [  ]
   },
   {
     "type": "furniture",
@@ -2207,7 +2215,8 @@
     "active": [
       "steady_consumer",
       { "power": 20, "consume_every": "600 s", "transform": { "id": "f_fridge", "msg": "The fridge shuts down." } }
-    ]
+    ],
+    "connects_to": [  ]
   },
   {
     "type": "furniture",
@@ -2221,7 +2230,8 @@
     "prompt": "Switch on the freezer.",
     "message": "You switch on the freezer.",
     "color": "blue",
-    "deconstruct": { "items": [ { "item": "freezer", "count": 1 } ] }
+    "deconstruct": { "items": [ { "item": "freezer", "count": 1 } ] },
+    "connects_to": [  ]
   },
   {
     "type": "furniture",
@@ -2256,7 +2266,8 @@
     "active": [
       "steady_consumer",
       { "power": 25, "consume_every": "600 s", "transform": { "id": "f_freezer", "msg": "The freezer shuts down." } }
-    ]
+    ],
+    "connects_to": [  ]
   },
   {
     "type": "furniture",
@@ -2298,7 +2309,8 @@
       ],
       "//": "Variable reduction since might hit more or less material.",
       "ranged": { "reduction": [ 9, 18 ], "destroy_threshold": 50 }
-    }
+    },
+    "connects_to": [  ]
   },
   {
     "type": "furniture",
@@ -2312,7 +2324,8 @@
     "prompt": "Switch on the freezer.",
     "message": "You switch on the freezer.",
     "//": "Removes autostart action",
-    "active": [ null ]
+    "active": [ null ],
+    "connects_to": [  ]
   },
   {
     "type": "furniture",
@@ -2332,7 +2345,8 @@
         "consume_every": "600 s",
         "transform": { "id": "f_freezer_industrial", "msg": "The freezer shuts down." }
       }
-    ]
+    ],
+    "connects_to": [  ]
   },
   {
     "type": "furniture",

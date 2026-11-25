@@ -307,7 +307,8 @@
         { "item": "cu_pipe", "count": [ 1, 4 ] },
         { "item": "scrap_copper", "count": [ 0, 2 ] }
       ]
-    }
+    },
+    "connects_to": [  ]
   },
   {
     "type": "terrain",
@@ -2257,7 +2258,8 @@
       "ter_set": "t_dirt",
       "items": [ { "item": "pointy_stick", "count": 4 }, { "item": "string_6", "count": 4 }, { "item": "tarp", "count": 1 } ]
     },
-    "flags": [ "TRANSPARENT", "FLAMMABLE", "THIN_OBSTACLE", "MOUNTABLE", "EASY_DECONSTRUCT", "FLAT", "BLOCK_WIND" ]
+    "flags": [ "TRANSPARENT", "FLAMMABLE", "THIN_OBSTACLE", "MOUNTABLE", "EASY_DECONSTRUCT", "FLAT", "BLOCK_WIND" ],
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "method": "json",

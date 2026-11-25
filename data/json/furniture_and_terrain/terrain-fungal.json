@@ -41,7 +41,8 @@
     "color": "light_gray",
     "move_cost": 2,
     "flags": [ "TRANSPARENT", "FLAMMABLE_ASH", "SUPPORTS_ROOF", "COLLAPSES", "FLAT", "FUNGUS" ],
-    "bash": { "sound": "smash", "ter_set": "t_null", "str_min": 20, "str_max": 400, "str_min_supported": 50 }
+    "bash": { "sound": "smash", "ter_set": "t_null", "str_min": 20, "str_max": 400, "str_min_supported": 50 },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",

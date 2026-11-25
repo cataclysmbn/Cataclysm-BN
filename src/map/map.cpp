@@ -2384,107 +2384,87 @@ auto map::furn_vars(const tripoint_bub_ms& p) const -> data_vars::data_set* {
     return &sm->get_furn_vars(l);
 }
 
-auto map::get_known_connections(
-    const tripoint_bub_ms& p, int connect_group,
-    const std::map<tripoint_bub_ms, ter_id>& override) const -> uint8_t {
-    auto& ch = access_cache(p.z());
-    if (!ch.inbounds(p.xy())) { return 0; }
-    uint8_t val = 0;
-    std::function<bool(const tripoint_bub_ms&)> is_memorized;
+namespace {
+template <class Id, class Get, class Match>
+auto known_connections(
+    const map& here, const level_cache& cache, const tripoint_bub_ms& p,
+    const std::map<tripoint_bub_ms, Id>& overrides, Get get, Match match) -> uint8_t {
+    if (!cache.inbounds(p.xy())) { return 0; }
+    const bool overridden = overrides.contains(p);
+    const bool transparent =
+        cache.transparency_cache[cache.idx(p.x(), p.y())] > LIGHT_TRANSPARENCY_SOLID;
+    uint8_t result = 0;
+    for (auto i = 0; i < 4; ++i) {
+        const auto q = p + offsets[i];
+        if (!here.inbounds(q)) { continue; }
+        const auto replacement = overrides.find(q);
+        const bool replaced = replacement != overrides.end();
+        bool known =
+            replaced
+            || here.get_visibility(cache.visibility_cache[cache.idx(q.x(), q.y())],
+                                   here.get_visibility_variables_cache())
+                   == VIS_CLEAR;
+        if (!known && !overridden) {
+            const auto absolute = map_local_to_abs(here, q);
 #ifdef TILES
-    if (use_tiles) {
-        is_memorized = [&](const tripoint_bub_ms& q) {
-            return !g->u.get_memorized_tile(map_local_to_abs(*this, q)).tile.empty();
-        };
-    } else {
+            known = transparent
+                 || (use_tiles ? !get_avatar().get_memorized_tile(absolute).tile.empty()
+                               : get_avatar().get_memorized_symbol(absolute));
+#else
+            known = transparent || get_avatar().get_memorized_symbol(absolute);
 #endif
-        is_memorized = [&](const tripoint_bub_ms& q) {
-            return g->u.get_memorized_symbol(map_local_to_abs(*this, q));
-        };
-#ifdef TILES
-    }
-#endif
-
-    const bool overridden = override.contains(p);
-    const bool is_transparent =
-        ch.transparency_cache[ch.idx(p.x(), p.y())] > LIGHT_TRANSPARENCY_SOLID;
-
-    // populate connection information
-    for (int i = 0; i < 4; ++i) {
-        auto neighbour = p + offsets[i];
-        if (!inbounds(neighbour)) { continue; }
-        const auto neighbour_override = override.find(neighbour);
-        const bool neighbour_overridden = neighbour_override != override.end();
-        // if there's some non-memory terrain to show at the neighboring tile
-        const bool may_connect =
-            neighbour_overridden
-            || get_visibility(ch.visibility_cache[ch.idx(neighbour.x(), neighbour.y())],
-                              get_visibility_variables_cache())
-                   == VIS_CLEAR
-            ||
-            // or if an actual center tile is transparent or next to a memorized tile
-            (!overridden && (is_transparent || is_memorized(neighbour)));
-        if (may_connect) {
-            const ter_t& neighbour_terrain =
-                neighbour_overridden ? neighbour_override->second.obj() : ter(neighbour).obj();
-            if (neighbour_terrain.connects_to(connect_group)) { val += 1 << i; }
         }
+        if (known && match((replaced ? replacement->second : get(q)).obj())) { result |= 1 << i; }
     }
-
-    return val;
+    return result;
 }
+} // namespace
 
-
+auto map::get_known_connections(
+    const tripoint_bub_ms& p, int group, const std::map<tripoint_bub_ms, ter_id>& overrides) const
+    -> uint8_t {
+    ter_connection_groups groups;
+    if (group > TERCONN_NONE && group < static_cast<int>(groups.size())) { groups.set(group); }
+    return known_connections(
+        *this, access_cache(p.z()), p, overrides, [&](const auto& q) { return ter(q); },
+        [&](const auto& type) { return type.in_connect_groups(groups); });
+}
 auto map::get_known_connections_f(
-    const tripoint_bub_ms& p, int connect_group,
-    const std::map<tripoint_bub_ms, furn_id>& override) const -> uint8_t {
-    const level_cache& ch = access_cache(p.z());
-    if (!ch.inbounds(p.xy())) { return 0; }
-    uint8_t val = 0;
-    std::function<bool(const tripoint_bub_ms&)> is_memorized;
-    avatar& player_character = get_avatar();
-#ifdef TILES
-    if (use_tiles) {
-        is_memorized = [&](const tripoint_bub_ms& q) {
-            return !player_character.get_memorized_tile(map_local_to_abs(*this, q)).tile.empty();
-        };
-    } else {
-#endif
-        is_memorized = [&](const tripoint_bub_ms& q) {
-            return player_character.get_memorized_symbol(map_local_to_abs(*this, q));
-        };
-#ifdef TILES
-    }
-#endif
-
-    const bool overridden = override.contains(p);
-    const bool is_transparent =
-        ch.transparency_cache[ch.idx(p.x(), p.y())] > LIGHT_TRANSPARENCY_SOLID;
-
-    // populate connection information
-    for (int i = 0; i < 4; ++i) {
-        auto pt = p + offsets[i];
-        if (!inbounds(pt)) { continue; }
-        const auto neighbour_override = override.find(pt);
-        const bool neighbour_overridden = neighbour_override != override.end();
-        // if there's some non-memory terrain to show at the neighboring tile
-        const bool may_connect =
-            neighbour_overridden
-            || get_visibility(
-                   ch.visibility_cache[ch.idx(pt.x(), pt.y())], get_visibility_variables_cache())
-                   == visibility_type::VIS_CLEAR
-            ||
-            // or if an actual center tile is transparent or
-            // next to a memorized tile
-            (!overridden && (is_transparent || is_memorized(pt)));
-        if (may_connect) {
-            const furn_t& neighbour_furn =
-                neighbour_overridden ? neighbour_override->second.obj() : furn(pt).obj();
-            if (neighbour_furn.connects_to(connect_group)) { val += 1 << i; }
-        }
-    }
-
-    return val;
+    const tripoint_bub_ms& p, int group, const std::map<tripoint_bub_ms, furn_id>& overrides) const
+    -> uint8_t {
+    ter_connection_groups groups;
+    if (group > TERCONN_NONE && group < static_cast<int>(groups.size())) { groups.set(group); }
+    return known_connections(
+        *this, access_cache(p.z()), p, overrides, [&](const auto& q) { return furn(q); },
+        [&](const auto& type) { return type.in_connect_groups(groups); });
+}
+auto map::get_known_connections(
+    const tripoint_bub_ms& p, const ter_connection_groups& groups,
+    const std::map<tripoint_bub_ms, ter_id>& overrides) const -> uint8_t {
+    return known_connections(
+        *this, access_cache(p.z()), p, overrides, [&](const auto& q) { return ter(q); },
+        [&](const auto& type) { return type.in_connect_groups(groups); });
+}
+auto map::get_known_connections_f(
+    const tripoint_bub_ms& p, const ter_connection_groups& groups,
+    const std::map<tripoint_bub_ms, furn_id>& overrides) const -> uint8_t {
+    return known_connections(
+        *this, access_cache(p.z()), p, overrides, [&](const auto& q) { return furn(q); },
+        [&](const auto& type) { return type.in_connect_groups(groups); });
+}
+auto map::get_known_rotates_to(
+    const tripoint_bub_ms& p, const ter_connection_groups& groups,
+    const std::map<tripoint_bub_ms, ter_id>& overrides) const -> uint8_t {
+    return groups.none() ? CHAR_MAX : get_known_connections(p, groups, overrides);
+}
+auto map::get_known_rotates_to_f(
+    const tripoint_bub_ms& p, const ter_connection_groups& groups,
+    const std::map<tripoint_bub_ms, ter_id>& terrain_override,
+    const std::map<tripoint_bub_ms, furn_id>& furniture_override) const -> uint8_t {
+    return groups.none()
+             ? CHAR_MAX
+             : get_known_connections(p, groups, terrain_override)
+                   | get_known_connections_f(p, groups, furniture_override);
 }
 
 

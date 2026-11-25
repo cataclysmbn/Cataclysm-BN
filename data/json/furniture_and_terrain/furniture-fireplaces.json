@@ -20,7 +20,8 @@
       "items": [ { "item": "rock", "count": [ 15, 30 ] } ],
       "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
       "ranged": { "reduction": [ 100, 100 ], "destroy_threshold": 100, "block_unaimed_chance": "75%" }
-    }
+    },
+    "connects_to": [  ]
   },
   {
     "type": "furniture",
