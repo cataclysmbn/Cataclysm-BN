@@ -329,15 +329,24 @@ class unit_reader : generic_typed_reader<T>
 {
     private:
         const std::vector<std::pair<std::string, T>> &type_units;
+        const T legacy_scale;
     protected:
-        unit_reader( const std::vector<std::pair<std::string, T>> &type_units )
-            : type_units( type_units )
+        unit_reader( const std::vector<std::pair<std::string, T>> &type_units, const T legacy_scale = T{} )
+            : type_units( type_units ), legacy_scale( legacy_scale )
         {}
     public:
         bool operator()( const JsonObject &jo, const std::string &member_name,
                          T &member, bool /* was_loaded */ ) const {
             if( !jo.has_member( member_name ) ) {
                 return false;
+            }
+            if constexpr( requires { requires units::quantity_details<typename T::unit_type>::common_zero_point::value; } ) {
+                if( legacy_scale != T{} && jo.has_int( member_name ) ) {
+                    jo.show_warning( "Legacy unit values used, support will be removed eventually.", member_name,
+                                     true );
+                    member = jo.get_int( member_name ) * legacy_scale;
+                    return true;
+                }
             }
             member = read_from_json_string<T>( *jo.get_raw( member_name ), type_units );
             return true;
@@ -351,7 +360,7 @@ class volume_reader : public unit_reader<units::volume>
 {
     public:
         volume_reader()
-            : unit_reader( units::volume_units )
+            : unit_reader( units::volume_units, units::legacy_volume_factor )
         {}
 };
 
@@ -462,21 +471,6 @@ class string_id_reader : public generic_typed_reader<string_id_reader<T>>
             return string_id<T>( jin.get_string() );
         }
 };
-
-/**
- * Reads a volume value from legacy format: JSON contains a integer which represents multiples
- * of `units::legacy_volume_factor` (250 ml).
- */
-inline bool legacy_volume_reader( const JsonObject &jo, const std::string &member_name,
-                                  units::volume &value, bool )
-{
-    int legacy_value;
-    if( !jo.read( member_name, legacy_value ) ) {
-        return false;
-    }
-    value = legacy_value * units::legacy_volume_factor;
-    return true;
-}
 
 /**
  * Loads string_id from JSON
