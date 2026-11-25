@@ -1,0 +1,282 @@
+[
+  {
+    "//": "Variant data: CDDA 08e73660; physical properties inherit BN parts.",
+    "type": "vehicle_part",
+    "id": "board",
+    "copy-from": "board_horizontal",
+    "variants": [
+      { "id": "horizontal", "label": "Horizontal", "symbols": "──│───│─", "symbols_broken": "#" },
+      {
+        "id": "horizontal_2",
+        "label": "Thick Horizontal",
+        "symbols": "━━┃━━━┃━",
+        "symbols_broken": "#"
+      },
+      { "id": "vertical", "label": "Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
+      { "id": "vertical_2", "label": "Thick Vertical", "symbols": "┃┃━┃┃┃━┃", "symbols_broken": "#" },
+      { "id": "ne", "label": "Front Right", "symbols": "┐┐┌└└└┘┐", "symbols_broken": "#" },
+      { "id": "nw", "label": "Front Left", "symbols": "┌┌└┘┘┘┐┌", "symbols_broken": "#" },
+      { "id": "se", "label": "Rear Right", "symbols": "┘┘┐┌┌┌└┘", "symbols_broken": "#" },
+      { "id": "sw", "label": "Rear Left", "symbols": "└└┘┐┐┐┌└", "symbols_broken": "#" },
+      { "id": "cross", "label": "Cross", "symbols": "┼X┼X┼X┼X", "symbols_broken": "#" },
+      { "id": "cover", "label": "Cover", "symbols": "^^<vvv>^", "symbols_broken": "#" },
+      { "id": "cover_left", "label": "Cover Left", "symbols": "──│───│─", "symbols_broken": "#" },
+      { "id": "cover_right", "label": "Cover Right", "symbols": "──│───│─", "symbols_broken": "#" },
+      {
+        "id": "horizontal_front",
+        "label": "Front Horizontal",
+        "symbols": "──│───│─",
+        "symbols_broken": "#"
+      },
+      {
+        "id": "hatch_wheel_left",
+        "label": "Hatchback Wheel Left",
+        "symbols": "└└┘┐┐┐┌└",
+        "symbols_broken": "#"
+      },
+      {
+        "id": "hatch_wheel_right",
+        "label": "Hatchback Wheel Right",
+        "symbols": "┘┘┐┌┌┌└┘",
+        "symbols_broken": "#"
+      },
+      {
+        "id": "horizontal_rear",
+        "label": "Rear Horizontal",
+        "symbols": "──│───│─",
+        "symbols_broken": "#"
+      },
+      {
+        "id": "horizontal_2_front",
+        "label": "Front Thick Horizontal",
+        "symbols": "━━┃━━━┃━",
+        "symbols_broken": "#"
+      },
+      {
+        "id": "horizontal_2_rear",
+        "label": "Rear Thick Horizontal",
+        "symbols": "━━┃━━━┃━",
+        "symbols_broken": "#"
+      },
+      { "id": "nw_edge", "label": "Front Left Corner", "symbols": "┌┌└┘┘┘┐┌", "symbols_broken": "#" },
+      { "id": "ne_edge", "label": "Front Right Corner", "symbols": "┐┐┌└└└┘┐", "symbols_broken": "#" },
+      { "id": "vertical_left", "label": "Left Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
+      { "id": "vertical_right", "label": "Right Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
+      { "id": "vertical_T_left", "label": "Left T Joint", "symbols": "[\\-/[\\-/", "symbols_broken": "#" },
+      { "id": "vertical_T_right", "label": "Right T Joint", "symbols": "]\\-/]\\-/", "symbols_broken": "#" },
+      {
+        "id": "vertical_2_left",
+        "label": "Left Thick Vertical",
+        "symbols": "┃┃━┃┃┃━┃",
+        "symbols_broken": "#"
+      },
+      {
+        "id": "vertical_2_right",
+        "label": "Right Thick Vertical",
+        "symbols": "┃┃━┃┃┃━┃",
+        "symbols_broken": "#"
+      },
+      { "id": "wheel_left", "label": "Wheel Left", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
+      { "id": "wheel_right", "label": "Wheel Right", "symbols": "│\\─/│\\─/", "symbols_broken": "#" }
+    ],
+    "variant_default": ""
+  },
+  {
+    "type": "vehicle_part",
+    "id": "halfboard",
+    "copy-from": "halfboard_horizontal",
+    "variants": [
+      { "id": "horizontal", "label": "Horizontal", "symbols": "──│───│─", "symbols_broken": "#" },
+      {
+        "id": "horizontal_2",
+        "label": "Thick Horizontal",
+        "symbols": "━━┃━━━┃━",
+        "symbols_broken": "#"
+      },
+      { "id": "vertical", "label": "Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
+      { "id": "vertical_2", "label": "Thick Vertical", "symbols": "┃┃━┃┃┃━┃", "symbols_broken": "#" },
+      { "id": "ne", "label": "Front Right", "symbols": "┐┐┌└└└┘┐", "symbols_broken": "#" },
+      { "id": "nw", "label": "Front Left", "symbols": "┌┌└┘┘┘┐┌", "symbols_broken": "#" },
+      { "id": "se", "label": "Rear Right", "symbols": "┘┘┐┌┌┌└┘", "symbols_broken": "#" },
+      { "id": "sw", "label": "Rear Left", "symbols": "└└┘┐┐┐┌└", "symbols_broken": "#" },
+      { "id": "cross", "label": "Cross", "symbols": "┼X┼X┼X┼X", "symbols_broken": "#" },
+      { "id": "cover", "label": "Cover", "symbols": "^^<vvv>^", "symbols_broken": "#" },
+      { "id": "cover_left", "label": "Cover Left", "symbols": "──│───│─", "symbols_broken": "#" },
+      { "id": "cover_right", "label": "Cover Right", "symbols": "──│───│─", "symbols_broken": "#" },
+      {
+        "id": "horizontal_front",
+        "label": "Front Horizontal",
+        "symbols": "──│───│─",
+        "symbols_broken": "#"
+      },
+      {
+        "id": "hatch_wheel_left",
+        "label": "Hatchback Wheel Left",
+        "symbols": "└└┘┐┐┐┌└",
+        "symbols_broken": "#"
+      },
+      {
+        "id": "hatch_wheel_right",
+        "label": "Hatchback Wheel Right",
+        "symbols": "┘┘┐┌┌┌└┘",
+        "symbols_broken": "#"
+      },
+      {
+        "id": "horizontal_rear",
+        "label": "Rear Horizontal",
+        "symbols": "──│───│─",
+        "symbols_broken": "#"
+      },
+      {
+        "id": "horizontal_2_front",
+        "label": "Front Thick Horizontal",
+        "symbols": "━━┃━━━┃━",
+        "symbols_broken": "#"
+      },
+      {
+        "id": "horizontal_2_rear",
+        "label": "Rear Thick Horizontal",
+        "symbols": "━━┃━━━┃━",
+        "symbols_broken": "#"
+      },
+      { "id": "nw_edge", "label": "Front Left Corner", "symbols": "┌┌└┘┘┘┐┌", "symbols_broken": "#" },
+      { "id": "ne_edge", "label": "Front Right Corner", "symbols": "┐┐┌└└└┘┐", "symbols_broken": "#" },
+      { "id": "vertical_left", "label": "Left Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
+      { "id": "vertical_right", "label": "Right Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
+      { "id": "vertical_T_left", "label": "Left T Joint", "symbols": "[\\-/[\\-/", "symbols_broken": "#" },
+      { "id": "vertical_T_right", "label": "Right T Joint", "symbols": "]\\-/]\\-/", "symbols_broken": "#" },
+      {
+        "id": "vertical_2_left",
+        "label": "Left Thick Vertical",
+        "symbols": "┃┃━┃┃┃━┃",
+        "symbols_broken": "#"
+      },
+      {
+        "id": "vertical_2_right",
+        "label": "Right Thick Vertical",
+        "symbols": "┃┃━┃┃┃━┃",
+        "symbols_broken": "#"
+      },
+      { "id": "wheel_left", "label": "Wheel Left", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
+      { "id": "wheel_right", "label": "Wheel Right", "symbols": "│\\─/│\\─/", "symbols_broken": "#" }
+    ],
+    "variant_default": ""
+  },
+  {
+    "type": "vehicle_part",
+    "id": "clothboard",
+    "copy-from": "clothboard",
+    "looks_like": "clothboard_vertical",
+    "symbol": "j",
+    "broken_symbol": "#",
+    "variant_default": ""
+  },
+  {
+    "type": "vehicle_part",
+    "id": "frame",
+    "copy-from": "frame",
+    "looks_like": "frame_vertical",
+    "symbol": "j",
+    "broken_symbol": "#",
+    "variant_default": ""
+  },
+  {
+    "type": "vehicle_part",
+    "id": "frame_wood",
+    "copy-from": "frame_wood",
+    "looks_like": "frame_wood_vertical",
+    "symbol": "j",
+    "broken_symbol": "#",
+    "variant_default": ""
+  },
+  {
+    "type": "vehicle_part",
+    "id": "frame_wood_light",
+    "copy-from": "frame_wood_light",
+    "looks_like": "frame_wood_light_vertical",
+    "symbol": "j",
+    "broken_symbol": "#",
+    "variant_default": ""
+  },
+  {
+    "type": "vehicle_part",
+    "id": "hdboard",
+    "copy-from": "hdboard",
+    "looks_like": "hdboard_vertical",
+    "symbol": "j",
+    "broken_symbol": "#",
+    "variant_default": ""
+  },
+  {
+    "type": "vehicle_part",
+    "id": "hdframe",
+    "copy-from": "hdframe",
+    "looks_like": "hdframe_vertical",
+    "symbol": "j",
+    "broken_symbol": "#",
+    "variant_default": ""
+  },
+  {
+    "type": "vehicle_part",
+    "id": "hdhalfboard",
+    "copy-from": "hdhalfboard",
+    "looks_like": "hdhalfboard_vertical",
+    "symbol": "j",
+    "broken_symbol": "#",
+    "variant_default": ""
+  },
+  {
+    "type": "vehicle_part",
+    "id": "hdstowboard",
+    "copy-from": "hdstowboard",
+    "looks_like": "hdstowboard_vertical",
+    "symbol": "j",
+    "broken_symbol": "#",
+    "variant_default": ""
+  },
+  {
+    "type": "vehicle_part",
+    "id": "stowboard",
+    "copy-from": "stowboard",
+    "looks_like": "stowboard_vertical",
+    "symbol": "j",
+    "broken_symbol": "#",
+    "variant_default": ""
+  },
+  {
+    "type": "vehicle_part",
+    "id": "woodboard",
+    "copy-from": "woodboard",
+    "looks_like": "woodboard_vertical",
+    "symbol": "j",
+    "broken_symbol": "#",
+    "variant_default": ""
+  },
+  {
+    "type": "vehicle_part",
+    "id": "woodhalfboard",
+    "copy-from": "woodhalfboard",
+    "looks_like": "woodhalfboard_vertical",
+    "symbol": "j",
+    "broken_symbol": "#",
+    "variant_default": ""
+  },
+  {
+    "type": "vehicle_part",
+    "id": "xlframe",
+    "copy-from": "xlframe",
+    "looks_like": "xlframe_vertical",
+    "symbol": "j",
+    "broken_symbol": "#",
+    "variant_default": ""
+  },
+  {
+    "type": "vehicle_part",
+    "id": "xlhalfboard",
+    "copy-from": "xlhalfboard",
+    "looks_like": "halfboard",
+    "symbol": "j",
+    "broken_symbol": "#",
+    "variant_default": ""
+  }
+]

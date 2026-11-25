@@ -12,7 +12,14 @@
       "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
       "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
     },
-    "flags": [ "PROTRUSION", "OBSTACLE" ]
+    "flags": [ "PROTRUSION", "OBSTACLE" ],
+    "variants": [
+      { "id": "front", "label": "Front", "symbols": "^^<vvv>^", "symbols_broken": "*" },
+      { "id": "rear", "label": "Rear", "symbols": "vv>^^^<v", "symbols_broken": "*" },
+      { "id": "left", "label": "Left", "symbols": "<<v>>>^<", "symbols_broken": "*" },
+      { "id": "right", "label": "Right", "symbols": ">>^<<<v>", "symbols_broken": "*" }
+    ],
+    "variant_default": ""
   },
   {
     "id": "ram_alloy",
@@ -32,7 +39,8 @@
       }
     },
     "extend": { "flags": [ "SHOCK_IMMUNE" ] },
-    "damage_reduction": { "all": 156 }
+    "damage_reduction": { "all": 156 },
+    "variant_default": ""
   },
   {
     "id": "ram_carbon",
@@ -46,7 +54,9 @@
     "breaks_into": "ig_vp_carbon",
     "requirements": { "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "vehicle_repair_carbon", 2 ] ] } },
     "extend": { "flags": [ "SHOCK_RESISTANT" ] },
-    "damage_reduction": { "all": 156, "cut": 130, "stab": 104, "bullet": 182 }
+    "damage_reduction": { "all": 156, "cut": 130, "stab": 104, "bullet": 182 },
+    "variants": [  ],
+    "variants_bases": [  ]
   },
   {
     "id": "ram_hardsteel",
@@ -68,7 +78,8 @@
       "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
       "repair": { "skills": [ [ "mechanics", 5 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
     },
-    "damage_reduction": { "all": 200 }
+    "damage_reduction": { "all": 200 },
+    "variant_default": ""
   },
   {
     "id": "ram_military_horizontal",
@@ -91,7 +102,9 @@
       "removal": { "skills": [ [ "mechanics", 4 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
       "repair": { "skills": [ [ "mechanics", 7 ] ], "time": "60 m", "using": [ [ "welding_standard", 10 ], [ "steel_standard", 1 ] ] }
     },
-    "damage_reduction": { "all": 180, "cut": 280, "stab": 210, "bullet": 280 }
+    "damage_reduction": { "all": 180, "cut": 280, "stab": 210, "bullet": 280 },
+    "variants": [  ],
+    "variants_bases": [  ]
   },
   {
     "id": "ram_spiked",
@@ -114,7 +127,8 @@
       "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
       "repair": { "skills": [ [ "mechanics", 4 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
     },
-    "damage_reduction": { "all": 148 }
+    "damage_reduction": { "all": 148 },
+    "variant_default": ""
   },
   {
     "id": "ram_steel",
@@ -126,7 +140,8 @@
     "broken_color": "light_cyan",
     "durability": 650,
     "breaks_into": "ig_vp_steel_plate",
-    "damage_reduction": { "all": 156 }
+    "damage_reduction": { "all": 156 },
+    "variant_default": ""
   },
   {
     "id": "ram_wood",
@@ -147,7 +162,8 @@
         "using": [ [ "nail_any_adhesive", 2 ], [ "wood_structural_small", 1 ] ]
       }
     },
-    "damage_reduction": { "all": 75 }
+    "damage_reduction": { "all": 75 },
+    "variant_default": ""
   },
   {
     "id": "ram_chitin",
@@ -164,7 +180,8 @@
       "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "rope_natural", 1 ] ] },
       "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "adhesive", 1 ], [ "armor_chitin", 3 ] ] }
     },
-    "damage_reduction": { "all": 80 }
+    "damage_reduction": { "all": 80 },
+    "variant_default": ""
   },
   {
     "id": "ram_bone",
@@ -181,7 +198,9 @@
       "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "rope_natural", 1 ] ] },
       "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "adhesive", 1 ], [ "bone_sturdy", 3 ] ] }
     },
-    "damage_reduction": { "all": 75 }
+    "damage_reduction": { "all": 75 },
+    "variants": [  ],
+    "variants_bases": [  ]
   },
   {
     "id": "ram_acidchitin",
@@ -194,7 +213,8 @@
     "requirements": {
       "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "adhesive", 1 ], [ "armor_acidchitin", 3 ] ] }
     },
-    "damage_reduction": { "all": 110 }
+    "damage_reduction": { "all": 110 },
+    "variant_default": ""
   },
   {
     "id": "ram_mattress",
@@ -218,7 +238,9 @@
       }
     },
     "damage_reduction": { "bash": 20 },
-    "flags": [ "PROTRUSION", "OBSTACLE", "OPAQUE", "SHOCK_IMMUNE" ]
+    "flags": [ "PROTRUSION", "OBSTACLE", "OPAQUE", "SHOCK_IMMUNE" ],
+    "variants": [  ],
+    "variants_bases": [  ]
   },
   {
     "id": "tearer",

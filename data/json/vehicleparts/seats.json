@@ -253,31 +253,85 @@
     "copy-from": "seat_abstract",
     "id": "seat",
     "symbol": "#",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "variants": [
+      { "id": "front", "label": "Front", "symbols": "#", "symbols_broken": "*" },
+      { "id": "vertical", "label": "Vertical", "symbols": "#", "symbols_broken": "*" },
+      { "id": "vertical_left", "label": "Left Vertical", "symbols": "#", "symbols_broken": "*" },
+      { "id": "vertical_right", "label": "Right Vertical", "symbols": "#", "symbols_broken": "*" },
+      { "id": "left", "label": "Left", "symbols": "#", "symbols_broken": "*" },
+      { "id": "right", "label": "Right", "symbols": "#", "symbols_broken": "*" },
+      { "id": "rear", "label": "Rear", "symbols": "#", "symbols_broken": "*" }
+    ],
+    "variants_bases": [
+      { "id": "windshield", "label": "Windshield" },
+      { "id": "swivel_chair", "label": "Swivel Chair" },
+      { "id": "back", "label": "Back" }
+    ],
+    "variant_default": ""
   },
   {
     "copy-from": "seat_leather_abstract",
     "id": "seat_leather",
     "symbol": "#",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "variants": [
+      { "id": "front", "label": "Front", "symbols": "#", "symbols_broken": "*" },
+      { "id": "vertical", "label": "Vertical", "symbols": "#", "symbols_broken": "*" },
+      { "id": "vertical_left", "label": "Left Vertical", "symbols": "#", "symbols_broken": "*" },
+      { "id": "vertical_right", "label": "Right Vertical", "symbols": "#", "symbols_broken": "*" },
+      { "id": "left", "label": "Left", "symbols": "#", "symbols_broken": "*" },
+      { "id": "right", "label": "Right", "symbols": "#", "symbols_broken": "*" },
+      { "id": "rear", "label": "Rear", "symbols": "#", "symbols_broken": "*" }
+    ],
+    "variants_bases": [ { "id": "windshield", "label": "Windshield" } ],
+    "variant_default": ""
   },
   {
     "copy-from": "reclining_seat_abstract",
     "id": "reclining_seat",
     "symbol": "#",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "variants": [
+      { "id": "front", "label": "Front", "symbols": "#", "symbols_broken": "*" },
+      { "id": "vertical", "label": "Vertical", "symbols": "#", "symbols_broken": "*" },
+      { "id": "vertical_left", "label": "Left Vertical", "symbols": "#", "symbols_broken": "*" },
+      { "id": "vertical_right", "label": "Right Vertical", "symbols": "#", "symbols_broken": "*" },
+      { "id": "left", "label": "Left", "symbols": "#", "symbols_broken": "*" },
+      { "id": "right", "label": "Right", "symbols": "#", "symbols_broken": "*" },
+      { "id": "rear", "label": "Rear", "symbols": "#", "symbols_broken": "*" }
+    ],
+    "variants_bases": [ { "id": "windshield", "label": "Windshield" } ],
+    "variant_default": ""
   },
   {
     "copy-from": "reclining_seat_leather_abstract",
     "id": "reclining_seat_leather",
     "symbol": "#",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "variants": [
+      { "id": "front", "label": "Front", "symbols": "#", "symbols_broken": "*" },
+      { "id": "vertical", "label": "Vertical", "symbols": "#", "symbols_broken": "*" },
+      { "id": "vertical_left", "label": "Left Vertical", "symbols": "#", "symbols_broken": "*" },
+      { "id": "vertical_right", "label": "Right Vertical", "symbols": "#", "symbols_broken": "*" },
+      { "id": "left", "label": "Left", "symbols": "#", "symbols_broken": "*" },
+      { "id": "right", "label": "Right", "symbols": "#", "symbols_broken": "*" },
+      { "id": "rear", "label": "Rear", "symbols": "#", "symbols_broken": "*" }
+    ],
+    "variants_bases": [ { "id": "windshield", "label": "Windshield" } ],
+    "variant_default": ""
   },
   {
     "copy-from": "saddle_abstract",
     "id": "saddle",
     "symbol": "#",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "variants": [
+      { "id": "pedal", "label": "Pedals", "symbols": "#", "symbols_broken": "*" },
+      { "id": "motor", "label": "Motorcycle", "symbols": "#", "symbols_broken": "*" },
+      { "id": "scooter", "label": "Scooter", "symbols": "#", "symbols_broken": "*" }
+    ],
+    "variant_default": ""
   },
   {
     "copy-from": "saddle_abstract",

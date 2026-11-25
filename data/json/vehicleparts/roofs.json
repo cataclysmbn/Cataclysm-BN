@@ -21,7 +21,8 @@
       }
     },
     "flags": [ "ROOF", "FOLDABLE", "SHOCK_IMMUNE" ],
-    "breaks_into": "ig_vp_cloth"
+    "breaks_into": "ig_vp_cloth",
+    "variants": [ { "symbols": "#", "symbols_broken": "#" } ]
   },
   {
     "type": "vehicle_part",
@@ -46,7 +47,8 @@
     },
     "flags": [ "ROOF" ],
     "breaks_into": "ig_vp_sheet_metal",
-    "damage_reduction": { "all": 28 }
+    "damage_reduction": { "all": 28 },
+    "variants": [ { "symbols": "#", "symbols_broken": "#" } ]
   },
   {
     "type": "vehicle_part",
@@ -67,7 +69,8 @@
     },
     "flags": [ "ROOF", "SHOCK_RESISTANT" ],
     "breaks_into": "ig_vp_steel_plate",
-    "damage_reduction": { "all": 75 }
+    "damage_reduction": { "all": 75 },
+    "variants": [ { "symbols": "#", "symbols_broken": "#" } ]
   },
   {
     "copy-from": "hdroof",
@@ -129,6 +132,7 @@
     },
     "flags": [ "ROOF" ],
     "breaks_into": [ { "item": "splinter", "count": [ 7, 9 ] } ],
-    "damage_reduction": { "all": 16 }
+    "damage_reduction": { "all": 16 },
+    "variants": [ { "symbols": "#", "symbols_broken": "#" } ]
   }
 ]

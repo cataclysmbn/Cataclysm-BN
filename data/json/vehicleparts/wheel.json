@@ -295,7 +295,12 @@
     "id": "wheel_bicycle",
     "looks_like": "wheel",
     "symbol": "|",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "variants": [
+      { "id": "front", "label": "Front", "symbols": "|\\-/|\\-/", "symbols_broken": "x" },
+      { "id": "rear", "label": "Rear", "symbols": "|\\-/|\\-/", "symbols_broken": "x" }
+    ],
+    "variant_default": ""
   },
   {
     "copy-from": "wheel_bicycle_abstract",
@@ -307,11 +312,17 @@
   {
     "id": "wheel_bicycle_or",
     "copy-from": "wheel_bicycle_abstract",
+    "looks_like": "wheel_bicycle",
     "type": "vehicle_part",
     "name": { "str": "off-road bicycle wheel" },
     "item": "wheel_bicycle_or",
     "contact_area": 36,
-    "wheel_type": "off-road"
+    "wheel_type": "off-road",
+    "variants": [
+      { "id": "front", "label": "Front", "symbols": "|\\-/|\\-/", "symbols_broken": "x" },
+      { "id": "rear", "label": "Rear", "symbols": "|\\-/|\\-/", "symbols_broken": "x" }
+    ],
+    "variant_default": ""
   },
   {
     "id": "wheel_bicycle_or_rear",
@@ -463,7 +474,12 @@
     "id": "wheel_motorbike",
     "looks_like": "wheel",
     "symbol": "o",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "variants": [
+      { "id": "front", "label": "Front", "symbols": "o", "symbols_broken": "x" },
+      { "id": "rear", "label": "Rear", "symbols": "o", "symbols_broken": "x" }
+    ],
+    "variant_default": ""
   },
   {
     "copy-from": "wheel_motorbike_abstract",
@@ -480,7 +496,12 @@
     "item": "wheel_motorbike_or",
     "contact_area": 60,
     "wheel_type": "off-road",
-    "damage_reduction": { "bash": 10, "cut": 8, "stab": 4 }
+    "damage_reduction": { "bash": 10, "cut": 8, "stab": 4 },
+    "variants": [
+      { "id": "front", "label": "Front", "symbols": "o", "symbols_broken": "x" },
+      { "id": "rear", "label": "Rear", "symbols": "o", "symbols_broken": "x" }
+    ],
+    "variant_default": ""
   },
   {
     "id": "wheel_motorbike_or_rear",
@@ -519,7 +540,13 @@
       "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "15 m", "qualities": [ { "id": "WRENCH", "level": 1 } ] },
       "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "15 m", "using": [ [ "adhesive", 1 ], [ "tire_repair", 1 ] ] }
     },
-    "flags": [ "WHEEL", "FOLDABLE", "NEEDS_WHEEL_MOUNT_LIGHT", "SHOCK_RESISTANT" ]
+    "flags": [ "WHEEL", "FOLDABLE", "NEEDS_WHEEL_MOUNT_LIGHT", "SHOCK_RESISTANT" ],
+    "variants": [
+      { "id": "front", "label": "Front", "symbols": "o", "symbols_broken": "x" },
+      { "id": "rear", "label": "Rear", "symbols": "o", "symbols_broken": "x" }
+    ],
+    "variants_bases": [ { "id": "scooter", "label": "Scooter" } ],
+    "variant_default": ""
   },
   {
     "id": "wheel_tricycle",

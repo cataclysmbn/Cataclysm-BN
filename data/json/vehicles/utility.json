@@ -9,42 +9,38 @@
       [ "o--o" ]
     ],
     "parts": [
-      { "x": -1, "y": 1, "parts": [ "frame_vertical", "board_vertical" ] },
-      { "x": -1, "y": -1, "parts": [ "frame_vertical", "board_vertical" ] },
-      { "x": 1, "y": 0, "parts": [ "frame_horizontal", "board_horizontal", "headlight", "omnicam" ] },
-      { "x": 1, "y": 1, "parts": [ "frame_horizontal", "wheel_mount_medium_steerable", "wheel", "board_ne" ] },
-      { "x": -2, "y": 0, "parts": [ "frame_horizontal", "hatch" ] },
-      {
-        "x": 0,
-        "y": 0,
-        "parts": [ "frame_vertical_2", "robot_controls", "vehicle_alarm", "engine_electric", "roof" ]
-      },
-      { "x": -1, "y": 0, "parts": [ "frame_vertical_2", "roof", "vehicle_scoop" ] },
+      { "x": -1, "y": 1, "parts": [ "frame#vertical_right", "board#vertical_right" ] },
+      { "x": -1, "y": -1, "parts": [ "frame#vertical_left", "board#vertical_left" ] },
+      { "x": 1, "y": 0, "parts": [ "frame#horizontal_front", "board#horizontal_front", "headlight", "omnicam" ] },
+      { "x": 1, "y": 1, "parts": [ "frame#ne", "wheel_mount_medium_steerable", "wheel", "board#ne" ] },
+      { "x": -2, "y": 0, "parts": [ "frame#horizontal_rear", "hatch#horizontal_rear" ] },
+      { "x": 0, "y": 0, "parts": [ "frame#cross", "robot_controls", "vehicle_alarm", "engine_electric", "roof" ] },
+      { "x": -1, "y": 0, "parts": [ "frame#cross", "roof", "vehicle_scoop" ] },
       {
         "x": -2,
         "y": 1,
         "parts": [
-          "frame_horizontal",
+          "frame#se",
           "wheel_mount_medium_steerable",
           "wheel",
           "storage_battery_mount",
           "storage_battery_removable",
-          "board_se"
+          "board#se"
         ]
       },
-      { "x": 0, "y": 1, "parts": [ "frame_vertical", "board_vertical" ] },
-      { "x": 0, "y": -1, "parts": [ "frame_vertical", "board_vertical" ] },
-      { "x": 1, "y": -1, "parts": [ "frame_horizontal", "wheel_mount_medium_steerable", "wheel", "board_nw" ] },
+      { "x": 0, "y": 1, "parts": [ "frame#vertical_right", "board#vertical_right" ] },
+      { "x": 0, "y": -1, "parts": [ "frame#vertical_left", "board#vertical_left" ] },
+      { "x": 1, "y": -1, "parts": [ "frame#nw", "wheel_mount_medium_steerable", "wheel", "board#nw" ] },
       {
         "x": -2,
         "y": -1,
         "parts": [
-          "frame_horizontal",
+          "frame#sw",
           "wheel_mount_medium_steerable",
           "wheel",
           "storage_battery_mount",
           "storage_battery_removable",
-          "board_sw"
+          "board#sw"
         ]
       }
     ],
@@ -70,34 +66,34 @@
         "y": 0,
         "parts": [ "hdframe_cross", "seat", "seatbelt", "roof", "controls", "dashboard", "vehicle_alarm", "floodlight", "horn_big" ]
       },
-      { "x": 1, "y": 0, "parts": [ "hdframe_horizontal", "windshield_horizontal_front" ] },
-      { "x": 1, "y": -1, "parts": [ "hdframe_nw", "windshield_nw_edge", "tread1" ] },
-      { "x": 1, "y": 2, "parts": [ "hdframe_ne", "halfboard_vertical_right", "tread1" ] },
-      { "x": 0, "y": 1, "parts": [ "hdframe_cross", "board_horizontal_front" ] },
-      { "x": 0, "y": 2, "parts": [ "hdframe_vertical", "halfboard_vertical_right", "tread1" ] },
-      { "x": 1, "y": 1, "part": "hdframe_vertical" },
-      { "x": 2, "y": 1, "part": "hdframe_vertical" },
+      { "x": 1, "y": 0, "parts": [ "hdframe#horizontal", "windshield#horizontal_front" ] },
+      { "x": 1, "y": -1, "parts": [ "hdframe#nw", "windshield#nw_edge", "tread1" ] },
+      { "x": 1, "y": 2, "parts": [ "hdframe#ne", "halfboard#vertical_right", "tread1" ] },
+      { "x": 0, "y": 1, "parts": [ "hdframe_cross", "board#horizontal_front" ] },
+      { "x": 0, "y": 2, "parts": [ "hdframe#vertical", "halfboard#vertical_right", "tread1" ] },
+      { "x": 1, "y": 1, "part": "hdframe#vertical" },
+      { "x": 2, "y": 1, "part": "hdframe#vertical" },
       { "x": 3, "y": 1, "part": "rockwheel" },
-      { "x": 0, "y": -1, "parts": [ "hdframe_vertical", "door", "tread1" ] },
-      { "x": -1, "y": -1, "parts": [ "hdframe_vertical", "halfboard_vertical_left", "tread1" ] },
-      { "x": -1, "y": 2, "parts": [ "hdframe_vertical", "halfboard_vertical_right", "tread1" ] },
-      { "x": -1, "y": 0, "parts": [ "hdframe_cross", "halfboard_horizontal", { "part": "tank", "fuel": "diesel" } ] },
+      { "x": 0, "y": -1, "parts": [ "hdframe#vertical", "door", "tread1" ] },
+      { "x": -1, "y": -1, "parts": [ "hdframe#vertical", "halfboard#vertical_left", "tread1" ] },
+      { "x": -1, "y": 2, "parts": [ "hdframe#vertical", "halfboard#vertical_right", "tread1" ] },
+      { "x": -1, "y": 0, "parts": [ "hdframe_cross", "halfboard#horizontal", { "part": "tank", "fuel": "diesel" } ] },
       {
         "x": -1,
         "y": 1,
         "parts": [
           "hdframe_cross",
-          "halfboard_cover",
+          "halfboard#cover",
           "battery_car",
           "diesel_engine_i6",
           "alternator_truck",
           { "part": "tank", "fuel": "diesel" }
         ]
       },
-      { "x": -2, "y": 2, "parts": [ "hdframe_se", "halfboard_se", "tread1" ] },
-      { "x": -2, "y": -1, "parts": [ "hdframe_sw", "halfboard_sw", "tread1" ] },
-      { "x": -2, "y": 0, "parts": [ "hdframe_horizontal", "halfboard_horizontal_rear" ] },
-      { "x": -2, "y": 1, "parts": [ "hdframe_horizontal", "halfboard_horizontal_rear", "beeper" ] }
+      { "x": -2, "y": 2, "parts": [ "hdframe#se", "halfboard#se", "tread1" ] },
+      { "x": -2, "y": -1, "parts": [ "hdframe#sw", "halfboard#sw", "tread1" ] },
+      { "x": -2, "y": 0, "parts": [ "hdframe#horizontal", "halfboard#horizontal_rear" ] },
+      { "x": -2, "y": 1, "parts": [ "hdframe#horizontal", "halfboard#horizontal_rear", "beeper" ] }
     ],
     "items": [  ]
   },
@@ -112,9 +108,9 @@
         "x": 1,
         "y": 0,
         "parts": [
-          "frame_cover",
+          "frame#cover",
           { "part": "tank_small", "fuel": "gasoline" },
-          "stowboard_vertical",
+          "stowboard#vertical",
           "controls_electronic",
           "wheel_mount_light",
           "wheel_small"
@@ -123,7 +119,7 @@
       {
         "x": 0,
         "y": 0,
-        "parts": [ "frame_cover", "small_storage_battery", "engine_vtwin", "generator_7500w", "wheel_mount_light", "wheel_small" ]
+        "parts": [ "frame#cover", "small_storage_battery", "engine_vtwin", "generator_7500w", "wheel_mount_light", "wheel_small" ]
       }
     ],
     "items": [
@@ -145,52 +141,52 @@
     ],
     "color_palette": "construction_standard",
     "parts": [
-      { "x": -3, "y": 1, "parts": [ "frame_horizontal", "roller_drum" ] },
-      { "x": -1, "y": 1, "parts": [ "frame_horizontal", "windshield", "roof" ] },
-      { "x": 2, "y": 2, "parts": [ "frame_horizontal", "roller_drum" ] },
-      { "x": 0, "y": 2, "parts": [ "frame_horizontal", "door", "roof" ] },
-      { "x": 2, "y": -1, "parts": [ "frame_horizontal", "roller_drum" ] },
-      { "x": -1, "y": -1, "parts": [ "frame_horizontal", "windshield", "roof" ] },
-      { "x": -2, "y": 2, "parts": [ "frame_horizontal", "halfboard_horizontal" ] },
+      { "x": -3, "y": 1, "parts": [ "frame#horizontal_rear", "roller_drum" ] },
+      { "x": -1, "y": 1, "parts": [ "frame#cross", "windshield#horizontal_rear", "roof" ] },
+      { "x": 2, "y": 2, "parts": [ "frame#ne", "roller_drum" ] },
+      { "x": 0, "y": 2, "parts": [ "frame#vertical_T_right", "door#front_right", "roof" ] },
+      { "x": 2, "y": -1, "parts": [ "frame#horizontal_front", "roller_drum" ] },
+      { "x": -1, "y": -1, "parts": [ "frame#cross", "windshield#horizontal_rear", "roof" ] },
+      { "x": -2, "y": 2, "parts": [ "frame#vertical_T_right", "halfboard#se" ] },
       {
         "x": 1,
         "y": 0,
-        "parts": [ "frame_horizontal", "windshield", "roof", "diesel_engine_i6", "alternator_truck", "battery_car" ]
+        "parts": [ "frame#vertical", "windshield#horizontal_front", "roof", "diesel_engine_i6", "alternator_truck", "battery_car" ]
       },
-      { "x": -3, "y": 2, "parts": [ "frame_horizontal", "roller_drum" ] },
-      { "x": 0, "y": -2, "parts": [ "frame_horizontal", "door", "roof" ] },
-      { "x": 1, "y": -2, "parts": [ "frame_horizontal", "windshield", "roof" ] },
+      { "x": -3, "y": 2, "parts": [ "frame#se", "roller_drum" ] },
+      { "x": 0, "y": -2, "parts": [ "frame#vertical_T_left", "door#nw", "roof" ] },
+      { "x": 1, "y": -2, "parts": [ "frame#vertical_left", "windshield#nw", "roof" ] },
       {
         "x": -1,
         "y": -2,
-        "parts": [ "frame_horizontal", "roof", "halfboard_horizontal", { "part": "tank", "fuel": "diesel" } ]
+        "parts": [ "frame#vertical_left", "roof", "halfboard#vertical_left", { "part": "tank", "fuel": "diesel" } ]
       },
-      { "x": 1, "y": 1, "parts": [ "frame_horizontal", "windshield", "roof", "headlight" ] },
-      { "x": -3, "y": 0, "parts": [ "frame_horizontal", "roller_drum" ] },
-      { "x": -2, "y": 0, "parts": [ "frame_horizontal", "trunk" ] },
+      { "x": 1, "y": 1, "parts": [ "frame#vertical", "windshield#horizontal_front", "roof", "headlight" ] },
+      { "x": -3, "y": 0, "parts": [ "frame#horizontal_rear", "roller_drum" ] },
+      { "x": -2, "y": 0, "parts": [ "frame#horizontal", "trunk" ] },
       {
         "x": 0,
         "y": 0,
-        "parts": [ "frame_horizontal", "roof", "seat", "seatbelt", "controls", "dashboard", "vehicle_alarm", "horn_car" ]
+        "parts": [ "frame#cross", "roof", "seat#front", "seatbelt", "controls", "dashboard", "vehicle_alarm", "horn_car" ]
       },
-      { "x": 2, "y": 0, "parts": [ "frame_horizontal", "roller_drum" ] },
-      { "x": -2, "y": -2, "parts": [ "frame_horizontal", "halfboard_horizontal" ] },
-      { "x": -1, "y": 0, "parts": [ "frame_horizontal", "door", "roof" ] },
-      { "x": -2, "y": 1, "parts": [ "frame_horizontal", "trunk" ] },
-      { "x": -3, "y": -2, "parts": [ "frame_horizontal", "roller_drum" ] },
-      { "x": 2, "y": -2, "parts": [ "frame_horizontal", "roller_drum" ] },
-      { "x": 0, "y": 1, "parts": [ "frame_horizontal", "roof", "trunk_floor" ] },
-      { "x": 0, "y": -1, "parts": [ "frame_horizontal", "roof", "trunk_floor" ] },
+      { "x": 2, "y": 0, "parts": [ "frame#horizontal_front", "roller_drum" ] },
+      { "x": -2, "y": -2, "parts": [ "frame#vertical_T_left", "halfboard#sw" ] },
+      { "x": -1, "y": 0, "parts": [ "frame#cross", "door#rear", "roof" ] },
+      { "x": -2, "y": 1, "parts": [ "frame#horizontal_2", "trunk" ] },
+      { "x": -3, "y": -2, "parts": [ "frame#sw", "roller_drum" ] },
+      { "x": 2, "y": -2, "parts": [ "frame#nw", "roller_drum" ] },
+      { "x": 0, "y": 1, "parts": [ "frame#horizontal_2", "roof", "trunk_floor" ] },
+      { "x": 0, "y": -1, "parts": [ "frame#horizontal_2", "roof", "trunk_floor" ] },
       {
         "x": -1,
         "y": 2,
-        "parts": [ "frame_horizontal", "roof", "halfboard_horizontal", { "part": "tank", "fuel": "diesel" } ]
+        "parts": [ "frame#vertical_right", "roof", "halfboard#vertical_right", { "part": "tank", "fuel": "diesel" } ]
       },
-      { "x": 1, "y": 2, "parts": [ "frame_horizontal", "windshield", "roof" ] },
-      { "x": 2, "y": 1, "parts": [ "frame_horizontal", "roller_drum" ] },
-      { "x": 1, "y": -1, "parts": [ "frame_horizontal", "windshield", "roof", "headlight" ] },
-      { "x": -3, "y": -1, "parts": [ "frame_horizontal", "roller_drum" ] },
-      { "x": -2, "y": -1, "parts": [ "frame_horizontal", "trunk" ] }
+      { "x": 1, "y": 2, "parts": [ "frame#vertical_right", "windshield#ne", "roof" ] },
+      { "x": 2, "y": 1, "parts": [ "frame#horizontal_front", "roller_drum" ] },
+      { "x": 1, "y": -1, "parts": [ "frame#vertical", "windshield#horizontal_front", "roof", "headlight" ] },
+      { "x": -3, "y": -1, "parts": [ "frame#horizontal_rear", "roller_drum" ] },
+      { "x": -2, "y": -1, "parts": [ "frame#horizontal_2", "trunk" ] }
     ],
     "items": [ { "x": 0, "y": 0, "chance": 5, "items": [ "hat_hard" ] } ]
   },
@@ -204,16 +200,16 @@
     ],
     "color_palette": "construction_standard",
     "parts": [
-      { "x": -1, "y": 1, "parts": [ "frame_se", "halfboard_se", "wheel_mount_light_steerable", "wheel_small" ] },
-      { "x": 1, "y": 0, "parts": [ "frame_nw", "halfboard_nw", "wheel_mount_light_steerable", "wheel_small" ] },
-      { "x": 1, "y": 1, "parts": [ "frame_ne", "halfboard_ne", "wheel_mount_light_steerable", "wheel_small" ] },
-      { "x": 0, "y": 0, "parts": [ "frame_horizontal", "seat", "roof", "controls", "dashboard" ] },
+      { "x": -1, "y": 1, "parts": [ "frame#se", "halfboard#se", "wheel_mount_light_steerable", "wheel_small" ] },
+      { "x": 1, "y": 0, "parts": [ "frame#nw", "halfboard#nw", "wheel_mount_light_steerable", "wheel_small" ] },
+      { "x": 1, "y": 1, "parts": [ "frame#ne", "halfboard#ne", "wheel_mount_light_steerable", "wheel_small" ] },
+      { "x": 0, "y": 0, "parts": [ "frame#horizontal", "seat", "roof", "controls", "dashboard" ] },
       { "x": 2, "y": 0, "parts": [ "forklift_fork" ] },
-      { "x": -1, "y": 0, "parts": [ "frame_sw", "halfboard_sw", "wheel_mount_light_steerable", "wheel_small" ] },
+      { "x": -1, "y": 0, "parts": [ "frame#sw", "halfboard#sw", "wheel_mount_light_steerable", "wheel_small" ] },
       {
         "x": 0,
         "y": 1,
-        "parts": [ "frame_horizontal", "engine_electric", "roof", "halfboard_vertical", "storage_battery" ]
+        "parts": [ "frame#horizontal", "engine_electric", "roof", "halfboard#vertical", "storage_battery" ]
       },
       { "x": 2, "y": 1, "parts": [ "forklift_fork" ] }
     ],
@@ -234,30 +230,34 @@
     ],
     "color_palette": "construction_standard",
     "parts": [
-      { "x": 0, "y": 0, "parts": [ "hdframe_cross", "seat", "floodlight", "horn_big", "seatbelt", "dashboard", "controls" ] },
-      { "x": 0, "y": -1, "parts": [ "hdframe_nw", "wheel_mount_medium", "wheel_wide_or" ] },
-      { "x": 0, "y": 1, "parts": [ "hdframe_ne", "wheel_mount_medium", "wheel_wide_or" ] },
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [ "hdframe_cross", "seat#front", "floodlight", "horn_big", "seatbelt", "dashboard", "controls" ]
+      },
+      { "x": 0, "y": -1, "parts": [ "hdframe#vertical_left", "wheel_mount_medium", "wheel_wide_or" ] },
+      { "x": 0, "y": 1, "parts": [ "hdframe#vertical_right", "wheel_mount_medium", "wheel_wide_or" ] },
       {
         "x": -1,
         "y": 0,
-        "parts": [ "hdframe_cross", "diesel_engine_i6", "battery_car", "halfboard_cover", "alternator_truck" ]
+        "parts": [ "hdframe_cross", "diesel_engine_i6", "battery_car", "halfboard#cover", "alternator_truck" ]
       },
       {
         "x": -1,
         "y": -1,
-        "parts": [ "hdframe_vertical", { "part": "tank", "fuel": "diesel" }, "halfboard_vertical_left" ]
+        "parts": [ "hdframe#vertical", { "part": "tank", "fuel": "diesel" }, "halfboard#vertical_left" ]
       },
       {
         "x": -1,
         "y": 1,
-        "parts": [ "hdframe_vertical", { "part": "tank", "fuel": "diesel" }, "halfboard_vertical_right" ]
+        "parts": [ "hdframe#vertical", { "part": "tank", "fuel": "diesel" }, "halfboard#vertical_right" ]
       },
-      { "x": -2, "y": 0, "parts": [ "hdframe_cross", "halfboard_horizontal_rear", "beeper" ] },
-      { "x": -2, "y": -1, "parts": [ "hdframe_sw", "wheel_mount_medium_steerable", "wheel_wide_or" ] },
-      { "x": -2, "y": 1, "parts": [ "hdframe_se", "wheel_mount_medium_steerable", "wheel_wide_or" ] },
-      { "x": -3, "y": -1, "part": "hdframe_horizontal" },
-      { "x": -3, "y": 0, "part": "hdframe_horizontal" },
-      { "x": -3, "y": 1, "part": "hdframe_horizontal" },
+      { "x": -2, "y": 0, "parts": [ "hdframe_cross", "halfboard#horizontal_rear", "beeper" ] },
+      { "x": -2, "y": -1, "parts": [ "hdframe#sw", "wheel_mount_medium_steerable", "wheel_wide_or" ] },
+      { "x": -2, "y": 1, "parts": [ "hdframe#se", "wheel_mount_medium_steerable", "wheel_wide_or" ] },
+      { "x": -3, "y": -1, "part": "hdframe#horizontal" },
+      { "x": -3, "y": 0, "part": "hdframe#horizontal" },
+      { "x": -3, "y": 1, "part": "hdframe#horizontal" },
       { "x": 1, "y": 0, "part": "rockwheel" }
     ],
     "items": [  ]
@@ -270,31 +270,31 @@
     "parts": [
       { "x": 0, "y": 0, "parts": [ "hdframe_cross", "seat", "controls", "seatbelt", "dashboard", "vehicle_alarm", "hdroof" ] },
       { "x": -1, "y": 0, "parts": [ "hdframe_cross", "aisle_vertical", "hdroof" ] },
-      { "x": -2, "y": 0, "parts": [ "hdframe_horizontal", "halfboard_horizontal_rear", "beeper" ] },
-      { "x": -2, "y": -1, "parts": [ "hdframe_sw", "halfboard_sw" ] },
-      { "x": -2, "y": 1, "parts": [ "hdframe_se", "halfboard_se" ] },
-      { "x": -1, "y": 1, "parts": [ "hdframe_vertical", "tread2", "trunk_flat" ] },
-      { "x": -1, "y": -1, "parts": [ "hdframe_vertical", "trunk_flat", "tread2" ] },
-      { "x": 0, "y": -1, "parts": [ "hdframe_vertical", "trunk_flat", "tread2" ] },
-      { "x": 0, "y": 1, "parts": [ "hdframe_vertical", "tread2", "trunk_flat" ] },
+      { "x": -2, "y": 0, "parts": [ "hdframe#horizontal", "halfboard#horizontal_rear", "beeper" ] },
+      { "x": -2, "y": -1, "parts": [ "hdframe#sw", "halfboard#sw" ] },
+      { "x": -2, "y": 1, "parts": [ "hdframe#se", "halfboard#se" ] },
+      { "x": -1, "y": 1, "parts": [ "hdframe#vertical", "tread2", "trunk_flat" ] },
+      { "x": -1, "y": -1, "parts": [ "hdframe#vertical", "trunk_flat", "tread2" ] },
+      { "x": 0, "y": -1, "parts": [ "hdframe#vertical", "trunk_flat", "tread2" ] },
+      { "x": 0, "y": 1, "parts": [ "hdframe#vertical", "tread2", "trunk_flat" ] },
       {
         "x": 1,
         "y": 0,
-        "parts": [ "hdframe_cross", "reinforced_windshield_horizontal_front", "large_storage_battery" ]
+        "parts": [ "hdframe_cross", "reinforced_windshield#horizontal_front", "large_storage_battery" ]
       },
       {
         "x": 2,
         "y": 0,
-        "parts": [ "hdframe_cross", "halfboard_cover", "engine_electric_large", "large_storage_battery" ]
+        "parts": [ "hdframe_cross", "halfboard#cover", "engine_electric_large", "large_storage_battery" ]
       },
-      { "x": 1, "y": -1, "parts": [ "hdframe_vertical", "tread2" ] },
-      { "x": 1, "y": 1, "parts": [ "hdframe_vertical", "tread2" ] },
-      { "x": 2, "y": -1, "parts": [ "hdframe_nw", "tread2", "directed_floodlight" ] },
-      { "x": 2, "y": 1, "parts": [ "hdframe_ne", "tread2", "directed_floodlight" ] },
+      { "x": 1, "y": -1, "parts": [ "hdframe#vertical", "tread2" ] },
+      { "x": 1, "y": 1, "parts": [ "hdframe#vertical", "tread2" ] },
+      { "x": 2, "y": -1, "parts": [ "hdframe#nw", "tread2", "directed_floodlight" ] },
+      { "x": 2, "y": 1, "parts": [ "hdframe#ne", "tread2", "directed_floodlight" ] },
       { "x": 3, "y": 1, "part": "ram_hardsteel" },
       { "x": 3, "y": -1, "part": "ram_hardsteel" },
-      { "x": 3, "y": 0, "part": "hdframe_vertical" },
-      { "x": 4, "y": 0, "part": "hdframe_vertical" },
+      { "x": 3, "y": 0, "part": "hdframe#vertical" },
+      { "x": 4, "y": 0, "part": "hdframe#vertical" },
       { "x": 5, "y": 0, "part": "roadheader" }
     ],
     "items": [ { "x": 0, "y": 0, "chance": 80, "items": [ "hat_hard" ] } ]
@@ -308,7 +308,7 @@
       {
         "x": 0,
         "y": 0,
-        "parts": [ "xlframe_vertical_2", "wheel_caster", "small_storage_battery", "floodlight", "controls_electronic" ]
+        "parts": [ "xlframe#cross", "wheel_caster", "small_storage_battery", "floodlight", "controls_electronic" ]
       }
     ],
     "items": [  ]
