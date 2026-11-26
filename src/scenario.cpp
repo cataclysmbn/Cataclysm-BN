@@ -1,21 +1,21 @@
 #include "scenario.h"
 
-#include <algorithm>
-#include <cstdlib>
-#include <algorithm>
-
 #include "debug.h"
 #include "generic_factory.h"
+#include "generic_readers.h"
 #include "json.h"
-#include "map_extras.h"
+#include "mapgen/map_extras.h"
 #include "mission.h"
 #include "mutation.h"
 #include "profession.h"
+#include "rng.h"
+#include "start_location.h"
 #include "string_id.h"
 #include "translations.h"
 #include "type_id_implement.h"
-#include "rng.h"
-#include "start_location.h"
+
+#include <algorithm>
+#include <cstdlib>
 
 namespace
 {
@@ -81,6 +81,7 @@ void scenario::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "spells", _allowed_spells, auto_flags_reader<spell_id> {} );
     optional( jo, was_loaded, "forbidden_spells", _forbidden_spells, auto_flags_reader<spell_id> {} );
     optional( jo, was_loaded, "forbids_spells", _forbids_spells );
+    optional( jo, was_loaded, "forced_perks", _forced_perks, auto_flags_reader<perk_id> {} );
     optional( jo, was_loaded, "allowed_locs", _allowed_locs, auto_flags_reader<start_location_id> {} );
     if( _allowed_locs.empty() ) {
         jo.throw_error( "at least one starting location (member \"allowed_locs\") must be defined" );
@@ -459,6 +460,11 @@ bool scenario::spellquery( const spell_id &spell ) const
            ( !is_forbidden_spell( spell ) && spell->starting_spell );
 }
 
+std::set<perk_id> scenario::get_perks() const
+{
+    return _forced_perks;
+}
+
 std::set<trait_id> scenario::get_locked_traits() const
 {
     return _forced_traits;
@@ -472,6 +478,11 @@ bool scenario::is_locked_trait( const trait_id &trait ) const
 bool scenario::is_locked_bionic( const bionic_id &bionic ) const
 {
     return _forced_bionics.contains( bionic );
+}
+
+auto scenario::get_locked_bionics() const -> std::set<bionic_id>
+{
+    return _forced_bionics;
 }
 
 bool scenario::is_forbidden_trait( const trait_id &trait ) const
@@ -497,6 +508,51 @@ bool scenario::forbids_bionics() const
 bool scenario::forbids_spells() const
 {
     return _forbids_spells;
+}
+
+auto scenario::allowed_traits() const -> const std::set<trait_id> &
+{
+    return _allowed_traits;
+}
+
+auto scenario::forbidden_traits() const -> const std::set<trait_id> &
+{
+    return _forbidden_traits;
+}
+
+auto scenario::allowed_bionics() const -> const std::set<bionic_id> &
+{
+    return _allowed_bionics;
+}
+
+auto scenario::forbidden_bionics() const -> const std::set<bionic_id> &
+{
+    return _forbidden_bionics;
+}
+
+auto scenario::allowed_spells() const -> const std::set<spell_id> &
+{
+    return _allowed_spells;
+}
+
+auto scenario::forbidden_spells() const -> const std::set<spell_id> &
+{
+    return _forbidden_spells;
+}
+
+auto scenario::forced_spells() const -> const std::set<spell_id> &
+{
+    return _forced_spells;
+}
+
+auto scenario::get_flags() const -> const std::set<std::string> &
+{
+    return flags;
+}
+
+auto scenario::allowed_start_locations() const -> const std::vector<start_location_id> &
+{
+    return _allowed_locs;
 }
 
 bool scenario::has_flag( const std::string &flag ) const

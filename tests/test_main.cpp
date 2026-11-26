@@ -17,6 +17,10 @@
 #    define CATCH_CONFIG_IMPL_ONLY
 #endif
 #define CATCH_CONFIG_RUNNER
+#include "../src/map/map.h"
+#include "../src/overmap/overmap.h"
+#include "../src/overmap/overmapbuffer.h"
+#include "action_time_scale.h"
 #include "avatar.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
@@ -29,13 +33,10 @@
 #include "init.h"
 #include "language.h"
 #include "loading_ui.h"
-#include "map.h"
 #include "mod_manager.h"
 #include "options.h"
 #include "output.h"
-#include "overmap.h"
-#include "overmap_special.h"
-#include "overmapbuffer.h"
+#include "overmap/overmap_special.h"
 #include "path_info.h"
 #include "pldata.h"
 #include "rng.h"
@@ -136,7 +137,8 @@ auto shutdown_test_sdl_gpu() -> void {
 // If tag is found as a prefix of any argument in arg_vec, the argument is
 // removed from arg_vec and the argument suffix after tag is returned.
 // Otherwise, an empty string is returned and arg_vec is unchanged.
-static std::string extract_argument(std::vector<const char*>& arg_vec, const std::string& tag) {
+static auto extract_argument(std::vector<const char*>& arg_vec, const std::string& tag)
+    -> std::string {
     std::string arg_rest;
     for (auto iter = arg_vec.begin(); iter != arg_vec.end(); iter++) {
         if (strncmp(*iter, tag.c_str(), tag.length()) == 0) {
@@ -148,7 +150,7 @@ static std::string extract_argument(std::vector<const char*>& arg_vec, const std
     return arg_rest;
 }
 
-static std::vector<mod_id> extract_mod_selection(std::vector<const char*>& arg_vec) {
+static auto extract_mod_selection(std::vector<const char*>& arg_vec) -> std::vector<mod_id> {
     std::string mod_string = extract_argument(arg_vec, "--mods=");
 
     std::vector<std::string> mod_names = string_split(mod_string, ',');
@@ -240,8 +242,8 @@ static void init_global_game_state(
 }
 
 // Checks if any of the flags are in container, removes them all
-static bool check_remove_flags(
-    std::vector<const char*>& cont, const std::vector<const char*>& flags) {
+static auto check_remove_flags(
+    std::vector<const char*>& cont, const std::vector<const char*>& flags) -> bool {
     bool has_any = false;
     auto iter = flags.begin();
     while (iter != flags.end()) {
@@ -261,7 +263,7 @@ static bool check_remove_flags(
 
 // Split s on separator sep, returning parts as a pair. Returns empty string as
 // second value if no separator found.
-static name_value_pair_t split_pair(const std::string& s, const char sep) {
+static auto split_pair(const std::string& s, const char sep) -> name_value_pair_t {
     const size_t pos = s.find(sep);
     if (pos != std::string::npos) {
         return name_value_pair_t(s.substr(0, pos), s.substr(pos + 1));
@@ -270,7 +272,7 @@ static name_value_pair_t split_pair(const std::string& s, const char sep) {
     }
 }
 
-static option_overrides_t extract_option_overrides(std::vector<const char*>& arg_vec) {
+static auto extract_option_overrides(std::vector<const char*>& arg_vec) -> option_overrides_t {
     option_overrides_t ret;
     std::string option_overrides_string = extract_argument(arg_vec, "--option_overrides=");
     if (option_overrides_string.empty()) { return ret; }
@@ -290,7 +292,7 @@ static option_overrides_t extract_option_overrides(std::vector<const char*>& arg
     return ret;
 }
 
-static std::string extract_user_dir(std::vector<const char*>& arg_vec) {
+static auto extract_user_dir(std::vector<const char*>& arg_vec) -> std::string {
     std::string option_user_dir = extract_argument(arg_vec, "--user-dir=");
     if (option_user_dir.empty()) { return "./test_user_dir/"; }
     if (!option_user_dir.ends_with("/")) { option_user_dir += "/"; }
@@ -304,9 +306,14 @@ struct CataListener: Catch::TestEventListenerBase {
         TestEventListenerBase::sectionStarting(sectionInfo);
         // Initialize the cata RNG with the Catch seed for reproducible tests
         rng_set_engine_seed(m_config->rngSeed());
+        // Catch starts the root section once per run through a test case, one run per leaf section.
+        if (sectionInfo.lineInfo == currentTestCaseInfo->lineInfo) {
+            // A wait at TIME_ACTION_SCALE below 100 leaves a tick length above 1 for the next test
+            action_time_scale::set_calendar_turns_this_tick(1);
+        }
     }
 
-    bool assertionEnded(Catch::AssertionStats const& assertionStats) override {
+    auto assertionEnded(Catch::AssertionStats const& assertionStats) -> bool override {
 #ifdef BACKTRACE
         Catch::AssertionResult const& result = assertionStats.assertionResult;
 
@@ -320,11 +327,29 @@ struct CataListener: Catch::TestEventListenerBase {
 
         return TestEventListenerBase::assertionEnded(assertionStats);
     }
+
+    auto testCaseStarting(Catch::TestCaseInfo const& info) -> void override {
+        TestEventListenerBase::testCaseStarting(info);
+        error_seen_before_case = debug_has_error_been_observed();
+    }
+
+    /// Names the test case that failed or logged the first error, so CI can report it.
+    auto testCaseEnded(Catch::TestCaseStats const& stats) -> void override {
+        const auto error_logged = !error_seen_before_case && debug_has_error_been_observed();
+        const auto assertion_failed = stats.totals.assertions.failed > 0;
+        if (assertion_failed || error_logged) {
+            cata_printf("Failed test case: %s (%s)\n", stats.testInfo.name.c_str(),
+                        assertion_failed ? "assertion failed" : "error logged");
+        }
+        TestEventListenerBase::testCaseEnded(stats);
+    }
+
+    bool error_seen_before_case = false;
 };
 
 CATCH_REGISTER_LISTENER(CataListener)
 
-int main(int argc, const char* argv[]) {
+auto main(int argc, const char* argv[]) -> int {
     Catch::Session session;
 
     std::vector<const char*> arg_vec(argv, argv + argc);

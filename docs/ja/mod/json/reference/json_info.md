@@ -195,7 +195,7 @@ JSON ファイルを編集するときは、以下に示すように正しい形
   "strength": 1
 }
 
-### Item Category
+### アイテムカテゴリ
 
 When you sort your inventory by category, these are the categories that are displayed.
 | Identifier      | Description

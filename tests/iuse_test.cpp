@@ -1,3 +1,4 @@
+#include "../src/map/map.h"
 #include "avatar.h"
 #include "bodypart.h"
 #include "cached_options.h"
@@ -9,7 +10,6 @@
 #include "game.h"
 #include "item.h"
 #include "itype.h"
-#include "map.h"
 #include "map_helpers.h"
 #include "morale_types.h"
 #include "player_helpers.h"
@@ -67,10 +67,7 @@ auto add_nearby_bionic_scanner_benchmark_items(
     return item_count;
 }
 
-auto add_bionic_scanner_benchmark_corpse(
-    map& here,
-    const tripoint_bub_ms& corpse_pos) -> item* // *NOPAD*
-{
+auto add_bionic_scanner_benchmark_corpse(map& here, const tripoint_bub_ms& corpse_pos) -> item* {
     auto corpse = item::make_corpse(mtype_id("mon_zombie_soldier"), calendar::turn, "");
     corpse->add_component(item::spawn("bio_power_storage", calendar::turn));
     auto* const corpse_ptr = corpse.get();

@@ -13,19 +13,19 @@
 #include "creature_tracker.h"
 #include "debug.h"
 #include "effect.h"
-#include "field.h"
-#include "field_type.h"
 #include "game.h"
 #include "game_constants.h"
 #include "init.h"
 #include "int_id.h"
-#include "legacy_pathfinding.h"
 #include "line.h"
 #include "make_static.h"
-#include "map.h"
+#include "map/field.h"
+#include "map/field_type.h"
+#include "map/legacy_pathfinding.h"
+#include "map/map.h"
+#include "map/mapdata.h"
 #include "map/utils/map_functions.h"
 #include "map_iterator.h"
-#include "mapdata.h"
 #include "mattack_common.h"
 #include "messages.h"
 #include "monfaction.h"
@@ -54,6 +54,7 @@
 #include "vehicle/vpart_position.h"
 
 #include <algorithm>
+#include <utility>
 #include <array>
 #include <cfloat>
 #include <cmath>
@@ -127,8 +128,7 @@ auto run_lua_monster_ai( monster &mon ) -> bool
         return false;
     }
 
-    std::unique_lock lock( cata::lua_lock );
-    auto *lua_state = cata::get_active_lua_state();
+    auto *lua_state = DynamicDataLoader::get_instance().lua.get();
     if( lua_state == nullptr ) {
         return false;
     }
@@ -1533,7 +1533,13 @@ void monster::execute_action( const monster_action_t &action )
     //     out into a separate action kind (with an early return) caused an infinite
     //     loop: if all call()s failed the cooldown was never reset, decide_action()
     //     saw cooldown==0 again next iteration, and moves were never consumed.
-    if( !pacified && !is_hallucination() &&
+    // The budget is consumed on read. use_special_attack() sets it, but monster::move() is the
+    // only place that clears it, and monsters without lua_ai reach execute_action() without
+    // going through move() at all -- see the use_direct_monster_move branch in game::monmove.
+    // Clearing here keeps the flag from latching and silently barring that monster from ever
+    // using a special attack again, whichever path reaches this block.
+    const auto budget_spent = std::exchange( special_attack_spent, false );
+    if( !pacified && !is_hallucination() && !budget_spent &&
         !type->special_attacks.empty() && !special_attacks.empty() ) {
         ZoneScopedN( "mon_execute_special_attacks" );
         auto spec_list = std::vector<const std::pair<const std::string, mtype_special_attack> *> {};
@@ -1546,6 +1552,10 @@ void monster::execute_action( const monster_action_t &action )
             }
         }
         auto sp_atk_used = false;
+        // The same guard use_special_attack() holds, so an on-hit or attitude callback that
+        // reaches back into Lua cannot fire a second attack from inside this one.
+        dispatching_special_attack = true;
+        const auto restore = on_out_of_scope( [this]() { dispatching_special_attack = false; } );
         while( !sp_atk_used && !spec_list.empty() ) {
             const auto spec_iter = spec_list.size() == 1 ? 0 :
                                    rng( 0, static_cast<int>( spec_list.size() ) - 1 );
@@ -1854,6 +1864,8 @@ void monster::execute_action( const monster_action_t &action )
 // 4) Sound-based tracking
 void monster::move()
 {
+    // Each action gets one special attack, whether Lua or the stock scheduler spends it.
+    clear_special_attack_budget();
     const auto pre_lua_pos = bub_pos();
     const auto pre_lua_moves = moves;
     if( run_lua_monster_ai( *this ) ) {
@@ -2413,20 +2425,17 @@ static tripoint_bub_ms find_closest_stair( const tripoint_bub_ms &near_this,
 bool monster::move_to( const tripoint_bub_ms &p, bool force, bool step_on_critter,
                        const float stagger_adjustment )
 {
-    {
-        std::unique_lock lock( cata::lua_lock );
-        const auto hook_results = cata::run_hooks(
-                                      "on_monster_try_move",
-        [ &, this]( sol::table & params ) {
-            params["monster"] = this;
-            params["from"] = cata::detail::lua_coords::to_lua( bub_pos() );
-            params["to"] = cata::detail::lua_coords::to_lua( p );
-            params["force"] = force;
-        } );
-        const auto can_move = hook_results.get_or( "allowed", true );
-        if( !can_move ) {
-            return false;
-        }
+    const auto hook_results = cata::run_hooks(
+                                  "on_monster_try_move",
+    [ &, this]( sol::table & params ) {
+        params["monster"] = this;
+        params["from"] = cata::detail::lua_coords::to_lua( bub_pos() );
+        params["to"] = cata::detail::lua_coords::to_lua( p );
+        params["force"] = force;
+    } );
+    const auto can_move = hook_results.get_or( "allowed", true );
+    if( !can_move ) {
+        return false;
     }
 
     const bool on_ground = !digging() && !flies();
@@ -2494,12 +2503,14 @@ bool monster::move_to( const tripoint_bub_ms &p, bool force, bool step_on_critte
     }
 
     if( !force ) {
+        if( stagger_adjustment == 0.0f ) {
+            return false;
+        }
         // This adjustment is to make it so that monster movement speed relative to the player
         // is consistent even if the monster stumbles,
         // and the same regardless of the distance measurement mode.
         // Note: Keep this as float here or else it will cancel valid moves
-        const float cost = stagger_adjustment *
-                           static_cast<float>( climbs() &&
+        const float cost = static_cast<float>( climbs() &&
                                                g->m.has_flag( TFLAG_NO_FLOOR, p ) ? calc_climb_cost( bub_pos(),
                                                        destination ) : calc_movecost( bub_pos(),
                                                                destination ) );

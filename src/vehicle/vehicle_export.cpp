@@ -31,7 +31,8 @@ auto is_plain_id(const vehicle_part* p) -> bool {
 }
 
 auto json_part_write(JsonOut& json, const vehicle_part* p) -> void {
-    const auto& id = p->info().get_id();
+    const auto& id =
+        p->proxy_part_id == vpart_id::NULL_ID() ? p->info().get_id() : p->proxy_part_id;
     const auto& ammo_type = p->ammo_current();
 
     json.member("part", id);

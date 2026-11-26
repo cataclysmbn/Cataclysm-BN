@@ -8,8 +8,8 @@
     "entries": [
       { "item": "eink_tablet_pc", "prob": 30, "count": [ 1, 2 ] },
       { "item": "laptop", "prob": 60, "count": [ 1, 4 ] },
-      { "item": "usb_drive", "prob": 60, "count": [ 3, 8 ] },
-      { "item": "mobile_memory_card_used", "prob": 60, "count": [ 2, 7 ] },
+      { "group": "digital_storage_media", "prob": 60, "count": [ 3, 8 ] },
+      { "group": "digital_storage_media", "prob": 60, "count": [ 2, 7 ] },
       { "item": "battery_charger", "prob": 80 },
       { "item": "file", "count": [ 8, 20 ], "prob": 80 },
       { "item": "paper", "count": [ 40, 90 ], "prob": 80 },
@@ -25,21 +25,49 @@
     "//2": "This group is for an office desk containing documents and electronics for work and some desk clutter.",
     "subtype": "collection",
     "entries": [
-      { "item": "eink_tablet_pc", "prob": 20 },
-      { "item": "laptop", "prob": 60 },
-      { "item": "battery_charger", "prob": 80 },
-      { "item": "usb_drive", "prob": 20 },
-      { "item": "mobile_memory_card_used", "count": [ 1, 4 ], "prob": 15 },
-      { "item": "mobile_memory_card_encrypted", "count": [ 1, 2 ], "prob": 15 },
-      { "item": "file", "count": [ 1, 8 ], "prob": 50 },
-      { "item": "paper", "charges": [ 100, 450 ], "prob": 60 },
-      { "item": "pen", "count": [ 1, 10 ], "prob": 95 },
-      { "item": "stapler", "prob": 60 },
-      { "item": "scissors", "prob": 35 },
-      { "item": "phonebook", "prob": 10 },
-      { "item": "family_photo", "prob": 10 },
-      { "item": "coin_quarter", "prob": 10 },
-      { "group": "oa_discarded_news", "count": [ 2, 12 ], "prob": 20 }
+      {
+        "collection": [
+          { "distribution": [ { "item": "laptop", "prob": 75 }, { "item": "eink_tablet_pc", "prob": 25 } ] },
+          { "item": "battery_charger", "prob": 75 },
+          {
+            "distribution": [
+              { "group": "digital_storage_media", "prob": 50 },
+              { "group": "digital_storage_media", "count": [ 1, 4 ], "prob": 25 },
+              { "group": "digital_storage_media_encrypted", "count": [ 1, 2 ], "prob": 25 }
+            ],
+            "prob": 75
+          }
+        ],
+        "prob": 50
+      },
+      { "item": "file", "count": [ 1, 4 ], "prob": 50 },
+      { "item": "paper", "charges": [ 10, 200 ], "prob": 75 },
+      { "item": "pen", "count": [ 1, 5 ], "prob": 75 },
+      { "item": "stapler", "prob": 50 },
+      { "item": "scissors", "prob": 25 },
+      {
+        "distribution": [
+          { "group": "oa_discarded_news", "prob": 50 },
+          { "group": "magazines", "prob": 25 },
+          { "item": "phonebook", "prob": 20 },
+          { "item": "family_photo", "prob": 5 }
+        ],
+        "prob": 50
+      },
+      {
+        "distribution": [
+          { "group": "softdrinks_canned", "prob": 75 },
+          { "group": "tobacco_products", "prob": 10 },
+          { "group": "drugs_heal_simple", "prob": 10 },
+          { "group": "baddrugs", "prob": 5 }
+        ],
+        "prob": 10
+      },
+      {
+        "distribution": [ { "item": "glasses_reading", "prob": 75 }, { "item": "glasses_bifocal", "prob": 25 } ],
+        "prob": 5
+      },
+      { "group": "everyday_gear", "prob": 10 }
     ]
   },
   {
@@ -51,8 +79,8 @@
     "entries": [
       { "item": "file", "count": [ 1, 15 ], "prob": 95 },
       { "item": "paper", "charges": [ 100, 1500 ], "prob": 80 },
-      { "item": "mobile_memory_card_used", "count": [ 1, 4 ], "prob": 15 },
-      { "item": "mobile_memory_card_encrypted", "count": [ 1, 2 ], "prob": 15 }
+      { "group": "digital_storage_media", "count": [ 1, 4 ], "prob": 15 },
+      { "group": "digital_storage_media_encrypted", "count": [ 1, 2 ], "prob": 15 }
     ]
   },
   {
@@ -67,6 +95,39 @@
       { "group": "clothing_cleaning", "count": [ 1, 3 ], "prob": 75 },
       { "item": "chem_hydrogen_peroxide", "prob": 40, "charges-min": 4 },
       { "item": "paper", "charges": [ 50, 100 ], "prob": 90 }
+    ]
+  },
+  {
+    "id": "SUS_office_mess",
+    "type": "item_group",
+    "//": "SUS item groups are collections that contain a reasonable realistic distribution of items that might spawn in a given storage furniture.",
+    "//2": "This group is for a messy assortment of items around an office desk.",
+    "subtype": "collection",
+    "entries": [
+      { "item": "eink_tablet_pc", "prob": 2 },
+      { "item": "laptop", "prob": 6 },
+      { "group": "digital_storage_media", "prob": 5 },
+      { "group": "digital_storage_media", "prob": 3 },
+      { "item": "battery_charger", "prob": 8 },
+      { "item": "file", "count": [ 1, 8 ], "prob": 20 },
+      { "item": "paper", "count": [ 2, 9 ], "prob": 20 },
+      { "item": "pen", "count": [ 1, 10 ], "prob": 30, "charges": [ 0, 100 ] },
+      { "item": "stapler", "prob": 5 },
+      { "item": "scissors", "prob": 5 },
+      { "item": "phonebook", "prob": 1 },
+      { "item": "family_photo", "prob": 10 },
+      { "group": "oa_discarded_news", "prob": 20 },
+      { "item": "inhaler", "prob": 3, "charges": [ 10, 75 ] },
+      { "item": "mbag", "prob": 5 },
+      { "item": "coin_quarter", "prob": 10, "count": [ 1, 8 ] },
+      { "item": "duct_tape", "prob": 5, "count": [ 0, 200 ] },
+      { "item": "umbrella", "prob": 5 },
+      { "item": "teleumbrella", "prob": 5 },
+      { "item": "survnote", "prob": 1 },
+      { "item": "cola", "prob": 6, "count": [ 1, 3 ] },
+      { "item": "can_drink", "prob": 15, "count": [ 1, 4 ] },
+      { "item": "box_cigarette", "prob": 5 },
+      { "item": "fan", "prob": 8 }
     ]
   }
 ]

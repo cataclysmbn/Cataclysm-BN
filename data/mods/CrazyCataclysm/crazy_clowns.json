@@ -1,0 +1,181 @@
+[
+  {
+    "type": "SPELL",
+    "id": "clown_spit_lube",
+    "name": "Spit Lubricant",
+    "description": "Spits a stream of slippery lubricant.",
+    "valid_targets": [ "hostile", "ally", "ground" ],
+    "effect": "line_attack",
+    "min_range": 5,
+    "max_range": 5,
+    "base_casting_time": 150,
+    "field_id": "fd_industrial_lubricant",
+    "field_chance": 1,
+    "min_field_intensity": 2,
+    "max_field_intensity": 2,
+    "sound_description": "Honk honk!",
+    "sound_type": "alert",
+    "sound_id": "vehicle",
+    "sound_variant": "horn_low",
+    "volume": 60,
+    "flags": [ "NO_HANDS", "NO_LEGS", "NO_EXPLOSION_VFX" ],
+    "//": "Spells must load before monsters: spell attacks resolve their spell_data immediately."
+  },
+  {
+    "type": "SPELL",
+    "id": "clown_spit_glue",
+    "name": "Spit Glue",
+    "description": "Spits a stream of sticky glue.",
+    "valid_targets": [ "hostile", "ally", "ground" ],
+    "effect": "line_attack",
+    "min_range": 5,
+    "max_range": 5,
+    "base_casting_time": 150,
+    "field_id": "fd_glue",
+    "field_chance": 1,
+    "min_field_intensity": 2,
+    "max_field_intensity": 2,
+    "sound_description": "Honk honk!",
+    "sound_type": "alert",
+    "sound_id": "vehicle",
+    "sound_variant": "horn_low",
+    "volume": 60,
+    "flags": [ "NO_HANDS", "NO_LEGS", "NO_EXPLOSION_VFX" ]
+  },
+  {
+    "type": "SPECIES",
+    "id": "CLOWN_ZOMBIE",
+    "name": { "str": "clown zombie" },
+    "description": "a clown zombie",
+    "footsteps": [ "squeaky clown shoes", "squeak-squeak!" ]
+  },
+  {
+    "type": "MONSTER",
+    "id": "mon_zombie_clown_lube",
+    "copy-from": "mon_zombie",
+    "name": { "str": "slippery clown zombie" },
+    "description": "A shambling clown with purple hair, a filthy green costume, and enormous squeaky shoes.  Its painted grin dribbles lubricant, and its red nose honks as it lurches toward you.  The slapstick routine is about to get personal.",
+    "looks_like": "mon_zombie",
+    "species": [ "ZOMBIE", "HUMAN", "CLOWN_ZOMBIE" ],
+    "color": "magenta",
+    "upgrades": false,
+    "death_drops": "mon_zombie_clown_lube_death_drops",
+    "special_attacks": [
+      [ "PARROT", 10 ],
+      [ "GRAB", 7 ],
+      {
+        "type": "spell",
+        "id": "clown_spit_lube",
+        "spell_data": { "id": "clown_spit_lube" },
+        "cooldown": 12,
+        "monster_message": "%1$s spits a stream of lubricant at %3$s!"
+      }
+    ]
+  },
+  {
+    "type": "MONSTER",
+    "id": "mon_zombie_clown_glue",
+    "copy-from": "mon_zombie_clown_lube",
+    "name": { "str": "sticky clown zombie" },
+    "description": "A shambling clown with red hair, a ragged blue costume, and enormous squeaky shoes.  Strings of glue hang from its painted grin, and its red nose gives an occasional cheerful honk.  This performer really wants you to stick around.",
+    "looks_like": "mon_zombie",
+    "color": "light_blue",
+    "death_drops": "mon_zombie_clown_glue_death_drops",
+    "special_attacks": [
+      [ "PARROT", 10 ],
+      [ "GRAB", 7 ],
+      {
+        "type": "spell",
+        "id": "clown_spit_glue",
+        "spell_data": { "id": "clown_spit_glue" },
+        "cooldown": 12,
+        "monster_message": "%1$s spits a stream of glue at %3$s!"
+      }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "zombie_clown_outfit",
+    "entries": [
+      {
+        "distribution": [
+          {
+            "collection": [
+              {
+                "distribution": [
+                  { "group": "male_underwear", "prob": 90, "damage": [ 1, 4 ] },
+                  { "item": "union_suit", "prob": 10, "damage": [ 1, 4 ] }
+                ]
+              },
+              { "group": "socks_unisex", "damage": [ 1, 4 ], "prob": 50 }
+            ],
+            "prob": 50
+          },
+          {
+            "collection": [
+              { "group": "female_underwear", "prob": 90, "damage": [ 1, 4 ] },
+              {
+                "distribution": [
+                  {
+                    "distribution": [
+                      { "item": "stockings", "prob": 40, "damage": [ 1, 4 ] },
+                      { "item": "stockings_wool", "prob": 10, "damage": [ 1, 4 ] },
+                      { "item": "tights", "prob": 50, "damage": [ 1, 4 ] }
+                    ]
+                  },
+                  { "group": "socks_unisex", "prob": 50, "damage": [ 1, 4 ] }
+                ]
+              }
+            ],
+            "prob": 50
+          }
+        ]
+      },
+      { "item": "clown_wig", "damage": [ 1, 4 ] },
+      { "item": "clown_nose", "damage": [ 1, 4 ] },
+      { "item": "clown_suit", "damage": [ 1, 4 ] },
+      { "item": "clownshoes", "damage": [ 1, 4 ] },
+      { "group": "accesories_personal_unisex", "damage": [ 1, 4 ], "prob": 15 },
+      { "group": "default_zombie_items_pockets", "prob": 50 },
+      { "item": "airhorn", "charges": [ 1, 50 ], "prob": 75 },
+      { "item": "balloon", "count": [ 1, 6 ], "prob": 50 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "mon_zombie_clown_lube_death_drops",
+    "entries": [
+      { "group": "zombie_clown_outfit", "prob": 100 },
+      {
+        "item": "super_soaker",
+        "prob": 100,
+        "damage": [ 0, 2 ],
+        "charges": [ 1, 8 ],
+        "ammo-item": "industrial_lubricant"
+      }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "mon_zombie_clown_glue_death_drops",
+    "entries": [
+      { "group": "zombie_clown_outfit", "prob": 100 },
+      { "item": "super_soaker", "prob": 100, "damage": [ 0, 2 ], "charges": [ 1, 8 ], "ammo-item": "superglue" }
+    ]
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_zombie_clown_lube",
+    "sound": "Honk honk!",
+    "volume": 60
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_zombie_clown_glue",
+    "sound": "Hooonk!",
+    "volume": 60
+  }
+]

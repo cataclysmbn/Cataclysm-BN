@@ -43,5 +43,15 @@
     "color": "light_gray",
     "mondensity": 2,
     "flags": [ "RISK_HIGH" ]
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "mi-go_forward_camp_1", "mi-go_forward_camp_2", "mi-go_forward_camp_3" ],
+    "copy-from": "generic_city_building",
+    "name": "mi-go forward camp",
+    "sym": ">",
+    "color": "light_gray",
+    "looks_like": "mi-go_camp1",
+    "extend": { "flags": [ "RISK_HIGH" ] }
   }
 ]

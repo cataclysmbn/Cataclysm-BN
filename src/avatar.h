@@ -338,6 +338,8 @@ class avatar : public player
         std::vector<mtype_id> starting_pets;
 
         std::set<character_id> follower_ids;
+
+        bool in_skip_state = false;
 };
 
 avatar &get_avatar();

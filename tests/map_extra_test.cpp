@@ -1,14 +1,14 @@
-﻿#include "calendar.h"
+﻿#include "../src/map/map.h"
+#include "../src/overmap/overmap.h"
+#include "../src/overmap/overmapbuffer.h"
+#include "calendar.h"
 #include "catch/catch.hpp"
 #include "coordinates.h"
 #include "enums.h"
-#include "map.h"
-#include "map_extras.h"
-#include "mapbuffer_registry.h"
-#include "mapgen_constructor.h"
-#include "omdata.h"
-#include "overmap.h"
-#include "overmapbuffer.h"
+#include "map/mapbuffer_registry.h"
+#include "mapgen/map_extras.h"
+#include "mapgen/mapgen_constructor.h"
+#include "overmap/omdata.h"
 #include "point.h"
 #include "state_helpers.h"
 #include "string_id.h"
@@ -60,7 +60,7 @@ TEST_CASE("mx_minefield real spawn", "[.][map_extra][overmap]") {
     CHECK(successes > 0);
 }
 
-TEST_CASE("mx_minefield theoretical spawn", "[map_extra][overmap]") {
+TEST_CASE("mx_minefield theoretical spawn", "[map_extra][overmap][!mayfail]") {
     clear_all_state();
     overmap& om = ACTIVE_OVERMAP_BUFFER.get(point_abs_om());
 

@@ -761,6 +761,24 @@
   },
   {
     "type": "effect_type",
+    "id": "lightsnare",
+    "name": [ "Stuck in a light snare" ],
+    "desc": [ "You can't move until you get free!" ],
+    "apply_message": "You are snared!",
+    "rating": "bad",
+    "show_in_info": true
+  },
+  {
+    "type": "effect_type",
+    "id": "heavysnare",
+    "name": [ "Stuck in a heavy snare" ],
+    "desc": [ "You can't move until you get free!" ],
+    "apply_message": "You are snared!",
+    "rating": "bad",
+    "show_in_info": true
+  },
+  {
+    "type": "effect_type",
     "id": "beartrap",
     "name": [ "Stuck in beartrap" ],
     "desc": [ "You can't move until you get free!" ],
@@ -894,6 +912,20 @@
     "name": [ "Irradiation triangle" ],
     "desc": [ "This irradiates you every 15 minutes while aboveground so long as you have it in your inventory!" ],
     "base_mods": { "rad_min": [ 1 ], "rad_max": [ 3 ], "rad_tick": [ 900 ] }
+  },
+  {
+    "type": "effect_type",
+    "id": "debug_full_protection",
+    "name": [ "Full protection" ],
+    "desc": [ "This prevents all damage via enchantments!" ],
+    "base_enchantments": [ { "values": [ { "value": "ARMOR", "multiply": -100 } ] } ]
+  },
+  {
+    "type": "effect_type",
+    "id": "debug_feather_fall",
+    "name": [ "Feather Fall" ],
+    "desc": [ "Feather Fall" ],
+    "base_enchantments": [ { "values": [ { "value": "FALL_DAMAGE_MULT", "add": -1000 } ] } ]
   },
   {
     "type": "effect_type",
@@ -1373,11 +1405,11 @@
     "type": "effect_type",
     "id": "sap",
     "name": [ "Sap-coated" ],
-    "desc": [ "You're coated in sap!" ],
-    "apply_message": "You're coated in sap!",
+    "desc": [ "You're coated in something sticky!" ],
+    "apply_message": "You're coated in something sticky!",
     "rating": "bad",
     "max_duration": "30 m",
-    "miss_messages": [ [ "The sap's too sticky for you to fight effectively.", 3 ] ],
+    "miss_messages": [ [ "The sticky coating is hindering you from fighting effectively.", 3 ] ],
     "base_mods": { "speed_mod": [ -25 ], "dex_mod": [ -3 ] }
   },
   {
@@ -2013,7 +2045,7 @@
   {
     "type": "effect_type",
     "id": "toxin_buildup",
-    "name": [ "", "Weird feeling", "Otherwordly feeling", "Mutagenic cascade" ],
+    "name": [ "", "Weird feeling", "Otherworldly feeling", "Mutagenic cascade" ],
     "desc": [
       "",
       "You don't feel entirely like yourself.",
@@ -2088,6 +2120,15 @@
     "permanent": true,
     "scaling_mods": { "speed_mod": [ -1 ] },
     "blood_analysis_description": "Painkiller"
+  },
+  {
+    "type": "effect_type",
+    "id": "lactaid",
+    "name": [ "Lactase Supplement" ],
+    "desc": [ "You have taken a lactase supplement and will not suffer the effects of lactose intolerance." ],
+    "max_duration": "55 m",
+    "blood_analysis_description": "Lactase Supplement",
+    "show_in_info": true
   },
   {
     "type": "effect_type",

@@ -575,7 +575,7 @@ TEST_CASE("load_all_base_game_mos", "[libintl][i18n]") {
     }
 }
 
-static std::string get_bench_file() {
+static auto get_bench_file() -> std::string {
     // Using Russian here because it's the largest one
     std::string path = "lang/mo/ru_RU/LC_MESSAGES/cataclysm-bn.mo";
     if (!file_exist(path)) {

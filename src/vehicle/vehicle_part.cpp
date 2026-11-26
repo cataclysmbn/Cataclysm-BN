@@ -11,7 +11,7 @@
 #include "item_contents.h"
 #include "itype.h"
 #include "locations.h"
-#include "map.h"
+#include "map/map.h"
 #include "messages.h"
 #include "npc.h"
 #include "string_formatter.h"
@@ -39,7 +39,7 @@ static const flag_id flag_NO_PAINT("NO_PAINT");
 
 namespace {
 
-vehicle* vehicle_from_location(location<item>* loc) {
+auto vehicle_from_location(location<item>* loc) -> vehicle* {
     if (auto* const vloc = dynamic_cast<vehicle_item_location*>(loc)) {
         return vloc->vehicle_ptr();
     }
@@ -132,7 +132,7 @@ vehicle_part::vehicle_part(vehicle_part&& source): vehicle_part() {
     items = std::move(source.items);
 }
 
-vehicle_part& vehicle_part::operator=(vehicle_part&& source) {
+auto vehicle_part::operator=(vehicle_part&& source) -> vehicle_part& {
     if (this == &source) { return *this; }
     // Drop destination cargo while this part's hack_id still matches its locations.
     items.clear();
@@ -148,13 +148,13 @@ vehicle_part& vehicle_part::operator=(vehicle_part&& source) {
 
 vehicle_part::operator bool() const { return id != vpart_id::NULL_ID(); }
 
-item& vehicle_part::get_base() const { return *base; }
+auto vehicle_part::get_base() const -> item& { return *base; }
 
-detached_ptr<item> vehicle_part::set_base(detached_ptr<item>&& new_base) {
+auto vehicle_part::set_base(detached_ptr<item>&& new_base) -> detached_ptr<item> {
     return base.swap(std::move(new_base));
 }
 
-detached_ptr<item> vehicle_part::properties_to_item() const {
+auto vehicle_part::properties_to_item() const -> detached_ptr<item> {
     // TODO!: the big check
     detached_ptr<item> tmp = item::spawn(*base);
     tmp->unset_flag(flag_VEHICLE);
@@ -203,7 +203,7 @@ detached_ptr<item> vehicle_part::properties_to_item() const {
 
 void vehicle_part::add_item(detached_ptr<item>&& item) { items.push_back(std::move(item)); }
 
-std::string vehicle_part::name(bool with_prefix) const {
+auto vehicle_part::name(bool with_prefix) const -> std::string {
     auto res = info().name();
 
     if (base->engine_displacement() > 0) {
@@ -227,7 +227,7 @@ std::string vehicle_part::name(bool with_prefix) const {
     return res;
 }
 
-int vehicle_part::hp() const {
+auto vehicle_part::hp() const -> int {
     const int dur = info().durability;
     if (base->max_damage() > 0) {
         return dur - dur * base->damage() / base->max_damage();
@@ -236,30 +236,32 @@ int vehicle_part::hp() const {
     }
 }
 
-int vehicle_part::damage() const { return base->damage(); }
+auto vehicle_part::damage() const -> int { return base->damage(); }
 
-int vehicle_part::max_damage() const { return base->max_damage(); }
+auto vehicle_part::max_damage() const -> int { return base->max_damage(); }
 
-int vehicle_part::damage_level(int max) const { return base->damage_level(max); }
+auto vehicle_part::damage_level(int max) const -> int { return base->damage_level(max); }
 
-double vehicle_part::health_percent() const {
+auto vehicle_part::health_percent() const -> double {
     return 1.0 - static_cast<double>(base->damage()) / base->max_damage();
 }
 
-double vehicle_part::damage_percent() const {
+auto vehicle_part::damage_percent() const -> double {
     return static_cast<double>(base->damage()) / base->max_damage();
 }
 
 /** parts are considered broken at zero health */
-bool vehicle_part::is_broken() const { return base->damage() >= base->max_damage(); }
+auto vehicle_part::is_broken() const -> bool { return base->damage() >= base->max_damage(); }
 
-bool vehicle_part::is_unavailable(const bool carried) const {
+auto vehicle_part::is_unavailable(const bool carried) const -> bool {
     return is_broken() || (has_flag(carried_flag) && carried);
 }
 
-bool vehicle_part::is_available(const bool carried) const { return !is_unavailable(carried); }
+auto vehicle_part::is_available(const bool carried) const -> bool {
+    return !is_unavailable(carried);
+}
 
-itype_id vehicle_part::fuel_current() const {
+auto vehicle_part::fuel_current() const -> itype_id {
     if (is_engine()) {
         if (ammo_pref.is_null()) {
             return info().fuel_type != itype_muscle ? info().fuel_type : itype_id::NULL_ID();
@@ -271,7 +273,7 @@ itype_id vehicle_part::fuel_current() const {
     return itype_id::NULL_ID();
 }
 
-bool vehicle_part::fuel_set(const itype_id& fuel) {
+auto vehicle_part::fuel_set(const itype_id& fuel) -> bool {
     if (is_engine()) {
         for (const itype_id& avail : info().engine_fuel_opts()) {
             if (fuel == avail) {
@@ -283,7 +285,7 @@ bool vehicle_part::fuel_set(const itype_id& fuel) {
     return false;
 }
 
-itype_id vehicle_part::ammo_current() const {
+auto vehicle_part::ammo_current() const -> itype_id {
     if (is_battery()) { return itype_battery; }
 
     if (is_tank() && !base->contents.empty()) { return base->contents.front().typeId(); }
@@ -293,7 +295,7 @@ itype_id vehicle_part::ammo_current() const {
     return itype_id::NULL_ID();
 }
 
-int vehicle_part::ammo_capacity() const {
+auto vehicle_part::ammo_capacity() const -> int {
     if (is_tank()) { return ammo_current()->charges_per_volume(base->get_container_capacity()); }
 
     if (is_fuel_store(false) || is_turret()) { return base->ammo_capacity(); }
@@ -301,7 +303,7 @@ int vehicle_part::ammo_capacity() const {
     return 0;
 }
 
-int vehicle_part::ammo_remaining() const {
+auto vehicle_part::ammo_remaining() const -> int {
     if (is_tank()) { return base->contents.empty() ? 0 : base->contents.back().charges; }
 
     if (is_fuel_store(false) || is_turret()) { return base->ammo_remaining(); }
@@ -309,7 +311,7 @@ int vehicle_part::ammo_remaining() const {
     return 0;
 }
 
-int vehicle_part::ammo_set(const itype_id& ammo, int qty) {
+auto vehicle_part::ammo_set(const itype_id& ammo, int qty) -> int {
     const itype* liquid = &*ammo;
 
     // We often check if ammo is set to see if tank is empty, if qty == 0 don't set ammo
@@ -342,7 +344,7 @@ void vehicle_part::ammo_unset() {
     }
 }
 
-int vehicle_part::ammo_consume(int qty, const tripoint_bub_ms& pos) {
+auto vehicle_part::ammo_consume(int qty, const tripoint_bub_ms& pos) -> int {
     if (is_tank() && !base->contents.empty()) {
         const int res = std::min(ammo_remaining(), qty);
         item& liquid = base->contents.back();
@@ -353,7 +355,7 @@ int vehicle_part::ammo_consume(int qty, const tripoint_bub_ms& pos) {
     return base->ammo_consume(qty, pos);
 }
 
-double vehicle_part::consume_energy(const itype_id& ftype, double energy_j) {
+auto vehicle_part::consume_energy(const itype_id& ftype, double energy_j) -> double {
     if (base->contents.empty() || !is_fuel_store()) { return 0.0f; }
 
     item& fuel = base->contents.back();
@@ -378,7 +380,7 @@ double vehicle_part::consume_energy(const itype_id& ftype, double energy_j) {
     return 0.0;
 }
 
-bool vehicle_part::can_reload(const item* obj) const {
+auto vehicle_part::can_reload(const item* obj) const -> bool {
     // first check part is not destroyed and can contain ammo
     if (!is_fuel_store()) { return false; }
 
@@ -423,33 +425,37 @@ void vehicle_part::process_contents(const tripoint_bub_ms& pos, const bool e_hea
     }
 }
 
-detached_ptr<item> vehicle_part::fill_with(detached_ptr<item>&& liquid, int qty) {
+auto vehicle_part::fill_with(detached_ptr<item>&& liquid, int qty) -> detached_ptr<item> {
     if (!is_tank() || !can_reload(&*liquid)) { return std::move(liquid); }
 
     return base->fill_with(std::move(liquid), qty);
 }
 
-const std::set<fault_id>& vehicle_part::faults() const { return base->faults; }
+auto vehicle_part::faults() const -> const std::set<fault_id>& { return base->faults; }
 
-std::set<fault_id> vehicle_part::faults_potential() const { return base->faults_potential(); }
+auto vehicle_part::faults_potential() const -> std::set<fault_id> {
+    return base->faults_potential();
+}
 
-bool vehicle_part::fault_set(const fault_id& f) {
+auto vehicle_part::fault_set(const fault_id& f) -> bool {
     if (!faults_potential().contains(f)) { return false; }
     base->faults.insert(f);
     return true;
 }
 
-int vehicle_part::wheel_area() const { return info().wheel_area(); }
+auto vehicle_part::wheel_area() const -> int { return info().wheel_area(); }
 
 /** Get wheel diameter (millimeters) or return 0 if part is not wheel */
-int vehicle_part::wheel_diameter() const {
+auto vehicle_part::wheel_diameter() const -> int {
     return base->is_wheel() ? base->type->wheel->diameter : 0;
 }
 
 /** Get wheel width (millimeters) or return 0 if part is not wheel */
-int vehicle_part::wheel_width() const { return base->is_wheel() ? base->type->wheel->width : 0; }
+auto vehicle_part::wheel_width() const -> int {
+    return base->is_wheel() ? base->type->wheel->width : 0;
+}
 
-npc* vehicle_part::crew() const {
+auto vehicle_part::crew() const -> npc* {
     if (is_broken() || !crew_id.is_valid()) { return nullptr; }
 
     npc* const res = g->critter_by_id<npc>(crew_id);
@@ -457,7 +463,7 @@ npc* vehicle_part::crew() const {
     return res->is_player_ally() ? res : nullptr;
 }
 
-bool vehicle_part::set_crew(const npc& who) {
+auto vehicle_part::set_crew(const npc& who) -> bool {
     if (who.is_dead_state() || !(who.is_walking_with() || who.is_player_ally())) { return false; }
     if (is_broken() || (!is_seat() && !is_turret())) { return false; }
     crew_id = who.getID();
@@ -471,9 +477,9 @@ void vehicle_part::reset_target(const tripoint_abs_ms& pos) {
     target.second = pos;
 }
 
-bool vehicle_part::is_engine() const { return info().has_flag(VPFLAG_ENGINE); }
+auto vehicle_part::is_engine() const -> bool { return info().has_flag(VPFLAG_ENGINE); }
 
-bool vehicle_part::is_light() const {
+auto vehicle_part::is_light() const -> bool {
     const auto& vp = info();
     return vp.has_flag(VPFLAG_CONE_LIGHT) || vp.has_flag(VPFLAG_WIDE_CONE_LIGHT)
         || vp.has_flag(VPFLAG_HALF_CIRCLE_LIGHT) || vp.has_flag(VPFLAG_CIRCLE_LIGHT)
@@ -481,32 +487,32 @@ bool vehicle_part::is_light() const {
         || vp.has_flag(VPFLAG_ATOMIC_LIGHT);
 }
 
-bool vehicle_part::is_fuel_store(bool skip_broke) const {
+auto vehicle_part::is_fuel_store(bool skip_broke) const -> bool {
     if (skip_broke && is_broken()) { return false; }
     return is_tank() || base->is_magazine() || is_reactor();
 }
 
-bool vehicle_part::is_tank() const { return base->is_watertight_container(); }
+auto vehicle_part::is_tank() const -> bool { return base->is_watertight_container(); }
 
-bool vehicle_part::is_battery() const {
+auto vehicle_part::is_battery() const -> bool {
     return base->is_magazine() && base->ammo_types().contains(ammotype("battery"));
 }
 
-bool vehicle_part::is_reactor() const { return info().has_flag(VPFLAG_REACTOR); }
+auto vehicle_part::is_reactor() const -> bool { return info().has_flag(VPFLAG_REACTOR); }
 
 auto vehicle_part::is_perpetual_power_source() const -> bool {
     return info().has_flag("PERPETUAL") && info().epower > 0;
 }
 
-bool vehicle_part::is_leaking() const {
+auto vehicle_part::is_leaking() const -> bool {
     return health_percent() <= 0.5 && (is_tank() || is_battery() || is_reactor());
 }
 
-bool vehicle_part::is_turret() const { return base->is_gun(); }
+auto vehicle_part::is_turret() const -> bool { return base->is_gun(); }
 
-bool vehicle_part::is_seat() const { return info().has_flag("SEAT"); }
+auto vehicle_part::is_seat() const -> bool { return info().has_flag("SEAT"); }
 
-const vpart_info& vehicle_part::info() const {
+auto vehicle_part::info() const -> const vpart_info& {
     if (!info_cache) { info_cache = &id.obj(); }
     return *info_cache;
 }
@@ -524,7 +530,7 @@ void vehicle::set_hp(vehicle_part& pt, int qty) {
     }
 }
 
-bool vehicle::mod_hp(vehicle_part& pt, int qty, damage_type dt) {
+auto vehicle::mod_hp(vehicle_part& pt, int qty, damage_type dt) -> bool {
     if (pt.info().durability > 0) {
         return pt.base->mod_damage(-(pt.base->max_damage() * qty / pt.info().durability), dt);
     } else {
@@ -532,7 +538,7 @@ bool vehicle::mod_hp(vehicle_part& pt, int qty, damage_type dt) {
     }
 }
 
-bool vehicle::can_enable(const vehicle_part& pt, bool alert) const {
+auto vehicle::can_enable(const vehicle_part& pt, bool alert) const -> bool {
     if (std::ranges::none_of(parts, [&pt](const vehicle_part& e) { return &e == &pt; })
         || pt.removed) {
         debugmsg("Cannot enable removed or non-existent part");
@@ -557,7 +563,7 @@ bool vehicle::can_enable(const vehicle_part& pt, bool alert) const {
     return true;
 }
 
-bool vehicle::assign_seat(vehicle_part& pt, const npc& who) {
+auto vehicle::assign_seat(vehicle_part& pt, const npc& who) -> bool {
     if (!pt.is_seat() || !pt.set_crew(who)) { return false; }
 
     // NPC's can only be assigned to one seat in the vehicle
@@ -576,12 +582,12 @@ bool vehicle::assign_seat(vehicle_part& pt, const npc& who) {
     return true;
 }
 
-std::string vehicle_part::carried_name() const {
+auto vehicle_part::carried_name() const -> std::string {
     if (carry_names.empty()) { return std::string(); }
     return carry_names.top().substr(name_offset);
 }
 
-RGBColorPair vehicle_part::get_color(bool ignore_default) const {
+auto vehicle_part::get_color(bool ignore_default) const -> RGBColorPair {
     if (ignore_default) { return part_color_; }
 
     const auto [def_bg, def_fg] = info().default_color;

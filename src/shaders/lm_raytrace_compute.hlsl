@@ -38,6 +38,8 @@ cbuffer Constants : register(b0, space2)
     uint  num_sources;
     int   max_radius;
     uint  source_offset;
+    uint  trigdist;
+    uint3 _pad;
 };
 
 StructuredBuffer<float>          transparency_all : register(t0, space0);
@@ -108,7 +110,9 @@ float trace_intensity(
     float fdx = (float)dx;
     float fdy = (float)dy;
     float fdz = ( (float)tz + target_frac - ( (float)src.z_idx + src.z_frac ) ) * z_scale;
-    float dist = sqrt( fdx * fdx + fdy * fdy + fdz * fdz );
+    float dist = trigdist == 0u
+        ? max( (float)max( abs( dx ), abs( dy ) ), abs( fdz ) )
+        : sqrt( fdx * fdx + fdy * fdy + fdz * fdz );
 
     if( dist > src.radius ) {
         return 0.0;

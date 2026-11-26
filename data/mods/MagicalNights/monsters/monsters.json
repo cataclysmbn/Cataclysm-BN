@@ -179,7 +179,7 @@
         "cooldown": 3,
         "damage_max_instance": [ { "damage_type": "bash", "amount": 80, "armor_multiplier": 0.8 } ]
       },
-      [ "SMASH", 10 ]
+      { "id": "smash", "cooldown": 10 }
     ],
     "flags": [ "SEES", "HEARS", "SMELLS", "PATH_AVOID_DANGER_1", "WARM", "CAN_DIG", "HIT_AND_RUN", "HARDTOSHOOT" ]
   },
@@ -256,7 +256,13 @@
     "vision_night": 3,
     "harvest": "human_large_leather",
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ { "type": "bite", "cooldown": 30 }, [ "GRAB", 15 ], [ "scratch", 15 ], [ "slam", 10 ], [ "SMASH", 30 ] ],
+    "special_attacks": [
+      { "type": "bite", "cooldown": 30 },
+      [ "GRAB", 15 ],
+      [ "scratch", 15 ],
+      [ "slam", 10 ],
+      { "id": "smash", "throw_strength": 72, "cooldown": 30 }
+    ],
     "regenerates": 1,
     "flags": [ "SEES", "SMELLS", "KEENNOSE", "PATH_AVOID_DANGER_1", "WARM", "GRABS", "BLEED", "FLAMMABLE" ]
   },

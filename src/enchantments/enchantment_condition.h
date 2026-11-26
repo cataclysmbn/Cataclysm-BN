@@ -12,15 +12,16 @@ class enchantment_condition_function {
 public:
     enchantment_condition_function() = default;
     virtual ~enchantment_condition_function() = default;
-    virtual bool check_item_condition(const item& /*it*/) const { return false; }
-    virtual bool check_item_character_condition(
-        const Character& /*guy*/, const item& /*it*/) const {
+    virtual auto check_item_condition(const item& /*it*/) const -> bool { return false; }
+    virtual auto check_item_character_condition(const Character& /*guy*/, const item& /*it*/) const
+        -> bool {
         return false;
     }
-    virtual bool check_character_condition(const Character& /*guy*/, const bool /*active*/) const {
+    virtual auto check_character_condition(const Character& /*guy*/, const bool /*active*/) const
+        -> bool {
         return false;
     }
-    virtual bool check_generic_condition(const bool /*active*/) const { return false; }
+    virtual auto check_generic_condition(const bool /*active*/) const -> bool { return false; }
 };
 
 class enchantment_condition_lua: public virtual enchantment_condition_function {
@@ -42,11 +43,12 @@ public:
           item_func(std::move(item)),
           item_character_func(std::move(item_character)) {}
 
-    virtual bool check_item_condition(const item& it) const override;
-    virtual bool check_item_character_condition(
-        const Character& guy, const item& it) const override;
-    virtual bool check_character_condition(const Character& guy, const bool active) const override;
-    virtual bool check_generic_condition(const bool active) const override;
+    virtual auto check_item_condition(const item& it) const -> bool override;
+    virtual auto check_item_character_condition(const Character& guy, const item& it) const
+        -> bool override;
+    virtual auto check_character_condition(const Character& guy, const bool active) const
+        -> bool override;
+    virtual auto check_generic_condition(const bool active) const -> bool override;
 };
 
 enum enchantment_condition_type : unsigned int {
@@ -69,14 +71,14 @@ public:
 
     void check() const;
 
-    static std::vector<enchantment_condition> get_all();
+    static auto get_all() -> std::vector<enchantment_condition>;
 
     static void reset();
 
-    bool item_condition(const item& it) const;
-    bool item_character_condition(const Character& guy, const item& it) const;
-    bool character_condition(const Character& guy, const bool active) const;
-    bool generic_condition(const bool active) const;
+    auto item_condition(const item& it) const -> bool;
+    auto item_character_condition(const Character& guy, const item& it) const -> bool;
+    auto character_condition(const Character& guy, const bool active) const -> bool;
+    auto generic_condition(const bool active) const -> bool;
 
     // Generic Factory stuff
     enchantment_condition_id id;

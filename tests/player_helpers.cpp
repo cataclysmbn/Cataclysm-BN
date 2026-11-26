@@ -1,5 +1,6 @@
 #include "player_helpers.h"
 
+#include "../src/map/map.h"
 #include "avatar.h"
 #include "bionics.h"
 #include "catch/catch.hpp"
@@ -13,7 +14,6 @@
 #include "item.h"
 #include "itype.h"
 #include "make_static.h"
-#include "map.h"
 #include "map_helpers.h"
 #include "material.h"
 #include "npc.h"
@@ -29,7 +29,7 @@
 #include <memory>
 #include <vector>
 
-int get_remaining_charges(const std::string& tool_id) {
+auto get_remaining_charges(const std::string& tool_id) -> int {
     const inventory crafting_inv = g->u.crafting_inventory();
     std::vector<item*> items = crafting_inv.items_with([tool_id](const item& i) {
         return i.typeId() == itype_id(tool_id);
@@ -39,7 +39,7 @@ int get_remaining_charges(const std::string& tool_id) {
     return remaining_charges;
 }
 
-bool player_has_item_of_type(const std::string& type) {
+auto player_has_item_of_type(const std::string& type) -> bool {
 
     std::vector<item*> inv_items = g->u.inv_dump();
 
@@ -57,6 +57,7 @@ void clear_character(player& dummy, bool debug_storage) {
     dummy.inv_clear();
     dummy.remove_primary_weapon();
     dummy.clear_mutations();
+    dummy.forget_all_recipes();
 
     // Prevent spilling, but don't cause encumbrance
     if (debug_storage && !dummy.has_trait(trait_id("DEBUG_STORAGE"))) {
@@ -82,9 +83,9 @@ void clear_character(player& dummy, bool debug_storage) {
 
     dummy.clear_skills();
     dummy.clear_morale();
-    dummy.activity->set_to_null();
-    // Make sure any lingering safe references from the activity are removed
-    dummy.activity->targets.clear();
+    // Replace the activity: set_to_null keeps index, values and targets for a continued read.
+    dummy.activity = std::make_unique<player_activity>();
+    dummy.backlog.clear();
     dummy.reset_chargen_attributes();
     dummy.set_pain(0);
     dummy.reset_bonuses();
@@ -134,7 +135,7 @@ void process_activity(player& dummy) {
     } while (dummy.activity);
 }
 
-npc& spawn_npc(const tripoint_bub_ms& p, const std::string& npc_class) {
+auto spawn_npc(const tripoint_bub_ms& p, const std::string& npc_class) -> npc& {
     const string_id<npc_template> test_guy(npc_class);
     const character_id model_id = g->m.place_npc(p, test_guy, true);
     g->load_npcs();

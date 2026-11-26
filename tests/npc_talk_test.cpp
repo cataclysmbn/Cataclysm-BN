@@ -1,3 +1,5 @@
+#include "../src/map/map.h"
+#include "../src/overmap/overmapbuffer.h"
 #include "avatar.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
@@ -11,13 +13,11 @@
 #include "inventory.h"
 #include "item.h"
 #include "item_category.h"
-#include "map.h"
 #include "map_helpers.h"
 #include "mission.h"
 #include "npc.h"
 #include "npc_favor.h"
 #include "npctalk.h"
-#include "overmapbuffer.h"
 #include "pimpl.h"
 #include "player.h"
 #include "player_helpers.h"
@@ -71,7 +71,7 @@ static void gen_response_lines(dialogue& d, size_t expected_count) {
     REQUIRE(d.responses.size() == expected_count);
 }
 
-static std::string gen_dynamic_line(dialogue& d) {
+static auto gen_dynamic_line(dialogue& d) -> std::string {
     std::string challenge = d.dynamic_line(d.topic_stack.back());
     return challenge;
 }
@@ -594,7 +594,7 @@ TEST_CASE("npc_talk_conditionals", "[npc_talk]") {
     CHECK(trial_effect.next_topic.id == "TALK_TEST_FALSE_CONDITION_NEXT");
 }
 
-static bool has_item(Character& p, const std::string& id, int count) {
+static auto has_item(Character& p, const std::string& id, int count) -> bool {
     item& old_item = *item::spawn_temporary(id);
     if (old_item.count_by_charges()) {
         return p.has_charges(itype_id(id), count);
@@ -603,7 +603,7 @@ static bool has_item(Character& p, const std::string& id, int count) {
     }
 }
 
-static bool has_beer_bottle(Character& p, int count) {
+static auto has_beer_bottle(Character& p, int count) -> bool {
     return has_item(p, "bottle_glass", 1) && has_item(p, "beer", count);
 }
 

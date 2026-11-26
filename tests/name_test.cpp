@@ -9,8 +9,8 @@ class IsOneOf: public Catch::MatcherBase<std::string> {
 
 public:
     IsOneOf(std::set<std::string> v): values{v} {}
-    bool match(std::string const& s) const override { return values.contains(s); }
-    std::string describe() const override {
+    auto match(std::string const& s) const -> bool override { return values.contains(s); }
+    auto describe() const -> std::string override {
         std::string s = "is one of {";
         for (auto const& i : values) { s += i + ", "; }
         s.back() = '}';

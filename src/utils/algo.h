@@ -96,7 +96,8 @@ void find_cycles_impl(
 // Complexity should be O(V+E)
 // Based on https://www.geeksforgeeks.org/detect-cycle-in-a-graph/
 template <typename T>
-std::vector<std::vector<T>> find_cycles(const std::unordered_map<T, std::vector<T>>& edges) {
+auto find_cycles(const std::unordered_map<T, std::vector<T>>& edges)
+    -> std::vector<std::vector<T>> {
     std::unordered_set<T> visited;
     std::unordered_map<T, T> on_current_branch;
     std::vector<std::vector<T>> result;

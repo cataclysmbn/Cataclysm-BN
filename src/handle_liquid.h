@@ -2,7 +2,7 @@
 
 #include "coordinates.h"
 #include "item_stack.h"
-#include "map.h"
+#include "map/map.h"
 
 class item;
 class monster;
@@ -20,8 +20,9 @@ enum liquid_dest : int {
 struct liquid_dest_opt {
     liquid_dest dest_opt = LD_NULL;
     tripoint_bub_ms pos;
-    item *it;
+    item *it = nullptr;
     vehicle *veh = nullptr;
+    int amount = -1;
 };
 
 // Contains functions that handle liquid
@@ -73,5 +74,4 @@ bool handle_liquid( item &liquid, int radius = 0 );
 bool handle_liquid( const tripoint_bub_ms &pos, int radius = 0 );
 bool handle_liquid( vehicle *veh, int part_id, int radius = 0 );
 } // namespace liquid_handler
-
 

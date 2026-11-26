@@ -155,51 +155,53 @@ jsobj.read( "name", name );
 [단위 테스트](https://ko.wikipedia.org/wiki/%EC%9C%A0%EB%8B%9B_%ED%85%8C%EC%8A%A4%ED%8A%B8)를
 실행하여 `translation` 클래스에서 보고된 텍스트 스타일 문제를 수정할 수도 있습니다.
 
-### Supported JSON values
+<a id="supported-json-values"></a>
 
-- Effect names
-- Item action names
-- Item category names
-- Activity verbs
-- Gate action messages
-- Spell names and descriptions
-- Terrain/furniture descriptions
-- Monster melee attack messages
-- Morale effect descriptions
-- Mutation names/descriptions
-- NPC class names/descriptions
-- Tool quality names
-- Score descriptions
-- Skill names/descriptions
-- Bionic names/descriptions
-- Terrain bash sound descriptions
-- Trap-vehicle collision sound descriptions
-- Vehicle part names/descriptions
-- Skill display type names
-- NPC dialogue u_buy_monster unique names
-- Spell messages and monster spell messages
-- Martial art names and descriptions
-- Mission names and descriptions
-- Fault names and descriptions
-- Plant names in item seed data
-- Transform use action messages and menu text
-- Template NPC names and name suffixes
-- NPC talk response text
-- Relic name overrides
-- Relic recharge messages
-- Speech text
-- Tutorial messages
-- Vitamin names
-- Recipe blueprint names
-- Recipe group recipe descriptions
-- Item names (plural supported) and descriptions
-- Recipe descriptions
-- Inscribe use action verbs/gerunds
-- Monster names (plural supported) and descriptions
-- Snippets
-- Bodypart names
-- Keybinding action names
-- Field level names
+### 지원되는 JSON 값
+
+- 효과 이름
+- 아이템 동작 이름
+- 아이템 카테고리 이름
+- 활동을 나타내는 동사
+- 출입문 동작 메시지
+- 주문 이름과 설명
+- 지형/가구 설명
+- 몬스터 근접 공격 메시지
+- 사기 효과 설명
+- 돌연변이 이름과 설명
+- NPC 클래스 이름과 설명
+- 도구 품질 이름
+- 점수 설명
+- 스킬 이름과 설명
+- 바이오닉 이름과 설명
+- 지형 강타 소리 설명
+- 함정과 차량의 충돌 소리 설명
+- 차량 부품 이름과 설명
+- 스킬 표시 유형 이름
+- NPC 대화의 `u_buy_monster` 고유 이름
+- 주문 메시지와 몬스터 주문 메시지
+- 무술 이름과 설명
+- 임무 이름과 설명
+- 결함 이름과 설명
+- 아이템 씨앗 데이터의 식물 이름
+- 변환 사용 동작의 메시지와 메뉴 텍스트
+- 템플릿 NPC 이름과 이름 접미사
+- NPC 대화 응답 텍스트
+- 유물 이름 재정의
+- 유물 재충전 메시지
+- 발언 텍스트
+- 튜토리얼 메시지
+- 비타민 이름
+- 제작법 설계도 이름
+- 제작법 그룹의 제작법 설명
+- 아이템 이름(복수형 지원)과 설명
+- 제작법 설명
+- 새기기 사용 동작의 동사/동명사
+- 몬스터 이름(복수형 지원)과 설명
+- 문구 모음
+- 신체 부위 이름
+- 키 바인딩 동작 이름
+- 필드 단계 이름
 
 ### Lua
 

@@ -11,13 +11,13 @@
 class npc;
 class player;
 
-int get_remaining_charges(const std::string& tool_id);
-bool player_has_item_of_type(const std::string&);
+auto get_remaining_charges(const std::string& tool_id) -> int;
+auto player_has_item_of_type(const std::string&) -> bool;
 void clear_character(player&, bool debug_storage = true);
 void clear_avatar();
 void process_activity(player& dummy);
 
-npc& spawn_npc(const tripoint_bub_ms&, const std::string& npc_class);
+auto spawn_npc(const tripoint_bub_ms&, const std::string& npc_class) -> npc&;
 void give_and_activate_bionic(player& p, const bionic_id& bioid);
 
 void arm_character(

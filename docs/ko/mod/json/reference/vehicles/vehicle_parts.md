@@ -39,10 +39,17 @@
   {"item": "scrap", "count": [0,5]} // 배열 대신, 인라인 아이템 그룹일 수 있으며,
 ],
 "breaks_into" : "some_item_group", // 또는 아이템 그룹의 id만 가능합니다.
-"flags": [                    // 부품과 관련된 플래그
-     "EXTERNAL", "MOUNT_OVER", "WHEEL", "MOUNT_POINT", "VARIABLE_SIZE"
-],
-"damage_reduction" : {        // 아래 설명된 대로 피해의 평면 감소. 지정되지 않으면 0으로 설정
+	"flags": [                    // 부품과 관련된 플래그
+	     "EXTERNAL", "MOUNT_OVER", "WHEEL", "MOUNT_POINT", "VARIABLE_SIZE"
+	],
+	"rotating_light": {           // 선택 사항. 일반 조명 플래그 대신 회전 방향 원뿔 조명을 내는 조명 부품용
+	  "arc": 30,                  // 원뿔 폭(도). 기본값 30
+	  "step": 90,                 // 주기마다 진행하는 각도. 음수면 반대 방향으로 회전. 기본값 90
+	  "phase": 0,                 // 초기 방향 오프셋(도). 기본값 0
+	  "period": "1 turns",        // 회전 단계 사이의 시간. 정수 턴 수도 가능. 기본값 1턴
+	  "beams": 2                  // 동시에 표시할 균일 간격 광선 수. 기본값 2
+	},
+	"damage_reduction" : {        // 아래 설명된 대로 피해의 평면 감소. 지정되지 않으면 0으로 설정
     "all" : 10,
     "physical" : 5
 },
@@ -62,6 +69,7 @@
 "lift_coff": 0.5,             // 선택 필드, 날개 효과의 배수
 "propeller_diameter": 0.5,    // 선택 필드, 프로펠러의 직경
 "length": 3,                  // 선택 필드, 사다리의 z-레벨 길이
+"default_color": "#622625"    // 선택 필드, 다른 색조가 정의되지 않았을 때의 기본 색조
 ```
 
 ### 통합 도구
@@ -85,6 +93,22 @@
 "integrated_tools": [ "water_purifier" ],  // 도구를 대체하지만, `WATER_PURIFIER` 플래그의 차량 탱크에서 물을 정화하는 능력은 대체하지 않음
 ```
 
+### 변환기
+
+`CONVERTER` 플래그가 있는 차량이 연료 탱크 안에서 한 액체를 다른 액체로 변환하도록 하는 필드입니다.
+아이템이나 주변 액체 공급원에는 사용할 수 없습니다.
+
+```json
+"converter": {
+  "input": "input_itype_id",   // 입력되는 itype
+  "input_step": 3,               // 반복마다 소비되는 입력량
+  "output": "output_itype_id",  // 출력되는 itype
+  "output_step": 1,              // 반복마다 소비되는 출력량
+  "max_steps": 10,               // 분당 최대 반복 횟수
+  "charge_cost": 100             // 반복마다 필요한 kJ(차량에서 사용하는 최소 단위)
+}
+```
+
 ### 부품 저항
 
 ```json
@@ -99,6 +123,24 @@
 "heat" : 3,
 "cold" : 3,
 "electric" : 3
+```
+
+### 형태
+
+서로 다른 스프라이트를 가진 차량 부품의 copy-from 버전을 자동으로 만드는 필드입니다.
+추상 부품에서 올바른 객체를 자동으로 생성합니다.
+
+참고: 이 필드는 copy-from을 지원하지 않으므로 각 객체에 정의해야 합니다.
+
+```jsonc
+"shapes": [
+  {
+    "direction": "left",     // ID에 추가되는 문자열. wing_metal은 wing_metal_left가 되며 looks_like에도 추가됩니다.
+    "symbol": "y",           // 위의 symbol 정의와 동일
+    "broken_symbol": "y",    // 위의 broken_symbol 정의와 동일
+    "looks_like": "board_nw" // 위의 looks_like 정의와 동일하며 direction으로 인한 변경을 덮어씀
+  },
+]
 ```
 
 ### 차량

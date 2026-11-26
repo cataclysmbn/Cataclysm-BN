@@ -1,0 +1,34 @@
+[
+  {
+    "type": "base_weather",
+    "id": "desert_region_default",
+    "spring_temp": 16,
+    "summer_temp": 24,
+    "autumn_temp": 15,
+    "winter_temp": 12,
+    "base_humidity": 20,
+    "base_pressure": 1025,
+    "base_wind": 5.7,
+    "base_wind_distrib_peaks": 20,
+    "base_wind_season_variation": 40,
+    "spring_humidity_manual_mod": 10,
+    "summer_humidity_manual_mod": 0,
+    "autumn_humidity_manual_mod": 10,
+    "winter_humidity_manual_mod": 15,
+    "weather_types": [
+      "clear",
+      "sunny",
+      "cloudy",
+      "light_drizzle",
+      "drizzle",
+      "rain",
+      "thunder",
+      "lightning",
+      "acid_drizzle",
+      "acid_rain",
+      "flurries",
+      "snowing",
+      "snowstorm"
+    ]
+  }
+]

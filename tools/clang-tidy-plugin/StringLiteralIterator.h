@@ -29,33 +29,35 @@ public:
     // expression such as __func__, so you may want to exclude them using
     // the matcher `unless( hasAncestor( predefinedExpr() ) )` or something
     // to that effect.
-    SourceLocation toSourceLocation(
-        const SourceManager& SrcMgr, const LangOptions& LangOpts, const TargetInfo& Info) const;
+    auto toSourceLocation(
+        const SourceManager& SrcMgr, const LangOptions& LangOpts, const TargetInfo& Info) const
+        -> SourceLocation;
 
     // All following operators assume that StringLiteral contains a valid
     // utf8 string
-    uint32_t operator*() const;
+    auto operator*() const -> uint32_t;
 
-    bool operator<(const StringLiteralIterator& rhs) const;
-    bool operator>(const StringLiteralIterator& rhs) const;
-    bool operator<=(const StringLiteralIterator& rhs) const;
-    bool operator>=(const StringLiteralIterator& rhs) const;
-    bool operator==(const StringLiteralIterator& rhs) const;
-    bool operator!=(const StringLiteralIterator& rhs) const;
+    auto operator<(const StringLiteralIterator& rhs) const -> bool;
+    auto operator>(const StringLiteralIterator& rhs) const -> bool;
+    auto operator<=(const StringLiteralIterator& rhs) const -> bool;
+    auto operator>=(const StringLiteralIterator& rhs) const -> bool;
+    auto operator==(const StringLiteralIterator& rhs) const -> bool;
+    auto operator!=(const StringLiteralIterator& rhs) const -> bool;
 
-    StringLiteralIterator& operator+=(ptrdiff_t inc);
-    StringLiteralIterator& operator-=(ptrdiff_t dec);
-    StringLiteralIterator operator+(ptrdiff_t inc) const;
-    StringLiteralIterator operator-(ptrdiff_t dec) const;
-    StringLiteralIterator& operator++();
-    StringLiteralIterator operator++(int);
-    StringLiteralIterator& operator--();
-    StringLiteralIterator operator--(int);
+    auto operator+=(ptrdiff_t inc) -> StringLiteralIterator&;
+    auto operator-=(ptrdiff_t dec) -> StringLiteralIterator&;
+    auto operator+(ptrdiff_t inc) const -> StringLiteralIterator;
+    auto operator-(ptrdiff_t dec) const -> StringLiteralIterator;
+    auto operator++() -> StringLiteralIterator&;
+    auto operator++(int) -> StringLiteralIterator;
+    auto operator--() -> StringLiteralIterator&;
+    auto operator--(int) -> StringLiteralIterator;
 
-    static StringLiteralIterator begin(const StringLiteral& str);
-    static StringLiteralIterator end(const StringLiteral& str);
+    static auto begin(const StringLiteral& str) -> StringLiteralIterator;
+    static auto end(const StringLiteral& str) -> StringLiteralIterator;
 
-    static ptrdiff_t distance(const StringLiteralIterator& beg, const StringLiteralIterator& end);
+    static auto distance(const StringLiteralIterator& beg, const StringLiteralIterator& end)
+        -> ptrdiff_t;
 
 private:
     std::reference_wrapper<const StringLiteral> str;

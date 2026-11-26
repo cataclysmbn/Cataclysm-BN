@@ -7,7 +7,7 @@
     "object": {
       "mapgensize": [ 1, 1 ],
       "rows": [ "C" ],
-      "furniture": { "C": "f_crate_c" },
+      "furniture": { "C": [ "f_cardboard_box", "f_crate_c" ] },
       "items": {
         "C": [
           { "item": "supplies_reagents_lab", "chance": 75 },

@@ -27,7 +27,7 @@
     "id": "martial_note_sprint",
     "//": "Adventurer technique",
     "name": { "str": "Note on Sprint", "str_pl": "Notes on Sprint" },
-    "description": "This'll give those jerks on your old highschool track team a run for their money!",
+    "description": "This'll give those jerks on your old high school track team a run for their money!",
     "use_action": { "type": "learn_spell", "spells": [ "sprint" ] }
   },
   {

@@ -8,12 +8,12 @@
 #include "handle_liquid.h"
 #include "itype.h"
 #include "make_static.h"
+#include "map/submap.h"
 #include "map_iterator.h"
 #include "player.h"
 #include "player_activity.h"
 #include "rng.h"
 #include "skill.h"
-#include "submap.h"
 #include "trap.h"
 #include "type_id.h"
 #include "vehicle/veh_type.h"
@@ -56,7 +56,6 @@ stat_mod get_pain_penalty( const Character &ch )
 
     ret.speed = std::pow( pain, 0.7f );
 
-    bool ceno = ch.has_trait( trait_CENOBITE );
     ret.strength = stat_penalty + ch.bonus_from_enchantments( stat_penalty, ench_val_PAIN_PENALTY_STR );
     ret.dexterity = stat_penalty + ch.bonus_from_enchantments( stat_penalty,
                     ench_val_PAIN_PENALTY_DEX );

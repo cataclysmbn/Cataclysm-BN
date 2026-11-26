@@ -17,7 +17,7 @@
 #include "item.h"
 #include "itype.h"
 #include "json.h"
-#include "mapdata.h"
+#include "map/mapdata.h"
 #include "messages.h"
 #include "output.h"
 #include "player.h"
@@ -43,9 +43,8 @@
 
 namespace {
 
-bool run_can_make_callback(const std::string id, const std::string ench_id) {
-    std::unique_lock lock(cata::lua_lock);
-    auto& state = *cata::get_active_lua_state();
+auto run_can_make_callback(const std::string id, const std::string ench_id) -> bool {
+    auto& state = *DynamicDataLoader::get_instance().lua.get();
     auto func = cata::get_lua_callback(state, "enchanter_can_make", id);
     if (!func) {
         debugmsg("Lua callback %s for `enchanter_can_make` does not exist. Defaulting to true", id);
@@ -65,9 +64,9 @@ bool run_can_make_callback(const std::string id, const std::string ench_id) {
     return res.get<bool>();
 }
 
-bool run_can_use_on_callback(const std::string id, const std::string ench_id, const item& itm) {
-    std::unique_lock lock(cata::lua_lock);
-    auto& state = *cata::get_active_lua_state();
+auto run_can_use_on_callback(const std::string id, const std::string ench_id, const item& itm)
+    -> bool {
+    auto& state = *DynamicDataLoader::get_instance().lua.get();
     auto func = cata::get_lua_callback(state, "enchanter_can_use_on", id);
     if (!func) {
         debugmsg("Lua callback %s for `enchanter_can_use_on` does not exist. Defaulting to true",
@@ -92,7 +91,7 @@ bool run_can_use_on_callback(const std::string id, const std::string ench_id, co
 } // namespace
 
 namespace enchanter {
-requirement_data total_requirements(const enchant_info& info) {
+auto total_requirements(const enchant_info& info) -> requirement_data {
     return std::accumulate(
         info.requirements.begin(), info.requirements.end(), requirement_data(),
         [](const requirement_data& lhs, const std::pair<requirement_id, int>& rhs) {
@@ -100,8 +99,8 @@ requirement_data total_requirements(const enchant_info& info) {
         });
 }
 
-std::vector<std::string> enchantment_info(
-    const enchant_info& info, Character& crafter, int fold_width, item& itm) {
+auto enchantment_info(const enchant_info& info, Character& crafter, int fold_width, item& itm)
+    -> std::vector<std::string> {
     units::volume vol = itm.base_volume();
     std::ostringstream oss = std::ostringstream();
 
@@ -151,12 +150,12 @@ std::vector<std::string> enchantment_info(
     return result;
 }
 
-int enchantment_selector_menu(std::vector<enchant_info> options, Character& user, item& itm) {
+auto enchantment_selector_menu(std::vector<enchant_info> options, Character& user, item& itm)
+    -> int {
     units::volume vol = itm.base_volume();
     auto crafting_inv = user.crafting_inventory(true);
     int width = 0;
     int height = 0;
-    int item_info_width = 0;
     catacurses::window w_ench;
     catacurses::window w_info;
     ui_adaptor ui;
@@ -188,7 +187,6 @@ int enchantment_selector_menu(std::vector<enchant_info> options, Character& user
     int names_scroll_max = 0;
     int info_lines = 0;
     int info_scroll = 0;
-    int info_scroll_min = 0;
     int info_scroll_max = 0;
     int num_options = names.size();
     ui.on_redraw([&](ui_adaptor& ui) {
@@ -213,11 +211,9 @@ int enchantment_selector_menu(std::vector<enchant_info> options, Character& user
                 enchantment_info(options[line], user, width, itm);
             const int total_lines = info.size();
             info_lines = total_lines;
-            calcStartPos(info_scroll_min, info_scroll, height, total_lines);
-            info_scroll_max = std::min(total_lines, info_scroll_min + height);
-            for (int i = info_scroll_min; i < info_scroll_max; ++i) {
-                auto dummy = c_white;
-                trim_and_print(w_info, point(2, i - info_scroll_min + 1), width, c_white, info[i]);
+            info_scroll_max = std::min(total_lines, info_scroll + height);
+            for (int i = info_scroll; i < info_scroll_max; ++i) {
+                trim_and_print(w_info, point(2, i - info_scroll + 1), width, c_white, info[i]);
             }
 
             if (total_lines > height) {
@@ -225,7 +221,7 @@ int enchantment_selector_menu(std::vector<enchant_info> options, Character& user
                     .offset_x(width)
                     .content_size(total_lines)
                     .viewport_pos(info_scroll)
-                    .viewport_size(TERMY)
+                    .viewport_size(height)
                     .apply(w_info);
             }
         }
@@ -237,10 +233,10 @@ int enchantment_selector_menu(std::vector<enchant_info> options, Character& user
         const std::string action = ctxt.handle_input();
         if (action == "PAGE_UP") {
             info_scroll -= scroll_info_lines;
-            if (info_scroll < 0) { info_scroll = info_lines; }
+            if (info_scroll < 0) { info_scroll = info_lines - height; }
         } else if (action == "PAGE_DOWN") {
             info_scroll += scroll_info_lines;
-            if (info_scroll > info_lines) { info_scroll = 0; }
+            if (info_scroll > info_lines - height) { info_scroll = 0; }
         } else if (action == "DOWN") {
             line++;
             info_scroll = 0;
@@ -369,13 +365,12 @@ void iexamine::enchanter(player& p, const tripoint_bub_ms& pos) {
     int index = enchanter::enchantment_selector_menu(infos, p, *to_ench);
     if (index != -1) {
         auto info = infos[index];
-        int moves =
+        const auto moves =
             to_moves<int>(info.time_to_enchant)
             * std::max(
                 1,
                 (info.volume_time_effect ? int(to_ench->base_volume() / info.volume_per_time) : 1));
-        p.assign_activity(
-            std::make_unique<player_activity>(std::make_unique<enchant_activity_actor>(
-                *to_ench, furn_id.id(), info.id, to_moves<int>(info.time_to_enchant))));
+        p.assign_activity(std::make_unique<player_activity>(
+            std::make_unique<enchant_activity_actor>(*to_ench, furn_id.id(), info.id, moves)));
     }
 }

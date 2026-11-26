@@ -1,3 +1,4 @@
+#include "../src/map/map.h"
 #include "activity_actor.h"
 #include "activity_actor_definitions.h"
 #include "avatar.h"
@@ -6,9 +7,8 @@
 #include "game_inventory.h"
 #include "inventory.h"
 #include "item.h"
-#include "map.h"
+#include "map/map_selector.h"
 #include "map_helpers.h"
-#include "map_selector.h"
 #include "options_helpers.h"
 #include "player.h"
 #include "player_activity.h"
@@ -50,7 +50,7 @@ enum test_action {
     TEST_ACTION_NUM,
 };
 
-static std::string location_desc(const inventory_location loc) {
+static auto location_desc(const inventory_location loc) -> std::string {
     switch (loc) {
         case GROUND:
             return "the ground";
@@ -66,8 +66,8 @@ static std::string location_desc(const inventory_location loc) {
     return "unknown location";
 }
 
-static std::string move_action_desc(
-    const int pos, const inventory_location from, const inventory_location to) {
+static auto move_action_desc(
+    const int pos, const inventory_location from, const inventory_location to) -> std::string {
     std::stringstream ss;
     ss << "move ";
     switch (pos) {
@@ -117,7 +117,7 @@ static std::string move_action_desc(
     return ss.str();
 }
 
-static std::string invlet_state_desc(const invlet_state invstate) {
+static auto invlet_state_desc(const invlet_state invstate) -> std::string {
     switch (invstate) {
         case NONE:
             return "none";
@@ -131,11 +131,12 @@ static std::string invlet_state_desc(const invlet_state invstate) {
     return "unexpected";
 }
 
-static std::string test_action_desc(
+static auto test_action_desc(
     const test_action action, const inventory_location from, const inventory_location to,
     const invlet_state first_invlet_state, const invlet_state second_invlet_state,
     const invlet_state expected_first_invlet_state, const invlet_state expected_second_invlet_state,
-    const invlet_state final_first_invlet_state, const invlet_state final_second_invlet_state) {
+    const invlet_state final_first_invlet_state, const invlet_state final_second_invlet_state)
+    -> std::string {
     std::stringstream ss;
     ss << "1. add 1st item to " << location_desc(to) << '\n';
     ss << "2. add 2nd item to " << location_desc(to) << '\n';
@@ -190,7 +191,7 @@ static void assign_invlet(Character& p, item& it, const char invlet, const invle
     }
 }
 
-static invlet_state check_invlet(player& p, item& it, const char invlet) {
+static auto check_invlet(player& p, item& it, const char invlet) -> invlet_state {
     if (it.invlet == '\0') {
         return NONE;
     } else if (it.invlet == invlet) {

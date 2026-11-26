@@ -1,7 +1,7 @@
 #include "activity_speed_adapters.h"
 
 #include "construction.h"
-#include "mapdata.h"
+#include "map/mapdata.h"
 #include "recipe.h"
 #include "requirements.h"
 #include "units_mass.h"

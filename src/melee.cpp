@@ -8,7 +8,6 @@
 #include "cached_options.h"
 #include "calendar.h"
 #include "cata_utility.h"
-#include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_icallback_actor.h"
 #include "catalua_sol.h"
@@ -31,9 +30,10 @@
 #include "iuse.h"
 #include "iuse_actor.h"
 #include "line.h"
-#include "map.h"
+#include "map/map.h"
+#include "map/mapdata.h"
+#include "map/utils/map_functions.h"
 #include "map_iterator.h"
-#include "mapdata.h"
 #include "martialarts.h"
 #include "messages.h"
 #include "monattack.h"
@@ -1776,7 +1776,6 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
         t.as_character()->on_hit( this, bodypart_str_id::NULL_ID().id(), &dp );
     }
 
-    std::unique_lock lock( cata::lua_lock );
     cata::run_hooks( "on_creature_melee_attacked", [ &, this]( auto & params ) {
         params["char"] = this;
         params["target"] = &t;
@@ -1872,6 +1871,11 @@ void Character::reach_attack( const tripoint_bub_ms &p )
         }
 
         mod_moves( -move_cost );
+        return;
+    }
+
+    if( map_funcs::physical_floor_between( here, bub_pos(), p ) ) {
+        add_msg_if_player( _( "There's a floor in the way!" ) );
         return;
     }
 
@@ -2582,6 +2586,10 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
         }
     }
 
+    if( technique.stun_dur > 0 ) {
+        t.add_effect( effect_stunned, rng( 1_turns, time_duration::from_turns( technique.stun_dur ) ) );
+    }
+
     if( technique.side_switch ) {
         const auto b = t.bub_pos();
         int newx;
@@ -2645,9 +2653,6 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
             }
         }
 
-        if( technique.stun_dur > 0 && !technique.powerful_knockback ) {
-            t.add_effect( effect_stunned, rng( 1_turns, time_duration::from_turns( technique.stun_dur ) ) );
-        }
         if( t.bub_pos() != prev_pos && can_be_downed_after_knockback( t ) ) {
             if( technique.controlled_knockback ) {
                 apply_thrown_creature_downed_effect( t );
@@ -2789,7 +2794,6 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
         }
     }
 
-    std::unique_lock lock( cata::lua_lock );
     cata::run_hooks( "on_creature_performed_technique", [ &, this]( auto & params ) {
         params["char"] = this;
         params["technique"] = &technique;
@@ -3088,7 +3092,6 @@ bool Character::block_hit( Creature *source, bodypart_id &bp_hit, damage_instanc
                                   static_cast<int>( damage_blocked ) );
     }
 
-    std::unique_lock lock( cata::lua_lock );
     cata::run_hooks( "on_creature_blocked", [ &, this]( auto & params ) {
         params["char"] = this;
         params["source"] = source;
@@ -3121,10 +3124,10 @@ void Character::perform_special_attacks( Creature &t, dealt_damage_instance &dea
                 practiced = true;
                 as_player()->practice( skill_unarmed, rng( 0, 10 ) );
             }
-        }
-        int dam = dealt_dam.total_damage();
-        if( dam > 0 ) {
-            player_hit_message( this, att.text, t, dam );
+            int dam = dealt_dam.total_damage();
+            if( dam > 0 ) {
+                player_hit_message( this, att.text, t, dam );
+            }
         }
     }
 }
@@ -3139,7 +3142,7 @@ std::string Character::melee_special_effects( Creature &t, damage_instance &d, i
     if( has_active_bionic( bio_shock ) && get_power_level() >= bio_shock->power_trigger &&
         ( !is_armed() || primary_weapon().conductive() ) ) {
         mod_power_level( -bio_shock->power_trigger );
-        d.add_damage( DT_ELECTRIC, rng( 2, 10 ) );
+        d.add_damage( DT_ELECTRIC, rng( 5, 10 ) );
 
         if( is_player() ) {
             dump += string_format( _( "You shock %s." ), target ) + "\n";

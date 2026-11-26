@@ -101,7 +101,7 @@
     "id": "MISSION_GET_BLACK_BOX",
     "type": "mission_definition",
     "name": { "str": "Retrieve Military Black Box" },
-    "description": "Obtain a <color_light_blue>black box</color> from a military helicoper, crashed or otherwise, and <color_light_red>extract it from the vehicle</color>.",
+    "description": "Obtain a <color_light_blue>black box</color> from a military helicopter, crashed or otherwise, and <color_light_red>extract it from the vehicle</color>.",
     "goal": "MGOAL_FIND_ITEM",
     "difficulty": 2,
     "value": 100000,

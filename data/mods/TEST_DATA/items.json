@@ -150,7 +150,7 @@
     "color": "dark_gray",
     "techniques": [ "WBLOCK_1", "BRUTAL", "SWEEP" ],
     "qualities": [ [ "PRY", 4 ], [ "HAMMER", 2 ], [ "DIG", 1 ] ],
-    "use_action": [ "HAMMER", "CROWBAR" ],
+    "use_action": [ "HAMMER" ],
     "flags": [ "DURABLE_MELEE", "BELT_CLIP" ]
   },
   {
@@ -169,8 +169,7 @@
     "color": "light_gray",
     "techniques": [ "WBLOCK_1", "BRUTAL", "SWEEP" ],
     "qualities": [ [ "AXE", 2 ], [ "PRY", 3 ], [ "BUTCHER", -30 ] ],
-    "flags": [ "DURABLE_MELEE", "NONCONDUCTIVE", "BELT_CLIP", "SHEATH_AXE" ],
-    "use_action": "CROWBAR"
+    "flags": [ "DURABLE_MELEE", "NONCONDUCTIVE", "BELT_CLIP", "SHEATH_AXE" ]
   },
   {
     "id": "test_screwdriver",
@@ -310,6 +309,25 @@
     "flags": [ "VARSIZE", "SKINTIGHT" ]
   },
   {
+    "id": "test_noslip_boots",
+    "type": "ARMOR",
+    "name": { "str": "TEST pair of non-slip boots", "str_pl": "TEST pairs of non-slip boots" },
+    "description": "Deterministic test boots with aggressively grippy soles.",
+    "weight": "900 g",
+    "volume": "1500 ml",
+    "price": "0 USD",
+    "material": [ "leather", "rubber" ],
+    "symbol": "[",
+    "looks_like": "boots",
+    "color": "light_gray",
+    "covers": [ "feet" ],
+    "coverage": 100,
+    "encumbrance": 6,
+    "warmth": 10,
+    "material_thickness": 2,
+    "flags": [ "VARSIZE", "NOSLIP" ]
+  },
+  {
     "id": "test_longshirt",
     "type": "ARMOR",
     "name": "TEST long-sleeved shirt",
@@ -444,6 +462,48 @@
     "charges": 4,
     "vitamins": [ [ "iron", 9 ], [ "nut_allergen", 1 ] ],
     "fun": 2
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "test_auto_consume_food_soon",
+    "name": { "str": "TEST auto-consume food expiring soon" },
+    "description": "An auto-consume priority test fixture with a short shelf life.",
+    "weight": "30 g",
+    "volume": "250 ml",
+    "color": "brown",
+    "symbol": "%",
+    "comestible_type": "FOOD",
+    "spoils_in": "2 days",
+    "calories": 100,
+    "charges": 1
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "test_auto_consume_food_later",
+    "name": { "str": "TEST auto-consume food expiring later" },
+    "description": "An auto-consume priority test fixture with a medium shelf life.",
+    "weight": "30 g",
+    "volume": "250 ml",
+    "color": "brown",
+    "symbol": "%",
+    "comestible_type": "FOOD",
+    "spoils_in": "3 days",
+    "calories": 100,
+    "charges": 1
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "test_auto_consume_food_last",
+    "name": { "str": "TEST auto-consume food expiring last" },
+    "description": "An auto-consume priority test fixture with a long shelf life.",
+    "weight": "30 g",
+    "volume": "250 ml",
+    "color": "brown",
+    "symbol": "%",
+    "comestible_type": "FOOD",
+    "spoils_in": "4 days",
+    "calories": 100,
+    "charges": 1
   },
   {
     "id": "test_jug_plastic",
@@ -919,5 +979,12 @@
     "symbol": "]",
     "color": "light_gray",
     "container_data": { "contains": "3000000 L" }
+  },
+  {
+    "id": "test_m203_10",
+    "copy-from": "m203",
+    "type": "GUNMOD",
+    "name": { "str_sp": "TEST M203 (10 rounds)" },
+    "gun_data": { "ammo": "40x46mm", "skill": "launcher", "dispersion": 300, "durability": 10, "clip_size": 10 }
   }
 ]

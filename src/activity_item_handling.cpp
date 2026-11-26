@@ -14,8 +14,6 @@
 #include "debug.h"
 #include "drop_token.h"
 #include "enums.h"
-#include "field.h"
-#include "field_type.h"
 #include "fire.h"
 #include "flag.h"
 #include "flat_set.h"
@@ -28,18 +26,20 @@
 #include "itype.h"
 #include "iuse.h"
 #include "line.h"
-#include "map.h"
+#include "map/field.h"
+#include "map/field_type.h"
+#include "map/map.h"
+#include "map/map_selector.h"
+#include "map/mapdata.h"
 #include "map/utils/map_utils.h"
 #include "map_iterator.h"
-#include "map_selector.h"
-#include "mapdata.h"
 #include "messages.h"
 #include "monster.h"
 #include "mtype.h"
 #include "npc.h"
 #include "options.h"
 #include "output.h"
-#include "overmapbuffer.h"
+#include "overmap/overmapbuffer.h"
 #include "pickup.h"
 #include "pickup_token.h"
 #include "player.h"
@@ -53,10 +53,12 @@
 #include "string_formatter.h"
 #include "string_id.h"
 #include "string_utils.h"
+#include "takeoff_cost.h"
 #include "translations.h"
 #include "trap.h"
 #include "units.h"
 #include "utils/algo.h"
+#include "utils/scaled_by.h"
 #include "value_ptr.h"
 #include "vehicle/veh_type.h"
 #include "vehicle/vehicle.h"
@@ -80,12 +82,14 @@
 #include <sstream>
 #include <string>
 #include <tuple>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
 namespace views = std::views;
 
 static const activity_id ACT_BUTCHER_FULL( "ACT_BUTCHER_FULL" );
+static const activity_id ACT_DISSECT( "ACT_DISSECT" );
 static const activity_id ACT_CHOP_LOGS( "ACT_CHOP_LOGS" );
 static const activity_id ACT_CHOP_PLANKS( "ACT_CHOP_PLANKS" );
 static const activity_id ACT_CHOP_TREE( "ACT_CHOP_TREE" );
@@ -95,6 +99,7 @@ static const activity_id ACT_FISH( "ACT_FISH" );
 static const activity_id ACT_JACKHAMMER( "ACT_JACKHAMMER" );
 static const activity_id ACT_MOVE_LOOT( "ACT_MOVE_LOOT" );
 static const activity_id ACT_MULTIPLE_BUTCHER( "ACT_MULTIPLE_BUTCHER" );
+static const activity_id ACT_MULTIPLE_DISSECT( "ACT_MULTIPLE_DISSECT" );
 static const activity_id ACT_MULTIPLE_CHOP_PLANKS( "ACT_MULTIPLE_CHOP_PLANKS" );
 static const activity_id ACT_MULTIPLE_CHOP_TREES( "ACT_MULTIPLE_CHOP_TREES" );
 static const activity_id ACT_MULTIPLE_CONSTRUCTION( "ACT_MULTIPLE_CONSTRUCTION" );
@@ -136,6 +141,7 @@ static const zone_type_id zone_type_VEHICLE_REPAIR( "VEHICLE_REPAIR" );
 
 static const quality_id qual_AXE( "AXE" );
 static const quality_id qual_BUTCHER( "BUTCHER" );
+static const quality_id qual_CUT_FINE( "CUT_FINE" );
 static const quality_id qual_DIG( "DIG" );
 static const quality_id qual_FISHING( "FISHING" );
 static const quality_id qual_SAW_M( "SAW_M" );
@@ -545,7 +551,9 @@ static std::list<pickup::act_item> convert_to_items( Character &p,
                 res.emplace_back( *it, qty, it->obtain_cost( p, qty ) );
             }
         } else {
-            res.emplace_back( *loc, count, p.is_wielding( *loc ) ? 0 : loc->obtain_cost( p ) );
+            const auto cost = p.is_wielding( *loc ) ? 0 : p.is_worn( *loc ) ? takeoff_move_cost :
+                              loc->obtain_cost( p );
+            res.emplace_back( *loc, count, cost );
         }
     }
 
@@ -573,6 +581,25 @@ std::list<act_item> reorder_for_dropping( Character &p, const drop_locations &dr
         return p.is_worn( loc );
     } );
 
+    auto dropping_clothing_ids = std::set<int> {};
+    for( const auto &worn_item : worn ) {
+        const auto clothing_id = worn_item.loc->get_var( "DROP_WITH_CLOTHING_ID", 0 );
+        if( clothing_id > 0 ) {
+            dropping_clothing_ids.insert( clothing_id );
+        }
+    }
+    for( const auto *stack : p.inv_const_slice() ) {
+        for( auto *it : *stack ) {
+            const auto target_id = it->get_var( "DROP_WITH_CLOTHING_TARGET", 0 );
+            if( dropping_clothing_ids.contains( target_id ) &&
+            !std::ranges::any_of( inv, [it]( const act_item & candidate ) {
+            return &*candidate.loc == it;
+        } ) ) {
+                inv.emplace_back( *it, it->count(), 0 );
+            }
+        }
+    }
+
     // Sort inventory items by volume in ascending order
     inv.sort( []( const act_item & first, const act_item & second ) {
         return first.loc->volume() < second.loc->volume();
@@ -586,8 +613,7 @@ std::list<act_item> reorder_for_dropping( Character &p, const drop_locations &dr
             } );
 
             if( iter == worn.end() ) {
-                // TODO: Use a calculated cost
-                worn.emplace_front( *dit, dit->count(), dit->obtain_cost( p ) );
+                worn.emplace_front( *dit, dit->count(), takeoff_move_cost );
             }
         }
     }
@@ -625,12 +651,16 @@ std::list<act_item> reorder_for_dropping( Character &p, const drop_locations &dr
             }
             const std::vector<item *> &inv_stack = *old_inv[i];
             std::ranges::copy_if( inv_stack, std::back_inserter( non_favorite_candidates ),
-            []( const item * const it ) {
-                return !it->is_favorite && it->volume() > 0_ml;
+            [&dropping_clothing_ids]( const auto * const it ) {
+                const auto target_id = it->get_var( "DROP_WITH_CLOTHING_TARGET", 0 );
+                return !it->is_favorite && it->volume() > 0_ml &&
+                       ( target_id <= 0 || dropping_clothing_ids.contains( target_id ) );
             } );
             std::ranges::copy_if( inv_stack, std::back_inserter( favorite_candidates ),
-            []( const item * const it ) {
-                return it->is_favorite && it->volume() > 0_ml;
+            [&dropping_clothing_ids]( const auto * const it ) {
+                const auto target_id = it->get_var( "DROP_WITH_CLOTHING_TARGET", 0 );
+                return it->is_favorite && it->volume() > 0_ml &&
+                       ( target_id <= 0 || dropping_clothing_ids.contains( target_id ) );
             } );
         }
 
@@ -658,6 +688,31 @@ std::list<act_item> reorder_for_dropping( Character &p, const drop_locations &dr
 
     // Cumulatively decreases
     units::volume remaining_dropped_storage = dropped_worn_storage;
+
+    for( auto worn_iter = worn.begin(); worn_iter != worn.end(); ) {
+        const auto clothing_id = worn_iter->loc->get_var( "DROP_WITH_CLOTHING_ID", 0 );
+        if( clothing_id <= 0 || !std::ranges::any_of( inv, [clothing_id]( const act_item & candidate ) {
+        return candidate.loc->get_var( "DROP_WITH_CLOTHING_TARGET", 0 ) == clothing_id;
+        } ) ) {
+            ++worn_iter;
+            continue;
+        }
+
+        const auto clothing_storage = worn_iter->loc->get_storage();
+        res.push_back( *worn_iter );
+        for( auto inv_iter = inv.begin(); inv_iter != inv.end(); ) {
+            if( inv_iter->loc->get_var( "DROP_WITH_CLOTHING_TARGET", 0 ) == clothing_id ) {
+                auto linked_item = *inv_iter;
+                linked_item.consumed_moves = 0;
+                res.push_back( linked_item );
+                inv_iter = inv.erase( inv_iter );
+            } else {
+                ++inv_iter;
+            }
+        }
+        remaining_dropped_storage -= clothing_storage;
+        worn_iter = worn.erase( worn_iter );
+    }
 
     while( !worn.empty() && !inv.empty() ) {
         units::volume front_storage = worn.front().loc->get_storage();
@@ -697,6 +752,7 @@ std::vector<detached_ptr<item>> obtain_and_tokenize_items( player &p, std::list<
     std::vector<detached_ptr<item>> res;
     drop_token_provider &token_provider = drop_token::get_provider();
     item_drop_token last_token = token_provider.make_next( calendar::turn );
+    auto clothing_drop_numbers = std::unordered_map<int, int> {};
     if( items.empty() ) {
         return res;
     }
@@ -713,6 +769,8 @@ std::vector<detached_ptr<item>> obtain_and_tokenize_items( player &p, std::list<
                 items.pop_front();
                 continue;
             }
+            // Refund the takeoff() moves because consumed_moves already has them
+            p.mod_moves( takeoff_move_cost );
         } else if( ait.loc->count_by_charges() ) {
             res.push_back( p.reduce_charges( const_cast<item *>( &*ait.loc ), ait.count ) );
         } else {
@@ -731,6 +789,16 @@ std::vector<detached_ptr<item>> obtain_and_tokenize_items( player &p, std::list<
         } else {
             last_token = *current_drop.drop_token;
             last_storage_volume = current_drop.get_storage();
+        }
+
+        const auto clothing_id = current_drop.get_var( "DROP_WITH_CLOTHING_ID", 0 );
+        if( clothing_id > 0 ) {
+            clothing_drop_numbers[clothing_id] = current_drop.drop_token->drop_number;
+        }
+        const auto target_id = current_drop.get_var( "DROP_WITH_CLOTHING_TARGET", 0 );
+        const auto target = clothing_drop_numbers.find( target_id );
+        if( target_id > 0 && target != clothing_drop_numbers.end() ) {
+            current_drop.drop_token->parent_number = target->second;
         }
 
         items.pop_front();
@@ -956,9 +1024,13 @@ static bool vehicle_activity( player &p, const tripoint_bub_ms &src_loc, int vpi
     const vpart_info &vp = veh->part_info( vpindex );
     if( type == 'r' ) {
         const vehicle_part &part = veh->part( vpindex );
-        time_to_take = vp.repair_time( p ) * part.damage() / part.max_damage();
+        time_to_take = std::max( 1, utils::scaled_by( {
+            .total = vp.repair_time( p ),
+            .cur = part.damage(),
+            .max = part.max_damage(),
+        } ) );
     } else if( type == 'o' ) {
-        time_to_take = vp.removal_time( p );
+        time_to_take = std::max( 1, vp.removal_time( p ) );
     }
     p.assign_activity( ACT_VEHICLE, time_to_take, static_cast<int>( type ) );
     // so , NPCs can remove the last part on a position, then there is no vehicle there anymore,
@@ -1277,6 +1349,7 @@ static bool are_requirements_nearby( const std::vector<tripoint_bub_ms> &loot_sp
         return id == ACT_MULTIPLE_FARM ||
                id == ACT_MULTIPLE_CHOP_PLANKS ||
                id == ACT_MULTIPLE_BUTCHER ||
+               id == ACT_MULTIPLE_DISSECT ||
                id == ACT_VEHICLE_DECONSTRUCTION ||
                id == ACT_VEHICLE_REPAIR ||
                id == ACT_MULTIPLE_CHOP_TREES ||
@@ -1737,6 +1810,25 @@ static activity_reason_info can_do_activity_there( const activity_id &act, playe
         }
         return activity_reason_info::fail( do_activity_reason::NO_ZONE );
     }
+    if( act == ACT_MULTIPLE_DISSECT ) {
+        std::vector<item *> corpses;
+        for( const auto &i : here.i_at( src_loc ) ) {
+            // make sure nobody else is working on that corpse right now
+            if( i->is_corpse() && !i->has_var( "activity_var" ) ) {
+                const mtype corpse = *i->get_mtype();
+                corpses.push_back( i );
+            }
+        }
+        if( !corpses.empty() ) {
+            // Is there a dissecting tool here?
+            if( p.has_quality( qual_CUT_FINE, 1 ) ) {
+                return activity_reason_info::ok( do_activity_reason::NEEDS_CUT_FINE );
+            } else {
+                return activity_reason_info::fail( do_activity_reason::NEEDS_CUT_FINE );
+            }
+        }
+        return activity_reason_info::fail( do_activity_reason::NO_ZONE );
+    }
     if( act == ACT_MULTIPLE_CHOP_PLANKS ) {
         //are there even any logs there?
         for( auto &i : here.i_at( src_loc ) ) {
@@ -1863,6 +1955,7 @@ static std::vector<std::tuple<tripoint_bub_ms, itype_id, int>> requirements_map(
     const bool pickup_task = p.backlog.front()->id() == ACT_MULTIPLE_FARM ||
                              p.backlog.front()->id() == ACT_MULTIPLE_CHOP_PLANKS ||
                              p.backlog.front()->id() == ACT_MULTIPLE_BUTCHER ||
+                             p.backlog.front()->id() == ACT_MULTIPLE_DISSECT ||
                              p.backlog.front()->id() == ACT_MULTIPLE_CHOP_TREES ||
                              p.backlog.front()->id() == ACT_VEHICLE_DECONSTRUCTION ||
                              p.backlog.front()->id() == ACT_VEHICLE_REPAIR ||
@@ -2261,6 +2354,7 @@ static bool fetch_activity( player &p, const tripoint_bub_ms &src_loc,
                                                    p.backlog.front()->id() == ACT_VEHICLE_DECONSTRUCTION ||
                                                    p.backlog.front()->id() == ACT_VEHICLE_REPAIR ||
                                                    p.backlog.front()->id() == ACT_MULTIPLE_BUTCHER ||
+                                                   p.backlog.front()->id() == ACT_MULTIPLE_DISSECT ||
                                                    p.backlog.front()->id() == ACT_MULTIPLE_CHOP_TREES ||
                                                    p.backlog.front()->id() == ACT_MULTIPLE_FISH ||
                                                    p.backlog.front()->id() == ACT_MULTIPLE_MINE ) ) {
@@ -2306,6 +2400,23 @@ static bool butcher_corpse_activity( player &p, const tripoint_bub_ms &src_loc,
             }
             elem->set_var( "activity_var", p.name );
             p.assign_activity( ACT_BUTCHER_FULL, 0, true );
+            p.activity->targets.emplace_back( elem );
+            p.activity->placement = bub_to_abs( src_loc );
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool dissect_corpse_activity( player &p, const tripoint_bub_ms &src_loc,
+                                     const do_activity_reason &/*reason*/ )
+{
+    map &here = get_map();
+    map_stack items = here.i_at( src_loc );
+    for( auto &elem : items ) {
+        if( elem->is_corpse() && !elem->has_var( "activity_var" ) ) {
+            elem->set_var( "activity_var", p.name );
+            p.assign_activity( ACT_DISSECT, 0, true );
             p.activity->targets.emplace_back( elem );
             p.activity->placement = bub_to_abs( src_loc );
             return true;
@@ -2694,7 +2805,7 @@ static zone_type_id get_zone_for_act( const tripoint_bub_ms &src_loc, const zone
     if( act_id == ACT_MULTIPLE_FARM ) {
         ret = zone_type_FARM_PLOT;
     }
-    if( act_id == ACT_MULTIPLE_BUTCHER ) {
+    if( act_id == ACT_MULTIPLE_BUTCHER  || act_id == ACT_MULTIPLE_DISSECT ) {
         ret = zone_type_LOOT_CORPSE;
     }
     if( act_id == ACT_MULTIPLE_CHOP_PLANKS ) {
@@ -2910,6 +3021,7 @@ static requirement_check_result generic_multi_activity_check_requirement( player
     const bool needs_to_be_in_zone = act_id == ACT_FETCH_REQUIRED ||
                                      act_id == ACT_MULTIPLE_FARM ||
                                      act_id == ACT_MULTIPLE_BUTCHER ||
+                                     act_id == ACT_MULTIPLE_DISSECT ||
                                      act_id == ACT_MULTIPLE_CHOP_PLANKS ||
                                      act_id == ACT_MULTIPLE_CHOP_TREES ||
                                      act_id == ACT_VEHICLE_DECONSTRUCTION ||
@@ -3023,6 +3135,7 @@ static requirement_check_result generic_multi_activity_check_requirement( player
                reason == do_activity_reason::NEEDS_CHOPPING ||
                reason == do_activity_reason::NEEDS_BUTCHERING ||
                reason == do_activity_reason::NEEDS_BIG_BUTCHERING ||
+               reason == do_activity_reason::NEEDS_CUT_FINE ||
                reason == do_activity_reason::NEEDS_VEH_DECONST ||
                reason == do_activity_reason::NEEDS_VEH_REPAIR ||
                reason == do_activity_reason::NEEDS_TREE_CHOPPING ||
@@ -3079,6 +3192,7 @@ static requirement_check_result generic_multi_activity_check_requirement( player
                    reason == do_activity_reason::NEEDS_CHOPPING ||
                    reason == do_activity_reason::NEEDS_BUTCHERING ||
                    reason == do_activity_reason::NEEDS_BIG_BUTCHERING ||
+                   reason == do_activity_reason::NEEDS_CUT_FINE ||
                    reason == do_activity_reason::NEEDS_TREE_CHOPPING ||
                    reason == do_activity_reason::NEEDS_FISHING ) {
             std::vector<std::vector<item_comp>> requirement_comp_vector;
@@ -3099,7 +3213,8 @@ static requirement_check_result generic_multi_activity_check_requirement( player
                 if( reason == do_activity_reason::NEEDS_BIG_BUTCHERING ) {
                     quality_comp_vector.push_back( std::vector<quality_requirement> { quality_requirement( qual_SAW_M, 1, 1 ), quality_requirement( qual_SAW_W, 1, 1 ) } );
                 }
-
+            } else if( reason == do_activity_reason::NEEDS_CUT_FINE ) {
+                quality_comp_vector.push_back( std::vector<quality_requirement> {quality_requirement( qual_CUT_FINE, 1, 1 )} );
             } else if( reason == do_activity_reason::NEEDS_FISHING ) {
                 quality_comp_vector.push_back( std::vector<quality_requirement> {quality_requirement( qual_FISHING, 1, 1 )} );
             }
@@ -3117,6 +3232,7 @@ static requirement_check_result generic_multi_activity_check_requirement( player
                            reason == do_activity_reason::NEEDS_CHOPPING ||
                            reason == do_activity_reason::NEEDS_BUTCHERING ||
                            reason == do_activity_reason::NEEDS_BIG_BUTCHERING ||
+                           reason == do_activity_reason::NEEDS_CUT_FINE ||
                            reason == do_activity_reason::NEEDS_TREE_CHOPPING ||
                            reason == do_activity_reason::NEEDS_VEH_DECONST ||
                            reason == do_activity_reason::NEEDS_VEH_REPAIR ||
@@ -3263,6 +3379,11 @@ static bool generic_multi_activity_do( player &p, const activity_id &act_id,
     } else if( reason == do_activity_reason::NEEDS_BUTCHERING ||
                reason == do_activity_reason::NEEDS_BIG_BUTCHERING ) {
         if( butcher_corpse_activity( p, src_loc, reason ) ) {
+            p.backlog.emplace_front( std::make_unique<player_activity>( act_id ) );
+            return false;
+        }
+    } else if( reason == do_activity_reason::NEEDS_CUT_FINE ) {
+        if( dissect_corpse_activity( p, src_loc, reason ) ) {
             p.backlog.emplace_front( std::make_unique<player_activity>( act_id ) );
             return false;
         }

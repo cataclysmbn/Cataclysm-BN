@@ -59,7 +59,7 @@ public:
           // the marker to allow using the marker inside normal comments
           Match("^/[/*]~.*$") {}
 
-    bool HandleComment(Preprocessor& PP, SourceRange Range) override {
+    auto HandleComment(Preprocessor& PP, SourceRange Range) -> bool override {
         if (Check.MatchingStarted) {
             // according to the standard, all comments are processed before analyzing the syntax
             Check.diag(
@@ -97,11 +97,11 @@ public:
         unsigned int EndLine;
         unsigned int EndCol;
 
-        bool operator==(const TranslatorCommentLocation& Other) const {
+        auto operator==(const TranslatorCommentLocation& Other) const -> bool {
             return File == Other.File && EndLine == Other.EndLine && EndCol == Other.EndCol;
         }
 
-        bool operator<(const TranslatorCommentLocation& Other) const {
+        auto operator<(const TranslatorCommentLocation& Other) const -> bool {
             if (File != Other.File) { return File < Other.File; }
             if (EndLine != Other.EndLine) { return EndLine < Other.EndLine; }
             return EndCol < Other.EndCol;

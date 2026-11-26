@@ -12,7 +12,6 @@ class player;
 class Character;
 class Creature;
 class item;
-class item_reload_option;
 class item_location;
 class npc;
 class time_duration;
@@ -192,31 +191,6 @@ int get_lift_strength_with_helpers( const Character &who );
 /** Returns whether character can lift given value (includes bonus from helpers). */
 bool can_lift_with_helpers( const Character &who, int lift_required );
 
-/**
- * List ammo suitable for given item.
- * @param who Character who looks for ammo
- * @param base Item to select ammo for
- * @param[out] ammo_list Output
- * @param include_empty_mags Whether to include empty magazines
- * @param include_potential Include ammo that can potentially be used, but not right now
- */
-bool list_ammo( const Character &who, item &base, std::vector<item_reload_option> &ammo_list,
-                bool include_empty_mags, bool include_potential );
-
-/**
- * Select suitable ammo with which to reload the item
- * @param who Character who looks for ammo
- * @param base Item to select ammo for
- * @param prompt Force display of the menu even if only one choice
- * @param include_empty_mags Allow selection of empty magazines
- * @param include_potential Include ammo that can potentially be used, but not right now
- */
-item_reload_option select_ammo( const player &who, item &base, bool prompt = false,
-                                bool include_empty_mags = true, bool include_potential = false );
-
-/** Select ammo from the provided options */
-item_reload_option select_ammo( const player &who, item &base,
-                                std::vector<item_reload_option> opts );
 
 /** Returns character's items that are ammo and have the matching ammo type. */
 std::vector<item *> get_ammo_items( const Character &who, const ammotype &at );

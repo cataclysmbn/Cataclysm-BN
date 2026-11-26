@@ -9,23 +9,30 @@ Cataclysm: BN 을 번역하는 공식적인 사이트는 [Transifex translations
 현재 지원되는 언어는 다음과 같습니다:
 
 - 아랍어
-- 불가리아어
-- 중국어(간체)
-- 중국어(번체)
+- 중국어(중국)
+- 중국어(대만)
+- 덴마크어
 - 네덜란드어
-- 에스페란토
 - 프랑스어
 - 독일어
+- 그리스어
+- 헝가리어
+- 아이슬란드어
+- 인도네시아어
 - 이탈리아어(이탈리아)
 - 일본어
-- **한국어**
-- 폴란드어
+- 한국어
+- 노르웨이어(보크몰)
+- 폴란드어(폴란드)
 - 포르투갈어(브라질)
-- 러시아어
+- 러시아어(러시아)
 - 세르비아어
+- 슬로바키아어(슬로바키아)
 - 스페인어(아르헨티나)
 - 스페인어(스페인)
 - 터키어
+- 우크라이나어
+- 우크라이나어(우크라이나)
 
 위 목록에 찾는 언어가 없으신가요? Transifex에서 프로젝트에 추가할 수 있습니다!
 
@@ -67,5 +74,5 @@ GitHub, Google+ 또는 LinkedIn을 사용하여 로그인할 수도 있습니다
 
 더 자세한 내용은 [Transifex 공식 문서][docs]를 참고해주세요.
 
-[project]: https://explore.transifex.com/bn-team/cataclysm-bright-nights/
+[project]: https://app.transifex.com/bn-team/cataclysm-bright-nights
 [docs]: https://docs.transifex.com/

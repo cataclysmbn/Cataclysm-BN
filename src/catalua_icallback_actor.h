@@ -8,11 +8,13 @@
 
 #include <string>
 
+class spell;
 class Character;
 class Creature;
 class item;
 class monster;
 struct bionic;
+struct consume_overrides;
 struct dealt_damage_instance;
 struct tripoint;
 
@@ -139,6 +141,27 @@ class lua_istate_actor : public lua_icallback_actor_base
         bool call_on_drop( Character &who, item &it, const tripoint_bub_ms &pos ) const;
 };
 
+/** Lua callbacks for consuming a specific item type. */
+class lua_iconsume_actor : public lua_icallback_actor_base
+{
+    private:
+        sol::protected_function on_try_consume_func;
+
+    public:
+        lua_iconsume_actor( const std::string &item_id,
+                            sol::protected_function &&on_try_consume );
+
+        /**
+         * Runs the on_try_consume callback for the item being consumed.
+         * Values modified in the Lua params table are written into @p overrides
+         * and applied instead of the ones computed from the item.
+         * Returns false to interrupt the rest of the consume function
+         * (the item is left alone unless the callback changed it).
+         */
+        auto call_on_try_consume( Character &who, item &it,
+                                  consume_overrides &overrides ) const -> bool;
+};
+
 /** Lua callbacks for melee combat events. */
 class lua_imelee_actor : public lua_icallback_actor_base
 {
@@ -254,11 +277,11 @@ class lua_itrap_actor : public lua_icallback_actor_base
                        );
 
         /** Returns false to prevent triggering the trap. */
-        bool call_can_trigger( const Character &who, const trap &trap, const tripoint_bub_ms &loc ) const;
+        bool call_can_trigger( const Creature &who, const trap &trap, const tripoint_bub_ms &loc ) const;
         /** Called after triggering. */
-        void call_on_trigger( Character &who, trap &trap, const tripoint_bub_ms &loc ) const;
+        void call_on_trigger( Creature &who, trap &trap, const tripoint_bub_ms &loc ) const;
         /** Called after trap aftermath. */
-        void call_on_trigger_aftermath( Character &who, trap &trap, const tripoint_bub_ms &loc ) const;
+        void call_on_trigger_aftermath( Creature &who, trap &trap, const tripoint_bub_ms &loc ) const;
 
 };
 
@@ -293,4 +316,50 @@ class lua_monster_callback_actor
         void call_on_examine_menu_entry( Character &who, monster &monster, std::string entry ) const;
 
         std::string get_mon_str_id() const;
+};
+
+
+/** Lua callbacks for spell related events. */
+class lua_ispell_actor
+{
+    private:
+        std::string spell_str_id;
+        sol::protected_function on_try_cast_func;
+        sol::protected_function on_cast_func;
+
+    public:
+        lua_ispell_actor( const std::string &spell_str_id,
+                          sol::protected_function &&on_try_cast,
+                          sol::protected_function &&on_cast
+                        );
+
+        /** Returns false to block casting. */
+        bool call_on_try_cast( Character &who, spell &sp ) const;
+        void call_on_cast( Character &who, spell &sp, tripoint_bub_ms &target_pos ) const;
+};
+
+
+/** Lua callbacks for recipe / crafting related events. */
+class lua_recipe_actor
+{
+    private:
+        std::string recipe_str_id;
+        sol::protected_function on_craft_func;
+
+    public:
+        lua_recipe_actor( const std::string &recipe_str_id,
+                          sol::protected_function &&on_craft
+                        );
+
+        struct RecipeCraftResult {
+            Character &crafter;
+            item &craft;
+            item &food_contained;
+            const recipe &recipe;
+            const int &batch_size;
+            const bool &hot_result;
+            const bool &dehydrated_result;
+        };
+        /** Returns false to block casting. */
+        void call_on_craft( const RecipeCraftResult &craft_result ) const;
 };

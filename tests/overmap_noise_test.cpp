@@ -1,7 +1,7 @@
 #include "catch/catch.hpp"
 #include "coordinates.h"
 #include "game_constants.h"
-#include "overmap_noise.h"
+#include "overmap/overmap_noise.h"
 
 #include <fstream>
 #include <string>

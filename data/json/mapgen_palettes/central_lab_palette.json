@@ -53,7 +53,7 @@
       "v": "f_vending_c"
     },
     "toilets": { "T": {  } },
-    "nested": { "C": { "chunks": [ "null", "central_lab_crate_1x1" ] } },
+    "nested": { "C": { "chunks": [ [ "null", 50 ], [ "central_lab_crate_1x1", 45 ], [ "central_lab_crate_special_1x1", 5 ] ] } },
     "items": {
       "}": { "item": "lab_bookshelves", "chance": 25, "repeat": 3 },
       "D": { "item": "dresser", "chance": 25, "repeat": 5 },

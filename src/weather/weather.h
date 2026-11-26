@@ -45,7 +45,7 @@ class map;
 struct trap;
 struct rl_vec2d;
 
-double precip_mm_per_hour(precip_class p);
+auto precip_mm_per_hour(precip_class p) -> double;
 void handle_bulk_weather_field_decay(const weather_type_id& w, int turns);
 void handle_weather_effects(const weather_type_id& w, bool do_decay = true);
 
@@ -64,7 +64,7 @@ struct weather_printable {
     nc_color colGlyph;
     //!< Glyph to draw this animation frame.
     uint32_t cGlyph;
-    std::string get_symbol() const { return utf32_to_utf8(cGlyph); }
+    auto get_symbol() const -> std::string { return utf32_to_utf8(cGlyph); }
 };
 
 /**
@@ -93,16 +93,28 @@ struct weather_sum {
     int wind_amount = 0;
 };
 
+struct omt_weather_override {
+    weather_type_id weather = weather_type_id::NULL_ID();
+    std::optional<time_point> expires_at = std::nullopt;
+};
+
+struct omt_weather_override_options {
+    tripoint_abs_omt center = tripoint_abs_omt();
+    int radius = 0;
+    weather_type_id weather = weather_type_id::NULL_ID();
+    std::optional<time_point> expires_at = std::nullopt;
+};
+
 namespace weather {
-bool is_sheltered(const map& m, const tripoint_bub_ms& p);
-bool is_in_sunlight(const map& m, const tripoint_bub_ms& p, const weather_type_id& weather);
+auto is_sheltered(const map& m, const tripoint_bub_ms& p) -> bool;
+auto is_in_sunlight(const map& m, const tripoint_bub_ms& p, const weather_type_id& weather) -> bool;
 } // namespace weather
 
-std::string get_shortdirstring(int angle);
+auto get_shortdirstring(int angle) -> std::string;
 
-std::string get_dirstring(int angle);
+auto get_dirstring(int angle) -> std::string;
 
-std::string weather_forecast(const point_abs_sm& abs_sm_pos);
+auto weather_forecast(const point_abs_sm& abs_sm_pos) -> std::string;
 
 // Returns input value (in Fahrenheit) converted to whatever temperature scale set in options.
 //
@@ -110,20 +122,21 @@ std::string weather_forecast(const point_abs_sm& abs_sm_pos);
 // If scale is Fahrenheit: temperature(100) will return "100F"
 //
 // Use the decimals parameter to set number of decimal places returned in string.
-std::string print_temperature(double fahrenheit, int decimals = 0);
-std::string print_temperature(units::temperature temperature, int decimals = 0);
-std::string print_humidity(double humidity, int decimals = 0);
-std::string print_pressure(double pressure, int decimals = 0);
+auto print_temperature(double fahrenheit, int decimals = 0) -> std::string;
+auto print_temperature(units::temperature temperature, int decimals = 0) -> std::string;
+auto print_humidity(double humidity, int decimals = 0) -> std::string;
+auto print_pressure(double pressure, int decimals = 0) -> std::string;
 
 // Return windchill offset in degrees F, starting from given temperature, humidity and wind
-int get_local_windchill(double temperature_f, double humidity, double wind_mph);
+auto get_local_windchill(double temperature_f, double humidity, double wind_mph) -> int;
 
-int get_local_humidity(double humidity, const weather_type_id& weather, bool sheltered = false);
-double get_local_windpower(
+auto get_local_humidity(double humidity, const weather_type_id& weather, bool sheltered = false)
+    -> int;
+auto get_local_windpower(
     double windpower, const oter_id& omter, const tripoint_abs_ms& location,
-    const int& winddirection, bool sheltered = false);
-weather_sum sum_conditions(
-    const time_point& start, const time_point& end, const tripoint_abs_ms& location);
+    const int& winddirection, bool sheltered = false) -> double;
+auto sum_conditions(const time_point& start, const time_point& end, const tripoint_abs_ms& location)
+    -> weather_sum;
 
 /**
  * @param it The container item which is to be filled.
@@ -135,15 +148,15 @@ void retroactively_fill_from_funnel(
     item& it, const trap& tr, const time_point& start, const time_point& end,
     const tripoint_abs_ms& pos);
 
-double funnel_charges_per_turn(double surface_area_mm2, double rain_depth_mm_per_hour);
+auto funnel_charges_per_turn(double surface_area_mm2, double rain_depth_mm_per_hour) -> double;
 
-rl_vec2d convert_wind_to_coord(int angle);
+auto convert_wind_to_coord(int angle) -> rl_vec2d;
 
-std::string get_wind_arrow(int);
+auto get_wind_arrow(int) -> std::string;
 
-std::string get_wind_desc(double);
+auto get_wind_desc(double) -> std::string;
 
-nc_color get_wind_color(double);
+auto get_wind_color(double) -> nc_color;
 /**
  * Calculates rot per hour at given temperature. Reference in weather_data.cpp
  */
@@ -155,13 +168,13 @@ auto get_hourly_rotpoints_at_temp(const units::temperature temp) -> int;
  * The first overload is in map-square coords, the second for larger scale
  * queries.
  */
-bool warm_enough_to_plant(const tripoint_abs_ms& pos);
-bool warm_enough_to_plant(const tripoint_abs_omt& pos);
+auto warm_enough_to_plant(const tripoint_abs_ms& pos) -> bool;
+auto warm_enough_to_plant(const tripoint_abs_omt& pos) -> bool;
 
-bool is_wind_blocker(const tripoint_bub_ms& location);
+auto is_wind_blocker(const tripoint_bub_ms& location) -> bool;
 
-const weather_type_id& current_weather(
-    const tripoint_abs_ms& location, const time_point& t = calendar::turn);
+auto current_weather(const tripoint_abs_ms& location, const time_point& t = calendar::turn)
+    -> const weather_type_id&;
 /**
  * Glare.
  * Causes glare effect to player's eyes if they are not wearing applicable eye protection.
@@ -173,14 +186,14 @@ void glare(const weather_type_id& w);
  * Amount of sunlight incident at the ground, taking weather and time of day
  * into account.
  */
-int incident_sunlight(const weather_type_id& wtype, const time_point& t = calendar::turn);
+auto incident_sunlight(const weather_type_id& wtype, const time_point& t = calendar::turn) -> int;
 
 class weather_manager {
 public:
     weather_manager();
     ~weather_manager();
 
-    const weather_generator& get_cur_weather_gen() const;
+    auto get_cur_weather_gen() const -> const weather_generator&;
 
     // Updates the temperature and weather pattern
     void update_weather();
@@ -198,10 +211,20 @@ public:
     weather_type_id weather_override;
     bool eternal_seasons = false;
 
+    auto get_omt_weather_override(
+        const tripoint_abs_omt& location, const time_point& when = calendar::turn) const
+        -> const weather_type_id*;
+    auto has_omt_weather_override(
+        const tripoint_abs_omt& location, const time_point& when = calendar::turn) const -> bool;
+    auto set_omt_weather_override(const omt_weather_override_options& opts) -> void;
+    auto clear_omt_weather_override(const tripoint_abs_omt& center, int radius) -> void;
+    auto clear_all_omt_weather_overrides() -> void;
+
     // not only sets nextweather, but updates weather as well
     void set_nextweather(time_point t);
     // The time at which weather will shift next.
     time_point nextweather;
+    tripoint_abs_ms last_weather_position = tripoint_abs_ms::zero();
 
     /** temperature cache, cleared every turn, sparse map of map tripoints to temperatures */
     mutable std::unordered_map<tripoint_abs_ms, units::temperature> temperature_cache;
@@ -214,7 +237,7 @@ public:
     void clear_temp_cache();
 
     // Get precise weather data
-    const w_point& get_precise() const { return weather_precise; }
+    auto get_precise() const -> const w_point& { return weather_precise; }
 
     // For use in tests
     void override_humidity(int h) { weather_precise.humidity = h; }
@@ -222,6 +245,12 @@ public:
 private:
     // Cached weather data
     w_point weather_precise;
+    std::unordered_map<point_abs_omt, omt_weather_override> omt_weather_overrides;
+    auto is_omt_weather_override_expired(
+        const omt_weather_override& override, const time_point& when) const -> bool;
+    auto get_next_omt_weather_override_expiration() const -> std::optional<time_point>;
+    auto prune_expired_omt_weather_overrides() -> void;
+    auto needs_forced_position_refresh(const tripoint_abs_ms& current_pos) const -> bool;
 };
 
-weather_manager& get_weather();
+auto get_weather() -> weather_manager&;

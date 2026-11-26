@@ -720,7 +720,8 @@
     "type": "effect_type",
     "id": "arcana_aegis_mending",
     "removes_effects": [ "bleed" ],
-    "rating": "good"
+    "rating": "good",
+    "base_enchantments": [ { "values": [ { "value": "LUMINATION", "max": 5 } ] } ]
   },
   {
     "type": "effect_type",

@@ -1,12 +1,16 @@
+#include "avatar.h"
 #include "avatar_action.h"
 #include "catch/catch.hpp"
 #include "character_martial_arts.h"
 #include "coordinates.h"
 #include "creature.h"
+#include "damage.h"
 #include "game.h"
 #include "game_constants.h"
 #include "item.h"
 #include "itype.h"
+#include "map_helpers.h"
+#include "martialarts.h"
 #include "melee.h"
 #include "monattack.h"
 #include "monster.h"
@@ -21,7 +25,7 @@
 #include <sstream>
 #include <string>
 
-static float brute_probability(monster& attacker, Creature& target, const size_t iters) {
+static auto brute_probability(monster& attacker, Creature& target, const size_t iters) -> float {
     // Note: not using deal_melee_attack because it trains dodge, which causes problems here
     size_t hits = 0;
     for (size_t i = 0; i < iters; i++) {
@@ -32,7 +36,7 @@ static float brute_probability(monster& attacker, Creature& target, const size_t
     return static_cast<float>(hits) / iters;
 }
 
-static float brute_probability(player& attacker, Creature& target, const size_t iters) {
+static auto brute_probability(player& attacker, Creature& target, const size_t iters) -> float {
     const item& weapon = attacker.primary_weapon();
     const attack_statblock& attack = melee::default_attack(weapon);
     size_t hits = 0;
@@ -44,7 +48,8 @@ static float brute_probability(player& attacker, Creature& target, const size_t 
     return static_cast<float>(hits) / iters;
 }
 
-static float brute_special_probability(monster& attacker, Creature& target, const size_t iters) {
+static auto brute_special_probability(monster& attacker, Creature& target, const size_t iters)
+    -> float {
     size_t hits = 0;
     for (size_t i = 0; i < iters; i++) {
         if (!mattack::dodge_check(&attacker, &target)) { hits++; }
@@ -53,7 +58,7 @@ static float brute_special_probability(monster& attacker, Creature& target, cons
     return static_cast<float>(hits) / iters;
 }
 
-static std::string full_attack_details(const player& dude) {
+static auto full_attack_details(const player& dude) -> std::string {
     const item& weapon = dude.primary_weapon();
     const attack_statblock& attack = melee::default_attack(weapon);
     std::stringstream ss;
@@ -64,7 +69,7 @@ static std::string full_attack_details(const player& dude) {
     return ss.str();
 }
 
-inline std::string percent_string(const float f) {
+inline auto percent_string(const float f) -> std::string {
     // Using stringstream for prettier precision printing
     std::stringstream ss;
     ss << 100.0f * f << "%";
@@ -222,6 +227,39 @@ TEST_CASE("manual technique prompt includes mutation attacks", "[melee]") {
     CHECK(std::ranges::any_of(mutation_attacks, [&fangs](const auto& entry) {
         return entry.name == fangs.obj().name() && entry.available;
     }));
+}
+
+TEST_CASE("stunning techniques stun regardless of knockback", "[melee][martial_arts]") {
+    clear_all_state();
+
+    const auto effect_stunned = efftype_id("stunned");
+    auto& dude = g->u;
+    dude.setpos(dude_pos);
+
+    const auto check_stuns = [&dude, &effect_stunned](const matec_id& tec) {
+        auto& target = spawn_test_monster("mon_zombie", dude_pos + tripoint_rel_ms::east());
+        REQUIRE(tec->stun_dur > 0);
+        REQUIRE_FALSE(target.has_effect(effect_stunned));
+
+        auto di = damage_instance();
+        auto move_cost = 100;
+        dude.perform_technique(tec.obj(), target, di, move_cost);
+
+        CHECK(target.has_effect(effect_stunned));
+    };
+
+    SECTION("technique without knockback") {
+        const auto tec = matec_id("tec_karate_precise");
+        REQUIRE(tec->knockback_dist == 0);
+        check_stuns(tec);
+    }
+
+    SECTION("technique with powerful knockback") {
+        const auto tec = matec_id("tec_crane_precise");
+        REQUIRE(tec->knockback_dist > 0);
+        REQUIRE(tec->powerful_knockback);
+        check_stuns(tec);
+    }
 }
 
 TEST_CASE("Character attacking a manhack", "[.melee]") {

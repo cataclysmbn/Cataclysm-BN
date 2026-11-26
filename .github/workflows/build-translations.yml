@@ -26,7 +26,7 @@ jobs:
           curl -sL https://github.com/transifex/cli/releases/download/v1.6.17/tx-linux-amd64.tar.gz | sudo tar zxvf - -C /usr/bin tx
 
       - name: Checkout local repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ inputs.checkout-ref }}
           sparse-checkout: |
@@ -44,7 +44,15 @@ jobs:
               echo "::error::TX_TOKEN is required to pull translations in the upstream repository"
               exit 1
             fi
-            tx pull --force --all
+            # A template push from the same main commit can make downloads fail while Transifex updates the resource.
+            for attempt in 1 2 3; do
+              tx pull --force --all && break
+              if [ "$attempt" = 3 ]; then
+                exit 1
+              fi
+              echo "::warning::tx pull failed on attempt $attempt, retrying in 60 s"
+              sleep 60
+            done
           else
             cat > lang/po/en_US.po <<'EOF'
           msgid ""
@@ -88,7 +96,7 @@ jobs:
         run: ./lang/update_stats.sh
 
       - name: Store translation artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: "translations"
           if-no-files-found: error

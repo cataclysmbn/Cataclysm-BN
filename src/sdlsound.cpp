@@ -103,6 +103,17 @@ static auto sfx_group_to_tag( const sfx::group group ) -> const char *
 
 // ── Global state ──────────────────────────────────────────────────────────────
 
+namespace
+{
+
+// SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK expands to a C-style cast.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+constexpr auto default_playback_device = SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK;
+#pragma GCC diagnostic pop
+
+} // namespace
+
 static MIX_Mixer *g_mixer = nullptr;
 
 // Dedicated persistent track for music playback
@@ -185,7 +196,7 @@ auto init_sound() -> bool
     spec.channels = 2;
     spec.freq     = 44100;
 
-    g_mixer = MIX_CreateMixerDevice( SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec );
+    g_mixer = MIX_CreateMixerDevice( default_playback_device, &spec );
     if( !g_mixer ) {
         dbg( DL::Error ) << "MIX_CreateMixerDevice failed: " << SDL_GetError();
         MIX_Quit();

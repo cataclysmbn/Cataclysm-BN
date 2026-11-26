@@ -18,11 +18,11 @@ struct rail_processing_result {
 /**
  * Decides how the vehicle should move in order to follow rails, or get on rails.
  */
-rail_processing_result process_movement_on_rails(const map& m, const vehicle& veh);
+auto process_movement_on_rails(const map& m, const vehicle& veh) -> rail_processing_result;
 
 /**
  * Returns whether the vehicle is currently on rails.
  */
-bool is_on_rails(const map& m, const vehicle& veh);
+auto is_on_rails(const map& m, const vehicle& veh) -> bool;
 
 } // namespace vehicle_movement

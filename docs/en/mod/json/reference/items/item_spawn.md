@@ -96,7 +96,7 @@ item(s):
 "charges-min": <number>,
 "charges-max": <number>,
 "active": "<bool>"
-"postprocessor": <string>|<array, // This is a reference to `itemgroup_postprocessors` lua callbacks.
+"vars": [ { "name": "<var_name>", "value": "<var_value>" } ] ( dynamically populating item variables )
 "contents-item": "<item-id>" (can be a string or an array of strings),
 "contents-group": "<group-id>" (can be a string or an array of strings),
 "ammo-item": "<ammo-item-id>",

@@ -1,13 +1,13 @@
 #pragma once
 
+#include "coordinates.h"
+#include "game_constants.h"
+#include "map/lightmap.h"
+
 #include <array>
 #include <cmath>
 #include <cstdint>
 #include <string>
-
-#include "game_constants.h"
-#include "lightmap.h"
-#include "coordinates.h"
 
 // Tracks whether a diagonal between two tiles is blocked by a vehicle part.
 // Stored per-tile in level_cache::vehicle_obscured_cache.

@@ -229,6 +229,7 @@ const flag_id flag_NO_RECOVER_AMMO( "NO_RECOVER_AMMO" );
 const flag_id flag_NO_RELOAD( "NO_RELOAD" );
 const flag_id flag_NO_REPAIR( "NO_REPAIR" );
 const flag_id flag_NO_SALVAGE( "NO_SALVAGE" );
+const flag_id flag_BUTCHERY_ROPE( "BUTCHERY_ROPE" );
 const flag_id flag_NO_STERILE( "NO_STERILE" );
 const flag_id flag_NO_TAKEOFF( "NO_TAKEOFF" );
 const flag_id flag_NO_UNLOAD( "NO_UNLOAD" );
@@ -257,6 +258,8 @@ const flag_id flag_POWERARMOR_EXO( "POWERARMOR_EXO" );
 const flag_id flag_POWERARMOR_EXTERNAL( "POWERARMOR_EXTERNAL" );
 const flag_id flag_POWERARMOR_PLATING( "POWERARMOR_PLATING" );
 const flag_id flag_POWERARMOR_MOD( "POWERARMOR_MOD" );
+const flag_id flag_PLATE_CARRIER( "PLATE_CARRIER" );
+const flag_id flag_ARMOR_PLATE( "ARMOR_PLATE" );
 const flag_id flag_POWERED( "POWERED" );
 const flag_id flag_PRIMITIVE_RANGED_WEAPON( "PRIMITIVE_RANGED_WEAPON" );
 const flag_id flag_PROCESSING( "PROCESSING" );
@@ -423,6 +426,7 @@ void json_flag::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "restriction", restriction_ );
     optional( jo, was_loaded, "tag", tag_ );
     optional( jo, was_loaded, "use_method", use_method_ );
+    optional( jo, was_loaded, "dynamic_color", tag_color_, c_light_gray );
 
     // FIXME: most flags have a "context" field that isn't used for anything
     // Test for it here to avoid errors about unvisited members

@@ -1,23 +1,24 @@
-#include <unordered_set>
+#include "distribution_grid.h"
+
+#include "active_tile_data.h"
+#include "active_tile_data_def.h"
+#include "character.h"
+#include "debug.h"
+#include "map/map.h"
+#include "map/mapbuffer.h"
+#include "map/submap.h"
+#include "messages.h"
+#include "options.h"
+#include "overmap/overmapbuffer.h"
+#include "overmap/overmapbuffer_registry.h"
+#include "profile.h"
+#include "utils/algo.h"
+
 #include <algorithm>
 #include <climits>
 #include <cstdint>
 #include <ranges>
-
-#include "utils/algo.h"
-#include "character.h"
-#include "debug.h"
-#include "distribution_grid.h"
-#include "active_tile_data.h"
-#include "active_tile_data_def.h"
-#include "map.h"
-#include "mapbuffer.h"
-#include "messages.h"
-#include "submap.h"
-#include "options.h"
-#include "overmapbuffer.h"
-#include "overmapbuffer_registry.h"
-#include "profile.h"
+#include <unordered_set>
 
 distribution_grid::distribution_grid( const std::vector<tripoint_abs_sm> &global_submap_coords,
                                       mapbuffer &buffer ) :
@@ -75,6 +76,7 @@ void distribution_grid::update( time_point to )
 static itype_id itype_battery( "battery" );
 int distribution_grid::mod_resource( int amt, bool recurse )
 {
+    cached_maximum_amount_here_needs_update = true;
     std::vector<vehicle *> connected_vehicles;
     for( const auto &c : contents ) {
         for( const tile_location &loc : c.second ) {
@@ -141,6 +143,27 @@ int distribution_grid::mod_resource( int amt, bool recurse )
     } );
 
     return amt;
+}
+
+int distribution_grid::get_resource_capacity() const
+{
+    if( cached_maximum_amount_here && !cached_maximum_amount_here_needs_update ) {
+        return *cached_maximum_amount_here;
+    } else {
+        cached_maximum_amount_here = 0;
+        cached_maximum_amount_here_needs_update = false;
+    }
+    for( const auto &c : contents ) {
+        for( const tile_location &loc : c.second ) {
+            battery_tile *battery = active_tiles::furn_at<battery_tile>( loc.absolute, mb );
+            if( battery != nullptr ) {
+                if( cached_maximum_amount_here ) {
+                    cached_maximum_amount_here = *cached_maximum_amount_here + battery->max_stored;
+                }
+            }
+        }
+    }
+    return *cached_maximum_amount_here;
 }
 
 int distribution_grid::get_resource( bool recurse ) const
@@ -228,7 +251,7 @@ auto distribution_grid::get_power_stat_local() const -> power_stat
         const auto &pos = loc.absolute;
 
         if( auto *s = active_tiles::furn_at<solar_tile>( pos, mb ) ) { return to_stat( s->get_power_w() ); }
-        if( auto *c = active_tiles::furn_at<charger_tile>( pos, mb ) ) { return to_stat( -c->power ); }
+        if( auto *c = active_tiles::furn_at<charger_tile>( pos, mb ) ) { return to_stat( c->is_charging( pos, mb ) ? -c->power : 0 ); }
         if( auto *sc = active_tiles::furn_at<steady_consumer_tile>( pos, mb ) ) { return to_stat( -sc->power ); }
         if( auto *vc = active_tiles::furn_at<vehicle_connector_tile>( pos, mb ) ) { return get_vehicle_stats( vc ); }
 

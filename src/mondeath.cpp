@@ -1,17 +1,5 @@
 #include "mondeath.h"
 
-#include <algorithm>
-#include <array>
-#include <cmath>
-#include <cstdlib>
-#include <map>
-#include <memory>
-#include <set>
-#include <string>
-#include <type_traits>
-#include <utility>
-#include <vector>
-
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
@@ -19,7 +7,6 @@
 #include "creature.h"
 #include "enums.h"
 #include "explosion_queue.h"
-#include "field_type.h"
 #include "fungal_effects.h"
 #include "game.h"
 #include "harvest.h"
@@ -32,7 +19,8 @@
 #include "kill_tracker.h"
 #include "line.h"
 #include "make_static.h"
-#include "map.h"
+#include "map/field_type.h"
+#include "map/map.h"
 #include "map_iterator.h"
 #include "mattack_actors.h"
 #include "mattack_common.h"
@@ -53,6 +41,18 @@
 #include "units.h"
 #include "value_ptr.h"
 #include "weighted_list.h"
+
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstdlib>
+#include <map>
+#include <memory>
+#include <set>
+#include <string>
+#include <type_traits>
+#include <utility>
+#include <vector>
 
 static const efftype_id effect_ai_controlled( "ai_controlled" );
 static const efftype_id effect_amigara( "amigara" );

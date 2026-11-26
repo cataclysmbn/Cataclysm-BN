@@ -1,22 +1,22 @@
 #pragma once
 
-#include <functional>
-#include <map>
-#include <optional>
-#include <string>
-#include <utility>
-#include <vector>
-
 #include "calendar.h"
 #include "character_id.h"
 #include "coordinates.h"
 #include "enums.h"
 #include "game_constants.h"
 #include "npc_favor.h"
-#include "overmap.h"
+#include "overmap/overmap.h"
 #include "point.h"
 #include "translations.h"
 #include "type_id.h"
+
+#include <functional>
+#include <map>
+#include <optional>
+#include <string>
+#include <utility>
+#include <vector>
 
 class Creature;
 class JsonArray;
@@ -105,9 +105,6 @@ struct mission_start {
     static void place_priest_diary( mission * ); // Hides the priest's diary in a local house
     static void place_deposit_box( mission * );  // Place a safe deposit box in a nearby bank
     static void find_safety( mission * );        // Goal is set to non-spawn area
-    static void ranch_scavenger_1( mission * );  // Expand Junk Shop
-    static void ranch_scavenger_2( mission * );  // Expand Junk Shop
-    static void ranch_scavenger_3( mission * );  // Expand Junk Shop
     static void place_book( mission * );         // Place a book to retrieve
     static void reveal_refugee_center( mission * ); // Find refugee center
     static void create_lab_console( mission * );  // Reveal lab with an unlocked workstation

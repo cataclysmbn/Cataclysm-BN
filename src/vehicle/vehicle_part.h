@@ -49,50 +49,50 @@ public:
     vehicle_part(const vehicle_part&, vehicle*);
 
     vehicle_part(vehicle_part&&);
-    vehicle_part& operator=(vehicle_part&&);
+    auto operator=(vehicle_part&&) -> vehicle_part&;
 
     /** Check this instance is non-null (not default constructed) */
     explicit operator bool() const;
 
-    bool has_flag(const vp_state_flag flag) const noexcept { return flag & flags; }
-    int set_flag(const vp_state_flag flag) noexcept { return flags |= flag; }
-    int remove_flag(const vp_state_flag flag) noexcept { return flags &= ~flag; }
+    auto has_flag(const vp_state_flag flag) const noexcept -> bool { return flag & flags; }
+    auto set_flag(const vp_state_flag flag) noexcept -> int { return flags |= flag; }
+    auto remove_flag(const vp_state_flag flag) noexcept -> int { return flags &= ~flag; }
 
     /** this can be removed when vehicles are made into GOs */
     void set_vehicle_hack(vehicle*);
     void refresh_locations_hack(vehicle*);
-    int get_hack_id() const { return hack_id; }
+    auto get_hack_id() const -> int { return hack_id; }
 
     /**
      * Translated name of a part inclusive of any current status effects
      * with_prefix as true indicates the durability symbol should be prepended
      */
-    std::string name(bool with_prefix = true) const;
+    auto name(bool with_prefix = true) const -> std::string;
 
     static constexpr int name_offset = 7;
     /** Stack of the containing vehicle's name, when it it stored as part of another vehicle */
     std::stack<std::string, std::vector<std::string>> carry_names;
 
     /** Specific type of fuel, charges or ammunition currently contained by a part */
-    itype_id ammo_current() const;
+    auto ammo_current() const -> itype_id;
 
     /** Maximum amount of fuel, charges or ammunition that can be contained by a part */
-    int ammo_capacity() const;
+    auto ammo_capacity() const -> int;
 
     /** Amount of fuel, charges or ammunition currently contained by a part */
-    int ammo_remaining() const;
+    auto ammo_remaining() const -> int;
 
     /** Type of fuel used by an engine */
-    itype_id fuel_current() const;
+    auto fuel_current() const -> itype_id;
     /** Set an engine to use a different type of fuel */
-    bool fuel_set(const itype_id& fuel);
+    auto fuel_set(const itype_id& fuel) -> bool;
     /**
      * Set fuel, charges or ammunition for this part removing any existing ammo
      * @param ammo specific type of ammo (must be compatible with vehicle part)
      * @param qty maximum ammo (capped by part capacity) or negative to fill to capacity
      * @return amount of ammo actually set or negative on failure
      */
-    int ammo_set(const itype_id& ammo, int qty = -1);
+    auto ammo_set(const itype_id& ammo, int qty = -1) -> int;
 
     /** Remove all fuel, charges or ammunition (if any) from this part */
     void ammo_unset();
@@ -103,7 +103,7 @@ public:
      * @param pos current bubble location of part from which ammo is being consumed
      * @return amount consumed which will be between 0 and specified qty
      */
-    int ammo_consume(int qty, const tripoint_bub_ms& pos);
+    auto ammo_consume(int qty, const tripoint_bub_ms& pos) -> int;
 
     /**
      * Consume fuel by energy content.
@@ -111,10 +111,10 @@ public:
      * @param energy_j Energy to consume, in J
      * @return Energy actually consumed, in J
      */
-    double consume_energy(const itype_id& ftype, double energy_j);
+    auto consume_energy(const itype_id& ftype, double energy_j) -> double;
 
     /* @retun true if part in current state be reloaded optionally with specific itype_id */
-    bool can_reload(const item* obj = nullptr) const;
+    auto can_reload(const item* obj = nullptr) const -> bool;
 
     /**
      * If this part is capable of wholly containing something, process the
@@ -128,37 +128,37 @@ public:
      *  Try adding @param liquid to tank optionally limited by @param qty
      *  @return the remaining liquid, if any
      */
-    detached_ptr<item> fill_with(detached_ptr<item>&& liquid, int qty = INT_MAX);
+    auto fill_with(detached_ptr<item>&& liquid, int qty = INT_MAX) -> detached_ptr<item>;
 
     /** Current faults affecting this part (if any) */
-    const std::set<fault_id>& faults() const;
+    auto faults() const -> const std::set<fault_id>&;
 
     /** Faults which could potentially occur with this part (if any) */
-    std::set<fault_id> faults_potential() const;
+    auto faults_potential() const -> std::set<fault_id>;
 
     /** Try to set fault returning false if specified fault cannot occur with this item */
-    bool fault_set(const fault_id& f);
+    auto fault_set(const fault_id& f) -> bool;
 
     /** Get wheel diameter times wheel width (millimeters^2) or return 0 if part is not wheel */
-    int wheel_area() const;
+    auto wheel_area() const -> int;
 
     /** Get wheel diameter (millimeters) or return 0 if part is not wheel */
-    int wheel_diameter() const;
+    auto wheel_diameter() const -> int;
 
     /** Get wheel width (millimeters) or return 0 if part is not wheel */
-    int wheel_width() const;
+    auto wheel_width() const -> int;
 
     /**
      *  Get NPC currently assigned to this part (seat, turret etc)?
      *  @note checks crew member is alive and currently allied to the player
      *  @return nullptr if no valid crew member is currently assigned
      */
-    npc* crew() const;
+    auto crew() const -> npc*;
 
     /** Set crew member for this part (seat, turret etc) who must be a player ally)
      *  @return true if part can have crew members and passed npc was suitable
      */
-    bool set_crew(const npc& who);
+    auto set_crew(const npc& who) -> bool;
 
     /** Remove any currently assigned crew member for this part */
     void unset_crew();
@@ -175,24 +175,24 @@ public:
     /*@{*/
 
     /** Can this part provide power or propulsion? */
-    bool is_engine() const;
+    auto is_engine() const -> bool;
 
     /** Is this any type of vehicle light? */
-    bool is_light() const;
+    auto is_light() const -> bool;
 
     /** Can this part store fuel of any type
      * @skip_broke exclude broken parts
      */
-    bool is_fuel_store(bool skip_broke = true) const;
+    auto is_fuel_store(bool skip_broke = true) const -> bool;
 
     /** Can this part contain liquid fuels? */
-    bool is_tank() const;
+    auto is_tank() const -> bool;
 
     /** Can this part store electrical charge? */
-    bool is_battery() const;
+    auto is_battery() const -> bool;
 
     /** Is this part a reactor? */
-    bool is_reactor() const;
+    auto is_reactor() const -> bool;
 
     /** Does this part provide always-on electrical power? */
     auto is_perpetual_power_source() const -> bool;
@@ -201,16 +201,16 @@ public:
      *  this doesn't take into account whether or not the part has any contents
      *  remaining to leak
      */
-    bool is_leaking() const;
+    auto is_leaking() const -> bool;
 
     /** Can this part function as a turret? */
-    bool is_turret() const;
+    auto is_turret() const -> bool;
 
     /** Can a player or NPC use this part as a seat? */
-    bool is_seat() const;
+    auto is_seat() const -> bool;
 
     /* if this is a carried part, what is the name of the carried vehicle */
-    std::string carried_name() const;
+    auto carried_name() const -> std::string;
     /*@}*/
 
 public:
@@ -226,28 +226,28 @@ public:
     std::array<int, 2> z_terrain = {0, 0};
 
     /** current part health with range [0,durability] */
-    int hp() const;
+    auto hp() const -> int;
 
     /** Current part damage in same units as item::damage. */
-    int damage() const;
+    auto damage() const -> int;
     /** max damage of part base */
-    int max_damage() const;
+    auto max_damage() const -> int;
 
     /** Current part damage level in same units as item::damage_level */
-    int damage_level(int max) const;
+    auto damage_level(int max) const -> int;
 
     /** Current part damage as a percentage of maximum, with 0.0 being perfect condition */
-    double damage_percent() const;
+    auto damage_percent() const -> double;
     /** Current part health as a percentage of maximum, with 1.0 being perfect condition */
-    double health_percent() const;
+    auto health_percent() const -> double;
 
     /** parts are considered broken at zero health */
-    bool is_broken() const;
+    auto is_broken() const -> bool;
 
     /** parts are unavailable if broken or if carried is true, if they have the CARRIED flag */
-    bool is_unavailable(bool carried = true) const;
+    auto is_unavailable(bool carried = true) const -> bool;
     /** parts are available if they aren't unavailable */
-    bool is_available(bool carried = true) const;
+    auto is_available(bool carried = true) const -> bool;
 
     /** how much blood covers part (in turns). */
     int blood = 0;
@@ -317,34 +317,34 @@ public:
     tripoint_abs_ms portal_tap_pos;
     bool portal_tap_linked = false;
     /** Get part definition common to all parts of this type */
-    const vpart_info& info() const;
+    auto info() const -> const vpart_info&;
 
     void serialize(JsonOut& json) const;
     void deserialize(JsonIn& jsin);
 
-    item& get_base() const;
-    detached_ptr<item> set_base(detached_ptr<item>&& new_base);
+    auto get_base() const -> item&;
+    auto set_base(detached_ptr<item>&& new_base) -> detached_ptr<item>;
 
-    const std::vector<item*>& get_items() const { return items.as_vector(); }
+    auto get_items() const -> const std::vector<item*>& { return items.as_vector(); }
 
-    std::vector<detached_ptr<item>> clear_items() { return items.clear(); }
+    auto clear_items() -> std::vector<detached_ptr<item>> { return items.clear(); }
 
     void add_item(detached_ptr<item>&& item);
 
-    detached_ptr<item> remove_item(item& it) { return items.remove(&it); }
+    auto remove_item(item& it) -> detached_ptr<item> { return items.remove(&it); }
 
     /**
      * Generate the corresponding item from this vehicle part. It includes
      * the hp (item damage), fuel charges (battery or liquids), aspect, ...
      */
-    detached_ptr<item> properties_to_item() const;
+    auto properties_to_item() const -> detached_ptr<item>;
     /**
      * Returns an std::vector<item *> of the pieces that should arise from breaking
      * this part.
      */
-    std::vector<detached_ptr<item>> pieces_for_broken_part() const;
+    auto pieces_for_broken_part() const -> std::vector<detached_ptr<item>>;
 
-    RGBColorPair get_color(bool ignore_default = false) const;
+    auto get_color(bool ignore_default = false) const -> RGBColorPair;
     void set_color(const RGBColorPair& color) { set_color(color.bg, color.fg); }
     void set_color(const RGBColor& bg, const RGBColor& fg);
 };

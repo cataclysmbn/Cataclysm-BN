@@ -2,6 +2,7 @@
   {
     "id": "LIGHTNING_JUDGMENT",
     "type": "ammo_effect",
+    "trail": { "field_type": "fd_laser", "intensity_min": 2, "intensity_max": 3 },
     "aoe": {
       "field_type": "fd_electricity",
       "intensity_min": 1,
@@ -140,5 +141,15 @@
     "id": "ARCANA_BANE_TEAR",
     "type": "ammo_effect",
     "aoe": { "field_type": "fd_tear_gas", "intensity_min": 1, "intensity_max": 3, "radius": 5, "chance": 25 }
+  },
+  {
+    "id": "ARCANA_WRAITHSLAYER_BEAM",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_wraithslayer_beam", "intensity_min": 2, "intensity_max": 2 }
+  },
+  {
+    "id": "ARCANA_WRAITHSLAYER_BEAM_GREATER",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_wraithslayer_beam", "intensity_min": 3, "intensity_max": 3 }
   }
 ]

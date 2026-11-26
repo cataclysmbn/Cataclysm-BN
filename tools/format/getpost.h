@@ -31,7 +31,7 @@ THE SOFTWARE.
 #include <stdlib.h>
 #include <string>
 
-inline std::string urlDecode(std::string str) {
+inline auto urlDecode(std::string str) -> std::string {
     std::string temp;
     int i;
     char tmp[5], tmpchar;

@@ -1,19 +1,23 @@
+#include "../src/map/map.h"
+#include "../src/overmap/overmapbuffer.h"
 #include "../src/vehicle/vpart_position.h"
 #include "avatar.h"
 #include "avatar_action.h"
 #include "bodypart.h"
+#include "cached_options.h"
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catch/catch.hpp"
 #include "game.h"
 #include "hash_utils.h"
 #include "item.h"
-#include "map.h"
+#include "map/field_type.h"
 #include "map_helpers.h"
 #include "morale_types.h"
-#include "overmapbuffer.h"
 #include "player.h"
+#include "player_activity.h"
 #include "player_helpers.h"
+#include "skill.h"
 #include "state_helpers.h"
 #include "units.h"
 #include "units_temperature.h"
@@ -38,6 +42,63 @@ TEST_CASE("floor_clothing_warmth_preserves_partial_volumes", "[bodytemp]") {
     CHECK(Character::floor_item_warmth(pos) == units::from_legacy_bodypart_temp_delta(90));
     here.add_item_or_charges(pos, item::spawn("test_hazmat_suit"));
     CHECK(Character::floor_item_warmth(pos) == units::from_legacy_bodypart_temp_delta(16410));
+}
+
+TEST_CASE("heat_radiation_sums_visible_sources_across_submaps", "[bodytemp]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    calendar::turn = calendar::turn_zero + 12_hours;
+    auto& here = get_map();
+    // x = 59 and x = 60 lie in different submaps.
+    const auto pos = tripoint_bub_ms(59, 60, 0);
+    g->place_player(pos);
+    here.add_field(pos + point(2, 0), fd_fire, 2);
+    here.ter_set(pos + point(-2, 2), ter_id("t_lava"));
+    // Outside the radius of 6.
+    here.add_field(pos + point(8, 0), fd_fire, 3);
+    // Behind a wall.
+    here.ter_set(pos + point(0, -2), ter_id("t_lava"));
+    for (auto x = -1; x <= 1; ++x) { here.ter_set(pos + point(x, -1), ter_id("t_rock_wall")); }
+    here.invalidate_map_cache(0);
+    here.build_map_cache(0);
+
+    // 6 * intensity^2 / distance per visible source.
+    CHECK(get_heat_radiation(pos, false) == 6 * 2 * 2 / 2 + 6 * 3 * 3 / 2);
+    CHECK(get_heat_radiation(pos, true) == 3);
+    const auto other = pos + point(1, 1);
+    CHECK(get_heat_radiation(other, false) == 6 * 2 * 2 / 1 + 6 * 3 * 3 / 3);
+}
+
+/// Checks that get_heat_radiation uses the hotter of the fire and the terrain on one tile.
+/// Fire 3 on ground gives a direct heat of 3. Fire 1 on lava (heat 3) also gives 3, and the
+/// total heat equals the total from the same lava tile without fire.
+TEST_CASE("heat_radiation_takes_hotter_of_fire_and_terrain", "[bodytemp]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    calendar::turn = calendar::turn_zero + 12_hours;
+    auto& here = get_map();
+    const auto pos = tripoint_bub_ms(60, 60, 0);
+    const auto source = pos + point(2, 0);
+    const auto rebuild = [&here]() {
+        here.invalidate_map_cache(0);
+        here.build_map_cache(0);
+    };
+    g->place_player(pos);
+
+    here.add_field(source, fd_fire, 3);
+    rebuild();
+    CHECK(get_heat_radiation(pos, true) == 3);
+    here.remove_field(source, fd_fire);
+
+    here.ter_set(source, ter_id("t_lava"));
+    rebuild();
+    const auto lava_only = get_heat_radiation(pos, false);
+    REQUIRE(lava_only > 0);
+    here.add_field(source, fd_fire, 1);
+    REQUIRE(here.get_field_intensity(source, fd_fire) == 1);
+    rebuild();
+    CHECK(get_heat_radiation(pos, true) == 3);
+    CHECK(get_heat_radiation(pos, false) == lava_only);
 }
 
 TEST_CASE("wetness_morale_interpolates_body_temperature", "[bodytemp][morale]") {
@@ -73,7 +134,7 @@ struct body_part_temp {
     bodypart_str_id part;
     int temperature;
 
-    bool operator==(const body_part_temp& other) const {
+    auto operator==(const body_part_temp& other) const -> bool {
         return part == other.part && temperature == other.temperature;
     }
 };
@@ -81,7 +142,7 @@ struct body_part_temp {
 namespace std {
 
 template <> struct hash<body_part_temp> {
-    std::size_t operator()(body_part_temp const& bpt) const noexcept {
+    auto operator()(body_part_temp const& bpt) const noexcept -> std::size_t {
         auto tuple_hash = cata::auto_hash<std::tuple<const bodypart_str_id&, const int&>>();
         return tuple_hash(std::forward_as_tuple(bpt.part, bpt.temperature));
     }
@@ -106,14 +167,14 @@ constexpr std::array<temperature_threshold, 7> bodytemps = {
 
 #undef t
 
-std::ostream& operator<<(std::ostream& os, const body_part_temp& bpt);
-std::ostream& operator<<(std::ostream& os, const body_part_temp& bpt) {
+auto operator<<(std::ostream& os, const body_part_temp& bpt) -> std::ostream&;
+auto operator<<(std::ostream& os, const body_part_temp& bpt) -> std::ostream& {
     // Stringify the temperature to avoid Catch adding hex
     return os << std::to_string(bpt.temperature);
 }
 
-std::ostream& operator<<(std::ostream& os, const std::vector<body_part_temp>& bpts);
-std::ostream& operator<<(std::ostream& os, const std::vector<body_part_temp>& bpts) {
+auto operator<<(std::ostream& os, const std::vector<body_part_temp>& bpts) -> std::ostream&;
+auto operator<<(std::ostream& os, const std::vector<body_part_temp>& bpts) -> std::ostream& {
     os << "[";
     for (const auto& e : bpts) { os << e << ","; }
     return os << "]\n";
@@ -126,8 +187,8 @@ public:
     temperatures_wrapper(const base_type& base): base_type(base) {}
 };
 
-std::ostream& operator<<(std::ostream& os, const temperatures_wrapper& arr);
-std::ostream& operator<<(std::ostream& os, const temperatures_wrapper& arr) {
+auto operator<<(std::ostream& os, const temperatures_wrapper& arr) -> std::ostream&;
+auto operator<<(std::ostream& os, const temperatures_wrapper& arr) -> std::ostream& {
     os << "[\n";
     for (size_t i = 0; i < arr.size() / 2; i++) { os << string_format("%6d, ", arr[i]); }
     // Ugly split like that because otherwise it gets wrapped seemingly randomly
@@ -141,7 +202,7 @@ std::ostream& operator<<(std::ostream& os, const temperatures_wrapper& arr) {
     return os;
 }
 
-static int get_temp_cur(const Character& c, const bodypart_str_id& bp) {
+static auto get_temp_cur(const Character& c, const bodypart_str_id& bp) -> int {
     auto iter = c.get_body().find(bp);
     if (iter == c.get_body().end()) {
         debugmsg("%s has no %s", c.disp_name().c_str(), bp.c_str());
@@ -152,9 +213,9 @@ static int get_temp_cur(const Character& c, const bodypart_str_id& bp) {
 }
 
 // Run update_bodytemp() until core body temperature settles.
-static std::vector<int> converge_temperature(
-    player& p, size_t iters,
-    int start_temperature = units::to_legacy_bodypart_temp(BODYTEMP_NORM)) {
+static auto converge_temperature(
+    player& p, size_t iters, int start_temperature = units::to_legacy_bodypart_temp(BODYTEMP_NORM))
+    -> std::vector<int> {
     constexpr size_t n_history = 10;
     REQUIRE(get_weather().weather_id == WEATHER_CLOUDY);
     REQUIRE(get_weather().windspeed == 0);
@@ -212,7 +273,7 @@ static void equip_clothing(player& p, const std::vector<std::string>& clothing) 
  * Table of temperature ranges closest to given body temperature.
  * That is, [0] to [1] is the range where FREEZING is the closest.
  */
-static std::array<int, 8> bodytemp_voronoi() {
+static auto bodytemp_voronoi() -> std::array<int, 8> {
     std::array<int, 8> midpoints;
     midpoints[0] = INT_MIN;
     midpoints[7] = INT_MAX;
@@ -363,7 +424,7 @@ TEST_CASE("Player body temperatures within expected bounds.", "[bodytemp][slow]"
  * Finds air temperatures for which body temperature is closest to exact "named" value.
  * FREEZING, HOT, etc.
  */
-static std::array<units::temperature, bodytemps.size()> find_temperature_points(player& p) {
+static auto find_temperature_points(player& p) -> std::array<units::temperature, bodytemps.size()> {
     constexpr int min_air_temp = -200;
     constexpr int max_air_temp = 200;
     std::array<std::pair<int, int>, bodytemps.size()> value_distances;
@@ -450,8 +511,8 @@ TEST_CASE("Find air temperatures for given body temperatures.", "[.][bodytemp]")
 }
 
 // Ugly pasta, for simplicity
-static int find_converging_water_temp(
-    player& p, int expected_water, units::temperature expected_bodytemp) {
+static auto find_converging_water_temp(
+    player& p, int expected_water, units::temperature expected_bodytemp) -> int {
     constexpr int tol = 100;
     const auto legacy_expected_bodytemp = units::to_legacy_bodypart_temp(expected_bodytemp);
     REQUIRE(get_map().has_flag(TFLAG_SWIMMABLE, p.bub_pos()));
@@ -584,6 +645,79 @@ TEST_CASE("Water hypothermia check.", "[.][bodytemp]") {
     }
 }
 
+TEST_CASE("update_bodytemp keeps the body intact for a single step.", "[bodytemp]") {
+    clear_all_state();
+    player& dummy = get_avatar();
+    guarantee_neutral_weather(dummy, get_weather());
+
+    for (auto& pr : dummy.get_body()) {
+        pr.second.set_temp_cur(BODYTEMP_NORM);
+        pr.second.set_temp_conv(BODYTEMP_NORM);
+    }
+
+    const std::vector<bodypart_id> ids_before = dummy.get_all_body_parts(true);
+    REQUIRE(!ids_before.empty());
+    for (const bodypart_id& bp_id : ids_before) {
+        INFO("before: " << bp_id.id().str());
+        REQUIRE(bp_id.is_valid());
+    }
+
+    SECTION("Without clothing") {}
+
+    SECTION("With worn clothing") { equip_clothing(dummy, heavy_clothing); }
+
+    dummy.update_bodytemp(get_map(), get_weather());
+
+    const std::vector<bodypart_id> ids_after = dummy.get_all_body_parts(true);
+    CHECK(ids_after == ids_before);
+
+    for (const bodypart_id& bp_id : ids_after) {
+        INFO("after: " << bp_id.id().str());
+        REQUIRE(bp_id.is_valid());
+        const bodypart& part = dummy.get_part(bp_id);
+        CHECK(part.get_str_id() == bp_id.id());
+        CHECK(part.get_temp_cur() >= BODYTEMP_FREEZING);
+        CHECK(part.get_temp_cur() <= BODYTEMP_SCORCHING);
+    }
+}
+
+// Light a fire 2 tiles away while skipping: torso temp_conv keeps the old value for 1 turn, then
+// reads the fire after ACTIVITY_SKIP_STAT_UPDATE_TICKS (60 s here), after
+// reset_skip_bodytemp_cache, or when skipping stops.
+TEST_CASE("skip_bodytemp_reads_new_heat_after_stat_update_interval", "[bodytemp][activity]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    calendar::turn = calendar::turn_zero + 12_hours;
+    auto& you = get_avatar();
+    auto& here = get_map();
+    guarantee_neutral_weather(you, get_weather());
+    const auto skip_state = restore_on_out_of_scope<bool>(you.in_skip_state);
+    const auto interval = restore_on_out_of_scope<time_duration>(activity_skip_stat_update_ticks);
+    activity_skip_stat_update_ticks = 60_seconds;
+    const auto torso_conv = [&]() { return you.get_part(body_part_torso).get_temp_conv(); };
+    const auto step = [&](const time_duration& dt) {
+        calendar::turn += dt;
+        you.update_bodytemp(here, get_weather());
+    };
+    you.in_skip_state = true;
+    step(1_turns);
+    const auto before = torso_conv();
+    here.add_field(you.bub_pos() + point(2, 0), fd_fire, 3);
+    step(1_turns);
+    CHECK(torso_conv() == before);
+
+    SECTION("after the interval") { step(60_turns); }
+    SECTION("after reset_skip_bodytemp_cache") {
+        reset_skip_bodytemp_cache();
+        step(1_turns);
+    }
+    SECTION("after skipping stops") {
+        you.in_skip_state = false;
+        step(1_turns);
+    }
+    CHECK(torso_conv() > before);
+}
+
 TEST_CASE("player_move_through_vehicle_holes") {
 
     clear_all_state();
@@ -599,4 +733,38 @@ TEST_CASE("player_move_through_vehicle_holes") {
     avatar_action::move(get_avatar(), get_map(), point_rel_ms::north_west());
 
     CHECK(get_avatar().bub_pos() == pos);
+}
+
+TEST_CASE("clear_skills_resets_exercise_and_highest_level", "[skill]") {
+    // Checks that clear_skills leaves no training progress from an earlier test.
+    // Level 3 electronics with 232 exercise must become level 0, exercise 0 and highest level 0.
+    clear_all_state();
+    auto& dummy = get_avatar();
+    auto& electronics = dummy.get_skill_level_object(skill_id("electronics"));
+    electronics.level(3);
+    electronics.train(232, true);
+    REQUIRE(electronics.exercise(true) == 232);
+
+    dummy.clear_skills();
+
+    CHECK(electronics.level() == 0);
+    CHECK(electronics.exercise(true) == 0);
+    CHECK(electronics.highestLevel() == 0);
+}
+
+TEST_CASE("clear_character_leaves_no_activity_state", "[activity]") {
+    // Checks that clear_character removes all activity state from an earlier test.
+    // A stopped activity with index 7 and one backlog entry must become a fresh activity with
+    // index 0 and an empty backlog, so a continued read does not reuse index 7.
+    clear_all_state();
+    auto& dummy = get_avatar();
+    dummy.assign_activity(std::make_unique<player_activity>(activity_id("ACT_WAIT"), 100, 7));
+    dummy.activity->set_to_null();
+    dummy.backlog.emplace_front(std::make_unique<player_activity>(activity_id("ACT_WAIT"), 100));
+
+    clear_character(dummy);
+
+    CHECK(dummy.activity->is_null());
+    CHECK(dummy.activity->index == 0);
+    CHECK(dummy.backlog.empty());
 }

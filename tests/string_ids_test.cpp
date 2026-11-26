@@ -1,7 +1,7 @@
 #include "catch/catch.hpp"
-#include "field_type.h"
 #include "flag.h"
 #include "generic_factory.h"
+#include "map/field_type.h"
 #include "string_id_utils.h"
 #include "type_id.h"
 

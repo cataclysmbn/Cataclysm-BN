@@ -2,9 +2,9 @@
 #include "shape_impl.h"
 
 class square_distance_from_zero_shape: public shape_impl {
-    double signed_distance(const rl_vec3d& p) const override { return p.dot_product(p); }
+    auto signed_distance(const rl_vec3d& p) const -> double override { return p.dot_product(p); }
 
-    inclusive_cuboid<rl_vec3d> bounding_box() const override {
+    auto bounding_box() const -> inclusive_cuboid<rl_vec3d> override {
         return inclusive_cuboid<rl_vec3d>(rl_vec3d(), rl_vec3d());
     }
 };

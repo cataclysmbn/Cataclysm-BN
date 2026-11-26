@@ -1,4 +1,6 @@
-<!-- for small, obvious fixes (e.g docs), it's okay to ignore this template -->
+<!-- for small, obvious fixes (e.g docs), it's okay to ignore this template.
+warning: PRs with AI-generated summary will be closed. see https://docs.cataclysmbn.org/contribute/contributing/#ai-assisted-pull-requests
+-->
 
 ## Purpose of change (The Why)
 

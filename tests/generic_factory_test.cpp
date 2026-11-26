@@ -245,11 +245,11 @@ generic_factory<stat_test_obj> stat_test_obj_factory("stat_test_obj");
 } // namespace
 
 // standard "generic_factory" methods to support the benchmark below
-template <> int_id<stat_test_obj> string_id<stat_test_obj>::id() const {
+template <> auto string_id<stat_test_obj>::id() const -> int_id<stat_test_obj> {
     return stat_test_obj_factory.convert(*this, stat_int_id_null);
 }
 template <> int_id<stat_test_obj>::int_id(const string_id<stat_test_obj>& id): _id(id.id()) {}
-template <> const stat_test_obj& string_id<stat_test_obj>::obj() const {
+template <> auto string_id<stat_test_obj>::obj() const -> const stat_test_obj& {
     return stat_test_obj_factory.obj(*this);
 }
 

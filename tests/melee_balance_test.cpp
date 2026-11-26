@@ -17,7 +17,7 @@
 
 static const tripoint_bub_ms dude_pos(g_half_mapsize_x, g_half_mapsize_y, 0);
 
-static std::vector<const itype*> find_weapons() {
+static auto find_weapons() -> std::vector<const itype*> {
     std::vector<const itype*> result;
     for (const itype* it : item_controller->all()) {
         if (it->melee[DT_BASH] + it->melee[DT_CUT] + it->melee[DT_STAB] >= 10) {

@@ -49,7 +49,7 @@ static void expect_will_eat(
     CHECK(rate_will.value() == expect_rating);
 }
 
-static avatar prepare_avatar() {
+static auto prepare_avatar() -> avatar {
     avatar dummy;
     dummy.set_stored_kcal(100);
     return dummy;

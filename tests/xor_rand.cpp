@@ -1,7 +1,7 @@
 #include "xor_rand.h"
 
 // original: https://codingforspeed.com/using-faster-psudo-random-generator-xorshift/
-unsigned int xor_rand() {
+auto xor_rand() -> unsigned int {
     static unsigned int x = 123456789;
     static unsigned int y = 362436069;
     static unsigned int z = 521288629;

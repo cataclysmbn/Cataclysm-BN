@@ -179,7 +179,7 @@
     "id": "762R_casehead",
     "type": "requirement",
     "//": "References needed for boltfaces and magazines using 7.62x54R or derivatives",
-    "tools": [ [ [ "762R_casing", -1 ], [ "762_54R", -1 ] ] ]
+    "tools": [ [ [ "762R_casing", -1 ], [ "762_54R", -1 ], [ "762_54R_7n1", -1 ] ] ]
   },
   {
     "id": "explosives_casting_standard",

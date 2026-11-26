@@ -8,6 +8,7 @@
     "license": "CC-BY-SA-3.0",
     "version": "BN In-Repo Version, Update 4/28/2026",
     "category": "magical",
-    "dependencies": [ "bn" ]
+    "dependencies": [ "bn" ],
+    "options_path": "options"
   }
 ]

@@ -1,0 +1,80 @@
+[
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "triffid_sprout" ],
+    "weight": 100,
+    "object": {
+      "fill_ter": "t_region_groundcover_urban",
+      "rows": [
+        "  ?           I     ?   ",
+        "    I  ?   I   X  ?  I  ",
+        "  *  X   ?      ^       ",
+        "     ?                  ",
+        "    ^   X    I   ^  *   ",
+        "  I X I I  X ^ .###X X  ",
+        "  X ? ? ^X ####.##### X ",
+        "  IX###########.#####   ",
+        "    ##########..~##^ I  ",
+        "   I^##.~.~~~..~~##?X  ^",
+        " ?  ?##........~~###    ",
+        "   X###~~~......~###^I  ",
+        "I  I###~...>...~~###    ",
+        "    ###~~~.>.~~~~##? X  ",
+        "   ^###~~~~..~~~~##^    ",
+        "  ? ###~~~~.~~~~~##XI   ",
+        "   ?X##~~~~~~~~~~##X  ? ",
+        "  X  ###############I   ",
+        "  ?  ###############X   ",
+        "   ? ###     ? ##  X   I",
+        "   I   X   I    *       ",
+        "                    ?   ",
+        " IX  X  I   I       I   ",
+        "     I ?        I       "
+      ],
+      "palettes": [ "triffid" ],
+      "terrain": { ">": "t_triffid_slope_down" }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "triffid_sprout_finale" ],
+    "weight": 100,
+    "object": {
+      "fill_ter": "t_root_floor",
+      "rows": [
+        ">>>>>>>>>>>>>>>>>>>>>>>>",
+        ">>>>>>>>>PPP>PPP>>>>>>>>",
+        ">>>>>>PPPPPPPPPPPPPPP>>>",
+        ">>>>PPPPPPPPPPPPPPPPP>>>",
+        ">>PPPP.T.@......PPPPPPP>",
+        ">>PPPP..@@.P..T...T...P>",
+        ">PPPPP!.T..P..........P>",
+        ">PPPP...PP.PPPP.@@...TP>",
+        ">PP.T..PP.......P..PPPP>",
+        ">P!.......H.P.@@..T.!PP>",
+        ">P.....!.T.P.@@.......P>",
+        ">PPP@@@.......@P..PPPPP>",
+        ">P.........<......T.!PP>",
+        ">P.T.!.PP..<.........PP>",
+        ">P......PP.....P....PPP>",
+        ">PPPP..@@.P..T..!.....P>",
+        ">PPPP..@@@@....P...PPPP>",
+        ">>>PPPPPPPP..P...PPPPP>>",
+        ">>>PP...T........TPPP>>>",
+        ">>>>PPPPPPP@@@@.PPP>>>>>",
+        ">>>>>>>>>PP.....PPP>>>>>",
+        ">>>>>>>>>PPPPPPPP>>>>>>>",
+        ">>>>>>>>>>>>>>>>>>>>>>>>",
+        ">>>>>>>>>>>>>>>>>>>>>>>>"
+      ],
+      "palettes": [ "triffid" ],
+      "terrain": { ">": "t_rock", "<": "t_triffid_slope_up" },
+      "monster": { "H": { "monster": "mon_triffid_queen" }, "!": { "monster": "mon_triffid_sprig", "chance": 100 } },
+      "items": {
+        "H": [ { "item": "mon_zombie_survivor_elite_death_drops", "chance": 100 }, { "item": "map_extra_corpse", "chance": 100 } ]
+      }
+    }
+  }
+]

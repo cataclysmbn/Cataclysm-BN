@@ -7,8 +7,6 @@
 #include "creature.h"
 #include "debug.h"
 #include "debug_menu.h"
-#include "field.h"
-#include "field_type.h"
 #include "fstream_utils.h"
 #include "game.h"
 #include "game_constants.h"
@@ -16,24 +14,26 @@
 #include "int_id.h"
 #include "item.h"
 #include "line.h"
-#include "map.h"
+#include "map/field.h"
+#include "map/field_type.h"
+#include "map/map.h"
+#include "map/mapbuffer.h"
+#include "map/mapdata.h"
+#include "map/submap.h"
 #include "map_iterator.h"
-#include "mapbuffer.h"
-#include "mapdata.h"
-#include "mapgen_constructor.h"
+#include "mapgen/mapgen_constructor.h"
 #include "monster.h"
 #include "mtype.h"
 #include "npc.h"
-#include "omdata.h"
 #include "options.h"
 #include "output.h"
-#include "overmapbuffer.h"
+#include "overmap/omdata.h"
+#include "overmap/overmapbuffer.h"
 #include "scent_map.h"
 #include "shadowcasting.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "string_input_popup.h"
-#include "submap.h"
 #include "tileray.h"
 #include "translations.h"
 #include "trap.h"
@@ -2055,7 +2055,6 @@ void editmap::edit_mapgen()
     } );
     restore_on_out_of_scope<std::string> info_txt_prev( info_txt_curr );
     restore_on_out_of_scope<std::string> info_title_prev( info_title_curr );
-    map &here = get_map();
 
     do {
         auto abs_pos = bub_to_abs( target.xy() );

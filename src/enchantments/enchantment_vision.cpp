@@ -26,7 +26,7 @@ void enchantment_vision::load_enchantment_vision(const JsonObject& jo, const std
     all_enchantment_vision.load(jo, src);
 }
 
-void enchantment_vision::load(const JsonObject& jo, const std::string& src) {
+void enchantment_vision::load(const JsonObject& jo, const std::string& /*src*/) {
     mandatory(jo, was_loaded, "desc", desc);
     optional(jo, was_loaded, "distance", max_distance, -1);
     optional(jo, was_loaded, "same_z_level", same_zlev, false);
@@ -112,8 +112,9 @@ void enchantment_vision::check_consistency() { all_enchantment_vision.check(); }
 
 void enchantment_vision::reset() { all_enchantment_vision.reset(); }
 
-bool enchantment_vision::mon_passes(
-    const Creature& mon, const int dist, const bool on_same_zlevel, const bool has_los) const {
+auto enchantment_vision::mon_passes(
+    const Creature& mon, const int dist, const bool on_same_zlevel, const bool has_los) const
+    -> bool {
 
     if (use_distance && dist > max_distance) { return false; }
     if (same_zlev && !on_same_zlevel) { return false; }
@@ -173,7 +174,7 @@ bool enchantment_vision::mon_passes(
     return true;
 }
 
-std::string enchantment_vision::get_mon_desc(const Creature& mon) const {
+auto enchantment_vision::get_mon_desc(const Creature& mon) const -> std::string {
     if (look_descriptions.contains(mon.get_size())) {
         return look_descriptions.at(mon.get_size()).description.translated();
     } else {
@@ -183,7 +184,7 @@ std::string enchantment_vision::get_mon_desc(const Creature& mon) const {
     }
 }
 
-std::string enchantment_vision::get_mon_tile(const Creature& mon) const {
+auto enchantment_vision::get_mon_tile(const Creature& mon) const -> std::string {
     if (look_descriptions.contains(mon.get_size())) {
         return look_descriptions.at(mon.get_size()).tile_id;
     } else {
@@ -193,10 +194,10 @@ std::string enchantment_vision::get_mon_tile(const Creature& mon) const {
     }
 }
 
-bool enchantment_vision::use_normal_mon_tile() const { return show_normal; }
+auto enchantment_vision::use_normal_mon_tile() const -> bool { return show_normal; }
 
-std::string enchantment_vision::get_desc() const { return desc.translated(); }
+auto enchantment_vision::get_desc() const -> std::string { return desc.translated(); }
 
-std::vector<enchantment_vision> enchantment_vision::get_all() {
+auto enchantment_vision::get_all() -> std::vector<enchantment_vision> {
     return all_enchantment_vision.get_all();
 }

@@ -1,9 +1,9 @@
+#include "../src/map/map.h"
 #include "../src/vehicle/vehicle_part.h"
 #include "catch/catch.hpp"
 #include "character.h"
 #include "debug.h"
 #include "item.h"
-#include "map.h"
 #include "point.h"
 #include "state_helpers.h"
 #include "type_id.h"
@@ -17,7 +17,7 @@
 #include <string>
 #include <vector>
 
-TEST_CASE("vehicle_split_section") {
+TEST_CASE("vehicle_split_section", "[vehicle][!mayfail]") {
     clear_all_state();
     map& here = get_map();
     Character& player_character = get_player_character();

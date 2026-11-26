@@ -188,7 +188,7 @@
     "id": "bot_mininuke_hack",
     "type": "TOOL",
     "name": { "str": "inactive mininuke hack" },
-    "description": "This is an inactive mininuke hack.  Many times as large as a normal manhack, a mininuke hack contains a mininuke and attack by flying at their target and detonating.  Use this item to reprogram and activate the mininuke hack.  Electronics and computer skill determines if the targeting matrix is reprogrammed successfully.  An inhumanly strong user could also deploy it remotely by throwing it, which might give you a head start if it's programmed incorrectly.",
+    "description": "This is an inactive mininuke hack.  Many times as large as a normal manhack, a mininuke hack contains a mininuke and attacks by flying at their target and detonating.  Use this item to reprogram and activate the mininuke hack.  Electronics and computer skill determines if the targeting matrix is reprogrammed successfully.  An inhumanly strong user could also deploy it remotely by throwing it, which might give you a head start if it's programmed incorrectly.",
     "weight": "24600 g",
     "volume": "18550 ml",
     "price": "26775 USD",
@@ -302,6 +302,31 @@
     "use_action": {
       "type": "place_monster",
       "monster_id": "mon_talon_m249",
+      "friendly_msg": "The UGV beeps affirmatively and begins scanning for hostiles.",
+      "hostile_msg": "You misprogram the UGV and it trains its gun on you. RUN!",
+      "difficulty": 6,
+      "moves": 150,
+      "skills": [ "electronics", "computer" ]
+    },
+    "flags": [ "ALLOWS_REMOTE_USE" ]
+  },
+  {
+    "id": "bot_talon_m2hb",
+    "type": "TOOL",
+    "name": { "str": "inactive M2HB TALON UGV" },
+    "description": "This is an inactive TALON UGV equipped with an M2HB.  Using this item involves loading the unit with the factory-loaded .50 BMG rounds in your inventory (if you wish to divide your ammunition, set aside whatever .50 BMG you do NOT want to give the robot) turning it on, and placing it on the ground.  If reprogrammed and rewired successfully the UGV will then identify you as a friendly, roam around or follow you, and attack all enemies with its heavy machine gun.",
+    "weight": "40750 g",
+    "volume": "30 L",
+    "price": "7500 USD",
+    "price_postapoc": "40 USD",
+    "to_hit": -3,
+    "bashing": 8,
+    "material": [ "steel" ],
+    "symbol": ";",
+    "color": "light_green",
+    "use_action": {
+      "type": "place_monster",
+      "monster_id": "mon_talon_m2hb",
       "friendly_msg": "The UGV beeps affirmatively and begins scanning for hostiles.",
       "hostile_msg": "You misprogram the UGV and it trains its gun on you. RUN!",
       "difficulty": 6,
@@ -729,6 +754,30 @@
       "hostile_msg": "The dispatch turns on you, slashing at you with its arms!",
       "difficulty": 1,
       "moves": 300,
+      "skills": [ "electronics", "computer" ]
+    },
+    "flags": [ "ALLOWS_REMOTE_USE" ]
+  },
+  {
+    "id": "bot_turret_mini",
+    "type": "TOOL",
+    "name": { "str": "inactive mini turret" },
+    "description": "This is an inactive mini turret.  Using this item involves loading the unit with the factory-loaded .22 rounds in your inventory (if you wish to divide your ammunition, set aside whatever .22 you do NOT want to give the turret) turning it on, and placing it on the ground.  If reprogrammed and rewired successfully the turret will then identify you as a friendly, and attack all enemies with its pistol.",
+    "weight": "5 kg",
+    "volume": "5 L",
+    "price": "1 kUSD",
+    "price_postapoc": "10 USD",
+    "to_hit": -1,
+    "bashing": 4,
+    "material": [ "steel", "plastic" ],
+    "symbol": ";",
+    "color": "light_green",
+    "looks_like": "bot_turret_light",
+    "use_action": {
+      "type": "place_monster",
+      "monster_id": "mon_turret_mini",
+      "difficulty": 3,
+      "moves": 100,
       "skills": [ "electronics", "computer" ]
     },
     "flags": [ "ALLOWS_REMOTE_USE" ]

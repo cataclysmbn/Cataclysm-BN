@@ -219,7 +219,7 @@
     "id": "mon_zanuqsaurus_fungus",
     "type": "MONSTER",
     "name": { "str": "fungal nanuqsaurus zombie" },
-    "description": "This was once a large, bipedal dinosaur with a long, sharp teeth.  Now fungal tendrils sprout from its mouth, eyes, and other orifices, holding together a shambling mass of mold-covered flesh.",
+    "description": "This was once a large, bipedal dinosaur with long, sharp teeth.  Now fungal tendrils sprout from its mouth, eyes, and other orifices, holding together a shambling mass of mold-covered flesh.",
     "copy-from": "mon_zanuqsaurus",
     "default_faction": "fungus",
     "species": [ "FUNGUS" ],
@@ -237,7 +237,7 @@
     "id": "mon_zaspletosaurus_fungus",
     "type": "MONSTER",
     "name": { "str": "fungal daspletosaurus zombie" },
-    "description": "This was once a large, bipedal dinosaur with a long, sharp teeth.  Now fungal tendrils sprout from its mouth, eyes, and other orifices, holding together a shambling mass of mold-covered flesh.",
+    "description": "This was once a large, bipedal dinosaur with long, sharp teeth.  Now fungal tendrils sprout from its mouth, eyes, and other orifices, holding together a shambling mass of mold-covered flesh.",
     "copy-from": "mon_zaspletosaurus",
     "default_faction": "fungus",
     "species": [ "FUNGUS" ],
@@ -512,7 +512,7 @@
     "special_attacks": [
       [ "FUNGUS", 200 ],
       { "id": "slam", "cooldown": 10, "damage_max_instance": [ { "damage_type": "bash", "amount": 12 } ] },
-      [ "SMASH", 30 ]
+      { "id": "smash", "cooldown": 30 }
     ],
     "upgrades": {  },
     "flags": [ "SEES", "POISON", "STUMBLES", "NO_BREATHE", "WARM", "BASHES" ]
@@ -534,7 +534,7 @@
     "special_attacks": [
       [ "FUNGUS", 200 ],
       { "id": "slam", "cooldown": 10, "damage_max_instance": [ { "damage_type": "bash", "amount": 12 } ] },
-      [ "SMASH", 30 ]
+      { "id": "smash", "cooldown": 30 }
     ],
     "upgrades": {  },
     "flags": [ "SEES", "POISON", "STUMBLES", "NO_BREATHE", "WARM", "BASHES" ]
@@ -615,7 +615,7 @@
     "special_attacks": [
       [ "FUNGUS", 200 ],
       { "id": "slam", "cooldown": 10, "damage_max_instance": [ { "damage_type": "bash", "amount": 12 } ] },
-      [ "SMASH", 30 ]
+      { "id": "smash", "cooldown": 30 }
     ],
     "upgrades": {  },
     "flags": [ "SEES", "SMELLS", "POISON", "STUMBLES", "NO_BREATHE", "BASHES" ]
@@ -637,7 +637,7 @@
     "special_attacks": [
       [ "FUNGUS", 200 ],
       { "id": "slam", "cooldown": 10, "damage_max_instance": [ { "damage_type": "bash", "amount": 12 } ] },
-      [ "SMASH", 30 ]
+      { "id": "smash", "cooldown": 30 }
     ],
     "upgrades": {  },
     "flags": [ "SEES", "SMELLS", "POISON", "STUMBLES", "NO_BREATHE", "BASHES" ]
@@ -737,7 +737,7 @@
       [ "scratch", 10 ],
       { "type": "bite", "cooldown": 5 },
       { "id": "slam", "cooldown": 10, "damage_max_instance": [ { "damage_type": "bash", "amount": 12 } ] },
-      [ "SMASH", 30 ]
+      { "id": "smash", "cooldown": 30 }
     ],
     "upgrades": {  },
     "flags": [ "SEES", "SMELLS", "POISON", "STUMBLES", "NO_BREATHE", "BASHES" ]
@@ -761,7 +761,7 @@
       [ "scratch", 10 ],
       { "type": "bite", "cooldown": 5 },
       { "id": "slam", "cooldown": 10, "damage_max_instance": [ { "damage_type": "bash", "amount": 12 } ] },
-      [ "SMASH", 30 ]
+      { "id": "smash", "cooldown": 30 }
     ],
     "upgrades": {  },
     "flags": [ "SEES", "SMELLS", "POISON", "STUMBLES", "NO_BREATHE", "BASHES" ]
@@ -785,7 +785,7 @@
       [ "scratch", 10 ],
       { "type": "bite", "cooldown": 5 },
       { "id": "slam", "cooldown": 10, "damage_max_instance": [ { "damage_type": "bash", "amount": 12 } ] },
-      [ "SMASH", 30 ]
+      { "id": "smash", "cooldown": 30 }
     ],
     "upgrades": {  },
     "flags": [ "SEES", "SMELLS", "POISON", "STUMBLES", "NO_BREATHE", "BASHES" ]
@@ -1055,7 +1055,7 @@
     "special_attacks": [
       [ "FUNGUS", 200 ],
       { "id": "slam", "cooldown": 10, "damage_max_instance": [ { "damage_type": "bash", "amount": 12 } ] },
-      [ "SMASH", 30 ]
+      { "id": "smash", "cooldown": 30 }
     ],
     "upgrades": {  }
   },
@@ -1069,7 +1069,7 @@
     "special_attacks": [
       [ "FUNGUS", 200 ],
       { "id": "slam", "cooldown": 10, "damage_max_instance": [ { "damage_type": "bash", "amount": 12 } ] },
-      [ "SMASH", 30 ]
+      { "id": "smash", "cooldown": 30 }
     ],
     "upgrades": {  }
   },

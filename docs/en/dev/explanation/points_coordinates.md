@@ -261,16 +261,16 @@ To iterate over nearby points of the same type you can use `closest_points_first
 
 All of the following are implemented and available for use:
 
-| Helper                            | Location                 | Purpose                                             |
-| --------------------------------- | ------------------------ | --------------------------------------------------- |
-| `project_to<S>(p)`                | `coordinates.h`          | Scale conversion, preserves origin                  |
-| `project_remain<S>(p)`            | `coordinates.h`          | Quotient + remainder decomposition                  |
-| `project_combine(coarse, fine)`   | `coordinates.h`          | Recombine quotient + remainder                      |
-| `abs_to_bub(p)` / `bub_to_abs(p)` | `map.h` (free functions) | Bubble ↔ absolute                                   |
-| `p.reinterpret_as<T>()`           | `coordinates.h`          | Explicit type-pun during migration scaffolding only |
-| `IsCoordPoint<T>` concept         | `coordinates.h`          | Constrains templates to typed coordinates           |
-| `rl_dist(a, b)` typed overload    | `line.h`                 | Accepts any same-type `coord_point` pair            |
-| `ch.bub_pos()` / `ch.abs_pos()`   | `creature.h`             | Typed creature position accessors                   |
+| Helper                            | Location                     | Purpose                                             |
+| --------------------------------- | ---------------------------- | --------------------------------------------------- |
+| `project_to<S>(p)`                | `coordinates.h`              | Scale conversion, preserves origin                  |
+| `project_remain<S>(p)`            | `coordinates.h`              | Quotient + remainder decomposition                  |
+| `project_combine(coarse, fine)`   | `coordinates.h`              | Recombine quotient + remainder                      |
+| `abs_to_bub(p)` / `bub_to_abs(p)` | `map/map.h` (free functions) | Bubble ↔ absolute                                   |
+| `p.reinterpret_as<T>()`           | `coordinates.h`              | Explicit type-pun during migration scaffolding only |
+| `IsCoordPoint<T>` concept         | `coordinates.h`              | Constrains templates to typed coordinates           |
+| `rl_dist(a, b)` typed overload    | `line.h`                     | Accepts any same-type `coord_point` pair            |
+| `ch.bub_pos()` / `ch.abs_pos()`   | `creature.h`                 | Typed creature position accessors                   |
 
 `reinterpret_as<T>()` is a migration scaffold: it makes unsafe origin-punning explicit and grep-able.
 A call site that still uses it is not fully migrated.

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "coordinates.h"
-#include "mapgen.h"
+#include "mapgen/mapgen.h"
 #include "string_id.h"
 #include "type_id.h"
 #include "units_angle.h"
@@ -35,11 +35,12 @@ public:
         vehicles.add(type, probability);
     }
 
-    const vproto_id& pick() const { return *vehicles.pick(); }
+    auto pick() const -> const vproto_id& { return *vehicles.pick(); }
 
     static void load(const JsonObject& jo);
     static void reset();
     static void check();
+    static void finalize();
 
 private:
     weighted_int_list<vproto_id> vehicles;
@@ -51,7 +52,7 @@ private:
 struct VehicleFacings {
     VehicleFacings(const JsonObject& jo, const std::string& key);
 
-    units::angle pick() const;
+    auto pick() const -> units::angle;
 
     std::vector<units::angle> values;
 };
@@ -62,9 +63,9 @@ struct VehicleLocation {
           y(y),
           facings(facings) {}
 
-    units::angle pick_facing() const { return facings.pick(); }
+    auto pick_facing() const -> units::angle { return facings.pick(); }
 
-    point_bub_ms pick_point() const;
+    auto pick_point() const -> point_bub_ms;
     auto pick_omt_point() const -> point_omt_ms;
 
     jmapgen_int x;
@@ -82,7 +83,7 @@ struct VehiclePlacement {
         locations.emplace_back(x, y, facings);
     }
 
-    const VehicleLocation* pick() const;
+    auto pick() const -> const VehicleLocation*;
     static void load(const JsonObject& jo);
     static void reset();
 

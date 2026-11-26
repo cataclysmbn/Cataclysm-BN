@@ -198,7 +198,7 @@ class bodypart
 
         int wetness = 0;
         // Just a cache, don't save/load
-        std::array<int, static_cast<size_t>( water_tolerance::NUM_WATER_TOLERANCE )> mut_drench;
+        std::array<int, static_cast<size_t>( water_tolerance::NUM_WATER_TOLERANCE )> mut_drench{};
 
     public:
         // TODO: private
@@ -287,6 +287,8 @@ class bodypart
         void deserialize( JsonIn &jsin );
 
         void set_location( location<item> *loc );
+
+        bool is_affected_by_temperature() const;
 };
 
 class body_part_set

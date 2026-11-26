@@ -1,7 +1,7 @@
 #include "vehicle_grab.h"
 
-#include "map.h"
-#include "mapdata.h"
+#include "map/map.h"
+#include "map/mapdata.h"
 
 namespace {
 

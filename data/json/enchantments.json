@@ -14,6 +14,12 @@
   },
   {
     "type": "enchantment",
+    "id": "ENCH_GAS_REMOVER_CLOUD",
+    "conditions": [ "ACTIVE" ],
+    "emitter": "emit_gas_remover_field"
+  },
+  {
+    "type": "enchantment",
     "id": "ENCH_BIO_CARBON",
     "values": [
       { "value": "ARMOR_BASH", "multiply": -0.05 },

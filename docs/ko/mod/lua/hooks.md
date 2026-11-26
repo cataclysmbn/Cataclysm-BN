@@ -18,7 +18,7 @@ end)
 
 ```lua
 game.add_hook("on_game_save", {
-  priority = 10,        -- 선택사항 (높을수록 먼저 실행, 기본값 0)
+  priority = 10,        -- optional (higher runs first, default 0)
   fn = function(params)
     -- ...
   end

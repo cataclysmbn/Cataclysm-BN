@@ -45,7 +45,7 @@ vcpkg integrate install
 **注釈:** これにより、CBNリポジトリ全体、つまり 3GB 以上のデータがダウンロードされます。テスト目的のみの場合は、`--depth=1`を追加することを推奨します。
 
 ```cmd
-git clone https://github.com/cataclysmbnteam/Cataclysm-BN.git
+git clone https://github.com/cataclysmbn/Cataclysm-BN.git
 cd Cataclysm-BN
 ```
 
@@ -99,6 +99,8 @@ C++ に関して十分な経験があり、以下のことを把握している�
 ### ユニットテストの実行
 
 Cataclysm テストバイナリプロジェクト (`Cataclysm-test-vcpkg-static`) がスタートアッププロジェクトとして選択されていることを確認し、プロジェクトのプロパティで作業ディレクトリを `$(ProjectDir)..`に設定してから、デバッグボタンを押します（または適切なショートカット、例: F5を使用します）。これにより、すべてのユニットテストが実行されます。追加のコマンドライン引数は、プロジェクトのコマンドライン引数設定で構成できます。互換性のあるユニットテストランナー（例: Resharper）を使用している場合は、ユニットテストセッションから個々のテストを実行またはデバッグできます。
+
+<a id="code-style"></a>
 
 ### コードスタイル
 

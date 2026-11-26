@@ -1,3 +1,4 @@
+#include "../src/map/map.h"
 #include "avatar.h"
 #include "ballistics.h"
 #include "calendar.h"
@@ -11,7 +12,6 @@
 #include "inventory.h"
 #include "item.h"
 #include "line.h"
-#include "map.h"
 #include "map_helpers.h"
 #include "material.h"
 #include "monster.h"
@@ -20,8 +20,10 @@
 #include "player_helpers.h"
 #include "projectile.h"
 #include "ranged.h"
+#include "rng.h"
 #include "state_helpers.h"
 #include "test_statistics.h"
+#include "trap.h"
 #include "type_id.h"
 #include "vehicle/vehicle_throw.h"
 
@@ -143,17 +145,25 @@ TEST_CASE("lighter flung creatures are worse at breaking obstacles", "[throwing]
 
 TEST_CASE("flung creatures only trigger landing traps if they cannot fly", "[throwing][trap]") {
     clear_all_state();
+    // Use a fixed player position so the test is independent of whatever
+    // position prior tests in the same process left the avatar at.
+    g->u.setpos(tripoint_bub_ms{10, 10, 0});
+    // Moving the avatar can load submaps outside the previously cleared area.
     clear_map();
+    // Deterministic seed: fling_creature consumes RNG, and the test outcome
+    // depends on the RNG state inherited from prior tests in the same process.
+    rng_set_engine_seed(1U);
 
     auto& here = g->m;
-    const auto start = g->u.bub_pos() + tripoint_east;
-    const auto landing = start + tripoint_east;
+    const auto start = tripoint_bub_ms{40, 30, 0};
+    const auto landing = tripoint_bub_ms{41, 30, 0};
     const auto beartrap = trap_str_id("tr_beartrap");
     const auto effect_beartrap = efftype_id("beartrap");
 
     here.ter_set(start, ter_id("t_floor"));
     here.ter_set(landing, ter_id("t_floor"));
     here.trap_set(landing, beartrap);
+    REQUIRE_FALSE(here.tr_at(landing).is_null());
 
     SECTION("non-flying creatures land on traps") {
         auto& zombie = spawn_test_monster("mon_zombie", start);
@@ -161,6 +171,8 @@ TEST_CASE("flung creatures only trigger landing traps if they cannot fly", "[thr
         g->fling_creature(&zombie, coord_to_angle(start, landing), 10.0f);
 
         CHECK(zombie.bub_pos() == landing);
+        // Beartraps have remove_on_trigger: true, so a triggered trap is gone.
+        CHECK(here.tr_at(landing).is_null());
         CHECK(zombie.has_effect(effect_beartrap));
     }
 
@@ -171,15 +183,17 @@ TEST_CASE("flung creatures only trigger landing traps if they cannot fly", "[thr
         g->fling_creature(&bat, coord_to_angle(start, landing), 10.0f);
 
         CHECK(bat.bub_pos() == landing);
+        // Flying creatures recover and don't trigger the trap.
+        CHECK_FALSE(here.tr_at(landing).is_null());
         CHECK_FALSE(bat.has_effect(effect_beartrap));
     }
 }
 
 TEST_CASE("flung creatures take damage when they slam into a wall", "[throwing][impact]") {
     clear_all_state();
-    clear_map();
-
     g->u.setpos(tripoint_bub_ms{10, 10, 0});
+    // Moving the avatar can load submaps outside the previously cleared area.
+    clear_map();
 
     auto& here = g->m;
     const auto source = tripoint_bub_ms{40, 30, 0};
@@ -239,7 +253,7 @@ struct throw_test_pstats {
     int per;
 };
 
-static std::ostream& operator<<(std::ostream& stream, const throw_test_pstats& pstats) {
+static auto operator<<(std::ostream& stream, const throw_test_pstats& pstats) -> std::ostream& {
     return (stream << "STR: " << pstats.str << " DEX: " << pstats.dex << " PER: " << pstats.per
                    << " SKL: " << pstats.skill_lvl);
 }
@@ -374,11 +388,11 @@ TEST_CASE("basic_throwing_sanity_tests", "[throwing],[balance]") {
 
     SECTION("test_player_vs_zombie_javelin_iron_basestats") {
         test_throwing_player_versus(
-            p, "mon_zombie", "javelin_iron", 1, lo_skill_base_stats, {1.00, 0.10}, {33, 5});
+            p, "mon_zombie", "javelin_iron", 1, lo_skill_base_stats, {1.00, 0.10}, {48.1, 5});
         test_throwing_player_versus(
-            p, "mon_zombie", "javelin_iron", 5, lo_skill_base_stats, {0.64, 0.10}, {13, 3});
+            p, "mon_zombie", "javelin_iron", 5, lo_skill_base_stats, {0.64, 0.10}, {19, 3});
         test_throwing_player_versus(
-            p, "mon_zombie", "javelin_iron", 10, lo_skill_base_stats, {0.20, 0.10}, {4, 2});
+            p, "mon_zombie", "javelin_iron", 10, lo_skill_base_stats, {0.20, 0.10}, {6.1, 2});
         test_throwing_player_versus(
             p, "mon_zombie", "javelin_iron", 15, lo_skill_base_stats, {0.11, 0.10}, {1.29, 3});
         test_throwing_player_versus(
@@ -407,13 +421,13 @@ TEST_CASE("basic_throwing_sanity_tests", "[throwing],[balance]") {
 
     SECTION("test_player_vs_zombie_javelin_iron_athlete") {
         test_throwing_player_versus(
-            p, "mon_zombie", "javelin_iron", 1, hi_skill_athlete_stats, {1.00, 0.10}, {59.00, 8});
+            p, "mon_zombie", "javelin_iron", 1, hi_skill_athlete_stats, {1.00, 0.10}, {71.75, 8});
         test_throwing_player_versus(
-            p, "mon_zombie", "javelin_iron", 5, hi_skill_athlete_stats, {1.00, 0.10}, {50.55, 8});
+            p, "mon_zombie", "javelin_iron", 5, hi_skill_athlete_stats, {1.00, 0.10}, {69.00, 8});
         test_throwing_player_versus(
-            p, "mon_zombie", "javelin_iron", 10, hi_skill_athlete_stats, {1.00, 0.10}, {40.00, 10});
+            p, "mon_zombie", "javelin_iron", 10, hi_skill_athlete_stats, {1.00, 0.10}, {60.22, 10});
         test_throwing_player_versus(
-            p, "mon_zombie", "javelin_iron", 15, hi_skill_athlete_stats, {0.97, 0.10}, {38.00, 10});
+            p, "mon_zombie", "javelin_iron", 15, hi_skill_athlete_stats, {0.97, 0.10}, {48.00, 10});
         test_throwing_player_versus(
             p, "mon_zombie", "javelin_iron", 20, hi_skill_athlete_stats, {0.77, 0.10}, {30.00, 10});
         test_throwing_player_versus(

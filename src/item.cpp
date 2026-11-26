@@ -9,6 +9,7 @@
 #include "bodypart.h"
 #include "cached_item_options.h"
 #include "calendar.h"
+#include "catalua_hooks.h"
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "catalua_icallback_actor.h"
@@ -25,6 +26,8 @@
 #include "craft_command.h"
 #include "damage.h"
 #include "debug.h"
+#include "digital_media.h"
+#include "digital_recipes.h"
 #include "dispersion.h"
 #include "drop_token.h"
 #include "effect.h" // for weed_msg
@@ -33,7 +36,6 @@
 #include "explosion.h"
 #include "faction.h"
 #include "fault.h"
-#include "field_type.h"
 #include "fire.h"
 #include "flag.h"
 #include "game.h"
@@ -53,8 +55,9 @@
 #include "line.h"
 #include "locations.h"
 #include "magic/magic.h"
-#include "map.h"
-#include "mapbuffer.h"
+#include "map/field_type.h"
+#include "map/map.h"
+#include "map/mapbuffer.h"
 #include "martialarts.h"
 #include "material.h"
 #include "melee.h"
@@ -65,8 +68,8 @@
 #include "npc.h"
 #include "options.h"
 #include "output.h"
-#include "overmap.h"
-#include "overmapbuffer.h"
+#include "overmap/overmap.h"
+#include "overmap/overmapbuffer.h"
 #include "pimpl.h"
 #include "player.h"
 #include "player_activity.h"
@@ -82,6 +85,7 @@
 #include "ret_val.h"
 #include "rng.h"
 #include "rot.h"
+#include "rot/rot_calculation.h"
 #include "scores_ui.h"
 #include "skill.h"
 #include "sol/sol.hpp"
@@ -90,6 +94,7 @@
 #include "string_id_utils.h"
 #include "string_utils.h"
 #include "text_snippets.h"
+#include "thread_pool.h"
 #include "translations.h"
 #include "type_id.h"
 #include "units.h"
@@ -137,8 +142,6 @@ static const ammo_effect_str_id ammo_effect_RECYCLED( "RECYCLED" );
 static const ammotype ammo_battery( "battery" );
 static const ammotype ammo_plutonium( "plutonium" );
 
-static const item_category_id itemcat_drugs( "drugs" );
-static const item_category_id itemcat_food( "food" );
 static const item_category_id itemcat_maps( "maps" );
 
 static const efftype_id effect_cig( "cig" );
@@ -185,6 +188,7 @@ static const trait_flag_str_id trait_flag_CANNIBAL( "CANNIBAL" );
 static const trait_id trait_CARNIVORE( "CARNIVORE" );
 static const trait_id trait_ILLITERATE( "ILLITERATE" );
 static const trait_id trait_LIGHTWEIGHT( "LIGHTWEIGHT" );
+static const trait_id trait_PROJUNK2( "PROJUNK2" );
 static const trait_id trait_TOLERANCE( "TOLERANCE" );
 static const trait_id trait_WOOLALLERGY( "WOOLALLERGY" );
 
@@ -249,38 +253,6 @@ item &null_item_reference()
     return result;
 }
 
-namespace item_internal
-{
-bool goes_bad_temp_cache = false;
-const item *goes_bad_temp_cache_for = nullptr;
-inline bool goes_bad_cache_fetch()
-{
-    return goes_bad_temp_cache;
-}
-inline void goes_bad_cache_set( const item *i )
-{
-    goes_bad_temp_cache = i->goes_bad();
-    goes_bad_temp_cache_for = i;
-}
-inline void goes_bad_cache_unset()
-{
-    goes_bad_temp_cache = false;
-    goes_bad_temp_cache_for = nullptr;
-}
-inline bool goes_bad_cache_is_for( const item *i )
-{
-    return goes_bad_temp_cache_for == i;
-}
-
-struct scoped_goes_bad_cache {
-    scoped_goes_bad_cache( item *i ) {
-        goes_bad_cache_set( i );
-    }
-    ~scoped_goes_bad_cache() {
-        goes_bad_cache_unset();
-    }
-};
-} // namespace item_internal
 
 const int item::INFINITE_CHARGES = INT_MAX;
 
@@ -382,6 +354,10 @@ item::item( const itype *type, time_point turn, int qty ) : type( type ),
             actor->on_spawned( *this );
         }
     }
+
+    if( get_var( "digital_content" ) == "digital_builtin_music" ) {
+        initialize_digital_media( *this );
+    }
 }
 
 item::item( const itype_id &id, time_point turn, int qty )
@@ -403,7 +379,7 @@ static const item *get_most_rotten_component( const item &craft )
 {
     const item *most_rotten = nullptr;
     for( const item * const &it : craft.get_components() ) {
-        if( it->goes_bad() ) {
+        if( it->get_shelf_life() > 0_turns ) {
             if( !most_rotten || it->get_relative_rot() > most_rotten->get_relative_rot() ) {
                 most_rotten = it;
             }
@@ -799,6 +775,12 @@ void item::set_damage( int qty )
     damage_ = std::max( std::min( qty, max_damage() ), min_damage() );
 }
 
+auto item::vehicle_storage_temperature() const -> std::optional<temperature_flag>
+{
+    const auto vehicle_loc = dynamic_cast<const vehicle_item_location *>( loc );
+    return vehicle_loc != nullptr ? std::optional( vehicle_loc->storage_temperature() ) : std::nullopt;
+}
+
 auto item::prepare_for_location_removal() -> void
 {
     if( is_in_preserving_container() ) {
@@ -1059,9 +1041,39 @@ bool item::swap_side()
     return set_side( opposite_side( get_side() ) );
 }
 
+std::map<flag_id, int> item::get_required_slots() const
+{
+    if( type && type->armor ) {
+        return type->armor->consumes_slot;
+    }
+    return std::map<flag_id, int>();
+}
+
+std::map<flag_id, int> item::get_provided_slots() const
+{
+    if( type && type->armor ) {
+        return type->armor->provides_slot;
+    }
+    return std::map<flag_id, int>();
+}
+
+bool item::requires_slots() const
+{
+    return type && type->armor && !type->armor->consumes_slot.empty();
+}
+
 bool item::is_worn_only_with( const item &it ) const
 {
-    return( ( has_flag( flag_POWERARMOR_EXTERNAL ) || has_flag( flag_POWERARMOR_MOD ) ) &&
+    if( requires_slots() ) {
+        std::map<flag_id, int> provided_flags = it.get_provided_slots();
+        for( const auto &[flag, amount] : get_required_slots() ) {
+            if( provided_flags.contains( flag ) ) {
+                return true;
+            }
+        }
+    }
+    return( ( has_flag( flag_POWERARMOR_EXTERNAL ) || has_flag( flag_POWERARMOR_MOD ) ||
+              has_flag( flag_POWERARMOR_PLATING ) ) &&
             it.has_flag( flag_POWERARMOR_EXO ) );
 }
 
@@ -1303,6 +1315,7 @@ void item::put_in( detached_ptr<item> &&payload )
         debugmsg( "Tried to put %s inside itself", debug_name().c_str() );
         return;
     }
+    initialize_digital_recipe_file( *payload );
     contents.insert_item( std::move( payload ) );
 }
 
@@ -1343,9 +1356,16 @@ static float get_ranged_armor_mult( const common_ranged_data &ranged )
     return ranged.damage.damage_units.front().res_mult;
 }
 
+/// Converts a time until spoilage at normal rot speed into the time under the global ROT_RATE option.
+static auto scale_by_rot_rate( const time_duration &d ) -> time_duration
+{
+    const auto rate = get_option<float>( "ROT_RATE" );
+    return rate > 0.0f ? d / rate : calendar::INDEFINITELY_LONG_DURATION;
+}
 // Generates a long-form description of the freshness of the given rottable food item.
 // NB: Doesn't check for non-rottable!
-static std::string get_freshness_description( const item &food_item )
+static std::string get_freshness_description( const item &food_item,
+        const temperature_flag temperature )
 {
     // So, skilled characters looking at food that is neither super-fresh nor about to rot
     // can guess its age as one of {quite fresh,midlife,past midlife,old soon}, and also
@@ -1359,7 +1379,16 @@ static std::string get_freshness_description( const item &food_item )
     if( time_left > shelf_life ) {
         time_left = shelf_life;
     }
+    time_left = scale_by_rot_rate( time_left );
     avatar &you = get_avatar();
+    const auto real_time_left = food_item.is_in_preserving_container()
+                                ? calendar::INDEFINITELY_LONG_DURATION
+                                : rot::time_to_rot( time_left, food_item.rot_temperature( temperature ) );
+    if( real_time_left < calendar::INDEFINITELY_LONG_DURATION ) {
+        time_left = real_time_left;
+    } else if( you.can_estimate_rot() ) {
+        return _( "* This food <good>won't spoil</good> where it is stored now." );
+    }
     if( food_item.is_fresh() ) {
         // Fresh food is assumed to be obviously so regardless of skill.
         if( you.can_estimate_rot() ) {
@@ -1847,11 +1876,11 @@ void item::basic_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
                     req.push_back( string_format( _( "%s %d <color_magenta>(Can't use!)</color>" ), _( "strength" ),
                                                   get_min_str() ) );
                 } else if( ranged::get_str_draw_penalty( *this, viewer ) < 0.75f ) {
-                    req.push_back( string_format( "%s %d <color_red>(Damage/Range 0.5x, Dispersion 2.0x)</color>",
+                    req.push_back( string_format( _( "%s %d <color_red>(Damage/Range 0.5x, Dispersion 2.0x)</color>" ),
                                                   _( "strength" ), get_min_str() ) );
                 } else {
-                    req.push_back( string_format( "%s %d <color_yellow>(Damage/Range 0.75x)</color>", _( "strength" ),
-                                                  get_min_str() ) );
+                    req.push_back( string_format( _( "%s %d <color_yellow>(Damage/Range 0.75x)</color>" ),
+                                                  _( "strength" ), get_min_str() ) );
                 }
             } else {
                 req.push_back( string_format( "%s %d", _( "strength" ), get_min_str() ) );
@@ -2011,6 +2040,14 @@ void item::food_info( const item *food_item, std::vector<iteminfo> &info,
         info.emplace_back( "FOOD", _( "Enjoyability: " ), fun_for_food_item.first );
     }
 
+    const auto healthy = food_item->get_comestible()->healthy;
+    // PROJUNK2 characters get no negative healthy effect, see Character::consume_effects
+    const auto ignores_healthy = healthy < 0 && you.has_trait( trait_PROJUNK2 ) &&
+                                 !food_item->has_flag( flag_NO_INGEST );
+    if( healthy != 0 && !ignores_healthy && parts->test( iteminfo_parts::FOOD_HEALTHY ) ) {
+        info.emplace_back( "FOOD", _( "Healthy: " ), healthy );
+    }
+
     if( parts->test( iteminfo_parts::FOOD_PORTIONS ) ) {
         info.emplace_back( "FOOD", _( "Portions: " ),
                            std::abs( static_cast<int>( food_item->charges ) * batch ) );
@@ -2100,14 +2137,19 @@ void item::food_info( const item *food_item, std::vector<iteminfo> &info,
     }
 
     if( food_item->goes_bad() && parts->test( iteminfo_parts::FOOD_ROT ) ) {
-        const std::string rot_time = to_string_clipped( food_item->get_shelf_life() );
-        info.emplace_back( "DESCRIPTION",
-                           string_format( _( "* This food is <neutral>perishable</neutral>, "
-                                             "and at room temperature has an estimated nominal "
-                                             "shelf life of <info>%s</info>." ), rot_time ) );
+        const auto spoilage_enabled = get_option<float>( "ROT_RATE" ) > 0.0f;
+        if( spoilage_enabled ) {
+            const auto rot_time = to_string_clipped( scale_by_rot_rate( food_item->get_shelf_life() ) );
+            info.emplace_back( "DESCRIPTION",
+                               string_format( _( "* This food is <neutral>perishable</neutral>, "
+                                                 "and at room temperature has an estimated nominal "
+                                                 "shelf life of <info>%s</info>." ), rot_time ) );
+        } else {
+            info.emplace_back( "DESCRIPTION",
+                               _( "* Spoilage is <good>disabled</good>.  This food will stay fresh indefinitely." ) );
+        }
 
-
-        if( parts->test( iteminfo_parts::FOOD_ROT_STORAGE ) ) {
+        if( spoilage_enabled && parts->test( iteminfo_parts::FOOD_ROT_STORAGE ) ) {
             const char *temperature_description;
             bool print_freshness_duration = false;
             const bool preserved_by_container = food_item->is_in_preserving_container();
@@ -2150,8 +2192,8 @@ void item::food_info( const item *food_item, std::vector<iteminfo> &info,
             }
         }
 
-        if( !food_item->rotten() ) {
-            info.emplace_back( "DESCRIPTION", get_freshness_description( *food_item ) );
+        if( spoilage_enabled && !food_item->rotten() ) {
+            info.emplace_back( "DESCRIPTION", get_freshness_description( *food_item, temperature ) );
         }
 
         if( food_item->has_flag( flag_NO_PARASITES ) ) {
@@ -2701,7 +2743,7 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
     }
 
     if( mod->ammo_required() > 1 ) {
-        info.emplace_back( "AMMO", string_format( "Uses <stat>%i</stat> ammo per shot",
+        info.emplace_back( "AMMO", string_format( _( "Uses <stat>%i</stat> ammo per shot" ),
                            mod->ammo_required() ) );
     }
 
@@ -3173,7 +3215,7 @@ void item::armor_fit_info( std::vector<iteminfo> &info, const iteminfo_query *pa
             }
         } else {
             info.emplace_back( "DESCRIPTION", _( "* This clothing <bad>can not be refitted, "
-                                                 "upsized, or downsized</bad>." ) );
+                                                 "upsized, or downsized</bad> to fit abnormal anatomy without <bad>extensive modifications</bad>, but should <info>fit everyone with normal anatomy</info>." ) );
         }
     }
 
@@ -3345,7 +3387,8 @@ void item::book_info( std::vector<iteminfo> &info, const iteminfo_query *parts, 
 void item::container_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int /*batch*/,
                            bool /*debug*/ ) const
 {
-    if( !is_container() || !parts->test( iteminfo_parts::CONTAINER_DETAILS ) ) {
+    if( !is_container() || has_flag( flag_id( "DIGITAL_STORAGE" ) ) ||
+        !parts->test( iteminfo_parts::CONTAINER_DETAILS ) ) {
         return;
     }
 
@@ -3650,8 +3693,9 @@ void item::bionic_info( std::vector<iteminfo> &info, const iteminfo_query *parts
 
     if( !bid->required_bionics.empty() ) {
         for( const bionic_id &req_bid : bid->required_bionics ) {
-            info.emplace_back( "CBM", string_format( "* This CBM requires another CBM to also be installed: %s",
-                               req_bid->name ) );
+            info.emplace_back( "CBM", string_format(
+                                   _( "* This CBM requires another CBM to also be installed: %s" ),
+                                   req_bid->name ) );
         }
     }
 
@@ -4075,7 +4119,8 @@ void item::throw_info( std::vector < iteminfo > &info, const iteminfo_query *par
 void item::contents_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,
                           bool debug ) const
 {
-    if( contents.empty() || !parts->test( iteminfo_parts::DESCRIPTION_CONTENTS ) ) {
+    if( contents.empty() || has_flag( flag_MC_ENCRYPTED ) ||
+        !parts->test( iteminfo_parts::DESCRIPTION_CONTENTS ) ) {
         return;
     }
     const std::string space = "  ";
@@ -4499,9 +4544,9 @@ void item::final_info( std::vector<iteminfo> &info, const iteminfo_query &parts_
     }
 }
 
-void item::enchantment_info( std::vector<iteminfo> &info, const iteminfo_query &parts_ref,
-                             int batch,
-                             bool debug ) const
+void item::enchantment_info( std::vector<iteminfo> &info, const iteminfo_query &/*parts_ref*/,
+                             int /*batch*/,
+                             bool /*debug*/ ) const
 {
     std::vector<enchantment> enchs = get_enchantments( true );
     std::vector<enchantment> enchs_2 = get_enchantments( false );
@@ -4510,16 +4555,33 @@ void item::enchantment_info( std::vector<iteminfo> &info, const iteminfo_query &
         return;
     }
     insert_separation_line( info );
-    for( const enchantment ench : enchs ) {
+    for( const enchantment &ench : enchs ) {
         for( std::string str : ench.get_effect_string( true ) ) {
             info.emplace_back( "DESCRIPTION", str );
         }
     }
     insert_separation_line( info );
 }
+
+namespace
+{
+
+/// Returns nullopt for items outside the reality bubble.
+auto storage_temperature( const item &it ) -> std::optional<temperature_flag>
+{
+    if( !it.is_loaded() ) {
+        return std::nullopt;
+    }
+    return rot::temp::for_location( get_map(), it );
+}
+
+} // namespace
+
 std::vector<iteminfo> item::info() const
 {
-    return info( iteminfo_query::no_conditions, 1, temperature_flag::TEMP_NORMAL );
+    const auto temperature = storage_temperature( *this );
+    return temperature ? info( *temperature )
+           : info( iteminfo_query::no_conditions, 1, temperature_flag::TEMP_NORMAL );
 }
 
 std::vector<iteminfo> item::info( int batch ) const
@@ -4617,7 +4679,8 @@ std::vector<iteminfo> item::info( const iteminfo_query &parts_ref, int batch,
 
 std::string item::info_string() const
 {
-    return info_string( iteminfo_query::all, 1 );
+    return info_string( iteminfo_query::all, 1,
+                        storage_temperature( *this ).value_or( temperature_flag::TEMP_NORMAL ) );
 }
 
 std::string item::info_string( const iteminfo_query &parts, int batch,
@@ -4844,6 +4907,13 @@ nc_color item::color_in_inventory( const player &p ) const
             // "just for fun" book that they haven't read yet
             ret = c_magenta;
         }
+    } else {
+        for( const auto flag : get_flags() ) {
+            if( flag->tag_color() != c_light_gray ) {
+                ret = flag->tag_color();
+                break;
+            }
+        }
     }
     return ret;
 }
@@ -5035,15 +5105,29 @@ void item::on_wield( player &p, int mv )
     // Update encumbrance in case we were wearing it
     p.flag_encumbrance();
 
-    if( type->iwieldable_callbacks ) {
-        type->iwieldable_callbacks->call_on_wield( p, *this, mv );
+    if( !is_pool_worker_thread() ) {
+        const auto &hook_results = cata::run_hooks( "on_character_wield",
+        [&]( sol::table & params ) {
+            params["who"] = &p;
+            params["item"] = this;
+        } );
+        if( type->iwieldable_callbacks ) {
+            type->iwieldable_callbacks->call_on_wield( p, *this, mv );
+        }
     }
 }
 
 void item::on_unwield( Character &who )
 {
-    if( type->iwieldable_callbacks ) {
-        type->iwieldable_callbacks->call_on_unwield( who, *this );
+    if( !is_pool_worker_thread() ) {
+        const auto &hook_results = cata::run_hooks( "on_character_unwield",
+        [&]( sol::table & params ) {
+            params["who"] = &who;
+            params["item"] = *this;
+        } );
+        if( type->iwieldable_callbacks ) {
+            type->iwieldable_callbacks->call_on_unwield( who, *this );
+        }
     }
 }
 
@@ -5144,19 +5228,18 @@ void item::on_damage( int qty, damage_type )
     }
 }
 
-void item::on_map_placement( const map &m, const tripoint_bub_ms &p )
+void item::on_map_placement( const tripoint_abs_ms &abs_pos )
 {
 
     // TODO: Move to reveal_map_actor
     if( is_map() && !has_var( "reveal_map_center_omt" ) ) {
-        const auto abs_pos = map_local_to_abs( m, p );
         set_var( "reveal_map_center_omt", project_to<coords::omt>( abs_pos ) );
     }
 
     for( const auto &func : type->use_methods | std::views::values ) {
         const auto actor = func.get_actor_ptr();
         if( actor != nullptr ) {
-            actor->on_placed( *this, m, p );
+            actor->on_placed( *this, abs_pos );
         }
     }
 }
@@ -5265,7 +5348,7 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
             labeltext += string_format( "+%d", modamt );
         }
 
-        if( is_gun() || is_tool() || is_magazine() ) {
+        if( is_gun() || is_tool() || is_magazine() || has_flag( flag_MC_ENCRYPTED ) ) {
             maintext = labeltext;
         } else if( contents.num_item_stacks() == 1 ) {
             const item &contents_item = contents.front();
@@ -5307,6 +5390,9 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
         } else {
             tagtext += _( " (scanned)" );
         }
+    }
+    if( const auto paint = iuse_paint_stuff::try_get_paint_color( *this ); paint && *paint != RGBColor{} ) {
+        tagtext += string_format( " (%s)", paint->friendly_name() );
     }
     if( has_flag( flag_ETHEREAL_ITEM ) ) {
         tagtext += string_format( _( " (%s turns)" ), get_var( "ethereal" ) );
@@ -5358,9 +5444,9 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
 
 
     if( has_var( "specimen_sample" ) ) {
-        const std::string specimen_name = get_var( "specimen_name" );
         const int progress = get_var( "specimen_sample_progress", 0 );
         const auto specimen_id = mtype_id( get_var( "specimen_sample" ) );
+        const auto specimen_name = cloning_utils::specimen_name( specimen_id, get_var( "specimen_name" ) );
         const auto size = cloning_utils::specimen_required_sample_size( specimen_id );
         if( has_flag( flag_genome_drive ) && size > 0 && progress < size ) {
             tagtext += string_format( " (%s [%d/%d])", specimen_name, progress, size );
@@ -5433,6 +5519,9 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
 
     if( is_favorite ) {
         tagtext += _( " *" ); // Display asterisk for favorite items
+    }
+    if( has_var( "DROP_WITH_CLOTHING_NAME" ) ) {
+        tagtext += _( " &" ); // Display ampersand for clothing-linked items
     }
 
     //~ This is a string to construct the item name as it is displayed. This format string has been added for maximum flexibility. The strings are: %1$s: Damage text (e.g. "bruised"). %2$s: burn adjectives (e.g. "burnt"). %3$s: tool modifier text (e.g. "atomic"). %4$s: vehicle part text (e.g. "3.8-Liter"). $5$s: main item text (e.g. "apple"). %6s: tags (e.g. "(wet) (poor fit)").
@@ -5790,6 +5879,11 @@ units::volume item::volume( bool integral ) const
 {
     if( is_null() ) {
         return 0_ml;
+    }
+
+    // Digital copies retain their physical type but need a nonzero file volume.
+    if( is_digital_file( *this ) ) {
+        return 1_ml;
     }
 
     if( is_corpse() ) {
@@ -6387,210 +6481,6 @@ int item::get_comestible_fun() const
     return static_cast<int>( get_var( "comestible_fun", static_cast<double>( fun ) ) );
 }
 
-bool item::goes_bad() const
-{
-    if( item_internal::goes_bad_cache_is_for( this ) ) {
-        return item_internal::goes_bad_cache_fetch();
-    }
-    if( has_flag( flag_PROCESSING ) ) {
-        return false;
-    }
-    if( is_corpse() ) {
-        // Corpses rot only if they are made of rotting materials
-        return made_of_any( materials::get_rotting() );
-    }
-    return is_food() && get_comestible()->spoils != 0_turns;
-}
-
-bool item::goes_bad_after_opening( bool strict ) const
-{
-    // check if this item is explicitly a canning-type item: eg, it preserves contents
-    if( strict ) {
-        if( type->container && type->container->preserves &&
-            !contents.empty() && contents.front().goes_bad() ) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    return goes_bad() || ( type->container && type->container->preserves &&
-                           !contents.empty() && contents.front().goes_bad() );
-}
-
-auto item::is_in_preserving_container() const -> bool
-{
-    for( const item *parent = parent_item(); parent != nullptr; parent = parent->parent_item() ) {
-        if( parent->type && parent->type->container && parent->type->container->preserves ) {
-            return true;
-        }
-    }
-    return false;
-}
-
-auto item::is_in_sealing_container() const -> bool
-{
-    for( const item *parent = parent_item(); parent != nullptr; parent = parent->parent_item() ) {
-        if( parent->type && parent->type->container && parent->type->container->seals ) {
-            return true;
-        }
-    }
-    return false;
-}
-
-auto item::mark_rot_checked_now() -> void
-{
-    last_rot_check = calendar::turn;
-}
-
-time_duration item::get_shelf_life() const
-{
-    if( goes_bad() ) {
-        if( is_food() ) {
-            return get_comestible()->spoils;
-        } else if( is_corpse() ) {
-            return 24_hours;
-        }
-    }
-    return 0_turns;
-}
-
-double item::get_relative_rot() const
-{
-    // Components are frozen in time, when they are returned they are new items
-    if( has_flag( flag_id( "COMPONENT" ) ) ) {
-        return rot / get_shelf_life();
-    }
-    if( goes_bad() ) {
-        const_cast<item *>( this )->update_rot_from_location( temperature_flag::TEMP_NORMAL );
-        return rot / get_shelf_life();
-    }
-    return 0;
-}
-
-void item::set_relative_rot( double val )
-{
-    if( goes_bad() ) {
-        rot = get_shelf_life() * val;
-        // calc_rot uses last_rot_check (when it's not turn_zero) instead of bday.
-        // this makes sure the rotting starts from now, not from bday.
-        // if this item is the result of smoking or milling don't do this, we want to start from bday.
-        if( !has_flag( flag_PROCESSING_RESULT ) ) {
-            last_rot_check = calendar::turn;
-        }
-    }
-}
-
-void item::set_rot( time_duration val )
-{
-    rot = val;
-}
-
-int item::spoilage_sort_order() const
-{
-    const item *subject;
-    constexpr int bottom = std::numeric_limits<int>::max();
-
-    if( type->container && !contents.empty() ) {
-        if( type->container->preserves ) {
-            return bottom - 3;
-        }
-        subject = &contents.front();
-    } else {
-        subject = this;
-    }
-
-    if( subject->goes_bad() ) {
-        return to_turns<int>( subject->get_shelf_life() - subject->rot );
-    }
-
-    if( subject->get_comestible() ) {
-        if( subject->get_category().get_id() == itemcat_food ) {
-            return bottom - 3;
-        } else if( subject->get_category().get_id() == itemcat_drugs ) {
-            return bottom - 2;
-        } else {
-            return bottom - 1;
-        }
-    }
-    return bottom;
-}
-
-namespace
-{
-
-/**
- * Hardcoded lookup table for food rots per hour calculation.
- *
- * IRL this tends to double every 10c a few degrees above freezing, but past a certain
- * point the rate decreases until even extremophiles find it too hot. Here we just stop
- * further acceleration at 40C.
- *
- * Original formula:
- * @see https://github.com/cataclysmbn/Cataclysm-BN/blob/033901af4b52ad0bfcfd6abfe06bca4e403d44b1/src/item.cpp#L5612-L5640
- */
-constexpr auto rot_chart = std::array<int, 44>
-{
-    0, 372, 744, 1118, 1219, 1273, 1388, 1514, 1651, 1800,
-    1880, 2050, 2235, 2438, 2658, 2776, 3027, 3301, 3600, 3926,
-    4100, 4471, 4875, 5317, 5798, 6054, 6602, 7200, 7852, 8562,
-    8941, 9751, 10633, 11595, 12645, 13205, 14400, 15703, 17125, 18674,
-    19501,
-};
-
-} // namespace
-
-/**
- * Get the hourly rot for a given temperature from the precomputed table.
- * @see rot_chart
- */
-auto get_hourly_rotpoints_at_temp( const units::temperature temp ) -> int
-{
-    /**
-     * Precomputed rot lookup table.
-     */
-    if( temp < temperatures::freezing ) {
-        return 0;
-    }
-    if( temp > 40_c ) {
-        return 21240;
-    }
-    // HACK: due to frequent fahrenheit <-> celsius conversion, 18C is actually 17.777C
-    // remove rounding after most of temperatures passed around are in `units::temperature`
-    const float temp_c = static_cast<float>( units::to_millidegree_celsius( temp ) ) / 1000;
-    return rot_chart[std::round( temp_c )];
-}
-
-auto item::calc_rot( time_point time, const units::temperature temp ) const -> time_duration
-{
-    // Avoid needlessly calculating already rotten things.  Corpses should
-    // always rot away and food rots away at twice the shelf life.  If the food
-    // is in a sealed container they won't rot away, this avoids needlessly
-    // calculating their rot in that case.
-    if( !is_corpse() && get_shelf_life() != 0_turns && rot / get_shelf_life() > 2.0 ) {
-        return 0_seconds;
-    }
-
-    // rot modifier
-    float factor = 1.0;
-    if( is_corpse() && has_flag( flag_FIELD_DRESS ) ) {
-        factor = 0.75;
-    }
-
-    time_duration added_rot = 0_seconds;
-    // simulation of different age of food at the start of the game and good/bad storage
-    // conditions by applying starting variation bonus/penalty of +/- 20% of base shelf-life
-    // positive = food was produced some time before calendar::start and/or bad storage
-    // negative = food was stored in good conditions before calendar::start
-    if( last_rot_check <= calendar::start_of_cataclysm ) {
-        time_duration spoil_variation = get_shelf_life() * 0.2f;
-        added_rot += rng( -spoil_variation, spoil_variation );
-    }
-    time_duration time_delta = time - last_rot_check;
-    added_rot += factor * time_delta / 1_hours * get_hourly_rotpoints_at_temp( temp ) * 1_turns;
-    return added_rot;
-}
-
 namespace
 {
 
@@ -6613,40 +6503,17 @@ auto temperature_flag_to_highest_temperature( temperature_flag temperature ) -> 
 
 } // namespace
 
-
 time_duration item::minimum_freshness_duration( temperature_flag temperature ) const
 {
     if( is_in_preserving_container() ) {
         return calendar::INDEFINITELY_LONG_DURATION;
     }
-    const units::temperature temp = temperature_flag_to_highest_temperature( temperature );
-    unsigned long long rot_per_hour = get_hourly_rotpoints_at_temp( temp );
-
-    if( rot_per_hour <= 0 || !type->comestible ) {
+    if( !type->comestible ) {
         return calendar::INDEFINITELY_LONG_DURATION;
     }
-
-    time_duration remaining_rot = type->comestible->spoils - rot;
-    // Has to be in int64 or it will overflow for long lasting food
-    unsigned long long duration = to_turns<unsigned long long>( remaining_rot )
-                                  * to_turns<unsigned long long>( 1_hours )
-                                  / rot_per_hour;
-    if( duration > to_turns<unsigned long long>( calendar::INDEFINITELY_LONG_DURATION ) ) {
-        return calendar::INDEFINITELY_LONG_DURATION;
-    }
-
-    return time_duration::from_turns( static_cast<int>( duration ) );
-}
-
-void item::mod_last_rot_check( time_duration processing_duration )
-{
-    if( !has_own_flag( flag_PROCESSING ) ) {
-        debugmsg( "mod_last_rot_check called on non smoking item: %s", tname() );
-        return;
-    }
-
-    // Apply no rot while smoking
-    last_rot_check += processing_duration;
+    const auto t = rot::time_to_rot( type->comestible->spoils - rot,
+                                     temperature_flag_to_highest_temperature( temperature ) );
+    return t < calendar::INDEFINITELY_LONG_DURATION ? scale_by_rot_rate( t ) : t;
 }
 
 units::volume item::get_storage() const
@@ -6706,6 +6573,7 @@ int item::get_base_env_resist_w_filter() const
 bool item::is_power_armor() const
 {
     return ( has_flag( flag_POWERARMOR_EXO ) || has_flag( flag_POWERARMOR_EXTERNAL ) ||
+             has_flag( flag_POWERARMOR_PLATING ) ||
              has_flag( flag_POWERARMOR_MOD ) );
 }
 
@@ -6980,8 +6848,8 @@ bool item::ready_to_revive( const tripoint_bub_ms &pos ) const
     if( damage_level( 4 ) > 0 ) {
         age_in_hours /= ( damage_level( 4 ) + 1 );
     }
-    int rez_factor = 48 - age_in_hours;
-    if( age_in_hours > 6 && ( rez_factor <= 0 || one_in( rez_factor ) ) ) {
+    int rez_factor = get_option< int >( "REVIVIFICATION_FREQUENCY" );
+    if( age_in_hours >= rez_factor && ( age_in_hours >= rez_factor * 2 || one_in( rez_factor ) ) ) {
         // If we're a special revival zombie, wait to get up until the player is nearby.
         const bool isReviveSpecial = has_flag( flag_REVIVE_SPECIAL );
         if( isReviveSpecial ) {
@@ -8057,6 +7925,15 @@ bool item::add_enchantment( const enchantment_id &ench )
     return true;
 }
 
+bool item::add_enchantment( const enchantment &ench )
+{
+    if( !relic_data ) {
+        relic_data = cata::make_value<relic>();
+    }
+    relic_data->add_passive_effect( ench );
+    return true;
+}
+
 const std::vector<enchantment> &item::get_enchantments( bool dynamic ) const
 {
     if( dynamic && is_relic( true ) ) {
@@ -8113,23 +7990,35 @@ double item::bonus_from_enchantments( double base, enchantment_value_id value,
     return ret;
 }
 
-const std::vector<relic_recharge> &item::get_relic_recharge_scheme() const
+auto item::get_relic_recharge_scheme() const -> std::vector<relic_recharge>
 {
-    if( is_relic( true ) ) {
-        return relic_data->get_recharge_scheme();
-    } else {
-        return type->relic_data->get_recharge_scheme();
+    auto recharge_schemes = std::vector<relic_recharge> {};
+    if( type->relic_data ) {
+        recharge_schemes = type->relic_data->get_recharge_scheme();
     }
+    if( is_relic( true ) ) {
+        const auto &dynamic_recharge_schemes = relic_data->get_recharge_scheme();
+        recharge_schemes.insert( recharge_schemes.end(), dynamic_recharge_schemes.begin(),
+                                 dynamic_recharge_schemes.end() );
+    }
+    return recharge_schemes;
 }
 
 bool item::can_contain( const item &it ) const
 {
+    if( is_digital_file( it ) || has_flag( flag_id( "DIGITAL_STORAGE" ) ) ) {
+        return has_flag( flag_id( "DIGITAL_STORAGE" ) ) && is_digital_file( it );
+    }
     // TODO: Volume check
     return can_contain( *it.type );
 }
 
 bool item::can_contain( const itype &tp ) const
 {
+    const auto digital_storage = has_flag( flag_id( "DIGITAL_STORAGE" ) );
+    if( tp.has_flag( flag_id( "DIGITAL" ) ) || digital_storage ) {
+        return digital_storage && tp.has_flag( flag_id( "DIGITAL" ) );
+    }
     if( !type->container ) {
         // TODO: Tools etc.
         return false;
@@ -8153,6 +8042,9 @@ const item &item::get_contained() const
 
 bool item::spill_contents( Character &c )
 {
+    if( has_flag( flag_id( "DIGITAL_STORAGE" ) ) ) {
+        return true;
+    }
     if( !is_container() || is_container_empty() ) {
         return true;
     }
@@ -8169,6 +8061,9 @@ bool item::spill_contents( Character &c )
 
 bool item::spill_contents( const tripoint_bub_ms &pos )
 {
+    if( has_flag( flag_id( "DIGITAL_STORAGE" ) ) ) {
+        return true;
+    }
     if( !is_container() || is_container_empty() ) {
         return true;
     }
@@ -8208,7 +8103,17 @@ void item::mark_chapter_as_read( const Character &ch )
 
 std::vector<std::pair<const recipe *, int>> item::get_available_recipes( const Character &u ) const
 {
+    if( is_digital_file( *this ) && !digital_reader_for( u, *this ) ) {
+        return {};
+    }
     std::vector<std::pair<const recipe *, int>> recipe_entries;
+    if( is_digital_file( *this ) ) {
+        for( const auto &entry : digital_file_recipes( *this ) ) {
+            if( u.get_skill_level( entry.recipe->skill_used ) >= entry.skill_level ) {
+                recipe_entries.emplace_back( &*entry.recipe, entry.skill_level );
+            }
+        }
+    }
     if( is_book() ) {
         for( const book_recipe &elem : type->book->recipes ) {
             if( u.get_skill_level( elem.recipe->skill_used ) >= elem.skill_level ) {
@@ -8216,7 +8121,7 @@ std::vector<std::pair<const recipe *, int>> item::get_available_recipes( const C
             }
         }
     } else if( has_var( "EIPC_RECIPES" ) ) {
-        // See einkpc_download_memory_card() in iuse.cpp where this is set.
+        // Compatibility with tablet recipe references from older saves.
         const std::string recipes = get_var( "EIPC_RECIPES" );
         // Capture the index one past the delimiter, i.e. start of target string.
         size_t first_string_index = recipes.find_first_of( ',' ) + 1;
@@ -9239,81 +9144,6 @@ bool item::units_sufficient( const Character &ch, int qty ) const
     return units_remaining( ch, qty ) == qty;
 }
 
-item_reload_option::item_reload_option( const item_reload_option & ) = default;
-
-item_reload_option &item_reload_option::operator=( const item_reload_option & ) = default;
-
-item_reload_option::item_reload_option( const player *who, item *target, const item *parent,
-                                        item &ammo ) :
-    who( who ), target( target ), ammo( &ammo ), parent( parent )
-{
-    if( this->target->is_ammo_belt() ) {
-        const auto &linkage = this->target->type->magazine->linkage ;
-        if( linkage ) {
-            max_qty = this->who->charges_of( *linkage );
-        }
-    }
-    qty( max_qty );
-}
-
-int item_reload_option::moves() const
-{
-    int mv = ammo->obtain_cost( *who, qty() ) + who->item_reload_cost( *target, *ammo, qty() );
-    if( parent != target ) {
-        if( parent->is_gun() ) {
-            mv += parent->get_reload_time();
-        } else if( parent->is_tool() ) {
-            mv += 100;
-        }
-    }
-    return mv;
-}
-
-void item_reload_option::qty( int val )
-{
-    bool ammo_in_ammo_container = ammo->is_ammo_container();
-    bool ammo_in_container = ammo->is_container();
-    item &ammo_obj = ( ammo_in_ammo_container || ammo_in_container ) ?
-                     ammo->contents.front() : *ammo;
-
-    if( ammo_in_ammo_container && !ammo_obj.is_ammo() ) {
-        debugmsg( "Invalid reload option: %s", ammo_obj.tname() );
-        return;
-    }
-
-    // Checking ammo capacity implicitly limits guns with removable magazines to capacity 0.
-    // This gets rounded up to 1 later.
-    int remaining_capacity = 0;
-    if( target->is_watertight_container() && ammo_obj.made_of( LIQUID ) ) {
-        remaining_capacity = target->get_remaining_capacity_for_liquid( ammo_obj, true );
-    } else if( target->is_container() && ammo_obj.is_comestible() ) {
-        remaining_capacity = ammo_obj.charges_per_volume( target->get_container_capacity() );
-        if( !target->is_container_empty() ) {
-            remaining_capacity -= target->ammo_remaining();
-        }
-    } else {
-        remaining_capacity = target->ammo_capacity() - target->ammo_remaining();
-    }
-    if( target->has_flag( flag_RELOAD_ONE ) && !ammo->has_flag( flag_SPEEDLOADER ) ) {
-        remaining_capacity = 1;
-    }
-    if( ammo_obj.type->ammo ) {
-        if( ammo_obj.ammo_type() == ammo_plutonium ) {
-            remaining_capacity = remaining_capacity / PLUTONIUM_CHARGES +
-                                 ( remaining_capacity % PLUTONIUM_CHARGES != 0 );
-        }
-    }
-
-    bool ammo_by_charges = ammo_obj.is_ammo() || ammo_in_container || ammo->is_comestible();
-    int available_ammo = ammo_by_charges ? ammo_obj.charges : ammo_obj.ammo_remaining();
-    // constrain by available ammo, target capacity and other external factors (max_qty)
-    // @ref max_qty is currently set when reloading ammo belts and limits to available linkages
-    qty_ = std::min( { val, available_ammo, remaining_capacity, max_qty } );
-
-    // always expect to reload at least one charge
-    qty_ = std::max( qty_, 1 );
-
-}
 
 int item::casings_count() const
 {
@@ -9363,7 +9193,8 @@ bool item::reload( Character &who, item &loc, int qty )
     int limit = 0;
     if( is_watertight_container() && ammo->made_of( LIQUID ) ) {
         limit = get_remaining_capacity_for_liquid( *ammo, true );
-    } else if( is_container() && ammo->is_comestible() ) {
+        // Disallow stackable generic to avoid issues with damage melding
+    } else if( is_container() && ( ammo->is_ammo() || ammo->is_comestible() ) ) {
         limit = ammo->charges_per_volume( get_container_capacity() );
         if( !is_container_empty() ) {
             limit -= ammo_remaining();
@@ -10099,40 +9930,6 @@ detached_ptr<item> item::detonate( detached_ptr<item> &&self, const tripoint_bub
 
     return std::move( self );
 }
-bool item::has_rotten_away() const
-{
-    if( is_corpse() && !can_revive() ) {
-        return get_rot() > 10_days;
-    } else {
-        return is_food() && get_relative_rot() > 2.0;
-    }
-}
-
-auto item::process_rot( detached_ptr<item> &&self,
-                        const absolute_rot_process_options &options ) -> detached_ptr<item>
-{
-    if( !self ) {
-        return std::move( self );
-    }
-    if( self->is_in_preserving_container() ) {
-        self->mark_rot_checked_now();
-        return std::move( self );
-    }
-
-    self->update_rot( options.context );
-
-    auto rotted_away = false;
-    if( self->is_corpse() && !self->can_revive() ) {
-        rotted_away = self->rot > 10_days;
-    } else {
-        const auto shelf_life = self->get_shelf_life();
-        rotted_away = self->is_food() && shelf_life != 0_turns && self->rot / shelf_life > 2.0;
-    }
-    if( rotted_away && options.carrier == nullptr && !options.seals ) {
-        return detached_ptr<item>();
-    }
-    return std::move( self );
-}
 
 auto item::actualize_rot( detached_ptr<item> &&self, const tripoint_bub_ms &pnt,
                           const temperature_flag temperature,
@@ -10362,129 +10159,6 @@ int item::processing_speed() const
     return speed;
 }
 
-auto item::process_rot( detached_ptr<item> &&self,
-                        const tripoint_bub_ms &pos ) -> detached_ptr<item>
-{
-    return process_rot( std::move( self ), false, pos, nullptr, temperature_flag::TEMP_NORMAL,
-                        get_weather() );
-}
-
-static units::temperature clip_by_temperature_flag( units::temperature temperature,
-        temperature_flag flag )
-{
-    switch( flag ) {
-        case temperature_flag::TEMP_NORMAL:
-            // Just use the temperature normally
-            return temperature;
-        case temperature_flag::TEMP_FRIDGE:
-            return std::min( temperature, temperatures::fridge );
-        case temperature_flag::TEMP_FREEZER:
-            return std::min( temperature, temperatures::freezer );
-        case temperature_flag::TEMP_HEATER:
-            return std::max( temperature, temperatures::normal );
-        case temperature_flag::TEMP_ROOT_CELLAR:
-            return temperatures::root_cellar;
-        default:
-            debugmsg( "Temperature flag enum not valid: %d.  Using current temperature.",
-                      static_cast<int>( flag ) );
-            break;
-    }
-    return temperature;
-}
-
-void item::update_rot_from_location( const temperature_flag temperature )
-{
-    if( !goes_bad() || last_rot_check == calendar::turn ) {
-        return;
-    }
-    if( is_in_preserving_container() ) {
-        mark_rot_checked_now();
-        return;
-    }
-
-    auto pos = tripoint_bub_ms::zero();
-    auto flag = temperature;
-    if( is_loaded() && has_position() ) {
-        pos = bub_pos();
-        flag = rot::temp::for_location( get_map(), *this );
-    }
-    update_rot( pos, flag, get_weather() );
-}
-
-auto item::update_rot( const tripoint_bub_ms &pos, const temperature_flag flag,
-                       const weather_manager &weather ) -> void
-{
-    update_rot( {
-        .position = bub_to_abs( pos ),
-        .temperature = flag,
-        .weather = &weather,
-        .local_temperature = g != nullptr && !g->new_game ? get_map().get_temperature( pos ) : 0,
-    } );
-}
-
-auto item::update_rot( const rot_context &context ) -> void
-{
-    const auto now = calendar::turn;
-
-    // if player debug menu'd the time backward it breaks stuff, just reset the
-    // last_temp_check and last_rot_check in this case
-    if( now - last_rot_check < 0_turns ) {
-        last_rot_check = now;
-        return;
-    }
-
-    // process rot at most once every 100_turns (10 min)
-    // note we're also gated by item::processing_speed
-    static constexpr auto smallest_interval = 10_minutes;
-
-    const auto &weather = context.weather == nullptr ? get_weather() : *context.weather;
-    auto temp = weather.get_temperature( context.position );
-    temp = clip_by_temperature_flag( temp, context.temperature );
-
-    auto time = last_rot_check;
-    item_internal::scoped_goes_bad_cache _cache( this );
-
-    if( now - time > 1_hours ) {
-        // This code is for items that were left out of reality bubble for long time
-
-        const auto &wgen = weather.get_cur_weather_gen();
-        const auto seed = g != nullptr ? g->get_seed() : 0;
-        // It's a modifier, so we need to subtract 0_f
-        const auto local_mod = units::from_fahrenheit( g != nullptr && g->new_game ?
-                               0 : context.local_temperature ) - 0_f;
-
-        // Process the past of this item since the last time it was processed
-        while( now - time > 1_hours ) {
-            // Get the environment temperature
-            const auto time_delta = std::min( 1_hours, now - 1_hours - time );
-            time += time_delta;
-
-            const auto env_temperature_raw = [&]() {
-                if( context.position.z() >= 0 ) {
-                    const auto weather_temperature = wgen.get_weather_temperature( context.position, time,
-                                                     calendar::config, seed );
-                    return weather_temperature + local_mod;
-                }
-                return temperatures::annual_average + local_mod;
-            }
-            ();
-
-            auto env_temperature_clipped = clip_by_temperature_flag( env_temperature_raw,
-                                           context.temperature );
-
-            // Calculate item rot
-            rot += calc_rot( time, env_temperature_clipped );
-            last_rot_check = time;
-        }
-    }
-
-    // Remaining <1 h from above
-    // and items that are held near the player
-    if( now - time > smallest_interval ) {
-        rot += calc_rot( now, temp );
-        last_rot_check = now;
-    }
-}
 
 auto item::process_rot( detached_ptr<item> &&self, const bool seals,
                         const tripoint_bub_ms &pos,
@@ -11416,9 +11090,9 @@ detached_ptr<item> item::process_internal( detached_ptr<item> &&self, player *ca
             return std::move( self );
         }
     }
-    if( self->has_flag( flag_WATER_DISABLE ) && carrier->is_underwater() ) {
+    if( self->has_flag( flag_WATER_DISABLE ) && carrier && carrier->is_underwater() ) {
         ZoneScopedN( "item_process_water_disable" );
-        carrier->add_msg_if_player( "Your %s gurgles and splutters.", self->tname() );
+        carrier->add_msg_if_player( _( "Your %s gurgles and splutters." ), self->tname() );
         self->revert( carrier );
         self->deactivate();
         return std::move( self );
@@ -11640,6 +11314,9 @@ std::string item::type_name( unsigned int quantity ) const
         }
     }
 
+    if( is_digital_file( *this ) && !type->has_flag( flag_id( "DIGITAL" ) ) ) {
+        ret_name = string_format( _( "digital copy of %s" ), ret_name );
+    }
     return ret_name;
 }
 
@@ -11744,9 +11421,17 @@ bool item::on_drop( const tripoint_bub_ms &pos, map &m )
         !has_own_flag( flag_DIRTY ) ) {
         set_flag( flag_DIRTY );
     }
+
+    const auto spilled_to_field =
+        made_of( LIQUID ) && type->spill_field != fd_null && !m.has_flag( flag_LIQUIDCONT, pos );
+    if( spilled_to_field ) {
+        m.spill_liquid_field( pos, *this );
+    }
     you.flag_encumbrance();
 
-    return type->drop_action && type->drop_action.call( you, *this, false, pos );
+    const auto handled_by_drop_action =
+        type->drop_action && type->drop_action.call( you, *this, false, pos );
+    return spilled_to_field || handled_by_drop_action;
 }
 
 time_duration item::age() const

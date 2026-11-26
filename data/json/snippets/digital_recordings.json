@@ -1,0 +1,110 @@
+[
+  {
+    "type": "snippet",
+    "category": "digital_home_video",
+    "text": [
+      {
+        "id": "digital_home_video_birthday",
+        "text": "A child in a paper crown leans toward a birthday cake.  Everyone sings at a different speed.  Just before the candles go out, someone behind the camera whispers, \"Make a good one.\"  The child closes their eyes for a very long time."
+      },
+      {
+        "id": "digital_home_video_dog",
+        "text": "A shaggy dog carries an enormous branch across a yard, repeatedly failing to fit it through the back door.  Someone laughs so hard that the camera shakes.  The dog backs up, thinks about it, and tries exactly the same thing again."
+      },
+      {
+        "id": "digital_home_video_first_snow",
+        "text": "Two children in oversized coats step into fresh snow.  One immediately falls over.  The other solemnly lies down beside them.  Behind the camera, an adult says, \"Well, that's both of them gone.\""
+      },
+      {
+        "id": "digital_home_video_band",
+        "text": "A garage band launches into a song, stops, argues about the count-in, and starts again.  The drummer drops a stick.  Everyone groans except the singer, who keeps going for another verse before noticing."
+      },
+      {
+        "id": "digital_home_video_barbecue",
+        "text": "Smoke pours from a backyard grill.  A man holding a spatula insists that everything is under control while someone off-camera asks whether the fire extinguisher is still in the kitchen.  A small hand reaches into frame and steals the only finished hot dog."
+      },
+      {
+        "id": "digital_home_video_camping",
+        "text": "Rain drums against a tent.  Four people sit shoulder to shoulder around a packet of crackers, listening to someone read the weather forecast from a phone.  \"Clear skies,\" they announce.  Everyone laughs.  A drop lands on the lens."
+      },
+      {
+        "id": "digital_home_video_wedding",
+        "text": "A wedding reception, filmed sideways.  An elderly couple dances alone at the edge of the floor.  One mouths something into the other's ear, and they both laugh.  The camera turns abruptly toward a loud argument about who gets to catch the bouquet."
+      },
+      {
+        "id": "digital_home_video_apartment",
+        "text": "Someone gives a tour of an almost empty apartment.  They proudly point out a secondhand couch, a window that sticks, and a cardboard box labeled KITCHEN, probably.  The tour ends with two mugs raised over takeout containers on the floor."
+      },
+      {
+        "id": "digital_home_video_first_steps",
+        "text": "A toddler takes three uncertain steps between two outstretched pairs of hands.  The cheering is so loud that the child sits down in surprise.  \"Again?\" asks the person filming.  The toddler reaches for the camera instead."
+      },
+      {
+        "id": "digital_home_video_repairs",
+        "text": "A teenager stands beside a car with its hood open.  An older woman tells them to try the ignition.  The engine catches, and the teenager's expression changes from disbelief to delight.  The woman taps the fender twice and says, \"Told you it wasn't dead.\""
+      },
+      {
+        "id": "digital_home_video_graduation",
+        "text": "The camera zooms shakily across a sea of graduation caps.  Someone calls a name, and the person filming shouts, \"That's ours!\"  They miss the handshake entirely.  The next thirty seconds show the pavement and the sound of proud, embarrassed laughter."
+      },
+      {
+        "id": "digital_home_video_lake",
+        "text": "A little aluminum boat rocks on a quiet lake.  A child holds up a tiny fish while an adult carefully supports the fishing line.  \"Biggest one today,\" the adult says.  In the background, someone loudly disputes this claim."
+      },
+      {
+        "id": "digital_home_video_new_baby",
+        "text": "A newborn sleeps in a hospital bassinet.  The camera lingers on a hand scarcely bigger than the fingertip resting beside it.  Two exhausted voices discuss whose nose the baby has.  Neither sounds willing to stop looking long enough to go home."
+      },
+      {
+        "id": "digital_home_video_blackout",
+        "text": "A family plays cards by candlelight.  Every few seconds, someone checks the dark kitchen clock.  A voice jokes that they should do this more often.  Through the window behind them, the whole street is dark."
+      },
+      {
+        "id": "digital_home_video_sirens",
+        "text": "Someone films a cat asleep in a laundry basket.  Sirens rise outside, followed by a distant loudspeaker.  The camera turns toward the window.  \"Can you hear what they're saying?\" a voice asks.  The recording ends before anyone answers."
+      },
+      {
+        "id": "digital_home_video_packing",
+        "text": "The recording starts halfway through an argument about what will fit in the car.  A child asks whether they can bring the aquarium.  Nobody answers.  Someone picks up the phone, and the last image is a packed suitcase with a stuffed rabbit wedged under its handle."
+      }
+    ]
+  },
+  {
+    "type": "snippet",
+    "category": "digital_voice_memo",
+    "text": [
+      {
+        "id": "digital_voice_memo_groceries",
+        "text": "\"Milk, coffee, dish soap.  The good coffee, not the one in the green bag.  Oh, and candles for Saturday.  Don't forget the candles this time.\"  A pause.  \"And something to put them on.\""
+      },
+      {
+        "id": "digital_voice_memo_song",
+        "text": "Someone hums the same few bars of a tune, stops, and tries them again a little differently.  There is a long silence, then an excited \"That's it!\"  The recorder clicks off before they repeat it."
+      },
+      {
+        "id": "digital_voice_memo_directions",
+        "text": "\"Left at the old diner, then keep going until the pavement ends.  If you pass the red barn, you've gone too far.  Actually, is it still red?  Hang on, I'll ask.\"  Several minutes of muffled conversation follow."
+      },
+      {
+        "id": "digital_voice_memo_interview",
+        "text": "\"My biggest weakness is that I care too much about my work.\"  A sigh.  \"No, that's terrible.\"  The speaker clears their throat and starts again.  A dog barks enthusiastically through the next three attempts."
+      },
+      {
+        "id": "digital_voice_memo_apology",
+        "text": "\"Hey.  I know you said not to call, so I'm just practicing this.  I shouldn't have said what I said.  You didn't deserve that.\"  The speaker falls silent.  Eventually they whisper, \"Okay.  Now actually call.\""
+      },
+      {
+        "id": "digital_voice_memo_grandfather",
+        "text": "An older man describes sneaking out of school to swim in a quarry.  Another voice interrupts to ask whether this is the story with the stolen trousers.  \"Borrowed,\" he corrects them firmly.  Both begin laughing before he can continue."
+      },
+      {
+        "id": "digital_voice_memo_pickup",
+        "text": "\"School called.  They're sending everyone home early.  I can't get away from work, so please pick them up.  I put their bags by the door this morning.  Call me when you're all home, okay?\""
+      },
+      {
+        "id": "digital_voice_memo_check_in",
+        "text": "\"Still no signal.  I'm leaving this here in case you get back before I do.  We're going to try the shelter they mentioned on the radio.  The dog is with us.  We waited as long as we could.\""
+      }
+    ]
+  }
+]

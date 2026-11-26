@@ -1,3 +1,4 @@
+#include "../src/map/map.h"
 #include "active_item_cache.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
@@ -6,7 +7,6 @@
 #include "game.h"
 #include "game_constants.h"
 #include "item.h"
-#include "map.h"
 #include "state_helpers.h"
 #include "type_id.h"
 

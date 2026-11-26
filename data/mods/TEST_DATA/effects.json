@@ -43,5 +43,31 @@
     "type": "effect_type",
     "id": "test_lua_effect",
     "flags": [ "EFFECT_LUA_ON_ADDED", "EFFECT_LUA_ON_TICK", "EFFECT_LUA_ON_REMOVED" ]
+  },
+  {
+    "type": "effect_type",
+    "id": "test_merged_enchantments",
+    "max_intensity": 3,
+    "base_enchantments": [ { "values": [ { "value": "STRENGTH", "add": 1 } ] }, { "values": [ { "value": "DEXTERITY", "add": 2 } ] } ],
+    "scaling_enchantments": [ { "values": [ { "value": "PERCEPTION", "add": 1 } ] }, { "values": [ { "value": "INTELLIGENCE", "add": 2 } ] } ]
+  },
+  {
+    "type": "effect_type",
+    "id": "test_chance_bot_base",
+    "max_intensity": 2,
+    "base_mods": { "pain_chance": [ 2 ], "pain_chance_bot": [ 10 ] },
+    "scaling_mods": { "pain_chance": [ 2 ] }
+  },
+  {
+    "type": "effect_type",
+    "id": "test_chance_bot_scaling",
+    "max_intensity": 2,
+    "base_mods": { "pain_chance": [ 2 ] },
+    "scaling_mods": { "pain_chance_bot": [ 10 ] }
+  },
+  {
+    "type": "effect_type",
+    "id": "test_chance_bot_guaranteed",
+    "base_mods": { "pain_chance": [ 10 ], "pain_chance_bot": [ 10 ] }
   }
 ]

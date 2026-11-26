@@ -26,7 +26,8 @@
       "CLIMBS",
       "PATH_AVOID_DANGER_1",
       "WARM",
-      "HIT_AND_RUN"
+      "HIT_AND_RUN",
+      "NO_SLIP"
     ]
   },
   {
@@ -75,6 +76,29 @@
       "feed": "The %s seems to like you!  Or maybe it just tolerates your presence better.  It's hard to tell with felines.",
       "pet": "The %s sofly purrs as you pet it.  It demands more."
     }
+  },
+  {
+    "id": "mon_bat_vampire_mutant",
+    "type": "MONSTER",
+    "name": { "str": "mutant vampire bat" },
+    "description": "One of the Desmodontinae bats, a family of winged blood-eating mammals.  This one looks terribly larger and stronger than its other kin.",
+    "copy-from": "mon_bat_vampire",
+    "volume": "25 L",
+    "weight": "25 kg",
+    "hp": 20,
+    "speed": 230,
+    "material": [ "flesh" ],
+    "color": "red",
+    "aggression": 25,
+    "morale": 20,
+    "melee_skill": 7,
+    "melee_dice": 2,
+    "melee_dice_sides": 3,
+    "melee_cut": 4,
+    "dodge": 6,
+    "harvest": "mutant_mammal_small_fur",
+    "delete": { "fear_triggers": [ "SOUND", "PLAYER_CLOSE" ] },
+    "anger_triggers": [ "STALK", "FRIEND_ATTACKED", "FRIEND_DIED", "PLAYER_WEAK", "PLAYER_CLOSE" ]
   },
   {
     "id": "mon_bear_armored",
@@ -476,6 +500,7 @@
     "melee_dice_sides": 6,
     "melee_cut": 6,
     "melee_damage": [ { "damage_type": "stab", "amount": 15, "armor_penetration": 10 } ],
+    "grab_strength": 2,
     "special_attacks": [
       [ "GRAB_DRAG", 12 ],
       [ "EAT_FOOD", 2400 ],

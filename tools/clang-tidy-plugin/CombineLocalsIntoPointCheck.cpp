@@ -38,7 +38,7 @@ void CombineLocalsIntoPointCheck::registerMatchers(MatchFinder* Finder) {
         this);
 }
 
-static bool nameExistsInContext(const DeclContext* Context, const std::string& Name) {
+static auto nameExistsInContext(const DeclContext* Context, const std::string& Name) -> bool {
     for (const Decl* D : Context->decls()) {
         if (const NamedDecl* ND = dyn_cast<NamedDecl>(D)) {
             if (ND->getIdentifier() && ND->getName() == Name) { return true; }
@@ -47,7 +47,7 @@ static bool nameExistsInContext(const DeclContext* Context, const std::string& N
     return false;
 }
 
-static bool isKeyword(const std::string& S) {
+static auto isKeyword(const std::string& S) -> bool {
     static const std::unordered_set<std::string> keywords = {
         "alignas",
         "alignof",

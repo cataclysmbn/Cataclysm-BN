@@ -1,3 +1,4 @@
+#include "../src/map/map.h"
 #include "action_time_scale.h"
 #include "activity_handlers.h"
 #include "activity_speed.h"
@@ -6,7 +7,6 @@
 #include "catch/catch.hpp"
 #include "character_effects.h"
 #include "character_functions.h"
-#include "map.h"
 #include "map_helpers.h"
 #include "npc.h"
 #include "options_helpers.h"
@@ -30,7 +30,7 @@ static void advance_turn(Character& guy) {
     calendar::turn += 1_turns;
 }
 
-static player& prepare_player() {
+static auto prepare_player() -> player& {
     auto& guy = *get_player_character().as_player();
     clear_character(*guy.as_player(), true);
     guy.set_moves(0);

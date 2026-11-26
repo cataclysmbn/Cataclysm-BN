@@ -50,9 +50,9 @@ void UsePointApisCheck::registerMatchers(MatchFinder* Finder) {
         this);
 }
 
-static bool doFunctionsMatch(
+static auto doFunctionsMatch(
     const FunctionDecl* Callee, const FunctionDecl* OtherCallee, unsigned int NumCoordParams,
-    unsigned int SkipArgs, unsigned int MinArg, bool IsTripoint) {
+    unsigned int SkipArgs, unsigned int MinArg, bool IsTripoint) -> bool {
     const unsigned int ExpectedNumParams = Callee->getNumParams() - (NumCoordParams - 1);
 
     if (OtherCallee->getNumParams() != ExpectedNumParams) { return false; }

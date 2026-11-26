@@ -162,3 +162,63 @@ void cata::detail::mod_mutation_branch( sol::state &lua )
     }
 #undef UT_CLASS // #define UT_CLASS mutation_branch
 }
+
+
+void cata::detail::mod_mutation_category_trait( sol::state &lua )
+{
+#define UT_CLASS mutation_category_trait
+    {
+        /* NOTE: These changes are applied to the "MutationCategoryTraitRaw" Lua obj.
+         * Because mutation_category_trait was bound as an ID, the actual object is
+         * shoved into a 'Raw' binding.
+         * The following code makes that useful, while also stopping the
+         * related object from being messed with.
+         */
+        sol::usertype<UT_CLASS> ut =
+        luna::new_usertype<UT_CLASS>(
+            lua,
+            luna::no_bases,
+            luna::no_constructor
+        );
+
+        SET_MEMB_RO( id );
+        SET_FX_T( name, std::string() const );
+        SET_MEMB_RO( mutagen_message );
+        SET_MEMB_RO( iv_message );
+        SET_MEMB_RO( iv_sound_message );
+        SET_MEMB_RO( iv_sound_id );
+        SET_MEMB_RO( iv_sound_variant );
+        SET_MEMB_RO( iv_sleep_message );
+        SET_MEMB_RO( junkie_message );
+        SET_MEMB_RO( memorial_message_male );
+        SET_MEMB_RO( memorial_message_female );
+        DOC( "The traits that you gain when you break the thresholds for this category." );
+        SET_MEMB_RO( threshold_muts );
+        SET_MEMB_RO( mutagen_hunger );
+        SET_MEMB_RO( mutagen_thirst );
+        SET_MEMB_RO( mutagen_pain );
+        SET_MEMB_RO( mutagen_fatigue );
+        SET_MEMB_RO( mutagen_morale );
+        SET_MEMB_RO( iv_min_mutations );
+        SET_MEMB_RO( iv_additional_mutations );
+        SET_MEMB_RO( iv_additional_mutations_chance );
+        SET_MEMB_RO( iv_hunger );
+        SET_MEMB_RO( iv_thirst );
+        SET_MEMB_RO( iv_pain );
+        SET_MEMB_RO( iv_fatigue );
+        SET_MEMB_RO( iv_morale );
+        SET_MEMB_RO( iv_morale_max );
+        SET_MEMB_RO( iv_sound );
+        SET_MEMB_RO( iv_noise );
+        SET_MEMB_RO( iv_sleep );
+        SET_MEMB_RO( iv_sleep_dur );
+
+        DOC( "Returns a list of all mutations in this category." );
+        luna::set_fx( ut, "get_mutations", []( const UT_CLASS & mut )  -> std::vector<trait_id> { return mut.get_mutations();} );
+
+        // The string conversion function references this object's str_id.
+        luna::set_fx( ut, sol::meta_function::to_string,
+        []( const UT_CLASS & id ) -> std::string { return string_format( "%s[%s]", luna::detail::luna_traits<UT_CLASS>::name, id.id.c_str() ); } );
+    }
+#undef UT_CLASS
+}

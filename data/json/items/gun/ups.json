@@ -212,5 +212,37 @@
     "reload": 300,
     "extend": { "flags": [ "MOUNTED_GUN", "NO_RECOVER_AMMO" ] },
     "delete": { "flags": [ "NO_UNLOAD" ] }
+  },
+  {
+    "id": "unbio_blaster_gun",
+    "copy-from": "rifle_energy",
+    "type": "GUN",
+    "name": { "str": "fusion blaster rifle" },
+    "description": "A cyborg's fusion blaster arm, cannibalized and converted into an improvised rifle.  Powered by UPS, it's less effective but still powerful.  Provides a damaging heat ray that can select between single-shot, 3-round burst, or a power shot that trades direct damage for area of effect.",
+    "weight": "2680 g",
+    "volume": "2500 ml",
+    "price": "4200 USD",
+    "price_postapoc": "42 USD",
+    "material": [ "steel", "plastic" ],
+    "color": "magenta",
+    "range": 30,
+    "//": "unbio weapons deal 80% damage/apren for 120% UPS cost compared to the bionic version",
+    "ranged_damage": { "damage_type": "heat", "amount": 48, "armor_penetration": 24 },
+    "dispersion": 90,
+    "durability": 6,
+    "loudness": 60,
+    "ups_charges": 120,
+    "modes": [ [ "DEFAULT", "single shot", 1 ], [ "burst", "triple shot", 3 ] ],
+    "built_in_mods": [ "unbio_powershot" ],
+    "valid_mod_locations": [
+      [ "emitter", 1 ],
+      [ "grip", 1 ],
+      [ "sights", 1 ],
+      [ "sling", 1 ],
+      [ "stock", 1 ],
+      [ "rail", 1 ],
+      [ "underbarrel", 1 ]
+    ],
+    "ammo_effects": [ "LASER" ]
   }
 ]

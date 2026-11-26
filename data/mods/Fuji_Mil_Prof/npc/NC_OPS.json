@@ -47,8 +47,7 @@
       [ "null", 60 ],
       [ "jacket_army", 40 ],
       [ "cloak", 20 ],
-      [ "modularveststeel", 10 ],
-      [ "modularvestceramic", 40 ],
+      { "group": "military_ballistic_vests_and_plates", "prob": 40 },
       [ "kevlar", 20 ],
       [ "chestrig", 30 ]
     ]

@@ -1,22 +1,21 @@
 #pragma once
 
 #include "activity_actor.h"
-#include "craft_command.h"
-
-#include <optional>
-
 #include "coordinates.h"
+#include "craft_command.h"
 #include "crafting.h"
 #include "item_handling_util.h"
 #include "location_ptr.h"
 #include "locations.h"
-#include "mapdata.h"
+#include "map/mapdata.h"
 #include "memory_fast.h"
 #include "pickup_token.h"
 #include "point.h"
 #include "safe_reference.h"
 #include "type_id.h"
 #include "units_energy.h"
+
+#include <optional>
 
 class Creature;
 class vehicle;
@@ -29,9 +28,9 @@ class aim_activity_actor : public activity_actor
         location_ptr<item> fake_weapon;
         units::energy bp_cost_per_shot = 0_J;
         int stamina_cost_per_shot = 0;
-        std::vector<tripoint_bub_ms> fin_trajectory;
 
     public:
+        std::vector<tripoint_bub_ms> fin_trajectory;
         std::string action;
         int aif_duration = 0; // Counts aim-and-fire duration
         bool aiming_at_critter = false; // Whether aiming at critter or a tile

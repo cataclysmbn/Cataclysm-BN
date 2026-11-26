@@ -40,13 +40,13 @@ private:
 public:
     vpart_position(::vehicle& v, const size_t part): vehicle_(v), part_index_(part) {}
     vpart_position(const vpart_position&) = default;
-    vpart_position& operator=(const vpart_position&) = default;
+    auto operator=(const vpart_position&) -> vpart_position& = default;
 
-    ::vehicle& vehicle() const { return vehicle_.get(); }
+    auto vehicle() const -> ::vehicle& { return vehicle_.get(); }
     // TODO: remove this, add a vpart_reference class instead
-    size_t part_index() const { return part_index_; }
+    auto part_index() const -> size_t { return part_index_; }
 
-    bool is_inside() const;
+    auto is_inside() const -> bool;
 
     /**
      * Sets the label at this part of the vehicle. Removes the label if @p text is empty.
@@ -55,21 +55,22 @@ public:
     /**
      * @returns The label at this part of the vehicle, if there is any.
      */
-    std::optional<std::string> get_label() const;
+    auto get_label() const -> std::optional<std::string>;
     /// @see vehicle::part_with_feature
-    std::optional<vpart_reference> part_with_feature(const std::string& f, bool unbroken) const;
+    auto part_with_feature(const std::string& f, bool unbroken) const
+        -> std::optional<vpart_reference>;
     /// @see vehicle::part_with_feature
-    std::optional<vpart_reference> part_with_feature(vpart_bitflags f, bool unbroken) const;
+    auto part_with_feature(vpart_bitflags f, bool unbroken) const -> std::optional<vpart_reference>;
     /**
      * Returns the obstacle that exists at this point of the vehicle (if any).
      * Open doors don't count as obstacles, but closed one do.
      * Broken parts are also never obstacles.
      */
-    std::optional<vpart_reference> obstacle_at_part() const;
+    auto obstacle_at_part() const -> std::optional<vpart_reference>;
     /**
      * Returns the part displayed at this point of the vehicle.
      */
-    std::optional<vpart_reference> part_displayed() const;
+    auto part_displayed() const -> std::optional<vpart_reference>;
     /**
      * Returns the position of this part in the coordinates system that @ref game::m uses.
      * Postcondition (if the vehicle cache of the map is correct and if there are un-removed
@@ -78,12 +79,12 @@ public:
      * `g->m.veh_at( this->pos() )->vehicle() == this->vehicle()` (it's this one)
      */
     // Name chosen to match Creature::pos
-    tripoint_bub_ms pos() const;
+    auto pos() const -> tripoint_bub_ms;
     /**
      * Returns the mount point: the point in the vehicles own coordinate system.
      * This system is independent of movement / rotation.
      */
-    tripoint_mnt_veh mount() const;
+    auto mount() const -> tripoint_mnt_veh;
 };
 
 /**
@@ -95,13 +96,14 @@ class optional_vpart_position: public std::optional<vpart_position> {
 public:
     optional_vpart_position(std::optional<vpart_position> p): std::optional<vpart_position>(p) {}
 
-    std::optional<std::string> get_label() const {
+    auto get_label() const -> std::optional<std::string> {
         return has_value() ? value().get_label() : std::nullopt;
     }
-    std::optional<vpart_reference> part_with_feature(const std::string& f, bool unbroken) const;
-    std::optional<vpart_reference> part_with_feature(vpart_bitflags f, bool unbroken) const;
-    std::optional<vpart_reference> obstacle_at_part() const;
-    std::optional<vpart_reference> part_displayed() const;
+    auto part_with_feature(const std::string& f, bool unbroken) const
+        -> std::optional<vpart_reference>;
+    auto part_with_feature(vpart_bitflags f, bool unbroken) const -> std::optional<vpart_reference>;
+    auto obstacle_at_part() const -> std::optional<vpart_reference>;
+    auto part_displayed() const -> std::optional<vpart_reference>;
 };
 
 /**
@@ -116,14 +118,14 @@ class vpart_reference: public vpart_position {
 public:
     vpart_reference(::vehicle& v, const size_t part): vpart_position(v, part) {}
     vpart_reference(const vpart_reference&) = default;
-    vpart_reference& operator=(const vpart_reference&) = default;
+    auto operator=(const vpart_reference&) -> vpart_reference& = default;
 
     using vpart_position::vehicle;
 
     /// Yields the \ref vehicle_part object referenced by this. @see vehicle::parts
-    vehicle_part& part() const;
+    auto part() const -> vehicle_part&;
     /// See @ref vehicle_part::info
-    const vpart_info& info() const;
+    auto info() const -> const vpart_info&;
     /**
      * Returns whether the part *type* has the given feature.
      * Note that this is different from part flags (which apply to part
@@ -131,16 +133,16 @@ public:
      * For example a feature is "CARGO" (the part can store items).
      */
     /**@{*/
-    bool has_feature(const std::string& f) const;
-    bool has_feature(vpart_bitflags f) const;
+    auto has_feature(const std::string& f) const -> bool;
+    auto has_feature(vpart_bitflags f) const -> bool;
     /**@}*/
 
     /// Returns the passenger in this part, or nullptr if no passenger.
-    player* get_passenger() const;
+    auto get_passenger() const -> player*;
 };
 
 // For legacy code, phase out, don't use in new code.
 // TODO: remove this
-inline vehicle* veh_pointer_or_null(const optional_vpart_position& p) {
+inline auto veh_pointer_or_null(const optional_vpart_position& p) -> vehicle* {
     return p ? &p->vehicle() : nullptr;
 }

@@ -64,7 +64,7 @@
     "id": "mounted_lesbian_flag",
     "copy-from": "mounted_american_flag",
     "name": { "str": "mounted Lesbian pride flag" },
-    "description": "A lesbian pride flag, fluttering in the breeze atop a vehicle.  The dark orange represents gender non-conformity, the orange represents independence, the white represents unique relationships to womanhood, pink represents serenity and peace, and the dark rose represents feminimity.",
+    "description": "A lesbian pride flag, fluttering in the breeze atop a vehicle.  The dark orange represents gender non-conformity, the orange represents independence, the white represents unique relationships to womanhood, pink represents serenity and peace, and the dark rose represents femininity.",
     "color": "red",
     "item": "lesbian_flag",
     "breaks_into": [ { "item": "splinter", "count": [ 1, 5 ] }, { "item": "lesbian_flag", "count": 1 } ]
@@ -104,7 +104,7 @@
     "id": "mounted_genderfluid_flag",
     "copy-from": "mounted_american_flag",
     "name": { "str": "mounted Genderfluid pride flag" },
-    "description": "A genderfluid pride flag, fluttering in the breeze atop a vehicle.  The pink represents feminimity, the white represents lack of gender, the purple represents androgyny, the black represents all other genders, and the blue represents masculinity.",
+    "description": "A genderfluid pride flag, fluttering in the breeze atop a vehicle.  The pink represents femininity, the white represents lack of gender, the purple represents androgyny, the black represents all other genders, and the blue represents masculinity.",
     "color": "red",
     "item": "genderfluid_flag",
     "breaks_into": [ { "item": "splinter", "count": [ 1, 5 ] }, { "item": "genderfluid_flag", "count": 1 } ]

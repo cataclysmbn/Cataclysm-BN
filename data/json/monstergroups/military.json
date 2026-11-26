@@ -36,6 +36,7 @@
       { "monster": "mon_zombie_military_pilot", "freq": 5, "cost_multiplier": 1 },
       { "monster": "mon_zombie_bio_op", "freq": 50, "cost_multiplier": 5 },
       { "monster": "mon_zombie_bio_op2", "freq": 25, "cost_multiplier": 5, "starts": 1440 },
+      { "monster": "mon_zombie_soldier_camo_1", "freq": 50, "cost_multiplier": 10 },
       { "monster": "mon_zombie_armored", "freq": 10, "cost_multiplier": 5 },
       { "monster": "mon_feral_soldier", "freq": 25, "cost_multiplier": 1 },
       { "monster": "mon_zombie_supply_sergeant", "freq": 25, "cost_multiplier": 5, "starts": 500 }
@@ -56,6 +57,7 @@
       { "monster": "mon_zombie_military_pilot", "freq": 5, "cost_multiplier": 1 },
       { "monster": "mon_zombie_bio_op", "freq": 30, "cost_multiplier": 5 },
       { "monster": "mon_zombie_soldier_blackops_1", "freq": 15, "cost_multiplier": 10 },
+      { "monster": "mon_zombie_soldier_camo_1", "freq": 15, "cost_multiplier": 10 },
       { "monster": "mon_zombie_armored", "freq": 5, "cost_multiplier": 5 },
       { "monster": "mon_zombie_scorched", "freq": 25, "cost_multiplier": 1 },
       { "monster": "mon_zombie_hazmat", "freq": 25, "cost_multiplier": 1 },

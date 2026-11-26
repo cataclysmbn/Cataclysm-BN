@@ -1,5 +1,56 @@
 #include "game_inventory.h"
 
+#include "avatar.h"
+#include "avatar_action.h"
+#include "avatar_functions.h"
+#include "bionics.h"
+#include "calendar.h"
+#include "cata_utility.h"
+#include "character.h"
+#include "character_functions.h"
+#include "character_martial_arts.h"
+#include "color.h"
+#include "crafting.h"
+#include "cursesdef.h"
+#include "damage.h"
+#include "debug.h"
+#include "enums.h"
+#include "examine_item_menu.h"
+#include "flag.h"
+#include "game.h"
+#include "input.h"
+#include "inventory.h"
+#include "inventory_ui.h"
+#include "item.h"
+#include "item_category.h"
+#include "itype.h"
+#include "iuse.h"
+#include "iuse_actor.h"
+#include "map/map.h"
+#include "material.h"
+#include "npc.h"
+#include "options.h"
+#include "output.h"
+#include "player.h"
+#include "player_activity.h"
+#include "point.h"
+#include "recipe.h"
+#include "recipe_dictionary.h"
+#include "requirements.h"
+#include "ret_val.h"
+#include "salvage.h"
+#include "skill.h"
+#include "stomach.h"
+#include "string_formatter.h"
+#include "string_id.h"
+#include "string_utils.h"
+#include "translations.h"
+#include "type_id.h"
+#include "ui_manager.h"
+#include "units.h"
+#include "units_utility.h"
+#include "value_ptr.h"
+
 #include <algorithm>
 #include <bitset>
 #include <cmath>
@@ -13,58 +64,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-#include "avatar.h"
-#include "avatar_action.h"
-#include "avatar_functions.h"
-#include "bionics.h"
-#include "calendar.h"
-#include "cata_utility.h"
-#include "crafting.h"
-#include "character.h"
-#include "character_functions.h"
-#include "character_martial_arts.h"
-#include "color.h"
-#include "cursesdef.h"
-#include "damage.h"
-#include "debug.h"
-#include "enums.h"
-#include "flag.h"
-#include "examine_item_menu.h"
-#include "game.h"
-#include "input.h"
-#include "inventory.h"
-#include "inventory_ui.h"
-#include "item.h"
-#include "itype.h"
-#include "iuse.h"
-#include "iuse_actor.h"
-#include "item_category.h"
-#include "material.h"
-#include "map.h"
-#include "npc.h"
-#include "options.h"
-#include "output.h"
-#include "player.h"
-#include "player_activity.h"
-#include "point.h"
-#include "recipe.h"
-#include "recipe_dictionary.h"
-#include "requirements.h"
-#include "ret_val.h"
-#include "skill.h"
-#include "stomach.h"
-#include "string_formatter.h"
-#include "string_id.h"
-#include "string_utils.h"
-#include "translations.h"
-#include "type_id.h"
-#include "ui_manager.h"
-#include "units.h"
-#include "units_utility.h"
-#include "value_ptr.h"
-#include "salvage.h"
-#include "inventory_ui.h"
 
 static const activity_id ACT_EAT_MENU( "ACT_EAT_MENU" );
 static const activity_id ACT_CONSUME_FOOD_MENU( "ACT_CONSUME_FOOD_MENU" );
@@ -815,7 +814,7 @@ item *game_menus::inv::consume_food( player &p )
     }
 
     return inv_internal( p, comestible_filtered_inventory_preset( p, []( const item & it ) {
-        return ( it.is_comestible() && it.get_comestible()->comesttype == "FOOD" ) ||
+        return !it.is_comestible() || it.get_comestible()->comesttype == "FOOD" ||
                it.has_flag( flag_USE_EAT_VERB );
     } ),
     _( "Consume food" ), 1,
@@ -1539,7 +1538,7 @@ class repair_inventory_preset: public inventory_selector_preset
                 return ret;
             }, _( "MATERIALS AVAILABLE" ) );
 
-            append_cell( [ this, actor ]( const item * loc ) {
+            append_cell( [ actor ]( const item * loc ) {
                 const auto amt = actor->get_material_amt_needed( *loc, true );
                 return string_format( _( "%d" ), amt );
             }, _( "NEED" ) );

@@ -12,6 +12,7 @@ title: Clothing Modifications
 "implement_prompt": "Pad with leather",      // 改造を実行する際に表示されるプロンプト
 "destroy_prompt": "Destroy leather padding", // 改造を取り消す(破壊する)際に表示されるプロンプト
 "restricted": true,       // (任意) trueの場合、衣服側の "valid_mods" リストにこのフラグが含まれていないと改造できません。デフォルトは false。
+"use_base_material": true, // (任意) trueの場合、item フィールドのアイテムではなく衣服の基本素材の1つを使います。デフォルトは false。
 "mod_value": [            // 改造による効果のリスト
     {
         "type": "bash",   // 効果の種類。"bash"(打撃), "cut"(斬撃), "bullet"(銃弾), "fire"(耐火), "acid"(耐酸), "warmth"(保温性), "storage"(収納容量), "encumbrance"(動作制限)が利用可能。

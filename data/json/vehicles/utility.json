@@ -14,7 +14,11 @@
       { "x": 1, "y": 0, "parts": [ "frame_horizontal", "board_horizontal", "headlight", "omnicam" ] },
       { "x": 1, "y": 1, "parts": [ "frame_horizontal", "wheel_mount_medium_steerable", "wheel", "board_ne" ] },
       { "x": -2, "y": 0, "parts": [ "frame_horizontal", "hatch" ] },
-      { "x": 0, "y": 0, "parts": [ "frame_vertical_2", "robot_controls", "engine_electric", "roof" ] },
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [ "frame_vertical_2", "robot_controls", "vehicle_alarm", "engine_electric", "roof" ]
+      },
       { "x": -1, "y": 0, "parts": [ "frame_vertical_2", "roof", "vehicle_scoop" ] },
       {
         "x": -2,

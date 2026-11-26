@@ -17,13 +17,14 @@ static void set_single_trait(player& dummy, std::string trait_name) {
 }
 
 // Return player `metabolic_rate_base` with a given mutation
-static float metabolic_rate_with_mutation(player& dummy, std::string trait_name) {
+static auto metabolic_rate_with_mutation(player& dummy, std::string trait_name) -> float {
     set_single_trait(dummy, trait_name);
     return dummy.metabolic_rate_base();
 }
 
 // Return player `height()` with a given base height and size trait (SMALL, MEDIUM, LARGE, HUGE).
-static int height_with_base_and_size(player& dummy, int base_height, std::string size_trait) {
+static auto height_with_base_and_size(player& dummy, int base_height, std::string size_trait)
+    -> int {
     clear_character(dummy);
     dummy.mod_base_height(base_height - dummy.base_height());
 

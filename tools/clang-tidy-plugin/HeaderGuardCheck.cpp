@@ -17,20 +17,20 @@ CataHeaderGuardCheck::CataHeaderGuardCheck(StringRef Name, ClangTidyContext* Con
     : ClangTidyCheck(Name, Context) {}
 
 /// \brief canonicalize a path by removing ./ and ../ components.
-static std::string cleanPath(StringRef Path) {
+static auto cleanPath(StringRef Path) -> std::string {
     SmallString<256> Result = Path;
     llvm::sys::path::remove_dots(Result, true);
     return Result.str().str();
 }
 
-static bool pathExists(const std::string& path) {
+static auto pathExists(const std::string& path) -> bool {
     struct stat buffer;
     return (stat(path.c_str(), &buffer) == 0);
 }
 
-static bool isHeaderFileName(StringRef FileName) { return FileName.contains(".h"); }
+static auto isHeaderFileName(StringRef FileName) -> bool { return FileName.contains(".h"); }
 
-static std::string getHeaderGuard(StringRef Filename) {
+static auto getHeaderGuard(StringRef Filename) -> std::string {
     std::string Guard = tooling::getAbsolutePath(Filename);
 
     // Look for the top-level directory
@@ -59,7 +59,9 @@ static std::string getHeaderGuard(StringRef Filename) {
     return StringRef(Guard).upper();
 }
 
-static std::string formatEndIf(StringRef HeaderGuard) { return "endif // " + HeaderGuard.str(); }
+static auto formatEndIf(StringRef HeaderGuard) -> std::string {
+    return "endif // " + HeaderGuard.str();
+}
 
 struct MacroInfo_ {
     Token Tok;
@@ -84,7 +86,7 @@ class HeaderGuardPPCallbacks: public PPCallbacks {
 public:
     HeaderGuardPPCallbacks(Preprocessor* PP, CataHeaderGuardCheck* Check): PP(PP), Check(Check) {}
 
-    std::string GetFileName(SourceLocation Loc) {
+    auto GetFileName(SourceLocation Loc) -> std::string {
         SourceManager& SM = PP->getSourceManager();
         FileID Id = SM.getFileID(Loc);
         if (const OptionalFileEntryRef Entry = SM.getFileEntryRefForID(Id)) {
@@ -197,8 +199,8 @@ public:
         FileInfos.clear();
     }
 
-    bool wouldFixEndifComment(
-        SourceLocation EndIf, StringRef HeaderGuard, size_t* EndIfLenPtr = nullptr) {
+    auto wouldFixEndifComment(
+        SourceLocation EndIf, StringRef HeaderGuard, size_t* EndIfLenPtr = nullptr) -> bool {
         if (!EndIf.isValid()) { return false; }
         const char* EndIfData = PP->getSourceManager().getCharacterData(EndIf);
         // NOLINTNEXTLINE(cata-text-style)
@@ -221,9 +223,9 @@ public:
     /// \brief Look for header guards that don't match the preferred style. Emit
     /// fix-its and return the suggested header guard (or the original if no
     /// change was made.
-    static std::string checkHeaderGuardDefinition(
+    static auto checkHeaderGuardDefinition(
         SourceLocation Ifndef, SourceLocation Define, StringRef FileName, StringRef CurHeaderGuard,
-        std::vector<FixItHint>& FixIts) {
+        std::vector<FixItHint>& FixIts) -> std::string {
         std::string CPPVar = getHeaderGuard(FileName);
 
         if (CPPVar.empty()) { return CurHeaderGuard.str(); }

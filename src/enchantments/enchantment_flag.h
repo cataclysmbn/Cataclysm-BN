@@ -20,11 +20,11 @@ public:
 
     void check() const;
 
-    static std::vector<enchantment_flag> get_all();
+    static auto get_all() -> std::vector<enchantment_flag>;
 
     static void reset();
 
-    std::set<enchantment_flag_id> get_parents() const;
+    auto get_parents() const -> std::set<enchantment_flag_id>;
 
     enchantment_flag_id id;
 
@@ -37,6 +37,6 @@ public:
     std::set<enchantment_flag_id> parents = std::set<enchantment_flag_id>();
 
     // Needed for bindings
-    bool operator==(const enchantment_flag& rhs) const { return id == rhs.id; }
-    bool operator<(const enchantment_flag& rhs) const { return id < rhs.id; }
+    auto operator==(const enchantment_flag& rhs) const -> bool { return id == rhs.id; }
+    auto operator<(const enchantment_flag& rhs) const -> bool { return id < rhs.id; }
 };

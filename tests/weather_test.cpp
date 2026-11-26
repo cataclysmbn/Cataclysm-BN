@@ -1,28 +1,36 @@
-#include "../src/weather/weather_gen.h"
+#include "avatar.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
 #include "coordinates.h"
+#include "game.h"
+#include "json.h"
+#include "map_helpers.h"
+#include "regional_settings.h"
+#include "state_helpers.h"
 #include "weather/weather.h"
+#include "weather/weather_gen.h"
 
 #include <algorithm>
 #include <memory>
+#include <sstream>
 #include <vector>
 
-static double mean_abs_running_diff(std::vector<double> const& v) {
+static auto mean_abs_running_diff(std::vector<double> const& v) -> double {
     double x = 0;
     int n = v.size() - 1;
     for (int i = 0; i < n; ++i) { x += std::abs(v[i + 1] - v[i]); }
     return x / n;
 }
 
-static double mean_pairwise_diffs(std::vector<double> const& a, std::vector<double> const& b) {
+static auto mean_pairwise_diffs(std::vector<double> const& a, std::vector<double> const& b)
+    -> double {
     double x = 0;
     int n = a.size();
     for (int i = 0; i < n; ++i) { x += a[i] - b[i]; }
     return x / n;
 }
 
-static double proportion_gteq_x(std::vector<double> const& v, double x) {
+static auto proportion_gteq_x(std::vector<double> const& v, double x) -> double {
     int count = 0;
     for (auto i : v) { count += (i >= x); }
     return static_cast<double>(count) / v.size();
@@ -130,6 +138,100 @@ TEST_CASE("water temperatures track season temperatures", "[weather]") {
     CHECK(spring_water_temperature > winter_water_temperature);
     CHECK(summer_water_temperature > spring_water_temperature);
     CHECK(summer_water_temperature == 30_c);
+}
+
+TEST_CASE("weather_pattern_requirements_gate_weather_selection", "[weather][json]") {
+    const auto basic = weather_type_id("test_weather_basic");
+    const auto patterned = weather_type_id(
+        GENERATE("test_weather_pattern_thresholds", "test_weather_pattern_presence"));
+    const auto front = weather_pattern_id("test_weather_front");
+    const auto secondary = weather_pattern_id("test_weather_secondary");
+    REQUIRE(patterned.is_valid());
+    const auto& requirements = patterned->requirements.required_weather_patterns;
+    REQUIRE(requirements.contains(front));
+    const auto threshold =
+        patterned == weather_type_id("test_weather_pattern_thresholds") ? 1.0 : 0.0;
+    CHECK(requirements.at(front) == threshold);
+
+    auto generator = weather_generator();
+    generator.weather_types = {basic, patterned};
+    auto sample = w_point();
+    CHECK(generator.get_weather_conditions(sample) == basic);
+
+    sample.pattern_values[secondary] = 2.0;
+    sample.pattern_values[front] = threshold - 0.01;
+    CHECK(generator.get_weather_conditions(sample) == basic);
+
+    sample.pattern_values[front] = threshold;
+    CHECK(generator.get_weather_conditions(sample) == patterned);
+    if (requirements.contains(secondary)) {
+        CHECK(requirements.at(secondary) == 2.0);
+        sample.pattern_values.erase(secondary);
+        CHECK(generator.get_weather_conditions(sample) == basic);
+        sample.pattern_values[secondary] = 1.99;
+        CHECK(generator.get_weather_conditions(sample) == basic);
+    }
+}
+
+TEST_CASE("region_overlay_changes_base_weather", "[weather][json]") {
+    auto region = regional_settings();
+    auto input = std::istringstream(R"({"base_weather":"test_weather_base"})");
+    auto reader = JsonIn(input);
+    apply_region_overlay(reader.get_object(), region);
+    CHECK(region.weather.id == base_weather_id("test_weather_base"));
+    CHECK(
+        region.weather.weather_types
+        == std::vector<weather_type_id>{
+            weather_type_id("test_weather_basic"),
+            weather_type_id("test_weather_pattern_thresholds")});
+}
+
+TEST_CASE("weather refreshes when the player crosses a submap", "[weather]") {
+    clear_all_state();
+    build_test_map(ter_id("t_floor"));
+
+    auto& weather = get_weather();
+    auto& you = get_avatar();
+
+    const auto start_sm = you.abs_sm_pos();
+    const auto start_pos = project_combine(start_sm, point_sm_ms(SEEX - 2, 1));
+    const auto same_submap_pos = project_combine(start_sm, point_sm_ms(SEEX - 1, 1));
+    const auto next_sm = tripoint_abs_sm(start_sm.x() + 1, start_sm.y(), start_sm.z());
+    const auto next_submap_pos = project_combine(next_sm, point_sm_ms(0, 1));
+
+    REQUIRE(project_to<coords::sm>(start_pos) == project_to<coords::sm>(same_submap_pos));
+    REQUIRE(project_to<coords::sm>(start_pos) != project_to<coords::sm>(next_submap_pos));
+
+    you.setpos(start_pos);
+    weather.set_nextweather(calendar::turn);
+    const auto refreshed_pos = weather.last_weather_position;
+
+    weather.nextweather = calendar::turn + 1_hours;
+    you.setpos(same_submap_pos);
+    weather.update_weather();
+    CHECK(weather.last_weather_position == refreshed_pos);
+
+    you.setpos(next_submap_pos);
+    weather.update_weather();
+    CHECK(weather.last_weather_position == next_submap_pos);
+}
+
+TEST_CASE("forecast representative weather prefers the most common sample", "[weather]") {
+    const auto& wgen = get_weather().get_cur_weather_gen();
+    const auto representative = wgen.choose_representative_weather(
+        {{weather_type_id("cloudy"), 4},
+         {weather_type_id("rain"), 2},
+         {weather_type_id("thunder"), 1}});
+
+    CHECK(representative == weather_type_id("cloudy"));
+}
+
+TEST_CASE("forecast representative weather breaks ties by forecast priority", "[weather]") {
+    const auto& wgen = get_weather().get_cur_weather_gen();
+    const auto representative = wgen.choose_representative_weather(
+        {{weather_type_id("rain"), 2}, {weather_type_id("thunder"), 2}});
+
+    CHECK(representative == weather_type_id("thunder"));
 }
 
 TEST_CASE("weather realism", "[.]")

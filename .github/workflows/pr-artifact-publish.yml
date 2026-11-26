@@ -50,7 +50,7 @@ jobs:
 
       - name: Check out workflow actions
         if: steps.pr.outputs.found == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Publish pull request artifact links
         if: steps.pr.outputs.found == 'true'

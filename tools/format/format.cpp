@@ -143,7 +143,7 @@ static void format(JsonIn& jsin, JsonOut& jsout, int depth, bool force_wrap) {
     }
 }
 
-int main(int argc, char* argv[]) {
+auto main(int argc, char* argv[]) -> int {
     std::stringstream in;
     std::stringstream out;
     std::string filename;

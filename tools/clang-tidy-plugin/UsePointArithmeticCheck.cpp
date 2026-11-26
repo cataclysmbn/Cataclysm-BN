@@ -100,27 +100,29 @@ struct ExpressionComponent {
     bool isArrowRef;
     bool isTripoint;
 
-    std::tuple<bool, std::string, bool> sortKey() const {
+    auto sortKey() const -> std::tuple<bool, std::string, bool> {
         return std::make_tuple(isMember, objectRef, isArrowRef);
     }
 
-    bool canConsolidateWith(const ExpressionComponent& other) const {
+    auto canConsolidateWith(const ExpressionComponent& other) const -> bool {
         return sortKey() == other.sortKey();
     }
 
     void consolidate(const ExpressionComponent& other) { coefficient += other.coefficient; }
 };
 
-static bool operator<(const ExpressionComponent& l, const ExpressionComponent& r) {
+static auto operator<(const ExpressionComponent& l, const ExpressionComponent& r) -> bool {
     // NOLINTNEXTLINE(cata-use-localized-sorting)
     return l.sortKey() < r.sortKey();
 }
 
-static bool operator>(const ExpressionComponent& l, const ExpressionComponent& r) { return r < l; }
+static auto operator>(const ExpressionComponent& l, const ExpressionComponent& r) -> bool {
+    return r < l;
+}
 
-static std::vector<ExpressionComponent> handleMultiply(
+static auto handleMultiply(
     const Expr* LhsE, const Expr* RhsE, std::vector<ExpressionComponent> LhsC,
-    std::vector<ExpressionComponent> RhsC) {
+    std::vector<ExpressionComponent> RhsC) -> std::vector<ExpressionComponent> {
     auto updateComponents =
         [&](std::vector<ExpressionComponent>& Components, const IntegerLiteral* CoeffExpr) {
             int Value = CoeffExpr->getValue().getZExtValue();
@@ -142,8 +144,9 @@ static std::vector<ExpressionComponent> handleMultiply(
     return {};
 }
 
-static std::vector<ExpressionComponent> decomposeExpr(
-    const Expr* E, const std::string& Member, const MatchFinder::MatchResult& Result) {
+static auto decomposeExpr(
+    const Expr* E, const std::string& Member, const MatchFinder::MatchResult& Result)
+    -> std::vector<ExpressionComponent> {
     auto anyHaveMember = [](const std::vector<ExpressionComponent>& Components) {
         auto isMember = [](const ExpressionComponent& C) { return C.isMember; };
         return std::any_of(Components.begin(), Components.end(), isMember);
@@ -268,8 +271,8 @@ static std::vector<ExpressionComponent> decomposeExpr(
     }
 }
 
-static std::vector<ExpressionComponent> consolidateComponents(
-    std::vector<ExpressionComponent> components) {
+static auto consolidateComponents(std::vector<ExpressionComponent> components)
+    -> std::vector<ExpressionComponent> {
     std::sort(components.begin(), components.end());
     std::vector<ExpressionComponent> result;
     for (const ExpressionComponent& component : components) {
@@ -314,9 +317,9 @@ static void appendCoefficient(std::string& Result, int coefficient) {
     }
 }
 
-static std::string writeConstructor(
+static auto writeConstructor(
     const StringRef TypeName, const std::set<std::string>& Keys,
-    std::map<std::string, std::string> Args) {
+    std::map<std::string, std::string> Args) -> std::string {
     std::string Result = TypeName.str() + "( ";
     bool AnyLeftovers = false;
     for (const auto& Key : Keys) {

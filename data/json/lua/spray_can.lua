@@ -5,6 +5,7 @@ local choose_color = function(params)
   if params.crafting_menu then return end
   local item = params.item
   if item == nil or not item:has_use( "paint_stuff" ) then return end
+  if item:has_var("PAINT_COLOR") then return end
 
   local allcolors = rgb_colors.get_all_named_colors()
   local menu = UiList.new()

@@ -16,12 +16,13 @@ StringLiteralIterator::StringLiteralIterator(const StringLiteral& str, const siz
     : str(str),
       ind(ind) {}
 
-SourceLocation StringLiteralIterator::toSourceLocation(
-    const SourceManager& SrcMgr, const LangOptions& LangOpts, const TargetInfo& Info) const {
+auto StringLiteralIterator::toSourceLocation(
+    const SourceManager& SrcMgr, const LangOptions& LangOpts, const TargetInfo& Info) const
+    -> SourceLocation {
     return str.get().getLocationOfByte(ind, SrcMgr, LangOpts, Info);
 }
 
-uint32_t StringLiteralIterator::operator*() const {
+auto StringLiteralIterator::operator*() const -> uint32_t {
     uint32_t ch = str.get().getCodeUnit(ind);
     unsigned int n;
     if (ch >= 0xFC) {
@@ -51,31 +52,31 @@ uint32_t StringLiteralIterator::operator*() const {
     return ch;
 }
 
-bool StringLiteralIterator::operator<(const StringLiteralIterator& rhs) const {
+auto StringLiteralIterator::operator<(const StringLiteralIterator& rhs) const -> bool {
     return ind < rhs.ind;
 }
 
-bool StringLiteralIterator::operator>(const StringLiteralIterator& rhs) const {
+auto StringLiteralIterator::operator>(const StringLiteralIterator& rhs) const -> bool {
     return rhs.operator<(*this);
 }
 
-bool StringLiteralIterator::operator<=(const StringLiteralIterator& rhs) const {
+auto StringLiteralIterator::operator<=(const StringLiteralIterator& rhs) const -> bool {
     return !rhs.operator<(*this);
 }
 
-bool StringLiteralIterator::operator>=(const StringLiteralIterator& rhs) const {
+auto StringLiteralIterator::operator>=(const StringLiteralIterator& rhs) const -> bool {
     return !operator<(rhs);
 }
 
-bool StringLiteralIterator::operator==(const StringLiteralIterator& rhs) const {
+auto StringLiteralIterator::operator==(const StringLiteralIterator& rhs) const -> bool {
     return ind == rhs.ind;
 }
 
-bool StringLiteralIterator::operator!=(const StringLiteralIterator& rhs) const {
+auto StringLiteralIterator::operator!=(const StringLiteralIterator& rhs) const -> bool {
     return !operator==(rhs);
 }
 
-StringLiteralIterator& StringLiteralIterator::operator+=(ptrdiff_t inc) {
+auto StringLiteralIterator::operator+=(ptrdiff_t inc) -> StringLiteralIterator& {
     if (inc == 0) {
         return *this;
     } else if (inc > 0) {
@@ -107,44 +108,46 @@ StringLiteralIterator& StringLiteralIterator::operator+=(ptrdiff_t inc) {
     return *this;
 }
 
-StringLiteralIterator& StringLiteralIterator::operator-=(ptrdiff_t dec) { return operator+=(-dec); }
+auto StringLiteralIterator::operator-=(ptrdiff_t dec) -> StringLiteralIterator& {
+    return operator+=(-dec);
+}
 
-StringLiteralIterator StringLiteralIterator::operator+(ptrdiff_t inc) const {
+auto StringLiteralIterator::operator+(ptrdiff_t inc) const -> StringLiteralIterator {
     StringLiteralIterator ret = *this;
     ret.operator+=(inc);
     return ret;
 }
 
-StringLiteralIterator StringLiteralIterator::operator-(ptrdiff_t dec) const {
+auto StringLiteralIterator::operator-(ptrdiff_t dec) const -> StringLiteralIterator {
     return operator+(-dec);
 }
 
-StringLiteralIterator& StringLiteralIterator::operator++() { return operator+=(1); }
+auto StringLiteralIterator::operator++() -> StringLiteralIterator& { return operator+=(1); }
 
-StringLiteralIterator StringLiteralIterator::operator++(int) {
+auto StringLiteralIterator::operator++(int) -> StringLiteralIterator {
     StringLiteralIterator ret = *this;
     operator++();
     return ret;
 }
 
-StringLiteralIterator& StringLiteralIterator::operator--() { return operator-=(1); }
+auto StringLiteralIterator::operator--() -> StringLiteralIterator& { return operator-=(1); }
 
-StringLiteralIterator StringLiteralIterator::operator--(int) {
+auto StringLiteralIterator::operator--(int) -> StringLiteralIterator {
     StringLiteralIterator ret = *this;
     operator--();
     return ret;
 }
 
-StringLiteralIterator StringLiteralIterator::begin(const StringLiteral& str) {
+auto StringLiteralIterator::begin(const StringLiteral& str) -> StringLiteralIterator {
     return StringLiteralIterator(str, 0);
 }
 
-StringLiteralIterator StringLiteralIterator::end(const StringLiteral& str) {
+auto StringLiteralIterator::end(const StringLiteral& str) -> StringLiteralIterator {
     return StringLiteralIterator(str, str.getLength());
 }
 
-ptrdiff_t StringLiteralIterator::distance(
-    const StringLiteralIterator& beg, const StringLiteralIterator& end) {
+auto StringLiteralIterator::distance(
+    const StringLiteralIterator& beg, const StringLiteralIterator& end) -> ptrdiff_t {
     if (beg <= end) {
         ptrdiff_t dist = 0;
         for (auto it = beg; it < end; ++it, ++dist) {}

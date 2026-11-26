@@ -117,6 +117,10 @@ is reported to callbacks as absolute map-square coordinates.
 - rest_amount( 0.0 ) : How restful the activity is with respects to HP recovery. A rest_amount
   of 0.2 gives 20% of the HP recovery sleeping would give while the activity is being performed.
 
+- suppress_comfort_lines( false ) : If false, lines regarding how comfortable the player is will
+  display while performing an activity with rest_amount greater than zero. True will suppress
+  these lines.
+
 ## Termination
 
 There are several ways an activity can be ended:

@@ -10,13 +10,13 @@ static void cata_assert(bool expr) {
 }
 
 namespace map_helpers {
-const std::string& canvas_legend::entry(char32_t c) const {
+auto canvas_legend::entry(char32_t c) const -> const std::string& {
     auto it = data.find(c);
     cata_assert(it != data.end());
     return it->second;
 }
 
-char32_t canvas_legend::key_for(const std::string& s) const {
+auto canvas_legend::key_for(const std::string& s) const -> char32_t {
     for (const auto& it : data) {
         if (it.second == s) { return it.first; }
     }
@@ -30,7 +30,7 @@ canvas::canvas(const tripoint& size) {
         std::vector<std::u32string>(size.y, std::u32string(size.x, canvas_legend::key_invalid)));
 }
 
-tripoint canvas::calc_size() const {
+auto canvas::calc_size() const -> tripoint {
     if (data.empty() || data[0].empty()) {
         return tripoint_zero;
     } else {
@@ -47,7 +47,7 @@ void canvas::assert_size(const tripoint& sz) const {
     }
 }
 
-std::string canvas::to_string() const {
+auto canvas::to_string() const -> std::string {
     std::string res;
     res += "\n";
     for (size_t i = 0; i < data.size(); i++) {
@@ -61,7 +61,7 @@ std::string canvas::to_string() const {
     return res;
 }
 
-std::vector<tripoint> canvas::replace(char32_t what, char32_t with) {
+auto canvas::replace(char32_t what, char32_t with) -> std::vector<tripoint> {
     std::vector<tripoint> ret;
     tripoint p;
     for (p.z = 0; p.z < size().z; p.z++) {
@@ -77,13 +77,13 @@ std::vector<tripoint> canvas::replace(char32_t what, char32_t with) {
     return ret;
 }
 
-tripoint canvas::replace_unique(char32_t what, char32_t with) {
+auto canvas::replace_unique(char32_t what, char32_t with) -> tripoint {
     std::vector<tripoint> candidates = replace(what, with);
     cata_assert(candidates.size() == 1);
     return candidates.front();
 }
 
-std::optional<tripoint> canvas::replace_opt(char32_t what, char32_t with) {
+auto canvas::replace_opt(char32_t what, char32_t with) -> std::optional<tripoint> {
     std::vector<tripoint> candidates = replace(what, with);
     cata_assert(candidates.size() <= 1);
     if (candidates.empty()) {
@@ -93,7 +93,7 @@ std::optional<tripoint> canvas::replace_opt(char32_t what, char32_t with) {
     }
 }
 
-canvas canvas::rotated(int turns) const {
+auto canvas::rotated(int turns) const -> canvas {
     const tripoint new_size = size_cache.rotate_2d(turns).abs();
     canvas ret(new_size);
     tripoint p;
@@ -119,7 +119,7 @@ void canvas_adapter::set_all(const canvas& c) {
     }
 }
 
-canvas canvas_adapter::extract_to_canvas(const tripoint& sz) {
+auto canvas_adapter::extract_to_canvas(const tripoint& sz) -> canvas {
     cata_assert(l);
     cata_assert(!!getter);
     canvas ret(sz);

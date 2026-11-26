@@ -51,6 +51,7 @@ class distribution_grid;
 class distribution_grid_tracker;
 class effect;
 class overmapbuffer;
+class enchantment;
 class enchantment_value;
 class enchantment_flag;
 class effect_type;
@@ -67,8 +68,10 @@ class mission;
 class monster;
 class npc;
 class player;
+class perk;
 class query_popup;
 class recipe;
+class scenario;
 class Skill;
 class SkillLevel;
 class SkillLevelMap;
@@ -87,6 +90,7 @@ struct dealt_damage_instance;
 struct fake_spell;
 struct field_type;
 struct mutation_branch;
+struct mutation_category_trait;
 struct mission_type;
 struct npc_opinion;
 struct npc_personality;
@@ -94,7 +98,7 @@ struct omt_find_params;
 struct oter_t;
 struct species_type;
 struct trap;
-struct MonsterGroup;
+class MonsterGroup;
 struct uilist_entry;
 struct book_recipe;
 struct MonsterGroupEntry;
@@ -252,6 +256,7 @@ LUNA_ID( activity_type, "ActivityType" )
 LUNA_ID( bionic_data, "BionicData" )
 LUNA_ID( body_part_type, "BodyPartType" )
 LUNA_ID( disease_type, "DiseaseType" )
+LUNA_VAL_WITH_ID( enchantment, "Enchantment" )
 LUNA_ID( enchantment_value, "EnchantmentValue" )
 LUNA_ID( enchantment_flag, "EnchantmentFlag" )
 LUNA_ID( effect_type, "EffectType" )
@@ -274,12 +279,14 @@ LUNA_ID( mutation_branch, "MutationBranch" )
 LUNA_ID( mutation_category_trait, "MutationCategoryTrait" )
 LUNA_ID( oter_t, "Oter" )
 LUNA_ID( recipe, "Recipe" )
+LUNA_ID( scenario, "Scenario" )
 LUNA_ID( Skill, "Skill" )
 LUNA_ID( species_type, "SpeciesType" )
 LUNA_ID( spell_type, "SpellType" )
 LUNA_ID( ter_t, "Ter" )
 LUNA_ID( trap, "Trap" )
 LUNA_ID( MonsterGroup, "MonsterGroup" )
+LUNA_ID( perk, "Perk" )
 LUNA_ID( weapon_category, "WeaponCategory" )
 LUNA_ID( emit, "FieldEmit" )
 LUNA_ID( fault, "Fault" )

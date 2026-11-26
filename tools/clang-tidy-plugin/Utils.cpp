@@ -26,7 +26,7 @@ NameConvention::NameConvention(StringRef xName) {
     }
 }
 
-NameConvention::MatchResult NameConvention::Match(StringRef name) const {
+auto NameConvention::Match(StringRef name) const -> NameConvention::MatchResult {
     if (name.empty()) { return None; }
 
     StringRef Root = atEnd ? name.drop_back() : name.drop_front();

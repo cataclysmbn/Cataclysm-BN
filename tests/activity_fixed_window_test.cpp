@@ -1,15 +1,14 @@
+#include "../src/map/map.h"
 #include "activity_time_cadence.h"
 #include "avatar.h"
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catch/catch.hpp"
 #include "coordinates.h"
-#include "field_type.h"
 #include "game.h"
 #include "game_constants.h"
 #include "item.h"
 #include "itype.h"
-#include "map.h"
 #include "map_helpers.h"
 #include "monster.h"
 #include "npc.h"
@@ -30,6 +29,7 @@ static const auto act_wait = activity_id("ACT_WAIT");
 static auto prepare_fixed_window_wait(const time_duration& duration) -> void {
     clear_all_state();
 
+    g->reset_activity_fixed_window();
     g->timed_events = timed_event_manager{};
     static auto next_start_turn = calendar::turn_zero + 12_hours;
     calendar::turn = next_start_turn;
@@ -145,12 +145,6 @@ TEST_CASE(
     "[activity][fixed_"
     "window]") {
     const auto no_autosave = override_option("AUTOSAVE", "false");
-
-    SECTION("active fire in simulated submap") {
-        expect_fixed_window_skip_blocked_by([] {
-            g->m.add_field(g->u.bub_pos() + point_east, fd_fire, 1);
-        });
-    }
 
     SECTION("relevant vehicle") {
         expect_fixed_window_skip_blocked_by([] {

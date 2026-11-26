@@ -1,3 +1,4 @@
+#include "../src/map/map.h"
 #include "../src/vehicle/vehicle_part.h"
 #include "../src/vehicle/vehicle_selector.h"
 #include "../src/vehicle/vpart_position.h"
@@ -11,9 +12,8 @@
 #include "item.h"
 #include "item_contents.h"
 #include "itype.h"
-#include "map.h"
+#include "map/map_selector.h"
 #include "map_helpers.h"
-#include "map_selector.h"
 #include "player.h"
 #include "rng.h"
 #include "state_helpers.h"
@@ -28,7 +28,7 @@
 #include <string>
 #include <vector>
 
-template <typename T> static int count_items(const T& src, const itype_id& id) {
+template <typename T> static auto count_items(const T& src, const itype_id& id) -> int {
     int n = 0;
     src.visit_items([&n, &id](const item* e) {
         n += (e->typeId() == id);

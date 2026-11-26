@@ -1,10 +1,6 @@
-#include "activity_actor_definitions.h"
 #include "salvage.h"
 
-#include <set>
-#include <unordered_map>
-#include <vector>
-
+#include "activity_actor_definitions.h"
 #include "activity_speed.h"
 #include "character.h"
 #include "flag.h"
@@ -12,7 +8,7 @@
 #include "item.h"
 #include "itype.h"
 #include "json.h"
-#include "map.h"
+#include "map/map.h"
 #include "material.h"
 #include "messages.h"
 #include "options.h"
@@ -23,6 +19,10 @@
 #include "recipe_dictionary.h"
 #include "type_id.h"
 #include "ui_manager.h"
+
+#include <set>
+#include <unordered_map>
+#include <vector>
 
 static const skill_id skill_fabrication( "fabrication" );
 

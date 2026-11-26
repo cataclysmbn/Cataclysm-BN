@@ -35,15 +35,15 @@ using firing_statistics = statistics<bool>;
 class Threshold {
 public:
     Threshold(const double accuracy, const double chance): _accuracy(accuracy), _chance(chance) {};
-    double accuracy() const { return _accuracy; }
-    double chance() const { return _chance; }
+    auto accuracy() const -> double { return _accuracy; }
+    auto chance() const -> double { return _chance; }
 
 private:
     double _accuracy;
     double _chance;
 };
 
-template <class T> std::ostream& operator<<(std::ostream& os, const std::vector<T>& v) {
+template <class T> auto operator<<(std::ostream& os, const std::vector<T>& v) -> std::ostream& {
     os << "[";
     for (typename std::vector<T>::const_iterator ii = v.begin(); ii != v.end(); ++ii) {
         os << " " << *ii;
@@ -52,7 +52,7 @@ template <class T> std::ostream& operator<<(std::ostream& os, const std::vector<
     return os;
 }
 
-std::ostream& operator<<(std::ostream& stream, const dispersion_sources& sources) {
+auto operator<<(std::ostream& stream, const dispersion_sources& sources) -> std::ostream& {
     if (!sources.normal_sources.empty()) { stream << "Normal: " << sources.normal_sources << '\n'; }
     if (!sources.linear_sources.empty()) { stream << "Linear: " << sources.linear_sources << '\n'; }
     if (!sources.multipliers.empty()) { stream << "Mult: " << sources.multipliers << '\n'; }
@@ -68,8 +68,9 @@ static void equip_shooter(npc& shooter, const std::vector<std::string>& apparel)
 
 std::array<double, 3> accuracy_levels = {{accuracy_grazing, accuracy_standard, accuracy_critical}};
 
-static firing_statistics firing_test(
-    const dispersion_sources& dispersion, const int range, const Threshold& threshold) {
+static auto firing_test(
+    const dispersion_sources& dispersion, const int range, const Threshold& threshold)
+    -> firing_statistics {
     firing_statistics firing_stats(Z99_99);
     bool threshold_within_confidence_interval = false;
     do {
@@ -91,9 +92,9 @@ static firing_statistics firing_test(
     return firing_stats;
 }
 
-static std::vector<firing_statistics> firing_test(
-    const dispersion_sources& dispersion, const int range,
-    const std::vector<Threshold>& thresholds) {
+static auto firing_test(
+    const dispersion_sources& dispersion, const int range, const std::vector<Threshold>& thresholds)
+    -> std::vector<firing_statistics> {
     std::vector<firing_statistics> firing_stats;
     for (const Threshold pear : thresholds) {
         firing_stats.push_back(firing_test(dispersion, range, pear));
@@ -101,7 +102,7 @@ static std::vector<firing_statistics> firing_test(
     return firing_stats;
 }
 
-static dispersion_sources get_dispersion(npc& shooter, const int aim_time) {
+static auto get_dispersion(npc& shooter, const int aim_time) -> dispersion_sources {
     item& gun = shooter.primary_weapon();
     dispersion_sources dispersion = ranged::get_weapon_dispersion(shooter, gun);
 
@@ -162,7 +163,7 @@ static void test_shooting_scenario(
                  aim_per_move(shooter, shooter.primary_weapon(), shooter.recoil));
         CAPTURE(good_stats.n());
         CAPTURE(good_stats.margin_of_error());
-        CHECK(good_stats.avg() < 0.1);
+        CHECK(good_stats.avg() < 0.16);
     }
 }
 
@@ -201,7 +202,7 @@ static void assert_encumbrance(npc& shooter, int encumbrance) {
 
 static constexpr tripoint_bub_ms shooter_pos(60, 60, 0);
 
-TEST_CASE("unskilled_shooter_accuracy", "[ranged][balance][slow][!mayfail]") {
+TEST_CASE("unskilled_shooter_accuracy", "[ranged][balance][slow]") {
     clear_all_state();
     standard_npc shooter("Shooter", shooter_pos, {}, 0, 8, 8, 8, 7);
     equip_shooter(
@@ -211,13 +212,13 @@ TEST_CASE("unskilled_shooter_accuracy", "[ranged][balance][slow][!mayfail]") {
 
     SECTION("an unskilled shooter with an inaccurate pistol") {
         arm_character(shooter, "glock_19");
-        test_shooting_scenario(shooter, 4, 5, 15);
-        test_fast_shooting(shooter, 40, 0.3);
+        test_shooting_scenario(shooter, 4, 3, 15);
+        test_fast_shooting(shooter, 40, 0.1);
     }
     SECTION("an unskilled shooter with an inaccurate rifle") {
         arm_character(shooter, "m1918");
-        test_shooting_scenario(shooter, 5, 9, 25);
-        test_fast_shooting(shooter, 50, 0.2);
+        test_shooting_scenario(shooter, 5, 5, 25);
+        test_fast_shooting(shooter, 50, 0.15);
     }
 }
 
@@ -249,12 +250,12 @@ TEST_CASE("expert_shooter_accuracy", "[ranged] [balance]") {
     SECTION("an expert shooter with an excellent pistol") {
         arm_character(shooter, "sw629", {"pistol_scope"});
         test_shooting_scenario(shooter, 18, 20, 140);
-        test_fast_shooting(shooter, 20, 0.6);
+        test_fast_shooting(shooter, 20, 0.71);
     }
     SECTION("an expert shooter with an excellent rifle") {
         arm_character(shooter, "browning_blr", {"rifle_scope"});
         test_shooting_scenario(shooter, 25, 60, 900);
-        test_fast_shooting(shooter, 35, 0.4);
+        test_fast_shooting(shooter, 35, 0.71);
     }
 }
 

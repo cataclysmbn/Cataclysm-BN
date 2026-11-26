@@ -74,6 +74,14 @@ class melee_actor : public mattack_actor
         // If non-negative, the attack will use a different accuracy from mon's
         // regular melee attack.
         int accuracy = INT_MIN;
+        // Whether the attack requires the target to be grabbed
+        bool requires_grab = false;
+        // Maximum range of the attack
+        float max_range = 1.0f;
+        // Minimum range of the attack
+        float min_range = 1.0f;
+        // Throw strength of the attack, 0 means no throw
+        float throw_strength = 0.0f;
 
         /**
          * If empty, regular melee roll body part selection is used.
@@ -91,6 +99,8 @@ class melee_actor : public mattack_actor
         translation no_dmg_msg_u;
         /** Message for damaging hit against the player. */
         translation hit_dmg_u;
+        /** Message for a ranged attack against the player that hits an obstacle. */
+        translation bounce_msg_u;
 
         /** Message for missed attack against a non-player. */
         translation miss_msg_npc;
@@ -98,6 +108,8 @@ class melee_actor : public mattack_actor
         translation no_dmg_msg_npc;
         /** Message for damaging hit against a non-player. */
         translation hit_dmg_npc;
+        /** Message for a ranged attack against a non-player that hits an obstacle. */
+        translation bounce_msg_npc;
 
         melee_actor();
         ~melee_actor() override;
@@ -196,6 +208,7 @@ class gun_actor : public mattack_actor
 
         void load_internal( const JsonObject &obj, const std::string &src ) override;
         bool call( monster & ) const override;
+        void check( const mtype_id &src ) const override;
         std::unique_ptr<mattack_actor> clone() const override;
 };
 

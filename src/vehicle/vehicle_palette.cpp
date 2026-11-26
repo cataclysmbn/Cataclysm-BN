@@ -5,7 +5,7 @@
 #include "generic_factory.h"
 #include "hsv_color.h"
 #include "json.h"
-#include "map.h"
+#include "map/map.h"
 #include "memory_fast.h"
 #include "options.h"
 #include "point.h"
@@ -64,14 +64,14 @@ void VehiclePalette::check() const {
     }
 }
 
-int VehiclePalette::fuzzy_to_index(const vpart_id& id) const {
+auto VehiclePalette::fuzzy_to_index(const vpart_id& id) const -> int {
     for (auto const& [fuzzy, index] : fuzzy_color_match) {
         if (id.str().contains(fuzzy) || id.str() == fuzzy) { return index; }
     }
     return -1;
 }
 
-std::vector<RGBColor> VehiclePalette::pick_colors() const {
+auto VehiclePalette::pick_colors() const -> std::vector<RGBColor> {
     std::vector<RGBColor> result;
     for (const auto& colorlist : colors) {
         std::string colorstr = *colorlist.pick();

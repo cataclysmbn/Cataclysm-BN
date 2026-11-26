@@ -1871,5 +1871,15 @@
     "id": "mon_kraken_boss_death_drops",
     "//": "Adds to existing group",
     "entries": [ { "item": "essence", "count": [ 2, 5 ] } ]
+  },
+  {
+    "type": "item_group",
+    "id": "radiation_zombie_death_drops",
+    "//": "Adds to existing group",
+    "subtype": "collection",
+    "entries": [
+      { "distribution": [ { "item": "iridescent_plate", "prob": 25 }, { "item": "bone_twisted", "prob": 75 } ], "prob": 5 },
+      { "item": "essence_blood", "count": [ 2, 4 ], "prob": 10 }
+    ]
   }
 ]

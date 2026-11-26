@@ -17,7 +17,6 @@
 #include "debug.h"
 #include "enums.h"
 #include "explosion_queue.h"
-#include "field_type.h"
 #include "flag.h"
 #include "flat_set.h"
 #include "fragment_cloud.h" // IWYU pragma: associated
@@ -29,9 +28,10 @@
 #include "itype.h"
 #include "json.h"
 #include "line.h"
-#include "map.h"
+#include "map/field_type.h"
+#include "map/map.h"
+#include "map/mapdata.h"
 #include "map_iterator.h"
-#include "mapdata.h"
 #include "material.h"
 #include "math_defines.h"
 #include "messages.h"
@@ -1626,15 +1626,12 @@ void explosion_funcs::regular( const queued_explosion &qe )
     const explosion_data &ex = qe.exp_data;
     auto &shr = ex.fragment;
 
-    {
-        std::unique_lock lock( cata::lua_lock );
-        cata::run_hooks( "on_explosion_start", [&]( sol::table & params ) {
-            params["pos"] = cata::detail::lua_coords::to_lua( p );
-            params["damage"] = ex.damage;
-            params["radius"] = static_cast<int>( ex.radius );
-            params["fire"] = ex.fire;
-        } );
-    }
+    cata::run_hooks( "on_explosion_start", [&]( sol::table & params ) {
+        params["pos"] = cata::detail::lua_coords::to_lua( p );
+        params["damage"] = ex.damage;
+        params["radius"] = static_cast<int>( ex.radius );
+        params["fire"] = ex.fire;
+    } );
 
     // Explosions are very, very loud. A *small* landmine going off is about 155dB 1m away.
     // An antipersonel grenade/flashbang going off 1m away is about 170-180dB.
@@ -1703,7 +1700,7 @@ void explosion_funcs::regular( const queued_explosion &qe )
                                             _( "the shrapnel" );
             std::string damage_description = ( pr.second > 0 ) ?
                                              string_format( _( "taking %d damage" ), pr.second ) :
-                                             _( "but takes no damage" );
+                                             critter->is_player() ? _( "but take no damage" ) : _( "but takes no damage" );
             if( critter->is_player() ) {
                 add_msg( _( "You are hit by %s, %s." ),
                          cause_description, damage_description );
@@ -2082,8 +2079,10 @@ void explosion_funcs::resonance_cascade( const queued_explosion &qe )
                 case 13:
                 case 14:
                 case 15: {
-                    MonsterGroupResult spawn_details = MonsterGroupManager::GetResultFromGroup( GROUP_NETHER );
-                    g->place_critter_at( spawn_details.name, dest );
+                    auto spawn_details_vec = MonsterGroupManager::GetResultFromGroup( GROUP_NETHER );
+                    for( auto spawn_details : spawn_details_vec ) {
+                        g->place_critter_at( spawn_details.name, dest );
+                    }
                     break;
                 }
                 case 16:

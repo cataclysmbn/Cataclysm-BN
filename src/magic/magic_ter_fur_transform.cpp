@@ -3,9 +3,9 @@
 #include "generic_factory.h"
 #include "json.h"
 #include "magic/magic_ter_furn_transform.h"
-#include "map.h"
-#include "mapdata.h"
-#include "mapgen_constructor.h"
+#include "map/map.h"
+#include "map/mapdata.h"
+#include "mapgen/mapgen_constructor.h"
 #include "string_id.h"
 #include "type_id.h"
 #include "type_id_implement.h"
@@ -33,9 +33,11 @@ void ter_furn_transform::load_transform(const JsonObject& jo, const std::string&
 
 void ter_furn_transform::reset_all() { ter_furn_transform_factory.reset(); }
 
-bool ter_furn_transform::is_valid() const { return ter_furn_transform_factory.is_valid(this->id); }
+auto ter_furn_transform::is_valid() const -> bool {
+    return ter_furn_transform_factory.is_valid(this->id);
+}
 
-const std::vector<ter_furn_transform>& ter_furn_transform::get_all() {
+auto ter_furn_transform::get_all() -> const std::vector<ter_furn_transform>& {
     return ter_furn_transform_factory.get_all();
 }
 
@@ -55,7 +57,7 @@ template <class T> void ter_furn_data<T>::load(const JsonObject& jo) {
     message_good = jo.get_bool("message_good", true);
 }
 
-template <class T> bool ter_furn_data<T>::is_empty() const { return list.empty(); }
+template <class T> auto ter_furn_data<T>::is_empty() const -> bool { return list.empty(); }
 
 void ter_furn_transform::load(const JsonObject& jo, const std::string&) {
     std::string input;
@@ -97,41 +99,41 @@ void ter_furn_transform::load(const JsonObject& jo, const std::string&) {
 }
 
 template <class T, class K>
-std::optional<ter_furn_data<T>> ter_furn_transform::find_transform(
-    const std::map<K, ter_furn_data<T>>& list, const K& key) const {
+auto ter_furn_transform::find_transform(const std::map<K, ter_furn_data<T>>& list, const K& key)
+    const -> std::optional<ter_furn_data<T>> {
     const auto result_iter = list.find(key);
     if (result_iter == list.cend()) { return std::nullopt; }
     return result_iter->second;
 }
 
 template <class T, class K>
-std::optional<T> ter_furn_transform::next(
-    const std::map<K, ter_furn_data<T>>& list, const K& key) const {
+auto ter_furn_transform::next(const std::map<K, ter_furn_data<T>>& list, const K& key) const
+    -> std::optional<T> {
     const std::optional<ter_furn_data<T>> result = find_transform(list, key);
     if (result) { return result->pick(); }
     return std::nullopt;
 }
 
-std::optional<ter_str_id> ter_furn_transform::next_ter(const ter_str_id& ter) const {
+auto ter_furn_transform::next_ter(const ter_str_id& ter) const -> std::optional<ter_str_id> {
     return next(ter_transform, ter);
 }
 
-std::optional<ter_str_id> ter_furn_transform::next_ter(const std::string& flag) const {
+auto ter_furn_transform::next_ter(const std::string& flag) const -> std::optional<ter_str_id> {
     return next(ter_flag_transform, flag);
 }
 
-std::optional<furn_str_id> ter_furn_transform::next_furn(const furn_str_id& furn) const {
+auto ter_furn_transform::next_furn(const furn_str_id& furn) const -> std::optional<furn_str_id> {
     return next(furn_transform, furn);
 }
 
-std::optional<furn_str_id> ter_furn_transform::next_furn(const std::string& flag) const {
+auto ter_furn_transform::next_furn(const std::string& flag) const -> std::optional<furn_str_id> {
     return next(furn_flag_transform, flag);
 }
 
 template <class T, class K>
-bool ter_furn_transform::add_message(
+auto ter_furn_transform::add_message(
     const std::map<K, ter_furn_data<T>>& list, const K& key, const Creature& critter,
-    const tripoint_bub_ms& location) const {
+    const tripoint_bub_ms& location) const -> bool {
     const std::optional<ter_furn_data<T>> result = find_transform(list, key);
     if (result && !result->has_msg()) {
         if (critter.sees(location)) { result->add_msg(critter); }
@@ -243,13 +245,13 @@ auto ter_furn_transform::transform(mapgen_constructor& m, const point_omt_ms& lo
     if (furn_potential) { m.furn_set(location, *furn_potential); }
 }
 
-template <class T> std::optional<T> ter_furn_data<T>::pick() const {
+template <class T> auto ter_furn_data<T>::pick() const -> std::optional<T> {
     const T* picked = list.pick();
     if (picked == nullptr) { return std::nullopt; }
     return *picked;
 }
 
-template <class T> bool ter_furn_data<T>::has_msg() const { return !message.empty(); }
+template <class T> auto ter_furn_data<T>::has_msg() const -> bool { return !message.empty(); }
 
 template <class T> void ter_furn_data<T>::add_msg(const Creature& critter) const {
     critter.add_msg_if_player(message_good ? m_good : m_bad, message);

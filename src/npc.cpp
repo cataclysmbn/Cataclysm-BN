@@ -6,7 +6,6 @@
 #include "bodypart.h"
 #include "cached_options.h"
 #include "calendar.h"
-#include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
 #include "character.h"
@@ -35,14 +34,14 @@
 #include "iuse.h"
 #include "iuse_actor.h"
 #include "json.h"
-#include "legacy_pathfinding.h"
 #include "locations.h"
 #include "magic/magic.h"
-#include "map.h"
+#include "map/legacy_pathfinding.h"
+#include "map/map.h"
+#include "map/map_selector.h"
+#include "map/mapbuffer.h"
+#include "map/mapdata.h"
 #include "map_iterator.h"
-#include "map_selector.h"
-#include "mapbuffer.h"
-#include "mapdata.h"
 #include "math_defines.h"
 #include "messages.h"
 #include "mission.h"
@@ -50,12 +49,13 @@
 #include "morale_types.h"
 #include "mtype.h"
 #include "mutation.h"
+#include "npc_attitude_message.h"
 #include "npc_class.h"
 #include "options.h"
 #include "output.h"
-#include "overmap.h"
-#include "overmapbuffer.h"
-#include "overmapbuffer_registry.h"
+#include "overmap/overmap.h"
+#include "overmap/overmapbuffer.h"
+#include "overmap/overmapbuffer_registry.h"
 #include "player_activity.h"
 #include "pldata.h"
 #include "ranged.h"
@@ -1078,15 +1078,15 @@ void npc::finish_read( item *it )
 
         if( skill_level != originalSkillLevel ) {
             g->events().send<event_type::gains_skill_level>( getID(), skill, skill_level.level() );
+            // NPC continue reading until they can no longer learn from the book.
+            if( skill_level == reading->level ) {
+                revert_after_activity();
+                return;
+            }
             if( display_messages ) {
                 add_msg( m_good, _( "%s increases their %s level." ), disp_name(), skill_name );
-                // NPC continue reading until they can no longer learn from the book.
-                if( skill_level == reading->level ) {
-                    revert_after_activity();
-                    return;
-                }
-                continuous = true;
             }
+            continuous = true;
         } else {
             continuous = true;
             if( display_messages ) {
@@ -3102,7 +3102,6 @@ void npc::on_load()
         hallucination = true;
     }
 
-    std::unique_lock lock( cata::lua_lock );
     cata::run_hooks( "on_creature_loaded", [this]( sol::table & params ) {
         params["creature"] = this;
     } );
@@ -3686,11 +3685,29 @@ npc_attitude npc::get_attitude() const
     return attitude;
 }
 
+auto visible_attitude_change( const npc &guy,
+                              const attitude_change &change ) -> std::optional<attitude_group_change>
+{
+    if( change.to == NPCATT_ACTIVITY ) {
+        return std::nullopt;
+    }
+    const auto from = change.from == NPCATT_ACTIVITY ? change.before_activity : change.from;
+    const auto groups = attitude_group_change{
+        .from = guy.get_attitude_group( from ),
+        .to = guy.get_attitude_group( change.to ),
+    };
+    if( groups.from == groups.to ) {
+        return std::nullopt;
+    }
+    return groups;
+}
+
 void npc::set_attitude( npc_attitude new_attitude )
 {
     if( new_attitude == attitude ) {
         return;
     }
+    const auto before_activity = previous_attitude;
     previous_attitude = attitude;
     if( new_attitude == NPCATT_FLEE ) {
         new_attitude = NPCATT_FLEE_TEMP;
@@ -3701,10 +3718,13 @@ void npc::set_attitude( npc_attitude new_attitude )
 
     add_msg( m_debug, "%s changes attitude from %s to %s",
              name, npc_attitude_id( attitude ), npc_attitude_id( new_attitude ) );
-    attitude_group new_group = get_attitude_group( new_attitude );
-    attitude_group old_group = get_attitude_group( attitude );
-    if( new_group != old_group && !is_fake() && g->u.sees( *this ) ) {
-        switch( new_group ) {
+    const auto change = visible_attitude_change( *this, {
+        .from = attitude,
+        .to = new_attitude,
+        .before_activity = before_activity,
+    } );
+    if( change && !is_fake() && g->u.sees( *this ) ) {
+        switch( change->to ) {
             case attitude_group::hostile:
                 add_msg_if_npc( m_bad, _( "<npcname> gets angry!" ) );
                 break;
@@ -3712,9 +3732,9 @@ void npc::set_attitude( npc_attitude new_attitude )
                 add_msg_if_npc( m_warning, _( "<npcname> gets scared!" ) );
                 break;
             default:
-                if( old_group == attitude_group::hostile ) {
+                if( change->from == attitude_group::hostile ) {
                     add_msg_if_npc( m_good, _( "<npcname> calms down." ) );
-                } else if( old_group == attitude_group::fearful ) {
+                } else if( change->from == attitude_group::fearful ) {
                     add_msg_if_npc( _( "<npcname> is no longer afraid." ) );
                 }
                 break;

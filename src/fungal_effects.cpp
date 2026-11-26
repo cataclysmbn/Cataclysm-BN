@@ -1,23 +1,18 @@
 #include "fungal_effects.h"
 
-#include <algorithm>
-#include <memory>
-#include <ostream>
-#include <string>
-
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
 #include "creature.h"
 #include "debug.h"
 #include "enums.h"
-#include "field_type.h"
 #include "game.h"
 #include "item.h"
 #include "item_stack.h"
-#include "map.h"
+#include "map/field_type.h"
+#include "map/map.h"
+#include "map/mapdata.h"
 #include "map_iterator.h"
-#include "mapdata.h"
 #include "messages.h"
 #include "monster.h"
 #include "mtype.h"
@@ -27,6 +22,11 @@
 #include "string_formatter.h"
 #include "translations.h"
 #include "type_id.h"
+
+#include <algorithm>
+#include <memory>
+#include <ostream>
+#include <string>
 
 #define dbg(x) DebugLogFL((x), DC::Game)
 

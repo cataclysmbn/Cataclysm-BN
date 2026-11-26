@@ -9,7 +9,7 @@
 
 #include <sstream>
 
-static std::string str_to_hex(const std::string& s) {
+static auto str_to_hex(const std::string& s) -> std::string {
     std::stringstream ss;
     for (char c : s) {
         ss << std::hex << std::uppercase << static_cast<int>(static_cast<unsigned char>(c)) << " ";
@@ -147,7 +147,7 @@ static void filesystem_test_group(
 }
 
 // HACK: Need to rework std::u8string
-static std::string conv_str(const char8_t* c) { return reinterpret_cast<const char*>(c); }
+static auto conv_str(const char8_t* c) -> std::string { return reinterpret_cast<const char*>(c); }
 
 TEST_CASE("filesystem_ascii", "[filesystem]") {
     // English

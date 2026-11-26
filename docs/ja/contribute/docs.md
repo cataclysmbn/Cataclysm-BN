@@ -68,6 +68,9 @@ LuaとCLIのドキュメントはソースコードから自動的に生成さ�
 (Cataclysm-BN) $ deno task docs:gen
 ```
 
+このコマンドは `docs/en/mod/lua/reference/lua.md` と、Lua IDEの自動補完に使用される
+`lua_annotations.lua` を再生成します。
+
 ## ライセンス
 
 - Markdownファイル（`.md` および `.mdx` ファイルを含むがこれに限定されない）に貢献することで、ゲームと同じライセンスである [CC-BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) の下で貢献をライセンスすることに同意したことになります。

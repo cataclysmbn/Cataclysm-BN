@@ -5,7 +5,7 @@
 #include "game.h"
 #include "item.h"
 #include "item_category.h"
-#include "map_selector.h"
+#include "map/map_selector.h"
 #include "npc.h"
 #include "player.h"
 #include "skill.h"

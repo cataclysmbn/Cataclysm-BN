@@ -232,6 +232,7 @@
       { "monster": "mon_secubot", "freq": 75, "cost_multiplier": 0, "pack_size": [ 2, 3 ] },
       { "monster": "mon_talon_m249", "freq": 75, "cost_multiplier": 0 },
       { "monster": "mon_talon_m202a1", "freq": 50, "cost_multiplier": 0 },
+      { "monster": "mon_talon_m2hb", "freq": 25, "cost_multiplier": 0 },
       { "monster": "mon_chickenbot", "freq": 50, "cost_multiplier": 0 }
     ]
   }

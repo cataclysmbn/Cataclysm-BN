@@ -64,6 +64,7 @@
   "display_items": true, // 파일의 항목을 표시하시겠습니까?
   "display_field": true, // 필드를 표시할지 말지?
   "priority": 1, // 필드의 심볼/스프라이트 표시 우선순위
+  "tint": "#123456", // 선택적 스프라이트 색조: 색상 이름 또는 RGB 색상. copy-from을 통해 상속됩니다.
   // 면역
   "immunity_data": {
     "traits": ["M_IMMUNE"], // 현장의 효과를 방지하는 특성 배열
@@ -84,6 +85,9 @@
   "wandering_field": "fd_toxic_gas", // 이 필드가 생성하는 필드
   "accelerated_decay": true, // 이 필드는 지형 이동에 따라 아래쪽으로 이동합니까?
   // 기타
+  "conductive": false, // true이면 전기 펄스가 연결된 전도성 필드를 활성화한 뒤 사라집니다. 기본값은 false입니다.
+  "flammable": false, // true이면 점화 시 이 필드를 소모하여 지속적인 불을 만듭니다. 기본값은 false입니다.
+  "moppable": false, // true이면 대걸레와 자동 청소가 이 필드를 제거합니다. 기본값은 false입니다.
   "gas_absorbption_factor": 10, // 방독면에서 먹을 충전 횟수
   "dirty_transparency_cache": true, // 투명도 캐시를 강제로 다시 계산하는 날씨입니다. transparent가 false로 자동 설정됩니다.
   "description_affix": "covered in", // 모든 강도 레벨 이름 앞에 이것을 넣습니다.

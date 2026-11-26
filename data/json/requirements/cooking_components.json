@@ -627,7 +627,10 @@
         [ "wild_herbs", 1 ],
         [ "soysauce", 1 ],
         [ "garlic_clove", 1 ],
-        [ "chili_pepper_roasted", 1 ]
+        [ "chili_pepper_roasted", 1 ],
+        [ "chilly-p", 1 ],
+        [ "salsa", 1 ],
+        [ "curry_powder", 1 ]
       ]
     ]
   },
@@ -906,6 +909,7 @@
         [ "pepper", 4 ],
         [ "garlic_clove", 2 ],
         [ "chili_pepper_roasted", 2 ],
+        [ "salsa", 2 ],
         [ "salt_water", 1 ],
         [ "salt", 4 ]
       ]
@@ -978,14 +982,14 @@
   {
     "id": "condiment_lite",
     "type": "requirement",
-    "//": " condiments that go well with sausage or boiled egg",
+    "//": " just the most 'vanilla' options",
     "components": [ [ [ "mayonnaise", 1 ], [ "mustard", 1 ], [ "ketchup", 1 ], [ "horseradish", 1 ] ] ]
   },
   {
     "id": "condiment",
     "type": "requirement",
     "//": " Should be about a teaspoon, or smallest serving",
-    "components": [ [ [ "condiment_lite", 1, "LIST" ], [ "soysauce", 1 ], [ "sauerkraut", 1 ], [ "butter", 1 ] ] ]
+    "components": [ [ [ "condiment_lite", 1, "LIST" ], [ "soysauce", 1 ], [ "sauerkraut", 1 ], [ "butter", 1 ], [ "salsa", 1 ] ] ]
   },
   {
     "id": "bread_sandwich",

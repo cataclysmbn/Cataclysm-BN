@@ -1,10 +1,3 @@
-#include "mission.h" // IWYU pragma: associated
-
-#include <algorithm>
-#include <memory>
-#include <optional>
-#include <vector>
-
 #include "avatar.h"
 #include "computer.h"
 #include "debug.h"
@@ -13,20 +6,26 @@
 #include "int_id.h"
 #include "item.h"
 #include "line.h"
-#include "map.h"
+#include "map/map.h"
+#include "map/mapdata.h"
 #include "map_iterator.h"
-#include "mapdata.h"
 #include "messages.h"
+#include "mission.h" // IWYU pragma: associated
 #include "name.h"
 #include "npc.h"
 #include "npc_class.h"
-#include "omdata.h"
-#include "overmap.h"
-#include "overmapbuffer.h"
+#include "overmap/omdata.h"
+#include "overmap/overmap.h"
+#include "overmap/overmapbuffer.h"
 #include "popup.h"
 #include "rng.h"
 #include "string_formatter.h"
 #include "translations.h"
+
+#include <algorithm>
+#include <memory>
+#include <optional>
+#include <vector>
 
 static const itype_id itype_software_hacking( "software_hacking" );
 static const itype_id itype_software_math( "software_math" );
@@ -377,88 +376,6 @@ void mission_start::find_safety( mission *miss )
             miss->target = place + point_rel_omt( 20, 20 );
             break;
     }
-}
-
-const int RANCH_SIZE = 5;
-
-void mission_start::ranch_scavenger_1( mission *miss )
-{
-    tripoint_abs_omt site = mission_util::target_om_ter_random(
-                                "ranch_camp_48", 1, miss, false, RANCH_SIZE );
-    map bay( 2 );
-    bay.load( project_to<coords::sm>( site.xy() ), false );
-    bay.draw_square_ter( t_chainfence, tripoint_bub_ms( 15, 13, site.z() ),
-                         tripoint_bub_ms( 15, 22, site.z() ) );
-    bay.draw_square_ter( t_chainfence, tripoint_bub_ms( 16, 13, site.z() ),
-                         tripoint_bub_ms( 23, 13, site.z() ) );
-    bay.draw_square_ter( t_chainfence, tripoint_bub_ms( 16, 22, site.z() ),
-                         tripoint_bub_ms( 23, 22, site.z() ) );
-
-    site = mission_util::target_om_ter_random( "ranch_camp_49", 1, miss, false, RANCH_SIZE );
-    bay.load( project_to<coords::sm>( site.xy() ), false );
-    bay.place_items( item_group_id( "mechanics" ), 65, tripoint_bub_ms( 9, 13, site.z() ),
-                     tripoint_bub_ms( 10, 16, site.z() ),
-                     true,
-                     calendar::start_of_cataclysm );
-    bay.draw_square_ter( t_chainfence, tripoint_bub_ms( 0, 22, site.z() ),
-                         tripoint_bub_ms( 7, 22, site.z() ) );
-    bay.draw_square_ter( t_dirt, tripoint_bub_ms( 2, 22, site.z() ),
-                         tripoint_bub_ms( 3, 22, site.z() ) );
-    bay.spawn_item( tripoint_bub_ms( 7, 19, site.z() ), "30gal_drum" );
-}
-
-void mission_start::ranch_scavenger_2( mission *miss )
-{
-    tripoint_abs_omt site = mission_util::target_om_ter_random(
-                                "ranch_camp_48", 1, miss, false, RANCH_SIZE );
-    map bay( 2 );
-    bay.load( project_to<coords::sm>( site.xy() ), false );
-    bay.add_vehicle( vproto_id( "car_chassis" ), tripoint_bub_ms( 20, 15, site.z() ), 0_degrees );
-    bay.draw_square_ter( t_wall_half, tripoint_bub_ms( 18, 19, site.z() ), tripoint_bub_ms( 21, 22,
-                         site.z() ) );
-    bay.draw_square_ter( t_dirt, tripoint_bub_ms( 19, 20, site.z() ), tripoint_bub_ms( 20, 21,
-                         site.z() ) );
-    bay.ter_set( tripoint_bub_ms( 19, 19, site.z() ), t_door_frame );
-
-    site = mission_util::target_om_ter_random( "ranch_camp_49", 1, miss, false, RANCH_SIZE );
-    bay.load( project_to<coords::sm>( site.xy() ), false );
-    bay.place_items( item_group_id( "mischw" ), 65, tripoint_bub_ms( 12, 13, site.z() ),
-                     tripoint_bub_ms( 13, 16, site.z() ),
-                     true,
-                     calendar::start_of_cataclysm );
-    bay.draw_square_ter( t_chaingate_l, tripoint_bub_ms( 2, 22, site.z() ),
-                         tripoint_bub_ms( 3, 22, site.z() ) );
-    bay.spawn_item( tripoint_bub_ms( 7, 20, site.z() ), "30gal_drum" );
-}
-
-void mission_start::ranch_scavenger_3( mission *miss )
-{
-    tripoint_abs_omt site = mission_util::target_om_ter_random(
-                                "ranch_camp_48", 1, miss, false, RANCH_SIZE );
-    map bay( 2 );
-    bay.load( project_to<coords::sm>( site.xy() ), false );
-    bay.translate( t_door_frame, t_door_locked );
-    bay.translate( t_wall_half, t_wall_wood );
-    bay.draw_square_ter( t_dirtfloor, tripoint_bub_ms( 19, 20, site.z() ),
-                         tripoint_bub_ms( 20, 21, site.z() ) );
-    bay.spawn_item( tripoint_bub_ms( 16, 21, site.z() ), "wheel_wide" );
-    bay.spawn_item( tripoint_bub_ms( 17, 21, site.z() ), "wheel_wide" );
-    bay.spawn_item( tripoint_bub_ms( 23, 18, site.z() ), "v8_combustion" );
-    bay.furn_set( tripoint_bub_ms( 23, 17, site.z() ), furn_str_id( "f_arcade_machine" ) );
-    bay.ter_set( tripoint_bub_ms( 23, 16, site.z() ), ter_str_id( "t_machinery_light" ) );
-    bay.furn_set( tripoint_bub_ms( 20, 21, site.z() ), f_woodstove );
-
-    site = mission_util::target_om_ter_random( "ranch_camp_49", 1, miss, false, RANCH_SIZE );
-    bay.load( project_to<coords::sm>( site.xy() ), false );
-    bay.place_items( item_group_id( "mischw" ), 65, tripoint_bub_ms( 2, 10, site.z() ),
-                     tripoint_bub_ms( 4, 10, site.z() ), true,
-                     calendar::start_of_cataclysm );
-    bay.place_items( item_group_id( "mischw" ), 65, tripoint_bub_ms( 2, 13, site.z() ),
-                     tripoint_bub_ms( 4, 13, site.z() ), true,
-                     calendar::start_of_cataclysm );
-    bay.furn_set( tripoint_bub_ms( 1, 15, site.z() ), f_fridge );
-    bay.spawn_item( tripoint_bub_ms( 2, 15, site.z() ), "hdframe" );
-    bay.furn_set( tripoint_bub_ms( 3, 15, site.z() ), f_washer );
 }
 
 void mission_start::place_book( mission * )

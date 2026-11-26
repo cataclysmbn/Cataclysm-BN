@@ -11,7 +11,7 @@ override_option::override_option(const std::string& option, const std::string& v
 
 override_option::~override_option() { get_options().get_option(option_).setValue(old_value_); }
 
-bool try_set_utf8_locale() {
+auto try_set_utf8_locale() -> bool {
     try {
         std::locale::global(std::locale("en_US.UTF-8"));
     } catch (std::runtime_error&) { return false; }

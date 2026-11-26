@@ -12,11 +12,11 @@ BinomialMatcher::BinomialMatcher(const int num_samples, const double p, const do
     margin_ = max_deviation_ * std::sqrt(num_samples_ * p_ * (1 - p_));
 }
 
-bool BinomialMatcher::match(const int& obs) const {
+auto BinomialMatcher::match(const int& obs) const -> bool {
     return expected_ - margin_ <= obs && obs <= expected_ + margin_;
 }
 
-std::string BinomialMatcher::describe() const {
+auto BinomialMatcher::describe() const -> std::string {
     std::ostringstream os;
     os << "is from Bin(" << num_samples_ << ", " << p_ << ") [" << (expected_ - margin_)
        << " <= obs <= " << (expected_ + margin_) << "]";

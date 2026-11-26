@@ -1,3 +1,4 @@
+#include "../src/map/map.h"
 #include "../src/vehicle/vehicle_part.h"
 #include "../src/vehicle/vpart_position.h"
 #include "avatar.h"
@@ -10,7 +11,6 @@
 #include "item.h"
 #include "itype.h"
 #include "line.h"
-#include "map.h"
 #include "map_helpers.h"
 #include "player_helpers.h"
 #include "state_helpers.h"
@@ -49,6 +49,8 @@ static auto reset_efficiency_state() -> void {
     // Move player somewhere safe
     REQUIRE_FALSE(g->u.in_vehicle);
     g->u.setpos(tripoint_bub_ms(g_half_mapsize_x + SEEX - 1, g_half_mapsize_y + SEEY - 1, -2));
+    // Moving the player can spawn monsters from overmap groups on the test track. Remove them.
+    clear_creatures();
     // Blind the player to avoid needless drawing-related overhead
     g->u.add_effect(effect_blind, 365_days, bodypart_str_id::NULL_ID());
 }
@@ -62,7 +64,7 @@ static auto prepare_efficiency_map(const ter_id& terrain) -> void {
 
 // Returns how much fuel did it provide
 // But contains only fuels actually used by engines
-static std::map<itype_id, int> set_vehicle_fuel(vehicle& v, const float veh_fuel_mult) {
+static auto set_vehicle_fuel(vehicle& v, const float veh_fuel_mult) -> std::map<itype_id, int> {
     // First we need to find the fuels to set
     // That is, fuels actually used by some engine
     std::set<itype_id> actually_used;
@@ -124,7 +126,7 @@ static std::map<itype_id, int> set_vehicle_fuel(vehicle& v, const float veh_fuel
 
 // Returns the lowest percentage of fuel left
 // i.e. 1 means no fuel was used, 0 means at least one dry tank
-static float fuel_percentage_left(vehicle& v, const std::map<itype_id, int>& started_with) {
+static auto fuel_percentage_left(vehicle& v, const std::map<itype_id, int>& started_with) -> float {
     std::map<itype_id, int> fuel_amount;
     std::set<itype_id> consumed_fuels;
     for (const vpart_reference vp : v.get_all_parts()) {
@@ -170,10 +172,10 @@ static auto assert_vehicle_on_valid_terrain(const map& here, vehicle& veh) -> vo
     }
 }
 
-static int test_efficiency(
+static auto test_efficiency(
     const vproto_id& veh_id, int& expected_mass, const ter_id& terrain,
     const int reset_velocity_turn, const int target_distance, const bool smooth_stops = false,
-    const bool test_mass = true, const bool in_reverse = false) {
+    const bool test_mass = true, const bool in_reverse = false) -> int {
     int min_dist = target_distance * 0.99;
     int max_dist = target_distance * 1.01;
     prepare_efficiency_map(terrain);
@@ -291,9 +293,10 @@ TEST_CASE("vehicle_efficiency_movement_keeps_vehicle_on_valid_terrain", "[vehicl
     here.destroy_vehicle(veh_ptr);
 }
 
-static efficiency_stat find_inner(
+static auto find_inner(
     const std::string& type, int& expected_mass, const std::string& terrain, const int delay,
-    const bool smooth, const bool test_mass = false, const bool in_reverse = false) {
+    const bool smooth, const bool test_mass = false, const bool in_reverse = false)
+    -> efficiency_stat {
     efficiency_stat efficiency;
     for (auto i = 0; i < 10; ++i) {
         efficiency.add(test_efficiency(
@@ -329,7 +332,7 @@ static void find_efficiency(const std::string& type) {
     }
 }
 
-static int avg_from_stat(const efficiency_stat& st) {
+static auto avg_from_stat(const efficiency_stat& st) -> int {
     const int ugly_integer = (st.min() + st.max()) / 2.0;
     // Round to 4 most significant places
     const int magnitude = std::max<int>(0, std::floor(std::log10(ugly_integer)));
@@ -337,7 +340,7 @@ static int avg_from_stat(const efficiency_stat& st) {
     return ugly_integer - ugly_integer % precision;
 }
 
-static int print_test_strings(const std::string& type, bool in_reverse = false) {
+static auto print_test_strings(const std::string& type, bool in_reverse = false) -> int {
     int expected_mass = 0;
     int v1 = avg_from_stat(
         find_inner(type, expected_mass, "t_pavement", -1, false, false, in_reverse));

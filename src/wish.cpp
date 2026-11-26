@@ -1,22 +1,11 @@
-#include "debug_menu.h" // IWYU pragma: associated
-
-#include <algorithm>
-#include <cstddef>
-#include <iterator>
-#include <map>
-#include <memory>
-#include <optional>
-#include <set>
-#include <string>
-#include <vector>
-#include <ranges>
-
 #include "bionics.h"
 #include "calendar.h"
 #include "catacharset.h"
 #include "color.h"
 #include "cursesdef.h"
 #include "debug.h"
+#include "debug_menu.h" // IWYU pragma: associated
+#include "digital_media.h"
 #include "flag.h"
 #include "flat_set.h"
 #include "game.h"
@@ -24,7 +13,7 @@
 #include "item.h"
 #include "item_factory.h"
 #include "itype.h"
-#include "map.h"
+#include "map/map.h"
 #include "monster.h"
 #include "monstergenerator.h"
 #include "mtype.h"
@@ -43,6 +32,17 @@
 #include "uistate.h"
 #include "units.h"
 #include "units_energy.h"
+
+#include <algorithm>
+#include <cstddef>
+#include <iterator>
+#include <map>
+#include <memory>
+#include <optional>
+#include <ranges>
+#include <set>
+#include <string>
+#include <vector>
 
 class wish_mutate_callback: public uilist_callback
 {
@@ -638,6 +638,8 @@ class wish_item_callback: public uilist_callback
         bool incontainer;
         bool has_flag;
         bool spawn_everything;
+        std::optional<itype_id> container;
+        int configured_item = -1;
         std::string msg;
         std::string flag;
         const std::vector<const itype *> &standard_itype_ids;
@@ -649,13 +651,60 @@ class wish_item_callback: public uilist_callback
             if( menu->selected < 0 ) {
                 return;
             }
-            incontainer = standard_itype_ids[menu->selected]->phase == phase_id::LIQUID;
+            if( configured_item != menu->selected ) {
+                configured_item = menu->selected;
+                incontainer = standard_itype_ids[menu->selected]->phase == phase_id::LIQUID;
+                container.reset();
+            }
+        }
+
+        auto choose_container( uilist *menu ) -> void {
+            using namespace std::views;
+            namespace ranges = std::ranges;
+
+            if( menu->selected < 0 ) {
+                return;
+            }
+            const auto *selected_type = standard_itype_ids[menu->selected];
+            const auto selected_item = item::spawn_temporary( selected_type, calendar::turn );
+            auto containers = item_controller->all()
+            | filter( []( const auto * type ) {
+                return type->container != nullptr || type->has_flag( flag_id( "DIGITAL_STORAGE" ) );
+            } )
+            | filter( [&]( const auto * type ) {
+                const auto candidate = item::spawn_temporary( type, calendar::turn );
+                return candidate->can_contain( *selected_item ) &&
+                       ( is_digital_file( *selected_item ) ||
+                         ( selected_item->volume() > 0_ml &&
+                           selected_item->charges_per_volume( candidate->get_container_capacity() ) > 0 ) );
+            } )
+            | ranges::to<std::vector>();
+            ranges::sort( containers, []( const auto * lhs, const auto * rhs ) {
+                return localized_compare( lhs->get_id().str(), rhs->get_id().str() );
+            } );
+            uilist container_menu;
+            container_menu.text = _( "Select a container" );
+            container_menu.addentry( 0, true, 0, _( "None (no container)" ) );
+            for( size_t index = 0; index < containers.size(); ++index ) {
+                const auto candidate = item::spawn_temporary( containers[index], calendar::turn );
+                container_menu.addentry( static_cast<int>( index + 1 ), true, 0, candidate->tname() );
+            }
+            container_menu.query();
+            if( container_menu.ret >= 0 ) {
+                if( container_menu.ret == 0 ) {
+                    container.reset();
+                    incontainer = false;
+                } else {
+                    container = containers[static_cast<size_t>( container_menu.ret - 1 )]->get_id();
+                    incontainer = true;
+                }
+            }
         }
 
         bool key( const input_context &, const input_event &event, int /*entnum*/,
-                  uilist * /*menu*/ ) override {
+                  uilist *menu ) override {
             if( event.get_first_input() == 'f' ) {
-                incontainer = !incontainer;
+                choose_container( menu );
                 return true;
             }
             if( event.get_first_input() == 'F' ) {
@@ -687,7 +736,8 @@ class wish_item_callback: public uilist_callback
                 item &tmp = *item::spawn_temporary( standard_itype_ids[entnum], calendar::turn );
                 const std::string header = string_format( "#%d: %s%s%s", entnum,
                                            standard_itype_ids[entnum]->get_id().c_str(),
-                                           incontainer ? _( " (contained)" ) : "",
+                                           incontainer ? string_format( _( " (in %s)" ),
+                                                   container ? container->str() : _( "default container" ) ) : "",
                                            has_flag ? _( " (flagged)" ) : "" );
                 mvwprintz( menu->window, point( startx + ( menu->pad_right - 1 - utf8_width( header ) ) / 2, 1 ),
                            c_cyan, header );
@@ -722,7 +772,7 @@ class wish_item_callback: public uilist_callback
             msg.erase();
             input_context ctxt( menu->input_category );
             mvwprintw( menu->window, point( startx, menu->w_height - 2 ),
-                       _( "[%s] find, [f] container, [F] flag, [E] everything, [%s] quit" ),
+                       _( "[%s] find, [f] choose container, [F] flag, [E] everything, [%s] quit" ),
                        ctxt.get_desc( "FILTER" ), ctxt.get_desc( "QUIT" ) );
             wnoutrefresh( menu->window );
         }
@@ -790,13 +840,35 @@ void debug_menu::wishitem( Character *who, const tripoint_bub_ms &pos )
                 granted->set_flag( flag_FIT );
             }
             if( cb.incontainer ) {
-                granted = item::in_its_container( std::move( granted ) );
+                if( cb.container && !granted->made_of( LIQUID ) ) {
+                    auto container = item::spawn( *cb.container, calendar::turn );
+                    if( is_digital_file( *granted ) ) {
+                        container->put_in( std::move( granted ) );
+                    } else {
+                        const auto count = granted->volume() > 0_ml ?
+                                           granted->charges_per_volume( container->get_container_capacity() ) : 0;
+                        if( granted->count_by_charges() ) {
+                            if( count > 0 ) {
+                                granted->charges = count;
+                                container->put_in( std::move( granted ) );
+                            }
+                        } else {
+                            for( auto index = 0; index < count; ++index ) {
+                                container->put_in( item::spawn( *granted ) );
+                            }
+                        }
+                    }
+                    granted = std::move( container );
+                } else {
+                    granted = cb.container ? item::in_container( *cb.container, std::move( granted ) ) :
+                              item::in_its_container( std::move( granted ) );
+                }
             }
             if( cb.has_flag ) {
                 granted->item_tags.insert( flag_id( cb.flag ) );
             }
             // If the item has an ammunition, this loads it to capacity, including magazines.
-            if( !granted->ammo_default().is_null() ) {
+            if( !granted->ammo_default().is_null() && granted->ammo_remaining() == 0 ) {
                 granted->ammo_set( granted->ammo_default(), -1 );
             }
 

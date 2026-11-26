@@ -66,14 +66,14 @@ struct ExpressionCategory {
     bool IsArrowRef = false;
     std::string Replacement;
 
-    std::tuple<bool, bool, bool, std::string> asTuple() const {
+    auto asTuple() const -> std::tuple<bool, bool, bool, std::string> {
         return std::make_tuple(IsPoint, IsTripoint, IsArrowRef, Replacement);
     }
 
-    friend bool operator==(const ExpressionCategory& l, const ExpressionCategory& r) {
+    friend auto operator==(const ExpressionCategory& l, const ExpressionCategory& r) -> bool {
         return l.asTuple() == r.asTuple();
     }
-    friend bool operator!=(const ExpressionCategory& l, const ExpressionCategory& r) {
+    friend auto operator!=(const ExpressionCategory& l, const ExpressionCategory& r) -> bool {
         return l.asTuple() != r.asTuple();
     }
 };

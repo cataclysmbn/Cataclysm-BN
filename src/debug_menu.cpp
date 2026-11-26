@@ -37,13 +37,13 @@
 #include "json_export.h"
 #include "language.h"
 #include "magic/magic.h"
-#include "map.h"
-#include "map_extras.h"
+#include "map/map.h"
+#include "map/mapbuffer_registry.h"
 #include "map_iterator.h"
-#include "mapbuffer_registry.h"
-#include "mapgen.h"
-#include "mapgen_constructor.h"
-#include "mapgendata.h"
+#include "mapgen/map_extras.h"
+#include "mapgen/mapgen.h"
+#include "mapgen/mapgen_constructor.h"
+#include "mapgen/mapgendata.h"
 #include "martialarts.h"
 #include "memory_fast.h"
 #include "messages.h"
@@ -54,13 +54,13 @@
 #include "mtype.h"
 #include "npc.h"
 #include "npc_class.h"
-#include "omdata.h"
 #include "options.h"
 #include "output.h"
-#include "overmap.h"
-#include "overmap_special.h"
-#include "overmap_ui.h"
-#include "overmapbuffer.h"
+#include "overmap/omdata.h"
+#include "overmap/overmap.h"
+#include "overmap/overmap_special.h"
+#include "overmap/overmap_ui.h"
+#include "overmap/overmapbuffer.h"
 #include "path_info.h"
 #include "pimpl.h"
 #include "player.h"
@@ -1566,15 +1566,12 @@ void debug()
             faction *new_solo_fac = g->faction_manager_ptr->add_new_faction( temp->name,
                                     faction_id( new_fac_id ), faction_id( "no_faction" ) );
             temp->set_fac( new_solo_fac ? new_solo_fac->id : faction_id( "no_faction" ) );
-            {
-                std::unique_lock lock( cata::lua_lock );
-                cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
-                    params["creature"] = temp.get();
-                } );
-                cata::run_hooks( "on_npc_spawn", [&]( sol::table & params ) {
-                    params["npc"] = temp.get();
-                } );
-            }
+            cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+                params["creature"] = temp.get();
+            } );
+            cata::run_hooks( "on_npc_spawn", [&]( sol::table & params ) {
+                params["npc"] = temp.get();
+            } );
             g->load_npcs();
         }
         break;

@@ -1,37 +1,37 @@
 #include "start_location.h"
 
-#include <algorithm>
-#include <climits>
-#include <memory>
-
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
 #include "coordinates.h"
 #include "debug.h"
 #include "enum_conversions.h"
-#include "field_type.h"
 #include "game.h"
 #include "game_constants.h"
 #include "generic_factory.h"
 #include "int_id.h"
 #include "json.h"
-#include "map.h"
-#include "mapbuffer_registry.h"
-#include "map_extras.h"
+#include "map/field_type.h"
+#include "map/map.h"
+#include "map/mapbuffer_registry.h"
+#include "map/mapdata.h"
 #include "map_iterator.h"
-#include "mapdata.h"
-#include "mapgen_constructor.h"
+#include "mapgen/map_extras.h"
+#include "mapgen/mapgen_constructor.h"
 #include "output.h"
-#include "overmap.h"
-#include "overmap_special.h"
-#include "overmapbuffer.h"
+#include "overmap/overmap.h"
+#include "overmap/overmap_special.h"
+#include "overmap/overmapbuffer.h"
 #include "player.h"
 #include "pldata.h"
 #include "point.h"
 #include "rng.h"
-#include "type_id_implement.h"
 #include "string_id.h"
+#include "type_id_implement.h"
+
+#include <algorithm>
+#include <climits>
+#include <memory>
 
 class item;
 
@@ -410,7 +410,7 @@ void start_location::burn( const tripoint_abs_omt &/*omtstart*/, const size_t co
                m.is_outside( p ) ||
                ( p.x() >= u.x() - rad && p.x() <= u.x() + rad &&
                  p.y() >= u.y() - rad && p.y() <= u.y() + rad ) ) ) {
-            if( m.has_flag( "FLAMMABLE", p ) || m.has_flag( "FLAMMABLE_ASH", p ) ) {
+            if( m.ter( p ).obj().is_flammable() || m.furn( p ).obj().is_flammable() ) {
                 valid.push_back( p );
             }
         }

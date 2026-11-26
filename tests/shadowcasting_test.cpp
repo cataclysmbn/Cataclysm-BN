@@ -1,9 +1,9 @@
+#include "../src/map/map.h"
 #include "catch/catch.hpp"
 #include "coordinates.h"
 #include "game_constants.h"
-#include "lightmap.h"
 #include "line.h" // For rl_dist.
-#include "map.h"
+#include "map/lightmap.h"
 #include "rng.h"
 #include "shadowcasting.h"
 #include "state_helpers.h"
@@ -80,9 +80,9 @@ static void oldCastLight(
 /*
  * This is checking whether bresenham visibility checks match shadowcasting (they don't).
  */
-static bool bresenham_visibility_check(
+static auto bresenham_visibility_check(
     const point_bub_ms& offset, const point_bub_ms& p,
-    const float (&transparency_cache)[MAPSIZE * SEEX][MAPSIZE * SEEY]) {
+    const float (&transparency_cache)[MAPSIZE * SEEX][MAPSIZE * SEEY]) -> bool {
     if (offset == p) { return true; }
     bool visible = true;
     const int junk = 0;
@@ -117,11 +117,12 @@ static void randomly_fill_transparency(
     }
 }
 
-static bool is_nonzero(const float x) { return x != 0; }
+static auto is_nonzero(const float x) -> bool { return x != 0; }
 
 template <typename Exp>
-bool grids_are_equivalent(
-    float control[MAPSIZE * SEEX][MAPSIZE * SEEY], Exp experiment[MAPSIZE * SEEX][MAPSIZE * SEEY]) {
+auto grids_are_equivalent(
+    float control[MAPSIZE * SEEX][MAPSIZE * SEEY], Exp experiment[MAPSIZE * SEEX][MAPSIZE * SEEY])
+    -> bool {
     for (int x = 0; x < MAPSIZE * SEEX; ++x) {
         for (int y = 0; y < MAPSIZE * SEEY; ++y) {
             // Check that both agree on the outcome, but not necessarily the same values.
@@ -382,13 +383,13 @@ struct grid_overlay {
         this->default_value = default_value;
     }
 
-    int height() const { return data.size(); }
-    int width() const {
+    auto height() const -> int { return data.size(); }
+    auto width() const -> int {
         if (data.empty()) { return 0; }
         return data[0].size();
     }
 
-    float get_global(const tripoint_bub_ms& p) const {
+    auto get_global(const tripoint_bub_ms& p) const -> float {
         if (p.y() >= offset.y() && p.y() < offset.y() + height() && p.x() >= offset.x()
             && p.x() < offset.x() + width()) {
             return data[p.y() - offset.y()][p.x() - offset.x()];
@@ -396,7 +397,7 @@ struct grid_overlay {
         return default_value;
     }
 
-    float get_local(const tripoint_bub_ms& p) const { return data[p.y()][p.x()]; }
+    auto get_local(const tripoint_bub_ms& p) const -> float { return data[p.y()][p.x()]; }
 };
 
 static void run_spot_check(const grid_overlay& test_case, const grid_overlay& expected_result) {

@@ -24,9 +24,9 @@ void enchantment_value::load_enchantment_values(const JsonObject& jo, const std:
 }
 
 // The result is the lowest nodes of the enchantment child tree
-std::vector<enchantment_value_id> enchantment_value::define_child_enchantments(
+auto enchantment_value::define_child_enchantments(
     const enchantment_value& main, const std::vector<enchantment_value_id>& parents,
-    const JsonObject& obj, const bool first) const {
+    const JsonObject& obj, const bool first) const -> std::vector<enchantment_value_id> {
     std::vector<enchantment_value_id> res;
     for (enchantment_value_id to_suffix_id : parents) {
         enchantment_value suffixed = enchantment_value(main);
@@ -49,7 +49,7 @@ std::vector<enchantment_value_id> enchantment_value::define_child_enchantments(
     }
     return res;
 }
-void enchantment_value::load(const JsonObject& jo, const std::string& src) {
+void enchantment_value::load(const JsonObject& jo, const std::string& /*src*/) {
     optional(jo, was_loaded, "can_add", can_add, true);
     optional(jo, was_loaded, "can_mult", can_mult, true);
     optional(jo, was_loaded, "can_max", can_max, false);
@@ -113,14 +113,16 @@ void enchantment_value::check() const {
 
 void enchantment_value::check_consistency() { all_enchantment_values.check(); }
 
-bool enchantment_value::has_parent() const { return !parent_ids.empty(); }
+auto enchantment_value::has_parent() const -> bool { return !parent_ids.empty(); }
 
-std::vector<enchantment_value_id> enchantment_value::get_parents() const { return parent_ids; }
+auto enchantment_value::get_parents() const -> std::vector<enchantment_value_id> {
+    return parent_ids;
+}
 
-std::string enchantment_value::get_desc() const {
+auto enchantment_value::get_desc() const -> std::string {
     return string_format(desc.translated(), desc_insert);
 }
-std::vector<enchantment_value> enchantment_value::get_all() {
+auto enchantment_value::get_all() -> std::vector<enchantment_value> {
     return all_enchantment_values.get_all();
 }
 

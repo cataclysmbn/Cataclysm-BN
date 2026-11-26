@@ -401,6 +401,18 @@ true に設定されている場合、非主要部位(手、目、足など)に�
 提供される士気効果のタイプです。
 士気効果がある場合は必須であり、そうでない場合は指定してはなりません。
 
+### エンチャント
+
+```json
+"base_enchantments": [ { "values": [ { "value": "SKILL_LEVEL_COMPUTER", "add": 100 } ] } ],
+"scaling_enchantments": [ { "values": [ { "value": "SKILL_LEVEL_COMPUTER", "add": 100 } ] } ]
+```
+
+インライン効果またはエンチャント文字列 ID のいずれかを指定します。
+配列である必要があります。
+強度が 1 を超えるごとに scaling が 1 回追加されます。
+効果が適用されたときに base が 1 回追加されます。
+
 ### 除去時の他の効果 (effects_on_remove)
 
 ```json

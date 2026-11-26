@@ -2,7 +2,7 @@
 
 #include "hsv_color.h"
 #include "json.h"
-#include "mapgen.h"
+#include "mapgen/mapgen.h"
 #include "string_id.h"
 #include "type_id.h"
 #include "units_angle.h"
@@ -32,9 +32,9 @@ public:
 
     static void reset();
 
-    int fuzzy_to_index(const vpart_id& id) const;
+    auto fuzzy_to_index(const vpart_id& id) const -> int;
 
-    std::vector<RGBColor> pick_colors() const;
+    auto pick_colors() const -> std::vector<RGBColor>;
 
     vpalette_id id;
 

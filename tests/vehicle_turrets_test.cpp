@@ -1,3 +1,4 @@
+#include "../src/map/map.h"
 #include "../src/vehicle/vehicle_part.h"
 #include "ammo.h"
 #include "avatar.h"
@@ -9,7 +10,6 @@
 #include "game.h"
 #include "item.h"
 #include "itype.h"
-#include "map.h"
 #include "map_helpers.h"
 #include "monster.h"
 #include "npc.h"
@@ -29,7 +29,7 @@
 #include <utility>
 #include <vector>
 
-static std::vector<const vpart_info*> turret_types() {
+static auto turret_types() -> std::vector<const vpart_info*> {
     std::vector<const vpart_info*> res;
 
     for (const auto& vp : vpart_info::get_all()) {

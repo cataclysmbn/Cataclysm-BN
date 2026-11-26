@@ -63,7 +63,7 @@ void NoLongCheck::registerMatchers(MatchFinder* Finder) {
     Finder->addMatcher(cxxStaticCastExpr(hasDestinationType(isIntegerOrRef)).bind("cast"), this);
 }
 
-static std::string AlternativesFor(QualType Type) {
+static auto AlternativesFor(QualType Type) -> std::string {
     Type = Type.getNonReferenceType();
     Type = Type.getLocalUnqualifiedType();
     std::string name = Type.getAsString();

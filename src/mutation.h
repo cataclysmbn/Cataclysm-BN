@@ -463,6 +463,7 @@ struct mutation_category_trait {
         std::string junkie_message() const;
         std::string memorial_message_male() const;
         std::string memorial_message_female() const;
+        std::vector<trait_id> get_mutations() const;
 
         // Mutation category i.e "BIRD", "CHIMERA"
         mutation_category_id id;

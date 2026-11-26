@@ -3,6 +3,7 @@
 #include <set>
 #include <string>
 
+#include "color.h"
 #include "catalua_type_operators.h"
 #include "translations.h"
 #include "type_id.h"
@@ -229,6 +230,7 @@ extern const flag_id flag_NO_RECOVER_AMMO;
 extern const flag_id flag_NO_RELOAD;
 extern const flag_id flag_NO_REPAIR;
 extern const flag_id flag_NO_SALVAGE;
+extern const flag_id flag_BUTCHERY_ROPE;
 extern const flag_id flag_NO_STERILE;
 extern const flag_id flag_NO_TAKEOFF;
 extern const flag_id flag_NO_UNLOAD;
@@ -257,6 +259,8 @@ extern const flag_id flag_POWERARMOR_EXO;
 extern const flag_id flag_POWERARMOR_EXTERNAL;
 extern const flag_id flag_POWERARMOR_PLATING;
 extern const flag_id flag_POWERARMOR_MOD;
+extern const flag_id flag_PLATE_CARRIER;
+extern const flag_id flag_ARMOR_PLATE;
 extern const flag_id flag_POWERED;
 extern const flag_id flag_PRIMITIVE_RANGED_WEAPON;
 extern const flag_id flag_PROCESSING;
@@ -446,6 +450,8 @@ class json_flag
         /** The tag to be displayed on the item's display name when it has this flag */
         auto tag() const -> const translation & { return tag_; } // *NOPAD*
 
+        auto tag_color() const -> nc_color { return tag_color_; }
+
         /** The flag's modifier on the fun value of comestibles */
         int taste_mod() const {
             return taste_mod_;
@@ -475,6 +481,7 @@ class json_flag
         bool inherit_ = true;
         bool craft_inherit_ = false;
         std::string requires_flag_;
+        nc_color tag_color_ = c_light_gray;
         translation tag_;
         int taste_mod_ = 0;
         std::string use_method_;

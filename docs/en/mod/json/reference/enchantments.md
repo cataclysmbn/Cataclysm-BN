@@ -133,9 +133,13 @@ Syntax for single entry:
   "value": "VALUE_ID_STRING",
 
   // Additive bonus. Optional integer number, default is 0.
-  // Ignored for:
-  // METABOLISM, MANA_REGEN, STAMINA_CAP, STAMINA_REGEN, THIRST, FATIGUE
   "add": 13,
+
+  // Alternatively, all of these can be based off character resources
+  "add": {
+    "val": "hungry", // Scale based off hunger
+    "per": 0.1 // Every 10 hunger, add 1 to the value
+  },
 
   // Multiplicative bonus. Optional, default is 0.
   "multiply": -0.3
@@ -381,6 +385,22 @@ Perception stat. `base_value` here is the base stat value. The final value canno
 ##### INTELLIGENCE
 
 Intelligence stat. `base_value` here is the base stat value. The final value cannot go below 0.
+
+##### STRENGTH_PERMANENT
+
+Affects base strength stat. `base_value` here is the base stat value. The final value cannot go below 0.
+
+##### DEXTERITY_PERMANENT
+
+Affects base dexterity stat. `base_value` here is the base stat value. The final value cannot go below 0.
+
+##### PERCEPTION_PERMANENET
+
+Affects base perception stat. `base_value` here is the base stat value. The final value cannot go below 0.
+
+##### INTELLIGENCE_PERMANENT
+
+Affects base intelligence stat. `base_value` here is the base stat value. The final value cannot go below 0.
 
 ##### HEALTH_POINTS
 
@@ -676,7 +696,7 @@ There is no limit.
 
 ##### UNCANNY_DODGE
 
-0-1 chance to dodge bullets. `base_value` is 0.
+0-100 chance to dodge bullets. `base_value` is 0.
 Each uncanny dodge takes 100 stamina.
 Any values below 0 or above 1 will have the same effect as at 0 and at 1 respectively
 
@@ -688,7 +708,7 @@ to dodge roll.
 
 ##### FORCEFIELD
 
-0-1 chance to block damage of a damage type. `base_value` is 0.
+0-100 chance to block damage of a damage type. `base_value` is 0.
 
 | Set         | Values                                                 | Use                            |
 | ----------- | ------------------------------------------------------ | ------------------------------ |

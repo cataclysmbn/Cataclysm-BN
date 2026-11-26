@@ -1,8 +1,8 @@
+#include "../src/map/map.h"
 #include "catch/catch.hpp"
 #include "enchantments/enchantment.h"
 #include "item.h"
 #include "magic/magic.h"
-#include "map.h"
 #include "map_helpers.h"
 #include "options.h"
 #include "player.h"
@@ -19,7 +19,7 @@ static void advance_turn(Character& guy) {
     calendar::turn += 1_turns;
 }
 
-static item& give_item(Character& guy, const std::string& item_id) {
+static auto give_item(Character& guy, const std::string& item_id) -> item& {
     detached_ptr<item> det = item::spawn(item_id);
     item& ret = *det;
     guy.i_add(std::move(det));
@@ -27,7 +27,7 @@ static item& give_item(Character& guy, const std::string& item_id) {
     return ret;
 }
 
-static item& wear_item(Character& guy, const std::string& item_id) {
+static auto wear_item(Character& guy, const std::string& item_id) -> item& {
     detached_ptr<item> det = item::spawn(item_id);
     item& ret = *det;
     guy.wear_item(std::move(det), false);
@@ -445,7 +445,7 @@ TEST_CASE("Mana pool", "[magic][enchantment][mana]") {
     for (const mana_test_case& it : mana_test_data) { tests_mana_pool_section(it); }
 }
 
-static float measure_stamina_gain_rate(Character& guy) {
+static auto measure_stamina_gain_rate(Character& guy) -> float {
     int gained_total = 0;
     // Stamina regen rate is supposed to decrease over time as character gains stamina,
     // so we measure 100 times on same level instead of doing update_stamina( 100 )
@@ -723,7 +723,7 @@ TEST_CASE("Item enchantments modify item damage", "[magic][enchantment]") {
     }
 }
 
-static int calc_damage_absorb(Character& guy, damage_type dt, int amount) {
+static auto calc_damage_absorb(Character& guy, damage_type dt, int amount) -> int {
     static const bodypart_id torso("torso");
     damage_instance dmg(dt, amount);
     guy.absorb_hit(torso, dmg);

@@ -1109,6 +1109,21 @@
     ]
   },
   {
+    "id": "everyday_m1919browning",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "m1919browning", "ammo-group": "on_hand_3006", "charges": [ 0, 100 ] },
+      {
+        "distribution": [
+          { "item": "belt3006", "ammo-group": "on_hand_3006", "charges": [ 1, 100 ], "prob": 50 },
+          { "group": "on_hand_3006", "prob": 50, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+        ]
+      }
+    ]
+  },
+  {
     "id": "everyday_hk417_13",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
@@ -1144,8 +1159,8 @@
     "subtype": "collection",
     "entries": [
       { "item": "iwi_tavor_x95_300blk", "ammo-group": "on_hand_300BLK", "charges": [ 0, 30 ] },
-      { "group": "nested_stanag_mag_300", "charges-min": 0, "prob": 80 },
-      { "group": "nested_stanag_mag_300", "charges-min": 0, "prob": 50 },
+      { "group": "nested_stanag_mag_300", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_300BLK" },
+      { "group": "nested_stanag_mag_300", "charges-min": 0, "ammo-group": "on_hand_300BLK", "prob": 50 },
       { "group": "on_hand_300BLK", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
     ]
   },
@@ -1473,9 +1488,9 @@
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
     "subtype": "collection",
     "entries": [
-      { "item": "acr_300blk", "charges": [ 0, 30 ] },
-      { "group": "nested_stanag_mag_300", "charges-min": 0, "prob": 80 },
-      { "group": "nested_stanag_mag_300", "charges-min": 0, "prob": 50 },
+      { "item": "acr_300blk", "ammo-group": "on_hand_300BLK", "charges": [ 0, 30 ] },
+      { "group": "nested_stanag_mag_300", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_300BLK" },
+      { "group": "nested_stanag_mag_300", "charges-min": 0, "ammo-group": "on_hand_300BLK", "prob": 50 },
       { "group": "on_hand_300BLK", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
     ]
   },
@@ -1485,9 +1500,9 @@
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
     "subtype": "collection",
     "entries": [
-      { "item": "sig_mcx", "charges": [ 0, 30 ] },
-      { "group": "nested_stanag_mag_300", "charges-min": 0, "prob": 80 },
-      { "group": "nested_stanag_mag_300", "charges-min": 0, "prob": 50 },
+      { "item": "sig_mcx", "ammo-group": "on_hand_300BLK", "charges": [ 0, 30 ] },
+      { "group": "nested_stanag_mag_300", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_300BLK" },
+      { "group": "nested_stanag_mag_300", "charges-min": 0, "ammo-group": "on_hand_300BLK", "prob": 50 },
       { "group": "on_hand_300BLK", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
     ]
   },
@@ -1497,9 +1512,9 @@
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
     "subtype": "collection",
     "entries": [
-      { "item": "sig_mcx", "charges": [ 0, 30 ], "contents-group": "swat_accessories" },
-      { "group": "nested_stanag_mag_300", "charges-min": 0, "prob": 80 },
-      { "group": "nested_stanag_mag_300", "charges-min": 0, "prob": 50 },
+      { "item": "sig_mcx", "ammo-group": "on_hand_300BLK", "charges": [ 0, 30 ], "contents-group": "swat_accessories" },
+      { "group": "nested_stanag_mag_300", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_300BLK" },
+      { "group": "nested_stanag_mag_300", "charges-min": 0, "ammo-group": "on_hand_300BLK", "prob": 50 },
       { "group": "on_hand_300BLK", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
     ]
   },
@@ -1513,6 +1528,18 @@
       { "group": "nested_ak47_mag", "charges-min": 0, "prob": 80 },
       { "group": "nested_ak47_mag", "charges-min": 0, "prob": 50 },
       { "group": "on_hand_762", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+    ]
+  },
+  {
+    "id": "everyday_SVD",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "SVD", "ammo-group": "on_hand_762R", "charges": [ 0, 10 ] },
+      { "item": "SVDmag", "ammo-group": "on_hand_762R", "charges-min": 0, "prob": 80 },
+      { "item": "SVDmag", "ammo-group": "on_hand_762R", "charges-min": 0, "prob": 50 },
+      { "group": "on_hand_762R", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
     ]
   },
   {
@@ -1866,8 +1893,18 @@
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
     "subtype": "collection",
     "entries": [
-      { "item": "colt_ring", "ammo-group": "on_hand_44paper", "charges": [ 0, 9 ] },
+      { "item": "colt_ring", "ammo-group": "on_hand_44paper", "charges": [ 0, 8 ] },
       { "group": "on_hand_44paper", "prob": 80, "charges": [ 5, 10 ], "count": [ 2, 3 ] }
+    ]
+  },
+  {
+    "id": "everyday_colt_ring_36",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "colt_ring_36", "ammo-group": "on_hand_36paper", "charges": [ 0, 8 ] },
+      { "group": "on_hand_36paper", "prob": 80, "charges": [ 5, 10 ], "count": [ 2, 3 ] }
     ]
   },
   {
@@ -2240,6 +2277,21 @@
     ]
   },
   {
+    "id": "everyday_PKM",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "PKM", "ammo-group": "on_hand_762R", "charges": [ 0, 100 ] },
+      {
+        "distribution": [
+          { "item": "belt762R", "ammo-group": "on_hand_762R", "charges": [ 1, 100 ], "prob": 50 },
+          { "group": "on_hand_762R", "prob": 50, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+        ]
+      }
+    ]
+  },
+  {
     "id": "everyday_m2browning",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
@@ -2583,7 +2635,7 @@
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
     "subtype": "collection",
     "entries": [
-      { "item": "rm99_pistol", "ammo-group": "on_hand_8x40", "charges": [ 0, 5 ] },
+      { "item": "rm99_pistol", "ammo-group": "on_hand_8x40", "charges": [ 0, 6 ] },
       {
         "distribution": [
           {

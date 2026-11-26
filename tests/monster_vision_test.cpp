@@ -1,9 +1,9 @@
+#include "../src/map/map.h"
+#include "../src/map/mapdata.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
 #include "game.h"
-#include "map.h"
 #include "map_helpers.h"
-#include "mapdata.h"
 #include "monster.h"
 #include "state_helpers.h"
 
@@ -11,7 +11,7 @@
 
 struct tripoint;
 
-static monster& spawn_and_clear(const tripoint_bub_ms& pos, bool set_floor) {
+static auto spawn_and_clear(const tripoint_bub_ms& pos, bool set_floor) -> monster& {
     if (set_floor) { get_map().set(pos, t_floor, f_null); }
     return spawn_test_monster("mon_zombie", pos);
 }

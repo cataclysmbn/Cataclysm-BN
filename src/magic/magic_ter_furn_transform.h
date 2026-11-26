@@ -30,11 +30,11 @@ public:
           message(message),
           message_good(message_good) {}
 
-    bool has_msg() const;
+    auto has_msg() const -> bool;
     void add_msg(const Creature& critter) const;
-    std::optional<T> pick() const;
+    auto pick() const -> std::optional<T>;
     void load(const JsonObject& jo);
-    bool is_empty() const;
+    auto is_empty() const -> bool;
 };
 
 class ter_furn_transform {
@@ -49,23 +49,23 @@ private:
     std::map<furn_str_id, ter_furn_data<furn_str_id>> furn_transform;
     std::map<std::string, ter_furn_data<furn_str_id>> furn_flag_transform;
 
-    std::optional<ter_str_id> next_ter(const ter_str_id& ter) const;
-    std::optional<ter_str_id> next_ter(const std::string& flag) const;
-    std::optional<furn_str_id> next_furn(const furn_str_id& furn) const;
-    std::optional<furn_str_id> next_furn(const std::string& flag) const;
+    auto next_ter(const ter_str_id& ter) const -> std::optional<ter_str_id>;
+    auto next_ter(const std::string& flag) const -> std::optional<ter_str_id>;
+    auto next_furn(const furn_str_id& furn) const -> std::optional<furn_str_id>;
+    auto next_furn(const std::string& flag) const -> std::optional<furn_str_id>;
 
     template <class T, class K>
-    std::optional<ter_furn_data<T>> find_transform(
-        const std::map<K, ter_furn_data<T>>& list, const K& key) const;
+    auto find_transform(const std::map<K, ter_furn_data<T>>& list, const K& key) const
+        -> std::optional<ter_furn_data<T>>;
 
     template <class T, class K>
-    std::optional<T> next(const std::map<K, ter_furn_data<T>>& list, const K& key) const;
+    auto next(const std::map<K, ter_furn_data<T>>& list, const K& key) const -> std::optional<T>;
 
     // return value is success of message found
     template <class T, class K>
-    bool add_message(
+    auto add_message(
         const std::map<K, ter_furn_data<T>>& list, const K& key, const Creature& critter,
-        const tripoint_bub_ms& location) const;
+        const tripoint_bub_ms& location) const -> bool;
 
 public:
     ter_furn_transform_id id;
@@ -82,7 +82,7 @@ public:
     static void load_transform(const JsonObject& jo, const std::string& src);
     void load(const JsonObject& jo, const std::string&);
 
-    static const std::vector<ter_furn_transform>& get_all();
+    static auto get_all() -> const std::vector<ter_furn_transform>&;
     static void reset_all();
-    bool is_valid() const;
+    auto is_valid() const -> bool;
 };

@@ -94,7 +94,7 @@
     "type": "GENERIC",
     "id": "2x4",
     "name": { "str": "plank" },
-    "description": "A narrow, thick plank of wood, like a 2 by 4 or similar piece of dimensional lumber.  Makes a decent melee weapon, and can be used for all kinds construction.",
+    "description": "A narrow, thick plank of wood, like a 2 by 4 or similar piece of dimensional lumber.  Makes a decent melee weapon, and can be used for all kinds of construction.",
     "category": "scrap_wood",
     "weight": "2200 g",
     "to_hit": 1,

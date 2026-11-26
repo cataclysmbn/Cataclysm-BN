@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "coordinates.h"
 #include "point.h"
 
 /// Options for rendering zone previews and overlays.

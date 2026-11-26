@@ -1,8 +1,8 @@
 #include "state_helpers.h"
 
+#include "../src/map/map.h"
 #include "calendar.h"
 #include "cata_arena.h"
-#include "map.h"
 #include "map_helpers.h"
 #include "name.h"
 #include "player_helpers.h"
@@ -29,6 +29,7 @@ auto clear_states(const enum_bitset<test_state>& states) -> void {
         weather.weather_id = weather_type_id("clear");
         weather.weather_override = weather_type_id::NULL_ID();
         weather.nextweather = calendar::before_time_starts;
+        weather.last_weather_position = tripoint_abs_ms::zero();
         weather.temperature = 0_c;
         weather.water_temperature = 0_c;
         weather.lightning_active = false;

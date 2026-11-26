@@ -15,10 +15,12 @@
     "o#o",                                 // 또는 팔레트와 함께 부품을 정의하는 방법
     "o#o"                                  // 팔레트를 사용한 부분 정의도 가능
 ],
-"blueprint_origin": { "x": 10, "y": 3 }    // 팔레트가 오프셋을 찾는 데 사용
+"blueprint_origin": { "x": 10, "y": 3 },   // 팔레트가 오프셋을 찾는 데 사용
 "palette": {                               // 블루프린트가 타일에 부품을 설정하는 데 사용하는 팔레트
-  "O": [ "airship_balloon_external" ]      // 문자열 배열만 가능, 부품 객체는 불가
-}
+  "O": [ "airship_balloon_external" ]      // 배열이어야 하며 문자열 하나만 사용할 수 없음
+  "J": [ { "part": "tank", "fuel": "gasoline" }, "battery_car" ], // 모든 부품 타입 지원
+},
+"color_palette": "car_standard",           // 이 차량이 사용할 차량 색상 팔레트
 "parts": [                                 // 부품 목록
     { "x": 0, "y": 0, "part": "frame" },   // 부품 정의, 양의 x 방향은 위,
     { "x": 0, "y": 0, "part": "seat" },    // 양의 y는 오른쪽
@@ -115,4 +117,34 @@ TYPE: DATA } 형식이며, 해당 위치에 생성될 수 있는 아이템을 �
   "fuel" : -1, // 새 차량의 연료.
   "status" : 1  // 새 차량의 상태.
 } } ]
+```
+
+## 차량 색상 팔레트
+
+```json
+"type": "vehicle_color_palette",
+"id": "car_standard",                                      // 고유 ID
+"palette": [
+  {
+    "fuzzy_ids": [ "board", "windshield", "door", "roo" ], // 아래에서 선택한 색상을 칠할 퍼지 매칭 ID 목록
+    "colors": [
+      { "color": "White aluminium", "weight": 8 },         // 색상과 가중치, 이름으로 지정
+      { "color": "#622625", "weight": 8 },                 // 16진수 코드도 가능
+      { "color": "Grey", "weight": 8 },                    // 퍼지 매칭 색상 이름도 가능
+    ]
+  }
+]
+```
+
+## 차량 블랙리스트
+
+```jsonc
+{
+  "type": "vehicle_blacklist", // 필수 타입
+  "vehicles": [ // 차단할 차량 프로토타입 ID 목록
+    "car", // 디버그 생성 등은 가능
+    "4x4_car", // 차량 그룹을 통한 생성만 차단
+    "beetle",
+  ],
+}
 ```

@@ -108,10 +108,10 @@ TEST_CASE("flat_set_comparison", "[flat_set]") {
 
 struct int_like {
     int i;
-#define INT_LIKE_OPERATOR(op)                                       \
-    friend bool operator op(int_like l, int r) { return l.i op r; } \
-    friend bool operator op(int l, int_like r) { return l op r.i; } \
-    friend bool operator op(int_like l, int_like r) { return l.i op r.i; }
+#define INT_LIKE_OPERATOR(op)                                             \
+    friend auto operator op(int_like l, int r)->bool { return l.i op r; } \
+    friend auto operator op(int l, int_like r)->bool { return l op r.i; } \
+    friend auto operator op(int_like l, int_like r)->bool { return l.i op r.i; }
     INT_LIKE_OPERATOR(==);
     INT_LIKE_OPERATOR(<);
 };

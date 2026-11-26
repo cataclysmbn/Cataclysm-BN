@@ -10,7 +10,7 @@
 
 // Same as @ref string_format, but does not swallow errors and throws them instead.
 template <typename... Args>
-std::string throwing_string_format(const char* const format, Args&&... args) {
+auto throwing_string_format(const char* const format, Args&&... args) -> std::string {
     cata::string_formatter formatter(format);
     formatter.parse(std::forward<Args>(args)...);
     return formatter.get_output();

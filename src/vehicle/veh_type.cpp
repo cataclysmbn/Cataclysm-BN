@@ -17,7 +17,8 @@
 #include "item_group.h"
 #include "itype.h"
 #include "json.h"
-#include "mapdata.h"
+#include "map/mapdata.h"
+#include "options.h"
 #include "output.h"
 #include "player.h"
 #include "requirements.h"
@@ -39,7 +40,9 @@
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
+#include <limits>
 #include <memory>
 #include <numeric>
 #include <string>
@@ -49,6 +52,8 @@
 class npc;
 
 std::unordered_map<vproto_id, vehicle_prototype> vtypes;
+
+std::unordered_set<vproto_id> vtypes_blacklisted;
 
 namespace {
 generic_factory<vpart_info> all_vparts("Vehicle Parts");
@@ -403,7 +408,7 @@ void vpart_info::load_vehicle_parts(const JsonObject& jo, const std::string& src
 /**
  * Reads in a vehicle part from a JsonObject.
  */
-void vpart_info::load(const JsonObject& jo, const std::string& src) {
+void vpart_info::load(const JsonObject& jo, const std::string& /*src*/) {
 
     assign(jo, "name", name_);
     assign(jo, "item", item);
@@ -459,9 +464,11 @@ void vpart_info::load(const JsonObject& jo, const std::string& src) {
     if (jo.has_member("requirements")) {
         auto reqs = jo.get_object("requirements");
 
-        parse_vp_reqs(reqs, id.str(), "install", install_reqs, install_skills, install_moves);
-        parse_vp_reqs(reqs, id.str(), "removal", removal_reqs, removal_skills, removal_moves);
-        parse_vp_reqs(reqs, id.str(), "repair", repair_reqs, repair_skills, repair_moves);
+        std::string id_str = id.str();
+        if (jo.has_member("abstract")) { id_str = jo.get_string("abstract"); }
+        parse_vp_reqs(reqs, id_str, "install", install_reqs, install_skills, install_moves);
+        parse_vp_reqs(reqs, id_str, "removal", removal_reqs, removal_skills, removal_moves);
+        parse_vp_reqs(reqs, id_str, "repair", repair_reqs, repair_skills, repair_moves);
     }
 
     if (jo.has_member("symbol")) { sym = jo.get_string("symbol")[0]; }
@@ -526,10 +533,10 @@ void vpart_info::load(const JsonObject& jo, const std::string& src) {
     if (jo.has_array("shapes")) {
         for (JsonObject obj : jo.get_array("shapes")) {
             vpart_info shape = vpart_info(*this);
-            if (shape.id.str() == "") {
+            if (jo.has_string("abstract")) {
                 shape.id = vpart_id(jo.get_string("abstract") + "_" + obj.get_string("direction"));
             } else {
-                shape.id = vpart_id(shape.id.str() + "_" + obj.get_string("direction"));
+                shape.id = vpart_id(id.str() + "_" + obj.get_string("direction"));
             }
             if (shape.looks_like != "") {
                 shape.looks_like = shape.looks_like + "_" + obj.get_string("direction");
@@ -537,6 +544,7 @@ void vpart_info::load(const JsonObject& jo, const std::string& src) {
             if (obj.has_string("symbol")) { shape.sym = obj.get_string("symbol")[0]; }
             if (obj.has_string("symbol_broken")) { shape.sym = obj.get_string("symbol_broken")[0]; }
             if (obj.has_string("looks_like")) { shape.looks_like = obj.get_string("looks_like"); }
+            shape.was_loaded = true;
             all_vparts.insert(shape);
         }
     }
@@ -649,7 +657,7 @@ void vpart_info::check() const {
         }
     }
 
-    for (const auto& [req, multiplier] : install_reqs) {
+    for (const auto& [req, multiplier] : removal_reqs) {
         if (!(req.is_null() || req.is_valid()) || multiplier < 0) {
             debugmsg("vehicle part %s has unknown or incorrectly specified removal requirements %s",
                      id.c_str(), req.c_str());
@@ -771,9 +779,9 @@ void vpart_info::check() const {
 
 void vpart_info::reset() { all_vparts.reset(); }
 
-const std::vector<vpart_info>& vpart_info::get_all() { return all_vparts.get_all(); }
+auto vpart_info::get_all() -> const std::vector<vpart_info>& { return all_vparts.get_all(); }
 
-std::string vpart_info::name() const {
+auto vpart_info::name() const -> std::string {
     if (name_.empty()) {
         return item::nname(item);
     } else {
@@ -781,8 +789,8 @@ std::string vpart_info::name() const {
     }
 }
 
-int vpart_info::format_description(
-    std::string& msg, const nc_color& format_color, int width) const {
+auto vpart_info::format_description(std::string& msg, const nc_color& format_color, int width) const
+    -> int {
     int lines = 1;
     msg += _("<color_white>Description</color>\n");
     msg += "> <color_" + string_from_color(format_color) + ">";
@@ -845,7 +853,7 @@ int vpart_info::format_description(
     return lines;
 }
 
-requirement_data vpart_info::install_requirements() const {
+auto vpart_info::install_requirements() const -> requirement_data {
     return std::accumulate(
         install_reqs.begin(), install_reqs.end(), requirement_data(),
         [](const requirement_data& lhs, const std::pair<requirement_id, int>& rhs) {
@@ -853,7 +861,7 @@ requirement_data vpart_info::install_requirements() const {
         });
 }
 
-requirement_data vpart_info::removal_requirements() const {
+auto vpart_info::removal_requirements() const -> requirement_data {
     return std::accumulate(
         removal_reqs.begin(), removal_reqs.end(), requirement_data(),
         [](const requirement_data& lhs, const std::pair<requirement_id, int>& rhs) {
@@ -861,7 +869,7 @@ requirement_data vpart_info::removal_requirements() const {
         });
 }
 
-requirement_data vpart_info::repair_requirements() const {
+auto vpart_info::repair_requirements() const -> requirement_data {
     return std::accumulate(
         repair_reqs.begin(), repair_reqs.end(), requirement_data(),
         [](const requirement_data& lhs, const std::pair<requirement_id, int>& rhs) {
@@ -869,35 +877,43 @@ requirement_data vpart_info::repair_requirements() const {
         });
 }
 
-bool vpart_info::is_repairable() const { return !repair_requirements().is_empty(); }
+auto vpart_info::is_repairable() const -> bool { return !repair_requirements().is_empty(); }
 
-static int scale_time(const std::map<skill_id, int>& sk, int mv, const Character& who) {
-    if (sk.empty()) { return mv; }
+namespace {
+auto scale_time(const std::map<skill_id, int>& sk, int mv, const Character& who) -> int {
+    const auto scaling = get_option<int>("VEHICLE_WORK_SCALING");
+    if (scaling == 0) { return mv > 0 ? 1 : 0; }
 
-    const int lvl = std::
-        accumulate(sk.begin(), sk.end(), 0, [&who](int lhs, const std::pair<skill_id, int>& rhs) {
+    auto time_norm = mv;
+    if (!sk.empty()) {
+        const auto lvl = std::accumulate(sk.begin(), sk.end(), 0, [&who](int lhs, const auto& rhs) {
             return lhs
                  + std::max(std::min(who.get_skill_level(rhs.first), MAX_SKILL) - rhs.second, 0);
         });
-    // 10% per excess level (reduced proportionally if >1 skill required) with max 50% reduction
-    // 10% reduction per assisting NPC
-    int time_norm =
-        mv * (1.0 - std::min(static_cast<double>(lvl) / sk.size() / 10.0, 0.5))
-        * (10 - character_funcs::get_crafting_helpers(who, 3).size()) / 10;
-    time_norm +=
-        who.bonus_from_enchantments(time_norm, enchantment_value_id("CONSTRUCTION_SPEED_VEH"));
-    return time_norm;
-}
+        // 10% per excess level (reduced proportionally if >1 skill required) with max 50% reduction
+        // 10% reduction per assisting NPC
+        time_norm =
+            mv * (1.0 - std::min(static_cast<double>(lvl) / sk.size() / 10.0, 0.5))
+            * (10 - character_funcs::get_crafting_helpers(who, 3).size()) / 10;
+        time_norm +=
+            who.bonus_from_enchantments(time_norm, enchantment_value_id("CONSTRUCTION_SPEED_VEH"));
+    }
 
-int vpart_info::install_time(const Character& who) const {
+    const auto scaled = static_cast<int64_t>(time_norm) * scaling / 100;
+    time_norm = static_cast<int>(std::min<int64_t>(scaled, std::numeric_limits<int>::max()));
+    return mv > 0 ? std::max(1, time_norm) : time_norm;
+}
+} // namespace
+
+auto vpart_info::install_time(const Character& who) const -> int {
     return scale_time(install_skills, install_moves, who);
 }
 
-int vpart_info::removal_time(const Character& who) const {
+auto vpart_info::removal_time(const Character& who) const -> int {
     return scale_time(removal_skills, removal_moves, who);
 }
 
-int vpart_info::repair_time(const Character& who) const {
+auto vpart_info::repair_time(const Character& who) const -> int {
     return scale_time(repair_skills, repair_moves, who);
 }
 
@@ -905,33 +921,35 @@ int vpart_info::repair_time(const Character& who) const {
  * @name Engine specific functions
  *
  */
-float vpart_info::engine_backfire_threshold() const {
+auto vpart_info::engine_backfire_threshold() const -> float {
     return has_flag(VPFLAG_ENGINE) ? engine_info->backfire_threshold : false;
 }
 
-int vpart_info::engine_backfire_freq() const {
+auto vpart_info::engine_backfire_freq() const -> int {
     return has_flag(VPFLAG_ENGINE) ? engine_info->backfire_freq : false;
 }
 
-int vpart_info::engine_muscle_power_factor() const {
+auto vpart_info::engine_muscle_power_factor() const -> int {
     return has_flag(VPFLAG_ENGINE) ? engine_info->muscle_power_factor : false;
 }
 
-float vpart_info::engine_damaged_power_factor() const {
+auto vpart_info::engine_damaged_power_factor() const -> float {
     return has_flag(VPFLAG_ENGINE) ? engine_info->damaged_power_factor : false;
 }
 
-int vpart_info::engine_noise_factor() const {
+auto vpart_info::engine_noise_factor() const -> int {
     return has_flag(VPFLAG_ENGINE) ? engine_info->noise_factor : false;
 }
 
-int vpart_info::engine_m2c() const { return has_flag(VPFLAG_ENGINE) ? engine_info->m2c : 0; }
+auto vpart_info::engine_m2c() const -> int {
+    return has_flag(VPFLAG_ENGINE) ? engine_info->m2c : 0;
+}
 
-std::vector<std::string> vpart_info::engine_excludes() const {
+auto vpart_info::engine_excludes() const -> std::vector<std::string> {
     return has_flag(VPFLAG_ENGINE) ? engine_info->exclusions : std::vector<std::string>();
 }
 
-std::vector<itype_id> vpart_info::engine_fuel_opts() const {
+auto vpart_info::engine_fuel_opts() const -> std::vector<itype_id> {
     return has_flag(VPFLAG_ENGINE) ? engine_info->fuel_opts : std::vector<itype_id>();
 }
 
@@ -939,63 +957,71 @@ std::vector<itype_id> vpart_info::engine_fuel_opts() const {
  * @name Wheel specific functions
  *
  */
-float vpart_info::wheel_rolling_resistance() const {
+auto vpart_info::wheel_rolling_resistance() const -> float {
     // caster wheels return 29, so if a part rolls worse than a caster wheel...
     return has_flag(VPFLAG_WHEEL) ? wheel_info->rolling_resistance : 50;
 }
 
-int vpart_info::wheel_area() const { return has_flag(VPFLAG_WHEEL) ? wheel_info->contact_area : 0; }
+auto vpart_info::wheel_area() const -> int {
+    return has_flag(VPFLAG_WHEEL) ? wheel_info->contact_area : 0;
+}
 
-std::vector<std::pair<std::string, int>> vpart_info::wheel_terrain_mod() const {
+auto vpart_info::wheel_terrain_mod() const -> std::vector<std::pair<std::string, int>> {
     const std::vector<std::pair<std::string, int>> null_map;
     return has_flag(VPFLAG_WHEEL) ? wheel_info->terrain_mod : null_map;
 }
 
-float vpart_info::wheel_or_rating() const {
+auto vpart_info::wheel_or_rating() const -> float {
     return has_flag(VPFLAG_WHEEL) ? wheel_info->or_rating : 0.0f;
 }
 
-int vpart_info::rotor_diameter() const {
+auto vpart_info::rotor_diameter() const -> int {
     return has_flag(VPFLAG_ROTOR) ? rotor_info->rotor_diameter : 0;
 }
 
-float vpart_info::balloon_height() const {
+auto vpart_info::balloon_height() const -> float {
     return has_flag(VPFLAG_BALLOON) ? balloon_info->height : 0;
 }
 
-int vpart_info::ladder_length() const { return has_flag("LADDER") ? ladder_info->length : 0; }
+auto vpart_info::ladder_length() const -> int {
+    return has_flag("LADDER") ? ladder_info->length : 0;
+}
 
-float vpart_info::lift_coff() const { return has_flag(VPFLAG_WING) ? wing_info->lift_coff : 0; }
+auto vpart_info::lift_coff() const -> float {
+    return has_flag(VPFLAG_WING) ? wing_info->lift_coff : 0;
+}
 
-int vpart_info::propeller_diameter() const {
+auto vpart_info::propeller_diameter() const -> int {
     return has_flag(VPFLAG_PROPELLER) ? propeller_info->propeller_diameter : 0;
 }
 
-int vpart_info::get_max_conversions() const {
+auto vpart_info::get_max_conversions() const -> int {
     return has_flag("CONVERTER") ? converter_info->max_steps : 0;
 }
-int vpart_info::get_conversion_charges() const {
+auto vpart_info::get_conversion_charges() const -> int {
     return has_flag("CONVERTER") ? converter_info->charge_cost : 0;
 }
-const std::pair<itype_id, int> vpart_info::get_conversion_input() const {
+auto vpart_info::get_conversion_input() const -> const std::pair<itype_id, int> {
     return has_flag("CONVERTER")
              ? std::make_pair(converter_info->input, converter_info->input_step)
              : std::make_pair(itype_id::NULL_ID(), 0);
 }
-const std::pair<itype_id, int> vpart_info::get_conversion_output() const {
+auto vpart_info::get_conversion_output() const -> const std::pair<itype_id, int> {
     return has_flag("CONVERTER")
              ? std::make_pair(converter_info->output, converter_info->output_step)
              : std::make_pair(itype_id::NULL_ID(), 0);
 }
 
-const std::vector<itype_id> vpart_info::craftertools() const { return crafter_info->fake_parts; }
+auto vpart_info::craftertools() const -> const std::vector<itype_id> {
+    return crafter_info->fake_parts;
+}
 
-const std::optional<vpslot_workbench>& vpart_info::get_workbench_info() const {
+auto vpart_info::get_workbench_info() const -> const std::optional<vpslot_workbench>& {
     return workbench_info;
 }
 
 /** @relates string_id */
-template <> const vehicle_prototype& string_id<vehicle_prototype>::obj() const {
+template <> auto string_id<vehicle_prototype>::obj() const -> const vehicle_prototype& {
     const auto iter = vtypes.find(*this);
     if (iter == vtypes.end()) {
         debugmsg("invalid vehicle prototype id %s", c_str());
@@ -1008,7 +1034,9 @@ template <> const vehicle_prototype& string_id<vehicle_prototype>::obj() const {
 }
 
 /** @relates string_id */
-template <> bool string_id<vehicle_prototype>::is_valid() const { return vtypes.contains(*this); }
+template <> auto string_id<vehicle_prototype>::is_valid() const -> bool {
+    return vtypes.contains(*this);
+}
 
 vehicle_prototype::vehicle_prototype() = default;
 
@@ -1023,7 +1051,7 @@ vehicle_prototype::vehicle_prototype(
 vehicle_prototype::vehicle_prototype(vehicle_prototype&&) noexcept = default;
 vehicle_prototype::~vehicle_prototype() = default;
 
-vehicle_prototype& vehicle_prototype::operator=(vehicle_prototype&&) noexcept = default;
+auto vehicle_prototype::operator=(vehicle_prototype&&) noexcept -> vehicle_prototype& = default;
 
 /**
  *Caches a vehicle definition from a JsonObject to be loaded after itypes is initialized.
@@ -1280,9 +1308,17 @@ void vehicle_prototype::finalize() {
     }
 }
 
-std::vector<vproto_id> vehicle_prototype::get_all() {
+auto vehicle_prototype::get_all() -> std::vector<vproto_id> {
     std::vector<vproto_id> result;
     result.reserve(vtypes.size());
     for (auto& vp : vtypes) { result.push_back(vp.first); }
     return result;
+}
+
+void vehicle_prototype::load_vehicle_blacklist(const JsonObject& json) {
+    json.read("vehicles", vtypes_blacklisted, true);
+}
+
+const std::unordered_set<vproto_id> vehicle_prototype::get_vehicle_blacklist() {
+    return vtypes_blacklisted;
 }

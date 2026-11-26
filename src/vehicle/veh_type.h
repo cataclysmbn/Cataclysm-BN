@@ -20,6 +20,7 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -203,9 +204,9 @@ public:
     bool was_loaded = false;
 
     /** Translated name of a part */
-    std::string name() const;
+    auto name() const -> std::string;
 
-    vpart_id get_id() const { return id; }
+    auto get_id() const -> vpart_id { return id; }
 
     /** base item for this part */
     itype_id item;
@@ -279,10 +280,10 @@ public:
     bool legacy = true;
 
     /** Format the description for display */
-    int format_description(std::string& msg, const nc_color& format_color, int width) const;
+    auto format_description(std::string& msg, const nc_color& format_color, int width) const -> int;
 
     /** Installation requirements for this component */
-    requirement_data install_requirements() const;
+    auto install_requirements() const -> requirement_data;
 
     /** Required skills to install this component */
     std::map<skill_id, int> install_skills;
@@ -291,10 +292,10 @@ public:
     int install_moves = to_moves<int>(1_hours);
 
     /** Installation time (in moves) for this component accounting for player skills */
-    int install_time(const Character& who) const;
+    auto install_time(const Character& who) const -> int;
 
     /** Requirements for removal of this component */
-    requirement_data removal_requirements() const;
+    auto removal_requirements() const -> requirement_data;
 
     /** Required skills to remove this component */
     std::map<skill_id, int> removal_skills;
@@ -304,13 +305,13 @@ public:
     int removal_moves = -1;
 
     /** Removal time (in moves) for this component accounting for player skills */
-    int removal_time(const Character& who) const;
+    auto removal_time(const Character& who) const -> int;
 
     /** Requirements for repair of this component (per level of damage) */
-    requirement_data repair_requirements() const;
+    auto repair_requirements() const -> requirement_data;
 
     /** Returns whether or not the part is repairable  */
-    bool is_repairable() const;
+    auto is_repairable() const -> bool;
 
     /** Required skills to repair this component */
     std::map<skill_id, int> repair_skills;
@@ -319,7 +320,7 @@ public:
     int repair_moves = to_moves<int>(1_hours);
 
     /** Repair time (in moves) to fully repair this component, accounting for player skills */
-    int repair_time(const Character& who) const;
+    auto repair_time(const Character& who) const -> int;
 
     /** @ref item_group this part breaks into when destroyed */
     item_group_id breaks_into_group = item_group_id("EMPTY_GROUP");
@@ -354,38 +355,38 @@ public:
      * @name Engine specific functions
      *
      */
-    std::vector<std::string> engine_excludes() const;
-    int engine_m2c() const;
-    float engine_backfire_threshold() const;
-    int engine_backfire_freq() const;
-    int engine_muscle_power_factor() const;
-    float engine_damaged_power_factor() const;
-    int engine_noise_factor() const;
-    std::vector<itype_id> engine_fuel_opts() const;
+    auto engine_excludes() const -> std::vector<std::string>;
+    auto engine_m2c() const -> int;
+    auto engine_backfire_threshold() const -> float;
+    auto engine_backfire_freq() const -> int;
+    auto engine_muscle_power_factor() const -> int;
+    auto engine_damaged_power_factor() const -> float;
+    auto engine_noise_factor() const -> int;
+    auto engine_fuel_opts() const -> std::vector<itype_id>;
     /**
      * @name Wheel specific functions
      *
      */
-    float wheel_rolling_resistance() const;
-    int wheel_area() const;
-    std::vector<std::pair<std::string, int>> wheel_terrain_mod() const;
-    float wheel_or_rating() const;
+    auto wheel_rolling_resistance() const -> float;
+    auto wheel_area() const -> int;
+    auto wheel_terrain_mod() const -> std::vector<std::pair<std::string, int>>;
+    auto wheel_or_rating() const -> float;
     /** @name flight specific functions
      */
-    int rotor_diameter() const;
-    float lift_coff() const;
-    int propeller_diameter() const;
-    float balloon_height() const;
-    int ladder_length() const;
-    const std::pair<itype_id, int> get_conversion_input() const;
-    const std::pair<itype_id, int> get_conversion_output() const;
-    int get_max_conversions() const;
-    int get_conversion_charges() const;
-    const std::vector<itype_id> craftertools() const;
+    auto rotor_diameter() const -> int;
+    auto lift_coff() const -> float;
+    auto propeller_diameter() const -> int;
+    auto balloon_height() const -> float;
+    auto ladder_length() const -> int;
+    auto get_conversion_input() const -> const std::pair<itype_id, int>;
+    auto get_conversion_output() const -> const std::pair<itype_id, int>;
+    auto get_max_conversions() const -> int;
+    auto get_conversion_charges() const -> int;
+    auto craftertools() const -> const std::vector<itype_id>;
     /**
      * Getter for optional workbench info
      */
-    const std::optional<vpslot_workbench>& get_workbench_info() const;
+    auto get_workbench_info() const -> const std::optional<vpslot_workbench>&;
 
 private:
     /** Name from vehicle part definition which if set overrides the base item name */
@@ -406,9 +407,9 @@ public:
     // Display order in vehicle interact display
     int list_order = 0;
 
-    const std::set<std::string>& get_flags() const { return flags; }
-    bool has_flag(const std::string& flag) const { return flags.contains(flag); }
-    bool has_flag(const vpart_bitflags flag) const { return bitflags.test(flag); }
+    auto get_flags() const -> const std::set<std::string>& { return flags; }
+    auto has_flag(const std::string& flag) const -> bool { return flags.contains(flag); }
+    auto has_flag(const vpart_bitflags flag) const -> bool { return bitflags.test(flag); }
     void set_flag(const std::string& flag);
 
     static void load_engine(
@@ -430,7 +431,7 @@ public:
     static void check_consistency();
     static void reset();
 
-    static const std::vector<vpart_info>& get_all();
+    static auto get_all() -> const std::vector<vpart_info>&;
 };
 
 struct vehicle_item_spawn {
@@ -465,7 +466,7 @@ struct vehicle_prototype {
     vehicle_prototype(vehicle_prototype&&) noexcept;
     ~vehicle_prototype();
 
-    vehicle_prototype& operator=(vehicle_prototype&&) noexcept;
+    auto operator=(vehicle_prototype&&) noexcept -> vehicle_prototype&;
 
     std::string name;
     std::vector<part_def> parts;
@@ -479,8 +480,10 @@ struct vehicle_prototype {
     std::unique_ptr<vehicle> blueprint;
 
     static void load(const JsonObject& jo);
+    static void load_vehicle_blacklist(const JsonObject& jo);
+    static const std::unordered_set<vproto_id> get_vehicle_blacklist();
     static void reset();
     static void finalize();
 
-    static std::vector<vproto_id> get_all();
+    static auto get_all() -> std::vector<vproto_id>;
 };

@@ -1,5 +1,26 @@
 #pragma once
 
+#include "bodypart.h" // body_part::num_bp
+#include "calendar.h"
+#include "catalua_type_operators.h"
+#include "color.h" // nc_color
+#include "coordinates.h"
+#include "damage.h"
+#include "data_vars.h"
+#include "enums.h" // point
+#include "explosion.h"
+#include "game_constants.h"
+#include "hsv_color.h"
+#include "iuse.h" // use_function
+#include "map/mapdata.h"
+#include "pldata.h" // add_type
+#include "shape.h"
+#include "stomach.h"
+#include "translations.h"
+#include "type_id.h"
+#include "units.h"
+#include "value_ptr.h"
+
 #include <array>
 #include <iosfwd>
 #include <map>
@@ -10,27 +31,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include "bodypart.h" // body_part::num_bp
-#include "calendar.h"
-#include "catalua_type_operators.h"
-#include "coordinates.h"
-#include "color.h" // nc_color
-#include "damage.h"
-#include "data_vars.h"
-#include "enums.h" // point
-#include "explosion.h"
-#include "game_constants.h"
-#include "hsv_color.h"
-#include "iuse.h" // use_function
-#include "mapdata.h"
-#include "pldata.h" // add_type
-#include "shape.h"
-#include "stomach.h"
-#include "translations.h"
-#include "type_id.h"
-#include "units.h"
-#include "value_ptr.h"
-
 class Item_factory;
 class item;
 class JsonObject;
@@ -39,6 +39,7 @@ class lua_iwieldable_actor;
 class lua_iwearable_actor;
 class lua_iequippable_actor;
 class lua_istate_actor;
+class lua_iconsume_actor;
 class lua_imelee_actor;
 class lua_iranged_actor;
 class lua_itrap_actor;
@@ -329,6 +330,11 @@ struct islot_armor {
     std::vector<std::string> valid_mods;
     // Layer, encumbrance and coverage information.
     std::vector<armor_portion_data> data;
+
+    // NOTE: Theoretically this will one day become clothing modifications
+    // Today is not that day, but this will set a suitable framework
+    std::map<flag_id, int> provides_slot;
+    std::map<flag_id, int> consumes_slot;
 };
 
 struct islot_pet_armor {
@@ -349,7 +355,7 @@ struct islot_pet_armor {
      */
     units::volume storage = 0_ml;
     /**
-     * The maximum volume a pet can be and wear this armor
+     * The maximum volume a pet can be and wear this armor (exclusive)
      */
     units::volume max_vol = 0_ml;
     /**
@@ -854,6 +860,10 @@ struct islot_seed {
      * Terrain tag required to plant the seed.
      */
     std::string required_terrain_flag = "PLANTABLE";
+    /// Flags copied from the planted item to harvested fruits and seeds, excluding byproducts.
+    std::vector<flag_id> harvest_inherit_flags;
+    /// Copy the planted item's poison value to harvested fruits and seeds.
+    bool harvest_inherit_poison = false;
     islot_seed() = default;
 
     /**
@@ -1008,11 +1018,15 @@ struct itype {
         /** Action to take BEFORE the item is placed on map. If it returns non-zero, item won't be placed. */
         use_function drop_action;
 
+        /** Field to spread when a liquid is spilled onto ordinary ground. */
+        field_type_id spill_field;
+
         /** Lua callback actors (non-owning, owned by Item_factory) */
         const lua_iwieldable_actor *iwieldable_callbacks = nullptr;
         const lua_iwearable_actor *iwearable_callbacks = nullptr;
         const lua_iequippable_actor *iequippable_callbacks = nullptr;
         const lua_istate_actor *istate_callbacks = nullptr;
+        const lua_iconsume_actor *iconsume_callbacks = nullptr;
         const lua_imelee_actor *imelee_callbacks = nullptr;
         const lua_iranged_actor *iranged_callbacks = nullptr;
         const lua_itrap_actor *itrap_callbacks = nullptr;

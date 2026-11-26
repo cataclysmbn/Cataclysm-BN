@@ -16,6 +16,7 @@
 #include "iexamine.h"
 #include "monster.h"
 #include "monstergenerator.h"
+#include "recipe_dictionary.h"
 #include "sol/sol.hpp"
 #include "trap.h"
 #include "type_id.h"
@@ -23,34 +24,32 @@
 constexpr int LUA_API_VERSION = 2;
 
 #include "action_time_scale.h"
-#include "catalua_sol.h"
-
 #include "avatar.h"
 #include "bionics.h"
 #include "catalua_console.h"
 #include "catalua_coord.h"
 #include "catalua_hooks.h"
-#include "catalua_impl.h"
 #include "catalua_icallback_actor.h"
+#include "catalua_impl.h"
 #include "catalua_readonly.h"
-#include "catalua_coord.h"
 #include "catalua_serde.h"
+#include "catalua_sol.h"
 #include "filesystem.h"
 #include "fstream_utils.h"
 #include "init.h"
 #include "item_factory.h"
 #include "json.h"
-#include "mapgen_async.h"
-#include "lua_sidebar_widgets.h"
 #include "lua_action_menu.h"
-#include "map.h"
-#include "mapgen_constructor.h"
+#include "lua_sidebar_widgets.h"
+#include "map/map.h"
+#include "mapgen/mapgen_async.h"
+#include "mapgen/mapgen_constructor.h"
 #include "messages.h"
 #include "mod_manager.h"
 #include "mutation.h"
 #include "path_info.h"
-#include "point.h"
 #include "player_activity.h"
+#include "point.h"
 #include "worldfactory.h"
 
 namespace cata
@@ -141,8 +140,7 @@ void show_lua_console()
 
 void reload_lua_code()
 {
-    std::unique_lock lock( lua_lock );
-    cata::lua_state &state = *get_active_lua_state();
+    cata::lua_state &state = *DynamicDataLoader::get_instance().lua;
     const auto &packs = world_generator->active_world->info->active_mod_order;
     try {
         cata::lua_action_menu::clear_entries();
@@ -159,8 +157,7 @@ void reload_lua_code()
 
 void debug_write_lua_backtrace( std::ostream &out )
 {
-    std::unique_lock lock( lua_lock );
-    cata::lua_state *state = get_active_lua_state();
+    cata::lua_state *state = DynamicDataLoader::get_instance().lua.get();
     if( !state ) {
         return;
     }
@@ -197,7 +194,6 @@ auto get_lua_callback( lua_state &state, const std::string table_name,
 auto run_lua_callback( const std::string table_name, const std::string &callback_id,
                        const std::function<void( sol::table & )> &fill_params ) -> void
 {
-    std::unique_lock lock( lua_lock );
     lua_state *state = get_active_lua_state();
     if( state == nullptr ) {
         debugmsg( "Lua callback '%s' requested before Lua state was initialized", callback_id );
@@ -238,11 +234,11 @@ auto make_lua_activity_data_table( sol::state &lua, const player_activity &act )
 
 bool save_world_lua_state( const world *world, const std::string &path )
 {
+    lua_state &state = *DynamicDataLoader::get_instance().lua;
+
     const mod_management::t_mod_list &mods = world_generator->active_world->info->active_mod_order;
-    run_on_game_save_hooks();
-    std::unique_lock lock( lua_lock );
-    lua_state &state = *get_active_lua_state();
     sol::table t = get_mod_storage_table( state );
+    run_on_game_save_hooks( state );
     const auto ret = world->write_to_file( path, [&]( std::ostream & stream ) {
         JsonOut jsout( stream );
         jsout.start_object();
@@ -261,8 +257,7 @@ bool save_world_lua_state( const world *world, const std::string &path )
 
 bool load_world_lua_state( const world *world, const std::string &path )
 {
-    std::unique_lock lock( lua_lock );
-    lua_state &state = *get_active_lua_state();
+    lua_state &state = *DynamicDataLoader::get_instance().lua;
     const mod_management::t_mod_list &mods = world_generator->active_world->info->active_mod_order;
     sol::table t = get_mod_storage_table( state );
 
@@ -285,8 +280,7 @@ bool load_world_lua_state( const world *world, const std::string &path )
         }
     }, true );
 
-    lock.unlock();
-    run_on_game_load_hooks();
+    run_on_game_load_hooks( state );
     return ret;
 }
 
@@ -348,11 +342,14 @@ void init_global_state_tables( lua_state &state, const std::vector<mod_id> &modl
     gt["iwearable_functions"] = lua.create_table();
     gt["iequippable_functions"] = lua.create_table();
     gt["istate_functions"] = lua.create_table();
+    gt["iconsume_functions"] = lua.create_table();
     gt["imelee_functions"] = lua.create_table();
     gt["iranged_functions"] = lua.create_table();
     gt["itrap_functions"] = lua.create_table();
     gt["examine_functions"] = lua.create_table();
     gt["activity_functions"] = lua.create_table();
+
+    gt["recipe_functions"] = lua.create_table();
 
     // bionic/mutation functions
     gt["bionic_functions"] = lua.create_table();
@@ -361,9 +358,6 @@ void init_global_state_tables( lua_state &state, const std::vector<mod_id> &modl
 
     // mapgen functions
     gt["mapgen_functions"] = lua.create_table();
-
-    // Itemgroup modification functions
-    gt["itemgroup_postprocessors"] = lua.create_table();
 
     // monster / npc functions
     gt["monster_ai_functions"] = lua.create_table();
@@ -374,6 +368,9 @@ void init_global_state_tables( lua_state &state, const std::vector<mod_id> &modl
     // enchanter functions
     gt["enchanter_can_make"] = lua.create_table();
     gt["enchanter_can_use_on"] = lua.create_table();
+
+    // spell functions
+    gt["spell_functions"] = lua.create_table();
 
     // hooks
     cata::define_hooks( state );
@@ -430,8 +427,6 @@ void init_global_state_tables( lua_state &state, const std::vector<mod_id> &modl
     };
 
     gt["add_lua_condition"] = [&lua]( const std::string & condition_name, const sol::object & entry ) {
-        auto *L = lua.lua_state();
-
         if( entry.is<sol::table>() ) {
             auto table = entry.as<sol::table>();
             sol::protected_function global = sol::lua_nil;
@@ -548,6 +543,8 @@ std::map<std::string, std::unique_ptr<lua_bionic_callback_actor>> bionic_callbac
 std::map<std::string, std::unique_ptr<lua_mutation_callback_actor>> mutation_callback_actors;
 std::map<std::string, std::unique_ptr<lua_itrap_actor>> lua_itrap_actors;
 std::map<std::string, std::unique_ptr<lua_monster_callback_actor>> monster_callback_actors;
+std::map<std::string, std::unique_ptr<lua_ispell_actor>> lua_ispell_actors;
+std::map<std::string, std::unique_ptr<lua_recipe_actor>> recipe_callback_actors;
 } // namespace
 
 namespace
@@ -662,8 +659,7 @@ auto get_hook_entries( sol::state_view lua, std::string_view hook_name,
 
 auto has_hooks( std::string_view hook_name, const hook_opts &opts ) -> bool
 {
-    std::unique_lock lock( lua_lock );
-    auto &state = opts.state ? *opts.state : *get_active_lua_state();
+    auto &state = opts.state ? *opts.state : *DynamicDataLoader::get_instance().lua;
     auto &lua = state.lua;
 
     const auto maybe_hooks = lua.globals()["game"]["hooks"][hook_name].get<sol::optional<sol::table>>();
@@ -697,7 +693,7 @@ auto run_hooks( std::string_view hook_name,
                 std::function < auto( sol::table &params ) -> void > init,
                 const hook_opts &opts ) -> sol::table
 {
-    auto &state = opts.state ? *opts.state : *get_active_lua_state();
+    auto &state = opts.state ? *opts.state : *DynamicDataLoader::get_instance().lua;
     auto &lua = state.lua;
 
     auto params = lua.create_table();
@@ -788,10 +784,14 @@ void reg_lua_icallback_actors( lua_state &state, Item_factory &ifactory )
     const sol::table iwearable_funcs = lua.globals()["game"]["iwearable_functions"];
     const sol::table iequippable_funcs = lua.globals()["game"]["iequippable_functions"];
     const sol::table istate_funcs = lua.globals()["game"]["istate_functions"];
+    const sol::table iconsume_funcs = lua.globals()["game"]["iconsume_functions"];
     const sol::table imelee_funcs = lua.globals()["game"]["imelee_functions"];
     const sol::table iranged_funcs = lua.globals()["game"]["iranged_functions"];
     const sol::table itrap_funcs = lua.globals()["game"]["itrap_functions"];
     const sol::table monster_funcs = lua.globals()["game"]["monster_functions"];
+    const sol::table spell_funcs = lua.globals()["game"]["spell_functions"];
+
+    const sol::table recipe_funcs = lua.globals()["game"]["recipe_functions"];
 
     auto it = iuse_funcs.begin();
     while( it != iuse_funcs.end() ) {
@@ -943,6 +943,28 @@ void reg_lua_icallback_actors( lua_state &state, Item_factory &ifactory )
                 break;
             }
             ++it;
+        }
+    }
+
+    // --- iconsume registration ---
+    {
+        for( const auto &ref : iconsume_funcs ) {
+            std::string key;
+            try {
+                key = ref.first.as<std::string>();
+                if( ref.second.get_type() != sol::type::table ) {
+                    throw std::runtime_error( "iconsume entry must be a table" );
+                }
+                const auto tbl = ref.second.as<sol::table>();
+                auto on_try_consume = tbl.get_or<sol::function>( "on_try_consume", sol::lua_nil );
+                ifactory.add_iconsume_actor(
+                    itype_id( key ),
+                    std::make_unique<lua_iconsume_actor>(
+                        key, std::move( on_try_consume ) ) );
+            } catch( std::runtime_error &e ) {
+                debugmsg( "Failed to extract iconsume_functions k='%s': %s", key, e.what() );
+                break;
+            }
         }
     }
 
@@ -1118,6 +1140,57 @@ void reg_lua_icallback_actors( lua_state &state, Item_factory &ifactory )
             ++it;
         }
     }
+
+    // --- spells callback registration ---
+    {
+        auto it = spell_funcs.begin();
+        while( it != spell_funcs.end() ) {
+            const auto ref = *it;
+            std::string key;
+            try {
+                key = ref.first.as<std::string>();
+                if( ref.second.get_type() != sol::type::table ) {
+                    throw std::runtime_error( "spell_functions entry must be a table" );
+                }
+                const auto tbl = ref.second.as<sol::table>();
+                auto on_try_cast = tbl.get_or<sol::function>( "on_try_cast", sol::lua_nil );
+                auto on_cast = tbl.get_or<sol::function>( "on_cast", sol::lua_nil );
+
+                lua_ispell_actors[key] = std::make_unique<lua_ispell_actor>(
+                                             key, std::move( on_try_cast ), std::move( on_cast ) );
+
+            } catch( std::runtime_error &e ) {
+                debugmsg( "Failed to extract monster_functions k='%s': %s", key, e.what() );
+                break;
+            }
+            ++it;
+        }
+    }
+
+    // --- recipe / crafting callback registration ---
+    {
+        auto it = recipe_funcs.begin();
+        while( it != recipe_funcs.end() ) {
+            const auto ref = *it;
+            std::string key;
+            try {
+                key = ref.first.as<std::string>();
+                if( ref.second.get_type() != sol::type::table ) {
+                    throw std::runtime_error( "recipe_functions entry must be a table" );
+                }
+                const auto tbl = ref.second.as<sol::table>();
+                auto on_craft = tbl.get_or<sol::function>( "on_craft", sol::lua_nil );
+                recipe_callback_actors[key] = std::make_unique<lua_recipe_actor>(
+                                                  key, std::move( on_craft )
+                                              );
+
+            } catch( std::runtime_error &e ) {
+                debugmsg( "Failed to extract recipe_functions k='%s': %s", key, e.what() );
+                break;
+            }
+            ++it;
+        }
+    }
 }
 
 void resolve_extra_lua_callbacks()
@@ -1126,12 +1199,12 @@ void resolve_extra_lua_callbacks()
     MonsterGenerator::generator().resolve_lua_monster_callbacks( monster_callback_actors );
     mutation_branch::resolve_lua_callbacks( mutation_callback_actors );
     trap::resolve_lua_callbacks( lua_itrap_actors );
+    spell_type::resolve_lua_callbacks( lua_ispell_actors );
+    recipe_dict.resolve_lua_callbacks( recipe_callback_actors );
 }
 
-void run_on_every_x_hooks()
+void run_on_every_x_hooks( lua_state &state )
 {
-    std::unique_lock lock( lua_lock );
-    lua_state &state = *cata::get_active_lua_state();
     std::vector<cata::on_every_x_hooks> &master_table =
         state.lua["game"]["cata_internal"]["on_every_x_hooks"];
     for( auto &entry : master_table ) {
@@ -1186,8 +1259,6 @@ auto run_lua_activity_callback( const std::string &callback_id, player &who,
         params["user"] = who.as_character();
         params["activity"] = &act;
         params["name"] = act.name;
-        // Run lua callback gets a lock -> It's the only thing that calls this
-        // Thus this needs no lock
         if( auto *state = get_active_lua_state() ) {
             params["data"] = make_lua_activity_data_table( state->lua, act );
         }
@@ -1214,38 +1285,35 @@ void lua_state_deleter::operator()( lua_state *state ) const
     mutation_callback_actors.clear();
     lua_itrap_actors.clear();
     monster_callback_actors.clear();
+    lua_ispell_actors.clear();
+    recipe_callback_actors.clear();
     get_hook_cache().clear();
     delete state;
 }
 
-void run_on_game_save_hooks()
+void run_on_game_save_hooks( lua_state &state )
 {
-    std::unique_lock lock( cata::lua_lock );
-    run_hooks( "on_game_save", nullptr );
+    run_hooks( "on_game_save", nullptr, { .state = &state } );
 }
 
-void run_on_game_load_hooks()
+void run_on_game_load_hooks( lua_state &state )
 {
-    std::unique_lock lock( cata::lua_lock );
-    run_hooks( "on_game_load", nullptr );
+    run_hooks( "on_game_load", nullptr, { .state = &state } );
 }
 
-void run_on_mapgen_postprocess_hooks( mapgen_constructor &m,
+void run_on_mapgen_postprocess_hooks( lua_state &state, mapgen_constructor &m,
                                       const tripoint_abs_omt &p, const time_point &when )
 {
-    std::unique_lock lock( cata::lua_lock );
     run_hooks( "on_mapgen_postprocess", [&]( sol::table & params ) {
         params["map"] = &m;
         params["omt"] = cata::detail::lua_coords::to_lua( p );
         params["when"] = when;
-    } );
+    }, { .state = &state } );
 }
 
-void run_on_mapgen_postprocess_hooks_batch( mapgen_constructor &constructor,
+void run_on_mapgen_postprocess_hooks_batch( lua_state &state, mapgen_constructor &constructor,
         std::span<const mapgen_hook_batch_item> items )
 {
-    std::unique_lock lock( lua_lock );
-    cata::lua_state &state = *get_active_lua_state();
     if( items.empty() ) {
         return;
     }

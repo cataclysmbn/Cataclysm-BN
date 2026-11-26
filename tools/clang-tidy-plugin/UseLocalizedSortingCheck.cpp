@@ -30,9 +30,9 @@ namespace clang {
 namespace tidy {
 namespace cata {
 
-static bool IsStringish(QualType T);
+static auto IsStringish(QualType T) -> bool;
 
-static bool IsStringish(const TemplateArgument& Arg) {
+static auto IsStringish(const TemplateArgument& Arg) -> bool {
     switch (Arg.getKind()) {
         case TemplateArgument::Type:
             if (IsStringish(Arg.getAsType())) { return true; }
@@ -48,7 +48,7 @@ static bool IsStringish(const TemplateArgument& Arg) {
     return false;
 }
 
-static bool IsStringish(QualType T) {
+static auto IsStringish(QualType T) -> bool {
     const TagDecl* TTag = T.getTypePtr()->getAsTagDecl();
     if (!TTag) { return false; }
     StringRef Name = TTag->getName();

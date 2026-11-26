@@ -22,5 +22,5 @@ const std::string USE_ACTION = "use_action";
 const std::string BASE_IUSE_ID = "CAMERA";
 const std::string TEST_IUSE_ID = "RPGDIE";
 
-const itype* get_item(Item_factory& test_factory, const std::string& name);
+auto get_item(Item_factory& test_factory, const std::string& name) -> const itype*;
 } // namespace item_factory_test

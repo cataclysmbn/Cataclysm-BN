@@ -1,21 +1,11 @@
-#include "npctalk.h" // IWYU pragma: associated
-
-#include <algorithm>
-#include <cstddef>
-#include <memory>
-#include <optional>
-#include <set>
-#include <string>
-#include <vector>
-
 #include "auto_pickup.h"
 #include "avatar.h"
 #include "bionics.h"
 #include "bodypart.h"
 #include "calendar.h"
 #include "cata_utility.h"
-#include "character_id.h"
 #include "character_display.h"
+#include "character_id.h"
 #include "character_martial_arts.h"
 #include "debug.h"
 #include "enums.h"
@@ -28,17 +18,18 @@
 #include "item.h"
 #include "line.h"
 #include "magic/magic.h"
-#include "map.h"
+#include "map/map.h"
 #include "messages.h"
 #include "mission.h"
 #include "monster.h"
 #include "morale_types.h"
 #include "mutation.h"
 #include "npc.h"
+#include "npctalk.h" // IWYU pragma: associated
 #include "npctrade.h"
 #include "output.h"
-#include "overmap.h"
-#include "overmapbuffer.h"
+#include "overmap/overmap.h"
+#include "overmap/overmapbuffer.h"
 #include "pimpl.h"
 #include "player.h"
 #include "player_activity.h"
@@ -49,9 +40,18 @@
 #include "translations.h"
 #include "ui.h"
 
+#include <algorithm>
+#include <cstddef>
+#include <memory>
+#include <optional>
+#include <set>
+#include <string>
+#include <vector>
+
 static const activity_id ACT_FIND_MOUNT( "ACT_FIND_MOUNT" );
 static const activity_id ACT_MOVE_LOOT( "ACT_MOVE_LOOT" );
 static const activity_id ACT_MULTIPLE_BUTCHER( "ACT_MULTIPLE_BUTCHER" );
+static const activity_id ACT_MULTIPLE_DISSECT( "ACT_MULTIPLE_DISSECT" );
 static const activity_id ACT_MULTIPLE_CHOP_PLANKS( "ACT_MULTIPLE_CHOP_PLANKS" );
 static const activity_id ACT_MULTIPLE_CHOP_TREES( "ACT_MULTIPLE_CHOP_TREES" );
 static const activity_id ACT_MULTIPLE_CONSTRUCTION( "ACT_MULTIPLE_CONSTRUCTION" );
@@ -84,6 +84,9 @@ static const flag_id flag_BIONIC_WEAPON( "BIONIC_WEAPON" );
 static const mtype_id mon_chicken( "mon_chicken" );
 static const mtype_id mon_cow( "mon_cow" );
 static const mtype_id mon_horse( "mon_horse" );
+
+static const trait_id trait_NPC_STATIC_NPC( "NPC_STATIC_NPC" );
+static const trait_id trait_NPC_STARTING_NPC( "NPC_STARTING_NPC" );
 
 struct itype;
 
@@ -257,6 +260,11 @@ void talk_function::do_butcher( npc &p )
     p.assign_activity( ACT_MULTIPLE_BUTCHER );
 }
 
+void talk_function::do_dissect( npc &p )
+{
+    p.assign_activity( ACT_MULTIPLE_DISSECT );
+}
+
 void talk_function::do_chop_plank( npc &p )
 {
     p.assign_activity( ACT_MULTIPLE_CHOP_PLANKS );
@@ -352,7 +360,10 @@ void talk_function::stop_guard( npc &p )
 {
     if( !p.is_player_ally() ) {
         p.set_attitude( NPCATT_NULL );
-        p.set_mission( NPC_MISSION_NULL );
+        // Don't let static NPCs start acting like dynamic NPCs.
+        if( !p.has_trait( trait_NPC_STARTING_NPC ) && !p.has_trait( trait_NPC_STATIC_NPC ) ) {
+            p.set_mission( NPC_MISSION_NULL );
+        }
         return;
     }
     p.set_attitude( NPCATT_FOLLOW );
@@ -746,10 +757,15 @@ void talk_function::leave( npc &p )
     if( new_solo_fac ) {
         new_solo_fac->known_by_u = true;
     }
-    p.chatbin.first_topic = "TALK_STRANGER_NEUTRAL";
+    p.chatbin.first_topic = "TALK_STRANGER_FRIENDLY";
     p.set_attitude( NPCATT_NULL );
-    p.mission = NPC_MISSION_NULL;
-    p.long_term_goal_action();
+    // Static NPCs should resume remaining static, dynanic NPCs resume acting dynamic.
+    if( p.has_trait( trait_NPC_STARTING_NPC ) || p.has_trait( trait_NPC_STATIC_NPC ) ) {
+        p.mission = NPC_MISSION_GUARD;
+    } else {
+        p.mission = NPC_MISSION_NULL;
+        p.long_term_goal_action();
+    }
 }
 
 void talk_function::stop_following( npc &p )

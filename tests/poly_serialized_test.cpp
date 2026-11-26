@@ -1,7 +1,7 @@
 #include "catch/catch.hpp"
 #include "json.h"
-#include "poly_serialized.h"
 #include "string_formatter.h"
+#include "utils/poly_serialized.h"
 
 #include <sstream>
 
@@ -11,9 +11,9 @@ public:
 
     virtual void serialize(JsonOut& jsout) const = 0;
     virtual void deserialize(JsonIn& jsin) = 0;
-    virtual std::string get_type() const = 0;
+    virtual auto get_type() const -> std::string = 0;
 
-    static has_type* create(std::string type);
+    static auto create(std::string type) -> has_type*;
 };
 
 class has_int: public has_type {
@@ -22,7 +22,7 @@ public:
 
     void serialize(JsonOut& jsout) const override { jsout.member("a", a); }
     void deserialize(JsonIn& jsin) override { a = JsonObject(jsin).get_int("a"); }
-    std::string get_type() const override { return "has_int"; }
+    auto get_type() const -> std::string override { return "has_int"; }
 };
 
 class has_float: public has_type {
@@ -31,10 +31,10 @@ public:
 
     void serialize(JsonOut& jsout) const override { jsout.member("b", b); }
     void deserialize(JsonIn& jsin) override { b = JsonObject(jsin).get_float("b"); }
-    std::string get_type() const override { return "has_float"; }
+    auto get_type() const -> std::string override { return "has_float"; }
 };
 
-has_type* has_type::create(std::string type) {
+auto has_type::create(std::string type) -> has_type* {
     if (type == "has_int") {
         return new has_int();
     } else if (type == "has_float") {

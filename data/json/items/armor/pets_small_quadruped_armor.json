@@ -5,7 +5,7 @@
     "name": { "str": "small quadruped armor" },
     "symbol": "[",
     "min_pet_vol": "1 L",
-    "max_pet_vol": "300 L",
+    "max_pet_vol": "55 L",
     "pet_bodytype": "quadruped",
     "flags": [ "IS_PET_ARMOR" ]
   },
@@ -75,8 +75,8 @@
     "copy-from": "small_quadruped_armor",
     "color": "green",
     "name": {
-      "str": "boiled leather small quadruped barding with caprison",
-      "str_pl": "boiled leather small quadruped bardings with caprison"
+      "str": "boiled leather small quadruped barding with caparison",
+      "str_pl": "boiled leather small quadruped bardings with caparison"
     },
     "description": "A full barding for small quadrupeds consisting of boiled leather and cloth undercovering.  This caparison is depicting a battle between a monstrous dragon and regal griffin.  You could put this on a friendly small quadruped.",
     "price": "300 USD",

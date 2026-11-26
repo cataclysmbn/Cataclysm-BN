@@ -10,7 +10,7 @@ class override_option {
 public:
     override_option(const std::string& option, const std::string& value);
     override_option(const override_option&) = delete;
-    override_option& operator=(const override_option&) = delete;
+    auto operator=(const override_option&) -> override_option& = delete;
     ~override_option();
 
 private:
@@ -19,6 +19,6 @@ private:
 };
 
 /** Try to set UTF-8 English locale. */
-bool try_set_utf8_locale();
+auto try_set_utf8_locale() -> bool;
 
 #endif // CATA_TESTS_OPTIONS_HELPERS_H

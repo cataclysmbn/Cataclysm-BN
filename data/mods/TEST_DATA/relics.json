@@ -194,6 +194,13 @@
   },
   {
     "type": "GENERIC",
+    "id": "test_socks_of_noslip",
+    "copy-from": "test_socks",
+    "name": "TEST relic noslip",
+    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "flags": [ "NOSLIP" ] } ] }
+  },
+  {
+    "type": "GENERIC",
     "id": "test_relic_item_armor_mod",
     "copy-from": "test_hazmat_suit",
     "name": "TEST relic item armor mod",

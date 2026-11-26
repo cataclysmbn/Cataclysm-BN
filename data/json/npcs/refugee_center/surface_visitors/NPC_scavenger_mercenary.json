@@ -45,7 +45,8 @@
     "id": "NC_SCAVENGER_MERC_worn",
     "subtype": "collection",
     "items": [
-      { "item": "modularvestceramic", "contents-group": "army_mags_m4" },
+      { "item": "ballistic_vest_esapi", "contents-group": "army_mags_m4" },
+      { "item": "ceramic_ballistic_plate" },
       { "item": "boxer_briefs" },
       { "item": "pants_army" },
       { "item": "duster" },

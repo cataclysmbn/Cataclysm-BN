@@ -25,6 +25,8 @@
         "prob": 10
       },
       { "group": "misc_smoking", "prob": 30 },
+      { "group": "clothing_glasses", "damage": [ 0, 2 ], "prob": 10 },
+      { "group": "clothing_watch", "damage": [ 0, 2 ], "prob": 10 },
       { "group": "accesories_personal_unisex", "prob": 25, "count": [ 0, 2 ] },
       { "item": "tool_belt", "prob": 50 },
       { "item": "tazer", "prob": 10, "damage": [ 1, 4 ] },

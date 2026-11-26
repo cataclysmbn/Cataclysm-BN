@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 
-static units::volume parse_volume_quantity(const std::string& json) {
+static auto parse_volume_quantity(const std::string& json) -> units::volume {
     std::istringstream buffer(json);
     JsonIn jsin(buffer);
     return read_from_json_string<units::volume>(jsin, units::volume_units);
@@ -111,7 +111,7 @@ TEST_CASE("large_volume_json_round_trip", "[units][volume]") {
     CHECK(parse_volume_quantity(serialized_volume) == large_volume);
 }
 
-static units::energy parse_energy_quantity(const std::string& json) {
+static auto parse_energy_quantity(const std::string& json) -> units::energy {
     std::istringstream buffer(json);
     JsonIn jsin(buffer);
     return read_from_json_string<units::energy>(jsin, units::energy_units);
@@ -166,7 +166,7 @@ TEST_CASE("energy parsing from JSON", "[units]") {
     CHECK(parse_energy_quantity("\"1 kJ -4 J\"") == 1_kJ - 4_J);
 }
 
-static time_duration parse_time_duration(const std::string& json) {
+static auto parse_time_duration(const std::string& json) -> time_duration {
     std::istringstream buffer(json);
     JsonIn jsin(buffer);
     return read_from_json_string<time_duration>(jsin, time_duration::units);
@@ -189,7 +189,7 @@ TEST_CASE("time_duration parsing from JSON", "[units]") {
           == 1_turns - 4_minutes + 1_hours - 4_days);
 }
 
-static units::angle parse_angle(const std::string& json) {
+static auto parse_angle(const std::string& json) -> units::angle {
     std::istringstream buffer(json);
     JsonIn jsin(buffer);
     return read_from_json_string<units::angle>(jsin, units::angle_units);

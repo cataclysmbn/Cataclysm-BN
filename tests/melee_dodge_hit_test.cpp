@@ -24,7 +24,7 @@
 // - Character::get_dodge, monster::get_dodge
 
 // Return the avatar's `get_hit_base` with a given DEX stat.
-static float hit_base_with_dex(avatar& dummy, int dexterity) {
+static auto hit_base_with_dex(avatar& dummy, int dexterity) -> float {
     clear_character(dummy);
     dummy.dex_max = dexterity;
 
@@ -32,7 +32,7 @@ static float hit_base_with_dex(avatar& dummy, int dexterity) {
 }
 
 // Return the avatar's `get_dodge_base` with the given DEX stat and dodge skill.
-static float dodge_base_with_dex_and_skill(avatar& dummy, int dexterity, int dodge_skill) {
+static auto dodge_base_with_dex_and_skill(avatar& dummy, int dexterity, int dodge_skill) -> float {
     clear_character(dummy);
     dummy.dex_max = dexterity;
     dummy.set_skill_level(skill_id("dodge"), dodge_skill);
@@ -41,7 +41,7 @@ static float dodge_base_with_dex_and_skill(avatar& dummy, int dexterity, int dod
 }
 
 // Return the Creature's `get_dodge` with the given effect.
-static float dodge_with_effect(Creature& critter, std::string effect_name) {
+static auto dodge_with_effect(Creature& critter, std::string effect_name) -> float {
     // Set one effect and leave other attributes alone
     critter.clear_effects();
     critter.add_effect(efftype_id(effect_name), 1_hours, bodypart_str_id::NULL_ID(), 1, true, true);
@@ -51,7 +51,7 @@ static float dodge_with_effect(Creature& critter, std::string effect_name) {
 }
 
 // Return the avatar's `get_dodge` while wearing a single item of clothing.
-static float dodge_wearing_item(avatar& dummy, item& clothing) {
+static auto dodge_wearing_item(avatar& dummy, item& clothing) -> float {
     // Get nekkid and wear just this one item
     std::vector<detached_ptr<item>> temp;
     while (dummy.takeoff(dummy.i_at(-2), &temp));

@@ -3,6 +3,7 @@
 #include "bodypart.h"
 #include "calendar.h"
 #include "character.h"
+#include "character_value.h"
 #include "creature.h"
 #include "debug.h"
 #include "effect.h"
@@ -14,7 +15,7 @@
 #include "enums.h"
 #include "generic_factory.h"
 #include "json.h"
-#include "map.h"
+#include "map/map.h"
 #include "mutation.h"
 #include "point.h"
 #include "rng.h"
@@ -24,6 +25,7 @@
 #include "units.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <memory>
 #include <set>
@@ -35,7 +37,7 @@ generic_factory<enchantment> enchant_factory("enchantment");
 
 IMPLEMENT_STRING_AND_INT_IDS(enchantment, enchant_factory);
 
-std::vector<std::string> enchantment::get_effect_string(bool is_item) const {
+auto enchantment::get_effect_string(bool /*is_item*/) const -> std::vector<std::string> {
     std::string cond_string;
     if (conditions.empty()) { cond_string = _("At all times"); }
     for (const enchantment_condition_id cond_id : conditions) {
@@ -44,33 +46,80 @@ std::vector<std::string> enchantment::get_effect_string(bool is_item) const {
     }
 
     std::map<enchantment_value_id, int> value_effects;
-    for (const auto [ench_id, effect] : values_add) {
+    for (const auto& [ench_id, effect] : values_add) {
         if (effect > 0) {
             value_effects[ench_id] += (ench_id->increase_good) ? 1 : -1;
         } else if (effect < 0) {
             value_effects[ench_id] += (ench_id->increase_good) ? -1 : 1;
         }
     }
-    for (const auto [ench_id, effect] : values_multiply) {
+    for (const auto& [ench_id, effect] : values_multiply) {
         if (effect > 0) {
             value_effects[ench_id] += (ench_id->increase_good) ? 1 : -1;
         } else if (effect < 0) {
             value_effects[ench_id] += (ench_id->increase_good) ? -1 : 1;
         }
     }
-    for (const auto [ench_id, effect] : values_max) {
+    for (const auto& [ench_id, effect] : values_max) {
         // Value max fundamentally cant be bad
         value_effects[ench_id] += 1;
     }
     std::vector<std::string> result;
     bool describe = false;
     result.push_back(cond_string);
+
+    for (const auto& [ench_val_id, effectors] : complex_values_add) {
+        for (const auto& effector : effectors) {
+            // Effectors should never have a value of 0
+            const std::string color = effector.second > 0 ? "green" : "red";
+            const std::string effect_desc = effector.first->get_desc();
+            if (!effect_desc.empty()) {
+                describe = true;
+                result.push_back(string_format(
+                    _("  <color_%1s>%2s (Affected by %s3)"), color, ench_val_id->get_desc(),
+                    effector.first->get_desc()));
+            } else {
+                value_effects[ench_val_id] += (effector.second > 0 ? 1 : -1);
+            }
+        }
+    }
+    for (const auto& [ench_val_id, effectors] : complex_values_multiply) {
+        for (const auto& effector : effectors) {
+            // Effectors should never have a value of 0
+            const std::string color = effector.second > 0 ? "green" : "red";
+            const std::string effect_desc = effector.first->get_desc();
+            if (!effect_desc.empty()) {
+                describe = true;
+                result.push_back(string_format(
+                    _("  <color_%1s>%2s (Affected by %s3)"), color, ench_val_id->get_desc(),
+                    effector.first->get_desc()));
+            } else {
+                value_effects[ench_val_id] += (effector.second > 0 ? 1 : -1);
+            }
+        }
+    }
+    for (const auto& [ench_val_id, effectors] : complex_values_max) {
+        for (const auto& effector : effectors) {
+            // Effectors should never have a value of 0
+            const std::string color = effector.second > 0 ? "green" : "red";
+            const std::string effect_desc = effector.first->get_desc();
+            if (!effect_desc.empty()) {
+                describe = true;
+                result.push_back(string_format(
+                    _("  <color_%1s>%2s (Affected by %s3)"), color, ench_val_id->get_desc(),
+                    effector.first->get_desc()));
+            } else {
+                value_effects[ench_val_id] += (effector.second > 0 ? 1 : -1);
+            }
+        }
+    }
+
     for (const auto [ench_id, goodbad] : value_effects) {
         const std::string color = goodbad > 0 ? "green" : goodbad < 0 ? "red" : "magenta";
         result.push_back(string_format("  <color_%s>%s</color>", color, ench_id->get_desc()));
         describe = true;
     }
-    for (const auto [eff_id, intense] : ench_effects) {
+    for (const auto& [eff_id, intense] : ench_effects) {
         if (!eff_id->is_show_in_info()) { continue; }
         effect_rating rating = eff_id->get_rating();
         const std::string color =
@@ -112,7 +161,7 @@ std::vector<std::string> enchantment::get_effect_string(bool is_item) const {
             string_format(_("  <color_%s>Gives mutation %s</color>"), color, trait_id->name()));
         describe = true;
     }
-    for (const auto [flag, _] : flags) {
+    for (const auto& [flag, _] : flags) {
         result.push_back(string_format("  %s", flag->info));
         describe = true;
     }
@@ -133,7 +182,7 @@ void enchantment::load_enchantment(const JsonObject& jo, const std::string& src)
 
 void enchantment::reset() { enchant_factory.reset(); }
 
-bool enchantment::is_active(const Character& guy, const item& parent) const {
+auto enchantment::is_active(const Character& guy, const item& parent) const -> bool {
 
     bool is_active = parent.is_active();
     bool active = true;
@@ -163,7 +212,7 @@ bool enchantment::is_active(const Character& guy, const item& parent) const {
     return active;
 }
 
-bool enchantment::is_active(const item& parent) const {
+auto enchantment::is_active(const item& parent) const -> bool {
 
     bool is_active = parent.is_active();
     bool active = true;
@@ -199,7 +248,7 @@ bool enchantment::is_active(const item& parent) const {
     return active;
 }
 
-bool enchantment::is_active(const Character& guy, const bool is_active) const {
+auto enchantment::is_active(const Character& guy, const bool is_active) const -> bool {
     bool active = true;
     for (const enchantment_condition_id cond_id : conditions) {
         if (!active) { break; }
@@ -282,22 +331,60 @@ void enchantment::load(const JsonObject& jo, const std::string&) {
              auto_flags_reader<enchantment_vision_id>{});
 
     if (jo.has_array("values")) {
-        for (const JsonObject value_obj : jo.get_array("values")) {
+        for (const JsonObject& value_obj : jo.get_array("values")) {
             enchantment_value_id value = enchantment_value_id(value_obj.get_string("value"));
-            const int add = value_obj.get_int("add", 0);
-            const double mult = value_obj.get_float("multiply", 0.0);
-            const double max = value_obj.get_int("max", 0);
-            if (add != 0) { values_add.emplace(value, add); }
-            if (mult != 0.0) {
-                // Limit precision to minimize inconsistencies between platforms / compilers
-                const double mul = static_cast<int>(std::round(mult * 100'000)) / 100'000.0;
-                values_multiply.emplace(value, mul);
+            if (value_obj.has_member("add")) {
+                if (value_obj.has_int("add")) {
+                    values_add.emplace(value, value_obj.get_int("add"));
+                } else {
+                    const JsonObject& nested_value_obj = value_obj.get_object("add");
+                    const character_value_id& char_val_id = character_value_id(
+                        nested_value_obj.get_string("val"));
+                    const double amount = nested_value_obj.get_float("per");
+                    if (!complex_values_add.contains(value)) {
+                        std::map<character_value_id, double> res = {{char_val_id, amount}};
+                        complex_values_add.emplace(value, res);
+                    } else {
+                        complex_values_add[value][char_val_id] = amount;
+                    }
+                }
             }
-            if (max != 0) { values_max.emplace(value, max); }
+            if (value_obj.has_member("multiply")) {
+                if (value_obj.has_int("multiply")) {
+                    values_multiply.emplace(value, value_obj.get_float("multiply"));
+                } else {
+                    const JsonObject& nested_value_obj = value_obj.get_object("multiply");
+                    const character_value_id& char_val_id = character_value_id(
+                        nested_value_obj.get_string("val"));
+                    const double amount = nested_value_obj.get_float("per");
+                    if (!complex_values_add.contains(value)) {
+                        std::map<character_value_id, double> res = {{char_val_id, amount}};
+                        complex_values_add.emplace(value, res);
+                    } else {
+                        complex_values_add[value][char_val_id] = amount;
+                    }
+                }
+            }
+            if (value_obj.has_member("max")) {
+                if (value_obj.has_int("max")) {
+                    values_max.emplace(value, value_obj.get_int("max"));
+                } else {
+                    const JsonObject& nested_value_obj = value_obj.get_object("max");
+                    const character_value_id& char_val_id = character_value_id(
+                        nested_value_obj.get_string("val"));
+                    const double amount = nested_value_obj.get_float("per");
+                    if (!complex_values_max.contains(value)) {
+                        std::map<character_value_id, double> res = {{char_val_id, amount}};
+                        complex_values_max.emplace(value, res);
+                    } else {
+                        complex_values_max[value][char_val_id] = amount;
+                    }
+                }
+            }
         }
     }
     if (jo.has_array("flags")) {
-        for (const auto flag : jo.get_string_array("flags")) {
+        for (const auto& flag : jo.get_string_array("flags")) {
             flags[enchantment_flag_id(flag)] = 1;
         }
     }
@@ -368,6 +455,43 @@ void enchantment::serialize(JsonOut& jsout) const {
         if (val_mult != 0) { jsout.member("multiply", val_mult); }
         jsout.end_object();
     }
+    for (const auto& [ench_val_id, effectors] : complex_values_add) {
+        for (const auto& effector : effectors) {
+            jsout.start_object();
+            jsout.member("value", ench_val_id.str());
+            jsout.member("add");
+            jsout.start_object();
+            jsout.member("val", effector.first);
+            jsout.member("per", effector.second);
+            jsout.end_object();
+            jsout.end_object();
+        }
+    }
+    for (const auto& [ench_val_id, effectors] : complex_values_multiply) {
+        for (const auto& effector : effectors) {
+            jsout.start_object();
+            jsout.member("value", ench_val_id.str());
+            jsout.member("multiply");
+            jsout.start_object();
+            jsout.member("val", effector.first);
+            jsout.member("per", effector.second);
+            jsout.end_object();
+            jsout.end_object();
+        }
+    }
+    for (const auto& [ench_val_id, effectors] : complex_values_max) {
+        for (const auto& effector : effectors) {
+            jsout.start_object();
+            jsout.member("value", ench_val_id.str());
+            jsout.member("max");
+            jsout.start_object();
+            jsout.member("val", effector.first);
+            jsout.member("per", effector.second);
+            jsout.end_object();
+            jsout.end_object();
+        }
+    }
+
     jsout.end_array();
 
     jsout.member("flags");
@@ -380,9 +504,11 @@ void enchantment::serialize(JsonOut& jsout) const {
     jsout.end_object();
 }
 
-bool enchantment::stacks_with(const enchantment& rhs) const { return conditions == rhs.conditions; }
+auto enchantment::stacks_with(const enchantment& rhs) const -> bool {
+    return conditions == rhs.conditions;
+}
 
-bool enchantment::add(const enchantment& rhs) {
+auto enchantment::add(const enchantment& rhs) -> bool {
     if (!stacks_with(rhs)) { return false; }
     force_add(rhs);
     // Because it is no longer a default enchantment
@@ -391,7 +517,7 @@ bool enchantment::add(const enchantment& rhs) {
     return true;
 }
 
-void enchantment::force_add(const enchantment& rhs) {
+void enchantment::force_add(const enchantment& rhs, bool merge_complex) {
     for (const auto& pair_values : rhs.values_add) {
         values_add[pair_values.first] += pair_values.second;
     }
@@ -404,6 +530,41 @@ void enchantment::force_add(const enchantment& rhs) {
     for (const auto& pair_values : rhs.values_max) {
         if (values_max[pair_values.first] < pair_values.second) {
             values_max[pair_values.first] = pair_values.second;
+        }
+    }
+
+    if (merge_complex) {
+        for (const auto& pair_values : rhs.complex_values_add) {
+            if (complex_values_add.contains(pair_values.first)) {
+                for (const auto& nested_pair_values : pair_values.second) {
+                    complex_values_add[pair_values.first][nested_pair_values.first] +=
+                        nested_pair_values.second;
+                }
+            } else {
+                complex_values_add[pair_values.first] = pair_values.second;
+            }
+        }
+
+        for (const auto& pair_values : rhs.complex_values_multiply) {
+            if (complex_values_multiply.contains(pair_values.first)) {
+                for (const auto& nested_pair_values : pair_values.second) {
+                    complex_values_multiply[pair_values.first][nested_pair_values.first] +=
+                        nested_pair_values.second;
+                }
+            } else {
+                complex_values_multiply[pair_values.first] = pair_values.second;
+            }
+        }
+
+        for (const auto& pair_values : rhs.complex_values_max) {
+            if (complex_values_max.contains(pair_values.first)) {
+                for (const auto& nested_pair_values : pair_values.second) {
+                    complex_values_max[pair_values.first][nested_pair_values.first] +=
+                        nested_pair_values.second;
+                }
+            } else {
+                complex_values_max[pair_values.first] = pair_values.second;
+            }
         }
     }
 
@@ -446,7 +607,30 @@ void enchantment::force_add(const enchantment& rhs) {
     }
 }
 
-bool enchantment::has_flag(const enchantment_flag_id flag) const {
+void enchantment::force_add(const enchantment& rhs, const Character& merger) {
+    force_add(rhs, false);
+    for (const auto& pair_values : rhs.complex_values_add) {
+        for (const auto& nested_pair_values : pair_values.second) {
+            values_add[pair_values.first] += int(floor(
+                double(nested_pair_values.first->get_amount(merger)) * nested_pair_values.second));
+        }
+    }
+    for (const auto& pair_values : rhs.complex_values_multiply) {
+        for (const auto& nested_pair_values : pair_values.second) {
+            values_multiply[pair_values.first] += int(floor(
+                double(nested_pair_values.first->get_amount(merger)) * nested_pair_values.second));
+        }
+    }
+    for (const auto& pair_values : rhs.complex_values_add) {
+        for (const auto& nested_pair_values : pair_values.second) {
+            int val = int(floor(
+                double(nested_pair_values.first->get_amount(merger)) * nested_pair_values.second));
+            if (values_max[pair_values.first] < val) { values_max[pair_values.first] = val; }
+        }
+    }
+}
+
+auto enchantment::has_flag(const enchantment_flag_id flag) const -> bool {
     if (!flag.is_valid()) { debugmsg("Tried to get invalid enchantment flag \"%s\".", flag); }
     if (flags.contains(flag)) {
         if (flags.at(flag) <= 0) {
@@ -458,13 +642,13 @@ bool enchantment::has_flag(const enchantment_flag_id flag) const {
     return false;
 }
 
-bool enchantment::has_value(const enchantment_value_id value) const {
+auto enchantment::has_value(const enchantment_value_id value) const -> bool {
     if (!value.is_valid()) { debugmsg("Tried to get invalid enchantment value \"%s\".", value); }
     return values_add.contains(value) || values_multiply.contains(value)
         || values_max.contains(value);
 }
 
-int enchantment::get_value_add(const enchantment_value_id value) const {
+auto enchantment::get_value_add(const enchantment_value_id value) const -> int {
     if (!value.is_valid()) { debugmsg("Tried to get invalid enchantment value \"%s\".", value); }
     int result = 0;
     if (values_add.contains(value)) { result += values_add.at(value); }
@@ -476,7 +660,7 @@ int enchantment::get_value_add(const enchantment_value_id value) const {
     return result;
 }
 
-double enchantment::get_value_multiply(const enchantment_value_id value) const {
+auto enchantment::get_value_multiply(const enchantment_value_id value) const -> double {
     if (!value.is_valid()) { debugmsg("Tried to get invalid enchantment value \"%s\".", value); }
     double result = 0;
     if (values_multiply.contains(value)) { result += values_multiply.at(value); }
@@ -489,7 +673,7 @@ double enchantment::get_value_multiply(const enchantment_value_id value) const {
     return result;
 }
 
-int enchantment::get_value_max(const enchantment_value_id value) const {
+auto enchantment::get_value_max(const enchantment_value_id value) const -> int {
     if (!value.is_valid()) { debugmsg("Tried to get invalid enchantment value \"%s\".", value); }
     int result = 0;
     if (values_max.contains(value)) { result = values_max.at(value); }
@@ -502,7 +686,8 @@ int enchantment::get_value_max(const enchantment_value_id value) const {
     return result;
 }
 
-double enchantment::calc_bonus(enchantment_value_id value, double base, bool round) const {
+auto enchantment::calc_bonus(enchantment_value_id value, double base, bool round) const -> double {
+    if (values_add.empty() && values_multiply.empty() && values_max.empty()) { return 0.0; }
     double add = value->can_add ? get_value_add(value) : 0.0;
     double mul = value->can_mult ? get_value_multiply(value) : 0.0;
     double max = value->can_max ? get_value_max(value) : 0.0;
@@ -514,7 +699,7 @@ double enchantment::calc_bonus(enchantment_value_id value, double base, bool rou
     return ret;
 }
 
-int enchantment::mult_bonus(enchantment_value_id value_type, int base_value) const {
+auto enchantment::mult_bonus(enchantment_value_id value_type, int base_value) const -> int {
     return get_value_multiply(value_type) * base_value;
 }
 
@@ -578,31 +763,45 @@ void enchantment::cast_enchantment_spell(
     }
 }
 
-enchantment_vision_id enchantment::mon_passes_special_vision(
-    const Creature& mon, const int dist, const bool same_zlevel, const bool sees_position) const {
+auto enchantment::mon_passes_special_vision(
+    const Creature& mon, const int dist, const bool same_zlevel, const bool sees_position) const
+    -> enchantment_vision_id {
     for (const enchantment_vision_id& vision : special_visions) {
         if (vision->mon_passes(mon, dist, same_zlevel, sees_position)) { return vision; }
     }
     return enchantment_vision_id::NULL_ID();
 }
 
-bool enchantment::operator==(const enchantment& rhs) const {
+auto enchantment::operator==(const enchantment& rhs) const -> bool {
     return id == rhs.id && mutations == rhs.mutations && emitter == rhs.emitter
-        && ench_effects == rhs.ench_effects && values_multiply == rhs.values_multiply
-        && values_add == rhs.values_add && values_max == rhs.values_max
-        && hit_me_effect == rhs.hit_me_effect && hit_you_effect == rhs.hit_you_effect
-        && intermittent_activation == intermittent_activation && conditions == rhs.conditions;
+        && fake_items == rhs.fake_items && ench_effects == rhs.ench_effects
+        && values_add == rhs.values_add && values_multiply == rhs.values_multiply
+        && values_max == rhs.values_max && hit_me_effect == rhs.hit_me_effect
+        && hit_you_effect == rhs.hit_you_effect
+        && intermittent_activation == intermittent_activation && conditions == rhs.conditions
+        && immune_effects == rhs.immune_effects && immune_fields == rhs.immune_fields
+        && flags == rhs.flags && special_visions == rhs.special_visions;
+}
+bool enchantment::operator<(const enchantment& rhs) const {
+    return std::tie(id, mutations, emitter, ench_effects, fake_items, values_add, values_multiply,
+                    values_max, hit_me_effect, hit_you_effect, intermittent_activation, conditions,
+                    immune_effects, immune_fields, flags, special_visions)
+         < std::tie(rhs.id, rhs.mutations, rhs.emitter, rhs.ench_effects, rhs.fake_items,
+                    rhs.values_add, rhs.values_multiply, rhs.values_max, rhs.hit_me_effect,
+                    rhs.hit_you_effect, rhs.intermittent_activation, rhs.conditions,
+                    rhs.immune_effects, rhs.immune_fields, rhs.flags, rhs.special_visions);
 }
 
 namespace {
 
-template <float mutation_branch::* First> bool is_set_value(const trait_id& mut, float val) {
+template <float mutation_branch::* First>
+auto is_set_value(const trait_id& mut, float val) -> bool {
     return (*mut).*First == val;
 }
 
 template <float mutation_branch::* First, float mutation_branch::*... Rest,
           std::enable_if_t<(sizeof...(Rest) > 0), bool> NonEmpty = false>
-bool is_set_value(const trait_id& mut, float val) {
+auto is_set_value(const trait_id& mut, float val) -> bool {
     return (*mut).*First == val && is_set_value<Rest...>(mut, val);
 }
 
@@ -676,8 +875,9 @@ void enchantment::finalize_all() {
     }
 }
 
-bool nested_enchant_check(
-    const enchantment& ench, const enchantment_id& to_match, std::set<trait_id> mut_to_match) {
+auto nested_enchant_check(
+    const enchantment& ench, const enchantment_id& to_match, std::set<trait_id> mut_to_match)
+    -> bool {
     // Populate mutations given first
     for (const trait_id& mut_id : ench.get_mutations()) {
         if (mut_to_match.contains(mut_id)) { return false; }
@@ -792,6 +992,16 @@ void enchantment::check(std::set<enchantment_condition_type> incompatible_cond_t
                     );
                 }
             }
+        }
+    }
+    for (const auto& spell : hit_me_effect) {
+        if (!spell.id.is_valid()) {
+            problems.push_back(string_format("\nspell id %s does not exist", spell.id.str()));
+        }
+    }
+    for (const auto& spell : hit_you_effect) {
+        if (!spell.id.is_valid()) {
+            problems.push_back(string_format("\nspell id %s does not exist", spell.id.str()));
         }
     }
     if (!problems.empty()) {

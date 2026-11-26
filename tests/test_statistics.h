@@ -82,7 +82,7 @@ public:
     // Outside of this class, this should only be used for debugging
     // purposes.
     template <typename U = T>
-    double margin_of_error()
+    auto margin_of_error() -> double
         requires(std::is_same_v<U, bool>)
     {
         if (_error != invalid_err) { return _error; }
@@ -103,7 +103,7 @@ public:
     // Outside of this class, this should only be used for debugging purposes.
     // https://measuringu.com/ci-five-steps/
     template <typename U = T>
-    double margin_of_error()
+    auto margin_of_error() -> double
         requires(!std::is_same_v<U, bool>)
     {
         if (_error != invalid_err) { return _error; }
@@ -117,35 +117,35 @@ public:
      *
      * Returns true if the confidence interval partially overlaps the target region.
      */
-    bool uncertain_about(const epsilon_threshold& t) {
+    auto uncertain_about(const epsilon_threshold& t) -> bool {
         return !test_threshold(t) &&               // Inside target
                t.midpoint - t.epsilon < upper() && // Below target
                t.midpoint + t.epsilon > lower();   // Above target
     }
 
-    bool test_threshold(const epsilon_threshold& t) {
+    auto test_threshold(const epsilon_threshold& t) -> bool {
         return ((t.midpoint - t.epsilon) < lower() && (t.midpoint + t.epsilon) > upper());
     }
-    bool test_threshold(const upper_lower_threshold& t) {
+    auto test_threshold(const upper_lower_threshold& t) -> bool {
         return (t.lower_thresh < lower() && t.upper_thresh > upper());
     }
-    double upper() {
+    auto upper() -> double {
         double result = avg() + margin_of_error();
         if (std::is_same<T, bool>::value) { result = std::min(result, 1.0); }
         return result;
     }
-    double lower() {
+    auto lower() -> double {
         double result = avg() - margin_of_error();
         if (std::is_same<T, bool>::value) { result = std::max(result, 0.0); }
         return result;
     }
     // Test if some value is a member of the confidence interval of the
     // sample
-    bool test_confidence_interval(const double v) const {
+    auto test_confidence_interval(const double v) const -> bool {
         return is_within_epsilon(v, margin_of_error());
     }
 
-    bool is_within_epsilon(const double v, const double epsilon) const {
+    auto is_within_epsilon(const double v, const double epsilon) const -> bool {
         const double average = avg();
         return ((average + epsilon > v) && (average - epsilon < v));
     }
@@ -154,7 +154,7 @@ public:
     // on the fly, a one-pass formula is unnecessary because we're already
     // one pass here.  It may not obvious that even though we're calling
     // the 'average()' function that's what is happening.
-    double variance(const bool sample_variance = true) const {
+    auto variance(const bool sample_variance = true) const -> double {
         double average = avg();
         double sigma_acc = 0;
 
@@ -170,24 +170,24 @@ public:
     // time because we can always get more samples.  The way we use tests,
     // we attempt to use the sample data to generalize about the
     // population.
-    double stddev(const bool sample_deviation = true) const {
+    auto stddev(const bool sample_deviation = true) const -> double {
         return std::sqrt(variance(sample_deviation));
     }
 
-    int types() const { return _types; }
-    double sum() const { return _sum; }
-    T max() const { return _max; }
-    T min() const { return _min; }
-    double avg() const { return _sum / static_cast<double>(_n); }
-    int n() const { return _n; }
-    std::vector<T> get_samples() { return samples; }
+    auto types() const -> int { return _types; }
+    auto sum() const -> double { return _sum; }
+    auto max() const -> T { return _max; }
+    auto min() const -> T { return _min; }
+    auto avg() const -> double { return _sum / static_cast<double>(_n); }
+    auto n() const -> int { return _n; }
+    auto get_samples() -> std::vector<T> { return samples; }
 };
 
 class BinomialMatcher: public Catch::MatcherBase<int> {
 public:
     BinomialMatcher(int num_samples, double p, double max_deviation);
-    bool match(const int& obs) const override;
-    std::string describe() const override;
+    auto match(const int& obs) const -> bool override;
+    auto describe() const -> std::string override;
 
 private:
     int num_samples_;
@@ -200,8 +200,8 @@ private:
 // Can be used to test that a value is a plausible observation from a binomial
 // distribution.  Uses a normal approximation to the binomial, and permits a
 // deviation up to max_deviation (measured in standard deviations).
-inline BinomialMatcher IsBinomialObservation(
-    const int num_samples, const double p, const double max_deviation = Z99_99) {
+inline auto IsBinomialObservation(
+    const int num_samples, const double p, const double max_deviation = Z99_99) -> BinomialMatcher {
     return BinomialMatcher(num_samples, p, max_deviation);
 }
 

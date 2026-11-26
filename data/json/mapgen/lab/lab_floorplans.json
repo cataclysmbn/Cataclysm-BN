@@ -973,5 +973,62 @@
         "V": { "item": [ { "item": "television" } ] }
       }
     }
+  },
+  {
+    "//": "experimentation room",
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "lab_4side" ],
+    "weight": 100,
+    "object": {
+      "rotation": [ 0, 3 ],
+      "fill_ter": "t_linoleum_gray",
+      "rows": [
+        "cccccc............cccccc",
+        "ceH///............//n//c",
+        "cHH///............/////c",
+        "c//..................//c",
+        "c//.RRRRRRRRRRRRRRRR.//c",
+        "c//.RI............IR.//c",
+        "....R.gggggggggggg.R....",
+        "....R.g,,,,,,,,,,g.R....",
+        "....R.g,H,,,,,,H,g.R....",
+        "....R.g,,,,,,,,,,g.R....",
+        "..J.R.g,,,,,,,,,,g.R....",
+        "..x.R.g,,,,HH,,,,g.R....",
+        "..xNR.g,,,,HH,,,,g.R....",
+        "..E.R.g,,,,,,,,,,g.R....",
+        "....R.g,,,,,,,,,,g.R....",
+        "....R.g,H,,,,,,H,g.R....",
+        "....R.g,,,,,,,,,,g.R....",
+        "....R.gggggGGggggg.R....",
+        "c//.RI............IR.//i",
+        "c//.RRRRRRRRRRRRRRRR.//i",
+        "c//..................//d",
+        "S//n//............/////d",
+        "S/////............///n/d",
+        "cSSccc............iidddd"
+      ],
+      "palettes": [ "lab_palette", "lab_loot_research" ],
+      "terrain": {
+        ".": "t_linoleum_gray",
+        "H": "t_grate",
+        "e": "t_grate",
+        "I": "t_utility_light",
+        "R": "t_floor_red",
+        ",": "t_floor_blue",
+        "/": "t_carpet_concrete",
+        "n": "t_carpet_concrete"
+      },
+      "furniture": { "e": "f_eyewash", "J": "f_sample_freezer", "E": "f_control_station", "N": "f_stool", "n": "f_stool" },
+      "place_loot": [ { "item": "syringe", "x": 10, "y": 10 } ],
+      "mapping": {
+        "R": { "items": [ { "item": "camera_pro", "chance": 2 } ] },
+        "J": { "items": [ { "item": "mut_lab", "chance": 100 } ] },
+        "i": { "items": [ { "item": "SUS_office_filing_cabinet", "chance": 100 } ] }
+      },
+      "place_monster": [ { "monster": [ "mon_mutant_experimental" ], "x": [ 11, 13 ], "y": [ 13, 14 ], "chance": 100 } ],
+      "place_vehicles": [ { "vehicle": "hospital_bed", "x": 11, "y": 11, "chance": 100, "rotation": 0, "status": 0 } ]
+    }
   }
 ]

@@ -16,19 +16,19 @@
 #include "int_id.h"
 #include "json.h"
 #include "kill_tracker.h"
-#include "map.h"
+#include "map/map.h"
 #include "messages.h"
 #include "mission.h"
 #include "mongroup.h"
 #include "monster.h"
 #include "npc.h"
-#include "omdata.h"
 #include "options.h"
 #include "output.h"
-#include "overmap.h"
-#include "overmap_types.h"
-#include "overmapbuffer.h"
-#include "overmapbuffer_registry.h"
+#include "overmap/omdata.h"
+#include "overmap/overmap.h"
+#include "overmap/overmap_types.h"
+#include "overmap/overmapbuffer.h"
+#include "overmap/overmapbuffer_registry.h"
 #include "popup.h"
 #include "regional_settings.h"
 #include "scent_map.h"
@@ -241,6 +241,13 @@ auto game::unserialize( std::istream &fin ) -> bool
         auto saved_reality_bubble_size = g_reality_bubble_size;
         const auto has_saved_reality_bubble_size = data.read( "reality_bubble_size",
                 saved_reality_bubble_size );
+        if( has_saved_reality_bubble_size ) {
+            // For all saves post bubble size changing PR with a bubble size
+            resize_reality_bubble_to( saved_reality_bubble_size );
+        } else {
+            // Otherwise: default initialization
+            resize_reality_bubble();
+        }
         auto saved_player_abs = tripoint_abs_ms::zero();
         auto has_saved_player_abs = false;
         if( data.has_object( "player" ) ) {

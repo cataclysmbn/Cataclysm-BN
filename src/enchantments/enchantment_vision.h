@@ -28,23 +28,24 @@ public:
 
     void check() const;
 
-    static std::vector<enchantment_vision> get_all();
+    static auto get_all() -> std::vector<enchantment_vision>;
 
     static void reset();
 
     enchantment_vision_id id;
     bool was_loaded = false;
 
-    bool mon_passes(
-        const Creature& mon, const int dist, const bool on_same_zlevel, const bool has_los) const;
-    std::string get_mon_tile(const Creature& mon) const;
-    std::string get_mon_desc(const Creature& mon) const;
-    bool use_normal_mon_tile() const;
-    std::string get_desc() const;
+    auto mon_passes(
+        const Creature& mon, const int dist, const bool on_same_zlevel, const bool has_los) const
+        -> bool;
+    auto get_mon_tile(const Creature& mon) const -> std::string;
+    auto get_mon_desc(const Creature& mon) const -> std::string;
+    auto use_normal_mon_tile() const -> bool;
+    auto get_desc() const -> std::string;
 
     // Needed for bindings
-    bool operator==(const enchantment_vision& rhs) const { return id == rhs.id; }
-    bool operator<(const enchantment_vision& rhs) const { return id < rhs.id; }
+    auto operator==(const enchantment_vision& rhs) const -> bool { return id == rhs.id; }
+    auto operator<(const enchantment_vision& rhs) const -> bool { return id < rhs.id; }
 
 private:
     // Description shown on items

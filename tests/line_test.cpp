@@ -17,7 +17,7 @@
 
 #define SGN(a) (((a) < 0) ? -1 : 1)
 // Compare all future line_to implementations to the canonical one.
-static std::vector<point> canonical_line_to(const point& p1, const point& p2, int t) {
+static auto canonical_line_to(const point& p1, const point& p2, int t) -> std::vector<point> {
     std::vector<point> ret;
     const point d(-p1 + p2);
     const point a(std::abs(d.x) << 1, std::abs(d.y) << 1);
@@ -73,7 +73,8 @@ static std::vector<point> canonical_line_to(const point& p1, const point& p2, in
     return ret;
 }
 
-static bool check_bresenham_far(const tripoint& source, const tripoint& destination, int length) {
+static auto check_bresenham_far(const tripoint& source, const tripoint& destination, int length)
+    -> bool {
     CAPTURE(source);
     CAPTURE(destination);
     CAPTURE(length);
@@ -137,7 +138,7 @@ static bool check_bresenham_far(const tripoint& source, const tripoint& destinat
     return true;
 }
 
-static bool check_bresenham_triaxis(const tripoint& src, const tripoint& sign, int dist) {
+static auto check_bresenham_triaxis(const tripoint& src, const tripoint& sign, int dist) -> bool {
     bool ret = true;
     for (int x = 0; x <= dist; x++) {
         for (int y = 0; y <= dist; y++) {

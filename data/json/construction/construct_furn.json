@@ -171,6 +171,18 @@
   },
   {
     "type": "construction",
+    "id": "constr_utility_shelf",
+    "group": "build_utility_shelf",
+    "category": "FURN",
+    "required_skills": [ [ "fabrication", 2 ] ],
+    "time": "60 m",
+    "qualities": [ [ { "id": "HAMMER", "level": 2 } ], [ { "id": "WRENCH", "level": 1 } ] ],
+    "components": [ [ [ "pipe", 8 ] ], [ [ "sheet_metal_small", 6 ] ], [ [ "plastic_chunk", 12 ] ] ],
+    "pre_special": "check_empty",
+    "post_furniture": "f_utility_shelf"
+  },
+  {
+    "type": "construction",
     "id": "constr_rack_coat",
     "group": "build_coat_rack",
     "category": "FURN",
@@ -659,6 +671,18 @@
   },
   {
     "type": "construction",
+    "id": "constr_ore_smelter_empty",
+    "group": "build_ore_smelter",
+    "category": "FURN",
+    "required_skills": [ [ "fabrication", 3 ] ],
+    "time": "120 m",
+    "components": [ [ [ "rock", 40 ] ], [ [ "material_soil", 2 ] ] ],
+    "pre_note": "Can be deconstructed without tools.",
+    "pre_special": "check_empty",
+    "post_furniture": "f_ore_smelter_empty"
+  },
+  {
+    "type": "construction",
     "id": "constr_kiln_metal_empty",
     "group": "build_metal_charcoal_kiln",
     "category": "FURN",
@@ -958,5 +982,51 @@
     "dark_craftable": true,
     "pre_special": "check_empty",
     "post_furniture": "f_bathtub"
+  },
+  {
+    "type": "construction",
+    "id": "constr_sink",
+    "group": "build_sink",
+    "category": "FURN",
+    "required_skills": [ [ "fabrication", 4 ] ],
+    "time": "3 h",
+    "qualities": [ [ { "id": "HAMMER", "level": 2 } ], [ { "id": "SAW_W", "level": 2 } ], [ { "id": "WRENCH", "level": 2 } ] ],
+    "using": [ [ "earthenware_firing", 120 ], [ "glazing", 2 ] ],
+    "components": [
+      [ [ "2x4", 3 ] ],
+      [ [ "wood_sheet", 1 ], [ "wood_panel", 2 ] ],
+      [ [ "nail", 8 ] ],
+      [ [ "clay_lump", 20 ] ],
+      [ [ "water_faucet", 1 ] ],
+      [ [ "cu_pipe", 2 ] ],
+      [ [ "water", 10 ], [ "water_clean", 10 ] ]
+    ],
+    "pre_special": "check_empty",
+    "post_furniture": "f_sink"
+  },
+  {
+    "type": "construction",
+    "id": "constr_sink_cupboard",
+    "group": "build_sink",
+    "category": "FURN",
+    "required_skills": [ [ "fabrication", 4 ] ],
+    "time": "2 h",
+    "qualities": [ [ { "id": "WRENCH", "level": 2 } ], [ { "id": "SAW_W", "level": 2 } ] ],
+    "using": [ [ "earthenware_firing", 120 ], [ "glazing", 2 ] ],
+    "components": [ [ [ "clay_lump", 20 ] ], [ [ "water_faucet", 1 ] ], [ [ "cu_pipe", 2 ] ], [ [ "water", 10 ], [ "water_clean", 10 ] ] ],
+    "pre_special": "check_empty",
+    "pre_furniture": "f_cupboard",
+    "post_furniture": "f_sink"
+  },
+  {
+    "type": "construction",
+    "id": "constr_place_billybass",
+    "group": "place_billybass",
+    "category": "FURN",
+    "required_skills": [ [ "fabrication", 0 ] ],
+    "time": "1 m",
+    "components": [ [ [ "billybass", 1 ] ] ],
+    "pre_flags": [ "WALL" ],
+    "post_furniture": "f_billybass"
   }
 ]

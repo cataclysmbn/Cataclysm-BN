@@ -1,7 +1,7 @@
 #pragma once
 
 #include "enums.h"
-#include "mapdata.h"
+#include "map/mapdata.h"
 #include "memory_fast.h"
 #include "string_id.h"
 #include "type_id.h"

@@ -3,7 +3,7 @@
 #    define CATA_TESTS_XOR_RAND_H
 
 // Fast xorshift+128 random number generator function
-unsigned int xor_rand();
+auto xor_rand() -> unsigned int;
 
 struct small_struct {
     double* empty_field_1;

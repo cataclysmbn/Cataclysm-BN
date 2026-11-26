@@ -14,6 +14,19 @@
   },
   {
     "type": "construction",
+    "id": "constr_nanofab_portable",
+    "group": "place_nanofab_portable",
+    "category": "WORKSHOP",
+    "required_skills": [  ],
+    "time": "1 m",
+    "qualities": [  ],
+    "components": [ [ [ "portable_nanofab", 1 ] ] ],
+    "pre_note": "Requires a flat, stable area.",
+    "pre_special": "check_empty",
+    "post_furniture": "f_nanofab_portable"
+  },
+  {
+    "type": "construction",
     "id": "constr_door_curtain",
     "group": "build_door_curtain",
     "//": "Door frame not required",

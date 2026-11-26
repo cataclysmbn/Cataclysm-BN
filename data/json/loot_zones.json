@@ -367,7 +367,7 @@
     "id": "NO_NPC_PICKUP",
     "type": "LOOT_ZONE",
     "name": "No NPC Pickup",
-    "description": "Friendly NPCs don't pickup items inside the zone.",
+    "description": "Friendly NPCs don't pick up items inside the zone.",
     "color": "dark_gray"
   },
   {
@@ -423,7 +423,7 @@
     "id": "FARM_PLOT",
     "type": "LOOT_ZONE",
     "name": "Farm: Plot",
-    "description": "Designate a farm plot for tilling and planting.",
+    "description": "Designate a farm plot for tilling, planting, fertilizing, and harvesting.",
     "color": "green"
   },
   {

@@ -1,5 +1,15 @@
 [
   {
+    "id": "ACT_SCAN_BOOK",
+    "type": "activity_type",
+    "verb": "scanning reading material",
+    "rooted": true,
+    "suspendable": false,
+    "verbose_tooltip": false,
+    "bubble_size_effect": "idle",
+    "rest_amount": 0.1
+  },
+  {
     "id": "ACT_RELOAD",
     "type": "activity_type",
     "verb": "reloading",
@@ -25,7 +35,8 @@
     "morale_blocked": true,
     "complex_moves": { "light": true, "speed": true, "stats": [ [ "INT" ] ], "morale": true },
     "verbose_tooltip": false,
-    "bubble_size_effect": "idle"
+    "bubble_size_effect": "idle",
+    "rest_amount": 0.1
   },
   {
     "id": "ACT_MULTIPLE_CONSTRUCTION",
@@ -101,6 +112,17 @@
     "bubble_size_effect": "mobile"
   },
   {
+    "id": "ACT_MULTIPLE_DISSECT",
+    "type": "activity_type",
+    "verb": "dissecting",
+    "special": true,
+    "suspendable": false,
+    "no_resume": true,
+    "multi_activity": true,
+    "auto_needs": true,
+    "bubble_size_effect": "mobile"
+  },
+  {
     "id": "ACT_MULTIPLE_CHOP_TREES",
     "type": "activity_type",
     "verb": "chopping trees",
@@ -118,7 +140,7 @@
     "special": true,
     "auto_needs": true,
     "bubble_size_effect": "mobile",
-    "rest_amount": 0.2
+    "rest_amount": 0.1
   },
   {
     "id": "ACT_GENERIC_GAME",
@@ -127,7 +149,7 @@
     "rooted": true,
     "verbose_tooltip": false,
     "bubble_size_effect": "idle",
-    "rest_amount": 0.2
+    "rest_amount": 0.1
   },
   {
     "id": "ACT_GAME",
@@ -136,7 +158,7 @@
     "rooted": true,
     "verbose_tooltip": false,
     "bubble_size_effect": "idle",
-    "rest_amount": 0.2
+    "rest_amount": 0.1
   },
   {
     "id": "ACT_WAIT",
@@ -148,7 +170,8 @@
     "auto_needs": true,
     "verbose_tooltip": false,
     "bubble_size_effect": "idle",
-    "rest_amount": 0.2
+    "rest_amount": 0.1,
+    "suppress_comfort_lines": true
   },
   {
     "id": "ACT_WASH_SELF",
@@ -158,7 +181,7 @@
     "no_resume": true,
     "verbose_tooltip": false,
     "bubble_size_effect": "idle",
-    "rest_amount": 0.2
+    "rest_amount": 0.1
   },
   {
     "id": "ACT_CRAFT",
@@ -353,7 +376,7 @@
     "rooted": true,
     "verbose_tooltip": false,
     "bubble_size_effect": "idle",
-    "rest_amount": 0.2
+    "rest_amount": 0.1
   },
   {
     "id": "ACT_WAIT_WEATHER",
@@ -364,7 +387,8 @@
     "auto_needs": true,
     "verbose_tooltip": false,
     "bubble_size_effect": "idle",
-    "rest_amount": 0.2
+    "rest_amount": 0.1,
+    "suppress_comfort_lines": true
   },
   {
     "id": "ACT_FIRSTAID",
@@ -381,7 +405,7 @@
     "suspendable": false,
     "complex_moves": { "light": true, "morale": true, "speed": true, "skills": [ [ "survival" ] ], "stats": [ [ "PER" ] ] },
     "bubble_size_effect": "idle",
-    "rest_amount": 0.2
+    "rest_amount": 0.1
   },
   {
     "id": "ACT_PICKAXE",
@@ -432,7 +456,7 @@
     "verb": "training",
     "verbose_tooltip": false,
     "bubble_size_effect": "idle",
-    "rest_amount": 0.2
+    "rest_amount": 0.1
   },
   {
     "id": "ACT_MAKE_ZLAVE",
@@ -703,7 +727,8 @@
     "no_resume": true,
     "verbose_tooltip": false,
     "bubble_size_effect": "idle",
-    "rest_amount": 0.2
+    "rest_amount": 0.1,
+    "suppress_comfort_lines": true
   },
   {
     "id": "ACT_WAIT_STAMINA",
@@ -713,7 +738,8 @@
     "no_resume": true,
     "verbose_tooltip": false,
     "bubble_size_effect": "idle",
-    "rest_amount": 0.2
+    "rest_amount": 0.1,
+    "suppress_comfort_lines": true
   },
   {
     "id": "ACT_CLEAR_RUBBLE",
@@ -729,7 +755,7 @@
     "rooted": true,
     "complex_moves": { "speed": true, "stats": [ [ "INT" ] ] },
     "bubble_size_effect": "idle",
-    "rest_amount": 0.2
+    "rest_amount": 0.1
   },
   {
     "id": "ACT_HACKSAW",
@@ -881,7 +907,7 @@
     "no_resume": true,
     "verbose_tooltip": false,
     "bubble_size_effect": "idle",
-    "rest_amount": 0.2
+    "rest_amount": 0.1
   },
   {
     "id": "ACT_EAT_MENU",
@@ -922,7 +948,7 @@
     "no_resume": true,
     "complex_moves": { "speed": true },
     "bubble_size_effect": "idle",
-    "rest_amount": 0.2
+    "rest_amount": 0.1
   },
   {
     "id": "ACT_CONSUME_DRINK_MENU",

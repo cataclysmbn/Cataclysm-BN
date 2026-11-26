@@ -50,8 +50,8 @@ static void give_one_trait(player& dummy, const std::string trait_name) {
 }
 
 // Return the Character's `healing_rate` at the given healthy value and rest quality.
-static float healing_rate_at_health(
-    Character& dummy, const int healthy_value, const float rest_quality) {
+static auto healing_rate_at_health(
+    Character& dummy, const int healthy_value, const float rest_quality) -> float {
     dummy.set_healthy(healthy_value);
     return dummy.healing_rate(rest_quality);
 }
@@ -150,11 +150,11 @@ TEST_CASE("traits and mutations affecting healing rate", "[heal][trait][mutation
     SECTION("Weakening") {
         give_one_trait(dummy, "ROT1");
 
-        REQUIRE(dummy.mutation_value("healing_awake") == -0.002f);
-        REQUIRE(dummy.mutation_value("healing_resting") == -0.25f);
+        REQUIRE(dummy.mutation_value("healing_awake") == -0.1f);
+        REQUIRE(dummy.mutation_value("healing_resting") == -0.1f);
 
-        CHECK(dummy.healing_rate(awake_rest) == zero);
-        CHECK_THAT(dummy.healing_rate(sleep_rest), WithinAbs(normal * 0.75f, tol));
+        CHECK_THAT(dummy.healing_rate(awake_rest), WithinAbs(normal * -0.1f, tol));
+        CHECK_THAT(dummy.healing_rate(sleep_rest), WithinAbs(normal * 0.9f, tol));
     }
 
     // "You heal a little slower than most; sleeping will heal less HP."
@@ -195,22 +195,22 @@ TEST_CASE("traits and mutations affecting healing rate", "[heal][trait][mutation
     SECTION("Deterioration") {
         give_one_trait(dummy, "ROT2");
 
-        REQUIRE(dummy.mutation_value("healing_awake") == -0.02f);
-        REQUIRE(dummy.mutation_value("healing_resting") == 0.0f);
+        REQUIRE(dummy.mutation_value("healing_awake") == -0.2f);
+        REQUIRE(dummy.mutation_value("healing_resting") == -0.2f);
 
-        CHECK(dummy.healing_rate(awake_rest) == zero);
-        CHECK_THAT(dummy.healing_rate(sleep_rest), WithinAbs(normal, tol));
+        CHECK_THAT(dummy.healing_rate(awake_rest), WithinAbs(normal * -0.2f, tol));
+        CHECK_THAT(dummy.healing_rate(sleep_rest), WithinAbs(normal * 0.8f, tol));
     }
 
     // "Your body is slowly wasting away!"
     SECTION("Disintegration") {
         give_one_trait(dummy, "ROT3");
 
-        REQUIRE(dummy.mutation_value("healing_awake") == -0.08f);
-        REQUIRE(dummy.mutation_value("healing_resting") == 0.0f);
+        REQUIRE(dummy.mutation_value("healing_awake") == -0.3f);
+        REQUIRE(dummy.mutation_value("healing_resting") == -0.3f);
 
-        CHECK_THAT(dummy.healing_rate(awake_rest), WithinAbs(normal * -0.1f, tol));
-        CHECK_THAT(dummy.healing_rate(sleep_rest), WithinAbs(normal, tol));
+        CHECK_THAT(dummy.healing_rate(awake_rest), WithinAbs(normal * -0.3f, tol));
+        CHECK_THAT(dummy.healing_rate(sleep_rest), WithinAbs(normal * 0.7f, tol));
     }
 }
 
@@ -260,13 +260,13 @@ TEST_CASE("health effects on healing rate", "[heal][health]") {
 // using a local avatar instance to avoid any cross-contamination. Tests may be contagious!
 
 // Return `healing_rate_medicine` for an untreated body part at a given rest quality
-static float untreated_rate(const std::string bp_name, const float rest_quality) {
+static auto untreated_rate(const std::string bp_name, const float rest_quality) -> float {
     avatar dummy;
     return dummy.healing_rate_medicine(rest_quality, bodypart_id(bp_name));
 }
 
 // Return `healing_rate_medicine` for a `bandaged` body part at a given rest quality
-static double bandaged_rate(const std::string bp_name, const float rest_quality) {
+static auto bandaged_rate(const std::string bp_name, const float rest_quality) -> double {
     avatar dummy;
     const bodypart_str_id& bp = bodypart_str_id(bp_name);
     dummy.add_effect(effect_bandaged, 1_turns, bp);
@@ -274,7 +274,7 @@ static double bandaged_rate(const std::string bp_name, const float rest_quality)
 }
 
 // Return `healing_rate_medicine` for a `disinfected` body part at a given rest quality
-static double disinfected_rate(const std::string bp_name, const float rest_quality) {
+static auto disinfected_rate(const std::string bp_name, const float rest_quality) -> double {
     avatar dummy;
     const bodypart_str_id& bp = bodypart_str_id(bp_name);
     dummy.add_effect(effect_disinfected, 1_turns, bp);
@@ -283,7 +283,7 @@ static double disinfected_rate(const std::string bp_name, const float rest_quali
 
 // Return `healing_rate_medicine` for a `bandaged` AND `disinfected` body part at a given rest
 // quality
-static double together_rate(const std::string bp_name, const float rest_quality) {
+static auto together_rate(const std::string bp_name, const float rest_quality) -> double {
     avatar dummy;
     const bodypart_str_id& bp = bodypart_str_id(bp_name);
     dummy.add_effect(effect_bandaged, 1_turns, bp);

@@ -159,6 +159,8 @@ experience you need to get to a level is below:
 
 - `MOD_MEELE_STAM` - Like `MOD_MELEE_MOVES` but for the casting cost of the spell and the stamina cost of your weapon. Primarily meant for stamina techniques. Has the same special behavior involving negative base costs and the increment field.
 
+- `DAMAGE_TERRAIN` - This allows a damaging spell to also hit the terrain for a percentage of its damage based on its damage type.
+
 - `NO_FAIL` - this spell cannot fail when you cast it
 
 #### Currently Implemented Effects and special rules

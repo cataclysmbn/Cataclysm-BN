@@ -96,6 +96,10 @@ struct MOD_INFORMATION {
         /** What mods cannot be loaded together with this one? */
         std::vector<mod_id> conflicts;
 
+        /** Path to load options from */
+        bool load_options = false;
+        std::string options_path;
+
         /** Core mods are loaded before any other mods */
         bool core = false;
 
@@ -162,6 +166,8 @@ class mod_manager
         void refresh_mod_list();
 
         std::vector<mod_id> all_mods() const;
+
+        std::vector<MOD_INFORMATION> all_mod_objects() const;
 
         /**
          * Returns the dependency tree for the loaded mods.

@@ -25,7 +25,7 @@ struct all_stats {
 };
 
 // given a list of components, adds all the calories together
-static int comp_calories(const std::vector<item_comp>& components) {
+static auto comp_calories(const std::vector<item_comp>& components) -> int {
     int calories = 0;
     for (item_comp it : components) {
         const cata::value_ptr<islot_comestible>& temp = it.type->comestible;
@@ -40,15 +40,16 @@ static int comp_calories(const std::vector<item_comp>& components) {
 }
 
 // puts one permutation of item components into a vector
-static std::vector<item_comp> item_comp_vector_create(
-    const std::vector<std::vector<item_comp>>& vv, const std::vector<int>& ndx) {
+static auto item_comp_vector_create(
+    const std::vector<std::vector<item_comp>>& vv, const std::vector<int>& ndx)
+    -> std::vector<item_comp> {
     std::vector<item_comp> list;
     for (int i = 0, sz = vv.size(); i < sz; ++i) { list.emplace_back(vv[i][ndx[i]]); }
     return list;
 }
 
-static all_stats recipe_permutations(
-    const std::vector<std::vector<item_comp>>& vv, int byproduct_calories) {
+static auto recipe_permutations(
+    const std::vector<std::vector<item_comp>>& vv, int byproduct_calories) -> all_stats {
     std::vector<int> muls;
     std::vector<int> szs;
 
@@ -78,7 +79,7 @@ static all_stats recipe_permutations(
     return mystats;
 }
 
-static int byproduct_calories(const recipe& recipe_obj) {
+static auto byproduct_calories(const recipe& recipe_obj) -> int {
 
     std::vector<detached_ptr<item>> byproducts = recipe_obj.create_byproducts();
     int kcal = 0;
@@ -90,7 +91,7 @@ static int byproduct_calories(const recipe& recipe_obj) {
     return kcal;
 }
 
-static item& food_or_food_container(item& it) {
+static auto food_or_food_container(item& it) -> item& {
     return it.is_food_container() ? it.contents.front() : it;
 }
 

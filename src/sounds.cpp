@@ -15,18 +15,19 @@
 #include "item.h"
 #include "itype.h"
 #include "line.h"
-#include "map.h"
+#include "map/map.h"
+#include "map/mapbuffer.h"
+#include "map/mapdata.h"
+#include "map/submap.h"
 #include "map_iterator.h"
-#include "mapbuffer.h"
-#include "mapdata.h"
 #include "messages.h"
 #include "monfaction.h"
 #include "monster.h"
 #include "mtype.h"
 #include "npc.h"
-#include "omdata.h"
-#include "overmapbuffer.h"
-#include "overmapbuffer_registry.h"
+#include "overmap/omdata.h"
+#include "overmap/overmapbuffer.h"
+#include "overmap/overmapbuffer_registry.h"
 #include "player.h"
 #include "player_activity.h"
 #include "point.h"
@@ -35,7 +36,6 @@
 #include "safemode_ui.h"
 #include "string_formatter.h"
 #include "string_id.h"
-#include "submap.h"
 #include "thread_pool.h"
 #include "translations.h"
 #include "type_id.h"
@@ -71,8 +71,6 @@
 #   if defined(_WIN32) && !defined(_MSC_VER)
 #       include "mingw.thread.h"
 #   endif
-
-#   define dbg(x) DebugLogFL((x),DC::SDL)
 #endif
 
 weather_type_id previous_weather;
@@ -953,7 +951,7 @@ void map::batch_flood_fill_sounds()
             if( flooded_sound.origin.z() != z ) {
                 // We still floodfill these sounds out later, just when we get to the right z-level.
                 continue;
-            } else if( flooded_sound.volume < 7 ) {
+            } else if( flooded_sound.volume < 7 || !inbounds( flooded_sound.origin ) ) {
                 num_invalidated_sounds++;
                 continue;
             } else {
@@ -2687,7 +2685,7 @@ void sounds::process_sound_markers( Character *who )
         }
         loudest_vol = std::max( loudest_vol, tile_vol );
 
-        if( tile_vol >= MAXIMUM_VOLUME_ATMOSPHERE || tile_vol > dBspl_to_mdBspl( element.sound.volume ) ) {
+        if( tile_vol > MAXIMUM_VOLUME_ATMOSPHERE || tile_vol > dBspl_to_mdBspl( element.sound.volume ) ) {
             // Dont count impossibly loud sounds.
             debugmsg( "Player given impossibly loud sound! Sound with description [ %1s ] from %i:%i:%i with an origin volume of %i dB, tile volume of %i mdB, distance %i at %i:%i:%i is louder than possible.",
                       element.sound.description, element.sound.origin.x(), element.sound.origin.y(),
@@ -2741,15 +2739,19 @@ void sounds::process_sound_markers( Character *who )
             const int db_vol = mdBspl_to_dBspl( tile_vol - passive_sound_dampening );
             // See if we need to wake someone up
             // Remember we are working with dB spl volumes instead of tile volumes and dB spl is a logarithmic unit. 60dB is normal conversation, 80-100 is a car horn, ~160 is a gunshot, 180+ can kill a human.
-            // Noise past +10 dB should automatically wake up normal sleepers.
-            // Noise past +40 dB should automatically wake up heavy sleepers.
-            // Noise past +60 dB will cause pain and should automatically wake up heavy sleeper 2.
+            // Noise past ambient + 10 dB should automatically wake up normal sleepers.
+            // Noise past ambient + 40 dB should automatically wake up heavy sleepers.
+            // Noise past ambient + 60 dB will cause pain and should automatically wake up heavy sleeper 2.
             if( who->has_effect( effect_sleep ) ) {
-                const int diff_db_vol = mdBspl_to_dBspl( tile_vol - passive_sound_dampening - tile_vol );
-                int wake_up_vol = 10;
+                // ambient_vol is in mdB, but db_vol and wake_up_vol are in dB.
+                const int ambient_db = mdBspl_to_dBspl( ambient_vol );
+                int wake_up_vol = 10 + ambient_db;
                 wake_up_vol += who->bonus_from_enchantments( wake_up_vol, ench_val_SLEEP_DB_RESIST );
 
-                if( rng( wake_up_vol / 2, wake_up_vol ) <= db_vol && !who->has_effect( effect_narcosis ) ) {
+                // For players sake anything below ambient should never wake them up
+                int minval = ambient_db > wake_up_vol ? wake_up_vol / 2 : ambient_db;
+                int maxval = wake_up_vol;
+                if( rng( minval, maxval ) <= db_vol && !who->has_effect( effect_narcosis ) ) {
                     who->wake_up();
                     who->add_msg_if_player( m_warning, _( "Something is making noise." ) );
                 } else {
@@ -3902,7 +3904,7 @@ void sfx::play_ambient_variant_sound( const std::string &, const std::string &, 
                                       double, int ) { }
 void sfx::play_activity_sound( const std::string &, const std::string &, int ) { }
 void sfx::end_activity_sounds() { }
-void sfx::generate_gun_sound( const tripoint_bub_ms &, const item &, const short &origin_vol ) { }
+void sfx::generate_gun_sound( const tripoint_bub_ms &, const item &, const short &/*origin_vol*/ ) { }
 void sfx::generate_melee_sound( const tripoint_bub_ms &, const tripoint_bub_ms &, bool, bool,
                                 const std::string & ) { }
 void sfx::do_hearing_loss( int ) { }

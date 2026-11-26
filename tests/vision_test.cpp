@@ -1,16 +1,19 @@
+#include "../src/map/map.h"
 #include "../src/vehicle/vehicle_part.h"
 #include "../src/vehicle/vpart_position.h"
+#include "cached_options.h"
 #include "calendar.h"
+#include "cata_utility.h"
 #include "catch/catch.hpp"
 #include "character.h"
 #include "coordinates.h"
-#include "field.h"
 #include "game.h"
 #include "game_constants.h"
 #include "item.h"
-#include "lightmap.h"
-#include "map.h"
+#include "map/field.h"
+#include "map/lightmap.h"
 #include "map_helpers.h"
+#include "options_helpers.h"
 #include "player_helpers.h"
 #include "shadowcasting.h"
 #include "state_helpers.h"
@@ -35,11 +38,11 @@ enum class vision_test_flags {
     crouching = 1 << 1,
 };
 
-static vision_test_flags operator&(vision_test_flags l, vision_test_flags r) {
+static auto operator&(vision_test_flags l, vision_test_flags r) -> vision_test_flags {
     return static_cast<vision_test_flags>(static_cast<unsigned>(l) & static_cast<unsigned>(r));
 }
 
-static bool operator!(vision_test_flags f) { return !static_cast<unsigned>(f); }
+static auto operator!(vision_test_flags f) -> bool { return !static_cast<unsigned>(f); }
 
 static void full_map_test(
     const std::vector<std::string>& setup, const std::vector<std::string>& expected_results,
@@ -661,4 +664,46 @@ TEST_CASE("vision_see_into_vehicle", "[shadowcasting][vision]") {
         -45_degrees};
 
     t.test();
+}
+
+TEST_CASE("lighting_circular_distances", "[shadowcasting][vision]") {
+    clear_all_state();
+    const auto restore_trigdist = restore_on_out_of_scope<bool>(trigdist);
+
+    auto& player_character = get_player_character();
+    const auto origin = tripoint_bub_ms(60, 60, 0);
+    g->place_player(origin);
+    get_weather().weather_id = weather_type_id("clear");
+    calendar::turn = midnight;
+    g->reset_light_level();
+    player_character.set_movement_mode(character_movemode::CMM_WALK);
+    player_character.worn.push_back(item::spawn("wearable_light_on"));
+
+    auto& here = get_map();
+    const auto cardinal = origin + point_rel_ms(5, 0);
+    const auto diagonal = origin + point_rel_ms(5, 5);
+
+    struct sampled_light {
+        float cardinal;
+        float diagonal;
+    };
+    const auto sample = [&](const bool circular) -> sampled_light {
+        const auto opt = override_option("CIRCLEDIST", circular ? "true" : "false");
+        trigdist = circular;
+        here.invalidate_map_cache(origin.z());
+        here.build_map_cache(origin.z());
+        const auto& cache = here.access_cache(origin.z());
+        return {
+            .cardinal = cache.lm[cache.idx(cardinal.x(), cardinal.y())],
+            .diagonal = cache.lm[cache.idx(diagonal.x(), diagonal.y())],
+        };
+    };
+
+    const auto square = sample(false);
+    CHECK(square.cardinal > LIGHT_AMBIENT_LOW);
+    CHECK(square.cardinal == Approx(square.diagonal));
+
+    const auto circular = sample(true);
+    CHECK(circular.cardinal > circular.diagonal);
+    CHECK(square.diagonal > circular.diagonal);
 }

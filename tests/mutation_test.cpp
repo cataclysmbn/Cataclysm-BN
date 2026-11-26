@@ -20,7 +20,7 @@
 static const efftype_id effect_accumulated_mutagen("accumulated_mutagen");
 static const auto trait_marloss = trait_id("MARLOSS");
 
-std::string get_mutations_as_string(const player& p);
+auto get_mutations_as_string(const player& p) -> std::string;
 
 // Note: If a category has two mutually-exclusive mutations (like pretty/ugly for Lupine), the
 // one they ultimately end up with depends on the order they were loaded from JSON
@@ -51,7 +51,7 @@ static void give_all_mutations(
     }
 }
 
-static int get_total_category_strength(const player& p) {
+static auto get_total_category_strength(const player& p) -> int {
     int total = 0;
     for (auto& i : p.mutation_category_level) { total += i.second; }
 
@@ -59,7 +59,7 @@ static int get_total_category_strength(const player& p) {
 }
 
 // Returns the list of mutations a player has as a string, for debugging
-std::string get_mutations_as_string(const player& p) {
+auto get_mutations_as_string(const player& p) -> std::string {
     std::ostringstream s;
     for (auto& m : p.get_mutations()) { s << static_cast<std::string>(m) << " "; }
     return s.str();
@@ -129,8 +129,8 @@ TEST_CASE(
     }
 }
 
-static float sum_without_category(
-    const std::map<trait_id, float>& chances, const mutation_category_id& cat) {
+static auto sum_without_category(
+    const std::map<trait_id, float>& chances, const mutation_category_id& cat) -> float {
     float sum = 0.0f;
     for (const auto& c : chances) {
         const auto& mut_categories = c.first->category;
@@ -189,7 +189,9 @@ TEST_CASE(
 }
 
 TEST_CASE("resized rigid armor fits tailed mutants", "[mutations][armor]") {
-    npc dummy;
+    auto dummy = npc{};
+    // This standalone fixture is not registered in an overmap.
+    dummy.set_fake(true);
     clear_character(dummy);
     dummy.set_mutation(trait_id("TAIL_FLUFFY"));
 

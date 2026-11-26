@@ -23,11 +23,3 @@ deno run -A scripts/tileset.ts --pack path/to/UndeadPeopleUnpacked path/to/Undea
 첫 번째 경로는 unpacked 타일셋 루트입니다. `tileset.txt`, `tile_info.json`, `pngs_*` 디렉터리 등이 들어 있어야 합니다. 두 번째 경로에는 합성된 `tile_config.json`과 타일시트 PNG가 저장됩니다.
 
 자세한 형식은 [타일셋](/mod/json/reference/graphics/tileset/#typescript-tileset-tool)을 참고하세요. 브라우저에서 작은 예제를 확인하려면 [타일셋 웹 도구](/dev/reference/tileset_web_tool/)를 사용할 수 있습니다.
-
-## 이전 자료
-
-다음 링크는 오래된 자료라 현재 명령과 다를 수 있습니다.
-
-- [DDA 타일셋 튜토리얼](https://github.com/CleverRaven/Cataclysm-DDA/wiki/Tileset-creation)
-- [DDA 타일 설정 참조](https://github.com/CleverRaven/Cataclysm-DDA/blob/master/doc/TILESET.md)
-- [이전 Undead People 저장소](https://github.com/SomeDeadGuy/UndeadPeopleTileset)

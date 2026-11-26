@@ -36,11 +36,6 @@
   },
   {
     "type": "recipe",
-    "result": "unbio_blaster_gun",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
     "result": "fertilizer_bomb",
     "obsolete": true
   },

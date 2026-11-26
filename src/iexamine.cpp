@@ -29,7 +29,6 @@
 #include "bodypart.h"
 #include "cached_options.h"
 #include "calendar.h"
-#include "cata_unreachable.h"
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "catalua.h"
@@ -41,6 +40,7 @@
 #include "construction_group.h"
 #include "construction_partial.h"
 #include "craft_command.h"
+#include "cultivated_harvest.h"
 #include "cursesdef.h"
 #include "damage.h"
 #include "data_vars.h"
@@ -52,7 +52,6 @@
 #include "enums.h"
 #include "event.h"
 #include "event_bus.h"
-#include "field_type.h"
 #include "flag.h"
 #include "flat_set.h"
 #include "flood_fill.h"
@@ -73,14 +72,16 @@
 #include "iuse_actor.h"
 #include "line.h"
 #include "magic/magic_teleporter_list.h"
-#include "map.h"
+#include "map/field_type.h"
+#include "map/map.h"
+#include "map/map_selector.h"
+#include "map/mapbuffer.h"
+#include "map/mapbuffer_registry.h"
+#include "map/mapdata.h"
+#include "map/submap.h"
 #include "map/utils/map_functions.h"
 #include "map/utils/map_utils.h"
 #include "map_iterator.h"
-#include "map_selector.h"
-#include "mapbuffer.h"
-#include "mapbuffer_registry.h"
-#include "mapdata.h"
 #include "material.h"
 #include "messages.h"
 #include "mongroup.h"
@@ -90,8 +91,8 @@
 #include "npc.h"
 #include "options.h"
 #include "output.h"
-#include "overmap.h"
-#include "overmapbuffer.h"
+#include "overmap/overmap.h"
+#include "overmap/overmapbuffer.h"
 #include "pickup.h"
 #include "pimpl.h"
 #include "player.h"
@@ -107,7 +108,6 @@
 #include "string_formatter.h"
 #include "string_id.h"
 #include "string_input_popup.h"
-#include "submap.h"
 #include "timed_event.h"
 #include "translations.h"
 #include "trap.h"
@@ -134,14 +134,18 @@ static const efftype_id effect_antibiotic( "antibiotic" );
 static const efftype_id effect_bite( "bite" );
 static const efftype_id effect_bleed( "bleed" );
 static const efftype_id effect_disinfected( "disinfected" );
+static const efftype_id effect_downed( "downed" );
 static const efftype_id effect_earphones( "earphones" );
+static const efftype_id effect_grabbed( "grabbed" );
 static const efftype_id effect_infected( "infected" );
 static const efftype_id effect_pblue( "pblue" );
 static const efftype_id effect_pkill2( "pkill2" );
 static const efftype_id effect_sleep( "sleep" );
 static const efftype_id effect_strong_antibiotic( "strong_antibiotic" );
+static const efftype_id effect_stunned( "stunned" );
 static const efftype_id effect_teleglow( "teleglow" );
 static const efftype_id effect_weak_antibiotic( "weak_antibiotic" );
+static const efftype_id effect_zapped( "zapped" );
 
 static const itype_id itype_2x4( "2x4" );
 static const itype_id itype_arm_splint( "arm_splint" );
@@ -212,6 +216,7 @@ static const trait_id trait_M_DEPENDENT( "M_DEPENDENT" );
 static const trait_id trait_M_FERTILE( "M_FERTILE" );
 static const trait_id trait_M_SPORES( "M_SPORES" );
 static const trait_id trait_PROBOSCIS( "PROBOSCIS" );
+static const trait_id trait_THRESH_FISH( "THRESH_FISH" );
 static const trait_id trait_THRESH_MARLOSS( "THRESH_MARLOSS" );
 static const trait_id trait_THRESH_MYCUS( "THRESH_MYCUS" );
 static const trait_id trait_WEB_BRIDGE( "WEB_BRIDGE" );
@@ -246,6 +251,30 @@ static const std::string flag_WALL( "WALL" );
 
 // @TODO maybe make this a property of the item (depend on volume/type)
 static const time_duration milling_time = 6_hours;
+
+namespace
+{
+auto check_fluid_grid_requirements( player &p, const requirement_id &requirements_id ) -> bool
+{
+    const auto &requirements = requirements_id.obj();
+    if( !requirements.can_make_with_inventory( p.crafting_inventory(), is_crafting_component ) ) {
+        popup( "%s", requirements.list_missing() );
+        return false;
+    }
+    return true;
+}
+
+auto consume_fluid_grid_requirements( player &p, const requirement_data &requirements ) -> void
+{
+    for( const auto &component : requirements.get_components() ) {
+        p.consume_items( component, 1, is_crafting_component );
+    }
+    for( const auto &tool : requirements.get_tools() ) {
+        p.consume_tools( tool );
+    }
+    p.invalidate_crafting_inventory();
+}
+} // namespace
 
 /**
  * Nothing player can interact with here.
@@ -305,7 +334,7 @@ void iexamine::nanofab( player &p, const tripoint_bub_ms &examp )
     tripoint_bub_ms spawn_point;
     map &here = get_map();
     for( const auto &valid_location : here.points_in_radius( examp, 1 ) ) {
-        if( here.ter( valid_location ) == ter_str_id( "t_nanofab_body" ) ) {
+        if( here.has_flag( "NANOFAB_BODY", valid_location ) ) {
             spawn_point = valid_location;
             table_exists = true;
             break;
@@ -431,7 +460,7 @@ void iexamine::nanoforge( player &p, const tripoint_bub_ms &examp )
     tripoint_bub_ms spawn_point;
     map &here = get_map();
     for( const auto &valid_location : here.points_in_radius( examp, 1 ) ) {
-        if( here.ter( valid_location ) == ter_str_id( "t_nanoforge_body" ) ) {
+        if( here.has_flag( "NANOFORGE_BODY", valid_location ) ) {
             spawn_point = valid_location;
             table_exists = true;
             break;
@@ -519,11 +548,14 @@ void iexamine::gaspump( player &p, const tripoint_bub_ms &examp )
 void iexamine::translocator( player &, const tripoint_bub_ms &examp )
 {
     // TODO: fix point types
-    const tripoint_abs_omt omt_loc( project_to<coords::omt>( bub_to_abs( examp ) ) );
     avatar &player_character = get_avatar();
-    const bool activated = player_character.translocators->knows_translocator( omt_loc );
+    const auto loc = translocator_location{
+        .dim = player_character.get_dimension(),
+        .pos = project_to<coords::omt>( bub_to_abs( examp ) ),
+    };
+    const bool activated = player_character.translocators->knows_translocator( loc );
     if( !activated ) {
-        g->u.translocators->activate_teleporter( omt_loc, examp );
+        g->u.translocators->activate_teleporter( loc );
         add_msg( m_info, _( "Translocator gate active." ) );
     } else {
         const int choice = uilist( _( "Do what with Translocator?" ), {
@@ -535,7 +567,7 @@ void iexamine::translocator( player &, const tripoint_bub_ms &examp )
             player_character.invoke_item( vtm );
         } else if( choice == 1 ) {
             if( query_yn( _( "Deactivate this Translocator?" ) ) ) {
-                g->u.translocators->deactivate_teleporter( omt_loc, examp );
+                g->u.translocators->deactivate_teleporter( loc );
             }
         } else {
             add_msg( _( "Never mind." ) );
@@ -765,7 +797,7 @@ class atm_menu
                 return false;
             }
 
-            add_msg( m_info, "amount: %d", amount );
+            add_msg( m_info, _( "amount: %d" ), amount );
             u.use_charges( itype_cash_card, amount );
             u.cash += amount;
             u.moves -= to_turns<int>( 10_seconds );
@@ -1774,7 +1806,6 @@ static void apply_lock_picking_tool( player &p, item *it, const tripoint_bub_ms 
 
 static bool pick_lock( player &p, const tripoint_bub_ms &examp )
 {
-    map &here = get_map();
 
     if( p.has_bionic( bio_lockpick ) ) {
         if( p.get_power_level() >= bio_lockpick->power_activate ) {
@@ -2780,9 +2811,6 @@ void iexamine::harvest_plant( player &p, const tripoint_bub_ms &examp, bool from
             add_msg( m_info, _( "The seed blossoms into a flower-looking fungus." ) );
         }
     } else { // Generic seed, use the seed item data
-        const itype &type = *seed->type;
-        here.i_clear( examp );
-
         int skillLevel = p.get_skill_level( skill_survival );
         ///\EFFECT_SURVIVAL increases number of plants harvested from a seed
         int plant_count = rng( skillLevel / 2, skillLevel );
@@ -2794,13 +2822,19 @@ void iexamine::harvest_plant( player &p, const tripoint_bub_ms &examp, bool from
             plant_count = 1;
         }
         const int seedCount = std::max( 1, rng( plant_count / 4, plant_count / 2 ) );
-        for( auto &i : get_harvest_items( type, plant_count, seedCount, true ) ) {
+        auto harvest = get_cultivated_harvest( *seed, {
+            .plant_count = plant_count,
+            .seed_count = seedCount,
+            .byproducts = true
+        } );
+        here.i_clear( examp );
+        here.furn_set( examp, furn_str_id( here.furn( examp )->plant->transform ) );
+        for( auto &i : harvest ) {
             if( from_activity ) {
                 i->set_var( "activity_var", p.name );
             }
             here.add_item_or_charges( examp, std::move( i ) );
         }
-        here.furn_set( examp, furn_str_id( here.furn( examp )->plant->transform ) );
         p.moves -= to_moves<int>( 10_seconds );
     }
 }
@@ -3681,6 +3715,7 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
 {
     none( p, examp );
     map &here = get_map();
+    const auto rubber_hose = itype_id( "hose" );
     const auto keg_name = here.name( examp );
     units::volume keg_cap = get_keg_capacity( examp );
     const auto furn_id = here.furn( examp );
@@ -3695,41 +3730,61 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
             fluid_grid::on_contents_changed( bub_to_abs( where ) );
         }
     };
-    const auto tank_contains_only_water = [&]( const tripoint_bub_ms & where ) -> bool {
-        auto items = here.i_at( where );
-        const auto has_non_water = std::ranges::any_of( items, [&]( const item * it )
-        {
-            return it != nullptr && it->made_of( LIQUID ) &&
-            it->typeId() != itype_water && it->typeId() != itype_water_clean;
-        } );
-        if( has_non_water )
-        {
-            add_msg( m_info, _( "The %s contains non-water liquids and cannot be connected." ), keg_name );
-            return false;
-        }
-        return true;
-    };
     const auto transfer_tank_liquid_to_grid = [&]( const tripoint_bub_ms & where ) {
         const auto pos_abs_omt = project_to<coords::omt>( bub_to_abs( where ) );
         auto items = here.i_at( where );
+        auto transferred = std::vector<item *> {};
         std::ranges::for_each( items, [&]( item * it ) {
             if( it != nullptr && it->made_of( LIQUID ) ) {
-                fluid_grid::add_liquid_charges( pos_abs_omt, it->typeId(), it->charges );
+                const auto pos_abs_ms = bub_to_abs( where );
+                if( fluid_grid::assign_tank_liquid( pos_abs_ms, it->typeId() ) ) {
+                    const auto added = fluid_grid::add_liquid_charges( pos_abs_omt, it->typeId(),
+                                       it->charges );
+                    it->charges -= added;
+                    if( it->charges <= 0 ) {
+                        transferred.push_back( it );
+                    }
+                }
             }
         } );
-        here.i_clear( where );
+        std::ranges::for_each( transferred, [&]( item * it ) {
+            here.i_rem( where, it );
+        } );
     };
 
     if( is_plumbed_tank ) {
         const auto pos_abs_ms = bub_to_abs( examp );
         const auto pos_abs_omt = project_to<coords::omt>( pos_abs_ms );
-        const auto clean_available = fluid_grid::liquid_charges_at( pos_abs_omt, itype_water_clean );
-        const auto dirty_available = fluid_grid::liquid_charges_at( pos_abs_omt, itype_water );
-        const auto available = clean_available > 0 ? clean_available : dirty_available;
-        const auto &liquid_type = clean_available > 0 ? itype_water_clean : itype_water;
+        const auto stats = fluid_grid::storage_stats_at( pos_abs_omt );
+        const auto is_universal_tank = furn.fluid_grid->universal_liquids;
+        auto assigned_liquid = std::optional<itype_id> {};
+        if( is_universal_tank ) {
+            const auto *vars = here.furn_vars( examp );
+            if( vars != nullptr ) {
+                const auto assigned_id = vars->get( "fluid_grid_assigned_liquid", "" );
+                if( !assigned_id.empty() ) {
+                    assigned_liquid = itype_id( assigned_id );
+                }
+            }
+        }
+        const auto can_dispense_liquid = [&]( const itype_id & liquid ) {
+            return furn.fluid_grid->allows_liquid( liquid ) &&
+                   ( !is_universal_tank || ( assigned_liquid && liquid == *assigned_liquid ) );
+        };
+        const auto liquid_types = stats.stored_by_type | std::views::filter( [&]( const auto & entry ) {
+            return entry.second > 0_ml && can_dispense_liquid( entry.first );
+        } ) | std::views::keys | std::ranges::to<std::vector>();
+        const auto assignable_liquid_types = stats.stored_by_type | std::views::filter( [&](
+        const auto & entry ) {
+            return entry.second > 0_ml && furn.fluid_grid->allows_liquid( entry.first );
+        } ) | std::views::keys | std::ranges::to<std::vector>();
+        auto liquid_type = itype_water;
+        auto available = 0;
 
-        if( available <= 0 ) {
-            add_msg( m_info, _( "It is empty." ) );
+        if( liquid_types.empty() ) {
+            add_msg( m_info, stats.stored > 0_ml && is_universal_tank && !assigned_liquid ?
+                     _( "The fluid grid has liquid, but this tank has no liquid assigned to dispense." ) :
+                     _( "It is empty." ) );
         }
 
         enum options {
@@ -3738,12 +3793,33 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
             FILL,
             EXAMINE,
             DISCONNECT_FROM_FLUID_GRID,
+            UNASSIGN_TANK,
+            DISPENSE_LIQUID_BASE = 100,
+            DRINK_LIQUID_BASE = 200,
+            ASSIGN_LIQUID_BASE = 300,
         };
         uilist selectmenu;
-        selectmenu.addentry( DISPENSE, available > 0, MENU_AUTOASSIGN,
-                             _( "Dispense or dump %s" ), item::nname( liquid_type ) );
-        selectmenu.addentry( HAVE_A_DRINK, available > 0, MENU_AUTOASSIGN,
-                             _( "Have a drink" ) );
+        for( auto index = size_t{ 0 }; index < liquid_types.size(); ++index ) {
+            const auto &type = liquid_types[index];
+            selectmenu.addentry( DISPENSE_LIQUID_BASE + static_cast<int>( index ), true,
+                                 MENU_AUTOASSIGN, _( "Dispense or dump %s" ),
+                                 item::nname( type ) );
+            if( type->comestible ) {
+                selectmenu.addentry( DRINK_LIQUID_BASE + static_cast<int>( index ), true,
+                                     MENU_AUTOASSIGN, _( "Have a drink of %s" ),
+                                     item::nname( type ) );
+            }
+        }
+        if( is_universal_tank && !assigned_liquid ) {
+            for( auto index = size_t{ 0 }; index < assignable_liquid_types.size(); ++index ) {
+                const auto &type = assignable_liquid_types[index];
+                selectmenu.addentry( ASSIGN_LIQUID_BASE + static_cast<int>( index ), true,
+                                     MENU_AUTOASSIGN, _( "Set dispensing liquid to %s" ), item::nname( type ) );
+            }
+        } else if( is_universal_tank && assigned_liquid ) {
+            selectmenu.addentry( UNASSIGN_TANK, true, MENU_AUTOASSIGN,
+                                 _( "Unassign tank" ) );
+        }
         selectmenu.addentry( FILL, true, MENU_AUTOASSIGN, _( "Fill" ) );
         selectmenu.addentry( EXAMINE, true, MENU_AUTOASSIGN, _( "Examine" ) );
         if( can_disconnect_tank ) {
@@ -3752,6 +3828,27 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
         }
         selectmenu.text = _( "Select an action" );
         selectmenu.query();
+        auto selected_action = selectmenu.ret;
+        if( selectmenu.ret >= DISPENSE_LIQUID_BASE && selectmenu.ret < DRINK_LIQUID_BASE ) {
+            const auto index = static_cast<size_t>( selectmenu.ret - DISPENSE_LIQUID_BASE );
+            liquid_type = liquid_types[index];
+            available = fluid_grid::liquid_charges_at( pos_abs_omt, liquid_type );
+            selected_action = DISPENSE;
+        } else if( selectmenu.ret >= DRINK_LIQUID_BASE &&
+                   selectmenu.ret < DRINK_LIQUID_BASE + static_cast<int>( liquid_types.size() ) ) {
+            const auto index = static_cast<size_t>( selectmenu.ret - DRINK_LIQUID_BASE );
+            liquid_type = liquid_types[index];
+            available = fluid_grid::liquid_charges_at( pos_abs_omt, liquid_type );
+            selected_action = HAVE_A_DRINK;
+        } else if( is_universal_tank && selectmenu.ret >= ASSIGN_LIQUID_BASE &&
+                   selectmenu.ret < ASSIGN_LIQUID_BASE + static_cast<int>( assignable_liquid_types.size() ) ) {
+            const auto index = static_cast<size_t>( selectmenu.ret - ASSIGN_LIQUID_BASE );
+            liquid_type = assignable_liquid_types[index];
+            selected_action = ASSIGN_LIQUID_BASE;
+        } else if( is_universal_tank && assigned_liquid && selectmenu.ret == UNASSIGN_TANK ) {
+            liquid_type = *assigned_liquid;
+            selected_action = UNASSIGN_TANK;
+        }
 
         const auto use_grid_liquid = [&]( const auto & fn ) -> int {
             auto target_sm = tripoint_abs_sm{};
@@ -3781,7 +3878,34 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
             return before;
         };
 
-        switch( selectmenu.ret ) {
+        switch( selected_action ) {
+            case UNASSIGN_TANK: {
+                const auto &requirements = requirement_id( "fluid_grid_unassign" ).obj();
+                if( !check_fluid_grid_requirements( p, requirement_id( "fluid_grid_unassign" ) ) ) {
+                    return;
+                }
+                if( fluid_grid::unassign_tank_liquid( pos_abs_ms ) ) {
+                    p.i_add( item::spawn( rubber_hose, calendar::turn ) );
+                    consume_fluid_grid_requirements( p, requirements );
+                    add_msg( m_info, _( "You unassign the %s." ), keg_name );
+                } else {
+                    add_msg( m_info, _( "The rest of the fluid grid cannot hold this tank's liquid." ) );
+                }
+                return;
+            }
+
+            case ASSIGN_LIQUID_BASE: {
+                const auto &requirements = requirement_id( "fluid_grid_assign" ).obj();
+                if( !check_fluid_grid_requirements( p, requirement_id( "fluid_grid_assign" ) ) ) {
+                    return;
+                }
+                if( fluid_grid::set_tank_assigned_liquid( pos_abs_ms, liquid_type ) ) {
+                    consume_fluid_grid_requirements( p, requirements );
+                    add_msg( m_info, _( "This tank is now assigned to dispense %s." ), item::nname( liquid_type ) );
+                }
+                return;
+            }
+
             case DISPENSE: {
                 const auto used = use_grid_liquid( [&]( item & water_item ) {
                     liquid_handler::handle_liquid( water_item );
@@ -3832,11 +3956,11 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
             }
 
             case FILL: {
-                auto drinks_inv = p.items_with( []( const item & it ) {
-                    return it.typeId() == itype_water || it.typeId() == itype_water_clean;
+                auto drinks_inv = p.items_with( [&pos_abs_ms]( const item & it ) {
+                    return it.made_of( LIQUID ) && fluid_grid::tank_allows_liquid( pos_abs_ms, it.typeId() );
                 } );
                 if( drinks_inv.empty() ) {
-                    add_msg( m_info, _( "You don't have any water to fill the %s with." ), keg_name );
+                    add_msg( m_info, _( "You don't have any liquids to fill the %s with." ), keg_name );
                     return;
                 }
                 auto drink_types = std::vector<itype_id> {};
@@ -3869,9 +3993,13 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
                 if( !confirm_fluid_grid_contamination( pos_abs_omt, drink_type ) ) {
                     return;
                 }
+                if( !fluid_grid::assign_tank_liquid( pos_abs_ms, drink_type ) ) {
+                    add_msg( m_info, _( "This tank is assigned to a different liquid." ) );
+                    return;
+                }
                 const auto added = fluid_grid::add_liquid_charges( pos_abs_omt, drink_type, charges_held );
                 if( added <= 0 ) {
-                    add_msg( m_info, _( "The %s cannot hold any more water." ), keg_name );
+                    add_msg( m_info, _( "The %s cannot hold any more liquid." ), keg_name );
                     return;
                 }
                 p.use_charges( drink_type, added );
@@ -3882,36 +4010,54 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
 
             case EXAMINE: {
                 const auto fluid_stats = fluid_grid::storage_stats_at( pos_abs_omt );
-                add_msg( m_info, _( "Fluid stored: %1$s/%2$s %3$s." ),
+                add_msg( m_info, _( "Fluid grid storage: %1$s/%2$s %3$s." ),
                          format_volume( fluid_stats.stored ),
                          format_volume( fluid_stats.capacity ),
                          volume_units_abbr() );
-                const auto stored_count = std::ranges::count_if( fluid_stats.stored_by_type,
-                []( const auto & entry ) {
+                add_msg( m_info, _( "This tank can dispense:" ) );
+                auto dispensable_liquids = fluid_stats.stored_by_type |
+                std::views::filter( [&]( const auto & entry ) {
+                    return entry.second > 0_ml && can_dispense_liquid( entry.first );
+                } );
+                if( std::ranges::empty( dispensable_liquids ) ) {
+                    add_msg( m_info, is_universal_tank && !assigned_liquid ?
+                             _( "No liquid is assigned to this tank." ) :
+                             _( "No dispensable liquid is stored in the fluid grid." ) );
+                } else {
+                    std::ranges::for_each( dispensable_liquids, [&fluid_stats]( const auto & entry ) {
+                        const auto liquid = item( entry.first, calendar::turn );
+                        const auto maximum = fluid_stats.capacity_by_type.at( entry.first );
+                        add_msg( m_info, colorize( string_format( _( "%1$s: %2$s %3$s." ),
+                                                   item::nname( entry.first ), format_volume( entry.second ) +
+                                                   " / " + format_volume( maximum ), volume_units_abbr() ),
+                                                   liquid.color() ) );
+                    } );
+                }
+                add_msg( m_info, _( "Liquids stored in the fluid grid:" ) );
+                auto grid_liquids = fluid_stats.stored_by_type |
+                std::views::filter( []( const auto & entry ) {
                     return entry.second > 0_ml;
                 } );
-                auto fluid_type = std::string{};
-                if( stored_count == 0 ) {
-                    fluid_type = _( "empty" );
-                } else if( stored_count == 1 ) {
-                    const auto iter = std::ranges::find_if( fluid_stats.stored_by_type,
-                    []( const auto & entry ) {
-                        return entry.second > 0_ml;
-                    } );
-                    if( iter != fluid_stats.stored_by_type.end() ) {
-                        fluid_type = item::nname( iter->first );
-                    } else {
-                        fluid_type = _( "empty" );
-                    }
+                if( std::ranges::empty( grid_liquids ) ) {
+                    add_msg( m_info, _( "The fluid grid is empty." ) );
                 } else {
-                    fluid_type = _( "mixed fluids" );
+                    std::ranges::for_each( grid_liquids, [&fluid_stats]( const auto & entry ) {
+                        const auto liquid = item( entry.first, calendar::turn );
+                        const auto maximum = fluid_stats.capacity_by_type.at( entry.first );
+                        add_msg( m_info, colorize( string_format( _( "%1$s: %2$s %3$s." ),
+                                                   item::nname( entry.first ), format_volume( entry.second ) +
+                                                   " / " + format_volume( maximum ), volume_units_abbr() ),
+                                                   liquid.color() ) );
+                    } );
                 }
-                add_msg( m_info, _( "Fluid type: %s." ), fluid_type );
                 return;
             }
 
             case DISCONNECT_FROM_FLUID_GRID:
-                fluid_grid::disconnect_tank( pos_abs_ms );
+                if( !fluid_grid::disconnect_tank( pos_abs_ms ) ) {
+                    add_msg( m_info, _( "The rest of the fluid grid cannot hold this tank's liquid." ) );
+                    return;
+                }
                 if( !disconnected_variant ) {
                     return;
                 }
@@ -3953,9 +4099,6 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
             selectmenu.text = _( "Select an action" );
             selectmenu.query();
             if( selectmenu.ret == ADD_TO_FLUID_GRID ) {
-                if( !tank_contains_only_water( examp ) ) {
-                    return;
-                }
                 displace_items_except_one_liquid( examp );
                 if( !connected_variant ) {
                     return;
@@ -3970,7 +4113,10 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
                 add_msg( m_info, _( "You connect the %s to the fluid grid." ), keg_name );
                 return;
             } else if( selectmenu.ret == DISCONNECT_FROM_FLUID_GRID ) {
-                fluid_grid::disconnect_tank( bub_to_abs( examp ) );
+                if( !fluid_grid::disconnect_tank( bub_to_abs( examp ) ) ) {
+                    add_msg( m_info, _( "The rest of the fluid grid cannot hold this tank's liquid." ) );
+                    return;
+                }
                 if( !disconnected_variant ) {
                     return;
                 }
@@ -4140,9 +4286,6 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
             }
 
             case ADD_TO_FLUID_GRID: {
-                if( !tank_contains_only_water( examp ) ) {
-                    return;
-                }
                 displace_items_except_one_liquid( examp );
                 if( !connected_variant ) {
                     return;
@@ -4158,7 +4301,10 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
             }
 
             case DISCONNECT_FROM_FLUID_GRID:
-                fluid_grid::disconnect_tank( bub_to_abs( examp ) );
+                if( !fluid_grid::disconnect_tank( bub_to_abs( examp ) ) ) {
+                    add_msg( m_info, _( "The rest of the fluid grid cannot hold this tank's liquid." ) );
+                    return;
+                }
                 if( !disconnected_variant ) {
                     return;
                 }
@@ -4196,12 +4342,13 @@ detached_ptr<item> iexamine::pour_into_keg( const tripoint_bub_ms &pos,
     item &obj = *liquid;
 
     if( is_plumbed ) {
-        if( liquid->typeId() != itype_water && liquid->typeId() != itype_water_clean ) {
-            add_msg( _( "The %s only accepts water." ), keg_name );
+        const auto pos_abs_ms = bub_to_abs( pos );
+        const auto pos_abs_omt = project_to<coords::omt>( pos_abs_ms );
+        if( !confirm_fluid_grid_contamination( pos_abs_omt, liquid->typeId() ) ) {
             return std::move( liquid );
         }
-        const auto pos_abs_omt = project_to<coords::omt>( bub_to_abs( pos ) );
-        if( !confirm_fluid_grid_contamination( pos_abs_omt, liquid->typeId() ) ) {
+        if( !fluid_grid::assign_tank_liquid( pos_abs_ms, liquid->typeId() ) ) {
+            add_msg( m_info, _( "This tank is assigned to a different liquid." ) );
             return std::move( liquid );
         }
         const auto added = fluid_grid::add_liquid_charges( pos_abs_omt, liquid->typeId(),
@@ -4703,6 +4850,7 @@ void iexamine::liquid_source( player &, const tripoint_bub_ms &examp )
 auto iexamine::fluid_grid_fixture( player &p, const tripoint_bub_ms &examp ) -> void
 {
     map &here = get_map();
+    const auto rubber_hose = itype_id( "hose" );
     const auto has_lootable_items = !here.i_at( examp ).empty();
     if( has_lootable_items ) {
         uilist selection_menu;
@@ -4735,16 +4883,103 @@ auto iexamine::fluid_grid_fixture( player &p, const tripoint_bub_ms &examp ) -> 
     const auto pos_abs_ms = bub_to_abs( examp );
     const auto pos_abs_omt = project_to<coords::omt>( pos_abs_ms );
 
-    const auto available_liquid = std::ranges::find_if( fluid_grid.allowed_liquids,
-    [&]( const itype_id & liquid ) {
-        return fluid_grid::liquid_charges_at( pos_abs_omt, liquid ) > 0;
-    } );
-    if( available_liquid == fluid_grid.allowed_liquids.end() ) {
+    const auto fluid_stats = fluid_grid::storage_stats_at( pos_abs_omt );
+    const auto available_liquids = fluid_stats.stored_by_type
+    | std::views::filter( [&]( const auto & entry ) {
+        return entry.second > 0_ml && fluid_grid.allows_liquid( entry.first );
+    } )
+    | std::views::keys
+    | std::ranges::to<std::vector>();
+    auto assigned_liquid = std::optional<itype_id> {};
+    if( !fluid_grid.universal_liquids ) {
+        const auto *vars = here.furn_vars( examp );
+        if( vars != nullptr ) {
+            const auto assigned_id = vars->get( "fluid_grid_assigned_liquid", "" );
+            if( !assigned_id.empty() ) {
+                assigned_liquid = itype_id( assigned_id );
+            }
+        }
+    }
+    if( available_liquids.empty() && ( fluid_grid.universal_liquids || !assigned_liquid ) ) {
         add_msg( m_info, _( "The %s is dry." ), fixture_name );
         return;
     }
 
-    const auto &liquid_type = *available_liquid;
+    auto liquid_type = available_liquids.empty() ? assigned_liquid.value_or( itype_water ) :
+                       available_liquids.front();
+    if( fluid_grid.universal_liquids ) {
+        if( available_liquids.size() > 1 ) {
+            uilist liquid_menu;
+            liquid_menu.text = _( "Select a liquid" );
+            for( auto index = size_t{ 0 }; index < available_liquids.size(); ++index ) {
+                const auto &type = available_liquids[index];
+                liquid_menu.addentry( static_cast<int>( index ), true, MENU_AUTOASSIGN,
+                                      item::nname( type ) );
+            }
+            liquid_menu.query();
+            if( liquid_menu.ret < 0 ) {
+                return;
+            }
+            liquid_type = available_liquids[static_cast<size_t>( liquid_menu.ret )];
+        }
+    } else {
+        enum options {
+            DISPENSE_ASSIGNED_LIQUID,
+            UNASSIGN_FIXTURE,
+            ASSIGN_LIQUID_BASE = 100,
+        };
+        uilist liquid_menu;
+        liquid_menu.text = _( "Select an action" );
+        if( assigned_liquid &&
+            std::ranges::find( available_liquids, *assigned_liquid ) != available_liquids.end() ) {
+            liquid_menu.addentry( DISPENSE_ASSIGNED_LIQUID, true, MENU_AUTOASSIGN,
+                                  _( "Dispense %s" ), item::nname( *assigned_liquid ) );
+        }
+        if( assigned_liquid ) {
+            liquid_menu.addentry( UNASSIGN_FIXTURE, true, MENU_AUTOASSIGN,
+                                  _( "Unassign fixture" ) );
+        } else {
+            for( auto index = size_t{ 0 }; index < available_liquids.size(); ++index ) {
+                const auto &type = available_liquids[index];
+                liquid_menu.addentry( ASSIGN_LIQUID_BASE + static_cast<int>( index ), true,
+                                      MENU_AUTOASSIGN,
+                                      _( "Assign fixture to %s" ), item::nname( type ) );
+            }
+        }
+        liquid_menu.query();
+        if( liquid_menu.ret >= ASSIGN_LIQUID_BASE &&
+            liquid_menu.ret < ASSIGN_LIQUID_BASE + static_cast<int>( available_liquids.size() ) ) {
+            const auto index = static_cast<size_t>( liquid_menu.ret - ASSIGN_LIQUID_BASE );
+            const auto selected_liquid = available_liquids[index];
+            const auto &requirements = requirement_id( "fluid_grid_assign" ).obj();
+            if( !check_fluid_grid_requirements( p, requirement_id( "fluid_grid_assign" ) ) ) {
+                return;
+            }
+            if( fluid_grid::set_fixture_assigned_liquid( pos_abs_ms, selected_liquid ) ) {
+                consume_fluid_grid_requirements( p, requirements );
+                add_msg( m_info, _( "The %1$s is now assigned to dispense %2$s." ), fixture_name,
+                         item::nname( selected_liquid ) );
+            }
+            return;
+        }
+        if( liquid_menu.ret == UNASSIGN_FIXTURE && assigned_liquid ) {
+            const auto &requirements = requirement_id( "fluid_grid_unassign" ).obj();
+            if( !check_fluid_grid_requirements( p, requirement_id( "fluid_grid_unassign" ) ) ) {
+                return;
+            }
+            if( fluid_grid::unassign_fixture_liquid( pos_abs_ms ) ) {
+                p.i_add( item::spawn( rubber_hose, calendar::turn ) );
+                consume_fluid_grid_requirements( p, requirements );
+                add_msg( m_info, _( "You unassign the %s." ), fixture_name );
+            }
+            return;
+        }
+        if( liquid_menu.ret != DISPENSE_ASSIGNED_LIQUID || !assigned_liquid ||
+            std::ranges::find( available_liquids, *assigned_liquid ) == available_liquids.end() ) {
+            return;
+        }
+        liquid_type = *assigned_liquid;
+    }
     const auto available = fluid_grid::liquid_charges_at( pos_abs_omt, liquid_type );
     auto target_sm = tripoint_abs_sm{};
     auto target_pos = point_sm_ms{};
@@ -4758,15 +4993,15 @@ auto iexamine::fluid_grid_fixture( player &p, const tripoint_bub_ms &examp ) -> 
     auto &items = target_submap->get_items( target_pos );
     auto liquid_item = item::spawn( liquid_type, calendar::turn, available );
     auto iter = items.insert( items.end(), std::move( liquid_item ) );
-    item *water_item = *iter;
-    const auto before = water_item->charges;
-    liquid_handler::handle_liquid( *water_item );
+    item *liquid_item_ptr = *iter;
+    const auto before = liquid_item_ptr->charges;
+    liquid_handler::handle_liquid( *liquid_item_ptr );
     auto used = 0;
     const auto &item_ptrs = items.as_vector();
-    const auto still_here = std::ranges::find( item_ptrs, water_item ) != item_ptrs.end();
+    const auto still_here = std::ranges::find( item_ptrs, liquid_item_ptr ) != item_ptrs.end();
     if( still_here ) {
-        used = before - water_item->charges;
-        items.remove( water_item );
+        used = before - liquid_item_ptr->charges;
+        items.remove( liquid_item_ptr );
     } else {
         used = before;
     }
@@ -5367,10 +5602,7 @@ bool iexamine::toPumpFuel( const tripoint_bub_ms &src, const tripoint_bub_ms &ds
 
             content->charges -= units;
 
-            const auto backup_pump = here.ter( dst );
-            here.ter_set( dst, ter_str_id::NULL_ID() );
             here.add_item_or_charges( dst, item::spawn( content->type, calendar::turn, units ) );
-            here.ter_set( dst, backup_pump );
 
             if( content->charges < 1 ) {
                 items.erase( item_it );
@@ -5393,10 +5625,7 @@ static int fromPumpFuel( const tripoint_bub_ms &dst, const tripoint_bub_ms &src 
             // how much do we have in the pump?
 
             // add the charges to the destination
-            const auto backup_tank = here.ter( dst );
-            here.ter_set( dst, ter_str_id::NULL_ID() );
             here.add_item_or_charges( dst, item::spawn( content->type, calendar::turn, content->charges ) );
-            here.ter_set( dst, backup_tank );
 
             // remove the liquid from the pump
             int amount = content->charges;
@@ -5617,7 +5846,6 @@ static constexpr auto jump_over_tile_base_move_cost = 200;
 static constexpr auto jump_over_tile_min_strength = 4;
 static constexpr auto jump_over_tile_stamina_burn_ratio = 14;
 static const auto dashing_effect = efftype_id( "dashing" );
-static const auto effect_downed = efftype_id( "downed" );
 
 auto jump_over_tile_carried_weight_percentage( const player &p ) -> int
 {
@@ -5840,8 +6068,7 @@ auto confirm_crash_through_window( const player &p,
     return query_yn( _( "Crash through the %s?" ), obstacle_name );
 }
 
-auto can_jump_over_tile_impl( const player &p, const tripoint_bub_ms &examp_bub,
-                              const bool show_messages ) -> bool
+auto can_jump_over_tile_impl( const player &p, const tripoint_bub_ms &examp_bub ) -> bool
 {
     const auto jump_state = get_jump_over_tile_state( p, examp_bub );
     const auto dir = jump_state.examp - p.abs_pos();
@@ -5850,7 +6077,7 @@ auto can_jump_over_tile_impl( const player &p, const tripoint_bub_ms &examp_bub,
         return false;
     }
 
-    if( !iexamine::can_start_jump_over_tile( p, show_messages ) ) {
+    if( !iexamine::can_start_jump_over_tile( p ) ) {
         return false;
     }
 
@@ -5859,18 +6086,11 @@ auto can_jump_over_tile_impl( const player &p, const tripoint_bub_ms &examp_bub,
     const auto jumped_tile = abs_to_bub( jump_state.examp );
     if( here.impassable( jumped_tile ) &&
         !jump_over_tile_can_cross_impassable( here, p, jumped_tile ) ) {
-        if( show_messages ) {
-            add_msg( m_warning, _( "You cannot jump through the %s." ),
-                     here.obstacle_name( jumped_tile ) );
-        }
         return false;
     }
 
     if( const auto blocking_creature = buffer.creature_at( jump_state.examp ) ) {
         if( blocking_creature->get_size() >= p.get_size() ) {
-            if( show_messages ) {
-                add_msg( m_warning, _( "You cannot jump over %s." ), blocking_creature->disp_name() );
-            }
             return false;
         }
     }
@@ -5878,18 +6098,10 @@ auto can_jump_over_tile_impl( const player &p, const tripoint_bub_ms &examp_bub,
     const auto landing_tile = abs_to_bub( jump_state.dest );
     if( here.impassable( landing_tile ) &&
         !jump_over_tile_can_land_on_ledge( buffer, jump_state.dest ) ) {
-        if( show_messages ) {
-            add_msg( m_warning, _( "You cannot land there - the %s is blocking the way." ),
-                     here.obstacle_name( landing_tile ) );
-        }
         return false;
     }
 
-    if( const auto blocking_creature = buffer.creature_at( jump_state.dest ) ) {
-        if( show_messages ) {
-            add_msg( m_warning, _( "You cannot jump over an obstacle - there is %s blocking the way." ),
-                     blocking_creature->disp_name() );
-        }
+    if( buffer.creature_at( jump_state.dest ) ) {
         return false;
     }
 
@@ -5898,20 +6110,44 @@ auto can_jump_over_tile_impl( const player &p, const tripoint_bub_ms &examp_bub,
 
 } // namespace
 
-auto iexamine::can_start_jump_over_tile( const player &p, const bool show_messages ) -> bool
+auto iexamine::can_start_jump_over_tile( const player &p ) -> bool
 {
     if( p.get_str() < jump_over_tile_min_strength ) {
-        if( show_messages ) {
-            add_msg( m_warning, _( "You are too weak to jump over an obstacle." ) );
-        }
+        p.add_msg_if_player( m_warning, _( "You are too weak to jump over an obstacle." ) );
         return false;
     }
 
     const auto stamina_cost = jump_over_tile_stamina_cost( p, jump_over_tile_move_cost( p ) );
     if( p.get_stamina() < stamina_cost ) {
-        if( show_messages ) {
-            add_msg( m_warning, _( "You're too exhausted to jump over an obstacle." ) );
-        }
+        p.add_msg_if_player( m_warning, _( "You're too exhausted to jump over an obstacle." ) );
+        return false;
+    }
+
+    if( p.get_working_leg_count() < 2 ) {
+        p.add_msg_if_player( m_bad, _( "You need two functional legs to jump." ) );
+        return false;
+    }
+
+    if( p.is_mounted() ) {
+        p.add_msg_if_player( m_warning, _( "Your steed cannot jump this far." ) );
+        return false;
+    }
+
+    // fish mutants get to act like dolphins
+    auto &here = get_map();
+    if( here.has_flag( "DEEP_WATER", p.bub_pos() ) && !p.has_trait( trait_THRESH_FISH ) ) {
+        p.add_msg_if_player( m_warning, _( "You cannot jump from water." ) );
+        return false;
+    }
+    // a generic return for things you generally can't jump from
+    if( p.has_effect( effect_grabbed ) || p.has_effect( effect_zapped ) ||
+        p.has_effect( effect_stunned ) ) {
+        p.add_msg_if_player( m_bad, _( "You can't jump in your current state!" ) );
+        return false;
+    }
+
+    if( p.has_effect( effect_downed ) || p.movement_mode_is( CMM_PRONE ) ) {
+        p.add_msg_if_player( m_bad, _( "You need to stand up in order to jump!" ) );
         return false;
     }
 
@@ -5920,7 +6156,7 @@ auto iexamine::can_start_jump_over_tile( const player &p, const bool show_messag
 
 auto iexamine::can_jump_over_tile( const player &p, const tripoint_bub_ms &examp ) -> bool
 {
-    return can_jump_over_tile_impl( p, examp, false );
+    return can_jump_over_tile_impl( p, examp );
 }
 
 auto iexamine::jump_over_tile( player &p, const tripoint_bub_ms &examp ) -> bool
@@ -5932,7 +6168,7 @@ auto iexamine::jump_over_tile( player &p, const tripoint_bub_ms &examp ) -> bool
         }
     }
 
-    if( !can_jump_over_tile_impl( p, examp, true ) ) {
+    if( !can_jump_over_tile_impl( p, examp ) ) {
         return false;
     }
 
@@ -6098,7 +6334,7 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp_bub )
                         case climb_result::one_way_unclimbable:
                             return _( "You probably won't be able to get back up.  Climb down?" );
                     }
-                    cata::unreachable();
+                    std::unreachable();
                 };
                 add_msg( m_debug, "climb_cost: %d", climb_cost.value_or( -1 ) );
                 const auto result = get_climb_result();
@@ -7112,7 +7348,9 @@ void iexamine::cloning_vat_finalize( const tripoint_bub_ms &examp, const time_po
     detached_ptr<item> spawned_embryo = item::spawn( itype_embryo, calendar::turn );
     spawned_embryo->set_var( "place_monster_override", developing_embryo.get_var( "specimen_sample" ) );
     spawned_embryo->set_var( "place_monster_override_name",
-                             developing_embryo.get_var( "specimen_name" ) );
+                             cloning_utils::specimen_name(
+                                 mtype_id( developing_embryo.get_var( "specimen_sample" ) ),
+                                 developing_embryo.get_var( "specimen_name" ) ) );
     here.add_item( examp, std::move( spawned_embryo ) );
 
     return;
@@ -7999,10 +8237,17 @@ void iexamine::check_power( player &, const tripoint_bub_ms &examp )
     tripoint_abs_ms abspos( bub_to_abs( examp ) );
     battery_tile *battery = active_tiles::furn_at<battery_tile>( abspos );
     if( battery != nullptr ) {
-        add_msg( m_info, _( "This battery stores %d kJ of electric power." ), battery->get_resource() );
+        add_msg( m_info,
+                 _( "This battery stores %d out of %d kJ of electric power." ),
+                 battery->get_resource(), battery->max_stored );
     }
-    int amt = get_distribution_grid_tracker().grid_at( abspos ).get_resource();
-    add_msg( m_info, _( "This electric grid stores %d kJ of electric power." ), amt );
+    const auto grid = get_distribution_grid_tracker().grid_at( abspos );
+    int tot_amt = grid.get_resource();
+    int loc_amt = grid.get_resource( false );
+    int max_amt = grid.get_resource_capacity();
+    add_msg( m_info,
+             _( "This electric grid locally stores %d out of %d kJ, and has connections to %d kJ of electric power." ),
+             loc_amt, max_amt, tot_amt - loc_amt );
 }
 
 void iexamine::power_portal( player &p, const tripoint_bub_ms &examp )
@@ -8420,7 +8665,7 @@ void iexamine::multicooker( player &p, const tripoint_bub_ms &pos )
 
         for( const auto &r : g->u.get_learned_recipes() ) {
             if( vars->get( "CATEGORYIDS", std::set<std::string>() ).contains( r->subcategory ) ||
-                vars->get( "RECIPEIDS", std::set<std::string>() ).contains( r->result().str() ) ) {
+                vars->get( "RECIPEIDS", std::set<std::string>() ).contains( r->ident().str() ) ) {
                 dishes.push_back( r );
                 const bool can_make = r->deduped_requirements().can_make_with_inventory(
                                           crafting_inv, r->get_component_filter() );

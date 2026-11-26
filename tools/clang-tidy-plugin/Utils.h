@@ -23,14 +23,15 @@ class Stmt;
 namespace tidy {
 namespace cata {
 
-inline StringRef getText(const ast_matchers::MatchFinder::MatchResult& Result, SourceRange Range) {
+inline auto getText(const ast_matchers::MatchFinder::MatchResult& Result, SourceRange Range)
+    -> StringRef {
     return Lexer::getSourceText(
         CharSourceRange::getTokenRange(Range), *Result.SourceManager,
         Result.Context->getLangOpts());
 }
 
 template <typename T>
-inline StringRef getText(const ast_matchers::MatchFinder::MatchResult& Result, T* Node) {
+inline auto getText(const ast_matchers::MatchFinder::MatchResult& Result, T* Node) -> StringRef {
     if (const CXXDefaultArgExpr* Default = dyn_cast<clang::CXXDefaultArgExpr>(Node)) {
         return getText(Result, Default->getExpr());
     }
@@ -38,7 +39,8 @@ inline StringRef getText(const ast_matchers::MatchFinder::MatchResult& Result, T
 }
 
 template <typename T, typename U>
-static const T* getParent(const ast_matchers::MatchFinder::MatchResult& Result, const U* Node) {
+static auto getParent(const ast_matchers::MatchFinder::MatchResult& Result, const U* Node)
+    -> const T* {
     for (const DynTypedNode& parent : Result.Context->getParents(*Node)) {
         if (const T* Candidate = parent.get<T>()) { return Candidate; }
     }
@@ -47,8 +49,8 @@ static const T* getParent(const ast_matchers::MatchFinder::MatchResult& Result, 
 }
 
 template <typename T>
-static const FunctionDecl* getContainingFunction(
-    const ast_matchers::MatchFinder::MatchResult& Result, const T* Node) {
+static auto getContainingFunction(
+    const ast_matchers::MatchFinder::MatchResult& Result, const T* Node) -> const FunctionDecl* {
     for (const DynTypedNode& parent : Result.Context->getParents(*Node)) {
         if (const Decl* Candidate = parent.get<Decl>()) {
             if (const FunctionDecl* ContainingFunction = dyn_cast<FunctionDecl>(Candidate)) {
@@ -68,7 +70,7 @@ static const FunctionDecl* getContainingFunction(
     return nullptr;
 }
 
-inline bool isPointType(const CXXRecordDecl* R) {
+inline auto isPointType(const CXXRecordDecl* R) -> bool {
     if (!R) { return false; }
     StringRef name = R->getName();
     return name == "point" || name == "tripoint";
@@ -109,7 +111,7 @@ inline auto isYParam() {
     return matchesName("[yY]");
 }
 
-inline bool isPointMethod(const FunctionDecl* d) {
+inline auto isPointMethod(const FunctionDecl* d) -> bool {
     if (const CXXMethodDecl* Method = dyn_cast_or_null<CXXMethodDecl>(d)) {
         const CXXRecordDecl* Record = Method->getParent();
         if (isPointType(Record)) { return true; }
@@ -125,11 +127,11 @@ public:
 
     enum MatchResult { XName, YName, ZName, None };
 
-    MatchResult Match(StringRef name) const;
+    auto Match(StringRef name) const -> MatchResult;
 
-    bool operator!() const { return !valid; }
+    auto operator!() const -> bool { return !valid; }
 
-    const std::string& getRoot() const { return root; }
+    auto getRoot() const -> const std::string& { return root; }
 
 private:
     std::string root;

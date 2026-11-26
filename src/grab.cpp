@@ -5,7 +5,7 @@
 #include "debug.h"
 #include "enums.h"
 #include "game.h" // IWYU pragma: associated
-#include "map.h"
+#include "map/map.h"
 #include "messages.h"
 #include "monster.h"
 #include "mtype.h"

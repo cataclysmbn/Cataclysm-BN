@@ -9,7 +9,7 @@
     "volume": "1500 ml",
     "price": "45 USD",
     "price_postapoc": "250 cent",
-    "material": [ "cotton", "plastic" ],
+    "material": [ "cotton", "nylon" ],
     "symbol": "[",
     "looks_like": "cowboy_hat",
     "color": "white",

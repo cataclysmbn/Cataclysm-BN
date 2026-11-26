@@ -22,8 +22,8 @@ public:
 
     static constexpr char32_t key_invalid = U'?';
 
-    const std::string& entry(char32_t c) const;
-    char32_t key_for(const std::string& s) const;
+    auto entry(char32_t c) const -> const std::string&;
+    auto key_for(const std::string& s) const -> char32_t;
 };
 
 struct canvas {
@@ -31,7 +31,7 @@ private:
     tripoint size_cache;
     std::vector<std::vector<std::u32string>> data;
 
-    tripoint calc_size() const;
+    auto calc_size() const -> tripoint;
 
 public:
     canvas() = default;
@@ -43,7 +43,7 @@ public:
     }
     // Moved out to a builder method to prevent compilers (and users) from
     // getting confused by all these curly braces.
-    static inline canvas make_multilevel(std::vector<std::vector<std::u32string>>&& data) {
+    static inline auto make_multilevel(std::vector<std::vector<std::u32string>>&& data) -> canvas {
         canvas c;
         c.data = std::move(data);
         c.size_cache = c.calc_size();
@@ -54,14 +54,14 @@ public:
     canvas(canvas&&) = default;
     ~canvas() = default;
 
-    bool operator==(const canvas& rhs) const { return data == rhs.data; }
+    auto operator==(const canvas& rhs) const -> bool { return data == rhs.data; }
 
-    inline const tripoint& size() const { return size_cache; }
+    inline auto size() const -> const tripoint& { return size_cache; }
 
     void assert_size(const tripoint& sz) const;
-    std::string to_string() const;
+    auto to_string() const -> std::string;
 
-    inline bool in_bounds(const tripoint& p) const {
+    inline auto in_bounds(const tripoint& p) const -> bool {
         return p.x >= 0 && p.y >= 0 && p.z >= 0 && p.x < size().x && p.y < size().y
             && p.z < size().z;
     }
@@ -70,16 +70,16 @@ public:
         assert(in_bounds(p));
         data[p.z][p.y][p.x] = val;
     }
-    inline char32_t get(const tripoint& p) const {
+    inline auto get(const tripoint& p) const -> char32_t {
         assert(in_bounds(p));
         return data[p.z][p.y][p.x];
     }
 
-    std::vector<tripoint> replace(char32_t what, char32_t with);
-    tripoint replace_unique(char32_t what, char32_t with);
-    std::optional<tripoint> replace_opt(char32_t what, char32_t with);
+    auto replace(char32_t what, char32_t with) -> std::vector<tripoint>;
+    auto replace_unique(char32_t what, char32_t with) -> tripoint;
+    auto replace_opt(char32_t what, char32_t with) -> std::optional<tripoint>;
 
-    canvas rotated(int turns) const;
+    auto rotated(int turns) const -> canvas;
 };
 
 struct canvas_adapter {
@@ -93,22 +93,23 @@ public:
     canvas_adapter(const canvas_legend& l) { with_legend(l); };
     ~canvas_adapter() = default;
 
-    inline canvas_adapter& with_legend(const canvas_legend& l) {
+    inline auto with_legend(const canvas_legend& l) -> canvas_adapter& {
         this->l = &l;
         return *this;
     }
-    inline canvas_adapter& with_getter(std::function<std::string(const tripoint&)> f) {
+    inline auto with_getter(std::function<std::string(const tripoint&)> f) -> canvas_adapter& {
         getter = f;
         return *this;
     }
-    inline canvas_adapter& with_setter(std::function<void(const tripoint&, const std::string&)> f) {
+    inline auto with_setter(std::function<void(const tripoint&, const std::string&)> f)
+        -> canvas_adapter& {
         setter = f;
         return *this;
     }
 
     void set_all(const canvas& c);
 
-    canvas extract_to_canvas(const tripoint& sz);
+    auto extract_to_canvas(const tripoint& sz) -> canvas;
 
     void check_matches_expected(const canvas& expected, bool require);
 };
@@ -116,7 +117,7 @@ public:
 
 namespace Catch {
 template <> struct StringMaker<map_helpers::canvas> {
-    static std::string convert(const map_helpers::canvas& c) { return c.to_string(); }
+    static auto convert(const map_helpers::canvas& c) -> std::string { return c.to_string(); }
 };
 } // namespace Catch
 

@@ -27,6 +27,7 @@
 "description": "Socks. Put 'em on your feet.", // Description of the item
 "ascii_picture": "ascii_socks", // Id of the asci_art used for this item
 "phase": "solid",                            // (Optional, default = "solid") What phase it is
+"spill_field": "fd_water",                   // (Optional) For liquids dropped onto ordinary ground, create this field before any drop_action runs.
 "weight": "350 g",                           // Weight, weight in grams, mg and kg can be used - "50 mg", "5 g" or "5 kg". For stackable items (ammo, comestibles) this is the weight per charge.
 "volume": "250 ml",                          // Volume, volume in ml and L can be used - "50 ml" or "2 L". For stackable items (ammo, comestibles) this is the volume of stack_size charges.
 "integral_volume": 0,                        // Volume added to base item when item is integrated into another (eg. a gunmod integrated to a gun). Volume in ml and L can be used - "50 ml" or "2 L". Can be negative to reduce parent volume. Clamped at 1% of parent base volume.
@@ -84,6 +85,25 @@
 },
 "repair_difficulty": 2                       // Overrites recipe difficulty being used for repair difficulty
 ```
+
+`spill_field` is intended for liquids. If a liquid item with a `spill_field` is dropped onto
+ordinary ground, the game marks the liquid dirty when appropriate, creates the specified field,
+and then still runs any `drop_action` the item defines. The liquid item is consumed: its charges
+and item state are not stored in the field, and the puddle cannot be collected as liquid again.
+Tiles with the `LIQUIDCONT` flag do not convert liquids to spill fields.
+
+Spill visuals are volume-based rather than charge-count-based. The current implementation treats
+each liter of liquid as one unit of visible spill intensity, with a minimum of one unit for any
+non-zero spill. When additional liquid is poured into an existing connected spill of the same
+field type, the spill deepens existing tiles first by raising field intensity, then expands
+outward into adjacent passable tiles. The visible footprint is capped, so very large spills stop
+growing visually while still consuming the poured liquid.
+
+In practice, `spill_field` is usually many-to-one. Multiple related liquids can intentionally map
+to the same visible field to avoid JSON bloat and unnecessary field type proliferation. For
+example, `tea`, `coca_tea`, and `sweet_tea` can all spill as `fd_tea`, producing the same visible
+`puddle of tea` field. A separate field type is only needed when the puddle has different effects
+or appearance. See [Field Types](../map/field_type.md) for field properties.
 
 #### damage_instance
 
@@ -163,6 +183,8 @@ Armor can be defined like this:
 "resistance": { "cut": 0, "bullet": 1000 }, // If set, overrides usual resistance calculation. Values are for undamaged item, thickness affects scaling with damage - 1 thickness means no reduction from damage, 2 means it's halved on first damage, 10 means each level of damage decreases armor by 10%
 "hearing_protection": 0,    // How much does this armor dampen sound hear by the wearer, in dB spl. 0 - 191. This will make all sounds harder to hear for the wearer, including deafening sounds. At a hearing_ability multiplier of one, heard sounds of 120dB+ can deafen the player, with guaranteed temporary deafness at 140dB+. Use this instead of the "DEAF" or "PARTIAL_DEAF" flags. ~40 dB spl total protection will protect against most gunfire, 80 will protect against almost any sound. Cumulative with other items with this quality.
 "adv_hearing_protection": 0 // How much does this armor dampen deafening sounds heard by the wearer, in dB spl. 0 - 191. This will reduce the damaging volume of deafening sounds by its given amount without dampening other sounds.  Cumulative with other items with this quality.
+"provided_slots": [ { "id": "INSERT_FLAG_ID_HERE", "amount": 1 } ] // Flag id to provide for wearing requirements
+"consumed_slots": [ { "id": "INSERT_FLAG_ID_HERE", "amount": 1 } ] // Flag id to require for wearing requirements, automatically is this with 1 if there is one such instance.
 ```
 
 Alternately, every item (book, tool, gun, even food) can be used as armor if it has armor_data:
@@ -685,6 +707,8 @@ can be planted:
     "seeds": false, // (optional, default is true). If true, harvesting the plant will spawn seeds (the same type as the item used to plant). If false only the fruits are spawned, no seeds.
     "fruit_div": 2, // (optional, default is 1). Final amount of fruit charges produced is divided by this number. Works only if fruit item is counted by charges.
     "byproducts": ["withered", "straw_pile"], // A list of further items that should spawn upon harvest.
+    "harvest_inherit_flags": ["HIDDEN_POISON", "HIDDEN_HALLU"], // Optional, default: []. Flags present on the planted item to copy to harvested fruits and seeds, excluding byproducts. Works with any required_terrain_flag.
+    "harvest_inherit_poison": true, // Optional, default: false. Copy the planted item's poison value to harvested fruits and seeds, excluding byproducts. Independent of flag inheritance.
     "plant_name": "sunflower", // The name of the plant that grows from this seed. This is only used as information displayed to the user.
     "grow" : 91 // A time duration: how long it takes for a plant to fully mature. Based around a 91 day season length (roughly a real world season) to give better accuracy for longer season lengths
                 // Note that growing time is later converted based upon the season_length option, basing it around 91 is just for accuracy purposes
@@ -868,7 +892,7 @@ All object defined use actions support the following two types.
 
 ```jsonc
 "use_action": {
-  "menu_text": "xyz", // What string is shown in the activate menu
+  "menu_text": "xyz", // Text shown in the activate menu; also accepts { "str": "xyz", "ctxt": "item action" }
   // Unique key for the iuse, defaults to the `type`
   // Note: This should only be used on repeated type definitions
   // WARN: This does not work on `repair_item` iuse actors -> they have their own special `item_action_type`
@@ -892,6 +916,7 @@ All object defined use actions support the following two types.
     "need_dry": false,                  // Whether the item cannot transform while submerged in water, false by default.
     "target_charges" : 3, // Number of charges the transformed item has.
     "rand_target_charges": [10, 15, 25], // Randomize the charges the transformed item has. This example has a 50% chance of rng(10, 15) charges and a 50% chance of rng(15, 25) (The endpoints are included)
+    "set_timer": false,   // Query the player on activation how many charges the transformed item should have, e.g. C-4. False by default.
     "container" : "jar",  // Container holding the target item.
     "moves" : 500         // Moves required to transform the item in excess of a normal action.
 },
@@ -928,6 +953,7 @@ All object defined use actions support the following two types.
     "type": "unfold_vehicle", // Transforms the item into a vehicle.
     "vehicle_name": "bicycle", // Vehicle name to create.
     "unfold_msg": "You painstakingly unfold the bicycle and make it ready to ride.", // Message to display when transforming.
+    "full_battery": true, // If set to true, vehicle will be created with full fuel and batteries. It's recommended you only use this if the vehicle being deployed is made entirely from foldable parts, as those will convert into a generic folded vehicle item that tracks its status when taken down.  (Default: false)
     "moves": 500 // Number of moves required in the process.
 },
 "use_action" : {
@@ -1030,12 +1056,14 @@ All object defined use actions support the following two types.
     "type": "fireweapon_on", // Function for active (burning) fire based weapons.
     "noise_chance": 1, // The chance (one in X) that the item will make a noise, rolled on each turn.
     "noise": 0, // The sound volume it makes, if it makes a noise at all. If 0, no sound is made, but the noise message is still printed.
-    "noise_message": "Your No. 9 hisses.", // The message / sound description (if noise is > 0), that appears when the item makes a sound.
+    "held_message": "Your No. 9 hisses.", // The message / sound description (if noise is > 0), that appears when the item makes a sound and player is wielding it.
+    "noise_message": "hsss.", // Sound description when heard from another tile, e.g. wielded by an NPC.
     "voluntary_extinguish_message": "Your No. 9 goes dark.", // Message that appears when the item is turned of by player.
     "charges_extinguish_message": "Out of ammo!", // Message that appears when the item runs out of charges.
     "water_extinguish_message": "Your No. 9 hisses in the water and goes out.", // Message that appears if the character walks into water and the fire of the item is extinguished.
     "auto_extinguish_chance": 0, // If > 0, this is the (one in X) chance that the item goes out on its own.
     "auto_extinguish_message": "Your No. 9 cuts out!" // Message that appears if the item goes out on its own (only required if auto_extinguish_chance is > 0).
+    "noise_variant": "fireweapon_lit" // sound variant for soundpacks, pair with id `tool`
 },
 "use_action": {
     "type": "musical_instrument", // The character plays an instrument (this item) while walking around.
@@ -1149,7 +1177,7 @@ All object defined use actions support the following two types.
     "charges_to_start": 50, // Static cost per item crafted
     "charges_per_minute": 1, // Cost per minute of craft time
     "time_mult": 1, //Multiplier for craft time, 2 is twice as long, 0.5 is half as long, 0 is instant
-    "recipes": [ "water_clean" ], //Any specific item itype in this list can be crafted
+    "recipes": [ "water_clean" ], //Any recipie ident (crafted item + its suffix, e.g water_clean_using_water_purifier) in this list can be crafted
     "subcategories": [ "CSC_FOOD_MEAT", "CSC_FOOD_VEGGI", "CSC_FOOD_PASTA" ], //Any item in these subcategories can be crafted
     "temporary_tools": [ "hotplate", "tongs", "toolset", "pot" ] //Temporary items spawned when crafting to allow for innate qualities
 },
@@ -1168,6 +1196,14 @@ All object defined use actions support the following two types.
 "use_action": {
     "type": "paint_stuff_cfg",  // Configures how it paints using paint stuff
     "color_swap": true          // Allow the color to be swapped to any other named color
+}
+"use_action": {
+  "type": "passivenoise", // Emits noise periodically, used mainly with active items such as chainsaws
+  "noise": 90, // Noise in decibels
+  "noise_chance": 10, // Percent chance to trigger per turn
+  "held_message": "The chainsaws rumble." // Message to display if player is holding the item
+  "noise_message": "a chainsaw rumbling." // Sound string when heard from another tile
+  "noise_variant": "chainsaw" // sound variant for soundpacks, pair with id `tool`
 }
 ```
 

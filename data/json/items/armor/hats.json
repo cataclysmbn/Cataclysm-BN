@@ -522,7 +522,7 @@
     "volume": "750 ml",
     "price": "10 USD",
     "price_postapoc": "50 cent",
-    "material": [ "cotton", "plastic" ],
+    "material": [ "cotton", "nylon" ],
     "symbol": "[",
     "looks_like": "hat_ball",
     "color": "blue",

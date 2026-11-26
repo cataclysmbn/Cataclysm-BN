@@ -874,12 +874,20 @@
     "message": "A surge of energy strikes the ground as you raise the verge, resounding with a thunderous blast!",
     "effect": "target_attack",
     "extra_effects": [
-      { "id": "arcana_item_meteoric_verge_pulse", "hit_self": false },
       { "id": "arcana_item_meteoric_verge_noise", "hit_self": false },
       { "id": "arcana_item_meteoric_verge_buff", "hit_self": true }
     ],
     "valid_targets": [ "hostile", "ground" ],
-    "flags": [ "IGNORE_WALLS", "RANDOM_DAMAGE", "RANDOM_DURATION", "NO_HANDS", "NO_LEGS", "SILENT", "DIVIDE_DAMAGE" ],
+    "flags": [
+      "IGNORE_WALLS",
+      "RANDOM_DAMAGE",
+      "RANDOM_DURATION",
+      "NO_HANDS",
+      "NO_LEGS",
+      "SILENT",
+      "DIVIDE_DAMAGE",
+      "DAMAGE_TERRAIN"
+    ],
     "effect_str": "blind",
     "min_damage": 200,
     "max_damage": 220,
@@ -894,22 +902,6 @@
     "field_chance": 3,
     "min_field_intensity": 3,
     "max_field_intensity": 3
-  },
-  {
-    "id": "arcana_item_meteoric_verge_pulse",
-    "type": "SPELL",
-    "name": { "str": "Verge Pulse" },
-    "description": "This adds the terrain damage.",
-    "valid_targets": [ "self", "ally", "hostile", "ground" ],
-    "message": "",
-    "flags": [ "NO_EXPLOSION_VFX", "SILENT", "IGNORE_WALLS", "RANDOM_DAMAGE", "NO_HANDS", "NO_LEGS" ],
-    "effect": "bash",
-    "min_damage": 100,
-    "max_damage": 110,
-    "min_aoe": 9,
-    "max_aoe": 9,
-    "min_range": 50,
-    "max_range": 50
   },
   {
     "type": "SPELL",
@@ -1560,11 +1552,19 @@
       { "id": "arcana_item_scroll_destruction_noise", "hit_self": true },
       { "id": "arcana_item_scroll_destruction_attention", "hit_self": true },
       { "id": "arcana_item_scroll_destruction_cold", "hit_self": false },
-      { "id": "arcana_item_scroll_destruction_pulse", "hit_self": false },
       { "id": "arcana_item_scroll_leftover", "hit_self": false }
     ],
     "valid_targets": [ "hostile", "ground" ],
-    "flags": [ "SILENT", "IGNORE_WALLS", "RANDOM_DAMAGE", "RANDOM_DURATION", "NO_HANDS", "NO_LEGS", "DIVIDE_DAMAGE" ],
+    "flags": [
+      "SILENT",
+      "IGNORE_WALLS",
+      "RANDOM_DAMAGE",
+      "RANDOM_DURATION",
+      "NO_HANDS",
+      "NO_LEGS",
+      "DIVIDE_DAMAGE",
+      "DAMAGE_TERRAIN"
+    ],
     "effect_str": "dazed",
     "min_damage": 300,
     "max_damage": 360,
@@ -1639,20 +1639,6 @@
     "field_chance": 1,
     "min_field_intensity": 3,
     "max_field_intensity": 3
-  },
-  {
-    "id": "arcana_item_scroll_destruction_pulse",
-    "type": "SPELL",
-    "name": { "str": "Divine Scroll: Destruction Pulse" },
-    "description": "This adds a highly-random pulse effect to the scroll.",
-    "valid_targets": [ "self", "ally", "hostile", "ground" ],
-    "message": "",
-    "flags": [ "NO_EXPLOSION_VFX", "SILENT", "IGNORE_WALLS", "RANDOM_DAMAGE", "NO_HANDS", "NO_LEGS" ],
-    "effect": "bash",
-    "min_damage": 150,
-    "max_damage": 180,
-    "min_aoe": 24,
-    "max_aoe": 24
   },
   {
     "id": "arcana_item_scroll_leftover",

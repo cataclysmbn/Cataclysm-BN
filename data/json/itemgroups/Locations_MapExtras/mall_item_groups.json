@@ -76,6 +76,7 @@
       [ "vitamins", 75 ],
       [ "calcium_tablet", 75 ],
       [ "aspirin", 45 ],
+      [ "lactaid", 25 ],
       [ "caffeine", 50 ],
       [ "pills_sleep", 45 ],
       [ "disinfectant", 15 ],
@@ -141,6 +142,7 @@
       [ "glasses_bifocal", 30 ],
       [ "glasses_safety", 30 ],
       [ "fancy_sunglasses", 5 ],
+      [ "aviators", 5 ],
       [ "glasses_reading", 50 ],
       [ "glasses_eye", 85 ]
     ]
@@ -282,14 +284,13 @@
       [ "antenna", 25 ],
       { "group": "ammo_any_batteries_full", "prob": 50 },
       [ "mp3", 40 ],
-      [ "usb_drive", 10 ],
+      { "group": "digital_storage_media", "prob": 20 },
       [ "manual_electronics", 20 ],
       [ "cable", 60 ],
       [ "cell_phone", 1 ],
       [ "smart_phone", 90 ],
       [ "wrist_comp_budget", 30 ],
-      [ "wristwatch", 60 ],
-      [ "mobile_memory_card_used", 10 ]
+      [ "wristwatch", 60 ]
     ]
   },
   {

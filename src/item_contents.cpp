@@ -1,17 +1,16 @@
 #include "item_contents.h"
 
-#include <algorithm>
-#include <limits>
-#include <algorithm>
-#include <memory>
-
 #include "character.h"
 #include "enums.h"
 #include "handle_liquid.h"
 #include "item.h"
 #include "itype.h"
 #include "locations.h"
-#include "map.h"
+#include "map/map.h"
+
+#include <algorithm>
+#include <limits>
+#include <memory>
 
 struct tripoint;
 

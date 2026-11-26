@@ -8,7 +8,7 @@ using t_mod_list = std::vector<t_mod_id>;
 using t_key_dep_map = std::map<t_mod_id, t_mod_list>;
 using t_map_entry = std::pair<t_mod_id, t_mod_list>;
 
-static std::map<mod_id, std::vector<mod_id>> build_map(const t_key_dep_map& m) {
+static auto build_map(const t_key_dep_map& m) -> std::map<mod_id, std::vector<mod_id>> {
     std::map<mod_id, std::vector<mod_id>> ret;
 
     for (const auto& entry : m) {
@@ -20,8 +20,8 @@ static std::map<mod_id, std::vector<mod_id>> build_map(const t_key_dep_map& m) {
     return ret;
 }
 
-static dependency_tree make_tree(
-    const t_key_dep_map& dependencies, const t_key_dep_map& conflicts) {
+static auto make_tree(const t_key_dep_map& dependencies, const t_key_dep_map& conflicts)
+    -> dependency_tree {
     dependency_tree tree;
 
     tree.init(build_map(dependencies), build_map(conflicts));

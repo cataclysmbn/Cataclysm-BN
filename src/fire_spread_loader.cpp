@@ -1,19 +1,19 @@
 #include "fire_spread_loader.h"
 
+#include "cached_options.h"
+#include "game_constants.h"
+#include "map/field.h"
+#include "map/field_type.h"
+#include "map/mapbuffer.h" // also pulls in mapbuffer_registry.h
+#include "map/submap.h"
+#include "point.h"
+#include "profile.h"
+
 #include <algorithm>
 #include <array>
 #include <cstdint>
 #include <set>
 #include <vector>
-
-#include "cached_options.h"
-#include "field.h"
-#include "field_type.h"
-#include "game_constants.h"
-#include "mapbuffer.h"   // also pulls in mapbuffer_registry.h
-#include "point.h"
-#include "profile.h"
-#include "submap.h"
 
 fire_spread_loader fire_loader;
 

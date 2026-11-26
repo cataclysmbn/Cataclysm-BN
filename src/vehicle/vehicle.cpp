@@ -1,5 +1,6 @@
 #include "vehicle.h"
 
+#include "../overmap/overmapbuffer.h"
 #include "action_time_scale.h"
 #include "active_tile_data_def.h"
 #include "avatar.h"
@@ -19,7 +20,6 @@
 #include "event_bus.h"
 #include "explosion.h"
 #include "faction.h"
-#include "field_type.h"
 #include "flag.h"
 #include "game.h"
 #include "item.h"
@@ -30,17 +30,18 @@
 #include "json.h"
 #include "locations.h"
 #include "make_static.h"
-#include "map.h"
+#include "map/field_type.h"
+#include "map/map.h"
+#include "map/mapbuffer.h"
+#include "map/mapdata.h"
+#include "map/submap.h"
 #include "map_iterator.h"
-#include "mapbuffer.h"
-#include "mapdata.h"
-#include "mapgen_constructor.h"
+#include "mapgen/mapgen_constructor.h"
 #include "messages.h"
 #include "monster.h"
 #include "npc.h"
 #include "options.h"
 #include "output.h"
-#include "overmapbuffer.h"
 #include "player.h"
 #include "player_activity.h"
 #include "point_float.h"
@@ -49,7 +50,6 @@
 #include "string_formatter.h"
 #include "string_id.h"
 #include "string_input_popup.h"
-#include "submap.h"
 #include "translations.h"
 #include "type_id.h"
 #include "ui.h"
@@ -123,7 +123,6 @@ static const flag_id f_VEHICLE_NO_HOTWIRE("VEHICLE_NO_HOTWIRE");
 static const flag_id f_VEHICLE_HOTWIRE("VEHICLE_HOTWIRE");
 
 static const std::string str_DOOR_LOCKING("DOOR_LOCKING");
-static const std::string str_OPENCLOSE_INSIDE("OPENCLOSE_INSIDE");
 static const std::string str_PERPETUAL("PERPETUAL");
 constexpr auto battery_charge_bucket_count = 101;
 
@@ -169,10 +168,11 @@ static const std::vector<std::string> vs_NO_HOTWIRING = {
     "MUSCLE_LEGS",
     "MUSCLE_ARMS",
     "ANIMAL_CTRL",
+    "WIND_POWERED",
 };
 
-static bool is_sm_tile_outside(const tripoint_abs_ms& pos);
-static bool is_sm_tile_over_water(const tripoint_abs_ms& pos);
+static auto is_sm_tile_outside(const tripoint_abs_ms& pos) -> bool;
+static auto is_sm_tile_over_water(const tripoint_abs_ms& pos) -> bool;
 
 static const itype_id fuel_type_mana("mana");
 
@@ -187,8 +187,9 @@ public:
     virtual ~RemovePartHandler() = default;
 
     virtual void unboard(const tripoint_bub_ms& loc) = 0;
-    virtual detached_ptr<item> add_item_or_charges(
-        const tripoint_bub_ms& loc, detached_ptr<item>&& it, bool permit_oob) = 0;
+    virtual auto add_item_or_charges(
+        const tripoint_bub_ms& loc, detached_ptr<item>&& it, bool permit_oob)
+        -> detached_ptr<item> = 0;
     virtual void set_transparency_cache_dirty(int z) = 0;
     virtual void set_floor_cache_dirty(int z) = 0;
     virtual void removed(vehicle& veh, int part) = 0;
@@ -201,8 +202,9 @@ public:
     ~DefaultRemovePartHandler() override = default;
 
     void unboard(const tripoint_bub_ms& loc) override { g->m.unboard_vehicle(loc); }
-    detached_ptr<item> add_item_or_charges(
-        const tripoint_bub_ms& loc, detached_ptr<item>&& it, bool /*permit_oob*/) override {
+    auto add_item_or_charges(
+        const tripoint_bub_ms& loc, detached_ptr<item>&& it, bool /*permit_oob*/)
+        -> detached_ptr<item> override {
         return g->m.add_item_or_charges(loc, std::move(it));
     }
     void set_transparency_cache_dirty(const int z) override {
@@ -264,8 +266,8 @@ public:
         // Ignored. Will almost certainly not be called anyway, because
         // there are no creatures that could have been mounted during mapgen.
     }
-    detached_ptr<item> add_item_or_charges(
-        const tripoint_bub_ms& loc, detached_ptr<item>&& it, bool permit_oob) override {
+    auto add_item_or_charges(const tripoint_bub_ms& loc, detached_ptr<item>&& it, bool permit_oob)
+        -> detached_ptr<item> override {
         if (!m.inbounds(loc)) {
             point_sm_ms offset;
             if (!m.get_mapbuffer().is_outside_pocket_dimension_bounds(map_local_to_abs(m, loc))
@@ -344,8 +346,8 @@ public:
 };
 
 // Vehicle stack methods.
-vehicle_stack::iterator vehicle_stack::erase(
-    vehicle_stack::const_iterator it, detached_ptr<item>* out) {
+auto vehicle_stack::erase(vehicle_stack::const_iterator it, detached_ptr<item>* out)
+    -> vehicle_stack::iterator {
     return myorigin->remove_item(part_num, std::move(it), out);
 }
 
@@ -353,11 +355,11 @@ void vehicle_stack::insert(detached_ptr<item>&& newitem) {
     myorigin->add_item(part_num, std::move(newitem));
 }
 
-detached_ptr<item> vehicle_stack::remove(item* to_remove) {
+auto vehicle_stack::remove(item* to_remove) -> detached_ptr<item> {
     return myorigin->remove_item(part_num, to_remove);
 }
 
-units::volume vehicle_stack::max_volume() const {
+auto vehicle_stack::max_volume() const -> units::volume {
     if (myorigin->part_flag(part_num, "CARGO") && !myorigin->part(part_num).is_broken()) {
         return myorigin->part(part_num).info().size;
     }
@@ -525,7 +527,7 @@ vehicle::vehicle(): vehicle(vproto_id()) {
 
 vehicle::~vehicle() = default;
 
-bool vehicle::player_in_control(const Character& who) const {
+auto vehicle::player_in_control(const Character& who) const -> bool {
     // Debug switch to prevent vehicles from skidding
     // without having to place the player in them.
     if (tags.contains("IN_CONTROL_OVERRIDE")) { return true; }
@@ -542,12 +544,12 @@ bool vehicle::player_in_control(const Character& who) const {
     return remote_controlled(who);
 }
 
-bool vehicle::remote_controlled(const Character& who) const {
+auto vehicle::remote_controlled(const Character& /*who*/) const -> bool {
     vehicle* veh = g->remoteveh();
     if (veh != this) { return false; }
 
     for (const vpart_reference& vp : get_avail_parts("REMOTE_CONTROLS")) {
-        if (rl_dist(who.bub_pos(), vp.pos()) <= 40) { return true; }
+        if (g->m.inbounds(vp.pos())) { return true; }
     }
 
     add_msg(m_bad, _("Lost connection with the vehicle due to distance!"));
@@ -794,7 +796,7 @@ void vehicle::init_state(
         std::set<tripoint_mnt_veh> doors;
         for (const vpart_reference& vp : get_all_parts()) {
             if (vp.has_feature("OPENABLE") && vp.has_feature("BOARDABLE")
-                && !vp.has_feature("CURTAIN")) {
+                && !vp.has_feature("CURTAIN") && !vp.has_feature("VEHICLEPART_NO_LOCKS")) {
                 doors.emplace(vp.mount());
             }
         }
@@ -830,16 +832,15 @@ void vehicle::init_state(
         }
 
         if (pt.is_reactor()) {
+            const auto& fuel_type = pt.info().fuel_type;
             if (veh_fuel_mult == 100) { // Mint condition vehicle
-                pt.ammo_set(itype_plut_cell, pt.ammo_capacity());
+                pt.ammo_set(fuel_type, pt.ammo_capacity());
             } else if (one_in(2) && veh_fuel_mult > 0) { // Randomize charge a bit
-                pt.ammo_set(itype_plut_cell,
-                            pt.ammo_capacity() * (veh_fuel_mult + rng(0, 10)) / 100);
+                pt.ammo_set(fuel_type, pt.ammo_capacity() * (veh_fuel_mult + rng(0, 10)) / 100);
             } else if (one_in(2) && veh_fuel_mult > 0) {
-                pt.ammo_set(itype_plut_cell,
-                            pt.ammo_capacity() * (veh_fuel_mult - rng(0, 10)) / 100);
+                pt.ammo_set(fuel_type, pt.ammo_capacity() * (veh_fuel_mult - rng(0, 10)) / 100);
             } else {
-                pt.ammo_set(itype_plut_cell, pt.ammo_capacity() * veh_fuel_mult / 100);
+                pt.ammo_set(fuel_type, pt.ammo_capacity() * veh_fuel_mult / 100);
             }
         }
 
@@ -1100,7 +1101,7 @@ void vehicle::autopilot_patrol() {
     drive_to_local_target(autodrive_local_target, false);
 }
 
-std::set<point_abs_ms> vehicle::immediate_path(units::angle rotate) {
+auto vehicle::immediate_path(units::angle rotate) -> std::set<point_abs_ms> {
     std::set<point_abs_ms> points_to_check;
     const int distance_to_check = 10 + (velocity / 358);
     units::angle adjusted_angle = normalize(face.dir() + rotate);
@@ -1123,9 +1124,9 @@ std::set<point_abs_ms> vehicle::immediate_path(units::angle rotate) {
     return points_to_check;
 }
 
-static int get_turn_from_angle(
+static auto get_turn_from_angle(
     const units::angle angle, const tripoint_abs_ms& vehpos, const tripoint_abs_ms& target,
-    bool reverse = false) {
+    bool reverse = false) -> int {
     if (angle > 10.0_degrees && angle <= 45.0_degrees) {
         return reverse ? 4 : 1;
     } else if (angle > 45.0_degrees && angle <= 90.0_degrees) {
@@ -1246,9 +1247,9 @@ void vehicle::drive_to_local_target(const tripoint_abs_ms& target, bool follow_p
     selfdrive(point(turn_x, accel_y));
 }
 
-tripoint_abs_ms vehicle::get_autodrive_target() { return autodrive_local_target; }
+auto vehicle::get_autodrive_target() -> tripoint_abs_ms { return autodrive_local_target; }
 
-units::angle vehicle::get_angle_from_targ(const tripoint_abs_ms& targ) {
+auto vehicle::get_angle_from_targ(const tripoint_abs_ms& targ) -> units::angle {
     auto vehpos = abs_ms_location();
     rl_vec2d facevec = face_vec();
     auto rel_pos_target = targ.xy() - vehpos.xy();
@@ -1406,7 +1407,7 @@ auto vehicle::smash(
     }
 }
 
-int vehicle::lift_strength() const {
+auto vehicle::lift_strength() const -> int {
     units::mass mass = total_mass();
     return std::max<std::int64_t>(mass / 10000_gram, 1);
 }
@@ -1425,7 +1426,7 @@ void vehicle::toggle_specific_engine(int e, bool on) {
 }
 void vehicle::toggle_specific_part(int p, bool on) { parts[p].enabled = on; }
 
-bool vehicle::can_enable_muscle_engine(int e, std::string& failure_reason) const {
+auto vehicle::can_enable_muscle_engine(int e, std::string& failure_reason) const -> bool {
     const int part_idx = engines[e];
     const vpart_info& engine_info = part_info(part_idx);
 
@@ -1451,7 +1452,7 @@ bool vehicle::can_enable_muscle_engine(int e, std::string& failure_reason) const
     return false;
 }
 
-bool vehicle::has_muscle_engine_operator(int e) const {
+auto vehicle::has_muscle_engine_operator(int e) const -> bool {
     const int part_idx = engines[e];
     const vpart_info& engine_info = part_info(part_idx);
 
@@ -1480,25 +1481,25 @@ void vehicle::validate_muscle_engines() {
         }
     }
 }
-bool vehicle::is_engine_type_on(int e, const itype_id& ft) const {
+auto vehicle::is_engine_type_on(int e, const itype_id& ft) const -> bool {
     return is_engine_on(e) && is_engine_type(e, ft);
 }
 
-bool vehicle::has_engine_type(const itype_id& ft, const bool enabled) const {
+auto vehicle::has_engine_type(const itype_id& ft, const bool enabled) const -> bool {
     for (size_t e = 0; e < engines.size(); ++e) {
         if (is_engine_type(e, ft) && (!enabled || is_engine_on(e))) { return true; }
     }
     return false;
 }
-bool vehicle::has_engine_type_not(const itype_id& ft, const bool enabled) const {
+auto vehicle::has_engine_type_not(const itype_id& ft, const bool enabled) const -> bool {
     for (size_t e = 0; e < engines.size(); ++e) {
         if (!is_engine_type(e, ft) && (!enabled || is_engine_on(e))) { return true; }
     }
     return false;
 }
 
-bool vehicle::has_engine_conflict(
-    const vpart_info* possible_conflict, std::string& conflict_type) const {
+auto vehicle::has_engine_conflict(
+    const vpart_info* possible_conflict, std::string& conflict_type) const -> bool {
     std::vector<std::string> new_excludes = possible_conflict->engine_excludes();
     // skip expensive string comparisons if there are no exclusions
     if (new_excludes.empty()) { return false; }
@@ -1520,7 +1521,7 @@ bool vehicle::has_engine_conflict(
     return has_conflict;
 }
 
-bool vehicle::is_engine_type(const int e, const itype_id& ft) const {
+auto vehicle::is_engine_type(const int e, const itype_id& ft) const -> bool {
     auto engine_fuel = parts[engines[e]].info().engine_fuel_opts();
     bool engine_has_fuel =
         std::find(engine_fuel.begin(), engine_fuel.end(), ft) != engine_fuel.end();
@@ -1529,22 +1530,22 @@ bool vehicle::is_engine_type(const int e, const itype_id& ft) const {
              : parts[engines[e]].ammo_current() == ft;
 }
 
-bool vehicle::is_perpetual_type(const int e) const {
+auto vehicle::is_perpetual_type(const int e) const -> bool {
     const itype_id& ft = part_info(engines[e]).fuel_type;
     // TODO!: push up
     return item::spawn_temporary(ft)->has_flag(flag_PERPETUAL);
 }
 
-bool vehicle::is_engine_on(const int e) const {
+auto vehicle::is_engine_on(const int e) const -> bool {
     return parts[engines[e]].is_available() && is_part_on(engines[e]);
 }
 
-bool vehicle::is_part_on(const int p) const {
+auto vehicle::is_part_on(const int p) const -> bool {
     const auto& pt = parts[p];
     return pt.enabled || (pt.is_available() && pt.info().has_flag(str_PERPETUAL));
 }
 
-bool vehicle::is_alternator_on(const int a) const {
+auto vehicle::is_alternator_on(const int a) const -> bool {
     auto& alt = parts[alternators[a]];
     if (alt.is_unavailable()) { return false; }
 
@@ -1556,7 +1557,7 @@ bool vehicle::is_alternator_on(const int a) const {
     });
 }
 
-bool vehicle::has_security_working() const {
+auto vehicle::has_security_working() const -> bool {
     bool found_security = false;
     if (fuel_left(fuel_type_battery) > 0) {
         const auto [c, s] = get_controls_and_security();
@@ -1582,7 +1583,7 @@ void vehicle::backfire(const int e) const {
     sounds::sound(se);
 }
 
-const vpart_info& vehicle::part_info(int index, bool include_removed) const {
+auto vehicle::part_info(int index, bool include_removed) const -> const vpart_info& {
     if (index < static_cast<int>(parts.size())) {
         if (!parts[index].removed || include_removed) { return parts[index].info(); }
     }
@@ -1591,7 +1592,7 @@ const vpart_info& vehicle::part_info(int index, bool include_removed) const {
 
 // engines & alternators all have power.
 // engines provide, whilst alternators consume.
-int vehicle::part_vpower_w(const int index, const bool at_full_hp) const {
+auto vehicle::part_vpower_w(const int index, const bool at_full_hp) const -> int {
     const vehicle_part& vp = parts[index];
     int pwr = vp.info().power;
     if (part_flag(index, VPFLAG_ENGINE)) {
@@ -1607,7 +1608,10 @@ int vehicle::part_vpower_w(const int index, const bool at_full_hp) const {
             }
         }
         ///\EFFECT_STR increases power produced for MUSCLE_* vehicles
-        pwr += (g->u.str_cur - 8) * part_info(index).engine_muscle_power_factor();
+        if (get_passenger(index)) {
+            pwr +=
+                (get_passenger(index)->str_cur - 8) * part_info(index).engine_muscle_power_factor();
+        }
         /// wind-powered vehicles have differing power depending on wind direction
         if (vp.info().fuel_type == fuel_type_wind) {
             const weather_manager& weather = get_weather();
@@ -1652,7 +1656,7 @@ int vehicle::part_vpower_w(const int index, const bool at_full_hp) const {
 // alternators, solar panels, reactors, and accessories all have epower.
 // alternators, solar panels, and reactors provide, whilst accessories consume.
 // for motor consumption see @ref vpart_info::energy_consumption instead
-int vehicle::part_epower_w(const int index) const {
+auto vehicle::part_epower_w(const int index) const -> int {
     int e = part_info(index).epower;
     if (e < 0) {
         return e; // Consumers always draw full power, even if broken
@@ -1660,7 +1664,7 @@ int vehicle::part_epower_w(const int index) const {
     return e * parts[index].health_percent();
 }
 
-int vehicle::power_to_energy_bat(const int power_w, const time_duration& d) const {
+auto vehicle::power_to_energy_bat(const int power_w, const time_duration& d) const -> int {
     // Integrate constant epower (watts) over time to get units of battery energy
     // Thousands of watts over millions of seconds can happen, so 32-bit int
     // insufficient.
@@ -1672,7 +1676,7 @@ int vehicle::power_to_energy_bat(const int power_w, const time_duration& d) cons
     return energy_bat;
 }
 
-int vehicle::vhp_to_watts(const int power_vhp) {
+auto vehicle::vhp_to_watts(const int power_vhp) -> int {
     // Convert vhp units (0.5 HP ) to watts
     // Used primarily for calculating battery charge/discharge
     // TODO: convert batteries to use energy units based on watts (watt-ticks?)
@@ -1680,7 +1684,7 @@ int vehicle::vhp_to_watts(const int power_vhp) {
     return power_vhp * conversion_factor;
 }
 
-bool vehicle::has_structural_part(const tripoint_mnt_veh& dp) const {
+auto vehicle::has_structural_part(const tripoint_mnt_veh& dp) const -> bool {
     for (const int elem : parts_at_relative(dp, false)) {
         if (part_info(elem).location == part_location_structure
             && !part_info(elem).has_flag("PROTRUSION")) {
@@ -1690,7 +1694,7 @@ bool vehicle::has_structural_part(const tripoint_mnt_veh& dp) const {
     return false;
 }
 
-bool vehicle::has_structural_or_extendable_part(const tripoint_mnt_veh& dp) const {
+auto vehicle::has_structural_or_extendable_part(const tripoint_mnt_veh& dp) const -> bool {
     for (const int elem : parts_at_relative(dp, false)) {
         if ((part_info(elem).location == part_location_structure
              && !part_info(elem).has_flag("PROTRUSION"))
@@ -1705,7 +1709,7 @@ bool vehicle::has_structural_or_extendable_part(const tripoint_mnt_veh& dp) cons
  * Returns whether or not the vehicle has a structural part queued for removal,
  * @return true if a structural is queue for removal, false if not.
  * */
-bool vehicle::is_structural_part_removed() const {
+auto vehicle::is_structural_part_removed() const -> bool {
     for (const vpart_reference& vp : get_all_parts()) {
         if (vp.part().removed && vp.info().location == part_location_structure) { return true; }
     }
@@ -1719,7 +1723,7 @@ bool vehicle::is_structural_part_removed() const {
  * @param id The id of the part to install.
  * @return true if the part can be mounted, false if not.
  */
-bool vehicle::can_mount(const tripoint_mnt_veh& dp, const vpart_id& id) const {
+auto vehicle::can_mount(const tripoint_mnt_veh& dp, const vpart_id& id) const -> bool {
     // The part has to actually exist.
     if (!id.is_valid()) { return false; }
 
@@ -1844,12 +1848,12 @@ bool vehicle::can_mount(const tripoint_mnt_veh& dp, const vpart_id& id) const {
     return true;
 }
 
-bool vehicle::can_unmount(const int p) const {
+auto vehicle::can_unmount(const int p) const -> bool {
     std::string no_reason;
     return can_unmount(p, no_reason);
 }
 
-bool vehicle::can_unmount(const int p, std::string& reason) const {
+auto vehicle::can_unmount(const int p, std::string& reason) const -> bool {
     if (p < 0 || p > static_cast<int>(parts.size())) { return false; }
 
     // Find all the flags on parts in this tile that require other flags
@@ -1858,17 +1862,25 @@ bool vehicle::can_unmount(const int p, std::string& reason) const {
 
     if (part_info(p).has_flag("NOREMOVE_SECURITY")) {
         const auto [c, s] = get_controls_and_security();
-        if (s >= 0) {
-            reason = string_format(_("Remove the %1$s %2$s first."), name, part_info(s).name());
+        if (s >= 0 && is_locked) {
+            reason = string_format(_("Disable the %1$s %2$s first."), name, part_info(s).name());
             return false;
         }
     }
 
+    const auto no_remove_locked = part_info(p).has_flag("NOREMOVE_LOCKED");
     const auto no_remove_closed = part_info(p).has_flag("NOREMOVE_CLOSED");
     const auto no_remove_open = part_info(p).has_flag("NOREMOVE_OPEN");
     for (const auto& elem : parts_here) {
         const auto is_openable = part_info(elem).has_flag("OPENABLE");
         const auto is_working = !parts[elem].is_broken();
+        if (no_remove_locked && is_working && is_openable && !parts[elem].open) {
+            const auto lock = part_with_feature(pt, str_DOOR_LOCKING, true);
+            if (lock >= 0 && parts[lock].enabled) {
+                reason = string_format(_("Unlock the attached %s first."), part_info(lock).name());
+                return false;
+            }
+        }
         if (no_remove_closed && is_openable && is_working && !parts[elem].open) {
             reason = string_format(_("Open the attached %s first."), part_info(elem).name());
             return false;
@@ -1967,8 +1979,9 @@ bool vehicle::can_unmount(const int p, std::string& reason) const {
  *        be included in the path.
  * @return true if a path exists without the excluded part, false otherwise.
  */
-bool vehicle::is_connected(
-    const vehicle_part& to, const vehicle_part& from, const vehicle_part& excluded_part) const {
+auto vehicle::is_connected(
+    const vehicle_part& to, const vehicle_part& from, const vehicle_part& excluded_part) const
+    -> bool {
     const auto target = to.mount;
     const auto excluded = excluded_part.mount;
 
@@ -2037,22 +2050,22 @@ bool vehicle::is_connected(
  * @param force Skip check of whether we can mount the part here.
  * @return false if the part could not be installed, true otherwise.
  */
-int vehicle::install_part(const tripoint_mnt_veh& dp, const vpart_id& id, bool force) {
+auto vehicle::install_part(const tripoint_mnt_veh& dp, const vpart_id& id, bool force) -> int {
     if (!(force || can_mount(dp, id))) { return -1; }
     detached_ptr<item> obj = item::spawn(id.obj().item);
     int ret = install_part(dp, vehicle_part(id, dp, std::move(obj), this));
     return ret;
 }
 
-int vehicle::install_part(
-    const tripoint_mnt_veh& dp, const vpart_id& id, detached_ptr<item>&& obj, bool force) {
+auto vehicle::install_part(
+    const tripoint_mnt_veh& dp, const vpart_id& id, detached_ptr<item>&& obj, bool force) -> int {
     if (!(force || can_mount(dp, id))) { return -1; }
 
     int ret = install_part(dp, vehicle_part(id, dp, std::move(obj), this));
     return ret;
 }
 
-int vehicle::install_part(const tripoint_mnt_veh& dp, vehicle_part&& new_part) {
+auto vehicle::install_part(const tripoint_mnt_veh& dp, vehicle_part&& new_part) -> int {
     // Should be checked before installing the part
     bool enable = false;
     if (new_part.is_engine()) {
@@ -2074,8 +2087,15 @@ int vehicle::install_part(const tripoint_mnt_veh& dp, vehicle_part&& new_part) {
         }
     }
 
+    const auto* const old_parts = parts.data();
     parts.push_back(std::move(new_part));
-    refresh_locations_hack();
+    // Item locations only refer to this vehicle and the part's hack_id, so existing parts only
+    // need refreshing when the vector reallocated.
+    if (parts.data() != old_parts) {
+        refresh_locations_hack();
+    } else {
+        parts.back().refresh_locations_hack(this);
+    }
     auto& pt = parts.back();
     pt.set_vehicle_hack(this);
 
@@ -2099,7 +2119,8 @@ int vehicle::install_part(const tripoint_mnt_veh& dp, vehicle_part&& new_part) {
     return parts.size() - 1;
 }
 
-bool vehicle::try_to_rack_nearby_vehicle(const std::vector<std::vector<int>>& list_of_racks) {
+auto vehicle::try_to_rack_nearby_vehicle(const std::vector<std::vector<int>>& list_of_racks)
+    -> bool {
     for (const auto& this_bike_rack : list_of_racks) {
         std::vector<vehicle*> carry_vehs;
         carry_vehs.assign(4, nullptr);
@@ -2130,7 +2151,8 @@ bool vehicle::try_to_rack_nearby_vehicle(const std::vector<std::vector<int>>& li
     return false;
 }
 
-bool vehicle::merge_rackable_vehicle(vehicle* carry_veh, const std::vector<int>& rack_parts) {
+auto vehicle::merge_rackable_vehicle(vehicle* carry_veh, const std::vector<int>& rack_parts)
+    -> bool {
     // Mapping between the old vehicle and new vehicle mounting points
     struct mapping {
         // All the parts attached to this mounting point
@@ -2294,12 +2316,12 @@ bool vehicle::merge_rackable_vehicle(vehicle* carry_veh, const std::vector<int>&
  * Mark a part as removed from the vehicle.
  * @return bool true if the vehicle's 0,0 point shifted.
  */
-bool vehicle::remove_part(const int p) {
+auto vehicle::remove_part(const int p) -> bool {
     DefaultRemovePartHandler handler;
     return remove_part(p, handler);
 }
 
-bool vehicle::remove_part(const int p, RemovePartHandler& handler) {
+auto vehicle::remove_part(const int p, RemovePartHandler& handler) -> bool {
     // NOTE: Don't access g or g->m or anything from it directly here.
     // Forward all access to the handler.
     // There are currently two implementations of it:
@@ -2474,7 +2496,7 @@ void vehicle::remove_tracked_flag() {
     }
 }
 
-bool vehicle::remove_carried_vehicle(const std::vector<int>& carried_parts) {
+auto vehicle::remove_carried_vehicle(const std::vector<int>& carried_parts) -> bool {
     if (carried_parts.empty()) { return false; }
     std::string veh_record;
     tripoint_bub_ms nbp;
@@ -2589,7 +2611,7 @@ bool vehicle::remove_carried_vehicle(const std::vector<int>& carried_parts) {
 }
 
 // split the current vehicle into up to 3 new vehicles that do not connect to each other
-bool vehicle::find_and_split_vehicles(int exclude) {
+auto vehicle::find_and_split_vehicles(int exclude) -> bool {
     std::vector<int> valid_parts = all_parts_at_location(part_location_structure);
     std::set<int> checked_parts;
     checked_parts.insert(exclude);
@@ -2679,9 +2701,9 @@ void vehicle::relocate_passengers(const std::vector<Character*>& passengers) {
 // @param new_mounts vector of vector of mount points. must have one vector for every vehicle*
 // in new_vehicles, and forces the part indices in new_vehs to be mounted on the new vehicle
 // at those mount points
-bool vehicle::split_vehicles(
+auto vehicle::split_vehicles(
     const std::vector<std::vector<int>>& new_vehs, const std::vector<vehicle*>& new_vehicles,
-    const std::vector<std::vector<tripoint_mnt_veh>>& new_mounts) {
+    const std::vector<std::vector<tripoint_mnt_veh>>& new_mounts) -> bool {
     bool did_split = false;
     size_t i = 0;
     for (i = 0; i < new_vehs.size(); i++) {
@@ -2841,7 +2863,7 @@ bool vehicle::split_vehicles(
     return did_split;
 }
 
-bool vehicle::split_vehicles(const std::vector<std::vector<int>>& new_vehs) {
+auto vehicle::split_vehicles(const std::vector<std::vector<int>>& new_vehs) -> bool {
     std::vector<vehicle*> null_vehicles;
     std::vector<std::vector<tripoint_mnt_veh>> null_mounts;
     std::vector<tripoint_mnt_veh> nothing;
@@ -2850,14 +2872,14 @@ bool vehicle::split_vehicles(const std::vector<std::vector<int>>& new_vehs) {
     return split_vehicles(new_vehs, null_vehicles, null_mounts);
 }
 
-item& vehicle::part_base(int p) { return *parts[p].base; }
+auto vehicle::part_base(int p) -> item& { return *parts[p].base; }
 
-int vehicle::find_part(const item& it) const {
+auto vehicle::find_part(const item& it) const -> int {
     auto idx = std::ranges::find_if(parts, [&it](const vehicle_part& e) { return e.base == &it; });
     return idx != parts.end() ? std::distance(parts.begin(), idx) : INT_MIN;
 }
 
-std::vector<detached_ptr<item>> vehicle_part::pieces_for_broken_part() const {
+auto vehicle_part::pieces_for_broken_part() const -> std::vector<detached_ptr<item>> {
     const item_group_id& group = info().breaks_into_group;
     // TODO: make it optional? Or use id of empty item group?
     if (!group) { return {}; }
@@ -2865,8 +2887,8 @@ std::vector<detached_ptr<item>> vehicle_part::pieces_for_broken_part() const {
     return item_group::items_from(group, calendar::turn);
 }
 
-std::vector<int> vehicle::parts_at_relative(
-    const tripoint_mnt_veh& dp, const bool use_cache) const {
+auto vehicle::parts_at_relative(const tripoint_mnt_veh& dp, const bool use_cache) const
+    -> std::vector<int> {
     if (!use_cache) {
         std::vector<int> res;
         for (const vpart_reference& vp : get_all_parts()) {
@@ -2886,7 +2908,7 @@ std::vector<int> vehicle::parts_at_relative(
     }
 }
 
-std::optional<vpart_reference> vpart_position::obstacle_at_part() const {
+auto vpart_position::obstacle_at_part() const -> std::optional<vpart_reference> {
     const std::optional<vpart_reference> part = part_with_feature(VPFLAG_OBSTACLE, true);
     if (!part) {
         return std::nullopt; // No obstacle here
@@ -2899,45 +2921,45 @@ std::optional<vpart_reference> vpart_position::obstacle_at_part() const {
     return part;
 }
 
-std::optional<vpart_reference> vpart_position::part_displayed() const {
+auto vpart_position::part_displayed() const -> std::optional<vpart_reference> {
     int part_id = vehicle().part_displayed_at(mount());
     if (part_id == -1) { return std::nullopt; }
     return vpart_reference(vehicle(), part_id);
 }
 
-std::optional<vpart_reference> vpart_position::part_with_feature(
-    const std::string& f, const bool unbroken) const {
+auto vpart_position::part_with_feature(const std::string& f, const bool unbroken) const
+    -> std::optional<vpart_reference> {
     const int i = vehicle().part_with_feature(part_index(), f, unbroken);
     if (i < 0) { return std::nullopt; }
     return vpart_reference(vehicle(), i);
 }
 
-std::optional<vpart_reference> vpart_position::part_with_feature(
-    const vpart_bitflags f, const bool unbroken) const {
+auto vpart_position::part_with_feature(const vpart_bitflags f, const bool unbroken) const
+    -> std::optional<vpart_reference> {
     const int i = vehicle().part_with_feature(part_index(), f, unbroken);
     if (i < 0) { return std::nullopt; }
     return vpart_reference(vehicle(), i);
 }
 
-std::optional<vpart_reference> optional_vpart_position::part_with_feature(
-    const std::string& f, const bool unbroken) const {
+auto optional_vpart_position::part_with_feature(const std::string& f, const bool unbroken) const
+    -> std::optional<vpart_reference> {
     return has_value() ? value().part_with_feature(f, unbroken) : std::nullopt;
 }
 
-std::optional<vpart_reference> optional_vpart_position::part_with_feature(
-    const vpart_bitflags f, const bool unbroken) const {
+auto optional_vpart_position::part_with_feature(const vpart_bitflags f, const bool unbroken) const
+    -> std::optional<vpart_reference> {
     return has_value() ? value().part_with_feature(f, unbroken) : std::nullopt;
 }
 
-std::optional<vpart_reference> optional_vpart_position::obstacle_at_part() const {
+auto optional_vpart_position::obstacle_at_part() const -> std::optional<vpart_reference> {
     return has_value() ? value().obstacle_at_part() : std::nullopt;
 }
 
-std::optional<vpart_reference> optional_vpart_position::part_displayed() const {
+auto optional_vpart_position::part_displayed() const -> std::optional<vpart_reference> {
     return has_value() ? value().part_displayed() : std::nullopt;
 }
 
-int vehicle::part_with_feature(int part, vpart_bitflags const flag, bool unbroken) const {
+auto vehicle::part_with_feature(int part, vpart_bitflags const flag, bool unbroken) const -> int {
     if (part_flag(part, flag) && (!unbroken || !parts[part].is_broken())) { return part; }
     const auto it = relative_parts.find(parts[part].mount);
     if (it != relative_parts.end()) {
@@ -2949,12 +2971,12 @@ int vehicle::part_with_feature(int part, vpart_bitflags const flag, bool unbroke
     return -1;
 }
 
-int vehicle::part_with_feature(int part, const std::string& flag, bool unbroken) const {
+auto vehicle::part_with_feature(int part, const std::string& flag, bool unbroken) const -> int {
     return part_with_feature(parts[part].mount, flag, unbroken);
 }
 
-int vehicle::part_with_feature(
-    const tripoint_mnt_veh& pt, const std::string& flag, bool unbroken) const {
+auto vehicle::part_with_feature(
+    const tripoint_mnt_veh& pt, const std::string& flag, bool unbroken) const -> int {
     std::vector<int> parts_here = parts_at_relative(pt, true);
     for (auto& elem : parts_here) {
         if (part_flag(elem, flag) && (!unbroken || !parts[elem].is_broken())) { return elem; }
@@ -2962,36 +2984,39 @@ int vehicle::part_with_feature(
     return -1;
 }
 
-int vehicle::avail_part_with_feature(int part, vpart_bitflags const flag, bool unbroken) const {
+auto vehicle::avail_part_with_feature(int part, vpart_bitflags const flag, bool unbroken) const
+    -> int {
     int part_a = part_with_feature(part, flag, unbroken);
     if ((part_a >= 0) && parts[part_a].is_available()) { return part_a; }
     return -1;
 }
 
-int vehicle::avail_part_with_feature(int part, const std::string& flag, bool unbroken) const {
+auto vehicle::avail_part_with_feature(int part, const std::string& flag, bool unbroken) const
+    -> int {
     return avail_part_with_feature(parts[part].mount, flag, unbroken);
 }
 
-int vehicle::avail_part_with_feature(
-    const tripoint_mnt_veh& pt, const std::string& flag, bool unbroken) const {
+auto vehicle::avail_part_with_feature(
+    const tripoint_mnt_veh& pt, const std::string& flag, bool unbroken) const -> int {
     int part_a = part_with_feature(pt, flag, unbroken);
     if ((part_a >= 0) && parts[part_a].is_available()) { return part_a; }
     return -1;
 }
 
-bool vehicle::has_part(const std::string& flag, bool enabled) const {
+auto vehicle::has_part(const std::string& flag, bool enabled) const -> bool {
     return std::ranges::any_of(parts, [&flag, &enabled](const vehicle_part& e) {
         return !e.removed && (!enabled || e.enabled) && !e.is_broken() && e.info().has_flag(flag);
     });
 }
 
-bool vehicle::has_part(const vpart_bitflags& flag, bool enabled) const {
+auto vehicle::has_part(const vpart_bitflags& flag, bool enabled) const -> bool {
     return std::ranges::any_of(parts, [&flag, &enabled](const vehicle_part& e) {
         return !e.removed && (!enabled || e.enabled) && !e.is_broken() && e.info().has_flag(flag);
     });
 }
 
-bool vehicle::has_part(const tripoint_bub_ms& pos, const std::string& flag, bool enabled) const {
+auto vehicle::has_part(const tripoint_bub_ms& pos, const std::string& flag, bool enabled) const
+    -> bool {
     const auto relative_pos = pos - bub_ms_location();
 
     for (const auto& e : parts) {
@@ -3005,7 +3030,7 @@ bool vehicle::has_part(const tripoint_bub_ms& pos, const std::string& flag, bool
     return false;
 }
 
-int vehicle::obstacle_at_position(const tripoint_mnt_veh& pos) const {
+auto vehicle::obstacle_at_position(const tripoint_mnt_veh& pos) const -> int {
     int i = part_with_feature(pos, "OBSTACLE", true);
 
     if (i == -1) { return -1; }
@@ -3017,7 +3042,7 @@ int vehicle::obstacle_at_position(const tripoint_mnt_veh& pos) const {
     return i;
 }
 
-int vehicle::opaque_at_position(const tripoint_mnt_veh& pos) const {
+auto vehicle::opaque_at_position(const tripoint_mnt_veh& pos) const -> int {
     int i = part_with_feature(pos, "OPAQUE", true);
 
     if (i == -1) { return -1; }
@@ -3029,8 +3054,9 @@ int vehicle::opaque_at_position(const tripoint_mnt_veh& pos) const {
     return i;
 }
 
-std::vector<vehicle_part*> vehicle::get_parts_at(
-    const tripoint_bub_ms& pos, const std::string& flag, const part_status_flag condition) {
+auto vehicle::get_parts_at(
+    const tripoint_bub_ms& pos, const std::string& flag, const part_status_flag condition)
+    -> std::vector<vehicle_part*> {
     const auto relative_pos = pos - bub_ms_location();
     std::vector<vehicle_part*> res;
     for (auto& e : parts) {
@@ -3046,8 +3072,9 @@ std::vector<vehicle_part*> vehicle::get_parts_at(
     return res;
 }
 
-std::vector<const vehicle_part*> vehicle::get_parts_at(
-    const tripoint_bub_ms& pos, const std::string& flag, const part_status_flag condition) const {
+auto vehicle::get_parts_at(
+    const tripoint_bub_ms& pos, const std::string& flag, const part_status_flag condition) const
+    -> std::vector<const vehicle_part*> {
     const auto relative_pos = pos - bub_ms_location();
     std::vector<const vehicle_part*> res;
     for (const auto& e : parts) {
@@ -3063,7 +3090,7 @@ std::vector<const vehicle_part*> vehicle::get_parts_at(
     return res;
 }
 
-std::optional<std::string> vpart_position::get_label() const {
+auto vpart_position::get_label() const -> std::optional<std::string> {
     const auto it = vehicle().labels.find(label(mount()));
     if (it == vehicle().labels.end()) { return std::nullopt; }
     if (it->text.empty()) {
@@ -3086,7 +3113,7 @@ void vpart_position::set_label(const std::string& text) const {
     }
 }
 
-int vehicle::next_part_to_close(int p, bool outside) const {
+auto vehicle::next_part_to_close(int p, bool outside) const -> int {
     std::vector<int> parts_here = parts_at_relative(parts[p].mount, true);
 
     // We want reverse, since we close the outermost thing first (curtains), and then the innermost
@@ -3103,7 +3130,7 @@ int vehicle::next_part_to_close(int p, bool outside) const {
     return -1;
 }
 
-int vehicle::next_part_to_open(int p, bool outside) const {
+auto vehicle::next_part_to_open(int p, bool outside) const -> int {
     std::vector<int> parts_here = parts_at_relative(parts[p].mount, true);
 
     // We want forwards, since we open the innermost thing first (curtains), and then the innermost
@@ -3117,50 +3144,53 @@ int vehicle::next_part_to_open(int p, bool outside) const {
     return -1;
 }
 
-vehicle_part_with_feature_range<std::string> vehicle::get_avail_parts(std::string feature) const {
+auto vehicle::get_avail_parts(std::string feature) const
+    -> vehicle_part_with_feature_range<std::string> {
     return vehicle_part_with_feature_range<std::string>(
         const_cast<vehicle&>(*this), std::move(feature),
         (part_status_flag::working | part_status_flag::available));
 }
 
-vehicle_part_with_feature_range<vpart_bitflags> vehicle::get_avail_parts(
-    const vpart_bitflags feature) const {
+auto vehicle::get_avail_parts(const vpart_bitflags feature) const
+    -> vehicle_part_with_feature_range<vpart_bitflags> {
     return vehicle_part_with_feature_range<vpart_bitflags>(
         const_cast<vehicle&>(*this), feature,
         (part_status_flag::working | part_status_flag::available));
 }
 
-vehicle_part_with_feature_range<std::string> vehicle::get_parts_including_carried(
-    std::string feature) const {
+auto vehicle::get_parts_including_carried(std::string feature) const
+    -> vehicle_part_with_feature_range<std::string> {
     return vehicle_part_with_feature_range<
         std::string>(const_cast<vehicle&>(*this), std::move(feature), part_status_flag::working);
 }
 
-vehicle_part_with_feature_range<vpart_bitflags> vehicle::get_parts_including_carried(
-    const vpart_bitflags feature) const {
+auto vehicle::get_parts_including_carried(const vpart_bitflags feature) const
+    -> vehicle_part_with_feature_range<vpart_bitflags> {
     return vehicle_part_with_feature_range<
         vpart_bitflags>(const_cast<vehicle&>(*this), feature, part_status_flag::working);
 }
 
-vehicle_part_with_feature_range<std::string> vehicle::get_any_parts(std::string feature) const {
+auto vehicle::get_any_parts(std::string feature) const
+    -> vehicle_part_with_feature_range<std::string> {
     return vehicle_part_with_feature_range<
         std::string>(const_cast<vehicle&>(*this), std::move(feature), part_status_flag::any);
 }
 
-vehicle_part_with_feature_range<vpart_bitflags> vehicle::get_any_parts(
-    const vpart_bitflags feature) const {
+auto vehicle::get_any_parts(const vpart_bitflags feature) const
+    -> vehicle_part_with_feature_range<vpart_bitflags> {
     return vehicle_part_with_feature_range<
         vpart_bitflags>(const_cast<vehicle&>(*this), feature, part_status_flag::any);
 }
 
-vehicle_part_with_feature_range<std::string> vehicle::get_enabled_parts(std::string feature) const {
+auto vehicle::get_enabled_parts(std::string feature) const
+    -> vehicle_part_with_feature_range<std::string> {
     return vehicle_part_with_feature_range<std::string>(
         const_cast<vehicle&>(*this), std::move(feature),
         (part_status_flag::enabled | part_status_flag::working | part_status_flag::available));
 }
 
-vehicle_part_with_feature_range<vpart_bitflags> vehicle::get_enabled_parts(
-    const vpart_bitflags feature) const {
+auto vehicle::get_enabled_parts(const vpart_bitflags feature) const
+    -> vehicle_part_with_feature_range<vpart_bitflags> {
     return vehicle_part_with_feature_range<vpart_bitflags>(
         const_cast<vehicle&>(*this), feature,
         (part_status_flag::enabled | part_status_flag::working | part_status_flag::available));
@@ -3172,7 +3202,7 @@ vehicle_part_with_feature_range<vpart_bitflags> vehicle::get_enabled_parts(
  * a extendable protusion part
  * @return A list of indices to all parts with the structure location or otherwise standalone
  */
-std::vector<int> vehicle::all_standalone_parts() const {
+auto vehicle::all_standalone_parts() const -> std::vector<int> {
     std::vector<int> parts_found;
     for (size_t part_index = 0; part_index < parts.size(); ++part_index) {
         if ((part_info(part_index).location == part_location_structure
@@ -3189,7 +3219,7 @@ std::vector<int> vehicle::all_standalone_parts() const {
  * @param location The location slot to get parts for.
  * @return A list of indices to all parts with the specified location.
  */
-std::vector<int> vehicle::all_parts_at_location(const std::string& location) const {
+auto vehicle::all_parts_at_location(const std::string& location) const -> std::vector<int> {
     std::vector<int> parts_found;
     for (size_t part_index = 0; part_index < parts.size(); ++part_index) {
         if (part_info(part_index).location == location && !parts[part_index].removed) {
@@ -3204,7 +3234,7 @@ std::vector<int> vehicle::all_parts_at_location(const std::string& location) con
 // therefore the part index is now invalid shifted by one or two ( depending on how many other NPCs
 // working on this vehicle ) so loop over the part indexes in reverse order to get the next one down
 // that matches the part type we wanted to remove
-int vehicle::get_next_shifted_index(int original_index, Character& who) {
+auto vehicle::get_next_shifted_index(int original_index, Character& who) -> int {
     int ret_index = original_index;
     bool found_shifted_index = false;
     for (vehicle_part& part : parts | std::views::reverse) {
@@ -3233,7 +3263,8 @@ int vehicle::get_next_shifted_index(int original_index, Character& who) {
  * @return A list of lists of indices of all parts sharing the flag and contiguous with the part
  * on the X or Y axis. Returns 0, 1, or 2 lists of indices.
  */
-std::vector<std::vector<int>> vehicle::find_lines_of_parts(int part, const std::string& flag) {
+auto vehicle::find_lines_of_parts(int part, const std::string& flag)
+    -> std::vector<std::vector<int>> {
     const auto possible_parts = get_avail_parts(flag);
     std::vector<std::vector<int>> ret_parts;
     if (possible_parts.empty()) { return ret_parts; }
@@ -3305,7 +3336,7 @@ std::vector<std::vector<int>> vehicle::find_lines_of_parts(int part, const std::
     return ret_parts;
 }
 
-bool vehicle::part_flag(int part, const std::string& flag) const {
+auto vehicle::part_flag(int part, const std::string& flag) const -> bool {
     if (part < 0 || part >= static_cast<int>(parts.size()) || parts[part].removed) {
         return false;
     } else {
@@ -3313,7 +3344,7 @@ bool vehicle::part_flag(int part, const std::string& flag) const {
     }
 }
 
-bool vehicle::part_flag(int part, const vpart_bitflags flag) const {
+auto vehicle::part_flag(int part, const vpart_bitflags flag) const -> bool {
     if (part < 0 || part >= static_cast<int>(parts.size()) || parts[part].removed) {
         return false;
     } else {
@@ -3321,7 +3352,7 @@ bool vehicle::part_flag(int part, const vpart_bitflags flag) const {
     }
 }
 
-int vehicle::part_at(const tripoint_rel_ms& dp) const {
+auto vehicle::part_at(const tripoint_rel_ms& dp) const -> int {
     for (const vpart_reference& vp : get_all_parts()) {
         const vehicle_part& p = vp.part();
         if (!p.removed && p.precalc[0] == dp.xy() && p.mount.z() + p.z_terrain[0] == dp.z()) {
@@ -3339,7 +3370,7 @@ int vehicle::part_at(const tripoint_rel_ms& dp) const {
  * @param check_removed Check whether this part can be removed
  * @return The part index, -1 if it is not part of this vehicle.
  */
-int vehicle::index_of_part(const vehicle_part* const part, const bool check_removed) const {
+auto vehicle::index_of_part(const vehicle_part* const part, const bool check_removed) const -> int {
     if (part != nullptr) {
         for (const vpart_reference& vp : get_all_parts()) {
             const vehicle_part& next_part = vp.part();
@@ -3357,7 +3388,7 @@ int vehicle::index_of_part(const vehicle_part* const part, const bool check_remo
  * @param dp The local coordinate.
  * @return The index of the part that will be displayed.
  */
-int vehicle::part_displayed_at(const tripoint_mnt_veh& dp) const {
+auto vehicle::part_displayed_at(const tripoint_mnt_veh& dp) const -> int {
     // Z-order is implicitly defined in game::load_vehiclepart, but as
     // numbers directly set on parts rather than constants that can be
     // used elsewhere. A future refactor might be nice but this way
@@ -3395,7 +3426,7 @@ int vehicle::part_displayed_at(const tripoint_mnt_veh& dp) const {
     return parts_in_square[top_part];
 }
 
-int vehicle::roof_at_part(const int part) const {
+auto vehicle::roof_at_part(const int part) const -> int {
     std::vector<int> parts_in_square = parts_at_relative(parts[part].mount, true);
     for (const int p : parts_in_square) {
         if (part_info(p).location == "on_roof" || part_flag(p, "ROOF")) { return p; }
@@ -3436,7 +3467,7 @@ const struct {
     {static_cast<float>(-tan(units::to_radians(15_degrees))), false, false, false},
 };
 
-tripoint_rel_ms vehicle::coord_translate(const tripoint_mnt_veh& p) const {
+auto vehicle::coord_translate(const tripoint_mnt_veh& p) const -> tripoint_rel_ms {
     return rotate_to_world(pivot_rotation[0], pivot_anchor[0], p);
 }
 
@@ -3452,21 +3483,22 @@ void vehicle::coord_translate_reverse(
     q = rotate_to_local(dir, pivot, p);
 }
 
-tripoint_bub_ms vehicle::mount_to_bubble(const tripoint_mnt_veh& mount) const {
+auto vehicle::mount_to_bubble(const tripoint_mnt_veh& mount) const -> tripoint_bub_ms {
     return bub_ms_location() + rotate_to_world(pivot_rotation[0], pivot_anchor[0], mount);
 }
 
-tripoint_bub_ms vehicle::mount_to_bubble(
-    const tripoint_mnt_veh& mount, const tripoint_rel_veh& offset) const {
+auto vehicle::mount_to_bubble(const tripoint_mnt_veh& mount, const tripoint_rel_veh& offset) const
+    -> tripoint_bub_ms {
     return mount_to_bubble(mount + offset);
 }
 
-tripoint_mnt_veh vehicle::bubble_to_mount(const tripoint_bub_ms& p) const {
+auto vehicle::bubble_to_mount(const tripoint_bub_ms& p) const -> tripoint_mnt_veh {
     return rotate_to_local(pivot_rotation[0], pivot_anchor[0], p - bub_ms_location());
 }
 
-tripoint_rel_ms vehicle::rotate_to_world(
-    units::angle dir, const tripoint_mnt_veh& pivot, const tripoint_mnt_veh& p) const {
+auto vehicle::rotate_to_world(
+    units::angle dir, const tripoint_mnt_veh& pivot, const tripoint_mnt_veh& p) const
+    -> tripoint_rel_ms {
     int increment = angle_to_increment(dir);
     auto relative = p - pivot;
     float skew = std::trunc(relative.x() * rotation_info[increment].gradient);
@@ -3481,8 +3513,9 @@ tripoint_rel_ms vehicle::rotate_to_world(
     return tripoint_rel_ms(result);
 }
 
-tripoint_mnt_veh vehicle::rotate_to_local(
-    units::angle dir, const tripoint_mnt_veh& pivot, const tripoint_rel_ms& p) const {
+auto vehicle::rotate_to_local(
+    units::angle dir, const tripoint_mnt_veh& pivot, const tripoint_rel_ms& p) const
+    -> tripoint_mnt_veh {
     int increment = angle_to_increment(dir);
 
     tripoint result = p.raw();
@@ -3498,15 +3531,15 @@ tripoint_mnt_veh vehicle::rotate_to_local(
     return tripoint_mnt_veh(result);
 }
 
-tripoint_abs_ms vehicle::mount_to_abs(const tripoint_mnt_veh& mount) const {
+auto vehicle::mount_to_abs(const tripoint_mnt_veh& mount) const -> tripoint_abs_ms {
     return abs_ms_location() + rotate_to_world(pivot_rotation[0], pivot_anchor[0], mount);
 }
 
-tripoint_mnt_veh vehicle::abs_to_mount(const tripoint_abs_ms& abs) const {
+auto vehicle::abs_to_mount(const tripoint_abs_ms& abs) const -> tripoint_mnt_veh {
     return rotate_to_local(pivot_rotation[0], pivot_anchor[0], abs - abs_ms_location());
 }
 
-int vehicle::angle_to_increment(units::angle dir) {
+auto vehicle::angle_to_increment(units::angle dir) -> int {
     int increment = (std::lround(to_degrees(dir)) % 360) / 15;
     if (increment < 0) { increment += 360 / 15; }
     return increment;
@@ -3529,9 +3562,9 @@ void vehicle::precalc_mounts(int idir, units::angle dir, const tripoint_mnt_veh&
     pivot_rotation[idir] = dir;
 }
 
-bool vehicle::check_rotated_intervening(
+auto vehicle::check_rotated_intervening(
     const tripoint_mnt_veh& from, const tripoint_mnt_veh& to,
-    bool (*check)(const vehicle*, const tripoint_mnt_veh&)) const {
+    bool (*check)(const vehicle*, const tripoint_mnt_veh&)) const -> bool {
     auto delta = to - from;
     if (abs(delta.x()) <= 1 && abs(delta.y()) <= 1) { // Just a normal move
         return true;
@@ -3562,19 +3595,20 @@ bool vehicle::check_rotated_intervening(
     return false;
 }
 
-bool vehicle::allowed_light(const tripoint_mnt_veh& from, const tripoint_mnt_veh& to) const {
+auto vehicle::allowed_light(const tripoint_mnt_veh& from, const tripoint_mnt_veh& to) const
+    -> bool {
     return check_rotated_intervening(from, to, [](const vehicle* veh, const tripoint_mnt_veh& p) {
         return (veh->opaque_at_position(p) == -1);
     });
 }
 
-bool vehicle::allowed_move(const tripoint_mnt_veh& from, const tripoint_mnt_veh& to) const {
+auto vehicle::allowed_move(const tripoint_mnt_veh& from, const tripoint_mnt_veh& to) const -> bool {
     return check_rotated_intervening(from, to, [](const vehicle* veh, const tripoint_mnt_veh& p) {
         return (veh->obstacle_at_position(p) == -1);
     });
 }
 
-std::vector<int> vehicle::boarded_parts() const {
+auto vehicle::boarded_parts() const -> std::vector<int> {
     std::vector<int> res;
     for (const vpart_reference& vp : get_avail_parts(VPFLAG_BOARDABLE)) {
         if (vp.part().has_flag(vehicle_part::passenger_flag)) {
@@ -3584,7 +3618,7 @@ std::vector<int> vehicle::boarded_parts() const {
     return res;
 }
 
-std::vector<rider_data> vehicle::get_riders() const {
+auto vehicle::get_riders() const -> std::vector<rider_data> {
     std::vector<rider_data> res;
     for (const vpart_reference& vp : get_avail_parts(VPFLAG_BOARDABLE)) {
         Creature* rider = g->critter_at(vp.pos());
@@ -3598,7 +3632,7 @@ std::vector<rider_data> vehicle::get_riders() const {
     return res;
 }
 
-player* vehicle::get_passenger(int p) const {
+auto vehicle::get_passenger(int p) const -> player* {
     const auto& target_mount = parts[p].mount;
     for (auto& part : parts) {
         if (part.removed || part.mount != target_mount) { continue; }
@@ -3609,31 +3643,33 @@ player* vehicle::get_passenger(int p) const {
     return nullptr;
 }
 
-monster* vehicle::get_pet(int p) const {
+auto vehicle::get_pet(int p) const -> monster* {
     p = part_with_feature(p, VPFLAG_BOARDABLE, false);
     if (p >= 0) { return g->critter_at<monster>(bub_part_location(p), true); }
     return nullptr;
 }
 
-tripoint_abs_ms vehicle::abs_ms_location() const { return project_combine(abs_sm_pos, sm_ms_pos); }
+auto vehicle::abs_ms_location() const -> tripoint_abs_ms {
+    return project_combine(abs_sm_pos, sm_ms_pos);
+}
 
-tripoint_bub_ms vehicle::bub_ms_location() const {
+auto vehicle::bub_ms_location() const -> tripoint_bub_ms {
     return abs_to_map_local(get_map(), abs_ms_location());
 }
 
-tripoint_bub_ms vehicle::bub_part_location(const int& index) const {
+auto vehicle::bub_part_location(const int& index) const -> tripoint_bub_ms {
     return bub_part_location(parts[index]);
 }
 
-tripoint_bub_ms vehicle::bub_part_location(const vehicle_part& pt) const {
+auto vehicle::bub_part_location(const vehicle_part& pt) const -> tripoint_bub_ms {
     return bub_ms_location() + tripoint_rel_ms(pt.precalc[0], pt.mount.z() + pt.z_terrain[0]);
 }
 
-tripoint_abs_ms vehicle::abs_part_location(const int& index) const {
+auto vehicle::abs_part_location(const int& index) const -> tripoint_abs_ms {
     return abs_part_location(parts[index]);
 }
 
-tripoint_abs_ms vehicle::abs_part_location(const vehicle_part& pt) const {
+auto vehicle::abs_part_location(const vehicle_part& pt) const -> tripoint_abs_ms {
     return abs_ms_location() + tripoint_rel_ms(pt.precalc[0], pt.mount.z() + pt.z_terrain[0]);
 }
 
@@ -3644,13 +3680,13 @@ void vehicle::update_overmap(const tripoint_abs_sm& prev_sm) {
     get_overmapbuffer(dimension_id_).move_vehicle(this, prev_omt.xy());
 }
 
-units::mass vehicle::total_mass() const {
+auto vehicle::total_mass() const -> units::mass {
     if (mass_dirty) { refresh_mass(); }
 
     return mass_cache;
 }
 
-units::volume vehicle::total_folded_volume() const {
+auto vehicle::total_folded_volume() const -> units::volume {
     units::volume m = 0_ml;
     for (const vpart_reference& vp : get_all_parts()) {
         if (vp.part().removed) { continue; }
@@ -3659,20 +3695,20 @@ units::volume vehicle::total_folded_volume() const {
     return m;
 }
 
-tripoint_mnt_veh vehicle::rotated_center_of_mass() const {
+auto vehicle::rotated_center_of_mass() const -> tripoint_mnt_veh {
     // TODO: Bring back caching of this point
     calc_mass_center(true);
 
     return mass_center_precalc;
 }
 
-tripoint_mnt_veh vehicle::local_center_of_mass() const {
+auto vehicle::local_center_of_mass() const -> tripoint_mnt_veh {
     if (mass_center_no_precalc_dirty) { calc_mass_center(false); }
 
     return mass_center_no_precalc;
 }
 
-tripoint_rel_ms vehicle::pivot_displacement() const {
+auto vehicle::pivot_displacement() const -> tripoint_rel_ms {
     // precalc_mounts always produces a result that puts the pivot point at (0,0).
     // If the pivot point changes, this artificially moves the vehicle, as the position
     // of the old pivot point will appear to move from (posx+0, posy+0) to some other point
@@ -3684,7 +3720,7 @@ tripoint_rel_ms vehicle::pivot_displacement() const {
     return rotate_to_world(pivot_rotation[0], pivot_anchor[1], pivot_anchor[0]);
 }
 
-int vehicle::fuel_left(const itype_id& ftype, bool recurse) const {
+auto vehicle::fuel_left(const itype_id& ftype, bool recurse) const -> int {
     int fl = 0;
     if (ftype == fuel_type_battery) {
         fl = std::accumulate(
@@ -3729,18 +3765,18 @@ int vehicle::fuel_left(const itype_id& ftype, bool recurse) const {
 
     return fl;
 }
-int vehicle::fuel_left(const int p, bool recurse) const {
+auto vehicle::fuel_left(const int p, bool recurse) const -> int {
     return fuel_left(parts[p].fuel_current(), recurse);
 }
 
-int vehicle::engine_fuel_left(const int e, bool recurse) const {
+auto vehicle::engine_fuel_left(const int e, bool recurse) const -> int {
     if (static_cast<size_t>(e) < engines.size()) {
         return fuel_left(parts[engines[e]].fuel_current(), recurse);
     }
     return 0;
 }
 
-int vehicle::fuel_capacity(const itype_id& ftype) const {
+auto vehicle::fuel_capacity(const itype_id& ftype) const -> int {
     if (ftype == fuel_type_battery) {
         return std::accumulate(
             battery_parts.begin(), battery_parts.end(), 0,
@@ -3755,7 +3791,7 @@ int vehicle::fuel_capacity(const itype_id& ftype) const {
         });
 }
 
-int vehicle::drain(const itype_id& ftype, int amount) {
+auto vehicle::drain(const itype_id& ftype, int amount) -> int {
     if (ftype == fuel_type_battery) {
         // Batteries get special handling to take advantage of jumper
         // cables -- discharge_battery knows how to recurse properly
@@ -3782,7 +3818,7 @@ int vehicle::drain(const itype_id& ftype, int amount) {
     return drained;
 }
 
-int vehicle::drain(const int index, int amount) {
+auto vehicle::drain(const int index, int amount) -> int {
     if (index < 0 || index >= static_cast<int>(parts.size())) {
         debugmsg("Tried to drain an invalid part index: %d", index);
         return 0;
@@ -3800,7 +3836,7 @@ int vehicle::drain(const int index, int amount) {
     return drained;
 }
 
-int vehicle::basic_consumption(const itype_id& ftype) const {
+auto vehicle::basic_consumption(const itype_id& ftype) const -> int {
     int fcon = 0;
     for (size_t e = 0; e < engines.size(); ++e) {
         if (is_engine_type_on(e, ftype)) {
@@ -3818,7 +3854,7 @@ int vehicle::basic_consumption(const itype_id& ftype) const {
     return fcon;
 }
 
-int vehicle::consumption_per_hour(const itype_id& ftype, int fuel_rate_w) const {
+auto vehicle::consumption_per_hour(const itype_id& ftype, int fuel_rate_w) const -> int {
     item& fuel = *item::spawn_temporary(ftype);
     if (fuel_rate_w == 0 || fuel.has_flag(flag_PERPETUAL) || !engine_on) { return 0; }
 
@@ -3830,7 +3866,7 @@ int vehicle::consumption_per_hour(const itype_id& ftype, int fuel_rate_w) const 
     return kj_per_hour / kj_per_mL;
 }
 
-int vehicle::ideal_engine_power(bool safe) const {
+auto vehicle::ideal_engine_power(bool safe) const -> int {
     int pwr = 0;
     int cnt = 0;
 
@@ -3857,7 +3893,7 @@ int vehicle::ideal_engine_power(bool safe) const {
     return pwr;
 }
 
-int vehicle::total_power_w(const bool fueled, const bool safe) const {
+auto vehicle::total_power_w(const bool fueled, const bool safe) const -> int {
     int pwr = 0;
     int cnt = 0;
 
@@ -3884,14 +3920,15 @@ int vehicle::total_power_w(const bool fueled, const bool safe) const {
     return pwr;
 }
 
-bool vehicle::is_moving() const { return velocity != 0; }
+auto vehicle::is_moving() const -> bool { return velocity != 0; }
 
-bool vehicle::can_use_rails() const {
+auto vehicle::can_use_rails() const -> bool {
     // Do not allow vehicles without rail wheels or with mixed wheels
     return !rail_wheelcache.empty() && wheelcache.size() == rail_wheelcache.size();
 }
 
-int vehicle::ground_acceleration(const bool fueled, int at_vel_in_vmi, const bool ideal) const {
+auto vehicle::ground_acceleration(const bool fueled, int at_vel_in_vmi, const bool ideal) const
+    -> int {
     if (!(engine_on || skidding)) { return 0; }
     int target_cmps = std::max(at_vel_in_vmi, std::max(447, max_velocity(fueled) / 4));
     double weight = to_kilogram(total_mass());
@@ -3905,7 +3942,8 @@ int vehicle::ground_acceleration(const bool fueled, int at_vel_in_vmi, const boo
     return accel_at_vel;
 }
 
-int vehicle::aircraft_acceleration(const bool fueled, int at_vel_in_vmi, const bool ideal) const {
+auto vehicle::aircraft_acceleration(const bool fueled, int at_vel_in_vmi, const bool ideal) const
+    -> int {
     (void)at_vel_in_vmi;
     if (!(engine_on || is_flying)) { return 0; }
     const double thrust = total_thrust(fueled, ideal);
@@ -3914,7 +3952,8 @@ int vehicle::aircraft_acceleration(const bool fueled, int at_vel_in_vmi, const b
     return accel_at_vel;
 }
 
-int vehicle::water_acceleration(const bool fueled, int at_vel_in_vmi, const bool ideal) const {
+auto vehicle::water_acceleration(const bool fueled, int at_vel_in_vmi, const bool ideal) const
+    -> int {
     if (!(engine_on || skidding)) { return 0; }
     int target_cmps = std::max(at_vel_in_vmi, std::max(447, max_water_velocity(fueled) / 4));
     double weight = to_kilogram(total_mass());
@@ -3931,7 +3970,7 @@ int vehicle::water_acceleration(const bool fueled, int at_vel_in_vmi, const bool
 // cubic equation solution
 // don't use complex numbers unless necessary and it's usually not
 // see https://math.vanderbilt.edu/schectex/courses/cubic/ for the gory details
-static double simple_cubic_solution(double a, double b, double c, double d) {
+static auto simple_cubic_solution(double a, double b, double c, double d) -> double {
     double p = -b / (3 * a);
     double q = p * p * p + (b * c - 3 * a * d) / (6 * a * a);
     double r = c / (3 * a);
@@ -3961,7 +4000,7 @@ static double simple_cubic_solution(double a, double b, double c, double d) {
     }
 }
 
-int vehicle::acceleration(const bool fueled, int at_vel_in_vmi) const {
+auto vehicle::acceleration(const bool fueled, int at_vel_in_vmi) const -> int {
     if (is_watercraft()) {
         return water_acceleration(fueled, at_vel_in_vmi);
     } else if (is_aircraft() && is_flying) {
@@ -3970,7 +4009,7 @@ int vehicle::acceleration(const bool fueled, int at_vel_in_vmi) const {
     return ground_acceleration(fueled, at_vel_in_vmi);
 }
 
-int vehicle::current_acceleration(const bool fueled) const {
+auto vehicle::current_acceleration(const bool fueled) const -> int {
     return acceleration(fueled, std::abs(velocity));
 }
 
@@ -3999,7 +4038,7 @@ int vehicle::current_acceleration(const bool fueled) const {
 // c_air_drag * v^3 + c_rolling_drag * v^2 + c_rolling_drag * 33.3 * v - engine power = 0
 // solve for v with the simplified cubic equation solver
 // got it? quiz on Wednesday.
-int vehicle::max_ground_velocity(const bool fueled, const bool ideal) const {
+auto vehicle::max_ground_velocity(const bool fueled, const bool ideal) const -> int {
     int total_engine_w = (ideal ? ideal_engine_power() : total_power_w(fueled));
     double c_rolling_drag = coeff_rolling_drag();
     double max_in_mps = simple_cubic_solution(
@@ -4020,7 +4059,7 @@ int vehicle::max_ground_velocity(const bool fueled, const bool ideal) const {
 // engine_power = ( c_water_drag + c_air_drag ) * velocity^3
 // velocity^3 = engine_power / ( c_water_drag + c_air_drag )
 // velocity = cube root( engine_power / ( c_water_drag + c_air_drag ) )
-int vehicle::max_water_velocity(const bool fueled, const bool ideal) const {
+auto vehicle::max_water_velocity(const bool fueled, const bool ideal) const -> int {
     int total_engine_w = (ideal ? ideal_engine_power() : total_power_w(fueled));
     double total_drag = coeff_water_drag() + coeff_air_drag();
     double max_in_mps = std::cbrt(total_engine_w / total_drag);
@@ -4029,13 +4068,13 @@ int vehicle::max_water_velocity(const bool fueled, const bool ideal) const {
     return mps_to_cmps(max_in_mps);
 }
 
-int vehicle::max_air_velocity(const bool fueled, const bool ideal) const {
+auto vehicle::max_air_velocity(const bool fueled, const bool ideal) const -> int {
     const double max_air_mps = std::sqrt(total_thrust(fueled, false, ideal) / coeff_air_drag());
     // fly fast at your own risk
     return mps_to_cmps(max_air_mps);
 }
 
-int vehicle::max_velocity(const bool fueled, const bool ideal) const {
+auto vehicle::max_velocity(const bool fueled, const bool ideal) const -> int {
     if (is_flying && is_aircraft()) {
         return max_air_velocity(fueled, ideal);
     } else if (is_watercraft()) {
@@ -4045,7 +4084,7 @@ int vehicle::max_velocity(const bool fueled, const bool ideal) const {
     }
 }
 
-int vehicle::max_reverse_velocity(const bool fueled, const bool ideal) const {
+auto vehicle::max_reverse_velocity(const bool fueled, const bool ideal) const -> int {
     int max_vel = max_velocity(fueled, ideal);
     if (has_engine_type(fuel_type_battery, true)) {
         // Electric motors can go in reverse as well as forward
@@ -4057,7 +4096,7 @@ int vehicle::max_reverse_velocity(const bool fueled, const bool ideal) const {
 }
 
 // the same physics as max_ground_velocity, but with a smaller engine power
-int vehicle::safe_ground_velocity(const bool fueled, const bool ideal) const {
+auto vehicle::safe_ground_velocity(const bool fueled, const bool ideal) const -> int {
     for (size_t e = 0; e < parts.size(); e++) {
         const vehicle_part& vp = parts[e];
         int animal_vel = 0;
@@ -4086,20 +4125,20 @@ int vehicle::safe_ground_velocity(const bool fueled, const bool ideal) const {
 
 // TODO: Consider some kind of dynamic pressure based safe velocity
 // or something simpler maybe
-int vehicle::safe_aircraft_velocity(const bool fueled, const bool ideal) const {
+auto vehicle::safe_aircraft_velocity(const bool fueled, const bool ideal) const -> int {
     const double max_air_mps = std::sqrt(total_thrust(fueled, true, ideal) / coeff_air_drag());
     return mps_to_cmps(max_air_mps);
 }
 
 // the same physics as max_water_velocity, but with a smaller engine power
-int vehicle::safe_water_velocity(const bool fueled, const bool ideal) const {
+auto vehicle::safe_water_velocity(const bool fueled, const bool ideal) const -> int {
     int total_engine_w = (ideal ? ideal_engine_power(true) : total_power_w(fueled, true));
     double total_drag = coeff_water_drag() + coeff_air_drag();
     double safe_in_mps = std::cbrt(total_engine_w / total_drag);
     return mps_to_cmps(safe_in_mps);
 }
 
-int vehicle::safe_velocity(const bool fueled) const {
+auto vehicle::safe_velocity(const bool fueled) const -> int {
     if (is_flying && is_aircraft()) {
         return safe_aircraft_velocity(fueled);
     } else if (is_watercraft()) {
@@ -4109,7 +4148,7 @@ int vehicle::safe_velocity(const bool fueled) const {
     }
 }
 
-bool vehicle::do_environmental_effects(const int turns) {
+auto vehicle::do_environmental_effects(const int turns) -> bool {
     bool needed = false;
     // check for smoking parts
     for (const vpart_reference& vp : get_all_parts()) {
@@ -4245,14 +4284,14 @@ void vehicle::noise_and_smoke(int load, time_duration time) {
     sounds::sound(se);
 }
 
-int vehicle::wheel_area() const {
+auto vehicle::wheel_area() const -> int {
     int total_area = 0;
     for (const int& wheel_index : wheelcache) { total_area += parts[wheel_index].wheel_area(); }
 
     return total_area;
 }
 
-float vehicle::average_or_rating() const {
+auto vehicle::average_or_rating() const -> float {
     if (wheelcache.empty()) { return 0.0f; }
     float total_rating = 0;
     for (const int& wheel_index : wheelcache) {
@@ -4261,7 +4300,7 @@ float vehicle::average_or_rating() const {
     return total_rating / wheelcache.size();
 }
 
-static double tile_to_width(int tiles) {
+static auto tile_to_width(int tiles) -> double {
     if (tiles < 1) {
         return 0.1;
     } else if (tiles < 6) {
@@ -4291,7 +4330,7 @@ struct drag_column {
     int last = maxrow;
 };
 
-double vehicle::coeff_air_drag() const {
+auto vehicle::coeff_air_drag() const -> double {
     if (!coeff_air_dirty) { return coefficient_air_resistance; }
     constexpr double c_air_base = 0.25;
     constexpr double c_air_mod = 0.1;
@@ -4428,7 +4467,7 @@ double vehicle::coeff_air_drag() const {
     return coefficient_air_resistance;
 }
 
-double vehicle::coeff_balloon_drag() const {
+auto vehicle::coeff_balloon_drag() const -> double {
     double volume = std::
         accumulate(balloons.begin(), balloons.end(), double{0.0}, [&](double acc, int balloon) {
             const double height{parts[balloon].info().balloon_height()};
@@ -4437,7 +4476,7 @@ double vehicle::coeff_balloon_drag() const {
     return std::pow(volume, 2 / 3);
 }
 
-double vehicle::coeff_rolling_drag() const {
+auto vehicle::coeff_rolling_drag() const -> double {
     if (!coeff_rolling_dirty) { return coefficient_rolling_resistance; }
     constexpr double wheel_ratio = 1.25;
     constexpr double base_wheels = 4.0;
@@ -4465,31 +4504,31 @@ double vehicle::coeff_rolling_drag() const {
     return coefficient_rolling_resistance;
 }
 
-double vehicle::water_hull_height() const {
+auto vehicle::water_hull_height() const -> double {
     if (coeff_water_dirty) { coeff_water_drag(); }
     return hull_height;
 }
 
-double vehicle::water_draft() const {
+auto vehicle::water_draft() const -> double {
     if (coeff_water_dirty) { coeff_water_drag(); }
     return draft_m;
 }
 
-bool vehicle::can_float() const {
+auto vehicle::can_float() const -> bool {
     if (coeff_water_dirty) { coeff_water_drag(); }
     int float_force = max_buoyancy() + total_balloon_lift();
     return to_newton(total_mass()) <= float_force;
 }
 
 
-double vehicle::total_rotor_area() const {
+auto vehicle::total_rotor_area() const -> double {
     return std::accumulate(rotors.begin(), rotors.end(), 0.0, [&](double acc, int rotor) {
         const double radius{parts[rotor].info().rotor_diameter() / 2.0};
         return acc + M_PI * std::pow(radius, 2);
     });
 }
 
-double vehicle::total_propeller_area() const {
+auto vehicle::total_propeller_area() const -> double {
     return std::
         accumulate(propellers.begin(), propellers.end(), 0.0, [&](double acc, int propeller) {
             const double radius{parts[propeller].info().propeller_diameter() / 2.0};
@@ -4501,7 +4540,7 @@ double vehicle::total_propeller_area() const {
 // 1 tile is 1 m^2, but with an undefined height
 // So balloon height and balloon weight will be what changes
 // Returns a value in newtons
-double vehicle::total_balloon_lift() const {
+auto vehicle::total_balloon_lift() const -> double {
     return GRAVITY_OF_EARTH
          * std::accumulate(
                balloons.begin(), balloons.end(), double{0.0}, [&](double acc, int balloon) {
@@ -4512,7 +4551,7 @@ double vehicle::total_balloon_lift() const {
 
 // Wing Lift
 // Based on air being 1kg/m^3
-double vehicle::total_wing_lift() const {
+auto vehicle::total_wing_lift() const -> double {
     const double meterpersec = cmps_to_mps(velocity);
     const double meterpersecsquared = std::pow(meterpersec, 2);
     return meterpersecsquared
@@ -4525,7 +4564,8 @@ double vehicle::total_wing_lift() const {
 
 // constants were converted from imperial to SI goodness
 // returns as newton
-double vehicle::thrust_of_rotorcraft(const bool fuelled, const bool safe, const bool ideal) const {
+auto vehicle::thrust_of_rotorcraft(const bool fuelled, const bool safe, const bool ideal) const
+    -> double {
     constexpr double coefficient = 0.8642;
     constexpr double exponentiation = -0.3107;
 
@@ -4543,8 +4583,8 @@ double vehicle::thrust_of_rotorcraft(const bool fuelled, const bool safe, const 
 
 // constants were converted from imperial to SI goodness
 // returns as newton
-double vehicle::foward_thrust_of_propellers(
-    const bool fuelled, const bool safe, const bool ideal) const {
+auto vehicle::foward_thrust_of_propellers(
+    const bool fuelled, const bool safe, const bool ideal) const -> double {
     constexpr double coefficient = 0.8642;
     constexpr double exponentiation = -0.3107;
 
@@ -4561,15 +4601,15 @@ double vehicle::foward_thrust_of_propellers(
 }
 
 // get sum of horizontal thrust from all lifting parts
-double vehicle::total_thrust(const bool fuelled, const bool safe, const bool ideal) const {
+auto vehicle::total_thrust(const bool fuelled, const bool safe, const bool ideal) const -> double {
     return thrust_of_rotorcraft(fuelled, safe, ideal)
          + foward_thrust_of_propellers(fuelled, safe, ideal);
 }
 
 // get sum of lift from all lifting parts
-double vehicle::total_lift(
+auto vehicle::total_lift(
     const bool fuelled, const bool safe, const bool ideal, const bool unpowered,
-    const bool idle) const {
+    const bool idle) const -> double {
     if (idle) { return total_balloon_lift(); }
     if (unpowered) {
         return total_balloon_lift() + total_wing_lift();
@@ -4579,7 +4619,7 @@ double vehicle::total_lift(
     }
 }
 
-int vehicle::get_takeoff_speed(std::string speed_type) const {
+auto vehicle::get_takeoff_speed(std::string speed_type) const -> int {
     const int needed_force =
         to_newton(total_mass()) - thrust_of_rotorcraft(true, false, true) - total_balloon_lift();
 
@@ -4607,38 +4647,44 @@ int vehicle::get_takeoff_speed(std::string speed_type) const {
 // For some reason, just checking total lift > 0 doesn't seem to work if the vehicle hasn't been
 // piloted before, which was impacting the design view. This fixes it, and can be used to check if
 // the vehicle HAS lift, but not enough to fly by doing has_lift && !has_sufficient_lift
-bool vehicle::has_lift() const {
+auto vehicle::has_lift() const -> bool {
     return has_part(VPFLAG_ROTOR) || has_part(VPFLAG_BALLOON) || has_part(VPFLAG_WING);
 }
 
-bool vehicle::has_sufficient_lift(const bool unpowered, const bool idle) const {
+auto vehicle::has_sufficient_lift(const bool unpowered, const bool idle) const -> bool {
     return total_lift(true, false, false, unpowered, idle) > to_newton(total_mass());
 }
 
-double vehicle::get_lift_percent(const bool unpowered) const {
+auto vehicle::get_lift_percent(const bool unpowered) const -> double {
     return std::max(0.0, 1 - (total_lift(true, false, false, unpowered) / to_newton(total_mass())));
 }
 
-bool vehicle::is_rotorcraft() const { return (has_part(VPFLAG_ROTOR)) && has_sufficient_lift(); }
+auto vehicle::is_rotorcraft() const -> bool {
+    return (has_part(VPFLAG_ROTOR)) && has_sufficient_lift();
+}
 // requires vehicle to have sufficient rotor lift
-bool vehicle::is_aircraft() const {
+auto vehicle::is_aircraft() const -> bool {
     return (has_part(VPFLAG_ROTOR) || has_part(VPFLAG_WING) || has_part(VPFLAG_BALLOON))
         && has_sufficient_lift();
 }
 
-int vehicle::get_z_change() const { return requested_z_change; }
+auto vehicle::get_z_change() const -> int { return requested_z_change; }
 
-bool vehicle::is_flying_in_air() const { return is_flying; }
+auto vehicle::is_flying_in_air() const -> bool { return is_flying; }
 
 void vehicle::set_flying(bool new_flying_value) { is_flying = new_flying_value; }
 
-bool vehicle::is_watercraft() const { return is_floating || (in_water && wheelcache.empty()); }
+auto vehicle::is_watercraft() const -> bool {
+    return is_floating || (in_water && wheelcache.empty());
+}
 
-bool vehicle::is_in_water(bool deep_water) const { return deep_water ? is_floating : in_water; }
+auto vehicle::is_in_water(bool deep_water) const -> bool {
+    return deep_water ? is_floating : in_water;
+}
 
 static constexpr double water_density = 1000.0; // kg/m^3
 
-double vehicle::coeff_water_drag() const {
+auto vehicle::coeff_water_drag() const -> double {
     if (!coeff_water_dirty) { return coefficient_water_resistance; }
     std::vector<int> hull_indices = all_parts_at_location(part_location_under);
     double hull_coverage;
@@ -4697,13 +4743,13 @@ double vehicle::coeff_water_drag() const {
     return coefficient_water_resistance;
 }
 
-double vehicle::max_buoyancy() const {
+auto vehicle::max_buoyancy() const -> double {
     if (coeff_water_dirty) { coeff_water_drag(); }
     const double total_volume = hull_area * water_hull_height();
     return total_volume * water_density * GRAVITY_OF_EARTH;
 }
 
-float vehicle::k_traction(float wheel_traction_area) const {
+auto vehicle::k_traction(float wheel_traction_area) const -> float {
     if (is_floating) { return can_float() ? 1.0f : -1.0f; }
     if (is_flying) {
         // Dont prematurely kill our flight, we'll fall soon enough
@@ -4721,11 +4767,11 @@ float vehicle::k_traction(float wheel_traction_area) const {
     return std::max(0.1f, traction);
 }
 
-int vehicle::static_drag(bool actual) const {
+auto vehicle::static_drag(bool actual) const -> int {
     return extra_drag + (actual && !engine_on && !is_towed() && brake_hold ? -1500 : 0);
 }
 
-float vehicle::strain() const {
+auto vehicle::strain() const -> float {
     int mv = max_velocity();
     int sv = safe_velocity();
     if (mv <= sv) { mv = sv + 1; }
@@ -4736,7 +4782,7 @@ float vehicle::strain() const {
     }
 }
 
-bool vehicle::sufficient_wheel_config() const {
+auto vehicle::sufficient_wheel_config() const -> bool {
     if (wheelcache.empty()) {
         // No wheels!
         return false;
@@ -4776,7 +4822,7 @@ auto vehicle::vehicle_damage_summary() const -> std::pair<std::string, nc_color>
     return {_("destroyed"), c_dark_gray};
 }
 
-bool vehicle::is_owned_by(const Character& c, bool available_to_take) const {
+auto vehicle::is_owned_by(const Character& c, bool available_to_take) const -> bool {
     if (owner.is_null()) { return available_to_take; }
     if (!c.get_faction()) {
         debugmsg("vehicle::is_owned_by() player %s has no faction", c.disp_name());
@@ -4785,7 +4831,7 @@ bool vehicle::is_owned_by(const Character& c, bool available_to_take) const {
     return c.get_faction()->id == get_owner();
 }
 
-bool vehicle::is_old_owner(const Character& c, bool available_to_take) const {
+auto vehicle::is_old_owner(const Character& c, bool available_to_take) const -> bool {
     if (old_owner.is_null()) { return available_to_take; }
     if (!c.get_faction()) {
         debugmsg("vehicle::is_old_owner() player %s has no faction", c.disp_name());
@@ -4794,7 +4840,7 @@ bool vehicle::is_old_owner(const Character& c, bool available_to_take) const {
     return c.get_faction()->id == get_old_owner();
 }
 
-std::string vehicle::get_owner_name() const {
+auto vehicle::get_owner_name() const -> std::string {
     if (!g->faction_manager_ptr->get(owner)) {
         debugmsg("vehicle::get_owner_name() vehicle %s has no valid nor null faction id ",
                  disp_name());
@@ -4803,9 +4849,9 @@ std::string vehicle::get_owner_name() const {
     return _(g->faction_manager_ptr->get(owner)->name);
 }
 
-bool vehicle::has_owner() const { return !owner.is_null(); }
+auto vehicle::has_owner() const -> bool { return !owner.is_null(); }
 
-faction_id vehicle::get_owner() const { return owner; }
+auto vehicle::get_owner() const -> faction_id { return owner; }
 
 void vehicle::set_owner(const Character& c) {
     const auto faction = c.get_faction();
@@ -4820,9 +4866,9 @@ void vehicle::set_owner(const faction_id& new_owner) { owner = new_owner; }
 
 void vehicle::remove_owner() { owner = faction_id::NULL_ID(); }
 
-bool vehicle::has_old_owner() const { return !old_owner.is_null(); }
+auto vehicle::has_old_owner() const -> bool { return !old_owner.is_null(); }
 
-faction_id vehicle::get_old_owner() const { return old_owner; }
+auto vehicle::get_old_owner() const -> faction_id { return old_owner; }
 
 void vehicle::set_old_owner(const faction_id& temp_owner) {
     theft_time = calendar::turn;
@@ -4834,7 +4880,7 @@ void vehicle::remove_old_owner() {
     old_owner = faction_id::NULL_ID();
 }
 
-bool vehicle::handle_potential_theft(avatar& you, bool check_only, bool prompt) {
+auto vehicle::handle_potential_theft(avatar& you, bool check_only, bool prompt) -> bool {
     const bool is_owned_by_player = is_owned_by(you);
     bool has_witnesses;
     if (has_owner() && !is_owned_by_player) {
@@ -4891,7 +4937,7 @@ bool vehicle::handle_potential_theft(avatar& you, bool check_only, bool prompt) 
     return true;
 }
 
-bool vehicle::balanced_wheel_config() const {
+auto vehicle::balanced_wheel_config() const -> bool {
     auto min = tripoint_mnt_veh(tripoint_max);
     auto max = tripoint_mnt_veh(tripoint_min);
     // find the bounding box of the wheels
@@ -4910,11 +4956,11 @@ bool vehicle::balanced_wheel_config() const {
     return support.contains(local_center_of_mass());
 }
 
-bool vehicle::valid_wheel_config() const {
+auto vehicle::valid_wheel_config() const -> bool {
     return sufficient_wheel_config() && balanced_wheel_config();
 }
 
-float vehicle::steering_effectiveness() const {
+auto vehicle::steering_effectiveness() const -> float {
     if (is_floating) {
         // I'M ON A BOAT
         return can_float() ? 1.0f : 0.0f;
@@ -4949,7 +4995,7 @@ float vehicle::steering_effectiveness() const {
     return 0.0f;
 }
 
-float vehicle::handling_difficulty() const {
+auto vehicle::handling_difficulty() const -> float {
     const float steer = std::max(0.0f, steering_effectiveness());
     const float ktraction = k_traction(g->m.vehicle_wheel_traction(*this));
     const float aligned = std::max(0.0f, 1.0f - (face_vec() - dir_vec()).magnitude());
@@ -4963,7 +5009,7 @@ float vehicle::handling_difficulty() const {
     return velocity * diff_mod / vehicles::cmps_per_tile;
 }
 
-std::map<itype_id, int> vehicle::fuel_usage() const {
+auto vehicle::fuel_usage() const -> std::map<itype_id, int> {
     std::map<itype_id, int> ret;
     for (size_t i = 0; i < engines.size(); i++) {
         // Note: functions with "engine" in name do NOT take part indices
@@ -4987,7 +5033,7 @@ std::map<itype_id, int> vehicle::fuel_usage() const {
     return ret;
 }
 
-double vehicle::drain_energy(const itype_id& ftype, double energy_j) {
+auto vehicle::drain_energy(const itype_id& ftype, double energy_j) -> double {
     // Consumption of battery power is done differently.
     // From all batteries at once and doesn't change mass.
     if (ftype == fuel_type_battery) {
@@ -5087,7 +5133,7 @@ void vehicle::consume_fuel(int load, const int t_seconds, bool skip_electric) {
     }
 }
 
-std::vector<vehicle_part*> vehicle::lights(bool active) {
+auto vehicle::lights(bool active) -> std::vector<vehicle_part*> {
     std::vector<vehicle_part*> res;
     for (auto& e : parts) {
         if ((!active || e.enabled) && e.is_available() && e.is_light()) { res.push_back(&e); }
@@ -5095,7 +5141,7 @@ std::vector<vehicle_part*> vehicle::lights(bool active) {
     return res;
 }
 
-int vehicle::total_accessory_epower_w() const {
+auto vehicle::total_accessory_epower_w() const -> int {
     int epower = 0;
     for (const vpart_reference& vp : get_enabled_parts(VPFLAG_ENABLED_DRAINS_EPOWER)) {
         epower += vp.info().epower;
@@ -5103,7 +5149,7 @@ int vehicle::total_accessory_epower_w() const {
     return epower;
 }
 
-int vehicle::total_alternator_epower_w() const {
+auto vehicle::total_alternator_epower_w() const -> int {
     int epower = 0;
     if (engine_on) {
         // If the engine is on, the alternators are working.
@@ -5114,7 +5160,7 @@ int vehicle::total_alternator_epower_w() const {
     return epower;
 }
 
-int vehicle::total_engine_epower_w() const {
+auto vehicle::total_engine_epower_w() const -> int {
     int epower = 0;
 
     // Engines: can both produce (plasma) or consume (gas, diesel) epower.
@@ -5129,7 +5175,7 @@ int vehicle::total_engine_epower_w() const {
     return epower;
 }
 
-int vehicle::total_solar_epower_w() const {
+auto vehicle::total_solar_epower_w() const -> int {
     int epower_w = 0;
     for (int part : solar_panels) {
         if (parts[part].is_unavailable()) { continue; }
@@ -5146,8 +5192,7 @@ int vehicle::total_solar_epower_w() const {
     return epower_w * intensity;
 }
 
-int vehicle::total_wind_epower_w() const {
-    map& here = get_map();
+auto vehicle::total_wind_epower_w() const -> int {
     const oter_id& cur_om_ter =
         get_overmapbuffer(dimension_id_).ter(project_to<coords::omt>(abs_ms_location()));
     const weather_manager& weather = get_weather();
@@ -5165,7 +5210,7 @@ int vehicle::total_wind_epower_w() const {
     return epower_w;
 }
 
-int vehicle::total_water_wheel_epower_w() const {
+auto vehicle::total_water_wheel_epower_w() const -> int {
     int epower_w = 0;
     for (int part : water_wheels) {
         if (parts[part].is_unavailable()) { continue; }
@@ -5178,13 +5223,13 @@ int vehicle::total_water_wheel_epower_w() const {
     return epower_w;
 }
 
-int vehicle::net_battery_charge_rate_w() const {
+auto vehicle::net_battery_charge_rate_w() const -> int {
     return total_engine_epower_w() + total_alternator_epower_w() + total_accessory_epower_w()
          + total_solar_epower_w() + total_wind_epower_w() + total_water_wheel_epower_w()
          + max_reactor_epower_w();
 }
 
-int vehicle::max_reactor_epower_w() const {
+auto vehicle::max_reactor_epower_w() const -> int {
     int epower_w = 0;
     for (int elem : reactors) { epower_w += is_part_on(elem) ? part_epower_w(elem) : 0; }
     return epower_w;
@@ -5222,6 +5267,22 @@ void vehicle::power_parts(int turns) {
     int delta_energy_bat = power_to_energy_bat(epower, 1_turns);
     int storage_deficit_bat = std::
         max(0, fuel_capacity(fuel_type_battery) - fuel_left(fuel_type_battery) - delta_energy_bat);
+    // If there are reactors also include demand from connected vehicles and distribution grids
+    if (!reactors.empty()) {
+        using tvr = distribution_graph::traverse_visitor_result;
+        auto charge_veh = [&storage_deficit_bat](vehicle& veh) {
+            g->u.add_msg_if_player(m_debug, "CHv: %d", storage_deficit_bat);
+            storage_deficit_bat +=
+                veh.fuel_capacity(fuel_type_battery) - veh.fuel_left(fuel_type_battery);
+            return tvr::continue_further;
+        };
+        auto charge_grid = [&storage_deficit_bat](distribution_grid& grid) {
+            g->u.add_msg_if_player(m_debug, "CHg: %d", storage_deficit_bat);
+            storage_deficit_bat += (grid.get_resource_capacity() - grid.get_resource(false));
+            return tvr::continue_further;
+        };
+        distribution_graph::traverse(*this, charge_veh, charge_grid);
+    }
     // Reactors trigger only on demand. If we'd otherwise run out of power, see
     // if we can spin up the reactors.
     if (!reactors.empty() && storage_deficit_bat > 0) {
@@ -5306,11 +5367,11 @@ void vehicle::power_parts(int turns) {
     }
 }
 
-vehicle* vehicle::find_vehicle(const tripoint_abs_ms& where) {
+auto vehicle::find_vehicle(const tripoint_abs_ms& where) -> vehicle* {
     return find_vehicle(where, MAPBUFFER_REGISTRY.get(get_map().get_bound_dimension()));
 }
 
-vehicle* vehicle::find_vehicle(const tripoint_abs_ms& where, mapbuffer& mbuf) {
+auto vehicle::find_vehicle(const tripoint_abs_ms& where, mapbuffer& mbuf) -> vehicle* {
     // Is it in the reality bubble?
     auto veh_local = abs_to_bub(where);
     if (const optional_vpart_position vp = g->m.veh_at(veh_local)) { return &vp->vehicle(); }
@@ -5358,13 +5419,13 @@ struct vehicle_or_grid {
 
     vehicle_or_grid(Grid* grid): type(type_t::grid), grid(grid) {}
 
-    bool operator==(const vehicle_or_grid& other) const {
+    auto operator==(const vehicle_or_grid& other) const -> bool {
         return veh == other.veh && grid == other.grid;
     }
 
-    bool operator==(const vehicle* veh) const { return this->veh == veh; }
+    auto operator==(const vehicle* veh) const -> bool { return this->veh == veh; }
 
-    bool operator==(const distribution_grid* grid) const { return this->grid == grid; }
+    auto operator==(const distribution_grid* grid) const -> bool { return this->grid == grid; }
 };
 
 template <typename VehFunc, typename GridFunc, typename StartPoint>
@@ -5472,7 +5533,7 @@ void traverse(StartPoint& start, VehFunc veh_action, GridFunc grid_action) {
 
 } // namespace distribution_graph
 
-int vehicle::charge_battery(int amount, bool include_other_vehicles) {
+auto vehicle::charge_battery(int amount, bool include_other_vehicles) -> int {
     auto chargeable_parts = make_chargeable_battery_buckets(*this);
     auto lowest_charge_level = 0;
     while (amount > 0) {
@@ -5516,7 +5577,7 @@ int vehicle::charge_battery(int amount, bool include_other_vehicles) {
     return amount;
 }
 
-int vehicle::discharge_battery(int amount, bool recurse) {
+auto vehicle::discharge_battery(int amount, bool recurse) -> int {
     auto dischargeable_parts = make_dischargeable_battery_buckets(*this);
     auto highest_charge_level = 100;
     while (amount > 0) {
@@ -5725,13 +5786,17 @@ void vehicle::slow_leak() {
 }
 
 // total volume of all the things
-units::volume vehicle::stored_volume(const int part) const {
+auto vehicle::stored_volume(const int part) const -> units::volume {
     return get_items(part).stored_volume();
 }
 
-units::volume vehicle::max_volume(const int part) const { return get_items(part).max_volume(); }
+auto vehicle::max_volume(const int part) const -> units::volume {
+    return get_items(part).max_volume();
+}
 
-units::volume vehicle::free_volume(const int part) const { return get_items(part).free_volume(); }
+auto vehicle::free_volume(const int part) const -> units::volume {
+    return get_items(part).free_volume();
+}
 
 void vehicle::make_inactive(item& target) {
     auto cargo_parts = get_parts_at(target.bub_pos(), "CARGO", part_status_flag::any);
@@ -5779,7 +5844,7 @@ auto vehicle::get_cargo_recharge_targets() -> std::vector<cargo_recharge_target>
     return cargo_recharge_targets_;
 }
 
-detached_ptr<item> vehicle::add_charges(int part, detached_ptr<item>&& itm) {
+auto vehicle::add_charges(int part, detached_ptr<item>&& itm) -> detached_ptr<item> {
     if (!itm->count_by_charges()) {
         debugmsg("Add charges was called for an item not counted by charges!");
         return std::move(itm);
@@ -5795,7 +5860,7 @@ detached_ptr<item> vehicle::add_charges(int part, detached_ptr<item>&& itm) {
     return itm->charges > 0 ? std::move(itm) : detached_ptr<item>();
 }
 
-detached_ptr<item> vehicle::add_item(vehicle_part& pt, detached_ptr<item>&& obj) {
+auto vehicle::add_item(vehicle_part& pt, detached_ptr<item>&& obj) -> detached_ptr<item> {
     int idx = index_of_part(&pt);
     if (idx < 0) {
         debugmsg("Tried to add item to invalid part");
@@ -5804,7 +5869,7 @@ detached_ptr<item> vehicle::add_item(vehicle_part& pt, detached_ptr<item>&& obj)
     return add_item(idx, std::move(obj));
 }
 
-detached_ptr<item> vehicle::add_item(int part, detached_ptr<item>&& itm) {
+auto vehicle::add_item(int part, detached_ptr<item>&& itm) -> detached_ptr<item> {
     if (part < 0 || part >= static_cast<int>(parts.size())) {
         debugmsg("int part (%d) is out of range", part);
         return std::move(itm);
@@ -5850,7 +5915,7 @@ detached_ptr<item> vehicle::add_item(int part, detached_ptr<item>&& itm) {
     return detached_ptr<item>();
 }
 
-detached_ptr<item> vehicle::remove_item(int part, item* it) {
+auto vehicle::remove_item(int part, item* it) -> detached_ptr<item> {
     const location_vector<item>& veh_items = parts[part].items;
 
     const location_vector<item>::const_iterator iter =
@@ -5864,8 +5929,8 @@ detached_ptr<item> vehicle::remove_item(int part, item* it) {
     return det;
 }
 
-vehicle_stack::iterator vehicle::remove_item(
-    int part, vehicle_stack::const_iterator it, detached_ptr<item>* ret) {
+auto vehicle::remove_item(int part, vehicle_stack::const_iterator it, detached_ptr<item>* ret)
+    -> vehicle_stack::iterator {
     // remove from the active items cache (if it isn't there does nothing)
     active_items.remove(*it);
 
@@ -5875,11 +5940,11 @@ vehicle_stack::iterator vehicle::remove_item(
     return iter;
 }
 
-vehicle_stack vehicle::get_items(const int part) {
+auto vehicle::get_items(const int part) -> vehicle_stack {
     return vehicle_stack(&parts[part].items, bub_part_location(part), this, part);
 }
 
-vehicle_stack vehicle::get_items(const int part) const {
+auto vehicle::get_items(const int part) const -> vehicle_stack {
     // HACK: callers could modify items through this
     // TODO: a const version of vehicle_stack is needed
     return const_cast<vehicle*>(this)->get_items(part);
@@ -6007,7 +6072,7 @@ void vehicle::dump_items_from_part(const size_t index) {
     }
 }
 
-bool vehicle::decrement_summon_timer() {
+auto vehicle::decrement_summon_timer() -> bool {
     if (!summon_time_limit) { return false; }
     if (*summon_time_limit <= 0_turns) {
         for (const vpart_reference& vp : get_all_parts()) {
@@ -6093,7 +6158,7 @@ void vehicle::refresh() {
     // Used to sort part list so it displays properly when examining
     struct sort_veh_part_vector {
         vehicle* veh;
-        bool operator()(const int p1, const int p2) {
+        auto operator()(const int p1, const int p2) -> bool {
             return veh->part_info(p1).list_order < veh->part_info(p2).list_order;
         }
     } svpv = {this};
@@ -6205,7 +6270,7 @@ void vehicle::refresh_position() {
     }
 }
 
-tripoint_mnt_veh vehicle::pivot_point() const {
+auto vehicle::pivot_point() const -> tripoint_mnt_veh {
     if (pivot_dirty) { refresh_pivot(); }
 
     return pivot_cache;
@@ -6387,7 +6452,7 @@ void vehicle::do_towing_move() {
     }
 }
 
-bool vehicle::is_external_part(const tripoint_bub_ms& part_pt) const {
+auto vehicle::is_external_part(const tripoint_bub_ms& part_pt) const -> bool {
     for (const auto& elem : g->m.points_in_radius(part_pt, 1)) {
         const optional_vpart_position vp = g->m.veh_at(elem);
         if (!vp) { return true; }
@@ -6396,7 +6461,7 @@ bool vehicle::is_external_part(const tripoint_bub_ms& part_pt) const {
     return false;
 }
 
-bool vehicle::is_towing() const {
+auto vehicle::is_towing() const -> bool {
     bool ret = false;
     if (!tow_data.get_towed()) {
         return ret;
@@ -6410,7 +6475,7 @@ bool vehicle::is_towing() const {
     return ret;
 }
 
-bool vehicle::is_towed() const {
+auto vehicle::is_towed() const -> bool {
     bool ret = false;
     if (!tow_data.get_towed_by()) {
         return ret;
@@ -6425,7 +6490,7 @@ bool vehicle::is_towed() const {
     return ret;
 }
 
-int vehicle::get_tow_part() const {
+auto vehicle::get_tow_part() const -> int {
     for (const vpart_reference& vp : get_all_parts()) {
         const size_t p = vp.part_index();
         if (vp.part().removed) { continue; }
@@ -6435,7 +6500,7 @@ int vehicle::get_tow_part() const {
     return -1;
 }
 
-bool vehicle::has_tow_attached() const {
+auto vehicle::has_tow_attached() const -> bool {
     bool ret = false;
     for (const vpart_reference& vp : get_all_parts()) {
         const size_t p = vp.part_index();
@@ -6472,7 +6537,7 @@ void vehicle::set_tow_directions() {
     }
 }
 
-bool towing_data::set_towing(vehicle* tower_veh, vehicle* towed_veh) {
+auto towing_data::set_towing(vehicle* tower_veh, vehicle* towed_veh) -> bool {
     if (!towed_veh || !tower_veh) { return false; }
     towed_veh->tow_data.towed_by = tower_veh;
     tower_veh->tow_data.towing = towed_veh;
@@ -6508,7 +6573,7 @@ void vehicle::invalidate_towing(bool first_vehicle) {
 }
 
 // to be called on the towed vehicle
-bool vehicle::tow_cable_too_far() const {
+auto vehicle::tow_cable_too_far() const -> bool {
     if (!tow_data.get_towed_by()) {
         debugmsg("checking tow cable length on a vehicle that has no towing vehicle");
         return false;
@@ -6540,7 +6605,7 @@ bool vehicle::tow_cable_too_far() const {
 
 // the towing cable only starts pulling at a certain distance between the vehicles
 // to be called on the towing vehicle
-bool vehicle::no_towing_slack() const {
+auto vehicle::no_towing_slack() const -> bool {
     if (!tow_data.get_towed()) { return false; }
     int index = get_tow_part();
     if (index == -1) {
@@ -6621,7 +6686,7 @@ void vehicle::shed_loose_parts() {
     }
 }
 
-bool vehicle::enclosed_at(const tripoint_bub_ms& pos) {
+auto vehicle::enclosed_at(const tripoint_bub_ms& pos) -> bool {
     refresh_insides();
     std::vector<vehicle_part*> parts_here =
         get_parts_at(pos, "BOARDABLE", part_status_flag::working);
@@ -6674,7 +6739,7 @@ void vehicle::refresh_insides() {
     }
 }
 
-bool vpart_position::is_inside() const {
+auto vpart_position::is_inside() const -> bool {
     // TODO: this is a bit of a hack as refresh_insides has side effects
     // this should be called elsewhere and not in a function that intends to just query
     // it's also a no-op if the insides are up to date.
@@ -6687,7 +6752,7 @@ void vehicle::unboard_all() {
     for (auto& i : bp) { g->m.unboard_vehicle(bub_part_location(i)); }
 }
 
-int vehicle::damage(int p, int dmg, damage_type type, bool aimed, bool random_part) {
+auto vehicle::damage(int p, int dmg, damage_type type, bool aimed, bool random_part) -> int {
     if (dmg < 1) { return dmg; }
 
     std::vector<int> pl = parts_at_relative(parts[p].mount, true);
@@ -6846,7 +6911,7 @@ void vehicle::shift_parts(const tripoint_rel_veh& delta) {
  * adjust if necessary.
  * @return bool true if the shift was needed.
  */
-bool vehicle::shift_if_needed() {
+auto vehicle::shift_if_needed() -> bool {
     std::vector<int> vehicle_origin = parts_at_relative(tripoint_mnt_veh::zero(), true);
     if (!vehicle_origin.empty() && !parts[vehicle_origin[0]].removed) {
         // Shifting is not needed.
@@ -6872,7 +6937,7 @@ bool vehicle::shift_if_needed() {
     return false;
 }
 
-int vehicle::break_off(int p, int dmg) {
+auto vehicle::break_off(int p, int dmg) -> int {
     /* Already-destroyed part - chance it could be torn off into pieces.
      * Chance increases with damage, and decreases with part max durability
      * (so lights, etc are easily removed; frames and plating not so much) */
@@ -6936,7 +7001,7 @@ int vehicle::break_off(int p, int dmg) {
     return dmg;
 }
 
-bool vehicle::explode_fuel(int p, damage_type type) {
+auto vehicle::explode_fuel(int p, damage_type type) -> bool {
     const itype_id& ft = part_info(p).fuel_type;
     item& fuel = *item::spawn_temporary(ft);
     if (!fuel.has_explosion_data()) { return false; }
@@ -6962,7 +7027,7 @@ bool vehicle::explode_fuel(int p, damage_type type) {
     return true;
 }
 
-unsigned int vehicle::hits_to_destroy(int p, int dmg, damage_type type) const {
+auto vehicle::hits_to_destroy(int p, int dmg, damage_type type) const -> unsigned int {
     const int armor_part = part_with_feature(p, VPFLAG_ARMOR, true);
     const bool is_armor_considered = !(
         armor_part < 0 || part_flag(p, VPFLAG_ROOF) || part_info(p).location == "on_roof");
@@ -7018,7 +7083,7 @@ unsigned int vehicle::hits_to_destroy(int p, int dmg, damage_type type) const {
     return armor_htd + part_htd_after_armor;
 }
 
-int vehicle::damage_direct(int p, int dmg, damage_type type) {
+auto vehicle::damage_direct(int p, int dmg, damage_type type) -> int {
     map& here = get_map();
     // Make sure p is within range and hasn't been removed already
     if ((static_cast<size_t>(p) >= parts.size()) || parts[p].removed
@@ -7100,7 +7165,7 @@ void vehicle::leak_fuel(vehicle_part& pt) {
     pt.ammo_unset();
 }
 
-std::map<itype_id, int> vehicle::fuels_left() const {
+auto vehicle::fuels_left() const -> std::map<itype_id, int> {
     std::map<itype_id, int> result;
     for (const auto& p : parts) {
         if (p.is_fuel_store() && !p.ammo_current().is_null()) {
@@ -7110,14 +7175,14 @@ std::map<itype_id, int> vehicle::fuels_left() const {
     return result;
 }
 
-bool vehicle::is_foldable() const {
+auto vehicle::is_foldable() const -> bool {
     for (const vpart_reference& vp : get_all_parts()) {
         if (!vp.has_feature("FOLDABLE")) { return false; }
     }
     return true;
 }
 
-bool vehicle::restore(const std::string& data) {
+auto vehicle::restore(const std::string& data) -> bool {
     std::istringstream veh_data(data);
     try {
         JsonIn json(veh_data);
@@ -7139,7 +7204,7 @@ bool vehicle::restore(const std::string& data) {
     return true;
 }
 
-std::set<tripoint_abs_ms>& vehicle::get_points(const bool force_refresh) {
+auto vehicle::get_points(const bool force_refresh) -> std::set<tripoint_abs_ms>& {
     if (force_refresh || occupied_cache_time != calendar::turn) {
         occupied_cache_time = calendar::turn;
         occupied_points.clear();
@@ -7149,24 +7214,32 @@ std::set<tripoint_abs_ms>& vehicle::get_points(const bool force_refresh) {
     return occupied_points;
 }
 
-vehicle_part& vpart_reference::part() const {
+auto vpart_reference::part() const -> vehicle_part& {
     assert(part_index() < static_cast<size_t>(vehicle().part_count()));
     return vehicle().part(part_index());
 }
 
-const vpart_info& vpart_reference::info() const { return part().info(); }
+auto vpart_reference::info() const -> const vpart_info& { return part().info(); }
 
-player* vpart_reference::get_passenger() const { return vehicle().get_passenger(part_index()); }
+auto vpart_reference::get_passenger() const -> player* {
+    return vehicle().get_passenger(part_index());
+}
 
-tripoint_mnt_veh vpart_position::mount() const { return vehicle().part(part_index()).mount; }
+auto vpart_position::mount() const -> tripoint_mnt_veh {
+    return vehicle().part(part_index()).mount;
+}
 
-tripoint_bub_ms vpart_position::pos() const { return vehicle().bub_part_location(part_index()); }
+auto vpart_position::pos() const -> tripoint_bub_ms {
+    return vehicle().bub_part_location(part_index());
+}
 
-bool vpart_reference::has_feature(const std::string& f) const { return info().has_flag(f); }
+auto vpart_reference::has_feature(const std::string& f) const -> bool { return info().has_flag(f); }
 
-bool vpart_reference::has_feature(const vpart_bitflags f) const { return info().has_flag(f); }
+auto vpart_reference::has_feature(const vpart_bitflags f) const -> bool {
+    return info().has_flag(f);
+}
 
-static bool is_sm_tile_over_water(const tripoint_abs_ms& pos) {
+static auto is_sm_tile_over_water(const tripoint_abs_ms& pos) -> bool {
     const auto proj = project_remain<coords::sm>(pos);
     auto& mbuf = MAPBUFFER_REGISTRY.get(get_map().get_bound_dimension());
     auto sm = mbuf.lookup_submap(proj.quotient_tripoint);
@@ -7181,7 +7254,7 @@ static bool is_sm_tile_over_water(const tripoint_abs_ms& pos) {
             || sm->get_furn(proj.remainder).obj().has_flag(TFLAG_CURRENT));
 }
 
-static bool is_sm_tile_outside(const tripoint_abs_ms& pos) {
+static auto is_sm_tile_outside(const tripoint_abs_ms& pos) -> bool {
     const auto proj = project_remain<coords::sm>(pos);
     auto& m = get_map();
     auto& mbuf = MAPBUFFER_REGISTRY.get(m.get_bound_dimension());
@@ -7436,7 +7509,7 @@ void vehicle::calc_mass_center(bool use_precalc) const {
     }
 }
 
-bounding_box vehicle::get_bounding_box() {
+auto vehicle::get_bounding_box() -> bounding_box {
     int min_x = INT_MAX;
     int max_x = INT_MIN;
     int min_y = INT_MAX;
@@ -7458,23 +7531,23 @@ bounding_box vehicle::get_bounding_box() {
     return b;
 }
 
-vehicle_part_range vehicle::get_all_parts() const {
+auto vehicle::get_all_parts() const -> vehicle_part_range {
     return vehicle_part_range(const_cast<vehicle&>(*this));
 }
 
-int vehicle::part_count() const { return static_cast<int>(parts.size()); }
+auto vehicle::part_count() const -> int { return static_cast<int>(parts.size()); }
 
-vehicle_part& vehicle::part(int part_num) { return parts[part_num]; }
+auto vehicle::part(int part_num) -> vehicle_part& { return parts[part_num]; }
 
-const vehicle_part& vehicle::cpart(int part_num) const {
+auto vehicle::cpart(int part_num) const -> const vehicle_part& {
     return const_cast<vehicle_part&>(parts[part_num]);
 }
 
-bool vehicle::valid_part(int part_num) const {
+auto vehicle::valid_part(int part_num) const -> bool {
     return part_num >= 0 && part_num < static_cast<int>(parts.size());
 }
 
-std::set<int> vehicle::advance_precalc_mounts(const tripoint_abs_ms& src) {
+auto vehicle::advance_precalc_mounts(const tripoint_abs_ms& src) -> std::set<int> {
     map& here = get_map();
     std::set<int> smzs;
     const auto src_local = abs_to_map_local(here, src);
@@ -7498,7 +7571,7 @@ std::set<int> vehicle::advance_precalc_mounts(const tripoint_abs_ms& src) {
     return smzs;
 }
 
-bool vehicle::refresh_zones() {
+auto vehicle::refresh_zones() -> bool {
     if (zones_dirty) {
         decltype(loot_zones) new_zones;
         for (auto const& z : loot_zones) {
@@ -7529,7 +7602,8 @@ bool vehicle::refresh_zones() {
     return false;
 }
 
-template <> bool vehicle_part_with_feature_range<std::string>::matches(const size_t part) const {
+template <>
+auto vehicle_part_with_feature_range<std::string>::matches(const size_t part) const -> bool {
     const vehicle_part& vp = this->vehicle().part(part);
     return vp.info().has_flag(feature_) && !vp.removed
         && (!(part_status_flag::working & required_) || !vp.is_broken())
@@ -7537,7 +7611,8 @@ template <> bool vehicle_part_with_feature_range<std::string>::matches(const siz
         && (!(part_status_flag::enabled & required_) || vp.enabled);
 }
 
-template <> bool vehicle_part_with_feature_range<vpart_bitflags>::matches(const size_t part) const {
+template <>
+auto vehicle_part_with_feature_range<vpart_bitflags>::matches(const size_t part) const -> bool {
     const vehicle_part& vp = this->vehicle().part(part);
     return vp.info().has_flag(feature_) && !vp.removed
         && (!(part_status_flag::working & required_) || !vp.is_broken())
@@ -7545,7 +7620,7 @@ template <> bool vehicle_part_with_feature_range<vpart_bitflags>::matches(const 
         && (!(part_status_flag::enabled & required_) || vp.enabled);
 }
 
-bool vehicle::is_loaded() const {
+auto vehicle::is_loaded() const -> bool {
     return attached && get_map().get_submap_at(tripoint_bub_ms(bub_ms_location())) != nullptr;
 }
 
@@ -7553,18 +7628,18 @@ void vehicle::refresh_locations_hack() {
     for (vehicle_part& part : parts) { part.refresh_locations_hack(this); }
 }
 
-const vehicle_part* vehicle::find_part_hack(const int id) const {
+auto vehicle::find_part_hack(const int id) const -> const vehicle_part* {
     for (const vehicle_part& part : parts) {
         if (part.hack_id == id) { return &part; }
     }
     return nullptr;
 }
 
-vehicle_part* vehicle::find_part_hack(const int id) {
+auto vehicle::find_part_hack(const int id) -> vehicle_part* {
     return const_cast<vehicle_part*>(static_cast<const vehicle*>(this)->find_part_hack(id));
 }
 
-int vehicle::get_part_id_hack(const int id) const {
+auto vehicle::get_part_id_hack(const int id) const -> int {
     int i = 0;
     for (const vehicle_part& part : parts) {
         if (part.hack_id == id) { return i; }
@@ -7574,13 +7649,13 @@ int vehicle::get_part_id_hack(const int id) const {
 }
 
 // The mythical invokation to summon the cargo part on the same tile
-vehicle_part* vehicle::get_cargo_part(vehicle_part* part) {
+auto vehicle::get_cargo_part(vehicle_part* part) -> vehicle_part* {
     vehicle_part* vp = nullptr;
     int vpr = part_with_feature(part->mount, "CARGO", false);
     if (vpr != -1) { vp = &parts[vpr]; }
     return vp;
 }
-bool vehicle::has_item_stored(vehicle_part* part) {
+auto vehicle::has_item_stored(vehicle_part* part) -> bool {
     vehicle_part* vp = get_cargo_part(part);
     if (vp) { return stored_volume(index_of_part(vp)) > 0_ml; }
     return false;

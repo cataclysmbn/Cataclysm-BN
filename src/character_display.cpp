@@ -3,11 +3,10 @@
 #include "addiction.h"
 #include "avatar.h"
 #include "bionics.h"
-#include "cata_utility.h"
-#include "catacharset.h"
-#include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
+#include "cata_utility.h"
+#include "catacharset.h"
 #include "character_effects.h"
 #include "character_encumbrance.h"
 #include "debug.h"
@@ -521,7 +520,7 @@ static void draw_stats_info( const catacurses::window &w_info, const Character &
         // NOLINTNEXTLINE(cata-use-named-point-constants)
         fold_and_print( w_info, point( 1, 0 ), FULL_SCREEN_WIDTH - 2, c_magenta,
                         _( "Perception is the most important stat for ranged combat.  It's also used for "
-                           "detecting traps and other things of interest." ) );
+                           "detecting traps, camouflaged creatures, and other things of interest." ) );
         print_colored_text( w_info, point( 1, 3 ), col_temp, c_light_gray,
                             string_format( _( "Base night vision range: <color_white>%.1f</color>" ),
                                            vision::nv_range_from_per( you.get_per() ) ) );
@@ -683,9 +682,15 @@ static void draw_bionics_info( const catacurses::window &w_info, const unsigned 
     if( line < bionicslist.size() ) {
         const auto& [bio, cnt] = bionicslist[line];
         // NOLINTNEXTLINE(cata-use-named-point-constants)
-        const auto fmtStr = cnt > 1 ? "%s\n\nYou have %s instances of this bionic installed." : "%s";
-        fold_and_print(
-            w_info, point( 1, 0 ), FULL_SCREEN_WIDTH - 2, c_light_gray, fmtStr, bio.info().description, cnt );
+        int ypos = fold_and_print( w_info, point( 1, 0 ), FULL_SCREEN_WIDTH - 2, c_light_gray,
+                                   "%s", bio.info().description );
+        if( cnt > 1 ) {
+            fold_and_print( w_info, point( 1, ypos + 1 ), FULL_SCREEN_WIDTH - 2, c_light_gray,
+                            vgettext( "You have %d instance of this bionic installed.",
+                                      "You have %d instances of this bionic installed.",
+                                      cnt ),
+                            cnt );
+        }
     }
     wnoutrefresh( w_info );
 }
@@ -921,17 +926,14 @@ static void draw_skills_info( const catacurses::window &w_info, const Character 
 
     if( selectedSkill ) {
         auto description = selectedSkill->description();
-        {
-            std::unique_lock lock( cata::lua_lock );
-            const auto hook_results = cata::run_hooks( "on_character_display_skill_info",
-            [&]( sol::table & params ) {
-                params["character"] = &you;
-                params["skill"] = selectedSkill->ident();
-            } );
-            const auto extra_text = hook_results.get_or( "text", std::string() );
-            if( !extra_text.empty() ) {
-                description += "\n\n" + extra_text;
-            }
+        const auto hook_results = cata::run_hooks( "on_character_display_skill_info",
+        [&]( sol::table & params ) {
+            params["character"] = &you;
+            params["skill"] = selectedSkill->ident();
+        } );
+        const auto extra_text = hook_results.get_or( "text", std::string() );
+        if( !extra_text.empty() ) {
+            description += "\n\n" + extra_text;
         }
         // NOLINTNEXTLINE(cata-use-named-point-constants)
         fold_and_print( w_info, point( 1, 0 ), FULL_SCREEN_WIDTH - 2, c_light_gray,
@@ -1238,7 +1240,6 @@ static bool handle_player_display_action( Character &you, unsigned int &line,
                     selectedSkill = skillslist[line].skill;
                 }
                 if( selectedSkill ) {
-                    std::unique_lock lock( cata::lua_lock );
                     const auto hook_results = cata::run_hooks( "on_character_display_skill_action",
                     [&]( sol::table & params ) {
                         params["character"] = &you;

@@ -201,10 +201,10 @@
       ],
       "palettes": [ "basement_empty" ],
       "nested": {
-        "1": { "chunks": [ [ "null", 70 ], [ "5x5_holdout_W", 10 ], [ "5x5_sauna_W", 20 ] ] },
+        "1": { "chunks": [ [ "null", 20 ], [ "5x5_holdout_W", 10 ], [ "5x5_sauna_W", 20 ] ] },
         "2": {
           "chunks": [
-            [ "null", 80 ],
+            [ "null", 30 ],
             [ "5x5_gym_N", 20 ],
             [ "5x5_gym_S", 20 ],
             [ "5x5_gym_E", 20 ],

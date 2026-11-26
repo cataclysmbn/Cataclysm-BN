@@ -10,7 +10,7 @@
 #include "inventory.h"
 #include "item.h"
 #include "locations.h"
-#include "map.h"
+#include "map/map.h"
 #include "player.h"
 #include "point.h"
 #include "requirements.h"
@@ -31,7 +31,7 @@
 
 namespace veh_utils {
 
-int calc_xp_gain(const vpart_info& vp, const skill_id& sk, const Character& who) {
+auto calc_xp_gain(const vpart_info& vp, const skill_id& sk, const Character& who) -> int {
     const auto iter = vp.install_skills.find(sk);
     if (iter == vp.install_skills.end()) { return 0; }
 
@@ -46,7 +46,7 @@ int calc_xp_gain(const vpart_info& vp, const skill_id& sk, const Character& who)
         static_cast<double>(vp.install_moves) / to_moves<int>(1_minutes * std::pow(lvl, 2)) * diff);
 }
 
-vehicle_part& most_repairable_part(vehicle& veh, Character& who, bool only_repairable) {
+auto most_repairable_part(vehicle& veh, Character& who, bool only_repairable) -> vehicle_part& {
     const auto& inv = who.crafting_inventory();
 
     enum class repairable_status { not_repairable = 0, need_replacement, repairable };
@@ -92,7 +92,7 @@ vehicle_part& most_repairable_part(vehicle& veh, Character& who, bool only_repai
     return high_damage_iterator->part();
 }
 
-bool repair_part(vehicle& veh, vehicle_part& pt, Character& who_c) {
+auto repair_part(vehicle& veh, vehicle_part& pt, Character& who_c) -> bool {
     // TODO: Get rid of this cast after moving relevant functions down to Character
     player& who = static_cast<player&>(who_c);
     int part_index = veh.index_of_part(&pt);

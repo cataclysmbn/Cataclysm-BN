@@ -13,6 +13,7 @@
 #include "calendar.h"
 #include "catacharset.h"
 #include "catalua.h"
+#include "catalua_hooks.h"
 #include "character.h"
 #include "character_display.h"
 #include "character_martial_arts.h"
@@ -28,8 +29,6 @@
 #include "diary.h"
 #include "distraction_manager.h"
 #include "faction.h"
-#include "field.h"
-#include "field_type.h"
 #include "flag.h"
 #include "fstream_utils.h"
 #include "game.h" // IWYU pragma: associated
@@ -48,13 +47,16 @@
 #include "item_hauling.h"
 #include "itype.h"
 #include "iuse.h"
-#include "lightmap.h"
 #include "line.h"
 #include "magic/magic.h"
 #include "make_static.h"
-#include "map.h"
-#include "map_selector.h"
-#include "mapdata.h"
+#include "map/field.h"
+#include "map/field_type.h"
+#include "map/lightmap.h"
+#include "map/map.h"
+#include "map/map_selector.h"
+#include "map/mapdata.h"
+#include "map_memory.h"
 #include "mapsharing.h"
 #include "messages.h"
 #include "monster.h"
@@ -64,8 +66,9 @@
 #include "npc.h"
 #include "options.h"
 #include "output.h"
-#include "overmap_ui.h"
+#include "overmap/overmap_ui.h"
 #include "panels.h"
+#include "perk.h"
 #include "player.h"
 #include "player_activity.h"
 #include "popup.h"
@@ -112,6 +115,7 @@
 static const activity_id ACT_FERTILIZE_PLOT( "ACT_FERTILIZE_PLOT" );
 static const activity_id ACT_MOVE_LOOT( "ACT_MOVE_LOOT" );
 static const activity_id ACT_MULTIPLE_BUTCHER( "ACT_MULTIPLE_BUTCHER" );
+static const activity_id ACT_MULTIPLE_DISSECT( "ACT_MULTIPLE_DISSECT" );
 static const activity_id ACT_MULTIPLE_CHOP_PLANKS( "ACT_MULTIPLE_CHOP_PLANKS" );
 static const activity_id ACT_MULTIPLE_CHOP_TREES( "ACT_MULTIPLE_CHOP_TREES" );
 static const activity_id ACT_MULTIPLE_CONSTRUCTION( "ACT_MULTIPLE_CONSTRUCTION" );
@@ -142,6 +146,22 @@ static const enchantment_value_id ench_val_REACH_RANGE_UNARMED( "REACH_RANGE_UNA
 
 namespace
 {
+
+auto is_terrain_memory( const memorized_terrain_tile &memory ) -> bool
+{
+    return !memory.tile.empty() && ter_str_id( memory.tile ).is_valid();
+}
+
+auto has_memorized_terrain_at( avatar &you, map &/*here*/, const tripoint_bub_ms &target ) -> bool
+{
+    if( !you.should_show_map_memory() ) {
+        return false;
+    }
+
+    const auto abs_target = bub_to_abs( target );
+    return is_terrain_memory( you.get_terrain_tile( abs_target ) ) ||
+           is_terrain_memory( you.get_memorized_tile( abs_target ) );
+}
 
 const flag_id flag_NO_GRAB( "NO_GRAB" );
 
@@ -729,7 +749,7 @@ static void close()
 static auto jump() -> void
 {
     auto &you = get_avatar();
-    if( !iexamine::can_start_jump_over_tile( you, true ) ) {
+    if( !iexamine::can_start_jump_over_tile( you ) ) {
         return;
     }
 
@@ -1406,7 +1426,8 @@ static void loot()
         Multideconvehicle = 1024,
         Multirepairvehicle = 2048,
         MultiButchery = 4096,
-        MultiMining = 8192
+        MultiMining = 8192,
+        MultiDissect = 16384
     };
 
     player &u = g->u;
@@ -1434,6 +1455,7 @@ static void loot()
     flags |= g->check_near_zone( zone_type_id( "VEHICLE_REPAIR" ),
                                  u.bub_pos() ) ? Multirepairvehicle : 0;
     flags |= g->check_near_zone( zone_type_id( "LOOT_CORPSE" ), u.bub_pos() ) ? MultiButchery : 0;
+    flags |= g->check_near_zone( zone_type_id( "LOOT_CORPSE" ), u.bub_pos() ) ? MultiDissect : 0;
     flags |= g->check_near_zone( zone_type_id( "MINING" ), u.bub_pos() ) ? MultiMining : 0;
     if( flags == 0 ) {
         add_msg( m_info, _( "There is no compatible zone nearby." ) );
@@ -1464,7 +1486,7 @@ static void loot()
     }
     if( flags & MultiFarmPlots ) {
         menu.addentry_desc( MultiFarmPlots, true, 'm', _( "Farm plots" ),
-                            _( "Till and plant on any nearby farm plots - auto-fetch seeds and tools." ) );
+                            _( "Till, plant, and harvest on any nearby farm plots - auto-fetch seeds and tools." ) );
     }
     if( flags & Multichoptrees ) {
         menu.addentry_desc( Multichoptrees, true, 'C', _( "Chop trees" ),
@@ -1486,10 +1508,15 @@ static void loot()
         menu.addentry_desc( MultiButchery, true, 'B', _( "Butcher corpses" ),
                             _( "Auto-butcher anything in corpse loot zones - auto-fetch tools." ) );
     }
+    if( flags & MultiDissect ) {
+        menu.addentry_desc( MultiDissect, true, 'D', _( "Dissect corpses" ),
+                            _( "Auto-dissect anything in corpse loot zones - auto-fetch tools." ) );
+    }
     if( flags & MultiMining ) {
         menu.addentry_desc( MultiMining, true, 'M', _( "Mine Area" ),
                             _( "Auto-mine anything in mining zone - auto-fetch tools." ) );
     }
+
 
     menu.query();
     flags = ( menu.ret >= 0 ) ? menu.ret : None;
@@ -1524,6 +1551,9 @@ static void loot()
             break;
         case MultiButchery:
             u.assign_activity( ACT_MULTIPLE_BUTCHER );
+            break;
+        case MultiDissect:
+            u.assign_activity( ACT_MULTIPLE_DISSECT );
             break;
         case MultiMining:
             u.assign_activity( ACT_MULTIPLE_MINE );
@@ -1795,6 +1825,16 @@ auto try_cast_spell( player &u, spell &sp ) -> bool
         return false;
     }
 
+    const auto hook_results = cata::run_hooks( "on_spell_try_cast", [&]( sol::table & params ) {
+        params["char"] = &u;
+        params["spell"] = &sp;
+    } );
+    if( !hook_results.get_or( "allowed", true ) ) { return false; }
+
+    if( sp.type->lua_callbacks ) {
+        if( !sp.type->lua_callbacks->call_on_try_cast( *u.as_character(), sp ) ) { return false;}
+    }
+
     start_spellcasting_activity( u, sp );
     return true;
 }
@@ -2007,7 +2047,8 @@ bool game::handle_action()
             mouse_target = mouse_pos;
 
             if( act == ACTION_SELECT ) {
-                if( !avatar_knows_travel_destination( u, *mouse_target ) ) {
+                if( !avatar_knows_travel_destination( u, *mouse_target ) &&
+                    !has_memorized_terrain_at( u, m, *mouse_target ) ) {
                     return false;
                 }
                 // Note: The following has the potential side effect of
@@ -2081,6 +2122,7 @@ bool game::handle_action()
             case ACTION_CENTER:
                 u.view_offset.x() = driving_view_offset.x;
                 u.view_offset.y() = driving_view_offset.y;
+                u.view_offset.z() = 0;
                 break;
 
             case ACTION_SHIFT_N:
@@ -2663,7 +2705,9 @@ bool game::handle_action()
             case ACTION_MUTATIONS:
                 show_mutations_ui( u );
                 break;
-
+            case ACTION_PERKS:
+                draw_perk_menu( u );
+                break;
             case ACTION_SORT_ARMOR:
                 show_armor_layers_ui( u );
                 break;

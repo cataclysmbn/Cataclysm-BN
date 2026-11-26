@@ -5,11 +5,11 @@
 #include "enums.h"
 #include "hash_utils.h"
 #include "hsv_color.h"
-#include "lightmap.h"
 #include "line.h"
+#include "map/lightmap.h"
 #include "map_memory.h"
 #include "options.h"
-#include "overmapbuffer.h"
+#include "overmap/overmapbuffer.h"
 #include "pimpl.h"
 #include "sdl_geometry.h"
 #include "sdl_utils.h"
@@ -372,6 +372,7 @@ class tileset
         int tile_width;
         int tile_height;
         int zlevel_height = 0;
+        bool iso = false;
         float prevent_occlusion_min_dist = 0.0f;
         float prevent_occlusion_max_dist = 0.0f;
 
@@ -440,6 +441,7 @@ class tileset
         auto get_zlevel_height() const -> int {
             return zlevel_height;
         }
+        auto is_iso() const -> bool { return iso; }
         auto get_prevent_occlusion_min_dist() const -> float {
             return prevent_occlusion_min_dist;
         }
@@ -889,6 +891,8 @@ class cata_tiles
         static auto get_ter_memory_at( const tripoint_bub_ms &p ) -> std::optional<memorized_terrain_tile>;
         static auto get_furn_memory_at( const tripoint_bub_ms &p ) -> std::optional<memorized_terrain_tile>;
         static auto get_trap_memory_at( const tripoint_bub_ms &p ) -> std::optional<memorized_terrain_tile>;
+        static auto get_field_memory_at( const tripoint_bub_ms &p ) ->
+        std::optional<memorized_terrain_tile>;
         static auto get_vpart_memory_at( const tripoint_bub_ms &p ) ->
         std::optional<memorized_terrain_tile>;
 
@@ -1088,6 +1092,8 @@ class cata_tiles
         float get_tile_ratioy() const {
             return tile_ratioy;
         }
+        /// Whether this context's tileset is isometric. Shadows the global ::tile_iso, which follows tilecontext.
+        bool tile_iso = false;
         void do_tile_loading_report( const std::function<void( std::string )> &out );
         point player_to_screen( point_bub_ms ) const;
         static std::vector<options_manager::id_and_option> build_renderer_list();

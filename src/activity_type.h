@@ -94,6 +94,7 @@ class activity_type
         bool verbose_tooltip_ = true;
         unsigned short max_assistants_ = 0;
         float rest_amount_ = 0.0f;
+        bool suppress_comfort_lines_ = false;
         activity_bubble_effect bubble_effect_ = activity_bubble_effect::none;
 
     public:
@@ -163,6 +164,9 @@ class activity_type
         }
         inline float rest_amount() const {
             return rest_amount_;
+        }
+        inline bool suppress_comfort() const {
+            return suppress_comfort_lines_;
         }
         inline activity_bubble_effect bubble_effect() const {
             return bubble_effect_;

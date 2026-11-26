@@ -13,6 +13,7 @@
     "color": "dark_gray",
     "ammo": "500",
     "ranged_damage": { "damage_type": "bullet", "amount": 2 },
+    "range": 10,
     "dispersion": 180,
     "clip_size": 7,
     "valid_mod_locations": [

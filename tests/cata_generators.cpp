@@ -9,9 +9,9 @@ public:
         this->next();
     }
 
-    const point& get() const override { return current_point; }
+    auto get() const -> const point& override { return current_point; }
 
-    bool next() override {
+    auto next() -> bool override {
         current_point = point(dist(engine), dist(engine));
         return true;
     }
@@ -31,9 +31,9 @@ public:
         this->next();
     }
 
-    const tripoint& get() const override { return current_point; }
+    auto get() const -> const tripoint& override { return current_point; }
 
-    bool next() override {
+    auto next() -> bool override {
         current_point = tripoint(xy_dist(engine), xy_dist(engine), z_dist(engine));
         return true;
     }
@@ -45,13 +45,13 @@ protected:
     tripoint current_point;
 };
 
-Catch::Generators::GeneratorWrapper<point> random_points(int low, int high) {
+auto random_points(int low, int high) -> Catch::Generators::GeneratorWrapper<point> {
     return Catch::Generators::GeneratorWrapper<point>(
         std::make_unique<RandomPointGenerator>(low, high));
 }
 
-Catch::Generators::GeneratorWrapper<tripoint> random_tripoints(
-    int low, int high, int zlow, int zhigh) {
+auto random_tripoints(int low, int high, int zlow, int zhigh)
+    -> Catch::Generators::GeneratorWrapper<tripoint> {
     return Catch::Generators::GeneratorWrapper<tripoint>(
         std::make_unique<RandomTripointGenerator>(low, high, zlow, zhigh));
 }

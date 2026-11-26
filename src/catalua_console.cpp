@@ -1,6 +1,5 @@
 #include "catalua_console.h"
 
-#include "catalua.h"
 #include "catalua_log.h"
 #include "catalua_impl.h"
 #include "cursesdef.h"
@@ -398,8 +397,7 @@ void show_lua_console_impl()
                 current_input.clear();
                 add_to_input_history( res.second );
                 log_invalidated = true;
-                std::unique_lock lock( lua_lock );
-                run_console_input( get_active_lua_state()->lua, res.second );
+                run_console_input( DynamicDataLoader::get_instance().lua->lua, res.second );
             } else {
                 // Canceled, save input for later use
                 current_input = res.second;

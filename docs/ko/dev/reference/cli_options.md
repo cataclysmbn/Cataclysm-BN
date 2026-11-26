@@ -6,7 +6,7 @@ edit: false
 
 > [!NOTE]
 >
-> 이 페이지는 `tools/gen_cli_docs.ts`에서 자동 생성되며 직접 편집해서는 안 됩니다.
+> 영문 원문은 `scripts/gen_cli_docs.ts`에서 자동 생성됩니다. 번역을 갱신할 때는 최신 영문 원문을 기준으로 하세요.
 
 게임 실행 파일은 좋아하는 roguelike를 실행할 뿐만 아니라 모더와 개발자를 돕는 여러 명령줄 옵션을 제공합니다.
 
@@ -28,7 +28,7 @@ edit: false
 
 ## 명령줄 매개변수
 
-### `--seed <문자 및/또는 숫자 문자열>`
+### `--seed <string of letters and or numbers>`
 
 난수 생성기의 시드 값을 설정합니다.
 
@@ -38,7 +38,11 @@ BN json 파일을 확인합니다.
 
 ### `--check-mods [mods…]`
 
-BN 모드에 속한 json 파일을 확인합니다.
+기본 또는 지정된 BN 모드의 JSON 파일을 검사합니다.
+
+### `--check-all-mods`
+
+폐기되지 않은 모든 BN 모드의 JSON 파일을 검사합니다.
 
 ### `--dump-stats <what> [mode = TSV] [opts…]`
 
@@ -63,6 +67,10 @@ BN 모드에 속한 json 파일을 확인합니다.
 ### `--lua-types <output path>`
 
 주어진 경로에 Lua 타입을 생성하고 종료합니다.
+
+### `--gpu-backend <driver>`
+
+진단을 위해 SDL_GPU 백엔드 드라이버를 지정합니다(`vulkan` / `direct3d12` / `metal` / `software`).
 
 ### `--datadir <directory name>`
 
