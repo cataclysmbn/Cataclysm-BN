@@ -323,9 +323,10 @@ Depending on the subtype, there are further relevant fields:
 
 #### Further fields for fixed overmap specials
 
-| Identifier | Description                                                                            |
-| ---------- | -------------------------------------------------------------------------------------- |
-| `overmaps` | List of overmap terrains and their relative `[ x, y, z ]` location within the special. |
+| Identifier           | Description                                                                                                                                                                       |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `overmaps`           | List of overmap terrains and their relative `[ x, y, z ]` location within the special.                                                                                            |
+| `absolute_spawn_loc` | Object of `{ "x": 0, "y": 0, "do_absolute_spawn_loc": bool }` which define the absolute overmap this will spawn in. Do absolute spawn loc is optional and is for overwriting mods |
 
 #### Further fields for mutable overmap specials
 
@@ -500,6 +501,22 @@ Once the mutable special placement is complete, a `local_road` connection will b
 north edge of this overmap (again, 'north' is a relative term, that will rotate as the overmap is
 rotated) in the same way as connections are built for fixed specials. 'Existing' connections are not
 supported for mutable specials.
+
+Placement rules can also declare point-based connections. The coordinates are relative to the
+rule's origin and rotate with the rule, including when it places a multi-tile chunk:
+
+```json
+{
+  "overmap": "where_road_connects",
+  "connections": [{ "point": [2, 0, 0], "connection": "local_road" }]
+}
+```
+
+The optional `from` point supplies an initial direction, as it does for fixed specials. Omitting
+`from` creates a disconnected connection: it can connect the specified point to an existing road
+from any direction, without requiring a connection to the placed overmap itself. If no existing
+connection can be reached, an undirected connection does not create a road stub. These rule-level
+connections can be used alongside directional connections on individual overmaps.
 
 #### Layout phases
 

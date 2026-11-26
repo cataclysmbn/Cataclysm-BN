@@ -19,6 +19,22 @@
 #include "json.h"
 #include "rng.h"
 #include "type_id.h"
+#include "options.h"
+
+namespace
+{
+
+/// Ammo spawn entries can be wrapped in their default container.
+auto spawned_ammo_id( const item &spawned ) -> itype_id
+{
+    const auto *ammo = &spawned;
+    while( ammo->is_container() && ammo->contents.num_item_stacks() == 1 ) {
+        ammo = &ammo->get_contained();
+    }
+    return ammo->typeId();
+}
+
+} // namespace
 
 // FIXME: Somehow we cant get item_groups from their ids
 // Only can get Item_spawn_data
@@ -75,6 +91,9 @@ detached_ptr<item> Single_item_creator::create_single( const time_point &birthda
     } else if( type == S_NONE ) {
         return detached_ptr<item>();
     }
+    if( !tmp ) {
+        return detached_ptr<item>();
+    }
     if( one_in( 3 ) && tmp->has_flag( flag_VARSIZE ) ) {
         tmp->set_flag( flag_FIT );
     }
@@ -120,6 +139,10 @@ std::vector<detached_ptr<item>> Single_item_creator::create( const time_point &b
                 for( auto &elem : tmplist ) {
                     elem = modifier->modify( std::move( elem ) );
                 }
+            } else {
+                for( auto &itm : tmplist ) {
+                    itm = item::in_its_container( std::move( itm ) );
+                }
             }
             result.insert( result.end(), std::make_move_iterator( tmplist.begin() ),
                            std::make_move_iterator( tmplist.end() ) );
@@ -145,8 +168,11 @@ void Single_item_creator::check_consistency( const std::string &context ) const
     } else {
         debugmsg( "Unknown type of Single_item_creator: %d", static_cast<int>( type ) );
     }
+    // Spawning every item is only needed to validate ammo and container compatibility.
     if( modifier ) {
         modifier->check_consistency( context );
+    }
+    if( modifier && ( modifier->ammo || modifier->container ) ) {
         for( auto &item : every_item_modified( false ) ) {
             if( modifier && modifier->ammo != nullptr ) {
                 for( auto &ammo : modifier->ammo->every_item_modified() ) {
@@ -331,38 +357,35 @@ bool Single_item_creator::remove_item( const itype_id &itemid )
             return true;
         }
     }
-    if( type == S_ITEM ) {
-        if( itemid.str() == id ) {
-            type = S_NONE;
-            return true;
-        }
-    } else if( type == S_ITEM_GROUP ) {
-        Item_spawn_data *isd = item_controller->get_group( item_group_id( id ) );
-        if( isd != nullptr ) {
-            isd->remove_item( itemid );
-        }
+    // Referenced item groups are visited directly by Item_factory::finalize_item_blacklist,
+    // so recursing into them here would only repeat the same work.
+    if( type == S_ITEM && itemid.str() == id ) {
+        type = S_NONE;
+        return true;
     }
     return type == S_NONE;
 }
 
-bool Single_item_creator::replace_item( const itype_id &itemid, const itype_id &replacementid )
+bool Single_item_creator::replace_item( const itype_id &itemid, const itype_id &replacementid,
+                                        const std::string &context )
 {
     if( modifier ) {
-        if( modifier->replace_item( itemid, replacementid ) ) {
+        if( modifier->replace_item( itemid, replacementid, context ) ) {
             return true;
         }
     }
     if( type == S_ITEM ) {
         if( itemid.str() == id ) {
+            if( get_option<bool>( "MIGRATION_CHECKS" ) ) {
+                debugmsg( "Migrated item: %s in ( %s ), should be migrated to %s", itemid,
+                          context, replacementid );
+            }
             id = replacementid.str();
             return true;
         }
-    } else if( type == S_ITEM_GROUP ) {
-        Item_spawn_data *isd = item_controller->get_group( item_group_id( id ) );
-        if( isd != nullptr ) {
-            isd->replace_item( itemid, replacementid );
-        }
     }
+    // Referenced item groups are visited directly by Item_factory::finalize_item_blacklist,
+    // so recursing into them here would only repeat the same work.
     return type == S_NONE;
 }
 
@@ -398,10 +421,10 @@ std::vector<detached_ptr<item>> Single_item_creator::every_item_modified( bool m
     switch( type ) {
         case S_ITEM: {
             detached_ptr<item> itm = item::spawn( itype_id( id ) );
-            if( modifier && modify ) {
+            if( modifier && modify && itm ) {
                 items.push_back( modifier->modify( std::move( itm ) ) );
-            } else {
-                items.push_back( std::move( itm ) );
+            } else if( modify && itm ) {
+                items.push_back( item::in_its_container( std::move( itm ) ) );
             }
             return items;
         }
@@ -423,8 +446,8 @@ std::vector<detached_ptr<item>> Single_item_creator::every_item_modified( bool m
             for( auto &itm : item_group_items ) {
                 if( modifier && modify ) {
                     items.push_back( modifier->modify( std::move( itm ) ) );
-                } else {
-                    items.push_back( std::move( itm ) );
+                } else if( modify ) {
+                    items.push_back( item::in_its_container( std::move( itm ) ) );
                 }
             }
             return items;
@@ -463,6 +486,14 @@ detached_ptr<item> Item_modifier::modify( detached_ptr<item> &&new_item ) const
 {
     if( new_item->is_null() ) {
         return std::move( new_item );
+    }
+
+    for( const flag_id &flag : custom_flags ) {
+        new_item->set_flag( flag );
+    }
+
+    for( const auto &fn : postprocess_fns ) {
+        new_item = fn( std::move( new_item ) );
     }
 
     new_item->set_damage( rng( damage.first, damage.second ) * itype::damage_scale );
@@ -555,7 +586,9 @@ detached_ptr<item> Item_modifier::modify( detached_ptr<item> &&new_item ) const
             }
         } else {
             detached_ptr<item> am = ammo->create_single( new_item->birthday() );
-            new_item->ammo_set( am->typeId(), ch );
+            if( am ) {
+                new_item->ammo_set( spawned_ammo_id( *am ), ch );
+            }
         }
         // Make sure the item is in valid state
         if( new_item->ammo_data() && new_item->magazine_integral() ) {
@@ -578,7 +611,9 @@ detached_ptr<item> Item_modifier::modify( detached_ptr<item> &&new_item ) const
         if( spawn_ammo ) {
             if( ammo ) {
                 detached_ptr<item> am = ammo->create_single( new_item->birthday() );
-                new_item->ammo_set( am->typeId() );
+                if( am ) {
+                    new_item->ammo_set( spawned_ammo_id( *am ) );
+                }
             } else {
                 new_item->ammo_set( new_item->ammo_default() );
             }
@@ -595,14 +630,6 @@ detached_ptr<item> Item_modifier::modify( detached_ptr<item> &&new_item ) const
         for( detached_ptr<item> &it : contentitems ) {
             new_item->put_in( std::move( it ) );
         }
-    }
-
-    for( const flag_id &flag : custom_flags ) {
-        new_item->set_flag( flag );
-    }
-
-    for( const auto &fn : postprocess_fns ) {
-        new_item = fn( std::move( new_item ) );
     }
     return std::move( new_item );
 }
@@ -642,13 +669,14 @@ bool Item_modifier::remove_item( const itype_id &itemid )
     return false;
 }
 
-bool Item_modifier::replace_item( const itype_id &itemid, const itype_id &replacementid )
+bool Item_modifier::replace_item( const itype_id &itemid, const itype_id &replacementid,
+                                  const std::string &context )
 {
     if( ammo != nullptr ) {
-        ammo->replace_item( itemid, replacementid );
+        ammo->replace_item( itemid, replacementid, "ammo of " + context );
     }
     if( container != nullptr ) {
-        if( container->replace_item( itemid, replacementid ) ) {
+        if( container->replace_item( itemid, replacementid, "container of " + context ) ) {
             return true;
         }
     }
@@ -760,7 +788,7 @@ detached_ptr<item> Item_group::create_single( const time_point &birthday, Recurs
 void Item_group::check_consistency( const std::string &context ) const
 {
     for( const auto &elem : items ) {
-        ( elem )->check_consistency( "item in " + context );
+        ( elem )->check_consistency( context );
     }
 }
 
@@ -817,10 +845,11 @@ bool Item_group::remove_specific_group( const std::string &itemid )
     return items.empty();
 }
 
-bool Item_group::replace_item( const itype_id &itemid, const itype_id &replacementid )
+bool Item_group::replace_item( const itype_id &itemid, const itype_id &replacementid,
+                               const std::string &context )
 {
     for( const std::unique_ptr<Item_spawn_data> &elem : items ) {
-        ( elem )->replace_item( itemid, replacementid );
+        ( elem )->replace_item( itemid, replacementid, "item in " + context );
     }
     return items.empty();
 }

@@ -15,7 +15,8 @@
     "locations": [ "field", "forest" ],
     "city_distance": [ 20, -1 ],
     "city_sizes": [ 0, 12 ],
-    "occurrences": [ 75, 100 ],
+    "occurrences": [ 1, 1 ],
+    "absolute_spawn_loc": { "x": -1, "y": 0 },
     "flags": [ "CLASSIC", "WILDERNESS", "GLOBALLY_UNIQUE", "ELECTRIC_GRID" ]
   },
   {
@@ -30,7 +31,8 @@
     "locations": [ "forest" ],
     "city_distance": [ 0, -1 ],
     "city_sizes": [ 0, 12 ],
-    "occurrences": [ 75, 100 ],
+    "occurrences": [ 1, 1 ],
+    "absolute_spawn_loc": { "x": 1, "y": -1 },
     "flags": [ "CLASSIC", "WILDERNESS", "GLOBALLY_UNIQUE" ]
   },
   {
@@ -51,7 +53,8 @@
     "locations": [ "field", "forest", "swamp" ],
     "city_distance": [ 20, -1 ],
     "city_sizes": [ 0, 12 ],
-    "occurrences": [ 75, 100 ],
+    "occurrences": [ 1, 1 ],
+    "absolute_spawn_loc": { "x": -1, "y": -1 },
     "flags": [ "CLASSIC", "WILDERNESS", "GLOBALLY_UNIQUE" ],
     "spawns": { "group": "GROUP_ARCHON", "population": [ 150, 300 ], "radius": [ 20, 40 ] }
   },
@@ -75,7 +78,8 @@
     "locations": [ "forest", "swamp" ],
     "city_distance": [ 20, -1 ],
     "city_sizes": [ 0, 12 ],
-    "occurrences": [ 75, 100 ],
+    "occurrences": [ 1, 1 ],
+    "absolute_spawn_loc": { "x": 1, "y": 0 },
     "flags": [ "CLASSIC", "WILDERNESS", "GLOBALLY_UNIQUE", "ELECTRIC_GRID" ]
   },
   {
@@ -117,7 +121,8 @@
     "locations": [ "wilderness" ],
     "city_distance": [ 16, -1 ],
     "city_sizes": [ 0, 12 ],
-    "occurrences": [ 75, 100 ],
+    "occurrences": [ 1, 1 ],
+    "absolute_spawn_loc": { "x": -1, "y": -1 },
     "flags": [ "CLASSIC", "WILDERNESS", "GLOBALLY_UNIQUE", "ELECTRIC_GRID" ]
   },
   {
@@ -184,9 +189,9 @@
     "locations": [ "land" ],
     "city_distance": [ 10, -1 ],
     "city_sizes": [ 1, 20 ],
-    "//": "Has to be spawned in by a mission, to avoid bugs.",
-    "occurrences": [ 0, 0 ],
-    "flags": [ "CLASSIC", "WILDERNESS", "UNIQUE", "ELECTRIC_GRID" ],
+    "occurrences": [ 1, 1 ],
+    "absolute_spawn_loc": { "x": 0, "y": 0 },
+    "flags": [ "CLASSIC", "WILDERNESS", "GLOBALLY_UNIQUE", "ELECTRIC_GRID" ],
     "rotate": false
   },
   {

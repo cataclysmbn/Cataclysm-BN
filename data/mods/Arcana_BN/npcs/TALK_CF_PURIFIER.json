@@ -44,17 +44,9 @@
       { "text": "What do you do here?", "topic": "TALK_CF_PURIFIER_DO" },
       { "text": "What can you tell me about this place?", "topic": "TALK_CF_PURIFIER_WHERE" },
       {
-        "text": "Can you teach me any spells?",
-        "topic": "TALK_CF_PURIFIER_SPELL_MENU",
-        "condition": {
-          "and": [
-            { "u_has_effect": "cf_mission_1" },
-            { "npc_has_trait": "FIX_CF_GM" },
-            {
-              "not": { "u_has_var": "nicholas_all_spells_known", "type": "flag", "context": "knowledge", "value": "yes" }
-            }
-          ]
-        }
+        "text": "Can you teach me anything?",
+        "topic": "TALK_TRAIN",
+        "condition": { "and": [ { "u_has_effect": "cf_mission_1" }, { "npc_has_trait": "FIX_CF_GM" } ] }
       },
       {
         "text": "Do you have anything to trade?",
@@ -179,102 +171,6 @@
       "no": "I haven't been here in a long time.  Before I became a member of the Cleansing Flame, might've been a teenager in fact.  To be honest, I recall a distinct lack of palisades back then.  But, I bet the padre was the same guy Sofia had an agreement with, letting us use this place.  Though I guess the deacon back at the center is technically in charge now."
     },
     "responses": [ { "text": "Oh, okay.", "topic": "TALK_CF_PURIFIER" } ]
-  },
-  {
-    "type": "talk_topic",
-    "id": "TALK_CF_PURIFIER_SPELL_MENU",
-    "dynamic_line": "With how you've helped us out, I could try to teach you a few things.  I have experience with Capacitance, Consecrate, and Opening, should you need it.  That said, I will need a few Golden Scales for the deed.  Binding a spell pattern safely takes a special touch, and the local scavengers don't part with materials easily.",
-    "responses": [
-      {
-        "text": "What can you tell me about Capacitance?",
-        "condition": { "and": [ { "not": { "u_has_trait": "PROF_CLEANSINGFLAME2" } }, { "not": { "u_has_trait": "SPELL_CAPACITANCE" } } ] },
-        "topic": "TALK_CF_PURIFIER_SPELL_MENU_1"
-      },
-      {
-        "text": "What can you tell me about Consecrate?",
-        "condition": { "not": { "u_has_trait": "SPELL_CONSECRATELESSER" } },
-        "topic": "TALK_CF_PURIFIER_SPELL_MENU_2"
-      },
-      {
-        "text": "What can you tell me about Opening?",
-        "condition": { "not": { "u_has_trait": "SPELL_LOCKPICK" } },
-        "topic": "TALK_CF_PURIFIER_SPELL_MENU_3"
-      },
-      {
-        "text": "I already know all of those, nevermind.",
-        "switch": true,
-        "condition": {
-          "and": [
-            { "u_has_any_trait": [ "PROF_CLEANSINGFLAME2", "SPELL_CAPACITANCE" ] },
-            { "u_has_trait": "SPELL_CONSECRATELESSER" },
-            { "u_has_trait": "SPELL_LOCKPICK" }
-          ]
-        },
-        "effect": { "u_add_var": "nicholas_all_spells_known", "type": "flag", "context": "knowledge", "value": "yes" },
-        "topic": "TALK_CF_PURIFIER"
-      },
-      { "text": "Maybe another time.", "switch": true, "default": true, "topic": "TALK_CF_PURIFIER" }
-    ]
-  },
-  {
-    "type": "talk_topic",
-    "id": "TALK_CF_PURIFIER_SPELL_MENU_1",
-    "dynamic_line": "A specialty of the Cleansing Flame's associates and allies who dealt with bionics.  It dumps the energy it calls up directly into power storage, so it's only useful if you have any capacity for bionic power set up.  Not good to use in a fight either, doesn't hurt or anything but your muscles freeze up when it activates.  I'll need 4 Golden Scales to cover everything that a proper ritual will require.",
-    "responses": [
-      {
-        "text": "[GS4] You have a deal, then.",
-        "condition": { "u_has_items": { "item": "CF_golden_scale", "count": 4 } },
-        "effect": [ { "u_consume_item": "CF_golden_scale", "count": 4 }, { "u_add_trait": "SPELL_CAPACITANCE" } ],
-        "topic": "TALK_DONE"
-      },
-      {
-        "text": "I'll need more Scales for that.  Maybe later.",
-        "switch": true,
-        "condition": { "not": { "u_has_items": { "item": "CF_golden_scale", "count": 4 } } },
-        "topic": "TALK_CF_PURIFIER"
-      },
-      { "text": "Not right now.", "switch": true, "default": true, "topic": "TALK_CF_PURIFIER" }
-    ]
-  },
-  {
-    "type": "talk_topic",
-    "id": "TALK_CF_PURIFIER_SPELL_MENU_2",
-    "dynamic_line": "Consecrate is designed to purify the terrain, either petrifying or disintegrating most anomalous or otherworldly alterations to the landscape.  Less well-known is what it does to most otherworldly monsters caught in its effect.  It's not intended as an offensive spell first and foremost, but it'll damage most such monsters and leave them reeling.  I'll need 4 Golden Scales to cover everything that a proper ritual will require.",
-    "responses": [
-      {
-        "text": "[GS4] You have a deal, then.",
-        "condition": { "u_has_items": { "item": "CF_golden_scale", "count": 4 } },
-        "effect": [ { "u_consume_item": "CF_golden_scale", "count": 4 }, { "u_add_trait": "SPELL_CONSECRATELESSER" } ],
-        "topic": "TALK_DONE"
-      },
-      {
-        "text": "I'll need more Scales for that.  Maybe later.",
-        "switch": true,
-        "condition": { "not": { "u_has_items": { "item": "CF_golden_scale", "count": 4 } } },
-        "topic": "TALK_CF_PURIFIER"
-      },
-      { "text": "Not right now.", "switch": true, "default": true, "topic": "TALK_CF_PURIFIER" }
-    ]
-  },
-  {
-    "type": "talk_topic",
-    "id": "TALK_CF_PURIFIER_SPELL_MENU_3",
-    "dynamic_line": "An extremely versatile entry tool.  Most locked doors will yield silently, windows slide open, metal garage doors, what-have-you.  Some field reports have mentioned it clearing rubble or a few other sorts of obstacles too.  I'll need 3 Golden Scales to cover everything that a proper ritual will require.",
-    "responses": [
-      {
-        "text": "[GS3] You have a deal, then.",
-        "condition": { "u_has_items": { "item": "CF_golden_scale", "count": 3 } },
-        "effect": [ { "u_consume_item": "CF_golden_scale", "count": 3 }, { "u_add_trait": "SPELL_LOCKPICK" } ],
-        "topic": "TALK_DONE"
-      },
-      {
-        "text": "I'll need more Scales for that.  Maybe later.",
-        "switch": true,
-        "condition": { "not": { "u_has_items": { "item": "CF_golden_scale", "count": 3 } } },
-        "topic": "TALK_CF_PURIFIER"
-      },
-      { "text": "Not right now.", "switch": true, "default": true, "topic": "TALK_CF_PURIFIER" }
-    ]
   },
   {
     "id": "TALK_CF_PURIFIER_INTERLUDE_MISSION",

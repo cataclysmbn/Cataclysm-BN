@@ -77,6 +77,13 @@ set(LINKER "" CACHE STRING "Custom Linker to use")
 set(GETTEXT_MSGFMT_BINARY "" CACHE FILEPATH "msgfmt binary name or path.")
 option(BUILD_SDL3 "Force builds SDL3 and its modules from source, instead of using system packages" "OFF")
 option(BUILD_SHADERCROSS "Build SDL_shadercross from source when shadercross is not on PATH" "ON")
+if(WIN32)
+    set(SHADER_TARGETS "dxil;spirv;msl" CACHE STRING "Shaders to build (dxil/spirv/msl)")
+else()
+    set(SHADER_TARGETS "spirv;msl" CACHE STRING "Shaders to build (dxil/spirv/msl)")
+endif()
+#Enforce lowercase
+list(TRANSFORM SHADER_TARGETS TOLOWER OUTPUT_VARIABLE SHADER_TARGETS)
 option(CATA_SDL "Link SDL3 core for GPU platform services used by existing game targets." "OFF")
 option(CATA_GPU_VERIFY "Enable GPU output verification against CPU reference via readback (development only, requires CATA_SDL)." "OFF")
 set(CATA_SHADERS OFF)
@@ -268,8 +275,9 @@ if (LINKER)
     message(STATUS "LINKER                        : ${LINKER}")
 endif ()
 message(STATUS "BUILD_SDL3                    : ${BUILD_SDL3}")
+message(STATUS "BUILD_SHADERCROSS             : ${BUILD_SHADERCROSS}")
+message(STATUS "SHADER_TARGETS                : ${SHADER_TARGETS}")
 message(STATUS "CATA_SDL                      : ${CATA_SDL}")
-message(STATUS "CATA_SHADERS                  : ${CATA_SHADERS}")
 message(STATUS "CATA_GPU_VERIFY               : ${CATA_GPU_VERIFY}")
 
 message(STATUS "See CMake compiling guide for details and more info --")
@@ -407,6 +415,9 @@ if (CATA_SDL)
                     EXCLUDE_FROM_ALL
             )
             FetchContent_MakeAvailable(SDL3)
+            # SDL compiles with a PCH. Clang writes a timestamp into it, so ccache misses every SDL file on every build.
+            target_compile_options(SDL3-shared PRIVATE
+                    "$<$<COMPILE_LANG_AND_ID:C,Clang,AppleClang>:SHELL:-Xclang -fno-pch-timestamp>")
             if (DYNAMIC_LINKING)
                 install(TARGETS SDL3-shared DESTINATION lib)
             endif ()
@@ -439,97 +450,13 @@ if (CATA_SDL)
 
     if (NOT SHADERCROSS_EXE AND BUILD_SHADERCROSS AND NOT APPLE)
         message(STATUS "Installing SDL_shadercross from Source")
-        FetchContent_Declare(
-                SDL3_SHADERCROSS
-                GIT_REPOSITORY https://github.com/libsdl-org/SDL_shadercross.git
-                GIT_TAG main
-                GIT_SHALLOW TRUE
-                GIT_SUBMODULES_RECURSE TRUE
-        )
-        FetchContent_GetProperties(SDL3_SHADERCROSS)
-        if (NOT sdl3_shadercross_POPULATED)
-            cmake_policy(PUSH)
-            if (POLICY CMP0169)
-                cmake_policy(SET CMP0169 OLD)
-            endif ()
-            FetchContent_Populate(SDL3_SHADERCROSS)
-            cmake_policy(POP)
-        endif ()
-
-        set(SHADERCROSS_DXC_ROOT "${sdl3_shadercross_BINARY_DIR}/DirectXShaderCompiler-binaries")
-        set(DXC_ROOT "${SHADERCROSS_DXC_ROOT}")
-        include("${sdl3_shadercross_SOURCE_DIR}/build-scripts/download-prebuilt-DirectXShaderCompiler.cmake")
-        set(DirectXShaderCompiler_ROOT "${SHADERCROSS_DXC_ROOT}")
-        if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
-            set(DirectXShaderCompiler_INCLUDE_PATH "${SHADERCROSS_DXC_ROOT}/linux/include/dxc")
-            set(DirectXShaderCompiler_dxcompiler_LIBRARY "${SHADERCROSS_DXC_ROOT}/linux/lib/libdxcompiler.so")
-            set(DirectXShaderCompiler_dxil_LIBRARY "${SHADERCROSS_DXC_ROOT}/linux/lib/libdxil.so")
-        endif ()
-
-        set(CATA_SAVED_CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
-        set(CATA_SAVED_CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-        set(CATA_SAVED_CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-        set(CMAKE_C_FLAGS "")
-        set(CMAKE_CXX_FLAGS "")
-        set(CMAKE_CXX_FLAGS_DEBUG "")
-
-        set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
-        set(SPIRV_CROSS_SKIP_INSTALL ON)
-        set(SPIRV_CROSS_CLI OFF)
-        set(SPIRV_CROSS_ENABLE_TESTS OFF)
-        set(SPIRV_CROSS_STATIC ON)
-        set(SPIRV_CROSS_SHARED OFF)
-        set(SPIRV_CROSS_FORCE_PIC ON)
-        add_subdirectory(
-                "${sdl3_shadercross_SOURCE_DIR}/external/SPIRV-Cross"
-                "${sdl3_shadercross_BINARY_DIR}/external/SPIRV-Cross"
-                EXCLUDE_FROM_ALL)
-        if (TARGET spirv-cross-c AND NOT TARGET spirv_cross_c)
-            add_library(spirv_cross_c ALIAS spirv-cross-c)
-        endif ()
-
-        set(SDLSHADERCROSS_CLI ON)
-        set(SDLSHADERCROSS_DXC ON)
-        set(SDLSHADERCROSS_INSTALL OFF)
-        set(SDLSHADERCROSS_SHARED ON)
-        set(SDLSHADERCROSS_STATIC OFF)
-        set(SDLSHADERCROSS_SPIRVCROSS_SHARED OFF)
-        set(SDLSHADERCROSS_TESTS OFF)
-        set(SDLSHADERCROSS_VENDORED OFF)
-        set(SDLSHADERCROSS_WERROR OFF)
-
-        add_subdirectory(
-                "${sdl3_shadercross_SOURCE_DIR}"
-                "${sdl3_shadercross_BINARY_DIR}"
-                EXCLUDE_FROM_ALL)
-        set(CMAKE_C_FLAGS "${CATA_SAVED_CMAKE_C_FLAGS}")
-        set(CMAKE_CXX_FLAGS "${CATA_SAVED_CMAKE_CXX_FLAGS}")
-        set(CMAKE_CXX_FLAGS_DEBUG "${CATA_SAVED_CMAKE_CXX_FLAGS_DEBUG}")
-        set_target_properties(shadercross PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${sdl3_shadercross_BINARY_DIR}")
-
-        set(SHADERCROSS_EXE $<TARGET_FILE:shadercross>)
-        set(SHADERCROSS_TARGET shadercross)
+        include(build-scripts/Shadercross.cmake)
     endif ()
 
     file(MAKE_DIRECTORY "${CMAKE_SOURCE_DIR}/data/shaders")
 
     file(GLOB_RECURSE CATA_HLSL_SOURCES CONFIGURE_DEPENDS
          "${CMAKE_SOURCE_DIR}/src/shaders/*.hlsl")
-
-    set(CATA_PRECOMPILED_SHADER_OUTPUTS "")
-    foreach (HLSL_SRC ${CATA_HLSL_SOURCES})
-        get_filename_component(SHADER_NAME ${HLSL_SRC} NAME_WE)
-        if (WIN32)
-            list(APPEND CATA_PRECOMPILED_SHADER_OUTPUTS
-                 "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.dxil")
-        elseif (APPLE)
-            list(APPEND CATA_PRECOMPILED_SHADER_OUTPUTS
-                 "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.msl")
-        else ()
-            list(APPEND CATA_PRECOMPILED_SHADER_OUTPUTS
-                 "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.spv")
-        endif ()
-    endforeach ()
 
     if (SHADERCROSS_EXE)
         set(CATA_SHADERS ON)
@@ -547,68 +474,65 @@ if (CATA_SDL)
                 set(STAGE compute)
             endif ()
 
-            set(SPV_OUT  "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.spv")
-            set(MSL_OUT  "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.msl")
+            foreach(SHADER ${SHADER_TARGETS})
 
-            add_custom_command(
-                OUTPUT "${SPV_OUT}"
-                COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_SOURCE_DIR}/data/shaders"
-                COMMAND "${SHADERCROSS_EXE}" "${HLSL_SRC}" -s hlsl -d spirv -t ${STAGE} -o "${SPV_OUT}"
-                DEPENDS "${HLSL_SRC}" ${SHADERCROSS_TARGET}
-                COMMENT "Compiling ${SHADER_NAME}.hlsl -> SPIR-V"
-                VERBATIM)
-            list(APPEND CATA_SHADER_OUTPUTS "${SPV_OUT}")
+                # All Shader extensions besides spv match the -d value passed to shadercross
+                if (SHADER STREQUAL "spirv")
+                    set(SHADER_EXTENSION "spv")
+                else ()
+                    set(SHADER_EXTENSION "${SHADER}")
+                endif()
 
-            add_custom_command(
-                OUTPUT "${MSL_OUT}"
-                COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_SOURCE_DIR}/data/shaders"
-                COMMAND "${SHADERCROSS_EXE}" "${HLSL_SRC}" -s hlsl -d msl -t ${STAGE} -o "${MSL_OUT}"
-                DEPENDS "${HLSL_SRC}" ${SHADERCROSS_TARGET}
-                COMMENT "Compiling ${SHADER_NAME}.hlsl -> MSL"
-                VERBATIM)
-            list(APPEND CATA_SHADER_OUTPUTS "${MSL_OUT}")
-
-            if (WIN32)
-                set(DXIL_OUT "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.dxil")
+                set(SHADER_OUT  "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.${SHADER_EXTENSION}")
                 add_custom_command(
-                    OUTPUT "${DXIL_OUT}"
+                    OUTPUT "${SHADER_OUT}"
                     COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_SOURCE_DIR}/data/shaders"
-                    COMMAND "${SHADERCROSS_EXE}" "${HLSL_SRC}" -s hlsl -d dxil -t ${STAGE} -o "${DXIL_OUT}"
+                    COMMAND "${SHADERCROSS_EXE}" "${HLSL_SRC}" -s hlsl -d ${SHADER} -t ${STAGE} -o "${SHADER_OUT}"
                     DEPENDS "${HLSL_SRC}" ${SHADERCROSS_TARGET}
-                    COMMENT "Compiling ${SHADER_NAME}.hlsl -> DXIL"
+                    COMMENT "Compiling ${SHADER_NAME}.hlsl -> ${SHADER}"
                     VERBATIM)
-                list(APPEND CATA_SHADER_OUTPUTS "${DXIL_OUT}")
-            endif ()
+                list(APPEND CATA_SHADER_OUTPUTS "${SHADER_OUT}")
+            endforeach()
+
         endforeach ()
 
         add_custom_target(cata_shaders ALL DEPENDS ${CATA_SHADER_OUTPUTS})
         if (SHADERCROSS_TARGET)
             add_dependencies(cata_shaders ${SHADERCROSS_TARGET})
         endif ()
-    elseif (CATA_PRECOMPILED_SHADER_OUTPUTS)
+    else ()
+
+        list(TRANSFORM SHADER_TARGETS REPLACE "spirv" "spv" OUTPUT_VARIABLE SHADER_TARGETS)
+
+        set(CATA_PRECOMPILED_SHADER_OUTPUTS "")
+        foreach (HLSL_SRC ${CATA_HLSL_SOURCES})
+
+            get_filename_component(SHADER_NAME ${HLSL_SRC} NAME_WE)
+
+            foreach(SHADER_EXTENSION ${SHADER_TARGETS})
+                list(APPEND CATA_PRECOMPILED_SHADER_OUTPUTS
+                     "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.${SHADER_EXTENSION}")
+            endforeach()
+        endforeach ()
+
         set(CATA_MISSING_PRECOMPILED_SHADERS "")
         foreach (SHADER_OUT ${CATA_PRECOMPILED_SHADER_OUTPUTS})
             if (NOT EXISTS "${SHADER_OUT}")
-                list(APPEND CATA_MISSING_PRECOMPILED_SHADERS "${SHADER_OUT}")
+                get_filename_component(SHADER_NAME ${SHADER_OUT} NAME)
+                list(APPEND CATA_MISSING_PRECOMPILED_SHADERS "${SHADER_NAME}")
             endif ()
         endforeach ()
 
         if (CATA_MISSING_PRECOMPILED_SHADERS)
             message(FATAL_ERROR
-                "shadercross not found and precompiled platform shaders are missing: "
+                "BUILD_SHADERCROSS disabled and precompiled platform shaders are missing: "
                 "${CATA_MISSING_PRECOMPILED_SHADERS}. "
-                "Run a shader generation job or place shadercross on PATH.")
+                "Run a shader generation job or place shaders in ${CMAKE_SOURCE_DIR}/data/shaders.")
         endif ()
 
         set(CATA_SHADERS ON)
-        message(STATUS "shadercross not found; using precompiled shaders from data/shaders")
+        message(STATUS "BUILD_SHADERCROSS disabled; using precompiled shaders from data/shaders")
         add_custom_target(cata_shaders DEPENDS ${CATA_PRECOMPILED_SHADER_OUTPUTS})
-    elseif (TILES)
-        message(FATAL_ERROR
-            "shadercross not found — tiles builds require compiled shaders. "
-            "Either enable BUILD_SHADERCROSS or place shadercross on PATH.")
-    else ()
-        message(STATUS "shadercross not found — shaders will not be compiled")
     endif ()
 endif ()
 

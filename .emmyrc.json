@@ -18,6 +18,10 @@
   },
   "diagnostics": {
     "enable": true,
-    "globals": [ "test_data", "catadoc", "doc_gen_func", "get_requirement" ]
+    "globals": [ "test_data", "catadoc", "doc_gen_func" ],
+    "severity": {
+      "param-type-mismatch": "error",
+      "undefined-field": "error"
+    }
   }
 }

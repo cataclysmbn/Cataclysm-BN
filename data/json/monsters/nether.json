@@ -1,5 +1,87 @@
 [
   {
+    "id": "mon_signal_maw",
+    "type": "MONSTER",
+    "name": { "str": "ghost in the machine", "str_pl": "ghosts in the machine" },
+    "description": "A wavering human silhouette hangs in the air, breaking into static and reappearing several paces away.  Unfamiliar faces flicker across the hollow where its head should be, their mouths moving in time with a faint electronic whine.  Its fingers stretch into fine, trembling edges that leave deep gouges wherever they pass.",
+    "looks_like": "mon_shadow",
+    "default_faction": "nether",
+    "bodytype": "blob",
+    "species": [ "NETHER" ],
+    "diff": 16,
+    "volume": "120 L",
+    "weight": "160 kg",
+    "hp": 320,
+    "speed": 90,
+    "material": [ "flesh" ],
+    "symbol": "&",
+    "color": "magenta",
+    "aggression": 100,
+    "morale": 100,
+    "melee_skill": 7,
+    "melee_dice": 3,
+    "melee_dice_sides": 6,
+    "melee_cut": 8,
+    "attack_effs": [ { "id": "bleed", "duration": 900, "affect_hit_bp": true } ],
+    "dodge": 7,
+    "uncanny_dodge_cost": 50,
+    "armor_bash": 10,
+    "armor_cut": 14,
+    "armor_bullet": 20,
+    "vision_day": 30,
+    "vision_night": 15,
+    "path_settings": { "max_dist": 30, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
+    "emit_fields": [ { "emit_id": "emit_physical_static", "delay": "4 seconds" } ],
+    "harvest": "exempt",
+    "death_drops": "ghost_in_the_machine",
+    "special_attacks": [
+      [ "FEAR_PARALYZE", 20 ],
+      [ "GRAB", 7 ],
+      {
+        "type": "gun",
+        "cooldown": 20,
+        "move_cost": 150,
+        "gun_type": "monster_emp_gun",
+        "ranges": [ [ 3, 10, "DEFAULT" ] ],
+        "require_targeting_npc": true,
+        "require_targeting_monster": true,
+        "description": "The ghost in the machine unleashes a crackling electromagnetic pulse!",
+        "targeting_cost": 200,
+        "targeting_timeout_extend": -10,
+        "targeting_sound": "a rising electronic whine!",
+        "targeting_volume": "54 dB",
+        "no_ammo_sound": "fading static."
+      },
+      {
+        "type": "spell",
+        "spell_data": { "id": "spell_ghost_in_the_machine_blink", "hit_self": true },
+        "cooldown": 6,
+        "monster_message": "%1$s flickers into a cloud of static!"
+      },
+      {
+        "type": "spell",
+        "id": "ghost_static_bolt",
+        "spell_data": { "id": "spell_ghost_in_the_machine_static_bolt" },
+        "cooldown": 20,
+        "monster_message": "%1$s fires a crackling bolt of static at %3$s!"
+      }
+    ],
+    "death_function": [ "MELT" ],
+    "flags": [
+      "SEES",
+      "HEARS",
+      "BASHES",
+      "NO_BREATHE",
+      "NOGIB",
+      "HARDTOSHOOT",
+      "UNCANNY_DODGE",
+      "CAN_OPEN_DOORS",
+      "PATH_AVOID_DANGER_2",
+      "PRIORITIZE_TARGETS",
+      "NO_VEHICLE_COLLISION"
+    ]
+  },
+  {
     "id": "mon_albino_penguin",
     "type": "MONSTER",
     "name": { "str": "albino penguin" },
@@ -257,7 +339,7 @@
       "feed": "If you're seeing this message it's a bug.",
       "pet": "If you're seeing this message it's a bug."
     },
-    "flags": [ "SEES", "SMELLS", "HEARS", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM" ]
+    "flags": [ "SEES", "SMELLS", "HEARS", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "NO_SLIP" ]
   },
   {
     "id": "mon_flaming_eye",
@@ -411,7 +493,18 @@
     "death_function": [ "NORMAL" ],
     "anger_triggers": [ "NETHER_ATTENTION" ],
     "special_attacks": [ { "id": "scratch", "damage_max_instance": [ { "damage_type": "cut", "amount": 8, "armor_multiplier": 0.8 } ] } ],
-    "flags": [ "SEES", "SMELLS", "HEARS", "WARM", "NO_BREATHE", "GRABS", "HUMAN", "PATH_AVOID_DANGER_2", "PRIORITIZE_TARGETS" ]
+    "flags": [
+      "SEES",
+      "SMELLS",
+      "HEARS",
+      "WARM",
+      "NO_BREATHE",
+      "GRABS",
+      "HUMAN",
+      "PATH_AVOID_DANGER_2",
+      "PRIORITIZE_TARGETS",
+      "NO_SLIP"
+    ]
   },
   {
     "id": "mon_headless_dog_thing",
@@ -437,9 +530,9 @@
     "melee_cut": 0,
     "dodge": 4,
     "harvest": "exempt",
-    "special_attacks": [ [ "TENTACLE", 5 ] ],
+    "special_attacks": [ { "id": "tentacle" } ],
     "on_death": { "spawn_mon": "mon_thing" },
-    "flags": [ "SEES", "SMELLS", "HEARS", "BASHES" ]
+    "flags": [ "SEES", "SMELLS", "HEARS", "BASHES", "NO_SLIP" ]
   },
   {
     "id": "mon_homunculus",
@@ -474,7 +567,7 @@
     "id": "mon_hound_tindalos",
     "type": "MONSTER",
     "name": { "str": "hound of tindalos", "str_pl": "hounds of tindalos" },
-    "description": "A grotesque hound-like beast, its frame is angular and emaciated and its head is like that of an abyssal fish.  When it moves, twisted limbs duplicate, merge, disappear, and reform in dissonance, as if a hundred copies of itself were somehow forced to inhabit the same space.  Extraneous to our reality, it moves between the corners of the world, hunting those that would dare stepping beyond time and space.",
+    "description": "A grotesque hound-like beast, its frame is angular and emaciated and its head is like that of an abyssal fish.  When it moves, twisted limbs duplicate, merge, disappear, and reform in dissonance, as if a hundred copies of itself were somehow forced to inhabit the same space.  Extraneous to our reality, it moves between the corners of the world, hunting those that would dare step beyond time and space.",
     "default_faction": "nether",
     "bodytype": "quadruped",
     "species": [ "NETHER" ],
@@ -512,14 +605,15 @@
       "ARTHROPOD_BLOOD",
       "DARKPROOF",
       "NO_BREATHE",
-      "HARDTOSHOOT"
+      "HARDTOSHOOT",
+      "NO_SLIP"
     ]
   },
   {
     "id": "mon_hound_tindalos_afterimage",
     "type": "MONSTER",
     "name": { "str": "hound of tindalos", "str_pl": "hounds of tindalos" },
-    "description": "A grotesque hound-like beast, its frame is angular and emaciated and its head is like that of an abyssal fish.  When it moves, twisted limbs duplicate, merge, disappear, and reform in dissonance, as if a hundred copies of itself were somehow forced to inhabit the same space.  Extraneous to our reality, it moves between the corners of the world, hunting those that would dare stepping beyond time and space.",
+    "description": "A grotesque hound-like beast, its frame is angular and emaciated and its head is like that of an abyssal fish.  When it moves, twisted limbs duplicate, merge, disappear, and reform in dissonance, as if a hundred copies of itself were somehow forced to inhabit the same space.  Extraneous to our reality, it moves between the corners of the world, hunting those that would dare step beyond time and space.",
     "default_faction": "nether",
     "bodytype": "quadruped",
     "species": [ "NETHER" ],
@@ -557,7 +651,8 @@
       "ARTHROPOD_BLOOD",
       "NO_BREATHE",
       "DARKPROOF",
-      "HARDTOSHOOT"
+      "HARDTOSHOOT",
+      "NO_SLIP"
     ]
   },
   {
@@ -587,7 +682,7 @@
     "special_attacks": [ [ "ACID", 15 ] ],
     "anger_triggers": [ "PLAYER_WEAK", "FRIEND_DIED" ],
     "death_function": [ "NORMAL" ],
-    "flags": [ "SMELLS", "HEARS", "POISON", "ACIDPROOF", "ACID_BLOOD" ]
+    "flags": [ "SMELLS", "HEARS", "POISON", "ACIDPROOF", "ACID_BLOOD", "NO_SLIP" ]
   },
   {
     "id": "mon_hunting_horror",
@@ -711,7 +806,8 @@
       "WEBWALK",
       "NO_BREATHE",
       "DARKPROOF",
-      "NIGHT_INVISIBILITY"
+      "NIGHT_INVISIBILITY",
+      "NO_SLIP"
     ]
   },
   {
@@ -756,7 +852,8 @@
       "ACIDPROOF",
       "HIT_AND_RUN",
       "NO_BREATHE",
-      "NOGIB"
+      "NOGIB",
+      "NO_SLIP"
     ]
   },
   {
@@ -784,7 +881,7 @@
     "harvest": "exempt",
     "special_attacks": [ [ "DISAPPEAR", 200 ] ],
     "death_function": [ "MELT" ],
-    "flags": [ "SEES", "SMELLS", "WARM", "SWIMS", "PLASTIC", "DARKPROOF", "SUNDEATH", "NOGIB" ]
+    "flags": [ "SEES", "SMELLS", "WARM", "SWIMS", "PLASTIC", "DARKPROOF", "SUNDEATH", "NOGIB", "NO_SLIP" ]
   },
   {
     "id": "mon_shoggoth",
@@ -817,7 +914,19 @@
     "regenerates": 50,
     "regeneration_modifiers": [ { "effect": "onfire", "base_mod": -0.3, "scaling_mod": -0.15 }, { "effect": "mon_mitosis", "base_mod": -1.0 } ],
     "regen_morale": true,
-    "flags": [ "SEES", "SMELLS", "SWIMS", "PLASTIC", "SLUDGEPROOF", "ACID_BLOOD", "ACIDPROOF", "NOHEAD", "ABSORBS_SPLITS", "NOGIB" ]
+    "flags": [
+      "SEES",
+      "SMELLS",
+      "SWIMS",
+      "PLASTIC",
+      "SLUDGEPROOF",
+      "ACID_BLOOD",
+      "ACIDPROOF",
+      "NOHEAD",
+      "ABSORBS_SPLITS",
+      "NOGIB",
+      "NO_SLIP"
+    ]
   },
   {
     "id": "mon_thing",
@@ -844,9 +953,22 @@
     "dodge": 2,
     "armor_bash": 8,
     "harvest": "exempt",
-    "special_attacks": [ [ "TENTACLE", 5 ] ],
+    "special_attacks": [ { "id": "tentacle" } ],
     "death_function": [ "MELT" ],
-    "flags": [ "SMELLS", "HEARS", "NOHEAD", "BASHES", "GROUP_BASH", "SWIMS", "ATTACKMON", "PLASTIC", "ACIDPROOF", "NOGIB", "CLIMBS" ]
+    "flags": [
+      "SMELLS",
+      "HEARS",
+      "NOHEAD",
+      "BASHES",
+      "GROUP_BASH",
+      "SWIMS",
+      "ATTACKMON",
+      "PLASTIC",
+      "ACIDPROOF",
+      "NOGIB",
+      "CLIMBS",
+      "NO_SLIP"
+    ]
   },
   {
     "id": "mon_twisted_body",
@@ -976,7 +1098,19 @@
     "death_function": [ "MELT" ],
     "death_drops": "mon_shade_boss_death_drops",
     "anger_triggers": [ "FRIEND_DIED", "FRIEND_ATTACKED", "HURT" ],
-    "flags": [ "SEES", "HEARS", "BASHES", "GROUP_BASH", "CAN_OPEN_DOORS", "PATH_AVOID_DANGER_1", "NO_BREATHE", "HARDTOSHOOT" ]
+    "flags": [
+      "SEES",
+      "HEARS",
+      "BASHES",
+      "GROUP_BASH",
+      "CAN_OPEN_DOORS",
+      "PATH_AVOID_DANGER_1",
+      "NO_BREATHE",
+      "HARDTOSHOOT",
+      "NOT_HALLUCINATION",
+      "NOHEAD",
+      "NO_SLIP"
+    ]
   },
   {
     "id": "mon_shade_boss_clone",
@@ -1012,6 +1146,327 @@
     "special_attacks": [ [ "PARROT_AT_DANGER", 0 ] ],
     "death_function": [ "MELT" ],
     "anger_triggers": [ "FRIEND_DIED", "FRIEND_ATTACKED", "HURT" ],
-    "flags": [ "SEES", "HEARS", "BASHES", "GROUP_BASH", "NO_BREATHE", "HARDTOSHOOT" ]
+    "flags": [ "SEES", "HEARS", "BASHES", "GROUP_BASH", "NO_BREATHE", "HARDTOSHOOT", "NOT_HALLUCINATION", "NOHEAD", "NO_SLIP" ]
+  },
+  {
+    "id": "mon_suspended_shade",
+    "type": "MONSTER",
+    "name": { "str": "suspended shade" },
+    "description": "This blurry, dark figure, wearing the outline of what can barely be perceived as a lab coat, shifts around your view erratically, perpetually out of focus.  It floats motionlessly, as if impaled by invisible spikes.  Paradoxically, it seems to be emitting light...",
+    "default_faction": "nether",
+    "bodytype": "human",
+    "species": [ "NETHER" ],
+    "volume": "62500 ml",
+    "weight": "81500 g",
+    "hp": 150,
+    "speed": 100,
+    "attack_cost": 100,
+    "symbol": "S",
+    "color": "dark_gray",
+    "aggression": 100,
+    "morale": 100,
+    "melee_skill": 4,
+    "melee_dice": 0,
+    "melee_dice_sides": 0,
+    "armor_bash": 0,
+    "armor_cut": 0,
+    "armor_bullet": 0,
+    "path_settings": { "max_dist": 0, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
+    "luminance": 10,
+    "harvest": "exempt",
+    "vision_day": 10,
+    "vision_night": 2,
+    "special_attacks": [ [ "SUICIDE", 20 ], { "type": "leap", "cooldown": 10, "max_range": 10 } ],
+    "death_drops": "mon_suspended_shade_death_drops",
+    "on_death": { "spawn_mon_near": { "distance": 1, "ids": [ "mon_shadow", "mon_shadow", "mon_shadow" ] } },
+    "flags": [ "SEES", "HEARS", "NO_BREATHE", "HARDTOSHOOT", "IMMOBILE", "NOT_HALLUCINATION", "NOHEAD", "ACIDPROOF" ]
+  },
+  {
+    "id": "mon_suspended_merc",
+    "type": "MONSTER",
+    "name": { "str": "suspended task force" },
+    "description": "This figure, suspended motionless in the air, is clad in hazmat gear and armor.  Around it orbits a swarm of shell casings and fired bullets.",
+    "default_faction": "nether",
+    "bodytype": "human",
+    "species": [ "NETHER" ],
+    "volume": "62500 ml",
+    "weight": "81500 g",
+    "hp": 200,
+    "speed": 100,
+    "attack_cost": 100,
+    "symbol": "S",
+    "color": "yellow",
+    "aggression": 100,
+    "morale": 100,
+    "melee_skill": 4,
+    "melee_dice": 0,
+    "melee_dice_sides": 0,
+    "//": "matches armor value of superalloy mbr vest",
+    "armor_bash": 40,
+    "armor_cut": 50,
+    "armor_bullet": 70,
+    "path_settings": { "max_dist": 0, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
+    "harvest": "exempt",
+    "vision_day": 40,
+    "vision_night": 30,
+    "special_attacks": [
+      {
+        "type": "spell",
+        "spell_data": { "id": "suspended_task_force_swarm", "hit_self": true },
+        "cooldown": 30,
+        "monster_message": "A swarm of casings and bullets breaks off from the swarm and flies towards you!"
+      }
+    ],
+    "death_drops": "mon_suspended_merc_death_drops",
+    "death_function": [ "MELT" ],
+    "flags": [ "SEES", "HEARS", "NO_BREATHE", "IMMOBILE", "NOT_HALLUCINATION", "NOHEAD", "ACIDPROOF" ]
+  },
+  {
+    "id": "mon_suspended_merc_summon",
+    "type": "MONSTER",
+    "name": { "str": "shrapnel swarm" },
+    "description": "This swarm of metal is made of various casings, fired bullets, and shrapnel.  The swarm orbits around a central, invisible force at high speed, and it seems to be heading towards you.",
+    "default_faction": "nether",
+    "species": [ "UNKNOWN" ],
+    "volume": "1230 ml",
+    "weight": "1230 g",
+    "hp": 10,
+    "speed": 150,
+    "material": [ "brass" ],
+    "symbol": "V",
+    "color": "yellow",
+    "aggression": 100,
+    "morale": 100,
+    "melee_skill": 5,
+    "melee_dice": 1,
+    "melee_dice_sides": 6,
+    "melee_damage": [
+      { "damage_type": "bullet", "amount": 18 },
+      { "damage_type": "stab", "amount": 12 },
+      { "damage_type": "cut", "amount": 22 }
+    ],
+    "special_attacks": [ [ "SUICIDE", 20 ] ],
+    "dodge": 20,
+    "vision_day": 55,
+    "vision_night": 55,
+    "death_drops": "mon_suspended_merc_summon_death_drops",
+    "death_function": [ "MELT" ],
+    "flags": [
+      "SEES",
+      "HEARS",
+      "GOODHEARING",
+      "NOHEAD",
+      "NO_BREATHE",
+      "HARDTOSHOOT",
+      "FLIES",
+      "BIOPROOF",
+      "NOT_HALLUCINATION",
+      "GRAB_IMMUNE"
+    ]
+  },
+  {
+    "id": "mon_anomaly_boss",
+    "type": "MONSTER",
+    "name": { "str": "PE-025-X" },
+    "description": "This anomaly resembles a floating ball of plasma.  It looks entirely inert.",
+    "default_faction": "nether",
+    "species": [ "NETHER" ],
+    "volume": "1 ml",
+    "weight": "1 g",
+    "hp": 5,
+    "speed": 100,
+    "symbol": "A",
+    "color": "light_green",
+    "aggression": 100,
+    "morale": 100,
+    "melee_skill": 0,
+    "melee_dice": 0,
+    "melee_dice_sides": 0,
+    "//": "Immune to pretty much all damage to represent its immaterial nature.",
+    "armor_bash": 1000000,
+    "armor_cut": 1000000,
+    "armor_stab": 1000000,
+    "armor_bullet": 1000000,
+    "armor_electric": 1000000,
+    "dodge": 20,
+    "harvest": "exempt",
+    "vision_day": 150,
+    "vision_night": 150,
+    "path_settings": { "max_dist": 40, "allow_open_doors": false, "avoid_traps": false, "avoid_sharp": false },
+    "special_attacks": [
+      [ "PULL_METAL_WEAPON", 10 ],
+      { "id": "smash", "throw_strength": 50, "cooldown": 15 },
+      {
+        "type": "spell",
+        "spell_data": { "id": "anomaly_clone", "hit_self": true },
+        "cooldown": 50,
+        "monster_message": "Copies of PE-025-X manifest around it!"
+      }
+    ],
+    "death_function": [ "MELT" ],
+    "anger_triggers": [ "FRIEND_DIED", "FRIEND_ATTACKED", "HURT" ],
+    "flags": [
+      "SEES",
+      "HEARS",
+      "GOODHEARING",
+      "NO_BREATHE",
+      "NOT_HALLUCINATION",
+      "NOHEAD",
+      "FLIES",
+      "ATTACKMON",
+      "PLASTIC",
+      "ACIDPROOF",
+      "FIREPROOF",
+      "SLUDGEPROOF",
+      "COLDPROOF",
+      "DARKPROOF",
+      "LIGHTPROOF",
+      "PSIPROOF",
+      "BIOPROOF",
+      "WEBWALK",
+      "IMMOBILE",
+      "STUN_IMMUNE",
+      "GRAB_IMMUNE"
+    ]
+  },
+  {
+    "id": "mon_anomaly_boss_clone",
+    "type": "MONSTER",
+    "name": { "str": "PE-025-X" },
+    "description": "Rocks and rubble churn at high speed around a central dark mass.  Luckily, it seems this anomaly can actually be harmed conventionally.",
+    "default_faction": "nether",
+    "species": [ "NETHER" ],
+    "volume": "2000 ml",
+    "weight": "5000 g",
+    "hp": 150,
+    "speed": 100,
+    "symbol": "A",
+    "color": "dark_gray",
+    "aggression": 100,
+    "morale": 100,
+    "melee_skill": 4,
+    "melee_dice": 5,
+    "melee_dice_sides": 10,
+    "harvest": "exempt",
+    "vision_day": 150,
+    "vision_night": 150,
+    "path_settings": { "max_dist": 40, "allow_open_doors": false, "avoid_traps": false, "avoid_sharp": false },
+    "starting_ammo": { "rock": 10000 },
+    "special_attacks": [
+      [ "GRAB_DRAG", 4 ],
+      [ "RANGED_PULL", 3 ],
+      [ "GRAB", 2 ],
+      { "id": "smash", "throw_strength": 50, "cooldown": 6 },
+      {
+        "type": "gun",
+        "cooldown": 5,
+        "move_cost": 150,
+        "gun_type": "anomaly_thrown_rock",
+        "ammo_type": "rock",
+        "no_ammo_sound": "",
+        "fake_skills": [ [ "gun", 2 ], [ "throw", 2 ] ],
+        "fake_dex": 6,
+        "fake_per": 6,
+        "require_targeting_player": false,
+        "ranges": [ [ 2, 40, "DEFAULT" ] ],
+        "description": "A heavy rock flies off from the anomaly!",
+        "no_crits": true
+      },
+      {
+        "type": "spell",
+        "spell_data": { "id": "summon_task_force" },
+        "cooldown": 65,
+        "monster_message": "Vengeful shades appear around you, coming to your aid!"
+      }
+    ],
+    "death_function": [ "MELT" ],
+    "anger_triggers": [ "FRIEND_DIED", "FRIEND_ATTACKED", "HURT" ],
+    "flags": [
+      "SEES",
+      "HEARS",
+      "GOODHEARING",
+      "BASHES",
+      "NO_BREATHE",
+      "NOT_HALLUCINATION",
+      "NOHEAD",
+      "FLIES",
+      "ATTACKMON",
+      "PLASTIC",
+      "ACIDPROOF",
+      "FIREPROOF",
+      "SLUDGEPROOF",
+      "COLDPROOF",
+      "DARKPROOF",
+      "LIGHTPROOF",
+      "PSIPROOF",
+      "BIOPROOF",
+      "STUN_IMMUNE",
+      "GRAB_IMMUNE"
+    ]
+  },
+  {
+    "id": "mon_task_force_shade",
+    "type": "MONSTER",
+    "name": { "str": "vengeful shade" },
+    "description": "This shifting figure dons a suit of hazmat gear under its heavy armor, over which it wears a large harness which reads '025-XPE'.  Despite its striking appearance, it seems to be focused instead on the anomalies around it.  It may be your only hope to finally stop this anomaly.",
+    "default_faction": "player",
+    "bodytype": "human",
+    "species": [ "NETHER", "HUMAN" ],
+    "volume": "62500 ml",
+    "weight": "81500 g",
+    "hp": 120,
+    "speed": 110,
+    "attack_cost": 110,
+    "symbol": "@",
+    "color": "yellow",
+    "aggression": 75,
+    "morale": 100,
+    "melee_skill": 7,
+    "melee_dice": 2,
+    "melee_dice_sides": 3,
+    "melee_cut": 3,
+    "melee_damage": [ { "damage_type": "true", "amount": 1 } ],
+    "dodge": 4,
+    "//": "Armor value matches that of anbc suit.",
+    "armor_bash": 14,
+    "armor_cut": 21,
+    "armor_bullet": 28,
+    "armor_acid": 7,
+    "vision_day": 50,
+    "vision_night": 50,
+    "path_settings": { "max_dist": 40, "allow_open_doors": false, "avoid_traps": false, "avoid_sharp": false },
+    "starting_ammo": { "8mm_caseless": 120 },
+    "special_attacks": [
+      [ "PARROT_AT_DANGER", 5 ],
+      {
+        "type": "gun",
+        "cooldown": 20,
+        "move_cost": 150,
+        "gun_type": "rm51_assault_rifle",
+        "ammo_type": "8mm_caseless",
+        "fake_skills": [ [ "gun", 8 ], [ "rifle", 8 ] ],
+        "fake_dex": 8,
+        "fake_per": 10,
+        "ranges": [ [ 0, 30, "BURST" ], [ 0, 30, "AUTO" ] ],
+        "require_targeting_player": false,
+        "description": "The vengeful shade fires their rifle!",
+        "no_crits": true
+      }
+    ],
+    "death_function": [ "DISAPPEAR" ],
+    "flags": [
+      "SEES",
+      "HEARS",
+      "SMELLS",
+      "WARM",
+      "BASHES",
+      "GROUP_BASH",
+      "HUMAN",
+      "CAN_OPEN_DOORS",
+      "CLIMBS",
+      "PUSH_MON",
+      "PATH_AVOID_DANGER_1",
+      "NO_SLIP"
+    ]
   }
 ]

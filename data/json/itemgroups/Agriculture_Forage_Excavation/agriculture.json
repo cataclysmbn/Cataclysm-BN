@@ -34,7 +34,8 @@
       [ "seed_tomato", 60 ],
       [ "seed_horseradish", 10 ],
       [ "seed_popcorn", 10 ],
-      [ "seed_mustard", 10 ]
+      [ "seed_mustard", 10 ],
+      [ "seed_coffee_cherry", 10 ]
     ]
   },
   {

@@ -37,6 +37,7 @@ local SKILL_DEFS = {
   { id = "driving", name = gettext("Driving") },
   { id = "fabrication", name = gettext("Fabrication") },
   { id = "spellcraft", name = gettext("Spellcraft") },
+  { id = "magic", name = gettext("Arcana") },
 }
 
 ---@class SkillsThroughKillsSkill

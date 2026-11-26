@@ -1,41 +1,25 @@
 #include "explosion.h" // IWYU pragma: associated
-#include "fragment_cloud.h" // IWYU pragma: associated
-
-#include <algorithm>
-#include <array>
-#include <cmath>
-#include <cstddef>
-#include <limits>
-#include <map>
-#include <memory>
-#include <optional>
-#include <queue>
-#include <random>
-#include <set>
-#include <utility>
-#include <variant>
-#include <vector>
 
 #include "animation.h"
 #include "avatar.h"
 #include "ballistics.h"
-#include "catalua_hooks.h"
-#include "catalua_sol.h"
 #include "bodypart.h"
 #include "calendar.h"
-#include "character.h"
-#include "catalua_coord.h"
 #include "cata_utility.h"
-#include "cata_algo.h"
+#include "catalua.h"
+#include "catalua_coord.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
+#include "character.h"
 #include "color.h"
 #include "creature.h"
 #include "damage.h"
 #include "debug.h"
 #include "enums.h"
 #include "explosion_queue.h"
-#include "field_type.h"
-#include "flat_set.h"
 #include "flag.h"
+#include "flat_set.h"
+#include "fragment_cloud.h" // IWYU pragma: associated
 #include "game.h"
 #include "game_constants.h"
 #include "int_id.h"
@@ -44,9 +28,10 @@
 #include "itype.h"
 #include "json.h"
 #include "line.h"
-#include "map.h"
+#include "map/field_type.h"
+#include "map/map.h"
+#include "map/mapdata.h"
 #include "map_iterator.h"
-#include "mapdata.h"
 #include "material.h"
 #include "math_defines.h"
 #include "messages.h"
@@ -67,13 +52,30 @@
 #include "translations.h"
 #include "trap.h"
 #include "type_id.h"
-#include "units.h"
 #include "ui_manager.h"
+#include "units.h"
 #include "units_mass.h"
 #include "units_volume.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
+#include "utils/algo.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstddef>
+#include <limits>
+#include <map>
+#include <memory>
+#include <optional>
+#include <queue>
+#include <random>
+#include <ranges>
+#include <set>
+#include <utility>
+#include <variant>
+#include <vector>
 
 static const ammo_effect_str_id ammo_effect_NULL_SOURCE( "NULL_SOURCE" );
 
@@ -86,20 +88,19 @@ static const efftype_id effect_teleglow( "teleglow" );
 static const species_id ROBOT( "ROBOT" );
 
 static const trait_id trait_LEG_TENT_BRACE( "LEG_TENT_BRACE" );
-static const trait_id trait_PER_SLIME( "PER_SLIME" );
-static const trait_id trait_PER_SLIME_OK( "PER_SLIME_OK" );
 
 static const mongroup_id GROUP_NETHER( "GROUP_NETHER" );
 
-static const bionic_id bio_ears( "bio_ears" );
-static const bionic_id bio_sunglasses( "bio_sunglasses" );
-
 static const itype_id itype_battery( "battery" );
 static const itype_id itype_e_handcuffs( "e_handcuffs" );
-static const itype_id itype_rm13_armor_on( "rm13_armor_on" );
+
+static const enchantment_value_id ench_val_FLASH_PROTECTION( "FLASH_PROTECTION" );
 
 namespace
 {
+
+const auto flag_CONSOLE = std::string( "CONSOLE" );
+
 auto is_dead_for_explosion( const Creature &critter ) -> bool
 {
     if( const auto *const character = dynamic_cast<const Character *>( &critter ) ) {
@@ -107,6 +108,13 @@ auto is_dead_for_explosion( const Creature &critter ) -> bool
     }
     return critter.is_dead_state();
 }
+
+auto is_emp_card_reader( const ter_id &terrain ) -> bool
+{
+    return terrain == t_card_science || terrain == t_card_military ||
+           terrain == t_card_industrial;
+}
+
 } // namespace
 
 static float obstacle_blast_percentage( float range, float distance )
@@ -1213,11 +1221,6 @@ void ExplosionProcess::run()
         }
     }
 
-    // Make sure the map is centered around the player
-    if( player_flung.has_value() ) {
-        g->update_map( *player_flung.value() );
-    }
-
     // Finally, recombine thrown items into full stacks again
     std::sort( recombination_targets.begin(), recombination_targets.end() );
     auto end = std::unique( recombination_targets.begin(), recombination_targets.end() );
@@ -1454,7 +1457,7 @@ static std::map<const Creature *, int> legacy_blast( const tripoint_bub_ms &p, c
     static const int y_offset[10] = { 0, 0, -1, 1, -1,  1, -1, 1, 0, 0 };
     static const int z_offset[10] = { 0, 0,  0, 0,  0,  0,  0, 0, 1, -1 };
     map &here = get_map();
-    const size_t max_index = here.has_zlevels() ? 10 : 8;
+    const size_t max_index = 10;
 
     here.bash( p, fire ? power : ( 2 * power ), true, false, false );
 
@@ -1555,12 +1558,6 @@ static std::map<const Creature *, int> legacy_blast( const tripoint_bub_ms &p, c
 
         if( fire ) {
             int intensity = 1 + ( force > 10.0f ) + ( force > 30.0f );
-
-            if( !here.has_zlevels() && here.is_outside( pt ) && intensity == 2 ) {
-                // In 3D mode, it would have fire fields above, which would then fall
-                // and fuel the fire on this tile
-                intensity++;
-            }
 
             here.add_field( pt, fd_fire, intensity );
         }
@@ -1703,7 +1700,7 @@ void explosion_funcs::regular( const queued_explosion &qe )
                                             _( "the shrapnel" );
             std::string damage_description = ( pr.second > 0 ) ?
                                              string_format( _( "taking %d damage" ), pr.second ) :
-                                             _( "but takes no damage" );
+                                             critter->is_player() ? _( "but take no damage" ) : _( "but takes no damage" );
             if( critter->is_player() ) {
                 add_msg( _( "You are hit by %s, %s." ),
                          cause_description, damage_description );
@@ -1757,18 +1754,10 @@ void explosion_funcs::flashbang( const queued_explosion &qe )
         // Deafening is now handled by the sound code.
         if( here.sees( g->u.bub_pos(), p, 8 ) ) {
             int flash_mod = 0;
-            if( g->u.has_trait( trait_PER_SLIME ) ) {
-                if( one_in( 2 ) ) {
-                    flash_mod = 3; // Yay, you weren't looking!
-                }
-            } else if( g->u.has_trait( trait_PER_SLIME_OK ) ) {
-                flash_mod = 8; // Just retract those and extrude fresh eyes
-            } else if( g->u.has_bionic( bio_sunglasses ) ||
-                       g->u.is_wearing( itype_rm13_armor_on ) ) {
-                flash_mod = 6;
-            } else if( g->u.worn_with_flag( flag_BLIND ) ||
-                       g->u.worn_with_flag( flag_FLASH_PROTECTION ) ) {
-                flash_mod = 3; // Not really proper flash protection, but better than nothing
+            flash_mod = g->u.bonus_from_enchantments( 0, ench_val_FLASH_PROTECTION );
+            if( g->u.worn_with_flag( flag_BLIND ) ||  g->u.worn_with_flag( flag_FLASH_PROTECTION ) ) {
+                // Not really proper flash protection, but better than nothing
+                flash_mod = std::max( flash_mod, 3 );
             }
             g->u.add_env_effect( effect_blind, body_part_eyes, ( 12 - flash_mod - dist ) / 2,
                                  time_duration::from_turns( 10 - dist ) );
@@ -1871,8 +1860,21 @@ void emp_blast( const tripoint_bub_ms &p )
 {
     map &here = get_map();
     Character &u = get_player_character();
-    const bool sight = u.sees( p );
-    if( here.has_flag( "CONSOLE", p ) ) {
+    const auto terrain = here.ter( p );
+    const auto console = here.has_flag( flag_CONSOLE, p );
+    const auto card_reader = is_emp_card_reader( terrain );
+    auto *const mon_ptr = g->critter_at<monster>( p );
+    const auto player_here = u.bub_pos() == p;
+    const auto has_items = here.has_items( p );
+
+    if( !console && !card_reader && mon_ptr == nullptr && !player_here && !has_items ) {
+        return;
+    }
+
+    const auto needs_sight = console || card_reader || mon_ptr != nullptr;
+    const bool sight = needs_sight && u.sees( p );
+
+    if( console ) {
         if( sight ) {
             add_msg( _( "The %s is rendered non-functional!" ), here.tername( p ) );
         }
@@ -1880,9 +1882,8 @@ void emp_blast( const tripoint_bub_ms &p )
         return;
     }
     // TODO: More terrain effects.
-    if( here.ter( p ) == t_card_science || here.ter( p ) == t_card_military ||
-        here.ter( p ) == t_card_industrial ) {
-        int rn = rng( 1, 100 );
+    if( card_reader ) {
+        const int rn = rng( 1, 100 );
         if( rn > 92 || rn < 40 ) {
             if( sight ) {
                 add_msg( _( "The card reader is rendered non-functional." ) );
@@ -1893,9 +1894,10 @@ void emp_blast( const tripoint_bub_ms &p )
             if( sight ) {
                 add_msg( _( "The nearby doors slide open!" ) );
             }
-            for( int i = -3; i <= 3; i++ ) {
-                for( int j = -3; j <= 3; j++ ) {
-                    auto p2 = p + tripoint( i, j, 0 );
+            using namespace std::views;
+            for( const int i : iota( -3, 4 ) ) {
+                for( const int j : iota( -3, 4 ) ) {
+                    const auto p2 = p + tripoint( i, j, 0 );
                     if( here.ter( p2 ) == t_door_metal_locked ) {
                         here.ter_set( p2, t_floor );
                     }
@@ -1908,7 +1910,7 @@ void emp_blast( const tripoint_bub_ms &p )
             }
         }
     }
-    if( monster *const mon_ptr = g->critter_at<monster>( p ) ) {
+    if( mon_ptr != nullptr ) {
         monster &critter = *mon_ptr;
         if( critter.has_flag( MF_ELECTRONIC ) ) {
             int deact_chance = 0;
@@ -1987,9 +1989,11 @@ void emp_blast( const tripoint_bub_ms &p )
         }
     }
     // Drain any items of their battery charge
-    for( auto &it : here.i_at( p ) ) {
-        if( it->is_tool() && it->ammo_current() == itype_battery ) {
-            it->charges = 0;
+    if( here.has_items( p ) ) {
+        for( auto &it : here.i_at( p ) ) {
+            if( it->is_tool() && it->ammo_current() == itype_battery ) {
+                it->charges = 0;
+            }
         }
     }
     // TODO: Drain NPC energy reserves
@@ -2075,8 +2079,10 @@ void explosion_funcs::resonance_cascade( const queued_explosion &qe )
                 case 13:
                 case 14:
                 case 15: {
-                    MonsterGroupResult spawn_details = MonsterGroupManager::GetResultFromGroup( GROUP_NETHER );
-                    g->place_critter_at( spawn_details.name, dest );
+                    auto spawn_details_vec = MonsterGroupManager::GetResultFromGroup( GROUP_NETHER );
+                    for( auto spawn_details : spawn_details_vec ) {
+                        g->place_critter_at( spawn_details.name, dest );
+                    }
                     break;
                 }
                 case 16:
@@ -2126,8 +2132,22 @@ explosion_queue &get_explosion_queue()
 
 void explosion_queue::execute()
 {
+    // Drain deferral (issue #9696) -- the primary fix. An item being processed can
+    // be detached but still in the map stack; a re-entrant drain (e.g. an EMP
+    // bomb's blast killing a searchlight) would re-detonate it forever. Defer to
+    // the turn-loop drain, which runs after processing (same turn).
+    if( drains_deferred() ) {
+        deferred_drain_requested = true;
+        return;
+    }
+    // Any real drain satisfies a pending suppressed request.
+    deferred_drain_requested = false;
+
+    // Per-drain backstop (not the #9696 fix): cap one runaway drain that re-feeds
+    // its own queue. Per drain, not per turn, so it never drops a later,
+    // independently-queued explosion.
     explosion_count = 0;
-    while( !elems.empty() ) {
+    while( !elems.empty() && explosion_count < max_pending_explosions ) {
         queued_explosion exp = std::move( elems.front() );
         elems.pop_front();
         explosion_count++;
@@ -2148,6 +2168,14 @@ void explosion_queue::execute()
                 debugmsg( "Explosion type not implemented." );
                 break;
         }
+    }
+    if( !elems.empty() ) {
+        // Leftovers mean the loop stopped at the per-drain cap (a runaway): drop
+        // them to avoid an OOM/hang and report once.
+        const auto dropped = static_cast<int>( elems.size() );
+        elems.clear();
+        debugmsg( "Explosion queue exceeded the per-drain cap of %d; dropped %d "
+                  "queued explosions to avoid a hang.", max_pending_explosions, dropped );
     }
 }
 

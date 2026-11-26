@@ -8,21 +8,24 @@
         "distribution": [
           {
             "collection": [
-              { "item": "power_armor_basic", "damage": [ 1, 4 ] },
+              { "item": "power_armor_exo_2", "damage": [ 1, 4 ] },
+              { "item": "power_armor_plating_2", "damage": [ 1, 4 ] },
               { "item": "power_armor_helmet_basic", "damage": [ 1, 4 ], "prob": 75 }
             ],
             "prob": 10
           },
           {
             "collection": [
-              { "item": "power_armor_light", "damage": [ 1, 4 ] },
+              { "item": "power_armor_exo_2", "damage": [ 1, 4 ] },
+              { "item": "power_armor_plating_3", "damage": [ 1, 4 ] },
               { "item": "power_armor_helmet_light", "damage": [ 1, 4 ], "prob": 75 }
             ],
             "prob": 10
           },
           {
             "collection": [
-              { "item": "power_armor_heavy", "damage": [ 1, 4 ] },
+              { "item": "power_armor_exo_1", "damage": [ 1, 4 ] },
+              { "item": "power_armor_plating_1", "damage": [ 1, 4 ] },
               { "item": "power_armor_helmet_heavy", "damage": [ 1, 4 ], "prob": 75 }
             ],
             "prob": 5
@@ -74,7 +77,7 @@
           }
         ]
       },
-      { "group": "military_specops_guns", "prob": 10, "damage": [ 0, 3 ], "dirt": [ 1500, 7050 ] },
+      { "group": "military_specops_guns", "prob": 40, "damage": [ 0, 3 ], "dirt": [ 1500, 7050 ] },
       { "group": "pwr_armor_acc", "damage": [ 1, 4 ], "prob": 90 }
     ]
   },
@@ -124,6 +127,59 @@
         ]
       },
       { "group": "underwear", "damage": [ 1, 4 ] },
+      { "distribution": [ { "group": "rad_gear", "prob": 1 } ] },
+      {
+        "distribution": [
+          { "item": "cash_card", "prob": 80, "charges": [ 0, 50000 ] },
+          { "item": "money_bundle", "prob": 20, "count": [ 1, 2 ] }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "radiation_zombie_death_drops",
+    "entries": [
+      {
+        "distribution": [
+          { "group": "hazmat_full", "damage": [ 1, 4 ], "prob": 20 },
+          {
+            "collection": [
+              { "group": "hazmat_torso", "damage": [ 1, 4 ] },
+              { "group": "hazmat_gloves", "damage": [ 1, 4 ] },
+              { "group": "hazmat_boots", "damage": [ 1, 4 ] },
+              { "group": "hazmat_mask", "damage": [ 1, 4 ] },
+              { "group": "hazmat_eyes", "damage": [ 1, 4 ], "prob": 33 }
+            ],
+            "prob": 30
+          },
+          {
+            "collection": [
+              { "item": "plastic_chunk", "damage": [ 1, 4 ], "count": [ 3, 6 ] },
+              { "item": "rag", "damage": [ 1, 4 ], "count": [ 0, 2 ] },
+              { "group": "hazmat_gloves", "damage": [ 1, 4 ], "prob": 80 },
+              { "group": "hazmat_boots", "damage": [ 1, 4 ], "prob": 80 },
+              { "group": "hazmat_eyes", "damage": [ 1, 4 ], "prob": 33 }
+            ],
+            "prob": 50
+          }
+        ]
+      },
+      {
+        "distribution": [
+          { "item": "nuclear_waste", "prob": 50 },
+          { "item": "nuclear_fuel", "prob": 15 },
+          { "item": "cobalt_60", "prob": 10 },
+          { "item": "atomic_coffeepot", "prob": 5, "damage": [ 1, 4 ] },
+          { "item": "atomic_butterchurn", "prob": 5, "damage": [ 1, 4 ] },
+          { "item": "atomic_light", "prob": 5, "damage": [ 1, 4 ] },
+          { "item": "knife_heat", "prob": 5, "damage": [ 1, 4 ] },
+          { "group": "ammo_atomic_batteries", "prob": 4, "damage": [ 1, 4 ] },
+          { "item": "mininuke", "prob": 1, "damage": [ 1, 4 ] }
+        ],
+        "prob": 50
+      },
       { "distribution": [ { "group": "rad_gear", "prob": 1 } ] },
       {
         "distribution": [

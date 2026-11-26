@@ -5,10 +5,9 @@
     "type": "AMMO",
     "name": { "str": ".44 Magnum FMJ" },
     "description": "A brass-jacketed variant of the .44 Magnum round.  This increases penetration at the cost of reduced damage from expansion.",
-    "//": "Base damage of 36, balance increase of one-nineth.",
     "loudness": 162,
     "speed": 470,
-    "relative": { "damage": { "damage_type": "bullet", "amount": -10, "armor_penetration": 23 } }
+    "relative": { "damage": { "damage_type": "bullet", "amount": -10, "armor_penetration": 18 } }
   },
   {
     "id": "44magnum",

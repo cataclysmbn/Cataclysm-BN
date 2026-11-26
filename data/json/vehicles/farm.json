@@ -242,7 +242,6 @@
       { "x": 0, "y": 1, "parts": [ "frame_wood_cross", "wood box" ] },
       { "x": 0, "y": -1, "parts": [ "frame_wood_cross", "wood box" ] },
       { "x": 1, "y": 0, "parts": [ "frame_wood_cross", "seat_wood", "reins_tackle" ] },
-      { "x": 1, "y": 0, "part": "foot_pedals" },
       { "x": 1, "y": 1, "parts": [ "frame_wood_cross", "seat_wood", "wheel_wood_b" ] },
       { "x": 1, "y": -1, "parts": [ "frame_wood_cross", "seat_wood", "wheel_wood_b" ] },
       { "x": 2, "y": 1, "part": "yoke_harness" },
@@ -293,8 +292,7 @@
       { "x": 0, "y": 0, "part": "roof_cloth" },
       { "x": 1, "y": 0, "part": "roof_cloth" },
       { "x": 1, "y": -1, "part": "roof_cloth" },
-      { "x": 0, "y": -1, "part": "roof_cloth" },
-      { "x": 1, "y": 0, "part": "foot_pedals" }
+      { "x": 0, "y": -1, "part": "roof_cloth" }
     ]
   },
   {

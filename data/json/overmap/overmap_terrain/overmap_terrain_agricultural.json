@@ -37,7 +37,8 @@
     "name": "rural road",
     "color": "brown",
     "see_cost": 5,
-    "mondensity": 2
+    "mondensity": 2,
+    "extras": "agricultural"
   },
   {
     "type": "overmap_terrain",
@@ -95,57 +96,44 @@
   },
   {
     "type": "overmap_terrain",
-    "id": "dirt_road",
+    "id": [ "dirt_road", "dirt_road_forest" ],
     "copy-from": "generic_dirt_road",
     "sym": "│"
   },
   {
     "type": "overmap_terrain",
-    "id": "dirt_road_3way",
+    "id": [ "dirt_road_3way", "dirt_road_3way_forest" ],
     "copy-from": "generic_dirt_road",
     "sym": "┬"
   },
   {
     "type": "overmap_terrain",
-    "id": "dirt_road_turn",
+    "id": [ "dirt_road_turn", "dirt_road_turn_forest" ],
     "copy-from": "generic_dirt_road",
     "sym": "┐"
   },
   {
     "type": "overmap_terrain",
-    "id": "dirt_road_turn1",
+    "id": "dirt_road_4way",
     "copy-from": "generic_dirt_road",
-    "sym": "┌"
-  },
-  {
-    "type": "overmap_terrain",
-    "id": "dirt_road_forest",
-    "copy-from": "generic_dirt_road",
-    "sym": "│"
-  },
-  {
-    "type": "overmap_terrain",
-    "id": "dirt_road_turn_forest",
-    "copy-from": "generic_dirt_road",
-    "sym": "┐"
-  },
-  {
-    "type": "overmap_terrain",
-    "id": "dirt_road_turn1_forest",
-    "copy-from": "generic_dirt_road",
-    "sym": "┌"
-  },
-  {
-    "type": "overmap_terrain",
-    "id": "dirt_road_3way_forest",
-    "copy-from": "generic_dirt_road",
-    "sym": "┬"
+    "sym": "┼"
   },
   {
     "type": "overmap_terrain",
     "abstract": "generic_rural_building",
     "copy-from": "generic_city_building_no_sidewalk",
     "name": "rural building",
+    "sym": "#",
+    "color": "i_brown",
+    "delete": { "flags": [ "RISK_HIGH" ] },
+    "extend": { "flags": [ "SOURCE_FOOD", "SOURCE_SAFETY", "RISK_LOW", "SOURCE_FARMING" ] }
+  },
+  {
+    "type": "overmap_terrain",
+    "abstract": "generic_rural_field",
+    "copy-from": "generic_open_land",
+    "looks_like": "2farm_1",
+    "name": "field",
     "sym": "#",
     "color": "i_brown",
     "extend": { "flags": [ "SOURCE_FOOD", "SOURCE_SAFETY", "RISK_LOW", "SOURCE_FARMING" ] }
@@ -170,8 +158,6 @@
       "2farm_1",
       "2farm_10",
       "2farm_12",
-      "2farm_13",
-      "2farm_14",
       "2farm_15",
       "2farm_16",
       "2farm_2",
@@ -181,7 +167,6 @@
       "2farm_6_2",
       "2farm_6_3",
       "2farm_9",
-      "2farm_roof_15",
       "farm_1",
       "farm_4",
       "farm_5",
@@ -189,23 +174,10 @@
       "farm_7",
       "farm_8",
       "farm_9",
-      "farm_isherwood_1",
-      "farm_isherwood_4",
-      "farm_isherwood_6",
-      "farm_isherwood_7",
-      "farm_isherwood_8",
-      "farm_isherwood_9",
-      "farm_lot_M",
-      "farm_lot_M1",
-      "farm_lot_wire_straight_h",
-      "farm_lot_wire_straight_h_open",
       "farm_lot_wire_straight_v",
       "farm_lot_wire_straight_v_open",
       "farm_lot_wire_turn_h",
-      "farm_lot_wire_turn_h_open",
-      "farm_lot_wire_turn_uni",
       "farm_lot_wire_turn_v",
-      "farm_lot_wire_turn_v_open",
       "farm_stills_1",
       "farm_stills_10",
       "farm_stills_2",
@@ -221,7 +193,20 @@
       "horse_farm_3",
       "horse_farm_5",
       "horse_farm_6",
-      "horse_farm_8",
+      "horse_farm_8"
+    ],
+    "copy-from": "generic_rural_field",
+    "name": "farm field"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [
+      "farm_isherwood_1",
+      "farm_isherwood_4",
+      "farm_isherwood_6",
+      "farm_isherwood_7",
+      "farm_isherwood_8",
+      "farm_isherwood_9",
       "horse_farm_isherwood_1",
       "horse_farm_isherwood_11",
       "horse_farm_isherwood_12",
@@ -233,8 +218,48 @@
       "horse_farm_isherwood_6",
       "horse_farm_isherwood_8"
     ],
+    "copy-from": "2farm_1",
+    "extras": ""
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [
+      "2farm_13",
+      "2farm_14",
+      "2farm_17",
+      "2farm_18",
+      "2farm_19",
+      "2farm_20",
+      "2farm_21",
+      "2farm_22",
+      "2farm_23",
+      "2farm_24",
+      "farmland_straight",
+      "farmland_turn",
+      "farmland_turn_inside",
+      "farmland_U"
+    ],
+    "copy-from": "generic_rural_field",
+    "name": "farm field",
+    "extras": "agricultural",
+    "looks_like": "farm_5",
+    "spawns": { "group": "GROUP_FOREST", "population": [ 0, 2 ], "chance": 15 }
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "farm_lot_M1", "farm_lot_wire_straight_h", "farm_lot_wire_turn_v_open" ],
     "copy-from": "generic_rural_building",
     "name": "farm field"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "hayfield_straight", "hayfield_turnL", "hayfield_turnR", "hayfield_end" ],
+    "copy-from": "generic_rural_field",
+    "name": "hay field",
+    "color": "brown",
+    "extras": "agricultural",
+    "looks_like": "ranch_camp_76",
+    "spawns": { "group": "GROUP_FOREST", "population": [ 0, 2 ], "chance": 15 }
   },
   {
     "type": "overmap_terrain",
@@ -293,7 +318,7 @@
   },
   {
     "type": "overmap_terrain",
-    "id": [ "farm_stills_7" ],
+    "id": [ "farm_stills_7", "farm_stills_7_roof" ],
     "copy-from": "generic_rural_building",
     "name": "stills",
     "spawns": { "group": "GROUP_WASP_FORAGER", "population": [ 1, 4 ], "chance": 15 },
@@ -612,9 +637,22 @@
   },
   {
     "type": "overmap_terrain",
-    "id": [ "2silos", "2silos_1", "2silos_2", "2silos_roof" ],
+    "id": [
+      "2silos",
+      "2silos_1",
+      "2silos_2",
+      "2silos_roof",
+      "farm_1_silo",
+      "farm_1_silo_1",
+      "farm_1_silo_2",
+      "farm_1_silo_roof",
+      "2farm_6",
+      "2farm_6_1",
+      "2farm_6_2",
+      "2farm_6_3"
+    ],
     "copy-from": "generic_rural_building",
-    "name": "silos",
+    "name": "silo",
     "sym": "O",
     "color": "brown"
   },
@@ -712,6 +750,61 @@
     "id": [ "farm_dairy_twd_second_floor_5", "farm_dairy_twd_second_floor_6", "farm_dairy_twd_second_floor_12" ],
     "copy-from": "generic_rural_building",
     "name": "barn roof",
+    "sym": "^"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "farm_1_greenhouse",
+    "copy-from": "generic_rural_building",
+    "name": "greenhouse",
+    "sym": "o"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "farm_1_greenhouse_roof",
+    "copy-from": "generic_rural_building",
+    "name": "greenhouse roof",
+    "sym": "o"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "farm_1_coop",
+    "copy-from": "generic_rural_building",
+    "name": "chicken coop",
+    "sym": "o"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "farm_1_coop_roof",
+    "copy-from": "generic_rural_building",
+    "name": "chicken coop roof",
+    "sym": "o"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "farm_stills_3_basement" ],
+    "spawns": { "group": "GROUP_BASEMENT", "population": [ 1, 1 ], "chance": 80 },
+    "copy-from": "generic_city_house_basement"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "farm_1_apiary" ],
+    "copy-from": "generic_rural_building",
+    "name": "apiary",
+    "sym": "h",
+    "color": "yellow"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "farm_1_apiary_roof" ],
+    "copy-from": "farm_1_apiary",
+    "name": "apiary roof"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "farm_stills_3_2nd", "farm_stills_3_roof" ],
+    "copy-from": "generic_rural_building",
+    "name": "farm house",
     "sym": "^"
   }
 ]

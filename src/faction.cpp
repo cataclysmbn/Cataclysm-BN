@@ -1,15 +1,5 @@
 #include "faction.h"
 
-#include <bitset>
-#include <cstdlib>
-#include <limits>
-#include <map>
-#include <memory>
-#include <optional>
-#include <set>
-#include <string>
-#include <utility>
-
 #include "avatar.h"
 #include "bionics.h"
 #include "character.h"
@@ -24,8 +14,8 @@
 #include "mtype.h"
 #include "npc.h"
 #include "output.h"
-#include "overmapbuffer.h"
-#include "overmapbuffer_registry.h"
+#include "overmap/overmapbuffer.h"
+#include "overmap/overmapbuffer_registry.h"
 #include "pimpl.h"
 #include "player.h"
 #include "point.h"
@@ -36,7 +26,15 @@
 #include "type_id.h"
 #include "ui_manager.h"
 
-static const bionic_id bio_infolink( "bio_infolink" );
+#include <bitset>
+#include <cstdlib>
+#include <limits>
+#include <map>
+#include <memory>
+#include <optional>
+#include <set>
+#include <string>
+#include <utility>
 
 namespace npc_factions
 {
@@ -512,9 +510,9 @@ int npc::faction_display( const catacurses::window &fac_w, const int width ) con
 
     static const flag_id json_flag_TWO_WAY_RADIO( "TWO_WAY_RADIO" );
     bool u_has_radio = g->u.has_item_with_flag( json_flag_TWO_WAY_RADIO, true ) ||
-                       g->u.has_bionic( bio_infolink );
+                       g->u.has_enchantment_flag( enchantment_flag_id( "RADIO" ) );
     bool guy_has_radio = has_item_with_flag( json_flag_TWO_WAY_RADIO, true ) ||
-                         has_bionic( bio_infolink );
+                         has_enchantment_flag( enchantment_flag_id( "RADIO" ) );
     // is the NPC even in the same area as the player?
     if( rl_dist( player_abspos, abs_omt_pos() ) > 3 ||
         ( rl_dist( g->u.bub_pos(), bub_pos() ) > SEEX * 2 || !g->u.sees( bub_pos() ) ) ) {

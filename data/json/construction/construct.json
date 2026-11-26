@@ -14,6 +14,19 @@
   },
   {
     "type": "construction",
+    "id": "constr_nanofab_portable",
+    "group": "place_nanofab_portable",
+    "category": "WORKSHOP",
+    "required_skills": [  ],
+    "time": "1 m",
+    "qualities": [  ],
+    "components": [ [ [ "portable_nanofab", 1 ] ] ],
+    "pre_note": "Requires a flat, stable area.",
+    "pre_special": "check_empty",
+    "post_furniture": "f_nanofab_portable"
+  },
+  {
+    "type": "construction",
     "id": "constr_door_curtain",
     "group": "build_door_curtain",
     "//": "Door frame not required",
@@ -1232,6 +1245,32 @@
     "components": [ [ [ "wood_panel", 1 ] ], [ [ "nail", 15 ] ], [ [ "mortar_build", 2 ], [ "mortar_adobe", 2 ] ] ],
     "pre_terrain": "t_wall_half_domestic",
     "post_terrain": "t_wall"
+  },
+  {
+    "type": "construction",
+    "id": "constr_wall_paintable_half",
+    "group": "constr_wall_paintable_standard",
+    "//": "Step 1: frame wall in an empty space",
+    "category": "CONSTRUCT",
+    "required_skills": [ [ "fabrication", 3 ] ],
+    "time": "30 m",
+    "qualities": [ [ { "id": "HAMMER", "level": 2 } ], [ { "id": "SAW_W", "level": 2 } ] ],
+    "components": [ [ [ "2x4", 6 ] ], [ [ "nail", 15 ] ] ],
+    "pre_special": "check_empty",
+    "post_terrain": "t_wall_paintable_half"
+  },
+  {
+    "type": "construction",
+    "id": "constr_wall_paintable",
+    "group": "constr_wall_paintable_standard",
+    "//": "Step 2: complete the half made wall with paneling and surface with mortar in place of drywall",
+    "category": "CONSTRUCT",
+    "required_skills": [ [ "fabrication", 3 ] ],
+    "time": "60 m",
+    "qualities": [ [ { "id": "HAMMER", "level": 2 } ], [ { "id": "SAW_W", "level": 2 } ], [ { "id": "SMOOTH", "level": 1 } ] ],
+    "components": [ [ [ "wood_panel", 1 ] ], [ [ "nail", 15 ] ], [ [ "mortar_build", 2 ], [ "mortar_adobe", 2 ] ] ],
+    "pre_terrain": "t_wall_paintable_half",
+    "post_terrain": "t_wall_paintable"
   },
   {
     "type": "construction",

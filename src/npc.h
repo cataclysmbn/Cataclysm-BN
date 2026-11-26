@@ -928,6 +928,7 @@ class npc : public player
         /** Is the item safe or does the NPC trust you enough? */
         bool will_accept_from_player( const item &it ) const;
 
+        void wake_up() override;
         bool wants_to_sell( const item &it ) const;
         bool wants_to_sell( const item &/*it*/, int at_price, int market_price ) const;
         bool wants_to_buy( const item &it ) const;
@@ -1036,6 +1037,8 @@ class npc : public player
 
         // Movement; the following are defined in npcmove.cpp
         void move(); // Picks an action & a target and calls execute_action
+        void execute_action( const std::string &action_str );
+
         void execute_action( npc_action action ); // Performs action
         void process_turn() override;
         auto action_move_factor() const -> int override;
@@ -1263,6 +1266,38 @@ class npc : public player
         std::map<std::string, time_point> complaints;
 
         npc_short_term_cache ai_cache;
+        // Action handlers dispatched from execute_action (defined in npcmove.cpp)
+        void act_pause();
+        void act_reload();
+        void act_investigate_sound();
+        void act_return_to_guard_pos();
+        void act_sleep();
+        void act_pickup();
+        void act_heal();
+        void act_use_painkiller();
+        void act_drop_items();
+        void act_flee();
+        void act_reach_attack();
+        void act_melee();
+        void act_aim();
+        void act_shoot();
+        void act_look_for_player();
+        void act_heal_player();
+        void act_follow_player();
+        void act_follow_embarked();
+        void act_talk_to_player();
+        void act_mug_player();
+        void act_goto_to_this_pos();
+        void act_goto_destination();
+        void act_avoid_friendly_fire();
+        void act_escape_explosion();
+        void act_player_activity();
+        void act_undecided();
+        void act_noop();
+        auto clear_transient_movement_state_after_reposition() -> void;
+        auto setpos_impl( const tripoint_abs_ms &pos, bool preserve_movement_state ) -> void;
+        auto setpos_preserving_movement_state( const tripoint_bub_ms &pos ) -> void;
+        auto setpos_preserving_movement_state( const tripoint_abs_ms &pos ) -> void;
 
         std::map<npc_need, npc_need_goal_cache> goal_cache;
         bool suppress_activity_complete_message = false;
@@ -1271,6 +1306,8 @@ class npc : public player
         std::optional<tripoint_bub_ms> last_player_seen_pos; // Where we last saw the player
         // Player orders a friendly NPC to move to this position
         std::optional<tripoint_abs_ms> goto_to_this_pos;
+        // When the npc wants to sleep it doesn't have to recalculate every turn
+        std::optional<tripoint_abs_ms> sleep_at_this_pos;
         int last_seen_player_turn = 0; // Timeout to forgetting
         tripoint_bub_ms wanted_item_pos; // The square containing an item we want
         tripoint_abs_ms

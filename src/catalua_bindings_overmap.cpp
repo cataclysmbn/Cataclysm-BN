@@ -1,25 +1,24 @@
+#include "catalua.h"
+#include "catalua_bindings.h"
+#include "catalua_bindings_utils.h"
+#include "catalua_coord.h"
+#include "catalua_impl.h"
+#include "catalua_luna.h"
+#include "catalua_luna_doc.h"
+#include "coordinates.h"
+#include "enums.h"
+#include "fluid_grid.h"
+#include "mongroup.h"
+#include "overmap/overmap_types.h"
+#include "overmap/overmapbuffer.h"
+#include "type_id.h"
+
 #include <algorithm>
 #include <iterator>
 #include <ranges>
 #include <string>
 #include <utility>
 #include <vector>
-
-#include "catalua_bindings.h"
-#include "catalua_coord.h"
-#include "catalua.h"
-#include "catalua_bindings_utils.h"
-#include "catalua_impl.h"
-#include "catalua_luna.h"
-#include "catalua_luna_doc.h"
-
-#include "coordinates.h"
-#include "enums.h"
-#include "fluid_grid.h"
-#include "mongroup.h"
-#include "overmap_types.h"
-#include "overmapbuffer.h"
-#include "type_id.h"
 
 namespace
 {
@@ -341,7 +340,16 @@ void cata::detail::reg_overmap( sol::state &lua )
         get_active_overmapbuffer().move_hordes();
     } );
 
-    DOC( "Create a monster horde at the given absolute OMT position. Pass a table with fields: type (mongroup_id, required), pos (TripointAbsOmt, required), radius (int), population (int), horde (bool), behaviour (string), diffuse (bool), target (TripointAbsOmt)." );
+    DOC( "Create a monster horde at the given absolute OMT position. Returns nil if `type` or `pos` is missing.  " );
+    DOC( "Takes a table with keys:  " );
+    DOC( "* `type` (MonsterGroupId or string): Monster group to spawn.  " );
+    DOC( "* `pos` (TripointAbsOmt): Where to create the horde.  " );
+    DOC( "* `radius` (integer, optional): Spread radius in submaps. Defaults to 1.  " );
+    DOC( "* `population` (integer, optional): Number of monsters. Defaults to 100.  " );
+    DOC( "* `horde` (boolean, optional): Whether the group moves as a horde. Defaults to true.  " );
+    DOC( "* `behaviour` (string, optional): Horde behaviour: `roam`, `city` or `nemesis`. Defaults to `roam`.  " );
+    DOC( "* `diffuse` (boolean, optional): If true, monster density doesn't depend on distance from `pos`. Defaults to false.  " );
+    DOC( "* `target` (TripointAbsOmt, optional): Initial movement target." );
     luna::set_fx( lib, "create_horde",
     []( const sol::table & opts ) -> mongroup * {
         const sol::object type_obj = opts.get<sol::object>( "type" );

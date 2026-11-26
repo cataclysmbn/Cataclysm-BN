@@ -219,6 +219,7 @@
     "armor_stab": 12,
     "death_drops": "default_zombie_death_drops",
     "starting_ammo": { "acid_artillery_shell": 100 },
+    "upgrades": { "half_life": 42, "into_group": "GROUP_NULL", "into": "mon_zombie_acid_mortar" },
     "extend": {
       "special_attacks": [
         [ "ACID_BARF", 10 ],
@@ -260,6 +261,7 @@
     "vision_day": 45,
     "death_drops": "default_zombie_death_drops",
     "starting_ammo": { "bot_unstable_grub": 200 },
+    "upgrades": { "half_life": 42, "into_group": "GROUP_NULL", "into": "mon_zombie_acid_spawner" },
     "extend": {
       "special_attacks": [ [ "ACID_BARF", 2 ], [ "GRENADIER_ELITE", 10 ], { "id": "slam" } ],
       "death_function": [ "ACID" ],
@@ -298,7 +300,7 @@
     "color": "brown_green",
     "hp": 180,
     "special_attacks": [
-      [ "SMASH", 30 ],
+      { "id": "smash", "throw_strength": 36, "cooldown": 30, "requires_grab": true },
       [ "GRAB", 7 ],
       {
         "id": "scratch",
@@ -307,7 +309,9 @@
         "effects": [ { "id": "slimed", "duration": 40 } ]
       }
     ],
+    "grab_strength": 2,
     "death_function": [ "ACID", "NORMAL" ],
+    "upgrades": { "half_life": 42, "into_group": "GROUP_NULL", "into": "mon_zombie_ichor_brute" },
     "extend": { "flags": [ "ACIDPROOF", "ACID_BLOOD" ], "harvest": "zombie_acid" }
   },
   {
@@ -321,7 +325,6 @@
     "color": "brown_green",
     "hp": 72,
     "special_attacks": [
-      [ "SMASH", 30 ],
       {
         "type": "bite",
         "cooldown": 5,

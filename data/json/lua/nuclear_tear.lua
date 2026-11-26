@@ -14,7 +14,7 @@ M.on_explosion = function(params)
 
   local m = gapi.get_map()
 
-  ---@type Tripoint[]
+  ---@type TripointBubMs[]
   local points_to_expand = {}
   for _, check_pos in ipairs(m:points_in_radius(pos, radius // 2, radius // 2)) do
     local field_at_pos = m:has_field_at(check_pos, fd_fatigue_id)

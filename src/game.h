@@ -1,5 +1,24 @@
 #pragma once
 
+#include "action.h"
+#include "calendar.h"
+#include "character_id.h"
+#include "coordinates.h"
+#include "creature.h"
+#include "cursesdef.h"
+#include "dimension_info.h"
+#include "enums.h"
+#include "game_constants.h"
+#include "location_vector.h"
+#include "map/mapbuffer.h"
+#include "map/mapdata.h"
+#include "map/submap_load_manager.h"
+#include "memory_fast.h"
+#include "pimpl.h"
+#include "point.h"
+#include "type_id.h"
+#include "zone_draw_options.h"
+
 #include <array>
 #include <atomic>
 #include <chrono>
@@ -18,24 +37,6 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-
-#include "action.h"
-#include "calendar.h"
-#include "character_id.h"
-#include "coordinates.h"
-#include "creature.h"
-#include "dimension_info.h"
-#include "cursesdef.h"
-#include "enums.h"
-#include "game_constants.h"
-#include "mapdata.h"
-#include "memory_fast.h"
-#include "pimpl.h"
-#include "point.h"
-#include "submap_load_manager.h"
-#include "zone_draw_options.h"
-#include "type_id.h"
-#include "location_vector.h"
 
 class Character;
 class Creature_tracker;
@@ -163,6 +164,9 @@ struct w_map {
 
 bool is_valid_in_w_terrain( point p );
 
+/// Submaps that a skip window processes every tick.
+using activity_skip_fire_submap_list = std::vector<std::pair<dimension_id, tripoint_abs_sm>>;
+
 // There is only one game instance, so losing a few bytes of memory
 // due to padding is not much of a concern.
 // NOLINTNEXTLINE(clang-analyzer-optin.performance.Padding)
@@ -231,6 +235,8 @@ class game : public submap_load_listener
         void draw_ter( bool draw_sounds = true );
         void draw_ter( const tripoint_bub_ms &center, bool looking = false, bool draw_sounds = true );
         auto visibility_cache_z() -> int;
+        auto refresh_player_visibility_cache_if_needed( bool player_map_cache_current = false,
+                bool skip_lightmap = false ) -> void;
 
         class draw_callback_t
         {
@@ -254,6 +260,7 @@ class game : public submap_load_listener
     private:
         bool is_looking = false;
         std::vector<weak_ptr_fast<draw_callback_t>> draw_callbacks;
+        auto delete_dimension( const dimension_id &dim_id, bool remove_zones ) -> bool;
 
     public:
         // when force_redraw is true, redraw all panel instead of just animated panels
@@ -266,7 +273,7 @@ class game : public submap_load_listener
          * @param next If true, bases it on the vehicle the vehicle will turn to next turn,
          * instead of the one it is currently facing.
          */
-        std::optional<tripoint_rel_ms> get_veh_dir_indicator_location( bool next ) const;
+        std::optional<tripoint_rel_ms> get_veh_dir_indicator_location( bool next );
         void draw_veh_dir_indicator( bool next );
 
         /**
@@ -297,6 +304,8 @@ class game : public submap_load_listener
                                   const std::optional<pocket_dimension_data> &pd_info = std::nullopt,
                                   const std::optional<tripoint_abs_sm> &load_pos = std::nullopt,
                                   const std::function<void()> &pre_load_callback = nullptr );
+        auto delete_dimension( const dimension_id &dim_id ) -> bool;
+        auto reset_dimension( const dimension_id &dim_id ) -> bool;
 
         /**
          * Return the dimension ID the player is currently in.
@@ -324,7 +333,7 @@ class game : public submap_load_listener
         std::optional<tripoint_bub_ms> find_or_make_stairs( map &mp, int z_after, bool &rope_ladder,
                 bool peeking );
         /** Actual z-level movement part of vertical_move. Doesn't include stair finding, traps etc. */
-        auto vertical_shift( int z_after, bool keep_grab = false ) -> void;
+        auto vertical_shift( const int z_before, const int z_after ) -> void;
         /** Add goes up/down auto_notes (if turned on) */
         void vertical_notes( int z_before, int z_after );
         /** Checks to see if a player can use a computer (not illiterate, etc.) and uses if able. */
@@ -533,6 +542,8 @@ class game : public submap_load_listener
          */
         std::vector<Creature *> get_creatures_if( const std::function<bool( const Creature & )> &pred );
         std::vector<npc *> get_npcs_if( const std::function<bool( const npc & )> &pred );
+        std::vector<weak_ptr_fast<npc>> get_npcs_pointers_if( const std::function<bool( const npc & )>
+                                     &pred );
         /**
          * Returns a creature matching a predicate. Only living (not dead) creatures
          * are checked. Returns `nullptr` if no creature matches the predicate.
@@ -579,12 +590,12 @@ class game : public submap_load_listener
         npc *find_npc( character_id id );
         /** Makes any nearby NPCs on the overmap active. */
         void load_npcs();
-    private:
         /** Resizes the reality bubble to an explicit target size.
          *  Safe to call mid-session: despawns out-of-range entities, flushes the
          *  submap load-manager work, rebuilds map grid and all dependent caches.
          */
         void resize_reality_bubble_to( int new_size );
+    private:
 
         /** Resizes the reality bubble to match the current REALITY_BUBBLE_SIZE option.
          *  Also clears in_activity_bubble_ so the normal size takes effect immediately.
@@ -665,10 +676,10 @@ class game : public submap_load_listener
         character_id assign_npc_id();
         Creature *is_hostile_nearby();
         Creature *is_hostile_very_close();
-        // Handles shifting coordinates transparently when moving between submaps.
-        // Helper to make calling with a player pointer less verbose.
-        point_rel_sm update_map( Character &who );
-        point_rel_sm update_map( int &x, int &y );
+        // Keeps the loaded map window aligned with an absolute center.
+        auto update_map( Character &who ) -> point_rel_sm;
+        auto update_map( const tripoint_abs_ms &center ) -> point_rel_sm;
+        auto update_map( int &x, int &y ) -> point_rel_sm;
         void update_overmap_seen(); // Update which overmap tiles we can see
 
         void process_artifact( item &it, Character &who );
@@ -676,7 +687,7 @@ class game : public submap_load_listener
         void add_artifact_dreams( );
 
         std::optional<tripoint_bub_ms> find_local_stairs_leading_to( map &mp, const int z_after );
-        void suggest_auto_walk_to_stairs( Character &u, map &m, const std::string &direction );
+        auto suggest_auto_walk_to_stairs( Character &u, map &m, const std::string &direction ) -> bool;
 
         void peek();
         void peek( const tripoint_rel_ms &p );
@@ -739,10 +750,16 @@ class game : public submap_load_listener
         void reenter_fullscreen();
         void zoom_in_overmap();
         void zoom_out_overmap();
+        /// Applies the stored overmap zoom to the overmap tile context; call when the overmap opens.
+        auto reapply_overmap_zoom() -> void;
+        /// Resets the stored overmap zoom to the default and applies it to the overmap tile context.
+        auto reset_overmap_zoom() -> void;
         void zoom_in();
         void zoom_out();
         void reset_zoom();
         void set_zoom( float level );
+        /// Applies the stored main-view zoom to the tile context even when the value is unchanged.
+        auto reapply_zoom() -> void;
         float get_zoom() const;
         int get_moves_since_last_save() const;
         int get_user_action_counter() const;
@@ -774,7 +791,7 @@ class game : public submap_load_listener
          * this function returns (for example, UIs that draw the map should be
          * disabled).
          */
-        void load_map( const tripoint_abs_sm &pos_sm, bool pump_events = false );
+        void load_map( const point_abs_sm &pos_sm, bool pump_events = false );
         /**
          * The overmap which contains the center submap of the reality bubble.
          */
@@ -936,7 +953,6 @@ class game : public submap_load_listener
         bool grabbed_veh_move( const tripoint_rel_ms &dp );
         auto grabbed_furn_move( const tripoint_rel_ms &dp ) -> bool;
 
-        void control_vehicle(); // Use vehicle controls  '^'
         void examine( const tripoint_bub_ms &p ); // Examine nearby terrain  'e'
         void examine();
 
@@ -949,9 +965,11 @@ class game : public submap_load_listener
         void drop_in_direction(); // Drop w/ direction  'D'
 
         void butcher(); // Butcher a corpse  'B'
+        void dissect(); // dissect a corpse
     public:
+        void control_vehicle(); // Use vehicle controls  '^'
         // Places the player at the specified point; hurts feet, lists items etc.
-        auto place_player( const tripoint_bub_ms &dest, bool keep_grab = false ) -> point_rel_sm;
+        auto place_player( const tripoint_bub_ms &dest ) -> point_rel_sm;
         void place_player_overmap( const tripoint_abs_omt &om_dest );
 
         unsigned int get_seed() const;
@@ -962,12 +980,15 @@ class game : public submap_load_listener
         void set_critter_died();
         void mon_info( const catacurses::window &,
                        int hor_padding = 0 ); // Prints a list of nearby monsters
-        void mon_info_update( );    //Update seen monsters information
+        auto mon_info_update() -> void;    //Update seen monsters information
         void cleanup_dead();     // Delete any dead NPCs/monsters
         bool is_dangerous_tile( const tripoint_bub_ms &dest_loc ) const;
         std::vector<std::string> get_dangerous_tile( const tripoint_bub_ms &dest_loc ) const;
         bool prompt_dangerous_tile( const tripoint_bub_ms &dest_loc ) const;
+        bool prompt_dangerous_tile( const tripoint_bub_ms &dest_loc, std::string_view query_message,
+                                    bool allow_ledge_examine ) const;
     private:
+        auto player_visibility_cache_current() const -> bool;
         void chat(); // Talk to a nearby NPC  'C'
 
         // Internal methods to show "look around" info
@@ -1016,6 +1037,9 @@ class game : public submap_load_listener
          */
         void win();
 
+        /// Clears the skip window state, so the next do_turn may start a skip window. Tests use it.
+        auto reset_activity_fixed_window() -> void;
+
     private:
         void perhaps_add_random_npc();
 
@@ -1039,8 +1063,8 @@ class game : public submap_load_listener
         auto can_activity_fixed_window_skip( const time_duration &duration ) -> bool;
         auto has_activity_skip_blocking_npc_state() -> bool;
         auto has_activity_skip_relevant_vehicle() -> bool;
-        auto has_activity_skip_active_fire() -> bool;
-        auto run_activity_skip_batch_turns( int skipped_turns ) -> void;
+        auto run_activity_skip_batch_turns( int skipped_turns,
+                                            const activity_skip_fire_submap_list &fire_submaps ) -> void;
         auto handle_wait_activity_redraw( bool force = false ) -> void;
         auto run_activity_cadence_boundary() -> void;
         void handle_key_blocking_activity(); // Abort reading etc.
@@ -1143,7 +1167,7 @@ class game : public submap_load_listener
         memorial_logger &memorial();
         spell_events &spell_events_subscriber();
 
-        pimpl<Creature_tracker> critter_tracker;
+        Creature_tracker *critter_tracker = nullptr;
         pimpl<faction_manager> faction_manager_ptr;
         pimpl<drop_token_provider> token_provider_ptr;
 
@@ -1190,31 +1214,35 @@ class game : public submap_load_listener
         bool fullscreen = false;
         bool was_fullscreen = false;
         bool auto_travel_mode = false;
+        bool manual_combat_mode = false;
         bool queue_screenshot = false;
         safe_mode_type safe_mode;
         int turnssincelastmon = 0; // needed for auto run mode
 
         int mostseen = 0; // # of mons seen last turn; if this increases, set safe_mode to SAFE_MODE_STOP
+        bool mon_info_cache_dirty = true;
 
-        // P-8: per-turn Creature::sees() result cache used during parallel monster
-        // planning (monmove()).  Keyed on directional (seer, target) Creature pointer
-        // pairs; Creature::sees() includes observer and target perception rules, while
-        // map::sees() remains the symmetric LOS cache.  Cleared at the start of
-        // monmove() before the parallel phase begins.  Workers hold a shared_lock for
-        // hits and upgrade to unique_lock on a miss.
-        // Lives in the public section so turn_cached_sees() in monmove.cpp can
-        // access it directly without an additional indirection layer.
-        struct TurnSightPairHash {
-            size_t operator()( const std::pair<const Creature *, const Creature *> &p ) const noexcept {
-                size_t h1 = std::hash<const Creature *> {}( p.first );
-                size_t h2 = std::hash<const Creature *> {}( p.second );
-                return h1 ^ ( h2 * 2654435761ULL );
+        auto clear_turn_los_blocker_cache() -> void;
+        // True means terrain LOS is blocked between these two positions.
+        // The key is canonicalized, so a check from either end warms both directions.
+        // It is not a creature visibility or perception result.
+        auto terrain_los_blocks_sight_between( const tripoint_bub_ms &from,
+                                               const tripoint_bub_ms &to ) -> bool;
+    private:
+        struct TurnLosBlockerPairHash {
+            auto operator()( const std::pair<tripoint_bub_ms, tripoint_bub_ms> &p ) const noexcept
+            -> std::size_t {
+                const auto first_hash = std::hash<tripoint_bub_ms> {}( p.first );
+                const auto second_hash = std::hash<tripoint_bub_ms> {}( p.second );
+                return first_hash ^ ( second_hash * 2654435761ULL );
             }
         };
-        std::unordered_map<std::pair<const Creature *, const Creature *>, bool, TurnSightPairHash>
-        turn_sight_cache_;
-        std::shared_mutex turn_sight_cache_mutex_;
-    private:
+        using turn_los_blocker_cache_t =
+            std::unordered_map<std::pair<tripoint_bub_ms, tripoint_bub_ms>, bool,
+            TurnLosBlockerPairHash>;
+        turn_los_blocker_cache_t turn_los_blocker_cache_;
+        std::shared_mutex turn_los_blocker_cache_mutex_;
+
         shared_ptr_fast<player> u_shared_ptr;
 
         catacurses::window w_terrain_ptr;
@@ -1305,14 +1333,19 @@ class game : public submap_load_listener
         /// Sets both current_dimension_id_ and g_active_dimension_id to @p dim_id.
         /// Always use this instead of assigning the two fields separately.
         auto set_active_dimension_id( const dimension_id &dim_id ) -> void;
+        auto rebind_critter_tracker() -> void;
 
         /// Sequenced critical section of a dimension switch: drain all load-manager
-        /// work, release load handles, flush the desired set, update the active
+        /// work, release load requests, flush the desired set, update the active
         /// dimension ID, and clear the old dimension's distribution-grid tracker.
         /// Must only be called from travel_to_dimension() after swapping_dimensions
         /// is set and before bind_dimension().
         auto activate_dimension_state( const dimension_id &new_dim_id,
                                        const dimension_id &old_dim_id ) -> void;
+        auto release_active_load_regions() -> void;
+        auto update_active_load_regions( const dimension_id &dim_id,
+                                         const point_abs_sm &begin,
+                                         const point_abs_sm &end ) -> void;
 
         /// Dimension ID the player is currently in.  "" = overworld (primary).
         /// Always updated via set_active_dimension_id().
@@ -1327,13 +1360,7 @@ class game : public submap_load_listener
         /// slot is evicted (saved + removed from registry) and replaced with the new one.
         dimension_id kept_pocket_dimension_id_;
 
-        // Handle for the reality bubble's submap_load_manager request.
-        // 0 means no request has been issued yet.
-        load_request_handle reality_bubble_handle_ = 0;
-
-        // Handle for the lazy border around the reality bubble.
-        // Controlled by LAZY_BORDER cached option.
-        load_request_handle lazy_border_handle_ = 0;
+        mapbuffer_load_region lazy_border_region_;
 
         // True while the bubble is temporarily shrunk for an ongoing long activity.
         // Entry requires >= ACTIVITY_BUBBLE_GRACE minutes remaining; once set, stays true

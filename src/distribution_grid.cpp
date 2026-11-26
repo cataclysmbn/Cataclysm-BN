@@ -1,23 +1,24 @@
-#include <unordered_set>
+#include "distribution_grid.h"
+
+#include "active_tile_data.h"
+#include "active_tile_data_def.h"
+#include "character.h"
+#include "debug.h"
+#include "map/map.h"
+#include "map/mapbuffer.h"
+#include "map/submap.h"
+#include "messages.h"
+#include "options.h"
+#include "overmap/overmapbuffer.h"
+#include "overmap/overmapbuffer_registry.h"
+#include "profile.h"
+#include "utils/algo.h"
+
 #include <algorithm>
 #include <climits>
 #include <cstdint>
 #include <ranges>
-
-#include "cata_algo.h"
-#include "character.h"
-#include "debug.h"
-#include "distribution_grid.h"
-#include "active_tile_data.h"
-#include "active_tile_data_def.h"
-#include "map.h"
-#include "mapbuffer.h"
-#include "messages.h"
-#include "submap.h"
-#include "options.h"
-#include "overmapbuffer.h"
-#include "overmapbuffer_registry.h"
-#include "profile.h"
+#include <unordered_set>
 
 distribution_grid::distribution_grid( const std::vector<tripoint_abs_sm> &global_submap_coords,
                                       mapbuffer &buffer ) :
@@ -70,11 +71,12 @@ void distribution_grid::update( time_point to )
 }
 
 // TODO: Shouldn't be here
-#include "vehicle.h"
-#include "vehicle_part.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
 static itype_id itype_battery( "battery" );
 int distribution_grid::mod_resource( int amt, bool recurse )
 {
+    cached_maximum_amount_here_needs_update = true;
     std::vector<vehicle *> connected_vehicles;
     for( const auto &c : contents ) {
         for( const tile_location &loc : c.second ) {
@@ -141,6 +143,27 @@ int distribution_grid::mod_resource( int amt, bool recurse )
     } );
 
     return amt;
+}
+
+int distribution_grid::get_resource_capacity() const
+{
+    if( cached_maximum_amount_here && !cached_maximum_amount_here_needs_update ) {
+        return *cached_maximum_amount_here;
+    } else {
+        cached_maximum_amount_here = 0;
+        cached_maximum_amount_here_needs_update = false;
+    }
+    for( const auto &c : contents ) {
+        for( const tile_location &loc : c.second ) {
+            battery_tile *battery = active_tiles::furn_at<battery_tile>( loc.absolute, mb );
+            if( battery != nullptr ) {
+                if( cached_maximum_amount_here ) {
+                    cached_maximum_amount_here = *cached_maximum_amount_here + battery->max_stored;
+                }
+            }
+        }
+    }
+    return *cached_maximum_amount_here;
 }
 
 int distribution_grid::get_resource( bool recurse ) const
@@ -228,7 +251,7 @@ auto distribution_grid::get_power_stat_local() const -> power_stat
         const auto &pos = loc.absolute;
 
         if( auto *s = active_tiles::furn_at<solar_tile>( pos, mb ) ) { return to_stat( s->get_power_w() ); }
-        if( auto *c = active_tiles::furn_at<charger_tile>( pos, mb ) ) { return to_stat( -c->power ); }
+        if( auto *c = active_tiles::furn_at<charger_tile>( pos, mb ) ) { return to_stat( c->is_charging( pos, mb ) ? -c->power : 0 ); }
         if( auto *sc = active_tiles::furn_at<steady_consumer_tile>( pos, mb ) ) { return to_stat( -sc->power ); }
         if( auto *vc = active_tiles::furn_at<vehicle_connector_tile>( pos, mb ) ) { return get_vehicle_stats( vc ); }
 
@@ -326,22 +349,26 @@ void distribution_grid_tracker::add_export_node( cross_dimension_export_node nod
 
         // Keep the far end's submap resident so the cross-dimension grid works.
         const auto target_sm = project_to<coords::sm>( node.target_pos );
+        const auto target_begin = target_sm.xy() - point_rel_sm( radius, radius );
+        const auto target_end = target_sm.xy() + point_rel_sm( radius + 1, radius + 1 );
         node.far_load_handle = submap_loader.request_load(
                                    load_request_source::player_base,
                                    node.target_dim_id,
-                                   target_sm,
-                                   radius );
+                                   target_begin,
+                                   target_end );
 
         // Keep the LOCAL source submap resident too.  Without this the source
         // submap unloads when the player leaves → on_submap_unloaded removes
         // the export node → far_load_handle released → far end unloads → the
         // link collapses after one turn.
         const auto source_sm = project_to<coords::sm>( node.source_pos );
+        const auto source_begin = source_sm.xy() - point_rel_sm( radius, radius );
+        const auto source_end = source_sm.xy() + point_rel_sm( radius + 1, radius + 1 );
         node.local_load_handle = submap_loader.request_load(
                                      load_request_source::player_base,
                                      dimension_id_,
-                                     source_sm,
-                                     radius );
+                                     source_begin,
+                                     source_end );
     }
 
     // Give the link a grace period before the first upkeep check.
@@ -436,18 +463,22 @@ void distribution_grid_tracker::resume_export_node( const tripoint_abs_ms &sourc
         const int radius = get_option<int>( "POWER_PORTAL_LOAD_RADIUS" );
 
         const auto target_sm = project_to<coords::sm>( it->target_pos );
+        const auto target_begin = target_sm.xy() - point_rel_sm( radius, radius );
+        const auto target_end = target_sm.xy() + point_rel_sm( radius + 1, radius + 1 );
         it->far_load_handle = submap_loader.request_load(
                                   load_request_source::player_base,
                                   it->target_dim_id,
-                                  target_sm,
-                                  radius );
+                                  target_begin,
+                                  target_end );
 
         const auto source_sm = project_to<coords::sm>( it->source_pos );
+        const auto source_begin = source_sm.xy() - point_rel_sm( radius, radius );
+        const auto source_end = source_sm.xy() + point_rel_sm( radius + 1, radius + 1 );
         it->local_load_handle = submap_loader.request_load(
                                     load_request_source::player_base,
                                     dimension_id_,
-                                    source_sm,
-                                    radius );
+                                    source_begin,
+                                    source_end );
 
         // Force-synchronous load of the far submap so power operations work
         // on the same turn as resume.  request_load() is async (SLM needs at
@@ -783,11 +814,18 @@ std::string grid_furn_transform_queue::to_string() const
 
 void distribution_grid_tracker::update( time_point to )
 {
-    ZoneScoped;
-    flush_dirty_omts();
+    ZoneScopedN( "all_distribution_grid_update" );
+    {
+        ZoneScopedN( "flush_dirty_omt_distribution_grid_update" );
+        flush_dirty_omts();
+    }
     for( const shared_ptr_fast<distribution_grid> &grid : grids_requiring_updates ) {
+        ZoneScopedN( "individual_grid_update" );
         grid->update( to );
     }
-    transform_queue.apply( mb, *this, get_player_character(), get_map() );
-    transform_queue.clear();
+    {
+        ZoneScopedN( "apply_transformation_queue" );
+        transform_queue.apply( mb, *this, get_player_character(), get_map() );
+        transform_queue.clear();
+    }
 }

@@ -63,6 +63,7 @@ In `data/json/debug_spells.json` there is a template spell, copied here for your
   "max_field_intensity": 10,
   "field_intensity_increment": 1,
   "field_intensity_variance": 0.1, // the field can range in intensity from -variance as a percent to +variance as a percent i.e. this spell would be 9-11
+  "volume": 90, // The volume of noise that the spell produces. This is a flat value that doesn't differ depending on level. Measured in decibels.
   "sound_type": "combat", // the type of sound. possible types are: background, weather, music, movement, speech, activity, destructive_activity, alarm, combat, alert, order
   "sound_description": "a whoosh", // the sound description. in the form of "You hear %s" by default it is "an explosion"
   "sound_ambient": true, // whether or not this is treated as an ambient sound or not
@@ -157,6 +158,8 @@ experience you need to get to a level is below:
 - `MOD_MELEE_MOVES` - The melee move cost of your weapon is added to the "spell"'s cast cost. Special behavior: If the base_casting_time is negative with this flag, the "increment" is instead a multiplier on the melee cost (useful for replicating rapid strike in spell form)
 
 - `MOD_MEELE_STAM` - Like `MOD_MELEE_MOVES` but for the casting cost of the spell and the stamina cost of your weapon. Primarily meant for stamina techniques. Has the same special behavior involving negative base costs and the increment field.
+
+- `DAMAGE_TERRAIN` - This allows a damaging spell to also hit the terrain for a percentage of its damage based on its damage type.
 
 - `NO_FAIL` - this spell cannot fail when you cast it
 

@@ -33,6 +33,9 @@ const hook_opts &opts = {} ) -> sol::table;
 /// Return whether a hook currently has registered entries without building params/results tables.
 auto has_hooks( std::string_view hook_name, const hook_opts &opts = {} ) -> bool;
 
+/// Returns the hook results directly, to simplify.
+auto get_hook_results( const sol::table &hook_results ) -> std::vector<sol::object>;
+
 /// Define all hooks that are used in the game.
 void define_hooks( lua_state &state );
 

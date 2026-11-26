@@ -5,6 +5,7 @@
 bool test_mode = false;
 bool debug_mode = false;
 bool json_report_strict = true;
+bool log_activity_skip_state = false;
 bool use_tiles = false;
 bool colored_lighting = false;
 bool use_pinyin_search = false;
@@ -40,7 +41,7 @@ int  activity_skip_monster_lod_gate = 1;
 bool reality_bubble_fire_spread = false;
 visibility_scaling_mode visibility_scaling = visibility_scaling_mode::smart;
 bool lazy_border_enabled        = false;
-int  retained_omt_cache_multiplier = 4;
+int  retained_omt_cache_length = 3;
 int  fire_spread_submap_cap    = 25;
 pocket_sim_level pocket_simulation_level = pocket_sim_level::off;
 int  safe_mode_proximity = 0;
@@ -50,6 +51,11 @@ bool parallel_monster_planning = true;
 int  monster_plan_chunk_size = 8;
 bool parallel_map_cache = true;
 bool parallel_scent_update = true;
+
+bool activity_skip_sound_skip = false;
+bool activity_skip_npc_skip = false;
+bool activity_skip_mon_skip = false;
+time_duration activity_skip_stat_update_ticks = 1_seconds;
 
 FungalOptions fungal_opt;
 

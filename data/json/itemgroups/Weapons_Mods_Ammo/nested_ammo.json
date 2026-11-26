@@ -50,7 +50,10 @@
     "type": "item_group",
     "//": "a collection of ammo that would be found with a loaded gun.",
     "subtype": "distribution",
-    "entries": [ { "item": "36navy", "prob": 100, "charges": [ 20, 40 ] } ]
+    "entries": [
+      { "item": "36navy", "prob": 100, "charges": [ 20, 40 ] },
+      { "item": "36navy_smokeless", "prob": 50, "charges": [ 20, 40 ] }
+    ]
   },
   {
     "id": "on_hand_flintlock",
@@ -75,9 +78,8 @@
     "//": "a collection of ammo that would be found with a loaded gun.",
     "subtype": "distribution",
     "entries": [
-      { "item": "8mm_caseless", "prob": 100, "charges": [ 20, 40 ] },
+      { "item": "8mm_caseless", "prob": 200, "charges": [ 20, 40 ] },
       { "item": "8mm_civilian", "prob": 100, "charges": [ 20, 40 ] },
-      { "item": "8mm_fmj", "prob": 100, "charges": [ 20, 40 ] },
       { "item": "8mm_jhp", "prob": 100, "charges": [ 20, 40 ] },
       { "item": "8mm_hvp", "prob": 30, "charges": [ 20, 40 ] },
       { "item": "8mm_inc", "prob": 30, "charges": [ 20, 40 ] }
@@ -163,8 +165,7 @@
     "//": "a collection of ammo that would be found with a loaded gun.",
     "subtype": "distribution",
     "entries": [
-      { "item": "22_cphp", "prob": 100, "charges": [ 50, 100 ] },
-      { "item": "22_fmj", "prob": 100, "charges": [ 50, 100 ] },
+      { "item": "22_cphp", "prob": 200, "charges": [ 50, 100 ] },
       { "item": "22_lr", "prob": 100, "charges": [ 50, 100 ] },
       { "item": "22_ratshot", "prob": 100, "charges": [ 50, 100 ] }
     ]
@@ -229,7 +230,10 @@
     "type": "item_group",
     "//": "a collection of ammo that would be found with a loaded gun.",
     "subtype": "distribution",
-    "entries": [ { "item": "762_54R", "prob": 100, "charges": [ 10, 20 ] } ]
+    "entries": [
+      { "item": "762_54R", "prob": 100, "charges": [ 10, 20 ] },
+      { "item": "762_54R_7n1", "prob": 50, "charges": [ 10, 20 ] }
+    ]
   },
   {
     "id": "on_hand_300",

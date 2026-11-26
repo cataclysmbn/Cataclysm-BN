@@ -1,0 +1,32 @@
+[
+  {
+    "id": "digital_basic_trap_blueprints",
+    "copy-from": "digital_collection",
+    "type": "GENERIC",
+    "name": { "str": "basic trap blueprints", "str_pl": "sets of basic trap blueprints" },
+    "description": "Saved plans for a pair of simple traps or alarms, with notes on materials, placement, and assembly.",
+    "item_vars": {
+      "digital_random_recipes": "{\"count\":2,\"subcategory\":\"CSC_OTHER_TRAPS\",\"min_difficulty\":0,\"max_difficulty\":2}"
+    }
+  },
+  {
+    "id": "digital_mechanical_trap_blueprints",
+    "copy-from": "digital_collection",
+    "type": "GENERIC",
+    "name": { "str": "mechanical trap blueprints", "str_pl": "sets of mechanical trap blueprints" },
+    "description": "Saved workshop drawings for a pair of mechanical traps.  The diagrams cover moving parts, trigger mechanisms, and the equipment needed for assembly.",
+    "item_vars": {
+      "digital_random_recipes": "{\"count\":2,\"candidates\":[\"beartrap\",\"crossbow_trap\",\"shotgun_trap_single\",\"shotgun_trap\",\"blade_trap\"]}"
+    }
+  },
+  {
+    "id": "digital_advanced_trap_blueprints",
+    "copy-from": "digital_collection",
+    "type": "GENERIC",
+    "name": { "str": "advanced trap blueprints", "str_pl": "sets of advanced trap blueprints" },
+    "description": "A saved technical design for a sophisticated trap.  Its diagrams specify specialized components and demanding assembly requirements.",
+    "item_vars": {
+      "digital_random_recipes": "{\"count\":1,\"subcategory\":\"CSC_OTHER_TRAPS\",\"min_difficulty\":5,\"max_difficulty\":8}"
+    }
+  }
+]

@@ -1,10 +1,10 @@
-#include "catch/catch.hpp"
-
+#include "../src/map/map.h"
+#include "../src/map/mapdata.h"
 #include "avatar.h"
 #include "bionics.h"
+#include "bodypart.h"
 #include "calendar.h"
 #include "cata_utility.h"
-#include "character_id.h"
 #include "catacharset.h"
 #include "catalua.h"
 #include "catalua_coord.h"
@@ -12,26 +12,40 @@
 #include "catalua_impl.h"
 #include "catalua_serde.h"
 #include "catalua_sol.h"
+#include "catch/catch.hpp"
+#include "character_id.h"
 #include "clzones.h"
 #include "color.h"
 #include "coordinates.h"
+#include "data_vars.h"
 #include "debug.h"
+#include "debug_log_capture.h"
+#include "dimension_info.h"
+#include "effect.h"
 #include "faction.h"
+#include "filesystem.h"
 #include "flag.h"
 #include "fstream_utils.h"
 #include "game.h"
+#include "game_constants.h"
 #include "iexamine.h"
 #include "init.h"
 #include "json.h"
-#include "map.h"
+#include "map/mapbuffer.h"
+#include "map/mapbuffer_registry.h"
+#include "map/submap_load_manager.h"
 #include "map_helpers.h"
-#include "mapdata.h"
-#include "effect.h"
+#include "mapgen/mapgen_constructor.h"
 #include "monster.h"
 #include "npc.h"
 #include "options.h"
+#include "overmap/overmap_special.h"
+#include "overmap/overmapbuffer.h"
+#include "overmap/overmapbuffer_registry.h"
 #include "player_activity.h"
 #include "player_helpers.h"
+#include "scenario.h"
+#include "sqlite3.h"
 #include "state_helpers.h"
 #include "string_formatter.h"
 #include "stringmaker.h"
@@ -39,30 +53,354 @@
 #include "units_angle.h"
 #include "units_energy.h"
 #include "units_mass.h"
+#include "units_temperature.h"
 #include "units_utility.h"
 #include "units_volume.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "veh_type.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "weather/weather.h"
+#include "world.h"
 
+#include <algorithm>
+#include <cstdint>
 #include <memory>
 #include <optional>
-#include <string>
+#include <sstream>
 #include <stdexcept>
+#include <string>
+#include <string_view>
 #include <vector>
 
 // workaround for https://github.com/llvm/llvm-project/issues/113087
 #define CHECK_TUPLE(...) CHECK((__VA_ARGS__))
 
-static void run_lua_test_script( sol::state &lua, const std::string &script_name )
-{
-    std::string full_script_name = "tests/lua/" + script_name;
-
-    run_lua_script( lua, full_script_name );
+TEST_CASE(
+    "Lua monster special attacks use the real melee actor", "[lua][monster][special_attack]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    auto& target = get_avatar();
+    target.setpos(map_local_to_abs(get_map(), tripoint_bub_ms(65, 60, 0)));
+    auto& mon = spawn_test_monster("mon_test_special_attack", tripoint_bub_ms(60, 60, 0));
+    mon.set_special("test", 0);
+    mon.friendly = 0;
+    mon.anger = 100;
+    mon.moves = 100;
+    mon.set_dest(target.bub_pos());
+    REQUIRE(mon.attack_target() == &target);
+    auto lua = make_lua_state();
+    lua["test_monster"] = &mon;
+    const auto failed = lua.safe_script(
+        R"(
+        assert(test_monster:has_special_attack("test"))
+        assert(not test_monster:has_special_attack("missing"))
+        assert(not test_monster:use_special_attack("missing"))
+        assert(test_monster:special_attack_ready("test"))
+        assert(not test_monster:use_special_attack("test"))
+        assert(test_monster:special_attack_ready("test"))
+    )",
+        sol::script_pass_on_error);
+    CHECK(failed.valid());
+    CHECK(mon.moves == 100);
+    CHECK(mon.shortest_special_cooldown() == 0);
+    target.setpos(map_local_to_abs(get_map(), tripoint_bub_ms(61, 60, 0)));
+    mon.set_dest(target.bub_pos());
+    const auto used = lua.safe_script(
+        R"(
+        assert(test_monster:use_special_attack("test"))
+        assert(not test_monster:special_attack_ready("test"))
+        assert(not test_monster:use_special_attack("test"))
+    )",
+        sol::script_pass_on_error);
+    CHECK(used.valid());
+    CHECK(mon.moves == 77);
+    CHECK(mon.shortest_special_cooldown() == 7);
 }
 
-TEST_CASE( "lua_class_members", "[lua]" )
-{
+TEST_CASE(
+    "Lua can enumerate special attacks and toggle them by ID", "[lua][monster][special_attack]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    get_avatar().setpos(map_local_to_abs(get_map(), tripoint_bub_ms(65, 60, 0)));
+    auto& mon = spawn_test_monster("mon_test_special_attack_pair", tripoint_bub_ms(60, 60, 0));
+    mon.set_special("alpha", 0);
+    mon.set_special("beta", 0);
+    auto lua = make_lua_state();
+    lua["test_monster"] = &mon;
+
+    // This mirrors what the phase boss demo does: enumerate, then keep exactly one enabled.
+    // It pins the whole round trip -- the returned list must be ipairs-able and its entries
+    // must compare equal to plain Lua strings, or the toggle silently hits the wrong attack.
+    const auto res = lua.safe_script(
+        R"(
+        local ids = test_monster:get_special_attack_ids()
+        assert(#ids == 2, "expected 2 ids, got " .. tostring(#ids))
+        assert(ids[1] == "alpha", "first id was " .. tostring(ids[1]))
+        assert(ids[2] == "beta", "second id was " .. tostring(ids[2]))
+        local seen = 0
+        for _, id in ipairs(ids) do
+            seen = seen + 1
+            test_monster:set_special_attack_enabled(id, id == "alpha")
+        end
+        assert(seen == 2, "ipairs visited " .. tostring(seen) .. " entries")
+        assert(test_monster:special_attack_enabled("alpha"))
+        assert(not test_monster:special_attack_enabled("beta"))
+    )",
+        sol::script_pass_on_error);
+    // Surface the script's own assert() text, which names the step that broke.
+    if (!res.valid()) { FAIL(res.get<sol::error>().what()); }
+
+    // The same state must be visible from C++, not just inside Lua.
+    CHECK(mon.special_attack_enabled("alpha"));
+    CHECK_FALSE(mon.special_attack_enabled("beta"));
+    // A disabled attack keeps its cooldown frozen, so it stays skippable.
+    CHECK(mon.special_attack_ready("alpha"));
+    CHECK_FALSE(mon.special_attack_ready("beta"));
+}
+
+TEST_CASE("Lua reads monster and monster type state", "[lua][monster]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    auto& target = get_avatar();
+    target.setpos(map_local_to_abs(get_map(), tripoint_bub_ms(61, 60, 0)));
+    auto& mon = spawn_test_monster("mon_test_lua_read_bindings", tripoint_bub_ms(60, 60, 0));
+    mon.friendly = 0;
+    mon.anger = 100;
+    mon.moves = 100;
+    mon.training_level = 2;
+    mon.pet_bond_level = 3;
+    mon.set_dest(target.bub_pos());
+    REQUIRE(mon.attack_target() == &target);
+    auto lua = make_lua_state();
+    lua["test_monster"] = &mon;
+    lua["test_target"] = &target;
+
+    const auto alive = lua.safe_script(
+        R"(
+        local mt = test_monster:get_type():obj()
+        assert(mt.melee_dice == 2, "melee_dice was " .. tostring(mt.melee_dice))
+        assert(mt.melee_sides == 3, "melee_sides was " .. tostring(mt.melee_sides))
+        assert(mt.melee_damage:total_damage() == 4, "melee_damage was " .. tostring(mt.melee_damage:total_damage()))
+        assert(mt.grab_strength == 5, "grab_strength was " .. tostring(mt.grab_strength))
+        assert(test_monster:get_grab_strength() == 5)
+        assert(test_monster.training_level == 2)
+        assert(test_monster.pet_bond_level == 3)
+        assert(not pcall(function() test_monster.training_level = 0 end), "training_level must be read-only")
+        local attack_target = test_monster:attack_target()
+        assert(attack_target ~= nil and attack_target:is_avatar(), "attack_target was not the avatar")
+        assert(not test_monster:is_fleeing(test_target))
+        assert(test_monster:can_act())
+        assert(not test_monster:movement_impaired())
+        assert(not test_monster:is_dead())
+        assert(not test_monster:is_dead_or_dying())
+    )",
+        sol::script_pass_on_error);
+    if (!alive.valid()) { FAIL(alive.get<sol::error>().what()); }
+    CHECK(mon.training_level == 2);
+
+    mon.add_effect(efftype_id("downed"), 1_turns);
+    const auto downed = lua.safe_script(
+        R"(
+        assert(not test_monster:can_act())
+        assert(test_monster:movement_impaired())
+    )",
+        sol::script_pass_on_error);
+    if (!downed.valid()) { FAIL(downed.get<sol::error>().what()); }
+
+    // die() with HP left, as self-destructing special attacks do.
+    mon.die(nullptr);
+    REQUIRE(mon.get_hp() > 0);
+    const auto died = lua.safe_script(
+        R"(
+        assert(not test_monster:is_dead(), "is_dead checks only HP")
+        assert(test_monster:is_dead_or_dying())
+    )",
+        sol::script_pass_on_error);
+    if (!died.valid()) { FAIL(died.get<sol::error>().what()); }
+}
+
+TEST_CASE(
+    "a Lua attitude function cannot recurse through a special attack",
+    "[lua][monster][special_attack]") {
+    clear_all_state();
+    sol::state& lua = DynamicDataLoader::get_instance().lua->lua;
+    // Register into the live tables rather than calling init_global_state_tables(), which
+    // replaces every callback table plus the mod runtime and storage. Wiping those would
+    // leave whatever ran before this test without its registrations.
+    sol::table attitudes = lua.globals()["game"]["monster_attitude_functions"];
+    REQUIRE(attitudes.valid());
+    const auto cleanup = on_out_of_scope([&]() {
+        attitudes["test_recursive_attitude"] = sol::lua_nil;
+        lua.globals()["test_data"] = sol::lua_nil;
+        clear_all_state();
+    });
+
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+    // Registered before the monster spawns, so no attitude query finds the hook missing.
+    const auto script = lua.safe_script(
+        R"(
+        test_data.depth = 0
+        test_data.max_depth = 0
+        game.monster_attitude_functions["test_recursive_attitude"] = function(mon, target)
+            test_data.depth = test_data.depth + 1
+            if test_data.depth > test_data.max_depth then
+                test_data.max_depth = test_data.depth
+            end
+            -- The actor resolves its target through attitude_to(), which lands back here.
+            mon:use_special_attack("test")
+            test_data.depth = test_data.depth - 1
+            return MonsterAttitude.MATT_ATTACK
+        end
+    )",
+        sol::script_pass_on_error);
+    REQUIRE(script.valid());
+
+    auto& target = get_avatar();
+    target.setpos(map_local_to_abs(get_map(), tripoint_bub_ms(61, 60, 0)));
+    auto& mon = spawn_test_monster("mon_test_lua_attitude_recursion", tripoint_bub_ms(60, 60, 0));
+    mon.friendly = 0;
+    mon.anger = 100;
+    mon.morale = 100;
+    mon.moves = 100;
+    mon.set_special("test", 0);
+    mon.set_dest(target.bub_pos());
+
+    // Without the guard this never returns; it recurses until the stack overflows.
+    // The guard reports the refused recursion, so capture it rather than failing the run.
+    const auto dmsg = capture_debugmsg_during([&]() {
+        CHECK(mon.attitude(&target) == MATT_ATTACK);
+    });
+    CHECK_THAT(dmsg, Catch::Contains("triggered attitude evaluation again"));
+    // The nested attitude query is served by the stock rules, so the hook runs exactly once.
+    CHECK(test_data.get<int>("max_depth") == 1);
+}
+
+static void run_lua_test_script(sol::state& lua, const std::string& script_name) {
+    std::string full_script_name = "tests/lua/" + script_name;
+
+    run_lua_script(lua, full_script_name);
+}
+
+namespace {
+
+auto initialize_dimension_test_storage() -> sol::table {
+    auto* const active_world = g->get_active_world();
+    REQUIRE(active_world != nullptr);
+    auto& lua = DynamicDataLoader::get_instance().lua->lua;
+    auto storage = lua["game"]["cata_internal"]["mod_storage"].get<sol::table>();
+    for (const auto& mod : active_world->info->active_mod_order) {
+        if (!storage[mod.str()].is<sol::table>()) { storage[mod.str()] = lua.create_table(); }
+    }
+    return storage;
+}
+
+auto dimension_test_cleanup(std::vector<dimension_id> dimensions) -> on_out_of_scope {
+    const auto original_dimension = g->get_current_dimension_id();
+    const auto original_pos = get_avatar().abs_pos();
+    const auto original_origin = player_reality_bubble_origin();
+    auto saved_zones = std::ostringstream{};
+    auto zones_json = JsonOut(saved_zones);
+    zone_manager::get_manager().serialize(zones_json);
+    return on_out_of_scope([=, original_zones = saved_zones.str()]() {
+        if (g->get_current_dimension_id() != original_dimension) {
+            CHECK(g->travel_to_dimension(
+                original_dimension, world_type_id(), std::nullopt, original_origin));
+            get_avatar().setpos(original_pos);
+            g->update_map(get_avatar());
+        }
+        for (const auto& dim : dimensions) {
+            g->delete_dimension(dim);
+            CHECK_FALSE(g->get_active_world()->has_dimension_data(dim.str()));
+        }
+        auto zones_stream = std::istringstream(original_zones);
+        auto restored_zones = JsonIn(zones_stream);
+        auto& zones = zone_manager::get_manager();
+        zones.deserialize(restored_zones);
+        zones.cache_data();
+        CHECK(zones.save_zones());
+        clear_all_state();
+    });
+}
+
+auto enter_test_pocket(const dimension_id& dim, const tripoint_abs_omt& target)
+    -> pocket_dimension_data {
+    auto data = pocket_dimension_data{};
+    data.entry_point = project_combine(target, point_omt_ms(SEEX, SEEY));
+    data.bounds = dimension_bounds{
+        .min_bound = project_to<coords::sm>(target),
+        .max_bound = project_to<coords::sm>(target) + point_rel_sm::south_east(),
+        .boundary_terrain = ter_str_id("t_pd_border"),
+        .boundary_overmap_terrain = oter_str_id("pd_border"),
+    };
+    const auto origin =
+        project_to<coords::sm>(data.entry_point)
+        - tripoint_rel_sm(g_half_mapsize, g_half_mapsize, 0);
+    REQUIRE(g->travel_to_dimension(dim, world_type_id("pocket_dimension"), data, origin));
+    return data;
+}
+
+struct saved_player_dimension_state {
+    std::string dimension_id;
+    std::string kept_dimension_id;
+    tripoint_abs_ms player_pos = tripoint_abs_ms::zero();
+    std::vector<dimension_info> loaded_dimensions;
+};
+
+auto sqlite_dimension_record_count(const std::string& db_path, const std::string& dimension)
+    -> int64_t {
+    auto* db = static_cast<sqlite3*>(nullptr);
+    const auto close_db = on_out_of_scope([&db]() { sqlite3_close(db); });
+    REQUIRE(sqlite3_open_v2(db_path.c_str(), &db, SQLITE_OPEN_READONLY, nullptr) == SQLITE_OK);
+
+    auto* statement = static_cast<sqlite3_stmt*>(nullptr);
+    const auto finalize_statement = on_out_of_scope([&statement]() {
+        sqlite3_finalize(statement);
+    });
+    constexpr auto* query = "SELECT count(*) FROM files WHERE substr(path, 1, ?1) = ?2";
+    REQUIRE(sqlite3_prepare_v2(db, query, -1, &statement, nullptr) == SQLITE_OK);
+
+    const auto prefix = "dimensions/" + dimension + "/";
+    REQUIRE(sqlite3_bind_int(statement, 1, static_cast<int>(prefix.size())) == SQLITE_OK);
+    REQUIRE(
+        sqlite3_bind_text(
+            statement, 2, prefix.c_str(), static_cast<int>(prefix.size()), SQLITE_TRANSIENT)
+        == SQLITE_OK);
+    REQUIRE(sqlite3_step(statement) == SQLITE_ROW);
+    return sqlite3_column_int64(statement, 0);
+}
+
+auto read_saved_player_dimension_state(world& active_world)
+    -> std::optional<saved_player_dimension_state> {
+    auto state = saved_player_dimension_state{};
+    auto has_dimension_id = false;
+    auto has_player_pos = false;
+    const auto read_success = active_world.read_from_player_file(
+        SAVE_EXTENSION,
+        [&](std::istream& input) {
+            auto version_header = std::string{};
+            std::getline(input, version_header);
+            auto jsin = JsonIn(input);
+            auto save_data = jsin.get_object();
+            save_data.allow_omitted_members();
+            has_dimension_id = save_data.read("current_dimension_id", state.dimension_id);
+            save_data.read("kept_pocket_dimension_id", state.kept_dimension_id);
+            if (save_data.has_object("player")) {
+                auto player_data = save_data.get_object("player");
+                player_data.allow_omitted_members();
+                has_player_pos = player_data.read("abs_pos", state.player_pos);
+            }
+            save_data.read("loaded_dimensions", state.loaded_dimensions);
+        },
+        false);
+    return read_success && has_dimension_id && has_player_pos
+             ? std::optional<saved_player_dimension_state>{state}
+             : std::nullopt;
+}
+
+} // namespace
+
+TEST_CASE("lua_class_members", "[lua]") {
     sol::state lua = make_lua_state();
 
     // Create global table for test
@@ -70,19 +408,18 @@ TEST_CASE( "lua_class_members", "[lua]" )
     lua.globals()["test_data"] = test_data;
 
     // Set input
-    test_data["in"] = point( -10, 10 );
+    test_data["in"] = point(-10, 10);
 
     // Run Lua script
-    run_lua_test_script( lua, "class_members_test.lua" );
+    run_lua_test_script(lua, "class_members_test.lua");
 
     // Get test output
     std::string res = test_data["out"];
 
-    REQUIRE( res == "result is Point(12,13)" );
+    REQUIRE(res == "result is Point(12,13)");
 }
 
-TEST_CASE( "lua_global_functions", "[lua]" )
-{
+TEST_CASE("lua_global_functions", "[lua]") {
     sol::state lua = make_lua_state();
 
     // Create global table for test
@@ -94,7 +431,7 @@ TEST_CASE( "lua_global_functions", "[lua]" )
     std::string expected_name = get_avatar().name;
 
     // Run Lua script
-    run_lua_test_script( lua, "global_functions_test.lua" );
+    run_lua_test_script(lua, "global_functions_test.lua");
 
     // Get test output
     std::string lua_avatar_name = test_data["avatar_name"];
@@ -103,64 +440,179 @@ TEST_CASE( "lua_global_functions", "[lua]" )
     std::string lua_character_avatar_name = test_data["character_avatar_name"];
     std::string lua_npc_avatar_name = test_data["npc_avatar_name"];
 
-    REQUIRE( lua_avatar_name == expected_name );
-    REQUIRE( lua_creature_avatar_name == expected_name );
-    REQUIRE( lua_monster_avatar_name == "nil" );
-    REQUIRE( lua_character_avatar_name == expected_name );
-    REQUIRE( lua_npc_avatar_name == "nil" );
+    REQUIRE(lua_avatar_name == expected_name);
+    REQUIRE(lua_creature_avatar_name == expected_name);
+    REQUIRE(lua_monster_avatar_name == "nil");
+    REQUIRE(lua_character_avatar_name == expected_name);
+    REQUIRE(lua_npc_avatar_name == "nil");
 }
 
-TEST_CASE( "lua_map_create_item_at_places_without_returning_owned_item", "[lua][map]" )
-{
+TEST_CASE("lua_scenario_binding", "[lua]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    sol::state lua = make_lua_state();
+
+    sol::table test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    // Restore the active scenario after the test: leaving g->scen null makes
+    // avatar::store omit the "scenario" member, which fails later save/load
+    // round-trips with "Tried to use non-existent scenario '(null)'".
+    const auto scen_cleanup = on_out_of_scope([]() { set_scenario(scenario::generic()); });
+
+    // Use a dedicated test scenario so the checks below do not depend on the
+    // point balance of real scenarios such as "hunted_start".
+    const auto test_scenario_json = std::string(R"({
+        "id": "test_lua_binding",
+        "name": "Test Scenario",
+        "points": -3,
+        "description": "Scenario used to test the Lua scenario bindings.",
+        "start_name": "Test Start",
+        "allowed_locs": [ "sloc_house" ],
+        "forced_traits": [ "HAS_NEMESIS" ],
+        "flags": [ "LONE_START" ]
+    })");
+    auto stream = std::istringstream(test_scenario_json);
+    auto jsin = JsonIn(stream);
+    scenario::load_scenario(jsin.get_object(), "test");
+
+    set_scenario(&string_id<scenario>("test_lua_binding").obj());
+    run_lua_test_script(lua, "scenario_binding_test.lua");
+    CHECK(test_data.get<bool>("has_scenario"));
+    CHECK(test_data.get<std::string>("scenario_id") == "test_lua_binding");
+    CHECK(test_data.get<int>("point_cost") == -3);
+    CHECK(test_data.get<int>("forced_count") == 1);
+    CHECK(test_data.get<bool>("has_nemesis"));
+    CHECK(test_data.get<bool>("has_flag"));
+
+    // Without a scenario, gapi.get_scenario() returns nil
+    set_scenario(nullptr);
+    sol::object res = lua["gapi"]["get_scenario"]();
+    CHECK(res.get_type() == sol::type::lua_nil);
+}
+
+TEST_CASE("lua_weather_override_can_expire", "[lua][weather]") {
+    clear_all_state();
+    sol::state lua = make_lua_state();
+
+    sol::table test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
+
+    run_lua_test_script(lua, "weather_override_expiration_test.lua");
+
+    const auto center = test_data.get<tripoint_abs_omt>("center");
+    CHECK(test_data.get<bool>("has_before"));
+    CHECK(test_data.get<std::string>("weather_before") == "lightning");
+    CHECK(get_weather().has_omt_weather_override(center));
+
+    calendar::turn += 31_minutes;
+
+    const auto script_res = lua.safe_script(
+        R"(
+test_data["has_after"] = gapi.has_omt_weather_override(test_data["center"])
+test_data["weather_after"] = tostring(gapi.get_omt_weather_override(test_data["center"]))
+)",
+        sol::script_pass_on_error);
+    REQUIRE(script_res.valid());
+
+    CHECK_FALSE(test_data.get<bool>("has_after"));
+    CHECK(test_data.get<std::string>("weather_after") == "nil");
+    CHECK_FALSE(get_weather().has_omt_weather_override(center));
+}
+
+TEST_CASE("lua_map_create_item_at_places_without_returning_owned_item", "[lua][map]") {
     clear_all_state();
     auto lua = make_lua_state();
     auto test_data = lua.create_table();
     lua.globals()["test_data"] = test_data;
 
-    auto &here = get_map();
+    auto& here = get_map();
     const auto pos = get_avatar().bub_pos();
-    here.i_clear( pos );
+    here.i_clear(pos);
     test_data["pos"] = pos;
 
-    const auto script_res = lua.safe_script( R"(
+    const auto script_res = lua.safe_script(
+        R"(
 local map = gapi.get_map()
 local placed = map:create_item_at(test_data["pos"], ItypeId.new("rock"), 1)
 test_data["return_type"] = type(placed)
 test_data["item_count"] = #map:get_items_at(test_data["pos"])
-)", sol::script_pass_on_error );
-    REQUIRE( script_res.valid() );
+)",
+        sol::script_pass_on_error);
+    REQUIRE(script_res.valid());
 
-    CHECK( test_data.get<std::string>( "return_type" ) == "nil" );
-    CHECK( test_data.get<int>( "item_count" ) == 1 );
+    CHECK(test_data.get<std::string>("return_type") == "nil");
+    CHECK(test_data.get<int>("item_count") == 1);
 
-    here.i_clear( pos );
+    here.i_clear(pos);
 }
 
-TEST_CASE( "item_lua_invoke_at_invokes_use_action", "[lua][item]" )
-{
+TEST_CASE("lua_field_ids_expose_moppable_fields_on_real_map", "[lua][map][fluid_regression]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    auto& here = get_map();
+    const auto pos = tripoint_bub_ms(60, 60, 0);
+    const auto water_field = field_type_id("fd_water");
+    const auto fire_field = field_type_id("fd_fire");
+    g->place_player(tripoint_bub_ms(61, 60, 0));
+    REQUIRE(here.add_field(pos, water_field));
+    REQUIRE(here.add_field(pos, fire_field));
+
+    auto lua = make_lua_state();
+    lua["field_pos"] = pos;
+    const auto result = lua.safe_script(
+        R"(
+local here = gapi.get_map()
+local saw_water, saw_fire = false, false
+for _, field_id in ipairs(here:get_field_ids_at(field_pos)) do
+  if field_id:str_id():str() == "fd_water" then
+    saw_water = true
+    assert(field_id:obj().moppable)
+  elseif field_id:str_id():str() == "fd_fire" then
+    saw_fire = true
+    assert(not field_id:obj().moppable)
+  end
+  if field_id:obj().moppable then here:remove_field_at(field_pos, field_id) end
+end
+return { saw_water = saw_water, saw_fire = saw_fire }
+)",
+        sol::script_pass_on_error);
+    const auto water_removed = here.get_field(pos, water_field) == nullptr;
+    const auto fire_preserved = here.get_field(pos, fire_field) != nullptr;
+    REQUIRE(result.valid());
+    const auto observed = result.get<sol::table>();
+    CHECK(observed.get<bool>("saw_water"));
+    CHECK(observed.get<bool>("saw_fire"));
+    CHECK(water_removed);
+    CHECK(fire_preserved);
+}
+
+TEST_CASE("item_lua_invoke_at_invokes_use_action", "[lua][item]") {
     auto lua = make_lua_state();
     lua["invoke_pos"] = get_avatar().bub_pos();
 
-    const auto load_res = lua.load( "local item = Item.spawn(ItypeId.new('helmet_riot'), 1)\n"
-                                    "local used = item:invoke_at(invoke_pos)\n"
-                                    "return { used = used, item_type = item:get_type() }" );
-    REQUIRE( load_res.valid() );
-    const auto script_res = sol::protected_function( load_res )();
-    REQUIRE( script_res.valid() );
+    const auto load_res = lua.load(
+        "local item = Item.spawn(ItypeId.new('helmet_riot'), 1)\n"
+        "local used = item:invoke_at(invoke_pos)\n"
+        "return { used = used, item_type = item:get_type() }");
+    REQUIRE(load_res.valid());
+    const auto script_res = sol::protected_function(load_res)();
+    REQUIRE(script_res.valid());
     const auto data = script_res.get<sol::table>();
 
-    CHECK( data.get<int>( "used" ) == 0 );
-    CHECK( data.get<itype_id>( "item_type" ) == itype_id( "helmet_riot_raised" ) );
+    CHECK(data.get<int>("used") == 0);
+    CHECK(data.get<itype_id>("item_type") == itype_id("helmet_riot_raised"));
 }
 
-TEST_CASE( "minirose_lua_detonates", "[lua][minirose]" )
-{
-    const auto minirose_id = bionic_id( "bio_minirose" );
-    CHECK( minirose_id->activated );
-    CHECK( minirose_id->has_flag( flag_id( "BIONIC_TOGGLED" ) ) );
+TEST_CASE("minirose_lua_detonates", "[lua][minirose]") {
+    const auto minirose_id = bionic_id("bio_minirose");
+    CHECK(minirose_id->activated);
+    CHECK(minirose_id->has_flag(flag_id("BIONIC_TOGGLED")));
 
     auto lua = make_lua_state();
-    auto env = sol::environment( lua, sol::create, lua.globals() );
+    auto env = sol::environment(lua, sol::create, lua.globals());
 
     auto calls_created = 0;
     auto calls_invoked = 0;
@@ -174,475 +626,618 @@ TEST_CASE( "minirose_lua_detonates", "[lua][minirose]" )
     auto removed_id = std::string{};
     auto has_minirose = true;
     auto minirose_armed = false;
-    auto query_answer = std::string{ "YES" };
+    auto query_answer = std::string{"YES"};
 
     auto fake_item = lua.create_table();
-    fake_item["set_charges"] = [&]( const sol::table &, const int charges ) { nuke_charges = charges; };
-    fake_item["invoke_at"] = [&]( const sol::table &, const tripoint_bub_ms & ) { ++calls_invoked; };
+    fake_item["set_charges"] = [&](const sol::table&, const int charges) {
+        nuke_charges = charges;
+    };
+    fake_item["invoke_at"] = [&](const sol::table&, const tripoint_bub_ms&) { ++calls_invoked; };
 
     auto fake_gapi = lua.create_table();
-    fake_gapi["create_item"] = [&]( const itype_id & id, const int count ) {
+    fake_gapi["create_item"] = [&](const itype_id& id, const int count) {
         ++calls_created;
         nuke_id = id.str();
         nuke_count = count;
         return fake_item;
     };
-    fake_gapi["add_msg"] = [&]( const sol::variadic_args & ) { ++calls_messages; };
+    fake_gapi["add_msg"] = [&](const sol::variadic_args&) { ++calls_messages; };
     env["gapi"] = fake_gapi;
 
     auto fake_popup_type = lua.create_table();
     fake_popup_type["new"] = [&]() {
         auto fake_popup = lua.create_table();
-        fake_popup["message"] = []( const sol::table &, const std::string & ) {};
-        fake_popup["message_color"] = []( const sol::table &, const color_id & ) {};
-        fake_popup["query_yn"] = [&query_answer]( const sol::table & ) { return query_answer; };
+        fake_popup["message"] = [](const sol::table&, const std::string&) {};
+        fake_popup["message_color"] = [](const sol::table&, const color_id&) {};
+        fake_popup["query_yn"] = [&query_answer](const sol::table&) { return query_answer; };
         return fake_popup;
     };
     env["QueryPopup"] = fake_popup_type;
 
     auto fake_char = lua.create_table();
-    fake_char["has_bionic"] = [&]( const sol::table &, const bionic_id & id ) {
+    fake_char["has_bionic"] = [&](const sol::table&, const bionic_id& id) {
         bionic_id_seen = id.str();
         return has_minirose;
     };
-    fake_char["has_active_bionic"] = [&]( const sol::table &, const bionic_id & id ) {
+    fake_char["has_active_bionic"] = [&](const sol::table&, const bionic_id& id) {
         active_bionic_id_seen = id.str();
         return has_minirose && minirose_armed;
     };
-    fake_char["remove_bionic"] = [&]( const sol::table &, const bionic_id & id ) {
+    fake_char["remove_bionic"] = [&](const sol::table&, const bionic_id& id) {
         ++calls_removed;
         removed_id = id.str();
         has_minirose = false;
         minirose_armed = false;
     };
-    fake_char["bub_pos"] = []( const sol::table & ) { return tripoint_bub_ms( 60, 60, 0 ); };
-    fake_char["is_avatar"] = []( const sol::table & ) { return true; };
+    fake_char["bub_pos"] = [](const sol::table&) { return tripoint_bub_ms(60, 60, 0); };
+    fake_char["is_avatar"] = [](const sol::table&) { return true; };
 
-    const auto load_res = lua.load_file( "data/json/lua/minirose.lua" );
-    REQUIRE( load_res.valid() );
-    auto exec = sol::protected_function( load_res );
-    sol::set_environment( env, exec );
+    const auto load_res = lua.load_file("data/json/lua/minirose.lua");
+    REQUIRE(load_res.valid());
+    auto exec = sol::protected_function(load_res);
+    sol::set_environment(env, exec);
     const auto script_res = exec();
-    REQUIRE( script_res.valid() );
+    REQUIRE(script_res.valid());
     const auto minirose = script_res.get<sol::table>();
 
     auto params = lua.create_table();
     params["char"] = fake_char;
-    minirose["on_character_death"]( params );
+    minirose["on_character_death"](params);
 
-    CHECK( active_bionic_id_seen == "bio_minirose" );
-    CHECK( calls_removed == 0 );
-    CHECK( calls_created == 0 );
-    CHECK( calls_invoked == 0 );
+    CHECK(active_bionic_id_seen == "bio_minirose");
+    CHECK(calls_removed == 0);
+    CHECK(calls_created == 0);
+    CHECK(calls_invoked == 0);
 
     minirose_armed = true;
-    minirose["on_character_death"]( params );
+    minirose["on_character_death"](params);
 
-    CHECK( bionic_id_seen == "bio_minirose" );
-    CHECK( removed_id == "bio_minirose" );
-    CHECK( calls_removed == 1 );
-    CHECK( calls_created == 1 );
-    CHECK( calls_invoked == 1 );
-    CHECK( nuke_id == "mininuke_act" );
-    CHECK( nuke_count == 1 );
-    CHECK( nuke_charges == 0 );
+    CHECK(bionic_id_seen == "bio_minirose");
+    CHECK(removed_id == "bio_minirose");
+    CHECK(calls_removed == 1);
+    CHECK(calls_created == 1);
+    CHECK(calls_invoked == 1);
+    CHECK(nuke_id == "mininuke_act");
+    CHECK(nuke_count == 1);
+    CHECK(nuke_charges == 0);
 
     has_minirose = true;
     minirose_armed = false;
     query_answer = "NO";
     params = lua.create_table();
     params["user"] = fake_char;
-    minirose["on_activate"]( params );
+    minirose["on_activate"](params);
 
-    CHECK( calls_removed == 1 );
-    CHECK( calls_created == 1 );
-    CHECK( calls_invoked == 1 );
-    CHECK( calls_messages == 1 );
+    CHECK(calls_removed == 1);
+    CHECK(calls_created == 1);
+    CHECK(calls_invoked == 1);
+    CHECK(calls_messages == 1);
 
     query_answer = "YES";
-    minirose["on_activate"]( params );
+    minirose["on_activate"](params);
 
-    CHECK( calls_removed == 2 );
-    CHECK( calls_created == 2 );
-    CHECK( calls_invoked == 2 );
+    CHECK(calls_removed == 2);
+    CHECK(calls_created == 2);
+    CHECK(calls_invoked == 2);
 }
 
-TEST_CASE( "minirose can be disarmed after switching to an npc and back", "[bionics][lua][minirose][npc]" )
-{
+TEST_CASE(
+    "minirose can be disarmed after switching to an npc and back",
+    "[bionics][lua][minirose]["
+    "npc]") {
     clear_all_state();
-    auto &you = get_avatar();
-    const auto minirose_id = bionic_id( "bio_minirose" );
-    const auto cleanup_test_state = on_out_of_scope( []() {
-        g->vertical_shift( 0 );
+    auto& you = get_avatar();
+    const auto minirose_id = bionic_id("bio_minirose");
+    const auto cleanup_test_state = on_out_of_scope([]() {
         clear_all_state();
-        get_avatar().setID( character_id(), true );
-    } );
+        get_avatar().setID(character_id(), true);
+    });
 
     you.clear_bionics();
-    npc &follower = spawn_npc( point_bub_ms( 45, 30 ), "test_talker" );
-    follower.set_fac( faction_id( "your_followers" ) );
-    follower.set_attitude( NPCATT_FOLLOW );
+    npc& follower = spawn_npc(tripoint_bub_ms(45, 30, 0), "test_talker");
+    follower.set_fac(faction_id("your_followers"));
+    follower.set_attitude(NPCATT_FOLLOW);
     follower.clear_bionics();
-    REQUIRE( follower.is_player_ally() );
+    REQUIRE(follower.is_player_ally());
 
-    follower.add_bionic( minirose_id );
-    REQUIRE( follower.has_bionic( minirose_id ) );
-    CHECK_FALSE( follower.has_active_bionic( minirose_id ) );
-    follower.get_bionic_state( minirose_id ).powered = true;
-    REQUIRE( follower.has_active_bionic( minirose_id ) );
-    CHECK_FALSE( you.has_bionic( minirose_id ) );
+    follower.add_bionic(minirose_id);
+    REQUIRE(follower.has_bionic(minirose_id));
+    CHECK_FALSE(follower.has_active_bionic(minirose_id));
+    follower.get_bionic_state(minirose_id).powered = true;
+    REQUIRE(follower.has_active_bionic(minirose_id));
+    CHECK_FALSE(you.has_bionic(minirose_id));
 
-    you.control_npc( follower );
+    you.control_npc(follower);
 
-    REQUIRE( you.has_active_bionic( minirose_id ) );
-    CHECK_FALSE( follower.has_bionic( minirose_id ) );
-    REQUIRE( you.deactivate_bionic( you.get_bionic_state( minirose_id ) ) );
-    CHECK_FALSE( you.has_active_bionic( minirose_id ) );
+    REQUIRE(you.has_active_bionic(minirose_id));
+    CHECK_FALSE(follower.has_bionic(minirose_id));
+    REQUIRE(you.deactivate_bionic(you.get_bionic_state(minirose_id)));
+    CHECK_FALSE(you.has_active_bionic(minirose_id));
 
-    you.control_npc( follower );
+    you.control_npc(follower);
 
-    CHECK_FALSE( you.has_bionic( minirose_id ) );
-    REQUIRE( follower.has_bionic( minirose_id ) );
-    CHECK_FALSE( follower.has_active_bionic( minirose_id ) );
+    CHECK_FALSE(you.has_bionic(minirose_id));
+    REQUIRE(follower.has_bionic(minirose_id));
+    CHECK_FALSE(follower.has_active_bionic(minirose_id));
 }
 
-TEST_CASE( "lua_activity_bindings", "[lua]" )
-{
+TEST_CASE("lua_activity_bindings", "[lua]") {
     clear_all_state();
-    auto &state = *DynamicDataLoader::get_instance().lua;
-    cata::init_global_state_tables( state, {} );
-    sol::state &lua = state.lua;
+    auto& state = *DynamicDataLoader::get_instance().lua;
+    cata::init_global_state_tables(state, {});
+    sol::state& lua = state.lua;
 
     auto test_data = lua.create_table();
     lua.globals()["test_data"] = test_data;
 
-    run_lua_test_script( lua, "activity_binding_test.lua" );
+    run_lua_test_script(lua, "activity_binding_test.lua");
 
-    REQUIRE( test_data.get<bool>( "has_examine_functions" ) );
-    REQUIRE( test_data.get<bool>( "has_activity_functions" ) );
-    REQUIRE( test_data.get<std::string>( "activity_id" ) == "ACT_WAIT" );
-    REQUIRE( test_data.get<std::string>( "activity_name" ) == "test wash" );
-    CHECK( test_data.get<int>( "activity_moves_total" ) == to_moves<int>( 5_minutes ) );
-    CHECK( test_data.get<bool>( "activity_interruptable" ) );
-    CHECK( test_data.get<std::string>( "activity_coord" ).starts_with( "TripointAbsMs" ) );
+    REQUIRE(test_data.get<bool>("has_examine_functions"));
+    REQUIRE(test_data.get<bool>("has_activity_functions"));
+    REQUIRE(test_data.get<std::string>("activity_id") == "ACT_WAIT");
+    REQUIRE(test_data.get<std::string>("activity_name") == "test wash");
+    CHECK(test_data.get<int>("activity_moves_total") == to_moves<int>(5_minutes));
+    CHECK(test_data.get<bool>("activity_interruptable"));
+    CHECK(test_data.get<std::string>("activity_coord").starts_with("TripointAbsMs"));
 
     get_avatar().activity->moves_left = 0;
-    get_avatar().activity->do_turn( get_avatar() );
+    get_avatar().activity->do_turn(get_avatar());
 
-    CHECK( get_avatar().activity->is_null() );
-    CHECK( test_data.get<bool>( "turn_called" ) );
-    CHECK( test_data.get<std::string>( "turn_name" ) == "test wash" );
-    CHECK( test_data.get<bool>( "finish_called" ) );
-    CHECK( test_data.get<std::string>( "finish_name" ) == "test wash" );
-    CHECK( test_data.get<std::string>( "finish_pos_type" ) == "TripointAbsMs" );
-    CHECK( test_data.get<std::string>( "finish_mode" ) == "test_shower" );
-    CHECK( test_data.get<bool>( "finish_is_warm" ) );
-    CHECK( test_data.get<std::string>( "finish_cleaner_label" ) == "soap" );
-    CHECK( test_data.get<int>( "finish_nested_charges" ) == 7 );
+    CHECK(get_avatar().activity->is_null());
+    CHECK(test_data.get<bool>("turn_called"));
+    CHECK(test_data.get<std::string>("turn_name") == "test wash");
+    CHECK(test_data.get<bool>("finish_called"));
+    CHECK(test_data.get<std::string>("finish_name") == "test wash");
+    CHECK(test_data.get<std::string>("finish_pos_type") == "TripointAbsMs");
+    CHECK(test_data.get<std::string>("finish_mode") == "test_shower");
+    CHECK(test_data.get<bool>("finish_is_warm"));
+    CHECK(test_data.get<std::string>("finish_cleaner_label") == "soap");
+    CHECK(test_data.get<int>("finish_nested_charges") == 7);
 }
 
-TEST_CASE( "lua_activity_without_callback_finishes", "[lua]" )
-{
+TEST_CASE("lua_activity_without_callback_finishes", "[lua]") {
     clear_all_state();
-    auto act = std::make_unique<player_activity>( activity_id( "ACT_WASH_SELF" ), 0 );
-    get_avatar().assign_activity( std::move( act ) );
+    auto act = std::make_unique<player_activity>(activity_id("ACT_WASH_SELF"), 0);
+    get_avatar().assign_activity(std::move(act));
 
-    get_avatar().activity->do_turn( get_avatar() );
+    get_avatar().activity->do_turn(get_avatar());
 
-    CHECK( get_avatar().activity->is_null() );
+    CHECK(get_avatar().activity->is_null());
 }
 
-TEST_CASE( "robofac_authorization_updates_real_active_creatures", "[lua][robofac]" )
-{
+TEST_CASE("robofac_authorization_updates_real_active_creatures", "[lua][robofac]") {
     clear_all_state();
     auto lua = make_lua_state();
 
     auto test_data = lua.create_table();
     lua.globals()["test_data"] = test_data;
 
-    auto &security = spawn_npc( point_bub_ms{ 50, 50 }, "hub_security" );
-    security.set_attitude( NPCATT_KILL );
-    auto &turret = spawn_test_monster( "mon_robofac_turret_light", tripoint_bub_ms{ 51, 50, 0 } );
+    auto& security = spawn_npc(tripoint_bub_ms{50, 50, 0}, "hub_security");
+    security.set_attitude(NPCATT_KILL);
+    auto& turret = spawn_test_monster("mon_robofac_turret_light", tripoint_bub_ms{51, 50, 0});
     test_data["security"] = &security;
     test_data["turret"] = &turret;
 
-    run_lua_test_script( lua, "robofac_actual_authorization_test.lua" );
+    run_lua_test_script(lua, "robofac_actual_authorization_test.lua");
 
-    CHECK( test_data.get<std::string>( "security_faction" ) == "robofac_auxiliaries" );
-    CHECK( test_data.get<npc_attitude>( "security_attitude" ) == NPCATT_NULL );
-    CHECK( test_data.get<bool>( "turret_authorized" ) );
+    CHECK(test_data.get<std::string>("security_faction") == "robofac_auxiliaries");
+    CHECK(test_data.get<npc_attitude>("security_attitude") == NPCATT_NULL);
+    CHECK(test_data.get<bool>("turret_authorized"));
 }
 
-TEST_CASE( "lua_nearby_omt_creature_queries_return_active_creatures", "[lua][creature]" )
-{
+TEST_CASE("lua_nearby_omt_creature_queries_return_active_creatures", "[lua][creature]") {
     clear_all_state();
     auto lua = make_lua_state();
 
     auto test_data = lua.create_table();
     lua.globals()["test_data"] = test_data;
 
-    auto &nearby_npc = spawn_npc( point_bub_ms{ 50, 50 }, "test_talker" );
-    auto &nearby_monster = spawn_test_monster( "mon_zombie", tripoint_bub_ms{ 51, 50, 0 } );
+    auto& nearby_npc = spawn_npc(tripoint_bub_ms{50, 50, 0}, "test_talker");
+    auto& nearby_monster = spawn_test_monster("mon_zombie", tripoint_bub_ms{51, 50, 0});
     test_data["center"] = nearby_npc.abs_omt_pos();
     test_data["expected_npc"] = &nearby_npc;
     test_data["expected_monster"] = &nearby_monster;
 
-    run_lua_test_script( lua, "nearby_omt_creature_query_test.lua" );
+    run_lua_test_script(lua, "nearby_omt_creature_query_test.lua");
 
-    CHECK( test_data.get<int>( "npc_count" ) == 1 );
-    CHECK( test_data.get<int>( "monster_count" ) == 1 );
-    CHECK( test_data.get<bool>( "found_expected_npc" ) );
-    CHECK( test_data.get<bool>( "found_expected_monster" ) );
+    CHECK(test_data.get<int>("npc_count") == 1);
+    CHECK(test_data.get<int>("monster_count") == 1);
+    CHECK(test_data.get<bool>("found_expected_npc"));
+    CHECK(test_data.get<bool>("found_expected_monster"));
 }
 
-TEST_CASE( "lua_npc_move_to_binding_moves_real_npc", "[lua][npc]" )
-{
+TEST_CASE("lua_character_get_items_if_filters_items", "[lua][character][item]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    auto lua = make_lua_state();
+
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    auto& player = get_avatar();
+    player.i_add(item::spawn("bread"));
+    player.i_add(item::spawn("apple"));
+    auto char_forge = item::spawn("char_forge");
+    char_forge->charges = 0;
+    player.i_add(std::move(char_forge));
+    player.wear_item(item::spawn("tshirt"), false);
+    player.wield(item::spawn("rock"));
+    test_data["character"] = &player;
+
+    run_lua_test_script(lua, "character_get_items_if_test.lua");
+
+    // all_count covers inventory + worn + wielded; the type filters pin the worn and wielded items.
+    CHECK(test_data.get<int>("all_count") == 5);
+    CHECK(test_data.get<int>("food_count") == 2);
+    CHECK(test_data.get<int>("food_category_count") == 2);
+    CHECK(test_data.get<int>("wielded_rock_count") == 1);
+    CHECK(test_data.get<int>("worn_tshirt_count") == 1);
+    CHECK(test_data.get<int>("flag_count") == 1);
+    CHECK(test_data.get<int>("combined_count") == 2);
+    CHECK(test_data.get<int>("worn_count") == 1);
+    CHECK(test_data.get<int>("wielded_count") == 1);
+    CHECK(test_data.get<int>("not_worn_count") == 4);
+    // the flashlight spawns empty, so need_charges excludes it
+    CHECK(test_data.get<int>("charged_tools_count") == 4);
+    CHECK(test_data.get<int>("empty_char_forge_count") == 0);
+    CHECK(test_data.get<int>("any_char_forge_count") == 1);
+    CHECK(test_data.get<int>("removed_food_count") == 2);
+    CHECK(test_data.get<int>("after_remove_count") == 3);
+    CHECK(test_data.get<int>("removed_by_object_count") == 1);
+    CHECK(test_data.get<int>("by_object_count") == 1);
+    CHECK(test_data.get<std::string>("type_str") == "rock");
+    CHECK(test_data.get<std::string>("id_type") == "userdata");
+    CHECK(test_data.get<bool>("id_eq") == true);
+    CHECK(test_data.get<int>("by_table") == 1);
+}
+
+TEST_CASE("lua_gapi_get_items_if_filters_map_items", "[lua][item][map]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    auto lua = make_lua_state();
+
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    auto& here = get_map();
+    const auto pos = get_avatar().bub_pos();
+    const auto far_pos = tripoint_bub_ms(pos.x() + 2, pos.y(), pos.z());
+    here.i_clear(pos);
+    here.i_clear(far_pos);
+    here.add_item_or_charges(pos, item::spawn("bread"));
+    here.add_item_or_charges(pos, item::spawn("rock"));
+    here.add_item_or_charges(far_pos, item::spawn("apple"));
+    auto bag = item::spawn("bag_plastic");
+    bag->put_in(item::spawn("banana"));
+    here.add_item_or_charges(far_pos, std::move(bag));
+    test_data["pos"] = pos;
+
+    run_lua_test_script(lua, "gapi_get_items_if_test.lua");
+
+    CHECK(test_data.get<int>("food_count") == 1);
+    CHECK(test_data.get<int>("food_radius2_count") == 3);
+    CHECK(test_data.get<int>("rock_count") == 1);
+    CHECK(test_data.get<int>("all_count") == 5);
+    // the banana inside the plastic bag at far_pos is found too
+    CHECK(test_data.get<int>("contained_food_count") == 1);
+    // the sacrifice flow removed the only food within radius 1 (the bread at pos)
+    CHECK(test_data.get<std::string>("sacrificed") == "bread (fresh) (2)");
+    CHECK(test_data.get<int>("food_after_sacrifice") == 0);
+    CHECK(here.i_at(pos).size() == 1);
+
+    here.i_clear(pos);
+    here.i_clear(far_pos);
+}
+
+TEST_CASE("lua_get_items_if_addiction_type_and_material_filters", "[lua][item]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    auto lua = make_lua_state();
+
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    auto& player = get_avatar();
+    player.i_add(item::spawn("bread"));
+    player.i_add(item::spawn("beer"));
+    player.i_add(item::spawn("crack"));
+    player.wield(item::spawn("rock"));
+
+    auto& here = get_map();
+    const auto pos = player.bub_pos();
+    here.i_clear(pos);
+    // add_item, not add_item_or_charges: dropping a liquid (beer) would spill it via on_drop
+    here.add_item(pos, item::spawn("beer"));
+    REQUIRE(here.i_at(pos).size() == 1);
+    test_data["character"] = &player;
+    test_data["pos"] = pos;
+
+    run_lua_test_script(lua, "items_if_addiction_material_test.lua");
+
+    // only the beer has the alcohol addiction type, via enum value or string
+    CHECK(test_data.get<int>("alcohol_enum_count") == 1);
+    CHECK(test_data.get<int>("alcohol_str_count") == 1);
+    // beer (alcohol) + crack
+    CHECK(test_data.get<int>("drug_and_alcohol_count") == 2);
+    // only the bread is a comestible without an addiction type
+    CHECK(test_data.get<int>("no_addiction_count") == 1);
+    // only the wielded rock is made of stone
+    CHECK(test_data.get<int>("stone_count") == 1);
+    CHECK(test_data.get<int>("alcohol_mat_count") == 1);
+    // bread (wheat) + rock (stone)
+    CHECK(test_data.get<int>("wheat_or_stone_count") == 2);
+    // combined is_food + alcohol: just the beer
+    CHECK(test_data.get<int>("food_alcohol_count") == 1);
+    // map-side queries use the same filters
+    CHECK(test_data.get<int>("map_beer_count") == 1);
+    CHECK(test_data.get<int>("map_alcohol_mat_count") == 1);
+    CHECK(test_data.get<int>("map_crack_count") == 0);
+
+    here.i_clear(pos);
+}
+
+TEST_CASE("lua_npc_move_to_binding_moves_real_npc", "[lua][npc]") {
     clear_all_state();
     auto lua = make_lua_state();
 
     auto test_data = lua.create_table();
     lua.globals()["test_data"] = test_data;
 
-    map &here = get_map();
-    const auto start = tripoint_bub_ms{ 50, 50, 0 };
-    const auto destination = tripoint_bub_ms{ 51, 50, 0 };
-    for( const tripoint_bub_ms &pos : { start, destination } ) {
-        here.ter_set( pos, ter_id( "t_dirt" ) );
-        here.furn_set( pos, furn_id( "f_null" ) );
+    map& here = get_map();
+    const auto start = tripoint_bub_ms{50, 50, 0};
+    const auto destination = tripoint_bub_ms{51, 50, 0};
+    for (const tripoint_bub_ms& pos : {start, destination}) {
+        here.ter_set(pos, ter_id("t_dirt"));
+        here.furn_set(pos, furn_id("f_null"));
     }
 
-    auto &moving_npc = spawn_npc( start.xy(), "test_talker" );
-    moving_npc.set_moves( 1000 );
+    auto& moving_npc = spawn_npc(start, "test_talker");
+    moving_npc.set_moves(1000);
     test_data["npc"] = &moving_npc;
     test_data["destination"] = destination;
 
-    run_lua_test_script( lua, "npc_move_to_test.lua" );
+    run_lua_test_script(lua, "npc_move_to_test.lua");
 
-    CHECK( test_data.get<bool>( "moved" ) );
-    CHECK( moving_npc.bub_pos() == destination );
+    CHECK(test_data.get<bool>("moved"));
+    CHECK(moving_npc.bub_pos() == destination);
 }
 
-TEST_CASE( "lua_place_monster_pins_upgrade_time", "[lua][monster]" )
-{
-    const auto restore_turn = restore_on_out_of_scope<time_point>( calendar::turn );
+TEST_CASE("lua_place_monster_pins_upgrade_time", "[lua][monster]") {
+    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     clear_map();
-    put_player_underground();
+    move_player_out_of_the_way();
     calendar::turn = calendar::start_of_cataclysm + 2 * calendar::season_length();
 
-    const auto monster_id = mtype_id( "mon_test_lua_upgrade_zombie" );
-    const auto &monster_type = monster_id.obj();
-    REQUIRE( monster_type.upgrades );
-    REQUIRE( monster_type.age_grow == 14 );
+    const auto monster_id = mtype_id("mon_test_lua_upgrade_zombie");
+    const auto& monster_type = monster_id.obj();
+    REQUIRE(monster_type.upgrades);
+    REQUIRE(monster_type.age_grow == 14);
 
     auto lua = make_lua_state();
     auto test_data = lua.create_table();
     lua.globals()["test_data"] = test_data;
     test_data["monster_id"] = monster_id;
-    test_data["pos"] = tripoint_bub_ms{ 5, 5, 0 };
+    test_data["pos"] = tripoint_bub_ms{5, 5, 0};
 
-    run_lua_test_script( lua, "place_monster_upgrade_time_test.lua" );
+    run_lua_test_script(lua, "place_monster_upgrade_time_test.lua");
 
-    const auto current_day = to_days<int>( calendar::turn - calendar::turn_zero );
-    REQUIRE( test_data.get<bool>( "monster_spawned" ) );
-    CHECK( test_data.get<std::string>( "monster_type" ) == "mon_test_lua_upgrade_zombie" );
-    CHECK( test_data.get<int>( "upgrade_time" ) > current_day );
+    const auto current_day = to_days<int>(calendar::turn - calendar::turn_zero);
+    REQUIRE(test_data.get<bool>("monster_spawned"));
+    CHECK(test_data.get<std::string>("monster_type") == "mon_test_lua_upgrade_zombie");
+    CHECK(test_data.get<int>("upgrade_time") > current_day);
 }
 
-TEST_CASE( "lua_typed_coords_projection", "[lua]" )
-{
+TEST_CASE("lua_typed_coords_projection", "[lua]") {
     auto lua = make_lua_state();
 
     auto test_data = lua.create_table();
     lua.globals()["test_data"] = test_data;
-    lua["accept_abs_omt"] = []( const tripoint_abs_omt & p ) {
-        return p.to_string();
-    };
+    lua["accept_abs_omt"] = [](const tripoint_abs_omt& p) { return p.to_string(); };
 
-    run_lua_test_script( lua, "typed_coords_projection_test.lua" );
+    run_lua_test_script(lua, "typed_coords_projection_test.lua");
 
-    CHECK( test_data.get<std::string>( "to_omt" ) == "TripointAbsOmt(1,1,2)" );
-    CHECK( test_data.get<std::string>( "named_to_omt" ) == "TripointAbsOmt(1,1,2)" );
-    CHECK( test_data.get<std::string>( "remain_quotient" ) == "TripointAbsOm(1,0,-1)" );
-    CHECK( test_data.get<std::string>( "remain_remainder" ) == "PointOmSm(1,2)" );
-    CHECK( test_data.get<std::string>( "combined" ) == "TripointAbsSm(361,2,-1)" );
-    CHECK( test_data.get<int>( "distance" ) == 3 );
-    CHECK( test_data.get<std::string>( "named_bub_point" ) == "PointBubMs(3,4)" );
-    CHECK( test_data.get<std::string>( "named_abs_tripoint" ) == "TripointAbsMs(5,6,7)" );
-    CHECK( test_data.get<std::string>( "named_abs_tripoint_from_typed_point" ) ==
-           "TripointAbsMs(8,9,10)" );
+    CHECK(test_data.get<std::string>("to_omt") == "TripointAbsOmt(1,1,2)");
+    CHECK(test_data.get<std::string>("named_to_omt") == "TripointAbsOmt(1,1,2)");
+    CHECK(test_data.get<std::string>("remain_quotient") == "TripointAbsOm(1,0,-1)");
+    CHECK(test_data.get<std::string>("remain_remainder") == "PointOmSm(1,2)");
+    CHECK(test_data.get<std::string>("combined") == "TripointAbsSm(361,2,-1)");
+    CHECK(test_data.get<int>("distance") == 3);
+    CHECK(test_data.get<std::string>("named_bub_point") == "PointBubMs(3,4)");
+    CHECK(test_data.get<std::string>("named_abs_tripoint") == "TripointAbsMs(5,6,7)");
+    CHECK(test_data.get<std::string>("named_abs_tripoint_from_typed_point")
+          == "TripointAbsMs(8,9,10)");
 
     // Validate project_remain_omt example from the typed-coordinates documentation.
-    CHECK( test_data.get<std::string>( "doc_remain_omt_quotient" ) == "TripointAbsOmt(1,1,2)" );
-    CHECK( test_data.get<std::string>( "doc_remain_omt_remainder" ) == "PointOmtMs(1,2)" );
-    CHECK( test_data.get<std::string>( "doc_remain_omt_combined" ) == "TripointAbsMs(25,26,2)" );
-    CHECK( test_data.get<std::string>( "doc_remain_omt_method_combined" ) ==
-           "TripointAbsMs(25,26,2)" );
+    CHECK(test_data.get<std::string>("doc_remain_omt_quotient") == "TripointAbsOmt(1,1,2)");
+    CHECK(test_data.get<std::string>("doc_remain_omt_remainder") == "PointOmtMs(1,2)");
+    CHECK(test_data.get<std::string>("doc_remain_omt_combined") == "TripointAbsMs(25,26,2)");
+    CHECK(test_data.get<std::string>("doc_remain_omt_method_combined") == "TripointAbsMs(25,26,2)");
 
-    CHECK( test_data.get<std::string>( "typed_param" ) == "(1,2,3)" );
-    CHECK_FALSE( test_data.get<bool>( "raw_param_ok" ) );
-    CHECK_FALSE( test_data.get<bool>( "wrong_coord_ok" ) );
-    CHECK( test_data.get<std::string>( "raw_reinterpreted" ) == "TripointAbsOmt(1,2,3)" );
-    CHECK( test_data.get<std::string>( "raw_reinterpreted_param" ) == "(1,2,3)" );
-    CHECK( test_data.get<std::string>( "typed_reinterpreted" ) == "TripointAbsOmt(1,2,3)" );
-    CHECK( test_data.get<std::string>( "raw_delta_arithmetic" ) == "TripointAbsSm(364,2,-1)" );
+    CHECK(test_data.get<std::string>("typed_param") == "(1,2,3)");
+    CHECK_FALSE(test_data.get<bool>("raw_param_ok"));
+    CHECK_FALSE(test_data.get<bool>("wrong_coord_ok"));
+    CHECK(test_data.get<std::string>("raw_reinterpreted") == "TripointAbsOmt(1,2,3)");
+    CHECK(test_data.get<std::string>("raw_reinterpreted_param") == "(1,2,3)");
+    CHECK(test_data.get<std::string>("typed_reinterpreted") == "TripointAbsOmt(1,2,3)");
+    CHECK(test_data.get<std::string>("raw_delta_arithmetic") == "TripointAbsSm(364,2,-1)");
 }
 
-TEST_CASE( "lua_coord_cpp_helpers", "[lua]" )
-{
+TEST_CASE("voltmeter_lua_uses_typed_coordinates", "[lua][voltmeter]") {
     auto lua = make_lua_state();
-    const auto cpp_pos = tripoint_abs_omt( 1, 2, 3 );
-    const auto lua_pos = cata::detail::lua_coords::to_lua( cpp_pos );
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
 
-    CHECK( lua_pos.raw == cpp_pos.raw() );
-    CHECK( lua_pos.origin == coords::origin::abs );
-    CHECK( lua_pos.scale == coords::scale::overmap_terrain );
+    run_lua_test_script(lua, "voltmeter_test.lua");
 
-    const auto round_trip = cata::detail::lua_coords::as_cpp<tripoint_abs_omt>( lua_pos );
-    REQUIRE( round_trip );
-    CHECK( *round_trip == cpp_pos );
-
-    const auto lua_obj = sol::make_object( lua, lua_pos );
-    const auto object_round_trip = cata::detail::lua_coords::as_cpp<tripoint_abs_omt>( lua_obj );
-    REQUIRE( object_round_trip );
-    CHECK( *object_round_trip == cpp_pos );
-
-    CHECK_FALSE( cata::detail::lua_coords::as_cpp<tripoint_bub_ms>( lua_pos ) );
-    CHECK( cata::detail::lua_coords::expect_cpp<tripoint_abs_omt>( lua_pos ) == cpp_pos );
-    CHECK_THROWS_AS( cata::detail::lua_coords::expect_cpp<tripoint_bub_ms>( lua_pos ),
-                     std::runtime_error );
+    CHECK(test_data.get<bool>("charge_ok"));
+    CHECK(test_data.get<std::string>("charge_info_type") == "string");
+    CHECK(test_data.get<bool>("connections_ok"));
+    CHECK(test_data.get<std::string>("connections_info_type") == "string");
 }
 
-TEST_CASE( "plumbing_lua_tripoint_migration", "[lua][plumbing]" )
-{
+TEST_CASE("luna_rejects_duplicate_member_registration", "[lua]") {
+    auto lua = make_lua_state();
+    auto lib = luna::begin_lib(lua, "duplicate_member_test");
+    luna::set_fx(lib, "same_name", []() -> int { return 1; });
+    CHECK_THROWS_WITH(
+        luna::set_fx(lib, "same_name", []() -> int { return 2; }),
+        Catch::Contains(
+            "Duplicate Lua "
+            "binding "
+            "registration"));
+    luna::finalize_lib(lib);
+}
+
+TEST_CASE("lua_coord_cpp_helpers", "[lua]") {
+    auto lua = make_lua_state();
+    const auto cpp_pos = tripoint_abs_omt(1, 2, 3);
+    const auto lua_pos = cata::detail::lua_coords::to_lua(cpp_pos);
+
+    CHECK(lua_pos.raw == cpp_pos.raw());
+    CHECK(lua_pos.origin == coords::origin::abs);
+    CHECK(lua_pos.scale == coords::scale::overmap_terrain);
+
+    const auto round_trip = cata::detail::lua_coords::as_cpp<tripoint_abs_omt>(lua_pos);
+    REQUIRE(round_trip);
+    CHECK(*round_trip == cpp_pos);
+
+    const auto lua_obj = sol::make_object(lua, lua_pos);
+    const auto object_round_trip = cata::detail::lua_coords::as_cpp<tripoint_abs_omt>(lua_obj);
+    REQUIRE(object_round_trip);
+    CHECK(*object_round_trip == cpp_pos);
+
+    CHECK_FALSE(cata::detail::lua_coords::as_cpp<tripoint_bub_ms>(lua_pos));
+    CHECK(cata::detail::lua_coords::expect_cpp<tripoint_abs_omt>(lua_pos) == cpp_pos);
+    CHECK_THROWS_AS(
+        cata::detail::lua_coords::expect_cpp<tripoint_bub_ms>(lua_pos), std::runtime_error);
+}
+
+TEST_CASE("plumbing_lua_tripoint_migration", "[lua][plumbing]") {
     clear_all_state();
     auto lua = make_lua_state();
 
     auto fake_map = lua.create_table();
     auto blood_intensity = 0;
     auto removed_blood_fields = 0;
-    fake_map["bub_to_abs"] = []( const sol::object &, const tripoint_bub_ms & ) -> tripoint_abs_ms {
-        return tripoint_abs_ms( 48, 48, 0 );
+    fake_map["bub_to_abs"] = [](const sol::object&, const tripoint_bub_ms&) -> tripoint_abs_ms {
+        return tripoint_abs_ms(48, 48, 0);
     };
-    fake_map["has_vehicle_part_with_feature_at"] = []( const sol::object &, const tripoint_bub_ms &,
-    const std::string &, bool ) -> bool {
+    fake_map["has_vehicle_part_with_feature_at"] =
+        [](const sol::object&, const tripoint_bub_ms&, const std::string&, bool) -> bool {
         return false;
     };
-    fake_map["points_in_radius"] = []( const sol::object &, const tripoint_bub_ms &, int,
-    int ) -> std::vector<tripoint_bub_ms> {
-        return { tripoint_bub_ms( 10, 10, 0 ) };
+    fake_map["points_in_radius"] =
+        [](const sol::object&, const tripoint_bub_ms&, int, int) -> std::vector<tripoint_bub_ms> {
+        return {tripoint_bub_ms(10, 10, 0)};
     };
-    fake_map["get_field_int_at"] = [&blood_intensity]( const sol::object &, const tripoint_bub_ms &,
-    const sol::object & ) -> int {
+    fake_map["get_field_int_at"] =
+        [&blood_intensity](const sol::object&, const tripoint_bub_ms&, const sol::object&) -> int {
         return blood_intensity;
     };
-    fake_map["remove_field_at"] = [&blood_intensity, &removed_blood_fields]( const sol::object &,
-    const tripoint_bub_ms &, const sol::object & ) -> void {
-        if( blood_intensity > 0 )
-        {
-            removed_blood_fields++;
-        }
+    fake_map["remove_field_at"] =
+        [&blood_intensity,
+         &removed_blood_fields](const sol::object&, const tripoint_bub_ms&, const sol::object&)
+        -> void {
+        if (blood_intensity > 0) { removed_blood_fields++; }
         blood_intensity = 0;
     };
     auto empty_item_stack = lua.create_table();
     empty_item_stack["items"] = [&lua]() -> sol::table { return lua.create_table(); };
-    fake_map["get_items_at"] = [&empty_item_stack]( const sol::object &,
-    const tripoint_bub_ms & ) -> sol::table {
+    fake_map["get_items_at"] =
+        [&empty_item_stack](const sol::object&, const tripoint_bub_ms&) -> sol::table {
         return empty_item_stack;
     };
-    fake_map["get_temperature_c"] = []( const sol::object &, const tripoint_bub_ms & ) -> double {
+    fake_map["get_temperature_c"] = [](const sol::object&, const tripoint_bub_ms&) -> double {
         return 20.0;
     };
 
     auto fake_user = lua.create_table();
-    fake_user["get_pos_ms"] = []( const sol::object & ) -> tripoint_bub_ms {
-        return tripoint_bub_ms( 9, 10, 0 );
+    fake_user["get_pos_ms"] = [](const sol::object&) -> tripoint_bub_ms {
+        return tripoint_bub_ms(9, 10, 0);
     };
     auto fake_user_on_fixture = lua.create_table();
-    fake_user_on_fixture["get_pos_ms"] = []( const sol::object & ) -> tripoint_bub_ms {
-        return tripoint_bub_ms( 10, 10, 0 );
+    fake_user_on_fixture["get_pos_ms"] = [](const sol::object&) -> tripoint_bub_ms {
+        return tripoint_bub_ms(10, 10, 0);
     };
 
     auto grid = lua.create_table();
-    grid["is_valid"] = []( const sol::object & ) -> bool { return true; };
-    grid["get_resource"] = []( const sol::object & ) -> int { return 1000; };
-    grid["mod_resource"] = []( const sol::object &, int ) -> void {};
+    grid["is_valid"] = [](const sol::object&) -> bool { return true; };
+    grid["get_resource"] = [](const sol::object&) -> int { return 1000; };
+    grid["mod_resource"] = [](const sol::object&, int) -> void {};
 
     auto tracker = lua.create_table();
-    tracker["grid_at"] = [&grid]( const sol::object &, const tripoint_abs_ms & ) -> sol::table {
+    tracker["grid_at"] = [&grid](const sol::object&, const tripoint_abs_ms&) -> sol::table {
         return grid;
     };
 
     auto gapi_table = lua.create_table();
     gapi_table["get_map"] = [&fake_map]() -> sol::table { return fake_map; };
     gapi_table["get_distribution_grid_tracker"] = [&tracker]() -> sol::table { return tracker; };
-    gapi_table["add_msg"] = []( const sol::variadic_args & ) -> void {};
+    gapi_table["add_msg"] = [](const sol::variadic_args&) -> void {};
 
     auto used_grid_pos = std::optional<tripoint_abs_omt>();
     auto overmapbuffer_table = lua.create_table();
-    overmapbuffer_table["fluid_grid_liquid_charges_at"] = [&used_grid_pos](
-    const tripoint_abs_omt & pos, const itype_id & ) -> int {
+    overmapbuffer_table["fluid_grid_liquid_charges_at"] =
+        [&used_grid_pos](const tripoint_abs_omt& pos, const itype_id&) -> int {
         used_grid_pos = pos;
         return 100;
     };
-    overmapbuffer_table["drain_fluid_grid_liquid_charges"] = []( const tripoint_abs_omt &,
-    const itype_id &, int ) -> int {
-        return 24;
-    };
+    overmapbuffer_table["drain_fluid_grid_liquid_charges"] =
+        [](const tripoint_abs_omt&, const itype_id&, int) -> int { return 24; };
 
-    auto menu_choices = std::vector<int> { 1, 2 };
-    auto menu_query_count = size_t{ 0 };
+    auto menu_choices = std::vector<int>{1, 2};
+    auto menu_query_count = size_t{0};
     auto menu = lua.create_table();
-    menu["title"] = []( const sol::object &, const std::string & ) -> void {};
-    menu["add"] = []( const sol::object &, int, const std::string & ) -> void {};
-    menu["query"] = [&menu_choices, &menu_query_count]( const sol::object & ) -> int {
-        return menu_choices.at( menu_query_count++ );
+    menu["title"] = [](const sol::object&, const std::string&) -> void {};
+    menu["add"] = [](const sol::object&, int, const std::string&) -> void {};
+    menu["query"] = [&menu_choices, &menu_query_count](const sol::object&) -> int {
+        return menu_choices.at(menu_query_count++);
     };
 
     auto ui_list = lua.create_table();
     ui_list["new"] = [&menu]() -> sol::table { return menu; };
 
-    auto env = sol::environment( lua, sol::create, lua.globals() );
+    auto env = sol::environment(lua, sol::create, lua.globals());
     env["gapi"] = gapi_table;
     env["overmapbuffer"] = overmapbuffer_table;
     env["UiList"] = ui_list;
 
-    auto load_res = lua.load_file( "data/json/lua/plumbing.lua" );
-    REQUIRE( load_res.valid() );
-    auto exec = sol::protected_function( load_res );
-    sol::set_environment( env, exec );
+    auto load_res = lua.load_file("data/json/lua/plumbing.lua");
+    REQUIRE(load_res.valid());
+    auto exec = sol::protected_function(load_res);
+    sol::set_environment(env, exec);
     auto exec_res = exec();
-    REQUIRE( exec_res.valid() );
+    REQUIRE(exec_res.valid());
     auto plumbing = exec_res.get<sol::table>();
 
     auto params = lua.create_table();
     params["user"] = fake_user;
-    params["pos"] = cata::detail::lua_coords::to_lua( tripoint_bub_ms( 10, 10, 0 ) );
+    params["pos"] = cata::detail::lua_coords::to_lua(tripoint_bub_ms(10, 10, 0));
     auto examine = plumbing["examine_shower"].get<sol::protected_function>();
-    auto examine_res = examine( params );
-    REQUIRE( examine_res.valid() );
+    auto examine_res = examine(params);
+    REQUIRE(examine_res.valid());
 
-    REQUIRE( used_grid_pos.has_value() );
-    CHECK( used_grid_pos->raw() == tripoint( 2, 2, 0 ) );
+    REQUIRE(used_grid_pos.has_value());
+    CHECK(used_grid_pos->raw() == tripoint(2, 2, 0));
 
     blood_intensity = 1;
     params["user"] = fake_user_on_fixture;
-    auto clean_res = examine( params );
-    REQUIRE( clean_res.valid() );
-    CHECK( removed_blood_fields > 0 );
-    CHECK( blood_intensity == 0 );
+    auto clean_res = examine(params);
+    REQUIRE(clean_res.valid());
+    CHECK(removed_blood_fields > 0);
+    CHECK(blood_intensity == 0);
 
-    auto &soap = get_avatar().add_item_with_id( itype_id( "soap" ), 10 );
-    REQUIRE( soap.charges > 1 );
+    auto& soap = get_avatar().add_item_with_id(itype_id("soap"), 10);
+    REQUIRE(soap.charges > 1);
     params["user"] = get_avatar().as_character();
-    params["pos"] = cata::detail::lua_coords::to_lua( get_avatar().bub_pos() );
-    auto consume_res = examine( params );
-    REQUIRE( consume_res.valid() );
-    CHECK( get_avatar().activity->id() == activity_id( "ACT_WASH_SELF" ) );
+    params["pos"] = cata::detail::lua_coords::to_lua(get_avatar().bub_pos());
+    auto consume_res = examine(params);
+    REQUIRE(consume_res.valid());
+    CHECK(get_avatar().activity->id() == activity_id("ACT_WASH_SELF"));
     get_avatar().cancel_activity();
 }
 
-TEST_CASE( "plumbing_lua_morale_refreshes_without_stacking", "[lua][plumbing]" )
-{
+TEST_CASE("plumbing_lua_morale_refreshes_without_stacking", "[lua][plumbing]") {
     clear_all_state();
     auto lua = make_lua_state();
 
@@ -650,36 +1245,36 @@ TEST_CASE( "plumbing_lua_morale_refreshes_without_stacking", "[lua][plumbing]" )
     empty_item_stack["items"] = [&lua]() -> sol::table { return lua.create_table(); };
 
     auto fake_map = lua.create_table();
-    fake_map["points_in_radius"] = []( const sol::object &, const tripoint_bub_ms &, int,
-    int ) -> std::vector<tripoint_bub_ms> {
-        return { tripoint_bub_ms( 10, 10, 0 ) };
+    fake_map["points_in_radius"] =
+        [](const sol::object&, const tripoint_bub_ms&, int, int) -> std::vector<tripoint_bub_ms> {
+        return {tripoint_bub_ms(10, 10, 0)};
     };
-    fake_map["get_items_at"] = [&empty_item_stack]( const sol::object &,
-    const tripoint_bub_ms & ) -> sol::table {
+    fake_map["get_items_at"] =
+        [&empty_item_stack](const sol::object&, const tripoint_bub_ms&) -> sol::table {
         return empty_item_stack;
     };
-    fake_map["has_vehicle_part_with_feature_at"] = []( const sol::object &, const tripoint_bub_ms &,
-    const std::string & feature, bool ) -> bool {
+    fake_map["has_vehicle_part_with_feature_at"] =
+        [](const sol::object&, const tripoint_bub_ms&, const std::string& feature, bool) -> bool {
         return feature == "TOWEL";
     };
 
     auto last_message = std::string{};
     auto gapi_table = lua.create_table();
     gapi_table["get_map"] = [&fake_map]() -> sol::table { return fake_map; };
-    gapi_table["add_msg"] = [&last_message]( const sol::object &,
-    const std::string & message ) -> void {
+    gapi_table["add_msg"] =
+        [&last_message](const sol::object&, const std::string& message) -> void {
         last_message = message;
     };
 
-    auto env = sol::environment( lua, sol::create, lua.globals() );
+    auto env = sol::environment(lua, sol::create, lua.globals());
     env["gapi"] = gapi_table;
 
-    auto load_res = lua.load_file( "data/json/lua/plumbing.lua" );
-    REQUIRE( load_res.valid() );
-    auto exec = sol::protected_function( load_res );
-    sol::set_environment( env, exec );
+    auto load_res = lua.load_file("data/json/lua/plumbing.lua");
+    REQUIRE(load_res.valid());
+    auto exec = sol::protected_function(load_res);
+    sol::set_environment(env, exec);
     auto exec_res = exec();
-    REQUIRE( exec_res.valid() );
+    REQUIRE(exec_res.valid());
     auto plumbing = exec_res.get<sol::table>();
     auto finish = plumbing["finish_wash"].get<sol::protected_function>();
 
@@ -693,44 +1288,857 @@ TEST_CASE( "plumbing_lua_morale_refreshes_without_stacking", "[lua][plumbing]" )
     params["user"] = get_avatar().as_character();
     params["data"] = data;
 
-    REQUIRE( finish( params ).valid() );
-    REQUIRE( finish( params ).valid() );
-    REQUIRE( finish( params ).valid() );
-    CHECK( get_avatar().get_morale( morale_type( "morale_shower" ) ) == 6 );
-    CHECK( last_message.find( "vehicle towel hanger" ) != std::string::npos );
+    REQUIRE(finish(params).valid());
+    REQUIRE(finish(params).valid());
+    REQUIRE(finish(params).valid());
+    CHECK(get_avatar().get_morale(morale_type("morale_shower")) == 6);
+    CHECK(last_message.find("vehicle towel hanger") != std::string::npos);
 }
 
-TEST_CASE( "plumbing_lua_data_hooks", "[lua]" )
-{
-    const auto &shower = furn_id( "f_shower" ).obj();
-    const auto &bathtub = furn_id( "f_bathtub" ).obj();
-    const auto lua_examine = iexamine_function_from_string( "lua_examine" );
+TEST_CASE("plumbing_lua_data_hooks", "[lua]") {
+    const auto& shower = furn_id("f_shower").obj();
+    const auto& bathtub = furn_id("f_bathtub").obj();
+    const auto lua_examine = iexamine_function_from_string("lua_examine");
 
-    REQUIRE( shower.examine == lua_examine );
-    REQUIRE( bathtub.examine == lua_examine );
-    REQUIRE( shower.examine_action_id == "PLUMBING_SHOWER_EXAMINE" );
-    REQUIRE( bathtub.examine_action_id == "PLUMBING_BATHTUB_EXAMINE" );
+    REQUIRE(shower.examine == lua_examine);
+    REQUIRE(bathtub.examine == lua_examine);
+    REQUIRE(shower.examine_action_id == "PLUMBING_SHOWER_EXAMINE");
+    REQUIRE(bathtub.examine_action_id == "PLUMBING_BATHTUB_EXAMINE");
 
-    const auto body_cleanser_flag = flag_id( "BODY_CLEANSER" );
-    REQUIRE( body_cleanser_flag.is_valid() );
-    REQUIRE( itype_id( "soap" ).obj().has_flag( body_cleanser_flag ) );
-    REQUIRE( itype_id( "soapy_water" ).obj().has_flag( body_cleanser_flag ) );
-    REQUIRE( itype_id( "soap_flakes" ).obj().has_flag( body_cleanser_flag ) );
-    CHECK_FALSE( itype_id( "bleach" ).obj().has_flag( body_cleanser_flag ) );
-    CHECK_FALSE( itype_id( "detergent" ).obj().has_flag( body_cleanser_flag ) );
-    CHECK_FALSE( itype_id( "ammonia" ).obj().has_flag( body_cleanser_flag ) );
+    const auto body_cleanser_flag = flag_id("BODY_CLEANSER");
+    REQUIRE(body_cleanser_flag.is_valid());
+    REQUIRE(itype_id("soap").obj().has_flag(body_cleanser_flag));
+    REQUIRE(itype_id("soapy_water").obj().has_flag(body_cleanser_flag));
+    REQUIRE(itype_id("soap_flakes").obj().has_flag(body_cleanser_flag));
+    CHECK_FALSE(itype_id("bleach").obj().has_flag(body_cleanser_flag));
+    CHECK_FALSE(itype_id("detergent").obj().has_flag(body_cleanser_flag));
+    CHECK_FALSE(itype_id("ammonia").obj().has_flag(body_cleanser_flag));
 
-    REQUIRE( morale_type( "morale_shower" ).is_valid() );
-    REQUIRE( morale_type( "morale_bath" ).is_valid() );
-    REQUIRE( morale_type( "morale_cleansed_self" ).is_valid() );
+    REQUIRE(morale_type("morale_shower").is_valid());
+    REQUIRE(morale_type("morale_bath").is_valid());
+    REQUIRE(morale_type("morale_cleansed_self").is_valid());
 
-    const auto &vehicle_shower = vpart_id( "vehicle_shower" ).obj();
-    REQUIRE( vehicle_shower.has_flag( "SHOWER" ) );
-    REQUIRE( vehicle_shower.has_flag( "FAUCET" ) );
+    const auto& vehicle_shower = vpart_id("vehicle_shower").obj();
+    REQUIRE(vehicle_shower.has_flag("SHOWER"));
+    REQUIRE(vehicle_shower.has_flag("FAUCET"));
 }
 
-TEST_CASE( "lua_called_from_cpp", "[lua]" )
-{
+TEST_CASE("lua_dimension_rejects_legacy_save_travel", "[lua]") {
+    clear_all_state();
+    auto* const active_world = g->get_active_world();
+    REQUIRE(active_world != nullptr);
+    const auto restore_format = restore_on_out_of_scope<save_format>(
+        active_world->info->world_save_format);
+    active_world->info->world_save_format = save_format::V1;
+    const auto original_dimension = g->get_current_dimension_id();
+    const auto original_pos = get_avatar().abs_pos();
+    const auto target_dimension = dimension_id("lua_test_legacy_travel");
+    REQUIRE_FALSE(MAPBUFFER_REGISTRY.is_registered(target_dimension));
+    auto lua = make_lua_state();
+    lua["opts"] = lua.create_table_with(
+        "dimension_id", target_dimension.str(), "world_type", "pocket_dimension", "target_ms",
+        original_pos);
+    const auto result = lua.safe_script("return gapi.place_player_dimension_at(opts)");
+    REQUIRE(result.valid());
+    CHECK_FALSE(result.get<bool>());
+    CHECK(g->get_current_dimension_id() == original_dimension);
+    CHECK(get_avatar().abs_pos() == original_pos);
+    CHECK_FALSE(MAPBUFFER_REGISTRY.is_registered(target_dimension));
+}
+
+TEST_CASE("lua_dimension_rejects_travel_during_save", "[lua][sqlite]") {
+    auto* const active_world = g->get_active_world();
+    REQUIRE(active_world != nullptr);
+    const auto cleanup = on_out_of_scope([&]() { active_world->rollback_save_tx(); });
+    const auto original_dimension = g->get_current_dimension_id();
+    const auto original_pos = get_avatar().abs_pos();
+    auto lua = make_lua_state();
+    lua["opts"] = lua.create_table_with(
+        "dimension_id", "lua_test_nested_save_travel", "world_type", "pocket_dimension",
+        "target_ms", original_pos);
+    active_world->start_save_tx();
+    const auto result = lua.safe_script("return gapi.place_player_dimension_at(opts)");
+    REQUIRE(result.valid());
+    CHECK_FALSE(result.get<bool>());
+    CHECK(active_world->is_save_tx_active());
+    CHECK(g->get_current_dimension_id() == original_dimension);
+    CHECK(get_avatar().abs_pos() == original_pos);
+}
+
+TEST_CASE("lua_dimension_failed_travel_save_can_retry", "[lua][sqlite]") {
+    const auto metadata_failure = GENERATE(true, false);
+    CAPTURE(metadata_failure);
+    clear_all_state();
+    initialize_dimension_test_storage();
+    const auto dim = dimension_id("lua_test_travel_save_failure");
+    const auto cleanup = dimension_test_cleanup({dim});
+    g->place_player_overmap(tripoint_abs_omt::zero());
+    const auto original_dimension = g->get_current_dimension_id();
+    const auto original_pos = get_avatar().abs_pos();
+    auto* const active_world = g->get_active_world();
+    REQUIRE(active_world != nullptr);
+    const auto metadata_path = active_world->info->folder_path() + "/dimension_data.gsav";
+    auto* db = static_cast<sqlite3*>(nullptr);
+    const auto restore_failure = on_out_of_scope([&]() {
+        if (dir_exist(metadata_path)) { remove_directory(metadata_path); }
+        if (db) {
+            CHECK(sqlite3_exec(db, "DROP TRIGGER IF EXISTS fail_dimension_travel", nullptr, nullptr,
+                               nullptr)
+                  == SQLITE_OK);
+            sqlite3_close(db);
+        }
+        active_world->rollback_save_tx();
+    });
+    if (metadata_failure) {
+        if (file_exist(metadata_path)) { REQUIRE(remove_file(metadata_path)); }
+        REQUIRE(assure_dir_exist(metadata_path));
+    } else {
+        const auto map_db_path = active_world->info->folder_path() + "/map.sqlite3";
+        REQUIRE(sqlite3_open(map_db_path.c_str(), &db) == SQLITE_OK);
+        REQUIRE(
+            sqlite3_exec(
+                db,
+                "CREATE TRIGGER fail_dimension_travel BEFORE INSERT ON files "
+                "BEGIN SELECT RAISE(ABORT, 'forced travel save failure'); END;",
+                nullptr, nullptr, nullptr)
+            == SQLITE_OK);
+    }
+    auto lua = make_lua_state();
+    lua["opts"] = lua.create_table_with(
+        "dimension_id", dim.str(), "world_type", "pocket_dimension", "target_omt",
+        tripoint_abs_omt(88, 88, 0), "bounds_min_omt", tripoint_abs_omt(88, 88, 0),
+        "bounds_max_omt", tripoint_abs_omt(90, 90, 0));
+    const auto errors = capture_debug_errors_during([&]() {
+        const auto failed = lua.safe_script("return gapi.place_player_dimension_at(opts)");
+        REQUIRE(failed.valid());
+        CHECK_FALSE(failed.get<bool>());
+        CHECK_FALSE(active_world->is_save_tx_active());
+        CHECK(g->get_current_dimension_id() == original_dimension);
+        CHECK(get_avatar().abs_pos() == original_pos);
+    });
+    CHECK(errors
+          == (metadata_failure ? "" : "Failed to execute query: forced travel save failure\n\n"));
+    if (metadata_failure) {
+        REQUIRE(remove_directory(metadata_path));
+    } else {
+        REQUIRE(sqlite3_exec(db, "DROP TRIGGER fail_dimension_travel", nullptr, nullptr, nullptr)
+                == SQLITE_OK);
+    }
+    const auto retried = lua.safe_script("return gapi.place_player_dimension_at(opts)");
+    REQUIRE(retried.valid());
+    CHECK(retried.get<bool>());
+    CHECK(g->get_current_dimension_id() == dim);
+}
+
+TEST_CASE("lua_delete_dimension_keeps_despawned_monsters_until_turn_cleanup", "[lua]") {
+    clear_all_state();
+    initialize_dimension_test_storage();
+    const auto dim = dimension_id("lua_test_delete_keeps_monsters");
+    const auto cleanup = dimension_test_cleanup({dim});
+    g->place_player_overmap(tripoint_abs_omt::zero());
+    const auto return_pos = get_avatar().abs_pos();
+    auto lua = make_lua_state();
+    lua["opts"] = lua.create_table_with(
+        "dimension_id", dim.str(), "world_type", "pocket_dimension", "target_omt",
+        tripoint_abs_omt(88, 88, 0), "bounds_min_omt", tripoint_abs_omt(88, 88, 0),
+        "bounds_max_omt", tripoint_abs_omt(90, 90, 0));
+    REQUIRE(lua.safe_script("return gapi.place_player_dimension_at(opts)").get<bool>());
+    auto& attacker =
+        spawn_test_monster("mon_zombie", get_avatar().bub_pos() + tripoint_rel_ms::east());
+    const auto attacker_ref = weak_ptr_fast<monster>(g->shared_from(attacker));
+    REQUIRE_FALSE(attacker_ref.expired());
+
+    // A death hook can return home and delete the attacker's dimension during its attack.
+    lua["home"] = lua.create_table_with("dimension_id", "", "target_ms", return_pos);
+    REQUIRE(lua.safe_script("return gapi.place_player_dimension_at(home)").get<bool>());
+    REQUIRE(g->delete_dimension(dim));
+    CHECK_FALSE(attacker_ref.expired());
+    CHECK(attacker.is_dead());
+    CHECK(MAPBUFFER_REGISTRY.find(dim) == nullptr);
+    g->cleanup_dead();
+    CHECK(attacker_ref.expired());
+}
+
+TEST_CASE("lua_dimension_target_z_limits", "[lua]") {
+    auto lua = make_lua_state();
+    const auto original_dimension = g->get_current_dimension_id();
+    const auto original_pos = get_avatar().abs_pos();
+    const auto target_key = GENERATE("target_omt", "target_ms");
+    const auto z = GENERATE(-OVERMAP_DEPTH - 1, -OVERMAP_DEPTH, OVERMAP_HEIGHT, OVERMAP_HEIGHT + 1);
+    CAPTURE(target_key, z);
+    auto opts = lua.create_table();
+    opts["dimension_id"] = original_dimension.str();
+    if (std::string_view(target_key) == "target_omt") {
+        opts[target_key] = tripoint_abs_omt(0, 0, z);
+    } else {
+        opts[target_key] = tripoint_abs_ms(0, 0, z);
+    }
+    lua["opts"] = opts;
+    const auto result = lua.safe_script("return gapi.place_player_dimension_at(opts)");
+    REQUIRE(result.valid());
+    CHECK(result.get<bool>() == (z >= -OVERMAP_DEPTH && z <= OVERMAP_HEIGHT));
+    CHECK(g->get_current_dimension_id() == original_dimension);
+    CHECK(get_avatar().abs_pos() == original_pos);
+}
+
+TEST_CASE("lua_dimension_rejects_out_of_range_bounds", "[lua]") {
+    auto lua = make_lua_state();
+    const auto original_dimension = g->get_current_dimension_id();
+    const auto original_pos = get_avatar().abs_pos();
+    const auto dim = dimension_id("lua_test_invalid_z_bounds");
+    REQUIRE_FALSE(MAPBUFFER_REGISTRY.is_registered(dim));
+    auto opts = lua.create_table();
+    opts["dimension_id"] = dim.str();
+    opts["world_type"] = "pocket_dimension";
+    opts["target_omt"] = tripoint_abs_omt(0, 0, 0);
+    opts["bounds_min_omt"] = tripoint_abs_omt(0, 0, -OVERMAP_DEPTH);
+    opts["bounds_max_omt"] = tripoint_abs_omt(0, 0, OVERMAP_HEIGHT);
+    SECTION("minimum below engine range") {
+        opts["bounds_min_omt"] = tripoint_abs_omt(0, 0, -OVERMAP_DEPTH - 1);
+    }
+    SECTION("maximum above engine range") {
+        opts["bounds_max_omt"] = tripoint_abs_omt(0, 0, OVERMAP_HEIGHT + 1);
+    }
+    lua["opts"] = opts;
+    const auto result = lua.safe_script("return gapi.place_player_dimension_at(opts)");
+    REQUIRE(result.valid());
+    CHECK_FALSE(result.get<bool>());
+    CHECK(g->get_current_dimension_id() == original_dimension);
+    CHECK(get_avatar().abs_pos() == original_pos);
+    CHECK_FALSE(MAPBUFFER_REGISTRY.is_registered(dim));
+}
+
+TEST_CASE("lua_dimension_rejects_clipped_specials", "[lua]") {
+    REQUIRE(overmap_special_id("test_dimension_special_bounds").is_valid());
+    auto lua = make_lua_state();
+    const auto original_dimension = g->get_current_dimension_id();
+    const auto original_pos = get_avatar().abs_pos();
+    const auto dim = dimension_id("lua_test_clipped_special");
+    REQUIRE_FALSE(MAPBUFFER_REGISTRY.is_registered(dim));
+    const auto special_pos = GENERATE(
+        tripoint_abs_omt(0, 1, 0), tripoint_abs_omt(OMAPX - 1, 1, 0), tripoint_abs_omt(1, 0, 0),
+        tripoint_abs_omt(1, OMAPY - 1, 0), tripoint_abs_omt(-1, -2, 0),
+        tripoint_abs_omt(-OMAPX, -2, 0), tripoint_abs_omt(1, 1, -OVERMAP_DEPTH),
+        tripoint_abs_omt(1, 1, OVERMAP_HEIGHT));
+    const auto bounded = GENERATE(false, true);
+    CAPTURE(special_pos, bounded);
+    auto opts = lua.create_table();
+    opts["dimension_id"] = dim.str();
+    opts["world_type"] = "pocket_dimension";
+    opts["target_omt"] = tripoint_abs_omt(1, 1, 0);
+    opts["pregen_special_id"] = "test_dimension_special_bounds";
+    opts["pregen_special_omt"] = special_pos;
+    if (bounded) {
+        opts["bounds_min_omt"] = tripoint_abs_omt(-OMAPX - 1, -OMAPY - 1, -OVERMAP_DEPTH);
+        opts["bounds_max_omt"] = tripoint_abs_omt(OMAPX, OMAPY, OVERMAP_HEIGHT);
+    }
+    lua["opts"] = opts;
+    const auto result = lua.safe_script("return gapi.place_player_dimension_at(opts)");
+    REQUIRE(result.valid());
+    CHECK_FALSE(result.get<bool>());
+    CHECK(g->get_current_dimension_id() == original_dimension);
+    CHECK(get_avatar().abs_pos() == original_pos);
+    CHECK_FALSE(MAPBUFFER_REGISTRY.is_registered(dim));
+    CHECK_FALSE(has_any_overmapbuffer(dim));
+}
+
+TEST_CASE("lua_dimension_places_complete_special_at_overmap_edges", "[lua]") {
+    clear_all_state();
+    initialize_dimension_test_storage();
+    const auto dim = dimension_id("lua_test_complete_special");
+    const auto cleanup = dimension_test_cleanup({dim});
+    const auto target = GENERATE(
+        tripoint_abs_omt(1, 1, -OVERMAP_DEPTH + 1), tripoint_abs_omt(-2, -2, OVERMAP_HEIGHT - 1));
+    CAPTURE(target);
+    auto lua = make_lua_state();
+    auto opts = lua.create_table();
+    opts["dimension_id"] = dim.str();
+    opts["world_type"] = "pocket_dimension";
+    opts["target_omt"] = target;
+    opts["bounds_min_omt"] = target - tripoint_rel_omt(1, 1, 1);
+    opts["bounds_max_omt"] = target + tripoint_rel_omt(1, 1, 1);
+    opts["pregen_special_id"] = "test_dimension_special_bounds";
+    lua["opts"] = opts;
+    const auto result = lua.safe_script("return gapi.place_player_dimension_at(opts)");
+    REQUIRE(result.valid());
+    REQUIRE(result.get<bool>());
+    CHECK(g->get_current_dimension_id() == dim);
+    auto& overmaps = get_overmapbuffer(dim);
+    for (const auto offset : {-1, 0, 1}) {
+        CHECK(overmaps.ter(target + tripoint_rel_omt(offset, offset, offset))
+              == oter_str_id("field").id());
+    }
+}
+
+TEST_CASE("lua_examine_dimension_travel_reenters_mapgen_and_save_hooks", "[lua]") {
+    clear_all_state();
+    initialize_dimension_test_storage();
+    const auto dim = dimension_id("lua_test_examine_travel");
+    const auto cleanup = dimension_test_cleanup({dim});
+    g->place_player_overmap(tripoint_abs_omt(0, 0, 0));
+    clear_map();
+    const auto return_pos = get_avatar().abs_pos();
+    get_map().ter_set(get_avatar().bub_pos(), ter_str_id("t_floor"));
+
+    auto& lua = DynamicDataLoader::get_instance().lua->lua;
+    auto callbacks = lua["game"]["examine_functions"].get<sol::table>();
+    auto hooks = lua["game"]["hooks"].get<sol::table>();
+    const auto id = std::string("test_dimension_travel_callback");
+    const auto previous_callback = callbacks[id].get<sol::object>();
+    const auto previous_mapgen = hooks["on_mapgen_postprocess"].get<sol::object>();
+    const auto previous_save = hooks["on_game_save"].get<sol::object>();
+    const auto restore_hooks = on_out_of_scope([&]() {
+        callbacks[id] = previous_callback;
+        hooks["on_mapgen_postprocess"] = previous_mapgen;
+        hooks["on_game_save"] = previous_save;
+    });
+    auto mapgen_calls = 0;
+    auto save_calls = 0;
+    auto mapgen_hooks = lua.create_table();
+    mapgen_hooks[1] = [&](sol::table /*params*/) { ++mapgen_calls; };
+    hooks["on_mapgen_postprocess"] = mapgen_hooks;
+    auto save_hooks = lua.create_table();
+    save_hooks[1] = [&](sol::table /*params*/) { ++save_calls; };
+    hooks["on_game_save"] = save_hooks;
+
+    auto cleanup_function = std::string{};
+    SECTION("reset") { cleanup_function = "reset_dimension"; }
+    SECTION("delete") { cleanup_function = "delete_dimension"; }
+    auto completed = false;
+    callbacks.set_function(id, [&](sol::table /*params*/) {
+        auto opts = lua.create_table();
+        opts["dimension_id"] = dim.str();
+        opts["target_omt"] = tripoint_abs_omt(16, 16, 0);
+        opts["world_type"] = "pocket_dimension";
+        opts["bounds_min_omt"] = tripoint_abs_omt(16, 16, 0);
+        opts["bounds_max_omt"] = tripoint_abs_omt(16, 16, 0);
+        auto terrain = lua.create_table();
+        terrain[1] = lua.create_table_with(1, lua.create_table_with(1, "field"));
+        opts["overmap_terrain"] = terrain;
+        auto api = lua["gapi"].get<sol::table>();
+        auto travel = api["place_player_dimension_at"].get<sol::protected_function>();
+        auto entered = travel(opts);
+        if (!entered.valid() || !entered.get<bool>()) { return; }
+        auto back = lua.create_table_with("dimension_id", "", "target_ms", return_pos);
+        auto returned = travel(back);
+        if (!returned.valid() || !returned.get<bool>()) { return; }
+        auto tidy = api[cleanup_function].get<sol::protected_function>();
+        auto cleaned = tidy(dim.str());
+        completed = cleaned.valid() && cleaned.get<bool>();
+    });
+    const auto restore_mapgen = restore_on_out_of_scope<bool>(disable_mapgen);
+    disable_mapgen = false;
+    cata::run_lua_examine(id, get_avatar(), get_avatar().bub_pos());
+    CHECK(completed);
+    CHECK(mapgen_calls > 0);
+    CHECK(save_calls > 0);
+    CHECK(g->get_current_dimension_id().is_empty());
+    CHECK(get_avatar().abs_pos() == return_pos);
+}
+
+TEST_CASE("lua_dimension_landing", "[lua]") {
+    clear_all_state();
+    initialize_dimension_test_storage();
+    const auto dim = dimension_id("lua_test_landing");
+    const auto cleanup = dimension_test_cleanup({dim, dimension_id("lua_test_landing_home")});
+    g->place_player_overmap(tripoint_abs_omt(0, 0, 0));
+    clear_map();
+    const auto original_pos = tripoint_abs_ms(0, 0, 0);
+    get_avatar().setpos(original_pos);
+    g->update_map(get_avatar());
+    get_map().ter_set(get_avatar().bub_pos(), ter_str_id("t_floor"));
+
+    auto lua = make_lua_state();
+    lua["landing_dimension"] = dim.str();
+    lua["return_pos"] = original_pos;
+    auto terrain = std::string("empty_rock");
+    SECTION("blocked destination restores overworld") {}
+    SECTION("blocked destination restores another pocket") {
+        const auto source = lua.safe_script(R"(
+local target = coords.tripoint_abs_omt(8, 8, 0)
+assert(gapi.place_player_dimension_at({
+    dimension_id = "lua_test_landing_home",
+    target_omt = target,
+    world_type = "pocket_dimension",
+    bounds_min_omt = target,
+    bounds_max_omt = target,
+    overmap_terrain = { { { "field" } } },
+}))
+)");
+        REQUIRE(source.valid());
+    }
+    SECTION("exact return ignores avatar occupancy") { terrain = "field"; }
+    const auto expected_dimension = g->get_current_dimension_id();
+    const auto expected_pos = get_avatar().abs_pos();
+    const auto restore_mapgen = restore_on_out_of_scope<bool>(disable_mapgen);
+    disable_mapgen = terrain != "empty_rock";
+    lua["landing_terrain"] = terrain;
+    const auto result = lua.safe_script(R"(
+local target = coords.tripoint_abs_omt(16, 16, 0)
+entered = gapi.place_player_dimension_at({
+    dimension_id = landing_dimension,
+    target_omt = target,
+    world_type = "pocket_dimension",
+    bounds_min_omt = target,
+    bounds_max_omt = target,
+    overmap_terrain = { { { landing_terrain } } },
+})
+)");
+    REQUIRE(result.valid());
+    if (terrain == "empty_rock") {
+        CHECK_FALSE(lua["entered"].get<bool>());
+    } else {
+        REQUIRE(lua["entered"].get<bool>());
+        const auto returned = lua.safe_script(R"(
+returned = gapi.place_player_dimension_at({ dimension_id = "", target_ms = return_pos })
+)");
+        REQUIRE(returned.valid());
+        CHECK(lua["returned"].get<bool>());
+    }
+    CHECK(g->get_current_dimension_id() == expected_dimension);
+    CHECK(get_map().get_bound_dimension() == expected_dimension);
+    CHECK(get_avatar().abs_pos() == expected_pos);
+}
+
+#if !defined(_WIN32)
+TEST_CASE("failed dimension deletion preserves saved metadata", "[lua]") {
+    clear_all_state();
+    initialize_dimension_test_storage();
+    const auto target_dimension_id = dimension_id("lua\\test_failed_delete");
+    g->place_player_overmap(tripoint_abs_omt(tripoint_zero));
+
+    auto* const active_world = g->get_active_world();
+    REQUIRE(active_world != nullptr);
+    REQUIRE(g->save(false));
+    auto original_save = std::ostringstream{};
+    REQUIRE(active_world->read_from_player_file(
+        SAVE_EXTENSION, [&](std::istream& input) { original_save << input.rdbuf(); }, false));
+    const auto cleanup = on_out_of_scope([&]() {
+        if (!g->get_current_dimension_id().is_empty()) {
+            g->travel_to_dimension(dimension_id(), world_type_id(), std::nullopt, std::nullopt);
+        }
+        MAPBUFFER_REGISTRY.unload_dimension(target_dimension_id);
+        unload_overmapbuffer_dimension(target_dimension_id);
+        auto input = std::istringstream(original_save.str());
+        g->unserialize(input);
+        clear_all_state();
+    });
+
+    const auto pocket_data = enter_test_pocket(target_dimension_id, tripoint_abs_omt(24, 24, 0));
+    REQUIRE(g->travel_to_dimension(dimension_id(), world_type_id(), std::nullopt, std::nullopt));
+
+    CHECK_FALSE(g->delete_dimension(target_dimension_id));
+
+    const auto saved_state = read_saved_player_dimension_state(*active_world);
+    REQUIRE(saved_state.has_value());
+    CHECK(saved_state->kept_dimension_id == target_dimension_id.str());
+    const auto saved_dimension =
+        std::ranges::find(saved_state->loaded_dimensions, target_dimension_id, &dimension_info::id);
+    REQUIRE(saved_dimension != saved_state->loaded_dimensions.end());
+    CHECK(saved_dimension->world_type == world_type_id("pocket_dimension"));
+    REQUIRE(saved_dimension->pocket_info.has_value());
+    CHECK(saved_dimension->pocket_info->bounds == pocket_data.bounds);
+}
+#endif
+
+/// A player who made a new character after a session in a pocket dimension started inside that
+/// pocket, at overworld coordinates outside the pocket bounds. The active dimension of the last
+/// session was still set when the new game started.
+///
+/// Enter a pocket and call `game::setup`, the step before each new game and each load. Check that
+/// the overworld is the active dimension. Then load the save made before the pocket, to restore
+/// the factions and the reality bubble size for later tests.
+TEST_CASE("resets the active dimension to the overworld in game setup", "[dimension]") {
+    clear_all_state();
+    initialize_dimension_test_storage();
+    const auto dim = dimension_id("test_setup_reset");
+    const auto cleanup = dimension_test_cleanup({dim});
+    REQUIRE(g->save(false));
+    enter_test_pocket(dim, tripoint_abs_omt(24, 24, 0));
+
+    g->setup(false);
+
+    CHECK(g->get_current_dimension_id().is_empty());
+    REQUIRE(g->load(save_t::from_save_id(get_avatar().get_save_id())));
+}
+
+TEST_CASE("lua_dimension_cleanup_preserves_portal_load_requests", "[lua]") {
+    clear_all_state();
+    initialize_dimension_test_storage();
+    const auto dim = dimension_id("lua_test_portal_cleanup");
+    const auto cleanup = dimension_test_cleanup({dim});
+    g->place_player_overmap(tripoint_abs_omt(0, 0, 0));
+    auto* const active_world = g->get_active_world();
+    REQUIRE(active_world != nullptr);
+    const auto pos = tripoint_abs_sm(32, 32, 0);
+    const auto handle = submap_loader.request_load(
+        load_request_source::portal_preload, dim, pos.xy(), pos.xy() + point_rel_sm::south_east());
+    const auto release = on_out_of_scope([&]() { submap_loader.release_load(handle); });
+    submap_loader.update();
+    REQUIRE(submap_loader.is_loaded(dim, pos));
+    auto* const original_submap = MAPBUFFER_REGISTRY.get(dim).lookup_submap(pos);
+    REQUIRE(original_submap != nullptr);
+    {
+        const auto restore_mapgen = restore_on_out_of_scope<bool>(disable_mapgen);
+        disable_mapgen = false;
+        MAPBUFFER_REGISTRY.get(dim).save();
+    }
+    REQUIRE(active_world->has_dimension_data(dim.str()));
+    auto lua = make_lua_state();
+    lua["cleanup_dimension"] = dim.str();
+    const auto result = lua.safe_script(R"(
+deleted = gapi.delete_dimension(cleanup_dimension)
+reset = gapi.reset_dimension(cleanup_dimension)
+)");
+    REQUIRE(result.valid());
+    CHECK_FALSE(lua["deleted"].get<bool>());
+    CHECK_FALSE(lua["reset"].get<bool>());
+    CHECK(active_world->has_dimension_data(dim.str()));
+    submap_loader.update();
+    CHECK(submap_loader.is_requested(dim, pos));
+    CHECK(submap_loader.is_loaded(dim, pos));
+    CHECK(MAPBUFFER_REGISTRY.get(dim).lookup_submap(pos) == original_submap);
+    submap_loader.release_load(handle);
+    submap_loader.update();
+    SECTION("delete after releasing portal") { CHECK(g->delete_dimension(dim)); }
+    SECTION("reset after releasing portal") { CHECK(g->reset_dimension(dim)); }
+    submap_loader.update();
+    CHECK_FALSE(submap_loader.is_requested(dim, pos));
+    CHECK_FALSE(MAPBUFFER_REGISTRY.is_registered(dim));
+}
+
+TEST_CASE("lua_pocket_dimension_api", "[lua]") {
+    clear_all_state();
+    initialize_dimension_test_storage();
+    const auto cleanup_test_state = dimension_test_cleanup({
+        dimension_id("lua_test_pocket"),
+        dimension_id("lua_test_pocket_special"),
+        dimension_id("lua_test_zone_pocket"),
+        dimension_id("lua_test_unloaded_delete"),
+        dimension_id("lua_test_unloaded_reset"),
+    });
+    g->place_player_overmap(tripoint_abs_omt(tripoint_zero));
+    const auto original_pos = tripoint_abs_ms(3, 5, 0);
+    get_avatar().setpos(original_pos);
+    g->update_map(get_avatar());
+    const auto zone_type_no_auto_pickup = zone_type_id("NO_AUTO_PICKUP");
+    zone_manager::get_manager()
+        .add("overworld zone", zone_type_no_auto_pickup, your_fac, false, true, original_pos,
+             original_pos);
+    CHECK(zone_manager::get_manager().has(zone_type_no_auto_pickup, original_pos));
+
+    auto lua = make_lua_state();
+
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    test_data["target_dimension_id"] = "lua_test_pocket";
+    test_data["target_omt"] = tripoint_abs_omt(16, 16, 0);
+    test_data["return_ms"] = original_pos;
+    test_data["bounds_min_omt"] = tripoint_abs_omt(16, 16, 0);
+    test_data["bounds_max_omt"] = tripoint_abs_omt(24, 24, 0);
+    test_data["outside_omt"] = tripoint_abs_omt(25, 16, 0);
+    test_data["outside_ms"] =
+        project_combine(tripoint_abs_omt(25, 16, 0), point_omt_ms(SEEX, SEEY));
+    test_data["outside_local"] = tripoint_bub_ms(500, 500, 0);
+    const auto unloaded_delete_dimension_id = std::string("lua_test_unloaded_delete");
+    const auto unloaded_reset_dimension_id = std::string("lua_test_unloaded_reset");
+    const auto unloaded_delete_omt = tripoint_abs_omt(32, 32, 0);
+    const auto unloaded_reset_omt = tripoint_abs_omt(40, 40, 0);
+    const auto write_empty_array = [](std::ostream& out) { out << "[]"; };
+    const auto read_empty_array = [](JsonIn& jsin) {
+        jsin.start_array();
+        jsin.end_array();
+    };
+    auto* const active_world = g->get_active_world();
+    REQUIRE(active_world != nullptr);
+    REQUIRE(active_world->write_map_omt(
+        unloaded_delete_dimension_id, unloaded_delete_omt, write_empty_array));
+    REQUIRE(active_world->write_map_omt(
+        unloaded_reset_dimension_id, unloaded_reset_omt, write_empty_array));
+
+    run_lua_test_script(lua, "pocket_dimension_api_test.lua");
+
+    CHECK_FALSE(active_world->read_map_omt(
+        unloaded_delete_dimension_id, unloaded_delete_omt, read_empty_array));
+    CHECK_FALSE(active_world->read_map_omt(
+        unloaded_reset_dimension_id, unloaded_reset_omt, read_empty_array));
+    auto& special_overmap = get_overmapbuffer(dimension_id("lua_test_pocket_special"));
+    CHECK(special_overmap.ter(tripoint_abs_omt(16, 16, 0))
+          == oter_str_id("riverside_dwelling_north").id());
+    auto& pocket_overmap = get_overmapbuffer(dimension_id("lua_test_pocket"));
+    CHECK(pocket_overmap.ter(tripoint_abs_omt(16, 16, 0)) == oter_str_id("forest").id());
+    CHECK(pocket_overmap.ter(tripoint_abs_omt(17, 16, 0)) == oter_str_id("field").id());
+    CHECK(pocket_overmap.ter(tripoint_abs_omt(16, 17, 0)) == oter_str_id("field").id());
+    CHECK(pocket_overmap.ter(tripoint_abs_omt(17, 17, 0)) == oter_str_id("forest").id());
+
+    const auto zone_dimension_id = dimension_id("lua_test_zone_pocket");
+    const auto zone_target_omt = tripoint_abs_omt(48, 48, 0);
+    const auto zone_target_ms = enter_test_pocket(zone_dimension_id, zone_target_omt).entry_point;
+    zone_manager::get_manager()
+        .add("dimension zone", zone_type_no_auto_pickup, your_fac, false, true, zone_target_ms,
+             zone_target_ms);
+    CHECK(zone_manager::get_manager().has(zone_type_no_auto_pickup, zone_target_ms));
+    REQUIRE(g->save(false));
+    REQUIRE(g->travel_to_dimension(dimension_id(), world_type_id(), std::nullopt, std::nullopt));
+    REQUIRE(g->reset_dimension(zone_dimension_id));
+    const auto saved = read_saved_player_dimension_state(*active_world);
+    REQUIRE(saved.has_value());
+    CHECK(saved->dimension_id.empty());
+    enter_test_pocket(zone_dimension_id, zone_target_omt);
+    CHECK(zone_manager::get_manager().has(zone_type_no_auto_pickup, zone_target_ms));
+    REQUIRE(g->travel_to_dimension(dimension_id(), world_type_id(), std::nullopt, std::nullopt));
+    REQUIRE(g->delete_dimension(zone_dimension_id));
+    enter_test_pocket(zone_dimension_id, zone_target_omt);
+    CHECK_FALSE(zone_manager::get_manager().has(zone_type_no_auto_pickup, zone_target_ms));
+    REQUIRE(g->travel_to_dimension(dimension_id(), world_type_id(), std::nullopt, std::nullopt));
+    REQUIRE(g->delete_dimension(zone_dimension_id));
+    CHECK(zone_manager::get_manager().has(zone_type_no_auto_pickup, original_pos));
+}
+
+TEST_CASE("dimension deletion can retry after saving zones fails", "[lua][sqlite]") {
+    clear_all_state();
+    initialize_dimension_test_storage();
+    const auto target_dimension_id = dimension_id("lua_test_zone_save_failure");
+    const auto cleanup_test_state = dimension_test_cleanup({target_dimension_id});
+
+    g->place_player_overmap(tripoint_abs_omt(tripoint_zero));
+    const auto return_pos = tripoint_abs_ms(11, 13, 0);
+    get_avatar().setpos(return_pos);
+    g->update_map(get_avatar());
+
+    auto* const active_world = g->get_active_world();
+    REQUIRE(active_world != nullptr);
+    const auto target_pos =
+        enter_test_pocket(target_dimension_id, tripoint_abs_omt(72, 72, 0)).entry_point;
+
+    auto& zones = zone_manager::get_manager();
+    const auto zone_type_no_auto_pickup = zone_type_id("NO_AUTO_PICKUP");
+    zones.add("dimension zone", zone_type_no_auto_pickup, your_fac, false, true, target_pos,
+              target_pos);
+    CHECK(zones.has(zone_type_no_auto_pickup, target_pos));
+    REQUIRE(g->travel_to_dimension(dimension_id(), world_type_id(), std::nullopt, std::nullopt));
+    zones.add("overworld zone", zone_type_no_auto_pickup, your_fac, false, true, return_pos,
+              return_pos);
+    const auto zone_count = zones.size();
+    REQUIRE(active_world->has_dimension_data(target_dimension_id.str()));
+    REQUIRE(MAPBUFFER_REGISTRY.is_registered(target_dimension_id));
+    REQUIRE(has_any_overmapbuffer(target_dimension_id));
+
+    const auto zones_path =
+        active_world->info->folder_path() + "/" + base64_encode(get_avatar().get_save_id())
+        + ".zones.json";
+    REQUIRE(zones.save_zones());
+    REQUIRE(remove_file(zones_path));
+    REQUIRE(assure_dir_exist(zones_path));
+    const auto restore_zones_file = on_out_of_scope([&zones, &zones_path]() {
+        if (dir_exist(zones_path)) { remove_directory(zones_path); }
+        zones.save_zones();
+    });
+
+    CHECK_FALSE(g->delete_dimension(target_dimension_id));
+    CHECK(zones.size() == zone_count);
+    CHECK(zones.has(zone_type_no_auto_pickup, return_pos));
+    CHECK_FALSE(active_world->has_dimension_data(target_dimension_id.str()));
+    CHECK_FALSE(MAPBUFFER_REGISTRY.is_registered(target_dimension_id));
+    CHECK_FALSE(has_any_overmapbuffer(target_dimension_id));
+
+    REQUIRE(g->save(false));
+    const auto saved = read_saved_player_dimension_state(*active_world);
+    REQUIRE(saved.has_value());
+    CHECK(
+        std::ranges::contains(saved->loaded_dimensions, target_dimension_id, &dimension_info::id));
+    CHECK_FALSE(active_world->has_dimension_data(target_dimension_id.str()));
+    CHECK_FALSE(MAPBUFFER_REGISTRY.is_registered(target_dimension_id));
+    CHECK_FALSE(has_any_overmapbuffer(target_dimension_id));
+
+    REQUIRE(remove_directory(zones_path));
+    REQUIRE(g->delete_dimension(target_dimension_id));
+    CHECK(zones.size() == zone_count - 1);
+    zones.load_zones();
+    CHECK(zones.size() == zone_count - 1);
+    CHECK(zones.has(zone_type_no_auto_pickup, return_pos));
+    const auto deleted = read_saved_player_dimension_state(*active_world);
+    REQUIRE(deleted.has_value());
+    CHECK_FALSE(
+        std::ranges::contains(deleted->loaded_dimensions, target_dimension_id, &dimension_info::id));
+}
+
+TEST_CASE("dimension deletion can retry after a full save fails", "[lua][sqlite]") {
+    const auto fail_before_deletion = GENERATE(true, false);
+    CAPTURE(fail_before_deletion);
+    clear_all_state();
+    initialize_dimension_test_storage();
+    const auto dim = dimension_id("lua_test_full_save_failure");
+    const auto cleanup = dimension_test_cleanup({dim});
+    g->place_player_overmap(tripoint_abs_omt::zero());
+    auto* const active_world = g->get_active_world();
+    REQUIRE(active_world != nullptr);
+    enter_test_pocket(dim, tripoint_abs_omt(80, 80, 0));
+    REQUIRE(g->travel_to_dimension(dimension_id(), world_type_id(), std::nullopt, std::nullopt));
+    REQUIRE(g->save(false));
+    REQUIRE(active_world->has_dimension_data(dim.str()));
+
+    auto& lua = DynamicDataLoader::get_instance().lua->lua;
+    auto hooks = lua["game"]["hooks"].get<sol::table>();
+    const auto previous_save = hooks["on_game_save"].get<sol::object>();
+    const auto lua_state_path = active_world->info->folder_path() + "/lua_state.json";
+    const auto restore_save = on_out_of_scope([&]() {
+        hooks["on_game_save"] = previous_save;
+        if (dir_exist(lua_state_path)) { remove_directory(lua_state_path); }
+        active_world->rollback_save_tx();
+    });
+    auto save_hooks = lua.create_table();
+    save_hooks[1] = [&](sol::table /*params*/) {
+        if (fail_before_deletion || !MAPBUFFER_REGISTRY.is_registered(dim)) {
+            if (file_exist(lua_state_path)) { REQUIRE(remove_file(lua_state_path)); }
+            REQUIRE(assure_dir_exist(lua_state_path));
+        }
+    };
+    hooks["on_game_save"] = save_hooks;
+
+    CHECK_FALSE(g->delete_dimension(dim));
+    CHECK_FALSE(active_world->is_save_tx_active());
+    CHECK(active_world->has_dimension_data(dim.str()) == fail_before_deletion);
+    REQUIRE(remove_directory(lua_state_path));
+    hooks["on_game_save"] = previous_save;
+    CHECK(g->delete_dimension(dim));
+    CHECK_FALSE(active_world->has_dimension_data(dim.str()));
+    const auto saved = read_saved_player_dimension_state(*active_world);
+    REQUIRE(saved.has_value());
+    CHECK_FALSE(std::ranges::contains(saved->loaded_dimensions, dim, &dimension_info::id));
+}
+
+TEST_CASE("lua dimension cleanup replaces records in temporary sqlite world", "[lua][sqlite]") {
+    auto cleanup_function = std::string{};
+    SECTION("reset inactive dimension") { cleanup_function = "reset_dimension"; }
+    SECTION("delete inactive dimension") { cleanup_function = "delete_dimension"; }
+
+    clear_all_state();
+    auto mod_storage = initialize_dimension_test_storage();
+    const auto target_dimension_id = dimension_id("lua_test_" + cleanup_function + "_save");
+    const auto cleanup_test_state = dimension_test_cleanup({target_dimension_id});
+
+    g->place_player_overmap(tripoint_abs_omt(tripoint_zero));
+    const auto return_pos = tripoint_abs_ms(7, 9, 0);
+    get_avatar().setpos(return_pos);
+    g->update_map(get_avatar());
+
+    auto* const active_world = g->get_active_world();
+    REQUIRE(active_world != nullptr);
+    const auto test_mod =
+        std::ranges::find_if(active_world->info->active_mod_order, [](const auto& mod) {
+            return mod.is_valid();
+        });
+    REQUIRE(test_mod != active_world->info->active_mod_order.end());
+
+    auto lua = make_lua_state();
+    auto opts = lua.create_table_with(
+        "dimension_id", target_dimension_id.str(), "world_type", "pocket_dimension", "target_omt",
+        tripoint_abs_omt(64, 64, 0), "bounds_min_omt", tripoint_abs_omt(64, 64, 0),
+        "bounds_max_omt", tripoint_abs_omt(66, 66, 0));
+    lua["opts"] = opts;
+    lua["return_pos"] = return_pos;
+    lua["cleanup"] = cleanup_function;
+    REQUIRE(lua.safe_script("assert(gapi.place_player_dimension_at(opts))").valid());
+    const auto entered_pos = get_avatar().abs_pos();
+    const auto write_empty_array = [](std::ostream& output) { output << "[]"; };
+    const auto sqlite_test_omt = tripoint_abs_omt(65, 65, 0);
+    const auto sqlite_test_mmr = tripoint_abs_mmr::zero();
+    REQUIRE(
+        active_world->write_map_omt(target_dimension_id.str(), sqlite_test_omt, write_empty_array));
+    REQUIRE(active_world->write_player_mm_omt(
+        target_dimension_id.str(), sqlite_test_mmr, write_empty_array));
+
+    const auto sqlite_prefix = target_dimension_id.str();
+    const auto map_db_path = active_world->info->folder_path() + "/map.sqlite3";
+    const auto player_db_path =
+        active_world->info->folder_path() + "/" + base64_encode(get_avatar().get_save_id())
+        + ".sqlite3";
+    REQUIRE(sqlite_dimension_record_count(map_db_path, sqlite_prefix) > 0);
+    REQUIRE(sqlite_dimension_record_count(player_db_path, sqlite_prefix) > 0);
+    REQUIRE(g->save(false));
+    const auto saved_in_dimension = read_saved_player_dimension_state(*active_world);
+    REQUIRE(saved_in_dimension.has_value());
+    CHECK(saved_in_dimension->dimension_id == target_dimension_id.str());
+    CHECK(saved_in_dimension->player_pos == entered_pos);
+
+    const auto storage_key = std::string("dimension_cleanup_save_test");
+    auto test_mod_storage = mod_storage[test_mod->str()].get<sol::table>();
+    const auto previous_storage_value = test_mod_storage[storage_key].get<sol::object>();
+    auto restore_mod_storage = on_out_of_scope(
+        [active_world, test_mod_storage, storage_key, previous_storage_value]() mutable {
+            test_mod_storage[storage_key] = previous_storage_value;
+            cata::save_world_lua_state(active_world, "lua_state.json");
+        });
+    test_mod_storage[storage_key] = cleanup_function;
+    REQUIRE(lua.safe_script(R"(
+assert(gapi.place_player_dimension_at({ dimension_id = "", target_ms = return_pos }))
+assert(gapi[cleanup](opts.dimension_id))
+)")
+                .valid());
+    CHECK(g->get_current_dimension_id().is_empty());
+    CHECK(get_map().get_bound_dimension().is_empty());
+    CHECK(get_avatar().abs_pos() == return_pos);
+    const auto resets_dimension = cleanup_function == "reset_dimension";
+    for (const auto follow_up_save : {false, true}) {
+        CAPTURE(follow_up_save);
+        if (follow_up_save) { REQUIRE(g->save(false)); }
+        CHECK_FALSE(active_world->has_dimension_data(target_dimension_id.str()));
+        CHECK(sqlite_dimension_record_count(map_db_path, sqlite_prefix) == 0);
+        active_world->release_player_db();
+        CHECK(sqlite_dimension_record_count(player_db_path, sqlite_prefix) == 0);
+        const auto saved = read_saved_player_dimension_state(*active_world);
+        REQUIRE(saved.has_value());
+        CHECK(saved->dimension_id.empty());
+        CHECK(saved->player_pos == return_pos);
+        CHECK(
+            std::ranges::contains(saved->loaded_dimensions, target_dimension_id, &dimension_info::id)
+            == resets_dimension);
+        CHECK(saved->kept_dimension_id == (resets_dimension ? target_dimension_id.str() : ""));
+    }
+
+    auto saved_mod_storage = lua.create_table();
+    REQUIRE(active_world->read_from_file(
+        "lua_state.json",
+        [&](std::istream& input) {
+            auto jsin = JsonIn(input);
+            auto lua_state = jsin.get_object();
+            lua_state.allow_omitted_members();
+            if (lua_state.has_object(test_mod->str())) {
+                auto saved_mod_storage_data = lua_state.get_object(test_mod->str());
+                cata::deserialize_lua_table(saved_mod_storage, saved_mod_storage_data);
+            }
+        },
+        false));
+    CHECK(saved_mod_storage[storage_key].get<std::string>() == cleanup_function);
+
+    if (resets_dimension) {
+        for (const auto* key : {"world_type", "bounds_min_omt", "bounds_max_omt"}) {
+            opts[key] = sol::nil;
+        }
+    }
+    REQUIRE(lua.safe_script("assert(gapi.place_player_dimension_at(opts))").valid());
+
+    REQUIRE(
+        active_world->write_map_omt(target_dimension_id.str(), sqlite_test_omt, write_empty_array));
+    REQUIRE(active_world->write_player_mm_omt(
+        target_dimension_id.str(), sqlite_test_mmr, write_empty_array));
+    CHECK(sqlite_dimension_record_count(map_db_path, sqlite_prefix) > 0);
+    active_world->release_player_db();
+    CHECK(sqlite_dimension_record_count(player_db_path, sqlite_prefix) > 0);
+
+    REQUIRE(
+        lua.safe_script(
+               "assert(gapi.place_player_dimension_at({ dimension_id = '', target_ms = return_pos }))")
+            .valid());
+
+    test_mod_storage[storage_key] = previous_storage_value;
+    REQUIRE(cata::save_world_lua_state(active_world, "lua_state.json"));
+    restore_mod_storage.cancel();
+}
+
+TEST_CASE("lua_called_from_cpp", "[lua]") {
     sol::state lua = make_lua_state();
 
     // Create global table for test
@@ -738,47 +2146,46 @@ TEST_CASE( "lua_called_from_cpp", "[lua]" )
     lua.globals()["test_data"] = test_data;
 
     // Run Lua script
-    run_lua_test_script( lua, "called_from_cpp_test.lua" );
+    run_lua_test_script(lua, "called_from_cpp_test.lua");
 
     // Get Lua function
-    REQUIRE( test_data["func"].valid() );
+    REQUIRE(test_data["func"].valid());
     sol::protected_function lua_func = test_data["func"];
 
     // Get test output
-    REQUIRE( test_data["out"].valid() );
+    REQUIRE(test_data["out"].valid());
     sol::table out_data = test_data["out"];
     int ret = 0;
 
-    REQUIRE( out_data["i"].valid() );
-    REQUIRE( out_data["s"].valid() );
+    REQUIRE(out_data["i"].valid());
+    REQUIRE(out_data["s"].valid());
 
-    CHECK_TUPLE( out_data["i"] == 0 );
-    CHECK( out_data.get<std::string>( "s" ).empty() );
+    CHECK_TUPLE(out_data["i"] == 0);
+    CHECK(out_data.get<std::string>("s").empty());
 
     // Execute function
-    ret = lua_func( 4, "Bright " );
+    ret = lua_func(4, "Bright ");
 
-    CHECK( ret == 8 );
-    CHECK_TUPLE( out_data["i"] == 4 );
-    CHECK( out_data.get<std::string>( "s" ) == "Bright " );
+    CHECK(ret == 8);
+    CHECK_TUPLE(out_data["i"] == 4);
+    CHECK(out_data.get<std::string>("s") == "Bright ");
 
     // Execute function again
-    ret = lua_func( 6, "Nights" );
+    ret = lua_func(6, "Nights");
 
-    CHECK( ret == 12 );
-    CHECK_TUPLE( out_data["i"] == 10 );
-    CHECK( out_data.get<std::string>( "s" ) == "Bright Nights" );
+    CHECK(ret == 12);
+    CHECK_TUPLE(out_data["i"] == 10);
+    CHECK(out_data.get<std::string>("s") == "Bright Nights");
 
     // And again, but this time with 1 parameter
-    ret = lua_func( 1 );
+    ret = lua_func(1);
 
-    CHECK( ret == 2 );
-    CHECK_TUPLE( out_data["i"] == 11 );
-    CHECK( out_data.get<std::string>( "s" ) == "Bright Nights" );
+    CHECK(ret == 2);
+    CHECK_TUPLE(out_data["i"] == 11);
+    CHECK(out_data.get<std::string>("s") == "Bright Nights");
 }
 
-TEST_CASE( "lua_runtime_error", "[lua]" )
-{
+TEST_CASE("lua_runtime_error", "[lua]") {
     sol::state lua = make_lua_state();
 
     // Running Lua script that has a runtime error
@@ -791,14 +2198,11 @@ TEST_CASE( "lua_runtime_error", "[lua]" )
         "\ttests/lua/runtime_error.lua:2: in main chunk";
 
     REQUIRE_THROWS_MATCHES(
-        run_lua_test_script( lua, "runtime_error.lua" ),
-        std::runtime_error,
-        Catch::Message( expected )
-    );
+        run_lua_test_script(lua, "runtime_error.lua"), std::runtime_error,
+        Catch::Message(expected));
 }
 
-TEST_CASE( "lua_called_error_on_lua_side", "[lua]" )
-{
+TEST_CASE("lua_called_error_on_lua_side", "[lua]") {
     sol::state lua = make_lua_state();
 
     // Running Lua script that calls error()
@@ -812,19 +2216,15 @@ TEST_CASE( "lua_called_error_on_lua_side", "[lua]" )
         "\ttests/lua/called_error_on_lua_side.lua:2: in main chunk";
 
     REQUIRE_THROWS_MATCHES(
-        run_lua_test_script( lua, "called_error_on_lua_side.lua" ),
-        std::runtime_error,
-        Catch::Message( expected )
-    );
+        run_lua_test_script(lua, "called_error_on_lua_side.lua"), std::runtime_error,
+        Catch::Message(expected));
 }
 
-static void cpp_call_error( sol::this_state L )
-{
-    luaL_error( L.lua_state(), "Error called on Cpp side!" );
+static void cpp_call_error(sol::this_state L) {
+    luaL_error(L.lua_state(), "Error called on Cpp side!");
 }
 
-TEST_CASE( "lua_called_error_on_cpp_side", "[lua]" )
-{
+TEST_CASE("lua_called_error_on_cpp_side", "[lua]") {
     sol::state lua = make_lua_state();
 
     lua.globals()["cpp_call_error"] = cpp_call_error;
@@ -840,20 +2240,16 @@ TEST_CASE( "lua_called_error_on_cpp_side", "[lua]" )
         "\ttests/lua/called_error_on_cpp_side.lua:2: in main chunk";
 
     REQUIRE_THROWS_MATCHES(
-        run_lua_test_script( lua, "called_error_on_cpp_side.lua" ),
-        std::runtime_error,
-        Catch::Message( expected )
-    );
+        run_lua_test_script(lua, "called_error_on_cpp_side.lua"), std::runtime_error,
+        Catch::Message(expected));
 }
 
-[[ noreturn ]]
-static void cpp_throw_exception()
-{
-    throw std::runtime_error( "Exception thrown on Cpp side!" );
+[[noreturn]]
+static void cpp_throw_exception() {
+    throw std::runtime_error("Exception thrown on Cpp side!");
 }
 
-TEST_CASE( "lua_called_cpp_func_throws", "[lua]" )
-{
+TEST_CASE("lua_called_cpp_func_throws", "[lua]") {
     sol::state lua = make_lua_state();
 
     lua.globals()["cpp_throw_exception"] = cpp_throw_exception;
@@ -869,91 +2265,191 @@ TEST_CASE( "lua_called_cpp_func_throws", "[lua]" )
         "\ttests/lua/called_cpp_func_throws.lua:2: in main chunk";
 
     REQUIRE_THROWS_MATCHES(
-        run_lua_test_script( lua, "called_cpp_func_throws.lua" ),
-        std::runtime_error,
-        Catch::Message( expected )
-    );
+        run_lua_test_script(lua, "called_cpp_func_throws.lua"), std::runtime_error,
+        Catch::Message(expected));
 }
 
 struct custom_udata {
     int unused = 0;
 };
 
-TEST_CASE( "lua_get_luna_type", "[lua]" )
-{
+TEST_CASE("lua_get_luna_type", "[lua]") {
     sol::state lua = make_lua_state();
 
-    SECTION( "number" ) {
+    SECTION("number") {
         sol::table st = lua.create_table();
         st["k"] = 3;
-        CHECK( get_luna_type( st["k"] ) == std::nullopt );
+        CHECK(get_luna_type(st["k"]) == std::nullopt);
     }
-    SECTION( "string" ) {
+    SECTION("string") {
         sol::table st = lua.create_table();
         st["k"] = "abc";
-        CHECK( get_luna_type( st["k"] ) == std::nullopt );
+        CHECK(get_luna_type(st["k"]) == std::nullopt);
     }
-    SECTION( "table" ) {
+    SECTION("table") {
         sol::table st = lua.create_table();
         st["k"] = lua.create_table();
-        CHECK( get_luna_type( st["k"] ) == std::nullopt );
+        CHECK(get_luna_type(st["k"]) == std::nullopt);
     }
-    SECTION( "registered userdata" ) {
+    SECTION("registered userdata") {
         sol::table st = lua.create_table();
-        st["k"] = tripoint( 1, 2, 3 );
-        CHECK( get_luna_type( st["k"] ) == std::optional( "Tripoint" ) );
+        st["k"] = tripoint(1, 2, 3);
+        CHECK(get_luna_type(st["k"]) == std::optional("Tripoint"));
     }
-    SECTION( "unknown userdata" ) {
+    SECTION("unknown userdata") {
         sol::table st = lua.create_table();
         st["k"] = custom_udata{};
-        CHECK( get_luna_type( st["k"] ) == std::nullopt );
+        CHECK(get_luna_type(st["k"]) == std::nullopt);
     }
 }
 
-TEST_CASE( "lua_map_vehicle_replacement", "[lua]" )
-{
+TEST_CASE("lua_map_vehicle_replacement", "[lua]") {
     clear_all_state();
 
-    auto &here = get_map();
-    const auto origin = tripoint_bub_ms( 60, 60, 0 );
+    auto& here = get_map();
+    const auto origin = tripoint_bub_ms(60, 60, 0);
     const auto original_facing = -90_degrees;
     const auto overridden_facing = 180_degrees;
-    auto *vehicle_ptr = here.add_vehicle( vproto_id( "bicycle" ), origin, original_facing, 0, 0 );
-    REQUIRE( vehicle_ptr != nullptr );
+    auto* vehicle_ptr = here.add_vehicle(vproto_id("bicycle"), origin, original_facing, 0, 0);
+    REQUIRE(vehicle_ptr != nullptr);
 
     sol::state lua = make_lua_state();
     auto test_data = lua.create_table();
     test_data["map"] = &here;
     lua.globals()["test_data"] = test_data;
 
-    run_lua_test_script( lua, "map_vehicle_replacement_test.lua" );
+    run_lua_test_script(lua, "map_vehicle_replacement_test.lua");
 
-    CHECK( test_data.get<int>( "vehicle_count_before" ) == 1 );
-    CHECK( test_data.get<std::string>( "vehicle_type_before" ) == "bicycle" );
-    CHECK( test_data.get<bool>( "replace_ok" ) );
-    CHECK( test_data.get<bool>( "replace_with_opts_ok" ) );
-    CHECK( test_data.get<int>( "vehicle_count_after" ) == 1 );
-    CHECK( test_data.get<std::string>( "vehicle_type_after" ) == "swivel_chair" );
+    CHECK(test_data.get<int>("vehicle_count_before") == 1);
+    CHECK(test_data.get<std::string>("vehicle_type_before") == "bicycle");
+    CHECK(test_data.get<bool>("replace_ok"));
+    CHECK(test_data.get<bool>("replace_with_opts_ok"));
+    CHECK(test_data.get<int>("vehicle_count_after") == 1);
+    CHECK(test_data.get<std::string>("vehicle_type_after") == "swivel_chair");
 
     const auto vehicles = here.get_vehicles();
-    REQUIRE( vehicles.size() == 1 );
-    CHECK( vehicles.front().pos == origin );
-    REQUIRE( vehicles.front().v != nullptr );
-    CHECK( vehicles.front().v->type == vproto_id( "swivel_chair" ) );
-    CHECK( normalize( vehicles.front().v->face.dir() ) == normalize( overridden_facing ) );
-    CHECK( vehicles.front().v->static_drag() == vehicles.front().v->static_drag( false ) );
+    REQUIRE(vehicles.size() == 1);
+    CHECK(vehicles.front().pos == origin);
+    REQUIRE(vehicles.front().v != nullptr);
+    CHECK(vehicles.front().v->type == vproto_id("swivel_chair"));
+    CHECK(normalize(vehicles.front().v->face.dir()) == normalize(overridden_facing));
+    CHECK(vehicles.front().v->static_drag() == vehicles.front().v->static_drag(false));
     const auto part_count = vehicles.front().v->part_count();
     auto has_lock = false;
-    for( auto index = 0; index < part_count; ++index ) {
-        CHECK( vehicles.front().v->part( index ).damage_percent() == Approx( 0.0 ) );
-        has_lock = has_lock ||
-                   vehicles.front().v->part_with_feature( index, "DOOR_LOCKING", false ) == index;
+    for (auto index = 0; index < part_count; ++index) {
+        CHECK(vehicles.front().v->part(index).damage_percent() == Approx(0.0));
+        has_lock = has_lock
+                || vehicles.front().v->part_with_feature(index, "DOOR_LOCKING", false) == index;
     }
-    CHECK( !has_lock );
+    CHECK(!has_lock);
 }
 
-TEST_CASE( "lua_table_serde", "[lua]" )
-{
+TEST_CASE("lua_mapgen_vehicle_replacement", "[lua][mapgen]") {
+    clear_all_state();
+
+    auto& buffer = MAPBUFFER_REGISTRY.get(mapbuffer_registry::primary_dimension_id());
+    auto tm = mapgen_constructor(buffer);
+    const auto origin = point_omt_ms(12, 12);
+    const auto original_facing = -90_degrees;
+    const auto overridden_facing = 180_degrees;
+    tm.reset_scratch_omt(
+        tripoint_abs_omt(11, 13, 0), ter_id("t_floor"), furn_id("f_null"), trap_id("tr_null"));
+    auto* vehicle_ptr = tm.add_vehicle(vproto_id("bicycle"), origin, original_facing, 0, 0);
+    REQUIRE(vehicle_ptr != nullptr);
+
+    auto lua = make_lua_state();
+    auto test_data = lua.create_table();
+    test_data["mapgen"] = &tm;
+    lua.globals()["test_data"] = test_data;
+
+    run_lua_test_script(lua, "mapgen_vehicle_replacement_test.lua");
+
+    CHECK(test_data.get<int>("vehicle_count_before") == 1);
+    CHECK(test_data.get<bool>("replace_ok"));
+    CHECK(test_data.get<int>("vehicle_count_after") == 1);
+
+    const auto vehicles = tm.get_vehicles();
+    REQUIRE(vehicles.size() == 1);
+    REQUIRE(vehicles.front() != nullptr);
+    CHECK(project_remain<coords::omt>(vehicles.front()->abs_ms_location()).remainder == origin);
+    CHECK(vehicles.front()->type == vproto_id("swivel_chair"));
+    CHECK(normalize(vehicles.front()->face.dir()) == normalize(overridden_facing));
+    CHECK(vehicles.front()->static_drag() == vehicles.front()->static_drag(false));
+}
+
+namespace {
+
+auto check_tile_vars_test_results(const sol::table& test_data) -> void {
+    CHECK_FALSE(test_data.get<bool>("furn_has_before"));
+    CHECK(test_data.get<std::string>("furn_default") == "fallback");
+    CHECK(test_data.get<bool>("furn_set_ok"));
+    CHECK(test_data.get<bool>("furn_has_after_set"));
+    CHECK(test_data.get<std::string>("furn_value") == "furn_value");
+    CHECK(test_data.get<std::string>("cpp_furn_key_value") == "cpp_value");
+
+    CHECK_FALSE(test_data.get<bool>("ter_has_before"));
+    CHECK(test_data.get<std::string>("ter_default").empty());
+    CHECK(test_data.get<bool>("ter_set_ok"));
+    CHECK(test_data.get<std::string>("ter_value") == "ter_value");
+
+    CHECK(test_data.get<bool>("ter_erase_ok"));
+    CHECK_FALSE(test_data.get<bool>("ter_erase_again"));
+    CHECK_FALSE(test_data.get<bool>("ter_has_after_erase"));
+    CHECK(test_data.get<bool>("furn_erase_ok"));
+}
+
+} // namespace
+
+TEST_CASE("lua_map_tile_vars", "[lua][map]") {
+    clear_all_state();
+
+    auto& here = get_map();
+    const auto pos = tripoint_bub_ms{50, 50, 0};
+    here.ter_set(pos, ter_id("t_floor"));
+    here.furn_set(pos, furn_id("f_chair"));
+    here.furn_vars(pos)->clear();
+    here.ter_vars(pos)->clear();
+    here.furn_vars(pos)->set("cpp_key", "cpp_value");
+
+    auto lua = make_lua_state();
+    auto test_data = lua.create_table();
+    test_data["target"] = &here;
+    test_data["pos"] = pos;
+    lua.globals()["test_data"] = test_data;
+
+    run_lua_test_script(lua, "tile_vars_test.lua");
+
+    check_tile_vars_test_results(test_data);
+    CHECK(here.furn_vars(pos)->get("lua_key") == "furn_value");
+    CHECK_FALSE(here.furn_vars(pos)->contains("cpp_key"));
+    CHECK_FALSE(here.ter_vars(pos)->contains("lua_key"));
+}
+
+TEST_CASE("lua_mapgen_tile_vars", "[lua][mapgen]") {
+    clear_all_state();
+
+    auto& buffer = MAPBUFFER_REGISTRY.get(mapbuffer_registry::primary_dimension_id());
+    auto tm = mapgen_constructor(buffer);
+    tm.reset_scratch_omt(
+        tripoint_abs_omt(11, 13, 0), ter_id("t_floor"), furn_id("f_chair"), trap_id("tr_null"));
+    const auto pos = point_omt_ms(12, 12);
+    tm.furn_vars(pos)->set("cpp_key", "cpp_value");
+
+    auto lua = make_lua_state();
+    auto test_data = lua.create_table();
+    test_data["target"] = &tm;
+    test_data["pos"] = pos;
+    lua.globals()["test_data"] = test_data;
+
+    run_lua_test_script(lua, "tile_vars_test.lua");
+
+    check_tile_vars_test_results(test_data);
+    CHECK(tm.furn_vars(pos)->get("lua_key") == "furn_value");
+    CHECK_FALSE(tm.furn_vars(pos)->contains("cpp_key"));
+    CHECK_FALSE(tm.ter_vars(pos)->contains("lua_key"));
+}
+
+TEST_CASE("lua_table_serde", "[lua]") {
     sol::state lua = make_lua_state();
 
     sol::table st = lua.create_table();
@@ -964,81 +2460,83 @@ TEST_CASE( "lua_table_serde", "[lua]" )
     t["member_float"] = 16.0;
     t["member_int"] = 11;
     t["member_string"] = "fuckoff";
-    t["member_usertype"] = tripoint( 7, 5, 3 );
-    t["member_point_coord"] = cata::detail::lua_coords::to_lua( point_bub_ms( 8, 9 ) );
-    t["member_tripoint_coord"] = cata::detail::lua_coords::to_lua( tripoint_abs_omt( 1, 2, 3 ) );
+    t["member_usertype"] = tripoint(7, 5, 3);
+    t["member_point_coord"] = cata::detail::lua_coords::to_lua(point_bub_ms(8, 9));
+    t["member_tripoint_coord"] = cata::detail::lua_coords::to_lua(tripoint_abs_omt(1, 2, 3));
     t["subtable"] = st;
 
-    std::string data = serialize_wrapper( [&]( JsonOut & jsout ) {
-        cata::serialize_lua_table( t, jsout );
-    } );
+    std::string data = serialize_wrapper([&](JsonOut& jsout) {
+        cata::serialize_lua_table(t, jsout);
+    });
 
     sol::table nt = lua.create_table();
-    deserialize_wrapper( [&]( JsonIn & jsin ) {
-        JsonObject jsobj = jsin.get_object();
-        cata::deserialize_lua_table( nt, jsobj );
-    }, data );
+    deserialize_wrapper(
+        [&](JsonIn& jsin) {
+            JsonObject jsobj = jsin.get_object();
+            cata::deserialize_lua_table(nt, jsobj);
+        },
+        data);
 
     // Sanity check: field does not exist
     sol::object mem_none = nt["member_the_best"];
-    REQUIRE( !mem_none.valid() );
+    REQUIRE(!mem_none.valid());
 
     sol::object mem_bool = nt["member_bool"];
-    REQUIRE( mem_bool.valid() );
-    REQUIRE( mem_bool.is<bool>() );
-    CHECK( mem_bool.as<bool>() == false );
+    REQUIRE(mem_bool.valid());
+    REQUIRE(mem_bool.is<bool>());
+    CHECK(mem_bool.as<bool>() == false);
 
     sol::object mem_float = nt["member_float"];
-    REQUIRE( mem_float.valid() );
-    REQUIRE( mem_float.is<double>() );
-    CHECK( mem_float.as<double>() == Approx( 16.0 ) );
+    REQUIRE(mem_float.valid());
+    REQUIRE(mem_float.is<double>());
+    CHECK(mem_float.as<double>() == Approx(16.0));
 
     sol::object mem_int = nt["member_int"];
-    REQUIRE( mem_int.valid() );
-    CHECK( mem_int.is<double>() );
-    REQUIRE( mem_int.is<int>() );
-    CHECK( mem_int.as<int>() == 11 );
+    REQUIRE(mem_int.valid());
+    CHECK(mem_int.is<double>());
+    REQUIRE(mem_int.is<int>());
+    CHECK(mem_int.as<int>() == 11);
 
     sol::object mem_string = nt["member_string"];
-    REQUIRE( mem_string.valid() );
-    REQUIRE( mem_string.is<std::string>() );
-    CHECK( mem_string.as<std::string>() == "fuckoff" );
+    REQUIRE(mem_string.valid());
+    REQUIRE(mem_string.is<std::string>());
+    CHECK(mem_string.as<std::string>() == "fuckoff");
 
     sol::object mem_usertype = nt["member_usertype"];
-    REQUIRE( mem_usertype.valid() );
-    REQUIRE( mem_usertype.is<tripoint>() );
-    CHECK( mem_usertype.as<tripoint>() == tripoint( 7, 5, 3 ) );
+    REQUIRE(mem_usertype.valid());
+    REQUIRE(mem_usertype.is<tripoint>());
+    CHECK(mem_usertype.as<tripoint>() == tripoint(7, 5, 3));
 
-    auto mem_point_coord = sol::object( nt["member_point_coord"] );
-    REQUIRE( mem_point_coord.valid() );
-    REQUIRE( mem_point_coord.is<cata::detail::lua_coords::lua_point_coord>() );
+    auto mem_point_coord = sol::object(nt["member_point_coord"]);
+    REQUIRE(mem_point_coord.valid());
+    REQUIRE(mem_point_coord.is<cata::detail::lua_coords::lua_point_coord>());
     const auto point_coord = mem_point_coord.as<cata::detail::lua_coords::lua_point_coord>();
-    CHECK( point_coord.raw == point( 8, 9 ) );
-    CHECK( point_coord.origin == coords::origin::bubble );
-    CHECK( point_coord.scale == coords::scale::map_square );
+    CHECK(point_coord.raw == point(8, 9));
+    CHECK(point_coord.origin == coords::origin::bubble);
+    CHECK(point_coord.scale == coords::scale::map_square);
 
-    auto mem_tripoint_coord = sol::object( nt["member_tripoint_coord"] );
-    REQUIRE( mem_tripoint_coord.valid() );
-    REQUIRE( mem_tripoint_coord.is<cata::detail::lua_coords::lua_tripoint_coord>() );
-    const auto tripoint_coord = mem_tripoint_coord.as<cata::detail::lua_coords::lua_tripoint_coord>();
-    CHECK( tripoint_coord.raw == tripoint( 1, 2, 3 ) );
-    CHECK( tripoint_coord.origin == coords::origin::abs );
-    CHECK( tripoint_coord.scale == coords::scale::overmap_terrain );
+    auto mem_tripoint_coord = sol::object(nt["member_tripoint_coord"]);
+    REQUIRE(mem_tripoint_coord.valid());
+    REQUIRE(mem_tripoint_coord.is<cata::detail::lua_coords::lua_tripoint_coord>());
+    const auto tripoint_coord =
+        mem_tripoint_coord.as<cata::detail::lua_coords::lua_tripoint_coord>();
+    CHECK(tripoint_coord.raw == tripoint(1, 2, 3));
+    CHECK(tripoint_coord.origin == coords::origin::abs);
+    CHECK(tripoint_coord.scale == coords::scale::overmap_terrain);
 
     sol::object mem_table = nt["subtable"];
-    REQUIRE( mem_table.valid() );
-    REQUIRE( mem_table.is<sol::table>() );
+    REQUIRE(mem_table.valid());
+    REQUIRE(mem_table.is<sol::table>());
 
     // Subtable
     sol::table nts = mem_table;
     sol::object inner_val = nts["inner_val"];
-    REQUIRE( inner_val.valid() );
-    REQUIRE( inner_val.is<int>() );
-    CHECK( inner_val.as<int>() == 4 );
+    REQUIRE(inner_val.valid());
+    REQUIRE(inner_val.is<int>());
+    CHECK(inner_val.as<int>() == 4);
 }
 
-TEST_CASE( "lua_table_serde_error_no_reg", "[lua]" )
-{
+TEST_CASE("lua_table_serde_error_no_reg", "[lua]") {
     sol::state lua = make_lua_state();
 
     sol::table t = lua.create_table();
@@ -1046,56 +2544,47 @@ TEST_CASE( "lua_table_serde_error_no_reg", "[lua]" )
 
     // Trying to serialize unregistered type results in error
     std::string data;
-    std::string dmsg = capture_debugmsg_during( [&]() {
-        data = serialize_wrapper( [&]( JsonOut & jsout ) {
-            cata::serialize_lua_table( t, jsout );
-        } );
-    } );
+    std::string dmsg = capture_debugmsg_during([&]() {
+        data = serialize_wrapper([&](JsonOut& jsout) { cata::serialize_lua_table(t, jsout); });
+    });
 
-    CHECK( dmsg == "Tried to serialize usertype that was not registered with luna." );
+    CHECK(dmsg == "Tried to serialize usertype that was not registered with luna.");
 }
 
-TEST_CASE( "lua_table_serde_error_no_luna", "[lua]" )
-{
+TEST_CASE("lua_table_serde_error_no_luna", "[lua]") {
     sol::state lua = make_lua_state();
 
-    lua.new_usertype<custom_udata>( "CustomUData" );
+    lua.new_usertype<custom_udata>("CustomUData");
 
     sol::table t = lua.create_table();
     t["my_member"] = custom_udata{};
 
     // Trying to serialize type that was not registered with luna results in error
     std::string data;
-    std::string dmsg = capture_debugmsg_during( [&]() {
-        data = serialize_wrapper( [&]( JsonOut & jsout ) {
-            cata::serialize_lua_table( t, jsout );
-        } );
-    } );
+    std::string dmsg = capture_debugmsg_during([&]() {
+        data = serialize_wrapper([&](JsonOut& jsout) { cata::serialize_lua_table(t, jsout); });
+    });
 
-    CHECK( dmsg == "Tried to serialize usertype that was not registered with luna." );
+    CHECK(dmsg == "Tried to serialize usertype that was not registered with luna.");
 }
 
-TEST_CASE( "lua_table_serde_error_no_ser", "[lua]" )
-{
+TEST_CASE("lua_table_serde_error_no_ser", "[lua]") {
     sol::state lua = make_lua_state();
 
     sol::table t = lua.create_table();
-    avatar *av_ptr = &get_avatar();
+    avatar* av_ptr = &get_avatar();
     t["my_member"] = av_ptr;
 
     // Trying to serialize unserializable type results in error
     std::string data;
-    std::string dmsg = capture_debugmsg_during( [&]() {
-        data = serialize_wrapper( [&]( JsonOut & jsout ) {
-            cata::serialize_lua_table( t, jsout );
-        } );
-    } );
+    std::string dmsg = capture_debugmsg_during([&]() {
+        data = serialize_wrapper([&](JsonOut& jsout) { cata::serialize_lua_table(t, jsout); });
+    });
 
-    CHECK( dmsg == "Tried to serialize usertype that does not allow serialization." );
+    CHECK(dmsg == "Tried to serialize usertype that does not allow serialization.");
 }
 
-TEST_CASE( "lua_table_serde_error_rec_table", "[lua]" )
-{
+TEST_CASE("lua_table_serde_error_rec_table", "[lua]") {
     sol::state lua = make_lua_state();
 
     sol::table t1 = lua.create_table();
@@ -1119,36 +2608,33 @@ TEST_CASE( "lua_table_serde_error_rec_table", "[lua]" )
 
     // Trying to serialize recursive table results in error
     std::string data;
-    std::string dmsg = capture_debugmsg_during( [&]() {
-        data = serialize_wrapper( [&]( JsonOut & jsout ) {
-            cata::serialize_lua_table( t1, jsout );
-        } );
-    } );
+    std::string dmsg = capture_debugmsg_during([&]() {
+        data = serialize_wrapper([&](JsonOut& jsout) { cata::serialize_lua_table(t1, jsout); });
+    });
 
-    CHECK( dmsg == "Tried to serialize recursive table structure." );
+    CHECK(dmsg == "Tried to serialize recursive table structure.");
 }
 
-TEST_CASE( "id_conversions", "[lua]" )
-{
+TEST_CASE("id_conversions", "[lua]") {
     sol::state lua = make_lua_state();
 
     sol::table t = lua.create_table();
 
     // The functions don't need to do anything, we're just checking type conversion
-    t["func_raw"] = []( const ter_t & ) {
+    t["func_raw"] = [](const ter_t&) {
 
     };
-    t["func_int_id"] = []( const ter_id & ) {
+    t["func_int_id"] = [](const ter_id&) {
 
     };
-    t["func_str_id"] = []( const ter_str_id & ) {
+    t["func_str_id"] = [](const ter_str_id&) {
 
     };
 
-    static const ter_str_id t_fragile_roof( "t_fragile_roof" );
-    REQUIRE( t_fragile_roof.is_valid() );
+    static const ter_str_id t_fragile_roof("t_fragile_roof");
+    REQUIRE(t_fragile_roof.is_valid());
 
-    const ter_t *raw_ptr = &t_fragile_roof.obj();
+    const ter_t* raw_ptr = &t_fragile_roof.obj();
 
     t["str_id"] = t_fragile_roof;
     t["int_id"] = t_fragile_roof.id();
@@ -1156,310 +2642,296 @@ TEST_CASE( "id_conversions", "[lua]" )
 
     lua.globals()["test_data"] = t;
 
-    run_lua_test_script( lua, "id_conversions.lua" );
+    run_lua_test_script(lua, "id_conversions.lua");
 }
 
-TEST_CASE( "id_conversions_no_int_id", "[lua]" )
-{
+TEST_CASE("id_conversions_no_int_id", "[lua]") {
     sol::state lua = make_lua_state();
 
     sol::table t = lua.create_table();
 
     // The functions don't need to do anything, we're just checking type conversion
-    t["func_raw"] = []( const faction & ) {
+    t["func_raw"] = [](const faction&) {
 
     };
-    t["func_str_id"] = []( const faction_id & ) {
+    t["func_str_id"] = [](const faction_id&) {
 
     };
 
-    REQUIRE( your_fac.is_valid() );
+    REQUIRE(your_fac.is_valid());
 
-    const faction *raw_ptr = &your_fac.obj();
+    const faction* raw_ptr = &your_fac.obj();
 
     t["str_id"] = your_fac;
     t["raw_ptr"] = raw_ptr;
 
     lua.globals()["test_data"] = t;
 
-    run_lua_test_script( lua, "id_conversions_no_int_id.lua" );
+    run_lua_test_script(lua, "id_conversions_no_int_id.lua");
 }
 
-TEST_CASE( "catalua_regression_sol_1444", "[lua]" )
-{
+TEST_CASE("catalua_regression_sol_1444", "[lua]") {
     // Regression test for https://github.com/ThePhD/sol2/issues/1444
     sol::state lua = make_lua_state();
-    run_lua_test_script( lua, "regression_sol_1444.lua" );
+    run_lua_test_script(lua, "regression_sol_1444.lua");
 }
 
-TEST_CASE( "catalua_table_compare", "[lua]" )
-{
+TEST_CASE("catalua_table_compare", "[lua]") {
     sol::state lua = make_lua_state();
     sol::table a = lua.create_table();
     sol::table b = lua.create_table();
-    SECTION( "empty tables" ) {
-        CHECK( compare_tables( a, b ) );
-        CHECK( compare_tables( b, a ) );
+    SECTION("empty tables") {
+        CHECK(compare_tables(a, b));
+        CHECK(compare_tables(b, a));
     }
-    SECTION( "one table has values, the other is empty" ) {
+    SECTION("one table has values, the other is empty") {
         a["my_key"] = "my_val";
-        CHECK_FALSE( compare_tables( a, b ) );
-        CHECK_FALSE( compare_tables( b, a ) );
+        CHECK_FALSE(compare_tables(a, b));
+        CHECK_FALSE(compare_tables(b, a));
     }
-    SECTION( "tables have identical keys and values" ) {
+    SECTION("tables have identical keys and values") {
         a["my_key"] = "my_val";
         b["my_key"] = "my_val";
-        CHECK( compare_tables( a, b ) );
-        CHECK( compare_tables( b, a ) );
+        CHECK(compare_tables(a, b));
+        CHECK(compare_tables(b, a));
     }
-    SECTION( "tables have different values" ) {
+    SECTION("tables have different values") {
         a["my_key"] = "my_val";
         b["my_key"] = "ANOTHER_VAL";
-        CHECK_FALSE( compare_tables( a, b ) );
-        CHECK_FALSE( compare_tables( b, a ) );
+        CHECK_FALSE(compare_tables(a, b));
+        CHECK_FALSE(compare_tables(b, a));
     }
-    SECTION( "tables have different keys and values" ) {
+    SECTION("tables have different keys and values") {
         a["my_key"] = "my_val";
         b["best_cata"] = "bn";
-        CHECK_FALSE( compare_tables( a, b ) );
-        CHECK_FALSE( compare_tables( b, a ) );
+        CHECK_FALSE(compare_tables(a, b));
+        CHECK_FALSE(compare_tables(b, a));
     }
-    SECTION( "tables have different keys and values" ) {
+    SECTION("tables have different keys and values") {
         a["my_key"] = "my_val";
         b["best_cata"] = "bn";
-        CHECK_FALSE( compare_tables( a, b ) );
-        CHECK_FALSE( compare_tables( b, a ) );
+        CHECK_FALSE(compare_tables(a, b));
+        CHECK_FALSE(compare_tables(b, a));
     }
-    SECTION( "can't compare tables with functions" ) {
+    SECTION("can't compare tables with functions") {
         a["my_key"] = &compare_tables;
         b["my_key"] = &compare_tables;
-        CHECK_THROWS( compare_tables( a, b ) );
-        CHECK_THROWS( compare_tables( b, a ) );
+        CHECK_THROWS(compare_tables(a, b));
+        CHECK_THROWS(compare_tables(b, a));
     }
-    SECTION( "can't compare tables with lambdas" ) {
-        a["my_key"] = [&]( int ) {
-            debugmsg( "Function A" );
-        };
-        b["my_key"] = [&]( int ) {
-            debugmsg( "Function B" );
-        };
-        CHECK_THROWS( compare_tables( a, b ) );
-        CHECK_THROWS( compare_tables( b, a ) );
+    SECTION("can't compare tables with lambdas") {
+        a["my_key"] = [&](int) { debugmsg("Function A"); };
+        b["my_key"] = [&](int) { debugmsg("Function B"); };
+        CHECK_THROWS(compare_tables(a, b));
+        CHECK_THROWS(compare_tables(b, a));
     }
-    SECTION( "tables have different values" ) {
+    SECTION("tables have different values") {
         a["my_key"] = 1;
         b["my_key"] = 2;
-        CHECK_FALSE( compare_tables( a, b ) );
-        CHECK_FALSE( compare_tables( b, a ) );
+        CHECK_FALSE(compare_tables(a, b));
+        CHECK_FALSE(compare_tables(b, a));
     }
-    SECTION( "tables have different value types" ) {
+    SECTION("tables have different value types") {
         a["my_key"] = 1;
         b["my_key"] = "2";
-        CHECK_FALSE( compare_tables( a, b ) );
-        CHECK_FALSE( compare_tables( b, a ) );
+        CHECK_FALSE(compare_tables(a, b));
+        CHECK_FALSE(compare_tables(b, a));
     }
-    SECTION( "tables have different number types" ) {
+    SECTION("tables have different number types") {
         a["my_key"] = 1;
         b["my_key"] = 1.0;
-        CHECK_FALSE( compare_tables( a, b ) );
-        CHECK_FALSE( compare_tables( b, a ) );
+        CHECK_FALSE(compare_tables(a, b));
+        CHECK_FALSE(compare_tables(b, a));
     }
-    SECTION( "tables have different key types" ) {
+    SECTION("tables have different key types") {
         a["1"] = "abc";
         b[1] = "abc";
-        CHECK_FALSE( compare_tables( a, b ) );
-        CHECK_FALSE( compare_tables( b, a ) );
+        CHECK_FALSE(compare_tables(a, b));
+        CHECK_FALSE(compare_tables(b, a));
     }
-    SECTION( "tables have identical subtables" ) {
+    SECTION("tables have identical subtables") {
         sol::table a_sub = lua.create_table();
         sol::table b_sub = lua.create_table();
         a_sub["my_key"] = "my_val";
         b_sub["my_key"] = "my_val";
         a["sub"] = a_sub;
         b["sub"] = b_sub;
-        CHECK( compare_tables( a, b ) );
-        CHECK( compare_tables( b, a ) );
+        CHECK(compare_tables(a, b));
+        CHECK(compare_tables(b, a));
     }
-    SECTION( "tables have different subtables" ) {
+    SECTION("tables have different subtables") {
         sol::table a_sub = lua.create_table();
         sol::table b_sub = lua.create_table();
         a_sub["my_key"] = "my_val";
         b_sub["my_key"] = "ANOTHER_VAL";
         a["sub"] = a_sub;
         b["sub"] = b_sub;
-        CHECK_FALSE( compare_tables( a, b ) );
-        CHECK_FALSE( compare_tables( b, a ) );
+        CHECK_FALSE(compare_tables(a, b));
+        CHECK_FALSE(compare_tables(b, a));
     }
-    SECTION( "tables have same userdata" ) {
-        a["my_key"] = tripoint( 1, 2, 3 );
-        b["my_key"] = tripoint( 1, 2, 3 );
-        CHECK( compare_tables( a, b ) );
-        CHECK( compare_tables( b, a ) );
+    SECTION("tables have same userdata") {
+        a["my_key"] = tripoint(1, 2, 3);
+        b["my_key"] = tripoint(1, 2, 3);
+        CHECK(compare_tables(a, b));
+        CHECK(compare_tables(b, a));
     }
-    SECTION( "tables have different userdata" ) {
-        a["my_key"] = tripoint( 1, 2, 3 );
-        b["my_key"] = tripoint( 12, 34, 56 );
-        CHECK_FALSE( compare_tables( a, b ) );
-        CHECK_FALSE( compare_tables( b, a ) );
+    SECTION("tables have different userdata") {
+        a["my_key"] = tripoint(1, 2, 3);
+        b["my_key"] = tripoint(12, 34, 56);
+        CHECK_FALSE(compare_tables(a, b));
+        CHECK_FALSE(compare_tables(b, a));
     }
-    SECTION( "tables have different userdata types" ) {
-        a["my_key"] = tripoint( 1, 2, 3 );
-        b["my_key"] = point( 12, 34 );
-        CHECK_FALSE( compare_tables( a, b ) );
-        CHECK_FALSE( compare_tables( b, a ) );
+    SECTION("tables have different userdata types") {
+        a["my_key"] = tripoint(1, 2, 3);
+        b["my_key"] = point(12, 34);
+        CHECK_FALSE(compare_tables(a, b));
+        CHECK_FALSE(compare_tables(b, a));
     }
-    SECTION( "tables with same userdata as keys" ) {
-        a[tripoint( 1, 3, 37 )] = "my_val";
-        b[tripoint( 1, 3, 37 )] = "my_val";
-        CHECK( compare_tables( a, b ) );
-        CHECK( compare_tables( b, a ) );
+    SECTION("tables with same userdata as keys") {
+        a[tripoint(1, 3, 37)] = "my_val";
+        b[tripoint(1, 3, 37)] = "my_val";
+        CHECK(compare_tables(a, b));
+        CHECK(compare_tables(b, a));
     }
-    SECTION( "tables have different userdata types in keys" ) {
-        a[tripoint( 1, 3, 37 )] = "my_val";
-        b[point( 12, 34 )] = "my_val";
-        CHECK_FALSE( compare_tables( a, b ) );
-        CHECK_FALSE( compare_tables( b, a ) );
+    SECTION("tables have different userdata types in keys") {
+        a[tripoint(1, 3, 37)] = "my_val";
+        b[point(12, 34)] = "my_val";
+        CHECK_FALSE(compare_tables(a, b));
+        CHECK_FALSE(compare_tables(b, a));
     }
-    SECTION( "tables have different userdata values in keys" ) {
-        a[tripoint( 1, 3, 37 )] = "my_val";
-        b[tripoint( 1, 2, 3 )] = "my_val";
-        CHECK_FALSE( compare_tables( a, b ) );
-        CHECK_FALSE( compare_tables( b, a ) );
+    SECTION("tables have different userdata values in keys") {
+        a[tripoint(1, 3, 37)] = "my_val";
+        b[tripoint(1, 2, 3)] = "my_val";
+        CHECK_FALSE(compare_tables(a, b));
+        CHECK_FALSE(compare_tables(b, a));
     }
-    SECTION( "tables have equivalent tables as keys" ) {
+    SECTION("tables have equivalent tables as keys") {
         sol::table key_a = lua.create_table();
         key_a["hello"] = "world";
         sol::table key_b = lua.create_table();
         key_b["hello"] = "world";
         a[key_a] = "my_val";
         b[key_b] = "my_val";
-        CHECK( compare_tables( a, b ) );
-        CHECK( compare_tables( b, a ) );
+        CHECK(compare_tables(a, b));
+        CHECK(compare_tables(b, a));
     }
-    SECTION( "tables have different tables as keys" ) {
+    SECTION("tables have different tables as keys") {
         sol::table key_a = lua.create_table();
         key_a["hello"] = "world";
         sol::table key_b = lua.create_table();
         key_b["hello"] = "BRIGHT NIGHTS";
         a[key_a] = "my_val";
         b[key_b] = "my_val";
-        CHECK_FALSE( compare_tables( a, b ) );
-        CHECK_FALSE( compare_tables( b, a ) );
+        CHECK_FALSE(compare_tables(a, b));
+        CHECK_FALSE(compare_tables(b, a));
     }
 }
 
-static std::string serialize_table( sol::table t )
-{
-    return serialize_wrapper( [&]( JsonOut & jsout ) {
-        cata::serialize_lua_table( t, jsout );
-    } );
+static auto serialize_table(sol::table t) -> std::string {
+    return serialize_wrapper([&](JsonOut& jsout) { cata::serialize_lua_table(t, jsout); });
 }
 
-static sol::table deserialize_table( sol::state &lua, const std::string &data )
-{
+static auto deserialize_table(sol::state& lua, const std::string& data) -> sol::table {
     sol::table res = lua.create_table();
-    deserialize_wrapper( [&]( JsonIn & jsin ) {
-        JsonObject jsobj = jsin.get_object();
-        cata::deserialize_lua_table( res, jsobj );
-    }, data );
+    deserialize_wrapper(
+        [&](JsonIn& jsin) {
+            JsonObject jsobj = jsin.get_object();
+            cata::deserialize_lua_table(res, jsobj);
+        },
+        data);
     return res;
 }
 
-static void run_serde_test( sol::state &lua, sol::table original )
-{
-    std::string data = serialize_table( original );
-    sol::table got = deserialize_table( lua, data );
-    bool eq = compare_tables( original, got );
-    if( !eq ) {
-        std::string data2 = serialize_table( got );
-        CHECK( data == data2 );
+static void run_serde_test(sol::state& lua, sol::table original) {
+    std::string data = serialize_table(original);
+    sol::table got = deserialize_table(lua, data);
+    bool eq = compare_tables(original, got);
+    if (!eq) {
+        std::string data2 = serialize_table(got);
+        CHECK(data == data2);
     }
-    REQUIRE( eq );
+    REQUIRE(eq);
 }
 
-TEST_CASE( "catalua_table_serde", "[lua]" )
-{
+TEST_CASE("catalua_table_serde", "[lua]") {
     sol::state lua = make_lua_state();
     sol::table t = lua.create_table();
-    SECTION( "empty table" ) {
-        run_serde_test( lua, t );
-    }
-    SECTION( "empty table from JSON" ) {
+    SECTION("empty table") { run_serde_test(lua, t); }
+    SECTION("empty table from JSON") {
         // This is a short notation for an empty table
         std::string data = "{}";
-        sol::table got = deserialize_table( lua, data );
-        bool eq = compare_tables( t, got );
-        if( !eq ) {
-            std::string data2 = serialize_table( got );
-            CHECK( data == data2 );
+        sol::table got = deserialize_table(lua, data);
+        bool eq = compare_tables(t, got);
+        if (!eq) {
+            std::string data2 = serialize_table(got);
+            CHECK(data == data2);
         }
-        REQUIRE( eq );
+        REQUIRE(eq);
     }
-    SECTION( "table with string keys and values" ) {
+    SECTION("table with string keys and values") {
         t["my_key"] = "my_val";
         t["another_key"] = "another_val";
-        run_serde_test( lua, t );
+        run_serde_test(lua, t);
     }
-    SECTION( "table with integer values" ) {
+    SECTION("table with integer values") {
         t["my_key"] = 1337;
         t["another_key"] = 1234;
-        run_serde_test( lua, t );
+        run_serde_test(lua, t);
     }
-    SECTION( "table with floating values" ) {
+    SECTION("table with floating values") {
         t["my_key"] = 13.37;
         t["another_key"] = 1.234;
-        run_serde_test( lua, t );
+        run_serde_test(lua, t);
     }
-    SECTION( "table with integer keys" ) {
-        t.add( "abc" );
-        t.add( "def" );
-        run_serde_test( lua, t );
+    SECTION("table with integer keys") {
+        t.add("abc");
+        t.add("def");
+        run_serde_test(lua, t);
     }
-    SECTION( "table with userdata values" ) {
-        t["my_key"] = point( 13, 37 );
-        t["another_key"] = tripoint( 12, 34, 56 );
-        run_serde_test( lua, t );
+    SECTION("table with userdata values") {
+        t["my_key"] = point(13, 37);
+        t["another_key"] = tripoint(12, 34, 56);
+        run_serde_test(lua, t);
     }
-    SECTION( "table with typed coordinate values" ) {
-        t["my_key"] = cata::detail::lua_coords::to_lua( point_bub_ms( 13, 37 ) );
-        t["another_key"] = cata::detail::lua_coords::to_lua( tripoint_abs_omt( 12, 34, 56 ) );
-        run_serde_test( lua, t );
+    SECTION("table with typed coordinate values") {
+        t["my_key"] = cata::detail::lua_coords::to_lua(point_bub_ms(13, 37));
+        t["another_key"] = cata::detail::lua_coords::to_lua(tripoint_abs_omt(12, 34, 56));
+        run_serde_test(lua, t);
     }
-    SECTION( "table with userdata keys" ) {
-        t[point( 13, 37 )] = "leet";
-        t[tripoint( 12, 34, 56 )] = "numbers";
-        run_serde_test( lua, t );
+    SECTION("table with userdata keys") {
+        t[point(13, 37)] = "leet";
+        t[tripoint(12, 34, 56)] = "numbers";
+        run_serde_test(lua, t);
     }
-    SECTION( "table with typed coordinate keys" ) {
-        t[cata::detail::lua_coords::to_lua( point_bub_ms( 13, 37 ) )] = "leet";
-        t[cata::detail::lua_coords::to_lua( tripoint_abs_omt( 12, 34, 56 ) )] = "numbers";
-        run_serde_test( lua, t );
+    SECTION("table with typed coordinate keys") {
+        t[cata::detail::lua_coords::to_lua(point_bub_ms(13, 37))] = "leet";
+        t[cata::detail::lua_coords::to_lua(tripoint_abs_omt(12, 34, 56))] = "numbers";
+        run_serde_test(lua, t);
     }
-    SECTION( "table with userdata keys and values" ) {
-        t[point( 13, 37 )] = tripoint( 1, 3, 37 );
-        t[tripoint( 12, 34, 56 )] = point( 98765, 43210 );
-        run_serde_test( lua, t );
+    SECTION("table with userdata keys and values") {
+        t[point(13, 37)] = tripoint(1, 3, 37);
+        t[tripoint(12, 34, 56)] = point(98765, 43210);
+        run_serde_test(lua, t);
     }
-    SECTION( "table with typed coordinate keys and values" ) {
-        t[cata::detail::lua_coords::to_lua( point_bub_ms( 13, 37 ) )] =
-            cata::detail::lua_coords::to_lua( tripoint_abs_omt( 1, 3, 37 ) );
-        t[cata::detail::lua_coords::to_lua( tripoint_abs_omt( 12, 34, 56 ) )] =
-            cata::detail::lua_coords::to_lua( point_rel_omt( 98765, 43210 ) );
-        run_serde_test( lua, t );
+    SECTION("table with typed coordinate keys and values") {
+        t[cata::detail::lua_coords::to_lua(point_bub_ms(13, 37))] =
+            cata::detail::lua_coords::to_lua(tripoint_abs_omt(1, 3, 37));
+        t[cata::detail::lua_coords::to_lua(tripoint_abs_omt(12, 34, 56))] =
+            cata::detail::lua_coords::to_lua(point_rel_omt(98765, 43210));
+        run_serde_test(lua, t);
     }
-    SECTION( "table with tables as keys" ) {
+    SECTION("table with tables as keys") {
         sol::table key1 = lua.create_table();
         key1["my_key"] = "my_val";
         sol::table key2 = lua.create_table();
         key2[13] = 37;
         t[key1] = "hello";
         t[key2] = "world";
-        run_serde_test( lua, t );
+        run_serde_test(lua, t);
     }
 }
 
-TEST_CASE( "lua_units_functions", "[lua]" )
-{
+TEST_CASE("lua_units_functions", "[lua]") {
     sol::state lua = make_lua_state();
 
     // Test variables
@@ -1467,6 +2939,8 @@ TEST_CASE( "lua_units_functions", "[lua]" )
     const int energy_kilojoules = 128;
     const std::int64_t mass_kilograms = 64;
     const int volume_liters = 16;
+    const auto temperature_celsius = 37.0;
+    const auto temperature_fahrenheit = 104.0;
 
     // Create global table for test
     sol::table test_data = lua.create_table();
@@ -1477,25 +2951,112 @@ TEST_CASE( "lua_units_functions", "[lua]" )
     test_data["energy_kilojoules"] = energy_kilojoules;
     test_data["mass_kilograms"] = mass_kilograms;
     test_data["volume_liters"] = volume_liters;
+    test_data["temperature_celsius"] = temperature_celsius;
+    test_data["temperature_fahrenheit"] = temperature_fahrenheit;
 
     // Run Lua script
-    run_lua_test_script( lua, "units_test.lua" );
+    run_lua_test_script(lua, "units_test.lua");
 
     // Get test output
     double lua_angle_arcmins = test_data["angle_arcmins"];
     int lua_energy_joules = test_data["energy_joules"];
     std::int64_t lua_mass_grams = test_data["mass_grams"];
     int lua_volume_milliliters = test_data["volume_milliliters"];
+    const auto lua_temperature_fahrenheit_from_celsius = test_data.get<double>(
+        "temperature_fahrenheit_from_celsius");
+    const auto lua_temperature_celsius_from_fahrenheit = test_data.get<double>(
+        "temperature_celsius_from_fahrenheit");
+    const auto lua_temperature_kelvin_from_celsius = test_data.get<double>(
+        "temperature_kelvin_from_celsius");
+    const auto lua_temperature_less_than = test_data.get<bool>("temperature_less_than");
+    const auto lua_temperature_equal_to = test_data.get<bool>("temperature_equal_to");
 
     // Check if match
-    REQUIRE( lua_angle_arcmins == units::to_arcmin( units::from_degrees( angle_degrees ) ) );
-    REQUIRE( lua_energy_joules == units::to_joule( units::from_kilojoule( energy_kilojoules ) ) );
-    REQUIRE( lua_mass_grams == units::to_gram( units::from_kilogram( mass_kilograms ) ) );
-    REQUIRE( lua_volume_milliliters == units::to_milliliter( units::from_liter( volume_liters ) ) );
+    REQUIRE(lua_angle_arcmins == units::to_arcmin(units::from_degrees(angle_degrees)));
+    REQUIRE(lua_energy_joules == units::to_joule(units::from_kilojoule(energy_kilojoules)));
+    REQUIRE(lua_mass_grams == units::to_gram(units::from_kilogram(mass_kilograms)));
+    REQUIRE(lua_volume_milliliters == units::to_milliliter(units::from_liter(volume_liters)));
+    REQUIRE(lua_temperature_fahrenheit_from_celsius
+            == Approx(units::celsius_to_fahrenheit(temperature_celsius)));
+    REQUIRE(lua_temperature_celsius_from_fahrenheit
+            == Approx(units::fahrenheit_to_celsius(temperature_fahrenheit)));
+    REQUIRE(lua_temperature_kelvin_from_celsius
+            == Approx(units::celsius_to_kelvin(temperature_celsius)));
+    REQUIRE(lua_temperature_less_than);
+    REQUIRE(lua_temperature_equal_to);
 }
 
-TEST_CASE( "lua_require_relative", "[lua]" )
-{
+TEST_CASE("lua_body_temperature_bindings_preserve_celsius_and_legacy_btu_apis", "[lua][bodytemp]") {
+    clear_all_state();
+    auto lua = make_lua_state();
+    auto& avatar = get_avatar();
+    const auto torso = body_part_torso.id();
+    avatar.set_temp_cur(BODYTEMP_NORM);
+
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+    test_data["torso"] = torso;
+
+    const auto script_res = lua.safe_script(
+        R"(
+local avatar = gapi.get_avatar()
+local torso = test_data["torso"]
+local cold = gapi.bodytemp_cold()
+local norm = gapi.bodytemp_norm()
+local hot = gapi.bodytemp_hot()
+
+test_data["cold_btu"] = cold
+test_data["norm_btu"] = norm
+test_data["hot_btu"] = hot
+
+avatar:set_part_temp_btu(torso, cold)
+test_data["torso_btu_after_part_btu_set"] = avatar:get_part_temp_btu(torso)
+test_data["torso_celsius_after_part_btu_set"] = avatar:get_part_temp_celsius(torso):to_celsius()
+
+avatar:set_part_temp_celsius(torso, Temperature.from_celsius(40))
+test_data["torso_btu_after_part_celsius_set"] = avatar:get_part_temp_btu(torso)
+test_data["torso_celsius_after_part_celsius_set"] = avatar:get_part_temp_celsius(torso):to_celsius()
+
+avatar:set_temp_btu(hot)
+local all_btu = avatar:get_temp_btu()
+test_data["torso_btu_after_all_btu_set"] = all_btu[torso]
+
+test_data["temperature_celsius_round_trip"] = Temperature.from_fahrenheit(98.6):to_celsius()
+test_data["temperature_fahrenheit_round_trip"] = Temperature.from_celsius(37):to_fahrenheit()
+test_data["temperature_kelvin_round_trip"] = Temperature.from_kelvin(310.15):to_kelvin()
+test_data["temperature_ordering"] = Temperature.from_celsius(34) < Temperature.from_celsius(37)
+test_data["temperature_equality"] = Temperature.from_fahrenheit(32) == Temperature.from_celsius(0)
+
+avatar:set_temp_celsius(Temperature.from_celsius(34))
+local all_celsius = avatar:get_temp_celsius()
+test_data["torso_celsius_after_all_celsius_set"] = all_celsius[torso]:to_celsius()
+)",
+        sol::script_pass_on_error);
+    REQUIRE(script_res.valid());
+
+    CHECK(test_data.get<int>("cold_btu") == units::to_legacy_bodypart_temp(BODYTEMP_COLD));
+    CHECK(test_data.get<int>("norm_btu") == units::to_legacy_bodypart_temp(BODYTEMP_NORM));
+    CHECK(test_data.get<int>("hot_btu") == units::to_legacy_bodypart_temp(BODYTEMP_HOT));
+    CHECK(test_data.get<int>("torso_btu_after_part_btu_set")
+          == units::to_legacy_bodypart_temp(BODYTEMP_COLD));
+    CHECK(test_data.get<double>("torso_celsius_after_part_btu_set") == Approx(34.0));
+    CHECK(test_data.get<int>("torso_btu_after_part_celsius_set")
+          == units::to_legacy_bodypart_temp(BODYTEMP_HOT));
+    CHECK(test_data.get<double>("torso_celsius_after_part_celsius_set") == Approx(40.0));
+    CHECK(test_data.get<int>("torso_btu_after_all_btu_set")
+          == units::to_legacy_bodypart_temp(BODYTEMP_HOT));
+    CHECK(test_data.get<double>("temperature_celsius_round_trip") == Approx(37.0).margin(0.01));
+    CHECK(test_data.get<double>("temperature_fahrenheit_round_trip") == Approx(98.6).margin(0.01));
+    CHECK(test_data.get<double>("temperature_kelvin_round_trip") == Approx(310.15).margin(0.01));
+    CHECK(test_data.get<bool>("temperature_ordering"));
+    CHECK(test_data.get<bool>("temperature_equality"));
+    CHECK(test_data.get<double>("torso_celsius_after_all_celsius_set") == Approx(34.0));
+    CHECK(avatar.get_part_temp_cur(torso) == BODYTEMP_COLD);
+
+    avatar.set_temp_cur(BODYTEMP_NORM);
+}
+
+TEST_CASE("lua_require_relative", "[lua]") {
     sol::state lua = make_lua_state();
 
     // Create global table for test
@@ -1503,18 +3064,17 @@ TEST_CASE( "lua_require_relative", "[lua]" )
     lua.globals()["test_data"] = test_data;
 
     // Run Lua script that uses relative require
-    run_lua_test_script( lua, "require_test_relative.lua" );
+    run_lua_test_script(lua, "require_test_relative.lua");
 
     // Check results
     int result_add = test_data["result_add"];
     int result_mul = test_data["result_mul"];
 
-    REQUIRE( result_add == 5 );   // 2 + 3
-    REQUIRE( result_mul == 20 );  // 4 * 5
+    REQUIRE(result_add == 5);  // 2 + 3
+    REQUIRE(result_mul == 20); // 4 * 5
 }
 
-TEST_CASE( "lua_require_dotted", "[lua]" )
-{
+TEST_CASE("lua_require_dotted", "[lua]") {
     sol::state lua = make_lua_state();
 
     // Create global table for test
@@ -1522,55 +3082,52 @@ TEST_CASE( "lua_require_dotted", "[lua]" )
     lua.globals()["test_data"] = test_data;
 
     // Run Lua script that uses dotted require
-    run_lua_test_script( lua, "require_test_dotted.lua" );
+    run_lua_test_script(lua, "require_test_dotted.lua");
 
     // Check results
     int result_add = test_data["result_add"];
     int result_mul = test_data["result_mul"];
 
-    REQUIRE( result_add == 30 );  // 10 + 20
-    REQUIRE( result_mul == 21 );  // 3 * 7
+    REQUIRE(result_add == 30); // 10 + 20
+    REQUIRE(result_mul == 21); // 3 * 7
 }
 
-TEST_CASE( "robofac_authorization_scans_nearby_hub01_tiles", "[lua][robofac]" )
-{
+TEST_CASE("robofac_authorization_scans_nearby_hub01_tiles", "[lua][robofac]") {
     auto lua = make_lua_state();
     auto test_data = lua.create_table();
     lua.globals()["test_data"] = test_data;
 
-    run_lua_test_script( lua, "robofac_authorization_scan_test.lua" );
+    run_lua_test_script(lua, "robofac_authorization_scan_test.lua");
 
-    CHECK( test_data.get<bool>( "npc_authorized" ) );
-    CHECK( test_data.get<bool>( "npc_attitude_cleared" ) );
-    CHECK( test_data.get<bool>( "monster_authorized" ) );
-    CHECK( test_data.get<std::string>( "hub01_prefix" ) == "robofachq" );
-    CHECK( test_data.get<int>( "npc_omt_queries" ) == 1 );
-    CHECK( test_data.get<int>( "monster_omt_queries" ) == 1 );
-    CHECK( test_data.get<int>( "npc_query_radius" ) == 4 );
-    CHECK( test_data.get<int>( "monster_query_radius" ) == 4 );
-    CHECK( test_data.get<bool>( "npc_query_ignores_z" ) );
-    CHECK( test_data.get<bool>( "monster_query_ignores_z" ) );
+    CHECK(test_data.get<bool>("npc_authorized"));
+    CHECK(test_data.get<bool>("npc_attitude_cleared"));
+    CHECK(test_data.get<bool>("monster_authorized"));
+    CHECK(test_data.get<std::string>("hub01_prefix") == "robofachq");
+    CHECK(test_data.get<int>("npc_omt_queries") == 1);
+    CHECK(test_data.get<int>("monster_omt_queries") == 1);
+    CHECK(test_data.get<int>("npc_query_radius") == 4);
+    CHECK(test_data.get<int>("monster_query_radius") == 4);
+    CHECK(test_data.get<bool>("npc_query_ignores_z"));
+    CHECK(test_data.get<bool>("monster_query_ignores_z"));
 }
 
-TEST_CASE( "lua_cooking_enjoy_bonus_applies_to_unheated_comestibles", "[lua][cooking]" )
-{
+TEST_CASE("lua_cooking_enjoy_bonus_applies_to_unheated_comestibles", "[lua][cooking]") {
     auto lua = make_lua_state();
     auto test_data = lua.create_table();
     lua.globals()["test_data"] = test_data;
 
-    run_lua_test_script( lua, "cooking_enjoy_bonus_test.lua" );
+    run_lua_test_script(lua, "cooking_enjoy_bonus_test.lua");
 
-    CHECK( test_data.get<std::string>( "high_skill_var_name" ) == "comestible_fun" );
-    CHECK( test_data.get<int>( "high_skill_fun" ) == 15 );
-    CHECK( test_data.get<int>( "high_skill_bad_fun" ) == -5 );
-    CHECK( test_data.get<std::string>( "zero_skill_var_name" ) == "comestible_fun" );
-    CHECK( test_data.get<int>( "zero_skill_fun" ) == 10 );
+    CHECK(test_data.get<std::string>("high_skill_var_name") == "comestible_fun");
+    CHECK(test_data.get<int>("high_skill_fun") == 15);
+    CHECK(test_data.get<int>("high_skill_bad_fun") == -5);
+    CHECK(test_data.get<std::string>("zero_skill_var_name") == "comestible_fun");
+    CHECK(test_data.get<int>("zero_skill_fun") == 10);
 }
 
-static auto init_test_lua_hook_state( cata::lua_state &state ) -> void
-{
+static auto init_test_lua_hook_state(cata::lua_state& state) -> void {
     state.lua = make_lua_state();
-    sol::state &lua = state.lua;
+    sol::state& lua = state.lua;
 
     sol::table game = lua.create_table();
     sol::table hooks = lua.create_table();
@@ -1581,125 +3138,122 @@ static auto init_test_lua_hook_state( cata::lua_state &state ) -> void
     game["current_mod"] = "test_mod";
     lua.globals()["game"] = game;
 
-    game["add_hook"] = [&lua]( const std::string & hook_name, const sol::object & entry ) {
-        auto *L = lua.lua_state();
+    game["add_hook"] = [&lua](const std::string& hook_name, const sol::object& entry) {
+        auto* L = lua.lua_state();
         sol::table hooks_table = lua["game"]["hooks"];
         sol::optional<sol::table> maybe_hook_list = hooks_table[hook_name];
 
-        if( !maybe_hook_list ) {
-            debugmsg( "Invalid hook name: %s", hook_name );
+        if (!maybe_hook_list) {
+            debugmsg("Invalid hook name: %s", hook_name);
             return;
         }
 
         sol::table hook_list = *maybe_hook_list;
 
         const auto current_mod = lua["game"]["current_mod"];
-        const auto mod_id = current_mod.valid() && current_mod.get_type() == sol::type::string
-                            ? current_mod.get<std::string>()
-                            : "<unknown>";
+        const auto mod_id =
+            current_mod.valid() && current_mod.get_type() == sol::type::string
+                ? current_mod.get<std::string>()
+                : "<unknown>";
 
         const auto is_function = entry.is<sol::function>() || entry.is<sol::protected_function>();
-        if( is_function ) {
+        if (is_function) {
             auto new_entry = lua.create_table();
             new_entry["mod_id"] = mod_id;
             new_entry["priority"] = 0;
             new_entry["fn"] = entry;
 
-            sol::stack::push( L, hook_list );
-            const auto next_index = static_cast<int>( lua_rawlen( L, -1 ) ) + 1;
-            lua_pop( L, 1 );
+            sol::stack::push(L, hook_list);
+            const auto next_index = static_cast<int>(lua_rawlen(L, -1)) + 1;
+            lua_pop(L, 1);
 
-            hook_list.set( next_index, new_entry );
+            hook_list.set(next_index, new_entry);
             return;
         }
 
-        if( entry.is<sol::table>() ) {
+        if (entry.is<sol::table>()) {
             auto tbl = entry.as<sol::table>();
-            const auto has_mod_id = tbl["mod_id"].valid() && tbl["mod_id"].get_type() != sol::type::lua_nil;
-            if( !has_mod_id ) {
-                tbl["mod_id"] = mod_id;
-            }
+            const auto has_mod_id =
+                tbl["mod_id"].valid() && tbl["mod_id"].get_type() != sol::type::lua_nil;
+            if (!has_mod_id) { tbl["mod_id"] = mod_id; }
 
-            sol::stack::push( L, hook_list );
-            const auto next_index = static_cast<int>( lua_rawlen( L, -1 ) ) + 1;
-            lua_pop( L, 1 );
+            sol::stack::push(L, hook_list);
+            const auto next_index = static_cast<int>(lua_rawlen(L, -1)) + 1;
+            lua_pop(L, 1);
 
-            hook_list.set( next_index, tbl );
+            hook_list.set(next_index, tbl);
             return;
         }
 
-        debugmsg( "add_hook expects function or table entry, got type: %s for hook: %s",
-                  sol::type_name( lua, entry.get_type() ).c_str(), hook_name.c_str() );
+        debugmsg("add_hook expects function or table entry, got type: %s for hook: %s",
+                 sol::type_name(lua, entry.get_type()).c_str(), hook_name.c_str());
     };
 
     sol::table cata_tbl = lua.create_table();
-    cata_tbl.set_function( "run_hooks", [&state]( const std::string & name ) -> sol::table {
-        return cata::run_hooks( name, nullptr, { .state = &state } );
-    } );
-    cata_tbl.set_function( "run_hooks_exit_early", [&state]( const std::string & name ) -> sol::table {
-        return cata::run_hooks( name, nullptr, { .exit_early = true, .state = &state } );
-    } );
+    cata_tbl.set_function("run_hooks", [&state](const std::string& name) -> sol::table {
+        return cata::run_hooks(name, nullptr, {.state = &state});
+    });
+    cata_tbl.set_function("run_hooks_exit_early", [&state](const std::string& name) -> sol::table {
+        return cata::run_hooks(name, nullptr, {.exit_early = true, .state = &state});
+    });
     lua.globals()["cata"] = cata_tbl;
 }
 
-TEST_CASE( "lua_has_hooks_tracks_registered_entries", "[lua]" )
-{
+TEST_CASE("lua_has_hooks_tracks_registered_entries", "[lua]") {
     cata::lua_state state;
-    init_test_lua_hook_state( state );
-    sol::state &lua = state.lua;
+    init_test_lua_hook_state(state);
+    sol::state& lua = state.lua;
 
     auto hook_list = lua.create_table();
     lua.globals()["game"]["hooks"]["on_creature_do_turn"] = hook_list;
 
-    CHECK_FALSE( cata::has_hooks( "on_creature_do_turn", { .state = &state } ) );
-    CHECK_FALSE( cata::has_hooks( "on_invalid_hook_for_test", { .state = &state } ) );
+    CHECK_FALSE(cata::has_hooks("on_creature_do_turn", {.state = &state}));
+    CHECK_FALSE(cata::has_hooks("on_invalid_hook_for_test", {.state = &state}));
 
-    hook_list[1] = []( sol::table ) {};
-    CHECK( cata::has_hooks( "on_creature_do_turn", { .state = &state } ) );
+    hook_list[1] = [](sol::table) {};
+    CHECK(cata::has_hooks("on_creature_do_turn", {.state = &state}));
 }
 
-TEST_CASE( "lua_hooks_order_and_chaining", "[lua]" )
-{
+TEST_CASE("lua_hooks_order_and_chaining", "[lua]") {
     cata::lua_state state;
-    init_test_lua_hook_state( state );
-    sol::state &lua = state.lua;
+    init_test_lua_hook_state(state);
+    sol::state& lua = state.lua;
 
     lua.globals()["game"]["hooks"]["on_game_load"] = lua.create_table();
 
-    run_lua_script( lua, "tests/lua/hooks_order_and_chaining_test.lua" );
+    run_lua_script(lua, "tests/lua/hooks_order_and_chaining_test.lua");
 
     sol::table results_tbl = lua.globals()["game"]["cata_internal"]["hook_test_results"];
     const sol::table log_tbl = results_tbl["log"];
 
-    REQUIRE( log_tbl.valid() );
+    REQUIRE(log_tbl.valid());
 
     // Order should be priority 10 -> 5 -> legacy(0)
-    CHECK( log_tbl.get<std::string>( 1 ) == "p10" );
-    CHECK( log_tbl.get<std::string>( 2 ) == "p5" );
-    CHECK( log_tbl.get<std::string>( 3 ) == "legacy" );
+    CHECK(log_tbl.get<std::string>(1) == "p10");
+    CHECK(log_tbl.get<std::string>(2) == "p5");
+    CHECK(log_tbl.get<std::string>(3) == "legacy");
 
     // Ensure hooks can override params.prev and affect downstream hooks.
-    CHECK( results_tbl.get<std::string>( "prev_seen" ) == "p5_ret" );
+    CHECK(results_tbl.get<std::string>("prev_seen") == "p5_ret");
 }
 
-TEST_CASE( "lua_hooks_exit_early", "[lua]" )
-{
+TEST_CASE("lua_hooks_exit_early", "[lua]") {
     cata::lua_state state;
-    init_test_lua_hook_state( state );
-    sol::state &lua = state.lua;
+    init_test_lua_hook_state(state);
+    sol::state& lua = state.lua;
 
     lua.globals()["game"]["hooks"]["on_game_save"] = lua.create_table();
 
-    run_lua_script( lua, "tests/lua/hooks_exit_early_test.lua" );
+    run_lua_script(lua, "tests/lua/hooks_exit_early_test.lua");
 
     sol::table results_tbl = lua.globals()["game"]["cata_internal"]["hook_test_results"];
     const sol::table log_tbl = results_tbl["log"];
 
-    REQUIRE( log_tbl.valid() );
+    REQUIRE(log_tbl.valid());
 
-    CHECK( log_tbl.get<std::string>( 1 ) == "p10" );
-    CHECK( results_tbl.get<bool>( "allowed" ) == false );
-    CHECK( log_tbl.get<sol::optional<std::string>>( 2 ) == sol::nullopt );
+    CHECK(log_tbl.get<std::string>(1) == "p10");
+    CHECK(results_tbl.get<bool>("allowed") == false);
+    CHECK(log_tbl.get<sol::optional<std::string>>(2) == sol::nullopt);
 }
 
 // ─── Hook wiring tests ───────────────────────────────────────────────────────
@@ -1709,343 +3263,344 @@ TEST_CASE( "lua_hooks_exit_early", "[lua]" )
 // The cleanup struct guarantees removal even when a REQUIRE inside a helper
 // throws and unwinds the stack.
 
-namespace
-{
+namespace {
 
-static const efftype_id effect_test_lua_effect( "test_lua_effect" );
+static const efftype_id effect_test_lua_effect("test_lua_effect");
 
 struct hook_cleanup {
     sol::table list;
     int idx;
-    hook_cleanup( sol::table l, int i ) : list( l ), idx( i ) {}
-    ~hook_cleanup() {
-        list[idx] = sol::lua_nil;
-    }
+    hook_cleanup(sol::table l, int i): list(l), idx(i) {}
+    ~hook_cleanup() { list[idx] = sol::lua_nil; }
 };
 
 // Append an entry backed by a C++ callable to a global hook list.
 // Returns the table index so the caller can build a hook_cleanup.
-template<typename Fn>
-static auto push_hook( sol::state &lua, const std::string &name,
-                       Fn &&fn ) -> std::pair<sol::table, int>
-{
+template <typename Fn>
+static auto push_hook(sol::state& lua, const std::string& name, Fn&& fn)
+    -> std::pair<sol::table, int> {
     sol::table list = lua["game"]["hooks"][name];
-    auto *L = lua.lua_state();
-    sol::stack::push( L, list );
-    const auto idx = static_cast<int>( lua_rawlen( L, -1 ) ) + 1;
-    lua_pop( L, 1 );
+    auto* L = lua.lua_state();
+    sol::stack::push(L, list);
+    const auto idx = static_cast<int>(lua_rawlen(L, -1)) + 1;
+    lua_pop(L, 1);
 
     auto entry = lua.create_table();
     entry["mod_id"] = "test";
     entry["priority"] = 0;
-    entry["fn"] = std::forward<Fn>( fn );
+    entry["fn"] = std::forward<Fn>(fn);
     list[idx] = entry;
-    return { list, idx };
+    return {list, idx};
 }
 
 } // namespace
 
 // ── Trivial ──────────────────────────────────────────────────────────────────
 
-TEST_CASE( "lua_hook_wiring_character_reset_stats", "[lua]" )
-{
+TEST_CASE("lua_hook_wiring_character_reset_stats", "[lua]") {
     clear_all_state();
-    auto &state = *DynamicDataLoader::get_instance().lua;
-    sol::state &lua = state.lua;
+    auto& state = *DynamicDataLoader::get_instance().lua;
+    sol::state& lua = state.lua;
 
-    const auto char_ptr = std::make_shared<Character *>( nullptr );
-    const auto [list, idx] = push_hook( lua, "on_character_reset_stats",
-    [char_ptr]( sol::table params ) {
-        *char_ptr = params["character"].get<sol::optional<Character *>>().value_or( nullptr );
-    } );
-    hook_cleanup cleanup{ list, idx };
+    const auto char_ptr = std::make_shared<Character*>(nullptr);
+    const auto [list, idx] =
+        push_hook(lua, "on_character_reset_stats", [char_ptr](sol::table params) {
+            *char_ptr = params["character"].get<sol::optional<Character*>>().value_or(nullptr);
+        });
+    hook_cleanup cleanup{list, idx};
 
     get_avatar().reset_stats();
 
-    CHECK( *char_ptr == &get_avatar() );
+    CHECK(*char_ptr == &get_avatar());
 }
 
-TEST_CASE( "lua_hook_wiring_monster_loaded", "[lua]" )
-{
+TEST_CASE("lua_hook_wiring_monster_loaded", "[lua]") {
     clear_all_state();
-    auto &state = *DynamicDataLoader::get_instance().lua;
-    sol::state &lua = state.lua;
+    auto& state = *DynamicDataLoader::get_instance().lua;
+    sol::state& lua = state.lua;
 
-    const auto mon_ptr = std::make_shared<monster *>( nullptr );
-    const auto cre_ptr = std::make_shared<Creature *>( nullptr );
+    const auto mon_ptr = std::make_shared<monster*>(nullptr);
+    const auto cre_ptr = std::make_shared<Creature*>(nullptr);
 
-    const auto [ml, mi] = push_hook( lua, "on_monster_loaded",
-    [mon_ptr]( sol::table params ) {
-        *mon_ptr = params["monster"].get<sol::optional<monster *>>().value_or( nullptr );
-    } );
-    hook_cleanup cleanup_ml{ ml, mi };
+    const auto [ml, mi] = push_hook(lua, "on_monster_loaded", [mon_ptr](sol::table params) {
+        *mon_ptr = params["monster"].get<sol::optional<monster*>>().value_or(nullptr);
+    });
+    hook_cleanup cleanup_ml{ml, mi};
 
-    const auto [cl, ci] = push_hook( lua, "on_creature_loaded",
-    [cre_ptr]( sol::table params ) {
-        auto *m = params["creature"].get<sol::optional<monster *>>().value_or( nullptr );
-        *cre_ptr = static_cast<Creature *>( m );
-    } );
-    hook_cleanup cleanup_cl{ cl, ci };
+    const auto [cl, ci] = push_hook(lua, "on_creature_loaded", [cre_ptr](sol::table params) {
+        auto* m = params["creature"].get<sol::optional<monster*>>().value_or(nullptr);
+        *cre_ptr = static_cast<Creature*>(m);
+    });
+    hook_cleanup cleanup_cl{cl, ci};
 
-    monster &mon = spawn_test_monster( "mon_zombie", tripoint_bub_ms{ 5, 5, 0 } );
+    monster& mon = spawn_test_monster("mon_zombie", tripoint_bub_ms{5, 5, 0});
     mon.on_load();
 
-    CHECK( *mon_ptr == &mon );
-    CHECK( *cre_ptr == static_cast<Creature *>( &mon ) );
+    CHECK(*mon_ptr == &mon);
+    CHECK(*cre_ptr == static_cast<Creature*>(&mon));
 }
 
 // ── Easy ─────────────────────────────────────────────────────────────────────
 
-TEST_CASE( "lua_hook_wiring_monster_spawn", "[lua]" )
-{
+TEST_CASE("lua_hook_wiring_monster_spawn", "[lua]") {
     clear_all_state();
-    auto &state = *DynamicDataLoader::get_instance().lua;
-    sol::state &lua = state.lua;
+    auto& state = *DynamicDataLoader::get_instance().lua;
+    sol::state& lua = state.lua;
 
-    const auto mon_ptr = std::make_shared<monster *>( nullptr );
-    const auto cre_ptr = std::make_shared<Creature *>( nullptr );
+    const auto mon_ptr = std::make_shared<monster*>(nullptr);
+    const auto cre_ptr = std::make_shared<Creature*>(nullptr);
 
-    const auto [ms, msi] = push_hook( lua, "on_monster_spawn",
-    [mon_ptr]( sol::table params ) {
-        *mon_ptr = params["monster"].get<sol::optional<monster *>>().value_or( nullptr );
-    } );
-    hook_cleanup cleanup_ms{ ms, msi };
+    const auto [ms, msi] = push_hook(lua, "on_monster_spawn", [mon_ptr](sol::table params) {
+        *mon_ptr = params["monster"].get<sol::optional<monster*>>().value_or(nullptr);
+    });
+    hook_cleanup cleanup_ms{ms, msi};
 
-    const auto [cs, csi] = push_hook( lua, "on_creature_spawn",
-    [cre_ptr]( sol::table params ) {
-        auto *m = params["creature"].get<sol::optional<monster *>>().value_or( nullptr );
-        *cre_ptr = static_cast<Creature *>( m );
-    } );
-    hook_cleanup cleanup_cs{ cs, csi };
+    const auto [cs, csi] = push_hook(lua, "on_creature_spawn", [cre_ptr](sol::table params) {
+        auto* m = params["creature"].get<sol::optional<monster*>>().value_or(nullptr);
+        *cre_ptr = static_cast<Creature*>(m);
+    });
+    hook_cleanup cleanup_cs{cs, csi};
 
-    monster &mon = spawn_test_monster( "mon_zombie", tripoint_bub_ms{ 5, 5, 0 } );
+    monster& mon = spawn_test_monster("mon_zombie", tripoint_bub_ms{5, 5, 0});
 
-    CHECK( *mon_ptr == &mon );
-    CHECK( *cre_ptr == static_cast<Creature *>( &mon ) );
+    CHECK(*mon_ptr == &mon);
+    CHECK(*cre_ptr == static_cast<Creature*>(&mon));
 }
 
-TEST_CASE( "lua_hook_wiring_mon_death", "[lua]" )
-{
+TEST_CASE("lua_hook_wiring_mon_death", "[lua]") {
     clear_all_state();
-    auto &state = *DynamicDataLoader::get_instance().lua;
-    sol::state &lua = state.lua;
+    auto& state = *DynamicDataLoader::get_instance().lua;
+    sol::state& lua = state.lua;
 
-    monster &mon = spawn_test_monster( "mon_zombie", tripoint_bub_ms{ 5, 5, 0 } );
+    monster& mon = spawn_test_monster("mon_zombie", tripoint_bub_ms{5, 5, 0});
 
-    const auto mon_ptr = std::make_shared<monster *>( nullptr );
-    const auto [list, idx] = push_hook( lua, "on_mon_death",
-    [mon_ptr]( sol::table params ) {
-        *mon_ptr = params["mon"].get<sol::optional<monster *>>().value_or( nullptr );
-    } );
-    hook_cleanup cleanup{ list, idx };
+    const auto mon_ptr = std::make_shared<monster*>(nullptr);
+    const auto [list, idx] = push_hook(lua, "on_mon_death", [mon_ptr](sol::table params) {
+        *mon_ptr = params["mon"].get<sol::optional<monster*>>().value_or(nullptr);
+    });
+    hook_cleanup cleanup{list, idx};
 
-    mon.die( nullptr );
+    mon.die(nullptr);
 
-    CHECK( *mon_ptr == &mon );
+    CHECK(*mon_ptr == &mon);
 }
 
-TEST_CASE( "lua_hook_wiring_creature_melee_attacked", "[lua]" )
-{
+TEST_CASE("lua_hook_wiring_creature_melee_attacked", "[lua]") {
     clear_all_state();
-    auto &state = *DynamicDataLoader::get_instance().lua;
-    sol::state &lua = state.lua;
+    auto& state = *DynamicDataLoader::get_instance().lua;
+    sol::state& lua = state.lua;
 
     // avatar is at {60,60,0} after clear_all_state; place target adjacent
-    monster &mon = spawn_test_monster( "mon_zombie", tripoint_bub_ms{ 61, 60, 0 } );
+    monster& mon = spawn_test_monster("mon_zombie", tripoint_bub_ms{61, 60, 0});
 
-    const auto char_ptr = std::make_shared<Character *>( nullptr );
-    const auto tgt_ptr  = std::make_shared<Creature *>( nullptr );
-    const auto success  = std::make_shared<sol::optional<bool>>( sol::nullopt );
+    const auto char_ptr = std::make_shared<Character*>(nullptr);
+    const auto tgt_ptr = std::make_shared<Creature*>(nullptr);
+    const auto success = std::make_shared<sol::optional<bool>>(sol::nullopt);
 
-    const auto [list, idx] = push_hook( lua, "on_creature_melee_attacked",
-    [char_ptr, tgt_ptr, success]( sol::table params ) {
-        *char_ptr = params["char"].get<sol::optional<Character *>>().value_or( nullptr );
-        *tgt_ptr  = params["target"].get<sol::optional<Creature *>>().value_or( nullptr );
-        *success  = params["success"].get<sol::optional<bool>>();
-    } );
-    hook_cleanup cleanup{ list, idx };
+    const auto [list, idx] = push_hook(
+        lua, "on_creature_melee_attacked", [char_ptr, tgt_ptr, success](sol::table params) {
+            *char_ptr = params["char"].get<sol::optional<Character*>>().value_or(nullptr);
+            *tgt_ptr = params["target"].get<sol::optional<Creature*>>().value_or(nullptr);
+            *success = params["success"].get<sol::optional<bool>>();
+        });
+    hook_cleanup cleanup{list, idx};
 
-    get_avatar().melee_attack( mon, false );
+    get_avatar().melee_attack(mon, false);
 
-    CHECK( *char_ptr == &get_avatar() );
-    CHECK( *tgt_ptr == static_cast<Creature *>( &mon ) );
-    CHECK( success->has_value() );
+    CHECK(*char_ptr == &get_avatar());
+    CHECK(*tgt_ptr == static_cast<Creature*>(&mon));
+    CHECK(success->has_value());
 }
 
-TEST_CASE( "lua_hook_wiring_npc_loaded", "[lua]" )
-{
+TEST_CASE("lua_hook_wiring_npc_loaded", "[lua]") {
     clear_all_state();
-    auto &state = *DynamicDataLoader::get_instance().lua;
-    sol::state &lua = state.lua;
+    auto& state = *DynamicDataLoader::get_instance().lua;
+    sol::state& lua = state.lua;
 
-    const auto npc_ptr = std::make_shared<npc *>( nullptr );
-    const auto cre_ptr = std::make_shared<Creature *>( nullptr );
+    const auto npc_ptr = std::make_shared<npc*>(nullptr);
+    const auto cre_ptr = std::make_shared<Creature*>(nullptr);
 
-    const auto [nl, ni] = push_hook( lua, "on_npc_loaded",
-    [npc_ptr]( sol::table params ) {
-        *npc_ptr = params["npc"].get<sol::optional<npc *>>().value_or( nullptr );
-    } );
-    hook_cleanup cleanup_nl{ nl, ni };
+    const auto [nl, ni] = push_hook(lua, "on_npc_loaded", [npc_ptr](sol::table params) {
+        *npc_ptr = params["npc"].get<sol::optional<npc*>>().value_or(nullptr);
+    });
+    hook_cleanup cleanup_nl{nl, ni};
 
-    const auto [cl, ci] = push_hook( lua, "on_creature_loaded",
-    [cre_ptr]( sol::table params ) {
-        *cre_ptr = params["creature"].get<sol::optional<Creature *>>().value_or( nullptr );
-    } );
-    hook_cleanup cleanup_cl{ cl, ci };
+    const auto [cl, ci] = push_hook(lua, "on_creature_loaded", [cre_ptr](sol::table params) {
+        *cre_ptr = params["creature"].get<sol::optional<Creature*>>().value_or(nullptr);
+    });
+    hook_cleanup cleanup_cl{cl, ci};
 
     // spawn_npc calls g->load_npcs() which calls npc::on_load() for the new NPC
-    npc &spawned = spawn_npc( point_bub_ms{ 50, 50 }, "test_talker" );
+    npc& spawned = spawn_npc(tripoint_bub_ms{50, 50, 0}, "test_talker");
 
-    CHECK( *npc_ptr == &spawned );
-    CHECK( *cre_ptr == static_cast<Creature *>( &spawned ) );
+    CHECK(*npc_ptr == &spawned);
+    CHECK(*cre_ptr == static_cast<Creature*>(&spawned));
 }
 
 // ── Easy with test data (requires test_lua_effect in TEST_DATA/effects.json) ─
 
-TEST_CASE( "lua_hook_wiring_character_effect_added", "[lua]" )
-{
+TEST_CASE("lua_hook_wiring_character_effect_added", "[lua]") {
     clear_all_state();
-    auto &state = *DynamicDataLoader::get_instance().lua;
-    sol::state &lua = state.lua;
+    auto& state = *DynamicDataLoader::get_instance().lua;
+    sol::state& lua = state.lua;
 
-    REQUIRE( effect_test_lua_effect.is_valid() );
+    REQUIRE(effect_test_lua_effect.is_valid());
 
-    const auto char_ptr = std::make_shared<Character *>( nullptr );
-    const auto eff_ptr  = std::make_shared<effect *>( nullptr );
-    const auto [list, idx] = push_hook( lua, "on_character_effect_added",
-    [char_ptr, eff_ptr]( sol::table params ) {
-        *char_ptr = params["char"].get<sol::optional<Character *>>().value_or( nullptr );
-        *eff_ptr  = params["effect"].get<sol::optional<effect *>>().value_or( nullptr );
-    } );
-    hook_cleanup cleanup{ list, idx };
+    const auto char_ptr = std::make_shared<Character*>(nullptr);
+    const auto eff_ptr = std::make_shared<effect*>(nullptr);
+    const auto [list, idx] =
+        push_hook(lua, "on_character_effect_added", [char_ptr, eff_ptr](sol::table params) {
+            *char_ptr = params["char"].get<sol::optional<Character*>>().value_or(nullptr);
+            *eff_ptr = params["effect"].get<sol::optional<effect*>>().value_or(nullptr);
+        });
+    hook_cleanup cleanup{list, idx};
 
-    get_avatar().add_effect( effect_test_lua_effect, 1_turns );
+    get_avatar().add_effect(effect_test_lua_effect, 1_turns);
 
-    CHECK( *char_ptr == &get_avatar() );
-    CHECK( *eff_ptr != nullptr );
+    CHECK(*char_ptr == &get_avatar());
+    CHECK(*eff_ptr != nullptr);
 }
 
-TEST_CASE( "lua_hook_wiring_character_effect_tick", "[lua]" )
-{
+TEST_CASE("lua_hook_wiring_character_effect_tick", "[lua]") {
     clear_all_state();
-    auto &state = *DynamicDataLoader::get_instance().lua;
-    sol::state &lua = state.lua;
+    auto& state = *DynamicDataLoader::get_instance().lua;
+    sol::state& lua = state.lua;
 
-    REQUIRE( effect_test_lua_effect.is_valid() );
+    REQUIRE(effect_test_lua_effect.is_valid());
 
-    const auto char_ptr = std::make_shared<Character *>( nullptr );
-    const auto eff_ptr  = std::make_shared<effect *>( nullptr );
-    const auto [list, idx] = push_hook( lua, "on_character_effect",
-    [char_ptr, eff_ptr]( sol::table params ) {
-        *char_ptr = params["char"].get<sol::optional<Character *>>().value_or( nullptr );
-        *eff_ptr  = params["effect"].get<sol::optional<effect *>>().value_or( nullptr );
-    } );
-    hook_cleanup cleanup{ list, idx };
+    const auto char_ptr = std::make_shared<Character*>(nullptr);
+    const auto eff_ptr = std::make_shared<effect*>(nullptr);
+    const auto [list, idx] =
+        push_hook(lua, "on_character_effect", [char_ptr, eff_ptr](sol::table params) {
+            *char_ptr = params["char"].get<sol::optional<Character*>>().value_or(nullptr);
+            *eff_ptr = params["effect"].get<sol::optional<effect*>>().value_or(nullptr);
+        });
+    hook_cleanup cleanup{list, idx};
 
     // add_effect triggers process_one_effect(is_new=true) which fires the tick hook
-    get_avatar().add_effect( effect_test_lua_effect, 1_turns );
+    get_avatar().add_effect(effect_test_lua_effect, 1_turns);
 
-    CHECK( *char_ptr == &get_avatar() );
-    CHECK( *eff_ptr != nullptr );
+    CHECK(*char_ptr == &get_avatar());
+    CHECK(*eff_ptr != nullptr);
 }
 
-TEST_CASE( "lua_hook_wiring_character_effect_removed", "[lua]" )
-{
+TEST_CASE("lua_hook_wiring_character_effect_removed", "[lua]") {
     clear_all_state();
-    auto &state = *DynamicDataLoader::get_instance().lua;
-    sol::state &lua = state.lua;
+    auto& state = *DynamicDataLoader::get_instance().lua;
+    sol::state& lua = state.lua;
 
-    REQUIRE( effect_test_lua_effect.is_valid() );
+    REQUIRE(effect_test_lua_effect.is_valid());
 
-    get_avatar().add_effect( effect_test_lua_effect, 1_turns );
+    get_avatar().add_effect(effect_test_lua_effect, 1_turns);
 
-    const auto char_ptr = std::make_shared<Character *>( nullptr );
-    const auto eff_ptr  = std::make_shared<effect *>( nullptr );
-    const auto [list, idx] = push_hook( lua, "on_character_effect_removed",
-    [char_ptr, eff_ptr]( sol::table params ) {
-        *char_ptr = params["character"].get<sol::optional<Character *>>().value_or( nullptr );
-        *eff_ptr  = params["effect"].get<sol::optional<effect *>>().value_or( nullptr );
-    } );
-    hook_cleanup cleanup{ list, idx };
+    const auto char_ptr = std::make_shared<Character*>(nullptr);
+    const auto eff_ptr = std::make_shared<effect*>(nullptr);
+    const auto [list, idx] =
+        push_hook(lua, "on_character_effect_removed", [char_ptr, eff_ptr](sol::table params) {
+            *char_ptr = params["character"].get<sol::optional<Character*>>().value_or(nullptr);
+            *eff_ptr = params["effect"].get<sol::optional<effect*>>().value_or(nullptr);
+        });
+    hook_cleanup cleanup{list, idx};
 
-    get_avatar().remove_effect( effect_test_lua_effect );
+    get_avatar().remove_effect(effect_test_lua_effect);
 
-    CHECK( *char_ptr == &get_avatar() );
-    CHECK( *eff_ptr != nullptr );
+    CHECK(*char_ptr == &get_avatar());
+    CHECK(*eff_ptr != nullptr);
 }
 
-TEST_CASE( "lua_hook_wiring_mon_effect_added", "[lua]" )
-{
+TEST_CASE("lua_hook_wiring_mon_effect_added", "[lua]") {
     clear_all_state();
-    auto &state = *DynamicDataLoader::get_instance().lua;
-    sol::state &lua = state.lua;
+    auto& state = *DynamicDataLoader::get_instance().lua;
+    sol::state& lua = state.lua;
 
-    REQUIRE( effect_test_lua_effect.is_valid() );
+    REQUIRE(effect_test_lua_effect.is_valid());
 
-    monster &mon = spawn_test_monster( "mon_zombie", tripoint_bub_ms{ 5, 5, 0 } );
+    monster& mon = spawn_test_monster("mon_zombie", tripoint_bub_ms{5, 5, 0});
 
-    const auto mon_ptr = std::make_shared<monster *>( nullptr );
-    const auto eff_ptr = std::make_shared<effect *>( nullptr );
-    const auto [list, idx] = push_hook( lua, "on_mon_effect_added",
-    [mon_ptr, eff_ptr]( sol::table params ) {
-        *mon_ptr = params["mon"].get<sol::optional<monster *>>().value_or( nullptr );
-        *eff_ptr = params["effect"].get<sol::optional<effect *>>().value_or( nullptr );
-    } );
-    hook_cleanup cleanup{ list, idx };
+    const auto mon_ptr = std::make_shared<monster*>(nullptr);
+    const auto eff_ptr = std::make_shared<effect*>(nullptr);
+    const auto [list, idx] =
+        push_hook(lua, "on_mon_effect_added", [mon_ptr, eff_ptr](sol::table params) {
+            *mon_ptr = params["mon"].get<sol::optional<monster*>>().value_or(nullptr);
+            *eff_ptr = params["effect"].get<sol::optional<effect*>>().value_or(nullptr);
+        });
+    hook_cleanup cleanup{list, idx};
 
-    mon.add_effect( effect_test_lua_effect, 1_turns );
+    mon.add_effect(effect_test_lua_effect, 1_turns);
 
-    CHECK( *mon_ptr == &mon );
-    CHECK( *eff_ptr != nullptr );
+    CHECK(*mon_ptr == &mon);
+    CHECK(*eff_ptr != nullptr);
 }
 
-TEST_CASE( "lua_hook_wiring_mon_effect_tick", "[lua]" )
-{
+TEST_CASE("lua_hook_wiring_mon_effect_tick", "[lua]") {
     clear_all_state();
-    auto &state = *DynamicDataLoader::get_instance().lua;
-    sol::state &lua = state.lua;
+    auto& state = *DynamicDataLoader::get_instance().lua;
+    sol::state& lua = state.lua;
 
-    REQUIRE( effect_test_lua_effect.is_valid() );
+    REQUIRE(effect_test_lua_effect.is_valid());
 
-    monster &mon = spawn_test_monster( "mon_zombie", tripoint_bub_ms{ 5, 5, 0 } );
+    monster& mon = spawn_test_monster("mon_zombie", tripoint_bub_ms{5, 5, 0});
 
-    const auto mon_ptr = std::make_shared<monster *>( nullptr );
-    const auto eff_ptr = std::make_shared<effect *>( nullptr );
-    const auto [list, idx] = push_hook( lua, "on_mon_effect",
-    [mon_ptr, eff_ptr]( sol::table params ) {
-        *mon_ptr = params["mon"].get<sol::optional<monster *>>().value_or( nullptr );
-        *eff_ptr = params["effect"].get<sol::optional<effect *>>().value_or( nullptr );
-    } );
-    hook_cleanup cleanup{ list, idx };
+    const auto mon_ptr = std::make_shared<monster*>(nullptr);
+    const auto eff_ptr = std::make_shared<effect*>(nullptr);
+    const auto [list, idx] = push_hook(lua, "on_mon_effect", [mon_ptr, eff_ptr](sol::table params) {
+        *mon_ptr = params["mon"].get<sol::optional<monster*>>().value_or(nullptr);
+        *eff_ptr = params["effect"].get<sol::optional<effect*>>().value_or(nullptr);
+    });
+    hook_cleanup cleanup{list, idx};
 
-    mon.add_effect( effect_test_lua_effect, 1_turns );
+    mon.add_effect(effect_test_lua_effect, 1_turns);
 
-    CHECK( *mon_ptr == &mon );
-    CHECK( *eff_ptr != nullptr );
+    CHECK(*mon_ptr == &mon);
+    CHECK(*eff_ptr != nullptr);
 }
 
-TEST_CASE( "lua_hook_wiring_mon_effect_removed", "[lua]" )
-{
+TEST_CASE("lua_hook_wiring_mon_effect_removed", "[lua]") {
     clear_all_state();
-    auto &state = *DynamicDataLoader::get_instance().lua;
-    sol::state &lua = state.lua;
+    auto& state = *DynamicDataLoader::get_instance().lua;
+    sol::state& lua = state.lua;
 
-    REQUIRE( effect_test_lua_effect.is_valid() );
+    REQUIRE(effect_test_lua_effect.is_valid());
 
-    monster &mon = spawn_test_monster( "mon_zombie", tripoint_bub_ms{ 5, 5, 0 } );
-    mon.add_effect( effect_test_lua_effect, 1_turns );
+    monster& mon = spawn_test_monster("mon_zombie", tripoint_bub_ms{5, 5, 0});
+    mon.add_effect(effect_test_lua_effect, 1_turns);
 
-    const auto cre_ptr = std::make_shared<Creature *>( nullptr );
-    const auto eff_ptr = std::make_shared<effect *>( nullptr );
-    const auto [list, idx] = push_hook( lua, "on_mon_effect_removed",
-    [cre_ptr, eff_ptr]( sol::table params ) {
-        *cre_ptr = params["mon"].get<sol::optional<Creature *>>().value_or( nullptr );
-        *eff_ptr = params["effect"].get<sol::optional<effect *>>().value_or( nullptr );
-    } );
-    hook_cleanup cleanup{ list, idx };
+    const auto cre_ptr = std::make_shared<Creature*>(nullptr);
+    const auto eff_ptr = std::make_shared<effect*>(nullptr);
+    const auto [list, idx] =
+        push_hook(lua, "on_mon_effect_removed", [cre_ptr, eff_ptr](sol::table params) {
+            *cre_ptr = params["mon"].get<sol::optional<Creature*>>().value_or(nullptr);
+            *eff_ptr = params["effect"].get<sol::optional<effect*>>().value_or(nullptr);
+        });
+    hook_cleanup cleanup{list, idx};
 
-    mon.remove_effect( effect_test_lua_effect );
+    mon.remove_effect(effect_test_lua_effect);
 
-    CHECK( *cre_ptr == static_cast<Creature *>( &mon ) );
-    CHECK( *eff_ptr != nullptr );
+    CHECK(*cre_ptr == static_cast<Creature*>(&mon));
+    CHECK(*eff_ptr != nullptr);
+}
+
+TEST_CASE("lua_trait_tick_cache_follows_mutation_changes", "[lua][morale]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    auto& you = get_avatar();
+    auto& lua = DynamicDataLoader::get_instance().lua->lua;
+    const auto call = [&lua](const std::string& fn) -> bool {
+        // Other tests may replace game.mod_runtime and the hook lists; the module stays loaded.
+        const auto res = lua.safe_script(
+            "local mod = {} package.loaded['lua/traits/lua_traits'].register(mod) return mod." + fn
+                + "()",
+            sol::script_pass_on_error);
+        REQUIRE(res.valid());
+        return res.get_type() == sol::type::boolean && res.get<bool>();
+    };
+    call("forget_trait_tick");
+
+    CHECK_FALSE(call("needs_trait_tick"));
+    you.set_mutation(trait_id("AGORAPHOBIA"));
+    CHECK(call("needs_trait_tick"));
+    you.unset_mutation(trait_id("AGORAPHOBIA"));
+    CHECK_FALSE(call("needs_trait_tick"));
+    you.add_effect(efftype_id("depressants"), 10_turns);
+    CHECK(call("needs_trait_tick"));
 }

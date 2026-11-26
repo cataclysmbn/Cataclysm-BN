@@ -221,8 +221,8 @@
       "str_max": 6,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 60,
-      "sound_fail_vol": 50,
+      "sound_vol": "60 dB",
+      "sound_fail_vol": "50 dB",
       "bash_below": true
     }
   },
@@ -242,8 +242,8 @@
       "str_min_supported": 40,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 80,
-      "sound_fail_vol": 70,
+      "sound_vol": "80 dB",
+      "sound_fail_vol": "70 dB",
       "ter_set": "t_null",
       "bash_below": true
     }
@@ -263,8 +263,8 @@
       "str_max": 6,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 60,
-      "sound_fail_vol": 40,
+      "sound_vol": "60 dB",
+      "sound_fail_vol": "40 dB",
       "bash_below": true
     }
   },

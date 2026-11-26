@@ -54,7 +54,7 @@
     "explosion": { "power": 125 },
     "use_action": {
       "type": "explosion",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "ssss...",
       "no_deactivate_msg": "You've already lit the %s, try throwing it instead.",
       "explosion": { "power": 175 }
@@ -103,7 +103,7 @@
     "use_action": {
       "type": "explosion",
       "no_deactivate_msg": "You've already lit the fuse - what are you waiting for?",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "ssss...",
       "explosion": { "power": 175, "shrapnel": { "casing_mass": 240, "fragment_mass": 0.4 } }
     },
@@ -123,35 +123,6 @@
       "install": { "skills": [ [ "mechanics", 6 ], [ "electronics", 6 ] ], "time": 10000 },
       "removal": { "skills": [ [ "mechanics", 4 ] ] }
     }
-  },
-  {
-    "id": "unbio_blaster_gun",
-    "copy-from": "rifle_energy",
-    "type": "GUN",
-    "name": { "str": "fusion blaster rifle" },
-    "description": "A cyborg's fusion blaster arm, cannibalized and converted into a rifle.  This improvised weapon is powered by a standard UPS connection.",
-    "weight": "2680 g",
-    "volume": "2500 ml",
-    "price": "4200 USD",
-    "material": [ "steel", "plastic" ],
-    "color": "magenta",
-    "range": 30,
-    "ranged_damage": { "damage_type": "stab", "amount": 22 },
-    "dispersion": 90,
-    "durability": 6,
-    "loudness": 55,
-    "ups_charges": 40,
-    "reload": 600,
-    "valid_mod_locations": [
-      [ "emitter", 1 ],
-      [ "grip", 1 ],
-      [ "sights", 1 ],
-      [ "sling", 1 ],
-      [ "stock", 1 ],
-      [ "rail", 1 ],
-      [ "underbarrel", 1 ]
-    ],
-    "ammo_effects": [ "PLASMA", "EXPLOSIVE", "FLAME" ]
   },
   {
     "id": "ftk93",
@@ -272,7 +243,7 @@
     "turns_per_charge": 1,
     "use_action": {
       "type": "explosion",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "ssss...",
       "no_deactivate_msg": "You've already lit the %s, try throwing it instead.",
       "explosion": { "power": 175, "shrapnel": { "casing_mass": 400, "fragment_mass": 1 } }
@@ -331,7 +302,7 @@
     "explosion": { "power": 25000, "shrapnel": 12600 },
     "use_action": {
       "type": "explosion",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "Tick.",
       "no_deactivate_msg": "You've already lit the fuse - run!",
       "explosion": {
@@ -400,7 +371,7 @@
     "use_action": {
       "type": "explosion",
       "no_deactivate_msg": "You've already lit the fuse - what are you waiting for?",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "ssss...",
       "explosion": { "power": 175, "shrapnel": { "casing_mass": 160, "fragment_mass": 0.4, "drop": "nail", "recovery": 16 } }
     },
@@ -461,7 +432,7 @@
     },
     "use_action": {
       "type": "explosion",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "Kshhh.",
       "no_deactivate_msg": "You've already lit the fuse - clear the area immediately!",
       "explosion": { "power": 67000, "shrapnel": { "casing_mass": 50000, "fragment_mass": 0.1, "drop": "shrapnel", "recovery": 1 } }
@@ -513,7 +484,7 @@
     "explosion": { "power": 2250, "shrapnel": { "casing_mass": 2000, "fragment_mass": 1, "drop": "scrap", "recovery": 20 } },
     "use_action": {
       "type": "explosion",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "Kshhh.",
       "no_deactivate_msg": "You've already lit the fuse - run!",
       "explosion": { "power": 2250, "shrapnel": { "casing_mass": 2000, "fragment_mass": 1, "drop": "scrap", "recovery": 20 } }

@@ -1,48 +1,47 @@
 #include "inventory.h"
 
+#include "avatar.h"
+#include "calendar.h"
+#include "character.h"
+#include "damage.h"
+#include "debug.h"
+#include "diary.h"
+#include "distribution_grid.h"
+#include "enchantments/enchantment.h"
+#include "enums.h"
+#include "flag.h"
+#include "flat_set.h"
+#include "game.h"
+#include "iexamine.h"
+#include "inventory_ui.h" // auto inventory blocking
+#include "locations.h"
+#include "map/map.h"
+#include "map/mapdata.h"
+#include "map_iterator.h"
+#include "material.h"
+#include "messages.h" //for rust message
+#include "npc.h"
+#include "options.h"
+#include "player.h"
+#include "point.h"
+#include "rng.h"
+#include "translations.h"
+#include "type_id.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+
 #include <algorithm>
 #include <climits>
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
-#include <algorithm>
 #include <iterator>
 #include <memory>
 #include <optional>
 #include <ranges>
 #include <unordered_set>
-
-#include "avatar.h"
-#include "debug.h"
-#include "diary.h"
-#include "distribution_grid.h"
-#include "game.h"
-#include "iexamine.h"
-#include "locations.h"
-#include "magic_enchantment.h"
-#include "map.h"
-#include "map_iterator.h"
-#include "mapdata.h"
-#include "messages.h" //for rust message
-#include "npc.h"
-#include "options.h"
-#include "translations.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "veh_type.h"
-#include "vpart_position.h"
-#include "calendar.h"
-#include "character.h"
-#include "damage.h"
-#include "enums.h"
-#include "flag.h"
-#include "player.h"
-#include "rng.h"
-#include "material.h"
-#include "type_id.h"
-#include "flat_set.h"
-#include "point.h"
-#include "inventory_ui.h" // auto inventory blocking
 
 static const itype_id itype_aspirin( "aspirin" );
 static const itype_id itype_battery( "battery" );
@@ -178,6 +177,7 @@ void inventory::clear()
     items.clear();
     binned = false;
     items_type_cached = false;
+    cached_weight_dirty = true;
 }
 
 inventory &inventory::add_items( const inventory &rhs, bool keep_invlet, bool assign_invlet,
@@ -303,6 +303,7 @@ template<bool IsCached>
 item &inventory::add_item_internal( item &newit, bool keep_invlet, bool assign_invlet,
                                     bool should_stack )
 {
+    cached_weight_dirty = true;
     binned = false;
 
     itype_id type = newit.typeId();
@@ -490,6 +491,7 @@ void inventory::form_from_map( map &m, std::vector<tripoint_bub_ms> pts, const C
     std::unordered_map<const vehicle *, std::unordered_set<std::string>> checked_veh_tools;
     bool has_faucet = false;
     bool has_autodoc = false;
+    cached_weight_dirty = true;
     items.clear();
     build_items_type_cache();
     for( const tripoint_bub_ms &p : pts ) {
@@ -658,6 +660,7 @@ std::vector<detached_ptr<item>> location_inventory::reduce_stack( const int posi
 
 item &inventory::remove_item( const item *it )
 {
+    cached_weight_dirty = true;
     auto tmp = remove_items_with( [&it]( const item & i ) {
         return &i == it;
     }, 1 );
@@ -672,6 +675,7 @@ item &inventory::remove_item( const item *it )
 
 item &inventory::remove_item( const int position )
 {
+    cached_weight_dirty = true;
     if( position < 0 || static_cast<size_t>( position ) >= items.size() ) {
         return null_item_reference();
     }
@@ -925,6 +929,15 @@ item *inventory::most_appropriate_painkiller( int pain )
     return ret;
 }
 
+void inventory::edit_all_items( const std::function<void( item & )> &func )
+{
+    for( auto &elem : items ) {
+        for( auto &elem_stack : elem ) {
+            func( *elem_stack );
+        }
+    }
+}
+
 void inventory::rust_iron_items()
 {
     for( auto &elem : items ) {
@@ -950,6 +963,20 @@ void inventory::rust_iron_items()
             }
         }
     }
+}
+
+units::mass inventory::weight_cached()
+{
+    if( cached_weight_dirty ) {
+        cached_weight = 0_gram;
+        for( const auto &elem : items ) {
+            for( const auto &elem_stack_iter : elem ) {
+                cached_weight += elem_stack_iter->weight();
+            }
+        }
+        cached_weight_dirty = false;
+    }
+    return cached_weight;
 }
 
 units::mass inventory::weight() const
@@ -1063,7 +1090,12 @@ enchantment inventory::get_active_enchantment_cache( const Character &owner ) co
     enchantment temp_cache;
     for( const std::vector<item *> &elem : items ) {
         for( const item * const &check_item : elem ) {
-            for( const enchantment &ench : check_item->get_enchantments() ) {
+            for( const enchantment &ench : check_item->get_enchantments( true ) ) {
+                if( ench.is_active( owner, *check_item ) ) {
+                    temp_cache.force_add( ench );
+                }
+            }
+            for( const enchantment &ench : check_item->get_enchantments( false ) ) {
                 if( ench.is_active( owner, *check_item ) ) {
                     temp_cache.force_add( ench );
                 }
@@ -1457,6 +1489,11 @@ void location_inventory::rust_iron_items()
 units::mass location_inventory::weight() const
 {
     return inv.weight();
+}
+
+units::mass location_inventory::weight_cached()
+{
+    return inv.weight_cached();
 }
 
 units::mass location_inventory::weight_without( const excluded_stacks &without ) const

@@ -1,0 +1,38 @@
+[
+  {
+    "result": "hellfire_heat",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 6,
+    "time": "1 h",
+    "qualities": [ { "id": "SCREW", "level": 1 }, { "id": "SAW_M", "level": 1 } ],
+    "components": [
+      [ [ "chem_rocket_fuel", 100 ] ],
+      [ [ "copper", 4000 ] ],
+      [ [ "chem_compositionb", 9000 ] ],
+      [ [ "impact_fuze", 1 ] ],
+      [ [ "steel_lump", 10 ] ],
+      [ [ "steel_chunk", 20 ] ],
+      [ [ "scrap", 40 ] ],
+      [ [ "e_scrap", 5 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "hellfire_ninja",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 6,
+    "time": "1 h",
+    "qualities": [ { "id": "SCREW", "level": 1 }, { "id": "SAW_M", "level": 1 } ],
+    "components": [
+      [ [ "chem_rocket_fuel", 100 ] ],
+      [ [ "blade", 6 ] ],
+      [ [ "steel_lump", 15 ] ],
+      [ [ "steel_chunk", 30 ] ],
+      [ [ "scrap", 60 ] ],
+      [ [ "e_scrap", 5 ] ]
+    ],
+    "charges": 1
+  }
+]

@@ -1,28 +1,30 @@
 #pragma once
 
-#include <map>
-#include <optional>
-#include <set>
-#include <array>
-#include <string>
-#include <variant>
-#include <vector>
-
 #include "behavior.h"
 #include "calendar.h"
+#include "catalua_type_operators.h"
 #include "color.h"
 #include "cursesdef.h"
 #include "damage.h"
 #include "enum_bitset.h"
 #include "enums.h"
+#include "map/legacy_pathfinding.h"
 #include "mattack_common.h"
-#include "legacy_pathfinding.h"
 #include "pathfinding.h"
 #include "translations.h"
 #include "type_id.h"
 #include "units.h"
-#include "catalua_type_operators.h"
 
+#include <array>
+#include <map>
+#include <optional>
+#include <set>
+#include <string>
+#include <variant>
+#include <vector>
+
+class lua_monster_callback_actor;
+class Character;
 class Creature;
 class monster;
 struct dealt_projectile_attack;
@@ -80,6 +82,7 @@ enum m_flag : int {
     MF_NOHEAD,              // Headshots not allowed!
     MF_HARDTOSHOOT,         // It's one size smaller for ranged attacks, no less then creature_size::tiny
     MF_GRABS,               // Its attacks may grab us!
+    MF_GRAB_IMMUNE,         // Cannot be grabbed by another creature
     MF_BASHES,              // Bashes down doors
     MF_DESTROYS,            // Bashes down walls and more
     MF_BORES,               // Tunnels through just about anything
@@ -158,22 +161,27 @@ enum m_flag : int {
     MF_INTERIOR_AMMO,       // Monster contain's its ammo inside itself, no need to load on launch. Prevents ammo from being dropped on disable.
     MF_CLIMBS,              // Monsters that can climb certain terrain and furniture
     MF_PACIFIST,            // Monsters that will never use melee attack, useful for having them use grab without attacking the player
+    MF_KEEP_DISTANCE,       // Attempts to keep tracking_distance between itself and its current target.
     MF_PUSH_MON,            // Monsters that can push creatures out of their way
     MF_PUSH_VEH,            // Monsters that can push vehicles out of their way
     MF_NIGHT_INVISIBILITY,  // Monsters that are invisible in poor light conditions
+    MF_CAMOUFLAGE,          // Monsters that are invisible at a range greater than the player's current perception + half of survival skill rounded down.
+    MF_UNCANNY_DODGE,       // Monsters that have the uncanny dodge ability.
     MF_REVIVES_HEALTHY,     // When revived, this monster has full hitpoints and speed
     MF_NO_NECRO,            // This monster can't be revived by necros. It will still rise on its own.
     MF_AVOID_DANGER_1,      // This monster will path around some dangers instead of through them.
     MF_AVOID_DANGER_2,      // This monster will path around most dangers instead of through them.
     MF_AVOID_FIRE,          // This monster will path around heat-related dangers instead of through them.
     MF_AVOID_FALL,          // This monster will path around cliffs instead of off of them.
+    MF_NO_SLIP,             // This monster cannot slip in fields.
     MF_PRIORITIZE_TARGETS,  // This monster will prioritize targets depending on their danger levels
     MF_NOT_HALLU,           // Monsters that will NOT appear when player's producing hallucinations
     MF_CANPLAY,             // This monster can be played with if it's a pet.
     MF_PET_MOUNTABLE,       // This monster can be mounted and ridden when tamed.
     MF_PET_HARNESSABLE,     // This monster can be harnessed when tamed.
     MF_CAN_FETCH,           // This monster can fetch items for its tamer when tamed.
-    MF_DOGFOOD,             // This monster will respond to the `dog whistle` item.
+    MF_DOGFOOD,             // DEPRECATED This monster will respond to the `dog whistle` item.
+    MF_DOG_WHISTLE,         // This monster will respond to the `dog whistle` item.
     MF_MILKABLE,            // This monster is milkable.
     MF_SHEARABLE,           // This monster is shearable.
     MF_NO_BREED,            // This monster doesn't breed, even though it has breed data
@@ -208,6 +216,9 @@ enum m_flag : int {
     MF_FACTION_MEMORY,      // This monster tracks anger separately per faction
     MF_COMBAT_MOUNT,        // This monster is trained for combat
     MF_CANT_TRAIN,            // This monster can't be trained for combat
+    MF_POLICE_EYEBOT,            // A drone capable of summoning reinforcements, see mattack::photograph
+    MF_IRRADIATED,         // Melee attacks can inflict radiation
+    MF_NO_VEHICLE_COLLISION, // Vehicles pass through this monster without hitting it.
 
     MF_MAX                  // Sets the length of the flags - obviously must be LAST
 };
@@ -240,6 +251,13 @@ struct pet_food_data {
     std::set<TraitSet> tamer_traits;
     std::string pet;
     std::string feed;
+    /// Skill used when taming this monster; defaults to "survival".
+    skill_id tame_skill = skill_id( "survival" );
+    /// Minimum level of tame_skill required to tame this monster; 0 means no skill requirement.
+    int tame_min_skill = 0;
+
+    /// True when the character meets the taming skill requirement (always true when tame_min_skill is 0).
+    auto tame_skill_requirement_met( const Character &ch ) const -> bool;
 
     bool was_loaded = false;
     void load( const JsonObject &jo );
@@ -286,8 +304,8 @@ struct mtype {
         mtype_id id;
 
         std::map<itype_id, int> starting_ammo; // Amount of ammo the monster spawns with.
-        // Name of item group that is used to create item dropped upon death, or empty.
-        item_group_id death_drops;
+        // Names of item groups used to create items dropped upon death.
+        std::vector<item_group_id> death_drops;
 
         /** Stores effect data for effects placed on attack */
         std::vector<mon_effect_data> atk_effs;
@@ -317,6 +335,8 @@ struct mtype {
         int speed = 0;          /** e.g. human = 100 */
         int agro = 0;           /** chance will attack [-100,100] */
         int morale = 0;         /** initial morale level at spawn */
+        // How close the monster is willing to approach its target when following or keeping distance.
+        int tracking_distance = 8;
         std::optional<int> preferred_z;
 
         // Number of hitpoints regenerated per turn.
@@ -332,6 +352,8 @@ struct mtype {
 
         // mountable ratio for rider weight vs. mount weight, default 0.3
         float mountable_weight_ratio = 0.3;
+        // how many pixels up does player go
+        int mountable_pixels_up = 6;
 
         int attack_cost = 100;  /** moves per regular attack */
         int melee_skill = 0;    /** melee hit skill, 20 is superhuman hitting abilities */
@@ -339,6 +361,7 @@ struct mtype {
         int melee_sides = 0;    /** number of sides those dice have */
 
         int grab_strength = 1;    /**intensity of the effect_grabbed applied*/
+        int uncanny_dodge_cost = 100;    /**moves cost for uncanny dodge, if the monster can uncanny dodge*/
 
         // Pet food category this monster is in
         pet_food_data petfood;
@@ -356,6 +379,8 @@ struct mtype {
             float dodge = 1.15f;
             int max_level = 3;
             int min_skill = 3;
+            /// Skill used when training this monster as a pet; defaults to "survival".
+            skill_id skill = skill_id( "survival" );
             std::vector<pet_training_level_flags> level_flags;
         };
         // Per-level stat multipliers when this monster is trained as a pet.
@@ -383,6 +408,9 @@ struct mtype {
         // Vision range is linearly scaled depending on lighting conditions
         int vision_day = 40;    /** vision range in bright light */
         int vision_night = 1;   /** vision range in total darkness */
+
+        // Clairvoyance
+        int clairvoyance = 0;
 
         damage_instance melee_damage; // Basic melee attack damage
         harvest_id harvest;
@@ -466,6 +494,10 @@ struct mtype {
 
         pathfinding_settings legacy_path_settings;
         pathfinding_settings legacy_path_settings_buffed;
+
+        /** Lua callback actor (non-owning, owned by catalua.cpp static maps).
+        *  Mutable because it is wired post-construction through const factory references. */
+        mutable const lua_monster_callback_actor *lua_callbacks = nullptr;
 
         PathfindingSettings path_settings;
         RouteSettings route_settings;

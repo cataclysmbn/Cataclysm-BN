@@ -34,17 +34,9 @@ Find a way to stop the Cataclysm ... or become one of its strongest monsters.
 
 ### Executables
 
-[![Stable][stable-releases-badge]][stable-releases] [![Recent][all-releases-badge]][all-releases] [![Experiemental][experimental-badge]][experimental-releases] [![Flatpak][flathub-badge]][flathub-releases]
+[![Stable][stable-releases-badge]][stable-releases] [![Flatpak][flathub-badge]][flathub-releases]
 
-#### Linux Instructions
-
-While many of the dependencies that the game depends on are likely installed by default, some likely aren't installed by default on your distro.
-
-Here are the commands for some of the most popular distro families:
-
-- Ubuntu / Debian: `sudo apt install libsdl3-0 libsdl3-image-0 libsdl3-ttf-0 libsdl3-mixer-0 libfreetype6 zip libsqlite3-0`
-- Fedora: `sudo dnf install SDL3 SDL3_image SDL3_ttf SDL3_mixer freetype zip sqlite`
-- Arch: `sudo pacman -S sdl3 sdl3_image sdl3_ttf sdl3_mixer zip sqlite`
+[![Recent][all-releases-badge]][all-releases] [![Experiemental][experimental-badge]][experimental-releases]
 
 ### Launchers
 
@@ -71,14 +63,13 @@ Bright Nights uses a [mod registry](https://mods.cataclysmbn.org/) for easier di
 [clone]: https://github.com/cataclysmbn/Cataclysm-BN/ "clone from our GitHub repo"
 [clone-badge]: https://img.shields.io/badge/Clone%20From%20Repo-black?style=for-the-badge&logo=github
 
-## Building
+#### Building from source
 
-- [with cmake](docs/en/dev/guides/building/cmake.md)
-- [with MSYS2](docs/en/dev/guides/building/msys.md)
-- [with vcpkg](docs/en/dev/guides/building/vs_vcpkg.md)
+Please read the official docs for details:
 
-Please read the [official docs](https://docs.cataclysmbn.org/dev/guides/building/cmake/) for
-details.
+- [building with cmake](docs/en/dev/guides/building/cmake.md)
+- [building with MSYS2](docs/en/dev/guides/building/msys.md)
+- [building with vcpkg](docs/en/dev/guides/building/vs_vcpkg.md)
 
 ## Contributing
 

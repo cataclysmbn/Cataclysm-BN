@@ -3,7 +3,7 @@
 #include "bionics.h"
 #include "color.h"
 #include "hsv_color.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "messages.h"
 #include "type_id.h"
 #include "character.h"

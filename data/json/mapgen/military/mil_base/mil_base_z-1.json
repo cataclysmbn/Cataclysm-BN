@@ -470,7 +470,7 @@
       ],
       "palettes": [ "mil_base_palette" ],
       "monster": { "ω": { "monster": "mon_turret_medium" } },
-      "place_loot": [ { "group": "steel_mill_storage", "x": [ 16, 17 ], "y": [ 18, 19 ], "chance": 75, "repeat": 3 } ],
+      "place_loot": [ { "group": "steel_mill_storage", "x": [ 16, 17 ], "y": [ 18, 19 ], "chance": 100 } ],
       "place_monster": [
         { "monster": [ "mon_mech_combat", "mon_mech_recon" ], "x": 15, "y": [ 18, 19 ] },
         { "group": "GROUP_ROBOTS_MIL", "x": [ 0, 8 ], "y": [ 12, 22 ], "repeat": [ 1, 2 ] }

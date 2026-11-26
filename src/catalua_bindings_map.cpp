@@ -1,32 +1,34 @@
+#include "artifact_enum_traits.h"
 #include "calendar.h"
 #include "catalua_bindings.h"
-#include "catalua_bindings_utils.h"
 #include "catalua_bindings_coords_common.h"
+#include "catalua_bindings_utils.h"
 #include "catalua_coord.h"
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
-
 #include "coordinates.h"
+#include "data_vars.h"
+#include "detached_ptr.h"
+#include "distribution_grid.h"
+#include "enum_conversions.h"
 #include "enums.h"
 #include "game.h"
-#include "artifact_enum_traits.h"
-#include "enum_conversions.h"
-#include "distribution_grid.h"
-#include "field.h"
-#include "map.h"
+#include "map/field.h"
+#include "map/map.h"
 #include "map_iterator.h"
+#include "map/mapbuffer.h"
+#include "mapgen/mapgen_constructor.h"
 #include "npc.h"
-#include "overmap.h"
+#include "overmap/overmap.h"
 #include "sol/sol.hpp"
 #include "sounds.h"
 #include "trap.h"
-#include "detached_ptr.h"
-#include "veh_type.h"
 #include "type_id.h"
 #include "units_angle.h"
-#include "vehicle.h"
-#include "vpart_position.h"
-#include "weather.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vpart_position.h"
+#include "weather/weather.h"
 
 #include <algorithm>
 #include <cmath>
@@ -224,6 +226,25 @@ auto replace_vehicle_impl( map &m, const replace_vehicle_target &target,
     return true;
 }
 
+auto replace_mapgen_vehicle_impl( mapgen_constructor &m, vehicle *const target,
+                                  const replace_vehicle_request &request ) -> bool
+{
+    if( target == nullptr ) {
+        return false;
+    }
+
+    const auto pos = project_remain<coords::omt>( target->abs_ms_location() ).remainder;
+    m.destroy_vehicle( target );
+    auto *const added_vehicle = m.add_vehicle( request.replacement_type, pos,
+                                request.options.orientation, -1, request.options.status,
+                                true, request.locked, request.has_keys );
+    if( added_vehicle == nullptr ) { return false; }
+
+    configure_vehicle_locks( *added_vehicle, request );
+    configure_vehicle_brake_hold( *added_vehicle );
+    return true;
+}
+
 struct item_stack_lua_it_state {
     item_stack *stack;
     size_t index;
@@ -310,10 +331,55 @@ void cata::detail::reg_map( sol::state &lua )
 
         DOC( "Returns the vehicle origin tile in local map-square coordinates." );
         luna::set_fx( ut, "pos", []( const wrapped_vehicle & wrapped ) -> tripoint_bub_ms { return wrapped.pos; } );
+        DOC( "Returns true if the wrapped vehicle still exists, false if the handle is invalid (e.g. the vehicle was destroyed)." );
+        luna::set_fx( ut, "is_valid", []( const wrapped_vehicle & wrapped ) -> bool { return wrapped.v != nullptr; } );
         DOC( "Returns the vehicle prototype id string." );
         luna::set_fx( ut, "type", []( const wrapped_vehicle & wrapped ) -> std::string {
             if( wrapped.v == nullptr ) { return ""; }
             return wrapped.v->type.str();
+        } );
+        DOC( "Returns the vehicle's display name, or an empty string if the handle is invalid." );
+        luna::set_fx( ut, "name", []( const wrapped_vehicle & wrapped ) -> std::string {
+            if( wrapped.v == nullptr ) { return ""; }
+            return wrapped.v->name;
+        } );
+        DOC( "Returns the vehicle's facing in degrees (0 = east, 90 = north), or 0 if the handle is invalid." );
+        luna::set_fx( ut, "facing", []( const wrapped_vehicle & wrapped ) -> double {
+            if( wrapped.v == nullptr ) { return 0.0; }
+            return units::to_degrees( wrapped.v->face.dir() );
+        } );
+        DOC( "Returns true if the vehicle is locked, false otherwise (also false if the handle is invalid)." );
+        luna::set_fx( ut, "is_locked", []( const wrapped_vehicle & wrapped ) -> bool {
+            if( wrapped.v == nullptr ) { return false; }
+            return wrapped.v->is_locked;
+        } );
+        DOC( "Locks or unlocks the vehicle. Does nothing if the handle is invalid." );
+        luna::set_fx( ut, "set_locked", []( wrapped_vehicle & wrapped, const bool locked ) {
+            if( wrapped.v == nullptr ) { return; }
+            wrapped.v->is_locked = locked;
+        } );
+        DOC( "Returns the charges of the given fuel type left in the vehicle (e.g. ItypeId.new(\"battery\")), or 0 if the handle is invalid." );
+        luna::set_fx( ut, "fuel_left", []( const wrapped_vehicle & wrapped, const itype_id & fuel ) -> int {
+            if( wrapped.v == nullptr ) { return 0; }
+            return wrapped.v->fuel_left( fuel );
+        } );
+        DOC( "Drains up to `amount` charges of the given fuel type from the vehicle. Returns the charges actually drained." );
+        luna::set_fx( ut, "drain_fuel", []( const wrapped_vehicle & wrapped, const itype_id & fuel,
+        const int amount ) -> int {
+            if( wrapped.v == nullptr ) { return 0; }
+            return wrapped.v->drain( fuel, amount );
+        } );
+        DOC( "Drains up to `amount` charges from the onboard batteries. Returns the charges actually drained." );
+        luna::set_fx( ut, "drain_batteries", []( const wrapped_vehicle & wrapped,
+        const int amount ) -> int {
+            if( wrapped.v == nullptr ) { return 0; }
+            return wrapped.v->drain( itype_id( "battery" ), amount );
+        } );
+        DOC( "Charges the onboard batteries by up to `amount`. Returns the charges actually added." );
+        luna::set_fx( ut, "charge_batteries", []( const wrapped_vehicle & wrapped,
+        const int amount ) -> int {
+            if( wrapped.v == nullptr ) { return 0; }
+            return wrapped.v->charge_battery( amount, false );
         } );
     }
 
@@ -339,6 +405,14 @@ void cata::detail::reg_map( sol::state &lua )
         []( const map &, const tripoint_abs_sm & pos ) -> tripoint_bub_sm {
             return abs_to_bub( pos );
         } ) );
+        DOC( "Returns the dimension id currently bound to this map. Empty string means the overworld." );
+        luna::set_fx( ut, "get_bound_dimension", []( const map & m ) -> std::string {
+            return m.get_bound_dimension().str();
+        } );
+        DOC( "Returns whether a local map position lies outside the current dimension bounds." );
+        luna::set_fx( ut, "is_out_of_bounds", []( const map & m, const tripoint_bub_ms & p ) -> bool {
+            return m.get_mapbuffer().is_outside_pocket_dimension_bounds( map_local_to_abs( m, p ) );
+        } );
 
         luna::set_fx( ut, "get_map_size_in_submaps", &map::getmapsize );
         DOC( "In map squares" );
@@ -351,12 +425,14 @@ void cata::detail::reg_map( sol::state &lua )
         } );
 
         DOC( "Forcibly places an npc using a template at a position on the map. Returns the npc." );
-        luna::set_fx( ut, "place_npc", []( map & m, point_bub_ms p, std::string id_str ) -> npc * {
+        luna::set_fx( ut, "place_npc", []( map & m, tripoint_bub_ms p, std::string id_str ) -> npc * {
             character_id char_id = m.place_npc( p, string_id<npc_template>( id_str ), true );
             return g->find_npc( char_id );
         } );
 
-        DOC( "Creates a new item(s) at a position on the map." );
+        DOC( "Creates a new item at a position on the map." );
+        DOC( "`count` sets the item's charges, not the number of items: exactly one item is created." );
+        DOC( "For stackable (count-by-charges) items such as ammo, `count` is the stack size. For non-stackable items, pass a negative value (e.g. -1), since a positive one is still applied as charges. Tools spawned with a negative value get their default charges." );
         DOC( "Returns nil. Use gapi.create_item and Map:add_item to modify before placement." );
         luna::set_fx( ut, "create_item_at", []( map & m, const tripoint_bub_ms & p, const itype_id & itype,
         int count ) -> void {
@@ -480,7 +556,12 @@ void cata::detail::reg_map( sol::state &lua )
         DOC( "Drains fuel charges from the vehicle when the position has a part with the given feature. Returns the charges drained." );
         luna::set_fx( ut, "drain_vehicle_fuel_at", drain_vehicle_fuel_at_lua );
 
-        DOC( "Replaces a specific vehicle with a different prototype, preserving origin tile by default. Pass an optional table with `orientation` (Angle or degrees), `status`, and `locks` to override spawn settings." );
+        DOC( "Replaces a specific vehicle with a different prototype at the same origin tile.  " );
+        DOC( "Returns false if the vehicle id or an option is invalid.  " );
+        DOC( "Pass an optional table with keys:  " );
+        DOC( "* `orientation` (Angle or number, optional): Facing of the new vehicle, as an Angle or in degrees. Defaults to the old vehicle's facing.  " );
+        DOC( "* `status` (integer, optional): Initial damage. -1 is light damage, 0 is undamaged, 1 is disabled (destroyed tires or engine). Defaults to -1.  " );
+        DOC( "* `locks` (boolean, optional): If false, removes locking door parts and spawns the vehicle unlocked with keys. Otherwise locks follow the normal spawn rules." );
         luna::set_fx( ut, "replace_vehicle", sol::overload(
                           []( map & m, const wrapped_vehicle & wrapped, const std::string & vehicle_id,
         sol::optional<sol::table> opts ) -> bool {
@@ -526,6 +607,63 @@ void cata::detail::reg_map( sol::state &lua )
         luna::set_fx( ut, "get_furn_at",
                       sol::resolve<furn_id( const tripoint_bub_ms & )const>( &map::furn ) );
         luna::set_fx( ut, "set_furn_at", []( map & m, const tripoint_bub_ms & p, const furn_id & id ) { m.furn_set( p, id ); } );
+        DOC( "Returns a furniture variable at the position, or `default` (empty string if omitted) when it is not set." );
+        luna::set_fx( ut, "get_furn_var_at", []( const map & m, const tripoint_bub_ms & p,
+        const std::string & key, sol::optional<std::string> default_value ) -> std::string {
+            const auto *vars = m.furn_vars( p );
+            return vars ? vars->get( key, default_value.value_or( "" ) ) : default_value.value_or( "" );
+        } );
+        DOC( "Sets a furniture variable at the position. Returns false if the position is out of bounds." );
+        luna::set_fx( ut, "set_furn_var_at", []( map & m, const tripoint_bub_ms & p,
+        const std::string & key, const std::string & value ) -> bool {
+            auto *vars = m.furn_vars( p );
+            if( !vars ) { return false; }
+            vars->set( key, value );
+            return true;
+        } );
+        DOC( "Returns whether a furniture variable is set at the position." );
+        luna::set_fx( ut, "has_furn_var_at", []( const map & m, const tripoint_bub_ms & p,
+        const std::string & key ) -> bool {
+            const auto *vars = m.furn_vars( p );
+            return vars && vars->contains( key );
+        } );
+        DOC( "Removes a furniture variable at the position. Returns whether a variable was removed." );
+        luna::set_fx( ut, "erase_furn_var_at", []( map & m, const tripoint_bub_ms & p,
+        const std::string & key ) -> bool {
+            auto *vars = m.furn_vars( p );
+            if( !vars || !vars->contains( key ) ) { return false; }
+            vars->erase( key );
+            return true;
+        } );
+
+        DOC( "Returns a terrain variable at the position, or `default` (empty string if omitted) when it is not set." );
+        luna::set_fx( ut, "get_ter_var_at", []( const map & m, const tripoint_bub_ms & p,
+        const std::string & key, sol::optional<std::string> default_value ) -> std::string {
+            const auto *vars = m.ter_vars( p );
+            return vars ? vars->get( key, default_value.value_or( "" ) ) : default_value.value_or( "" );
+        } );
+        DOC( "Sets a terrain variable at the position. Returns false if the position is out of bounds." );
+        luna::set_fx( ut, "set_ter_var_at", []( map & m, const tripoint_bub_ms & p,
+        const std::string & key, const std::string & value ) -> bool {
+            auto *vars = m.ter_vars( p );
+            if( !vars ) { return false; }
+            vars->set( key, value );
+            return true;
+        } );
+        DOC( "Returns whether a terrain variable is set at the position." );
+        luna::set_fx( ut, "has_ter_var_at", []( const map & m, const tripoint_bub_ms & p,
+        const std::string & key ) -> bool {
+            const auto *vars = m.ter_vars( p );
+            return vars && vars->contains( key );
+        } );
+        DOC( "Removes a terrain variable at the position. Returns whether a variable was removed." );
+        luna::set_fx( ut, "erase_ter_var_at", []( map & m, const tripoint_bub_ms & p,
+        const std::string & key ) -> bool {
+            auto *vars = m.ter_vars( p );
+            if( !vars || !vars->contains( key ) ) { return false; }
+            vars->erase( key );
+            return true;
+        } );
 
         luna::set_fx( ut, "has_field_at",
                       []( const map & m, const tripoint_bub_ms & p, const field_type_id & fid ) -> bool { return !!m.field_at( p ).find_field( fid ); } );
@@ -540,6 +678,17 @@ void cata::detail::reg_map( sol::state &lua )
             return m.add_field( p, fid, intensity, age );
         } );
         luna::set_fx( ut, "remove_field_at", &map::remove_field );
+        luna::set_fx( ut, "get_field_ids_at", []( const map & m,
+        const tripoint_bub_ms & p ) -> std::vector<field_type_id> {
+            auto field_ids = std::vector<field_type_id>{};
+            const auto &fields = m.field_at( p );
+            for( const auto &[field_id, entry] : fields )
+            {
+                static_cast<void>( entry );
+                field_ids.push_back( field_id );
+            }
+            return field_ids;
+        } );
         luna::set_fx( ut, "get_field_name_at", []( map & m, const tripoint_bub_ms & p,
         const field_type_id & fid ) -> std::string {
             field_entry *fe = m.get_field( p, fid );
@@ -564,19 +713,218 @@ void cata::detail::reg_map( sol::state &lua )
 
         luna::set_fx( ut, "is_ot_match", []( std::string ref, oter_id & id, ot_match_type match ) -> bool { return is_ot_match( ref, id, match ); } );
         luna::set_fx( ut, "draw_fill_background", []( map & m, std::string ref ) { m.draw_fill_background( ter_id( ref ) ); } );
-        luna::set_fx( ut, "place_spawns", []( map & m, std::string id, int chance, point_bub_ms topleft,
-        point_bub_ms bottomright, float density, bool single ) { m.place_spawns( mongroup_id( id ), chance, topleft, bottomright, density, single ); } );
-        luna::set_fx( ut, "place_items", []( map & m, std::string id, int chance, point_bub_ms topleft,
-        point_bub_ms bottomright, bool onflat ) { m.place_items( item_group_id( id ), chance, topleft, bottomright, onflat, calendar::start_of_cataclysm ); } );
+        luna::set_fx( ut, "place_spawns", []( map & m, std::string id, int chance, tripoint_bub_ms topleft,
+        tripoint_bub_ms bottomright, float density, bool single ) { m.place_spawns( mongroup_id( id ), chance, topleft, bottomright, density, single ); } );
+        luna::set_fx( ut, "place_items", []( map & m, std::string id, int chance, tripoint_bub_ms topleft,
+        tripoint_bub_ms bottomright, bool onflat ) { m.place_items( item_group_id( id ), chance, topleft, bottomright, onflat, calendar::start_of_cataclysm ); } );
         luna::set_fx( ut, "rotate", []( map & m, int turns ) { m.rotate( turns ); } );
         luna::set_fx( ut, "make_rubble", []( map & m, tripoint_bub_ms point, furn_id & fid, ter_id & tid ) { m.make_rubble( point, fid, tid ); } );
         luna::set_fx( ut, "destroy", []( map & m, tripoint_bub_ms point ) { m.destroy( point ); } );
         luna::set_fx( ut, "set_temperature", []( map & m, tripoint_bub_ms point, int temp ) { m.set_temperature( point, temp ); } );
     }
 
-    // Register 'tinymap' class to be used in Lua
+    // Register mapgen constructor surface to be used in Lua mapgen hooks.
     {
-        luna::new_usertype<tinymap>( lua, luna::bases<map>(), luna::no_constructor );
+        sol::usertype<mapgen_constructor> ut =
+            luna::new_usertype<mapgen_constructor>( lua, luna::no_bases, luna::no_constructor );
+
+        DOC( "Forcibly places an npc using a template at a position on the mapgen surface. Returns the npc." );
+        luna::set_fx( ut, "place_npc", []( mapgen_constructor & m, point_omt_ms p,
+        std::string id_str ) -> npc * {
+            character_id char_id = m.place_npc( p, string_id<npc_template>( id_str ), true );
+            return g->find_npc( char_id );
+        } );
+
+        DOC( "Creates a new item at a position on the mapgen surface." );
+        DOC( "`count` sets the item's charges, not the number of items: exactly one item is created." );
+        DOC( "For stackable (count-by-charges) items such as ammo, `count` is the stack size. For non-stackable items, pass a negative value (e.g. -1), since a positive one is still applied as charges. Tools spawned with a negative value get their default charges." );
+        luna::set_fx( ut, "create_item_at", []( mapgen_constructor & m, const point_omt_ms & p,
+        const itype_id & itype, int count ) -> void {
+            auto new_item = item::spawn( itype, calendar::turn, count );
+            m.add_item_or_charges( p, std::move( new_item ) );
+        } );
+
+        luna::set_fx( ut, "create_corpse_at", []( mapgen_constructor & m, const point_omt_ms & p,
+                      sol::optional<mtype_id> mtype,
+                      sol::optional<time_point> turn, sol::optional<std::string> name,
+        sol::optional<int> upgrade_time ) -> void {
+            mtype_id the_id = mtype.value_or( mtype_id::NULL_ID() );
+            time_point the_tp = turn.value_or( calendar::turn );
+            std::string the_name = name.value_or( "" );
+            int the_upgrade = upgrade_time.value_or( -1 );
+
+            detached_ptr<item> new_corpse = item::make_corpse( the_id, the_tp, the_name, the_upgrade );
+            m.add_item_or_charges( p, std::move( new_corpse ) );
+        } );
+
+        luna::set_fx( ut, "add_item", []( mapgen_constructor & m, const point_omt_ms & p,
+        detached_ptr<item> &it ) -> detached_ptr<item> {
+            return m.add_item_or_charges( p, std::move( it ) );
+        } );
+        luna::set_fx( ut, "clear_items_at", []( mapgen_constructor & m, const point_omt_ms & p ) -> void { m.i_clear( p ); } );
+
+        luna::set_fx( ut, "get_items_at", []( mapgen_constructor & m, const point_omt_ms & p ) {
+            return m.i_at( p );
+        } );
+        luna::set_fx( ut, "get_items_in_radius", []( mapgen_constructor & m,
+        const point_omt_ms & p, int radius ) -> std::vector<map_stack> {
+            std::vector<map_stack> items;
+            for( const auto pt : m.points_in_radius( p, radius ) )
+            {
+                items.push_back( m.i_at( pt ) );
+            }
+            return items;
+        } );
+
+        luna::set_fx( ut, "points_in_radius", []( const mapgen_constructor & m,
+        const point_omt_ms & center, int radius ) -> std::vector<point_omt_ms> {
+            auto points = std::vector<point_omt_ms>{};
+            std::ranges::copy( m.points_in_radius( center, radius ),
+                               std::back_inserter( points ) );
+            return points;
+        } );
+
+        luna::set_fx( ut, "get_vehicles",
+                      []( mapgen_constructor & m ) -> std::vector<vehicle *> { return m.get_vehicles(); } );
+        DOC( "Replaces a vehicle spawned by mapgen with a different prototype at the same position.  " );
+        DOC( "Returns false if the vehicle id or an option is invalid.  " );
+        DOC( "Pass an optional table with keys:  " );
+        DOC( "* `orientation` (Angle or number, optional): Facing of the new vehicle, as an Angle or in degrees. Defaults to the old vehicle's facing.  " );
+        DOC( "* `status` (integer, optional): Initial damage. -1 is light damage, 0 is undamaged, 1 is disabled (destroyed tires or engine). Defaults to -1.  " );
+        DOC( "* `locks` (boolean, optional): If false, removes locking door parts and spawns the vehicle unlocked with keys. Otherwise locks follow the normal spawn rules." );
+        luna::set_fx( ut, "replace_vehicle", []( mapgen_constructor & m, vehicle * target,
+        const std::string & vehicle_id, const sol::optional<sol::table> &opts ) -> bool {
+            if( target == nullptr )
+            {
+                return false;
+            }
+            const auto replacement = make_replace_vehicle_request( vehicle_id, replace_vehicle_target{
+                .pos = tripoint_bub_ms::zero(),
+                .veh = target,
+                .default_orientation = target->face.dir(),
+            }, opts );
+            if( !replacement.has_value() )
+            {
+                return false;
+            }
+            return replace_mapgen_vehicle_impl( m, target, *replacement );
+        } );
+
+        luna::set_fx( ut, "get_map_size_in_submaps", []( const mapgen_constructor & ) -> int {
+            return 2;
+        } );
+        luna::set_fx( ut, "get_map_size", []( const mapgen_constructor & ) -> int {
+            return SEEX * 2;
+        } );
+
+        luna::set_fx( ut, "has_flag_at",
+        []( const mapgen_constructor & m, const std::string & flag, const point_omt_ms & p ) {
+            return m.has_flag( flag, p );
+        } );
+        luna::set_fx( ut, "has_ter_flag_at",
+        []( const mapgen_constructor & m, const std::string & flag, const point_omt_ms & p ) {
+            return m.has_flag_ter( flag, p );
+        } );
+        luna::set_fx( ut, "get_ter_at",
+        []( const mapgen_constructor & m, const point_omt_ms & p ) { return m.ter( p ); } );
+        luna::set_fx( ut, "set_ter_at",
+        []( mapgen_constructor & m, const point_omt_ms & p, const ter_id & id ) { return m.ter_set( p, id ); } );
+        luna::set_fx( ut, "has_furn_flag_at",
+        []( const mapgen_constructor & m, const std::string & flag, const point_omt_ms & p ) {
+            return m.has_flag_furn( flag, p );
+        } );
+        luna::set_fx( ut, "get_furn_at",
+        []( const mapgen_constructor & m, const point_omt_ms & p ) { return m.furn( p ); } );
+        luna::set_fx( ut, "set_furn_at",
+        []( mapgen_constructor & m, const point_omt_ms & p, const furn_id & id ) { m.furn_set( p, id ); } );
+        DOC( "Returns a furniture variable at the position, or `default` (empty string if omitted) when it is not set." );
+        luna::set_fx( ut, "get_furn_var_at", []( const mapgen_constructor & m, const point_omt_ms & p,
+        const std::string & key, sol::optional<std::string> default_value ) -> std::string {
+            const auto *vars = m.furn_vars( p );
+            return vars ? vars->get( key, default_value.value_or( "" ) ) : default_value.value_or( "" );
+        } );
+        DOC( "Sets a furniture variable at the position. Returns false if the position is out of bounds." );
+        luna::set_fx( ut, "set_furn_var_at", []( mapgen_constructor & m, const point_omt_ms & p,
+        const std::string & key, const std::string & value ) -> bool {
+            auto *vars = m.furn_vars( p );
+            if( !vars ) { return false; }
+            vars->set( key, value );
+            return true;
+        } );
+        DOC( "Returns whether a furniture variable is set at the position." );
+        luna::set_fx( ut, "has_furn_var_at", []( const mapgen_constructor & m, const point_omt_ms & p,
+        const std::string & key ) -> bool {
+            const auto *vars = m.furn_vars( p );
+            return vars && vars->contains( key );
+        } );
+        DOC( "Removes a furniture variable at the position. Returns whether a variable was removed." );
+        luna::set_fx( ut, "erase_furn_var_at", []( mapgen_constructor & m, const point_omt_ms & p,
+        const std::string & key ) -> bool {
+            auto *vars = m.furn_vars( p );
+            if( !vars || !vars->contains( key ) ) { return false; }
+            vars->erase( key );
+            return true;
+        } );
+
+        DOC( "Returns a terrain variable at the position, or `default` (empty string if omitted) when it is not set." );
+        luna::set_fx( ut, "get_ter_var_at", []( const mapgen_constructor & m, const point_omt_ms & p,
+        const std::string & key, sol::optional<std::string> default_value ) -> std::string {
+            const auto *vars = m.ter_vars( p );
+            return vars ? vars->get( key, default_value.value_or( "" ) ) : default_value.value_or( "" );
+        } );
+        DOC( "Sets a terrain variable at the position. Returns false if the position is out of bounds." );
+        luna::set_fx( ut, "set_ter_var_at", []( mapgen_constructor & m, const point_omt_ms & p,
+        const std::string & key, const std::string & value ) -> bool {
+            auto *vars = m.ter_vars( p );
+            if( !vars ) { return false; }
+            vars->set( key, value );
+            return true;
+        } );
+        DOC( "Returns whether a terrain variable is set at the position." );
+        luna::set_fx( ut, "has_ter_var_at", []( const mapgen_constructor & m, const point_omt_ms & p,
+        const std::string & key ) -> bool {
+            const auto *vars = m.ter_vars( p );
+            return vars && vars->contains( key );
+        } );
+        DOC( "Removes a terrain variable at the position. Returns whether a variable was removed." );
+        luna::set_fx( ut, "erase_ter_var_at", []( mapgen_constructor & m, const point_omt_ms & p,
+        const std::string & key ) -> bool {
+            auto *vars = m.ter_vars( p );
+            if( !vars || !vars->contains( key ) ) { return false; }
+            vars->erase( key );
+            return true;
+        } );
+        luna::set_fx( ut, "get_temperature",
+        []( const mapgen_constructor & m, const point_omt_ms & p ) { return m.get_temperature( p ); } );
+        luna::set_fx( ut, "set_temperature",
+        []( mapgen_constructor & m, const point_omt_ms & p, const int temp ) { m.set_temperature( p, temp ); } );
+        luna::set_fx( ut, "add_field_at", []( mapgen_constructor & m, const point_omt_ms & p,
+        const field_type_id & fid, int intensity, const time_duration & age ) -> bool {
+            return m.add_field( p, fid, intensity, age );
+        } );
+        luna::set_fx( ut, "remove_field_at", &mapgen_constructor::remove_field );
+        luna::set_fx( ut, "get_trap_at",
+                      []( mapgen_constructor & m, const point_omt_ms & p ) -> trap_id { return m.tr_at( p ).loadid; } );
+        luna::set_fx( ut, "set_trap_at", &mapgen_constructor::trap_set );
+        luna::set_fx( ut, "remove_trap_at", &mapgen_constructor::remove_trap );
+
+        luna::set_fx( ut, "is_ot_match",
+                      []( std::string ref, oter_id & id, ot_match_type match ) -> bool { return is_ot_match( ref, id, match ); } );
+        luna::set_fx( ut, "draw_fill_background",
+        []( mapgen_constructor & m, std::string ref ) { m.draw_fill_background( ter_id( ref ) ); } );
+        luna::set_fx( ut, "place_spawns", []( mapgen_constructor & m, std::string id, int chance,
+        point_omt_ms topleft, point_omt_ms bottomright, float density, bool single ) {
+            m.place_spawns( mongroup_id( id ), chance, topleft, bottomright, density, single );
+        } );
+        luna::set_fx( ut, "place_items", []( mapgen_constructor & m, std::string id, int chance,
+        point_omt_ms topleft, point_omt_ms bottomright, bool onflat ) {
+            m.place_items( item_group_id( id ), chance, topleft, bottomright, onflat,
+                           calendar::start_of_cataclysm );
+        } );
+        luna::set_fx( ut, "rotate", []( mapgen_constructor & m, int turns ) { m.rotate( turns ); } );
+        luna::set_fx( ut, "make_rubble", []( mapgen_constructor & m, point_omt_ms point,
+        furn_id & fid, ter_id & tid ) { m.make_rubble( point, fid, tid ); } );
+        luna::set_fx( ut, "destroy", []( mapgen_constructor & m, point_omt_ms point ) { m.destroy( point ); } );
     }
 
     // Register 'item_stack' class to be used in Lua

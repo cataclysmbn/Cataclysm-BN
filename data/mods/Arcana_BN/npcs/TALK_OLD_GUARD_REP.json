@@ -76,7 +76,7 @@
     "type": "talk_topic",
     "dynamic_line": {
       "u_has_trait": "PROF_FED",
-      "yes": "We're stretched thin as it is.  However, hou've done a lot of good work for us, maybe I could try to talk the higher-ups into working something out.  I'll be honest with you, it's not going to be easy to convince them, and I'm worried such arrangements might turn sour if they find something they need.  I'll need to know more about the community you're requesting assistance for.",
+      "yes": "We're stretched thin as it is.  However, you've done a lot of good work for us, maybe I could try to talk the higher-ups into working something out.  I'll be honest with you, it's not going to be easy to convince them, and I'm worried such arrangements might turn sour if they find something they need.  I'll need to know more about the community you're requesting assistance for.",
       "no": "I wish we could spare the people for every settlement out there, but we're stretched dangerously thin as it is.  Not to mention, that's for the higher-ups to decide.  If things weren't so hectic in this region, I might be able talk them into committing more personnel, but I'm not sure how easy it'll be."
     },
     "responses": [
@@ -126,7 +126,7 @@
   {
     "id": "TALK_OLD_GUARD_REP_CF_MISSION_4_CF1",
     "type": "talk_topic",
-    "dynamic_line": "So you can vouch for them, Marshal.  That's good.  I hope you know the risks.  If even half the rumors brought back by survivors that meet with them are true, they're involved in some odd business, and that might attract the wrong kind of attention from top brass.  If you're sure, I'll do what I can to put in word with my superiors to make contact with them and set up a contact.",
+    "dynamic_line": "So you can vouch for them, Marshal.  That's good.  I hope you know the risks.  If even half the rumors brought back by survivors that meet with them are true, they're involved in some odd business, and that might attract the wrong kind of attention from top brass.  If you're sure, I'll do what I can to put in word with my superiors to make contact with them and send a representative.",
     "responses": [
       {
         "text": "I don't think either party can afford not to work together for survival.  Go ahead.",

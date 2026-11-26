@@ -146,6 +146,8 @@ F^^|^^^.^..F.FFF
 }
 ```
 
+<a id="overmap-terrain"></a>
+
 ## 오버맵 지형
 
 ### 회전
@@ -160,7 +162,7 @@ F^^|^^^.^..F.FFF
 | `id`              | 고유 ID.                                                                                                                                                |
 | `name`            | 게임에 표시되는 위치 이름.                                                                                                                              |
 | `sym`             | 위치를 그릴 때 사용하는 기호, `"F"` 같은 것 (또는 `70`과 같은 ASCII 값 사용 가능).                                                                      |
-| `color`           | 기호를 그릴 색상. [COLOR.md](../graphics/COLOR) 참조.                                                                                                   |
+| `color`           | 기호를 그릴 색상. [색상 문서](../graphics/color.md) 참조.                                                                                               |
 | `looks_like`      | 이것에 대한 그래픽 타일이 없는 경우 사용할 다른 오버맵 지형의 ID.                                                                                       |
 | `connect_group`   | 이 오버맵 지형이 인접 지형과 그래픽적으로 연결될 수 있도록 지정(타일셋이 원하는 경우). 같은 `connect_group`을 가진 다른 `overmap_terrain`과 연결됩니다. |
 | `see_cost`        | 오버맵에서 플레이어 시야에 영향을 줍니다. 값이 높을수록 시야를 더 가립니다.                                                                             |
@@ -168,7 +170,7 @@ F^^|^^^.^..F.FFF
 | `extras`          | region_settings의 이름이 지정된 `map_extras`에 대한 참조, 적용할 수 있는 맵 추가 요소를 정의합니다.                                                     |
 | `mondensity`      | 인접한 오버맵 지형의 값과 합산되어 여기서 생성되는 몬스터 밀도에 영향을 줍니다.                                                                         |
 | `spawns`          | 맵젠 시 한 번 추가되는 스폰. 몬스터 그룹, % 확률, 개체수 범위 (최소/최대).                                                                              |
-| `flags`           | [json_flags.md](../json_flags)의 `Overmap terrains` 참조.                                                                                               |
+| `flags`           | [json_flags.md](../json_flags.md)의 `Overmap terrains` 참조.                                                                                            |
 | `mapgen`          | C++ 맵젠 함수 지정. 하지 마세요--JSON을 사용하세요.                                                                                                     |
 | `mapgen_straight` | LINEAR 특징 변형을 위한 C++ 맵젠 함수 지정. JSON 선호.                                                                                                  |
 | `mapgen_curved`   | LINEAR 특징 변형을 위한 C++ 맵젠 함수 지정. JSON 선호.                                                                                                  |
@@ -247,16 +249,17 @@ F^^|^^^.^..F.FFF
 | `city_distance` | 스페셜이 배치될 수 있는 도시로부터의 최소/최대 거리. 무제한의 경우 -1 사용.              |
 | `city_sizes`    | 스페셜이 근처에 배치될 수 있는 도시의 최소/최대 크기. 무제한의 경우 -1 사용.             |
 | `occurrences`   | 스페셜을 배치할 때의 최소/최대 발생 수. UNIQUE 플래그가 설정되면 Y 중 X의 확률이 됩니다. |
-| `flags`         | [json_flags.md](../json_flags)의 `Overmap specials` 참조.                                |
+| `flags`         | [json_flags.md](../json_flags.md)의 `Overmap specials` 참조.                             |
 | `rotate`        | 스페셜이 회전할 수 있는지 여부. 지정되지 않으면 참.                                      |
 
 하위 유형에 따라 추가 관련 필드가 있습니다:
 
 #### 고정 오버맵 스페셜을 위한 추가 필드
 
-| 식별자     | 설명                                                      |
-| ---------- | --------------------------------------------------------- |
-| `overmaps` | 오버맵 지형과 스페셜 내의 상대적 `[ x, y, z ]` 위치 목록. |
+| 식별자               | 설명                                                                                                                                                                    |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `overmaps`           | 오버맵 지형과 스페셜 내의 상대적 `[ x, y, z ]` 위치 목록.                                                                                                               |
+| `absolute_spawn_loc` | 이 스페셜이 생성될 절대 오버맵을 정의하는 `{ "x": 0, "y": 0, "do_absolute_spawn_loc": bool }` 객체. 모드 덮어쓰기에 사용되는 `do_absolute_spawn_loc`은 선택 사항입니다. |
 
 #### 가변 오버맵 스페셜을 위한 추가 필드
 
@@ -635,7 +638,7 @@ Z 레벨 제한은 숫자, 절대 좌표 제한이 있는 `["min", "mix"]` 범�
 
 ### 필수 오버맵 스페셜 / 지역 설정
 
-도시 건물은 오버맵 스페셜과 동일한 수량 제한의 대상이 아니며, 실제로 발생 속성은 전혀 적용되지 않습니다. 대신 도시 건물의 배치는 `region_settings` 내에서 도시 건물에 할당된 빈도에 의해 구동됩니다. 자세한 내용은 [REGION_SETTINGS.md](./REGION_SETTINGS)를 참조하세요.
+도시 건물은 오버맵 스페셜과 동일한 수량 제한의 대상이 아니며, 실제로 발생 속성은 전혀 적용되지 않습니다. 대신 도시 건물의 배치는 `region_settings` 내에서 도시 건물에 할당된 빈도에 의해 구동됩니다. 자세한 내용은 [지역 설정 문서](region_settings.md)를 참조하세요.
 
 ### 필드
 
@@ -721,7 +724,7 @@ Z 레벨 제한은 숫자, 절대 좌표 제한이 있는 `["min", "mix"]` 범�
 | `locations`  | 이 하위 유형이 적용되는 `overmap_location` 목록. 비어 있을 수 있음; `terrain`이 그대로 유효함을 나타냄. |
 | `basic_cost` | 경로를 찾을 때 이 하위 유형의 비용. 기본값 0.                                                           |
 | `weight`     | 다른 항목보다 항목이 나타날 가중치. 기본값 0.                                                           |
-| `flags`      | [json_flags.md](../json_flags)의 `Overmap connections` 참조.                                            |
+| `flags`      | [json_flags.md](../json_flags.md)의 `Overmap connections` 참조.                                         |
 
 ## 오버맵 위치
 

@@ -15,7 +15,7 @@
       { "item": "onion_rings", "prob": 10 },
       { "item": "mintpatties", "prob": 20 },
       { "item": "electrohack", "prob": 3 },
-      { "item": "usb_drive", "prob": 5 },
+      { "group": "digital_storage_media", "prob": 5 },
       { "group": "ammo_pocket_batteries_full", "prob": 50 },
       { "item": "file", "prob": 10 },
       { "item": "manual_computers", "prob": 20 },

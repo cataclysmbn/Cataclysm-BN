@@ -17,7 +17,7 @@
       "str_max": 16,
       "sound": "glass breaking",
       "sound_fail": "whack!",
-      "sound_vol": 90,
+      "sound_vol": "90 dB",
       "furn_set": "f_bigmirror_b",
       "items": [ { "item": "glass_shard", "count": [ 3, 6 ] } ],
       "//": "destroy_threshold equal to str_min as fragile glass breaks into standing mirror frame, reduction matches that of broken mirror",
@@ -171,7 +171,7 @@
     "type": "furniture",
     "id": "f_rotary_clothesline",
     "name": "rotary clothes dryer line",
-    "description": "A umbrella shaped clothes line mounted on a pole.",
+    "description": "An umbrella shaped clothes line mounted on a pole.",
     "symbol": "X",
     "color": "white",
     "move_cost_mod": -2,
@@ -225,6 +225,32 @@
       ],
       "//": "Variable reduction since might hit more or less material.",
       "ranged": { "reduction": [ 10, 20 ], "destroy_threshold": 40, "block_unaimed_chance": "25%" }
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_billybass",
+    "name": "big mouth billy bass",
+    "symbol": "B",
+    "description": "A classic home decoration piece that projects an air of class and sophistication across the room, and for only 4 dollars a pound.  Examine it to activate its soothing melody.",
+    "color": "green",
+    "move_cost_mod": 0,
+    "required_str": 10,
+    "flags": [ "EASY_DECONSTRUCT", "TRANSPARENT" ],
+    "deconstruct": { "items": [ { "item": "billybass", "count": 1 } ] },
+    "crafting_pseudo_item": "fake_billybass",
+    "examine_action": "use_furn_fake_item",
+    "bash": {
+      "str_min": 6,
+      "str_max": 40,
+      "sound": "smash!",
+      "sound_fail": "whack!",
+      "items": [
+        { "item": "splinter", "count": [ 1, 2 ] },
+        { "item": "plastic_chunk", "count": [ 1, 2 ] },
+        { "item": "e_scrap", "count": [ 1, 2 ] }
+      ],
+      "ranged": { "reduction": [ 6, 6 ], "destroy_threshold": 40, "block_unaimed_chance": "25%" }
     }
   }
 ]

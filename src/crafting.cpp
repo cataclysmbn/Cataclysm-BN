@@ -1,21 +1,5 @@
 #include "crafting.h"
 
-#include <algorithm>
-#include <cassert>
-#include <climits>
-#include <cmath>
-#include <cstdlib>
-#include <functional>
-#include <limits>
-#include <map>
-#include <memory>
-#include <optional>
-#include <ranges>
-#include <set>
-#include <string>
-#include <utility>
-#include <vector>
-
 #include "action_time_scale.h"
 #include "activity_actor_definitions.h"
 #include "activity_handlers.h"
@@ -23,9 +7,9 @@
 #include "avatar_functions.h"
 #include "bionics.h"
 #include "calendar.h"
+#include "cata_utility.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
-#include "cata_utility.h"
 #include "character.h"
 #include "character_functions.h"
 #include "color.h"
@@ -33,6 +17,7 @@
 #include "crafting_gui.h"
 #include "crafting_quality.h"
 #include "debug.h"
+#include "enchantments/enchantment.h"
 #include "enums.h"
 #include "faction.h"
 #include "flag.h"
@@ -48,10 +33,9 @@
 #include "itype.h"
 #include "iuse.h"
 #include "line.h"
-#include "map.h"
-#include "map_selector.h"
-#include "mapdata.h"
-#include "magic_enchantment.h"
+#include "map/map.h"
+#include "map/map_selector.h"
+#include "map/mapdata.h"
 #include "messages.h"
 #include "mutation.h"
 #include "npc.h"
@@ -76,11 +60,27 @@
 #include "ui.h"
 #include "units.h"
 #include "value_ptr.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vehicle_selector.h"
-#include "vpart_position.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vehicle_selector.h"
+#include "vehicle/vpart_position.h"
+
+#include <algorithm>
+#include <cassert>
+#include <climits>
+#include <cmath>
+#include <cstdlib>
+#include <functional>
+#include <limits>
+#include <map>
+#include <memory>
+#include <optional>
+#include <ranges>
+#include <set>
+#include <string>
+#include <utility>
+#include <vector>
 
 static const activity_id ACT_CRAFT( "ACT_CRAFT" );
 
@@ -302,7 +302,7 @@ float crafting_speed_multiplier( const Character &who, const recipe &rec, bool )
                                   ? 9999
                                   : 100.0f / get_option<int>( "CRAFTING_SPEED_MULT" ) ) *
                   who.mutation_value( "crafting_speed_modifier" );
-    result += who.bonus_from_enchantments( result, enchant_vals::mod::CRAFTING_SPEED );
+    result += who.bonus_from_enchantments( result, enchantment_value_id( "CRAFTING_SPEED" ) );
 
     return result;
 }
@@ -331,7 +331,7 @@ float crafting_speed_multiplier( const Character &who, const item &craft,
     auto total_multi = light_multi * bench_multi * morale_multi * tools_multi * mutation_multi *
                        game_opt_multi;
 
-    total_multi += who.bonus_from_enchantments( total_multi, enchant_vals::mod::CRAFTING_SPEED );
+    total_multi += who.bonus_from_enchantments( total_multi, enchantment_value_id( "CRAFTING_SPEED" ) );
     if( light_multi <= 0.0f ) {
         who.add_msg_player_or_npc( m_bad,
                                    _( "You can no longer see well enough to keep crafting." ),
@@ -389,7 +389,8 @@ void Character::craft( const tripoint_bub_ms &loc )
     while( true ) {
         int batch_size = 0;
         bool this_was_batch = false;
-        const recipe *rec = select_crafting_recipe( batch_size, *this, resume_rec, resume_bs, resume_was_batch, &this_was_batch );
+        const recipe *rec = select_crafting_recipe( batch_size, *this, resume_rec, resume_bs,
+                            resume_was_batch, &this_was_batch );
         if( !rec ) {
             return;
         }
@@ -425,7 +426,8 @@ void Character::long_craft( const tripoint_bub_ms &loc )
     while( true ) {
         int batch_size = 0;
         bool this_was_batch = false;
-        const recipe *rec = select_crafting_recipe( batch_size, *this, resume_rec, resume_bs, resume_was_batch, &this_was_batch );
+        const recipe *rec = select_crafting_recipe( batch_size, *this, resume_rec, resume_bs,
+                            resume_was_batch, &this_was_batch );
         if( !rec ) {
             return;
         }
@@ -659,9 +661,13 @@ const inventory &Character::crafting_inventory( const tripoint_bub_ms &src_pos, 
                                                 units::to_kilojoule( get_power_level() ) ), true );
         }
     }
-    if( has_trait( trait_BURROW ) ) {
-        cached_crafting_inventory.add_item( *item::spawn_temporary( "pickaxe", calendar::turn ), true );
-        cached_crafting_inventory.add_item( *item::spawn_temporary( "shovel", calendar::turn ), true );
+    for( const itype_id &it : enchantment_cache->get_fake_items() ) {
+        if( it->has_flag( flag_USES_BIONIC_POWER ) ) {
+            cached_crafting_inventory.add_item( *item::spawn_temporary( it, calendar::turn,
+                                                units::to_kilojoule( get_power_level() ) ), true );
+        } else {
+            cached_crafting_inventory.add_item( *item::spawn_temporary( it, calendar::turn ), true );
+        }
     }
 
     cached_moves = moves;
@@ -705,13 +711,14 @@ void Character::make_craft_with_command( const recipe_id &id_to_make, int batch_
 
 // @param offset is the index of the created item in the range [0, batch_size-1],
 // it makes sure that the used items are distributed equally among the new items.
-static void set_components( item &of, const std::vector<item *> &used,
-                            const int batch_size, const size_t offset )
+void set_components( item &of, const std::vector<item *> &used,
+                     const int batch_size, const size_t offset )
 {
     location_vector<item> &components = of.get_components();
     if( batch_size <= 1 ) {
         for( item * const &it : used ) {
             components.push_back( item::spawn( *it ) );
+            components.back()->set_flag( flag_id( "COMPONENT" ) );
         }
         return;
     }
@@ -723,9 +730,11 @@ static void set_components( item &of, const std::vector<item *> &used,
             // This assumes all (count-by-charges) items of the same type have been merged into one,
             // which has a charges value that can be evenly divided by batch_size.
             components.back()->charges = tmp->charges / batch_size;
+            components.back()->set_flag( flag_id( "COMPONENT" ) );
         } else {
             if( ( non_charges_counter + offset ) % batch_size == 0 ) {
                 components.push_back( item::spawn( *tmp ) );
+                components.back()->set_flag( flag_id( "COMPONENT" ) );
             }
             non_charges_counter++;
         }
@@ -1131,7 +1140,7 @@ static auto component_relative_rot( const item *component ) -> double
     return component != nullptr && component->goes_bad() ? component->get_relative_rot() : 0.0;
 }
 
-static auto highest_component_relative_rot( const std::vector<item *> &components ) -> double
+auto highest_component_relative_rot( const std::vector<item *> &components ) -> double
 {
     namespace ranges = std::ranges;
     using namespace std::views;
@@ -1226,7 +1235,22 @@ void complete_craft( Character &who, item &craft )
             params["batch_size"] = batch_size;
             params["hot_result"] = should_heat;
             params["dehydrated_result"] = is_dehydrated;
+            params["crafting_menu"] = false;
         } );
+        if( making.lua_callbacks ) {
+            making.lua_callbacks->call_on_craft(
+            lua_recipe_actor::RecipeCraftResult{
+                who,
+                craft,
+                food_contained,
+                making,
+                batch_size,
+                should_heat,
+                is_dehydrated,
+            }
+            );
+        }
+
         // Don't store components for things that ignores components (e.g wow 'conjured bread')
         if( ignore_component ) {
             food_contained.set_flag( flag_NUTRIENT_OVERRIDE );
@@ -1289,6 +1313,9 @@ void complete_craft( Character &who, item &craft )
         // If we created a tool that spawns empty, don't preset its ammotype.
         if( !newit->ammo_remaining() ) {
             newit->ammo_unset();
+        }
+        if( newit->has_flag( flag_id( "CRAFT_WITH_FULL_MAG" ) ) ) {
+            newit->ammo_set( newit->ammo_default(), newit->ammo_capacity() );
         }
         if( newit->made_of( LIQUID ) ) {
             liquid_handler::handle_all_liquid( std::move( newit ), PICKUP_RANGE );

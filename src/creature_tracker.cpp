@@ -1,19 +1,21 @@
 #include "creature_tracker.h"
 
-#include <algorithm>
-#include <cassert>
-#include <ostream>
-#include <string>
-#include <utility>
-
 #include "debug.h"
-#include "map.h"
+#include "explosion_queue.h"
+#include "map/map.h"
 #include "mongroup.h"
 #include "monster.h"
 #include "mtype.h"
 #include "point.h"
 #include "string_formatter.h"
 #include "type_id.h"
+
+#include <algorithm>
+#include <cassert>
+#include <iterator>
+#include <ostream>
+#include <string>
+#include <utility>
 
 #define dbg(x) DebugLogFL((x),DC::Game)
 
@@ -230,6 +232,13 @@ void Creature_tracker::remove( const monster &critter )
     monsters_list.erase( iter );
 }
 
+void Creature_tracker::adopt_removed( Creature_tracker &other )
+{
+    std::ranges::move( other.monsters_list, std::back_inserter( removed_ ) );
+    std::ranges::move( other.removed_, std::back_inserter( removed_ ) );
+    other.clear();
+}
+
 void Creature_tracker::clear()
 {
     monsters_list.clear();
@@ -243,8 +252,12 @@ void Creature_tracker::rebuild_cache()
     monsters_by_location.clear();
     monster_faction_map_.clear();
     for( const shared_ptr_fast<monster> &mon_ptr : monsters_list ) {
-        monsters_by_location[mon_ptr->abs_pos()] = mon_ptr;
-        add_to_faction_map( mon_ptr );
+        if( !mon_ptr ) {
+            debugmsg( "Monster stored in creature cache was invalid." );
+        } else {
+            monsters_by_location[mon_ptr->abs_pos()] = mon_ptr;
+            add_to_faction_map( mon_ptr );
+        }
     }
 }
 
@@ -311,10 +324,13 @@ bool Creature_tracker::kill_marked_for_death()
 
 void Creature_tracker::remove_dead()
 {
+    // Queued explosions must not keep raw source pointers to destroyed monsters.
+    auto &explosions = explosion_handler::get_explosion_queue();
     // Can't use game::all_monsters() as it would not contain *dead* monsters.
     for( auto iter = monsters_list.begin(); iter != monsters_list.end(); ) {
         const monster &critter = **iter;
         if( critter.is_dead() ) {
+            explosions.invalidate_source( &critter );
             remove_from_location_map( critter );
             iter = monsters_list.erase( iter );
         } else {
@@ -322,5 +338,8 @@ void Creature_tracker::remove_dead()
         }
     }
 
+    for( const auto &mon_ptr : removed_ ) {
+        explosions.invalidate_source( mon_ptr.get() );
+    }
     removed_.clear();
 }

@@ -230,7 +230,7 @@
     "type": "furniture",
     "id": "f_lilypad",
     "name": "lilypad",
-    "description": "These lilypads don't look they'd support the weight of the things you've heard croaking in the swamp.",
+    "description": "These lilypads don't look like they'd support the weight of the things you've heard croaking in the swamp.",
     "symbol": "f",
     "color": "green",
     "move_cost_mod": 0,

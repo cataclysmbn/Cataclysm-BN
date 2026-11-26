@@ -9,10 +9,11 @@
 
 #include "bodypart.h"
 #include "damage.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "mattack_common.h"
 #include "translations.h"
 #include "type_id.h"
+#include "units.h"
 #include "weighted_list.h"
 
 class Creature;
@@ -73,6 +74,14 @@ class melee_actor : public mattack_actor
         // If non-negative, the attack will use a different accuracy from mon's
         // regular melee attack.
         int accuracy = INT_MIN;
+        // Whether the attack requires the target to be grabbed
+        bool requires_grab = false;
+        // Maximum range of the attack
+        float max_range = 1.0f;
+        // Minimum range of the attack
+        float min_range = 1.0f;
+        // Throw strength of the attack, 0 means no throw
+        float throw_strength = 0.0f;
 
         /**
          * If empty, regular melee roll body part selection is used.
@@ -90,6 +99,8 @@ class melee_actor : public mattack_actor
         translation no_dmg_msg_u;
         /** Message for damaging hit against the player. */
         translation hit_dmg_u;
+        /** Message for a ranged attack against the player that hits an obstacle. */
+        translation bounce_msg_u;
 
         /** Message for missed attack against a non-player. */
         translation miss_msg_npc;
@@ -97,6 +108,8 @@ class melee_actor : public mattack_actor
         translation no_dmg_msg_npc;
         /** Message for damaging hit against a non-player. */
         translation hit_dmg_npc;
+        /** Message for a ranged attack against a non-player that hits an obstacle. */
+        translation bounce_msg_npc;
 
         melee_actor();
         ~melee_actor() override;
@@ -131,8 +144,8 @@ class gun_actor : public mattack_actor
         // Item type of the gun we're using
         itype_id gun_type;
 
-        /** Specific ammo type to use or for gun default if unspecified */
-        itype_id ammo_type = itype_id::NULL_ID();
+        /** Specific ammo item ids to use, with the first entry as the default loaded ammo */
+        std::vector<itype_id> ammo_types;
 
         /*@{*/
         /** Balanced against player. If fake_skills unspecified defaults to GUN 4, WEAPON 8 */
@@ -176,7 +189,7 @@ class gun_actor : public mattack_actor
         int targeting_timeout_extend = 3; /** Increase timeout by this many turns after each shot */
 
         std::string targeting_sound;
-        int targeting_volume = 6; /** If set to zero don't emit any targeting sounds */
+        units::sound targeting_volume = 6_dB; /** If set to zero don't emit any targeting sounds */
 
         bool laser_lock = false; /** Does switching between targets incur further targeting penalty */
         bool no_crits =
@@ -195,6 +208,7 @@ class gun_actor : public mattack_actor
 
         void load_internal( const JsonObject &obj, const std::string &src ) override;
         bool call( monster & ) const override;
+        void check( const mtype_id &src ) const override;
         std::unique_ptr<mattack_actor> clone() const override;
 };
 
@@ -221,4 +235,3 @@ class deployer_actor : public mattack_actor
         bool call( monster & ) const override;
         std::unique_ptr<mattack_actor> clone() const override;
 };
-

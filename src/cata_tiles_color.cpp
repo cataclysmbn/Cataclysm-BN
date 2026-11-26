@@ -1,17 +1,16 @@
 #if defined(TILES)
-#include "cata_tiles.h"
-
-#include "map.h"
-#include "monster.h"
-#include "character.h"
-#include "field.h"
-#include "color.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
-#include "omdata.h"
-
+#    include "cata_tiles.h"
+#    include "character.h"
+#    include "color.h"
+#    include "map/field.h"
+#    include "map/map.h"
+#    include "monster.h"
+#    include "overmap/omdata.h"
+#    include "vehicle/veh_type.h"
+#    include "vehicle/vehicle.h"
+#    include "vehicle/vehicle_part.h"
+#    include "vehicle/vpart_position.h"
+#    include "profile.h"
 static constexpr RGBColor RGB_NO_COLOR = TILESET_NO_COLOR;
 
 namespace
@@ -80,6 +79,7 @@ color_tint_pair tint_from_tileset(
     const T &v,
     const color_tint_pair &defVal = {} )
 {
+    ZoneScoped;
     using helper = tint_helper<T>;
 
     color_tint_pair tint = defVal;
@@ -103,11 +103,12 @@ color_tint_pair tint_from_tileset(
 
 color_tint_pair tint_from_data_vars( const data_vars::data_set &i, const color_tint_pair &defVal = {} )
 {
-    auto [bg_tint, fg_tint] = defVal;
-
+    ZoneScoped;
     if( !std::ranges::any_of( i, []( auto & f ) { return f.first.starts_with( TINT_VAR_PREFIX ); } ) ) {
         return defVal;
     }
+
+    auto [bg_tint, fg_tint] = defVal;
 
     constexpr blend_mode_cvt blendCvt{};
 
@@ -214,6 +215,13 @@ auto cata_tiles::get_trap_color(
 auto cata_tiles::get_field_color(
     const field &f, const map &, const tripoint_bub_ms & ) const -> color_tint_pair
 {
+    if( const auto tint_rgb = f.displayed_field_type().obj().get_tint_rgb(); tint_rgb.has_value() ) {
+        return { tint_config{ *tint_rgb }, tint_config{ *tint_rgb } };
+    }
+    const auto tint = f.displayed_field_type().obj().get_tint();
+    if( tint != c_unset ) {
+        return { tint_config{ tint }, tint_config{ tint } };
+    }
     return tint_from_tileset( tileset_ptr, f );
 }
 
@@ -228,6 +236,7 @@ auto cata_tiles::get_vpart_color(
     const optional_vpart_position &vp, const map &, const tripoint_bub_ms &,
     const bool use_roof ) const -> color_tint_pair
 {
+    ZoneScoped;
     color_tint_pair tint{};
     if( !vp.has_value() ) {
         return tint;

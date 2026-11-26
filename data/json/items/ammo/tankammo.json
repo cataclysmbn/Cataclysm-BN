@@ -607,7 +607,9 @@
     "name": { "str_sp": "25mm casing" },
     "description": "A canister from a spent 25mm shell.",
     "volume": "135 ml",
-    "weight": "20 g"
+    "weight": "50 g",
+    "stackable": true,
+    "damage_states": [ 0, 0 ]
   },
   {
     "type": "GENERIC",

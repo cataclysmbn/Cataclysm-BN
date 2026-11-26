@@ -68,7 +68,7 @@
         "targeting_cost": 150,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile detected.\"",
-        "targeting_volume": 20,
+        "targeting_volume": "46 dB",
         "no_ammo_sound": "beep!"
       }
     ],
@@ -121,7 +121,6 @@
         "cooldown": 1,
         "move_cost": 150,
         "gun_type": "pseudo_m203",
-        "ammo_type": "40x46mm_m1006",
         "fake_skills": [ [ "gun", 8 ], [ "rifle", 8 ] ],
         "fake_dex": 12,
         "ranges": [ [ 0, 30, "DEFAULT" ] ],
@@ -133,7 +132,7 @@
         "targeting_cost": 200,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Universal curfew is in effect.  Please return to your home.  This unit is authorized to open fire.\"",
-        "targeting_volume": 50,
+        "targeting_volume": "54 dB",
         "no_ammo_sound": "a chk!"
       }
     ],
@@ -156,7 +155,7 @@
     "id": "mon_turret_light",
     "type": "MONSTER",
     "name": { "str": "light turret" },
-    "description": "The General Atomics TX-1 Guardian, an popular automated turret equipped with a 9mm carbine.  Initially it was designed mainly for corporate property protection and police needs, however due to its popularity, it ended up being used even for military needs.  Its high-quality targeting system allows it to engage targets even at medium range.",
+    "description": "The General Atomics TX-1 Guardian, a popular automated turret equipped with a 9mm carbine.  Initially it was designed mainly for corporate property protection and police needs, however due to its popularity, it ended up being used even for military needs.  Its high-quality targeting system allows it to engage targets even at medium range.",
     "default_faction": "military",
     "species": [ "ROBOT" ],
     "looks_like": "mon_turret",
@@ -184,7 +183,6 @@
         "cooldown": 1,
         "move_cost": 150,
         "gun_type": "ksub2000_turret_fake",
-        "ammo_type": "9mmfmj",
         "fake_skills": [ [ "gun", 5 ], [ "rifle", 5 ] ],
         "fake_str": 16,
         "fake_dex": 12,
@@ -197,7 +195,7 @@
         "targeting_cost": 200,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile detected.\"",
-        "targeting_volume": 20,
+        "targeting_volume": "46 dB",
         "no_ammo_sound": "a chk!"
       }
     ],
@@ -215,6 +213,38 @@
       "ID_CARD_DESPAWN",
       "CONSOLE_DESPAWN",
       "BIOPROOF"
+    ]
+  },
+  {
+    "id": "mon_turret_mini",
+    "type": "MONSTER",
+    "copy-from": "mon_turret_light",
+    "name": { "str": "mini turret" },
+    "description": "A compact sentry gun built in a hurry, with a lot of confidence and not much else.  It will never be upgraded, and nobody will ever call it sturdy, but it sets up fast and fires fast.  What it lacks in armour it makes up for in enthusiasm.  Chambered in .22 LR.",
+    "looks_like": "mon_turret_light",
+    "diff": 3,
+    "volume": "5000 ml",
+    "weight": "5 kg",
+    "hp": 20,
+    "armor_bash": 5,
+    "armor_cut": 5,
+    "armor_bullet": 5,
+    "armor_fire": 3,
+    "vision_day": 13,
+    "revert_to_itype": "bot_turret_mini",
+    "starting_ammo": { "22_lr": 50 },
+    "special_attacks": [
+      {
+        "type": "gun",
+        "cooldown": 1,
+        "move_cost": 250,
+        "gun_type": "22_turret_fake",
+        "fake_skills": [ [ "gun", 3 ], [ "pistol", 3 ] ],
+        "fake_str": 12,
+        "fake_dex": 8,
+        "ranges": [ [ 0, 13, "DEFAULT" ] ],
+        "targeting_sound": "\"Beep-boop!\""
+      }
     ]
   },
   {
@@ -257,7 +287,6 @@
         "cooldown": 1,
         "move_cost": 150,
         "gun_type": "m16a4_turret_fake",
-        "ammo_type": "556",
         "fake_skills": [ [ "gun", 8 ], [ "rifle", 8 ] ],
         "fake_str": 16,
         "fake_dex": 12,
@@ -270,7 +299,7 @@
         "targeting_cost": 200,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile detected.\"",
-        "targeting_volume": 50,
+        "targeting_volume": "54 dB",
         "no_ammo_sound": "a chk!"
       }
     ],
@@ -294,7 +323,7 @@
     "id": "mon_turret_longrange",
     "type": "MONSTER",
     "name": { "str": "longrange milspec turret" },
-    "description": "The General Atomics TX-7 Sniper, an automated milspec turret equipped with a 7.62x51mm gun.  Designed as a counter-sniper turret to cover the vulnerability of TX-5 Sentinel to sniper fire.  Its advanced target recognition system and 7.62x51mm gun allows it to engage targets protected by modern body armor at very long range.",
+    "description": "The General Atomics TX-7 Sniper, an automated milspec turret equipped with a 7.62x51mm gun.  Designed as a counter-sniper turret to cover the vulnerability of TX-5 Sentinel to sniper fire.  Its advanced target recognition system and 7.62x51mm gun allow it to engage targets protected by modern body armor at very long range.",
     "default_faction": "military",
     "species": [ "ROBOT" ],
     "looks_like": "mon_turret_bmg",
@@ -322,7 +351,6 @@
         "cooldown": 1,
         "move_cost": 150,
         "gun_type": "m14ebr_turret_fake",
-        "ammo_type": "762_51",
         "fake_skills": [ [ "gun", 8 ], [ "rifle", 8 ] ],
         "fake_str": 16,
         "fake_dex": 12,
@@ -335,7 +363,7 @@
         "targeting_cost": 200,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile detected.\"",
-        "targeting_volume": 60,
+        "targeting_volume": "56 dB",
         "no_ammo_sound": "a chk!"
       }
     ],
@@ -359,7 +387,7 @@
     "id": "mon_turret_antimateriel",
     "type": "MONSTER",
     "name": { "str": "anti-materiel milspec turret" },
-    "description": "The General Atomics TX-10 Heavy, an automated milspec turret equipped with a M2HB machine gun.  Designed for light vehicles or enemies behind cover, it utilizes the powerful and ubiquitous .50 BMG.  Its advanced target recognition system and M2HB makes a deadly combination for anything short of an armored vehicle.",
+    "description": "The General Atomics TX-10 Heavy, an automated milspec turret equipped with a M2HB machine gun.  Designed for light vehicles or enemies behind cover, it utilizes the powerful and ubiquitous .50 BMG.  Its advanced target recognition system and M2HB make a deadly combination for anything short of an armored vehicle.",
     "default_faction": "military",
     "species": [ "ROBOT" ],
     "looks_like": "mon_turret_bmg",
@@ -387,7 +415,6 @@
         "cooldown": 1,
         "move_cost": 150,
         "gun_type": "m2browning_turret_fake",
-        "ammo_type": "50bmg",
         "fake_skills": [ [ "gun", 8 ], [ "rifle", 8 ] ],
         "fake_str": 16,
         "fake_dex": 12,
@@ -400,7 +427,7 @@
         "targeting_cost": 600,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile detected.\"",
-        "targeting_volume": 60,
+        "targeting_volume": "56 dB",
         "no_ammo_sound": "a chk!"
       }
     ],
@@ -424,7 +451,7 @@
     "id": "mon_turret_mark19",
     "type": "MONSTER",
     "name": { "str": "grenade launcher milspec turret" },
-    "description": "The General Atomics TX-12 Thumper, an automated milspec turret equipped with a MK19 grenade machine gun.  Designed for medium or light vehicles, it utilizes high velocity 40x53mm grenades.  Such a powerful device moves the bar from anything on four legs to anything on four wheels, but the minimum range and the inability to return fire as a safety measure necessitates cover fire from other turret systems.",
+    "description": "The General Atomics TX-12 Thumper, an automated milspec turret equipped with a MK19 grenade machine gun.  Designed for medium or light vehicles, it utilizes high velocity 40x53mm grenades.  Such a powerful device moves the bar from anything on four legs to anything on four wheels, but the minimum range and the inability to return fire as a safety measure necessitate cover fire from other turret systems.",
     "default_faction": "military",
     "species": [ "ROBOT" ],
     "looks_like": "mon_turret_bmg",
@@ -452,7 +479,6 @@
         "cooldown": 1,
         "move_cost": 150,
         "gun_type": "mark19_turret_fake",
-        "ammo_type": "40x53mm_m430a1",
         "fake_skills": [ [ "gun", 8 ], [ "rifle", 8 ] ],
         "fake_str": 16,
         "fake_dex": 12,
@@ -465,7 +491,7 @@
         "targeting_cost": 800,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile detected.\"",
-        "targeting_volume": 60,
+        "targeting_volume": "56 dB",
         "no_ammo_sound": "a chk!"
       }
     ],

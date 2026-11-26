@@ -19,6 +19,7 @@
     "melee_skill": 6,
     "melee_dice": 3,
     "melee_dice_sides": 8,
+    "mountable_pixels_up": 20,
     "melee_cut": 5,
     "armor_bash": 15,
     "armor_cut": 25,
@@ -50,7 +51,8 @@
       "MOUNTABLE_LEDGE",
       "MECH_DEFENSIVE",
       "PRIORITIZE_TARGETS",
-      "PATH_AVOID_DANGER_2"
+      "PATH_AVOID_DANGER_2",
+      "NO_SLIP"
     ]
   },
   {
@@ -73,6 +75,7 @@
     "melee_skill": 2,
     "melee_dice": 2,
     "melee_dice_sides": 6,
+    "mountable_pixels_up": 20,
     "melee_cut": 0,
     "armor_bash": 25,
     "armor_cut": 45,
@@ -105,7 +108,8 @@
       "MECH_DEFENSIVE",
       "PRIORITIZE_TARGETS",
       "PATH_AVOID_DANGER_2",
-      "LOUDMOVES"
+      "LOUDMOVES",
+      "NO_SLIP"
     ]
   },
   {
@@ -129,6 +133,7 @@
     "melee_dice": 4,
     "melee_dice_sides": 8,
     "melee_cut": 0,
+    "mountable_pixels_up": 20,
     "armor_bash": 22,
     "armor_cut": 30,
     "armor_bullet": 65,
@@ -159,7 +164,8 @@
       "MOUNTABLE_LEDGE",
       "PRIORITIZE_TARGETS",
       "PATH_AVOID_DANGER_2",
-      "LOUDMOVES"
+      "LOUDMOVES",
+      "NO_SLIP"
     ]
   }
 ]

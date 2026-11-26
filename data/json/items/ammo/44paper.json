@@ -6,16 +6,16 @@
     "description": "A paper cartridge containing a premeasured amount of black powder and a .44 projectile.",
     "weight": "7 g",
     "volume": "250 ml",
-    "price": "350 cent",
-    "price_postapoc": "10 USD",
+    "price": "175 cent",
+    "price_postapoc": "5 USD",
     "material": [ "paper", "powder", "lead" ],
     "symbol": "=",
     "color": "white",
     "count": 25,
     "ammo_type": "44paper",
     "range": 18,
-    "//": "Base damage of 27, balance increase of two-nineths, half the expected armor penetration.",
-    "damage": { "damage_type": "bullet", "amount": 33, "armor_penetration": 9 },
+    "//": "Half the expected armor penetration since blackpowder.",
+    "damage": { "damage_type": "bullet", "amount": 28, "armor_penetration": 6 },
     "dispersion": 70,
     "recoil": 580,
     "loudness": 145,
@@ -29,7 +29,13 @@
     "description": "A paper cartridge containing a premeasured amount of smokeless powder and a .44 projectile, for people who want to fire real civil war era weapons without getting a lungful of smoke.",
     "copy-from": "44army",
     "ammo_type": "44paper",
-    "relative": { "damage": { "damage_type": "bullet", "amount": 5, "armor_penetration": 5 } },
+    "proportional": {
+      "price": 2,
+      "price_postapoc": 2,
+      "damage": { "damage_type": "bullet", "amount": 1.25 },
+      "recoil": 1.31,
+      "dispersion": 0.83
+    },
     "delete": { "effects": [ "BLACKPOWDER", "MUZZLE_SMOKE" ] }
   }
 ]

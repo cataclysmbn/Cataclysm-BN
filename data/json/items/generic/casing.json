@@ -140,7 +140,9 @@
     "volume": "55ml",
     "material": "steel",
     "symbol": "=",
-    "color": "dark_gray"
+    "color": "dark_gray",
+    "stackable": true,
+    "damage_states": [ 0, 0 ]
   },
   {
     "id": "40x53mm_casing",
@@ -152,7 +154,9 @@
     "volume": "64ml",
     "material": "steel",
     "symbol": "=",
-    "color": "dark_gray"
+    "color": "dark_gray",
+    "stackable": true,
+    "damage_states": [ 0, 0 ]
   },
   {
     "id": "44_casing",
@@ -290,8 +294,8 @@
     "id": "shot_hull",
     "type": "GENERIC",
     "category": "spare_parts",
-    "name": { "str": "shotgun hull" },
-    "description": "An empty hull from a shotgun shell.",
+    "name": { "str": "12ga shotgun hull" },
+    "description": "An empty hull from a 12 gauge shotgun shell.",
     "weight": "12 g",
     "volume": "12ml",
     "stackable": true,

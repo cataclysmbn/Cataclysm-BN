@@ -108,7 +108,8 @@
     "material": [ "aluminum" ],
     "symbol": ",",
     "color": "light_gray",
-    "qualities": [ [ "HAMMER", 1 ] ]
+    "qualities": [ [ "HAMMER", 1 ] ],
+    "flags": [ "NO_SALVAGE" ]
   },
   {
     "id": "bismuth",

@@ -16,7 +16,7 @@
     "casing": "5x50_hull",
     "range": 60,
     "//": "Balanced as AP",
-    "damage": { "damage_type": "bullet", "amount": 30, "armor_penetration": 50 },
+    "damage": { "damage_type": "bullet", "amount": 30, "armor_penetration": 70 },
     "dispersion": 60,
     "recoil": 400,
     "speed": 1000,

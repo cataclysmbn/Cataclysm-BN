@@ -555,6 +555,12 @@ enum class item_filter_type : int {
 void draw_item_filter_rules( const catacurses::window &win, int starty, int height,
                              item_filter_type type );
 
+/**
+ * The same tips as draw_item_filter_rules(), as a single string (with color tags) for use
+ * in popups, e.g. as a string_input_popup description.
+ */
+auto item_filter_rules_text( item_filter_type type ) -> std::string;
+
 char rand_char();
 int special_symbol( int sym );
 
@@ -575,7 +581,7 @@ std::string shortcut_text( nc_color shortcut_color, const std::string &fmt );
 // extra_resolution
 std::pair<std::string, nc_color> get_bar( float cur, float max, int width = 5,
         bool extra_resolution = true,
-        const std::vector<nc_color> &colors = { c_green, c_light_green, c_yellow, c_light_red, c_red } );
+const std::vector<nc_color> &colors = { c_green, c_light_green, c_yellow, c_light_red, c_red } );
 
 /**
  * @return Pair of a string containing the bar, and its color
@@ -760,10 +766,10 @@ void draw_subtab( const catacurses::window &w, int iOffsetX, const std::string &
 //   │ TAB1 │ │ TAB2 │
 // ┌─┴──────┴─┘      └───────────┐
 void draw_tabs( const catacurses::window &, const std::vector<std::string> &tab_texts,
-                size_t current_tab );
+                size_t current_tab, int max_tab_width = -1 );
 // As above, but specify current tab by its label rather than position
 void draw_tabs( const catacurses::window &, const std::vector<std::string> &tab_texts,
-                const std::string &current_tab );
+                const std::string &current_tab, int max_tab_width = -1 );
 
 // This overload of draw_tabs is intended for use when you track the current
 // tab via some other value (like an enum) linked to each tab.  Expected use
@@ -777,7 +783,7 @@ void draw_tabs( const catacurses::window &, const std::vector<std::string> &tab_
 // draw_tabs( w, tabs, current_tab );
 template<typename TabList, typename CurrentTab>
 void draw_tabs( const catacurses::window &w, const TabList &tab_list,
-                const CurrentTab &current_tab )
+                const CurrentTab &current_tab, int max_tab_width = -1 )
 requires std::is_same_v<CurrentTab,
 std::remove_const_t<typename TabList::value_type::first_type>> {
     std::vector<std::string> tab_text;
@@ -792,14 +798,14 @@ std::remove_const_t<typename TabList::value_type::first_type>> {
         return pair.first == current_tab;
     } );
     assert( current_tab_it != tab_list.end() );
-    draw_tabs( w, tab_text, std::distance( tab_list.begin(), current_tab_it ) );
+    draw_tabs( w, tab_text, std::distance( tab_list.begin(), current_tab_it ), max_tab_width );
 }
 
 // Similar to the above, but where the order of tabs is specified separately
 // TabList is expected to be a map type.
 template<typename TabList, typename TabKeys, typename CurrentTab>
 void draw_tabs( const catacurses::window &w, const TabList &tab_list, const TabKeys &keys,
-                const CurrentTab &current_tab )
+                const CurrentTab &current_tab, int max_tab_width = -1 )
 requires std::is_same_v<CurrentTab,
 std::remove_const_t<typename TabList::value_type::first_type>> {
     std::vector<typename TabList::value_type> ordered_tab_list;
@@ -809,7 +815,7 @@ std::remove_const_t<typename TabList::value_type::first_type>> {
         assert( it != tab_list.end() );
         ordered_tab_list.push_back( *it );
     }
-    draw_tabs( w, ordered_tab_list, current_tab );
+    draw_tabs( w, ordered_tab_list, current_tab, max_tab_width );
 }
 
 // Legacy function, use class scrollbar instead!

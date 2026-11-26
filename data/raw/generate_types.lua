@@ -26,13 +26,13 @@ end
 ---@param arg_list string[] List of types
 ---@param ret_type string return type
 ---@param class_name string The name of the owning class/library
----@param meta string Member metadata
+---@param meta string? Member metadata
 ---@return string
 local fmt_function_signature = function(arg_list, ret_type, class_name, meta)
   local params = {}
 
   local clean_arg_list = remove_hidden_args(arg_list)
-  local meta_args = get_meta_params(meta)
+  local meta_args = get_meta_param_specs(meta)
   local state = nil
 
   for i, arg_str in ipairs(clean_arg_list) do
@@ -41,11 +41,13 @@ local fmt_function_signature = function(arg_list, ret_type, class_name, meta)
     if i == 1 and arg_str == class_name then
       arg_name = "self"
     else
-      state, arg_name = next(meta_args, state)
-      if not arg_name then
+      local param_spec
+      state, param_spec = next(meta_args, state)
+      if not param_spec then
         arg_name = "arg" .. i -- Generate placeholder name if needed
       else
-        arg_name = string.gsub(arg_name, "[^%w_]", "_")
+        arg_name = string.gsub(param_spec.name, "[^%w_]", "_")
+        lua_type = param_spec.type or lua_type
       end
     end
     table.insert(params, arg_name .. ": " .. lua_type)
@@ -79,7 +81,7 @@ local operator_metamethod_names = {
 ---@return string?
 local get_operator_metamethod_name = function(member_name) return operator_metamethod_names[member_name] end
 
----@param member table {name:string, overloads:table[]}
+---@param member LuaDocFunctionMember
 ---@param class_name string
 ---@return string
 local fmt_operator_annotations = function(member, class_name)
@@ -127,7 +129,7 @@ end
 --[[
     Formats ---@field annotation for variable members.
   ]]
----@param member table {name:string, vartype:string, comment?:string, hasval?:boolean, varval?:any}
+---@param member { name: string, vartype: string, comment?: string, hasval?: boolean, varval?: any }
 ---@param _is_static boolean (optional) Not directly used in LuaLS field, but might be relevant contextually
 ---@return string
 local fmt_variable_field = function(member, _is_static)
@@ -166,7 +168,7 @@ local fmt_signature_union = function(signatures)
   return table.concat(wrapped, " | ")
 end
 
----@param member table {name:string, comment?:string, overloads:table[]}
+---@param member LuaDocFunctionMember
 ---@param class_name string The name of the owning class/library
 ---@return string
 local fmt_function_field = function(member, class_name)
@@ -183,6 +185,7 @@ local fmt_function_field = function(member, class_name)
   local signatures = {}
   ---@type table<string, boolean>
   local seen_signatures = {}
+  ---@param signature string
   local add_signature = function(signature)
     if seen_signatures[signature] then return end
     seen_signatures[signature] = true
@@ -210,16 +213,275 @@ local fmt_function_field = function(member, class_name)
   local signature_union = fmt_signature_union(signatures)
   ret = ret .. "---@field " .. member_name .. " " .. signature_union
   if member.comment and member.comment ~= "" then
+    ---@param m string
     local op = function(m)
-      if string.match(m, "^@param") then
-        return nil
-      else
-        return m
-      end
+      if string.match(m, "^@param") or is_luals_metadata_line(m) then return nil end
+      return m
     end
     ret = ret .. " @" .. string_concat_matches(member.comment, "([^\r\n]+)", "<br />", op)
   end
   return ret .. "\n"
+end
+
+---@param annotations string
+---@param class_name string
+---@param annotation string
+---@return string
+local add_class_annotation = function(annotations, class_name, annotation)
+  local pattern = "(---@class " .. class_name .. " : [^\n]+\n)"
+  return (annotations:gsub(pattern, "%1" .. annotation .. "\n"))
+end
+
+---@param comment string?
+---@return string[]
+local custom_luals_annotations_from_comment = function(comment)
+  local lines = {}
+  if not comment or comment == "" then return lines end
+  for line in string.gmatch(comment, "[^\r\n]+") do
+    if is_luals_metadata_line(line) then table.insert(lines, "---" .. line) end
+  end
+  return lines
+end
+
+---@param dt LuaDocMetadata
+---@return string
+local collect_custom_luals_annotations = function(dt)
+  local lines = {}
+  local seen = {}
+
+  ---@param comment string?
+  local add_comment = function(comment)
+    for _, line in ipairs(custom_luals_annotations_from_comment(comment)) do
+      if not seen[line] then
+        seen[line] = true
+        table.insert(lines, line)
+      end
+    end
+  end
+
+  ---@param section table<string, LuaDocSection>
+  local add_section = function(section)
+    for _, item in ipairs(sort_by(wrapped(section))) do
+      local data = item.v or {}
+      add_comment(data.type_comment or data.lib_comment)
+      for _, member in ipairs(data["#member"] or {}) do
+        add_comment(member.comment)
+      end
+    end
+  end
+
+  add_section(dt["#types"] or {})
+  add_section(dt["#libs"] or {})
+
+  if #lines == 0 then return "" end
+  return table.concat(lines, "\n") .. "\n\n"
+end
+
+---@class LuaCoordNamePart
+---@field suffix string
+
+---@class LuaCoordScaleSpec : LuaCoordNamePart
+---@field method string
+---@field map_squares integer
+
+---@type LuaCoordNamePart[]
+local coord_origins = {
+  { suffix = "Rel" },
+  { suffix = "Abs" },
+  { suffix = "Bub" },
+  { suffix = "Mnt" },
+  { suffix = "Sm" },
+  { suffix = "Omt" },
+  { suffix = "Mmr" },
+  { suffix = "Seg" },
+  { suffix = "Om" },
+}
+
+---@type LuaCoordScaleSpec[]
+local coord_scales = {
+  { suffix = "Ms", method = "ms", map_squares = 1 },
+  { suffix = "Veh", method = "veh", map_squares = 1 },
+  { suffix = "Sm", method = "sm", map_squares = 12 },
+  { suffix = "Omt", method = "omt", map_squares = 24 },
+  { suffix = "Mmr", method = "mmr", map_squares = 96 },
+  { suffix = "Seg", method = "seg", map_squares = 768 },
+  { suffix = "Om", method = "om", map_squares = 4320 },
+}
+
+---@type table<string, LuaCoordNamePart>
+local coord_origin_by_remainder_scale = {
+  Veh = { suffix = "Mnt" },
+  Sm = { suffix = "Sm" },
+  Omt = { suffix = "Omt" },
+  Mmr = { suffix = "Mmr" },
+  Seg = { suffix = "Seg" },
+  Om = { suffix = "Om" },
+}
+
+---@param kind "Point" | "Tripoint"
+---@param origin LuaCoordNamePart
+---@param scale LuaCoordScaleSpec
+---@return string
+local coord_class_name = function(kind, origin, scale) return kind .. origin.suffix .. scale.suffix end
+
+---@param annotations string
+---@param class_name string
+---@return boolean
+local has_coord_class = function(annotations, class_name)
+  return string.find(annotations, "---@class " .. class_name .. " : ", 1, true) ~= nil
+end
+
+---@param lines string[]
+---@param line string
+---@param seen table<string, boolean>
+local add_unique_line = function(lines, line, seen)
+  if seen[line] then return end
+  seen[line] = true
+  table.insert(lines, line)
+end
+
+---@param source LuaCoordScaleSpec
+---@param result LuaCoordScaleSpec
+---@return boolean
+local exact_scale_conversion = function(source, result)
+  if source.map_squares > result.map_squares then return source.map_squares % result.map_squares == 0 end
+  return result.map_squares % source.map_squares == 0
+end
+
+---@param source LuaCoordScaleSpec
+---@param result LuaCoordScaleSpec
+---@return boolean
+local can_project_remain_scale = function(source, result)
+  return result.map_squares > source.map_squares and result.map_squares % source.map_squares == 0
+end
+
+---@param class_name string
+---@return string[]
+local raw_offset_types_for = function(class_name)
+  if string.match(class_name, "^Point") then return { "Point" } end
+  return { "Point", "Tripoint" }
+end
+
+---@param annotations string
+---@param kind "Point" | "Tripoint"
+---@param origin LuaCoordNamePart
+---@param scale LuaCoordScaleSpec
+---@return string
+local coord_specific_annotation = function(annotations, kind, origin, scale)
+  local class_name = coord_class_name(kind, origin, scale)
+  if not has_coord_class(annotations, class_name) then return "" end
+
+  ---@type string[]
+  local lines = {}
+  ---@type table<string, boolean>
+  local seen = {}
+
+  if kind == "Tripoint" then
+    local xy_type = coord_class_name("Point", origin, scale)
+    if has_coord_class(annotations, xy_type) then
+      add_unique_line(lines, "---@field xy fun(self: " .. class_name .. "): " .. xy_type, seen)
+    end
+  end
+
+  for _, result_scale in ipairs(coord_scales) do
+    local result_type = coord_class_name(kind, origin, result_scale)
+    if
+      result_scale.suffix ~= scale.suffix
+      and exact_scale_conversion(scale, result_scale)
+      and has_coord_class(annotations, result_type)
+    then
+      add_unique_line(
+        lines,
+        "---@field to_" .. result_scale.method .. " fun(self: " .. class_name .. "): " .. result_type,
+        seen
+      )
+    end
+
+    local remainder_origin = coord_origin_by_remainder_scale[result_scale.suffix]
+    if remainder_origin and can_project_remain_scale(scale, result_scale) then
+      local quotient_type = coord_class_name(kind, origin, result_scale)
+      local remainder_type = coord_class_name("Point", remainder_origin, scale)
+      if has_coord_class(annotations, quotient_type) and has_coord_class(annotations, remainder_type) then
+        add_unique_line(
+          lines,
+          "---@field project_remain_"
+            .. result_scale.method
+            .. " fun(self: "
+            .. class_name
+            .. "): ("
+            .. quotient_type
+            .. ", "
+            .. remainder_type
+            .. ")",
+          seen
+        )
+      end
+    end
+  end
+
+  for _, raw_offset_type in ipairs(raw_offset_types_for(class_name)) do
+    add_unique_line(lines, "---@operator add(" .. raw_offset_type .. "): " .. class_name, seen)
+    add_unique_line(lines, "---@operator sub(" .. raw_offset_type .. "): " .. class_name, seen)
+  end
+
+  local relative_result_type = coord_class_name(kind, { suffix = "Rel" }, scale)
+  if origin.suffix ~= "Rel" and has_coord_class(annotations, relative_result_type) then
+    for _, relative_kind in ipairs(kind == "Tripoint" and { "Point", "Tripoint" } or { "Point" }) do
+      local relative_type = coord_class_name(relative_kind, { suffix = "Rel" }, scale)
+      if has_coord_class(annotations, relative_type) then
+        add_unique_line(lines, "---@operator add(" .. relative_type .. "): " .. class_name, seen)
+        add_unique_line(lines, "---@operator sub(" .. relative_type .. "): " .. class_name, seen)
+      end
+    end
+    add_unique_line(lines, "---@operator sub(" .. class_name .. "): " .. relative_result_type, seen)
+  elseif origin.suffix == "Rel" then
+    add_unique_line(lines, "---@operator mul(integer): " .. class_name, seen)
+    for _, other_origin in ipairs(coord_origins) do
+      local other_type = coord_class_name(kind, other_origin, scale)
+      if other_origin.suffix ~= "Rel" and has_coord_class(annotations, other_type) then
+        add_unique_line(lines, "---@operator add(" .. other_type .. "): " .. other_type, seen)
+      end
+    end
+  end
+
+  for _, fine_scale in ipairs(coord_scales) do
+    local remainder_origin = coord_origin_by_remainder_scale[scale.suffix]
+    if
+      remainder_origin
+      and scale.map_squares > fine_scale.map_squares
+      and scale.map_squares % fine_scale.map_squares == 0
+    then
+      for _, fine_kind in ipairs(kind == "Point" and { "Point", "Tripoint" } or { "Point" }) do
+        local fine_type = coord_class_name(fine_kind, remainder_origin, fine_scale)
+        local result_type = coord_class_name(kind == "Point" and fine_kind or kind, origin, fine_scale)
+        if has_coord_class(annotations, fine_type) and has_coord_class(annotations, result_type) then
+          add_unique_line(
+            lines,
+            "---@field project_combine fun(self: " .. class_name .. ", fine: " .. fine_type .. "): " .. result_type,
+            seen
+          )
+        end
+      end
+    end
+  end
+
+  return table.concat(lines, "\n")
+end
+
+---@param annotations string
+---@return string
+local add_coord_specific_annotations = function(annotations)
+  for _, kind in ipairs({ "Point", "Tripoint" }) do
+    for _, origin in ipairs(coord_origins) do
+      for _, scale in ipairs(coord_scales) do
+        local annotation = coord_specific_annotation(annotations, kind, origin, scale)
+        if annotation ~= "" then
+          annotations = add_class_annotation(annotations, coord_class_name(kind, origin, scale), annotation)
+        end
+      end
+    end
+  end
+  return annotations
 end
 
 --[[
@@ -255,6 +517,10 @@ doc_gen_func.impl = function()
   local full_ret = [[---@meta
 -- Generated by generate_types.lua - DO NOT EDIT MANUALLY
 
+---@class ExamineParams
+---@field user Character
+---@field pos TripointBubMs
+
 ---@class HookResult
 ---@field allowed boolean @whether the action is allowed (true) or blocked (false), defaults to true
 
@@ -263,7 +529,7 @@ doc_gen_func.impl = function()
 ---@field prev any @result of the previous hook call in the chain, nil for the first call
 ---@field [string] any
 
----@alias HookCallback fun(params: HookParams): HookResult
+---@alias HookCallback fun(params: HookParams): HookResult|boolean|nil
 
 ---@class HookConfig
 ---@field fn HookCallback @function to call
@@ -346,6 +612,9 @@ doc_gen_func.impl = function()
 ---@field on_pickup? fun(params: ItemStateParams)
 ---@field on_drop? fun(params: ItemStateParams): boolean
 
+---@class IconsumeFunctionTable
+---@field on_try_consume? fun(params: ItemTryConsumeParams): boolean @runs before the eat-confirmation prompt; return false to interrupt the consume, modify params.nutrition/params.thirst/params.fun/params.fun_max to override them, set params.skip_cannibalism to true to skip the human-flesh consequence (overrides also affect the "eat anyway?" warnings); callback side effects persist even if the checks fail or the player declines
+
 ---@class BionicFunctionTable
 ---@field on_activate? fun(params: BionicCallbackParams)
 ---@field on_deactivate? fun(params: BionicCallbackParams)
@@ -359,16 +628,19 @@ doc_gen_func.impl = function()
 ---@field mod_runtime table<string, any>
 ---@field mod_storage table<string, any>
 ---@field on_every_x_hooks table
----@field iuse_functions table<string, fun(params: ItemUseParams): integer | IuseFunctionTable>
+---@field iuse_functions table<string, (fun(params: ItemUseParams): integer) | IuseFunctionTable>
 ---@field iwieldable_functions table<string, IwieldableFunctionTable>
 ---@field iwearable_functions table<string, IwearableFunctionTable>
 ---@field iequippable_functions table<string, IequippableFunctionTable>
 ---@field istate_functions table<string, IstateFunctionTable>
+---@field iconsume_functions table<string, IconsumeFunctionTable>
 ---@field imelee_functions table<string, table<string, function>>
 ---@field iranged_functions table<string, table<string, function>>
 ---@field bionic_functions table<string, BionicFunctionTable>
 ---@field mutation_functions table<string, table<string, function>>
 ---@field horde_behaviours table<string, function>
+---@field monster_ai_functions table<string, function>
+---@field monster_attitude_functions table<string, function>
 ---@field mapgen_functions table<string, MapgenFunction>
 ---@field examine_functions table<string, fun(params: { user: Character, pos: TripointBubMs })>
 ---@field activity_functions table<string, LuaActivityFinishFunction>
@@ -415,6 +687,41 @@ on_monster_try_move = {}
 ---@field mounted boolean
 ---@field mount Creature?
 on_character_try_move = {}
+
+--- Runs before the edibility checks and the eat-confirmation prompt: hook side
+--- effects persist even if the checks fail or the player declines, and the
+--- hook also fires (and may veto) forced consumption.
+---@class OnCharacterTryConsumeParams
+---@field char Character @the character eating or drinking the item
+---@field item Item @the comestible being consumed
+---@field nutrition integer @effective calories (kcal) the character would gain
+---@field thirst integer @thirst quenched by the item
+---@field fun integer @effective fun (joy) value, taking traits and rot into account
+---@field fun_max integer @maximum fun the joy would be capped at
+on_character_try_consume = {}
+
+--- The hook runs before the eat-confirmation prompt; a returned table with
+--- override values also affects the "eat anyway?" warnings. Hook side effects
+--- persist even if the consume is then refused, and the hook also fires for
+--- forced consumption.
+---@class OnCharacterTryConsumeResult
+---@field allowed? boolean @defaults to true; false interrupts the consume
+---@field nutrition? integer @overrides the calories (kcal) applied by the game
+---@field thirst? integer @overrides the thirst quenched by the item
+---@field fun? integer @overrides the fun (joy) value applied by the game
+---@field fun_max? integer @overrides the cap the fun value is capped at
+---@field skip_cannibalism? boolean @true skips the human-flesh (cannibalism) consequence of the "eat anyway?" warnings and the post-consume guilt morale penalty
+on_character_try_consume_result = {}
+
+---@class ItemTryConsumeParams
+---@field char Character @the character eating or drinking the item
+---@field item Item @the comestible being consumed
+---@field nutrition integer @effective calories (kcal) the character would gain; may be modified to override the value applied by the game
+---@field thirst integer @thirst quenched by the item; may be modified to override the value applied by the game
+---@field fun integer @effective fun (joy) value, taking traits and rot into account; may be modified to override the value applied by the game
+---@field fun_max integer @maximum fun the joy would be capped at; may be modified to override the value applied by the game
+---@field skip_cannibalism boolean @set to true to skip the human-flesh (cannibalism) consequence of the "eat anyway?" warnings and the post-consume guilt morale penalty
+item_try_consume_params = {}
 
 ---@class OnCraftResultParams
 ---@field crafter Character
@@ -532,7 +839,7 @@ on_creature_performed_technique = {}
 on_creature_melee_attacked = {}
 
 ---@class OnMapgenPostprocessParams
----@field map Map
+---@field map MapgenConstructor
 ---@field omt TripointAbsOmt
 ---@field when TimePoint
 on_mapgen_postprocess = {}
@@ -575,7 +882,7 @@ on_npc_loaded = {}
 
   -- Process Classes and Libraries (Types and Libs)
   ---@param section_name string Display name for the section header
-  ---@param section_data table Data table (#types or #libs)
+  ---@param section_data { k: string|integer, v: LuaDocSection }[] Data table (#types or #libs)
   ---@param is_class boolean True if processing classes (affects 'self', bases, constructors)
   ---@return string Generated Lua code snippet for this section
   local process_section = function(section_name, section_data, is_class)
@@ -586,7 +893,7 @@ on_npc_loaded = {}
     ret = ret .. "--================---- " .. section_name .. " ----================\n\n"
 
     for _, item in ipairs(section_sorted) do
-      local name = item.k -- Class or Library name
+      local name = tostring(item.k) -- Class or Library name
       local data = item.v or {}
       local comment = data.type_comment or data.lib_comment or ""
       local bases = data["#bases"] or {}
@@ -595,12 +902,21 @@ on_npc_loaded = {}
 
       -- Class/Lib Annotation Start
       local bases_str = is_class and fmt_bases_luals(bases) or ""
-      local comment_annot = string_concat_matches(comment, "([^\r\n]+)", "\n", function(m) return "--- " .. m end)
+      local comment_annot = string_concat_matches(
+        comment,
+        "([^\r\n]+)",
+        "\n",
+        ---@param m string
+        function(m)
+          if is_luals_metadata_line(m) then return nil end
+          return "--- " .. m
+        end
+      )
       if comment_annot ~= "" then ret = ret .. comment_annot .. "\n" end
       ret = ret .. "---@class " .. name .. bases_str .. "\n"
 
       -- Process Members (Variables and Functions)
-      ---@type { member: table, value: string }[]
+      ---@type { member: LuaDocMember, value: string }[]
       local formatted = {}
       for _, member in ipairs(members) do
         local member_name_str = tostring(member.name)
@@ -631,11 +947,16 @@ on_npc_loaded = {}
       end
 
       for _, item in
-        ipairs(sort_by(formatted, function(a, b)
-          if field_sort_less(a.member, b.member) then return true end
-          if field_sort_less(b.member, a.member) then return false end
-          return a.value < b.value
-        end))
+        ipairs(sort_by(
+          formatted,
+          ---@param a { member: LuaDocMember, value: string }
+          ---@param b { member: LuaDocMember, value: string }
+          function(a, b)
+            if field_sort_less(a.member, b.member) then return true end
+            if field_sort_less(b.member, a.member) then return false end
+            return a.value < b.value
+          end
+        ))
       do
         ret = ret .. item.value
       end
@@ -646,6 +967,8 @@ on_npc_loaded = {}
     end
     return ret
   end
+
+  full_ret = full_ret .. collect_custom_luals_annotations(dt)
 
   -- Generate sections
   full_ret = full_ret .. process_section("Classes", wrapped(dt["#types"]), true)
@@ -659,7 +982,16 @@ on_npc_loaded = {}
     local dt_enum = item.v or {}
     local comment = dt_enum.enum_comment
 
-    local comment_annot = string_concat_matches(comment, "([^\r\n]+)", "\n", function(m) return "--- " .. m end)
+    local comment_annot = string_concat_matches(
+      comment,
+      "([^\r\n]+)",
+      "\n",
+      ---@param m string
+      function(m)
+        if is_luals_metadata_line(m) then return nil end
+        return "--- " .. m
+      end
+    )
     if comment_annot ~= "" then full_ret = full_ret .. comment_annot .. "\n" end
 
     full_ret = full_ret .. "---@enum " .. enumname .. "\n"
@@ -673,7 +1005,12 @@ on_npc_loaded = {}
       end
     end
 
-    local entries_sorted_by_v = sort_by(entries_filtered, function(a, b) return a.v < b.v end)
+    local entries_sorted_by_v = sort_by(
+      entries_filtered,
+      ---@param a { k: string, v: string|number|boolean }
+      ---@param b { k: string, v: string|number|boolean }
+      function(a, b) return a.v < b.v end
+    )
 
     local table_entries = {}
     for _, entry_item in ipairs(entries_sorted_by_v) do
@@ -709,7 +1046,23 @@ on_npc_loaded = {}
     full_ret = full_ret .. "}\n\n"
   end
 
-  -- No second pass needed anymore
+  full_ret = full_ret:gsub(
+    "%-%-%-@class (Point%u[%w]*)\n",
+    ---@param name string
+    function(name)
+      if name == "PointCoord" then return "---@class " .. name .. "\n" end
+      return "---@class " .. name .. " : PointCoord\n"
+    end
+  )
+  full_ret = full_ret:gsub(
+    "%-%-%-@class (Tripoint%u[%w]*)\n",
+    ---@param name string
+    function(name)
+      if name == "TripointCoord" then return "---@class " .. name .. "\n" end
+      return "---@class " .. name .. " : TripointCoord\n"
+    end
+  )
+  full_ret = add_coord_specific_annotations(full_ret)
 
   return full_ret
 end

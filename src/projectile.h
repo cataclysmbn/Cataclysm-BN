@@ -71,6 +71,9 @@ struct projectile {
         void add_effect( const ammo_effect_str_id &id ) {
             proj_effects.insert( id );
         }
+        void remove_effect( const ammo_effect_str_id &id ) {
+            proj_effects.erase( id );
+        }
 
     private:
         // Actual item used (to drop contents etc.).

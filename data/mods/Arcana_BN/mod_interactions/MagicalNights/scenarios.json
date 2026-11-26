@@ -1,0 +1,77 @@
+[
+  {
+    "type": "scenario",
+    "id": "lost_faith",
+    "copy-from": "lost_faith",
+    "extend": {
+      "professions": [ "arcanist_magehunter", "arcanist_dark_priest", "arcanist_purifier", "arcanist_operator", "arcanist_mendicant" ],
+      "spells": [
+        "arcana_magic_agility",
+        "arcana_magic_conjure_flame",
+        "arcana_magic_dampening",
+        "arcana_magic_healing",
+        "arcana_magic_insight",
+        "arcana_magic_light",
+        "arcana_magic_might",
+        "arcana_magic_serpentine_shield",
+        "arcana_magic_summon_skeletal_dog",
+        "arcana_magic_ward_against_evil"
+      ]
+    }
+  },
+  {
+    "type": "scenario",
+    "id": "magic_basement",
+    "copy-from": "magic_basement",
+    "extend": {
+      "spells": [
+        "arcana_magic_agility",
+        "arcana_magic_clairvoyance",
+        "arcana_magic_clarity_blood",
+        "arcana_magic_confuse_monster",
+        "arcana_magic_insight",
+        "arcana_magic_light",
+        "arcana_magic_might",
+        "arcana_magic_open_lock",
+        "arcana_magic_poison_armor",
+        "arcana_magic_surge_adrenaline"
+      ]
+    }
+  },
+  {
+    "type": "scenario",
+    "id": "lake_retreat",
+    "copy-from": "lake_retreat",
+    "extend": {
+      "spells": [
+        "arcana_magic_agility",
+        "arcana_magic_conjure_flame",
+        "arcana_magic_dampening",
+        "arcana_magic_healing",
+        "arcana_magic_insight",
+        "arcana_magic_light",
+        "arcana_magic_might",
+        "arcana_magic_serpentine_shield",
+        "arcana_magic_summon_skeletal_dog",
+        "arcana_magic_ward_against_evil"
+      ]
+    }
+  },
+  {
+    "type": "scenario",
+    "id": "arcane_seeker",
+    "copy-from": "arcane_seeker",
+    "extend": {
+      "professions": [ "novice_necromancer", "novice_stormshaper", "novice_earthshaper", "novice_technomancer", "novice_kelvinist", "druid" ]
+    }
+  },
+  {
+    "type": "scenario",
+    "id": "arcane_urban",
+    "copy-from": "arcane_urban",
+    "extend": {
+      "professions": [ "priest_magic2", "shinto_priest_magic2", "imam_magic2", "rabbi_magic2", "guru_magic2", "preacher_magic2" ]
+    },
+    "delete": { "professions": [ "priest", "shinto_priest", "imam", "rabbi", "guru", "preacher" ] }
+  }
+]

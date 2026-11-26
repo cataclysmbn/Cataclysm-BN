@@ -4,7 +4,7 @@
     "copy-from": "smg_base",
     "type": "GUN",
     "name": { "str_sp": "American-180" },
-    "description": "The American-180 is a submachine gun developed in the 1960's that fires .22 LR, unusual for an SMG.  Though the round is low-powered, the high rate of fire and large magazine makes the 180 a formidable weapon.",
+    "description": "The American-180 is a submachine gun developed in the 1960's that fires .22 LR, unusual for an SMG.  Though the round is low-powered, the high rate of fire and large magazine make the 180 a formidable weapon.",
     "weight": "2600 g",
     "volume": "1250 ml",
     "price": "1630 USD",
@@ -71,28 +71,11 @@
       [ "mechanism", 2 ],
       [ "sights", 1 ],
       [ "stock", 1 ],
+      [ "sling", 1 ],
       [ "underbarrel", 1 ]
     ],
     "faults": [ "fault_gun_blackpowder", "fault_gun_dirt" ],
     "flags": [ "RELOAD_ONE", "NEVER_JAMS", "RELOAD_EJECT" ]
-  },
-  {
-    "id": "rifle_22",
-    "copy-from": "rifle_home_made",
-    "type": "GUN",
-    "name": { "str": "pipe rifle: .22", "str_pl": "pipe rifles: .22" },
-    "description": "A home-made rifle.  It is simply a pipe attached to a stock, with a hammer to strike the single round it holds.",
-    "weight": "1953 g",
-    "volume": "1750 ml",
-    "price": "100 USD",
-    "price_postapoc": "5 USD",
-    "bashing": 10,
-    "ascii_picture": "sm_pipe_gun",
-    "material": [ "steel", "wood" ],
-    "color": "brown",
-    "ammo": "22",
-    "blackpowder_tolerance": 96,
-    "barrel_volume": "500 ml"
   },
   {
     "id": "ruger_1022",
@@ -157,6 +140,7 @@
       [ "muzzle", 1 ],
       [ "rail", 1 ],
       [ "sights", 1 ],
+      [ "sling", 1 ],
       [ "stock", 1 ],
       [ "underbarrel", 1 ]
     ],
@@ -198,7 +182,7 @@
     "material": [ "budget_steel" ],
     "color": "dark_gray",
     "ammo": "22",
-    "magazine_well": "55 ml",
+    "magazine_well": "75 ml",
     "dispersion": 600,
     "durability": 5,
     "min_cycle_recoil": 39,
@@ -224,5 +208,15 @@
     "min_cycle_recoil": 39,
     "magazine_well": "250 ml",
     "magazines": [ [ "22", [ "wp22mag" ] ] ]
+  },
+  {
+    "id": "22_turret_fake",
+    "copy-from": "walther_p22",
+    "type": "GUN",
+    "name": { "str_sp": "Walther P22" },
+    "description": "If you see it - it is bug!",
+    "modes": [ [ "DEFAULT", "semi", 1 ] ],
+    "clip_size": 50,
+    "magazines": [  ]
   }
 ]

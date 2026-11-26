@@ -1,4 +1,5 @@
 #include "active_tile_data.h"
+
 #include "active_tile_data_def.h"
 #include "calendar.h"
 #include "debug.h"
@@ -7,17 +8,17 @@
 #include "item.h"
 #include "itype.h"
 #include "json.h"
-#include "map.h"
-#include "mapbuffer.h"
+#include "map/map.h"
+#include "map/mapbuffer.h"
+#include "map/submap_load_manager.h"
 #include "rng.h"
-#include "submap_load_manager.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_range.h"
-#include "weather.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_range.h"
+#include "weather/weather.h"
 
 // TODO: Shouldn't use
-#include "submap.h"
+#include "map/submap.h"
 
 static const itype_id itype_battery( "battery" );
 
@@ -288,6 +289,36 @@ void charge_watcher_tile::load( JsonObject &jo )
     jo.read( "transform", transform );
 }
 
+namespace
+{
+auto can_recharge( const item &n ) -> bool { return n.has_flag( flag_RECHARGE ) || n.has_flag( flag_USE_UPS ); }
+auto needs_charge( const item &n ) -> bool
+{
+    return n.ammo_capacity() > n.ammo_remaining() ||
+           ( n.type->battery && n.type->battery->max_capacity > n.energy_remaining() );
+}
+} // namespace
+
+auto charger_tile::is_charging( const tripoint_abs_ms &p, mapbuffer &mb ) const -> bool
+{
+    const auto split = project_remain<coords::sm>( p );
+    const submap *sm = mb.lookup_submap( split.quotient_tripoint );
+    if( sm == nullptr ) {
+        return false;
+    }
+    return std::ranges::any_of( sm->get_items( split.remainder ), []( const auto & outer ) {
+        auto found = false;
+        outer->visit_items( [&found]( const item * it ) {
+            if( !can_recharge( *it ) ) {
+                return VisitResponse::NEXT;
+            }
+            found = needs_charge( *it );
+            return found ? VisitResponse::ABORT : VisitResponse::SKIP;
+        } );
+        return found;
+    } );
+}
+
 void charger_tile::update_internal( time_point to, const tripoint_abs_ms &p,
                                     distribution_grid &grid )
 {
@@ -304,11 +335,10 @@ void charger_tile::update_internal( time_point to, const tripoint_abs_ms &p,
     for( item *const outer : sm->get_items( p_within_sm ) ) {
         outer->visit_items( [&power, &grid]( item * it ) {
             item &n = *it;
-            if( !n.has_flag( flag_RECHARGE ) && !n.has_flag( flag_USE_UPS ) ) {
+            if( !can_recharge( n ) ) {
                 return VisitResponse::NEXT;
             }
-            if( n.ammo_capacity() > n.ammo_remaining() ||
-                ( n.type->battery && n.type->battery->max_capacity > n.energy_remaining() ) ) {
+            if( needs_charge( n ) ) {
                 while( power >= 1000 || x_in_y( power, 1000 ) ) {
                     const int missing = grid.mod_resource( -1 );
                     if( missing == 0 ) {
@@ -513,13 +543,15 @@ void portal_tile::update_internal( time_point, const tripoint_abs_ms &p, distrib
         return;
     }
     // Keep target area resident each tick if a load_radius is configured.
-    const auto center_sm = project_to<coords::sm>( target_pos );
+    const auto center_sm = project_to<coords::sm>( target_pos.xy() );
+    const auto begin = center_sm - point_rel_sm( load_radius, load_radius );
+    const auto end = center_sm + point_rel_sm( load_radius + 1, load_radius + 1 );
     if( preload_handle_ == 0 ) {
         preload_handle_ = submap_loader.request_load(
                               load_request_source::portal_preload,
-                              target_dim_id, center_sm, load_radius );
+                              target_dim_id, begin, end );
     } else {
-        submap_loader.update_request( preload_handle_, center_sm );
+        submap_loader.update_request( preload_handle_, begin, end );
     }
     ( void )p;
 }

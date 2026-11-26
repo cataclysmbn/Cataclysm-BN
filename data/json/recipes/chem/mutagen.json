@@ -575,7 +575,7 @@
     "batch_time_factors": [ 80, 4 ],
     "book_learn": [ [ "recipe_animal", 7 ] ],
     "using": [ [ "mutagen_production_standard", 25 ] ],
-    "components": [ [ [ "mutagen", 1 ] ], [ [ "egg_reptile", 1 ], [ "scute_piece", 3 ] ], [ [ "ammonia", 1 ], [ "lye_powder", 100 ] ] ],
+    "components": [ [ [ "mutagen", 1 ] ], [ [ "egg_reptile", 1 ], [ "scute_piece", 1 ] ], [ [ "ammonia", 1 ], [ "lye_powder", 100 ] ] ],
     "flags": [ "SECRET" ]
   },
   {
@@ -605,7 +605,7 @@
     "batch_time_factors": [ 80, 4 ],
     "book_learn": [ [ "recipe_animal", 7 ] ],
     "using": [ [ "mutagen_production_standard", 25 ] ],
-    "components": [ [ [ "mutagen", 1 ] ], [ [ "egg_reptile", 1 ], [ "scute_piece", 3 ] ], [ [ "ammonia", 1 ], [ "lye_powder", 100 ] ] ],
+    "components": [ [ [ "mutagen", 1 ] ], [ [ "egg_reptile", 1 ], [ "scute_piece", 1 ] ], [ [ "ammonia", 1 ], [ "lye_powder", 100 ] ] ],
     "flags": [ "SECRET" ]
   },
   {

@@ -15,7 +15,30 @@ TODO: NPC 템플릿을 로드할 때 사용하는 "npc" 구조 문서화
 응답이 자기 자신 토픽으로 다시 전환되도록 구성해도 완전히 정상입니다.
 
 NPC 미션은 별도의 관련 JSON 구조로 제어되며,
-[the missions docs](./missions_json.md)에 문서화되어 있습니다.
+[미션 문서](./missions_json.md)에 문서화되어 있습니다.
+
+## NPC 클래스
+
+NPC 클래스는 `"type": "npc_class"` 항목으로 정의합니다(`data/json/npcs/classes.json` 참조).
+
+### `lua_ai`
+
+(문자열, 선택 사항)
+
+설정하면 각 NPC 턴마다 `game.npc_ai_functions`의 Lua 함수를 실행합니다. 함수에는 `(npc)`가 전달되며
+불리언을 반환해야 합니다. `true`이면 Lua가 턴을 처리하고 기본 C++ AI를 건너뜁니다. `false` 또는 `nil`이면
+기본 AI로 돌아갑니다.
+
+```json
+"lua_ai": "my_npc_ai"
+```
+
+```lua
+game.npc_ai_functions["my_npc_ai"] = function(npc)
+  npc:set_moves(0)
+  return true
+end
+```
 
 다음 두 토픽은 특별합니다:
 
@@ -475,29 +498,29 @@ trial 실패 시 `failure`, 그 외에는 `success` 객체가 사용됩니다.
 
 ---
 
-## Talk Tags
+## 대화 태그
 
-Talk tag는 '<' 와 '>' 사이에 들어가는 특수 문자열로, 런타임에 동적으로 치환됩니다.
+대화 태그는 `<`와 `>` 사이에 들어가는 특수 문자열로, 실행 중에 동적으로 치환됩니다.
 세 가지 종류가 있습니다.
 
-### Special
+### 특수 태그
 
 하드코딩되어 동적으로 채워지는 태그들입니다.
 
-|
-|----------------------------------------------------------------| ---------------------------------------------------------------------------------------------------------------- |
-| '<yrwp>' | Name of your primary weapon, with 'none' as default if none found. |
-| '<mywp>' | Name of the npcs' primary weapon, with 'fists' as default if none found. |
-| '<ammo>' | Name of your primary weapons' ammo, with 'BADAMMO' as default if not a gun. |
-| '<current_activity>' | Npcs' current activity as a verb, with 'doing this and that' if not doing anything. |
-| '<mypronoun>' | Npcs' pronoun, uppercase. eg. 'He' / 'She' |
-| '<topic_item>' | Item from a repeat response. |
-| '<topic_item_price>' | Price of item from a repeat response. |
-| '<topic_item_my_total_price>' | Price of all items of this type from a repeat response, using the npcs' inventory. |
-| '<topic_item_your_total_price>' | Price of all items of this type from a repeat response, using the players' inventory. |
-| '<interval>' | The time until this npc restocks their item shop |
+| 태그                            | 설명                                                                                    |
+| ------------------------------- | --------------------------------------------------------------------------------------- |
+| `<yrwp>`                        | 플레이어의 주 무기 이름. 없으면 `none`을 사용합니다.                                    |
+| `<mywp>`                        | NPC의 주 무기 이름. 없으면 `fists`를 사용합니다.                                        |
+| `<ammo>`                        | 플레이어 주 무기의 탄약 이름. 총이 아니면 `BADAMMO`를 사용합니다.                       |
+| `<current_activity>`            | 동사로 표현한 NPC의 현재 활동. 아무것도 하지 않으면 `doing this and that`를 사용합니다. |
+| `<mypronoun>`                   | 첫 글자가 대문자인 NPC의 대명사. 예: `He` / `She`.                                      |
+| `<topic_item>`                  | 반복 응답의 아이템.                                                                     |
+| `<topic_item_price>`            | 반복 응답의 아이템 가격.                                                                |
+| `<topic_item_my_total_price>`   | NPC의 인벤토리를 기준으로 한, 반복 응답의 해당 유형 아이템 전체 가격.                   |
+| `<topic_item_your_total_price>` | 플레이어의 인벤토리를 기준으로 한, 반복 응답의 해당 유형 아이템 전체 가격.              |
+| `<interval>`                    | NPC가 상점의 물품을 재입고하기까지 남은 시간.                                           |
 
-### Snippets
+### 문구 모음
 
 무작위로 고를 수 있는 문구 목록입니다. 예시는 talk_tags.json에 있습니다.
 
@@ -696,8 +719,8 @@ Repeat response는 아이템 인스턴스마다 한 번씩 응답 목록에 반�
 (optional `assign_mission_target` parameters) | 추가 매개변수가 없으면 플레이어 현재 위치의 overmap tile에
 `mapgen_update_id`의 변경사항(또는 목록의 각 `mapgen_update_id`)을 적용합니다.
 `assign_mission_target` 매개변수로 업데이트 대상 overmap tile 위치를 바꿀 수 있습니다.
-`assign_mission_target`은 [the missions docs](missions_json), `mapgen_update`는
-[the mapgen docs](../map/mapgen)를 참고하세요.
+`assign_mission_target`은 [미션 문서](./missions_json.md), `mapgen_update`는
+[맵 생성 문서](../map/mapgen.md)를 참고하세요.
 
 ### Deprecated
 

@@ -24,6 +24,7 @@ import { parseCataJson, readJSONsRec } from "$catjazz/utils/parse.ts"
 import type { CataEntry, Entry } from "$catjazz/utils/parse.ts"
 import { match, P } from "$catjazz/deps/ts_pattern.ts"
 import { id } from "$catjazz/utils/id.ts"
+import { mapEntries } from "$catjazz/deps/std/collection.ts"
 
 /**
  * [PR#3312](https://github.com/cataclysmbn/Cataclysm-BN/pull/3312)
@@ -32,6 +33,43 @@ import { id } from "$catjazz/utils/id.ts"
 const desc = "Migrates Legacy units into new literal format."
 
 export type Currency = `${number} ${"cent" | "USD" | "kUSD"}`
+export type Sound = `${number} dB`
+
+// deno-fmt-ignore
+const distVolLoss = [0, 1500, 602, 352, 250, 194, 158, 134, 116, 102, 92, 83, 76, 70, 64, 60, 56, 53, 50, 47, 45, 42, 40, 39, 37, 35, 34, 33, 32, 30, 29, 28, 28, 27, 26, 25, 24, 24, 23, 23, 22, 21, 21, 20, 20, 20, 19, 19, 18, 18, 18, 17, 17, 17, 16, 16, 16, 15, 15, 15, 15, 14, 14, 14, 14, 13, 13, 13, 13, 13, 12, 12, 12, 12, 12, 12, 12, 11, 11, 11, 11, 11, 11, 11, 10, 10, 10, 10, 10, 10, 10, 10, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7]
+
+const minimumDistanceForSoundPropagation = 1
+const maximumDistanceForSoundPropagation = 120
+const maximumVolumeAtmosphere = 19100
+const soundMinimumVolumeForPropagation = 2000
+
+const mdBsplToDBspl = (mdB: number) => Math.trunc(mdB * 0.01)
+
+const getDistanceForVolumeLoss = (tileDistance: number) =>
+  tileDistance < minimumDistanceForSoundPropagation
+    ? minimumDistanceForSoundPropagation
+    : tileDistance > maximumDistanceForSoundPropagation
+    ? maximumDistanceForSoundPropagation
+    : tileDistance + 1
+
+export const fromLegacySound = (legacyDistance: number): Sound => {
+  if (legacyDistance <= minimumDistanceForSoundPropagation) {
+    return `${mdBsplToDBspl(soundMinimumVolumeForPropagation)} dB`
+  }
+
+  const totalDistance = legacyDistance + Math.trunc(legacyDistance / 12)
+  let approxVolume = soundMinimumVolumeForPropagation
+  let checkDistance = minimumDistanceForSoundPropagation
+  let approxDistance = minimumDistanceForSoundPropagation
+
+  while (approxDistance < totalDistance) {
+    approxDistance++
+    checkDistance = getDistanceForVolumeLoss(checkDistance)
+    approxVolume += distVolLoss[checkDistance]
+  }
+
+  return `${mdBsplToDBspl(Math.min(maximumVolumeAtmosphere, approxVolume))} dB`
+}
 
 export const migrate = <const T>(fromLegacy: (x: number) => T) =>
   v.optional(v.union([v.pipe(v.number(), v.integer(), v.transform(fromLegacy)), v.string()]))
@@ -63,6 +101,38 @@ const migrateWeight = migrate(fromLegacyWeight)
 const migrateVolume = migrate(fromLegacyVolume)
 const migrateCurrency = migrate(fromLegacyCurrency)
 const migrateEnergy = migrate(fromLegacyEnergy)
+const migrateSound = migrate(fromLegacySound)
+
+const soundFields = {
+  reload_noise_volume: migrateSound,
+  reload_noise_volume_dB: migrateSound,
+  sound_fail_vol: migrateSound,
+  sound_vol: migrateSound,
+  sound_volume: migrateSound,
+  targeting_volume: migrateSound,
+  targeting_volume_dB: migrateSound,
+}
+
+const soundFieldNames = new Set(Object.keys(soundFields))
+
+const migrateSoundFieldsRecursively = <const T>(value: T): T => {
+  if (Array.isArray(value)) {
+    return value.map(migrateSoundFieldsRecursively) as T
+  }
+  if (!isRecord(value)) {
+    return value
+  }
+
+  return mapEntries(
+    value,
+    ([key, entry]) => [
+      key,
+      soundFieldNames.has(key) && Number.isInteger(entry)
+        ? fromLegacySound(entry as number)
+        : migrateSoundFieldsRecursively(entry),
+    ],
+  ) as T
+}
 
 const volumeFields = {
   barrel_length: migrateVolume,
@@ -157,7 +227,8 @@ const attempt = (schema: v.GenericSchema) => (x: CataEntry): CataEntry =>
 export const schemasTransformer = (schemas: v.GenericSchema[]) => {
   const matchers = schemas.map((schema) => attempt(schema))
 
-  return (entries: CataEntry[]) => entries.map((x) => matchers.reduce((acc, fn) => fn(acc), x))
+  return (entries: CataEntry[]) =>
+    entries.map((x) => migrateSoundFieldsRecursively(matchers.reduce((acc, fn) => fn(acc), x)))
 }
 const main = () =>
   new Command()

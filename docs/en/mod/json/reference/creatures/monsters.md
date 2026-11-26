@@ -218,6 +218,13 @@ hostility on detection)
 Monster morale. Defines how low monster HP can get before it retreats. This number is treated as %
 of their max HP.
 
+## "tracking_distance"
+
+(integer, optional, default `8`)
+
+Distance in tiles that the monster keeps between itself and its current target when it has the
+`KEEP_DISTANCE` flag. This also controls how close following monsters approach their goal.
+
 ## "aggro_character"
 
 (bool, optional, default true)
@@ -297,6 +304,11 @@ are slower.
 Used as the acceptable rider vs. mount weight percentage ratio. Defaults to "0.3", which means the
 mount is capable of carrying riders weighing <= 30% of the mount's weight.
 
+## "mountable_pixels_up"
+
+(int, optional)
+Used as the number of pixels upward to place the player when the mount is mounted
+
 ## "melee_skill"
 
 (integer, optional)
@@ -314,13 +326,13 @@ Monster dodge skill. 0 to 10 in base game. See GAME_BALANCE.txt for an explanati
 
 (array of objects, optional)
 
-| Property            | Description                                                                                                                                                                 |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `damage_type`       | Type of damage. Valid entries: `"true"`, `"bash"`, `"cut"`, `"stab"`, `"bullet"`, `"biological"`, `"acid"`, `"heat"`, `"cold"`, `"dark"`, `"light"`, `"psi"`, `"electric"`. |
-| `amount`            | Amount of damage dealt.                                                                                                                                                     |
-| `armor_penetration` | Amount of armor ignored by this damage instance.                                                                                                                            |
-| `armor_multiplier`  | Multiplier applied to `armor_penetration`.                                                                                                                                  |
-| `damage_multiplier` | Multiplier applied to `amount`.                                                                                                                                             |
+| Property            | Description                                                                       |
+| ------------------- | --------------------------------------------------------------------------------- |
+| `damage_type`       | Type of damage. See [damage types](/mod/json/reference/misc/damage/#damage-types) |
+| `amount`            | Amount of damage dealt.                                                           |
+| `armor_penetration` | Amount of armor ignored by this damage instance.                                  |
+| `armor_multiplier`  | Multiplier applied to `armor_penetration`.                                        |
+| `damage_multiplier` | Multiplier applied to `amount`.                                                   |
 
 ```json
 "melee_damage": [ { "damage_type": "electric", "amount": 4.0, "armor_penetration": 1, "armor_multiplier": 1.2, "damage_multiplier": 1.4 } ],
@@ -341,6 +353,12 @@ Intensity of the grab effect applied by this monster. Defaults to 1, is only use
 a GRAB special attack and the GRABS flag. A monster with grab_strength = n applies a grab as if it
 was n zombies. A player with max(Str,Dex)<=n has no chance of breaking that grab.
 
+## "uncanny_dodge_cost"
+
+(integer, optional)
+
+How many moves it costs this monster to uncanny dodge. Defaults to 100, is only useful for monster with the UNCANNY_DODGE flag.
+
 ## "melee_cut"
 
 (integer, optional)
@@ -358,6 +376,12 @@ Monster protection from bashing, cutting, stabbing, acid, fire, cold and electri
 (integer, optional)
 
 Vision range in full daylight and in total darkness.
+
+## "clairvoyance"
+
+(integer, optional)
+
+Clairvoyance vision range
 
 ## "luminance"
 
@@ -385,6 +409,8 @@ Can freely be a collection to imply two weapons wielded in both hands, as items 
 
 An item group that is used to spawn items when the monster dies. This can be an inlined item group,
 see ITEM_SPAWN.md. The default subtype is "distribution".
+
+Use `"extend": { "death_drops": ... }` in an inherited or overridden monster to add another drop group without replacing existing death drops. A top-level `"death_drops"` member replaces inherited death drops.
 
 ## "death_function"
 
@@ -748,6 +774,34 @@ Some properties allow adding and removing entries, as documented above, usually 
 
 The listed attack types can be as monster special attacks (see "special_attacks").
 
+### "melee"
+
+Makes a general melee special attack
+
+#### "damage_max_instance"
+
+Max damage it can deal on one attack.
+
+#### "move_cost"
+
+Turns needed to complete special attack. 100 move_cost with 100 speed is equal to 1 second/turn.
+
+#### "accuracy"
+
+(Integer) How accurate it is. Not many monsters use it though.
+
+#### "requires_grab"
+
+Whether the attack requires the target to be grabbed first. Useful for multi-stage attacks or "finisher" attacks.
+
+#### "max_range"
+
+The maximum range of the attack. Monsters will not use this special attack against enemies outside of max range.
+
+#### "min_range"
+
+The minimum range of the attack. Monsters will not use this special attack against enemies inside of minimum range.
+
 ### "leap"
 
 Makes the monster leap a few tiles. It supports the following additional properties:
@@ -771,6 +825,10 @@ Turns needed to complete special attack. 100 move_cost with 100 speed is equal t
 #### "min_consider_range", "max_consider_range"
 
 Minimal range and maximal range to consider for using specific attack.
+
+#### "throw_strength"
+
+Whether and how much the attack throws its target.
 
 ### "bite"
 

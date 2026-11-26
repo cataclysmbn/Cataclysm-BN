@@ -40,7 +40,7 @@
         "targeting_cost": 400,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"You should walk away.\"",
-        "targeting_volume": 20,
+        "targeting_volume": "46 dB",
         "no_ammo_sound": "a chk!"
       }
     ],

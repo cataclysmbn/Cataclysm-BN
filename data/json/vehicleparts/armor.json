@@ -26,7 +26,6 @@
     "type": "vehicle_part",
     "name": { "str": "shock absorber" },
     "item": "spring_plate",
-    "location": "armor",
     "symbol": "X",
     "broken_symbol": "*",
     "color": "dark_gray",

@@ -7,6 +7,7 @@
 #include "clone_ptr.h"
 #include "coordinates.h"
 #include "type_id.h"
+#include "translations.h"
 #include "units.h"
 
 class map;
@@ -90,6 +91,7 @@ int capture_monster_act( player *, item *, bool, const tripoint_bub_ms & );
 int debug_grenade( player *, item *, bool, const tripoint_bub_ms & );
 int debug_grenade_act( player *, item *, bool, const tripoint_bub_ms & );
 int c4( player *, item *, bool, const tripoint_bub_ms & );
+int c4_breaching( player *, item *, bool, const tripoint_bub_ms & );
 int arrow_flammable( player *, item *, bool, const tripoint_bub_ms & );
 int acidbomb_act( player *, item *, bool, const tripoint_bub_ms & );
 int grenade_inc_act( player *, item *, bool, const tripoint_bub_ms & );
@@ -222,6 +224,8 @@ class iuse_actor
 {
     protected:
         iuse_actor( const std::string &type, int cost = -1 ) : type( type ), cost( cost ) {}
+        bool use_local_display_name = false;
+        translation display_name;
 
     public:
         /**
@@ -239,6 +243,7 @@ class iuse_actor
         virtual ret_val<bool> can_use( const Character &, const item &, bool,
                                        const tripoint_bub_ms & ) const;
         virtual void info( const item &, std::vector<iteminfo> & ) const {}
+        virtual bool activatable() const { return true; }
         /**
          * Returns a deep copy of this object. Example implementation:
          * \code
@@ -259,13 +264,23 @@ class iuse_actor
          * Returns the translated name of the action. It is used for the item action menu.
          */
         virtual std::string get_name() const;
+
+        void set_name( const translation &name ) {
+            use_local_display_name = true;
+            display_name = name;
+        }
+
         /**
          * Finalizes the actor. Must be called after all items are loaded.
          */
         virtual void finalize( const itype_id &/*my_item_type*/ ) { }
+        /**
+         * Checks the actor.
+         */
+        virtual std::string check() const { return ""; }
 
         virtual void on_spawned( item & ) const {}
-        virtual void on_placed( item &, const map &, const tripoint_bub_ms & ) const {}
+        virtual void on_placed( item &, const tripoint_abs_ms & ) const {}
 };
 
 struct use_function {
@@ -279,6 +294,7 @@ struct use_function {
 
         int call( player &, item &, bool, const tripoint_bub_ms & ) const;
         ret_val<bool> can_call( const Character &, const item &, bool t, const tripoint_bub_ms &pos ) const;
+        bool activatable() const { return actor->activatable(); }
 
         iuse_actor *get_actor_ptr() {
             return actor.get();

@@ -94,7 +94,6 @@ ignorable = {
     "emit",
     "enchantment",
     "event_transformation",
-    "event_statistic",
     "EXTERNAL_OPTION",
     "hit_range",
     "ITEM_BLACKLIST",
@@ -129,6 +128,11 @@ ignorable = {
     "vehicle_placement",
     "WORLD_OPTION",
     "sound_effect",
+    "OPTION_SPACE",
+    "base_weather",
+    "weather_pattern",
+    "vehicle_color_palette",
+    "mapgen_color_palette",
 }
 
 # these objects can have their strings automatically extracted.
@@ -156,7 +160,6 @@ automatically_convertible = {
     "CONTAINER",
     "dream",
     "ENGINE",
-    "event_statistic",
     "faction",
     "furniture",
     "GENERIC",
@@ -192,7 +195,10 @@ automatically_convertible = {
     "WHEEL",
     "help",
     "weather_type",
-    "world_type"
+    "world_type",
+    "enchantment_flag",
+    "named_color",
+    "nested_category",
 }
 
 # for these objects a plural form is needed
@@ -293,11 +299,13 @@ def extract_martial_art(state, item):
     if "initiate" in item:
         writestr(state, item["initiate"], format_strings=True,
                  comment=f"Initiate message for martial art '{name}'")
-    onhit_buffs = item.get("onhit_buffs", list())
-    static_buffs = item.get("static_buffs", list())
-    onmove_buffs = item.get("onmove_buffs", list())
-    ondodge_buffs = item.get("ondodge_buffs", list())
-    buffs = onhit_buffs + static_buffs + onmove_buffs + ondodge_buffs
+    # Keep in sync with the buff event arrays in martialart::load.
+    buff_fields = (
+        "static_buffs", "onmove_buffs", "onpause_buffs", "onhit_buffs",
+        "onattack_buffs", "ondodge_buffs", "onblock_buffs", "ongethit_buffs",
+        "onmiss_buffs", "oncrit_buffs", "onkill_buffs",
+    )
+    buffs = [buff for field in buff_fields for buff in item.get(field, [])]
     for buff in buffs:
         writestr(state, buff["name"])
         if buff["name"] == item["name"]:
@@ -390,6 +398,8 @@ def extract_effect_type(state, item):
 
 
 def extract_gun(state, item):
+    if "use_action" in item:
+        extract_use_action_msgs(state, item["use_action"], item.get("name"))
     if "name" in item:
         item_name = item.get("name")
         if item["type"] in needs_plural:
@@ -416,6 +426,8 @@ def extract_gun(state, item):
 
 
 def extract_gunmod(state, item):
+    if "use_action" in item:
+        extract_use_action_msgs(state, item["use_action"], item.get("name"))
     if "name" in item:
         item_name = item.get("name")
         if item["type"] in needs_plural:
@@ -524,16 +536,18 @@ def extract_mapgen(state, item):
                     writestr(state, v.get("access_denied"),
                              comment="Computer access denied warning")
 
+def extract_map_feature_description(state, item):
+    for feature in item.get("features", []):
+        if "text" in feature:
+            writestr(state, feature["text"],
+                     comment="Map feature description shown in tile info")
+
 
 def extract_monster_attack(state, item):
-    if "hit_dmg_u" in item:
-        writestr(state, item.get("hit_dmg_u"))
-    if "hit_dmg_npc" in item:
-        writestr(state, item.get("hit_dmg_npc"))
-    if "no_dmg_msg_u" in item:
-        writestr(state, item.get("no_dmg_msg_u"))
-    if "no_dmg_msg_npc" in item:
-        writestr(state, item.get("no_dmg_msg_npc"))
+    for field in ("hit_dmg_u", "hit_dmg_npc", "no_dmg_msg_u", "no_dmg_msg_npc",
+                  "miss_msg_u", "miss_msg_npc", "bounce_msg_u", "bounce_msg_npc"):
+        if field in item:
+            writestr(state, item[field])
 
 
 def extract_recipe(state, item):
@@ -705,6 +719,10 @@ def extract_mutation(state, item):
         if found is not None:
             writestr(state, found, comment=f"Description for {item_name_or_id}")
 
+    found = item.get("apperance_description")
+    if found is not None:
+        writestr(state, found,
+                 comment=f"Appearance description for {item_name_or_id}")
     if "attacks" in item:
         attacks = item.get("attacks")
         if type(attacks) is list:
@@ -826,21 +844,73 @@ def extract_json_flag(state, item):
 
 
 def extract_snippet(state, item):
-    text = item["text"];
+    text = item["text"]
     if type(text) is not list:
-        text = [text];
+        text = [text]
     for snip in text:
         if type(snip) is str:
             writestr(state, snip)
-        else:
+        elif "text" in snip:
             writestr(state, snip["text"])
+        else:
+            writestr(state, snip)
 
 
 def extract_weapon_category(state, item):
     name = item["name"]
     comment = "weapon category name"
     writestr(state, name, comment=comment)
+    
+def extract_enchantment_condition(state, item):
+    writestr(state, item.get("condition_info"),
+             comment=f"Description of enchantment condition '{item.get('id')}'")
 
+def extract_enchantment_value(state, item):
+    writestr(state, item.get("desc"),
+             comment=f"Description of enchantment value '{item.get('id')}'")
+
+def extract_enchantment_vision(state, item):
+    vision_id = item.get("id")
+    writestr(state, item.get("desc"),
+             comment=f"Description of enchantment vision '{vision_id}'")
+    vision_desc = item.get("vision_desc")
+    if isinstance(vision_desc, dict):
+        writestr(state, vision_desc.get("description"),
+                 comment=f"Message shown when sensing creatures with enchantment vision '{vision_id}'")
+
+def extract_option(state, item):
+    name = item.get("name")
+    writestr(state, item.get("menu_text"),
+             comment=f"Menu text of option '{name}'")
+    writestr(state, item.get("tooltip"),
+             comment=f"Tooltip of option '{name}'")
+    for entry in item.get("items", []):
+        if type(entry) is dict and "label" in entry:
+            writestr(state, entry["label"],
+                     comment=f"Value label of option '{name}'")
+
+def extract_option_group(state, item):
+    group_id = item.get("id")
+    writestr(state, item.get("title"),
+             comment=f"Title of option group '{group_id}'")
+    writestr(state, item.get("desc"),
+             comment=f"Description of option group '{group_id}'")
+    
+def extract_nested_category(state, item):
+    nested_name = item.get("nested_name")
+    writestr(state, nested_name, comment="Nested crafting category name")
+    if "description" in item:
+        writestr(state, item["description"],
+                 comment=f"Name for nested category '{nested_name}'")
+                 
+def extract_event_statistic(state, item):
+    stat_id = item.get("id")
+    writestr(state, item.get("name"),
+             comment=f"Name of event statistic '{stat_id}'")
+    desc = item.get("description")
+    has_plural = isinstance(desc, dict) and ("str_pl" in desc or "str_sp" in desc)
+    writestr(state, desc, pl_fmt=has_plural,
+             comment=f"Description of character stats near achievments for '{stat_id}'")
 
 # these objects need to have their strings specially extracted
 extract_specials = {
@@ -875,6 +945,14 @@ extract_specials = {
     "trap": extract_trap,
     "vehicle_spawn": extract_vehspawn,
     "weapon_category": extract_weapon_category,
+    "OPTION": extract_option,
+    "OPTION_GROUP": extract_option_group,    
+    "map_feature_description": extract_map_feature_description,
+    "enchantment_condition": extract_enchantment_condition,
+    "enchantment_value": extract_enchantment_value,
+    "enchantment_vision": extract_enchantment_vision,
+    "nested_category": extract_nested_category,
+    "event_statistic": extract_event_statistic,    
 }
 
 
@@ -986,6 +1064,8 @@ use_action_msgs = {
     "lacks_fuel_message",
     "failure_message",
     "descriptions",
+    "player_descriptions",
+    "npc_descriptions",    
     "use_message",
     "noise_message",
     "bury_question",
@@ -998,7 +1078,16 @@ use_action_msgs = {
     "holster_msg",
     "holster_prompt",
     "verb",
-    "gerund"
+    "gerund",
+    "training_msg",
+    "no_charges_message",
+    "set_charges_msg",
+    "start_message",
+    "already_charged_message",
+    "need_battery_message",
+    "underwater_message",
+    "exhausted_message",
+    "fully_charged_message"
 }
 
 
@@ -1006,9 +1095,8 @@ def extract_use_action_msgs(state, use_action, it_name):
     """Extract messages for iuse_actor objects. """
     for f in sorted(use_action_msgs):
         if type(use_action) is dict and f in use_action:
-            if it_name:
-                writestr(state, use_action[f],
-                  comment=f"Use action {f} for {it_name}.")
+            comment = f"Use action {f} for {it_name}." if it_name else f"Use action {f}."
+            writestr(state, use_action[f], comment=comment)
     # Recursively check sub objects as they may contain more messages.
     if type(use_action) is list:
         for i in use_action:
@@ -1069,6 +1157,18 @@ def extract_json(state, item):
     if "use_action" in item:
         extract_use_action_msgs(state, item["use_action"], item.get("name"))
         wrote = True
+    if object_type in ("TOOL", "TOOL_ARMOR") and "revert_msg" in item:
+        writestr(state, item["revert_msg"], format_strings=True,
+                 comment=f"Reversion message for {name}.")
+        wrote = True
+    if object_type == "furniture" and len(item.get("active", [])) == 2:
+        active_type, active_data = item["active"]
+        if active_type in ("charge_watcher", "steady_consumer", "countdown"):
+            transform = active_data.get("transform", {})
+            if "msg" in transform:
+                writestr(state, transform["msg"],
+                         comment=f"Transformation message for {name}.")
+                wrote = True
     if "conditional_names" in item:
         for cname in item["conditional_names"]:
             c = f"Conditional name for {name} when {cname['type']} matches {cname['condition']}"
@@ -1197,9 +1297,14 @@ def extract_json(state, item):
     if "verb" in item:
        writestr(state, item["verb"])
        wrote = True
-    if "special_attacks" in item:
-        special_attacks = item["special_attacks"]
+    for special_attacks in (item.get("special_attacks", []),
+                            item.get("extend", {}).get("special_attacks", [])):
         for special_attack in special_attacks:
+            if not isinstance(special_attack, dict):
+                continue
+            attack_type = special_attack.get("attack_type", special_attack.get("type", "monster_attack"))
+            if attack_type in ("monster_attack", "melee", "bite"):
+                extract_monster_attack(state, special_attack)
             if "description" in special_attack:
                 writestr(state, special_attack["description"])
                 wrote = True

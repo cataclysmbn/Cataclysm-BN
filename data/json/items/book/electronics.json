@@ -268,8 +268,8 @@
   {
     "id": "schematics_secubot",
     "type": "BOOK",
-    "name": { "str_sp": "security bot schematics" },
-    "description": "Assembly plans, design specs, and technical drawings for the security bot.  Most of this is useless to you, but you could use the assembly plans to re-assemble the robot from salvaged parts.",
+    "name": { "str_sp": "TALON schematics" },
+    "description": "Assembly plans, design specs, and technical drawings for TALON UGVs.  Most of this is useless to you, but you could use the assembly plans to re-assemble the robot from salvaged parts.",
     "copy-from": "schematics_generic"
   },
   {

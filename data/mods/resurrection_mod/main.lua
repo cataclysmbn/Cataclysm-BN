@@ -56,18 +56,20 @@ mod.on_game_save_hook = function()
   mod.save_anchor_omt()
 end
 
-mod.on_character_death_hook = function()
-  local who = gapi.get_avatar()
+mod.on_character_death_hook = function(params)
+  local who = params and params.char
+  if not who or not who:is_avatar() then return end
+
   local anchor_pos = mod.pick_teleport_destination(who)
   if anchor_pos ~= nil then
     local player_abs = who:abs_pos()
-    local distance = math.abs(player_abs:rl_dist(anchor_pos))
-    ---@cast distance integer
+    local distance = math.abs(player_abs:rl_dist(anchor_pos) or 0)
     who:drop_inv(math.ceil(distance / 50))
     gapi.add_msg("Respawning Player at " .. tostring(anchor_pos))
 
     -- Convert abs_ms to abs_omt
     local omt_pos = anchor_pos:to_omt()
+    if omt_pos == nil then return end
     gapi.place_player_overmap_at(omt_pos)
 
     -- Convert abs_ms to local_ms

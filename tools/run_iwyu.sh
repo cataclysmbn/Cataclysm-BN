@@ -49,6 +49,6 @@ run_clang_tidy
 # Second IWYU pass
 run_iwyu 2
 # Tidy up
-cmake --build build --target astyle --parallel "$jobs"
+cmake --build build --target format --parallel "$jobs"
 # Make sure we didn't break the build
 cmake --build build --parallel "$jobs"

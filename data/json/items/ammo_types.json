@@ -74,7 +74,7 @@
   {
     "type": "ammunition_type",
     "id": "shot",
-    "name": "shot",
+    "name": "12 gauge shot",
     "default": "shot_00"
   },
   {
@@ -584,6 +584,12 @@
   },
   {
     "type": "ammunition_type",
+    "id": "fungus_milk_raw",
+    "name": "raw fungal milk",
+    "default": "fungus_milk_raw"
+  },
+  {
+    "type": "ammunition_type",
     "id": "paintball",
     "name": "paintball",
     "default": "paintball"
@@ -635,6 +641,18 @@
     "type": "ammunition_type",
     "name": "acid",
     "default": "acid"
+  },
+  {
+    "id": "lubricant",
+    "type": "ammunition_type",
+    "name": "lubricant",
+    "default": "industrial_lubricant"
+  },
+  {
+    "id": "glue",
+    "type": "ammunition_type",
+    "name": "glue",
+    "default": "superglue"
   },
   {
     "type": "ammunition_type",

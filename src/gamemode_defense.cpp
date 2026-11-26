@@ -1,13 +1,7 @@
 #include "gamemode_defense.h" // IWYU pragma: associated
 
-#include <cassert>
-#include <cstddef>
-#include <memory>
-#include <ostream>
-#include <set>
-
-#include "action_time_scale.h"
 #include "action.h"
+#include "action_time_scale.h"
 #include "avatar.h"
 #include "color.h"
 #include "construction.h"
@@ -19,15 +13,17 @@
 #include "item.h"
 #include "item_group.h"
 #include "iteminfo_query.h"
-#include "map.h"
+#include "map/map.h"
+#include "map/mapbuffer_registry.h"
+#include "mapgen/mapgen_constructor.h"
 #include "messages.h"
 #include "mongroup.h"
 #include "monster.h"
 #include "monstergenerator.h"
 #include "mtype.h"
 #include "output.h"
-#include "overmap.h"
-#include "overmapbuffer.h"
+#include "overmap/overmap.h"
+#include "overmap/overmapbuffer.h"
 #include "player.h"
 #include "pldata.h"
 #include "point.h"
@@ -38,7 +34,13 @@
 #include "string_utils.h"
 #include "translations.h"
 #include "ui_manager.h"
-#include "weather.h"
+#include "weather/weather.h"
+
+#include <cassert>
+#include <cstddef>
+#include <memory>
+#include <ostream>
+#include <set>
 
 static const skill_id skill_barter( "barter" );
 
@@ -286,23 +288,24 @@ void defense_game::init_map()
             // Round down to the nearest even number
             mx -= mx % 2;
             my -= my % 2;
-            tinymap tm;
-            tm.generate( tripoint_abs_sm( mx, my, 0 ), calendar::turn );
-            tm.clear_spawns();
-            tm.clear_traps();
+            mapgen_constructor constructor( MAPBUFFER_REGISTRY.get(
+                                                mapbuffer_registry::primary_dimension_id() ) );
+            constructor.generate( project_to<coords::omt>( tripoint_abs_sm( mx, my, 0 ) ),
+                                  calendar::turn );
+            constructor.clear_spawns();
+            constructor.clear_traps();
         }
     }
 
     // For this mode assume we always want overmap zero.
     tripoint_abs_omt abs_defloc_pos = project_combine( point_abs_om(), defloc_pos );
-    g->load_map( project_to<coords::sm>( abs_defloc_pos ) );
+    g->load_map( project_to<coords::sm>( abs_defloc_pos.xy() ) );
     Character &player_character = get_player_character();
     const int z = player_character.bub_pos().z();
     player_character.setpos( tripoint_bub_ms( SEEX, SEEY, z ) );
 
-    g->update_map( g-> u );
-    monster *const generator = g->place_critter_around( mtype_id( "mon_generator" ), g->u.bub_pos(),
-                               2 );
+    monster *const generator = g->place_critter_around(
+                                   mtype_id( "mon_generator" ), g->u.bub_pos(), 2 );
     assert( generator );
     generator->friendly = -1;
 }

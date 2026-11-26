@@ -7,7 +7,7 @@
     "color_palette": "wooden_standard",
     "parts": [
       { "x": 0, "y": 0, "parts": [ "frame_wood_horizontal", "seat_wood_light", "hand_paddles", "boat_board" ] },
-      { "x": 1, "y": 0, "parts": [ "frame_wood_horizontal", "boat_board", "seat_wood_light" ] },
+      { "x": 1, "y": 0, "parts": [ "frame_wood_horizontal", "seat_wood_light", "hand_paddles", "boat_board" ] },
       { "x": 2, "y": 0, "parts": [ "frame_wood_horizontal", "boat_board" ] },
       { "x": -1, "y": 0, "parts": [ "frame_wood_horizontal", "boat_board" ] }
     ],
@@ -288,7 +288,7 @@
     "color_palette": "wooden_standard",
     "parts": [
       { "x": 0, "y": 0, "parts": [ "frame_wood_cross", "seat_wood", "hand_paddles", "boat_board" ] },
-      { "x": 0, "y": 1, "parts": [ "frame_wood_cross", "seat_wood", "boat_board" ] },
+      { "x": 0, "y": 1, "parts": [ "frame_wood_cross", "seat_wood", "hand_paddles", "boat_board" ] },
       { "x": 0, "y": 2, "parts": [ "frame_wood_vertical", "boat_board" ] },
       { "x": 0, "y": -1, "parts": [ "frame_wood_vertical", "boat_board" ] },
       { "x": -1, "y": -1, "parts": [ "frame_wood_sw", "boat_board" ] },
@@ -314,13 +314,14 @@
     "name": "Sailboat",
     "blueprint": [
       [ " ||||||||++|||  " ],
-      [ "||heeh|______|| " ],
+      [ "||heeh|s____s|| " ],
       [ "|__hh_|_______||" ],
       [ "'_____+__S===_F|" ],
       [ "|_____|_______||" ],
-      [ "||##==|______|| " ],
+      [ "||##==|s____s|| " ],
       [ " ||||||||++|||  " ]
     ],
+    "flags": [ "VEHICLE_NO_LOCKS" ],
     "color_palette": "wooden_standard",
     "parts": [
       { "x": -9, "y": 0, "parts": [ "frame_wood_horizontal", "windshield", "v_curtain", "boat_board" ] },
@@ -366,12 +367,12 @@
       { "x": -5, "y": 2, "parts": [ "frame_wood_vertical", "wood box", "roof_wood", "boat_board" ] },
       { "x": -4, "y": 2, "parts": [ "frame_wood_vertical", "wood box", "roof_wood", "boat_board" ] },
       { "x": -3, "y": 2, "parts": [ "frame_wood_horizontal", "woodboard_horizontal", "boat_board" ] },
-      { "x": -2, "y": 2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": -2, "y": 2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "folding_seat", "boat_board" ] },
       { "x": -1, "y": 2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
       { "x": 0, "y": 2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
       { "x": 1, "y": 2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
       { "x": 2, "y": 2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
-      { "x": 3, "y": 2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 3, "y": 2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "folding_seat", "boat_board" ] },
       { "x": 4, "y": 2, "parts": [ "frame_wood_sw", "woodhalfboard_sw", "boat_board" ] },
       { "x": 5, "y": 2, "parts": [ "frame_wood_ne", "woodhalfboard_ne", "boat_board" ] },
       { "x": -8, "y": 3, "parts": [ "frame_wood_se", "woodboard_se", "boat_board" ] },
@@ -410,12 +411,12 @@
       { "x": -5, "y": -2, "parts": [ "frame_wood_vertical", "veh_table_wood", "roof_wood", "boat_board" ] },
       { "x": -4, "y": -2, "parts": [ "frame_wood_vertical", "seat_wood", "roof_wood", "boat_board" ] },
       { "x": -3, "y": -2, "parts": [ "frame_wood_horizontal", "woodboard_horizontal", "boat_board" ] },
-      { "x": -2, "y": -2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": -2, "y": -2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "folding_seat", "boat_board" ] },
       { "x": -1, "y": -2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
       { "x": 0, "y": -2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
       { "x": 1, "y": -2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
       { "x": 2, "y": -2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
-      { "x": 3, "y": -2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 3, "y": -2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "folding_seat", "boat_board" ] },
       { "x": 4, "y": -2, "parts": [ "frame_wood_se", "woodhalfboard_se", "boat_board" ] },
       { "x": 5, "y": -2, "parts": [ "frame_wood_nw", "woodhalfboard_nw", "boat_board" ] },
       { "x": -8, "y": -3, "parts": [ "frame_wood_sw", "woodboard_sw", "boat_board" ] },
@@ -454,13 +455,14 @@
     "name": "Pirate Ship",
     "blueprint": [
       [ " ||||||||++|||   " ],
-      [ "||heeh|_____t||  " ],
+      [ "||heeh|s____t||  " ],
       [ "|=_hh_|_______|| " ],
       [ "|=____+__S===_F|>" ],
       [ "|=____|_______|| " ],
-      [ "||##__|_____t||  " ],
+      [ "||##__|s____t||  " ],
       [ " ||||||||++|||   " ]
     ],
+    "flags": [ "VEHICLE_NO_LOCKS" ],
     "color_palette": "wooden_standard",
     "parts": [
       { "x": -9, "y": 0, "parts": [ "frame_wood_horizontal", "woodboard_horizontal", "plating_wood", "boat_board" ] },
@@ -511,7 +513,7 @@
       { "x": -5, "y": 2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "roof_wood", "boat_board" ] },
       { "x": -4, "y": 2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "roof_wood", "boat_board" ] },
       { "x": -3, "y": 2, "parts": [ "frame_wood_horizontal", "woodboard_horizontal", "boat_board" ] },
-      { "x": -2, "y": 2, "parts": [ "frame_wood_horizontal", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": -2, "y": 2, "parts": [ "frame_wood_horizontal", "wooden_aisle_vertical", "folding_seat", "boat_board" ] },
       { "x": -1, "y": 2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
       { "x": 0, "y": 2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
       { "x": 1, "y": 2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
@@ -522,6 +524,7 @@
         "parts": [
           "frame_wood_vertical",
           "wood box",
+          "folding_seat",
           "turret_mount_manual_wood",
           {
             "ammo_types": [ "cannon_round_ball", "cannon_canister_shot" ],
@@ -570,7 +573,11 @@
       { "x": -5, "y": -2, "parts": [ "frame_wood_vertical", "veh_table_wood", "roof_wood", "boat_board" ] },
       { "x": -4, "y": -2, "parts": [ "frame_wood_vertical", "seat_wood", "roof_wood", "boat_board" ] },
       { "x": -3, "y": -2, "parts": [ "frame_wood_horizontal", "woodboard_horizontal", "boat_board" ] },
-      { "x": -2, "y": -2, "parts": [ "frame_wood_horizontal", "wooden_aisle_vertical", "boat_board" ] },
+      {
+        "x": -2,
+        "y": -2,
+        "parts": [ "frame_wood_horizontal", "wooden_aisle_vertical", "folding_seat", "boat_board" ]
+      },
       { "x": -1, "y": -2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
       { "x": 0, "y": -2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
       { "x": 1, "y": -2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
@@ -581,6 +588,7 @@
         "parts": [
           "frame_wood_vertical",
           "wood box",
+          "folding_seat",
           "turret_mount_manual_wood",
           {
             "ammo_types": [ "cannon_round_ball", "cannon_canister_shot" ],
@@ -1914,7 +1922,11 @@
     "name": "Automatic Water Skimmer",
     "blueprint": [  ],
     "parts": [
-      { "x": 0, "y": 0, "parts": [ "frame_vertical_2", "robot_controls", "engine_electric", "roof", "metal_boat_hull" ] },
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [ "frame_vertical_2", "robot_controls", "vehicle_alarm", "engine_electric", "roof", "metal_boat_hull" ]
+      },
       { "x": -1, "y": 0, "parts": [ "frame_vertical_2", "roof", "vehicle_scoop" ] },
       { "x": -2, "y": 0, "parts": [ "frame_horizontal", "hatch", "metal_boat_hull" ] },
       {

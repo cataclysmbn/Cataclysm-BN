@@ -97,16 +97,6 @@ inline auto is_outside_pocket_dimension_bounds(
     return is_outside_pocket_dimension_bounds( pocket_info, project_to<coords::sm>( p ) );
 }
 
-inline auto is_outside_pocket_dimension_bounds(
-    const std::optional<pocket_dimension_data> &pocket_info,
-    const tripoint_abs_sm &loaded_grid_origin,
-    const tripoint_bub_ms &p ) -> bool
-{
-    const auto origin = project_to<coords::ms>( loaded_grid_origin );
-    const auto abs_ms = ( p + origin.xy().raw() ).reinterpret_as<tripoint_abs_ms>();
-    return is_outside_pocket_dimension_bounds( pocket_info, abs_ms );
-}
-
 /**
  * Metadata for a dimension that is active (has at least one submap in the loaded set).
  *

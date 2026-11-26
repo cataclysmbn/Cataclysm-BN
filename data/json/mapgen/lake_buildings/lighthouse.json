@@ -115,7 +115,7 @@
         "     |.............|    ",
         "     0h.h...<.....C0    ",
         "     0ttt...>.....g0    ",
-        "     0h.h.#####...C0    ",
+        "     0h.h.##I##...C0    ",
         "     |....C.W.C....|    ",
         "     ||..........y||    ",
         "      |y..........|     ",
@@ -133,7 +133,8 @@
         ">": "t_wood_stairs_down",
         "0": "t_laminated_glass",
         "#": "t_wall_wood",
-        "^": "t_shingle_flat_roof"
+        "^": "t_shingle_flat_roof",
+        "I": "t_wall_wood"
       },
       "furniture": {
         "h": "f_chair",
@@ -153,7 +154,8 @@
         "b": "f_bookcase",
         "a": "f_rack_coat",
         "g": "f_floor_lamp",
-        "W": "f_fireplace"
+        "W": "f_fireplace",
+        "I": "f_billybass"
       },
       "items": {
         "b": { "item": "homebooks", "chance": 20, "repeat": [ 2, 4 ] },

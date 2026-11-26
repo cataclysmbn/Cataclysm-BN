@@ -45,6 +45,7 @@ void do_chop_trees( npc & );
 void do_fishing( npc & );
 void do_farming( npc & );
 void do_butcher( npc & );
+void do_dissect( npc & );
 void do_craft( npc & );
 void revert_activity( npc & );
 void goto_location( npc & );
@@ -87,6 +88,7 @@ void set_npc_pickup( npc &p );
 void npc_die( npc &p );
 void npc_thankful( npc &p );
 void clear_overrides( npc &p );
+void go_to_sleep( npc &p );
 } // namespace talk_function
 
 time_duration calc_skill_training_time( const npc &p, const skill_id &skill );

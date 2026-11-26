@@ -54,6 +54,21 @@ using emit_id = string_id<emit>;
 class enchantment;
 using enchantment_id = string_id<enchantment>;
 
+class enchantment_value;
+using enchantment_value_id = string_id<enchantment_value>;
+
+class enchantment_flag;
+using enchantment_flag_id = string_id<enchantment_flag>;
+
+class enchantment_condition;
+using enchantment_condition_id = string_id<enchantment_condition>;
+
+class enchantment_vision;
+using enchantment_vision_id = string_id<enchantment_vision>;
+
+class character_value;
+using character_value_id = string_id<character_value>;
+
 class fault;
 using fault_id = string_id<fault>;
 
@@ -92,8 +107,9 @@ using matype_id = string_id<martialart>;
 class ma_technique;
 using matec_id = string_id<ma_technique>;
 
-class mapgen_palette;
-using palette_id = string_id<mapgen_palette>;
+class MapgenColorPalette;
+using mpalette_id = string_id<MapgenColorPalette>;
+
 
 class material_type;
 using material_id = string_id<material_type>;
@@ -108,7 +124,7 @@ class monfaction;
 using mfaction_id = int_id<monfaction>;
 using mfaction_str_id = string_id<monfaction>;
 
-struct MonsterGroup;
+class MonsterGroup;
 using mongroup_id = string_id<MonsterGroup>;
 
 class morale_type_data;
@@ -142,6 +158,12 @@ using overmap_location_id = string_id<overmap_location>;
 
 class overmap_special;
 using overmap_special_id = string_id<overmap_special>;
+
+class mapgen_palette;
+using palette_id = string_id<mapgen_palette>;
+
+class perk;
+using perk_id = string_id<perk>;
 
 class profession;
 using profession_id = string_id<profession>;

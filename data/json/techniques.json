@@ -119,6 +119,7 @@
     "id": "WRAP",
     "name": "Wrap Attack",
     "unarmed_allowed": true,
+    "melee_allowed": true,
     "stun_dur": 2,
     "messages": [ "You wrap up %s", "<npcname> wraps up %s" ],
     "description": "Stun 2 turns"
@@ -128,6 +129,7 @@
     "id": "SWEEP",
     "name": "Sweep Attack",
     "unarmed_allowed": true,
+    "melee_allowed": true,
     "down_dur": 2,
     "messages": [ "You sweep %s", "<npcname> sweeps %s" ],
     "description": "Down 2 turns"
@@ -205,6 +207,7 @@
     "disarms": true,
     "down_dur": 1,
     "knockback_dist": 1,
+    "controlled_knockback": true,
     "mult_bonuses": [ { "stat": "movecost", "scale": 0 } ]
   },
   {
@@ -219,6 +222,7 @@
     "force_unarmed": true,
     "down_dur": 1,
     "knockback_dist": 1,
+    "controlled_knockback": true,
     "mult_bonuses": [ { "stat": "movecost", "scale": 0 } ]
   },
   {
@@ -234,6 +238,7 @@
     "force_unarmed": true,
     "down_dur": 1,
     "knockback_dist": 1,
+    "controlled_knockback": true,
     "mult_bonuses": [ { "stat": "movecost", "scale": 0 } ]
   },
   {
@@ -249,6 +254,7 @@
     "disarms": true,
     "down_dur": 1,
     "knockback_dist": 1,
+    "controlled_knockback": true,
     "mult_bonuses": [ { "stat": "movecost", "scale": 0 } ]
   },
   {
@@ -814,6 +820,7 @@
     "crit_ok": true,
     "weighting": 2,
     "down_dur": 2,
+    "knockback_dist": 1,
     "mult_bonuses": [
       { "stat": "damage", "type": "bash", "scale": 0.5 },
       { "stat": "damage", "type": "cut", "scale": 0.5 },
@@ -845,6 +852,8 @@
     "melee_allowed": true,
     "force_unarmed": true,
     "down_dur": 1,
+    "knockback_dist": 1,
+    "controlled_knockback": true,
     "mult_bonuses": [
       { "stat": "damage", "type": "bash", "scale": 1.25 },
       { "stat": "damage", "type": "cut", "scale": 1.25 },
@@ -862,6 +871,8 @@
     "force_unarmed": true,
     "disarms": true,
     "down_dur": 1,
+    "knockback_dist": 1,
+    "controlled_knockback": true,
     "mult_bonuses": [
       { "stat": "damage", "type": "bash", "scale": 1.25 },
       { "stat": "damage", "type": "cut", "scale": 1.25 },
@@ -881,6 +892,8 @@
     "force_unarmed": true,
     "down_dur": 1,
     "stun_dur": 1,
+    "knockback_dist": 1,
+    "controlled_knockback": true,
     "mult_bonuses": [
       { "stat": "damage", "type": "bash", "scale": 1.5 },
       { "stat": "damage", "type": "cut", "scale": 1.5 },
@@ -912,6 +925,8 @@
     "dodge_counter": true,
     "force_unarmed": true,
     "down_dur": 1,
+    "knockback_dist": 1,
+    "controlled_knockback": true,
     "mult_bonuses": [ { "stat": "movecost", "scale": 0 } ]
   },
   {
@@ -1466,6 +1481,7 @@
     "down_dur": 2,
     "knockback_dist": 2,
     "knockback_spread": 2,
+    "controlled_knockback": true,
     "stunned_target": true,
     "force_unarmed": true,
     "mult_bonuses": [ { "stat": "damage", "type": "bash", "scale": 2 } ]

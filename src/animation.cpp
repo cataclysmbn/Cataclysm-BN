@@ -6,10 +6,12 @@
 #include "coordinates.h"
 #include "cursesdef.h"
 #include "enums.h"
-#include "game_constants.h"
 #include "game.h"
+#include "game_constants.h"
 #include "line.h"
-#include "map.h"
+#include "map/map.h"
+#include "map/mapdata.h"
+#include "map_memory.h"
 #include "monster.h"
 #include "mtype.h"
 #include "options.h"
@@ -19,9 +21,10 @@
 #include "posix_time.h"
 #include "ranged.h"
 #include "translations.h"
+#include "travel/travel_destination.h"
 #include "type_id.h"
 #include "ui_manager.h"
-#include "weather.h"
+#include "weather/weather.h"
 
 #if defined(TILES)
 #include <memory>
@@ -40,6 +43,17 @@
 
 namespace
 {
+
+auto has_memorized_terrain_at( avatar &you, map &/*here*/, const tripoint_bub_ms &target ) -> bool
+{
+    if( !you.should_show_map_memory() ) {
+        return false;
+    }
+
+    const auto abs_target = bub_to_abs( target );
+    return ter_str_id( you.get_terrain_tile( abs_target ).tile ).is_valid() ||
+           ter_str_id( you.get_memorized_tile( abs_target ).tile ).is_valid();
+}
 
 class basic_animation
 {
@@ -543,6 +557,8 @@ void game::draw_bullet( const tripoint_bub_ms &t, const int i,
                         const std::vector<tripoint_bub_ms> &trajectory, const char bullet,
                         const std::string &custom_sprite )
 {
+    refresh_player_visibility_cache_if_needed();
+
     if( !use_tiles ) {
         draw_bullet_curses( m, t, bullet, nullptr );
         return;
@@ -568,6 +584,7 @@ void game::draw_bullet( const tripoint_bub_ms &t, const int i,
                         const std::vector<tripoint_bub_ms> &trajectory,
                         const char bullet, const std::string & )
 {
+    refresh_player_visibility_cache_if_needed();
     draw_bullet_curses( m, t, bullet, &trajectory[i] );
 }
 #endif
@@ -666,6 +683,8 @@ void draw_bullet_trajectories( const draw_bullet_trajectories_options &options )
     if( options.trajectories.empty() ) {
         return;
     }
+
+    g->refresh_player_visibility_cache_if_needed();
 
 #if !defined( TILES )
     draw_bullet_trajectories_curses( *g, options );
@@ -864,7 +883,8 @@ void draw_line_curses( game &g, const tripoint_bub_ms &center,
 void game::draw_line( const tripoint_bub_ms &p, const tripoint_bub_ms &center,
                       const std::vector<tripoint_bub_ms> &points, bool noreveal )
 {
-    if( !u.sees( p ) ) {
+    if( !noreveal && !avatar_knows_travel_destination( u, p ) &&
+        !has_memorized_terrain_at( u, get_map(), p ) ) {
         return;
     }
 
@@ -879,7 +899,8 @@ void game::draw_line( const tripoint_bub_ms &p, const tripoint_bub_ms &center,
 void game::draw_line( const tripoint_bub_ms &p, const tripoint_bub_ms &center,
                       const std::vector<tripoint_bub_ms> &points, bool noreveal )
 {
-    if( !u.sees( p ) ) {
+    if( !noreveal && !avatar_knows_travel_destination( u, p ) &&
+        !has_memorized_terrain_at( u, get_map(), p ) ) {
         return;
     }
 
@@ -905,6 +926,8 @@ void draw_line_curses( game &g, const std::vector<tripoint_bub_ms> &points )
 #if defined(TILES)
 void draw_line_of( const draw_sprite_line_options &options )
 {
+    g->refresh_player_visibility_cache_if_needed();
+
     if( !use_tiles ) {
         draw_line_curses( *g, options.points );
         return;

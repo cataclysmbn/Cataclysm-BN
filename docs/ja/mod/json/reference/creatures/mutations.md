@@ -6,7 +6,7 @@
 
 ### 特性/変異のフィールド定義
 
-```json
+```jsonc
 "id": "LIGHTEATER",  // 固有のID
 "name": "Optimist",  // ゲーム内で表示される名称
 "points": 2,         // 特性の取得コスト。正の値はポイントを消費し、負の値はポイントを獲得します
@@ -23,16 +23,18 @@
 "initial_ma_styles": [ "style_crane" ], // (任意) ゲーム開始時にプレイヤーが選択できる武術スタイルのIDリスト
 "mixed_effect": false, // この特性がメリットとデメリットの両面を持つかどうか。UI表示専用の宣言的な設定です (既定値: false)
 "description": "Nothing gets you down!" // ゲーム内の説明文
+"apperance_description": "mowhawk" // 写真や詳細説明で外見の変異（hair_color、hair_style、eye_color、skin_tone など）を説明する場合のみ使用します
 "starting_trait": true, // キャラクター作成時に選択可能か (既定値: false)
+"random_starting_trait": true, // キャラクター作成時にランダム選択されるか (既定値: starting_trait)
 "valid": false,      // ゲーム内で変異によって取得可能か (既定値: true)
 "purifiable": false, // 精製剤で除去可能か (既定値: true)
 "profession": true, // 職業専用の初期特質か (既定値: false)
 "debug": false,     // デバッグ用の特質か (既定値: false)
 "player_display": true, // プレイヤー情報画面(@)で表示するか
-"category": ["MUTCAT_BIRD", "MUTCAT_INSECT"], // この変異が属する変異カテゴリ
+"category": ["BIRD", "INSECT"], // この変異が属する変異カテゴリ
 "prereqs": ["SKIN_ROUGH"], // この変異を取得するために事前に必要な変異
 "prereqs2": ["LEAVES"], //この変異を取得するために事前に必要な変異（第2候補）。prereqsと併用すると2つの変異ルートが作成され、どちらかがランダムに選ばれます
-"threshreq": ["THRESH_SPIDER"], // この変異の取得に必要な閾値（しきい値）
+"threshold_tier": 1, // 変異するために必要な、カテゴリの閾値の段階
 "cancels": ["ROT1", "ROT2", "ROT3"], // 変異時に、これら既存の変異を上書きして消去します
 "prevents": ["ROT1", "ROT2", "ROT3"], // この変異がある限り、指定された変異の取得を防ぎます
 "changes_to": ["FASTHEALER2"], // さらに変異が進んだ際、この変異に変化する可能性があります
@@ -114,6 +116,7 @@
 "no_cbm_on_bp": [ "TORSO", "HEAD", "EYES", "MOUTH", "ARM_L" ], // CBMを埋め込めない部位のリスト (既定値: 空)
 "body_size": "LARGE", // 体格を増減させます。有効な変異は一度に1つのみです。指定可能な値: `TINY`, `SMALL`, `LARGE`, `HUGE`（`MEDIUM`は既定値のため効果なし）
 "lumination": [ [ "HEAD", 20 ], [ "ARM_L", 10 ] ], // 発光する部位と、その強度のリスト (既定値: 空)
+"kcal_scale" : 0.5, // 最大 kcal 蓄積量をスケールします。1.0 は2倍、-0.5 は半分です。
 "metabolism_modifier": 0.333, // 代謝率の追加倍率。1.0は消費量倍増、-0.5は半減を意味します。
 "fatigue_modifier": 0.5, // 疲労蓄積率の追加倍率。1.0は消費量倍増、-0.5は半減を意味します。
 "fatigue_regen_modifier": 0.333, // 休息時に疲労や睡眠不足が回復する速度の修正値。
@@ -127,6 +130,47 @@
                "active": false , //変化後の変異が発動状態で開始するか
                "moves": 100 // 変化に要する移動コスト (既定値: 0)
 "enchantments": [ "MEP_INK_GLAND_SPRAY" ], // プレイヤーに付与するエンチャント。詳細は magic.md 等を参照。
-"mutagen_target_modifier": 5         // 変異原による変異のバランス調整。負の値は目標値を低く押し下げます (既定値: 0)
+"mutagen_target_modifier": 5,        // 変異原による変異のバランス調整。負の値は目標値を低く押し下げます (既定値: 0)
+"flags": [ "LIMB_SCORE_DODGE_AFFECTED" ], // この変異に適用される変異フラグのリスト。下記の Mutation Flags を参照してください (既定値: 空)
+"types": [ "CLAWS" ]                 // この変異が属する変異タイプIDのリスト。競合検出と必須外見処理に使用します。下記の Mutation Types を参照してください (既定値: 空)
 }
 ```
+
+## 変異フラグ
+
+変異フラグは `data/json/flags_mutation.json` で定義され、変異の `flags` フィールドから参照されます。
+
+### 性別フラグ
+
+これらのフラグは、キャラクター作成やNPC生成時に変異を割り当てる方法を制御します。外見の変異に適用され、ランダム化およびキャラクター作成時の特性選択で確認されます。
+
+| フラグ             | 効果                                                                               |
+| ------------------ | ---------------------------------------------------------------------------------- |
+| `MALE_EXCLUSIVE`   | 女性キャラクターには割り当てられず、キャラクター作成時に女性から隠されます。       |
+| `FEMALE_EXCLUSIVE` | 男性キャラクターには割り当てられず、キャラクター作成時に男性から隠されます。       |
+| `MALE_PREFERRED`   | 女性キャラクターには自動割り当てされませんが、女性プレイヤーは手動で選択できます。 |
+| `FEMALE_PREFERRED` | 男性キャラクターには自動割り当てされませんが、男性プレイヤーは手動で選択できます。 |
+
+`EXCLUSIVE` フラグは `mandatory_one` より優先されます。必須タイプに性別に適合する特性がない場合、無効な特性を割り当てず、そのタイプを静かにスキップします。
+
+## 変異タイプ
+
+変異タイプは関連する変異をグループ化します。個別のJSONオブジェクトとして定義し、変異の `types` フィールドから参照します。
+
+```json
+{
+  "type": "mutation_type",
+  "id": "hair_color", // このタイプの一意な文字列ID
+  "mandatory_one": true, // true の場合、キャラクターは常にこのタイプの変異を1つ以上持ちます。swap_on_conflict を暗黙に含みます (既定値: false)
+  "default_trait": "SKIN_LIGHTER", // この必須タイプを持たないロード済みキャラクターに追加される任意の変異 (既定値: なし)
+  "swap_on_conflict": true, // true の場合、キャラクター作成でこのタイプの新しい変異を選ぶと、競合エラーを表示せず同じタイプの既存変異を自動的に削除します (既定値: false)
+  "random_chance": 50 // 外見のランダム化でこのタイプの変異がランダムに割り当てられる確率（0～100）。mandatory_one が false の場合のみ使用します (既定値: 0)
+}
+```
+
+### 注記
+
+- `mandatory_one` は、作成時と再抽選時に新しいキャラクターがそのタイプの変異を必ず1つ受け取ることを保証します。
+- `default_trait` は、必須外見タイプが導入される前のセーブやテンプレートをロードした際に代替特性を与えます。
+- `swap_on_conflict` は `mandatory_one` なしでも、任意の外見タイプで同時に1つだけ選ぶ必要がある場合（例：ひげのスタイル）に役立ちます。
+- `random_chance` と `mandatory_one` は意図上相互排他的です。どちらか一方だけを使用してください。

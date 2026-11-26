@@ -1,17 +1,13 @@
-#include "game.h" // IWYU pragma: associated
-
-#include <algorithm>
-#include <sstream>
-#include <type_traits>
-#include <utility>
-
 #include "avatar.h"
 #include "calendar.h"
 #include "color.h"
+#include "game.h" // IWYU pragma: associated
 #include "harvest.h"
 #include "input.h"
-#include "map.h"
-#include "mapdata.h"
+#include "item_group.h"
+#include "itype.h"
+#include "map/map.h"
+#include "map/mapdata.h"
 #include "mod_manager.h"
 #include "output.h"
 #include "string_formatter.h"
@@ -19,8 +15,11 @@
 #include "string_utils.h"
 #include "translations.h"
 #include "ui_manager.h"
-#include "item_group.h"
-#include "itype.h"
+
+#include <algorithm>
+#include <sstream>
+#include <type_traits>
+#include <utility>
 
 static const skill_id skill_survival( "survival" );
 

@@ -1,10 +1,104 @@
 // Associated headers here are the ones for which their only non-inline
 // functions are serialization functions.  This allows IWYU to check the
 // includes in such headers.
+#include "active_item_cache.h"
+#include "activity_actor.h"
+#include "assign.h"
+#include "auto_pickup.h"
+#include "avatar.h"
+#include "bionics.h"
+#include "bodypart.h"
+#include "calendar.h"
+#include "cata_cartesian_product.h"
+#include "cata_io.h"
+#include "cata_utility.h"
+#include "cata_variant.h"
+#include "character.h"
+#include "character_encumbrance.h"
+#include "character_id.h"
+#include "character_martial_arts.h"
+#include "clone_ptr.h"
+#include "clzones.h"
+#include "computer.h"
+#include "construction.h"
+#include "consumption.h"
 #include "coordinates.h"
+#include "craft_command.h"
+#include "creature.h"
+#include "creature_tracker.h"
+#include "debug.h"
+#include "digital_media.h"
+#include "digital_recipes.h"
+#include "drop_token.h"
+#include "effect.h"
+#include "enum_conversions.h"
 #include "enums.h" // IWYU pragma: associated
+#include "event.h"
+#include "faction.h"
+#include "flag.h"
+#include "flat_set.h"
+#include "game.h"
+#include "game_constants.h"
+#include "int_id.h"
+#include "inventory.h"
+#include "item.h"
+#include "item_contents.h"
+#include "item_factory.h"
+#include "itype.h"
+#include "json.h"
+#include "kill_tracker.h"
+#include "lru_cache.h"
+#include "magic/magic.h"
+#include "magic/magic_teleporter_list.h"
+#include "map/field.h"
+#include "map/field_type.h"
+#include "map/map.h"
+#include "map/mapdata.h"
+#include "map/submap.h"
+#include "map_memory.h"
+#include "mattack_common.h"
+#include "mission.h"
+#include "monster.h"
+#include "morale.h"
+#include "morale_types.h"
+#include "mtype.h"
+#include "mutation.h"
+#include "newcharacter.h"
+#include "npc.h"
+#include "npc_class.h"
 #include "npc_favor.h" // IWYU pragma: associated
+#include "options.h"
+#include "overmap/overmapbuffer.h"
+#include "pickup_token.h"
+#include "pimpl.h"
+#include "player.h"
+#include "player_activity.h"
 #include "pldata.h" // IWYU pragma: associated
+#include "point.h"
+#include "profession.h"
+#include "recipe.h"
+#include "recipe_dictionary.h"
+#include "relic.h"
+#include "requirements.h"
+#include "rng.h"
+#include "scenario.h"
+#include "skill.h"
+#include "stats_tracker.h"
+#include "stomach.h"
+#include "string_id.h"
+#include "text_snippets.h"
+#include "tileray.h"
+#include "trait_group.h"
+#include "uistate.h"
+#include "units.h"
+#include "value_ptr.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+#include "vehicle/vpart_range.h"
+#include "vitamin.h"
+#include "world_type.h"
 
 #include <algorithm>
 #include <array>
@@ -20,107 +114,14 @@
 #include <numeric>
 #include <optional>
 #include <ranges>
-#include <span>
 #include <set>
+#include <span>
 #include <sstream>
 #include <stack>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
-
-#include "active_item_cache.h"
-#include "activity_actor.h"
-#include "assign.h"
-#include "auto_pickup.h"
-#include "avatar.h"
-#include "bionics.h"
-#include "bodypart.h"
-#include "calendar.h"
-#include "cata_cartesian_product.h"
-#include "cata_io.h"
-#include "cata_variant.h"
-#include "cata_utility.h"
-#include "character.h"
-#include "character_encumbrance.h"
-#include "character_id.h"
-#include "character_martial_arts.h"
-#include "clone_ptr.h"
-#include "clzones.h"
-#include "computer.h"
-#include "construction.h"
-#include "consumption.h"
-#include "craft_command.h"
-#include "creature.h"
-#include "creature_tracker.h"
-#include "debug.h"
-#include "drop_token.h"
-#include "effect.h"
-#include "enum_conversions.h"
-#include "event.h"
-#include "faction.h"
-#include "field.h"
-#include "field_type.h"
-#include "flag.h"
-#include "flat_set.h"
-#include "game.h"
-#include "game_constants.h"
-#include "int_id.h"
-#include "inventory.h"
-#include "item.h"
-#include "world_type.h"
-#include "item_contents.h"
-#include "item_factory.h"
-#include "itype.h"
-#include "json.h"
-#include "kill_tracker.h"
-#include "lru_cache.h"
-#include "magic.h"
-#include "magic_teleporter_list.h"
-#include "map.h"
-#include "map_memory.h"
-#include "mapdata.h"
-#include "mattack_common.h"
-#include "mission.h"
-#include "monster.h"
-#include "morale.h"
-#include "morale_types.h"
-#include "mtype.h"
-#include "mutation.h"
-#include "newcharacter.h"
-#include "npc.h"
-#include "npc_class.h"
-#include "options.h"
-#include "overmapbuffer.h"
-#include "pickup_token.h"
-#include "pimpl.h"
-#include "player.h"
-#include "player_activity.h"
-#include "point.h"
-#include "profession.h"
-#include "recipe.h"
-#include "recipe_dictionary.h"
-#include "relic.h"
-#include "requirements.h"
-#include "rng.h"
-#include "scenario.h"
-#include "skill.h"
-#include "stats_tracker.h"
-#include "stomach.h"
-#include "string_id.h"
-#include "submap.h"
-#include "text_snippets.h"
-#include "tileray.h"
-#include "trait_group.h"
-#include "units.h"
-#include "uistate.h"
-#include "value_ptr.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vitamin.h"
-#include "vpart_position.h"
-#include "vpart_range.h"
 
 static const efftype_id effect_riding( "riding" );
 
@@ -536,10 +537,10 @@ void Character::load( const JsonObject &data )
 
     JsonObject vits = data.get_object( "vitamin_levels" );
     vits.allow_omitted_members();
-    for( const std::pair<const vitamin_id, vitamin> &v : vitamin::all() ) {
-        if( vits.has_member( v.first.str() ) ) {
-            int lvl = vits.get_int( v.first.str() );
-            vitamin_levels[v.first] = clamp( lvl, v.first->min(), v.first->max() );
+    for( const auto &v : vitamin::all() ) {
+        if( vits.has_member( v.id.str() ) ) {
+            int lvl = vits.get_int( v.id.str() );
+            vitamin_levels[v.id] = clamp( lvl, v.id->min(), v.id->max() );
         }
     }
     data.read( "consumption_history", consumption_history );
@@ -572,8 +573,8 @@ void Character::load( const JsonObject &data )
             for( size_t bp_iter = 0; bp_iter < num_bp; bp_iter++ ) {
                 body_part bp_token = static_cast<body_part>( bp_iter );
                 auto &part = get_part( convert_bp( bp_token ) );
-                part.set_temp_cur( temp_cur_old[bp_iter] );
-                part.set_temp_conv( temp_conv_old[bp_iter] );
+                part.set_temp_cur( units::from_legacy_bodypart_temp( temp_cur_old[bp_iter] ) );
+                part.set_temp_conv( units::from_legacy_bodypart_temp( temp_conv_old[bp_iter] ) );
                 part.set_frostbite_timer( frostbite_timer_old[bp_iter] );
             }
         }
@@ -706,6 +707,7 @@ void Character::load( const JsonObject &data )
     recalculate_size();
 
     data.read( "my_bionics", *my_bionics );
+    data.read( "my_perks", perks );
 
     for( auto &w : worn ) {
         w->on_takeoff( *this );
@@ -792,13 +794,12 @@ void Character::load( const JsonObject &data )
     recalc_sight_limits();
     reset_encumbrance();
 
-    assign( data, "power_level", power_level, false, 0_kJ );
-    assign( data, "max_power_level", max_power_level, false, 0_kJ );
+    assign( data, "power_level", power_level, false );
+    assign( data, "max_power_level", max_power_level, false );
 
     // Bionic power should not be negative!
-    if( power_level < 0_J ) {
-        power_level = 0_J;
-    }
+    max_power_level = std::max( max_power_level, 0_J );
+    power_level = std::clamp( power_level, 0_J, max_power_level );
 
     JsonArray overmap_time_array = data.get_array( "overmap_time" );
     overmap_time.clear();
@@ -907,6 +908,7 @@ void Character::store( JsonOut &json ) const
     json.member( "martial_arts_data", martial_arts_data );
     // "Fracking Toasters" - Saul Tigh, toaster
     json.member( "my_bionics", *my_bionics );
+    json.member( "my_perks", perks );
 
     json.member_as_string( "move_mode",  move_mode );
 
@@ -2173,6 +2175,17 @@ auto monster::load( const JsonObject &data,
     data.read( "mounted_player_id", mounted_player_id );
     data.read( "path", path );
     data.read( "monster_flags", monster_flags );
+    if( type->pet_training && training_level > 0 ) {
+        for( const auto &lf : type->pet_training->level_flags ) {
+            if( lf.level <= training_level ) {
+                for( const m_flag f : lf.flags ) {
+                    if( !has_flag( f ) ) {
+                        monster_flags.insert( f );
+                    }
+                }
+            }
+        }
+    }
 }
 
 /*
@@ -2517,7 +2530,7 @@ void split_deferred()
     auto &m = get_map();
 
     for( const auto& [it, cnt] : split_defer ) {
-        const auto pos = it->position();
+        const auto pos = it->bub_pos();
         for( auto n = 0; n < cnt; n++ ) {
             auto tmp = item::spawn( *it );
 
@@ -2751,7 +2764,13 @@ void item::io( Archive &archive )
     archive.io( "item_counter", item_counter, static_cast<decltype( item_counter )>( 0 ) );
     archive.io( "rot", rot, 0_turns );
     archive.io( "last_rot_check", last_rot_check, calendar::start_of_cataclysm );
+    if constexpr( !Archive::is_input::value ) {
+        erase_if( techniques, []( const matec_id & technique ) { return !technique.is_valid(); } );
+    }
     archive.io( "techniques", techniques, io::empty_default_tag() );
+    if constexpr( Archive::is_input::value ) {
+        erase_if( techniques, []( const matec_id & technique ) { return !technique.is_valid(); } );
+    }
     {
         auto serialized_melee = std::vector<damage_instance_serialization::serialized_damage_unit> {};
         auto serialized_ranged = std::vector<damage_instance_serialization::serialized_damage_unit> {};
@@ -2930,6 +2949,16 @@ void item::deserialize( JsonIn &jsin )
         kills = std::make_unique<kill_tracker>( false );
         data.read( "item_kill_tracker", kills );
     }
+
+    if( has_flag( flag_id( "GENOME_DRIVE" ) ) && !is_digital_file( *this ) ) {
+        migrate_legacy_digital_media( *this );
+    }
+    for( const auto &[key, value] : type->item_vars ) {
+        if( key.starts_with( "digital_" ) && !has_var( key ) ) {
+            set_var( key, value );
+        }
+    }
+    initialize_digital_recipe_file( *this );
 
     if( data.has_member( "id" ) ) {
         safe_reference<item>::id_type id;
@@ -4341,6 +4370,7 @@ void stats_tracker::deserialize( JsonIn &jsin )
 void submap::store( JsonOut &jsout ) const
 {
     jsout.member( "turn_last_touched", last_touched );
+    jsout.member( "turn_last_actualized", last_actualized );
     jsout.member( "temperature", temperature );
 
     // Terrain is saved using a simple RLE scheme.  Legacy saves don't have
@@ -4487,6 +4517,11 @@ void submap::store( JsonOut &jsout ) const
                 jsout.write( cur.get_field_type().id() );
                 jsout.write( cur.get_field_intensity() );
                 jsout.write( cur.get_field_age() );
+                if( cur.electricity_conducted ) {
+                    jsout.start_object();
+                    jsout.member( "electricity_conducted", true );
+                    jsout.end_object();
+                }
             }
             jsout.end_array();
         }
@@ -4602,12 +4637,16 @@ void submap::store( JsonOut &jsout ) const
 }
 
 void submap::load( JsonIn &jsin, const std::string &member_name, int version,
-                   const tripoint_abs_ms offset )
+                   const tripoint_abs_ms offset, const dimension_id &dim )
 {
     if( member_name == "turn_last_touched" ) {
         last_touched = calendar::turn_zero + time_duration::from_turns( jsin.get_int() );
         // Guard against corrupted saves: last_touched must not be in the future.
         last_touched = std::min( last_touched, calendar::turn );
+    } else if( member_name == "turn_last_actualized" ) {
+        last_actualized = calendar::turn_zero + time_duration::from_turns( jsin.get_int() );
+        // Guard against corrupted saves: last_touched must not be in the future.
+        last_actualized = std::min( last_actualized, calendar::turn );
     } else if( member_name == "temperature" ) {
         temperature = jsin.get_int();
     } else if( member_name == "terrain" ) {
@@ -4632,6 +4671,9 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
                 --remaining;
             }
             ter[sm_ms.x()][sm_ms.y()] = iid;
+            if( iid->trap != tr_null ) {
+                trap_cache.push_back( sm_ms );
+            }
         }
         if( remaining ) {
             debugmsg( "Mapbuffer terrain data is corrupt, tile data remaining." );
@@ -4745,6 +4787,11 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
                     field_cache.push_back( point_sm_ms( i, j ) );
                 }
                 fld[i][j].add_field( ft, intensity, time_duration::from_turns( age ) );
+                if( jsin.test_object() ) {
+                    auto metadata = jsin.get_object();
+                    fld[i][j].find_field( ft )->electricity_conducted =
+                        metadata.get_bool( "electricity_conducted", false );
+                }
             }
         }
     } else if( member_name == "graffiti" ) {
@@ -4817,7 +4864,7 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
             int k = jsin.get_int();
             auto sm_pt = tripoint_sm_ms( i, j, k );
             auto abs_pt = tripoint_abs_ms( offset.x() + i, offset.y() + j, k );
-            std::unique_ptr<partial_con> pc = std::make_unique<partial_con>( abs_pt );
+            std::unique_ptr<partial_con> pc = std::make_unique<partial_con>( abs_pt, dim );
             pc->counter = jsin.get_int();
             if( jsin.test_int() ) {
                 // Oops, int id incorrectly saved by legacy code, just load it and hope for the best

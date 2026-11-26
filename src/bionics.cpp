@@ -1,19 +1,8 @@
 #include "bionics.h"
 
-#include <algorithm> //std::min
-#include <array>
-#include <climits>
-#include <cmath>
-#include <cstdlib>
-#include <forward_list>
-#include <iterator>
-#include <list>
-#include <memory>
-#include <optional>
-#include <type_traits>
-
 #include "action.h"
 #include "action_time_scale.h"
+#include "active_tile_data_def.h"
 #include "activity_actor_definitions.h"
 #include "assign.h"
 #include "avatar.h"
@@ -32,13 +21,15 @@
 #include "damage.h"
 #include "debug.h"
 #include "dispersion.h"
+#include "distribution_grid.h"
 #include "effect.h"
+#include "enchantments/enchantment.h"
+#include "enchantments/enchantment_condition.h"
 #include "enum_conversions.h"
 #include "enums.h"
 #include "event.h"
 #include "event_bus.h"
 #include "explosion.h"
-#include "field_type.h"
 #include "flag.h"
 #include "game.h"
 #include "generic_factory.h"
@@ -50,11 +41,12 @@
 #include "itype.h"
 #include "json.h"
 #include "line.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "make_static.h"
-#include "map.h"
+#include "map/field_type.h"
+#include "map/map.h"
+#include "map/mapdata.h"
 #include "map_iterator.h"
-#include "mapdata.h"
 #include "memorial_logger.h"
 #include "messages.h"
 #include "monster.h"
@@ -63,34 +55,45 @@
 #include "npc.h"
 #include "options.h"
 #include "output.h"
-#include "overmapbuffer.h"
+#include "overmap/overmapbuffer.h"
 #include "pimpl.h"
 #include "player.h"
 #include "player_activity.h"
 #include "pldata.h"
 #include "point.h"
 #include "projectile.h"
-#include "requirements.h"
 #include "regen.h"
+#include "requirements.h"
 #include "rng.h"
 #include "sounds.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "teleport.h"
 #include "translations.h"
+#include "type_id_implement.h"
 #include "ui.h"
 #include "ui_manager.h"
 #include "units.h"
 #include "units_utility.h"
 #include "value_ptr.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
-#include "weather.h"
-#include "weather_gen.h"
-#include "active_tile_data_def.h"
-#include "action_time_scale.h"
-#include "distribution_grid.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+#include "weather/weather.h"
+#include "weather/weather_gen.h"
+
+#include <algorithm> //std::min
+#include <array>
+#include <climits>
+#include <cmath>
+#include <cstdlib>
+#include <forward_list>
+#include <iterator>
+#include <list>
+#include <memory>
+#include <optional>
+#include <ranges>
+#include <type_traits>
 
 static const activity_id ACT_OPERATION( "ACT_OPERATION" );
 
@@ -219,21 +222,7 @@ auto scaled_operation_duration( const int difficulty ) -> time_duration
 }
 } //namespace
 
-/** @relates string_id */
-template<>
-const bionic_data &string_id<bionic_data>::obj() const
-{
-    return bionic_factory.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-bool string_id<bionic_data>::is_valid() const
-{
-    return bionic_factory.is_valid( *this );
-}
-
-
+IMPLEMENT_STRING_AND_INT_IDS( bionic_data, bionic_factory );
 
 std::vector<bodypart_id> get_occupied_bodyparts( const bionic_id &bid )
 {
@@ -276,7 +265,7 @@ void bionic_data::finalize_all()
 {
     bionic_factory.finalize();
     for( const bionic_data &bd : bionic_factory.get_all() ) {
-        bd.finalize();
+        const_cast<bionic_data &>( bd ).finalize();
     }
 }
 
@@ -376,10 +365,13 @@ void bionic_data::load( const JsonObject &jsobj, const std::string &src )
                 charge_time > 0;
 }
 
-void bionic_data::finalize() const
+void bionic_data::finalize()
 {
     if( has_flag( STATIC( flag_id( "BIONIC_FAULTY" ) ) ) ) {
         faulty_bionics.push_back( id );
+    }
+    for( enchantment &ench : bio_enchantments ) {
+        ench.finalize();
     }
 }
 
@@ -425,8 +417,12 @@ void bionic_data::check() const
             rep.warn( "uses undefined enchantment \"%s\"", eid.str() );
         }
     }
+    std::set<enchantment_condition_type> incompatible_cond_types = {
+        enchantment_condition_type::ITEM,
+        enchantment_condition_type::ITEM_CHARACTER
+    };
     for( const auto &ench : id->bio_enchantments ) {
-        ench.check();
+        ench.check( incompatible_cond_types );
     }
     for( const auto &it : occupied_bodyparts ) {
         if( !it.first.is_valid() ) {
@@ -684,6 +680,9 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
 
         bio.powered = bio.info().has_flag( flag_BIONIC_TOGGLED ) || bio.info().charge_time > 0;
 
+        if( bio.info().is_remote_fueled ) {
+            find_remote_fuel();
+        }
         if( bio.info().charge_time > 0 ) {
             bio.charge_timer = bio.info().charge_time;
         }
@@ -1391,9 +1390,9 @@ bool Character::burn_fuel( bionic &bio, bool start )
             } else if( is_perpetual_fuel ) {
                 current_fuel_stock = 1;
             } else if( is_cable_powered ) {
-                current_fuel_stock = std::stoi( get_value( "rem_" + fuel.str() ) );
+                current_fuel_stock = get_value_as_int( "rem_" + fuel.str() ).value_or( 0 );
             } else {
-                current_fuel_stock = std::stoi( get_value( fuel.str() ) );
+                current_fuel_stock = get_value_as_int( fuel.str() ).value_or( 0 );
             }
 
             if( !bio.has_flag( flag_SAFE_FUEL_OFF ) &&
@@ -1448,22 +1447,15 @@ bool Character::burn_fuel( bionic &bio, bool start )
                             mod_power_level( units::from_kilojoule( fuel_energy ) * effective_efficiency );
                         }
                     } else if( is_cable_powered ) {
-                        auto to_consume = bio.info().remote_fuel_draw;
-                        if( get_power_level() >= get_max_power_level() ) {
-                            to_consume = 0_J;
-                        }
-                        const auto unconsumed = consume_remote_fuel( to_consume );
-                        // we don't check if to_consume != unconsumed cuz we wouldn't get there otherwise
+                        const units::energy power_needed = ( get_max_power_level() - get_power_level() ) /
+                                                           effective_efficiency;
+                        const units::energy to_consume = std::min( bio.info().remote_fuel_draw, power_needed );
                         if( to_consume > 0_J ) {
-                            if( unconsumed == 0_J ) {
-                                mod_power_level( bio.info().remote_fuel_draw * effective_efficiency );
-                                current_fuel_stock -= units::to_kilojoule( to_consume );
-                            } else {
-                                mod_power_level( ( to_consume - unconsumed ) * effective_efficiency );
-                                current_fuel_stock = 0;
-                            }
+                            const auto unconsumed = consume_remote_fuel( to_consume );
+                            mod_power_level( ( to_consume - unconsumed ) * effective_efficiency );
+                            current_fuel_stock -= units::to_kilojoule( to_consume - unconsumed );
+                            set_value( "rem_" + fuel.str(), std::to_string( current_fuel_stock ) );
                         }
-                        set_value( "rem_" + fuel.str(), std::to_string( current_fuel_stock ) );
                     } else {
                         current_fuel_stock -= 1;
                         set_value( fuel.str(), std::to_string( current_fuel_stock ) );
@@ -1690,6 +1682,10 @@ units::energy Character::consume_remote_fuel( units::energy amount )
         }
     }
 
+    // We truncate anything less than 1 kJ, so we may have left some unfulfilled
+    if( amount > units::from_kilojoule( amount_kj ) ) {
+        unconsumed_amount += ( amount - units::from_kilojoule( amount_kj ) );
+    }
     return unconsumed_amount;
 }
 
@@ -1780,11 +1776,7 @@ void Character::process_bionic( bionic &bio )
         std::vector<itype_id> fuel_available = get_fuel_available( bio.id );
         if( bio.id->is_remote_fueled ) {
             const itype_id rem_fuel = find_remote_fuel();
-            const std::string rem_amount = get_value( "rem_" + rem_fuel.str() );
-            int rem_fuel_stock = 0;
-            if( !rem_amount.empty() ) {
-                rem_fuel_stock = std::stoi( rem_amount );
-            }
+            const auto rem_fuel_stock = get_value_as_int( "rem_" + rem_fuel.str() ).value_or( 0 );
             if( !rem_fuel.is_empty() && ( rem_fuel_stock > 0 || rem_fuel->has_flag( flag_PERPETUAL ) ) ) {
                 fuel_available.emplace_back( rem_fuel );
             }
@@ -1881,10 +1873,12 @@ void Character::process_bionic( bionic &bio )
             if( !bleeding_list.empty() ) {
                 effect *e = bleeding_list[0];
                 if( e->get_intensity() > 1 ) {
-                    add_msg_if_player( "Your %s slow the bleeding on your %s", bio.info().name, e->get_bp()->name );
+                    add_msg_if_player( _( "Your %1$s slow the bleeding on your %2$s" ),
+                                       bio.info().name, e->get_bp()->name );
                     e->mod_intensity( -1, false );
                 } else {
-                    add_msg_if_player( "Your %s staunch the bleeding on your %s", bio.info().name, e->get_bp()->name );
+                    add_msg_if_player( _( "Your %1$s staunch the bleeding on your %2$s" ),
+                                       bio.info().name, e->get_bp()->name );
                     e->set_removed();
                 }
             }
@@ -2001,53 +1995,54 @@ void Character::process_bionic( bionic &bio )
         add_morale( MORALE_FEELING_GOOD, 20, 20, 30_minutes, 20_minutes, true );
     } else if( bio.id == bio_electrosense_bscanner ) {
         // This is a horrible mess but can't use the active iuse behavior directly
-        map &here = get_map();
-        for( const auto &pt : here.points_in_radius( bub_pos(), PICKUP_RANGE ) ) {
-            if( !here.has_items( pt ) || !sees( pt ) ) {
+        auto &here = get_map();
+        auto visibility_cache_updated = false;
+        for( const auto corpse : here.get_active_items_in_radius( bub_pos(), PICKUP_RANGE,
+                special_item_type::bionic_scannable_corpse ) ) {
+            if( corpse == nullptr || !corpse->is_corpse() ||
+                corpse->get_var( "bionics_scanned_by", -1 ) == getID().get_value() ) {
                 continue;
             }
-            for( item * const &corpse : here.i_at( pt ) ) {
-                if( !corpse->is_corpse() ||
-                    corpse->get_var( "bionics_scanned_by", -1 ) == getID().get_value() ) {
+            const auto pt = corpse->bub_pos();
+            if( !visibility_cache_updated && here.visibility_caches_dirty() ) {
+                here.update_visibility_cache( bub_pos().z() );
+                visibility_cache_updated = true;
+            }
+            if( !sees( pt ) ) {
+                continue;
+            }
+
+            using namespace std::views;
+            namespace ranges = std::ranges;
+            auto cbms = corpse->get_components()
+                        | filter( &item::is_bionic )
+                        | ranges::to<std::vector>();
+
+            auto enrg = static_cast<int>( cbms.size() ) * bio.info().power_trigger;
+            if( get_power_level() >= enrg ) {
+                mod_power_level( -enrg );
+            } else {
+                add_msg_if_player( m_bad,
+                                   _( "Your %s doesn't have enough power for the %s" ),
+                                   bio.info().name, corpse->display_name().c_str() );
+                if( get_power_level() < bio.info().power_trigger ) {
+                    break;
+                } else {
                     continue;
                 }
+            }
 
-                std::vector<const item *> cbms;
-                for( const item * const &maybe_cbm : corpse->get_components() ) {
-                    if( maybe_cbm->is_bionic() ) {
-                        cbms.push_back( maybe_cbm );
-                    }
-                }
-
-                units::energy enrg = cbms.size() * bio.info().power_trigger;
-                if( get_power_level() >= enrg ) {
-                    mod_power_level( -enrg );
-                } else {
-                    add_msg_if_player( m_bad,
-                                       _( "Your %s doesn't have enough power for the %s" ),
-                                       bio.info().name, corpse->display_name().c_str() );
-                    if( get_power_level() < bio.info().power_trigger ) {
-                        break;
-                    } else {
-                        continue;
-                    }
-                }
-
-                corpse->set_var( "bionics_scanned_by", getID().get_value() );
-                if( !cbms.empty() ) {
-                    corpse->set_flag( flag_CBM_SCANNED );
-                    std::string bionics_string =
-                        enumerate_as_string( cbms.begin(), cbms.end(),
-                    []( const item * entry ) -> std::string {
-                        return entry->display_name();
-                    }, enumeration_conjunction::none );
-                    //~ %1 is corpse name, %2 is direction, %3 is bionic name
-                    add_msg_if_player( m_good, _( "A %1$s located %2$s contains %3$s." ),
-                                       corpse->display_name().c_str(),
-                                       direction_name( direction_from( bub_pos(), pt ) ).c_str(),
-                                       bionics_string.c_str()
-                                     );
-                }
+            corpse->set_var( "bionics_scanned_by", getID().get_value() );
+            if( !cbms.empty() ) {
+                corpse->set_flag( flag_CBM_SCANNED );
+                auto bionics_string = enumerate_as_string( cbms.begin(), cbms.end(),
+                []( const auto entry ) { return entry->type_name(); }, enumeration_conjunction::none );
+                //~ %1 is corpse name, %2 is direction, %3 is bionic name
+                add_msg_if_player( m_good, _( "A %1$s located %2$s contains %3$s." ),
+                                   corpse->display_name().c_str(),
+                                   direction_name( direction_from( bub_pos(), pt ) ).c_str(),
+                                   bionics_string.c_str()
+                                 );
             }
             if( get_power_level() < bio.info().power_trigger ) {
                 add_msg_if_player( m_bad, _( "Your %s doesn't have enough power and shuts down." ),
@@ -2357,7 +2352,7 @@ bool Character::uninstall_bionic( const bionic_id &b_id, Character &installer, b
 
     int success = chance_of_success - rng( 1, 100 );
     if( installer.has_trait( trait_DEBUG_BIONICS ) ) {
-        perform_uninstall( b_id, difficulty, success, b_id->capacity, pl_skill );
+        perform_uninstall( b_id, difficulty, success, pl_skill );
         return true;
     }
     assign_activity( ACT_OPERATION, to_moves<int>( difficulty * 20_minutes ) );
@@ -2383,8 +2378,7 @@ bool Character::uninstall_bionic( const bionic_id &b_id, Character &installer, b
     return true;
 }
 
-void Character::perform_uninstall( bionic_id bid, int difficulty, int success,
-                                   const units::energy &power_lvl, int pl_skill )
+void Character::perform_uninstall( bionic_id bid, int difficulty, int success, int pl_skill )
 {
     map &here = get_map();
     if( success > 0 ) {
@@ -2399,9 +2393,6 @@ void Character::perform_uninstall( bionic_id bid, int difficulty, int success,
         if( const auto *lcb = bid.obj().lua_callbacks ) {
             lcb->call_on_removed( *this, bid );
         }
-
-        // remove power bank provided by bionic
-        mod_max_power_level( -power_lvl );
 
         detached_ptr<item> cbm;
         if( bid->itype().is_valid() && !bid.obj().has_flag( flag_BIONIC_FAULTY ) ) {
@@ -2476,8 +2467,6 @@ bool Character::uninstall_bionic( const bionic &target_cbm, monster &installer, 
             add_msg( m_mixed, _( "Successfully removed %s." ), target_cbm.info().name );
         }
 
-        // remove power bank provided by bionic
-        patient.mod_max_power_level( -target_cbm.info().capacity );
         patient.remove_bionic( target_cbm.id );
         const itype_id iid = itemtype.is_valid() &&
                              !target_cbm.info().has_flag( flag_BIONIC_FAULTY ) ? itemtype : itype_burnt_out_bionic;
@@ -2874,7 +2863,7 @@ std::map<bodypart_id, int> Character::bionic_installation_issues( const bionic_i
     }
     for( const std::pair<const bodypart_str_id, int> &elem : bioid->occupied_bodyparts ) {
         int lacked_slots = elem.second - get_free_bionics_slots( elem.first );
-        if( bioid->upgraded_bionic ) {
+        if( bioid->upgraded_bionic && bioid->upgraded_bionic->occupied_bodyparts.contains( elem.first ) ) {
             lacked_slots -= bioid->upgraded_bionic->occupied_bodyparts.at( elem.first );
         }
         if( lacked_slots > 0 ) {

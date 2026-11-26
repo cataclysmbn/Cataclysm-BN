@@ -5,7 +5,7 @@
 #include <string_view>
 
 #if defined(CATA_SDL)
-#include "compute/gpu_platform.h"
+#    include "compute/gpu_platform.h"
 #endif
 
 namespace cata_compute {

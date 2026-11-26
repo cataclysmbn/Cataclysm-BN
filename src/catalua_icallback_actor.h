@@ -8,10 +8,13 @@
 
 #include <string>
 
+class spell;
 class Character;
 class Creature;
 class item;
+class monster;
 struct bionic;
+struct consume_overrides;
 struct dealt_damage_instance;
 struct tripoint;
 
@@ -122,17 +125,41 @@ class lua_istate_actor : public lua_icallback_actor_base
         sol::protected_function on_tick_func;
         sol::protected_function on_pickup_func;
         sol::protected_function on_drop_func;
+        sol::protected_function on_puff_func;
 
     public:
         lua_istate_actor( const std::string &item_id,
                           sol::protected_function &&on_tick,
                           sol::protected_function &&on_pickup,
-                          sol::protected_function &&on_drop );
+                          sol::protected_function &&on_drop,
+                          sol::protected_function &&on_puff );
 
         bool has_on_tick() const;
         auto call_on_tick( Character &who, item &it, const tripoint_bub_ms &pos ) const -> void;
         void call_on_pickup( Character &who, item &it ) const;
+        void call_on_puff( Character &who, item &it ) const;
         bool call_on_drop( Character &who, item &it, const tripoint_bub_ms &pos ) const;
+};
+
+/** Lua callbacks for consuming a specific item type. */
+class lua_iconsume_actor : public lua_icallback_actor_base
+{
+    private:
+        sol::protected_function on_try_consume_func;
+
+    public:
+        lua_iconsume_actor( const std::string &item_id,
+                            sol::protected_function &&on_try_consume );
+
+        /**
+         * Runs the on_try_consume callback for the item being consumed.
+         * Values modified in the Lua params table are written into @p overrides
+         * and applied instead of the ones computed from the item.
+         * Returns false to interrupt the rest of the consume function
+         * (the item is left alone unless the callback changed it).
+         */
+        auto call_on_try_consume( Character &who, item &it,
+                                  consume_overrides &overrides ) const -> bool;
 };
 
 /** Lua callbacks for melee combat events. */
@@ -230,4 +257,109 @@ class lua_mutation_callback_actor
         void call_on_deactivate( Character &who, const trait_id &tid ) const;
         void call_on_gain( Character &who, const trait_id &tid ) const;
         void call_on_loss( Character &who, const trait_id &tid ) const;
+};
+
+/** Lua callbacks for trap events. */
+class lua_itrap_actor : public lua_icallback_actor_base
+{
+    private:
+        sol::protected_function can_trigger_func;
+        sol::protected_function on_trigger_func;
+        sol::protected_function on_trigger_aftermath_func;
+
+
+
+    public:
+        lua_itrap_actor( const std::string &item_id,
+                         sol::protected_function &&can_trigger_func,
+                         sol::protected_function &&on_trigger_func,
+                         sol::protected_function &&on_trigger_aftermath_func
+                       );
+
+        /** Returns false to prevent triggering the trap. */
+        bool call_can_trigger( const Creature &who, const trap &trap, const tripoint_bub_ms &loc ) const;
+        /** Called after triggering. */
+        void call_on_trigger( Creature &who, trap &trap, const tripoint_bub_ms &loc ) const;
+        /** Called after trap aftermath. */
+        void call_on_trigger_aftermath( Creature &who, trap &trap, const tripoint_bub_ms &loc ) const;
+
+};
+
+
+struct lua_menu_entry {
+    std::string menu_id;
+    std::string menu_label;
+
+    bool valid() const {
+        return !menu_id.empty() && !menu_label.empty();
+    }
+};
+
+class lua_monster_callback_actor
+{
+    private:
+        std::string mon_str_id;
+        sol::protected_function on_tame_func;
+        sol::protected_function get_examine_menu_entries_func;
+        sol::protected_function on_examine_menu_entry_func;
+
+    public:
+        lua_monster_callback_actor( const std::string &mon_str_id,
+                                    sol::protected_function &&on_tame_func,
+                                    sol::protected_function &&get_examine_menu_entries,
+                                    sol::protected_function &&on_examine_menu_entry_func
+                                  );
+
+        void call_on_tame( Character &who, monster &pet ) const;
+        std::vector<lua_menu_entry>  call_get_examine_menu_entries( Character &who,
+                monster &monster ) const;
+        void call_on_examine_menu_entry( Character &who, monster &monster, std::string entry ) const;
+
+        std::string get_mon_str_id() const;
+};
+
+
+/** Lua callbacks for spell related events. */
+class lua_ispell_actor
+{
+    private:
+        std::string spell_str_id;
+        sol::protected_function on_try_cast_func;
+        sol::protected_function on_cast_func;
+
+    public:
+        lua_ispell_actor( const std::string &spell_str_id,
+                          sol::protected_function &&on_try_cast,
+                          sol::protected_function &&on_cast
+                        );
+
+        /** Returns false to block casting. */
+        bool call_on_try_cast( Character &who, spell &sp ) const;
+        void call_on_cast( Character &who, spell &sp, tripoint_bub_ms &target_pos ) const;
+};
+
+
+/** Lua callbacks for recipe / crafting related events. */
+class lua_recipe_actor
+{
+    private:
+        std::string recipe_str_id;
+        sol::protected_function on_craft_func;
+
+    public:
+        lua_recipe_actor( const std::string &recipe_str_id,
+                          sol::protected_function &&on_craft
+                        );
+
+        struct RecipeCraftResult {
+            Character &crafter;
+            item &craft;
+            item &food_contained;
+            const recipe &recipe;
+            const int &batch_size;
+            const bool &hot_result;
+            const bool &dehydrated_result;
+        };
+        /** Returns false to block casting. */
+        void call_on_craft( const RecipeCraftResult &craft_result ) const;
 };

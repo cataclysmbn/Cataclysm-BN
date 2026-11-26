@@ -6,6 +6,11 @@
   },
   {
     "type": "construction_group",
+    "id": "place_nanofab_portable",
+    "name": "Place Portable Nanofab"
+  },
+  {
+    "type": "construction_group",
     "id": "add_mattress_to_bed_frame",
     "name": "Add Mattress to Bed Frame"
   },
@@ -37,7 +42,7 @@
   {
     "type": "construction_group",
     "id": "build_a_bellow",
-    "name": "Build a bellow"
+    "name": "Build Bellows"
   },
   {
     "type": "construction_group",
@@ -143,6 +148,11 @@
     "type": "construction_group",
     "id": "build_chair",
     "name": "Build Chair"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_ore_smelter",
+    "name": "Build Ore Smelter"
   },
   {
     "type": "construction_group",
@@ -736,6 +746,11 @@
   },
   {
     "type": "construction_group",
+    "id": "build_utility_shelf",
+    "name": "Build Utility Shelf"
+  },
+  {
+    "type": "construction_group",
     "id": "build_rain_collector",
     "name": "Build Rain Collector"
   },
@@ -1236,6 +1251,11 @@
   },
   {
     "type": "construction_group",
+    "id": "constr_wall_paintable_standard",
+    "name": "Build Dark Plastered Wooden Wall"
+  },
+  {
+    "type": "construction_group",
     "id": "place_arc_welder",
     "name": "Plug In Arc Welder"
   },
@@ -1312,7 +1332,7 @@
   {
     "type": "construction_group",
     "id": "place_microcentrifuge",
-    "name": "Plug In  Microcentrifuge"
+    "name": "Plug In Microcentrifuge"
   },
   {
     "type": "construction_group",
@@ -1352,17 +1372,22 @@
   {
     "type": "construction_group",
     "id": "place_rv_kitchen_unit",
-    "name": "Place RV-kitchen unit"
+    "name": "Place RV-kitchen Unit"
   },
   {
     "type": "construction_group",
     "id": "place_hotplate",
-    "name": "Plug In hotplate"
+    "name": "Plug In Hotplate"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_microwave",
+    "name": "Plug In Microwave"
   },
   {
     "type": "construction_group",
     "id": "place_soldering_iron",
-    "name": "Plug In soldering iron"
+    "name": "Plug In Soldering Iron"
   },
   {
     "type": "construction_group",
@@ -1377,7 +1402,7 @@
   {
     "type": "construction_group",
     "id": "place_vaccuum_sealer",
-    "name": "Plug In Vaccuum Sealer"
+    "name": "Plug In Vacuum Sealer"
   },
   {
     "type": "construction_group",
@@ -1686,6 +1711,11 @@
   },
   {
     "type": "construction_group",
+    "id": "build_sink",
+    "name": "Build Sink"
+  },
+  {
+    "type": "construction_group",
     "id": "remove_bathtub_money",
     "name": "Remove Money from Bathtub"
   },
@@ -1933,5 +1963,10 @@
     "type": "construction_group",
     "id": "place_roulette",
     "name": "Place Roulette Table"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_billybass",
+    "name": "Put Up Big Mouth Billy Bass"
   }
 ]

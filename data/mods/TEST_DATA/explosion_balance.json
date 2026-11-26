@@ -48,7 +48,7 @@
     "turns_per_charge": 1,
     "use_action": {
       "type": "explosion",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "Tick.",
       "no_deactivate_msg": "This test grenade is already active.",
       "explosion": {
@@ -72,7 +72,7 @@
     "color": "blue",
     "use_action": {
       "type": "explosion",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "Tick.",
       "no_deactivate_msg": "This test shrapnel source is already active.",
       "explosion": { "fragment": { "impact": { "damage_type": "bullet", "amount": 50, "armor_multiplier": 3 }, "range": 5 } }
@@ -92,7 +92,7 @@
     "color": "blue",
     "use_action": {
       "type": "explosion",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "Tick.",
       "no_deactivate_msg": "This test shrapnel source is already active.",
       "explosion": { "fragment": { "impact": { "damage_type": "heat", "amount": 300 }, "range": 300 } }

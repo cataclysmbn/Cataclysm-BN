@@ -17,10 +17,10 @@
         ".|1                 11|.",
         ".|111                1|.",
         ".|1 1              1  |.",
-        ".|1111               @|.",
-        ".|1111                |.",
+        ".|1111               0|.",
+        ".|1111               0|.",
         ".|111               1 |.",
-        ".|111                 |.",
+        ".|111                @|.",
         ".|11   1            61|.",
         ".|---3--            11|.",
         ".|43  5|@        1  11|.",
@@ -58,6 +58,7 @@
       },
       "furniture": {
         "'": "f_street_light",
+        "0": "f_utility_shelf",
         "1": [ "f_crate_c", "f_cardboard_box" ],
         "2": "f_sink",
         "5": "f_counter",
@@ -68,6 +69,7 @@
         "@": "f_trashcan"
       },
       "items": {
+        "0": { "item": "delivery_drones", "chance": 50, "repeat": [ 1, 2 ] },
         "1": [
           { "item": "kitchen_counters", "chance": 20, "repeat": [ 1, 2 ] },
           { "item": "dishes_dining", "chance": 20, "repeat": [ 1, 2 ] },

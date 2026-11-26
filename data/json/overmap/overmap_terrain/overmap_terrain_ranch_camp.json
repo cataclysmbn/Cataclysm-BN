@@ -135,14 +135,6 @@
   },
   {
     "type": "overmap_terrain",
-    "id": [ "ranch_camp_65_roof", "ranch_camp_74_roof", "ranch_camp_75_roof" ],
-    "name": "barn roof",
-    "sym": ".",
-    "color": "blue",
-    "see_cost": 2
-  },
-  {
-    "type": "overmap_terrain",
     "id": "ranch_camp_66",
     "name": "barn",
     "sym": "#",
@@ -211,8 +203,7 @@
     "name": "road",
     "sym": "│",
     "color": "dark_gray",
-    "see_cost": 2,
-    "extras": "road"
+    "see_cost": 2
   },
   {
     "type": "overmap_terrain",
@@ -220,6 +211,33 @@
     "name": "field",
     "sym": "└",
     "color": "brown",
+    "see_cost": 2
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "ranch_camp_65_roof", "ranch_camp_74_roof", "ranch_camp_75_roof" ],
+    "name": "barn roof",
+    "sym": ".",
+    "color": "blue",
+    "see_cost": 2
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [
+      "ranch_camp_49_z1",
+      "ranch_camp_50_z1",
+      "ranch_camp_51_z1",
+      "ranch_camp_52_z1",
+      "ranch_camp_58_z1",
+      "ranch_camp_59_z1",
+      "ranch_camp_60_z1",
+      "ranch_camp_65_roof",
+      "ranch_camp_74_roof",
+      "ranch_camp_75_roof"
+    ],
+    "name": "open air",
+    "sym": ".",
+    "color": "blue",
     "see_cost": 2
   }
 ]

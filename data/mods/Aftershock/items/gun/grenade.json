@@ -42,7 +42,7 @@
       "draw_explosion_radius": 8,
       "draw_explosion_color": "light_blue",
       "emp_blast_radius": 8,
-      "sound_volume": 0
+      "sound_volume": "20 dB"
     },
     "flags": [ "TRADER_AVOID" ]
   }

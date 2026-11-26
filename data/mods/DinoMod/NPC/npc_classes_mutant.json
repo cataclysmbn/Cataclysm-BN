@@ -12,7 +12,6 @@
     "bonus_str": 2,
     "bonus_per": 2,
     "traits": [
-      { "group": "trait_mutant_npc_common" },
       { "group": "BG_survival_story_UNIVERSAL" },
       { "group": "NPC_starting_traits" },
       { "group": "trait_group_dino" },
@@ -32,7 +31,6 @@
     "bonus_str": 2,
     "bonus_dex": 2,
     "traits": [
-      { "group": "trait_mutant_npc_common" },
       { "group": "BG_survival_story_UNIVERSAL" },
       { "group": "NPC_starting_traits" },
       { "group": "trait_group_dino" },

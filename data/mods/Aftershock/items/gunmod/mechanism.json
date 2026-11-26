@@ -1,0 +1,22 @@
+[
+  {
+    "id": "afs_titanium_bolt_carrier",
+    "type": "GUNMOD",
+    "name": { "str": "titanium bolt carrier" },
+    "description": "A precision-machined titanium bolt carrier group.  Lighter than the standard steel unit, reducing reciprocating mass and felt recoil for improved accuracy.",
+    "weight": "60 g",
+    "volume": "250 ml",
+    "integral_volume": "0 ml",
+    "price": "800 USD",
+    "price_postapoc": "15 USD",
+    "material": [ "titanium" ],
+    "symbol": ":",
+    "color": "dark_gray",
+    "location": "mechanism",
+    "mod_target_category": [ [ "SUBMACHINE_GUNS" ], [ "RIFLES" ], [ "MACHINE_GUNS" ] ],
+    "install_time": "20 m",
+    "weight_multiplier": 0.95,
+    "dispersion_modifier": -10,
+    "min_skills": [ [ "mechanics", 3 ] ]
+  }
+]

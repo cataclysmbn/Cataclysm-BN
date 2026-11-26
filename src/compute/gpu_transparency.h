@@ -1,11 +1,11 @@
 #pragma once
 #if defined(CATA_SDL)
 
-#include "game_constants.h"
+#    include "game_constants.h"
 
-#include <cstdint>
-#include <span>
-#include <vector>
+#    include <cstdint>
+#    include <span>
+#    include <vector>
 
 class map;
 struct SDL_GPUBuffer;
@@ -86,7 +86,7 @@ struct transparency_submap_ref {
 auto rebuild_transparency_luts(transparency_luts& luts) -> void;
 
 // Collect transparency_submap_ref records for all submaps at zlev.
-// Uses only public map accessors (get_submap_at_grid, get_cache_ref).
+// Uses only public map/cache accessors and resident mapbuffer lookup.
 auto gather_transparency_refs(map const& m, int zlev) -> std::vector<transparency_submap_ref>;
 
 // Build GPU upload records for a set of submaps.
@@ -121,7 +121,7 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool;
 // Release transparency compute resources before the SDL GPU device is destroyed.
 auto shutdown_transparency() -> void;
 
-#if defined(CATA_GPU_VERIFY)
+#    if defined(CATA_GPU_VERIFY)
 // Orchestrates the full GPU verify cycle for one z-level:
 // gather → prepare → dispatch → compare against the CPU result already in
 // m.get_cache_ref(zlev).transparency_cache.
@@ -132,7 +132,7 @@ auto verify_transparency_against_cpu(map const& m, int zlev, float sight_penalty
 // Legacy verification hook retained for dev-only CATA_GPU_VERIFY builds.
 auto verify_transparency_readback(SDL_GPUDevice* device, float const* cpu_reference, int cache_size)
     -> void;
-#endif
+#    endif
 
 } // namespace cata_gpu
 #endif // defined( CATA_SDL )

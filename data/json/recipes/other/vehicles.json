@@ -1070,6 +1070,7 @@
     "skill_used": "fabrication",
     "skills_required": [ "mechanics", 1 ],
     "difficulty": 4,
+    "reversible": true,
     "autolearn": true,
     "time": "1 h",
     "using": [ [ "welding_standard", 5 ] ],
@@ -1097,9 +1098,8 @@
     "difficulty": 1,
     "time": "10 m",
     "autolearn": true,
-    "using": [ [ "welding_standard", 1 ] ],
-    "qualities": [ { "id": "DRILL", "level": 3 } ],
-    "components": [ [ [ "scrap", 2 ] ] ]
+    "using": [ [ "welding_standard", 1 ], [ "steel_tiny", 1 ] ],
+    "qualities": [ { "id": "DRILL", "level": 3 } ]
   },
   {
     "type": "recipe",
@@ -1111,7 +1111,7 @@
     "difficulty": 3,
     "time": "1 h",
     "autolearn": true,
-    "using": [ [ "blacksmithing_advanced", 2 ], [ "steel_tiny", 2 ] ]
+    "using": [ [ "blacksmithing_advanced", 1 ], [ "steel_tiny", 1 ] ]
   },
   {
     "type": "recipe",
@@ -2172,7 +2172,7 @@
     "time": "20 m",
     "autolearn": true,
     "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_W", "level": 1 }, { "id": "SANDING", "level": 1 } ],
-    "components": [ [ [ "nail_glue", 4, "LIST" ] ], [ [ "stick", 2 ], [ "2x4", 2 ] ] ]
+    "components": [ [ [ "nail_glue", 2, "LIST" ] ], [ [ "wood_structural_small", 1, "LIST" ] ] ]
   },
   {
     "result": "carbonfiber_boat_hull",
@@ -2197,8 +2197,8 @@
     "skills_required": [ [ "fabrication", 2 ] ],
     "time": "10 m",
     "book_learn": [ [ "textbook_computer", 1 ], [ "advanced_electronics", 1 ], [ "reference_fabrication1", 1 ] ],
-    "using": [ [ "3d_printing_standard", 5 ] ],
-    "components": [ [ [ "carbon_fiber_filament", 50 ] ] ]
+    "using": [ [ "3d_printing_standard", 15 ] ],
+    "components": [ [ [ "carbon_fiber_filament", 150 ] ] ]
   },
   {
     "result": "carbon_plate",
@@ -2210,8 +2210,8 @@
     "skills_required": [ [ "fabrication", 2 ] ],
     "time": "10 m",
     "book_learn": [ [ "textbook_computer", 1 ], [ "advanced_electronics", 1 ], [ "reference_fabrication1", 1 ] ],
-    "using": [ [ "3d_printing_standard", 15 ] ],
-    "components": [ [ [ "carbon_fiber_filament", 150 ] ] ]
+    "using": [ [ "3d_printing_standard", 40 ] ],
+    "components": [ [ [ "carbon_fiber_filament", 400 ] ] ]
   },
   {
     "result": "wing_carbon_item",
@@ -2224,7 +2224,7 @@
     "time": "10 m",
     "book_learn": [ [ "textbook_computer", 1 ], [ "advanced_electronics", 1 ], [ "reference_fabrication1", 1 ] ],
     "using": [ [ "3d_printing_standard", 10 ] ],
-    "components": [ [ [ "carbon_fiber_filament", 75 ] ] ]
+    "components": [ [ [ "carbon_fiber_filament", 400 ] ] ]
   },
   {
     "type": "recipe",
@@ -2234,11 +2234,12 @@
     "skill_used": "electronics",
     "difficulty": 1,
     "time": "15 m",
+    "reversible": true,
     "book_learn": [ [ "manual_electronics", 1 ], [ "mag_electronics", 1 ], [ "reference_aircraft", 1 ] ],
     "using": [ [ "soldering_standard", 5 ] ],
     "components": [
       [ [ "wing_carbon_item", 1 ] ],
-      [ [ "lightstrip_inactive", 1 ], [ "light_bulb", 1 ] ],
+      [ [ "light_bulb", 1 ], [ "lightstrip_inactive", 1 ] ],
       [ [ "cable", 10 ] ],
       [ [ "plastic_chunk", 1 ] ]
     ]
@@ -2253,6 +2254,7 @@
     "time": "45 m",
     "autolearn": true,
     "using": [ [ "welding_standard", 12 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 } ],
     "components": [ [ [ "material_aluminium_ingot", 6 ] ] ]
   },
   {
@@ -2292,8 +2294,21 @@
     "autolearn": true,
     "time": "20 m",
     "batch_time_factors": [ 60, 1 ],
-    "using": [ [ "3d_printing_standard", 20 ] ],
-    "components": [ [ [ "carbon_fiber_filament", 200 ] ] ]
+    "using": [ [ "3d_printing_standard", 30 ] ],
+    "components": [ [ [ "carbon_fiber_filament", 300 ] ] ]
+  },
+  {
+    "result": "cargo_aisle_carbon",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "computer",
+    "difficulty": 4,
+    "autolearn": true,
+    "skills_required": [ [ "fabrication", 2 ] ],
+    "time": "10 m",
+    "using": [ [ "3d_printing_standard", 10 ] ],
+    "components": [ [ [ "sheet_carbon", 3 ] ], [ [ "carbon_fiber_filament", 50 ] ] ]
   },
   {
     "type": "recipe",
@@ -2307,7 +2322,7 @@
     "time": "20 m",
     "batch_time_factors": [ 60, 1 ],
     "using": [ [ "3d_printing_standard", 20 ], [ "rope_natural", 4 ] ],
-    "components": [ [ [ "carbon_fiber_filament", 400 ], [ "frame_carbon", 2 ] ] ]
+    "components": [ [ [ "carbon_fiber_filament", 1800 ], [ "frame_carbon", 6 ] ] ]
   },
   {
     "type": "recipe",
@@ -2375,11 +2390,12 @@
     "skill_used": "electronics",
     "difficulty": 1,
     "time": "15 m",
+    "reversible": true,
     "book_learn": [ [ "manual_electronics", 1 ], [ "mag_electronics", 1 ], [ "reference_aircraft", 1 ] ],
     "using": [ [ "soldering_standard", 5 ] ],
     "components": [
       [ [ "wing_metal_item", 1 ] ],
-      [ [ "lightstrip_inactive", 1 ], [ "light_bulb", 1 ] ],
+      [ [ "light_bulb", 1 ], [ "lightstrip_inactive", 1 ] ],
       [ [ "cable", 10 ] ],
       [ [ "plastic_chunk", 1 ] ]
     ]
@@ -2471,11 +2487,12 @@
     "skill_used": "electronics",
     "difficulty": 1,
     "time": "15 m",
+    "reversible": true,
     "book_learn": [ [ "manual_electronics", 1 ], [ "mag_electronics", 1 ], [ "reference_aircraft", 1 ] ],
     "using": [ [ "soldering_standard", 5 ] ],
     "components": [
       [ [ "wing_wood_item", 1 ] ],
-      [ [ "lightstrip_inactive", 1 ], [ "light_bulb", 1 ] ],
+      [ [ "light_bulb", 1 ], [ "lightstrip_inactive", 1 ] ],
       [ [ "cable", 10 ] ],
       [ [ "plastic_chunk", 1 ] ]
     ]
@@ -2521,7 +2538,7 @@
     "autolearn": true,
     "book_learn": [ [ "textbook_fabrication", 4 ], [ "welding_book", 5 ], [ "textbook_carpentry", 4 ] ],
     "using": [ [ "blacksmithing_intermediate", 15 ], [ "steel_standard", 15 ] ],
-    "components": [ [ [ "steel_plate", 3 ] ], [ [ "chain", 2 ] ] ]
+    "components": [ [ [ "steel_plate", 3 ], [ "steel_armor", 36 ] ], [ [ "chain", 2 ] ] ]
   },
   {
     "result": "tread3",
@@ -2535,7 +2552,7 @@
     "autolearn": true,
     "book_learn": [ [ "textbook_fabrication", 5 ], [ "welding_book", 6 ], [ "textbook_carpentry", 5 ] ],
     "using": [ [ "blacksmithing_advanced", 20 ], [ "steel_standard", 20 ] ],
-    "components": [ [ [ "hard_plate", 5 ] ], [ [ "chain", 2 ] ] ]
+    "components": [ [ [ "hard_plate", 5 ], [ "hard_steel_armor", 60 ] ], [ [ "chain", 2 ] ] ]
   },
   {
     "result": "NBC_seal",
@@ -2556,14 +2573,23 @@
     "result": "jet_thruster",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_VEHICLE",
-    "book_learn": [ [ "book_icef", 8 ], [ "textbook_mechanics", 8 ] ],
-    "skills_required": [ [ "fabrication", 8 ] ],
+    "book_learn": [ [ "book_icef", 10 ], [ "textbook_mechanics", 10 ] ],
+    "skills_required": [ [ "fabrication", 10 ], [ "electronics", 8 ] ],
     "skill_used": "mechanics",
-    "difficulty": 9,
-    "time": "4 h",
+    "difficulty": 10,
+    "time": "12 h",
     "reversible": true,
-    "decomp_learn": 9,
-    "using": [ [ "welding_standard", 20 ], [ "adhesive", 5 ] ],
+    "using": [ [ "welding_standard", 20 ], [ "adhesive", 5 ], [ "soldering_standard", 50 ] ],
+    "qualities": [
+      { "id": "SCREW_FINE", "level": 1 },
+      { "id": "WRENCH_FINE", "level": 1 },
+      { "id": "WRENCH", "level": 2 },
+      { "id": "SCREW", "level": 1 },
+      { "id": "SAW_M_FINE", "level": 1 },
+      { "id": "HAMMER_FINE", "level": 1 },
+      { "id": "DRILL", "level": 3 },
+      { "id": "HV_INSULATION", "level": 1 }
+    ],
     "components": [
       [ [ "amplifier", 2 ] ],
       [ [ "power_supply", 2 ] ],
@@ -2582,21 +2608,30 @@
     "result": "vtol_thruster",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_VEHICLE",
-    "book_learn": [ [ "book_icef", 8 ], [ "textbook_mechanics", 8 ] ],
-    "skills_required": [ [ "fabrication", 7 ] ],
+    "book_learn": [ [ "book_icef", 10 ], [ "textbook_mechanics", 10 ] ],
+    "skills_required": [ [ "fabrication", 10 ], [ "electronics", 8 ] ],
     "skill_used": "mechanics",
-    "difficulty": 8,
-    "time": "8 h",
+    "difficulty": 10,
+    "time": "12 h",
     "reversible": true,
-    "decomp_learn": 8,
-    "using": [ [ "welding_standard", 20 ], [ "adhesive", 5 ] ],
+    "using": [ [ "welding_standard", 20 ], [ "adhesive", 5 ], [ "soldering_standard", 50 ] ],
+    "qualities": [
+      { "id": "SCREW_FINE", "level": 1 },
+      { "id": "WRENCH_FINE", "level": 1 },
+      { "id": "WRENCH", "level": 2 },
+      { "id": "SCREW", "level": 1 },
+      { "id": "SAW_M_FINE", "level": 1 },
+      { "id": "HAMMER_FINE", "level": 1 },
+      { "id": "DRILL", "level": 3 },
+      { "id": "HV_INSULATION", "level": 1 }
+    ],
     "components": [
       [ [ "amplifier", 2 ] ],
       [ [ "power_supply", 2 ] ],
       [ [ "pipe", 6 ] ],
       [ [ "processor", 2 ] ],
       [ [ "motor_small", 4 ] ],
-      [ [ "small_turbine_engine", 1 ] ],
+      [ [ "large_turbine_engine", 1 ] ],
       [ [ "e_scrap", 10 ] ],
       [ [ "cable", 150 ] ],
       [ [ "frame", 2 ] ],
@@ -2608,24 +2643,73 @@
     "result": "hover_repulsor",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_VEHICLE",
-    "book_learn": [ [ "recipe_lab_elec", 7 ] ],
-    "skills_required": [ [ "fabrication", 8 ], [ "electronics", 8 ] ],
+    "book_learn": [ [ "recipe_lab_elec", 10 ] ],
+    "skills_required": [ [ "fabrication", 10 ], [ "electronics", 10 ], [ "computer", 10 ] ],
     "skill_used": "mechanics",
-    "difficulty": 9,
-    "time": "8 h",
-    "reversible": true,
-    "decomp_learn": 9,
-    "using": [ [ "welding_standard", 20 ], [ "adhesive", 5 ] ],
+    "difficulty": 10,
+    "time": "18 h",
+    "using": [
+      [ "welding_standard", 20 ],
+      [ "adhesive", 5 ],
+      [ "coding_standard", 120 ],
+      [ "utility_software_standard", -1 ],
+      [ "math_software_standard", -1 ]
+    ],
+    "qualities": [
+      { "id": "SCREW_FINE", "level": 1 },
+      { "id": "WRENCH_FINE", "level": 1 },
+      { "id": "WRENCH", "level": 2 },
+      { "id": "SCREW", "level": 1 },
+      { "id": "SAW_M_FINE", "level": 1 },
+      { "id": "HAMMER_FINE", "level": 1 },
+      { "id": "DRILL", "level": 3 },
+      { "id": "HV_INSULATION", "level": 1 },
+      { "id": "VOLT_MEASURE", "level": 1 }
+    ],
     "components": [
       [ [ "amplifier", 2 ] ],
       [ [ "power_supply", 4 ] ],
       [ [ "nanomaterial", 50 ] ],
-      [ [ "plut_cell", 8 ] ],
+      [ [ "huge_atomic_battery_cell", 1 ] ],
       [ [ "portal", 2 ] ],
       [ [ "e_scrap", 10 ] ],
       [ [ "frame", 1 ] ],
       [ [ "teleporter", 1 ], [ "portal", 1 ], [ "telepad", 1 ] ],
-      [ [ "alloy_sheet", 8 ] ]
+      [ [ "alloy_sheet", 16 ] ]
+    ]
+  },
+  {
+    "result": "hydrogen_cell",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "mechanics",
+    "skills_required": [ [ "fabrication", 6 ], [ "electronics", 4 ] ],
+    "difficulty": 8,
+    "time": "180 m",
+    "reversible": true,
+    "decomp_learn": 7,
+    "book_learn": [ [ "textbook_mechanics", 5 ], [ "textbook_fabrication", 5 ], [ "textbook_electronics", 5 ] ],
+    "using": [ [ "welding_standard", 50 ], [ "soldering_standard", 25 ], [ "steel_tiny", 1 ] ],
+    "qualities": [
+      { "id": "HAMMER", "level": 2 },
+      { "id": "SAW_M", "level": 1 },
+      { "id": "DRILL", "level": 1 },
+      { "id": "SCREW", "level": 1 },
+      { "id": "WRENCH", "level": 1 }
+    ],
+    "components": [
+      [ [ "sheet_metal", 2 ] ],
+      [ [ "material_aluminium_ingot", 9 ] ],
+      [ [ "zinc_metal", 500 ] ],
+      [ [ "chem_potassium_hydroxide", 60 ], [ "chem_lye", 1, "LIST" ] ],
+      [ [ "metal_tank_little", 1 ] ],
+      [ [ "pump_complex", 1 ] ],
+      [ [ "hose", 1 ] ],
+      [ [ "cable", 10 ] ],
+      [ [ "circuit", 4 ] ],
+      [ [ "power_supply", 4 ] ],
+      [ [ "amplifier", 4 ] ]
     ]
   }
 ]

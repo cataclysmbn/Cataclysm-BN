@@ -140,10 +140,17 @@ void cata::detail::reg_ui_elements( sol::state &lua )
     {
         DOC( "Sidebar utility functions." );
         luna::userlib lib = luna::begin_lib( lua, "sidebar" );
-        DOC( "Register a Lua sidebar widget. Options: id(string), name(string), height(int, use -2 to fill remaining space), order(int, 1-based), draw(function), " );
-        DOC( "default_toggle(bool), redraw_every_frame(bool), panel_visible(bool|function), render(function). " );
-        DOC( "draw(width, height) returns an array of entries: each entry is string or table { text=string, color=Color|string }." );
-        DOC( "text may include color tags like <color_red>text</color> for multi-color lines." );
+        DOC( "Register a Lua sidebar widget.  " );
+        DOC( "Takes a table with keys:  " );
+        DOC( "* `id` (string): Unique widget id.  " );
+        DOC( "* `draw` (function): `draw(width, height)` returns an array of lines. Each line is a string or a table { text = string, color = Color|string }. `text` may include color tags like <color_red>text</color> for multi-color lines.  " );
+        DOC( "* `name` (string, optional): Name shown in the sidebar options. Defaults to `id`.  " );
+        DOC( "* `height` (integer, optional): Height in lines. Use -2 to fill the remaining space. Defaults to 1.  " );
+        DOC( "* `order` (integer, optional): 1-based position in the sidebar.  " );
+        DOC( "* `default_toggle` (boolean, optional): Whether the widget is enabled by default. Defaults to true.  " );
+        DOC( "* `redraw_every_frame` (boolean, optional): Redraw on every frame instead of only on sidebar refresh. Defaults to false.  " );
+        DOC( "* `panel_visible` (boolean or function, optional): Whether to show the widget. A function is called with no arguments and should return a boolean.  " );
+        DOC( "* `render` (function, optional): Visibility check used when `panel_visible` is not a function. Called with no arguments; return false to hide the widget." );
         luna::set_fx( lib, "register_widget", []( const sol::table & opts ) {
             auto get_opt_int = [&]( const char *key, const int fallback ) -> int {
                 auto obj = opts.get<sol::object>( key );

@@ -189,8 +189,20 @@
       "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
       "repair": { "skills": [ [ "mechanics", 4 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] }
     },
-    "flags": [ "CARGO", "OBSTACLE", "HOTPLATE", "FAUCET", "WATER_PURIFIER", "COVERED", "CRAFTER" ],
-    "integrated_tools": [ "chemistry_set", "electrolysis_kit", "pot", "pan", "hotplate", "dehydrator", "vac_sealer", "food_processor", "press" ],
+    "flags": [ "CARGO", "OBSTACLE", "HOTPLATE", "FAUCET", "WATER_PURIFIER", "COVERED", "CRAFTER", "CONVERTER" ],
+    "integrated_tools": [
+      "chemistry_set",
+      "electrolysis_kit",
+      "pot",
+      "pan",
+      "hotplate",
+      "dehydrator",
+      "vac_sealer",
+      "water_purifier",
+      "food_processor",
+      "press"
+    ],
+    "converter": { "input": "water", "input_step": 8, "output": "water_clean", "output_step": 8, "max_steps": 6, "charge_cost": 1 },
     "breaks_into": [
       { "item": "steel_lump", "count": [ 9, 18 ] },
       { "item": "steel_chunk", "count": [ 9, 18 ] },

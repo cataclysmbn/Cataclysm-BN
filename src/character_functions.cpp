@@ -1,43 +1,42 @@
 #include "character_functions.h"
 
-#include <algorithm>
-#include <string>
-#include <utility>
-
 #include "ammo.h"
 #include "bionics.h"
 #include "bodypart.h"
 #include "calendar.h"
-#include "character_martial_arts.h"
 #include "character.h"
+#include "character_martial_arts.h"
 #include "creature.h"
 #include "flag.h"
+#include "flag_trait.h"
 #include "game.h"
 #include "handle_liquid.h"
 #include "itype.h"
 #include "iuse_actor.h"
 #include "make_static.h"
+#include "map/map_selector.h"
+#include "map/submap.h"
 #include "map_iterator.h"
-#include "map_selector.h"
 #include "messages.h"
 #include "monster.h"
 #include "npc.h"
 #include "output.h"
 #include "player.h"
-#include "ranged.h"
 #include "rng.h"
 #include "skill.h"
-#include "submap.h"
 #include "trap.h"
-#include "flag_trait.h"
-#include "uistate.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vehicle_selector.h"
-#include "vpart_position.h"
-#include "weather_gen.h"
-#include "weather.h"
+#include "type_id.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vehicle_selector.h"
+#include "vehicle/vpart_position.h"
+#include "weather/weather.h"
+#include "weather/weather_gen.h"
+
+#include <algorithm>
+#include <string>
+#include <utility>
 
 static const trait_id trait_CHLOROMORPH( "CHLOROMORPH" );
 static const trait_id trait_DEBUG_NODMG( "DEBUG_NODMG" );
@@ -75,13 +74,13 @@ static const efftype_id effect_meth( "meth" );
 static const bionic_id bio_soporific( "bio_soporific" );
 static const bionic_id bio_uncanny_dodge( "bio_uncanny_dodge" );
 
-static const itype_id itype_battery( "battery" );
 static const itype_id itype_UPS( "UPS" );
 
-static const skill_id skill_throw( "throw" );
 
 static const quality_id qual_SLEEP_AID( "SLEEP_AID" );
 
+static const enchantment_value_id ench_val_UNCANNY_DODGE( "UNCANNY_DODGE" );
+static const enchantment_value_id ench_val_SLEEPY( "SLEEPY" );
 namespace character_funcs
 {
 
@@ -248,8 +247,10 @@ float fine_detail_vision_mod( const Character &who, const tripoint_bub_ms &p )
           !who.has_trait( trait_PER_SLIME_OK ) ) ) {
         return 11.0;
     }
-    // Regular NV trait isn't enough to help at all, while Full Night Vision allows reading at a penalty
-    float nvbonus = who.mutation_value( "night_vision_range" ) >= 8 ? 4 : 0;
+    // Previously above 8 added 4 to help night vision reading on mutations
+    // Thusly nearsight help to night vision ratio is 2
+    float nvbonus = who.night_vision_sight_range() / 2;
+
     // Scale linearly as light level approaches LIGHT_AMBIENT_LIT.
     // If we're actually a source of light, assume we can direct it where we need it.
     // Therefore give a hefty bonus relative to ambient light.
@@ -454,17 +455,8 @@ int rate_sleep_spot( const Character &who, const tripoint_bub_ms &p )
         // 12.5 points is the difference between "tired" and "dead tired"
         sleepy -= 12;
     }
-    if( who.has_trait( trait_EASYSLEEPER ) ) {
-        // Low fatigue (being rested) has a much stronger effect than high fatigue
-        // so it's OK for the value to be that much higher
-        sleepy += 40;
-    }
     if( who.has_active_bionic( bio_soporific ) ) {
         sleepy += 30;
-    }
-    if( who.has_trait( trait_EASYSLEEPER2 ) ) {
-        // At this point, the only limit to sleep is tiredness
-        sleepy += 100;
     }
     if( watersleep && get_map().has_flag_ter( "SWIMMABLE", p ) ) {
         sleepy += 10; //comfy water!
@@ -483,18 +475,7 @@ int rate_sleep_spot( const Character &who, const tripoint_bub_ms &p )
         sleepy -= current_stim;
     }
 
-    if( one_in( 3 ) ) {
-        if( comfort_info.level >= comfort_level::very_comfortable ) {
-            who.add_msg_if_player( "You feel very comfortable." );
-        } else if( comfort_info.level >= comfort_level::comfortable ) {
-            who.add_msg_if_player( "You feel comfortable." );
-        } else if( comfort_info.level >= comfort_level::slightly_comfortable ) {
-            who.add_msg_if_player( "You feel slightly comfortable." );
-        } else {
-            who.add_msg_if_player( "You feel uncomfortable." );
-        }
-    }
-
+    sleepy += who.bonus_from_enchantments( sleepy, ench_val_SLEEPY );
     return sleepy;
 }
 
@@ -719,11 +700,23 @@ bool try_wield_contents( Character &who, item &container, item *internal_item, b
 
 bool try_uncanny_dodge( Character &who )
 {
-    const units::energy trigger_cost = bio_uncanny_dodge->power_trigger;
-    if( who.get_power_level() < trigger_cost || !who.has_active_bionic( bio_uncanny_dodge ) ) {
+    if( who.has_active_bionic( bio_uncanny_dodge ) ) {
+        const units::energy trigger_cost = bio_uncanny_dodge->power_trigger;
+        if( who.get_power_level() < trigger_cost ) {
+            return false;
+        }
+        who.mod_power_level( -trigger_cost );
+    } else if( who.get_stamina() > 100 ) {
+        float ench_chance = who.bonus_from_enchantments( 0.0, ench_val_UNCANNY_DODGE );
+        if( ench_chance < rng( 0, 100 ) ) {
+            return false;
+        }
+        // NOTE: Potential improvement, allow lua hook to burn resources
+        who.mod_stamina( -100 );
+    } else {
         return false;
     }
-    who.mod_power_level( -trigger_cost );
+
     bool is_u = who.is_avatar();
     bool seen = is_u || get_player_character().sees( who );
     // If successful, dodge for free. If we already burned bonus dodges this turn then get_dodge fails and we're overwhelmed.
@@ -855,371 +848,8 @@ bool can_lift_with_helpers( const Character &who, int lift_required )
     return get_lift_strength_with_helpers( who ) >= lift_required;
 }
 
-bool list_ammo( const Character &who, item &base, std::vector<item_reload_option> &ammo_list,
-                bool include_empty_mags, bool include_potential )
-{
-    auto opts = base.gunmods();
-    opts.push_back( &base );
 
-    if( base.magazine_current() ) {
-        opts.push_back( base.magazine_current() );
-    }
 
-    for( const auto mod : base.gunmods() ) {
-        if( mod->magazine_current() ) {
-            opts.push_back( mod->magazine_current() );
-        }
-    }
-
-    bool ammo_match_found = false;
-    int ammo_search_range = who.is_mounted() ? -1 : 1;
-    for( item *e : opts ) {
-        for( item *ammo : find_ammo_items_or_mags( who, *e, include_empty_mags,
-                ammo_search_range ) ) {
-            // don't try to unload frozen liquids
-            if( ammo->is_watertight_container() && ammo->contents_normally_made_of( LIQUID ) &&
-                ammo->contents_made_of( SOLID ) ) {
-                continue;
-            }
-            auto id = ( ammo->is_ammo_container() || ammo->is_container() )
-                      ? ammo->contents.front().typeId()
-                      : ammo->typeId();
-            const bool can_reload_with = e->can_reload_with( id );
-            if( can_reload_with ) {
-                // Skip if is magazine inside gun/mod, but gun/mod can't fire it (e.g 300 Blackout on STANAG on AR-15)
-                if( e->is_magazine() && e->parent_item() ) {
-                    auto ammo_type = ( ammo->is_ammo_container() || ammo->is_container() )
-                                     ? ammo->contents.front().ammo_type()
-                                     : ammo->ammo_type();
-                    const std::set<ammotype> &supported_ammo = e->parent_item()->ammo_types();
-                    const bool gun_supports = std::ranges::any_of( supported_ammo, [&]( const ammotype & at ) {
-                        return at == ammo_type;
-                    } );
-                    if( !gun_supports ) {
-                        continue;
-                    }
-                }
-                // Speedloaders require an empty target.
-                if( include_potential || !ammo->has_flag( flag_SPEEDLOADER ) || e->ammo_remaining() < 1 ) {
-                    ammo_match_found = true;
-                }
-            }
-            if( ( include_potential && can_reload_with )
-                || who.as_player()->can_reload( *e, id ) || e->has_flag( flag_RELOAD_AND_SHOOT ) ) {
-                ammo_list.emplace_back( who.as_player(), e, &base, *ammo );
-            }
-        }
-    }
-    return ammo_match_found;
-}
-
-item_reload_option select_ammo( const player &who, item &base,
-                                std::vector<item_reload_option> opts )
-{
-    if( opts.empty() ) {
-        who.add_msg_if_player( m_info, _( "Never mind." ) );
-        return item_reload_option();
-    }
-
-    if( who.is_npc() ) {
-        return opts[ 0 ];
-    }
-
-    uilist menu;
-    menu.text = string_format( base.is_container() ? _( "Refill %s" ) :
-                               base.has_flag( flag_RELOAD_AND_SHOOT ) ? _( "Select ammo for %s" ) : _( "Reload %s" ),
-                               base.tname() );
-
-    // Construct item names
-    std::vector<std::string> names;
-    std::ranges::transform( opts,
-    std::back_inserter( names ), [&]( const item_reload_option & e ) {
-        const auto ammo_color = [&]( const std::string & name ) {
-            return base.is_gun() && e.ammo->ammo_data() &&
-                   !base.ammo_types().contains( e.ammo->ammo_data()->ammo->type ) ?
-                   colorize( name, c_dark_gray ) : name;
-        };
-        if( e.ammo->is_magazine() && e.ammo->ammo_data() ) {
-            if( e.ammo->ammo_current() == itype_battery ) {
-                // This battery ammo is not a real object that can be recovered but pseudo-object that represents charge
-                //~ battery storage (charges)
-                return string_format( pgettext( "magazine", "%1$s (%2$d)" ), e.ammo->type_name(),
-                                      e.ammo->ammo_remaining() );
-            } else {
-                //~ magazine with ammo (count)
-                return ammo_color( string_format( pgettext( "magazine", "%1$s with %2$s (%3$d)" ),
-                                                  e.ammo->type_name(), e.ammo->ammo_data()->nname( e.ammo->ammo_remaining() ),
-                                                  e.ammo->ammo_remaining() ) );
-            }
-        } else if( e.ammo->is_container() ||
-                   ( e.ammo->is_ammo_container() && who.is_worn( *e.ammo ) ) ) {
-            // worn ammo containers should be named by their contents with their location also updated below
-            return e.ammo->contents.front().display_name();
-        } else {
-            return ammo_color( ( who.ammo_location &&
-                                 who.ammo_location == e.ammo ? "* " : "" ) + e.ammo->display_name() );
-        }
-    } );
-
-    // Get location descriptions
-    std::vector<std::string> where;
-    std::ranges::transform( opts,
-    std::back_inserter( where ), [&]( const item_reload_option & e ) {
-        bool is_ammo_container = e.ammo->is_ammo_container();
-        if( is_ammo_container || e.ammo->is_container() ) {
-            if( is_ammo_container && who.is_worn( *e.ammo ) ) {
-                return e.ammo->type_name();
-            }
-            return string_format( _( "%s, %s" ), e.ammo->type_name(),
-                                  e.ammo->describe_location( who.as_player() ) );
-        }
-        return e.ammo->describe_location( who.as_player() );
-    } );
-
-    // Pads elements to match longest member and return length
-    auto pad = []( std::vector<std::string> &vec, int n, int t ) -> int {
-        for( const auto &e : vec )
-        {
-            n = std::max( n, utf8_width( e, true ) + t );
-        }
-        for( auto &e : vec )
-        {
-            e += std::string( n - utf8_width( e, true ), ' ' );
-        }
-        return n;
-    };
-
-    // Pad the first column including 4 trailing spaces
-    int w = pad( names, utf8_width( menu.text, true ), 6 );
-    menu.text.insert( 0, 2, ' ' ); // add space for UI hotkeys
-    menu.text += std::string( w + 2 - utf8_width( menu.text, true ), ' ' );
-
-    // Pad the location similarly (excludes leading "| " and trailing " ")
-    w = pad( where, utf8_width( _( "| Location " ) ) - 3, 6 );
-    menu.text += _( "| Location " );
-    menu.text += std::string( w + 3 - utf8_width( _( "| Location " ) ), ' ' );
-
-    menu.text += _( "| Amount  " );
-    menu.text += _( "| Moves   " );
-
-    // We only show ammo statistics for guns and magazines
-    if( base.is_gun() || base.is_magazine() ) {
-        menu.text += _( "| Damage   | Pierce   " );
-    }
-
-    auto draw_row = [&]( int idx ) {
-        const auto &sel = opts[ idx ];
-        std::string row = string_format( "%s| %s |", names[ idx ], where[ idx ] );
-        row += string_format( ( sel.ammo->is_ammo() ||
-                                sel.ammo->is_ammo_container() ) ? " %-7d |" : "         |", sel.qty() );
-        row += string_format( " %-7d ", sel.moves() );
-
-        if( base.is_gun() || base.is_magazine() ) {
-            const itype *ammo = sel.ammo->is_ammo_container() ? sel.ammo->contents.front().ammo_data() :
-                                sel.ammo->ammo_data();
-            if( ammo ) {
-                const damage_instance &dam = ammo->ammo->damage;
-                const damage_unit &du = dam.damage_units.front();
-                if( du.damage_multiplier != 1.0f ) {
-                    float dam_amt = du.amount;
-                    row += string_format( "| %-3d*%3d%% ", static_cast<int>( dam_amt ),
-                                          clamp( static_cast<int>( du.damage_multiplier * 100 ), 0, 999 ) );
-                } else {
-                    float throw_amt = 0;
-                    if( base.gun_skill() == skill_throw ) {
-                        item &tmp = *item::spawn_temporary( item( ammo ) );
-                        throw_amt += ranged::throw_damage( tmp,
-                                                           who.get_skill_level( skill_throw ),
-                                                           who.get_str() );
-                    }
-                    float dam_amt = std::max( dam.total_damage(), throw_amt );
-                    row += string_format( "| %-8d ", static_cast<int>( dam_amt ) );
-                }
-                if( du.res_mult != 1.0f ) {
-                    row += string_format( "| %-3d/%3d%%",
-                                          static_cast<int>( du.res_pen ), static_cast<int>( 100 * du.res_mult ) );
-                } else {
-                    row += string_format( "| %-8d", static_cast<int>( du.res_pen ) );
-                }
-            } else {
-                row += "|          |          ";
-            }
-        }
-        return row;
-    };
-
-    const ammotype base_ammotype( base.ammo_default().str() );
-    itype_id last = uistate.lastreload[ base_ammotype ];
-    // We keep the last key so that pressing the key twice (for example, r-r for reload)
-    // will always pick the first option on the list.
-    int last_key = inp_mngr.get_previously_pressed_key();
-    bool last_key_bound = false;
-    // This is the entry that has out default
-    int default_to = 0;
-
-    // If last_key is RETURN, don't use that to override hotkey
-    if( last_key == '\n' ) {
-        last_key_bound = true;
-        default_to = -1;
-    }
-
-    for( auto i = 0; i < static_cast<int>( opts.size() ); ++i ) {
-        const item &ammo = opts[ i ].ammo->is_ammo_container() ? opts[ i ].ammo->contents.front() :
-                           *opts[ i ].ammo;
-
-        char hotkey = -1;
-        if( who.has_item( ammo ) ) {
-            // if ammo in player possession and either it or any container has a valid invlet use this
-            if( ammo.invlet ) {
-                hotkey = ammo.invlet;
-            } else {
-                for( const auto obj : who.parents( ammo ) ) {
-                    if( obj->invlet ) {
-                        hotkey = obj->invlet;
-                        break;
-                    }
-                }
-            }
-        }
-        if( last == ammo.typeId() ) {
-            if( !last_key_bound && hotkey == -1 ) {
-                // If this is the first occurrence of the most recently used type of ammo and the hotkey
-                // was not already set above then set it to the keypress that opened this prompt
-                hotkey = last_key;
-                last_key_bound = true;
-            }
-            if( !last_key_bound ) {
-                // Pressing the last key defaults to the first entry of compatible type
-                default_to = i;
-                last_key_bound = true;
-            }
-        }
-        if( hotkey == last_key ) {
-            last_key_bound = true;
-            // Prevent the default from being used: key is bound to something already
-            default_to = -1;
-        }
-
-        menu.addentry( i, true, hotkey, draw_row( i ) );
-    }
-
-    struct reload_callback : public uilist_callback {
-        public:
-            std::vector<item_reload_option> &opts;
-            const std::function<std::string( int )> draw_row;
-            int last_key;
-            const int default_to;
-            const bool can_partial_reload;
-
-            reload_callback( std::vector<item_reload_option> &_opts,
-                             std::function<std::string( int )> _draw_row,
-                             int _last_key, int _default_to, bool _can_partial_reload ) :
-                opts( _opts ), draw_row( std::move( _draw_row ) ),
-                last_key( _last_key ), default_to( _default_to ),
-                can_partial_reload( _can_partial_reload )
-            {}
-
-            bool key( const input_context &, const input_event &event, int idx, uilist *menu ) override {
-                auto cur_key = event.get_first_input();
-                if( default_to != -1 && cur_key == last_key ) {
-                    // Select the first entry on the list
-                    menu->ret = default_to;
-                    return true;
-                }
-                if( idx < 0 || idx >= static_cast<int>( opts.size() ) ) {
-                    return false;
-                }
-                auto &sel = opts[ idx ];
-                switch( cur_key ) {
-                    case KEY_LEFT:
-                        if( can_partial_reload ) {
-                            sel.qty( sel.qty() - 1 );
-                            menu->entries[ idx ].txt = draw_row( idx );
-                        }
-                        return true;
-
-                    case KEY_RIGHT:
-                        if( can_partial_reload ) {
-                            sel.qty( sel.qty() + 1 );
-                            menu->entries[ idx ].txt = draw_row( idx );
-                        }
-                        return true;
-                }
-                return false;
-            }
-    } cb( opts, draw_row, last_key, default_to, !base.has_flag( flag_RELOAD_ONE ) );
-    menu.callback = &cb;
-
-    menu.query();
-    if( menu.ret < 0 || static_cast<size_t>( menu.ret ) >= opts.size() ) {
-        who.add_msg_if_player( m_info, _( "Never mind." ) );
-        return item_reload_option();
-    }
-
-    const item *sel = opts[ menu.ret ].ammo;
-    uistate.lastreload[ ammotype( base.ammo_default().str() ) ] = sel->is_ammo_container() ?
-            sel->contents.front().typeId() :
-            sel->typeId();
-    return opts[ menu.ret ];
-}
-
-item_reload_option select_ammo( const player &who, item &base, bool prompt,
-                                bool include_empty_mags, bool include_potential )
-{
-    std::vector<item_reload_option> ammo_list;
-    const bool ammo_match_found = list_ammo( who, base, ammo_list, include_empty_mags,
-                                  include_potential );
-
-    if( ammo_list.empty() && !base.is_holster() ) {
-        if( !who.is_npc() ) {
-            if( !base.is_magazine() && !base.magazine_integral() && !base.magazine_current() ) {
-                who.add_msg_if_player( m_info, _( "You need a compatible magazine to reload the %s!" ),
-                                       base.tname() );
-
-            } else if( ammo_match_found ) {
-                who.add_msg_if_player( m_info, _( "Nothing to reload!" ) );
-            } else {
-                std::string name;
-                if( base.ammo_data() ) {
-                    name = base.ammo_data()->nname( 1 );
-                } else if( base.is_watertight_container() ) {
-                    name = base.is_container_empty() ? "liquid" : base.contents.front().tname();
-                } else if( base.is_container() ) {
-                    name = base.is_container_empty() ? "items" : base.contents.front().tname();
-                } else {
-                    name = enumerate_as_string( base.ammo_types().begin(),
-                    base.ammo_types().end(), []( const ammotype & at ) {
-                        return at->name();
-                    }, enumeration_conjunction::none );
-                }
-                who.add_msg_if_player( m_info, _( "You don't have any %s to reload your %s!" ),
-                                       name, base.tname() );
-            }
-        }
-        return item_reload_option();
-    }
-
-    // sort in order of move cost (ascending), then remaining ammo (descending) with empty magazines always last
-    std::ranges::stable_sort( ammo_list, []( const item_reload_option & lhs,
-    const item_reload_option & rhs ) {
-        return lhs.ammo->ammo_remaining() > rhs.ammo->ammo_remaining();
-    } );
-    std::ranges::stable_sort( ammo_list, []( const item_reload_option & lhs,
-    const item_reload_option & rhs ) {
-        return lhs.moves() < rhs.moves();
-    } );
-    std::ranges::stable_sort( ammo_list, []( const item_reload_option & lhs,
-    const item_reload_option & rhs ) {
-        return ( lhs.ammo->ammo_remaining() != 0 ) > ( rhs.ammo->ammo_remaining() != 0 );
-    } );
-
-    if( !prompt && ammo_list.size() == 1 ) {
-        // unconditionally suppress the prompt if there's only one option
-        return ammo_list[ 0 ];
-    }
-
-    return select_ammo( who, base, std::move( ammo_list ) );
-}
 
 std::vector<item *> get_ammo_items( const Character &who, const ammotype &at )
 {
@@ -1252,7 +882,7 @@ void find_ammo_helper( T &src, const item &obj, bool empty, Output out, bool nes
                 return nested ? VisitResponse::NEXT : VisitResponse::SKIP;
             } );
         } else {
-            // Look for any contents we can hold
+            // Look for any contents we can hold, exclude stackable generics
             src.visit_items( [&nested, &out]( item * node ) {
                 if( ( node->is_watertight_container() && node->contents_made_of( LIQUID ) ) ||
                     ( !node->is_in_container() && ( node->is_ammo() || node->is_comestible() ) &&

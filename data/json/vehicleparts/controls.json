@@ -257,10 +257,9 @@
     "broken_color": "light_gray",
     "damage_modifier": 10,
     "durability": 300,
-    "description": "A set of controls to allow a vehicle to drive itself, or you to drive it remotely using a controller.",
+    "description": "A set of controls to allow a vehicle to drive itself, or you to drive it remotely using a controller.  Blocks access to the tile it's installed on.",
     "item": "robot_controls",
     "folded_volume": "1250 ml",
-    "location": "center",
     "requirements": {
       "install": { "skills": [ [ "mechanics", 4 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
       "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
@@ -270,7 +269,7 @@
         "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_electronics", 1 ] ]
       }
     },
-    "flags": [ "REMOTE_CONTROLS", "OBSTACLE", "FOLDABLE", "SHOCK_RESISTANT" ],
+    "flags": [ "REMOTE_CONTROLS", "CAMERA_CONTROL", "OBSTACLE", "FOLDABLE", "SHOCK_RESISTANT" ],
     "breaks_into": [
       { "item": "motor_tiny", "count": [ 1, 3 ] },
       { "item": "steel_chunk", "count": [ 1, 3 ] },

@@ -83,6 +83,24 @@ std::vector<std::string> get_files_from_path( const std::string &pattern,
         const std::string &root_path = "", bool recursive_search = false,
         bool match_extension = false );
 
+/**
+ * Returns a vector of files or directories matching pattern at @p root_path, excluding ones that match @p pattern_clash.
+ *
+ * Searches through the directory tree breadth-first. Directories are searched in lexical
+ * order. Matching files within in each directory are also ordered lexically.
+ *
+ * @param pattern The sub-string to match, uses only the filename
+ * @param exclude_pattern The sub-string to not match, uses the entire path
+ * @param root_path The path relative to the current working directory to search; empty means ".".
+ * @param recursive_search Whether to recursively search sub directories.
+ * @param match_extension If true, match pattern at the end of file names. Otherwise, match anywhere
+ *                        in the file name. Exclude pattern is always anywhere in the file name
+ */
+std::vector<std::string> get_files_from_path_exclude( const std::string &pattern,
+        const std::string &exclude_pattern,
+        const std::string &root_path = "", bool recursive_search = false,
+        bool match_extension = false );
+
 //--------------------------------------------------------------------------------------------------
 /**
  * Returns a vector of directories which contain files matching any of @p patterns.

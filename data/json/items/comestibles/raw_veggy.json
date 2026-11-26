@@ -122,7 +122,7 @@
     "description": "Edible leaves of a grape vine.  Typically used in salads or as food wrapping.",
     "price": "80 cent",
     "material": [ "veggy" ],
-    "volume": "250 ml",
+    "volume": "100 ml",
     "flags": [ "SMOKABLE", "RAW" ],
     "smoking_result": "dry_veggy",
     "vitamins": [ [ "vitA", 21 ], [ "vitC", 2 ], [ "calcium", 4 ], [ "iron", 2 ], [ "veggy_allergen", 1 ] ]

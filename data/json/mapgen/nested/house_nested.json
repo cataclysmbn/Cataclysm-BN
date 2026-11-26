@@ -720,6 +720,25 @@
     "type": "mapgen",
     "method": "json",
     "//": "compass direction indicates table orientation",
+    "nested_mapgen_id": "diningroom_6x6_E_W_1A",
+    "object": {
+      "mapgensize": [ 6, 6 ],
+      "rotation": [ 0, 3 ],
+      "rows": [
+        "      ",
+        " hhhh ",
+        " ssss ",
+        " hhhh ",
+        "      ",
+        " yIIy "
+      ],
+      "palettes": [ "standard_domestic_palette" ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "//": "compass direction indicates table orientation",
     "nested_mapgen_id": "diningroom_6x6_E_W_2",
     "object": {
       "mapgensize": [ 6, 6 ],
@@ -739,6 +758,25 @@
     "type": "mapgen",
     "method": "json",
     "//": "compass direction indicates table orientation",
+    "nested_mapgen_id": "diningroom_6x6_E_W_2A",
+    "object": {
+      "mapgensize": [ 6, 6 ],
+      "rotation": [ 0, 3 ],
+      "rows": [
+        "      ",
+        " hhhh ",
+        " ssss ",
+        " ssss ",
+        " hhhh ",
+        "y    a"
+      ],
+      "palettes": [ "standard_domestic_palette" ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "//": "compass direction indicates table orientation",
     "nested_mapgen_id": "diningroom_6x6_N_S_2",
     "object": {
       "mapgensize": [ 6, 6 ],
@@ -750,6 +788,269 @@
         " hffh ",
         " hffh ",
         "      "
+      ],
+      "palettes": [ "standard_domestic_palette" ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "//": "compass direction indicates table orientation",
+    "nested_mapgen_id": "diningroom_6x6_N_S_2A",
+    "object": {
+      "mapgensize": [ 6, 6 ],
+      "rotation": [ 0, 3 ],
+      "rows": [
+        "      ",
+        " hssh ",
+        " hssh ",
+        " hssh ",
+        " hssh ",
+        "Y    y"
+      ],
+      "palettes": [ "standard_domestic_palette" ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "livingroom_4x4_N_S_1",
+    "object": {
+      "mapgensize": [ 4, 4 ],
+      "rotation": [ 0, 3 ],
+      "rows": [
+        "yxxx",
+        "    ",
+        "E l ",
+        " HHH"
+      ],
+      "palettes": [ "standard_domestic_palette" ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "livingroom_4x4_N_S_1",
+    "object": {
+      "mapgensize": [ 4, 4 ],
+      "rotation": [ 0, 3 ],
+      "rows": [
+        "EllE",
+        " ==T",
+        " == ",
+        "RRRR"
+      ],
+      "palettes": [ "standard_domestic_palette" ],
+      "parameters": {
+        "carpet_type": {
+          "type": "ter_str_id",
+          "scope": "nest",
+          "default": {
+            "distribution": [ [ "t_carpet_yellow", 1 ], [ "t_carpet_green", 1 ], [ "t_carpet_purple", 1 ], [ "t_carpet_red", 1 ], [ "t_floor", 4 ] ]
+          }
+        }
+      },
+      "terrain": { "=": { "param": "carpet_type", "fallback": "t_floor" } }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "livingroom_4x4_N_S_1",
+    "object": {
+      "mapgensize": [ 4, 4 ],
+      "rotation": [ 0, 3 ],
+      "rows": [
+        "RRRR",
+        "====",
+        "====",
+        "HHHT"
+      ],
+      "palettes": [ "standard_domestic_palette" ],
+      "parameters": {
+        "carpet_type": {
+          "type": "ter_str_id",
+          "scope": "nest",
+          "default": {
+            "distribution": [ [ "t_carpet_yellow", 1 ], [ "t_carpet_green", 1 ], [ "t_carpet_purple", 1 ], [ "t_carpet_red", 1 ], [ "t_floor", 4 ] ]
+          }
+        }
+      },
+      "terrain": { "=": { "param": "carpet_type", "fallback": "t_floor" } }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "livingroom_4x4_N_S_1",
+    "object": {
+      "mapgensize": [ 4, 4 ],
+      "rotation": [ 0, 3 ],
+      "rows": [
+        "Exxx",
+        "    ",
+        "R l ",
+        "RHHH"
+      ],
+      "palettes": [ "standard_domestic_palette" ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "livingroom_4x4_N_S_1",
+    "object": {
+      "mapgensize": [ 4, 4 ],
+      "rotation": [ 0, 3 ],
+      "rows": [
+        "yHHH",
+        "  l ",
+        "E   ",
+        " xxx"
+      ],
+      "palettes": [ "standard_domestic_palette" ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "livingroom_4x4_N_S_1",
+    "object": {
+      "mapgensize": [ 4, 4 ],
+      "rotation": [ 0, 3 ],
+      "rows": [
+        "    ",
+        "eee ",
+        "eee ",
+        "    "
+      ],
+      "palettes": [ "standard_domestic_palette" ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "//": "compass direction indicates furniture orientation",
+    "nested_mapgen_id": "livingroom_4x4_N_1",
+    "object": {
+      "mapgensize": [ 4, 4 ],
+      "rotation": [ 0, 3 ],
+      "rows": [
+        "YHHy",
+        "    ",
+        "    ",
+        "    "
+      ],
+      "palettes": [ "standard_domestic_palette" ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "//": "compass direction indicates furniture orientation",
+    "nested_mapgen_id": "livingroom_4x4_N_1",
+    "object": {
+      "mapgensize": [ 4, 4 ],
+      "rotation": [ 0, 3 ],
+      "rows": [
+        "RRRR",
+        "    ",
+        "    ",
+        "    "
+      ],
+      "palettes": [ "standard_domestic_palette" ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "//": "compass direction indicates furniture orientation",
+    "nested_mapgen_id": "livingroom_4x4_N_1",
+    "object": {
+      "mapgensize": [ 4, 4 ],
+      "rotation": [ 0, 3 ],
+      "rows": [
+        "EllE",
+        "    ",
+        "    ",
+        "    "
+      ],
+      "palettes": [ "standard_domestic_palette" ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "//": "compass direction indicates furniture orientation",
+    "nested_mapgen_id": "livingroom_4x4_N_1",
+    "object": {
+      "mapgensize": [ 4, 4 ],
+      "rotation": [ 0, 3 ],
+      "rows": [
+        "hssh",
+        "    ",
+        "    ",
+        "    "
+      ],
+      "palettes": [ "standard_domestic_palette" ],
+      "items": {
+        "s": [
+          { "item": "dishes_dining", "chance": 30 },
+          { "item": "tea_dishes", "chance": 10, "repeat": [ 1, 2 ] },
+          { "item": "baked_goods", "chance": 5 },
+          { "item": "groce_condiment", "chance": 10, "repeat": [ 1, 2 ] },
+          { "item": "dining", "chance": 10 }
+        ]
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "//": "compass direction indicates furniture orientation",
+    "nested_mapgen_id": "livingroom_4x4_N_1",
+    "object": {
+      "mapgensize": [ 4, 4 ],
+      "rotation": [ 0, 3 ],
+      "rows": [
+        "ybcy",
+        "    ",
+        "    ",
+        "    "
+      ],
+      "palettes": [ "standard_domestic_palette" ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "//": "compass direction indicates furniture orientation",
+    "nested_mapgen_id": "livingroom_4x4_N_1",
+    "object": {
+      "mapgensize": [ 4, 4 ],
+      "rotation": [ 0, 3 ],
+      "rows": [
+        "EZWE",
+        "    ",
+        "    ",
+        "    "
+      ],
+      "palettes": [ "standard_domestic_palette" ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "//": "compass direction indicates furniture orientation",
+    "nested_mapgen_id": "livingroom_4x4_N_1",
+    "object": {
+      "mapgensize": [ 4, 4 ],
+      "rotation": [ 0, 3 ],
+      "rows": [
+        "xxxx",
+        "    ",
+        "    ",
+        "    "
       ],
       "palettes": [ "standard_domestic_palette" ]
     }
@@ -1019,6 +1320,22 @@
         "R T",
         "RE ",
         "R  "
+      ],
+      "palettes": [ "standard_domestic_palette" ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "//": "computer and chair for studies, workrooms, hobby rooms, etc",
+    "nested_mapgen_id": "bonus_room_3x3_1A",
+    "object": {
+      "mapgensize": [ 3, 3 ],
+      "rotation": [ 0, 3 ],
+      "rows": [
+        "T I",
+        " Eɱ",
+        "  I"
       ],
       "palettes": [ "standard_domestic_palette" ]
     }
@@ -1743,6 +2060,188 @@
       "rows": [ "S" ],
       "furniture": { "S": [ "f_gun_safe_el", "f_gunsafe_ml" ] },
       "items": { "S": { "item": "guns_safe", "chance": 100 } }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "kitchen_5x5_N_1",
+    "object": {
+      "mapgensize": [ 5, 5 ],
+      "rotation": [ 0, 3 ],
+      "rows": [
+        "123FO",
+        "     ",
+        " 161 ",
+        "     ",
+        "     "
+      ],
+      "terrain": { "2": "t_linoleum_white" },
+      "set": [ { "square": "terrain", "id": "t_linoleum_white", "x": 0, "y": 0, "x2": 4, "y2": 2 } ],
+      "palettes": [ "standard_domestic_palette", "standard_domestic_lino_kitchen" ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "kitchen_5x5_N_1",
+    "object": {
+      "mapgensize": [ 5, 5 ],
+      "rotation": [ 0, 3 ],
+      "rows": [
+        "FOwww",
+        "     ",
+        "12334",
+        "     ",
+        "     "
+      ],
+      "terrain": { "2": "t_linoleum_white" },
+      "set": [ { "square": "terrain", "id": "t_linoleum_white", "x": 0, "y": 0, "x2": 4, "y2": 2 } ],
+      "palettes": [ "standard_domestic_palette", "standard_domestic_lino_kitchen" ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "kitchen_5x5_N_1A",
+    "object": {
+      "mapgensize": [ 5, 5 ],
+      "rotation": [ 0, 3 ],
+      "rows": [
+        "123 4",
+        "     ",
+        "O154F",
+        "     ",
+        "     "
+      ],
+      "set": [ { "square": "terrain", "id": "t_linoleum_white", "x": 0, "y": 0, "x2": 4, "y2": 2 } ],
+      "palettes": [ "standard_domestic_palette", "standard_domestic_lino_kitchen" ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "kitchen_5x5_N_1A",
+    "object": {
+      "mapgensize": [ 5, 5 ],
+      "rotation": [ 0, 3 ],
+      "rows": [
+        "1O1 F",
+        "     ",
+        "7234w",
+        "     ",
+        "     "
+      ],
+      "set": [ { "square": "terrain", "id": "t_linoleum_white", "x": 0, "y": 0, "x2": 4, "y2": 2 } ],
+      "palettes": [ "standard_domestic_palette", "standard_domestic_lino_kitchen" ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "kitchen_5x5_N_1B",
+    "object": {
+      "mapgensize": [ 5, 5 ],
+      "rotation": [ 0, 3 ],
+      "rows": [
+        "1  14",
+        "5    ",
+        "7OF32",
+        "     ",
+        "     "
+      ],
+      "set": [ { "square": "terrain", "id": "t_linoleum_white", "x": 0, "y": 0, "x2": 4, "y2": 2 } ],
+      "palettes": [ "standard_domestic_palette", "standard_domestic_lino_kitchen" ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "kitchen_5x5_N_1C",
+    "object": {
+      "mapgensize": [ 5, 5 ],
+      "rotation": [ 0, 3 ],
+      "rows": [
+        "123 2",
+        "    5",
+        "FOnY3",
+        "     ",
+        "     "
+      ],
+      "set": [ { "square": "terrain", "id": "t_linoleum_white", "x": 0, "y": 0, "x2": 4, "y2": 2 } ],
+      "palettes": [ "standard_domestic_palette", "standard_domestic_lino_kitchen" ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "kitchen_5x5_N_2",
+    "object": {
+      "mapgensize": [ 5, 5 ],
+      "rotation": [ 0, 3 ],
+      "rows": [
+        "OF157",
+        "     ",
+        "4 123",
+        "  AAA",
+        "     "
+      ],
+      "set": [ { "square": "terrain", "id": "t_linoleum_white", "x": 0, "y": 0, "x2": 4, "y2": 2 } ],
+      "palettes": [ "standard_domestic_palette", "standard_domestic_lino_kitchen" ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "kitchen_5x5_N_2",
+    "object": {
+      "mapgensize": [ 5, 5 ],
+      "rotation": [ 0, 3 ],
+      "rows": [
+        "wFO4n",
+        "w    ",
+        "w 123",
+        "  AAA",
+        "     "
+      ],
+      "set": [ { "square": "terrain", "id": "t_linoleum_white", "x": 0, "y": 0, "x2": 4, "y2": 2 } ],
+      "palettes": [ "standard_domestic_palette", "standard_domestic_lino_kitchen" ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "kitchen_5x5_N_3",
+    "object": {
+      "mapgensize": [ 5, 5 ],
+      "rotation": [ 0, 3 ],
+      "rows": [
+        "nOFww",
+        "    w",
+        " ss  ",
+        "    4",
+        "341 2"
+      ],
+      "set": [ { "square": "terrain", "id": "t_linoleum_white", "x": 0, "y": 0, "x2": 4, "y2": 4 } ],
+      "palettes": [ "standard_domestic_palette", "standard_domestic_lino_kitchen" ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "kitchen_5x5_N_3",
+    "object": {
+      "mapgensize": [ 5, 5 ],
+      "rotation": [ 0, 3 ],
+      "rows": [
+        "wwFww",
+        "     ",
+        " nO1 ",
+        "     ",
+        "74 23"
+      ],
+      "set": [ { "square": "terrain", "id": "t_linoleum_white", "x": 0, "y": 0, "x2": 4, "y2": 4 } ],
+      "palettes": [ "standard_domestic_palette", "standard_domestic_lino_kitchen" ]
     }
   }
 ]

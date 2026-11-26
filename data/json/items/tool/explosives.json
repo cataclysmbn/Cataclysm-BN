@@ -75,7 +75,7 @@
     "use_action": {
       "type": "explosion",
       "no_deactivate_msg": "You've already lit the fuse - what are you waiting for?",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "ssss...",
       "explosion": { "fragment": { "impact": { "damage_type": "bullet", "amount": 50, "armor_multiplier": 3 }, "range": 5 } }
     },
@@ -86,7 +86,7 @@
     "type": "TOOL",
     "category": "weapons",
     "name": { "str": "C-4 explosive" },
-    "description": "This is military grade RDX composition explosive.  A label reads: \"Highly explosive, use with extreme caution!\" It comes with a small timer.",
+    "description": "This is military grade RDX composition explosive, made of a bundle of demolition blocks, meant to breach heavily reinforced bunkers and destroy large structures.  A label reads: \"Highly explosive, use with extreme caution!\" It comes with a small timer.",
     "weight": "1570 g",
     "volume": "1 L",
     "price": "90 USD",
@@ -95,7 +95,7 @@
     "material": [ "plastic" ],
     "symbol": ";",
     "color": "light_gray",
-    "use_action": "C4",
+    "use_action": { "target": "c4armed", "active": true, "set_timer": true, "menu_text": "Arm bomb", "type": "transform" },
     "flags": [ "GRENADE", "ALLOWS_REMOTE_USE" ]
   },
   {
@@ -103,7 +103,7 @@
     "type": "TOOL",
     "category": "weapons",
     "name": { "str": "C-4 explosive (armed)", "str_pl": "C-4 explosives (armed)" },
-    "description": "This is military grade RDX composition explosive.  A label reads: \"Highly explosive, use with extreme caution!\" It comes with a small timer, which is currently ticking down.",
+    "description": "This is military grade RDX composition explosive, made of a bundle of demolition blocks, meant to breach heavily reinforced bunkers and destroy large structures.  A label reads: \"Highly explosive, use with extreme caution!\" It comes with a small timer, which is currently ticking down.",
     "weight": "1570 g",
     "volume": "1 L",
     "price": "0 cent",
@@ -111,15 +111,56 @@
     "material": [ "plastic" ],
     "symbol": ";",
     "color": "light_gray",
-    "initial_charges": 9,
-    "max_charges": 9,
+    "//": "Doesn't affect timer but instead default value when called by C-4 hacks.",
+    "max_charges": 10,
     "turns_per_charge": 1,
     "use_action": {
       "type": "explosion",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "Tick.",
       "no_deactivate_msg": "You've already set the %s's timer, you might want to get away from it.",
       "explosion": { "damage": 200, "radius": 6 }
+    },
+    "flags": [ "TRADER_AVOID", "ALLOWS_REMOTE_USE" ]
+  },
+  {
+    "id": "c4_breaching",
+    "type": "TOOL",
+    "category": "weapons",
+    "name": { "str": "C-4 breaching charge" },
+    "description": "This is military grade RDX composition explosive.  It has been formed into a charge meant to breach walls and doors without causing undue structural damage.  It comes with a small timer.",
+    "weight": "400 g",
+    "volume": "250 ml",
+    "price": "6 USD",
+    "price_postapoc": "2 USD",
+    "to_hit": -4,
+    "material": [ "plastic" ],
+    "symbol": ";",
+    "color": "light_gray",
+    "use_action": { "target": "c4_breaching_armed", "active": true, "set_timer": true, "menu_text": "Arm bomb", "type": "transform" },
+    "flags": [ "GRENADE", "ALLOWS_REMOTE_USE" ]
+  },
+  {
+    "id": "c4_breaching_armed",
+    "type": "TOOL",
+    "category": "weapons",
+    "name": { "str": "C-4 breaching charge (armed)", "str_pl": "C-4 breaching charges (armed)" },
+    "description": "This is military grade RDX composition explosive.  It has been formed into a charge meant to breach walls and doors without causing undue structural damage.  It comes with a small timer, which is currently ticking down.",
+    "weight": "400 g",
+    "volume": "250 ml",
+    "price": "0 cent",
+    "to_hit": -4,
+    "material": [ "plastic" ],
+    "symbol": ";",
+    "color": "light_gray",
+    "max_charges": 10,
+    "turns_per_charge": 1,
+    "use_action": {
+      "type": "explosion",
+      "sound_volume": "20 dB",
+      "sound_msg": "Tick.",
+      "no_deactivate_msg": "You've already set the %s's timer, you might want to get away from it.",
+      "explosion": { "damage": 200, "radius": 1 }
     },
     "flags": [ "TRADER_AVOID", "ALLOWS_REMOTE_USE" ]
   },
@@ -171,7 +212,7 @@
     "explosion": { "damage": 100, "radius": 6 },
     "use_action": {
       "type": "explosion",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "ssss...",
       "no_deactivate_msg": "You've already lit the %s, try throwing it instead.",
       "explosion": { "damage": 100, "radius": 6 }
@@ -236,7 +277,7 @@
     },
     "use_action": {
       "type": "explosion",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "ssss...",
       "no_deactivate_msg": "You've already lit the %s, try throwing it instead.",
       "explosion": {
@@ -264,14 +305,7 @@
     "explode_in_fire": true,
     "explosion": { "damage": 50, "radius": 7 },
     "color": "light_gray",
-    "use_action": {
-      "target": "EMPbomb_act",
-      "msg": "You activate the EMP bomb.",
-      "target_charges": 10,
-      "active": true,
-      "menu_text": "Activate bomb",
-      "type": "transform"
-    },
+    "use_action": { "target": "EMPbomb_act", "set_timer": true, "active": true, "menu_text": "Activate bomb", "type": "transform" },
     "flags": [ "RADIO_MODABLE", "RADIO_INVOKE_PROC", "BOMB", "GRENADE", "ALLOWS_REMOTE_USE" ]
   },
   {
@@ -291,7 +325,6 @@
     "explode_in_fire": true,
     "explosion": { "damage": 50, "radius": 7 },
     "color": "light_gray",
-    "initial_charges": 10,
     "max_charges": 10,
     "turns_per_charge": 1,
     "use_action": {
@@ -299,7 +332,7 @@
       "draw_explosion_radius": 10,
       "draw_explosion_color": "light_blue",
       "emp_blast_radius": 10,
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "Tick.",
       "explosion": { "damage": 50, "radius": 7 },
       "no_deactivate_msg": "You've already activated the %s, try throwing it instead."
@@ -312,7 +345,7 @@
     "category": "weapons",
     "looks_like": "fertilizer_bomb",
     "name": { "str": "improvised demolition charge" },
-    "description": "This is a improvised demolition charge.  Use this item to light the fuse.  You will, of course, need a lighter or matches in your inventory to do this.  20 seconds after lighting the fuse, this item will explode, so get away!",
+    "description": "This is an improvised demolition charge.  Use this item to light the fuse.  You will, of course, need a lighter or matches in your inventory to do this.  20 seconds after lighting the fuse, this item will explode, so get away!",
     "weight": "2290 g",
     "volume": "3750 ml",
     "price": "0 cent",
@@ -357,7 +390,7 @@
     "explosion": { "damage": 150, "radius": 6 },
     "use_action": {
       "type": "explosion",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "ssss...",
       "no_deactivate_msg": "You've already lit the %s, try throwing it instead.",
       "explosion": { "damage": 150, "radius": 6 }
@@ -423,7 +456,7 @@
     "id": "firecracker_pack_act",
     "type": "TOOL",
     "name": { "str": "pack of firecrackers (lit)", "str_pl": "packs of firecrackers (lit)" },
-    "description": "A pack of 25 firecrackers that has been lit; the fuse is hissing.  Throw them quickly before the start to explode.",
+    "description": "A pack of 25 firecrackers that has been lit; the fuse is hissing.  Throw them quickly before they start to explode.",
     "weight": "75 g",
     "volume": "250 ml",
     "price": "0 cent",
@@ -482,7 +515,7 @@
     "use_action": {
       "type": "explosion",
       "do_flashbang": true,
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "Tick.",
       "no_deactivate_msg": "You've already pulled the %s's pin, try throwing it instead."
     },
@@ -497,7 +530,7 @@
     "price": "36 USD",
     "price_postapoc": "750 cent",
     "description": "This is a canister grenade filled with fungicidal solution.  Use this item to pull the pin and light the fuse, turning it into an active fungicidal grenade.  In five turns it will begin to expel a volatile spray that is highly toxic to fungal life forms.",
-    "countdown_action": { "menu_text": "Pull pin", "type": "transform", "target": "fungicidalbomb_act" }
+    "countdown_action": { "menu_text": "Pull pin", "type": "transform", "active": true, "target": "fungicidalbomb_act" }
   },
   {
     "id": "fungicidalbomb_act",
@@ -520,7 +553,7 @@
     "price": "36 USD",
     "price_postapoc": "5 USD",
     "description": "This is a makeshift canister grenade filled with fungicidal solution.  Use this item to pull the pin and light the fuse, turning it into an active fungicidal grenade.  In five turns it will begin to expel a volatile spray that is highly toxic to fungal life forms.",
-    "countdown_action": { "menu_text": "Pull pin", "type": "transform", "target": "fungicidalbomb_makeshift_act" }
+    "countdown_action": { "menu_text": "Pull pin", "type": "transform", "active": true, "target": "fungicidalbomb_makeshift_act" }
   },
   {
     "id": "fungicidalbomb_makeshift_act",
@@ -584,7 +617,7 @@
       "fields_radius": 6,
       "fields_min_intensity": 1,
       "fields_max_intensity": 3,
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "Hiss.",
       "no_deactivate_msg": "You've already armed the %s, try throwing it instead."
     },
@@ -635,7 +668,7 @@
     "turns_per_charge": 1,
     "use_action": {
       "type": "explosion",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "Tick.",
       "no_deactivate_msg": "You've already pulled the %s's pin; try throwing it instead.",
       "explosion": {
@@ -696,7 +729,7 @@
       "draw_explosion_radius": 4,
       "draw_explosion_color": "light_blue",
       "emp_blast_radius": 4,
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "Tick.",
       "no_deactivate_msg": "You've already pulled the %s's pin, try throwing it instead."
     },
@@ -771,7 +804,7 @@
     "price": "36 USD",
     "price_postapoc": "250 cent",
     "description": "This is a canister grenade filled with noxious irritant.  Use this item to pull the pin and light the fuse, turning it into an active tear gas grenade.  In five turns it will begin to expel a highly toxic gas for some time.  This gas damages and slows those who enter it, as well as obscuring vision and scent.",
-    "countdown_action": { "menu_text": "Pull pin", "type": "transform", "target": "gasbomb_act" }
+    "countdown_action": { "menu_text": "Pull pin", "type": "transform", "active": true, "target": "gasbomb_act" }
   },
   {
     "id": "gasbomb_act",
@@ -794,7 +827,7 @@
     "price": "36 USD",
     "price_postapoc": "750 cent",
     "description": "This is a canister grenade filled with insecticidal solution.  Use this item to pull the pin and light the fuse, turning it into an active insecticidal grenade.  In five turns it will begin to expel a volatile spray that is highly toxic to insect life forms.",
-    "countdown_action": { "menu_text": "Pull pin", "type": "transform", "target": "insecticidalbomb_act" }
+    "countdown_action": { "menu_text": "Pull pin", "type": "transform", "active": true, "target": "insecticidalbomb_act" }
   },
   {
     "id": "insecticidalbomb_act",
@@ -818,7 +851,7 @@
     "price": "36 USD",
     "price_postapoc": "5 USD",
     "description": "This is a makeshift canister grenade filled with insecticidal solution.  Use this item to pull the pin and light the fuse, turning it into an active insecticidal grenade.  In five turns it will begin to expel a volatile spray that is highly toxic to insect life forms.",
-    "countdown_action": { "menu_text": "Pull pin", "type": "transform", "target": "insecticidalbomb_makeshift_act" }
+    "countdown_action": { "menu_text": "Pull pin", "type": "transform", "active": true, "target": "insecticidalbomb_makeshift_act" }
   },
   {
     "id": "insecticidalbomb_makeshift_act",
@@ -865,7 +898,7 @@
     "type": "TOOL",
     "name": { "str": "improvised grenade" },
     "looks_like": "makeshift_grenade",
-    "description": "A improvised explosive device cobbled together from parts.  Use this item to light the fuse.  You will then have some amount of time before it explodes; throwing it would be a good idea.",
+    "description": "An improvised explosive device cobbled together from parts.  Use this item to light the fuse.  You will then have some amount of time before it explodes; throwing it would be a good idea.",
     "weight": "400 g",
     "price": "750 cent",
     "material": [ "aluminum", "iron" ],
@@ -900,7 +933,7 @@
     "turns_per_charge": 1,
     "use_action": {
       "type": "explosion",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "sssssh.",
       "no_deactivate_msg": "You've already lit the %s's fuse; try throwing it instead.",
       "explosion": {
@@ -927,7 +960,7 @@
     "material": [ "steel", "plastic" ],
     "symbol": "*",
     "color": "light_green",
-    "use_action": "MININUKE",
+    "use_action": { "target": "mininuke_act", "active": true, "set_timer": true, "menu_text": "Arm mininuke", "type": "transform" },
     "flags": [
       "LEAK_DAM",
       "RADIOACTIVE",
@@ -955,14 +988,15 @@
     "symbol": "*",
     "color": "light_green",
     "turns_per_charge": 1,
-    "max_charges": 1000,
+    "//": "Doesn't affect timer but instead default value when called by mininuke hacks.",
+    "max_charges": 20,
     "use_action": {
       "type": "explosion",
       "fields_type": "fd_nuke_gas",
       "fields_radius": 24,
       "fields_min_intensity": 3,
       "fields_max_intensity": 3,
-      "sound_volume": 2,
+      "sound_volume": "26 dB",
       "sound_msg": "Tick.",
       "no_deactivate_msg": "You've already set the %s's timer, you might want to get away from it.",
       "explosion": {
@@ -971,7 +1005,7 @@
         "fragment": { "impact": { "damage_type": "heat", "amount": 3000, "armor_multiplier": 2 }, "range": 24 }
       }
     },
-    "//": "Allowed to 'use' remotely so that triggering the message telling you to run won't put it back in your inventory and cause a YASD",
+    "//2": "Allowed to 'use' remotely so that triggering the message telling you to run won't put it back in your inventory and cause a YASD",
     "flags": [ "LEAK_DAM", "RADIOACTIVE", "TRADER_AVOID", "CLOSES_PORTAL", "ALLOWS_REMOTE_USE" ]
   },
   {
@@ -1016,6 +1050,7 @@
     "material": [ "glass", "cotton" ],
     "symbol": "*",
     "color": "light_gray",
+    "light_color": "#ffb05f",
     "initial_charges": 1,
     "max_charges": 1,
     "turns_per_charge": 5,
@@ -1091,7 +1126,7 @@
     },
     "use_action": {
       "type": "explosion",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "ssss...",
       "no_deactivate_msg": "You've already lit the %s, try throwing it instead.",
       "explosion": {
@@ -1151,7 +1186,7 @@
       "draw_explosion_radius": 4,
       "draw_explosion_color": "cyan",
       "scrambler_blast_radius": 4,
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "Tick.",
       "no_deactivate_msg": "You've already pulled the %s's pin; try throwing it instead."
     },
@@ -1166,7 +1201,7 @@
     "price": "18 USD",
     "price_postapoc": "0 cent",
     "weight": "569 g",
-    "countdown_action": { "type": "transform", "target": "smokebomb_act" }
+    "countdown_action": { "type": "transform", "active": true, "target": "smokebomb_act" }
   },
   {
     "id": "smokebomb_act",
@@ -1237,7 +1272,7 @@
     },
     "use_action": {
       "type": "explosion",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "Tick.",
       "no_deactivate_msg": "You've already lit the fuse - run!",
       "explosion": {
@@ -1283,7 +1318,7 @@
     "id": "tool_small_improvised_fragmentation_device_act",
     "type": "TOOL",
     "category": "weapons",
-    "name": { "str": "small improvised frag device" },
+    "name": { "str": "active small improvised frag device" },
     "looks_like": "tool_black_powder_charge_act",
     "description": "This is a home-made explosive device, consisting of a large plastic jug filled with stable explosives and scrap metal, whose fuse has been lit, its final countdown starting.",
     "weight": "6500 g",
@@ -1304,7 +1339,7 @@
     },
     "use_action": {
       "type": "explosion",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "Kshhh.",
       "no_deactivate_msg": "You've already lit the fuse - run!",
       "explosion": {
@@ -1375,7 +1410,7 @@
     },
     "use_action": {
       "type": "explosion",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "Kshhh.",
       "no_deactivate_msg": "You've already lit the fuse - clear the area immediately!",
       "explosion": {
@@ -1435,7 +1470,7 @@
       "fields_radius": 2,
       "fields_min_intensity": 2,
       "fields_max_intensity": 3,
-      "sound_volume": 5,
+      "sound_volume": "33 dB",
       "sound_msg": "Hsssss.",
       "no_deactivate_msg": "You've already lit the fuse - get rid of it immediately!",
       "explosion": { "damage": 1 }

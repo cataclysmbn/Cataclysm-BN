@@ -304,6 +304,15 @@
   },
   {
     "type": "effect_type",
+    "id": "eyebot_depleted",
+    "name": [ "Eyebot Depleted" ],
+    "permanent": true,
+    "desc": [
+      "Marks a non-friendly eyebot as having already summoned reinforcements, preventing it from doing so again.  This is a bug if you have it."
+    ]
+  },
+  {
+    "type": "effect_type",
     "id": "monster_disarmed",
     "name": [ "Disarmed" ],
     "desc": [ "AI tag for a monster's attacks being disabled due to disarming tecs.  This is a bug if you have it." ],
@@ -317,7 +326,8 @@
     "desc": [ "You're knocked to the ground.  You have to get up before you can move." ],
     "apply_message": "You're knocked to the floor!",
     "rating": "bad",
-    "show_in_info": true
+    "show_in_info": true,
+    "base_enchantments": [ { "values": [ { "value": "CROWD_CRUSH_RESIST", "add": -4 } ] } ]
   },
   {
     "type": "effect_type",
@@ -415,7 +425,8 @@
     "desc": [ "Your footing is unstable.  It's more difficult to fight while standing here." ],
     "apply_message": "You try to keep your balance.",
     "rating": "bad",
-    "permanent": true
+    "permanent": true,
+    "base_enchantments": [ { "values": [ { "value": "MELEE_HIT", "multiply": -0.25 } ] } ]
   },
   {
     "type": "effect_type",
@@ -750,6 +761,24 @@
   },
   {
     "type": "effect_type",
+    "id": "lightsnare",
+    "name": [ "Stuck in a light snare" ],
+    "desc": [ "You can't move until you get free!" ],
+    "apply_message": "You are snared!",
+    "rating": "bad",
+    "show_in_info": true
+  },
+  {
+    "type": "effect_type",
+    "id": "heavysnare",
+    "name": [ "Stuck in a heavy snare" ],
+    "desc": [ "You can't move until you get free!" ],
+    "apply_message": "You are snared!",
+    "rating": "bad",
+    "show_in_info": true
+  },
+  {
+    "type": "effect_type",
     "id": "beartrap",
     "name": [ "Stuck in beartrap" ],
     "desc": [ "You can't move until you get free!" ],
@@ -883,6 +912,30 @@
     "name": [ "Irradiation triangle" ],
     "desc": [ "This irradiates you every 15 minutes while aboveground so long as you have it in your inventory!" ],
     "base_mods": { "rad_min": [ 1 ], "rad_max": [ 3 ], "rad_tick": [ 900 ] }
+  },
+  {
+    "type": "effect_type",
+    "id": "debug_full_protection",
+    "name": [ "Full protection" ],
+    "desc": [ "This prevents all damage via enchantments!" ],
+    "base_enchantments": [ { "values": [ { "value": "ARMOR", "multiply": -100 } ] } ]
+  },
+  {
+    "type": "effect_type",
+    "id": "debug_feather_fall",
+    "name": [ "Feather Fall" ],
+    "desc": [ "Feather Fall" ],
+    "base_enchantments": [ { "values": [ { "value": "FALL_DAMAGE_MULT", "add": -1000 } ] } ]
+  },
+  {
+    "type": "effect_type",
+    "id": "debug_knowledge",
+    "max_intensity": 100,
+    "int_add_val": 1,
+    "name": [ "Pure Insanity" ],
+    "desc": [ "This causes you to become more and more insane" ],
+    "base_enchantments": [ { "values": [ { "value": "SKILL_LEVEL_COMPUTER", "add": 100 } ] } ],
+    "scaling_enchantments": [ { "values": [ { "value": "SKILL_LEVEL_COMPUTER", "add": 100 } ] } ]
   },
   {
     "type": "effect_type",
@@ -1352,11 +1405,11 @@
     "type": "effect_type",
     "id": "sap",
     "name": [ "Sap-coated" ],
-    "desc": [ "You're coated in sap!" ],
-    "apply_message": "You're coated in sap!",
+    "desc": [ "You're coated in something sticky!" ],
+    "apply_message": "You're coated in something sticky!",
     "rating": "bad",
     "max_duration": "30 m",
-    "miss_messages": [ [ "The sap's too sticky for you to fight effectively.", 3 ] ],
+    "miss_messages": [ [ "The sticky coating is hindering you from fighting effectively.", 3 ] ],
     "base_mods": { "speed_mod": [ -25 ], "dex_mod": [ -3 ] }
   },
   {
@@ -1588,7 +1641,8 @@
     "apply_message": "You feel lightheaded.",
     "morale": "morale_high",
     "base_mods": { "per_mod": [ -1 ], "morale": [ 10 ] },
-    "blood_analysis_description": "Intoxicant: THC"
+    "blood_analysis_description": "Intoxicant: THC",
+    "base_enchantments": [ { "values": [ { "value": "VOMIT_MOD", "multiply": -0.9 } ] } ]
   },
   {
     "type": "effect_type",
@@ -1794,8 +1848,9 @@
     "name": [ "Grabbed" ],
     "desc": [ "You have been grabbed by an attack.\nYou are being held in place, and dodging is harder." ],
     "rating": "bad",
-    "max_duration": "2 s",
-    "max_intensity": 2,
+    "max_duration": "1 d",
+    "max_intensity": 15,
+    "flags": [ "GRAB" ],
     "base_mods": { "speed_mod": [ -15 ] },
     "scaling_mods": { "speed_mod": [ -5 ] },
     "show_in_info": true
@@ -1805,8 +1860,9 @@
     "id": "grabbing",
     "name": [ "Grabbing" ],
     "desc": [ "Grabbing another creature and holding them in place." ],
-    "max_duration": "2 s",
+    "max_duration": "1 d",
     "max_intensity": 15,
+    "flags": [ "GRAB_FILTER" ],
     "show_in_info": true
   },
   {
@@ -1989,7 +2045,7 @@
   {
     "type": "effect_type",
     "id": "toxin_buildup",
-    "name": [ "", "Weird feeling", "Otherwordly feeling", "Mutagenic cascade" ],
+    "name": [ "", "Weird feeling", "Otherworldly feeling", "Mutagenic cascade" ],
     "desc": [
       "",
       "You don't feel entirely like yourself.",
@@ -2064,6 +2120,15 @@
     "permanent": true,
     "scaling_mods": { "speed_mod": [ -1 ] },
     "blood_analysis_description": "Painkiller"
+  },
+  {
+    "type": "effect_type",
+    "id": "lactaid",
+    "name": [ "Lactase Supplement" ],
+    "desc": [ "You have taken a lactase supplement and will not suffer the effects of lactose intolerance." ],
+    "max_duration": "55 m",
+    "blood_analysis_description": "Lactase Supplement",
+    "show_in_info": true
   },
   {
     "type": "effect_type",
@@ -2339,6 +2404,12 @@
     "max_intensity": 1000,
     "int_dur_factor": "1 s",
     "rating": "bad"
+  },
+  {
+    "type": "effect_type",
+    "id": "drone_marker",
+    "//": "Used by friendly eyebots to designate targets that become temporarily visible to the player if they have the right items or bionics.",
+    "max_duration": "1 m"
   },
   {
     "type": "effect_type",

@@ -111,7 +111,7 @@ Download pre-compiled executable from <https://github.com/wolfpld/tracy/releases
 Build on [cmake](../guides/building/cmake.md) with `-D USE_TRACY=ON` flag. For example,
 
 ```sh
-$ cmake -B build -DUSE_TRACY=ON ...other flags...
+$ cmake -B out/build/tracy -DUSE_TRACY=ON ...other flags...
 ```
 
 See [CMake options](building/cmake.md#cataclysmbn-specific-options) for more information.

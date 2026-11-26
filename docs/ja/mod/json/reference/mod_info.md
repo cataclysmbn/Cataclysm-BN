@@ -46,7 +46,9 @@
     "obsolete": false,
     // modinfo.json から見たモッドファイルの相対パスです。ゲームは modinfo.json があるフォルダとそのすべてのサブフォルダを自動で読み込むため、
     // この項目は何らかの理由で modinfo.json をモッドのサブフォルダに置きたい場合にのみ役立ちます。
-    "path": "../common-data/"
+    "path": "../common-data/",
+    // モッドのオプションへのパス
+    "options_path": "options"
   }
 ]
 ```

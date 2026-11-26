@@ -1,10 +1,5 @@
 #include "scent_map.h"
 
-#include <algorithm>
-#include <cassert>
-#include <cstdlib>
-#include <span>
-
 #include "assign.h"
 #include "cached_options.h"
 #include "calendar.h"
@@ -14,14 +9,19 @@
 #include "debug.h"
 #include "game.h"
 #include "generic_factory.h"
-#include "map.h"
-#include "mapbuffer.h"
+#include "map/map.h"
+#include "map/mapbuffer.h"
+#include "map/submap.h"
 #include "options.h"
 #include "output.h"
 #include "profile.h"
 #include "string_id.h"
-#include "submap.h"
 #include "thread_pool.h"
+
+#include <algorithm>
+#include <cassert>
+#include <cstdlib>
+#include <span>
 
 static constexpr int SCENT_RADIUS = 40;
 
@@ -147,8 +147,13 @@ void scent_map::draw( const catacurses::window &win, const int div,
 
 int scent_map::get( const tripoint_bub_ms &p ) const
 {
-    if( inbounds( p ) && raw_scent_at( p.x(), p.y(), p.z() ) > 0 ) {
-        return get_unsafe( p );
+    if( !inbounds( p ) ) {
+        return 0;
+    }
+
+    const auto raw_scent = raw_scent_at( p.x(), p.y(), p.z() );
+    if( raw_scent > 0 ) {
+        return raw_scent - std::abs( gm.get_levz() - p.z() );
     }
     return 0;
 }
@@ -246,8 +251,9 @@ void scent_map::update( const tripoint_bub_ms &center, map &m )
     const int scentmap_maxy = center.y() + SCENT_RADIUS;
 
     // The new scent flag searching function. Should be wayyy faster than the old one.
-    m.scent_blockers( scent_transfer, st_sy, point_bub_ms( scentmap_minx - 1, scentmap_miny - 1 ),
-                      point_bub_ms( scentmap_maxx + 1, scentmap_maxy + 1 ) );
+    m.scent_blockers( scent_transfer, st_sy,
+                      tripoint_bub_ms( scentmap_minx - 1, scentmap_miny - 1, center.z() ),
+                      tripoint_bub_ms( scentmap_maxx + 1, scentmap_maxy + 1, center.z() ) );
 
     for( int x = 0; x < SCENT_RADIUS * 2 + 3; ++x ) {
         sum_3_scent_y[0][x] = 0;

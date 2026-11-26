@@ -11,7 +11,7 @@
     "time": "4 h",
     "book_learn": [ [ "book_hexenhammer", 7 ], [ "book_syncretism", 7 ] ],
     "using": [ [ "steel_standard", 3 ], [ "arcana_forging_tools_standard", 1 ], [ "arcana_essence_any", 1 ] ],
-    "components": [ [ [ "2x4", 1 ], [ "stick", 2 ] ], [ [ "fur", 1 ], [ "leather", 1 ] ] ],
+    "components": [ [ [ "wood_structural_small", 1, "LIST" ] ], [ [ "fabric_hides_any", 1, "LIST" ] ] ],
     "flags": [ "BLIND_EASY", "SECRET" ]
   },
   {
@@ -26,7 +26,7 @@
     "time": "3 h 30 m",
     "book_learn": [ [ "book_hexenhammer", 7 ], [ "book_syncretism", 7 ] ],
     "using": [ [ "steel_standard", 3 ], [ "arcana_forging_tools_standard", 1 ], [ "arcana_essence_any", 1 ] ],
-    "components": [ [ [ "2x4", 1 ], [ "stick", 2 ] ], [ [ "fur", 1 ], [ "leather", 1 ] ] ],
+    "components": [ [ [ "wood_structural_small", 1, "LIST" ] ], [ [ "fabric_hides_any", 1, "LIST" ] ] ],
     "flags": [ "BLIND_EASY", "SECRET" ]
   },
   {
@@ -41,7 +41,7 @@
     "time": "4 h",
     "book_learn": [ [ "book_hexenhammer", 7 ], [ "book_syncretism", 7 ] ],
     "using": [ [ "steel_standard", 3 ], [ "arcana_forging_tools_standard", 1 ], [ "arcana_essence_any", 1 ] ],
-    "components": [ [ [ "filament", 100, "LIST" ] ], [ [ "2x4", 1 ], [ "stick", 2 ] ], [ [ "fur", 1 ], [ "leather", 1 ] ] ],
+    "components": [ [ [ "filament", 100, "LIST" ] ], [ [ "wood_structural_small", 1, "LIST" ] ], [ [ "fabric_hides_any", 1, "LIST" ] ] ],
     "flags": [ "BLIND_EASY", "SECRET" ]
   },
   {
@@ -56,7 +56,7 @@
     "time": "4 h",
     "book_learn": [ [ "book_hexenhammer", 6 ], [ "book_syncretism", 6 ] ],
     "using": [ [ "steel_standard", 2 ], [ "arcana_forging_tools_standard", 1 ], [ "arcana_essence_any", 1 ] ],
-    "components": [ [ [ "scrap", 24 ] ], [ [ "2x4", 1 ], [ "stick", 2 ] ] ],
+    "components": [ [ [ "scrap", 24 ] ], [ [ "wood_structural_small", 1, "LIST" ] ] ],
     "flags": [ "BLIND_EASY", "SECRET" ]
   },
   {
@@ -71,7 +71,7 @@
     "time": "3 h",
     "book_learn": [ [ "book_hexenhammer", 6 ], [ "book_syncretism", 6 ] ],
     "using": [ [ "steel_standard", 3 ], [ "arcana_forging_tools_standard", 1 ], [ "arcana_essence_any", 1 ] ],
-    "components": [ [ [ "stick_long", 1 ] ], [ [ "fur", 2 ], [ "leather", 2 ] ] ],
+    "components": [ [ [ "stick_long", 1 ] ], [ [ "fabric_hides_any", 2, "LIST" ] ] ],
     "flags": [ "BLIND_EASY", "SECRET" ]
   },
   {
@@ -89,7 +89,7 @@
     "components": [
       [ [ "stick_long", 1 ] ],
       [ [ "filament", 100, "LIST" ] ],
-      [ [ "rag", 2 ], [ "felt_patch", 2 ], [ "leather", 2 ], [ "fur", 2 ] ]
+      [ [ "fabric_standard", 2, "LIST" ], [ "felt_patch", 2 ], [ "fabric_hides_any", 2, "LIST" ] ]
     ],
     "flags": [ "BLIND_EASY", "SECRET" ]
   },
@@ -105,7 +105,7 @@
     "time": "3 h 50 m",
     "book_learn": [ [ "book_sacrifice", 6 ], [ "book_syncretism", 6 ] ],
     "using": [ [ "steel_standard", 1 ], [ "arcana_forging_tools_standard", 1 ], [ "arcana_essence_any", 1 ] ],
-    "components": [ [ [ "filament", 100, "LIST" ] ], [ [ "stick_long", 1 ] ], [ [ "fur", 2 ], [ "leather", 2 ] ] ],
+    "components": [ [ [ "filament", 100, "LIST" ] ], [ [ "stick_long", 1 ] ], [ [ "fabric_hides_any", 2, "LIST" ] ] ],
     "flags": [ "BLIND_EASY", "SECRET" ]
   },
   {
@@ -120,7 +120,7 @@
     "time": "2 h 30 m",
     "book_learn": [ [ "book_bloodmagic", 5 ], [ "book_syncretism", 5 ] ],
     "using": [ [ "steel_standard", 1 ], [ "arcana_forging_tools_standard", 1 ], [ "arcana_essence_any", 1 ] ],
-    "components": [ [ [ "2x4", 1 ], [ "stick", 2 ] ] ],
+    "components": [ [ [ "wood_structural_small", 1, "LIST" ] ] ],
     "flags": [ "BLIND_EASY", "SECRET" ]
   },
   {
@@ -137,10 +137,9 @@
     "using": [ [ "arcana_forging_tools_standard", 1 ], [ "arcana_essence_any", 1 ] ],
     "components": [
       [
-        [ "rag", 1 ],
+        [ "fabric_standard", 1, "LIST" ],
         [ "felt_patch", 1 ],
-        [ "leather", 1 ],
-        [ "fur", 1 ],
+        [ "fabric_hides_any", 1, "LIST" ],
         [ "duct_tape", 50 ],
         [ "cordage_short", 2, "LIST" ],
         [ "filament", 100, "LIST" ]
@@ -163,10 +162,9 @@
     "using": [ [ "arcana_forging_tools_standard", 1 ], [ "arcana_essence_any", 1 ] ],
     "components": [
       [
-        [ "rag", 1 ],
+        [ "fabric_standard", 1, "LIST" ],
         [ "felt_patch", 1 ],
-        [ "leather", 1 ],
-        [ "fur", 1 ],
+        [ "fabric_hides_any", 1, "LIST" ],
         [ "duct_tape", 50 ],
         [ "cordage_short", 2, "LIST" ],
         [ "filament", 100, "LIST" ]
@@ -296,7 +294,7 @@
       [ "arcana_essence_exclude_dull", 5 ]
     ],
     "tools": [ [ [ "book_sacrifice", -1 ] ] ],
-    "components": [ [ [ "gold_small", 300 ] ], [ [ "silver_small", 100 ] ] ],
+    "components": [ [ [ "gold_small", 150 ] ], [ [ "silver_small", 50 ] ] ],
     "flags": [ "SECRET" ]
   },
   {
@@ -313,7 +311,7 @@
     "qualities": [ { "id": "CUT", "level": 1 } ],
     "tools": [ [ [ "book_bloodmagic", -1 ], [ "book_syncretism", -1 ] ] ],
     "components": [
-      [ [ "silver_small", 400 ] ],
+      [ [ "silver_small", 180 ] ],
       [ [ "2x4", 1 ], [ "stick", 1 ] ],
       [ [ "fur", 1 ], [ "leather", 1 ] ],
       [ [ "essence_blood", 1 ], [ "flame_talisman", 1 ] ]
@@ -433,9 +431,9 @@
     "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SCREW_FINE", "level": 1 } ],
     "tools": [ [ [ "book_bloodmagic", -1 ] ] ],
     "components": [
-      [ [ "silver_small", 500 ] ],
-      [ [ "2x4", 1 ], [ "stick", 1 ] ],
-      [ [ "fur", 1 ], [ "leather", 1 ] ],
+      [ [ "silver_small", 300 ] ],
+      [ [ "wood_structural_small", 1, "LIST" ] ],
+      [ [ "fabric_hides_any", 1, "LIST" ] ],
       [ [ "pipe", 2 ] ],
       [ [ "sharp_rock", 2 ] ],
       [ [ "shadow_gem", 1 ], [ "vortex_shard", 1 ] ],

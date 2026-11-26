@@ -92,9 +92,11 @@ C++에 대한 충분한 경험이 있어 다음을 알고 있다면:
 
 Cataclysm 테스트 바이너리 프로젝트 (`Cataclysm-test-vcpkg-static`)가 선택된 시작 프로젝트인지 확인하고 프로젝트 속성에서 작업 디렉토리를 `$(ProjectDir)..`로 구성한 다음 디버그 버튼을 누릅니다 (또는 F5와 같은 적절한 단축키 사용). 모든 단위 테스트가 실행됩니다. 추가 명령줄 인수는 프로젝트의 명령줄 인수 설정에서 구성할 수 있으며, 호환되는 단위 테스트 러너 (예: Resharper)를 사용하는 경우 단위 테스트 세션에서 개별 테스트를 실행하거나 디버그할 수 있습니다.
 
+<a id="code-style"></a>
+
 ### 코드 스타일
 
-C++ 코드의 스타일을 일관되게 유지하기 위해 `Artistic Style` 소스 코드 포매터를 사용합니다. 미리 빌드된 Windows 실행 파일로 제공되며 설치하여 실행하거나 커밋 전에 자동으로 코드를 포맷하도록 구성할 수 있지만, Visual Studio 사용자에게 훨씬 더 편리한 옵션은 특정 확장을 설치하는 것입니다. 자세한 내용은 [tooling의 "Visual Studio용 Astyle 확장"](../../reference/tooling.md#astyle-extensions-for-visual-studio)을 참조하세요.
+C++ 변경 사항을 커밋하기 전에 `just fmt-cpp`를 실행하세요. `bash`가 `PATH`에 있으면 Visual Studio에서도 CMake `format` 타겟을 사용할 수 있습니다.
 
 2022년 10월부터 코드 스타일 검사는 GitHub의 각 PR에서 자동으로 실행되므로 변경 사항을 스타일링하는 것을 잊었다면 해당 검사가 실패하는 것을 볼 수 있습니다.
 

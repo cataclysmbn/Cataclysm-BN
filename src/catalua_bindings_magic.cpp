@@ -11,7 +11,7 @@
 
 #include "avatar.h"
 #include "creature.h"
-#include "magic.h"
+#include "magic/magic.h"
 
 // IN WAITING: enchantment_id, enchantments in general
 void cata::detail::reg_magic( sol::state &lua )

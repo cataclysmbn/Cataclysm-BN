@@ -37,7 +37,8 @@ sonar.register = function(mod)
     if pos == nil then return 0 end
     local abs_ms = gapi.bub_to_abs(pos)
     local center_omt = abs_ms:to_omt()
-    local radius = 7
+    if center_omt == nil then return 0 end
+    local radius = 10
     local depth_steps = 5
     local any_revealed = false
     local start_omt = center_omt

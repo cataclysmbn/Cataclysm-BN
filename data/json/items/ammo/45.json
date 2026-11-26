@@ -4,17 +4,16 @@
     "copy-from": "45_jhp",
     "type": "AMMO",
     "name": { "str": ".45 ACP FMJ" },
-    "description": ".45 ACP ammunition with 230gr FMJ bullets.  Noted for its stopping power, the .45 ACP round has been common for almost 150 years.",
-    "//": "Base damage of 27, balance increase of two-nineths.",
+    "description": ".45 ACP ammunition with 230gr FMJ bullets.  Noted for its stopping power, the .45 ACP round has been common for almost 150 years.  It's a subsonic round, and is known for working well with suppressors.",
     "loudness": 157,
     "speed": 290,
-    "relative": { "damage": { "damage_type": "bullet", "amount": -8, "armor_penetration": 18 } }
+    "relative": { "damage": { "damage_type": "bullet", "amount": -8, "armor_penetration": 13 } }
   },
   {
     "id": "45_jhp",
     "type": "AMMO",
     "name": { "str": ".45 ACP JHP" },
-    "description": ".45 ACP ammunition with 185gr JHP bullets.  The .45 ACP round was developed to replace the .38 Long Colt cartridge in the early 20th century.  It has good stopping power but above average recoil.",
+    "description": ".45 ACP ammunition with 185gr JHP bullets.  The .45 ACP round was developed to replace the .38 Long Colt cartridge in the early 20th century.  It has good stopping power but above average recoil.  It's a subsonic round, and is known for working well with suppressors",
     "weight": "10 g",
     "volume": "250 ml",
     "price": "180 cent",
@@ -27,7 +26,7 @@
     "ammo_type": "45",
     "casing": "45_casing",
     "range": 16,
-    "damage": { "damage_type": "bullet", "amount": 41 },
+    "damage": { "damage_type": "bullet", "amount": 38 },
     "dispersion": 50,
     "recoil": 600,
     "loudness": 156,
@@ -45,7 +44,8 @@
     "count": 10,
     "loudness": 158,
     "speed": 380,
-    "relative": { "damage": { "damage_type": "bullet", "armor_penetration": 18 }, "dispersion": -10 },
+    "//": "Balanced as +p, gaining both hollowpoint's damage and FMJ's penetration",
+    "relative": { "damage": { "damage_type": "bullet", "armor_penetration": 14 }, "dispersion": -10 },
     "proportional": { "recoil": 1.2 }
   },
   {

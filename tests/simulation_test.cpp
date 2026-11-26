@@ -1,44 +1,56 @@
-#include "catch/catch.hpp"
-
+#include "../src/map/submap.h"
+#include "../src/map/submap_load_manager.h"
 #include "avatar.h"
+#include "batch_turns.h"
 #include "cached_options.h"
 #include "cata_utility.h"
+#include "catch/catch.hpp"
 #include "coordinates.h"
-#include "field.h"
-#include "field_type.h"
 #include "fire_spread_loader.h"
+#include "map/field.h"
+#include "map/field_type.h"
+#include "map/mapbuffer.h"
+#include "map/mapbuffer_registry.h"
+#include "map/submap_fields.h"
 #include "map_helpers.h"
-#include "mapbuffer.h"
-#include "mapbuffer_registry.h"
 #include "point.h"
+#include "rng.h"
 #include "state_helpers.h"
-#include "submap.h"
-#include "submap_fields.h"
-#include "submap_load_manager.h"
 #include "type_id.h"
 #include "units.h"
 
+#include <array>
+#include <ranges>
+
 // Dimension ID used only by these tests — never appears in game data.
-static const dimension_id TEST_DIM_ID( "sim_test_dim" );
+static const dimension_id TEST_DIM_ID("sim_test_dim");
 
 // Far enough from the test map centre that it is never inside the reality bubble.
-static const tripoint_abs_sm FAR_SM_POS{ 200, 200, 0 };
+static const tripoint_abs_sm FAR_SM_POS{200, 200, 0};
 
 // Create a blank submap at @p pos in @p mb and return the raw pointer.
 // Ownership is transferred to @p mb.
-static auto make_blank_submap( mapbuffer &mb, const tripoint_abs_sm &pos ) -> submap *
-{
-    auto sm = std::make_unique<submap>( pos );
-    mb.add_submap( pos, sm );
-    return mb.lookup_submap_in_memory( pos );
+static auto make_blank_submap(mapbuffer& mb, const tripoint_abs_sm& pos) -> submap* {
+    auto sm = std::make_unique<submap>(pos, mb.get_dimension_id());
+    mb.add_submap(pos, sm);
+    return mb.lookup_submap_in_memory(pos);
 }
 
 // Add fd_fire to @p sm at @p local and keep field_count / field_cache / is_uniform consistent.
-static auto plant_fire( submap &sm, const point_sm_ms &local, int intensity = 1 ) -> void
-{
-    if( sm.get_field( local ).add_field( fd_fire, intensity, 0_turns ) ) {
+static auto plant_fire(submap& sm, const point_sm_ms& local, int intensity = 1) -> void {
+    if (sm.get_field(local).add_field(fd_fire, intensity, 0_turns)) {
         ++sm.field_count;
-        sm.field_cache.push_back( local );
+        sm.field_cache.push_back(local);
+        sm.is_uniform = false;
+    }
+}
+
+static auto plant_field(
+    submap& sm, const point_sm_ms& local, const field_type_id& field_type, int intensity = 1)
+    -> void {
+    if (sm.get_field(local).add_field(field_type, intensity, 0_turns)) {
+        ++sm.field_count;
+        sm.field_cache.push_back(local);
         sm.is_uniform = false;
     }
 }
@@ -52,74 +64,434 @@ static auto plant_fire( submap &sm, const point_sm_ms &local, int intensity = 1 
 // per call.  A newborn field (age == 0_turns) is suppressed from fire-specific
 // effects on the first tick but is still aged — so after one call the fire must
 // be at 1_turns old.
-TEST_CASE( "fire_processes_in_loaded_submap_outside_bubble", "[simulation][field]" )
-{
+TEST_CASE("fire_processes_in_loaded_submap_outside_bubble", "[simulation][field]") {
     clear_all_state();
     put_player_underground();
 
-    auto *sm = make_blank_submap( MAPBUFFER, FAR_SM_POS );
-    REQUIRE( sm != nullptr );
+    auto* sm = make_blank_submap(MAPBUFFER, FAR_SM_POS);
+    REQUIRE(sm != nullptr);
 
-    const auto fire_pt = point_sm_ms{ 5, 5 };
-    plant_fire( *sm, fire_pt );
-    REQUIRE( sm->get_field( fire_pt ).find_field( fd_fire ) != nullptr );
+    const auto fire_pt = point_sm_ms{5, 5};
+    plant_fire(*sm, fire_pt);
+    REQUIRE(sm->get_field(fire_pt).find_field(fd_fire) != nullptr);
 
-    auto &dummy = get_avatar();
-    process_fields_in_submap( dummy.get_dimension(), *sm, FAR_SM_POS, MAPBUFFER );
+    auto& dummy = get_avatar();
+    process_fields_in_submap(dummy.get_dimension(), *sm, FAR_SM_POS, MAPBUFFER);
 
-    const auto *fire = sm->get_field( fire_pt ).find_field( fd_fire );
-    REQUIRE( fire != nullptr );
-    CHECK( fire->get_field_age() == 1_turns );
+    const auto* fire = sm->get_field(fire_pt).find_field(fd_fire);
+    REQUIRE(fire != nullptr);
+    CHECK(fire->get_field_age() == 1_turns);
 
-    MAPBUFFER.unload_omt( project_to<coords::omt>( FAR_SM_POS ), false );
+    MAPBUFFER.unload_omt(project_to<coords::omt>(FAR_SM_POS), false);
+}
+
+TEST_CASE("adjacent_fire_ignites_fuel_fields", "[simulation][field][fire]") {
+    clear_all_state();
+    put_player_underground();
+
+    const auto cleanup = on_out_of_scope([]() {
+        MAPBUFFER.unload_omt(project_to<coords::omt>(FAR_SM_POS), false);
+    });
+    auto* sm = make_blank_submap(MAPBUFFER, FAR_SM_POS);
+    REQUIRE(sm != nullptr);
+
+    const auto fire_pt = point_sm_ms{5, 5};
+    const auto fuel_pt = point_sm_ms{6, 5};
+    const auto fuel_field = field_type_id(
+        GENERATE("fd_fuel", "fd_sticky_fuel", "test_fd_flammable"));
+    plant_fire(*sm, fire_pt);
+    plant_field(*sm, fuel_pt, fuel_field);
+
+    auto& dummy = get_avatar();
+    process_fields_in_submap(dummy.get_dimension(), *sm, FAR_SM_POS, MAPBUFFER);
+    REQUIRE(sm->get_field(fuel_pt).find_field(fuel_field) != nullptr);
+
+    process_fields_in_submap(dummy.get_dimension(), *sm, FAR_SM_POS, MAPBUFFER);
+
+    CHECK(sm->get_field(fuel_pt).find_field(fuel_field) == nullptr);
+    const auto* fuel_fire = sm->get_field(fuel_pt).find_field(fd_fire);
+    REQUIRE(fuel_fire != nullptr);
+    CHECK(fuel_fire->get_field_intensity() >= 2);
+}
+
+TEST_CASE(
+    "fire_consumes_fuel_on_its_own_tile_and_preserves_inert_fields",
+    "[simulation][field][fire][liquid][fluid_regression]") {
+    clear_all_state();
+    put_player_underground();
+
+    const auto cleanup = on_out_of_scope([]() {
+        MAPBUFFER.unload_omt(project_to<coords::omt>(FAR_SM_POS), false);
+    });
+    auto* sm = make_blank_submap(MAPBUFFER, FAR_SM_POS);
+    REQUIRE(sm != nullptr);
+
+    const auto fire_pt = point_sm_ms{5, 5};
+    const auto control_pt = point_sm_ms{9, 9};
+    const auto fuel_field = field_type_id(
+        GENERATE("fd_fuel", "fd_sticky_fuel", "test_fd_flammable"));
+    const auto inert_field = field_type_id("test_fd_nonflammable");
+    const auto furniture = furn_id(GENERATE("f_null", "f_brazier"));
+    const auto fuel_before_fire = GENERATE(true, false);
+    CAPTURE(fuel_field.id().str(), furniture.id().str(), fuel_before_fire);
+    sm->set_ter(fire_pt, ter_id("t_rock_floor"));
+    sm->set_ter(control_pt, ter_id("t_rock_floor"));
+    sm->set_furn(fire_pt, furniture);
+
+    if (fuel_before_fire) { plant_field(*sm, fire_pt, fuel_field); }
+    plant_field(*sm, fire_pt, inert_field);
+    plant_fire(*sm, fire_pt);
+    plant_fire(*sm, control_pt);
+    if (!fuel_before_fire) { plant_field(*sm, fire_pt, fuel_field); }
+    REQUIRE(sm->field_count == 4);
+
+    auto& dummy = get_avatar();
+    process_fields_in_submap(dummy.get_dimension(), *sm, FAR_SM_POS, MAPBUFFER);
+    REQUIRE(sm->get_field(fire_pt).find_field(fuel_field) != nullptr);
+    REQUIRE(sm->get_field(fire_pt).find_field(inert_field) != nullptr);
+    const auto* newborn_fire = sm->get_field(fire_pt).find_field(fd_fire);
+    REQUIRE(newborn_fire != nullptr);
+    CHECK(newborn_fire->get_field_age() == 1_turns);
+
+    process_fields_in_submap(dummy.get_dimension(), *sm, FAR_SM_POS, MAPBUFFER);
+
+    CHECK(sm->get_field(fire_pt).find_field(fuel_field) == nullptr);
+    CHECK(sm->get_field(fire_pt).find_field(inert_field) != nullptr);
+    const auto* fueled_fire = sm->get_field(fire_pt).find_field(fd_fire);
+    const auto* control_fire = sm->get_field(control_pt).find_field(fd_fire);
+    REQUIRE(fueled_fire != nullptr);
+    REQUIRE(control_fire != nullptr);
+    CHECK(fueled_fire->get_field_intensity() >= 2);
+    CHECK(fueled_fire->get_field_age() < control_fire->get_field_age());
+    CHECK(sm->field_count == 3);
+    CHECK(sm->field_cache.size() == 2);
+}
+
+TEST_CASE(
+    "contained_fire_does_not_ignite_adjacent_fuel", "[simulation][field][fire][fluid_regression]") {
+    clear_all_state();
+    put_player_underground();
+
+    const auto cleanup = on_out_of_scope([]() {
+        MAPBUFFER.unload_omt(project_to<coords::omt>(FAR_SM_POS), false);
+    });
+    auto* sm = make_blank_submap(MAPBUFFER, FAR_SM_POS);
+    REQUIRE(sm != nullptr);
+
+    const auto fire_pt = point_sm_ms{5, 5};
+    const auto fuel_pt = point_sm_ms{6, 5};
+    const auto fuel_field = field_type_id("test_fd_flammable");
+    sm->set_ter(fire_pt, ter_id("t_rock_floor"));
+    sm->set_furn(fire_pt, furn_id("f_brazier"));
+    plant_fire(*sm, fire_pt);
+    plant_field(*sm, fuel_pt, fuel_field);
+
+    auto& dummy = get_avatar();
+    process_fields_in_submap(dummy.get_dimension(), *sm, FAR_SM_POS, MAPBUFFER);
+    process_fields_in_submap(dummy.get_dimension(), *sm, FAR_SM_POS, MAPBUFFER);
+
+    CHECK(sm->get_field(fuel_pt).find_field(fuel_field) != nullptr);
+    CHECK(sm->get_field(fuel_pt).find_field(fd_fire) == nullptr);
+    CHECK(sm->get_field(fire_pt).find_field(fd_fire) != nullptr);
+}
+
+TEST_CASE(
+    "fuel_extends_an_already_strong_fire", "[simulation][field][fire][liquid][fluid_regression]") {
+    clear_all_state();
+    put_player_underground();
+
+    const auto cleanup = on_out_of_scope([]() {
+        MAPBUFFER.unload_omt(project_to<coords::omt>(FAR_SM_POS), false);
+    });
+    auto* sm = make_blank_submap(MAPBUFFER, FAR_SM_POS);
+    REQUIRE(sm != nullptr);
+
+    const auto fire_pt = point_sm_ms{5, 5};
+    const auto control_pt = point_sm_ms{9, 9};
+    const auto fuel_field = field_type_id("test_fd_flammable");
+    for (const auto pt : {fire_pt, control_pt}) {
+        sm->set_ter(pt, ter_id("t_rock_floor"));
+        sm->set_furn(pt, furn_id("f_brazier"));
+        plant_fire(*sm, pt, 3);
+        auto* fire = sm->get_field(pt).find_field(fd_fire);
+        REQUIRE(fire != nullptr);
+        fire->set_field_age(-2_hours);
+    }
+    plant_field(*sm, fire_pt, fuel_field);
+
+    auto& dummy = get_avatar();
+    process_fields_in_submap(dummy.get_dimension(), *sm, FAR_SM_POS, MAPBUFFER);
+
+    CHECK(sm->get_field(fire_pt).find_field(fuel_field) == nullptr);
+    const auto* fueled_fire = sm->get_field(fire_pt).find_field(fd_fire);
+    const auto* control_fire = sm->get_field(control_pt).find_field(fd_fire);
+    REQUIRE(fueled_fire != nullptr);
+    REQUIRE(control_fire != nullptr);
+    CHECK(fueled_fire->get_field_intensity() == 3);
+    CHECK(fueled_fire->get_field_age() < control_fire->get_field_age());
+}
+
+TEST_CASE(
+    "adjacent_fire_propagates_through_fuel_over_multiple_ticks", "[simulation][field][fire]") {
+    clear_all_state();
+    put_player_underground();
+
+    const auto cleanup = on_out_of_scope([]() {
+        MAPBUFFER.unload_omt(project_to<coords::omt>(FAR_SM_POS), false);
+    });
+    auto* sm = make_blank_submap(MAPBUFFER, FAR_SM_POS);
+    REQUIRE(sm != nullptr);
+
+    const auto fire_pt = point_sm_ms{5, 5};
+    const auto first_fuel_pt = point_sm_ms{6, 5};
+    const auto second_fuel_pt = point_sm_ms{7, 5};
+    const auto fuel_field = field_type_id(
+        GENERATE("fd_fuel", "fd_sticky_fuel", "test_fd_flammable"));
+    plant_fire(*sm, fire_pt);
+    plant_field(*sm, first_fuel_pt, fuel_field);
+    plant_field(*sm, second_fuel_pt, fuel_field);
+
+    auto& dummy = get_avatar();
+    process_fields_in_submap(dummy.get_dimension(), *sm, FAR_SM_POS, MAPBUFFER);
+    process_fields_in_submap(dummy.get_dimension(), *sm, FAR_SM_POS, MAPBUFFER);
+
+    CHECK(sm->get_field(first_fuel_pt).find_field(fuel_field) == nullptr);
+    CHECK(sm->get_field(second_fuel_pt).find_field(fuel_field) != nullptr);
+    REQUIRE(sm->get_field(first_fuel_pt).find_field(fd_fire) != nullptr);
+
+    process_fields_in_submap(dummy.get_dimension(), *sm, FAR_SM_POS, MAPBUFFER);
+
+    CHECK(sm->get_field(first_fuel_pt).find_field(fuel_field) == nullptr);
+    CHECK(sm->get_field(second_fuel_pt).find_field(fuel_field) == nullptr);
+    REQUIRE(sm->get_field(first_fuel_pt).find_field(fd_fire) != nullptr);
+    REQUIRE(sm->get_field(second_fuel_pt).find_field(fd_fire) != nullptr);
+}
+
+TEST_CASE("water_puddles_extinguish_fire_on_the_same_tile", "[simulation][field][fire][liquid]") {
+    clear_all_state();
+    put_player_underground();
+
+    auto* sm = make_blank_submap(MAPBUFFER, FAR_SM_POS);
+    const auto cleanup = on_out_of_scope([]() {
+        MAPBUFFER.unload_omt(project_to<coords::omt>(FAR_SM_POS), false);
+    });
+    REQUIRE(sm != nullptr);
+
+    const auto fire_pt = point_sm_ms{5, 5};
+    const auto water_field = field_type_id("fd_water");
+    plant_fire(*sm, fire_pt);
+    plant_field(*sm, fire_pt, water_field, 3);
+
+    auto& dummy = get_avatar();
+    process_fields_in_submap(dummy.get_dimension(), *sm, FAR_SM_POS, MAPBUFFER);
+
+    const auto* newborn_fire = sm->get_field(fire_pt).find_field(fd_fire);
+    REQUIRE(newborn_fire != nullptr);
+    CHECK(newborn_fire->get_field_age() == 1_turns);
+    const auto* newborn_puddle = sm->get_field(fire_pt).find_field(water_field);
+    REQUIRE(newborn_puddle != nullptr);
+    CHECK(newborn_puddle->get_field_intensity() == 3);
+
+    process_fields_in_submap(dummy.get_dimension(), *sm, FAR_SM_POS, MAPBUFFER);
+
+    CHECK(sm->get_field(fire_pt).find_field(fd_fire) == nullptr);
+    const auto* puddle_after = sm->get_field(fire_pt).find_field(water_field);
+    REQUIRE(puddle_after != nullptr);
+    CHECK(puddle_after->get_field_intensity() == 2);
+}
+
+TEST_CASE(
+    "adjacent_electricity_energizes_conductive_fields", "[simulation][field][electric][liquid]") {
+    clear_all_state();
+    put_player_underground();
+
+    const auto cleanup = on_out_of_scope([]() {
+        MAPBUFFER.unload_omt(project_to<coords::omt>(FAR_SM_POS), false);
+    });
+    auto* sm = make_blank_submap(MAPBUFFER, FAR_SM_POS);
+    REQUIRE(sm != nullptr);
+
+    const auto electricity_pt = point_sm_ms{5, 5};
+    const auto salt_water_pt = point_sm_ms{6, 5};
+    const auto salt_water_field = field_type_id(
+        GENERATE("fd_salt_water", "test_fd_conductive_pool"));
+    plant_field(*sm, electricity_pt, fd_electricity, 3);
+    plant_field(*sm, salt_water_pt, salt_water_field, 2);
+
+    auto& dummy = get_avatar();
+    process_fields_in_submap(dummy.get_dimension(), *sm, FAR_SM_POS, MAPBUFFER);
+    REQUIRE(sm->get_field(salt_water_pt).find_field(fd_electricity) == nullptr);
+
+    process_fields_in_submap(dummy.get_dimension(), *sm, FAR_SM_POS, MAPBUFFER);
+
+    const auto* energized = sm->get_field(salt_water_pt).find_field(fd_electricity);
+    REQUIRE(energized != nullptr);
+    CHECK(energized->get_field_intensity() >= 2);
+    REQUIRE(sm->get_field(salt_water_pt).find_field(salt_water_field) != nullptr);
+}
+
+TEST_CASE(
+    "electricity_energizes_a_connected_puddle_once", "[simulation][field][electric][liquid]") {
+    clear_all_state();
+    put_player_underground();
+    auto restore_rng = restore_on_out_of_scope<cata_default_random_engine>(rng_get_engine());
+    rng_set_engine_seed(12345);
+    const auto cleanup = on_out_of_scope([]() {
+        MAPBUFFER.unload_omt(project_to<coords::omt>(FAR_SM_POS), false);
+    });
+    auto* first = make_blank_submap(MAPBUFFER, FAR_SM_POS);
+    const auto next_pos = FAR_SM_POS + tripoint_rel_sm(1, 0, 0);
+    auto* second = make_blank_submap(MAPBUFFER, next_pos);
+    REQUIRE(first != nullptr);
+    REQUIRE(second != nullptr);
+    const auto pool = field_type_id(GENERATE("fd_salt_water", "test_fd_conductive_pool"));
+    const auto intensity = GENERATE(1, 3);
+    for (const auto x : std::views::iota(1, SEEX + 5)) {
+        auto& sm = x < SEEX ? *first : *second;
+        plant_field(sm, point_sm_ms(x % SEEX, 5), pool, 2);
+    }
+    const auto disconnected = point_sm_ms(5, 8);
+    plant_field(*first, disconnected, pool, 2);
+    plant_field(*first, point_sm_ms(0, 5), fd_electricity, intensity);
+    const auto& dim = get_avatar().get_dimension();
+    process_fields_in_submap(dim, *first, FAR_SM_POS, MAPBUFFER);
+    process_fields_in_submap(dim, *first, FAR_SM_POS, MAPBUFFER);
+    for (const auto x : std::views::iota(1, SEEX + 5)) {
+        const auto& sm = x < SEEX ? *first : *second;
+        const auto* spark = sm.get_field(point_sm_ms(x % SEEX, 5)).find_field(fd_electricity);
+        REQUIRE(spark != nullptr);
+        CHECK(spark->get_field_intensity() == intensity);
+    }
+    CHECK(first->get_field(disconnected).find_field(fd_electricity) == nullptr);
+    for (const auto tick : std::views::iota(0, 30)) {
+        CAPTURE(tick);
+        process_fields_in_submap(dim, *first, FAR_SM_POS, MAPBUFFER);
+        process_fields_in_submap(dim, *second, next_pos, MAPBUFFER);
+    }
+    for (const auto x : std::views::iota(1, SEEX + 5)) {
+        const auto& sm = x < SEEX ? *first : *second;
+        const auto& fields = sm.get_field(point_sm_ms(x % SEEX, 5));
+        CHECK(fields.find_field(fd_electricity) == nullptr);
+        REQUIRE(fields.find_field(pool) != nullptr);
+    }
+    // A later external discharge can energize the same pool again.
+    plant_field(*first, point_sm_ms(0, 5), fd_electricity, intensity);
+    process_fields_in_submap(dim, *first, FAR_SM_POS, MAPBUFFER);
+    process_fields_in_submap(dim, *first, FAR_SM_POS, MAPBUFFER);
+    CHECK(second->get_field(point_sm_ms(4, 5)).find_field(fd_electricity) != nullptr);
+}
+
+TEST_CASE(
+    "conductive_pool_cannot_sustain_its_own_electricity", "[simulation][field][electric][liquid]") {
+    clear_all_state();
+    put_player_underground();
+    auto restore_rng = restore_on_out_of_scope<cata_default_random_engine>(rng_get_engine());
+    rng_set_engine_seed(12345);
+
+    auto* sm = make_blank_submap(MAPBUFFER, FAR_SM_POS);
+    const auto cleanup = on_out_of_scope([]() {
+        MAPBUFFER.unload_omt(project_to<coords::omt>(FAR_SM_POS), false);
+    });
+    REQUIRE(sm != nullptr);
+    const auto pool_field = field_type_id("test_fd_conductive_pool");
+    const auto pool_tiles =
+        std::array{point_sm_ms{5, 5}, point_sm_ms{6, 5}, point_sm_ms{5, 6}, point_sm_ms{6, 6}};
+    for (const auto& tile : pool_tiles) { plant_field(*sm, tile, pool_field, 3); }
+    plant_field(*sm, pool_tiles.front(), fd_electricity, 3);
+
+    auto& dummy = get_avatar();
+    // Both fields on the source must remain newborn for the entire first tick,
+    // even though adding two field types puts the tile in the cache twice.
+    process_fields_in_submap(dummy.get_dimension(), *sm, FAR_SM_POS, MAPBUFFER);
+    const auto* source = sm->get_field(pool_tiles.front()).find_field(fd_electricity);
+    REQUIRE(source != nullptr);
+    CHECK(source->get_field_age() == 1_turns);
+    CHECK(source->get_field_intensity() == 3);
+    for (const auto& tile : pool_tiles) {
+        const auto* pool = sm->get_field(tile).find_field(pool_field);
+        REQUIRE(pool != nullptr);
+        CHECK(pool->get_field_age() == 1_turns);
+        if (tile != pool_tiles.front()) {
+            CHECK(sm->get_field(tile).find_field(fd_electricity) == nullptr);
+        }
+    }
+    // The pulse energizes the whole pool once, then its total intensity only decreases.
+    process_fields_in_submap(dummy.get_dimension(), *sm, FAR_SM_POS, MAPBUFFER);
+    auto previous_charge = 3 * static_cast<int>(pool_tiles.size());
+    auto spread = false;
+    for (const auto tick : std::views::iota(0, 300)) {
+        CAPTURE(tick);
+        process_fields_in_submap(dummy.get_dimension(), *sm, FAR_SM_POS, MAPBUFFER);
+        auto charge = 0;
+        for (const auto x : std::views::iota(0, SEEX)) {
+            for (const auto y : std::views::iota(0, SEEY)) {
+                const auto tile = point_sm_ms{x, y};
+                if (const auto* electricity = sm->get_field(tile).find_field(fd_electricity)) {
+                    charge += electricity->get_field_intensity();
+                    spread = spread || tile != pool_tiles.front();
+                }
+            }
+        }
+        REQUIRE(charge <= previous_charge);
+        previous_charge = charge;
+    }
+    CHECK(spread);
+    CHECK(previous_charge == 0);
+    for (const auto& tile : pool_tiles) {
+        REQUIRE(sm->get_field(tile).find_field(pool_field) != nullptr);
+        CHECK(sm->get_field(tile).find_field(pool_field)->get_field_intensity() == 3);
+    }
 }
 
 // ── Test 2 ────────────────────────────────────────────────────────────────────
 // Verify that a loaded, no-fire boundary submap stays requested while it is
 // adjacent to tracked fire.  This avoids request/load/prune/evict churn at fire
 // boundaries during long activities.
-TEST_CASE( "fire_spread_keeps_no_fire_boundary_submap_while_adjacent_to_fire",
-           "[simulation][field][fire_spread]" )
-{
+TEST_CASE(
+    "fire_spread_keeps_no_fire_boundary_submap_while_adjacent_to_fire",
+    "[simulation][field]["
+    "fire_spread]") {
     clear_all_state();
     put_player_underground();
 
-    auto restore_cap = restore_on_out_of_scope<int>( fire_spread_submap_cap );
+    auto restore_cap = restore_on_out_of_scope<int>(fire_spread_submap_cap);
     fire_spread_submap_cap = 25;
 
     auto loader = fire_spread_loader{};
-    auto &dim = MAPBUFFER_REGISTRY.get( TEST_DIM_ID );
-    const auto source_pos = tripoint_abs_sm{ 400, 400, 0 };
-    const auto neighbor_pos = tripoint_abs_sm{ 401, 400, 0 };
-    const auto proper_handle = submap_loader.request_load( load_request_source::reality_bubble,
-                               TEST_DIM_ID, source_pos, 0 );
-    const auto cleanup = on_out_of_scope( [&]() {
-        loader.clear( submap_loader );
-        submap_loader.release_load( proper_handle );
-        MAPBUFFER_REGISTRY.unload_dimension( TEST_DIM_ID );
-    } );
+    auto& dim = MAPBUFFER_REGISTRY.get(TEST_DIM_ID);
+    const auto source_pos = tripoint_abs_sm{400, 400, 0};
+    const auto neighbor_pos = tripoint_abs_sm{401, 400, 0};
+    const auto request_begin = source_pos.xy();
+    const auto request_end = request_begin + point_rel_sm(1, 1);
+    const auto proper_handle = submap_loader.request_load(
+        load_request_source::reality_bubble, TEST_DIM_ID, request_begin, request_end);
+    const auto cleanup = on_out_of_scope([&]() {
+        loader.clear(submap_loader);
+        submap_loader.release_load(proper_handle);
+        MAPBUFFER_REGISTRY.unload_dimension(TEST_DIM_ID);
+    });
 
-    auto *source_sm = make_blank_submap( dim, source_pos );
-    auto *neighbor_sm = make_blank_submap( dim, neighbor_pos );
-    REQUIRE( source_sm != nullptr );
-    REQUIRE( neighbor_sm != nullptr );
+    auto* source_sm = make_blank_submap(dim, source_pos);
+    auto* neighbor_sm = make_blank_submap(dim, neighbor_pos);
+    REQUIRE(source_sm != nullptr);
+    REQUIRE(neighbor_sm != nullptr);
 
-    const auto fire_pt = point_sm_ms{ 5, 5 };
-    plant_fire( *source_sm, fire_pt );
+    const auto fire_pt = point_sm_ms{5, 5};
+    plant_fire(*source_sm, fire_pt);
 
-    loader.request_for_fire( TEST_DIM_ID, source_pos );
-    loader.request_for_fire( TEST_DIM_ID, neighbor_pos );
-    REQUIRE( loader.loaded_count() == 2 );
+    loader.request_for_fire(TEST_DIM_ID, source_pos);
+    loader.request_for_fire(TEST_DIM_ID, neighbor_pos);
+    REQUIRE(loader.loaded_count() == 2);
 
-    loader.prune_disconnected( submap_loader );
-    CHECK( loader.loaded_count() == 2 );
+    loader.prune_disconnected(submap_loader);
+    CHECK(loader.loaded_count() == 2);
 
-    auto *fire = source_sm->get_field( fire_pt ).find_field( fd_fire );
-    REQUIRE( fire != nullptr );
-    fire->set_field_intensity( 0 );
+    auto* fire = source_sm->get_field(fire_pt).find_field(fd_fire);
+    REQUIRE(fire != nullptr);
+    fire->set_field_intensity(0);
 
-    loader.prune_disconnected( submap_loader );
-    CHECK( loader.loaded_count() == 0 );
+    loader.prune_disconnected(submap_loader);
+    CHECK(loader.loaded_count() == 0);
 }
 
 // ── Test 3 ────────────────────────────────────────────────────────────────────
@@ -130,35 +502,52 @@ TEST_CASE( "fire_spread_keeps_no_fire_boundary_submap_while_adjacent_to_fire",
 // This tests the fundamental isolation guarantee of the dimension system:
 // fire spread uses only the mapbuffer passed in, so a secondary dimension's
 // flames can never cross into the primary world.
-TEST_CASE( "fire_isolated_between_dimensions", "[simulation][field][dimension]" )
-{
+TEST_CASE("fire_isolated_between_dimensions", "[simulation][field][dimension]") {
     clear_all_state();
     put_player_underground();
 
-    auto &dim = MAPBUFFER_REGISTRY.get( TEST_DIM_ID );
-    auto *dim_sm = make_blank_submap( dim, FAR_SM_POS );
-    REQUIRE( dim_sm != nullptr );
+    auto& dim = MAPBUFFER_REGISTRY.get(TEST_DIM_ID);
+    auto* dim_sm = make_blank_submap(dim, FAR_SM_POS);
+    REQUIRE(dim_sm != nullptr);
 
-    const auto fire_pt = point_sm_ms{ 5, 5 };
-    plant_fire( *dim_sm, fire_pt );
+    const auto fire_pt = point_sm_ms{5, 5};
+    plant_fire(*dim_sm, fire_pt);
 
     // Primary dimension must have no fire at the same absolute position.
-    if( const auto *primary_sm = MAPBUFFER.lookup_submap_in_memory( FAR_SM_POS ) ) {
-        REQUIRE( primary_sm->get_field( fire_pt ).find_field( fd_fire ) == nullptr );
+    if (const auto* primary_sm = MAPBUFFER.lookup_submap_in_memory(FAR_SM_POS)) {
+        REQUIRE(primary_sm->get_field(fire_pt).find_field(fd_fire) == nullptr);
     }
 
     // Process only the secondary dimension.
-    process_fields_in_submap( TEST_DIM_ID, *dim_sm, FAR_SM_POS, dim );
+    process_fields_in_submap(TEST_DIM_ID, *dim_sm, FAR_SM_POS, dim);
 
     // Fire in the secondary dimension must have aged (processing occurred).
-    const auto *dim_fire = dim_sm->get_field( fire_pt ).find_field( fd_fire );
-    REQUIRE( dim_fire != nullptr );
-    CHECK( dim_fire->get_field_age() == 1_turns );
+    const auto* dim_fire = dim_sm->get_field(fire_pt).find_field(fd_fire);
+    REQUIRE(dim_fire != nullptr);
+    CHECK(dim_fire->get_field_age() == 1_turns);
 
     // Primary dimension must still be fire-free — no cross-dimension spread.
-    if( const auto *primary_sm = MAPBUFFER.lookup_submap_in_memory( FAR_SM_POS ) ) {
-        CHECK( primary_sm->get_field( fire_pt ).find_field( fd_fire ) == nullptr );
+    if (const auto* primary_sm = MAPBUFFER.lookup_submap_in_memory(FAR_SM_POS)) {
+        CHECK(primary_sm->get_field(fire_pt).find_field(fd_fire) == nullptr);
     }
 
-    MAPBUFFER_REGISTRY.unload_dimension( TEST_DIM_ID );
+    MAPBUFFER_REGISTRY.unload_dimension(TEST_DIM_ID);
+}
+
+TEST_CASE("batch_turns_decay_plain_display_liquid_fields", "[simulation][field][liquid]") {
+    clear_all_state();
+    put_player_underground();
+
+    auto* sm = make_blank_submap(MAPBUFFER, FAR_SM_POS);
+    REQUIRE(sm != nullptr);
+
+    const auto spill_pt = point_sm_ms{5, 5};
+    const auto water_field = field_type_id("fd_water");
+    plant_field(*sm, spill_pt, water_field);
+
+    batch_turns_field(*sm, to_turns<int>(2_hours));
+
+    CHECK(sm->get_field(spill_pt).find_field(water_field) == nullptr);
+
+    MAPBUFFER.unload_omt(project_to<coords::omt>(FAR_SM_POS), false);
 }

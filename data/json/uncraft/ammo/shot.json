@@ -187,5 +187,145 @@
     "qualities": [ { "id": "CUT", "level": 1 } ],
     "components": [ [ [ "shot_hull", 2 ] ], [ [ "shotgun_primer", 2 ] ], [ [ "incendiary", 25 ] ] ],
     "charges": 1
+  },
+  {
+    "result": "20x66_shot_reloaded",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "skills_required": [ "gun", 1 ],
+    "time": "10 s",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "shotgun_primer", 1 ] ], [ [ "oxy_powder", 3 ] ], [ [ "gunpowder", 6 ] ], [ [ "lead", 8 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "20x66_flechette_reloaded",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "skills_required": [ "gun", 1 ],
+    "time": "10 s",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "shotgun_primer", 1 ] ], [ [ "oxy_powder", 3 ] ], [ [ "gunpowder", 6 ] ], [ [ "combatnail", 12 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "20x66_slug_reloaded",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "skills_required": [ "gun", 1 ],
+    "time": "10 s",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "shotgun_primer", 1 ] ], [ [ "oxy_powder", 4 ] ], [ [ "gunpowder", 8 ] ], [ [ "lead", 12 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "20x66_shot",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "skills_required": [ "gun", 1 ],
+    "time": "10 s",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "shotgun_primer", 1 ] ], [ [ "oxy_powder", 3 ] ], [ [ "gunpowder", 6 ] ], [ [ "lead", 8 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "20x66_flechette",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "skills_required": [ "gun", 1 ],
+    "time": "10 s",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "shotgun_primer", 1 ] ], [ [ "oxy_powder", 3 ] ], [ [ "gunpowder", 6 ] ], [ [ "combatnail", 12 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "20x66_slug",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "skills_required": [ "gun", 1 ],
+    "time": "10 s",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "shotgun_primer", 1 ] ], [ [ "oxy_powder", 4 ] ], [ [ "gunpowder", 8 ] ], [ [ "lead", 12 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "20x66_beanbag",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "skills_required": [ "gun", 1 ],
+    "time": "10 s",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "shotgun_primer", 1 ] ], [ [ "oxy_powder", 2 ] ], [ [ "gunpowder", 4 ] ], [ [ "rubber_slug", 1 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "20x66_exp",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "skills_required": [ "gun", 1 ],
+    "time": "10 s",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [
+      [ [ "shotgun_primer", 1 ] ],
+      [ [ "oxy_powder", 2 ] ],
+      [ [ "gunpowder", 4 ] ],
+      [ [ "chem_compositionb", 24 ] ],
+      [ [ "impact_fuze", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "20x66_frag",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "skills_required": [ "gun", 1 ],
+    "time": "10 s",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [
+      [ [ "shotgun_primer", 1 ] ],
+      [ [ "oxy_powder", 2 ] ],
+      [ [ "gunpowder", 4 ] ],
+      [ [ "chem_compositionb", 24 ] ],
+      [ [ "bb", 30 ] ],
+      [ [ "impact_fuze", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "20x66_flare",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "skills_required": [ "gun", 1 ],
+    "time": "10 s",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "shotgun_primer", 1 ] ], [ [ "oxy_powder", 2 ] ], [ [ "gunpowder", 4 ] ], [ [ "incendiary", 25 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "20x66_inc",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "skills_required": [ "gun", 1 ],
+    "time": "10 s",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [
+      [ [ "shotgun_primer", 1 ] ],
+      [ [ "oxy_powder", 2 ] ],
+      [ [ "gunpowder", 4 ] ],
+      [ [ "incendiary", 5 ] ],
+      [ [ "lead", 8 ] ]
+    ],
+    "charges": 1
   }
 ]

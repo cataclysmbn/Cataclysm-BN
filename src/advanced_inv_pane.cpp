@@ -1,25 +1,26 @@
-#include <algorithm>
-#include <cassert>
-#include <list>
-#include <memory>
-#include <string>
-#include <vector>
+#include "advanced_inv_pane.h"
 
 #include "advanced_inv_area.h"
-#include "advanced_inv_pane.h"
 #include "avatar.h"
 #include "inventory.h"
 #include "item.h"
 #include "item_contents.h"
 #include "item_search.h"
 #include "make_static.h"
-#include "map.h"
+#include "map/map.h"
 #include "options.h"
 #include "player.h"
 #include "uistate.h"
 #include "units.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+
+#include <algorithm>
+#include <cassert>
+#include <list>
+#include <memory>
+#include <string>
+#include <vector>
 
 #if defined(__ANDROID__)
 #   include <SDL3/SDL.h>

@@ -43,7 +43,7 @@ class player_activity
         /** Unlocks the activity, or deletes it if it's already gone. */
         void resolve_active();
 
-        std::vector<npc *> assistants_;
+        std::vector<weak_ptr_fast<npc>> assistants_;
         //Cuz game code is borked
         std::set<int> assistants_ids_;
 
@@ -118,7 +118,7 @@ class player_activity
             return moves_left <= 0;
         }
         //Wrapper func to return assistants array properly
-        std::vector<npc *> &assistants();
+        std::vector<weak_ptr_fast<npc>> &assistants();
         /*
         * Members to work with activity_actor.
         */
@@ -167,6 +167,14 @@ class player_activity
             return type->verb();
         }
 
+        float get_rest_amount() const {
+            return type->rest_amount();
+        }
+
+        bool get_suppress_comfort() const {
+            return type->suppress_comfort();
+        }
+
         int get_value( size_t index, int def = 0 ) const;
         std::string get_str_value( size_t index, const std::string &def = "" ) const;
 
@@ -184,7 +192,7 @@ class player_activity
 
         //Fills assistant vector with applicable assistants
         void get_assistants( const Character &who );
-        static std::vector<npc *> get_assistants( const Character &who, unsigned short max );
+        static std::vector<weak_ptr_fast<npc>> get_assistants( const Character &who, unsigned short max );
 
         /**
          * Helper that returns an activity specific progress message.

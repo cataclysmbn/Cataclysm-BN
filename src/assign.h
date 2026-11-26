@@ -342,6 +342,13 @@ bool assign( const JsonObject &jo,
              const units::energy lo = units::energy_min,
              const units::energy hi = units::energy_max );
 
+auto assign( const JsonObject &jo,
+             const std::string &name,
+             units::sound &val,
+             bool strict = false,
+             const units::sound lo = units::sound_min,
+             const units::sound hi = units::sound_max ) -> bool;
+
 // Kinda hacky way to avoid allowing multiplying temperature
 // For example, in 10 * 0 Fahrenheit, 10 * 0 Celsius - what's the expected result of those?
 template < typename lvt, typename ut, typename s>

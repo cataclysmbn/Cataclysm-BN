@@ -1,16 +1,3 @@
-#include "game.h" // IWYU pragma: associated
-
-#include <cctype>
-#include <charconv>
-#include <chrono>
-#include <cstdint>
-#include <cstdlib>
-#include <initializer_list>
-#include <optional>
-#include <set>
-#include <sstream>
-#include <utility>
-
 #include "action.h"
 #include "advanced_inv.h"
 #include "animation.h"
@@ -22,9 +9,11 @@
 #include "avatar_functions.h"
 #include "bionics.h"
 #include "bionics_ui.h"
+#include "bodypart.h"
 #include "calendar.h"
-#include "catalua.h"
 #include "catacharset.h"
+#include "catalua.h"
+#include "catalua_hooks.h"
 #include "character.h"
 #include "character_display.h"
 #include "character_martial_arts.h"
@@ -40,16 +29,16 @@
 #include "diary.h"
 #include "distraction_manager.h"
 #include "faction.h"
-#include "field.h"
-#include "field_type.h"
 #include "flag.h"
 #include "fstream_utils.h"
+#include "game.h" // IWYU pragma: associated
 #include "game_constants.h"
 #include "game_inventory.h"
 #include "gamemode.h"
 #include "gates.h"
 #include "gun_mode.h"
 #include "help.h"
+#include "iexamine.h"
 #include "input.h"
 #include "int_id.h"
 #include "item.h"
@@ -58,23 +47,28 @@
 #include "item_hauling.h"
 #include "itype.h"
 #include "iuse.h"
-#include "lightmap.h"
 #include "line.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "make_static.h"
-#include "map.h"
-#include "map_selector.h"
-#include "mapdata.h"
+#include "map/field.h"
+#include "map/field_type.h"
+#include "map/lightmap.h"
+#include "map/map.h"
+#include "map/map_selector.h"
+#include "map/mapdata.h"
+#include "map_memory.h"
 #include "mapsharing.h"
 #include "messages.h"
 #include "monster.h"
 #include "mtype.h"
 #include "mutation.h"
 #include "mutation_ui.h"
+#include "npc.h"
 #include "options.h"
 #include "output.h"
-#include "overmap_ui.h"
+#include "overmap/overmap_ui.h"
 #include "panels.h"
+#include "perk.h"
 #include "player.h"
 #include "player_activity.h"
 #include "popup.h"
@@ -86,27 +80,42 @@
 #include "scores_ui.h"
 #include "sounds.h"
 #include "string_formatter.h"
-#include "string_utils.h"
 #include "string_id.h"
 #include "string_input_popup.h"
+#include "string_utils.h"
 #include "translations.h"
+#include "travel/travel_destination.h"
+#include "type_id.h"
 #include "ui.h"
 #include "ui_manager.h"
-#include "utils/url.h"
 #include "units.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_grab.h"
-#include "vehicle_part.h"
-#include "vehicle_wait.h"
-#include "vpart_position.h"
-#include "vpart_range.h"
-#include "weather.h"
+#include "utils/url.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_grab.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vehicle_wait.h"
+#include "vehicle/vpart_position.h"
+#include "vehicle/vpart_range.h"
+#include "weather/weather.h"
 #include "worldfactory.h"
+
+#include <algorithm>
+#include <cctype>
+#include <charconv>
+#include <chrono>
+#include <cstdint>
+#include <cstdlib>
+#include <initializer_list>
+#include <optional>
+#include <set>
+#include <sstream>
+#include <utility>
 
 static const activity_id ACT_FERTILIZE_PLOT( "ACT_FERTILIZE_PLOT" );
 static const activity_id ACT_MOVE_LOOT( "ACT_MOVE_LOOT" );
 static const activity_id ACT_MULTIPLE_BUTCHER( "ACT_MULTIPLE_BUTCHER" );
+static const activity_id ACT_MULTIPLE_DISSECT( "ACT_MULTIPLE_DISSECT" );
 static const activity_id ACT_MULTIPLE_CHOP_PLANKS( "ACT_MULTIPLE_CHOP_PLANKS" );
 static const activity_id ACT_MULTIPLE_CHOP_TREES( "ACT_MULTIPLE_CHOP_TREES" );
 static const activity_id ACT_MULTIPLE_CONSTRUCTION( "ACT_MULTIPLE_CONSTRUCTION" );
@@ -121,6 +130,8 @@ static const activity_id ACT_WAIT_STAMINA( "ACT_WAIT_STAMINA" );
 static const activity_id ACT_WAIT_WEATHER( "ACT_WAIT_WEATHER" );
 
 static const efftype_id effect_alarm_clock( "alarm_clock" );
+static const efftype_id effect_grabbed( "grabbed" );
+static const efftype_id effect_grabbing( "grabbing" );
 static const efftype_id effect_laserlocked( "laserlocked" );
 static const efftype_id effect_relax_gas( "relax_gas" );
 
@@ -130,6 +141,96 @@ static const itype_id itype_pistol_lanyard( "pistol_lanyard" );
 static const skill_id skill_melee( "melee" );
 
 static const quality_id qual_CUT( "CUT" );
+
+static const enchantment_value_id ench_val_REACH_RANGE_UNARMED( "REACH_RANGE_UNARMED" );
+
+namespace
+{
+
+auto is_terrain_memory( const memorized_terrain_tile &memory ) -> bool
+{
+    return !memory.tile.empty() && ter_str_id( memory.tile ).is_valid();
+}
+
+auto has_memorized_terrain_at( avatar &you, map &/*here*/, const tripoint_bub_ms &target ) -> bool
+{
+    if( !you.should_show_map_memory() ) {
+        return false;
+    }
+
+    const auto abs_target = bub_to_abs( target );
+    return is_terrain_memory( you.get_terrain_tile( abs_target ) ) ||
+           is_terrain_memory( you.get_memorized_tile( abs_target ) );
+}
+
+const flag_id flag_NO_GRAB( "NO_GRAB" );
+
+auto nearby_grabbed_creature( const avatar &you ) -> Creature *
+{
+    for( const auto &p : get_map().points_in_radius( you.bub_pos(), 1 ) ) {
+        Creature *const target = g->critter_at<Creature>( p, true );
+        if( target != nullptr && target != &you && target->has_effect( effect_grabbed ) ) {
+            return target;
+        }
+    }
+    return nullptr;
+}
+
+auto release_grabbed_creature( avatar &you ) -> bool
+{
+    if( !you.has_effect( effect_grabbing ) ) {
+        return false;
+    }
+
+    Creature *const target = nearby_grabbed_creature( you );
+    if( target != nullptr ) {
+        add_msg( _( "You release %s." ), target->disp_name() );
+        target->remove_effect( effect_grabbed );
+    } else {
+        add_msg( _( "You release your grip." ) );
+    }
+    you.remove_effect( effect_grabbing );
+    return true;
+}
+
+auto can_grab_creature( const Creature &target ) -> bool
+{
+    return !target.is_hallucination() && !target.has_effect_with_flag( flag_NO_GRAB ) &&
+           !target.has_effect( effect_grabbed ) && !target.has_flag( MF_GRAB_IMMUNE );
+}
+
+auto confirm_grab_npc( const npc &target ) -> bool
+{
+    return target.is_enemy() ||
+           query_yn( _( "You may be attacked!  Proceed?" ) );
+}
+
+auto grab_creature( avatar &you, Creature &target ) -> void
+{
+    if( !can_grab_creature( target ) ) {
+        add_msg( m_info, _( "You can't grab %s." ), target.disp_name() );
+        return;
+    }
+
+    if( npc *const guy = target.as_npc(); guy != nullptr && !confirm_grab_npc( *guy ) ) {
+        return;
+    }
+
+    if( monster *const mon = target.as_monster() ) {
+        mon->on_hit( &you, body_part_torso.id(), nullptr, false );
+    } else if( npc *const guy = target.as_npc(); guy != nullptr && !guy->is_enemy() ) {
+        guy->make_angry();
+    }
+
+    const auto grab_strength = std::clamp( you.get_str() / 2, 1, 15 );
+    target.add_effect( effect_grabbed, 1_days, body_part_torso, grab_strength );
+    you.add_effect( effect_grabbing, 1_days, body_part_torso, grab_strength );
+    you.mod_moves( -100 );
+    you.mod_stamina( -std::max( 50, grab_strength * 20 ) );
+    add_msg( _( "You grab %s." ), target.disp_name() );
+}
+
+} // namespace
 
 static const bionic_id bio_remote( "bio_remote" );
 
@@ -568,10 +669,6 @@ static void pldrive( const tripoint_rel_veh &p )
             return;
         }
     }
-    if( p.z() != 0 && !here.has_zlevels() ) {
-        u.add_msg_if_player( m_info, _( "This vehicle doesn't look very airworthy." ) );
-        return;
-    }
     if( p.z() == -1 ) {
         if( veh->check_heli_descend( u ) ) {
             u.add_msg_if_player( m_info, _( "You steer the vehicle into a descent." ) );
@@ -649,11 +746,36 @@ static void close()
     }
 }
 
+static auto jump() -> void
+{
+    auto &you = get_avatar();
+    if( !iexamine::can_start_jump_over_tile( you ) ) {
+        return;
+    }
+
+    const auto allowed = [&you]( const tripoint_bub_ms & pos ) {
+        return iexamine::can_jump_over_tile( you, pos );
+    };
+    const auto jump_target = choose_adjacent_highlight(
+                                 _( "Jump across where?" ),
+                                 _( "There is no adjacent tile you can jump across." ),
+                                 allowed );
+    if( !jump_target ) {
+        return;
+    }
+
+    iexamine::jump_over_tile( you, *jump_target );
+}
+
 // Establish or release a grab on a vehicle
 static void grab()
 {
     avatar &you = g->u;
     map &here = get_map();
+
+    if( release_grabbed_creature( you ) ) {
+        return;
+    }
 
     if( you.get_grab_type() != OBJECT_NONE ) {
         if( const auto target = vehicle_grab_target_at( here, you.bub_pos() + you.grab_point ) ) {
@@ -678,7 +800,9 @@ static void grab()
         you.grab( OBJECT_NONE );
         return;
     }
-    if( const auto target = vehicle_grab_target_at( here, grabp ) ) {
+    if( Creature *const target = g->critter_at<Creature>( grabp, false ) ) {
+        grab_creature( you, *target );
+    } else if( const auto target = vehicle_grab_target_at( here, grabp ) ) {
         if( !target->vp.vehicle().handle_potential_theft( get_avatar() ) ) {
             return;
         }
@@ -741,7 +865,7 @@ static void smash()
         !query_yn( _( "Are you sure you want to smash with an item that might shatter?" ) ) ) {
         return;
     }
-    const int move_cost = !u.is_armed() ? 80 : weapon.attack_cost() * 0.8;
+    const int move_cost = !u.is_armed() ? 80 : u.attack_cost( weapon ) * 0.8;
 
     bool didit = false;
     bool mech_smash = false;
@@ -755,10 +879,7 @@ static void smash()
     } else {
         smashskill = u.str_cur + weapon.damage_melee( DT_BASH );
     }
-
-    const bool allow_floor_bash = here.has_zlevels();
-    const std::optional<tripoint_bub_ms> smashp_ = choose_adjacent( _( "Smash where?" ),
-            allow_floor_bash );
+    const std::optional<tripoint_bub_ms> smashp_ = choose_adjacent( _( "Smash where?" ), true );
     if( !smashp_ ) {
         return;
     }
@@ -791,7 +912,7 @@ static void smash()
         } else if( smashskill >= rng( bash_info.str_min, bash_info.str_max ) ) {
             sound_event se;
             se.origin = smashp;
-            se.volume = bash_info.sound_vol.value_or( 0 );
+            se.volume = units::to_decibel( bash_info.sound_vol.value_or( 0_dB ) );
             se.category = sounds::sound_t::combat;
             se.description = bash_info.sound.translated();
             se.id = "smash";
@@ -806,7 +927,7 @@ static void smash()
         } else {
             sound_event se;
             se.origin = smashp;
-            se.volume = bash_info.sound_fail_vol.value_or( 0 );
+            se.volume = units::to_decibel( bash_info.sound_fail_vol.value_or( 0_dB ) );
             se.category = sounds::sound_t::combat;
             se.description = bash_info.sound_fail.translated();
             se.id = "smash";
@@ -1244,16 +1365,15 @@ static void sleep()
        and loop until we get a valid answer. */
     as_m.query();
 
-    if( as_m.ret == 1 ) {
-        g->quicksave();
-    } else if( as_m.ret == 2 || as_m.ret < 0 ) {
+    const auto save_before_sleep = as_m.ret == 1;
+    if( as_m.ret == 2 || as_m.ret < 0 ) {
         return;
     }
 
     time_duration try_sleep_dur = 24_hours;
     std::string deaf_text;
     // Infolink alarm is silent and works even if deaf
-    if( g->u.is_deaf() && !g->u.has_bionic( bionic_id( "bio_infolink" ) ) ) {
+    if( g->u.is_deaf() && !g->u.has_enchantment_flag( enchantment_flag_id( "INTERNAL_ALARMCLOCK" ) ) ) {
         deaf_text = _( "<color_c_red> (DEAF!)</color>" );
     }
     if( u.has_alarm_clock() ) {
@@ -1285,6 +1405,10 @@ static void sleep()
         }
     }
 
+    if( save_before_sleep ) {
+        g->quicksave();
+    }
+
     u.moves = 0;
     avatar_funcs::try_to_sleep( u, try_sleep_dur );
 }
@@ -1302,7 +1426,8 @@ static void loot()
         Multideconvehicle = 1024,
         Multirepairvehicle = 2048,
         MultiButchery = 4096,
-        MultiMining = 8192
+        MultiMining = 8192,
+        MultiDissect = 16384
     };
 
     player &u = g->u;
@@ -1330,6 +1455,7 @@ static void loot()
     flags |= g->check_near_zone( zone_type_id( "VEHICLE_REPAIR" ),
                                  u.bub_pos() ) ? Multirepairvehicle : 0;
     flags |= g->check_near_zone( zone_type_id( "LOOT_CORPSE" ), u.bub_pos() ) ? MultiButchery : 0;
+    flags |= g->check_near_zone( zone_type_id( "LOOT_CORPSE" ), u.bub_pos() ) ? MultiDissect : 0;
     flags |= g->check_near_zone( zone_type_id( "MINING" ), u.bub_pos() ) ? MultiMining : 0;
     if( flags == 0 ) {
         add_msg( m_info, _( "There is no compatible zone nearby." ) );
@@ -1360,7 +1486,7 @@ static void loot()
     }
     if( flags & MultiFarmPlots ) {
         menu.addentry_desc( MultiFarmPlots, true, 'm', _( "Farm plots" ),
-                            _( "Till and plant on any nearby farm plots - auto-fetch seeds and tools." ) );
+                            _( "Till, plant, and harvest on any nearby farm plots - auto-fetch seeds and tools." ) );
     }
     if( flags & Multichoptrees ) {
         menu.addentry_desc( Multichoptrees, true, 'C', _( "Chop trees" ),
@@ -1382,10 +1508,15 @@ static void loot()
         menu.addentry_desc( MultiButchery, true, 'B', _( "Butcher corpses" ),
                             _( "Auto-butcher anything in corpse loot zones - auto-fetch tools." ) );
     }
+    if( flags & MultiDissect ) {
+        menu.addentry_desc( MultiDissect, true, 'D', _( "Dissect corpses" ),
+                            _( "Auto-dissect anything in corpse loot zones - auto-fetch tools." ) );
+    }
     if( flags & MultiMining ) {
         menu.addentry_desc( MultiMining, true, 'M', _( "Mine Area" ),
                             _( "Auto-mine anything in mining zone - auto-fetch tools." ) );
     }
+
 
     menu.query();
     flags = ( menu.ret >= 0 ) ? menu.ret : None;
@@ -1420,6 +1551,9 @@ static void loot()
             break;
         case MultiButchery:
             u.assign_activity( ACT_MULTIPLE_BUTCHER );
+            break;
+        case MultiDissect:
+            u.assign_activity( ACT_MULTIPLE_DISSECT );
             break;
         case MultiMining:
             u.assign_activity( ACT_MULTIPLE_MINE );
@@ -1479,7 +1613,12 @@ static void reach_attack( avatar &you )
 {
     g->temp_exit_fullscreen();
 
-    target_handler::trajectory traj = target_handler::mode_reach( you, you.primary_weapon() );
+    target_handler::trajectory traj;
+    if( you.is_armed() ) {
+        traj = target_handler::mode_reach( you, you.primary_weapon() );
+    } else {
+        traj = target_handler::mode_unarmed_reach( you );
+    }
 
     if( !traj.empty() ) {
         you.reach_attack( traj.back() );
@@ -1512,13 +1651,31 @@ static void fire()
         std::vector<std::string> options;
         std::vector<std::function<void()>> actions;
 
+        if( u.bonus_from_enchantments( 0, ench_val_REACH_RANGE_UNARMED, true ) > 0 ) {
+            options.push_back( _( "Unarmed Reach Attack" ) );
+            actions.emplace_back( [&] {
+                if( u.has_effect( effect_relax_gas ) )
+                {
+                    if( one_in( 8 ) ) {
+                        add_msg( m_good, _( "Your willpower asserts itself, and so do you!" ) );
+                        reach_attack( u );
+                    } else {
+                        u.moves -= rng( 2, 8 ) * 10;
+                        add_msg( m_bad, _( "You're too pacified to strike anything…" ) );
+                    }
+                } else
+                {
+                    reach_attack( u );
+                }
+            } );
+        }
         bool do_autofire = false;
         for( auto &w : u.worn ) {
             if( w->type->can_use( "holster" ) && !w->has_flag( flag_NO_QUICKDRAW ) &&
                 !w->contents.empty() && w->contents.front().is_gun() ) {
                 //~ draw (first) gun contained in holster
                 //~ %1$s: weapon name, %2$s: container name, %3$d: remaining ammo count
-                options.push_back( "Draw: " + string_format( pgettext( "holster", "%1$s from %2$s (%3$d)" ),
+                options.push_back( _( "Draw: " ) + string_format( pgettext( "holster", "%1$s from %2$s (%3$d)" ),
                                    w->contents.front().tname(),
                                    w->type_name(),
                                    w->contents.front().ammo_remaining() ) );
@@ -1526,16 +1683,16 @@ static void fire()
                 actions.emplace_back( [&] { u.invoke_item( w, "holster" ); } );
 
             } else if( w->is_gun() && w->has_flag( flag_WORN_GUN ) ) {
-                options.push_back( "Fire: " + w->display_name() );
+                options.push_back( _( "Fire: " ) + w->display_name() );
                 actions.emplace_back( [&] { avatar_action::fire_ranged_gear( u, w ); } );
                 do_autofire = true;
             } else if( w->is_gun() && w->gunmod_find( itype_shoulder_strap ) ) {
                 // wield item currently worn using shoulder strap
-                options.push_back( "Wield: " + w->display_name() );
+                options.push_back( _( "Wield: " ) + w->display_name() );
                 actions.emplace_back( [&] { u.wield( *w ); } );
             } else if( w->is_gun() && w->gunmod_find( itype_pistol_lanyard ) ) {
                 // wield item currently worn using pistol lanyard
-                options.push_back( "Wield: " + w->display_name() );
+                options.push_back( _( "Wield: " ) + w->display_name() );
                 actions.emplace_back( [&] { u.wield( *w ); } );
             }
         }
@@ -1579,7 +1736,8 @@ static void open_movement_mode_menu()
     as_m.entries.emplace_back( CMM_RUN, true, 'r', _( "Run" ) );
     as_m.entries.emplace_back( CMM_WALK, true, 'w', _( "Walk" ) );
     as_m.entries.emplace_back( CMM_CROUCH, true, 'c', _( "Crouch" ) );
-    as_m.entries.emplace_back( CMM_COUNT, true, '"', _( "Cycle move mode (run/walk/crouch)" ) );
+    as_m.entries.emplace_back( CMM_PRONE, true, 'p', _( "Prone" ) );
+    as_m.entries.emplace_back( CMM_COUNT, true, '"', _( "Cycle move mode" ) );
     as_m.selected = 1;
     as_m.query();
 
@@ -1665,6 +1823,16 @@ auto try_cast_spell( player &u, spell &sp ) -> bool
         add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
                  _( "You cannot cast Blood Magic without a cutting implement." ) );
         return false;
+    }
+
+    const auto hook_results = cata::run_hooks( "on_spell_try_cast", [&]( sol::table & params ) {
+        params["char"] = &u;
+        params["spell"] = &sp;
+    } );
+    if( !hook_results.get_or( "allowed", true ) ) { return false; }
+
+    if( sp.type->lua_callbacks ) {
+        if( !sp.type->lua_callbacks->call_on_try_cast( *u.as_character(), sp ) ) { return false;}
     }
 
     start_spellcasting_activity( u, sp );
@@ -1875,13 +2043,14 @@ bool game::handle_action()
             const std::optional<tripoint_bub_ms> mouse_pos = ctxt.get_coordinates( w_terrain );
             if( !mouse_pos ) {
                 return false;
-            } else if( !u.sees( *mouse_pos ) ) {
-                // Not clicked in visible terrain
-                return false;
             }
             mouse_target = mouse_pos;
 
             if( act == ACTION_SELECT ) {
+                if( !avatar_knows_travel_destination( u, *mouse_target ) &&
+                    !has_memorized_terrain_at( u, m, *mouse_target ) ) {
+                    return false;
+                }
                 // Note: The following has the potential side effect of
                 // setting auto-move destination state in addition to setting
                 // act.
@@ -1889,6 +2058,10 @@ bool game::handle_action()
                     return false;
                 }
             } else if( act == ACTION_SEC_SELECT ) {
+                if( !u.sees( *mouse_target ) ) {
+                    // Right-click actions examine or target current terrain and creatures.
+                    return false;
+                }
                 if( !try_get_right_click_action( act, *mouse_target ) ) {
                     return false;
                 }
@@ -1949,6 +2122,7 @@ bool game::handle_action()
             case ACTION_CENTER:
                 u.view_offset.x() = driving_view_offset.x;
                 u.view_offset.y() = driving_view_offset.y;
+                u.view_offset.z() = 0;
                 break;
 
             case ACTION_SHIFT_N:
@@ -2027,6 +2201,10 @@ bool game::handle_action()
                 u.toggle_crouch_mode();
                 break;
 
+            case ACTION_TOGGLE_PRONE:
+                u.toggle_prone_mode();
+                break;
+
             case ACTION_OPEN_MOVEMENT:
                 open_movement_mode_menu();
                 break;
@@ -2040,6 +2218,7 @@ bool game::handle_action()
             case ACTION_MOVE_LEFT:
             case ACTION_MOVE_FORTH_LEFT: {
                 ZoneScopedN( "handle_action_movement" );
+                character_funcs::search_surroundings( u );
                 if( !u.get_value( "remote_controlling" ).empty() &&
                     ( u.has_active_item_with_action( "RADIOCONTROL" ) ||
                       u.has_active_bionic( bio_remote ) ) ) {
@@ -2274,6 +2453,14 @@ bool game::handle_action()
                     examine( *mouse_target );
                 } else {
                     examine();
+                }
+                break;
+
+            case ACTION_JUMP:
+                if( mouse_target && iexamine::can_jump_over_tile( u, *mouse_target ) ) {
+                    iexamine::jump_over_tile( u, *mouse_target );
+                } else {
+                    jump();
                 }
                 break;
 
@@ -2518,7 +2705,9 @@ bool game::handle_action()
             case ACTION_MUTATIONS:
                 show_mutations_ui( u );
                 break;
-
+            case ACTION_PERKS:
+                draw_perk_menu( u );
+                break;
             case ACTION_SORT_ARMOR:
                 show_armor_layers_ui( u );
                 break;
@@ -3003,6 +3192,10 @@ bool game::handle_action()
 
             case ACTION_AUTOATTACK:
                 avatar_action::autoattack( u, m );
+                break;
+
+            case ACTION_TOGGLE_MANUAL_COMBAT_MODE:
+                avatar_action::toggle_manual_combat_mode();
                 break;
 
             default:

@@ -7,7 +7,7 @@
     "material": [ "leather", "steel" ],
     "looks_like": "boots_hiking",
     "description": "Rugged yet extremely comfortable and well fitting boots of worn leather and steel, they look like they've seen a lot of use and will likely see a lot more.  They make your movement a lot less work.",
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "MOVE_COST", "add": -30 } ] } ] },
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "MOVE_COST", "add": -30 } ] } ] },
     "encumbrance": 8,
     "warmth": 30,
     "material_thickness": 3,
@@ -24,8 +24,8 @@
     "description": "Rugged yet extremely comfortable and well fitting boots of worn leather and steel, they look like they've seen a lot of use and will likely see a lot more.  They make your movement a lot less work.",
     "relic_data": {
       "passive_effects": [
-        { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "MOVE_COST", "add": -20 } ] },
-        { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "SPEED", "add": 10 } ] }
+        { "conditions": [ "WORN" ], "values": [ { "value": "MOVE_COST", "add": -20 } ] },
+        { "conditions": [ "WORN" ], "values": [ { "value": "SPEED", "add": 10 } ] }
       ]
     },
     "encumbrance": 8,
@@ -45,7 +45,7 @@
     "max_charges": 24,
     "charges_per_use": 24,
     "material": [ "leather", "steel" ],
-    "artifact_data": { "charge_type": "ARTC_TIME" },
+    "relic_data": { "recharge_scheme": [ { "type": "time", "interval": "1 h", "rate": 1 } ] },
     "use_action": { "type": "cast_spell", "spell_id": "magus_escape", "no_fail": true, "level": 10, "need_worn": true },
     "encumbrance": 8,
     "warmth": 30,
@@ -65,6 +65,6 @@
     "material_thickness": 3,
     "environmental_protection": 3,
     "flags": [ "WATERPROOF", "STURDY" ],
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "ARMOR_ELEC", "add": -20 } ] } ] }
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "ARMOR_ELECTRIC", "add": -20 } ] } ] }
   }
 ]

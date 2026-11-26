@@ -21,1744 +21,243 @@
     "default": "mon_null",
     "is_animal": true,
     "monsters": [
+      { "monster_group": "GROUP_WILDERNESS_FOREST_MAMMAL", "weight": 225, "conditions": [ "SPRING", "SUMMER", "AUTUMN" ] },
       {
-        "monster": "mon_bat",
-        "freq": 50,
-        "cost_multiplier": 2,
-        "pack_size": [ 3, 12 ],
-        "conditions": [ "DAWN", "DUSK", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_bat_vampire",
-        "freq": 50,
-        "cost_multiplier": 2,
-        "pack_size": [ 3, 12 ],
-        "conditions": [ "DAWN", "DUSK", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_bat_vampire_mutant",
-        "freq": 10,
-        "cost_multiplier": 15,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "NIGHT", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      { "monster": "mon_bear", "freq": 1, "cost_multiplier": 10, "conditions": [ "SPRING", "SUMMER", "AUTUMN" ] },
-      {
-        "monster": "mon_bear",
-        "freq": 3,
-        "cost_multiplier": 10,
-        "conditions": [ "NIGHT", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_bear",
-        "freq": 1,
-        "cost_multiplier": 10,
-        "ends": 72,
+        "monster_group": "GROUP_WILDERNESS_FOREST_MAMMAL",
+        "weight": 75,
+        "ends": "112 days",
         "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
       },
       {
-        "monster": "mon_bear",
-        "freq": 3,
-        "cost_multiplier": 10,
-        "ends": 72,
-        "conditions": [ "NIGHT", "SPRING", "SUMMER", "AUTUMN" ]
+        "monster_group": "GROUP_WILDERNESS_FOREST_MAMMAL",
+        "weight": 75,
+        "ends": "360 days",
+        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
+      },
+      { "monster_group": "GROUP_WILDERNESS_FOREST_MAMMAL_WINTER", "weight": 225, "conditions": [ "WINTER" ] },
+      {
+        "monster_group": "GROUP_WILDERNESS_FOREST_MAMMAL_WINTER",
+        "weight": 75,
+        "ends": "112 days",
+        "conditions": [ "WINTER" ]
       },
       {
-        "monster": "mon_bear",
-        "freq": 1,
-        "cost_multiplier": 10,
-        "ends": 168,
+        "monster_group": "GROUP_WILDERNESS_FOREST_MAMMAL_WINTER",
+        "weight": 75,
+        "ends": "360 days",
+        "conditions": [ "WINTER" ]
+      },
+      { "monster_group": "GROUP_WILDERNESS_FOREST_BIRD", "weight": 300 },
+      {
+        "monster_group": "GROUP_WILDERNESS_FOREST_INSECT_HARMLESS",
+        "weight": 75,
         "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
       },
       {
-        "monster": "mon_bear",
-        "freq": 3,
-        "cost_multiplier": 10,
-        "ends": 168,
-        "conditions": [ "NIGHT", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_bear",
-        "freq": 1,
-        "cost_multiplier": 10,
-        "ends": 672,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_bear",
-        "freq": 3,
-        "cost_multiplier": 10,
-        "ends": 672,
-        "conditions": [ "NIGHT", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_bear",
-        "freq": 1,
-        "cost_multiplier": 10,
-        "ends": 2160,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_bear",
-        "freq": 3,
-        "cost_multiplier": 10,
-        "ends": 2160,
-        "conditions": [ "NIGHT", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      { "monster": "mon_bear_mutant_3headed", "freq": 1, "cost_multiplier": 10 },
-      { "monster": "mon_bear_mutant_3headed", "freq": 2, "cost_multiplier": 10, "starts": 672 },
-      { "monster": "mon_zombear", "freq": 1, "cost_multiplier": 10, "starts": 72 },
-      { "monster": "mon_zombear", "freq": 2, "cost_multiplier": 10, "starts": 168 },
-      { "monster": "mon_zombear", "freq": 3, "cost_multiplier": 10, "starts": 672 },
-      { "monster": "mon_zombear", "freq": 4, "cost_multiplier": 10, "starts": 2160 },
-      { "monster": "mon_bobcat", "freq": 7, "cost_multiplier": 2 },
-      { "monster": "mon_bobcat", "freq": 13, "cost_multiplier": 2, "conditions": [ "DAWN", "DUSK" ] },
-      { "monster": "mon_boar_wild", "freq": 2, "cost_multiplier": 2, "pack_size": [ 1, 4 ] },
-      { "monster": "mon_boar_wild", "freq": 4, "cost_multiplier": 2, "pack_size": [ 1, 4 ], "conditions": [ "DAY" ] },
-      { "monster": "mon_cat", "freq": 10, "cost_multiplier": 1 },
-      { "monster": "mon_cat", "freq": 15, "cost_multiplier": 1, "conditions": [ "DAWN", "DUSK" ] },
-      { "monster": "mon_cat", "freq": 1, "cost_multiplier": 1, "pack_size": [ 2, 8 ] },
-      {
-        "monster": "mon_cat",
-        "freq": 4,
-        "cost_multiplier": 1,
-        "pack_size": [ 2, 8 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      {
-        "monster": "mon_chipmunk",
-        "freq": 30,
-        "cost_multiplier": 0,
-        "pack_size": [ 1, 2 ],
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      { "monster": "mon_cougar", "freq": 1, "cost_multiplier": 3 },
-      { "monster": "mon_cougar", "freq": 2, "cost_multiplier": 3, "conditions": [ "DAWN", "DUSK" ] },
-      { "monster": "mon_cougar", "freq": 1, "cost_multiplier": 3, "ends": 168 },
-      { "monster": "mon_cougar", "freq": 2, "cost_multiplier": 3, "ends": 168, "conditions": [ "DAWN", "DUSK" ] },
-      { "monster": "mon_cougar", "freq": 1, "cost_multiplier": 3, "ends": 504 },
-      { "monster": "mon_cougar", "freq": 2, "cost_multiplier": 3, "ends": 504, "conditions": [ "DAWN", "DUSK" ] },
-      { "monster": "mon_cougar", "freq": 1, "cost_multiplier": 3, "ends": 1008 },
-      { "monster": "mon_cougar", "freq": 2, "cost_multiplier": 3, "ends": 1008, "conditions": [ "DAWN", "DUSK" ] },
-      { "monster": "mon_cougar", "freq": 1, "cost_multiplier": 3, "ends": 2160 },
-      { "monster": "mon_cougar", "freq": 2, "cost_multiplier": 3, "ends": 2160, "conditions": [ "DAWN", "DUSK" ] },
-      { "monster": "mon_zougar", "freq": 3, "cost_multiplier": 10, "starts": 168 },
-      { "monster": "mon_zougar", "freq": 3, "cost_multiplier": 10, "starts": 504 },
-      { "monster": "mon_zougar", "freq": 3, "cost_multiplier": 10, "starts": 1008 },
-      { "monster": "mon_zougar", "freq": 3, "cost_multiplier": 10, "starts": 2160 },
-      { "monster": "mon_crow", "freq": 5, "cost_multiplier": 0, "pack_size": [ 1, 14 ] },
-      { "monster": "mon_crow", "freq": 25, "cost_multiplier": 0, "pack_size": [ 1, 14 ], "conditions": [ "DAY" ] },
-      { "monster": "mon_deer", "freq": 4, "cost_multiplier": 2, "pack_size": [ 1, 5 ] },
-      { "monster": "mon_deer", "freq": 16, "cost_multiplier": 2, "pack_size": [ 1, 5 ], "conditions": [ "DAY" ] },
-      { "monster": "mon_deer_mutant_spider", "freq": 2, "cost_multiplier": 2, "pack_size": [ 1, 3 ], "starts": 168 },
-      {
-        "monster": "mon_deer_mutant_spider",
-        "freq": 3,
-        "cost_multiplier": 2,
-        "pack_size": [ 1, 3 ],
-        "starts": 168,
-        "conditions": [ "DUSK", "NIGHT" ]
-      },
-      { "monster": "mon_dog", "freq": 3, "cost_multiplier": 25, "pack_size": [ 1, 6 ] },
-      {
-        "monster": "mon_dog",
-        "freq": 2,
-        "cost_multiplier": 25,
-        "pack_size": [ 1, 6 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_bull", "freq": 1, "cost_multiplier": 25, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_bull",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_auscattle", "freq": 1, "cost_multiplier": 25, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_auscattle",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_pitbullmix", "freq": 3, "cost_multiplier": 25, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_pitbullmix",
-        "freq": 2,
-        "cost_multiplier": 25,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_beagle", "freq": 1, "cost_multiplier": 25, "pack_size": [ 1, 6 ] },
-      {
-        "monster": "mon_dog_beagle",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "pack_size": [ 1, 6 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_bcollie", "freq": 1, "cost_multiplier": 25, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_bcollie",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_boxer", "freq": 1, "cost_multiplier": 25, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_boxer",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_chihuahua", "freq": 1, "cost_multiplier": 25, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_chihuahua",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_dachshund", "freq": 1, "cost_multiplier": 25, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_dachshund",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_gshepherd", "freq": 1, "cost_multiplier": 25, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_gshepherd",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog", "freq": 3, "cost_multiplier": 25, "ends": 72, "pack_size": [ 1, 6 ] },
-      {
-        "monster": "mon_dog",
-        "freq": 2,
-        "cost_multiplier": 25,
-        "ends": 72,
-        "pack_size": [ 1, 6 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_bull", "freq": 1, "cost_multiplier": 25, "ends": 72, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_bull",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "ends": 72,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_auscattle", "freq": 1, "cost_multiplier": 25, "ends": 72, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_auscattle",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "ends": 72,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_pitbullmix", "freq": 3, "cost_multiplier": 25, "ends": 72, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_pitbullmix",
-        "freq": 2,
-        "cost_multiplier": 25,
-        "ends": 72,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_beagle", "freq": 1, "cost_multiplier": 25, "ends": 72, "pack_size": [ 1, 6 ] },
-      {
-        "monster": "mon_dog_beagle",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "ends": 72,
-        "pack_size": [ 1, 6 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_bcollie", "freq": 1, "cost_multiplier": 25, "ends": 72, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_bcollie",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "ends": 72,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_boxer", "freq": 1, "cost_multiplier": 25, "ends": 72, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_boxer",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "ends": 72,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_chihuahua", "freq": 1, "cost_multiplier": 25, "ends": 72, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_chihuahua",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "ends": 72,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_dachshund", "freq": 1, "cost_multiplier": 25, "ends": 72, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_dachshund",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "ends": 72,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_gshepherd", "freq": 1, "cost_multiplier": 25, "ends": 72, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_gshepherd",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "ends": 72,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog", "freq": 3, "cost_multiplier": 25, "ends": 168, "pack_size": [ 1, 6 ] },
-      {
-        "monster": "mon_dog",
-        "freq": 2,
-        "cost_multiplier": 25,
-        "ends": 168,
-        "pack_size": [ 1, 6 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_bull", "freq": 1, "cost_multiplier": 25, "ends": 168, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_bull",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "ends": 168,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_auscattle", "freq": 1, "cost_multiplier": 25, "ends": 168, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_auscattle",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "ends": 168,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_pitbullmix", "freq": 3, "cost_multiplier": 25, "ends": 168, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_pitbullmix",
-        "freq": 2,
-        "cost_multiplier": 25,
-        "ends": 168,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_beagle", "freq": 1, "cost_multiplier": 25, "ends": 168, "pack_size": [ 1, 6 ] },
-      {
-        "monster": "mon_dog_beagle",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "ends": 168,
-        "pack_size": [ 1, 6 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_bcollie", "freq": 1, "cost_multiplier": 25, "ends": 168, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_bcollie",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "ends": 168,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_boxer", "freq": 1, "cost_multiplier": 25, "ends": 168, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_boxer",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "ends": 168,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_chihuahua", "freq": 1, "cost_multiplier": 25, "ends": 168, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_chihuahua",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "ends": 168,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_dachshund", "freq": 1, "cost_multiplier": 25, "ends": 168, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_dachshund",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "ends": 168,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_gshepherd", "freq": 1, "cost_multiplier": 25, "ends": 168, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_gshepherd",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "ends": 168,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog", "freq": 3, "cost_multiplier": 25, "ends": 672, "pack_size": [ 1, 6 ] },
-      {
-        "monster": "mon_dog",
-        "freq": 2,
-        "cost_multiplier": 25,
-        "ends": 672,
-        "pack_size": [ 1, 6 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_bull", "freq": 1, "cost_multiplier": 25, "ends": 672, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_bull",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "ends": 672,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_auscattle", "freq": 1, "cost_multiplier": 25, "ends": 672, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_auscattle",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "ends": 672,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_pitbullmix", "freq": 3, "cost_multiplier": 25, "ends": 672, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_pitbullmix",
-        "freq": 2,
-        "cost_multiplier": 25,
-        "ends": 672,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_beagle", "freq": 1, "cost_multiplier": 25, "ends": 672, "pack_size": [ 1, 6 ] },
-      {
-        "monster": "mon_dog_beagle",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "ends": 672,
-        "pack_size": [ 1, 6 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_bcollie", "freq": 1, "cost_multiplier": 25, "ends": 672, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_bcollie",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "ends": 672,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_boxer", "freq": 1, "cost_multiplier": 25, "ends": 672, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_boxer",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "ends": 672,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_chihuahua", "freq": 1, "cost_multiplier": 25, "ends": 672, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_chihuahua",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "ends": 672,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_dachshund", "freq": 1, "cost_multiplier": 25, "ends": 672, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_dachshund",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "ends": 672,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_gshepherd", "freq": 1, "cost_multiplier": 25, "ends": 672, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_gshepherd",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "ends": 672,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog", "freq": 3, "cost_multiplier": 25, "ends": 2160, "pack_size": [ 1, 6 ] },
-      {
-        "monster": "mon_dog",
-        "freq": 2,
-        "cost_multiplier": 25,
-        "ends": 2160,
-        "pack_size": [ 1, 6 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_bull", "freq": 1, "cost_multiplier": 25, "ends": 2160, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_bull",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "ends": 2160,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_auscattle", "freq": 1, "cost_multiplier": 25, "ends": 2160, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_auscattle",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "ends": 2160,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_pitbullmix", "freq": 3, "cost_multiplier": 25, "ends": 2160, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_pitbullmix",
-        "freq": 2,
-        "cost_multiplier": 25,
-        "ends": 2160,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_beagle", "freq": 1, "cost_multiplier": 25, "ends": 2160, "pack_size": [ 1, 6 ] },
-      {
-        "monster": "mon_dog_beagle",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "ends": 2160,
-        "pack_size": [ 1, 6 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_bcollie", "freq": 1, "cost_multiplier": 25, "ends": 2160, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_bcollie",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "ends": 2160,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_boxer", "freq": 1, "cost_multiplier": 25, "ends": 2160, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_boxer",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "ends": 2160,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_chihuahua", "freq": 1, "cost_multiplier": 25, "ends": 2160, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_chihuahua",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "ends": 2160,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_dachshund", "freq": 1, "cost_multiplier": 25, "ends": 2160, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_dachshund",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "ends": 2160,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_gshepherd", "freq": 1, "cost_multiplier": 25, "ends": 2160, "pack_size": [ 1, 3 ] },
-      {
-        "monster": "mon_dog_gshepherd",
-        "freq": 1,
-        "cost_multiplier": 25,
-        "ends": 2160,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_dog_mutant_mongrel", "freq": 1, "cost_multiplier": 0 },
-      { "monster": "mon_dog_mutant_mongrel", "freq": 1, "cost_multiplier": 0, "conditions": [ "DAWN", "DUSK" ] },
-      {
-        "monster": "mon_dog_mutant_mongrel",
-        "freq": 1,
-        "cost_multiplier": 0,
-        "conditions": [ "DAWN", "DUSK", "SUMMER", "AUTUMN", "WINTER" ]
-      },
-      { "monster": "mon_fox_gray", "freq": 1, "cost_multiplier": 0 },
-      { "monster": "mon_fox_gray", "freq": 2, "cost_multiplier": 0, "conditions": [ "DAWN", "DUSK" ] },
-      { "monster": "mon_fox_gray", "freq": 1, "cost_multiplier": 0, "ends": 72 },
-      { "monster": "mon_fox_gray", "freq": 2, "cost_multiplier": 0, "ends": 72, "conditions": [ "DAWN", "DUSK" ] },
-      { "monster": "mon_fox_gray", "freq": 1, "cost_multiplier": 0, "ends": 168 },
-      { "monster": "mon_fox_gray", "freq": 2, "cost_multiplier": 0, "ends": 168, "conditions": [ "DAWN", "DUSK" ] },
-      { "monster": "mon_fox_gray", "freq": 1, "cost_multiplier": 0, "ends": 672 },
-      { "monster": "mon_fox_gray", "freq": 2, "cost_multiplier": 0, "ends": 672, "conditions": [ "DAWN", "DUSK" ] },
-      { "monster": "mon_fox_gray", "freq": 1, "cost_multiplier": 0, "ends": 2160 },
-      { "monster": "mon_fox_gray", "freq": 2, "cost_multiplier": 0, "ends": 2160, "conditions": [ "DAWN", "DUSK" ] },
-      { "monster": "mon_fox_red", "freq": 1, "cost_multiplier": 0 },
-      { "monster": "mon_fox_red", "freq": 2, "cost_multiplier": 0, "conditions": [ "DAWN", "DUSK" ] },
-      { "monster": "mon_fox_red", "freq": 1, "cost_multiplier": 0, "ends": 72 },
-      { "monster": "mon_fox_red", "freq": 2, "cost_multiplier": 0, "ends": 72, "conditions": [ "DAWN", "DUSK" ] },
-      { "monster": "mon_fox_red", "freq": 1, "cost_multiplier": 0, "ends": 168 },
-      { "monster": "mon_fox_red", "freq": 2, "cost_multiplier": 0, "ends": 168, "conditions": [ "DAWN", "DUSK" ] },
-      { "monster": "mon_fox_red", "freq": 1, "cost_multiplier": 0, "ends": 672 },
-      { "monster": "mon_fox_red", "freq": 2, "cost_multiplier": 0, "ends": 672, "conditions": [ "DAWN", "DUSK" ] },
-      { "monster": "mon_fox_red", "freq": 1, "cost_multiplier": 0, "ends": 2160 },
-      { "monster": "mon_fox_red", "freq": 2, "cost_multiplier": 0, "ends": 2160, "conditions": [ "DAWN", "DUSK" ] },
-      { "monster": "mon_wolf", "freq": 1, "cost_multiplier": 2, "pack_size": [ 2, 5 ] },
-      { "monster": "mon_wolf", "freq": 2, "cost_multiplier": 2, "pack_size": [ 2, 5 ], "conditions": [ "NIGHT" ] },
-      { "monster": "mon_wolf", "freq": 1, "cost_multiplier": 2, "ends": 72, "pack_size": [ 2, 5 ] },
-      {
-        "monster": "mon_wolf",
-        "freq": 2,
-        "cost_multiplier": 2,
-        "ends": 72,
-        "pack_size": [ 2, 5 ],
-        "conditions": [ "NIGHT" ]
-      },
-      { "monster": "mon_wolf", "freq": 1, "cost_multiplier": 2, "ends": 168, "pack_size": [ 2, 5 ] },
-      {
-        "monster": "mon_wolf",
-        "freq": 2,
-        "cost_multiplier": 2,
-        "ends": 168,
-        "pack_size": [ 2, 5 ],
-        "conditions": [ "NIGHT" ]
-      },
-      { "monster": "mon_wolf", "freq": 1, "cost_multiplier": 2, "ends": 672, "pack_size": [ 2, 5 ] },
-      {
-        "monster": "mon_wolf",
-        "freq": 2,
-        "cost_multiplier": 2,
-        "ends": 672,
-        "pack_size": [ 2, 5 ],
-        "conditions": [ "NIGHT" ]
-      },
-      { "monster": "mon_wolf", "freq": 1, "cost_multiplier": 2, "ends": 2160, "pack_size": [ 2, 5 ] },
-      {
-        "monster": "mon_wolf",
-        "freq": 2,
-        "cost_multiplier": 2,
-        "ends": 2160,
-        "pack_size": [ 2, 5 ],
-        "conditions": [ "NIGHT" ]
-      },
-      { "monster": "mon_wolf_mutant_huge", "freq": 1, "cost_multiplier": 0, "starts": 504 },
-      {
-        "monster": "mon_wolf_mutant_huge",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 504,
-        "pack_size": [ 1, 2 ],
-        "conditions": [ "NIGHT" ]
-      },
-      { "monster": "mon_coyote", "freq": 1, "cost_multiplier": 2, "pack_size": [ 1, 6 ] },
-      { "monster": "mon_coyote", "freq": 2, "cost_multiplier": 2, "pack_size": [ 1, 6 ], "conditions": [ "NIGHT" ] },
-      { "monster": "mon_coyote", "freq": 1, "cost_multiplier": 2, "ends": 72, "pack_size": [ 1, 6 ] },
-      {
-        "monster": "mon_coyote",
-        "freq": 2,
-        "cost_multiplier": 2,
-        "ends": 72,
-        "pack_size": [ 1, 6 ],
-        "conditions": [ "NIGHT" ]
-      },
-      { "monster": "mon_coyote", "freq": 1, "cost_multiplier": 2, "ends": 168, "pack_size": [ 1, 6 ] },
-      {
-        "monster": "mon_coyote",
-        "freq": 2,
-        "cost_multiplier": 2,
-        "ends": 168,
-        "pack_size": [ 1, 6 ],
-        "conditions": [ "NIGHT" ]
-      },
-      { "monster": "mon_coyote", "freq": 1, "cost_multiplier": 2, "ends": 672, "pack_size": [ 1, 6 ] },
-      {
-        "monster": "mon_coyote",
-        "freq": 2,
-        "cost_multiplier": 2,
-        "ends": 672,
-        "pack_size": [ 1, 6 ],
-        "conditions": [ "NIGHT" ]
-      },
-      { "monster": "mon_coyote", "freq": 1, "cost_multiplier": 2, "ends": 2160, "pack_size": [ 1, 6 ] },
-      {
-        "monster": "mon_coyote",
-        "freq": 2,
-        "cost_multiplier": 2,
-        "ends": 2160,
-        "pack_size": [ 1, 6 ],
-        "conditions": [ "NIGHT" ]
-      },
-      { "monster": "mon_coyote_wolf", "freq": 1, "cost_multiplier": 2, "pack_size": [ 1, 8 ] },
-      {
-        "monster": "mon_coyote_wolf",
-        "freq": 2,
-        "cost_multiplier": 2,
-        "pack_size": [ 1, 8 ],
-        "conditions": [ "NIGHT" ]
-      },
-      { "monster": "mon_coyote_wolf", "freq": 1, "cost_multiplier": 2, "ends": 72, "pack_size": [ 1, 8 ] },
-      {
-        "monster": "mon_coyote_wolf",
-        "freq": 2,
-        "cost_multiplier": 2,
-        "ends": 72,
-        "pack_size": [ 1, 8 ],
-        "conditions": [ "NIGHT" ]
-      },
-      { "monster": "mon_coyote_wolf", "freq": 1, "cost_multiplier": 2, "ends": 168, "pack_size": [ 1, 8 ] },
-      {
-        "monster": "mon_coyote_wolf",
-        "freq": 2,
-        "cost_multiplier": 2,
-        "ends": 168,
-        "pack_size": [ 1, 8 ],
-        "conditions": [ "NIGHT" ]
-      },
-      { "monster": "mon_coyote_wolf", "freq": 1, "cost_multiplier": 2, "ends": 672, "pack_size": [ 1, 8 ] },
-      {
-        "monster": "mon_coyote_wolf",
-        "freq": 2,
-        "cost_multiplier": 2,
-        "ends": 672,
-        "pack_size": [ 1, 8 ],
-        "conditions": [ "NIGHT" ]
-      },
-      { "monster": "mon_coyote_wolf", "freq": 1, "cost_multiplier": 2, "ends": 2160, "pack_size": [ 1, 8 ] },
-      {
-        "monster": "mon_coyote_wolf",
-        "freq": 2,
-        "cost_multiplier": 2,
-        "ends": 2160,
-        "pack_size": [ 1, 8 ],
-        "conditions": [ "NIGHT" ]
-      },
-      { "monster": "mon_coyote_mutant_shark", "freq": 1, "cost_multiplier": 2, "pack_size": [ 1, 6 ] },
-      {
-        "monster": "mon_coyote_mutant_shark",
-        "freq": 2,
-        "cost_multiplier": 2,
-        "pack_size": [ 1, 6 ],
-        "conditions": [ "NIGHT" ]
-      },
-      { "monster": "mon_coyote_mutant_venom", "freq": 2, "cost_multiplier": 2, "pack_size": [ 1, 8 ] },
-      {
-        "monster": "mon_coyote_mutant_venom",
-        "freq": 3,
-        "cost_multiplier": 2,
-        "pack_size": [ 1, 8 ],
-        "conditions": [ "NIGHT" ]
-      },
-      { "monster": "mon_zombie_dog", "freq": 4, "cost_multiplier": 2, "starts": 72 },
-      { "monster": "mon_zombie_dog", "freq": 4, "cost_multiplier": 2, "starts": 168 },
-      { "monster": "mon_zombie_dog", "freq": 4, "cost_multiplier": 2, "starts": 336 },
-      { "monster": "mon_zombie_dog", "freq": 4, "cost_multiplier": 2, "starts": 504 },
-      { "monster": "mon_zombie_dog", "freq": 4, "cost_multiplier": 2, "starts": 672 },
-      { "monster": "mon_zombie_dog", "freq": 4, "cost_multiplier": 2, "starts": 890 },
-      { "monster": "mon_zombie_dog", "freq": 4, "cost_multiplier": 2, "starts": 1008 },
-      { "monster": "mon_zombie_dog", "freq": 4, "cost_multiplier": 2, "starts": 1344 },
-      { "monster": "mon_zombie_dog", "freq": 4, "cost_multiplier": 2, "starts": 1680 },
-      { "monster": "mon_zombie_dog", "freq": 4, "cost_multiplier": 2, "starts": 2160 },
-      { "monster": "mon_zolf", "freq": 2, "cost_multiplier": 2, "starts": 72, "pack_size": [ 1, 4 ] },
-      { "monster": "mon_zolf", "freq": 2, "cost_multiplier": 2, "starts": 168, "pack_size": [ 1, 4 ] },
-      { "monster": "mon_zolf", "freq": 2, "cost_multiplier": 2, "starts": 672, "pack_size": [ 1, 4 ] },
-      { "monster": "mon_zolf", "freq": 2, "cost_multiplier": 2, "starts": 2160, "pack_size": [ 1, 4 ] },
-      {
-        "monster": "mon_groundhog",
-        "freq": 30,
-        "cost_multiplier": 5,
-        "pack_size": [ 1, 6 ],
-        "conditions": [ "DAWN", "DAY", "DUSK", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      { "monster": "mon_hare", "freq": 12, "cost_multiplier": 2, "pack_size": [ 1, 6 ] },
-      { "monster": "mon_hare", "freq": 18, "cost_multiplier": 2, "pack_size": [ 1, 6 ], "conditions": [ "NIGHT" ] },
-      { "monster": "mon_moose", "freq": 1, "cost_multiplier": 3 },
-      { "monster": "mon_moose", "freq": 2, "cost_multiplier": 3, "conditions": [ "DAY" ] },
-      { "monster": "mon_moose", "freq": 1, "cost_multiplier": 3, "ends": 72 },
-      { "monster": "mon_moose", "freq": 2, "cost_multiplier": 3, "ends": 72, "conditions": [ "DAY" ] },
-      { "monster": "mon_moose", "freq": 1, "cost_multiplier": 3, "ends": 168 },
-      { "monster": "mon_moose", "freq": 2, "cost_multiplier": 3, "ends": 168, "conditions": [ "DAY" ] },
-      { "monster": "mon_moose", "freq": 1, "cost_multiplier": 3, "ends": 672 },
-      { "monster": "mon_moose", "freq": 2, "cost_multiplier": 3, "ends": 672, "conditions": [ "DAY" ] },
-      { "monster": "mon_moose", "freq": 1, "cost_multiplier": 3, "ends": 2160 },
-      { "monster": "mon_moose", "freq": 2, "cost_multiplier": 3, "ends": 2160, "conditions": [ "DAY" ] },
-      { "monster": "mon_zoose", "freq": 1, "cost_multiplier": 10, "starts": 72 },
-      { "monster": "mon_zoose", "freq": 1, "cost_multiplier": 10, "starts": 168 },
-      { "monster": "mon_zoose", "freq": 1, "cost_multiplier": 10, "starts": 672 },
-      { "monster": "mon_zoose", "freq": 1, "cost_multiplier": 10, "starts": 2160 },
-      { "monster": "mon_rabbit", "freq": 10, "cost_multiplier": 0, "pack_size": [ 1, 5 ] },
-      {
-        "monster": "mon_rabbit",
-        "freq": 15,
-        "cost_multiplier": 0,
-        "pack_size": [ 1, 5 ],
-        "conditions": [ "DUSK", "NIGHT", "DAWN" ]
-      },
-      { "monster": "mon_squirrel", "freq": 50, "cost_multiplier": 0, "pack_size": [ 1, 2 ], "conditions": [ "DAY" ] },
-      {
-        "monster": "mon_squirrel",
-        "freq": 25,
-        "cost_multiplier": 0,
-        "pack_size": [ 1, 2 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      {
-        "monster": "mon_squirrel_red",
-        "freq": 50,
-        "cost_multiplier": 0,
-        "pack_size": [ 1, 2 ],
-        "conditions": [ "DAY" ]
-      },
-      {
-        "monster": "mon_squirrel_red",
-        "freq": 25,
-        "cost_multiplier": 0,
-        "pack_size": [ 1, 2 ],
-        "conditions": [ "DAWN", "DUSK" ]
-      },
-      { "monster": "mon_weasel", "freq": 5, "cost_multiplier": 5 },
-      { "monster": "mon_weasel", "freq": 15, "cost_multiplier": 5, "conditions": [ "NIGHT" ] },
-      { "monster": "mon_turkey", "freq": 6, "cost_multiplier": 2, "pack_size": [ 1, 18 ] },
-      { "monster": "mon_turkey", "freq": 9, "cost_multiplier": 2, "pack_size": [ 1, 18 ], "conditions": [ "DAY" ] },
-      {
-        "monster": "mon_duck",
-        "freq": 4,
-        "cost_multiplier": 5,
-        "pack_size": [ 1, 4 ],
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_duck",
-        "freq": 6,
-        "cost_multiplier": 5,
-        "pack_size": [ 1, 4 ],
-        "conditions": [ "DAWN", "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_goose_canadian",
-        "freq": 4,
-        "cost_multiplier": 5,
-        "pack_size": [ 1, 4 ],
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_goose_canadian",
-        "freq": 6,
-        "cost_multiplier": 5,
-        "pack_size": [ 1, 4 ],
-        "conditions": [ "DAWN", "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_raccoon",
-        "freq": 8,
-        "cost_multiplier": 0,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_raccoon",
-        "freq": 12,
-        "cost_multiplier": 0,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_opossum",
-        "freq": 8,
-        "cost_multiplier": 0,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_opossum",
-        "freq": 12,
-        "cost_multiplier": 0,
-        "pack_size": [ 1, 3 ],
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      { "monster": "mon_black_rat", "freq": 10, "cost_multiplier": 0, "pack_size": [ 1, 5 ], "conditions": [ "DAY" ] },
-      {
-        "monster": "mon_black_rat",
-        "freq": 15,
-        "cost_multiplier": 0,
-        "pack_size": [ 1, 5 ],
-        "conditions": [ "NIGHT" ]
-      },
-      {
-        "monster": "mon_rattlesnake",
-        "freq": 15,
-        "cost_multiplier": 5,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_rattlesnake_giant",
-        "freq": 10,
-        "cost_multiplier": 5,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      { "monster": "mon_bee", "freq": 3, "cost_multiplier": 0, "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ] },
-      {
-        "monster": "mon_bee",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 24,
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_bee",
-        "freq": 3,
-        "cost_multiplier": 0,
-        "starts": 72,
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_bee",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 120,
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_bee",
-        "freq": 3,
-        "cost_multiplier": 0,
-        "starts": 168,
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_bee",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 216,
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_bee",
-        "freq": 3,
-        "cost_multiplier": 0,
-        "starts": 288,
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_bee",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 336,
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_bee",
-        "freq": 3,
-        "cost_multiplier": 0,
-        "starts": 384,
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_bee",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 456,
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_bee",
-        "freq": 3,
-        "cost_multiplier": 0,
-        "starts": 504,
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_bee",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 552,
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_bee",
-        "freq": 3,
-        "cost_multiplier": 0,
-        "starts": 624,
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_bee",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 672,
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_bee",
-        "freq": 3,
-        "cost_multiplier": 0,
-        "starts": 720,
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_bee",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 792,
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      { "monster": "mon_fly", "freq": 1, "cost_multiplier": 0, "conditions": [ "SPRING", "SUMMER", "AUTUMN" ] },
-      { "monster": "mon_fly", "freq": 3, "cost_multiplier": 0, "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ] },
-      {
-        "monster": "mon_fly",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 24,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_fly",
-        "freq": 3,
-        "cost_multiplier": 0,
-        "starts": 24,
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_fly",
-        "freq": 1,
-        "cost_multiplier": 0,
-        "starts": 72,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_fly",
-        "freq": 3,
-        "cost_multiplier": 0,
-        "starts": 72,
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_fly",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 120,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_fly",
-        "freq": 3,
-        "cost_multiplier": 0,
-        "starts": 120,
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_fly",
-        "freq": 1,
-        "cost_multiplier": 0,
-        "starts": 168,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_fly",
-        "freq": 3,
-        "cost_multiplier": 0,
-        "starts": 168,
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_fly",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 216,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_fly",
-        "freq": 3,
-        "cost_multiplier": 0,
-        "starts": 216,
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_fly",
-        "freq": 1,
-        "cost_multiplier": 0,
-        "starts": 288,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_fly",
-        "freq": 3,
-        "cost_multiplier": 0,
-        "starts": 288,
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_fly",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 336,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_fly",
-        "freq": 3,
-        "cost_multiplier": 0,
-        "starts": 336,
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_fly",
-        "freq": 1,
-        "cost_multiplier": 0,
-        "starts": 384,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_fly",
-        "freq": 3,
-        "cost_multiplier": 0,
-        "starts": 384,
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_fly",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 456,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_fly",
-        "freq": 3,
-        "cost_multiplier": 0,
-        "starts": 456,
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_fly",
-        "freq": 1,
-        "cost_multiplier": 0,
-        "starts": 504,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_fly",
-        "freq": 3,
-        "cost_multiplier": 0,
-        "starts": 504,
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_fly",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 552,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_fly",
-        "freq": 3,
-        "cost_multiplier": 0,
-        "starts": 552,
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_fly",
-        "freq": 1,
-        "cost_multiplier": 0,
-        "starts": 624,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_fly",
-        "freq": 3,
-        "cost_multiplier": 0,
-        "starts": 624,
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_fly",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 672,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_fly",
-        "freq": 3,
-        "cost_multiplier": 0,
-        "starts": 672,
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_fly",
-        "freq": 1,
-        "cost_multiplier": 0,
-        "starts": 720,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_fly",
-        "freq": 3,
-        "cost_multiplier": 0,
-        "starts": 720,
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_fly",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 793,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_fly",
-        "freq": 3,
-        "cost_multiplier": 0,
-        "starts": 792,
-        "conditions": [ "DAY", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_jumping_giant",
-        "freq": 0,
-        "cost_multiplier": 0,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_jumping_giant",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "conditions": [ "DAWN", "DAY", "DUSK", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_jumping_giant",
-        "freq": 1,
-        "cost_multiplier": 0,
-        "starts": 24,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_jumping_giant",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 24,
-        "conditions": [ "DAWN", "DAY", "DUSK", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_jumping_giant",
-        "freq": 0,
-        "cost_multiplier": 0,
-        "starts": 72,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_jumping_giant",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 72,
-        "conditions": [ "DAWN", "DAY", "DUSK", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_jumping_giant",
-        "freq": 1,
-        "cost_multiplier": 0,
-        "starts": 120,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_jumping_giant",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 120,
-        "conditions": [ "DAWN", "DAY", "DUSK", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_jumping_giant",
-        "freq": 0,
-        "cost_multiplier": 0,
-        "starts": 168,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_jumping_giant",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 168,
-        "conditions": [ "DAWN", "DAY", "DUSK", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_jumping_giant",
-        "freq": 1,
-        "cost_multiplier": 0,
-        "starts": 216,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_jumping_giant",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 216,
-        "conditions": [ "DAWN", "DAY", "DUSK", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_jumping_giant",
-        "freq": 0,
-        "cost_multiplier": 0,
-        "starts": 288,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_jumping_giant",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 288,
-        "conditions": [ "DAWN", "DAY", "DUSK", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_jumping_giant",
-        "freq": 1,
-        "cost_multiplier": 0,
-        "starts": 336,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_jumping_giant",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 336,
-        "conditions": [ "DAWN", "DAY", "DUSK", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_jumping_giant",
-        "freq": 0,
-        "cost_multiplier": 0,
-        "starts": 384,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_jumping_giant",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 384,
-        "conditions": [ "DAWN", "DAY", "DUSK", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_jumping_giant",
-        "freq": 1,
-        "cost_multiplier": 0,
-        "starts": 456,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_jumping_giant",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 456,
-        "conditions": [ "DAWN", "DAY", "DUSK", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_jumping_giant",
-        "freq": 0,
-        "cost_multiplier": 0,
-        "starts": 504,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_jumping_giant",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 504,
-        "conditions": [ "DAWN", "DAY", "DUSK", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_jumping_giant",
-        "freq": 1,
-        "cost_multiplier": 0,
-        "starts": 552,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_jumping_giant",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 552,
-        "conditions": [ "DAWN", "DAY", "DUSK", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_jumping_giant",
-        "freq": 0,
-        "cost_multiplier": 0,
-        "starts": 624,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_jumping_giant",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 624,
-        "conditions": [ "DAWN", "DAY", "DUSK", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_jumping_giant",
-        "freq": 1,
-        "cost_multiplier": 0,
-        "starts": 672,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_jumping_giant",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 672,
-        "conditions": [ "DAWN", "DAY", "DUSK", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_jumping_giant",
-        "freq": 0,
-        "cost_multiplier": 0,
-        "starts": 720,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_jumping_giant",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 720,
-        "conditions": [ "DAWN", "DAY", "DUSK", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_jumping_giant",
-        "freq": 1,
-        "cost_multiplier": 0,
-        "starts": 792,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_jumping_giant",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 792,
-        "conditions": [ "DAWN", "DAY", "DUSK", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_wolf_giant",
-        "freq": 0,
-        "cost_multiplier": 0,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_wolf_giant",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "conditions": [ "DUSK", "NIGHT", "DAWN", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_wolf_giant",
-        "freq": 1,
-        "cost_multiplier": 0,
-        "starts": 24,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_wolf_giant",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 24,
-        "conditions": [ "DUSK", "NIGHT", "DAWN", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_wolf_giant",
-        "freq": 0,
-        "cost_multiplier": 0,
-        "starts": 72,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_wolf_giant",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 72,
-        "conditions": [ "DUSK", "NIGHT", "DAWN", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_wolf_giant",
-        "freq": 1,
-        "cost_multiplier": 0,
-        "starts": 120,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_wolf_giant",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 120,
-        "conditions": [ "DUSK", "NIGHT", "DAWN", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_wolf_giant",
-        "freq": 0,
-        "cost_multiplier": 0,
-        "starts": 168,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_wolf_giant",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 168,
-        "conditions": [ "DUSK", "NIGHT", "DAWN", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_wolf_giant",
-        "freq": 1,
-        "cost_multiplier": 0,
-        "starts": 216,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_wolf_giant",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 216,
-        "conditions": [ "DUSK", "NIGHT", "DAWN", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_wolf_giant",
-        "freq": 0,
-        "cost_multiplier": 0,
-        "starts": 288,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_wolf_giant",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 288,
-        "conditions": [ "DUSK", "NIGHT", "DAWN", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_wolf_giant",
-        "freq": 1,
-        "cost_multiplier": 0,
-        "starts": 336,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_wolf_giant",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 336,
-        "conditions": [ "DUSK", "NIGHT", "DAWN", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_wolf_giant",
-        "freq": 0,
-        "cost_multiplier": 0,
-        "starts": 384,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_wolf_giant",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 384,
-        "conditions": [ "DUSK", "NIGHT", "DAWN", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_wolf_giant",
-        "freq": 1,
-        "cost_multiplier": 0,
-        "starts": 456,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_wolf_giant",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 456,
-        "conditions": [ "DUSK", "NIGHT", "DAWN", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_wolf_giant",
-        "freq": 0,
-        "cost_multiplier": 0,
-        "starts": 504,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_wolf_giant",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 504,
-        "conditions": [ "DUSK", "NIGHT", "DAWN", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_wolf_giant",
-        "freq": 1,
-        "cost_multiplier": 0,
-        "starts": 552,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_wolf_giant",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 552,
-        "conditions": [ "DUSK", "NIGHT", "DAWN", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_wolf_giant",
-        "freq": 0,
-        "cost_multiplier": 0,
-        "starts": 624,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_wolf_giant",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 624,
-        "conditions": [ "DUSK", "NIGHT", "DAWN", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_wolf_giant",
-        "freq": 1,
-        "cost_multiplier": 0,
-        "starts": 672,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_wolf_giant",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 672,
-        "conditions": [ "DUSK", "NIGHT", "DAWN", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_wolf_giant",
-        "freq": 0,
-        "cost_multiplier": 0,
-        "starts": 720,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_wolf_giant",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 720,
-        "conditions": [ "DUSK", "NIGHT", "DAWN", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_wolf_giant",
-        "freq": 1,
-        "cost_multiplier": 0,
-        "starts": 792,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_spider_wolf_giant",
-        "freq": 2,
-        "cost_multiplier": 0,
-        "starts": 792,
-        "conditions": [ "DUSK", "NIGHT", "DAWN", "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_wasp_small",
-        "freq": 20,
-        "cost_multiplier": 2,
+        "monster_group": "GROUP_WILDERNESS_FOREST_INSECT",
+        "weight": 75,
         "conditions": [ "SPRING", "SUMMER", "AUTUMN" ],
-        "ends": 168
+        "starts": "12 days"
       },
       {
-        "monster": "mon_wasp_small",
-        "freq": 25,
-        "cost_multiplier": 2,
-        "starts": 168,
-        "ends": 336,
+        "monster_group": "GROUP_WILDERNESS_FOREST_INSECT",
+        "weight": 75,
+        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ],
+        "starts": "28 days"
+      },
+      {
+        "monster_group": "GROUP_WILDERNESS_FOREST_INSECT",
+        "weight": 75,
+        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ],
+        "starts": "112 days"
+      },
+      {
+        "monster_group": "GROUP_WILDERNESS_FOREST_INSECT",
+        "weight": 75,
+        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ],
+        "starts": "360 days"
+      },
+      {
+        "monster_group": "GROUP_WILDERNESS_FOREST_ZOMBIE",
+        "weight": 50,
+        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ],
+        "starts": "12 days"
+      },
+      {
+        "monster_group": "GROUP_WILDERNESS_FOREST_ZOMBIE",
+        "weight": 50,
+        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ],
+        "starts": "28 days"
+      },
+      {
+        "monster_group": "GROUP_WILDERNESS_FOREST_ZOMBIE",
+        "weight": 50,
+        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ],
+        "starts": "112 days"
+      },
+      {
+        "monster_group": "GROUP_WILDERNESS_FOREST_ZOMBIE",
+        "weight": 50,
+        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ],
+        "starts": "360 days"
+      },
+      {
+        "monster_group": "GROUP_WILDERNESS_FOREST_MAMMAL_MUTANT",
+        "weight": 10,
+        "starts": "14 days",
         "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
       },
       {
-        "monster": "mon_wasp",
-        "freq": 30,
-        "cost_multiplier": 2,
-        "starts": 720,
-        "ends": 1440,
+        "monster_group": "GROUP_WILDERNESS_FOREST_MAMMAL_MUTANT",
+        "weight": 20,
+        "starts": "28 days",
         "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
       },
       {
-        "monster": "mon_wasp",
-        "freq": 30,
-        "cost_multiplier": 2,
-        "pack_size": [ 1, 2 ],
-        "starts": 1440,
-        "ends": 2160,
+        "monster_group": "GROUP_WILDERNESS_FOREST_MAMMAL_MUTANT",
+        "weight": 40,
+        "starts": "90 days",
         "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
       },
       {
-        "monster": "mon_wasp",
-        "freq": 30,
-        "cost_multiplier": 2,
-        "pack_size": [ 1, 3 ],
-        "starts": 2160,
+        "monster_group": "GROUP_WILDERNESS_FOREST_REPTILE",
+        "weight": 10,
+        "cost_multiplier": 5,
         "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
       },
-      { "monster": "mon_worm", "freq": 1, "cost_multiplier": 0, "conditions": [ "SPRING", "SUMMER", "AUTUMN" ] },
-      {
-        "monster": "mon_worm",
-        "freq": 1,
-        "cost_multiplier": 0,
-        "starts": 168,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_worm",
-        "freq": 1,
-        "cost_multiplier": 0,
-        "starts": 336,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_worm",
-        "freq": 1,
-        "cost_multiplier": 0,
-        "starts": 504,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      {
-        "monster": "mon_worm",
-        "freq": 1,
-        "cost_multiplier": 0,
-        "starts": 672,
-        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
-      },
-      { "monster": "mon_nakedmolerat_giant", "freq": 1, "cost_multiplier": 3, "conditions": [ "DUSK", "NIGHT" ] },
-      { "monster": "mon_mutant_experimental", "freq": 3, "cost_multiplier": 0, "conditions": [ "DUSK", "NIGHT" ] },
-      { "monster": "mon_chicken", "freq": 2, "cost_multiplier": 2, "starts": 336 },
-      { "monster": "mon_cow", "freq": 2, "cost_multiplier": 3, "starts": 504 },
-      { "monster": "mon_horse", "freq": 2, "cost_multiplier": 2, "starts": 168 },
-      { "monster": "mon_pig", "freq": 2, "cost_multiplier": 2, "starts": 336 },
-      { "monster": "mon_zombie_pig", "freq": 2, "cost_multiplier": 2, "starts": 168 },
-      { "monster": "mon_sheep", "freq": 2, "cost_multiplier": 3, "starts": 504 }
+      { "monster_group": "GROUP_MUTAFROGS_FOREST", "weight": 8, "starts": "28 days" }
     ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_WILDERNESS_FOREST_MAMMAL",
+    "default": "mon_null",
+    "is_animal": true,
+    "monsters": [
+      { "monster": "mon_bat_vampire", "weight": 10, "cost_multiplier": 2, "pack_size": [ 3, 12 ] },
+      { "monster_group": "GROUP_BATS", "weight": 10, "cost_multiplier": 2, "pack_size": [ 3, 12 ] },
+      { "monster_group": "GROUP_BEARS", "weight": 1, "cost_multiplier": 10, "pack_size": [ 1, 3 ] },
+      { "monster_group": "GROUP_PIGS", "weight": 1, "cost_multiplier": 2, "pack_size": [ 1, 6 ] },
+      { "monster_group": "GROUP_SHEEPS", "weight": 1, "cost_multiplier": 2, "pack_size": [ 1, 4 ] },
+      { "monster_group": "GROUP_COWS", "weight": 1, "cost_multiplier": 3 },
+      { "monster_group": "GROUP_STRAY_CATS", "weight": 10 },
+      { "monster_group": "GROUP_STRAY_CATS", "weight": 1, "pack_size": [ 2, 8 ] },
+      { "monster": "mon_chipmunk", "weight": 30, "cost_multiplier": 0, "pack_size": [ 1, 2 ] },
+      { "monster_group": "GROUP_STRAY_DOGS", "weight": 6, "cost_multiplier": 25, "pack_size": [ 1, 6 ] },
+      { "monster_group": "GROUP_HORSES", "weight": 1, "cost_multiplier": 15, "pack_size": [ 1, 4 ] },
+      { "monster": "mon_groundhog", "weight": 30, "cost_multiplier": 5, "pack_size": [ 1, 6 ] },
+      { "monster_group": "GROUP_RABBIT_WILD", "weight": 20, "pack_size": [ 1, 5 ] },
+      { "monster": "mon_squirrel", "weight": 50, "cost_multiplier": 0, "pack_size": [ 1, 2 ] },
+      { "monster": "mon_squirrel_red", "weight": 50, "cost_multiplier": 0, "pack_size": [ 1, 2 ] },
+      { "monster": "mon_weasel", "weight": 5, "cost_multiplier": 5 },
+      { "monster": "mon_raccoon", "weight": 8, "cost_multiplier": 0, "pack_size": [ 1, 3 ] },
+      { "monster": "mon_opossum", "weight": 8, "cost_multiplier": 0, "pack_size": [ 1, 3 ] },
+      { "monster": "mon_black_rat", "weight": 10, "cost_multiplier": 0, "pack_size": [ 1, 5 ] },
+      { "monster_group": "GROUP_WOLFS", "weight": 10, "cost_multiplier": 2, "pack_size": [ 1, 3 ] },
+      { "monster_group": "GROUP_WILDERNESS_FOREST_MAMMAL_WINTER", "weight": 22 }
+    ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_WILDERNESS_FOREST_MAMMAL_WINTER",
+    "default": "mon_null",
+    "is_animal": true,
+    "monsters": [
+      { "monster": "mon_bobcat", "weight": 7, "cost_multiplier": 2 },
+      { "monster_group": "GROUP_BOARS", "weight": 2, "cost_multiplier": 2, "pack_size": [ 1, 4 ] },
+      { "monster_group": "GROUP_COUGARS", "weight": 1, "cost_multiplier": 3 },
+      { "monster_group": "GROUP_DEERS", "weight": 4, "cost_multiplier": 2, "pack_size": [ 1, 5 ] },
+      { "monster": "mon_fox_gray", "weight": 1, "cost_multiplier": 0 },
+      { "monster": "mon_fox_red", "weight": 1, "cost_multiplier": 0 },
+      { "monster_group": "GROUP_COYOTE", "weight": 1, "cost_multiplier": 2, "pack_size": [ 1, 6 ] },
+      { "monster_group": "GROUP_MOOSE", "weight": 1, "cost_multiplier": 3, "pack_size": [ 1, 3 ] }
+    ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_WILDERNESS_FOREST_MAMMAL_MUTANT",
+    "default": "mon_null",
+    "is_animal": true,
+    "monsters": [
+      { "monster_group": "GROUP_DEER_MUT_SPIDERS", "weight": 4, "cost_multiplier": 2, "pack_size": [ 1, 3 ] },
+      { "monster": "mon_bear_mutant_3headed", "weight": 1, "cost_multiplier": 10 },
+      { "monster": "mon_bat_vampire_mutant", "weight": 1, "cost_multiplier": 15, "pack_size": [ 1, 3 ] },
+      { "monster": "mon_wolf_mutant_huge", "weight": 1, "cost_multiplier": 0, "pack_size": [ 1, 2 ] },
+      { "monster": "mon_nakedmolerat_giant", "weight": 1, "cost_multiplier": 3, "conditions": [ "DUSK", "NIGHT" ] },
+      { "monster": "mon_mutant_experimental", "weight": 1, "cost_multiplier": 0, "conditions": [ "DUSK", "NIGHT" ] }
+    ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_WILDERNESS_FOREST_BIRD",
+    "default": "mon_null",
+    "is_animal": true,
+    "monsters": [
+      { "monster_group": "GROUP_CROWS", "weight": 5, "cost_multiplier": 0, "pack_size": [ 1, 14 ] },
+      { "monster_group": "GROUP_TURKEYS", "weight": 6, "cost_multiplier": 2, "pack_size": [ 1, 18 ] },
+      {
+        "monster_group": "GROUP_DUCKS",
+        "weight": 4,
+        "cost_multiplier": 5,
+        "pack_size": [ 1, 4 ],
+        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
+      },
+      {
+        "monster_group": "GROUP_GEESE_CANADIAN",
+        "weight": 4,
+        "cost_multiplier": 5,
+        "pack_size": [ 1, 4 ],
+        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
+      }
+    ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_WILDERNESS_FOREST_INSECT_HARMLESS",
+    "default": "mon_null",
+    "is_animal": true,
+    "monsters": [
+      { "monster_group": "GROUP_FLY", "weight": 2, "cost_multiplier": 0 },
+      { "monster_group": "GROUP_BEE", "weight": 1, "cost_multiplier": 0 }
+    ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_WILDERNESS_FOREST_INSECT",
+    "default": "mon_null",
+    "is_animal": true,
+    "monsters": [
+      { "monster_group": "GROUP_FLY", "weight": 2, "cost_multiplier": 0 },
+      { "monster_group": "GROUP_SPIDER_JUMPING", "weight": 1, "cost_multiplier": 0 },
+      { "monster_group": "GROUP_SPIDER_WOLF", "weight": 1, "cost_multiplier": 0 },
+      { "monster_group": "GROUP_BEE", "weight": 1, "cost_multiplier": 0 },
+      { "monster": "mon_wasp_small", "weight": 1, "cost_multiplier": 2 },
+      { "monster": "mon_wasp", "weight": 1, "cost_multiplier": 2, "starts": "7 days" },
+      { "monster_group": "GROUP_LOCUST", "weight": 3, "pack_size": [ 3, 9 ], "cost_multiplier": 0 },
+      { "monster_group": "GROUP_WORM", "weight": 1, "cost_multiplier": 0 }
+    ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_WILDERNESS_FOREST_ZOMBIE",
+    "default": "mon_null",
+    "is_animal": true,
+    "monsters": [
+      { "monster": "mon_zeer", "weight": 4, "cost_multiplier": 10, "pack_size": [ 1, 5 ] },
+      { "monster": "mon_zolf", "weight": 2, "cost_multiplier": 2, "pack_size": [ 1, 4 ] },
+      { "monster": "mon_zougar", "weight": 2, "cost_multiplier": 10 },
+      { "monster": "mon_zombear", "weight": 1, "cost_multiplier": 10 },
+      { "monster": "mon_zombie_dog", "weight": 1, "cost_multiplier": 2 },
+      { "monster": "mon_zombie_pig", "weight": 1, "cost_multiplier": 2 },
+      { "monster": "mon_zoose", "weight": 1, "cost_multiplier": 10 }
+    ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_WILDERNESS_FOREST_REPTILE",
+    "default": "mon_null",
+    "is_animal": true,
+    "monsters": [ { "monster_group": "GROUP_RATTLESNAKE", "weight": 3 } ]
   },
   {
     "type": "monstergroup",
@@ -2209,7 +708,6 @@
         "pack_size": [ 1, 3 ]
       },
       { "monster": "mon_fish_blinky", "freq": 5, "cost_multiplier": 3, "pack_size": [ 1, 3 ] },
-      { "monster": "mon_kraken_boss", "freq": 1, "cost_multiplier": 3 },
       { "monster": "mon_dragonfly_naiad", "freq": 50, "cost_multiplier": 2, "pack_size": [ 1, 3 ] }
     ]
   },

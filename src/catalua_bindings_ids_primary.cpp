@@ -1,15 +1,14 @@
-#include "catalua_bindings_ids_common.h"
-
-#include "ammo.h"
 #include "activity_type.h"
+#include "ammo.h"
 #include "bionics.h"
 #include "bodypart.h"
+#include "catalua_bindings_ids_common.h"
 #include "disease.h"
 #include "effect.h"
 #include "faction.h"
-#include "field_type.h"
 #include "itype.h"
-#include "mapdata.h"
+#include "map/field_type.h"
+#include "map/mapdata.h"
 
 auto cata::detail::reg_game_ids_primary( sol::state &lua ) -> void
 {

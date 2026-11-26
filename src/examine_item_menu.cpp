@@ -1,25 +1,27 @@
 #include "examine_item_menu.h"
 
-#include <vector>
-#include <string>
-
 #include "auto_pickup.h"
-#include "avatar_action.h"
 #include "avatar.h"
+#include "avatar_action.h"
 #include "avatar_functions.h"
+#include "clothing_link.h"
 #include "crafting.h"
 #include "game_inventory.h"
-#include "map.h"
 #include "input.h"
 #include "item.h"
 #include "item_functions.h"
 #include "itype.h"
+#include "map/map.h"
 #include "messages.h"
 #include "output.h"
-#include "salvage.h"
 #include "recipe_dictionary.h"
 #include "rot.h"
+#include "salvage.h"
 #include "ui_manager.h"
+
+#include <algorithm>
+#include <string>
+#include <vector>
 //#include "handle_action.cpp"
 #include "utils/url.h"
 #include "options.h"
@@ -62,7 +64,7 @@ bool run(
 
     int info_area_scroll_pos = 0;
     constexpr int info_area_scroll_step = 3;
-    temperature_flag temperature = rot::temperature_flag_for_location( get_map(), itm );
+    temperature_flag temperature = rot::temp::for_location( get_map(), itm );
     std::vector<iteminfo> item_info_vals = itm.info( temperature );
     std::vector<iteminfo> dummy_compare;
     item_info_data data( itm.tname(), itm.type_name(), item_info_vals, dummy_compare,
@@ -237,6 +239,59 @@ bool run(
         } );
     }
 
+    const auto can_drop_with_clothing = std::ranges::any_of( you.worn, [&]( const auto * worn ) {
+        return can_link_to_clothing( you, itm, *worn );
+    } );
+    if( can_drop_with_clothing || itm.has_var( "DROP_WITH_CLOTHING_TARGET" ) ) {
+        add_entry( "DROP_WITH_CLOTHING", hint_rating::good, [&]() {
+            auto clothing = std::vector<item *> {};
+            for( auto *worn : you.worn ) {
+                if( worn != &itm ) {
+                    clothing.push_back( worn );
+                }
+            }
+
+            auto menu = uilist{};
+            menu.text = _( "Link this item to which clothing?" );
+            menu.addentry( 0, true, 0, _( "No clothing item" ) );
+            for( auto index = size_t{ 0 }; index < clothing.size(); ++index ) {
+                const auto fits = can_link_to_clothing( you, itm, *clothing[index] );
+                menu.addentry( static_cast<int>( index + 1 ), fits, 0,
+                               fits ? clothing[index]->tname() :
+                               string_format( _( "%s (not enough storage)" ), clothing[index]->tname() ) );
+            }
+            menu.query();
+            if( menu.ret < 0 ) {
+                return false;
+            }
+            if( menu.ret == 0 ) {
+                itm.erase_var( "DROP_WITH_CLOTHING_TARGET" );
+                itm.erase_var( "DROP_WITH_CLOTHING_NAME" );
+                return false;
+            }
+
+            auto &target = *clothing[static_cast<size_t>( menu.ret - 1 )];
+            auto clothing_id = target.get_var( "DROP_WITH_CLOTHING_ID", 0 );
+            const auto clothing_id_in_use = std::ranges::any_of( you.worn,
+            [&target, clothing_id]( const auto * worn ) {
+                return worn != &target && worn->get_var( "DROP_WITH_CLOTHING_ID", 0 ) == clothing_id;
+            } );
+            if( clothing_id <= 0 || clothing_id_in_use ) {
+                auto next_id = 1;
+                you.visit_items( [&next_id]( item * candidate ) {
+                    next_id = std::max( next_id, candidate->get_var( "DROP_WITH_CLOTHING_ID", 0 ) + 1 );
+                    next_id = std::max( next_id, candidate->get_var( "DROP_WITH_CLOTHING_TARGET", 0 ) + 1 );
+                    return VisitResponse::NEXT;
+                } );
+                clothing_id = next_id;
+                target.set_var( "DROP_WITH_CLOTHING_ID", clothing_id );
+            }
+            itm.set_var( "DROP_WITH_CLOTHING_TARGET", clothing_id );
+            itm.set_var( "DROP_WITH_CLOTHING_NAME", target.tname() );
+            return false;
+        } );
+    }
+
     if( !get_option<std::string>( "HHG_URL" ).empty() ) {
         add_entry( "OPEN_ITEM_IN_HHG", hint_rating::good, [&]() {
             open_url( get_option<std::string>( "HHG_URL" ) + std::string( "/item/" ) + itm.typeId().c_str() +
@@ -370,6 +425,18 @@ hint_rating rate_action_eat( const avatar &you, const item &it )
 {
     if( !you.can_consume( it ) ) {
         return hint_rating::cant;
+    }
+    const auto &fuel = you.get_consumable_from( const_cast<item &>( it ) );
+    if( !fuel.is_comestible() ) {
+        // Refuse bionic fuel without fuel space, as the consume menu does. Warn when the furnace is full.
+        switch( you.get_cbm_rechargeable_with( fuel ) ) {
+            case rechargeable_cbm::furnace:
+                return you.is_max_power() ? hint_rating::iffy : hint_rating::good;
+            case rechargeable_cbm::other:
+                return you.get_fuel_capacity( fuel.typeId() ) > 0 ? hint_rating::good : hint_rating::cant;
+            default:
+                return hint_rating::good;
+        }
     }
 
     const ret_val<edible_rating> rating = you.will_eat( it );

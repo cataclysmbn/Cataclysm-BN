@@ -1,3 +1,5 @@
+#include <string>
+
 #include "json.h"
 #include "string_formatter.h"
 #include "units.h"
@@ -10,9 +12,9 @@ template<>
 void volume::serialize( JsonOut &jsout ) const
 {
     if( value_ % 1000 == 0 ) {
-        jsout.write( string_format( "%d L", value_ / 1000 ) );
+        jsout.write( std::to_string( value_ / 1000 ) + " L" );
     } else {
-        jsout.write( string_format( "%d ml", value_ ) );
+        jsout.write( std::to_string( value_ ) + " ml" );
     }
 }
 
@@ -49,9 +51,21 @@ void money::serialize( JsonOut &jsout ) const
 }
 
 template<>
+void sound::serialize( JsonOut &jsout ) const
+{
+    jsout.write( string_format( "%d dB", value_ ) );
+}
+
+template<>
 void money::deserialize( JsonIn &jsin )
 {
     *this = read_from_json_string<money>( jsin, units::money_units );
+}
+
+template<>
+void sound::deserialize( JsonIn &jsin )
+{
+    *this = read_from_json_string<sound>( jsin, units::sound_units );
 }
 
 template<>

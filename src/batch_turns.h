@@ -4,7 +4,7 @@
  * Free functions for analytically advancing game state by N turns for
  * entities that were outside the reality bubble (or simply not processed)
  * during that period.  These are called from:
- *   - map::loadn()  (submap-level: fields, items, vehicles)
+ *   - mapbuffer::actualize_submap()
  *   - game::load_npcs()  (per-NPC catchup via Creature::batch_turns)
  *   - map::spawn_monsters_submap() (per-monster catchup)
  *
@@ -34,6 +34,6 @@ void batch_turns_items( submap &sm, int n );
 /**
  * Convenience wrapper: calls batch_turns_field, batch_turns_items, and
  * vehicle::update_time for every vehicle on the submap.  Intended for use
- * in map::loadn() immediately before actualize().
+ * immediately before submap actualization.
  */
 void run_submap_batch_turns( submap &sm, int n );

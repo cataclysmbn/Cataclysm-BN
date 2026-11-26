@@ -1,0 +1,111 @@
+[
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": "mi-go_forward_camp_1",
+    "object": {
+      "fill_ter": "t_floor_resin",
+      "rows": [
+        "........................",
+        "........................",
+        "........................",
+        "............||..........",
+        "..........||||||........",
+        "........|||TPTP|||......",
+        "......|||       V|||....",
+        "....|||V    H     T||...",
+        "...||<            T |...",
+        "...|||  H   P P     ||..",
+        "....||       &      T|..",
+        ".....|      P P     T|..",
+        ".....+              ||..",
+        "....|| TPTP  H  TPTP|...",
+        "..|||V              |...",
+        "||| +      TPTP  V ||...",
+        "||  ||| TPTP     |||....",
+        "|| 14 ||||||||TT||......",
+        ".|&  ||......||||.......",
+        ".|||||..................",
+        "........................",
+        "........................",
+        "........................",
+        "........................"
+      ],
+      "palettes": [ "mi-go_palette" ],
+      "place_nested": [ { "chunks": [ "mi-go_encampment1_room14" ], "x": 1, "y": 14 } ],
+      "monster": { "H": { "monster": "mon_mi_go_guard" } }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": "mi-go_forward_camp_2",
+    "object": {
+      "fill_ter": "t_floor_resin",
+      "rows": [
+        "vvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvv||vvvvvvvvvv",
+        "vvvvvvvvvv||||||vvvvvvvv",
+        "vvvvvvvv|||   O|||vvvvvv",
+        "vvvvvv|||    OTO |||vvvv",
+        "vvvv|||i  O   O i O||vvv",
+        "vvv||>   OTO     OTO|vvv",
+        "vvv||<    O  TnT  O ||vv",
+        "vvvv||i    F nnnH   i|vv",
+        "vvvvv|    O  TnT O   |vv",
+        "vvvvv|   OTO    OTO ||vv",
+        "vvvv|| i  O   O  O  |vvv",
+        "vv|||        OTO  T |vvv",
+        "||| + F  &    O   V||vvv",
+        "||T |||    i    F|||vvvv",
+        "||   i||||||||ii||vvvvvv",
+        "v|PPP||vvvvvv||||vvvvvvv",
+        "v|||||vvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvv"
+      ],
+      "palettes": [ "mi-go_palette" ],
+      "monster": { "H": { "monster": "mon_mi_go_surgeon" } }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": "mi-go_forward_camp_3",
+    "object": {
+      "fill_ter": "t_floor_resin",
+      "rows": [
+        "vvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvTvvvvvvvvvv",
+        "vvvvvvvvvT,,,,,,Tvvvvvvv",
+        "vvvvvvvv,,,,,,,,,vvvvvvv",
+        "vvvvvRv,,,,,,,,,,,,vvvvv",
+        "vvvvv>v,,,,,,,,,,,,Tvvvv",
+        "vvvvvvv,,,,,,,,,,,,vvvvv",
+        "vvvvvvv,,,,,,,,,,,vvvvvv",
+        "vvvvvvT,,,,,,,,,,,Tvvvvv",
+        "vvvvvvvv,,,,,,,,,vvvvvvv",
+        "vvvvvvvvv,,,,,,,vvvvvvvv",
+        "vvvvvvvvvT,,,,,Tvvvvvvvv",
+        "vvvvvvvvvvvvTvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvv",
+        "vvvvvvvvvvvvvvvvvvvvvvvv"
+      ],
+      "palettes": [ "mi-go_palette" ],
+      "terrain": { "R": "t_resin_roof" }
+    }
+  }
+]

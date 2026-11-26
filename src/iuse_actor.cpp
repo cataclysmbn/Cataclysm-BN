@@ -1,23 +1,9 @@
 #include "iuse_actor.h"
+#include "digital_media.h"
 
-#include <algorithm>
-#include <array>
-#include <cctype>
-#include <cmath>
-#include <cstddef>
-#include <functional>
-#include <iterator>
-#include <list>
-#include <memory>
-#include <ret_val.h>
-#include <sstream>
-#include <string>
-#include <utility>
-#include <vector>
-#include <ranges>
-
-#include "action_time_scale.h"
 #include "action.h"
+#include "action_time_scale.h"
+#include "active_tile_data_def.h"
 #include "activity_handlers.h"
 #include "addiction.h"
 #include "ammo.h"
@@ -29,16 +15,17 @@
 #include "bodypart.h"
 #include "cached_options.h"
 #include "calendar.h"
-#include "catalua_hooks.h"
-#include "catalua_sol.h"
 #include "cata_utility.h"
+#include "catacharset.h"
+#include "catalua_hooks.h"
 #include "catalua_icallback_actor.h"
+#include "catalua_sol.h"
 #include "character.h"
 #include "character_functions.h"
 #include "character_id.h"
+#include "cloning_utils.h"
 #include "clothing_mod.h"
 #include "crafting.h"
-#include "active_tile_data_def.h"
 #include "creature.h"
 #include "debug.h"
 #include "dimension_info.h"
@@ -46,7 +33,8 @@
 #include "enum_conversions.h"
 #include "enums.h"
 #include "explosion.h"
-#include "field_type.h"
+#include "field_ignition_utils.h"
+#include "faction.h"
 #include "flag.h"
 #include "flat_set.h"
 #include "game.h"
@@ -64,12 +52,14 @@
 #include "json.h"
 #include "line.h"
 #include "locations.h"
-#include "magic.h"
-#include "map.h"
+#include "magic/magic.h"
+#include "map/field_type.h"
+#include "map/map.h"
+#include "map/map_selector.h"
+#include "map/mapdata.h"
+#include "map/submap_load_manager.h"
+#include "map/utils/map_utils.h"
 #include "map_iterator.h"
-#include "map_selector.h"
-#include "map_utils.h"
-#include "mapdata.h"
 #include "material.h"
 #include "memory_fast.h"
 #include "messages.h"
@@ -80,24 +70,24 @@
 #include "npc.h"
 #include "options.h"
 #include "output.h"
-#include "overmap.h"
-#include "overmap_special.h"
-#include "overmap_ui.h"
+#include "overmap/overmap.h"
+#include "overmap/overmap_special.h"
+#include "overmap/overmap_ui.h"
 #include "player.h"
 #include "player_activity.h"
 #include "pldata.h"
 #include "popup.h"
 #include "recipe.h"
 #include "recipe_dictionary.h"
+#include "reload/reload.h"
+#include "reload/reload_ui.h"
 #include "requirements.h"
 #include "rng.h"
 #include "skill.h"
 #include "sounds.h"
-#include "cloning_utils.h"
 #include "string_formatter.h"
-#include "string_utils.h"
 #include "string_input_popup.h"
-#include "submap_load_manager.h"
+#include "string_utils.h"
 #include "text_snippets.h"
 #include "translations.h"
 #include "trap.h"
@@ -106,17 +96,34 @@
 #include "uistate.h"
 #include "units_utility.h"
 #include "value_ptr.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vehicle_selector.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vehicle_selector.h"
+#include "vehicle/vpart_position.h"
+#include "vehicle/vpart_range.h"
 #include "visitable.h"
 #include "vitamin.h"
-#include "vpart_position.h"
-#include "vpart_range.h"
-#include "veh_type.h"
-#include "weather.h"
+#include "weather/weather.h"
+#include "world.h"
 #include "world_type.h"
-#include "faction.h"
+
+#include <algorithm>
+#include <array>
+#include <cctype>
+#include <cmath>
+#include <cstddef>
+#include <functional>
+#include <iterator>
+#include <list>
+#include <locale>
+#include <memory>
+#include <ranges>
+#include <ret_val.h>
+#include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
 
 static const activity_id ACT_FIRSTAID( "ACT_FIRSTAID" );
 static const activity_id ACT_HAND_CRANK( "ACT_HAND_CRANK" );
@@ -159,9 +166,6 @@ static const itype_id itype_fire( "fire" );
 static const itype_id itype_stock_small( "stock_small" );
 static const itype_id itype_syringe( "syringe" );
 static const itype_id itype_fertilizer( "fertilizer" );
-static const itype_id itype_genome_drive( "genome_drive" );
-static const itype_id itype_usb_drive( "usb_drive" );
-static const flag_id flag_genome_drive( "GENOME_DRIVE" );
 static const itype_id itype_mutagen( "mutagen" );
 static const itype_id itype_biomaterial( "biomaterial" );
 
@@ -231,6 +235,7 @@ void iuse_transform::load( const JsonObject &obj )
         }
     }
     obj.read( "target_ammo", ammo_type );
+    obj.read( "set_timer", set_timer );
 
     obj.read( "countdown", countdown );
 
@@ -263,14 +268,17 @@ void iuse_transform::load( const JsonObject &obj )
     obj.read( "need_dry", need_dry );
 
     obj.read( "qualities_needed", qualities_needed );
-
-    obj.read( "menu_text", menu_text );
 }
 
 int iuse_transform::use( player &p, item &it, bool t, const tripoint_bub_ms &pos ) const
 {
     if( t ) {
         return 0; // invoked from active item processing, do nothing.
+    }
+
+    if( it.has_flag( flag_id( "DIGITAL_READER" ) ) && target->can_use( "MP3_ON" ) &&
+        !digital_music_ready( p, it ) ) {
+        return 0;
     }
 
     const bool possess = p.has_item( it ) ||
@@ -315,6 +323,20 @@ int iuse_transform::use( player &p, item &it, bool t, const tripoint_bub_ms &pos
             p.add_msg_if_player( m_info, _( "You can't do that while underwater" ) );
             return 0;
         }
+    }
+
+    int time;
+    if( set_timer && !p.is_npc() ) {
+        bool got_value = query_int( time, _( "Set the timer to (0 to cancel)?" ) );
+        if( !got_value || time <= 0 ) {
+            p.add_msg_if_player( _( "Never mind." ) );
+            return 0;
+        }
+        p.add_msg_if_player( _( "You set the timer on the %s's to %d." ), it.tname(), time );
+        // Default value in case an NPC uses one.
+    } else {
+        const itype_id act_bomb_type = target;
+        time = act_bomb_type.obj().maximum_charges();
     }
 
     // All checks complete the damn thing can finally transform
@@ -376,6 +398,8 @@ int iuse_transform::use( player &p, item &it, bool t, const tripoint_bub_ms &pos
                 }
 
             }
+        } else if( set_timer ) {
+            it.set_charges( time );
         }
     } else {
         it.convert( container );
@@ -429,14 +453,6 @@ ret_val<bool> iuse_transform::can_use( const Character &p, const item &, bool,
                                         unmet_reqs.size() ), unmet_reqs_string );
 }
 
-std::string iuse_transform::get_name() const
-{
-    if( !menu_text.empty() ) {
-        return menu_text.translated();
-    }
-    return iuse_actor::get_name();
-}
-
 void iuse_transform::finalize( const itype_id & )
 {
     if( !target.is_valid() ) {
@@ -487,11 +503,16 @@ void unpack_actor::load( const JsonObject &obj )
 
 int unpack_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) const
 {
+    detached_ptr<item> unpacked = it.detach();
+    if( !unpacked ) {
+        debugmsg( "Could not detach item for unpacking" );
+        return 0;
+    }
+
+    p.add_msg_if_player( _( "You unpack the %s." ), unpacked->tname() );
+
     std::vector<detached_ptr<item>> items = item_group::items_from( unpack_group, calendar::turn );
     item *last_armor = &null_item_reference();
-
-    p.add_msg_if_player( _( "You unpack the %s." ), it.tname() );
-
     map &here = get_map();
     for( detached_ptr<item> &content : items ) {
         if( content->is_armor() ) {
@@ -510,8 +531,6 @@ int unpack_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) cons
 
         here.add_item_or_charges( p.bub_pos(), std::move( content ) );
     }
-
-    it.detach( );
 
     return 0;
 }
@@ -636,7 +655,7 @@ void explosion_iuse::load( const JsonObject &obj )
     }
     obj.read( "emp_blast_radius", emp_blast_radius );
     obj.read( "scrambler_blast_radius", scrambler_blast_radius );
-    obj.read( "sound_volume", sound_volume );
+    assign( obj, "sound_volume", sound_volume );
     obj.read( "sound_msg", sound_msg );
     obj.read( "no_deactivate_msg", no_deactivate_msg );
 }
@@ -644,10 +663,10 @@ void explosion_iuse::load( const JsonObject &obj )
 int explosion_iuse::use( player &p, item &it, bool t, const tripoint_bub_ms &pos ) const
 {
     if( t ) {
-        if( sound_volume >= 0 ) {
+        if( sound_volume >= 0_dB ) {
             sound_event se;
             se.origin = pos;
-            se.volume = sound_volume;
+            se.volume = units::to_decibel( sound_volume );
             se.category = sounds::sound_t::alarm;
             se.movement_noise = true;
             se.description = sound_msg.empty() ? _( "Tick." ) : _( sound_msg );
@@ -740,6 +759,7 @@ void unfold_vehicle_iuse::load( const JsonObject &obj )
     obj.read( "unfold_msg", unfold_msg );
     obj.read( "moves", moves );
     obj.read( "tools_needed", tools_needed );
+    obj.read( "full_battery", full_battery );
 }
 
 int unfold_vehicle_iuse::use( player &p, item &it, bool, const tripoint_bub_ms & ) const
@@ -761,7 +781,8 @@ int unfold_vehicle_iuse::use( player &p, item &it, bool, const tripoint_bub_ms &
         }
     }
 
-    vehicle *veh = get_map().add_vehicle( vehicle_id, p.bub_pos(), 0_degrees, 0, 0, false, false,
+    vehicle *veh = get_map().add_vehicle( vehicle_id, p.bub_pos(), 0_degrees, full_battery ? 100 : 0, 0,
+                                          false, false,
                                           true );
     if( veh == nullptr ) {
         p.add_msg_if_player( m_info, _( "There's no room to unfold the %s." ), it.tname() );
@@ -1291,25 +1312,40 @@ int place_monster_iuse::use( player &p, item &it, bool, const tripoint_bub_ms &p
         p.moves -= moves;
     }
     if( !newmon.has_flag( MF_INTERIOR_AMMO ) ) {
-        for( auto &amdef : newmon.ammo ) {
-            item &ammo_item = *item::spawn_temporary( amdef.first, calendar::start_of_cataclysm );
-            const int available = p.charges_of( amdef.first );
-            if( available == 0 ) {
-                amdef.second = 0;
+        for( const auto &[slot_ammo_id, max_ammo] : newmon.type->starting_ammo ) {
+            for( const auto &compatible_ammo_id : newmon.ammo_slot_items( slot_ammo_id ) ) {
+                newmon.ammo[compatible_ammo_id] = 0;
+            }
+
+            auto remaining_capacity = max_ammo;
+            auto loaded_any_ammo = false;
+            for( const auto &compatible_ammo_id : newmon.ammo_slot_items( slot_ammo_id ) ) {
+                if( remaining_capacity <= 0 ) {
+                    break;
+                }
+                item &ammo_item = *item::spawn_temporary( compatible_ammo_id, calendar::start_of_cataclysm );
+                const auto available = p.charges_of( compatible_ammo_id );
+                if( available <= 0 ) {
+                    continue;
+                }
+                ammo_item.charges = std::min( available, remaining_capacity );
+                p.use_charges( compatible_ammo_id, ammo_item.charges );
+                //~ First %s is the ammo item (with plural form and count included), second is the monster name
+                p.add_msg_if_player( vgettext( "You load %1$d x %2$s round into the %3$s.",
+                                               "You load %1$d x %2$s rounds into the %3$s.", ammo_item.charges ),
+                                     ammo_item.charges, ammo_item.type_name( ammo_item.charges ),
+                                     newmon.name() );
+                newmon.ammo[compatible_ammo_id] = ammo_item.charges;
+                remaining_capacity -= ammo_item.charges;
+                loaded_any_ammo = true;
+            }
+
+            if( !loaded_any_ammo ) {
+                item &slot_ammo_item = *item::spawn_temporary( slot_ammo_id, calendar::start_of_cataclysm );
                 p.add_msg_if_player( m_info,
                                      _( "If you had standard factory-built %1$s bullets, you could load the %2$s." ),
-                                     ammo_item.type_name( 2 ), newmon.name() );
-                continue;
+                                     slot_ammo_item.type_name( 2 ), newmon.name() );
             }
-            // Don't load more than the default from the monster definition.
-            ammo_item.charges = std::min( available, amdef.second );
-            p.use_charges( amdef.first, ammo_item.charges );
-            //~ First %s is the ammo item (with plural form and count included), second is the monster name
-            p.add_msg_if_player( vgettext( "You load %1$d x %2$s round into the %3$s.",
-                                           "You load %1$d x %2$s rounds into the %3$s.", ammo_item.charges ),
-                                 ammo_item.charges, ammo_item.type_name( ammo_item.charges ),
-                                 newmon.name() );
-            amdef.second = ammo_item.charges;
         }
     }
     int skill_offset = 0;
@@ -1389,7 +1425,7 @@ int place_npc_iuse::use( player &p, item &, bool, const tripoint_bub_ms & ) cons
         return 0;
     }
 
-    here.place_npc( target_pos.value().xy(), npc_class_id );
+    here.place_npc( target_pos.value(), npc_class_id );
     p.mod_moves( -moves );
     p.add_msg_if_player( m_info, "%s", _( summon_msg ) );
     return 1;
@@ -1797,7 +1833,14 @@ bool firestarter_actor::prep_firestarter_use( const player &p, tripoint_bub_ms &
 
 void firestarter_actor::resolve_firestarter_use( player &p, const tripoint_bub_ms &pos )
 {
-    if( get_map().add_field( pos, fd_fire, 1, 10_minutes ) ) {
+    map &here = get_map();
+    const auto fuel = flammable_fields( here.get_field( pos ) );
+    const auto fuel_intensity = fuel.intensity;
+    for( const auto type : fuel.types ) {
+        here.remove_field( pos, type );
+    }
+    if( here.add_field( pos, fd_fire, fuel_field_fire_intensity( fuel_intensity ),
+                        fuel_field_fire_age( fuel_intensity ) ) ) {
         if( !p.has_trait( trait_PYROMANIA ) ) {
             p.add_msg_if_player( _( "You successfully light a fire." ) );
         } else {
@@ -2191,7 +2234,7 @@ int enzlave_actor::use( player &p, item &it, bool t, const tripoint_bub_ms & ) c
         p.add_msg_if_player( m_info, _( "You cannot do that while mounted." ) );
         return 0;
     }
-    map_stack items = get_map().i_at( p.bub_pos().xy() );
+    map_stack items = get_map().i_at( p.bub_pos() );
     std::vector<const item *> corpses;
 
     for( item * const &corpse_candidate : items ) {
@@ -2340,7 +2383,7 @@ std::unique_ptr<iuse_actor> fireweapon_off_actor::clone() const
     return std::make_unique<fireweapon_off_actor>( *this );
 }
 
-int fireweapon_off_actor::use( player &p, item &it, bool t, const tripoint_bub_ms & ) const
+int fireweapon_off_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &pos ) const
 {
     if( t ) {
         return 0;
@@ -2355,7 +2398,7 @@ int fireweapon_off_actor::use( player &p, item &it, bool t, const tripoint_bub_m
     if( rng( 0, 10 ) - it.damage_level( 4 ) > success_chance && !p.is_underwater() ) {
         if( noise > 0 ) {
             sound_event se;
-            se.origin = p.bub_pos();
+            se.origin = pos;
             se.volume = noise;
             se.category = sounds::sound_t::combat;
             se.description = _( success_message );
@@ -2395,10 +2438,12 @@ ret_val<bool> fireweapon_off_actor::can_use( const Character &p, const item &it,
 
 void fireweapon_on_actor::load( const JsonObject &obj )
 {
+    held_message                    = obj.get_string( "held_message", "hsss" );
     noise_message                   = obj.get_string( "noise_message", "hsss" );
     voluntary_extinguish_message    = obj.get_string( "voluntary_extinguish_message" );
     charges_extinguish_message      = obj.get_string( "charges_extinguish_message" );
     water_extinguish_message        = obj.get_string( "water_extinguish_message" );
+    noise_variant                   = obj.get_string( "noise_variant", "default" );
     noise                           = obj.get_int( "noise", 0 );
     noise_chance                    = obj.get_int( "noise_chance", 1 );
     auto_extinguish_chance          = obj.get_int( "auto_extinguish_chance", 0 );
@@ -2412,7 +2457,7 @@ std::unique_ptr<iuse_actor> fireweapon_on_actor::clone() const
     return std::make_unique<fireweapon_on_actor>( *this );
 }
 
-int fireweapon_on_actor::use( player &p, item &it, bool t, const tripoint_bub_ms & ) const
+int fireweapon_on_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &pos ) const
 {
     bool extinguish = true;
     if( it.charges == 0 ) {
@@ -2440,17 +2485,19 @@ int fireweapon_on_actor::use( player &p, item &it, bool t, const tripoint_bub_ms
     } else if( one_in( noise_chance ) ) {
         if( noise > 0 ) {
             sound_event se;
-            se.origin = p.bub_pos();
+            se.origin = pos;
             se.volume = noise;
-            se.category = sounds::sound_t::combat;
+            se.category = sounds::sound_t::activity;
             se.description = _( noise_message );
+            se.id = "tool";
+            se.variant = noise_variant;
             se.from_player = p.is_avatar();
             se.from_npc = !se.from_player;
             se.faction = p.get_faction()->id;
             se.monfaction = p.get_faction()->mon_faction;
             sounds::sound( se );
         }
-        p.add_msg_if_player( _( noise_message ) );
+        p.add_msg_if_player( _( held_message ) );
     }
 
     return it.type->charges_to_use();
@@ -2472,12 +2519,14 @@ std::unique_ptr<iuse_actor> manualnoise_actor::clone() const
     return std::make_unique<manualnoise_actor>( *this );
 }
 
-int manualnoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms & ) const
+int manualnoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &pos ) const
 {
     if( t ) {
         return 0;
     }
-    if( it.type->charges_to_use() != 0 && it.charges < it.type->charges_to_use() ) {
+    const auto charges_required = is_digital_file( it ) && !it.is_tool() ? 0 :
+                                  it.type->charges_to_use();
+    if( charges_required != 0 && it.charges < charges_required ) {
         p.add_msg_if_player( _( no_charges_message ) );
         return 0;
     }
@@ -2485,7 +2534,7 @@ int manualnoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &
         p.moves -= moves;
         if( noise > 0 ) {
             sound_event se;
-            se.origin = p.bub_pos();
+            se.origin = pos;
             se.volume = noise;
             se.category = sounds::sound_t::activity;
             se.description = noise_message.empty() ? _( "Hsss" ) : _( noise_message );
@@ -2499,17 +2548,58 @@ int manualnoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &
         }
         p.add_msg_if_player( _( use_message ) );
     }
-    return it.type->charges_to_use();
+    return charges_required;
 }
 
 ret_val<bool> manualnoise_actor::can_use( const Character &, const item &it, bool,
         const tripoint_bub_ms & ) const
 {
-    if( it.charges < it.type->charges_to_use() ) {
+    const auto charges_required = is_digital_file( it ) && !it.is_tool() ? 0 :
+                                  it.type->charges_to_use();
+    if( charges_required != 0 && it.charges < charges_required ) {
         return ret_val<bool>::make_failure( _( "This tool doesn't have enough charges." ) );
     }
 
     return ret_val<bool>::make_success();
+}
+
+void passivenoise_actor::load( const JsonObject &obj )
+{
+    held_message                    = obj.get_string( "held_message", "hsss" );
+    noise_message                   = obj.get_string( "noise_message", "hsss" );
+    noise_variant                   = obj.get_string( "noise_variant", "default" );
+    noise                           = obj.get_int( "noise", 0 );
+    noise_chance                    = obj.get_int( "noise_chance", 1 );
+}
+
+std::unique_ptr<iuse_actor> passivenoise_actor::clone() const
+{
+    return std::make_unique<passivenoise_actor>( *this );
+}
+
+int passivenoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &pos ) const
+{
+    // Make noise over time or force when used
+    if( ( t && one_in( noise_chance ) ) || !t ) {
+        if( noise > 0 ) {
+            sound_event se;
+            se.origin = pos;
+            se.volume = noise;
+            se.category = sounds::sound_t::activity;
+            se.description = _( noise_message );
+            se.id = "tool";
+            se.variant = noise_variant;
+            se.from_player = p.is_avatar();
+            se.from_npc = !se.from_player;
+            se.faction = p.get_faction()->id;
+            se.monfaction = p.get_faction()->mon_faction;
+            sounds::sound( se );
+        }
+        if( p.has_item( it ) ) {
+            p.add_msg_if_player( _( held_message ) );
+        }
+    }
+    return 0;
 }
 
 std::unique_ptr<iuse_actor> musical_instrument_actor::clone() const
@@ -3049,6 +3139,17 @@ void bandolier_actor::load( const JsonObject &obj )
     draw_cost = obj.get_int( "draw_cost", draw_cost );
 }
 
+std::string bandolier_actor::check() const
+{
+    std::string res = "";
+    for( const auto &ammotype : ammo ) {
+        if( !ammotype.is_valid() ) {
+            res += string_format( "invalid ammotype %s\n", ammotype.str() );
+        }
+    }
+    return res;
+}
+
 void bandolier_actor::info( const item &, std::vector<iteminfo> &dump ) const
 {
     if( !ammo.empty() ) {
@@ -3106,7 +3207,7 @@ bool bandolier_actor::reload( player &p, item &obj ) const
         return item_reload_option( &p, &obj, &obj, *e );
     } );
 
-    item_reload_option sel = character_funcs::select_ammo( p, obj, std::move( opts ) );
+    auto sel = reload_ui::select_ammo( p, obj, std::move( opts ) );
     if( !sel ) {
         return false; // canceled menu
     }
@@ -3214,7 +3315,7 @@ int ammobelt_actor::use( player &p, item &, bool, const tripoint_bub_ms & ) cons
         return 0;
     }
 
-    item_reload_option opt = character_funcs::select_ammo( p, *mag, true );
+    auto opt = reload_ui::select_ammo( p, *mag, { .prompt = true } );
     if( opt ) {
         p.assign_activity( ACT_RELOAD, opt.moves(), opt.qty() );
         p.activity->targets.emplace_back( &*mag );
@@ -3298,8 +3399,18 @@ std::unique_ptr<iuse_actor> repair_item_actor::clone() const
     return std::make_unique<repair_item_actor>( *this );
 }
 
-bool repair_item_actor::handle_components( player &pl, const item &fix,
-        bool print_msg, bool just_check ) const
+int repair_item_actor::get_material_amt_needed( const item &fix, bool just_check ) const
+{
+    // Repairing or modifying items requires at least 1 repair item,
+    // otherwise number is related to size of item
+    // Round up if checking, but roll if actually consuming
+    // TODO: should 250_ml be part of the cost_scaling?
+    return std::max<int>( 1, just_check ?
+                          std::ceil( fix.volume() / 250_ml * cost_scaling ) :
+                          roll_remainder( fix.volume() / 250_ml * cost_scaling ) );
+}
+
+std::set<material_id> repair_item_actor::get_valid_materials( const item &fix ) const
 {
     // Entries valid for repaired items
     std::set<material_id> valid_entries;
@@ -3308,6 +3419,13 @@ bool repair_item_actor::handle_components( player &pl, const item &fix,
             valid_entries.insert( mat );
         }
     }
+    return valid_entries;
+}
+
+bool repair_item_actor::handle_components( player &pl, const item &fix,
+        bool print_msg, bool just_check ) const
+{
+    std::set<material_id> valid_entries = get_valid_materials( fix );
 
     if( valid_entries.empty() ) {
         if( print_msg ) {
@@ -3324,15 +3442,7 @@ bool repair_item_actor::handle_components( player &pl, const item &fix,
     }
 
     const inventory &crafting_inv = pl.crafting_inventory();
-
-    // Repairing or modifying items requires at least 1 repair item,
-    //  otherwise number is related to size of item
-    // Round up if checking, but roll if actually consuming
-    // TODO: should 250_ml be part of the cost_scaling?
-    const int items_needed = std::max<int>( 1, just_check ?
-                                            std::ceil( fix.volume() / 250_ml * cost_scaling ) :
-                                            roll_remainder( fix.volume() / 250_ml * cost_scaling ) );
-
+    const int items_needed = get_material_amt_needed( fix, just_check );
 
     // Go through all discovered repair items and see if we have any of them available
     std::vector<item_comp> comps;
@@ -3613,7 +3723,7 @@ static bool damage_item( player &pl, item *fix )
             return std::move( mod );
         } );
 
-        fix->contents.spill_contents( fix->position() );
+        fix->contents.spill_contents( fix->bub_pos() );
 
         pl.add_msg_if_player( m_bad, _( "You destroy it!" ) );
         if( fix->where() == item_location_type::character ) {
@@ -3621,7 +3731,7 @@ static bool damage_item( player &pl, item *fix )
         } else {
             for( detached_ptr<item> &it : fix->contents.clear_items() ) {
                 put_into_vehicle_or_drop( pl, item_drop_reason::deliberate, std::move( it ),
-                                          fix->position() );
+                                          fix->bub_pos() );
             }
             fix->detach();
         }
@@ -3801,7 +3911,7 @@ std::string repair_item_actor::get_name() const
     []( const material_id & mid ) {
         return _( mid->name() );
     } );
-    return string_format( _( "Repair %s" ), mats );
+    return string_format( _( "Repair/Refit %s" ), mats );
 }
 
 void heal_actor::load( const JsonObject &obj )
@@ -5008,22 +5118,11 @@ int gps_device_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) 
         "swamp", "stream", "stream_corner", "stream_end", "river_center", "river_shore", "river_bank", "deep_water", "shallow_water"
     };
 
-    // Build list of matching terrain IDs whose display name matches the query
-    std::vector<std::string> matching_ids;
-    for( const oter_t &oter : overmap_terrains::get_all() ) {
-        // get_name() returns the human‐readable display name
-        if( lcmatch( oter.get_name(), query ) ) {
-            matching_ids.push_back( oter.get_mapgen_id() );
-        }
-    }
-
     // Configure search to look only for those matching IDs
     omt_find_params params{};
     params.search_range = { 0, radius };
     params.types.clear();
-    for( const auto &id_str : matching_ids ) {
-        params.types.emplace_back( id_str, ot_match_type::type );
-    }
+    params.types.emplace_back( query, ot_match_type::contains );
     for( const std::string &nt : natural_terrains ) {
         params.exclude_types.emplace_back( nt, ot_match_type::type );
     }
@@ -5286,13 +5385,13 @@ int sew_advanced_actor::use( player &p, item &it, bool, const tripoint_bub_ms & 
 
         bool enab = false;
         std::string prompt;
-        // TODO: Fix for UTF-8 strings
-        // TODO: find other places where this is used and make a global function for all
-        static const auto tolower = []( std::string t ) {
-            if( !t.empty() ) {
-                t.front() = std::tolower( t.front() );
+        const auto tolower = []( std::string t ) {
+            if( t.empty() ) {
+                return t;
             }
-            return t;
+            auto text = utf8_to_wstr( _( t ) );
+            text.front() = std::tolower( text.front(), std::locale() );
+            return wstr_to_utf8( text );
         };
         const bool already_resized = mod.has_flag( flag_resized_large ) ||
                                      mod.has_flag( flag_resized_small );
@@ -5502,18 +5601,25 @@ void cloning_syringe_iuse::load( const JsonObject &obj )
     assign( obj, "charges_to_use", charges_to_use );
 }
 
-int cloning_syringe_iuse::use( player &p, item &it, bool, const tripoint_bub_ms &pos ) const
+namespace
 {
-    const auto is_empty_usb = []( const item & drive ) {
-        return drive.contents.empty();
-    };
+auto select_genome_storage( const std::vector<item *> &storage ) -> item * // *NOPAD*
+{
+    auto menu = uilist{};
+    menu.text = _( "Store genome sample on which device?" );
+    for( auto index = 0; index < static_cast<int>( storage.size() ); ++index ) {
+        menu.addentry( index, true, MENU_AUTOASSIGN, storage[index]->display_name() );
+    }
+    menu.query();
+    return menu.ret >= 0 ? storage[menu.ret] : nullptr;
+}
+} // namespace
 
+auto cloning_syringe_iuse::use( player &p, item &it, bool /*t*/,
+                                const tripoint_bub_ms &pos ) const -> int
+{
     if( !it.units_sufficient( p, charges_to_use ) ) {
         add_msg( m_info, _( "There's not enough charge left in the %s." ), it.display_name() );
-        return 0;
-    }
-    if( !p.has_amount( itype_usb_drive, 1, true, is_empty_usb ) ) {
-        add_msg( m_bad, "You need an empty USB drive to store genetic data." );
         return 0;
     }
 
@@ -5537,6 +5643,23 @@ int cloning_syringe_iuse::use( player &p, item &it, bool, const tripoint_bub_ms 
     if( !m ) {
         add_msg( m_info, _( "There's no creature there." ) );
         return 0;
+    }
+
+    const auto drives = digital_genome_samples( p );
+    const auto has_sample = std::ranges::any_of( drives, [&m]( const auto * sample ) {
+        return sample->get_var( "specimen_sample" ) == m->type->id.str();
+    } );
+    auto *destination = static_cast<item *>( nullptr );
+    if( !has_sample ) {
+        const auto storage = digital_genome_storage( p );
+        if( storage.empty() ) {
+            add_msg( m_bad, _( "You need a USB drive or unencrypted SD card to store genetic data." ) );
+            return 0;
+        }
+        destination = select_genome_storage( storage );
+        if( destination == nullptr ) {
+            return 0;
+        }
     }
 
     const int fa_skill = p.get_skill_level( skill_firstaid );
@@ -5572,7 +5695,8 @@ int cloning_syringe_iuse::use( player &p, item &it, bool, const tripoint_bub_ms 
                           m->in_species( species_SKELETON );
     if( m->has_flag( MF_CANT_CLONE ) || in_bad_species ) {
         add_msg( m_info,
-                 _( "The %s emits two error beeps.  This creature can't provide a valid sample." ) );
+                 _( "The %s emits two error beeps.  This creature can't provide a valid sample." ),
+                 it.display_name() );
         return 0;
     }
 
@@ -5587,48 +5711,48 @@ int cloning_syringe_iuse::use( player &p, item &it, bool, const tripoint_bub_ms 
     const mtype_id &id = m->type->id;
     const std::string id_str = id.str();
 
+    p.set_knows_creature_type( id );
+
     add_msg( m_good, _( "The %s beeps softly.  You successfully gathered a sample from the %s!" ),
              it.display_name(), m->name() );
 
 
-    auto drives = p.all_items_with_flag( flag_genome_drive );
-
-    for( size_t z = 0; z < drives.size(); z++ ) {
-        if( drives[z]->get_var( "specimen_sample" ) == id_str ) {
-            int progress = drives[z]->get_var( "specimen_sample_progress", 0 );
+    for( auto *sample : drives ) {
+        if( sample->get_var( "specimen_sample" ) == id_str ) {
+            auto progress = sample->get_var( "specimen_sample_progress", 0 );
             const auto size = std::max( 1, cloning_utils::specimen_required_sample_size( m->type->id ) );
 
             // Increment progress, but don't exceed size
             if( progress < size ) {
                 progress++;
-                drives[z]->set_var( "specimen_sample_progress", std::to_string( progress ) );
-                add_msg( m_info, "Progress: %d/%d for genome sample.", progress, size );
+                sample->set_var( "specimen_sample_progress", std::to_string( progress ) );
+                sample->erase_var( "DIGITAL_FILE_ID" );
+                add_msg( m_info, _( "Progress: %d/%d for genome sample." ), progress, size );
                 if( progress == size ) {
-                    add_msg( m_good, "Sample is complete." );
+                    add_msg( m_good, _( "Sample is complete." ) );
                 }
             } else {
-                add_msg( "Sample is already complete." );
+                add_msg( _( "Sample is already complete." ) );
             }
 
             return charges_to_use;
         }
     }
 
-    // Create new genome drive
-    p.use_amount( itype_usb_drive, 1, is_empty_usb );
-    detached_ptr<item> drive = item::spawn( itype_genome_drive, calendar::turn );
+    // Store the new sample alongside any existing files.
+    auto sample = item::spawn( "digital_genome_sample", calendar::turn );
     const auto size = std::max( 1, cloning_utils::specimen_required_sample_size( m->type->id ) );
 
-    drive->set_var( "specimen_sample", id_str );
-    drive->set_var( "specimen_sample_progress", "1" );  // First increment
-    drive->set_var( "specimen_name", m->name() );
+    sample->set_var( "specimen_sample", id_str );
+    sample->set_var( "specimen_sample_progress", "1" );
+    sample->set_var( "specimen_name", m->name() );
+    destination->put_in( std::move( sample ) );
 
     if( size > 1 ) {
-        add_msg( m_info, "Progress: 1/%d for genome sample.", size );
+        add_msg( m_info, _( "Progress: 1/%d for genome sample." ), size );
     } else {
-        add_msg( m_good, "Sample is complete." );
+        add_msg( m_good, _( "Sample is complete." ) );
     }
-    p.i_add( std::move( drive ) );
 
     return charges_to_use;
 }
@@ -5644,37 +5768,34 @@ void dna_editor_iuse::load( const JsonObject &obj )
     assign( obj, "charges_to_use", charges_to_use );
 }
 
-int dna_editor_iuse::use( player &p, item &it, bool, const tripoint_bub_ms & ) const
+auto dna_editor_iuse::use( player &p, item &it, bool /*t*/,
+                           const tripoint_bub_ms & /*pos*/ ) const -> int
 {
-    const auto is_empty_usb = []( const item & drive ) {
-        return drive.contents.empty();
-    };
-
     if( !it.units_sufficient( p, charges_to_use ) ) {
         add_msg( m_info, _( "There's not enough charge left in the %s." ), it.display_name() );
         return 0;
     }
-    auto genome_drives = p.all_items_with_flag( flag_genome_drive );
-    if( genome_drives.size() == 0 ) {
-        popup( "You have no valid genome drives." );
+    auto samples = digital_genome_samples( p );
+    if( samples.size() == 0 ) {
+        popup( _( "You have no complete genome sample files." ) );
         return 0;
     }
 
     uilist specimen_menu;
     specimen_menu.text = _( "Select specimen sample:" );
     bool has_complete_sample = false;
-    for( size_t z = 0; z < genome_drives.size(); z++ ) {
-        const int progress = genome_drives[z]->get_var( "specimen_sample_progress", 0 );
-        const auto specimen_id = mtype_id( genome_drives[z]->get_var( "specimen_sample" ) );
+    for( size_t z = 0; z < samples.size(); z++ ) {
+        const int progress = samples[z]->get_var( "specimen_sample_progress", 0 );
+        const auto specimen_id = mtype_id( samples[z]->get_var( "specimen_sample" ) );
         const auto size = cloning_utils::specimen_required_sample_size( specimen_id );
         if( size > 0 && progress >= size ) {
             has_complete_sample = true;
             specimen_menu.addentry( z, true, MENU_AUTOASSIGN, string_format( "%s",
-                                    genome_drives[z]->display_name() ) );
+                                    samples[z]->display_name() ) );
         }
     }
     if( !has_complete_sample ) {
-        popup( "You have no valid genome drives." );
+        popup( _( "You have no complete genome sample files." ) );
         return 0;
     }
     specimen_menu.query();
@@ -5683,15 +5804,22 @@ int dna_editor_iuse::use( player &p, item &it, bool, const tripoint_bub_ms & ) c
         return 0;
     }
 
-    auto &selected_drive = genome_drives[choice];  // reference to the original detached_ptr
+    auto &selected_sample = samples[choice];
 
     uilist menu;
-    menu.text = string_format( _( "What to do with the %s?" ), selected_drive->display_name() );
-    menu.addentry( 0, true, 'e', "Examine sample" );
+    menu.text = string_format( _( "What to do with the %s?" ), selected_sample->display_name() );
+    menu.addentry( 0, true, 'e', _( "Examine sample" ) );
     menu.addentry( 1, p.has_charges( itype_mutagen, 1 ) &&
-                   p.has_charges( itype_biomaterial, 1 ), 'i', "Research upgrade" );
-    menu.addentry( 2, p.has_amount( itype_usb_drive, 1, true, is_empty_usb ), 'c', "Clone drive" );
-    menu.addentry( 3, p.has_charges( itype_biomaterial, 1 ), 'p', "Produce DNA" );
+                   p.has_charges( itype_biomaterial, 1 ), 'i', _( "Research upgrade" ) );
+    auto storage = digital_genome_storage( p );
+    std::erase_if( storage, [&selected_sample]( const auto * media ) {
+        return std::ranges::any_of( media->contents.all_items_top(), [&selected_sample](
+        const auto * file ) {
+            return file->get_var( "DIGITAL_FILE_ID" ) == selected_sample->get_var( "DIGITAL_FILE_ID" );
+        } );
+    } );
+    menu.addentry( 2, !storage.empty(), 'c', _( "Copy sample file" ) );
+    menu.addentry( 3, p.has_charges( itype_biomaterial, 1 ), 'p', _( "Produce DNA" ) );
     menu.query();
     if( menu.ret < 0 ) {
         return 0;
@@ -5699,7 +5827,7 @@ int dna_editor_iuse::use( player &p, item &it, bool, const tripoint_bub_ms & ) c
 
     if( menu.ret == 0 ) {
         // grab the monsters data from a fake copy
-        const auto specimen_id = mtype_id( selected_drive->get_var( "specimen_sample" ) );
+        const auto specimen_id = mtype_id( selected_sample->get_var( "specimen_sample" ) );
         const auto newmon_ptr = make_shared_fast<monster>( specimen_id );
         const monster &newmon = *newmon_ptr;
 
@@ -5707,7 +5835,7 @@ int dna_editor_iuse::use( player &p, item &it, bool, const tripoint_bub_ms & ) c
 
         popup(
             _( "Examination Results:\n\nSample Name: %s\nSize Class: %s\nWeight: %.0fkg\nVolume: %.0fl" ),
-            selected_drive->get_var( "specimen_name" ),
+            cloning_utils::specimen_name( specimen_id, selected_sample->get_var( "specimen_name" ) ),
             size_str,
             static_cast<double>( to_kilogram( newmon.get_weight() ) ),
             static_cast<double>( to_liter( newmon.get_volume() ) )
@@ -5715,7 +5843,7 @@ int dna_editor_iuse::use( player &p, item &it, bool, const tripoint_bub_ms & ) c
 
         return 0;
     } else if( menu.ret == 1 ) {
-        const mtype_id id( selected_drive->get_var( "specimen_sample" ) );
+        const mtype_id id( selected_sample->get_var( "specimen_sample" ) );
         const mtype &type = id.obj();
 
         mongroup_id upgrade_group = mongroup_id::NULL_ID();
@@ -5723,12 +5851,12 @@ int dna_editor_iuse::use( player &p, item &it, bool, const tripoint_bub_ms & ) c
         const auto mons = upgrade_group.obj().monsters;
 
         if( mons.empty() ) {
-            popup( "A message pops up on the genome editor indicating there are no further mutations possible for this sample." );
+            popup( _( "A message pops up on the genome editor indicating there are no further mutations possible for this sample." ) );
             return 0;
         }
 
         if( !query_yn( _( "This will use up 1 unit of mutagen and 1 unit of biomaterial.  Are you sure?" ),
-                       selected_drive->display_name() ) ) {
+                       selected_sample->display_name() ) ) {
             return 0;
         }
 
@@ -5758,37 +5886,36 @@ int dna_editor_iuse::use( player &p, item &it, bool, const tripoint_bub_ms & ) c
 
         // chance of failure when converting DNA
         if( rng( 1, 100 ) < 80 ) {
-            add_msg( m_bad, "The research produced no result." );
+            add_msg( m_bad, _( "The research produced no result." ) );
             return charges_to_use;
         }
 
         add_msg( m_info, _( "The research produced a viable %s sample!" ), newmon.name() );
         const auto specimen_id = mtype_id( chosen->name.str() );
         const auto size = cloning_utils::specimen_required_sample_size( specimen_id );
-        selected_drive->set_var( "specimen_sample", specimen_id.str() );
-        selected_drive->set_var( "specimen_sample_progress", std::to_string( size ) );
-        selected_drive->set_var( "specimen_name", newmon.name() );
+        selected_sample->set_var( "specimen_sample", specimen_id.str() );
+        selected_sample->set_var( "specimen_sample_progress", std::to_string( size ) );
+        selected_sample->set_var( "specimen_name", newmon.name() );
+        selected_sample->erase_var( "DIGITAL_FILE_ID" );
     } else if( menu.ret == 2 ) {
-        add_msg( "You clone a copy of the drive onto another USB." );
-        p.use_amount( itype_usb_drive, 1, is_empty_usb );
-        detached_ptr<item> drive_copy = item::spawn( itype_genome_drive, calendar::turn );
-
-        drive_copy->set_var( "specimen_sample", selected_drive->get_var( "specimen_sample" ) );
-        drive_copy->set_var( "specimen_sample_progress",
-                             selected_drive->get_var( "specimen_sample_progress" ) );
-        drive_copy->set_var( "specimen_name", selected_drive->get_var( "specimen_name" ) );
-
-        p.i_add( std::move( drive_copy ) );
+        auto *destination = select_genome_storage( storage );
+        if( destination == nullptr ) {
+            return 0;
+        }
+        destination->put_in( item::spawn( *selected_sample ) );
+        add_msg( _( "You copy the genome sample file to the %s." ), destination->display_name() );
     } else if( menu.ret == 3 ) {
         p.use_charges( itype_biomaterial, 1 );
         const std::string msg = string_format( _( "You produce a unit of %s DNA." ),
-                                               selected_drive->get_var( "specimen_name" ) );
+                                               cloning_utils::specimen_name(
+                                                       mtype_id( selected_sample->get_var( "specimen_sample" ) ),
+                                                       selected_sample->get_var( "specimen_name" ) ) );
         add_msg( msg );
 
         detached_ptr<item> dna = item::spawn( itype_id( "dna" ), calendar::turn, 1 );
 
-        dna->set_var( "specimen_sample", selected_drive->get_var( "specimen_sample" ) );
-        dna->set_var( "specimen_name", selected_drive->get_var( "specimen_name" ) );
+        dna->set_var( "specimen_sample", selected_sample->get_var( "specimen_sample" ) );
+        dna->set_var( "specimen_name", selected_sample->get_var( "specimen_name" ) );
 
         liquid_handler::handle_all_liquid( std::move( dna ), PICKUP_RANGE );
     }
@@ -5808,7 +5935,7 @@ void multicooker_iuse::load( const JsonObject &obj )
     assign( obj, "charges_per_minute", charges_per_minute );
     assign( obj, "time_mult", time_mult );
     for( const std::string line : obj.get_array( "recipes" ) ) {
-        recipes.emplace( line );
+        recipes.emplace( recipe_id( line ) );
     }
     for( const std::string line : obj.get_array( "subcategories" ) ) {
         subcategories.emplace( line );
@@ -5874,17 +6001,76 @@ int multicooker_iuse::use( player &p, item &it, bool t, const tripoint_bub_ms &p
 {
     if( t ) {
         if( !it.units_sufficient( p, charges_per_minute ) ) {
+            for( detached_ptr<item> &item : it.remove_components() ) {
+                get_map().add_item_or_charges( pos, std::move( item ) );
+            }
             it.deactivate();
+            it.erase_var( "RESULT" );
+            it.erase_var( "COOKTIME" );
+            it.erase_var( "BATCHCOUNT" );
+            it.erase_var( "RECIPE" );
             return 0;
         }
 
-        int cooktime = it.get_var( "COOKTIME", 0 );
+        int cooktime = it.get_var( "COOKTIME", -1 );
         cooktime -= 100;
 
-        if( cooktime <= 0 ) {
+        if( cooktime <= 0 && it.get_var( "RESULT" ) != "" ) {
             it.deactivate();
             it.erase_var( "COOKTIME" );
-            it.put_in( item::spawn( it.get_var( "RESULT" ), calendar::turn, it.get_var( "BATCHCOUNT", 1 ) ) );
+
+            //mirroring a lot of behavior in complete_craft except for set_kcal_mult
+            //you dont get kcal benifits from your cooking skill because you didnt actually craft the item
+
+            std::vector<detached_ptr<item>> used = it.remove_components();
+            std::vector<item *> used_items;
+            used_items.reserve( used.size() );
+            for( detached_ptr<item> &it : used ) {
+                used_items.push_back( &*it );
+            }
+
+            auto crafted_item = item::spawn( it.get_var( "RESULT" ), calendar::turn, it.get_var( "BATCHCOUNT",
+                                             1 ) );
+
+            //basically just a copy past of inherit_flags() to well... inherit flags
+            //cant use the existing method as it requires passing a recipe and we dont have that
+            for( const item * const &item : used_items ) {
+                for( const flag_id &f : item->get_flags() ) {
+                    if( f->craft_inherit() ) {
+                        crafted_item->set_flag( f );
+                    }
+                }
+                for( const flag_id &f : item->type->get_flags() ) {
+                    if( f->craft_inherit() ) {
+                        crafted_item->set_flag( f );
+                    }
+                }
+                if( item->has_flag( flag_HIDDEN_POISON ) ) {
+                    crafted_item->poison = item->poison;
+                }
+            }
+
+            if( crafted_item->is_food() && !( crafted_item->has_flag( flag_NUTRIENT_OVERRIDE ) ) ) {
+                set_components( *crafted_item, used_items, it.get_var( "BATCHCOUNT", 1 ), 0 );
+            }
+
+            const auto relative_rot = highest_component_relative_rot( used_items );
+
+            if( crafted_item->goes_bad() ) {
+                crafted_item->set_relative_rot( relative_rot );
+            }
+
+            // mirror complete_craft ammo behavior
+            // just in case someone wanted to make a gun with a multicooker...
+            if( !crafted_item->ammo_remaining() ) {
+                crafted_item->ammo_unset();
+            }
+            if( crafted_item->has_flag( flag_id( "CRAFT_WITH_FULL_MAG" ) ) ) {
+                crafted_item->ammo_set( crafted_item->ammo_default(), crafted_item->ammo_capacity() );
+            }
+
+            //finally insert our crafted item to be removed by the player later on
+            it.put_in( std::move( crafted_item ) );
             it.erase_var( "BATCHCOUNT" );
             it.erase_var( "RESULT" );
 
@@ -5954,6 +6140,10 @@ int multicooker_iuse::use( player &p, item &it, bool t, const tripoint_bub_ms &p
 
         if( mc_stop == choice ) {
             if( query_yn( _( "Really stop?" ) ) ) {
+                //if user cancels craft just dump the crafts components on the ground
+                for( detached_ptr<item> &item : it.remove_components() ) {
+                    get_map().add_item_or_charges( pos, std::move( item ) );
+                }
                 it.deactivate();
                 it.erase_var( "RESULT" );
                 it.erase_var( "COOKTIME" );
@@ -6003,7 +6193,7 @@ int multicooker_iuse::use( player &p, item &it, bool t, const tripoint_bub_ms &p
             int counter = 0;
 
             for( const auto &r : g->u.get_learned_recipes() ) {
-                if( subcategories.contains( r->subcategory ) || recipes.contains( r->result() ) ) {
+                if( subcategories.contains( r->subcategory ) || recipes.contains( r->ident() ) ) {
                     dishes.push_back( r );
                     const bool can_make = r->deduped_requirements().can_make_with_inventory(
                                               crafting_inv, r->get_component_filter() );
@@ -6066,8 +6256,18 @@ int multicooker_iuse::use( player &p, item &it, bool t, const tripoint_bub_ms &p
                     return 0;
                 }
 
-                for( const auto &component : reqs->get_components() ) {
-                    p.consume_items( component, batchcount, filter );
+                std::vector<detached_ptr<item>> used;
+
+                for( const std::vector<item_comp> &component : reqs->get_components() ) {
+                    std::vector<detached_ptr<item>> tmp = p.consume_items( component, batchcount, filter );
+                    used.insert( used.end(), std::make_move_iterator( tmp.begin() ),
+                                 std::make_move_iterator( tmp.end() ) );
+                }
+
+                //add recipe compontents to the multicooker, because we need to reference them later when the item is actually crafted
+                //yes this is a bit weird but its the sanest method to do this
+                for( detached_ptr<item> &item : used ) {
+                    it.add_component( std::move( item ) );
                 }
 
                 it.set_var( "RECIPE", meal->ident().str() );
@@ -6269,7 +6469,7 @@ int train_skill_actor::use( player &p, item &i, bool, const tripoint_bub_ms & ) 
         return 0;
     }
 
-    p.add_msg_if_player( training_msg );
+    p.add_msg_if_player( _( training_msg ) );
     // using metadata is the easiest way to transfer this over to the activity handler and also allow it to function as furniture
     p.set_value( "training_iuse_skill", training_skill );
     p.set_value( "training_iuse_skill_xp", std::to_string( training_skill_xp ) );
@@ -6332,6 +6532,10 @@ int iuse_music_player::use( player &p, item &it, bool t, const tripoint_bub_ms &
 {
     if( t ) {
         return 0; // invoked from active item processing, do nothing.
+    }
+
+    if( it.has_flag( flag_id( "DIGITAL_READER" ) ) && !digital_music_ready( p, it ) ) {
+        return 0;
     }
 
     const bool possess = p.has_item( it ) ||
@@ -7171,6 +7375,10 @@ void iuse_dimension_travel::load( const JsonObject &obj )
 
 int iuse_dimension_travel::use( player &p, item &it, bool, const tripoint_bub_ms &pos ) const
 {
+    if( g->get_active_world()->info->world_save_format == save_format::V1 ) {
+        popup( "Dimensions are currently disfunctional in v1 saves. Please migrate this save to v2 or dont use the feature." );
+        return true;
+    }
     dimension_travel( p, it, pos );
     return need_charges;
 }
@@ -7303,6 +7511,10 @@ void iuse_pocket_dimension::load( const JsonObject &obj )
 
 int iuse_pocket_dimension::use( player &p, item &it, bool, const tripoint_bub_ms & ) const
 {
+    if( g->get_active_world()->info->world_save_format == save_format::V1 ) {
+        popup( "Dimensions are currently disfunctional in v1 saves. Please migrate this save to v2 or dont use the feature." );
+        return true;
+    }
     // If pocket is not initialized, initialize it on first use
     if( !it.pocket_dim.has_value() || !it.pocket_dim->pocket_info.has_value() ||
         !it.pocket_dim->pocket_info->is_initialized ) {
@@ -7518,9 +7730,6 @@ void iuse_pocket_dimension::enter_pocket( player &p, item &it ) const
     }
 
     p.setpos( pd.entry_point );
-
-    // Single update_map call at the final position
-    g->update_map( p );
 }
 
 // ---- iuse_portal_link -------------------------------------------------------
@@ -7604,7 +7813,6 @@ auto iuse_portal_link::use( player &p, item &it, bool, const tripoint_bub_ms & )
                                        g_half_mapsize );
             g->travel_to_dimension( origin_dim, wt_id, std::nullopt, preload_point );
             p.setpos( origin_pos );
-            g->update_map( p );
             it.erase_var( "origin_stored" );
             return charges_per_use;
         }
@@ -7631,7 +7839,6 @@ auto iuse_portal_link::use( player &p, item &it, bool, const tripoint_bub_ms & )
                          tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 );
     g->travel_to_dimension( linked_dim, wt_id, std::nullopt, dest_sm );
     p.setpos( linked_pos );
-    g->update_map( p );
     return charges_per_use;
 }
 
@@ -7667,9 +7874,6 @@ void iuse_pocket_dimension::exit_pocket( player &p, item &it ) const
     const auto &here = get_map();
     const auto safe = find_safe_spawn( abs_to_map_local( here, return_point ) );
     p.setpos( map_local_to_abs( here, safe ) );
-
-    // Single update_map call at the final position
-    g->update_map( p );
 }
 
 // ---- iuse_paint_stuff -------------------------------------------------------
@@ -7776,8 +7980,12 @@ auto iuse_paint_stuff_do_paint( player &who, item &it,
             }
 
             if( painter.set_color( thing, n_col.value(), layer ) ) {
-                who.add_msg_if_player( m_info, _( "You paint the %s %s." ), painter.describe( thing ),
-                                       target_color.friendly_name() );
+                if( target_color == RGBColor{} ) {
+                    who.add_msg_if_player( m_info, _( "You strip the paint from the %s." ), painter.describe( thing ) );
+                } else {
+                    who.add_msg_if_player( m_info, _( "You paint the %s %s." ), painter.describe( thing ),
+                                           target_color.friendly_name() );
+                }
                 charges_used += iter_cost;
                 who.moves -= to_turns<int>( 30_seconds );
             }
@@ -8379,12 +8587,12 @@ void iuse_paint_stuff::info( const item &it, std::vector<iteminfo> &inf ) const
     }
 }
 
-void iuse_paint_stuff::on_placed( item &it, const map &, const tripoint_bub_ms & ) const
+void iuse_paint_stuff::on_placed( item &it, const tripoint_abs_ms & ) const
 {
     get_paint_color( it );
 }
 
-void iuse_paint_stuff_config::on_placed( item &it, const map &, const tripoint_bub_ms & ) const
+void iuse_paint_stuff_config::on_placed( item &it, const tripoint_abs_ms & ) const
 {
     get_paint_layer( it, false );
 }
@@ -8463,7 +8671,7 @@ void iuse_paint_stuff_config::set_color( item &it )
 ret_val<bool> iuse_paint_stuff::can_use( const Character &, const item &it, bool,
         const tripoint_bub_ms & ) const
 {
-    if( it.ammo_remaining() < 1 ) {
+    if( it.ammo_remaining() < charge_cost ) {
         return ret_val<bool>::make_failure( _( "The %s doesn't have enough charges." ), it.tname() );
     }
 

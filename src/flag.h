@@ -3,6 +3,7 @@
 #include <set>
 #include <string>
 
+#include "color.h"
 #include "catalua_type_operators.h"
 #include "translations.h"
 #include "type_id.h"
@@ -81,6 +82,7 @@ extern const flag_id flag_DANGEROUS;
 extern const flag_id flag_DARK_IMMUNE;
 extern const flag_id flag_DEAF;
 extern const flag_id flag_DESTROY_ON_DECHARGE;
+extern const flag_id flag_DESTROY_ON_DROP;
 extern const flag_id flag_DIAMOND;
 extern const flag_id flag_DIG_TOOL;
 extern const flag_id flag_DIMENSIONAL_ANCHOR;
@@ -116,6 +118,7 @@ extern const flag_id flag_ELECTRIC_IMMUNE;
 extern const flag_id flag_ETHEREAL_ITEM;
 extern const flag_id flag_EXPLOSION_SMASHED;
 extern const flag_id flag_EXPLOSION_PROPELLED;
+extern const flag_id flag_DRONE_CAM;
 extern const flag_id flag_FAKE_MILL;
 extern const flag_id flag_FAKE_CLONING_VAT;
 extern const flag_id flag_FAKE_SMOKE;
@@ -227,6 +230,7 @@ extern const flag_id flag_NO_RECOVER_AMMO;
 extern const flag_id flag_NO_RELOAD;
 extern const flag_id flag_NO_REPAIR;
 extern const flag_id flag_NO_SALVAGE;
+extern const flag_id flag_BUTCHERY_ROPE;
 extern const flag_id flag_NO_STERILE;
 extern const flag_id flag_NO_TAKEOFF;
 extern const flag_id flag_NO_UNLOAD;
@@ -253,7 +257,10 @@ extern const flag_id flag_POLEARM;
 extern const flag_id flag_POWERARMOR_COMPATIBLE;
 extern const flag_id flag_POWERARMOR_EXO;
 extern const flag_id flag_POWERARMOR_EXTERNAL;
+extern const flag_id flag_POWERARMOR_PLATING;
 extern const flag_id flag_POWERARMOR_MOD;
+extern const flag_id flag_PLATE_CARRIER;
+extern const flag_id flag_ARMOR_PLATE;
 extern const flag_id flag_POWERED;
 extern const flag_id flag_PRIMITIVE_RANGED_WEAPON;
 extern const flag_id flag_PROCESSING;
@@ -305,6 +312,7 @@ extern const flag_id flag_ROLLER_ONE;
 extern const flag_id flag_ROLLER_QUAD;
 extern const flag_id flag_SAFECRACK;
 extern const flag_id flag_SEMITANGIBLE;
+extern const flag_id flag_SECRET_ENCHANTMENTS;
 extern const flag_id flag_SHATTERS;
 extern const flag_id flag_SHOCKING;
 extern const flag_id flag_ACIDIC;
@@ -442,6 +450,8 @@ class json_flag
         /** The tag to be displayed on the item's display name when it has this flag */
         auto tag() const -> const translation & { return tag_; } // *NOPAD*
 
+        auto tag_color() const -> nc_color { return tag_color_; }
+
         /** The flag's modifier on the fun value of comestibles */
         int taste_mod() const {
             return taste_mod_;
@@ -466,6 +476,7 @@ class json_flag
         bool inherit_ = true;
         bool craft_inherit_ = false;
         std::string requires_flag_;
+        nc_color tag_color_ = c_light_gray;
         translation tag_;
         int taste_mod_ = 0;
 

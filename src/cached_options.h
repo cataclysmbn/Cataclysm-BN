@@ -1,4 +1,5 @@
 #pragma once
+#include "calendar.h"
 
 // A collection of options which are accessed frequently enough that we don't
 // want to pay the overhead of a string lookup each time one is tested.
@@ -100,6 +101,8 @@ extern int PICKUP_RANGE;
  */
 extern bool dont_debugmsg;
 
+// If true, add messages for why activities aren't entering skip state.
+extern bool log_activity_skip_state;
 
 /** Monster LOD (level-of-detail) options. */
 extern bool monster_lod_enabled;
@@ -124,7 +127,7 @@ enum class visibility_scaling_mode {
 extern visibility_scaling_mode visibility_scaling;
 
 extern bool lazy_border_enabled;
-extern int retained_omt_cache_multiplier;
+extern int retained_omt_cache_length;
 
 /**
  * Maximum number of fire-spread-loaded submaps allowed across all dimensions
@@ -157,6 +160,11 @@ extern bool parallel_monster_planning;
 extern int  monster_plan_chunk_size;
 extern bool parallel_map_cache;
 extern bool parallel_scent_update;
+
+extern bool activity_skip_sound_skip;
+extern bool activity_skip_npc_skip;
+extern bool activity_skip_mon_skip;
+extern time_duration activity_skip_stat_update_ticks;
 
 /* Options related to fungal activity */
 struct FungalOptions {

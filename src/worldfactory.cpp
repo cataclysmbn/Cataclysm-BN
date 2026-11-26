@@ -1591,7 +1591,12 @@ void worldfactory::delete_world( const std::string &worldname, const bool delete
         remove_directory( worldpath );
         remove_world( worldname );
     } else {
-        get_world( worldname )->world_saves.clear();
+        auto *world = get_world( worldname );
+        world->world_saves.clear();
+        // Recreate the empty database that identifies V2 worlds after removing old data.
+        if( !world->save() ) {
+            debugmsg( "Failed to save world metadata after resetting %s", worldname );
+        }
     }
 }
 

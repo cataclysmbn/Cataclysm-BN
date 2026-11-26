@@ -16,7 +16,8 @@
     "weight": "2 kg",
     "volume": "2 L",
     "upgrades": { "age_grow": 20, "into": "mon_dilophosaurus_juvenile" },
-    "extend": { "flags": "SWIMS" }
+    "extend": { "flags": "SWIMS" },
+    "petfood": { "food": [ "DINOFOOD_A" ] }
   },
   {
     "id": "mon_ceratosaurus_hatchling",
@@ -161,7 +162,6 @@
     "default_faction": "herbivore_young",
     "color": "light_green_yellow",
     "upgrades": { "age_grow": 20, "into": "mon_gallimimus_juvenile" },
-    "petfood": { "food": [ "DINOFOOD_B" ] },
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "GUILT", "CANPLAY", "STUMBLES", "NO_BREED" ]
   },
   {
@@ -216,7 +216,8 @@
     "copy-from": "mon_compsognathus_hatchling",
     "name": "dark gray and yellow hatchling",
     "default_faction": "velociraptor_hatchling",
-    "upgrades": { "age_grow": 20, "into": "mon_velociraptor" }
+    "upgrades": { "age_grow": 20, "into": "mon_velociraptor" },
+    "petfood": { "food": [ "DINOFOOD_A" ] }
   },
   {
     "id": "mon_deinonychus_hatchling",
@@ -647,7 +648,6 @@
     "default_faction": "herbivore_young",
     "color": "light_gray",
     "upgrades": { "age_grow": 20, "into": "mon_thescelosaurus_juvenile" },
-    "petfood": { "food": [ "DINOFOOD_B" ] },
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "CANPLAY", "STUMBLES", "NO_BREED", "GUILT" ]
   },
   {

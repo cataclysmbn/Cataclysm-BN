@@ -29,9 +29,7 @@
     "copy-from": "mbelt_leather",
     "id": "mbelt_haste",
     "name": { "str": "Belt of Haste", "str_pl": "Belts of Haste" },
-    "relic_data": {
-      "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "SPEED", "multiply": 0.15, "add": 5 } ] } ]
-    }
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "SPEED", "multiply": 0.15, "add": 5 } ] } ] }
   },
   {
     "type": "TOOL_ARMOR",
@@ -43,16 +41,14 @@
     "material_thickness": 10,
     "environmental_protection": 20,
     "weight_capacity_bonus": "50 kg",
-    "relic_data": {
-      "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "STRENGTH", "multiply": 1 } ] } ]
-    }
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "STRENGTH", "multiply": 1 } ] } ] }
   },
   {
     "type": "TOOL_ARMOR",
     "copy-from": "mbelt_leather",
     "id": "mbelt_pockets_lesser",
     "name": { "str": "Lesser Girdle of Pockets", "str_pl": "Lesser Girdles of Pockets" },
-    "description": "A wide girdle that fits around your waist, coverd in numerous small pouches that hold a lot more than they should, and the weight of their contents is greatly reduced.",
+    "description": "A wide girdle that fits around your waist, covered in numerous small pouches that hold a lot more than they should, and the weight of their contents is greatly reduced.",
     "coverage": 10,
     "encumbrance": 4,
     "weight_capacity_bonus": "5 kg",
@@ -63,7 +59,7 @@
     "copy-from": "mbelt_leather",
     "id": "mbelt_pockets_greater",
     "name": { "str": "Greater Girdle of Pockets", "str_pl": "Greater Girdles of Pockets" },
-    "description": "A wide girdle that fits around your waist, coverd in numerous small pouches that hold a lot more than they should, and the weight of their contents is greatly reduced.",
+    "description": "A wide girdle that fits around your waist, covered in numerous small pouches that hold a lot more than they should, and the weight of their contents is greatly reduced.",
     "coverage": 10,
     "encumbrance": 6,
     "weight_capacity_bonus": "10 kg",
@@ -102,7 +98,7 @@
         "gun",
         "unarmed"
       ],
-      "flags": [ "SHEATH_KNIFE", "SHEATH_SWORD", "BELT_CLIP", "SHEATH_SPEAR" ]
+      "flags": [ "SHEATH_KNIFE", "SHEATH_SWORD", "BELT_CLIP", "SHEATH_SPEAR", "SHEATH_AXE", "SHEATH_GOLF" ]
     }
   },
   {
@@ -152,6 +148,6 @@
     "copy-from": "mbelt_leather",
     "type": "ARMOR",
     "name": { "str": "belt of strength +2", "str_pl": "belts of strength +2" },
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "STRENGTH", "add": 2 } ] } ] }
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "STRENGTH", "add": 2 } ] } ] }
   }
 ]

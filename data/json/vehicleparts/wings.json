@@ -27,7 +27,12 @@
       "repair": { "skills": [ [ "mechanics", 5 ] ], "time": "10 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
     },
     "flags": [ "WING", "SHOCK_RESISTANT" ],
-    "damage_reduction": { "all": 28 }
+    "damage_reduction": { "all": 28 },
+    "shapes": [
+      { "direction": "left", "symbol": "y" },
+      { "direction": "right", "symbol": "u" },
+      { "direction": "horizontal", "symbol": "h" }
+    ]
   },
   {
     "abstract": "lit_wing_metal",
@@ -39,7 +44,12 @@
     "breaks_into": "ig_vp_sheet_metal",
     "epower": -5,
     "bonus": 10,
-    "extend": { "flags": [ "CIRCLE_LIGHT", "ENABLED_DRAINS_EPOWER" ] }
+    "extend": { "flags": [ "CIRCLE_LIGHT", "ENABLED_DRAINS_EPOWER" ] },
+    "shapes": [
+      { "direction": "left", "symbol": "y" },
+      { "direction": "right", "symbol": "u" },
+      { "direction": "horizontal", "symbol": "h" }
+    ]
   },
   {
     "abstract": "wing_metal_external",
@@ -47,7 +57,12 @@
     "type": "vehicle_part",
     "name": "external metal wing",
     "location": "structure",
-    "extend": { "flags": [ "PROTUSION", "EXTENDABLE", "BOARDABLE", "SEAT_REQUIRES_BALANCE" ] }
+    "extend": { "flags": [ "PROTUSION", "EXTENDABLE", "BOARDABLE", "SEAT_REQUIRES_BALANCE" ] },
+    "shapes": [
+      { "direction": "left", "symbol": "y" },
+      { "direction": "right", "symbol": "u" },
+      { "direction": "horizontal", "symbol": "h" }
+    ]
   },
   {
     "abstract": "lit_wing_metal_external",
@@ -55,91 +70,12 @@
     "type": "vehicle_part",
     "name": "external metal wing with lights",
     "location": "structure",
-    "extend": { "flags": [ "PROTUSION", "EXTENDABLE", "BOARDABLE", "SEAT_REQUIRES_BALANCE" ] }
-  },
-  {
-    "id": "wing_metal_horizontal",
-    "copy-from": "wing_metal",
-    "type": "vehicle_part",
-    "looks_like": "board_horizontal",
-    "symbol": "h"
-  },
-  {
-    "id": "wing_metal_left",
-    "copy-from": "wing_metal",
-    "type": "vehicle_part",
-    "looks_like": "board_nw",
-    "symbol": "y"
-  },
-  {
-    "id": "wing_metal_right",
-    "copy-from": "wing_metal",
-    "type": "vehicle_part",
-    "looks_like": "board_ne",
-    "symbol": "u"
-  },
-  {
-    "id": "lit_wing_metal_horizontal",
-    "copy-from": "lit_wing_metal",
-    "type": "vehicle_part",
-    "looks_like": "board_horizontal",
-    "symbol": "h"
-  },
-  {
-    "id": "lit_wing_metal_left",
-    "copy-from": "lit_wing_metal",
-    "type": "vehicle_part",
-    "looks_like": "board_nw",
-    "symbol": "y"
-  },
-  {
-    "id": "lit_wing_metal_right",
-    "copy-from": "lit_wing_metal",
-    "type": "vehicle_part",
-    "looks_like": "board_ne",
-    "symbol": "u"
-  },
-  {
-    "id": "wing_metal_external_horizontal",
-    "copy-from": "wing_metal_external",
-    "type": "vehicle_part",
-    "looks_like": "board_horizontal",
-    "symbol": "h"
-  },
-  {
-    "id": "wing_metal_external_left",
-    "copy-from": "wing_metal_external",
-    "type": "vehicle_part",
-    "looks_like": "board_nw",
-    "symbol": "y"
-  },
-  {
-    "id": "wing_metal_external_right",
-    "copy-from": "wing_metal_external",
-    "type": "vehicle_part",
-    "looks_like": "board_ne",
-    "symbol": "u"
-  },
-  {
-    "id": "lit_wing_metal_external_horizontal",
-    "copy-from": "lit_wing_metal_external",
-    "type": "vehicle_part",
-    "looks_like": "board_horizontal",
-    "symbol": "h"
-  },
-  {
-    "id": "lit_wing_metal_external_left",
-    "copy-from": "lit_wing_metal_external",
-    "type": "vehicle_part",
-    "looks_like": "board_nw",
-    "symbol": "y"
-  },
-  {
-    "id": "lit_wing_metal_external_right",
-    "copy-from": "lit_wing_metal_external",
-    "type": "vehicle_part",
-    "looks_like": "board_ne",
-    "symbol": "u"
+    "extend": { "flags": [ "PROTUSION", "EXTENDABLE", "BOARDABLE", "SEAT_REQUIRES_BALANCE" ] },
+    "shapes": [
+      { "direction": "left", "symbol": "y" },
+      { "direction": "right", "symbol": "u" },
+      { "direction": "horizontal", "symbol": "h" }
+    ]
   },
   {
     "abstract": "wing_wood",
@@ -159,7 +95,12 @@
     },
     "flags": [ "WING", "SHOCK_RESISTANT", "FOLDABLE" ],
     "folded_volume": "15 L",
-    "damage_reduction": { "all": 28 }
+    "damage_reduction": { "all": 28 },
+    "shapes": [
+      { "direction": "left", "symbol": "y" },
+      { "direction": "right", "symbol": "u" },
+      { "direction": "horizontal", "symbol": "h" }
+    ]
   },
   {
     "abstract": "lit_wing_wood",
@@ -171,7 +112,12 @@
     "breaks_into": "ig_vp_wood_plate",
     "epower": -5,
     "bonus": 10,
-    "extend": { "flags": [ "CIRCLE_LIGHT", "ENABLED_DRAINS_EPOWER" ] }
+    "extend": { "flags": [ "CIRCLE_LIGHT", "ENABLED_DRAINS_EPOWER" ] },
+    "shapes": [
+      { "direction": "left", "symbol": "y" },
+      { "direction": "right", "symbol": "u" },
+      { "direction": "horizontal", "symbol": "h" }
+    ]
   },
   {
     "abstract": "wing_wood_external",
@@ -179,7 +125,12 @@
     "type": "vehicle_part",
     "name": "external wooden wing",
     "location": "structure",
-    "extend": { "flags": [ "PROTUSION", "EXTENDABLE", "BOARDABLE", "SEAT_REQUIRES_BALANCE" ] }
+    "extend": { "flags": [ "PROTUSION", "EXTENDABLE", "BOARDABLE", "SEAT_REQUIRES_BALANCE" ] },
+    "shapes": [
+      { "direction": "left", "symbol": "y" },
+      { "direction": "right", "symbol": "u" },
+      { "direction": "horizontal", "symbol": "h" }
+    ]
   },
   {
     "abstract": "lit_wing_wood_external",
@@ -187,91 +138,12 @@
     "type": "vehicle_part",
     "name": "external wooden wing with lights",
     "location": "structure",
-    "extend": { "flags": [ "PROTUSION", "EXTENDABLE", "BOARDABLE", "SEAT_REQUIRES_BALANCE" ] }
-  },
-  {
-    "id": "wing_wood_horizontal",
-    "copy-from": "wing_wood",
-    "type": "vehicle_part",
-    "looks_like": "board_horizontal",
-    "symbol": "h"
-  },
-  {
-    "id": "wing_wood_left",
-    "copy-from": "wing_wood",
-    "type": "vehicle_part",
-    "looks_like": "board_nw",
-    "symbol": "y"
-  },
-  {
-    "id": "wing_wood_right",
-    "copy-from": "wing_wood",
-    "type": "vehicle_part",
-    "looks_like": "board_ne",
-    "symbol": "u"
-  },
-  {
-    "id": "lit_wing_wood_horizontal",
-    "copy-from": "lit_wing_wood",
-    "type": "vehicle_part",
-    "looks_like": "board_horizontal",
-    "symbol": "h"
-  },
-  {
-    "id": "lit_wing_wood_left",
-    "copy-from": "lit_wing_wood",
-    "type": "vehicle_part",
-    "looks_like": "board_nw",
-    "symbol": "y"
-  },
-  {
-    "id": "lit_wing_wood_right",
-    "copy-from": "lit_wing_wood",
-    "type": "vehicle_part",
-    "looks_like": "board_ne",
-    "symbol": "u"
-  },
-  {
-    "id": "wing_wood_external_horizontal",
-    "copy-from": "wing_wood_external",
-    "type": "vehicle_part",
-    "looks_like": "board_horizontal",
-    "symbol": "h"
-  },
-  {
-    "id": "wing_wood_external_left",
-    "copy-from": "wing_wood_external",
-    "type": "vehicle_part",
-    "looks_like": "board_nw",
-    "symbol": "y"
-  },
-  {
-    "id": "wing_wood_external_right",
-    "copy-from": "wing_wood_external",
-    "type": "vehicle_part",
-    "looks_like": "board_ne",
-    "symbol": "u"
-  },
-  {
-    "id": "lit_wing_wood_external_horizontal",
-    "copy-from": "lit_wing_wood_external",
-    "type": "vehicle_part",
-    "looks_like": "board_horizontal",
-    "symbol": "h"
-  },
-  {
-    "id": "lit_wing_wood_external_left",
-    "copy-from": "lit_wing_wood_external",
-    "type": "vehicle_part",
-    "looks_like": "board_nw",
-    "symbol": "y"
-  },
-  {
-    "id": "lit_wing_wood_external_right",
-    "copy-from": "lit_wing_wood_external",
-    "type": "vehicle_part",
-    "looks_like": "board_ne",
-    "symbol": "u"
+    "extend": { "flags": [ "PROTUSION", "EXTENDABLE", "BOARDABLE", "SEAT_REQUIRES_BALANCE" ] },
+    "shapes": [
+      { "direction": "left", "symbol": "y" },
+      { "direction": "right", "symbol": "u" },
+      { "direction": "horizontal", "symbol": "h" }
+    ]
   },
   {
     "abstract": "wing_carbon",
@@ -291,7 +163,13 @@
     },
     "flags": [ "WING", "SHOCK_RESISTANT", "FOLDABLE" ],
     "folded_volume": "15 L",
-    "damage_reduction": { "all": 28 }
+    "damage_reduction": { "all": 28 },
+    "looks_like": "wing_metal",
+    "shapes": [
+      { "direction": "left", "symbol": "y" },
+      { "direction": "right", "symbol": "u" },
+      { "direction": "horizontal", "symbol": "h" }
+    ]
   },
   {
     "abstract": "lit_wing_carbon",
@@ -303,7 +181,13 @@
     "breaks_into": "ig_vp_carbon",
     "epower": -5,
     "bonus": 10,
-    "extend": { "flags": [ "CIRCLE_LIGHT", "ENABLED_DRAINS_EPOWER" ] }
+    "extend": { "flags": [ "CIRCLE_LIGHT", "ENABLED_DRAINS_EPOWER" ] },
+    "looks_like": "lit_wing_metal",
+    "shapes": [
+      { "direction": "left", "symbol": "y" },
+      { "direction": "right", "symbol": "u" },
+      { "direction": "horizontal", "symbol": "h" }
+    ]
   },
   {
     "abstract": "wing_carbon_external",
@@ -311,7 +195,13 @@
     "type": "vehicle_part",
     "name": "external carbon wing",
     "location": "structure",
-    "extend": { "flags": [ "PROTUSION", "EXTENDABLE", "BOARDABLE", "SEAT_REQUIRES_BALANCE" ] }
+    "extend": { "flags": [ "PROTUSION", "EXTENDABLE", "BOARDABLE", "SEAT_REQUIRES_BALANCE" ] },
+    "looks_like": "wing_metal_external",
+    "shapes": [
+      { "direction": "left", "symbol": "y" },
+      { "direction": "right", "symbol": "u" },
+      { "direction": "horizontal", "symbol": "h" }
+    ]
   },
   {
     "abstract": "lit_wing_carbon_external",
@@ -319,210 +209,64 @@
     "type": "vehicle_part",
     "name": "external carbon wing with lights",
     "location": "structure",
-    "extend": { "flags": [ "PROTUSION", "EXTENDABLE", "BOARDABLE", "SEAT_REQUIRES_BALANCE" ] }
+    "extend": { "flags": [ "PROTUSION", "EXTENDABLE", "BOARDABLE", "SEAT_REQUIRES_BALANCE" ] },
+    "looks_like": "lit_wing_metal_external",
+    "shapes": [
+      { "direction": "left", "symbol": "y" },
+      { "direction": "right", "symbol": "u" },
+      { "direction": "horizontal", "symbol": "h" }
+    ]
   },
   {
-    "id": "wing_carbon_horizontal",
-    "copy-from": "wing_carbon",
-    "type": "vehicle_part",
-    "looks_like": "wing_metal_horizontal",
-    "symbol": "h"
-  },
-  {
-    "id": "wing_carbon_left",
-    "copy-from": "wing_carbon",
-    "type": "vehicle_part",
-    "looks_like": "wing_metal_left",
-    "symbol": "y"
-  },
-  {
-    "id": "wing_carbon_right",
-    "copy-from": "wing_carbon",
-    "type": "vehicle_part",
-    "looks_like": "wing_metal_right",
-    "symbol": "u"
-  },
-  {
-    "id": "lit_wing_carbon_horizontal",
-    "copy-from": "lit_wing_carbon",
-    "type": "vehicle_part",
-    "looks_like": "let_wing_metal_horizontal",
-    "symbol": "h"
-  },
-  {
-    "id": "lit_wing_carbon_left",
-    "copy-from": "lit_wing_carbon",
-    "type": "vehicle_part",
-    "looks_like": "lit_wing_metal_left",
-    "symbol": "y"
-  },
-  {
-    "id": "lit_wing_carbon_right",
-    "copy-from": "lit_wing_carbon",
-    "type": "vehicle_part",
-    "looks_like": "lit_wing_metal_right",
-    "symbol": "u"
-  },
-  {
-    "id": "wing_carbon_external_horizontal",
-    "copy-from": "wing_carbon_external",
-    "type": "vehicle_part",
-    "looks_like": "wing_metal_external_horizontal",
-    "symbol": "h"
-  },
-  {
-    "id": "wing_carbon_external_left",
-    "copy-from": "wing_carbon_external",
-    "type": "vehicle_part",
-    "looks_like": "wing_metal_external_left",
-    "symbol": "y"
-  },
-  {
-    "id": "wing_carbon_external_right",
-    "copy-from": "wing_carbon_external",
-    "type": "vehicle_part",
-    "looks_like": "wing_metal_external_right",
-    "symbol": "u"
-  },
-  {
-    "id": "lit_wing_carbon_external_horizontal",
-    "copy-from": "lit_wing_carbon_external",
-    "type": "vehicle_part",
-    "looks_like": "lit_wing_metal_external_horizontal",
-    "symbol": "h"
-  },
-  {
-    "id": "lit_wing_carbon_external_left",
-    "copy-from": "lit_wing_carbon_external",
-    "type": "vehicle_part",
-    "looks_like": "lit_wing_metal_external_left",
-    "symbol": "y"
-  },
-  {
-    "id": "lit_wing_carbon_external_right",
-    "copy-from": "lit_wing_carbon_external",
-    "type": "vehicle_part",
-    "looks_like": "lit_wing_metal_external_right",
-    "symbol": "u"
-  },
-  {
-    "id": "spoiler_metal_horizontal",
+    "abstract": "spoiler_metal",
     "copy-from": "wing_metal",
     "type": "vehicle_part",
     "name": "metal spoiler",
-    "looks_like": "board_horizontal",
     "lift_coff": -1,
     "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
-    "symbol": "h"
+    "shapes": [
+      { "direction": "left", "symbol": "y", "looks_like": "board_nw" },
+      { "direction": "right", "symbol": "u", "looks_like": "board_ne" },
+      { "direction": "horizontal", "symbol": "h", "looks_like": "board_horizontal" }
+    ]
   },
   {
-    "id": "spoiler_metal_left",
-    "copy-from": "wing_metal",
+    "abstract": "spoiler_metal_external",
+    "copy-from": "wing_metal_external",
     "type": "vehicle_part",
     "name": "metal spoiler",
-    "looks_like": "board_nw",
     "lift_coff": -1,
     "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
-    "symbol": "y"
+    "shapes": [
+      { "direction": "left", "symbol": "y", "looks_like": "board_nw" },
+      { "direction": "right", "symbol": "u", "looks_like": "board_ne" },
+      { "direction": "horizontal", "symbol": "h", "looks_like": "board_horizontal" }
+    ]
   },
   {
-    "id": "spoiler_metal_right",
-    "copy-from": "wing_metal",
-    "type": "vehicle_part",
-    "name": "metal spoiler",
-    "looks_like": "board_ne",
-    "lift_coff": -1,
-    "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
-    "symbol": "u"
-  },
-  {
-    "id": "spoiler_metal_external_horizontal",
-    "copy-from": "wing_metal_external",
-    "type": "vehicle_part",
-    "name": "external metal spoiler",
-    "looks_like": "board_horizontal",
-    "lift_coff": -1,
-    "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
-    "symbol": "h"
-  },
-  {
-    "id": "spoiler_metal_external_left",
-    "copy-from": "wing_metal_external",
-    "type": "vehicle_part",
-    "name": "external metal spoiler",
-    "looks_like": "board_nw",
-    "lift_coff": -1,
-    "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
-    "symbol": "y"
-  },
-  {
-    "id": "spoiler_metal_external_right",
-    "copy-from": "wing_metal_external",
-    "type": "vehicle_part",
-    "name": "external metal spoiler",
-    "looks_like": "board_ne",
-    "lift_coff": -1,
-    "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
-    "symbol": "u"
-  },
-  {
-    "id": "spoiler_carbon_horizontal",
+    "abstract": "spoiler_carbon",
     "copy-from": "wing_carbon",
     "type": "vehicle_part",
     "name": "carbon spoiler",
-    "looks_like": "wing_metal_horizontal",
     "lift_coff": -1,
     "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
-    "symbol": "h"
+    "shapes": [
+      { "direction": "left", "symbol": "y", "looks_like": "board_nw" },
+      { "direction": "right", "symbol": "u", "looks_like": "board_ne" },
+      { "direction": "horizontal", "symbol": "h", "looks_like": "board_horizontal" }
+    ]
   },
   {
-    "id": "spoiler_carbon_left",
-    "copy-from": "wing_carbon",
+    "abstract": "spoiler_carbon_external",
+    "copy-from": "wing_carbon_external",
     "type": "vehicle_part",
     "name": "carbon spoiler",
-    "looks_like": "wing_metal_left",
     "lift_coff": -1,
     "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
-    "symbol": "y"
-  },
-  {
-    "id": "spoiler_carbon_right",
-    "copy-from": "wing_carbon",
-    "type": "vehicle_part",
-    "name": "carbon spoiler",
-    "looks_like": "wing_metal_right",
-    "lift_coff": -1,
-    "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
-    "symbol": "u"
-  },
-  {
-    "id": "spoiler_carbon_external_horizontal",
-    "copy-from": "wing_carbon_external",
-    "type": "vehicle_part",
-    "name": "external carbon spoiler",
-    "looks_like": "wing_metal_external_horizontal",
-    "lift_coff": -1,
-    "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
-    "symbol": "h"
-  },
-  {
-    "id": "spoiler_carbon_external_left",
-    "copy-from": "wing_carbon_external",
-    "type": "vehicle_part",
-    "name": "external carbon spoiler",
-    "looks_like": "wing_metal_external_left",
-    "lift_coff": -1,
-    "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
-    "symbol": "y"
-  },
-  {
-    "id": "spoiler_carbon_external_right",
-    "copy-from": "wing_carbon_external",
-    "type": "vehicle_part",
-    "name": "external carbon spoiler",
-    "looks_like": "wing_metal_external_right",
-    "lift_coff": -1,
-    "description": "A vehicle spoiler that gives the vehicle more downforce, lowering its top speed.",
-    "symbol": "u"
+    "shapes": [
+      { "direction": "left", "symbol": "y", "looks_like": "board_nw" },
+      { "direction": "right", "symbol": "u", "looks_like": "board_ne" },
+      { "direction": "horizontal", "symbol": "h", "looks_like": "board_horizontal" }
+    ]
   }
 ]

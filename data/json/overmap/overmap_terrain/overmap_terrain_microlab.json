@@ -90,5 +90,73 @@
     "type": "overmap_terrain",
     "id": "microlab_under_connector",
     "copy-from": "empty_rock"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "microlab_distorted_edge",
+    "name": "distorted science lab",
+    "color": "pink",
+    "sym": "L",
+    "spawns": { "group": "GROUP_SUSPENDED_SHADE", "population": [ 20, 40 ], "chance": 50 },
+    "flags": [ "NO_ROTATE", "RISK_HIGH", "SOURCE_CHEMISTRY", "SOURCE_MEDICINE" ]
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "microlab_portal_dressroom",
+    "name": "science lab",
+    "sym": "L",
+    "color": "light_blue",
+    "flags": [ "RISK_HIGH" ]
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "microlab_distorted_hallway",
+    "name": "distorted hallway",
+    "color": "light_red",
+    "sym": "L",
+    "spawns": { "group": "GROUP_SUSPENDED_SHADE", "population": [ 20, 40 ], "chance": 50 },
+    "see_cost": 5
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "microlab_portal_elevator", "microlab_portal_elevator_physics_glass" ],
+    "name": "physics department elevator",
+    "color": "light_red",
+    "sym": "L",
+    "see_cost": 5
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [
+      "microlab_portal_elevator_nether_glass",
+      "microlab_nether_glass_entrance",
+      "microlab_nether_glass_hallway",
+      "microlab_nether_glass_end",
+      "microlab_nether_glass_roof"
+    ],
+    "name": "lost level",
+    "color": "black",
+    "sym": " ",
+    "see_cost": 5
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [
+      "microlab_portal_security1",
+      "microlab_portal_security2",
+      "microlab_portal_security3",
+      "microlab_portal_security4",
+      "microlab_portal_security5",
+      "microlab_portal_security6",
+      "microlab_portal_security7",
+      "microlab_portal_security8",
+      "microlab_portal_security_hallway1",
+      "microlab_portal_security_hallway2"
+    ],
+    "name": "physics lab",
+    "sym": "L",
+    "color": "red",
+    "see_cost": 5,
+    "flags": [ "RISK_HIGH" ]
   }
 ]

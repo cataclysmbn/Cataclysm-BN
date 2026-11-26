@@ -4,7 +4,7 @@
     "id": "lethal_zeds",
     "name": "<color_red>Lethal Zombies</color>",
     "authors": [ "RoyalFox" ],
-    "maintainers": [ "RoyalFox" ],
+    "maintainers": [ "scarf005 " ],
     "description": "For an uncompromising and brutal experience.",
     "category": "content",
     "dependencies": [ "bn" ]

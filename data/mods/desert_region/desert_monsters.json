@@ -27,7 +27,7 @@
     "vision_night": 5,
     "harvest": "zombie_leather",
     "special_attacks": [
-      [ "SMASH", 20 ],
+      { "id": "smash", "throw_strength": 50 },
       [ "LUNGE", 20 ],
       { "type": "leap", "cooldown": 15, "move_cost": 0, "max_range": 12, "min_consider_range": 4 }
     ],
@@ -54,7 +54,7 @@
     "armor_bash": 3,
     "armor_cut": 1,
     "death_function": [ "NORMAL", "FUNGUS" ],
-    "special_attacks": [ [ "FUNGUS", 200 ], [ "SMASH", 15 ], [ "FUNGUS_BRISTLE", 20 ], [ "FUNGUS_BIG_BLOSSOM", 30 ] ],
+    "special_attacks": [ [ "FUNGUS", 200 ], { "id": "smash", "cooldown": 15 }, [ "FUNGUS_BRISTLE", 20 ], [ "FUNGUS_BIG_BLOSSOM", 30 ] ],
     "extend": { "flags": [ "POISON", "NO_BREATHE" ] },
     "delete": { "flags": [ "HEARS", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "BLEED", "GROUP_MORALE", "GOODHEARING", "SWARMS" ] },
     "petfood": { "food": [ "NULL" ] }

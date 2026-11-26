@@ -8,9 +8,9 @@
     "traits": [ "MMA_MARTIAL_ARTS_PANZER" ],
     "skills": [
       { "level": 2, "name": "swimming" },
-      { "level": 3, "name": "unarmed" },
-      { "level": 3, "name": "melee" },
-      { "level": 1, "name": "dodge" }
+      { "level": 4, "name": "unarmed" },
+      { "level": 4, "name": "melee" },
+      { "level": 4, "name": "dodge" }
     ],
     "items": { "both": { "items": [ "wetsuit", "trenchcoat", "gloves_fingerless", "knee_pads", "boots" ] } },
     "CBMs": [

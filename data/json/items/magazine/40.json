@@ -76,7 +76,7 @@
     "type": "MAGAZINE",
     "name": { "str": "Glock 22 magazine" },
     "description": "A compact light-weight polymer magazine for use with Glock pistols chambered for .40 S&W or .357 SIG.",
-    "weight": "125 g",
+    "weight": "80 g",
     "volume": "250 ml",
     "price": "32 USD",
     "price_postapoc": "1 USD",
@@ -232,6 +232,24 @@
     "ammo_type": "40",
     "capacity": 10,
     "reliability": 8,
+    "flags": [ "MAG_COMPACT" ]
+  },
+  {
+    "id": "ump40mag",
+    "looks_like": "ump45mag",
+    "type": "MAGAZINE",
+    "name": { "str": "UMP40 magazine" },
+    "description": "A straight, double-stack plastic box magazine for the UMP sub-machine gun in .40 S&W.  Holds 30 rounds.",
+    "weight": "250 g",
+    "volume": "500 ml",
+    "price": "4950 cent",
+    "price_postapoc": "1 USD",
+    "material": "plastic",
+    "symbol": "#",
+    "color": "light_gray",
+    "ammo_type": "40",
+    "capacity": 30,
+    "reliability": 9,
     "flags": [ "MAG_COMPACT" ]
   },
   {

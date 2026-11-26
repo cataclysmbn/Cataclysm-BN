@@ -1,44 +1,82 @@
 # Developer Tooling
 
-## Code style (astyle)
+## Playtesting pull requests
 
-Automatic formatting of the source code is performed by
-[Artistic Style](http://astyle.sourceforge.net/), or `astyle` for short.
-
-There are multiple ways to invoke it on the codebase, depending on your system or personal
-preferences.
-
-### Invoking astyle directly
-
-If you only have `astyle` installed, use:
+From the repository root, download and launch a PR's tiles build without compiling locally:
 
 ```sh
-astyle --options=.astylerc --recursive src/*.cpp,*.h tests/*.cpp,*.h tools/*.cpp,*.h
+gh auth login
+just playtest 10443
+just playtest https://github.com/cataclysmbn/Cataclysm-BN/pull/10443
+just playtest --os linux https://github.com/cataclysmbn/Cataclysm-BN/pull/10443
+just playtest "Exact PR title"
+just playtest branch-name
 ```
 
-### Invoking astyle through CMake
+The first argument accepts a PR number, URL, branch, or exact title. Titles must match exactly one PR;
+quote titles containing spaces. The optional `--os` is `linux`, `windows`, `macos`, or `android`, and defaults
+to the host OS. Desktop builds must run on their matching OS. Linux builds require x86_64; macOS selects
+Intel or ARM according to the host architecture.
 
-If you have configured a CMake build tree, use:
+Install [just](https://just.systems/), [Deno](https://deno.com/), and the
+[GitHub CLI](https://cli.github.com/). The repository's justfile also requires Bash, including on Windows.
+Linux extraction requires GNU tar; macOS uses the built-in `hdiutil`, `ditto`, and `open` tools.
+The downloaded game still needs its platform's runtime libraries.
+
+For Android, connect an ARM64 device with USB debugging enabled and ensure `adb devices` shows one
+authorized target, then run `just playtest --os android https://github.com/cataclysmbn/Cataclysm-BN/pull/10443`. This installs or updates the experimental app
+with `adb install -r` and launches it. An existing app signed with a different key cannot be updated
+this way.
+
+> [!WARNING]
+> Only playtest PRs you trust: their artifacts execute code on your computer or Android device.
+
+The command selects the newest unexpired artifact matching the PR's current head SHA. If none exists,
+check the PR's `matrix` workflow: the build may be pending, skipped, failed, or expired. Older commits
+are not used as a fallback.
+
+Desktop downloads are cached under
+`/tmp/cataclysm-bn/artifacts/PR-<number>-<SHA>/<os>/build-<artifact-id>/`.
+On Windows, the root is `%TEMP%\cataclysm-bn\artifacts` (the repository directory is used if `TEMP` is unset).
+Repeated launches reuse the same artifact directory and preserve its saves and configuration;
+a new SHA or artifact ID gets a separate directory. Temporary-directory cleanup can remove these files,
+so copy any saves you want to keep elsewhere. Android saves remain on the device.
+
+## Code style (C++)
+
+C++ formatting uses [Artistic Style](http://astyle.sourceforge.net/) only for top-level
+`src/*.cpp` and `src/*.h`. Most other C++ files use
+[clang-format](https://clang.llvm.org/docs/ClangFormat.html). Formatter-sensitive fixtures such as
+`tools/clang-tidy-plugin/test/` are left unchanged. Use the repository helpers so each file goes
+through the right formatter.
+
+### Invoking C++ formatting
 
 ```sh
-cmake --build build --target astyle
+just fmt
+# or, for C++ only
+just fmt-cpp
 ```
 
-### Invoking astyle via pre-commit hook
+### Invoking C++ formatting through CMake
 
-If you have all the relevant tools installed, you can have git automatically check the style of code
-and json by adding these commands to your git pre-commit hook (typically at
-`.git/hooks/pre-commit`):
+If you have configured a CMake build tree with `bash` available, this target calls the same C++ helper:
 
 ```sh
-git diff --cached --name-only -z HEAD | grep -z 'data/.*\.json' | \
-    xargs -r -0 -L 1 ./tools/format/json_formatter.[ce]* || exit 1
+cmake --build <build-dir> --target format
+```
 
-astyle --options=.astylerc --dry-run -X -Q src/*.cpp src/*.h tests/*.cpp tests/*.h tools/*/*.cpp tools/*/*.h || exit 1
+### Invoking formatting via pre-commit hook
+
+Install the optional hook with:
+
+```sh
+just hooks-setup
 ```
 
 ### Astyle extensions for Visual Studio
 
+Use these only for top-level `src/*.cpp` and `src/*.h`; use `just fmt-cpp` for repository style.
 There are astyle extensions in the Visual Studio Marketplace, but none of them have been confirmed
 (yet) to correctly work for our purposes on VS2019 or VS2022.
 
@@ -175,7 +213,7 @@ add `CATA_CLANG_TIDY_PLUGIN=ON` to cmake flags when configuring the build.
 To run the plugin on a single file, run following command on project root:
 
 ```sh
-$ ./build-scripts/clang-tidy-wrapper.sh -fix src/achievement.cpp
+$ ./build-scripts/clang-tidy-wrapper.sh -fix src/event/achievement.cpp
 ```
 
 To run the plugin on multiple files, use [GNU parallel](https://www.gnu.org/software/parallel/):

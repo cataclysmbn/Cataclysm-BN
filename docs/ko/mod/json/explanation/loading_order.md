@@ -1,191 +1,30 @@
 # 로딩 순서
 
-이 문서는 Cataclysm: Bright Nights가 JSON 파일을 로드하는 순서를 설명합니다.
+`data/json`에 있는 모든 파일은 결국 읽히지만, 다른 종류의 객체에 의존하는 객체(예: 제작법은
+스킬에 의존함)의 경우에는 읽는 순서가 중요할 수 있습니다. 올바른 로딩 순서를 보장하면 대개
+세그멘테이션 오류로 게임이 강제 종료되는 형태로 나타나는 예상치 못한 문제(매우 나쁜 문제)를
+방지할 수 있습니다.
 
-## 로딩 단계
+Cataclysm은 `data/json/` 파일 트리를 너비 우선 탐색하여 JSON 파일을 찾아 로드합니다. 즉,
+`data/json/whatever.json`은 **항상** `data/json/subdir/whatever.json`보다 먼저 읽힙니다. 이를
+이용하면 의존성이 올바른 순서로 로드되도록 할 수 있습니다.
 
-게임은 다음 순서로 JSON을 로드합니다:
-
-### 1. 코어 데이터
-
-```
-data/json/
-├── damage_type.json      # 먼저 로드되어야 함
-├── materials.json        # 기본 재질
-├── flags.json            # 플래그 정의
-└── ...
-```
-
-### 2. 기본 정의
+예를 들어 시나리오가 직업에 의존하고 직업이 스킬에 의존한다면, 다음과 같은 디렉터리 구조를
+사용해야 합니다.
 
 ```
 data/json/
-├── items/                # 아이템 정의
-├── monsters/             # 몬스터
-├── furniture_terrain/    # 가구와 지형
-└── ...
+  skills.json
+  professions/
+    professions.json
+    scenarios/
+      scenarios.json
 ```
 
-### 3. 복잡한 시스템
+이 구조에서는 `skills.json`, `professions.json`, `scenarios.json` 순으로 로드됩니다.
 
-```
-data/json/
-├── mapgen/              # 맵 생성
-├── recipes/             # 제작법
-├── requirements/        # 제작 요구사항
-└── ...
-```
+## 같은 깊이의 로딩 순서
 
-### 4. 모드
-
-```
-data/mods/
-├── mod1/
-├── mod2/
-└── ...
-```
-
-모드는 `modinfo.json`의 종속성 순서에 따라 로드됩니다.
-
-## 종속성
-
-### 타입 종속성
-
-일부 타입은 다른 타입에 의존합니다:
-
-```
-materials → items → recipes
-damage_types → monsters
-terrain → mapgen
-```
-
-### 필드 종속성
-
-일부 필드는 다른 정의를 참조합니다:
-
-```json
-{
-  "type": "recipe",
-  "result": "item_id", // items에서 존재해야 함
-  "using": ["requirement_id"] // requirements에서 존재해야 함
-}
-```
-
-## 모드 종속성
-
-모드는 `modinfo.json`에서 종속성을 선언할 수 있습니다:
-
-```json
-{
-  "type": "MOD_INFO",
-  "id": "my_mod",
-  "name": "My Mod",
-  "dependencies": ["dda", "other_mod"]
-}
-```
-
-로딩 순서:
-
-1. 기본 게임 (`dda`)
-2. `other_mod`
-3. `my_mod`
-
-## 오버라이드
-
-나중에 로드된 정의가 이전 정의를 오버라이드합니다:
-
-### 복사-출처 (Copy-From)
-
-```json
-{
-  "type": "item",
-  "id": "my_variant",
-  "copy-from": "base_item",
-  "name": "My Variant"
-}
-```
-
-### 확장 (Extend)
-
-```json
-{
-  "type": "item",
-  "id": "existing_item",
-  "extend": { "flags": ["NEW_FLAG"] }
-}
-```
-
-### 삭제 (Delete)
-
-```json
-{
-  "type": "item",
-  "id": "existing_item",
-  "delete": { "flags": ["OLD_FLAG"] }
-}
-```
-
-## 로딩 오류
-
-### 일반적인 문제
-
-1. **누락된 종속성**
-
-```
-ERROR: item "my_item" references unknown material "nonexistent"
-```
-
-**수정**: 재질을 먼저 정의하거나 올바른 ID 사용
-
-2. **순환 종속성**
-
-```
-ERROR: circular dependency detected: item_a -> item_b -> item_a
-```
-
-**수정**: 종속성 체인 재구성
-
-3. **모드 순서 문제**
-
-```
-ERROR: mod "my_mod" depends on "other_mod" which is not loaded
-```
-
-**수정**: `modinfo.json`에 종속성 추가
-
-## 디버깅
-
-로딩 문제를 디버깅하려면:
-
-### 디버그 모드 활성화
-
-```bash
-./cataclysm-tiles --debug
-```
-
-### 로그 확인
-
-```
-config/debug.log
-```
-
-### 특정 타입 검사
-
-게임 내 디버그 메뉴 사용:
-
-- `~` - 디버그 메뉴 열기
-- "Show JSON errors" 선택
-
-## 모범 사례
-
-1. **올바른 순서로 정의**: 종속성을 먼저 정의
-2. **명시적 종속성**: 모드에서 명확한 종속성 선언
-3. **상위 호환성 테스트**: 모드를 다양한 순서로 테스트
-4. **로그 확인**: 항상 로딩 오류 확인
-5. **문서화**: 복잡한 종속성 문서화
-
-## 관련 문서
-
-- [MOD_INFO](../reference/mod/modinfo.md)
-- [JSON 스타일](json_style.md)
-- [파일 설명](file_description.md)
+파일(또는 디렉터리)이 같은 깊이에 있을 때(예: 모두 `data/json/`에 있을 때)는 사전식 순서로
+읽힙니다. ASCII 문자만 사용하는 파일 이름이라면 이는 알파벳순과 거의 같습니다. UTF-8 또는
+그 밖의 비 ASCII 파일 이름은 코드 포인트 순서로 정렬됩니다.

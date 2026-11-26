@@ -526,13 +526,6 @@ auto make_submap_tiles() -> std::vector<lua_point_coord>
     } );
 }
 
-auto make_tinymap_tiles() -> std::vector<lua_point_coord>
-{
-    return make_point_coord_vector( ::tinymap_tiles(), []( const point_bub_ms & p ) {
-        return make_point_coord( coords::origin::bubble, coords::scale::map_square, p.raw() );
-    } );
-}
-
 auto make_overmap_terrain_tiles() -> std::vector<lua_point_coord>
 {
     return make_point_coord_vector( ::overmap_terrain_tiles(), []( const point_omt_ms & p ) {
@@ -671,8 +664,6 @@ auto cata::detail::reg_coords_library( sol::state &lua ) -> void
 
     DOC( "Returns every map-square offset within one submap as PointCoord values." );
     luna::set_fx( lib, "submap_tiles", &lua_coords::make_submap_tiles );
-    DOC( "Returns every map-square offset within the tinymap as PointCoord values." );
-    luna::set_fx( lib, "tinymap_tiles", &lua_coords::make_tinymap_tiles );
     DOC( "Returns every map-square offset within one overmap terrain tile as PointCoord values." );
     luna::set_fx( lib, "overmap_terrain_tiles", &lua_coords::make_overmap_terrain_tiles );
     DOC( "Returns every map-square offset within one overmap as PointCoord values." );

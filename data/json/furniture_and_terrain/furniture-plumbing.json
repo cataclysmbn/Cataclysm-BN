@@ -12,7 +12,7 @@
     "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "CONTAINER", "PLACE_ITEM", "BLOCKSDOOR", "MOUNTABLE", "LIQUIDCONT" ],
     "max_volume": "200 L",
     "examine_action": "lua:PLUMBING_BATHTUB_EXAMINE",
-    "keg_capacity": 800,
+    "keg_capacity": "200 L",
     "fluid_grid": { "role": "fixture", "allow_input": false, "allow_output": true, "allowed_liquids": [ "water", "water_clean" ] },
     "bash": {
       "str_min": 12,
@@ -46,8 +46,8 @@
       "str_max": 30,
       "sound": "porcelain breaking!",
       "sound_fail": "whunk!",
-      "sound_vol": 100,
-      "sound_fail_vol": 80,
+      "sound_vol": "100 dB",
+      "sound_fail_vol": "80 dB",
       "items": [
         { "item": "cu_pipe", "count": [ 0, 2 ] },
         { "item": "scrap_copper", "count": [ 0, 2 ] },
@@ -63,7 +63,7 @@
     "id": "f_sink",
     "name": "sink",
     "symbol": "&",
-    "description": "Emergency relief provider.  Water isn't running, so it's basically useless.",
+    "description": "A basin with a faucet, set in a countertop. If you can get the plumbing working, it might work as a water source.",
     "color": "white",
     "move_cost_mod": 2,
     "coverage": 45,
@@ -144,7 +144,7 @@
     "required_str": -1,
     "flags": [ "CONTAINER", "PLACE_ITEM", "LIQUIDCONT", "NOITEM", "SEALED", "ADV_DECONSTRUCT" ],
     "examine_action": "keg",
-    "keg_capacity": 240,
+    "keg_capacity": "60 L",
     "deconstruct": {
       "items": [
         { "item": "pipe", "count": 1 },
@@ -188,7 +188,7 @@
     "description": "A machine with several taps that dispenses clean water.  Also known as a water cooler, it's still useful so long as the tank is full.",
     "symbol": "W",
     "color": "light_blue",
-    "keg_capacity": 75,
+    "keg_capacity": "18750 ml",
     "bash": {
       "str_min": 15,
       "str_max": 80,
@@ -443,6 +443,21 @@
       "allow_output": false,
       "allowed_liquids": [ "water" ],
       "transformer": { "tick_interval": "10 m", "collector_area_m2": 1.0 }
+    },
+    "deconstruct": {
+      "items": [
+        { "item": "pipe", "count": 4 },
+        { "item": "sheet_metal", "count": 2 },
+        { "item": "scrap", "count": 8 },
+        { "item": "water_faucet", "count": 1 }
+      ]
+    },
+    "bash": {
+      "str_min": 15,
+      "str_max": 80,
+      "sound": "whack!",
+      "sound_fail": "thunk.",
+      "items": [ { "item": "scrap", "count": [ 8, 12 ] }, { "item": "pipe", "count": [ 0, 2 ] } ]
     }
   }
 ]

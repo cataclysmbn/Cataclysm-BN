@@ -233,7 +233,7 @@
     "using": [ [ "forging_standard", 2 ], [ "bronzesmithing_tools", 1 ] ],
     "tools": [ [ [ "book_sacrifice", -1 ], [ "book_syncretism", -1 ] ] ],
     "components": [
-      [ [ "gold_small", 625 ] ],
+      [ [ "gold_small", 500 ] ],
       [ [ "arcana_holy_relic_any", 1, "LIST" ], [ "arcana_holy_symbol_any", 1, "LIST" ] ],
       [ [ "essence", 1 ], [ "earth_talisman", 1 ] ]
     ]

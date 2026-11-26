@@ -2,7 +2,12 @@
 
 #include <map>
 #include <vector>
+#include "bodypart.h"
+#include "calendar.h"
+#include "debug.h"
 #include "json.h"
+#include "reader_detail.h"
+#include "translations.h"
 #include "units.h"
 
 /*
@@ -34,86 +39,8 @@ template<typename T> concept SupportsRelative = supports_relative<T>::value;
 
 namespace reader_detail
 {
-template<typename T>
-struct handler {
-    static constexpr bool is_container = false;
-};
-
-template<typename T> concept Container = handler<T>::is_container;
-
 template<typename T> concept RelativeContainer = Container<T> &&SupportsRelative<T>;
-
-template<typename T>
-struct handler<std::set<T>> {
-    void clear( std::set<T> &container ) const {
-        container.clear();
-    }
-    void insert( std::set<T> &container, const T &data ) const {
-        container.insert( data );
-    }
-    void erase( std::set<T> &container, const T &data ) const {
-        container.erase( data );
-    }
-    static constexpr bool is_container = true;
 };
-
-template<size_t N>
-struct handler<std::bitset<N>> {
-    void clear( std::bitset<N> &container ) const {
-        container.reset();
-    }
-    template<typename T>
-    void insert( std::bitset<N> &container, const T &data ) const {
-        container.set( data );
-    }
-    template<typename T>
-    void erase( std::bitset<N> &container, const T &data ) const {
-        container.reset( data );
-    }
-    static constexpr bool is_container = true;
-};
-
-template<typename E>
-struct handler<enum_bitset<E>> {
-    void clear( enum_bitset<E> &container ) const {
-        container.clear_all();
-    }
-    template<typename T>
-    void insert( enum_bitset<E> &container, const T &data ) const {
-        container.set( data );
-    }
-    template<typename T>
-    void erase( enum_bitset<E> &container, const T &data ) const {
-        container.clear( data );
-    }
-    static constexpr bool is_container = true;
-};
-
-template<typename T>
-struct handler<std::vector<T>> {
-    void clear( std::vector<T> &container ) const {
-        container.clear();
-    }
-    void insert( std::vector<T> &container, const T &data ) const {
-        container.push_back( data );
-    }
-    template<typename E>
-    void erase( std::vector<T> &container, const E &data ) const {
-        erase_if( container, [&data]( const T & e ) {
-            return e == data;
-        } );
-    }
-    template<typename P>
-    void erase_if( std::vector<T> &container, const P &predicate ) const {
-        const auto iter = std::find_if( container.begin(), container.end(), predicate );
-        if( iter != container.end() ) {
-            container.erase( iter );
-        }
-    }
-    static constexpr bool is_container = true;
-};
-} // namespace reader_detail
-
 /**
  * Base class for reading generic objects from JSON.
  * It can load members being certain containers or being a single value.
@@ -199,6 +126,25 @@ class generic_typed_reader
             reader_detail::handler<C>().erase( container, derived.get_next( jin ) );
         }
 
+        template<typename C>
+        void replace_values_from( const JsonObject &jo, const std::string &member_name,
+                                  C &container ) const {
+            const Derived &derived = static_cast<const Derived &>( *this );
+            if( !jo.has_member( member_name ) ) {
+                return;
+            }
+            JsonObject obj = jo.get_object( member_name );
+            int index = obj.get_int( "idx" );
+            JsonIn &jin = *obj.get_raw( "val" );
+            derived.replace_next( jin, container, index );
+        }
+
+        template<typename C>
+        void replace_next( JsonIn &jin, C &container, int index ) const {
+            const Derived &derived = static_cast<const Derived &>( *this );
+            reader_detail::handler<C>().replace( container, derived.get_next( jin ), index );
+        }
+
         /**
          * Implements the reader interface, handles members that are containers of flags.
          * The functions forwards the actual changes to assign(), insert()
@@ -208,13 +154,16 @@ class generic_typed_reader
          */
         template<typename C>
         bool operator()( const JsonObject &jo, const std::string &member_name,
-                         C &container, bool was_loaded ) const requires reader_detail::handler<C>::is_container {
+                         C &container, bool was_loaded ) const requires( reader_detail::Container<C> &&
+                                 !reader_detail::IndexableContainer<C> ) {
             const Derived &derived = static_cast<const Derived &>( *this );
             // If you get an error about "incomplete type 'struct reader_detail::handler...",
             // you have to implement a specialization of your container type, so above for
             // existing specializations in namespace reader_detail.
             if( jo.has_member( member_name ) ) {
-                reader_detail::handler<C>().clear( container );
+                if( override_on_copy_from() ) {
+                    reader_detail::handler<C>().clear( container );
+                }
                 derived.insert_values_from( jo, member_name, container );
                 return true;
             } else if( !was_loaded ) {
@@ -229,6 +178,53 @@ class generic_typed_reader
                     JsonObject tmp = jo.get_object( "delete" );
                     tmp.allow_omitted_members();
                     derived.erase_values_from( tmp, member_name, container );
+                }
+                if( jo.has_object( "replace" ) ) {
+                    debugmsg( "This container does not support index based replacements" );
+                }
+                return true;
+            }
+        }
+
+        /**
+         * Identical to the above but with one exception
+         * Implements the reader interface, handles members that are containers of flags.
+         * The functions forwards the actual changes to assign(), insert()
+         * and erase(), which are specialized for various container types.
+         * The `enable_if` is here to prevent the compiler from considering it
+         * when called on a simple data member, the other `operator()` will be used.
+         */
+        template<typename C>
+        bool operator()( const JsonObject &jo, const std::string &member_name,
+                         C &container, bool was_loaded ) const requires( reader_detail::Container<C>
+                                 &&reader_detail::IndexableContainer<C> ) {
+            const Derived &derived = static_cast<const Derived &>( *this );
+            // If you get an error about "incomplete type 'struct reader_detail::handler...",
+            // you have to implement a specialization of your container type, so above for
+            // existing specializations in namespace reader_detail.
+            if( jo.has_member( member_name ) ) {
+                if( derived.override_on_copy_from() ) {
+                    reader_detail::handler<C>().clear( container );
+                }
+                derived.insert_values_from( jo, member_name, container );
+                return true;
+            } else if( !was_loaded ) {
+                return false;
+            } else {
+                if( jo.has_object( "extend" ) ) {
+                    JsonObject tmp = jo.get_object( "extend" );
+                    tmp.allow_omitted_members();
+                    derived.insert_values_from( tmp, member_name, container );
+                }
+                if( jo.has_object( "delete" ) ) {
+                    JsonObject tmp = jo.get_object( "delete" );
+                    tmp.allow_omitted_members();
+                    derived.erase_values_from( tmp, member_name, container );
+                }
+                if( jo.has_object( "replace" ) ) {
+                    JsonObject tmp = jo.get_object( "replace" );
+                    tmp.allow_omitted_members();
+                    derived.replace_values_from( tmp, member_name, container );
                 }
                 return true;
             }
@@ -294,6 +290,7 @@ class generic_typed_reader
                    handle_proportional( jo, member_name, member ) ||
                    do_relative( jo, member_name, member );
         }
+        bool override_on_copy_from() const { return true; }
 };
 
 /**
@@ -317,6 +314,14 @@ class auto_flags_reader : public generic_typed_reader<auto_flags_reader<FlagType
         }
 };
 
+class translation_reader : public generic_typed_reader<translation_reader>
+{
+    public:
+        translation get_next( JsonIn &jin ) const {
+            return to_translation( jin.get_string() );
+        }
+};
+
 using string_reader = auto_flags_reader<>;
 
 template <typename T>
@@ -324,15 +329,24 @@ class unit_reader : generic_typed_reader<T>
 {
     private:
         const std::vector<std::pair<std::string, T>> &type_units;
+        const T legacy_scale;
     protected:
-        unit_reader( const std::vector<std::pair<std::string, T>> &type_units )
-            : type_units( type_units )
+        unit_reader( const std::vector<std::pair<std::string, T>> &type_units, const T legacy_scale = T{} )
+            : type_units( type_units ), legacy_scale( legacy_scale )
         {}
     public:
         bool operator()( const JsonObject &jo, const std::string &member_name,
                          T &member, bool /* was_loaded */ ) const {
             if( !jo.has_member( member_name ) ) {
                 return false;
+            }
+            if constexpr( requires { requires units::quantity_details<typename T::unit_type>::common_zero_point::value; } ) {
+                if( legacy_scale != T{} && jo.has_int( member_name ) ) {
+                    jo.show_warning( "Legacy unit values used, support will be removed eventually.", member_name,
+                                     true );
+                    member = jo.get_int( member_name ) * legacy_scale;
+                    return true;
+                }
             }
             member = read_from_json_string<T>( *jo.get_raw( member_name ), type_units );
             return true;
@@ -346,7 +360,7 @@ class volume_reader : public unit_reader<units::volume>
 {
     public:
         volume_reader()
-            : unit_reader( units::volume_units )
+            : unit_reader( units::volume_units, units::legacy_volume_factor )
         {}
 };
 
@@ -364,6 +378,12 @@ class temperature_reader : public unit_reader<units::temperature>
         temperature_reader()
             : unit_reader( units::temperature_units )
         {}
+};
+
+class time_reader : public unit_reader<time_duration>
+{
+    public:
+        time_reader() : unit_reader( time_duration::units ) {};
 };
 
 /**
@@ -453,18 +473,14 @@ class string_id_reader : public generic_typed_reader<string_id_reader<T>>
 };
 
 /**
- * Reads a volume value from legacy format: JSON contains a integer which represents multiples
- * of `units::legacy_volume_factor` (250 ml).
+ * Loads string_id from JSON
  */
-inline bool legacy_volume_reader( const JsonObject &jo, const std::string &member_name,
-                                  units::volume &value, bool )
+class bodypart_reader : public generic_typed_reader<bodypart_reader>
 {
-    int legacy_value;
-    if( !jo.read( member_name, legacy_value ) ) {
-        return false;
-    }
-    value = legacy_value * units::legacy_volume_factor;
-    return true;
-}
+    public:
+        body_part get_next( JsonIn &jin ) const {
+            return get_body_part_token( jin.get_string() );
+        }
+};
 
 

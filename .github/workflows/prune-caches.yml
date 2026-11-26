@@ -1,0 +1,29 @@
+name: Prune duplicate caches
+
+# ccache-action appends a timestamp to each saved key, so every save adds a new copy.
+# Old copies fill the 10 GB repository limit and evict the caches that other jobs need.
+on:
+  workflow_run:
+    workflows: [matrix, Nightly Release, Experimental Release, Manual release, Clang-tidy (tiles)]
+    types: [completed]
+  workflow_dispatch:
+
+concurrency:
+  group: prune-caches
+
+permissions:
+  actions: write
+
+jobs:
+  prune:
+    runs-on: ubuntu-slim
+    steps:
+      - name: Keep only the newest copy of each timestamped cache key per ref
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh cache list --limit 1000 --json id,key,ref,createdAt --jq '
+            group_by([.ref, (.key | sub("-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z$"; ""))])
+            | map(sort_by(.createdAt) | .[:-1][] | .id) | .[]' |
+            xargs -r -n1 gh cache delete

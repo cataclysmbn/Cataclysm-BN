@@ -17,6 +17,7 @@
 #include "rng.h"
 #include "skill.h"
 #include "trait_group.h"
+#include "type_id_implement.h"
 #include "json.h"
 
 static const std::array<npc_class_id, 19> legacy_ids = {{
@@ -64,19 +65,7 @@ npc_class_id NC_HALLU( "NC_HALLU" );
 
 generic_factory<npc_class> npc_class_factory( "npc_class" );
 
-/** @relates string_id */
-template<>
-const npc_class &string_id<npc_class>::obj() const
-{
-    return npc_class_factory.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-bool string_id<npc_class>::is_valid() const
-{
-    return npc_class_factory.is_valid( *this );
-}
+IMPLEMENT_STRING_AND_INT_IDS( npc_class, npc_class_factory );
 
 npc_class::npc_class() : id( NC_NONE )
 {

@@ -56,12 +56,7 @@
     "charges_per_use": 1,
     "qualities": [ [ "DISTILL", 1 ], [ "CHEM", 3 ], [ "BOIL", 1 ] ],
     "use_action": "HOTPLATE",
-    "magazines": [
-      [
-        "battery",
-        [ "medium_battery_cell", "medium_plus_battery_cell", "medium_atomic_battery_cell", "medium_disposable_cell" ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "medium_battery_cell" ] ] ],
     "magazine_well": "500 ml"
   },
   {
@@ -293,20 +288,7 @@
     "charges_per_use": 5,
     "use_action": "WEATHER_TOOL",
     "flags": [ "THERMOMETER", "HYGROMETER", "BAROMETER", "WINDMETER" ],
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_battery_cell",
-          "light_plus_battery_cell",
-          "light_disposable_cell",
-          "light_atomic_battery_cell",
-          "light_minus_battery_cell",
-          "light_minus_disposable_cell",
-          "light_minus_atomic_battery_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_battery_cell", "light_minus_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -326,12 +308,7 @@
     "symbol": ";",
     "color": "light_gray",
     "qualities": [ [ "ANALYSIS", 1 ] ],
-    "magazines": [
-      [
-        "battery",
-        [ "medium_battery_cell", "medium_plus_battery_cell", "medium_atomic_battery_cell", "medium_disposable_cell" ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "medium_battery_cell" ] ] ],
     "magazine_well": "500 ml"
   },
   {
@@ -366,12 +343,7 @@
     "material": [ "plastic", "steel" ],
     "symbol": ";",
     "color": "light_gray",
-    "magazines": [
-      [
-        "battery",
-        [ "medium_battery_cell", "medium_plus_battery_cell", "medium_atomic_battery_cell", "medium_disposable_cell" ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "medium_battery_cell" ] ] ],
     "magazine_well": "500 ml"
   },
   {
@@ -390,20 +362,7 @@
     "material": [ "plastic", "glass" ],
     "symbol": ";",
     "color": "light_gray",
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_battery_cell",
-          "light_plus_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell",
-          "light_minus_disposable_cell",
-          "light_disposable_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_battery_cell", "light_minus_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -425,20 +384,7 @@
     "use_action": [ "VOLTMETER" ],
     "flags": [ "BELT_CLIP" ],
     "qualities": [ [ "VOLT_MEASURE", 1 ] ],
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_battery_cell",
-          "light_plus_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell",
-          "light_minus_disposable_cell",
-          "light_disposable_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_battery_cell", "light_minus_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -457,20 +403,7 @@
     "material": [ "plastic", "glass" ],
     "symbol": ";",
     "color": "light_gray",
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_battery_cell",
-          "light_plus_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell",
-          "light_minus_disposable_cell",
-          "light_disposable_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_battery_cell", "light_minus_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -611,7 +544,7 @@
     "id": "still_lab",
     "type": "GENERIC",
     "category": "tools_chemistry",
-    "name": { "str": "fractional distillation apparatus", "str_pl": "fractional distillation apparati" },
+    "name": { "str": "fractional distillation apparatus", "str_pl": "fractional distillation apparatuses" },
     "description": "One of the classic pieces of mad science glassware, this is basically a small volume still that passes the vapour through a fractional distillation column and then condenses the distillate in a cooled collection column.  A grad student or a robot (is there really any difference?) collects the distillate in fractions so that specific contents can be analyzed.  Going a few milliliters at a time, it would not be very effective to try to distill whiskey in this thing.",
     "weight": "1000 g",
     "volume": "5000 ml",
@@ -660,20 +593,7 @@
     "color": "white",
     "ammo": "battery",
     "qualities": [ [ "CONCENTRATE", 1 ], [ "SEPARATE", 1 ] ],
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_battery_cell",
-          "light_plus_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell",
-          "light_minus_disposable_cell",
-          "light_disposable_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_battery_cell", "light_minus_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -705,12 +625,7 @@
       },
       { "flame": false, "type": "cauterize" }
     ],
-    "magazines": [
-      [
-        "battery",
-        [ "medium_battery_cell", "medium_plus_battery_cell", "medium_atomic_battery_cell", "medium_disposable_cell" ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "medium_battery_cell" ] ] ],
     "magazine_well": "500 ml"
   },
   {

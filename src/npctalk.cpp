@@ -1,29 +1,13 @@
-#include "creature.h"
-#include "dialogue.h" // IWYU pragma: associated
-
-#include <algorithm>
-#include <array>
-#include <cmath>
-#include <cstddef>
-#include <iterator>
-#include <list>
-#include <map>
-#include <memory>
-#include <ostream>
-#include <string>
-#include <unordered_map>
-#include <unordered_set>
-#include <utility>
-#include <vector>
+#include "npctalk.h"
 
 #include "activity_type.h"
 #include "auto_pickup.h"
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "cata_utility.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
-#include "cata_utility.h"
 #include "character.h"
 #include "character_effects.h"
 #include "character_functions.h"
@@ -31,10 +15,12 @@
 #include "clzones.h"
 #include "color.h"
 #include "condition.h"
+#include "creature.h"
 #include "debug.h"
+#include "dialogue.h" // IWYU pragma: associated
 #include "enums.h"
-#include "flag.h"
 #include "faction.h"
+#include "flag.h"
 #include "game.h"
 #include "game_constants.h"
 #include "game_inventory.h"
@@ -46,19 +32,18 @@
 #include "itype.h"
 #include "json.h"
 #include "line.h"
+#include "magic/magic.h"
 #include "make_static.h"
-#include "magic.h"
-#include "map.h"
-#include "mapgen_functions.h"
+#include "map/map.h"
+#include "mapgen/mapgen_functions.h"
 #include "martialarts.h"
-#include "messages.h"
 #include "message_types.h"
+#include "messages.h"
 #include "mission.h"
 #include "monster.h"
 #include "mtype.h"
 #include "npc.h"
 #include "npc_class.h"
-#include "npctalk.h"
 #include "npctrade.h"
 #include "options.h"
 #include "output.h"
@@ -77,16 +62,32 @@
 #include "string_utils.h"
 #include "text_snippets.h"
 #include "translations.h"
+#include "type_id.h"
 #include "ui.h"
 #include "ui_manager.h"
 #include "units.h"
 #include "units_utility.h"
 #include "value_ptr.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
-#include "vpart_range.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+#include "vehicle/vpart_range.h"
+
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstddef>
+#include <iterator>
+#include <list>
+#include <map>
+#include <memory>
+#include <ostream>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 static const activity_id ACT_AIM( "ACT_AIM" );
 static const activity_id ACT_SOCIALIZE( "ACT_SOCIALIZE" );
@@ -870,7 +871,6 @@ void npc::handle_sound( const short heard_vol, sound_event sound )
 
     // Remember that our heard volume is in milli-decibels spl
     // Only sounds that are marked as being from a monster/npc/the player are passed to handle_sound, so we have a source creature.
-    map &here = get_map();
     const auto &spos = sound.origin;
 
     // What entity is the source of the sound? We effectively have two logic cases, source is a monster or source is a "player" i.e., the player character or an npc.
@@ -910,7 +910,8 @@ void npc::handle_sound( const short heard_vol, sound_event sound )
     // Is the sound source a monster, and is said monster an ally of the hearing NPC?
 
     // Grab the attitude of our monster or set it to null if it the source is not a monster.
-    const monster_attitude mon_att = ( source_monster ) ? ( critter->as_monster()->attitude(
+    const monster *mon = critter->as_monster();
+    const monster_attitude mon_att = ( source_monster && mon ) ? ( mon->attitude(
                                          this->as_character() ) ) : MATT_NULL;
 
     // NPCs should generally ignore low priority sounds from non-hostile monsters such as dogs
@@ -1497,7 +1498,7 @@ std::string dialogue::dynamic_line( const talk_topic &the_topic ) const
             } else {
                 info += _( "\nThirsty" );
             }
-            if( p->max_stored_kcal() - p->get_stored_kcal() > 500 ) {
+            if( p->max_stored_kcal() - p->get_stored_kcal() < 500 ) {
                 time_duration hunger_at = 5_minutes
                                           * ( 500 - p->max_stored_kcal() + p->get_stored_kcal() )
                                           / p->bmr();
@@ -1827,7 +1828,7 @@ int talk_trial::calc_chance( const dialogue &d ) const
                       p.op_of_u.trust * 3;
             chance += u_mods.lie;
 
-            chance += u.bonus_from_enchantments( chance, enchant_vals::mod::LIE );
+            chance += u.bonus_from_enchantments( chance, enchantment_value_id( "LIE" ) );
             break;
         case TALK_TRIAL_PERSUADE:
             chance += character_effects::talk_skill( u ) -
@@ -1835,7 +1836,7 @@ int talk_trial::calc_chance( const dialogue &d ) const
                       p.op_of_u.trust * 2 + p.op_of_u.value;
             chance += u_mods.persuade;
 
-            chance += u.bonus_from_enchantments( chance, enchant_vals::mod::PERSUADE );
+            chance += u.bonus_from_enchantments( chance, enchantment_value_id( "PERSUADE" ) );
             break;
         case TALK_TRIAL_INTIMIDATE:
             chance += character_effects::intimidation( u ) -
@@ -1843,7 +1844,7 @@ int talk_trial::calc_chance( const dialogue &d ) const
                       p.op_of_u.fear * 2 - p.personality.bravery * 2;
             chance += u_mods.intimidate;
 
-            chance += u.bonus_from_enchantments( chance, enchant_vals::mod::INTIMIDATE );
+            chance += u.bonus_from_enchantments( chance, enchantment_value_id( "INTIMIDATE" ) );
             break;
         case TALK_TRIAL_NONE:
             chance = 100;
@@ -3152,6 +3153,7 @@ void talk_effect_t::parse_string_effect( const std::string &effect_id, const Jso
             WRAP( do_mining ),
             WRAP( do_read ),
             WRAP( do_butcher ),
+            WRAP( do_dissect ),
             WRAP( do_farming ),
             WRAP( do_craft ),
             WRAP( assign_guard ),
@@ -3205,6 +3207,7 @@ void talk_effect_t::parse_string_effect( const std::string &effect_id, const Jso
             WRAP( npc_die ),
             WRAP( npc_thankful ),
             WRAP( clear_overrides ),
+            WRAP( go_to_sleep ),
             WRAP( nothing )
 #undef WRAP
         }

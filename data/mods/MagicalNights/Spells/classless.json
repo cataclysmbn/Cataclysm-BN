@@ -248,7 +248,7 @@
     "id": "anomaly_ward",
     "type": "SPELL",
     "name": { "str": "Anomaly Ward" },
-    "description": "Protects yourself against otherworldly interference.",
+    "description": "Protects you against otherworldly interference.",
     "valid_targets": [ "ally", "self" ],
     "scale_int": true,
     "flags": [ "CONCENTRATE", "SOMATIC", "NO_LEGS" ],

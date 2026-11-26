@@ -23,7 +23,7 @@
     "action": "bubble",
     "remove_on_trigger": true,
     "drops": [ "bubblewrap" ],
-    "vehicle_data": { "sound_volume": 18, "sound": "Pop!" }
+    "vehicle_data": { "sound_volume": "45 dB", "sound": "Pop!" }
   },
   {
     "type": "trap",
@@ -37,7 +37,7 @@
     "action": "glass",
     "remove_on_trigger": true,
     "drops": [ "glass_shard" ],
-    "vehicle_data": { "sound_volume": 10, "sound": "Crunch!" }
+    "vehicle_data": { "sound_volume": "40 dB", "sound": "Crunch!" }
   },
   {
     "type": "trap",
@@ -91,7 +91,7 @@
     "visibility": -1,
     "avoidance": 0,
     "difficulty": 0,
-    "comfort": 4,
+    "comfort": 3,
     "floor_bedding_warmth": -1000,
     "action": "none",
     "drops": [ "rollmat" ],
@@ -154,7 +154,7 @@
     "drops": [ "beartrap" ],
     "vehicle_data": {
       "damage": 300,
-      "sound_volume": 8,
+      "sound_volume": "38 dB",
       "sound": "SNAP!",
       "sound_type": "trap",
       "sound_variant": "bear_trap",
@@ -178,7 +178,7 @@
     "drops": [ "beartrap" ],
     "vehicle_data": {
       "damage": 300,
-      "sound_volume": 8,
+      "sound_volume": "38 dB",
       "sound": "SNAP!",
       "sound_type": "trap",
       "sound_variant": "bear_trap",
@@ -255,7 +255,7 @@
     "remove_on_trigger": true,
     "trigger_items": [ "can_alarm_trap" ],
     "drops": [ "can_alarm_trap" ],
-    "vehicle_data": { "sound_volume": 25, "sound": "empty cans clattering!" }
+    "vehicle_data": { "sound_volume": "48 dB", "sound": "empty cans clattering!" }
   },
   {
     "type": "trap",
@@ -275,7 +275,7 @@
     "vehicle_data": {
       "chance": 30,
       "damage": 300,
-      "sound_volume": 1,
+      "sound_volume": "20 dB",
       "sound": "Clank!",
       "sound_type": "fire_gun",
       "sound_variant": "crossbow",
@@ -300,7 +300,7 @@
     "vehicle_data": {
       "chance": 70,
       "damage": 300,
-      "sound_volume": 60,
+      "sound_volume": "56 dB",
       "sound": "Bang!",
       "sound_type": "fire_gun",
       "sound_variant": "shotgun_d",
@@ -324,7 +324,7 @@
     "vehicle_data": {
       "chance": 70,
       "damage": 300,
-      "sound_volume": 60,
+      "sound_volume": "56 dB",
       "sound": "Bang!",
       "sound_type": "fire_gun",
       "sound_variant": "shotgun_s",
@@ -356,7 +356,13 @@
     "avoidance": 4,
     "difficulty": 99,
     "action": "blade",
-    "vehicle_data": { "damage": 300, "sound_volume": 1, "sound": "Swinnng!", "sound_type": "smash_success", "sound_variant": "hit_vehicle" }
+    "vehicle_data": {
+      "damage": 300,
+      "sound_volume": "20 dB",
+      "sound": "Swinnng!",
+      "sound_type": "smash_success",
+      "sound_variant": "hit_vehicle"
+    }
   },
   {
     "type": "trap",
@@ -375,7 +381,7 @@
       "do_explosion": true,
       "damage": 1000,
       "shrapnel": 8,
-      "sound_volume": 10,
+      "sound_volume": "40 dB",
       "sound": "Boom!",
       "sound_type": "explosion",
       "sound_variant": "default"
@@ -398,7 +404,7 @@
       "do_explosion": true,
       "damage": 1000,
       "shrapnel": 8,
-      "sound_volume": 10,
+      "sound_volume": "40 dB",
       "sound": "Boom!",
       "sound_type": "explosion",
       "sound_variant": "default"
@@ -440,7 +446,7 @@
     "difficulty": 2,
     "action": "dissector",
     "drops": [ "broken_dissector" ],
-    "vehicle_data": { "damage": 500, "sound_volume": 10, "sound": "BRZZZAP!", "sound_type": "trap", "sound_variant": "dissector" }
+    "vehicle_data": { "damage": 500, "sound_volume": "40 dB", "sound": "BRZZZAP!", "sound_type": "trap", "sound_variant": "dissector" }
   },
   {
     "type": "trap",
@@ -533,7 +539,7 @@
       "do_explosion": true,
       "damage": 1000,
       "shrapnel": 12,
-      "sound_volume": 18,
+      "sound_volume": "45 dB",
       "sound": "Boom!",
       "sound_type": "explosion",
       "sound_variant": "default"
@@ -739,5 +745,178 @@
     "drops": [ "tarp_raincatcher" ],
     "benign": true,
     "funnel_radius": 360
+  },
+  {
+    "type": "trap",
+    "id": "tr_tripwire_incendiary",
+    "name": "incendiary tripwire",
+    "color": "light_red",
+    "symbol": "^",
+    "looks_like": "tr_tripwire",
+    "visibility": 6,
+    "avoidance": 4,
+    "difficulty": 2,
+    "action": "spell",
+    "spell_data": { "id": "spell_trap_tripwire_incendiary" },
+    "remove_on_trigger": true,
+    "//": "Incendiary charge is consumed on use; disarming an unfired trap recovers it via drops.",
+    "drops": [ "tripwire_incendiary" ],
+    "vehicle_data": { "sound_volume": "40 dB", "sound": "Whoosh!", "sound_type": "fire", "sound_variant": "default" }
+  },
+  {
+    "type": "trap",
+    "id": "tr_tripwire_acid",
+    "name": "acid tripwire",
+    "color": "light_green",
+    "symbol": "^",
+    "looks_like": "tr_tripwire",
+    "visibility": 6,
+    "avoidance": 4,
+    "difficulty": 2,
+    "action": "spell",
+    "spell_data": { "id": "spell_trap_tripwire_acid" },
+    "remove_on_trigger": true,
+    "//": "Acid charge is consumed on use; disarming an unfired trap recovers it via drops.",
+    "drops": [ "tripwire_acid" ],
+    "vehicle_data": { "sound_volume": "30 dB", "sound": "Hiss!", "sound_type": "movement", "sound_variant": "default" }
+  },
+  {
+    "type": "trap",
+    "id": "tr_tripwire_shock",
+    "name": "electric tripwire",
+    "color": "light_blue",
+    "symbol": "^",
+    "looks_like": "tr_tripwire",
+    "visibility": 6,
+    "avoidance": 4,
+    "difficulty": 3,
+    "action": "spell",
+    "spell_data": { "id": "spell_trap_tripwire_shock" },
+    "remove_on_trigger": true,
+    "//": "Charge is consumed on use; disarming an unfired trap recovers it via drops.",
+    "drops": [ "tripwire_shock" ],
+    "vehicle_data": { "sound_volume": "40 dB", "sound": "Crackle!", "sound_type": "combat", "sound_variant": "default" }
+  },
+  {
+    "type": "trap",
+    "id": "tr_snare_spear",
+    "trigger_weight": "200 g",
+    "name": "spear snare",
+    "color": "light_gray",
+    "symbol": "^",
+    "visibility": 2,
+    "avoidance": 8,
+    "difficulty": 5,
+    "action": "spell",
+    "spell_data": { "id": "spell_trap_snare_spear" },
+    "remove_on_trigger": true,
+    "drops": [ "snare_spear" ],
+    "vehicle_data": { "sound_volume": "50 dB", "sound": "Crunch!", "sound_type": "combat", "sound_variant": "snare" }
+  },
+  {
+    "type": "trap",
+    "id": "tr_mine_incendiary",
+    "trigger_weight": "200 g",
+    "name": "incendiary mine",
+    "color": "light_red",
+    "symbol": "^",
+    "visibility": 1,
+    "avoidance": 14,
+    "difficulty": 10,
+    "action": "spell",
+    "spell_data": { "id": "spell_trap_mine_incendiary" },
+    "remove_on_trigger": true,
+    "drops": [ "mine_incendiary" ],
+    "vehicle_data": { "sound_volume": "40 dB", "sound": "Whoosh!", "sound_type": "fire", "sound_variant": "default" }
+  },
+  {
+    "type": "trap",
+    "id": "tr_mine_incendiary_buried",
+    "trigger_weight": "200 g",
+    "name": "buried incendiary mine",
+    "color": "light_red",
+    "symbol": "^",
+    "visibility": 0,
+    "avoidance": 16,
+    "difficulty": 12,
+    "action": "spell",
+    "spell_data": { "id": "spell_trap_mine_incendiary" },
+    "remove_on_trigger": true,
+    "drops": [ "mine_incendiary" ],
+    "vehicle_data": { "sound_volume": "40 dB", "sound": "Whoosh!", "sound_type": "fire", "sound_variant": "default" }
+  },
+  {
+    "type": "trap",
+    "id": "tr_emp",
+    "name": "EMP trap",
+    "color": "light_blue",
+    "symbol": "^",
+    "looks_like": "tr_tripwire",
+    "visibility": 5,
+    "avoidance": 6,
+    "difficulty": 6,
+    "action": "spell",
+    "spell_data": { "id": "spell_trap_emp" },
+    "remove_on_trigger": true,
+    "//": "EMP charge is consumed on use; disarming an unfired trap recovers it via drops.",
+    "drops": [ "emp_trap" ],
+    "vehicle_data": { "sound_volume": "40 dB", "sound": "Crackle!", "sound_type": "combat", "sound_variant": "default" }
+  },
+  {
+    "type": "trap",
+    "id": "tr_sprinkler",
+    "trigger_weight": "200 g",
+    "name": "sprinkler",
+    "color": "light_cyan",
+    "symbol": "^",
+    "visibility": 2,
+    "avoidance": 6,
+    "difficulty": 5,
+    "action": "lua",
+    "remove_on_trigger": false,
+    "drops": [ "sprinkler_trap" ]
+  },
+  {
+    "type": "trap",
+    "id": "tr_manhack_hatch",
+    "trigger_weight": "200 g",
+    "name": "manhack hatch",
+    "color": "light_green",
+    "symbol": "_",
+    "visibility": 1,
+    "avoidance": 8,
+    "difficulty": 6,
+    "action": "lua",
+    "remove_on_trigger": true,
+    "drops": [ "manhack_hatch" ]
+  },
+  {
+    "type": "trap",
+    "id": "tr_tesla_wire",
+    "trigger_weight": "200 g",
+    "name": "tesla wire",
+    "color": "yellow",
+    "symbol": "^",
+    "looks_like": "tr_tripwire",
+    "visibility": 4,
+    "avoidance": 10,
+    "difficulty": 8,
+    "action": "lua",
+    "remove_on_trigger": false,
+    "//": "Reusable while the grid has power; must not list trigger_items or each zap would spawn a duplicate item.",
+    "drops": [ "tesla_wire" ]
+  },
+  {
+    "id": "snare_trigger",
+    "type": "TOOL",
+    "name": "snare trigger",
+    "description": "This is a stick that has been cut into a trigger mechanism for a snare trap.",
+    "weight": "850 g",
+    "volume": "1 L",
+    "price": "0 USD",
+    "to_hit": -1,
+    "material": "wood",
+    "symbol": ";",
+    "color": "brown"
   }
 ]

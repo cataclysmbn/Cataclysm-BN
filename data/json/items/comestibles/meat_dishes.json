@@ -68,7 +68,10 @@
       { "type": "COMPONENT_ID", "condition": "ketchup", "name": "sausage with ketchup" },
       { "type": "COMPONENT_ID", "condition": "mayonnaise", "name": "sausage with mayonnaise" },
       { "type": "COMPONENT_ID", "condition": "mustard", "name": "sausage with mustard" },
-      { "type": "COMPONENT_ID", "condition": "horseradish", "name": "sausage with horseradish" }
+      { "type": "COMPONENT_ID", "condition": "horseradish", "name": "sausage with horseradish" },
+      { "type": "COMPONENT_ID", "condition": "butter", "name": "%s with butter" },
+      { "type": "COMPONENT_ID", "condition": "sauerkraut", "name": "%s with sauerkraut" },
+      { "type": "COMPONENT_ID", "condition": "soysauce", "name": "%s with soy sauce" }
     ],
     "copy-from": "sausage_cooked",
     "fun": 8,
@@ -378,6 +381,7 @@
     "description": "Dehydrated fish flakes.  With proper storage, this dried food will remain edible for an incredibly long time.",
     "price": "5 USD",
     "price_postapoc": "250 cent",
+    "delete": { "flags": [ "SMOKABLE" ] },
     "volume": "125 ml"
   },
   {
@@ -700,6 +704,19 @@
     "fun": 5,
     "charges": 2,
     "vitamins": [ [ "vitA", 14 ], [ "vitC", 7 ], [ "calcium", 6 ], [ "iron", 27 ], [ "meat_allergen", 1 ], [ "veggy_allergen", 1 ] ]
+  },
+  {
+    "type": "COMESTIBLE",
+    "copy-from": "chili",
+    "id": "birria",
+    "name": { "str_sp": "birria" },
+    "conditional_names": [  ],
+    "color": "brown",
+    "calories": 360,
+    "description": "A rich Mexican stew of tender meat braised in a chile broth with garlic and warm spices.  Often served with tortillas and its savory broth for dipping.",
+    "material": [ "flesh", "veggy" ],
+    "quench": 3,
+    "fun": 9
   },
   {
     "type": "COMESTIBLE",
@@ -1287,7 +1304,7 @@
     "description": "Dehydrated meat flakes.  With proper storage, this dried food will remain edible for an incredibly long time.",
     "price": "9 USD",
     "price_postapoc": "3 USD",
-    "delete": { "flags": [ "NUTRIENT_OVERRIDE" ] },
+    "delete": { "flags": [ "NUTRIENT_OVERRIDE", "SMOKABLE" ] },
     "extend": { "flags": [ "SMOKED" ] },
     "material": [ "flesh" ],
     "primary_material": "cured_meat",
@@ -1414,7 +1431,7 @@
     "material": [ "flesh" ],
     "volume": "125 ml",
     "fun": -4,
-    "delete": { "flags": [ "RAW" ] },
+    "delete": { "flags": [ "RAW", "SMOKABLE" ] },
     "extend": { "flags": [ "SMOKED" ] },
     "vitamins": [ [ "meat_allergen", 1 ] ]
   },

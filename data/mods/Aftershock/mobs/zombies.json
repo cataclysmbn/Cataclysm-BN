@@ -146,7 +146,7 @@
     "vision_day": 20,
     "harvest": "zombie_fur_large",
     "death_drops": "xl_uplift_death_drop",
-    "special_attacks": [ [ "SMASH", 20 ] ],
+    "special_attacks": [ { "id": "smash", "throw_strength": 72 } ],
     "death_function": [ "NORMAL" ],
     "flags": [
       "SEES",
@@ -191,7 +191,7 @@
     "vision_day": 50,
     "vision_night": 4,
     "harvest": "zombie_uplift_mil_bionics",
-    "special_attacks": [ [ "SMASH", 28 ] ],
+    "special_attacks": [ { "id": "smash", "cooldown": 28 } ],
     "death_drops": "xl_uplift_death_drop",
     "death_function": [ "NORMAL" ],
     "flags": [

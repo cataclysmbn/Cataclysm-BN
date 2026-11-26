@@ -860,6 +860,12 @@
         "effect": "do_butcher"
       },
       {
+        "text": "Please dissect any corpses that you can.",
+        "topic": "TALK_DONE",
+        "condition": { "not": "npc_has_activity" },
+        "effect": "do_dissect"
+      },
+      {
         "text": "Please chop any trees in the designated areas.",
         "topic": "TALK_DONE",
         "condition": { "not": "npc_has_activity" },
@@ -876,6 +882,12 @@
         "topic": "TALK_DONE",
         "condition": { "not": "npc_has_activity" },
         "effect": "do_farming"
+      },
+      {
+        "text": "Please go get some sleep.",
+        "topic": "TALK_DONE",
+        "condition": { "and": [ { "not": "npc_has_activity" }, "npc_is_sleepy" ] },
+        "effect": "go_to_sleep"
       },
       {
         "text": "Can you craft this item?",

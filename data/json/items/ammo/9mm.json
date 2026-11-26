@@ -17,7 +17,7 @@
     "casing": "9mm_casing",
     "range": 14,
     "//": "Hollowpoint bonus of 25%",
-    "damage": { "damage_type": "bullet", "amount": 34 },
+    "damage": { "damage_type": "bullet", "amount": 31 },
     "dispersion": 60,
     "recoil": 500,
     "loudness": 159,
@@ -32,8 +32,7 @@
     "loudness": 159,
     "speed": 360,
     "description": "9x19mm ammunition with a brass jacketed 115gr bullet.  It is a popular round for military, law enforcement, and civilian use even after almost 150 years.",
-    "//": "Base damage of 22, balance increase of two-nineths.",
-    "relative": { "damage": { "damage_type": "bullet", "amount": -7, "armor_penetration": 15 } }
+    "relative": { "damage": { "damage_type": "bullet", "amount": -6, "armor_penetration": 11 } }
   },
   {
     "id": "9mmP",
@@ -46,7 +45,7 @@
     "count": 25,
     "loudness": 161,
     "speed": 410,
-    "relative": { "damage": { "damage_type": "bullet", "armor_penetration": 15 }, "dispersion": -15 },
+    "relative": { "damage": { "damage_type": "bullet", "armor_penetration": 11 }, "dispersion": -15 },
     "proportional": { "recoil": 1.2 }
   },
   {

@@ -1,25 +1,25 @@
 #include "npctrade.h"
 
-#include <algorithm>
-#include <memory>
-#include <ranges>
-#include <string>
-#include <vector>
-
 #include "avatar.h"
 #include "faction.h"
 #include "game.h"
 #include "item.h"
 #include "item_category.h"
-#include "map_selector.h"
+#include "map/map_selector.h"
 #include "npc.h"
 #include "player.h"
 #include "skill.h"
 #include "string_utils.h"
 #include "trade_win.h"
 #include "type_id.h"
-#include "vehicle_selector.h"
+#include "vehicle/vehicle_selector.h"
 #include "visitable.h"
+
+#include <algorithm>
+#include <memory>
+#include <ranges>
+#include <string>
+#include <vector>
 
 static const skill_id skill_barter( "barter" );
 static const flag_id json_flag_NO_UNWIELD( "NO_UNWIELD" );
@@ -41,8 +41,9 @@ void npc_trading::transfer_items( std::vector<item_pricing> &stuff, Character &,
 
             receiver.i_add( std::move( to_give ) );
         } else {
+            const auto count = npc_gives ? ip.u_has : ip.npc_has;
             gift.set_owner( receiver );
-            std::ranges::for_each( ip.locs, [&]( auto * it ) {
+            std::ranges::for_each( std::views::take( ip.locs, count ), [&]( auto * it ) {
                 receiver.i_add( it->detach() );
             } );
         }

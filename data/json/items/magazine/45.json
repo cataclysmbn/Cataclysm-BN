@@ -125,7 +125,7 @@
     "name": { "str": "UMP45 magazine" },
     "description": "A straight, double-stack plastic box magazine for the UMP sub-machine gun in .45 ACP.  Holds 25 rounds.",
     "weight": "150 g",
-    "volume": "750 ml",
+    "volume": "500 ml",
     "price": "4950 cent",
     "price_postapoc": "1 USD",
     "material": "plastic",
@@ -204,7 +204,7 @@
     "type": "MAGAZINE",
     "name": { "str": "Glock 21 13-round magazine" },
     "description": "A standard capacity magazine for use with the Glock 21.",
-    "weight": "85 g",
+    "weight": "90 g",
     "volume": "105 ml",
     "price": "40 USD",
     "price_postapoc": "1 USD",
@@ -278,5 +278,22 @@
     "capacity": 7,
     "reliability": 10,
     "flags": [ "MAG_COMPACT" ]
+  },
+  {
+    "id": "45_speedloader5",
+    "looks_like": "38_speedloader",
+    "type": "MAGAZINE",
+    "name": { "str": ".45 5-round speedloader" },
+    "description": "This speedloader can hold 5 rounds of .45 ACP and quickly reload a compatible revolver.",
+    "weight": "78 g",
+    "volume": "250 ml",
+    "price": "15 USD",
+    "price_postapoc": "1 USD",
+    "material": "steel",
+    "symbol": "#",
+    "color": "light_gray",
+    "ammo_type": [ "45" ],
+    "capacity": 5,
+    "flags": [ "SPEEDLOADER" ]
   }
 ]

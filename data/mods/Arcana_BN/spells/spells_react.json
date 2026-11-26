@@ -58,20 +58,7 @@
     "max_duration": 400
   },
   {
-    "type": "SPELL",
     "id": "arcana_react_drain_life",
-    "name": { "str": "React: Drain Life Shell" },
-    "description": "This exists only to trigger on-self effects from an on-hit action.",
-    "valid_targets": [ "hostile" ],
-    "message": "",
-    "min_range": 3,
-    "max_range": 3,
-    "effect": "target_attack",
-    "flags": [ "NO_EXPLOSION_VFX", "SILENT" ],
-    "extra_effects": [ { "id": "arcana_react_drain_life_2", "hit_self": true } ]
-  },
-  {
-    "id": "arcana_react_drain_life_2",
     "type": "SPELL",
     "name": { "str": "React: Drain Life Effect" },
     "description": "This creates the effect that heals the caster.",
@@ -86,23 +73,7 @@
     "max_duration": 1000
   },
   {
-    "type": "SPELL",
     "id": "arcana_react_drain_life_improved",
-    "name": { "str": "React: Improved Drain Life Shell" },
-    "description": "This exists only to trigger on-self effects from an on-hit action.",
-    "valid_targets": [ "hostile" ],
-    "message": "",
-    "effect_str": "arcana_lingering_chill",
-    "min_range": 1,
-    "max_range": 1,
-    "min_duration": 1000,
-    "max_duration": 2000,
-    "effect": "target_attack",
-    "flags": [ "NO_EXPLOSION_VFX", "SILENT" ],
-    "extra_effects": [ { "id": "arcana_react_drain_life_improved_2", "hit_self": true } ]
-  },
-  {
-    "id": "arcana_react_drain_life_improved_2",
     "type": "SPELL",
     "name": { "str": "React: Drain Life Effect" },
     "description": "This creates the effect that heals the caster.",
@@ -115,6 +86,21 @@
     "flags": [ "NO_EXPLOSION_VFX", "RANDOM_DURATION", "RANDOM_DAMAGE", "SILENT" ],
     "min_duration": 600,
     "max_duration": 1200
+  },
+  {
+    "type": "SPELL",
+    "id": "arcana_react_drain_life_improved_2",
+    "name": { "str": "React: Improved Drain Life Chill" },
+    "description": "This adds a DoT effect to targets hit by the cursed blade.",
+    "valid_targets": [ "hostile" ],
+    "message": "",
+    "effect_str": "arcana_lingering_chill",
+    "min_range": 1,
+    "max_range": 1,
+    "min_duration": 1000,
+    "max_duration": 2000,
+    "effect": "target_attack",
+    "flags": [ "NO_EXPLOSION_VFX", "SILENT" ]
   },
   {
     "type": "SPELL",
@@ -174,7 +160,7 @@
     "type": "SPELL",
     "id": "arcana_react_sanguine_staff_drain",
     "name": { "str": "React: Life's Bane Shell" },
-    "description": "This exists only to trigger on-self effects from an on-hit action.",
+    "description": "This adds a DoT effect to targets hit by the staff.",
     "valid_targets": [ "hostile" ],
     "message": "",
     "effect_str": "arcana_lingering_chill",
@@ -183,8 +169,7 @@
     "min_duration": 100,
     "max_duration": 300,
     "effect": "target_attack",
-    "flags": [ "NO_EXPLOSION_VFX", "SILENT" ],
-    "extra_effects": [ { "id": "arcana_react_sanguine_staff_drain_2", "hit_self": true } ]
+    "flags": [ "NO_EXPLOSION_VFX", "SILENT" ]
   },
   {
     "id": "arcana_react_sanguine_staff_drain_2",

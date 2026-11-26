@@ -11,7 +11,7 @@
         "|--------|....|--------|",
         "|llllllllg...6gllllllll|",
         "|#.......-gLLg-.......#|",
-        "|#....................#|",
+        "|#........%...........#|",
         "|......................|",
         "|......................|",
         "|......................|",
@@ -49,8 +49,11 @@
       "computers": {
         "6": {
           "name": "Vehicle Testing Track",
-          "security": 4,
-          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 5 } ],
+          "security": 1,
+          "options": [
+            { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 5 },
+            { "name": "ENTER EMERGENCY OVERRIDE CODE", "action": "unlock_labpass" }
+          ],
           "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
         }
       },

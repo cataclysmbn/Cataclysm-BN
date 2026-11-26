@@ -1,3 +1,27 @@
+#include "advanced_inv_area.h"
+
+#include "advanced_inv_listitem.h"
+#include "avatar.h"
+#include "enums.h"
+#include "game.h"
+#include "game_constants.h"
+#include "int_id.h"
+#include "inventory.h"
+#include "item.h"
+#include "item_contents.h"
+#include "map/field.h"
+#include "map/field_type.h"
+#include "map/map.h"
+#include "map/mapdata.h"
+#include "translations.h"
+#include "trap.h"
+#include "type_id.h"
+#include "uistate.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+
 #include <algorithm>
 #include <cassert>
 #include <cstring>
@@ -8,29 +32,6 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
-
-#include "advanced_inv_area.h"
-#include "advanced_inv_listitem.h"
-#include "avatar.h"
-#include "enums.h"
-#include "field.h"
-#include "field_type.h"
-#include "game.h"
-#include "game_constants.h"
-#include "int_id.h"
-#include "inventory.h"
-#include "item.h"
-#include "item_contents.h"
-#include "map.h"
-#include "mapdata.h"
-#include "translations.h"
-#include "trap.h"
-#include "type_id.h"
-#include "uistate.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
 
 int advanced_inv_area::get_item_count() const
 {
@@ -119,7 +120,7 @@ void advanced_inv_area::init()
             break;
         case AIM_ABOVE:
         case AIM_BELOW:
-            if( !g->m.has_zlevels() || !g->m.valid_move( g->u.bub_pos(), pos ) ) {
+            if( !g->m.valid_move( g->u.bub_pos(), pos ) ) {
                 canputitemsloc = false;
                 break;
             }

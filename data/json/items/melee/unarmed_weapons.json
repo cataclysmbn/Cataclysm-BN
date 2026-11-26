@@ -92,7 +92,7 @@
     "symbol": "3",
     "color": "dark_gray",
     "name": { "str": "pair of steel knuckles", "str_pl": "pairs of steel knuckles" },
-    "description": "A mass of scrap metal crudely beat into shape, with folded rags underneath to protect the wearers knuckles.  A good, quick weapon - but you have to get within punching range to use it.",
+    "description": "A mass of scrap metal crudely beat into shape, with folded rags underneath to protect the wearer's knuckles.  A good, quick weapon - but you have to get within punching range to use it.",
     "material": "steel",
     "volume": "250 ml",
     "weight": "400 g",
@@ -157,7 +157,7 @@
     "symbol": "]",
     "color": "dark_gray",
     "name": { "str": "pair of impact knuckles", "str_pl": "pairs of impact knuckles" },
-    "description": "A pair of sturdy steel bracings, inlaid with padding material, which are then covered by hardened steel plates.  Can be used to safely deliver punches full force without the risk of harming ones hands.",
+    "description": "A pair of sturdy steel bracings, inlaid with padding material, which are then covered by hardened steel plates.  Can be used to safely deliver punches full force without the risk of harming one's hands.",
     "material": [ "steel" ],
     "volume": "550 ml",
     "weight": "750g",
@@ -210,8 +210,8 @@
     "type": "GENERIC",
     "copy-from": "jamadhar",
     "name": { "str": "carbon fiber jamadhar" },
-    "description": "A custom 3D-printed jamadhar made out of carbon fiber.  It is more lightweight than a normal weapon thanks to its method of manufacturing, but it can only be repaired using a 3D printer.",
-    "material": [ "carbon_fiber" ],
+    "description": "A custom 3D-printed jamadhar made out of carbon fiber with steel-edged blades.  It is more lightweight than a normal weapon thanks to its method of manufacturing.",
+    "material": [ "carbon_fiber", "steel" ],
     "proportional": { "weight": 0.6, "price": 2, "price_postapoc": 2 }
   },
   {
@@ -219,8 +219,8 @@
     "type": "GENERIC",
     "copy-from": "katar",
     "name": { "str": "carbon fiber katar" },
-    "description": "A custom 3D-printed katar made out of carbon fiber.  It is more lightweight than a normal weapon thanks to its method of manufacturing, but it can only be repaired using a 3D printer.",
-    "material": [ "carbon_fiber" ],
+    "description": "A custom 3D-printed katar made out of carbon fiber and a steel edge.  It is more lightweight than a normal weapon thanks to its method of manufacturing.",
+    "material": [ "carbon_fiber", "steel" ],
     "proportional": { "weight": 0.6, "price": 2, "price_postapoc": 2 }
   },
   {

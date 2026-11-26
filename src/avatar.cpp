@@ -1,34 +1,23 @@
 #include "avatar.h"
 
-#include <algorithm>
-#include <array>
-#include <climits>
-#include <cstdlib>
-#include <iterator>
-#include <list>
-#include <map>
-#include <memory>
-#include <optional>
-#include <set>
-#include <utility>
-
 #include "action.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "cata_utility.h"
+#include "catacharset.h"
 #include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_icallback_actor.h"
 #include "catalua_sol.h"
-#include "cata_utility.h"
-#include "catacharset.h"
 #include "character.h"
 #include "character_effects.h"
-#include "character_id.h"
 #include "character_functions.h"
+#include "character_id.h"
 #include "character_martial_arts.h"
 #include "character_stat.h"
 #include "color.h"
 #include "debug.h"
+#include "digital_media.h"
 #include "diary.h"
 #include "effect.h"
 #include "enums.h"
@@ -39,18 +28,19 @@
 #include "game.h"
 #include "game_constants.h"
 #include "help.h"
-#include "inventory.h"
 #include "init.h"
+#include "inventory.h"
 #include "item.h"
 #include "item_contents.h"
 #include "item_factory.h"
-#include "locations.h"
 #include "itype.h"
 #include "iuse.h"
 #include "kill_tracker.h"
+#include "locations.h"
+#include "magic/magic_teleporter_list.h"
 #include "make_static.h"
-#include "magic_teleporter_list.h"
-#include "map.h"
+#include "map/legacy_pathfinding.h"
+#include "map/map.h"
 #include "map_memory.h"
 #include "martialarts.h"
 #include "messages.h"
@@ -62,8 +52,7 @@
 #include "npc.h"
 #include "options.h"
 #include "output.h"
-#include "overmap.h"
-#include "legacy_pathfinding.h"
+#include "overmap/overmap.h"
 #include "player.h"
 #include "player_activity.h"
 #include "recipe.h"
@@ -76,17 +65,29 @@
 #include "translations.h"
 #include "type_id.h"
 #include "ui.h"
-#include "vehicle.h"
-#include "vpart_position.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vpart_position.h"
+
+#include <algorithm>
+#include <array>
+#include <climits>
+#include <cstdlib>
+#include <iterator>
+#include <list>
+#include <map>
+#include <memory>
+#include <optional>
+#include <set>
+#include <utility>
 
 static const activity_id ACT_READ( "ACT_READ" );
 
 static const bionic_id bio_eye_optic( "bio_eye_optic" );
 static const bionic_id bio_memory( "bio_memory" );
-static const bionic_id bio_infolink( "bio_infolink" );
 
 static const efftype_id effect_alarm_clock( "alarm_clock" );
 static const efftype_id effect_contacts( "contacts" );
+static const efftype_id effect_downed( "downed" );
 static const efftype_id effect_sleep( "sleep" );
 static const efftype_id effect_slept_through_alarm( "slept_through_alarm" );
 static const efftype_id effect_cold( "cold" );
@@ -98,11 +99,12 @@ static const itype_id itype_guidebook( "guidebook" );
 static const trait_id trait_CENOBITE( "CENOBITE" );
 static const trait_id trait_HYPEROPIC( "HYPEROPIC" );
 static const trait_id trait_ILLITERATE( "ILLITERATE" );
-static const trait_id trait_PROF_DICEMASTER( "PROF_DICEMASTER" );
 
 static const morale_type MORALE_FOOD_COLD( "morale_food_cold" );
 static const morale_type MORALE_FOOD_VERY_COLD( "morale_food_very_cold" );
 
+static const enchantment_flag_id
+ench_flag_NO_READING_COMPLEXITY_PENALTY( "NO_READING_COMPLEXITY_PENALTY" );
 class JsonIn;
 class JsonOut;
 
@@ -198,6 +200,11 @@ void avatar::control_npc( npc &np )
     g->remove_npc_follower( getID() );
     // the previous avatar character is now a follower (unless they're dead)
     const bool swapped_out_character_was_dead = avatar_was_dead || np.is_dead_state();
+    // swap_character moved raw position data without running npc::setpos().
+    // Put the NPC object back at its old absolute location first so setpos()
+    // can update overmapbuffer membership when the old avatar body is restored.
+    np.Character::setpos( controlled_npc_pos );
+    np.setpos( previous_avatar_pos );
     if( swapped_out_character_was_dead ) {
         // Keep the newly controlled avatar in the current reality bubble while
         // the swapped-out dead character runs death side effects.
@@ -206,19 +213,17 @@ void avatar::control_npc( npc &np )
     } else {
         g->add_npc_follower( np.getID() );
         np.set_fac( faction_id( "your_followers" ) );
+        // After the swap the avatar already has controlled_npc_pos, so a plain
+        // setpos( controlled_npc_pos ) would be a no-op and skip update_map().
+        Character::setpos( previous_avatar_pos );
     }
     // perception and mutations may have changed, so reset light level caches
     g->reset_light_level();
-    // center the map on the new avatar character
-    if( swapped_out_character_was_dead ) {
-        auto map_local_pos = abs_to_map_local( get_map(), controlled_npc_pos );
-        g->vertical_shift( controlled_npc_pos.z() );
-        g->update_map( map_local_pos.x(), map_local_pos.y() );
-        setpos( controlled_npc_pos );
-    } else {
-        g->vertical_shift( bub_pos().z() );
-        g->update_map( *this );
-    }
+    // setpos() keeps the loaded map window aligned with the new avatar.
+    setpos( controlled_npc_pos );
+    cata::run_hooks( "on_control_npc", [ & ]( auto & params ) {
+        params["npc"] = &np;
+    } );
 }
 
 void avatar::toggle_map_memory()
@@ -401,6 +406,11 @@ const Character *avatar::get_book_reader( const item &book,
         return nullptr;
     }
 
+    if( is_digital_file( book ) && !digital_reader_for( *this, book ) ) {
+        reasons.emplace_back( _( "You need to install this file on a powered reader first." ) );
+        return nullptr;
+    }
+
     // Check for conditions that immediately disqualify the player from reading:
     const optional_vpart_position vp = get_map().veh_at( bub_pos() );
     if( vp && vp->vehicle().player_in_control( *this ) ) {
@@ -428,7 +438,8 @@ const Character *avatar::get_book_reader( const item &book,
                !worn_with_flag( flag_FIX_FARSIGHT ) &&
                !has_effect( effect_contacts ) && !has_bionic( bio_eye_optic ) ) {
         reasons.emplace_back( _( "Your eyes won't focus without reading glasses." ) );
-    } else if( !character_funcs::can_see_fine_details( *this ) ) {
+    } else if( ( !is_digital_file( book ) || is_blind() ) &&
+               !character_funcs::can_see_fine_details( *this ) ) {
         // Too dark to read only applies if the player can read to himself
         reasons.emplace_back( _( "It's too dark to read!" ) );
         return nullptr;
@@ -499,11 +510,14 @@ int avatar::time_to_read( const item &book, const Character &reader,
     }
 
     int retval = type->time * reading_speed;
-    retval *= std::min( character_funcs::fine_detail_vision_mod( *this ),
-                        character_funcs::fine_detail_vision_mod( reader ) );
+    if( !is_digital_file( book ) ) {
+        retval *= std::min( character_funcs::fine_detail_vision_mod( *this ),
+                            character_funcs::fine_detail_vision_mod( reader ) );
+    }
 
     const int effective_int = std::min( { get_int(), reader.get_int(), learner ? learner->get_int() : INT_MAX } );
-    if( type->intel > effective_int && !reader.has_trait( trait_PROF_DICEMASTER ) ) {
+    if( type->intel > effective_int &&
+        !reader.has_enchantment_flag( ench_flag_NO_READING_COMPLEXITY_PENALTY ) ) {
         retval += type->time * ( type->intel - effective_int ) * 100;
     }
     return retval;
@@ -756,7 +770,7 @@ bool avatar::read( item *loc, const bool continuous )
                                  character_funcs::fine_detail_vision_mod( *this ),
                                  character_funcs::fine_detail_vision_mod( *reader )
                              );
-    if( vision_mod > character_funcs::FINE_VISION_PERFECT ) {
+    if( !is_digital_file( it ) && vision_mod > character_funcs::FINE_VISION_PERFECT ) {
         add_msg( m_warning,
                  _( "It's difficult for %s to see fine details right now.  Reading will take longer than usual." ),
                  reader->disp_name() );
@@ -764,7 +778,7 @@ bool avatar::read( item *loc, const bool continuous )
 
     const int intelligence = get_int();
     const bool complex_penalty = type->intel > std::min( intelligence, reader->get_int() ) &&
-                                 !reader->has_trait( trait_PROF_DICEMASTER );
+                                 !reader->has_enchantment_flag( ench_flag_NO_READING_COMPLEXITY_PENALTY );
     const auto *complex_player = reader->get_int() < intelligence ? reader : this;
     if( complex_penalty && !continuous ) {
         add_msg( m_warning,
@@ -1109,7 +1123,7 @@ void avatar::wake_up()
             add_msg( _( "It looks like you woke up before your alarm." ) );
             remove_effect( effect_alarm_clock );
         } else if( has_effect( effect_slept_through_alarm ) ) {
-            if( has_bionic( bio_infolink ) ) {
+            if( has_enchantment_flag( enchantment_flag_id( "INTERNAL_ALARMCLOCK" ) ) ) {
                 add_msg( m_warning, _( "It looks like you've slept through your internal alarm…" ) );
             } else {
                 add_msg( m_warning, _( "It looks like you've slept through the alarm…" ) );
@@ -1288,8 +1302,19 @@ void avatar::set_movement_mode( character_movemode new_mode )
                     add_msg( _( "You nudge your steed into a steady trot." ) );
                 }
             } else {
-                // Spend moves to stand up if crouched, otherwise just stop running.
-                if( move_mode == CMM_CROUCH ) {
+                // Spend moves to stand up if crouched or prone, otherwise just stop running.
+                if( move_mode == CMM_PRONE ) {
+                    if( has_effect( effect_downed ) ) {
+                        // Spend a turn trying to get back up if the player tried to manually swap stances while downed.
+                        Character::try_remove_downed( *this );
+                        mod_moves( -100 );
+                        return;
+                    } else {
+                        mod_moves( -300 );
+                        recoil = MAX_RECOIL;
+                        add_msg( _( "You get up from the ground." ) );
+                    }
+                } else if( move_mode == CMM_CROUCH ) {
                     mod_moves( -100 );
                     recoil = MAX_RECOIL;
                     add_msg( _( "You stand up." ) );
@@ -1311,8 +1336,19 @@ void avatar::set_movement_mode( character_movemode new_mode )
                         add_msg( _( "You spur your steed into a gallop." ) );
                     }
                 } else {
-                    // Spend moves to stand up if crouched, otherwise just stop running.
-                    if( move_mode == CMM_CROUCH ) {
+                    // Spend moves to stand up if crouched or prone, otherwise just stop running.
+                    if( move_mode == CMM_PRONE ) {
+                        if( has_effect( effect_downed ) ) {
+                            // Spend a turn trying to get back up if the player tried to manually swap stances while downed.
+                            Character::try_remove_downed( *this );
+                            mod_moves( -100 );
+                            return;
+                        } else {
+                            mod_moves( -300 );
+                            recoil = MAX_RECOIL;
+                            add_msg( _( "You get up from the ground and start running." ) );
+                        }
+                    } else if( move_mode == CMM_CROUCH ) {
                         mod_moves( -100 );
                         recoil = MAX_RECOIL;
                         add_msg( _( "You stand up and start running." ) );
@@ -1342,11 +1378,52 @@ void avatar::set_movement_mode( character_movemode new_mode )
                 }
             } else {
                 // Don't spend moves if we were already crouching.
-                if( move_mode != CMM_CROUCH ) {
+                if( move_mode != CMM_CROUCH && move_mode != CMM_PRONE ) {
                     recoil = MAX_RECOIL;
                     mod_moves( -100 );
+                    add_msg( _( "You start crouching." ) );
+                } else if( move_mode == CMM_PRONE ) {
+                    if( has_effect( effect_downed ) ) {
+                        // Spend a turn trying to get back up if the player tried to manually swap stances while downed.
+                        Character::try_remove_downed( *this );
+                        mod_moves( -100 );
+                        return;
+                    } else {
+                        recoil = MAX_RECOIL;
+                        mod_moves( -200 );
+                        add_msg( _( "You rise from prone to a crouch." ) );
+                    }
                 }
-                add_msg( _( "You start crouching." ) );
+            }
+            break;
+        }
+        case CMM_PRONE: {
+            if( is_mounted() ) {
+                if( mounted_creature->has_flag( MF_RIDEABLE_MECH ) ) {
+                    add_msg( m_bad, _( "Your mech cannot go prone." ) );
+                } else {
+                    add_msg( m_bad, _( "You cannot go prone while mounted." ) );
+                }
+                return;
+            }
+            if( controlling_vehicle ) {
+                add_msg( m_bad, _( "You cannot go prone while driving." ) );
+                return;
+            }
+            if( is_hauling() ) {
+                stop_hauling();
+            }
+            // Spend moves to go prone — cost depends on current stance
+            if( move_mode == CMM_CROUCH ) {
+                mod_moves( -200 );
+                recoil = MAX_RECOIL;
+                add_msg( _( "You go prone from a crouching position." ) );
+            } else if( move_mode != CMM_PRONE ) {
+                mod_moves( -300 );
+                recoil = MAX_RECOIL;
+                add_msg( _( "You drop to the ground." ) );
+            } else {
+                add_msg( _( "You are already prone." ) );
             }
             break;
         }
@@ -1354,8 +1431,9 @@ void avatar::set_movement_mode( character_movemode new_mode )
             return;
         }
     }
-    if( move_mode == CMM_CROUCH || new_mode == CMM_CROUCH ) {
-        // crouching affects visibility
+    if( move_mode == CMM_CROUCH || new_mode == CMM_CROUCH ||
+        move_mode == CMM_PRONE || new_mode == CMM_PRONE ) {
+        // crouching and prone affect visibility
         get_map().set_seen_cache_dirty( bub_pos().z() );
     }
     move_mode = new_mode;
@@ -1376,6 +1454,15 @@ void avatar::toggle_crouch_mode()
         set_movement_mode( CMM_WALK );
     } else {
         set_movement_mode( CMM_CROUCH );
+    }
+}
+
+void avatar::toggle_prone_mode()
+{
+    if( move_mode == CMM_PRONE ) {
+        set_movement_mode( CMM_WALK );
+    } else {
+        set_movement_mode( CMM_PRONE );
     }
 }
 
@@ -1512,9 +1599,11 @@ bool avatar::invoke_item( item *used, const tripoint_bub_ms &pt )
     umenu.text = string_format( _( "What to do with your %s?" ), used->tname() );
     umenu.hilight_disabled = true;
 
-    for( const auto &e : use_methods ) {
+    for( int i = 0; i < static_cast<int>( use_methods.size() ); i++ ) {
+        const auto &e = *std::next( use_methods.begin(), i );
+        if( !e.second.activatable() ) { continue; }
         const auto res = e.second.can_call( *this, *used, false, pt );
-        umenu.addentry_desc( MENU_AUTOASSIGN, res.success(), MENU_AUTOASSIGN, e.second.get_name(),
+        umenu.addentry_desc( i, res.success(), MENU_AUTOASSIGN, e.second.get_name(),
                              res.str() );
     }
 

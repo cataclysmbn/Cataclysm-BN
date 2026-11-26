@@ -5,6 +5,7 @@
 #include "debug.h"
 #include "json.h"
 #include "type_id.h"
+#include "type_id_implement.h"
 #include "generic_factory.h"
 
 const flag_id flag_NULL = flag_id( "null" ); // intentionally invalid flag
@@ -80,6 +81,7 @@ const flag_id flag_DANGEROUS( "DANGEROUS" );
 const flag_id flag_DARK_IMMUNE( "DARK_IMMUNE" );
 const flag_id flag_DEAF( "DEAF" );
 const flag_id flag_DESTROY_ON_DECHARGE( "DESTROY_ON_DECHARGE" );
+const flag_id flag_DESTROY_ON_DROP( "DESTROY_ON_DROP" );
 const flag_id flag_DIAMOND( "DIAMOND" );
 const flag_id flag_DIG_TOOL( "DIG_TOOL" );
 const flag_id flag_DIMENSIONAL_ANCHOR( "DIMENSIONAL_ANCHOR" );
@@ -115,6 +117,7 @@ const flag_id flag_ELECTRIC_IMMUNE( "ELECTRIC_IMMUNE" );
 const flag_id flag_ETHEREAL_ITEM( "ETHEREAL_ITEM" );
 const flag_id flag_EXPLOSION_SMASHED( "EXPLOSION_SMASHED" );
 const flag_id flag_EXPLOSION_PROPELLED( "EXPLOSION_PROPELLED" );
+const flag_id flag_DRONE_CAM( "DRONE_CAM" );
 const flag_id flag_FAKE_MILL( "FAKE_MILL" );
 const flag_id flag_FAKE_CLONING_VAT( "FAKE_CLONING_VAT" );
 const flag_id flag_FAKE_SMOKE( "FAKE_SMOKE" );
@@ -226,6 +229,7 @@ const flag_id flag_NO_RECOVER_AMMO( "NO_RECOVER_AMMO" );
 const flag_id flag_NO_RELOAD( "NO_RELOAD" );
 const flag_id flag_NO_REPAIR( "NO_REPAIR" );
 const flag_id flag_NO_SALVAGE( "NO_SALVAGE" );
+const flag_id flag_BUTCHERY_ROPE( "BUTCHERY_ROPE" );
 const flag_id flag_NO_STERILE( "NO_STERILE" );
 const flag_id flag_NO_TAKEOFF( "NO_TAKEOFF" );
 const flag_id flag_NO_UNLOAD( "NO_UNLOAD" );
@@ -252,7 +256,10 @@ const flag_id flag_POLEARM( "POLEARM" );
 const flag_id flag_POWERARMOR_COMPATIBLE( "POWERARMOR_COMPATIBLE" );
 const flag_id flag_POWERARMOR_EXO( "POWERARMOR_EXO" );
 const flag_id flag_POWERARMOR_EXTERNAL( "POWERARMOR_EXTERNAL" );
+const flag_id flag_POWERARMOR_PLATING( "POWERARMOR_PLATING" );
 const flag_id flag_POWERARMOR_MOD( "POWERARMOR_MOD" );
+const flag_id flag_PLATE_CARRIER( "PLATE_CARRIER" );
+const flag_id flag_ARMOR_PLATE( "ARMOR_PLATE" );
 const flag_id flag_POWERED( "POWERED" );
 const flag_id flag_PRIMITIVE_RANGED_WEAPON( "PRIMITIVE_RANGED_WEAPON" );
 const flag_id flag_PROCESSING( "PROCESSING" );
@@ -303,6 +310,7 @@ const flag_id flag_ROLLER_ONE( "ROLLER_ONE" );
 const flag_id flag_ROLLER_QUAD( "ROLLER_QUAD" );
 const flag_id flag_SAFECRACK( "SAFECRACK" );
 const flag_id flag_SEMITANGIBLE( "SEMITANGIBLE" );
+const flag_id flag_SECRET_ENCHANTMENTS( "SECRET_ENCHANTMENTS" );
 const flag_id flag_SHATTERS( "SHATTERS" );
 const flag_id flag_SHOCKING( "SHOCKING" );
 const flag_id flag_ACIDIC( "ACIDIC" );
@@ -392,19 +400,7 @@ namespace
 generic_factory<json_flag> json_flags_all( "json_flags" );
 } // namespace
 
-/** @relates string_id */
-template<>
-bool flag_id ::is_valid() const
-{
-    return json_flags_all.is_valid( *this );
-}
-
-/** @relates string_id */
-template<>
-const json_flag &flag_id::obj() const
-{
-    return json_flags_all.obj( *this );
-}
+IMPLEMENT_STRING_AND_INT_IDS( json_flag, json_flags_all );
 
 json_flag::operator bool() const
 {
@@ -429,6 +425,7 @@ void json_flag::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "taste_mod", taste_mod_ );
     optional( jo, was_loaded, "restriction", restriction_ );
     optional( jo, was_loaded, "tag", tag_ );
+    optional( jo, was_loaded, "dynamic_color", tag_color_, c_light_gray );
 
     // FIXME: most flags have a "context" field that isn't used for anything
     // Test for it here to avoid errors about unvisited members

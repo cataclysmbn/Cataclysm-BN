@@ -631,7 +631,7 @@
     "time": "17 m",
     "book_learn": [ [ "textbook_computer", 2 ], [ "advanced_electronics", 2 ], [ "reference_fabrication1", 2 ] ],
     "using": [ [ "3d_printing_standard", 17 ] ],
-    "components": [ [ [ "carbon_fiber_filament", 170 ] ] ]
+    "components": [ [ [ "carbon_fiber_filament", 230 ] ] ]
   },
   {
     "result": "boots_scute",

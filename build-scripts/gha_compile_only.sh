@@ -49,10 +49,6 @@ if [ -n "$COMPILER" ]; then
     cmake_args+=( -DCMAKE_CXX_COMPILER="$COMPILER" )
 fi
 
-if [ -n "$TEST_STAGE" ]; then
-    cmake_args+=( -DJSON_FORMAT=ON )
-fi
-
 if [ "$OS" = "macos-14" ]; then
     cmake_args+=( -DCMAKE_OSX_DEPLOYMENT_TARGET=14 )
 fi
@@ -62,7 +58,8 @@ cmake "${cmake_args[@]}"
 if [ -n "$TEST_STAGE" ]
 then
     build-scripts/lint-json.sh
-    cmake --build build --target style-json-parallel --parallel "$num_jobs"
+    CMAKE_BUILD_PARALLEL_LEVEL="$num_jobs" build-scripts/format-json.sh
+    git diff --exit-code -- '*.json'
     tools/dialogue_validator.py data/json/npcs/* data/json/npcs/*/* data/json/npcs/*/*/*
 fi
 

@@ -42,7 +42,7 @@
     "color": "red",
     "move_cost": 0,
     "coverage": 65,
-    "flags": [ "TRANSPARENT", "FLAMMABLE", "NOITEM", "SEALED", "CONTAINER", "REDUCE_SCENT", "PERMEABLE" ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE", "NOITEM", "SEALED", "CONTAINER", "LIQUIDCONT", "REDUCE_SCENT", "PERMEABLE" ],
     "examine_action": "gaspump",
     "bash": {
       "str_min": 8,
@@ -65,7 +65,7 @@
     "color": "brown_red",
     "move_cost": 0,
     "coverage": 50,
-    "flags": [ "TRANSPARENT", "FLAMMABLE", "NOITEM", "SEALED", "CONTAINER", "REDUCE_SCENT" ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE", "NOITEM", "SEALED", "CONTAINER", "LIQUIDCONT", "REDUCE_SCENT" ],
     "bash": {
       "str_min": 40,
       "str_max": 100,
@@ -114,7 +114,7 @@
     "color": "yellow_red",
     "move_cost": 0,
     "coverage": 65,
-    "flags": [ "TRANSPARENT", "FLAMMABLE", "NOITEM", "SEALED", "CONTAINER", "REDUCE_SCENT" ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE", "NOITEM", "SEALED", "CONTAINER", "LIQUIDCONT", "REDUCE_SCENT" ],
     "examine_action": "gaspump",
     "bash": {
       "str_min": 8,
@@ -158,13 +158,13 @@
     "type": "terrain",
     "id": "t_diesel_pump",
     "name": "diesel pump",
-    "description": "This is a diesel fuel pump.  This roadside attraction provides all the thick, gloopy liquid POWER you need to move your sensibly oversized APOCOLYPTIC SUPERTRUCK from point A to points beyond.  If it doesn't dispense fuel immediately, try banging on it or grunt your way over the nearby payment terminal.",
+    "description": "This is a diesel fuel pump.  This roadside attraction provides all the thick, gloopy liquid POWER you need to move your sensibly oversized APOCALYPTIC SUPERTRUCK from point A to points beyond.  If it doesn't dispense fuel immediately, try banging on it or grunt your way over the nearby payment terminal.",
     "symbol": "&",
     "color": "green",
     "looks_like": "t_gas_pump",
     "move_cost": 0,
     "coverage": 65,
-    "flags": [ "TRANSPARENT", "FLAMMABLE", "NOITEM", "SEALED", "CONTAINER", "REDUCE_SCENT", "PERMEABLE" ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE", "NOITEM", "SEALED", "CONTAINER", "LIQUIDCONT", "REDUCE_SCENT", "PERMEABLE" ],
     "examine_action": "gaspump",
     "bash": {
       "str_min": 8,
@@ -273,7 +273,7 @@
     "type": "terrain",
     "id": "t_metal_ventilation_shutter",
     "name": "ventilation shutters",
-    "description": "A large wall mounted panel, covered fragile metal sheets that regulate airflow.",
+    "description": "A large wall mounted panel, covered with fragile metal sheets that regulate airflow.",
     "symbol": "=",
     "color": "light_gray",
     "looks_like": "t_chainfence_v",
@@ -528,40 +528,6 @@
   },
   {
     "type": "terrain",
-    "id": "t_cvdmachine",
-    "name": "CVD control panel",
-    "description": "This is a VERY expensive-looking apparatus that's labeled 'Chemical Vapor Deposition Machine'.  With the input of certain exceptionally rare chemicals and elements, one could conceivably coat one's weapon with diamond.  While the process is extremely complicated, a previous user has helpfully sketched: Hydrogen + charcoal = smiley face.",
-    "symbol": "&",
-    "color": "cyan",
-    "looks_like": "t_console",
-    "move_cost": 0,
-    "coverage": 50,
-    "flags": [ "TRANSPARENT", "NOITEM", "PERMEABLE" ],
-    "examine_action": "cvdmachine",
-    "bash": {
-      "str_min": 8,
-      "str_max": 150,
-      "sound": "crunch!",
-      "sound_fail": "whack!",
-      "ter_set": "t_console_broken",
-      "items": [
-        { "item": "processor", "prob": 25 },
-        { "item": "RAM", "count": [ 0, 2 ], "prob": 50 },
-        { "item": "cable", "charges": [ 1, 2 ], "prob": 50 },
-        { "item": "small_lcd_screen", "prob": 25 },
-        { "item": "e_scrap", "count": [ 1, 4 ], "prob": 50 },
-        { "item": "circuit", "count": [ 0, 2 ], "prob": 50 },
-        { "item": "power_supply", "prob": 25 },
-        { "item": "amplifier", "prob": 25 },
-        { "item": "plastic_chunk", "count": [ 4, 10 ], "prob": 50 },
-        { "item": "scrap", "count": [ 2, 6 ], "prob": 50 }
-      ],
-      "//": "reduction equal to broken console, but destroy_threshold equal to str_min since fragile",
-      "ranged": { "reduction": [ 8, 16 ], "destroy_threshold": 8, "block_unaimed_chance": "50%" }
-    }
-  },
-  {
-    "type": "terrain",
     "id": "t_nanofab_body",
     "name": "nanofabricator",
     "symbol": "%",
@@ -569,7 +535,15 @@
     "color": "dark_gray",
     "move_cost": 0,
     "coverage": 65,
-    "flags": [ "PLACE_ITEM" ],
+    "flags": [ "PLACE_ITEM", "NANOFAB_BODY", "ADV_DECONSTRUCT" ],
+    "deconstruct": {
+      "ter_set": "t_strconc_floor",
+      "items": [
+        { "item": "nanofab_body_item", "charges": 1 },
+        { "item": "power_supply", "charges": [ 3, 3 ] },
+        { "item": "cable", "charges": [ 15, 15 ] }
+      ]
+    },
     "bash": {
       "str_min": 120,
       "str_max": 150,
@@ -603,8 +577,16 @@
     "looks_like": "t_console",
     "move_cost": 0,
     "coverage": 50,
-    "flags": [ "WALL", "NOITEM", "PERMEABLE" ],
+    "flags": [ "WALL", "NOITEM", "PERMEABLE", "ADV_DECONSTRUCT" ],
     "examine_action": "nanofab",
+    "deconstruct": {
+      "ter_set": "t_strconc_floor",
+      "items": [
+        { "item": "nanofab_item", "charges": 1 },
+        { "item": "power_supply", "charges": [ 3, 3 ] },
+        { "item": "cable", "charges": [ 15, 15 ] }
+      ]
+    },
     "bash": {
       "str_min": 8,
       "str_max": 150,
@@ -636,7 +618,7 @@
     "color": "dark_gray",
     "move_cost": 0,
     "coverage": 65,
-    "flags": [ "PLACE_ITEM" ],
+    "flags": [ "PLACE_ITEM", "NANOFORGE_BODY" ],
     "bash": {
       "str_min": 120,
       "str_max": 150,
@@ -711,8 +693,8 @@
       "str_max": 80,
       "sound": "ker-rash!",
       "sound_fail": "plunk.",
-      "sound_vol": 100,
-      "sound_fail_vol": 80,
+      "sound_vol": "100 dB",
+      "sound_fail_vol": "80 dB",
       "ter_set": "t_floor",
       "items": [ { "item": "glass_shard", "count": [ 3, 6 ] }, { "item": "scrap", "count": [ 0, 2 ] } ],
       "//": "reduction and destroy_threshold are lower for plain glass",
@@ -758,7 +740,7 @@
     "id": "t_water_pump",
     "name": "water pump",
     "looks_like": "t_machinery_heavy",
-    "description": "Deep well collecting ground water.  Installed water pump allows to draw water from it.",
+    "description": "Deep well collecting ground water.  Installed water pump allows you to draw water from it.",
     "symbol": "&",
     "color": "light_gray",
     "move_cost": 6,
@@ -1174,7 +1156,7 @@
     "type": "terrain",
     "id": "t_potential_trans",
     "name": "potential transformer",
-    "description": "A specialized type of electrical transformer, ",
+    "description": "A specialized type of electrical transformer.",
     "symbol": "8",
     "color": "i_light_gray",
     "looks_like": "t_machinery_electronic",
@@ -1652,6 +1634,54 @@
       "str_max": 100,
       "ter_set": "t_dirt",
       "items": [ { "item": "material_soil", "count": [ 5, 15 ] }, { "item": "material_niter", "count": [ 0, 1 ] } ]
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_drill_string",
+    "name": "drill string",
+    "description": "An extremely resistant length of mechanical tubing used to reach deep under water and drill into pockets of oil.",
+    "looks_like": "t_little_column",
+    "symbol": "O",
+    "color": "dark_gray",
+    "move_cost": 0,
+    "coverage": 50,
+    "flags": [ "NOITEM", "PERMEABLE", "TRANSPARENT" ],
+    "bash": {
+      "str_min": 30,
+      "str_max": 150,
+      "sound": "metal screeching!",
+      "sound_fail": "clang!",
+      "ter_set": "t_null",
+      "items": [
+        { "item": "steel_plate", "count": [ 0, 4 ] },
+        { "item": "steel_chunk", "count": [ 1, 4 ] },
+        { "item": "scrap", "count": [ 3, 7 ] }
+      ]
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_underwater_drill_string",
+    "name": "drill string",
+    "description": "An extremely resistant length of mechanical tubing used to reach deep under water and drill into pockets of oil.",
+    "looks_like": "t_little_column",
+    "symbol": "O",
+    "color": "blue",
+    "move_cost": 0,
+    "coverage": 50,
+    "flags": [ "NOITEM", "PERMEABLE", "TRANSPARENT" ],
+    "bash": {
+      "str_min": 30,
+      "str_max": 150,
+      "sound": "metal screeching!",
+      "sound_fail": "clang!",
+      "ter_set": "t_water_cube",
+      "items": [
+        { "item": "steel_chunk", "count": [ 1, 4 ] },
+        { "item": "pipe", "count": [ 0, 4 ] },
+        { "item": "scrap", "count": [ 3, 7 ] }
+      ]
     }
   }
 ]

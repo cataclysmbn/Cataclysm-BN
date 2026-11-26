@@ -170,8 +170,9 @@ local function run_fetch_mode(runtime_ctx, ctx)
 
   if fetch_pos.x == ctx.pos.x and fetch_pos.y == ctx.pos.y and fetch_pos.z == ctx.pos.z then
     local stack = ctx.here:get_items_at(fetch_pos)
+    ---@type Item?
     local picked = nil
-    for _, item in ipairs(stack) do
+    for _, item in ipairs(stack:items()) do
       if item:get_type():str() == item_id then
         picked = item
         break
@@ -276,6 +277,7 @@ end
 ---@param safe_step fun(mon: Monster, dest: TripointBubMs): boolean
 ---@return boolean
 local function run_calm_dance_turn(mon, serialize_tripoint_abs_ms, deserialize_tripoint_abs_ms, safe_step)
+  ---@type [integer, integer][]
   local dance_points = {
     { 1, 0 },
     { 1, 1 },
@@ -316,6 +318,7 @@ local function run_calm_dance_turn(mon, serialize_tripoint_abs_ms, deserialize_t
   end
 
   local offset = dance_points[idx]
+  if offset == nil then return false end
   local dest = TripointBubMs.new(anchor_local.x + offset[1], anchor_local.y + offset[2], anchor_local.z)
 
   if not safe_step(mon, dest) then
@@ -332,7 +335,7 @@ local function run_calm_dance_turn(mon, serialize_tripoint_abs_ms, deserialize_t
   mon:set_value("lua_dance_index", tostring((idx % #dance_points) + 1))
   mon:set_value("lua_dance_anchor_abs", serialize_tripoint_abs_ms(anchor_abs))
   if gapi.rng(1, 4) == 1 then
-    gapi.play_variant_sound("music", "dancer", 30)
+    gapi.play_variant_sound("music", "dancer", 30, true)
   else
     gapi.add_msg(MsgType.info, "♪ beep boop dance ♪")
   end

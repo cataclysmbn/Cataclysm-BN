@@ -12,7 +12,7 @@
     "floor_bedding_warmth": -1500,
     "bonus_fire_warmth_feet": 1000,
     "required_str": 8,
-    "flags": [ "TRANSPARENT", "FLAMMABLE_ASH", "ORGANIC", "MOUNTABLE", "SHORT", "CAN_SIT" ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE_ASH", "ORGANIC", "MOUNTABLE", "SHORT", "CAN_SIT", "BASH_TRANSFORM" ],
     "deconstruct": { "items": [ { "item": "2x4", "count": 4 }, { "item": "nail", "charges": 10 } ] },
     "bash": {
       "str_min": 12,
@@ -31,7 +31,7 @@
     "id": "f_bench_flipped",
     "copy-from": "f_bench",
     "name": "flipped bench",
-    "symbol": "#",
+    "symbol": "X",
     "description": "Hobo bed, now with extra hostile architecture.  Examine it to make it actually suitable to sleep on.",
     "color": "brown",
     "move_cost_mod": 2,
@@ -50,7 +50,7 @@
     "transforms_into": "f_bench",
     "prompt": "Set bench upright",
     "message": "You set the bench back upright.",
-    "delete": { "flags": [ "CAN_SIT" ] }
+    "delete": { "flags": [ "CAN_SIT", "BASH_TRANSFORM" ] }
   },
   {
     "type": "furniture",
@@ -193,7 +193,7 @@
     "name": "camp chair",
     "symbol": "#",
     "looks_like": "f_chair",
-    "description": "Sit down, have a drink.  It can folded for easy transportation.",
+    "description": "Sit down, have a drink.  It can be folded for easy transportation.",
     "color": "brown",
     "move_cost_mod": 1,
     "coverage": 35,
@@ -287,7 +287,7 @@
     "comfort": 1,
     "floor_bedding_warmth": -2000,
     "bonus_fire_warmth_feet": 1000,
-    "flags": [ "TRANSPARENT", "MOUNTABLE", "SHORT", "CAN_SIT" ],
+    "flags": [ "TRANSPARENT", "MOUNTABLE", "SHORT", "CAN_SIT", "BASH_TRANSFORM" ],
     "bash": {
       "str_min": 15,
       "str_max": 200,
@@ -311,7 +311,7 @@
     "copy-from": "f_metal_bench",
     "name": "flipped metal bench",
     "description": "A bench made of scrap metal, now even more uncomfortable being used as low cover.  Examine it to reorient it for using as proper furniture.",
-    "symbol": "h",
+    "symbol": "x",
     "color": "light_gray",
     "move_cost_mod": 2,
     "coverage": 30,
@@ -333,7 +333,7 @@
     "transforms_into": "f_metal_bench",
     "prompt": "Set metal bench upright",
     "message": "You set the metal bench back upright.",
-    "delete": { "flags": [ "CAN_SIT" ] }
+    "delete": { "flags": [ "CAN_SIT", "BASH_TRANSFORM" ] }
   },
   {
     "type": "furniture",

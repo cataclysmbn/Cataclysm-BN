@@ -1,30 +1,29 @@
-#include "coordinates.h"
-#include "enums.h"
-#include "game.h" // IWYU pragma: associated
-
-#include <cstdlib>
-#include <algorithm>
-#include <numeric>
-
 #include "avatar.h"
 #include "character.h"
 #include "character_functions.h"
-#include "map.h"
+#include "coordinates.h"
+#include "debug.h"
+#include "enums.h"
+#include "game.h" // IWYU pragma: associated
+#include "map/map.h"
 #include "messages.h"
 #include "monster.h"
 #include "mtype.h"
 #include "point.h"
-#include "sounds.h"
-#include "vehicle.h"
-#include "vehicle_grab.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
-#include "vpart_range.h"
-#include "debug.h"
 #include "rng.h"
+#include "sounds.h"
 #include "tileray.h"
 #include "translations.h"
 #include "units.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_grab.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+#include "vehicle/vpart_range.h"
+
+#include <algorithm>
+#include <cstdlib>
+#include <numeric>
 
 static const efftype_id effect_harnessed( "harnessed" );
 
@@ -223,16 +222,14 @@ bool game::grabbed_veh_move( const tripoint_rel_ms &dp )
 
         grabbed_vehicle->adjust_zlevel( 1, actual_dir );
 
-        // Put the player on an invalid z-level so they can't collide with the
-        // grabbed vehicle. Moving to an arbitrary x/y no longer hides the avatar
-        // now that player bubble space is derived from avatar position.
-        const auto player_prev = u.abs_pos();
-        auto player_hidden = player_prev;
-        player_hidden.z() = OVERMAP_HEIGHT + 1;
-        u.setpos( player_hidden );
         std::vector<veh_collision> colls;
-        const bool failed = grabbed_vehicle->collision( colls, actual_dir, true );
-        u.setpos( player_prev );
+        const bool failed = grabbed_vehicle->collision( vehicle_collision_options{
+            .colls = colls,
+            .dp = actual_dir,
+            .just_detect = true,
+            .bash_floor = false,
+            .ignored_critter = &u,
+        } );
         if( !colls.empty() ) {
             blocker_name = colls.front().target_name;
         }

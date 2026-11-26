@@ -1,20 +1,20 @@
 #include "mtype.h"
 
-#include <algorithm>
-#include <cmath>
-#include <unordered_map>
-
 #include "behavior_strategy.h"
 #include "creature.h"
-#include "field_type.h"
 #include "item.h"
 #include "itype.h"
+#include "map/field_type.h"
 #include "mod_manager.h"
 #include "mondeath.h"
 #include "monstergenerator.h"
 #include "output.h"
 #include "string_id.h"
 #include "translations.h"
+
+#include <algorithm>
+#include <cmath>
+#include <unordered_map>
 
 static const itype_id itype_bone( "bone" );
 static const itype_id itype_bone_tainted( "bone_tainted" );

@@ -67,24 +67,25 @@ NPCはプレイヤーにミッションを依頼することができます。�
 
 必須項目です。以下のいずれかの文字列を指定します:
 
-| goal 文字列               | 達成条件                                                 |
-| ------------------------- | -------------------------------------------------------- |
-| `MGOAL_GO_TO`             | 指定された広域マップ（Overmap）のタイルに到達する        |
-| `MGOAL_GO_TO_TYPE`        | 指定された種類の広域マップタイルのいずれかに到達する     |
-| `MGOAL_COMPUTER_TOGGLE`   | 正しい端末を起動すると完了                               |
-| `MGOAL_FIND_ITEM`         | 指定された種類のアイテムを1つ以上見つける                |
-| `MGOAL_FIND_ITEM_GROUP`   | 指定されたアイテムグループからアイテムを1つ以上見つける  |
-| `MGOAL_FIND_ANY_ITEM`     | このミッション用にタグ付けされた特定のアイテムを見つける |
-| `MGOAL_FIND_MONSTER`      | 友好的なモンスターを見つけて連れ帰る                     |
-| `MGOAL_FIND_NPC`          | 特定のNPCを見つける                                      |
-| `MGOAL_TALK_TO_NPC`       | 特定のNPCと話す                                          |
-| `MGOAL_RECRUIT_NPC`       | 特定のNPCを仲間に加える                                  |
-| `MGOAL_RECRUIT_NPC_CLASS` | 特定のクラスのNPCを仲間に加える                          |
-| `MGOAL_ASSASSINATE`       | 特定のNPCを殺害する                                      |
-| `MGOAL_KILL_MONSTER`      | 特定の敵対モンスターを殺害する                           |
-| `MGOAL_KILL_MONSTER_TYPE` | 特定の種類のモンスターを規定数殺害する                   |
-| `MGOAL_KILL_MONSTER_SPEC` | 特定の種族のモンスターを規定数殺害する                   |
-| `MGOAL_CONDITION`         | 動的に作成された条件を満たし、依頼主と話す               |
+| goal 文字列               | 達成条件                                                                   |
+| ------------------------- | -------------------------------------------------------------------------- |
+| `MGOAL_GO_TO`             | 指定された広域マップ（Overmap）のタイルに到達する                          |
+| `MGOAL_GO_TO_TYPE`        | 指定された種類の広域マップタイルのいずれかに到達する                       |
+| `MGOAL_COMPUTER_TOGGLE`   | 正しい端末を起動すると完了                                                 |
+| `MGOAL_FIND_ITEM`         | 指定された種類のアイテムを1つ以上見つける                                  |
+| `MGOAL_FIND_ITEM_GROUP`   | 指定されたアイテムグループからアイテムを1つ以上見つける                    |
+| `MGOAL_FIND_ANY_ITEM`     | このミッション用にタグ付けされた特定のアイテムを見つける                   |
+| `MGOAL_FIND_MONSTER`      | 友好的なモンスターを見つけて連れ帰る                                       |
+| `MGOAL_FIND_NPC`          | 特定のNPCを見つける                                                        |
+| `MGOAL_TALK_TO_NPC`       | 特定のNPCと話す                                                            |
+| `MGOAL_RECRUIT_NPC`       | 特定のNPCを仲間に加える                                                    |
+| `MGOAL_RECRUIT_NPC_CLASS` | 特定のクラスのNPCを仲間に加える                                            |
+| `MGOAL_ASSASSINATE`       | 特定のNPCを殺害する                                                        |
+| `MGOAL_KILL_MONSTER`      | 特定の敵対モンスターを殺害する                                             |
+| `MGOAL_KILL_MONSTER_TYPE` | 特定の種類のモンスターを規定数殺害する                                     |
+| `MGOAL_KILL_MONSTER_SPEC` | 特定の種族のモンスターを規定数殺害する                                     |
+| `MGOAL_KILL_MONSTERS`     | ミッション開始時に生成された、ミッションタグ付きの特定モンスターを殺害する |
+| `MGOAL_CONDITION`         | 動的に作成された条件を満たし、依頼主と話す                                 |
 
 ### monster_species
 
@@ -100,7 +101,7 @@ NPCはプレイヤーにミッションを依頼することができます。�
 
 ### goal_condition
 
-"MGOAL_CONDITION" (特殊条件)を使用する場合に、ミッション完了と判定されるための条件を定義します。条件の記述方法については [NPCs.md](./NPCs)で詳しく解説されており、ミッションでも全く同じ構文を使用します。
+"MGOAL_CONDITION" (特殊条件)を使用する場合に、ミッション完了と判定されるための条件を定義します。条件の記述方法については [NPCのドキュメント](./npcs.md)で詳しく解説されており、ミッションでも全く同じ構文を使用します。
 
 ### dialogue
 
@@ -130,7 +131,7 @@ NPCがミッションの依頼時や報告時に話すテキストです。ミ�
 
 #### effect
 
-[NPCs.md](./NPCs)で定義されているものと全く同じ形式の「エフェクト配列」です。ここに含まれるすべての値を使用できます。どの場合においても、対象となるNPCは「ミッションの依頼主」となります。
+[NPCのドキュメント](./npcs.md)で定義されているものと全く同じ形式の「エフェクト配列」です。ここに含まれるすべての値を使用できます。どの場合においても、対象となるNPCは「ミッションの依頼主」となります。
 
 #### reveal_om_ter (地形の開示)
 

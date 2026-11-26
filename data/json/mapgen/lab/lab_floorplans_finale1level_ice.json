@@ -181,7 +181,18 @@
       ],
       "palettes": [ "lab_palette", "lab_loot_research" ],
       "furniture": { "R": "f_rack", "D": "f_desk", "A": "f_artifact_analyzer_console", "P": "t_dimensional_portal" },
-      "mapping": { "R": { "item": [ { "item": "dimensional_anchor" }, { "item": "phase_immersion_suit" } ] } },
+      "mapping": {
+        "R": { "item": [ { "item": "dimensional_anchor" }, { "item": "phase_immersion_suit" } ] },
+        "r": { "items": [ { "item": "portal_room_gear", "chance": 100 } ] },
+        "l": {
+          "items": [
+            { "item": "lab_shoes", "chance": 100 },
+            { "item": "lab_torso", "chance": 100 },
+            { "item": "lab_pants", "chance": 100 },
+            { "item": "underwear", "chance": 100 }
+          ]
+        }
+      },
       "place_nested": [ { "chunks": [ "lab_finale_loot_ice" ], "x": 4, "y": 1 } ],
       "place_loot": [ { "item": "id_science", "x": [ 19, 20 ], "y": [ 2, 5 ] } ],
       "place_monster": [ { "monster": "mon_mech_lifter", "x": 2, "y": 2, "chance": 100 } ]

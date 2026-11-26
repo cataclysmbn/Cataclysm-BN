@@ -1,16 +1,3 @@
-#include "game.h" // IWYU pragma: associated
-
-#include <algorithm>
-#include <map>
-#include <ranges>
-#include <sstream>
-#include <string>
-#include <type_traits>
-#include <unordered_map>
-#include <unordered_set>
-#include <utility>
-#include <vector>
-
 #include "achievement.h"
 #include "avatar.h"
 #include "calendar.h"
@@ -22,24 +9,26 @@
 #include "drop_token.h"
 #include "enum_conversions.h"
 #include "faction.h"
+#include "fluid_grid.h"
+#include "game.h" // IWYU pragma: associated
 #include "game_constants.h"
 #include "hash_utils.h"
 #include "int_id.h"
 #include "json.h"
 #include "kill_tracker.h"
-#include "map.h"
+#include "map/map.h"
 #include "messages.h"
 #include "mission.h"
 #include "mongroup.h"
 #include "monster.h"
 #include "npc.h"
-#include "omdata.h"
 #include "options.h"
 #include "output.h"
-#include "overmap.h"
-#include "overmap_types.h"
-#include "overmapbuffer.h"
-#include "fluid_grid.h"
+#include "overmap/omdata.h"
+#include "overmap/overmap.h"
+#include "overmap/overmap_types.h"
+#include "overmap/overmapbuffer.h"
+#include "overmap/overmapbuffer_registry.h"
 #include "popup.h"
 #include "regional_settings.h"
 #include "scent_map.h"
@@ -47,9 +36,20 @@
 #include "string_id.h"
 #include "translations.h"
 #include "ui_manager.h"
-#include "weather.h"
+#include "weather/weather.h"
 #include "world_type.h"
-#include "overmapbuffer_registry.h"
+
+#include <algorithm>
+#include <cstdint>
+#include <map>
+#include <ranges>
+#include <sstream>
+#include <string>
+#include <type_traits>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 #if defined(__ANDROID__)
 #include "input.h"
@@ -95,6 +95,7 @@ void game::serialize( std::ostream &fout )
     json.member( "initial_season", static_cast<int>( calendar_config._initial_season ) );
     json.member( "auto_travel_mode", auto_travel_mode );
     json.member( "run_mode", static_cast<int>( safe_mode ) );
+    json.member( "manual_combat_mode", manual_combat_mode );
     json.member( "mostseen", mostseen );
     json.member( "show_zone_overlay", show_zone_overlay );
     // current map coordinates
@@ -116,7 +117,7 @@ void game::serialize( std::ostream &fout )
     }
 
     // Save dimension bounds for bounded dimensions (pocket dimensions)
-    const auto &pocket_info = m.get_pocket_info();
+    const auto &pocket_info = m.get_mapbuffer().get_pocket_info();
     if( pocket_info ) {
         json.member( "pocket_info", pocket_info );
     }
@@ -240,6 +241,13 @@ auto game::unserialize( std::istream &fin ) -> bool
         auto saved_reality_bubble_size = g_reality_bubble_size;
         const auto has_saved_reality_bubble_size = data.read( "reality_bubble_size",
                 saved_reality_bubble_size );
+        if( has_saved_reality_bubble_size ) {
+            // For all saves post bubble size changing PR with a bubble size
+            resize_reality_bubble_to( saved_reality_bubble_size );
+        } else {
+            // Otherwise: default initialization
+            resize_reality_bubble();
+        }
         auto saved_player_abs = tripoint_abs_ms::zero();
         auto has_saved_player_abs = false;
         if( data.has_object( "player" ) ) {
@@ -332,7 +340,7 @@ auto game::unserialize( std::istream &fin ) -> bool
         if( data.has_object( "pocket_info" ) ) {
             pocket_dimension_data pocket_info;
             data.read( "pocket_info", pocket_info );
-            m.set_pocket_info( pocket_info );
+            m.get_mapbuffer().set_pocket_info( pocket_info );
             get_overmapbuffer( current_dimension_id_ ).set_pocket_info( pocket_info );
         }
 
@@ -344,24 +352,26 @@ auto game::unserialize( std::istream &fin ) -> bool
         const auto saved_origin = tripoint_abs_sm( lev.x + com.x * OMAPX * 2,
                                   lev.y + com.y * OMAPY * 2, lev.z );
         auto load_origin = saved_origin;
+        auto player_pos = project_to<coords::ms>(
+                              saved_origin + tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 ) );
         if( has_saved_player_abs ) {
-            u.setpos( saved_player_abs );
-            load_origin = player_reality_bubble_origin();
+            player_pos = saved_player_abs;
+            load_origin = reality_bubble_origin_from_player( player_pos, g_reality_bubble_size );
         } else if( has_saved_reality_bubble_size ) {
             const auto saved_player_sm = reality_bubble_center_from_origin( saved_origin,
                                          saved_reality_bubble_size );
-            u.setpos( project_to<coords::ms>( saved_player_sm ) );
-            load_origin = player_reality_bubble_origin();
-        } else {
-            u.setpos( project_to<coords::ms>( saved_origin + tripoint_rel_sm( g_half_mapsize,
-                                              g_half_mapsize, 0 ) ) );
+            player_pos = project_to<coords::ms>( saved_player_sm );
+            load_origin = reality_bubble_origin_from_player( player_pos, g_reality_bubble_size );
         }
-        load_map( load_origin, /*pump_events=*/true );
+        load_map( load_origin.xy(), /*pump_events=*/true );
+        u.setpos( player_pos );
 
         safe_mode = static_cast<safe_mode_type>( tmprun );
         if( get_option<bool>( "SAFEMODE" ) && safe_mode == SAFE_MODE_OFF ) {
             safe_mode = SAFE_MODE_ON;
         }
+        manual_combat_mode = false;
+        data.read( "manual_combat_mode", manual_combat_mode );
 
         // Silently discard old grscent/typescent flat-array data; scent now lives on submaps.
         {
@@ -636,7 +646,7 @@ void overmap::unserialize( std::istream &fin, const std::string &file_path )
             while( !jsin.end_array() ) {
                 const auto entry = jsin.get_object();
                 auto origin = tripoint_om_omt{};
-                auto capacity_ml = 0;
+                auto capacity_ml = std::int64_t{ 0 };
                 entry.read( "pos", origin );
                 entry.read( "capacity_ml", capacity_ml );
 
@@ -648,8 +658,10 @@ void overmap::unserialize( std::istream &fin, const std::string &file_path )
                 std::ranges::for_each( std::views::iota( size_t{ 0 }, liquids.size() ),
                 [&]( size_t i ) {
                     const auto liquid_entry = liquids.get_array( i );
-                    const auto liquid_type = itype_id( liquid_entry.get_string( 0 ) );
-                    const auto volume_ml = liquid_entry.get_int( 1 );
+                    auto liquid_entry_iter = liquid_entry.begin();
+                    const auto liquid_type = itype_id( ( *liquid_entry_iter ).get_string() );
+                    ++liquid_entry_iter;
+                    const auto volume_ml = ( *liquid_entry_iter ).get_int64();
                     if( volume_ml > 0 ) {
                         state.stored_by_type[liquid_type] += units::from_milliliter( volume_ml );
                     }
@@ -1244,7 +1256,7 @@ void overmap::serialize( std::ostream &fout ) const
     std::ranges::for_each( fluid_storage, [&]( const auto & entry ) {
         json.start_object();
         json.member( "pos", entry.first );
-        json.member( "capacity_ml", units::to_milliliter<int>( entry.second.capacity ) );
+        json.member( "capacity_ml", units::to_milliliter( entry.second.capacity ) );
         json.member( "liquids" );
         json.start_array();
         std::ranges::for_each( entry.second.stored_by_type, [&]( const auto & liquid_entry ) {
@@ -1253,7 +1265,7 @@ void overmap::serialize( std::ostream &fout ) const
             }
             json.start_array();
             json.write( liquid_entry.first );
-            json.write( units::to_milliliter<int>( liquid_entry.second ) );
+            json.write( units::to_milliliter( liquid_entry.second ) );
             json.end_array();
         } );
         json.end_array();

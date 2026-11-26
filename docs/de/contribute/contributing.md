@@ -40,7 +40,7 @@ Es gibt ein paar Richtlinien, an die wir uns halten sollten:
 
 ### C++
 
-Der Code-Stil wird in der gesamten Codebasis durch `astyle` durchgesetzt. Siehe [CODE_STYLE](./../dev/explanation/code_style.md) für Details.
+Der C++-Code-Stil wird durch die Formatter-Helfer des Repositorys durchgesetzt. Führen Sie vor dem Commit `just fmt` aus; siehe [CODE_STYLE](./../dev/explanation/code_style.md) für Details.
 
 ### JSON
 

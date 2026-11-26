@@ -6,7 +6,7 @@
 
 ### Traits/Mutations fields
 
-```json
+```jsonc
 "id": "LIGHTEATER",  // Unique ID
 "name": "Optimist",  // In-game name displayed
 "points": 2,         // Point cost of the trait. Positive values cost points and negative values give points
@@ -25,6 +25,7 @@
 "description": "Nothing gets you down!" // In-game description
 "apperance_description": "mowhawk" //only used for describing apperance mutations (i.e hair_color, hair_style, eye_color, skin_tone) in photos and extended descriptions 
 "starting_trait": true, // Can be selected at character creation (default: false)
+"random_starting_trait": true, // Will be randomly selected at character creation (default: starting_trait)
 "valid": false,      // Can be mutated ingame (default: true)
 "purifiable": false, //Sets if the mutation be purified (default: true)
 "profession": true, //Trait is a starting profession special trait. (default: false)

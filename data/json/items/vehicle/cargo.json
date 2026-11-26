@@ -74,7 +74,7 @@
     "type": "GENERIC",
     "name": { "str": "carbon cargo carrier" },
     "description": "A sturdy, yet lightweight carbon structure outfitted with tie-downs and attachment points for carrying cargo.",
-    "weight": "10000 g",
+    "weight": "9 kg",
     "to_hit": -3,
     "material": [ "carbon_fiber" ],
     "price": "1000 USD",
@@ -94,6 +94,17 @@
     "category": "veh_parts",
     "price": "200 USD",
     "price_postapoc": "5 USD"
+  },
+  {
+    "copy-from": "cargo_aisle",
+    "id": "cargo_aisle_carbon",
+    "type": "GENERIC",
+    "name": { "str": "carbon floor trunk" },
+    "description": "A section of carbon flooring with a cargo-space beneath, and a hinged door for access.",
+    "weight": "2 kg",
+    "material": [ "carbon_fiber" ],
+    "price": "500 USD",
+    "price_postapoc": "10 USD"
   },
   {
     "id": "livestock_carrier",

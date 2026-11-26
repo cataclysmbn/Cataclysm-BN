@@ -52,7 +52,7 @@
     "name": { "str": "disc" },
     "symbol": "o",
     "color": "red",
-    "description": "A plastic disc made for playing disc golf, it is smaller and denser then a normal frisbee.",
+    "description": "A plastic disc made for playing disc golf, it is smaller and denser than a normal frisbee.",
     "material": [ "plastic" ],
     "volume": "250 ml",
     "weight": "170 g",
@@ -142,7 +142,7 @@
     "name": { "str": "throwing axe" },
     "symbol": ";",
     "color": "light_gray",
-    "description": "A lightweight hatchet made for throwing.  Its ineffective cutting edge and light weight makes it unsuitable for use as a tool.",
+    "description": "A lightweight hatchet made for throwing.  Its ineffective cutting edge and light weight make it unsuitable for use as a tool.",
     "material": [ "steel", "wood" ],
     "volume": "750 ml",
     "weight": "792 g",
@@ -186,7 +186,7 @@
     "weight": "125 g",
     "cutting": 5,
     "thrown_damage": [ { "damage_type": "stab", "amount": 10 } ],
-    "flags": [ "HURT_WHEN_WIELDED" ]
+    "flags": [ "HURT_WHEN_WIELDED", "BELT_CLIP" ]
   },
   {
     "id": "throwing_stick",
@@ -199,6 +199,7 @@
     "price": "2 USD",
     "price_postapoc": "50 cent",
     "bashing": 5,
+    "thrown_damage": [ { "damage_type": "bash", "amount": 5 } ],
     "material": "wood",
     "symbol": ";",
     "color": "brown",

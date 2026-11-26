@@ -21,7 +21,7 @@ PO/POT/MO 파일에 대한 자세한 설명이나 GNU gettext 유틸리티를 �
 설명은 [GNU gettext 매뉴얼](https://www.gnu.org/software/gettext/manual/gettext.html)을 참조하세요.
 
 대격변의 밝은 밤과 모드의 문자열 번역에 대한 일반적인 팁을 얻으려면
-[translation API](../reference/translation) 를 참조하세요.
+[translation API](../reference/translation.md) 를 참조하세요.
 
 ## 간단한 용어 해설
 
@@ -48,7 +48,7 @@ Machine Object (`.mo`).
 
 ## 워크플로우 개요
 
-The first translation workflow is as follows: 첫 번째 번역 워크플로우는 다음과 같습니다:
+첫 번째 번역 워크플로우는 다음과 같습니다:
 
 1. 모드 JSON 및 Lua 소스 파일에서 문자열을 POT 파일로 추출합니다.
 2. 이 POT에서 대상 언어에 대한 PO 파일을 생성합니다.
@@ -93,7 +93,7 @@ The first translation workflow is as follows: 첫 번째 번역 워크플로우�
 
 PO 파일을 생성하기 전에 언어 ID를 선택해야 합니다.
 
-데이터/raw/languages.json`을 열어 게임에서 지원하는 언어 목록을 확인합니다.
+`data/raw/languages.json`을 열어 게임에서 지원하는 언어 목록을 확인합니다.
 
 이 목록에서 각 항목은 `ln_LN` 형식의 고유한 ID를 가지며, 여기서 `ln`은 언어를, `LN`은 방언을
 나타냅니다. 언어+방언을 정확히 일치시키려면 전체 `ln_LN`을 사용하거나, 방언에 관계없이 게임에서
@@ -236,7 +236,7 @@ MO 파일을 불러올 때 게임에서는 먼저 이름에 언어와 방언이 
    로드 순서 참조).
 
 기본 게임과 다른 번역을 원하거나 다른 모드의 문자열과 충돌하지 않게 하려면 해당 JSON 객체의 문자열에
-번역 컨텍스트를 추가하세요(번역 컨텍스트를 지원하는 필드는 [여기](../reference/translation) 참조).
+번역 컨텍스트를 추가하세요(번역 컨텍스트를 지원하는 필드는 [여기](../reference/translation.md) 참조).
 
 ### 참고: 모드 번역을 구현하는 PR
 

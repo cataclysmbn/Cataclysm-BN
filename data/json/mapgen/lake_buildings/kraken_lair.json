@@ -1,0 +1,48 @@
+[
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": "kraken_lair",
+    "weight": 75,
+    "object": {
+      "fill_ter": "t_water_dp",
+      "rows": [
+        "                        ",
+        "                        ",
+        "                        ",
+        "      ???      ???      ",
+        "     ?%%%?    ?%%%?     ",
+        "     ?%??      ??%?     ",
+        "     ?%?        ?%?     ",
+        "    ?%%?        ?%%?    ",
+        "    ?%?          ?%?    ",
+        "    ?%?          ?%?    ",
+        "   ?%%?    ~~    ?%%?   ",
+        "   ?%?    ~~~~    ?%?   ",
+        "   ?%?    ~~~~    ?%?   ",
+        "   ?%%?    ~~    ?%%?   ",
+        "    ?%?          ?%?    ",
+        "    ?%?          ?%?    ",
+        "    ?%%?        ?%%?    ",
+        "     ?%?        ?%?     ",
+        "     ?%??      ??%?     ",
+        "     ?%%%?    ?%%%?     ",
+        "      ???      ???      ",
+        "                        ",
+        "                        ",
+        "                        "
+      ],
+      "terrain": { "~": "t_water_dp" },
+      "furniture": {
+        " ": [ [ "f_null", 18 ], "f_wreckage", "f_rubble_landfill" ],
+        "?": [ [ "f_null", 2 ], "f_wreckage", "f_rubble_landfill" ],
+        "%": [ "f_wreckage", "f_rubble_landfill" ]
+      },
+      "items": {
+        "?": { "item": "lake_bed", "chance": 25 },
+        "%": [ { "item": "lake_bed", "chance": 25, "repeat": 2 }, { "item": "rare", "chance": 5 } ]
+      },
+      "place_monster": [ { "monster": "mon_kraken_boss", "x": 12, "y": 12 } ]
+    }
+  }
+]

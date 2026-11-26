@@ -35,12 +35,12 @@
     "price_postapoc": "80 USD",
     "weight": "2100 g",
     "ammo_type": "66mm",
-    "damage": { "damage_type": "bullet", "amount": 150, "armor_multiplier": 0.1 },
+    "damage": { "damage_type": "bullet", "amount": 650, "armor_multiplier": 0.1 },
     "range": 80,
     "dispersion": 30,
     "recoil": 225,
     "loudness": 90,
     "speed": 200,
-    "effects": [ "COOKOFF", "EXPLOSIVE_BIG", "TRAIL", "NO_PENETRATE_OBSTACLES" ]
+    "effects": [ "COOKOFF", "AMMO_66MM_HEAT", "TRAIL", "NO_PENETRATE_OBSTACLES" ]
   }
 ]

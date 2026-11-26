@@ -1,98 +1,12 @@
 [
   {
-    "id": "halo_draconic_might",
-    "copy-from": "spell_base",
-    "type": "ARMOR",
-    "name": { "str": "aura of dragon's blood", "str_pl": "auras of dragon's blood" },
-    "description": "A strange radiance permeating your body, increasing your strength and reducing physical damage, and allowing you to use heavy weapons unsupported if otherwise unable to.",
-    "color": "dark_gray",
-    "relic_data": {
-      "passive_effects": [
-        {
-          "has": "WORN",
-          "condition": "ALWAYS",
-          "values": [
-            { "value": "STRENGTH", "add": 5 },
-            { "value": "ARMOR_BASH", "add": -10 },
-            { "value": "ARMOR_CUT", "add": -20 },
-            { "value": "ARMOR_STAB", "add": -15 },
-            { "value": "ARMOR_BULLET", "add": -15 }
-          ]
-        }
-      ]
-    },
-    "extend": { "flags": [ "ONLY_ONE", "NO_TAKEOFF", "HEAVY_WEAPON_SUPPORT" ] }
-  },
-  {
-    "id": "halo_phase_shield",
-    "copy-from": "spell_base",
-    "type": "ARMOR",
-    "name": { "str": "sunstone halo" },
-    "description": "A strange radiance permeating your body, repelling nearby attackers away from you.",
-    "color": "dark_gray",
-    "relic_data": {
-      "passive_effects": [
-        {
-          "has": "WORN",
-          "condition": "ALWAYS",
-          "hit_me_effect": [
-            {
-              "id": "arcana_react_phase_shield",
-              "once_in": 10,
-              "message": "%2$s is suddenly forced back!",
-              "npc_message": "%2$s is suddenly forced away from %1$s!"
-            }
-          ]
-        }
-      ]
-    },
-    "extend": { "flags": [ "ONLY_ONE", "NO_TAKEOFF" ] }
-  },
-  {
-    "id": "halo_shadowsnakes",
-    "//": "ID retained for simplicity.",
-    "copy-from": "spell_base",
-    "type": "ARMOR",
-    "name": { "str": "obsidian halo" },
-    "description": "A strange radiance permeating your body, blinding attackers with otherworldly magic.",
-    "color": "dark_gray",
-    "relic_data": {
-      "passive_effects": [
-        {
-          "has": "WORN",
-          "condition": "ALWAYS",
-          "hit_me_effect": [
-            {
-              "id": "arcana_react_shadowy_shield",
-              "message": "Wisps of shadow lash out at %2$s",
-              "npc_message": "Wisps of shadow jump from %1$s to %2$s."
-            }
-          ]
-        }
-      ]
-    },
-    "extend": { "flags": [ "ONLY_ONE", "NO_TAKEOFF" ] }
-  },
-  {
-    "id": "halo_drainlife",
-    "copy-from": "spell_base",
-    "type": "ARMOR",
-    "name": { "str": "horned halo" },
-    "description": "A strange radiance permeating your body, granting you a life-draining touch.",
-    "color": "dark_gray",
-    "relic_data": {
-      "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "hit_you_effect": [ { "id": "arcana_react_drain_life" } ] } ]
-    },
-    "extend": { "flags": [ "ONLY_ONE", "NO_TAKEOFF" ] }
-  },
-  {
     "id": "halo_amulet_effect",
     "copy-from": "spell_base",
     "type": "ARMOR",
     "name": { "str": "shrouded aura" },
     "description": "A strange radiance permeating your body, obscuring your life force from the undead.  You will be invisible to them, but not to other creatures, and they will still be able to hear and smell you.",
     "color": "white",
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "mutations": [ "ARCANA_LIFE_SIGN_SUPPRESSION" ] } ] },
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "mutations": [ "ARCANA_LIFE_SIGN_SUPPRESSION" ] } ] },
     "extend": { "flags": [ "ONLY_ONE", "NO_TAKEOFF" ] }
   },
   {
@@ -102,7 +16,7 @@
     "name": { "str": "faded halo" },
     "description": "A strange radiance permeating your body, hiding your aura from otherworldly creatures in exchange for being more visible to wildlife and the undead.",
     "color": "white",
-    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "mutations": [ "ARCANA_TRANSCENDANT_AURA" ] } ] },
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "mutations": [ "ARCANA_TRANSCENDANT_AURA" ] } ] },
     "extend": { "flags": [ "ONLY_ONE", "NO_TAKEOFF" ] }
   },
   {
@@ -115,8 +29,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WORN",
-          "condition": "ALWAYS",
+          "conditions": [ "WORN" ],
           "values": [ { "value": "MOVE_COST", "multiply": -0.5 }, { "value": "BONUS_DODGE", "add": 5 } ],
           "ench_effects": [ { "effect": "halo_flute_effect", "intensity": 1 } ]
         }
@@ -131,28 +44,7 @@
     "name": { "str": "guardian aura" },
     "description": "A strange radiance permeating your body, adding to your defenses.",
     "color": "white",
-    "relic_data": {
-      "passive_effects": [
-        {
-          "has": "WORN",
-          "condition": "ALWAYS",
-          "values": [
-            { "value": "ARMOR_ACID", "multiply": -0.25 },
-            { "value": "ARMOR_BASH", "multiply": -0.25 },
-            { "value": "ARMOR_BIO", "multiply": -0.25 },
-            { "value": "ARMOR_COLD", "multiply": -0.25 },
-            { "value": "ARMOR_LIGHT", "multiply": -0.25 },
-            { "value": "ARMOR_DARK", "multiply": -0.25 },
-            { "value": "ARMOR_PSI", "multiply": -0.25 },
-            { "value": "ARMOR_CUT", "multiply": -0.25 },
-            { "value": "ARMOR_ELEC", "multiply": -0.25 },
-            { "value": "ARMOR_HEAT", "multiply": -0.25 },
-            { "value": "ARMOR_STAB", "multiply": -0.25 },
-            { "value": "ARMOR_BULLET", "multiply": -0.25 }
-          ]
-        }
-      ]
-    },
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "ARMOR", "multiply": -0.25 } ] } ] },
     "extend": { "flags": [ "ONLY_ONE", "NO_TAKEOFF" ] }
   },
   {
@@ -216,8 +108,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WORN",
-          "condition": "ALWAYS",
+          "conditions": [ "WORN" ],
           "values": [ { "value": "MANA_REGEN", "multiply": 0.025 }, { "value": "MANA_CAP", "multiply": 0.025 } ]
         }
       ]
@@ -283,8 +174,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WORN",
-          "condition": "ALWAYS",
+          "conditions": [ "WORN" ],
           "hit_me_effect": [
             {
               "id": "arcana_react_satchel_attention",

@@ -19,6 +19,7 @@ bool acid_accurate( monster *z );
 bool acid_barf( monster *z );
 bool shockstorm( monster *z );
 bool shocking_reveal( monster *z );
+auto pull_metal_weapon_success_chance( int base_success, int distance ) -> int;
 bool pull_metal_weapon( monster *z );
 bool boomer( monster *z );
 bool boomer_glow( monster *z );

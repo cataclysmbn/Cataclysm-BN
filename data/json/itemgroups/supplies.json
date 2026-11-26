@@ -4,8 +4,7 @@
     "type": "item_group",
     "//": "Parts for electronics crafting or repair",
     "items": [
-      { "item": "cable", "prob": 40, "count": [ 1, 2 ] },
-      { "item": "cable", "prob": 25, "count": [ 2, 4 ] },
+      { "item": "cable", "prob": 40, "count": [ 2, 4 ] },
       [ "light_detector", 5 ],
       [ "amplifier", 40 ],
       [ "antenna", 40 ],
@@ -18,6 +17,7 @@
       { "item": "solder_wire", "prob": 20, "count": [ 2, 4 ] },
       [ "RAM", 20 ],
       [ "radiocontrol", 10 ],
+      [ "remotevehcontrol", 5 ],
       [ "receiver", 30 ],
       [ "transponder", 30 ],
       [ "light_bulb", 60 ],
@@ -64,6 +64,7 @@
     "id": "paint",
     "type": "item_group",
     "items": [
+      [ "spray_can", 100 ],
       [ "r_paint", 45 ],
       [ "g_paint", 45 ],
       [ "b_paint", 45 ],
@@ -253,6 +254,7 @@
       [ "fungicide", 5 ],
       [ "gas_insecticidal", 5 ],
       [ "gas_fungicidal", 5 ],
+      [ "foamcrete_slurry", 3 ],
       [ "insecticide", 5 ],
       [ "charcoal", 5 ],
       { "group": "ammo_pocket_batteries_full", "prob": 50 },
@@ -279,7 +281,7 @@
     "id": "supplies_reagents_lab",
     "//": "General laboratory reagents and expendibles.  This list contains most conceivable chemicals in the game.  More specific lists for each type of lab would be reasonable eventually.",
     "items": [
-      [ "water_clean", 90 ],
+      [ "water_clean", 50 ],
       [ "salt_water", 20 ],
       [ "detergent", 10 ],
       [ "shimmer", 8 ],
@@ -475,6 +477,7 @@
       [ "steam_triple_small", 1 ],
       [ "steam_triple_medium", 1 ],
       [ "steam_watts_small", 1 ],
+      [ "hydrogen_cell", 5 ],
       [ "vehicle_controls", 3 ],
       [ "horn_car", 10 ],
       [ "horn_big", 8 ],
@@ -525,7 +528,7 @@
   {
     "id": "blankets",
     "type": "item_group",
-    "//": "Blankets used for the MISSION_LUMBERMILL_GET_6_BLANKETS quest",
+    "//": "Blankets used for the MISSION_LUMBERMILL_GET_6_BLANKETS and MISSION_RANCH_FOREMAN_2 quests",
     "items": [
       [ "blanket", 100 ],
       [ "fur_blanket", 100 ],
@@ -534,6 +537,18 @@
       [ "afs_quilt", 100 ],
       [ "afs_quilt_patchwork", 100 ]
     ]
+  },
+  {
+    "id": "anvils_any",
+    "type": "item_group",
+    "//": "Level 3 anvil quality, used for the MISSION_ISHERWOOD_CARLOS_1 quest",
+    "items": [ [ "anvil", 100 ], [ "anvil_bronze", 100 ] ]
+  },
+  {
+    "id": "first_aid_kits_any",
+    "type": "item_group",
+    "//": "Used for the MISSION_RANCH_FOREMAN_10 quest",
+    "items": [ [ "1st_aid", 100 ], [ "1st_aid_deluxe", 100 ], [ "1st_aid_ifak", 100 ] ]
   },
   {
     "id": "file_room",
@@ -600,7 +615,7 @@
       [ "flashlight", 7 ],
       [ "laptop", 7 ],
       [ "eink_tablet_pc", 7 ],
-      [ "usb_drive", 5 ],
+      { "group": "digital_storage_media", "prob": 5 },
       [ "cash_card", 5 ],
       [ "record_accounting", 1 ],
       [ "money_bundle", 1 ]
@@ -642,6 +657,14 @@
       { "item": "gasoline", "container-item": "30gal_drum", "prob": 20 },
       { "item": "diesel", "container-item": "30gal_drum", "prob": 10 },
       { "item": "jp8", "container-item": "30gal_drum", "prob": 20 }
+    ]
+  },
+  {
+    "id": "writing_utensils",
+    "type": "item_group",
+    "items": [
+      { "item": "permanent_marker", "prob": 8, "charges": [ 0, 500 ] },
+      { "item": "pen", "prob": 64, "charges": [ 80, 100 ] }
     ]
   },
   {
@@ -702,7 +725,7 @@
       {
         "distribution": [
           { "item": "hardtack", "charges": [ 1, 40 ], "container-item": "bag_canvas_small", "prob": 50 },
-          { "item": "flour", "charges": [ 1, 20 ], "container-item": "bag_canvas_small", "prob": 25 },
+          { "item": "flour", "charges": [ 1, 40 ], "container-item": "bag_canvas_small", "prob": 25 },
           { "item": "dry_beans", "charges": [ 1, 12 ], "container-item": "bag_canvas_small", "prob": 25 }
         ],
         "prob": 75

@@ -42,7 +42,7 @@
       "palettes": [ "evac_center" ],
       "place_vehicles": [
         { "vehicle": "schoolbus", "x": 32, "y": 18, "chance": 75, "rotation": 0 },
-        { "vehicle": "car", "x": 48, "y": 23, "chance": 75, "rotation": 270 }
+        { "vehicle": "car", "x": 55, "y": 8, "chance": 75, "rotation": 180 }
       ]
     }
   },

@@ -90,6 +90,7 @@
       { "item": "vitamins", "prob": 75 },
       { "item": "calcium_tablet", "prob": 75 },
       { "item": "aspirin", "prob": 85 },
+      { "item": "lactaid", "prob": 15 },
       { "item": "caffeine", "prob": 25 },
       { "item": "pills_sleep", "prob": 15 },
       { "item": "iodine", "prob": 5 },

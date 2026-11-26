@@ -302,7 +302,7 @@
       "str_max": 1,
       "sound": "clickity clack… clack… clack",
       "sound_fail": "clickity clack… clack",
-      "sound_vol": 75,
+      "sound_vol": "75 dB",
       "items": [
         { "item": "string_36", "count": [ 3, 15 ] },
         { "item": "stick_long", "count": 1 },
@@ -332,7 +332,7 @@
       "str_max": 1,
       "sound": "clickity clack… clack… clack!",
       "sound_fail": "clickity clack… clack",
-      "sound_vol": 75,
+      "sound_vol": "75 dB",
       "items": [
         { "item": "string_36", "count": [ 3, 15 ] },
         { "item": "stick_long", "count": 1 },
@@ -356,7 +356,7 @@
     "type": "furniture",
     "id": "f_skylight_canvas_floor",
     "name": "skylight canvas floor",
-    "description": "Flooring made out of stretched, waterproof cloth.  Helps keep the dirt out of the tent. Has a plastic skylight to let light",
+    "description": "Flooring made out of stretched, waterproof cloth.  Helps keep the dirt out of the tent. Has a plastic skylight to let light in.",
     "symbol": "#",
     "color": "white",
     "move_cost_mod": 0,
@@ -380,7 +380,7 @@
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 60,
+      "sound_vol": "60 dB",
       "//": "Go straight through without taking any damage.",
       "ranged": { "block_unaimed_chance": "100%" },
       "items": [ { "item": "rag", "count": [ 10, 20 ] }, { "item": "pointy_stick_long", "count": [ 0, 1 ] } ]
@@ -391,7 +391,7 @@
     "type": "furniture",
     "id": "f_large_canvas_wall",
     "name": "heavy-duty canvas wall",
-    "description": "A wall made of stretched, waterproof cloth and supported by wooden or metal stakes. It has been strenghtened with plastic sheets.",
+    "description": "A wall made of stretched, waterproof cloth and supported by wooden or metal stakes. It has been strengthened with plastic sheets.",
     "symbol": "#",
     "color": "blue",
     "move_cost_mod": -1,
@@ -403,7 +403,7 @@
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 60,
+      "sound_vol": "60 dB",
       "//": "Go straight through without taking any damage.",
       "ranged": { "block_unaimed_chance": "100%" },
       "items": [
@@ -439,7 +439,7 @@
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 60,
+      "sound_vol": "60 dB",
       "//": "Go straight through without taking any damage.",
       "ranged": { "block_unaimed_chance": "100%" },
       "items": [ { "item": "rag", "count": [ 10, 20 ] } ]
@@ -463,7 +463,7 @@
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 60,
+      "sound_vol": "60 dB",
       "//": "Go straight through without taking any damage.",
       "ranged": { "block_unaimed_chance": "100%" },
       "items": [ { "item": "rag", "count": [ 10, 20 ] } ]
@@ -489,7 +489,7 @@
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 60,
+      "sound_vol": "60 dB",
       "//": "Go straight through without taking any damage.",
       "ranged": { "block_unaimed_chance": "100%" },
       "items": [
@@ -523,7 +523,7 @@
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 60,
+      "sound_vol": "60 dB",
       "//": "Go straight through without taking any damage.",
       "ranged": { "block_unaimed_chance": "100%" },
       "items": [
@@ -557,7 +557,7 @@
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 60,
+      "sound_vol": "60 dB",
       "items": [ { "item": "broketent" } ],
       "tent_centers": [ "f_groundsheet", "f_fema_groundsheet", "f_skin_groundsheet" ]
     }
@@ -577,7 +577,7 @@
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 60,
+      "sound_vol": "60 dB",
       "collapse_radius": 2,
       "tent_centers": [ "f_center_groundsheet" ]
     }
@@ -599,7 +599,7 @@
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 60,
+      "sound_vol": "60 dB",
       "collapse_radius": 2,
       "items": [ { "item": "largebroketent" } ],
       "tent_centers": [ "f_center_groundsheet" ]
@@ -620,7 +620,7 @@
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 60,
+      "sound_vol": "60 dB",
       "tent_centers": [ "f_groundsheet", "f_fema_groundsheet", "f_skin_groundsheet" ]
     }
   },
@@ -640,7 +640,7 @@
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 60,
+      "sound_vol": "60 dB",
       "tent_centers": [ "f_groundsheet", "f_fema_groundsheet", "f_skin_groundsheet" ],
       "//": "Go straight through without taking any damage.",
       "ranged": { "block_unaimed_chance": "100%" }
@@ -663,7 +663,7 @@
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 60,
+      "sound_vol": "60 dB",
       "tent_centers": [ "f_groundsheet", "f_fema_groundsheet", "f_skin_groundsheet" ],
       "//": "Go straight through without taking any damage.",
       "ranged": { "block_unaimed_chance": "100%" }
@@ -685,7 +685,7 @@
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 60,
+      "sound_vol": "60 dB",
       "tent_centers": [ "f_groundsheet", "f_fema_groundsheet", "f_skin_groundsheet" ]
     }
   },
@@ -706,7 +706,7 @@
       "str_max": 8,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 60,
+      "sound_vol": "60 dB",
       "items": [ { "item": "damaged_shelter_kit" } ],
       "tent_centers": [ "f_groundsheet", "f_fema_groundsheet", "f_skin_groundsheet" ]
     }
@@ -1351,7 +1351,7 @@
     "id": "f_tarptent_leather",
     "type": "furniture",
     "name": "leather tarp lean-to",
-    "description": "A makeshift shelter made from a lather tarp and stakes driven into the ground.",
+    "description": "A makeshift shelter made from a leather tarp and stakes driven into the ground.",
     "symbol": ";",
     "looks_like": "f_skin_door",
     "color": [ "brown" ],

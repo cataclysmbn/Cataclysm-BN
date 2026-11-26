@@ -1,77 +1,78 @@
 #if defined(TILES)
 
-#include "cursesdef.h" // IWYU pragma: associated
-#include "sdltiles.h" // IWYU pragma: associated
+#    include "sdltiles.h" // IWYU pragma: associated
 
-#include <algorithm>
-#include <array>
-#include <cassert>
-#include <climits>
-#include <cmath>
-#include <cstdint>
-#include <cstring>
-#include <exception>
-#include <fstream>
-#include <iterator>
-#include <limits>
-#include <map>
-#include <memory>
-#include <optional>
-#include <ranges>
-#include <set>
-#include <stack>
-#include <stdexcept>
-#include <type_traits>
-#include <unordered_map>
-#include <vector>
-#include "avatar.h"
-#include "cata_tiles.h"
-#include "cata_utility.h"
-#include "catacharset.h"
-#include "color.h"
-#include "color_loader.h"
-#include "cuboid_rectangle.h"
-#include "cursesport.h"
-#include "debug.h"
-#include "dynamic_atlas.h"
-#include "filesystem.h"
-#include "font_loader.h"
-#include "game.h"
-#include "game_ui.h"
-#include "get_version.h"
-#include "hash_utils.h"
-#include "input.h"
-#include "runtime_handlers.h"
-#include "json.h"
-#include "make_static.h"
-#include "mapbuffer.h"
-#include "mission.h"
-#include "npc.h"
-#include "options.h"
-#include "output.h"
-#include "overmap_location.h"
-#include "overmap_label.h"
-#include "overmap_label_note.h"
-#include "note_label_utils.h"
-#include "overmap_special.h"
-#include "overmap_ui.h"
-#include "overmapbuffer.h"
-#include "regional_settings.h"
-#include "mongroup.h"
-#include "path_info.h"
-#include "point.h"
-#include "profile.h"
-#include "rng.h"
-#include "sdl_wrappers.h"
-#include "sdl_geometry.h"
-#include "sdl_utils.h"
-#include "sdl_font.h"
-#include "sdlsound.h"
-#include "string_formatter.h"
-#include "uistate.h"
-#include "ui_manager.h"
-#include "wcwidth.h"
-#include "worldfactory.h"
+#    include "avatar.h"
+#    include "cata_tiles.h"
+#    include "cata_utility.h"
+#    include "catacharset.h"
+#    include "color.h"
+#    include "color_loader.h"
+#    include "cuboid_rectangle.h"
+#    include "cursesdef.h" // IWYU pragma: associated
+#    include "cursesport.h"
+#    include "debug.h"
+#    include "dynamic_atlas.h"
+#    include "filesystem.h"
+#    include "font_loader.h"
+#    include "game.h"
+#    include "game_ui.h"
+#    include "get_version.h"
+#    include "hash_utils.h"
+#    include "input.h"
+#    include "json.h"
+#    include "make_static.h"
+#    include "map/mapbuffer.h"
+#    include "mission.h"
+#    include "mongroup.h"
+#    include "npc.h"
+#    include "options.h"
+#    include "output.h"
+#    include "overmap/note_label_utils.h"
+#    include "overmap/overmap_label.h"
+#    include "overmap/overmap_label_note.h"
+#    include "overmap/overmap_location.h"
+#    include "overmap/overmap_special.h"
+#    include "overmap/overmap_ui.h"
+#    include "overmap/overmapbuffer.h"
+#    include "path_info.h"
+#    include "point.h"
+#    include "profile.h"
+#    include "regional_settings.h"
+#    include "rng.h"
+#    include "runtime_handlers.h"
+#    include "sdl_font.h"
+#    include "sdl_geometry.h"
+#    include "sdl_utils.h"
+#    include "sdl_wrappers.h"
+#    include "sdlsound.h"
+#    include "string_formatter.h"
+#    include "ui_manager.h"
+#    include "uistate.h"
+#    include "wcwidth.h"
+#    include "worldfactory.h"
+
+#    include <algorithm>
+#    include <array>
+#    include <cassert>
+#    include <climits>
+#    include <cmath>
+#    include <cstdint>
+#    include <cstring>
+#    include <exception>
+#    include <fstream>
+#    include <iterator>
+#    include <limits>
+#    include <map>
+#    include <memory>
+#    include <optional>
+#    include <ranges>
+#    include <set>
+#    include <stack>
+#    include <stdexcept>
+#    include <type_traits>
+#    include <unordered_map>
+#    include <vector>
 
 #if defined(__linux__)
 #   include <cstdlib> // getenv()/setenv()
@@ -89,10 +90,10 @@
 
 #include "action.h"
 #include "inventory.h"
-#include "map.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
+#include "map/map.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
 #include "worldfactory.h"
 #endif
 
@@ -107,7 +108,6 @@ std::shared_ptr<cata_tiles> overmap_tilecontext;
 static Uint64 lastupdate = 0;
 static uint32_t interval = 25;
 static bool needupdate = false;
-static bool need_invalidate_framebuffers = false;
 static bool clear_display_buffer_before_redraw = false;
 static const std::string empty_string;
 
@@ -278,15 +278,7 @@ static void WinCreate()
     }
 #endif
     // Initialize framebuffer caches
-    terminal_framebuffer.resize( TERMINAL_HEIGHT );
-    for( int i = 0; i < TERMINAL_HEIGHT; i++ ) {
-        terminal_framebuffer[i].chars.assign( TERMINAL_WIDTH, cursecell( "" ) );
-    }
-
-    oversized_framebuffer.resize( TERMINAL_HEIGHT );
-    for( int i = 0; i < TERMINAL_HEIGHT; i++ ) {
-        oversized_framebuffer[i].chars.assign( TERMINAL_WIDTH, cursecell( "" ) );
-    }
+    reinitialize_framebuffer();
 
     format = SDL_GetWindowPixelFormat( ::window.get() );
     throwErrorIf( format == SDL_PIXELFORMAT_UNKNOWN, "SDL_GetWindowPixelFormat failed" );
@@ -565,8 +557,8 @@ void reinitialize_framebuffer( const bool force_invalidate )
     static int prev_height = -1;
     static int prev_width = -1;
     //Re-initialize the framebuffer with new values.
-    const int new_height = std::max( { TERMY, OVERMAP_WINDOW_HEIGHT, TERRAIN_WINDOW_HEIGHT } );
-    const int new_width = std::max( { TERMX, OVERMAP_WINDOW_WIDTH, TERRAIN_WINDOW_WIDTH } );
+    const auto new_height = std::max( { TERMINAL_HEIGHT, OVERMAP_WINDOW_HEIGHT, TERRAIN_WINDOW_HEIGHT } );
+    const auto new_width = std::max( { TERMINAL_WIDTH, OVERMAP_WINDOW_WIDTH, TERRAIN_WINDOW_WIDTH } );
     if( new_height != prev_height || new_width != prev_width ) {
         prev_height = new_height;
         prev_width = new_width;
@@ -578,8 +570,7 @@ void reinitialize_framebuffer( const bool force_invalidate )
         for( int i = 0; i < new_height; i++ ) {
             terminal_framebuffer[i].chars.assign( new_width, cursecell( "" ) );
         }
-    } else if( force_invalidate || need_invalidate_framebuffers ) {
-        need_invalidate_framebuffers = false;
+    } else if( force_invalidate ) {
         invalidate_framebuffer( oversized_framebuffer );
         invalidate_framebuffer( terminal_framebuffer );
     }
@@ -2111,7 +2102,7 @@ bool handle_resize( int w, int h )
         WindowHeight = h;
         TERMINAL_WIDTH = WindowWidth / fontwidth / scaling_factor;
         TERMINAL_HEIGHT = WindowHeight / fontheight / scaling_factor;
-        need_invalidate_framebuffers = true;
+        reinitialize_framebuffer( true );
         catacurses::stdscr = catacurses::newwin( TERMINAL_HEIGHT, TERMINAL_WIDTH, point_zero );
         throwErrorIf( !SetupRenderTarget(), "SetupRenderTarget failed" );
         game_ui::init_ui();
@@ -2791,7 +2782,7 @@ void handle_finger_input( Uint64 ticks )
     float dist = std::sqrt( delta_x * delta_x + delta_y * delta_y ); // in pixel space
     bool handle_diagonals = touch_input_context.is_action_registered( "LEFTUP" );
     bool is_default_mode = touch_input_context.get_category() == "DEFAULTMODE";
-    if( dist > ( get_option<float>( "ANDROID_DEADZONE_RANGE" )*std::max( WindowWidth,
+    if( dist > ( get_option<float>( "ANDROID_DEADZONE_RANGE" ) * std::max( WindowWidth,
                  WindowHeight ) ) ) {
         if( !handle_diagonals ) {
             if( delta_x >= 0 && delta_y >= 0 ) {
@@ -2996,6 +2987,10 @@ static void CheckMessages()
                 // If we're already crouching, make it simple to toggle crouching to off.
                 if( g->u.movement_mode_is( CMM_CROUCH ) ) {
                     actions.insert( ACTION_TOGGLE_CROUCH );
+                }
+                // If we're already prone, make it simple to toggle prone to off.
+                if( g->u.movement_mode_is( CMM_PRONE ) ) {
+                    actions.insert( ACTION_TOGGLE_PRONE );
                 }
 
                 // We're not already running or in combat, so remove cycle walk/run
@@ -3635,6 +3630,7 @@ int projected_window_height()
     return get_option<int>( "TERMINAL_Y" ) * fontheight;
 }
 
+#if !defined(__ANDROID__)
 // Measures scaling factor for high-dpi displays
 static std::pair<float, float> get_display_scale( int display_index )
 {
@@ -3656,6 +3652,7 @@ static std::pair<float, float> get_display_scale( int display_index )
     float scale_h = lh ? static_cast<float>( ph ) / static_cast<float>( lh ) : 1.0f;
     return std::make_pair( scale_w, scale_h );
 }
+#endif
 
 static void init_term_size_and_scaling_factor()
 {
@@ -4152,7 +4149,10 @@ std::optional<tripoint_bub_ms> input_context::get_coordinates( const catacurses:
 
     const point screen_pos = coordinate - win_min;
     point_bub_ms p;
-    if( tile_iso && use_tiles ) {
+    const auto iso = capture_win == g->w_overmap
+                     ? use_tiles_overmap && overmap_tilecontext && overmap_tilecontext->tile_iso
+                     : tile_iso;
+    if( iso && use_tiles ) {
         const float win_mid_x = win_min.x + win_size.x / 2.0f;
         const float win_mid_y = -win_min.y + win_size.y / 2.0f;
         const int screen_col = std::round( ( screen_pos.x - win_mid_x ) / ( fw / 2.0 ) );
@@ -4283,6 +4283,11 @@ HWND getWindowHandle()
 const SDL_Renderer_Ptr &get_sdl_renderer()
 {
     return renderer;
+}
+
+auto set_sdl_renderer( SDL_Renderer_Ptr r ) -> void
+{
+    renderer = std::move( r );
 }
 
 const SDL_Window_Ptr &get_sdl_window()

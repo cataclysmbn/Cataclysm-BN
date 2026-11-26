@@ -1,36 +1,74 @@
+#include "avatar.h"
+#include "cached_options.h"
 #include "catalua_bindings.h"
-#include "catalua_coord.h"
-#include "catalua_bindings_utils.h"
 #include "catalua_bindings_game_internal.h"
+#include "catalua_bindings_utils.h"
+#include "catalua_coord.h"
 #include "catalua_impl.h"
+#include "catalua_item_filters.h"
+#include "catalua_log.h"
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
-
-#include <algorithm>
-#include <ranges>
-#include <stdexcept>
-#include <vector>
-
-#include "avatar.h"
 #include "creature_tracker.h"
 #include "distribution_grid.h"
 #include "game.h"
 #include "iexamine.h"
-#include "lightmap.h"
-#include "map.h"
-#include "catalua_log.h"
-#include "messages.h"
-#include "npc.h"
-#include "monster.h"
-#include "overmapbuffer.h"
-#include "weather.h"
+#include "init.h"
+#include "inventory.h"
 #include "line.h"
 #include "lua_action_menu.h"
+#include "map/lightmap.h"
+#include "map/map.h"
+#include "messages.h"
+#include "monster.h"
+#include "npc.h"
+#include "options.h"
+#include "overmap/overmapbuffer.h"
+#include "scenario.h"
+#include "sol/forward.hpp"
+#include "sol/sol.hpp"
+#include "units_temperature.h"
+#include "weather/weather.h"
 
+#include <algorithm>
+#include <functional>
+#include <initializer_list>
+#include <optional>
+#include <ranges>
+#include <stdexcept>
+#include <vector>
+
+#include "dimension_info.h"
+#include "game_constants.h"
+#include "map_iterator.h"
+#include "overmap/overmap.h"
+#include "overmap/overmap_special.h"
+#include "overmap/overmapbuffer_registry.h"
+#include "point.h"
 namespace
 {
 
-void add_msg_lua( game_message_type t, sol::variadic_args va )
+struct overmap_terrain_entry {
+    tripoint_rel_omt offset;
+    oter_str_id terrain;
+};
+
+struct dimension_travel_options {
+    dimension_id dim_id;
+    tripoint_abs_omt target_omt;
+    std::optional<tripoint_abs_ms> target_ms;
+    bool has_target = false;
+    std::optional<std::string> world_type;
+    std::optional<tripoint_abs_omt> bounds_min_omt;
+    std::optional<tripoint_abs_omt> bounds_max_omt;
+    std::optional<std::string> boundary_terrain;
+    std::optional<std::string> boundary_overmap_terrain;
+    std::optional<std::vector<overmap_terrain_entry>> overmap_terrain;
+    std::optional<std::string> pregen_special_id;
+    std::optional<tripoint_abs_omt> pregen_special_omt;
+};
+
+auto add_msg_lua( game_message_type t, sol::variadic_args va ) -> void
 {
     if( va.size() == 0 ) {
         // Nothing to print
@@ -53,6 +91,404 @@ auto place_lua_monster_around( const mtype_id &id, const tripoint_bub_ms &center
 
 
 
+auto read_optional_string( const sol::table &opts, const char *key ) -> std::optional<std::string>
+{
+    const auto value = opts.get<sol::optional<std::string>>( key );
+    if( !value || value->empty() ) {
+        return std::nullopt;
+    }
+    return *value;
+}
+
+template<typename T>
+auto read_optional( const sol::table &opts, const char *key ) -> std::optional<T>
+{
+    const auto value = opts.get<sol::optional<T>>( key );
+    return value ? std::optional<T>( *value ) : std::nullopt;
+}
+
+auto is_dense_lua_array( const sol::table &table ) -> bool
+{
+    const auto length = static_cast<int>( table.size() );
+    auto key_count = 0;
+    for( const auto &[key, value] : table ) {
+        if( !key.is<int>() ) {
+            return false;
+        }
+        const auto index = key.as<int>();
+        if( index < 1 || index > length ) {
+            return false;
+        }
+        ++key_count;
+    }
+    return key_count == length;
+}
+
+auto read_optional_overmap_terrain_layout( const sol::table &opts ) ->
+std::optional<std::vector<overmap_terrain_entry>>
+{
+    const auto value = opts.get<sol::object>( "overmap_terrain" );
+    if( value == sol::nil ) {
+        return std::vector<overmap_terrain_entry> {};
+    }
+    if( !value.is<sol::table>() ) {
+        return std::nullopt;
+    }
+
+    const auto layers = value.as<sol::table>();
+    if( !is_dense_lua_array( layers ) ) {
+        return std::nullopt;
+    }
+    auto entries = std::vector<overmap_terrain_entry> {};
+    const auto layer_count = static_cast<int>( layers.size() );
+    for( auto z_idx = 1; z_idx <= layer_count; ++z_idx ) {
+        const auto layer_obj = layers.get<sol::object>( z_idx );
+        if( !layer_obj.is<sol::table>() ) {
+            return std::nullopt;
+        }
+        const auto rows = layer_obj.as<sol::table>();
+        if( !is_dense_lua_array( rows ) ) {
+            return std::nullopt;
+        }
+        const auto row_count = static_cast<int>( rows.size() );
+        for( auto y_idx = 1; y_idx <= row_count; ++y_idx ) {
+            const auto row_obj = rows.get<sol::object>( y_idx );
+            if( !row_obj.is<sol::table>() ) {
+                return std::nullopt;
+            }
+            const auto row = row_obj.as<sol::table>();
+            if( !is_dense_lua_array( row ) ) {
+                return std::nullopt;
+            }
+            const auto column_count = static_cast<int>( row.size() );
+            for( auto x_idx = 1; x_idx <= column_count; ++x_idx ) {
+                const auto terrain_obj = row.get<sol::object>( x_idx );
+                if( !terrain_obj.is<std::string>() ) {
+                    return std::nullopt;
+                }
+                const auto terrain = oter_str_id( terrain_obj.as<std::string>() );
+                if( !terrain.is_valid() ) {
+                    return std::nullopt;
+                }
+                entries.push_back( overmap_terrain_entry{
+                    .offset = tripoint_rel_omt( x_idx - 1, y_idx - 1, z_idx - 1 ),
+                    .terrain = terrain,
+                } );
+            }
+        }
+    }
+
+    if( entries.empty() && layers.size() > 0 ) {
+        return std::nullopt;
+    }
+    return entries;
+}
+
+auto get_dimension_entry_point( const tripoint_abs_omt &target_omt ) -> tripoint_abs_ms
+{
+    return project_combine( target_omt, point_omt_ms( SEEX, SEEY ) );
+}
+
+auto get_dimension_entry_point( const dimension_travel_options &opts ) -> tripoint_abs_ms
+{
+    return opts.target_ms.value_or( get_dimension_entry_point( opts.target_omt ) );
+}
+
+auto is_safe_dimension_save_id( const dimension_id &dim_id ) -> bool
+{
+    const auto raw_dim_id = dim_id.str();
+    return raw_dim_id.empty() ||
+           ( raw_dim_id != "." && raw_dim_id != ".." && raw_dim_id.find( '\0' ) == std::string::npos &&
+             raw_dim_id.find_first_of( "/\\" ) == std::string::npos );
+}
+
+template<typename T>
+auto optional_fields_have_type( const sol::table &opts,
+                                const std::initializer_list<const char *> keys ) -> bool
+{
+    namespace ranges = std::ranges;
+    return ranges::all_of( keys, [&]( const auto * key ) {
+        const auto value = opts.get<sol::object>( key );
+        return value == sol::nil || value.template is<T>();
+    } );
+}
+
+auto parse_dimension_travel_options( const sol::table &opts ) ->
+std::optional<dimension_travel_options>
+{
+    if( !optional_fields_have_type<std::string>( opts, { "dimension_id", "world_type",
+            "boundary_terrain", "boundary_overmap_terrain", "pregen_special_id"
+                                                       } ) ||
+        !optional_fields_have_type<tripoint_abs_omt>( opts, { "target_omt", "bounds_min_omt",
+                "bounds_max_omt", "pregen_special_omt"
+                                                            } ) ||
+        !optional_fields_have_type<tripoint_abs_ms>( opts, { "target_ms" } ) ) {
+        return std::nullopt;
+    }
+
+    const auto target_ms = read_optional<tripoint_abs_ms>( opts, "target_ms" );
+    const auto target_omt = read_optional<tripoint_abs_omt>( opts, "target_omt" );
+    return dimension_travel_options{
+        .dim_id = dimension_id( opts.get_or( "dimension_id", std::string{} ) ),
+        .target_omt = target_omt.value_or(
+            target_ms ? project_to<coords::omt>( *target_ms ) : tripoint_abs_omt( tripoint_zero ) ),
+        .target_ms = target_ms,
+        .has_target = target_ms.has_value() || target_omt.has_value(),
+        .world_type = read_optional_string( opts, "world_type" ),
+        .bounds_min_omt = read_optional<tripoint_abs_omt>( opts, "bounds_min_omt" ),
+        .bounds_max_omt = read_optional<tripoint_abs_omt>( opts, "bounds_max_omt" ),
+        .boundary_terrain = read_optional_string( opts, "boundary_terrain" ),
+        .boundary_overmap_terrain = read_optional_string( opts, "boundary_overmap_terrain" ),
+        .overmap_terrain = read_optional_overmap_terrain_layout( opts ),
+        .pregen_special_id = read_optional_string( opts, "pregen_special_id" ),
+        .pregen_special_omt = read_optional<tripoint_abs_omt>( opts, "pregen_special_omt" ),
+    };
+}
+
+auto make_pocket_dimension_data( const dimension_travel_options &opts ) ->
+std::optional<pocket_dimension_data>
+{
+    if( !opts.bounds_min_omt || !opts.bounds_max_omt ) {
+        return std::nullopt;
+    }
+
+    auto pocket_data = pocket_dimension_data{};
+    pocket_data.entry_point = get_dimension_entry_point( opts );
+    pocket_data.bounds = dimension_bounds{
+        .min_bound = project_to<coords::sm>( *opts.bounds_min_omt ),
+        .max_bound = project_to<coords::sm>( *opts.bounds_max_omt ) + point_rel_sm::south_east(),
+        .boundary_terrain = ter_str_id( opts.boundary_terrain.value_or( "t_pd_border" ) ),
+        .boundary_overmap_terrain = oter_str_id( opts.boundary_overmap_terrain.value_or( "pd_border" ) ),
+    };
+    return pocket_data;
+}
+
+auto point_is_in_bounds( const tripoint_abs_omt &point, const tripoint_abs_omt &min_bound,
+                         const tripoint_abs_omt &max_bound ) -> bool
+{
+    return point.x() >= min_bound.x() && point.x() <= max_bound.x() &&
+           point.y() >= min_bound.y() && point.y() <= max_bound.y() &&
+           point.z() >= min_bound.z() && point.z() <= max_bound.z();
+}
+
+auto target_coordinates_match( const dimension_travel_options &opts ) -> bool
+{
+    return !opts.target_ms || project_to<coords::omt>( *opts.target_ms ) == opts.target_omt;
+}
+
+auto target_fits_bounds( const dimension_travel_options &opts ) -> bool
+{
+    return !opts.bounds_min_omt || !opts.bounds_max_omt ||
+           point_is_in_bounds( opts.target_omt, *opts.bounds_min_omt, *opts.bounds_max_omt );
+}
+
+auto has_dimension_generation_config( const dimension_travel_options &opts ) -> bool
+{
+    return opts.world_type || opts.bounds_min_omt || opts.bounds_max_omt || opts.boundary_terrain ||
+           opts.boundary_overmap_terrain || ( opts.overmap_terrain && !opts.overmap_terrain->empty() ) ||
+           opts.pregen_special_id || opts.pregen_special_omt;
+}
+
+auto boundary_terrain_is_valid( const dimension_travel_options &opts ) -> bool
+{
+    return ( !opts.boundary_terrain || ter_str_id( *opts.boundary_terrain ).is_valid() ) &&
+           ( !opts.boundary_overmap_terrain || oter_str_id( *opts.boundary_overmap_terrain ).is_valid() );
+}
+
+auto pregen_special_fits_bounds( const dimension_travel_options &opts ) -> bool
+{
+    if( !opts.pregen_special_id ) {
+        return true;
+    }
+
+    const auto special_id = overmap_special_id( *opts.pregen_special_id );
+    if( !special_id.is_valid() ) {
+        return false;
+    }
+
+    const auto &special = special_id.obj();
+    if( special.get_subtype() != overmap_special_subtype::fixed || special.has_flag( "BLOB" ) ||
+        !special.connections.empty() || !special.get_nested_specials().empty() ) {
+        return false;
+    }
+
+    const auto special_omt = opts.pregen_special_omt.value_or( opts.target_omt );
+    const auto local = project_remain<coords::om>( special_omt ).remainder_tripoint;
+    const auto fits_overmap = [&]( const auto & loc ) { return overmap::inbounds( local + loc.p ); };
+    if( !overmap::inbounds( local ) ||
+        !std::ranges::all_of( special.required_locations(), fits_overmap ) ) {
+        return false;
+    }
+
+    if( !opts.bounds_min_omt || !opts.bounds_max_omt ) {
+        return true;
+    }
+
+    const auto overmap_terrain_overlaps = [&]( const tripoint_abs_omt & pos ) {
+        const auto overmap_terrain_origin = opts.bounds_min_omt.value_or( opts.target_omt );
+        return opts.overmap_terrain &&
+        std::ranges::any_of( *opts.overmap_terrain, [&]( const overmap_terrain_entry & entry ) {
+            return overmap_terrain_origin + entry.offset == pos;
+        } );
+    };
+
+    if( overmap_terrain_overlaps( special_omt ) ) {
+        return false;
+    }
+
+    return point_is_in_bounds( special_omt, *opts.bounds_min_omt, *opts.bounds_max_omt ) &&
+    std::ranges::all_of( special.required_locations(), [&]( const auto & loc ) {
+        const auto pos = special_omt + loc.p;
+        return point_is_in_bounds( pos, *opts.bounds_min_omt, *opts.bounds_max_omt ) &&
+               !overmap_terrain_overlaps( pos );
+    } );
+}
+
+auto overmap_terrain_layout_fits_bounds( const dimension_travel_options &opts ) -> bool
+{
+    if( !opts.overmap_terrain || opts.overmap_terrain->empty() ) {
+        return true;
+    }
+    if( !opts.bounds_min_omt || !opts.bounds_max_omt ) {
+        return false;
+    }
+
+    return std::ranges::all_of( *opts.overmap_terrain, [&]( const overmap_terrain_entry & entry ) {
+        return point_is_in_bounds( *opts.bounds_min_omt + entry.offset, *opts.bounds_min_omt,
+                                   *opts.bounds_max_omt );
+    } );
+}
+
+auto is_valid_dimension_travel_config( const dimension_travel_options &opts ) -> bool
+{
+    if( !opts.has_target || !is_safe_dimension_save_id( opts.dim_id ) ||
+        !target_coordinates_match( opts ) ) {
+        return false;
+    }
+
+    const auto &here = get_map();
+    if( !here.inbounds_z( opts.target_omt.z() ) ||
+        ( opts.bounds_min_omt && !here.inbounds_z( opts.bounds_min_omt->z() ) ) ||
+        ( opts.bounds_max_omt && !here.inbounds_z( opts.bounds_max_omt->z() ) ) ) {
+        return false;
+    }
+
+    if( opts.dim_id.is_empty() && has_dimension_generation_config( opts ) ) {
+        return false;
+    }
+
+    if( opts.bounds_min_omt.has_value() != opts.bounds_max_omt.has_value() ||
+        !target_fits_bounds( opts ) ) {
+        return false;
+    }
+
+    return boundary_terrain_is_valid( opts ) && opts.overmap_terrain &&
+           overmap_terrain_layout_fits_bounds( opts ) && pregen_special_fits_bounds( opts );
+}
+
+auto find_safe_spawn( const tripoint_bub_ms &target ) -> std::optional<tripoint_bub_ms>
+{
+    auto &here = get_map();
+    const auto can_land = [&]( const tripoint_bub_ms & point ) {
+        const auto *occupant = g->critter_at( point );
+        return !here.get_mapbuffer().is_outside_pocket_dimension_bounds(
+                   map_local_to_abs( here, point ) ) && here.passable( point ) &&
+               ( !occupant || occupant == &get_avatar() );
+    };
+
+    if( can_land( target ) ) {
+        return target;
+    }
+
+    for( auto radius = 1; radius <= 10; radius++ ) {
+        for( const auto &point : here.points_in_radius( target, radius ) ) {
+            if( can_land( point ) ) {
+                return point;
+            }
+        }
+    }
+
+    return std::nullopt;
+}
+
+auto get_dimension_load_position( const dimension_travel_options &opts ) -> tripoint_abs_sm
+{
+    const auto target_sm = project_to<coords::sm>( get_dimension_entry_point( opts ) );
+    return target_sm - tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 );
+}
+
+auto build_dimension_preload_callback( const dimension_travel_options &opts ) ->
+std::function<void()>
+{
+    const auto has_overmap_terrain = opts.overmap_terrain && !opts.overmap_terrain->empty();
+    if( !opts.pregen_special_id && !has_overmap_terrain ) {
+        return {};
+    }
+
+    const auto special_id = opts.pregen_special_id ? std::optional<overmap_special_id>(
+                                *opts.pregen_special_id ) : std::nullopt;
+    const auto special_omt = opts.pregen_special_omt.value_or( opts.target_omt );
+    const auto dim_id = opts.dim_id;
+    const auto overmap_terrain_origin = opts.bounds_min_omt.value_or( opts.target_omt );
+    const auto overmap_terrain = opts.overmap_terrain.value_or( std::vector<overmap_terrain_entry> {} );
+
+    return [dim_id, special_id, special_omt, overmap_terrain_origin, overmap_terrain]() {
+        auto &dim_omb = get_overmapbuffer( dim_id );
+        std::ranges::for_each( overmap_terrain, [&]( const overmap_terrain_entry & entry ) {
+            dim_omb.ter_set( overmap_terrain_origin + entry.offset, entry.terrain.id() );
+        } );
+        if( special_id ) {
+            auto global_location = dim_omb.get_om_global( special_omt );
+            auto &om = *global_location.om;
+            om.place_special_forced( *special_id, global_location.local, om_direction::type::north );
+        }
+    };
+}
+
+auto place_player_dimension_at( const dimension_travel_options &opts ) -> bool
+{
+    if( !is_valid_dimension_travel_config( opts ) ) {
+        return false;
+    }
+
+    if( opts.dim_id == g->get_current_dimension_id() ) {
+        return true;
+    }
+
+    auto pocket_data = make_pocket_dimension_data( opts );
+
+    auto world_type = world_type_id{};
+    if( opts.world_type ) {
+        world_type = world_type_id( *opts.world_type );
+    }
+
+    const auto preload_callback = build_dimension_preload_callback( opts );
+    const auto load_pos = get_dimension_load_position( opts );
+    const auto original_dimension = g->get_current_dimension_id();
+    const auto original_pos = get_avatar().abs_pos();
+    const auto original_origin = player_reality_bubble_origin();
+    if( !g->travel_to_dimension( opts.dim_id, world_type, pocket_data, load_pos,
+                                 preload_callback ) ) {
+        return false;
+    }
+
+    auto &avatar = get_avatar();
+    const auto target_local = abs_to_bub( get_dimension_entry_point( opts ) );
+    const auto landing = find_safe_spawn( target_local );
+    if( !landing ) {
+        if( !g->travel_to_dimension( original_dimension, world_type_id(), std::nullopt,
+                                     original_origin ) ) {
+            throw std::runtime_error( "Failed to restore original dimension after blocked landing" );
+        }
+        avatar.setpos( original_pos );
+        g->update_map( avatar );
+        return false;
+    }
+    avatar.setpos( *landing );
+    g->update_map( avatar );
+    return true;
+}
+
 } // namespace
 
 void cata::detail::reg_game_api( sol::state &lua )
@@ -62,10 +498,18 @@ void cata::detail::reg_game_api( sol::state &lua )
 
     luna::set_fx( lib, "get_avatar", &get_avatar );
     luna::set_fx( lib, "get_map", &get_map );
-    luna::set_fx( lib, "bub_to_abs", []( const tripoint_bub_ms & p ) -> tripoint_abs_ms { return bub_to_abs( p ); } );
-    luna::set_fx( lib, "bub_to_abs", []( const tripoint_bub_sm & p ) -> tripoint_abs_sm { return bub_to_abs( p ); } );
-    luna::set_fx( lib, "abs_to_bub", []( const tripoint_abs_ms & p ) -> tripoint_bub_ms { return abs_to_bub( p ); } );
-    luna::set_fx( lib, "abs_to_bub", []( const tripoint_abs_sm & p ) -> tripoint_bub_sm { return abs_to_bub( p ); } );
+    DOC( "Returns the scenario the current game started with, or nil if no game is active." );
+    luna::set_fx( lib, "get_scenario", []() -> const scenario * { return get_scenario(); } );
+    luna::set_fx( lib, "bub_to_abs",
+                  sol::overload(
+                      []( const tripoint_bub_ms & p ) -> tripoint_abs_ms { return bub_to_abs( p ); },
+                      []( const tripoint_bub_sm & p ) -> tripoint_abs_sm { return bub_to_abs( p ); }
+                  ) );
+    luna::set_fx( lib, "abs_to_bub",
+                  sol::overload(
+                      []( const tripoint_abs_ms & p ) -> tripoint_bub_ms { return abs_to_bub( p ); },
+                      []( const tripoint_abs_sm & p ) -> tripoint_bub_sm { return abs_to_bub( p ); }
+                  ) );
     luna::set_fx( lib, "get_distribution_grid_tracker",
                   []() -> distribution_grid_tracker & { return get_distribution_grid_tracker(); } );
     luna::set_fx( lib, "light_ambient_lit", []() -> float { return LIGHT_AMBIENT_LIT; } );
@@ -76,13 +520,104 @@ void cata::detail::reg_game_api( sol::state &lua )
     luna::set_fx( lib, "place_player_overmap_at", []( const tripoint_abs_omt & p ) -> void { g->place_player_overmap( p ); } );
     DOC( "Teleports player to local coordinates within active map" );
     luna::set_fx( lib, "place_player_local_at", []( const tripoint_bub_ms & p ) -> void { g->place_player( p ); } );
+    DOC( "Returns the current dimension id. Empty string means the overworld." );
+    luna::set_fx( lib, "get_current_dimension_id", []() -> std::string { return g->get_current_dimension_id().str(); } );
+    DOC( "Moves the player into another dimension and loads the destination around required target_ms or target_omt." );
+    DOC( "Moves the player to a position in another dimension, creating the dimension if needed. Does nothing if the player is already in that dimension.  " );
+    DOC( "Returns false if the options are invalid or there is no safe landing spot.  " );
+    DOC( "@alias OvermapTerrainLayout string[][][]" );
+    DOC( "@class DimensionTravelOptions" );
+    DOC( "@field dimension_id? string Target dimension id. Empty string means the overworld." );
+    DOC( "@field target_ms? TripointAbsMs Absolute map-square destination. Required when target_omt is absent." );
+    DOC( "@field target_omt? TripointAbsOmt Absolute overmap-terrain destination. Required when target_ms is absent." );
+    DOC( "@field world_type? string World type for creating a new non-overworld dimension." );
+    DOC( "@field bounds_min_omt? TripointAbsOmt Inclusive pocket dimension minimum overmap-terrain bound." );
+    DOC( "@field bounds_max_omt? TripointAbsOmt Inclusive pocket dimension maximum overmap-terrain bound." );
+    DOC( "@field boundary_terrain? string Map terrain used outside pocket bounds." );
+    DOC( "@field boundary_overmap_terrain? string Overmap terrain used outside pocket bounds." );
+    DOC( "@field overmap_terrain? OvermapTerrainLayout Optional z/y/x table anchored at bounds_min_omt." );
+    DOC( "@field pregen_special_id? string Overmap special to force before loading the destination." );
+    DOC( "@field pregen_special_omt? TripointAbsOmt Overmap-terrain position for pregen_special_id; defaults to target_omt." );
+    DOC_PARAMS( "opts: DimensionTravelOptions" );
+    luna::set_fx( lib, "place_player_dimension_at", []( sol::table opts ) -> bool {
+        const auto parsed = parse_dimension_travel_options( opts );
+        return parsed && place_player_dimension_at( *parsed );
+    } );
+    DOC( "Fully saves the game, then deletes an inactive, non-primary dimension from memory and save storage." );
+    DOC_PARAMS( "dim_id: string" );
+    luna::set_fx( lib, "delete_dimension", []( const std::string & dim_id ) -> bool {
+        return g->delete_dimension( dimension_id( dim_id ) );
+    } );
+    DOC( "Fully saves the game, then deletes generated data for an inactive, non-primary dimension while keeping its loaded metadata." );
+    DOC_PARAMS( "dim_id: string" );
+    luna::set_fx( lib, "reset_dimension", []( const std::string & dim_id ) -> bool {
+        return g->reset_dimension( dimension_id( dim_id ) );
+    } );
+    DOC( "Returns a counter that changes whenever the traits of a character may change: a mutation is gained or lost, or an enchantment grants or removes one." );
+    luna::set_fx( lib, "trait_generation", &character_trait_generation );
     luna::set_fx( lib, "current_turn", []() -> time_point { return calendar::turn; } );
     luna::set_fx( lib, "turn_zero", []() -> time_point { return calendar::turn_zero; } );
     luna::set_fx( lib, "before_time_starts", []() -> time_point { return calendar::before_time_starts; } );
-    luna::set_fx( lib, "bodytemp_cold", []() -> int { return BODYTEMP_COLD; } );
-    luna::set_fx( lib, "bodytemp_norm", []() -> int { return BODYTEMP_NORM; } );
-    luna::set_fx( lib, "bodytemp_hot", []() -> int { return BODYTEMP_HOT; } );
+    luna::set_fx( lib, "bodytemp_cold",
+                  []() -> int { return units::to_legacy_bodypart_temp( BODYTEMP_COLD ); } );
+    luna::set_fx( lib, "bodytemp_norm",
+                  []() -> int { return units::to_legacy_bodypart_temp( BODYTEMP_NORM ); } );
+    luna::set_fx( lib, "bodytemp_hot",
+                  []() -> int { return units::to_legacy_bodypart_temp( BODYTEMP_HOT ); } );
     luna::set_fx( lib, "rng", sol::resolve<int( int, int )>( &rng ) );
+    DOC( "Override weather for all OMTs in a radius around center. Radius is in OMT tiles.  Optionally expires at a given time_point." );
+    luna::set_fx( lib, "set_omt_weather_override",
+                  []( const tripoint_abs_omt & center, const int radius,
+    const std::string & weather, const sol::optional<time_point> &expires_at ) -> void {
+        if( radius < 0 )
+        {
+            throw std::runtime_error( "set_omt_weather_override radius must be non-negative" );
+        }
+        const auto weather_id = weather_type_id( weather );
+        if( !weather_id.is_valid() )
+        {
+            throw std::runtime_error( string_format( "invalid weather id: %s", weather ) );
+        }
+        const auto maybe_expires_at = expires_at ?
+        std::optional<time_point>( *expires_at ) :
+        std::nullopt;
+        get_weather().set_omt_weather_override( {
+            .center = center,
+            .radius = radius,
+            .weather = weather_id,
+            .expires_at = maybe_expires_at
+        } );
+        get_weather().set_nextweather( calendar::turn );
+    } );
+    DOC( "Clear weather overrides for all OMTs in a radius around center. Radius is in OMT tiles." );
+    luna::set_fx( lib, "clear_omt_weather_override",
+    []( const tripoint_abs_omt & center, const int radius ) -> void {
+        if( radius < 0 )
+        {
+            throw std::runtime_error( "clear_omt_weather_override radius must be non-negative" );
+        }
+        get_weather().clear_omt_weather_override( center, radius );
+        get_weather().set_nextweather( calendar::turn );
+    } );
+    DOC( "Clear every active OMT weather override." );
+    luna::set_fx( lib, "clear_all_omt_weather_overrides", []() -> void {
+        get_weather().clear_all_omt_weather_overrides();
+        get_weather().set_nextweather( calendar::turn );
+    } );
+    DOC( "Get the current OMT weather override at a location, or nil if none is set." );
+    luna::set_fx( lib, "get_omt_weather_override",
+    []( const tripoint_abs_omt & location ) -> sol::optional<std::string> {
+        if( const weather_type_id *result = get_weather().get_omt_weather_override( location ) )
+        {
+            return result->str();
+        }
+        return sol::nullopt;
+    } );
+    DOC( "Returns true if an OMT weather override exists at the given location." );
+    luna::set_fx( lib, "has_omt_weather_override",
+    []( const tripoint_abs_omt & location ) -> bool {
+        return get_weather().has_omt_weather_override( location );
+    } );
     DOC( "Get recent player message log entries. Returns array of { time=string, text=string }." );
     luna::set_fx( lib, "get_messages", []( sol::this_state lua_this, const int count ) {
         sol::state_view lua( lua_this );
@@ -135,6 +670,8 @@ void cata::detail::reg_game_api( sol::state &lua )
         } );
         return out;
     } );
+    DOC( "Registers `fn` to run once every `interval` of game time.  " );
+    DOC( "`fn` receives no arguments. Return `false` from it to unregister it; any other return value keeps it registered." );
     luna::set_fx( lib, "add_on_every_x_hook",
     []( sol::this_state lua_this, time_duration interval, sol::protected_function f ) {
         sol::state_view lua( lua_this );
@@ -150,7 +687,13 @@ void cata::detail::reg_game_api( sol::state &lua )
         hooks.push_back( on_every_x_hooks{ interval, vec } );
     } );
 
-    DOC( "Register a Lua-defined action menu entry in the in-game action menu." );
+    DOC( "Register a Lua-defined action menu entry in the in-game action menu.  " );
+    DOC( "Takes a table with keys:  " );
+    DOC( "* `id` (string): Unique entry id. Registering the same id again replaces the old entry.  " );
+    DOC( "* `fn` (function): Called with no arguments when the entry is selected.  " );
+    DOC( "* `name` (string, optional): Displayed text. Defaults to `id`.  " );
+    DOC( "* `category` (string, optional): Submenu to show the entry in. Defaults to `misc`. Built-in categories are `look`, `interact`, `inventory`, `combat`, `craft`, `info`, `misc` and `debug`; `back` places it in the top-level menu, and any other id adds a new submenu.  " );
+    DOC( "* `hotkey` (string, optional): Key name for the entry's hotkey." );
     luna::set_fx( lib, "register_action_menu_entry", []( sol::table opts ) -> void {
         auto id = opts.get_or( "id", std::string{} );
         auto name = opts.get_or( "name", std::string{} );
@@ -172,6 +715,8 @@ void cata::detail::reg_game_api( sol::state &lua )
     } );
 
     DOC( "Spawns a new item. Same as Item::spawn " );
+    DOC( "`count` sets the item's charges, not the number of items: exactly one item is created." );
+    DOC( "For stackable (count-by-charges) items such as ammo, `count` is the stack size. For non-stackable items, pass a negative value (e.g. -1), since a positive one is still applied as charges. Tools spawned with a negative value get their default charges." );
     luna::set_fx( lib, "create_item", []( const itype_id & itype, int count ) -> detached_ptr<item> {
         return item::spawn( itype, calendar::turn, count );
     } );
@@ -261,14 +806,157 @@ void cata::detail::reg_game_api( sol::state &lua )
 
     luna::set_fx( lib, "play_variant_sound",
                   sol::overload(
-                      sol::resolve<void( const std::string &, const std::string &, int )>( &sfx::play_variant_sound ),
+                      sol::resolve<void( const std::string &, const std::string &, int, bool )>
+                      ( &sfx::play_variant_sound ),
                       sol::resolve<void( const std::string &, const std::string &, int,
-                                         units::angle, double, double )>( &sfx::play_variant_sound )
+                                         units::angle, double, double, bool )>( &sfx::play_variant_sound )
                   ) );
     luna::set_fx( lib, "play_ambient_variant_sound", &sfx::play_ambient_variant_sound );
 
     luna::set_fx( lib, "add_npc_follower", []( npc & p ) { g->add_npc_follower( p.getID() ); } );
     luna::set_fx( lib, "remove_npc_follower", []( npc & p ) { g->remove_npc_follower( p.getID() ); } );
+
+    luna::set_fx( lib, "fling_creature", []( Creature & c, const units::angle & dir, float force,
+    bool controlled ) {
+        g->fling_creature( &c, dir, force, controlled );
+    } );
+    DOC( "Opens an item selection menu listing the player's inventory and nearby items that pass a filter, and returns the chosen item or nil.  " );
+    DOC( "Takes a table with keys:  " );
+    DOC( "* `title` (string): Menu title.  " );
+    DOC( "* `failure` (string): Message shown when no item passes the filter.  " );
+    DOC( "* `check` (function): Filter called with a table { item = Item }. Must return a boolean.  " );
+    DOC( "* `radius` (integer, optional): Search radius for nearby items. Defaults to the pickup range." );
+    luna::set_fx( lib, "inv_map_splice", []( sol::table opts ) -> item* {
+        auto title = opts.get<std::string>( "title" );
+        auto failure = opts.get<std::string>( "failure" );
+        auto radius = opts.get_or<int>( "radius", PICKUP_RANGE );
+        auto fn = opts.get<sol::protected_function>( "check" );
+        auto &state = *DynamicDataLoader::get_instance().lua.get();
+        return g->inv_map_splice( [&]( const item & e )
+        {
+            auto params = state.lua.create_table();
+            params["item"] = &e;
+            sol::protected_function_result res = fn( params );
+
+            check_func_result( res );
+            if( res.get_type() != sol::type::boolean ) {
+                debugmsg( "Expected boolean result in `inv_map_splice` lua callback. Defaulting to false" );
+                return false;
+            }
+            return res.get<bool>();
+        }, title, radius, failure );
+    } );
+
+    DOC( "Returns items on the map within a radius of a point, matching every given filter, as an array of Item.  " );
+    DOC( "Items inside containers on the ground are included.  " );
+    DOC( "Takes a table where each key is a filter; unknown keys show a debug message and are ignored. Available filters:  " );
+    DOC( "* `pos` (Tripoint): Center point to search around.  " );
+    DOC( "* `radius` (integer, optional): Search radius in tiles. Defaults to the pickup range.  " );
+    DOC( "* `category` (string or string[]): Item category id is one of these, e.g. \"food\".  " );
+    DOC( "* `type` (ItemTypeId or ItemTypeId[]): Item type is one of these.  " );
+    DOC( "* `is_food` (boolean): Whether the item is food.  " );
+    DOC( "* `flags` (FlagId or FlagId[]): Item has at least one of these flags.  " );
+    DOC( "* `need_charges` (boolean): Tool items must have charges left.  " );
+    DOC( "* `has_charges` (table): { id = ItemTypeId, amount = integer }: item type is `id` and has at least `amount` charges.  " );
+    DOC( "* `addiction_type` (AddictionType, string, or array of those): Comestible's addiction type is one of these, e.g. `AddictionType.ALCOHOL` or `\"alcohol\"`.  " );
+    DOC( "* `material` (MaterialTypeId, string, or array of those): Item is made of at least one of these materials, e.g. `\"stone\"`.  " );
+    DOC( "The `worn` and `wielded` filters only apply to `Character:get_items_if` and are ignored here." );
+    luna::set_fx( lib, "get_items_if", []( sol::this_state s, sol::table filters ) -> sol::table {
+        sol::state_view lua( s );
+        const auto pos = filters["pos"].get<tripoint_bub_ms>();
+        const auto radius = filters.get_or<int>( "radius", PICKUP_RANGE );
+        const auto parsed = item_filters_from_lua( filters, { "pos", "radius" } );
+        if( parsed.worn || parsed.wielded )
+        {
+            debugmsg( "`worn`/`wielded` filters are not applicable to map items and were ignored" );
+        }
+        auto out = lua.create_table();
+        auto idx = 1;
+        auto collect = [&]( item * node ) -> void {
+            if( matches_item_filters( parsed, *node ) )
+            {
+                out[idx++] = node;
+            }
+        };
+        for( const auto pt : g->m.points_in_radius( pos, radius ) )
+        {
+            for( const auto *it : g->m.i_at( pt ) ) {
+                // visit_items covers the item itself and everything inside its containers
+                const_cast<item *>( it )->visit_items( [&collect]( item * node, item * ) -> VisitResponse {
+                    collect( node );
+                    return VisitResponse::NEXT;
+                } );
+            }
+        }
+        return out;
+    } );
+
+    DOC( "Opens an item selection menu listing the player's inventory and nearby items that match the given filters, and returns the chosen item or nil.  " );
+    DOC( "Takes a table with keys:  " );
+    DOC( "* `title` (string): Menu title.  " );
+    DOC( "* `failure` (string): Message shown when no item passes the filter.  " );
+    DOC( "* `radius` (integer, optional): Search radius for nearby items. Defaults to the pickup range.  " );
+    DOC( "* plus any filter key accepted by `gapi.get_items_if` (e.g. `category`, `type`, `is_food`, `flags`, `need_charges`, `has_charges`, `addiction_type`, `material`).  " );
+    DOC( "Containers whose contents match a filter are listed as well; the returned item is then the container itself." );
+    luna::set_fx( lib, "inv_map_splice_if", []( sol::table opts ) -> item* {
+        auto title = opts.get<std::string>( "title" );
+        auto failure = opts.get<std::string>( "failure" );
+        auto radius = opts.get_or<int>( "radius", PICKUP_RANGE );
+        const auto parsed = item_filters_from_lua( opts, { "title", "failure", "radius" } );
+        const auto matches = [&parsed]( const item & e ) -> bool {
+            auto found = false;
+            // visit_items covers the item itself and everything inside its containers
+            const_cast<item &>( e ).visit_items( [&]( item * node, item * ) -> VisitResponse {
+                if( matches_item_filters( parsed, *node ) )
+                {
+                    found = true;
+                    return VisitResponse::ABORT;
+                }
+                return VisitResponse::NEXT;
+            } );
+            return found;
+        };
+        return g->inv_map_splice( matches, title, radius, failure );
+    } );
+
+    DOC( "Runs a function editing the player's inventory and nearby items.  " );
+    DOC( "Takes a table with keys:  " );
+    DOC( "* `func` (function): Editing function called with a table { item = Item }. Must return a boolean.  " );
+    DOC( "* `radius` (integer, optional): Search radius for nearby items. Defaults to the pickup range." );
+    luna::set_fx( lib, "map_inv_edit", []( sol::table opts ) -> void {
+        auto radius = opts.get_or<int>( "radius", PICKUP_RANGE );
+        auto fn = opts.get<sol::protected_function>( "func" );
+        auto &state = *DynamicDataLoader::get_instance().lua.get();
+        inventory map_inv;
+        map_inv.form_from_map( g->u.bub_pos(), radius, &g->u );
+        map_inv.add_items( g->u.get_inv(), true );
+        map_inv.add_item( g->u.primary_weapon(), true );
+        map_inv.add_items( g->u.worn, true );
+        map_inv.edit_all_items( [&]( item & e )
+        {
+            auto params = state.lua.create_table();
+            params["item"] = &e;
+            sol::protected_function_result res = fn( params );
+
+            check_func_result( res );
+        } );
+    } );
+
+    luna::set_fx( lib, "get_option", []( std::string name ) -> std::string {
+        return get_option<std::string>( name );
+    } );
+
+    luna::set_fx( lib, "get_option_bool", []( std::string name ) -> bool {
+        return get_option<bool>( name );
+    } );
+
+    luna::set_fx( lib, "get_option_int", []( std::string name ) -> int {
+        return get_option<int>( name );
+    } );
+
+    luna::set_fx( lib, "get_option_float", []( std::string name ) -> float {
+        return get_option<float>( name );
+    } );
 
     reg_game_api_creature_queries( lib );
     reg_game_api_world_helpers( lib );

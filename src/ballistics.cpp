@@ -30,7 +30,7 @@
 #include "game.h"
 #include "item.h"
 #include "line.h"
-#include "map.h"
+#include "map/map.h"
 #include "map_iterator.h"
 #include "messages.h"
 #include "monster.h"
@@ -43,8 +43,8 @@
 #include "trap.h"
 #include "type_id.h"
 #include "units.h"
+#include "vehicle/vpart_position.h"
 #include "visitable.h"
-#include "vpart_position.h"
 
 static const ammo_effect_str_id ammo_effect_ACT_ON_RANGED_HIT( "ACT_ON_RANGED_HIT" );
 static const ammo_effect_str_id ammo_effect_BOUNCE( "BOUNCE" );
@@ -65,6 +65,7 @@ static const ammo_effect_str_id ammo_effect_STREAM( "STREAM" );
 static const ammo_effect_str_id ammo_effect_STREAM_BIG( "STREAM_BIG" );
 static const ammo_effect_str_id ammo_effect_TANGLE( "TANGLE" );
 static const ammo_effect_str_id ammo_effect_THROWN( "THROWN" );
+static const ammo_effect_str_id ammo_effect_WIDE( "WIDE" );
 
 static const efftype_id effect_tied( "tied" );
 
@@ -179,7 +180,7 @@ void drop_or_embed_projectile( dealt_projectile_attack &attack )
         }
         if( proj.has_effect( ammo_effect_ACT_ON_RANGED_HIT ) ) {
             // Don't drop if it exploded
-            drop = item::process( std::move( drop ), nullptr, attack.end_point, true );
+            drop = item::process( std::move( drop ), nullptr, attack.end_point, true, 1 );
         }
 
         map &here = get_map();
@@ -317,7 +318,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
     Creature *target_critter = g->critter_at( target_arg );
     map &here = get_map();
     const auto target_size = target_critter != nullptr ?
-                             target_critter->ranged_target_size() :
+                             target_critter->ranged_target_size( proj_arg.has_effect( ammo_effect_WIDE ) ) :
                              here.inbounds( target_arg ) ? here.ranged_target_size( target_arg ) : 0.0;
     projectile_attack_aim const aim = projectile_attack_roll( dispersion, range, target_size );
 
@@ -573,7 +574,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
         if( critter != nullptr && tp != target_arg ) {
             // Unintentional hit
             cur_missed_by = std::max( rng_float( 0.1, 1.5 - aim.missed_by ) /
-                                      critter->ranged_target_size(), 0.4 );
+                                      critter->ranged_target_size( proj.has_effect( ammo_effect_WIDE ) ), 0.4 );
         }
 
         if( here.obstructed_by_vehicle_rotation( prev_point, tp ) ) {

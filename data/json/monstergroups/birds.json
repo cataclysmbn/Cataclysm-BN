@@ -1,0 +1,26 @@
+[
+  {
+    "name": "GROUP_CROWS",
+    "type": "monstergroup",
+    "is_animal": true,
+    "monsters": [ { "monster": "mon_crow", "weight": 150 }, { "monster": "mon_crow_chick", "weight": 50 } ]
+  },
+  {
+    "name": "GROUP_TURKEYS",
+    "type": "monstergroup",
+    "is_animal": true,
+    "monsters": [ { "monster": "mon_turkey", "weight": 150 }, { "monster": "mon_turkey_chick", "weight": 50 } ]
+  },
+  {
+    "name": "GROUP_DUCKS",
+    "type": "monstergroup",
+    "is_animal": true,
+    "monsters": [ { "monster": "mon_duck", "weight": 150 }, { "monster": "mon_duck_chick", "weight": 50 } ]
+  },
+  {
+    "name": "GROUP_GEESE_CANADIAN",
+    "type": "monstergroup",
+    "is_animal": true,
+    "monsters": [ { "monster": "mon_goose_canadian", "weight": 150 }, { "monster": "mon_goose_canadian_chick", "weight": 50 } ]
+  }
+]

@@ -1,5 +1,76 @@
 [
   {
+    "id": "mon_test_special_attack",
+    "copy-from": "debug_mon",
+    "type": "MONSTER",
+    "name": { "str": "special attack test monster" },
+    "description": "This monster exists only for testing purposes.",
+    "clairvoyance": 10,
+    "special_attacks": [
+      {
+        "type": "melee",
+        "id": "test",
+        "cooldown": 7,
+        "move_cost": 23,
+        "damage_max_instance": [ { "damage_type": "bash", "amount": 0 } ]
+      }
+    ]
+  },
+  {
+    "id": "mon_test_lua_attitude_recursion",
+    "copy-from": "debug_mon",
+    "type": "MONSTER",
+    "name": { "str": "recursive attitude test monster" },
+    "description": "This monster exists only for testing purposes.",
+    "clairvoyance": 10,
+    "lua_attitude": "test_recursive_attitude",
+    "special_attacks": [
+      {
+        "type": "melee",
+        "id": "test",
+        "cooldown": 7,
+        "move_cost": 10,
+        "damage_max_instance": [ { "damage_type": "bash", "amount": 0 } ]
+      }
+    ]
+  },
+  {
+    "id": "mon_test_special_attack_pair",
+    "copy-from": "debug_mon",
+    "type": "MONSTER",
+    "name": { "str": "paired special attack test monster" },
+    "description": "This monster exists only for testing purposes.",
+    "clairvoyance": 10,
+    "special_attacks": [
+      {
+        "type": "melee",
+        "id": "alpha",
+        "cooldown": 7,
+        "move_cost": 10,
+        "damage_max_instance": [ { "damage_type": "bash", "amount": 0 } ]
+      },
+      {
+        "type": "melee",
+        "id": "beta",
+        "cooldown": 9,
+        "move_cost": 10,
+        "damage_max_instance": [ { "damage_type": "bash", "amount": 0 } ]
+      }
+    ]
+  },
+  {
+    "id": "mon_test_lua_read_bindings",
+    "copy-from": "debug_mon",
+    "type": "MONSTER",
+    "name": { "str": "Lua read binding test monster" },
+    "description": "This monster exists only for testing purposes.",
+    "clairvoyance": 10,
+    "melee_dice": 2,
+    "melee_dice_sides": 3,
+    "melee_damage": [ { "damage_type": "cut", "amount": 4 } ],
+    "grab_strength": 5
+  },
+  {
     "id": "mon_test_bash",
     "copy-from": "debug_mon",
     "type": "MONSTER",
@@ -25,5 +96,88 @@
     "species": [ "ZOMBIE", "HUMAN" ],
     "symbol": "Z",
     "upgrades": { "age_grow": 14, "into": "mon_zombie" }
+  },
+  {
+    "type": "item_group",
+    "id": "test_monster_death_drop_base",
+    "subtype": "collection",
+    "items": [ "rock" ]
+  },
+  {
+    "type": "item_group",
+    "id": "test_monster_death_drop_append",
+    "subtype": "collection",
+    "items": [ "stick" ]
+  },
+  {
+    "id": "mon_test_death_drops_append",
+    "copy-from": "debug_mon",
+    "type": "MONSTER",
+    "name": { "str": "death drop append test monster" },
+    "description": "This monster exists only for testing purposes.",
+    "death_drops": "test_monster_death_drop_base"
+  },
+  {
+    "id": "mon_test_death_drops_append",
+    "copy-from": "mon_test_death_drops_append",
+    "type": "MONSTER",
+    "extend": { "death_drops": "test_monster_death_drop_append" }
+  },
+  {
+    "id": "mon_test_death_drops_clear",
+    "copy-from": "debug_mon",
+    "type": "MONSTER",
+    "name": { "str": "death drop clear test monster" },
+    "description": "This monster exists only for testing purposes.",
+    "death_drops": "test_monster_death_drop_base"
+  },
+  {
+    "id": "mon_test_death_drops_clear",
+    "copy-from": "mon_test_death_drops_clear",
+    "type": "MONSTER",
+    "death_drops": ""
+  },
+  {
+    "id": "mon_test_ammo_variants",
+    "copy-from": "debug_mon",
+    "type": "MONSTER",
+    "name": { "str": "ammo variants test turret" },
+    "description": "This monster exists only for testing purposes.",
+    "flags": [ "DROPS_AMMO" ],
+    "starting_ammo": { "9mmfmj": 10 },
+    "special_attacks": [
+      {
+        "type": "gun",
+        "cooldown": 1,
+        "move_cost": 100,
+        "gun_type": "glock_19",
+        "ammo_type": [ "9mmfmj", "9mm" ],
+        "fake_skills": [ [ "gun", 4 ], [ "pistol", 4 ] ],
+        "fake_str": 8,
+        "fake_dex": 8,
+        "ranges": [ [ 0, 12, "DEFAULT" ] ]
+      }
+    ]
+  },
+  {
+    "id": "mon_test_gun_ammo_compat",
+    "copy-from": "debug_mon",
+    "type": "MONSTER",
+    "name": { "str": "gun ammo compatibility test turret" },
+    "description": "This monster exists only for testing purposes.",
+    "flags": [ "DROPS_AMMO" ],
+    "starting_ammo": { "9mmfmj": 10 },
+    "special_attacks": [
+      {
+        "type": "gun",
+        "cooldown": 1,
+        "move_cost": 100,
+        "gun_type": "glock_19",
+        "fake_skills": [ [ "gun", 4 ], [ "pistol", 4 ] ],
+        "fake_str": 8,
+        "fake_dex": 8,
+        "ranges": [ [ 0, 12, "DEFAULT" ] ]
+      }
+    ]
   }
 ]

@@ -1,0 +1,37 @@
+[
+  {
+    "type": "mapgen_color_palette",
+    "id": "plaster_wall_palette",
+    "colors": [ "Emerald Green", "Traffic Purple", "Carmine Red", "Olive Yellow", { "color": "#ffffff", "weight": 600 } ]
+  },
+  {
+    "type": "mapgen_color_palette",
+    "id": "plaster_wall_palette_colorful",
+    "colors": [ "Emerald Green", "Traffic Purple", "Carmine Red", "Olive Yellow" ]
+  },
+  {
+    "type": "mapgen_color_palette",
+    "id": "wooden_furniture_palette",
+    "colors": [
+      "Green beige",
+      "Beige",
+      "Brown beige",
+      "Broom yellow",
+      "Brown red",
+      "Beige red",
+      "Olive grey",
+      "Beige grey",
+      "Khaki grey",
+      "Green brown",
+      "Ochre brown",
+      "Clay brown",
+      "Olive brown",
+      "Nut brown",
+      "Sepia brown",
+      "Chestnut brown",
+      "Mahogany brown",
+      "Chocolate brown",
+      "Beige brown"
+    ]
+  }
+]

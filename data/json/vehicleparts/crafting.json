@@ -222,7 +222,7 @@
     "color": "red",
     "damage_modifier": 10,
     "damage_reduction": { "all": 29 },
-    "description": "A electric forge for metalworking, powered by the vehicle's batteries.  With a hammer and other tools, you could use this for metalworking.  If you attempt to craft an item that needs a forge, you will be given the option of selecting it as a tool.",
+    "description": "An electric forge for metalworking, powered by the vehicle's batteries.  With a hammer and other tools, you could use this for metalworking.  If you attempt to craft an item that needs a forge, you will be given the option of selecting it as a tool.",
     "durability": 80,
     "flags": [ "CARGO", "OBSTACLE", "CRAFTER" ],
     "integrated_tools": [ "forge" ],
@@ -288,7 +288,7 @@
     "color": "red",
     "damage_modifier": 10,
     "damage_reduction": { "all": 25 },
-    "description": "A electric kiln for baking brick or clay, powered by the vehicle's batteries.  You could use this to harden bricks or clay.  If you attempt to craft an item that needs a kiln, you will be given the option of selecting it as a tool.",
+    "description": "An electric kiln for baking brick or clay, powered by the vehicle's batteries.  You could use this to harden bricks or clay.  If you attempt to craft an item that needs a kiln, you will be given the option of selecting it as a tool.",
     "durability": 80,
     "flags": [ "CARGO", "OBSTACLE", "CRAFTER" ],
     "integrated_tools": [ "kiln" ],
@@ -507,7 +507,7 @@
         "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_small_metal", 1 ] ]
       }
     },
-    "flags": [ "FAUCET", "SHOWER", "FOLDABLE", "SHOCK_RESISTANT" ],
+    "flags": [ "FAUCET", "SHOWER", "BOARDABLE", "FOLDABLE", "SHOCK_RESISTANT" ],
     "breaks_into": [ { "item": "scrap", "count": [ 1, 3 ] }, { "item": "plastic_chunk", "count": [ 1, 2 ] } ],
     "damage_reduction": { "all": 6 }
   },
@@ -577,6 +577,7 @@
   {
     "type": "vehicle_part",
     "id": "survivors_workbench",
+    "integrated_tools": [ "toolbox_workshop" ],
     "name": { "str": "survivors workbench" },
     "symbol": "#",
     "looks_like": "veh_table_wood",
@@ -593,7 +594,7 @@
       "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "using": [ [ "vehicle_bolt", 1 ] ] },
       "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "15 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
     },
-    "flags": [ "CARGO", "OBSTACLE", "FLAT_SURF", "WORKBENCH" ],
+    "flags": [ "CARGO", "OBSTACLE", "FLAT_SURF", "WORKBENCH", "CRAFTER" ],
     "breaks_into": [
       { "item": "pipe", "count": [ 4, 6 ] },
       { "item": "sheet_metal", "count": [ 0, 1 ] },
@@ -607,6 +608,7 @@
   {
     "type": "vehicle_part",
     "id": "robobench",
+    "integrated_tools": [ "toolbox_workshop" ],
     "name": { "str": "robobench" },
     "symbol": "#",
     "looks_like": "machinery_heavy",
@@ -623,7 +625,7 @@
       "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "using": [ [ "vehicle_bolt", 1 ] ] },
       "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "15 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
     },
-    "flags": [ "CARGO", "OBSTACLE", "FLAT_SURF", "WORKBENCH" ],
+    "flags": [ "CARGO", "OBSTACLE", "FLAT_SURF", "WORKBENCH", "CRAFTER" ],
     "breaks_into": [
       { "item": "pipe", "count": [ 4, 6 ] },
       { "item": "sheet_metal", "count": [ 0, 1 ] },
@@ -633,5 +635,29 @@
     ],
     "workbench": { "multiplier": 1.8, "mass": "300 kg", "volume": "30L" },
     "damage_reduction": { "all": 25 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "veh_microwave",
+    "integrated_tools": [ "fake_microwave" ],
+    "name": { "str": "microwave" },
+    "symbol": "#",
+    "color": "red",
+    "broken_symbol": "#",
+    "broken_color": "light_gray",
+    "durability": 50,
+    "item": "microwave",
+    "folded_volume": "9 L",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 2 ] ],
+        "time": "15 m",
+        "using": [ [ "soldering_standard", 5 ], [ "vehicle_repair_electronics", 2 ] ]
+      }
+    },
+    "flags": [ "FOLDABLE", "SHOCK_RESISTANT", "CRAFTER" ],
+    "breaks_into": [ { "item": "e_scrap", "count": [ 1, 2 ] }, { "item": "plastic_chunk", "count": [ 3, 6 ] } ]
   }
 ]

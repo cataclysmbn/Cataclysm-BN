@@ -58,6 +58,9 @@ class iuse_transform : public iuse_actor
         /** if set transform item to container and place new item (of type @ref target) inside */
         itype_id container;
 
+        /** if true, ask player how many charges to set ammo of active item to */
+        bool set_timer = false;
+
         /** if zero or positive set remaining ammo of @ref target to this (after transformation) */
         int ammo_qty = -1;
 
@@ -103,8 +106,6 @@ class iuse_transform : public iuse_actor
         /** Tool qualities needed, e.g. "fine bolt turning 1". **/
         std::map<quality_id, int> qualities_needed;
 
-        translation menu_text;
-
         iuse_transform( const std::string &type = "transform" ) : iuse_actor( type ) {}
 
         ~iuse_transform() override = default;
@@ -113,7 +114,6 @@ class iuse_transform : public iuse_actor
         ret_val<bool> can_use( const Character &, const item &, bool,
                                const tripoint_bub_ms & ) const override;
         std::unique_ptr<iuse_actor> clone() const override;
-        std::string get_name() const override;
         void finalize( const itype_id &my_item_type ) override;
         void info( const item &, std::vector<iteminfo> & ) const override;
 };
@@ -190,7 +190,7 @@ class explosion_iuse : public iuse_actor
         /** Calls game::scrambler_blast if >= 0 */
         int scrambler_blast_radius = -1;
         /** Volume of sound each turn, -1 means no sound at all */
-        int sound_volume = -1;
+        units::sound sound_volume = -1_dB;
         std::string sound_msg;
         /** Message shown when the player tries to deactivate the item,
          * which is not allowed. */
@@ -222,6 +222,10 @@ class unfold_vehicle_iuse : public iuse_actor
         /** Creature::moves it takes to unfold. */
         int moves = 0;
         std::map<itype_id, int> tools_needed;
+        /**
+         * Whether vehicle deploys with full battery/fuel.
+         */
+        bool full_battery = false;
 
         unfold_vehicle_iuse( const std::string &type = "unfold_vehicle" ) : iuse_actor( type ) {}
 
@@ -710,7 +714,9 @@ class fireweapon_off_actor : public iuse_actor
 class fireweapon_on_actor : public iuse_actor
 {
     public:
-        std::string noise_message; // If noise is 0, message content instead
+        std::string held_message; // If noise is 0, message content instead
+        std::string noise_message;
+        std::string noise_variant;
         std::string voluntary_extinguish_message;
         std::string charges_extinguish_message;
         std::string water_extinguish_message;
@@ -725,6 +731,27 @@ class fireweapon_on_actor : public iuse_actor
         void load( const JsonObject &obj ) override;
         int use( player &, item &, bool, const tripoint_bub_ms & ) const override;
         std::unique_ptr<iuse_actor> clone() const override;
+};
+
+/**
+ * Makes noise of a given volume randomly over time
+ */
+class passivenoise_actor : public iuse_actor
+{
+    public:
+        std::string held_message; // If noise is 0, message content instead
+        std::string noise_message;
+        std::string noise_variant;
+        int noise = 0; // If 0, it produces a message instead of noise
+        int noise_chance = 1; // one_in(this variable)
+
+        passivenoise_actor( const std::string &type = "passivenoise" ) : iuse_actor( type ) {}
+
+        ~passivenoise_actor() override = default;
+        void load( const JsonObject &obj ) override;
+        int use( player &, item &, bool, const tripoint_bub_ms & ) const override;
+        std::unique_ptr<iuse_actor> clone() const override;
+        bool activatable() const override { return false; }
 };
 
 /**
@@ -913,6 +940,7 @@ class bandolier_actor : public iuse_actor
         std::unique_ptr<iuse_actor> clone() const override;
         void info( const item &, std::vector<iteminfo> & ) const override;
 
+        std::string check() const override;
         units::volume max_stored_volume() const;
 };
 
@@ -981,6 +1009,10 @@ class repair_item_actor : public iuse_actor
         /** Checks if we are allowed to use the tool. */
         bool can_use_tool( const player &p, const item &tool, bool print_msg ) const;
 
+        /** Returns the number of repair items needed for repair. Will round up if just_check = true, and roll remainder otherwise. */
+        int get_material_amt_needed( const item &fix, bool just_check ) const;
+        /** Returns a list of materials that can be used to repair this item using this tool. */
+        std::set<material_id> get_valid_materials( const item &fix ) const;
         /** Returns if components are available. Consumes them if `just_check` is false. */
         bool handle_components( player &pl, const item &fix, bool print_msg, bool just_check ) const;
         /** Returns the chance to repair and to damage an item. */
@@ -1318,7 +1350,7 @@ class multicooker_iuse : public iuse_actor
         int charges_to_start;
         float time_mult = 1.0f;
         float charges_per_minute;
-        std::set<itype_id> recipes;
+        std::set<recipe_id> recipes;
         std::set<std::string> subcategories;
         std::set<std::string> temporary_tools;
 
@@ -1657,7 +1689,7 @@ class iuse_paint_stuff_config : public iuse_actor
         auto can_use( const Character &, const item &, bool,
                       const tripoint_bub_ms & ) const -> ret_val<bool> override;
         auto clone() const -> std::unique_ptr<iuse_actor> override;
-        void on_placed( item &, const map &, const tripoint_bub_ms & ) const override;
+        void on_placed( item &, const tripoint_abs_ms & ) const override;
         static paint_layer get_paint_layer( item &, bool change = false );
         static void set_color( item & );
 };
@@ -1680,7 +1712,7 @@ class iuse_paint_stuff : public iuse_actor
                       const tripoint_bub_ms & ) const -> ret_val<bool> override;
         auto clone() const -> std::unique_ptr<iuse_actor> override;
         void info( const item &, std::vector<iteminfo> & ) const override;
-        void on_placed( item &, const map &, const tripoint_bub_ms & ) const override;
+        void on_placed( item &, const tripoint_abs_ms & ) const override;
 
         static std::optional<RGBColor> try_get_paint_color( const item &it );
         static RGBColor get_paint_color( item &it );

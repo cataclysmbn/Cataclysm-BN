@@ -1,24 +1,24 @@
-#include <algorithm>
-#include <optional>
-
-#include "cata_algo.h"
 #include "catalua_coord.h"
 #include "catalua_hooks.h"
+#include "coordinates.h"
+#include "flood_fill.h"
 #include "game.h"
 #include "iexamine.h"
-#include "mapdata.h"
-#include "flood_fill.h"
+#include "map/map.h"
+#include "map/mapdata.h"
 #include "output.h"
-#include "omdata.h"
-#include "overmapbuffer.h"
+#include "overmap/omdata.h"
+#include "overmap/overmapbuffer.h"
 #include "player.h"
-#include "coordinates.h"
-#include "map.h"
 #include "point.h"
-#include "ui.h"
-#include "vpart_range.h"
-#include "vehicle_part.h"
 #include "point_rotate.h"
+#include "ui.h"
+#include "utils/algo.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_range.h"
+
+#include <algorithm>
+#include <optional>
 
 namespace
 {
@@ -65,7 +65,7 @@ auto dest( const elevator::tiles &elevator_here,
 auto find_elevators_nearby( const tripoint_bub_ms &pos ) -> std::optional<tripoint_bub_ms>
 {
     constexpr int max_misalign = 3;
-    map &here = get_map();
+    auto &here = get_map();
 
     for( const auto &p : closest_points_first( pos, max_misalign ) ) {
         if( here.has_flag( TFLAG_ELEVATOR, p ) ) {
@@ -216,16 +216,15 @@ auto move_vehicles( const elevator_vehicles &vehs, const tripoint_bub_ms &sm_ori
     here.reset_vehicle_cache();
 }
 
-auto move_player( player &p, const int movez, tripoint_abs_ms old_abs_pos ) -> void
+auto move_player( player &p, const int /*movez*/ ) -> void
 {
-    map &here = get_map();
+    auto &here = get_map();
 
-    g->vertical_shift( movez );
     // yes, this is inefficient, but i'm lazy
     elevator::find_elevators_nearby( p.bub_pos() )
     .transform( []( const tripoint_bub_ms & pos ) -> point_rel_sm { return g->place_player( pos ); } );
 
-    cata_event_dispatch::avatar_moves( *p.as_avatar(), here, old_abs_pos );
+    cata_event_dispatch::avatar_moves( *p.as_avatar(), here, p.abs_pos() );
 }
 
 } //namespace elevator
@@ -247,7 +246,6 @@ void iexamine::elevator( player &p, const tripoint_bub_ms &examp )
         return;
     }
 
-    const auto old_abs_pos = p.abs_pos();
     const auto sm_orig = abs_to_bub( project_to<coords::ms>( this_omt ) );
 
     const auto elevator_here = elevator::here( p );
@@ -275,5 +273,5 @@ void iexamine::elevator( player &p, const tripoint_bub_ms &examp )
     elevator::move_items( elevator_here, elevator_dest );
     elevator::move_creatures( elevator_here, elevator_dest );
     elevator::move_vehicles( vehs, sm_orig, movez, turns );
-    elevator::move_player( p, movez, old_abs_pos );
+    elevator::move_player( p, movez );
 }

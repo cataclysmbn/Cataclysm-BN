@@ -1,13 +1,7 @@
 #include "activity_actor.h"
-#include "activity_actor_definitions.h"
-
-#include <cmath>
-#include <list>
-#include <memory>
-#include <string>
-#include <utility>
 
 #include "action_time_scale.h"
+#include "activity_actor_definitions.h"
 #include "activity_handlers.h" // put_into_vehicle_or_drop and drop_on_map
 #include "activity_speed.h"
 #include "advanced_inv.h"
@@ -20,11 +14,12 @@
 #include "construction_partial.h"
 #include "craft_command.h"
 #include "crafting.h"
+#include "crafting_quality.h"
 #include "debug.h"
+#include "enchantments/enchanter.h"
 #include "enums.h"
 #include "event.h"
 #include "event_bus.h"
-#include "field_type.h"
 #include "flag.h"
 #include "game.h"
 #include "gates.h"
@@ -36,10 +31,11 @@
 #include "json.h"
 #include "line.h"
 #include "locations.h"
-#include "map.h"
+#include "map/field_type.h"
+#include "map/map.h"
+#include "map/map_selector.h"
+#include "map/mapdata.h"
 #include "map_iterator.h"
-#include "map_selector.h"
-#include "mapdata.h"
 #include "messages.h"
 #include "npc.h"
 #include "options.h"
@@ -48,7 +44,8 @@
 #include "player_activity.h"
 #include "point.h"
 #include "ranged.h"
-#include "crafting_quality.h"
+#include "reload/reload.h"
+#include "reload/reload_ui.h"
 #include "recipe.h"
 #include "recipe_dictionary.h"
 #include "rng.h"
@@ -56,9 +53,15 @@
 #include "timed_event.h"
 #include "translations.h"
 #include "uistate.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+
+#include <cmath>
+#include <list>
+#include <memory>
+#include <string>
+#include <utility>
 
 #define dbg(x) DebugLog((x),DC::Game)
 
@@ -369,14 +372,14 @@ bool aim_activity_actor::load_RAS_weapon()
         {
             return false;
         }
-        if( square_dist( you.bub_pos(), you.ammo_location->position() ) > 1 )
+        if( square_dist( you.abs_pos(), you.ammo_location->abs_pos() ) > 1 )
         {
             return false;
         }
         return true;
     };
-    item_reload_option opt = ammo_location_is_valid() ? item_reload_option( &you, weapon,
-                             weapon, *you.ammo_location ) : character_funcs::select_ammo( you, *gun );
+    auto opt = ammo_location_is_valid() ? item_reload_option( &you, weapon, weapon,
+               *you.ammo_location ) : reload_ui::select_ammo( you, *gun );
     if( !opt ) {
         // Menu canceled
         return false;
@@ -555,11 +558,12 @@ void dig_activity_actor::finish( player_activity &act, Character &who )
                       item_group::items_from( item_group_id( byproducts_item_group ),
                               calendar::turn ) );
 
-    const int act_exertion = act.moves_total;
+    const int act_exertion = moves_total;
 
     who.mod_stored_kcal( std::min( -1, -act_exertion / to_moves<int>( 80_seconds ) ) );
     who.mod_thirst( std::max( 1, act_exertion / to_moves<int>( 12_minutes ) ) );
     who.mod_fatigue( std::max( 1, act_exertion / to_moves<int>( 6_minutes ) ) );
+    who.mod_stamina( std::min( -1, -act_exertion / to_moves<int>( 10_seconds ) ) );
     if( grave ) {
         who.add_msg_if_player( m_good, _( "You finish exhuming a grave." ) );
     } else {
@@ -640,11 +644,12 @@ void dig_channel_activity_actor::finish( player_activity &act, Character &who )
                       item_group::items_from( item_group_id( byproducts_item_group ),
                               calendar::turn ) );
 
-    const int act_exertion = act.moves_total;
+    const int act_exertion = moves_total;
 
     who.mod_stored_kcal( std::min( -1, -act_exertion / to_moves<int>( 80_seconds ) ) );
     who.mod_thirst( std::max( 1, act_exertion / to_moves<int>( 12_minutes ) ) );
     who.mod_fatigue( std::max( 1, act_exertion / to_moves<int>( 6_minutes ) ) );
+    who.mod_stamina( std::min( -1, -act_exertion / to_moves<int>( 10_seconds ) ) );
     who.add_msg_if_player( m_good, _( "You finish digging up %s." ),
                            here.ter( location )->name() );
 
@@ -1045,7 +1050,7 @@ std::unique_ptr<activity_actor> hacking_activity_actor::deserialize( JsonIn &jsi
 
 void move_items_activity_actor::do_turn( player_activity &act, Character &who )
 {
-    const auto dest = relative_destination + who.bub_pos();
+    const auto dest = relative_destination + who.abs_pos();
 
     while( who.moves > 0 && !target_items.empty() ) {
         safe_reference<item> target = std::move( target_items.back() );
@@ -1073,7 +1078,7 @@ void move_items_activity_actor::do_turn( player_activity &act, Character &who )
             continue;
         }
 
-        const tripoint_bub_ms src = target->position();
+        const auto src = target->abs_pos();
         detached_ptr<item> newit = quantity == 0 ? target->detach() : target->split( quantity );
 
         const int distance = src.z() == dest.z() ? std::max( rl_dist( src, dest ), 1 ) : 1;
@@ -1082,9 +1087,9 @@ void move_items_activity_actor::do_turn( player_activity &act, Character &who )
         std::vector<detached_ptr<item>> vec;
         vec.push_back( std::move( newit ) );
         if( to_vehicle ) {
-            put_into_vehicle_or_drop( who, item_drop_reason::deliberate, vec, dest );
+            put_into_vehicle_or_drop( who, item_drop_reason::deliberate, vec, abs_to_bub( dest ) );
         } else {
-            drop_on_map( who, item_drop_reason::deliberate, vec, dest );
+            drop_on_map( who, item_drop_reason::deliberate, vec, abs_to_bub( dest ) );
         }
     }
 
@@ -1247,7 +1252,7 @@ void hacksaw_activity_actor::do_turn( player_activity &/* act */, Character &who
         return;
     }
     if( tool->ammo_sufficient() ) {
-        tool->ammo_consume( tool->ammo_required(), tool->position() );
+        tool->ammo_consume( tool->ammo_required(), tool->bub_pos() );
         sfx::play_activity_sound( "tool", "hacksaw", sfx::get_heard_volume( target, 80 ) );
         if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
             //~ Sound of a metal sawing tool at work!
@@ -1412,7 +1417,7 @@ void boltcutting_activity_actor::do_turn( player_activity &/* act */, Character 
         return;
     }
     if( tool->ammo_sufficient() ) {
-        tool->ammo_consume( tool->ammo_required(), tool->position() );
+        tool->ammo_consume( tool->ammo_required(), tool->bub_pos() );
     } else {
         if( who.is_avatar() ) {
             who.add_msg_if_player( m_bad, _( "Your %1$s ran out of charges." ), tool->tname() );
@@ -1835,7 +1840,7 @@ void oxytorch_activity_actor::do_turn( player_activity &/*act*/, Character &who 
 {
     // We check available charges when first starting the cut, but this prevents abnormal behavior if torch status changes mid-activity.
     if( tool->ammo_sufficient() ) {
-        tool->ammo_consume( tool->ammo_required(), tool->position() );
+        tool->ammo_consume( tool->ammo_required(), tool->bub_pos() );
         sfx::play_activity_sound( "tool", "oxytorch", sfx::get_heard_volume( target, 65 ) );
         if( action_time_scale::once_every_this_tick( 2_turns ) ) {
             sound_event se;
@@ -2099,7 +2104,6 @@ void throw_activity_actor::do_turn( player_activity &act, Character &who )
     const auto original_player_position = who.abs_pos();
     if( blind_throw_pos ) {
         who.setpos( bub_to_abs( *blind_throw_pos ) );
-        g->update_map( who );
     }
 
     target_handler::trajectory trajectory = target_handler::mode_throw( *who.as_avatar(), *it,
@@ -2108,7 +2112,6 @@ void throw_activity_actor::do_turn( player_activity &act, Character &who )
     // If we previously shifted our position, put ourselves back now that we've picked our target.
     if( blind_throw_pos ) {
         who.setpos( original_player_position );
-        g->update_map( who );
     }
 
     if( trajectory.empty() ) {
@@ -2212,17 +2215,19 @@ void craft_activity_actor::calc_all_moves( player_activity &act, Character &who 
 
     // Catch-up: apply time elapsed while NPC was outside the reality bubble.
     // last_turn_nr >= 0 means start() already ran in a previous session.
-    if( last_turn_nr >= 0 && current_turn > last_turn_nr ) {
+    // The turns of this tick are not elapsed time: do_turn adds their progress from moves.
+    const auto elapsed_turns = current_turn - last_turn_nr -
+                               action_time_scale::calendar_turns_this_tick();
+    if( last_turn_nr >= 0 && elapsed_turns > 0 ) {
         item *craft_item = find_in_progress_craft( act, who );
         if( craft_item ) {
-            const int elapsed_turns = current_turn - last_turn_nr;
             const double base_total_moves = std::max( 1, rec->batch_time( batch_size, 1.0f, 0 ) );
             // No live crafting modifiers are applied while outside the reality bubble.
             const auto moves_elapsed = action_time_scale::activity_progress_for_turns( elapsed_turns );
             const int old_counter = craft_item->get_counter();
-            const int new_counter = std::min(
-                                        static_cast<int>( old_counter + moves_elapsed / base_total_moves * 10'000'000.0 ),
-                                        10'000'000 );
+            const int new_counter = static_cast<int>( std::min(
+                                        old_counter + moves_elapsed / base_total_moves * 10'000'000.0,
+                                        10'000'000.0 ) );
             craft_item->set_counter( new_counter );
             craft_counter = new_counter;
 
@@ -2366,9 +2371,9 @@ void craft_activity_actor::do_turn( player_activity &act, Character &who )
     const auto scaled_moves = action_time_scale::activity_progress_from_actor_moves( who );
     const auto delta_progress = scaled_moves * base_total_moves / cur_total_moves;
     const double current_progress = old_counter * base_total_moves / 10'000'000.0 + delta_progress;
-    const int new_counter = std::min(
-                                static_cast<int>( std::round( current_progress / base_total_moves * 10'000'000.0 ) ),
-                                10'000'000 );
+    const int new_counter = static_cast<int>( std::min(
+                                std::round( current_progress / base_total_moves * 10'000'000.0 ),
+                                10'000'000.0 ) );
     const int five_percent_steps = new_counter / 500'000 - old_counter / 500'000;
     craft_item->set_counter( new_counter );
     craft_counter = new_counter;
@@ -2473,7 +2478,7 @@ act_progress_message craft_activity_actor::get_progress_message(
     mults_desc += string_format( " - %s: %s\n", _( "Total" ),
                                  colorize( std::to_string( total_pct ) + '%', total_col ) );
     mults_desc += fmt_spd( act.speed.player_speed, _( "Speed" ) );
-    mults_desc += fmt_spd( act.speed.light, _( "Light" ) );
+    mults_desc += fmt_spd( act.speed.light, pgettext( "crafting speed multiplier", "Light" ) );
     mults_desc += fmt_spd( act.speed.bench_factor, _( "Workbench" ) );
     mults_desc += fmt_spd( act.speed.morale, _( "Morale" ) );
     mults_desc += fmt_spd( act.speed.tools, _( "Tools" ) );
@@ -2668,6 +2673,98 @@ std::unique_ptr<activity_actor> salvage_activity_actor::deserialize( JsonIn &jsi
     return actor;
 }
 
+// ---- enchant_activity_actor ----
+
+void enchant_activity_actor::start( player_activity &act, Character & )
+{
+    if( !target ) {
+        debugmsg( "Lost object being enchanted" );
+        act.set_to_null();
+        return;
+    }
+    const std::string name = string_format( "Enchant %s", target->display_name() );
+    progress.emplace( name, moves_total );
+}
+
+void enchant_activity_actor::do_turn( player_activity &act, Character & )
+{
+    if( !target ) {
+        debugmsg( "Lost object being enchanted" );
+        act.set_to_null();
+        return;
+    }
+
+    if( progress.front().complete() ) {
+        progress.pop();
+        return;
+    }
+}
+
+void enchant_activity_actor::finish( player_activity &act, Character &who )
+{
+    if( !target ) {
+        debugmsg( "Lost object being enchanted" );
+        act.set_to_null();
+        return;
+    }
+    if( !furn.is_valid() ) {
+        debugmsg( "The furniture that was used is invalid" );
+        act.set_to_null();
+        return;
+    }
+    enchant_info info;
+    bool found_info = false;
+    for( const enchant_info &ench_info : furn->enchanter ) {
+        if( ench_info.id == enchanter_id ) {
+            info = ench_info;
+            found_info = true;
+            break;
+        }
+    }
+    if( !found_info ) {
+        debugmsg( "The enchantment could not be found in furniture definition." );
+        act.set_to_null();
+        return;
+    }
+
+    auto total_reqs =
+        enchanter::total_requirements( info )
+        * std::max(
+            1, ( info.volume_batch_effect ? int( target->base_volume() / info.volume_per_batch ) : 1 ) );
+    for( const auto &comp : total_reqs.get_components() ) { who.consume_items( comp ); }
+    for( const auto &comp : total_reqs.get_tools() ) { who.consume_tools( comp ); }
+    target->add_enchantment( info.to_enchant_with );
+    target->set_var( info.count_var, target->get_var<int>( info.count_var, 0 ) + 1 );
+    if( info.applied_flag_id.is_valid() ) { target->set_flag( info.applied_flag_id ); }
+    act.set_to_null();
+}
+
+void enchant_activity_actor::serialize( JsonOut &jsout ) const
+{
+    jsout.start_object();
+
+    jsout.member( "progress", progress );
+    jsout.member( "target_obj", target );
+    jsout.member( "furn", furn );
+    jsout.member( "enchanter_id", enchanter_id );
+
+    jsout.end_object();
+}
+
+std::unique_ptr<activity_actor> enchant_activity_actor::deserialize( JsonIn &jsin )
+{
+    std::unique_ptr<enchant_activity_actor> actor( new enchant_activity_actor() );
+
+    JsonObject data = jsin.get_object();
+
+    data.read( "progress", actor->progress );
+    data.read( "target_obj", actor->target );
+    data.read( "furn", actor->furn );
+    data.read( "enchanter_id", actor->enchanter_id );
+
+    return actor;
+}
+
 namespace activity_actors
 {
 
@@ -2694,7 +2791,8 @@ deserialize_functions = {
     { activity_id( "ACT_STASH" ), &stash_activity_actor::deserialize },
     { activity_id( "ACT_THROW" ), &throw_activity_actor::deserialize },
     { activity_id( "ACT_ASSIST" ), &assist_activity_actor::deserialize },
-    { activity_id( "ACT_LONGSALVAGE" ), &salvage_activity_actor::deserialize }
+    { activity_id( "ACT_LONGSALVAGE" ), &salvage_activity_actor::deserialize },
+    { activity_id( "ACT_ENCHANT" ), &enchant_activity_actor::deserialize }
 };
 } // namespace activity_actors
 

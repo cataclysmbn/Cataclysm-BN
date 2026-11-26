@@ -2,81 +2,83 @@
 
 > [!NOTE]
 >
-> 이 문서는 여러 페이지로 분리 중입니다.
+> 이 문서는 여러 페이지로 분할되어 있습니다.
 
 > [!CAUTION]
 >
-> 많은 JSON 파일이 아직 문서화되지 않았거나 오래되었습니다. 확실히 하려면 관련 소스 파일을 확인하세요.
+> 많은 JSON 파일이 아직 문서화되지 않았거나 오래되었습니다. 관련 소스 파일을 확인하십시오.
+> 물론이죠.
 
-이 문서는 Cataclysm: Dark days ahead에서 사용하는 json 파일의 내용을 설명합니다. 아마도 여러분은
-Catacysm: Dark days ahead의 콘텐츠를 추가/수정하려고 하며, 어떤 내용을 어디서 찾아야 하는지와 각 파일 및
-속성이 무엇을 하는지 더 알아보려고 이 문서를 읽고 있을 것입니다.
+이 문서는 Cataclysm: Bright Nights에서 사용되는 json 파일의 내용을 설명합니다. Cataclysm: Bright Nights의 콘텐츠를 추가하거나 변경하고 어디에서 무엇을 찾아야 하는지, 각 파일과 속성이 무엇을 하는지 알아야 한다면 이 문서를 읽으면 됩니다.
+각 파일과 속성의 위치와 기능에 대해 자세히 알아보세요.
 
-## JSON 탐색
+## JSON 탐색하기
 
-많은 JSON은 다른 JSON 엔티티를 교차 참조합니다. 탐색을 쉽게 하기 위해 `tags` 파일을 생성하는
-스크립트 `tools/json_tools/cddatags.py`를 제공합니다.
+많은 JSON에는 다른 JSON 엔터티에 대한 상호 참조가 포함됩니다. 더 쉽게 탐색할 수 있도록,
+우리는 `tags` 파일을 빌드할 수 있는 `tools/json_tools/cddatags.py` 스크립트를 제공합니다.
 
-스크립트를 실행하려면 Python 3가 필요합니다. Windows에서는 아마 설치가 필요하고, `.py` 파일을 Python과
-연결해야 할 수 있습니다. 그런 다음 명령 프롬프트를 열고 CDDA 폴더로 이동해
-`tools\json_tools\cddatags.py`를 실행하세요.
+스크립트를 실행하려면 Python 3이 필요합니다. Windows에서는 아마도 Python 3을 설치해야 할 것입니다.
+`.py` 파일을 Python과 연결합니다. 그런 다음 명령 프롬프트를 열고 Cataclysm: Bright Nights 폴더로 이동하여 다음을 실행합니다.
+`tools\json_tools\cddatags.py`.
 
-이 기능을 사용하려면 에디터가 [ctags support](http://ctags.sourceforge.net/)를 지원해야 합니다.
-설정이 완료되면 어떤 엔티티의 정의로도 쉽게 점프할 수 있습니다. 예를 들어 id 위에 커서를 두고 해당
-단축키를 누르면 됩니다.
+이 기능을 사용하려면 편집기에 [ctags 지원](http://ctags.sourceforge.net/)이 필요합니다. 언제
+작동합니다. 어떤 엔터티의 정의로 쉽게 이동할 수 있어야 합니다. 예를 들어,
+커서를 ID 위에 놓고 적절한 키 조합을 누르십시오.
 
-- Vim에서는 기본 제공되며,
-  [`^\]`](http://vimdoc.sourceforge.net/htmldoc/tagsrch.html#tagsrch.txt)로 정의로 점프할 수 있습니다.
-- Notepad++에서는 "Plugins" -> "Plugins Admin"에서 "TagLEET" 플러그인을 활성화하세요. 그런 다음
-  id를 선택하고 Alt+Space를 눌러 references 창을 엽니다.
+- Vim에서는 이 기능이 기본적으로 존재하며 다음을 사용하여 정의로 이동할 수 있습니다.
+  [`^\]`](http://vimdoc.sourceforge.net/htmldoc/tagsrch.html#tagsrch.txt).
+- Notepad++에서 "Plugins" -> "Plugins Admin"로 이동하여 "TagLEET" 플러그인을 활성화합니다. 그런 다음 아무거나 선택하세요.
+  id를 입력하고 Alt+Space를 눌러 참조 창을 엽니다.
 
 ## `type` 속성
 
-항목은 `type` 속성으로 구분됩니다. 이 속성은 모든 항목에서 필수입니다.
-예를 들어 이 항목을 'armor'로 설정하면 게임은 해당 항목에서 armor 전용 속성을 기대합니다.
-또한 [`copy-from`](./items/json_inheritance.md#copy-from)과도 연결되며,
-[inherit properties of another object](./items/json_inheritance.md)하려면 같은 tipe여야 합니다.
+항목은 `type` 속성으로 구별됩니다. 이 속성은 모든 항목에 필수입니다.
+예를 들어 이 항목을 'armor'로 설정하면 게임이 갑옷과 관련된 속성을 기대한다는 의미입니다.
+그 항목. 또한 원하는 경우 [`copy-from`](./items/json_inheritance.md#copy-from)과 연결됩니다.
+[다른 객체의 속성 상속](./items/json_inheritance.md), 동일한 객체여야 합니다.
 
-## 포맷팅
+## 서식 지정
 
-JSON 파일을 편집할 때는 아래와 같은 올바른 포맷팅을 적용하세요.
+JSON 파일을 편집할 때 아래와 같이 올바른 형식을 적용했는지 확인하세요.
 
-### 시간 길이
+### 지속 시간
 
-숫자와 시간 단위 쌍을 하나 이상 포함하는 문자열입니다. 숫자와 단위 사이, 그리고 각 쌍 사이는
-임의 개수의 공백이 허용됩니다. 사용 가능한 단위:
+하나 이상의 숫자 및 기간 단위 쌍을 포함하는 문자열입니다. 숫자와 단위는 물론이고
+각 쌍은 임의의 공백으로 구분될 수 있습니다. 사용 가능한 단위:
 
 - "hours", "hour", "h" - 1시간
-- "days", "day", "d" - 1일
+- "days", "day", "d" - 하루
 - "minutes", "minute", "m" - 1분
-- "turns", "turn", "t" - 1턴,
+- "turns", "turn", "t" - 한 턴,
 
-예시:
+예:
 
-- " +1 day -23 hours 50m " `(1*24*60 - 23*60 + 50 == 110 minutes)`
-- "1 turn 1 minutes 9 turns" (1턴이 1초이므로 1분 10초)
+- " +1일 -23시간 50분 " `(1*24*60 - 23*60 + 50 == 110 minutes)`
+- "1 turn 1 minutes 9 turns" (1회전이 1초이므로 1분 10초)
 
-### 기타 포맷
+### 기타 형식
 
 ```json
-"//" : "comment", // Preferred method of leaving comments inside json files.
+"//" : "comment", // json 파일 내에 주석을 남기는 데 선호되는 방법입니다.
 ```
 
-일부 json 문자열(아이템 이름, 설명 등)은 번역 추출 대상입니다. 정확한 추출 방식은
-`lang/extract_json_strings.py`에서 처리됩니다. 번역 컨텍스트 없이 문자열을 쓰는 일반적인 방식 외에도,
-아래처럼 선택적 번역 컨텍스트(그리고 때때로 복수형)를 지정할 수 있습니다:
+항목 이름, 설명 등과 같은 일부 json 문자열이 번역을 위해 추출됩니다.
+정확한 추출은 `lang/extract_json_strings.py`에서 처리됩니다. 뻔한 글쓰기 방식과는 별개로
+번역 컨텍스트가 없는 문자열인 경우 문자열은 선택적 번역 컨텍스트를 가질 수도 있습니다(그리고
+때로는 복수형) 다음과 같이 작성합니다.
 
 ```json
 "name": { "ctxt": "foo", "str": "bar", "str_pl": "baz" }
 ```
 
-또는 복수형이 단수형과 같다면:
+또는 복수형이 단수형과 동일한 경우:
 
 ```json
 "name": { "ctxt": "foo", "str_sp": "foo" }
 ```
 
-아래처럼 `"//~"` 항목을 추가해 번역자용 주석을 넣을 수도 있습니다. 항목 순서는 중요하지 않습니다.
+아래와 같이 "//~" 항목을 추가하여 번역자를 위한 설명을 추가할 수도 있습니다. 순서는
+항목은 중요하지 않습니다.
 
 ```json
 "name": {
@@ -85,22 +87,23 @@ JSON 파일을 편집할 때는 아래와 같은 올바른 포맷팅을 적용�
 }
 ```
 
-[Currently, only some JSON values support this syntax](./../../../i18n/reference/translation#supported-json-values).
+[현재 일부 JSON 값만 이 구문을 지원합니다](./../../../i18n/reference/translation.md#supported-json-values).
 
 ## 각 JSON 파일의 설명과 내용
 
-이 섹션은 각 json 파일과 그 내용을 설명합니다. 각 json은 다른 Json 파일과 공유되지 않는 고유 속성을
-가집니다(예: 책의 'chapters' 속성은 armor에 적용되지 않음). 이를 통해 속성이 올바른 JSON 파일
-컨텍스트에서만 설명되고 사용되도록 합니다.
+이 섹션에서는 각 json 파일과 해당 내용을 설명합니다. 각 json에는 고유한 속성이 있습니다.
+다른 Json 파일과 공유되지 않는 파일(예: 책에 사용되는 'chapters' 속성은
+갑옷에 적용). 이렇게 하면 속성이 다음 컨텍스트 내에서만 설명되고 사용됩니다.
+적절한 JSON 파일.
 
-## `data/json/` JSONs
+## `data/json/` JSON
 
 ### Ascii_arts
 
-| Identifier | Description                                                          |
-| ---------- | -------------------------------------------------------------------- |
-| id         | 고유 ID. 하나의 연속된 단어여야 하며 필요하면 밑줄을 사용합니다.     |
-| picture    | 문자열 배열. 각 항목은 아스키 그림 한 줄이며 최대 42열이어야 합니다. |
+| 식별자  | 설명                                                                         |
+| ------- | ---------------------------------------------------------------------------- |
+| id      | 고유 ID. 하나의 연속된 단어여야 하며 필요한 경우 밑줄을 사용하세요.          |
+| picture | 문자열 배열, 각 항목은 ASCII 그림의 한 줄이며 길이는 최대 42열이어야 합니다. |
 
 ```json
 {
@@ -125,29 +128,29 @@ JSON 파일을 편집할 때는 아래와 같은 올바른 포맷팅을 적용�
 }
 ```
 
-### Body_parts
+### 신체 부위
 
-| Identifier        | Description                                                                                                                                                                                                                               |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| id                | (_mandatory_) 고유 ID. 하나의 연속된 단어여야 하며 필요하면 밑줄을 사용합니다.                                                                                                                                                            |
-| name              | (_mandatory_) 게임 내 표시 이름.                                                                                                                                                                                                          |
-| accusative        | (_mandatory_) 이 신체 부위의 목적격 형태.                                                                                                                                                                                                 |
-| heading           | (_mandatory_) 헤딩에서 표시되는 방식.                                                                                                                                                                                                     |
-| heading_multiple  | (_optional_) heading의 복수형. (기본값: heading 값)                                                                                                                                                                                       |
-| hp_bar_ui_text    | (_optional_) 패널의 HP 바 옆 표시 문자열. (기본값: 빈 문자열)                                                                                                                                                                             |
-| encumbrance_text  | (_optional_) 과부하(encumbered) 시 효과 설명. (기본값: 빈 문자열)                                                                                                                                                                         |
-| main_part         | (_optional_) 이 부위가 부착된 주 부위. (기본값: self)                                                                                                                                                                                     |
-| base_hp           | (_optional_) 수정 전 이 부위의 HP 양. (기본값: `60`)                                                                                                                                                                                      |
-| opposite_part     | (_optional_) 쌍을 이룰 때 반대 부위. (기본값: self)                                                                                                                                                                                       |
-| essential         | (_optional_) 이 부위 HP가 `0`이 되면 캐릭터가 사망하는지 여부.                                                                                                                                                                            |
-| hit_size          | (_optional_) Float. 가중치 없는 선택 시 신체 부위 크기. (기본값: `0.`)                                                                                                                                                                    |
-| hit_size_relative | (_optional_) Float. 공격자가 더 작음/같음/더 큼일 때의 타격 크기. (기본값: `[ 0, 0, 0 ]`                                                                                                                                                  |
-| hit_difficulty    | (_optional_) Float. "owner"가 맞았다고 가정할 때 해당 부위를 맞히기 어려운 정도. 숫자가 높을수록 좋은 타격이 이 부위로 치우치고, 낮을수록 부정확한 공격에 맞기 어렵습니다. 공식은 `chance *= pow(hit_roll, hit_difficulty)` (기본값: `0`) |
-| side              | (_optional_) 이 신체 부위가 어느 쪽인지. 기본 both.                                                                                                                                                                                       |
-| stylish_bonus     | (_optional_) 이 부위에 멋진 의류 착용 시 기분 보너스. (기본값: `0`)                                                                                                                                                                       |
-| hot_morale_mod    | (_optional_) 이 부위가 너무 더울 때 기분 효과. (기본값: `0`)                                                                                                                                                                              |
-| cold_morale_mod   | (_optional_) 이 부위가 너무 추울 때 기분 효과. (기본값: `0`)                                                                                                                                                                              |
-| bionic_slots      | (_optional_) 이 부위의 바이오닉 슬롯 수.                                                                                                                                                                                                  |
+| 식별자            | 설명                                                                                                                                                                                                                                                                                                    |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| id                | (_필수_) 고유 ID입니다. 하나의 연속된 단어여야 하며 필요한 경우 밑줄을 사용하세요.                                                                                                                                                                                                                      |
+| name              | (_필수_) 게임 내 이름이 표시됩니다.                                                                                                                                                                                                                                                                     |
+| accusative        | (_필수_) 이 본문 부분에 대한 대격형입니다.                                                                                                                                                                                                                                                              |
+| heading           | (_필수_) 제목에 표시되는 방법입니다.                                                                                                                                                                                                                                                                    |
+| heading_multiple  | (_선택 사항_) 표제의 복수형입니다. (기본값: 제목 값)                                                                                                                                                                                                                                                    |
+| hp_bar_ui_text    | (_선택 사항_) 패널의 HP 바 옆에 표시되는 방식입니다. (기본값: 빈 문자열)                                                                                                                                                                                                                                |
+| encumbrance_text  | (_선택적_) 방해가 되었을 때의 효과에 대한 설명입니다. (기본값: 빈 문자열)                                                                                                                                                                                                                               |
+| main_part         | (_선택적_) 이것이 붙어 있는 주요 부분은 무엇입니까? (기본값: 자기)                                                                                                                                                                                                                                      |
+| base_hp           | (_선택 사항_) 수정 전 이 부품의 HP 양입니다. (기본값: `60`)                                                                                                                                                                                                                                             |
+| opposite_part     | (_선택 사항_) 쌍인 경우 이것의 반대 부분은 무엇입니까? (기본값: 자기)                                                                                                                                                                                                                                   |
+| essential         | (_선택 사항_) 이 부분의 HP가 `0`으로 떨어지면 캐릭터가 죽는지 여부입니다.                                                                                                                                                                                                                               |
+| hit_size          | (_선택적_) 부동. 가중치가 적용되지 않은 선택을 수행할 때 신체 부분의 크기입니다. (기본값: `0.`)                                                                                                                                                                                                         |
+| hit_size_relative | (_선택적_) 부동. 더 작고, 크기가 동일하며, 더 큰 공격자의 히트 크기입니다. (기본값: `[ 0, 0, 0 ]`                                                                                                                                                                                                       |
+| hit_difficulty    | (_선택적_) 부동. "owner"가 맞았다고 가정할 때 특정 신체 부위를 치는 것이 얼마나 어려운가요? 숫자가 높을수록 좋은 타격이 이 부분으로 향할 것임을 의미하고, 낮을수록 이 부분이 부정확한 공격에 맞을 가능성이 낮다는 것을 의미합니다. 수식은 `chance *= pow(hit_roll, hit_difficulty)`입니다(기본값: `0`). |
+| side              | (_선택 사항_) 이 신체 부위가 어느 쪽에 있는지. 둘 다 기본값입니다.                                                                                                                                                                                                                                      |
+| stylish_bonus     | (_선택 사항_) 이 부분에 화려한 옷을 입으면 기분 보너스가 부여됩니다. (기본값: `0`)                                                                                                                                                                                                                      |
+| hot_morale_mod    | (_선택 사항_) 이 부분에 너무 뜨거워지는 기분 효과입니다. (기본값: `0`)                                                                                                                                                                                                                                  |
+| cold_morale_mod   | (_선택 사항_) 이 부분에 너무 차가워지는 기분 효과입니다. (기본값: `0`)                                                                                                                                                                                                                                  |
+| bionic_slots      | (_선택 사항_) 이 부품에는 생체 공학 슬롯이 몇 개 있습니까?                                                                                                                                                                                                                                              |
 
 ```json
 {
@@ -174,104 +177,13 @@ JSON 파일을 편집할 때는 아래와 같은 올바른 포맷팅을 적용�
 }
 ```
 
-### Bionics
+### 꿈
 
-| Identifier                                                                                           | Description                                                                                                                       |
-| ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| id                                                                                                   | (_mandatory_) 고유 ID. 하나의 연속된 단어여야 하며 필요하면 밑줄을 사용합니다.                                                    |
-| name                                                                                                 | (_mandatory_) 게임 내 표시 이름.                                                                                                  |
-| description                                                                                          | (_mandatory_) 게임 내 설명.                                                                                                       |
-| flags                                                                                                | (_optional_) 플래그 목록. 지원 값은 json_flags.md를 참고하세요.                                                                   |
-| act_cost                                                                                             | (_optional_) 바이오닉 활성화에 드는 kJ. 문자열 "1 kJ"/"1000 J"/"1000000 mJ" 사용 가능 (기본값: `0`)                               |
-| deact_cost                                                                                           | (_optional_) 바이오닉 비활성화에 드는 kJ. 문자열 "1 kJ"/"1000 J"/"1000000 mJ" 사용 가능 (기본값: `0`)                             |
-| react_cost                                                                                           | (_optional_) 활성 유지 시 시간당 소모 kJ. "time"이 0이 아니어야 동작. 문자열 "1 kJ"/"1000 J"/"1000000 mJ" 사용 가능 (기본값: `0`) |
-| time                                                                                                 | (_optional_) 활성화 시 비용을 소모하는 간격. 0이면 한 번만 소모. (기본값: `0`)                                                    |
-| upgraded_bionic                                                                                      | (_optional_) 이것을 설치해 업그레이드 가능한 바이오닉.                                                                            |
-| required_bionics                                                                                     | (_optional_) 이 바이오닉 설치에 필요한 바이오닉이며, 이것이 설치되면 제거할 수 없는 바이오닉들                                    |
-| can_uninstall                                                                                        | (_optional_) 설치 후 제거 가능 여부                                                                                               |
-| no_uninstall_reason                                                                                  | (_optional_) can_uninstall이 false일 때 필수. CBM 제거 시도 시 표시할 문자열                                                      |
-| available_upgrades                                                                                   | (_optional_) 이 바이오닉에 사용할 수 있는 업그레이드(바이오닉 목록)                                                               |
-| starting_bionic                                                                                      | (_optional_) 시작 시 선택 가능 여부를 결정하는 Bool                                                                               |
-| points                                                                                               | (_optional_) 이 바이오닉 선택에 드는 포인트 수                                                                                    |
-| having this one referenced by `upgraded_bionic`.                                                     |                                                                                                                                   |
-| and how much this bionic encumber them.                                                              |                                                                                                                                   |
-| carrying capacity in grams, can be negative. Strings can be used - "5000 g" or "5 kg" (default: `0`) |                                                                                                                                   |
-|                                                                                                      | weight_capacity_modifier                                                                                                          |
-| (default: `1`)                                                                                       |                                                                                                                                   |
-| when this bionic is installed (e.g. because it replaces the fault biological part).                  |                                                                                                                                   |
-| included_bionics                                                                                     | (_optional_) 이 바이오닉 설치 시 자동으로 함께 설치되는 추가 바이오닉                                                             |
-| is installed. This can be used to install several bionics from one CBM item, which is useful as each |                                                                                                                                   |
-| of those can be activated independently.                                                             |                                                                                                                                   |
-| with another. If true this bionic does not require a CBM item to be defined. (default: `false`)      |                                                                                                                                   |
-| env_protec                                                                                           | (_optional_) 지정된 신체 부위에 이 바이오닉이 제공하는 환경 보호량                                                                |
-| specified body parts.                                                                                |                                                                                                                                   |
-| provide on the specified body parts.                                                                 |                                                                                                                                   |
-| bionic provide on the specified body parts.                                                          |                                                                                                                                   |
-| protect does this bionic provide on the specified body parts.                                        |                                                                                                                                   |
-| A list of body parts occupied by this bionic, and the number of bionic slots it take on those parts. |                                                                                                                                   |
-|                                                                                                      | capacity                                                                                                                          |
-| kJ"/"1000 J"/"1000000 mJ" (default: `0`)                                                             |                                                                                                                                   |
-| bionic can use to produce bionic power.                                                              |                                                                                                                                   |
-| allows you to plug your power banks to an external power source (solar backpack, UPS, vehicle etc)   |                                                                                                                                   |
-| via a cable. (default: `false`)                                                                      |                                                                                                                                   |
-| store.                                                                                               |                                                                                                                                   |
-| `0`)                                                                                                 |                                                                                                                                   |
-| (default: `1`)                                                                                       |                                                                                                                                   |
-| converted into power. Useful for CBM using PERPETUAL fuel like `muscle`, `wind` or `sun_light`.      |                                                                                                                                   |
-| (default: `0`)                                                                                       |                                                                                                                                   |
-| power. (default: `false`)                                                                            |                                                                                                                                   |
-| diminishing fuel_efficiency. Float between 0.0 and 1.0. (default: `nullopt`)                         |                                                                                                                                   |
-| (_optional_) `emit_id` of the field emitted by this bionic when it produces energy. Emit_ids are     |                                                                                                                                   |
-| defined in `emit.json`.                                                                              |                                                                                                                                   |
-| designated as follow: "DEX", "INT", "STR", "PER".                                                    |                                                                                                                                   |
-| enchantments applied by this CBM (see MAGIC.md for instructions on enchantment. NB: enchantments are |                                                                                                                                   |
-| not necessarily magic.)                                                                              |                                                                                                                                   |
-| installing this CBM, and lose when you uninstall this CBM. Spell classes are automatically gained.   |                                                                                                                                   |
-| fake_item                                                                                            | (_optional_) 이 바이오닉에서 사용하는 가짜 아이템 ID. 총/무기 바이오닉에서는 필수                                                 |
-| bionics.                                                                                             |                                                                                                                                   |
-
-```json
-{
-    "id"           : "bio_batteries",
-    "name"         : "Battery System",
-    "active"       : false,
-    "act_cost"     : 0,
-    "time"         : 1,
-    "fuel_efficiency": 1,
-    "stat_bonus": [ [ "INT", 2 ], [ "STR", 2 ] ],
-    "fuel_options": [ "battery" ],
-    "fuel_capacity": 500,
-    "encumbrance"  : [ [ "torso", 10 ], [ "arm_l", 10 ], [ "arm_r", 10 ], [ "leg_l", 10 ], [ "leg_r", 10 ], [ "foot_l", 10 ], [ "foot_r", 10 ] ],
-    "description"  : "You have a battery draining attachment, and thus can make use of the energy contained in normal, everyday batteries. Use 'E' to consume batteries.",
-    "canceled_mutations": ["HYPEROPIC"],
-    "included_bionics": ["bio_blindfold"]
-},
-{
-    "id": "bio_purifier",
-    "type": "bionic",
-    "name": "Air Filtration System",
-    "description": "Surgically implanted in your trachea is an advanced filtration system.  If toxins, or airborne diseases find their way into your windpipe, the filter will attempt to remove them.",
-    "occupied_bodyparts": [ [ "torso", 4 ], [ "mouth", 2 ] ],
-    "env_protec": [ [ "mouth", 7 ] ],
-    "bash_protec": [ [ "leg_l", 3 ], [ "leg_r", 3 ] ],
-    "cut_protec": [ [ "leg_l", 3 ], [ "leg_r", 3 ] ],
-    "bullet_protec": [ [ "leg_l", 3 ], [ "leg_r", 3 ] ],
-    "learned_spells": [ [ "mint_breath", 2 ] ],
-    "flags": [ "BIONIC_NPC_USABLE" ]
-}
-```
-
-바이오닉 효과는 코드에서 정의되며, JSON만으로 새 효과를 만들 수는 없습니다. 새 바이오닉을 추가할 때,
-다른 것에 포함되는 경우가 아니라면 `data/json/items/bionics.json`에 해당 CBM 아이템도 함께 추가해야
-합니다. 고장 바이오닉도 마찬가지입니다.
-
-### Dreams
-
-| Identifier | Description                                                    |
-| ---------- | -------------------------------------------------------------- |
-| messages   | 가능한 꿈 목록.                                                |
-| category   | 꿈을 꾸기 위해 필요한 돌연변이 카테고리.                       |
-| strength   | 필요한 돌연변이 카테고리 강도 (1 = 20-34, 2 = 35-49, 3 = 50+). |
+| 식별자   | 설명                                                            |
+| -------- | --------------------------------------------------------------- |
+| messages | 잠재적인 꿈의 목록입니다.                                       |
+| category | 꿈을 꾸기 위해서는 돌연변이 카테고리가 필요합니다.              |
+| strength | 돌연변이 범주 강도가 필요합니다(1 = 20-34, 2 = 35-49, 3 = 50+). |
 
 ````json
 {
@@ -283,7 +195,7 @@ JSON 파일을 편집할 때는 아래와 같은 올바른 포맷팅을 적용�
   "strength": 1
 }
 
-### Item Category
+### 아이템 카테고리
 
 When you sort your inventory by category, these are the categories that are displayed.
 | Identifier      | Description
@@ -305,18 +217,18 @@ When you sort your inventory by category, these are the categories that are disp
 }
 ````
 
-### Disease
+### 질병
 
-| Identifier         | Description                                                            |
-| ------------------ | ---------------------------------------------------------------------- |
-| id                 | 고유 ID. 하나의 연속된 단어여야 하며 필요하면 밑줄을 사용합니다.       |
-| min_duration       | 질병의 최소 지속 시간. 문자열 "x m", "x s","x d"를 사용합니다.         |
-| max_duration       | 질병의 최대 지속 시간.                                                 |
-| min_intensity      | 질병이 적용하는 효과의 최소 강도                                       |
-| max_intensity      | 효과의 최대 강도.                                                      |
-| health_threshold   | 이 값보다 건강이 높으면 질병에 면역. -200~200 사이여야 함. (optional ) |
-| symptoms           | 질병이 적용하는 효과.                                                  |
-| affected_bodyparts | 효과가 적용되는 신체 부위 목록. (optional, 기본값 num_bp)              |
+| 식별자             | 설명                                                                          |
+| ------------------ | ----------------------------------------------------------------------------- |
+| id                 | 고유 ID. 하나의 연속된 단어여야 하며 필요한 경우 밑줄을 사용하세요.           |
+| min_duration       | 질병이 지속될 수 있는 최소 기간. 문자열 "x m", "x s","x d"를 사용합니다.      |
+| max_duration       | 질병이 지속될 수 있는 최대 기간.                                              |
+| min_intensity      | 질병에 의해 적용되는 효과의 최소 강도                                         |
+| max_intensity      | 효과의 최대 강도입니다.                                                       |
+| health_threshold   | 질병에 면역이 되는 체력의 양입니다. -200에서 200 사이여야 합니다. (선택 사항) |
+| symptoms           | 질병에 의해 적용되는 효과.                                                    |
+| affected_bodyparts | 효과가 적용되는 신체 부위 목록입니다. (선택사항, 기본값은 num_bp)             |
 
 ```json
 {
@@ -332,18 +244,28 @@ When you sort your inventory by category, these are the categories that are disp
 }
 ```
 
-### Names
+### 이름
 
 ```json
-{ "name" : "Aaliyah", "gender" : "female", "usage" : "given" }, // Name, gender, "given"/"family"/"city" (first/last/city name).
+{ "name" : "Aaliyah", "gender" : "female", "usage" : "given" }, // 이름, 성별, "given"/"family"/"city"(이름/성/도시 이름).
 ```
 
-### Scent_types
+### 명명된 색상
 
-| Identifier        | Description                                                                     |
-| ----------------- | ------------------------------------------------------------------------------- |
-| id                | 고유 ID. 하나의 연속된 단어여야 하며 필요하면 밑줄을 사용합니다.                |
-| receptive_species | 이 냄새를 추적할 수 있는 종. `species.json`에 정의된 유효 id를 사용해야 합니다. |
+```json
+{
+  "type": "named_color", // 예상대로
+  "name": "Cataclysm Red", // 표시할 이름
+  "value": "#622625" // 색상의 16진수 값
+}
+```
+
+### 향기 유형
+
+| 식별자            | 설명                                                                              |
+| ----------------- | --------------------------------------------------------------------------------- |
+| id                | 고유 ID. 하나의 연속된 단어여야 하며 필요한 경우 밑줄을 사용하세요.               |
+| receptive_species | 이 냄새를 추적할 수 있는 종. `species.json`에 정의된 유효한 ID를 사용해야 합니다. |
 
 ```json
 {
@@ -353,15 +275,16 @@ When you sort your inventory by category, these are the categories that are disp
 }
 ```
 
-### Scores and Achievements
+### 점수 및 성과
 
-점수는 _events_를 기반으로 두세 단계로 정의됩니다. 어떤 이벤트가 있고 어떤 데이터를 담는지 보려면
-[`event.h`](https://github.com/cataclysmbn/Cataclysm-BN/blob/main/src/event.h)를 읽으세요.
+점수는 _events_를 기준으로 2~3단계로 정의됩니다. 어떤 이벤트가 존재하는지, 어떤 데이터가 있는지 확인하려면
+여기에는 [`event.h`](https://github.com/cataclysmbn/Cataclysm-BN/blob/main/src/event.h)이 포함되어 있습니다. 읽어보세요.
 
-각 이벤트는 특정 필드 집합을 포함합니다. 각 필드는 문자열 키와 `cata_variant` 값을 가집니다.
-필드는 이벤트에 관한 관련 정보를 모두 제공해야 합니다.
+각 이벤트에는 특정 필드 집합이 포함되어 있습니다. 각 필드에는 문자열 키와 `cata_variant` 값이 있습니다.
+필드는 이벤트에 대한 모든 관련 정보를 제공해야 합니다.
 
-예를 들어 `gains_skill_level` 이벤트를 보겠습니다. `event.h`에는 다음과 같이 정의되어 있습니다:
+예를 들어 `gains_skill_level` 이벤트를 생각해 보세요. 이 사양은 다음에서 볼 수 있습니다.
+`event.h`:
 
 ```json
 template<>
@@ -375,48 +298,53 @@ struct event_spec<event_type::gains_skill_level> {
 };
 ```
 
-여기서 이 이벤트 타입에 세 필드가 있음을 알 수 있습니다:
+여기에서 이 이벤트 유형에 세 가지 필드가 있음을 알 수 있습니다.
 
-- `character`: 레벨을 얻는 캐릭터의 id
-- `skill`: 획득한 스킬의 id
-- `new_level`: 해당 스킬에서 새로 획득한 정수 레벨
+- `character`, 레벨을 획득한 캐릭터의 ID입니다.
+- `skill`, 획득한 스킬의 ID입니다.
+- `new_level`, 해당 스킬에서 새로 획득한 정수 레벨입니다.
 
-이벤트는 게임 내 상황에 따라 생성됩니다. 이 이벤트는 다양한 방식으로 변환/요약될 수 있습니다.
-여기에는 event streams, event statistics, scores라는 세 개념이 있습니다.
+이벤트는 게임 내 상황에 따라 게임에서 생성됩니다. 이러한 이벤트는 변형될 수 있습니다.
+그리고 다양한 방법으로 요약했습니다. 관련된 세 가지 개념은 이벤트 스트림, 이벤트 통계,
+그리고 점수.
 
-- 게임이 정의한 각 `event_type`은 하나의 event stream을 생성합니다.
-- 기존 event stream에 `event_transformation`을 적용해 json에서 추가 event stream을 정의할 수 있습니다.
-- `event_statistic`은 event stream을 하나의 값(대개 숫자지만 다른 값 타입도 가능)으로 요약합니다.
-- `score`는 이런 statistic을 사용해 플레이어가 볼 수 있는 게임 내 점수를 정의합니다.
+- 게임에서 정의한 각 `event_type`는 이벤트 스트림을 생성합니다.
+- 기존 이벤트에 `event_transformation`를 적용하여 json에서 추가 이벤트 스트림을 정의할 수 있습니다.
+  이벤트 스트림.
+- `event_statistic`은 이벤트 스트림을 단일 값(보통 숫자이지만 다른 값)으로 요약합니다.
+  값 유형이 가능합니다).
+- `score`는 이러한 통계를 사용하여 플레이어가 볼 수 있는 게임 내 점수를 정의합니다.
 
 #### `event_transformation`
 
-`event_transformation`은 event stream을 수정해 다른 event stream을 생성할 수 있습니다.
+`event_transformation`은 이벤트 스트림을 수정하여 다른 이벤트 스트림을 생성할 수 있습니다.
 
-변환할 입력 stream은 내장 event type stream을 쓰는 `"event_type"` 또는,
-다른 json 정의 변환 stream을 쓰는 `"event_transformation"`으로 지정합니다.
+변환될 입력 스트림은 다음 중 하나를 사용하기 위해 `"event_type"`로 지정됩니다.
+다른 json 정의 변환을 사용하기 위한 내장 이벤트 유형 스트림 또는 `"event_transformation"`
+이벤트 스트림.
 
-다음 변경을 일부 또는 전부 적용할 수 있습니다:
+이벤트 스트림에 다음 변경 사항 중 일부 또는 전부를 적용할 수 있습니다.
 
-- event field transformation을 기반으로 각 이벤트에 새 필드를 추가
-  (event field transformation은
-  [`event_field_transformation.cpp`](https://github.com/cataclysmbn/Cataclysm-BN/blob/main/src/event_field_transformations.cpp)에 있음)
-- 이벤트 값 조건으로 필터링해 입력 stream의 일부만 포함하는 stream 생성
-- 출력 stream에서 관심 없는 필드 제거
+- 이벤트 필드 변환을 기반으로 각 이벤트에 새 필드를 추가합니다. 이벤트 필드 변환
+  에서 찾을 수 있습니다
+  [`event_field_transformation.cpp`](https://github.com/cataclysmbn/Cataclysm-BN/blob/main/src/event_field_transformations.cpp).
+- 이벤트의 일부 하위 집합을 포함하는 스트림을 생성하기 위해 포함된 값을 기반으로 이벤트를 필터링합니다.
+  입력 스트림.
+- 출력 스트림에 관심이 없는 일부 필드를 삭제합니다.
 
-각 수정 예시는 다음과 같습니다:
+각 수정 사항의 예는 다음과 같습니다.
 
 ```json
 "id": "avatar_kills_with_species",
 "type": "event_transformation",
-"event_type": "character_kills_monster", // Transformation acts upon events of this type
-"new_fields": { // A dictionary of new fields to add to the event
-    // The key is the new field name; the value should be a dictionary of one element
+"event_type": "character_kills_monster", // 변환은 이 유형의 이벤트에 작용합니다.
+"new_fields": { // 이벤트에 추가할 새 필드 사전
+    // 키는 새 필드 이름입니다. 값은 한 요소의 사전이어야 합니다.
     "species": {
-        // The key specifies the event_field_transformation to apply; the value specifies
-        // the input field whose value should be provided to that transformation.
-        // So, in this case, we are adding a new field 'species' which will
-        // contain the species of the victim of this kill event.
+        // 키는 적용할 event_field_transformation을 지정합니다. 값은 지정합니다
+        // 해당 변환에 값을 제공해야 하는 입력 필드입니다.
+        // 따라서 이 경우에는 'species'라는 새 필드를 추가합니다.
+        // 이 살해 사건의 희생자 종족을 포함합니다.
         "species_of_monster": "victim_type"
     }
 }
@@ -425,30 +353,31 @@ struct event_spec<event_type::gains_skill_level> {
 ```json
 "id": "moves_on_horse",
 "type": "event_transformation",
-"event_type" : "avatar_moves", // An event type.  The transformation will act on events of this type
-"value_constraints" : { // A dictionary of constraints
-    // Each key is the field to which the constraint applies
-    // The value specifies the constraint.
-    // "equals" can be used to specify a constant string value the field must take.
-    // "equals_statistic" specifies that the value must match the value of some statistic (see below)
+"event_type" : "avatar_moves", // 이벤트 유형입니다.  변환은 이 유형의 이벤트에 적용됩니다.
+"value_constraints" : { // 제약 조건 사전
+    // 각 키는 제약조건이 적용되는 필드입니다.
+    // 값은 제약 조건을 지정합니다.
+    // "equals"은 필드가 사용해야 하는 상수 문자열 값을 지정하는 데 사용할 수 있습니다.
+    // "equals_statistic"은 값이 일부 통계 값과 일치해야 함을 지정합니다(아래 참조).
     "mount" : { "equals": "mon_horse" }
 }
-// Since we are filtering to only those events where 'mount' is 'mon_horse', we
-// might as well drop the 'mount' field, since it provides no useful information.
+// 'mount'가 'mon_horse'인 이벤트만 필터링하므로
+// 유용한 정보를 제공하지 않으므로 'mount' 필드를 삭제하는 것이 좋습니다.
 "drop_fields" : [ "mount" ]
 ```
 
 #### `event_statistic`
 
-`event_transformation`과 마찬가지로 `event_statistic`도 입력 event stream이 필요합니다.
-입력 stream은 아래 두 항목 중 하나로 지정할 수 있습니다:
+`event_transformation`과 마찬가지로 `event_statistic`에도 입력 이벤트 스트림이 필요합니다. 그 입력
+스트림은 다음 두 가지 중 하나를 통해 `event_transformation`과 동일하게 지정할 수 있습니다.
+항목:
 
 ```json
-"event_type" : "avatar_moves" // Events of this built-in type
-"event_transformation" : "moves_on_horse" // Events resulting from this json-defined transformation
+"event_type" : "avatar_moves" // 이 내장 유형의 이벤트
+"event_transformation" : "moves_on_horse" // 이 json 정의 변환으로 인해 발생하는 이벤트
 ```
 
-그 다음 `stat_type`과 추가 세부사항을 다음과 같이 지정합니다:
+그런 다음 특정 `stat_type` 및 잠재적으로 다음과 같은 추가 세부 정보를 지정합니다.
 
 이벤트 수:
 
@@ -456,50 +385,52 @@ struct event_spec<event_type::gains_skill_level> {
 "stat_type" : "count"
 ```
 
-모든 이벤트에서 지정 필드 숫자값의 합:
+모든 이벤트에 걸쳐 지정된 필드의 숫자 값 합계:
 
 ```json
 "stat_type" : "total"
 "field" : "damage"
 ```
 
-모든 이벤트에서 지정 필드 숫자값의 최댓값:
+모든 이벤트에서 지정된 필드에 있는 숫자 값의 최대값:
 
 ```json
 "stat_type" : "maximum"
 "field" : "damage"
 ```
 
-모든 이벤트에서 지정 필드 숫자값의 최솟값:
+모든 이벤트에서 지정된 필드에 있는 숫자 값의 최소값:
 
 ```json
 "stat_type" : "minimum"
 "field" : "damage"
 ```
 
-고려할 이벤트가 하나뿐이라고 가정하고, 그 유일한 이벤트의 지정 필드 값을 사용:
+고려해야 할 이벤트가 하나만 있다고 가정하고 해당 이벤트에 대해 지정된 필드의 값을 사용합니다.
+독특한 이벤트:
 
 ```json
 "stat_type": "unique_value",
 "field": "avatar_id"
 ```
 
-`stat_type`과 무관하게 각 `event_statistic`에는 다음도 가질 수 있습니다:
+`stat_type`에 관계없이 각 `event_statistic`에는 다음이 포함될 수도 있습니다.
 
 ```json
-// Intended for use in describing scores and achievement requirements.
+// 점수 및 성취 요건을 설명하는 데 사용됩니다.
 "description": "Number of things"
 ```
 
 #### `score`
 
-Score는 점수 표시에 사용할 설명을 이벤트와 연결합니다.
-`description`은 statistic 값이 삽입될 `%s` 포맷 지정자를 포함해야 합니다.
+점수는 단순히 점수 표 형식화를 위해 설명을 이벤트에 연결합니다. 는
+`description`은 `%s` 형식 지정자를 포함할 것으로 예상되는 문자열을 지정합니다.
+통계값이 삽입됩니다.
 
-대부분의 statistic이 정수를 반환하더라도 `%s`를 사용해야 합니다.
+대부분의 통계가 정수를 산출하더라도 `%s`을 계속 사용해야 합니다.
 
-기반 statistic에 description이 있으면 score description은 선택입니다.
-기본값은 "<statistic description>: <value>"입니다.
+기본 통계에 설명이 있는 경우 점수 설명은 선택 사항입니다. 기본값
+"<statistic description>: <value>"로.
 
 ```json
 "id": "score_headshots",
@@ -510,78 +441,81 @@ Score는 점수 표시에 사용할 설명을 이벤트와 연결합니다.
 
 #### `achievement`
 
-Achievement는 일반적인 의미에서 플레이어가 달성하도록 설계된 목표입니다.
+업적은 플레이어가 열망하는 목표이며, 게임에서 대중화된 용어의 일반적인 의미입니다.
+다른 게임.
 
-Achievement는 요구사항으로 정의되며, 각 요구사항은 `event_statistic`에 대한 제약입니다.
-예:
+업적은 요구 사항을 통해 지정되며 각 요구 사항은 `event_statistic`에 대한 제약 조건입니다.
+예를 들면:
 
 ```json
 {
   "id": "achievement_kill_zombie",
   "type": "achievement",
-  // The achievement name and description are used for the UI.
-  // Description is optional and can provide extra details if you wish.
+  // 업적 이름과 설명은 UI에 사용됩니다.
+  // 설명은 선택사항이며 원하는 경우 추가 세부정보를 제공할 수 있습니다.
   "name": "One down, billions to go\u2026",
   "description": "Kill a zombie",
   "requirements": [
-    // Each requirement must specify the statistic being constrained, and the
-    // constraint in terms of a comparison against some target value.
+    // 각 요구 사항은 제한되는 통계를 지정해야 하며
+    // 일부 목표 값과의 비교 측면에서 제약이 있습니다.
     { "event_statistic": "num_avatar_zombie_kills", "is": ">=", "target": 1 }
   ]
 },
 ```
 
-`"is"` 필드는 `">="`, `"<="`, `"anything"` 중 하나여야 합니다. `"anything"`이 아니면
-`"target"`이 있어야 하며 정수여야 합니다.
+`"is"` 필드는 `">="`, `"<="` 또는 `"anything"`이어야 합니다. `"anything"`가 아닌 경우 `"target"`
+존재해야 하며 정수여야 합니다.
 
-추가 선택 필드는 다음과 같습니다:
+추가 선택 필드가 있습니다.
 
 ```json
 "hidden_by": [ "other_achievement_id" ]
 ```
 
-다른 achievement id 목록을 지정합니다. 목록의 achievement가 모두 완료될 때까지 이 achievement는
-숨겨집니다(UI에 표시되지 않음).
+다른 업적 ID 목록을 제공하세요. 이 업적은 숨겨집니다(예:
+업적 UI) 나열된 모든 업적이 완료될 때까지.
 
-스포일러 방지 또는 achievement 목록의 혼잡도를 줄일 때 사용하세요.
+스포일러를 방지하거나 업적 목록의 혼란을 줄이려면 이 기능을 사용하세요.
 
 ```json
 "skill_requirements": [ { "skill": "archery", "is": ">=", "level": 5 } ]
 ```
 
-Achievement를 획득할 수 있는 시점에 스킬 레벨 요구사항(상한/하한)을 추가할 수 있습니다.
-`"skill"` 필드는 스킬 id를 사용합니다.
+이를 통해 성취가 언제 달성될 수 있는지에 대한 기술 수준 요구 사항(상한 또는 하한)을 허용합니다.
+청구됩니다. `"skill"` 필드는 스킬의 ID를 사용합니다.
 
-아래 `"time_constraint"`와 마찬가지로 achievement는 `"requirements"`에 나열된 statistic이 변경될 때만
-획득할 수 있습니다.
+아래의 `"time_constraint"`와 같은 업적은 통계가 나열된 경우에만 캡처할 수 있습니다.
+`"requirements"`에서 변경됩니다.
 
 ```json
 "kill_requirements": [ { "faction": "ZOMBIE", "is": ">=", "count": 1 }, { "monster": "mon_sludge_crawler", "is": ">=", "count": 1 } ],
 ```
 
-Achievement를 획득할 수 있는 시점에 처치 요구사항(상한/하한)을 추가할 수 있습니다.
-대상은 `"faction"` 또는 `"monster"`로 정의하며, `species.json`의 species id 또는 특정 monster id를 사용합니다.
+이를 통해 달성할 수 있는 시기에 대한 처치 요구 사항(상한 또는 하한)을 허용합니다.
+주장했다. 다음의 종 ID를 사용하여 `"faction"` 또는 `"monster"`을 대상으로 정의할 수 있습니다.
+`species.json` 또는 특정 몬스터 ID.
 
-각 항목당 `"monster"`/`"faction"` 중 하나만 사용할 수 있습니다. 둘 다 없으면 아무 몬스터나 조건을
-충족합니다.
+항목당 `"monster"`/`"faction"` 필드 중 하나만 사용할 수 있습니다. 둘 다 사용되지 않는 경우,
+몬스터가 요구 사항을 충족합니다.
 
-현재 NPC는 대상으로 지정할 수 없습니다.
+NPC는 현재 대상으로 정의할 수 없습니다.
 
-아래 `"time_constraint"`와 마찬가지로 achievement는 `"requirements"`에 나열된 statistic이 변경될 때만
-획득할 수 있습니다.
+아래의 `"time_constraint"`와 같은 업적은 통계가 나열된 경우에만 캡처할 수 있습니다.
+`"requirements"`에서 변경됩니다.
 
 ```json
 "time_constraint": { "since": "game_start", "is": "<=", "target": "1 minute" }
 ```
 
-Achievement를 획득할 수 있는 시점에 시간 제한(상한/하한)을 둘 수 있습니다.
-`"since"` 필드는 `"game_start"` 또는 `"cataclysm"`을 사용할 수 있습니다.
-`"target"`은 그 기준 시점 이후의 시간량을 설명합니다.
+이를 통해 성취를 달성할 수 있는 시간 제한(하한 또는 상한)을 설정할 수 있습니다.
+주장했다. `"since"` 필드는 `"game_start"` 또는 `"cataclysm"`일 수 있습니다. `"target"`에서는 설명합니다.
+해당 기준점 이후의 시간.
 
-Achievement는 요구사항의 statistic이 변경될 때만 획득 판정이 이루어집니다.
-따라서 시간 임계값 도달로 트리거되는 achievement(예: "일정 시간 생존")를 만들고 싶다면,
-시간이 지난 뒤 판정을 일으킬 수 있는 다른 요구사항을 함께 넣어야 합니다.
-자주 변하는 statistic을 골라 `"anything"` 제약을 추가하세요. 예:
+업적은 요구 사항에 나열된 통계가 변경되는 경우에만 캡처할 수 있습니다.
+따라서 일반적으로 특정 시간 임계값에 도달하면 트리거되는 업적을 원하는 경우
+(예: "survived a certain amount of time") 그런 다음 그 옆에 몇 가지 요구 사항을 배치해야 합니다.
+해당 시간이 지난 후에 트리거하십시오. 자주 변경될 수 있는 통계를 선택하고 추가하세요.
+`"anything"` 제약 조건. 예를 들면:
 
 ```json
 {
@@ -593,33 +527,122 @@ Achievement는 요구사항의 statistic이 변경될 때만 획득 판정이 �
 },
 ```
 
-이는 단순한 "하루 생존" 업적이지만, 기상 이벤트로 트리거되므로 게임 시작 24시간 이후 처음 잠에서
-깨어날 때 완료됩니다.
+이것은 단순한 "survive a day"이지만 깨어나면 트리거되므로 다음과 같이 완료됩니다.
+게임을 시작한 지 24시간 만에 처음으로 일어났습니다.
 
-### Skills
+### `requirements`
+
+Cataclysm의 요구 사항 시스템은 제작, 건설 및 기타 게임 메커니즘에 필요한 재사용 가능한 구성 요소, 도구 및 품질 세트를 정의합니다. 요구사항은 JSON 형식으로 정의되며 `data/json/requirements/`에 위치합니다.
+
+## JSON 구조
+
+### 기본 형식
 
 ```json
-"id" : "smg",  // Unique ID. Must be one continuous word, use underscores if necessary
-"name" : "submachine guns",  // In-game name displayed
-"description" : "Your skill with submachine guns and machine pistols. Halfway between a pistol and an assault rifle, these weapons fire and reload quickly, and may fire in bursts, but they are not very accurate.", // In-game description
-"tags" : ["gun_type"]  // Special flags (default: none)
+{
+  "id": "unique_id",
+  "type": "requirement",
+  "//": "Optional comment",
+  "components": [
+    [
+      ["gasoline", 1],
+      ["diesel", 1],
+      ["biodiesel", 1]
+    ]
+  ],
+  "tools": [
+    [
+      ["soldering_iron", 1],
+      ["soldering_ethanol", 10],
+      ["toolset", 1]
+    ]
+  ],
+  "qualities": [
+    { "id": "CUT", "level": 1 },
+    { "id": "HAMMER", "level": 2 }
+  ]
+}
 ```
 
-### Missions
+#### 형식
 
-(선택, mission id 배열)
+마지막 세 개의 배열 중 하나가 존재하는 한 선택 사항입니다. (요구 사항은 결국 _something_에 따라 달라져야 합니다!)
 
-이 profession/hobby의 시작 미션 목록입니다.
+**구성 요소**는 대안과 요구 사항을 나타내는 중첩 배열로 구성됩니다.
 
-예시:
+```json
+"components": [
+  [ /* Group 1: ONE of these required */ ],
+  [ /* Group 2: ONE of these required */ ]
+]
+```
+
+- `[ "item_id", quantity ]` - 특정 항목
+- `[ "item_id", quantity, "LIST" ]` - 다른 요구사항 정의를 참조합니다.
+
+**도구**는 사용되었지만 소비되지 않는 항목과 청구 비용을 지정합니다.
+
+```json
+"tools": [
+  [
+    [ "tool_id", charges ],
+    [ "alternative", charges, "LIST" ]
+  ]
+]
+```
+
+`charges`는 양의 정수일 수 있습니다. 이 경우 소비된 요금 수를 참조하거나 `-1`는 요금이 사용되지 않음을 나타냅니다.
+
+**품질**은 필요한 최소 도구 품질 수준을 지정합니다.
+
+````json
+"qualities": [
+  { "id": "QUALITY_ID", "level": min_level }
+]
+
+#### Usage in Recipes
+
+Here is an example of a requirement in a recipe:
+
+```json
+"using": [ [ "requirement_id", multiplier ] ]
+````
+
+다양한 요구사항:
+
+```json
+"using": [
+  [ "welding_standard", 1 ],
+  [ "forging_standard", 2 ]
+]
+```
+
+`/data/json/requirements` 폴더의 파일을 탐색하여 특정 유형의 항목 또는 구성 요소에 대한 요구 사항의 일반적인 예를 볼 수 있습니다. 요구 사항이 순환 종속성을 형성하지 않는지 확인하세요.
+
+### 스킬
+
+```json
+"id" : "smg",  // 고유 ID. 하나의 연속된 단어여야 합니다. 필요한 경우 밑줄을 사용하세요.
+"name" : "submachine guns",  // 게임 내 이름이 표시됨
+"description" : "Your skill with submachine guns and machine pistols. Halfway between a pistol and an assault rifle, these weapons fire and reload quickly, and may fire in bursts, but they are not very accurate.", // 게임 내 설명
+"tags" : ["gun_type"]  // 특수 플래그(기본값: 없음)
+```
+
+### 임무
+
+(선택사항, 임무 ID 배열)
+
+이 직업/취미에 대한 시작 임무 목록입니다.
+
+예:
 
 ```JSON
 "missions": [ "MISSION_LAST_DELIVERY" ]
 ```
 
-## `json/` JSONs
+## `json/` JSON
 
-### Harvest
+### 수확
 
 ```json
 {
@@ -670,44 +693,53 @@ Achievement는 요구사항의 statistic이 변경될 때만 획득 판정이 �
 
 #### `id`
 
-수확 정의의 고유 id입니다.
+수확 정의의 고유 ID입니다.
 
 #### `type`
 
-객체를 수확 정의로 표시하려면 항상 `harvest`여야 합니다.
+개체를 수확 정의로 표시하려면 항상 `harvest`이어야 합니다.
 
 #### `message`
 
-해당 수확 정의를 사용하는 생물을 도축할 때 출력할 선택 메시지입니다.
-정의에서 생략할 수 있습니다.
+수확 정의를 사용하는 생물이 도살될 때 인쇄될 선택적 메시지입니다. 어쩌면
+정의에서 생략되었습니다.
 
 #### `entries`
 
-도축 시 생성될 수 있는 아이템과 생성 가능성을 정의하는 사전 배열입니다.
-`drop` 값은 생성할 아이템의 `id` 문자열이어야 합니다.
+도축 시 생산될 수 있는 품목과 그 가능성을 정의하는 사전 배열
+생산. `drop` 값은 생산할 아이템의 `id` 문자열이어야 합니다.
 
-`type` 값은 아이템이 나오는 신체 부위를 나타내는 문자열이어야 합니다. 허용 값:
-`flesh`: 생물의 "고기". `offal`: 생물의 "내장"(필드 드레싱 시 제거됨). `skin`: 생물의 "가죽"(쿼터링 시
-손상됨). `bone`: 생물의 "뼈"(일부는 필드 드레싱, 나머지는 시체 도축에서 획득). `bionic`: 생물 해부로 얻는
-아이템(CBM에 한정되지 않음). `bionic_group`: 생물 해부로 아이템을 주는 아이템 그룹(CBM 포함 그룹에 한정되지 않음).
+`type` 값은 항목의 출처와 관련된 본문 부분이 포함된 문자열이어야 합니다. 허용되는 값
+`flesh`: 생물의 "meat"입니다. `offal`: 생물의 "organs"입니다. 이것들
+현장 드레싱시 제거됩니다. `skin`: 생물의 "skin"입니다. 이게 망하는 동안에
+4등분. `bone`: 생물의 "bones"입니다. 당신은 현장에서 이것들 중 일부를 얻을 것입니다
+드레싱을 하고 나머지는 시체를 도살한 것입니다. `bionic`: 해부하여 얻은 아이템
+생물. CBM에만 국한되지 않습니다. `bionic_group`: 아이템을 주는 아이템 그룹
+생물을 해부하는 것. CBM을 포함하는 그룹에만 국한되지 않습니다.
 
-`flags` 값은 문자열 배열이어야 합니다. 수확 시 해당 항목의 아이템에 추가되는 플래그입니다.
+`flags` 값은 문자열 배열이어야 합니다. 그 항목에 추가될 플래그입니다.
+수확 후 입장.
 
-`faults` 값은 `fault_id` 문자열 배열이어야 합니다. 수확 시 해당 항목의 아이템에 추가되는 고장입니다.
+`faults` 값은 `fault_id` 문자열의 배열이어야 합니다. te에 추가되는 결함입니다.
+수확 시 해당 항목의 항목.
 
-`bionic`/`bionic_group` 외의 모든 `type`에 대해 다음 항목이 결과를 스케일합니다:
-`base_num`은 두 요소 배열로 최소/최대 생성 수를 정의합니다. `scale_num`은 두 요소 배열로,
-각 요소값 \\* survival 스킬만큼 최소/최대 드롭 수를 증가시킵니다. `max`는 `bas_num`/`scale_num` 계산 후 상한입니다.
-`mass_ratio`는 몬스터 무게 중 해당 아이템이 차지하는 비율 배수입니다. 질량 보존을 위해 모든 드롭의 합을
-0~1 사이로 유지하세요. 이 값이 있으면 `base_num`, `scale_num`, `max`를 덮어씁니다.
+다음 항목의 `bionic` 및 `bionic_group`를 제외한 모든 `type`에 대해 결과 크기를 조정합니다.
+`base_num` 값은 첫 번째 요소가 최소 수를 정의하는 두 개의 요소로 구성된 배열이어야 합니다.
+생산된 해당 품목의 수와 두 번째는 최대 수를 정의합니다. `scale_num` 값
+최소 및 최대 드롭 수를 각각 증가시키는 두 개의 요소가 있는 배열이어야 합니다.
+요소값 \* 생존 스킬 기준. `bas_num` 및 `scale_num` 계산 후 `max` 상한
+`mass_ratio` 값을 사용하는 것은 몬스터의 무게가 몬스터를 구성하는 양의 배수입니다.
+관련 항목. 질량을 보존하려면 모든 방울과 결합하여 0과 1 사이를 유지하십시오. 이는 재정의됩니다.
+`base_num`, `scale_num` 및 `max`
 
-`bionic`/`bionic_group` `type`에서는 다음 항목으로 결과를 스케일할 수 있습니다:
-`max`는(다른 `type`의 `max`와 달리) activity_handlers.cpp의 check_butcher_cbm()에 전달될 최대 도축 롤에
-해당합니다. 해당 함수에 전달된 롤 값별 분포 확률은 check_butcher_cbm()를 확인하세요.
+`type`의 경우: `bionic` 및 `bionic_group` 다음 항목은 결과를 확장할 수 있습니다. `max` 이 값
+(다른 `type`의 경우 `max`와 반대)는 전달될 최대 도살 롤에 해당합니다.
+Activity_handlers.cpp의 check_butcher_cbm(); 해당 내용을 보려면 check_butcher_cbm()을 확인하세요.
+해당 함수에 전달된 롤 값의 분포 확률
 
-### Weapon Category
+### 무기 카테고리
 
-무기(총기 또는 근접)를 분류해 그룹화할 때 사용하며, 주로 무술에서 사용됩니다.
+주로 무술에 사용하기 위해 무기(총 또는 근접 공격)를 그룹으로 분류하는 데 사용됩니다.
 
 ```json
 {
@@ -717,14 +749,15 @@ Achievement는 요구사항의 statistic이 변경될 때만 획득 판정이 �
 }
 ```
 
-`"name"`은 무술 UI 표시용 번역 문자열이며, ID는 JSON 항목에서 사용됩니다.
+`"name"`은 무술 UI에서 UI 표시에 사용되는 번역 가능한 문자열이고, JSON에는 ID가 사용됩니다.
+항목.
 
 ## 폐기 및 마이그레이션
 
-맵의 경우, 스폰 가능한 모든 위치에서 항목을 제거하고 mapgen 항목을 제거한 다음,
-오버맵 지형 id를 `data/json/obsoletion/migration_oter_ids.json`에 추가합니다.
-예를 들어 oter_id `underground_sub_station`, `sewer_sub_station`을 회전형 버전으로 마이그레이션할 수 있습니다.
-단, 해당 영역이 이미 생성된 경우 오버맵에 표시되는 타일만 변경됩니다:
+지도의 경우 항목이 생성될 수 있는 모든 장소에서 항목을 제거하고, mapgen 항목을 제거하고, 추가합니다.
+oter_id를 마이그레이션하기 위해 오버맵 지형 ID를 `data/json/obsoletion/migration_oter_ids.json`에 넣습니다.
+`underground_sub_station` 및 `sewer_sub_station`을 회전 가능한 버전으로 변환합니다. mapgen이
+이미 이 영역을 생성했습니다. 이는 오버맵에 표시된 타일만 변경합니다.
 
 ```json
 {
@@ -739,8 +772,9 @@ Achievement는 요구사항의 statistic이 변경될 때만 획득 판정이 �
 }
 ```
 
-`old_directions` 옵션을 켜면 각 항목마다 `old_north`, `old_west`, `old_south`, `old_east`에 대한
-마이그레이션 4개가 생성됩니다. 대상은 `new_directions` 값에 따라 달라집니다.
-`true`면 같은 방향으로 마이그레이션됩니다(`old_north` -> `new_north`, `old_east` -> `new_east` 등).
-`false`면 네 방향 모두 단일 `new`로 마이그레이션됩니다. 두 경우 모두 `oter_ids` 맵에는 접미사 없는
-순수 `old`/`new` 이름만 지정하면 됩니다.
+`old_directions` 옵션이 활성화되면 각 항목은 4개의 마이그레이션을 생성합니다: `old_north`에 대해,
+`old_west`, `old_south`, `old_east`. 마이그레이션 대상은 다음의 가치에 따라 달라집니다.
+`new_directions` 옵션. `true`로 설정되면 지형이 동일한 방향으로 마이그레이션됩니다.
+`old_north`에서 `new_north`, `old_east`에서 `new_east` 등. `new_directions`가 다음으로 설정된 경우
+`false`이면 4개의 지형이 모두 하나의 일반 `new`으로 마이그레이션됩니다. 두 경우 모두에 대해 당신은
+접미사 없이 `oter_ids` 맵에 일반 `old` 및 `new` 이름만 지정하면 됩니다.

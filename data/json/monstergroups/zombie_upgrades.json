@@ -51,8 +51,18 @@
     "type": "monstergroup",
     "default": "mon_skeleton_brute",
     "monsters": [
-      { "monster": "mon_skeleton_brute", "freq": 80, "cost_multiplier": 2 },
-      { "monster": "mon_skeleton_brute", "freq": 80, "cost_multiplier": 2 }
+      { "monster": "mon_skeleton_electric", "freq": 300, "cost_multiplier": 2 },
+      { "monster": "mon_skeleton_brute", "freq": 700, "cost_multiplier": 2 }
+    ]
+  },
+  {
+    "name": "GROUP_SKELETON_BRUTE_UPGRADE",
+    "type": "monstergroup",
+    "default": "mon_skeleton_hulk",
+    "//": "I'd put skeletal liches in here, but for some reason they disappear as soon as they are placed/spawned",
+    "monsters": [
+      { "monster": "mon_skeleton_master", "freq": 350, "cost_multiplier": 2 },
+      { "monster": "mon_skeleton_hulk", "freq": 650, "cost_multiplier": 2 }
     ]
   },
   {
@@ -74,10 +84,9 @@
     "name": "GROUP_ZOMBIE_ELECTRIC_UPGRADE",
     "default": "mon_null",
     "monsters": [
-      { "monster": "mon_zombie_nullfield", "freq": 550, "cost_multiplier": 0 },
-      { "monster": "mon_zombie_brute_shocker", "freq": 300, "cost_multiplier": 2 },
-      { "monster": "mon_skeleton_electric", "freq": 300, "cost_multiplier": 2 },
-      { "monster": "mon_zombie_stormbringer", "freq": 250, "cost_multiplier": 2, "starts": 500 }
+      { "monster": "mon_zombie_nullfield", "freq": 650, "cost_multiplier": 0 },
+      { "monster": "mon_zombie_brute_shocker", "freq": 400, "cost_multiplier": 2 },
+      { "monster": "mon_zombie_stormbringer", "freq": 350, "cost_multiplier": 2, "starts": 500 }
     ]
   },
   {
@@ -92,25 +101,24 @@
   {
     "type": "monstergroup",
     "name": "GROUP_SOLDIER_UPGRADE",
-    "default": "mon_zombie_kevlar_1",
+    "default": "mon_zombie_kevlar_0",
     "//": "Masters pick from here when upgrading.",
     "monsters": [
       { "monster": "mon_zombie_supply_sergeant", "freq": 100, "cost_multiplier": 2 },
       { "monster": "mon_zombie_soldier_blackops_1", "freq": 100, "cost_multiplier": 2 },
-      { "monster": "mon_zombie_soldier_acid_1", "freq": 100, "cost_multiplier": 2 },
-      { "monster": "mon_zombie_soldier_acid_2", "freq": 150, "cost_multiplier": 2 },
-      { "monster": "mon_zombie_soldier_acid_3", "freq": 50, "cost_multiplier": 10 }
+      { "monster": "mon_zombie_soldier_camo_1", "freq": 100, "cost_multiplier": 2 },
+      { "monster": "mon_zombie_soldier_acid_1", "freq": 125, "cost_multiplier": 2 },
+      { "monster": "mon_zombie_soldier_acid_2", "freq": 175, "cost_multiplier": 2 }
     ]
   },
   {
     "type": "monstergroup",
     "name": "GROUP_ZOMBIE_BURNER_UPGRADE",
-    "default": "mon_zombie_kevlar_1",
+    "default": "mon_zombie_kevlar_0",
     "monsters": [
       { "monster": "mon_zombie_soldier_blackops_1", "freq": 100, "cost_multiplier": 2 },
-      { "monster": "mon_zombie_soldier_acid_1", "freq": 100, "cost_multiplier": 2 },
-      { "monster": "mon_zombie_soldier_acid_2", "freq": 150, "cost_multiplier": 2 },
-      { "monster": "mon_zombie_soldier_acid_3", "freq": 50, "cost_multiplier": 10 },
+      { "monster": "mon_zombie_soldier_acid_1", "freq": 125, "cost_multiplier": 2 },
+      { "monster": "mon_zombie_soldier_acid_2", "freq": 170, "cost_multiplier": 2 },
       { "monster": "mon_zombie_smoker", "freq": 100, "cost_multiplier": 5 },
       { "monster": "mon_gas_zombie", "freq": 50, "cost_multiplier": 10 },
       { "monster": "mon_zombie_fiend", "freq": 50, "cost_multiplier": 10 }
@@ -161,7 +169,7 @@
   {
     "type": "monstergroup",
     "name": "GROUP_ZOMBIE_SWAT_UPGRADE",
-    "default": "mon_zombie_kevlar_1",
+    "default": "mon_zombie_kevlar_0",
     "monsters": [
       { "monster": "mon_zombie_tough", "freq": 250, "cost_multiplier": 2 },
       { "monster": "mon_zombie_hunter", "freq": 100, "cost_multiplier": 2 },
@@ -209,5 +217,30 @@
     "name": "GROUP_ZOMBIE_MINER_UPGRADE",
     "default": "mon_zombie_miner_evolved_moleman",
     "monsters": [ { "monster": "mon_zombie_miner_evolved_shady", "freq": 300, "cost_multiplier": 2 } ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_FERAL_UPGRADE",
+    "default": "mon_zombie",
+    "//": "Upgrades for basic ferals.  25% chance they don't make it (becoming either a zombie or a survivor zed), otherwise turn into survivor ferals.",
+    "monsters": [
+      { "monster": "mon_zombie_survivor", "freq": 40, "cost_multiplier": 5 },
+      { "monster": "mon_zombie_survivor_elite", "freq": 10, "cost_multiplier": 5 },
+      { "monster": "mon_feral_survivalist", "freq": 250, "cost_multiplier": 1 },
+      { "monster": "mon_feral_prepper", "freq": 250, "cost_multiplier": 1 },
+      { "monster": "mon_feral_militia", "freq": 250, "cost_multiplier": 1 }
+    ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_FERAL_SOLDIER_UPGRADE",
+    "default": "mon_zombie_soldier",
+    "//": "Upgrades for soldier ferals.  25% chance they don't make it (becoming a zombie soldier), otherwise get a gun.",
+    "monsters": [
+      { "monster": "mon_feral_soldier_rifle", "freq": 250, "cost_multiplier": 1 },
+      { "monster": "mon_feral_soldier_lmg", "freq": 200, "cost_multiplier": 1 },
+      { "monster": "mon_feral_soldier_shotgun", "freq": 200, "cost_multiplier": 1 },
+      { "monster": "mon_feral_soldier_sniper", "freq": 100, "cost_multiplier": 1 }
+    ]
   }
 ]

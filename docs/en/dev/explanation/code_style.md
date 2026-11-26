@@ -1,9 +1,8 @@
 # C++ Code Style Guide
 
-All of the C++ code in the project is styled, you should run any changes you make through astyle
-before pushing a pull request.
+All C++ code in the project is styled. Run `just fmt` before pushing, or `just fmt-cpp` for C++-only changes. The helper uses astyle only for top-level `src/*.cpp` and `src/*.h`; most other C++ files use clang-format. Formatter-sensitive fixtures such as `tools/clang-tidy-plugin/test/` are left unchanged.
 
-We are using astyle version 3.1. Version 3.0.1 will disagree in only a few places, while Version 3.6.6 will disagree in nearly every file.
+Where astyle is still used, use version 3.1. Version 3.0.1 will disagree in only a few places, while Version 3.6.6 will disagree in nearly every file.
 
 Blocks of code can be passed through astyle to ensure that their formatting is correct:
 

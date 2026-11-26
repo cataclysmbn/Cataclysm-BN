@@ -10,7 +10,7 @@
   },
   {
     "type": "MONSTER_BLACKLIST",
-    "categories": [ "GROUP_FUNGI", "GROUP_FUNGI_FUNGALOID", "GROUP_FUNGI_TOWER", "GROUP_FUNGI_FLOWERS" ]
+    "categories": [ "GROUP_FUNGI", "GROUP_FUNGI_FUNGALOID", "GROUP_FUNGI_TOWER", "GROUP_FUNGI_FLOWERS", "GROUP_FUNGI_BUDS" ]
   },
   {
     "type": "MONSTER_BLACKLIST",
@@ -37,6 +37,7 @@
   {
     "type": "region_overlay",
     "regions": [ "all" ],
-    "overmap_feature_flag_settings": { "blacklist": [ "FUNGAL" ] }
+    "overmap_feature_flag_settings": { "blacklist": [ "FUNGAL" ] },
+    "city": { "parks": { "fungal_buds": 0 } }
   }
 ]

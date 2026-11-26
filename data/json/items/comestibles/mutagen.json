@@ -8,6 +8,7 @@
     "price_postapoc": "50 cent",
     "//": "Not commercially traded, in case there was any question.",
     "comestible_type": "DRINK",
+    "spill_field": "fd_mutagen",
     "category": "mutagen",
     "weight": "250 g",
     "volume": "250 ml",
