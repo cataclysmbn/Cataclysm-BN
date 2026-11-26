@@ -12,6 +12,7 @@
 #include "coordinates.h"
 #include "cursesdef.h"
 #include "damage.h"
+#include "data_vars.h"
 #include "debug.h"
 #include "effect.h"
 #include "enums.h"
@@ -306,7 +307,11 @@ void Creature::process_turn()
         reset_bonuses();
         reset_stats();
     }
-    process_effects();
+    // Roll effects once per calendar turn, so their chances do not depend on the tick length
+    action_time_scale::for_each_calendar_turn_this_tick( [this] {
+        process_effects();
+        return !is_dead_state();
+    } );
 
     // add an appropriate number of moves
     if( !has_effect( effect_ridden ) ) {
@@ -1925,7 +1930,7 @@ auto Creature::get_value_as_int( const std::string &key ) const -> std::optional
     return string_utils::string_to_int( get_value( key ) );
 }
 
-auto Creature::get_values_map() const -> const std::unordered_map<std::string, std::string> &
+auto Creature::get_values_map() const -> const data_vars::data_set &
 {
     return values;
 }

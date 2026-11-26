@@ -9,7 +9,7 @@
  */
 
 import { Command } from "@cliffy/command"
-import { assertEquals } from "@std/assert"
+import { assertEquals, assertThrows } from "@std/assert"
 import { pooledMap } from "@std/async"
 import { emptyDir, ensureDir } from "@std/fs"
 import { basename, join } from "@std/path"
@@ -21,6 +21,7 @@ type Options = {
   jobs: number | "auto"
   slowShards: number
   nonSlowShards: number | "auto"
+  shardGroup: ShardGroup
   dryRun: boolean
   testBin: string
   testOpts: string[]
@@ -31,6 +32,12 @@ type Shard = {
   filters: string[]
   estimatedSeconds: number
   compute: "cpu" | "gpu_software"
+}
+
+/** One of `count` CI jobs that split the shards; `index` starts at 1. */
+type ShardGroup = {
+  index: number
+  count: number
 }
 
 type CommandResult = {
@@ -55,19 +62,19 @@ const fixedShards: Shard[] = [
   {
     name: "00-vehicle-rails-basic",
     filters: ["vehicle_rail_movement_basic*"],
-    estimatedSeconds: 215,
+    estimatedSeconds: 8,
     compute: "cpu",
   },
   {
     name: "09-vehicle-rails-fork",
     filters: ["vehicle_rail_movement_fork"],
-    estimatedSeconds: 180,
+    estimatedSeconds: 5,
     compute: "cpu",
   },
   {
     name: "19-vehicle-rails-shifting",
     filters: ["vehicle_rail_movement_shifting*"],
-    estimatedSeconds: 200,
+    estimatedSeconds: 16,
     compute: "cpu",
   },
   {
@@ -77,42 +84,101 @@ const fixedShards: Shard[] = [
       "[#shadowcasting_test] ~[.]",
       "[#zlevel_visibility_cache_test] ~[.]",
     ],
-    estimatedSeconds: 250,
+    estimatedSeconds: 187,
     compute: "gpu_software",
   },
   {
     name: "21-vehicle-efficiency",
     filters: ["[#vehicle_efficiency_test] ~[.]"],
-    estimatedSeconds: 260,
+    estimatedSeconds: 12,
     compute: "cpu",
   },
   {
     name: "22-starting-items",
     filters: ["starting_items"],
-    estimatedSeconds: 220,
+    estimatedSeconds: 24,
     compute: "cpu",
   },
   {
     name: "29-vehicle-rails-other",
     filters: ["vehicle_rail_movement_derailed,vehicle_rail_movement_ramp"],
-    estimatedSeconds: 120,
+    estimatedSeconds: 18,
+    compute: "cpu",
+  },
+  // Each Lua dimension test takes 40-200 s, so they do not share one shard with the rest of catalua_test.
+  {
+    name: "23-lua-dimension",
+    filters: ["[#catalua_test] ~[slow] ~[.] lua_dimension*"],
+    estimatedSeconds: 393,
+    compute: "cpu",
+  },
+  {
+    name: "24-lua-pocket-dimension",
+    filters: ["[#catalua_test] ~[slow] ~[.] lua_pocket_dimension*"],
+    estimatedSeconds: 199,
+    compute: "cpu",
+  },
+  {
+    name: "25-lua-dimension-other",
+    filters: [
+      `[#catalua_test] ~[slow] ~[.] "*dimension*" ~"lua_dimension*" ~"lua_pocket_dimension*"`,
+    ],
+    estimatedSeconds: 371,
     compute: "cpu",
   },
 ]
 
+/** Seconds per file tag on a Windows CI runner. Unlisted tags take about 6 s. */
 const tagWeights = new Map<string, number>([
-  ["[#enchantment_test]", 350],
-  ["[#vehicle_test]", 150],
-  ["[#vehicle_ramp_test]", 100],
-  ["[#map_test]", 100],
-  ["[#crafting_test]", 120],
-  ["[#weather_test]", 80],
-  ["[#json_test]", 70],
-  ["[#overmap_test]", 55],
-  ["[#generic_factory_test]", 35],
-  ["[#catalua_test]", 30],
-  ["[#vehicle_drag_test]", 18],
+  ["[#catalua_test]", 95],
+  ["[#map_test]", 457],
+  ["[#enchantment_test]", 276],
+  ["[#crafting_test]", 135],
+  ["[#electric_grid_test]", 122],
+  ["[#digital_media_test]", 108],
+  ["[#iteminfo_test]", 94],
+  ["[#rot_test]", 88],
+  ["[#overmap_test]", 77],
+  ["[#visitable_remove_test]", 74],
+  ["[#pet_system_test]", 72],
+  ["[#book_scanning_test]", 72],
+  ["[#simulation_test]", 69],
+  ["[#cultivated_harvest_test]", 67],
+  ["[#reading_test]", 65],
+  ["[#vehicle_test]", 62],
+  ["[#char_edible_rating_test]", 59],
+  ["[#monster_test]", 57],
+  ["[#speed_test]", 56],
+  ["[#magic_spell_test]", 56],
+  ["[#monster_attack_test]", 55],
+  ["[#char_healing_test]", 55],
+  ["[#vehicle_ramp_test]", 53],
+  ["[#char_stamina_test]", 52],
+  ["[#throwing_test]", 51],
+  ["[#reload_magazine_test]", 50],
+  ["[#melee_dodge_hit_test]", 50],
+  ["[#consume_hook_test]", 49],
+  ["[#item_tname_test]", 47],
+  ["[#explosion_balance_test]", 44],
+  ["[#projectile_test]", 41],
+  ["[#iuse_test]", 41],
+  ["[#monster_grab_balance_test]", 40],
+  ["[#npc_talk_test]", 38],
+  ["[#sound_mechanics_test]", 35],
+  ["[#effective_dps_test]", 34],
+  ["[#reload_selection_test]", 34],
+  ["[#reloading_test]", 33],
+  ["[#ranged_aiming_test]", 32],
+  ["[#water_movement_test]", 30],
 ])
+
+const slowTagWeights = new Map<string, number>([
+  ["[#stomach_contents_test]", 136],
+  ["[#weather_test]", 24],
+])
+
+/** Name filters that move tests out of their file tag shard into fixed shards. */
+const tagExclusions = new Map<string, string>([["[#catalua_test]", ` ~"*dimension*"`]])
 
 const specialTagPattern =
   /^\[#(vehicle_(efficiency|rails)|vision|shadowcasting|zlevel_visibility_cache)_test\]$/
@@ -167,7 +233,7 @@ const ensureFilenameTags = (testOpts: string[]): string[] =>
   testOpts.includes("--filenames-as-tags") ? testOpts : ["--filenames-as-tags", ...testOpts]
 
 export const extractFileTags = (text: string): string[] =>
-  [...text.matchAll(/\[#.*?_test\]/g)].map((match) => match[0]).toSorted()
+  [...text.matchAll(/\[#[^\]]+\]/g)].map((match) => match[0]).toSorted()
     .filter((tag, index, tags) => index === 0 || tag !== tags[index - 1])
 
 const distributeWorkItems = (items: Shard[], shardCount: number): Shard[] => {
@@ -191,8 +257,12 @@ const distributeWorkItems = (items: Shard[], shardCount: number): Shard[] => {
 
 const tagWorkItem = (tag: string, prefix: "slow" | "non-slow"): Shard => ({
   name: tag,
-  filters: [prefix === "slow" ? `[slow] ~starting_items ${tag}` : `~[slow] ~[.] ${tag}`],
-  estimatedSeconds: tagWeights.get(tag) ?? 10,
+  filters: [
+    prefix === "slow"
+      ? `[slow] ~starting_items ${tag}`
+      : `~[slow] ~[.] ${tag}${tagExclusions.get(tag) ?? ""}`,
+  ],
+  estimatedSeconds: (prefix === "slow" ? slowTagWeights : tagWeights).get(tag) ?? 6,
   compute: "cpu",
 })
 
@@ -220,6 +290,25 @@ export const buildShardPlan = (
     ...visibility,
     ...distributeWorkItems(cpuItems, nonSlowShards),
   ].toSorted((a, b) => b.estimatedSeconds - a.estimatedSeconds || a.name.localeCompare(b.name))
+}
+
+export const parseShardGroup = (value: string): ShardGroup => {
+  const match = /^([1-9][0-9]*)\/([1-9][0-9]*)$/.exec(value)
+  const group = match && { index: Number(match[1]), count: Number(match[2]) }
+  if (!group || group.index > group.count) {
+    throw new Error(`--shard-group must be i/n with 1 <= i <= n: ${value}`)
+  }
+  return group
+}
+
+/** Gives each shard, heaviest first, to the group with the least estimated time. */
+export const selectShardGroup = (shards: Shard[], { index, count }: ShardGroup): Shard[] => {
+  const loads = Array.from({ length: count }, () => 0)
+  return shards.filter((shard) => {
+    const target = loads.indexOf(Math.min(...loads))
+    loads[target] += shard.estimatedSeconds
+    return target === index - 1
+  })
 }
 
 const prepareShardDir = async (): Promise<{ path: string; cleanup: () => Promise<void> }> => {
@@ -256,6 +345,7 @@ const discoverTags = async (
     ...testOpts,
     `--user-dir=${join(shardDir, "discovery")}`,
     "--list-tags",
+    "~[slow] ~[.]",
   ], discoveryEnv)
   if (all.stderr) {
     console.error(all.stderr)
@@ -276,9 +366,6 @@ const discoverTags = async (
   return { allTags: extractFileTags(all.stdout), slowTags: extractFileTags(slow.stdout), testOpts }
 }
 
-const defaultCpuShardCompute = (): string | undefined =>
-  Deno.build.os === "windows" ? undefined : "cpu"
-
 const runShard = async (
   options: Options & { jobs: number; nonSlowShards: number },
   testOpts: string[],
@@ -288,30 +375,66 @@ const runShard = async (
   const compute = explicitCompute ??
     (shard.compute === "gpu_software"
       ? Deno.env.get("CATA_TEST_VISIBILITY_COMPUTE_ACCELERATION") ?? "gpu_software"
-      : defaultCpuShardCompute())
+      : "cpu")
   const userDirPrefix = Deno.env.get("CATA_TEST_USER_DIR_PREFIX") ?? "test_user_dir"
   const userDir = `${userDirPrefix}_${shard.name}`
   const filter = shard.filters.join(",")
   const start = Date.now()
-  console.log(`Starting shard ${shard.name} with ${compute ?? "default"} compute`)
-  const env: Record<string, string> = compute === undefined
-    ? {}
-    : { CATA_TEST_COMPUTE_ACCELERATION: compute }
+  console.log(`Starting shard ${shard.name} with ${compute} compute`)
   const result = await commandOutput(options.testBin, [
     ...testOpts,
     `--user-dir=${userDir}`,
     filter,
-  ], env)
-  if (result.stdout) {
-    console.log(result.stdout.trimEnd())
-  }
-  if (result.stderr) {
-    console.error(result.stderr.trimEnd())
-  }
+  ], { CATA_TEST_COMPUTE_ACCELERATION: compute })
   const elapsed = Math.round((Date.now() - start) / 1000)
-  console.log(`Finished shard ${shard.name} in ${elapsed}s with status ${result.code}`)
+  const output = `${result.stdout.trimEnd()}\n${result.stderr.trimEnd()}`.trim()
+  const finished = `Finished shard ${shard.name} in ${elapsed}s with status ${result.code}`
+  const ci = Deno.env.get("GITHUB_ACTIONS") === "true"
+  if (result.code === 0) {
+    console.log(ci ? `::group::${finished}\n${output}\n::endgroup::` : `${output}\n${finished}`)
+    return 0
+  }
+  const summary = [
+    ...extractFailureLines(output),
+    `${finished}. Rerun: ${rerunCommand(basename(options.testBin), filter, output)}`,
+  ].join("\n")
+  console.log(`${output}\n${finished}`)
+  console.log(
+    ci ? `::error title=Test shard ${shard.name} failed::${escapeWorkflowData(summary)}` : summary,
+  )
   return result.code
 }
+
+/** Builds a command that reruns one shard with the seed of its failed run. */
+export const rerunCommand = (testBin: string, filter: string, output: string): string => {
+  const seed = output.match(/Randomness seeded to: (\d+)/)?.[1]
+  return [testBin, "-#", ...(seed ? [`--rng-seed ${seed}`] : []), `"${filter}"`].join(" ")
+}
+
+const failureLinePattern =
+  /Failed test case: |: FAILED:|^ERROR |\(continued from above\) ERROR:|Terminated: |test cases:.*failed|Treating result as failure/
+
+/**
+ * Picks the lines that name the failed test and its error from one shard's test output.
+ * Test names and errors come first, so many failed assertions cannot push them out of the cap.
+ */
+export const extractFailureLines = (output: string): string[] => {
+  const lines = [
+    ...new Set(
+      output.replaceAll(/\x1b\[[0-9;]*m/g, "").split(/\r?\n/)
+        .map((line) => line.trim().replace(/^\d\d:\d\d:\d\d\.\d+ /, ""))
+        .filter((line) =>
+          failureLinePattern.test(line) && !line.endsWith("(error message will follow backtrace)")
+        ),
+    ),
+  ]
+  const isAssertion = (line: string) => line.includes(": FAILED:")
+  return [...lines.filter((line) => !isAssertion(line)), ...lines.filter(isAssertion)].slice(0, 30)
+}
+
+/** Escapes text for the message part of a GitHub Actions workflow command. */
+const escapeWorkflowData = (text: string): string =>
+  text.replaceAll("%", "%25").replaceAll("\r", "%0D").replaceAll("\n", "%0A")
 
 const run = async (options: Options): Promise<number> => {
   const parsed = await normalizedOptions(options)
@@ -336,7 +459,10 @@ const run = async (options: Options): Promise<number> => {
     }
 
     const { allTags, slowTags, testOpts } = await discoverTags(parsed, shardDir.path)
-    const shards = buildShardPlan(allTags, slowTags, parsed.nonSlowShards, parsed.slowShards)
+    const shards = selectShardGroup(
+      buildShardPlan(allTags, slowTags, parsed.nonSlowShards, parsed.slowShards),
+      parsed.shardGroup,
+    )
     await writeShardFiles(shardDir.path, shards)
     if (parsed.dryRun) {
       for (const shard of shards.toSorted((a, b) => a.name.localeCompare(b.name))) {
@@ -359,8 +485,54 @@ const run = async (options: Options): Promise<number> => {
   }
 }
 
+Deno.test("extractFailureLines keeps test name and error, drops passing output and backtrace", () => {
+  const stdout = [
+    "\x1b[1;32mAll tests passed\x1b[0m (4722604 assertions in 126 test cases)",
+    "Failed test case: spell effect - summon (error logged)",
+    "Treating result as failure due to error logged during tests.",
+  ]
+  const stderr = [
+    "04:04:24.468 ERROR DEBUGMSG : monfaction.cpp:46 [id] (error message will follow backtrace)",
+    "    cata_test-tiles(+0x4df6a4a) [0x55d39f116a4a]",
+    "(continued from above) ERROR: invalid monfaction id null",
+    "04:04:25.001 ERROR DEBUGMSG : monfaction.cpp:46 [id] invalid monfaction id null",
+    "04:04:26.001 ERROR DEBUGMSG : monfaction.cpp:46 [id] invalid monfaction id null",
+    "04:04:27.001 ERROR GAME : map.cpp:9 [f] bad map",
+  ]
+  assertEquals(extractFailureLines([...stdout, ...stderr].join("\n")), [
+    "Failed test case: spell effect - summon (error logged)",
+    "Treating result as failure due to error logged during tests.",
+    "(continued from above) ERROR: invalid monfaction id null",
+    "ERROR DEBUGMSG : monfaction.cpp:46 [id] invalid monfaction id null",
+    "ERROR GAME : map.cpp:9 [f] bad map",
+  ])
+})
+
+Deno.test("extractFailureLines keeps test name and error when 40 assertions fail", () => {
+  const asserts = Array.from({ length: 40 }, (_, i) => `a_test.cpp:${i}: FAILED:`)
+  const output = [...asserts, "Failed test case: a (assertion failed)", "12:00:00.000 ERROR : x"]
+  const lines = extractFailureLines(output.join("\n"))
+  assertEquals(lines.length, 30)
+  assertEquals(lines.slice(0, 3), [
+    "Failed test case: a (assertion failed)",
+    "ERROR : x",
+    "a_test.cpp:0: FAILED:",
+  ])
+})
+
+Deno.test("rerunCommand adds filename tags and the seed of the failed run", () => {
+  assertEquals(
+    rerunCommand("cata_test-tiles", "~[slow] ~[.] [#map_test]", "Randomness seeded to: 1794888166"),
+    `cata_test-tiles -# --rng-seed 1794888166 "~[slow] ~[.] [#map_test]"`,
+  )
+})
+
 Deno.test("extractFileTags returns sorted unique file tags", () => {
-  assertEquals(extractFileTags("x [#b_test] [foo] [#a_test] [#b_test]"), ["[#a_test]", "[#b_test]"])
+  assertEquals(extractFileTags("x [#b_test] [foo] [#a_test] [#data_vars] [#b_test]"), [
+    "[#a_test]",
+    "[#b_test]",
+    "[#data_vars]",
+  ])
 })
 
 Deno.test("buildShardPlan keeps visibility out of CPU shards", () => {
@@ -378,6 +550,22 @@ Deno.test("buildShardPlan keeps visibility on its GPU shard", () => {
   assertEquals(visibility?.compute, "gpu_software")
 })
 
+Deno.test("selectShardGroup gives every shard to exactly one group", () => {
+  const shards = buildShardPlan(["[#enchantment_test]", "[#map_test]", "[#tiny_test]"], [], 6, 1)
+  const groups = [1, 2, 3].map((index) => selectShardGroup(shards, { index, count: 3 }))
+  assertEquals(
+    groups.flat().map((shard) => shard.name).toSorted(),
+    shards.map((s) => s.name).toSorted(),
+  )
+  assertEquals(groups.every((group) => group.length > 0), true)
+})
+
+Deno.test("parseShardGroup rejects an index above the group count", () => {
+  assertEquals(parseShardGroup("2/3"), { index: 2, count: 3 })
+  assertThrows(() => parseShardGroup("4/3"))
+  assertThrows(() => parseShardGroup("0/3"))
+})
+
 if (import.meta.main) {
   try {
     const { options, args, literal } = await new Command()
@@ -388,6 +576,9 @@ if (import.meta.main) {
       .option("--slow-shards <slowShards:string>", "accepted for compatibility", { default: "4" })
       .option("--non-slow-shards <nonSlowShards:string>", "generated CPU shards, or auto", {
         default: "auto",
+      })
+      .option("--shard-group <shardGroup:string>", "run only group i of n, for example 2/3", {
+        default: "1/1",
       })
       .option("--dry-run", "print shard filters without running tests")
       .arguments("[testBin:string] [...testOpts:string]")
@@ -406,6 +597,7 @@ if (import.meta.main) {
         jobs,
         slowShards: parsePositiveInt("--slow-shards", options.slowShards),
         nonSlowShards,
+        shardGroup: parseShardGroup(options.shardGroup),
         dryRun: Boolean(options.dryRun),
         testBin: args[0] ?? defaultTestBin,
         testOpts: testOpts.length > 0 ? testOpts : defaultTestOpts,

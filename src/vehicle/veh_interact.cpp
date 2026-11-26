@@ -42,6 +42,7 @@
 #include "ui_manager.h"
 #include "units.h"
 #include "units_utility.h"
+#include "utils/scaled_by.h"
 #include "value_ptr.h"
 #include "veh_type.h"
 #include "veh_utils.h"
@@ -121,7 +122,6 @@ void act_vehicle_siphon(vehicle* veh);
 void act_vehicle_unload_fuel(vehicle* veh);
 
 auto veh_interact::serialize_activity() -> std::unique_ptr<player_activity> {
-    const auto& here = get_map();
     const auto& you = get_avatar();
     const auto* pt = sel_vehicle_part;
     const auto* vp = sel_vpart_info;
@@ -138,7 +138,11 @@ auto veh_interact::serialize_activity() -> std::unique_ptr<player_activity> {
                 if (pt->is_broken()) {
                     time = vp->install_time(you);
                 } else if (pt->base->max_damage() > 0) {
-                    time = vp->repair_time(you) * pt->base->damage() / pt->base->max_damage();
+                    time = utils::scaled_by({
+                        .total = vp->repair_time(you),
+                        .cur = pt->base->damage(),
+                        .max = pt->base->max_damage(),
+                    });
                 }
             }
             break;
@@ -149,6 +153,7 @@ auto veh_interact::serialize_activity() -> std::unique_ptr<player_activity> {
             break;
     }
     if (you.has_trait(trait_DEBUG_HT)) { time = 1; }
+    time = std::max(1, time);
     std::unique_ptr<player_activity> res =
         std::make_unique<player_activity>(ACT_VEHICLE, time, static_cast<int>(sel_cmd));
 
@@ -1173,7 +1178,11 @@ void veh_interact::do_repair() {
             if (!vp.repair_requirements().is_empty() && pt.base->max_damage() > 0) {
                 ok = format_reqs(
                     nmsg, vp.repair_requirements() * pt.base->damage_level(4), vp.repair_skills,
-                    vp.repair_time(you) * pt.base->damage() / pt.base->max_damage());
+                    utils::scaled_by({
+                        .total = vp.repair_time(you),
+                        .cur = pt.base->damage(),
+                        .max = pt.base->max_damage(),
+                    }));
             } else {
                 nmsg += colorize(_("This part cannot be repaired"), c_light_red);
                 ok = false;
@@ -1287,6 +1296,10 @@ void veh_interact::do_refill() {
                 if (obj.typeId() == fuel_type_battery && can_reload) {
                     msg = _("You cannot recharge a vehicle battery with handheld batteries");
                     return false;
+                } else {
+                    if (obj.is_container() && !obj.contents.empty()) {
+                        return pt.can_reload(&obj.contents.front());
+                    }
                 }
                 return can_reload;
             }
@@ -2505,10 +2518,14 @@ void veh_interact::display_stats() const {
                weight_units());
     if (veh->has_lift()) {
         // convert newton to kg.
-        units::mass lift_as_mass = units::from_newton(
-            veh->total_lift(true, false, !veh->engine_on));
-        print_stat(_("Maximum Lift: <color_light_blue>%5.0f</color> %s"),
-                   convert_weight(lift_as_mass), weight_units());
+        units::mass active_lift_as_mass = units::from_newton(
+            veh->total_lift(true, false, !veh->engine_on, false));
+        units::mass passive_lift_as_mass = units::from_newton(
+            veh->total_lift(true, false, !veh->engine_on, true));
+        print_stat(
+            _("Maximum Lift (act/idle): (<color_light_blue>%5.0f</color>, <color_light_blue>%5.0f</color>) %s"),
+            convert_weight(active_lift_as_mass), convert_weight(passive_lift_as_mass),
+            weight_units());
         if (veh->has_part("WING")) {
             print_stat(_("Liftoff Speed: <color_light_blue>%3d</color> %s"),
                        veh->get_takeoff_speed(), velocity_units(VU_VEHICLE));
@@ -3100,7 +3117,9 @@ void veh_interact::complete_vehicle(Character& who) {
 
             // TODO: allow boarding for non-players as well.
             player* const pl = g->critter_at<player>(vehp);
-            if (vpinfo.has_flag(VPFLAG_BOARDABLE) && pl) { here.board_vehicle(vehp, pl); }
+            if (vpinfo.has_flag(VPFLAG_BOARDABLE) && pl && !pl->in_vehicle) {
+                here.board_vehicle(vehp, pl);
+            }
 
             who.add_msg_if_player(
                 m_good, _("You install a %1$s into the %2$s."), veh->part(partnum).name(),
@@ -3147,7 +3166,7 @@ void veh_interact::complete_vehicle(Character& who) {
                 }
 
             } else if (pt.is_fuel_store()) {
-                auto qty = src->charges;
+                auto qty = !src->contents.empty() ? src->contents.front().charges : src->charges;
                 pt.base->reload(who, *src, qty);
 
                 //~ 1$s vehicle name, 2$s reactor name

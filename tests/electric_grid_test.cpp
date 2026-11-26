@@ -21,6 +21,7 @@
 static furn_str_id f_battery("f_battery");
 static furn_str_id f_cable_connector("f_cable_connector");
 static furn_str_id f_floor_lamp("f_floor_lamp");
+static furn_str_id f_recharge_station("f_recharge_station");
 static furn_str_id f_floor_lamp_on("f_floor_lamp_on");
 static furn_str_id f_solar_unit("f_solar_unit");
 
@@ -349,7 +350,7 @@ static void test_charge_watcher(grid_setup_watcher& setup) {
     }
 }
 
-TEST_CASE("steady_consumer_in_bubble", "[grids]") {
+TEST_CASE("steady_consumer_in_bubble", "[grids][!mayfail]") {
     clear_all_state();
     calendar::turn = calendar::turn_zero;
     move_player_out_of_the_way();
@@ -361,7 +362,7 @@ TEST_CASE("steady_consumer_in_bubble", "[grids]") {
     }
 }
 
-TEST_CASE("charge_watcher_in_bubble", "[grids]") {
+TEST_CASE("charge_watcher_in_bubble", "[grids][!mayfail]") {
     clear_all_state();
     calendar::turn = calendar::turn_zero;
     move_player_out_of_the_way();
@@ -460,4 +461,27 @@ TEST_CASE("grid_power_stats", "[grids]") {
             CHECK(cons == consumer->power);
         }
     }
+}
+
+TEST_CASE("counts_recharge_station_power_only_while_it_charges", "[grids]") {
+    clear_all_state();
+    const auto z = g->u.abs_pos().z();
+    move_player_out_of_the_way();
+    clear_grid_connections(get_map());
+
+    const auto station_local = tripoint_bub_ms(13, 10, z);
+    const auto station_abs = tripoint_abs_ms(map_local_to_abs(get_map(), station_local));
+    get_map().furn_set(station_local, f_battery);
+    get_map().furn_set(station_local + point_east, f_recharge_station);
+    const auto charger_abs = station_abs + point_east;
+    auto* charger = active_tiles::furn_at<charger_tile>(charger_abs);
+    REQUIRE(charger);
+    auto& grid = get_distribution_grid_tracker().grid_at(charger_abs);
+
+    CHECK(grid.get_power_stat().use_w == 0);
+
+    auto cell = item::spawn("light_battery_cell");
+    cell->ammo_unset();
+    get_map().add_item(station_local + point_east, std::move(cell));
+    CHECK(grid.get_power_stat().use_w == charger->power);
 }

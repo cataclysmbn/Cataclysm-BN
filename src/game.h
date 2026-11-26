@@ -164,6 +164,9 @@ struct w_map {
 
 bool is_valid_in_w_terrain( point p );
 
+/// Submaps that a skip window processes every tick.
+using activity_skip_fire_submap_list = std::vector<std::pair<dimension_id, tripoint_abs_sm>>;
+
 // There is only one game instance, so losing a few bytes of memory
 // due to padding is not much of a concern.
 // NOLINTNEXTLINE(clang-analyzer-optin.performance.Padding)
@@ -588,12 +591,12 @@ class game : public submap_load_listener
         npc *find_npc( character_id id );
         /** Makes any nearby NPCs on the overmap active. */
         void load_npcs();
-    private:
         /** Resizes the reality bubble to an explicit target size.
          *  Safe to call mid-session: despawns out-of-range entities, flushes the
          *  submap load-manager work, rebuilds map grid and all dependent caches.
          */
         void resize_reality_bubble_to( int new_size );
+    private:
 
         /** Resizes the reality bubble to match the current REALITY_BUBBLE_SIZE option.
          *  Also clears in_activity_bubble_ so the normal size takes effect immediately.
@@ -955,7 +958,6 @@ class game : public submap_load_listener
         bool grabbed_veh_move( const tripoint_rel_ms &dp );
         auto grabbed_furn_move( const tripoint_rel_ms &dp ) -> bool;
 
-        void control_vehicle(); // Use vehicle controls  '^'
         void examine( const tripoint_bub_ms &p ); // Examine nearby terrain  'e'
         void examine();
 
@@ -970,6 +972,7 @@ class game : public submap_load_listener
         void butcher(); // Butcher a corpse  'B'
         void dissect(); // dissect a corpse
     public:
+        void control_vehicle(); // Use vehicle controls  '^'
         void place_player_overmap( const tripoint_abs_omt &om_dest );
 
         unsigned int get_seed() const;
@@ -1037,6 +1040,9 @@ class game : public submap_load_listener
          */
         void win();
 
+        /// Clears the skip window state, so the next do_turn may start a skip window. Tests use it.
+        auto reset_activity_fixed_window() -> void;
+
     private:
         void perhaps_add_random_npc();
 
@@ -1060,8 +1066,8 @@ class game : public submap_load_listener
         auto can_activity_fixed_window_skip( const time_duration &duration ) -> bool;
         auto has_activity_skip_blocking_npc_state() -> bool;
         auto has_activity_skip_relevant_vehicle() -> bool;
-        auto has_activity_skip_active_fire() -> bool;
-        auto run_activity_skip_batch_turns( int skipped_turns ) -> void;
+        auto run_activity_skip_batch_turns( int skipped_turns,
+                                            const activity_skip_fire_submap_list &fire_submaps ) -> void;
         auto handle_wait_activity_redraw( bool force = false ) -> void;
         auto run_activity_cadence_boundary() -> void;
         void handle_key_blocking_activity(); // Abort reading etc.

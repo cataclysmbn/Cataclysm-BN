@@ -1,0 +1,90 @@
+[
+  {
+    "type": "mod_tileset",
+    "compatibility": [ "UNDEAD_PEOPLE_BASE", "UNDEAD_PEOPLE" ],
+    "tiles-new": [
+      {
+        "file": "external_tileset/tcl.png",
+        "tiles": [
+          { "id": "lab_surface_parking_blockA0", "fg": [ 55, 56, 58, 57 ], "rotates": true },
+          { "id": "lab_surface_parking_blockA1", "fg": [ 59, 60, 62, 61 ], "rotates": true },
+          { "id": "lab_surface_parking_blockA2", "fg": [ 63, 64, 66, 65 ], "rotates": true },
+          { "id": "lab_res_8_SWD_ground", "fg": [ 36, 38, 37, 35 ], "rotates": true },
+          { "id": "lab_res_8_SED_ground", "fg": [ 28, 30, 29, 27 ], "rotates": true },
+          { "id": "lab_surface_parking_blockB0", "fg": [ 67, 68, 70, 69 ], "rotates": true },
+          { "id": "lab_surface_parking_blockB1", "fg": [ 71, 72, 74, 73 ], "rotates": true },
+          { "id": "lab_security_z0S", "fg": [ 48, 50, 49, 47 ], "rotates": true },
+          { "id": "lab_CORE_2x1_SED_ground", "fg": [ 23, 25, 24, 22 ], "rotates": true },
+          { "id": "lab_CORE_2x1_SWD_ground", "fg": [ 15, 17, 16, 14 ], "rotates": true },
+          { "id": "lab_surface_parking_blockC0", "fg": [ 75, 76, 78, 77 ], "rotates": true },
+          { "id": "lab_surface_parking_blockC1", "fg": [ 79, 80, 82, 81 ], "rotates": true },
+          { "id": "lab_security_z0", "fg": [ 52, 54, 53, 51 ], "rotates": true },
+          { "id": "lab_CORE_2x1_WC_ground", "fg": 26 },
+          { "id": "lab_CORE_2x1_EC_ground", "fg": [ 15, 17, 16, 14 ], "rotates": true },
+          { "id": "lab_surface_parking_blockD0", "fg": [ 83, 84, 86, 85 ], "rotates": true },
+          { "id": "lab_surface_parking_blockD1", "fg": [ 87, 88, 90, 89 ], "rotates": true },
+          { "id": "lab_security_z0N", "fg": [ 44, 46, 45, 43 ], "rotates": true },
+          { "id": "lab_CORE_2x1_NED_ground", "fg": [ 19, 21, 20, 18 ], "rotates": true },
+          { "id": "lab_CORE_2x1_NWD_ground", "fg": [ 15, 17, 16, 14 ], "rotates": true },
+          { "id": "lab_surface_parking_blockE0", "fg": [ 91, 92, 94, 93 ], "rotates": true },
+          { "id": "lab_surface_parking_blockE1", "fg": [ 95, 96, 98, 97 ], "rotates": true },
+          { "id": "lab_surface_parking_blockE2", "fg": [ 99, 100, 102, 101 ], "rotates": true },
+          { "id": "lab_res_8_SEU_ground", "fg": [ 32, 34, 33, 31 ], "rotates": true },
+          { "id": "lab_res_8_SWU_ground", "fg": [ 40, 42, 41, 39 ], "rotates": true },
+          { "id": "full_basic_lab_roof", "fg": 103 },
+          { "id": "lab_security_z-1", "fg": 117 },
+          { "id": "lab_security_z-2", "fg": 118 },
+          { "id": "lab_security_z-3", "fg": 119 },
+          { "id": "lab_security_z-4", "fg": 120 },
+          { "id": "lab_security_z-5", "fg": 121 },
+          { "id": "lab_security_z-6_final_flr", "fg": 122 },
+          { "id": [ "lab_2x1_CORE_-1E", "lab_2x1_CORE_-1W" ], "fg": 109 },
+          { "id": [ "lab_2x2_cargo_NE", "lab_2x2_cargo_SE", "lab_2x2_cargo_SW", "lab_2x2_cargo_NW" ], "fg": 112 },
+          { "id": [ "underground_lab_cargo_stationA", "underground_lab_cargo_stationB" ], "fg": 123 },
+          { "id": "lab_1x1_RES_8_bedrooms_security", "fg": 105 },
+          { "id": "lab_1x1_RES_8_bedrooms_maintenance", "fg": 104 },
+          { "id": [ "lab_1x1x2_RES_8_apartments_upper", "lab_1x1x2_RES_8_apartments_lower" ], "fg": 108 },
+          {
+            "id": [
+              "underground_lab_central_-5E",
+              "underground_lab_central_-5W",
+              "underground_lab_central_-6E",
+              "underground_lab_central_-6W",
+              "underground_lab_central_-7E",
+              "underground_lab_central_-7W"
+            ],
+            "fg": 124
+          },
+          { "id": [ "lab_maintenance_z-2&3_A", "lab_maintenance_z-2&3_B" ], "fg": 115 },
+          {
+            "id": [
+              "lab_res_8_NE",
+              "lab_res_8_SE",
+              "lab_res_8_SW",
+              "lab_res_8_NW",
+              "lab_res_8_SED",
+              "lab_res_8_SWD",
+              "lab_res_8_NWD",
+              "lab_res_8_NED"
+            ],
+            "fg": 116
+          },
+          { "id": [ "lab_health_z-2_A", "lab_health_z-2_B", "lab_health_z-3_A", "lab_health_z-3_B" ], "fg": 114 },
+          { "id": "lab_1x1_RES_8_commons_SEC", "fg": 107 },
+          { "id": "lab_1x1_RES_8_commons_MAINT", "fg": 106 },
+          { "id": [ "lab_CORE_2x1_2UP", "lab_CORE_2x1_1UP", "lab_CORE_2x1_2DN", "lab_CORE_2x1_1DN" ], "fg": 113 },
+          {
+            "id": [ "lab_2x2_MUT_tier_1_NE", "lab_2x2_MUT_tier_1_SE", "lab_2x2_MUT_tier_1_SW", "lab_2x2_MUT_tier_1_NW" ],
+            "fg": 110
+          },
+          {
+            "id": [ "lab_2x2_MUT_tier_2_NE", "lab_2x2_MUT_tier_2_SE", "lab_2x2_MUT_tier_2_SW", "lab_2x2_MUT_tier_2_NW_final_flr" ],
+            "fg": 111
+          }
+        ],
+        "sprite_width": 32,
+        "sprite_height": 32
+      }
+    ]
+  }
+]

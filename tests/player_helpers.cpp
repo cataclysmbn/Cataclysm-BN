@@ -57,6 +57,7 @@ void clear_character(player& dummy, bool debug_storage) {
     dummy.inv_clear();
     dummy.remove_primary_weapon();
     dummy.clear_mutations();
+    dummy.forget_all_recipes();
 
     // Prevent spilling, but don't cause encumbrance
     if (debug_storage && !dummy.has_trait(trait_id("DEBUG_STORAGE"))) {
@@ -82,9 +83,9 @@ void clear_character(player& dummy, bool debug_storage) {
 
     dummy.clear_skills();
     dummy.clear_morale();
-    dummy.activity->set_to_null();
-    // Make sure any lingering safe references from the activity are removed
-    dummy.activity->targets.clear();
+    // Replace the activity: set_to_null keeps index, values and targets for a continued read.
+    dummy.activity = std::make_unique<player_activity>();
+    dummy.backlog.clear();
     dummy.reset_chargen_attributes();
     dummy.set_pain(0);
     dummy.reset_bonuses();
@@ -137,7 +138,7 @@ void process_activity(player& dummy) {
     } while (dummy.activity);
 }
 
-auto spawn_npc(const tripoint_bub_ms& p, const std::string& npc_class) -> npc& { // *NOPAD*
+auto spawn_npc(const tripoint_bub_ms& p, const std::string& npc_class) -> npc& {
     const string_id<npc_template> test_guy(npc_class);
     const character_id model_id = g->m.place_npc(p, test_guy, true);
     g->load_npcs();

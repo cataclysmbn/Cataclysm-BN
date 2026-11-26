@@ -1,4 +1,5 @@
 #include "activity_handlers.h"
+#include "book_scanning.h"
 
 #include <algorithm>
 #include <climits>
@@ -36,7 +37,9 @@
 #include "crafting_quality.h"
 #include "creature.h"
 #include "damage.h"
+#include "digital_media.h"
 #include "debug.h"
+#include "catalua_coord.h"
 // TODO (https://github.com/cataclysmbn/Cataclysm-BN/issues/1612):
 // Remove that include after implementing repair_activity_actor.
 #include "catalua_hooks.h"
@@ -264,6 +267,7 @@ using namespace activity_handlers;
 
 const std::map< activity_id, std::function<void( player_activity *, player * )> >
 activity_handlers::do_turn_functions = {
+    { activity_id( "ACT_SCAN_BOOK" ), scan_book_do_turn },
     { ACT_BURROW, burrow_do_turn },
     { ACT_CRAFT, craft_do_turn },
     { ACT_FILL_LIQUID, fill_liquid_do_turn },
@@ -328,6 +332,7 @@ activity_handlers::do_turn_functions = {
 
 const std::map< activity_id, std::function<void( player_activity *, player * )> >
 activity_handlers::finish_functions = {
+    { activity_id( "ACT_SCAN_BOOK" ), scan_book_finish },
     { ACT_BURROW, burrow_finish },
     { ACT_BUTCHER, butcher_finish },
     { ACT_BUTCHER_FULL, butcher_finish },
@@ -2186,7 +2191,6 @@ void activity_handlers::start_fire_finish( player_activity *act, player *p )
     }
     p->practice( skill_survival, act->index, 5 );
 
-    map &here = get_map();
     firestarter_actor::resolve_firestarter_use( *p, abs_to_bub( act->placement ) );
     act->set_to_null();
 }
@@ -3426,6 +3430,23 @@ void activity_handlers::butcher_do_turn( player_activity *act, player *p )
 
 void activity_handlers::read_do_turn( player_activity *act, player *p )
 {
+    if( !act->targets.empty() && act->targets.front() &&
+        is_digital_file( *act->targets.front() ) ) {
+        const auto reader = digital_reader_for( *p, *act->targets.front() );
+        if( !reader ) {
+            p->add_msg_if_player( m_bad, _( "Your reader is no longer available.  You stop studying." ) );
+            act->set_to_null();
+            return;
+        }
+        const auto drain_interval_minutes = std::max<int64_t>( 1,
+                                            reader->get().get_var( "digital_read_charge_interval_minutes",
+                                                    int64_t{ 1 } ) );
+        const auto drain_interval = time_duration::from_minutes( drain_interval_minutes );
+        if( action_time_scale::once_every_this_tick( drain_interval ) ) {
+            auto &device = reader->get();
+            p->consume_charges( device, device.type->charges_to_use() );
+        }
+    }
     if( p->is_player() ) {
         if( !act->str_values.empty() && act->str_values[0] == "martial_art" && one_in( 3 ) ) {
             if( act->values.empty() ) {
@@ -3719,7 +3740,7 @@ void activity_handlers::operation_do_turn( player_activity *act, player *p )
 
             if( p->has_bionic( bid ) ) {
                 p->perform_uninstall( bid, act->values[difficulty_value], act->values[success_value],
-                                      units::from_joule( act->values[max_power_value] ), act->values[pl_skill_value] );
+                                      act->values[pl_skill_value] );
             } else {
                 debugmsg( _( "Tried to uninstall %s, but you don't have this bionic installed." ), bid.c_str() );
                 p->remove_effect( effect_under_op );
@@ -4441,7 +4462,7 @@ void activity_handlers::train_pet_finish( player_activity *act, player *p )
 {
     auto mon = act->monsters[0].lock();
     if( mon && mon->type->pet_training &&
-        p->get_skill_level( skill_survival ) < mon->type->pet_training->min_skill ) {
+        p->get_skill_level( mon->type->pet_training->skill ) < mon->type->pet_training->min_skill ) {
         p->add_msg_if_player( m_bad,
                               _( "You lack the skill to train %s effectively." ),
                               act->str_values[0] );
@@ -4455,7 +4476,9 @@ void activity_handlers::train_pet_finish( player_activity *act, player *p )
     mon->remove_effect( effect_well_fed );
     mon->remove_effect( effect_ai_waiting );
     auto const bonded = p->getID() == mon->bonded_character_id;
-    auto skill_rating = 10 * p->get_skill_level( skill_survival );
+    const skill_id pet_skill = mon->type->pet_training ? mon->type->pet_training->skill :
+                               skill_survival;
+    auto skill_rating = 10 * p->get_skill_level( pet_skill );
     if( bonded ) { skill_rating *= 2; }
     if( skill_rating >= 100 || skill_rating >= rng( 0, 100 ) ) {
         if( mon && mon->type->pet_training ) {
@@ -4474,7 +4497,7 @@ void activity_handlers::train_pet_finish( player_activity *act, player *p )
         }
     } else {
         p->add_msg_if_player( m_neutral,
-                              _( "Training your %s takes time, it seems they are making a bit of progress at least." ),
+                              _( "Training your %s takes time, but they haven't learned anything new yet." ),
                               act->str_values[0] );
     }
     act->set_to_null();
@@ -4937,7 +4960,7 @@ void activity_handlers::spellcasting_finish( player_activity *act, player *p )
     [ & ]( sol::table & params ) {
         params["char"] = p;
         params["spell"] = spell_being_cast;
-        params["target_pos"] = &target;
+        params["target_pos"] = cata::detail::lua_coords::to_lua( target );
     } );
     if( spell_being_cast.type->lua_callbacks ) {
         spell_being_cast.type->lua_callbacks->call_on_cast( *p->as_character(), spell_being_cast, target );

@@ -274,14 +274,13 @@ struct track {
     tripoint_abs_ms location;
 };
 
-static auto operator<<(std::ostream& os, track const& value) -> std::ostream& { // *NOPAD*
+static auto operator<<(std::ostream& os, track const& value) -> std::ostream& {
     os << value.participant << " l:" << value.location << " d:" << value.distance
        << " m:" << value.moves;
     return os;
 }
 
-static auto operator<<(std::ostream& os, const std::vector<track>& vec)
-    -> std::ostream& { // *NOPAD*
+static auto operator<<(std::ostream& os, const std::vector<track>& vec) -> std::ostream& {
     for (auto& track_instance : vec) { os << track_instance << " "; }
     return os;
 }

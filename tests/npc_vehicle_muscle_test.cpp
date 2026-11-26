@@ -25,7 +25,7 @@
 
 static const itype_id fuel_type_muscle("muscle");
 
-static auto create_test_npc() -> npc& { // *NOPAD*
+static auto create_test_npc() -> npc& {
     const string_id<npc_template> test_guy("test_talker");
     const auto npc_pos_abs = test_origin + tripoint_rel_ms(15, 15, 0);
     const character_id model_id = get_map().place_npc(abs_to_bub(npc_pos_abs), test_guy);

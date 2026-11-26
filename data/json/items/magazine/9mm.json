@@ -188,7 +188,7 @@
     "looks_like": "glock17_17",
     "type": "MAGAZINE",
     "name": { "str": "MP5 extended magazine" },
-    "description": "A drum magazine for use with the H&K MP5 SMG.  Much greater capacity but less reliable the factory specification magazine.",
+    "description": "A drum magazine for use with the H&K MP5 SMG.  Much greater capacity but less reliable than the factory specification magazine.",
     "weight": "350 g",
     "volume": "750 ml",
     "price": "6920 cent",

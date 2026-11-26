@@ -484,8 +484,51 @@
   {
     "type": "mapgen",
     "method": "json",
+    "weight": 100,
+    "om_terrain": [ "shelter_vandal_under" ],
+    "object": {
+      "fill_ter": "t_linoleum_white",
+      "rows": [
+        "########################",
+        "########################",
+        "########################",
+        "########################",
+        "########################",
+        "########################",
+        "########################",
+        "########################",
+        "####;;;;;;;;;;;;;;;;####",
+        "####;bbbbbbbbbbbbbb;####",
+        "####;b____________b;####",
+        "####;----_________b;####",
+        "####;$|T||bbbbb___b;####",
+        "####;____|----|___b;####",
+        "####;s%s_+____A___b;####",
+        "####;----|_<<_+___b;####",
+        "####;s%s_|_<<_+___b;####",
+        "####;____+____A___b;####",
+        "####;$|T||----|___b;####",
+        "####;---|%bbbbb___b;####",
+        "####;b____________b;####",
+        "####;b____________b;####",
+        "####;bbbbbbbbbbbbCB;####",
+        "####;;;;;;;;;;;;;;;;####"
+      ],
+      "palettes": [ "shelter" ],
+      "terrain": { "+": [ "t_door_c", "t_door_b" ] },
+      "furniture": { "b": [ [ "f_bench", 3 ], "f_bench_flipped", "f_null" ], "s": "f_sink", "%": "f_trashcan" },
+      "items": {
+        "_": [ { "item": "trash", "chance": 3 }, { "item": "shelter_supplies", "chance": 1 } ],
+        "%": { "item": "trash", "chance": 10, "repeat": 3 },
+        "s": { "item": "SUS_evac_shelter_sink_used", "chance": 70 }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
     "weight": 50,
-    "om_terrain": [ "shelter_under" ],
+    "om_terrain": [ "shelter_vandal_under" ],
     "object": {
       "fill_ter": "t_linoleum_white",
       "rows": [
@@ -515,10 +558,13 @@
         "####;;;;;;;;;;;;;;;;####"
       ],
       "palettes": [ "shelter" ],
-      "terrain": { "X": "t_door_boarded" },
+      "terrain": { "+": [ "t_door_c", "t_door_b" ], "X": "t_door_boarded" },
+      "furniture": { "b": [ [ "f_bench", 3 ], "f_bench_flipped", "f_null" ], "s": "f_sink", "%": "f_trashcan" },
       "items": {
         "_": [ { "item": "trash", "chance": 5 }, { "item": "shelter_supplies", "chance": 1 } ],
-        "b": { "item": "shelter", "chance": 10 }
+        "%": { "item": "trash", "chance": 20, "repeat": 3 },
+        "b": { "item": "shelter", "chance": 10 },
+        "s": { "item": "SUS_evac_shelter_sink_used", "chance": 70 }
       },
       "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 16, 18 ], "y": [ 10, 21 ], "repeat": [ 2, 4 ] } ]
     }

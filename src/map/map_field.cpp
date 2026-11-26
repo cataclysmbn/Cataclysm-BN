@@ -540,10 +540,6 @@ void map::player_in_field(player& u) {
 
 auto map::creature_in_field(Creature& critter, const bool movement_only) -> void {
     static const auto effect_downed = efftype_id("downed");
-    static const auto flag_NOSLIP = flag_id("NOSLIP");
-    static const auto ench_flag_NOSLIP = enchantment_flag_id("NOSLIP");
-    static const auto body_part_foot_l = bodypart_id("foot_l");
-    static const auto body_part_foot_r = bodypart_id("foot_r");
 
     bool in_vehicle = false;
     bool inside_vehicle = false;
@@ -874,8 +870,6 @@ static constexpr auto max_visual_spill_tiles = 90;
 struct spilled_liquid_field_candidate {
     int distance = 0;
     tripoint_bub_ms pos = tripoint_bub_ms::zero();
-
-    auto operator<=>(const spilled_liquid_field_candidate&) const = default; // *NOPAD*
 };
 
 static constexpr std::array<std::pair<int, int>, 8> spilled_liquid_adjacent_offsets = {{

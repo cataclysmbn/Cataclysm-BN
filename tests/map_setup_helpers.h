@@ -22,7 +22,7 @@ public:
 
     static constexpr char32_t key_invalid = U'?';
 
-    auto entry(char32_t c) const -> const std::string&; // *NOPAD*
+    auto entry(char32_t c) const -> const std::string&;
     auto key_for(const std::string& s) const -> char32_t;
 };
 
@@ -56,7 +56,7 @@ public:
 
     auto operator==(const canvas& rhs) const -> bool { return data == rhs.data; }
 
-    inline auto size() const -> const tripoint& { return size_cache; } // *NOPAD*
+    inline auto size() const -> const tripoint& { return size_cache; }
 
     void assert_size(const tripoint& sz) const;
     auto to_string() const -> std::string;
@@ -93,17 +93,16 @@ public:
     canvas_adapter(const canvas_legend& l) { with_legend(l); };
     ~canvas_adapter() = default;
 
-    inline auto with_legend(const canvas_legend& l) -> canvas_adapter& { // *NOPAD*
+    inline auto with_legend(const canvas_legend& l) -> canvas_adapter& {
         this->l = &l;
         return *this;
     }
-    inline auto with_getter(std::function<std::string(const tripoint&)> f)
-        -> canvas_adapter& { // *NOPAD*
+    inline auto with_getter(std::function<std::string(const tripoint&)> f) -> canvas_adapter& {
         getter = f;
         return *this;
     }
     inline auto with_setter(std::function<void(const tripoint&, const std::string&)> f)
-        -> canvas_adapter& { // *NOPAD*
+        -> canvas_adapter& {
         setter = f;
         return *this;
     }

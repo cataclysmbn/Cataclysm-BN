@@ -123,7 +123,6 @@ static const flag_id f_VEHICLE_NO_HOTWIRE("VEHICLE_NO_HOTWIRE");
 static const flag_id f_VEHICLE_HOTWIRE("VEHICLE_HOTWIRE");
 
 static const std::string str_DOOR_LOCKING("DOOR_LOCKING");
-static const std::string str_OPENCLOSE_INSIDE("OPENCLOSE_INSIDE");
 static const std::string str_PERPETUAL("PERPETUAL");
 constexpr auto battery_charge_bucket_count = 101;
 
@@ -545,7 +544,7 @@ auto vehicle::player_in_control(const Character& who) const -> bool {
     return remote_controlled(who);
 }
 
-auto vehicle::remote_controlled(const Character& who) const -> bool {
+auto vehicle::remote_controlled(const Character& /*who*/) const -> bool {
     vehicle* veh = g->remoteveh();
     if (veh != this) { return false; }
 
@@ -833,16 +832,15 @@ void vehicle::init_state(
         }
 
         if (pt.is_reactor()) {
+            const auto& fuel_type = pt.info().fuel_type;
             if (veh_fuel_mult == 100) { // Mint condition vehicle
-                pt.ammo_set(itype_plut_cell, pt.ammo_capacity());
+                pt.ammo_set(fuel_type, pt.ammo_capacity());
             } else if (one_in(2) && veh_fuel_mult > 0) { // Randomize charge a bit
-                pt.ammo_set(itype_plut_cell,
-                            pt.ammo_capacity() * (veh_fuel_mult + rng(0, 10)) / 100);
+                pt.ammo_set(fuel_type, pt.ammo_capacity() * (veh_fuel_mult + rng(0, 10)) / 100);
             } else if (one_in(2) && veh_fuel_mult > 0) {
-                pt.ammo_set(itype_plut_cell,
-                            pt.ammo_capacity() * (veh_fuel_mult - rng(0, 10)) / 100);
+                pt.ammo_set(fuel_type, pt.ammo_capacity() * (veh_fuel_mult - rng(0, 10)) / 100);
             } else {
-                pt.ammo_set(itype_plut_cell, pt.ammo_capacity() * veh_fuel_mult / 100);
+                pt.ammo_set(fuel_type, pt.ammo_capacity() * veh_fuel_mult / 100);
             }
         }
 
@@ -1876,7 +1874,7 @@ auto vehicle::can_unmount(const int p, std::string& reason) const -> bool {
     for (const auto& elem : parts_here) {
         const auto is_openable = part_info(elem).has_flag("OPENABLE");
         const auto is_working = !parts[elem].is_broken();
-        if (no_remove_locked && is_working) {
+        if (no_remove_locked && is_working && is_openable && !parts[elem].open) {
             const auto lock = part_with_feature(pt, str_DOOR_LOCKING, true);
             if (lock >= 0 && parts[lock].enabled) {
                 reason = string_format(_("Unlock the attached %s first."), part_info(lock).name());
@@ -2089,8 +2087,15 @@ auto vehicle::install_part(const tripoint_mnt_veh& dp, vehicle_part&& new_part) 
         }
     }
 
+    const auto* const old_parts = parts.data();
     parts.push_back(std::move(new_part));
-    refresh_locations_hack();
+    // Item locations only refer to this vehicle and the part's hack_id, so existing parts only
+    // need refreshing when the vector reallocated.
+    if (parts.data() != old_parts) {
+        refresh_locations_hack();
+    } else {
+        parts.back().refresh_locations_hack(this);
+    }
     auto& pt = parts.back();
     pt.set_vehicle_hack(this);
 
@@ -5194,7 +5199,6 @@ auto vehicle::total_solar_epower_w() const -> int {
 }
 
 auto vehicle::total_wind_epower_w() const -> int {
-    map& here = get_map();
     const oter_id& cur_om_ter =
         get_overmapbuffer(dimension_id_).ter(project_to<coords::omt>(abs_ms_location()));
     const weather_manager& weather = get_weather();
@@ -5269,6 +5273,22 @@ void vehicle::power_parts(int turns) {
     int delta_energy_bat = power_to_energy_bat(epower, 1_turns);
     int storage_deficit_bat = std::
         max(0, fuel_capacity(fuel_type_battery) - fuel_left(fuel_type_battery) - delta_energy_bat);
+    // If there are reactors also include demand from connected vehicles and distribution grids
+    if (!reactors.empty()) {
+        using tvr = distribution_graph::traverse_visitor_result;
+        auto charge_veh = [&storage_deficit_bat](vehicle& veh) {
+            g->u.add_msg_if_player(m_debug, "CHv: %d", storage_deficit_bat);
+            storage_deficit_bat +=
+                veh.fuel_capacity(fuel_type_battery) - veh.fuel_left(fuel_type_battery);
+            return tvr::continue_further;
+        };
+        auto charge_grid = [&storage_deficit_bat](distribution_grid& grid) {
+            g->u.add_msg_if_player(m_debug, "CHg: %d", storage_deficit_bat);
+            storage_deficit_bat += (grid.get_resource_capacity() - grid.get_resource(false));
+            return tvr::continue_further;
+        };
+        distribution_graph::traverse(*this, charge_veh, charge_grid);
+    }
     // Reactors trigger only on demand. If we'd otherwise run out of power, see
     // if we can spin up the reactors.
     if (!reactors.empty() && storage_deficit_bat > 0) {

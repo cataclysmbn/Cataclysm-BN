@@ -71,10 +71,7 @@ auto add_nearby_bionic_scanner_benchmark_items(
     return item_count;
 }
 
-auto add_bionic_scanner_benchmark_corpse(
-    map& here,
-    const tripoint_bub_ms& corpse_pos) -> item* // *NOPAD*
-{
+auto add_bionic_scanner_benchmark_corpse(map& here, const tripoint_bub_ms& corpse_pos) -> item* {
     auto corpse = item::make_corpse(mtype_id("mon_zombie_soldier"), calendar::turn, "");
     corpse->add_component(item::spawn("bio_power_storage", calendar::turn));
     auto* const corpse_ptr = corpse.get();

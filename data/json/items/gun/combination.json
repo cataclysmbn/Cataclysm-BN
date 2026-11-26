@@ -36,7 +36,7 @@
     "type": "GUN",
     "color": "brown",
     "name": { "str": "pipe combination gun" },
-    "description": "A home-made triple-barreled firearm, one barrel chambered in .30-06 and two other for shotgun shells.  It is made from pipes and parts cannibalized from a double barrel shotgun.",
+    "description": "A home-made triple-barreled firearm, one barrel chambered in .30-06 and two others for shotgun shells.  It is made from pipes and parts cannibalized from a double barrel shotgun.",
     "price": "400 USD",
     "//": "Attached mod will now have weight.",
     "material": [ "steel", "wood" ],

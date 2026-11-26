@@ -151,6 +151,29 @@ local function clutter_penalty(count)
   return math.min(steps * 2, max_penalty)
 end
 
+local has_tick_trait = false
+---@type integer?
+local tick_trait_generation = nil
+
+--- Run the 1-turn trait tick only for an avatar with one of these traits, or with depressants above
+--- intensity 3. Depressants clear misery morale left from a lost trait. Keep the trait answer until a
+--- trait changes or another game or avatar starts.
+---@return boolean
+local function needs_trait_tick()
+  local you = gapi.get_avatar()
+  if you == nil then return false end
+  local generation = gapi.trait_generation()
+  if generation ~= tick_trait_generation then
+    tick_trait_generation = generation
+    has_tick_trait = you:has_trait(trait_nyctophobia)
+      or you:has_trait(trait_claustrophobia)
+      or you:has_trait(trait_agoraphobia)
+  end
+  return has_tick_trait or you:get_effect_int(effect_depressants) > 3
+end
+
+local function forget_trait_tick() tick_trait_generation = nil end
+
 local function tick_nyctophobia()
   ---@type Avatar
   local you = gapi.get_avatar()
@@ -343,6 +366,8 @@ function lua_traits.register(mod)
   mod.on_nyctophobia_tick = tick_nyctophobia
   mod.on_morale_traits_tick = tick_morale_traits
   mod.on_clutter_intolerant_tick = tick_clutter_intolerant
+  mod.needs_trait_tick = needs_trait_tick
+  mod.forget_trait_tick = forget_trait_tick
 end
 
 return lua_traits

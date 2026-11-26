@@ -672,7 +672,7 @@
     "id": "spirit_armor",
     "type": "ARMOR",
     "name": { "str": "Spirit Armor" },
-    "description": "A magical barrier made of the user's conviction, will, and faith. Feels like a super light, permeable bubble around you and your equipment that hardens on impact. Most of it's power comes from draining inertia from anything that could harm the user.",
+    "description": "A magical barrier made of the user's conviction, will, and faith. Feels like a super light, permeable bubble around you and your equipment that hardens on impact. Most of its power comes from draining inertia from anything that could harm the user.",
     "weight": "1 g",
     "volume": "1 ml",
     "price": "0 USD",

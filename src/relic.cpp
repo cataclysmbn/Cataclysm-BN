@@ -2,7 +2,6 @@
 
 #include "action_time_scale.h"
 #include "calendar.h"
-#include "cata_unreachable.h"
 #include "character.h"
 #include "creature.h"
 #include "enchantments/enchantment.h"
@@ -21,6 +20,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <utility>
 
 static const efftype_id effect_sleep( "sleep" );
 
@@ -381,7 +381,7 @@ bool check_recharge_reqs( const item &itm, const relic_recharge &rech, const Cha
             std::abort();
         }
     }
-    cata::unreachable();
+    std::unreachable();
 }
 
 bool process_recharge_entry( item &itm, const relic_recharge &rech, Character *carrier )

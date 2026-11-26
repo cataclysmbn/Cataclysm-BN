@@ -128,4 +128,4 @@ Mod制作者は `"delete"` フィールドを追加することもできます�
 - もし generic_factoy が見つからなければ、copy-fromには対応していませ
   ん。例えば
   vitamin (ビタミン)タイプで同じ手順を踏むと、
-  [vitamin.cpp](https://github.com/cataclysmbn/Cataclysm-BN/tree/main/src/vitamin.cpp) には generic_factoyが存在しないことがわかります。
+  [vitamin.cpp](https://github.com/cataclysmbn/Cataclysm-BN/tree/main/src/item/vitamin.cpp) には generic_factoyが存在しないことがわかります。

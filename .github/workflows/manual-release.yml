@@ -15,11 +15,14 @@ env:
   VERSION: "v${{ inputs.major }}.${{ inputs.minor }}.${{ inputs.patch }}"
 
 jobs:
+  mods:
+    uses: ./.github/workflows/registry-mods-summary.yml
+
   release:
     name: Create Release
     runs-on: ubuntu-slim
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 1
       - name: Create release

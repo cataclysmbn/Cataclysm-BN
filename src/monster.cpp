@@ -62,6 +62,7 @@
 #include "profile.h"
 #include "projectile.h"
 #include "rng.h"
+#include "skill.h"
 #include "sounds.h"
 #include "string_formatter.h"
 #include "string_id.h"
@@ -74,6 +75,7 @@
 #include "weather/weather.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <iterator>
 #include <limits>
@@ -557,8 +559,10 @@ void monster::poly( const mtype_id &id )
         entry.cooldown = sa.second->cooldown;
     }
     faction = type->default_faction;
+    ammo = type->starting_ammo;
     upgrades = type->upgrades;
     reproduces = type->reproduces;
+    aggro_character = type->aggro_character;
 
     // HACK: We should know if the monster is in the bubble instead of checking it like this
     auto &tracker = get_mapbuffer().creature_tracker();
@@ -1195,6 +1199,84 @@ int monster::print_info( const catacurses::window &w, int vStart, int vLines, in
     return ++vStart;
 }
 
+namespace
+{
+
+/// Converts a petfood category id like "DOGFOOD" into a display name like "dog food".
+auto petfood_category_display_name( const std::string &category ) -> std::string
+{
+    std::string pretty;
+    pretty.reserve( category.size() + 1 );
+    for( const char c : category ) {
+        pretty += c == '_' ? ' ' : static_cast<char>( std::tolower( static_cast<unsigned char>( c ) ) );
+    }
+    const size_t food_pos = pretty.find( "food", 1 );
+    if( food_pos != std::string::npos ) {
+        pretty.insert( food_pos, " " );
+    }
+    return pretty;
+}
+
+/// Builds the "what it takes to tame and train this monster" text for the extended description.
+auto pet_requirements_description( const monster &mon ) -> std::string
+{
+    std::string ss;
+    const pet_food_data &petfood = mon.type->petfood;
+
+    std::vector<std::string> foods;
+    for( const std::string &category : petfood.food ) {
+        if( category != "NULL" ) {
+            foods.emplace_back( petfood_category_display_name( category ) );
+        }
+    }
+
+    if( foods.empty() ) {
+        ss += std::string( _( "It cannot be tamed." ) ) + "\n";
+        return ss;
+    }
+
+    ss += std::string( _( "<color_yellow>Taming</color> it requires:" ) ) + "\n";
+    ss += string_format( "  %s: %s\n", _( "Food" ),
+                         enumerate_as_string( foods, enumeration_conjunction::or_ ) );
+
+    if( !petfood.tamer_traits.empty() ) {
+        std::vector<std::string> trait_reqs;
+        for( const TraitSet &trait_set : petfood.tamer_traits ) {
+            trait_reqs.emplace_back( enumerate_as_string( trait_set.begin(), trait_set.end(),
+            []( const trait_id & trait ) { return trait.obj().name(); },
+            enumeration_conjunction::or_ ) );
+        }
+        ss += string_format( "  %s: %s\n", _( "Traits" ),
+                             enumerate_as_string( trait_reqs, enumeration_conjunction::and_ ) );
+    }
+
+    if( petfood.tame_min_skill > 0 ) {
+        ss += string_format( "  %s: %d\n", petfood.tame_skill->name(), petfood.tame_min_skill );
+    }
+
+    if( mon.type->pet_training && mon.type->pet_training->min_skill > 0 ) {
+        ss += "\n";
+        ss += std::string( _( "<color_yellow>Training</color> it requires:" ) ) + "\n";
+        ss += string_format( "  %s: %d\n", mon.type->pet_training->skill->name(),
+                             mon.type->pet_training->min_skill );
+        ss += "\n";
+    }
+
+    const auto pet_armors = item_controller->find( [&mon]( const itype & t ) {
+        return t.pet_armor && mon.type->bodytype == t.pet_armor->bodytype &&
+               mon.get_volume() >= t.pet_armor->min_vol && mon.get_volume() < t.pet_armor->max_vol;
+    } );
+    if( !pet_armors.empty() ) {
+        const itype *const example = *std::ranges::min_element( pet_armors, {},
+        []( const itype * t ) { return t->nname( 1 ).size(); } );
+        ss += string_format( _( "It can wear pet armor such as %s." ), example->nname( 1 ) ) + "\n";
+    }
+
+    return ss;
+}
+
+} // namespace
+
 std::string monster::extended_description() const
 {
     std::string ss;
@@ -1356,6 +1438,8 @@ std::string monster::extended_description() const
                              static_cast<int>( convert_weight( get_carried_weight() ) ),
                              static_cast<int>( convert_weight( weight_capacity() ) ) );
     }
+
+    ss += pet_requirements_description( *this );
 
     if( training_level > 0 && type->pet_training ) {
         const auto training_adj = []( float ratio ) -> const std::string {
@@ -1825,6 +1909,11 @@ Attitude monster::attitude_to( const Creature &other ) const
                            m->type->in_species( ZOMBIE ) ) ) {
             // Zombies ignoring a feral survivor aren't quite the same as friendly
             // Ignore actually-friendly zombies/ferals but not other friendlies like reprogramed bots
+            return Attitude::A_FRIENDLY;
+        } else if( g->u.has_trait( trait_THRESH_MYCUS ) &&
+                   ( ( friendly != 0 && m->type->in_species( FUNGUS ) ) ||
+                     ( m->friendly != 0 && type->in_species( FUNGUS ) ) ) ) {
+            // A mycus survivor's pets are accepted by wild fungus, and vice versa
             return Attitude::A_FRIENDLY;
         } else if( ( friendly == 0 && m->friendly == 0 && faction_att == MFA_HATE ) ) {
             // Stuff that hates a specific faction will always attack that faction
@@ -2583,6 +2672,13 @@ void monster::melee_attack( Creature &target, float accuracy )
             add_msg( m_bad, _( "Something hits your %s." ),
                      bp_hit->accusative.translated() );
         }
+        // Deal radiation damage, bypass immunity since we broke through armor
+        if( has_flag( MF_IRRADIATED ) ) {
+            Character *ch = target.as_character();
+            if( ch != nullptr ) {
+                ch->irradiate( damage.total_damage(), true );
+            }
+        }
     } else {
         // No damage dealt
         if( u_see_me ) {
@@ -2611,6 +2707,13 @@ void monster::melee_attack( Creature &target, float accuracy )
             //~ 1$s is bodypart name in accusative, 2$s is armor name.
             add_msg( _( "Something hits your %1$s, but your %2$s protects you." ),
                      bp_hit->accusative.translated(), target.skin_name() );
+        }
+        // Radiation damage, armor negated attack so check if we're wearing radiation protection
+        if( has_flag( MF_IRRADIATED ) ) {
+            Character *ch = target.as_character();
+            if( ch != nullptr ) {
+                ch->irradiate( damage.total_damage(), false );
+            }
         }
     }
 
@@ -4207,6 +4310,18 @@ bool monster::make_fungus()
     const std::string old_name = name();
     poly( type->fungalize_into );
 
+    // A fungalized pet only stays loyal to a mycus survivor; otherwise it
+    // reverts to a wild fungus hostile to the player.
+    if( friendly != 0 && !g->u.has_trait( trait_THRESH_MYCUS ) &&
+        !g->u.has_trait( trait_MYCUS_FRIEND ) ) {
+        friendly = 0;
+        remove_effect( effect_pet );
+        get_mapbuffer().creature_tracker().update_faction( *this );
+        if( g->u.sees( bub_pos() ) ) {
+            add_msg( m_warning, _( "The %s turns on you!" ), name() );
+        }
+    }
+
     if( g->u.sees( bub_pos() ) ) {
         add_msg( m_info, _( "The spores transform %1$s into a %2$s!" ),
                  old_name, name() );
@@ -4217,6 +4332,10 @@ bool monster::make_fungus()
 
 void monster::make_friendly()
 {
+    // Permanently friendly monsters must not be downgraded to a temporary countdown.
+    if( friendly < 0 ) {
+        return;
+    }
     unset_dest();
     friendly = rng( 5, 30 ) + rng( 0, 20 );
 }

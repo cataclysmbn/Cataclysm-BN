@@ -1,5 +1,6 @@
 #include "mapbuffer.h"
 
+#include "../overmap/omdata.h"
 #include "../overmap/overmapbuffer.h"
 #include "avatar.h"
 #include "batch_turns.h"
@@ -46,6 +47,7 @@
 #include "trap.h"
 #include "ui_manager.h"
 #include "units_mass.h"
+#include "utils/memory_stream.h"
 #include "vehicle/veh_type.h"
 #include "vehicle/vehicle.h"
 #include "vehicle/vehicle_part.h"
@@ -247,17 +249,19 @@ auto rotten_item_spawn(const actualize_tile_options& options, const item& source
         comestible->rot_spawn_chance * get_option<float>("CARRION_SPAWNRATE"));
     if (rng(0, 100) >= chance) { return; }
 
-    const auto spawn_details = MonsterGroupManager::GetResultFromGroup(comestible->rot_spawn);
+    const auto spawn_details_vec = MonsterGroupManager::GetResultFromGroup(comestible->rot_spawn);
     const auto disposition =
         source.has_own_flag(flag_SPAWN_FRIENDLY)
             ? spawn_disposition::SpawnDisp_Pet
             : spawn_disposition::SpawnDisp_Default;
-    add_spawn_to_submap({
-        .sm = options.sm,
-        .local = options.local,
-        .type = spawn_details.name,
-        .disposition = disposition,
-    });
+    for (const auto spawn_details : spawn_details_vec) {
+        add_spawn_to_submap({
+            .sm = options.sm,
+            .local = options.local,
+            .type = spawn_details.name,
+            .disposition = disposition,
+        });
+    }
 
     if (!options.active_bubble_pos || g == nullptr || !g->u.sees(*options.active_bubble_pos)) {
         return;
@@ -582,7 +586,8 @@ auto omt_submap_index(const point_omt_sm& local) -> std::optional<std::size_t> {
     return static_cast<std::size_t>(local.x() + local.y() * 2);
 }
 
-auto vertical_transition_target_below(const ter_id& source) -> std::optional<ter_id> {
+[[maybe_unused]] auto vertical_transition_target_below(const ter_id& source)
+    -> std::optional<ter_id> {
     static const auto t_stairs_down_no_roof = ter_id("t_stairs_down_no_roof");
     static const auto t_stairs_down_underwater = ter_id("t_stairs_down_underwater");
     static const auto t_stairs_up_underwater = ter_id("t_stairs_up_underwater");
@@ -602,7 +607,8 @@ auto vertical_transition_target_below(const ter_id& source) -> std::optional<ter
     return std::nullopt;
 }
 
-auto vertical_transition_target_above(const ter_id& source) -> std::optional<ter_id> {
+[[maybe_unused]] auto vertical_transition_target_above(const ter_id& source)
+    -> std::optional<ter_id> {
     static const auto t_stairs_down = ter_id("t_stairs_down");
     static const auto t_stairs_up_underwater = ter_id("t_stairs_up_underwater");
     static const auto t_stairs_down_underwater = ter_id("t_stairs_down_underwater");
@@ -735,6 +741,10 @@ auto mapbuffer_abs_tile_view::move_cost_with_vehicle(const optional_vpart_positi
 auto mapbuffer_abs_tile_view::passable_with_vehicle(const optional_vpart_position& vp) const
     -> bool {
     return move_cost_with_vehicle(vp) != 0;
+}
+
+auto mapbuffer_abs_tile_view::has_flag(ter_bitflags flag) const -> bool {
+    return get_ter_t().has_flag(flag) || get_furn_t().has_flag(flag);
 }
 
 mapbuffer_abs_tile_with_vehicle_view::mapbuffer_abs_tile_with_vehicle_view(
@@ -1151,7 +1161,7 @@ void mapbuffer::remove_submap(tripoint_abs_sm addr) {
         return;
     }
     // Safety: skip freeing if submap still in bubble
-    if (g != nullptr && m_target->second) {
+    if (g != nullptr && m_target->second && g->m.get_bound_dimension() == dimension_id_) {
         const submap* doomed = m_target->second.get();
         const map& here = g->m;
         if (here.inbounds(addr)) {
@@ -1216,6 +1226,7 @@ void mapbuffer::unload_omt(const tripoint_abs_omt& omt_addr, bool save) {
              base + point_rel_sm::south_east()}};
 
         bool all_uniform = true;
+
         for (const tripoint_abs_sm& addr : addrs) {
             const auto it = submaps.find(addr);
             if (it != submaps.end() && it->second && !it->second->is_uniform) {
@@ -1265,7 +1276,8 @@ void mapbuffer::unload_omt(const tripoint_abs_omt& omt_addr, bool save) {
     // Safety: skip freeing submaps that map::grid[] still references.
     // This prevents use-after-free when submap_loader eviction races with
     // map::shift() / copy_grid() during large map shifts (e.g. pocket entry).
-    if (g != nullptr) {
+    // Only the bubble's own dimension can alias grid[]; other dimensions share coordinates.
+    if (g != nullptr && g->m.get_bound_dimension() == dimension_id_) {
         const map& here = g->m;
         to_delete.remove_if([&](const tripoint_abs_sm& p) {
             const auto it = submaps.find(p);
@@ -1288,6 +1300,7 @@ void mapbuffer::unload_omt(const tripoint_abs_omt& omt_addr, bool save) {
 }
 
 auto mapbuffer::load_submap_from_storage(const tripoint_abs_sm& p) -> submap* {
+    ZoneScoped;
     // Fast path: submap already resident in memory.
     auto* resident_sm = static_cast<submap*>(nullptr);
     { resident_sm = find_resident_submap(p); }
@@ -1315,7 +1328,7 @@ auto mapbuffer::load_submap_from_storage(const tripoint_abs_sm& p) -> submap* {
     try {
         bool found = false;
         if (!pending_data.empty()) {
-            std::istringstream iss(pending_data);
+            memory_istream iss(pending_data);
             JsonIn jsin(iss);
             deserialize_into_vec(jsin, loaded, already_loaded);
             found = true;
@@ -1495,6 +1508,7 @@ auto mapbuffer::mark_submap_caches_dirty(const mapbuffer_mark_submap_caches_dirt
     if (options.begin.x() >= options.end.x() || options.begin.y() >= options.end.y()) { return; }
 
     const auto max = point_abs_sm(options.end.x() - 1, options.end.y() - 1);
+    auto lk = std::lock_guard<std::recursive_mutex>(submaps_mutex_);
     for (const auto pos : point_range<point_abs_sm>(options.begin, max)) {
         auto* const sm = find_resident_submap(tripoint_abs_sm(pos, options.zlev));
         if (sm == nullptr) { continue; }
@@ -3340,7 +3354,7 @@ auto mapbuffer::preload_omt(const tripoint_abs_omt& omt_addr) -> bool {
     }
 
     if (!pending_data.empty()) {
-        std::istringstream iss(pending_data);
+        memory_istream iss(pending_data);
         JsonIn jsin(iss);
         deserialize_into_vec(jsin, loaded, already_loaded);
     } else {
@@ -3439,14 +3453,13 @@ auto mapbuffer::run_omt_pillar_post_pass(const point_abs_omt& omt_pos) -> void {
         point_rel_sm::south(),
         point_rel_sm::south_east(),
     });
-
     auto lk = std::lock_guard<std::recursive_mutex>(submaps_mutex_);
     struct vertical_transition_link_request {
         tripoint_abs_sm target_pos;
         point_sm_ms local;
         ter_id desired;
     };
-    const auto ensure_vertical_transition_link =
+    [[maybe_unused]] const auto ensure_vertical_transition_link =
         [&](const vertical_transition_link_request& request) {
             auto* const target_sm = find_resident_submap(request.target_pos);
             if (target_sm == nullptr
@@ -3460,11 +3473,18 @@ auto mapbuffer::run_omt_pillar_post_pass(const point_abs_omt& omt_pos) -> void {
 
     for (const auto zlev : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
         const auto omt_addr = tripoint_abs_omt(omt_pos, zlev);
+        bool can_be_uniform =
+            !get_overmapbuffer(get_dimension_id())
+                 .ter(omt_addr)
+                 ->has_flag(oter_flags::cant_be_uniform);
+
         const auto base = project_to<coords::sm>(omt_addr);
         for (const auto& offset : offsets) {
             const auto sm_pos = base + offset;
             auto* const sub_here = find_resident_submap(sm_pos);
             if (sub_here == nullptr) { continue; }
+
+            if (sub_here->is_uniform) { sub_here->is_uniform = can_be_uniform; }
 
             auto* const sub_below =
                 zlev > -OVERMAP_DEPTH ? find_resident_submap(sm_pos + tripoint_below) : nullptr;

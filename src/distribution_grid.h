@@ -54,6 +54,8 @@ class distribution_grid
         std::vector<tripoint_abs_sm> submap_coords;
 
         mutable std::optional<int> cached_amount_here;
+        mutable bool cached_maximum_amount_here_needs_update = false;
+        mutable std::optional<int> cached_maximum_amount_here;
 
         mapbuffer &mb;
 
@@ -64,6 +66,9 @@ class distribution_grid
         void update( time_point to );
         int mod_resource( int amt, bool recurse = true );
         int get_resource( bool recurse = true ) const;
+        /// This never recuses into vehicles
+        /// Gets the max resource amount
+        int get_resource_capacity() const;
         const std::vector<tripoint_abs_ms> &get_contents() const {
             return flat_contents;
         }

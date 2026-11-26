@@ -283,8 +283,8 @@ If AI coding assistants contributed to a PR, the PR description must disclose th
 
 Each commit that was written, generated, or substantively revised with AI assistance must include an
 `Assisted-by:` trailer in the Linux kernel format described in
-[AI Coding Assistants](https://docs.kernel.org/process/coding-assistants.html) and
-[Submitting patches](https://docs.kernel.org/process/submitting-patches.html#using-assisted-by).
+[AI Coding Assistants](https://docs.kernel.org/7.2/process/coding-assistants.html) and
+[Submitting patches](https://docs.kernel.org/7.2/process/submitting-patches.html#using-assisted-by).
 
 Example:
 

@@ -62,12 +62,12 @@ public:
 
     void load(const JsonObject& jo, const std::string& src);
     void check() const;
-    auto get_bad_weather() const -> const weather_type_id&;     // *NOPAD*
-    auto get_default_weather() const -> const weather_type_id&; // *NOPAD*
+    auto get_bad_weather() const -> const weather_type_id&;
+    auto get_default_weather() const -> const weather_type_id&;
 
     auto forecast_priority(const weather_type_id& w) const -> int;
     auto choose_representative_weather(const std::map<weather_type_id, int>& sample_counts) const
-        -> const weather_type_id&; // *NOPAD*
+        -> const weather_type_id&;
 
     /**
      * TODO: Remove the regular tripoint overload, replace with *_abs_ms one.

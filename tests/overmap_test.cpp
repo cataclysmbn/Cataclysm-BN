@@ -5,6 +5,7 @@
 #include "coordinates.h"
 #include "debug.h"
 #include "enums.h"
+#include "filesystem.h"
 #include "fluid_grid.h"
 #include "game.h"
 #include "game_constants.h"
@@ -19,6 +20,7 @@
 #include "rng.h"
 #include "state_helpers.h"
 #include "type_id.h"
+#include "world.h"
 
 #include <algorithm>
 #include <array>
@@ -457,6 +459,44 @@ TEST_CASE("mutable_overmap_placement", "[overmap][slow]") {
     }
 }
 
+TEST_CASE("mutable_placement_rule_connections", "[overmap][mutable_connections]") {
+    const auto special_id = overmap_special_id(
+        GENERATE("test_mutable_disconnected_connection", "test_mutable_directed_connection"));
+    const auto rotation =
+        GENERATE(om_direction::type::north, om_direction::type::east, om_direction::type::south,
+                 om_direction::type::west);
+    REQUIRE(special_id.is_valid());
+    const auto directed = special_id.str() == "test_mutable_directed_connection";
+    auto om = std::make_unique<overmap>(point_abs_om());
+    const auto origin = tripoint_om_omt(90, 90, 0);
+    const auto endpoint = origin + om_direction::rotate(tripoint_rel_omt(3, 0, 0), rotation);
+    const auto road = origin + om_direction::rotate(tripoint_rel_omt(7, 0, 0), rotation);
+    for (auto x = 80; x <= 100; ++x) {
+        for (auto y = 80; y <= 100; ++y) {
+            om->ter_set(tripoint_om_omt(x, y, 0), oter_id("field"));
+        }
+    }
+    auto existing_road = false;
+    SECTION("connect to an existing road") {
+        existing_road = true;
+        om->ter_set(road, oter_id("road_nesw"));
+    }
+    SECTION("without an existing road only directed connections make a stub") {}
+
+    const auto placed = om->place_special(*special_id, origin, rotation, city{}, false, true);
+    REQUIRE(placed.size() == 3);
+    CHECK(om->ter(origin) == oter_id("field"));
+    CHECK(
+        is_ot_match("road", om->ter(endpoint), ot_match_type::type) == (existing_road || directed));
+    if (existing_road) {
+        for (auto offset = 3; offset <= 7; ++offset) {
+            const auto pos =
+                origin + om_direction::rotate(tripoint_rel_omt(offset, 0, 0), rotation);
+            CHECK(is_ot_match("road", om->ter(pos), ot_match_type::type));
+        }
+    }
+}
+
 namespace {
 
 const auto road_start = tripoint_abs_omt(50, 50, 0);
@@ -646,3 +686,20 @@ TEST_CASE("separate_overmap_tile_context_keeps_independent_scale", "[overmap][zo
 }
 
 #endif // TILES
+
+TEST_CASE("overmap_that_failed_to_load_is_not_saved", "[overmap]") {
+    clear_all_state();
+    const auto pos = point_abs_om(40, 40);
+    const auto dim = dimension_id("overmap_failed_load_" + get_pid_string());
+    auto& w = *g->get_active_world();
+    REQUIRE(w.write_overmap(dim.str(), pos, [](std::ostream& out) { out << "not an overmap"; }));
+
+    const auto om = std::make_unique<overmap>(pos, dim);
+    const auto message = capture_debugmsg_during([&]() { om->populate(dim); });
+    REQUIRE(message.contains("failed to load"));
+    om->save(dim);
+
+    auto saved = std::string();
+    w.read_overmap(dim.str(), pos, [&](std::istream& in) { std::getline(in, saved); });
+    CHECK(saved == "not an overmap");
+}

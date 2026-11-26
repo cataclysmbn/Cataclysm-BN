@@ -13,7 +13,7 @@
 #include <climits>
 #include <memory>
 
-static auto find_adjacent_monster(const tripoint_abs_ms& pos_abs) -> monster* { // *NOPAD*
+static auto find_adjacent_monster(const tripoint_abs_ms& pos_abs) -> monster* {
     tripoint_abs_ms target_abs = pos_abs;
     for (target_abs.x() = pos_abs.x() - 1; target_abs.x() <= pos_abs.x() + 1; target_abs.x()++) {
         for (target_abs.y() = pos_abs.y() - 1; target_abs.y() <= pos_abs.y() + 1;

@@ -21,8 +21,7 @@ void clear_map();
 void clear_overmap();
 void put_player_underground();
 auto move_player_out_of_the_way() -> void;
-auto spawn_test_monster(const std::string& monster_type, const tripoint_bub_ms& start)
-    -> monster&; // *NOPAD*
+auto spawn_test_monster(const std::string& monster_type, const tripoint_bub_ms& start) -> monster&;
 void clear_vehicles();
 void build_test_map(const ter_id& terrain);
 void build_water_test_map(const ter_id& surface, const ter_id& mid, const ter_id& bottom);

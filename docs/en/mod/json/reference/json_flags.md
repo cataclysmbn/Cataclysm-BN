@@ -10,7 +10,8 @@
   "craft_inherit": true, // Items made with it will keep this flag
   "requires_flag": true, // Used by vehicle part flags, requires another part with this ID on the tile
   "inherit": true, // Item mods will pass this flag down to the item
-  "tag": "string" // Translatable string appended to the item's UI display name, if the item has this flag
+  "tag": "string", // Translatable string appended to the item's UI display name, if the item has this flag
+  "dynamic_color": "c_brown" // Curses color string to use in inventory when this flag is dynamically applied to an item
 }
 ```
 
@@ -1079,6 +1080,9 @@ Multiple death functions can be used. Not all combinations make sense.
 - `ID_CARD_DESPAWN` Despawns when a science ID card is used on a nearby console
 - `INTERIOR_AMMO` Monster contains ammo inside itself, no need to load on launch. Prevents ammo from
   being dropped on disable.
+- `IRRADIATED` Melee attacks from the monster will irradiate targets. Scales with how much damage the
+  attack would deal before armor. Radiation-resistant gear only protects against this if the attack
+  dealt zero damage, otherwise bypasses protection outright.
 - `KEENNOSE` Keen sense of smell.
 - `LARVA` Creature is a larva. Currently used for gib and blood handling.
 - `LEATHER` May produce leather when butchered.
@@ -1099,6 +1103,7 @@ Multiple death functions can be used. Not all combinations make sense.
 - `NO_BREED` Creature doesn't reproduce even though it has reproduction data - useful when using
   copy-from to make child versions of adult creatures
 - `NO_FUNG_DMG` Creature is immune to fungal spores and can't be fungalized.
+- `NO_VEHICLE_COLLISION` Vehicles pass through the monster without hitting or damaging it.
 - `PAY_BOT` Creature can be turned into a pet for a limited time in exchange of e-money.
 - `PET_MOUNTABLE` Creature can be ridden or attached to an harness.
 - `PET_HARNESSABLE`Creature can be attached to an harness.

@@ -11,7 +11,7 @@
 
 struct tripoint;
 
-static auto spawn_and_clear(const tripoint_abs_ms& pos_abs, bool set_floor) -> monster& { // *NOPAD*
+static auto spawn_and_clear(const tripoint_abs_ms& pos_abs, bool set_floor) -> monster& {
     if (set_floor) { get_map().set(abs_to_bub(pos_abs), t_floor, f_null); }
     return spawn_test_monster("mon_zombie", abs_to_bub(pos_abs));
 }
