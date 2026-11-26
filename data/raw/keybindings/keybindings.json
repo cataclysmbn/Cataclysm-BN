@@ -2157,6 +2157,13 @@
   },
   {
     "type": "keybinding",
+    "name": "View Perks",
+    "category": "DEFAULTMODE",
+    "id": "perks",
+    "bindings": [ { "input_method": "keyboard", "key": "CTRL+P" } ]
+  },
+  {
+    "type": "keybinding",
     "name": "Re-layer armor/clothing",
     "category": "DEFAULTMODE",
     "id": "sort_armor",
@@ -3706,6 +3713,13 @@
     "bindings": [ { "input_method": "keyboard", "key": "f" } ]
   },
   {
+    "id": "DROP_WITH_CLOTHING",
+    "type": "keybinding",
+    "category": "INVENTORY_ITEM",
+    "name": "Link to clothing",
+    "bindings": [ { "input_method": "keyboard", "key": "L" } ]
+  },
+  {
     "id": "REASSIGN",
     "type": "keybinding",
     "category": "INVENTORY_ITEM",
@@ -3976,7 +3990,7 @@
     "type": "keybinding",
     "id": "IGNORE",
     "category": "YN_IGNORE_QUERY",
-    "name": "Ignore further promts and finish",
+    "name": "Ignore further prompts and finish",
     "bindings": [ { "input_method": "keyboard", "key": "I" }, { "input_method": "keyboard", "key": "i" } ]
   },
   {

@@ -61,7 +61,7 @@
     "id": "bio_armor_arms",
     "type": "bionic",
     "name": { "str": "Alloy Plating - Arms" },
-    "description": "The flesh on your arms and hands have been surgically replaced by alloy plating.  Provides 6 bash and cut protection, 5 ballistic protection, and can be used in conjunction with bionic martial arts.",
+    "description": "The flesh on your arms and hands has been surgically replaced by alloy plating.  Provides 6 bash and cut protection, 5 ballistic protection, and can be used in conjunction with bionic martial arts.",
     "occupied_bodyparts": [ [ "arm_l", 4 ], [ "arm_r", 4 ] ],
     "bash_protec": [ [ "arm_l", 6 ], [ "arm_r", 6 ], [ "hand_l", 6 ], [ "hand_r", 6 ] ],
     "cut_protec": [ [ "arm_l", 6 ], [ "arm_r", 6 ], [ "hand_l", 6 ], [ "hand_r", 6 ] ],
@@ -98,7 +98,7 @@
     "id": "bio_armor_legs",
     "type": "bionic",
     "name": { "str": "Alloy Plating - Legs" },
-    "description": "The flesh on your legs and feet have been surgically replaced by alloy plating.  Provides 6 bash and cut protection, 5 ballistic protection, and can be used in conjunction with bionic martial arts.",
+    "description": "The flesh on your legs and feet has been surgically replaced by alloy plating.  Provides 6 bash and cut protection, 5 ballistic protection, and can be used in conjunction with bionic martial arts.",
     "occupied_bodyparts": [ [ "leg_l", 6 ], [ "leg_r", 6 ], [ "foot_l", 1 ], [ "foot_r", 1 ] ],
     "bash_protec": [ [ "leg_l", 6 ], [ "leg_r", 6 ], [ "foot_l", 6 ], [ "foot_r", 6 ] ],
     "cut_protec": [ [ "leg_l", 6 ], [ "leg_r", 6 ], [ "foot_l", 6 ], [ "foot_r", 6 ] ],
@@ -211,7 +211,7 @@
     "id": "bio_cable_mkII",
     "type": "bionic",
     "name": { "str": "Cable Charger System Mk. II" },
-    "description": "This is a military-grade electronic port and power converter system which are surgically mounted above your hip, it has ten times higher throughput than basic version.  While active, it will recharge bionic power when connected to a power source via cable.",
+    "description": "This is a military-grade electronic port and power converter system which is surgically mounted above your hip.  It has ten times higher throughput than the basic version.  While active, it will recharge bionic power when connected to a power source via cable.",
     "occupied_bodyparts": [ [ "torso", 12 ] ],
     "remote_fuel_draw": "10 kJ",
     "time": 1,
@@ -325,7 +325,7 @@
     "id": "bio_deformity",
     "type": "bionic",
     "name": { "str": "Bionic-Induced Deformity" },
-    "description": "A combination of poor surgical installation and unpleasant scarring has lead to the malfunctioning bionic catastrophe you call your face.  People who mind that you look like a dime-store Frankenstein will react poorly to your appearance.",
+    "description": "A combination of poor surgical installation and unpleasant scarring has led to the malfunctioning bionic catastrophe you call your face.  People who mind that you look like a dime-store Frankenstein will react poorly to your appearance.",
     "occupied_bodyparts": [ [ "head", 4 ], [ "mouth", 1 ] ],
     "starting_bionic": true,
     "points": -1,
@@ -611,7 +611,7 @@
     "id": "bio_heat_absorb",
     "type": "bionic",
     "name": { "str": "Heat Drain" },
-    "description": "While fighting unarmed against a warm-blooded opponent, there is a chance that a successful hit will drain body heat, inflicting a small amount of extra damage, and increasing your power reserves slightly.",
+    "description": "While fighting against a warm-blooded opponent, striking them with unarmed attacks or being struck by them will drain body heat, inflicting a small amount of extra damage, and increasing your power reserves slightly.",
     "occupied_bodyparts": [ [ "hand_l", 2 ], [ "hand_r", 2 ] ],
     "points": 3,
     "flags": [ "BIONIC_TOGGLED", "BIONIC_NPC_USABLE", "COMBAT_NPC_USE" ],
@@ -621,7 +621,7 @@
     "id": "bio_heatsink",
     "type": "bionic",
     "name": { "str": "Thermal Dissipation" },
-    "description": "Powerful heatsinks and supermaterials are surgically woven into your flesh.  While powered, this system will prevent heat damage up to 2000 degrees Fahrenheit.  Note that this does not affect your internal temperature.",
+    "description": "Powerful heatsinks and supermaterials are surgically woven into your flesh.  While powered, this system will prevent heat damage up to 2000 degrees Fahrenheit, reducing the effects of overheating as well.",
     "occupied_bodyparts": [
       [ "torso", 10 ],
       [ "head", 2 ],
@@ -640,7 +640,11 @@
     "time": 1,
     "points": 2,
     "bio_enchantments": [
-      { "conditions": [ "ACTIVE" ], "values": [ { "value": "BLISTER_COUNT", "add": -20 } ], "flags": [ "FIRE_FIELD_IMMUNE" ] }
+      {
+        "conditions": [ "ACTIVE" ],
+        "values": [ { "value": "BLISTER_COUNT", "add": -20 }, { "value": "CLIMATE_CONTROL_COOLING", "add": 1500 } ],
+        "flags": [ "FIRE_FIELD_IMMUNE" ]
+      }
     ]
   },
   {
@@ -668,19 +672,6 @@
     "starting_bionic": true,
     "points": 1,
     "bio_enchantments": [ { "flags": [ "INTERNAL_ALARMCLOCK", "WATCH", "RADIO", "THERMOMETER" ], "special_vision": [ "DRONE_CAM" ] } ]
-  },
-  {
-    "id": "bio_infrared",
-    "type": "bionic",
-    "name": { "str": "Infrared Vision" },
-    "description": "Your range of vision extends into the infrared, allowing you to see warm-blooded creatures in the dark or through smoke.",
-    "occupied_bodyparts": [ [ "eyes", 1 ] ],
-    "flags": [ "BIONIC_TOGGLED" ],
-    "act_cost": "5 J",
-    "react_cost": "5 J",
-    "time": 1,
-    "points": 1,
-    "bio_enchantments": [ { "conditions": [ "ACTIVE" ], "special_vision": [ "INFRARED" ] } ]
   },
   {
     "id": "bio_int_enhancer",
@@ -781,8 +772,8 @@
   {
     "id": "bio_memory",
     "type": "bionic",
-    "name": { "str": "Enhanced Memory Banks" },
-    "description": "Your memory has been enhanced with small quantum storage drives.  While active, you learn - both through reading and practice - more quickly.  Additionally, you can't forget skills you've already learned.",
+    "name": { "str": "Memory Coprocessor" },
+    "description": "Your brain has been enhanced with a microcomputer and quantum storage drives.  While active, you learn - both through reading and practice - more quickly.  Additionally, you can't forget skills you've already learned.",
     "occupied_bodyparts": [ [ "head", 3 ] ],
     "flags": [ "BIONIC_TOGGLED", "BIONIC_SLEEP_FRIENDLY" ],
     "act_cost": "2 J",
@@ -790,7 +781,12 @@
     "trigger_cost": "25 J",
     "time": 1,
     "points": 1,
-    "bio_enchantments": [ { "conditions": [ "ACTIVE" ], "values": [ { "value": "EFFECTIVE_FOCUS", "add": 10 } ] } ]
+    "bio_enchantments": [
+      {
+        "conditions": [ "ACTIVE" ],
+        "values": [ { "value": "EFFECTIVE_FOCUS", "add": 10 }, { "value": "READING_SPEED", "multiply": -0.25 } ]
+      }
+    ]
   },
   {
     "id": "bio_metabolics",
@@ -846,15 +842,17 @@
   {
     "id": "bio_night_vision",
     "type": "bionic",
-    "name": { "str": "Implanted Night Vision" },
-    "description": "When active, this bionic will amplify existing light, allowing you to see in the dark.",
+    "name": { "str": "Hybrid Night Vision" },
+    "description": "When active, this bionic will provide both light amplification and thermal imaging, allowing you to see in the dark and detect warm-blooded creatures with ease.",
     "occupied_bodyparts": [ [ "eyes", 1 ] ],
     "points": 3,
     "flags": [ "BIONIC_TOGGLED" ],
     "act_cost": "10 J",
     "react_cost": "10 J",
     "time": 1,
-    "bio_enchantments": [ { "conditions": [ "ACTIVE" ], "values": [ { "value": "NIGHT_VISION", "max": 10 } ] } ]
+    "bio_enchantments": [
+      { "conditions": [ "ACTIVE" ], "values": [ { "value": "NIGHT_VISION", "max": 10 } ], "special_vision": [ "INFRARED" ] }
+    ]
   },
   {
     "id": "bio_noise",
@@ -876,19 +874,6 @@
     "flags": [ "BIONIC_FAULTY" ],
     "starting_bionic": true,
     "points": -1
-  },
-  {
-    "id": "bio_ods",
-    "type": "bionic",
-    "name": { "str": "Offensive Defense System" },
-    "description": "A thin forcefield surrounds your body, continually draining power.  This field does not deflect attacks, but rather delivers a strong shock, damaging unarmed attackers and those with a conductive weapon.",
-    "occupied_bodyparts": [ [ "torso", 10 ], [ "head", 1 ], [ "arm_l", 1 ], [ "arm_r", 1 ], [ "leg_l", 2 ], [ "leg_r", 2 ] ],
-    "points": 3,
-    "flags": [ "BIONIC_TOGGLED", "BIONIC_NPC_USABLE", "COMBAT_NPC_USE" ],
-    "act_cost": "10 kJ",
-    "react_cost": "10 kJ",
-    "trigger_cost": "1 kJ",
-    "time": 1
   },
   {
     "id": "bio_painkiller",
@@ -974,7 +959,7 @@
     "id": "bio_purifier",
     "type": "bionic",
     "name": { "str": "Air Filtration System (passive)" },
-    "description": "Surgically implanted in your trachea is an advanced filtration system.  In it's passive form it will protect you against smoke inhalation and even particulate matter that triggers asthma attacks.  Once activated, it will prevent spores, toxins and diseases from being inhaled.",
+    "description": "Surgically implanted in your trachea is an advanced filtration system.  In its passive form it will protect you against smoke inhalation and even particulate matter that triggers asthma attacks.  Once activated, it will prevent spores, toxins and diseases from being inhaled.",
     "occupied_bodyparts": [ [ "torso", 4 ], [ "mouth", 2 ] ],
     "env_protec": [ [ "mouth", 7 ] ],
     "points": 3,
@@ -986,7 +971,7 @@
     "id": "bio_purifier_active",
     "type": "bionic",
     "name": { "str": "Air Filtration System (active)" },
-    "description": "Surgically implanted in your trachea is an advanced filtration system.  In it's passive form it will protect you against smoke inhalation.  Once activated, it will prevent spores, toxins and diseases from being inhaled.",
+    "description": "Surgically implanted in your trachea is an advanced filtration system.  In its passive form it will protect you against smoke inhalation.  Once activated, it will prevent spores, toxins and diseases from being inhaled.",
     "env_protec": [ [ "mouth", 8 ] ],
     "included": true,
     "flags": [ "BIONIC_TOGGLED", "BIONIC_NPC_USABLE" ],
@@ -1022,7 +1007,7 @@
     "id": "bio_razors",
     "type": "bionic",
     "name": { "str": "Fingertip Razors" },
-    "description": "You possess razor-sharp claws underneath your fingernails that do a fair amount of unarmed slashing damage whenever your fingertips are uncovered, and which you can use with some precision to cut and butcher..",
+    "description": "You possess razor-sharp claws underneath your fingernails that do a fair amount of unarmed slashing damage whenever your fingertips are uncovered, and which you can use with some precision to cut and butcher.",
     "occupied_bodyparts": [ [ "hand_l", 1 ], [ "hand_r", 1 ] ],
     "fake_item": "fake_razor",
     "flags": [ "BIONIC_NPC_USABLE" ],
@@ -1096,8 +1081,17 @@
     "id": "bio_shock",
     "type": "bionic",
     "name": { "str": "Electroshock Unit" },
-    "description": "While fighting unarmed, or with a weapon that conducts electricity, there is a chance that a successful hit will shock your opponent, inflicting extra damage and disabling them temporarily at the cost of some energy.",
-    "occupied_bodyparts": [ [ "hand_l", 2 ], [ "hand_r", 2 ] ],
+    "description": "While fighting unarmed, or with a weapon that conducts electricity, there is a chance that a successful hit will shock your opponent, inflicting extra damage and disabling them temporarily at the cost of some energy.  Unarmed attackers and those with a conductive weapon will also be shocked.",
+    "occupied_bodyparts": [
+      [ "torso", 2 ],
+      [ "head", 2 ],
+      [ "arm_l", 2 ],
+      [ "arm_r", 2 ],
+      [ "hand_l", 2 ],
+      [ "hand_r", 2 ],
+      [ "leg_l", 2 ],
+      [ "leg_r", 2 ]
+    ],
     "points": 3,
     "flags": [ "BIONIC_TOGGLED", "BIONIC_NPC_USABLE", "COMBAT_NPC_USE" ],
     "trigger_cost": "2 kJ"
@@ -1106,7 +1100,7 @@
     "id": "bio_shockwave",
     "type": "bionic",
     "name": { "str": "Shockwave Generator" },
-    "description": "You generate a powerful shockwave, knocking back all nearby creatures.  Targets are stunned briefly, take damage and additional stun upon impact with impassable terrain, and knockback any creatures they collide with.",
+    "description": "You generate a powerful shockwave, knocking back all nearby creatures.  Targets are stunned briefly, take damage and additional stun upon impact with impassable terrain, and knock back any creatures they collide with.",
     "occupied_bodyparts": [ [ "torso", 10 ] ],
     "act_cost": "250 kJ",
     "points": 4
@@ -1545,22 +1539,12 @@
     "type": "bionic",
     "//": "Watch those wrist rockets!",
     "name": { "str": "Deployable Grenade Launcher" },
-    "description": "Your right hand can fold inward to reveal a mechanism capable of igniting and firing 40mm grenades across medium distances with great accuracy due built in ballistic calculator.",
+    "description": "Your right hand can fold inward to reveal a mechanism capable of igniting and firing 40mm grenades across medium distances with great accuracy due to a built-in ballistic calculator.",
     "occupied_bodyparts": [ [ "hand_r", 3 ] ],
     "fake_item": "afs_bionic_rocket",
     "points": 4,
     "flags": [ "BIONIC_TOGGLED", "BIONIC_WEAPON" ],
     "act_cost": "5 kJ"
-  },
-  {
-    "id": "afs_bio_linguistic_coprocessor",
-    "type": "bionic",
-    "name": { "str": "Linguistic Coprocessor" },
-    "description": "The left hemisphere of your brain has been augmented with a microcomputer that moderately increases the speed that language and written words are processed, granting a 25% increase to reading speed.",
-    "occupied_bodyparts": [ [ "head", 1 ] ],
-    "starting_bionic": true,
-    "points": 1,
-    "bio_enchantments": [ { "values": [ { "value": "READING_SPEED", "multiply": -0.25 } ] } ]
   },
   {
     "id": "afs_bio_dopamine_stimulators",

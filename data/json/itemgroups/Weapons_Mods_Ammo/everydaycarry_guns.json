@@ -2635,7 +2635,7 @@
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
     "subtype": "collection",
     "entries": [
-      { "item": "rm99_pistol", "ammo-group": "on_hand_8x40", "charges": [ 0, 5 ] },
+      { "item": "rm99_pistol", "ammo-group": "on_hand_8x40", "charges": [ 0, 6 ] },
       {
         "distribution": [
           {

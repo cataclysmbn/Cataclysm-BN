@@ -67,6 +67,7 @@ class profession
         std::set<itype_id> no_bonus;
 
         std::vector<addiction> _starting_addictions;
+        std::vector<perk_id> _starting_perks;
         std::vector<bionic_id> _starting_CBMs;
         std::vector<trait_id> _starting_traits;
         std::set<trait_id> _forbidden_traits;
@@ -121,6 +122,7 @@ class profession
         vproto_id vehicle() const;
         std::vector<mtype_id> pets() const;
         std::vector<bionic_id> CBMs() const;
+        std::vector<perk_id> get_perks() const;
         StartingSkillList skills() const;
         const std::vector<mission_type_id> &missions() const;
         std::vector<npc_class_id> npcs() const;

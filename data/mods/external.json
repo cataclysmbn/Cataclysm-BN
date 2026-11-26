@@ -2,7 +2,7 @@
   {
     "id": "cbn_sky_island",
     "version": "0.0.9-alpha",
-    "url": "https://github.com/graysonchao/CBN-Sky-Island/archive/refs/tags/v0.0.9-alpha.zip"
+    "url": "https://github.com/graysonchao/CBN-Sky-Island/archive/refs/heads/main.zip"
   },
   {
     "id": "jake_s_squirrel_mod",
@@ -17,13 +17,13 @@
   {
     "id": "overhaul",
     "version": "0.0.2",
-    "url": "https://github.com/scarf005/Overhaul/archive/9180c5a2b93c07908c7b5dd714bf92bb3d7a4e20.zip",
+    "url": "https://github.com/scarf005/Overhaul/archive/refs/heads/main.zip",
     "extract_path": "overhaul"
   },
   {
     "id": "overhaul_additions",
     "version": "0.0.2",
-    "url": "https://github.com/scarf005/Overhaul/archive/9180c5a2b93c07908c7b5dd714bf92bb3d7a4e20.zip",
+    "url": "https://github.com/scarf005/Overhaul/archive/refs/heads/main.zip",
     "extract_path": "overhaul_additions"
   },
   {

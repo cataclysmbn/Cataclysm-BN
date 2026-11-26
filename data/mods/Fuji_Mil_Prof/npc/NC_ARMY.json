@@ -48,8 +48,7 @@
     "entries": [
       { "item": "null", "prob": 60 },
       { "item": "jacket_army", "prob": 40 },
-      { "item": "modularveststeel", "prob": 10 },
-      { "item": "modularvestceramic", "prob": 40 },
+      { "group": "military_ballistic_vests_and_plates", "prob": 40 },
       { "item": "kevlar", "prob": 20 },
       { "item": "chestrig", "prob": 30 }
     ]

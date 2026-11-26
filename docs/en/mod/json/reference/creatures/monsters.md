@@ -353,6 +353,12 @@ Intensity of the grab effect applied by this monster. Defaults to 1, is only use
 a GRAB special attack and the GRABS flag. A monster with grab_strength = n applies a grab as if it
 was n zombies. A player with max(Str,Dex)<=n has no chance of breaking that grab.
 
+## "uncanny_dodge_cost"
+
+(integer, optional)
+
+How many moves it costs this monster to uncanny dodge. Defaults to 100, is only useful for monster with the UNCANNY_DODGE flag.
+
 ## "melee_cut"
 
 (integer, optional)
@@ -768,6 +774,34 @@ Some properties allow adding and removing entries, as documented above, usually 
 
 The listed attack types can be as monster special attacks (see "special_attacks").
 
+### "melee"
+
+Makes a general melee special attack
+
+#### "damage_max_instance"
+
+Max damage it can deal on one attack.
+
+#### "move_cost"
+
+Turns needed to complete special attack. 100 move_cost with 100 speed is equal to 1 second/turn.
+
+#### "accuracy"
+
+(Integer) How accurate it is. Not many monsters use it though.
+
+#### "requires_grab"
+
+Whether the attack requires the target to be grabbed first. Useful for multi-stage attacks or "finisher" attacks.
+
+#### "max_range"
+
+The maximum range of the attack. Monsters will not use this special attack against enemies outside of max range.
+
+#### "min_range"
+
+The minimum range of the attack. Monsters will not use this special attack against enemies inside of minimum range.
+
 ### "leap"
 
 Makes the monster leap a few tiles. It supports the following additional properties:
@@ -791,6 +825,10 @@ Turns needed to complete special attack. 100 move_cost with 100 speed is equal t
 #### "min_consider_range", "max_consider_range"
 
 Minimal range and maximal range to consider for using specific attack.
+
+#### "throw_strength"
+
+Whether and how much the attack throws its target.
 
 ### "bite"
 

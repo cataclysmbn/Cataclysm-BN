@@ -25,7 +25,7 @@
     "armor_cut": 16,
     "armor_bullet": 13,
     "harvest": "zombie",
-    "special_attacks": [ [ "TENTACLE", 2 ], [ "scratch", 10 ] ],
+    "special_attacks": [ { "id": "tentacle", "cooldown": 2 }, [ "scratch", 10 ] ],
     "death_function": [ "NORMAL" ],
     "flags": [ "HEARS", "GOODHEARING", "WARM", "CLIMBS", "NOHEAD", "POISON", "BLEED", "NO_BREATHE" ]
   },
@@ -51,7 +51,7 @@
     "melee_dice_sides": 5,
     "melee_damage": [ { "damage_type": "cut", "amount": 5 } ],
     "harvest": "zombie",
-    "special_attacks": [ [ "TENTACLE", 7 ], [ "scratch", 8 ] ],
+    "special_attacks": [ { "id": "tentacle", "cooldown": 7 }, [ "scratch", 8 ] ],
     "death_function": [ "NORMAL" ],
     "flags": [ "WARM", "CLIMBS", "NOHEAD", "POISON", "BLEED", "NO_BREATHE" ]
   }

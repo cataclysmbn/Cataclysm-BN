@@ -542,6 +542,37 @@ Several additional callback tables let you react to item events.
 | `on_pickup`          | `user`, `item`        |
 ---
 
+### game.iconsume_functions
+
+Keyed by item id. `on_try_consume` runs before the edibility checks and the
+eat-confirmation prompt: modify the `params` fields to override the values the
+game applies, return `false` to interrupt the consume. Callback side effects
+persist even if the checks then fail or the player declines, and the item is
+left alone unless the callback changed it — so the callback can implement its
+own consumption (`params.item:mod_charges( -1 )`) and return `false`.
+
+| Callbacks        | params fields                                                               |
+| ---------------- | --------------------------------------------------------------------------- |
+| `on_try_consume` | `char`, `item`, `nutrition`, `thirst`, `fun`, `fun_max`, `skip_cannibalism` |
+
+```lua
+game.iconsume_functions["blood"] = {
+    on_try_consume = function( params )
+        -- Blood without the guilt.
+        params.skip_cannibalism = true
+        params.fun = 10
+        params.fun_max = 10
+    end
+}
+```
+
+The character-wide equivalent is the `on_character_try_consume` hook: it
+receives the same values in its `params` and returns a table with the override
+fields (`allowed`, `nutrition`, `thirst`, `fun`, `fun_max`, `skip_cannibalism`)
+instead of mutating `params`.
+
+---
+
 ### game.imelee_functions
 
 | Callbacks         | params fields                               |

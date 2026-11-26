@@ -1,0 +1,220 @@
+[
+  {
+    "type": "item_group",
+    "id": "NC_BANDIT_LEADER_worn_override",
+    "subtype": "collection",
+    "//": "Ensures they only spawn with these items.",
+    "entries": [
+      { "group": "underwear_unisex", "prob": 100 },
+      { "group": "socks_unisex", "prob": 100 },
+      { "group": "NC_BANDIT_LEADER_shirt", "prob": 100 },
+      { "group": "NC_BANDIT_LEADER_pants", "prob": 100 },
+      { "group": "NC_BANDIT_LEADER_armor", "prob": 100 },
+      { "group": "NC_BANDIT_LEADER_storage", "prob": 100 },
+      { "group": "NC_BANDIT_LEADER_extra", "prob": 100 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_BANDIT_LEADER_shirt",
+    "subtype": "distribution",
+    "entries": [
+      { "group": "NC_BANDIT_shirt_male", "prob": 50 },
+      { "item": "chainmail_vest", "prob": 10 },
+      { "item": "armor_lamellar", "prob": 10 },
+      { "item": "armor_lamellar_plated", "prob": 5 },
+      { "item": "lsurvivor_armor", "prob": 25 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_BANDIT_LEADER_pants",
+    "subtype": "distribution",
+    "entries": [
+      { "group": "NC_BANDIT_pants_male", "prob": 50 },
+      { "item": "chainmail_legs", "prob": 25 },
+      { "item": "lsurvivor_pants", "prob": 15 },
+      { "item": "pants_survivor", "prob": 10 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_BANDIT_LEADER_armor",
+    "subtype": "distribution",
+    "//": "Helmet paired with the armor so mods can add alternative forms of makeshift power armor without the helmet getting in the way.",
+    "entries": [
+      {
+        "collection": [ { "item": "depowered_armor", "prob": 100 }, { "item": "depowered_helmet", "prob": 100 } ],
+        "prob": 100
+      }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_BANDIT_LEADER_storage",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "molle_pack", "prob": 25 },
+      { "item": "rucksack", "prob": 25 },
+      { "item": "slingpack", "prob": 10 },
+      { "item": "backpack_leather", "prob": 15 },
+      { "item": "survivor_pack", "prob": 15 },
+      { "item": "survivor_rucksack", "prob": 10 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_BANDIT_LEADER_extra",
+    "subtype": "collection",
+    "//": "Bling the boss out.",
+    "entries": [
+      { "group": "accessory_bracelet", "prob": 25 },
+      { "group": "accessory_earring", "prob": 25 },
+      { "group": "accessory_necklace", "prob": 25 },
+      { "group": "accessory_ring", "prob": 25 },
+      { "group": "accessory_teeth", "prob": 25 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_BANDIT_LEADER_bashing",
+    "subtype": "distribution",
+    "ammo": 100,
+    "entries": [
+      { "item": "greatclub_iron", "prob": 20 },
+      { "item": "2h_flail_steel", "prob": 20 },
+      { "item": "lucern_hammer", "prob": 10 },
+      { "item": "mace_bone", "prob": 10 },
+      { "item": "mace", "prob": 5 },
+      { "item": "morningstar", "prob": 5 },
+      { "item": "warhammer", "prob": 5 },
+      { "item": "battletorch", "prob": 15 },
+      { "item": "shock_staff", "prob": 10 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "distribution",
+    "id": "NC_BANDIT_LEADER_cutting",
+    "ammo": 100,
+    "entries": [
+      { "item": "zweihander", "prob": 10 },
+      { "item": "nodachi", "prob": 10 },
+      { "item": "glaive_bone", "prob": 5 },
+      { "item": "cs_lajatang_off", "prob": 5 },
+      { "item": "ecs_lajatang_off", "prob": 5 },
+      { "item": "zweifire_off", "prob": 15 },
+      { "item": "tooth_leiomano", "prob": 15 },
+      { "item": "sword_bone", "prob": 10 },
+      { "item": "combatsaw_off", "prob": 5 },
+      { "item": "e_combatsaw_off", "prob": 5 },
+      { "item": "shishkebab_off", "prob": 15 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_BANDIT_LEADER_rifle",
+    "subtype": "distribution",
+    "ammo": 100,
+    "entries": [
+      { "item": "m1919browning_stinger", "prob": 25 },
+      { "item": "PKM", "prob": 25 },
+      { "item": "m60", "prob": 15 },
+      { "item": "m240", "prob": 10 },
+      { "item": "m2browning_sawn", "prob": 15 },
+      { "item": "m250", "prob": 10 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_BANDIT_LEADER_launcher",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "mgl", "prob": 25 },
+      { "item": "m202_flash", "prob": 25 },
+      { "item": "m3_carlgustav", "prob": 25 },
+      { "item": "AT4", "prob": 25 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_BANDIT_LEADER_stabbing",
+    "subtype": "distribution",
+    "//": "Should be unlikely to be selected unless the main weapon skills roll really bad results.",
+    "entries": [
+      { "group": "NC_THUG_stabbing", "prob": 50 },
+      { "item": "knife_rm42", "prob": 5 },
+      { "item": "spear_survivor", "prob": 5 },
+      { "item": "spear_tooth", "prob": 5 },
+      { "item": "spear_stinger", "prob": 5 },
+      { "item": "spear_triffid", "prob": 5 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_BANDIT_LEADER_unarmed",
+    "subtype": "distribution",
+    "//": "Should be unlikely to be selected unless the main weapon skills roll really bad results.",
+    "entries": [ { "group": "NC_THUG_unarmed", "prob": 50 }, { "item": "cestus_tooth", "prob": 50 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_BANDIT_LEADER_pistol",
+    "subtype": "distribution",
+    "//": "Should be unlikely to be selected unless the main weapon skills roll really bad results.",
+    "entries": [ { "group": "bandit_guns_pistols", "prob": 100 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_BANDIT_LEADER_shotgun",
+    "subtype": "distribution",
+    "//": "Should be unlikely to be selected unless the main weapon skills roll really bad results.",
+    "entries": [ { "group": "bandit_guns_shotguns", "prob": 100 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_BANDIT_LEADER_smg",
+    "subtype": "distribution",
+    "//": "Should be unlikely to be selected unless the main weapon skills roll really bad results.",
+    "entries": [ { "group": "bandit_guns_smgs", "prob": 50 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_BANDIT_LEADER_throw",
+    "subtype": "distribution",
+    "//": "Should be unlikely to be selected unless the main weapon skills roll really bad results.",
+    "entries": [ { "group": "survivor_grenades", "prob": 100 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_BANDIT_LEADER_archery",
+    "subtype": "distribution",
+    "//": "Should be unlikely to be selected unless the main weapon skills roll really bad results.",
+    "entries": [ { "group": "NC_BANDIT_archery", "prob": 100 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_BANDIT_LEADER_misc",
+    "subtype": "distribution",
+    "//": "Similar to NC_BANDIT_misc except higher chance of picking grenades or useful drugs, and higher quality items overall.",
+    "entries": [
+      { "group": "drugs_soldier", "prob": 25 },
+      { "group": "military_standard_grenades", "prob": 25, "count": [ 1, 3 ] },
+      { "group": "stash_food", "prob": 10 },
+      {
+        "distribution": [
+          { "group": "baddrugs", "prob": 50 },
+          { "group": "smokedrugs", "prob": 25 },
+          { "group": "liquor_and_spirits", "prob": 25 }
+        ],
+        "prob": 15
+      },
+      { "group": "tools_mechanic", "prob": 5 },
+      { "group": "gear_survival", "prob": 5 },
+      {
+        "distribution": [ { "group": "book_survival", "prob": 50 }, { "group": "mansion_books", "prob": 50 } ],
+        "prob": 15
+      }
+    ]
+  }
+]

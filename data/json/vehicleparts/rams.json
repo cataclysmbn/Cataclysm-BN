@@ -6,7 +6,7 @@
     "symbol": "X",
     "broken_symbol": "*",
     "damage_modifier": 150,
-    "description": "A reinforced ram.  Place at the edge of vehicle to reduce damage taken in collisions, and to increase damaged delivered in collisions, if the ram is the first vehicle part to collide.",
+    "description": "A reinforced ram.  Place at the edge of vehicle to reduce damage taken in collisions, and to increase damage delivered in collisions, if the ram is the first vehicle part to collide.",
     "requirements": {
       "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
       "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
@@ -33,6 +33,20 @@
     },
     "extend": { "flags": [ "SHOCK_IMMUNE" ] },
     "damage_reduction": { "all": 156 }
+  },
+  {
+    "id": "ram_carbon",
+    "copy-from": "ram_blaze",
+    "type": "vehicle_part",
+    "name": { "str": "carbon fiber ram" },
+    "item": "carbon_plate",
+    "color": "dark_gray",
+    "broken_color": "dark_gray",
+    "durability": 850,
+    "breaks_into": "ig_vp_carbon",
+    "requirements": { "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "vehicle_repair_carbon", 2 ] ] } },
+    "extend": { "flags": [ "SHOCK_RESISTANT" ] },
+    "damage_reduction": { "all": 156, "cut": 130, "stab": 104, "bullet": 182 }
   },
   {
     "id": "ram_hardsteel",
@@ -77,7 +91,7 @@
       "removal": { "skills": [ [ "mechanics", 4 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
       "repair": { "skills": [ [ "mechanics", 7 ] ], "time": "60 m", "using": [ [ "welding_standard", 10 ], [ "steel_standard", 1 ] ] }
     },
-    "damage_reduction": { "all": 180, "cut": 210, "stab": 280 }
+    "damage_reduction": { "all": 180, "cut": 280, "stab": 210, "bullet": 280 }
   },
   {
     "id": "ram_spiked",

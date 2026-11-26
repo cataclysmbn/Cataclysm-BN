@@ -61,6 +61,10 @@ class inventory_entry
         std::vector<item *> locations;
 
         size_t chosen_count = 0;
+        /// Additional items selected by the automatic drop preview.
+        size_t automatic_drop_count = 0;
+        /// Position of this stack in the predicted drop sequence.
+        std::optional<size_t> drop_order;
         int custom_invlet = INT_MIN;
         /// Drawn when the entry has no letter of its own.
         std::optional<inventory_invlet_hint> invlet_hint;
@@ -772,9 +776,14 @@ class inventory_drop_selector : public inventory_multiselector
         /** Toggle item dropping */
         void set_chosen_count( inventory_entry &entry, size_t count );
         void process_selected( int &count, const std::vector<inventory_entry *> &selected );
+        auto update_drop_preview() -> void;
+        auto get_drop_preview() const -> const drop_locations & { return predicted_drops; } // *NOPAD*
 
     private:
         excluded_stacks dropping;
+        excluded_stacks predicted_counts;
+        drop_locations predicted_drops;
+        bool preview_dirty = true;
 };
 
 
@@ -786,6 +795,5 @@ class inventory_pickup_selector : public inventory_multiselector
     protected:
         stats get_raw_stats() const override;
 };
-
 
 

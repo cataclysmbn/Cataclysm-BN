@@ -150,7 +150,7 @@
     "color": "dark_gray",
     "techniques": [ "WBLOCK_1", "BRUTAL", "SWEEP" ],
     "qualities": [ [ "PRY", 4 ], [ "HAMMER", 2 ], [ "DIG", 1 ] ],
-    "use_action": [ "HAMMER", "CROWBAR" ],
+    "use_action": [ "HAMMER" ],
     "flags": [ "DURABLE_MELEE", "BELT_CLIP" ]
   },
   {
@@ -169,8 +169,7 @@
     "color": "light_gray",
     "techniques": [ "WBLOCK_1", "BRUTAL", "SWEEP" ],
     "qualities": [ [ "AXE", 2 ], [ "PRY", 3 ], [ "BUTCHER", -30 ] ],
-    "flags": [ "DURABLE_MELEE", "NONCONDUCTIVE", "BELT_CLIP", "SHEATH_AXE" ],
-    "use_action": "CROWBAR"
+    "flags": [ "DURABLE_MELEE", "NONCONDUCTIVE", "BELT_CLIP", "SHEATH_AXE" ]
   },
   {
     "id": "test_screwdriver",
@@ -980,5 +979,12 @@
     "symbol": "]",
     "color": "light_gray",
     "container_data": { "contains": "3000000 L" }
+  },
+  {
+    "id": "test_m203_10",
+    "copy-from": "m203",
+    "type": "GUNMOD",
+    "name": { "str_sp": "TEST M203 (10 rounds)" },
+    "gun_data": { "ammo": "40x46mm", "skill": "launcher", "dispersion": 300, "durability": 10, "clip_size": 10 }
   }
 ]

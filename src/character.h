@@ -98,6 +98,20 @@ DEFAULT_HOTKEYS( "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ
 
 using recipe_filter = std::function<bool( const recipe &r )>;
 
+/**
+ * Nutrition overrides requested by Lua consume callbacks
+ * (see `lua_iconsume_actor` and the `on_character_try_consume` hook).
+ * A nullopt member means "use the value computed from the item".
+ */
+struct consume_overrides {
+    std::optional<int> kcal;
+    std::optional<int> thirst;
+    std::optional<int> fun;
+    std::optional<int> fun_max;
+    /** Skips the human-flesh (cannibalism) consequence check in will_eat. */
+    bool skip_cannibalism = false;
+};
+
 enum vision_modes {
     DEBUG_NIGHTVISION,
     NV_GOGGLES,
@@ -1151,8 +1165,7 @@ class Character : public Creature, public location_visitable<Character>
         bool uninstall_bionic( const bionic_id &b_id, Character &installer, bool autodoc = false,
                                int skill_level = -1 );
         /**Succes or failure of removal happens here*/
-        void perform_uninstall( bionic_id bid, int difficulty, int success, const units::energy &power_lvl,
-                                int pl_skill );
+        void perform_uninstall( bionic_id bid, int difficulty, int success, int pl_skill );
         /**When a player fails the surgery*/
         void bionics_uninstall_failure( int difficulty, int success, float adjusted_skill );
 
@@ -1800,6 +1813,17 @@ class Character : public Creature, public location_visitable<Character>
         /** Returns the intensity of the specified addiction */
         int  addiction_level( add_type type ) const;
 
+    private:
+        std::unordered_set<perk_id> perks;
+    public:
+        std::vector<perk_id> get_perks() const;
+        /** Adds a perk to the player */
+        void add_perk( const perk_id &perk );
+        /** Removes a perk from the player */
+        void remove_perk( const perk_id &perk );
+        /** Checks if the player has a perk. */
+        bool has_perk( const perk_id &perk ) const;
+
         /** This character becomes familiar with creatures of the given type **/
         void set_knows_creature_type( const mtype_id &c );
         /** Returns a list of all monster types known by this character **/
@@ -1841,6 +1865,19 @@ class Character : public Creature, public location_visitable<Character>
          * All items in the character's inventory.
          */
         std::vector<item *> all_items( bool need_charges = false ) const;
+
+        /**
+         * All items in the character's inventory, wielded and worn that match every given filter.
+         */
+        auto get_items_if( const std::vector<std::function<bool( const item & )>> &filters ) const ->
+        std::vector<item *>;
+
+        /**
+         * Removes and returns all items in the character's inventory, wielded and worn
+         * that match every given filter.
+         */
+        auto remove_items_if( const std::vector<std::function<bool( const item & )>> &filters ) ->
+        std::vector<detached_ptr<item>>;
 
 
         bool has_charges( const itype_id &it, int quantity,
@@ -1965,6 +2002,7 @@ class Character : public Creature, public location_visitable<Character>
         /** Regenerates stamina */
         void update_stamina( int turns );
 
+        location_inventory &get_inv() { return inv; };
     protected:
         void on_damage_of_type( int adjusted_damage, damage_type type, const bodypart_id &bp ) override;
         location_inventory inv;
@@ -2151,8 +2189,11 @@ class Character : public Creature, public location_visitable<Character>
         /**
          * Same as @ref can_eat, but takes consequences into account.
          * Asks about them if @param interactive is true, refuses otherwise.
+         * Consequences are computed with @param overrides applied, if given
+         * (see the Lua consume callbacks).
          */
-        ret_val<edible_rating> will_eat( const item &food, bool interactive = false ) const;
+        ret_val<edible_rating> will_eat( const item &food, bool interactive = false,
+        const consume_overrides &overrides = {} ) const;
         /** Determine character's capability of recharging their CBMs. */
         bool can_feed_furnace_with( const item &it ) const;
         rechargeable_cbm get_cbm_rechargeable_with( const item &it ) const;
@@ -2176,7 +2217,7 @@ class Character : public Creature, public location_visitable<Character>
         /** Used to apply health modifications from food and medication **/
         void modify_health( const islot_comestible &comest );
         /** Handles the effects of consuming an item */
-        bool consume_effects( item &food );
+        bool consume_effects( item &food, const consume_overrides &overrides = {} );
         /** Check character's capability of consumption overall */
         bool can_consume( const item &it ) const;
         /** True if the character has enough skill (in cooking or survival) to estimate time to rot */
@@ -2218,7 +2259,7 @@ class Character : public Creature, public location_visitable<Character>
          * depending on choice of ingredients */
         std::pair<nutrients, nutrients> compute_nutrient_range(
             const item &, const recipe_id &,
-        const cata::flat_set<flag_id> &extra_flags = {} ) const;
+            const cata::flat_set<flag_id> &extra_flags = {} ) const;
         /** Same, but across arbitrary recipes */
         std::pair<nutrients, nutrients> compute_nutrient_range(
             const itype_id &, const cata::flat_set<flag_id> &extra_flags = {} ) const;
@@ -2258,7 +2299,7 @@ class Character : public Creature, public location_visitable<Character>
         /** Ensures persistent morale effects are up-to-date */
         void apply_persistent_morale();
         /** Used to apply morale modifications from food and medication **/
-        void modify_morale( item &food, int nutr = 0 );
+        void modify_morale( item &food, int nutr = 0, const consume_overrides &overrides = {} );
         // Modified by traits, &c
         int get_morale_level() const;
         void add_morale( const morale_type &type, int bonus, int max_bonus = 0,
@@ -2280,6 +2321,8 @@ class Character : public Creature, public location_visitable<Character>
         const recipe_subset &get_learned_recipes() const;
 
         bool knows_recipe( const recipe *rec ) const;
+        /** Forgets every learned recipe; autolearned ones are re-evaluated on next query. */
+        void forget_all_recipes();
         void learn_recipe( const recipe *rec );
         bool can_learn_by_disassembly( const recipe &rec ) const;
 
@@ -2703,3 +2746,11 @@ nc_color bodytemp_color( const Character &c, const bodypart_str_id &bp );
 
 /** Returns true if the player has a psyshield artifact, or sometimes if wearing tinfoil */
 bool has_psy_protection( const Character &c, int partial_chance );
+
+/// Counter that changes whenever the traits of a character may change: a mutation is gained or
+/// lost, or an enchantment grants or removes one. Lua caches of trait checks compare it.
+auto character_trait_generation() -> int;
+
+/// Forgets the body temperature inputs that activity skips reuse, so a new or loaded game
+/// calculates them again.
+auto reset_skip_bodytemp_cache() -> void;

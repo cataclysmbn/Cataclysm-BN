@@ -251,7 +251,11 @@ void Character::process_turn()
     // Didn't just pick something up
     last_item = itype_id( "null" );
 
-    suffer();
+    // Roll mutation and bionic side effects once per calendar turn, as for effects
+    action_time_scale::for_each_calendar_turn_this_tick( [this] {
+        suffer();
+        return !is_dead_state();
+    } );
 
     // bio_portal_tap: passively draw power from a linked portal's distribution grid.
     if( bio_portal_tap_linked && has_bionic( bionic_id( "bio_portal_tap" ) ) ) {

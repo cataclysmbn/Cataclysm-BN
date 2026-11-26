@@ -929,6 +929,15 @@ item *inventory::most_appropriate_painkiller( int pain )
     return ret;
 }
 
+void inventory::edit_all_items( const std::function<void( item & )> &func )
+{
+    for( auto &elem : items ) {
+        for( auto &elem_stack : elem ) {
+            func( *elem_stack );
+        }
+    }
+}
+
 void inventory::rust_iron_items()
 {
     for( auto &elem : items ) {

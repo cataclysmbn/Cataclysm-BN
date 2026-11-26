@@ -283,8 +283,8 @@ $ git push origin new_feature
 AI 코딩 어시스턴트가 PR 작성에 사용되었다면 PR 설명에 AI 사용 사실을 공개해야 합니다.
 
 AI의 도움을 받아 작성, 생성 또는 실질적으로 수정한 모든 커밋에는
-[AI 코딩 어시스턴트](https://docs.kernel.org/process/coding-assistants.html) 및
-[패치 제출](https://docs.kernel.org/process/submitting-patches.html#using-assisted-by)에 설명된
+[AI 코딩 어시스턴트](https://docs.kernel.org/7.2/process/coding-assistants.html) 및
+[패치 제출](https://docs.kernel.org/7.2/process/submitting-patches.html#using-assisted-by)에 설명된
 Linux 커널 형식의 `Assisted-by:` 트레일러를 포함해야 합니다.
 
 예시:

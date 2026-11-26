@@ -1681,7 +1681,7 @@
       { "type": "leap", "cooldown": 10, "max_range": 2, "allow_no_target": true },
       { "id": "stomp_DinoMod", "cooldown": 20, "damage_max_instance": [ { "damage_type": "bash", "amount": 8 } ] },
       [ "EAT_CROP", 2400 ],
-      [ "SMASH", 30 ]
+      { "id": "smash", "cooldown": 30 }
     ],
     "reproduction": { "baby_egg": "egg_maiasaura", "baby_count": 30, "baby_timer": 60 }
   },
@@ -1917,7 +1917,7 @@
     "zombify_into": "mon_ztyracosaurus",
     "description": "A large stocky four-legged dinosaur with a bony crest with several long spikes and one large horn above the beak and a short tail.",
     "reproduction": { "baby_egg": "egg_styracosaurus", "baby_count": 20, "baby_timer": 40 },
-    "special_attacks": [ [ "SMASH", 60 ], [ "LUNGE", 10 ], [ "EAT_CROP", 3600 ], [ "stretch_horn_DinoMod", 40 ] ],
+    "special_attacks": [ { "id": "smash", "cooldown": 60 }, [ "LUNGE", 10 ], [ "EAT_CROP", 3600 ], [ "stretch_horn_DinoMod", 40 ] ],
     "harvest": "styracosaurus"
   },
   {
@@ -1936,7 +1936,7 @@
     "reproduction": { "baby_egg": "egg_centrosaurus", "baby_count": 20, "baby_timer": 40 },
     "special_attacks": [
       { "id": "stomp_DinoMod", "cooldown": 30, "damage_max_instance": [ { "damage_type": "bash", "amount": 12 } ] },
-      [ "SMASH", 60 ],
+      { "id": "smash", "cooldown": 60 },
       [ "LUNGE", 10 ],
       [ "EAT_CROP", 3600 ],
       [ "stretch_horn_DinoMod", 40 ]
@@ -1957,7 +1957,7 @@
     "zombify_into": "mon_zeiniosaurus",
     "description": "A large stocky rhino-like dinosaur with a tall bony crest and one large horn above the nose curving forward towards the beak.",
     "reproduction": { "baby_egg": "egg_einiosaurus", "baby_count": 20, "baby_timer": 40 },
-    "special_attacks": [ [ "SMASH", 60 ], [ "LUNGE", 20 ], [ "EAT_CROP", 3600 ], [ "stretch_horn_DinoMod", 30 ] ]
+    "special_attacks": [ { "id": "smash", "cooldown": 60 }, [ "LUNGE", 20 ], [ "EAT_CROP", 3600 ], [ "stretch_horn_DinoMod", 30 ] ]
   },
   {
     "type": "MONSTER",
@@ -1975,7 +1975,7 @@
     "reproduction": { "baby_egg": "egg_achelousaurus", "baby_count": 20, "baby_timer": 40 },
     "special_attacks": [
       { "id": "stomp_DinoMod", "cooldown": 10, "damage_max_instance": [ { "damage_type": "bash", "amount": 12 } ] },
-      [ "SMASH", 40 ],
+      { "id": "smash", "cooldown": 40 },
       [ "LUNGE", 20 ],
       [ "EAT_CROP", 3000 ]
     ]
@@ -1995,7 +1995,7 @@
     "reproduction": { "baby_egg": "egg_pachyrhinosaurus", "baby_count": 20, "baby_timer": 40 },
     "special_attacks": [
       { "id": "stomp_DinoMod", "cooldown": 10, "damage_max_instance": [ { "damage_type": "bash", "amount": 12 } ] },
-      [ "SMASH", 30 ],
+      { "id": "smash", "cooldown": 30 },
       [ "LUNGE", 10 ],
       [ "EAT_CROP", 2400 ]
     ],

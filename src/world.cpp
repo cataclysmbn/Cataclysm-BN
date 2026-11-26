@@ -16,6 +16,7 @@
 #include "sqlite3.h"
 #include "sqlite_file_prefix.h"
 #include "worldfactory.h"
+#include "utils/memory_stream.h"
 #include "zlib.h"
 
 #include <algorithm>
@@ -455,11 +456,14 @@ auto read_from_db( sqlite3 *db, const std::string &path, file_read_fn reader,
         dbg( DL::Error ) << "Failed to prepare statement: " << sqlite3_errmsg( db ) << '\n';
         throw std::runtime_error( "DB query failed" );
     }
+    // Also runs when the reader throws; an open statement hides newer writes from later reads.
+    const auto finalize = on_out_of_scope( [&]() {
+        sqlite3_finalize( stmt );
+    } );
 
     if( sqlite3_bind_text( stmt, sqlite3_bind_parameter_index( stmt, ":path" ), path.c_str(), -1,
                            SQLITE_TRANSIENT ) != SQLITE_OK ) {
         dbg( DL::Error ) << "Failed to bind parameter: " << sqlite3_errmsg( db ) << '\n';
-        sqlite3_finalize( stmt );
         throw std::runtime_error( "DB query failed" );
     }
 
@@ -471,7 +475,6 @@ auto read_from_db( sqlite3 *db, const std::string &path, file_read_fn reader,
         std::string compression = compression_raw ? reinterpret_cast<const char *>( compression_raw ) : "";
 
         if( blobData == nullptr ) {
-            sqlite3_finalize( stmt );
             return false; // Return an empty string if there's no data
         }
 
@@ -484,12 +487,11 @@ auto read_from_db( sqlite3 *db, const std::string &path, file_read_fn reader,
             throw std::runtime_error( "Unknown compression format: " + compression );
         }
 
-        std::istringstream stream( dataString );
+        // JSON is parsed much faster from a memory stream than from a string stream.
+        memory_istream stream( std::move( dataString ) );
         reader( stream );
-        sqlite3_finalize( stmt );
     } else {
         auto err = sqlite3_errmsg( db );
-        sqlite3_finalize( stmt );
 
         if( !optional ) {
             dbg( DL::Error ) << "Failed to execute query: " << err << '\n';
@@ -1043,17 +1045,38 @@ auto world::get_player_paths() const -> std::vector<std::string>
 
 sqlite3 *world::get_player_db()
 {
-    if( !save_db ) {
-        save_db = open_db( info->folder_path() + "/" + get_player_path() + ".sqlite3" );
-        last_save_id = g->u.get_save_id();
+    // Mutex is required here because parallel save workers call this function concurrently.
+    // It serializes the open and migration steps below, which must run as one step on a
+    // single connection that matches the current save id:
+    //
+    // Why this function keeps one connection that matches the current save id:
+    // 1. A save id can change while a save transaction is open. Example: the transaction
+    //    is open for "Tom" and the save id becomes "Nagi".
+    // 2. The "Tom" connection holds that transaction, so it holds the file write lock.
+    // 3. A new connection for "Nagi" cannot write. It waits for 5 seconds (busy_timeout)
+    //    and then fails with SQLITE_BUSY.
+    // 4. If last_save_id still says "Tom", every call repeats this and opens another
+    //    connection. Each old connection leaks and keeps its lock.
+    //
+    // So this function closes the old connection, copies its file to the new save id once,
+    // opens one connection, and updates last_save_id.
+    static std::mutex player_db_mutex;
+    const auto lock = std::lock_guard<std::mutex>( player_db_mutex );
+
+    if( save_db && last_save_id != g->u.get_save_id() ) {
+        sqlite3_close( save_db );
+        save_db = nullptr;
     }
 
-    if( last_save_id != g->u.get_save_id() ) {
-        copy_file(
-            info->folder_path() + "/" + base64_encode( last_save_id ) + ".sqlite3",
-            info->folder_path() + "/" + base64_encode( g->u.get_save_id() ) + ".sqlite3"
-        );
+    if( !save_db ) {
+        if( !last_save_id.empty() && last_save_id != g->u.get_save_id() ) {
+            copy_file(
+                info->folder_path() + "/" + base64_encode( last_save_id ) + ".sqlite3",
+                info->folder_path() + "/" + base64_encode( g->u.get_save_id() ) + ".sqlite3"
+            );
+        }
         save_db = open_db( info->folder_path() + "/" + get_player_path() + ".sqlite3" );
+        last_save_id = g->u.get_save_id();
     }
 
     // A player connection first opened during a save must join that save's transaction.

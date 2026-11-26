@@ -1,0 +1,16 @@
+[
+  {
+    "type": "mod_tileset",
+    "compatibility": [ "UNDEAD_PEOPLE_BASE", "UNDEAD_PEOPLE", "MshockRealXotto", "MSX++DEAD_PEOPLE", "UltimateCataclysm" ],
+    "tiles-new": [
+      {
+        "file": "crazy_monsters_large.png",
+        "sprite_width": 64,
+        "sprite_height": 80,
+        "sprite_offset_x": -16,
+        "sprite_offset_y": -48,
+        "tiles": [ { "id": "mon_zombie_skeltal", "fg": 0 } ]
+      }
+    ]
+  }
+]

@@ -871,7 +871,6 @@ void npc::handle_sound( const short heard_vol, sound_event sound )
 
     // Remember that our heard volume is in milli-decibels spl
     // Only sounds that are marked as being from a monster/npc/the player are passed to handle_sound, so we have a source creature.
-    map &here = get_map();
     const auto &spos = sound.origin;
 
     // What entity is the source of the sound? We effectively have two logic cases, source is a monster or source is a "player" i.e., the player character or an npc.
@@ -1499,7 +1498,7 @@ std::string dialogue::dynamic_line( const talk_topic &the_topic ) const
             } else {
                 info += _( "\nThirsty" );
             }
-            if( p->max_stored_kcal() - p->get_stored_kcal() > 500 ) {
+            if( p->max_stored_kcal() - p->get_stored_kcal() < 500 ) {
                 time_duration hunger_at = 5_minutes
                                           * ( 500 - p->max_stored_kcal() + p->get_stored_kcal() )
                                           / p->bmr();

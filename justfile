@@ -15,6 +15,10 @@ fmt-json *FILES:
 fmt-return *PATHS:
     build-scripts/format-trailing-return.sh {{PATHS}}
 
+# Use `auto` for declarations whose type the initializer already names.
+fmt-auto *PATHS:
+    TIDY_CHECK=modernize-use-auto build-scripts/format-trailing-return.sh {{PATHS}}
+
 fmt-docs:
     build-scripts/fmt.sh docs
 
@@ -32,9 +36,17 @@ lint-dialogue:
 hooks-setup:
     prek install
 
+# Download loading screen images into data/.
+loading-screens:
+    build-scripts/fetch-loading-screens.sh
+
 # Download and launch a PR tiles build: just playtest [--os OS] <PR URL>.
 [positional-arguments]
 playtest *args:
     deno run --allow-read --allow-write --allow-run --allow-env scripts/playtest.ts "$@"
+
+# Download the latest .po files from Transifex (needs `tx` and TX_TOKEN): just pull-po [LANG,...].
+pull-po *LANGS:
+    tx pull --force {{ if LANGS == '' { '--all' } else { '--languages ' + replace(LANGS, ' ', ',') } }}
 
 check: lint

@@ -32,6 +32,7 @@
 #include "line.h"
 #include "map/map.h"
 #include "map/mapdata.h"
+#include "map/utils/map_functions.h"
 #include "map_iterator.h"
 #include "martialarts.h"
 #include "messages.h"
@@ -1873,6 +1874,11 @@ void Character::reach_attack( const tripoint_bub_ms &p )
         return;
     }
 
+    if( map_funcs::physical_floor_between( here, bub_pos(), p ) ) {
+        add_msg_if_player( _( "There's a floor in the way!" ) );
+        return;
+    }
+
     reach_attacking = true;
     melee_attack( *critter, true, &force_technique, false );
     reach_attacking = false;
@@ -3118,10 +3124,10 @@ void Character::perform_special_attacks( Creature &t, dealt_damage_instance &dea
                 practiced = true;
                 as_player()->practice( skill_unarmed, rng( 0, 10 ) );
             }
-        }
-        int dam = dealt_dam.total_damage();
-        if( dam > 0 ) {
-            player_hit_message( this, att.text, t, dam );
+            int dam = dealt_dam.total_damage();
+            if( dam > 0 ) {
+                player_hit_message( this, att.text, t, dam );
+            }
         }
     }
 }
@@ -3136,7 +3142,7 @@ std::string Character::melee_special_effects( Creature &t, damage_instance &d, i
     if( has_active_bionic( bio_shock ) && get_power_level() >= bio_shock->power_trigger &&
         ( !is_armed() || primary_weapon().conductive() ) ) {
         mod_power_level( -bio_shock->power_trigger );
-        d.add_damage( DT_ELECTRIC, rng( 2, 10 ) );
+        d.add_damage( DT_ELECTRIC, rng( 5, 10 ) );
 
         if( is_player() ) {
             dump += string_format( _( "You shock %s." ), target ) + "\n";

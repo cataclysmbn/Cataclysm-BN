@@ -32,9 +32,9 @@ TEST_CASE("nested_recipe_known_check", "[crafting][nested][recipe]") {
         }
     }
 
-    GIVEN("character with tailor skill 4") {
-        // Set tailor skill to 4 (meets difficulty requirement for autolearn)
-        dummy.set_skill_level(skill_id("tailor"), 4);
+    GIVEN("character with tailor skill 5") {
+        // Set tailor skill to 5 (meets difficulty requirement for autolearn)
+        dummy.set_skill_level(skill_id("tailor"), 5);
 
         inventory crafting_inv = dummy.crafting_inventory();
         const recipe_subset& available = dummy.get_available_recipes(crafting_inv);

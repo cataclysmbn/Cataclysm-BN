@@ -101,7 +101,25 @@
       { "item": "armor_larmor", "prob": 5 },
       { "item": "armor_plarmor", "prob": 5 },
       { "item": "kevlar", "prob": 5 },
-      { "item": "modularvest", "prob": 5 },
+      {
+        "collection": [
+          {
+            "distribution": [
+              { "item": "ballistic_vest_light", "prob": 25 },
+              { "item": "ballistic_vest_esapi", "prob": 50 },
+              { "item": "ballistic_vest_heavy", "prob": 25 }
+            ]
+          },
+          {
+            "distribution": [
+              { "item": "null", "prob": 50 },
+              { "item": "scrap_ballistic_plate", "prob": 25 },
+              { "item": "steel_ballistic_plate", "prob": 25 }
+            ]
+          }
+        ],
+        "prob": 5
+      },
       { "item": "flotation_vest_sandbag", "prob": 5 },
       { "item": "armor_trench", "prob": 5 }
     ]
@@ -242,35 +260,34 @@
     "subtype": "distribution",
     "//": "Chance of rare guns, some specific individual obscure guns, and bonus weight to make specific common guns show up more often.",
     "entries": [
-      {
-        "distribution": [
-          { "item": "hand_crossbow", "prob": 10 },
-          { "item": "glock_17", "prob": 55 },
-          { "item": "glock_19", "prob": 40 },
-          { "item": "glock_20", "prob": 20 },
-          { "item": "glock_21", "prob": 15 },
-          { "item": "glock_22", "prob": 30 },
-          { "item": "glock_31", "prob": 15 },
-          { "item": "hptc9", "prob": 15 },
-          { "item": "hptcf380", "prob": 10 },
-          { "item": "hptjcp", "prob": 10 },
-          { "item": "hptjhp", "prob": 10 }
-        ],
-        "prob": 50
-      },
+      { "group": "bandit_guns_pistols", "prob": 50 },
       { "group": "guns_pistol_common", "prob": 25 },
-      {
-        "distribution": [
-          { "item": "colt_army", "prob": 50 },
-          { "item": "colt_navy", "prob": 50 },
-          { "item": "colt_saa", "prob": 60 },
-          { "item": "draco", "prob": 30 },
-          { "item": "lemat_revolver", "prob": 50 }
-        ],
-        "prob": 10
-      },
-      { "group": "guns_pistol_rare", "prob": 5 },
-      { "group": "guns_pistol_improvised", "prob": 10 }
+      { "group": "guns_pistol_improvised", "prob": 15 },
+      { "group": "guns_pistol_rare", "prob": 10 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "bandit_guns_pistols",
+    "subtype": "distribution",
+    "//": "Designed to make make specific guns show up more often.  Generally a mix of gangster, cowboy, and Soviet guns including obscure ones.",
+    "entries": [
+      { "item": "hand_crossbow", "prob": 10 },
+      { "item": "glock_17", "prob": 55 },
+      { "item": "glock_19", "prob": 40 },
+      { "item": "glock_20", "prob": 20 },
+      { "item": "glock_21", "prob": 15 },
+      { "item": "glock_22", "prob": 30 },
+      { "item": "glock_31", "prob": 15 },
+      { "item": "hptc9", "prob": 15 },
+      { "item": "hptcf380", "prob": 10 },
+      { "item": "hptjcp", "prob": 10 },
+      { "item": "hptjhp", "prob": 10 },
+      { "item": "colt_army", "prob": 50 },
+      { "item": "colt_navy", "prob": 50 },
+      { "item": "colt_saa", "prob": 60 },
+      { "item": "draco", "prob": 30 },
+      { "item": "lemat_revolver", "prob": 50 }
     ]
   },
   {
@@ -278,21 +295,25 @@
     "id": "NC_BANDIT_shotgun",
     "subtype": "distribution",
     "entries": [
-      {
-        "distribution": [
-          { "item": "browning_a5", "prob": 15 },
-          { "item": "shotgun_410", "prob": 30 },
-          { "item": "shotgun_d", "prob": 40 },
-          { "item": "shotgun_s", "prob": 30 },
-          { "item": "winchester_1887", "prob": 5 },
-          { "item": "winchester_1897", "prob": 10 }
-        ],
-        "prob": 50
-      },
+      { "group": "bandit_guns_shotguns", "prob": 50 },
       { "group": "guns_shotgun_common", "prob": 25 },
-      { "distribution": [ { "item": "saiga_12", "prob": 25 }, { "item": "saiga_410", "prob": 10 } ], "prob": 10 },
-      { "group": "guns_shotgun_rare", "prob": 5 },
-      { "group": "guns_shotgun_improvised", "prob": 10 }
+      { "group": "guns_shotgun_improvised", "prob": 15 },
+      { "group": "guns_shotgun_rare", "prob": 10 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "bandit_guns_shotguns",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "browning_a5", "prob": 15 },
+      { "item": "shotgun_410", "prob": 30 },
+      { "item": "shotgun_d", "prob": 40 },
+      { "item": "shotgun_s", "prob": 30 },
+      { "item": "winchester_1887", "prob": 5 },
+      { "item": "winchester_1897", "prob": 10 },
+      { "item": "saiga_12", "prob": 25 },
+      { "item": "saiga_410", "prob": 10 }
     ]
   },
   {
@@ -300,34 +321,32 @@
     "id": "NC_BANDIT_rifle",
     "subtype": "distribution",
     "entries": [
-      {
-        "distribution": [
-          { "item": "crossbow", "prob": 25 },
-          { "item": "rep_crossbow", "prob": 10 },
-          { "item": "bullet_crossbow", "prob": 10 },
-          { "item": "compcrossbow", "prob": 20 },
-          { "item": "compositecrossbow", "prob": 10 },
-          { "item": "aksemi", "prob": 15 },
-          { "item": "ar15", "prob": 30 },
-          { "item": "m1a", "prob": 40 },
-          { "item": "mosin44", "prob": 10 },
-          { "item": "mosin91_30", "prob": 20 },
-          { "item": "sks", "prob": 40 }
-        ],
-        "prob": 50
-      },
+      { "group": "bandit_guns_rifles", "prob": 50 },
       { "group": "guns_rifle_common", "prob": 25 },
-      {
-        "distribution": [
-          { "item": "crossbow_carbon", "prob": 10 },
-          { "item": "huge_crossbow", "prob": 5 },
-          { "item": "ak47", "prob": 50 },
-          { "item": "SVD", "prob": 5 }
-        ],
-        "prob": 10
-      },
-      { "group": "guns_rifle_rare", "prob": 5 },
-      { "group": "guns_rifle_improvised", "prob": 10 }
+      { "group": "guns_rifle_improvised", "prob": 15 },
+      { "group": "guns_rifle_rare", "prob": 10 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "bandit_guns_rifles",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "crossbow", "prob": 25 },
+      { "item": "rep_crossbow", "prob": 10 },
+      { "item": "bullet_crossbow", "prob": 10 },
+      { "item": "compcrossbow", "prob": 20 },
+      { "item": "compositecrossbow", "prob": 10 },
+      { "item": "aksemi", "prob": 15 },
+      { "item": "ar15", "prob": 30 },
+      { "item": "m1a", "prob": 40 },
+      { "item": "mosin44", "prob": 10 },
+      { "item": "mosin91_30", "prob": 20 },
+      { "item": "sks", "prob": 40 },
+      { "item": "crossbow_carbon", "prob": 10 },
+      { "item": "huge_crossbow", "prob": 5 },
+      { "item": "ak47", "prob": 50 },
+      { "item": "SVD", "prob": 5 }
     ]
   },
   {
@@ -335,19 +354,22 @@
     "id": "NC_BANDIT_smg",
     "subtype": "distribution",
     "entries": [
-      {
-        "distribution": [
-          { "item": "mac_10", "prob": 40 },
-          { "item": "mac_11", "prob": 20 },
-          { "item": "sten", "prob": 100 },
-          { "item": "tec9", "prob": 20 }
-        ],
-        "prob": 50
-      },
+      { "group": "bandit_guns_smgs", "prob": 50 },
       { "group": "guns_smg_common", "prob": 25 },
-      { "item": "skorpion_61", "prob": 3 },
-      { "group": "guns_smg_rare", "prob": 5 },
-      { "group": "guns_smg_improvised", "prob": 10 }
+      { "group": "guns_smg_improvised", "prob": 15 },
+      { "group": "guns_smg_rare", "prob": 10 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "bandit_guns_smgs",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "mac_10", "prob": 40 },
+      { "item": "mac_11", "prob": 20 },
+      { "item": "sten", "prob": 100 },
+      { "item": "tec9", "prob": 20 },
+      { "item": "skorpion_61", "prob": 25 }
     ]
   },
   {

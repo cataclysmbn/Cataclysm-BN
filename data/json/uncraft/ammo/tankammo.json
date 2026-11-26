@@ -1,16 +1,79 @@
 [
   {
+    "result": "105mm_slug",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "launcher", 3 ] ],
+    "difficulty": 5,
+    "time": "10 m",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 2000 ] ], [ [ "gunpowder", 5500 ] ], [ [ "105mm_casing", 1 ] ], [ [ "electric_primer_120mm", 1 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "bp_105mm_slug",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "launcher", 3 ] ],
+    "difficulty": 5,
+    "time": "10 m",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [
+      [ [ "lead", 2000 ] ],
+      [ [ "chem_black_powder", 5500 ] ],
+      [ [ "105mm_casing", 1 ] ],
+      [ [ "electric_primer_120mm", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "105mm_he_reloaded",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "launcher", 3 ] ],
+    "difficulty": 5,
+    "time": "10 m",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [
+      [ [ "chem_compositionb", 800 ] ],
+      [ [ "gunpowder", 5500 ] ],
+      [ [ "impact_fuze", 1 ] ],
+      [ [ "scrap", 20 ] ],
+      [ [ "105mm_casing", 1 ] ],
+      [ [ "electric_primer_120mm", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "bp_105mm_he_reloaded",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "launcher", 3 ] ],
+    "difficulty": 5,
+    "time": "10 m",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [
+      [ [ "chem_compositionb", 800 ] ],
+      [ [ "chem_black_powder", 5500 ] ],
+      [ [ "impact_fuze", 1 ] ],
+      [ [ "scrap", 20 ] ],
+      [ [ "105mm_casing", 1 ] ],
+      [ [ "electric_primer_120mm", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
     "result": "105mm_heat",
     "type": "uncraft",
     "skill_used": "fabrication",
-    "skills_required": [ [ "launcher", 4 ], [ "electronics", 1 ] ],
-    "difficulty": 6,
+    "skills_required": [ [ "launcher", 3 ] ],
+    "difficulty": 5,
     "time": "10 m",
     "qualities": [ { "id": "PULL", "level": 1 } ],
     "components": [
       [ [ "copper", 2000 ] ],
       [ [ "chem_compositionb", 1000 ] ],
-      [ [ "gunpowder_artillery", 6000 ] ],
+      [ [ "gunpowder", 5500 ] ],
       [ [ "impact_fuze", 1 ] ],
       [ [ "scrap", 6 ] ],
       [ [ "105mm_casing", 1 ] ],
@@ -22,14 +85,99 @@
     "result": "105mm_ap",
     "type": "uncraft",
     "skill_used": "fabrication",
-    "skills_required": [ [ "launcher", 4 ], [ "electronics", 1 ] ],
-    "difficulty": 6,
+    "skills_required": [ [ "launcher", 3 ] ],
+    "difficulty": 5,
+    "time": "10 m",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "gunpowder", 5500 ] ], [ [ "scrap", 20 ] ], [ [ "105mm_casing", 1 ] ], [ [ "electric_primer_120mm", 1 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "120mm_usable_shot",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "launcher", 3 ] ],
+    "difficulty": 5,
+    "time": "10 m",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 3000 ] ], [ [ "gunpowder", 7000 ] ], [ [ "120mm_casing", 1 ] ], [ [ "electric_primer_120mm", 1 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "bp_120mm_usable_shot",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "launcher", 3 ] ],
+    "difficulty": 5,
     "time": "10 m",
     "qualities": [ { "id": "PULL", "level": 1 } ],
     "components": [
-      [ [ "gunpowder_artillery", 6000 ] ],
+      [ [ "lead", 3000 ] ],
+      [ [ "chem_black_powder", 7000 ] ],
+      [ [ "120mm_casing", 1 ] ],
+      [ [ "electric_primer_120mm", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "120mm_usable_slug",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "launcher", 3 ] ],
+    "difficulty": 5,
+    "time": "10 m",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 3000 ] ], [ [ "gunpowder", 7000 ] ], [ [ "120mm_casing", 1 ] ], [ [ "electric_primer_120mm", 1 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "bp_120mm_usable_slug",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "launcher", 3 ] ],
+    "difficulty": 5,
+    "time": "10 m",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [
+      [ [ "lead", 3000 ] ],
+      [ [ "chem_black_powder", 7000 ] ],
+      [ [ "120mm_casing", 1 ] ],
+      [ [ "electric_primer_120mm", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "120mm_usable_he_reloaded",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "launcher", 3 ] ],
+    "difficulty": 5,
+    "time": "10 m",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [
+      [ [ "chem_compositionb", 1000 ] ],
+      [ [ "gunpowder", 7000 ] ],
+      [ [ "impact_fuze", 1 ] ],
       [ [ "scrap", 20 ] ],
-      [ [ "105mm_casing", 1 ] ],
+      [ [ "120mm_casing", 1 ] ],
+      [ [ "electric_primer_120mm", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "bp_120mm_usable_he_reloaded",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "launcher", 3 ] ],
+    "difficulty": 5,
+    "time": "10 m",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [
+      [ [ "chem_compositionb", 1000 ] ],
+      [ [ "chem_black_powder", 7000 ] ],
+      [ [ "impact_fuze", 1 ] ],
+      [ [ "scrap", 20 ] ],
+      [ [ "120mm_casing", 1 ] ],
       [ [ "electric_primer_120mm", 1 ] ]
     ],
     "charges": 1
@@ -38,16 +186,18 @@
     "result": "120mm_usable_heat",
     "type": "uncraft",
     "skill_used": "fabrication",
-    "skills_required": [ [ "launcher", 4 ], [ "electronics", 1 ] ],
-    "difficulty": 6,
+    "skills_required": [ [ "launcher", 3 ] ],
+    "difficulty": 5,
     "time": "10 m",
-    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "//": "Taking apart a factory original combustible casing",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
     "components": [
       [ [ "copper", 2500 ] ],
       [ [ "chem_compositionb", 2000 ] ],
-      [ [ "gunpowder_artillery", 8000 ] ],
+      [ [ "gunpowder", 7000 ] ],
       [ [ "impact_fuze", 1 ] ],
       [ [ "scrap", 8 ] ],
+      [ [ "cardboard", 5 ] ],
       [ [ "120mm_case_base", 1 ] ],
       [ [ "electric_primer_120mm", 1 ] ]
     ],
@@ -57,16 +207,122 @@
     "result": "120mm_usable_ap",
     "type": "uncraft",
     "skill_used": "fabrication",
-    "skills_required": [ [ "launcher", 4 ], [ "electronics", 1 ] ],
-    "difficulty": 6,
+    "skills_required": [ [ "launcher", 3 ] ],
+    "difficulty": 5,
     "time": "10 m",
-    "qualities": [ { "id": "PULL", "level": 1 } ],
-    "//": "Realistically you'd get a fair bit of depleted uranium, and probably get horribly toxic oxides everywhere, but...",
+    "//": "Taking apart a factory original combustible casing",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "//2": "Realistically you'd get a fair bit of depleted uranium, and probably get horribly toxic oxides everywhere, but...",
     "components": [
-      [ [ "gunpowder_artillery", 8000 ] ],
+      [ [ "gunpowder", 7000 ] ],
       [ [ "scrap", 24 ] ],
+      [ [ "cardboard", 5 ] ],
       [ [ "120mm_case_base", 1 ] ],
       [ [ "electric_primer_120mm", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "155mm_shot",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "launcher", 3 ] ],
+    "difficulty": 5,
+    "time": "10 m",
+    "//": "155mm uses bagged charges instead of casings",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "lead", 7000 ] ], [ [ "gunpowder", 6000 ] ], [ [ "primer_155mm", 1 ] ], [ [ "rag", 20 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "bp_155mm_shot",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "launcher", 3 ] ],
+    "difficulty": 5,
+    "time": "10 m",
+    "//": "155mm uses bagged charges instead of casings",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "lead", 7000 ] ], [ [ "chem_black_powder", 6000 ] ], [ [ "primer_155mm", 1 ] ], [ [ "rag", 20 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "155mm_slug",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "launcher", 3 ] ],
+    "difficulty": 5,
+    "time": "10 m",
+    "//": "155mm uses bagged charges instead of casings",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "lead", 7000 ] ], [ [ "gunpowder", 6000 ] ], [ [ "primer_155mm", 1 ] ], [ [ "rag", 20 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "bp_155mm_slug",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "launcher", 3 ] ],
+    "difficulty": 5,
+    "time": "10 m",
+    "//": "155mm uses bagged charges instead of casings",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "lead", 7000 ] ], [ [ "chem_black_powder", 6000 ] ], [ [ "primer_155mm", 1 ] ], [ [ "rag", 20 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "155mm_he_reloaded",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "launcher", 3 ] ],
+    "difficulty": 5,
+    "time": "10 m",
+    "//": "155mm uses bagged charges instead of casings",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [
+      [ [ "chem_compositionb", 2000 ] ],
+      [ [ "gunpowder", 6000 ] ],
+      [ [ "impact_fuze", 1 ] ],
+      [ [ "scrap", 80 ] ],
+      [ [ "primer_155mm", 1 ] ],
+      [ [ "rag", 20 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "bp_155mm_he_reloaded",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "launcher", 3 ] ],
+    "difficulty": 5,
+    "time": "10 m",
+    "//": "155mm uses bagged charges instead of casings",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [
+      [ [ "chem_compositionb", 2000 ] ],
+      [ [ "chem_black_powder", 6000 ] ],
+      [ [ "impact_fuze", 1 ] ],
+      [ [ "scrap", 80 ] ],
+      [ [ "primer_155mm", 1 ] ],
+      [ [ "rag", 20 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "155mm_nuke",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "launcher", 3 ] ],
+    "difficulty": 5,
+    "time": "10 m",
+    "//": "155mm uses bagged charges instead of casings",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [
+      [ [ "mininuke", 1 ] ],
+      [ [ "gunpowder", 6000 ] ],
+      [ [ "impact_fuze", 1 ] ],
+      [ [ "primer_155mm", 1 ] ],
+      [ [ "rag", 20 ] ]
     ],
     "charges": 1
   },
@@ -74,17 +330,19 @@
     "result": "155mm_heat",
     "type": "uncraft",
     "skill_used": "fabrication",
-    "skills_required": [ [ "launcher", 5 ], [ "mechanics", 1 ] ],
-    "difficulty": 4,
+    "skills_required": [ [ "launcher", 3 ] ],
+    "difficulty": 5,
     "time": "10 m",
-    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "//": "155mm uses bagged charges instead of casings",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
     "components": [
       [ [ "copper", 4500 ] ],
       [ [ "chem_compositionb", 6000 ] ],
-      [ [ "gunpowder_artillery", 12000 ] ],
+      [ [ "gunpowder", 6000 ] ],
       [ [ "impact_fuze", 1 ] ],
       [ [ "scrap", 12 ] ],
-      [ [ "primer_155mm", 1 ] ]
+      [ [ "primer_155mm", 1 ] ],
+      [ [ "rag", 20 ] ]
     ],
     "charges": 1
   },
@@ -92,16 +350,18 @@
     "result": "155mm_frag",
     "type": "uncraft",
     "skill_used": "fabrication",
-    "skills_required": [ [ "launcher", 5 ], [ "mechanics", 1 ] ],
-    "difficulty": 4,
+    "skills_required": [ [ "launcher", 3 ] ],
+    "difficulty": 5,
     "time": "10 m",
-    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "//": "155mm uses bagged charges instead of casings",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
     "components": [
       [ [ "chem_compositionb", 8000 ] ],
-      [ [ "gunpowder_artillery", 12000 ] ],
+      [ [ "gunpowder", 6000 ] ],
       [ [ "impact_fuze", 1 ] ],
       [ [ "scrap", 24 ] ],
-      [ [ "primer_155mm", 1 ] ]
+      [ [ "primer_155mm", 1 ] ],
+      [ [ "rag", 20 ] ]
     ],
     "charges": 1
   },
@@ -109,15 +369,15 @@
     "result": "25mm_hei",
     "type": "uncraft",
     "skill_used": "fabrication",
-    "difficulty": 5,
-    "skills_required": [ [ "launcher", 3 ], [ "mechanics", 1 ] ],
+    "difficulty": 4,
+    "skills_required": [ "launcher", 2 ],
     "time": "3 m",
     "qualities": [ { "id": "PULL", "level": 1 } ],
     "components": [
       [ [ "25mm_casing", 1 ] ],
       [ [ "chem_compositionb", 20 ] ],
       [ [ "incendiary", 20 ] ],
-      [ [ "gunpowder_rifle", 80 ] ],
+      [ [ "gunpowder", 80 ] ],
       [ [ "impact_fuze", 1 ] ],
       [ [ "lgrifle_primer", 1 ] ]
     ],
@@ -127,11 +387,11 @@
     "result": "25mm_apds",
     "type": "uncraft",
     "skill_used": "fabrication",
-    "difficulty": 5,
-    "skills_required": [ [ "launcher", 3 ], [ "mechanics", 1 ] ],
+    "difficulty": 4,
+    "skills_required": [ "launcher", 2 ],
     "time": "3 m",
     "qualities": [ { "id": "PULL", "level": 1 } ],
-    "components": [ [ [ "25mm_casing", 1 ] ], [ [ "scrap", 4 ] ], [ [ "gunpowder_rifle", 80 ] ], [ [ "lgrifle_primer", 1 ] ] ],
+    "components": [ [ [ "25mm_casing", 1 ] ], [ [ "scrap", 4 ] ], [ [ "gunpowder", 80 ] ], [ [ "lgrifle_primer", 1 ] ] ],
     "charges": 1
   }
 ]

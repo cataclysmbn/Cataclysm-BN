@@ -4,7 +4,7 @@
 #include <ranges>
 
 #include "point.h"
-#include "point_traits.h"
+#include "math/point_traits.h"
 
 template<typename Tripoint>
 class tripoint_range : public std::ranges::view_interface<tripoint_range<Tripoint>>

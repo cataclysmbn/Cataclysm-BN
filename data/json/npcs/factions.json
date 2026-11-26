@@ -497,7 +497,7 @@
   {
     "type": "faction",
     "id": "apis_hive",
-    "name": "Mutants Bees",
+    "name": "Mutant Bees",
     "likes_u": -25,
     "respects_u": -25,
     "known_by_u": false,

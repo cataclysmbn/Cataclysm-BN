@@ -275,5 +275,21 @@
     "range": 40,
     "dispersion": 1000,
     "durability": 8
+  },
+  {
+    "id": "m16a4_monster",
+    "copy-from": "m16a4",
+    "type": "GUN",
+    "name": { "str_sp": "fake monster M16A4" },
+    "description": "This exists to give feral soldiers less accurate shots.",
+    "dispersion": 750
+  },
+  {
+    "id": "m1a_monster",
+    "copy-from": "m1a",
+    "type": "GUN",
+    "name": { "str_sp": "fake monster M1A" },
+    "description": "This exists to give feral snipers less accurate shots.",
+    "dispersion": 500
   }
 ]

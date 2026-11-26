@@ -4,7 +4,7 @@
     "id": "irradiated_rose_hips",
     "copy-from": "rose_hips",
     "name": { "str_sp": "irradiated rose hips" },
-    "description": "An irradiated rose hips will remain edible nearly forever.  Sterilized using radiation, so it's safe to eat.",
+    "description": "Irradiated rose hips will remain edible nearly forever.  Sterilized using radiation, so it's safe to eat.",
     "proportional": { "price": 2 },
     "spoils_in": "0 hours",
     "container": "bag_zipper"

@@ -707,6 +707,19 @@
   },
   {
     "type": "COMESTIBLE",
+    "copy-from": "chili",
+    "id": "birria",
+    "name": { "str_sp": "birria" },
+    "conditional_names": [  ],
+    "color": "brown",
+    "calories": 360,
+    "description": "A rich Mexican stew of tender meat braised in a chile broth with garlic and warm spices.  Often served with tortillas and its savory broth for dipping.",
+    "material": [ "flesh", "veggy" ],
+    "quench": 3,
+    "fun": 9
+  },
+  {
+    "type": "COMESTIBLE",
     "id": "pork_beans",
     "name": { "str_sp": "pork and beans" },
     "weight": "267 g",

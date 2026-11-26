@@ -215,7 +215,7 @@
     "value": 300000,
     "start": {
       "assign_mission_target": { "om_terrain": "bandit_camp_1", "om_special": "bandit_camp", "reveal_radius": 1, "min_distance": 10 },
-      "update_mapgen": { "place_npcs": [ { "class": "bandit", "x": 17, "y": 9, "target": true } ] },
+      "update_mapgen": { "place_npcs": [ { "class": "bandit_leader", "x": 17, "y": 9, "target": true } ] },
       "effect": [
         { "u_buy_item": "ruger_redhawk" },
         { "u_buy_item": "44magnum", "count": 17 },
@@ -249,7 +249,6 @@
     "item": "necropolis_datasheet",
     "start": { "assign_mission_target": { "om_terrain": "necropolis_a_29", "om_special": "Necropolis", "reveal_radius": 5 } },
     "origins": [ "ORIGIN_SECONDARY" ],
-    "followup": "MISSION_FREE_MERCHANTS_EVAC_4",
     "dialogue": {
       "describe": "We need help…",
       "offer": "If you are interested, I recently received a message that a unit was deploying into our AO.  I've been informed of an underground facility they're attempting to secure, and they may require assistance.  The bird dropped them off next to a pump station.  Not much more I can tell you.  We've had difficulty keeping in contact with them, so command has requested you give us a status report when you return.  If you could locate the captain in charge, I'm sure he could use your skills.",

@@ -166,10 +166,10 @@
       ],
       "palettes": [ "basement_empty" ],
       "nested": {
-        "1": { "chunks": [ [ "null", 70 ], [ "recroom_12x12", 30 ], [ "tvroom_12x12", 30 ], [ "workoutroom_12x12", 30 ] ] },
+        "1": { "chunks": [ [ "null", 30 ], [ "recroom_12x12", 30 ], [ "tvroom_12x12", 30 ], [ "workoutroom_12x12", 30 ] ] },
         "2": {
           "chunks": [
-            [ "null", 70 ],
+            [ "null", 30 ],
             [ "room_6x6_guns_E", 2 ],
             [ "room_6x6_junk_E", 30 ],
             [ "room_6x6_office_E", 30 ],

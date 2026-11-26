@@ -2269,7 +2269,7 @@
     "subtype": "collection",
     "ammo": 100,
     "entries": [
-      { "item": "rm99_pistol", "ammo-group": "on_hand_8x40", "charges": [ 0, 5 ] },
+      { "item": "rm99_pistol", "ammo-group": "on_hand_8x40", "charges": [ 0, 6 ] },
       { "item": "8x40_speedloader5", "ammo-group": "on_hand_8x40", "prob": 50 },
       { "item": "8x40_speedloader5", "ammo-group": "on_hand_8x40", "prob": 25 },
       { "group": "on_hand_8x40" }

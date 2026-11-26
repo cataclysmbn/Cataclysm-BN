@@ -1562,17 +1562,17 @@ bool ma_style_callback::key( const input_context &ctxt, const input_event &event
             }
         };
 
-        buff_desc( _( "Passive" ), ma.static_buffs, true );
-        buff_desc( _( "Move" ), ma.onmove_buffs );
-        buff_desc( _( "Pause" ), ma.onpause_buffs );
-        buff_desc( _( "Hit" ), ma.onhit_buffs );
-        buff_desc( _( "Miss" ), ma.onmiss_buffs );
-        buff_desc( _( "Attack" ), ma.onattack_buffs );
-        buff_desc( _( "Crit" ), ma.oncrit_buffs );
-        buff_desc( _( "Kill" ), ma.onkill_buffs );
-        buff_desc( _( "Dodge" ), ma.ondodge_buffs );
-        buff_desc( _( "Block" ), ma.onblock_buffs );
-        buff_desc( _( "Get hit" ), ma.ongethit_buffs );
+        buff_desc( pgettext( "martial art buff", "Passive" ), ma.static_buffs, true );
+        buff_desc( pgettext( "martial art buff", "Move" ), ma.onmove_buffs );
+        buff_desc( pgettext( "martial art buff", "Pause" ), ma.onpause_buffs );
+        buff_desc( pgettext( "martial art buff", "Hit" ), ma.onhit_buffs );
+        buff_desc( pgettext( "martial art buff", "Miss" ), ma.onmiss_buffs );
+        buff_desc( pgettext( "martial art buff", "Attack" ), ma.onattack_buffs );
+        buff_desc( pgettext( "martial art buff", "Crit" ), ma.oncrit_buffs );
+        buff_desc( pgettext( "martial art buff", "Kill" ), ma.onkill_buffs );
+        buff_desc( pgettext( "martial art buff", "Dodge" ), ma.ondodge_buffs );
+        buff_desc( pgettext( "martial art buff", "Block" ), ma.onblock_buffs );
+        buff_desc( pgettext( "martial art buff", "Get hit" ), ma.ongethit_buffs );
 
         for( const auto &tech : ma.techniques ) {
             buffer += string_format( _( "<header>Technique:</header> <bold>%s</bold>   " ),

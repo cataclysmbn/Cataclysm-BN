@@ -65,7 +65,7 @@
       "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
       "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
     },
-    "flags": [ "ROOF" ],
+    "flags": [ "ROOF", "SHOCK_RESISTANT" ],
     "breaks_into": "ig_vp_steel_plate",
     "damage_reduction": { "all": 75 }
   },
@@ -93,9 +93,9 @@
     "color": "dark_gray",
     "broken_symbol": "#",
     "broken_color": "dark_gray",
-    "durability": 1000,
-    "description": "A thick carbon fiber roof.",
-    "item": "carbon_plate",
+    "durability": 320,
+    "description": "A carbon fiber roof.",
+    "item": "sheet_carbon",
     "location": "roof",
     "requirements": {
       "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
@@ -104,7 +104,7 @@
     },
     "flags": [ "ROOF" ],
     "breaks_into": "ig_vp_carbon",
-    "damage_reduction": { "all": 75 }
+    "damage_reduction": { "all": 28 }
   },
   {
     "type": "vehicle_part",

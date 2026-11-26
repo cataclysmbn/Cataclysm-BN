@@ -61,11 +61,6 @@
   },
   {
     "type": "recipe",
-    "result": "lightstrip_inactive",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
     "result": "milk",
     "id_suffix": "from_powder",
     "obsolete": true
@@ -2339,6 +2334,46 @@
   {
     "type": "recipe",
     "result": "xlkevlar",
+    "obsolete": true
+  },
+  {
+    "result": "modularvestceramic",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "modularvesthard",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "modularveststeel",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "modularvestsuper",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "oldguard_armor_ceramic",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "oldguard_armor_hardsteel",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "oldguard_armor_steel",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "oldguard_armor_superalloy",
+    "type": "recipe",
     "obsolete": true
   }
 ]

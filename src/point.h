@@ -27,7 +27,7 @@ class ostream;
 
 #endif // CATA_NO_STL
 
-#include "point_traits.h"
+#include "math/point_traits.h"
 
 class JsonIn;
 class JsonOut;

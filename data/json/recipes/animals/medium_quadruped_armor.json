@@ -6,7 +6,7 @@
     "category": "CC_ANIMALS",
     "subcategory": "CSC_ANIMALS_EQUINE ARMOR",
     "skills_required": [ [ "survival", 4 ], [ "firstaid", 2 ], [ "fabrication", 4 ] ],
-    "time": "600 m",
+    "time": "3 h 30 m",
     "using": [ [ "cordage", 7 ] ],
     "components": [ [ [ "acidchitin_piece", 84 ] ] ]
   },
@@ -16,7 +16,7 @@
     "copy-from": "armor_chitin",
     "category": "CC_ANIMALS",
     "subcategory": "CSC_ANIMALS_EQUINE ARMOR",
-    "time": "525 m",
+    "time": "2 h 15 m",
     "book_learn": [ [ "textbook_tailor", 5 ], [ "tailor_portfolio", 5 ] ],
     "skills_required": [ [ "fabrication", 4 ] ],
     "using": [ [ "cordage", 7 ] ],
@@ -28,9 +28,18 @@
     "copy-from": "chainmail_vest",
     "category": "CC_ANIMALS",
     "subcategory": "CSC_ANIMALS_EQUINE ARMOR",
-    "time": "364 m",
+    "time": "1 h 50 m",
     "using": [ [ "chainmail_standard", 7 ] ],
     "components": [ [ [ "link_sheet", 35 ] ], [ [ "chain_link", 917 ] ], [ [ "wire", 7 ] ], [ [ "fur", 42 ], [ "leather", 42 ] ] ]
+  },
+  {
+    "result": "plate_armor_medium_quadruped",
+    "type": "recipe",
+    "copy-from": "armor_lightplate",
+    "category": "CC_ANIMALS",
+    "subcategory": "CSC_ANIMALS_EQUINE ARMOR",
+    "using": [ [ "blacksmithing_advanced", 80 ] ],
+    "components": [ [ [ "steel_armor", 32 ] ], [ [ "fur", 42 ], [ "leather", 42 ] ] ]
   },
   {
     "result": "kevlar_armor_medium_quadruped",
@@ -39,7 +48,7 @@
     "subcategory": "CSC_ANIMALS_EQUINE ARMOR",
     "skill_used": "tailor",
     "difficulty": 6,
-    "time": "210 m",
+    "time": "2 h 10 m",
     "autolearn": true,
     "using": [ [ "sewing_standard", 190 ] ],
     "components": [ [ [ "kevlar_plate", 56 ] ], [ [ "fabric_standard", 42, "LIST" ] ], [ [ "fabric_hides_proper", 24, "LIST" ] ] ]
@@ -51,7 +60,7 @@
     "subcategory": "CSC_ANIMALS_EQUINE ARMOR",
     "skill_used": "tailor",
     "difficulty": 3,
-    "time": "105 m",
+    "time": "1 h 15 m",
     "byproducts": [ [ "leather", 21 ] ],
     "using": [ [ "sewing_standard", 30 ] ],
     "components": [ [ [ "armor_blarmor", 3 ] ], [ [ "fabric_standard", 18, "LIST" ] ] ]
@@ -64,7 +73,7 @@
     "category": "CC_ANIMALS",
     "subcategory": "CSC_ANIMALS_EQUINE ARMOR",
     "skills_required": [ "tailor", 6 ],
-    "time": "420 m",
+    "time": "2 h",
     "using": [ [ "sewing_standard", 190 ], [ "surface_heat", 60, "LIST" ] ],
     "components": [
       [ [ "water", 30 ], [ "water_clean", 30 ] ],
@@ -86,7 +95,7 @@
     "type": "recipe",
     "copy-from": "leather_armor_medium_quadruped",
     "difficulty": 4,
-    "time": "210 m",
+    "time": "1 h 30 m",
     "using": [ [ "sewing_standard", 75 ] ],
     "components": [ [ [ "bone", 39 ], [ "bone_human", 39 ], [ "bone_tainted", 75 ], [ "bone_heavy", 18 ] ], [ [ "armor_blarmor", 3 ] ] ]
   },
@@ -98,7 +107,7 @@
     "subcategory": "CSC_ANIMALS_EQUINE ARMOR",
     "skill_used": "tailor",
     "difficulty": 4,
-    "time": "105 m",
+    "time": "1 h 15 m",
     "autolearn": true,
     "byproducts": [ [ "rag", 6 ] ],
     "using": [ [ "sewing_standard", 35 ] ],
@@ -116,7 +125,7 @@
     "skill_used": "cooking",
     "difficulty": 3,
     "skills_required": [ "tailor", 6 ],
-    "time": "525 m",
+    "time": "2 h 15 m",
     "book_learn": [
       [ "textbook_tailor", 4 ],
       [ "tailor_portfolio", 5 ],
@@ -144,7 +153,7 @@
     "skill_used": "tailor",
     "difficulty": 4,
     "skills_required": [ "fabrication", 3 ],
-    "time": "112 m",
+    "time": "1 h 16 m",
     "autolearn": true,
     "using": [ [ "sewing_standard", 30 ] ],
     "components": [ [ [ "duct_tape", 175 ] ], [ [ "coat_rain", 7 ] ] ]
@@ -158,7 +167,7 @@
     "skill_used": "tailor",
     "difficulty": 5,
     "skills_required": [ "fabrication", 3 ],
-    "time": "210 m",
+    "time": "1 h 30 m",
     "autolearn": true,
     "using": [ [ "sewing_standard", 30 ] ],
     "components": [
@@ -175,7 +184,7 @@
     "skill_used": "tailor",
     "difficulty": 7,
     "skills_required": [ "fabrication", 9 ],
-    "time": "310 m",
+    "time": "2 h 35 m",
     "autolearn": true,
     "using": [ [ "sewing_standard", 2240 ] ],
     "components": [ [ [ "alloy_sheet", 28 ] ] ]

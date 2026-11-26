@@ -18,6 +18,7 @@
 #include "line.h"
 #include "map/field_type.h"
 #include "map/map.h"
+#include "map/utils/map_functions.h"
 #include "map_iterator.h"
 #include "material.h"
 #include "messages.h"
@@ -43,6 +44,7 @@
 static const efftype_id effect_badpoison( "badpoison" );
 static const efftype_id effect_bite( "bite" );
 static const efftype_id effect_grabbed( "grabbed" );
+static const efftype_id effect_grabbing( "grabbing" );
 static const efftype_id effect_infected( "infected" );
 static const efftype_id effect_laserlocked( "laserlocked" );
 static const efftype_id effect_monster_disarmed( "monster_disarmed" );
@@ -344,10 +346,14 @@ void melee_actor::load_internal( const JsonObject &obj, const std::string & )
         damage_max_instance = load_damage_instance( obj );
     }
 
-    min_mul = obj.get_float( "min_mul", 0.0f );
-    max_mul = obj.get_float( "max_mul", 1.0f );
-    move_cost = obj.get_int( "move_cost", 100 );
-    accuracy = obj.get_int( "accuracy", INT_MIN );
+    optional( obj, was_loaded, "min_mul", min_mul, 0.5f );
+    optional( obj, was_loaded, "max_mul", max_mul, 1.0f );
+    optional( obj, was_loaded, "move_cost", move_cost, 100 );
+    optional( obj, was_loaded, "accuracy", accuracy, INT_MIN );
+    optional( obj, was_loaded, "requires_grab", requires_grab, false );
+    optional( obj, was_loaded, "max_range", max_range, 1.0f );
+    optional( obj, was_loaded, "min_range", min_range, 1.0f );
+    optional( obj, was_loaded, "throw_strength", throw_strength, 0.0f );
 
     optional( obj, was_loaded, "miss_msg_u", miss_msg_u,
               to_translation( "The %s lunges at you, but you dodge!" ) );
@@ -355,12 +361,16 @@ void melee_actor::load_internal( const JsonObject &obj, const std::string & )
               to_translation( "The %1$s bites your %2$s, but fails to penetrate armor!" ) );
     optional( obj, was_loaded, "hit_dmg_u", hit_dmg_u,
               to_translation( "The %1$s bites your %2$s!" ) );
+    optional( obj, was_loaded, "bounce_msg_u", bounce_msg_u,
+              to_translation( "The %s lunges at you, but bounces off the %2$s!" ) );
     optional( obj, was_loaded, "miss_msg_npc", miss_msg_npc,
               to_translation( "The %s lunges at <npcname>, but they dodge!" ) );
     optional( obj, was_loaded, "no_dmg_msg_npc", no_dmg_msg_npc,
               to_translation( "The %1$s bites <npcname>'s %2$s, but fails to penetrate armor!" ) );
     optional( obj, was_loaded, "hit_dmg_npc", hit_dmg_npc,
               to_translation( "The %1$s bites <npcname>'s %2$s!" ) );
+    optional( obj, was_loaded, "bounce_msg_npc", bounce_msg_npc,
+              to_translation( "The %s lunges at <npcname>, but bounces off the %2$s!" ) );
 
     if( obj.has_array( "body_parts" ) ) {
         for( JsonArray sub : obj.get_array( "body_parts" ) ) {
@@ -384,7 +394,20 @@ Creature *melee_actor::find_target( monster &z ) const
     }
 
     Creature *target = z.attack_target();
-    if( target == nullptr || !is_adjacent( z, *target ) ) {
+    if( target == nullptr || ( min_range > 1 && is_adjacent( z, *target ) ) ) {
+        return nullptr;
+    }
+
+    if( max_range == 1 && !is_adjacent( z, *target ) ) {
+        return nullptr;
+    }
+
+    int distance = rl_dist( z.bub_pos(), target->bub_pos() );
+    if( distance < min_range || distance > max_range ) {
+        return nullptr;
+    }
+
+    if( map_funcs::physical_floor_between( g->m, z.bub_pos(), target->bub_pos() ) ) {
         return nullptr;
     }
 
@@ -398,15 +421,38 @@ bool melee_actor::call( monster &z ) const
         return false;
     }
 
+    if( requires_grab && !target->has_effect( effect_grabbed ) && !z.has_effect( effect_grabbing ) ) {
+        return false;
+    }
+
     z.mod_moves( -move_cost );
 
     add_msg( m_debug, "%s attempting to melee_attack %s", z.name(),
              target->disp_name() );
 
-    const int acc = accuracy >= 0 ? accuracy : z.type->melee_skill;
+    auto prev_point = z.bub_pos();
+    bool obstructed = false;
+    for( auto &pnt : g->m.find_clear_path( z.bub_pos(), target->bub_pos() ) ) {
+        if( g->m.obstructed_by_vehicle_rotation( prev_point, pnt ) ) {
+            obstructed = true;
+            if( one_in( 2 ) ) {
+                pnt.x() = prev_point.x();
+            } else {
+                pnt.y() = prev_point.y();
+            }
+        }
+        if( obstructed || g->m.impassable( pnt ) ) {
+            target->add_msg_player_or_npc( m_neutral, bounce_msg_u, bounce_msg_npc, z.name(),
+                                           g->m.obstacle_name( pnt ) );
+            return true;
+        }
+        prev_point = pnt;
+    }
+
+    const int acc = accuracy >= 0 ? accuracy : static_cast<int>( z.get_melee() );
     int hitspread = target->deal_melee_attack( &z, dice( acc, 10 ) );
 
-    if( hitspread < 0 ) {
+    if( hitspread < 0 || target->uncanny_dodge() ) {
         auto msg_type = target->is_avatar() ? m_warning : m_info;
         sfx::play_variant_sound( "mon_bite", "bite_miss", sfx::get_heard_volume( z.bub_pos(), 50 ),
                                  sfx::get_heard_angle( z.bub_pos() ) );
@@ -437,6 +483,23 @@ bool melee_actor::call( monster &z ) const
                                  sfx::get_heard_angle( z.bub_pos() ) );
         target->add_msg_player_or_npc( m_neutral, no_dmg_msg_u, no_dmg_msg_npc, z.name(),
                                        body_part_name_accusative( bp_hit ) );
+    }
+    // Deal radiation damage unless resisted/immune, bypass protection depending on if we broke through armor
+    if( z.has_flag( MF_IRRADIATED ) ) {
+        Character *ch = target->as_character();
+        if( ch != nullptr ) {
+            ch->irradiate( damage.total_damage(), damage_total > 0 );
+        }
+    }
+    if( throw_strength > 0 && !target->has_flag( MF_IMMOBILE ) ) {
+        auto msg_type = target->attitude_to( g->u ) == Attitude::A_FRIENDLY ? m_bad : m_neutral;
+        target->add_msg_player_or_npc( msg_type,
+                                       _( "The %s hits you with such a force that it sends you flying!" ),
+                                       _( "The %s hits <npcname> with such a force that it sends them flying!" ),
+                                       z.name() );
+        // TODO: Make this parabolic
+        g->fling_creature( target, coord_to_angle( z.bub_pos(), target->bub_pos() ),
+                           throw_strength );
     }
     target->on_hit( &z, bp_hit.id() );
     return true;
@@ -585,6 +648,14 @@ void gun_actor::load_internal( const JsonObject &obj, const std::string & )
     obj.read( "require_sunlight", require_sunlight );
 
     obj.read( "no_crits", no_crits );
+}
+
+void gun_actor::check( const mtype_id &src ) const
+{
+    if( !gun_type.is_valid() ) {
+        throw JsonError( string_format( "item_id %s in gun actor for %s is invalid.", gun_type.str(),
+                                        src.str() ) );
+    }
 }
 
 std::unique_ptr<mattack_actor> gun_actor::clone() const

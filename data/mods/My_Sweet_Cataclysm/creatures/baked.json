@@ -67,7 +67,7 @@
     "id": "mon_cookie",
     "type": "MONSTER",
     "name": { "str": "cookie" },
-    "description": "A small cookie, scuriying around in search of crumbs.",
+    "description": "A small cookie, scurrying around in search of crumbs.",
     "default_faction": "cookies",
     "bodytype": "pig",
     "species": [ "COOKIE" ],

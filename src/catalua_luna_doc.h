@@ -68,8 +68,10 @@ class mission;
 class monster;
 class npc;
 class player;
+class perk;
 class query_popup;
 class recipe;
+class scenario;
 class Skill;
 class SkillLevel;
 class SkillLevelMap;
@@ -96,7 +98,7 @@ struct omt_find_params;
 struct oter_t;
 struct species_type;
 struct trap;
-struct MonsterGroup;
+class MonsterGroup;
 struct uilist_entry;
 struct book_recipe;
 struct MonsterGroupEntry;
@@ -277,12 +279,14 @@ LUNA_ID( mutation_branch, "MutationBranch" )
 LUNA_ID( mutation_category_trait, "MutationCategoryTrait" )
 LUNA_ID( oter_t, "Oter" )
 LUNA_ID( recipe, "Recipe" )
+LUNA_ID( scenario, "Scenario" )
 LUNA_ID( Skill, "Skill" )
 LUNA_ID( species_type, "SpeciesType" )
 LUNA_ID( spell_type, "SpellType" )
 LUNA_ID( ter_t, "Ter" )
 LUNA_ID( trap, "Trap" )
 LUNA_ID( MonsterGroup, "MonsterGroup" )
+LUNA_ID( perk, "Perk" )
 LUNA_ID( weapon_category, "WeaponCategory" )
 LUNA_ID( emit, "FieldEmit" )
 LUNA_ID( fault, "Fault" )

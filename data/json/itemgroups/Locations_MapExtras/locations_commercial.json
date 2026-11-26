@@ -45,7 +45,8 @@
       { "group": "newspaper_recent", "prob": 15 },
       { "item": "survnote", "prob": 2 },
       { "item": "eclipse_glasses", "prob": 1 },
-      { "item": "thermos", "prob": 10 }
+      { "item": "thermos", "prob": 10 },
+      { "item": "delivery_drone_item", "prob": 5 }
     ]
   },
   {
@@ -413,7 +414,7 @@
       [ "silver_locket", 1 ],
       [ "gold_locket", 1 ],
       [ "platinum_locket", 1 ],
-      [ "usb_drive", 5 ],
+      { "group": "digital_storage_media", "prob": 5 },
       [ "cot", 40 ],
       [ "rollmat", 40 ],
       [ "tent_kit", 17 ],
@@ -563,10 +564,13 @@
       [ "survnote", 5 ],
       [ "radio_car_box", 1 ],
       [ "radiocontrol", 3 ],
+      [ "delivery_drone_item", 1 ],
+      [ "remotevehcontrol", 1 ],
       [ "peephole", 1 ],
       [ "magnifying_glass", 2 ],
       [ "ear_spool", 30 ],
       [ "halter_top", 40 ],
+      [ "tshirt_cropped", 60 ],
       [ "linuxtshirt", 15 ],
       [ "kilt", 5 ],
       [ "nanoskirt", 10 ],
@@ -615,7 +619,8 @@
       [ "pirate_flag", 5 ],
       [ "professional_chemical_thrower", 5 ],
       [ "chestrig", 5 ],
-      [ "belt_magazine", 5 ]
+      [ "belt_magazine", 5 ],
+      [ "billybass", 5 ]
     ]
   },
   {
@@ -709,7 +714,7 @@
       [ "radio", 20 ],
       [ "geiger_off", 8 ],
       [ "rad_monitor", 2 ],
-      [ "usb_drive", 5 ],
+      { "group": "digital_storage_media", "prob": 5 },
       [ "canteen", 15 ],
       [ "2lcanteen", 10 ],
       [ "camelbak", 5 ],
@@ -742,7 +747,8 @@
       [ "angle_grinder", 4 ],
       [ "textbook_launcher", 2 ],
       [ "105mm_casing", 12 ],
-      [ "120mm_case_base", 4 ]
+      [ "120mm_case_base", 4 ],
+      [ "combat_drone_item", 1 ]
     ]
   },
   {
@@ -1673,7 +1679,7 @@
     "//": "For s_electronics shops",
     "ammo": 75,
     "magazine": 100,
-    "items": [ [ "television", 50 ], [ "eink_tablet_pc", 50 ], [ "stereo", 30 ], [ "microwave", 40 ] ]
+    "items": [ [ "television", 50 ], [ "eink_tablet_pc", 50 ], [ "stereo", 30 ], [ "microwave", 40 ], [ "delivery_drone_item", 25 ] ]
   },
   {
     "id": "elecsto_books",
@@ -1692,8 +1698,7 @@
     "type": "item_group",
     "//": "For s_electronics shops",
     "items": [
-      [ "usb_drive", 65 ],
-      [ "mobile_memory_card", 95 ],
+      { "group": "digital_storage_media", "prob": 160 },
       [ "software_math", 15 ],
       [ "software_useless", 25 ],
       [ "software_utility", 10 ],
@@ -1780,7 +1785,7 @@
       [ "eyedrops", 20 ],
       [ "mag_electronics", 20 ],
       [ "ecig", 20 ],
-      [ "usb_drive", 20 ]
+      { "group": "digital_storage_media", "prob": 20 }
     ]
   },
   {
@@ -1981,7 +1986,7 @@
   },
   {
     "id": "sporting_vehicle_items",
-    "//": "Deployable vehicles and parts kit items.  1/3 bikes and other wheeled items, 1/3 boats and other deployable watercraft, 1/3 aircraft parts kits.",
+    "//": "Deployable vehicles and parts kit items.  1/3 bikes and other wheeled items, 1/3 boats and other deployable watercraft, 1/3 drones and aircraft parts kits.",
     "type": "item_group",
     "items": [
       [ "folding_bicycle", 50 ],
@@ -1989,7 +1994,18 @@
       [ "folding_wagon", 25 ],
       [ "inflatable_boat", 75 ],
       [ "sea_scooter", 25 ],
-      [ "wooden_plane_kit", 100 ]
+      { "collection": [ { "item": "delivery_drone_item" }, { "item": "remotevehcontrol", "prob": 50 } ], "prob": 50 },
+      [ "wooden_plane_kit", 50 ]
+    ]
+  },
+  {
+    "id": "delivery_drones",
+    "//": "Deployable drones and controllers for spawning them specifically.",
+    "type": "item_group",
+    "items": [
+      [ "remotevehcontrol", 75 ],
+      [ "delivery_drone_item", 20 ],
+      { "collection": [ { "item": "delivery_drone_item" }, { "item": "remotevehcontrol" } ], "prob": 5 }
     ]
   }
 ]

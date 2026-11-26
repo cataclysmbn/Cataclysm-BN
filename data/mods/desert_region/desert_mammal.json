@@ -30,7 +30,7 @@
     "baby_flags": [ "SPRING" ],
     "//2": "Baby elephants don't actually exist (yet), but Spring is the wet season (their mating season) so baby_flags is defined so that they get angry then",
     "harvest": "mammal_large_leather",
-    "special_attacks": [ [ "EAT_CROP", 60 ], [ "SMASH", 15 ] ],
+    "special_attacks": [ [ "EAT_CROP", 60 ], { "id": "smash", "cooldown": 15 } ],
     "petfood": { "food": [ "CATTLEFOOD" ], "feed": "The %s seems to like you! It lets you pat its head and seems friendly." },
     "flags": [
       "SEES",

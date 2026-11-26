@@ -682,9 +682,15 @@ static void draw_bionics_info( const catacurses::window &w_info, const unsigned 
     if( line < bionicslist.size() ) {
         const auto& [bio, cnt] = bionicslist[line];
         // NOLINTNEXTLINE(cata-use-named-point-constants)
-        const auto fmtStr = cnt > 1 ? "%s\n\nYou have %s instances of this bionic installed." : "%s";
-        fold_and_print(
-            w_info, point( 1, 0 ), FULL_SCREEN_WIDTH - 2, c_light_gray, fmtStr, bio.info().description, cnt );
+        int ypos = fold_and_print( w_info, point( 1, 0 ), FULL_SCREEN_WIDTH - 2, c_light_gray,
+                                   "%s", bio.info().description );
+        if( cnt > 1 ) {
+            fold_and_print( w_info, point( 1, ypos + 1 ), FULL_SCREEN_WIDTH - 2, c_light_gray,
+                            vgettext( "You have %d instance of this bionic installed.",
+                                      "You have %d instances of this bionic installed.",
+                                      cnt ),
+                            cnt );
+        }
     }
     wnoutrefresh( w_info );
 }

@@ -9,7 +9,7 @@
 #include <typeinfo>
 #include <utility>
 
-#include "demangle.h"
+#include "utils/demangle.h"
 #include "reader_detail.h"
 
 class translation;

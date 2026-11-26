@@ -11,7 +11,7 @@
       [ [ "canister_empty", 1 ] ],
       [ [ "processor", 1 ] ],
       [ [ "targeting_module", 1 ] ],
-      [ [ "motor_tiny", 1 ] ],
+      [ [ "motor_micro", 1 ] ],
       [ [ "cable", 2 ] ],
       [ [ "burnt_out_bionic", 1 ] ]
     ]
@@ -96,7 +96,7 @@
     "components": [
       [ [ "hose", 2 ] ],
       [ [ "cu_pipe", 2 ] ],
-      [ [ "motor_tiny", 2 ] ],
+      [ [ "motor_micro", 2 ] ],
       [ [ "element", 2 ] ],
       [ [ "nanomaterial", 5 ] ],
       [ [ "self_monitoring_module", 1 ] ],
@@ -119,7 +119,7 @@
       [ [ "amplifier", 1 ] ],
       [ [ "processor", 1 ] ],
       [ [ "targeting_module", 1 ] ],
-      [ [ "motor_tiny", 1 ] ],
+      [ [ "motor_micro", 1 ] ],
       [ [ "cable", 12 ] ],
       [ [ "plut_cell", 1 ] ],
       [ [ "burnt_out_bionic", 1 ] ]
@@ -134,7 +134,7 @@
     "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
     "components": [
       [ [ "plastic_chunk", 6 ] ],
-      [ [ "motor_tiny", 4 ] ],
+      [ [ "motor_micro", 4 ] ],
       [ [ "spring", 4 ] ],
       [ [ "cable", 4 ] ],
       [ [ "nanomaterial", 5 ] ],
@@ -187,7 +187,7 @@
     "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
     "components": [
       [ [ "glass_tinted", 4 ] ],
-      [ [ "motor_tiny", 1 ] ],
+      [ [ "motor_micro", 1 ] ],
       [ [ "circuit", 2 ] ],
       [ [ "cable", 4 ] ],
       [ [ "plastic_chunk", 1 ] ],
@@ -301,7 +301,7 @@
     "time": "50 m",
     "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
     "components": [
-      [ [ "motor_tiny", 1 ] ],
+      [ [ "motor_micro", 1 ] ],
       [ [ "hose", 1 ] ],
       [ [ "canister_empty", 1 ] ],
       [ [ "nanomaterial", 5 ] ],
@@ -352,7 +352,15 @@
     "difficulty": 7,
     "time": "50 m",
     "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
-    "components": [ [ [ "burnt_out_bionic", 1 ] ] ]
+    "components": [
+      [ [ "nanomaterial", 25 ] ],
+      [ [ "self_monitoring_module", 1 ] ],
+      [ [ "processor", 2 ] ],
+      [ [ "cable", 4 ] ],
+      [ [ "plastic_chunk", 1 ] ],
+      [ [ "plut_cell", 3 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
   },
   {
     "result": "bio_digestion",
@@ -361,7 +369,16 @@
     "difficulty": 7,
     "time": "50 m",
     "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
-    "components": [ [ [ "burnt_out_bionic", 1 ] ] ]
+    "components": [
+      [ [ "motor_micro", 1 ] ],
+      [ [ "hose", 1 ] ],
+      [ [ "canister_empty", 1 ] ],
+      [ [ "nanomaterial", 5 ] ],
+      [ [ "self_monitoring_module", 1 ] ],
+      [ [ "cable", 4 ] ],
+      [ [ "alloy_sheet", 1 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
   },
   {
     "result": "bio_face_mask",
@@ -370,7 +387,13 @@
     "difficulty": 7,
     "time": "50 m",
     "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
-    "components": [ [ [ "burnt_out_bionic", 1 ] ] ]
+    "components": [
+      [ [ "motor_micro", 1 ] ],
+      [ [ "cable", 4 ] ],
+      [ [ "processor", 2 ] ],
+      [ [ "identification_module", 1 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
   },
   {
     "result": "bio_ground_sonar",
@@ -379,7 +402,15 @@
     "difficulty": 7,
     "time": "50 m",
     "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
-    "components": [ [ [ "burnt_out_bionic", 1 ] ] ]
+    "components": [
+      [ [ "memory_module", 1 ] ],
+      [ [ "RAM", 1 ] ],
+      [ [ "amplifier", 1 ] ],
+      [ [ "transponder", 1 ] ],
+      [ [ "receiver", 1 ] ],
+      [ [ "cable", 2 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
   },
   {
     "result": "bio_metabolics",
@@ -388,7 +419,16 @@
     "difficulty": 7,
     "time": "50 m",
     "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
-    "components": [ [ [ "burnt_out_bionic", 1 ] ] ]
+    "components": [
+      [ [ "nanomaterial", 5 ] ],
+      [ [ "self_monitoring_module", 1 ] ],
+      [ [ "processor", 2 ] ],
+      [ [ "cable", 4 ] ],
+      [ [ "plastic_chunk", 1 ] ],
+      [ [ "amplifier", 1 ] ],
+      [ [ "power_supply", 1 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
   },
   {
     "type": "uncraft",
@@ -414,7 +454,16 @@
     "difficulty": 7,
     "time": "50 m",
     "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
-    "components": [ [ [ "burnt_out_bionic", 1 ] ] ]
+    "components": [
+      [ [ "motor_micro", 1 ] ],
+      [ [ "hose", 1 ] ],
+      [ [ "nanomaterial", 5 ] ],
+      [ [ "self_monitoring_module", 1 ] ],
+      [ [ "circuit", 2 ] ],
+      [ [ "cable", 4 ] ],
+      [ [ "plastic_chunk", 1 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
   },
   {
     "type": "uncraft",
@@ -450,6 +499,31 @@
   },
   {
     "type": "uncraft",
+    "result": "bio_cable_mkII",
+    "skill_used": "electronics",
+    "difficulty": 8,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "power_supply", 2 ] ],
+      [ [ "processor", 2 ] ],
+      [ [ "amplifier", 6 ] ],
+      [ [ "cable", 20 ] ],
+      [ [ "alloy_sheet", 2 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_cable_upgrade",
+    "skill_used": "electronics",
+    "difficulty": 7,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [ [ [ "amplifier", 4 ] ], [ [ "cable", 12 ] ], [ [ "alloy_sheet", 1 ] ], [ [ "burnt_out_bionic", 1 ] ] ]
+  },
+  {
+    "type": "uncraft",
     "result": "bio_infolink",
     "skill_used": "electronics",
     "difficulty": 8,
@@ -473,6 +547,7 @@
     "time": "50 m",
     "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
     "components": [
+      [ [ "laser_source", 1 ] ],
       [ [ "lens", 2 ] ],
       [ [ "power_supply", 2 ] ],
       [ [ "amplifier", 1 ] ],
@@ -518,7 +593,7 @@
       [ [ "canister_empty", 1 ] ],
       [ [ "processor", 1 ] ],
       [ [ "targeting_module", 1 ] ],
-      [ [ "motor_tiny", 1 ] ],
+      [ [ "motor_micro", 1 ] ],
       [ [ "cable", 2 ] ],
       [ [ "burnt_out_bionic", 1 ] ]
     ]
@@ -536,6 +611,1079 @@
       [ [ "memory_module", 1 ] ],
       [ [ "cable", 2 ] ],
       [ [ "plastic_chunk", 1 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_adrenaline",
+    "skill_used": "electronics",
+    "difficulty": 7,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "hose", 1 ] ],
+      [ [ "nanomaterial", 5 ] ],
+      [ [ "self_monitoring_module", 1 ] ],
+      [ [ "cable", 4 ] ],
+      [ [ "plastic_chunk", 1 ] ],
+      [ [ "alloy_sheet", 1 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_ads",
+    "skill_used": "electronics",
+    "difficulty": 9,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "power_supply", 2 ] ],
+      [ [ "sensor_module", 1 ] ],
+      [ [ "amplifier", 5 ] ],
+      [ [ "cable", 14 ] ],
+      [ [ "circuit", 2 ] ],
+      [ [ "plut_cell", 2 ] ],
+      [ [ "alloy_sheet", 1 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_wings",
+    "skill_used": "electronics",
+    "difficulty": 10,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "alloy_sheet", 4 ] ],
+      [ [ "carbon_fiber_filament", 20 ] ],
+      [ [ "RAM", 1 ] ],
+      [ [ "processor", 2 ] ],
+      [ [ "circuit", 2 ] ],
+      [ [ "pathfinding_module", 1 ] ],
+      [ [ "cable", 12 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_alarm",
+    "skill_used": "electronics",
+    "difficulty": 8,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "memory_module", 1 ] ],
+      [ [ "RAM", 1 ] ],
+      [ [ "amplifier", 1 ] ],
+      [ [ "transponder", 1 ] ],
+      [ [ "receiver", 1 ] ],
+      [ [ "cable", 2 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_armor_eyes",
+    "skill_used": "electronics",
+    "difficulty": 6,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "glass_tinted", 2 ] ],
+      [ [ "alloy_sheet", 1 ] ],
+      [ [ "circuit", 2 ] ],
+      [ [ "cable", 4 ] ],
+      [ [ "plastic_chunk", 1 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_blade",
+    "skill_used": "electronics",
+    "difficulty": 6,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [ [ [ "alloy_sheet", 3 ] ], [ [ "motor_micro", 1 ] ], [ [ "cable", 2 ] ], [ [ "burnt_out_bionic", 1 ] ] ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_monowire",
+    "skill_used": "electronics",
+    "difficulty": 6,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [ [ [ "carbon_fiber_filament", 50 ] ], [ [ "motor_micro", 1 ] ], [ [ "cable", 2 ] ], [ [ "burnt_out_bionic", 1 ] ] ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_chain_lightning",
+    "skill_used": "electronics",
+    "difficulty": 7,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "antenna", 1 ] ],
+      [ [ "power_supply", 2 ] ],
+      [ [ "amplifier", 4 ] ],
+      [ [ "processor", 1 ] ],
+      [ [ "targeting_module", 1 ] ],
+      [ [ "motor_micro", 1 ] ],
+      [ [ "cable", 12 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_claws",
+    "skill_used": "electronics",
+    "difficulty": 6,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [ [ [ "alloy_sheet", 2 ] ], [ [ "motor_micro", 2 ] ], [ [ "cable", 2 ] ], [ [ "burnt_out_bionic", 1 ] ] ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_cloak",
+    "skill_used": "electronics",
+    "difficulty": 8,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "sensor_module", 1 ] ],
+      [ [ "power_supply", 1 ] ],
+      [ [ "amplifier", 4 ] ],
+      [ [ "lens", 6 ] ],
+      [ [ "small_lcd_screen", 6 ] ],
+      [ [ "cable", 20 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_cqb",
+    "skill_used": "electronics",
+    "difficulty": 9,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "memory_module", 1 ] ],
+      [ [ "ai_module", 1 ] ],
+      [ [ "RAM", 1 ] ],
+      [ [ "circuit", 2 ] ],
+      [ [ "motor_micro", 4 ] ],
+      [ [ "cable", 8 ] ],
+      [ [ "plastic_chunk", 1 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_str_enhancer",
+    "skill_used": "electronics",
+    "difficulty": 8,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "self_monitoring_module", 1 ] ],
+      [ [ "carbon_fiber_filament", 80 ] ],
+      [ [ "motor_micro", 4 ] ],
+      [ [ "cable", 6 ] ],
+      [ [ "plastic_chunk", 1 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_hydraulics",
+    "skill_used": "electronics",
+    "difficulty": 7,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "hose", 4 ] ],
+      [ [ "motor_micro", 4 ] ],
+      [ [ "nanomaterial", 10 ] ],
+      [ [ "self_monitoring_module", 1 ] ],
+      [ [ "cable", 12 ] ],
+      [ [ "plastic_chunk", 1 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_dex_enhancer",
+    "skill_used": "electronics",
+    "difficulty": 8,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "pathfinding_module", 1 ] ],
+      [ [ "targeting_module", 1 ] ],
+      [ [ "motor_micro", 4 ] ],
+      [ [ "cable", 6 ] ],
+      [ [ "plastic_chunk", 1 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_speed",
+    "skill_used": "electronics",
+    "difficulty": 7,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [ [ [ "motor_micro", 4 ] ], [ [ "cable", 6 ] ], [ [ "plastic_chunk", 1 ] ], [ [ "burnt_out_bionic", 1 ] ] ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_int_enhancer",
+    "skill_used": "electronics",
+    "difficulty": 8,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "ai_module_advanced", 1 ] ],
+      [ [ "memory_module", 1 ] ],
+      [ [ "cable", 4 ] ],
+      [ [ "plastic_chunk", 1 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_eye_enhancer",
+    "skill_used": "electronics",
+    "difficulty": 8,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "sensor_module", 1 ] ],
+      [ [ "identification_module", 1 ] ],
+      [ [ "lens_small", 2 ] ],
+      [ [ "diamond", 2 ] ],
+      [ [ "cable", 6 ] ],
+      [ [ "plastic_chunk", 1 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_eye_optic",
+    "skill_used": "electronics",
+    "difficulty": 7,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "lens_small", 2 ] ],
+      [ [ "motor_micro", 2 ] ],
+      [ [ "cable", 4 ] ],
+      [ [ "plastic_chunk", 1 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_ears",
+    "skill_used": "electronics",
+    "difficulty": 7,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "receiver", 2 ] ],
+      [ [ "amplifier", 1 ] ],
+      [ [ "cable", 4 ] ],
+      [ [ "plastic_chunk", 1 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "result": "bio_ethanol",
+    "type": "uncraft",
+    "skill_used": "electronics",
+    "difficulty": 7,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "canister_empty", 1 ] ],
+      [ [ "cable", 4 ] ],
+      [ [ "power_supply", 1 ] ],
+      [ [ "processor", 1 ] ],
+      [ [ "amplifier", 1 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "result": "bio_fuel_cell_gasoline",
+    "type": "uncraft",
+    "skill_used": "electronics",
+    "difficulty": 7,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "canister_empty", 1 ] ],
+      [ [ "cable", 4 ] ],
+      [ [ "power_supply", 1 ] ],
+      [ [ "processor", 1 ] ],
+      [ [ "amplifier", 1 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "result": "bio_fuel_cell_hydrogen",
+    "type": "uncraft",
+    "skill_used": "electronics",
+    "difficulty": 7,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "canister_empty", 1 ] ],
+      [ [ "cable", 4 ] ],
+      [ [ "power_supply", 1 ] ],
+      [ [ "processor", 1 ] ],
+      [ [ "amplifier", 1 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_faraday",
+    "skill_used": "electronics",
+    "difficulty": 8,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "antenna", 1 ] ],
+      [ [ "power_supply", 2 ] ],
+      [ [ "amplifier", 6 ] ],
+      [ [ "processor", 2 ] ],
+      [ [ "cable", 30 ] ],
+      [ [ "plastic_chunk", 1 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_fingerhack",
+    "skill_used": "electronics",
+    "difficulty": 7,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "ai_module_basic", 1 ] ],
+      [ [ "RAM", 1 ] ],
+      [ [ "processor", 1 ] ],
+      [ [ "cable", 10 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_lockpick",
+    "skill_used": "electronics",
+    "difficulty": 7,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "wire", 1 ] ],
+      [ [ "motor_micro", 1 ] ],
+      [ [ "processor", 1 ] ],
+      [ [ "cable", 10 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_flashbang",
+    "skill_used": "electronics",
+    "difficulty": 7,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "power_supply", 1 ] ],
+      [ [ "amplifier", 4 ] ],
+      [ [ "lens", 4 ] ],
+      [ [ "light_bulb", 4 ] ],
+      [ [ "transponder", 2 ] ],
+      [ [ "cable", 6 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_tattoo_led",
+    "skill_used": "electronics",
+    "difficulty": 6,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [ [ [ "power_supply", 1 ] ], [ [ "small_lcd_screen", 1 ] ], [ [ "cable", 2 ] ], [ [ "burnt_out_bionic", 1 ] ] ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_geiger",
+    "skill_used": "electronics",
+    "difficulty": 7,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "amplifier", 1 ] ],
+      [ [ "processor", 2 ] ],
+      [ [ "receiver", 1 ] ],
+      [ [ "cable", 8 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_gills",
+    "skill_used": "electronics",
+    "difficulty": 8,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "nanomaterial", 5 ] ],
+      [ [ "self_monitoring_module", 1 ] ],
+      [ [ "cable", 8 ] ],
+      [ [ "plastic_chunk", 1 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "result": "bio_heat_absorb",
+    "type": "uncraft",
+    "skill_used": "electronics",
+    "difficulty": 9,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "element", 4 ] ],
+      [ [ "power_supply", 1 ] ],
+      [ [ "amplifier", 2 ] ],
+      [ [ "thermostat", 1 ] ],
+      [ [ "cable", 15 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_heatsink",
+    "skill_used": "electronics",
+    "difficulty": 9,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "hose", 2 ] ],
+      [ [ "element", 4 ] ],
+      [ [ "nanomaterial", 5 ] ],
+      [ [ "self_monitoring_module", 1 ] ],
+      [ [ "cable", 10 ] ],
+      [ [ "material_aluminium_ingot", 2 ] ],
+      [ [ "alloy_sheet", 2 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_leukocyte",
+    "skill_used": "electronics",
+    "difficulty": 9,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "nanomaterial", 10 ] ],
+      [ [ "self_monitoring_module", 1 ] ],
+      [ [ "processor", 2 ] ],
+      [ [ "cable", 4 ] ],
+      [ [ "plastic_chunk", 1 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_magnet",
+    "skill_used": "electronics",
+    "difficulty": 6,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "power_supply", 1 ] ],
+      [ [ "amplifier", 2 ] ],
+      [ [ "cable", 30 ] ],
+      [ [ "scrap", 4 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_membrane",
+    "skill_used": "electronics",
+    "difficulty": 6,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "motor_micro", 1 ] ],
+      [ [ "circuit", 2 ] ],
+      [ [ "cable", 4 ] ],
+      [ [ "plastic_chunk", 1 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_night",
+    "skill_used": "electronics",
+    "difficulty": 10,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "sensor_module", 1 ] ],
+      [ [ "power_supply", 1 ] ],
+      [ [ "amplifier", 4 ] ],
+      [ [ "nanomaterial", 5 ] ],
+      [ [ "laser_source", 1 ] ],
+      [ [ "glass_prism", 1 ] ],
+      [ [ "transponder", 2 ] ],
+      [ [ "cable", 20 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_gas_remover",
+    "skill_used": "electronics",
+    "difficulty": 8,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "sensor_module", 1 ] ],
+      [ [ "power_supply", 2 ] ],
+      [ [ "amplifier", 6 ] ],
+      [ [ "processor", 2 ] ],
+      [ [ "cable", 20 ] ],
+      [ [ "plastic_chunk", 1 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_night_vision",
+    "skill_used": "electronics",
+    "difficulty": 7,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "power_supply", 1 ] ],
+      [ [ "lens", 2 ] ],
+      [ [ "processor", 1 ] ],
+      [ [ "amplifier", 1 ] ],
+      [ [ "circuit", 2 ] ],
+      [ [ "cable", 4 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_painkiller",
+    "skill_used": "electronics",
+    "difficulty": 8,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "nanomaterial", 10 ] ],
+      [ [ "self_monitoring_module", 1 ] ],
+      [ [ "processor", 2 ] ],
+      [ [ "cable", 4 ] ],
+      [ [ "plastic_chunk", 1 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_probability_travel",
+    "skill_used": "electronics",
+    "difficulty": 10,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "portal", 1 ] ],
+      [ [ "processor", 1 ] ],
+      [ [ "sensor_module", 1 ] ],
+      [ [ "pathfinding_module", 1 ] ],
+      [ [ "RAM", 1 ] ],
+      [ [ "cable", 6 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_teleport",
+    "skill_used": "electronics",
+    "difficulty": 8,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [ [ [ "teleporter", 1 ] ], [ [ "processor", 1 ] ], [ [ "RAM", 1 ] ], [ [ "cable", 6 ] ], [ [ "burnt_out_bionic", 1 ] ] ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_purifier",
+    "skill_used": "electronics",
+    "difficulty": 7,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "nanomaterial", 5 ] ],
+      [ [ "self_monitoring_module", 1 ] ],
+      [ [ "cable", 8 ] ],
+      [ [ "plastic_chunk", 1 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "result": "bio_radscrubber",
+    "type": "uncraft",
+    "skill_used": "electronics",
+    "difficulty": 8,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "nanomaterial", 25 ] ],
+      [ [ "self_monitoring_module", 1 ] ],
+      [ [ "processor", 2 ] ],
+      [ [ "cable", 4 ] ],
+      [ [ "plastic_chunk", 1 ] ],
+      [ [ "plut_cell", 3 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_railgun",
+    "skill_used": "electronics",
+    "difficulty": 7,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "power_supply", 1 ] ],
+      [ [ "amplifier", 2 ] ],
+      [ [ "processor", 1 ] ],
+      [ [ "targeting_module", 1 ] ],
+      [ [ "motor_micro", 1 ] ],
+      [ [ "cable", 30 ] ],
+      [ [ "scrap", 4 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_razors",
+    "skill_used": "electronics",
+    "difficulty": 6,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [ [ [ "alloy_sheet", 1 ] ], [ [ "cable", 2 ] ], [ [ "plastic_chunk", 1 ] ], [ [ "burnt_out_bionic", 1 ] ] ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_surgical_razor",
+    "skill_used": "electronics",
+    "difficulty": 7,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "memory_module", 1 ] ],
+      [ [ "processor", 1 ] ],
+      [ [ "RAM", 1 ] ],
+      [ [ "alloy_sheet", 2 ] ],
+      [ [ "motor_micro", 2 ] ],
+      [ [ "cable", 2 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_reactor",
+    "skill_used": "electronics",
+    "difficulty": 9,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "power_supply", 2 ] ],
+      [ [ "amplifier", 4 ] ],
+      [ [ "carbon_fiber_filament", 25 ] ],
+      [ [ "motor_micro", 2 ] ],
+      [ [ "scrap", 4 ] ],
+      [ [ "cable", 16 ] ],
+      [ [ "lead", 100 ] ],
+      [ [ "alloy_sheet", 2 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_advreactor",
+    "skill_used": "electronics",
+    "difficulty": 10,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "nanomaterial", 10 ] ],
+      [ [ "self_monitoring_module", 1 ] ],
+      [ [ "processor", 2 ] ],
+      [ [ "power_supply", 3 ] ],
+      [ [ "amplifier", 6 ] ],
+      [ [ "carbon_fiber_filament", 25 ] ],
+      [ [ "motor_micro", 2 ] ],
+      [ [ "scrap", 4 ] ],
+      [ [ "cable", 24 ] ],
+      [ [ "lead", 100 ] ],
+      [ [ "alloy_sheet", 2 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_reactor_upgrade",
+    "skill_used": "electronics",
+    "difficulty": 9,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "nanomaterial", 10 ] ],
+      [ [ "self_monitoring_module", 1 ] ],
+      [ [ "processor", 2 ] ],
+      [ [ "power_supply", 1 ] ],
+      [ [ "amplifier", 2 ] ],
+      [ [ "cable", 8 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_atomic_battery",
+    "skill_used": "electronics",
+    "difficulty": 8,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "plut_cell", 5 ] ],
+      [ [ "power_supply", 1 ] ],
+      [ [ "amplifier", 2 ] ],
+      [ [ "cable", 8 ] ],
+      [ [ "lead", 25 ] ],
+      [ [ "alloy_sheet", 1 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_atomic_battery_upgrade",
+    "skill_used": "electronics",
+    "difficulty": 8,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "power_supply", 1 ] ],
+      [ [ "amplifier", 2 ] ],
+      [ [ "carbon_fiber_filament", 25 ] ],
+      [ [ "motor_micro", 2 ] ],
+      [ [ "scrap", 4 ] ],
+      [ [ "cable", 8 ] ],
+      [ [ "lead", 75 ] ],
+      [ [ "alloy_sheet", 1 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_remote",
+    "skill_used": "electronics",
+    "difficulty": 8,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "memory_module", 1 ] ],
+      [ [ "RAM", 1 ] ],
+      [ [ "amplifier", 1 ] ],
+      [ [ "transponder", 1 ] ],
+      [ [ "receiver", 1 ] ],
+      [ [ "cable", 2 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "result": "bio_resonator",
+    "type": "uncraft",
+    "skill_used": "electronics",
+    "difficulty": 8,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "RAM", 1 ] ],
+      [ [ "amplifier", 2 ] ],
+      [ [ "transponder", 2 ] ],
+      [ [ "cable", 5 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "result": "bio_scent_mask",
+    "type": "uncraft",
+    "skill_used": "electronics",
+    "difficulty": 7,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "nanomaterial", 5 ] ],
+      [ [ "self_monitoring_module", 1 ] ],
+      [ [ "processor", 2 ] ],
+      [ [ "cable", 4 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_shock",
+    "skill_used": "electronics",
+    "difficulty": 8,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "scrap", 4 ] ],
+      [ [ "power_supply", 3 ] ],
+      [ [ "amplifier", 5 ] ],
+      [ [ "processor", 2 ] ],
+      [ [ "cable", 36 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "result": "bio_shockwave",
+    "type": "uncraft",
+    "skill_used": "electronics",
+    "difficulty": 9,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "RAM", 2 ] ],
+      [ [ "amplifier", 4 ] ],
+      [ [ "transponder", 4 ] ],
+      [ [ "cable", 10 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_targeting",
+    "skill_used": "electronics",
+    "difficulty": 7,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "targeting_module", 1 ] ],
+      [ [ "circuit", 2 ] ],
+      [ [ "processor", 3 ] ],
+      [ [ "RAM", 2 ] ],
+      [ [ "cable", 8 ] ],
+      [ [ "plastic_chunk", 1 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_time_freeze",
+    "skill_used": "electronics",
+    "difficulty": 10,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "portal", 1 ] ],
+      [ [ "processor", 2 ] ],
+      [ [ "amplifier", 3 ] ],
+      [ [ "circuit", 3 ] ],
+      [ [ "RAM", 2 ] ],
+      [ [ "cable", 20 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_tools",
+    "skill_used": "electronics",
+    "difficulty": 7,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "//": "Giving a whole mess of tools would look a bit silly...",
+    "components": [
+      [ [ "scrap", 20 ] ],
+      [ [ "chunk_rubber", 2 ] ],
+      [ [ "power_supply", 4 ] ],
+      [ [ "element", 4 ] ],
+      [ [ "motor_micro", 2 ] ],
+      [ [ "cable", 8 ] ],
+      [ [ "plastic_chunk", 2 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_torsionratchet",
+    "skill_used": "electronics",
+    "difficulty": 7,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "power_supply", 2 ] ],
+      [ [ "processor", 2 ] ],
+      [ [ "amplifier", 2 ] ],
+      [ [ "cable", 8 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_jointservo",
+    "skill_used": "electronics",
+    "difficulty": 7,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "motor_micro", 4 ] ],
+      [ [ "processor", 2 ] ],
+      [ [ "amplifier", 2 ] ],
+      [ [ "cable", 8 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_uncanny_dodge",
+    "skill_used": "electronics",
+    "difficulty": 10,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "ai_module_basic", 1 ] ],
+      [ [ "pathfinding_module", 1 ] ],
+      [ [ "sensor_module", 1 ] ],
+      [ [ "motor_micro", 4 ] ],
+      [ [ "amplifier", 4 ] ],
+      [ [ "processor", 2 ] ],
+      [ [ "cable", 6 ] ],
+      [ [ "plastic_chunk", 1 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_underwater_propellers",
+    "skill_used": "electronics",
+    "difficulty": 8,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "alloy_sheet", 4 ] ],
+      [ [ "motor_micro", 4 ] ],
+      [ [ "RAM", 1 ] ],
+      [ [ "processor", 2 ] ],
+      [ [ "circuit", 2 ] ],
+      [ [ "pathfinding_module", 1 ] ],
+      [ [ "cable", 12 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_storage",
+    "skill_used": "electronics",
+    "difficulty": 6,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [ [ [ "alloy_sheet", 6 ] ], [ [ "cable", 5 ] ], [ [ "plastic_chunk", 5 ] ], [ [ "burnt_out_bionic", 1 ] ] ]
+  },
+  {
+    "result": "bio_taste_blocker",
+    "type": "uncraft",
+    "skill_used": "electronics",
+    "difficulty": 7,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "nanomaterial", 5 ] ],
+      [ [ "self_monitoring_module", 1 ] ],
+      [ [ "sensor_module", 1 ] ],
+      [ [ "processor", 2 ] ],
+      [ [ "cable", 4 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_soporific",
+    "skill_used": "electronics",
+    "difficulty": 9,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "nanomaterial", 5 ] ],
+      [ [ "self_monitoring_module", 1 ] ],
+      [ [ "memory_module", 1 ] ],
+      [ [ "cable", 2 ] ],
+      [ [ "plastic_chunk", 1 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "afs_bio_dopamine_stimulators",
+    "skill_used": "electronics",
+    "difficulty": 9,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "nanomaterial", 5 ] ],
+      [ [ "self_monitoring_module", 1 ] ],
+      [ [ "memory_module", 1 ] ],
+      [ [ "cable", 2 ] ],
+      [ [ "plastic_chunk", 1 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
+    "result": "bio_blaster",
+    "skill_used": "electronics",
+    "difficulty": 10,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "power_supply", 4 ] ],
+      [ [ "amplifier", 2 ] ],
+      [ [ "processor", 1 ] ],
+      [ [ "pump_complex", 1 ] ],
+      [ [ "targeting_module", 1 ] ],
+      [ [ "motor_micro", 1 ] ],
+      [ [ "cable", 15 ] ],
+      [ [ "plut_cell", 4 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "result": "bio_electrosense",
+    "type": "uncraft",
+    "skill_used": "electronics",
+    "difficulty": 9,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "sensor_module", 1 ] ],
+      [ [ "RAM", 1 ] ],
+      [ [ "amplifier", 1 ] ],
+      [ [ "antenna", 1 ] ],
+      [ [ "receiver", 4 ] ],
+      [ [ "cable", 2 ] ],
       [ [ "burnt_out_bionic", 1 ] ]
     ]
   }

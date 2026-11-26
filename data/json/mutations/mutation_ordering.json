@@ -21,15 +21,19 @@
       },
       {
         "id": [
-          "bio_armor_arms",
-          "bio_armor_legs",
-          "bio_armor_torso",
-          "bio_armor_head",
-          "bio_armor_eyes",
-          "bio_sunglasses",
-          "bio_blindfold"
+          "ALBINO",
+          "SUNBURN",
+          "PLANTSKIN",
+          "PALE",
+          "SKIN_DARK",
+          "SKIN_LIGHTER",
+          "SKIN_LIGHT",
+          "SKIN_MEDIUM",
+          "SKIN_PINK",
+          "SKIN_TAN",
+          "SKIN_OLIVE"
         ],
-        "order": 500
+        "order": 1000
       },
       {
         "id": [
@@ -45,23 +49,20 @@
           "bio_deformity",
           "bio_face_mask"
         ],
-        "order": 1000
+        "order": 1100
       },
+      { "id": [ "bio_carbon" ], "order": 1125 },
       {
         "id": [
-          "ALBINO",
-          "SUNBURN",
-          "PLANTSKIN",
-          "PALE",
-          "SKIN_DARK",
-          "SKIN_LIGHTER",
-          "SKIN_LIGHT",
-          "SKIN_MEDIUM",
-          "SKIN_PINK",
-          "SKIN_TAN",
-          "SKIN_OLIVE"
+          "bio_armor_arms",
+          "bio_armor_legs",
+          "bio_armor_torso",
+          "bio_armor_head",
+          "bio_armor_eyes",
+          "bio_sunglasses",
+          "bio_blindfold"
         ],
-        "order": 1100
+        "order": 1150
       },
       {
         "id": [ "eye_red", "eye_violet", "eye_hazel", "eye_blue", "eye_brown", "eye_gray", "eye_green", "eye_amber" ],

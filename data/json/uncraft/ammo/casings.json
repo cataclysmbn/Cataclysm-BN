@@ -190,5 +190,37 @@
     "qualities": [ { "id": "HAMMER", "level": 1 } ],
     "charges": 1,
     "components": [ [ [ "cartridgebrass", 1 ] ], [ [ "plastic_scrap", 1 ] ] ]
+  },
+  {
+    "result": "277_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 6 ] ] ]
+  },
+  {
+    "result": "40x46mm_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "scrap", 1 ] ] ]
+  },
+  {
+    "result": "40x53mm_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "scrap", 1 ] ] ]
+  },
+  {
+    "result": "25mm_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "scrap", 1 ] ] ]
   }
 ]

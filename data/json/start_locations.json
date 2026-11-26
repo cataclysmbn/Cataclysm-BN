@@ -229,7 +229,7 @@
     "type": "start_location",
     "id": "sloc_lmoe_empty",
     "name": "LMOE shelter (underground)",
-    "terrain": [ "lmoe_under_empty" ]
+    "terrain": [ "lmoe_under_safe" ]
   },
   {
     "type": "start_location",
@@ -528,6 +528,12 @@
     "id": "sloc_freshwater_research_station",
     "name": "Freshwater Research Station",
     "terrain": [ "sealab_small_surface" ]
+  },
+  {
+    "type": "start_location",
+    "id": "sloc_oil_platform",
+    "name": "Oil Platform",
+    "terrain": [ "oil_platform_2c_2" ]
   },
   {
     "type": "start_location",

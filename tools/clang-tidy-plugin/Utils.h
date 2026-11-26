@@ -40,7 +40,7 @@ inline auto getText(const ast_matchers::MatchFinder::MatchResult& Result, T* Nod
 
 template <typename T, typename U>
 static auto getParent(const ast_matchers::MatchFinder::MatchResult& Result, const U* Node)
-    -> const T* { // *NOPAD*
+    -> const T* {
     for (const DynTypedNode& parent : Result.Context->getParents(*Node)) {
         if (const T* Candidate = parent.get<T>()) { return Candidate; }
     }
@@ -50,8 +50,7 @@ static auto getParent(const ast_matchers::MatchFinder::MatchResult& Result, cons
 
 template <typename T>
 static auto getContainingFunction(
-    const ast_matchers::MatchFinder::MatchResult& Result, const T* Node)
-    -> const FunctionDecl* { // *NOPAD*
+    const ast_matchers::MatchFinder::MatchResult& Result, const T* Node) -> const FunctionDecl* {
     for (const DynTypedNode& parent : Result.Context->getParents(*Node)) {
         if (const Decl* Candidate = parent.get<Decl>()) {
             if (const FunctionDecl* ContainingFunction = dyn_cast<FunctionDecl>(Candidate)) {
@@ -132,7 +131,7 @@ public:
 
     auto operator!() const -> bool { return !valid; }
 
-    auto getRoot() const -> const std::string& { return root; } // *NOPAD*
+    auto getRoot() const -> const std::string& { return root; }
 
 private:
     std::string root;

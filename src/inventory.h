@@ -188,6 +188,7 @@ class inventory : public temp_visitable<inventory>
         item *most_appropriate_painkiller( int pain );
 
         void rust_iron_items();
+        void edit_all_items( const std::function<void( item & )> &func );
 
     private:
         units::mass cached_weight;
