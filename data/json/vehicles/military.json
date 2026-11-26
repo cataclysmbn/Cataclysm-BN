@@ -1245,7 +1245,7 @@
       { "y": 1, "x": 1, "parts": [ "hdframe_horizontal", "reinforced_windshield" ] },
       { "y": 0, "x": 1, "parts": [ "hdframe_horizontal", "reinforced_windshield" ] },
       { "y": -1, "x": 1, "parts": [ "hdframe_vertical", "reinforced_windshield_nw" ] },
-      { "y": 3, "x": 0, "parts": [ "hdframe_vertical_right", "hddoor_right" ] },
+      { "y": 3, "x": 0, "parts": [ "hdframe_vertical_right", "hddoor_ascii_right" ] },
       {
         "y": 2,
         "x": 0,

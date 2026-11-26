@@ -621,7 +621,8 @@
         "symbol": "u",
         "looks_like": "door_front_right"
       },
-      { "direction": "appearance_door_full_right", "symbol": "u", "looks_like": "door_front_right" }
+      { "direction": "appearance_door_full_right", "symbol": "u", "looks_like": "door_front_right" },
+      { "direction": "ascii_right", "symbol": "+", "looks_like": "door_vertical_right" }
     ]
   },
   {
@@ -666,7 +667,8 @@
     "shapes": [
       { "direction": "left", "symbol": "L" },
       { "direction": "right", "symbol": "R" },
-      { "direction": "full_right", "symbol": "+", "looks_like": "hddoor" }
+      { "direction": "full_right", "symbol": "+", "looks_like": "hddoor" },
+      { "direction": "ascii_right", "symbol": "+", "looks_like": "hddoor_right" }
     ]
   },
   {

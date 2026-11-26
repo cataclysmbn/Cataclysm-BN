@@ -53,7 +53,9 @@
       },
       { "direction": "appearance_board_vertical_left", "symbol": "b", "looks_like": "board_sw" },
       { "direction": "appearance_board_vertical_right", "symbol": "n", "looks_like": "board_se" },
-      { "direction": "appearance_board_vertical_left_from_vertical", "symbol": "j", "looks_like": "board_vertical" }
+      { "direction": "appearance_board_vertical_left_from_vertical", "symbol": "j", "looks_like": "board_vertical" },
+      { "direction": "ascii_rear", "symbol": "h", "looks_like": "board_horizontal_rear" },
+      { "direction": "ascii_front", "symbol": "h", "looks_like": "board_horizontal_front" }
     ]
   },
   {
@@ -150,7 +152,7 @@
       { "direction": "appearance_windshield_wheel_right", "symbol": "j", "looks_like": "halfboard_vertical_right" },
       {
         "direction": "appearance_hdhalfboard_horizontal_front",
-        "symbol": "T",
+        "symbol": "=",
         "looks_like": "halfboard_horizontal_front"
       },
       { "direction": "appearance_hdhalfboard_nw", "symbol": "y", "looks_like": "halfboard_nw" },
@@ -193,7 +195,8 @@
         "direction": "appearance_halfboard_ne_from_vertical_right",
         "symbol": "j",
         "looks_like": "halfboard_vertical_right"
-      }
+      },
+      { "direction": "ascii_front", "symbol": "h", "looks_like": "halfboard_horizontal_front" }
     ]
   },
   {

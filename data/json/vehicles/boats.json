@@ -51,9 +51,9 @@
         "y": -1,
         "parts": [ "frame_vertical", "windshield_left", "metal_boat_hull", { "part": "tank", "fuel": "gasoline" } ]
       },
-      { "x": -1, "y": 0, "parts": [ "frame_cross", "windshield_horizontal_rear", "metal_boat_hull" ] },
-      { "x": -1, "y": 1, "parts": [ "frame_cross", "windshield_horizontal_rear", "metal_boat_hull" ] },
-      { "x": -1, "y": 2, "parts": [ "frame_cross", "windshield_horizontal_rear", "metal_boat_hull" ] },
+      { "x": -1, "y": 0, "parts": [ "frame_cross", "windshield_ascii_rear", "metal_boat_hull" ] },
+      { "x": -1, "y": 1, "parts": [ "frame_cross", "windshield_ascii_rear", "metal_boat_hull" ] },
+      { "x": -1, "y": 2, "parts": [ "frame_cross", "windshield_ascii_rear", "metal_boat_hull" ] },
       {
         "x": -1,
         "y": 3,
@@ -1956,7 +1956,7 @@
       {
         "x": 1,
         "y": 0,
-        "parts": [ "frame_horizontal_front", "board_horizontal_front", "headlight", "omnicam", "metal_boat_hull" ]
+        "parts": [ "frame_horizontal_front", "board_ascii_front", "headlight", "omnicam", "metal_boat_hull" ]
       },
       {
         "x": -2,

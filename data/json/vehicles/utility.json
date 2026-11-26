@@ -11,7 +11,7 @@
     "parts": [
       { "x": -1, "y": 1, "parts": [ "frame_vertical_right", "board_vertical_right" ] },
       { "x": -1, "y": -1, "parts": [ "frame_vertical_left", "board_vertical_left" ] },
-      { "x": 1, "y": 0, "parts": [ "frame_horizontal_front", "board_horizontal_front", "headlight", "omnicam" ] },
+      { "x": 1, "y": 0, "parts": [ "frame_horizontal_front", "board_ascii_front", "headlight", "omnicam" ] },
       { "x": 1, "y": 1, "parts": [ "frame_ne", "wheel_mount_medium_steerable", "wheel", "board_ne" ] },
       { "x": -2, "y": 0, "parts": [ "frame_horizontal_rear", "hatch_horizontal_rear" ] },
       {
@@ -146,11 +146,11 @@
     "color_palette": "construction_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_horizontal_rear", "roller_drum" ] },
-      { "x": -1, "y": 1, "parts": [ "frame_appearance_frame_cross", "windshield_horizontal_rear", "roof" ] },
+      { "x": -1, "y": 1, "parts": [ "frame_appearance_frame_cross", "windshield_ascii_rear", "roof" ] },
       { "x": 2, "y": 2, "parts": [ "frame_ne", "roller_drum" ] },
       { "x": 0, "y": 2, "parts": [ "frame_vertical_T_right", "door_front_right", "roof" ] },
       { "x": 2, "y": -1, "parts": [ "frame_horizontal_front", "roller_drum" ] },
-      { "x": -1, "y": -1, "parts": [ "frame_appearance_frame_cross", "windshield_horizontal_rear", "roof" ] },
+      { "x": -1, "y": -1, "parts": [ "frame_appearance_frame_cross", "windshield_ascii_rear", "roof" ] },
       { "x": -2, "y": 2, "parts": [ "frame_vertical_T_right", "halfboard_se" ] },
       {
         "x": 1,

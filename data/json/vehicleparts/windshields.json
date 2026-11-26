@@ -116,7 +116,8 @@
       { "direction": "appearance_xlhalfboard_sw", "symbol": "\"", "looks_like": "windshield" },
       { "direction": "appearance_board_ne_edge", "symbol": "\"", "looks_like": "windshield" },
       { "direction": "appearance_windshield_se", "symbol": "\"", "looks_like": "windshield" },
-      { "direction": "appearance_windshield_sw", "symbol": "\"", "looks_like": "windshield" }
+      { "direction": "appearance_windshield_sw", "symbol": "\"", "looks_like": "windshield" },
+      { "direction": "ascii_rear", "symbol": "\"", "looks_like": "windshield_horizontal_rear" }
     ]
   },
   {
