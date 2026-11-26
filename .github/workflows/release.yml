@@ -110,6 +110,8 @@ jobs:
       - name: Build changelog
         if: ${{ steps.release_check.outputs.release_exists == 'false' }}
         id: build_changelog
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           changelog_file="$RUNNER_TEMP/changelog.md"
           deno run -A scripts/changelog/main.ts \

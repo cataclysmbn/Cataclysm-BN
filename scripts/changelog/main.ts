@@ -6,6 +6,7 @@ import { titleCase } from "https://deno.land/x/case@2.1.1/mod.ts"
 import { fmtLink } from "./fmt_commit.ts"
 import { type CommitInfo, parseCommit } from "./parse_commit.ts"
 import { type Commit, readCommits } from "./read_commits.ts"
+import { fetchPrIndex, groupRebaseMerges } from "./merged_prs.ts"
 import { paragraph } from "./paragraph.ts"
 
 const asSections = (group: Record<string, string>): string =>
@@ -154,7 +155,9 @@ const main = new Command()
   .action(async ({ since, until, range, output, quiet = false, format }) => {
     const log = quiet ? () => {} : console.log
 
-    const commits = await readCommits(range ? { range } : { since, until })
+    const raw = await readCommits(range ? { range } : { since, until })
+    const index = await fetchPrIndex({ repo: "cataclysmbn/Cataclysm-BN", commits: raw })
+    const commits = groupRebaseMerges({ commits: raw, ...index })
     log(`${commits.length} commits found`)
 
     const changelog = format === "reddit" ? redditTemplate(commits) : commitsSection(commits)
