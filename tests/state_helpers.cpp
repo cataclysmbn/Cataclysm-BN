@@ -3,6 +3,7 @@
 #include "../src/map/map.h"
 #include "calendar.h"
 #include "cata_arena.h"
+#include "game.h"
 #include "map_helpers.h"
 #include "name.h"
 #include "player_helpers.h"
@@ -43,6 +44,10 @@ auto clear_states(const enum_bitset<test_state>& states) -> void {
     if (normalized_states.test(state::avatar)) { clear_avatar(); }
 
     if (normalized_states.test(state::map)) {
+        // A test may move the map object without moving the player across a submap
+        // boundary.  Restore the expected map origin before the next test converts
+        // its absolute fixtures to a legacy map-space API.
+        if (g->m.get_abs_sub() != test_map_origin()) { g->load_map(test_map_origin(), false); }
         clear_map();
     } else {
         if (normalized_states.test(state::npc)) { clear_npcs(); }

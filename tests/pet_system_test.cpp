@@ -30,7 +30,7 @@ static const skill_id skill_survival("survival");
 
 // A position well away from the player's test location so
 // the monster's line-of-sight checks do not interfere with tests.
-static const tripoint_bub_ms mon_pos(10, 10, 0);
+static auto mon_pos() -> tripoint_bub_ms { return bub_test_origin() + tripoint_rel_ms(10, 10, 0); }
 
 // -----------------------------------------------------------------------
 // make_pet / is_pet
@@ -38,7 +38,7 @@ static const tripoint_bub_ms mon_pos(10, 10, 0);
 
 TEST_CASE("make_pet sets friendly to -1", "[pet][monster]") {
     clear_all_state();
-    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos);
+    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos());
 
     REQUIRE(mon.friendly == 0);
     mon.make_pet();
@@ -47,7 +47,7 @@ TEST_CASE("make_pet sets friendly to -1", "[pet][monster]") {
 
 TEST_CASE("make_pet adds effect_pet", "[pet][monster]") {
     clear_all_state();
-    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos);
+    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos());
 
     REQUIRE_FALSE(mon.has_effect(effect_pet));
     mon.make_pet();
@@ -59,7 +59,7 @@ TEST_CASE(
     "[pet]["
     "monster]") {
     clear_all_state();
-    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos);
+    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos());
 
     SECTION("unfriendly monster is not a pet") {
         mon.friendly = 0;
@@ -87,7 +87,7 @@ TEST_CASE(
 
 TEST_CASE("make_pet does not reset training_level", "[pet][monster][training]") {
     clear_all_state();
-    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos);
+    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos());
 
     mon.make_pet();
     mon.training_level = 2;
@@ -99,7 +99,7 @@ TEST_CASE("make_pet does not reset training_level", "[pet][monster][training]") 
 
 TEST_CASE("repeated make_pet calls preserve is_pet status", "[pet][monster]") {
     clear_all_state();
-    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos);
+    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos());
 
     mon.make_pet();
     REQUIRE(mon.is_pet());
@@ -114,7 +114,7 @@ TEST_CASE("repeated make_pet calls preserve is_pet status", "[pet][monster]") {
 
 TEST_CASE("adding effect_well_fed to a pet works", "[pet][monster]") {
     clear_all_state();
-    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos);
+    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos());
     mon.make_pet();
 
     REQUIRE_FALSE(mon.has_effect(effect_well_fed));
@@ -124,7 +124,7 @@ TEST_CASE("adding effect_well_fed to a pet works", "[pet][monster]") {
 
 TEST_CASE("effect_well_fed duration is refreshed on re-add", "[pet][monster]") {
     clear_all_state();
-    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos);
+    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos());
     mon.make_pet();
 
     mon.add_effect(effect_well_fed, 1_hours);
@@ -142,7 +142,7 @@ TEST_CASE("effect_well_fed duration is refreshed on re-add", "[pet][monster]") {
 
 TEST_CASE("pet training stat scaling with training_level", "[pet][monster][training]") {
     clear_all_state();
-    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos);
+    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos());
     mon.make_pet();
     REQUIRE(mon.type->pet_training.has_value());
 
@@ -185,7 +185,7 @@ TEST_CASE("pet training stat scaling with training_level", "[pet][monster][train
 
 TEST_CASE("training_level is capped at max_level", "[pet][monster][training]") {
     clear_all_state();
-    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos);
+    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos());
     mon.make_pet();
     REQUIRE(mon.type->pet_training.has_value());
 
@@ -227,7 +227,7 @@ TEST_CASE(
 
 TEST_CASE("train_pet_finish removes effect_well_fed", "[pet][monster][training][activity]") {
     clear_all_state();
-    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos);
+    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos());
     mon.make_pet();
     mon.add_effect(effect_well_fed, 24_hours);
     REQUIRE(mon.has_effect(effect_well_fed));
@@ -251,7 +251,7 @@ TEST_CASE(
     "[pet][monster][training]["
     "activity]") {
     clear_all_state();
-    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos);
+    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos());
     mon.make_pet();
     mon.add_effect(effect_well_fed, 24_hours);
     mon.training_level = 0;
@@ -271,7 +271,7 @@ TEST_CASE(
 
 TEST_CASE("train_pet_finish does not exceed max_level", "[pet][monster][training][activity]") {
     clear_all_state();
-    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos);
+    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos());
     mon.make_pet();
     REQUIRE(mon.type->pet_training.has_value());
 
@@ -299,7 +299,7 @@ TEST_CASE(
     "activity"
     "]") {
     clear_all_state();
-    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos);
+    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos());
     mon.make_pet();
     mon.add_effect(effect_well_fed, 24_hours);
     mon.training_level = 0;
@@ -325,7 +325,7 @@ TEST_CASE(
     "[pet][monster]["
     "training]") {
     clear_all_state();
-    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos);
+    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos());
     mon.make_pet();
     mon.training_level = 2;
 
@@ -346,7 +346,7 @@ TEST_CASE(
     "activit"
     "y]") {
     clear_all_state();
-    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos);
+    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos());
     mon.make_pet();
     mon.add_effect(effect_well_fed, 24_hours);
     // Simulate what monexamine::train_pet does when the activity starts.
@@ -382,7 +382,7 @@ static auto armor_matches(const monster& z, const item& it) -> bool {
 TEST_CASE(
     "pet armor volume filter matches correct size for German shepherd", "[pet][armor][monster]") {
     clear_all_state();
-    monster& mon = spawn_test_monster(mon_dog_gshepherd.str(), mon_pos);
+    auto& mon = spawn_test_monster(mon_dog_gshepherd.str(), mon_pos());
 
     // German shepherd: base volume 35 L, bodytype "quadruped".
     // Small quadruped armor: 1 L – 54999 ml. Medium: 55 L – 1000 L.
@@ -413,7 +413,7 @@ TEST_CASE(
     "extended description shows taming food and pet armor for a tamable monster",
     "[pet][monster]") {
     clear_all_state();
-    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos);
+    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos());
 
     const std::string desc = mon.extended_description();
     INFO(desc);
@@ -433,7 +433,7 @@ TEST_CASE(
     "extended description shows required traits for a monster with tamer_traits",
     "[pet][monster]") {
     clear_all_state();
-    monster& mon = spawn_test_monster(mon_bear_cub.str(), mon_pos);
+    auto& mon = spawn_test_monster(mon_bear_cub.str(), mon_pos());
 
     const std::string desc = mon.extended_description();
     INFO(desc);
@@ -449,7 +449,7 @@ TEST_CASE(
     "extended description says the monster cannot be tamed when it has no pet food",
     "[pet][monster]") {
     clear_all_state();
-    monster& mon = spawn_test_monster(mon_zombie.str(), mon_pos);
+    auto& mon = spawn_test_monster(mon_zombie.str(), mon_pos());
 
     const std::string desc = mon.extended_description();
     INFO(desc);
@@ -466,7 +466,7 @@ static const skill_id skill_speech("speech");
 
 TEST_CASE("configurable pet tame and training skills", "[pet][monster][skill]") {
     clear_all_state();
-    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos);
+    monster& mon = spawn_test_monster(mon_dog.str(), mon_pos());
     avatar& p = get_avatar();
     move_player_out_of_the_way();
     REQUIRE(mon.type->pet_training.has_value());

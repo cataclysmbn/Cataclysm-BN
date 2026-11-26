@@ -24,7 +24,7 @@ auto remove_migo_nerve_cage_terrain(mapbuffer& buffer, const tripoint_abs_ms& p)
     auto open = false;
     const auto tile_reader = buffer.make_abs_tile_reader();
     for (const auto& tmp : points_in_radius(p, 12)) {
-        const auto tile = tile_reader.get_tile(tmp);
+        const auto tile = tile_reader.tile_at(tmp);
         if (tile && tile->get_ter() == ter_id("t_wall_resin_cage")) {
             buffer.set_ter(tmp, ter_id("t_floor_resin"));
             open = true;

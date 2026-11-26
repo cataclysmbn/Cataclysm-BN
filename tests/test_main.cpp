@@ -33,6 +33,7 @@
 #include "init.h"
 #include "language.h"
 #include "loading_ui.h"
+#include "map_helpers.h"
 #include "mod_manager.h"
 #include "options.h"
 #include "output.h"
@@ -233,10 +234,11 @@ static void init_global_game_state(
     g->u = avatar();
     g->u.create(character_type::NOW);
 
-    g->m = map();
+    g->setup(false);
     disable_mapgen = true;
 
-    g->m.load(g->m.get_abs_sub(), false);
+    g->load_map(test_map_origin(), false);
+    g->u.setpos(test_origin);
 
     get_weather().update_weather();
 }

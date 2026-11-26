@@ -39,7 +39,7 @@ TEST_CASE(
     const auto pos = tripoint_bub_ms(60, 60, 0);
     auto& buffer = MAPBUFFER_REGISTRY.get(here.get_bound_dimension());
     const auto sm_pos = project_to<coords::sm>(bub_to_abs(pos));
-    auto* sm = buffer.lookup_submap_in_memory(sm_pos);
+    auto* sm = buffer.find_resident_submap(sm_pos);
     REQUIRE(sm != nullptr);
     for (const auto& id : dropping_pheromone) {
         CAPTURE(id.str());

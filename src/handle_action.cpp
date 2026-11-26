@@ -1035,10 +1035,10 @@ static void smash()
                 }
 
                 if( to_safety ) {
-                    auto oldpos = u.bub_pos();
-                    auto newpos = u.bub_pos() + *to_safety;
+                    auto oldpos = u.abs_pos();
+                    auto newpos = u.abs_pos() + *to_safety;
                     // game::walk_move will return true even if you don't move
-                    if( g->walk_move( newpos ) && u.bub_pos() != oldpos ) {
+                    if( g->walk_move( newpos ) && u.abs_pos() != oldpos ) {
                         break;
                     }
                 }
@@ -2262,7 +2262,7 @@ bool game::handle_action()
                     auto moved = false;
                     {
                         ZoneScopedN( "handle_action_call_avatar_move" );
-                        moved = avatar_action::move( u, m, dest_delta );
+                        moved = avatar_action::move( dest_delta );
                     }
                     if( !moved ) {
                         ZoneScopedN( "handle_action_clear_failed_move" );

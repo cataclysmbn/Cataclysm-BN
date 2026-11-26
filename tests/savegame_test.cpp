@@ -66,12 +66,12 @@ TEST_CASE("loading a save loads the map only around the saved player position", 
     const auto wasted_sm =
         tripoint_abs_sm(corner.x() - g_half_mapsize, corner.y() - g_half_mapsize, 0);
     MAPBUFFER.unload_omt(project_to<coords::omt>(wasted_sm), false);
-    REQUIRE(MAPBUFFER.lookup_submap_in_memory(wasted_sm) == nullptr);
+    REQUIRE(MAPBUFFER.find_resident_submap(wasted_sm) == nullptr);
 
     REQUIRE(g->load(save_t::from_save_id(get_avatar().get_save_id())));
 
     CHECK(project_to<coords::omt>(get_avatar().abs_pos()) == player_omt);
-    CHECK(MAPBUFFER.lookup_submap_in_memory(wasted_sm) == nullptr);
+    CHECK(MAPBUFFER.find_resident_submap(wasted_sm) == nullptr);
 }
 
 TEST_CASE("manual combat mode is serialized in save data", "[save]") {

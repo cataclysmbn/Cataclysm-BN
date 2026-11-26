@@ -28,7 +28,7 @@ namespace
 auto resident_tile_lookup() -> mapbuffer_lookup_options
 {
     return {
-        .mode = mapbuffer_lookup_mode::resident_only,
+        .policy = mapbuffer_lookup_policy::resident_only,
     };
 }
 
@@ -335,7 +335,7 @@ void tile_item_location::attach( detached_ptr<item> &&obj )
 
 bool tile_item_location::is_loaded( const item * ) const
 {
-    return MAPBUFFER_REGISTRY.get( dim_ ).lookup_submap_in_memory( project_to<coords::sm>( pos_ ) );
+    return MAPBUFFER_REGISTRY.get( dim_ ).find_resident_submap( project_to<coords::sm>( pos_ ) );
 }
 
 tripoint_bub_ms tile_item_location::bub_pos( const item * ) const

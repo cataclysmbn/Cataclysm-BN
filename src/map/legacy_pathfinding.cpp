@@ -141,7 +141,7 @@ template <ter_bitflags flag>
 auto vertical_move_destination(const map& m, tripoint_abs_ms& t) -> bool {
     const auto omt = project_to<coords::omt>(t);
     auto& buffer = MAPBUFFER_REGISTRY.get(m.get_bound_dimension());
-    const auto omt_view = buffer.get_abs_omt_view(omt);
+    const auto omt_view = buffer.resolve_abs_omt_view(omt);
     if (!omt_view) { return false; }
 
     const auto submap_offsets = std::array{
@@ -151,7 +151,7 @@ auto vertical_move_destination(const map& m, tripoint_abs_ms& t) -> bool {
         point_omt_sm(1, 1),
     };
     for (const auto& local_sm : submap_offsets) {
-        const auto submap_view = omt_view->get_submap_view(local_sm);
+        const auto submap_view = omt_view->submap_view_at(local_sm);
         if (!submap_view) { continue; }
 
         for (const auto tile_pos : submap_view->tiles()) {
@@ -496,7 +496,7 @@ auto map::route(
                             // Warning: really expensive, needs a cache
                             const auto below = p + tripoint_rel_ms::below();
                             if (buffer.valid_move(p, below, {.flying = true})) {
-                                const auto below_tile = buffer.get_abs_tile(below);
+                                const auto below_tile = buffer.resolve_abs_tile(below);
                                 if (below_tile
                                     && !below_tile->get_ter_t().has_flag(TFLAG_NO_FLOOR)) {
                                     // Otherwise this would have been a huge fall

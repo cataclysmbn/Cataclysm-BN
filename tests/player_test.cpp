@@ -33,15 +33,16 @@ static weather_type_id WEATHER_CLOUDY = weather_type_id("cloudy");
 TEST_CASE("floor_clothing_warmth_preserves_partial_volumes", "[bodytemp]") {
     clear_all_state();
     const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
-    const auto pos = get_avatar().bub_pos();
     auto& here = get_map();
-    CHECK(Character::floor_item_warmth(pos) == 0_c_delta);
-    here.add_item_or_charges(pos, item::spawn("test_socks"));
-    CHECK(Character::floor_item_warmth(pos) == 0_c_delta);
-    here.add_item_or_charges(pos, item::spawn("test_longshirt"));
-    CHECK(Character::floor_item_warmth(pos) == units::from_legacy_bodypart_temp_delta(90));
-    here.add_item_or_charges(pos, item::spawn("test_hazmat_suit"));
-    CHECK(Character::floor_item_warmth(pos) == units::from_legacy_bodypart_temp_delta(16410));
+    CHECK(Character::floor_item_warmth(bub_test_origin()) == 0_c_delta);
+    here.add_item_or_charges(bub_test_origin(), item::spawn("test_socks"));
+    CHECK(Character::floor_item_warmth(bub_test_origin()) == 0_c_delta);
+    here.add_item_or_charges(bub_test_origin(), item::spawn("test_longshirt"));
+    CHECK(Character::floor_item_warmth(bub_test_origin())
+          == units::from_legacy_bodypart_temp_delta(90));
+    here.add_item_or_charges(bub_test_origin(), item::spawn("test_hazmat_suit"));
+    CHECK(Character::floor_item_warmth(bub_test_origin())
+          == units::from_legacy_bodypart_temp_delta(16410));
 }
 
 TEST_CASE("heat_radiation_sums_visible_sources_across_submaps", "[bodytemp]") {
@@ -51,7 +52,7 @@ TEST_CASE("heat_radiation_sums_visible_sources_across_submaps", "[bodytemp]") {
     auto& here = get_map();
     // x = 59 and x = 60 lie in different submaps.
     const auto pos = tripoint_bub_ms(59, 60, 0);
-    g->place_player(pos);
+    g->u.setpos(pos);
     here.add_field(pos + point(2, 0), fd_fire, 2);
     here.ter_set(pos + point(-2, 2), ter_id("t_lava"));
     // Outside the radius of 6.
@@ -83,7 +84,7 @@ TEST_CASE("heat_radiation_takes_hotter_of_fire_and_terrain", "[bodytemp]") {
         here.invalidate_map_cache(0);
         here.build_map_cache(0);
     };
-    g->place_player(pos);
+    g->u.setpos(pos);
 
     here.add_field(source, fd_fire, 3);
     rebuild();
@@ -558,12 +559,10 @@ TEST_CASE("Player body temperatures in water.", "[.][bodytemp]") {
     clear_all_state();
     player& dummy = get_avatar();
 
-    const tripoint_bub_ms& pos = dummy.bub_pos();
-
-    get_map().ter_set(pos, t_water_dp);
-    REQUIRE(get_map().has_flag(TFLAG_SWIMMABLE, pos));
-    REQUIRE(get_map().has_flag(TFLAG_DEEP_WATER, pos));
-    REQUIRE(!g->is_in_sunlight(pos));
+    get_map().ter_set(bub_test_origin(), t_water_dp);
+    REQUIRE(get_map().has_flag(TFLAG_SWIMMABLE, bub_test_origin()));
+    REQUIRE(get_map().has_flag(TFLAG_DEEP_WATER, bub_test_origin()));
+    REQUIRE(!g->is_in_sunlight(bub_test_origin()));
     get_weather().weather_id = WEATHER_CLOUDY;
 
     dummy.drench(
@@ -616,12 +615,10 @@ TEST_CASE("Water hypothermia check.", "[.][bodytemp]") {
     clear_all_state();
     player& dummy = get_avatar();
 
-    const tripoint_bub_ms& pos = dummy.bub_pos();
-
-    get_map().ter_set(pos, t_water_dp);
-    REQUIRE(get_map().has_flag(TFLAG_SWIMMABLE, pos));
-    REQUIRE(get_map().has_flag(TFLAG_DEEP_WATER, pos));
-    REQUIRE(!g->is_in_sunlight(pos));
+    get_map().ter_set(bub_test_origin(), t_water_dp);
+    REQUIRE(get_map().has_flag(TFLAG_SWIMMABLE, bub_test_origin()));
+    REQUIRE(get_map().has_flag(TFLAG_DEEP_WATER, bub_test_origin()));
+    REQUIRE(!g->is_in_sunlight(bub_test_origin()));
     get_weather().weather_id = WEATHER_CLOUDY;
 
     dummy.drench(
@@ -723,16 +720,15 @@ TEST_CASE("player_move_through_vehicle_holes") {
     clear_all_state();
     player& dummy = get_avatar();
 
-    const auto pos = dummy.bub_pos();
+    get_map().add_vehicle(
+        vproto_id("apc"), abs_to_bub(test_origin + tripoint_rel_ms(2, -1, 0)), -45_degrees, 0, 0);
+    get_map().build_map_cache(test_origin.z());
 
-    get_map().add_vehicle(vproto_id("apc"), pos + tripoint_rel_ms(2, -1, 0), -45_degrees, 0, 0);
-    get_map().build_map_cache(pos.z());
+    REQUIRE(get_avatar().abs_pos() == test_origin);
 
-    REQUIRE(get_avatar().bub_pos() == pos);
+    avatar_action::move(point_rel_ms::north_west());
 
-    avatar_action::move(get_avatar(), get_map(), point_rel_ms::north_west());
-
-    CHECK(get_avatar().bub_pos() == pos);
+    CHECK(get_avatar().abs_pos() == test_origin);
 }
 
 TEST_CASE("clear_skills_resets_exercise_and_highest_level", "[skill]") {

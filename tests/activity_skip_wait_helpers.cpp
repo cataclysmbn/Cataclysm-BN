@@ -70,7 +70,7 @@ auto build_hay_fire() -> void {
 
 auto setup_wait_scene(const wait_scene scene) -> void {
     clear_all_state();
-    g->place_player(tripoint_bub_ms(30, 66, 0));
+    g->u.setpos(tripoint_bub_ms(30, 66, 0));
     // Need to clear all sources of monsters (e.g. anthills) or the skip window will end.
     const auto map_omts = point_range<point_abs_omt>(
         project_to<coords::omt>(g->m.get_abs_sub()),

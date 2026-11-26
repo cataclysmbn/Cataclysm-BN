@@ -20,7 +20,7 @@ const auto act_aim = activity_id("ACT_AIM");
 
 auto set_up_shooter() -> avatar& { // *NOPAD*
     clear_all_state();
-    g->place_player(shooter_pos);
+    g->u.setpos(shooter_pos);
     return get_avatar();
 }
 

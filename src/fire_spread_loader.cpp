@@ -94,7 +94,7 @@ auto fire_spread_loader::prune_disconnected( submap_load_manager &loader ) -> vo
     std::ranges::for_each( fire_handles_, [&]( const auto & entry ) {
         const auto &key = entry.first;
         auto &mb = MAPBUFFER_REGISTRY.get( key.first );
-        auto *sm = mb.lookup_submap_in_memory( key.second );
+        auto *sm = mb.find_resident_submap( key.second );
         // sm == nullptr means the submap hasn't been loaded yet — keep the handle
         // so submap_loader.update() gets a chance to load it.  Only prune once
         // the submap is resident in memory.

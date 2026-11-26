@@ -79,16 +79,16 @@ auto turns_to_omt_edge(const tripoint_abs_ms& pos, const point& direction) -> st
 
 auto is_omt_zlevel_loaded(mapbuffer& mb, const tripoint_abs_omt& omt_addr) -> bool {
     const auto sm_base = project_to<coords::sm>(omt_addr);
-    return mb.lookup_submap_in_memory(sm_base) && mb.lookup_submap_in_memory(sm_base + point_east)
-        && mb.lookup_submap_in_memory(sm_base + point_south)
-        && mb.lookup_submap_in_memory(sm_base + point_south_east);
+    return mb.find_resident_submap(sm_base) && mb.find_resident_submap(sm_base + point_east)
+        && mb.find_resident_submap(sm_base + point_south)
+        && mb.find_resident_submap(sm_base + point_south_east);
 }
 
 auto is_any_omt_zlevel_loaded(mapbuffer& mb, const tripoint_abs_omt& omt_addr) -> bool {
     const auto sm_base = project_to<coords::sm>(omt_addr);
-    return mb.lookup_submap_in_memory(sm_base) || mb.lookup_submap_in_memory(sm_base + point_east)
-        || mb.lookup_submap_in_memory(sm_base + point_south)
-        || mb.lookup_submap_in_memory(sm_base + point_south_east);
+    return mb.find_resident_submap(sm_base) || mb.find_resident_submap(sm_base + point_east)
+        || mb.find_resident_submap(sm_base + point_south)
+        || mb.find_resident_submap(sm_base + point_south_east);
 }
 
 auto contains_request_pos(const submap_load_request& req, const point_abs_sm& pos) -> bool {
@@ -853,10 +853,10 @@ auto submap_load_manager::update(const bool defer_lazy_border_work) -> void {
                 // pending_writes cache).
                 const tripoint_abs_sm sm_base = project_to<coords::sm>(omt_addr);
                 const bool all_loaded =
-                    mb.lookup_submap_in_memory(sm_base)
-                    && mb.lookup_submap_in_memory((sm_base + point_east))
-                    && mb.lookup_submap_in_memory((sm_base + point_south))
-                    && mb.lookup_submap_in_memory((sm_base + point_south_east));
+                    mb.find_resident_submap(sm_base)
+                    && mb.find_resident_submap((sm_base + point_east))
+                    && mb.find_resident_submap((sm_base + point_south))
+                    && mb.find_resident_submap((sm_base + point_south_east));
                 if (all_loaded) {
                     ++resident_zlevels;
                     continue;
@@ -899,10 +899,10 @@ auto submap_load_manager::update(const bool defer_lazy_border_work) -> void {
                 const auto omt_addr = tripoint_abs_omt{omt_xy, z};
                 const auto sm_base = project_to<coords::sm>(omt_addr);
                 const auto all_loaded =
-                    mb.lookup_submap_in_memory(sm_base)
-                    && mb.lookup_submap_in_memory((sm_base + point_east))
-                    && mb.lookup_submap_in_memory((sm_base + point_south))
-                    && mb.lookup_submap_in_memory((sm_base + point_south_east));
+                    mb.find_resident_submap(sm_base)
+                    && mb.find_resident_submap((sm_base + point_east))
+                    && mb.find_resident_submap((sm_base + point_south))
+                    && mb.find_resident_submap((sm_base + point_south_east));
                 if (!all_loaded) {
                     const auto result = mb.generate_omt(
                         omt_addr,
@@ -1036,8 +1036,7 @@ auto submap_load_manager::is_simulated(const dimension_id& dim_id, const point_a
 
 auto submap_load_manager::is_loaded(const dimension_id& dim_id, const point_abs_sm& pos) const
     -> bool {
-    return MAPBUFFER_REGISTRY.get(dim_id).lookup_submap_in_memory(tripoint_abs_sm{pos, 0})
-        != nullptr;
+    return MAPBUFFER_REGISTRY.get(dim_id).find_resident_submap(tripoint_abs_sm{pos, 0}) != nullptr;
 }
 
 auto submap_load_manager::simulated_submaps(const dimension_id& dim_id) const

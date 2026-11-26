@@ -39,9 +39,9 @@ static const efftype_id effect_infected("infected");
 static const trait_id trait_PROF_FED("PROF_FED");
 static const trait_id trait_PROF_SWAT("PROF_SWAT");
 
-static auto create_test_talker(const tripoint_bub_ms& talker_pos) -> npc& {
+static auto create_test_talker(const tripoint_abs_ms& talker_pos_abs) -> npc& {
     const string_id<npc_template> test_talker("test_talker");
-    const auto model_id = get_map().place_npc(talker_pos, test_talker, true);
+    const auto model_id = get_map().place_npc(abs_to_bub(talker_pos_abs), test_talker, true);
     g->load_npcs();
 
     auto* model_npc = g->find_npc(model_id);
@@ -86,13 +86,12 @@ static auto prep_test(dialogue& d) -> npc& {
     auto& player_character = get_avatar();
     REQUIRE_FALSE(player_character.in_vehicle);
 
-    const auto test_origin =
-        tripoint_bub_ms(g_half_mapsize_x, g_half_mapsize_y, player_character.abs_pos().z());
-    player_character.setpos(test_origin);
+    const auto player_pos_abs = test_origin_at_z(player_character.abs_pos().z());
+    player_character.setpos(player_pos_abs);
 
     g->faction_manager_ptr->create_if_needed();
 
-    auto& talker_npc = create_test_talker(player_character.bub_pos() + point(5, 0));
+    auto& talker_npc = create_test_talker(player_pos_abs + tripoint_rel_ms(5, 0, 0));
 
     d.alpha = &player_character;
     d.beta = &talker_npc;

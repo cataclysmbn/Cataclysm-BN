@@ -19,12 +19,13 @@ const auto effect_downed = efftype_id("downed");
 
 TEST_CASE("creature_in_field", "[monster],[field]") {
     clear_all_state();
-    static const tripoint_bub_ms target_location{5, 5, 0};
+    const auto target_location_abs = test_origin + tripoint_rel_ms(5, 5, 0);
     map& here = get_map();
     GIVEN("An acid field") {
-        here.add_field(target_location, field_type_id("fd_acid"));
+        here.add_field(abs_to_bub(target_location_abs), field_type_id("fd_acid"));
         WHEN("a monster stands on it") {
-            monster& test_monster = spawn_test_monster("mon_zombie", target_location);
+            monster& test_monster =
+                spawn_test_monster("mon_zombie", abs_to_bub(target_location_abs));
             REQUIRE(test_monster.get_hp() == test_monster.get_hp_max());
             THEN("the monster takes damage") {
                 here.creature_in_field(test_monster);
@@ -32,8 +33,9 @@ TEST_CASE("creature_in_field", "[monster],[field]") {
             }
         }
         WHEN("A monster in a vehicle stands in it") {
-            here.add_vehicle(vproto_id("handjack"), target_location, 0_degrees);
-            monster& test_monster = spawn_test_monster("mon_zombie", target_location);
+            here.add_vehicle(vproto_id("handjack"), abs_to_bub(target_location_abs), 0_degrees);
+            monster& test_monster =
+                spawn_test_monster("mon_zombie", abs_to_bub(target_location_abs));
             REQUIRE(test_monster.get_hp() == test_monster.get_hp_max());
             THEN("the monster doesn't take damage") {
                 here.creature_in_field(test_monster);
@@ -49,12 +51,9 @@ TEST_CASE("noslip clothing prevents field-based slipping", "[avatar],[field]") {
     auto& here = get_map();
     auto& you = get_avatar();
     const auto field_test_fd_slip = field_type_id("test_fd_slip");
-    you.setpos(tripoint_bub_ms(5, 5, 0));
-    // Moving the avatar recenters the map, so read its local position afterward.
-    const auto target_location = you.bub_pos();
-
+    you.setpos(test_origin);
     SECTION("slippery fields down the avatar without noslip footwear") {
-        REQUIRE(here.add_field(target_location, field_test_fd_slip));
+        REQUIRE(here.add_field(bub_test_origin(), field_test_fd_slip));
 
         here.creature_in_field(you, /*movement_only=*/true);
 
@@ -63,7 +62,7 @@ TEST_CASE("noslip clothing prevents field-based slipping", "[avatar],[field]") {
 
     SECTION("noslip footwear blocks the downed effect from slippery fields") {
         REQUIRE_FALSE(you.wear_item(item::spawn("test_noslip_boots"), false));
-        REQUIRE(here.add_field(target_location, field_test_fd_slip));
+        REQUIRE(here.add_field(bub_test_origin(), field_test_fd_slip));
 
         here.creature_in_field(you, /*movement_only=*/true);
 
@@ -72,7 +71,7 @@ TEST_CASE("noslip clothing prevents field-based slipping", "[avatar],[field]") {
 
     SECTION("noslip enchantments block the downed effect from slippery fields") {
         REQUIRE_FALSE(you.wear_item(item::spawn("test_socks_of_noslip"), false));
-        REQUIRE(here.add_field(target_location, field_test_fd_slip));
+        REQUIRE(here.add_field(bub_test_origin(), field_test_fd_slip));
 
         here.creature_in_field(you, /*movement_only=*/true);
 
@@ -84,14 +83,13 @@ TEST_CASE("waiting in slippery fields does not knock characters down", "[avatar]
     clear_all_state();
     auto& here = get_map();
     auto& you = get_avatar();
-    you.setpos(tripoint_bub_ms(5, 5, 0));
-    const auto origin = you.abs_pos();
+    you.setpos(test_origin);
+    const auto origin = test_origin;
     const auto destination = origin + tripoint_rel_ms(1, 0, 0);
-    REQUIRE(
-        here.add_field(you.bub_pos() + tripoint_rel_ms(1, 0, 0), field_type_id("test_fd_slip")));
+    REQUIRE(here.add_field(abs_to_bub(destination), field_type_id("test_fd_slip")));
     CHECK_FALSE(you.has_effect(effect_downed));
 
-    g->place_player(abs_to_bub(destination));
+    g->process_player_movement(destination);
     REQUIRE(you.has_effect(effect_downed));
     you.remove_effect(effect_downed);
 
@@ -101,7 +99,7 @@ TEST_CASE("waiting in slippery fields does not knock characters down", "[avatar]
         CHECK_FALSE(you.has_effect(effect_downed));
     }
 
-    g->place_player(abs_to_bub(origin));
-    g->place_player(abs_to_bub(destination));
+    g->u.setpos(origin);
+    g->process_player_movement(destination);
     CHECK(you.has_effect(effect_downed));
 }

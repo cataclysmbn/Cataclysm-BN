@@ -465,7 +465,7 @@ auto submap::rebuild_floor_cache(const map& m, const tripoint_bub_sm& grid_pos) 
     const submap* below =
         lowest_z
             ? nullptr
-            : m.get_mapbuffer().lookup_submap_in_memory(
+            : m.get_mapbuffer().find_resident_submap(
                   map_local_to_abs(m, grid_pos - tripoint_rel_sm(0, 0, 1)));
 
     for (const auto& sp : submap_tiles()) {

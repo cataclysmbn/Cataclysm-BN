@@ -116,7 +116,7 @@ TEST_CASE("scanned_books_can_be_read_in_darkness", "[digital_media][book_scannin
 
     set_time(calendar::turn_zero);
     constexpr auto pos = tripoint_bub_ms(60, 60, 0);
-    g->place_player(pos);
+    g->u.setpos(pos);
     auto& here = get_map();
     here.ter_set(pos, ter_id("t_floor"));
     here.furn_set(pos, furn_id("f_null"));

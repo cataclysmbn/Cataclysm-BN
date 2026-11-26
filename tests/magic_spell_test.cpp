@@ -129,13 +129,13 @@ TEST_CASE(
     g->reset_light_level();
 
     avatar& you = get_avatar();
-    const auto caster_pos = tripoint_bub_ms(60, 60, 0);
-    const auto target_pos = caster_pos + point_rel_ms(5, 0);
-    you.setpos(caster_pos);
+    const auto caster_pos_abs = test_origin;
+    const auto target_pos_abs = caster_pos_abs + tripoint_rel_ms(5, 0, 0);
+    you.setpos(caster_pos_abs);
     you.set_mutation(trait_id("INFRARED"));
     you.recalc_sight_limits();
 
-    monster& target = spawn_test_monster("mon_zombie", target_pos);
+    monster& target = spawn_test_monster("mon_zombie", abs_to_bub(target_pos_abs));
     map& here = get_map();
     here.invalidate_map_cache(you.bub_pos().z());
     g->refresh_player_visibility_cache_if_needed();
@@ -147,9 +147,9 @@ TEST_CASE(
     REQUIRE(
         std::ranges::contains(ranged::targetable_creatures(you, hostile_spell.range()), &target));
     REQUIRE(!you.sees_with_specials(target, true).is_null());
-    REQUIRE_FALSE(you.sees(target_pos));
+    REQUIRE_FALSE(you.sees(abs_to_bub(target_pos_abs)));
 
-    CHECK(spell_target_can_be_resolved(hostile_spell, you, target_pos));
+    CHECK(spell_target_can_be_resolved(hostile_spell, you, abs_to_bub(target_pos_abs)));
 }
 
 TEST_CASE("known magic remembers the last cast spell", "[magic][spell][save]") {
@@ -559,8 +559,8 @@ TEST_CASE("spell area of effect", "[magic][spell][aoe]") {
 TEST_CASE("spell effect - target_attack", "[magic][spell][effect][target_attack]") {
     clear_all_state();
     // Locations for avatar and monster
-    const tripoint_bub_ms dummy_loc = {60, 60, 0};
-    const tripoint_bub_ms mummy_loc = {62, 60, 0};
+    const auto dummy_loc_abs = test_origin;
+    const auto mummy_loc_abs = dummy_loc_abs + tripoint_rel_ms(2, 0, 0);
 
     // For tracking spell damage
     int before_hp = 0;
@@ -569,15 +569,15 @@ TEST_CASE("spell effect - target_attack", "[magic][spell][effect][target_attack]
     // Avatar/spellcaster
     avatar& dummy = g->u;
     clear_character(dummy);
-    dummy.setpos(dummy_loc);
-    REQUIRE(dummy.bub_pos() == dummy_loc);
-    REQUIRE(g->critter_at(dummy_loc));
+    dummy.setpos(dummy_loc_abs);
+    REQUIRE(dummy.abs_pos() == dummy_loc_abs);
+    REQUIRE(g->critter_at(abs_to_bub(dummy_loc_abs)));
     REQUIRE(g->num_creatures() == 1);
 
     // Monster/defender
-    monster& mummy = spawn_test_monster("mon_zombie", mummy_loc);
-    REQUIRE(mummy.bub_pos() == mummy_loc);
-    REQUIRE(g->critter_at(mummy_loc));
+    monster& mummy = spawn_test_monster("mon_zombie", abs_to_bub(mummy_loc_abs));
+    REQUIRE(mummy.abs_pos() == mummy_loc_abs);
+    REQUIRE(g->critter_at(abs_to_bub(mummy_loc_abs)));
     REQUIRE(g->num_creatures() == 2);
 
     // Spell with ranged target_attack effect
@@ -600,7 +600,7 @@ TEST_CASE("spell effect - target_attack", "[magic][spell][effect][target_attack]
 
     // Cast the spell and measure the defender's change in HP
     before_hp = mummy.get_hp();
-    pew_spell.cast_spell_effect(dummy, mummy_loc);
+    pew_spell.cast_spell_effect(dummy, abs_to_bub(mummy_loc_abs));
     after_hp = mummy.get_hp();
 
     // Should do approximately the expected damage
@@ -611,14 +611,14 @@ TEST_CASE("spell effect - target_attack", "[magic][spell][effect][target_attack]
 TEST_CASE("spell effect - summon", "[magic][spell][effect][summon]") {
     clear_all_state();
     // Avatar/spellcaster and summoned mummy locations
-    const tripoint_bub_ms dummy_loc = {60, 60, 0};
-    const tripoint_bub_ms mummy_loc = {61, 60, 0};
+    const auto dummy_loc_abs = test_origin;
+    const auto mummy_loc_abs = dummy_loc_abs + tripoint_rel_ms(1, 0, 0);
 
     avatar& dummy = g->u;
     clear_character(dummy);
-    dummy.setpos(dummy_loc);
-    REQUIRE(dummy.bub_pos() == dummy_loc);
-    REQUIRE(g->critter_at(dummy_loc));
+    dummy.setpos(dummy_loc_abs);
+    REQUIRE(dummy.abs_pos() == dummy_loc_abs);
+    REQUIRE(g->critter_at(abs_to_bub(dummy_loc_abs)));
     REQUIRE(g->num_creatures() == 1);
 
     spell_id mummy_id("test_spell_tp_mummy");
@@ -627,9 +627,9 @@ TEST_CASE("spell effect - summon", "[magic][spell][effect][summon]") {
     REQUIRE(dummy.magic->has_enough_energy(dummy, mummy_spell));
 
     // Summon the mummy in the adjacent space
-    mummy_spell.cast_spell_effect(dummy, mummy_loc);
+    mummy_spell.cast_spell_effect(dummy, abs_to_bub(mummy_loc_abs));
 
-    CHECK(g->critter_at(mummy_loc));
+    CHECK(g->critter_at(abs_to_bub(mummy_loc_abs)));
     CHECK(g->num_creatures() == 2);
 }
 

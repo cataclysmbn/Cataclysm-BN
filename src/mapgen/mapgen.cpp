@@ -5846,7 +5846,7 @@ auto map::add_vehicle(
 
     if (placed_vehicle != nullptr) {
         const auto placed_vehicle_sm = abs_to_map_local(*this, placed_vehicle->abs_sm_pos);
-        auto* place_on_submap = get_mapbuffer().lookup_submap_in_memory(placed_vehicle->abs_sm_pos);
+        auto* place_on_submap = get_mapbuffer().find_resident_submap(placed_vehicle->abs_sm_pos);
         place_on_submap->vehicles.push_back(std::move(placed_vehicle_up));
         place_on_submap->is_uniform = false;
         invalidate_max_populated_zlev(placed_vehicle_sm.z());
@@ -5967,7 +5967,7 @@ auto map::add_computer(const tripoint_bub_ms& p, const std::string& name, int se
             .security = security,
             .lookup =
                 {
-                    .mode = mapbuffer_lookup_mode::resident_only,
+                    .policy = mapbuffer_lookup_policy::resident_only,
                 },
         });
 }
@@ -6017,8 +6017,8 @@ void map::rotate(int turns, const bool setpos_safe) {
     // 1,1
     //
     auto swap_submaps = [&](const tripoint_bub_sm& p1, const tripoint_bub_sm& p2) {
-        submap* sm1 = get_mapbuffer().lookup_submap_in_memory(map_local_to_abs(*this, p1));
-        submap* sm2 = get_mapbuffer().lookup_submap_in_memory(map_local_to_abs(*this, p2));
+        submap* sm1 = get_mapbuffer().find_resident_submap(map_local_to_abs(*this, p1));
+        submap* sm2 = get_mapbuffer().find_resident_submap(map_local_to_abs(*this, p2));
         submap::swap(*sm1, *sm2);
     };
 
@@ -6042,7 +6042,7 @@ void map::rotate(int turns, const bool setpos_safe) {
     for (int j = 0; j < 2; ++j) {
         for (int i = 0; i < 2; ++i) {
             tripoint_bub_sm p(i, j, player_pos.z());
-            auto sm = get_mapbuffer().lookup_submap_in_memory(map_local_to_abs(*this, p));
+            auto sm = get_mapbuffer().find_resident_submap(map_local_to_abs(*this, p));
 
             sm->rotate(turns);
 
