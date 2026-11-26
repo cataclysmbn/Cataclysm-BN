@@ -149,6 +149,10 @@ Shapes are ordinary part IDs, such as `frame_vertical`. Use those IDs in vehicle
 prototypes and `copy-from`. A shape’s `looks_like` changes graphic fallback, not
 its physical inheritance. Existing IDs remain available when new shapes are added.
 
+A tileset binds a shape with `vp_<part_id>`. Give the shape an existing part ID as
+its `looks_like` so other tilesets can use that fallback. The selected artwork does
+not change the part's collision, transparency, material or other physical properties.
+
 ### Vehicles
 
 See also `vehicles_spawning.md`

@@ -929,15 +929,15 @@
       { "x": -2, "y": 2, "parts": [ "hdframe_horizontal_2", "hdroof", "hdboard_horizontal", "plating_military" ] },
       { "x": -2, "y": 0, "parts": [ "hdframe_horizontal_2", "hdroof", "hdboard_horizontal", "plating_military" ] },
       { "x": -2, "y": -1, "parts": [ "hdframe_vertical", "plating_military", "hdboard_sw" ] },
-      { "x": -3, "y": -1, "parts": [ "hdframe_horizontal", "plating_military", "hdhalfboard_vertical" ] },
+      { "x": -3, "y": -1, "parts": [ "hdframe_horizontal", "plating_military", "hdhalfboard_vertical_left" ] },
       { "x": -3, "y": 1, "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ] },
       { "x": -3, "y": 0, "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ] },
       { "x": -3, "y": 2, "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ] },
-      { "x": -3, "y": 3, "parts": [ "hdframe_horizontal", "plating_military", "hdhalfboard_vertical" ] },
+      { "x": -3, "y": 3, "parts": [ "hdframe_horizontal", "plating_military", "hdhalfboard_vertical_right" ] },
       {
         "x": -4,
         "y": 3,
-        "parts": [ "hdframe_se", "plating_military", "wheel_mount_heavy", "wheel_armor", "omnicam", "hdhalfboard_vertical" ]
+        "parts": [ "hdframe_se", "plating_military", "wheel_mount_heavy", "wheel_armor", "omnicam", "hdhalfboard_se" ]
       },
       { "x": -4, "y": 2, "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ] },
       { "x": -4, "y": 1, "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ] },
@@ -945,7 +945,7 @@
       {
         "x": -4,
         "y": -1,
-        "parts": [ "hdframe_sw", "plating_military", "wheel_mount_heavy", "wheel_armor", "omnicam", "hdhalfboard_vertical" ]
+        "parts": [ "hdframe_sw", "plating_military", "wheel_mount_heavy", "wheel_armor", "omnicam", "hdhalfboard_sw" ]
       },
       { "x": -2, "y": 1, "parts": [ "hdframe_cross", "hdroof", "hddoor_trunk", "plating_military" ] },
       { "x": -5, "y": 2, "part": "mounted_spare_tire" }
@@ -1054,15 +1054,15 @@
       { "x": -2, "y": 2, "parts": [ "hdframe_horizontal_2", "hdroof", "hdboard_horizontal", "plating_military" ] },
       { "x": -2, "y": 0, "parts": [ "hdframe_horizontal_2", "hdroof", "hdboard_horizontal", "plating_military" ] },
       { "x": -2, "y": -1, "parts": [ "hdframe_vertical", "plating_military", "hdboard_sw" ] },
-      { "x": -3, "y": -1, "parts": [ "hdframe_horizontal", "plating_military", "hdhalfboard_vertical" ] },
+      { "x": -3, "y": -1, "parts": [ "hdframe_horizontal", "plating_military", "hdhalfboard_vertical_left" ] },
       { "x": -3, "y": 1, "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ] },
       { "x": -3, "y": 0, "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ] },
       { "x": -3, "y": 2, "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ] },
-      { "x": -3, "y": 3, "parts": [ "hdframe_horizontal", "plating_military", "hdhalfboard_vertical" ] },
+      { "x": -3, "y": 3, "parts": [ "hdframe_horizontal", "plating_military", "hdhalfboard_vertical_right" ] },
       {
         "x": -4,
         "y": 3,
-        "parts": [ "hdframe_se", "plating_military", "wheel_mount_heavy", "wheel_armor", "omnicam", "hdhalfboard_vertical" ]
+        "parts": [ "hdframe_se", "plating_military", "wheel_mount_heavy", "wheel_armor", "omnicam", "hdhalfboard_se" ]
       },
       { "x": -4, "y": 2, "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ] },
       { "x": -4, "y": 1, "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ] },
@@ -1070,7 +1070,7 @@
       {
         "x": -4,
         "y": -1,
-        "parts": [ "hdframe_sw", "plating_military", "wheel_mount_heavy", "wheel_armor", "omnicam", "hdhalfboard_vertical" ]
+        "parts": [ "hdframe_sw", "plating_military", "wheel_mount_heavy", "wheel_armor", "omnicam", "hdhalfboard_sw" ]
       },
       { "x": -2, "y": 1, "parts": [ "hdframe_cross", "hdroof", "hddoor_trunk", "plating_military" ] },
       { "x": -5, "y": 2, "part": "mounted_spare_tire" }

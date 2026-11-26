@@ -255,13 +255,15 @@
     "symbol": "#",
     "type": "vehicle_part",
     "shapes": [
-      { "direction": "windshield_front", "symbol": "#", "symbol_broken": "*", "looks_like": "seat" },
+      { "direction": "windshield", "symbol": "#", "symbol_broken": "*", "looks_like": "seat" },
+      { "direction": "windshield_front", "symbol": "#", "symbol_broken": "*", "looks_like": "seat_windshield" },
       { "direction": "back_left", "symbol": "#", "symbol_broken": "*", "looks_like": "seat" },
       { "direction": "back_right", "symbol": "#", "symbol_broken": "*", "looks_like": "seat" },
       { "direction": "swivel_chair_front", "symbol": "#", "symbol_broken": "*", "looks_like": "seat" },
       { "direction": "back_front", "symbol": "#", "symbol_broken": "*", "looks_like": "seat" },
-      { "direction": "back_vertical_right", "symbol": "#", "symbol_broken": "*", "looks_like": "seat" },
-      { "direction": "back_vertical_left", "symbol": "#", "symbol_broken": "*", "looks_like": "seat" }
+      { "direction": "back_vertical", "symbol": "#", "symbol_broken": "*", "looks_like": "seat" },
+      { "direction": "back_vertical_right", "symbol": "#", "symbol_broken": "*", "looks_like": "seat_back_vertical" },
+      { "direction": "back_vertical_left", "symbol": "#", "symbol_broken": "*", "looks_like": "seat_back_vertical" }
     ]
   },
   {
@@ -279,7 +281,15 @@
     "id": "reclining_seat",
     "symbol": "#",
     "type": "vehicle_part",
-    "shapes": [ { "direction": "windshield_front", "symbol": "#", "symbol_broken": "*", "looks_like": "reclining_seat" } ]
+    "shapes": [
+      { "direction": "windshield", "symbol": "#", "symbol_broken": "*", "looks_like": "reclining_seat" },
+      {
+        "direction": "windshield_front",
+        "symbol": "#",
+        "symbol_broken": "*",
+        "looks_like": "reclining_seat_windshield"
+      }
+    ]
   },
   {
     "copy-from": "reclining_seat_leather_abstract",

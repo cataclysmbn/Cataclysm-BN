@@ -525,8 +525,9 @@
     },
     "flags": [ "WHEEL", "FOLDABLE", "NEEDS_WHEEL_MOUNT_LIGHT", "SHOCK_RESISTANT" ],
     "shapes": [
-      { "direction": "scooter_front", "symbol": "o", "symbol_broken": "x", "looks_like": "wheel_small" },
-      { "direction": "scooter_rear", "symbol": "o", "symbol_broken": "x", "looks_like": "wheel_small" },
+      { "direction": "scooter", "symbol": "o", "symbol_broken": "x", "looks_like": "wheel_small" },
+      { "direction": "scooter_front", "symbol": "o", "symbol_broken": "x", "looks_like": "wheel_small_scooter" },
+      { "direction": "scooter_rear", "symbol": "o", "symbol_broken": "x", "looks_like": "wheel_small_scooter" },
       { "direction": "front", "symbol": "o", "symbol_broken": "x", "looks_like": "wheel_small" }
     ]
   },

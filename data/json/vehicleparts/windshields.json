@@ -100,12 +100,13 @@
       { "direction": "cover_right", "symbol": "\"", "symbol_broken": "0", "looks_like": "windshield" },
       { "direction": "wheel_left", "symbol": "\"", "symbol_broken": "0", "looks_like": "windshield" },
       { "direction": "wheel_right", "symbol": "\"", "symbol_broken": "0", "looks_like": "windshield" },
-      { "direction": "full_left", "symbol": "j", "symbol_broken": "0", "looks_like": "windshield" },
-      { "direction": "full_right", "symbol": "H", "symbol_broken": "0", "looks_like": "windshield" },
-      { "direction": "full_wheel_left", "symbol": "j", "symbol_broken": "0", "looks_like": "windshield" },
-      { "direction": "full_wheel_right", "symbol": "H", "symbol_broken": "0", "looks_like": "windshield" },
-      { "direction": "full_vertical_right", "symbol": "\"", "symbol_broken": "0", "looks_like": "windshield" },
-      { "direction": "full_vertical_left", "symbol": "\"", "symbol_broken": "0", "looks_like": "windshield" },
+      { "direction": "full", "symbol": "j", "symbol_broken": "0", "looks_like": "windshield" },
+      { "direction": "full_left", "symbol": "j", "symbol_broken": "0", "looks_like": "windshield_full" },
+      { "direction": "full_right", "symbol": "H", "symbol_broken": "0", "looks_like": "windshield_full" },
+      { "direction": "full_wheel_left", "symbol": "j", "symbol_broken": "0", "looks_like": "windshield_full" },
+      { "direction": "full_wheel_right", "symbol": "H", "symbol_broken": "0", "looks_like": "windshield_full" },
+      { "direction": "full_vertical_right", "symbol": "\"", "symbol_broken": "0", "looks_like": "windshield_full" },
+      { "direction": "full_vertical_left", "symbol": "\"", "symbol_broken": "0", "looks_like": "windshield_full" },
       {
         "direction": "horizontal_rear_edge",
         "symbol": "\"",
@@ -114,7 +115,16 @@
       },
       { "direction": "vertical_2_left", "symbol": "\"", "symbol_broken": "0", "looks_like": "windshield" },
       { "direction": "vertical_2_right", "symbol": "\"", "symbol_broken": "0", "looks_like": "windshield" },
-      { "direction": "full_horizontal_rear_edge", "symbol": "\"", "symbol_broken": "0", "looks_like": "windshield" }
+      { "direction": "full_horizontal_rear", "symbol": "\"", "symbol_broken": "0", "looks_like": "windshield_full" },
+      {
+        "direction": "full_horizontal_rear_edge",
+        "symbol": "\"",
+        "symbol_broken": "0",
+        "looks_like": "windshield_full_horizontal_rear"
+      },
+      { "direction": "appearance_xlhalfboard_se", "symbol": "\"", "symbol_broken": "0", "looks_like": "windshield" },
+      { "direction": "appearance_xlhalfboard_sw", "symbol": "\"", "symbol_broken": "0", "looks_like": "windshield" },
+      { "direction": "appearance_board_ne_edge", "symbol": "\"", "symbol_broken": "0", "looks_like": "windshield" }
     ]
   },
   {
