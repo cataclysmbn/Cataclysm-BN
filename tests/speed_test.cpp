@@ -30,7 +30,7 @@ static void advance_turn(Character& guy) {
     calendar::turn += 1_turns;
 }
 
-static auto prepare_player() -> player& { // *NOPAD*
+static auto prepare_player() -> player& {
     auto& guy = *get_player_character().as_player();
     clear_character(*guy.as_player(), true);
     guy.set_moves(0);

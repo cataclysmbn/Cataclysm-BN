@@ -7,7 +7,7 @@
       "|": "t_wall_w",
       "T": "t_region_tree",
       "]": "t_railroad_rubble",
-      "\"": "t_water_sh",
+      "~": "t_water_sh",
       ")": "t_region_shrub_decorative",
       "*": "t_carpet_red",
       "x": "t_sidewalk",
@@ -185,7 +185,6 @@
       "ξ": "f_filing_cabinet",
       "π": "f_washer",
       "τ": "f_dishwasher",
-      "~": "f_shower",
       "U": "f_toilet",
       "i": "f_sink",
       "f": "f_fridge",
@@ -216,20 +215,6 @@
       "×": "f_triple_bunkbed"
     },
     "vendingmachines": { "V": {  } },
-    "toilets": { "U": {  } },
-    "nested": {
-      "я": {
-        "chunks": [
-          [ "null", 50 ],
-          [ "roof_2x2_utilities", 50 ],
-          [ "roof_2x2_utilities_b", 15 ],
-          [ "roof_2x2_utilities_c", 15 ],
-          [ "roof_2x2_utilities_d", 15 ],
-          [ "roof_2x2_infrastructure", 15 ],
-          [ "roof_2x2_infrastructure_1", 5 ],
-          [ "roof_2x2_infrastructure_2", 40 ]
-        ]
-      }
-    }
+    "toilets": { "U": {  } }
   }
 ]

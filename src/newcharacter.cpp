@@ -1615,23 +1615,29 @@ tab_direction set_traits( avatar &u, points_left &points )
                     }
                 }
             } else if( newcharacter::has_conflicting_trait( u, cur_trait ) ) {
-                const auto &new_types = cur_trait.obj().types;
-                const bool do_swap = std::ranges::any_of( new_types,
-                []( const auto & t ) { return mutation_type_swaps_on_conflict( t ); } );
-                if( do_swap ) {
-                    const auto base_traits = u.get_base_traits();
-                    auto it = std::ranges::find_if( base_traits, [&]( const trait_id & tr ) {
-                        return tr != cur_trait && std::ranges::any_of( tr.obj().types,
-                        [&]( const auto & t ) { return new_types.contains( t ); } );
-                    } );
-                    if( it != base_traits.end() ) {
-                        inc_type = 1;
-                        u.toggle_trait( *it );
-                    } else {
-                        popup( _( "You already picked a conflicting trait!" ) );
-                    }
-                } else {
+                const auto old_trait = newcharacter::find_swapped_trait( u, cur_trait );
+                if( !old_trait ) {
                     popup( _( "You already picked a conflicting trait!" ) );
+                } else {
+                    // The old trait's points are refunded on removal, so check the limits as
+                    // they will be after the swap.
+                    const int old_points = ( *old_trait )->points;
+                    const int good_after_swap = num_good - std::max( old_points, 0 );
+                    const int bad_after_swap = num_bad - std::min( old_points, 0 );
+                    if( iCurWorkingPage == 0 && good_after_swap + mdata.points >
+                        max_trait_points && !points.is_freeform() ) {
+                        popup( vgettext( "Sorry, but you can only take %d point of advantages.",
+                                         "Sorry, but you can only take %d points of advantages.", max_trait_points ),
+                               max_trait_points );
+                    } else if( iCurWorkingPage != 0 && bad_after_swap + mdata.points <
+                               -max_trait_points && !points.is_freeform() ) {
+                        popup( vgettext( "Sorry, but you can only take %d point of disadvantages.",
+                                         "Sorry, but you can only take %d points of disadvantages.", max_trait_points ),
+                               max_trait_points );
+                    } else {
+                        newcharacter::remove_trait_and_refund( u, *old_trait, points, num_good, num_bad );
+                        inc_type = 1;
+                    }
                 }
             } else if( g->scen->is_forbidden_trait( cur_trait ) ) {
                 popup( _( "The scenario you picked prevents you from taking this trait!" ) );
@@ -3009,7 +3015,6 @@ tab_direction set_magic( avatar &u, points_left &points )
         // Write the hint as to upgrade costs
         const bool knows = u.magic->knows_spell( current_spell );
         const int cost = knows ? current_spell->increase_points : current_spell->starting_points;
-        const int level = knows ? u.magic->get_spell( current_spell ).get_level() : 0;
         // We have two different strings to pluralize, so we have to use two
         // translation calls.
         const nc_color color = points.trait_points_left() >= cost ? COL_SKILL_USED : c_light_red;
@@ -4348,7 +4353,7 @@ void Character::clear_mutations()
 void Character::clear_skills()
 {
     for( auto &sk : *_skills ) {
-        sk.second.level( 0 );
+        sk.second = SkillLevel{};
     }
 }
 
@@ -4792,6 +4797,41 @@ bool has_same_type_trait( const Character &ch, const trait_id &t )
         }
     }
     return false;
+}
+
+auto find_swapped_trait( const Character &ch, const trait_id &t ) -> std::optional<trait_id>
+{
+    const auto &new_types = t->types;
+    const bool do_swap = std::ranges::any_of( new_types, []( const auto & type ) {
+        return mutation_type_swaps_on_conflict( type );
+    } );
+    if( !do_swap ) {
+        return std::nullopt;
+    }
+    const auto base_traits = ch.get_base_traits();
+    const auto it = std::ranges::find_if( base_traits, [&]( const trait_id & tr ) {
+        return tr != t && std::ranges::any_of( tr->types, [&]( const auto & type ) {
+            return new_types.contains( type );
+        } );
+    } );
+    if( it == base_traits.end() ) {
+        return std::nullopt;
+    }
+    return *it;
+}
+
+auto remove_trait_and_refund( Character &ch, const trait_id &t, points_left &points,
+                              int &num_good, int &num_bad ) -> void
+{
+    ch.toggle_trait( t );
+    const int cost = t->points;
+    // Undo what picking the trait did: give back its cost and drop it from the totals.
+    points.trait_points += cost;
+    if( cost > 0 ) {
+        num_good -= cost;
+    } else {
+        num_bad -= cost;
+    }
 }
 
 } // namespace newcharacter

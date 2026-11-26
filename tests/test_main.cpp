@@ -20,6 +20,7 @@
 #include "../src/map/map.h"
 #include "../src/overmap/overmap.h"
 #include "../src/overmap/overmapbuffer.h"
+#include "action_time_scale.h"
 #include "avatar.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
@@ -305,6 +306,11 @@ struct CataListener: Catch::TestEventListenerBase {
         TestEventListenerBase::sectionStarting(sectionInfo);
         // Initialize the cata RNG with the Catch seed for reproducible tests
         rng_set_engine_seed(m_config->rngSeed());
+        // Catch starts the root section once per run through a test case, one run per leaf section.
+        if (sectionInfo.lineInfo == currentTestCaseInfo->lineInfo) {
+            // A wait at TIME_ACTION_SCALE below 100 leaves a tick length above 1 for the next test
+            action_time_scale::set_calendar_turns_this_tick(1);
+        }
     }
 
     auto assertionEnded(Catch::AssertionStats const& assertionStats) -> bool override {
@@ -321,6 +327,24 @@ struct CataListener: Catch::TestEventListenerBase {
 
         return TestEventListenerBase::assertionEnded(assertionStats);
     }
+
+    auto testCaseStarting(Catch::TestCaseInfo const& info) -> void override {
+        TestEventListenerBase::testCaseStarting(info);
+        error_seen_before_case = debug_has_error_been_observed();
+    }
+
+    /// Names the test case that failed or logged the first error, so CI can report it.
+    auto testCaseEnded(Catch::TestCaseStats const& stats) -> void override {
+        const auto error_logged = !error_seen_before_case && debug_has_error_been_observed();
+        const auto assertion_failed = stats.totals.assertions.failed > 0;
+        if (assertion_failed || error_logged) {
+            cata_printf("Failed test case: %s (%s)\n", stats.testInfo.name.c_str(),
+                        assertion_failed ? "assertion failed" : "error logged");
+        }
+        TestEventListenerBase::testCaseEnded(stats);
+    }
+
+    bool error_seen_before_case = false;
 };
 
 CATCH_REGISTER_LISTENER(CataListener)

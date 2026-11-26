@@ -398,3 +398,22 @@ TEST_CASE("sqlite map database accepts concurrent map reads", "[world][sqlite]")
 
     CHECK(all_read.load(std::memory_order_relaxed));
 }
+
+TEST_CASE("sqlite_read_that_throws_does_not_hide_later_writes", "[world][sqlite]") {
+    auto* const w = g->get_active_world();
+    REQUIRE(w->info->world_save_format == save_format::V2_COMPRESSED_SQLITE3);
+    const auto dim_id = "sqlite_failed_read_" + get_pid_string();
+    const auto write = [&](const std::string& text) {
+        return w->write_overmap(dim_id, dimension_save_om, [&](std::ostream& out) { out << text; });
+    };
+
+    REQUIRE(write("old"));
+    CHECK_THROWS(w->read_overmap(dim_id, dimension_save_om, [](std::istream&) {
+        throw std::runtime_error("bad save data");
+    }));
+    REQUIRE(write("new"));
+
+    auto value = std::string{};
+    REQUIRE(w->read_overmap(dim_id, dimension_save_om, [&](std::istream& in) { in >> value; }));
+    CHECK(value == "new");
+}

@@ -1531,7 +1531,7 @@ bool trapfunc::snake( const tripoint_bub_ms &p, Creature *, item * )
     return true;
 }
 
-static bool lua_trap_can_trigger_check( const Character &target, const trap &trap,
+static bool lua_trap_can_trigger_check( const Creature &target, const trap &trap,
                                         const tripoint_bub_ms &loc )
 {
     // Lua itrap can_trigger prevents triggering when returning false
@@ -1543,14 +1543,14 @@ static bool lua_trap_can_trigger_check( const Character &target, const trap &tra
     return true;
 }
 
-static void lua_trap_on_trigger( Character &target, trap &trap, const tripoint_bub_ms &loc )
+static void lua_trap_on_trigger( Creature &target, trap &trap, const tripoint_bub_ms &loc )
 {
     if( const auto *itrap_cb = trap.lua_callbacks ) {
         itrap_cb->call_on_trigger( target, trap, loc );
     }
 }
 
-static void lua_trap_on_trigger_aftermath( Character &target, trap &trap,
+static void lua_trap_on_trigger_aftermath( Creature &target, trap &trap,
         const tripoint_bub_ms &loc )
 {
     if( const auto *itrap_cb = trap.lua_callbacks ) {
@@ -1560,17 +1560,17 @@ static void lua_trap_on_trigger_aftermath( Character &target, trap &trap,
 
 bool trapfunc::lua( const tripoint_bub_ms &p, Creature *target, item * )
 {
-    const auto character = target->as_character();
+    // target may be a monster, which is not a Character; pass the Creature directly
     auto trap = g->m.tr_at( p );
-    if( !lua_trap_can_trigger_check( *character, trap, p ) ) {
+    if( !lua_trap_can_trigger_check( *target, trap, p ) ) {
         return false;
     }
-    lua_trap_on_trigger( *character, trap, p );
+    lua_trap_on_trigger( *target, trap, p );
 
     // This is to respect other json fields, like remove_on_trigger
     trap.trigger_aftermath( g->m, p );
 
-    lua_trap_on_trigger_aftermath( *character, trap, p );
+    lua_trap_on_trigger_aftermath( *target, trap, p );
     return true;
 }
 

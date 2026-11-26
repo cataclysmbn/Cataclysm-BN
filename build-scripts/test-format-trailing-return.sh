@@ -33,4 +33,13 @@ if BUILD_PATH="$scratch" JOBS=4 build-scripts/format-trailing-return.sh \
 fi
 rg -q '^int pending\(\)' "$scratch/pending.h"
 
-echo "fmt-return parallel analysis tests passed"
+# fmt-auto turns `int *p = new int( 1 );` into `auto *p = ...` and keeps the return type.
+printf 'int main() { int *p = new int( 1 ); return *p; }\n' > "$scratch/auto.cpp"
+printf '[{"directory":"%s","file":"%s/auto.cpp","arguments":["clang++","-std=c++23","-c","%s/auto.cpp"]}]\n' \
+    "$scratch" "$scratch" "$scratch" > "$scratch/compile_commands.json"
+TIDY_CHECK=modernize-use-auto BUILD_PATH="$scratch" JOBS=4 build-scripts/format-trailing-return.sh \
+    "$scratch/auto.cpp" >> "$scratch/output" 2>&1
+rg -q 'auto \*p = new int' "$scratch/auto.cpp"
+rg -q '^int main\(\)' "$scratch/auto.cpp"
+
+echo "fmt-return and fmt-auto parallel analysis tests passed"

@@ -929,6 +929,53 @@ TEST_CASE("lua_gapi_get_items_if_filters_map_items", "[lua][item][map]") {
     here.i_clear(far_pos);
 }
 
+TEST_CASE("lua_get_items_if_addiction_type_and_material_filters", "[lua][item]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    auto lua = make_lua_state();
+
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    auto& player = get_avatar();
+    player.i_add(item::spawn("bread"));
+    player.i_add(item::spawn("beer"));
+    player.i_add(item::spawn("crack"));
+    player.wield(item::spawn("rock"));
+
+    auto& here = get_map();
+    const auto pos = player.bub_pos();
+    here.i_clear(pos);
+    // add_item, not add_item_or_charges: dropping a liquid (beer) would spill it via on_drop
+    here.add_item(pos, item::spawn("beer"));
+    REQUIRE(here.i_at(pos).size() == 1);
+    test_data["character"] = &player;
+    test_data["pos"] = pos;
+
+    run_lua_test_script(lua, "items_if_addiction_material_test.lua");
+
+    // only the beer has the alcohol addiction type, via enum value or string
+    CHECK(test_data.get<int>("alcohol_enum_count") == 1);
+    CHECK(test_data.get<int>("alcohol_str_count") == 1);
+    // beer (alcohol) + crack
+    CHECK(test_data.get<int>("drug_and_alcohol_count") == 2);
+    // only the bread is a comestible without an addiction type
+    CHECK(test_data.get<int>("no_addiction_count") == 1);
+    // only the wielded rock is made of stone
+    CHECK(test_data.get<int>("stone_count") == 1);
+    CHECK(test_data.get<int>("alcohol_mat_count") == 1);
+    // bread (wheat) + rock (stone)
+    CHECK(test_data.get<int>("wheat_or_stone_count") == 2);
+    // combined is_food + alcohol: just the beer
+    CHECK(test_data.get<int>("food_alcohol_count") == 1);
+    // map-side queries use the same filters
+    CHECK(test_data.get<int>("map_beer_count") == 1);
+    CHECK(test_data.get<int>("map_alcohol_mat_count") == 1);
+    CHECK(test_data.get<int>("map_crack_count") == 0);
+
+    here.i_clear(pos);
+}
+
 TEST_CASE("lua_npc_move_to_binding_moves_real_npc", "[lua][npc]") {
     clear_all_state();
     auto lua = make_lua_state();
@@ -1383,6 +1430,35 @@ TEST_CASE("lua_dimension_failed_travel_save_can_retry", "[lua][sqlite]") {
     CHECK(g->get_current_dimension_id() == dim);
 }
 
+TEST_CASE("lua_delete_dimension_keeps_despawned_monsters_until_turn_cleanup", "[lua]") {
+    clear_all_state();
+    initialize_dimension_test_storage();
+    const auto dim = dimension_id("lua_test_delete_keeps_monsters");
+    const auto cleanup = dimension_test_cleanup({dim});
+    g->place_player_overmap(tripoint_abs_omt::zero());
+    const auto return_pos = get_avatar().abs_pos();
+    auto lua = make_lua_state();
+    lua["opts"] = lua.create_table_with(
+        "dimension_id", dim.str(), "world_type", "pocket_dimension", "target_omt",
+        tripoint_abs_omt(88, 88, 0), "bounds_min_omt", tripoint_abs_omt(88, 88, 0),
+        "bounds_max_omt", tripoint_abs_omt(90, 90, 0));
+    REQUIRE(lua.safe_script("return gapi.place_player_dimension_at(opts)").get<bool>());
+    auto& attacker =
+        spawn_test_monster("mon_zombie", get_avatar().bub_pos() + tripoint_rel_ms::east());
+    const auto attacker_ref = weak_ptr_fast<monster>(g->shared_from(attacker));
+    REQUIRE_FALSE(attacker_ref.expired());
+
+    // A death hook can return home and delete the attacker's dimension during its attack.
+    lua["home"] = lua.create_table_with("dimension_id", "", "target_ms", return_pos);
+    REQUIRE(lua.safe_script("return gapi.place_player_dimension_at(home)").get<bool>());
+    REQUIRE(g->delete_dimension(dim));
+    CHECK_FALSE(attacker_ref.expired());
+    CHECK(attacker.is_dead());
+    CHECK(MAPBUFFER_REGISTRY.find(dim) == nullptr);
+    g->cleanup_dead();
+    CHECK(attacker_ref.expired());
+}
+
 TEST_CASE("lua_dimension_target_z_limits", "[lua]") {
     auto lua = make_lua_state();
     const auto original_dimension = g->get_current_dimension_id();
@@ -1664,6 +1740,27 @@ TEST_CASE("failed dimension deletion preserves saved metadata", "[lua]") {
     CHECK(saved_dimension->pocket_info->bounds == pocket_data.bounds);
 }
 #endif
+
+/// A player who made a new character after a session in a pocket dimension started inside that
+/// pocket, at overworld coordinates outside the pocket bounds. The active dimension of the last
+/// session was still set when the new game started.
+///
+/// Enter a pocket and call `game::setup`, the step before each new game and each load. Check that
+/// the overworld is the active dimension. Then load the save made before the pocket, to restore
+/// the factions and the reality bubble size for later tests.
+TEST_CASE("resets the active dimension to the overworld in game setup", "[dimension]") {
+    clear_all_state();
+    initialize_dimension_test_storage();
+    const auto dim = dimension_id("test_setup_reset");
+    const auto cleanup = dimension_test_cleanup({dim});
+    REQUIRE(g->save(false));
+    enter_test_pocket(dim, tripoint_abs_omt(24, 24, 0));
+
+    g->setup(false);
+
+    CHECK(g->get_current_dimension_id().is_empty());
+    REQUIRE(g->load(save_t::from_save_id(get_avatar().get_save_id())));
+}
 
 TEST_CASE("lua_dimension_cleanup_preserves_portal_load_requests", "[lua]") {
     clear_all_state();
@@ -3481,4 +3578,29 @@ TEST_CASE("lua_hook_wiring_mon_effect_removed", "[lua]") {
 
     CHECK(*cre_ptr == static_cast<Creature*>(&mon));
     CHECK(*eff_ptr != nullptr);
+}
+
+TEST_CASE("lua_trait_tick_cache_follows_mutation_changes", "[lua][morale]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    auto& you = get_avatar();
+    auto& lua = DynamicDataLoader::get_instance().lua->lua;
+    const auto call = [&lua](const std::string& fn) -> bool {
+        // Other tests may replace game.mod_runtime and the hook lists; the module stays loaded.
+        const auto res = lua.safe_script(
+            "local mod = {} package.loaded['lua/traits/lua_traits'].register(mod) return mod." + fn
+                + "()",
+            sol::script_pass_on_error);
+        REQUIRE(res.valid());
+        return res.get_type() == sol::type::boolean && res.get<bool>();
+    };
+    call("forget_trait_tick");
+
+    CHECK_FALSE(call("needs_trait_tick"));
+    you.set_mutation(trait_id("AGORAPHOBIA"));
+    CHECK(call("needs_trait_tick"));
+    you.unset_mutation(trait_id("AGORAPHOBIA"));
+    CHECK_FALSE(call("needs_trait_tick"));
+    you.add_effect(efftype_id("depressants"), 10_turns);
+    CHECK(call("needs_trait_tick"));
 }

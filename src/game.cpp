@@ -712,6 +712,7 @@ void game::setup( bool load_world_modfiles )
     new_game = true;
     next_activity_fixed_window_check_ = calendar::turn_zero;
     activity_fixed_window_force_normal_turn_ = false;
+    reset_skip_bodytemp_cache();
     saving_blocked_by_failed_load = false;
     uquit = QUIT_NO;   // We haven't quit the game
     bVMonsterLookFire = true;
@@ -733,6 +734,8 @@ void game::setup( bool load_world_modfiles )
         guy->get_mapbuffer().remove_active_npc( *guy );
     }
     active_npc.clear();
+    // Leave the dimension of the last session, so that a new game starts in the overworld.
+    set_active_dimension_id( dimension_id() );
     faction_manager_ptr->clear();
     mission::clear_all();
     Messages::clear_messages();
@@ -867,7 +870,7 @@ void game::load_map( const point_abs_sm &pos_sm, const bool pump_events )
     }
 
     const auto bubble_begin = pos_sm;
-    const auto bubble_end = bubble_begin + point_rel_sm( g_mapsize, g_mapsize );
+    const auto bubble_end = bubble_begin + point_rel_sm( m.getmapsize(), m.getmapsize() );
 
     update_active_load_regions( new_dim_id, bubble_begin, bubble_end );
     // map::loadn() now uses MAPBUFFER_REGISTRY.get(bound_dimension_), so
@@ -2082,6 +2085,36 @@ auto game::advance_time_action_tick() -> int
     return calendar_turns;
 }
 
+auto game::reset_activity_fixed_window() -> void
+{
+    next_activity_fixed_window_check_ = calendar::turn_zero;
+    activity_fixed_window_force_normal_turn_ = false;
+    time_action_scale_turn_remainder = 0;
+}
+
+namespace
+{
+
+/// Applies weather to the avatar and updates its body temperature and wetness once per calendar
+/// turn of the tick. Each call steps, rolls or converges once, so a 10-turn tick needs 10 calls.
+auto update_weather_and_body( const bool decay_fields ) -> void
+{
+    auto &weather = get_weather();
+    auto &you = get_avatar();
+    action_time_scale::for_each_calendar_turn_this_tick( [&] {
+        if( g->get_levz() >= 0 && !you.is_underwater() )
+        {
+            handle_weather_effects( weather.weather_id, decay_fields );
+        }
+        you.update_bodytemp( get_map(), weather );
+        character_funcs::update_body_wetness( you, weather.get_precise() );
+        you.apply_wetness_morale( weather.temperature );
+        return true;
+    } );
+}
+
+} // namespace
+
 // MAIN GAME LOOP
 // Returns true if game is over (death, saved, quit, etc)
 bool game::do_turn()
@@ -2465,21 +2498,14 @@ bool game::do_turn()
         refresh_display();
     }
 
-    if( get_levz() >= 0 && !u.is_underwater() ) {
-        ZoneScopedN( "do_turn_weather_effects" );
-        handle_weather_effects( weather.weather_id );
+    {
+        ZoneScopedN( "do_turn_weather_bodytemp_wetness" );
+        update_weather_and_body( true );
     }
 
     {
         ZoneScopedN( "do_turn_wait_activity_redraw" );
         handle_wait_activity_redraw();
-    }
-
-    {
-        ZoneScopedN( "do_turn_bodytemp_wetness" );
-        u.update_bodytemp( m, weather );
-        character_funcs::update_body_wetness( u, get_weather().get_precise() );
-        u.apply_wetness_morale( weather.temperature );
     }
 
     if( !u.is_deaf() ) {
@@ -2688,41 +2714,59 @@ auto game::has_activity_skip_relevant_vehicle() -> bool
     } );
 }
 
-auto game::has_activity_skip_active_fire() -> bool
+namespace
 {
-    const auto submap_has_active_fire = []( const submap & sm ) {
-        if( sm.field_count == 0 ) {
-            return false;
-        }
-        for( const auto &local : sm.field_cache ) {
-            const auto &curfield = sm.get_field( local );
-            for( const auto &field_pair : curfield ) {
-                const auto &cur = field_pair.second;
-                if( cur.is_field_alive() && cur.get_field_type().obj().has_fire ) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    };
 
-    auto has_fire = false;
+auto submap_has_fire( const submap &sm ) -> bool
+{
+    return sm.field_count > 0 && std::ranges::any_of( sm.field_cache, [&]( const point_sm_ms & local ) {
+        return std::ranges::any_of( sm.get_field( local ), []( const auto & field_pair ) {
+            const auto &cur = field_pair.second;
+            return cur.is_field_alive() && cur.get_field_type().obj().has_fire;
+        } );
+    } );
+}
+
+/// Simulated submaps with a fire.
+auto activity_skip_fire_submaps() -> activity_skip_fire_submap_list
+{
+    auto fire_submaps = activity_skip_fire_submap_list{};
     MAPBUFFER_REGISTRY.for_each( [&]( const dimension_id & dim, mapbuffer & mb ) {
-        if( has_fire || ( pocket_simulation_level == pocket_sim_level::off && !dim.is_empty() ) ) {
+        if( pocket_simulation_level == pocket_sim_level::off && !dim.is_empty() ) {
             return;
         }
-        mb.for_each_simulated_submap( [&]( const tripoint_abs_sm &, submap & sm ) {
-            if( has_fire ) {
-                return;
-            }
-            if( submap_has_active_fire( sm ) ) {
-                has_fire = true;
-                return;
+        mb.for_each_simulated_submap( [&]( const tripoint_abs_sm & pos, submap & sm ) {
+            if( submap_has_fire( sm ) ) {
+                fire_submaps.emplace_back( dim, pos );
             }
         } );
     } );
-    return has_fire;
+    return fire_submaps;
 }
+
+/// Adds the simulated neighbors of listed submaps that a fire has reached. A new submap first runs
+/// the batch step for the @p skipped_turns of the window that passed before it joined.
+auto add_activity_skip_fire_neighbors( activity_skip_fire_submap_list &fire_submaps,
+                                       const int skipped_turns ) -> void
+{
+    // Fire moves at most one tile per turn, so a fire that leaves a submap is in one of its 26
+    // neighbors.
+    for( auto i = std::size_t{ 0 }, listed = fire_submaps.size(); i < listed; ++i ) {
+        const auto [dim, pos] = fire_submaps[i];
+        auto &mb = MAPBUFFER_REGISTRY.get( dim );
+        for( const auto &nbr : tripoint_range<tripoint_abs_sm>( pos + tripoint_rel_sm( -1, -1, -1 ),
+                pos + tripoint_rel_sm( 1, 1, 1 ) ) ) {
+            auto *sm = mb.get_submap( nbr );
+            if( sm && submap_has_fire( *sm ) &&
+                !std::ranges::contains( fire_submaps, std::pair{ dim, nbr } ) ) {
+                run_submap_batch_turns( *sm, skipped_turns );
+                fire_submaps.emplace_back( dim, nbr );
+            }
+        }
+    }
+}
+
+} // namespace
 
 auto game::can_activity_fixed_window_skip( const time_duration &duration ) -> bool
 {
@@ -2788,12 +2832,6 @@ auto game::can_activity_fixed_window_skip( const time_duration &duration ) -> bo
         }
         return false;
     }
-    if( has_activity_skip_active_fire() ) {
-        if( log_activity_skip_state ) {
-            add_msg( "Fire is being processed, cannot skip time" );
-        }
-        return false;
-    }
     if( has_activity_skip_relevant_vehicle() ) {
         return false;
     }
@@ -2840,7 +2878,19 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
     const auto starting_activity = u.activity->id();
     auto activity_monsters = activity_monmove_cache {};
     const auto requested_turns = to_turns<int>( duration );
-    while( skipped_turns < requested_turns ) {
+    // The window processes the fields of submaps with a fire every tick.
+    auto fire_submaps = activity_skip_fire_submaps();
+    // A monster or NPC that appears stops the fast-forward. Time for this turn already passed, so
+    // finish the turn for the player first.
+    auto window_ends = false;
+    const auto end_window = [&]( const char *reason ) {
+        activity_fixed_window_force_normal_turn_ = true;
+        window_ends = true;
+        if( log_activity_skip_state ) {
+            add_msg( reason );
+        }
+    };
+    while( !window_ends && skipped_turns < requested_turns ) {
         if( is_game_over() || ( ( !u.activity || !*u.activity ) && !u.in_sleep_state() ) ) {
             if( log_activity_skip_state ) {
                 add_msg( "Activity lost, cannot skip time" );
@@ -2883,35 +2933,28 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
         }
         perhaps_add_random_npc();
         if( npcs_dirty || critter_tracker->size() != monster_count ) {
-            activity_fixed_window_force_normal_turn_ = true;
-            if( log_activity_skip_state ) {
-                add_msg( "NPC added, cannot skip time" );
-            }
-            break;
+            end_window( "NPC added, cannot skip time" );
         }
 
         debug_hour_timer.print_time();
         process_voluntary_act_interrupt();
-        if( ( ( !u.activity || !*u.activity ) && !u.in_sleep_state() ) ) {
-            if( log_activity_skip_state ) {
-                add_msg( "Lost activity, cannot skip time" );
-            }
-            break;
-        }
-
         process_activity();
+        std::ranges::for_each( fire_submaps, [&]( const auto & fire_submap ) {
+            const auto &[dim, pos] = fire_submap;
+            auto &mb = MAPBUFFER_REGISTRY.get( dim );
+            if( auto *sm = mb.lookup_submap_in_memory( pos ) ) {
+                process_fields_in_submap( dim, *sm, pos, mb );
+            }
+        } );
+        add_activity_skip_fire_neighbors( fire_submaps, skipped_turns );
         if( is_game_over() ) {
             if( log_activity_skip_state ) {
                 add_msg( "You died, cannot skip time" );
             }
             break;
         }
-        if( npcs_dirty || critter_tracker->size() != monster_count ) {
-            activity_fixed_window_force_normal_turn_ = true;
-            if( log_activity_skip_state ) {
-                add_msg( "NPC or monster added, cannot skip time" );
-            }
-            break;
+        if( !window_ends && ( npcs_dirty || critter_tracker->size() != monster_count ) ) {
+            end_window( "NPC or monster added, cannot skip time" );
         }
         const auto activity_continues = ( u.activity && *u.activity &&
                                           u.activity->id() == starting_activity ) ||
@@ -2928,7 +2971,7 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
         []( const shared_ptr_fast<npc> &guy ) {
             return guy && !guy->is_dead();
         } );
-        if( critter_tracker->size() > 0 || has_active_npcs ) {
+        if( !window_ends && ( critter_tracker->size() > 0 || has_active_npcs ) ) {
             if( !activity_skip_sound_skip ) {
                 sounds::process_sounds();
             }
@@ -2940,11 +2983,7 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
                 if( !activity_skip_mon_skip ) {
                     monmove( monster_activity_ai_mode::activity_skip, &activity_monsters );
                     if( critter_tracker->size() != monster_count ) {
-                        activity_fixed_window_force_normal_turn_ = true;
-                        if( log_activity_skip_state ) {
-                            add_msg( "Monster added, cannot skip time" );
-                        }
-                        break;
+                        end_window( "Monster added, cannot skip time" );
                     }
                 } else {
                     for( const shared_ptr_fast<monster> &mon_ptr : critter_tracker->get_monsters_list() ) {
@@ -2955,15 +2994,11 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
                     }
                 }
             }
-            if( has_active_npcs ) {
+            if( has_active_npcs && !window_ends ) {
                 if( !activity_skip_npc_skip ) {
                     npcmove();
                     if( npcs_dirty || critter_tracker->size() != monster_count ) {
-                        activity_fixed_window_force_normal_turn_ = true;
-                        if( log_activity_skip_state ) {
-                            add_msg( "NPC or monster added, cannot skip time" );
-                        }
-                        break;
+                        end_window( "NPC or monster added, cannot skip time" );
                     }
                 } else {
                     for( npc &guy : g->all_npcs() ) {
@@ -2997,12 +3032,7 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
         explosion_handler::get_explosion_queue().execute();
         cleanup_dead();
 
-        if( get_levz() >= 0 && !u.is_underwater() ) {
-            handle_weather_effects( weather.weather_id, false );
-        }
-        u.update_bodytemp( m, weather );
-        character_funcs::update_body_wetness( u, get_weather().get_precise() );
-        u.apply_wetness_morale( weather.temperature );
+        update_weather_and_body( false );
         u.volume = 0;
 
         if( !activity_continues || ( !u.in_sleep_state() && u.activity->complete() ) ) {
@@ -3010,11 +3040,12 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
         }
     }
     handle_bulk_weather_field_decay( weather.weather_id, skipped_turns );
-    run_activity_skip_batch_turns( skipped_turns );
+    run_activity_skip_batch_turns( skipped_turns, fire_submaps );
     return skipped_turns;
 }
 
-auto game::run_activity_skip_batch_turns( const int skipped_turns ) -> void
+auto game::run_activity_skip_batch_turns( const int skipped_turns,
+        const activity_skip_fire_submap_list &fire_submaps ) -> void
 {
     if( skipped_turns <= 0 ) {
         return;
@@ -3026,8 +3057,17 @@ auto game::run_activity_skip_batch_turns( const int skipped_turns ) -> void
             if( pocket_simulation_level == pocket_sim_level::off && !dim.is_empty() ) {
                 return;
             }
-            mb.for_each_simulated_submap( [&]( const tripoint_abs_sm &, submap & sm ) {
-                run_submap_batch_turns( sm, skipped_turns );
+            mb.for_each_simulated_submap( [&]( const tripoint_abs_sm & pos, submap & sm ) {
+                if( !std::ranges::contains( fire_submaps, std::pair{ dim, pos } ) ) {
+                    run_submap_batch_turns( sm, skipped_turns );
+                } else {
+                    // The window processed the fields of this submap every tick.
+                    std::ranges::for_each( sm.vehicles, []( const auto & veh ) {
+                        if( veh ) {
+                            veh->update_time( calendar::turn, true );
+                        }
+                    } );
+                }
                 sm.last_touched = calendar::turn;
             } );
         } );
@@ -3137,6 +3177,16 @@ auto game::try_activity_fixed_window_skip() -> bool
     return true;
 }
 
+namespace
+{
+
+/// Real time of the last wait redraw; redraws closer than ACTIVITY_REDRAW_INTERVAL_MS to it are skipped.
+auto last_wait_redraw = std::chrono::steady_clock::time_point {};
+/// A due map redraw that the throttle dropped; the next unthrottled redraw draws the map.
+auto wait_map_redraw_pending = false;
+
+} // namespace
+
 auto game::handle_wait_activity_redraw( const bool force ) -> void
 {
     const auto player_is_sleeping = u.has_effect( effect_sleep );
@@ -3164,10 +3214,16 @@ auto game::handle_wait_activity_redraw( const bool force ) -> void
     }
     if( wait_redraw ) {
         ZoneScopedN( "wait_redraw" );
-        if( force || first_redraw_since_waiting_started ||
-            action_time_scale::once_every_this_tick( std::min( 1_minutes, wait_refresh_rate ) ) ) {
-            if( force || first_redraw_since_waiting_started ||
-                action_time_scale::once_every_this_tick( wait_refresh_rate ) ) {
+        const auto now = std::chrono::steady_clock::now();
+        // Per-turn redraws (autodrive) keep every frame; slower cadences redraw at most once per interval.
+        const auto throttled = wait_refresh_rate > 1_turns &&
+                               now - last_wait_redraw < std::chrono::milliseconds(
+                                   get_option<int>( "ACTIVITY_REDRAW_INTERVAL_MS" ) );
+        wait_map_redraw_pending = wait_map_redraw_pending || force ||
+                                  action_time_scale::once_every_this_tick( wait_refresh_rate );
+        if( first_redraw_since_waiting_started || ( !throttled && ( wait_map_redraw_pending ||
+                action_time_scale::once_every_this_tick( std::min( 1_minutes, wait_refresh_rate ) ) ) ) ) {
+            if( wait_map_redraw_pending || first_redraw_since_waiting_started ) {
                 ui_manager::redraw();
             }
 
@@ -3177,6 +3233,8 @@ auto game::handle_wait_activity_redraw( const bool force ) -> void
             ui_manager::redraw();
             refresh_display();
             first_redraw_since_waiting_started = false;
+            wait_map_redraw_pending = false;
+            last_wait_redraw = now;
         }
     } else {
         wait_popup.reset();
@@ -3320,13 +3378,6 @@ void game::set_critter_died()
     critter_died = true;
 }
 
-static int maptile_field_intensity( maptile &mt, field_type_id fld )
-{
-    auto field_ptr = mt.find_field( fld );
-
-    return field_ptr == nullptr ? 0 : field_ptr->get_field_intensity();
-}
-
 int get_heat_radiation( const tripoint_bub_ms &location, bool direct )
 {
     // Direct heat from fire sources
@@ -3338,32 +3389,51 @@ int get_heat_radiation( const tripoint_bub_ms &location, bool direct )
     map &here = get_map();
     // Convert it to an int id once, instead of 139 times per turn
     const field_type_id fd_fire_int = fd_fire.id();
-    for( const tripoint_bub_ms &dest : here.points_in_radius( location, 6 ) ) {
-        int heat_intensity = 0;
-
-        maptile mt = here.maptile_at( tripoint_bub_ms( dest ) );
-
-        int ffire = maptile_field_intensity( mt, fd_fire_int );
-        if( ffire > 0 ) {
-            heat_intensity = ffire;
-        } else  {
-            heat_intensity = mt.get_ter()->heat_radiation;
-        }
-        if( heat_intensity == 0 ) {
-            // No heat source here
-            continue;
-        }
-        if( player_character.bub_pos() == location ) {
-            if( !here.pl_line_of_sight( dest, -1 ) ) {
+    const auto range = here.points_in_radius( location, 6 );
+    if( range.size() == 0 ) {
+        return 0;
+    }
+    const auto min_x = range.min().x();
+    const auto min_y = range.min().y();
+    const auto max_x = range.max().x();
+    const auto max_y = range.max().y();
+    const auto z = range.min().z();
+    // Look up each submap once and its fields only when it has any.
+    for( auto smx = divide_round_to_minus_infinity( min_x, SEEX );
+         smx <= divide_round_to_minus_infinity( max_x, SEEX ); ++smx ) {
+        for( auto smy = divide_round_to_minus_infinity( min_y, SEEY );
+             smy <= divide_round_to_minus_infinity( max_y, SEEY ); ++smy ) {
+            const submap *sm = here.get_submap_at( tripoint_bub_ms( smx * SEEX, smy * SEEY, z ) );
+            if( sm == nullptr ) {
                 continue;
             }
-        } else if( !here.sees( location, dest, -1 ) ) {
-            continue;
+            for( auto x = std::max( min_x, smx * SEEX ); x <= std::min( max_x, smx * SEEX + SEEX - 1 ); ++x ) {
+                for( auto y = std::max( min_y, smy * SEEY ); y <= std::min( max_y, smy * SEEY + SEEY - 1 );
+                     ++y ) {
+                    const auto local = point_sm_ms( x - smx * SEEX, y - smy * SEEY );
+                    const field_entry *fire = sm->field_count == 0 ? nullptr :
+                                              sm->get_field( local ).find_field( fd_fire_int );
+                    const auto ffire = fire == nullptr ? 0 : fire->get_field_intensity();
+                    const auto heat_intensity = std::max( ffire, sm->get_ter( local )->heat_radiation );
+                    if( heat_intensity == 0 ) {
+                        // No heat source here
+                        continue;
+                    }
+                    const auto dest = tripoint_bub_ms( x, y, z );
+                    if( player_character.bub_pos() == location ) {
+                        if( !here.pl_line_of_sight( dest, -1 ) ) {
+                            continue;
+                        }
+                    } else if( !here.sees( location, dest, -1 ) ) {
+                        continue;
+                    }
+                    // Ensure fire_dist >= 1 to avoid divide-by-zero errors.
+                    const int fire_dist = std::max( 1, square_dist( dest, location ) );
+                    temp_mod += 6 * heat_intensity * heat_intensity / fire_dist;
+                    best_fire = std::max( best_fire, heat_intensity );
+                }
+            }
         }
-        // Ensure fire_dist >= 1 to avoid divide-by-zero errors.
-        const int fire_dist = std::max( 1, square_dist( dest, location ) );
-        temp_mod += 6 * heat_intensity * heat_intensity / fire_dist;
-        best_fire = std::max( best_fire, heat_intensity );
     }
     if( direct ) {
         return best_fire;
@@ -5858,7 +5928,7 @@ void game::cleanup_dead()
 {
     // Dead monsters need to stay in the tracker until everything else that needs to die does so
     // This is because dying monsters can still interact with other dying monsters (@ref Creature::killer)
-    bool monster_is_dead = critter_tracker->kill_marked_for_death();
+    critter_tracker->kill_marked_for_death();
 
     bool npc_is_dead = false;
     // can't use all_npcs as that does not include dead ones
@@ -5869,10 +5939,9 @@ void game::cleanup_dead()
         }
     }
 
-    if( monster_is_dead ) {
-        // From here on, pointers to creatures get invalidated as dead creatures get removed.
-        critter_tracker->remove_dead();
-    }
+    // From here on, pointers to dead and removed creatures get invalidated.  Run it every turn
+    // so creatures removed without dying (despawned, deleted dimensions) are freed too.
+    critter_tracker->remove_dead();
 
     if( npc_is_dead ) {
         for( auto it = active_npc.begin(); it != active_npc.end(); ) {
@@ -6674,7 +6743,7 @@ void game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
     auto monmove_action_move = int64_t{ 0 };
     auto monmove_action_attack = int64_t{ 0 };
     auto monmove_action_other = int64_t{ 0 };
-    const auto record_monmove_action = [&]( const monster & critter,
+    const auto record_monmove_action = [&]( const monster & /*critter*/,
     const monster_action_t &action ) {
         if( action.needs_repath ) {
             ++monmove_action_repath_requests;
@@ -6779,6 +6848,11 @@ void game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
                         ZoneScopedN( "monmove_controlled_move" );
                         critter.move();
                     }
+                }
+                // The action can despawn the monster, e.g. when it kills the player and a death
+                // hook moves the player to another dimension.
+                if( critter.is_dead() ) {
+                    break;
                 }
                 {
                     ZoneScopedN( "monmove_process_triggers" );
@@ -8124,8 +8198,15 @@ void game::control_vehicle()
             veh_part = vp->part_index();
         }
     }
-    if( veh != nullptr && veh->player_in_control( u ) &&
-        veh->avail_part_with_feature( veh_part, "CONTROLS", true ) >= 0 ) {
+    if( veh != nullptr && veh_part < 0 ) {
+        // Remote control: the player is not standing on the vehicle, so there is no part to
+        // check for controls. player_in_control() verifies the remote link (and drops it if lost).
+        if( !veh->player_in_control( u ) ) {
+            return;
+        }
+        veh->use_controls( tripoint_bub_ms( u.bub_pos() ) );
+    } else if( veh != nullptr && veh->player_in_control( u ) &&
+               veh->avail_part_with_feature( veh_part, "CONTROLS", true ) >= 0 ) {
         veh->use_controls( tripoint_bub_ms( u.bub_pos() ) );
     } else if( veh && veh->player_in_control( u ) &&
                veh->avail_part_with_feature( veh_part, "CONTROL_ANIMAL", true ) >= 0 ) {
@@ -10029,7 +10110,7 @@ std::optional<tripoint_bub_ms> game::look_around( look_around_mode mode )
 
 look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
                                       const tripoint_bub_ms &start_point, bool has_first_point, bool select_zone, bool peeking,
-                                      bool is_moving_zone, const tripoint_bub_ms &end_point, look_around_mode mode )
+                                      bool is_moving_zone, const tripoint_bub_ms &end_point, look_around_mode /*mode*/ )
 {
     bVMonsterLookFire = false;
     temp_exit_fullscreen();
@@ -11344,7 +11425,7 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
                 if( iter->vIG.size() > 1 ) {
                     sText += string_format( "[%d/%d] (%d) ", iThisPage + 1, iter->vIG.size(), iter->totalcount );
                 }
-                sText += iter->example->tname();
+                sText += iter->vIG[iThisPage].example->tname();
                 if( iter->vIG[iThisPage].count > 1 ) {
                     sText += string_format( "[%d]", iter->vIG[iThisPage].count );
                 }
@@ -11388,9 +11469,9 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
             werase( w_item_info );
 
             if( iItemNum > 0 && activeItem ) {
-                const item &loc = *activeItem->example;
+                const item &loc = *activeItem->vIG[page_num].example;
                 temperature_flag temperature = rot::temp::for_location( m, loc );
-                std::vector<iteminfo> this_item = activeItem->example->info( temperature );
+                std::vector<iteminfo> this_item = loc.info( temperature );
                 std::vector<iteminfo> item_info_dummy;
 
                 item_info_data dummy( "", "", this_item, item_info_dummy, iScrollPos );
@@ -11409,8 +11490,9 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
         if( iItemNum > 0 && activeItem ) {
             // print info window title: < item name >
             mvwprintw( w_item_info, point( 2, 0 ), "< " );
-            trim_and_print( w_item_info, point( 4, 0 ), width - 8, activeItem->example->color_in_inventory(),
-                            activeItem->example->display_name() );
+            const item &active_example = *activeItem->vIG[page_num].example;
+            trim_and_print( w_item_info, point( 4, 0 ), width - 8, active_example.color_in_inventory(),
+                            active_example.display_name() );
             wprintw( w_item_info, " >" );
             // move the cursor to the selected item (for screen readers)
             ui.set_cursor( w_items, point( 1, iActive - iStartPos ) );
@@ -11458,7 +11540,7 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
             addcategory = !sort_radius;
         } else if( action == "EXAMINE" && !filtered_items.empty() && activeItem ) {
             std::vector<iteminfo> dummy;
-            const item *example_item = activeItem->example;
+            const item *example_item = activeItem->vIG[page_num].example;
             // TODO: const_item_location
             const item &loc = *example_item;
             temperature_flag temperature = rot::temp::for_location( m, loc );
@@ -14031,6 +14113,10 @@ void game::resize_reality_bubble_to( int new_size )
         active_npc.erase( out_of_range.begin(), out_of_range.end() );
     }
 
+    // While a save is being read there is no live reality bubble and the player position is
+    // not known yet, so there is nothing to reload: the load brings the map in afterwards.
+    const auto reading_save = saving_blocked_by_failed_load && !m.has_active_load_region();
+
     // Release submap loader requests so load_map() recreates them with the new bounds.
     release_active_load_regions();
 
@@ -14040,6 +14126,20 @@ void game::resize_reality_bubble_to( int new_size )
     init_bubble_config( new_size );
     m.resize( g_mapsize );
     reality_bubble_radius_ = g_half_mapsize;
+
+    const auto discard_bubble_sized_state = []() {
+        // Discard pathfinding objects sized for the old bubble.
+        Pathfinding::clear_pool();
+#if defined(TILES)
+        if( tilecontext ) {
+            tilecontext->reset_minimap();
+        }
+#endif
+    };
+    if( reading_save ) {
+        discard_bubble_sized_state();
+        return;
+    }
 
     // Compute the new top-left abs_sub so load_map centers on the player.
     const auto new_abs_sub = player_abs_sm.xy() +
@@ -14092,15 +14192,7 @@ void game::resize_reality_bubble_to( int new_size )
     m.invalidate_map_cache( get_levz() );
     m.build_map_cache( get_levz() );
 
-    // Discard pathfinding objects sized for the old bubble.
-    Pathfinding::clear_pool();
-
-
-#if defined(TILES)
-    if( tilecontext ) {
-        tilecontext->reset_minimap();
-    }
-#endif
+    discard_bubble_sized_state();
 }
 
 void game::resize_reality_bubble()
@@ -14734,7 +14826,13 @@ void game::vertical_move( int movez, bool force, bool peeking )
     bool rope_ladder = false;
     // TODO: Remove the stairfinding, make the mapgen gen aligned maps
     // Don't check can_fly here, flight was handled earlier and doing that would just embed you in a wall instead
-    const bool special_move = climbing || swimming;
+    const bool on_stairs =
+        m.has_flag( TFLAG_GOES_UP, u.bub_pos() ) ||
+        m.has_flag( TFLAG_GOES_DOWN, u.bub_pos() ) ||
+        m.has_flag( TFLAG_RAMP, u.bub_pos() ) ||
+        m.has_flag( TFLAG_RAMP_UP, u.bub_pos() ) ||
+        m.has_flag( TFLAG_RAMP_DOWN, u.bub_pos() );
+    const bool special_move = climbing || swimming || ( can_fly && !on_stairs );
 
     if( !force && !special_move ) {
         const std::optional<tripoint_bub_ms> pnt = find_or_make_stairs( m, z_after, rope_ladder,
@@ -14979,6 +15077,10 @@ auto game::delete_dimension( const dimension_id &dim_id, const bool remove_zones
         grid_trackers_.erase( tracker_it );
     }
 
+    // A Lua death hook can delete the attacker's dimension while the attack is on the stack.
+    if( auto *const buffer = MAPBUFFER_REGISTRY.find( dim_id ) ) {
+        critter_tracker->adopt_removed( buffer->creature_tracker() );
+    }
     MAPBUFFER_REGISTRY.unload_dimension( dim_id );
     unload_overmapbuffer_dimension( dim_id );
 
@@ -15601,7 +15703,7 @@ auto game::update_map( const tripoint_abs_ms &center ) -> point_rel_sm
     if( m.has_active_load_region() ) {
         ZoneScopedN( "update_map_submap_loader" );
         const auto bubble_begin = player_reality_bubble_origin().xy();
-        const auto bubble_end = bubble_begin + point_rel_sm( g_mapsize, g_mapsize );
+        const auto bubble_end = bubble_begin + point_rel_sm( m.getmapsize(), m.getmapsize() );
         update_active_load_regions( m.get_bound_dimension(), bubble_begin, bubble_end );
         // Ensure trackers exist for all active dimensions before firing events.
         for( const auto &dim_id : submap_loader.active_dimensions() ) {

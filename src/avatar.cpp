@@ -1605,7 +1605,7 @@ bool avatar::invoke_item( item *used, const tripoint_bub_ms &pt )
     umenu.text = string_format( _( "What to do with your %s?" ), used->tname() );
     umenu.hilight_disabled = true;
 
-    for( int i = 0; i < use_methods.size(); i++ ) {
+    for( int i = 0; i < static_cast<int>( use_methods.size() ); i++ ) {
         const auto &e = *std::next( use_methods.begin(), i );
         if( !e.second.activatable() ) { continue; }
         const auto res = e.second.can_call( *this, *used, false, pt );

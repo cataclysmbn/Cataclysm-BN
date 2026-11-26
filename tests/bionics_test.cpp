@@ -2,8 +2,11 @@
 #include "bionics.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
+#include "examine_item_menu.h"
 #include "item.h"
 #include "itype.h"
+#include "json.h"
+#include "npc.h"
 #include "pimpl.h"
 #include "player.h"
 #include "player_helpers.h"
@@ -14,6 +17,7 @@
 #include <climits>
 #include <list>
 #include <memory>
+#include <sstream>
 #include <string>
 
 static void clear_bionics(player& p) {
@@ -76,6 +80,18 @@ TEST_CASE("bionics", "[bionics] [item]") {
             "battery" // old-school
         };
         for (auto it : always) { test_consumable_charges(dummy, it, true, true); }
+        CHECK(examine_item_menu::rate_action_eat(
+                  dummy, *item::spawn_temporary("battery", calendar::start_of_cataclysm, 100))
+              == examine_item_menu::hint_rating::good);
+        auto cell = item::spawn("light_battery_cell");
+        cell->ammo_set(cell->ammo_default(), -1);
+        CHECK(examine_item_menu::rate_action_eat(dummy, *cell)
+              == examine_item_menu::hint_rating::good);
+        dummy.set_value(
+            "battery", std::to_string(dummy.get_total_fuel_capacity(itype_id("battery"))));
+        CHECK(examine_item_menu::rate_action_eat(
+                  dummy, *item::spawn_temporary("battery", calendar::start_of_cataclysm, 100))
+              == examine_item_menu::hint_rating::cant);
 
         static const std::list<std::string> never = {
             "flashlight",  // !is_magazine()
@@ -84,6 +100,18 @@ TEST_CASE("bionics", "[bionics] [item]") {
             "battery_car"  // NO_UNLOAD, is_magazine()
         };
         for (auto it : never) { test_consumable_ammo(dummy, it, false, false); }
+    }
+
+    SECTION("bio_furnace") {
+        give_and_activate_bionic(dummy, bionic_id("bio_furnace"));
+        const auto& rag = *item::spawn_temporary("rag");
+        REQUIRE(dummy.get_cbm_rechargeable_with(rag) == rechargeable_cbm::furnace);
+
+        CHECK(
+            examine_item_menu::rate_action_eat(dummy, rag) == examine_item_menu::hint_rating::good);
+        dummy.set_power_level(dummy.get_max_power_level());
+        CHECK(
+            examine_item_menu::rate_action_eat(dummy, rag) == examine_item_menu::hint_rating::iffy);
     }
 
     // TODO: bio_cable
@@ -285,4 +313,35 @@ TEST_CASE("microreactor_installation_paths", "[bionics][reactor]") {
         dummy.add_bionic(bio_reactor);
         CHECK(dummy.has_bionic(bio_reactor));
     }
+}
+
+TEST_CASE("bionic_uninstall_removes_its_power_capacity_once", "[bionics]") {
+    clear_all_state();
+    player& dummy = get_avatar();
+    clear_bionics(dummy);
+    const auto small_storage = bionic_id("bio_power_storage");
+    dummy.add_bionic(small_storage);
+    dummy.add_bionic(bionic_id("bio_power_storage_mkII"));
+    REQUIRE(dummy.get_max_power_level() == 350_kJ);
+
+    dummy.perform_uninstall(small_storage, 0, 100, 10);
+
+    CHECK(dummy.get_max_power_level() == 250_kJ);
+}
+
+TEST_CASE("npc_with_negative_bionic_power_loads_with_zero_power", "[bionics][npc]") {
+    clear_all_state();
+    npc saved;
+    saved.set_max_power_level(-2_kJ);
+    saved.set_power_level(-2_kJ);
+    std::ostringstream out;
+    JsonOut jsout(out);
+    saved.serialize(jsout);
+
+    std::istringstream in(out.str());
+    JsonIn jsin(in);
+    npc loaded;
+    REQUIRE_NOTHROW(loaded.deserialize(jsin));
+    CHECK(loaded.get_power_level() == 0_J);
+    CHECK(loaded.get_max_power_level() == 0_J);
 }

@@ -29,6 +29,19 @@
 
 #include "ncurses_def.h"
 
+namespace
+{
+
+// ncurses mouse mask macros expand to C-style casts.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+constexpr auto button1_clicked = BUTTON1_CLICKED;
+constexpr auto button3_clicked = BUTTON3_CLICKED;
+constexpr auto report_mouse_position = REPORT_MOUSE_POSITION;
+#pragma GCC diagnostic pop
+
+} // namespace
+
 struct pairs {
     catacurses::base_color FG;
     catacurses::base_color BG;
@@ -304,7 +317,7 @@ void catacurses::init_interface()
     }
 #if !defined(__CYGWIN__)
     // ncurses mouse registration
-    mousemask( BUTTON1_CLICKED | BUTTON3_CLICKED | REPORT_MOUSE_POSITION, nullptr );
+    mousemask( button1_clicked | button3_clicked | report_mouse_position, nullptr );
 #endif
     // our curses wrapper does not support changing this behavior, ncurses must
     // behave exactly like the wrapper, therefor:
@@ -381,11 +394,11 @@ input_event input_manager::get_input_event()
             if( getmouse( &event ) == OK ) {
                 rval.type = input_event_t::mouse;
                 rval.mouse_pos = point( event.x, event.y );
-                if( event.bstate & BUTTON1_CLICKED ) {
+                if( event.bstate & button1_clicked ) {
                     rval.add_input( MOUSE_BUTTON_LEFT );
-                } else if( event.bstate & BUTTON3_CLICKED ) {
+                } else if( event.bstate & button3_clicked ) {
                     rval.add_input( MOUSE_BUTTON_RIGHT );
-                } else if( event.bstate & REPORT_MOUSE_POSITION ) {
+                } else if( event.bstate & report_mouse_position ) {
                     rval.add_input( MOUSE_MOVE );
                     if( input_timeout > 0 ) {
                         // Mouse movement seems to clear ncurses timeout

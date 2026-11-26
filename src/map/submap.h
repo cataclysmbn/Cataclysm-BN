@@ -11,9 +11,9 @@
 #include "legacy_pathfinding.h"
 #include "monster.h"
 #include "point.h"
-#include "poly_serialized.h"
 #include "sounds.h"
 #include "type_id.h"
+#include "utils/poly_serialized.h"
 
 #include <algorithm>
 #include <cstddef>
@@ -140,6 +140,7 @@ public:
     void set_all_furn(const furn_id& furn) {
         std::fill_n(&frn[0][0], elements, furn);
         emitter_cache = std::nullopt;
+        for (auto& [pt, vars] : frn_vars) { vars.merge(furn->default_vars); }
         if (furn != f_null) { return; }
         // Reset furniture vars on clear
         frn_vars.clear();

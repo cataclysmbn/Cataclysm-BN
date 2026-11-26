@@ -282,7 +282,7 @@
   {
     "type": "item_action",
     "id": "BELL",
-    "name": { "str": "Ring" }
+    "name": { "str": "Ring", "ctxt": "item action" }
   },
   {
     "type": "item_action",

@@ -22,6 +22,8 @@ class texture_packer
         explicit texture_packer( const SDL_Rect &bounds ) : bounds( bounds ) {}
     public:
         virtual std::optional<SDL_Rect> pack( uint32_t w, uint32_t h ) = 0;
+        /// True once pack() fails for every size.
+        virtual auto full() const -> bool = 0;
         virtual ~texture_packer() = 0;
 };
 } // namespace detail
@@ -76,10 +78,15 @@ class dynamic_atlas
         };
 
         auto assign_id_internal( size_t id, const atlas_texture &tex ) -> bool;
+        auto find_sheet( const SDL_Texture_SharedPtr &tex ) -> sprite_sheet *; // *NOPAD*
         auto allocate_sprite_internal( int w, int h ) -> atlas_texture;
         auto update_staging_area( staging_area &staging, int width, int height ) const
         -> std::tuple<SDL_Texture *, SDL_Surface *, SDL_Rect>;
         std::vector<sprite_sheet> sheets;
+        /// Index into sheets for each sheet texture. The software renderer makes one sheet per sprite.
+        std::unordered_map<const SDL_Texture *, int> sheet_indices;
+        /// Sheets before this index are full, so new sprites skip them.
+        size_t first_open_sheet = 0;
         std::unordered_map<size_t, std::pair<int, SDL_Rect>> sprite_ids;
 
         staging_area user_staging;

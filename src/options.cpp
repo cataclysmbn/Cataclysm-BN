@@ -480,44 +480,6 @@ auto parse_option_definition( const JsonObject &jo ) -> option_definition
     return option;
 }
 
-auto capture_option_values( const options_manager::options_container &container )
--> std::map<std::string, std::string>
-{
-    auto values = std::map<std::string, std::string>();
-    for( const auto &[name, opt] : container ) {
-        values.emplace( name, opt.getValue( true ) );
-    }
-    return values;
-}
-
-auto restore_option_values( const std::map<std::string, std::string> &values,
-                            options_manager::options_container &container ) -> void
-{
-    for( const auto &[name, value] : values ) {
-        if( container.contains( name ) ) {
-            container[name].setValue( value );
-        }
-    }
-}
-
-auto sync_snapshot_keys( const options_manager::options_container &current,
-                         options_manager::options_container &snapshot ) -> void
-{
-    for( const auto &[name, option] : current ) {
-        if( !snapshot.contains( name ) ) {
-            snapshot.emplace( name, option );
-        }
-    }
-
-    for( auto iter = snapshot.begin(); iter != snapshot.end(); ) {
-        if( current.contains( iter->first ) ) {
-            ++iter;
-        } else {
-            iter = snapshot.erase( iter );
-        }
-    }
-}
-
 } // namespace
 
 void options_manager::enable_json( const std::string &lvar )
@@ -1833,7 +1795,7 @@ void options_manager::add_options_interface()
     add( "HEALTH_STYLE", interface, translate_marker( "Health Display Style" ),
     translate_marker( "Switch health-related display styling such as HP and hunger" ), {
         {"number", translate_marker( "Numerical" ) },
-        {"bar", translate_marker( "Bar" ) },
+        {"bar", to_translation( "health display style", "Bar" ) },
         {"bar_alt", translate_marker( "Bar (Alt)" ) },
         {"bar_ascii", translate_marker( "Bar (Old)" ) },
     },
@@ -2277,7 +2239,7 @@ void options_manager::add_options_graphics()
     add( "NIGHT_VISION_DEFAULT_COLOR", graphics, translate_marker( "Night Vision Default Colors" ),
     translate_marker( "Choose from default night vision colors." ), {
         { "#2eab01", translate_marker( "Green" ) },
-        { "#ff141c", translate_marker( "Red" ) },
+        { "#ff141c", to_translation( "color", "Red" ) },
         { "#888888", translate_marker( "Gray" ) },
         { "custom", translate_marker( "Custom" ) }
     }, "#2eab01" );
@@ -3121,6 +3083,12 @@ void options_manager::add_options_world_default()
     add( "CONSTRUCTION_SCALING", world_default,
          translate_marker( "Construction speed percentage" ),
          translate_marker( "Sets the time of construction in percents.  '50' is two times faster than default, '200' is two times longer.  '0' makes construction instant." ),
+         0, 1000, 100, COPT_NO_HIDE, "%i%%"
+       );
+
+    add( "VEHICLE_WORK_SCALING", world_default,
+         translate_marker( "Vehicle work speed percentage" ),
+         translate_marker( "Sets the time of vehicle part installation, repair, and removal in percents.  '50' is two times faster than default, '200' is two times longer.  '0' makes vehicle work instant." ),
          0, 1000, 100, COPT_NO_HIDE, "%i%%"
        );
 

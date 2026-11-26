@@ -7,7 +7,7 @@
     "location": "structure",
     "symbol": "h",
     "durability": 50,
-    "description": "A light metal framework, designed to fold.  Other vehicle components can be mounted on it.  If all the frames and components of a vehicle are foldable, the vehicle can be folding into a small package and picked up as a normal item.",
+    "description": "A light metal framework, designed to fold.  Other vehicle components can be mounted on it.  If all the frames and components of a vehicle are foldable, the vehicle can be folded into a small package and picked up as a normal item.",
     "folded_volume": "2500 ml",
     "breaks_into": [ { "item": "steel_chunk", "count": [ 0, 2 ] }, { "item": "scrap", "count": [ 1, 2 ] } ],
     "requirements": {
@@ -32,7 +32,7 @@
     "color": "brown",
     "broken_color": "brown",
     "durability": 15,
-    "description": "A light wooden framework, designed to fold.  Other vehicle components can be mounted on it.  If all the frames and components of a vehicle are foldable, the vehicle can be folding into a small package and picked up as a normal item.",
+    "description": "A light wooden framework, designed to fold.  Other vehicle components can be mounted on it.  If all the frames and components of a vehicle are foldable, the vehicle can be folded into a small package and picked up as a normal item.",
     "folded_volume": "3750 ml",
     "breaks_into": [ { "item": "splinter", "count": [ 0, 6 ] }, { "item": "nail", "charges": [ 1, 15 ] } ],
     "requirements": {
@@ -117,7 +117,7 @@
     "color": "brown",
     "broken_color": "brown",
     "durability": 100,
-    "description": "A light wooden framework.  Other vehicle components can be mounted on it, and it can be attached to other frames to increase the vehicle's size.  Wood and rope constructions means it can be constructed and added to the vehicle without welding tools or nails.",
+    "description": "A light wooden framework.  Other vehicle components can be mounted on it, and it can be attached to other frames to increase the vehicle's size.  Wood and rope construction means it can be constructed and added to the vehicle without welding tools or nails.",
     "breaks_into": [ { "item": "splinter", "count": [ 3, 5 ] }, { "item": "string_36", "count": [ 10, 15 ] } ],
     "requirements": {
       "install": { "skills": [ [ "mechanics", 0 ] ], "time": "10 m", "using": [ [ "rope_natural_short", 1 ] ] },

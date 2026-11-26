@@ -23,7 +23,7 @@
     "type": "BOOK",
     "copy-from": "base_book",
     "name": { "str": "Through the Lens", "str_pl": "copies of Through the Lens" },
-    "description": "A colorful digest devoted to backpacking and wilderness photography.  The photos are beautiful, though the terminology in the sections on survivalcraft assume some proficiency.",
+    "description": "A colorful digest devoted to backpacking and wilderness photography.  The photos are beautiful, though the terminology in the sections on survivalcraft assumes some proficiency.",
     "weight": "400 g",
     "volume": "250 ml",
     "price": "450 cent",

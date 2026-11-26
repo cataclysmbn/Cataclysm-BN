@@ -796,13 +796,12 @@ void Character::load( const JsonObject &data )
     recalc_sight_limits();
     reset_encumbrance();
 
-    assign( data, "power_level", power_level, false, 0_kJ );
-    assign( data, "max_power_level", max_power_level, false, 0_kJ );
+    assign( data, "power_level", power_level, false );
+    assign( data, "max_power_level", max_power_level, false );
 
     // Bionic power should not be negative!
-    if( power_level < 0_J ) {
-        power_level = 0_J;
-    }
+    max_power_level = std::max( max_power_level, 0_J );
+    power_level = std::clamp( power_level, 0_J, max_power_level );
 
     JsonArray overmap_time_array = data.get_array( "overmap_time" );
     overmap_time.clear();

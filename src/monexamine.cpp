@@ -25,6 +25,7 @@
 #include "player_activity.h"
 #include "point.h"
 #include "rng.h"
+#include "skill.h"
 #include "string_formatter.h"
 #include "string_input_popup.h"
 #include "translations.h"
@@ -515,10 +516,10 @@ bool monexamine::pet_menu( monster &z )
     } else if( z.training_level >= z.type->pet_training->max_level ) {
         amenu.addentry( train_combat_pet, false, '[', _( "Train %s (level %d/%d - fully trained)" ),
                         pet_name, z.training_level, z.type->pet_training->max_level );
-    } else if( get_player_character().get_skill_level( skill_survival ) <
+    } else if( get_player_character().get_skill_level( z.type->pet_training->skill ) <
                z.type->pet_training->min_skill ) {
-        amenu.addentry( train_combat_pet, false, '[', _( "Train %s (requires survival %d)" ), pet_name,
-                        z.type->pet_training->min_skill );
+        amenu.addentry( train_combat_pet, false, '[', _( "Train %s (requires %s %d)" ), pet_name,
+                        z.type->pet_training->skill->name(), z.type->pet_training->min_skill );
     } else if( !z.has_effect( effect_well_fed ) ) {
         amenu.addentry( train_combat_pet, false, '[', _( "Train %s (requires well-fed)" ), pet_name );
     } else {
@@ -659,7 +660,7 @@ bool monexamine::pet_menu( monster &z )
     const auto cb_actor = z.get_lua_callbacks();
     if( cb_actor ) {
         const auto entries = cb_actor->call_get_examine_menu_entries( you, z );
-        for( const auto entry : entries ) {
+        for( const auto &entry : entries ) {
             if( entry.valid() ) {
                 lua_entries.push_back( entry );
             }
@@ -668,7 +669,7 @@ bool monexamine::pet_menu( monster &z )
 
     const auto hook_results = cata::run_hooks( "on_monster_get_examine_menu_entries",
     [&]( auto & params ) { params["avatar"] = &you; params["monster"] = &z; } );
-    for( const auto results = cata::get_hook_results( hook_results ); const auto result : results ) {
+    for( const auto results = cata::get_hook_results( hook_results ); const auto &result : results ) {
         if( !result.is<sol::table>() ) { continue; }
 
         const sol::table &entries_table = result.as<sol::table>();
@@ -692,7 +693,7 @@ bool monexamine::pet_menu( monster &z )
     } );
 
     int last_int = COUNT - 1;
-    for( const auto entry : lua_entries ) {
+    for( const auto &entry : lua_entries ) {
         last_int++;
         lua_entries_map.emplace( last_int, entry );
         amenu.addentry( last_int, true, ' ', entry.menu_label );
@@ -878,7 +879,7 @@ static item *pet_armor_loc( monster &z )
     auto filter = [z]( const item & it ) {
         return z.type->bodytype == it.get_pet_armor_bodytype() &&
                z.get_volume() >= it.get_pet_armor_min_vol() &&
-               z.get_volume() <= it.get_pet_armor_max_vol();
+               z.get_volume() < it.get_pet_armor_max_vol();
     };
 
     return game_menus::inv::titled_filter_menu( filter, get_avatar(), _( "Pet armor" ), "",
@@ -1061,7 +1062,7 @@ bool monexamine::mfriend_menu( monster &z )
     const auto cb_actor = z.get_lua_callbacks();
     if( cb_actor ) {
         const auto entries = cb_actor->call_get_examine_menu_entries( you, z );
-        for( const auto entry : entries ) {
+        for( const auto &entry : entries ) {
             if( entry.valid() ) {
                 lua_entries.push_back( entry );
             }
@@ -1070,7 +1071,7 @@ bool monexamine::mfriend_menu( monster &z )
 
     const auto hook_results = cata::run_hooks( "on_monster_get_examine_menu_entries",
     [&]( auto & params ) { params["avatar"] = &you; params["monster"] = &z; } );
-    for( const auto results = cata::get_hook_results( hook_results ); const auto result : results ) {
+    for( const auto results = cata::get_hook_results( hook_results ); const auto &result : results ) {
         if( !result.is<sol::table>() ) { continue; }
 
         const sol::table &entries_table = result.as<sol::table>();
@@ -1094,7 +1095,7 @@ bool monexamine::mfriend_menu( monster &z )
     } );
 
     int last_int = COUNT - 1;
-    for( const auto entry : lua_entries ) {
+    for( const auto &entry : lua_entries ) {
         last_int++;
         lua_entries_map.emplace( last_int, entry );
         amenu.addentry( last_int, true, ' ', entry.menu_label );

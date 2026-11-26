@@ -1165,8 +1165,7 @@ class Character : public Creature, public location_visitable<Character>
         bool uninstall_bionic( const bionic_id &b_id, Character &installer, bool autodoc = false,
                                int skill_level = -1 );
         /**Succes or failure of removal happens here*/
-        void perform_uninstall( bionic_id bid, int difficulty, int success, const units::energy &power_lvl,
-                                int pl_skill );
+        void perform_uninstall( bionic_id bid, int difficulty, int success, int pl_skill );
         /**When a player fails the surgery*/
         void bionics_uninstall_failure( int difficulty, int success, float adjusted_skill );
 
@@ -2322,6 +2321,8 @@ class Character : public Creature, public location_visitable<Character>
         const recipe_subset &get_learned_recipes() const;
 
         bool knows_recipe( const recipe *rec ) const;
+        /** Forgets every learned recipe; autolearned ones are re-evaluated on next query. */
+        void forget_all_recipes();
         void learn_recipe( const recipe *rec );
         bool can_learn_by_disassembly( const recipe &rec ) const;
 
@@ -2745,3 +2746,11 @@ nc_color bodytemp_color( const Character &c, const bodypart_str_id &bp );
 
 /** Returns true if the player has a psyshield artifact, or sometimes if wearing tinfoil */
 bool has_psy_protection( const Character &c, int partial_chance );
+
+/// Counter that changes whenever the traits of a character may change: a mutation is gained or
+/// lost, or an enchantment grants or removes one. Lua caches of trait checks compare it.
+auto character_trait_generation() -> int;
+
+/// Forgets the body temperature inputs that activity skips reuse, so a new or loaded game
+/// calculates them again.
+auto reset_skip_bodytemp_cache() -> void;

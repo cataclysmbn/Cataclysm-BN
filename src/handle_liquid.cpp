@@ -43,8 +43,6 @@
 namespace
 {
 
-constexpr int liquid_transfer_all = -1;
-
 struct liquid_transfer_result {
     bool handled = false;
     bool continue_handling = false;

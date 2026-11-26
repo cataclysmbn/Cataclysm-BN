@@ -917,7 +917,7 @@
     "required_str": -1,
     "flags": [ "NOITEM", "SEALED", "ALLOW_FIELD_EFFECT", "TRANSPARENT", "FLAMMABLE", "CONTAINER", "LIQUIDCONT" ],
     "examine_action": "keg",
-    "keg_capacity": 500,
+    "keg_capacity": "125 L",
     "deconstruct": {
       "items": [
         { "item": "2x4", "count": 18 },
@@ -1047,7 +1047,7 @@
     "flags": [ "BASHABLE", "CONTAINER", "DECONSTRUCT", "LIQUIDCONT", "NOITEM", "SEALED", "TRANSPARENT" ],
     "deconstruct": { "items": [ { "item": "metal_tank", "count": 4 }, { "item": "water_faucet", "count": 1 } ] },
     "examine_action": "keg",
-    "keg_capacity": 1200,
+    "keg_capacity": "300 L",
     "bash": {
       "str_min": 10,
       "str_max": 20,
@@ -1065,7 +1065,7 @@
     "description": "A large freestanding metal tank hooked into a fluid grid. It accepts any liquid, and unassigned tanks can be assigned automatically when the grid needs more capacity for a liquid.",
     "symbol": "O",
     "color": "light_gray",
-    "keg_capacity": 1200,
+    "keg_capacity": "300 L",
     "fluid_grid": {
       "role": "tank",
       "allow_input": true,
@@ -1090,7 +1090,7 @@
     "flags": [ "BASHABLE", "CONTAINER", "EASY_DECONSTRUCT", "LIQUIDCONT", "NOITEM", "SEALED", "TRANSPARENT" ],
     "deconstruct": { "items": [ { "item": "clay_watercont", "count": 4 } ] },
     "examine_action": "keg",
-    "keg_capacity": 600,
+    "keg_capacity": "150 L",
     "bash": {
       "str_min": 10,
       "str_max": 20,
@@ -1137,7 +1137,7 @@
     "required_str": -1,
     "flags": [ "NOITEM", "SEALED", "ALLOW_FIELD_EFFECT", "TRANSPARENT", "FLAMMABLE", "CONTAINER", "LIQUIDCONT", "EASY_DECONSTRUCT" ],
     "examine_action": "keg",
-    "keg_capacity": 45,
+    "keg_capacity": "11250 ml",
     "deconstruct": { "items": [ { "item": "churn", "count": 1 } ] },
     "bash": {
       "str_min": 12,
@@ -1169,7 +1169,7 @@
     "flags": [ "NOITEM", "SEALED", "ALLOW_FIELD_EFFECT", "TRANSPARENT", "EASY_DECONSTRUCT", "CONTAINER", "LIQUIDCONT" ],
     "deconstruct": { "items": [ { "item": "atomic_butterchurn", "count": 1 } ] },
     "examine_action": "keg",
-    "keg_capacity": 45,
+    "keg_capacity": "11250 ml",
     "bash": {
       "str_min": 12,
       "str_max": 50,
@@ -1187,7 +1187,7 @@
     "type": "furniture",
     "id": "f_foot_locker",
     "name": "metal foot locker",
-    "description": "A metal storage box, capable of holding any number of things.  The lid has has a small lock.",
+    "description": "A metal storage box, capable of holding any number of things.  The lid has a small lock.",
     "symbol": "O",
     "color": "white",
     "move_cost_mod": 2,

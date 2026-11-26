@@ -86,7 +86,7 @@ static auto add_backpack_with_sashimi_to_vehicle_part(vehicle& veh, const int pa
     REQUIRE_FALSE(veh.add_item(part_index, make_backpack_with_sashimi()));
 }
 
-static auto nested_sashimi_in(item& container) -> item*; // *NOPAD*
+static auto nested_sashimi_in(item& container) -> item*;
 
 static auto make_plastic_bag_with_sashimi() -> detached_ptr<item> {
     auto bag = item::spawn("bag_plastic");
@@ -107,8 +107,7 @@ static auto make_sealed_carton_with_rotten_nested_sashimi() -> detached_ptr<item
     return carton;
 }
 
-static auto nested_sashimi_in(item& container) -> item* // *NOPAD*
-{
+static auto nested_sashimi_in(item& container) -> item* {
     namespace ranges = std::ranges;
     using namespace std::views;
     const auto nested_food =
@@ -168,8 +167,7 @@ static auto completed_items(Character& who, const itype_id& type) -> std::vector
     return who.items_with([&type](const item& it) { return it.typeId() == type; });
 }
 
-static auto move_to_inventory_with_attempt_detach(item& stored) -> item* // *NOPAD*
-{
+static auto move_to_inventory_with_attempt_detach(item& stored) -> item* {
     item* carried = nullptr;
     stored.attempt_detach([&carried](detached_ptr<item>&& it) {
         carried = &get_avatar().i_add(std::move(it));
@@ -886,6 +884,19 @@ TEST_CASE("Running engine heater warms vehicle cargo location", "[item][rot]") {
     fixture.veh->engine_on = true;
     CHECK(rot::temp::for_location(get_map(), food) == temperature_flag::TEMP_HEATER);
     CHECK(rot::temp::for_part(*fixture.veh, fixture.part_index) == temperature_flag::TEMP_HEATER);
+}
+
+TEST_CASE("Vehicle cargo temperature does not need the vehicle on the map", "[item][rot]") {
+    // Merging wrecks spills cargo from a vehicle that is not in the map's vehicle cache yet.
+    auto fixture = make_storage(vpart_id("minifridge"), true);
+    auto container = item::spawn("bag_plastic");
+    REQUIRE(container->contents.insert_item(item::spawn("sashimi")).success());
+    REQUIRE_FALSE(fixture.veh->add_item(fixture.part_index, std::move(container)));
+    const auto& food = fixture.veh->get_items(fixture.part_index).only_item().contents.front();
+
+    const auto off_map = get_map().detach_vehicle(fixture.veh);
+    REQUIRE(off_map != nullptr);
+    CHECK(rot::temp::for_location(get_map(), food) == temperature_flag::TEMP_FRIDGE);
 }
 
 TEST_CASE("Sealed containers keep rotten nested contents on location removal", "[item][rot]") {

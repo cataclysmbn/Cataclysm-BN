@@ -16,6 +16,7 @@
 #include "cached_options.h"
 #include "calendar.h"
 #include "cata_utility.h"
+#include "catacharset.h"
 #include "catalua_hooks.h"
 #include "catalua_icallback_actor.h"
 #include "catalua_sol.h"
@@ -115,6 +116,7 @@
 #include <functional>
 #include <iterator>
 #include <list>
+#include <locale>
 #include <memory>
 #include <ranges>
 #include <ret_val.h>
@@ -5116,22 +5118,11 @@ int gps_device_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) 
         "swamp", "stream", "stream_corner", "stream_end", "river_center", "river_shore", "river_bank", "deep_water", "shallow_water"
     };
 
-    // Build list of matching terrain IDs whose display name matches the query
-    std::vector<std::string> matching_ids;
-    for( const oter_t &oter : overmap_terrains::get_all() ) {
-        // get_name() returns the human‐readable display name
-        if( lcmatch( oter.get_name(), query ) ) {
-            matching_ids.push_back( oter.get_mapgen_id() );
-        }
-    }
-
     // Configure search to look only for those matching IDs
     omt_find_params params{};
     params.search_range = { 0, radius };
     params.types.clear();
-    for( const auto &id_str : matching_ids ) {
-        params.types.emplace_back( id_str, ot_match_type::type );
-    }
+    params.types.emplace_back( query, ot_match_type::contains );
     for( const std::string &nt : natural_terrains ) {
         params.exclude_types.emplace_back( nt, ot_match_type::type );
     }
@@ -5394,13 +5385,13 @@ int sew_advanced_actor::use( player &p, item &it, bool, const tripoint_bub_ms & 
 
         bool enab = false;
         std::string prompt;
-        // TODO: Fix for UTF-8 strings
-        // TODO: find other places where this is used and make a global function for all
-        static const auto tolower = []( std::string t ) {
-            if( !t.empty() ) {
-                t.front() = std::tolower( t.front() );
+        const auto tolower = []( std::string t ) {
+            if( t.empty() ) {
+                return t;
             }
-            return t;
+            auto text = utf8_to_wstr( _( t ) );
+            text.front() = std::tolower( text.front(), std::locale() );
+            return wstr_to_utf8( text );
         };
         const bool already_resized = mod.has_flag( flag_resized_large ) ||
                                      mod.has_flag( flag_resized_small );
@@ -5719,6 +5710,8 @@ auto cloning_syringe_iuse::use( player &p, item &it, bool /*t*/,
 
     const mtype_id &id = m->type->id;
     const std::string id_str = id.str();
+
+    p.set_knows_creature_type( id );
 
     add_msg( m_good, _( "The %s beeps softly.  You successfully gathered a sample from the %s!" ),
              it.display_name(), m->name() );

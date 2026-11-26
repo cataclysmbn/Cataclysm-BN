@@ -16,9 +16,11 @@
 #include "line.h"
 #include "lru_cache.h"
 #include "mapbuffer.h"
+#include "mapbuffer_registry.h"
 #include "mapdata.h"
 #include "mapgen/mapgen_functions.h"
 #include "memory_fast.h"
+#include "profile.h"
 #include "shadowcasting.h"
 #include "sounds.h"
 #include "submap_load_manager.h"
@@ -2276,6 +2278,15 @@ public:
      * Compatibility map-local lookup with submap-local offset.
      */
     auto get_submap_at(const tripoint_bub_ms& p, point_sm_ms& offset_p) const -> submap*;
+    /**
+     * Modern map-local lookup with submap-local offset.
+     */
+    auto get_submap_view_at(const tripoint_bub_ms& p, point_sm_ms& offset_p) const
+        -> std::optional<mapbuffer_abs_submap_view>;
+    /**
+     * Modern map-local immutable tile lookup.
+     */
+    auto get_tile_view_at(const tripoint_bub_ms& p) const -> std::optional<mapbuffer_abs_tile_view>;
 
 private:
     /** Caclulate the greatest populated zlevel in the loaded submaps and save in the level cache.
@@ -2420,10 +2431,13 @@ private:
         // 64-bit key: two tripoints packed as 29 bits each (12x + 12y + 5z).
         // Handles coordinates up to 4095 per axis — safe for g_mapsize up to ~340.
         int64_t key = 0;
-        char value = -1; // -1 = empty/miss
+        uint32_t generation = 0; // Valid only while equal to skew_vision_generation.
+        char value = -1;         // -1 = empty/miss
     };
     static constexpr std::size_t vision_cache_slots = 1 << 17; // 131072 entries (~1.5 MB)
     mutable std::vector<vision_cache_slot> skew_vision_cache;
+    /// Incremented to clear skew_vision_cache without rewriting it.
+    uint32_t skew_vision_generation = 1;
     // shared_mutex allows concurrent cache reads (common case)
     // while still serialising inserts.  Use shared_lock for reads and
     // unique_lock for writes in map::sees().
@@ -2447,10 +2461,20 @@ private:
 
     // The dimension ID this map is bound to (empty = primary dimension)
     dimension_id bound_dimension_;
+    mapbuffer* bound_buffer_ = nullptr;
 
 public:
-    auto get_mapbuffer() -> mapbuffer& { return MAPBUFFER_REGISTRY.get(bound_dimension_); }
-    auto get_mapbuffer() const -> mapbuffer& { return MAPBUFFER_REGISTRY.get(bound_dimension_); }
+    auto get_mapbuffer() -> mapbuffer& {
+        ZoneScoped;
+        if (bound_buffer_ == nullptr) { bound_buffer_ = &MAPBUFFER_REGISTRY.get(bound_dimension_); }
+        return *bound_buffer_;
+    }
+    auto get_mapbuffer() const -> mapbuffer& {
+        ZoneScopedN("const_get_mapbuffer");
+        // This sadly will be slower due to the cache renew being unavailable
+        if (bound_buffer_ == nullptr) { return MAPBUFFER_REGISTRY.get(bound_dimension_); }
+        return *bound_buffer_;
+    }
     auto has_rope_at(tripoint_bub_ms pt) const -> bool;
     auto get_rope_at(const tripoint_bub_ms& pt) const -> std::pair<vehicle*, int>;
 

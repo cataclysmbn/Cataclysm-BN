@@ -246,7 +246,7 @@
     "broken_color": "dark_gray",
     "damage_modifier": 60,
     "durability": 200,
-    "description": "An exotic motor, converted into a endless source of kinetic energy with even more anomalous technology.  It serves as a motor that never drains power.  Still cannot be equipped with an alternator, but multiple can be installed without skill penalty or loss of power.",
+    "description": "An exotic motor, converted into an endless source of kinetic energy with even more anomalous technology.  It serves as a motor that never drains power.  Still cannot be equipped with an alternator, but multiple can be installed without skill penalty or loss of power.",
     "backfire_threshold": 0.5,
     "backfire_freq": 15,
     "damaged_power_factor": 0.5,

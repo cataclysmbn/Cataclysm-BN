@@ -557,20 +557,15 @@ void handle_bulk_weather_field_decay(const weather_type_id& w, int turns) {
     ZoneScoped;
     if (w->rains && w->precip != precip_class::none) {
         fill_water_collectors(precip_mm_per_hour(w->precip), w->acidic);
-        int wetness = 0;
         time_duration decay_time = 60_turns;
         if (w->precip == precip_class::very_light) {
-            wetness = 5;
             decay_time = 5_turns;
         } else if (w->precip == precip_class::light) {
-            wetness = 30;
             decay_time = 15_turns;
         } else if (w->precip == precip_class::medium) {
-            wetness = 45;
             decay_time = 30_turns;
         } else if (w->precip == precip_class::heavy) {
             decay_time = 45_turns;
-            wetness = 60;
         }
         g->m.decay_fields_and_scent(decay_time * turns);
     }
@@ -1056,9 +1051,7 @@ auto weather_manager::get_cur_weather_gen() const -> const weather_generator& {
 }
 
 auto weather_manager::get_omt_weather_override(
-    const tripoint_abs_omt& location,
-    const time_point& when) const -> const weather_type_id* // *NOPAD*
-{
+    const tripoint_abs_omt& location, const time_point& when) const -> const weather_type_id* {
     const auto iter = omt_weather_overrides.find(location.xy());
     if (iter == omt_weather_overrides.end()) { return nullptr; }
     if (is_omt_weather_override_expired(iter->second, when)) { return nullptr; }
