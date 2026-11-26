@@ -255,15 +255,15 @@
     "symbol": "#",
     "type": "vehicle_part",
     "shapes": [
-      { "direction": "windshield", "symbol": "#", "symbol_broken": "*", "looks_like": "seat" },
-      { "direction": "windshield_front", "symbol": "#", "symbol_broken": "*", "looks_like": "seat_windshield" },
-      { "direction": "back_left", "symbol": "#", "symbol_broken": "*", "looks_like": "seat" },
-      { "direction": "back_right", "symbol": "#", "symbol_broken": "*", "looks_like": "seat" },
-      { "direction": "swivel_chair_front", "symbol": "#", "symbol_broken": "*", "looks_like": "seat" },
-      { "direction": "back_front", "symbol": "#", "symbol_broken": "*", "looks_like": "seat" },
-      { "direction": "back_vertical", "symbol": "#", "symbol_broken": "*", "looks_like": "seat" },
-      { "direction": "back_vertical_right", "symbol": "#", "symbol_broken": "*", "looks_like": "seat_back_vertical" },
-      { "direction": "back_vertical_left", "symbol": "#", "symbol_broken": "*", "looks_like": "seat_back_vertical" }
+      { "direction": "windshield", "symbol": "#", "looks_like": "seat" },
+      { "direction": "windshield_front", "symbol": "#", "looks_like": "seat_windshield" },
+      { "direction": "back_left", "symbol": "#", "looks_like": "seat" },
+      { "direction": "back_right", "symbol": "#", "looks_like": "seat" },
+      { "direction": "swivel_chair_front", "symbol": "#", "looks_like": "seat" },
+      { "direction": "back_front", "symbol": "#", "looks_like": "seat" },
+      { "direction": "back_vertical", "symbol": "#", "looks_like": "seat" },
+      { "direction": "back_vertical_right", "symbol": "#", "looks_like": "seat_back_vertical" },
+      { "direction": "back_vertical_left", "symbol": "#", "looks_like": "seat_back_vertical" }
     ]
   },
   {
@@ -272,8 +272,8 @@
     "symbol": "#",
     "type": "vehicle_part",
     "shapes": [
-      { "direction": "windshield_front", "symbol": "#", "symbol_broken": "*", "looks_like": "seat_leather" },
-      { "direction": "rear", "symbol": "#", "symbol_broken": "*", "looks_like": "seat_leather" }
+      { "direction": "windshield_front", "symbol": "#", "looks_like": "seat_leather" },
+      { "direction": "rear", "symbol": "#", "looks_like": "seat_leather" }
     ]
   },
   {
@@ -282,13 +282,8 @@
     "symbol": "#",
     "type": "vehicle_part",
     "shapes": [
-      { "direction": "windshield", "symbol": "#", "symbol_broken": "*", "looks_like": "reclining_seat" },
-      {
-        "direction": "windshield_front",
-        "symbol": "#",
-        "symbol_broken": "*",
-        "looks_like": "reclining_seat_windshield"
-      }
+      { "direction": "windshield", "symbol": "#", "looks_like": "reclining_seat" },
+      { "direction": "windshield_front", "symbol": "#", "looks_like": "reclining_seat_windshield" }
     ]
   },
   {
@@ -296,7 +291,7 @@
     "id": "reclining_seat_leather",
     "symbol": "#",
     "type": "vehicle_part",
-    "shapes": [ { "direction": "windshield_front", "symbol": "#", "symbol_broken": "*", "looks_like": "reclining_seat_leather" } ]
+    "shapes": [ { "direction": "windshield_front", "symbol": "#", "looks_like": "reclining_seat_leather" } ]
   },
   {
     "copy-from": "saddle_abstract",
@@ -304,8 +299,8 @@
     "symbol": "#",
     "type": "vehicle_part",
     "shapes": [
-      { "direction": "scooter", "symbol": "#", "symbol_broken": "*", "looks_like": "saddle" },
-      { "direction": "appearance_saddle_motor", "symbol": "#", "symbol_broken": "*", "looks_like": "saddle_motor" }
+      { "direction": "scooter", "symbol": "#", "looks_like": "saddle" },
+      { "direction": "appearance_saddle_motor", "symbol": "#", "looks_like": "saddle_motor" }
     ]
   },
   {
@@ -319,7 +314,7 @@
     "id": "saddle_motor",
     "symbol": "#",
     "type": "vehicle_part",
-    "shapes": [ { "direction": "appearance_saddle_scooter", "symbol": "#", "symbol_broken": "*", "looks_like": "saddle_scooter" } ]
+    "shapes": [ { "direction": "appearance_saddle_scooter", "symbol": "#", "looks_like": "saddle_scooter" } ]
   },
   {
     "copy-from": "folding_seat_abstract",

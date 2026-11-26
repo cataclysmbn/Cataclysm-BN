@@ -296,7 +296,7 @@
     "looks_like": "wheel",
     "symbol": "|",
     "type": "vehicle_part",
-    "shapes": [ { "direction": "front", "symbol": "|", "symbol_broken": "x", "looks_like": "wheel_bicycle" } ]
+    "shapes": [ { "direction": "front", "symbol": "|", "looks_like": "wheel_bicycle" } ]
   },
   {
     "copy-from": "wheel_bicycle_abstract",
@@ -313,7 +313,7 @@
     "item": "wheel_bicycle_or",
     "contact_area": 36,
     "wheel_type": "off-road",
-    "shapes": [ { "direction": "front", "symbol": "|", "symbol_broken": "x", "looks_like": "wheel_bicycle_or" } ]
+    "shapes": [ { "direction": "front", "symbol": "|", "looks_like": "wheel_bicycle_or" } ]
   },
   {
     "id": "wheel_bicycle_or_rear",
@@ -466,7 +466,7 @@
     "looks_like": "wheel",
     "symbol": "o",
     "type": "vehicle_part",
-    "shapes": [ { "direction": "front", "symbol": "o", "symbol_broken": "x", "looks_like": "wheel_motorbike" } ]
+    "shapes": [ { "direction": "front", "symbol": "o", "looks_like": "wheel_motorbike" } ]
   },
   {
     "copy-from": "wheel_motorbike_abstract",
@@ -484,7 +484,7 @@
     "contact_area": 60,
     "wheel_type": "off-road",
     "damage_reduction": { "bash": 10, "cut": 8, "stab": 4 },
-    "shapes": [ { "direction": "front", "symbol": "o", "symbol_broken": "x", "looks_like": "wheel_motorbike_or" } ]
+    "shapes": [ { "direction": "front", "symbol": "o", "looks_like": "wheel_motorbike_or" } ]
   },
   {
     "id": "wheel_motorbike_or_rear",
@@ -525,10 +525,10 @@
     },
     "flags": [ "WHEEL", "FOLDABLE", "NEEDS_WHEEL_MOUNT_LIGHT", "SHOCK_RESISTANT" ],
     "shapes": [
-      { "direction": "scooter", "symbol": "o", "symbol_broken": "x", "looks_like": "wheel_small" },
-      { "direction": "scooter_front", "symbol": "o", "symbol_broken": "x", "looks_like": "wheel_small_scooter" },
-      { "direction": "scooter_rear", "symbol": "o", "symbol_broken": "x", "looks_like": "wheel_small_scooter" },
-      { "direction": "front", "symbol": "o", "symbol_broken": "x", "looks_like": "wheel_small" }
+      { "direction": "scooter", "symbol": "o", "looks_like": "wheel_small" },
+      { "direction": "scooter_front", "symbol": "o", "looks_like": "wheel_small_scooter" },
+      { "direction": "scooter_rear", "symbol": "o", "looks_like": "wheel_small_scooter" },
+      { "direction": "front", "symbol": "o", "looks_like": "wheel_small" }
     ]
   },
   {

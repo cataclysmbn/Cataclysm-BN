@@ -73,15 +73,15 @@
       { "direction": "sw", "symbol": "b", "looks_like": "frame_horizontal" },
       { "direction": "vertical", "symbol": "j", "looks_like": "frame_horizontal" },
       { "direction": "vertical_2", "symbol": "H", "looks_like": "frame_horizontal" },
-      { "direction": "horizontal_rear", "symbol": "h", "symbol_broken": "#", "looks_like": "frame_horizontal" },
-      { "direction": "horizontal_front", "symbol": "h", "symbol_broken": "#", "looks_like": "frame_horizontal" },
-      { "direction": "vertical_left", "symbol": "j", "symbol_broken": "#", "looks_like": "frame_vertical" },
-      { "direction": "vertical_right", "symbol": "j", "symbol_broken": "#", "looks_like": "frame_vertical" },
-      { "direction": "vertical_T_left", "symbol": "j", "symbol_broken": "#", "looks_like": "frame_vertical" },
-      { "direction": "vertical_T_right", "symbol": "j", "symbol_broken": "#", "looks_like": "frame_vertical" },
-      { "direction": "vertical_2_left", "symbol": "j", "symbol_broken": "#", "looks_like": "frame_vertical_2" },
-      { "direction": "vertical_2_right", "symbol": "j", "symbol_broken": "#", "looks_like": "frame_vertical_2" },
-      { "direction": "appearance_frame_cross", "symbol": "H", "symbol_broken": "#", "looks_like": "frame_cross" }
+      { "direction": "horizontal_rear", "symbol": "h", "looks_like": "frame_horizontal" },
+      { "direction": "horizontal_front", "symbol": "h", "looks_like": "frame_horizontal" },
+      { "direction": "vertical_left", "symbol": "j", "looks_like": "frame_vertical" },
+      { "direction": "vertical_right", "symbol": "j", "looks_like": "frame_vertical" },
+      { "direction": "vertical_T_left", "symbol": "j", "looks_like": "frame_vertical" },
+      { "direction": "vertical_T_right", "symbol": "j", "looks_like": "frame_vertical" },
+      { "direction": "vertical_2_left", "symbol": "j", "looks_like": "frame_vertical_2" },
+      { "direction": "vertical_2_right", "symbol": "j", "looks_like": "frame_vertical_2" },
+      { "direction": "appearance_frame_cross", "symbol": "H", "looks_like": "frame_cross" }
     ]
   },
   {
@@ -115,8 +115,8 @@
       { "direction": "sw", "symbol": "b" },
       { "direction": "vertical", "symbol": "j", "looks_like": "frame_wood_horizontal" },
       { "direction": "vertical_2", "symbol": "H" },
-      { "direction": "horizontal_front", "symbol": "h", "symbol_broken": "#", "looks_like": "frame_wood_horizontal" },
-      { "direction": "horizontal_rear", "symbol": "h", "symbol_broken": "#", "looks_like": "frame_wood_horizontal" }
+      { "direction": "horizontal_front", "symbol": "h", "looks_like": "frame_wood_horizontal" },
+      { "direction": "horizontal_rear", "symbol": "h", "looks_like": "frame_wood_horizontal" }
     ]
   },
   {
@@ -178,13 +178,13 @@
       { "direction": "sw", "symbol": "b" },
       { "direction": "vertical", "symbol": "j", "looks_like": "hdframe_horizontal" },
       { "direction": "vertical_2", "symbol": "H" },
-      { "direction": "horizontal_front", "symbol": "h", "symbol_broken": "#", "looks_like": "hdframe_horizontal" },
-      { "direction": "vertical_T_left", "symbol": "j", "symbol_broken": "#", "looks_like": "hdframe_vertical" },
-      { "direction": "vertical_T_right", "symbol": "j", "symbol_broken": "#", "looks_like": "hdframe_vertical" },
-      { "direction": "vertical_left", "symbol": "j", "symbol_broken": "#", "looks_like": "hdframe_vertical" },
-      { "direction": "vertical_right", "symbol": "j", "symbol_broken": "#", "looks_like": "hdframe_vertical" },
-      { "direction": "horizontal_rear", "symbol": "h", "symbol_broken": "#", "looks_like": "hdframe_horizontal" },
-      { "direction": "appearance_hdframe_cross", "symbol": "h", "symbol_broken": "#", "looks_like": "hdframe_cross" }
+      { "direction": "horizontal_front", "symbol": "h", "looks_like": "hdframe_horizontal" },
+      { "direction": "vertical_T_left", "symbol": "j", "looks_like": "hdframe_vertical" },
+      { "direction": "vertical_T_right", "symbol": "j", "looks_like": "hdframe_vertical" },
+      { "direction": "vertical_left", "symbol": "j", "looks_like": "hdframe_vertical" },
+      { "direction": "vertical_right", "symbol": "j", "looks_like": "hdframe_vertical" },
+      { "direction": "horizontal_rear", "symbol": "h", "looks_like": "hdframe_horizontal" },
+      { "direction": "appearance_hdframe_cross", "symbol": "h", "looks_like": "hdframe_cross" }
     ]
   },
   {
@@ -218,13 +218,13 @@
       { "direction": "sw", "symbol": "b", "looks_like": "xlframe_horizontal" },
       { "direction": "vertical", "symbol": "j", "looks_like": "xlframe_horizontal" },
       { "direction": "vertical_2", "symbol": "H", "looks_like": "xlframe_horizontal" },
-      { "direction": "vertical_left", "symbol": "j", "symbol_broken": "#", "looks_like": "xlframe_vertical" },
-      { "direction": "vertical_right", "symbol": "j", "symbol_broken": "#", "looks_like": "xlframe_vertical" },
-      { "direction": "vertical_T_left", "symbol": "j", "symbol_broken": "#", "looks_like": "xlframe_vertical" },
-      { "direction": "vertical_T_right", "symbol": "j", "symbol_broken": "#", "looks_like": "xlframe_vertical" },
-      { "direction": "horizontal_front", "symbol": "h", "symbol_broken": "#", "looks_like": "xlframe_horizontal" },
-      { "direction": "horizontal_rear", "symbol": "h", "symbol_broken": "#", "looks_like": "xlframe_horizontal" },
-      { "direction": "appearance_xlframe_cross", "symbol": "H", "symbol_broken": "#", "looks_like": "xlframe_cross" }
+      { "direction": "vertical_left", "symbol": "j", "looks_like": "xlframe_vertical" },
+      { "direction": "vertical_right", "symbol": "j", "looks_like": "xlframe_vertical" },
+      { "direction": "vertical_T_left", "symbol": "j", "looks_like": "xlframe_vertical" },
+      { "direction": "vertical_T_right", "symbol": "j", "looks_like": "xlframe_vertical" },
+      { "direction": "horizontal_front", "symbol": "h", "looks_like": "xlframe_horizontal" },
+      { "direction": "horizontal_rear", "symbol": "h", "looks_like": "xlframe_horizontal" },
+      { "direction": "appearance_xlframe_cross", "symbol": "H", "looks_like": "xlframe_cross" }
     ]
   },
   {
@@ -326,7 +326,7 @@
       "FOLDABLE"
     ],
     "damage_reduction": { "all": 2 },
-    "shapes": [ { "direction": "cover", "symbol": "]", "symbol_broken": "#", "looks_like": "frame_wood_deck" } ]
+    "shapes": [ { "direction": "cover", "symbol": "]", "looks_like": "frame_wood_deck" } ]
   },
   {
     "type": "vehicle_part",
