@@ -1,0 +1,44 @@
+[
+  {
+    "type": "weather_pattern",
+    "id": "test_weather_front",
+    "multiplier": 0.0
+  },
+  {
+    "type": "weather_pattern",
+    "id": "test_weather_secondary",
+    "multiplier": 0.0
+  },
+  {
+    "type": "weather_type",
+    "id": "test_weather_basic",
+    "name": "test weather",
+    "glyph": " ",
+    "ranged_penalty": 0,
+    "sight_penalty": 0,
+    "light_modifier": 0,
+    "sound_attn": 0,
+    "dangerous": false,
+    "precip": "none",
+    "rains": false,
+    "sun_intensity": "normal"
+  },
+  {
+    "type": "weather_type",
+    "id": "test_weather_pattern_thresholds",
+    "copy-from": "test_weather_basic",
+    "requirements": { "required_weather_patterns": { "test_weather_front": 1.0, "test_weather_secondary": 2.0 } }
+  },
+  {
+    "type": "weather_type",
+    "id": "test_weather_pattern_presence",
+    "copy-from": "test_weather_basic",
+    "requirements": { "required_weather_patterns": [ "test_weather_front" ] }
+  },
+  {
+    "type": "base_weather",
+    "id": "test_weather_base",
+    "copy-from": "default",
+    "weather_types": [ "test_weather_basic", "test_weather_pattern_thresholds" ]
+  }
+]

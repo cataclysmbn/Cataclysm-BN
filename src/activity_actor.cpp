@@ -248,8 +248,7 @@ void aim_activity_actor::finish( player_activity &act, Character &who )
         }
     }
 
-    if( !get_option<bool>( "AIM_AFTER_FIRING" ) ||
-        who.recoil <= ranged::calculate_aim_cap( who, fin_trajectory.back() ) ) {
+    if( !get_option<bool>( "AIM_AFTER_FIRING" ) ) {
         restore_view();
         return;
     }
@@ -2216,17 +2215,19 @@ void craft_activity_actor::calc_all_moves( player_activity &act, Character &who 
 
     // Catch-up: apply time elapsed while NPC was outside the reality bubble.
     // last_turn_nr >= 0 means start() already ran in a previous session.
-    if( last_turn_nr >= 0 && current_turn > last_turn_nr ) {
+    // The turns of this tick are not elapsed time: do_turn adds their progress from moves.
+    const auto elapsed_turns = current_turn - last_turn_nr -
+                               action_time_scale::calendar_turns_this_tick();
+    if( last_turn_nr >= 0 && elapsed_turns > 0 ) {
         item *craft_item = find_in_progress_craft( act, who );
         if( craft_item ) {
-            const int elapsed_turns = current_turn - last_turn_nr;
             const double base_total_moves = std::max( 1, rec->batch_time( batch_size, 1.0f, 0 ) );
             // No live crafting modifiers are applied while outside the reality bubble.
             const auto moves_elapsed = action_time_scale::activity_progress_for_turns( elapsed_turns );
             const int old_counter = craft_item->get_counter();
-            const int new_counter = std::min(
-                                        static_cast<int>( old_counter + moves_elapsed / base_total_moves * 10'000'000.0 ),
-                                        10'000'000 );
+            const int new_counter = static_cast<int>( std::min(
+                                        old_counter + moves_elapsed / base_total_moves * 10'000'000.0,
+                                        10'000'000.0 ) );
             craft_item->set_counter( new_counter );
             craft_counter = new_counter;
 
@@ -2370,9 +2371,9 @@ void craft_activity_actor::do_turn( player_activity &act, Character &who )
     const auto scaled_moves = action_time_scale::activity_progress_from_actor_moves( who );
     const auto delta_progress = scaled_moves * base_total_moves / cur_total_moves;
     const double current_progress = old_counter * base_total_moves / 10'000'000.0 + delta_progress;
-    const int new_counter = std::min(
-                                static_cast<int>( std::round( current_progress / base_total_moves * 10'000'000.0 ) ),
-                                10'000'000 );
+    const int new_counter = static_cast<int>( std::min(
+                                std::round( current_progress / base_total_moves * 10'000'000.0 ),
+                                10'000'000.0 ) );
     const int five_percent_steps = new_counter / 500'000 - old_counter / 500'000;
     craft_item->set_counter( new_counter );
     craft_counter = new_counter;
@@ -2477,7 +2478,7 @@ act_progress_message craft_activity_actor::get_progress_message(
     mults_desc += string_format( " - %s: %s\n", _( "Total" ),
                                  colorize( std::to_string( total_pct ) + '%', total_col ) );
     mults_desc += fmt_spd( act.speed.player_speed, _( "Speed" ) );
-    mults_desc += fmt_spd( act.speed.light, _( "Light" ) );
+    mults_desc += fmt_spd( act.speed.light, pgettext( "crafting speed multiplier", "Light" ) );
     mults_desc += fmt_spd( act.speed.bench_factor, _( "Workbench" ) );
     mults_desc += fmt_spd( act.speed.morale, _( "Morale" ) );
     mults_desc += fmt_spd( act.speed.tools, _( "Tools" ) );

@@ -48,6 +48,8 @@
           { "group": "clothing_work_set", "prob": 10 }
         ]
       },
+      { "group": "clothing_glasses", "prob": 10 },
+      { "group": "clothing_watch", "prob": 10 },
       { "group": "accesories_personal_unisex", "prob": 40, "count": [ 0, 2 ] },
       { "group": "default_zombie_items_pockets", "prob": 25, "count": [ 0, 4 ] },
       { "group": "socks_unisex", "prob": 80 }

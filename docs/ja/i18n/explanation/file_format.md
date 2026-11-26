@@ -24,7 +24,7 @@ msgstr "niarreT tcurtsnoC"
 
 もう一つの例を以下に示します。
 
-Another exmple is:
+もう一つの例を以下に示します。
 
 ```
 #: action.cpp:425 defense.cpp:635 defense.cpp:701 npcmove.cpp:2049
@@ -79,6 +79,8 @@ msgstr ""
 
 手動で簡単に記入できない唯一の重要な部分は、`Plural-Forms` セクションです。これは、あなたの言語において異なる数の物事 (例:単数形、複数形) がどのように扱われるかを決定するものです。これについては、後ほど詳しく説明いたします。
 
+<a id="format-strings-and-newlines"></a>
+
 ## フォーマット文字列と改行
 
 一部の文字列には、`%s`、`%2$d`、`\n` などの特殊な用語が含まれています。
@@ -128,6 +130,8 @@ msgstr "%2$s eht fo lortnoc sesol %1$s"
 ```
 
 この例は、もし`Abigail`が`truck`を運転していると仮定した場合、ゲーム内では `kcurt eht fo lortnoc sesol liagibA`として表示されます。
+
+<a id="special-tags-in-strings"></a>
 
 ## 文字列内の特殊タグ
 

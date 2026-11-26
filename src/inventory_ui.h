@@ -9,6 +9,7 @@
 #include <array>
 #include <list>
 #include <map>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -48,13 +49,25 @@ enum class scroll_direction : int {
 struct navigation_mode_data;
 struct inventory_input;
 
+/// Display-only key hint. Doesn't participate in inventory-letter lookup.
+struct inventory_invlet_hint {
+    int invlet;
+    nc_color color;
+};
+
 class inventory_entry
 {
     public:
         std::vector<item *> locations;
 
         size_t chosen_count = 0;
+        /// Additional items selected by the automatic drop preview.
+        size_t automatic_drop_count = 0;
+        /// Position of this stack in the predicted drop sequence.
+        std::optional<size_t> drop_order;
         int custom_invlet = INT_MIN;
+        /// Drawn when the entry has no letter of its own.
+        std::optional<inventory_invlet_hint> invlet_hint;
         std::string cached_name;
 
         inventory_entry() = default;
@@ -539,6 +552,9 @@ class inventory_selector
         /** Tackles screen overflow */
         virtual void rearrange_columns( size_t client_width );
 
+        /// Refreshes display-only key hints after layout or wield/wear actions.
+        virtual auto assign_invlet_hints() -> void {}
+
         static stats get_weight_and_volume_stats(
             units::mass weight_carried, units::mass weight_capacity,
             const units::volume &volume_carried, const units::volume &volume_capacity );
@@ -689,6 +705,10 @@ class inventory_pick_selector : public inventory_selector
         virtual auto handle_action( const std::string &/*action*/ ) -> bool {
             return false;
         }
+
+        /// Receives a key that matched no selectable letter and no picker action.
+        /// @return The item to pick, or nullptr to treat the key as before.
+        virtual auto pick_by_unbound_key( int /*key*/ ) -> item * { return nullptr; } // *NOPAD*
 };
 
 class inventory_multiselector : public inventory_selector
@@ -756,9 +776,14 @@ class inventory_drop_selector : public inventory_multiselector
         /** Toggle item dropping */
         void set_chosen_count( inventory_entry &entry, size_t count );
         void process_selected( int &count, const std::vector<inventory_entry *> &selected );
+        auto update_drop_preview() -> void;
+        auto get_drop_preview() const -> const drop_locations & { return predicted_drops; } // *NOPAD*
 
     private:
         excluded_stacks dropping;
+        excluded_stacks predicted_counts;
+        drop_locations predicted_drops;
+        bool preview_dirty = true;
 };
 
 
@@ -770,6 +795,5 @@ class inventory_pickup_selector : public inventory_multiselector
     protected:
         stats get_raw_stats() const override;
 };
-
 
 

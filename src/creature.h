@@ -13,6 +13,7 @@
 #include "anatomy.h"
 #include "bodypart.h"
 #include "coordinates.h"
+#include "data_vars.h"
 #include "pimpl.h"
 #include "string_formatter.h"
 #include "translations.h"
@@ -377,6 +378,7 @@ class Creature
          * Size of the target this creature presents to ranged weapons.
          * 0.0 means unhittable, 1.0 means all projectiles going through this creature's tile will hit it.
          */
+        double ranged_target_size( bool shot ) const;
         double ranged_target_size() const;
 
         // handles blocking of damage instance. mutates &dam
@@ -572,8 +574,12 @@ class Creature
         void set_value( const std::string &key, const std::string &value );
         void remove_value( const std::string &key );
         std::string get_value( const std::string &key ) const;
+        template <typename Value>
+        Value get_value( const std::string &key, const Value &default_value = {} ) const {
+            return values.get<Value>( key, default_value );
+        };
         auto get_value_as_int( const std::string &key ) const -> std::optional<int>;
-        auto get_values_map() const -> const std::unordered_map<std::string, std::string> &;
+        auto get_values_map() const -> const data_vars::data_set &;
 
         virtual units::mass get_weight() const = 0;
 
@@ -636,6 +642,7 @@ class Creature
         /** Returns melee skill level, to be used to throttle dodge practice. **/
         virtual float get_melee() const = 0;
         virtual float get_hit() const;
+        virtual int spotting_range() const;
 
         virtual int get_speed() const;
         virtual creature_size get_size() const = 0;
@@ -1001,7 +1008,7 @@ class Creature
 
         pimpl<effects_map> effects;
         // Miscellaneous key/value pairs.
-        std::unordered_map<std::string, std::string> values;
+        data_vars::data_set values;
 
         // used for innate bonuses like effects. weapon bonuses will be
         // handled separately

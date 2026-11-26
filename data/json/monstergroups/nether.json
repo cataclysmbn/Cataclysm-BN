@@ -104,5 +104,19 @@
     "type": "monstergroup",
     "name": "GROUP_SUSPENDED_SHADE",
     "default": "mon_suspended_shade"
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_NETHER_LESSER_INCURSION",
+    "default": "mon_gracke",
+    "monsters": [
+      { "monster": "mon_flying_polyp", "freq": 100, "cost_multiplier": 0 },
+      { "monster": "mon_yugg", "freq": 100, "cost_multiplier": 0 },
+      { "monster": "mon_kreck", "freq": 200, "cost_multiplier": 0 },
+      { "monster": "mon_gracke", "freq": 100, "cost_multiplier": 0 },
+      { "monster": "mon_mothman", "freq": 50, "cost_multiplier": 0 },
+      { "monster": "mon_albino_penguin", "freq": 150, "cost_multiplier": 0 },
+      { "monster": "mon_gozu", "freq": 50, "cost_multiplier": 0 }
+    ]
   }
 ]

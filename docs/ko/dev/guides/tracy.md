@@ -127,10 +127,10 @@ bool game::do_turn()
 
 1. BN (`USE_TRACY=ON`으로 빌드)을 시작하고 tracy 프로파일러를 실행합니다.
 
-![](../../../../../assets/img/tracy/main.png)
+![](./img/tracy/main.png)
 
 2. `connect` 버튼을 클릭하여 게임에 연결합니다.
 
-![](../../../../../assets/img/tracy/stats.png)
+![](./img/tracy/stats.png)
 
 3. 프로파일링 데이터가 GUI에 표시됩니다.

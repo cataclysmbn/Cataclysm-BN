@@ -7,6 +7,8 @@
 #include "units_serde.h"
 #include "weather.h"
 
+#include <algorithm>
+#include <cmath>
 namespace {
 generic_factory<weather_type> weather_type_factory("weather_type");
 } // namespace
@@ -123,6 +125,17 @@ void weather_type::load(const JsonObject& jo, const std::string&) {
     optional(jo, was_loaded, "acidic", acidic, false);
     optional(jo, was_loaded, "sound_category", sound_category, weather_sound_category::silent);
     mandatory(jo, was_loaded, "sun_intensity", sun_intensity);
+    if (jo.has_object("screen_color_overlay")) {
+        const JsonObject overlay_jo = jo.get_object("screen_color_overlay");
+        const std::string color_string = overlay_jo.get_string("color");
+        const std::optional<RGBColor> color = RGBColor::try_parse(color_string);
+        if (!color) {
+            overlay_jo.throw_error(
+                string_format("invalid screen color overlay color: %s", color_string), "color");
+        }
+        screen_color_overlay.color = color;
+        screen_color_overlay.alpha = std::clamp(overlay_jo.get_int("alpha", 0), 0, 255);
+    }
 
     for (const JsonObject weather_effect : jo.get_array("effects")) {
         std::string name = weather_effect.get_string("name");
@@ -234,6 +247,14 @@ void weather_type::load(const JsonObject& jo, const std::string&) {
         optional(j, was_loaded, "acidic", requirements.acidic, false);
         optional(j, was_loaded, "time", requirements.time, weather_time_requirement_type::both);
         optional(j, was_loaded, "required_weathers", requirements.required_weathers);
+        if (j.has_array("required_weather_patterns")) {
+            for (const auto& pattern : j.get_string_array("required_weather_patterns")) {
+                requirements.required_weather_patterns.emplace(weather_pattern_id(pattern), 0.0);
+            }
+        } else {
+            optional(j, was_loaded, "required_weather_patterns",
+                     requirements.required_weather_patterns);
+        }
     }
 }
 

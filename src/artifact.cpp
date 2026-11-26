@@ -577,10 +577,26 @@ static const std::array<artifact_armor_form_datum, NUM_ARMORMODS> artifact_armor
     }
 };
 static const std::array<std::string, 20> artifact_adj = { {
-        translate_marker( "Forbidden" ), translate_marker( "Unknowable" ), translate_marker( "Forgotten" ), translate_marker( "Hideous" ), translate_marker( "Eldritch" ),
-        translate_marker( "Gelatinous" ), translate_marker( "Ancient" ), translate_marker( "Cursed" ), translate_marker( "Bloody" ), translate_marker( "Undying" ),
-        translate_marker( "Shadowy" ), translate_marker( "Silent" ), translate_marker( "Cyclopean" ), translate_marker( "Fungal" ), translate_marker( "Unspeakable" ),
-        translate_marker( "Antediluvian" ), translate_marker( "Frigid" ), translate_marker( "Shattered" ), translate_marker( "Sleeping" ), translate_marker( "Repellent" )
+        translate_marker_context( "artifact adjective", "Forbidden" ),
+        translate_marker_context( "artifact adjective", "Unknowable" ),
+        translate_marker_context( "artifact adjective", "Forgotten" ),
+        translate_marker_context( "artifact adjective", "Hideous" ),
+        translate_marker_context( "artifact adjective", "Eldritch" ),
+        translate_marker_context( "artifact adjective", "Gelatinous" ),
+        translate_marker_context( "artifact adjective", "Ancient" ),
+        translate_marker_context( "artifact adjective", "Cursed" ),
+        translate_marker_context( "artifact adjective", "Bloody" ),
+        translate_marker_context( "artifact adjective", "Undying" ),
+        translate_marker_context( "artifact adjective", "Shadowy" ),
+        translate_marker_context( "artifact adjective", "Silent" ),
+        translate_marker_context( "artifact adjective", "Cyclopean" ),
+        translate_marker_context( "artifact adjective", "Fungal" ),
+        translate_marker_context( "artifact adjective", "Unspeakable" ),
+        translate_marker_context( "artifact adjective", "Antediluvian" ),
+        translate_marker_context( "artifact adjective", "Frigid" ),
+        translate_marker_context( "artifact adjective", "Shattered" ),
+        translate_marker_context( "artifact adjective", "Sleeping" ),
+        translate_marker_context( "artifact adjective", "Repellent" )
     }
 };
 static const std::array<std::string, 20> artifact_noun = { {
@@ -1097,7 +1113,7 @@ std::vector<art_effect_active> fill_bad_active()
 std::string artifact_name( const std::string &type )
 {
     const std::string noun = _( random_entry_ref( artifact_noun ) );
-    const std::string adj = _( random_entry_ref( artifact_adj ) );
+    const auto adj = pgettext( "artifact adjective", random_entry_ref( artifact_adj ).c_str() );
     std::string ret = string_format( noun, adj );
     ret = string_format( pgettext( "artifact name (type, noun)", "%1$s of %2$s" ), type, ret );
     return ret;

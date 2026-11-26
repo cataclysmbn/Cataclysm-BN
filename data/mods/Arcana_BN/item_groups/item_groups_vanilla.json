@@ -349,15 +349,9 @@
   },
   {
     "type": "item_group",
-    "id": "cyborg_harvest",
-    "subtype": "distribution",
-    "entries": [ { "group": "lab_magitech_bionics", "prob": 1 } ]
-  },
-  {
-    "type": "item_group",
     "id": "ammo_shotgun_modern_handloads",
     "subtype": "distribution",
-    "entries": [ { "item": "reloaded_shot_00_arcana", "prob": 25 } ]
+    "entries": [ { "item": "reloaded_shot_00_arcana", "prob": 20 }, { "item": "410shot_000_arcana", "prob": 5 } ]
   },
   {
     "type": "item_group",
@@ -387,5 +381,26 @@
     "id": "survivorzed_extra",
     "type": "item_group",
     "items": [ [ "triffid_garland", 1 ], [ "amulet_exotic", 1 ], [ "brooch_iridescent", 1 ] ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_BANDIT_LEADER_bashing",
+    "subtype": "distribution",
+    "ammo": 100,
+    "entries": [ { "item": "hexenhammer", "prob": 2 }, { "item": "lucern_hexenhammer", "prob": 3 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_BANDIT_LEADER_cutting",
+    "subtype": "distribution",
+    "ammo": 100,
+    "entries": [ { "item": "sun_sword", "prob": 4 }, { "item": "scourge_moonstone", "prob": 1 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_BANDIT_LEADER_rifle",
+    "subtype": "distribution",
+    "ammo": 100,
+    "entries": [ { "item": "ethereal_huge_crossbow", "prob": 5 } ]
   }
 ]

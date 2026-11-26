@@ -52,7 +52,7 @@
     "type": "item_group",
     "id": "REFUGEE_Garry_carried",
     "subtype": "collection",
-    "entries": [ { "item": "duct_tape" }, { "item": "superglue" } ]
+    "entries": [ { "item": "duct_tape" }, { "item": "superglue", "charges": 1 } ]
   },
   {
     "type": "item_group",

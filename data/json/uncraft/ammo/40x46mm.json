@@ -87,5 +87,23 @@
     "qualities": [ { "id": "CUT", "level": 1 }, { "id": "PULL", "level": 1 } ],
     "components": [ [ [ "40x46mm_casing", 1 ] ], [ [ "combatnail", 70 ] ], [ [ "gunpowder", 30 ] ], [ [ "smpistol_primer", 1 ] ] ],
     "charges": 1
+  },
+  {
+    "result": "40x46mm_makeshift_he",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "skills_required": [ "launcher", 2 ],
+    "time": "2 m 30 s",
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "PULL", "level": 1 } ],
+    "components": [
+      [ [ "40x46mm_casing", 1 ] ],
+      [ [ "lead", 12 ] ],
+      [ [ "gunpowder", 30 ] ],
+      [ [ "smpistol_primer", 1 ] ],
+      [ [ "impact_fuze", 1 ] ],
+      [ [ "chem_compositionb", 24 ] ]
+    ],
+    "charges": 1
   }
 ]

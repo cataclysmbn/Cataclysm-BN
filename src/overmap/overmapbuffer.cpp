@@ -17,6 +17,7 @@
 #include "line.h"
 #include "map/map.h"
 #include "map_iterator.h"
+#include "mapgen/map_extras.h"
 #include "mapgen/mapgendata.h"
 #include "memory_fast.h"
 #include "mongroup.h"
@@ -836,6 +837,7 @@ auto overmap_path_params::for_player() -> overmap_path_params {
     ret.forest_cost = 30;
     ret.swamp_cost = 100;
     ret.other_cost = 30;
+    ret.extra_cost = extra_mode_code::on_foot;
     return ret;
 }
 
@@ -862,6 +864,7 @@ auto overmap_path_params::for_land_vehicle(float offroad_coeff, bool tiny, bool 
         ret.water_cost = boat_params.water_cost;
         ret.shore_cost = boat_params.shore_cost;
     }
+    ret.extra_cost = extra_mode_code::land_vehicle;
     return ret;
 }
 
@@ -869,6 +872,8 @@ auto overmap_path_params::for_watercraft() -> overmap_path_params {
     overmap_path_params ret;
     ret.water_cost = 10;
     ret.shore_cost = 20;
+    ret.extra_cost = extra_mode_code::land_vehicle; // Don't think any map extras spawn on water
+                                                    // atm, so...
     return ret;
 }
 
@@ -927,6 +932,15 @@ static auto get_terrain_cost(
     }
 }
 
+static auto get_extra_cost(
+    const tripoint_abs_omt& omt_pos, const overmap_path_params& params, overmapbuffer& omb) -> int {
+    if (params.extra_cost == extra_mode_code::none) { return 0; }
+    const auto id = omb.extra(omt_pos);
+    if (id.is_null() || !id.is_valid()) { return 0; }
+    const auto& cost = id.obj().pathing_cost;
+    return params.extra_cost == extra_mode_code::on_foot ? cost.on_foot : cost.land_vehicle;
+}
+
 static auto is_ramp(const tripoint_abs_omt& omt_pos, overmapbuffer& omb) -> bool {
     const oter_id& oter = omb.ter_existing(omt_pos);
     return is_ot_match("bridgehead_ground", oter, ot_match_type::type)
@@ -939,9 +953,12 @@ auto overmapbuffer::get_travel_path(
     if (src == overmap::invalid_tripoint || dest == overmap::invalid_tripoint) { return {}; }
 
     const pf::omt_scoring_fn estimate = [&](tripoint_abs_omt pos) {
-        const int cur_cost = pos == src ? 0 : get_terrain_cost(pos, params, *this);
-        if (cur_cost < 0) { return pf::omt_score::rejected; }
-        return pf::omt_score(cur_cost, is_ramp(pos, *this));
+        const int terrain_cost = pos == src ? 0 : get_terrain_cost(pos, params, *this);
+        if (terrain_cost < 0) { return pf::omt_score::rejected; }
+        // Destination has no cost so the player can still deliberately travel onto an extra
+        const auto extra_cost = pos == src || pos == dest ? 0 : get_extra_cost(pos, params, *this);
+        if (extra_cost < 0) { return pf::omt_score::rejected; }
+        return pf::omt_score(terrain_cost + extra_cost, is_ramp(pos, *this));
     };
 
     constexpr int radius = 4 * OMAPX; // radius of search in OMTs = 4 overmaps

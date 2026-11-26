@@ -103,6 +103,8 @@ Example for whole block:
 
 - rest_amount(既定値 0.0) : HP回復に関して、この活動がどの程度休息になるかを表します。`rest_amount`が0.2の場合、活動中に睡眠で得られるHP回復量の20%を得られます。
 
+- suppress_comfort_lines(既定値 false) : `rest_amount` が0より大きい活動中に、プレイヤーの快適さに関するメッセージを表示するかを指定します。falseなら表示し、trueなら抑制します。
+
 ## 終了処理 (Termination)
 
 アクティビティを終了させる方法はいくつかあります:

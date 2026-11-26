@@ -43,6 +43,8 @@ namespace om_direction {
 enum class type;
 } // namespace om_direction
 
+enum class extra_mode_code : int { none, on_foot, land_vehicle };
+
 struct overmap_path_params {
     int road_cost = -1;
     int field_cost = -1;
@@ -56,6 +58,7 @@ struct overmap_path_params {
     int air_cost = -1;
     int other_cost = -1;
     bool avoid_danger = true;
+    extra_mode_code extra_cost = extra_mode_code::none;
     bool only_known_by_player = true;
 
     static constexpr int standard_cost = 10;
@@ -163,9 +166,7 @@ public:
      * registry when creating the slot; used to route I/O to the correct
      * dimension subdirectory without reading global state.
      */
-    auto get_dimension_id() const -> const dimension_id& { // *NOPAD*
-        return dimension_id_;
-    }
+    auto get_dimension_id() const -> const dimension_id& { return dimension_id_; }
     auto set_dimension_id(const dimension_id& id) -> void { dimension_id_ = id; }
 
     /**

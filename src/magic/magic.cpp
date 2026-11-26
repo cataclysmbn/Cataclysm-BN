@@ -389,7 +389,7 @@ void spell_type::load(const JsonObject& jo, const std::string&) {
 
     optional(jo, was_loaded, "volume", volume,
              -255); // -255 used as default because it would never be set that low on purpose
-                    // otherwise
+    // otherwise
 
     optional(jo, was_loaded, "starting_spell", starting_spell, false);
     optional(jo, was_loaded, "starting_points", starting_points, 0);
@@ -403,8 +403,8 @@ void spell_type::load(const JsonObject& jo, const std::string&) {
     for (auto d : temp_vector) {
         // phys and ele provided for convenience when you want entire categories
         std::array<damage_type, 3> phys = {DT_BASH, DT_CUT, DT_STAB}; // Ballistic not included
-                                                                      // because why would ballistic
-                                                                      // be on a melee anyway
+        // because why would ballistic
+        // be on a melee anyway
         std::array<damage_type, 8> ele =
             {DT_ACID, DT_HEAT,  DT_COLD,       DT_DARK,
              DT_PSI,  DT_LIGHT, DT_BIOLOGICAL, DT_ELECTRIC}; // True not included
@@ -480,6 +480,12 @@ void spell_type::check_consistency() {
                          sp_t.id.c_str(), sp_t.effect_str);
             }
         }
+        if (sp_t.effect_name == "target_attack") {
+            if (!sp_t.effect_str.empty() && !efftype_id(sp_t.effect_str).is_valid()) {
+                debugmsg("ERROR %s specifies an effect, but effect %s is not valid",
+                         sp_t.id.c_str(), sp_t.effect_str);
+            }
+        }
         std::set<spell_id> spell_effect_list;
         if (spell_infinite_loop_check(spell_effect_list, sp_t.id)) {
             debugmsg("ERROR: %s has infinite loop in extra_effects", sp_t.id.c_str());
@@ -543,7 +549,7 @@ auto spell::get_stat_mult(bool decrease, const Character& guy) const -> double {
                         0.1); // Max is necessary to avoid negatives / 0
     }
     return (1.0 + (percent * get_stats_deltas(guy))); // No else block needed because return early
-                                                      // above
+    // above
 }
 
 auto spell::field_intensity() const -> int {
@@ -832,21 +838,21 @@ auto spell::terrain_damage(const int base_damage) const -> int {
         case DT_CUT:
         case DT_STAB:
             return std::floor(base_damage * 0.8); // Cut and Stab are fairly good at damaging
-                                                  // terrain
+        // terrain
         case DT_HEAT:
         case DT_COLD:
         case DT_ACID:
             return std::floor(base_damage * 0.75); // Some elemental damage types are okay at
-                                                   // damaging terrain
+        // damaging terrain
         case DT_LIGHT:
         case DT_DARK:
         case DT_ELECTRIC:
             return std::floor(base_damage * 0.5); // Some elemental damage types are bad at damaging
-                                                  // terrain
+        // terrain
         case DT_PSI:
         case DT_BIOLOGICAL:
             return std::floor(base_damage * 0.1); // Terrain is generally not biological nor does it
-                                                  // have a brain to be psionically attacked
+        // have a brain to be psionically attacked
         default:
             return base_damage; // We don't know how we want to handle this damage type, let's just
                                 // assume it's good at damaging terrain
@@ -2053,14 +2059,11 @@ auto spellcasting_callback::draw_spell_info(const spell& sp, const uilist* menu)
     const int info_width = menu->pad_right - 4;
     const int win_height = menu->w_height;
     const int h_col1 = h_offset + 1;
-    const int h_col2 = h_offset + (info_width / 2);
     const catacurses::window w_menu = menu->window;
     // various pieces of spell data mean different things depending on the effect of the spell
     const std::string fx = sp.effect();
-    int line = 2;
     nc_color gray = c_light_gray;
     nc_color light_green = c_light_green;
-    nc_color yellow = c_yellow;
 
     const auto spell_class = sp.spell_class();
     const auto spell_class_name =
@@ -2219,27 +2222,24 @@ auto spellcasting_callback::draw_spell_info(const spell& sp, const uilist* menu)
     std::vector<std::string> to_print_list = foldstring(oss.str(), info_width - 1);
 
     const int total_lines = to_print_list.size();
-    if (info_scroll > total_lines) {
+    if (info_scroll > total_lines - win_height + 3) {
         info_scroll = 0;
     } else if (info_scroll < 0) {
-        info_scroll = total_lines;
+        info_scroll = total_lines - win_height + 3;
     }
-    int start;
-    int end;
-    calcStartPos(start, info_scroll, win_height, total_lines);
-    end = std::min(total_lines, start + win_height - 3);
-    for (int i = start; i < end; ++i) {
-        auto dummy = c_white;
+    int info_scroll_max;
+    info_scroll_max = std::min(total_lines, info_scroll + win_height - 3);
+    for (int i = info_scroll; i < info_scroll_max; ++i) {
         trim_and_print(
-            w_menu, point(h_col1, i - start + 2), info_width - 1, c_white, to_print_list[i]);
+            w_menu, point(h_col1, i - info_scroll + 2), info_width - 1, c_white, to_print_list[i]);
     }
 
     if (total_lines > win_height) {
         scrollbar()
             .offset_x(h_col1 + info_width)
             .content_size(total_lines)
-            .viewport_pos(start)
-            .viewport_size(win_height)
+            .viewport_pos(info_scroll)
+            .viewport_size(win_height - 3)
             .apply(w_menu);
     }
 }
@@ -2624,5 +2624,13 @@ void spell_events::notify(const cata::event& e) {
         }
         default:
             break;
+    }
+}
+
+void spell_type::resolve_lua_callbacks(
+    const std::map<std::string, std::unique_ptr<lua_ispell_actor>>& actors) {
+    for (const spell_type& sp : spell_factory.get_all()) {
+        auto it = actors.find(sp.id.str());
+        if (it != actors.end()) { sp.lua_callbacks = it->second.get(); }
     }
 }

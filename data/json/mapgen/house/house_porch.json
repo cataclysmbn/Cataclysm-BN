@@ -130,14 +130,14 @@
       "nested": {
         "1": {
           "chunks": [
-            [ "null", 70 ],
+            [ "null", 30 ],
             [ "room_7x7_recroom_E", 30 ],
             [ "room_7x7_wine_cellar_E", 30 ],
             [ "7x7_tent_indoors", 10 ],
             [ "7x7_band_practice_open", 30 ]
           ]
         },
-        "2": { "chunks": [ [ "null", 75 ], [ "room_9x9_cellar_W", 20 ], [ "room_9x9_weed_W", 5 ] ] }
+        "2": { "chunks": [ [ "null", 20 ], [ "room_9x9_cellar_W", 20 ], [ "room_9x9_weed_W", 5 ] ] }
       }
     }
   }

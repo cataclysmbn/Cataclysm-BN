@@ -68,6 +68,21 @@
         <content_attribute id="language-discrimination">intense</content_attribute>
     </content_rating>
     <releases>
+        <release version="0.13.0" date="2026-09-25">
+            <url type="details">https://github.com/cataclysmbn/Cataclysm-BN/releases/tag/v0.13.0</url>
+            <description>
+                <p>Notable Changes</p>
+                <ul>
+                    <li>Explore redesigned towns and cities with suburbs and alien faction outposts</li>
+                    <li>Uncover new secrets and rewards in the redesigned Central Lab</li>
+                    <li>Explore commercial airports with full-size aircraft</li>
+                    <li>Choose melee techniques manually, grab and throw smaller enemies, and opt into crowd crush</li>
+                    <li>Customize power armor with separate exoskeletons and tiered armor plating</li>
+                    <li>Jump over obstacles and crash through windows</li>
+                    <li>Inflict bleeding on flesh-based monsters with cutting and ballistic attacks</li>
+                </ul>
+            </description>
+        </release>
             <release version="0.12.0" date="2026-05-30">
             <url type="details">https://github.com/cataclysmbn/Cataclysm-BN/releases/tag/v0.12.0</url>
             <description>

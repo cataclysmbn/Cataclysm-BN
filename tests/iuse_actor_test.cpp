@@ -15,7 +15,7 @@
 #include <climits>
 #include <memory>
 
-static auto find_adjacent_monster(const tripoint_bub_ms& pos) -> monster* { // *NOPAD*
+static auto find_adjacent_monster(const tripoint_bub_ms& pos) -> monster* {
     tripoint_bub_ms target = pos;
     for (target.x() = pos.x() - 1; target.x() <= pos.x() + 1; target.x()++) {
         for (target.y() = pos.y() - 1; target.y() <= pos.y() + 1; target.y()++) {
@@ -58,8 +58,7 @@ TEST_CASE("place_monster_failure_result_breaks_item", "[iuse_actor][place_monste
     player& dummy = get_avatar();
     g->clear_zombies();
 
-    detached_ptr<item> det =
-        item::spawn("test_handy_hauler_random", calendar::start_of_cataclysm);
+    detached_ptr<item> det = item::spawn("test_handy_hauler_random", calendar::start_of_cataclysm);
     item& test_item = *det;
     test_item.set_flag(flag_SPAWN_HOSTILE);
     dummy.i_add(std::move(det));
@@ -77,8 +76,7 @@ TEST_CASE("handy_hauler_activates_as_pacifist_pet", "[iuse_actor][place_monster]
     player& dummy = get_avatar();
     g->clear_zombies();
 
-    detached_ptr<item> det =
-        item::spawn("test_handy_hauler_random", calendar::start_of_cataclysm);
+    detached_ptr<item> det = item::spawn("test_handy_hauler_random", calendar::start_of_cataclysm);
     item& test_item = *det;
     test_item.set_flag(flag_SPAWN_FRIENDLY);
     dummy.i_add(std::move(det));

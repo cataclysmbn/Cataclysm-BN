@@ -160,10 +160,10 @@ Trait_list Single_trait_creator::create( RecursionList & /* rec */ ) const
     return Trait_list { id };
 }
 
-void Single_trait_creator::check_consistency() const
+void Single_trait_creator::check_consistency( const std::string &context ) const
 {
     if( !id.is_valid() ) {
-        debugmsg( "trait id %s is unknown", id.c_str() );
+        debugmsg( "trait id %s is unknown in %s", id.c_str(), context );
     }
 }
 
@@ -207,10 +207,10 @@ Trait_list Trait_group_creator::create( RecursionList &rec ) const
     return result;
 }
 
-void Trait_group_creator::check_consistency() const
+void Trait_group_creator::check_consistency( const std::string &context ) const
 {
-    if( id.is_valid() ) {
-        debugmsg( "trait group id %s is unknown", id.c_str() );
+    if( !id.is_valid() ) {
+        debugmsg( "trait group id %s is unknown in %s", id.c_str(), context );
     }
 }
 
@@ -234,10 +234,10 @@ void Trait_group::add_group_entry( const Trait_group_tag &gid, int probability )
     add_entry( std::make_unique<Trait_group_creator>( gid, probability ) );
 }
 
-void Trait_group::check_consistency() const
+void Trait_group::check_consistency( const std::string &context ) const
 {
     for( const auto &creator : creators ) {
-        creator->check_consistency();
+        creator->check_consistency( context );
     }
 }
 

@@ -67,6 +67,7 @@ scopes:
   - mods/lethal_zeds
   - mods/limit_fungal_growth
   - mods/lua_ai_attitude_debug
+  - mods/lua_special_attack_demo
   - mods/manualbionicinstall
   - mods/my_sweet_cataclysm
   - mods/no_global_uniques

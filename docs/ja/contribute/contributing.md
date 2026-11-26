@@ -70,9 +70,9 @@ Cataclysm: BNの翻訳はTransifexを使用して行われます。サポート�
 
 詳細情報：
 
-- [翻訳者向け](./../i18n/tutorial/transifex)
-- [開発者向け](./../i18n/reference/translation)
-- [メンテナ向け](./../i18n/guides/maintain)
+- [翻訳者向け](./../i18n/tutorial/transifex.md)
+- [開発者向け](./../i18n/reference/translation.md)
+- [メンテナ向け](./../i18n/guides/maintain.md)
 
 ## ドキュメント
 
@@ -251,6 +251,19 @@ PRを作成するためにIssueを解決または参照することは必須で�
 > 1. そのような概要はほとんどの場合、質が低く、レビュアーにとって読みにくいためです。
 > 2. 通常、PRの作成者が何をしているのか理解せずにバイブコーディングしたことを示すためです。
 
+AIコーディングアシスタントがPRに貢献した場合、PRの説明でAIの使用を開示する必要があります。
+
+AIの支援を受けて作成、生成、または大幅に修正された各コミットには、
+[AI Coding Assistants](https://docs.kernel.org/process/coding-assistants.html) および
+[Submitting patches](https://docs.kernel.org/process/submitting-patches.html#using-assisted-by)に記載された
+Linuxカーネル形式の `Assisted-by:` トレーラーを含める必要があります。
+
+例:
+
+```text
+Assisted-by: Claude:claude-3-opus coccinelle sparse
+```
+
 ### キーワードを使用してIssueを閉じる
 
 もう一つ：PRがIssueを閉じる、修正する、または解決することを示す場合、説明のどこかに以下を含めてください：
@@ -286,7 +299,7 @@ PRを作成するためにIssueを解決または参照することは必須で�
 ## ツールサポート
 
 貢献を適切なスタイルに保つのに役立つさまざまなツールが利用可能です。
-詳細は [開発者ツール](./../dev/reference/tooling) を参照してください。
+詳細は [開発者ツール](./../dev/reference/tooling.md) を参照してください。
 
 ## 高度なテクニック
 
@@ -382,6 +395,8 @@ The test took 41.772 seconds
 これらのコマンドを使用すると、変更をテストするための適切な条件を再現できるはずです。[BN wiki](https://cataclysmbn-guide.com/) には、デバッグメニューに関する有用な情報があるかもしれません。
 
 ## よくある質問
+
+<a id="why-does-git-pull---ff-only-result-in-an-error"></a>
 
 ### なぜ `git pull --ff-only` でエラーが発生するのですか？
 

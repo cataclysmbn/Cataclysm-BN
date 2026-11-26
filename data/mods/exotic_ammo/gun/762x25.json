@@ -13,7 +13,7 @@
     "material": [ "steel", "wood" ],
     "color": "brown",
     "ammo": "762x25",
-    "range": 2,
+    "range": 10,
     "ranged_damage": { "damage_type": "bullet", "amount": 2 },
     "dispersion": 120,
     "min_cycle_recoil": 270,

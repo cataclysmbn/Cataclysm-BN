@@ -352,11 +352,8 @@ auto get_weather_at_point(const point_abs_omt& pos) -> weather_type_id {
     }
     auto iter = weather_cache.find(pos);
     if (iter == weather_cache.end()) {
-        // TODO: fix point types
-        tripoint_abs_omt pos_z(pos, OVERMAP_HEIGHT);
-        const auto& wgen = ACTIVE_OVERMAP_BUFFER.get_settings(pos_z).weather;
-        auto weather = wgen.get_weather_conditions(
-            project_to<coords::ms>(pos_z), calendar::turn, g->get_seed());
+        const auto pos_z = tripoint_abs_omt(pos, OVERMAP_HEIGHT);
+        const auto weather = current_weather(project_to<coords::ms>(pos_z), calendar::turn);
         iter = weather_cache.insert(std::make_pair(pos, weather)).first;
     }
     return iter->second;

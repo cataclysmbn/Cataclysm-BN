@@ -164,7 +164,7 @@ void cata::detail::mod_bionic_data( sol::state &lua )
         SET_MEMB_RO( weight_capacity_bonus );
 
         // Stat bonuses (character_stat not in lua, convert to string keys)
-        DOC( "Returns stat bonuses as a table mapping stat name to bonus value." );
+        DOC( "Returns stat bonuses as a table mapping stat name to bonus value. Stat names are the translated abbreviations (`STR`, `DEX`, `INT`, `PER` in English)." );
         luna::set_fx( ut, "stat_bonus", []( const UT_CLASS & bd ) -> std::map<std::string, int> {
             std::map<std::string, int> rv;
             for( const auto &pair : bd.stat_bonus )

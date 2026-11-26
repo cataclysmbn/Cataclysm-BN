@@ -19,7 +19,7 @@
           "hdframe_horizontal",
           "plating_steel",
           "turret_mount",
-          { "part": "m249", "ammo": 60, "ammo_types": [ "556" ], "ammo_qty": [ 10, 100 ] },
+          { "part": "m249", "ammo": 60, "ammo_types": [ "556" ], "ammo_qty": [ 3, 30 ] },
           "hddoor_opaque"
         ]
       },
@@ -39,7 +39,7 @@
           "hdroof",
           { "part": "tank", "fuel": "diesel" },
           "turret_mount",
-          { "part": "m249", "ammo": 80, "ammo_types": [ "556" ], "ammo_qty": [ 10, 100 ] }
+          { "part": "m249", "ammo": 80, "ammo_types": [ "556" ], "ammo_qty": [ 3, 30 ] }
         ]
       },
       { "x": 1, "y": 3, "parts": [ "hdframe_vertical", "reinforced_windshield" ] },
@@ -489,7 +489,7 @@
       { "x": -4, "y": 0, "parts": [ "frame_horizontal", "door_trunk", "roof", "v_curtain" ] },
       { "x": 1, "y": 1, "parts": [ "frame_horizontal", "windshield" ] },
       { "x": -4, "y": 2, "parts": [ "frame_se", "board_se", "wheel_mount_medium", "wheel", "roof" ] },
-      { "x": -3, "y": 0, "parts": [ "frame_vertical", "muffler", "roof", "veh_table" ] },
+      { "x": -3, "y": 0, "parts": [ "frame_vertical", "muffler", "roof", "veh_table", "veh_microwave" ] },
       { "x": -4, "y": -1, "parts": [ "frame_sw", "board_sw", "wheel_mount_medium", "wheel", "roof" ] },
       {
         "x": -2,

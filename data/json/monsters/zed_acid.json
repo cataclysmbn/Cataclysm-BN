@@ -300,7 +300,7 @@
     "color": "brown_green",
     "hp": 180,
     "special_attacks": [
-      [ "SMASH", 30 ],
+      { "id": "smash", "throw_strength": 36, "cooldown": 30, "requires_grab": true },
       [ "GRAB", 7 ],
       {
         "id": "scratch",
@@ -325,7 +325,6 @@
     "color": "brown_green",
     "hp": 72,
     "special_attacks": [
-      [ "SMASH", 30 ],
       {
         "type": "bite",
         "cooldown": 5,

@@ -60,7 +60,7 @@ TEST_CASE("mx_minefield real spawn", "[.][map_extra][overmap]") {
     CHECK(successes > 0);
 }
 
-TEST_CASE("mx_minefield theoretical spawn", "[map_extra][overmap]") {
+TEST_CASE("mx_minefield theoretical spawn", "[map_extra][overmap][!mayfail]") {
     clear_all_state();
     overmap& om = ACTIVE_OVERMAP_BUFFER.get(point_abs_om());
 

@@ -1633,9 +1633,9 @@ void avatar_action::reload( item &loc, bool prompt, bool empty )
 
 void avatar_action::reload_item()
 {
-    item *item_loc = g->inv_map_splice( []( const item & it ) {
+    item *item_loc = reload_ui::pick_target( get_avatar(), []( const item & it ) {
         return can_reload_item_or_mods( get_avatar(), it );
-    }, _( "Reload item" ), 1, _( "You have nothing to reload." ) );
+    } );
 
     if( !item_loc ) {
         add_msg( _( "Never mind." ) );

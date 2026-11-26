@@ -111,7 +111,7 @@
     "id": "map_extra_drugdeal",
     "entries": [
       { "distribution": [ { "group": "baddrugs", "prob": 75 }, { "group": "meth_ingredients", "prob": 25 } ], "prob": 50 },
-      { "group": "drugdealer", "prob": 100 },
+      { "group": "drugdealer", "prob": 75 },
       { "group": "default_zombie_clothes" },
       {
         "distribution": [ { "item": "bandana", "damage": [ 1, 4 ], "prob": 50 }, { "item": "bandana_head", "damage": [ 1, 4 ], "prob": 25 } ],
@@ -166,6 +166,16 @@
     "type": "item_group",
     "id": "mass_grave_casings",
     "items": [ [ "9mm_casing", 10 ], [ "223_casing", 50 ], [ "308_casing", 20 ], [ "shot_hull", 20 ] ]
+  },
+  {
+    "type": "item_group",
+    "id": "drug_deal_gang_casings",
+    "items": [ [ "9mm_casing", 50 ], [ "22_casing", 20 ], [ "shot_hull", 10 ] ]
+  },
+  {
+    "type": "item_group",
+    "id": "drug_deal_cop_casings",
+    "items": [ [ "9mm_casing", 50 ], [ "223_casing", 40 ], [ "45_casing", 20 ], [ "shot_hull", 20 ] ]
   },
   {
     "type": "item_group",

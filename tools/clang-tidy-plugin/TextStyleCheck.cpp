@@ -1,6 +1,6 @@
 #include "TextStyleCheck.h"
 
-#include "../../src/text_style_check.h"
+#include "../../src/utils/text_style_check.h"
 #include "StringLiteralIterator.h"
 
 #include <clang-tidy/ClangTidy.h>

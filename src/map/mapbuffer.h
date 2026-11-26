@@ -9,6 +9,7 @@
 #include "mapgen/mapgen_functions.h"
 #include "memory_fast.h"
 #include "point.h"
+#include "profile.h"
 #include "submap_load_manager.h"
 #include "type_id.h"
 #include "vehicle/vpart_position.h"
@@ -76,63 +77,63 @@ struct mapbuffer_valid_move_options {
     bool flying = false;
     bool via_ramp = false;
     bool zlevels = true;
-    mapbuffer_lookup_options lookup;
+    mapbuffer_lookup_options lookup = {};
 };
 
 struct mapbuffer_field_age_options {
     field_type_id type;
     time_duration age = 0_turns;
     bool isoffset = false;
-    mapbuffer_lookup_options lookup;
+    mapbuffer_lookup_options lookup = {};
 };
 
 struct mapbuffer_field_intensity_options {
     field_type_id type;
     int intensity = 0;
     bool isoffset = false;
-    mapbuffer_lookup_options lookup;
+    mapbuffer_lookup_options lookup = {};
 };
 
 struct mapbuffer_add_field_options {
     field_type_id type;
     int intensity = std::numeric_limits<int>::max();
     time_duration age = 0_turns;
-    mapbuffer_lookup_options lookup;
+    mapbuffer_lookup_options lookup = {};
 };
 
 struct mapbuffer_add_computer_options {
     std::string name;
     int security = 0;
-    mapbuffer_lookup_options lookup;
+    mapbuffer_lookup_options lookup = {};
 };
 
 struct mapbuffer_set_furn_options {
     furn_id furniture;
     const cata::poly_serialized<active_tile_data>* active = nullptr;
-    mapbuffer_lookup_options lookup;
+    mapbuffer_lookup_options lookup = {};
 };
 
 struct mapbuffer_item_lum_options {
     bool add_luminance = false;
-    mapbuffer_lookup_options lookup;
+    mapbuffer_lookup_options lookup = {};
 };
 
 class mapbuffer;
 
 struct mapbuffer_add_item_or_charges_options {
     bool overflow = true;
-    mapbuffer_lookup_options lookup;
+    mapbuffer_lookup_options lookup = {};
 };
 
 struct mapbuffer_erase_item_options {
     location_vector<item>::const_iterator it;
     detached_ptr<item>* out = nullptr;
-    mapbuffer_lookup_options lookup;
+    mapbuffer_lookup_options lookup = {};
 };
 
 struct mapbuffer_mark_submap_caches_dirty_options {
-    point_abs_sm begin;
-    point_abs_sm end;
+    point_abs_sm begin = {};
+    point_abs_sm end = {};
     int zlev = 0;
     bool transparency = false;
     bool floor = false;
@@ -199,6 +200,7 @@ public:
     auto passable_ter_furn() const -> bool;
     auto move_cost_with_vehicle(const optional_vpart_position& vp) const -> int;
     auto passable_with_vehicle(const optional_vpart_position& vp) const -> bool;
+    auto has_flag(ter_bitflags flag) const -> bool;
 
 private:
     tripoint_abs_sm abs_sm_;
@@ -641,6 +643,7 @@ public:
      * Thread-safe: may be called from background worker threads (under gen_mutex).
      */
     auto lookup_submap_in_memory(const tripoint_abs_sm& p) -> submap* {
+        ZoneScoped;
         std::lock_guard<std::recursive_mutex> lk(submaps_mutex_);
         const auto iter = submaps.find(p);
         return iter != submaps.end() ? iter->second.get() : nullptr;
@@ -716,6 +719,9 @@ public:
      * destruction here instead of letting it happen on the worker.
      */
     auto drain_pending_submap_destroy() -> void;
+
+    /// Release committed pending writes, or restore them after a failed save transaction.
+    auto finish_save_tx(bool committed) -> void;
 
     /**
      * Evict all submaps in the OMT at @p omt_addr.
@@ -793,6 +799,8 @@ private:
     /// the player can revert to the pre-session state by quitting without saving.
     mutable std::mutex pending_writes_mutex_;
     std::map<tripoint_abs_omt, std::string> pending_writes_;
+    /// Evicted OMTs flushed by the current save, retained until its transaction finishes.
+    std::map<tripoint_abs_omt, std::string> transaction_pending_writes_;
 
 public:
     auto begin() -> submap_map_t::iterator { return submaps.begin(); }

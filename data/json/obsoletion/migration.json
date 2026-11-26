@@ -1,5 +1,29 @@
 [
   {
+    "id": [ "mobile_memory_card_used", "mobile_memory_card_data" ],
+    "type": "MIGRATION",
+    "replace": "sd_memory_card",
+    "flags": [ "MC_USED" ]
+  },
+  {
+    "id": "mobile_memory_card",
+    "type": "MIGRATION",
+    "replace": "sd_memory_card",
+    "flags": [ "MC_RANDOM_STUFF", "MC_MAY_BE_ENCRYPTED" ]
+  },
+  {
+    "id": "mobile_memory_card_encrypted",
+    "type": "MIGRATION",
+    "replace": "sd_memory_card",
+    "flags": [ "MC_ENCRYPTED", "MC_RANDOM_STUFF" ]
+  },
+  {
+    "id": "mobile_memory_card_science",
+    "type": "MIGRATION",
+    "replace": "sd_memory_card",
+    "flags": [ "MC_ENCRYPTED", "MC_SCIENCE_STUFF" ]
+  },
+  {
     "id": "rifle_308",
     "type": "MIGRATION",
     "replace": "handmade_carbine",
@@ -487,11 +511,6 @@
     "replace": "modularvest"
   },
   {
-    "id": "ballistic_vest_esapi",
-    "type": "MIGRATION",
-    "replace": "modularvestceramic"
-  },
-  {
     "id": "esapi_plate",
     "type": "MIGRATION",
     "replace": "kevlar_plate"
@@ -868,5 +887,85 @@
     "type": "MIGRATION",
     "replace": "smg_luty",
     "contents": [ "retool_luty_45" ]
+  },
+  {
+    "id": "modularvest",
+    "type": "MIGRATION",
+    "replace": "ballistic_vest_esapi"
+  },
+  {
+    "id": "modularvestceramic",
+    "type": "MIGRATION",
+    "replace": "ceramic_ballistic_plate"
+  },
+  {
+    "id": "modularvesthard",
+    "type": "MIGRATION",
+    "replace": "hard_ballistic_plate"
+  },
+  {
+    "id": "modularveststeel",
+    "type": "MIGRATION",
+    "replace": "steel_ballistic_plate"
+  },
+  {
+    "id": "modularvestsuper",
+    "type": "MIGRATION",
+    "replace": "super_ballistic_plate"
+  },
+  {
+    "id": "oldguard_armor_ceramic",
+    "type": "MIGRATION",
+    "replace": "oldguard_armor"
+  },
+  {
+    "id": "oldguard_armor_hardsteel",
+    "type": "MIGRATION",
+    "replace": "oldguard_armor"
+  },
+  {
+    "id": "oldguard_armor_steel",
+    "type": "MIGRATION",
+    "replace": "oldguard_armor"
+  },
+  {
+    "id": "oldguard_armor_superalloy",
+    "type": "MIGRATION",
+    "replace": "oldguard_armor"
+  },
+  {
+    "id": "dragonskinempty",
+    "type": "MIGRATION",
+    "replace": "dragonskin"
+  },
+  {
+    "id": "ballistic_vest_empty",
+    "type": "MIGRATION",
+    "replace": "ballistic_vest_esapi"
+  },
+  {
+    "id": "esapi_plate",
+    "type": "MIGRATION",
+    "replace": "ceramic_ballistic_plate"
+  },
+  {
+    "id": "esbi_plate",
+    "type": "MIGRATION",
+    "replace": "ceramic_ballistic_plate"
+  },
+  {
+    "id": "ceramicdisks",
+    "type": "MIGRATION",
+    "replace": "dragonskin"
+  },
+  {
+    "id": "digital_genome_sample_black_rat",
+    "type": "MIGRATION",
+    "replace": "digital_genome_sample"
+  },
+  {
+    "id": "digital_genome_sample_wolf_mutant_huge",
+    "type": "MIGRATION",
+    "replace": "digital_genome_sample"
   }
 ]

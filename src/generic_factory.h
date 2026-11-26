@@ -147,8 +147,7 @@ class generic_factory
         std::string type_name;
         std::string id_member_name;
         std::string alias_member_name;
-        // TEMPORARY until 0.G: Remove "ident" support
-        const std::string legacy_id_member_name = "ident";
+        std::string legacy_id_member_name;
 
         bool find_id( const string_id<T> &id, int_id<T> &result ) const {
             if( id._version == version ) {
@@ -194,12 +193,15 @@ class generic_factory
          * loaded object(s).
          * @param alias_member_name Alternate names of the JSON member that contains the id(s) of the
          * loaded object alias(es).
+         * @param legacy_member_name Alternative names of the JSON member that contains a legacy style id.
          */
         generic_factory( const std::string &type_name, const std::string &id_member_name = "id",
-                         const std::string &alias_member_name = "alias" )
+                         const std::string &alias_member_name = "alias",
+                         const std::string &legacy_member_name = "ident" )
             : type_name( type_name ),
               id_member_name( id_member_name ),
               alias_member_name( alias_member_name ),
+              legacy_id_member_name( legacy_member_name ),
               dummy_obj() {
         }
 
@@ -249,6 +251,7 @@ class generic_factory
                     jo.throw_error( string_format( "cannot specify both '%s' and '%s'/'%s'",
                                                    abstract_member_name, id_member_name, legacy_id_member_name ) );
                 }
+                assign_src( def, src );
                 def.load( jo, src );
                 abstracts[jo.get_string( abstract_member_name )] = def;
             }

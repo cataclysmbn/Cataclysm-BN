@@ -302,5 +302,47 @@
     "context": [ "vehicle_part" ],
     "type": "json_flag",
     "info": "This part can siphon power from a linked dimensional portal into the vehicle's battery system.  Must be linked by examining a compatible portal while the vehicle is nearby."
+  },
+  {
+    "id": "VEHICLEPART_NO_LOCKS",
+    "//": "Vehiclepart won't generate with locks during vehicle creation, but player can manually install one during gameplay.",
+    "type": "json_flag",
+    "context": [ "vehicle_part" ]
+  },
+  {
+    "id": "NOREMOVE_SECURITY",
+    "type": "json_flag",
+    "context": [ "vehicle_part" ],
+    "info": "Cannot be uninstalled if the vehicle's security system is still active."
+  },
+  {
+    "id": "NOREMOVE_OPEN",
+    "type": "json_flag",
+    "context": [ "vehicle_part" ],
+    "info": "Cannot be uninstalled if the door is open."
+  },
+  {
+    "id": "NOREMOVE_CLOSED",
+    "type": "json_flag",
+    "context": [ "vehicle_part" ],
+    "info": "Cannot be uninstalled if the door is closed."
+  },
+  {
+    "id": "NOREMOVE_LOCKED",
+    "type": "json_flag",
+    "context": [ "vehicle_part" ],
+    "info": "Cannot be uninstalled if the door is locked."
+  },
+  {
+    "id": "NOREMOVE_INSIDE",
+    "type": "json_flag",
+    "context": [ "vehicle_part" ],
+    "info": "Cannot be uninstalled from inside the vehicle."
+  },
+  {
+    "id": "NOREMOVE_OUTSIDE",
+    "type": "json_flag",
+    "context": [ "vehicle_part" ],
+    "info": "Cannot be uninstalled from outside the vehicle."
   }
 ]

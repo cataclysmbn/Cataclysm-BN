@@ -1873,10 +1873,12 @@ void Character::process_bionic( bionic &bio )
             if( !bleeding_list.empty() ) {
                 effect *e = bleeding_list[0];
                 if( e->get_intensity() > 1 ) {
-                    add_msg_if_player( "Your %s slow the bleeding on your %s", bio.info().name, e->get_bp()->name );
+                    add_msg_if_player( _( "Your %1$s slow the bleeding on your %2$s" ),
+                                       bio.info().name, e->get_bp()->name );
                     e->mod_intensity( -1, false );
                 } else {
-                    add_msg_if_player( "Your %s staunch the bleeding on your %s", bio.info().name, e->get_bp()->name );
+                    add_msg_if_player( _( "Your %1$s staunch the bleeding on your %2$s" ),
+                                       bio.info().name, e->get_bp()->name );
                     e->set_removed();
                 }
             }
@@ -2350,7 +2352,7 @@ bool Character::uninstall_bionic( const bionic_id &b_id, Character &installer, b
 
     int success = chance_of_success - rng( 1, 100 );
     if( installer.has_trait( trait_DEBUG_BIONICS ) ) {
-        perform_uninstall( b_id, difficulty, success, b_id->capacity, pl_skill );
+        perform_uninstall( b_id, difficulty, success, pl_skill );
         return true;
     }
     assign_activity( ACT_OPERATION, to_moves<int>( difficulty * 20_minutes ) );
@@ -2376,8 +2378,7 @@ bool Character::uninstall_bionic( const bionic_id &b_id, Character &installer, b
     return true;
 }
 
-void Character::perform_uninstall( bionic_id bid, int difficulty, int success,
-                                   const units::energy &power_lvl, int pl_skill )
+void Character::perform_uninstall( bionic_id bid, int difficulty, int success, int pl_skill )
 {
     map &here = get_map();
     if( success > 0 ) {
@@ -2392,9 +2393,6 @@ void Character::perform_uninstall( bionic_id bid, int difficulty, int success,
         if( const auto *lcb = bid.obj().lua_callbacks ) {
             lcb->call_on_removed( *this, bid );
         }
-
-        // remove power bank provided by bionic
-        mod_max_power_level( -power_lvl );
 
         detached_ptr<item> cbm;
         if( bid->itype().is_valid() && !bid.obj().has_flag( flag_BIONIC_FAULTY ) ) {
@@ -2469,8 +2467,6 @@ bool Character::uninstall_bionic( const bionic &target_cbm, monster &installer, 
             add_msg( m_mixed, _( "Successfully removed %s." ), target_cbm.info().name );
         }
 
-        // remove power bank provided by bionic
-        patient.mod_max_power_level( -target_cbm.info().capacity );
         patient.remove_bionic( target_cbm.id );
         const itype_id iid = itemtype.is_valid() &&
                              !target_cbm.info().has_flag( flag_BIONIC_FAULTY ) ? itemtype : itype_burnt_out_bionic;
@@ -2867,7 +2863,7 @@ std::map<bodypart_id, int> Character::bionic_installation_issues( const bionic_i
     }
     for( const std::pair<const bodypart_str_id, int> &elem : bioid->occupied_bodyparts ) {
         int lacked_slots = elem.second - get_free_bionics_slots( elem.first );
-        if( bioid->upgraded_bionic ) {
+        if( bioid->upgraded_bionic && bioid->upgraded_bionic->occupied_bodyparts.contains( elem.first ) ) {
             lacked_slots -= bioid->upgraded_bionic->occupied_bodyparts.at( elem.first );
         }
         if( lacked_slots > 0 ) {

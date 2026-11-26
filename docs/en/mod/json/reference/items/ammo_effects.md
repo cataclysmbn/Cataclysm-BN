@@ -41,8 +41,8 @@ There are two types of ammo_effects. Hardcoded ammo effects and jsonized ammo ef
 | BLACKPOWDER            | Will cause build up of damaging gunk                                         |
 | RECYCLED               | Causes a 1 in 256 chance to fail to fire                                     |
 | RECOVER_X              | Has a (X-1/X) chance to recover one charge of used ammo at the impact        |
-| WIDE                   | Currently has no effect, suppost to make `HARDTOSHOOT` have no effect        |
-| SHOT                   | Force applies the `WIDE` effect                                              |
+| WIDE                   | Negates the effect of the `HARDTOSHOOT` monster flag.                        |
+| SHOT                   | Multiplies point-blank damage to terrain, also gives the `WIDE` effect       |
 
 ### Fields
 

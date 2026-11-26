@@ -16,6 +16,9 @@ Use when adding or changing automated tests.
 - When CI test jobs fail, inspect the job log for the exact test command, filters, shard split, user-dir, order-sensitive included tests, `--rng-seed`, and backend flags. Run that same shard command on the final rebased HEAD before declaring the fix validated; do not substitute a narrower tag filter or a different full-test command.
 - Before pushing test fixes that touch global state, NPCs, maps, overmaps, player position, RNG, options, or fixtures, run both the relevant focused test and the CI-equivalent shard/full command that can expose state bleed from earlier tests.
 - Keep Lua/C++ integration tests on real bound objects when the binding behavior is under test.
+- Expected `DebugLog(DL::Error, ...)` still makes the test process fail even when assertions pass. Use
+  `capture_debug_errors_during` for the injected failure only and assert its exact messages; never clear
+  the global observed-error flag or disable the test runner's error check.
 
 ## Cleanup
 

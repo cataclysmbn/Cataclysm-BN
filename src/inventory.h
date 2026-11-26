@@ -188,8 +188,14 @@ class inventory : public temp_visitable<inventory>
         item *most_appropriate_painkiller( int pain );
 
         void rust_iron_items();
+        void edit_all_items( const std::function<void( item & )> &func );
 
+    private:
+        units::mass cached_weight;
+        bool cached_weight_dirty = true;
+    public:
         units::mass weight() const;
+        units::mass weight_cached();
         units::mass weight_without( const excluded_stacks &without ) const;
         units::volume volume() const;
         units::volume volume_without( const excluded_stacks &without ) const;
@@ -351,6 +357,7 @@ class location_inventory : public location_visitable<location_inventory>
         void rust_iron_items();
 
         units::mass weight() const;
+        units::mass weight_cached();
         units::mass weight_without( const excluded_stacks &without ) const;
         units::volume volume() const;
         units::volume volume_without( const excluded_stacks &without ) const;

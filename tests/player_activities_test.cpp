@@ -1,16 +1,28 @@
 #include "../src/map/map.h"
 #include "activity_actor_definitions.h"
+#include "activity_handlers.h"
 #include "avatar.h"
 #include "calendar.h"
+#include "cata_utility.h"
 #include "catch/catch.hpp"
 #include "character.h"
 #include "coordinates.h"
+#include "enums.h"
 #include "game.h"
 #include "itype.h"
 #include "iuse_actor.h"
 #include "map_helpers.h"
 #include "player_activity.h"
 #include "player_helpers.h"
+#include "state_helpers.h"
+#include "type_id.h"
+#include "units_angle.h"
+#include "units_volume.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+
+#include <algorithm>
 
 static const activity_id ACT_NULL = activity_id::NULL_ID();
 static const activity_id ACT_BOLTCUTTING("ACT_BOLTCUTTING");
@@ -44,6 +56,112 @@ static const ter_str_id ter_test_t_boltcut1("test_t_boltcut1");
 static const ter_str_id ter_test_t_boltcut2("test_t_boltcut2");
 static const ter_str_id ter_test_t_hacksaw1("test_t_hacksaw1");
 static const ter_str_id ter_test_t_hacksaw2("test_t_hacksaw2");
+
+TEST_CASE(
+    "fill_liquid_from_infinite_water_respects_ground_pour_amount", "[activity][fluid_regression]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    auto& here = get_map();
+    auto& you = get_avatar();
+    const auto source = tripoint_bub_ms(60, 60, 0);
+    const auto target = tripoint_bub_ms(62, 60, 0);
+    const auto water_field = field_type_id("fd_water");
+    g->place_player(tripoint_bub_ms(61, 60, 0));
+    here.ter_set(source, ter_str_id("t_water_sh"));
+    REQUIRE(here.water_from(source));
+    const auto charges_per_turn =
+        std::max(1, here.water_from(source)->charges_per_volume(units::from_liter(4.0F / 6.0F)));
+    const auto requested = charges_per_turn + 1;
+
+    auto activity = player_activity(activity_id("ACT_FILL_LIQUID"));
+    activity.values = {LST_INFINITE_MAP, 0, LTT_MAP, requested};
+    activity.coords = {bub_to_abs(source), bub_to_abs(target)};
+
+    activity_handlers::fill_liquid_do_turn(&activity, &you);
+    CHECK_FALSE(activity.is_null());
+    CHECK(activity.values[3] == 1);
+    CHECK(here.get_field(target, water_field) != nullptr);
+
+    activity_handlers::fill_liquid_do_turn(&activity, &you);
+    CHECK(activity.is_null());
+
+    here.remove_field(target, water_field);
+    auto zero_activity = player_activity(activity_id("ACT_FILL_LIQUID"));
+    zero_activity.values = {LST_INFINITE_MAP, 0, LTT_MAP, 0};
+    zero_activity.coords = {bub_to_abs(source), bub_to_abs(target)};
+    activity_handlers::fill_liquid_do_turn(&zero_activity, &you);
+    CHECK(zero_activity.is_null());
+    CHECK(here.get_field(target, water_field) == nullptr);
+
+    auto legacy_activity = player_activity(activity_id("ACT_FILL_LIQUID"));
+    legacy_activity.values = {LST_INFINITE_MAP, 0, LTT_MAP};
+    legacy_activity.coords = {bub_to_abs(source), bub_to_abs(target)};
+    activity_handlers::fill_liquid_do_turn(&legacy_activity, &you);
+    CHECK_FALSE(legacy_activity.is_null());
+    CHECK(here.get_field(target, water_field) != nullptr);
+}
+
+TEST_CASE(
+    "fill_liquid_from_vehicle_respects_ground_pour_amount_and_exhaustion",
+    "[activity][fluid_regression]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    auto& here = get_map();
+    auto& you = get_avatar();
+    const auto source = tripoint_bub_ms(60, 60, 0);
+    const auto target = tripoint_bub_ms(62, 60, 0);
+    const auto water_field = field_type_id("fd_water");
+    g->place_player(tripoint_bub_ms(61, 60, 0));
+    auto* vehicle = here.add_vehicle(vproto_id("none"), source, 0_degrees, 0, 0);
+    REQUIRE(vehicle);
+    REQUIRE(vehicle->install_part(tripoint_mnt_veh::zero(), vpart_id("frame_vertical"), true) >= 0);
+    const auto tank_index =
+        vehicle->install_part(tripoint_mnt_veh::zero(), vpart_id("tank_small"), true);
+    REQUIRE(tank_index >= 0);
+    here.add_vehicle_to_cache(vehicle);
+    here.build_map_cache(source.z(), true);
+    const auto vehicle_source = vehicle->bub_part_location(0);
+    REQUIRE(here.veh_at(vehicle_source));
+    auto& tank = vehicle->part(tank_index);
+    const auto water = itype_id("water_clean");
+    REQUIRE(tank.ammo_set(water, 20) > 0);
+    const auto initial_charges = tank.ammo_remaining();
+    const auto charges_per_turn = std::
+        max(1, tank.get_base().contents.back().charges_per_volume(units::from_liter(4.0F / 6.0F)));
+    const auto requested = charges_per_turn + 1;
+
+    auto activity = player_activity(activity_id("ACT_FILL_LIQUID"));
+    activity.values = {LST_VEHICLE, tank_index, LTT_MAP, requested};
+    activity.coords = {bub_to_abs(vehicle_source), bub_to_abs(target)};
+    activity_handlers::fill_liquid_do_turn(&activity, &you);
+    CHECK_FALSE(activity.is_null());
+    CHECK(activity.values[3] == 1);
+    CHECK(tank.ammo_remaining() == initial_charges - charges_per_turn);
+    CHECK(here.get_field(target, water_field) != nullptr);
+
+    activity_handlers::fill_liquid_do_turn(&activity, &you);
+    CHECK(activity.is_null());
+    CHECK(tank.ammo_remaining() == initial_charges - requested);
+
+    here.remove_field(target, water_field);
+    auto zero_activity = player_activity(activity_id("ACT_FILL_LIQUID"));
+    zero_activity.values = {LST_VEHICLE, tank_index, LTT_MAP, 0};
+    zero_activity.coords = {bub_to_abs(vehicle_source), bub_to_abs(target)};
+    activity_handlers::fill_liquid_do_turn(&zero_activity, &you);
+    CHECK(zero_activity.is_null());
+    CHECK(tank.ammo_remaining() == initial_charges - requested);
+    CHECK(here.get_field(target, water_field) == nullptr);
+
+    REQUIRE(tank.ammo_set(water, 1) > 0);
+    auto exhausted_activity = player_activity(activity_id("ACT_FILL_LIQUID"));
+    exhausted_activity.values = {LST_VEHICLE, tank_index, LTT_MAP, 3};
+    exhausted_activity.coords = {bub_to_abs(vehicle_source), bub_to_abs(target)};
+    activity_handlers::fill_liquid_do_turn(&exhausted_activity, &you);
+    CHECK(exhausted_activity.is_null());
+    CHECK(exhausted_activity.values[3] == 2);
+    CHECK(tank.ammo_remaining() == 0);
+    CHECK(here.get_field(target, water_field) != nullptr);
+}
 
 TEST_CASE("boltcut", "[activity][boltcut]") {
     map& mp = get_map();

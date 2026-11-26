@@ -30,6 +30,24 @@
     "use_action": { "type": "ammobelt", "belt": "belt308" }
   },
   {
+    "id": "ammolink3006",
+    "copy-from": "ammolink",
+    "type": "GENERIC",
+    "name": { "str": ".30-06 ammo belt linkage" },
+    "weight": "4 g",
+    "volume": "4 ml",
+    "use_action": { "type": "ammobelt", "belt": "belt3006" }
+  },
+  {
+    "id": "ammolink762R",
+    "copy-from": "ammolink",
+    "type": "GENERIC",
+    "name": { "str": "7.62x54mmR ammo belt linkage" },
+    "weight": "4 g",
+    "volume": "4 ml",
+    "use_action": { "type": "ammobelt", "belt": "belt762R" }
+  },
+  {
     "id": "ammolink40mm",
     "copy-from": "ammolink",
     "type": "GENERIC",

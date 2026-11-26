@@ -69,7 +69,7 @@
       "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "qualities": [ { "id": "SAW_M", "level": 1 } ] },
       "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "vehicle_repair_carbon", 3 ] ] }
     },
-    "flags": [ "AISLE", "BOARDABLE" ],
+    "flags": [ "AISLE", "BOARDABLE", "SHOCK_RESISTANT" ],
     "breaks_into": "ig_vp_carbon",
     "damage_reduction": { "all": 28 }
   },
@@ -91,7 +91,7 @@
       "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "30 m", "qualities": [ { "id": "SAW_M", "level": 1 } ] },
       "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "vehicle_repair_carbon", 3 ] ] }
     },
-    "flags": [ "AISLE", "BOARDABLE" ],
+    "flags": [ "AISLE", "BOARDABLE", "SHOCK_RESISTANT" ],
     "breaks_into": "ig_vp_carbon",
     "damage_reduction": { "all": 28 }
   },

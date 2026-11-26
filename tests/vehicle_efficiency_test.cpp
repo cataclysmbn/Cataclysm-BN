@@ -49,6 +49,8 @@ static auto reset_efficiency_state() -> void {
     // Move player somewhere safe
     REQUIRE_FALSE(g->u.in_vehicle);
     g->u.setpos(tripoint_bub_ms(g_half_mapsize_x + SEEX - 1, g_half_mapsize_y + SEEY - 1, -2));
+    // Moving the player can spawn monsters from overmap groups on the test track. Remove them.
+    clear_creatures();
     // Blind the player to avoid needless drawing-related overhead
     g->u.add_effect(effect_blind, 365_days, bodypart_str_id::NULL_ID());
 }

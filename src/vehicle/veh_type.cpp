@@ -18,6 +18,7 @@
 #include "itype.h"
 #include "json.h"
 #include "map/mapdata.h"
+#include "options.h"
 #include "output.h"
 #include "player.h"
 #include "requirements.h"
@@ -39,7 +40,9 @@
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
+#include <limits>
 #include <memory>
 #include <numeric>
 #include <string>
@@ -49,6 +52,8 @@
 class npc;
 
 std::unordered_map<vproto_id, vehicle_prototype> vtypes;
+
+std::unordered_set<vproto_id> vtypes_blacklisted;
 
 namespace {
 generic_factory<vpart_info> all_vparts("Vehicle Parts");
@@ -403,7 +408,7 @@ void vpart_info::load_vehicle_parts(const JsonObject& jo, const std::string& src
 /**
  * Reads in a vehicle part from a JsonObject.
  */
-void vpart_info::load(const JsonObject& jo, const std::string& src) {
+void vpart_info::load(const JsonObject& jo, const std::string& /*src*/) {
 
     assign(jo, "name", name_);
     assign(jo, "item", item);
@@ -459,9 +464,11 @@ void vpart_info::load(const JsonObject& jo, const std::string& src) {
     if (jo.has_member("requirements")) {
         auto reqs = jo.get_object("requirements");
 
-        parse_vp_reqs(reqs, id.str(), "install", install_reqs, install_skills, install_moves);
-        parse_vp_reqs(reqs, id.str(), "removal", removal_reqs, removal_skills, removal_moves);
-        parse_vp_reqs(reqs, id.str(), "repair", repair_reqs, repair_skills, repair_moves);
+        std::string id_str = id.str();
+        if (jo.has_member("abstract")) { id_str = jo.get_string("abstract"); }
+        parse_vp_reqs(reqs, id_str, "install", install_reqs, install_skills, install_moves);
+        parse_vp_reqs(reqs, id_str, "removal", removal_reqs, removal_skills, removal_moves);
+        parse_vp_reqs(reqs, id_str, "repair", repair_reqs, repair_skills, repair_moves);
     }
 
     if (jo.has_member("symbol")) { sym = jo.get_string("symbol")[0]; }
@@ -526,10 +533,10 @@ void vpart_info::load(const JsonObject& jo, const std::string& src) {
     if (jo.has_array("shapes")) {
         for (JsonObject obj : jo.get_array("shapes")) {
             vpart_info shape = vpart_info(*this);
-            if (shape.id.str() == "") {
+            if (jo.has_string("abstract")) {
                 shape.id = vpart_id(jo.get_string("abstract") + "_" + obj.get_string("direction"));
             } else {
-                shape.id = vpart_id(shape.id.str() + "_" + obj.get_string("direction"));
+                shape.id = vpart_id(id.str() + "_" + obj.get_string("direction"));
             }
             if (shape.looks_like != "") {
                 shape.looks_like = shape.looks_like + "_" + obj.get_string("direction");
@@ -537,6 +544,7 @@ void vpart_info::load(const JsonObject& jo, const std::string& src) {
             if (obj.has_string("symbol")) { shape.sym = obj.get_string("symbol")[0]; }
             if (obj.has_string("symbol_broken")) { shape.sym = obj.get_string("symbol_broken")[0]; }
             if (obj.has_string("looks_like")) { shape.looks_like = obj.get_string("looks_like"); }
+            shape.was_loaded = true;
             all_vparts.insert(shape);
         }
     }
@@ -649,7 +657,7 @@ void vpart_info::check() const {
         }
     }
 
-    for (const auto& [req, multiplier] : install_reqs) {
+    for (const auto& [req, multiplier] : removal_reqs) {
         if (!(req.is_null() || req.is_valid()) || multiplier < 0) {
             debugmsg("vehicle part %s has unknown or incorrectly specified removal requirements %s",
                      id.c_str(), req.c_str());
@@ -871,23 +879,31 @@ auto vpart_info::repair_requirements() const -> requirement_data {
 
 auto vpart_info::is_repairable() const -> bool { return !repair_requirements().is_empty(); }
 
-static auto scale_time(const std::map<skill_id, int>& sk, int mv, const Character& who) -> int {
-    if (sk.empty()) { return mv; }
+namespace {
+auto scale_time(const std::map<skill_id, int>& sk, int mv, const Character& who) -> int {
+    const auto scaling = get_option<int>("VEHICLE_WORK_SCALING");
+    if (scaling == 0) { return mv > 0 ? 1 : 0; }
 
-    const int lvl = std::
-        accumulate(sk.begin(), sk.end(), 0, [&who](int lhs, const std::pair<skill_id, int>& rhs) {
+    auto time_norm = mv;
+    if (!sk.empty()) {
+        const auto lvl = std::accumulate(sk.begin(), sk.end(), 0, [&who](int lhs, const auto& rhs) {
             return lhs
                  + std::max(std::min(who.get_skill_level(rhs.first), MAX_SKILL) - rhs.second, 0);
         });
-    // 10% per excess level (reduced proportionally if >1 skill required) with max 50% reduction
-    // 10% reduction per assisting NPC
-    int time_norm =
-        mv * (1.0 - std::min(static_cast<double>(lvl) / sk.size() / 10.0, 0.5))
-        * (10 - character_funcs::get_crafting_helpers(who, 3).size()) / 10;
-    time_norm +=
-        who.bonus_from_enchantments(time_norm, enchantment_value_id("CONSTRUCTION_SPEED_VEH"));
-    return time_norm;
+        // 10% per excess level (reduced proportionally if >1 skill required) with max 50% reduction
+        // 10% reduction per assisting NPC
+        time_norm =
+            mv * (1.0 - std::min(static_cast<double>(lvl) / sk.size() / 10.0, 0.5))
+            * (10 - character_funcs::get_crafting_helpers(who, 3).size()) / 10;
+        time_norm +=
+            who.bonus_from_enchantments(time_norm, enchantment_value_id("CONSTRUCTION_SPEED_VEH"));
+    }
+
+    const auto scaled = static_cast<int64_t>(time_norm) * scaling / 100;
+    time_norm = static_cast<int>(std::min<int64_t>(scaled, std::numeric_limits<int>::max()));
+    return mv > 0 ? std::max(1, time_norm) : time_norm;
 }
+} // namespace
 
 auto vpart_info::install_time(const Character& who) const -> int {
     return scale_time(install_skills, install_moves, who);
@@ -1297,4 +1313,12 @@ auto vehicle_prototype::get_all() -> std::vector<vproto_id> {
     result.reserve(vtypes.size());
     for (auto& vp : vtypes) { result.push_back(vp.first); }
     return result;
+}
+
+void vehicle_prototype::load_vehicle_blacklist(const JsonObject& json) {
+    json.read("vehicles", vtypes_blacklisted, true);
+}
+
+const std::unordered_set<vproto_id> vehicle_prototype::get_vehicle_blacklist() {
+    return vtypes_blacklisted;
 }

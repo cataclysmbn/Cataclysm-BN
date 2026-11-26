@@ -1,5 +1,12 @@
 [
   {
+    "id": "emit_physical_static",
+    "type": "emit",
+    "field": "fd_physical_static",
+    "intensity": 1,
+    "qty": 3
+  },
+  {
     "id": "emit_tobacco_trail",
     "type": "emit",
     "//": "Intermittent cigarette smoke (example: lit cigarette)",
@@ -79,6 +86,13 @@
     "field": "fd_toxic_gas",
     "intensity": 3,
     "qty": 24
+  },
+  {
+    "id": "emit_toxic_stream_small",
+    "type": "emit",
+    "//": "Small stream of toxic gas",
+    "field": "fd_toxic_gas",
+    "intensity": 2
   },
   {
     "id": "emit_tear_gas_stream",

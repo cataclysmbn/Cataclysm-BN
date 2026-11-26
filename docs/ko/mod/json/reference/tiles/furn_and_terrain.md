@@ -41,6 +41,12 @@ title: Furniture and Terrain
     "message": "The safe is hacksawed open!",
     "sound": "Gachunk!",
     "byproducts": [{ "item": "scrap", "count": 13 }]
+  },
+  "default_vars": {
+    "CATEGORYIDS": "[ \"CSC_FOOD_MEAT\", \"CSC_FOOD_VEGGI\", \"CSC_FOOD_PASTA\" ]",
+    "CHARGE_PER_MIN": "5",
+    "CHARGE_START": "100",
+    "CRAFTSPEEDMULT": "1.0"
   }
 }
 ```
@@ -167,6 +173,54 @@ oxytorch: {
 
 (선택) 상호작용 시 지정한 액체 아이템을 무한 공급합니다. 동작하려면
 `"examine_action": "liquid_source"`와 함께 사용해야 합니다.
+
+#### `enchanter_info`
+
+(선택) 인챈트 정보 객체의 배열입니다. 다음은 인챈트 정보 객체의 형식입니다.
+
+```jsonc
+{
+  "id": "CVD_DIAMOND_CUT", // 저장/불러오기에 사용하는 인챈트 정보 ID (필수)
+  "name": "Cutting Diamonds", // 인챈트 UI에 표시할 이름 (필수)
+  "enchant": "ENCH_CVD_MACHINE_CUT", // 부여할 인챈트 ID (필수)
+  "time_to_enchant": "10 minutes", // 인챈트에 걸리는 시간 (필수)
+  "volume_per_time": "250 ml", // 이 부피마다 필요한 시간이 배율로 증가
+  "volume_time_effect": true, // volume_per_time을 사용할지 여부
+  "using": "cvd_diamond", // 요구 사항 정보 (필수)
+  "volume_per_batch": "250 ml", // 이 부피마다 요구 사항 정보의 배율이 증가
+  "volume_batch_effect": true, // volume_per_batch을 사용할지 여부
+  "count_var": "DIAMONDIZE", // 적용 횟수를 세는 아이템 변수
+  "max_count": 10, // 최대 적용 횟수
+  "applied_flag": "DIAMOND", // 적용할 플래그
+  "can_use_on": "cvd_machine", // enchanter_can_use_on Lua 함수 이름
+  "can_make": "cvd_machine", // enchanter_can_make Lua 함수 이름
+  "required_skills": [ { "skill": "magic", "level": 2 } ] // 필요한 스킬 배열
+},
+```
+
+#### `default_vars`
+
+(선택) 객체의 기본 문자열 변수입니다. 항상 문자열-문자열 쌍이며 임의의 데이터나 iuse 데이터 저장에 사용할 수 있습니다.
+
+- 멀티쿠커
+  - `CATEGORYIDS`: 적용 가능한 레시피 카테고리의 JSON 배열 문자열
+  - `RECIPEIDS`: 유효한 레시피의 JSON 배열 문자열
+
+```json
+{
+  "default_vars": {
+    "CATEGORYIDS": "[ \"CSC_FOOD_MEAT\" ]",
+    "RECIPEIDS": "[ \"recipe_example\" ]",
+    "CHARGE_PER_MIN": "5",
+    "CHARGE_START": "100",
+    "CRAFTSPEEDMULT": "1.0"
+  }
+}
+```
+
+- `CHARGE_PER_MIN`: 분당 소모되는 충전량
+- `CHARGE_START`: 시작 시 소모되는 충전량
+- `CRAFTSPEEDMULT`: 제작 속도 배율
 
 ### Terrain
 

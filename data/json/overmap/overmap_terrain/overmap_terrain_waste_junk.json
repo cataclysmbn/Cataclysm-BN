@@ -152,6 +152,7 @@
     "type": "overmap_terrain",
     "id": "dumpsite",
     "copy-from": "generic_city_building_no_sidewalk",
+    "looks_like": "generic_regional_dump",
     "name": "dumpsite",
     "sym": "D",
     "color": "brown"
@@ -211,8 +212,6 @@
   {
     "type": "overmap_terrain",
     "id": [
-      "ws_regional_dump_0_0",
-      "ws_regional_dump_1_0",
       "ws_regional_dump_2_0",
       "ws_regional_dump_3_0",
       "ws_regional_dump_0_1",
@@ -227,8 +226,6 @@
       "ws_regional_dump_1_3",
       "ws_regional_dump_2_3",
       "ws_regional_dump_3_3",
-      "ws_biker_dump_0_0",
-      "ws_biker_dump_1_0",
       "ws_biker_dump_2_0",
       "ws_biker_dump_3_0",
       "ws_biker_dump_0_1",
@@ -246,6 +243,12 @@
       "ws_biker_dump_3_3"
     ],
     "copy-from": "generic_regional_dump"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "ws_regional_dump_0_0", "ws_regional_dump_1_0", "ws_biker_dump_0_0", "ws_biker_dump_1_0" ],
+    "copy-from": "generic_regional_dump",
+    "looks_like": "s_lot"
   },
   {
     "type": "overmap_terrain",

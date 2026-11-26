@@ -31,6 +31,17 @@
     ]
   },
   {
+    "type": "item_group",
+    "id": "ammo_smg_rare",
+    "//": "Less common SMGs ammo.",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "57mm", "prob": 40, "charges": [ 1, 100 ] },
+      { "item": "57mm_civ", "prob": 10, "charges": [ 1, 100 ] },
+      { "item": "46mm", "prob": 60, "charges": [ 1, 100 ] }
+    ]
+  },
+  {
     "id": "ammo_casings",
     "type": "item_group",
     "subtype": "distribution",
@@ -57,7 +68,8 @@
       { "item": "38_super", "prob": 8, "charges": [ 1, 100 ] },
       { "item": "38super_fmj", "prob": 7, "charges": [ 1, 100 ] },
       { "item": "500_Magnum", "prob": 25, "charges": [ 1, 100 ] },
-      { "item": "57mm", "prob": 10, "charges": [ 1, 100 ] }
+      { "item": "57mm", "prob": 5, "charges": [ 1, 100 ] },
+      { "item": "57mm_civ", "prob": 5, "charges": [ 1, 100 ] }
     ]
   },
   {
@@ -69,7 +81,8 @@
       { "item": "bp_38_super", "prob": 8, "charges": [ 1, 100 ] },
       { "item": "bp_38super_fmj", "prob": 7, "charges": [ 1, 100 ] },
       { "item": "bp_500_Magnum", "prob": 25, "charges": [ 1, 100 ] },
-      { "item": "bp_57mm", "prob": 10, "charges": [ 1, 100 ] }
+      { "item": "bp_57mm", "prob": 5, "charges": [ 1, 100 ] },
+      { "item": "bp_57mm_civ", "prob": 5, "charges": [ 1, 100 ] }
     ]
   },
   {
@@ -81,7 +94,8 @@
       { "item": "38_super", "prob": 8 },
       { "item": "38super_fmj", "prob": 7 },
       { "item": "500_Magnum", "prob": 25 },
-      { "item": "57mm", "prob": 10 }
+      { "item": "57mm", "prob": 5 },
+      { "item": "57mm_civ", "prob": 5 }
     ]
   },
   {
@@ -108,7 +122,9 @@
     "subtype": "distribution",
     "entries": [
       { "item": "500_Magnum", "prob": 20, "charges": [ 1, 100 ] },
-      { "item": "270win_jsp", "prob": 30, "charges": [ 1, 100 ] }
+      { "item": "270win_jsp", "prob": 30, "charges": [ 1, 100 ] },
+      { "item": "57mm", "prob": 1, "charges": [ 1, 100 ] },
+      { "item": "57mm_civ", "prob": 4, "charges": [ 1, 100 ] }
     ]
   },
   {
@@ -118,7 +134,9 @@
     "subtype": "distribution",
     "entries": [
       { "item": "bp_500_Magnum", "prob": 20, "charges": [ 1, 100 ] },
-      { "item": "bp_270win_jsp", "prob": 30, "charges": [ 1, 100 ] }
+      { "item": "bp_270win_jsp", "prob": 30, "charges": [ 1, 100 ] },
+      { "item": "bp_57mm_civ", "prob": 4, "charges": [ 1, 100 ] },
+      { "item": "bp_57mm", "prob": 1, "charges": [ 1, 100 ] }
     ]
   },
   {
@@ -126,14 +144,19 @@
     "id": "ammo_rifle_common_full",
     "//": "Rifle ammo commonly owned by citizens and found in many locations, for vending machines.",
     "subtype": "distribution",
-    "entries": [ { "item": "500_Magnum", "prob": 20 }, { "item": "270win_jsp", "prob": 30 } ]
+    "entries": [
+      { "item": "500_Magnum", "prob": 20 },
+      { "item": "270win_jsp", "prob": 30 },
+      { "item": "57mm_civ", "prob": 4 },
+      { "item": "57mm", "prob": 1 }
+    ]
   },
   {
     "type": "item_group",
     "id": "ammo_cop",
     "//": "Ammo for police issue firearms.",
     "subtype": "distribution",
-    "entries": [ { "item": "57mm", "prob": 80, "charges": [ 1, 100 ] } ]
+    "entries": [ { "item": "57mm", "prob": 60, "charges": [ 1, 100 ] }, { "item": "57mm_civ", "prob": 20, "charges": [ 1, 100 ] } ]
   },
   {
     "type": "item_group",

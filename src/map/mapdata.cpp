@@ -484,8 +484,11 @@ auto null_terrain_t() -> ter_t {
 }
 
 template <typename C, typename F>
-void load_season_array(const JsonObject& jo, const std::string& key, C& container, F load_func) {
+void load_season_array(
+    const JsonObject& jo, const bool was_loaded, const std::string& key, C& container,
+    F load_func) {
     if (!jo.has_member(key)) {
+        if (was_loaded) { return; }
         // Throw 'member not found' error
         jo.get_member(key);
 
@@ -517,7 +520,7 @@ void map_data_common_t::load_symbol(const JsonObject& jo) {
     }
     jo.read("looks_like", looks_like);
 
-    load_season_array(jo, "symbol", symbol_, [&jo](const std::string& str) {
+    load_season_array(jo, was_loaded, "symbol", symbol_, [&jo](const std::string& str) {
         if (str == "LINE_XOXO") {
             return LINE_XOXO;
         } else if (str == "LINE_OXOX") {
@@ -533,13 +536,13 @@ void map_data_common_t::load_symbol(const JsonObject& jo) {
     if (has_color && has_bgcolor) {
         jo.throw_error("Found both color and bgcolor, only one of these is allowed.");
     } else if (has_color) {
-        load_season_array(jo, "color", color_, [](const std::string& str) {
+        load_season_array(jo, was_loaded, "color", color_, [](const std::string& str) {
             // has to use a lambda because of default params
             return color_from_string(str);
         });
     } else if (has_bgcolor) {
-        load_season_array(jo, "bgcolor", color_, bgcolor_from_string);
-    } else {
+        load_season_array(jo, was_loaded, "bgcolor", color_, bgcolor_from_string);
+    } else if (!was_loaded) {
         jo.throw_error(R"(Missing member: one of: "color", "bgcolor" must exist.)");
     }
 }
@@ -1212,6 +1215,7 @@ void map_data_common_t::load(const JsonObject& jo, const std::string& src) {
     mandatory(jo, was_loaded, "description", description);
     optional(jo, was_loaded, "message", message);
     optional(jo, was_loaded, "prompt", prompt);
+    if (jo.has_member("flammable")) { flammable_override = jo.get_bool("flammable"); }
     assign(jo, "light_color", light_color, is_json_check_strict(src));
 
     assign(jo, "flags", flags);
@@ -1221,6 +1225,14 @@ void map_data_common_t::load(const JsonObject& jo, const std::string& src) {
     transparent = false;
 
     for (const std::string& flag : flags) { set_flag(flag); }
+
+    const auto has_legacy_flammability =
+        has_flag(TFLAG_FLAMMABLE) || has_flag(TFLAG_FLAMMABLE_ASH)
+        || has_flag(TFLAG_FLAMMABLE_HARD);
+    flammable = flammable_override.value_or(has_legacy_flammability);
+    flammable_ash = flammable && has_flag(TFLAG_FLAMMABLE_ASH);
+    flammable_hard = flammable && has_flag(TFLAG_FLAMMABLE_HARD);
+
     optional(jo, was_loaded, "curtain_transform", curtain_transform);
 }
 
@@ -1437,7 +1449,7 @@ void furn_t::load(const JsonObject& jo, const std::string& src) {
     optional(jo, was_loaded, "emissions", emissions);
     optional(jo, was_loaded, "provides_liquids", provides_liquids);
     optional(jo, was_loaded, "bonus_fire_warmth_feet", bonus_fire_warmth_feet, 300);
-    optional(jo, was_loaded, "keg_capacity", keg_capacity, legacy_volume_reader, 0_ml);
+    optional(jo, was_loaded, "keg_capacity", keg_capacity, volume_reader(), 0_ml);
     if (jo.has_member("fluid_grid")) {
         auto fluid_grid_obj = jo.get_object("fluid_grid");
         auto fluid_grid_entry = fluid_grid_data{};
@@ -1450,8 +1462,22 @@ void furn_t::load(const JsonObject& jo, const std::string& src) {
             fluid_grid_entry.role = *role;
             mandatory(fluid_grid_obj, was_loaded, "allow_input", fluid_grid_entry.allow_input);
             mandatory(fluid_grid_obj, was_loaded, "allow_output", fluid_grid_entry.allow_output);
-            mandatory(fluid_grid_obj, was_loaded, "allowed_liquids",
-                      fluid_grid_entry.allowed_liquids);
+            if (fluid_grid_obj.has_member("allowed_liquids")) {
+                const auto allowed_liquids = fluid_grid_obj.get_member("allowed_liquids");
+                if (allowed_liquids.test_string()) {
+                    if (allowed_liquids.get_string() != "universal") {
+                        allowed_liquids.throw_error(
+                            "allowed_liquids string value must be \"universal\"");
+                    }
+                    fluid_grid_entry.universal_liquids = true;
+                } else if (!allowed_liquids.read(fluid_grid_entry.allowed_liquids, true)) {
+                    allowed_liquids.throw_error(
+                        "allowed_liquids must be an array of item ids or \"universal\"");
+                }
+            } else if (!was_loaded) {
+                fluid_grid_obj.throw_error("missing mandatory member \"allowed_liquids\"");
+            }
+            optional(fluid_grid_obj, was_loaded, "autofill", fluid_grid_entry.autofill, false);
             optional(fluid_grid_obj, was_loaded, "use_keg_capacity",
                      fluid_grid_entry.use_keg_capacity, false);
             if (fluid_grid_obj.has_member("capacity")) {
@@ -1593,8 +1619,12 @@ void furn_t::check() const {
     }
     if (fluid_grid) {
         const auto& fluid_grid_data = *fluid_grid;
-        if (fluid_grid_data.allowed_liquids.empty()) {
+        if (fluid_grid_data.allowed_liquids.empty() && !fluid_grid_data.universal_liquids) {
             debugmsg("furn %s has fluid grid but no allowed_liquids set", id.c_str());
+        }
+        if (fluid_grid_data.autofill && !fluid_grid_data.universal_liquids) {
+            debugmsg("furn %s has fluid grid autofill enabled without universal liquids",
+                     id.c_str());
         }
         const auto invalid_liquid =
             std::ranges::find_if(fluid_grid_data.allowed_liquids, [](const itype_id& liquid) {

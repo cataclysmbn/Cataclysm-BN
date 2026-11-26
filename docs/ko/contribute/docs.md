@@ -68,6 +68,9 @@ Lua 및 CLI 문서는 소스 코드를 바탕으로 자동으로 생성됩니다
 (Cataclysm-BN) $ deno task docs:gen
 ```
 
+이 명령은 `docs/en/mod/lua/reference/lua.md`와 Lua IDE 자동 완성에 사용되는 `lua_annotations.lua`를
+다시 생성합니다.
+
 ## 라이선스
 
 - 마크다운 파일(`.md` 및 `.mdx` 파일을 포함하되 이에 국한되지 않음)에 기여함으로써 귀하는 귀하의 기여를 게임과 동일한 라이선스인 [CC-BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/)에 따라 라이선스하는 데 동의하는 것입니다.

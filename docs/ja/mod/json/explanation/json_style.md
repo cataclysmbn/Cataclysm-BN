@@ -13,7 +13,7 @@ sidebar:
 DDA は独自のJSONパーサーを記述しました。それは `tools/format/format.cpp` に存在し、
 `src/json.cpp`を利用してJSONをパースし、出力します。
 
-これは、既存のJSONフォーマッタ (例: `deno fmt`) の使用を不可能にするため、最適な解決策ではありませんが、[前回の試み](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/3118)では、不利益が利益を上回ることが証明されました。
+これは、既存のJSONフォーマッタ (例: `deno fmt`) の使用を不可能にするため、最適な解決策ではありませんが、[前回の試み](https://github.com/cataclysmbn/Cataclysm-BN/pull/3118)では、不利益が利益を上回ることが証明されました。
 
 ## JSONの記述例
 

@@ -29,6 +29,7 @@ public:
 
     // returns the move cost of this field
     auto move_cost() const -> int;
+    auto is_impassable() const -> bool { return type.obj().get_impassable(intensity - 1); }
 
     auto extra_radiation_min() const -> int;
     auto extra_radiation_max() const -> int;
@@ -97,6 +98,10 @@ public:
     auto decays_on_actualize() const -> bool { return type.obj().accelerated_decay; }
 
     auto field_effects() const -> std::vector<field_effect>;
+    auto is_moppable() const -> bool { return type.obj().moppable; }
+
+    /// Conducted electricity fades in place instead of starting another pulse.
+    bool electricity_conducted = false;
 
 private:
     // The field identifier.

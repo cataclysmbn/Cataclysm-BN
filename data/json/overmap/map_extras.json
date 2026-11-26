@@ -13,6 +13,7 @@
     "looks_like": "crater",
     "description": "There is a crater here.",
     "generator": { "generator_method": "map_extra_function", "generator_id": "mx_crater" },
+    "path_cost": { "on_foot": 20, "land_vehicle": -1 },
     "sym": "o",
     "color": "red",
     "autonote": true
@@ -47,6 +48,7 @@
     "looks_like": "jackhammer",
     "description": "Some road work was being done here.",
     "generator": { "generator_method": "map_extra_function", "generator_id": "mx_roadworks" },
+    "path_cost": { "on_foot": 0, "land_vehicle": 30 },
     "sym": "X",
     "color": "yellow",
     "autonote": true
@@ -58,6 +60,7 @@
     "looks_like": "wheel",
     "description": "A car crash ended in violence here.",
     "generator": { "generator_method": "map_extra_function", "generator_id": "mx_mayhem" },
+    "path_cost": { "on_foot": 50, "land_vehicle": 50 },
     "sym": "M",
     "color": "light_red",
     "autonote": true
@@ -69,6 +72,7 @@
     "looks_like": "f_sandbag_wall",
     "description": "This road is blocked by military.",
     "generator": { "generator_method": "map_extra_function", "generator_id": "mx_roadblock" },
+    "path_cost": { "on_foot": 100, "land_vehicle": 100 },
     "sym": "X",
     "color": "red",
     "autonote": true
@@ -80,6 +84,7 @@
     "looks_like": "t_fence_barbed",
     "description": "This road is blocked by bandits.",
     "generator": { "generator_method": "map_extra_function", "generator_id": "mx_bandits_block" },
+    "path_cost": { "on_foot": 100, "land_vehicle": 100 },
     "sym": "X",
     "color": "red",
     "autonote": true
@@ -91,6 +96,7 @@
     "looks_like": "landmine",
     "description": "Mines are scattered here.",
     "generator": { "generator_method": "map_extra_function", "generator_id": "mx_minefield" },
+    "path_cost": { "on_foot": -1, "land_vehicle": -1 },
     "sym": "M",
     "color": "red",
     "autonote": true
@@ -122,10 +128,10 @@
     "type": "map_extra",
     "name": { "ctxt": "map extra", "str": "Dead Survivors" },
     "looks_like": "mon_zombie_survivor_elite",
-    "description": "Several corpses of survivors are here.",
+    "description": "Several corpses of survivors are here, along with whatever killed them.",
     "generator": { "generator_method": "update_mapgen", "generator_id": "mx_survivor" },
     "sym": "s",
-    "color": "light_red",
+    "color": "red",
     "autonote": true
   },
   {
@@ -168,6 +174,7 @@
     "looks_like": "t_dimensional_portal",
     "description": "A portal is here.",
     "generator": { "generator_method": "map_extra_function", "generator_id": "mx_portal" },
+    "path_cost": { "on_foot": 50, "land_vehicle": 50 },
     "sym": "P",
     "color": "magenta",
     "autonote": true
@@ -179,6 +186,7 @@
     "looks_like": "t_dimensional_portal",
     "description": "A portal is here.",
     "generator": { "generator_method": "map_extra_function", "generator_id": "mx_portal_in" },
+    "path_cost": { "on_foot": 50, "land_vehicle": 50 },
     "sym": "P",
     "color": "magenta",
     "autonote": true
@@ -190,6 +198,7 @@
     "looks_like": "mon_spider_web",
     "description": "A spider nest is here.",
     "generator": { "generator_method": "map_extra_function", "generator_id": "mx_house_spider" },
+    "path_cost": { "on_foot": 100, "land_vehicle": 30 },
     "sym": "S",
     "color": "yellow",
     "autonote": true
@@ -201,6 +210,7 @@
     "looks_like": "mon_wasp",
     "description": "A wasp nest is here.",
     "generator": { "generator_method": "map_extra_function", "generator_id": "mx_house_wasp" },
+    "path_cost": { "on_foot": 100, "land_vehicle": 100 },
     "sym": "W",
     "color": "yellow",
     "autonote": true
@@ -212,6 +222,7 @@
     "looks_like": "mon_spider_web",
     "description": "This area is covered with webs.  Probably spiders are nearby.",
     "generator": { "generator_method": "map_extra_function", "generator_id": "mx_spider" },
+    "path_cost": { "on_foot": 100, "land_vehicle": 50 },
     "sym": "S",
     "color": "yellow",
     "autonote": true
@@ -223,6 +234,7 @@
     "looks_like": "mon_shia",
     "description": "The cannibal is nearby.",
     "generator": { "generator_method": "map_extra_function", "generator_id": "mx_shia" },
+    "path_cost": { "on_foot": 100, "land_vehicle": 50 },
     "sym": "c",
     "color": "red",
     "autonote": true
@@ -234,6 +246,7 @@
     "looks_like": "mon_jabberwock",
     "description": "Something big and nasty is nearby.",
     "generator": { "generator_method": "map_extra_function", "generator_id": "mx_jabberwock" },
+    "path_cost": { "on_foot": 100, "land_vehicle": 50 },
     "sym": "J",
     "color": "red",
     "autonote": true
@@ -289,6 +302,7 @@
     "looks_like": "pond_field",
     "description": "A small pond is here.",
     "generator": { "generator_method": "map_extra_function", "generator_id": "mx_pond" },
+    "path_cost": { "on_foot": 10, "land_vehicle": 40 },
     "sym": "p",
     "color": "blue",
     "autonote": true
@@ -414,6 +428,7 @@
     "looks_like": "mon_wasp",
     "description": "A wasp nest.",
     "generator": { "generator_method": "update_mapgen", "generator_id": "mx_nest_wasp" },
+    "path_cost": { "on_foot": 100, "land_vehicle": 100 },
     "sym": "W",
     "color": "yellow",
     "autonote": true
@@ -425,6 +440,7 @@
     "looks_like": "mon_dermatik",
     "description": "A dermatik nest.",
     "generator": { "generator_method": "update_mapgen", "generator_id": "mx_nest_dermatik" },
+    "path_cost": { "on_foot": 100, "land_vehicle": 100 },
     "sym": "D",
     "color": "brown",
     "autonote": true
@@ -444,16 +460,21 @@
     "looks_like": "wheel_armor",
     "description": "A vehicle surrounded by zombies.",
     "generator": { "generator_method": "update_mapgen", "generator_id": "mx_surrounded_vehicle" },
+    "path_cost": { "on_foot": 100, "land_vehicle": 30 },
     "sym": "S",
-    "color": "light_red",
+    "color": "yellow",
     "autonote": true
   },
   {
     "id": "mx_swat_truck",
     "type": "map_extra",
     "name": "SWAT Truck",
-    "description": "A SWAT truck.",
-    "generator": { "generator_method": "update_mapgen", "generator_id": "mx_swat_truck" }
+    "looks_like": "badge_swat",
+    "description": "A SWAT truck stopped here.  Something's moving nearby…",
+    "generator": { "generator_method": "update_mapgen", "generator_id": "mx_swat_truck" },
+    "sym": "S",
+    "color": "light_blue",
+    "autonote": true
   },
   {
     "id": "mx_mass_grave",
@@ -626,8 +647,9 @@
     "type": "map_extra",
     "name": { "ctxt": "map extra", "str": "Corpses" },
     "looks_like": "corpse_bloody",
-    "description": "Several corpses are here, along with whatever killed them...",
+    "description": "Several corpses are here, along with whatever killed them…",
     "generator": { "generator_method": "update_mapgen", "generator_id": "mx_crawler" },
+    "path_cost": { "on_foot": 100, "land_vehicle": 100 },
     "sym": "C",
     "color": "red",
     "autonote": true

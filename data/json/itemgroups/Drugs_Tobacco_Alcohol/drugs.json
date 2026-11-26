@@ -41,7 +41,7 @@
     "id": "drugs_misc",
     "type": "item_group",
     "//": "Drugs not contained within any other category",
-    "items": [ [ "bfipowder", 100 ], [ "dayquil", 50 ], [ "nyquil", 50 ], [ "vaccine_shot", 50 ] ]
+    "items": [ [ "bfipowder", 100 ], [ "dayquil", 50 ], [ "nyquil", 50 ], [ "vaccine_shot", 50 ], [ "lactaid", 50 ] ]
   },
   {
     "id": "drugs_pharmacy",
@@ -94,7 +94,7 @@
     "subtype": "distribution",
     "//": "Healing items appropriate for soldiers and other paramilitary forces",
     "entries": [
-      { "item": "1st_aid", "prob": 40 },
+      { "item": "1st_aid_ifak", "prob": 40 },
       { "item": "1st_aid_deluxe", "prob": 10 },
       { "item": "antibiotics", "prob": 20 },
       { "item": "bandages", "prob": 100 },
@@ -169,6 +169,7 @@
       [ "prussian_blue", 5 ],
       [ "dayquil", 70 ],
       [ "nyquil", 70 ],
+      [ "lactaid", 35 ],
       [ "disinfectant", 35 ],
       [ "vaccine_shot", 10 ],
       {
@@ -226,7 +227,8 @@
       [ "sizzurp", 4 ],
       [ "syringe", 8 ],
       [ "crack", 8 ],
-      [ "lsd", 10 ]
+      [ "lsd", 10 ],
+      { "item": "dry_mushroom", "prob": 10, "count": [ 2, 5 ], "custom-flags": [ "HIDDEN_HALLU" ] }
     ]
   },
   {
@@ -242,6 +244,7 @@
       [ "seed_tobacco", 5 ],
       [ "cigar", 10 ],
       [ "handrolled_cig", 10 ],
+      { "item": "dry_mushroom", "prob": 3, "custom-flags": [ "HIDDEN_HALLU" ] },
       [ "ecig", 20 ],
       [ "dab_pen_disposable", 20 ],
       { "item": "light_battery_cell", "charges": 100, "container-item": "dab_pen", "prob": 20 },

@@ -1,208 +1,73 @@
-# JSON 스타일 가이드
+---
+title: JSON 스타일 가이드
+sidebar:
+  badge:
+    text: 불안정
+    variant: caution
+---
 
-이 문서는 Cataclysm: Bright Nights JSON 파일의 스타일 가이드라인을 설명합니다.
+[C++ 코드 스타일](../../../dev/explanation/code_style.md)과 마찬가지로 JSON 스타일 정책은 개발에 불필요한 혼란을 주지 않도록 JSON을 추가하거나 편집할 때, 그렇지 않으면 비교적 작은 단위로 JSON을 업데이트하는 것입니다.
 
-## 형식
+## 자체 JSON 포매터를 사용하는 이유
 
-### 들여쓰기
+DDA는 자체 JSON 파서를 작성했습니다. 파서는 `tools/format/format.cpp`에 있으며 `src/json.cpp`을 이용해 JSON을 파싱하고 출력합니다.
 
-- **2칸 공백** 사용 (탭 아님)
-- 일관된 들여쓰기 레벨 유지
+이 방식은 기존 JSON 포매터(예: `deno fmt`)를 사용할 수 없게 하므로 최적의 해법은 아니지만, [이전 시도](https://github.com/cataclysmbn/Cataclysm-BN/pull/3118)에서 단점이 장점보다 큰 것으로 확인되었습니다.
+
+## JSON 예시
+
+다음 예시는 대부분의 스타일 기능을 보여 줍니다.
 
 ```json
-{
-  "type": "item",
-  "id": "my_item",
-  "name": {
-    "str": "my item"
+[
+  {
+    "type": "foo",
+    "id": "example",
+    "short_array": [1, 2, 3, 4, 5],
+    "short_object": {
+      "item_a": "a",
+      "item_b": "b"
+    },
+    "long_array": [
+      "a really long string to illustrate line wrapping, ",
+      "which occurs if the line is longer than 120 characters"
+    ],
+    "nested_array": [
+      [
+        ["item1", "value1"],
+        ["item2", "value2"],
+        ["item3", "value3"],
+        ["item4", "value4"],
+        ["item5", "value5"],
+        ["item6", "value6"]
+      ]
+    ]
   }
-}
+]
 ```
 
-### 중괄호 및 대괄호
+들여쓰기는 2칸입니다. 쉼표와 콜론을 제외한 모든 JSON 구분자는 공백(스페이스 또는 줄바꿈)으로 둘러쌉니다. 쉼표와 콜론 뒤에는 공백이 옵니다. 객체 항목은 항상 줄바꿈으로 구분합니다. 배열 항목은 들여쓰기를 포함한 결과가 120자를 넘는 경우 줄바꿈으로 구분합니다. 여는 괄호, 닫는 괄호 또는 항목 뒤에 줄바꿈이 옵니다.
 
-- 여는 중괄호/대괄호는 같은 줄에
-- 닫는 중괄호/대괄호는 새 줄에
+## 포매터
 
-```json
-{
-  "array": [
-    "item1",
-    "item2"
-  ],
-  "object": {
-    "key": "value"
-  }
-}
-```
+포매터는 CMake의 `style-json` 타깃, 직접 실행하는 `tools/format/json_formatter.cgi`, 또는 CGI <http://dev.narc.ro/cataclysm/format.html>로 호출할 수 있습니다.
 
-## 명명 규칙
+Visual Studio 솔루션을 사용한다면 프로젝트의 모든 JSON을 포맷하도록 Visual Studio 명령을 설정할 수 있습니다.
 
-### ID
+1. 전체 솔루션 또는 JsonFormatter 프로젝트만 빌드하여 `tools/format/json_formatter.exe` 바이너리를 만듭니다.
+2. 외부 도구 항목(`Tools` > `External Tools..` > `Add`)을 추가하고 다음처럼 설정합니다.
+   - 제목: `Lint All JSON`
+   - 명령: `C:\windows\system32\windowspowershell\v1.0\powershell.exe`
+   - 인수: `-file $(SolutionDir)\style-json.ps1`
+   - 초기 디렉토리: `$(SolutionDir)`
+   - 출력 창 사용: 선택
 
-- **소문자** 사용
-- 단어는 **밑줄**로 구분
-- 설명적이고 고유해야 함
+이제 `Tools` > `Lint All JSON`에서 명령을 실행하고 출력 창에서 결과를 볼 수 있습니다. `Tools` > `Options` > `Environment` > `Keyboard`에서 `Tools.ExternalCommand`가 포함된 명령을 검색하면 목록에서 해당 위치에 맞는 명령(예: 맨 위라면 `Tools.ExternalCommand1`)을 선택해 키 바인딩을 지정할 수도 있습니다.
 
-```json
-{
-  "id": "my_cool_item", // ✓ 좋음
-  "id": "MyCoolItem", // ✗ 나쁨
-  "id": "item1" // ✗ 설명적이지 않음
-}
-```
+### 단일 파일
 
-### 필드
+`json_formatter.exe path/to/file.json`을 실행하면 JSON 파일 하나를 포맷할 수 있습니다. `needs linting`이 출력되면 파일이 포맷되지 않았다는 뜻이며 이제 포맷된 상태가 됩니다. `json_formatter` 아이콘에 JSON 파일을 드래그 앤 드롭해도 됩니다.
 
-- 소문자 사용
-- 밑줄로 구분된 스네이크 케이스
-- 기존 필드명과 일관성 유지
+### *nix
 
-```json
-{
-  "weight": "1 kg",
-  "volume": "250 ml",
-  "longest_side": "30 cm"
-}
-```
-
-## 순서
-
-필드는 다음 순서로 배치:
-
-1. `type`
-2. `id`
-3. `name` / `description`
-4. 기타 필수 필드
-5. 선택적 필드 (알파벳순)
-
-```json
-{
-  "type": "TOOL",
-  "id": "screwdriver",
-  "name": "screwdriver",
-  "description": "A tool for screws.",
-  "weight": "200 g",
-  "volume": "100 ml",
-  "price": "5 USD",
-  "material": ["steel"],
-  "symbol": ";",
-  "color": "light_gray"
-}
-```
-
-## 문자열
-
-### 번역 가능한 문자열
-
-- 사용자에게 표시되는 텍스트는 번역 가능해야 함
-- 간단한 문자열에는 문자열 사용
-- 복수형이 필요하면 객체 사용
-
-```json
-{
-  "name": "apple", // 단수만
-  "name": { // 단수/복수
-    "str": "apple",
-    "str_pl": "apples"
-  }
-}
-```
-
-### 설명
-
-- 명확하고 간결하게 작성
-- 완전한 문장 사용
-- 마침표로 끝내기
-
-```json
-{
-  "description": "A fresh red apple.  Delicious and nutritious."
-}
-```
-
-## 배열
-
-### 단일 항목
-
-- 대괄호 사용
-
-```json
-{
-  "material": ["steel"]
-}
-```
-
-### 여러 항목
-
-- 각 항목을 새 줄에
-- 마지막 항목 뒤에 쉼표 없음
-
-```json
-{
-  "material": [
-    "steel",
-    "plastic",
-    "wood"
-  ]
-}
-```
-
-## 주석
-
-JSON은 공식적으로 주석을 지원하지 않지만, 게임은 `//` 주석을 허용합니다:
-
-```json
-{
-  "type": "item",
-  "id": "my_item",
-  // 이것은 주석입니다
-  "name": "my item"
-}
-```
-
-**참고**: 주석은 다음과 같은 경우에만 사용:
-
-- 복잡한 로직 설명
-- 임시 노트 (나중에 제거)
-- 디버깅 정보
-
-## 단위
-
-명시적 단위 사용:
-
-```json
-{
-  "weight": "1 kg", // ✓ 명시적
-  "weight": 1000, // ✗ 모호함
-  "volume": "250 ml", // ✓ 명시적
-  "volume": "0.25 L" // ✓ 또한 유효함
-}
-```
-
-## 검증
-
-변경 전에 항상 JSON 유효성 검사:
-
-```bash
-# JSON 파일 검증
-./build-scripts/lint-json.sh
-
-# JSON 형식 지정
-just fmt-json
-# 또는
-build-scripts/format-json.sh
-```
-
-## 모범 사례
-
-1. **일관성**: 기존 파일의 스타일 따르기
-2. **가독성**: 코드를 명확하고 이해하기 쉽게 작성
-3. **검증**: 커밋 전에 항상 유효성 검사
-4. **문서화**: 복잡한 정의에 주석 추가
-5. **테스트**: 게임 내에서 변경사항 테스트
-
-## 관련 문서
-
-- [파일 설명](file_description.md)
-- [로딩 순서](loading_order.md)
+저장소의 기본 디렉토리에서 `just fmt-json`를 실행합니다. `just`를 사용할 수 없다면 대신 `build-scripts/format-json.sh`를 실행합니다.

@@ -1203,6 +1203,20 @@ void complete_craft( Character &who, item &craft )
             params["dehydrated_result"] = is_dehydrated;
             params["crafting_menu"] = false;
         } );
+        if( making.lua_callbacks ) {
+            making.lua_callbacks->call_on_craft(
+            lua_recipe_actor::RecipeCraftResult{
+                who,
+                craft,
+                food_contained,
+                making,
+                batch_size,
+                should_heat,
+                is_dehydrated,
+            }
+            );
+        }
+
         // Don't store components for things that ignores components (e.g wow 'conjured bread')
         if( ignore_component ) {
             food_contained.set_flag( flag_NUTRIENT_OVERRIDE );

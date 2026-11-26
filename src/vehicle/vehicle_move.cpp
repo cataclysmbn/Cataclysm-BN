@@ -504,6 +504,7 @@ auto vehicle::part_collision(const vehicle_part_collision_options& options) -> v
     Character& player_character = get_player_character();
     const bool pl_ctrl = player_in_control(player_character);
     Creature* critter = g->critter_at(p, true);
+    if (critter != nullptr && critter->has_flag(MF_NO_VEHICLE_COLLISION)) { critter = nullptr; }
     if (critter == options.ignored_critter) { critter = nullptr; }
     player* ph = dynamic_cast<player*>(critter);
 

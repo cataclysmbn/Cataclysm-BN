@@ -142,6 +142,12 @@ auto field::add_field(
     }
     auto it = _field_type_list.find(field_type_to_add);
     if (it != _field_type_list.end()) {
+        if (field_type_to_add == fd_electricity && new_age <= 0_turns
+            && it->second.electricity_conducted) {
+            // A fresh external discharge can energize the puddle again.
+            it->second.electricity_conducted = false;
+            it->second.set_field_age(new_age);
+        }
         // Most fields stack intensities, but some add duration instead
         if (it->first->stacking_type == fields::stacking_type::intensity) {
             it->second.set_field_intensity(it->second.get_field_intensity() + new_intensity);

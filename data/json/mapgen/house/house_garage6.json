@@ -138,7 +138,7 @@
       "nested": {
         "1": {
           "chunks": [
-            [ "null", 70 ],
+            [ "null", 40 ],
             [ "room_6x6_guns_N", 10 ],
             [ "room_6x6_guns_E", 10 ],
             [ "room_6x6_office_E", 40 ],
@@ -149,7 +149,7 @@
         },
         "2": {
           "chunks": [
-            [ "null", 70 ],
+            [ "null", 40 ],
             [ "room_6x6_woodworker", 10 ],
             [ "room_6x6_guns_S", 5 ],
             [ "room_6x6_brewer_S", 10 ],
@@ -159,7 +159,7 @@
         "3": { "chunks": [ [ "null", 95 ], [ "7x7_tent_indoors", 5 ], [ "room_7x7_recroom_S", 20 ] ] },
         "4": {
           "chunks": [
-            [ "null", 80 ],
+            [ "null", 30 ],
             [ "5x5_holdout_N", 2 ],
             [ "5x5_holdout_W", 2 ],
             [ "5x5_gym_N", 20 ],

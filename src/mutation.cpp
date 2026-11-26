@@ -53,10 +53,7 @@ static const efftype_id effect_stunned( "stunned" );
 
 static const trait_id trait_CARNIVORE( "CARNIVORE" );
 static const trait_id trait_CHAOTIC_BAD( "CHAOTIC_BAD" );
-static const trait_id trait_DEX_ALPHA( "DEX_ALPHA" );
 static const trait_id trait_GLASSJAW( "GLASSJAW" );
-static const trait_id trait_INT_ALPHA( "INT_ALPHA" );
-static const trait_id trait_INT_SLIME( "INT_SLIME" );
 static const trait_id trait_M_BLOOM( "M_BLOOM" );
 static const trait_id trait_M_BLOSSOMS( "M_BLOSSOMS" );
 static const trait_id trait_M_FERTILE( "M_FERTILE" );
@@ -65,12 +62,10 @@ static const trait_id trait_M_SPORES( "M_SPORES" );
 static const trait_id trait_MUTAGEN_AVOID( "MUTAGEN_AVOID" );
 static const trait_id trait_NAUSEA( "NAUSEA" );
 static const trait_id trait_NOPAIN( "NOPAIN" );
-static const trait_id trait_PER_ALPHA( "PER_ALPHA" );
 static const trait_id trait_ROBUST( "ROBUST" );
 static const trait_id trait_ROOTS2( "ROOTS2" );
 static const trait_id trait_ROOTS3( "ROOTS3" );
 static const trait_id trait_SLIMESPAWNER( "SLIMESPAWNER" );
-static const trait_id trait_STR_ALPHA( "STR_ALPHA" );
 
 static const trait_flag_str_id flag_MALE_EXCLUSIVE( "MALE_EXCLUSIVE" );
 static const trait_flag_str_id flag_FEMALE_EXCLUSIVE( "FEMALE_EXCLUSIVE" );
@@ -312,31 +307,6 @@ void Character::mutation_effect( const trait_id &mut )
 {
     if( mut == trait_GLASSJAW ) {
         recalc_hp();
-
-    } else if( mut == trait_STR_ALPHA ) {
-        if( str_max < 16 ) {
-            str_max = 8 + str_max / 2;
-        }
-        apply_mods( mut, true );
-        recalc_hp();
-    } else if( mut == trait_DEX_ALPHA ) {
-        if( dex_max < 16 ) {
-            dex_max = 8 + dex_max / 2;
-        }
-        apply_mods( mut, true );
-    } else if( mut == trait_INT_ALPHA ) {
-        if( int_max < 16 ) {
-            int_max = 8 + int_max / 2;
-        }
-        apply_mods( mut, true );
-    } else if( mut == trait_INT_SLIME ) {
-        int_max *= 2; // Now, can you keep it? :-)
-
-    } else if( mut == trait_PER_ALPHA ) {
-        if( per_max < 16 ) {
-            per_max = 8 + per_max / 2;
-        }
-        apply_mods( mut, true );
     } else {
         apply_mods( mut, true );
     }
@@ -396,31 +366,6 @@ void Character::mutation_loss_effect( const trait_id &mut )
 {
     if( mut == trait_GLASSJAW ) {
         recalc_hp();
-
-    } else if( mut == trait_STR_ALPHA ) {
-        apply_mods( mut, false );
-        if( str_max < 16 ) {
-            str_max = 2 * ( str_max - 8 );
-        }
-        recalc_hp();
-    } else if( mut == trait_DEX_ALPHA ) {
-        apply_mods( mut, false );
-        if( dex_max < 16 ) {
-            dex_max = 2 * ( dex_max - 8 );
-        }
-    } else if( mut == trait_INT_ALPHA ) {
-        apply_mods( mut, false );
-        if( int_max < 16 ) {
-            int_max = 2 * ( int_max - 8 );
-        }
-    } else if( mut == trait_INT_SLIME ) {
-        int_max /= 2; // In case you have a freak accident with the debug menu ;-)
-
-    } else if( mut == trait_PER_ALPHA ) {
-        apply_mods( mut, false );
-        if( per_max < 16 ) {
-            per_max = 2 * ( per_max - 8 );
-        }
     } else {
         apply_mods( mut, false );
     }
@@ -1130,6 +1075,18 @@ void Character::old_mutate()
     }
 }
 
+void Character::mutate_category( const mutation_category_id &cat, const bool cross_thresh )
+{
+    if( !cross_thresh ) {mutate_category( cat ); return;}
+
+    mutate_category( cat );
+    const auto cat_obj = &cat.obj();
+    if( !cat_obj->threshold_muts.empty() ) {
+        const auto max_tier = cat_obj->threshold_muts.size() - 1;
+        test_crossing_threshold( *this, *cat_obj, max_tier );
+    }
+}
+
 void Character::mutate_category( const mutation_category_id &cat )
 {
     // Hacky ID comparison is better than separate hardcoded branch used before
@@ -1711,14 +1668,7 @@ void test_crossing_threshold( Character &guy, const mutation_category_trait &m_c
     if( guy.thresh_tier >= tier ) {
         // Check for the incredibly stupid scenario where the player somehow has a tier but not any actual thresholds
         // Mostly an issue with debug quit and similar scenarios
-        bool has_thresh = false;
-        for( const trait_id &mut : guy.get_mutations() ) {
-            if( mut->threshold ) {
-                has_thresh = true;
-                break;
-            }
-        }
-        if( has_thresh ) {
+        if( guy.crossed_threshold() ) {
             return;
         } else {
             // The character does not have a threshold mutation but has a tier greater than 0
@@ -1745,14 +1695,7 @@ void test_crossing_threshold( Character &guy, const mutation_category_trait &m_c
     if( ( guy.thresh_tier > 0 ) && ( guy.thresh_category != mutation_category ) ) {
         // Check for the incredibly stupid scenario where the player somehow has a tier but not any actual thresholds
         // Mostly an issue with debug quit and similar scenarios
-        bool has_thresh = false;
-        for( const trait_id &mut : guy.get_mutations() ) {
-            if( mut->threshold ) {
-                has_thresh = true;
-                break;
-            }
-        }
-        if( has_thresh ) {
+        if( guy.crossed_threshold() ) {
             return;
         } else {
             // The character does not have a threshold mutation but has a tier greater than 0
@@ -1939,4 +1882,13 @@ std::string Character::visible_mutations( const int visibility_cap ) const
         return std::string();
     } );
     return trait_str;
+}
+
+std::vector<trait_id> mutation_category_trait::get_mutations( ) const
+{
+    auto it = mutations_category.find( id );
+    if( it != mutations_category.end() ) {
+        return it->second;
+    }
+    return std::vector<trait_id>();
 }

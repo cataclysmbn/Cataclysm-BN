@@ -27,6 +27,8 @@
 #include "creature.h"
 #include "creature_tracker.h"
 #include "debug.h"
+#include "digital_media.h"
+#include "digital_recipes.h"
 #include "drop_token.h"
 #include "effect.h"
 #include "enum_conversions.h"
@@ -705,6 +707,7 @@ void Character::load( const JsonObject &data )
     recalculate_size();
 
     data.read( "my_bionics", *my_bionics );
+    data.read( "my_perks", perks );
 
     for( auto &w : worn ) {
         w->on_takeoff( *this );
@@ -791,13 +794,12 @@ void Character::load( const JsonObject &data )
     recalc_sight_limits();
     reset_encumbrance();
 
-    assign( data, "power_level", power_level, false, 0_kJ );
-    assign( data, "max_power_level", max_power_level, false, 0_kJ );
+    assign( data, "power_level", power_level, false );
+    assign( data, "max_power_level", max_power_level, false );
 
     // Bionic power should not be negative!
-    if( power_level < 0_J ) {
-        power_level = 0_J;
-    }
+    max_power_level = std::max( max_power_level, 0_J );
+    power_level = std::clamp( power_level, 0_J, max_power_level );
 
     JsonArray overmap_time_array = data.get_array( "overmap_time" );
     overmap_time.clear();
@@ -906,6 +908,7 @@ void Character::store( JsonOut &json ) const
     json.member( "martial_arts_data", martial_arts_data );
     // "Fracking Toasters" - Saul Tigh, toaster
     json.member( "my_bionics", *my_bionics );
+    json.member( "my_perks", perks );
 
     json.member_as_string( "move_mode",  move_mode );
 
@@ -2172,6 +2175,17 @@ auto monster::load( const JsonObject &data,
     data.read( "mounted_player_id", mounted_player_id );
     data.read( "path", path );
     data.read( "monster_flags", monster_flags );
+    if( type->pet_training && training_level > 0 ) {
+        for( const auto &lf : type->pet_training->level_flags ) {
+            if( lf.level <= training_level ) {
+                for( const m_flag f : lf.flags ) {
+                    if( !has_flag( f ) ) {
+                        monster_flags.insert( f );
+                    }
+                }
+            }
+        }
+    }
 }
 
 /*
@@ -2935,6 +2949,16 @@ void item::deserialize( JsonIn &jsin )
         kills = std::make_unique<kill_tracker>( false );
         data.read( "item_kill_tracker", kills );
     }
+
+    if( has_flag( flag_id( "GENOME_DRIVE" ) ) && !is_digital_file( *this ) ) {
+        migrate_legacy_digital_media( *this );
+    }
+    for( const auto &[key, value] : type->item_vars ) {
+        if( key.starts_with( "digital_" ) && !has_var( key ) ) {
+            set_var( key, value );
+        }
+    }
+    initialize_digital_recipe_file( *this );
 
     if( data.has_member( "id" ) ) {
         safe_reference<item>::id_type id;
@@ -4493,6 +4517,11 @@ void submap::store( JsonOut &jsout ) const
                 jsout.write( cur.get_field_type().id() );
                 jsout.write( cur.get_field_intensity() );
                 jsout.write( cur.get_field_age() );
+                if( cur.electricity_conducted ) {
+                    jsout.start_object();
+                    jsout.member( "electricity_conducted", true );
+                    jsout.end_object();
+                }
             }
             jsout.end_array();
         }
@@ -4758,6 +4787,11 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
                     field_cache.push_back( point_sm_ms( i, j ) );
                 }
                 fld[i][j].add_field( ft, intensity, time_duration::from_turns( age ) );
+                if( jsin.test_object() ) {
+                    auto metadata = jsin.get_object();
+                    fld[i][j].find_field( ft )->electricity_conducted =
+                        metadata.get_bool( "electricity_conducted", false );
+                }
             }
         }
     } else if( member_name == "graffiti" ) {

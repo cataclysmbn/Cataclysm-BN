@@ -23,6 +23,11 @@ on:
         required: false
         type: string
         default: ""
+      shader-artifact:
+        description: "Name of a generated-shaders artifact that the caller already uploaded in this run (empty generates one)"
+        required: false
+        type: string
+        default: ""
       matrix-json:
         description: "Build matrix include entries as JSON"
         required: false
@@ -30,8 +35,8 @@ on:
         default: |
           [
             { "name": "Windows MSVC", "platform": "windows", "artifact": "windows-tiles-x64-msvc", "os": "windows-2022", "arch": "x64", "tiles": true, "sound": true, "ext": "zip", "content-type": "application/zip" },
-            { "name": "Linux Tiles", "platform": "linux", "artifact": "linux-tiles-x64", "os": "ubuntu-latest", "tiles": true, "sound": true, "ext": "tar.gz", "content-type": "application/gzip" },
-            { "name": "Linux Curses", "platform": "linux", "artifact": "linux-curses-x64", "os": "ubuntu-latest", "tiles": false, "sound": false, "ext": "tar.gz", "content-type": "application/gzip" },
+            { "name": "Linux Tiles", "platform": "linux", "artifact": "linux-tiles-x64", "os": "ubuntu-24.04", "tiles": true, "sound": true, "ext": "tar.gz", "content-type": "application/gzip" },
+            { "name": "Linux Curses", "platform": "linux", "artifact": "linux-curses-x64", "os": "ubuntu-24.04", "tiles": false, "sound": false, "ext": "tar.gz", "content-type": "application/gzip" },
             { "name": "macOS Curses", "platform": "macos", "artifact": "osx-curses-x64", "os": "macos-15-intel", "preset": "osx-curses-x64-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
             { "name": "macOS Tiles", "platform": "macos", "artifact": "osx-tiles-x64", "os": "macos-15-intel", "preset": "osx-tiles-x64-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
             { "name": "macOS Curses ARM", "platform": "macos", "artifact": "osx-curses-arm", "os": "macos-15", "preset": "osx-curses-arm-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
@@ -60,10 +65,15 @@ on:
         type: boolean
         default: true
       run-tests:
-        description: "Build and run tests when supported by the selected platform"
+        description: "Build tests when supported by the selected platform"
         required: false
         type: boolean
         default: false
+      windows-test-groups:
+        description: "Run Windows tests in one job per group, as JSON: [\"1/3\", \"2/3\", \"3/3\"]. Needs run-tests and a Windows-only matrix-json."
+        required: false
+        type: string
+        default: "[]"
       android-localize:
         description: "Build Android assets with localization"
         required: false
@@ -102,32 +112,32 @@ env:
 jobs:
   shader-artifacts:
     name: Generate shader artifacts
+    if: inputs.shader-artifact == ''
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
+          persist-credentials: false
           ref: ${{ inputs.checkout-ref }}
 
-      - name: Install shadercross dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y autoconf autoconf-archive automake libtool libltdl-dev
-
-      - name: Install shadercross
-        run: bash build-scripts/install-shadercross-vcpkg.sh
+      - name: Build shadercross
+        uses: ./.github/actions/build-shadercross
 
       - name: Generate shaders
         run: bash build-scripts/generate-shaders.sh
 
       - name: Upload generated shaders
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
-          name: generated-shaders
+          # A caller can use this workflow more than once in one run.
+          name: generated-shaders-${{ fromJSON(inputs.matrix-json)[0].artifact }}
           path: data/shaders/
           if-no-files-found: error
 
   builds:
     needs: shader-artifacts
+    # Without this condition, GitHub skips this job when the caller gives the shaders and skips shader-artifacts.
+    if: ${{ !cancelled() && needs.shader-artifacts.result != 'failure' }}
     strategy:
       fail-fast: false
       matrix:
@@ -136,25 +146,25 @@ jobs:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
+          persist-credentials: false
           ref: ${{ inputs.checkout-ref }}
 
       - name: Download generated shaders
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
-          name: generated-shaders
+          name: ${{ inputs.shader-artifact || format('generated-shaders-{0}', fromJSON(inputs.matrix-json)[0].artifact) }}
           path: data/shaders
 
       - name: Download translation artifacts
         if: inputs.download-translations
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: translations
           path: .
 
-      - uses: denoland/setup-deno@v2
-        with: { cache: true }
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
 
       - name: Create VERSION.TXT
         shell: bash
@@ -166,13 +176,19 @@ jobs:
           commit url: https://github.com/${{ github.repository }}/commit/${{ github.sha }}
           EOL
 
+      - name: Download loading screens
+        if: matrix.tiles == true
+        continue-on-error: ${{ inputs.mode == 'ci' }}
+        shell: bash
+        run: bash build-scripts/fetch-loading-screens.sh
+
       - name: Bundle CDDA tilesets
         if: matrix.tiles == true && inputs.bundle-tilesets
         env:
           GH_TOKEN: ${{ github.token }}
           CDDA_TILESETS_REPO: I-am-Erk/CDDA-Tilesets
-          CDDA_TILESETS_RELEASE: "2026-05-03"
-          CDDA_TILESETS: UltimateCataclysm ChibiUltica
+          CDDA_TILESETS_RELEASE: "2026-03-29"
+          CDDA_TILESETS: UltimateCataclysm ChibiUltica Ultica_iso
         shell: bash
         run: |
           set -euo pipefail
@@ -196,7 +212,7 @@ jobs:
 
           Source repository: https://github.com/I-am-Erk/CDDA-Tilesets
           Source release: https://github.com/I-am-Erk/CDDA-Tilesets/releases/tag/2026-05-03
-          Bundled assets: UltimateCataclysm.zip, ChibiUltica.zip
+          Bundled assets: UltimateCataclysm.zip, ChibiUltica.zip, Ultica_iso.zip
 
           The CDDA-Tilesets repository states that Cataclysm: Dark Days Ahead and
           the Ultimate Cataclysm tileset are volunteer contributions under the
@@ -212,13 +228,13 @@ jobs:
       # Windows MSVC setup
       - name: Setup MSVC environment
         if: runner.os == 'Windows'
-        uses: ilammy/msvc-dev-cmd@v1
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1
         with:
           arch: x64
 
       - name: Setup msys2 (windows msvc)
         if: runner.os == 'Windows'
-        uses: msys2/setup-msys2@v2
+        uses: msys2/setup-msys2@3c51bf698df1e37b2261f53cb67797b97761185c # v2
         with:
           msystem: mingw64
           install: gettext
@@ -230,29 +246,34 @@ jobs:
 
       - name: Install stable CMake
         if: runner.os == 'Windows'
-        uses: lukka/get-cmake@v3.31.6
+        uses: lukka/get-cmake@b78306120111dc2522750771cfd09ee7ca723687 # v4.3.0
+        with: { cmakeVersion: 3.31.6 }
 
-      - name: Export GitHub Actions cache environment variables
-        if: runner.os == 'Windows'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            core.exportVariable("ACTIONS_CACHE_URL", process.env.ACTIONS_CACHE_URL || "")
-            core.exportVariable("ACTIONS_RESULTS_URL", process.env.ACTIONS_RESULTS_URL || "")
-            core.exportVariable("ACTIONS_RUNTIME_TOKEN", process.env.ACTIONS_RUNTIME_TOKEN || "")
-
+      # vcpkg removed its x-gha backend. Keep binary packages in a files cache instead.
       - name: Configure vcpkg binary cache (windows msvc)
         if: runner.os == 'Windows'
+        id: vcpkg-cache-dir
         run: |
-          $mode = "readwrite"
-          if ("${{ github.event_name }}" -eq "pull_request") {
-            $mode = "read"
-          }
-          "VCPKG_BINARY_SOURCES=clear;x-gha,$mode" >> $env:GITHUB_ENV
+          $dir = "${{ runner.temp }}\vcpkg-binary-cache"
+          New-Item -ItemType Directory -Force $dir | Out-Null
+          "VCPKG_BINARY_SOURCES=clear;files,$dir,readwrite" >> $env:GITHUB_ENV
+          "dir=$dir" >> $env:GITHUB_OUTPUT
+          "image=$env:ImageVersion" >> $env:GITHUB_OUTPUT
+
+      - name: Restore vcpkg binary cache (windows msvc)
+        if: runner.os == 'Windows'
+        id: vcpkg-cache
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ steps.vcpkg-cache-dir.outputs.dir }}
+          # Runner image updates can change the MSVC version and so the vcpkg ABI hashes.
+          key: vcpkg-${{ matrix.artifact }}-${{ steps.vcpkg-cache-dir.outputs.image }}-${{ hashFiles('msvc-full-features/vcpkg.json', '.github/vcpkg_triplets/**') }}
+          # vcpkg rebuilds only the packages whose ABI hash changed, so an older image's cache still helps.
+          restore-keys: vcpkg-${{ matrix.artifact }}-
 
       - name: Install vcpkg
         if: runner.os == 'Windows'
-        uses: lukka/run-vcpkg@main
+        uses: lukka/run-vcpkg@d4e6061274d7ffb3e33694898aed9fb6ece66310 # main
         id: runvcpkg
         with:
           vcpkgDirectory: "${{ github.workspace }}/../b/vcpkg"
@@ -263,17 +284,20 @@ jobs:
 
       - name: Setup ccache (Windows)
         if: runner.os == 'Windows'
-        uses: hendrikmuhs/ccache-action@v1.2
+        # v1.2.20 installs ccache 4.9. With ccache 4.13, MSVC fails on test files that use a PCH (error C1010).
+        uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2.20
         with:
-          # Build mode changes MSVC compiler inputs.
-          key: windows-${{ matrix.artifact }}-${{ inputs.mode }}-${{ github.ref_name }}
+          # Share this cache between CI and release builds. Both compile the same objects with the Release config.
+          # Save it only from CI builds. Release builds do not compile tests, and evict-old-files would drop the test objects.
+          # Change the ccache version in the key and in "Delete old ccache copy" together with the action.
+          key: windows-ccache4.9-${{ matrix.artifact }}-${{ github.ref_name }}
           restore-keys: |
-            windows-${{ matrix.artifact }}-${{ inputs.mode }}-${{ github.ref_name }}
-            windows-${{ matrix.artifact }}-${{ inputs.mode }}-main
-            windows-${{ matrix.artifact }}-${{ inputs.mode }}-
+            windows-ccache4.9-${{ matrix.artifact }}-${{ github.ref_name }}
+            windows-ccache4.9-${{ matrix.artifact }}-main
           max-size: 3G
+          evict-old-files: job
           verbose: 2
-          save: ${{ github.event_name != 'pull_request' }}
+          save: ${{ github.event_name != 'pull_request' && inputs.mode == 'ci' }}
 
       - name: Configure ccache for MSVC
         if: runner.os == 'Windows'
@@ -294,7 +318,7 @@ jobs:
 
       - name: Setup LLVM build tools (Linux)
         if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')
-        uses: aminya/setup-cpp@v1
+        uses: aminya/setup-cpp@15a6bd8cf39030f88b5da3d203a829ec4eea4955 # v1
         with:
           compiler: llvm-${{ env.LLVM_VERSION }}
           cmake: true
@@ -323,7 +347,7 @@ jobs:
 
       - name: Setup ccache (Linux)
         if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')
-        uses: hendrikmuhs/ccache-action@v1.2
+        uses: hendrikmuhs/ccache-action@e91f31892a1d1b8c44424b1a94c0b7f52d337168 # v1.2
         with:
           key: ${{ matrix.artifact }}-${{ github.ref_name }}
           restore-keys: |
@@ -331,6 +355,9 @@ jobs:
             ${{ matrix.artifact }}-main
             ${{ matrix.artifact }}-
           max-size: 500M
+          # Release and CI builds share this key but compile different files. Evict only in CI builds,
+          # here and in the mac and android steps, so a release save keeps the CI objects.
+          evict-old-files: ${{ inputs.mode == 'ci' && 'job' || '' }}
           verbose: 2
           save: ${{ github.event_name != 'pull_request' }}
 
@@ -348,7 +375,7 @@ jobs:
 
       - name: Setup C++ build tools (mac)
         if: runner.os == 'macOS'
-        uses: aminya/setup-cpp@v1
+        uses: aminya/setup-cpp@15a6bd8cf39030f88b5da3d203a829ec4eea4955 # v1
         with:
           compiler: apple-clang
           cmake: true
@@ -357,7 +384,7 @@ jobs:
 
       - name: Setup ccache (mac)
         if: runner.os == 'macOS'
-        uses: hendrikmuhs/ccache-action@v1.2
+        uses: hendrikmuhs/ccache-action@e91f31892a1d1b8c44424b1a94c0b7f52d337168 # v1.2
         with:
           key: ${{ matrix.artifact }}-${{ github.ref_name }}
           restore-keys: |
@@ -365,17 +392,18 @@ jobs:
             ${{ matrix.artifact }}-main
             ${{ matrix.artifact }}-
           max-size: 500M
+          evict-old-files: ${{ inputs.mode == 'ci' && 'job' || '' }}
           verbose: 2
           save: ${{ github.event_name != 'pull_request' }}
 
-      - name: Install shadercross (Linux)
+      - name: Build shadercross (Linux)
         if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none') && matrix.tiles == true
-        run: bash build-scripts/install-shadercross-vcpkg.sh
+        uses: ./.github/actions/build-shadercross
 
       # Build with CMake (Linux)
       - name: Configure and Build with CMake (Linux)
         if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')
-        uses: lukka/run-cmake@v10
+        uses: lukka/run-cmake@5d55ea7949e25f69f0ecb516d8d572297e03a956 # v10
         with:
           configurePreset: ${{ matrix.tiles && 'dist-tiles' || 'dist-curses' }}
           configurePresetAdditionalArgs: ${{ inputs.run-tests && '["-DCATA_FORMAT_TARGETS=OFF", "-DTESTS=ON"]' || '["-DCATA_FORMAT_TARGETS=OFF"]' }}
@@ -383,7 +411,7 @@ jobs:
 
       - name: Setup EmmyLua checker
         if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64'
-        uses: scarf005/emmylua_check_action@v1.0.3
+        uses: scarf005/emmylua_check_action@c649f22256fc0d39e7abd7d9728b1efd7fab03a7 # v1.0.3
         with:
           version: ${{ env.EMMYLUA_CHECK_VERSION }}
           token: ${{ github.token }}
@@ -411,7 +439,7 @@ jobs:
 
       - name: Upload documentation artifact
         if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64' && inputs.version-label == 'experimental'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: lua-docs
           if-no-files-found: error
@@ -477,16 +505,16 @@ jobs:
         env:
           VCPKG_OVERLAY_TRIPLETS: ${{ github.workspace }}\.github\vcpkg_triplets
         run: |
-          $buildType = "Release"
           $localize = "False"
           $tests = "False"
           $release = "ON"
+          $fastLink = "OFF"
           if ("${{ inputs.download-translations }}" -eq "true") {
             $localize = "True"
           }
           if ("${{ inputs.mode }}" -eq "ci") {
-            $buildType = "RelWithDebInfo"
             $release = "OFF"
+            $fastLink = "ON"
           }
           if ("${{ inputs.run-tests }}" -eq "true") {
             $tests = "True"
@@ -494,7 +522,7 @@ jobs:
           cmake -G Ninja `
             -S "${{ github.workspace }}" `
             -B "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc" `
-            "-DCMAKE_BUILD_TYPE=$buildType" `
+            -DCMAKE_BUILD_TYPE=Release `
             -DCMAKE_PROJECT_INCLUDE_BEFORE="${{ github.workspace }}/build-scripts/windows-tiles-sounds-x64-msvc.cmake" `
             -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/build-scripts/MSVC.cmake" `
             -DVCPKG_TARGET_TRIPLET=x64-windows-static `
@@ -505,9 +533,17 @@ jobs:
             -DSOUND=True `
             "-DTESTS=$tests" `
             "-DRELEASE=$release" `
+            "-DCATA_MSVC_FAST_LINK=$fastLink" `
             -DJSON_FORMAT=OFF `
             -DCATA_FORMAT_TARGETS=OFF `
             -DCMAKE_INSTALL_MESSAGE=NEVER
+
+      - name: Save vcpkg binary cache (windows msvc)
+        if: runner.os == 'Windows' && github.event_name != 'pull_request' && steps.vcpkg-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: ${{ steps.vcpkg-cache-dir.outputs.dir }}
+          key: ${{ steps.vcpkg-cache.outputs.cache-primary-key }}
 
       - name: Build CBN (windows msvc)
         if: runner.os == 'Windows'
@@ -582,7 +618,7 @@ jobs:
 
       - name: Configure and Build with CMake (macOS)
         if: runner.os == 'macOS'
-        uses: lukka/run-cmake@v10
+        uses: lukka/run-cmake@5d55ea7949e25f69f0ecb516d8d572297e03a956 # v10
         with:
           configurePreset: ${{ matrix.preset }}
           configurePresetAdditionalArgs: ${{ inputs.run-tests && '["-DCATA_FORMAT_TARGETS=OFF", "-DTESTS=ON"]' || '["-DCATA_FORMAT_TARGETS=OFF"]' }}
@@ -631,7 +667,7 @@ jobs:
       # Android builds
       - name: Set up JDK 11 (android)
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
-        uses: actions/setup-java@v4.1.0
+        uses: actions/setup-java@v5
         with:
           java-version: "11"
           distribution: "adopt"
@@ -650,19 +686,19 @@ jobs:
 
       - name: Setup C++ build tools (android host)
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
-        uses: aminya/setup-cpp@v1
+        uses: aminya/setup-cpp@15a6bd8cf39030f88b5da3d203a829ec4eea4955 # v1
         with:
           cmake: true
           ninja: true
           setup-cpp: false
 
-      - name: Install shadercross (android host)
+      - name: Build shadercross (android host)
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
-        run: bash build-scripts/install-shadercross-vcpkg.sh
+        uses: ./.github/actions/build-shadercross
 
       - name: Setup ccache (android)
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
-        uses: hendrikmuhs/ccache-action@v1.2
+        uses: hendrikmuhs/ccache-action@e91f31892a1d1b8c44424b1a94c0b7f52d337168 # v1.2
         with:
           key: ${{ matrix.artifact }}-${{ github.ref_name }}
           restore-keys: |
@@ -670,6 +706,7 @@ jobs:
             ${{ matrix.artifact }}-main
             ${{ matrix.artifact }}-
           max-size: 2G
+          evict-old-files: ${{ inputs.mode == 'ci' && 'job' || '' }}
           verbose: 2
           save: ${{ github.event_name != 'pull_request' }}
 
@@ -825,7 +862,7 @@ jobs:
       # Upload artifacts
       - name: Upload packaged build artifact
         if: inputs.upload-artifacts && matrix.upload-artifact == true
-        uses: actions/upload-artifact@v4.6.0
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ inputs.artifact-label != '' && format('{0}-{1}', matrix.artifact, inputs.artifact-label) || matrix.artifact }}
           path: ${{ runner.os == 'Windows' && format('cataclysmbn-{0}/', inputs.version-label) || format('cbn-{0}-{1}.{2}', matrix.artifact, inputs.version-label, matrix.ext) }}
@@ -861,39 +898,72 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
 
-      - name: Run sharded tests (desktop)
-        if: inputs.run-tests && (runner.os == 'Windows' || (runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')))
+      - name: Upload test executable (windows msvc)
+        if: runner.os == 'Windows' && inputs.run-tests && inputs.windows-test-groups != '[]'
+        uses: actions/upload-artifact@v6
+        with:
+          name: cata-test-${{ matrix.artifact }}
+          path: |
+            out/build/windows-tiles-sounds-x64-msvc/tests/cata_test-tiles.exe
+            out/build/windows-tiles-sounds-x64-msvc/tests/cata_test-tiles.pdb
+            out/build/windows-tiles-sounds-x64-msvc/tests/mesa/
+          if-no-files-found: error
+          retention-days: 1
+
+      # Delete the old ccache copy before the post step saves the new one.
+      # Two copies of every cache do not fit in the 10 GB limit, and GitHub then evicts other caches.
+      - name: Delete old ccache copy
+        if: github.event_name == 'push' && (runner.os != 'Windows' || inputs.mode == 'ci')
+        continue-on-error: true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PREFIX: ccache-${{ runner.os == 'Windows' && format('windows-ccache4.9-{0}', matrix.artifact) || matrix.artifact }}-${{ github.ref_name }}-
+        run: gh cache list --ref "$GITHUB_REF" --key "$PREFIX" --json id --jq '.[].id' | xargs -r -n1 gh cache delete
+
+  # Split Windows tests over several runners. One runner takes about 16 min for all shards.
+  windows-tests:
+    needs: builds
+    if: ${{ !cancelled() && needs.builds.result == 'success' && inputs.run-tests && inputs.windows-test-groups != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        group: ${{ fromJSON(inputs.windows-test-groups) }}
+    name: ${{ fromJSON(inputs.matrix-json)[0].name }} tests ${{ matrix.group }}
+    runs-on: ${{ fromJSON(inputs.matrix-json)[0].os }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.checkout-ref }}
+
+      - name: Download generated shaders
+        uses: actions/download-artifact@v7
+        with:
+          name: ${{ inputs.shader-artifact || format('generated-shaders-{0}', fromJSON(inputs.matrix-json)[0].artifact) }}
+          path: data/shaders
+
+      - name: Download test executable
+        uses: actions/download-artifact@v7
+        with:
+          name: cata-test-${{ fromJSON(inputs.matrix-json)[0].artifact }}
+          path: out/build/windows-tiles-sounds-x64-msvc/tests
+
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+
+      - name: Run sharded tests
         shell: pwsh
         run: |
-          $ErrorActionPreference = "Stop"
-          $buildDir = if ($IsWindows) {
-            "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc"
-          } else {
-            "${{ github.workspace }}/build"
-          }
-          $exeName = if ("${{ matrix.tiles }}" -eq "true") { "cata_test-tiles" } else { "cata_test" }
-          if ($IsWindows) {
-            $exeName = "$exeName.exe"
-          }
-          $testBin = Join-Path $buildDir (Join-Path "tests" $exeName)
-          if (-not (Test-Path $testBin)) {
-            throw "Missing test executable: $testBin"
-          }
-
-          $testOpts = @(
-            "--min-duration", "20",
-            "--use-colour", "yes",
-            "--rng-seed", "time",
-            "--error-format=github-action"
-          )
-          if ($IsLinux -and "${{ matrix.tiles }}" -eq "true") {
-            $testOpts += "--gpu-backend=software"
-          }
           deno run --allow-read --allow-write --allow-run --allow-env `
             build-scripts/run-linux-test-shards.ts `
             --mode file-tags `
             --jobs 4 `
-            --non-slow-shards 8 `
-            $testBin `
+            --non-slow-shards 12 `
+            --shard-group "${{ matrix.group }}" `
+            out/build/windows-tiles-sounds-x64-msvc/tests/cata_test-tiles.exe `
             -- `
-            @testOpts
+            --min-duration 20 `
+            --use-colour yes `
+            --rng-seed time `
+            --error-format=github-action

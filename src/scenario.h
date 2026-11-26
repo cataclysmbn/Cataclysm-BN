@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include "catalua_type_operators.h"
 #include "string_id.h"
 #include "translations.h"
 #include "type_id.h"
@@ -37,6 +38,7 @@ class scenario
         */
         mutable std::vector<profession_id> cached_permitted_professions;
 
+        std::set<perk_id> _forced_perks;
         std::set<trait_id> _allowed_traits;
         std::set<trait_id> _forced_traits;
         std::set<trait_id> _forbidden_traits;
@@ -98,8 +100,19 @@ class scenario
         bool is_locked_trait( const trait_id &trait ) const;
         bool is_forbidden_trait( const trait_id &trait ) const;
 
+        /** Read access to the JSON-defined trait/bionic/spell lists, for UI and Lua. */
+        auto allowed_traits() const -> const std::set<trait_id> &;
+        auto forbidden_traits() const -> const std::set<trait_id> &;
+        auto allowed_bionics() const -> const std::set<bionic_id> &;
+        auto forbidden_bionics() const -> const std::set<bionic_id> &;
+        auto allowed_spells() const -> const std::set<spell_id> &;
+        auto forbidden_spells() const -> const std::set<spell_id> &;
+        auto forced_spells() const -> const std::set<spell_id> &;
+        auto get_flags() const -> const std::set<std::string> &;
+        auto allowed_start_locations() const -> const std::vector<start_location_id> &;
+
         bool bionicquery( const bionic_id &bionic ) const;
-        std::set<bionic_id> get_locked_bionics() const;
+        auto get_locked_bionics() const -> std::set<bionic_id>;
         bool is_locked_bionic( const bionic_id &bionic ) const;
         bool is_forbidden_bionic( const bionic_id &bionic ) const;
         bool forbids_bionics() const;
@@ -108,6 +121,8 @@ class scenario
         std::set<spell_id> get_locked_spells() const;
         bool is_forbidden_spell( const spell_id &spell ) const;
         bool forbids_spells() const;
+
+        std::set<perk_id> get_perks() const;
 
         bool allowed_start( const start_location_id &loc ) const;
         signed int point_cost() const;
@@ -134,6 +149,8 @@ class scenario
         const std::vector<mission_type_id> &missions() const;
 
         const std::vector<std::pair<mongroup_id, float>> &surround_groups() const;
+
+        LUA_TYPE_OPS( scenario, id );
 };
 
 struct scen_blacklist {

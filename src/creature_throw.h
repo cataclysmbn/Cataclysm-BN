@@ -10,7 +10,7 @@ namespace creature_throw
 {
 
 constexpr auto min_stamina_cost = 100;
-constexpr auto max_stamina_cost = 800;
+constexpr auto max_stamina_cost = 1500;
 constexpr auto equal_size_throw_min_str = 12;
 constexpr auto larger_size_throw_min_str = 16;
 constexpr auto much_larger_size_throw_min_str = 20;
@@ -54,7 +54,7 @@ inline auto flung_creature_bash_damage( const creature_size size, const int weig
 
 inline auto grabbed_stamina_cost( const float throwforce ) -> int
 {
-    return std::clamp( static_cast<int>( std::lround( throwforce * 4.0f ) ),
+    return std::clamp( static_cast<int>( std::lround( throwforce * 10.0f ) ),
                        min_stamina_cost, max_stamina_cost );
 }
 

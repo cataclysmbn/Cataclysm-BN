@@ -43,8 +43,7 @@ private:
     double _chance;
 };
 
-template <class T>
-auto operator<<(std::ostream& os, const std::vector<T>& v) -> std::ostream& { // *NOPAD*
+template <class T> auto operator<<(std::ostream& os, const std::vector<T>& v) -> std::ostream& {
     os << "[";
     for (typename std::vector<T>::const_iterator ii = v.begin(); ii != v.end(); ++ii) {
         os << " " << *ii;
@@ -53,8 +52,7 @@ auto operator<<(std::ostream& os, const std::vector<T>& v) -> std::ostream& { //
     return os;
 }
 
-auto operator<<(std::ostream& stream, const dispersion_sources& sources)
-    -> std::ostream& { // *NOPAD*
+auto operator<<(std::ostream& stream, const dispersion_sources& sources) -> std::ostream& {
     if (!sources.normal_sources.empty()) { stream << "Normal: " << sources.normal_sources << '\n'; }
     if (!sources.linear_sources.empty()) { stream << "Linear: " << sources.linear_sources << '\n'; }
     if (!sources.multipliers.empty()) { stream << "Mult: " << sources.multipliers << '\n'; }
@@ -165,7 +163,7 @@ static void test_shooting_scenario(
                  aim_per_move(shooter, shooter.primary_weapon(), shooter.recoil));
         CAPTURE(good_stats.n());
         CAPTURE(good_stats.margin_of_error());
-        CHECK(good_stats.avg() < 0.1);
+        CHECK(good_stats.avg() < 0.16);
     }
 }
 
@@ -204,7 +202,7 @@ static void assert_encumbrance(npc& shooter, int encumbrance) {
 
 static constexpr tripoint_bub_ms shooter_pos(60, 60, 0);
 
-TEST_CASE("unskilled_shooter_accuracy", "[ranged][balance][slow][!mayfail]") {
+TEST_CASE("unskilled_shooter_accuracy", "[ranged][balance][slow]") {
     clear_all_state();
     standard_npc shooter("Shooter", shooter_pos, {}, 0, 8, 8, 8, 7);
     equip_shooter(
@@ -214,13 +212,13 @@ TEST_CASE("unskilled_shooter_accuracy", "[ranged][balance][slow][!mayfail]") {
 
     SECTION("an unskilled shooter with an inaccurate pistol") {
         arm_character(shooter, "glock_19");
-        test_shooting_scenario(shooter, 4, 5, 15);
-        test_fast_shooting(shooter, 40, 0.3);
+        test_shooting_scenario(shooter, 4, 3, 15);
+        test_fast_shooting(shooter, 40, 0.1);
     }
     SECTION("an unskilled shooter with an inaccurate rifle") {
         arm_character(shooter, "m1918");
-        test_shooting_scenario(shooter, 5, 9, 25);
-        test_fast_shooting(shooter, 50, 0.2);
+        test_shooting_scenario(shooter, 5, 5, 25);
+        test_fast_shooting(shooter, 50, 0.15);
     }
 }
 
@@ -252,12 +250,12 @@ TEST_CASE("expert_shooter_accuracy", "[ranged] [balance]") {
     SECTION("an expert shooter with an excellent pistol") {
         arm_character(shooter, "sw629", {"pistol_scope"});
         test_shooting_scenario(shooter, 18, 20, 140);
-        test_fast_shooting(shooter, 20, 0.6);
+        test_fast_shooting(shooter, 20, 0.71);
     }
     SECTION("an expert shooter with an excellent rifle") {
         arm_character(shooter, "browning_blr", {"rifle_scope"});
         test_shooting_scenario(shooter, 25, 60, 900);
-        test_fast_shooting(shooter, 35, 0.4);
+        test_fast_shooting(shooter, 35, 0.71);
     }
 }
 

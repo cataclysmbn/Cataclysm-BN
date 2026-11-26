@@ -2,7 +2,7 @@
   {
     "type": "mod_tileset",
     "compatibility": [ "UNDEAD_PEOPLE_BASE", "UNDEAD_PEOPLE", "MshockXottoplus" ],
-    "//": "Note: Spaces 115, 121, and 148 are available for new sprites",
+    "//": "Note: Spaces 121 and 148 are available for new sprites",
     "tiles-new": [
       {
         "file": "mod_tileset/arcana_expan_dp_normal.png",
@@ -186,6 +186,7 @@
           { "id": [ "robe_shadow", "overlay_wielded_robe_shadow" ], "fg": 112 },
           { "id": "overlay_worn_robe_shadow", "fg": 113 },
           { "id": "overlay_worn_robe_shadow_on", "fg": 114 },
+          { "id": "rid_mon_centipede_giant_summoned", "fg": 115 },
           { "id": [ "gauntlets_necro", "gauntlets_necro_xl" ], "fg": 116 },
           { "id": [ "overlay_worn_gauntlets_necro", "overlay_worn_gauntlets_necro_xl" ], "fg": 117 },
           { "id": "cyclopean_mirror", "fg": 118 },

@@ -395,7 +395,9 @@ static void draw_description( const catacurses::window &win, const bionic &bio,
         int count = who.count_bionic_of_type( bio.id );
         if( count != 1 ) {
             fold_and_print( win, point( 0, ypos ), width, c_magenta,
-                            "You have %s instances of this bionic installed.", count );
+                            vgettext( "You have %d instance of this bionic installed.",
+                                      "You have %d instances of this bionic installed.", count ),
+                            count );
         }
     }
     // TODO: Unhide when enforcing limits

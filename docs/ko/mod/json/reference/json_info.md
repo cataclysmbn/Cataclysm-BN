@@ -87,7 +87,7 @@ JSON 파일을 편집할 때 아래와 같이 올바른 형식을 적용했는�
 }
 ```
 
-[현재 일부 JSON 값만 이 구문을 지원합니다](./../../../i18n/reference/translation#supported-json-values).
+[현재 일부 JSON 값만 이 구문을 지원합니다](./../../../i18n/reference/translation.md#supported-json-values).
 
 ## 각 JSON 파일의 설명과 내용
 
@@ -195,7 +195,7 @@ JSON 파일을 편집할 때 아래와 같이 올바른 형식을 적용했는�
   "strength": 1
 }
 
-### Item Category
+### 아이템 카테고리
 
 When you sort your inventory by category, these are the categories that are displayed.
 | Identifier      | Description

@@ -14,6 +14,7 @@ local t_thconc_floor = TerId.new("t_thconc_floor"):int_id()
 local t_thconc_floor_olight = TerId.new("t_thconc_floor_olight"):int_id()
 local t_strconc_floor = TerId.new("t_strconc_floor"):int_id()
 local t_thconc_olight_floor = TerId.new("t_strconc_floor"):int_id()
+local t_floor_blue = TerId.new("t_floor_blue"):int_id()
 local t_sewage = TerId.new("t_sewage"):int_id()
 local t_bars = TerId.new("t_bars"):int_id()
 local t_door_metal_locked = TerId.new("t_door_metal_locked"):int_id()
@@ -127,7 +128,7 @@ local function insert_stairs_single(map, stair_id)
   for i = 0, 23 do
     for j = 0, 23 do
       local pt = PointOmtMs.new(i, j)
-      if map:get_ter_at(pt) == t_thconc_floor and map:get_furn_at(pt) == f_null and map:get_trap_at(pt) == tr_null then
+      if map:get_ter_at(pt) ~= t_strconc_floor and tostring(map:get_ter_at(pt)):find("floor", 1, true) and map:get_ter_at(pt) ~= t_floor_blue and map:get_furn_at(pt) == f_null and map:get_trap_at(pt) == tr_null then
         table.insert(valid_points, PointOmtMs.new(i, j))
       end
     end
@@ -144,7 +145,7 @@ insert_stairs = function(map, up_id, down_id, from_above)
   for i = 0, 23 do
     for j = 0, 23 do
       local pt = PointOmtMs.new(i, j)
-      if map:get_ter_at(pt) == t_thconc_floor and map:get_furn_at(pt) == f_null and map:get_trap_at(pt) == tr_null then
+      if map:get_ter_at(pt) ~= t_strconc_floor and tostring(map:get_ter_at(pt)):find("floor", 1, true) and map:get_ter_at(pt) ~= t_floor_blue and map:get_furn_at(pt) == f_null and map:get_trap_at(pt) == tr_null then
         table.insert(valid_points, PointOmtMs.new(i, j))
       end
     end

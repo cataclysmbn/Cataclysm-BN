@@ -164,29 +164,30 @@
     "id": "cyborg_harvest",
     "type": "item_group",
     "subtype": "distribution",
-    "//": "Higher-tier bionic harvests have a 1/4 chance of generating nothing, 1/4 components, 1/2 CBMs",
+    "//": "Outright called a cyborg, so 2/3 chance of yielding CBMs, favor armor bionics more heavily.",
     "entries": [
-      { "item": "null", "prob": 25 },
-      { "item": "burnt_out_bionic", "prob": 10 },
-      { "group": "bionic_salvage_junk", "prob": 15 },
-      { "group": "bionics_broken_cyborg", "prob": 50 }
+      { "distribution": [ { "item": "null", "prob": 50 }, { "group": "bionic_salvage_junk", "prob": 50 } ], "prob": 33 },
+      {
+        "distribution": [ { "group": "bionics", "prob": 50 }, { "group": "bionics_broken_cyborg", "prob": 50 } ],
+        "prob": 66
+      }
     ]
   },
   {
     "id": "cyborg_harvest_uncommon",
     "type": "item_group",
     "subtype": "distribution",
-    "//": "Lab mutant spawns, 40% of them will roll for either components or a single CBM, effectively 20% odds of getting a bionic.",
+    "//": "Lab mutant spawns, spawn a random bionic, power storage CBM, or armor bionics about a third of the time.",
     "entries": [
-      { "item": "null", "prob": 60 },
+      { "item": "null", "prob": 33 },
+      { "group": "bionic_salvage_junk", "prob": 33 },
       {
         "distribution": [
-          { "group": "bionic_salvage_junk", "prob": 25 },
-          { "item": "burnt_out_bionic", "prob": 25 },
-          { "group": "bionic_power_storage_civ", "prob": 10 },
-          { "group": "bionics_broken_cyborg", "prob": 40 }
+          { "group": "bionic_power_storage_civ", "prob": 33 },
+          { "group": "bionics", "prob": 33 },
+          { "group": "bionics_broken_cyborg", "prob": 33 }
         ],
-        "prob": 40
+        "prob": 33
       }
     ]
   },
@@ -227,9 +228,9 @@
     "type": "item_group",
     "subtype": "distribution",
     "entries": [
-      { "item": "null", "prob": 33 },
-      { "group": "bionic_salvage_junk", "prob": 33 },
-      { "group": "bionic_power_storage_civ", "prob": 33 }
+      { "item": "null", "prob": 25 },
+      { "group": "bionic_salvage_junk", "prob": 25 },
+      { "group": "bionic_power_storage_civ", "prob": 50 }
     ]
   },
   {
@@ -316,9 +317,9 @@
     "type": "item_group",
     "subtype": "distribution",
     "entries": [
-      { "item": "null", "prob": 33 },
-      { "group": "bionic_salvage_junk", "prob": 33 },
-      { "group": "bionics_sci", "prob": 33 }
+      { "item": "null", "prob": 25 },
+      { "group": "bionic_salvage_junk", "prob": 25 },
+      { "group": "bionics_sci", "prob": 50 }
     ]
   },
   {
@@ -336,9 +337,9 @@
     "type": "item_group",
     "subtype": "distribution",
     "entries": [
-      { "item": "null", "prob": 33 },
-      { "group": "bionic_salvage_junk", "prob": 33 },
-      { "group": "bionics_tech", "prob": 33 }
+      { "item": "null", "prob": 25 },
+      { "group": "bionic_salvage_junk", "prob": 25 },
+      { "group": "bionics_tech", "prob": 50 }
     ]
   },
   {

@@ -239,7 +239,20 @@
     "death_drops": "mon_zombie_swat_death_drops",
     "death_function": [ "NORMAL" ],
     "burn_into": "mon_zombie_scorched",
-    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "GROUP_BASH", "POISON", "NO_BREATHE", "REVIVES", "PUSH_MON" ]
+    "flags": [
+      "SEES",
+      "HEARS",
+      "SMELLS",
+      "STUMBLES",
+      "WARM",
+      "BASHES",
+      "GROUP_BASH",
+      "POISON",
+      "NO_BREATHE",
+      "REVIVES",
+      "PUSH_MON",
+      "NO_SLIP"
+    ]
   },
   {
     "id": "mon_zombie_crawler",
@@ -411,7 +424,7 @@
     "id": "mon_zombie_hazmat",
     "type": "MONSTER",
     "name": { "str": "hazmat zombie" },
-    "description": "This zombie's face and body is completely covered by a protective suit.  It wanders around, unsteadily.",
+    "description": "This zombie's face and body are completely covered by a protective suit.  It wanders around, unsteadily.",
     "default_faction": "zombie",
     "bodytype": "human",
     "categories": [ "CLASSIC" ],
@@ -438,6 +451,7 @@
     "death_drops": "mon_zombie_hazmat_death_drops",
     "death_function": [ "NORMAL" ],
     "burn_into": "mon_zombie_scorched",
+    "upgrades": { "half_life": 20, "into": "mon_zombie_radiation_1" },
     "flags": [
       "SEES",
       "HEARS",
@@ -451,7 +465,8 @@
       "NO_BREATHE",
       "REVIVES",
       "PUSH_MON",
-      "NO_FUNG_DMG"
+      "NO_FUNG_DMG",
+      "NO_SLIP"
     ]
   },
   {

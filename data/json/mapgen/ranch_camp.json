@@ -1035,5 +1035,47 @@
       "palettes": [ "roof_palette" ],
       "terrain": { ".": "t_shingle_flat_roof" }
     }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": "ranch_camp_49_z1",
+    "object": { "fill_ter": "t_open_air" }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": "ranch_camp_50_z1",
+    "object": { "fill_ter": "t_open_air" }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": "ranch_camp_51_z1",
+    "object": { "fill_ter": "t_open_air" }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": "ranch_camp_52_z1",
+    "object": { "fill_ter": "t_open_air" }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": "ranch_camp_58_z1",
+    "object": { "fill_ter": "t_open_air" }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": "ranch_camp_59_z1",
+    "object": { "fill_ter": "t_open_air" }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": "ranch_camp_60_z1",
+    "object": { "fill_ter": "t_open_air" }
   }
 ]

@@ -17,6 +17,7 @@
       { "item": "solder_wire", "prob": 20, "count": [ 2, 4 ] },
       [ "RAM", 20 ],
       [ "radiocontrol", 10 ],
+      [ "remotevehcontrol", 5 ],
       [ "receiver", 30 ],
       [ "transponder", 30 ],
       [ "light_bulb", 60 ],
@@ -253,6 +254,7 @@
       [ "fungicide", 5 ],
       [ "gas_insecticidal", 5 ],
       [ "gas_fungicidal", 5 ],
+      [ "foamcrete_slurry", 3 ],
       [ "insecticide", 5 ],
       [ "charcoal", 5 ],
       { "group": "ammo_pocket_batteries_full", "prob": 50 },
@@ -475,6 +477,7 @@
       [ "steam_triple_small", 1 ],
       [ "steam_triple_medium", 1 ],
       [ "steam_watts_small", 1 ],
+      [ "hydrogen_cell", 5 ],
       [ "vehicle_controls", 3 ],
       [ "horn_car", 10 ],
       [ "horn_big", 8 ],
@@ -525,7 +528,7 @@
   {
     "id": "blankets",
     "type": "item_group",
-    "//": "Blankets used for the MISSION_LUMBERMILL_GET_6_BLANKETS quest",
+    "//": "Blankets used for the MISSION_LUMBERMILL_GET_6_BLANKETS and MISSION_RANCH_FOREMAN_2 quests",
     "items": [
       [ "blanket", 100 ],
       [ "fur_blanket", 100 ],
@@ -540,6 +543,12 @@
     "type": "item_group",
     "//": "Level 3 anvil quality, used for the MISSION_ISHERWOOD_CARLOS_1 quest",
     "items": [ [ "anvil", 100 ], [ "anvil_bronze", 100 ] ]
+  },
+  {
+    "id": "first_aid_kits_any",
+    "type": "item_group",
+    "//": "Used for the MISSION_RANCH_FOREMAN_10 quest",
+    "items": [ [ "1st_aid", 100 ], [ "1st_aid_deluxe", 100 ], [ "1st_aid_ifak", 100 ] ]
   },
   {
     "id": "file_room",
@@ -606,7 +615,7 @@
       [ "flashlight", 7 ],
       [ "laptop", 7 ],
       [ "eink_tablet_pc", 7 ],
-      [ "usb_drive", 5 ],
+      { "group": "digital_storage_media", "prob": 5 },
       [ "cash_card", 5 ],
       [ "record_accounting", 1 ],
       [ "money_bundle", 1 ]
@@ -648,6 +657,14 @@
       { "item": "gasoline", "container-item": "30gal_drum", "prob": 20 },
       { "item": "diesel", "container-item": "30gal_drum", "prob": 10 },
       { "item": "jp8", "container-item": "30gal_drum", "prob": 20 }
+    ]
+  },
+  {
+    "id": "writing_utensils",
+    "type": "item_group",
+    "items": [
+      { "item": "permanent_marker", "prob": 8, "charges": [ 0, 500 ] },
+      { "item": "pen", "prob": 64, "charges": [ 80, 100 ] }
     ]
   },
   {

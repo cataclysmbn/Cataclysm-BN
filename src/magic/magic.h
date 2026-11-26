@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 
+class lua_ispell_actor;
 class Creature;
 class JsonIn;
 class JsonObject;
@@ -50,28 +51,28 @@ enum spell_flag {
     NO_LEGS,          // legs do not affect casting time
     CONCENTRATE,      // focus affects spell fail %
     RANDOM_AOE,       // picks random number between min+increment*level and max instead of normal
-                      // behavior
-    RANDOM_DAMAGE,    // picks random number between min+increment*level and max instead of normal
-                      // behavior
-    DIVIDE_DAMAGE,    // divides damage equally among all the targets of the spell
-    RANDOM_DURATION,  // picks random number between min+increment*level and max instead of normal
-                      // behavior
-    RANDOM_TARGET,    // picks a random valid target within your range instead of normal behavior.
-    MUTATE_THRESH,    // allows mutate spell_effect to try and cross thresholds for the category
-                      // provided, accuracy optionally defines highest tier of threshold to test for
-                      // (default of 1).
-    MUTATE_TRAIT,     // overrides the mutate spell_effect to use a specific trait_id instead of a
-                      // category
+    // behavior
+    RANDOM_DAMAGE, // picks random number between min+increment*level and max instead of normal
+    // behavior
+    DIVIDE_DAMAGE,   // divides damage equally among all the targets of the spell
+    RANDOM_DURATION, // picks random number between min+increment*level and max instead of normal
+    // behavior
+    RANDOM_TARGET, // picks a random valid target within your range instead of normal behavior.
+    MUTATE_THRESH, // allows mutate spell_effect to try and cross thresholds for the category
+    // provided, accuracy optionally defines highest tier of threshold to test for
+    // (default of 1).
+    MUTATE_TRAIT, // overrides the mutate spell_effect to use a specific trait_id instead of a
+    // category
     WONDER, // instead of casting each of the extra_spells, it picks N of them and casts them (where
-            // N is std::min( damage(), number_of_spells ))
+    // N is std::min( damage(), number_of_spells ))
     PAIN_NORESIST, // pain altering spells can't be resisted (like with the deadened trait)
     NO_FAIL,       // this spell cannot fail when you cast it
     BRAWL,         // this spell can be used by brawlers
     DUPE_SOUND,    // this spell will play 'duplicate' sounds, if relevant to the spell effect
     ADD_MELEE_DAM, // Add melee damage to the spell's damage. Legacy method, "melee_dam" vector is
-                   // preferred instead
+    // preferred instead
     PHYSICAL, // IMPLIES BRAWL. This spell is actually a Physical Technique / Weapon Arte / similar,
-              // and is sort-of a replacement of martial arts.
+    // and is sort-of a replacement of martial arts.
     MOD_MELEE_MOVES, // Use melee attack cost as a base and add spell cost on top
     MOD_MELEE_STAM,  // Use melee stamina cost as a base and add spell cost on top
     DAMAGE_TERRAIN,  // Enables the spell to damage the terrain
@@ -333,6 +334,10 @@ public:
 
     enum_bitset<spell_flag> spell_tags;
 
+    /** Lua callback actor (non-owning, owned by catalua.cpp static maps).
+     *  Mutable because it is wired post-construction through const factory references. */
+    mutable const lua_ispell_actor* lua_callbacks = nullptr;
+
     static void load_spell(const JsonObject& jo, const std::string& src);
     void load(const JsonObject& jo, const std::string&);
     /**
@@ -342,6 +347,9 @@ public:
     static void check_consistency();
     static void reset_all();
     auto is_valid() const -> bool;
+
+    static void resolve_lua_callbacks(
+        const std::map<std::string, std::unique_ptr<lua_ispell_actor>>& actors);
 
     LUA_TYPE_OPS(spell_type, id);
 };

@@ -6,7 +6,7 @@
 
 ### 특성/돌연변이 필드
 
-```json
+```jsonc
 "id": "LIGHTEATER",  // 고유 ID
 "name": "Optimist",  // 게임 내 표시되는 이름
 "points": 2,         // 특성의 포인트 비용. 양수 값은 포인트를 소비하고 음수 값은 포인트를 제공합니다
@@ -23,7 +23,9 @@
 "initial_ma_styles": [ "style_crane" ], // (optional) 게임 시작 시 플레이어가 선택할 수 있는 무술 스타일의 ID 목록.
 "mixed_effect": false, // 특성이 긍정적 효과와 부정적 효과를 모두 가지고 있는지 여부. 이것은 순전히 선언적이며 사용자 인터페이스에만 사용됩니다. (기본값: false)
 "description": "Nothing gets you down!" // 게임 내 설명
+"apperance_description": "mowhawk" // 사진 및 확장 설명에서 외형 변이를 설명할 때만 사용합니다(예: hair_color, hair_style, eye_color, skin_tone)
 "starting_trait": true, // 캐릭터 생성 시 선택할 수 있습니다 (기본값: false)
+"random_starting_trait": true, // 캐릭터 생성 시 무작위로 선택됩니다 (기본값: starting_trait)
 "valid": false,      // 게임 내에서 돌연변이할 수 있습니다 (기본값: true)
 "purifiable": false, //돌연변이가 정화될 수 있는지 설정합니다 (기본값: true)
 "profession": true, //특성이 시작 직업 특수 특성입니다. (기본값: false)
@@ -114,6 +116,7 @@
 "no_cbm_on_bp": [ "TORSO", "HEAD", "EYES", "MOUTH", "ARM_L" ], // cbm을 받을 수 없는 신체 부위 목록. (기본값: empty)
 "body_size": "LARGE", // 크기를 증가 또는 감소시키며, 한 번에 하나의 크기 돌연변이만 유효합니다. 허용되는 값: `TINY`, `SMALL`, `LARGE`, `HUGE`. `MEDIUM`은 지정할 수 있지만 효과가 없으며, 이것은 플레이어와 NPC의 기본 크기입니다.
 "lumination": [ [ "HEAD", 20 ], [ "ARM_L", 10 ] ], // 빛나는 신체 부위와 빛의 강도를 float로 나타낸 목록. (기본값: empty)
+"kcal_scale" : 0.5, // 최대 kcal 저장량을 조정합니다. 1.0은 두 배, -0.5는 절반입니다.
 "metabolism_modifier": 0.333, // 추가 대사율 승수. 1.0은 사용량을 두 배로, -0.5는 반으로 줄입니다.
 "fatigue_modifier": 0.5, // 추가 피로율 승수. 1.0은 사용량을 두 배로, -0.5는 반으로 줄입니다.
 "fatigue_regen_modifier": 0.333, // 휴식 시 피로와 수면 부족이 떨어지는 비율에 대한 수정자.
@@ -127,6 +130,47 @@
                "active": false , // 대상 돌연변이가 powered(켜짐)로 시작될 것인가.
                "moves": 100 // 이것이 소비하는 이동 수. (기본값: 0)
 "enchantments": [ "MEP_INK_GLAND_SPRAY" ], // 이 마법 부여를 플레이어에게 적용합니다. magic.md와 effects_json.md를 참조하세요
-"mutagen_target_modifier": 5         // 돌연변이 독소로 돌연변이할 때 돌연변이가 균형을 잡는 것을 선호하는 방식을 증가 또는 감소시킵니다. 음수 값은 대상 값을 낮게 푸시합니다 (기본값: 0)
+"mutagen_target_modifier": 5,        // 돌연변이 독소로 돌연변이할 때 돌연변이가 균형을 잡는 것을 선호하는 방식을 증가 또는 감소시킵니다. 음수 값은 대상 값을 낮게 푸시합니다 (기본값: 0)
+"flags": [ "LIMB_SCORE_DODGE_AFFECTED" ], // 이 변이에 적용되는 변이 플래그 목록. 아래의 Mutation Flags를 참조하세요. (기본값: 비어 있음)
+"types": [ "CLAWS" ]                 // 이 변이가 속한 변이 유형 ID 목록. 충돌 감지와 필수 외형 처리에 사용합니다. 아래의 Mutation Types를 참조하세요. (기본값: 비어 있음)
 }
 ```
+
+## 변이 플래그
+
+변이 플래그는 `data/json/flags_mutation.json`에 정의되며 변이의 `flags` 필드에서 참조합니다.
+
+### 성별 플래그
+
+이 플래그는 캐릭터 생성 및 NPC 생성 시 변이를 할당하는 방식을 제어합니다. 외형 특성에 적용되며 무작위화와 캐릭터 생성 특성 선택 중에 검사됩니다.
+
+| 플래그             | 효과                                                                            |
+| ------------------ | ------------------------------------------------------------------------------- |
+| `MALE_EXCLUSIVE`   | 여성 캐릭터에게 할당할 수 없습니다. 캐릭터 생성에서 여성 캐릭터에게 숨겨집니다. |
+| `FEMALE_EXCLUSIVE` | 남성 캐릭터에게 할당할 수 없습니다. 캐릭터 생성에서 남성 캐릭터에게 숨겨집니다. |
+| `MALE_PREFERRED`   | 여성 캐릭터에게 자동 할당되지 않지만 여성 플레이어가 직접 선택할 수 있습니다.   |
+| `FEMALE_PREFERRED` | 남성 캐릭터에게 자동 할당되지 않지만 남성 플레이어가 직접 선택할 수 있습니다.   |
+
+`EXCLUSIVE` 플래그는 `mandatory_one`보다 우선합니다. 필수 유형에 성별에 맞는 특성이 없으면 잘못된 특성을 할당하는 대신 해당 유형을 조용히 건너뜁니다.
+
+## 변이 유형
+
+변이 유형은 관련 변이를 그룹화합니다. 별도의 JSON 객체로 정의하고 변이의 `types` 필드에서 참조합니다.
+
+```json
+{
+  "type": "mutation_type",
+  "id": "hair_color", // 이 유형의 고유 문자열 ID
+  "mandatory_one": true, // true이면 캐릭터가 생성될 때 항상 이 유형의 변이를 하나 이상 갖습니다. swap_on_conflict를 암시합니다. (기본값: false)
+  "default_trait": "SKIN_LIGHTER", // 이 필수 유형이 없는 기존 캐릭터를 불러올 때 추가하는 선택적 변이입니다. (기본값: 없음)
+  "swap_on_conflict": true, // true이면 캐릭터 생성에서 이 유형의 새 변이를 선택할 때 충돌 오류 대신 같은 유형의 기존 변이를 자동으로 제거합니다. (기본값: false)
+  "random_chance": 50 // 외형 무작위화 중 이 유형의 변이가 무작위로 할당될 확률(0~100). mandatory_one이 false일 때만 사용합니다. (기본값: 0)
+}
+```
+
+### 참고
+
+- `mandatory_one`은 새 캐릭터가 생성 및 재추첨될 때 해당 유형의 변이를 정확히 하나 받도록 보장합니다.
+- `default_trait`은 필수 외형 유형보다 이전에 만들어진 저장 파일이나 템플릿을 불러올 때 대체 특성을 제공합니다.
+- `swap_on_conflict`는 `mandatory_one` 없이도 선택적 외형 유형에서 한 번에 하나의 선택지만 허용할 때 유용합니다(예: 수염 스타일).
+- `random_chance`와 `mandatory_one`은 의도상 상호 배타적입니다. 둘 중 하나만 사용해야 합니다.

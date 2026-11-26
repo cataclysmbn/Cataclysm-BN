@@ -240,7 +240,7 @@
     "ammo_to_fire": 10,
     "ammo_effects": [ "WIDE", "ARCANA_WRAITHSLAYER_BEAM", "BEANBAG", "BLINDS_EYES" ],
     "flags": [ "NEVER_JAMS", "PRIMITIVE_RANGED_WEAPON", "NO_SALVAGE", "CROSSBOW" ],
-    "valid_mod_locations": [ [ "grip", 1 ], [ "rail", 1 ], [ "sights", 1 ] ]
+    "valid_mod_locations": [ [ "sling", 1 ], [ "grip", 1 ], [ "rail", 1 ], [ "sights", 1 ] ]
   },
   {
     "id": "ethereal_huge_crossbow",
@@ -279,7 +279,7 @@
     "category": "weapons",
     "weapon_category": [ "FIST_WEAPONS", "FLAMETHROWERS" ],
     "name": { "str": "demon claw" },
-    "description": "An ornate weapon resembling a clawed gauntlet, blades perpetually glowing red-hot.  Despite this, the weapon doesn't burn ones hand when grasped.  Firing it will smite your enemies and scour the land with wicked fire, to sate the god of blood.",
+    "description": "An ornate weapon resembling a clawed gauntlet, blades perpetually glowing red-hot.  Despite this, the weapon doesn't burn one's hand when grasped.  Firing it will smite your enemies and scour the land with wicked fire, to sate the god of blood.",
     "weight": "360 g",
     "volume": "750 ml",
     "price_postapoc": "120 USD",
@@ -301,6 +301,7 @@
     "looks_like": "bagh_nakha",
     "repairs_like": "bloodscourge",
     "color": "yellow",
+    "light_color": "#ffb05f",
     "ammo": "essence_pure_type",
     "skill": "magic",
     "range": 50,

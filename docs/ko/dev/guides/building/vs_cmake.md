@@ -1,163 +1,224 @@
-# CMake + Visual Studio + Vcpkg
+# Visual Studio 2022 및 CMake로 빌드하기
 
-> [!CAUTION]
+이 가이드는 Visual Studio 2022의 네이티브 CMake 통합을 사용해 Windows에서 Cataclysm: Bright Nights를 빌드하는 방법을 설명합니다. 한 번 설정한 뒤에는 구성, 빌드, 디버깅을 모두 외부 도구 없이 Visual Studio 안에서 수행합니다.
+
+> **레거시 빌드:** `msvc-full-features/`의 `.sln` 기반 빌드는 여전히 작동하며 이 시스템의 영향을 받지 않습니다. 같은 체크아웃에서 두 방식을 함께 사용할 수 있습니다.
+
+## 작동 방식
+
+프로젝트에는 두 개의 CMake 구성 파일이 있습니다:
+
+| 파일                 | 사용처               |
+| -------------------- | -------------------- |
+| `CMakeSettings.json` | Visual Studio IDE    |
+| `CMakePresets.json`  | cmake CLI, CI, Linux |
+
+폴더를 열면 VS가 `CMakeSettings.json`을 직접 읽습니다. VS를 열기 전에 수동으로 cmake를 구성할 필요가 없습니다.
+
+> **VS 설정:** **Tools → Options → CMake**에서 _"When a CMakeSettings.json or CMakePresets.json file is detected"_를 **"Use CMakeSettings.json (Legacy)"** 또는 **"Never use CMake Presets"**로 설정하세요. 그러면 VS가 `CMakeSettings.json`을 사용하고 `CMakePresets.json`을 무시합니다.
+
+> [!TIP]
 >
-> CMake 빌드는 진행 중입니다.
+> Visual Studio에서 시작하는 프롬프트 기반 워크플로를 선호한다면 [Visual Studio 외부 도구 자동화 (Windows + WSL)](./vs_external_tool_wsl.md)를 참조하세요.
 
 ## 전제 조건
 
-- `cmake` >= 3.24.0
-- [vcpkg.io](https://vcpkg.io/en/getting-started.html)의 `vcpkg`
+| 도구                                          | 최소 버전 | 구하는 곳                                                         |
+| --------------------------------------------- | --------- | ----------------------------------------------------------------- |
+| Visual Studio 2022                            | 17.6      | [visualstudio.microsoft.com](https://visualstudio.microsoft.com/) |
+| VS 워크로드: **Desktop development with C++** | —         | VS Installer                                                      |
+| cmake                                         | 3.24      | 위 VS 워크로드에 포함                                             |
+| ninja                                         | 모든 버전 | 위 VS 워크로드에 포함                                             |
+| vcpkg                                         | 모든 버전 | VS 2022 17.6+에 포함 (아래 참조)                                  |
+| git                                           | 모든 버전 | [git-scm.com](https://git-scm.com/)                               |
 
-Visual Studio 2022 버전 17.6부터 `vcpkg`가 배포에 포함되어 VS 개발자 명령 프롬프트에서 사용할 수 있으므로 별도로 설치할 필요가 없습니다.
+### vcpkg
 
-## 구성
+Visual Studio 2022 17.6 이상에는 vcpkg가 포함됩니다. 권장 설치 옵션을 사용했다면 이미 설치되어 있습니다. VS 개발자 환경이 설정하는 `VCPKG_INSTALLATION_ROOT` 환경 변수를 통해 CMake가 자동으로 찾습니다.
 
-`CMakePresets.json`의 사전 설정 중 하나를 사용하여 구성할 수 있습니다. 모두 `out/build/<preset>/` 디렉토리에 코드를 빌드합니다.
+별도의 vcpkg를 설치했다면 `VCPKG_ROOT`를 해당 경로로 설정하면 CMake가 사용합니다.
 
-### 터미널
+---
 
-`cmake`가 `vcpkg`를 찾을 수 있는지 확인합니다. 찾지 못하면 누락된 패키지에 대해 불평합니다. 다음 방법 중 하나로 수행할 수 있습니다:
+## Visual Studio에서의 일상적인 워크플로
 
-- 사전 설치된 `vcpkg`가 있는 VS2022 사용자의 경우, 일반 터미널이 아닌 VS 개발자 명령 프롬프트를 실행하면 `vcpkg`를 이미 사용할 수 있어야 합니다.
-- 모든 cmake 구성 명령에 `-DVCPKG_ROOT=C:\dev\vcpkg` (또는 경로가 무엇이든)를 추가합니다.
-- 환경 변수 `VCPKG_ROOT`를 vcpkg 체크아웃 경로로 설정합니다.
-- `CMakePresets.json`에 적절한 경로로 `VCPKG_ROOT` 캐시 변수를 추가합니다 (나중에 코드와 함께 작업할 계획이라면 권장하지 않음, git이 이 파일을 추적함).
+### 1. 폴더 열기
 
-명령 실행:
+Visual Studio 2022를 열고 **File → Open → Folder…**를 선택한 뒤 `CMakeLists.txt`가 있는 프로젝트 루트 디렉터리를 선택합니다.
 
-```sh
-cmake --list-presets
+`msvc-full-features/`의 `.sln` 파일은 열지 마세요. 이는 레거시 빌드 시스템이며 두 시스템은 서로 분리되어 있습니다.
+
+### 2. 구성 선택
+
+표준 도구 모음에서 **Configuration** 드롭다운을 열고 선택합니다:
+
+| 구성             | 용도                                      |
+| ---------------- | ----------------------------------------- |
+| `Debug`          | 디버깅, 모든 심볼, 최적화 없음            |
+| `RelWithDebInfo` | 일반 개발 — 최적화되지만 디버깅 가능      |
+| `Release`        | 성능 테스트, 배포                         |
+| `Tests`          | 테스트 모음 빌드 및 실행                  |
+| `Tracy`          | Tracy 프로파일러를 사용한 성능 프로파일링 |
+
+> **RelWithDebInfo**가 일상 개발의 기본값으로 가장 적합합니다. 게임은 정상 속도로 실행되면서 중단점과 스택 추적에 필요한 디버그 정보를 유지합니다.
+
+`Tests` 구성은 테스트 모음을 활성화한 RelWithDebInfo 빌드입니다. 나머지 구성은 빌드 시간을 줄이기 위해 테스트를 비활성화합니다.
+
+`Tracy` 구성은 Tracy 프로파일러 계측을 포함한 Release 빌드입니다. [Tracy 프로파일링](#tracy-프로파일링)을 참조하세요.
+
+### 3. 빌드
+
+**Build → Build All**(또는 `Ctrl+Shift+B`)을 선택합니다.
+
+첫 빌드에서는 vcpkg 의존성을 다운로드하고 컴파일하므로 시간이 걸립니다. 이후 빌드는 증분 빌드입니다.
+
+### 4. 실행 및 디버깅
+
+도구 모음에서 시작 항목을 선택합니다:
+
+| 구성                                     | 시작 항목                  |
+| ---------------------------------------- | -------------------------- |
+| Debug / RelWithDebInfo / Release / Tracy | **cataclysm-bn-tiles.exe** |
+| Tests                                    | **cata_test-tiles.exe**    |
+
+그 다음 **F5**를 누릅니다.
+
+작업 디렉터리는 `launch.vs.json`을 통해 프로젝트 루트로 설정되므로 추가 설정 없이 게임이 데이터 파일을 찾습니다.
+
+---
+
+## 빌드 사용자 지정
+
+로컬 빌드의 cmake 변수를 덮어쓰려면 `CMakeSettings.json`을 열고 사용할 구성의 `variables` 배열에 항목을 추가합니다. 이 파일은 git으로 추적되므로 개인 설정은 로컬 브랜치에서 편집하거나 구성을 복사해 새 이름을 사용하세요.
+
+### 유용한 변수
+
+| 변수          | 기본값                      | 효과                     |
+| ------------- | --------------------------- | ------------------------ |
+| `TESTS`       | `OFF` (Tests 구성에서는 ON) | 테스트 모음 빌드         |
+| `JSON_FORMAT` | `ON`                        | JSON formatter 도구 빌드 |
+| `LOCALIZE`    | `ON`                        | 번역 지원 빌드           |
+| `SOUND`       | `ON`                        | 오디오 지원 빌드         |
+
+---
+
+## Tracy 프로파일링
+
+[Tracy](https://github.com/wolfpld/tracy)는 실시간 프레임 프로파일러입니다. VS 도구 모음에서 **Tracy** 구성을 선택하고 평소처럼 빌드하세요. Tracy는 `TRACY_ON_DEMAND` 모드를 사용하므로 Tracy 뷰어가 연결되어 녹화를 시작할 때만 프로파일링하며, 뷰어 없이도 게임을 사용할 수 있습니다.
+
+터미널 워크플로에서도 `windows-tiles-sounds-x64-msvc-tracy` cmake 사전 설정으로 Tracy를 사용할 수 있습니다. [터미널 워크플로](#터미널-워크플로)를 참조하세요.
+
+---
+
+## 터미널 워크플로
+
+`setup.ps1`은 전제 조건을 확인하고 터미널 빌드에 사용할 cmake 사전 설정을 구성합니다. 일반 PowerShell 창에서 한 번 실행하세요:
+
+```powershell
+.\setup.ps1
 ```
 
-사용 가능한 사전 설정을 표시합니다. 목록은 사용 중인 환경에 따라 변경됩니다. 비어 있으면 환경이 지원되지 않습니다.
+스크립트는 전제 조건을 확인하고 번역 빌드에 필요한 gettext 바이너리를 다운로드한 다음 `cmake --preset windows-tiles-sounds-x64-msvc`를 실행합니다.
 
-명령 실행:
+그 후 **VS 2022 Developer Command Prompt** 또는 **Developer PowerShell**에서 표준 cmake 명령을 사용할 수 있습니다:
 
-```sh
-cmake --preset <preset>
+```powershell
+# 한 번 구성 (또는 CMakeLists.txt 변경 후)
+cmake --preset windows-tiles-sounds-x64-msvc
+
+# 빌드
+cmake --build --preset windows-msvc-relwithdebinfo
+
+# 프로젝트 루트에서 게임 실행
+.\out\build\windows-tiles-sounds-x64-msvc\src\RelWithDebInfo\cataclysm-bn-tiles.exe
+
+# 테스트 실행
+.\out\build\windows-tiles-sounds-x64-msvc\tests\RelWithDebInfo\cata_test-tiles.exe
+
+# 번역만 빌드
+cmake --build --preset windows-msvc-relwithdebinfo --target translations_compile
+
+# 설치 (게임과 데이터를 독립 실행 디렉터리에 복사)
+cmake --install out\build\windows-tiles-sounds-x64-msvc --config RelWithDebInfo
 ```
 
-`vcpkg` 설치를 사용할 수 있는 한 모든 의존성을 다운로드하고 빌드 파일을 생성합니다.
+> **참고:** 일반 터미널(VS 개발자 터미널이 아님)에서 `cmake --build`를 실행하면 `CMakeUserPresets.json`에 저장된 VS 환경을 사용합니다. 이 파일이 없으면 `setup.ps1`로 다시 생성하거나 VS 개발자 명령 프롬프트를 사용하세요.
 
-VS2022를 사용하는 경우 이름에 `2022`가 있는 사전 설정을 선택해야 합니다. 접미사가 없는 사전 설정은 VS2019를 대상으로 합니다.
+---
 
-명령에 `-Doption=value`를 추가하여 옵션을 재정의할 수 있습니다. [빌드 옵션](./cmake.md/#build-options)을 참조하세요. 예를 들어 테스트가 필요 없으면 `-DTESTS=OFF`로 테스트 빌드를 비활성화할 수 있습니다.
+## 문제 해결
 
-### Visual Studio
+### CMake 구성이 즉시 실패함
 
-Visual Studio에서 게임 소스 폴더를 엽니다.
+**가장 흔한 원인:** vcpkg를 찾지 못함.
 
-Visual Studio는 폴더를 CMake 프로젝트로 인식하고 구성을 시작하려고 시도할 수 있지만 적절한 사전 설정을 사용하지 않았기 때문에 실패할 가능성이 높습니다.
-
-표준 도구 모음의 `Configuration` 드롭다운 상자에 사전 설정이 표시됩니다. 적절한 것 (`windows`와 `msvc`를 포함해야 함)을 선택한 다음 기본 메뉴에서 `Project` -> `Configure Cache`를 선택합니다.
-
-VS2022를 사용하는 경우 이름에 `2022`가 있는 사전 설정을 선택해야 합니다. 접미사가 없는 사전 설정은 VS2019를 대상으로 합니다.
-
-## 빌드
-
-### 터미널
-
-명령 실행:
-
-- `cmake --build --preset <preset> --config Release`
-
-`Release`를 `Debug`로 바꾸면 디버그 빌드를, `RelWithDebInfo`로 바꾸면 최적화는 적지만 디버그 정보는 더 많은 릴리스 빌드를 얻을 수 있습니다.
-
-### Visual Studio
-
-표준 도구 모음의 `Build Preset` 드롭다운 메뉴에서 빌드 사전 설정을 선택합니다. 기본 메뉴에서 `Build` -> `Build All`을 선택합니다.
-
-UI 레이아웃에 따라 이 드롭다운 메뉴가 오버플로 버튼 뒤에 숨겨져 있을 수 있지만 `Release`, `Debug`, `RelWithDebInfo` 빌드 중에서도 선택할 수 있습니다.
-
-## 번역
-
-번역은 선택 사항이며 `gettext` 패키지의 `msgfmt` 바이너리가 필요합니다. `vcpkg`가 자동으로 설치해야 합니다.
-
-### 터미널
-
-명령 실행:
-
-- `cmake --build --preset <preset> --target translations_compile`
-
-### Visual Studio
-
-Visual Studio는 이전 단계에서 번역을 빌드했어야 합니다. 그렇지 않은 경우 솔루션 탐색기를 열고 CMake Targets 모드로 전환한 다음 (마우스 오른쪽 버튼 클릭으로 가능) `translations_compile` 대상을 마우스 오른쪽 버튼으로 클릭 -> `Build translations_compile`.
-
-## 설치
-
-> [!CAUTION]
->
-> 설치는 아직 진행 중이며 테스트가 거의 없었습니다.
-
-### Visual Studio
-
-기본 메뉴에서 `Build` -> `Install CataclysmBN`을 선택합니다.
-
-### 터미널
-
-명령 실행:
-
-- `cmake --install out/build/<preset>/ --config Release`
-
-선택한 빌드 유형으로 `Release`를 바꿉니다.
-
-## 실행
-
-게임 및 테스트 실행 파일은 모두 `.\Release\` 폴더에서 사용할 수 있습니다 (폴더 이름은 빌드 유형과 일치하므로 다른 빌드 유형의 경우 다른 폴더 이름을 얻음).
-
-터미널에서 수동으로 실행할 수 있습니다. 프로젝트의 최상위 디렉토리에서 실행해야 합니다. 기본적으로 게임은 현재 경로에 데이터 파일이 있을 것으로 예상합니다.
-
-Visual Studio에서 실행하고 디버깅하려면 `out\build\<preset>\CataclysmBN.sln`에 있는 생성된 VS 솔루션을 열고 (이전 단계를 IDE 또는 터미널에서 완료했는지 여부에 관계없이 존재함) 대신 그것으로 추가 작업을 수행하는 것이 좋습니다.
-
-또는 "Open Folder" 모드에서 유지할 수 있지만 게임 실행 파일 (및 테스트)에 대한 시작 구성을 사용자 지정해야 하며 아직 발견되지 않은 다른 부작용이 있을 수 있습니다.
-
-### 터미널
-
-게임을 시작하려면 다음을 실행합니다:
-
-- `.\Release\cataclysm-bn-tiles.exe`
-
-테스트를 실행하려면 다음을 실행합니다:
-
-- `.\Release\cata_test-tiles.exe`
-
-### Visual Studio (옵션 1, 권장)
-
-Visual Studio를 닫은 다음 `out\build\<preset>\`로 이동하여 `CataclysmBN.sln`을 엽니다. `cataclysm-bn-tiles`를 시작 프로젝트로 설정하면 (솔루션 탐색기에서 마우스 오른쪽 버튼 클릭으로 가능) 추가 문제 없이 게임 실행 파일을 실행하고 디버그할 수 있습니다. 최상위 프로젝트 디렉토리에서 데이터 파일을 찾도록 이미 미리 구성되어 있습니다.
-
-테스트를 실행하려면 시작 프로젝트를 `cata_test-tiles`로 전환합니다.
-
-### Visual Studio (옵션 2)
-
-Visual Studio가 CMake 프로젝트를 처리하는 방식으로 인해 VS가 "Open Folder" 모드에 있는 동안 실행 파일의 작업 디렉토리를 지정할 수 없습니다. StackOverflow 답변에서 잘 설명합니다: https://stackoverflow.com/a/62309569 다행히 VS는 개별적으로 실행 파일 시작 옵션을 사용자 지정할 수 있습니다.
-
-솔루션 탐색기를 열고 아직 CMake Targets 모드로 전환하지 않았다면 전환합니다 (마우스 오른쪽 버튼 클릭으로 가능). `cataclysm-bn-tiles` 대상을 마우스 오른쪽 버튼으로 클릭 -> `Add Debug Configuration`. Visual Studio는 `cataclysm-bn-tiles` 대상에 대한 새 구성과 함께 이 프로젝트의 시작 구성 파일을 엽니다. 다음 줄을 추가합니다:
+`VCPKG_ROOT`가 설정되어 있는지(또는 VS 번들 vcpkg를 사용할 수 있는지) 확인하세요. VS 개발자 명령 프롬프트를 열고 다음을 실행합니다:
 
 ```
-"currentDir": "${workspaceRoot}",
+echo %VCPKG_ROOT%
+echo %VCPKG_INSTALLATION_ROOT%
 ```
 
-구성에 추가하고 파일을 저장합니다.
+둘 중 하나는 `vcpkg.exe`가 있는 디렉터리를 가리켜야 합니다. 둘 다 설정되지 않았다면 `setup.ps1`을 실행하세요. VS 번들 vcpkg를 자동으로 찾습니다.
 
-최종 결과는 다음과 같아야 합니다:
+### VS에 `x64-Debug` 구성이 표시되거나 ncurses 오류가 나타남
 
-```json
-{
-  "version": "0.2.1",
-  "defaults": {},
-  "configurations": [
-    {
-      "currentDir": "${workspaceRoot}",
-      "type": "default",
-      "project": "CMakeLists.txt",
-      "projectTarget": "cataclysm-bn-tiles.exe (<PATH_TO_SOURCE_FOLDER>\\Debug\\cataclysm-bn-tiles.exe)",
-      "name": "cataclysm-bn-tiles.exe (<PATH_TO_SOURCE_FOLDER>\\Debug\\cataclysm-bn-tiles.exe)"
-    }
-  ]
-}
+VS가 `CMakeSettings.json`을 사용하지 않는 것입니다. **Tools → Options → CMake → General**에서 preset 통합을 **"Use CMakeSettings.json (Legacy)"** 또는 **"Never use CMake Presets"**로 설정한 뒤 아래의 전체 초기화를 수행하세요.
+
+### 구성은 성공하지만 헤더/라이브러리가 없어 빌드가 실패함
+
+VS 환경(`INCLUDE`, `LIB`, `PATH`)이 올바르게 캡처되지 않았을 수 있습니다. 다음을 시도하세요:
+
+1. 프로젝트 루트의 `CMakeUserPresets.json`을 삭제합니다.
+2. 관련 `out\build\` 하위 디렉터리를 완전히 삭제합니다.
+3. `setup.ps1`을 다시 실행해 둘 다 생성합니다.
+
+### 게임이 즉시 충돌하거나 데이터를 찾지 못함
+
+프로젝트 루트의 `launch.vs.json`은 F5 실행의 작업 디렉터리를 프로젝트 루트로 설정합니다. 파일이 없거나 VS가 읽지 않으면 `./data/`를 찾지 못할 수 있습니다.
+
+파일 탐색기나 터미널에서 `.exe`를 직접 실행한다면 프로젝트 루트에서 실행하세요:
+
+```powershell
+# 올바름 — 프로젝트 루트에서 실행
+.\out\build\win-rel-deb\src\cataclysm-bn-tiles.exe
+
+# 잘못됨 — ./data/를 찾지 못함
+cd out\build\win-rel-deb\src
+.\cataclysm-bn-tiles.exe
 ```
 
-이제 Visual Studio 내에서 게임 실행 파일을 실행하고 디버그할 수 있어야 합니다.
+### 구성 중 `VsDevCmd.bat not found` 오류
 
-테스트를 실행하려면 `cata_test-tiles` 대상에 대해 이 프로세스를 반복합니다.
+`VsDevCmd.bat`은 VS 설치 폴더에 있습니다. 이 오류가 나타나면 VS가 표준 위치가 아닌 곳에 설치되었을 수 있습니다. cmake 실행 전에 `DevEnvDir` 환경 변수를 VS `Common7\IDE` 디렉터리 경로로 설정하세요:
+
+```powershell
+$env:DevEnvDir = "D:\VisualStudio\Common7\IDE\"
+cmake --preset windows-tiles-sounds-x64-msvc
+```
+
+### 빌드가 매우 느림
+
+설치되어 있고 `PATH`에 있다면 ccache가 자동으로 감지되어 사용됩니다. [ccache.dev](https://ccache.dev/)에서 설치하면 `git clean` 또는 브랜치 전환 후 증분 빌드 속도가 크게 향상됩니다.
+
+### 빌드 환경을 완전히 초기화하는 방법
+
+문제가 생겨 깨끗한 상태가 필요하다면:
+
+```powershell
+# VS의 캐시된 프로젝트 상태 (오래된 구성, IntelliSense DB) 삭제
+Remove-Item -Recurse -Force .vs
+
+# 모든 빌드 출력 디렉터리 삭제
+Remove-Item -Recurse -Force out\build
+
+# 생성된 사용자 사전 설정 삭제 (다음 구성에서 다시 생성됨)
+Remove-Item -Force CMakeUserPresets.json
+
+# 터미널 빌드를 위해 setup 재실행 (다음 VS 열 때도 다시 구성됨)
+.\setup.ps1
+```
+
+### 재구성할 때 CMakeUserPresets.json이 "already exists"라고 표시됨
+
+의도된 동작입니다. 사용자 지정 설정을 덮어쓰지 않도록 이 파일은 최초 구성에서만 생성됩니다. 기본 생성 내용으로 초기화하려면 삭제한 뒤 `setup.ps1`을 실행하세요.

@@ -3,12 +3,56 @@
 #include "reload_selection.h"
 #include "type_id.h"
 
+#include <functional>
+#include <optional>
 #include <vector>
 
 class item;
 class player;
 
 namespace reload_ui {
+/**
+ * Show the "Reload item" picker over carried and adjacent items that @p is_target accepts.
+ *
+ * Each printable single-key keyboard binding for `reload_item` also picks
+ * the first reloadable wielded item. The picker must list that item, and the key must not match
+ * any other entry's letter or picker action.
+ * @param who Character who performs the reload
+ * @param is_target Items the picker lists
+ * @return The picked item, or nullptr if the player cancelled or nothing is listed
+ */
+auto pick_target(player& who, const std::function<bool(const item&)>& is_target) -> item*;
+
+/** Keys in play on the wielded row of the "Reload item" picker. */
+struct wielded_key_facts {
+    /** Printable keys bound to `reload_item`, in binding order. */
+    std::vector<char> reload_keys;
+    /** The wielded row's own letter, or 0 for none. */
+    int own_invlet;
+    /** Letters of the picker's other selectable entries. */
+    std::vector<int> taken_invlets;
+    /** Keys bound to the picker's own actions. */
+    std::vector<char> action_keys;
+};
+
+/** How the reload picker treats reload keys on the wielded row. */
+struct wielded_key {
+    /** Reload keys that pick the wielded item. */
+    std::vector<char> keys;
+    /** Key drawn in the row's letter slot. Empty when the row has its own letter. */
+    std::optional<char> shown;
+    /** True when another entry's letter or a picker action takes the shown key. */
+    bool shadowed;
+};
+
+/**
+ * Decide which reload keys pick the wielded item, and which key its row shows.
+ *
+ * Another entry's letter or a picker action keeps any reload key it takes.
+ * A row without its own letter shows the first reload key, even when that key is taken.
+ */
+auto resolve_wielded_key(const wielded_key_facts& facts) -> wielded_key;
+
 /**
  * Select ammunition to reload @p base, with a menu or a message as needed.
  *

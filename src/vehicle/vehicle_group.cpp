@@ -10,6 +10,7 @@
 #include "rng.h"
 #include "translations.h"
 #include "units_angle.h"
+#include "veh_type.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
@@ -68,6 +69,21 @@ void VehicleGroup::load(const JsonObject& jo) {
 
     for (JsonArray pair : jo.get_array("vehicles")) {
         group.add_vehicle(vproto_id(pair.get_string(0)), pair.get_int(1));
+    }
+}
+
+void VehicleGroup::finalize() {
+    const auto& blacklist = vehicle_prototype::get_vehicle_blacklist();
+    for (auto& vgroup : vgroups) {
+        const auto vehs = vgroup.second.vehicles;
+        int count = 0;
+        for (const auto& vproto : vehs) {
+            if (!vproto.obj.is_null() && vproto.obj.is_valid() && blacklist.contains(vproto.obj)) {
+                vgroup.second.vehicles.erase(vgroup.second.vehicles.begin() + count);
+                count--;
+            }
+            count++;
+        }
     }
 }
 

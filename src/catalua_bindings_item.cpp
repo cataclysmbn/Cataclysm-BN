@@ -26,9 +26,11 @@
 #include "relic.h"
 #include "skill.h"
 #include "translations.h"
+#include "type_id.h"
 #include "vitamin.h"
 
 #include <ranges>
+#include <vector>
 
 namespace
 {
@@ -333,7 +335,7 @@ void reg_item( sol::state &lua )
         SET_FX( erase_var );
         DOC( "Erase all variables" );
         SET_FX( clear_vars );
-        DOC( "Returns all stored item vars as a table" );
+        DOC( "Returns all stored item vars as a table mapping each var name (string) to its raw value (string)." );
         luna::set_fx( ut, "vars_table", []( const item & it, sol::this_state state )
         {
             sol::state_view lua( state );
@@ -345,6 +347,8 @@ void reg_item( sol::state &lua )
         } );
 
         DOC( "Spawns a new item. Same as gapi.create_item " );
+        DOC( "`count` sets the item's charges, not the number of items: exactly one item is created." );
+        DOC( "For stackable (count-by-charges) items such as ammo, `count` is the stack size. For non-stackable items, pass a negative value (e.g. -1), since a positive one is still applied as charges. Tools spawned with a negative value get their default charges." );
         luna::set_fx( ut, "spawn", []( const itype_id & itype, int count )
         {
             return item::spawn( itype, calendar::turn, count );
@@ -421,6 +425,11 @@ void reg_item( sol::state &lua )
         luna::set_fx( ut, "is_melee", sol::resolve<bool( damage_type ) const>
                       ( &item::is_melee ) );
 
+        DOC( "Gets the weapon category of the item." );
+        luna::set_fx( ut, "weapon_categories", []( const item & it ) -> std::vector<weapon_category_id> {
+            return it.typeId()->weapon_category | std::ranges::to<std::vector>();
+        } );
+
         DOC( "Is this a magazine? (batteries are magazines)" );
         SET_FX( is_magazine );
 
@@ -483,6 +492,12 @@ void reg_item( sol::state &lua )
         luna::set_fx( ut, "remove_technique",
                       sol::resolve<void( const matec_id & )> ( &item::remove_technique ) );
 
+        DOC( "Adds an enchantment to this item" );
+        luna::set_fx( ut, "add_enchantment", sol::overload(
+                          sol::resolve<bool( const enchantment_id & )>( &item::add_enchantment ),
+                          sol::resolve<bool( const enchantment & )>( &item::add_enchantment )
+                      ) );
+
         DOC( "Checks if this item can contain another" );
         luna::set_fx( ut, "can_contain",
                       sol::resolve<bool( const item & ) const>
@@ -516,7 +531,9 @@ void reg_item( sol::state &lua )
 
         SET_FX( get_reload_time );
 
-        DOC( "Adds an item(s) to contents" );
+        DOC( "Creates an item with the given id and adds it to contents." );
+        DOC( "`count` sets the item's charges, not the number of items: exactly one item is created." );
+        DOC( "For stackable (count-by-charges) items such as ammo, `count` is the stack size. For non-stackable items, pass a negative value (e.g. -1), since a positive one is still applied as charges. Tools spawned with a negative value get their default charges." );
         SET_FX( add_item_with_id );
 
         DOC( "Checks item contents for a given item id" );
@@ -686,6 +703,7 @@ void reg_itype( sol::state &lua )
             std::back_inserter( rv ) );
             return rv;
         } );
+        DOC( "Attacks this weapon can perform, keyed by attack id." );
         SET_MEMB_RO( attacks );
         SET_MEMB_RO( countdown_destroy );
         SET_MEMB_RO( countdown_interval );
@@ -703,12 +721,15 @@ void reg_itype( sol::state &lua )
         SET_MEMB_RO( min_dex );
         SET_MEMB_RO( min_int );
         SET_MEMB_RO( min_per );
+        DOC( "Minimum skill levels required to use this item, keyed by skill." );
         SET_MEMB_RO( min_skills );
         SET_MEMB_RO( min_str );
         SET_MEMB_RO( phase );
         luna::set_fx( ut, "price", []( const UT_CLASS & c ) { return c.price.value(); } );
         luna::set_fx( ut, "price_post", []( const UT_CLASS & c ) { return c.price.value(); } );
+        DOC( "Free-form string properties from the item's JSON `properties` field, keyed by property name." );
         SET_MEMB_RO( properties );
+        DOC( "Tool qualities this item provides, mapped to their level." );
         SET_MEMB_RO( qualities );
         SET_MEMB_RO( recipes );
         SET_MEMB_RO( repair );
@@ -1190,7 +1211,7 @@ void reg_islot( sol::state &lua )
         DOC( "Modifies base strength required" );
         SET_MEMB_RO( min_str_required_mod );
 
-        DOC( "Additional gunmod slots to add to the gun" );
+        DOC( "Additional gunmod slots to add to the gun. Key is the location (untranslated!), value is the number of extra mods that location can hold." );
         luna::set_fx( ut, "get_added_slots", []( const UT_CLASS & c )
         {
             std::map<std::string, int> ret;

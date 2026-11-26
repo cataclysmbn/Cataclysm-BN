@@ -58,6 +58,9 @@ class iuse_transform : public iuse_actor
         /** if set transform item to container and place new item (of type @ref target) inside */
         itype_id container;
 
+        /** if true, ask player how many charges to set ammo of active item to */
+        bool set_timer = false;
+
         /** if zero or positive set remaining ammo of @ref target to this (after transformation) */
         int ammo_qty = -1;
 
@@ -219,6 +222,10 @@ class unfold_vehicle_iuse : public iuse_actor
         /** Creature::moves it takes to unfold. */
         int moves = 0;
         std::map<itype_id, int> tools_needed;
+        /**
+         * Whether vehicle deploys with full battery/fuel.
+         */
+        bool full_battery = false;
 
         unfold_vehicle_iuse( const std::string &type = "unfold_vehicle" ) : iuse_actor( type ) {}
 
@@ -713,7 +720,9 @@ class fireweapon_off_actor : public iuse_actor
 class fireweapon_on_actor : public iuse_actor
 {
     public:
-        std::string noise_message; // If noise is 0, message content instead
+        std::string held_message; // If noise is 0, message content instead
+        std::string noise_message;
+        std::string noise_variant;
         std::string voluntary_extinguish_message;
         std::string charges_extinguish_message;
         std::string water_extinguish_message;
@@ -728,6 +737,27 @@ class fireweapon_on_actor : public iuse_actor
         void load( const JsonObject &obj ) override;
         int use( player &, item &, bool, const tripoint_bub_ms & ) const override;
         std::unique_ptr<iuse_actor> clone() const override;
+};
+
+/**
+ * Makes noise of a given volume randomly over time
+ */
+class passivenoise_actor : public iuse_actor
+{
+    public:
+        std::string held_message; // If noise is 0, message content instead
+        std::string noise_message;
+        std::string noise_variant;
+        int noise = 0; // If 0, it produces a message instead of noise
+        int noise_chance = 1; // one_in(this variable)
+
+        passivenoise_actor( const std::string &type = "passivenoise" ) : iuse_actor( type ) {}
+
+        ~passivenoise_actor() override = default;
+        void load( const JsonObject &obj ) override;
+        int use( player &, item &, bool, const tripoint_bub_ms & ) const override;
+        std::unique_ptr<iuse_actor> clone() const override;
+        bool activatable() const override { return false; }
 };
 
 /**

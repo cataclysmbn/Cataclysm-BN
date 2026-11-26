@@ -1552,5 +1552,50 @@
     "using": [ [ "soldering_standard", 5 ] ],
     "qualities": [ { "id": "HAMMER_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 } ],
     "components": [ [ [ "plastic_chunk", 6 ] ], [ [ "scrap", 2 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "retool_ar15_300blk",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_MODS",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "mechanics", 3 ], [ "rifle", 3 ] ],
+    "difficulty": 4,
+    "time": "45 m",
+    "book_learn": [ [ "manual_rifle", 4 ], [ "textbook_anarch", 3 ] ],
+    "using": [ [ "welding_standard", 5 ] ],
+    "qualities": [ { "id": "SAW_M_FINE", "level": 1 } ],
+    "tools": [ [ [ "large_repairkit", 20 ], [ "small_repairkit", 40 ] ] ],
+    "components": [ [ [ "pipe", 1 ] ], [ [ "scrap", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "retool_ump45_40",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_MODS",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "mechanics", 3 ], [ "smg", 3 ] ],
+    "difficulty": 4,
+    "time": "45 m",
+    "book_learn": [ [ "manual_rifle", 4 ], [ "textbook_anarch", 3 ] ],
+    "using": [ [ "welding_standard", 5 ] ],
+    "qualities": [ { "id": "SAW_M_FINE", "level": 1 } ],
+    "tools": [ [ [ "large_repairkit", 20 ], [ "small_repairkit", 40 ] ] ],
+    "components": [ [ [ "pipe", 1 ] ], [ [ "scrap", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "retool_ump45_9mm",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_MODS",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "mechanics", 3 ], [ "smg", 3 ] ],
+    "difficulty": 4,
+    "time": "45 m",
+    "book_learn": [ [ "manual_rifle", 4 ], [ "textbook_anarch", 3 ] ],
+    "using": [ [ "welding_standard", 5 ] ],
+    "qualities": [ { "id": "SAW_M_FINE", "level": 1 } ],
+    "tools": [ [ [ "large_repairkit", 20 ], [ "small_repairkit", 40 ] ] ],
+    "components": [ [ [ "pipe", 1 ] ], [ [ "scrap", 1 ] ] ]
   }
 ]

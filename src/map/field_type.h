@@ -100,6 +100,7 @@ struct field_intensity_level {
     nc_color color = c_white;
     bool dangerous = false;
     bool transparent = true;
+    bool impassable = false;
     int move_cost = 0;
     int extra_radiation_min = 0;
     int extra_radiation_max = 0;
@@ -166,12 +167,19 @@ public:
     time_duration half_life = 0_turns;
     phase_id phase = PNULL;
     bool accelerated_decay = false;
+    bool conductive = false;
+    bool flammable = false;
     bool display_items = true;
     bool display_field = false;
+    bool moppable = false;
+    nc_color tint = c_unset;
+    std::optional<RGBColor> tint_rgb;
     field_type_id wandering_field;
     std::string looks_like;
 
     fields::stacking_type stacking_type = fields::stacking_type::intensity;
+
+    auto is_conductive() const -> bool { return conductive; }
 
     LUA_TYPE_OPS(field_type, id);
 
@@ -191,6 +199,11 @@ public:
     auto get_transparent(int level = 0) const -> bool {
         return get_intensity_level(level).transparent;
     }
+    auto get_impassable(int level = 0) const -> bool {
+        return get_intensity_level(level).impassable;
+    }
+    auto get_tint() const -> nc_color { return tint; }
+    auto get_tint_rgb() const -> std::optional<RGBColor> { return tint_rgb; }
     auto get_move_cost(int level = 0) const -> int { return get_intensity_level(level).move_cost; }
     auto get_extra_radiation_min(int level = 0) const -> int {
         return get_intensity_level(level).extra_radiation_min;

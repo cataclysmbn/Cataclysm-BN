@@ -15,6 +15,10 @@ function remove_hidden_args(arg_list)
   return ret
 end
 
+---@param str string?
+---@param pat string
+---@param sep string
+---@param op? fun(match: string): string?
 function string_concat_matches(str, pat, sep, op)
   if str == nil or str == "" then return "" end
   local tbl = {}
@@ -26,14 +30,67 @@ function string_concat_matches(str, pat, sep, op)
   return table.concat(tbl, sep)
 end
 
-function get_meta_params(meta)
+---@class LuaDocOverload
+---@field args string[]
+---@field retval string
+
+---@class LuaDocMemberBase
+---@field name string
+---@field comment? string
+
+---@class LuaDocVariableMember : LuaDocMemberBase
+---@field type "var"
+---@field vartype string
+---@field hasval? boolean
+---@field varval any
+
+---@class LuaDocFunctionMember : LuaDocMemberBase
+---@field type "func"
+---@field overloads LuaDocOverload[]
+
+---@alias LuaDocMember LuaDocVariableMember|LuaDocFunctionMember
+
+---@class LuaDocSection
+---@field type_comment? string
+---@field lib_comment? string
+---@field ["#member"] LuaDocMember[]?
+---@field ["#bases"] string[]?
+---@field ["#construct"] string[][]?
+
+---@class LuaDocMetadata
+---@field ["#types"] table<string, LuaDocSection>?
+---@field ["#libs"] table<string, LuaDocSection>?
+
+---@class LuaDocParamSpec
+---@field name string
+---@field type? string
+
+---@param raw string
+---@return LuaDocParamSpec
+function parse_meta_param(raw)
+  local name, type_name = string.match(raw, "^([%w_]+%??)%s*:%s*(.+)$")
+  if name ~= nil then return { name = name, type = type_name } end
+  return { name = raw }
+end
+
+---@param meta string?
+---@return LuaDocParamSpec[]
+function get_meta_param_specs(meta)
   local tbl = {}
   if meta == nil or meta == "" then return tbl end
   for line in string.gmatch(meta, "[^\r\n]+") do
-    local name = string.match(line, "^@param (.*)$")
-    if name ~= nil then table.insert(tbl, name) end
+    local raw = string.match(line, "^@param (.*)$")
+    if raw ~= nil then table.insert(tbl, parse_meta_param(raw)) end
   end
   return tbl
+end
+
+---@param line string
+---@return boolean
+function is_luals_metadata_line(line)
+  return string.match(line, "^@alias%s+") ~= nil
+    or string.match(line, "^@class%s+") ~= nil
+    or string.match(line, "^@field%s+") ~= nil
 end
 
 ---@param a any
@@ -58,8 +115,8 @@ end
 
 --- wraps sol2 table/map proxies so it can be sorted.
 ---@generic T
----@param t? T[]
----@return { k: string, v: T }[]
+---@param t? table<string, T>|T[]
+---@return { k: string|integer, v: T }[]
 function wrapped(t)
   local res = {}
   for k, v in pairs(t or {}) do
@@ -132,6 +189,8 @@ function field_sort_order(member)
   return 0
 end
 
+---@param a LuaDocMember
+---@param b LuaDocMember
 function field_sort_less(a, b)
   local a_priority = field_sort_order(a)
   local b_priority = field_sort_order(b)
@@ -145,6 +204,7 @@ function field_sort_less(a, b)
   return tostring(a.type) < tostring(b.type)
 end
 
+---@param cpp_type string
 function normalize_sol_object_type(cpp_type)
   local compact_type = string.gsub(cpp_type, "%s+", "")
   compact_type = string.gsub(compact_type, "::", "_")
@@ -157,6 +217,7 @@ function normalize_sol_object_type(cpp_type)
   return cpp_type
 end
 
+---@param arg_list string
 function split_doc_type_args(arg_list)
   local result = {}
   local depth = 0
@@ -177,7 +238,7 @@ function split_doc_type_args(arg_list)
 end
 
 -- Rudimentary mapping from C++/sol types to LuaLS types.
----@param cpp_type string
+---@param cpp_type string?
 ---@param keep_cppval boolean
 ---@return string
 function map_cpp_type_to_lua(cpp_type, keep_cppval)
@@ -250,35 +311,42 @@ function map_cpp_type_to_lua(cpp_type, keep_cppval)
       clean_type = string.gsub(
         clean_type,
         "^Vector%((%S+)%)$",
+        ---@param k string
         function(k) return ("%s[]"):format(map_cpp_type_to_lua(k, keep_cppval)) end
       )
     elseif string.match(clean_type, "^Set%(%S+%)$") then
       clean_type = string.gsub(
         clean_type,
         "^Set%((%S+)%)$",
+        ---@param k string
         function(k) return ("%s[]"):format(map_cpp_type_to_lua(k, keep_cppval)) end
       )
     elseif string.match(clean_type, "^Array%(%S+,%d+%)$") then
       clean_type = string.gsub(
         clean_type,
         "^Array%((%S+),(%d+)%)$",
+        ---@param k string
         function(k) return ("%s[]"):format(map_cpp_type_to_lua(k, keep_cppval)) end
       )
     elseif string.match(clean_type, "^Dict%(%S+,%S+%)$") then
       clean_type = string.gsub(
         clean_type,
         "^Dict%((%S+),(%S+)%)$",
+        ---@param k string
+        ---@param v string
         function(k, v) return ("table<%s, %s>"):format(map_cpp_type_to_lua(k, keep_cppval), map_cpp_type_to_lua(v, keep_cppval)) end
       )
     elseif string.match(clean_type, "^Opt%(%S+%)$") then
       clean_type = string.gsub(
         clean_type,
         "^Opt%((%S+)%)$",
+        ---@param k string
         function(k) return ("%s?"):format(map_cpp_type_to_lua(k, keep_cppval)) end
       )
     elseif string.match(clean_type, "^Variant%(.+%)$") then
       local mapped_types = {}
       local inner = string.match(clean_type, "^Variant%((.*)%)$")
+      ---@cast inner string
       for _, type_part in ipairs(split_doc_type_args(inner)) do
         table.insert(mapped_types, map_cpp_type_to_lua(type_part, keep_cppval))
       end
@@ -286,6 +354,7 @@ function map_cpp_type_to_lua(cpp_type, keep_cppval)
     elseif string.match(clean_type, "^%(.+%)$") then
       local mapped_types = {}
       local inner = string.match(clean_type, "^%((.*)%)$")
+      ---@cast inner string
       for _, type_part in ipairs(split_doc_type_args(inner)) do
         table.insert(mapped_types, map_cpp_type_to_lua(type_part, keep_cppval))
       end
@@ -294,6 +363,8 @@ function map_cpp_type_to_lua(cpp_type, keep_cppval)
       clean_type = string.gsub(
         clean_type,
         "^Pair%((%S+),(%S+)%)$",
+        ---@param k string
+        ---@param v string
         function(k, v) return ("(%s, %s)"):format(map_cpp_type_to_lua(k, keep_cppval), map_cpp_type_to_lua(v, keep_cppval)) end
       )
     end

@@ -54,6 +54,7 @@
 #include "options.h"
 #include "output.h"
 #include "path_info.h"
+#include "perk.h"
 #include "pimpl.h"
 #include "pldata.h"
 #include "profession.h"
@@ -347,6 +348,7 @@ void avatar::randomize( const bool random_scenario, points_left &points, bool pl
     int num_btraits = 0;
     int tries = 0;
     newcharacter::add_traits( *this, points ); // adds mandatory profession/scenario traits.
+    newcharacter::add_perks( *this );
     for( const trait_id &mut : get_mutations() ) {
         const mutation_branch &mut_info = mut.obj();
         if( mut_info.profession ) {
@@ -1161,7 +1163,7 @@ tab_direction set_stats( avatar &u, points_left &points )
                 mvwprintz( w_description, point( 0, 2 ), COL_STAT_BONUS, _( "Night vision bonus: +%.1f" ),
                            vision::nv_range_from_per( u.per_max ) );
                 fold_and_print( w_description, point( 0, 4 ), getmaxx( w_description ) - 1, COL_STAT_NEUTRAL,
-                                _( "Perception is also used for detecting traps and other things of interest." ) );
+                                _( "Perception is also used for detecting traps, camouflaged creatures, and other things of interest." ) );
                 break;
         }
 
@@ -1613,23 +1615,29 @@ tab_direction set_traits( avatar &u, points_left &points )
                     }
                 }
             } else if( newcharacter::has_conflicting_trait( u, cur_trait ) ) {
-                const auto &new_types = cur_trait.obj().types;
-                const bool do_swap = std::ranges::any_of( new_types,
-                []( const auto & t ) { return mutation_type_swaps_on_conflict( t ); } );
-                if( do_swap ) {
-                    const auto base_traits = u.get_base_traits();
-                    auto it = std::ranges::find_if( base_traits, [&]( const trait_id & tr ) {
-                        return tr != cur_trait && std::ranges::any_of( tr.obj().types,
-                        [&]( const auto & t ) { return new_types.contains( t ); } );
-                    } );
-                    if( it != base_traits.end() ) {
-                        inc_type = 1;
-                        u.toggle_trait( *it );
-                    } else {
-                        popup( _( "You already picked a conflicting trait!" ) );
-                    }
-                } else {
+                const auto old_trait = newcharacter::find_swapped_trait( u, cur_trait );
+                if( !old_trait ) {
                     popup( _( "You already picked a conflicting trait!" ) );
+                } else {
+                    // The old trait's points are refunded on removal, so check the limits as
+                    // they will be after the swap.
+                    const int old_points = ( *old_trait )->points;
+                    const int good_after_swap = num_good - std::max( old_points, 0 );
+                    const int bad_after_swap = num_bad - std::min( old_points, 0 );
+                    if( iCurWorkingPage == 0 && good_after_swap + mdata.points >
+                        max_trait_points && !points.is_freeform() ) {
+                        popup( vgettext( "Sorry, but you can only take %d point of advantages.",
+                                         "Sorry, but you can only take %d points of advantages.", max_trait_points ),
+                               max_trait_points );
+                    } else if( iCurWorkingPage != 0 && bad_after_swap + mdata.points <
+                               -max_trait_points && !points.is_freeform() ) {
+                        popup( vgettext( "Sorry, but you can only take %d point of disadvantages.",
+                                         "Sorry, but you can only take %d points of disadvantages.", max_trait_points ),
+                               max_trait_points );
+                    } else {
+                        newcharacter::remove_trait_and_refund( u, *old_trait, points, num_good, num_bad );
+                        inc_type = 1;
+                    }
                 }
             } else if( g->scen->is_forbidden_trait( cur_trait ) ) {
                 popup( _( "The scenario you picked prevents you from taking this trait!" ) );
@@ -2475,13 +2483,19 @@ tab_direction set_profession( avatar &u, points_left &points,
             if( sorted_profs[cur_id]->vehicle() ) {
                 buffer += colorize( _( "Vehicle:" ), c_light_blue ) + "\n";
                 vproto_id veh_id = sorted_profs[cur_id]->vehicle();
-                buffer += veh_id->name + "\n";
+                buffer += _( veh_id->name ) + "\n";
             }
             // Profession spells
             if( !sorted_profs[cur_id]->spells().empty() ) {
                 buffer += colorize( _( "Spells:" ), c_light_blue ) + "\n";
                 for( const std::pair<spell_id, int> spell_pair : sorted_profs[cur_id]->spells() ) {
                     buffer += string_format( _( "%s level %d" ), spell_pair.first->name, spell_pair.second ) + "\n";
+                }
+            }
+            if( !sorted_profs[cur_id]->get_perks().empty() ) {
+                buffer += colorize( _( "Perks:" ), c_light_blue ) + "\n";
+                for( const perk_id &perk : sorted_profs[cur_id]->get_perks() ) {
+                    buffer += string_format( _( "%s" ), perk->get_name() ) + "\n";
                 }
             }
 
@@ -2633,6 +2647,7 @@ tab_direction set_profession( avatar &u, points_left &points,
             // Add traits for the new profession (and perhaps scenario, if, for example,
             // both the scenario and old profession require the same trait)
             newcharacter::add_traits( u, points );
+            newcharacter::add_perks( u );
             points.skill_points -= netPointCost;
         } else if( action == "CHANGE_GENDER" ) {
             u.male = !u.male;
@@ -3000,7 +3015,6 @@ tab_direction set_magic( avatar &u, points_left &points )
         // Write the hint as to upgrade costs
         const bool knows = u.magic->knows_spell( current_spell );
         const int cost = knows ? current_spell->increase_points : current_spell->starting_points;
-        const int level = knows ? u.magic->get_spell( current_spell ).get_level() : 0;
         // We have two different strings to pluralize, so we have to use two
         // translation calls.
         const nc_color color = points.trait_points_left() >= cost ? COL_SKILL_USED : c_light_red;
@@ -3348,7 +3362,7 @@ tab_direction set_scenario( avatar &u, points_left &points,
             mvwprintz( w_vehicle, point_zero, COL_HEADER, _( "Scenario Vehicle:" ) );
             wprintz( w_vehicle, c_light_gray, ( "\n" ) );
             if( sorted_scens[cur_id]->vehicle() ) {
-                wprintz( w_vehicle, c_light_gray, sorted_scens[cur_id]->vehicle()->name );
+                wprintz( w_vehicle, c_light_gray, _( sorted_scens[cur_id]->vehicle()->name ) );
             }
 
             mvwprintz( w_flags, point_zero, COL_HEADER, _( "Scenario Flags:" ) );
@@ -3518,7 +3532,7 @@ static void draw_height( const catacurses::window &w_height, const avatar &you,
     werase( w_height );
     mvwprintz( w_height, point_zero, highlight ? h_light_gray : c_light_gray, _( "Height:" ) );
     unsigned height_pos = 1 + utf8_width( _( "Height:" ) );
-    mvwprintz( w_height, point( height_pos, 0 ), c_white, string_format( "%d cm",
+    mvwprintz( w_height, point( height_pos, 0 ), c_white, string_format( _( "%d cm" ),
                you.base_height() ) );
     wnoutrefresh( w_height );
 }
@@ -3722,9 +3736,26 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
             wprintz( w_traits, c_light_red, _( "None!" ) );
         } else {
             for( size_t i = 0; i < current_traits.size(); i++ ) {
+                pos = i + 1;
                 const auto current_trait = current_traits[i];
-                trim_and_print( w_traits, point( 0, i + 1 ), getmaxx( w_traits ) - 1,
+                trim_and_print( w_traits, point( 0, pos ), getmaxx( w_traits ) - 1,
                                 current_trait->get_display_color(), "\t" + current_trait->name() );
+            }
+        }
+
+        if( !you.prof->get_perks().empty() || !g->scen->get_perks().empty() ) {
+            pos++;
+            mvwprintz( w_traits, point( 0, pos ), COL_HEADER, _( "Perks: " ) );
+            pos++;
+            for( const perk_id &perk : you.prof->get_perks() ) {
+                trim_and_print( w_traits, point( 0, pos ), getmaxx( w_traits ) - 1,
+                                c_white, "\t" + perk->get_name() );
+                pos++;
+            }
+            for( const perk_id &perk : g->scen->get_perks() ) {
+                trim_and_print( w_traits, point( 0, pos ), getmaxx( w_traits ) - 1,
+                                c_white, "\t" + perk->get_name() );
+                pos++;
             }
         }
 
@@ -3930,12 +3961,12 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
         }
         if( scen_veh ) {
             trim_and_print( w_misc, point( 0, misc_point ), getmaxx( w_misc ) - 1,
-                            c_white, "\t" + scen_veh->name );
+                            c_white, "\t" + _( scen_veh->name ) );
             misc_point++;
         }
         if( prof_veh ) {
             trim_and_print( w_misc, point( 0, misc_point ), getmaxx( w_misc ) - 1,
-                            c_white, "\t" + prof_veh->name );
+                            c_white, "\t" + _( prof_veh->name ) );
             misc_point++;
         }
         std::vector<npc_class_id> npcs = you.prof->npcs();
@@ -4322,7 +4353,7 @@ void Character::clear_mutations()
 void Character::clear_skills()
 {
     for( auto &sk : *_skills ) {
-        sk.second.level( 0 );
+        sk.second = SkillLevel{};
     }
 }
 
@@ -4345,6 +4376,17 @@ void newcharacter::add_traits( Character &ch, points_left &points )
         if( !ch.has_trait( tr ) ) {
             ch.toggle_trait( tr );
         }
+    }
+}
+
+void newcharacter::add_perks( Character &ch )
+{
+    for( const perk_id &perk : ch.prof->get_perks() ) {
+        ch.add_perk( perk );
+    }
+
+    for( const perk_id &perk : g->scen->get_perks() ) {
+        ch.add_perk( perk );
     }
 }
 
@@ -4585,6 +4627,7 @@ void reset_scenario( avatar &u, const scenario *scen )
     u.clear_skills();
     u.clear_bionics();
     newcharacter::add_traits( u );
+    newcharacter::add_perks( u );
     restore_cosmetic_trait( u, type_hair_color, previous_hair_color );
     restore_or_default_hair_style( u, previous_hair_style );
 }
@@ -4754,6 +4797,41 @@ bool has_same_type_trait( const Character &ch, const trait_id &t )
         }
     }
     return false;
+}
+
+auto find_swapped_trait( const Character &ch, const trait_id &t ) -> std::optional<trait_id>
+{
+    const auto &new_types = t->types;
+    const bool do_swap = std::ranges::any_of( new_types, []( const auto & type ) {
+        return mutation_type_swaps_on_conflict( type );
+    } );
+    if( !do_swap ) {
+        return std::nullopt;
+    }
+    const auto base_traits = ch.get_base_traits();
+    const auto it = std::ranges::find_if( base_traits, [&]( const trait_id & tr ) {
+        return tr != t && std::ranges::any_of( tr->types, [&]( const auto & type ) {
+            return new_types.contains( type );
+        } );
+    } );
+    if( it == base_traits.end() ) {
+        return std::nullopt;
+    }
+    return *it;
+}
+
+auto remove_trait_and_refund( Character &ch, const trait_id &t, points_left &points,
+                              int &num_good, int &num_bad ) -> void
+{
+    ch.toggle_trait( t );
+    const int cost = t->points;
+    // Undo what picking the trait did: give back its cost and drop it from the totals.
+    points.trait_points += cost;
+    if( cost > 0 ) {
+        num_good -= cost;
+    } else {
+        num_bad -= cost;
+    }
 }
 
 } // namespace newcharacter

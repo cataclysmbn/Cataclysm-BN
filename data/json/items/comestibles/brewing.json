@@ -6,6 +6,7 @@
     "name": "base brew",
     "price": "0 cent",
     "price_postapoc": "10 cent",
+    "spill_field": "fd_alcohol",
     "volume": "250 ml",
     "charges": 7,
     "calories": 17,
