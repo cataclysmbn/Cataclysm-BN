@@ -14,6 +14,7 @@ const api = async (path: string, body?: unknown): Promise<any> => {
     headers: token() ? { Authorization: `Bearer ${token()}` } : {},
     body: body ? JSON.stringify(body) : undefined,
   })
+  if (res.status === 404) return null
   const json = await res.json()
   if (!res.ok || json.errors && !json.data) {
     throw new Error(`${path}: ${res.status} ${JSON.stringify(json)}`)
@@ -51,7 +52,7 @@ const fetchGraphql = async (repo: string, since: Date, numbers: number[]): Promi
       if (repository[`n${n}`]?.__typename === "PullRequest") index.prNumbers.add(n)
     }
     const { nodes, pageInfo } = repository.pullRequests
-    for (const pr of nodes) index.prs.set(pr.mergeCommit.oid, pr)
+    for (const pr of nodes) if (pr.mergeCommit) index.prs.set(pr.mergeCommit.oid, pr)
     if (!pageInfo.hasNextPage || new Date(nodes.at(-1).updatedAt) < since) return index
     after = pageInfo.endCursor
   }
@@ -71,7 +72,7 @@ const fetchRest = async (repo: string, since: Date, numbers: number[]): Promise<
   const issues = await Promise.all(
     numbers.filter((n) => !known.has(n)).map((n) => api(`repos/${repo}/issues/${n}`)),
   )
-  const prNumbers = known.union(new Set(issues.filter((x) => x.pull_request).map((x) => x.number)))
+  const prNumbers = known.union(new Set(issues.filter((x) => x?.pull_request).map((x) => x.number)))
   return { prs, prNumbers }
 }
 
