@@ -754,9 +754,11 @@ void Character::hardcoded_effects( effect &it )
                     if( g->m.impassable( dest ) ) {
                         g->m.make_rubble( dest, f_rubble_rock );
                     }
-                    MonsterGroupResult spawn_details = MonsterGroupManager::GetResultFromGroup(
-                                                           GROUP_NETHER );
-                    g->place_critter_at( spawn_details.name, dest );
+                    auto spawn_details_vec = MonsterGroupManager::GetResultFromGroup(
+                                                 GROUP_NETHER );
+                    for( auto spawn_details : spawn_details_vec ) {
+                        g->place_critter_at( spawn_details.name, dest );
+                    }
                     if( g->u.sees( dest ) ) {
                         g->cancel_activity_or_ignore_query( distraction_type::hostile_spotted_far,
                                                             _( "A monster appears nearby!" ) );

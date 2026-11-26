@@ -1449,7 +1449,7 @@ void furn_t::load(const JsonObject& jo, const std::string& src) {
     optional(jo, was_loaded, "emissions", emissions);
     optional(jo, was_loaded, "provides_liquids", provides_liquids);
     optional(jo, was_loaded, "bonus_fire_warmth_feet", bonus_fire_warmth_feet, 300);
-    optional(jo, was_loaded, "keg_capacity", keg_capacity, legacy_volume_reader, 0_ml);
+    optional(jo, was_loaded, "keg_capacity", keg_capacity, volume_reader(), 0_ml);
     if (jo.has_member("fluid_grid")) {
         auto fluid_grid_obj = jo.get_object("fluid_grid");
         auto fluid_grid_entry = fluid_grid_data{};

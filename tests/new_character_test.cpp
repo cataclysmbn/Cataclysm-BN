@@ -30,8 +30,7 @@
 
 auto reset_scenario(avatar& u, const scenario* scen) -> void;
 
-static auto operator<<(std::ostream& s, const std::vector<trait_id>& v)
-    -> std::ostream& { // *NOPAD*
+static auto operator<<(std::ostream& s, const std::vector<trait_id>& v) -> std::ostream& {
     for (const auto& e : v) { s << e.c_str() << " "; }
     return s;
 }
@@ -141,6 +140,57 @@ TEST_CASE("skin_tone_is_mandatory_with_default", "[new_character][traits]") {
 
     CHECK(ch.has_base_trait(skin_lighter));
     CHECK(ch.has_trait(skin_lighter));
+}
+
+// Regression test for #9368: picking a new skin tone removed Albino without refunding its trait
+// points, so switching back and forth between Albino and another skin tone gave free points.
+TEST_CASE("swapping_skin_tone_refunds_albino_trait_points", "[new_character][traits]") {
+    clear_all_state();
+
+    const auto albino = trait_id("ALBINO");
+    const auto skin_lighter = trait_id("SKIN_LIGHTER");
+    REQUIRE(albino->points < 0);
+    REQUIRE(skin_lighter->points == 0);
+
+    auto ch = get_sanitized_player();
+    ch.clear_mutations();
+    ch.toggle_trait(skin_lighter);
+
+    auto points = points_left();
+    const auto start_points = points.trait_points;
+    auto num_good = 0;
+    auto num_bad = 0;
+
+    // Same steps as picking a trait on the traits tab: swap out the conflicting skin tone, then
+    // add the new trait and pay its cost.
+    const auto pick = [&](const trait_id& new_trait, const trait_id& expected_old) {
+        const auto old_trait = newcharacter::find_swapped_trait(ch, new_trait);
+        REQUIRE(old_trait);
+        CHECK(*old_trait == expected_old);
+        newcharacter::remove_trait_and_refund(ch, *old_trait, points, num_good, num_bad);
+        ch.toggle_trait(new_trait);
+        points.trait_points -= new_trait->points;
+        if (new_trait->points > 0) {
+            num_good += new_trait->points;
+        } else {
+            num_bad += new_trait->points;
+        }
+    };
+
+    for (auto i = 0; i < 5; i++) {
+        pick(albino, skin_lighter);
+        CHECK(ch.has_trait(albino));
+        CHECK_FALSE(ch.has_trait(skin_lighter));
+        CHECK(points.trait_points == start_points - albino->points);
+        CHECK(num_bad == albino->points);
+
+        pick(skin_lighter, albino);
+        CHECK_FALSE(ch.has_trait(albino));
+        CHECK(ch.has_trait(skin_lighter));
+        CHECK(points.trait_points == start_points);
+        CHECK(num_good == 0);
+        CHECK(num_bad == 0);
+    }
 }
 
 TEST_CASE("default_character_respects_scenario_whitelist", "[new_character][scenario]") {

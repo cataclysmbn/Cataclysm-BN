@@ -5,9 +5,12 @@ repo_root="$(git rev-parse --show-toplevel)"
 cd "$repo_root"
 
 if (( $# == 0 )); then
-    echo "usage: just fmt-return <files or dirs>" >&2
+    echo "usage: just fmt-return|fmt-auto <files or dirs>" >&2
     exit 2
 fi
+
+# fmt-auto sets TIDY_CHECK=modernize-use-auto.
+check="${TIDY_CHECK:-modernize-use-trailing-return-type}"
 
 for tool in clang-tidy clang-apply-replacements; do
     if ! command -v "$tool" >/dev/null 2>&1; then
@@ -62,12 +65,12 @@ xargs -0 -n 1 -P "$jobs" bash -c '
     fix_dir="$(mktemp -d "$1/fixes.XXXXXX")"
     clang-tidy \
         --quiet \
-        --checks="-*,modernize-use-trailing-return-type" \
-        --config="{CheckOptions: {modernize-use-trailing-return-type.TransformLambdas: none}}" \
+        --checks="-*,$3" \
+        --config="{CheckOptions: {modernize-use-trailing-return-type.TransformLambdas: none, modernize-use-auto.MinTypeNameLength: 0}}" \
         --header-filter="^$" \
         --export-fixes="$fix_dir/fixes.yaml" \
-        -p "$2" "$3"
-' _ "$fixes_dir" "$build_path" < "$files_file"
+        -p "$2" "$4"
+' _ "$fixes_dir" "$build_path" "$check" < "$files_file"
 
 clang-apply-replacements "$fixes_dir"
 

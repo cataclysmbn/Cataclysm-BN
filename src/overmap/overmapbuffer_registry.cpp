@@ -37,7 +37,7 @@ public:
     overmapbuffer_registry(const overmapbuffer_registry&) = delete;
     auto operator=(const overmapbuffer_registry&) -> overmapbuffer_registry& = delete;
 
-    auto get(const dimension_id& dim_id) -> overmapbuffer& { // *NOPAD*
+    auto get(const dimension_id& dim_id) -> overmapbuffer& {
         auto it = buffers_.find(dim_id);
         if (it == buffers_.end()) {
             auto buf = std::make_unique<overmapbuffer>();
@@ -58,9 +58,7 @@ public:
         for (auto& kv : buffers_) { fn(kv.first, *kv.second); }
     }
 
-    auto primary() -> overmapbuffer& { // *NOPAD*
-        return get(primary_dimension_id());
-    }
+    auto primary() -> overmapbuffer& { return get(primary_dimension_id()); }
 
 private:
     std::map<dimension_id, std::unique_ptr<overmapbuffer>> buffers_;

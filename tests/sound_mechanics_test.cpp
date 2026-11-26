@@ -204,3 +204,37 @@ TEST_CASE("sounds_keep_absolute_positions_when_reality_bubble_resizes", "[sound]
     CHECK(instances.front().vol_at_tri(cached_source) == cached_volume);
     CHECK(instances.back().origin == cached_source);
 }
+
+namespace {
+const auto effect_sleep = efftype_id("sleep");
+
+auto sleeper_wakes_from(const short volume) -> bool {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() {
+        sounds::reset_sounds();
+        sounds::clear_floodfill_que(true);
+    });
+    auto& here = get_map();
+    auto& you = get_avatar();
+    you.setpos(tripoint_bub_ms(60, 60, 0));
+    here.build_map_cache(0);
+    sounds::reset_sounds();
+    you.add_effect(effect_sleep, 1_hours);
+    sounds::sound(
+        {.volume = volume,
+         .origin = tripoint_bub_ms(61, 60, 0),
+         .category = sounds::sound_t::music,
+         .description = "music"});
+    here.batch_flood_fill_sounds();
+    sounds::process_sound_markers(&you);
+    return !you.has_effect(effect_sleep);
+}
+} // namespace
+
+// Ambient volume above ground is 35 dB, so a sleeper wakes from sounds past 45 dB.
+// Checks a 70 dB car stereo on the next tile wakes the sleeper.
+// A 30 dB sound is audible but below ambient, so it does not wake the sleeper.
+TEST_CASE("sleeper_wakes_from_sounds_louder_than_ambient", "[sound][sleep]") {
+    CHECK(sleeper_wakes_from(70));
+    CHECK_FALSE(sleeper_wakes_from(30));
+}

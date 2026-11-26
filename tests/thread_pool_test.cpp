@@ -20,9 +20,14 @@ TEST_CASE("nested_parallel_loops_complete_with_saturated_workers", "[thread_pool
     CHECK(visits.load() == outer_count * 7);
 }
 
+namespace {
+
+[[noreturn]] auto fail(int /*index*/) -> void { throw std::runtime_error("nested failure"); }
+
+} // namespace
+
 TEST_CASE("nested_parallel_loop_exceptions_reach_caller", "[thread_pool]") {
     const auto chunked = GENERATE(false, true);
-    const auto fail = [](int /*index*/) { throw std::runtime_error("nested failure"); };
     CHECK_THROWS_WITH(
         parallel_for(0, 2,
                      [&](int /*outer*/) {

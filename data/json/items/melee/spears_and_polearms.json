@@ -132,7 +132,7 @@
     "category": "weapons",
     "weapon_category": [ "SPEARS" ],
     "name": { "str": "homemade halfpike" },
-    "description": "A short do-it-yourself spear made out of a smooth wooden shaft with a metal spike seated and bound into place at its tip.  Its functional grip and decent construction makes it a usable, if not effective, weapon.",
+    "description": "A short do-it-yourself spear made out of a smooth wooden shaft with a metal spike seated and bound into place at its tip.  Its functional grip and decent construction make it a usable, if not effective, weapon.",
     "weight": "1814 g",
     "volume": "1750 ml",
     "price": "14 USD",
@@ -394,7 +394,7 @@
     "type": "GENERIC",
     "copy-from": "naginata",
     "name": { "str": "naginata fake" },
-    "description": "This is a dull, slightly floppy replica of a Japanese polearm with a curved blade.  With a little difficulty, you could use it administer a solid slap from a distance.",
+    "description": "This is a dull, slightly floppy replica of a Japanese polearm with a curved blade.  With a little difficulty, you could use it to administer a solid slap from a distance.",
     "material": [ "aluminum", "wood" ],
     "price": "80 USD",
     "price_postapoc": "5 USD",
@@ -697,7 +697,7 @@
     "copy-from": "glaive",
     "looks_like": "makeshift_halberd",
     "name": { "str": "bone glaive" },
-    "description": "This glaive's blade is carved from a large chunk of bone, and is capable of slicing foes in with swiftness and efficiency.",
+    "description": "This glaive's blade is carved from a large chunk of bone, and is capable of slicing foes with swiftness and efficiency.",
     "material": [ "bone_heavy", "wood" ],
     "proportional": { "weight": 0.8, "cutting": 0.9 }
   }

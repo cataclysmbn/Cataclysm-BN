@@ -1,0 +1,62 @@
+[
+  {
+    "type": "COMESTIBLE",
+    "id": "test_rot_food",
+    "name": "test perishable food",
+    "description": "Food with a fixed shelf life for rot tests.",
+    "symbol": "%",
+    "color": "white",
+    "material": [ "flesh" ],
+    "weight": "1 g",
+    "volume": "1 ml",
+    "comestible_type": "FOOD",
+    "calories": 1,
+    "spoils_in": "1 day"
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "test_rot_nonperishable",
+    "copy-from": "test_rot_food",
+    "name": "test nonperishable food",
+    "spoils_in": "0 days"
+  },
+  {
+    "type": "CONTAINER",
+    "id": "test_rot_open",
+    "name": "test open container",
+    "description": "A container for testing nested food storage.",
+    "symbol": ")",
+    "color": "white",
+    "material": [ "plastic" ],
+    "weight": "1 g",
+    "volume": "1 ml",
+    "contains": "10 L",
+    "seals": false,
+    "preserves": false
+  },
+  {
+    "type": "CONTAINER",
+    "id": "test_rot_sealed",
+    "copy-from": "test_rot_open",
+    "name": "test sealed container",
+    "seals": true
+  },
+  {
+    "type": "CONTAINER",
+    "id": "test_rot_preserving",
+    "copy-from": "test_rot_sealed",
+    "name": "test preserving container",
+    "preserves": true
+  },
+  {
+    "type": "GENERIC",
+    "id": "test_rot_remains",
+    "name": "test rot remains",
+    "description": "A nonperishable, non-charge-counted corpse decay product for tests.",
+    "symbol": ",",
+    "color": "white",
+    "material": [ "bone" ],
+    "weight": "1 g",
+    "volume": "1 ml"
+  }
+]

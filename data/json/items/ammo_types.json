@@ -584,6 +584,12 @@
   },
   {
     "type": "ammunition_type",
+    "id": "fungus_milk_raw",
+    "name": "raw fungal milk",
+    "default": "fungus_milk_raw"
+  },
+  {
+    "type": "ammunition_type",
     "id": "paintball",
     "name": "paintball",
     "default": "paintball"

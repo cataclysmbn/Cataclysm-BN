@@ -709,7 +709,7 @@ bool try_uncanny_dodge( Character &who )
         who.mod_power_level( -trigger_cost );
     } else if( who.get_stamina() > 100 ) {
         float ench_chance = who.bonus_from_enchantments( 0.0, ench_val_UNCANNY_DODGE );
-        if( ench_chance < rng_float( 0.0, 1.0 ) ) {
+        if( ench_chance < rng( 0, 100 ) ) {
             return false;
         }
         // NOTE: Potential improvement, allow lua hook to burn resources

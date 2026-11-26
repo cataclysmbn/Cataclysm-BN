@@ -163,7 +163,7 @@
     "id": "f_alien_scar_small_clogged",
     "copy-from": "f_alien_scar_small",
     "name": "clogged-up scarred lump",
-    "description": "This is a small patch of mangled alien flesh, sabotaged even further by being given a heavy coating of resin to stop it from leaking noxius gases.",
+    "description": "This is a small patch of mangled alien flesh, sabotaged even further by being given a heavy coating of resin to stop it from leaking noxious gases.",
     "symbol": "{",
     "color": "green",
     "emissions": [ "emit_shock_burst" ]

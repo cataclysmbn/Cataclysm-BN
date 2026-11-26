@@ -828,7 +828,7 @@
     "healthy": 1,
     "addiction_potential": 1,
     "calories": 53,
-    "description": "A potent wine flavored with pine resin.  Bold and pungent, its biting taste and strong aroma takes some getting used to.",
+    "description": "A potent wine flavored with pine resin.  Bold and pungent, its biting taste and strong aroma take some getting used to.",
     "price": "10 USD",
     "price_postapoc": "1 USD",
     "material": [ "alcohol", "water" ],

@@ -26,7 +26,7 @@
 
 struct city;
 class overmap_land_use_code;
-struct MonsterGroup;
+class MonsterGroup;
 
 using overmap_land_use_code_id = string_id<overmap_land_use_code>;
 class JsonObject;
@@ -153,6 +153,7 @@ enum class oter_flags : int {
     source_vehicles,
     source_weapon,
     is_bridge,
+    cant_be_uniform,
     num_oter_flags
 };
 

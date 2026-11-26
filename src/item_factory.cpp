@@ -10,6 +10,7 @@
 #include <optional>
 #include <stdexcept>
 #include <type_traits>
+#include <unordered_map>
 #include <unordered_set>
 
 #include "addiction.h"
@@ -37,6 +38,7 @@
 #include "input.h"
 #include "item.h"
 #include "item_contents.h"
+#include "digital_recipes.h"
 #include "item_group.h"
 #include "iuse_actor.h"
 #include "json.h"
@@ -67,6 +69,54 @@ class player;
 struct tripoint;
 
 static std::set<itype_id> item_blacklist;
+
+namespace
+{
+
+auto collect_spawn_item_ids( const Item_spawn_data &data,
+                             std::unordered_set<itype_id> &ids ) -> void;
+
+auto collect_modifier_item_ids( const Item_modifier &modifier,
+                                std::unordered_set<itype_id> &ids ) -> void
+{
+    if( modifier.ammo ) {
+        collect_spawn_item_ids( *modifier.ammo, ids );
+    }
+    if( modifier.container ) {
+        collect_spawn_item_ids( *modifier.container, ids );
+    }
+}
+
+/// Collects item ids referenced by a spawn tree without following named item group references.
+auto collect_spawn_item_ids( const Item_spawn_data &data,
+                             std::unordered_set<itype_id> &ids ) -> void
+{
+    if( const auto *const single = dynamic_cast<const Single_item_creator *>( &data ) ) {
+        if( single->type == Single_item_creator::S_ITEM ) {
+            ids.emplace( single->id );
+        }
+        if( single->modifier ) {
+            collect_modifier_item_ids( *single->modifier, ids );
+        }
+    } else if( const auto *const group = dynamic_cast<const Item_group *>( &data ) ) {
+        for( const auto &entry : group->get_items() ) {
+            collect_spawn_item_ids( *entry, ids );
+        }
+    }
+}
+
+template<typename T>
+auto collect_requirement_item_ids( const std::vector<std::vector<T>> &alternatives,
+                                   std::unordered_set<itype_id> &ids ) -> void
+{
+    for( const auto &options : alternatives ) {
+        for( const auto &option : options ) {
+            ids.emplace( option.type );
+        }
+    }
+}
+
+} // namespace
 
 static DynamicDataLoader::deferred_json deferred;
 
@@ -269,7 +319,6 @@ void Item_factory::finalize_pre( itype &obj )
     }
 
     // Items always should have some volume.
-    // TODO: handle possible exception software?
     // TODO: make items with 0 volume an error during loading?
     if( obj.volume <= 0_ml ) {
         obj.volume = units::from_milliliter( 1 );
@@ -801,27 +850,59 @@ void Item_factory::finalize_item_blacklist()
         }
     }
 
+    // Migrations only touch item groups and requirements that mention the migrated item, so index
+    // them by item id instead of scanning everything once per migration.
+    // Indexes may keep stale entries; visiting an extra group or requirement is a no-op.
+    auto groups_by_item = std::unordered_map<itype_id, std::vector<GroupMap::value_type *>> {};
+    for( auto &g : m_template_groups ) {
+        auto ids = std::unordered_set<itype_id> {};
+        collect_spawn_item_ids( *g.second, ids );
+        for( const auto &id : ids ) {
+            groups_by_item[id].push_back( &g );
+        }
+    }
+    auto requirements_by_item = std::unordered_map<itype_id, std::vector<requirement_data *>> {};
+    for( const auto &r : requirement_data::all() ) {
+        auto ids = std::unordered_set<itype_id> {};
+        collect_requirement_item_ids( r.second.get_tools(), ids );
+        collect_requirement_item_ids( r.second.get_components(), ids );
+        for( const auto &id : ids ) {
+            requirements_by_item[id].push_back( const_cast<requirement_data *>( &r.second ) );
+        }
+    }
+    auto migrated_recipe_results = std::unordered_set<itype_id> {};
+
     for( const std::pair<const itype_id, migration> &migrate : migrations ) {
         if( !m_templates.contains( migrate.second.replace ) ) {
             debugmsg( "Replacement item for migration %s does not exist", migrate.first.c_str() );
             continue;
         }
 
-        for( std::pair<const item_group_id, std::unique_ptr<Item_spawn_data>> &g : m_template_groups ) {
-            g.second->replace_item( migrate.first, migrate.second.replace, g.first.str() );
+        if( const auto found = groups_by_item.find( migrate.first ); found != groups_by_item.end() ) {
+            // Copy: indexing the replacement below may rehash the map.
+            const auto groups = found->second;
+            for( auto *const g : groups ) {
+                g->second->replace_item( migrate.first, migrate.second.replace, g->first.str() );
+            }
+            auto &replacement_groups = groups_by_item[migrate.second.replace];
+            replacement_groups.insert( replacement_groups.end(), groups.begin(), groups.end() );
         }
 
         // replace migrated items in requirements
-        for( const std::pair<const requirement_id, requirement_data> &r : requirement_data::all() ) {
-            const_cast<requirement_data &>( r.second ).replace_item( migrate.first,
-                    migrate.second.replace );
+        if( const auto found = requirements_by_item.find( migrate.first );
+            found != requirements_by_item.end() ) {
+            const auto requirements = found->second;
+            for( auto *const r : requirements ) {
+                r->replace_item( migrate.first, migrate.second.replace );
+            }
+            auto &replacement_requirements = requirements_by_item[migrate.second.replace];
+            replacement_requirements.insert( replacement_requirements.end(), requirements.begin(),
+                                             requirements.end() );
         }
 
         // remove any recipes used to craft the migrated item
         // if there's a valid recipe, it will be for the replacement
-        recipe_dictionary::delete_if( [&migrate]( const recipe & r ) {
-            return !r.obsolete && r.result() == migrate.first;
-        } );
+        migrated_recipe_results.emplace( migrate.first );
 
         // If the default ammo of an ammo_type gets migrated, we migrate all guns using that ammo
         // type to the ammo type of whatever that default ammo was migrated to.
@@ -849,6 +930,11 @@ void Item_factory::finalize_item_blacklist()
                           migrate.second.replace.str(), migrate.first.str() );
             }
         }
+    }
+    if( !migrated_recipe_results.empty() ) {
+        recipe_dictionary::delete_if( [&migrated_recipe_results]( const recipe & r ) {
+            return !r.obsolete && migrated_recipe_results.contains( r.result() );
+        } );
     }
     for( vproto_id &vid : vehicle_prototype::get_all() ) {
         vehicle_prototype &prototype = const_cast<vehicle_prototype &>( vid.obj() );
@@ -1138,6 +1224,7 @@ void Item_factory::init()
     add_actor( std::make_unique<unpack_actor>() );
     add_actor( std::make_unique<countdown_actor>() );
     add_actor( std::make_unique<manualnoise_actor>() );
+    add_actor( std::make_unique<passivenoise_actor>() );
     add_actor( std::make_unique<musical_instrument_actor>() );
     add_actor( std::make_unique<deploy_furn_actor>() );
     add_actor( std::make_unique<place_monster_iuse>() );
@@ -1303,6 +1390,16 @@ void Item_factory::check_definitions() const
             }
         }
 
+        if( const auto content = type->item_vars.find( "digital_content" );
+            content != type->item_vars.end() && !content->second.empty() &&
+            !item_group::group_is_defined( item_group_id( content->second ) ) ) {
+            msg += string_format( "invalid digital_content item group %s\n", content->second );
+        }
+
+        if( const auto recipes = validate_digital_recipe_data( type->item_vars ); !recipes ) {
+            msg += string_format( "invalid digital recipe data: %s\n", recipes.error() );
+        }
+
         for( const auto &f : type->faults ) {
             if( !f.is_valid() ) {
                 msg += string_format( "invalid item fault %s\n", f.c_str() );
@@ -1354,6 +1451,11 @@ void Item_factory::check_definitions() const
             for( auto &b : type->seed->byproducts ) {
                 if( !has_template( b ) ) {
                     msg += string_format( "invalid byproduct id %s\n", b.c_str() );
+                }
+            }
+            for( const auto &flag : type->seed->harvest_inherit_flags ) {
+                if( !flag.is_valid() ) {
+                    msg += string_format( "invalid harvest inheritance flag %s\n", flag.c_str() );
                 }
             }
         }
@@ -2488,6 +2590,8 @@ void Item_factory::load( islot_seed &slot, const JsonObject &jo, const std::stri
     assign( jo, "seeds", slot.spawn_seeds );
     assign( jo, "byproducts", slot.byproducts );
     assign( jo, "required_terrain_flag", slot.required_terrain_flag );
+    assign( jo, "harvest_inherit_flags", slot.harvest_inherit_flags );
+    assign( jo, "harvest_inherit_poison", slot.harvest_inherit_poison );
 }
 
 void Item_factory::load( islot_container &slot, const JsonObject &jo, const std::string & )
@@ -3400,6 +3504,20 @@ auto load_active( std::vector<ItemFn> &xs, const JsonObject &obj ) -> bool
     return result;
 }
 
+auto load_item_vars( std::vector<ItemFn> &xs, const JsonObject &obj ) -> bool
+{
+    const bool result = obj.has_array( "vars" );
+    for( const JsonObject &jobj : obj.get_array( "vars" ) ) {
+        std::string name = jobj.get_string( "name" );
+        std::string val = jobj.get_string( "value" );
+        xs.emplace_back( [name, val]( detached_ptr<item> &&it ) {
+            it->set_var( name, val );
+            return std::move( it );
+        } );
+    }
+    return result;
+}
+
 } // namespace
 
 void Item_factory::add_entry( Item_group &ig, const JsonObject &obj )
@@ -3446,6 +3564,7 @@ void Item_factory::add_entry( Item_group &ig, const JsonObject &obj )
     use_modifier |= load_sub_ref( modifier.container, obj, "container", ig );
     use_modifier |= load_sub_ref( modifier.contents, obj, "contents", ig );
     use_modifier |= load_active( modifier.postprocess_fns, obj );
+    use_modifier |= load_item_vars( modifier.postprocess_fns, obj );
 
     std::vector<std::string> custom_flags;
     use_modifier |= load_string( custom_flags, obj, "custom-flags" );
@@ -3639,8 +3758,10 @@ std::pair<std::string, use_function> Item_factory::usage_from_object( const Json
     }
 
     method.get_actor_ptr()->load( obj );
-    if( obj.has_string( "menu_text" ) ) {
-        method.get_actor_ptr()->set_name( obj.get_string( "menu_text" ) );
+    if( obj.has_member( "menu_text" ) ) {
+        auto menu_text = translation{};
+        obj.read( "menu_text", menu_text );
+        method.get_actor_ptr()->set_name( menu_text );
     }
     return std::make_pair( internal_name, method );
 }

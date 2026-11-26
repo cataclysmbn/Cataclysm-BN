@@ -1,6 +1,20 @@
 [
   {
     "type": "COMESTIBLE",
+    "id": "salsa",
+    "copy-from": "sauce_red",
+    "name": { "str_sp": "salsa" },
+    "description": "A chunky, spicy sauce made from tomatoes, onion, and chili peppers.",
+    "container": "jar_glass",
+    "material": [ "veggy" ],
+    "spoils_in": "5 days",
+    "healthy": 2,
+    "fun": 3,
+    "price": "2 USD",
+    "price_postapoc": "1 USD"
+  },
+  {
+    "type": "COMESTIBLE",
     "id": "sauce_red",
     "name": "red sauce",
     "weight": "64 g",

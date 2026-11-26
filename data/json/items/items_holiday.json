@@ -21,7 +21,7 @@
       "msg": "You light the candle in the jack o'lantern.",
       "active": true,
       "transform_charges": 1,
-      "menu_text": "Light",
+      "menu_text": { "str": "Light", "ctxt": "item action" },
       "type": "transform"
     }
   },

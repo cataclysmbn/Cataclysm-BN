@@ -650,6 +650,14 @@ void gun_actor::load_internal( const JsonObject &obj, const std::string & )
     obj.read( "no_crits", no_crits );
 }
 
+void gun_actor::check( const mtype_id &src ) const
+{
+    if( !gun_type.is_valid() ) {
+        throw JsonError( string_format( "item_id %s in gun actor for %s is invalid.", gun_type.str(),
+                                        src.str() ) );
+    }
+}
+
 std::unique_ptr<mattack_actor> gun_actor::clone() const
 {
     return std::make_unique<gun_actor>( *this );

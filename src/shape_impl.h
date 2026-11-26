@@ -8,7 +8,7 @@
 #include "cata_utility.h"
 #include "cuboid_rectangle.h"
 #include "line.h"
-#include "matrix_math.h"
+#include "math/matrix_math.h"
 #include "shape.h"
 #include "point.h"
 #include "point_float.h"

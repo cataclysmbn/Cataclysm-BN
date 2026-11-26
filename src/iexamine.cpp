@@ -29,7 +29,6 @@
 #include "bodypart.h"
 #include "cached_options.h"
 #include "calendar.h"
-#include "cata_unreachable.h"
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "catalua.h"
@@ -41,6 +40,7 @@
 #include "construction_group.h"
 #include "construction_partial.h"
 #include "craft_command.h"
+#include "cultivated_harvest.h"
 #include "cursesdef.h"
 #include "damage.h"
 #include "data_vars.h"
@@ -548,11 +548,14 @@ void iexamine::gaspump( player &p, const tripoint_bub_ms &examp )
 void iexamine::translocator( player &, const tripoint_bub_ms &examp )
 {
     // TODO: fix point types
-    const tripoint_abs_omt omt_loc( project_to<coords::omt>( bub_to_abs( examp ) ) );
     avatar &player_character = get_avatar();
-    const bool activated = player_character.translocators->knows_translocator( omt_loc );
+    const auto loc = translocator_location{
+        .dim = player_character.get_dimension(),
+        .pos = project_to<coords::omt>( bub_to_abs( examp ) ),
+    };
+    const bool activated = player_character.translocators->knows_translocator( loc );
     if( !activated ) {
-        g->u.translocators->activate_teleporter( omt_loc, examp );
+        g->u.translocators->activate_teleporter( loc );
         add_msg( m_info, _( "Translocator gate active." ) );
     } else {
         const int choice = uilist( _( "Do what with Translocator?" ), {
@@ -564,7 +567,7 @@ void iexamine::translocator( player &, const tripoint_bub_ms &examp )
             player_character.invoke_item( vtm );
         } else if( choice == 1 ) {
             if( query_yn( _( "Deactivate this Translocator?" ) ) ) {
-                g->u.translocators->deactivate_teleporter( omt_loc, examp );
+                g->u.translocators->deactivate_teleporter( loc );
             }
         } else {
             add_msg( _( "Never mind." ) );
@@ -794,7 +797,7 @@ class atm_menu
                 return false;
             }
 
-            add_msg( m_info, "amount: %d", amount );
+            add_msg( m_info, _( "amount: %d" ), amount );
             u.use_charges( itype_cash_card, amount );
             u.cash += amount;
             u.moves -= to_turns<int>( 10_seconds );
@@ -1803,7 +1806,6 @@ static void apply_lock_picking_tool( player &p, item *it, const tripoint_bub_ms 
 
 static bool pick_lock( player &p, const tripoint_bub_ms &examp )
 {
-    map &here = get_map();
 
     if( p.has_bionic( bio_lockpick ) ) {
         if( p.get_power_level() >= bio_lockpick->power_activate ) {
@@ -2809,9 +2811,6 @@ void iexamine::harvest_plant( player &p, const tripoint_bub_ms &examp, bool from
             add_msg( m_info, _( "The seed blossoms into a flower-looking fungus." ) );
         }
     } else { // Generic seed, use the seed item data
-        const itype &type = *seed->type;
-        here.i_clear( examp );
-
         int skillLevel = p.get_skill_level( skill_survival );
         ///\EFFECT_SURVIVAL increases number of plants harvested from a seed
         int plant_count = rng( skillLevel / 2, skillLevel );
@@ -2823,13 +2822,19 @@ void iexamine::harvest_plant( player &p, const tripoint_bub_ms &examp, bool from
             plant_count = 1;
         }
         const int seedCount = std::max( 1, rng( plant_count / 4, plant_count / 2 ) );
-        for( auto &i : get_harvest_items( type, plant_count, seedCount, true ) ) {
+        auto harvest = get_cultivated_harvest( *seed, {
+            .plant_count = plant_count,
+            .seed_count = seedCount,
+            .byproducts = true
+        } );
+        here.i_clear( examp );
+        here.furn_set( examp, furn_str_id( here.furn( examp )->plant->transform ) );
+        for( auto &i : harvest ) {
             if( from_activity ) {
                 i->set_var( "activity_var", p.name );
             }
             here.add_item_or_charges( examp, std::move( i ) );
         }
-        here.furn_set( examp, furn_str_id( here.furn( examp )->plant->transform ) );
         p.moves -= to_moves<int>( 10_seconds );
     }
 }
@@ -3951,8 +3956,8 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
             }
 
             case FILL: {
-                auto drinks_inv = p.items_with( []( const item & it ) {
-                    return it.made_of( LIQUID );
+                auto drinks_inv = p.items_with( [&pos_abs_ms]( const item & it ) {
+                    return it.made_of( LIQUID ) && fluid_grid::tank_allows_liquid( pos_abs_ms, it.typeId() );
                 } );
                 if( drinks_inv.empty() ) {
                     add_msg( m_info, _( "You don't have any liquids to fill the %s with." ), keg_name );
@@ -6096,7 +6101,7 @@ auto can_jump_over_tile_impl( const player &p, const tripoint_bub_ms &examp_bub 
         return false;
     }
 
-    if( const auto blocking_creature = buffer.creature_at( jump_state.dest ) ) {
+    if( buffer.creature_at( jump_state.dest ) ) {
         return false;
     }
 
@@ -6329,7 +6334,7 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp_bub )
                         case climb_result::one_way_unclimbable:
                             return _( "You probably won't be able to get back up.  Climb down?" );
                     }
-                    cata::unreachable();
+                    std::unreachable();
                 };
                 add_msg( m_debug, "climb_cost: %d", climb_cost.value_or( -1 ) );
                 const auto result = get_climb_result();
@@ -7343,7 +7348,9 @@ void iexamine::cloning_vat_finalize( const tripoint_bub_ms &examp, const time_po
     detached_ptr<item> spawned_embryo = item::spawn( itype_embryo, calendar::turn );
     spawned_embryo->set_var( "place_monster_override", developing_embryo.get_var( "specimen_sample" ) );
     spawned_embryo->set_var( "place_monster_override_name",
-                             developing_embryo.get_var( "specimen_name" ) );
+                             cloning_utils::specimen_name(
+                                 mtype_id( developing_embryo.get_var( "specimen_sample" ) ),
+                                 developing_embryo.get_var( "specimen_name" ) ) );
     here.add_item( examp, std::move( spawned_embryo ) );
 
     return;
@@ -8230,10 +8237,17 @@ void iexamine::check_power( player &, const tripoint_bub_ms &examp )
     tripoint_abs_ms abspos( bub_to_abs( examp ) );
     battery_tile *battery = active_tiles::furn_at<battery_tile>( abspos );
     if( battery != nullptr ) {
-        add_msg( m_info, _( "This battery stores %d kJ of electric power." ), battery->get_resource() );
+        add_msg( m_info,
+                 _( "This battery stores %d out of %d kJ of electric power." ),
+                 battery->get_resource(), battery->max_stored );
     }
-    int amt = get_distribution_grid_tracker().grid_at( abspos ).get_resource();
-    add_msg( m_info, _( "This electric grid stores %d kJ of electric power." ), amt );
+    const auto grid = get_distribution_grid_tracker().grid_at( abspos );
+    int tot_amt = grid.get_resource();
+    int loc_amt = grid.get_resource( false );
+    int max_amt = grid.get_resource_capacity();
+    add_msg( m_info,
+             _( "This electric grid locally stores %d out of %d kJ, and has connections to %d kJ of electric power." ),
+             loc_amt, max_amt, tot_amt - loc_amt );
 }
 
 void iexamine::power_portal( player &p, const tripoint_bub_ms &examp )

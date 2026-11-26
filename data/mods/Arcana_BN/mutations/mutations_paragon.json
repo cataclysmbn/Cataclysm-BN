@@ -4,7 +4,7 @@
     "id": "THRESH_VEIL",
     "name": { "str": "Paragon of The Veil" },
     "points": 1,
-    "description": "You have gazed deeper into The Beyond than anyone that still lives.  It has gazed back, and found greater purpose in you.  The living wind it calls its herald, and you its knight under oath.  You will unable to mutate beyond your current state by mundane means, as this would tie you to intruders that must be cast out…",
+    "description": "You have gazed deeper into The Beyond than anyone that still lives.  It has gazed back, and found greater purpose in you.  The living wind it calls its herald, and you its knight under oath.  You will be unable to mutate beyond your current state by mundane means, as this would tie you to intruders that must be cast out…",
     "valid": false,
     "purifiable": false,
     "threshold": true,

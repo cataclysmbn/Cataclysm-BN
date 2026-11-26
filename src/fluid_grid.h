@@ -91,6 +91,7 @@ auto update( time_point to ) -> void;
 auto bind_dimension( const dimension_id &dim_id ) -> void;
 auto load( const map &m ) -> void;
 auto on_contents_changed( const tripoint_abs_ms &p ) -> void;
+auto tank_allows_liquid( const tripoint_abs_ms &p, const itype_id &liquid_type ) -> bool;
 auto assign_tank_liquid( const tripoint_abs_ms &p, const itype_id &liquid_type ) -> bool;
 auto set_tank_assigned_liquid( const tripoint_abs_ms &p, const itype_id &liquid_type ) -> bool;
 auto unassign_tank_liquid( const tripoint_abs_ms &p ) -> bool;

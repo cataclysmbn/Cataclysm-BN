@@ -3,7 +3,7 @@
     "type": "profession",
     "id": "crt_engineer_t3",
     "name": "C.R.I.T. Engineer",
-    "description": "You were scheduled to fix the several of the lab facilities in New England and show other researchers the new weapons you were working on.  When the Cataclysm broke out, it made it so testing was easier to do, but then again nothing seems to making that much sense.  Time to bug-out!",
+    "description": "You were scheduled to fix several of the lab facilities in New England and show other researchers the new weapons you were working on.  When the Cataclysm broke out, it made it so testing was easier to do, but then again nothing seems to make that much sense.  Time to bug-out!",
     "traits": [ "MARTIAL_CRT", "PROF_MILITARY" ],
     "points": 12,
     "skills": [

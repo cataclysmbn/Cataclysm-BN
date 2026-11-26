@@ -227,7 +227,8 @@
       [ "sizzurp", 4 ],
       [ "syringe", 8 ],
       [ "crack", 8 ],
-      [ "lsd", 10 ]
+      [ "lsd", 10 ],
+      { "item": "dry_mushroom", "prob": 10, "count": [ 2, 5 ], "custom-flags": [ "HIDDEN_HALLU" ] }
     ]
   },
   {
@@ -243,6 +244,7 @@
       [ "seed_tobacco", 5 ],
       [ "cigar", 10 ],
       [ "handrolled_cig", 10 ],
+      { "item": "dry_mushroom", "prob": 3, "custom-flags": [ "HIDDEN_HALLU" ] },
       [ "ecig", 20 ],
       [ "dab_pen_disposable", 20 ],
       { "item": "light_battery_cell", "charges": 100, "container-item": "dab_pen", "prob": 20 },
