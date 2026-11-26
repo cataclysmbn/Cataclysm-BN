@@ -13,6 +13,7 @@
 #include "debug.h"
 #include "enums.h"
 #include "explosion.h"
+#include "faction.h"
 #include "game.h"
 #include "handle_liquid.h"
 #include "item.h"
@@ -904,14 +905,15 @@ static auto is_summon_friendly(const spell& sp) -> bool {
 }
 
 static auto add_summoned_mon(
-    const mtype_id& id, const tripoint_bub_ms& pos, const time_duration& time, const spell& sp)
-    -> bool {
+    const mtype_id& id, const mfaction_str_id& faction, const tripoint_bub_ms& pos,
+    const time_duration& time, const spell& sp) -> bool {
     monster* const mon_ptr = g->place_critter_at(id, pos);
     if (!mon_ptr) { return false; }
     const bool permanent = sp.has_flag(spell_flag::PERMANENT);
     monster& spawned_mon = *mon_ptr;
     if (is_summon_friendly(sp)) {
         spawned_mon.friendly = INT_MAX;
+        if (faction != mfaction_str_id::NULL_ID()) { spawned_mon.faction = faction.id(); }
     } else {
         spawned_mon.friendly = 0;
     }
@@ -930,11 +932,17 @@ void spell_effect::spawn_summoned_monster(
     size_t num_mons = std::abs(sp.damage());
     const time_duration summon_time = sp.duration_turns();
     bool sound_played = false;
+    mfaction_str_id faction_id = mfaction_str_id::NULL_ID();
+    if (caster.is_avatar() || caster.is_npc()) {
+        faction_id = caster.as_character()->get_faction()->mon_faction;
+    } else if (caster.is_monster()) {
+        faction_id = caster.as_monster()->faction.id();
+    }
     while (num_mons > 0 && !area.empty()) {
         const size_t mon_spot = rng(0, area.size() - 1);
         auto iter = area.begin();
         std::advance(iter, mon_spot);
-        if (add_summoned_mon(mon_id, *iter, summon_time, sp)) {
+        if (add_summoned_mon(mon_id, faction_id, *iter, summon_time, sp)) {
             num_mons--;
             if (sp.has_flag(spell_flag::DUPE_SOUND) || !sound_played) {
                 sound_played = true;

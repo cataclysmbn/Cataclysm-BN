@@ -5,6 +5,7 @@
 #include "catalua_bindings_utils.h"
 #include "catalua_coord.h"
 #include "catalua_impl.h"
+#include "catalua_item_filters.h"
 #include "catalua_log.h"
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
@@ -13,6 +14,7 @@
 #include "game.h"
 #include "iexamine.h"
 #include "init.h"
+#include "inventory.h"
 #include "line.h"
 #include "lua_action_menu.h"
 #include "map/lightmap.h"
@@ -20,7 +22,9 @@
 #include "messages.h"
 #include "monster.h"
 #include "npc.h"
+#include "options.h"
 #include "overmap/overmapbuffer.h"
+#include "scenario.h"
 #include "sol/forward.hpp"
 #include "sol/sol.hpp"
 #include "units_temperature.h"
@@ -494,6 +498,8 @@ void cata::detail::reg_game_api( sol::state &lua )
 
     luna::set_fx( lib, "get_avatar", &get_avatar );
     luna::set_fx( lib, "get_map", &get_map );
+    DOC( "Returns the scenario the current game started with, or nil if no game is active." );
+    luna::set_fx( lib, "get_scenario", []() -> const scenario * { return get_scenario(); } );
     luna::set_fx( lib, "bub_to_abs",
                   sol::overload(
                       []( const tripoint_bub_ms & p ) -> tripoint_abs_ms { return bub_to_abs( p ); },
@@ -517,6 +523,8 @@ void cata::detail::reg_game_api( sol::state &lua )
     DOC( "Returns the current dimension id. Empty string means the overworld." );
     luna::set_fx( lib, "get_current_dimension_id", []() -> std::string { return g->get_current_dimension_id().str(); } );
     DOC( "Moves the player into another dimension and loads the destination around required target_ms or target_omt." );
+    DOC( "Moves the player to a position in another dimension, creating the dimension if needed. Does nothing if the player is already in that dimension.  " );
+    DOC( "Returns false if the options are invalid or there is no safe landing spot.  " );
     DOC( "@alias OvermapTerrainLayout string[][][]" );
     DOC( "@class DimensionTravelOptions" );
     DOC( "@field dimension_id? string Target dimension id. Empty string means the overworld." );
@@ -545,6 +553,8 @@ void cata::detail::reg_game_api( sol::state &lua )
     luna::set_fx( lib, "reset_dimension", []( const std::string & dim_id ) -> bool {
         return g->reset_dimension( dimension_id( dim_id ) );
     } );
+    DOC( "Returns a counter that changes whenever the traits of a character may change: a mutation is gained or lost, or an enchantment grants or removes one." );
+    luna::set_fx( lib, "trait_generation", &character_trait_generation );
     luna::set_fx( lib, "current_turn", []() -> time_point { return calendar::turn; } );
     luna::set_fx( lib, "turn_zero", []() -> time_point { return calendar::turn_zero; } );
     luna::set_fx( lib, "before_time_starts", []() -> time_point { return calendar::before_time_starts; } );
@@ -660,6 +670,8 @@ void cata::detail::reg_game_api( sol::state &lua )
         } );
         return out;
     } );
+    DOC( "Registers `fn` to run once every `interval` of game time.  " );
+    DOC( "`fn` receives no arguments. Return `false` from it to unregister it; any other return value keeps it registered." );
     luna::set_fx( lib, "add_on_every_x_hook",
     []( sol::this_state lua_this, time_duration interval, sol::protected_function f ) {
         sol::state_view lua( lua_this );
@@ -675,7 +687,13 @@ void cata::detail::reg_game_api( sol::state &lua )
         hooks.push_back( on_every_x_hooks{ interval, vec } );
     } );
 
-    DOC( "Register a Lua-defined action menu entry in the in-game action menu." );
+    DOC( "Register a Lua-defined action menu entry in the in-game action menu.  " );
+    DOC( "Takes a table with keys:  " );
+    DOC( "* `id` (string): Unique entry id. Registering the same id again replaces the old entry.  " );
+    DOC( "* `fn` (function): Called with no arguments when the entry is selected.  " );
+    DOC( "* `name` (string, optional): Displayed text. Defaults to `id`.  " );
+    DOC( "* `category` (string, optional): Submenu to show the entry in. Defaults to `misc`. Built-in categories are `look`, `interact`, `inventory`, `combat`, `craft`, `info`, `misc` and `debug`; `back` places it in the top-level menu, and any other id adds a new submenu.  " );
+    DOC( "* `hotkey` (string, optional): Key name for the entry's hotkey." );
     luna::set_fx( lib, "register_action_menu_entry", []( sol::table opts ) -> void {
         auto id = opts.get_or( "id", std::string{} );
         auto name = opts.get_or( "name", std::string{} );
@@ -798,7 +816,16 @@ void cata::detail::reg_game_api( sol::state &lua )
     luna::set_fx( lib, "add_npc_follower", []( npc & p ) { g->add_npc_follower( p.getID() ); } );
     luna::set_fx( lib, "remove_npc_follower", []( npc & p ) { g->remove_npc_follower( p.getID() ); } );
 
-    DOC( "Register a Lua-defined action menu entry in the in-game action menu." );
+    luna::set_fx( lib, "fling_creature", []( Creature & c, const units::angle & dir, float force,
+    bool controlled ) {
+        g->fling_creature( &c, dir, force, controlled );
+    } );
+    DOC( "Opens an item selection menu listing the player's inventory and nearby items that pass a filter, and returns the chosen item or nil.  " );
+    DOC( "Takes a table with keys:  " );
+    DOC( "* `title` (string): Menu title.  " );
+    DOC( "* `failure` (string): Message shown when no item passes the filter.  " );
+    DOC( "* `check` (function): Filter called with a table { item = Item }. Must return a boolean.  " );
+    DOC( "* `radius` (integer, optional): Search radius for nearby items. Defaults to the pickup range." );
     luna::set_fx( lib, "inv_map_splice", []( sol::table opts ) -> item* {
         auto title = opts.get<std::string>( "title" );
         auto failure = opts.get<std::string>( "failure" );
@@ -818,6 +845,117 @@ void cata::detail::reg_game_api( sol::state &lua )
             }
             return res.get<bool>();
         }, title, radius, failure );
+    } );
+
+    DOC( "Returns items on the map within a radius of a point, matching every given filter, as an array of Item.  " );
+    DOC( "Items inside containers on the ground are included.  " );
+    DOC( "Takes a table where each key is a filter; unknown keys show a debug message and are ignored. Available filters:  " );
+    DOC( "* `pos` (Tripoint): Center point to search around.  " );
+    DOC( "* `radius` (integer, optional): Search radius in tiles. Defaults to the pickup range.  " );
+    DOC( "* `category` (string or string[]): Item category id is one of these, e.g. \"food\".  " );
+    DOC( "* `type` (ItemTypeId or ItemTypeId[]): Item type is one of these.  " );
+    DOC( "* `is_food` (boolean): Whether the item is food.  " );
+    DOC( "* `flags` (FlagId or FlagId[]): Item has at least one of these flags.  " );
+    DOC( "* `need_charges` (boolean): Tool items must have charges left.  " );
+    DOC( "* `has_charges` (table): { id = ItemTypeId, amount = integer }: item type is `id` and has at least `amount` charges.  " );
+    DOC( "* `addiction_type` (AddictionType, string, or array of those): Comestible's addiction type is one of these, e.g. `AddictionType.ALCOHOL` or `\"alcohol\"`.  " );
+    DOC( "* `material` (MaterialTypeId, string, or array of those): Item is made of at least one of these materials, e.g. `\"stone\"`.  " );
+    DOC( "The `worn` and `wielded` filters only apply to `Character:get_items_if` and are ignored here." );
+    luna::set_fx( lib, "get_items_if", []( sol::this_state s, sol::table filters ) -> sol::table {
+        sol::state_view lua( s );
+        const auto pos = filters["pos"].get<tripoint_bub_ms>();
+        const auto radius = filters.get_or<int>( "radius", PICKUP_RANGE );
+        const auto parsed = item_filters_from_lua( filters, { "pos", "radius" } );
+        if( parsed.worn || parsed.wielded )
+        {
+            debugmsg( "`worn`/`wielded` filters are not applicable to map items and were ignored" );
+        }
+        auto out = lua.create_table();
+        auto idx = 1;
+        auto collect = [&]( item * node ) -> void {
+            if( matches_item_filters( parsed, *node ) )
+            {
+                out[idx++] = node;
+            }
+        };
+        for( const auto pt : g->m.points_in_radius( pos, radius ) )
+        {
+            for( const auto *it : g->m.i_at( pt ) ) {
+                // visit_items covers the item itself and everything inside its containers
+                const_cast<item *>( it )->visit_items( [&collect]( item * node, item * ) -> VisitResponse {
+                    collect( node );
+                    return VisitResponse::NEXT;
+                } );
+            }
+        }
+        return out;
+    } );
+
+    DOC( "Opens an item selection menu listing the player's inventory and nearby items that match the given filters, and returns the chosen item or nil.  " );
+    DOC( "Takes a table with keys:  " );
+    DOC( "* `title` (string): Menu title.  " );
+    DOC( "* `failure` (string): Message shown when no item passes the filter.  " );
+    DOC( "* `radius` (integer, optional): Search radius for nearby items. Defaults to the pickup range.  " );
+    DOC( "* plus any filter key accepted by `gapi.get_items_if` (e.g. `category`, `type`, `is_food`, `flags`, `need_charges`, `has_charges`, `addiction_type`, `material`).  " );
+    DOC( "Containers whose contents match a filter are listed as well; the returned item is then the container itself." );
+    luna::set_fx( lib, "inv_map_splice_if", []( sol::table opts ) -> item* {
+        auto title = opts.get<std::string>( "title" );
+        auto failure = opts.get<std::string>( "failure" );
+        auto radius = opts.get_or<int>( "radius", PICKUP_RANGE );
+        const auto parsed = item_filters_from_lua( opts, { "title", "failure", "radius" } );
+        const auto matches = [&parsed]( const item & e ) -> bool {
+            auto found = false;
+            // visit_items covers the item itself and everything inside its containers
+            const_cast<item &>( e ).visit_items( [&]( item * node, item * ) -> VisitResponse {
+                if( matches_item_filters( parsed, *node ) )
+                {
+                    found = true;
+                    return VisitResponse::ABORT;
+                }
+                return VisitResponse::NEXT;
+            } );
+            return found;
+        };
+        return g->inv_map_splice( matches, title, radius, failure );
+    } );
+
+    DOC( "Runs a function editing the player's inventory and nearby items.  " );
+    DOC( "Takes a table with keys:  " );
+    DOC( "* `func` (function): Editing function called with a table { item = Item }. Must return a boolean.  " );
+    DOC( "* `radius` (integer, optional): Search radius for nearby items. Defaults to the pickup range." );
+    luna::set_fx( lib, "map_inv_edit", []( sol::table opts ) -> void {
+        auto radius = opts.get_or<int>( "radius", PICKUP_RANGE );
+        auto fn = opts.get<sol::protected_function>( "func" );
+        auto &state = *DynamicDataLoader::get_instance().lua.get();
+        inventory map_inv;
+        map_inv.form_from_map( g->u.bub_pos(), radius, &g->u );
+        map_inv.add_items( g->u.get_inv(), true );
+        map_inv.add_item( g->u.primary_weapon(), true );
+        map_inv.add_items( g->u.worn, true );
+        map_inv.edit_all_items( [&]( item & e )
+        {
+            auto params = state.lua.create_table();
+            params["item"] = &e;
+            sol::protected_function_result res = fn( params );
+
+            check_func_result( res );
+        } );
+    } );
+
+    luna::set_fx( lib, "get_option", []( std::string name ) -> std::string {
+        return get_option<std::string>( name );
+    } );
+
+    luna::set_fx( lib, "get_option_bool", []( std::string name ) -> bool {
+        return get_option<bool>( name );
+    } );
+
+    luna::set_fx( lib, "get_option_int", []( std::string name ) -> int {
+        return get_option<int>( name );
+    } );
+
+    luna::set_fx( lib, "get_option_float", []( std::string name ) -> float {
+        return get_option<float>( name );
     } );
 
     reg_game_api_creature_queries( lib );

@@ -31,6 +31,7 @@ class mattack_actor
         virtual std::unique_ptr<mattack_actor> clone() const = 0;
         virtual void load_internal( const JsonObject &jo, const std::string &src ) = 0;
         virtual void finalize() {};
+        virtual void check( const mtype_id &src ) const {};
 };
 
 struct mtype_special_attack {

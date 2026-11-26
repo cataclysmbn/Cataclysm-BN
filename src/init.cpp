@@ -13,6 +13,7 @@
 #include "cata_utility.h"
 #include "catalua.h"
 #include "catalua_impl.h"
+#include "character_value.h"
 #include "clothing_mod.h"
 #include "clzones.h"
 #include "construction.h"
@@ -61,6 +62,7 @@
 #include "mapgen/mapgen_color_palette.h"
 #include "martialarts.h"
 #include "material.h"
+#include "utils/memory_stream.h"
 #include "mission.h"
 #include "mod_manager.h"
 #include "monfaction.h"
@@ -79,6 +81,7 @@
 #include "overmap/overmap_special.h"
 #include "overmap/overmapbuffer.h"
 #include "panels.h"
+#include "perk.h"
 #include "profession.h"
 #include "recipe_dictionary.h"
 #include "recipe_groups.h"
@@ -115,19 +118,38 @@
 #include <fstream>
 #include <iterator>
 #include <memory>
+#include <mutex>
 #include <ranges>
 #include <set>
 #include <sstream> // for throwing errors
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #if defined(TILES)
 #  include "mod_tileset.h"
+#  include "tileset_loading.h"
 #endif
 
+namespace
+{
+
+/// Data files read since the last finalization. Finalization re-parses parts of them
+/// (deferred objects, mapgen), so keeping the streams lets it reuse both their contents
+/// and the JSON structure already scanned while loading.
+using loaded_files = std::unordered_map<std::string, shared_ptr_fast<memory_istream>>;
+
+auto loaded_data_files() -> loaded_files & // *NOPAD*
+{
+    static auto files = loaded_files{};
+    return files;
+}
+
+} // namespace
+
 struct DynamicDataLoader::cached_streams {
-    lru_cache<std::string, shared_ptr_fast<std::istringstream>> cache;
+    lru_cache<std::string, shared_ptr_fast<memory_istream>> cache;
 };
 
 DynamicDataLoader::DynamicDataLoader()
@@ -159,14 +181,25 @@ shared_ptr_fast<std::istream> DynamicDataLoader::get_cached_stream( const std::s
 {
     assert( !finalized && "Cannot open data file after finalization." );
     assert( stream_cache && "Stream cache is only available during finalization" );
-    shared_ptr_fast<std::istringstream> cached = stream_cache->cache.get( path, nullptr );
+    // Threads finalizing data in parallel each stick to their own files, so only
+    // files outside the registry need the lock.
+    if( const auto loaded = loaded_data_files().find( path ); loaded != loaded_data_files().end() ) {
+        // Only the registry holds it, so nobody else is reading from it.
+        if( loaded->second.use_count() == 1 ) {
+            return loaded->second;
+        }
+        return make_shared_fast<memory_istream>( loaded->second->contents() );
+    }
+    static auto cache_mutex = std::mutex{};
+    const auto lock = std::lock_guard( cache_mutex );
+    shared_ptr_fast<memory_istream> cached = stream_cache->cache.get( path, nullptr );
     // Create a new stream if the file is not opened yet, or if some code is still
     // using the previous stream (in such case, `cached` and `stream_cache` have
     // two references to the stream, hence the test for > 2).
     if( !cached ) {
-        cached = make_shared_fast<std::istringstream>( read_entire_file( path ) );
+        cached = make_shared_fast<memory_istream>( read_entire_file( path ) );
     } else if( cached.use_count() > 2 ) {
-        cached = make_shared_fast<std::istringstream>( cached->str() );
+        cached = make_shared_fast<memory_istream>( cached->contents() );
     }
     stream_cache->cache.insert( 8, path, cached );
     return cached;
@@ -293,7 +326,7 @@ void DynamicDataLoader::initialize()
     add( "mutation", &mutation_branch::load_trait );
     add( "furniture", &load_furniture );
     add( "terrain", &load_terrain );
-    add( "monstergroup", &MonsterGroupManager::LoadMonsterGroup );
+    add( "monstergroup", &MonsterGroup::load_monster_groups );
     add( "MONSTER_BLACKLIST", &MonsterGroupManager::LoadMonsterBlacklist );
     add( "MONSTER_WHITELIST", &MonsterGroupManager::LoadMonsterWhitelist );
     add( "speech", &load_speech );
@@ -307,6 +340,7 @@ void DynamicDataLoader::initialize()
     add( "enchantment_flag", &enchantment_flag::load_enchantment_flags );
     add( "enchantment_condition", &enchantment_condition::load_enchantment_conditions );
     add( "enchantment_vision", &enchantment_vision::load_enchantment_vision );
+    add( "character_value", &character_value::load_character_values );
     add( "hit_range", &Creature::load_hit_range );
     add( "scent_type", &scent_type::load_scent_type );
     add( "disease_type", &disease_type::load_disease_type );
@@ -489,6 +523,7 @@ void DynamicDataLoader::initialize()
     add( "score", &score::load_score );
     add( "achievement", &achievement::load_achievement );
     add( "named_color", &RGBColor::load_named_color );
+    add( "perk", &perk::load_perks );
     add( "vehicle_blacklist", &vehicle_prototype::load_vehicle_blacklist );
 #if defined(TILES)
     add( "mod_tileset", &load_mod_tileset );
@@ -540,18 +575,12 @@ void DynamicDataLoader::load_data_from_path( const std::string &path, const std:
     // iterate over each file
     for( auto &files_i : files ) {
         const std::string &file = files_i;
-        // open the file as a stream
-        cata_ifstream infile = std::move( cata_ifstream().mode( cata_ios_mode::binary ).open( file ) );
-        // and stuff it into ram
-        std::istringstream iss(
-            std::string(
-                ( std::istreambuf_iterator<char>( *infile ) ),
-                std::istreambuf_iterator<char>()
-            )
-        );
+        // read the whole file into ram
+        auto stream = make_shared_fast<memory_istream>( read_entire_file( file ) );
+        loaded_data_files().insert_or_assign( file, stream );
         try {
             // parse it
-            JsonIn jsin( iss, file );
+            JsonIn jsin( *stream, file );
             load_all_from_json( jsin, src, ui, path, file );
         } catch( const JsonError &err ) {
             throw std::runtime_error( err.what() );
@@ -591,6 +620,7 @@ void DynamicDataLoader::load_all_from_json( JsonIn &jsin, const std::string &src
 void DynamicDataLoader::unload_data()
 {
     finalized = false;
+    loaded_data_files().clear();
 
     //Moved to the top as a temp hack until vehicles are made into game objects
     vehicle_prototype::reset();
@@ -606,6 +636,7 @@ void DynamicDataLoader::unload_data()
     bionic_data::reset();
     body_part_type::reset();
     charge_removal_blacklist::reset();
+    character_value::reset();
     clear_techniques_and_martial_arts();
     clothing_mods::reset();
     construction_categories::reset();
@@ -639,7 +670,7 @@ void DynamicDataLoader::unload_data()
     mission_type::reset();
     monfactions::reset();
     MonsterGenerator::generator().reset();
-    MonsterGroupManager::ClearMonsterGroups();
+    MonsterGroup::reset();
     morale_type_data::reset();
     mutation_branch::reset_all();
     mutation_category_trait::reset();
@@ -695,6 +726,7 @@ void DynamicDataLoader::unload_data()
     zone_type::reset_zones();
     l10n_data::unload_mod_catalogues();
     RGBColor::unload_names();
+    perk::reset();
 #if defined(TILES)
     reset_mod_tileset();
 #endif
@@ -712,6 +744,7 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
 
     on_out_of_scope reset_stream_cache( [this]() {
         stream_cache.reset();
+        loaded_data_files().clear();
     } );
     stream_cache = std::make_unique<cached_streams>();
 
@@ -755,7 +788,18 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
             { _( "Start locations" ), &start_locations::finalize_all },
             { _( "Zone manager" ), &zone_manager::reset_manager },
             { _( "Vehicle prototypes" ), &vehicle_prototype::finalize },
-            { _( "Mapgen weights" ), &calculate_mapgen_weights },
+            {
+                _( "Mapgen weights" ), []()
+                {
+#if defined(TILES)
+                    // Loading the tileset needs this thread, but none of the game data that
+                    // the worker threads are busy with, so it fills the wait for them.
+                    calculate_mapgen_weights( &tileset_loading::load_for_active_world );
+#else
+                    calculate_mapgen_weights();
+#endif
+                }
+            },
             { _( "Mapgen parameters" ), &overmap_specials::finalize_mapgen_parameters },
             {
                 _( "Monster types" ), []()
@@ -763,7 +807,7 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
                     MonsterGenerator::generator().finalize_mtypes();
                 }
             },
-            { _( "Monster groups" ), &MonsterGroupManager::FinalizeMonsterGroups },
+            { _( "Monster groups" ), &MonsterGroup::finalize_all },
             { _( "Monster factions" ), &monfactions::finalize },
             { _( "Factions" ), &npc_factions::finalize },
             { _( "Constructions" ), &constructions::finalize },
@@ -779,6 +823,7 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
             { _( "Achievements" ), &achievement::finalize },
             { _( "Localization" ), &l10n_data::load_mod_catalogues },
             { _( "Enchantments" ), &enchantment::finalize_all },
+            { _( "Perks" ), &perk::finalize_all },
 #if defined(TILES)
             { _( "Tileset" ), &load_tileset },
 #endif
@@ -839,7 +884,7 @@ void DynamicDataLoader::check_consistency( loading_ui &ui )
                     MonsterGenerator::generator().check_monster_definitions();
                 }
             },
-            { _( "Monster groups" ), &MonsterGroupManager::check_group_definitions },
+            { _( "Monster groups" ), &MonsterGroup::check_consistency },
             { _( "Furniture and terrain" ), &check_furniture_and_terrain },
             { _( "Constructions" ), &constructions::check_consistency },
             { _( "Construction sequences" ), &constructions::check_consistency },
@@ -879,6 +924,7 @@ void DynamicDataLoader::check_consistency( loading_ui &ui )
             { _( "Enchantment Flags" ), &enchantment_flag::check_consistency },
             { _( "Enchantment Conditions" ), &enchantment_condition::check_consistency },
             { _( "Enchantment Vision" ), &enchantment_vision::check_consistency },
+            { _( "Character Value" ), &character_value::check_consistency },
             { _( "Transformations" ), &event_transformation::check_consistency },
             { _( "Statistics" ), &event_statistic::check_consistency },
             { _( "Scent types" ), &scent_type::check_scent_consistency },
@@ -887,6 +933,7 @@ void DynamicDataLoader::check_consistency( loading_ui &ui )
             { _( "Disease types" ), &disease_type::check_disease_consistency },
             { _( "Factions" ), &faction_template::check_consistency },
             { _( "Effects" ), &effect_type::check_consistency },
+            { _( "Perks" ), &perk::check_consistency },
         }
     };
 
@@ -930,6 +977,13 @@ static void load_and_finalize_packs( loading_ui &ui, const std::string &msg,
     }
 
     DynamicDataLoader &loader = DynamicDataLoader::get_instance();
+
+#if defined(TILES)
+    // The tileset loads last, but decoding its images can start now on idle threads.
+    tileset_loading::decode_images_ahead();
+    const auto discard_tileset_images = on_out_of_scope(
+                                            &tileset_loading::discard_images_decoded_ahead );
+#endif
 
     cata::lua_sidebar_widgets::clear_widgets();
     loader.lua = cata::make_wrapped_state();
@@ -1142,8 +1196,6 @@ auto init::check_mods_for_errors( loading_ui &ui, const std::vector<mod_id> &opt
             load_and_finalize_packs( ui, _( "Checking mods" ), mods_list );
         } catch( const std::exception &err ) {
             std::cerr << "Error loading data: " << err.what() << '\n';
-        } catch( const JsonError &err ) {
-            debugmsg( "(json-error)\n%s", err.what() );
         }
 
         std::string world_name = world_generator->active_world->info->world_name;

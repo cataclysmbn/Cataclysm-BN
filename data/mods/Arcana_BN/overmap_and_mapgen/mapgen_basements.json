@@ -364,7 +364,7 @@
         "s": { "item": "magic_consumables", "chance": 25, "repeat": 2 },
         "N": { "item": "magic_crafting", "chance": 50, "repeat": 2 }
       },
-      "place_nested": [ { "chunks": [ [ "null", 15 ], [ "utility_3x3_N", 10 ], [ "utility_3x3_S", 5 ] ], "x": 7, "y": 3 } ],
+      "place_nested": [ { "chunks": [ [ "null", 10 ], [ "utility_3x3_N", 10 ], [ "utility_3x3_S", 5 ] ], "x": 7, "y": 3 } ],
       "place_monsters": [ { "monster": "GROUP_CF_BASEMENT", "x": [ 3, 6 ], "y": [ 8, 19 ], "density": 0.15 } ]
     }
   },
@@ -436,10 +436,13 @@
       "nested": {
         "1": {
           "chunks": [
-            [ "null", 10 ],
+            [ "null", 30 ],
             [ "room_6x6_brewer_E", 10 ],
+            [ "room_6x6_brewer_S", 10 ],
             [ "room_6x6_junk_E", 30 ],
+            [ "room_6x6_junk_S", 30 ],
             [ "room_6x6_office_E", 30 ],
+            [ "room_6x6_office_S", 30 ],
             [ "6x6_sewing_open", 20 ],
             [ "6x6_electronics_open", 10 ]
           ]
@@ -514,10 +517,10 @@
         }
       },
       "nested": {
-        "1": { "chunks": [ [ "null", 10 ], [ "recroom_12x12", 30 ], [ "tvroom_12x12", 30 ], [ "workoutroom_12x12", 10 ] ] },
+        "1": { "chunks": [ [ "null", 30 ], [ "recroom_12x12", 30 ], [ "tvroom_12x12", 30 ], [ "workoutroom_12x12", 10 ] ] },
         "2": {
           "chunks": [
-            [ "null", 10 ],
+            [ "null", 30 ],
             [ "room_6x6_brewer_E", 10 ],
             [ "room_6x6_junk_E", 30 ],
             [ "room_6x6_office_E", 30 ],

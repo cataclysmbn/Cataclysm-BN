@@ -273,5 +273,18 @@
     "material": "wood",
     "symbol": "{",
     "color": "light_cyan"
+  },
+  {
+    "id": "billybass",
+    "type": "GENERIC",
+    "name": "big mouth billy bass",
+    "description": "A classic home decoration piece that projects an air of class and sophistication across the room, and for only 4 dollars a pound.  Mount it to a wall to experience its true glory.",
+    "weight": "450 g",
+    "volume": "16 L",
+    "price": "40 USD",
+    "price_postapoc": "5 USD",
+    "material": [ "wood", "plastic" ],
+    "symbol": "B",
+    "color": "green"
   }
 ]

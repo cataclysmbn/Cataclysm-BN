@@ -195,7 +195,7 @@
     "type": "TOOL",
     "copy-from": "bot_hack_base",
     "name": "inactive floating lantern",
-    "description": "An inactive floating lantern, a fist-sized robots that flies through the air and illuminates its surroundings with bright LEDs.  The lantern is non aggressive and has no means of attack.  Activate this item to deploy the salvaged robot.",
+    "description": "An inactive floating lantern, a fist-sized robot that flies through the air and illuminates its surroundings with bright LEDs.  The lantern is non aggressive and has no means of attack.  Activate this item to deploy the salvaged robot.",
     "color": "yellow",
     "looks_like": "bot_manhack",
     "use_action": {
@@ -292,7 +292,7 @@
     "type": "TOOL",
     "copy-from": "bot_skitterbot_base",
     "name": "inactive rat snatcher",
-    "description": "A salvaged skitterbot repurposed for hunting small game.  It attacks targets with pincers and an integrated tazer.  Activate this item to deploy the robot.",
+    "description": "A salvaged skitterbot repurposed for hunting small game.  It attacks targets with pincers and an integrated taser.  Activate this item to deploy the robot.",
     "color": "dark_gray",
     "use_action": {
       "type": "place_monster",

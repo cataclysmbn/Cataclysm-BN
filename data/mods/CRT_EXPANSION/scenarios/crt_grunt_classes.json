@@ -72,7 +72,8 @@
           { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
           { "item": "crt_backpack", "contents-item": [ "knife_crt" ] },
           { "item": "m4a1", "ammo-item": "556", "contents-item": [ "shoulder_strap", "grip", "holo_sight" ] },
-          { "item": "modularvestsuper", "contents-group": "army_mags_m4" }
+          { "item": "ballistic_vest_esapi", "contents-group": "army_mags_m4" },
+          { "item": "super_ballistic_plate" }
         ]
       },
       "male": [ "boxer_shorts" ],
@@ -102,7 +103,7 @@
       "both": {
         "ammo": 100,
         "items": [
-          "modularvest",
+          "ballistic_vest_esapi",
           "crt_chestrig",
           "crt_pants",
           "legguard_hard",
@@ -123,7 +124,8 @@
           { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
           { "item": "knife_rm42", "container-item": "sheath" },
           { "item": "scar_h", "ammo-item": "762_51", "contents-item": "shoulder_strap" },
-          { "item": "modularvestsuper", "contents-group": "crit_mags_scarh" }
+          { "item": "ballistic_vest_esapi", "contents-group": "crit_mags_scarh" },
+          { "item": "super_ballistic_plate" }
         ]
       },
       "male": [ "boxer_shorts" ],
@@ -173,7 +175,8 @@
           { "item": "knife_combat", "container-item": "sheath" },
           { "item": "m249", "ammo-item": "556", "contents-item": "shoulder_strap" },
           { "item": "m9", "ammo-item": "9mm", "container-item": "holster" },
-          { "item": "modularvestsuper", "contents-group": "crit_mags_m9" }
+          { "item": "ballistic_vest_esapi", "contents-group": "crit_mags_m9" },
+          { "item": "super_ballistic_plate" }
         ]
       },
       "male": [ "boxer_shorts" ],

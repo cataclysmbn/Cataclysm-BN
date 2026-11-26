@@ -62,6 +62,18 @@
     "ranged_damage": { "damage_type": "bullet", "amount": 8 },
     "range": 4,
     "dispersion": 280,
-    "clip_size": 8
+    "clip_size": 8,
+    "//": "No muzzle slot since it's a revolver rifle.",
+    "valid_mod_locations": [
+      [ "accessories", 4 ],
+      [ "barrel", 1 ],
+      [ "bore", 1 ],
+      [ "grip", 1 ],
+      [ "magazine", 1 ],
+      [ "rail", 1 ],
+      [ "sights", 1 ],
+      [ "sling", 1 ],
+      [ "stock", 1 ]
+    ]
   }
 ]

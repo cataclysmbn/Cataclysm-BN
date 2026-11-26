@@ -5,7 +5,8 @@
     "copy-from": "american_flag",
     "name": { "str": "Trans pride flag" },
     "description": "A transgender pride flag.  The blue represents transmascs, the pink represents transfemmes, and the white represents non-binary individuals.",
-    "color": "light_blue"
+    "color": "light_blue",
+    "flags": [ "SUPER_FANCY" ]
   },
   {
     "id": "rainbow_flag",
@@ -13,7 +14,8 @@
     "copy-from": "american_flag",
     "name": { "str": "LGBTQ+ pride flag" },
     "description": "The original pride flag of the entire LGBTQ+ community.  The rainbow of colors represents the rainbow of individuals throughout the community.",
-    "color": "red"
+    "color": "red",
+    "flags": [ "SUPER_FANCY" ]
   },
   {
     "id": "aromantic_flag",
@@ -21,7 +23,8 @@
     "copy-from": "american_flag",
     "name": { "str": "Aromantic pride flag" },
     "description": "An aromantic pride flag.  The greens represent aromanticism and the aro-spectrum as a whole, the white represents the importance of non-romantic relationships, and the black and grey represent the sexuality spectrum that ranges from aro-ace to aro-allosexual.",
-    "color": "light_green"
+    "color": "light_green",
+    "flags": [ "SUPER_FANCY" ]
   },
   {
     "id": "asexual_flag",
@@ -29,7 +32,8 @@
     "copy-from": "american_flag",
     "name": { "str": "Asexual pride flag" },
     "description": "An asexual pride flag.  The black represents total asexuality, the grey represents demisexuals and grey-asexuals, the white represents allies, and the purple represents community.",
-    "color": "light_gray"
+    "color": "light_gray",
+    "flags": [ "SUPER_FANCY" ]
   },
   {
     "id": "bisexual_flag",
@@ -37,7 +41,8 @@
     "copy-from": "american_flag",
     "name": { "str": "Bisexual pride flag" },
     "description": "A bisexual pride flag.  The pink represents attraction to the same sex, the blue represents attraction to the opposite sex, and the purple overlap represents the combination of both.",
-    "color": "magenta"
+    "color": "magenta",
+    "flags": [ "SUPER_FANCY" ]
   },
   {
     "id": "intersex_flag",
@@ -45,15 +50,17 @@
     "copy-from": "american_flag",
     "name": { "str": "Intersex pride flag" },
     "description": "An intersex pride flag.  The center circle symbolizes wholeness and completeness.",
-    "color": "yellow"
+    "color": "yellow",
+    "flags": [ "SUPER_FANCY" ]
   },
   {
     "id": "lesbian_flag",
     "type": "ARMOR",
     "copy-from": "american_flag",
     "name": { "str": "Lesbian pride flag" },
-    "description": "A lesbian pride flag.  The dark orange represents gender non-conformity, the orange represents independence, the white represents unique relationships to womanhood, pink represents serenity and peace, and the dark rose represents feminimity.",
-    "color": "light_red"
+    "description": "A lesbian pride flag.  The dark orange represents gender non-conformity, the orange represents independence, the white represents unique relationships to womanhood, pink represents serenity and peace, and the dark rose represents femininity.",
+    "color": "light_red",
+    "flags": [ "SUPER_FANCY" ]
   },
   {
     "id": "enby_flag",
@@ -61,7 +68,8 @@
     "copy-from": "american_flag",
     "name": { "str": "Non-binary pride flag" },
     "description": "A non-binary pride flag.  Yellow represents those who identify outside of the gender binary, white represents those with multiple genders, purple for those with a mix of both male and female, and black for agender individuals.",
-    "color": "white"
+    "color": "white",
+    "flags": [ "SUPER_FANCY" ]
   },
   {
     "id": "pansexual_flag",
@@ -69,7 +77,8 @@
     "copy-from": "american_flag",
     "name": { "str": "Pansexual pride flag" },
     "description": "A pansexual pride flag.  Pink represents being attracted to women, blue being attracted to men, and yellow being attracted to everyone else.",
-    "color": "pink"
+    "color": "pink",
+    "flags": [ "SUPER_FANCY" ]
   },
   {
     "id": "gay_flag",
@@ -77,15 +86,17 @@
     "copy-from": "american_flag",
     "name": { "str": "Gay pride flag" },
     "description": "A gay pride flag for men.  The greens represent healing and joy; the white stripe includes people who are transgender, nonbinary, intersex, or otherwise likely to be traditionally left out; the blues represent pure love, strength, and diversity.",
-    "color": "green"
+    "color": "green",
+    "flags": [ "SUPER_FANCY" ]
   },
   {
     "id": "genderfluid_flag",
     "type": "ARMOR",
     "copy-from": "american_flag",
     "name": { "str": "Genderfluid pride flag" },
-    "description": "A genderfluid pride flag.  The pink represents feminimity, the white represents lack of gender, the purple represents androgyny, the black represents all other genders, and the blue represents masculinity.",
-    "color": "blue"
+    "description": "A genderfluid pride flag.  The pink represents femininity, the white represents lack of gender, the purple represents androgyny, the black represents all other genders, and the blue represents masculinity.",
+    "color": "blue",
+    "flags": [ "SUPER_FANCY" ]
   },
   {
     "id": "autism_flag",
@@ -93,6 +104,7 @@
     "copy-from": "american_flag",
     "name": { "str": "Autism pride flag" },
     "description": "The autistic pride flag.  Gold middle band refers to the elemental symbol of gold (AU) which is used in the autistic community.  The gradient refers to the Pride Movement.  Red originated as a protest to the `light it up blue` campaign, which was denounced by the autistic community.  The infinity sign is a symbol long used in the wider autistic and wider neurodiverse community.",
-    "color": "white"
+    "color": "white",
+    "flags": [ "SUPER_FANCY" ]
   }
 ]

@@ -6,6 +6,44 @@
     "intensity_levels": [ { "name": "nothing" } ]
   },
   {
+    "id": "fd_physical_static",
+    "type": "field_type",
+    "intensity_levels": [
+      {
+        "name": "physical static",
+        "sym": "#",
+        "color": "pink",
+        "dangerous": true,
+        "effects": [
+          {
+            "effect_id": "hallu",
+            "body_part": "num_bp",
+            "min_duration": "1 minutes",
+            "max_duration": "3 minutes",
+            "intensity": 1,
+            "is_environmental": false
+          },
+          {
+            "effect_id": "deaf",
+            "body_part": "num_bp",
+            "min_duration": "1 minutes",
+            "max_duration": "3 minutes",
+            "intensity": 3,
+            "is_environmental": false,
+            "message": "Signal interference drowns out all sound!",
+            "message_npc": "<npcname> reels as a burst of static overwhelms their hearing!",
+            "message_type": "bad"
+          }
+        ]
+      }
+    ],
+    "immune_mtypes": [ "mon_signal_maw" ],
+    "half_life": "20 seconds",
+    "phase": "solid",
+    "display_field": true,
+    "looks_like": "fd_dazzling"
+  },
+  {
     "id": "fd_blood",
     "type": "field_type",
     "legacy_enum_id": 1,
@@ -243,6 +281,36 @@
     "moppable": true,
     "display_field": true,
     "looks_like": "fd_sap"
+  },
+  {
+    "id": "fd_foamcrete",
+    "type": "field_type",
+    "intensity_levels": [
+      {
+        "name": "foamcrete splatter",
+        "transparent": false,
+        "impassable": true,
+        "sym": "~",
+        "color": "light_gray",
+        "move_cost": 200
+      },
+      { "name": "thick foamcrete", "color": "light_gray", "move_cost": 200 }
+    ],
+    "description_affix": "covered_in",
+    "priority": 2,
+    "phase": "solid",
+    "display_field": true,
+    "half_life": "12 hours",
+    "looks_like": "t_wall_resin",
+    "tint": "#fff2a6",
+    "bash": {
+      "str_min": 8,
+      "str_max": 12,
+      "sound_vol": "50 dB",
+      "sound_fail_vol": "50 dB",
+      "sound": "crack!",
+      "msg_success": "You smash the hardened foamcrete."
+    }
   },
   {
     "id": "fd_fire",
@@ -719,9 +787,50 @@
     "type": "field_type",
     "legacy_enum_id": 24,
     "intensity_levels": [
-      { "name": "faint plasma", "color": "magenta", "sym": "9", "light_emitted": 0.01 },
-      { "name": "glowing plasma", "color": "pink", "light_emitted": 4 },
-      { "name": "glaring plasma", "color": "white", "light_emitted": 20 }
+      {
+        "name": "faint plasma",
+        "color": "magenta",
+        "sym": "9",
+        "dangerous": true,
+        "light_emitted": 0.01,
+        "effects": [
+          {
+            "effect_id": "onfire",
+            "body_part": "torso",
+            "intensity": 1,
+            "min_duration": "4 seconds",
+            "max_duration": "4 seconds"
+          }
+        ]
+      },
+      {
+        "name": "glowing plasma",
+        "color": "pink",
+        "light_emitted": 4,
+        "effects": [
+          {
+            "effect_id": "onfire",
+            "body_part": "torso",
+            "intensity": 2,
+            "min_duration": "8 seconds",
+            "max_duration": "8 seconds"
+          }
+        ]
+      },
+      {
+        "name": "glaring plasma",
+        "color": "white",
+        "light_emitted": 20,
+        "effects": [
+          {
+            "effect_id": "onfire",
+            "body_part": "torso",
+            "intensity": 3,
+            "min_duration": "12 seconds",
+            "max_duration": "12 seconds"
+          }
+        ]
+      }
     ],
     "priority": 4,
     "half_life": "2 turns",
@@ -958,7 +1067,7 @@
     "intensity_levels": [
       { "name": "swirl of meth smoke", "translucency": 5 },
       { "name": "meth smoke", "color": "light_gray" },
-      { "name": "thick meth  smoke", "color": "dark_gray" }
+      { "name": "thick meth smoke", "color": "dark_gray" }
     ],
     "npc_complain": { "chance": 20, "issue": "meth_smoke", "duration": "30 minutes", "speech": "<meth_smoke>" },
     "decay_amount_factor": 5,

@@ -1,5 +1,28 @@
 [
   {
+    "id": "DIGITAL_MUSIC",
+    "type": "json_flag",
+    "context": [ "GENERIC" ]
+  },
+  {
+    "id": "DIGITAL",
+    "type": "json_flag",
+    "context": [ "GENERIC", "BOOK", "TOOL" ],
+    "info": "This is a <info>digital file</info>.  Install it on a powered reader to use it."
+  },
+  {
+    "id": "DIGITAL_STORAGE",
+    "type": "json_flag",
+    "context": [ "GENERIC", "TOOL" ],
+    "info": "This device can store <info>digital files</info>."
+  },
+  {
+    "id": "DIGITAL_READER",
+    "type": "json_flag",
+    "context": [ "TOOL" ],
+    "info": "This device can read installed <info>digital files</info> while powered."
+  },
+  {
     "id": "GRAB",
     "type": "json_flag",
     "context": [  ]
@@ -783,6 +806,7 @@
   {
     "id": "MC_SCIENCE_STUFF",
     "type": "json_flag",
+    "tag": "(XEDRA)",
     "context": [ "TOOL", "TOOL_ARMOR" ]
   },
   {
@@ -803,6 +827,7 @@
   {
     "id": "MC_ENCRYPTED",
     "type": "json_flag",
+    "tag": "(encrypted)",
     "context": [ "TOOL", "TOOL_ARMOR" ]
   },
   {
@@ -1084,6 +1109,20 @@
     "context": [ "ARMOR", "TOOL_ARMOR" ],
     "//": "Allows power armor to be worn with compatible armors like ear plugs and mouthpieces.",
     "info": "This item can be worn simultaneously with power armor."
+  },
+  {
+    "id": "PLATE_CARRIER",
+    "type": "json_flag",
+    "context": [ "ARMOR", "TOOL_ARMOR" ],
+    "//": "Defines a plate carrier that will allow armor plates to be worn.",
+    "info": "This item is a <info>plate carrier</info> with specialized inserts for armor plates, <good>allowing armor plates to be worn</good>."
+  },
+  {
+    "id": "ARMOR_PLATE",
+    "type": "json_flag",
+    "context": [ "ARMOR", "TOOL_ARMOR" ],
+    "//": "Defines an armor plate that can be worn with clothing with the PLATE_CARRIER flag. One set of armor plates can be worn per plate carrier.",
+    "info": "This item is a <info>set of armor plates</info>, meant to be inserted into a plate carrier, and <bad>can only be worn with a plate carrier</bad>."
   },
   {
     "id": "ZERO_WEIGHT",
@@ -1983,6 +2022,12 @@
     "id": "NO_SALVAGE",
     "type": "json_flag",
     "context": [  ]
+  },
+  {
+    "id": "BUTCHERY_ROPE",
+    "type": "json_flag",
+    "context": [  ],
+    "info": "This item can be used as a <good>butchery rope</good>"
   },
   {
     "id": "NO_STERILE",

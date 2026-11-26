@@ -42,7 +42,6 @@
     "to_hit": 2,
     "symbol": ";",
     "qualities": [ [ "CUT", 1 ], [ "CUT_FINE", 1 ], [ "PRY", 2 ] ],
-    "use_action": "CROWBAR",
     "flags": [ "SHEATH_KNIFE", "UNARMED_WEAPON", "STAB", "UNBREAKABLE_MELEE" ],
     "techniques": [ "WBLOCK_2", "UHAND", "PROD" ]
   },
@@ -174,7 +173,6 @@
     "to_hit": 5,
     "symbol": ";",
     "qualities": [ [ "PRY", 4 ] ],
-    "use_action": "CROWBAR",
     "flags": [ "UNBREAKABLE_MELEE" ],
     "techniques": [ "WBLOCK_3", "tec_feint", "tec_counter", "BERSERK", "DSBI", "DSINERTIAL" ]
   },

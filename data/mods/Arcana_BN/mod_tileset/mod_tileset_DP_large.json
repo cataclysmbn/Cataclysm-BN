@@ -8,7 +8,7 @@
         "tiles": [
           { "id": "mon_dark_wyrm_summoned", "fg": 0 },
           { "id": "mon_flesh_angel_summoned", "fg": 1 },
-          { "id": "mon_flying_polyp_summoned", "fg": 2 },
+          { "id": [ "rid_mon_dark_wyrm_summoned", "rid_mon_dark_wyrm_summoned_glyph" ], "fg": 2 },
           { "id": "mon_jabberwock_summoned", "fg": 3 },
           { "id": "mon_mech_arcana", "fg": 4 },
           { "id": "mon_mech_arcana_boss", "fg": 5 },
@@ -42,7 +42,15 @@
           { "id": [ "broken_mech_arcana", "broken_mech_arcana_boss" ], "fg": 21 },
           { "id": "bot_mech_arcana", "fg": 22 },
           { "id": "mon_archon", "fg": 23 },
-          { "id": "overlay_wielded_spear_pestilence", "fg": 24 }
+          { "id": "overlay_wielded_spear_pestilence", "fg": 24 },
+          { "id": "rid_mon_thing_summoned", "fg": 25 },
+          { "id": "rid_mon_yugg_summoned", "fg": 26 },
+          {
+            "id": "mon_flying_polyp_summoned",
+            "fg": [ { "weight": 25, "sprite": 27 }, { "weight": 25, "sprite": 28 } ],
+            "animated": true
+          },
+          { "id": "rid_mon_flying_polyp_summoned", "fg": 29 }
         ],
         "sprite_width": 64,
         "sprite_height": 80,

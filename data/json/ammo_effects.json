@@ -39,6 +39,11 @@
     "aoe": { "field_type": "fd_fire", "intensity_min": 1, "intensity_max": 1, "size": 3 }
   },
   {
+    "id": "FOAMCRETE",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_foamcrete", "intensity_min": 1, "intensity_max": 2, "size": 0, "check_passable": true }
+  },
+  {
     "id": "NAPALM",
     "type": "ammo_effect",
     "aoe": { "field_type": "fd_fire", "intensity_min": 1, "intensity_max": 1, "size": 3 },
@@ -463,6 +468,11 @@
     "id": "AMMO_20x66_EXP",
     "type": "ammo_effect",
     "explosion": { "damage": 70, "radius": 1 }
+  },
+  {
+    "id": "AMMO_20x66_FRAG",
+    "type": "ammo_effect",
+    "explosion": { "fragment": { "impact": { "damage_type": "bullet", "amount": 50, "armor_multiplier": 2 }, "range": 3 } }
   },
   {
     "id": "AMMO_25MM_HEI",

@@ -1192,7 +1192,7 @@ double effect::get_percentage( const std::string &arg, int val, bool reduced ) c
 
     double ret = 0;
     // If both bot values are zero the formula is one_in(top), else the formula is x_in_y(top, bot)
-    if( bot_base != 0 && bot_scale != 0 ) {
+    if( bot_base != 0 || bot_scale != 0 ) {
         if( bot_base + bot_scale == 0 ) {
             // Special crash avoidance case, in most effect fields 0 = "nothing happens"
             // so assume false here for consistency
@@ -1216,6 +1216,7 @@ double effect::get_percentage( const std::string &arg, int val, bool reduced ) c
 bool effect::activated( const time_point &when, const std::string &arg, int val, bool reduced,
                         double mod ) const
 {
+    if( val == 0 && !eff_type->mod_data_types.contains( arg ) ) { return false; }
     auto &mod_data = eff_type->mod_data;
     auto found_top_base = mod_data.find( std::make_tuple( "base_mods", reduced, arg, "chance_top" ) );
     auto found_top_scale = mod_data.find( std::make_tuple( "scaling_mods", reduced, arg,
@@ -1275,7 +1276,7 @@ bool effect::activated( const time_point &when, const std::string &arg, int val,
     // has to be an && here to avoid undefined behavior of turn % 0
     if( tick > 0 &&
         ( when - calendar::turn_zero ) % time_duration::from_turns( tick ) == 0_turns ) {
-        if( bot_base != 0 && bot_scale != 0 ) {
+        if( bot_base != 0 || bot_scale != 0 ) {
             if( bot_base + bot_scale == 0 ) {
                 // Special crash avoidance case, in most effect fields 0 = "nothing happens"
                 // so assume false here for consistency

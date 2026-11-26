@@ -10,7 +10,8 @@
     "id": "add_fluid_grid_connection",
     "type": "requirement",
     "//": "Connect two fluid grid tiles. Cost is multiplied by number of elements in resulting grid.",
-    "components": [ [ [ "pipe", 1 ] ], [ [ "hose", 2 ] ] ],
-    "tools": [ [ [ "oxy_torch", 5 ], [ "welder", 25 ], [ "fake_gridwelder", 25 ], [ "toolset", 50 ] ] ]
+    "components": [ [ [ "pipe", 2 ] ], [ [ "hose", 1 ], [ "makeshift_hose", 1 ] ] ],
+    "qualities": [ { "id": "GLARE", "level": 2 } ],
+    "tools": [ [ [ "welder", 20 ], [ "toolset", 30 ], [ "oxy_torch", 4 ] ] ]
   }
 ]

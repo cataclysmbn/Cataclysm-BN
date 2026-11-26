@@ -227,7 +227,7 @@
       { "point": [ -1, 0, -6 ], "special": "lab_basement" }
     ],
     "locations": [ "lake_surface" ],
-    "city_distance": [ 20, -1 ],
+    "city_distance": [ 10, -1 ],
     "occurrences": [ 0, 5 ],
     "flags": [ "LAB", "LAKE" ]
   }

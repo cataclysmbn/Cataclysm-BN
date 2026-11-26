@@ -1,5 +1,18 @@
 [
   {
+    "id": "fluid_grid_assign",
+    "type": "requirement",
+    "//": "Assigning a fluid-grid tank or fixture uses a rubber hose and requires a plumbing kit.",
+    "tools": [ [ [ "plumber_toolkit", -1 ] ] ],
+    "components": [ [ [ "hose", 1 ] ] ]
+  },
+  {
+    "id": "fluid_grid_unassign",
+    "type": "requirement",
+    "//": "Unassigning a fluid-grid tank or fixture requires a plumbing kit.",
+    "tools": [ [ [ "plumber_toolkit", -1 ] ] ]
+  },
+  {
     "id": "3d_printing_standard",
     "type": "requirement",
     "//": "For working with an printing items made from plastic using a 3D printer, per 50 grams material.",

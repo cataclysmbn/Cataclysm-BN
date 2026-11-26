@@ -68,6 +68,17 @@
   },
   {
     "type": "monstergroup",
+    "name": "GROUP_FLY",
+    "monsters": [ { "monster": "mon_fly", "weight": 5 } ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_LOCUST",
+    "default": "mon_locust_nymph",
+    "monsters": [ { "monster": "mon_locust_nymph", "weight": 5 }, { "monster": "mon_locust", "weight": 5, "starts": "30 days" } ]
+  },
+  {
+    "type": "monstergroup",
     "name": "GROUP_ROACH",
     "default": "mon_giant_cockroach",
     "is_animal": true,
@@ -82,6 +93,16 @@
     "name": "GROUP_SPIDER",
     "default": "mon_spider_web",
     "monsters": [  ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_SPIDER_WOLF",
+    "monsters": [ { "monster": "mon_spider_wolf_giant", "weight": 5 } ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_SPIDER_JUMPING",
+    "monsters": [ { "monster": "mon_spider_jumping_giant", "weight": 5 } ]
   },
   {
     "name": "GROUP_WASP_NEST",
@@ -254,10 +275,6 @@
     "type": "monstergroup",
     "name": "GROUP_WORM",
     "default": "mon_worm",
-    "is_animal": true,
-    "monsters": [
-      { "monster": "mon_graboid", "freq": 30, "cost_multiplier": 20 },
-      { "monster": "mon_halfworm", "freq": 0, "cost_multiplier": 0 }
-    ]
+    "monsters": [ { "monster": "mon_worm", "weight": 5 }, { "monster": "mon_graboid", "weight": 2, "starts": "28 days" } ]
   }
 ]

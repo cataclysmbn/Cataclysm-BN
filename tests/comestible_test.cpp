@@ -91,7 +91,7 @@ static auto byproduct_calories(const recipe& recipe_obj) -> int {
     return kcal;
 }
 
-static auto food_or_food_container(item& it) -> item& { // *NOPAD*
+static auto food_or_food_container(item& it) -> item& {
     return it.is_food_container() ? it.contents.front() : it;
 }
 

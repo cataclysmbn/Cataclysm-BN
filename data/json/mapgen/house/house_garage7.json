@@ -114,11 +114,11 @@
       "palettes": [ "basement_empty" ],
       "nested": {
         "1": {
-          "chunks": [ [ "null", 60 ], [ "room_10x10_woodworker_E", 30 ], [ "room_10x10_guns_E", 10 ], [ "room_10x10_guns_N", 10 ] ]
+          "chunks": [ [ "null", 30 ], [ "room_10x10_woodworker_E", 30 ], [ "room_10x10_guns_E", 10 ], [ "room_10x10_guns_N", 10 ] ]
         },
         "2": {
           "chunks": [
-            [ "null", 50 ],
+            [ "null", 30 ],
             [ "room_6x6_brewer_N", 10 ],
             [ "room_6x6_junk", 30 ],
             [ "room_6x6_office_N", 30 ],

@@ -5,7 +5,6 @@
 #include "vehicle/veh_type.h"
 #include "vehicle/vehicle.h"
 #include "vehicle/vehicle_part.h"
-#include "vehicle/vpart_position.h"
 
 namespace rot::temp
 {
@@ -45,17 +44,13 @@ auto for_location( const map &m, const item &loc ) -> temperature_flag
             } );
         }
         case item_location_type::vehicle: {
-            auto pos = loc.bub_pos();
-            optional_vpart_position veh = m.veh_at( pos );
-            if( !veh ) {
-                debugmsg( "Expected vehicle at %d, %d, %d, but couldn't find any", pos.x(), pos.y(), pos.z() );
+            // The location names its vehicle; the map cache misses vehicles not placed on it yet.
+            const auto flag = loc.vehicle_storage_temperature();
+            if( !flag ) {
+                debugmsg( "Item %s is in a vehicle without a vehicle location", loc.tname() );
                 return temperature_flag::TEMP_NORMAL;
             }
-            int cargo_index = veh->vehicle().part_with_feature( veh->part_index(), VPFLAG_CARGO, true );
-            if( cargo_index < 0 ) {
-                return temperature_flag::TEMP_NORMAL;
-            }
-            return for_part( veh->vehicle(), cargo_index );
+            return *flag;
         }
         case item_location_type::container: {
             const auto parent = loc.parent_item();
@@ -88,6 +83,16 @@ auto for_part( const vehicle &veh, const size_t part_index,
     }
 
     return temperature_flag::TEMP_NORMAL;
+}
+
+auto for_part( const vehicle &veh, const size_t part_index ) -> temperature_flag
+{
+    return for_part( veh, part_index, engine_heater_is_on( veh ) );
+}
+
+auto engine_heater_is_on( const vehicle &veh ) -> bool
+{
+    return veh.has_part( "E_HEATER", true ) && veh.engine_on;
 }
 
 } // namespace rot::temp

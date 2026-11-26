@@ -99,12 +99,12 @@
     "symbol": "/",
     "color": "yellow",
     "ammo": "battery",
-    "charges_per_use": 5,
+    "charges_per_use": 1,
     "use_action": {
       "type": "transform",
       "active": true,
       "target": "carver_on",
-      "msg": "You turn on the electric carver.",
+      "msg": "The electric carver's serrated blades start buzzing!",
       "moves": 80,
       "transform_charges": 1,
       "need_dry": true
@@ -125,8 +125,18 @@
     "charges_per_use": 0,
     "revert_to": "carver_off",
     "qualities": [ [ "CUT", 1 ], [ "BUTCHER", 25 ] ],
-    "revert_msg": "Your electric carver goes quiet",
-    "use_action": { "type": "transform", "target": "carver_off", "msg": "You turn off the electric carver." },
+    "revert_msg": "Your electric carver goes quiet.",
+    "use_action": [
+      { "type": "transform", "target": "carver_off", "msg": "You turn off the electric carver." },
+      {
+        "type": "passivenoise",
+        "noise": 80,
+        "noise_chance": 10,
+        "held_message": "The electric carver buzzes.",
+        "noise_message": "a carver buzzing.",
+        "noise_variant": "circsaw"
+      }
+    ],
     "flags": [ "MESSY", "TRADER_AVOID", "NONCONDUCTIVE", "WATER_DISABLE", "COMBAT_NPC_USE", "COMBAT_NPC_ON" ],
     "magazine_well": "500 ml"
   },
@@ -336,7 +346,7 @@
     "id": "flask_yeast",
     "type": "GENERIC",
     "category": "cooking_ingredients",
-    "name": { "str_sp": "small sealed yeast culture" },
+    "name": { "str": "small sealed yeast culture" },
     "description": "A sealed flask holding sanitized yeast wort.  You may harvest the yeast inside when it's done culturing.",
     "weight": "250 g",
     "volume": "250 ml",
@@ -362,7 +372,7 @@
   {
     "id": "jar_yeast",
     "type": "GENERIC",
-    "name": { "str_sp": "sealed yeast culture" },
+    "name": { "str": "sealed yeast culture" },
     "description": "A sealed jar holding sanitized yeast wort.  You may harvest the yeast inside when it's done culturing.",
     "copy-from": "flask_yeast",
     "looks_like": "jar_glass_sealed",
@@ -383,7 +393,7 @@
   {
     "id": "clay_yeast",
     "type": "GENERIC",
-    "name": { "str_sp": "sealed yeast culture" },
+    "name": { "str": "sealed yeast culture" },
     "description": "A sealed clay bowl holding sanitized yeast wort.  You may harvest the yeast inside when it's done culturing.",
     "copy-from": "wild_clay_yeast",
     "use_action": {
@@ -401,7 +411,7 @@
   {
     "id": "jar_3l_glass_yeast",
     "type": "GENERIC",
-    "name": { "str_sp": "large sealed yeast culture" },
+    "name": { "str": "large sealed yeast culture" },
     "description": "A sealed 3L glass jar holding sanitized yeast wort.  You may harvest the yeast inside when it's done culturing.",
     "copy-from": "jar_yeast",
     "looks_like": "jar_3l_glass_sealed",
@@ -422,7 +432,7 @@
   {
     "id": "wild_yeast",
     "type": "GENERIC",
-    "name": { "str_sp": "sealed wild yeast culture" },
+    "name": { "str": "sealed wild yeast culture" },
     "description": "Mixture of water, sugar and fruits with some naturally occurring yeast, that will eventually produce a more sizable yeast culture.",
     "copy-from": "jar_yeast",
     "use_action": {
@@ -439,7 +449,7 @@
   {
     "id": "wild_clay_yeast",
     "type": "GENERIC",
-    "name": { "str_sp": "sealed wild yeast culture" },
+    "name": { "str": "sealed wild yeast culture" },
     "description": "Mixture of water, sugar and fruits with some naturally occurring yeast, that will eventually produce a more sizable yeast culture.",
     "copy-from": "jar_yeast",
     "looks_like": "bowl_clay",
@@ -718,7 +728,7 @@
     "type": "TOOL",
     "name": { "str": "atompot" },
     "copy-from": "pressure_cooker",
-    "description": "Rivtech's premiere self-heating kitchen appliance, complete with lid, hand-crafted with the power of the atom to reach any temperature in thirty seconds.  As bulky as it is, its plutonium power source means that it can be used to cook an absurd amount of meals without ever worrying about running low on power.  Unsurprisingly, sales weren't particularly good because of the prospect of irradiating your food, but internal shielding ensures that only trace amounts find its way into the center.",
+    "description": "Rivtech's premiere self-heating kitchen appliance, complete with lid, hand-crafted with the power of the atom to reach any temperature in thirty seconds.  As bulky as it is, its plutonium power source means that it can be used to cook an absurd amount of meals without ever worrying about running low on power.  Unsurprisingly, sales weren't particularly good because of the prospect of irradiating your food, but internal shielding ensures that only trace amounts find their way into the center.",
     "price": "300 USD",
     "price_postapoc": "50 USD",
     "material": [ "steel", "plastic" ],
@@ -934,6 +944,7 @@
     "id": "multi_cooker_improved",
     "type": "TOOL",
     "copy-from": "multi_cooker",
+    "sub": "multi_cooker",
     "name": { "str": "improved multi cooker" },
     "description": "A professional-grade multi-cooker, with a battery slot for camping trips or tailgating. This has been tinkered with.",
     "use_action": [

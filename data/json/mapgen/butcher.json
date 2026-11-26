@@ -96,7 +96,7 @@
     "method": "json",
     "om_terrain": "s_butcher_roof",
     "object": {
-      "fill_ter": "t_tile_flat_roof",
+      "fill_ter": "t_floor",
       "rows": [
         "                        ",
         "                        ",
@@ -123,17 +123,33 @@
         "                        ",
         "                        "
       ],
-      "palettes": [ "roof_palette" ],
       "terrain": {
         ".": "t_tile_flat_roof",
+        "&": "t_tile_flat_roof",
+        "=": "t_tile_flat_roof",
+        "R": "t_tile_flat_roof",
+        "b": "t_tile_flat_roof",
+        "k": "t_tile_flat_roof",
+        " ": "t_open_air",
+        "_": "t_floor",
+        ">": "t_stairs_down",
         "|": "t_wall_r",
         "+": "t_door_locked",
         "o": "t_window_domestic",
-        "s": "t_floor",
-        "t": "t_floor",
-        "r": "t_floor"
+        "-": "t_gutter",
+        "4": "t_gutter_downspout",
+        "5": "t_gutter_drop"
       },
-      "furniture": { "R": "f_smoking_rack", "k": "f_kiln_empty" },
+      "furniture": {
+        "&": "f_roof_turbine_vent",
+        "=": "f_vent_pipe",
+        "R": "f_smoking_rack",
+        "b": "f_bench",
+        "k": "f_kiln_empty",
+        "s": "f_sofa",
+        "t": "f_table",
+        "r": "f_rack"
+      },
       "place_loot": [
         { "group": "stash_wood", "x": 14, "y": 8, "chance": 50, "repeat": [ 2, 5 ] },
         { "item": "television", "x": 13, "y": 14 }

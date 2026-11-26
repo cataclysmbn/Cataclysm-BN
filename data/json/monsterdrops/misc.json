@@ -96,7 +96,7 @@
       { "item": "webbing_belt" },
       { "distribution": [ { "item": "socks", "prob": 95 }, { "item": "socks_wool", "prob": 5 } ] },
       { "item": "boots_combat" },
-      { "item": "modularvestsuper", "prob": 100 },
+      { "collection": [ { "item": "ballistic_vest_heavy" }, { "item": "super_ballistic_plate" } ], "prob": 100 },
       {
         "distribution": [ { "item": "goggles_nv", "prob": 75 }, { "item": "goggles_nv_enhanced", "prob": 25 } ],
         "prob": 100

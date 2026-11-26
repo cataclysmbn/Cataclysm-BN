@@ -111,7 +111,7 @@ A list of CBM ids that are implanted in the character.
 
 Mods can modify this via "add:CBMs" and "remove:CBMs".
 
-## `traits", "forced_traits", "forbidden_traits`
+## `"traits", "forced_traits", "forbidden_traits`
 
 (optional, array of strings)
 
@@ -119,15 +119,21 @@ Lists of trait/mutation ids. Traits in "forbidden_traits" are forbidden and can'
 the character creation. Traits in "forced_traits" are automatically added to character. Traits in
 "traits" enables them to be chosen, even if they are not starting traits.
 
-## `bionics", "forced_bionics", "forbidden_bionics`
+## `"bionics", "forced_bionics", "forbidden_bionics`
 
 (optional, array of strings)
 
-Lists of trait/mutation ids. Bionics in "forbidden_bionics" are forbidden and can't be selected during
+Lists of bionics ids. Bionics in "forbidden_bionics" are forbidden and can't be selected during
 the character creation. bionics in "forced_bionics" are automatically added to character. Bionics in
 "bionics" enables them to be chosen, even if they are not starting bionics.
 
-## `spells", "forbidden_spells`
+## `"forced_perks"`
+
+(optional, array of strings)
+
+Lists of perk ids. Perks in "forced_perks" are automatically added to character.
+
+## `"spells", "forbidden_spells`
 
 (optional, array of strings)
 

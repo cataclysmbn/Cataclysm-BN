@@ -44,7 +44,7 @@
     "ammo_type": "762R",
     "capacity": 200,
     "count": 100,
-    "default_ammo": "762_54R",
+    "default_ammo": "762_54R_7n1",
     "linkage": "ammolink762R"
   }
 ]

@@ -236,6 +236,7 @@ void profession::load( const JsonObject &jo, const std::string & )
 
     optional( jo, was_loaded, "skills", _starting_skills, skilllevel_reader {} );
     optional( jo, was_loaded, "addictions", _starting_addictions, addiction_reader {} );
+    optional( jo, was_loaded, "perks", _starting_perks, auto_flags_reader<perk_id> {} );
     // TODO: use string_id<bionic_type> or so
     optional( jo, was_loaded, "CBMs", _starting_CBMs, auto_flags_reader<bionic_id> {} );
     // TODO: use string_id<mutation_branch> or so
@@ -558,6 +559,11 @@ std::vector<mtype_id> profession::pets() const
 std::vector<addiction> profession::addictions() const
 {
     return _starting_addictions;
+}
+
+std::vector<perk_id> profession::get_perks() const
+{
+    return _starting_perks;
 }
 
 std::vector<bionic_id> profession::CBMs() const

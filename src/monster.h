@@ -419,6 +419,8 @@ class monster : public Creature, public location_visitable<monster>
         bool is_immune_effect( const efftype_id & ) const override;
         bool is_immune_damage( damage_type ) const override;
 
+        bool uncanny_dodge() override;
+
         resistances resists() const;
         void absorb_hit( const bodypart_id &bp, damage_instance &dam ) override;
         bool block_hit( Creature *source, bodypart_id &bp_hit, damage_instance &d ) override;
@@ -490,6 +492,8 @@ class monster : public Creature, public location_visitable<monster>
         float  dodge_roll() override;  // For the purposes of comparing to player::hit_roll()
 
         int get_grab_strength() const; // intensity of grabbed effect
+        int get_uncanny_dodge_cost()
+        const; // moves cost for uncanny dodge, if the monster can uncanny dodge
 
         monster_horde_attraction get_horde_attraction();
         void set_horde_attraction( monster_horde_attraction mha );

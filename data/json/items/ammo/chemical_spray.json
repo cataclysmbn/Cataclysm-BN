@@ -19,6 +19,26 @@
     "effects": [ "TOXICGAS", "NEVER_MISFIRES", "JET" ]
   },
   {
+    "id": "foamcrete_slurry",
+    "type": "AMMO",
+    "name": { "str_sp": "foamcrete slurry" },
+    "description": "A pressurized slurry that rapidly expands and hardens into foamcrete on impact, providing short-term construction support or cover.",
+    "weight": "3 g",
+    "volume": "250 ml",
+    "price": "15 USD",
+    "price_postapoc": "2 USD",
+    "material": "water",
+    "symbol": "=",
+    "color": "light_gray",
+    "container": "pressurized_tank_chem",
+    "phase": "liquid",
+    "ammo_type": "chemical_spray",
+    "range": 8,
+    "count": 800,
+    "damage": { "damage_type": "bash", "amount": 1 },
+    "effects": [ "FOAMCRETE", "NEVER_MISFIRES", "JET" ]
+  },
+  {
     "id": "gas_fungicidal",
     "type": "AMMO",
     "name": { "str_sp": "sprayable fungicide" },

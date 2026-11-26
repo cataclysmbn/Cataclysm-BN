@@ -9,6 +9,9 @@ on:
     paths-ignore: [docs/**, scripts/**, "**.md", "**.mdx"]
 
 jobs:
+  metadata:
+    uses: ./.github/workflows/registry-mods-summary.yml
+
   build-translations:
     uses: ./.github/workflows/build-translations.yml
     secrets:

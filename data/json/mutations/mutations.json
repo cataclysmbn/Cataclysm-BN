@@ -113,7 +113,7 @@
     "id": "GOODCARDIO",
     "name": { "str": "Indefatigable" },
     "points": 2,
-    "description": "Whether due to exercise and good diet, or due to a natural propensity to physical endurance, you tire due to physical exertion much less readily than others.  Your maximum stamina and stamina regeneration is 25% higher than usual.",
+    "description": "Whether due to exercise and good diet, or due to a natural propensity to physical endurance, you tire due to physical exertion much less readily than others.  Your maximum stamina and stamina regeneration are 25% higher than usual.",
     "starting_trait": true,
     "valid": false,
     "cancels": [ "BADCARDIO" ],
@@ -192,7 +192,8 @@
     "starting_trait": true,
     "valid": false,
     "cancels": [ "INSOMNIA" ],
-    "category": [ "MOUSE", "INSECT", "RABBIT" ]
+    "category": [ "MOUSE", "INSECT", "RABBIT" ],
+    "mut_enchantments": [ { "values": [ { "value": "SLEEPY", "add": 40 } ] } ]
   },
   {
     "type": "mutation",
@@ -203,7 +204,8 @@
     "prereqs": [ "MET_RAT" ],
     "cancels": [ "INSOMNIA" ],
     "threshreq": [ "THRESH_MOUSE", "THRESH_RABBIT" ],
-    "category": [ "MOUSE", "RABBIT" ]
+    "category": [ "MOUSE", "RABBIT" ],
+    "mut_enchantments": [ { "values": [ { "value": "SLEEPY", "add": 100 } ] } ]
   },
   {
     "type": "mutation",
@@ -589,7 +591,7 @@
     "id": "KILLER",
     "name": { "str": "Killer Drive" },
     "points": 2,
-    "description": "You derive enjoyment from killing things.  Putting end to life seem to spark some dark satisfaction and thrill, and you crave it every moment.",
+    "description": "You derive enjoyment from killing things.  Putting an end to life seems to spark some dark satisfaction and thrill, and you crave it every moment.",
     "starting_trait": true,
     "valid": false,
     "social_modifiers": { "intimidate": 10 },
@@ -727,7 +729,7 @@
     "id": "BADCARDIO",
     "name": { "str": "Languorous" },
     "points": -4,
-    "description": "Whether due to lack of exercise and poor diet, or due to a natural disinclination to physical endurance, you tire due to physical exertion much more readily than others.  Your maximum stamina and stamina regeneration is 25% lower than usual.",
+    "description": "Whether due to lack of exercise and poor diet, or due to a natural disinclination to physical endurance, you tire due to physical exertion much more readily than others.  Your maximum stamina and stamina regeneration are 25% lower than usual.",
     "starting_trait": true,
     "valid": false,
     "cancels": [ "GOODCARDIO" ],
@@ -807,7 +809,7 @@
     "changes_to": [ "SLEEPY2", "MET_RAT" ],
     "starting_trait": true,
     "types": [ "SLEEP" ],
-    "category": [ "BEAST", "CHIMERA", "MOUSE" ],
+    "category": [ "BEAST", "CHIMERA", "MOUSE", "MEDICAL" ],
     "fatigue_modifier": 0.333,
     "fatigue_regen_modifier": 0.333
   },
@@ -971,8 +973,19 @@
     "description": "Something in those heavily processed foods doesn't agree with you.  It's possible for you to eat them, but you will suffer morale penalties and obtain less nutrition from them.",
     "starting_trait": true,
     "cancels": [ "PROJUNK" ],
+    "changes_to": [ "ANTIJUNK2" ],
     "vitamins_absorb_multi": [ [ "junk", [ [ "vitA", 0 ], [ "vitB", 0 ], [ "vitC", 0 ], [ "calcium", 0 ], [ "iron", 0 ] ] ] ],
     "category": [ "BEAST", "RAPTOR", "ALPHA", "ELFA", "RABBIT" ]
+  },
+  {
+    "type": "mutation",
+    "id": "ANTIJUNK2",
+    "name": { "str": "Natural Omnivore" },
+    "points": 2,
+    "description": "You embody your omnivorous nature!  You are able to eat almost anything considered normal human food, with the exception of heavily processed foods.",
+    "cancels": [ "ANTIWHEAT", "MEATARIAN", "ANTIFRUIT", "LACTOSE", "VEGETARIAN" ],
+    "threshreq": [ "THRESH_ALPHA" ],
+    "category": [ "ALPHA" ]
   },
   {
     "type": "mutation",
@@ -1162,8 +1175,7 @@
     "points": -3,
     "description": "You randomly fall asleep without any reason.",
     "starting_trait": true,
-    "valid": false,
-    "category": [ "MEDICAL" ]
+    "valid": false
   },
   {
     "type": "mutation",
@@ -1910,7 +1922,7 @@
     "ugliness": 3,
     "bodytemp_modifiers": [ 250, 1200 ],
     "bodytemp_sleep": 500,
-    "description": "Dense gray fur has grown to cover your entire body, providing a 3 points of armor against bashing attacks, and considerable protection from cold.",
+    "description": "Dense gray fur has grown to cover your entire body, providing 3 points of armor against bashing attacks, and considerable protection from cold.",
     "types": [ "SKIN" ],
     "prereqs": [ "LIGHTFUR" ],
     "category": [ "LUPINE" ],
@@ -2018,7 +2030,7 @@
     "bodytemp_modifiers": [ 150, 250 ],
     "bodytemp_sleep": 20,
     "encumbrance_always": [ [ "torso", 10 ], [ "arm_l", 10 ], [ "arm_r", 10 ], [ "leg_l", 10 ], [ "leg_r", 10 ], [ "head", 10 ] ],
-    "description": "Your chaotic skin has wholly compressed all the different traits of animals into a thin, subdermal layer of armor. Not as good as fur for keeping you warm, but highly protective and you once more can blend in with the hairless apes. Though you are slightly heavier.",
+    "description": "Your chaotic skin has wholly compressed all the different traits of animals into a thin, subdermal layer which provides 12 armor. Not as good as fur for keeping you warm, but highly protective and you now once more can blend in with the hairless apes. Though it is slightly heavy, reducing your dexterity by 2.",
     "armor": [ { "parts": "ALL", "physical": 12 } ],
     "mut_enchantments": [ { "values": [ { "value": "DEXTERITY_PERMANENT", "add": -2 } ] } ],
     "category": [ "CHIMERA" ],
@@ -2039,7 +2051,7 @@
     "bodytemp_modifiers": [ 250, 500 ],
     "bodytemp_sleep": 100,
     "prevents": [ "DEFORMED", "DEFORMED2", "DEFORMED3", "HOOVES" ],
-    "description": "Your subdermal armor has unfolded, providing a grotesque layer of protection against bullets, blades and human interaction. You shouldn't bother trying to do precise actions though, your hands are I'll suited for those things. Your metabolism has also massively accelerated, burning calories at a fast rate for increased regeneration speed.",
+    "description": "Your subdermal armor has unfolded, providing a grotesque 20 armor point layer to protect against bullets, blades and human interaction. You shouldn't bother trying to do precise actions though, your hands are ill suited for those things. Your metabolism has also massively accelerated, burning calories at a fast rate for increased regeneration speed.",
     "movecost_swim_modifier": 0.8,
     "restricts_gear": [ "TORSO", "HEAD", "leg_l", "leg_r", "arm_l", "arm_r" ],
     "allow_soft_gear": true,
@@ -2376,7 +2388,7 @@
     "points": -5,
     "visibility": 0,
     "ugliness": 0,
-    "description": "You body has begun moving nutrients via the evaporation of water.  This increases your thirst when it's hot, but reduces it when it's cold.",
+    "description": "Your body has begun moving nutrients via the evaporation of water.  This increases your thirst when it's hot, but reduces it when it's cold.",
     "prereqs": [ "PLANTSKIN", "BARK" ],
     "prereqs2": [ "LEAVES" ],
     "threshreq": [ "THRESH_PLANT" ],
@@ -2621,7 +2633,7 @@
     "visibility": 4,
     "ugliness": 3,
     "description": "You develop a reservoir of fluids that bulges out of your abdomen.  Your body has adapted to containing extra liquids in event of shortfalls.",
-    "thirst_modifier": 0.75,
+    "thirst_modifier": -0.25,
     "cancels": [ "THIRST", "THIRST2", "THIRST3" ],
     "category": [ "INSECT" ]
   },
@@ -2728,7 +2740,7 @@
     "id": "INFRESIST",
     "name": { "str": "Infection Immune" },
     "points": 1,
-    "description": "Your immune system is particularly good at resisting infections.  Your wounds will no longer become infected, altough existing infections are still dangerous.  You will also be able to install non-sterile CBMs.",
+    "description": "Your immune system is particularly good at resisting infections.  Your wounds will no longer become infected, although existing infections are still dangerous.  You will also be able to install non-sterile CBMs.",
     "starting_trait": true,
     "category": [ "TROGLOBITE", "RAT", "MEDICAL" ]
   },
@@ -3361,6 +3373,7 @@
     "description": "You have a long tail that ends in a vicious stinger.  It does not improve your balance at all, but allows for a powerful piercing attack.  Prevents wearing non-fabric pants.",
     "types": [ "TAIL" ],
     "prereqs": [ "TAIL_LONG" ],
+    "category": [ "INSECT", "SPIDER" ],
     "restricts_gear": [ "leg_l", "leg_r" ],
     "allow_soft_gear": true,
     "allowed_items": [ "ALLOWS_TAIL" ],
@@ -3574,7 +3587,7 @@
   {
     "type": "mutation",
     "id": "PRED2",
-    "name": { "str": "Hunter" },
+    "name": { "str": "Hunter", "ctxt": "Mutation name" },
     "points": 3,
     "description": "Your brain has a lot more in common with a predatory animal than a human, making it easier to control misplaced reactions to the death of your prey.  Additionally, combat skills, which you use to hunt, are easier to learn and maintain.",
     "social_modifiers": { "intimidate": 3 },
@@ -5635,7 +5648,7 @@
     "name": { "str": "Cold Blooded" },
     "points": -3,
     "mixed_effect": true,
-    "description": "You are cold-blooded and rely on heat to keep moving.  Your lose 1% of your speed for every 2 (1.1) degrees below 65 F (18.3 C), but only need to eat about half as much as before.",
+    "description": "You are cold-blooded and rely on heat to keep moving.  You lose 1% of your speed for every 2 (1.1) degrees below 65 F (18.3 C), but only need to eat about half as much as before.",
     "prereqs": [ "COLDBLOOD2" ],
     "changes_to": [ "COLDBLOOD4" ],
     "types": [ "METABOLISM" ],
@@ -5649,7 +5662,7 @@
     "name": { "str": "Ectothermic" },
     "points": 0,
     "mixed_effect": true,
-    "description": "Your body has become permanently cold-blooded.  Your speed lowers or raises 1% for every 2 (1.1) degrees below or above 65 F (18.3 C).  You only need to eat half as much as an average human.",
+    "description": "Your body has become permanently cold-blooded.  Your speed lowers or rises 1% for every 2 (1.1) degrees below or above 65 F (18.3 C).  You only need to eat half as much as an average human.",
     "prereqs": [ "COLDBLOOD3" ],
     "threshreq": [ "THRESH_LIZARD", "THRESH_SERPENT", "THRESH_PLANT" ],
     "purifiable": false,
@@ -6272,7 +6285,7 @@
     "random_starting_trait": false,
     "visibility": 9,
     "ugliness": -1,
-    "description": "Your ears have grown into tall, flexible and pretty rabbit ears.  They're are slender and enhance your hearing beyond the normal range.",
+    "description": "Your ears have grown into tall, flexible and pretty rabbit ears.  They are slender and enhance your hearing beyond the normal range.",
     "valid": false,
     "types": [ "EARS" ],
     "category": [ "RABBIT" ],
@@ -6764,7 +6777,8 @@
     "valid": false,
     "purifiable": false,
     "profession": true,
-    "cancels": [ "ILLITERATE" ]
+    "cancels": [ "ILLITERATE" ],
+    "mut_enchantments": [ { "flags": [ "NO_READING_COMPLEXITY_PENALTY" ] } ]
   },
   {
     "type": "mutation",
@@ -7110,6 +7124,17 @@
   },
   {
     "type": "mutation",
+    "id": "WAYFARER_SELF",
+    "name": { "str": "DIWhy" },
+    "points": -3,
+    "description": "There's nothing better than a vehicle you built with your own hands, sanity and practicality be damned.  You won't even touch the controls of a vehicle you haven't constructed from scratch, even if your life depended on it.",
+    "starting_trait": true,
+    "random_starting_trait": false,
+    "valid": false,
+    "purifiable": false
+  },
+  {
+    "type": "mutation",
     "id": "FAST_REFLEXES",
     "name": { "str": "Fast Reflexes" },
     "points": 2,
@@ -7138,7 +7163,7 @@
     "id": "NO_RANGED_CRIT",
     "name": { "str": "No ranged crit" },
     "points": 0,
-    "description": "You are not an intellectual shooter.  Your ranged shots no longer able to crit, and you more likely going to hit the body or limbs rather than the head.",
+    "description": "You are not an intellectual shooter.  Your ranged shots are no longer able to crit, and you are more likely to hit the body or limbs rather than the head.",
     "valid": false,
     "purifiable": false,
     "profession": false

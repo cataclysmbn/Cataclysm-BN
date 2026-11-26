@@ -180,7 +180,7 @@ void cata::detail::reg_mission_type( sol::state &lua )
         DOC( "Returns any follow-up mission type ID." );
         SET_MEMB_RO( follow_up );
 
-        DOC( "Returns any associated dialogue for the mission." );
+        DOC( "Returns any associated dialogue for the mission, keyed by situation: `describe`, `offer`, `accepted`, `rejected`, `advice`, `inquire`, `success`, `success_lie` and `failure`." );
         SET_MEMB_RO( dialogue );
 
         DOC( "Returns all available missions." );

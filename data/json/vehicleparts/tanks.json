@@ -51,6 +51,32 @@
     "damage_reduction": { "all": 9, "stab": 0 }
   },
   {
+    "id": "tank_small_carbon",
+    "type": "vehicle_part",
+    "name": { "str": "carbon fiber vehicle tank (10L)" },
+    "item": "jerrycan_carbon",
+    "location": "fuel_source",
+    "symbol": "O",
+    "broken_color": "red",
+    "durability": 100,
+    "description": "A storage space for holding liquids.  If filled with the appropriate fuel for the vehicle's engine, the engine will automatically draw fuel from the tank when the engine is on.  If filled with water, you can access the water from a water faucet, if one is installed in the vehicle.  You can also use a rubber hose to siphon liquids out of a tank.",
+    "size": "2500 L",
+    "damage_modifier": 80,
+    "breaks_into": "ig_vp_carbon",
+    "folded_volume": "1250 ml",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "20 m", "using": [ [ "welding_standard", 10 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "10 m", "using": "vehicle_weld_removal" },
+      "repair": {
+        "skills": [ [ "mechanics", 1 ] ],
+        "time": "1 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_carbon", 10 ] ]
+      }
+    },
+    "flags": [ "FLUIDTANK", "FOLDABLE", "SHOCK_RESISTANT" ],
+    "damage_reduction": { "all": 9, "stab": 0 }
+  },
+  {
     "id": "tank_medium",
     "type": "vehicle_part",
     "name": { "str": "vehicle tank (20L)" },

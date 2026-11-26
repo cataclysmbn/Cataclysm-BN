@@ -1,0 +1,10 @@
+[
+  {
+    "id": "mx_test_path_cost",
+    "type": "map_extra",
+    "name": "Test path cost (-1 | 100)",
+    "description": "Map extra for travel path tests, -1 on foot cost (impassable), 100 land_vehicle cost.",
+    "generator": { "generator_method": "null", "generator_id": "mx_null" },
+    "path_cost": { "on_foot": -1, "land_vehicle": 100 }
+  }
+]

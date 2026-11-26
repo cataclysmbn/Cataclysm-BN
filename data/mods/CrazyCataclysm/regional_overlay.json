@@ -1,0 +1,11 @@
+[
+  {
+    "type": "region_overlay",
+    "regions": [ "all" ],
+    "region_terrain_and_furniture": { "terrain": { "t_region_tree": { "t_tree_money": 1, "t_tree_knowledge": 1 } } },
+    "field_coverage": {
+      "other": { "t_region_tree": 0.98, "t_tree_money": 0.01, "t_tree_knowledge": 0.01 },
+      "boosted_other": { "t_tree_money": 0.01, "t_tree_knowledge": 0.01 }
+    }
+  }
+]

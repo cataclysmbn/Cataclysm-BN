@@ -545,5 +545,48 @@
       { "skill": "pistol", "bonus": { "rng": [ 3, 6 ] } },
       { "skill": "rifle", "bonus": { "rng": [ 3, 6 ] } }
     ]
+  },
+  {
+    "type": "npc_class",
+    "id": "NC_BANDIT_LEADER",
+    "name": { "str": "Bandit Leader" },
+    "job_description": "I'm here to kick your ass, Marshal.",
+    "traits": [
+      { "group": "BG_survival_story_CRIMINAL" },
+      { "group": "NPC_starting_traits" },
+      { "group": "Appearance_demographics" }
+    ],
+    "bionics": [
+      { "id": "bio_armor_arms", "chance": 10 },
+      { "id": "bio_armor_eyes", "chance": 10 },
+      { "id": "bio_armor_head", "chance": 10 },
+      { "id": "bio_armor_legs", "chance": 10 },
+      { "id": "bio_armor_torso", "chance": 10 },
+      { "id": "bio_carbon", "chance": 10 },
+      { "id": "bio_dex_enhancer", "chance": 10 },
+      { "id": "bio_ears", "chance": 10 },
+      { "id": "bio_eye_enhancer", "chance": 10 },
+      { "id": "bio_speed", "chance": 10 },
+      { "id": "bio_storage", "chance": 10 },
+      { "id": "bio_str_enhancer", "chance": 10 },
+      { "id": "bio_sunglasses", "chance": 10 },
+      { "id": "bio_targeting", "chance": 10 },
+      { "id": "bio_weight", "chance": 10 }
+    ],
+    "common": false,
+    "bonus_str": { "rng": [ 3, 6 ] },
+    "bonus_dex": { "rng": [ 2, 4 ] },
+    "bonus_per": { "rng": [ 2, 4 ] },
+    "worn_override": "NC_BANDIT_LEADER_worn_override",
+    "skills": [
+      { "skill": "ALL", "level": { "sum": [ { "dice": [ 3, 2 ] }, { "constant": -4 } ] } },
+      { "skill": "dodge", "bonus": { "rng": [ 1, 3 ] } },
+      { "skill": "melee", "bonus": { "rng": [ 2, 4 ] } },
+      { "skill": "bashing", "bonus": { "rng": [ 1, 4 ] } },
+      { "skill": "cutting", "bonus": { "rng": [ 1, 4 ] } },
+      { "skill": "gun", "bonus": { "rng": [ 3, 6 ] } },
+      { "skill": "launcher", "bonus": { "rng": [ 1, 5 ] } },
+      { "skill": "rifle", "bonus": { "rng": [ 3, 6 ] } }
+    ]
   }
 ]

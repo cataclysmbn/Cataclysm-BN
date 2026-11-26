@@ -38,14 +38,51 @@
     "charges_per_use": 1,
     "use_action": [
       "HAMMER",
-      "CROWBAR",
       {
         "type": "repair_item",
         "item_action_type": "repair_metal",
-        "materials": [ "kevlar", "plastic", "iron", "steel", "budget_steel", "hardsteel", "aluminum", "copper", "silver", "gold", "glass" ],
+        "materials": [
+          "kevlar",
+          "plastic",
+          "iron",
+          "steel",
+          "budget_steel",
+          "hardsteel",
+          "aluminum",
+          "copper",
+          "silver",
+          "gold",
+          "glass",
+          "bronze",
+          "brass",
+          "platinum",
+          "superalloy"
+        ],
         "skill": "mechanics",
         "cost_scaling": 0.1,
         "move_cost": 1000
+      },
+      {
+        "type": "sew_advanced",
+        "materials": [
+          "kevlar",
+          "plastic",
+          "iron",
+          "steel",
+          "budget_steel",
+          "hardsteel",
+          "aluminum",
+          "copper",
+          "silver",
+          "gold",
+          "glass",
+          "bronze",
+          "brass",
+          "platinum",
+          "superalloy"
+        ],
+        "skill": "fabrication",
+        "clothing_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ]
       },
       { "flame": false, "type": "cauterize" }
     ],
@@ -290,6 +327,17 @@
     "max_charges": 2500,
     "charges_per_use": 5,
     "flags": [ "USES_GRID_POWER", "HEATS_FOOD_USING_CHARGES", "HEATS_FOOD_USING_FIRE", "HEATS_FOOD" ]
+  },
+  {
+    "id": "fake_microwave",
+    "copy-from": "fake_item",
+    "type": "TOOL",
+    "name": { "str": "plugged-in microwave" },
+    "//": "This instead of hotplate to reduce its use in non-food recipes.",
+    "sub": "multi_cooker",
+    "max_charges": 2500,
+    "charges_per_use": 3,
+    "flags": [ "USES_GRID_POWER", "HEATS_FOOD_USING_CHARGES", "HEATS_FOOD" ]
   },
   {
     "id": "fake_gridwelder",
@@ -980,5 +1028,23 @@
     "volume": "0 ml",
     "flags": [ "PSEUDO", "PERPETUAL" ],
     "fuel": { "energy": 1 }
+  },
+  {
+    "id": "fake_billybass",
+    "copy-from": "fake_item",
+    "type": "TOOL",
+    "name": { "str": "fake billybass" },
+    "use_action": [
+      {
+        "type": "manualnoise",
+        "moves": 100,
+        "noise": 50,
+        "noise_message": "\"I wanna know, can you help mee, he-e-e-elp meeeeee...  Take me to the river! *doo* *doo* Drop me in the water! *doo* *doo* Take me to the river! *doo* *doo* Put me in the water!...\"",
+        "noise_id": "misc",
+        "use_message": "<color_blue>\"I wanna know, can you help mee, he-e-e-elp meeeeee...  Take me to the river! *doo* *doo* Drop me in the water! *doo* *doo* Take me to the river! *doo* *doo* Put me in the water!...\"</color>",
+        "no_charges_message": "You press the red button but no sound comes out.",
+        "//": "Use of %s not currently supported."
+      }
+    ]
   }
 ]

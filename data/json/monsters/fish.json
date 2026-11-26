@@ -915,7 +915,12 @@
     "anger_triggers": [ "PLAYER_CLOSE", "PLAYER_WEAK", "HURT" ],
     "regenerates": 50,
     "regen_morale": true,
-    "special_attacks": [ [ "RANGED_PULL", 15 ], [ "SMASH", 15 ], [ "GRAB_DRAG", 10 ] ],
+    "special_attacks": [
+      [ "RANGED_PULL", 15 ],
+      { "id": "smash" },
+      [ "GRAB_DRAG", 10 ],
+      { "id": "tentacle", "damage_max_instance": [ { "damage_type": "bash", "amount": 40 } ] }
+    ],
     "death_function": [ "MELT" ],
     "flags": [
       "SEES",

@@ -17,7 +17,7 @@ void clear_character(player&, bool debug_storage = true);
 void clear_avatar();
 void process_activity(player& dummy);
 
-auto spawn_npc(const tripoint_bub_ms&, const std::string& npc_class) -> npc&; // *NOPAD*
+auto spawn_npc(const tripoint_bub_ms&, const std::string& npc_class) -> npc&;
 void give_and_activate_bionic(player& p, const bionic_id& bioid);
 
 void arm_character(

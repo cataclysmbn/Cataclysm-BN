@@ -143,6 +143,28 @@ local function fmt_one_member_func(typename, member)
   return ret
 end
 
+--- Renders a LuaLS `@class`/`@field`/`@alias` doc line as readable markdown, so option table shapes show up in the reference.
+---@param line string
+---@return string?
+local fmt_luals_metadata_line = function(line)
+  local class_name = string.match(line, "^@class%s+([%w_%.]+)")
+  if class_name ~= nil then return ("Fields of `%s`:  "):format(class_name) end
+
+  local alias_name, alias_type = string.match(line, "^@alias%s+([%w_%.]+)%s+(.-)%s*$")
+  if alias_name ~= nil then return ("`%s` is %s.  "):format(alias_name, alias_type) end
+
+  local field_name, field_type, field_desc = string.match(line, "^@field%s+([%w_]+%??)%s+(%S+)%s*(.-)%s*$")
+  if field_name == nil then return nil end
+  local is_optional = string.sub(field_name, -1) == "?"
+  if is_optional then
+    field_name = string.sub(field_name, 1, -2)
+    field_type = field_type .. ", optional"
+  end
+  local ret = ("* `%s` (%s)"):format(field_name, field_type)
+  if field_desc ~= "" then ret = ret .. ": " .. field_desc end
+  return ret .. "  "
+end
+
 ---@param typename string?
 ---@param member LuaDocMember
 local fmt_one_member = function(typename, member)
@@ -164,7 +186,12 @@ local fmt_one_member = function(typename, member)
       "\n",
       ---@param m string
       function(m)
-        if string.match(m, "^@param") or is_luals_metadata_line(m) then return nil end
+        if string.match(m, "^@param") then return nil end
+        if is_luals_metadata_line(m) then
+          local formatted = fmt_luals_metadata_line(m)
+          if formatted == nil then return nil end
+          return "> " .. linkify_types(formatted, true)
+        end
         return "> " .. linkify_types(m, true)
       end
     )

@@ -117,6 +117,19 @@
     "components": [ [ [ "duct_tape", 50 ] ], [ [ "jug_plastic", 4 ] ] ]
   },
   {
+    "result": "jerrycan_carbon",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_CONTAINERS",
+    "skill_used": "computer",
+    "difficulty": 3,
+    "skills_required": [ [ "fabrication", 2 ] ],
+    "time": "5 m",
+    "autolearn": true,
+    "using": [ [ "3d_printing_standard", 5 ] ],
+    "components": [ [ [ "carbon_fiber_filament", 50 ] ] ]
+  },
+  {
     "type": "recipe",
     "result": "jerrycan_big",
     "category": "CC_OTHER",

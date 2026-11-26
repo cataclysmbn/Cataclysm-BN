@@ -2,8 +2,10 @@
 #include "../src/overmap/overmapbuffer.h"
 #include "../src/vehicle/vehicle_part.h"
 #include "../src/vehicle/vpart_position.h"
+#include "action_time_scale.h"
 #include "avatar.h"
 #include "calendar.h"
+#include "cata_utility.h"
 #include "catch/catch.hpp"
 #include "coordinates.h"
 #include "faction.h"
@@ -15,7 +17,9 @@
 #include "map/field_type.h"
 #include "map_helpers.h"
 #include "memory_fast.h"
+#include "monster.h"
 #include "npc.h"
+#include "npc_attitude_message.h"
 #include "npc_class.h"
 #include "numeric_interval.h"
 #include "pimpl.h"
@@ -558,4 +562,82 @@ TEST_CASE("random npc spawn chance") {
     CHECK(npc_overmap::spawn_chance_in_hour(2 * days_in_year, 1.0) == Approx(0.5 / 24.0));
     CHECK(npc_overmap::spawn_chance_in_hour(4 * days_in_year, 1.0) == Approx(0.25 / 24.0));
     CHECK(npc_overmap::spawn_chance_in_hour(8 * days_in_year, 1.0) == Approx(0.125 / 24.0));
+}
+
+TEST_CASE("shows_no_attitude_change_for_npc_activity", "[npc][attitude]") {
+    const auto guy = npc();
+    const auto change = [&](npc_attitude from, npc_attitude to, npc_attitude before_activity) {
+        return visible_attitude_change(
+            guy, {.from = from, .to = to, .before_activity = before_activity});
+    };
+
+    SECTION("hostile NPC starts and stops an activity") {
+        CHECK_FALSE(change(NPCATT_KILL, NPCATT_ACTIVITY, NPCATT_NULL));
+        CHECK_FALSE(change(NPCATT_ACTIVITY, NPCATT_KILL, NPCATT_KILL));
+    }
+
+    SECTION("follower gets angry during an activity") {
+        const auto angry = change(NPCATT_ACTIVITY, NPCATT_KILL, NPCATT_FOLLOW);
+        REQUIRE(angry);
+        CHECK(angry->from == attitude_group::friendly);
+        CHECK(angry->to == attitude_group::hostile);
+    }
+
+    SECTION("attitude change without an activity") {
+        const auto calm = change(NPCATT_KILL, NPCATT_NULL, NPCATT_NULL);
+        REQUIRE(calm);
+        CHECK(calm->from == attitude_group::hostile);
+        CHECK(calm->to == attitude_group::neutral);
+    }
+}
+
+TEST_CASE("calm_npc_reassesses_danger_every_5_turns_in_activity_skip", "[npc]") {
+    clear_all_state();
+    build_test_map(ter_id("t_floor"));
+    g->faction_manager_ptr->create_if_needed();
+    clear_npcs();
+    clear_creatures();
+    auto& you = get_avatar();
+    g->place_player(tripoint_bub_ms(60, 60, 0));
+    set_time(calendar::turn_zero + 12_hours + 1_turns);
+    auto& guy = spawn_npc(you.bub_pos() + point(5, 0), "test_talker");
+    guy.set_attitude(NPCATT_NULL);
+    guy.regen_ai_cache();
+    REQUIRE(guy.current_target() == nullptr);
+
+    const auto skip_state = restore_on_out_of_scope<bool>(you.in_skip_state);
+    you.in_skip_state = true;
+    auto& zombie = spawn_test_monster("mon_zombie", guy.bub_pos() + point(2, 0));
+    guy.move();
+    CHECK(guy.current_target() == nullptr);
+
+    set_time(calendar::turn_zero + 12_hours + 5_turns);
+    guy.move();
+    CHECK(guy.current_target() == static_cast<Creature*>(&zombie));
+}
+
+/// Checks that a calm NPC still reassesses danger in a 10-turn tick (TIME_ACTION_SCALE below 100%).
+/// The tick ends on turn 12 h + 13, which is not a multiple of 5, but it covers turns 12 h + 5 and
+/// 12 h + 10. So the NPC must see the zombie that appears next to it.
+TEST_CASE("calm_npc_reassesses_danger_in_a_multi_turn_tick_in_activity_skip", "[npc]") {
+    clear_all_state();
+    build_test_map(ter_id("t_floor"));
+    g->faction_manager_ptr->create_if_needed();
+    clear_npcs();
+    clear_creatures();
+    auto& you = get_avatar();
+    g->place_player(tripoint_bub_ms(60, 60, 0));
+    set_time(calendar::turn_zero + 12_hours + 3_turns);
+    auto& guy = spawn_npc(you.bub_pos() + point(5, 0), "test_talker");
+    guy.set_attitude(NPCATT_NULL);
+    guy.regen_ai_cache();
+    REQUIRE(guy.current_target() == nullptr);
+
+    const auto skip_state = restore_on_out_of_scope<bool>(you.in_skip_state);
+    you.in_skip_state = true;
+    auto& zombie = spawn_test_monster("mon_zombie", guy.bub_pos() + point(2, 0));
+    const auto tick_scope = action_time_scale::scoped_calendar_turns_this_tick(10);
+    set_time(calendar::turn_zero + 12_hours + 13_turns);
+    guy.move();
+    CHECK(guy.current_target() == static_cast<Creature*>(&zombie));
 }

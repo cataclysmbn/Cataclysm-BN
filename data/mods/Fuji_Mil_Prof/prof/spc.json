@@ -36,7 +36,8 @@
             "contents-item": [ "shoulder_strap", "acog_scope", "grip", "suppressor" ]
           },
           { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
-          { "item": "modularvestceramic", "contents-group": "army_mags_300blk" },
+          { "item": "ballistic_vest_esapi", "contents-group": "army_mags_300blk" },
+          { "item": "ceramic_ballistic_plate" },
           { "item": "knife_rambo", "container-item": "scabbard" },
           { "item": "holster", "contents-group": "holster_supp_MEU" },
           { "item": "legpouch_large", "contents-group": "army_mags_1911" }
@@ -190,7 +191,8 @@
         "entries": [
           { "item": "hk_mp5", "ammo-item": "9mm", "charges": 30, "contents-item": [ "shoulder_strap", "suppressor" ] },
           { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
-          { "item": "modularvestkevlar", "contents-group": "army_mags_mp5" },
+          { "item": "ballistic_vest_esapi", "contents-group": "army_mags_mp5" },
+          { "item": "ceramic_ballistic_plate" },
           { "item": "holster", "contents-group": "holster_supp_MEU" },
           { "item": "legpouch_large", "contents-group": "army_mags_1911" }
         ]
