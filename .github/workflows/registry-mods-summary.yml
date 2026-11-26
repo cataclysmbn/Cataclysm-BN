@@ -1,0 +1,19 @@
+name: Registry Mods Summary
+
+on: workflow_call
+
+jobs:
+  summary:
+    runs-on: ubuntu-slim
+    env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+    steps:
+      - name: List bundled mod versions
+        run: |
+          printf '| id | version | SHA |\n| -- | ------- | --- |\n' >> "$GITHUB_STEP_SUMMARY"
+          gh api "repos/$GITHUB_REPOSITORY/contents/data/mods/external.json?ref=$GITHUB_SHA" -H 'Accept: application/vnd.github.raw' \
+            --jq '.[] | (.url | capture("github.com/(?<repo>[^/]+/[^/]+)/archive/refs/heads/(?<ref>.+)\\.zip")) as $m | [.id, .version, $m.repo, $m.ref] | @tsv' |
+          while IFS=$'\t' read -r id version repo ref; do
+            sha=$(gh api "repos/$repo/commits/$ref" --jq .sha)
+            tag=$(gh api "repos/$repo/tags?per_page=100" --jq "map(select(.commit.sha == \"$sha\"))[0].name // empty")
+            echo "| $id | $version | [${sha:0:7}](https://github.com/$repo/commit/$sha)${tag:+ \`$tag\`} |"
+          done >> "$GITHUB_STEP_SUMMARY"

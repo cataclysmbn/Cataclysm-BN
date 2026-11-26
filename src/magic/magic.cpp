@@ -480,6 +480,12 @@ void spell_type::check_consistency() {
                          sp_t.id.c_str(), sp_t.effect_str);
             }
         }
+        if (sp_t.effect_name == "target_attack") {
+            if (!sp_t.effect_str.empty() && !efftype_id(sp_t.effect_str).is_valid()) {
+                debugmsg("ERROR %s specifies an effect, but effect %s is not valid",
+                         sp_t.id.c_str(), sp_t.effect_str);
+            }
+        }
         std::set<spell_id> spell_effect_list;
         if (spell_infinite_loop_check(spell_effect_list, sp_t.id)) {
             debugmsg("ERROR: %s has infinite loop in extra_effects", sp_t.id.c_str());
@@ -2053,14 +2059,11 @@ auto spellcasting_callback::draw_spell_info(const spell& sp, const uilist* menu)
     const int info_width = menu->pad_right - 4;
     const int win_height = menu->w_height;
     const int h_col1 = h_offset + 1;
-    const int h_col2 = h_offset + (info_width / 2);
     const catacurses::window w_menu = menu->window;
     // various pieces of spell data mean different things depending on the effect of the spell
     const std::string fx = sp.effect();
-    int line = 2;
     nc_color gray = c_light_gray;
     nc_color light_green = c_light_green;
-    nc_color yellow = c_yellow;
 
     const auto spell_class = sp.spell_class();
     const auto spell_class_name =
@@ -2219,27 +2222,24 @@ auto spellcasting_callback::draw_spell_info(const spell& sp, const uilist* menu)
     std::vector<std::string> to_print_list = foldstring(oss.str(), info_width - 1);
 
     const int total_lines = to_print_list.size();
-    if (info_scroll > total_lines) {
+    if (info_scroll > total_lines - win_height + 3) {
         info_scroll = 0;
     } else if (info_scroll < 0) {
-        info_scroll = total_lines;
+        info_scroll = total_lines - win_height + 3;
     }
-    int start;
-    int end;
-    calcStartPos(start, info_scroll, win_height, total_lines);
-    end = std::min(total_lines, start + win_height - 3);
-    for (int i = start; i < end; ++i) {
-        auto dummy = c_white;
+    int info_scroll_max;
+    info_scroll_max = std::min(total_lines, info_scroll + win_height - 3);
+    for (int i = info_scroll; i < info_scroll_max; ++i) {
         trim_and_print(
-            w_menu, point(h_col1, i - start + 2), info_width - 1, c_white, to_print_list[i]);
+            w_menu, point(h_col1, i - info_scroll + 2), info_width - 1, c_white, to_print_list[i]);
     }
 
     if (total_lines > win_height) {
         scrollbar()
             .offset_x(h_col1 + info_width)
             .content_size(total_lines)
-            .viewport_pos(start)
-            .viewport_size(win_height)
+            .viewport_pos(info_scroll)
+            .viewport_size(win_height - 3)
             .apply(w_menu);
     }
 }

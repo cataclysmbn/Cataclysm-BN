@@ -263,6 +263,7 @@ static constexpr uint8_t get_flood_envelope_by_enum( const sound_vol_for_flood_d
         case sound_vol_for_flood_dist::_LAST:
             return ( flood_radius_SILENT * 2 ) + 1;
     }
+    std::unreachable();
 }
 
 static constexpr auto get_flood_dist_enum( const short &dB_vol )
@@ -304,6 +305,7 @@ static constexpr auto get_flood_radius_by_enum( const enum sound_vol_for_flood_d
         case sound_vol_for_flood_dist::_LAST:
             return flood_radius_SILENT;
     }
+    std::unreachable();
 }
 
 // static constexpr auto flood_dist_by_index = std::array<uint8_t, 7>

@@ -3,7 +3,7 @@
     "type": "martial_art",
     "id": "style_biojutsu",
     "name": { "str": "Bionic Combatives" },
-    "description": "A modern combat style for the post-modern human.  Nicknamed \"Biojutsu\", Bionic Combatives combines integrated weaponry, armor and augments into an consolidated fighting discipline.",
+    "description": "A modern combat style for the post-modern human.  Nicknamed \"Biojutsu\", Bionic Combatives combines integrated weaponry, armor and augments into a consolidated fighting discipline.",
     "initiate": [
       "BEGINNING BIONIC COMBATIVES PROGRAM. INITIATING COMBAT PROTOCOLS.",
       "%s starts moving with swift robotic precision."
@@ -64,7 +64,7 @@
       {
         "id": "buff_centipede_onhit",
         "name": "Centipede's Frenzy",
-        "description": "Your attacks are a blur of hands and legs that become faster as your strike your opponents without rest.\n\n-4 move cost.\nLasts 3 turns.  Stacks 4 times.",
+        "description": "Your attacks are a blur of hands and legs that become faster as you strike your opponents without rest.\n\n-4 move cost.\nLasts 3 turns.  Stacks 4 times.",
         "skill_requirements": [ { "name": "unarmed", "level": 5 } ],
         "unarmed_allowed": true,
         "buff_duration": 3,
@@ -97,7 +97,7 @@
       {
         "id": "buff_lizard_static",
         "name": "Lizard's Cunning",
-        "description": "By briefly scaling, leaping, or pushing off a nearby wall, you can avoid the worst of your opponents attacks.\n\n+3.0 Dodge skill when near a wall.\nEnables \"Lizard Tail\" and \"Lizard Wall Counter\" techniques when near a wall.",
+        "description": "By briefly scaling, leaping, or pushing off a nearby wall, you can avoid the worst of your opponents' attacks.\n\n+3.0 Dodge skill when near a wall.\nEnables \"Lizard Tail\" and \"Lizard Wall Counter\" techniques when near a wall.",
         "unarmed_allowed": true,
         "wall_adjacent": true,
         "flat_bonuses": [ { "stat": "dodge", "scale": 3 } ]
@@ -242,7 +242,7 @@
     "type": "martial_art",
     "id": "style_venom_snake",
     "name": { "str": "Viper Kung Fu" },
-    "description": "A legacy of the Five Deadly Venoms, use by Qi Dong.  Viper Style (originally called Snake Style) has a unique three-part combo, which initiates on a dodge, then follows up with a stunning Viper Bite and then finishes with the legendary Viper Strike.",
+    "description": "A legacy of the Five Deadly Venoms, used by Qi Dong.  Viper Style (originally called Snake Style) has a unique three-part combo, which initiates on a dodge, then follows up with a stunning Viper Bite and then finishes with the legendary Viper Strike.",
     "initiate": [ "You prepare to strike your foes' weaknesses.", "%s assumes a viper-like stance." ],
     "learn_difficulty": 10,
     "arm_block": 1,
@@ -267,7 +267,7 @@
       {
         "id": "buff_venom_snake_ondodge2",
         "name": "Viper's Venom",
-        "description": "Your venom is a harsh reminder to never tease a predator.\n\n+2 bash damage.\nLasts 3 turn.",
+        "description": "Your venom is a harsh reminder to never tease a predator.\n\n+2 bash damage.\nLasts 3 turns.",
         "skill_requirements": [ { "name": "unarmed", "level": 1 } ],
         "unarmed_allowed": true,
         "buff_duration": 3,

@@ -1,11 +1,51 @@
 [
   {
+    "result": "22_cphp",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "4 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 2 ] ], [ [ "copper", 1 ] ], [ [ "22_casing_new", 1 ] ], [ [ "gunpowder", 2 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "22_lr",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "4 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 2 ] ], [ [ "22_casing_new", 1 ] ], [ [ "gunpowder", 2 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "bp_22_cphp",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "4 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 2 ] ], [ [ "copper", 1 ] ], [ [ "22_casing_new", 1 ] ], [ [ "chem_black_powder", 3 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "bp_22_lr",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "4 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 2 ] ], [ [ "22_casing_new", 1 ] ], [ [ "chem_black_powder", 3 ] ] ],
+    "charges": 1
+  },
+  {
     "result": "22_ratshot",
     "type": "uncraft",
     "skill_used": "fabrication",
     "difficulty": 3,
     "skills_required": [ "gun", 1 ],
-    "time": "1 m",
+    "time": "4 s",
     "qualities": [ { "id": "PULL", "level": 1 } ],
     "components": [ [ [ "bb", 4 ] ], [ [ "22_casing_new", 1 ] ], [ [ "gunpowder", 2 ] ] ],
     "charges": 1

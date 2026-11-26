@@ -248,7 +248,7 @@
     "name": { "str": "battery charger" },
     "durability": 5,
     "description": "A small, low-power consumer device for recharging batteries.  It slowly charges any rechargeable batteries (battery cells, lead-acid batteries, etc) placed directly in the attached storage space.",
-    "bonus": 15,
+    "bonus": 60,
     "item": "battery_charger",
     "requirements": {
       "install": { "skills": [ [ "mechanics", 1 ] ], "time": "5 m", "using": [ [ "vehicle_screw", 1 ] ] },

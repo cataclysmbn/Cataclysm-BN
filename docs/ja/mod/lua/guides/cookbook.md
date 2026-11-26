@@ -175,6 +175,101 @@ mod.on_control_npc = function(params)
 end
 ```
 
+## 次元
+
+### 現在の次元を確認する
+
+```lua
+local map = gapi.get_map()
+
+print("game dimension:", gapi.get_current_dimension_id())
+print("map dimension:", map:get_bound_dimension())
+print("is far-away point out of bounds:", map:is_out_of_bounds(coords.tripoint_bub_ms(500, 500, 0)))
+```
+
+### ポケットディメンションへ入って再入場する
+
+新しいポケットディメンションを作る時は `world_type` と両方の境界を渡します。
+任意の `overmap_terrain` は `bounds_min_omt` 基準の z/y/x テーブルです。
+そのディメンションが現在のセッションでロードされたままなら、再入場には
+`dimension_id` と `target_omt` だけで足ります。
+
+```lua
+home_dimension = "sky_island_home"
+overworld_pos = gapi.get_avatar():abs_pos()
+home_omt = overworld_pos:to_omt()
+local home_bounds_radius = coords.tripoint_rel_omt(2, 2, 0)
+
+local entered = gapi.place_player_dimension_at({
+  dimension_id = home_dimension,
+  target_omt = home_omt,
+  world_type = "pocket_dimension",
+  bounds_min_omt = home_omt - home_bounds_radius,
+  bounds_max_omt = home_omt + home_bounds_radius,
+  boundary_terrain = "t_pd_border",
+  boundary_overmap_terrain = "pd_border",
+  overmap_terrain = {
+    {
+      { "forest", "field", "forest" },
+      { "field", "field", "field" },
+      { "forest", "field", "forest" },
+    },
+  },
+})
+
+if entered then
+  gapi.add_msg("Pocket home loaded.")
+end
+```
+
+### オーバーワールドへ戻る
+
+入場前に保存した `overworld_pos` を使うと、元のマスへ正確に戻れます。
+
+```lua
+gapi.place_player_dimension_at({
+  dimension_id = "",
+  target_ms = overworld_pos,
+})
+```
+
+帰還後は、ロード済みポケットディメンションの ID と目的地だけで再入場できます。
+
+```lua
+local reentered = gapi.place_player_dimension_at({
+  dimension_id = home_dimension,
+  target_omt = home_omt,
+})
+```
+
+### 遠征ディメンションをリセットまたは削除する
+
+統合対象の
+[CBN-Sky-Island 遠征フロー](https://github.com/graysonchao/CBN-Sky-Island/blob/main/teleport.lua)では、
+[issue #9589](https://github.com/cataclysmbn/Cataclysm-BN/issues/9589)を解決するために
+遠征地形を新しく生成する必要があります。遠征にプライマリ以外のディメンション ID を割り当て、
+オーバーワールドへ戻って mod の状態を更新してから、生成データをリセットします。
+
+```lua
+local expedition_dimension = "sky_island_expedition"
+local storage = game.mod_storage[game.current_mod]
+local returned = gapi.place_player_dimension_at({
+  dimension_id = "",
+  target_ms = overworld_pos,
+})
+
+if returned then
+  storage.is_away_from_home = false
+  gapi.reset_dimension(expedition_dimension)
+end
+```
+
+プライマリのオーバーワールドは削除できないため、どちらのクリーンアップ関数も `""` を拒否します。
+`reset_dimension` は再入場に必要なディメンションメタデータを維持しますが、
+`delete_dimension` を使った場合、次の入場時に生成オプションをすべて再指定する必要があります。
+クリーンアップはディメンションデータを削除する前に完全な保存を行うため、
+永続 Lua 状態を先に更新してください。
+
 ## 天気フック
 
 ### 天気の変化に反応する

@@ -217,5 +217,30 @@
     "name": "GROUP_ZOMBIE_MINER_UPGRADE",
     "default": "mon_zombie_miner_evolved_moleman",
     "monsters": [ { "monster": "mon_zombie_miner_evolved_shady", "freq": 300, "cost_multiplier": 2 } ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_FERAL_UPGRADE",
+    "default": "mon_zombie",
+    "//": "Upgrades for basic ferals.  25% chance they don't make it (becoming either a zombie or a survivor zed), otherwise turn into survivor ferals.",
+    "monsters": [
+      { "monster": "mon_zombie_survivor", "freq": 40, "cost_multiplier": 5 },
+      { "monster": "mon_zombie_survivor_elite", "freq": 10, "cost_multiplier": 5 },
+      { "monster": "mon_feral_survivalist", "freq": 250, "cost_multiplier": 1 },
+      { "monster": "mon_feral_prepper", "freq": 250, "cost_multiplier": 1 },
+      { "monster": "mon_feral_militia", "freq": 250, "cost_multiplier": 1 }
+    ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_FERAL_SOLDIER_UPGRADE",
+    "default": "mon_zombie_soldier",
+    "//": "Upgrades for soldier ferals.  25% chance they don't make it (becoming a zombie soldier), otherwise get a gun.",
+    "monsters": [
+      { "monster": "mon_feral_soldier_rifle", "freq": 250, "cost_multiplier": 1 },
+      { "monster": "mon_feral_soldier_lmg", "freq": 200, "cost_multiplier": 1 },
+      { "monster": "mon_feral_soldier_shotgun", "freq": 200, "cost_multiplier": 1 },
+      { "monster": "mon_feral_soldier_sniper", "freq": 100, "cost_multiplier": 1 }
+    ]
   }
 ]

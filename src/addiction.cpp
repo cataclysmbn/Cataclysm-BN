@@ -63,7 +63,7 @@ void addict_effect( Character &u, addiction &add )
 
     switch( add.type ) {
         case add_type::CIG:
-            u.mod_int_bonus( -1 );
+            u.mod_int_bonus( -1, true );
             if( !one_in( 2000 - 20 * in ) ) {
                 break;
             }
@@ -101,8 +101,8 @@ void addict_effect( Character &u, addiction &add )
             const auto morale_type = add.type == add_type::ALCOHOL ? MORALE_CRAVING_ALCOHOL :
                                      MORALE_CRAVING_DIAZEPAM;
 
-            u.mod_per_bonus( -1 );
-            u.mod_int_bonus( -1 );
+            u.mod_per_bonus( -1, true );
+            u.mod_int_bonus( -1, true );
             if( x_in_y( in, to_turns<int>( 2_hours ) ) ) {
                 u.mod_healthy_mod( -1, -in * 10 );
             }
@@ -162,9 +162,9 @@ void addict_effect( Character &u, addiction &add )
                 break;
             }
 
-            u.mod_str_bonus( -1 );
-            u.mod_per_bonus( -1 );
-            u.mod_dex_bonus( -1 );
+            u.mod_str_bonus( -1, true );
+            u.mod_per_bonus( -1, true );
+            u.mod_dex_bonus( -1, true );
             if( u.get_pain() < in * 2 ) {
                 u.mod_pain( 1 );
             }
@@ -187,8 +187,8 @@ void addict_effect( Character &u, addiction &add )
             if( u.has_effect( effect_meth ) ) {
                 break;
             }
-            u.mod_int_bonus( -1 );
-            u.mod_str_bonus( -1 );
+            u.mod_int_bonus( -1, true );
+            u.mod_str_bonus( -1, true );
             if( current_stim > -75 && action_time_scale::once_every_this_tick( 3_minutes ) ) {
                 u.mod_stim( -1 );
             }
@@ -218,8 +218,8 @@ void addict_effect( Character &u, addiction &add )
                                          _( "You're shivering, you need some crack." );
             const auto morale_type = add.type == add_type::COKE ? MORALE_CRAVING_COCAINE :
                                      MORALE_CRAVING_CRACK;
-            u.mod_int_bonus( -1 );
-            u.mod_per_bonus( -1 );
+            u.mod_int_bonus( -1, true );
+            u.mod_per_bonus( -1, true );
             if( one_in( 900 - 30 * in ) ) {
                 u.add_msg_if_player( m_warning, cur_msg );
                 u.add_morale( morale_type, -20, -50 - 10 * in );

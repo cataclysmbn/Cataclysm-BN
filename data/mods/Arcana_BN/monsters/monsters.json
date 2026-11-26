@@ -112,7 +112,10 @@
     "harvest": "moruboru_harvest",
     "special_attacks": [
       { "type": "bite", "cooldown": 5 },
-      [ "TENTACLE", 5 ],
+      {
+        "id": "tentacle",
+        "damage_max_instance": [ { "damage_type": "bash", "amount": 20 }, { "damage_type": "acid", "amount": 10 } ]
+      },
       {
         "type": "spell",
         "spell_data": { "id": "arcana_monster_moruboru_fetid_exhalation" },
@@ -331,6 +334,7 @@
     ],
     "death_function": [ "MELT" ],
     "death_drops": {  },
+    "mountable_pixels_up": 24,
     "extend": {
       "flags": [
         "SEES",
@@ -380,6 +384,7 @@
     "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1 } ],
     "death_function": [ "MELT" ],
     "death_drops": {  },
+    "mountable_pixels_up": 42,
     "extend": {
       "flags": [
         "PATH_AVOID_DANGER_2",
@@ -403,7 +408,7 @@
     "vision_night": 10,
     "mountable_weight_ratio": 0.9,
     "path_settings": { "max_dist": 10 },
-    "special_attacks": [ [ "SMASH", 25 ] ],
+    "special_attacks": [ { "id": "smash", "throw_strength": 50, "cooldown": 25 } ],
     "regenerates": 1,
     "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1 } ],
     "death_function": [ "MELT" ],
@@ -428,6 +433,7 @@
     "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1 } ],
     "death_drops": {  },
     "special_attacks": [ [ "RANGED_PULL", 20 ], [ "LUNGE", 10 ] ],
+    "mountable_pixels_up": 21,
     "extend": {
       "flags": [
         "SEES",
@@ -525,6 +531,7 @@
     "death_function": [ "MELT" ],
     "death_drops": "mon_bound_glyph_death_drops_universal",
     "revert_to_itype": "summon_yugg_bound",
+    "mountable_pixels_up": 38,
     "extend": {
       "flags": [
         "PATH_AVOID_DANGER_2",
@@ -669,6 +676,7 @@
     "death_drops": "mon_bound_glyph_death_drops_universal",
     "revert_to_itype": "summon_flying_polyp_bound",
     "special_attacks": [ { "type": "bite", "cooldown": 20, "damage_max_instance": [ { "damage_type": "dark", "amount": 20 } ] } ],
+    "mountable_pixels_up": 53,
     "extend": {
       "flags": [
         "SEES",
@@ -827,6 +835,7 @@
     "regeneration_modifiers": [ { "effect": "dazed", "base_mod": -1 } ],
     "death_drops": {  },
     "death_function": [ "MELT" ],
+    "mountable_pixels_up": 7,
     "extend": {
       "flags": [
         "PATH_AVOID_DANGER_2",

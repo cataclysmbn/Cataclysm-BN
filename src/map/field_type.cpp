@@ -136,6 +136,8 @@ void field_type::load(const JsonObject& jo, const std::string&) {
                 : fallback_intensity_level.color;
         optional(jao, was_loaded, "transparent", intensity_level.transparent,
                  fallback_intensity_level.transparent);
+        optional(jao, was_loaded, "impassable", intensity_level.impassable,
+                 fallback_intensity_level.impassable);
         optional(jao, was_loaded, "dangerous", intensity_level.dangerous,
                  fallback_intensity_level.dangerous);
         optional(jao, was_loaded, "move_cost", intensity_level.move_cost,

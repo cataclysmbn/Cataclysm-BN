@@ -335,7 +335,7 @@
     "id": "electric_ward",
     "type": "SPELL",
     "name": { "str": "Electric Ward" },
-    "description": "Uses your control over electricity to make yourself immune to its effects..",
+    "description": "Uses your control over electricity to make yourself immune to its effects.",
     "valid_targets": [ "ally", "self" ],
     "scale_int": true,
     "flags": [ "CONCENTRATE", "SOMATIC", "NO_LEGS" ],

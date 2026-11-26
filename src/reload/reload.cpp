@@ -60,7 +60,7 @@ void item_reload_option::qty(int val) {
     auto remaining_capacity = 0;
     if (target->is_watertight_container() && ammo_obj.made_of(LIQUID)) {
         remaining_capacity = target->get_remaining_capacity_for_liquid(ammo_obj, true);
-    } else if (target->is_container() && ammo_obj.is_comestible()) {
+    } else if (target->is_container() && (ammo_obj.is_ammo() || ammo_obj.is_comestible())) {
         remaining_capacity = ammo_obj.charges_per_volume(target->get_container_capacity());
         if (!target->is_container_empty()) { remaining_capacity -= target->ammo_remaining(); }
     } else {

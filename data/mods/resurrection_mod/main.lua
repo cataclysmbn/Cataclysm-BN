@@ -56,8 +56,10 @@ mod.on_game_save_hook = function()
   mod.save_anchor_omt()
 end
 
-mod.on_character_death_hook = function()
-  local who = gapi.get_avatar()
+mod.on_character_death_hook = function(params)
+  local who = params and params.char
+  if not who or not who:is_avatar() then return end
+
   local anchor_pos = mod.pick_teleport_destination(who)
   if anchor_pos ~= nil then
     local player_abs = who:abs_pos()

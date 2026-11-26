@@ -4,7 +4,7 @@
     "copy-from": "8mm_jhp",
     "type": "AMMO",
     "name": { "str": "8x40mm JHP, handmade" },
-    "description": "Handmade duplicates of Rivtech 8x40mm JHP rounds.  Being caseless rounds, these cannot be disassembled or reloaded.",
+    "description": "Handmade duplicates of Rivtech 8x40mm JHP rounds.  Being caseless rounds, these are almost irreplaceable once fired.",
     "proportional": { "price": 0.7, "damage": { "damage_type": "bullet", "amount": 0.9, "armor_penetration": 0.6 }, "dispersion": 1.1 },
     "extend": { "effects": [ "RECYCLED" ] },
     "delete": { "effects": [ "NEVER_MISFIRES" ] }
@@ -14,7 +14,7 @@
     "copy-from": "8mm_caseless",
     "type": "AMMO",
     "name": { "str": "8x40mm caseless, handmade" },
-    "description": "Handmade duplicates of Rivtech 8x40mm caseless rounds.  Being caseless rounds, these cannot be disassembled or reloaded.",
+    "description": "Handmade duplicates of Rivtech 8x40mm caseless rounds.  Being caseless rounds, these are almost irreplaceable once fired.",
     "proportional": { "price": 0.7, "damage": { "damage_type": "bullet", "amount": 0.9, "armor_penetration": 0.6 }, "dispersion": 1.1 },
     "extend": { "effects": [ "RECYCLED" ] },
     "delete": { "effects": [ "NEVER_MISFIRES" ] }
@@ -24,7 +24,7 @@
     "copy-from": "8mm_hvp",
     "type": "AMMO",
     "name": { "str": "8x40mm HVP, handmade" },
-    "description": "Handmade duplicates of Rivtech 8x40mm HVP rounds.  Being caseless rounds, these cannot be disassembled or reloaded.",
+    "description": "Handmade duplicates of Rivtech 8x40mm HVP rounds.  Being caseless rounds, these are almost irreplaceable once fired.",
     "proportional": { "price": 0.7, "damage": { "damage_type": "bullet", "amount": 0.9, "armor_penetration": 0.6 }, "dispersion": 1.1 },
     "extend": { "effects": [ "RECYCLED" ] },
     "delete": { "effects": [ "NEVER_MISFIRES" ] }
@@ -34,7 +34,7 @@
     "copy-from": "8mm_inc",
     "type": "AMMO",
     "name": { "str": "8x40mm tracer, handmade" },
-    "description": "Handmade duplicates of Rivtech 8x40mm tracer rounds.  Being caseless rounds, these cannot be disassembled or reloaded.",
+    "description": "Handmade duplicates of Rivtech 8x40mm tracer rounds.  Being caseless rounds, these are almost irreplaceable once fired.",
     "proportional": { "price": 0.7, "damage": { "damage_type": "bullet", "amount": 0.9, "armor_penetration": 0.6 }, "dispersion": 1.1 },
     "extend": { "effects": [ "RECYCLED" ] },
     "delete": { "effects": [ "NEVER_MISFIRES" ] }
@@ -44,7 +44,7 @@
     "type": "AMMO",
     "name": { "str_sp": "8x40mm caseless" },
     "//": "Cased ammo tends to be roughly $1/shot, more or less.  Rivtech ammo, being New and Proprietary and Expensive, $2-2.50 or so.",
-    "description": "8x40mm caseless rounds.  Proprietary ammunition for Rivtech firearms.  Being caseless rounds, these cannot be disassembled or reloaded.",
+    "description": "8x40mm caseless rounds.  Proprietary ammunition for Rivtech firearms.  Being caseless rounds, these are almost irreplaceable once fired.",
     "weight": "12 g",
     "volume": "250 ml",
     "price": "225 cent",
@@ -68,7 +68,7 @@
     "copy-from": "8mm_caseless",
     "type": "AMMO",
     "name": { "str": "8x40mm sporting" },
-    "description": "8x40mm caseless rounds, light sporting load sold for civilian use.  Proprietary ammunition for Rivtech firearms.  Being caseless rounds, these cannot be disassembled or reloaded.",
+    "description": "8x40mm caseless rounds, light sporting load sold for civilian use.  Proprietary ammunition for Rivtech firearms.  Being caseless rounds, these are almost irreplaceable once fired.",
     "delete": { "effects": [ "NEVER_MISFIRES" ] },
     "loudness": 154,
     "speed": 700,
@@ -84,7 +84,7 @@
     "copy-from": "8mm_caseless",
     "type": "AMMO",
     "name": { "str": "8x40mm HVP" },
-    "description": "8x40mm caseless rounds, saboted high-velocity penetrator type.  Advanced military grade, armor-piercing ammunition that fires a single depleted uranium flechette.  Being caseless rounds, these cannot be disassembled or reloaded.",
+    "description": "8x40mm caseless rounds, saboted high-velocity penetrator type.  Advanced military grade, armor-piercing ammunition that fires a single depleted uranium flechette.  Being caseless rounds, these are almost irreplaceable once fired.",
     "price": "25 USD",
     "price_postapoc": "500 USD",
     "count": 20,
@@ -99,7 +99,7 @@
     "copy-from": "8mm_caseless",
     "type": "AMMO",
     "name": { "str": "8x40mm tracer" },
-    "description": "8x40mm caseless rounds with tracers to help keep the weapon they are fired from on target at the risk of igniting flammable substances.  Military grade ammunition for Rivtech firearms.  Being caseless rounds, these cannot be disassembled or reloaded.",
+    "description": "8x40mm caseless rounds with tracers to help keep the weapon they are fired from on target at the risk of igniting flammable substances.  Military grade ammunition for Rivtech firearms.  Being caseless rounds, these are almost irreplaceable once fired.",
     "count": 20,
     "proportional": { "dispersion": 0.8 },
     "extend": { "effects": [ "INCENDIARY" ] }
@@ -109,7 +109,7 @@
     "copy-from": "8mm_caseless",
     "type": "AMMO",
     "name": { "str": "8x40mm JHP" },
-    "description": "8x40mm caseless rounds, jacketed hollowpoint.  Military grade ammunition for Rivtech firearms.  Being caseless rounds, these cannot be disassembled or reloaded.",
+    "description": "8x40mm caseless rounds, jacketed hollowpoint.  Military grade ammunition for Rivtech firearms.  Being caseless rounds, these are almost irreplaceable once fired.",
     "relative": { "damage": { "damage_type": "bullet", "amount": 11, "armor_penetration": -22 } }
   }
 ]

@@ -33,8 +33,11 @@ void cata::detail::reg_recipe( sol::state &lua )
         SET_MEMB( time );
         SET_MEMB( skill_used );
         SET_MEMB( difficulty );
+        DOC( "Secondary skill levels required to craft this recipe, besides `skill_used` at `difficulty`." );
         SET_MEMB( required_skills );
+        DOC( "Skill levels required to learn this recipe by disassembling its result." );
         SET_MEMB( learn_by_disassembly );
+        DOC( "Books that teach this recipe, mapped to the skill level required to learn it from them." );
         SET_MEMB( booksets );
 
         DOC( "DEPRECATED: use recipe_id instead" );

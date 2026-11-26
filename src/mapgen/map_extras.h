@@ -24,6 +24,14 @@ enum class map_extra_method : int {
     num_map_extra_methods
 };
 
+/**
+ * Autodrive pathing costs for map extras.
+ */
+struct map_extra_pathing_cost {
+    int on_foot = 0; // Referred to as "for_player" in overmapbuffer.cpp
+    int land_vehicle = 0;
+};
+
 template <> struct enum_traits<map_extra_method> {
     static constexpr map_extra_method last = map_extra_method::num_map_extra_methods;
 };
@@ -39,6 +47,7 @@ public:
     uint32_t symbol = UTF8_getch("X");
     nc_color color = c_red;
     std::optional<std::string> looks_like;
+    map_extra_pathing_cost pathing_cost;
 
     auto get_symbol() const -> std::string { return utf32_to_utf8(symbol); }
     auto name() const -> std::string { return _name.translated(); }

@@ -72,6 +72,8 @@ class Creature_tracker
         auto update_pos( const monster &critter, const tripoint_abs_ms &new_pos ) -> bool;
         /** Removes the given monster from the Creature tracker, adjusting other entries as needed. */
         void remove( const monster &critter );
+        /** Keeps every monster of @p other valid until this tracker's end-of-turn cleanup. */
+        void adopt_removed( Creature_tracker &other );
         void clear();
         void rebuild_cache();
         /** Swaps the positions of two monsters */

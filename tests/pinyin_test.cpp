@@ -1,8 +1,8 @@
 #include "cached_options.h"
 #include "catacharset.h"
 #include "catch/catch.hpp"
-#include "pinyin.h"
 #include "string_utils.h"
+#include "utils/pinyin.h"
 
 TEST_CASE("pinyin_match_handles_basic_search", "[pinyin]") {
     const auto text = std::u32string(U"\u7269\u54c1");

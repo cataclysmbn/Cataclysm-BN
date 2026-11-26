@@ -250,7 +250,55 @@
     "charges": 1
   },
   {
+    "result": "57mm",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 2 } ],
+    "components": [
+      [ [ "lead", 2 ] ],
+      [ [ "smpistol_primer", 1 ] ],
+      [ [ "57mm_casing", 1 ] ],
+      [ [ "gunpowder", 4 ] ],
+      [ [ "copper", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "57mm_civ",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 2 } ],
+    "components": [
+      [ [ "lead", 2 ] ],
+      [ [ "smpistol_primer", 1 ] ],
+      [ [ "57mm_casing", 1 ] ],
+      [ [ "gunpowder", 4 ] ],
+      [ [ "copper", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
     "result": "bp_57mm",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 2 } ],
+    "components": [
+      [ [ "lead", 2 ] ],
+      [ [ "smpistol_primer", 1 ] ],
+      [ [ "57mm_casing", 1 ] ],
+      [ [ "chem_black_powder", 3 ] ],
+      [ [ "copper", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "bp_57mm_civ",
     "type": "uncraft",
     "skill_used": "fabrication",
     "skills_required": [ "gun", 1 ],

@@ -39,17 +39,15 @@ static auto popup_string(std::string& result, std::string& title) -> bool {
     return true;
 }
 
-auto teleporter_list::activate_teleporter(const tripoint_abs_omt& omt_pt, const tripoint_bub_ms&)
-    -> bool {
+auto teleporter_list::activate_teleporter(const translocator_location& loc) -> bool {
     std::string point_name;
     std::string title = _("Name this gate.");
     popup_string(point_name, title);
-    return known_teleporters.emplace(omt_pt, point_name).second;
+    return known_teleporters.emplace(loc, point_name).second;
 }
 
-void teleporter_list::deactivate_teleporter(
-    const tripoint_abs_omt& omt_pt, const tripoint_bub_ms&) {
-    known_teleporters.erase(omt_pt);
+void teleporter_list::deactivate_teleporter(const translocator_location& loc) {
+    known_teleporters.erase(loc);
 }
 
 // returns the first valid teleport location near a teleporter
@@ -58,7 +56,6 @@ static auto find_valid_teleporters_omt(const tripoint_abs_omt& omt_pt)
     // this is the top left hand square of the global absolute coordinate
     // of the overmap terrain we want to try to teleport to.
     // an OMT is SEEX * SEEY in size
-    const auto sm_pt = project_to<coords::sm>(omt_pt.xy());
     mapbuffer& buf = get_map().get_mapbuffer();
     auto omt_view = buf.get_abs_omt_view(omt_pt, {.mode = mapbuffer_lookup_mode::load_from_disk});
 
@@ -95,7 +92,10 @@ auto teleporter_list::place_avatar_overmap(Character& you, const tripoint_abs_om
 }
 
 void teleporter_list::translocate(const std::set<tripoint_bub_ms>& targets) {
-    if (known_teleporters.empty()) {
+    const auto& dim = get_avatar().get_dimension();
+    if (std::ranges::none_of(known_teleporters, [&](const auto& gate) {
+            return gate.first.dim == dim;
+        })) {
         // we can't go somewhere if we don't know how to get there!
         add_msg(m_bad, _("No translocator target known."));
         return;
@@ -114,7 +114,7 @@ void teleporter_list::translocate(const std::set<tripoint_bub_ms>& targets) {
             valid_targets = true;
             if (!place_avatar_overmap(*you, *omt_dest)) {
                 add_msg(_("Failed to teleport.  Teleporter obstructed or destroyed."));
-                deactivate_teleporter(*omt_dest, pt);
+                deactivate_teleporter({.dim = dim, .pos = *omt_dest});
             }
         }
     }
@@ -122,8 +122,8 @@ void teleporter_list::translocate(const std::set<tripoint_bub_ms>& targets) {
     if (!valid_targets) { add_msg(_("No valid targets to teleport.")); }
 }
 
-auto teleporter_list::knows_translocator(const tripoint_abs_omt& omt_pos) const -> bool {
-    return known_teleporters.contains(omt_pos);
+auto teleporter_list::knows_translocator(const translocator_location& loc) const -> bool {
+    return known_teleporters.contains(loc);
 }
 
 void teleporter_list::serialize(JsonOut& json) const {
@@ -131,10 +131,11 @@ void teleporter_list::serialize(JsonOut& json) const {
 
     json.member("known_teleporters");
     json.start_array();
-    for (std::pair<tripoint_abs_omt, std::string> pair : known_teleporters) {
+    for (const auto& [loc, name] : known_teleporters) {
         json.start_object();
-        json.member("position", pair.first);
-        json.member("name", pair.second);
+        json.member("dimension", loc.dim);
+        json.member("position", loc.pos);
+        json.member("name", name);
         json.end_object();
     }
     json.end_array();
@@ -150,8 +151,11 @@ void teleporter_list::deserialize(JsonIn& jsin) {
         jo.read("position", temp_pos);
         std::string name;
         jo.read("name", name);
+        // Saves made before gates stored their dimension only had overworld gates.
+        dimension_id dim;
+        jo.read("dimension", dim);
 
-        known_teleporters.emplace(temp_pos, name);
+        known_teleporters.emplace(translocator_location{.dim = dim, .pos = temp_pos}, name);
     }
 }
 
@@ -191,10 +195,12 @@ auto teleporter_list::choose_teleport_location() -> std::optional<tripoint_abs_o
     int index = 0;
     int column_width = 25;
     std::map<int, tripoint_abs_omt> index_pairs;
-    for (const std::pair<const tripoint_abs_omt, std::string>& gate : known_teleporters) {
-        teleport_selector.addentry(index, true, 0, gate.second);
-        column_width = std::max(column_width, utf8_width(gate.second));
-        index_pairs.emplace(index, gate.first);
+    const auto& dim = get_avatar().get_dimension();
+    for (const auto& [loc, name] : known_teleporters) {
+        if (loc.dim != dim) { continue; }
+        teleport_selector.addentry(index, true, 0, name);
+        column_width = std::max(column_width, utf8_width(name));
+        index_pairs.emplace(index, loc.pos);
         index++;
     }
     teleporter_callback cb(index_pairs);

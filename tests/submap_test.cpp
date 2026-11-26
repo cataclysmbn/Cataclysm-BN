@@ -9,6 +9,19 @@
 
 #include <sstream>
 
+TEST_CASE("const furniture variables are separate from terrain variables", "[submap]") {
+    auto sm = submap(tripoint_abs_sm::zero(), {});
+    const auto pos = point_sm_ms(5, 5);
+    const auto& const_sm = sm;
+
+    CHECK(const_sm.get_furn_vars(pos).get("liquid", "missing") == "missing");
+    sm.get_ter_vars(pos).set("liquid", "terrain");
+    CHECK(const_sm.get_furn_vars(pos).get("liquid", "missing") == "missing");
+    sm.get_furn_vars(pos).set("liquid", "water");
+    CHECK(const_sm.get_furn_vars(pos).get("liquid", "missing") == "water");
+    CHECK(const_sm.get_ter_vars(pos).get("liquid", "missing") == "terrain");
+}
+
 TEST_CASE("submap rotation", "[submap]") {
     // Corners are labelled starting from the upper-left one, clockwise.
     // NOLINTNEXTLINE(cata-point-initialization)

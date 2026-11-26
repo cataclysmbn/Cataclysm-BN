@@ -143,5 +143,10 @@
     "id": "NO_LIGHT_WAKE",
     "type": "enchantment_flag",
     "info": "<bad>Prevents waking up from seeing light</bad>"
+  },
+  {
+    "id": "NO_READING_COMPLEXITY_PENALTY",
+    "type": "enchantment_flag",
+    "info": "<good>Prevents penalties from reading books you cannot easily understand</good>"
   }
 ]

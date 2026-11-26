@@ -21,6 +21,7 @@
 #include <cassert>
 #include <iterator>
 #include <memory>
+#include <ranges>
 #include <string>
 #include <utility>
 #include <vector>
@@ -101,6 +102,22 @@ void clear_fields(const int zlevel) {
     }
 }
 
+/// Removes fields outside the loaded map. A fire left there by map generation stops waits from
+/// fast-forwarding.
+static auto clear_simulated_fields() -> void {
+    MAPBUFFER_REGISTRY.for_each([](const dimension_id&, mapbuffer& mb) {
+        mb.for_each_simulated_submap([&](const tripoint_abs_sm& sm_pos, submap& sm) {
+            for (const auto local : std::vector{sm.field_cache}) {
+                const auto types =
+                    sm.get_field(local) | std::views::keys | std::ranges::to<std::vector>();
+                for (const auto& type : types) {
+                    mb.remove_field(project_combine(sm_pos, local), type);
+                }
+            }
+        });
+    });
+}
+
 void clear_items(const int zlevel) {
     const int mapsize = g->m.getmapsize() * SEEX;
     for (int x = 0; x < mapsize; ++x) {
@@ -114,14 +131,24 @@ void clear_overmap() {
 }
 
 void clear_map() {
-    // Clearing all z-levels is rather slow, so just clear the ones I know the
-    // tests use for now.
-    for (int z = -2; z <= 0; ++z) { clear_fields(z); }
+    // Fields can spread between z-levels and affect later tests' lighting.
+    for (auto z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; ++z) { clear_fields(z); }
+    clear_simulated_fields();
     wipe_map_terrain();
     clear_npcs();
     clear_creatures();
     g->m.clear_traps();
+    // Limit the slower item cleanup to the levels used by most tests.
     for (int z = -2; z <= 0; ++z) { clear_items(z); }
+    // Tests that call map::load move the bubble but not its load region. Outside the region, items
+    // are not processed and retained submaps of the bubble can be evicted. Cover the whole map,
+    // which is larger than g_mapsize in tests. Move the region before the grid reset, so that
+    // grids built by its load events do not stay cached.
+    if (g->m.has_active_load_region()) {
+        const auto begin = g->m.get_abs_sub();
+        const auto size = g->m.getmapsize();
+        g->m.update_active_load_region(begin, begin + point_rel_sm(size, size));
+    }
     // Reset the distribution grid tracker so that stale grids from a previous
     // test's Catch2 WHEN section do not bleed into the next run.  The tracker
     // is a global singleton; grid_at() rebuilds on demand, so clearing here is safe.
@@ -142,8 +169,7 @@ auto move_player_out_of_the_way() -> void {
             g_half_mapsize_x + SEEX - 1, g_half_mapsize_y + SEEY - 1, g->u.abs_pos().z())));
 }
 
-auto spawn_test_monster(const std::string& monster_type, const tripoint_bub_ms& start)
-    -> monster& { // *NOPAD*
+auto spawn_test_monster(const std::string& monster_type, const tripoint_bub_ms& start) -> monster& {
     monster* const added = g->place_critter_at(mtype_id(monster_type), start);
     REQUIRE(added);
     return *added;

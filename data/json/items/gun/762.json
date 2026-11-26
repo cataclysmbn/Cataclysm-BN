@@ -130,6 +130,7 @@
     "ammo": "762",
     "dispersion": 240,
     "ranged_damage": { "damage_type": "bullet", "amount": -5 },
+    "range": -3,
     "durability": 7,
     "modes": [ [ "DEFAULT", "semi", 1 ] ],
     "blackpowder_tolerance": 24,

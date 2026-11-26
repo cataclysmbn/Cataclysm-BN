@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <string>
 
 #include "type_id.h"
@@ -43,6 +44,11 @@ trait_id random_bad_trait();
  */
 void add_traits( Character &ch );
 void add_traits( Character &ch, points_left &points );
+/**
+ * Adds scenario and profession perks
+ * Currently the only way to get perks in the basegame
+ */
+void add_perks( Character &ch );
 /** Adds configured default mutation traits when their mutation type is missing. */
 auto add_default_mutation_type_traits( Character &ch ) -> void;
 
@@ -56,6 +62,18 @@ bool has_lower_trait( const Character &ch, const trait_id &t );
 bool has_higher_trait( const Character &ch, const trait_id &t );
 /** Returns true if character has a trait that shares a type with the entered trait. */
 bool has_same_type_trait( const Character &ch, const trait_id &t );
+/**
+ * Returns the trait that picking @p t replaces when they share a mutation type that swaps on
+ * conflict (e.g. a new skin tone replaces the old one), or nothing if there is no such trait.
+ */
+auto find_swapped_trait( const Character &ch, const trait_id &t ) -> std::optional<trait_id>;
+/**
+ * Removes trait @p t (which the character must have) during character creation and gives back
+ * the trait points it cost.
+ * Also updates the good / bad point totals that are capped by MAX_TRAIT_POINTS.
+ */
+auto remove_trait_and_refund( Character &ch, const trait_id &t, points_left &points,
+                              int &num_good, int &num_bad ) -> void;
 } // namespace newcharacter
 
 

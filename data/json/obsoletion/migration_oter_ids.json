@@ -1619,5 +1619,63 @@
     "type": "oter_id_migration",
     "//": "obsoleted in 0.5",
     "oter_ids": { "bunker_basement": "bunker_basement_north" }
+  },
+  {
+    "type": "oter_id_migration",
+    "//": "obsoleted in 0.14",
+    "oter_ids": {
+      "2fmotel_1_north": "motel_1_north",
+      "2fmotel_1_east": "motel_1_east",
+      "2fmotel_1_south": "motel_1_south",
+      "2fmotel_1_west": "motel_1_west",
+      "2fmotel_entrance_north": "motel_entrance_north",
+      "2fmotel_entrance_east": "motel_entrance_east",
+      "2fmotel_entrance_south": "motel_entrance_south",
+      "2fmotel_entrance_west": "motel_entrance_west",
+      "2fmotel_2_north": "motel_2_north",
+      "2fmotel_2_east": "motel_2_east",
+      "2fmotel_2_south": "motel_2_south",
+      "2fmotel_2_west": "motel_2_west",
+      "2fmotel_3_north": "motel_3_north",
+      "2fmotel_3_east": "motel_3_east",
+      "2fmotel_3_south": "motel_3_south",
+      "2fmotel_3_west": "motel_3_west",
+      "motel_twd_second_floor_north": "motel_twd_1_f1_north",
+      "motel_twd_second_floor_east": "motel_twd_1_f1_east",
+      "motel_twd_second_floor_south": "motel_twd_1_f1_south",
+      "motel_twd_second_floor_west": "motel_twd_1_f1_west"
+    }
+  },
+  {
+    "type": "oter_id_migration",
+    "//": "removed by the farm port in 0.14",
+    "old_directions": true,
+    "new_directions": true,
+    "oter_ids": {
+      "farm_lot_M": "farm_lot_M1",
+      "farm_lot_wire_straight_h_open": "farm_lot_wire_straight_h",
+      "farm_lot_wire_turn_h_open": "farm_lot_wire_turn_h",
+      "farm_lot_wire_turn_uni": "farm_lot_wire_turn_v"
+    }
+  },
+  {
+    "type": "oter_id_migration",
+    "//": "removed by the farm port in 0.14",
+    "old_directions": true,
+    "oter_ids": { "2farm_roof_15": "open_air" }
+  },
+  {
+    "type": "oter_id_migration",
+    "//": "removed by the farm port in 0.14, each is the same shape as dirt_road_turn rotated left",
+    "oter_ids": {
+      "dirt_road_turn1_north": "dirt_road_turn_west",
+      "dirt_road_turn1_east": "dirt_road_turn_north",
+      "dirt_road_turn1_south": "dirt_road_turn_east",
+      "dirt_road_turn1_west": "dirt_road_turn_south",
+      "dirt_road_turn1_forest_north": "dirt_road_turn_forest_west",
+      "dirt_road_turn1_forest_east": "dirt_road_turn_forest_north",
+      "dirt_road_turn1_forest_south": "dirt_road_turn_forest_east",
+      "dirt_road_turn1_forest_west": "dirt_road_turn_forest_south"
+    }
   }
 ]

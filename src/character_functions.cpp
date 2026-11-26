@@ -80,7 +80,7 @@ static const itype_id itype_UPS( "UPS" );
 static const quality_id qual_SLEEP_AID( "SLEEP_AID" );
 
 static const enchantment_value_id ench_val_UNCANNY_DODGE( "UNCANNY_DODGE" );
-
+static const enchantment_value_id ench_val_SLEEPY( "SLEEPY" );
 namespace character_funcs
 {
 
@@ -455,17 +455,8 @@ int rate_sleep_spot( const Character &who, const tripoint_bub_ms &p )
         // 12.5 points is the difference between "tired" and "dead tired"
         sleepy -= 12;
     }
-    if( who.has_trait( trait_EASYSLEEPER ) ) {
-        // Low fatigue (being rested) has a much stronger effect than high fatigue
-        // so it's OK for the value to be that much higher
-        sleepy += 40;
-    }
     if( who.has_active_bionic( bio_soporific ) ) {
         sleepy += 30;
-    }
-    if( who.has_trait( trait_EASYSLEEPER2 ) ) {
-        // At this point, the only limit to sleep is tiredness
-        sleepy += 100;
     }
     if( watersleep && get_map().has_flag_ter( "SWIMMABLE", p ) ) {
         sleepy += 10; //comfy water!
@@ -484,6 +475,7 @@ int rate_sleep_spot( const Character &who, const tripoint_bub_ms &p )
         sleepy -= current_stim;
     }
 
+    sleepy += who.bonus_from_enchantments( sleepy, ench_val_SLEEPY );
     return sleepy;
 }
 
@@ -716,7 +708,7 @@ bool try_uncanny_dodge( Character &who )
         who.mod_power_level( -trigger_cost );
     } else if( who.get_stamina() > 100 ) {
         float ench_chance = who.bonus_from_enchantments( 0.0, ench_val_UNCANNY_DODGE );
-        if( ench_chance < rng_float( 0.0, 1.0 ) ) {
+        if( ench_chance < rng( 0, 100 ) ) {
             return false;
         }
         // NOTE: Potential improvement, allow lua hook to burn resources
@@ -890,7 +882,7 @@ void find_ammo_helper( T &src, const item &obj, bool empty, Output out, bool nes
                 return nested ? VisitResponse::NEXT : VisitResponse::SKIP;
             } );
         } else {
-            // Look for any contents we can hold
+            // Look for any contents we can hold, exclude stackable generics
             src.visit_items( [&nested, &out]( item * node ) {
                 if( ( node->is_watertight_container() && node->contents_made_of( LIQUID ) ) ||
                     ( !node->is_in_container() && ( node->is_ammo() || node->is_comestible() ) &&

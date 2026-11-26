@@ -1,11 +1,148 @@
 [
   {
+    "result": "50bmg",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "7 s",
+    "qualities": [ { "id": "PULL", "level": 2 } ],
+    "components": [
+      [ [ "lead", 12 ] ],
+      [ [ "copper", 6 ] ],
+      [ [ "50_casing", 1 ] ],
+      [ [ "lgrifle_primer", 1 ] ],
+      [ [ "gunpowder", 30 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "50_incendiary",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "15 s",
+    "qualities": [ { "id": "PULL", "level": 2 } ],
+    "components": [
+      [ [ "lead", 15 ] ],
+      [ [ "copper", 6 ] ],
+      [ [ "50_casing", 1 ] ],
+      [ [ "lgrifle_primer", 1 ] ],
+      [ [ "gunpowder", 30 ] ],
+      [ [ "incendiary", 20 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "50ss",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "7 s",
+    "qualities": [ { "id": "PULL", "level": 2 } ],
+    "components": [
+      [ [ "lead", 12 ] ],
+      [ [ "copper", 6 ] ],
+      [ [ "50_casing", 1 ] ],
+      [ [ "lgrifle_primer", 1 ] ],
+      [ [ "gunpowder", 30 ] ],
+      [ [ "scrap", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "50_mk211",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "7 s",
+    "qualities": [ { "id": "PULL", "level": 2 } ],
+    "components": [
+      [ [ "lead", 6 ] ],
+      [ [ "copper", 6 ] ],
+      [ [ "50_casing", 1 ] ],
+      [ [ "lgrifle_primer", 1 ] ],
+      [ [ "gunpowder", 30 ] ],
+      [ [ "chem_compositionb", 32 ] ],
+      [ [ "incendiary", 20 ] ],
+      [ [ "impact_fuze", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "bp_50bmg",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "7 s",
+    "qualities": [ { "id": "PULL", "level": 2 } ],
+    "components": [
+      [ [ "lead", 12 ] ],
+      [ [ "copper", 6 ] ],
+      [ [ "50_casing", 1 ] ],
+      [ [ "lgrifle_primer", 1 ] ],
+      [ [ "chem_black_powder", 45 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "bp_50_incendiary",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "15 s",
+    "qualities": [ { "id": "PULL", "level": 2 } ],
+    "components": [
+      [ [ "lead", 15 ] ],
+      [ [ "copper", 6 ] ],
+      [ [ "50_casing", 1 ] ],
+      [ [ "lgrifle_primer", 1 ] ],
+      [ [ "chem_black_powder", 45 ] ],
+      [ [ "incendiary", 20 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "bp_50ss",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "7 s",
+    "qualities": [ { "id": "PULL", "level": 2 } ],
+    "components": [
+      [ [ "lead", 12 ] ],
+      [ [ "copper", 6 ] ],
+      [ [ "50_casing", 1 ] ],
+      [ [ "lgrifle_primer", 1 ] ],
+      [ [ "chem_black_powder", 45 ] ],
+      [ [ "scrap", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "bp_50_mk211",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "7 s",
+    "qualities": [ { "id": "PULL", "level": 2 } ],
+    "components": [
+      [ [ "lead", 6 ] ],
+      [ [ "copper", 6 ] ],
+      [ [ "50_casing", 1 ] ],
+      [ [ "lgrifle_primer", 1 ] ],
+      [ [ "chem_black_powder", 30 ] ],
+      [ [ "chem_compositionb", 32 ] ],
+      [ [ "incendiary", 20 ] ],
+      [ [ "impact_fuze", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
     "result": "50match",
     "type": "uncraft",
     "skill_used": "fabrication",
-    "difficulty": 8,
-    "skills_required": [ "gun", 7 ],
-    "time": "2 m",
+    "skills_required": [ "gun", 1 ],
+    "time": "7 s",
     "qualities": [ { "id": "PULL", "level": 2 } ],
     "components": [
       [ [ "lead", 10 ] ],

@@ -298,7 +298,7 @@
       "set_charges_msg": "You need a UPS or a bionic armor interface to power this."
     },
     "resistance": { "bullet": 0 },
-    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXO", "WATERPROOF", "STURDY", "ELECTRIC_IMMUNE", "COMBAT_NPC_USE" ],
+    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXO", "WATERPROOF", "STURDY", "ELECTRIC_IMMUNE", "COMBAT_NPC_USE", "NOSLIP" ],
     "relic_data": {
       "passive_effects": [
         {
@@ -424,7 +424,7 @@
       "set_charges_msg": "You need a UPS or a bionic armor interface to power this."
     },
     "resistance": { "bullet": 0 },
-    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXO", "WATERPROOF", "STURDY", "ELECTRIC_IMMUNE", "COMBAT_NPC_USE" ],
+    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXO", "WATERPROOF", "STURDY", "ELECTRIC_IMMUNE", "COMBAT_NPC_USE", "NOSLIP" ],
     "relic_data": {
       "passive_effects": [
         {

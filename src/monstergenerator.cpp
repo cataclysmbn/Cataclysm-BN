@@ -4,6 +4,7 @@
 #include "bodypart.h"
 #include "calendar.h"
 #include "catacharset.h"
+#include "character.h"
 #include "creature.h"
 #include "damage.h"
 #include "debug.h"
@@ -24,6 +25,7 @@
 #include "mtype.h"
 #include "options.h"
 #include "rng.h"
+#include "skill.h"
 #include "string_id.h"
 #include "translations.h"
 #include "units.h"
@@ -162,6 +164,7 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_INTERIOR_AMMO: return "INTERIOR_AMMO";
         case MF_NIGHT_INVISIBILITY: return "NIGHT_INVISIBILITY";
         case MF_CAMOUFLAGE: return "CAMOUFLAGE";
+        case MF_UNCANNY_DODGE: return "UNCANNY_DODGE";
         case MF_REVIVES_HEALTHY: return "REVIVES_HEALTHY";
         case MF_NO_NECRO: return "NO_NECRO";
         case MF_PACIFIST: return "PACIFIST";
@@ -171,6 +174,7 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_AVOID_DANGER_1: return "PATH_AVOID_DANGER_1";
         case MF_AVOID_DANGER_2: return "PATH_AVOID_DANGER_2";
         case MF_AVOID_FALL: return "PATH_AVOID_FALL";
+        case MF_NO_SLIP: return "NO_SLIP";
         case MF_AVOID_FIRE: return "PATH_AVOID_FIRE";
         case MF_PRIORITIZE_TARGETS: return "PRIORITIZE_TARGETS";
         case MF_NOT_HALLU: return "NOT_HALLUCINATION";
@@ -214,6 +218,8 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_COMBAT_MOUNT: return "COMBAT_MOUNT";
         case MF_CANT_TRAIN: return "CANT_TRAIN";
         case MF_POLICE_EYEBOT: return "POLICE_EYEBOT";
+        case MF_IRRADIATED: return "IRRADIATED";
+        case MF_NO_VEHICLE_COLLISION: return "NO_VEHICLE_COLLISION";
         // *INDENT-ON*
         case m_flag::MF_MAX:
             break;
@@ -749,6 +755,13 @@ void pet_food_data::load( const JsonObject &jo )
     optional( jo, was_loaded, "feed", feed );
     optional( jo, was_loaded, "pet", pet );
     optional( jo, was_loaded, "tamer_traits", tamer_traits );
+    optional( jo, was_loaded, "tame_skill", tame_skill, skill_id( "survival" ) );
+    optional( jo, was_loaded, "tame_min_skill", tame_min_skill );
+}
+
+auto pet_food_data::tame_skill_requirement_met( const Character &ch ) const -> bool
+{
+    return tame_min_skill <= 0 || ch.get_skill_level( tame_skill ) >= tame_min_skill;
 }
 
 void pet_food_data::deserialize( JsonIn &jsin )
@@ -813,6 +826,7 @@ void mtype::load( const JsonObject &jo, const std::string &src )
     assign( jo, "melee_dice_sides", melee_sides, strict, 0 );
 
     assign( jo, "grab_strength", grab_strength, strict, 0 );
+    assign( jo, "uncanny_dodge_cost", uncanny_dodge_cost, strict, 0 );
 
     assign( jo, "dodge", sk_dodge, strict, 0 );
     assign( jo, "armor_bash", armor_bash, strict, 0 );
@@ -884,6 +898,7 @@ void mtype::load( const JsonObject &jo, const std::string &src )
         pt.read( "dodge_mult", ptm.dodge );
         pt.read( "max_level", ptm.max_level );
         pt.read( "min_skill", ptm.min_skill );
+        pt.read( "skill", ptm.skill );
         if( pt.has_array( "level_flags" ) ) {
             for( JsonObject lf_obj : pt.get_array( "level_flags" ) ) {
                 pet_training_level_flags lf;
@@ -1693,6 +1708,9 @@ void MonsterGenerator::check_monster_definitions() const
                 debugmsg( "item_id %s of monster %s is not a valid item id",
                           mon.baby_egg.c_str(), mon.id.c_str() );
             }
+        }
+        for( const auto &[_, special] : mon.special_attacks ) {
+            special->check( mon.id );
         }
     }
 }

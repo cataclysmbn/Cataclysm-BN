@@ -13,7 +13,7 @@ public:
     explicit tile_context_fixture(bool alias_overmap_context);
     ~tile_context_fixture();
     tile_context_fixture(const tile_context_fixture&) = delete;
-    auto operator=(const tile_context_fixture&) -> tile_context_fixture& = delete; // *NOPAD*
+    auto operator=(const tile_context_fixture&) -> tile_context_fixture& = delete;
 
     /// false when this environment cannot set up a headless tile context; WARN and bail out
     auto valid() const -> bool { return valid_; }

@@ -1,5 +1,31 @@
 # 開発者向けツール
 
+## PR のプレイテスト
+
+リポジトリのルートで、ローカルでコンパイルせずに PR のタイル版ビルドをダウンロードして起動できます。
+
+```sh
+gh auth login
+just playtest 10443
+just playtest https://github.com/cataclysmbn/Cataclysm-BN/pull/10443
+just playtest --os linux https://github.com/cataclysmbn/Cataclysm-BN/pull/10443
+just playtest "正確な PR タイトル"
+just playtest branch-name
+```
+
+最初の位置引数は PR 番号、URL、ブランチ、または正確なタイトルです。タイトルに一致する PR は1件である必要があり、空白を含むタイトルは引用符で囲んでください。省略可能な `--os` は `linux`、`windows`、`macos`、`android` で、既定値はホスト OS です。デスクトップ版は対応する OS で実行してください。Linux 版には x86_64 が必要です。macOS ではホストのアーキテクチャに応じて Intel または ARM 版を選択します。
+
+[just](https://just.systems/)、[Deno](https://deno.com/)、[GitHub CLI](https://cli.github.com/) をインストールしてください。リポジトリの justfile は Windows でも Bash を必要とします。Linux での展開には GNU tar が必要です。macOS では標準の `hdiutil`、`ditto`、`open` を使います。ダウンロードしたゲームの実行には、そのプラットフォームのランタイムライブラリも必要です。
+
+Android では USB デバッグを有効にした ARM64 デバイスを接続し、`adb devices` に認証済みの対象が1台表示されることを確認してから、`just playtest --os android https://github.com/cataclysmbn/Cataclysm-BN/pull/10443` を実行してください。`adb install -r` で実験版アプリをインストールまたは更新して起動します。既存のアプリが別の鍵で署名されている場合、この方法では更新できません。
+
+> [!WARNING]
+> 信頼できる PR のみをプレイテストしてください。アーティファクトはコンピュータや Android デバイス上でコードを実行します。
+
+このコマンドは、PR の現在の head SHA に一致する、有効期限内の最新アーティファクトを選択します。見つからない場合は PR の `matrix` ワークフローを確認してください。ビルドが待機中、スキップ、失敗の状態か、アーティファクトが期限切れの可能性があります。古いコミットのビルドを代わりに使うことはありません。
+
+デスクトップ版のダウンロードは `/tmp/cataclysm-bn/artifacts/PR-<number>-<SHA>/<os>/build-<artifact-id>/` 以下にキャッシュされます。Windows のルートは `%TEMP%\cataclysm-bn\artifacts` です。`TEMP` が未設定の場合はリポジトリのディレクトリを使います。同じアーティファクトを再起動すると同じディレクトリを再利用し、その中のセーブと設定を保持します。SHA またはアーティファクト ID が変わると別のディレクトリを使います。一時ディレクトリのクリーンアップでファイルが削除されることがあるため、残したいセーブは別の場所にコピーしてください。Android のセーブはデバイスに残ります。
+
 ## コードスタイル (C++)
 
 C++ フォーマットはトップレベルの `src/*.cpp` と `src/*.h` にのみ [Artistic Style](http://astyle.sourceforge.net/) を使います。他のほとんどの C++ ファイルには [clang-format](https://clang.llvm.org/docs/ClangFormat.html) を使います。`tools/clang-tidy-plugin/test/` のようなフォーマッタ依存の fixture は変更しません。ファイルごとのツール選択はリポジトリの helper に任せてください。
@@ -152,7 +178,7 @@ sudo dnf install clang-devel llvm-devel clang-tools-extra-devel
 単一のファイルでプラグインを実行するには、プロジェクトルートで以下のコマンドを実行します。
 
 ```sh
-$ ./build-scripts/clang-tidy-wrapper.sh -fix src/achievement.cpp
+$ ./build-scripts/clang-tidy-wrapper.sh -fix src/event/achievement.cpp
 ```
 
 複数のファイルでプラグインを実行するには、[GNU parallel](https://www.gnu.org/software/parallel/)を使用します。

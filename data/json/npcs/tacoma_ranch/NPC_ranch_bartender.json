@@ -92,10 +92,16 @@
     },
     "end": {
       "effect": { "npc_add_trait": "NPC_BRANDY" },
-      "update_mapgen": {
-        "om_terrain": "ranch_camp_51",
-        "place_nested": [ { "chunks": [ "tacoma_commune_bar_bartender_2" ], "x": 0, "y": 0 } ]
-      }
+      "update_mapgen": [
+        {
+          "om_terrain": "ranch_camp_51",
+          "place_nested": [ { "chunks": [ "tacoma_commune_bar_bartender_2" ], "x": 0, "y": 0 } ]
+        },
+        {
+          "om_terrain": "ranch_camp_51_z1",
+          "place_nested": [ { "chunks": [ "tacoma_commune_bar_roof_2" ], "x": 0, "y": 0 } ]
+        }
+      ]
     }
   },
   {
@@ -122,10 +128,16 @@
     },
     "end": {
       "effect": { "npc_add_trait": "NPC_RUM" },
-      "update_mapgen": {
-        "om_terrain": "ranch_camp_51",
-        "place_nested": [ { "chunks": [ "tacoma_commune_bar_bartender_3" ], "x": 0, "y": 0 } ]
-      }
+      "update_mapgen": [
+        {
+          "om_terrain": "ranch_camp_51",
+          "place_nested": [ { "chunks": [ "tacoma_commune_bar_bartender_3" ], "x": 0, "y": 0 } ]
+        },
+        {
+          "om_terrain": "ranch_camp_51_z1",
+          "place_nested": [ { "chunks": [ "tacoma_commune_bar_roof_3" ], "x": 0, "y": 0 } ]
+        }
+      ]
     }
   },
   {

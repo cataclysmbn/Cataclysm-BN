@@ -58,6 +58,7 @@
         { "item": "tools_construction", "x": 20, "y": 16, "chance": 50 },
         { "item": "tools_construction", "x": 8, "y": 8, "chance": 50 },
         { "item": "tools_construction", "x": 2, "y": 5, "chance": 50 },
+        { "item": "foamcrete_slurry", "x": 15, "y": 11, "chance": 5 },
         { "item": "clothing_work_gloves", "x": 15, "y": 9, "chance": 30 },
         { "item": "hardware_trash", "x": 22, "y": 4, "chance": 15 },
         { "item": "hardware_trash", "x": 6, "y": 1, "chance": 15 }

@@ -147,7 +147,8 @@ static const std::map<std::string, oter_flags> oter_flags_map = {
     {"SOURCE_TAILORING", oter_flags::source_tailoring},
     {"SOURCE_VEHICLES", oter_flags::source_vehicles},
     {"SOURCE_WEAPON", oter_flags::source_weapon},
-    {"IS_BRIDGE", oter_flags::is_bridge}};
+    {"IS_BRIDGE", oter_flags::is_bridge},
+    {"CANT_BE_UNIFORM", oter_flags::cant_be_uniform}};
 
 /*
  * TODO: Needs to load from a JSON somwhere, move to json.
@@ -251,9 +252,7 @@ public:
     overmap(const point_abs_om& p, const dimension_id& dim_id = dimension_id());
     ~overmap();
 
-    auto get_dimension_id() const -> const dimension_id& { // *NOPAD*
-        return dimension_id_;
-    }
+    auto get_dimension_id() const -> const dimension_id& { return dimension_id_; }
 
     /**
      * Create content in the overmap.
@@ -441,6 +440,8 @@ private:
     std::vector<shared_ptr_fast<npc>> npcs;
 
     bool nullbool = false;
+    /// True when the save data of this overmap did not load. `save` then keeps that data.
+    bool load_failed = false;
     point_abs_om loc;
     dimension_id dimension_id_;
 

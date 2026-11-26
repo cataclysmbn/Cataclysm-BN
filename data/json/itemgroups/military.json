@@ -235,8 +235,7 @@
     "id": "infantry_medical_gear",
     "subtype": "collection",
     "entries": [
-      { "distribution": [ { "item": "1st_aid", "prob": 80 }, { "item": "1st_aid_deluxe", "prob": 20 } ], "prob": 80 },
-      { "item": "quikclot", "prob": 70 },
+      { "distribution": [ { "item": "1st_aid_ifak", "prob": 80 }, { "item": "1st_aid_deluxe", "prob": 20 } ], "prob": 80 },
       { "collection": [ { "item": "morphine" }, { "item": "syringe" } ], "prob": 40 },
       {
         "distribution": [
@@ -486,6 +485,7 @@
       { "item": "shoulder_strap", "prob": 10 },
       { "item": "bot_manhack", "prob": 1 },
       { "item": "bot_grenade_hack", "prob": 1 },
+      { "item": "combat_drone_item", "prob": 2 },
       { "item": "l-stick", "prob": 1 },
       { "item": "mil_gps_device", "prob": 5, "charges-min": 10, "charges-max": 95 },
       { "item": "chem_hexamine", "prob": 5 },
@@ -695,7 +695,7 @@
       { "item": "neccowafers", "prob": 30 },
       { "item": "can_beans", "prob": 40 },
       { "item": "pork_beans", "prob": 40 },
-      { "item": "1st_aid", "prob": 28 },
+      { "item": "1st_aid_ifak", "prob": 28 },
       { "item": "1st_aid_deluxe", "prob": 7 },
       { "item": "saline", "prob": 10 },
       { "item": "con_milk", "prob": 10 },
@@ -746,8 +746,7 @@
       { "item": "gloves_tactical", "prob": 10 },
       { "item": "jumpsuit", "prob": 20 },
       { "item": "kevlar", "prob": 10 },
-      { "item": "modularvest", "prob": 27 },
-      { "item": "modularvestceramic", "prob": 34 },
+      { "group": "military_ballistic_vests_and_plates", "prob": 61 },
       { "item": "kevlar_plate", "prob": 10 },
       { "item": "mask_gas", "prob": 10 },
       { "item": "helmet_army", "prob": 40 },
@@ -819,7 +818,8 @@
       [ "bot_turret_antimateriel", 1 ],
       [ "bot_turret_mark19", 1 ],
       [ "bot_turret_medium", 10 ],
-      [ "bot_turret_searchlight", 10 ]
+      [ "bot_turret_searchlight", 10 ],
+      { "collection": [ { "item": "combat_drone_item" }, { "item": "remotevehcontrol", "prob": 50 } ], "prob": 10 }
     ]
   },
   {

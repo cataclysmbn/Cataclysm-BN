@@ -341,7 +341,14 @@
     "type": "item_group",
     "//": "a collection of ammo that would be found with a loaded gun.",
     "subtype": "distribution",
-    "entries": [ { "item": "57mm", "prob": 100, "charges": [ 25, 50 ] } ]
+    "entries": [ { "item": "57mm", "prob": 50, "charges": [ 25, 50 ] }, { "item": "57mm_civ", "prob": 50, "charges": [ 25, 50 ] } ]
+  },
+  {
+    "id": "on_hand_57_civ",
+    "type": "item_group",
+    "//": "For the AR-57 specifically, only spawns non-AP ammo.",
+    "subtype": "distribution",
+    "entries": [ { "item": "57mm_civ", "prob": 100, "charges": [ 25, 50 ] } ]
   },
   {
     "id": "nested_fn57",
@@ -370,6 +377,19 @@
     ]
   },
   {
+    "id": "nested_ar57",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "ammo": 100,
+    "entries": [
+      { "item": "ar57", "ammo-group": "on_hand_57_civ", "charges": [ 0, 50 ] },
+      { "item": "fnp90mag", "ammo-group": "on_hand_57_civ" },
+      { "item": "fnp90mag", "ammo-group": "on_hand_57_civ", "prob": 50 },
+      { "group": "on_hand_57_civ" }
+    ]
+  },
+  {
     "id": "everyday_fn57",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
@@ -388,6 +408,18 @@
     "subtype": "collection",
     "entries": [
       { "item": "fn_p90", "ammo-group": "on_hand_57", "charges": [ 0, 50 ] },
+      { "item": "fnp90mag", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_57" },
+      { "item": "fnp90mag", "charges-min": 0, "ammo-group": "on_hand_57", "prob": 50 },
+      { "group": "on_hand_57", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+    ]
+  },
+  {
+    "id": "everyday_ar57",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "ar57", "ammo-group": "on_hand_57", "charges": [ 0, 50 ] },
       { "item": "fnp90mag", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_57" },
       { "item": "fnp90mag", "charges-min": 0, "ammo-group": "on_hand_57", "prob": 50 },
       { "group": "on_hand_57", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }

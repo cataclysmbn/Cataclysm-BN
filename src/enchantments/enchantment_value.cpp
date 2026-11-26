@@ -49,7 +49,7 @@ auto enchantment_value::define_child_enchantments(
     }
     return res;
 }
-void enchantment_value::load(const JsonObject& jo, const std::string& src) {
+void enchantment_value::load(const JsonObject& jo, const std::string& /*src*/) {
     optional(jo, was_loaded, "can_add", can_add, true);
     optional(jo, was_loaded, "can_mult", can_mult, true);
     optional(jo, was_loaded, "can_max", can_max, false);

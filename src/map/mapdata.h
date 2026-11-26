@@ -8,10 +8,10 @@
 #include "data_vars.h"
 #include "hsv_color.h"
 #include "numeric_interval.h"
-#include "poly_serialized.h"
 #include "translations.h"
 #include "type_id.h"
 #include "units.h"
+#include "utils/poly_serialized.h"
 #include "value_ptr.h"
 
 #include <array>
@@ -645,11 +645,17 @@ struct fluid_grid_data {
     bool allow_input = false;
     bool allow_output = false;
     std::set<itype_id> allowed_liquids;
+    bool universal_liquids = false;
+    bool autofill = false;
     std::optional<units::volume> capacity;
     bool use_keg_capacity = false;
     std::optional<furn_str_id> connected_variant;
     std::optional<furn_str_id> disconnected_variant;
     std::optional<fluid_grid_transformer_config> transformer;
+
+    auto allows_liquid(const itype_id& liquid) const -> bool {
+        return universal_liquids || allowed_liquids.contains(liquid);
+    }
 };
 
 struct furn_t: map_data_common_t {

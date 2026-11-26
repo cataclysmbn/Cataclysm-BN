@@ -119,6 +119,7 @@
     "id": "WRAP",
     "name": "Wrap Attack",
     "unarmed_allowed": true,
+    "melee_allowed": true,
     "stun_dur": 2,
     "messages": [ "You wrap up %s", "<npcname> wraps up %s" ],
     "description": "Stun 2 turns"

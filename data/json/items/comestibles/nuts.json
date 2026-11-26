@@ -413,7 +413,7 @@
     "name": { "str_sp": "roasted acorns" },
     "copy-from": "acorns",
     "healthy": 1,
-    "description": "A handful roasted nuts from an oak tree.",
+    "description": "A handful of roasted nuts from an oak tree.",
     "price": "90 cent",
     "price_postapoc": "2 USD",
     "flags": [ "EATEN_HOT", "NO_COOKING_BUFF" ],

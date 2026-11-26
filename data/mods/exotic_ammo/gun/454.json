@@ -14,6 +14,8 @@
     "material": [ "steel", "plastic" ],
     "color": "light_gray",
     "ammo": [ "454", "45colt" ],
+    "ranged_damage": { "damage_type": "bullet", "amount": -4 },
+    "range": -2,
     "dispersion": 280,
     "clip_size": 5,
     "magazines": [ [ "454", [ "454_speedloader5" ] ] ],

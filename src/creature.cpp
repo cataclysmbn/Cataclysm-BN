@@ -12,6 +12,7 @@
 #include "coordinates.h"
 #include "cursesdef.h"
 #include "damage.h"
+#include "data_vars.h"
 #include "debug.h"
 #include "effect.h"
 #include "enums.h"
@@ -299,7 +300,6 @@ void Creature::process_turn()
     if( is_dead_state() ) {
         return;
     }
-    process_effects();
 
     // Call this in case any effects have changed our stats
     if( !g->u.in_skip_state ||
@@ -307,6 +307,11 @@ void Creature::process_turn()
         reset_bonuses();
         reset_stats();
     }
+    // Roll effects once per calendar turn, so their chances do not depend on the tick length
+    action_time_scale::for_each_calendar_turn_this_tick( [this] {
+        process_effects();
+        return !is_dead_state();
+    } );
 
     // add an appropriate number of moves
     if( !has_effect( effect_ridden ) ) {
@@ -849,6 +854,11 @@ auto get_stun_srength( const projectile &proj, creature_size size ) -> int
 void Creature::deal_projectile_attack( Creature *source, item *source_weapon,
                                        dealt_projectile_attack &attack )
 {
+    if( uncanny_dodge() ) {
+        // Messages are handled by uncanny_dodge itself
+        return;
+    }
+
     const double missed_by = attack.missed_by;
     if( missed_by >= 1.0 ) {
         // Total miss.
@@ -1360,10 +1370,13 @@ void Creature::deal_damage_handle_type( const damage_unit &du, bodypart_id bp, i
             // Cause bleed if high damage goes through armor and enemy is made of flesh
             if( adjusted_damage > 15 ) {
                 if( !is_immune_effect( effect_bleed ) ) {
-                    if( is_monster() ) {
-                        add_effect( effect_bleed, 4_seconds * rng( 1, adjusted_damage ), bp.id() );
-                    } else {
-                        add_effect( effect_bleed, 1_minutes * rng( 1, adjusted_damage ), bp.id() );
+                    int bleed_intensity = std::min( 3, std::max( 1, adjusted_damage / 25 ) );
+                    for( int i = 0; i < bleed_intensity; i++ ) {
+                        if( is_monster() ) {
+                            add_effect( effect_bleed, 4_seconds * rng( 1, adjusted_damage ), bp.id() );
+                        } else {
+                            add_effect( effect_bleed, 1_minutes * rng( 1, adjusted_damage ), bp.id() );
+                        }
                     }
                 }
             }
@@ -1374,10 +1387,13 @@ void Creature::deal_damage_handle_type( const damage_unit &du, bodypart_id bp, i
             // Cause bleed if high damage goes through armor and enemy is made of flesh
             if( adjusted_damage > 15 ) {
                 if( !is_immune_effect( effect_bleed ) ) {
-                    if( is_monster() ) {
-                        add_effect( effect_bleed, 4_seconds * rng( 1, adjusted_damage ), bp.id() );
-                    } else {
-                        add_effect( effect_bleed, 1_minutes * rng( 1, adjusted_damage ), bp.id() );
+                    int bleed_intensity = std::min( 3, std::max( 1, adjusted_damage / 25 ) );
+                    for( int i = 0; i < bleed_intensity; i++ ) {
+                        if( is_monster() ) {
+                            add_effect( effect_bleed, 4_seconds * rng( 1, adjusted_damage ), bp.id() );
+                        } else {
+                            add_effect( effect_bleed, 1_minutes * rng( 1, adjusted_damage ), bp.id() );
+                        }
                     }
                 }
             }
@@ -1552,6 +1568,10 @@ void Creature::add_effect( const efftype_id &eff_id, const time_duration &dur,
             if( is_player() && !type.get_apply_message().empty() ) {
                 add_msg( type.gain_game_message_type(), _( type.get_apply_message() ) );
             }
+            // Knockdown changes your stance.
+            if( eff_id == effect_downed ) {
+                ch->force_movement_mode( CMM_PRONE );
+            }
         }
         on_effect_int_change( e.get_id(), e.get_intensity(), e.get_bp() );
         // Perform any effect addition effects.
@@ -1608,6 +1628,10 @@ bool Creature::remove_effect( const efftype_id &eff_id, const bodypart_str_id &b
             }
         }
         g->events().send<event_type::character_loses_effect>( ch->getID(), eff_id );
+        // Stand back up after knockdown, unless we're aiming since we're busy retaliating against what knocked us over
+        if( eff_id == effect_downed && !ch->has_activity( activity_id( "ACT_AIM" ) ) ) {
+            ch->force_movement_mode( CMM_WALK );
+        }
     }
 
     if( type.has_flag( flag_EFFECT_LUA_ON_REMOVED ) ) {
@@ -1906,7 +1930,7 @@ auto Creature::get_value_as_int( const std::string &key ) const -> std::optional
     return string_utils::string_to_int( get_value( key ) );
 }
 
-auto Creature::get_values_map() const -> const std::unordered_map<std::string, std::string> &
+auto Creature::get_values_map() const -> const data_vars::data_set &
 {
     return values;
 }

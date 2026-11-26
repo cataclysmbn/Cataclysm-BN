@@ -120,7 +120,7 @@
       "nested": {
         "1": {
           "chunks": [
-            [ "null", 60 ],
+            [ "null", 30 ],
             [ "5x5_holdout_E", 2 ],
             [ "livingroom_5x5_S_1", 30 ],
             [ "livingroom_5x5_E_1", 30 ],
@@ -134,7 +134,7 @@
             [ "home_office_4x4_S", 20 ]
           ]
         },
-        "2": { "chunks": [ [ "null", 80 ], [ "room_9x9_cellar_E", 20 ], [ "room_9x9_weed_E", 5 ], [ "room_9x9_recroom_E", 20 ] ] }
+        "2": { "chunks": [ [ "null", 20 ], [ "room_9x9_cellar_E", 20 ], [ "room_9x9_weed_E", 5 ], [ "room_9x9_recroom_E", 20 ] ] }
       }
     }
   }

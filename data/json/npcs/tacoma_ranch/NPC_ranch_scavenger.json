@@ -76,7 +76,6 @@
     "value": 50000,
     "item": "wearable_light",
     "count": 5,
-    "start": "ranch_scavenger_1",
     "origins": [ "ORIGIN_SECONDARY" ],
     "followup": "MISSION_RANCH_SCAVENGER_3",
     "dialogue": {
@@ -100,7 +99,6 @@
     "value": 50000,
     "item": "armor_larmor",
     "count": 3,
-    "start": "ranch_scavenger_2",
     "origins": [ "ORIGIN_SECONDARY" ],
     "followup": "MISSION_RANCH_SCAVENGER_4",
     "dialogue": {
@@ -124,7 +122,6 @@
     "value": 50000,
     "item": "molotov",
     "count": 12,
-    "start": "ranch_scavenger_3",
     "origins": [ "ORIGIN_SECONDARY" ],
     "followup": "MISSION_RANCH_SCAVENGER_4",
     "dialogue": {

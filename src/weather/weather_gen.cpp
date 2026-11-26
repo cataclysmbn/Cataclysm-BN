@@ -8,10 +8,10 @@
 #include "generic_factory.h"
 #include "generic_readers.h"
 #include "json.h"
+#include "math/simplexnoise.h"
 #include "math_defines.h"
 #include "point.h"
 #include "rng.h"
-#include "simplexnoise.h"
 #include "weather.h"
 
 #include <algorithm>
@@ -235,8 +235,7 @@ auto weather_generator::forecast_priority(const weather_type_id& w) const -> int
 }
 
 auto weather_generator::choose_representative_weather(
-    const std::map<weather_type_id, int>& sample_counts) const
-    -> const weather_type_id& { // *NOPAD*
+    const std::map<weather_type_id, int>& sample_counts) const -> const weather_type_id& {
     if (sample_counts.empty()) { return get_default_weather(); }
 
     namespace ranges = std::ranges;

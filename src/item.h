@@ -978,6 +978,8 @@ class item : public location_visitable<item>, public game_object<item>
         auto update_rot( const tripoint_bub_ms &pos, temperature_flag temperature,
                          const weather_manager &weather_generator ) -> void;
         auto update_rot( const rot_context &context ) -> void;
+        /// Temperature that update_rot currently applies; unplaced items use @p fallback.
+        auto rot_temperature( temperature_flag fallback ) const -> units::temperature;
 
         /** Get @ref rot value relative to shelf life (or 0 if item does not spoil) */
         double get_relative_rot() const;
@@ -1012,6 +1014,11 @@ class item : public location_visitable<item>, public game_object<item>
         bool rotten() const {
             return get_relative_rot() > 1.0;
         }
+
+        /** true if a parent container keeps this item from rotting */
+        auto is_in_preserving_container() const -> bool;
+        /// Storage flag of the vehicle part holding this item, or nullopt outside vehicle cargo.
+        auto vehicle_storage_temperature() const -> std::optional<temperature_flag>;
 
         /**
          * Whether the item has enough rot that it should get removed.
@@ -1897,6 +1904,11 @@ class item : public location_visitable<item>, public game_object<item>
          * or similar.
          */
         bool is_power_armor() const;
+
+        bool requires_slots() const;
+        std::map<flag_id, int> get_provided_slots() const;
+        std::map<flag_id, int> get_required_slots() const;
+
         /**
          * If this is an armor item, return its armor data. You should probably not use this function,
          * use the various functions above (like @ref get_storage) to access armor data directly.
@@ -2389,6 +2401,7 @@ class item : public location_visitable<item>, public game_object<item>
         std::optional<dimension_info> pocket_dim;
 
         bool add_enchantment( const enchantment_id &ench );
+        bool add_enchantment( const enchantment &ench );
 
         const std::vector<enchantment> &get_enchantments( bool dynamic ) const;
 
@@ -2424,7 +2437,7 @@ class item : public location_visitable<item>, public game_object<item>
 
         /** returns the parent item, or a null pointer if it has no parent */
         item *parent_item() const;
-        const std::vector<relic_recharge> &get_relic_recharge_scheme() const;
+        auto get_relic_recharge_scheme() const -> std::vector<relic_recharge>;
 
     private:
         struct absolute_rot_process_options {
@@ -2444,7 +2457,6 @@ class item : public location_visitable<item>, public game_object<item>
                                    const rot_context &context, bool seals ) -> detached_ptr<item>;
         static auto process_rot( detached_ptr<item> &&self,
                                  const absolute_rot_process_options &options ) -> detached_ptr<item>;
-        auto is_in_preserving_container() const -> bool;
         auto is_in_sealing_container() const -> bool;
         auto mark_rot_checked_now() -> void;
 

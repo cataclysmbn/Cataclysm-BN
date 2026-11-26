@@ -44,13 +44,13 @@ public:
     auto operator==(const StringLiteralIterator& rhs) const -> bool;
     auto operator!=(const StringLiteralIterator& rhs) const -> bool;
 
-    auto operator+=(ptrdiff_t inc) -> StringLiteralIterator&; // *NOPAD*
-    auto operator-=(ptrdiff_t dec) -> StringLiteralIterator&; // *NOPAD*
+    auto operator+=(ptrdiff_t inc) -> StringLiteralIterator&;
+    auto operator-=(ptrdiff_t dec) -> StringLiteralIterator&;
     auto operator+(ptrdiff_t inc) const -> StringLiteralIterator;
     auto operator-(ptrdiff_t dec) const -> StringLiteralIterator;
-    auto operator++() -> StringLiteralIterator&; // *NOPAD*
+    auto operator++() -> StringLiteralIterator&;
     auto operator++(int) -> StringLiteralIterator;
-    auto operator--() -> StringLiteralIterator&; // *NOPAD*
+    auto operator--() -> StringLiteralIterator&;
     auto operator--(int) -> StringLiteralIterator;
 
     static auto begin(const StringLiteral& str) -> StringLiteralIterator;

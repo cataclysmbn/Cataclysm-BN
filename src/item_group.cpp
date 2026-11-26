@@ -21,6 +21,21 @@
 #include "type_id.h"
 #include "options.h"
 
+namespace
+{
+
+/// Ammo spawn entries can be wrapped in their default container.
+auto spawned_ammo_id( const item &spawned ) -> itype_id
+{
+    const auto *ammo = &spawned;
+    while( ammo->is_container() && ammo->contents.num_item_stacks() == 1 ) {
+        ammo = &ammo->get_contained();
+    }
+    return ammo->typeId();
+}
+
+} // namespace
+
 // FIXME: Somehow we cant get item_groups from their ids
 // Only can get Item_spawn_data
 // Either that or it is not clear how to access it from item_factory
@@ -153,8 +168,11 @@ void Single_item_creator::check_consistency( const std::string &context ) const
     } else {
         debugmsg( "Unknown type of Single_item_creator: %d", static_cast<int>( type ) );
     }
+    // Spawning every item is only needed to validate ammo and container compatibility.
     if( modifier ) {
         modifier->check_consistency( context );
+    }
+    if( modifier && ( modifier->ammo || modifier->container ) ) {
         for( auto &item : every_item_modified( false ) ) {
             if( modifier && modifier->ammo != nullptr ) {
                 for( auto &ammo : modifier->ammo->every_item_modified() ) {
@@ -339,16 +357,11 @@ bool Single_item_creator::remove_item( const itype_id &itemid )
             return true;
         }
     }
-    if( type == S_ITEM ) {
-        if( itemid.str() == id ) {
-            type = S_NONE;
-            return true;
-        }
-    } else if( type == S_ITEM_GROUP ) {
-        Item_spawn_data *isd = item_controller->get_group( item_group_id( id ) );
-        if( isd != nullptr ) {
-            isd->remove_item( itemid );
-        }
+    // Referenced item groups are visited directly by Item_factory::finalize_item_blacklist,
+    // so recursing into them here would only repeat the same work.
+    if( type == S_ITEM && itemid.str() == id ) {
+        type = S_NONE;
+        return true;
     }
     return type == S_NONE;
 }
@@ -370,12 +383,9 @@ bool Single_item_creator::replace_item( const itype_id &itemid, const itype_id &
             id = replacementid.str();
             return true;
         }
-    } else if( type == S_ITEM_GROUP ) {
-        Item_spawn_data *isd = item_controller->get_group( item_group_id( id ) );
-        if( isd != nullptr ) {
-            isd->replace_item( itemid, replacementid, "in itemgroup " + id );
-        }
     }
+    // Referenced item groups are visited directly by Item_factory::finalize_item_blacklist,
+    // so recursing into them here would only repeat the same work.
     return type == S_NONE;
 }
 
@@ -478,6 +488,14 @@ detached_ptr<item> Item_modifier::modify( detached_ptr<item> &&new_item ) const
         return std::move( new_item );
     }
 
+    for( const flag_id &flag : custom_flags ) {
+        new_item->set_flag( flag );
+    }
+
+    for( const auto &fn : postprocess_fns ) {
+        new_item = fn( std::move( new_item ) );
+    }
+
     new_item->set_damage( rng( damage.first, damage.second ) * itype::damage_scale );
     // no need for dirt if it's a bow
     if( new_item->is_gun() && !new_item->has_flag( flag_PRIMITIVE_RANGED_WEAPON ) &&
@@ -569,7 +587,7 @@ detached_ptr<item> Item_modifier::modify( detached_ptr<item> &&new_item ) const
         } else {
             detached_ptr<item> am = ammo->create_single( new_item->birthday() );
             if( am ) {
-                new_item->ammo_set( am->typeId(), ch );
+                new_item->ammo_set( spawned_ammo_id( *am ), ch );
             }
         }
         // Make sure the item is in valid state
@@ -594,7 +612,7 @@ detached_ptr<item> Item_modifier::modify( detached_ptr<item> &&new_item ) const
             if( ammo ) {
                 detached_ptr<item> am = ammo->create_single( new_item->birthday() );
                 if( am ) {
-                    new_item->ammo_set( am->typeId() );
+                    new_item->ammo_set( spawned_ammo_id( *am ) );
                 }
             } else {
                 new_item->ammo_set( new_item->ammo_default() );
@@ -612,14 +630,6 @@ detached_ptr<item> Item_modifier::modify( detached_ptr<item> &&new_item ) const
         for( detached_ptr<item> &it : contentitems ) {
             new_item->put_in( std::move( it ) );
         }
-    }
-
-    for( const flag_id &flag : custom_flags ) {
-        new_item->set_flag( flag );
-    }
-
-    for( const auto &fn : postprocess_fns ) {
-        new_item = fn( std::move( new_item ) );
     }
     return std::move( new_item );
 }

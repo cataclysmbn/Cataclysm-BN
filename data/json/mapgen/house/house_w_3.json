@@ -154,7 +154,7 @@
         "                        ",
         "                        ",
         "||||||||||||||||||||    ",
-        "|..................|    ",
+        "|1.................|    ",
         "|..................|    ",
         "|..................|    ",
         "|..................|    ",
@@ -173,7 +173,28 @@
         "                        ",
         "                        "
       ],
-      "palettes": [ "basement_empty" ]
+      "palettes": [ "basement_empty" ],
+      "nested": {
+        "1": {
+          "chunks": [
+            [ "null", 30 ],
+            [ "5x5_holdout_S", 2 ],
+            [ "5x5_sauna_S", 10 ],
+            [ "5x5_gym_S", 20 ],
+            [ "5x5_gym_E", 20 ],
+            [ "livingroom_5x5_S_1", 30 ],
+            [ "livingroom_5x5_E_1", 30 ],
+            [ "livingroom_5x5_N_1", 30 ],
+            [ "livingroom_5x5_W_1", 30 ],
+            [ "livingroom_5x5_S_2", 30 ],
+            [ "livingroom_5x5_E_2", 30 ],
+            [ "livingroom_5x5_N_2", 30 ],
+            [ "livingroom_5x5_W_2", 30 ],
+            [ "home_office_4x4_N", 20 ],
+            [ "home_office_4x4_S", 20 ]
+          ]
+        }
+      }
     }
   }
 ]

@@ -141,7 +141,7 @@
     "warmth": 25,
     "material_thickness": 3,
     "environmental_protection": 2,
-    "flags": [ "VARSIZE", "WATERPROOF", "STURDY" ]
+    "flags": [ "VARSIZE", "WATERPROOF", "STURDY", "NOSLIP" ]
   },
   {
     "id": "boots_fsurvivor",

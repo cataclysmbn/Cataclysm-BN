@@ -782,8 +782,15 @@
     "color": "light_gray",
     "id": "mushroom_culture",
     "copy-from": "seed",
-    "description": "A chunk of compost laden with spores and mycelium, for growing your own mushrooms.  You'll need to \"plant\" these on tree trunks, or dedicated mushroom racks, for it to grow.",
-    "seed_data": { "plant_name": "mushroom", "fruit": "mushroom", "required_terrain_flag": "MUSHROOM_PLANTABLE", "grow": "14 days" },
+    "description": "A chunk of compost laden with spores and mycelium, for growing your own mushrooms.  You'll need to \"plant\" these on tree trunks, or dedicated mushroom racks, for it to grow.  Mushrooms and cultures harvested from it retain the poisonous or hallucinogenic properties of the original mushroom.",
+    "seed_data": {
+      "plant_name": "mushroom",
+      "fruit": "mushroom",
+      "required_terrain_flag": "MUSHROOM_PLANTABLE",
+      "grow": "14 days",
+      "harvest_inherit_flags": [ "HIDDEN_POISON", "HIDDEN_HALLU" ],
+      "harvest_inherit_poison": true
+    },
     "extend": { "flags": [ "CAN_PLANT_UNDERGROUND" ] }
   },
   {
@@ -804,7 +811,9 @@
       "plant_name": "morel mushroom",
       "required_terrain_flag": "MUSHROOM_PLANTABLE",
       "fruit": "mushroom_morel",
-      "grow": "14 days"
+      "grow": "14 days",
+      "harvest_inherit_flags": [ "HIDDEN_POISON", "HIDDEN_HALLU" ],
+      "harvest_inherit_poison": true
     },
     "extend": { "flags": [ "CAN_PLANT_UNDERGROUND" ] },
     "vitamins": [ [ "veggy_allergen", 1 ] ]
@@ -818,7 +827,14 @@
     "color": "light_gray",
     "calories": 35,
     "use_action": "MYCUS",
-    "seed_data": { "plant_name": "mycus fruit", "required_terrain_flag": "MUSHROOM_PLANTABLE", "fruit": "mycus_fruit", "grow": "7 days" },
+    "seed_data": {
+      "plant_name": "mycus fruit",
+      "required_terrain_flag": "MUSHROOM_PLANTABLE",
+      "fruit": "mycus_fruit",
+      "grow": "7 days",
+      "harvest_inherit_flags": [ "HIDDEN_POISON", "HIDDEN_HALLU" ],
+      "harvest_inherit_poison": true
+    },
     "extend": { "flags": [ "MYCUS_OK", "CAN_PLANT_UNDERGROUND" ] }
   },
   {
@@ -831,5 +847,16 @@
     "charges": 2,
     "stack_size": 8,
     "seed_data": { "plant_name": "spurge", "fruit": "spurge", "byproducts": [ "withered" ], "grow": "14 days" }
+  },
+  {
+    "id": "seed_coffee_cherry",
+    "copy-from": "seed",
+    "type": "COMESTIBLE",
+    "name": { "str_sp": "coffee seeds" },
+    "description": "Some coffee seeds.",
+    "price": "160 cent",
+    "charges": 2,
+    "stack_size": 8,
+    "seed_data": { "plant_name": "coffee", "fruit": "coffee_cherry", "byproducts": [ "withered" ], "grow": "14 days" }
   }
 ]

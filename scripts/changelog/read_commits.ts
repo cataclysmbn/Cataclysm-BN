@@ -15,7 +15,7 @@ type Coauthor = {
 
 const coauthorRe = /^Co-authored-by:\s*(.*?)\s*<([^>]+)>$/gimu
 
-const botRe =
+export const botRe =
   /(\[bot\]|bot@|autofix-ci|copilot|dependabot|github-actions|pre-commit-ci|renovate|claude|anthropic|gpt|codex)/iu
 
 const isBot = ({ name, email }: Coauthor): boolean => botRe.test(name) || botRe.test(email)
@@ -45,7 +45,7 @@ const gitLog = async (option: RangeOption): Promise<string> => {
     args: [
       "log",
       ...rangeArgs(option),
-      "--pretty=format:%x1f%s%x1f%an%x1f%aI%x1f%B%x1e",
+      "--pretty=format:%x1f%H%x1f%s%x1f%an%x1f%aI%x1f%cI%x1f%B%x1e",
     ],
     stdout: "piped",
   })
@@ -57,10 +57,12 @@ const gitLog = async (option: RangeOption): Promise<string> => {
 }
 
 export type Commit = {
+  sha: string
   subject: string
   author: string
   coauthors: string[]
   date: Date
+  committed: Date
 }
 
 export const readCommits = async (option: RangeOption): Promise<Commit[]> => {
@@ -70,8 +72,15 @@ export const readCommits = async (option: RangeOption): Promise<Commit[]> => {
     .split("\x1e")
     .filter((record) => record.trim().length > 0)
     .map((record) => {
-      const [, subject, author, date, ...body] = record.split("\x1f")
-      return { subject, author, coauthors: parseCoauthors(body.join("\x1f")), date: new Date(date) }
+      const [, sha, subject, author, date, committed, ...body] = record.split("\x1f")
+      return {
+        sha,
+        subject,
+        author,
+        coauthors: parseCoauthors(body.join("\x1f")),
+        date: new Date(date),
+        committed: new Date(committed),
+      }
     })
 }
 

@@ -3,6 +3,7 @@
 #include "action_time_scale.h"
 #include "avatar.h"
 #include "bodypart.h"
+#include "cata_utility.h"
 #include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_icallback_actor.h"
@@ -61,6 +62,7 @@
 #include "profile.h"
 #include "projectile.h"
 #include "rng.h"
+#include "skill.h"
 #include "sounds.h"
 #include "string_formatter.h"
 #include "string_id.h"
@@ -73,6 +75,7 @@
 #include "weather/weather.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <iterator>
 #include <limits>
@@ -221,6 +224,40 @@ auto report_missing_lua_attitude( const std::string &method ) -> void
         return;
     }
     debugmsg( "Lua monster attitude function '%s' is not defined", method );
+}
+
+auto report_recursive_special_attack( const std::string &mon_name,
+                                      const std::string &attack_id ) -> void
+{
+    static auto warned = std::unordered_set<std::string> {};
+    if( !warned.insert( attack_id ).second ) {
+        return;
+    }
+    debugmsg( "%s re-entered use_special_attack( '%s' ) from inside a special attack; "
+              "the nested call was refused.", mon_name, attack_id );
+}
+
+auto report_spent_special_attack( const std::string &mon_name,
+                                  const std::string &attack_id ) -> void
+{
+    static auto warned = std::unordered_set<std::string> {};
+    if( !warned.insert( attack_id ).second ) {
+        return;
+    }
+    debugmsg( "%s already spent this action's special attack, so use_special_attack( '%s' ) "
+              "was refused. Call clear_special_attack_budget() first if the second attack "
+              "is deliberate.", mon_name, attack_id );
+}
+
+auto report_recursive_lua_attitude( const std::string &method ) -> void
+{
+    static auto warned = std::unordered_set<std::string> {};
+    if( !warned.insert( method ).second ) {
+        return;
+    }
+    debugmsg( "Lua monster attitude function '%s' triggered attitude evaluation again; "
+              "the nested call fell back to the stock rules. This usually means it called "
+              "use_special_attack() or another action that resolves a target.", method );
 }
 
 auto report_invalid_lua_attitude_return( const std::string &method, const sol::object &value,
@@ -509,21 +546,23 @@ auto monster::abs_pos() const -> tripoint_abs_ms
 
 void monster::poly( const mtype_id &id )
 {
-    double hp_percentage = static_cast<double>( hp ) / static_cast<double>( type->hp );
+    double hp_percentage = static_cast<double>( hp ) / static_cast<double>( get_hp_max() );
     type = &id.obj();
     moves = 0;
     Creature::set_speed_base( type->speed );
     anger = type->agro;
     morale = type->morale;
-    hp = static_cast<int>( hp_percentage * type->hp );
+    hp = static_cast<int>( hp_percentage * get_hp_max() );
     special_attacks.clear();
     for( auto &sa : type->special_attacks ) {
         auto &entry = special_attacks[sa.first];
         entry.cooldown = sa.second->cooldown;
     }
     faction = type->default_faction;
+    ammo = type->starting_ammo;
     upgrades = type->upgrades;
     reproduces = type->reproduces;
+    aggro_character = type->aggro_character;
 
     // HACK: We should know if the monster is in the bubble instead of checking it like this
     auto &tracker = get_mapbuffer().creature_tracker();
@@ -955,7 +994,7 @@ std::string monster::skin_name() const
 
 void monster::get_HP_Bar( nc_color &color, std::string &text ) const
 {
-    std::tie( text, color ) = ::get_hp_bar( hp, type->hp, true );
+    std::tie( text, color ) = ::get_hp_bar( hp, get_hp_max(), true );
 }
 
 std::pair<std::string, nc_color> monster::get_attitude() const
@@ -1160,6 +1199,84 @@ int monster::print_info( const catacurses::window &w, int vStart, int vLines, in
     return ++vStart;
 }
 
+namespace
+{
+
+/// Converts a petfood category id like "DOGFOOD" into a display name like "dog food".
+auto petfood_category_display_name( const std::string &category ) -> std::string
+{
+    std::string pretty;
+    pretty.reserve( category.size() + 1 );
+    for( const char c : category ) {
+        pretty += c == '_' ? ' ' : static_cast<char>( std::tolower( static_cast<unsigned char>( c ) ) );
+    }
+    const size_t food_pos = pretty.find( "food", 1 );
+    if( food_pos != std::string::npos ) {
+        pretty.insert( food_pos, " " );
+    }
+    return pretty;
+}
+
+/// Builds the "what it takes to tame and train this monster" text for the extended description.
+auto pet_requirements_description( const monster &mon ) -> std::string
+{
+    std::string ss;
+    const pet_food_data &petfood = mon.type->petfood;
+
+    std::vector<std::string> foods;
+    for( const std::string &category : petfood.food ) {
+        if( category != "NULL" ) {
+            foods.emplace_back( petfood_category_display_name( category ) );
+        }
+    }
+
+    if( foods.empty() ) {
+        ss += std::string( _( "It cannot be tamed." ) ) + "\n";
+        return ss;
+    }
+
+    ss += std::string( _( "<color_yellow>Taming</color> it requires:" ) ) + "\n";
+    ss += string_format( "  %s: %s\n", _( "Food" ),
+                         enumerate_as_string( foods, enumeration_conjunction::or_ ) );
+
+    if( !petfood.tamer_traits.empty() ) {
+        std::vector<std::string> trait_reqs;
+        for( const TraitSet &trait_set : petfood.tamer_traits ) {
+            trait_reqs.emplace_back( enumerate_as_string( trait_set.begin(), trait_set.end(),
+            []( const trait_id & trait ) { return trait.obj().name(); },
+            enumeration_conjunction::or_ ) );
+        }
+        ss += string_format( "  %s: %s\n", _( "Traits" ),
+                             enumerate_as_string( trait_reqs, enumeration_conjunction::and_ ) );
+    }
+
+    if( petfood.tame_min_skill > 0 ) {
+        ss += string_format( "  %s: %d\n", petfood.tame_skill->name(), petfood.tame_min_skill );
+    }
+
+    if( mon.type->pet_training && mon.type->pet_training->min_skill > 0 ) {
+        ss += "\n";
+        ss += std::string( _( "<color_yellow>Training</color> it requires:" ) ) + "\n";
+        ss += string_format( "  %s: %d\n", mon.type->pet_training->skill->name(),
+                             mon.type->pet_training->min_skill );
+        ss += "\n";
+    }
+
+    const auto pet_armors = item_controller->find( [&mon]( const itype & t ) {
+        return t.pet_armor && mon.type->bodytype == t.pet_armor->bodytype &&
+               mon.get_volume() >= t.pet_armor->min_vol && mon.get_volume() < t.pet_armor->max_vol;
+    } );
+    if( !pet_armors.empty() ) {
+        const itype *const example = *std::ranges::min_element( pet_armors, {},
+        []( const itype * t ) { return t->nname( 1 ).size(); } );
+        ss += string_format( _( "It can wear pet armor such as %s." ), example->nname( 1 ) ) + "\n";
+    }
+
+    return ss;
+}
+
+} // namespace
+
 std::string monster::extended_description() const
 {
     std::string ss;
@@ -1208,7 +1325,7 @@ std::string monster::extended_description() const
     }
 
     ss += "--\n";
-    const std::pair<std::string, nc_color> hp_bar = hp_description( hp, type->hp );
+    const std::pair<std::string, nc_color> hp_bar = hp_description( hp, get_hp_max() );
     ss += colorize( hp_bar.first, hp_bar.second ) + "\n";
 
     const std::pair<std::string, nc_color> speed_desc = speed_description(
@@ -1321,6 +1438,8 @@ std::string monster::extended_description() const
                              static_cast<int>( convert_weight( get_carried_weight() ) ),
                              static_cast<int>( convert_weight( weight_capacity() ) ) );
     }
+
+    ss += pet_requirements_description( *this );
 
     if( training_level > 0 && type->pet_training ) {
         const auto training_adj = []( float ratio ) -> const std::string {
@@ -1435,7 +1554,7 @@ bool monster::avoid_trap( const tripoint_bub_ms & /* pos */, const trap &tr ) co
     if( digging() || flies() ) {
         return true;
     }
-    return dice( 3, type->sk_dodge + 1 ) >= dice( 3, tr.get_avoidance() );
+    return dice( 3, static_cast<int>( get_dodge_base() + 1 ) ) >= dice( 3, tr.get_avoidance() );
 }
 
 bool monster::has_flag( const m_flag f ) const
@@ -1791,6 +1910,11 @@ Attitude monster::attitude_to( const Creature &other ) const
             // Zombies ignoring a feral survivor aren't quite the same as friendly
             // Ignore actually-friendly zombies/ferals but not other friendlies like reprogramed bots
             return Attitude::A_FRIENDLY;
+        } else if( g->u.has_trait( trait_THRESH_MYCUS ) &&
+                   ( ( friendly != 0 && m->type->in_species( FUNGUS ) ) ||
+                     ( m->friendly != 0 && type->in_species( FUNGUS ) ) ) ) {
+            // A mycus survivor's pets are accepted by wild fungus, and vice versa
+            return Attitude::A_FRIENDLY;
         } else if( ( friendly == 0 && m->friendly == 0 && faction_att == MFA_HATE ) ) {
             // Stuff that hates a specific faction will always attack that faction
             return Attitude::A_HOSTILE;
@@ -1861,8 +1985,21 @@ std::string io::enum_to_string<monster_attitude>( monster_attitude att )
 
 auto monster::attitude( const Character *u ) const -> monster_attitude
 {
-    if( const auto lua_attitude = get_lua_monster_attitude( *this, u ); lua_attitude ) {
-        return *lua_attitude;
+    // A Lua attitude function that causes attitude to be evaluated again — directly, or by
+    // calling use_special_attack(), whose actor resolves its target through attitude_to() —
+    // would recurse until the stack overflows. Serve the nested call from the stock rules.
+    // Gated on lua_attitude so ordinary monsters, which call this from the movement hot
+    // loop, pay the same single check they did before the guard existed.
+    if( type->lua_attitude ) {
+        if( evaluating_lua_attitude ) {
+            report_recursive_lua_attitude( *type->lua_attitude );
+        } else {
+            evaluating_lua_attitude = true;
+            const auto restore = on_out_of_scope( [this]() { evaluating_lua_attitude = false; } );
+            if( const auto lua_attitude = get_lua_monster_attitude( *this, u ); lua_attitude ) {
+                return *lua_attitude;
+            }
+        }
     }
 
     if( friendly != 0 ) {
@@ -2361,6 +2498,29 @@ bool monster::is_dead_state() const
     return hp <= 0;
 }
 
+bool monster::uncanny_dodge()
+{
+    if( !has_flag( MF_UNCANNY_DODGE ) ) {
+        return false;
+    }
+
+    const bool u_see_me = g->u.sees( *this );
+    if( x_in_y( get_dodge(), 10 ) ) {
+        if( u_see_me ) {
+            add_msg( _( "%s dodges… so fast!" ),
+                     disp_name( false, true ) );
+        }
+        mod_moves( -get_uncanny_dodge_cost() );
+        return true;
+    } else {
+        if( u_see_me ) {
+            add_msg( _( "%s tries to dodge but fails!" ),
+                     disp_name( false, true ) );
+        }
+        return false;
+    }
+}
+
 bool monster::block_hit( Creature *, bodypart_id &, damage_instance & )
 {
     return false;
@@ -2512,6 +2672,13 @@ void monster::melee_attack( Creature &target, float accuracy )
             add_msg( m_bad, _( "Something hits your %s." ),
                      bp_hit->accusative.translated() );
         }
+        // Deal radiation damage, bypass immunity since we broke through armor
+        if( has_flag( MF_IRRADIATED ) ) {
+            Character *ch = target.as_character();
+            if( ch != nullptr ) {
+                ch->irradiate( damage.total_damage(), true );
+            }
+        }
     } else {
         // No damage dealt
         if( u_see_me ) {
@@ -2540,6 +2707,13 @@ void monster::melee_attack( Creature &target, float accuracy )
             //~ 1$s is bodypart name in accusative, 2$s is armor name.
             add_msg( _( "Something hits your %1$s, but your %2$s protects you." ),
                      bp_hit->accusative.translated(), target.skin_name() );
+        }
+        // Radiation damage, armor negated attack so check if we're wearing radiation protection
+        if( has_flag( MF_IRRADIATED ) ) {
+            Character *ch = target.as_character();
+            if( ch != nullptr ) {
+                ch->irradiate( damage.total_damage(), false );
+            }
         }
     }
 
@@ -2640,7 +2814,7 @@ void monster::deal_projectile_attack( Creature *source, item *source_weapon,
 
 int monster::heal( const int delta_hp, bool overheal )
 {
-    const int maxhp = type->hp;
+    const int maxhp = get_hp_max();
     if( delta_hp <= 0 || ( hp >= maxhp && !overheal ) ) {
         return 0;
     }
@@ -3073,6 +3247,11 @@ int monster::get_grab_strength() const
     return type->grab_strength;
 }
 
+int monster::get_uncanny_dodge_cost() const
+{
+    return type->uncanny_dodge_cost;
+}
+
 float monster::fall_damage_mod() const
 {
     if( flies() ) {
@@ -3097,11 +3276,14 @@ float monster::fall_damage_mod() const
     return 0.0f;
 }
 
-int monster::impact( const int force, const tripoint_bub_ms &p )
+int monster::impact( int force, const tripoint_bub_ms &p )
 {
     if( force <= 0 ) {
         return force;
     }
+
+    // A zombie's only body part is torso, so multiply damage to it by 6 for parity with character::impact()
+    force *= 6;
 
     const float mod = fall_damage_mod();
     int total_dealt = 0;
@@ -3111,7 +3293,8 @@ int monster::impact( const int force, const tripoint_bub_ms &p )
         total_dealt += 10 * mod;
     }
 
-    const int bash_damage = std::max( 0.0f, force * mod - get_armor_bash( bodypart_id( "torso" ) ) );
+    const int bash_damage = std::max( 0.0f,
+                                      force * mod - ( get_armor_bash( bodypart_id( "torso" ) ) / 2 ) );
     apply_damage( nullptr, bodypart_id( "torso" ), bash_damage );
     total_dealt += force * mod;
 
@@ -3130,6 +3313,109 @@ void monster::reset_bonuses()
 void monster::reset_stats()
 {
     // Nothing here yet
+}
+
+auto monster::has_special_attack( const std::string &attack_id ) const -> bool
+{
+    return type->special_attacks.contains( attack_id ) && special_attacks.contains( attack_id );
+}
+
+auto monster::special_attack_ready( const std::string &attack_id ) const -> bool
+{
+    const auto attack = special_attacks.find( attack_id );
+    return type->special_attacks.contains( attack_id ) && attack != special_attacks.end() &&
+           attack->second.enabled && attack->second.cooldown == 0;
+}
+
+auto monster::use_special_attack( const std::string &attack_id ) -> bool
+{
+    // Actors reach into the map and into their target; a corpse must not act. This has to be
+    // is_dead(), not is_dead_state(): monster::die() only raises the dead flag, so an actor
+    // that kills outright without dealing damage (mattack::suicide) leaves hp positive. The
+    // stock scheduler is gated by the caller's is_dead() check, which one Lua AI call does
+    // not repeat, so an actor that kills this monster must not be followed by another.
+    if( is_dead() || !special_attack_ready( attack_id ) ) {
+        return false;
+    }
+    // One special attack per action, whoever spends it. Lua chooses which attack; the engine
+    // keeps the action economy, because an accidental second attack is silent in play while a
+    // refused deliberate one shows up immediately in testing.
+    if( special_attack_spent ) {
+        report_spent_special_attack( disp_name(), attack_id );
+        return false;
+    }
+    // An actor can re-enter Lua (an attitude function, an on-hit hook) which can call back
+    // into here. The cooldown is not reset until call() returns, so a nested call for the
+    // same attack would still look ready and recurse until the stack overflows.
+    if( dispatching_special_attack ) {
+        report_recursive_special_attack( disp_name(), attack_id );
+        return false;
+    }
+    dispatching_special_attack = true;
+    const auto restore = on_out_of_scope( [this]() { dispatching_special_attack = false; } );
+    // The actor may replace the runtime state through poly(), including the supplied ID.
+    const auto used_id = attack_id;
+    if( !type->special_attacks.at( used_id )->call( *this ) ) {
+        return false;
+    }
+    // The actor may have killed this monster outright (mattack::suicide, mattack::kamikaze).
+    // Leave the corpse's cooldowns alone; it will not act again.
+    if( !is_dead() && has_special_attack( used_id ) ) {
+        reset_special( used_id );
+    }
+    // Consume this action's special budget so the stock scheduler does not add a second
+    // attack on top of the one Lua picked. monster::move() clears it every action.
+    special_attack_spent = true;
+    return true;
+}
+
+auto monster::special_attack_ids() const -> std::vector<std::string>
+{
+    namespace ranges = std::ranges;
+    using namespace std::views;
+
+    // Hoisted out of the pipeline: an inline lambda there breaks astyle's continuation
+    // indent. See mongroup.cpp for the same pipeline shape without one.
+    const auto tracked = [this]( const auto & id ) { return special_attacks.contains( id ); };
+    // type->special_attacks is a std::map, so the result is already sorted by ID.
+    return type->special_attacks
+           | keys
+           | filter( tracked )
+           | ranges::to<std::vector<std::string>>();
+}
+
+auto monster::special_attack_enabled( const std::string &attack_id ) const -> bool
+{
+    const auto attack = special_attacks.find( attack_id );
+    return type->special_attacks.contains( attack_id ) && attack != special_attacks.end() &&
+           attack->second.enabled;
+}
+
+auto monster::set_special_attack_enabled( const std::string &attack_id, bool enabled ) -> void
+{
+    if( enabled ) {
+        enable_special( attack_id );
+    } else {
+        disable_special( attack_id );
+    }
+}
+
+auto monster::set_special_attack_cooldown( const std::string &attack_id, int turns ) -> void
+{
+    if( !has_special_attack( attack_id ) ) {
+        return;
+    }
+    set_special( attack_id, std::max( 0, turns ) );
+}
+
+auto monster::get_special_attack_cooldown( const std::string &attack_id ) const ->
+std::optional<int>
+{
+    const auto attack = special_attacks.find( attack_id );
+    if( !type->special_attacks.contains( attack_id ) || attack == special_attacks.end() ) {
+        return std::nullopt;
+    }
+    return attack->second.cooldown;
 }
 
 void monster::reset_special( const std::string &special_name )
@@ -3163,6 +3449,16 @@ void monster::disable_special( const std::string &special_name )
     const auto iter = special_attacks.find( special_name );
     if( iter != special_attacks.end() ) {
         iter->second.enabled = false;
+    } else {
+        debugmsg( "%s has no special attack %s", disp_name(), special_name );
+    }
+}
+
+void monster::enable_special( const std::string &special_name )
+{
+    const auto iter = special_attacks.find( special_name );
+    if( iter != special_attacks.end() ) {
+        iter->second.enabled = true;
     } else {
         debugmsg( "%s has no special attack %s", disp_name(), special_name );
     }
@@ -3261,6 +3557,12 @@ void monster::process_turn()
 
         local_attack_data.cooldown = std::max( 0, local_attack_data.cooldown -
                                                action_time_scale::calendar_turns_this_tick() );
+    }
+    // A player-held monster must be released after any separation, including teleportation.
+    const auto &you = get_avatar();
+    if( has_effect( effect_grabbed ) &&
+        ( bub_pos().z() != you.bub_pos().z() || square_dist( bub_pos(), you.bub_pos() ) > 1 ) ) {
+        remove_effect( effect_grabbed );
     }
     // Persist grabs as long as there's an adjacent target.
     if( has_effect( effect_grabbing ) ) {
@@ -3933,9 +4235,10 @@ void monster::process_effects_internal()
         const float light = g->m.ambient_light_at( bub_pos() );
         add_msg( m_debug, _( "%1$s local light level: %2$s" ), name(), light );
         // Requires standing in a properly dark tile, scales as it gets darker
-        if( light < 11.0f && one_in( 2 ) && hp < type->hp ) {
+        if( light < 11.0f && one_in( 2 ) && hp < get_hp_max() ) {
             // Regen will max out at 50 at 6.0 light (barely able to craft), or top off to max HP
-            int dark_regen_amount = std::min( static_cast<int>( 110.0f - ( light * 10.0f ) ), type->hp - hp );
+            int dark_regen_amount = std::min( static_cast<int>( 110.0f - ( light * 10.0f ) ),
+                                              get_hp_max() - hp );
             dark_regen_amount = std::min( dark_regen_amount, 50 );
             heal( round( dark_regen_amount ) );
             if( dark_regen_amount > 0 && g->u.sees( *this ) ) {
@@ -3947,7 +4250,7 @@ void monster::process_effects_internal()
 
     // Monster will regen morale and aggression if it is on max HP
     // It regens more morale and aggression if is currently fleeing.
-    if( type->regen_morale && hp >= type->hp ) {
+    if( type->regen_morale && hp >= get_hp_max() ) {
         if( is_fleeing( g->u ) ) {
             morale = type->morale;
             // Don't restore global anger for FACTION_MEMORY monsters
@@ -4007,6 +4310,18 @@ bool monster::make_fungus()
     const std::string old_name = name();
     poly( type->fungalize_into );
 
+    // A fungalized pet only stays loyal to a mycus survivor; otherwise it
+    // reverts to a wild fungus hostile to the player.
+    if( friendly != 0 && !g->u.has_trait( trait_THRESH_MYCUS ) &&
+        !g->u.has_trait( trait_MYCUS_FRIEND ) ) {
+        friendly = 0;
+        remove_effect( effect_pet );
+        get_mapbuffer().creature_tracker().update_faction( *this );
+        if( g->u.sees( bub_pos() ) ) {
+            add_msg( m_warning, _( "The %s turns on you!" ), name() );
+        }
+    }
+
     if( g->u.sees( bub_pos() ) ) {
         add_msg( m_info, _( "The spores transform %1$s into a %2$s!" ),
                  old_name, name() );
@@ -4017,6 +4332,10 @@ bool monster::make_fungus()
 
 void monster::make_friendly()
 {
+    // Permanently friendly monsters must not be downgraded to a temporary countdown.
+    if( friendly < 0 ) {
+        return;
+    }
     unset_dest();
     friendly = rng( 5, 30 ) + rng( 0, 20 );
 }
@@ -4196,7 +4515,7 @@ void monster::init_from_item( const item &itm )
 
         // HP can be 0 or less, in this case revive_corpse will just deactivate the corpse
         if( hp > 0 && type->has_flag( MF_REVIVES_HEALTHY ) ) {
-            hp = type->hp;
+            hp = get_hp_max();
             set_speed_base( type->speed );
         }
         const std::string up_time = itm.get_var( "upgrade_time" );
@@ -4218,7 +4537,7 @@ detached_ptr<item> monster::to_item() const
     }
     // Birthday is wrong, but the item created here does not use it anyway (I hope).
     detached_ptr<item> result = item::spawn( type->revert_to_itype, calendar::turn );
-    const int damfac = std::max( 1, ( result->max_damage() + 1 ) * hp / type->hp );
+    const int damfac = std::max( 1, ( result->max_damage() + 1 ) * hp / get_hp_max() );
     result->set_damage( std::max( 0, ( result->max_damage() + 1 ) - damfac ) );
     // If we have a nickname, save it via the item's label
     if( !unique_name.empty() ) {

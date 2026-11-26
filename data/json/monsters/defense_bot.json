@@ -40,7 +40,8 @@
       "NO_BREATHE",
       "PRIORITIZE_TARGETS",
       "PATH_AVOID_DANGER_1",
-      "BIOPROOF"
+      "BIOPROOF",
+      "NO_SLIP"
     ]
   },
   {
@@ -82,7 +83,8 @@
       "NO_BREATHE",
       "PRIORITIZE_TARGETS",
       "PATH_AVOID_DANGER_1",
-      "BIOPROOF"
+      "BIOPROOF",
+      "NO_SLIP"
     ]
   },
   {
@@ -146,7 +148,8 @@
       "PATH_AVOID_DANGER_1",
       "LOUDMOVES",
       "DROPS_AMMO",
-      "BIOPROOF"
+      "BIOPROOF",
+      "NO_SLIP"
     ]
   },
   {
@@ -209,7 +212,8 @@
       "PATH_AVOID_DANGER_1",
       "LOUDMOVES",
       "DROPS_AMMO",
-      "BIOPROOF"
+      "BIOPROOF",
+      "NO_SLIP"
     ]
   },
   {
@@ -272,7 +276,8 @@
       "PATH_AVOID_DANGER_1",
       "LOUDMOVES",
       "DROPS_AMMO",
-      "BIOPROOF"
+      "BIOPROOF",
+      "NO_SLIP"
     ]
   },
   {
@@ -334,14 +339,15 @@
       "PATH_AVOID_DANGER_1",
       "LOUDMOVES",
       "DROPS_AMMO",
-      "BIOPROOF"
+      "BIOPROOF",
+      "NO_SLIP"
     ]
   },
   {
     "id": "mon_skitterbot",
     "type": "MONSTER",
     "name": { "str": "skitterbot" },
-    "description": "An insectoid robot the size of a small dog, designed for home security.  Armed with two close-range tazers, it can skate across the ground with great speed.",
+    "description": "An insectoid robot the size of a small dog, designed for home security.  Armed with two close-range tasers, it can skate across the ground with great speed.",
     "default_faction": "defense_bot",
     "species": [ "ROBOT" ],
     "diff": 2,
@@ -442,7 +448,7 @@
     "armor_fire": 20,
     "vision_night": 5,
     "path_settings": { "max_dist": 5 },
-    "special_attacks": [ [ "SMASH", 20 ], [ "BIO_OP_TAKEDOWN", 20 ] ],
+    "special_attacks": [ { "id": "smash", "throw_strength": 72 }, [ "BIO_OP_TAKEDOWN", 20 ] ],
     "death_drops": "mon_robofac_prototype_drops",
     "death_function": [ "BROKEN" ],
     "flags": [
@@ -504,7 +510,8 @@
       "PATH_AVOID_DANGER_2",
       "LOUDMOVES",
       "DROPS_AMMO",
-      "BIOPROOF"
+      "BIOPROOF",
+      "NO_SLIP"
     ]
   },
   {
@@ -551,7 +558,8 @@
       "PATH_AVOID_DANGER_2",
       "LOUDMOVES",
       "DROPS_AMMO",
-      "BIOPROOF"
+      "BIOPROOF",
+      "NO_SLIP"
     ]
   },
   {
@@ -603,7 +611,8 @@
       "FIREPROOF",
       "PRIORITIZE_TARGETS",
       "DROPS_AMMO",
-      "BIOPROOF"
+      "BIOPROOF",
+      "NO_SLIP"
     ]
   },
   {
@@ -773,7 +782,8 @@
       "NO_BREATHE",
       "PATH_AVOID_DANGER_1",
       "LOUDMOVES",
-      "DROPS_AMMO"
+      "DROPS_AMMO",
+      "NO_SLIP"
     ]
   }
 ]

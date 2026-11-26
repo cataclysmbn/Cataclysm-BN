@@ -555,6 +555,12 @@ enum class item_filter_type : int {
 void draw_item_filter_rules( const catacurses::window &win, int starty, int height,
                              item_filter_type type );
 
+/**
+ * The same tips as draw_item_filter_rules(), as a single string (with color tags) for use
+ * in popups, e.g. as a string_input_popup description.
+ */
+auto item_filter_rules_text( item_filter_type type ) -> std::string;
+
 char rand_char();
 int special_symbol( int sym );
 
@@ -575,7 +581,7 @@ std::string shortcut_text( nc_color shortcut_color, const std::string &fmt );
 // extra_resolution
 std::pair<std::string, nc_color> get_bar( float cur, float max, int width = 5,
         bool extra_resolution = true,
-        const std::vector<nc_color> &colors = { c_green, c_light_green, c_yellow, c_light_red, c_red } );
+const std::vector<nc_color> &colors = { c_green, c_light_green, c_yellow, c_light_red, c_red } );
 
 /**
  * @return Pair of a string containing the bar, and its color

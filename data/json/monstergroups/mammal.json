@@ -1,44 +1,238 @@
 [
   {
-    "name": "GROUP_COWS",
+    "name": "GROUP_BATS",
     "type": "monstergroup",
-    "default": "mon_null",
-    "is_safe": true,
+    "is_animal": true,
+    "monsters": [ { "monster": "mon_bat", "weight": 150, "cost_multiplier": 2 }, { "monster": "mon_bat_pup", "weight": 50 } ]
+  },
+  {
+    "name": "GROUP_BEARS",
+    "type": "monstergroup",
+    "is_animal": true,
+    "default": "mon_bear",
     "monsters": [
-      { "monster": "mon_cow", "freq": 100, "cost_multiplier": 10, "ends": 168 },
-      { "monster": "mon_cow", "freq": 50, "cost_multiplier": 5, "starts": 168 }
+      { "monster": "mon_bear", "weight": 150, "cost_multiplier": 2 },
+      { "monster": "mon_bear_cub", "weight": 50, "ends": "124 days", "conditions": [ "SPRING", "SUMMER" ] },
+      { "monster": "mon_bear_cub", "weight": 25, "starts": "124 days", "conditions": [ "SPRING", "SUMMER" ] }
+    ]
+  },
+  {
+    "name": "GROUP_PIGS",
+    "type": "monstergroup",
+    "is_animal": true,
+    "default": "mon_pig",
+    "monsters": [
+      { "monster": "mon_pig", "weight": 150, "cost_multiplier": 2 },
+      { "monster": "mon_pig_piglet", "weight": 25, "pack_size": [ 1, 2 ], "ends": "28 days" },
+      { "monster": "mon_pig_piglet", "weight": 12, "pack_size": [ 1, 2 ], "starts": "28 days" }
+    ]
+  },
+  {
+    "name": "GROUP_SHEEPS",
+    "type": "monstergroup",
+    "is_animal": true,
+    "default": "mon_sheep",
+    "monsters": [
+      { "monster": "mon_sheep", "weight": 150, "cost_multiplier": 2 },
+      { "monster": "mon_sheep_lamb", "weight": 25, "ends": "28 days", "conditions": [ "SPRING", "SUMMER" ] },
+      { "monster": "mon_sheep_lamb", "weight": 12, "starts": "28 days", "conditions": [ "SPRING", "SUMMER" ] }
+    ]
+  },
+  {
+    "name": "GROUP_STRAY_CATS",
+    "type": "monstergroup",
+    "is_animal": true,
+    "default": "mon_cat",
+    "monsters": [
+      { "monster_group": "GROUP_PET_CATS", "weight": 94, "cost_multiplier": 0 },
+      { "monster": "mon_cat_void", "weight": 2, "cost_multiplier": 0 },
+      { "monster": "mon_cat_void_kitten", "weight": 1, "cost_multiplier": 0 },
+      { "monster": "mon_cat_mutant_prism", "weight": 2, "cost_multiplier": 0 },
+      { "monster": "mon_cat_mutant_kitten_prism", "weight": 1, "cost_multiplier": 0 }
+    ]
+  },
+  {
+    "name": "GROUP_PET_CATS",
+    "type": "monstergroup",
+    "is_animal": true,
+    "default": "mon_cat",
+    "monsters": [
+      { "monster": "mon_cat", "weight": 100, "cost_multiplier": 0 },
+      { "monster": "mon_cat_kitten", "weight": 5, "cost_multiplier": 0 },
+      { "monster": "mon_cat_tabby", "weight": 200, "cost_multiplier": 0 },
+      { "monster": "mon_cat_tabby_kitten", "weight": 5, "cost_multiplier": 0 },
+      { "monster": "mon_cat_longhair", "weight": 50, "cost_multiplier": 0 },
+      { "monster": "mon_cat_longhair_kitten", "weight": 5, "cost_multiplier": 0 },
+      { "monster": "mon_cat_siamese", "weight": 30, "cost_multiplier": 0 },
+      { "monster": "mon_cat_siamese_kitten", "weight": 3, "cost_multiplier": 0 },
+      { "monster": "mon_cat_persian", "weight": 20, "cost_multiplier": 0 },
+      { "monster": "mon_cat_persian_kitten", "weight": 2, "cost_multiplier": 0 },
+      { "monster": "mon_cat_calico", "weight": 50, "cost_multiplier": 0 },
+      { "monster": "mon_cat_calico_kitten", "weight": 4, "cost_multiplier": 0 },
+      { "monster": "mon_cat_maine_coon", "weight": 50, "cost_multiplier": 0 },
+      { "monster": "mon_cat_maine_coon_kitten", "weight": 5, "cost_multiplier": 0 },
+      { "monster": "mon_cat_bengal", "weight": 50, "cost_multiplier": 0 },
+      { "monster": "mon_cat_bengal_kitten", "weight": 5, "cost_multiplier": 0 },
+      { "monster": "mon_cat_devon_rex", "weight": 10, "cost_multiplier": 0 },
+      { "monster": "mon_cat_devon_rex_kitten", "weight": 1, "cost_multiplier": 0 },
+      { "monster": "mon_cat_sphynx", "weight": 10, "cost_multiplier": 0 },
+      { "monster": "mon_cat_sphynx_kitten", "weight": 1, "cost_multiplier": 0 },
+      { "monster": "mon_cat_chonker", "weight": 10, "cost_multiplier": 0 },
+      { "monster": "mon_cat_chonker_kitten", "weight": 1, "cost_multiplier": 0 },
+      { "monster": "mon_cat_black", "weight": 80, "cost_multiplier": 0 },
+      { "monster": "mon_cat_black_kitten", "weight": 5, "cost_multiplier": 0 }
     ]
   },
   {
     "name": "GROUP_STRAY_DOGS",
     "type": "monstergroup",
+    "is_animal": true,
     "default": "mon_dog",
     "monsters": [
-      { "monster": "mon_dog", "freq": 50, "cost_multiplier": 0 },
-      { "monster": "mon_dog_pup", "freq": 5, "cost_multiplier": 0 },
-      { "monster": "mon_dog_bull", "freq": 50, "cost_multiplier": 0 },
-      { "monster": "mon_dog_bull_pup", "freq": 5, "cost_multiplier": 0 },
-      { "monster": "mon_dog_pitbullmix", "freq": 50, "cost_multiplier": 0 },
-      { "monster": "mon_dog_pitbullmix_pup", "freq": 5, "cost_multiplier": 0 },
-      { "monster": "mon_dog_beagle", "freq": 50, "cost_multiplier": 0 },
-      { "monster": "mon_dog_beagle_pup", "freq": 5, "cost_multiplier": 0 },
-      { "monster": "mon_dog_bcollie", "freq": 50, "cost_multiplier": 0 },
-      { "monster": "mon_dog_bcollie_pup", "freq": 5, "cost_multiplier": 0 },
-      { "monster": "mon_dog_boxer", "freq": 50, "cost_multiplier": 0 },
-      { "monster": "mon_dog_boxer_pup", "freq": 5, "cost_multiplier": 0 },
-      { "monster": "mon_dog_chihuahua", "freq": 50, "cost_multiplier": 0 },
-      { "monster": "mon_dog_chihuahua_pup", "freq": 5, "cost_multiplier": 0 },
-      { "monster": "mon_dog_dachshund", "freq": 50, "cost_multiplier": 0 },
-      { "monster": "mon_dog_dachshund_pup", "freq": 5, "cost_multiplier": 0 },
-      { "monster": "mon_dog_gshepherd", "freq": 50, "cost_multiplier": 0 },
-      { "monster": "mon_dog_gshepherd_pup", "freq": 5, "cost_multiplier": 0 },
-      { "monster": "mon_dog_gpyrenees", "freq": 50, "cost_multiplier": 0 },
-      { "monster": "mon_dog_gpyrenees_pup", "freq": 5, "cost_multiplier": 0 },
-      { "monster": "mon_dog_rottweiler", "freq": 50, "cost_multiplier": 0 },
-      { "monster": "mon_dog_rottweiler_pup", "freq": 5, "cost_multiplier": 0 },
-      { "monster": "mon_dog_auscattle", "freq": 50, "cost_multiplier": 0 },
-      { "monster": "mon_dog_auscattle_pup", "freq": 5, "cost_multiplier": 0 },
-      { "monster": "mon_dog_mutant_mongrel", "freq": 10, "cost_multiplier": 0 }
+      { "monster_group": "GROUP_PET_DOGS", "weight": 93, "cost_multiplier": 0 },
+      { "monster": "mon_dog_mutant_mongrel", "weight": 7, "cost_multiplier": 0 }
+    ]
+  },
+  {
+    "name": "GROUP_PET_DOGS",
+    "type": "monstergroup",
+    "is_animal": true,
+    "default": "mon_dog",
+    "monsters": [
+      { "monster": "mon_dog", "weight": 50, "cost_multiplier": 0 },
+      { "monster": "mon_dog_pup", "weight": 5, "cost_multiplier": 0 },
+      { "monster": "mon_dog_bull", "weight": 50, "cost_multiplier": 0 },
+      { "monster": "mon_dog_bull_pup", "weight": 5, "cost_multiplier": 0 },
+      { "monster": "mon_dog_pitbullmix", "weight": 50, "cost_multiplier": 0 },
+      { "monster": "mon_dog_pitbullmix_pup", "weight": 5, "cost_multiplier": 0 },
+      { "monster": "mon_dog_beagle", "weight": 50, "cost_multiplier": 0 },
+      { "monster": "mon_dog_beagle_pup", "weight": 5, "cost_multiplier": 0 },
+      { "monster": "mon_dog_bcollie", "weight": 50, "cost_multiplier": 0 },
+      { "monster": "mon_dog_bcollie_pup", "weight": 5, "cost_multiplier": 0 },
+      { "monster": "mon_dog_boxer", "weight": 50, "cost_multiplier": 0 },
+      { "monster": "mon_dog_boxer_pup", "weight": 5, "cost_multiplier": 0 },
+      { "monster": "mon_dog_chihuahua", "weight": 50, "cost_multiplier": 0 },
+      { "monster": "mon_dog_chihuahua_pup", "weight": 5, "cost_multiplier": 0 },
+      { "monster": "mon_dog_dachshund", "weight": 50, "cost_multiplier": 0 },
+      { "monster": "mon_dog_dachshund_pup", "weight": 5, "cost_multiplier": 0 },
+      { "monster": "mon_dog_gshepherd", "weight": 50, "cost_multiplier": 0 },
+      { "monster": "mon_dog_gshepherd_pup", "weight": 5, "cost_multiplier": 0 },
+      { "monster": "mon_dog_gpyrenees", "weight": 50, "cost_multiplier": 0 },
+      { "monster": "mon_dog_gpyrenees_pup", "weight": 5, "cost_multiplier": 0 },
+      { "monster": "mon_dog_rottweiler", "weight": 50, "cost_multiplier": 0 },
+      { "monster": "mon_dog_rottweiler_pup", "weight": 5, "cost_multiplier": 0 },
+      { "monster": "mon_dog_auscattle", "weight": 50, "cost_multiplier": 0 },
+      { "monster": "mon_dog_auscattle_pup", "weight": 5, "cost_multiplier": 0 }
+    ]
+  },
+  {
+    "name": "GROUP_HORSES",
+    "type": "monstergroup",
+    "is_animal": true,
+    "default": "mon_horse",
+    "monsters": [
+      { "monster": "mon_horse", "weight": 150, "cost_multiplier": 2 },
+      { "monster": "mon_horse_foal", "weight": 50, "ends": "124 days" },
+      { "monster": "mon_horse_foal", "weight": 25, "starts": "124 days" }
+    ]
+  },
+  {
+    "name": "GROUP_RABBIT_WILD",
+    "type": "monstergroup",
+    "is_animal": true,
+    "default": "mon_rabbit",
+    "monsters": [
+      { "monster": "mon_hare", "weight": 106, "cost_multiplier": 0 },
+      { "monster": "mon_rabbit", "weight": 894, "cost_multiplier": 0 }
+    ]
+  },
+  {
+    "name": "GROUP_BOARS",
+    "type": "monstergroup",
+    "is_animal": true,
+    "default": "mon_boar_wild",
+    "monsters": [
+      { "monster": "mon_boar_wild", "weight": 150, "cost_multiplier": 2 },
+      { "monster": "mon_boar_wild_piglet", "weight": 50, "pack_size": [ 1, 6 ], "ends": "56 days" },
+      { "monster": "mon_boar_wild_piglet", "weight": 25, "pack_size": [ 1, 6 ], "starts": "56 days" }
+    ]
+  },
+  {
+    "name": "GROUP_COUGARS",
+    "type": "monstergroup",
+    "is_animal": true,
+    "monsters": [ { "monster": "mon_cougar", "weight": 150, "cost_multiplier": 2 } ]
+  },
+  {
+    "name": "GROUP_DEERS",
+    "type": "monstergroup",
+    "is_animal": true,
+    "default": "mon_deer",
+    "monsters": [
+      { "monster": "mon_deer", "weight": 150, "cost_multiplier": 2 },
+      { "monster": "mon_deer_fawn", "weight": 25, "ends": "28 days", "conditions": [ "SPRING", "SUMMER", "AUTUMN" ] },
+      {
+        "monster": "mon_deer_fawn",
+        "weight": 12,
+        "starts": "28 days",
+        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
+      }
+    ]
+  },
+  {
+    "name": "GROUP_COYOTE",
+    "type": "monstergroup",
+    "is_animal": true,
+    "monsters": [
+      { "monster": "mon_coyote", "weight": 38 },
+      { "monster": "mon_coyote_mutant_shark", "weight": 1 },
+      { "monster": "mon_coyote_mutant_venom", "weight": 1 },
+      { "monster": "mon_coyote_wolf", "weight": 38 }
+    ]
+  },
+  {
+    "name": "GROUP_MOOSE",
+    "type": "monstergroup",
+    "is_animal": true,
+    "monsters": [ { "monster": "mon_moose", "weight": 150, "cost_multiplier": 2 } ]
+  },
+  {
+    "name": "GROUP_DEER_MUT_SPIDERS",
+    "type": "monstergroup",
+    "is_animal": true,
+    "default": "mon_deer_mutant_spider",
+    "//": "Mutant deer are better prepared to protect/escape with their spawn than normal deer, so, contrary to normal wildlife, their spawn becomes more common as time goes on.",
+    "monsters": [
+      { "monster": "mon_deer_mutant_spider", "weight": 150, "cost_multiplier": 2 },
+      {
+        "monster": "mon_deer_mutant_spider_fawn",
+        "weight": 12,
+        "ends": "124 days",
+        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
+      },
+      {
+        "monster": "mon_deer_mutant_spider_fawn",
+        "weight": 25,
+        "starts": "124 days",
+        "conditions": [ "SPRING", "SUMMER", "AUTUMN" ]
+      }
+    ]
+  },
+  {
+    "id": "GROUP_WOLFS",
+    "type": "monstergroup",
+    "is_animal": true,
+    "monsters": [ { "monster": "mon_wolf", "weight": 150, "cost_multiplier": 2 } ]
+  },
+  {
+    "name": "GROUP_COWS",
+    "type": "monstergroup",
+    "is_animal": true,
+    "default": "mon_cow",
+    "monsters": [
+      { "monster": "mon_cow", "weight": 150, "cost_multiplier": 2 },
+      { "monster": "mon_cow_calf", "weight": 50, "ends": "28 days" },
+      { "monster": "mon_cow_calf", "weight": 25, "starts": "28 days" }
     ]
   },
   {

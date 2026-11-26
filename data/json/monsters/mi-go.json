@@ -26,7 +26,7 @@
     "armor_bullet": 10,
     "vision_day": 50,
     "vision_night": 20,
-    "harvest": "zombie_meatslug",
+    "harvest": "migo_standard",
     "path_settings": { "max_dist": 50 },
     "scents_ignored": [ "sc_fetid" ],
     "special_attacks": [
@@ -75,7 +75,7 @@
     "armor_bullet": 10,
     "vision_day": 50,
     "vision_night": 20,
-    "harvest": "zombie_meatslug",
+    "harvest": "migo_standard",
     "path_settings": { "max_dist": 50 },
     "scents_ignored": [ "sc_fetid" ],
     "special_attacks": [
@@ -125,7 +125,7 @@
     "armor_bullet": 10,
     "vision_day": 50,
     "vision_night": 20,
-    "harvest": "zombie_meatslug",
+    "harvest": "migo_standard",
     "path_settings": { "max_dist": 50 },
     "scents_ignored": [ "sc_fetid" ],
     "special_attacks": [
@@ -174,7 +174,7 @@
     "armor_bullet": 18,
     "vision_day": 50,
     "vision_night": 20,
-    "harvest": "zombie_meatslug",
+    "harvest": "migo_standard",
     "path_settings": { "max_dist": 50 },
     "scents_ignored": [ "sc_fetid" ],
     "special_attacks": [
@@ -227,13 +227,14 @@
     "armor_bullet": 22,
     "vision_day": 50,
     "vision_night": 25,
-    "harvest": "zombie_meatslug",
+    "harvest": "migo_standard",
     "path_settings": { "max_dist": 50 },
     "scents_ignored": [ "sc_fetid" ],
     "special_attacks": [
       [ "PARROT", 5 ],
-      [ "LONGSWIPE", 12 ],
-      [ "STRETCH_ATTACK", 20 ],
+      { "id": "stretch_attack" },
+      { "id": "longswipe", "cooldown": 12 },
+      { "id": "cut_throat", "cooldown": 12 },
       { "id": "scratch", "damage_max_instance": [ { "damage_type": "cut", "amount": 30, "armor_multiplier": 0.7 } ] },
       { "type": "spell", "spell_data": { "id": "mi-go_slaver_beam", "min_level": 2 }, "cooldown": 100 }
     ],
@@ -279,7 +280,7 @@
     "armor_bullet": 4,
     "vision_day": 50,
     "vision_night": 25,
-    "harvest": "zombie_meatslug",
+    "harvest": "migo_standard",
     "path_settings": { "max_dist": 50 },
     "scents_ignored": [ "sc_fetid" ],
     "special_attacks": [

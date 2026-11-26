@@ -816,6 +816,49 @@ input_event draw_item_info( const int iLeft, const int iWidth, const int iTop, c
     return result;
 }
 
+namespace
+{
+
+/// One paragraph of the item filter rules, optionally followed by an empty line.
+struct item_filter_rule_line {
+    std::string text;
+    bool gap_after = false;
+};
+
+auto item_filter_rule_lines( item_filter_type type ) -> std::vector<item_filter_rule_line>
+{
+    // Not static so that language changes are correctly handled
+    const std::array<std::string, 3> intros = {{
+            _( "Type part of an item's name to filter it." ),
+            _( "Type part of an item's name to move nearby items to the bottom." ),
+            _( "Type part of an item's name to move nearby items to the top." )
+        }
+    };
+    const int tab_idx = static_cast<int>( type ) - static_cast<int>( item_filter_type::FIRST );
+
+    std::vector<item_filter_rule_line> lines;
+    lines.push_back( { intros[tab_idx], true } );
+    // NOLINTNEXTLINE(cata-text-style): literal comma
+    lines.push_back( { _( "Separate multiple items with [<color_yellow>,</color>]." ), false } );
+    //~ An example of how to separate multiple items with a comma when filtering items.
+    lines.push_back( { _( "Example: back,flash,aid, ,band" ), true } ); // NOLINT(cata-text-style): literal comma
+
+    if( type == item_filter_type::FILTER ) {
+        lines.push_back( { _( "To exclude items, place [<color_yellow>-</color>] in front." ), false } );
+        //~ An example of how to exclude items with - when filtering items.
+        lines.push_back( { _( "Example: -pipe,-chunk,-steel" ), true } );
+    }
+
+    lines.push_back( { _( "Search [<color_yellow>c</color>]ategory, [<color_yellow>m</color>]aterial, "
+                          "[<color_yellow>q</color>]uality, [<color_yellow>n</color>]otes or "
+                          "[<color_yellow>d</color>]isassembled components." ), false } );
+    //~ An example of how to filter items based on category or material.
+    lines.push_back( { _( "Examples: c:food,m:iron,q:hammering,n:toolshelf,d:pipe" ), false } );
+    return lines;
+}
+
+} // namespace
+
 void draw_item_filter_rules( const catacurses::window &win, int starty, int height,
                              item_filter_type type )
 {
@@ -825,39 +868,27 @@ void draw_item_filter_rules( const catacurses::window &win, int starty, int heig
         mvwprintz( win, point( 1, starty + i ), c_black, std::string( len, ' ' ) );
     }
 
-    // Not static so that language changes are correctly handled
-    const std::array<std::string, 3> intros = {{
-            _( "Type part of an item's name to filter it." ),
-            _( "Type part of an item's name to move nearby items to the bottom." ),
-            _( "Type part of an item's name to move nearby items to the top." )
+    for( const item_filter_rule_line &line : item_filter_rule_lines( type ) ) {
+        starty += fold_and_print( win, point( 1, starty ), len, c_white, line.text );
+        if( line.gap_after ) {
+            starty += 1;
         }
-    };
-    const int tab_idx = static_cast<int>( type ) - static_cast<int>( item_filter_type::FIRST );
-    starty += 1 + fold_and_print( win, point( 1, starty ), len, c_white, intros[tab_idx] );
-
-    starty += fold_and_print( win, point( 1, starty ), len, c_white,
-                              // NOLINTNEXTLINE(cata-text-style): literal comma
-                              _( "Separate multiple items with [<color_yellow>,</color>]." ) );
-    starty += 1 + fold_and_print( win, point( 1, starty ), len, c_white,
-                                  //~ An example of how to separate multiple items with a comma when filtering items.
-                                  _( "Example: back,flash,aid, ,band" ) ); // NOLINT(cata-text-style): literal comma
-
-    if( type == item_filter_type::FILTER ) {
-        starty += fold_and_print( win, point( 1, starty ), len, c_white,
-                                  _( "To exclude items, place [<color_yellow>-</color>] in front." ) );
-        starty += 1 + fold_and_print( win, point( 1, starty ), len, c_white,
-                                      //~ An example of how to exclude items with - when filtering items.
-                                      _( "Example: -pipe,-chunk,-steel" ) );
     }
-
-    starty += fold_and_print( win, point( 1, starty ), len, c_white,
-                              _( "Search [<color_yellow>c</color>]ategory, [<color_yellow>m</color>]aterial, "
-                                 "[<color_yellow>q</color>]uality, [<color_yellow>n</color>]otes or "
-                                 "[<color_yellow>d</color>]isassembled components." ) );
-    fold_and_print( win, point( 1, starty ), len, c_white,
-                    //~ An example of how to filter items based on category or material.
-                    _( "Examples: c:food,m:iron,q:hammering,n:toolshelf,d:pipe" ) );
     wnoutrefresh( win );
+}
+
+auto item_filter_rules_text( item_filter_type type ) -> std::string
+{
+    std::string ret;
+    for( const item_filter_rule_line &line : item_filter_rule_lines( type ) ) {
+        ret += line.text;
+        ret += line.gap_after ? "\n\n" : "\n";
+    }
+    // Drop the trailing newline
+    if( !ret.empty() ) {
+        ret.pop_back();
+    }
+    return ret;
 }
 
 std::string format_item_info( const std::vector<iteminfo> &item_display,

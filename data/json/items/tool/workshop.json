@@ -208,6 +208,7 @@
     "volume": "375 ml",
     "price": "10 USD",
     "price_postapoc": "250 cent",
+    "ascii_picture": "crowbar",
     "to_hit": 1,
     "bashing": 10,
     "cutting": 1,
@@ -215,7 +216,7 @@
     "symbol": ";",
     "color": "dark_gray",
     "qualities": [ [ "PRY", 2 ], [ "HAMMER", 1 ] ],
-    "use_action": [ "CROWBAR", "HAMMER" ],
+    "use_action": [ "HAMMER" ],
     "flags": [ "BELT_CLIP" ]
   },
   {
@@ -349,13 +350,14 @@
     "volume": "350 ml",
     "price": "7 USD",
     "price_postapoc": "1 USD",
+    "ascii_picture": "hammer",
     "to_hit": -1,
     "bashing": 9,
     "material": [ "steel", "wood" ],
     "symbol": ";",
     "color": "brown",
     "qualities": [ [ "HAMMER", 3 ], [ "PRY", 1 ], [ "HAMMER_FINE", 1 ] ],
-    "use_action": [ "HAMMER", "CROWBAR" ],
+    "use_action": [ "HAMMER" ],
     "flags": [ "BELT_CLIP", "NONCONDUCTIVE" ]
   },
   {
@@ -586,7 +588,7 @@
       [ "PULL", 2 ],
       [ "CASING_FORMING", 1 ]
     ],
-    "use_action": [ "GUN_CLEAN", "GUN_REPAIR", "CROWBAR", "HAMMER" ],
+    "use_action": [ "GUN_CLEAN", "GUN_REPAIR", "HAMMER" ],
     "magazines": [ [ "battery", [ "medium_battery_cell" ] ] ],
     "magazine_well": "500 ml",
     "flags": [ "ALLOWS_REMOTE_USE" ]
@@ -602,6 +604,7 @@
     "volume": "350 ml",
     "price": "0 cent",
     "price_postapoc": "10 cent",
+    "ascii_picture": "hammer",
     "bashing": 9,
     "to_hit": -1,
     "material": [ "steel", "wood" ],
@@ -929,7 +932,7 @@
     "color": "light_gray",
     "ammo": "battery",
     "flags": [ "TRADER_AVOID" ],
-    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
+    "magazines": [ [ "battery", [ "light_battery_cell", "light_minus_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -943,6 +946,7 @@
     "volume": "400 ml",
     "price": "0 cent",
     "price_postapoc": "10 cent",
+    "ascii_picture": "hammer",
     "bashing": 14,
     "to_hit": -1,
     "material": [ "stone", "wood" ],
@@ -958,7 +962,7 @@
     "category": "tools_workshop",
     "weapon_category": [ "STILETTOS" ],
     "name": { "str": "screwdriver" },
-    "description": "This is a Philips-head screwdriver.  It is important for almost all electronics crafting, most mechanics crafting, and has many more uses.",
+    "description": "This is a Phillips-head screwdriver.  It is important for almost all electronics crafting, most mechanics crafting, and has many more uses.",
     "weight": "170 g",
     "volume": "40 ml",
     "price": "450 cent",
@@ -1022,7 +1026,7 @@
       [ "CHISEL", 3 ],
       [ "CASING_FORMING", 1 ]
     ],
-    "use_action": [ "GUN_CLEAN", "GUN_REPAIR", "CROWBAR", "HAMMER" ],
+    "use_action": [ "GUN_CLEAN", "GUN_REPAIR", "HAMMER" ],
     "magazines": [ [ "battery", [ "medium_battery_cell" ] ] ],
     "magazine_well": "500 ml",
     "flags": [ "ALLOWS_REMOTE_USE" ]
@@ -1066,7 +1070,7 @@
     "type": "TOOL",
     "category": "tools_workshop",
     "name": { "str": "alcohol-fueled soldering iron" },
-    "description": "This is a device with a metal tip that can get very hot.  It is necessary for advanced electronics crafting.  A metal tip is hold over the burner to create enough heat to solder.  Not as sophisticated as a regular soldering iron.",
+    "description": "This is a device with a metal tip that can get very hot.  It is necessary for advanced electronics crafting.  A metal tip is held over the burner to create enough heat to solder.  Not as sophisticated as a regular soldering iron.",
     "weight": "1000 g",
     "volume": "600 ml",
     "price": "50 USD",
@@ -1127,7 +1131,7 @@
       [ "HV_INSULATION", 1 ],
       [ "BUTCHER", 11 ]
     ],
-    "use_action": [ "HAMMER", "CROWBAR" ]
+    "use_action": [ "HAMMER" ]
   },
   {
     "id": "toolbox_workshop",
@@ -1168,7 +1172,7 @@
       [ "HV_INSULATION", 1 ],
       [ "VISE", 1 ]
     ],
-    "use_action": [ "HAMMER", "CROWBAR" ]
+    "use_action": [ "HAMMER" ]
   },
   {
     "id": "welder",
@@ -1314,7 +1318,7 @@
     "type": "GENERIC",
     "category": "tools_workshop",
     "name": "leather hose",
-    "description": "This is a hose made out of leather.  Watertight and flexiable, it can be used to siphon fuel from a vehicle tank.  However, it's not as elastic a rubber hose.",
+    "description": "This is a hose made out of leather.  Watertight and flexible, it can be used to siphon fuel from a vehicle tank.  However, it's not as elastic as a rubber hose.",
     "weight": "600 g",
     "volume": "500 ml",
     "price": "1 USD",

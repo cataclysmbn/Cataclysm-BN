@@ -398,6 +398,8 @@ src/
 
 ## Build and Test
 
+When changing Lua doc generators, type all helper parameters with `---@param` and annotate table shapes, including nested helpers and anonymous callbacks. Rerun the workspace Lua checker after the last annotation edit even if generated output is unchanged; new source diagnostics are regressions.
+
 ```sh
 # Build
 cmake --build --preset linux-full --target cataclysm-bn-tiles

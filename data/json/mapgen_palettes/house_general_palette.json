@@ -219,7 +219,7 @@
       "u": "t_thconc_floor",
       "X": "t_thconc_floor"
     },
-    "furniture": { "c": "f_exercise", "u": "f_ergometer", "X": "f_punching_bag" },
+    "furniture": { "c": "f_exercise", "u": "f_ergometer", "X": "f_punching_bag", "â": "f_home_furnace", "g": "f_water_heater" },
     "monsters": {
       "!": [ { "monster": "GROUP_ROACH", "chance": 70 }, { "monster": "GROUP_ZOMBIE", "chance": 100 } ],
       ".": [ { "monster": "GROUP_ROACH", "chance": 80 }, { "monster": "GROUP_ZOMBIE", "chance": 60 } ]
@@ -229,6 +229,9 @@
     "type": "palette",
     "id": "standard_domestic_lino_kitchen",
     "//": "Intended to be used in conjunction with standard_domestic_palette. Load the domestic palette first, then this one to add gray linoleum flooring under kitchen furniture",
+    "parameters": {
+      "linoleum_color_kitchen": { "type": "ter_str_id", "default": { "distribution": [ [ "t_linoleum_gray", 1 ], [ "t_linoleum_white", 1 ] ] } }
+    },
     "terrain": {
       "O": "t_linoleum_gray",
       "F": "t_linoleum_gray",
@@ -248,6 +251,9 @@
     "type": "palette",
     "id": "standard_domestic_lino_bathroom",
     "//": "Intended to be used in conjunction with standard_domestic_palette. Load the domestic palette first, then this one to add gray linoleum flooring under bathroom furniture",
+    "parameters": {
+      "linoleum_color_bathroom": { "type": "ter_str_id", "default": { "distribution": [ [ "t_linoleum_gray", 1 ], [ "t_linoleum_white", 1 ] ] } }
+    },
     "terrain": {
       "B": "t_linoleum_gray",
       "9": "t_linoleum_gray",
@@ -255,7 +261,8 @@
       "S": "t_linoleum_gray",
       "8": "t_linoleum_gray",
       "Q": "t_linoleum_gray",
-      "w": "t_linoleum_gray"
+      "w": "t_linoleum_gray",
+      "~": "t_linoleum_gray"
     }
   },
   {
