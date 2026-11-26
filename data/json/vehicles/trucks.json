@@ -1317,7 +1317,7 @@
         "parts": [ "frame_nw", "halfboard_nw", "wheel_mount_medium_steerable", "wheel", "headlight" ]
       },
       { "x": -1, "y": -1, "parts": [ "frame_vertical", "halfboard_appearance_board_nw" ] },
-      { "x": -2, "y": 2, "parts": [ "frame_vertical", "hatch_appearance_hatch_opaque_right" ] },
+      { "x": -2, "y": 2, "parts": [ "frame_vertical", "hatch" ] },
       { "x": 1, "y": 0, "parts": [ "frame_horizontal_2", "windshield_cover_left" ] },
       { "x": -3, "y": 2, "parts": [ "frame_vertical", "hatch", "wheel_mount_medium", "wheel" ] },
       { "x": -4, "y": 0, "parts": [ "frame_horizontal", "stowboard_horizontal_rear" ] },
@@ -1355,11 +1355,7 @@
       { "x": 1, "y": 2, "parts": [ "frame_vertical_T_right", "windshield_wheel_right" ] },
       { "x": 2, "y": 1, "parts": [ "frame_horizontal_front", "halfboard_cover_right" ] },
       { "x": 1, "y": -1, "parts": [ "frame_vertical_T_left", "windshield_wheel_left" ] },
-      {
-        "x": -2,
-        "y": -1,
-        "parts": [ "frame_vertical", "hatch_appearance_hatch_opaque_left", { "part": "tank", "fuel": "gasoline" } ]
-      },
+      { "x": -2, "y": -1, "parts": [ "frame_vertical", "hatch", { "part": "tank", "fuel": "gasoline" } ] },
       { "x": -3, "y": -1, "parts": [ "frame_vertical", "hatch", "wheel_mount_medium", "wheel" ] }
     ],
     "items": [

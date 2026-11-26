@@ -429,7 +429,7 @@
         "parts": [ "frame_nw", "halfboard_nw", "headlight", "wheel_mount_medium_steerable", "wheel" ]
       },
       { "x": -1, "y": -1, "parts": [ "frame_vertical", "board_nw_edge", "roof" ] },
-      { "x": -2, "y": 2, "parts": [ "frame_vertical_right", "door_sliding_front", "roof" ] },
+      { "x": -2, "y": 2, "parts": [ "frame_vertical_right", "door_sliding", "roof" ] },
       { "x": 1, "y": 0, "parts": [ "frame_horizontal_2", "windshield_cover_left" ] },
       { "x": -3, "y": 2, "parts": [ "frame_vertical_right", "board_wheel_right", "roof" ] },
       { "x": -4, "y": 0, "parts": [ "frame_horizontal_rear", "door_trunk_horizontal_2", "roof" ] },
@@ -517,11 +517,7 @@
         "parts": [ "frame_nw", "halfboard_nw", "headlight", "wheel_mount_medium_steerable", "wheel" ]
       },
       { "x": -1, "y": -1, "parts": [ "frame_vertical", "board_nw_edge", "roof" ] },
-      {
-        "x": -2,
-        "y": 2,
-        "parts": [ "frame_vertical", "roof", "door_sliding_appearance_door_opaque_full_right", "v_curtain" ]
-      },
+      { "x": -2, "y": 2, "parts": [ "frame_vertical", "roof", "door_sliding", "v_curtain" ] },
       { "x": 1, "y": 0, "parts": [ "frame_horizontal_2", "windshield_cover_left" ] },
       { "x": -3, "y": 2, "parts": [ "frame_vertical_right", "board_wheel_right", "roof" ] },
       {
@@ -622,7 +618,7 @@
         "parts": [ "xlframe_nw", "halfboard_nw", "headlight", "wheel_mount_medium_steerable", "wheel" ]
       },
       { "x": -1, "y": -1, "parts": [ "xlframe_vertical", "board_nw_edge", "roof" ] },
-      { "x": -2, "y": 2, "parts": [ "xlframe_vertical_right", "door_sliding_front", "roof" ] },
+      { "x": -2, "y": 2, "parts": [ "xlframe_vertical_right", "door_sliding", "roof" ] },
       { "x": 1, "y": 0, "parts": [ "xlframe_horizontal_2", "windshield_cover_left" ] },
       { "x": -3, "y": 2, "parts": [ "xlframe_vertical_right", "board_wheel_right", "roof", "solar_panel" ] },
       { "x": -4, "y": 0, "parts": [ "xlframe_horizontal_rear", "door_trunk_horizontal_2", "roof" ] },

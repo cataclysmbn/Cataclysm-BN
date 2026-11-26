@@ -652,8 +652,8 @@
         "y": -1,
         "parts": [ "xlframe_sw", "wheel_mount_medium", "wheel_slick", "aluminum_halfboard_appearance_halfboard_hatch_wheel_left" ]
       },
-      { "x": -2, "y": 0, "parts": [ "xlframe_horizontal_rear", "door_trunk_wheel_left" ] },
-      { "x": -2, "y": 1, "parts": [ "xlframe_horizontal_rear", "door_trunk_wheel_right" ] },
+      { "x": -2, "y": 0, "parts": [ "xlframe_horizontal_rear", "door_trunk" ] },
+      { "x": -2, "y": 1, "parts": [ "xlframe_horizontal_rear", "door_trunk" ] },
       {
         "x": -2,
         "y": 2,
