@@ -124,7 +124,9 @@
       },
       { "direction": "appearance_xlhalfboard_se", "symbol": "\"", "symbol_broken": "0", "looks_like": "windshield" },
       { "direction": "appearance_xlhalfboard_sw", "symbol": "\"", "symbol_broken": "0", "looks_like": "windshield" },
-      { "direction": "appearance_board_ne_edge", "symbol": "\"", "symbol_broken": "0", "looks_like": "windshield" }
+      { "direction": "appearance_board_ne_edge", "symbol": "\"", "symbol_broken": "0", "looks_like": "windshield" },
+      { "direction": "appearance_windshield_se", "symbol": "\"", "looks_like": "windshield" },
+      { "direction": "appearance_windshield_sw", "symbol": "\"", "looks_like": "windshield" }
     ]
   },
   {

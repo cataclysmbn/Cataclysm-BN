@@ -44,9 +44,9 @@
       { "x": 0, "y": 1, "parts": [ "frame_cross", "reclining_seat", "controls", "dashboard", "seatbelt", "roof" ] },
       { "x": 0, "y": -1, "parts": [ "frame_vertical", "windshield_vertical_left" ] },
       { "x": -1, "y": 2, "parts": [ "frame_vertical_right", "door_sliding_appearance_door_front_right", "roof" ] },
-      { "x": 1, "y": 2, "parts": [ "frame_ne", "halfboard_appearance_windshield_ne_edge" ] },
+      { "x": 1, "y": 2, "parts": [ "frame_ne", "halfboard_ne" ] },
       { "x": -5, "y": 1, "parts": [ "frame_cover", "halfboard_appearance_xlhalfboard_sw" ] },
-      { "x": 1, "y": -1, "parts": [ "frame_nw", "halfboard_appearance_windshield_nw_edge" ] },
+      { "x": 1, "y": -1, "parts": [ "frame_nw", "halfboard_nw" ] },
       { "x": -5, "y": 2, "parts": [ "frame_se", "halfboard_appearance_xlhalfboard_ne" ] },
       { "x": -5, "y": 0, "parts": [ "frame_cover", "halfboard_appearance_xlhalfboard_se" ] },
       {
@@ -111,9 +111,9 @@
       { "x": 0, "y": 1, "parts": [ "frame_cross", "reclining_seat", "controls", "dashboard", "seatbelt", "roof" ] },
       { "x": 0, "y": -1, "parts": [ "frame_vertical", "windshield_vertical_left" ] },
       { "x": -1, "y": 2, "parts": [ "frame_vertical_right", "door_sliding_appearance_door_front_right", "roof" ] },
-      { "x": 1, "y": 2, "parts": [ "frame_ne", "halfboard_appearance_windshield_ne_edge" ] },
+      { "x": 1, "y": 2, "parts": [ "frame_ne", "halfboard_ne" ] },
       { "x": -5, "y": 1, "parts": [ "frame_cover", "halfboard_appearance_xlhalfboard_sw" ] },
-      { "x": 1, "y": -1, "parts": [ "frame_nw", "halfboard_appearance_windshield_nw_edge" ] },
+      { "x": 1, "y": -1, "parts": [ "frame_nw", "halfboard_nw" ] },
       { "x": -5, "y": 2, "parts": [ "frame_se", "halfboard_appearance_xlhalfboard_ne" ] },
       { "x": -5, "y": 0, "parts": [ "frame_cover", "halfboard_appearance_xlhalfboard_se" ] },
       {
@@ -136,11 +136,11 @@
     "blueprint": [  ],
     "color_palette": "aircraft_standard",
     "parts": [
-      { "x": -1, "y": 1, "parts": [ "frame_se", "windshield_appearance_xlhalfboard_se" ] },
-      { "x": -1, "y": -1, "parts": [ "frame_sw", "windshield_appearance_xlhalfboard_sw" ] },
+      { "x": -1, "y": 1, "parts": [ "frame_se", "windshield_appearance_windshield_se" ] },
+      { "x": -1, "y": -1, "parts": [ "frame_sw", "windshield_appearance_windshield_sw" ] },
       { "x": 1, "y": 0, "parts": [ "frame_horizontal", "windshield_horizontal_front_edge", "small_storage_battery" ] },
       { "x": -4, "y": 0, "parts": [ "frame_cover", "aluminum_halfboard_appearance_xlhalfboard_vertical" ] },
-      { "x": 1, "y": 1, "parts": [ "frame_ne", "xlhalfboard_appearance_windshield_ne_edge" ] },
+      { "x": 1, "y": 1, "parts": [ "frame_ne", "xlhalfboard_ne" ] },
       {
         "x": -3,
         "y": 0,
@@ -161,7 +161,7 @@
       { "x": -4, "y": 1, "parts": [ "frame_se", "aluminum_halfboard_appearance_xlhalfboard_ne_from_cover" ] },
       { "x": 0, "y": 1, "parts": [ "frame_vertical", "windshield_vertical_right" ] },
       { "x": 0, "y": -1, "parts": [ "frame_vertical", "windshield" ] },
-      { "x": 1, "y": -1, "parts": [ "frame_nw", "xlhalfboard_appearance_windshield_nw_edge" ] }
+      { "x": 1, "y": -1, "parts": [ "frame_nw", "xlhalfboard_nw" ] }
     ],
     "items": [
       { "x": 0, "y": 0, "chance": 100, "items": [ "caff_gum" ] },
@@ -267,9 +267,9 @@
     "blueprint": [  ],
     "color_palette": "aircraft_standard",
     "parts": [
-      { "x": -1, "y": 1, "parts": [ "frame_se", "aluminum_board_appearance_xlhalfboard_se" ] },
+      { "x": -1, "y": 1, "parts": [ "frame_se", "aluminum_board_se" ] },
       { "x": 2, "y": -1, "parts": [ "frame_nw", "xlhalfboard_nw" ] },
-      { "x": -1, "y": -1, "parts": [ "frame_sw", "aluminum_board_appearance_xlhalfboard_sw" ] },
+      { "x": -1, "y": -1, "parts": [ "frame_sw", "aluminum_board_sw" ] },
       { "x": 1, "y": 0, "parts": [ "frame_horizontal", "windshield" ] },
       { "x": -4, "y": 0, "parts": [ "frame_cover", "aluminum_halfboard_appearance_xlhalfboard_vertical" ] },
       { "x": 1, "y": 1, "parts": [ "frame_ne", "windshield_ne" ] },
@@ -319,7 +319,7 @@
       { "x": -1, "y": 1, "parts": [ "frame_cross", "door_internal_front", "small_civilian_rotors", "roof" ] },
       { "x": 2, "y": 2, "parts": [ "frame_ne", "halfboard_ne" ] },
       { "x": 0, "y": 2, "parts": [ "frame_cross", "seat", "controls", "dashboard", "roof", "seatbelt" ] },
-      { "x": 1, "y": 3, "parts": [ "frame_ne", "halfboard_appearance_windshield_ne_edge" ] },
+      { "x": 1, "y": 3, "parts": [ "frame_ne", "halfboard_ne" ] },
       { "x": -3, "y": 3, "parts": [ "frame_se", "board_se", "roof" ] },
       { "x": -1, "y": -1, "parts": [ "frame_vertical_left", "board_vertical_left", "roof" ] },
       { "x": -2, "y": 2, "parts": [ "frame_cross", "roof", "bed", "engine_turbine_medium", "alternator_car" ] },
@@ -328,9 +328,9 @@
       { "x": -3, "y": 2, "parts": [ "frame_nw", "board_nw", "roof", { "part": "tank_55gal_drum", "fuel": "jp8" } ] },
       { "x": -7, "y": 2, "parts": [ "frame_cover", "halfboard_ne" ] },
       { "x": -2, "y": 3, "parts": [ "frame_vertical_right", "board_vertical_right" ] },
-      { "x": -4, "y": 0, "parts": [ "frame_sw", "door_sliding_appearance_door_opaque_rear", "roof" ] },
+      { "x": -4, "y": 0, "parts": [ "frame_sw", "door_sliding", "roof" ] },
       { "x": 1, "y": 1, "parts": [ "frame_horizontal", "windshield" ] },
-      { "x": -4, "y": 2, "parts": [ "frame_se", "door_sliding_appearance_door_opaque_rear", "roof" ] },
+      { "x": -4, "y": 2, "parts": [ "frame_se", "door_sliding", "roof" ] },
       { "x": -3, "y": 0, "parts": [ "frame_ne", "board_ne", "roof", { "part": "tank_55gal_drum", "fuel": "jp8" } ] },
       { "x": -2, "y": 0, "parts": [ "frame_cross", "roof", "bed", "engine_turbine_medium", "alternator_car" ] },
       { "x": 0, "y": 0, "parts": [ "frame_cross", "seat", "controls", "dashboard", "roof", "seatbelt" ] },
@@ -339,7 +339,7 @@
       { "x": -1, "y": 0, "parts": [ "frame_cross", "roof", "stowboard_horizontal" ] },
       { "x": -6, "y": 1, "parts": [ "frame_vertical", "halfboard_vertical" ] },
       { "x": -2, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "aisle_lights", "roof" ] },
-      { "x": -4, "y": 1, "parts": [ "frame_cross", "door_sliding_appearance_door_opaque_rear", "roof" ] },
+      { "x": -4, "y": 1, "parts": [ "frame_cross", "door_sliding", "roof" ] },
       { "x": 0, "y": 3, "parts": [ "frame_vertical", "windshield" ] },
       { "x": 0, "y": 1, "parts": [ "frame_cross", "medium_storage_battery", "roof", "aisle_vertical" ] },
       { "x": 0, "y": -1, "parts": [ "frame_vertical", "windshield" ] },
@@ -348,7 +348,7 @@
       { "x": -5, "y": 1, "parts": [ "frame_vertical", "halfboard_vertical" ] },
       { "x": 2, "y": 1, "parts": [ "frame_horizontal", "halfboard_horizontal_front" ] },
       { "x": -7, "y": 0, "parts": [ "frame_cover", "halfboard_nw" ] },
-      { "x": 1, "y": -1, "parts": [ "frame_nw", "halfboard_appearance_windshield_nw_edge" ] },
+      { "x": 1, "y": -1, "parts": [ "frame_nw", "halfboard_nw" ] },
       { "x": -3, "y": -1, "parts": [ "frame_sw", "board_sw", "roof" ] },
       { "x": -2, "y": -1, "parts": [ "frame_vertical_left", "board_vertical_left", "roof" ] }
     ],
@@ -372,7 +372,7 @@
     "blueprint": [  ],
     "color_palette": "aircraft_standard",
     "parts": [
-      { "x": -1, "y": 1, "parts": [ "frame_se", "windshield_appearance_xlhalfboard_se" ] },
+      { "x": -1, "y": 1, "parts": [ "frame_se", "windshield_appearance_windshield_se" ] },
       { "x": -1, "y": -1, "parts": [ "frame_sw" ] },
       { "x": 1, "y": 0, "parts": [ "frame_horizontal", "windshield_horizontal_front_edge" ] },
       { "x": 1, "y": 1, "parts": [ "frame_ne", "xlhalfboard_ne" ] },
@@ -386,12 +386,7 @@
       {
         "x": -1,
         "y": 0,
-        "parts": [
-          "frame_cross",
-          "door_sliding_appearance_door_opaque_rear",
-          "engine_turbine_small",
-          { "part": "tank_55gal_drum", "fuel": "jp8" }
-        ]
+        "parts": [ "frame_cross", "door_sliding", "engine_turbine_small", { "part": "tank_55gal_drum", "fuel": "jp8" } ]
       },
       { "x": 0, "y": 1, "parts": [ "frame_vertical", "windshield_ne" ] },
       { "x": 0, "y": -1, "parts": [ "frame_vertical" ] },
@@ -522,29 +517,35 @@
       { "x": 2, "y": -1, "parts": [ "frame_nw", "xlhalfboard_nw" ] },
       { "x": -1, "y": -1, "parts": [ "frame_sw", "board_sw" ] },
       { "x": 1, "y": 0, "parts": [ "frame_cross", "seat", "controls", "dashboard", "seatbelt", "roof" ] },
-      { "x": -4, "y": 0, "parts": [ "frame_vertical", "halfboard_vertical" ] },
-      { "x": 1, "y": 1, "parts": [ "frame_ne", "windshield" ] },
+      { "x": -4, "y": 0, "parts": [ "frame_vertical", "halfboard_appearance_xlhalfboard_vertical" ] },
+      { "x": 1, "y": 1, "parts": [ "frame_ne", "windshield_vertical_right" ] },
       {
         "x": -3,
         "y": 0,
-        "parts": [ "frame_vertical", "halfboard_vertical", { "part": "tank_55gal_drum", "fuel": "jp8" } ]
+        "parts": [ "frame_vertical", "halfboard_appearance_xlhalfboard_vertical", { "part": "tank_55gal_drum", "fuel": "jp8" } ]
       },
-      { "x": -4, "y": -1, "parts": [ "frame_cover", "halfboard_cover" ] },
+      { "x": -4, "y": -1, "parts": [ "frame_cover", "halfboard_appearance_xlhalfboard_nw_from_cover" ] },
       {
         "x": -2,
         "y": 0,
-        "parts": [ "frame_vertical", "halfboard_vertical", { "part": "tank_55gal_drum", "fuel": "jp8" } ]
+        "parts": [ "frame_vertical", "halfboard_appearance_xlhalfboard_vertical", { "part": "tank_55gal_drum", "fuel": "jp8" } ]
       },
       { "x": 0, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "roof", "small_storage_battery" ] },
       { "x": 2, "y": 0, "parts": [ "frame_cover", "windshield" ] },
       {
         "x": -1,
         "y": 0,
-        "parts": [ "frame_cross", "engine_turbine_small", "alternator_car", "stowboard_horizontal", "small_civilian_rotors" ]
+        "parts": [
+          "frame_cross",
+          "engine_turbine_small",
+          "alternator_car",
+          "stowboard_appearance_board_horizontal_rear",
+          "small_civilian_rotors"
+        ]
       },
-      { "x": -4, "y": 1, "parts": [ "frame_cover", "halfboard_cover" ] },
-      { "x": 0, "y": 1, "parts": [ "frame_vertical", "door_sliding" ] },
-      { "x": 0, "y": -1, "parts": [ "frame_vertical", "door_sliding" ] },
+      { "x": -4, "y": 1, "parts": [ "frame_cover", "halfboard_appearance_xlhalfboard_ne_from_cover" ] },
+      { "x": 0, "y": 1, "parts": [ "frame_vertical", "door_sliding_appearance_door_se_from_door_sliding" ] },
+      { "x": 0, "y": -1, "parts": [ "frame_vertical", "door_sliding_appearance_door_sw_from_door_sliding" ] },
       { "x": 2, "y": 1, "parts": [ "frame_ne", "xlhalfboard_ne" ] },
       { "x": 1, "y": -1, "parts": [ "frame_nw", "windshield" ] }
     ],
@@ -569,7 +570,7 @@
       { "x": -1, "y": 1, "parts": [ "frame_cross", "door_internal_front", "small_civilian_rotors", "roof" ] },
       { "x": 2, "y": 2, "parts": [ "frame_ne", "halfboard_ne" ] },
       { "x": 0, "y": 2, "parts": [ "frame_cross", "seat", "controls", "dashboard", "roof", "seatbelt" ] },
-      { "x": 1, "y": 3, "parts": [ "frame_ne", "halfboard_appearance_windshield_ne_edge" ] },
+      { "x": 1, "y": 3, "parts": [ "frame_ne", "halfboard_ne" ] },
       { "x": -3, "y": 3, "parts": [ "frame_se", "board_se" ] },
       { "x": -1, "y": -1, "parts": [ "frame_vertical", "roof", "door_sliding" ] },
       { "x": -2, "y": 2, "parts": [ "frame_cross", "roof", "bed", "engine_turbine_medium", "alternator_car" ] },
@@ -602,7 +603,7 @@
       { "x": -5, "y": 1, "parts": [ "frame_vertical", "halfboard_vertical" ] },
       { "x": 2, "y": 1, "parts": [ "frame_horizontal", "halfboard_horizontal_front" ] },
       { "x": -7, "y": 0, "parts": [ "frame_cover", "halfboard_nw" ] },
-      { "x": 1, "y": -1, "parts": [ "frame_nw", "halfboard_appearance_windshield_nw_edge" ] },
+      { "x": 1, "y": -1, "parts": [ "frame_nw", "halfboard_nw" ] },
       { "x": -3, "y": -1, "parts": [ "frame_sw", "board_sw" ] },
       { "x": -2, "y": -1, "parts": [ "frame_vertical_left", "roof", "door_sliding" ] }
     ],

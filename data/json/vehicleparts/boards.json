@@ -96,7 +96,10 @@
         "symbol": "j",
         "symbol_broken": "#",
         "looks_like": "board_vertical"
-      }
+      },
+      { "direction": "appearance_board_vertical_left", "symbol": "b", "looks_like": "board_sw" },
+      { "direction": "appearance_board_vertical_right", "symbol": "n", "looks_like": "board_se" },
+      { "direction": "appearance_board_vertical_left_from_vertical", "symbol": "j", "looks_like": "board_vertical" }
     ]
   },
   {
@@ -270,7 +273,25 @@
       { "direction": "appearance_board_nw", "symbol": "j", "symbol_broken": "#", "looks_like": "halfboard_vertical" },
       { "direction": "appearance_board_se", "symbol": "n", "symbol_broken": "#", "looks_like": "halfboard_se" },
       { "direction": "appearance_board_sw", "symbol": "b", "symbol_broken": "#", "looks_like": "halfboard_sw" },
-      { "direction": "appearance_board_ne", "symbol": "j", "symbol_broken": "#", "looks_like": "halfboard_vertical" }
+      { "direction": "appearance_board_ne", "symbol": "j", "symbol_broken": "#", "looks_like": "halfboard_vertical" },
+      { "direction": "appearance_halfboard_wheel_left", "symbol": "j", "looks_like": "halfboard_vertical_left" },
+      { "direction": "appearance_halfboard_wheel_right", "symbol": "j", "looks_like": "halfboard_vertical_right" },
+      { "direction": "appearance_xlhalfboard_nw_from_cover", "symbol": "^", "looks_like": "halfboard_cover" },
+      { "direction": "appearance_xlhalfboard_ne_from_cover", "symbol": "^", "looks_like": "halfboard_cover" },
+      { "direction": "appearance_halfboard_sw", "symbol": "j", "looks_like": "halfboard_vertical" },
+      { "direction": "appearance_halfboard_se", "symbol": "j", "looks_like": "halfboard_vertical" },
+      { "direction": "appearance_halfboard_nw", "symbol": "j", "looks_like": "halfboard_vertical" },
+      { "direction": "appearance_halfboard_ne", "symbol": "j", "looks_like": "halfboard_vertical" },
+      {
+        "direction": "appearance_halfboard_nw_from_vertical_left",
+        "symbol": "j",
+        "looks_like": "halfboard_vertical_left"
+      },
+      {
+        "direction": "appearance_halfboard_ne_from_vertical_right",
+        "symbol": "j",
+        "looks_like": "halfboard_vertical_right"
+      }
     ]
   },
   {
@@ -614,7 +635,8 @@
         "symbol": "#",
         "symbol_broken": "#",
         "looks_like": "stowboard_vertical_right"
-      }
+      },
+      { "direction": "appearance_board_horizontal_rear", "symbol": "h", "looks_like": "stowboard_horizontal" }
     ]
   },
   {

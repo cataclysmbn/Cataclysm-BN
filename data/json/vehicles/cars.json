@@ -1461,9 +1461,9 @@
       {
         "x": -2,
         "y": -1,
-        "parts": [ "frame_vertical", "halfboard_appearance_windshield_wheel_left", { "part": "tank", "fuel": "gasoline" } ]
+        "parts": [ "frame_vertical", "halfboard_appearance_halfboard_wheel_left", { "part": "tank", "fuel": "gasoline" } ]
       },
-      { "x": -2, "y": 2, "parts": [ "frame_vertical", "halfboard_appearance_windshield_wheel_right" ] },
+      { "x": -2, "y": 2, "parts": [ "frame_vertical", "halfboard_appearance_halfboard_wheel_right" ] },
       { "x": -3, "y": -1, "parts": [ "frame_horizontal_rear", "halfboard_sw", "wheel_mount_medium", "wheel" ] },
       { "x": -3, "y": 0, "parts": [ "frame_horizontal_rear", "trunk_flat" ] },
       { "x": -3, "y": 1, "parts": [ "frame_horizontal_rear", "trunk_flat" ] },
@@ -1531,7 +1531,7 @@
         "y": -1,
         "parts": [
           "xlframe_vertical",
-          "halfboard_appearance_windshield_wheel_left",
+          "halfboard_appearance_halfboard_wheel_left",
           "storage_battery_mount",
           "storage_battery_removable",
           "solar_panel"
@@ -1542,7 +1542,7 @@
         "y": 2,
         "parts": [
           "xlframe_vertical",
-          "halfboard_appearance_windshield_wheel_right",
+          "halfboard_appearance_halfboard_wheel_right",
           "storage_battery_mount",
           "storage_battery_removable",
           "solar_panel"
@@ -1750,8 +1750,8 @@
       },
       { "x": -2, "y": 0, "parts": [ "xlframe_vertical", "windshield_horizontal_rear", "medium_storage_battery" ] },
       { "x": -2, "y": 1, "parts": [ "xlframe_vertical", "windshield_horizontal_rear", "medium_storage_battery" ] },
-      { "x": -2, "y": -1, "parts": [ "xlframe_vertical", "halfboard_appearance_windshield_wheel_left" ] },
-      { "x": -2, "y": 2, "parts": [ "xlframe_vertical", "halfboard_appearance_windshield_wheel_right" ] },
+      { "x": -2, "y": -1, "parts": [ "xlframe_vertical", "halfboard_appearance_halfboard_wheel_left" ] },
+      { "x": -2, "y": 2, "parts": [ "xlframe_vertical", "halfboard_appearance_halfboard_wheel_right" ] },
       { "x": -3, "y": -1, "parts": [ "xlframe_horizontal_rear", "halfboard_sw", "wheel_mount_medium", "wheel" ] },
       { "x": -3, "y": 0, "parts": [ "xlframe_horizontal_rear", "trunk_flat" ] },
       { "x": -3, "y": 1, "parts": [ "xlframe_horizontal_rear", "trunk_flat" ] },
