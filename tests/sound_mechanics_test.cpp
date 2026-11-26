@@ -228,13 +228,14 @@ auto sleeper_wakes_from(const short volume) -> bool {
     });
     auto& here = get_map();
     auto& you = get_avatar();
-    you.setpos(tripoint_bub_ms(60, 60, 0));
-    here.build_map_cache(0);
+    const auto origin = bub_test_origin();
+    you.setpos(origin);
+    here.build_map_cache(origin.z());
     sounds::reset_sounds();
     you.add_effect(effect_sleep, 1_hours);
     sounds::sound(
         {.volume = volume,
-         .origin = tripoint_bub_ms(61, 60, 0),
+         .origin = origin + tripoint_rel_ms::east(),
          .category = sounds::sound_t::music,
          .description = "music"});
     here.batch_flood_fill_sounds();
