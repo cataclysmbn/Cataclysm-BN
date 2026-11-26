@@ -4,10 +4,13 @@
 #include "avatar.h"
 #include "catch/catch.hpp"
 #include "game.h"
+#include "map/field.h"
+#include "map/field_type.h"
 #include "morale_types.h"
 #include "rng.h"
 #include "timed_event.h"
 
+#include <algorithm>
 #include <ranges>
 #include <string>
 #include <vector>
@@ -125,4 +128,51 @@ TEST_CASE(
     // Without skip windows each 10-turn tick is one do_turn call.
     if (!skip_windows) { REQUIRE(coarse.do_turn_calls == to_turns<int>(10_minutes) / 10); }
     check_same_body(exact, coarse);
+}
+
+// Issue 11046: the avatar refuels the fireplace from a firewood source, so the fire burns for the
+// whole hour. The wait still skips time in 5-minute windows.
+TEST_CASE("waiting next to a refueled fireplace skips time", "[activity][fixed_window]") {
+    const auto skip_options = skip_window_options{};
+    const auto action_scale = override_option("TIME_ACTION_SCALE", "100");
+    setup_wait_scene(wait_scene::fireplace);
+    hold_weather(weather_type_id("clear"), 18_c);
+
+    const auto state = wait_through_activity(1_hours);
+    INFO(state.error_or(""));
+    REQUIRE(state.has_value());
+    CHECK(g->m.get_field(g->u.bub_pos() + fireplace_fire, fd_fire) != nullptr);
+    CHECK(g->m.i_at(g->u.bub_pos() + fireplace_pile).size() < 30);
+    const auto windows =
+        to_turns<int>(1_hours) / to_turns<int>(activity_time_cadence::fixed_window());
+    CHECK(state->do_turn_calls <= windows * 5);
+}
+
+// A fire that can spread does not stop the skip window. The fire starts on the last tile of a
+// submap and burns a line of 24 webs through the next 2 submaps within one 5-minute window. Blood
+// in the last submap ages the full 5 minutes, also the turns before the fire reached it.
+TEST_CASE("waiting near a spreading fire skips time", "[activity][fixed_window]") {
+    const auto skip_options = skip_window_options{};
+    const auto action_scale = override_option("TIME_ACTION_SCALE", "100");
+    setup_wait_scene(wait_scene::field);
+    hold_weather(weather_type_id("clear"), 18_c);
+    // The avatar stands 6 tiles east of a submap border, so x + 5 is the last tile of a submap.
+    const auto fire = g->u.bub_pos() + point(5, 24);
+    g->m.add_field(fire, fd_fire, 2);
+    for (auto i = 1; i <= 24; ++i) { g->m.add_field(fire + point(i, 0), fd_web, 1); }
+    const auto blood = fire + point(24, 1);
+    g->m.add_field(blood, fd_blood, 1);
+
+    const auto state = wait_through_activity(5_minutes);
+    INFO(state.error_or(""));
+    REQUIRE(state.has_value());
+    // Fire removes a web in the tile it spreads to.
+    const auto webs_left = std::ranges::count_if(std::views::iota(1, 25), [&](int i) {
+        return g->m.get_field(fire + point(i, 0), fd_web) != nullptr;
+    });
+    CHECK(webs_left == 0);
+    const auto* blood_field = g->m.get_field(blood, fd_blood);
+    REQUIRE(blood_field != nullptr);
+    CHECK(blood_field->get_field_age() == 5_minutes);
+    CHECK(state->do_turn_calls <= 5);
 }

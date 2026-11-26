@@ -9,7 +9,6 @@
 #include "game_constants.h"
 #include "item.h"
 #include "itype.h"
-#include "map/field_type.h"
 #include "map_helpers.h"
 #include "monster.h"
 #include "npc.h"
@@ -146,12 +145,6 @@ TEST_CASE(
     "[activity][fixed_"
     "window]") {
     const auto no_autosave = override_option("AUTOSAVE", "false");
-
-    SECTION("active fire in simulated submap") {
-        expect_fixed_window_skip_blocked_by([] {
-            g->m.add_field(g->u.bub_pos() + point_east, fd_fire, 1);
-        });
-    }
 
     SECTION("relevant vehicle") {
         expect_fixed_window_skip_blocked_by([] {
