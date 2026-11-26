@@ -189,18 +189,10 @@
       { "x": -5, "y": 0, "parts": [ "frame_vertical", "cargo_space" ] },
       { "x": 0, "y": 2, "parts": [ "frame_appearance_frame_cross", "seat_windshield_front", "seatbelt", "roof" ] },
       { "x": -5, "y": -1, "parts": [ "frame_vertical_left", "halfboard_vertical_left" ] },
-      {
-        "x": -1,
-        "y": -1,
-        "parts": [ "frame_sw", "board_appearance_board_vertical_left", { "part": "tank", "fuel": "diesel" } ]
-      },
+      { "x": -1, "y": -1, "parts": [ "frame_sw", "board_nw_edge", { "part": "tank", "fuel": "diesel" } ] },
       { "x": -3, "y": 3, "parts": [ "frame_vertical_right", "halfboard_vertical_right" ] },
       { "x": -2, "y": 2, "parts": [ "frame_vertical", "cargo_space" ] },
-      {
-        "x": -1,
-        "y": 3,
-        "parts": [ "frame_se", "board_appearance_board_vertical_right", { "part": "tank", "fuel": "diesel" } ]
-      },
+      { "x": -1, "y": 3, "parts": [ "frame_se", "board_ne_edge", { "part": "tank", "fuel": "diesel" } ] },
       { "x": -2, "y": 3, "parts": [ "frame_sw", "halfboard_vertical_right" ] },
       {
         "x": 2,
