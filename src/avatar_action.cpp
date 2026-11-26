@@ -6,6 +6,7 @@
 #include "avatar_functions.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "cata_tiles.h"
 #include "character.h"
 #include "character_functions.h"
 #include "character_martial_arts.h"
@@ -48,6 +49,7 @@
 #include "reload/reload_ui.h"
 #include "ret_val.h"
 #include "rng.h"
+#include "sdltiles.h"
 #include "string_formatter.h"
 #include "translations.h"
 #include "type_id.h"
@@ -761,12 +763,42 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
                                             dest_loc )->part_index(), false, part_mod );
                 you.memorize_tile( bub_to_abs( dest_loc ), "vp_" + vp_id.str(), 0, 0 );
             } else {
+                auto subtile = 0;
+                auto rotation = 0;
                 if( m.has_furn( dest_loc ) ) {
+                    auto furn = m.furn( dest_loc );
+                    auto furn_id = furn.id().str();
+#if defined(TILES)
+                    auto connect_group = 0;
+                    if( furn.obj().connects( connect_group ) ) {
+                        tilecontext->get_furn_connect_values( dest_loc, subtile, rotation, connect_group, {} );
+                    } else {
+                        const auto neighborhood_ids = std::array{
+                            static_cast<int>( m.furn( dest_loc + point_south ) ),
+                            static_cast<int>( m.furn( dest_loc + point_east ) ),
+                            static_cast<int>( m.furn( dest_loc + point_west ) ),
+                            static_cast<int>( m.furn( dest_loc + point_north ) )
+                        };
+                        tilecontext->get_tile_values_with_ter( dest_loc, furn.to_i(), neighborhood_ids.data(), subtile,
+                                                               rotation );
+                    }
+#endif
                     you.memorize_tile( bub_to_abs( dest_loc ), m.furn( dest_loc ).id().str(), 0, 0 );
                 } else {
-                    std::string ter = m.ter( dest_loc ).id().str();
-                    you.memorize_tile( bub_to_abs( dest_loc ), ter, 0, 0 );
-                    you.memorize_terrain_tile( bub_to_abs( dest_loc ), ter, 0, 0 );
+                    auto ter = m.ter( dest_loc );
+                    auto ter_id = ter.id().str();
+#if defined(TILES)
+                    auto connect_group = 0;
+                    if( ter.obj().connects( connect_group ) ) {
+                        tilecontext->get_connect_values( dest_loc, subtile, rotation, connect_group, {} );
+                    } else {
+                        // Nothing is invisible -> this way map memory is always oriented correctly
+                        // Note: this does not apply to connects group sadly
+                        tilecontext->get_terrain_orientation( dest_loc, rotation, subtile, {}, {false, false, false, false, false} );
+                    }
+#endif
+                    you.memorize_tile( bub_to_abs( dest_loc ), ter_id, subtile, rotation );
+                    you.memorize_terrain_tile( bub_to_abs( dest_loc ), ter_id, subtile, rotation );
                 }
             }
         }

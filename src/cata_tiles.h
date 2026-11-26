@@ -866,6 +866,7 @@ class cata_tiles
         bool draw_color_at(
             const SDL_Color &color, point_bub_ms p, SDL_BlendMode blend_mode = SDL_BLENDMODE_NONE );
 
+    public:
         /** Tile Picking */
         void get_tile_values( int t, const int *tn, int &subtile, int &rotation );
 
@@ -886,6 +887,7 @@ class cata_tiles
 
         void get_rotation_and_subtile( char val, int &rota, int &subtile );
 
+    protected:
         /** Map memory */
         static bool has_memory_at( const tripoint_bub_ms &p );
         static auto get_ter_memory_at( const tripoint_bub_ms &p ) -> std::optional<memorized_terrain_tile>;
