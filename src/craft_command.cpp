@@ -197,7 +197,8 @@ void craft_command::execute( const tripoint_bub_ms &new_loc )
                 }
             }
             return acc;
-        }();
+        }
+        ();
         if( total_vol > 1000_liter ) {
             if( !query_large_volume( total_vol ) ) {
                 volume_warning_canceled = true;
