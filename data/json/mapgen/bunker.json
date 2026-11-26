@@ -94,7 +94,7 @@
   {
     "type": "mapgen",
     "method": "json",
-    "om_terrain": [ "bunker_roof" ],
+    "om_terrain": "bunker_roof",
     "object": {
       "fill_ter": "t_metal_floor_no_roof",
       "rows": [
@@ -123,15 +123,15 @@
         "       ..........       ",
         "       ..........       "
       ],
-      "palettes": [ "roof_palette" ],
       "terrain": {
         ".": "t_metal_floor_no_roof",
+        " ": "t_open_air",
         "_": "t_concrete",
         "R": "t_metal_floor_no_roof",
         "S": "t_radio_tower",
         "X": "t_metal_floor_no_roof"
       },
-      "furniture": { "S": "f_solar_unit" }
+      "furniture": { "X": "f_small_satelitte_dish", "S": "f_solar_unit" }
     }
   },
   {
