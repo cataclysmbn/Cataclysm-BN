@@ -6,7 +6,9 @@
 #include "avatar_functions.h"
 #include "bodypart.h"
 #include "calendar.h"
+#if defined(TILES)
 #include "cata_tiles.h"
+#endif
 #include "character.h"
 #include "character_functions.h"
 #include "character_martial_arts.h"
