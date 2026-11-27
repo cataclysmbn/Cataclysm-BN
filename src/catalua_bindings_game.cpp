@@ -9,8 +9,12 @@
 #include "catalua_log.h"
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
+#include "character.h"
+#include "character_id.h"
 #include "creature_tracker.h"
 #include "distribution_grid.h"
+#include "event.h"
+#include "event_bus.h"
 #include "game.h"
 #include "iexamine.h"
 #include "init.h"
@@ -36,6 +40,8 @@
 #include <optional>
 #include <ranges>
 #include <stdexcept>
+#include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "dimension_info.h"
@@ -489,6 +495,148 @@ auto place_player_dimension_at( const dimension_travel_options &opts ) -> bool
     return true;
 }
 
+// Maps the event_type enum to and from its string form so Lua can name
+// events without a dedicated enum binding.
+auto event_type_from_string( const std::string &name ) -> event_type
+{
+    static const auto lookup = [] {
+        std::unordered_map<std::string, event_type> map;
+        for( int i = 0; i < static_cast<int>( event_type::num_event_types ); ++i )
+        {
+            const auto type = static_cast<event_type>( i );
+            map.emplace( io::enum_to_string( type ), type );
+        }
+        return map;
+    }();
+    const auto found = lookup.find( name );
+    if( found == lookup.end() ) {
+        throw std::runtime_error( string_format( "unknown event_type '%s'", name ) );
+    }
+    return found->second;
+}
+
+// Converts a Lua payload value into the string form cata_variant expects for
+// @p type. `character` fields accept a Character-like object, a character_id,
+// or the numeric id; boolean and integer fields also accept Lua numbers and
+// booleans; every other (string-based) field takes a string.
+auto event_field_to_string( cata_variant_type type, const std::string &field_name,
+                            const sol::object &value ) -> std::string
+{
+    const auto wrong_type = [&]() -> std::runtime_error {
+        return std::runtime_error( string_format(
+                                       "event field '%s' (type %s): unsupported Lua value type '%s'", field_name,
+                                       io::enum_to_string( type ),
+                                       sol::type_name( value.lua_state(), value.get_type() ) ) );
+    };
+    switch( type ) {
+        case cata_variant_type::character_id: {
+            if( value.is<avatar *>() ) {
+                return std::to_string( value.as<avatar *>()->getID().get_value() );
+            }
+            if( value.is<npc *>() ) {
+                return std::to_string( value.as<npc *>()->getID().get_value() );
+            }
+            if( value.is<Character *>() ) {
+                return std::to_string( value.as<Character *>()->getID().get_value() );
+            }
+            if( value.is<character_id>() ) {
+                return std::to_string( value.as<character_id>().get_value() );
+            }
+            if( value.is<int>() ) {
+                return std::to_string( value.as<int>() );
+            }
+            if( value.is<std::string>() ) {
+                return value.as<std::string>();
+            }
+            break;
+        }
+        case cata_variant_type::bool_:
+            if( value.is<bool>() ) {
+                return std::to_string( static_cast<int>( value.as<bool>() ) );
+            }
+            break;
+        case cata_variant_type::int_:
+            if( value.is<int>() ) {
+                return std::to_string( value.as<int>() );
+            }
+            break;
+        default:
+            if( value.is<std::string>() ) {
+                return value.as<std::string>();
+            }
+            if( value.is<int>() ) {
+                return std::to_string( value.as<int>() );
+            }
+            break;
+    }
+    throw wrong_type();
+}
+
+// Builds and dispatches a game event named @p name with the given payload.
+// Table payloads are keyed by the event's field names; a bare Character-like
+// value is shorthand for events whose only field is `character`; nil (or no
+// payload) suits events without fields. Unknown event names, unknown or
+// missing fields raise Lua errors.
+auto send_event_impl( const std::string &name, const sol::object &payload ) -> void
+{
+    const auto type = event_type_from_string( name );
+    const auto fields = cata::event::get_fields( type );
+    cata::event::data_type data;
+
+    // Dispatch on the raw Lua type: sol's `is<sol::table>()` also matches
+    // usertypes, which must stay in the bare-object branch below.
+    switch( payload.get_type() ) {
+        case sol::type::table: {
+            const auto tbl = payload.as<sol::table>();
+            for( const auto &[field_name, field_type] : fields ) {
+                const sol::object value = tbl.get<sol::object>( field_name );
+                if( value.get_type() == sol::type::lua_nil ) {
+                    throw std::runtime_error( string_format(
+                                                  "event '%s': missing required field '%s'", name, field_name ) );
+                }
+                data.emplace( field_name, cata_variant::from_string(
+                                  field_type, event_field_to_string( field_type, field_name, value ) ) );
+            }
+            for( const auto &pair : tbl ) {
+                if( !pair.first.is<std::string>() ) {
+                    continue;
+                }
+                const auto key = pair.first.as<std::string>();
+                if( !fields.contains( key ) ) {
+                    throw std::runtime_error( string_format(
+                                                  "event '%s': unknown field '%s'", name, key ) );
+                }
+            }
+            break;
+        }
+        case sol::type::lua_nil:
+        case sol::type::none: {
+            if( !fields.empty() ) {
+                std::string names;
+                for( const auto &field : fields ) {
+                    names += field.first + " ";
+                }
+                throw std::runtime_error( string_format(
+                                              "event '%s': requires the fields %s; pass them as a table", name, names ) );
+            }
+            break;
+        }
+        default: {
+            // A bare value is shorthand for the single `character` field.
+            if( fields.size() != 1 || !fields.contains( "character" ) ) {
+                throw std::runtime_error( string_format(
+                                              "event '%s': pass the event fields as a table", name ) );
+            }
+            data.emplace( "character",
+                          cata_variant::from_string( cata_variant_type::character_id,
+                                  event_field_to_string( cata_variant_type::character_id, "character", payload ) ) );
+            break;
+        }
+    }
+
+    g->events().send( cata::event( type, calendar::turn, std::move( data ) ) );
+}
+
 } // namespace
 
 void cata::detail::reg_game_api( sol::state &lua )
@@ -500,6 +648,15 @@ void cata::detail::reg_game_api( sol::state &lua )
     luna::set_fx( lib, "get_map", &get_map );
     DOC( "Returns the scenario the current game started with, or nil if no game is active." );
     luna::set_fx( lib, "get_scenario", []() -> const scenario * { return get_scenario(); } );
+    DOC( "Sends a game event by name so statistics, achievements and the memorial keep working when the triggering logic is implemented in Lua.  " );
+    DOC( "The payload is a table keyed by the event's field names (e.g. `{ character = who, itype = \"marloss_berry\" }` for `consumes_marloss_item`), a bare Character-like object for events whose only field is `character`, or nil for events without fields.  " );
+    DOC( "`character` fields accept a Character-like object, a character_id, or the numeric id; boolean and integer fields also accept Lua booleans and numbers; every other field takes a string.  " );
+    DOC( "Unknown event names and unknown or missing fields raise Lua errors." );
+    luna::set_fx( lib, "send_event",
+                  sol::overload(
+                      []( const std::string & name ) -> void { send_event_impl( name, sol::object() ); },
+                      &send_event_impl
+                  ) );
     luna::set_fx( lib, "bub_to_abs",
                   sol::overload(
                       []( const tripoint_bub_ms & p ) -> tripoint_abs_ms { return bub_to_abs( p ); },
