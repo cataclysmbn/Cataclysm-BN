@@ -100,6 +100,7 @@
 #include "type_id.h"
 #include "ui.h"
 #include "units.h"
+#include "utils/success_chance.h"
 #include "vehicle/veh_interact.h"
 #include "vehicle/vehicle.h"
 #include "vehicle/vehicle_part.h"
@@ -4693,15 +4694,9 @@ void activity_handlers::robot_control_finish( player_activity *act, player *p )
 
     p->add_msg_if_player( _( "You unleash your override attack on the %s." ), z->name() );
 
-    /** @EFFECT_INT increases chance of successful robot reprogramming, vs difficulty */
-    /** @EFFECT_COMPUTER increases chance of successful robot reprogramming, vs difficulty */
-    const int computer_skill = p->get_skill_level( skill_id( "computer" ) );
-    const float randomized_skill = rng( 2, p->int_cur ) + computer_skill;
-    float success = computer_skill - 3 * z->type->difficulty / randomized_skill;
-    if( z->has_flag( MF_RIDEABLE_MECH ) ) {
-        success = randomized_skill - rng( 1, 11 );
-    }
-    // rideable mechs are not hostile, they have no AI, they do not resist control as much.
+    const float success = success_chance::robot_override( success_chance::hacker_of( *p ),
+                          z->type->difficulty,
+                          z->has_flag( MF_RIDEABLE_MECH ) );
     if( success >= 0 ) {
         p->add_msg_if_player( _( "You successfully override the %s's IFF protocols!" ),
                               z->name() );

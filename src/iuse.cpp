@@ -370,6 +370,7 @@ static const std::string flag_PLOWABLE( "PLOWABLE" );
 static constexpr int RADIO_PER_TURN = 25;
 
 #include "iuse_software.h"
+#include "utils/success_chance.h"
 
 
 struct object_names_collection;
@@ -1832,7 +1833,13 @@ int iuse::fish_trap( player *p, item *it, bool t, const tripoint_bub_ms &pos )
             p->add_msg_if_player( m_info, _( "You can't fish there!" ) );
             return 0;
         }
-        if( good_fishing_spot( pnt ) == 0 ) {
+        const int spot = good_fishing_spot( pnt );
+        if( spot == 0 ) {
+            return 0;
+        }
+        if( success_chance::fish_trap( spot, it->charges, p->get_skill_level( skill_survival ) ) < 0 &&
+            !query_yn(
+                _( "With your survival skill and this much bait, you will never catch a fish here.  Set it anyway?" ) ) ) {
             return 0;
         }
         it->activate();
@@ -1855,12 +1862,8 @@ int iuse::fish_trap( player *p, item *it, bool t, const tripoint_bub_ms &pos )
             if( !g->m.has_flag( "FISHABLE", pos ) ) {
                 return 0;
             }
-            int fish = good_fishing_spot( pos );
-            int success = -250 + ( good_fishing_spot( pos ) * 15 );
-            const int surv_mod = p->get_skill_level( skill_survival ) + ( fish );
-            for( int i = 0; i < it->charges; i++ ) {
-                success += surv_mod + fish;
-            }
+            const int success = success_chance::fish_trap( good_fishing_spot( pos ), it->charges,
+                                p->get_skill_level( skill_survival ) );
 
             it->charges = 0;
 
@@ -5850,6 +5853,15 @@ int iuse::robotcontrol( player *p, item *it, bool, const tripoint_bub_ms & )
             }
             const size_t mondex = pick_robot.ret;
             shared_ptr_fast< monster > z = mons[mondex];
+            const auto hacker = success_chance::hacker_of( *p );
+            if( success_chance::robot_override( hacker.best(), z->type->difficulty,
+                                                z->has_flag( MF_RIDEABLE_MECH ) ) < -2 &&
+                !query_yn(
+                    _( "Your computer skill and intelligence are too low to ever override the %s.  Try anyway?" ),
+                    z->name() ) ) {
+                p->add_msg_if_player( m_info, _( "Never mind" ) );
+                return it->type->charges_to_use();
+            }
             p->add_msg_if_player( _( "You start reprogramming the %s into an ally." ), z->name() );
 
             /** @EFFECT_INT speeds up hacking preperation */
@@ -6593,14 +6605,16 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
                 return it->type->charges_to_use();
             }
 
+            const auto hacker = success_chance::hacker_of( *p );
+            if( success_chance::decrypt_memory_card( hacker.best() ) <= 0 &&
+                !query_yn(
+                    _( "Your computer skill and intelligence are too low to ever decrypt this, and a failed try can erase it.  Try anyway?" ) ) ) {
+                return it->type->charges_to_use();
+            }
+
             p->practice( skill_computer, rng( 2, 5 ) );
 
-            /** @EFFECT_INT increases chance of safely decrypting memory card */
-
-            /** @EFFECT_COMPUTER increases chance of safely decrypting memory card */
-            const int success = p->get_skill_level( skill_computer ) * rng( 1,
-                                p->get_skill_level( skill_computer ) ) *
-                                rng( 1, p->int_cur ) - rng( 30, 80 );
+            const int success = success_chance::decrypt_memory_card( hacker );
             if( success > 0 ) {
                 p->practice( skill_computer, rng( 5, 10 ) );
                 p->add_msg_if_player( m_good, _( "You successfully decrypted content on %s!" ),
@@ -8132,11 +8146,15 @@ static bool hackveh( player &p, item &it, vehicle &veh )
         p.add_msg_if_player( m_bad, _( "This vehicle's security system has locked you out!" ) );
         return false;
     }
+    const auto hacker = success_chance::hacker_of( p );
+    const bool hopeless = success_chance::vehicle_hack( hacker.best() ) < 0;
+    if( hopeless &&
+        !query_yn(
+            _( "Your computer skill and intelligence are too low to ever bypass this car's security system.  Try anyway?" ) ) ) {
+        return false;
+    }
 
-    /** @EFFECT_INT increases chance of bypassing vehicle security system */
-
-    /** @EFFECT_COMPUTER increases chance of bypassing vehicle security system */
-    int roll = dice( p.get_skill_level( skill_computer ) + 2, p.int_cur ) - ( 50 );
+    const int roll = success_chance::vehicle_hack( hacker );
     int effort = 0;
     bool success = false;
     if( roll < -20 ) { // Really bad rolls will trigger the alarm before you know it exists
@@ -8149,7 +8167,7 @@ static bool hackveh( player &p, item &it, vehicle &veh )
         success = true;
     }
 
-    if( effort == 0 && !query_yn( _( "Try to hack this car's security system?" ) ) ) {
+    if( effort == 0 && !hopeless && !query_yn( _( "Try to hack this car's security system?" ) ) ) {
         // Scanning for security systems isn't free
         p.moves -= to_moves<int>( 1_seconds );
         it.charges -= 1;
