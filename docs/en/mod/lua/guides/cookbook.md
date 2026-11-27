@@ -544,8 +544,9 @@ Several additional callback tables let you react to item events.
 
 ### game.iconsume_functions
 
-Keyed by item id. `on_try_consume` runs before the edibility checks and the
-eat-confirmation prompt: modify the `params` fields to override the values the
+Keyed by item id. `on_try_consume` runs before the food's edibility checks and
+eat-confirmation prompt, or before medication is applied (even before the
+required-tool check): modify the `params` fields to override the values the
 game applies, return `false` to interrupt the consume. Callback side effects
 persist even if the checks then fail or the player declines, and the item is
 left alone unless the callback changed it — so the callback can implement its
@@ -554,6 +555,7 @@ own consumption (`params.item:mod_charges( -1 )`) and return `false`.
 | Callbacks        | params fields                                                               |
 | ---------------- | --------------------------------------------------------------------------- |
 | `on_try_consume` | `char`, `item`, `nutrition`, `thirst`, `fun`, `fun_max`, `skip_cannibalism` |
+| `on_consume`     | `char`, `item`, `nutrition`, `thirst`, `fun`, `fun_max`                     |
 
 ```lua
 game.iconsume_functions["blood"] = {
@@ -570,6 +572,31 @@ The character-wide equivalent is the `on_character_try_consume` hook: it
 receives the same values in its `params` and returns a table with the override
 fields (`allowed`, `nutrition`, `thirst`, `fun`, `fun_max`, `skip_cannibalism`)
 instead of mutating `params`.
+
+`on_consume` is the post-consume counterpart: it runs after the item has
+actually been consumed (charges deducted, effects applied), receives the
+values the game applied (`char`, `item`, `nutrition`, `thirst`, `fun`,
+`fun_max`), and its return value is ignored. The character-wide equivalent is
+the `on_character_consume` hook with the same `params` fields.
+
+`params.item` is still the consumed item, so `params.item.charges` can be 0
+when the last charge was eaten; the game removes the item afterwards. Do not
+keep a reference to it.
+
+Food and medication both run these callbacks. That covers eating, taking
+medication, and medication that an NPC accepts in dialogue. For parenteral
+medication (`NO_INGEST`, such as injections) `nutrition` and `thirst` are 0.
+Other consumption paths (bionic fuel, furnace feeding, the fake item of
+`consume_drug` actions) do not run them.
+
+```lua
+game.iconsume_functions["blood"] = {
+    on_consume = function( params )
+        gdebug.log_info( params.char:get_name() .. " drank "
+            .. tostring( params.nutrition ) .. " kcal of blood" )
+    end
+}
+```
 
 ---
 

@@ -6,6 +6,7 @@ namespace cata
 
 constexpr auto hook_names = std::array
 {
+    "on_character_consume",
     "on_character_death",
     "on_character_display_skill_action",
     "on_character_display_skill_info",

@@ -5,6 +5,7 @@
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "catalua/consume_callbacks.h"
 #include "cata_utility.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
@@ -3760,6 +3761,11 @@ static consumption_result try_consume( npc &p, item &it, std::string &reason )
             reason = _( "Thanks, that hit the spot." );
         }
     } else if( to_eat.is_medication() || to_eat.get_contained().is_medication() ) {
+        const auto try_result = run_try_consume_callbacks( p, to_eat );
+        if( !try_result ) {
+            reason = _( "It doesn't look like a good idea to consume this…" );
+            return REFUSED;
+        }
         if( comest->tool ) {
             bool has = p.has_amount( comest->tool, 1 );
             if( item::count_by_charges( comest->tool ) ) {
@@ -3782,9 +3788,11 @@ static consumption_result try_consume( npc &p, item &it, std::string &reason )
             reason = _( "Thanks, I used it." );
         }
 
+        const auto applied = consumed_med_values( p, to_eat, *try_result );
         to_eat.charges -= amount_used;
-        p.consume_effects( to_eat );
+        p.consume_effects( to_eat, *try_result );
         p.moves -= 250;
+        run_consume_callbacks( p, to_eat, applied );
     } else {
         debugmsg( "Unknown comestible type of item: %s\n", to_eat.tname() );
     }

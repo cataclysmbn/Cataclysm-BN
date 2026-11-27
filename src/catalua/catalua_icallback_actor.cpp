@@ -1,6 +1,7 @@
 #include "catalua_icallback_actor.h"
 
 #include "bionics.h"
+#include "catalua/consume_callbacks.h"
 #include "catalua_coord.h"
 #include "catalua_impl.h"
 #include "character.h"
@@ -360,9 +361,11 @@ void lua_istate_actor::call_on_puff(Character& who, item& it) const {
 // --- lua_iconsume_actor ---
 
 lua_iconsume_actor::lua_iconsume_actor(
-    const std::string& item_id, sol::protected_function&& on_try_consume)
+    const std::string& item_id, sol::protected_function&& on_try_consume,
+    sol::protected_function&& on_consume)
     : lua_icallback_actor_base(item_id),
-      on_try_consume_func(std::move(on_try_consume)) {}
+      on_try_consume_func(std::move(on_try_consume)),
+      on_consume_func(std::move(on_consume)) {}
 
 auto lua_iconsume_actor::call_on_try_consume(
     Character& who, item& it, consume_overrides& overrides) const -> bool {
@@ -409,6 +412,25 @@ auto lua_iconsume_actor::call_on_try_consume(
         debugmsg("Failed to run iconsume on_try_consume for '%s': %s", item_id, e.what());
     }
     return true;
+}
+
+auto lua_iconsume_actor::call_on_consume(
+    Character& who, item& it, const consumed_values& applied) const -> void {
+    if (on_consume_func == sol::lua_nil) { return; }
+    try {
+        sol::state_view lua(on_consume_func.lua_state());
+        auto params = lua.create_table();
+        params["char"] = &who;
+        params["item"] = &it;
+        params["nutrition"] = applied.kcal;
+        params["thirst"] = applied.thirst;
+        params["fun"] = applied.fun;
+        params["fun_max"] = applied.fun_max;
+        sol::protected_function_result res = on_consume_func(params);
+        check_func_result(res);
+    } catch (std::runtime_error& e) {
+        debugmsg("Failed to run iconsume on_consume for '%s': %s", item_id, e.what());
+    }
 }
 
 // --- lua_imelee_actor ---

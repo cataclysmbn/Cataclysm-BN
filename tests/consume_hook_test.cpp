@@ -174,7 +174,8 @@ TEST_CASE("iconsume per-item callback", "[consume_hook][lua]") {
     REQUIRE(result.valid());
     item_controller->add_iconsume_actor(
         itype_id("blood"),
-        std::make_unique<lua_iconsume_actor>("blood", result.get<sol::protected_function>()));
+        std::make_unique<lua_iconsume_actor>(
+            "blood", result.get<sol::protected_function>(), sol::protected_function(sol::lua_nil)));
     item_controller->resolve_lua_callbacks();
 
     avatar dummy;
@@ -302,5 +303,259 @@ TEST_CASE("iconsume per-item callback", "[consume_hook][lua]") {
         REQUIRE_FALSE(dummy.eat(blood, true));
         CHECK(blood.charges == 9);
         CHECK(dummy.get_morale(MORALE_FOOD_BAD) == 0);
+    }
+}
+
+/// The post-consume hook and per-item callback see the applied values
+/// (overrides and enchantments included) after the charge was deducted, and
+/// do not run when the try phase denies the consume.
+TEST_CASE("on_character_consume hook and on_consume callback", "[consume_hook][lua]") {
+    clear_all_state();
+    sol::state& lua = DynamicDataLoader::get_instance().lua->lua;
+    auto hooks = lua["game"]["hooks"].get<sol::table>();
+    REQUIRE(hooks.valid());
+    const auto previous = hooks["on_character_consume"].get<sol::object>();
+    const auto restore = on_out_of_scope([&]() {
+        hooks["on_character_consume"] = previous;
+        lua.globals()["consume_hook_seen"] = sol::lua_nil;
+        lua.globals()["iconsume_gate"] = sol::lua_nil;
+        lua.globals()["iconsume_on_consume_seen"] = sol::lua_nil;
+        clear_all_state();
+    });
+
+    // Registers the hook function returned by `chunk` as the only
+    // `on_character_consume` entry.
+    const auto register_hook = [&](const std::string& chunk) {
+        const auto result = lua.safe_script(chunk, sol::script_pass_on_error);
+        REQUIRE(result.valid());
+        auto hook_table = lua.create_table();
+        hook_table[1] = result.get<sol::function>();
+        hooks["on_character_consume"] = hook_table;
+    };
+
+    const auto try_cb = lua.safe_script(
+        R"(
+        iconsume_gate = nil
+        return function( params )
+            local gate = iconsume_gate
+            if gate then
+                return gate( params )
+            end
+            return true
+        end
+    )",
+        sol::script_pass_on_error);
+    REQUIRE(try_cb.valid());
+    const auto consume_cb = lua.safe_script(
+        R"(
+        iconsume_on_consume_seen = nil
+        return function( params )
+            iconsume_on_consume_seen = {
+                nutrition = params.nutrition,
+                thirst = params.thirst,
+                fun = params.fun,
+                fun_max = params.fun_max,
+                item_id = params.item:get_type():str(),
+                charges = params.item.charges,
+            }
+        end
+    )",
+        sol::script_pass_on_error);
+    REQUIRE(consume_cb.valid());
+    item_controller->add_iconsume_actor(
+        itype_id("blood"),
+        std::make_unique<lua_iconsume_actor>(
+            "blood", try_cb.get<sol::protected_function>(),
+            consume_cb.get<sol::protected_function>()));
+    item_controller->resolve_lua_callbacks();
+
+    const auto set_gate = [&](const std::string& chunk) {
+        const auto gate = lua.safe_script(chunk, sol::script_pass_on_error);
+        REQUIRE(gate.valid());
+        lua.globals()["iconsume_gate"] = gate.get<sol::function>();
+    };
+
+    avatar dummy;
+    item& blood = *item::spawn_temporary("blood", calendar::turn, 10);
+    REQUIRE(blood.is_comestible());
+
+    SECTION("hook and callback fire after consumption with the applied values") {
+        set_gate(R"(
+            return function( params )
+                params.nutrition = 500
+                params.thirst = 100
+            end
+        )");
+        register_hook(R"(
+            return function( params )
+                consume_hook_seen = {
+                    nutrition = params.nutrition,
+                    thirst = params.thirst,
+                    fun = params.fun,
+                    fun_max = params.fun_max,
+                    item_id = params.item:get_type():str(),
+                    charges = params.item.charges,
+                    is_avatar = params.char:is_avatar(),
+                }
+            end
+        )");
+
+        dummy.set_thirst(200);
+        REQUIRE(dummy.eat(blood, true));
+        CHECK(blood.charges == 9);
+        CHECK(dummy.stomach.get_calories() == 500);
+        CHECK(dummy.get_thirst() == 100);
+        // No fun override, so the base fun of -50 applies.
+        CHECK(dummy.get_morale(MORALE_FOOD_BAD) == -50);
+
+        const auto seen = lua.globals()["consume_hook_seen"].get<sol::table>();
+        REQUIRE(seen.valid());
+        CHECK(seen["nutrition"].get<int>() == 500);
+        CHECK(seen["thirst"].get<int>() == 100);
+        CHECK(seen["fun"].get<int>() == -50);
+        CHECK(seen["fun_max"].get<int>() == -300);
+        CHECK(seen["item_id"].get<std::string>() == "blood");
+        CHECK(seen["charges"].get<int>() == 9);
+        CHECK(seen["is_avatar"].get<bool>());
+
+        const auto cb_seen = lua.globals()["iconsume_on_consume_seen"].get<sol::table>();
+        REQUIRE(cb_seen.valid());
+        CHECK(cb_seen["nutrition"].get<int>() == 500);
+        CHECK(cb_seen["thirst"].get<int>() == 100);
+        CHECK(cb_seen["fun"].get<int>() == -50);
+        CHECK(cb_seen["fun_max"].get<int>() == -300);
+        CHECK(cb_seen["item_id"].get<std::string>() == "blood");
+        CHECK(cb_seen["charges"].get<int>() == 9);
+    }
+
+    SECTION("neither fires when the consume is denied") {
+        set_gate(R"(
+            return function( params )
+                return false
+            end
+        )");
+        register_hook(R"(
+            return function( params )
+                consume_hook_seen = true
+            end
+        )");
+
+        REQUIRE_FALSE(dummy.eat(blood, true));
+        CHECK(blood.charges == 10);
+        CHECK(dummy.get_morale(MORALE_FOOD_BAD) == 0);
+        // Neither the hook nor the on_consume callback ran, so the marker
+        // globals stay unset. Check for nil: the callback stores a table, so
+        // reading it as a bool would pass even when the callback ran.
+        CHECK_FALSE(lua.globals()["consume_hook_seen"].get<sol::object>().valid());
+        CHECK_FALSE(lua.globals()["iconsume_on_consume_seen"].get<sol::object>().valid());
+    }
+
+    SECTION("hook reports the applied fun when the monotony penalty applies") {
+        // Cheese has positive fun and the default monotony penalty, so each
+        // repeat meal within two days is less fun. The hook runs after the
+        // meal enters the consumption history and must still report the fun
+        // that was applied, not one recomputed with the extra history entry.
+        register_hook(R"(
+            return function( params )
+                consume_hook_seen = params.fun
+            end
+        )");
+        item& cheese = *item::spawn_temporary("cheese", calendar::turn, 8);
+        REQUIRE(cheese.get_comestible_fun() > 0);
+        REQUIRE(cheese.get_comestible()->monotony_penalty > 0);
+
+        const auto first_fun = dummy.fun_for(cheese).first;
+        REQUIRE(dummy.eat(cheese, true));
+        CHECK(lua.globals()["consume_hook_seen"].get<int>() == first_fun);
+
+        const auto second_fun = dummy.fun_for(cheese).first;
+        REQUIRE(second_fun < first_fun);
+        REQUIRE(dummy.eat(cheese, true));
+        CHECK(lua.globals()["consume_hook_seen"].get<int>() == second_fun);
+    }
+
+    SECTION("hook reports the applied fun including the enchantment bonus") {
+        // The faulty bio_grossfood bionic carries a FOOD_FUN enchantment that
+        // lowers the fun of everything consumed; the hook must report the
+        // enchanted value, and the applied morale must match the report.
+        dummy.add_bionic(bionic_id("bio_grossfood"));
+        register_hook(R"(
+            return function( params )
+                consume_hook_seen = params.fun
+            end
+        )");
+        item& cheese = *item::spawn_temporary("cheese", calendar::turn, 8);
+        const auto base_fun = dummy.fun_for(cheese).first;
+        REQUIRE(base_fun > 0);
+
+        REQUIRE(dummy.eat(cheese, true));
+        // fun_for() ignores enchantments; the bionic's bonus is -4.
+        CHECK(lua.globals()["consume_hook_seen"].get<int>() == base_fun - 4);
+        CHECK(dummy.get_morale(MORALE_FOOD_GOOD) == base_fun - 4);
+    }
+}
+
+/// `Character::consume_med` fires the same consume hooks as food; aspirin is
+/// an oral (ingested) medication.
+TEST_CASE("consume hooks fire for medication", "[consume_hook][lua]") {
+    clear_all_state();
+    sol::state& lua = DynamicDataLoader::get_instance().lua->lua;
+    auto hooks = lua["game"]["hooks"].get<sol::table>();
+    REQUIRE(hooks.valid());
+    const auto previous_try = hooks["on_character_try_consume"].get<sol::object>();
+    const auto previous_post = hooks["on_character_consume"].get<sol::object>();
+    const auto restore = on_out_of_scope([&]() {
+        hooks["on_character_try_consume"] = previous_try;
+        hooks["on_character_consume"] = previous_post;
+        lua.globals()["med_try_seen"] = sol::lua_nil;
+        lua.globals()["med_post_seen"] = sol::lua_nil;
+        clear_all_state();
+    });
+
+    // Registers the function returned by `chunk` as the only entry of `hook`.
+    const auto register_hook = [&](const std::string& hook, const std::string& chunk) {
+        const auto result = lua.safe_script(chunk, sol::script_pass_on_error);
+        REQUIRE(result.valid());
+        auto hook_table = lua.create_table();
+        hook_table[1] = result.get<sol::function>();
+        hooks[hook] = hook_table;
+    };
+    register_hook("on_character_consume", R"(
+        return function( params )
+            med_post_seen = {
+                item_id = params.item:get_type():str(),
+                charges = params.item.charges,
+            }
+        end
+    )");
+
+    avatar dummy;
+    item& aspirin = *item::spawn_temporary("aspirin", calendar::turn, 20);
+    REQUIRE(aspirin.is_medication());
+
+    SECTION("both hooks fire when the medication is taken") {
+        register_hook("on_character_try_consume", R"(
+            return function( params )
+                med_try_seen = params.item:get_type():str()
+            end
+        )");
+        dummy.consume_med(aspirin);
+        CHECK(aspirin.charges < 20);
+        CHECK(lua.globals()["med_try_seen"].get<std::string>() == "aspirin");
+        const auto seen = lua.globals()["med_post_seen"].get<sol::table>();
+        REQUIRE(seen.valid());
+        CHECK(seen["item_id"].get<std::string>() == "aspirin");
+        CHECK(seen["charges"].get<int>() == aspirin.charges);
+    }
+
+    SECTION("the try hook can deny the medication") {
+        register_hook("on_character_try_consume", R"(
+            return function( params )
+                return false
+            end
+        )");
+        CHECK_FALSE(dummy.consume_med(aspirin));
+        CHECK(aspirin.charges == 20);
+        CHECK_FALSE(lua.globals()["med_post_seen"].get<sol::object>().valid());
     }
 }
