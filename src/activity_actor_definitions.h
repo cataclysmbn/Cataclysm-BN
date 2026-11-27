@@ -678,7 +678,7 @@ class construction_activity_actor : public activity_actor
 {
     private:
         tripoint_abs_ms target;
-        partial_con *pc;
+        partial_con *pc = nullptr;
     public:
         explicit construction_activity_actor( const tripoint_abs_ms &target ) : target( target ) {
         };
