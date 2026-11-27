@@ -5,6 +5,8 @@
 #include "int_id.h"
 #include "json.h"
 #include "map/field.h"
+#include "map/mapdata.h"
+#include "trap.h"
 #include "type_id.h"
 
 #include <sstream>
@@ -137,4 +139,15 @@ TEST_CASE(
     restored.get_field(pos).add_field(fd_electricity, 1, 0_turns);
     CHECK_FALSE(spark->electricity_conducted);
     CHECK(spark->get_field_age() == (conducted ? 0_turns : 1_turns));
+}
+
+TEST_CASE("whole_submap_fills_list_every_trap_tile_in_trap_cache", "[submap][trap]") {
+    // t_pit carries tr_pit, so a submap of t_pit has a trap on each of its SEEX * SEEY tiles.
+    auto sm = submap(tripoint_abs_sm::zero(), {});
+    sm.set_all_ter(ter_str_id("t_pit").id());
+    CHECK(sm.trap_cache.size() == SEEX * SEEY);
+    sm.set_all_traps(tr_null);
+    CHECK(sm.trap_cache.size() == SEEX * SEEY);
+    sm.set_all_ter(ter_str_id("t_dirt").id());
+    CHECK(sm.trap_cache.empty());
 }
