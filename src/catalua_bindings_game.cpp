@@ -40,6 +40,7 @@
 #include <cmath>
 #include <functional>
 #include <initializer_list>
+#include <limits>
 #include <optional>
 #include <ranges>
 #include <stdexcept>
@@ -524,22 +525,13 @@ auto lua_integer( const sol::object &value ) -> std::optional<int>
     if( std::trunc( number ) != number ) {
         return std::nullopt;
     }
-    return static_cast<int>( number );
-}
-
-/// Checks @p value with the `is_valid` of the cata_variant converter for @p type
-/// (string ids must exist, enums must name a value).
-template<int I = 0>
-auto variant_value_is_valid( const cata_variant_type type, const std::string &value ) -> bool
-{
-    if constexpr( I == static_cast<int>( cata_variant_type::num_types ) ) {
-        return false;
-    } else {
-        if( static_cast<int>( type ) == I ) {
-            return cata_variant_detail::convert<static_cast<cata_variant_type>( I )>::is_valid( value );
-        }
-        return variant_value_is_valid < I + 1 > ( type, value );
+    // Casting an out-of-range value (which includes infinities) to int is
+    // undefined behavior, so reject it instead of wrapping it around.
+    if( number < static_cast<double>( std::numeric_limits<int>::min() ) ||
+        number > static_cast<double>( std::numeric_limits<int>::max() ) ) {
+        return std::nullopt;
     }
+    return static_cast<int>( number );
 }
 
 /// Converts a Lua `character` value: a Character-like object, a character_id,
@@ -612,7 +604,7 @@ auto event_field_to_string( cata_variant_type type, const std::string &field_nam
             if( !text ) {
                 break;
             }
-            if( !variant_value_is_valid( type, *text ) ) {
+            if( !cata_variant::from_string( type, std::string( *text ) ).is_valid() ) {
                 throw std::runtime_error( string_format(
                                               "event field '%s' (type %s): invalid value '%s'", field_name,
                                               io::enum_to_string( type ), *text ) );
@@ -646,18 +638,28 @@ auto send_event_impl( const std::string &name, const sol::object &payload ) -> v
     switch( payload.get_type() ) {
         case sol::type::table: {
             const auto tbl = payload.as<sol::table>();
+            auto missing = std::vector<std::string>();
             for( const auto &[field_name, field_type] : fields ) {
                 const sol::object value = tbl.get<sol::object>( field_name );
                 if( value.get_type() == sol::type::lua_nil ) {
-                    throw std::runtime_error( string_format(
-                                                  "event '%s': missing required field '%s'", name, field_name ) );
+                    missing.push_back( field_name );
+                    continue;
                 }
                 data.emplace( field_name, cata_variant::from_string(
                                   field_type, event_field_to_string( field_type, field_name, value ) ) );
             }
+            if( !missing.empty() ) {
+                // `fields` is an unordered map, so name every missing field
+                // in a fixed order instead of whichever the iteration found.
+                std::ranges::sort( missing );
+                throw std::runtime_error( string_format(
+                                              "event '%s': missing required field%s %s", name,
+                                              missing.size() > 1 ? "s" : "", join( missing, ", " ) ) );
+            }
             for( const auto &pair : tbl ) {
                 if( !pair.first.is<std::string>() ) {
-                    continue;
+                    throw std::runtime_error( string_format(
+                                                  "event '%s': field names must be strings", name ) );
                 }
                 const auto key = pair.first.as<std::string>();
                 if( !fields.contains( key ) ) {
@@ -712,6 +714,7 @@ void cata::detail::reg_game_api( sol::state &lua )
     DOC( "The payload is a table keyed by the event's field names (e.g. `{ character = who, itype = \"marloss_berry\" }` for `consumes_marloss_item`), a bare Character-like object for events whose only field is `character`, or nil for events without fields.  " );
     DOC( "`character` fields accept a Character-like object, a character_id, or an integer id; `bool` fields take a Lua boolean; `int` fields take an integer; every other field takes a string (an integer is converted to its string form) that must be a valid value for the field, e.g. an existing item id.  " );
     DOC( "Unknown event names, unknown, missing or invalid fields raise Lua errors and send nothing.  `game_start` and `game_over` are sent only by the game." );
+    DOC( "Events can do more than feed statistics, achievements and the memorial: some subscribers have gameplay effects (for example, `player_levels_spell` teaches the follow-up spells that leveling a spell grants), so send an event only when the action it describes actually happened." );
     luna::set_fx( lib, "send_event",
                   sol::overload(
                       []( const std::string & name, sol::this_state lua ) -> void { send_event_impl( name, sol::make_object( lua, sol::lua_nil ) ); },

@@ -120,8 +120,10 @@ TEST_CASE("gapi.send_event checks payload values before sending", "[lua][event]"
             for k, v in pairs( fields ) do payload[k] = v end
             return payload
         end
-        -- Events with fields need them.
+        -- Events with fields need them, and every missing field is named.
         fails_with( "requires the fields", "avatar_moves" )
+        fails_with( "missing required fields mount, movement_mode, terrain, underwater, z",
+                    "avatar_moves", { character = test_avatar } )
         -- Ids and enum values must exist.
         fails_with( "invalid value 'not_an_item'", "consumes_marloss_item",
                     { character = test_avatar, itype = "not_an_item" } )
@@ -132,6 +134,11 @@ TEST_CASE("gapi.send_event checks payload values before sending", "[lua][event]"
         -- int fields reject fractions, bool fields reject numbers.
         fails_with( "unsupported Lua value type", "avatar_moves", moves( { z = 0.5 } ) )
         fails_with( "unsupported Lua value type", "avatar_moves", moves( { underwater = 1 } ) )
+        -- Numbers outside the int range are rejected, not wrapped around.
+        fails_with( "unsupported Lua value type", "crosses_marloss_threshold", { character = 1e20 } )
+        fails_with( "unsupported Lua value type", "avatar_moves", moves( { z = 1e20 } ) )
+        -- Payload keys must be the event's field names.
+        fails_with( "field names must be strings", "avatar_moves", moves( { [1] = "junk" } ) )
         -- Only the game sends these.
         fails_with( "sent by the game", "game_start", { avatar_id = test_avatar } )
         fails_with( "sent by the game", "game_over", { is_suicide = false, last_words = "" } )
