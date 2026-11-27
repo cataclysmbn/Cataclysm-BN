@@ -14,6 +14,7 @@
 #include <utility>
 
 #include "action.h"
+#include "addiction.h"
 #include "activity_actor.h"
 #include "activity_actor_definitions.h"
 #include "action_time_scale.h"
@@ -2285,7 +2286,7 @@ void iexamine::flower_poppy( player &p, const tripoint_bub_ms &examp )
         p.add_effect( effect_pkill2, 7_minutes );
         // Please drink poppy nectar responsibly.
         if( one_in( 20 ) ) {
-            p.add_addiction( add_type::PKILLER, 1 );
+            p.add_addiction( addiction_id_from_legacy( add_type::PKILLER ), 1 );
         }
     }
     if( !query_yn( _( "Pick %s?" ), here.furnname( examp ) ) ) {

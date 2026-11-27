@@ -1,5 +1,6 @@
 #include "character_functions.h"
 
+#include "addiction.h"
 #include "ammo.h"
 #include "bionics.h"
 #include "bodypart.h"
@@ -448,7 +449,7 @@ int rate_sleep_spot( const Character &who, const tripoint_bub_ms &p )
     int sleepy = static_cast<int>( comfort_info.level );
     bool watersleep = who.has_trait( trait_WATERSLEEP );
 
-    if( who.has_addiction( add_type::SLEEP ) ) {
+    if( who.has_addiction( addiction_id_from_legacy( add_type::SLEEP ) ) ) {
         sleepy -= 4;
     }
     if( who.has_trait( trait_INSOMNIA ) ) {

@@ -2040,9 +2040,9 @@ void Character::apply_wetness_morale( const units::temperature &temperature )
     add_morale( MORALE_WET, morale_effect, total_morale, 61_seconds, 61_seconds, true );
 }
 
-void Character::add_addiction( add_type type, int strength )
+void Character::add_addiction( const addiction_type_id &type, int strength )
 {
-    if( type == add_type::NONE ) {
+    if( type.is_empty() || !type.is_valid() ) {
         return;
     }
     time_duration timer = 2_hours;
@@ -2080,35 +2080,41 @@ void Character::add_addiction( add_type type, int strength )
         const std::string &type_name = addiction_type_name( type );
         add_msg( m_debug, "%s got addicted to %s", disp_name(), type_name );
         addictions.emplace_back( type, 1 );
-        g->events().send<event_type::gains_addiction>( getID(), type );
+        const add_type legacy = legacy_add_type( type );
+        if( legacy != add_type::NONE ) {
+            g->events().send<event_type::gains_addiction>( getID(), legacy );
+        }
     }
 }
 
-bool Character::has_addiction( add_type type ) const
+bool Character::has_addiction( const addiction_type_id &type ) const
 {
     return std::ranges::any_of( addictions,
-    [type]( const addiction & ad ) {
+    [&type]( const addiction & ad ) {
         return ad.type == type && ad.intensity >= MIN_ADDICTION_LEVEL;
     } );
 }
 
-void Character::rem_addiction( add_type type )
+void Character::rem_addiction( const addiction_type_id &type )
 {
     auto iter = std::ranges::find_if( addictions,
-    [type]( const addiction & ad ) {
+    [&type]( const addiction & ad ) {
         return ad.type == type;
     } );
 
     if( iter != addictions.end() ) {
         addictions.erase( iter );
-        g->events().send<event_type::loses_addiction>( getID(), type );
+        const add_type legacy = legacy_add_type( type );
+        if( legacy != add_type::NONE ) {
+            g->events().send<event_type::loses_addiction>( getID(), legacy );
+        }
     }
 }
 
-int Character::addiction_level( add_type type ) const
+int Character::addiction_level( const addiction_type_id &type ) const
 {
     auto iter = std::ranges::find_if( addictions,
-    [type]( const addiction & ad ) {
+    [&type]( const addiction & ad ) {
         return ad.type == type;
     } );
     return iter != addictions.end() ? iter->intensity : 0;

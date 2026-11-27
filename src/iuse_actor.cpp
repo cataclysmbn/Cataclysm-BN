@@ -1039,7 +1039,7 @@ int consume_drug_iuse::use( player &p, item &it, bool, const tripoint_bub_ms & )
                 if( id.obj() == eff.id.obj() ) {
                     if( p.get_effect_dur( id ) > time_duration::from_minutes( too_much_threshold ) *
                         ( p.addiction_level(
-                              addiction_type( attm_addiction_type ) ) + 1 ) ) {
+                              addiction_type_id( attm_addiction_type ) ) + 1 ) ) {
                         p.add_msg_if_player( m_bad, _( "Ugh, too much %s… you feel nasty." ), attm_addiction_type );
                         break;
                     }

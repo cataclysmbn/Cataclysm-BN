@@ -2,6 +2,7 @@
 // functions are serialization functions.  This allows IWYU to check the
 // includes in such headers.
 #include "active_item_cache.h"
+#include "addiction.h"
 #include "activity_actor.h"
 #include "assign.h"
 #include "auto_pickup.h"
@@ -4155,7 +4156,7 @@ void tripoint::serialize( JsonOut &jsout ) const
 void addiction::serialize( JsonOut &json ) const
 {
     json.start_object();
-    json.member( "type_enum", type );
+    json.member( "type", type );
     json.member( "intensity", intensity );
     json.member( "sated", sated );
     json.end_object();
@@ -4165,7 +4166,12 @@ void addiction::deserialize( JsonIn &jsin )
 {
     JsonObject jo = jsin.get_object();
     jo.allow_omitted_members();
-    type = static_cast<add_type>( jo.get_int( "type_enum" ) );
+    if( jo.has_string( "type" ) ) {
+        type = addiction_type_id( jo.get_string( "type" ) );
+    } else {
+        // Old saves store the addiction type as the legacy enum int
+        type = addiction_id_from_legacy( static_cast<add_type>( jo.get_int( "type_enum" ) ) );
+    }
     intensity = jo.get_int( "intensity" );
     jo.read( "sated", sated );
 }

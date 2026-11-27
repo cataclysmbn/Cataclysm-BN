@@ -1,0 +1,10 @@
+[
+  {
+    "type": "addiction_type",
+    "id": "test_lua_addiction",
+    "name": "TEST lua addiction",
+    "description": "A test addiction whose withdrawal behavior is delegated to Lua.",
+    "craving_morale": "morale_craving_marloss",
+    "on_withdrawal": "lua:test_addiction_withdrawal"
+  }
+]

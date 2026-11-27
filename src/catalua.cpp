@@ -346,6 +346,7 @@ void init_global_state_tables( lua_state &state, const std::vector<mod_id> &modl
     gt["imelee_functions"] = lua.create_table();
     gt["iranged_functions"] = lua.create_table();
     gt["itrap_functions"] = lua.create_table();
+    gt["addiction_functions"] = lua.create_table();
     gt["examine_functions"] = lua.create_table();
     gt["activity_functions"] = lua.create_table();
 
@@ -1239,6 +1240,17 @@ auto run_lua_examine( const std::string &callback_id, player &who,
     run_lua_callback( "examine_functions", callback_id, [&]( sol::table & params ) {
         params["user"] = who.as_character();
         params["pos"] = pos;
+    } );
+}
+
+auto run_lua_addiction_withdrawal( const std::string &callback_id, Character &who,
+                                   const addiction &add ) -> void
+{
+    run_lua_callback( "addiction_functions", callback_id, [&]( sol::table & params ) {
+        params["char"] = &who;
+        params["addiction"] = add.type.str();
+        params["intensity"] = add.intensity;
+        params["sated"] = to_turns<int>( add.sated );
     } );
 }
 

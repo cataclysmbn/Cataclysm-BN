@@ -829,3 +829,58 @@ gapi.clear_omt_weather_override(center_omt, 2)
 
 Use `"thunder"` instead of `"lightning"` if you want thunderstorm weather without the stronger
 lightning-storm variant.
+
+## Custom Addiction Types
+
+Addiction types are defined in JSON (`data/json/addiction_types.json`). A type
+has an id, display name, description for the character status UI, a craving
+morale type, and optionally a legacy enum alias used for old save files and the
+`gains_addiction`/`loses_addiction` game events:
+
+```json
+{
+  "type": "addiction_type",
+  "id": "marloss_r",
+  "name": "Marloss berries",
+  "description": "You should try some of those pink berries.",
+  "craving_morale": "morale_craving_marloss",
+  "legacy_enum": "MARLOSS_R"
+}
+```
+
+Comestibles reference the type by id via their existing `"addiction_type"`
+field, and Lua accepts the id string everywhere an `AddictionType` enum value
+was accepted before (`add_addiction`, `rem_addiction`, `has_addiction`,
+`addiction_level`, and item filters).
+
+### Lua withdrawal callbacks
+
+A type may delegate its per-turn withdrawal behavior to Lua with
+`"on_withdrawal": "lua:NAME"`; the callback in `game.addiction_functions`
+then fully replaces the hardcoded withdrawal logic:
+
+| Callback  | params fields                                     |
+| --------- | ------------------------------------------------- |
+| (single)  | `char`, `addiction`, `intensity`, `sated`         |
+
+```json
+{
+  "type": "addiction_type",
+  "id": "marloss_r",
+  "name": "Marloss berries",
+  "description": "You should try some of those pink berries.",
+  "craving_morale": "morale_craving_marloss",
+  "on_withdrawal": "lua:marloss_withdrawal"
+}
+```
+
+```lua
+game.addiction_functions["marloss_withdrawal"] = function( params )
+    if params.char.focus_pool > 40 then
+        params.char.focus_pool = params.char.focus_pool - params.intensity
+    end
+end
+```
+
+Types without `on_withdrawal` keep their hardcoded withdrawal behavior, keyed
+by `legacy_enum`. Types with neither run nothing.

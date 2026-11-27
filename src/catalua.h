@@ -49,6 +49,8 @@ void run_on_game_save_hooks( lua_state &state );
 void run_on_every_x_hooks( lua_state &state );
 auto run_lua_examine( const std::string &callback_id, player &who,
                       const tripoint_bub_ms &pos ) -> void;
+auto run_lua_addiction_withdrawal( const std::string &callback_id, Character &who,
+                                   const addiction &add ) -> void;
 auto get_lua_activity_on_finish( const player_activity &act ) -> std::string;
 auto get_lua_activity_on_turn( const player_activity &act ) -> std::string;
 auto run_lua_activity_callback( const std::string &callback_id, player &who,

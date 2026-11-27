@@ -1,6 +1,7 @@
 #include "character_turn.h"
 
 #include "action_time_scale.h"
+#include "addiction.h"
 #include "active_tile_data_def.h"
 #include "avatar.h"
 #include "bionics.h"
@@ -617,7 +618,8 @@ void Character::process_one_effect( effect &it, bool is_new )
     // Handle painkillers
     val = get_effect( "PKILL", reduced );
     if( val != 0 ) {
-        mod = it.get_addict_mod( "PKILL", addiction_level( add_type::PKILLER ) );
+        mod = it.get_addict_mod( "PKILL",
+                                 addiction_level( addiction_id_from_legacy( add_type::PKILLER ) ) );
         if( is_new || it.activated( calendar::turn, "PKILL", val, reduced, mod ) ) {
             mod_painkiller( bound_mod_to_vals( get_painkiller(), val, it.get_max_val( "PKILL", reduced ), 0 ) );
         }

@@ -273,7 +273,7 @@ class consume_drug_iuse : public iuse_actor
         float tolerance_mod = 1.2;
         /** The modification applied when the user uis a lightweight. **/
         float lightweight_mod = .8;
-        /** Number of minutes to use for the too much calculation. p.get_effect_dur(id) > time_duration::to_minutes(too_much_threshold) * ( p.addiction_level( addiction_type(attm_addiction_type) ) + 1 ) **/
+        /** Number of minutes to use for the too much calculation. p.get_effect_dur(id) > time_duration::to_minutes(too_much_threshold) * ( p.addiction_level( addiction_type_id( attm_addiction_type ) ) + 1 ) **/
         float too_much_threshold = 10;
         /** A [string, string] that defines what effect type is linked to an addiction. Example: ["cig", "nicotine"]**/
         std::vector<std::pair<std::string, std::string>> addiction_type_too_much;

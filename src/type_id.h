@@ -127,6 +127,9 @@ using mfaction_str_id = string_id<monfaction>;
 class MonsterGroup;
 using mongroup_id = string_id<MonsterGroup>;
 
+class addiction_type_data;
+using addiction_type_id = string_id<addiction_type_data>;
+
 class morale_type_data;
 using morale_type = string_id<morale_type_data>;
 

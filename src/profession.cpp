@@ -104,11 +104,12 @@ class addiction_reader : public generic_typed_reader<addiction_reader>
     public:
         addiction get_next( JsonIn &jin ) const {
             JsonObject jo = jin.get_object();
-            return addiction( addiction_type( jo.get_string( "type" ) ), jo.get_int( "intensity" ) );
+            return addiction( addiction_type_id( jo.get_string( "type" ) ),
+                              jo.get_int( "intensity" ) );
         }
         template<typename C>
         void erase_next( JsonIn &jin, C &container ) const {
-            const add_type type = addiction_type( jin.get_string() );
+            const addiction_type_id type = addiction_type_id( jin.get_string() );
             reader_detail::handler<C>().erase_if( container, [&type]( const addiction & e ) {
                 return e.type == type;
             } );

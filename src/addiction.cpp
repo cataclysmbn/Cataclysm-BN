@@ -3,17 +3,22 @@
 #include <algorithm>
 #include <cstdlib>
 #include <map>
+#include <string>
 #include <utility>
 
 #include "action_time_scale.h"
 #include "calendar.h"
+#include "catalua.h"
 #include "character.h"
 #include "debug.h"
 #include "enums.h"
 #include "enum_conversions.h"
+#include "generic_factory.h"
+#include "json.h"
 #include "morale_types.h"
 #include "rng.h"
 #include "translations.h"
+#include "type_id_implement.h"
 
 static const efftype_id effect_hallu( "hallu" );
 static const efftype_id effect_meth( "meth" );
@@ -54,14 +59,101 @@ std::string enum_to_string<add_type>( add_type data )
 
 } // namespace io
 
+namespace
+{
+
+generic_factory<addiction_type_data> addiction_type_data_factory( "addiction type" );
+
+} // namespace
+
+IMPLEMENT_STRING_AND_INT_IDS( addiction_type_data, addiction_type_data_factory )
+
+void addiction_type_data::load_type( const JsonObject &jo, const std::string &src )
+{
+    addiction_type_data_factory.load( jo, src );
+}
+
+void addiction_type_data::check_all()
+{
+    addiction_type_data_factory.check();
+}
+
+void addiction_type_data::reset()
+{
+    addiction_type_data_factory.reset();
+}
+
+void addiction_type_data::load( const JsonObject &jo, const std::string & )
+{
+    mandatory( jo, was_loaded, "name", name );
+    mandatory( jo, was_loaded, "description", description );
+
+    optional( jo, was_loaded, "craving_morale", craving_morale, morale_type() );
+    optional( jo, was_loaded, "legacy_enum", legacy_enum, add_type::NONE );
+    optional( jo, was_loaded, "on_withdrawal", on_withdrawal, std::string() );
+}
+
+void addiction_type_data::check() const
+{
+    if( !craving_morale.is_empty() && !craving_morale.is_valid() ) {
+        debugmsg( "Addiction type \"%s\" has unknown craving_morale \"%s\"",
+                  id.str(), craving_morale.str() );
+    }
+    if( legacy_enum != add_type::NONE && addiction_id_from_legacy( legacy_enum ) != id ) {
+        debugmsg( "Addiction type \"%s\" uses legacy_enum %s which maps to a different id",
+                  id.str(), io::enum_to_string( legacy_enum ) );
+    }
+}
+
+addiction_type_id addiction_id_from_legacy( add_type legacy )
+{
+    switch( legacy ) {
+        // *INDENT-OFF*
+        case add_type::NONE: break;
+        case add_type::CAFFEINE: return addiction_type_id( "caffeine" );
+        case add_type::ALCOHOL: return addiction_type_id( "alcohol" );
+        case add_type::SLEEP: return addiction_type_id( "sleeping pill" );
+        case add_type::PKILLER: return addiction_type_id( "opiate" );
+        case add_type::SPEED: return addiction_type_id( "amphetamine" );
+        case add_type::CIG: return addiction_type_id( "nicotine" );
+        case add_type::COKE: return addiction_type_id( "cocaine" );
+        case add_type::CRACK: return addiction_type_id( "crack" );
+        case add_type::MUTAGEN: return addiction_type_id( "mutagen" );
+        case add_type::DIAZEPAM: return addiction_type_id( "diazepam" );
+        case add_type::MARLOSS_R: return addiction_type_id( "marloss_r" );
+        case add_type::MARLOSS_B: return addiction_type_id( "marloss_b" );
+        case add_type::MARLOSS_Y: return addiction_type_id( "marloss_y" );
+        // *INDENT-ON*
+        case add_type::NUM_ADD_TYPES:
+            break;
+    }
+    return addiction_type_id();
+}
+
+add_type legacy_add_type( const addiction_type_id &type )
+{
+    if( type.is_empty() || !type.is_valid() ) {
+        return add_type::NONE;
+    }
+    return type.obj().legacy_enum;
+}
+
 void marloss_add( Character &u, int in, const char *msg );
 
 void addict_effect( Character &u, addiction &add )
 {
+    const addiction_type_data &type_data = add.type.obj();
+    if( type_data.on_withdrawal.rfind( "lua:", 0 ) == 0 ) {
+        // A Lua withdrawal callback fully replaces the hardcoded behavior.
+        cata::run_lua_addiction_withdrawal( type_data.on_withdrawal.substr( 4 ), u, add );
+        return;
+    }
+
+    const add_type type = type_data.legacy_enum;
     const int in = std::min( 20, add.intensity );
     const int current_stim = u.get_stim();
 
-    switch( add.type ) {
+    switch( type ) {
         case add_type::CIG:
             u.mod_int_bonus( -1, true );
             if( !one_in( 2000 - 20 * in ) ) {
@@ -98,7 +190,7 @@ void addict_effect( Character &u, addiction &add )
 
         case add_type::ALCOHOL:
         case add_type::DIAZEPAM: {
-            const auto morale_type = add.type == add_type::ALCOHOL ? MORALE_CRAVING_ALCOHOL :
+            const auto morale_type = type == add_type::ALCOHOL ? MORALE_CRAVING_ALCOHOL :
                                      MORALE_CRAVING_DIAZEPAM;
 
             u.mod_per_bonus( -1, true );
@@ -107,14 +199,14 @@ void addict_effect( Character &u, addiction &add )
                 u.mod_healthy_mod( -1, -in * 10 );
             }
 
-            const bool is_alcohol = add.type == add_type::ALCOHOL;
+            const bool is_alcohol = type == add_type::ALCOHOL;
             const bool on_ghb = is_alcohol && u.has_effect( effect_took_antinarcoleptic );
 
             // Hardcoded morale penalties depending on GHB effect
             const int morale_penalty_min = on_ghb ? -18 : -35;  // roughly half
             const int morale_penalty_max = on_ghb ? -5 * in : -10 * in;
 
-            if( is_alcohol || add.type == add_type::DIAZEPAM ) {
+            if( is_alcohol || type == add_type::DIAZEPAM ) {
                 if( x_in_y( in, to_turns<int>( 2_minutes ) * 20 ) && ( !on_ghb || one_in( 2 ) ) ) {
                     const std::string msg_1 = is_alcohol ?
                                               _( "You could use a drink." ) :
@@ -176,7 +268,7 @@ void addict_effect( Character &u, addiction &add )
                 u.add_morale( MORALE_CRAVING_OPIATE, -40, -10 * in );
                 u.add_effect( effect_shakes, 2_minutes + in * 30_seconds );
             } else if( one_in( 20 ) && dice( 2, 30 ) < in ) {
-                u.add_msg_if_player( m_bad, _( "You feel anxious.  You need your painkillers!" ) );
+                u.add_msg_if_player( m_bad, _( "You feel anxious. You need your painkillers!" ) );
                 u.add_morale( MORALE_CRAVING_OPIATE, -30, -10 * in );
             } else if( one_in( 50 ) && dice( 3, 50 ) < in ) {
                 u.vomit();
@@ -213,10 +305,10 @@ void addict_effect( Character &u, addiction &add )
 
         case add_type::COKE:
         case add_type::CRACK: {
-            const std::string &cur_msg = add.type == add_type::COKE ?
+            const std::string &cur_msg = type == add_type::COKE ?
                                          _( "You feel like you need a bump." ) :
                                          _( "You're shivering, you need some crack." );
-            const auto morale_type = add.type == add_type::COKE ? MORALE_CRAVING_COCAINE :
+            const auto morale_type = type == add_type::COKE ? MORALE_CRAVING_COCAINE :
                                      MORALE_CRAVING_CRACK;
             u.mod_int_bonus( -1, true );
             u.mod_per_bonus( -1, true );
@@ -272,145 +364,33 @@ void addict_effect( Character &u, addiction &add )
  * Returns the name of an addiction. It should be able to finish the sentence
  * "Became addicted to ______".
  */
-std::string addiction_type_name( add_type const cur )
+std::string addiction_type_name( const addiction_type_id &cur )
 {
-    static const std::map<add_type, std::string> type_map = {{
-            { add_type::CIG, translate_marker( "nicotine" ) },
-            { add_type::CAFFEINE, translate_marker( "caffeine" ) },
-            { add_type::ALCOHOL, translate_marker( "alcohol" ) },
-            { add_type::SLEEP, translate_marker( "sleeping pills" ) },
-            { add_type::PKILLER, translate_marker( "opiates" ) },
-            { add_type::SPEED, translate_marker( "amphetamine" ) },
-            { add_type::COKE, translate_marker( "cocaine" ) },
-            { add_type::CRACK, translate_marker( "crack cocaine" ) },
-            { add_type::MUTAGEN, translate_marker( "mutation" ) },
-            { add_type::DIAZEPAM, translate_marker( "diazepam" ) },
-            { add_type::MARLOSS_R, translate_marker( "Marloss berries" ) },
-            { add_type::MARLOSS_B, translate_marker( "Marloss seeds" ) },
-            { add_type::MARLOSS_Y, translate_marker( "Marloss gel" ) },
-        }
-    };
-
-    const auto iter = type_map.find( cur );
-    if( iter != type_map.end() ) {
-        return _( iter->second );
+    if( cur.is_empty() || !cur.is_valid() ) {
+        return "bugs in addiction.cpp";
     }
-
-    return "bugs in addiction.cpp";
+    return cur.obj().name.translated();
 }
 
 std::string addiction_name( const addiction &cur )
 {
-    static const std::map<add_type, std::string> type_map = {{
-            { add_type::CIG, translate_marker( "Nicotine Withdrawal" ) },
-            { add_type::CAFFEINE, translate_marker( "Caffeine Withdrawal" ) },
-            { add_type::ALCOHOL, translate_marker( "Alcohol Withdrawal" ) },
-            { add_type::SLEEP, translate_marker( "Sleeping Pill Dependence" ) },
-            { add_type::PKILLER, translate_marker( "Opiate Withdrawal" ) },
-            { add_type::SPEED, translate_marker( "Amphetamine Withdrawal" ) },
-            { add_type::COKE, translate_marker( "Cocaine Withdrawal" ) },
-            { add_type::CRACK, translate_marker( "Crack Cocaine Withdrawal" ) },
-            { add_type::MUTAGEN, translate_marker( "Mutation Withdrawal" ) },
-            { add_type::DIAZEPAM, translate_marker( "Diazepam Withdrawal" ) },
-            { add_type::MARLOSS_R, translate_marker( "Marloss Longing" ) },
-            { add_type::MARLOSS_B, translate_marker( "Marloss Desire" ) },
-            { add_type::MARLOSS_Y, translate_marker( "Marloss Cravings" ) },
-        }
-    };
-
-    const auto iter = type_map.find( cur.type );
-    if( iter != type_map.end() ) {
-        return _( iter->second );
-    }
-
-    return "Erroneous addiction";
+    return addiction_type_name( cur.type );
 }
 
-morale_type addiction_craving( add_type const cur )
+morale_type addiction_craving( const addiction_type_id &cur )
 {
-    static const std::map<add_type, morale_type> type_map = {{
-            { add_type::CIG, MORALE_CRAVING_NICOTINE },
-            { add_type::CAFFEINE, MORALE_CRAVING_CAFFEINE },
-            { add_type::ALCOHOL, MORALE_CRAVING_ALCOHOL },
-            { add_type::PKILLER, MORALE_CRAVING_OPIATE },
-            { add_type::SPEED, MORALE_CRAVING_SPEED },
-            { add_type::COKE, MORALE_CRAVING_COCAINE },
-            { add_type::CRACK, MORALE_CRAVING_CRACK },
-            { add_type::MUTAGEN, MORALE_CRAVING_MUTAGEN },
-            { add_type::DIAZEPAM, MORALE_CRAVING_DIAZEPAM },
-            { add_type::MARLOSS_R, MORALE_CRAVING_MARLOSS },
-            { add_type::MARLOSS_B, MORALE_CRAVING_MARLOSS },
-            { add_type::MARLOSS_Y, MORALE_CRAVING_MARLOSS },
-        }
-    };
-
-    const auto iter = type_map.find( cur );
-    if( iter != type_map.end() ) {
-        return iter->second;
+    if( cur.is_empty() || !cur.is_valid() ) {
+        return MORALE_NULL;
     }
-
-    return MORALE_NULL;
-}
-
-add_type addiction_type( const std::string &name )
-{
-    static const std::map<std::string, add_type> type_map = {{
-            { "nicotine", add_type::CIG },
-            { "caffeine", add_type::CAFFEINE },
-            { "alcohol", add_type::ALCOHOL },
-            { "sleeping pill", add_type::SLEEP },
-            { "opiate", add_type::PKILLER },
-            { "amphetamine", add_type::SPEED },
-            { "cocaine", add_type::COKE },
-            { "crack", add_type::CRACK },
-            { "mutagen", add_type::MUTAGEN },
-            { "diazepam", add_type::DIAZEPAM },
-            { "marloss_r", add_type::MARLOSS_R },
-            { "marloss_b", add_type::MARLOSS_B },
-            { "marloss_y", add_type::MARLOSS_Y },
-            { "none", add_type::NONE }
-        }
-    };
-
-    const auto iter = type_map.find( name );
-    if( iter != type_map.end() ) {
-        return iter->second;
-    }
-
-    return add_type::NONE;
+    return cur.obj().craving_morale;
 }
 
 std::string addiction_text( const addiction &cur )
 {
-    static const std::map<add_type, std::string> addiction_msg = {{
-            { add_type::CIG, translate_marker( "Intelligence - 1;   Occasional cravings" ) },
-            { add_type::CAFFEINE, translate_marker( "Strength - 1;   Slight sluggishness;   Occasional cravings" )  },
-            {
-                add_type::ALCOHOL, translate_marker( "Perception - 1;   Intelligence - 1;   Occasional Cravings;\nRisk of delirium tremens" )
-            },
-            { add_type::SLEEP, translate_marker( "You may find it difficult to sleep without medication." ) },
-            {
-                add_type::PKILLER, translate_marker( "Strength - 1;   Perception - 1;   Dexterity - 1;\nDepression and physical pain to some degree.  Frequent cravings.  Vomiting." )
-            },
-            { add_type::SPEED, translate_marker( "Strength - 1;   Intelligence - 1;\nMovement rate reduction.  Depression.  Weak immune system.  Frequent cravings." ) },
-            { add_type::COKE, translate_marker( "Perception - 1;   Intelligence - 1;   Frequent cravings." ) },
-            { add_type::CRACK, translate_marker( "Perception - 2;   Intelligence - 2;   Frequent cravings." ) },
-            { add_type::MUTAGEN, translate_marker( "You've gotten a taste for mutating and the chemicals that cause it.  But you can stop, yeah, any time you want." ) },
-            {
-                add_type::DIAZEPAM, translate_marker( "Perception - 1;   Intelligence - 1;\nAnxiety, nausea, hallucinations, and general malaise." )
-            },
-            { add_type::MARLOSS_R, translate_marker( "You should try some of those pink berries." ) },
-            { add_type::MARLOSS_B, translate_marker( "You should try some of those cyan seeds." ) },
-            { add_type::MARLOSS_Y, translate_marker( "You should try some of that golden gel." ) },
-        }
-    };
-
-    const auto iter = addiction_msg.find( cur.type );
-    if( iter != addiction_msg.end() ) {
-        return _( iter->second );
+    if( cur.type.is_empty() || !cur.type.is_valid() ) {
+        return "You crave to report this bug.";
     }
-
-    return "You crave to report this bug.";
+    return cur.type.obj().description.translated();
 }
 
 void marloss_add( Character &u, int in, const char *msg )
