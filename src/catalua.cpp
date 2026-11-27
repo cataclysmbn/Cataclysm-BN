@@ -957,10 +957,11 @@ void reg_lua_icallback_actors( lua_state &state, Item_factory &ifactory )
                 }
                 const auto tbl = ref.second.as<sol::table>();
                 auto on_try_consume = tbl.get_or<sol::function>( "on_try_consume", sol::lua_nil );
+                auto on_consume = tbl.get_or<sol::function>( "on_consume", sol::lua_nil );
                 ifactory.add_iconsume_actor(
                     itype_id( key ),
                     std::make_unique<lua_iconsume_actor>(
-                        key, std::move( on_try_consume ) ) );
+                        key, std::move( on_try_consume ), std::move( on_consume ) ) );
             } catch( std::runtime_error &e ) {
                 debugmsg( "Failed to extract iconsume_functions k='%s': %s", key, e.what() );
                 break;

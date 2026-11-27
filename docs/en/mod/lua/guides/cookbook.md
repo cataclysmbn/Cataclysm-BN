@@ -554,6 +554,7 @@ own consumption (`params.item:mod_charges( -1 )`) and return `false`.
 | Callbacks        | params fields                                                               |
 | ---------------- | --------------------------------------------------------------------------- |
 | `on_try_consume` | `char`, `item`, `nutrition`, `thirst`, `fun`, `fun_max`, `skip_cannibalism` |
+| `on_consume`     | `char`, `item`, `nutrition`, `thirst`, `fun`, `fun_max`                     |
 
 ```lua
 game.iconsume_functions["blood"] = {
@@ -570,6 +571,21 @@ The character-wide equivalent is the `on_character_try_consume` hook: it
 receives the same values in its `params` and returns a table with the override
 fields (`allowed`, `nutrition`, `thirst`, `fun`, `fun_max`, `skip_cannibalism`)
 instead of mutating `params`.
+
+`on_consume` is the post-consume counterpart: it runs after the item has
+actually been consumed (charges deducted, effects applied), receives the
+values the game applied (`char`, `item`, `nutrition`, `thirst`, `fun`,
+`fun_max`), and its return value is ignored. The character-wide equivalent is
+the `on_character_consume` hook with the same `params` fields.
+
+```lua
+game.iconsume_functions["blood"] = {
+    on_consume = function( params )
+        gdebug.log_info( params.char:get_name() .. " drank "
+            .. tostring( params.nutrition ) .. " kcal of blood" )
+    end
+}
+```
 
 ---
 

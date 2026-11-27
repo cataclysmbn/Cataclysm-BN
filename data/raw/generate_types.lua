@@ -614,6 +614,7 @@ doc_gen_func.impl = function()
 
 ---@class IconsumeFunctionTable
 ---@field on_try_consume? fun(params: ItemTryConsumeParams): boolean @runs before the eat-confirmation prompt; return false to interrupt the consume, modify params.nutrition/params.thirst/params.fun/params.fun_max to override them, set params.skip_cannibalism to true to skip the human-flesh consequence (overrides also affect the "eat anyway?" warnings); callback side effects persist even if the checks fail or the player declines
+---@field on_consume? fun(params: ItemConsumeParams) @runs after the item has actually been consumed (charges deducted, effects applied); params carries the values the game applied (overrides included), the return value is ignored
 
 ---@class BionicFunctionTable
 ---@field on_activate? fun(params: BionicCallbackParams)
@@ -722,6 +723,26 @@ on_character_try_consume_result = {}
 ---@field fun_max integer @maximum fun the joy would be capped at; may be modified to override the value applied by the game
 ---@field skip_cannibalism boolean @set to true to skip the human-flesh (cannibalism) consequence of the "eat anyway?" warnings and the post-consume guilt morale penalty
 item_try_consume_params = {}
+
+--- Runs after the comestible has actually been consumed (charges deducted,
+--- effects applied); the return value is ignored.
+---@class OnCharacterConsumeParams
+---@field char Character @the character that ate or drank the item
+---@field item Item @the comestible that was consumed
+---@field nutrition integer @effective calories (kcal) the character gained, honoring overrides
+---@field thirst integer @thirst quenched by the item, honoring overrides
+---@field fun integer @fun (joy) value applied by the game, honoring overrides
+---@field fun_max integer @maximum fun the joy was capped at, honoring overrides
+on_character_consume = {}
+
+---@class ItemConsumeParams
+---@field char Character @the character that ate or drank the item
+---@field item Item @the comestible that was consumed
+---@field nutrition integer @effective calories (kcal) the character gained, honoring overrides
+---@field thirst integer @thirst quenched by the item, honoring overrides
+---@field fun integer @fun (joy) value applied by the game, honoring overrides
+---@field fun_max integer @maximum fun the joy was capped at, honoring overrides
+item_consume_params = {}
 
 ---@class OnCraftResultParams
 ---@field crafter Character

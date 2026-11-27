@@ -146,10 +146,12 @@ class lua_iconsume_actor : public lua_icallback_actor_base
 {
     private:
         sol::protected_function on_try_consume_func;
+        sol::protected_function on_consume_func;
 
     public:
         lua_iconsume_actor( const std::string &item_id,
-                            sol::protected_function &&on_try_consume );
+                            sol::protected_function &&on_try_consume,
+                            sol::protected_function &&on_consume );
 
         /**
          * Runs the on_try_consume callback for the item being consumed.
@@ -160,6 +162,15 @@ class lua_iconsume_actor : public lua_icallback_actor_base
          */
         auto call_on_try_consume( Character &who, item &it,
                                   consume_overrides &overrides ) const -> bool;
+
+        /**
+         * Runs the on_consume callback after the item has actually been
+         * consumed (charges deducted, effects applied). The params table is
+         * informational (it carries the values that were applied, honoring
+         * @p overrides); the return value is ignored.
+         */
+        auto call_on_consume( Character &who, item &it,
+                              const consume_overrides &overrides ) const -> void;
 };
 
 /** Lua callbacks for melee combat events. */

@@ -1042,6 +1042,24 @@ bool Character::eat( item &food, bool force )
         consumption_history->elems.pop_front();
     }
 
+    // Lua consume hook and per-item callback run after the comestible has
+    // actually been consumed (charges deducted, effects applied). They are
+    // purely informational, so their return values are ignored.
+    if( cata::has_hooks( "on_character_consume" ) ) {
+        const auto fun = fun_for( food );
+        cata::run_hooks( "on_character_consume", [ &, this ]( sol::table & params ) {
+            params["char"] = this;
+            params["item"] = &food;
+            params["nutrition"] = food_kcal;
+            params["thirst"] = quench;
+            params["fun"] = lua_overrides.fun ? *lua_overrides.fun : fun.first;
+            params["fun_max"] = lua_overrides.fun_max ? *lua_overrides.fun_max : fun.second;
+        } );
+    }
+    if( const lua_iconsume_actor *iconsume_cb = food.type->iconsume_callbacks ) {
+        iconsume_cb->call_on_consume( *this, food, lua_overrides );
+    }
+
     return true;
 }
 
