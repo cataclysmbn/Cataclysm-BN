@@ -25,7 +25,9 @@ public:
      * @param parent Base item the reload was requested for; may equal @p target
      * @param ammo Source item
      */
-    item_reload_option(const player* who, item* target, const item* parent, item& ammo);
+    item_reload_option(
+        const player* who, item* target, const item* parent, item& ammo,
+        bool store_container_as_item = false);
 
     /** Character who performs the reload. */
     const player* who = nullptr;
@@ -33,6 +35,8 @@ public:
     item* target = nullptr;
     /** Source item: loose ammunition, a magazine, a speedloader, or a container. */
     item* ammo;
+    /** Store a filled container whole instead of transferring its contents. */
+    bool store_container_as_item = false;
 
     /** Amount of ammunition this option transfers. */
     auto qty() const -> int { return qty_; }
