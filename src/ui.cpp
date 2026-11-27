@@ -299,6 +299,9 @@ void uilist::filterlist()
             continue;
         }
         if( filtering ) {
+            if( !entries[i].filterable ) {
+                continue;
+            }
             if( exact_match_only ) {
                 if( !( entries[i].txt == filter ) ) {
                     continue;
