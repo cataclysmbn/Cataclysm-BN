@@ -156,6 +156,7 @@ static const itype_id itype_hotplate("hotplate");
 static const itype_id itype_kiln("kiln");
 static const itype_id itype_press("press");
 static const itype_id itype_soldering_iron("soldering_iron");
+static const itype_id itype_UPS("UPS");
 static const itype_id itype_vac_sealer("vac_sealer");
 static const itype_id itype_welder("welder");
 static const itype_id itype_butchery("fake_adv_butchery");
@@ -5874,6 +5875,29 @@ auto map::use_charges(
         reachable_flood_steps(reachable_pts, origin, range, 1, 100);
     }
 
+    if (type == itype_UPS) {
+        const auto drain_ups = [&](auto&& stack, const tripoint_bub_ms& p) {
+            for (item* const top : stack) {
+                top->visit_items([&](item* it) {
+                    if (it->has_flag(flag_IS_UPS) && filter(*it)) {
+                        quantity -= it->use_ups_charges(quantity, p);
+                    }
+                    return quantity > 0 ? VisitResponse::NEXT : VisitResponse::ABORT;
+                });
+                if (quantity <= 0) { return; }
+            }
+        };
+        for (const tripoint_bub_ms& p : reachable_pts) {
+            if (accessible_items(p)) { drain_ups(i_at(p), p); }
+            const std::optional<vpart_reference> cargo = veh_at(p).part_with_feature("CARGO", true);
+            if (cargo && quantity > 0) {
+                drain_ups(cargo->vehicle().get_items(cargo->part_index()), p);
+            }
+            if (quantity <= 0) { return ret; }
+        }
+        return ret;
+    }
+
     // We prefer infinite map sources where available, so search for those
     // first
     for (const tripoint_bub_ms& p : reachable_pts) {
@@ -5951,6 +5975,14 @@ auto map::use_charges(
             if (quantity <= 0) { return ret; }
         }
     }
+
+    const auto is_ups_modded = [&type](const item* it) {
+        return it->typeId() == type && it->has_flag(flag_USE_UPS);
+    };
+    const bool has_ups_modded_tool = std::ranges::any_of(reachable_pts, [&](const auto& p) {
+        return accessible_items(p) && std::ranges::any_of(i_at(p), is_ups_modded);
+    });
+    if (has_ups_modded_tool) { use_charges(origin, range, itype_UPS, quantity, filter); }
 
     return ret;
 }

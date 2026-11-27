@@ -11655,14 +11655,9 @@ std::vector<detached_ptr<item>> Character::use_charges( const itype_id &what, in
 
         remove_items_with( [ & ]( detached_ptr<item> &&e ) {
             if( e->has_flag( flag_IS_UPS ) && e->ammo_remaining() > 0 && filter( *e ) ) {
-                int ups_eff_mult = e->type->tool->ups_eff_mult;
                 detached_ptr<item> split = item::spawn( *e );
                 split->ammo_set( e->ammo_current(), e->ammo_remaining() );
-                int used = std::min( qty, e->ammo_remaining() * ups_eff_mult );
-                qty -= used;
-                int rand_increase = x_in_y( used % ups_eff_mult, ups_eff_mult );
-                int really_used = ( used / ups_eff_mult ) + rand_increase;
-                e->ammo_consume( really_used, bub_pos() );
+                qty -= e->use_ups_charges( qty, bub_pos() );
                 res.push_back( std::move( split ) );
             }
             return qty != 0 ? VisitResponse::NEXT : VisitResponse::ABORT;

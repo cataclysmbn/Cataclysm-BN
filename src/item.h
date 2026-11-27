@@ -2042,6 +2042,12 @@ class item : public location_visitable<item>, public game_object<item>
          */
         int ammo_consume( int qty, const tripoint_bub_ms &pos );
 
+        /**
+         * Use UPS charges from this IS_UPS item, scaled by its ups_eff_mult.
+         * @return UPS charges used, between 0 and qty
+         */
+        auto use_ups_charges( int qty, const tripoint_bub_ms &pos ) -> int;
+
         /** Specific ammo data, returns nullptr if item is neither ammo nor loaded with any */
         const itype *ammo_data() const;
         /** Specific ammo type, returns "null" if item is neither ammo nor loaded with any */

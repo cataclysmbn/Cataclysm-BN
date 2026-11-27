@@ -89,14 +89,14 @@ int charges_for_continuing( int full_charges );
  */
 comp_selection<tool_comp>
 select_tool_component( const std::vector<tool_comp> &tools, int batch, const inventory &map_inv,
-                       const Character *player_with_inv,
+                       Character *player_with_inv,
                        bool can_cancel,
                        const std::string &hotkeys,
                        cost_adjustment adjustment );
 
 comp_selection<tool_comp>
 select_tool_component( const std::vector<tool_comp> &tools, int batch, const inventory &map_inv,
-                       const Character *player_with_inv,
+                       Character *player_with_inv,
                        bool can_cancel = false );
 
 /** Check if character can disassemble an item using the given crafting inventory. */

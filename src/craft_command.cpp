@@ -292,7 +292,7 @@ detached_ptr<item> craft_command::create_in_progress_craft()
                     }
                     break;
                 case usage_from::both:
-                    if( crafter->charges_of( type ) + map_inv.charges_of( type ) < full_cost ) {
+                    if( !crafter->crafting_inventory().has_charges( type, full_cost ) ) {
                         can_fully_prepay = false;
                     }
                     break;
@@ -353,8 +353,7 @@ detached_ptr<item> craft_command::create_in_progress_craft()
                     has_start = map_inv.has_charges( tool_sel.comp.type, start_cost );
                     break;
                 case usage_from::both:
-                    has_start = crafter->charges_of( tool_sel.comp.type ) +
-                                map_inv.charges_of( tool_sel.comp.type ) >= start_cost;
+                    has_start = crafter->crafting_inventory().has_charges( tool_sel.comp.type, start_cost );
                     break;
                 default:
                     has_start = true;
@@ -470,6 +469,10 @@ std::vector<comp_selection<tool_comp>> craft_command::check_tool_components_miss
                     }
                     break;
                 case usage_from::both:
+                    if( !crafter->crafting_inventory().has_charges( type, count ) ) {
+                        missing.push_back( tool_sel );
+                    }
+                    break;
                 case usage_from::none:
                 case usage_from::cancel:
                 case usage_from::num_usages_from:

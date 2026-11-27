@@ -1298,3 +1298,71 @@ TEST_CASE("vehicle kitchen craft preserves frozen component rot", "[crafting][ro
 
     check_cooked_meat_is_fresh(result);
 }
+
+static auto prepare_stanag_without_forge(avatar& you) -> recipe_id {
+    clear_all_state();
+    auto& here = get_map();
+    const auto stanag = recipe_id("stanag20");
+    you.set_skill_level(stanag->skill_used, 10);
+    you.learn_recipe(&stanag.obj());
+    for (const auto* id : {"anvil", "tongs", "hammer"}) { you.i_add(item::spawn(id)); }
+    you.i_add(item::spawn("small_repairkit", calendar::turn, 500));
+    here.add_item(you.bub_pos(), item::spawn("scrap"));
+    here.add_item(you.bub_pos(), item::spawn("scrap"));
+    set_time(midday);
+    return stanag;
+}
+
+TEST_CASE("crafting uses a tool granted by an enchantment", "[crafting][enchantment]") {
+    auto& you = get_avatar();
+    const auto stanag = prepare_stanag_without_forge(you);
+    you.set_mutation(trait_id("TEST_ENCHANTED_FORGE"));
+    you.recalculate_enchantment_cache();
+
+    you.make_craft(stanag, 1);
+
+    const auto crafts = in_progress_crafts(you);
+    REQUIRE(crafts.size() == 1);
+    const auto& selections = crafts.front()->get_cached_tool_selections();
+    CHECK(std::ranges::any_of(selections, [](const comp_selection<tool_comp>& sel) {
+        return sel.comp.type == itype_id("test_enchanted_forge");
+    }));
+    CHECK(you.craft_consume_tools(*crafts.front(), 1, false));
+}
+
+TEST_CASE("crafting drains a UPS for a UPS-modded tool", "[crafting][ups]") {
+    auto& you = get_avatar();
+    auto& here = get_map();
+    const auto stanag = prepare_stanag_without_forge(you);
+    auto forge = item::spawn("forge", calendar::start_of_cataclysm, 0);
+    forge->put_in(item::spawn("battery_ups"));
+    auto ups = item::spawn("adv_UPS_off", calendar::start_of_cataclysm, 5000);
+    const item* ups_ptr = ups.get();
+
+    SECTION("forge on the ground, UPS carried") {
+        here.add_item(you.bub_pos(), std::move(forge));
+        you.i_add(std::move(ups));
+    }
+    SECTION("forge carried, UPS on the ground") {
+        you.i_add(std::move(forge));
+        here.add_item(you.bub_pos(), std::move(ups));
+    }
+    SECTION("forge carried, UPS in a backpack on the ground") {
+        you.i_add(std::move(forge));
+        auto backpack = item::spawn("backpack");
+        backpack->put_in(std::move(ups));
+        here.add_item(you.bub_pos(), std::move(backpack));
+    }
+    SECTION("forge and UPS on the ground") {
+        here.add_item(you.bub_pos(), std::move(forge));
+        here.add_item(you.bub_pos(), std::move(ups));
+    }
+
+    you.make_craft(stanag, 1);
+
+    const auto crafts = in_progress_crafts(you);
+    REQUIRE(crafts.size() == 1);
+    const int before = ups_ptr->ammo_remaining();
+    CHECK(you.craft_consume_tools(*crafts.front(), 1, false));
+    CHECK(ups_ptr->ammo_remaining() < before);
+}
