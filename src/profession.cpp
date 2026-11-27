@@ -319,6 +319,11 @@ void profession::check_item_definitions( const itypedecvec &items ) const
 
 void profession::check_definition() const
 {
+    for( const auto &add : _starting_addictions ) {
+        if( !add.type.is_valid() ) {
+            debugmsg( "profession %s has unknown addiction type \"%s\"", id.str(), add.type.str() );
+        }
+    }
     check_item_definitions( legacy_starting_items );
     check_item_definitions( legacy_starting_items_female );
     check_item_definitions( legacy_starting_items_male );

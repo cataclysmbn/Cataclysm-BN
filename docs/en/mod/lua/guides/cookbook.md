@@ -832,26 +832,32 @@ lightning-storm variant.
 
 ## Custom Addiction Types
 
-Addiction types are defined in JSON (`data/json/addiction_types.json`). A type
-has an id, display name, description for the character status UI, a craving
-morale type, and optionally a legacy enum alias used for old save files and the
-`gains_addiction`/`loses_addiction` game events:
+Addiction types are defined in JSON (`data/json/addiction_types.json`; fields in
+[Addiction types](../../json/reference/creatures/addictions.md)). A type has an
+id, display name, withdrawal name and description for the character status UI,
+a craving morale type, and optionally a legacy enum alias used for old save
+files and the hardcoded withdrawal behavior:
 
 ```json
 {
   "type": "addiction_type",
   "id": "marloss_r",
   "name": "Marloss berries",
+  "withdrawal_name": "Marloss Longing",
   "description": "You should try some of those pink berries.",
   "craving_morale": "morale_craving_marloss",
   "legacy_enum": "MARLOSS_R"
 }
 ```
 
+Gaining or losing any addiction sends the `gains_addiction`/`loses_addiction`
+game events with the type id in their `addiction` field, so the memorial logs
+JSON-only types too.
+
 Comestibles reference the type by id via their existing `"addiction_type"`
 field, and Lua accepts the id string everywhere an `AddictionType` enum value
 was accepted before (`add_addiction`, `rem_addiction`, `has_addiction`,
-`addiction_level`, and item filters).
+`addiction_level`, and item filters). Unknown ids are reported as errors.
 
 ### Lua withdrawal callbacks
 
@@ -859,9 +865,12 @@ A type may delegate its per-turn withdrawal behavior to Lua with
 `"on_withdrawal": "lua:NAME"`; the callback in `game.addiction_functions`
 then fully replaces the hardcoded withdrawal logic:
 
-| Callback  | params fields                                     |
-| --------- | ------------------------------------------------- |
-| (single)  | `char`, `addiction`, `intensity`, `sated`         |
+| Callback | params fields                             |
+| -------- | ----------------------------------------- |
+| (single) | `char`, `addiction`, `intensity`, `sated` |
+
+`addiction` is the type id, `intensity` the addiction level, and `sated` the
+remaining time until withdrawal, in turns (negative while in withdrawal).
 
 ```json
 {
@@ -875,6 +884,7 @@ then fully replaces the hardcoded withdrawal logic:
 ```
 
 ```lua
+---@param params { char: Character, addiction: string, intensity: integer, sated: integer }
 game.addiction_functions["marloss_withdrawal"] = function( params )
     if params.char.focus_pool > 40 then
         params.char.focus_pool = params.char.focus_pool - params.intensity

@@ -299,6 +299,8 @@ class consume_drug_iuse : public iuse_actor
         ~consume_drug_iuse() override = default;
         void load( const JsonObject &obj ) override;
         int use( player &, item &, bool, const tripoint_bub_ms & ) const override;
+        /// Reports unknown addiction types in `addiction_type_too_much`.
+        void finalize( const itype_id &my_item_type ) override;
         std::unique_ptr<iuse_actor> clone() const override;
         void info( const item &, std::vector<iteminfo> & ) const override;
 

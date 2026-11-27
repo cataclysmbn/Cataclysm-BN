@@ -1044,6 +1044,11 @@ void player::load( const JsonObject &data )
     }
 
     data.read( "addictions", addictions );
+    // Addictions from removed mods have no type anymore; drop them instead of
+    // reporting the missing type every turn.
+    std::erase_if( addictions, []( const addiction & add ) {
+        return add.type.is_empty() || !add.type.is_valid();
+    } );
     data.read( "followers", follower_ids );
 
     // Add the earplugs.

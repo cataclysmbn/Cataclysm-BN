@@ -2080,10 +2080,7 @@ void Character::add_addiction( const addiction_type_id &type, int strength )
         const std::string &type_name = addiction_type_name( type );
         add_msg( m_debug, "%s got addicted to %s", disp_name(), type_name );
         addictions.emplace_back( type, 1 );
-        const add_type legacy = legacy_add_type( type );
-        if( legacy != add_type::NONE ) {
-            g->events().send<event_type::gains_addiction>( getID(), legacy );
-        }
+        g->events().send<event_type::gains_addiction>( getID(), type.str() );
     }
 }
 
@@ -2104,10 +2101,7 @@ void Character::rem_addiction( const addiction_type_id &type )
 
     if( iter != addictions.end() ) {
         addictions.erase( iter );
-        const add_type legacy = legacy_add_type( type );
-        if( legacy != add_type::NONE ) {
-            g->events().send<event_type::loses_addiction>( getID(), legacy );
-        }
+        g->events().send<event_type::loses_addiction>( getID(), type.str() );
     }
 }
 

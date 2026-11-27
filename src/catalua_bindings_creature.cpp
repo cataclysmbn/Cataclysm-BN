@@ -58,6 +58,17 @@ LUNA_VAL( player_activity, "PlayerActivity" )
 namespace
 {
 
+/// Converts an addiction type id given by Lua, reporting unknown ids instead of
+/// silently ignoring them.
+auto addiction_id_from_lua( const std::string &type ) -> addiction_type_id
+{
+    const auto id = addiction_type_id( type );
+    if( !id.is_valid() ) {
+        debugmsg( "unknown addiction type \"%s\"", type );
+    }
+    return id;
+}
+
 constexpr std::string_view lua_activity_data_prefix = "lua_activity_data:";
 constexpr std::string_view lua_activity_on_finish_prefix = "lua_activity_on_finish:";
 constexpr std::string_view lua_activity_on_turn_prefix = "lua_activity_on_turn:";
@@ -1142,7 +1153,7 @@ void cata::detail::reg_character( sol::state &lua )
         },
         []( UT_CLASS & c, const std::string & type, int strength )
         {
-            c.add_addiction( addiction_type_id( type ), strength );
+            c.add_addiction( addiction_id_from_lua( type ), strength );
         } ) );
         DOC( "Removes an addiction from the character. Accepts an AddictionType enum value"
              " or an addiction type id string, e.g. \"alcohol\"." );
@@ -1153,7 +1164,7 @@ void cata::detail::reg_character( sol::state &lua )
         },
         []( UT_CLASS & c, const std::string & type )
         {
-            c.rem_addiction( addiction_type_id( type ) );
+            c.rem_addiction( addiction_id_from_lua( type ) );
         } ) );
         DOC( "Returns true if the character has an addiction of the given type."
              " Accepts an AddictionType enum value or an addiction type id string." );
@@ -1164,7 +1175,7 @@ void cata::detail::reg_character( sol::state &lua )
         },
         []( const UT_CLASS & c, const std::string & type )
         {
-            return c.has_addiction( addiction_type_id( type ) );
+            return c.has_addiction( addiction_id_from_lua( type ) );
         } ) );
         DOC( "Returns the intensity of the addiction of the given type."
              " Accepts an AddictionType enum value or an addiction type id string." );
@@ -1175,7 +1186,7 @@ void cata::detail::reg_character( sol::state &lua )
         },
         []( const UT_CLASS & c, const std::string & type )
         {
-            return c.addiction_level( addiction_type_id( type ) );
+            return c.addiction_level( addiction_id_from_lua( type ) );
         } ) );
 
         SET_FX_T( is_hauling, bool() const );

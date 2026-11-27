@@ -2,6 +2,7 @@
 
 #include "achievement.h"
 #include "activity_type.h"
+#include "addiction.h"
 #include "ammo.h"
 #include "ammo_effect.h"
 #include "anatomy.h"
@@ -68,7 +69,6 @@
 #include "monfaction.h"
 #include "mongroup.h"
 #include "monstergenerator.h"
-#include "addiction.h"
 #include "morale_types.h"
 #include "mutation.h"
 #include "mutation_data.h"

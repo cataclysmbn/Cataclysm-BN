@@ -875,6 +875,16 @@ static effect_data load_effect_data( const JsonObject &e )
     }
 }
 
+void consume_drug_iuse::finalize( const itype_id &my_item_type )
+{
+    for( const auto &[effect, addiction] : addiction_type_too_much ) {
+        if( !addiction_type_id( addiction ).is_valid() ) {
+            debugmsg( "Item %s has unknown addiction type \"%s\" in addiction_type_too_much",
+                      my_item_type.str(), addiction );
+        }
+    }
+}
+
 void consume_drug_iuse::load( const JsonObject &obj )
 {
     obj.read( "activation_message", activation_message );

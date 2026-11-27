@@ -1419,6 +1419,10 @@ void Item_factory::check_definitions() const
         }
 
         if( type->comestible ) {
+            const auto &addiction = type->comestible->add;
+            if( !addiction.is_empty() && !addiction.is_valid() ) {
+                msg += string_format( "invalid addiction_type %s\n", addiction.str() );
+            }
             if( !type->comestible->tool.is_null() ) {
                 auto req_tool = find_template( type->comestible->tool );
                 if( !req_tool->tool ) {

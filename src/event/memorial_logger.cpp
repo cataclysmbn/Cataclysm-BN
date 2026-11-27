@@ -790,8 +790,8 @@ void memorial_logger::notify(const cata::event& e) {
         case event_type::gains_addiction: {
             character_id ch = e.get<character_id>("character");
             if (ch == g->u.getID()) {
-                add_type type = e.get<add_type>("add_type");
-                const std::string& type_name = addiction_type_name(addiction_id_from_legacy(type));
+                const auto type = addiction_type_id(e.get<std::string>("addiction"));
+                const auto type_name = addiction_type_name(type);
                 //~ %s is addiction name
                 add(pgettext("memorial_male", "Became addicted to %s."),
                     pgettext("memorial_female", "Became addicted to %s."), type_name);
@@ -878,8 +878,8 @@ void memorial_logger::notify(const cata::event& e) {
         case event_type::loses_addiction: {
             character_id ch = e.get<character_id>("character");
             if (ch == g->u.getID()) {
-                add_type type = e.get<add_type>("add_type");
-                const std::string& type_name = addiction_type_name(addiction_id_from_legacy(type));
+                const auto type = addiction_type_id(e.get<std::string>("addiction"));
+                const auto type_name = addiction_type_name(type);
                 //~ %s is addiction name
                 add(pgettext("memorial_male", "Overcame addiction to %s."),
                     pgettext("memorial_female", "Overcame addiction to %s."), type_name);
