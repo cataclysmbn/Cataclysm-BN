@@ -17,6 +17,7 @@
 #include <array>
 #include <bitset>
 #include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <set>
 #include <string>
@@ -33,6 +34,17 @@ struct ter_t;
 struct tripoint;
 
 using iexamine_function = void (*)(player&, const tripoint_bub_ms&);
+
+/**
+ * Which auto-forage options (see the AUTO_FORAGING game option) may harvest this
+ * terrain/furniture without player interaction. Values may be combined.
+ */
+enum class forage_class : std::uint8_t {
+    none = 0,
+    bushes = 1 << 0,
+    trees = 1 << 1,
+    flowers = 1 << 2,
+};
 
 struct ranged_bash_info {
     numeric_interval<int> reduction; // Damage reduction when shot. Rolled like rng(min, max).
@@ -503,6 +515,7 @@ public:
 
     iexamine_function examine; // What happens when the terrain/furniture is examined
     std::string examine_action_id;
+    forage_class forage_classes = forage_class::none;
 
     data_vars::data_set default_vars;
 

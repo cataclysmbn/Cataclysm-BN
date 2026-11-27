@@ -107,5 +107,16 @@
     "move_cost_mod": 1,
     "required_str": 8,
     "oxytorch": { "duration": "80 seconds" }
+  },
+  {
+    "type": "furniture",
+    "id": "f_test_lua_examine",
+    "name": "test lua examine furniture",
+    "description": "A furniture that dispatches its examine action to Lua.",
+    "symbol": "&",
+    "color": "blue",
+    "move_cost_mod": 1,
+    "required_str": -1,
+    "examine_action": "lua:test_lua_examine_furn"
   }
 ]

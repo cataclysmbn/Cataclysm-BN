@@ -860,6 +860,11 @@ struct islot_seed {
      * Terrain tag required to plant the seed.
      */
     std::string required_terrain_flag = "PLANTABLE";
+    /**
+     * Optional Lua callback (prefixed "lua:") that fully replaces the hardcoded
+     * harvest behavior when a plant grown from this seed is harvested.
+     */
+    std::string harvest_action;
     /// Flags copied from the planted item to harvested fruits and seeds, excluding byproducts.
     std::vector<flag_id> harvest_inherit_flags;
     /// Copy the planted item's poison value to harvested fruits and seeds.

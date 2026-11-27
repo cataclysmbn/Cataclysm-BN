@@ -248,5 +248,45 @@
     "symbol": ".",
     "color": "yellow",
     "flammable": true
+  },
+  {
+    "type": "terrain",
+    "id": "t_test_lua_examine",
+    "name": "test lua examine terrain",
+    "description": "A terrain that dispatches its examine action to Lua and can be auto-foraged as a bush.",
+    "symbol": ".",
+    "color": "green",
+    "move_cost": 2,
+    "examine_action": "lua:test_lua_examine",
+    "forage_class": "bushes"
+  },
+  {
+    "type": "terrain",
+    "id": "t_test_lua_examine_copy",
+    "copy-from": "t_test_lua_examine",
+    "name": "test lua examine terrain copy",
+    "description": "Inherits the Lua examine action of t_test_lua_examine through copy-from."
+  },
+  {
+    "type": "terrain",
+    "id": "t_test_legacy_forage",
+    "name": "test legacy forage tree",
+    "description": "A harvestable tree without forage_class, like terrain from mods that predate it.",
+    "symbol": "7",
+    "color": "green",
+    "move_cost": 0,
+    "examine_action": "harvest_ter",
+    "transforms_into": "t_dirt",
+    "harvest_by_season": [ { "seasons": [ "autumn" ], "entries": [ { "drop": "apple", "base_num": [ 1, 2 ] } ] } ]
+  },
+  {
+    "type": "terrain",
+    "id": "t_test_forage_none",
+    "name": "test forage class without examine action",
+    "description": "Has a forage class but no examine action, so it can never be foraged.",
+    "symbol": ".",
+    "color": "green",
+    "move_cost": 2,
+    "forage_class": "bushes"
   }
 ]

@@ -829,3 +829,115 @@ gapi.clear_omt_weather_override(center_omt, 2)
 
 Use `"thunder"` instead of `"lightning"` if you want thunderstorm weather without the stronger
 lightning-storm variant.
+
+## Terrain, Furniture and Plant Examine
+
+Terrain and furniture can dispatch their `examine` interaction to Lua. In the
+terrain or furniture JSON, set `"examine_action": "lua:NAME"` and register a
+callback in `game.examine_functions`:
+
+| Callback | params fields                         |
+| -------- | ------------------------------------- |
+| (single) | `user`, `pos`, `terrain`, `furniture` |
+
+`terrain` is the terrain id at `pos`; `furniture` is the furniture id, or `nil`
+when the tile has no furniture.
+
+```lua
+game.examine_functions["my_shrine"] = function( params )
+    gdebug.log_info( params.user:get_name() .. " examines " .. params.terrain )
+    params.user:mod_fatigue( 5 )
+end
+```
+
+```json
+{
+  "type": "furniture",
+  "id": "f_my_shrine",
+  "name": "shrine",
+  "description": "An old shrine.",
+  "symbol": "&",
+  "color": "white",
+  "move_cost_mod": 1,
+  "required_str": -1,
+  "examine_action": "lua:my_shrine"
+}
+```
+
+### Auto-foraging
+
+The `AUTO_FORAGING` option automatically harvests adjacent flora. Which flora
+qualify is defined per terrain/furniture by the JSON field `"forage_class"`
+instead of a hardcoded whitelist, so Lua-examinable flora participate too:
+
+```json
+"forage_class": "bushes"
+```
+
+Valid values are `"bushes"`, `"trees"`, and `"flowers"`, or an array to combine
+them (`"forage_class": [ "bushes", "trees" ]`). Terrain is foraged for bushes
+and trees, furniture for flowers. A `lua:` examine action needs an explicit
+`forage_class` to be auto-foraged.
+
+Without `forage_class`, the class follows the examine action: the built-in
+harvest actions keep the classes they always had (`shrub_wildveggies` and
+`shrub_marloss`: bushes; `harvest_ter` and `tree_marloss`: trees;
+`harvest_ter_nectar`: bushes and trees; `harvest_furn` and
+`harvest_furn_nectar`: flowers), and every other action is not foraged. An
+entry that sets its own `examine_action` (also through `copy-from` or a mod
+override) does not inherit `forage_class`; set it again if needed.
+
+### Seed harvest callbacks
+
+When a plant is harvested, the behavior is normally chosen from the seed's
+`seed_data`. A seed may instead delegate its entire harvest to Lua by setting
+`"harvest_action": "lua:NAME"` inside its `seed_data`; the callback in
+`game.harvest_functions["NAME"]` then fully replaces the hardcoded harvest
+(including the special fungal seed handling):
+
+| Callback | params fields                          |
+| -------- | -------------------------------------- |
+| (single) | `user`, `pos`, `seed`, `from_activity` |
+
+`from_activity` is true when a farm-zone activity harvests the plant (the C++
+harvest tags the produce with the harvester's name in that case).
+
+```json
+{
+  "type": "COMESTIBLE",
+  "id": "marloss_seed",
+  "name": { "str": "Marloss seed" },
+  "//": "…",
+  "seed_data": {
+    "fruit": "null",
+    "plant_name": "marloss berry",
+    "grow": "14 days",
+    "harvest_action": "lua:marloss_harvest"
+  }
+}
+```
+
+```lua
+---@param params { user: Character, pos: TripointBubMs, seed: Item, from_activity: boolean }
+game.harvest_functions["marloss_harvest"] = function( params )
+    local map = gapi.get_map()
+    map:set_ter_at( params.pos, TerId.new( "t_marloss" ):int_id() )
+    -- Remove the grown plant and the planted seed item, as the C++ harvest
+    -- would have.
+    map:set_furn_at( params.pos, FurnId.new( "f_null" ):int_id() )
+    map:i_clear( params.pos )
+    -- The C++ harvest takes 10 seconds.
+    params.user:mod_moves( -1000 )
+end
+```
+
+The C++ harvest does not run, so the callback is responsible for the whole
+harvest: it must replace the grown plant furniture (the furniture with the
+`GROWTH_HARVEST` flag) and clear or transform the planted seed item, and it
+should charge the time it takes. If the grown plant is still there after the
+callback, the game reports an error and applies the plant's default transform
+(clearing the tile's items), because farm zones would otherwise harvest the
+same tile forever. That fallback is triggered by the `GROWTH_HARVEST` flag
+itself, so multi-stage crops cannot skip the transform: a callback that turns
+the plant into a _different_ harvestable stage has that stage immediately
+replaced by the new furniture's own default transform.

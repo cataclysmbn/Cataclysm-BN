@@ -92,6 +92,7 @@
 #include "magic/magic.h"
 #include "map/field.h"
 #include "map/field_type.h"
+#include "map/auto_forage.h"
 #include "map/lightmap.h"
 #include "map/map.h"
 #include "map/map_selector.h"
@@ -13435,28 +13436,17 @@ auto game::place_player( const tripoint_bub_ms &dest_loc ) -> point_rel_sm
         const std::string forage_type = get_option<std::string>( "AUTO_FORAGING" );
         if( forage_type != "off" ) {
             const auto forage = [&]( const tripoint_bub_ms & pos ) {
-                const auto &xter_t = m.ter( pos ).obj().examine;
-                const auto &xfurn_t = m.furn( pos ).obj().examine;
-                const bool forage_everything = forage_type == "both";
-                const bool forage_bushes = forage_everything || forage_type == "bushes";
-                const bool forage_trees = forage_everything || forage_type == "trees";
-                const bool forage_flowers = forage_everything || forage_type == "flowers";
-                if( xter_t == &iexamine::none && xfurn_t == &iexamine::none ) {
-                    return;
-                } else if( ( forage_bushes && xter_t == &iexamine::shrub_marloss ) ||
-                           ( forage_bushes && xter_t == &iexamine::shrub_wildveggies ) ||
-                           ( forage_bushes && xter_t == &iexamine::harvest_ter_nectar ) ||
-                           ( forage_trees && xter_t == &iexamine::tree_marloss ) ||
-                           ( forage_trees && xter_t == &iexamine::harvest_ter ) ||
-                           ( forage_trees && xter_t == &iexamine::harvest_ter_nectar )
-                         ) {
-                    xter_t( u, pos );
-                } else if( ( ( forage_flowers && xfurn_t == &iexamine::harvest_furn ) ||
-                             ( forage_flowers && xfurn_t == &iexamine::harvest_furn_nectar ) ||
-                             ( forage_everything && xfurn_t == &iexamine::harvest_furn ) ||
-                             ( forage_everything && xfurn_t == &iexamine::harvest_furn_nectar )
-                           ) ) {
-                    xfurn_t( u, pos );
+                const auto &xter = m.ter( pos ).obj();
+                const auto &xfurn = m.furn( pos ).obj();
+                switch( pick_auto_forage_target( xter.forage_classes, xfurn.forage_classes, forage_type ) ) {
+                    case auto_forage_target::terrain:
+                        xter.examine( u, pos );
+                        break;
+                    case auto_forage_target::furniture:
+                        xfurn.examine( u, pos );
+                        break;
+                    case auto_forage_target::none:
+                        break;
                 }
             };
 

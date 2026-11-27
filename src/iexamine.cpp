@@ -2787,6 +2787,32 @@ void iexamine::harvest_plant( player &p, const tripoint_bub_ms &examp, bool from
     item *&seed = *seed_it;
     seed_it = map_stack::iterator();
     const itype_id &seedType = seed->typeId();
+    const std::string &harvest_action = seed->type->seed->harvest_action;
+    if( harvest_action.rfind( "lua:", 0 ) == 0 ) {
+        // A seed with a Lua harvest action fully replaces the hardcoded harvest
+        // behavior, including the fungal seed special cases below.
+        cata::run_lua_harvest( {
+            .callback_id = harvest_action.substr( 4 ),
+            .who = p,
+            .pos = examp,
+            .seed = *seed,
+            .from_activity = from_activity,
+        } );
+        // The callback must replace the grown plant. If it is still there,
+        // apply its default transform: otherwise farm zones would harvest the
+        // same tile forever.
+        if( here.has_flag_furn( flag_GROWTH_HARVEST, examp ) ) {
+            debugmsg( "Lua harvest action \"%s\" left a harvestable plant at %s; applying its default transform",
+                      harvest_action, examp.to_string() );
+            const auto &plant = here.furn( examp )->plant;
+            // Clear the tile like the hardcoded harvest would, so a callback
+            // that transformed the furniture but forgot the seed does not
+            // leave it lying on the transformed tile.
+            here.i_clear( examp );
+            here.furn_set( examp, plant ? furn_str_id( plant->transform ) : f_null );
+        }
+        return;
+    }
     if( seedType == itype_fungal_seeds ) {
         fungus( p, examp );
         here.i_clear( examp );
