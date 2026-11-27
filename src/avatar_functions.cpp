@@ -522,7 +522,8 @@ std::pair<int, int> gunmod_installation_odds( const avatar &you, const item &gun
         const item &mod )
 {
     // Mods with INSTALL_DIFFICULT have a chance to fail, potentially damaging the gun
-    if( !mod.has_flag( flag_INSTALL_DIFFICULT ) || you.has_trait( trait_DEBUG_HS ) ) {
+    if( !mod.has_flag( flag_INSTALL_DIFFICULT ) || you.has_trait( trait_DEBUG_HS ) ||
+        mod.has_flag( flag_id( "UNIVERSAL_WEAPON_TETHER" ) ) ) {
         return std::make_pair( 100, 0 );
     }
 

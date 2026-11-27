@@ -1,0 +1,18 @@
+[
+  {
+    "id": "bungee_cord",
+    "type": "GUNMOD",
+    "name": { "str": "bungee cord" },
+    "description": "An elastic cord with hooks at both ends, used to tether a weapon to its wielder.  Activate it to select a gun or melee weapon to modify.  An attached cord prevents zombie technicians from pulling the weapon away, including when wielded by an NPC.  Remove it through the weapon's gunmod removal menu.",
+    "weight": "100 g",
+    "volume": "100 ml",
+    "price": "3 USD",
+    "price_postapoc": "1 USD",
+    "material": [ "rubber", "cotton" ],
+    "symbol": ":",
+    "color": "yellow",
+    "location": "sling",
+    "flags": [ "WEAPON_TETHER", "UNIVERSAL_WEAPON_TETHER" ],
+    "install_time": "1 s"
+  }
+]

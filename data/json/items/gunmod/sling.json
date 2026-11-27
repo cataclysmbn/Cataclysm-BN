@@ -25,7 +25,7 @@
       [ "FLAMETHROWERS" ],
       [ "SPRAY_GUNS" ]
     ],
-    "flags": [ "IS_ARMOR", "BELTED", "COMPACT", "OVERSIZE", "WATER_FRIENDLY" ]
+    "flags": [ "IS_ARMOR", "BELTED", "COMPACT", "OVERSIZE", "WATER_FRIENDLY", "WEAPON_TETHER" ]
   },
   {
     "id": "pistol_lanyard",
@@ -41,6 +41,6 @@
     "color": "green",
     "location": "sling",
     "mod_target_category": [ [ "PISTOLS" ], [ "REVOLVERS" ], [ "S_XBOWS" ] ],
-    "flags": [ "IS_ARMOR", "BELTED", "COMPACT", "OVERSIZE", "WATER_FRIENDLY" ]
+    "flags": [ "IS_ARMOR", "BELTED", "COMPACT", "OVERSIZE", "WATER_FRIENDLY", "WEAPON_TETHER" ]
   }
 ]

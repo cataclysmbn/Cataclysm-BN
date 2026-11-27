@@ -4,6 +4,7 @@
     "id": "hardware",
     "//": "A general hardware group for retail, workshops, etc.",
     "items": [
+      [ "bungee_cord", 10 ],
       { "group": "tools_general", "prob": 50 },
       { "group": "supplies_hardware", "prob": 50 },
       { "group": "hardware_clothing", "prob": 10 },

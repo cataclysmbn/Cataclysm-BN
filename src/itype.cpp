@@ -208,7 +208,7 @@ int itype::invoke( player &p, item &it, const tripoint_bub_ms &pos ) const
 int itype::invoke( player &p, item &it, const tripoint_bub_ms &pos,
                    const std::string &iuse_name ) const
 {
-    const use_function *use = get_use( iuse_name );
+    const auto *use = it.get_use( iuse_name );
     if( use == nullptr ) {
         debugmsg( "Tried to invoke %s on a %s, which doesn't have this use_function",
                   iuse_name, nname( 1 ) );

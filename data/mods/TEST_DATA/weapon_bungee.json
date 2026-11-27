@@ -1,0 +1,27 @@
+[
+  {
+    "id": "test_custom_weapon_tether",
+    "copy-from": "bungee_cord",
+    "type": "GUNMOD",
+    "name": { "str": "test custom weapon tether" }
+  },
+  {
+    "id": "test_bungee_melee",
+    "type": "GENERIC",
+    "name": { "str": "test bungee melee weapon" },
+    "description": "A steel melee weapon for retention cord tests.",
+    "material": "steel",
+    "weight": "500 g",
+    "volume": "500 ml",
+    "bashing": 12,
+    "symbol": "/"
+  },
+  {
+    "id": "test_bungee_gun",
+    "copy-from": "flaregun",
+    "type": "GUN",
+    "name": { "str": "test bungee gun" },
+    "description": "A steel gun for retention cord tests.",
+    "material": "steel"
+  }
+]

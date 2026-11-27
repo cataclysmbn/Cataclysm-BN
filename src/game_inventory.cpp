@@ -869,7 +869,7 @@ class activatable_inventory_preset : public pickup_inventory_preset
                 ( *loc ).get_contained().type->has_use() ) {
                 return true;
             }
-            return loc->type->has_use();
+            return loc->has_use();
         }
 
         std::string get_denial( const item *loc ) const override {
@@ -905,6 +905,10 @@ class activatable_inventory_preset : public pickup_inventory_preset
     protected:
         std::string get_action_name( const item &it ) const {
             const auto &uses = it.type->use_methods;
+
+            if( !it.gunmods().empty() && !uses.contains( "detach_gunmods" ) ) {
+                return uses.empty() ? it.get_use( "detach_gunmods" )->get_name() : _( "…" );
+            }
 
             if( uses.size() == 1 ) {
                 return uses.begin()->second.get_name();
@@ -947,7 +951,8 @@ class gunmod_inventory_preset : public inventory_selector_preset
         }
 
         bool is_shown( const item *loc ) const override {
-            return loc->is_gun() && !loc->is_gunmod();
+            return !loc->is_gunmod() && ( loc->is_gun() ||
+                                          ( gunmod.has_flag( flag_id( "UNIVERSAL_WEAPON_TETHER" ) ) && loc->is_melee() ) );
         }
 
         std::string get_denial( const item *loc ) const override {
@@ -993,8 +998,10 @@ class gunmod_inventory_preset : public inventory_selector_preset
 
 item *game_menus::inv::gun_to_modify( player &p, const item &gunmod )
 {
+    const auto tether = gunmod.has_flag( flag_id( "UNIVERSAL_WEAPON_TETHER" ) );
     return inv_internal( p, gunmod_inventory_preset( p, gunmod ),
-                         _( "Select gun to modify" ), -1,
+                         tether ? _( "Select weapon to modify" ) : _( "Select gun to modify" ), -1,
+                         tether ? _( "You don't have any weapons to modify." ) :
                          _( "You don't have any guns to modify." ) );
 }
 
