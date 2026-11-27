@@ -66,6 +66,15 @@ struct replace_vehicle_request {
     std::optional<bool> has_keys = std::nullopt;
 };
 
+auto tile_vars_table( const data_vars::data_set *vars, sol::this_state state ) -> sol::table
+{
+    auto table = sol::state_view( state ).create_table();
+    if( vars ) {
+        std::ranges::for_each( *vars, [&]( const auto & entry ) { table[entry.first] = entry.second; } );
+    }
+    return table;
+}
+
 auto vehicle_part_with_feature_at( map &m, const tripoint_bub_ms &pos, const std::string &feature,
                                    const bool unbroken ) -> std::optional<vpart_reference>
 {
@@ -627,6 +636,9 @@ void cata::detail::reg_map( sol::state &lua )
             const auto *vars = m.furn_vars( p );
             return vars && vars->contains( key );
         } );
+        DOC( "Returns all furniture variables at the position as a table mapping each name to its value." );
+        luna::set_fx( ut, "get_furn_vars_table_at", []( const map & m, const tripoint_bub_ms & p,
+        sol::this_state state ) { return tile_vars_table( m.furn_vars( p ), state ); } );
         DOC( "Removes a furniture variable at the position. Returns whether a variable was removed." );
         luna::set_fx( ut, "erase_furn_var_at", []( map & m, const tripoint_bub_ms & p,
         const std::string & key ) -> bool {
@@ -656,6 +668,9 @@ void cata::detail::reg_map( sol::state &lua )
             const auto *vars = m.ter_vars( p );
             return vars && vars->contains( key );
         } );
+        DOC( "Returns all terrain variables at the position as a table mapping each name to its value." );
+        luna::set_fx( ut, "get_ter_vars_table_at", []( const map & m, const tripoint_bub_ms & p,
+        sol::this_state state ) { return tile_vars_table( m.ter_vars( p ), state ); } );
         DOC( "Removes a terrain variable at the position. Returns whether a variable was removed." );
         luna::set_fx( ut, "erase_ter_var_at", []( map & m, const tripoint_bub_ms & p,
         const std::string & key ) -> bool {
@@ -857,6 +872,10 @@ void cata::detail::reg_map( sol::state &lua )
             const auto *vars = m.furn_vars( p );
             return vars && vars->contains( key );
         } );
+        DOC( "Returns all furniture variables at the position as a table mapping each name to its value." );
+        luna::set_fx( ut, "get_furn_vars_table_at", []( const mapgen_constructor & m,
+                      const point_omt_ms & p,
+        sol::this_state state ) { return tile_vars_table( m.furn_vars( p ), state ); } );
         DOC( "Removes a furniture variable at the position. Returns whether a variable was removed." );
         luna::set_fx( ut, "erase_furn_var_at", []( mapgen_constructor & m, const point_omt_ms & p,
         const std::string & key ) -> bool {
@@ -886,6 +905,9 @@ void cata::detail::reg_map( sol::state &lua )
             const auto *vars = m.ter_vars( p );
             return vars && vars->contains( key );
         } );
+        DOC( "Returns all terrain variables at the position as a table mapping each name to its value." );
+        luna::set_fx( ut, "get_ter_vars_table_at", []( const mapgen_constructor & m, const point_omt_ms & p,
+        sol::this_state state ) { return tile_vars_table( m.ter_vars( p ), state ); } );
         DOC( "Removes a terrain variable at the position. Returns whether a variable was removed." );
         luna::set_fx( ut, "erase_ter_var_at", []( mapgen_constructor & m, const point_omt_ms & p,
         const std::string & key ) -> bool {
