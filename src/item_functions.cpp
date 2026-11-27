@@ -1,6 +1,7 @@
 #include "item_functions.h"
 
 #include "character.h"
+#include "character_resource.h"
 #include "item.h"
 #include "itype.h"
 #include "units.h"
@@ -49,17 +50,14 @@ int shots_remaining( const Character &who, const item &it )
     }
 
     int ammo_drain = it.ammo_required();
-    int energy_drain = it.get_gun_ups_drain();
-    int power = who.charges_of( itype_UPS );
+    int external_charges = item::INFINITE_CHARGES;
+    for( const auto &[resource, amount] : it.get_gun_resources_used() ) {
+        external_charges = std::min( resource->get_charges( who ) / amount, external_charges );
+    }
 
-    if( ammo_drain > 0 && energy_drain > 0 ) {
+    if( ammo_drain > 0 ) {
         // Both UPS and ammo, lower is limiting.
-        return std::min( it.ammo_remaining() / ammo_drain, power / energy_drain );
-    } else if( energy_drain > 0 ) {
-        //Only one of the two, it is limiting.
-        return power / energy_drain;
-    } else if( ammo_drain > 0 ) {
-        return it.ammo_remaining() / ammo_drain;
+        return std::min( it.ammo_remaining() / ammo_drain, external_charges );
     } else {
         // Effectively infinite ammo.
         return item::INFINITE_CHARGES;
