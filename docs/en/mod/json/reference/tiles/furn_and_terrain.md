@@ -535,6 +535,17 @@ ml" or "2 L"
 #### `examine_action`
 
 (Optional) The json function that is called when the object is examined. See "src/iexamine.h".
+`"lua:NAME"` calls `game.examine_functions["NAME"]` instead (see the Lua cookbook).
+
+#### `forage_class`
+
+(Optional) Which `AUTO_FORAGING` options harvest this object automatically: `"bushes"`, `"trees"`,
+`"flowers"`, or an array of them (`[ "bushes", "trees" ]`). Terrain is foraged for bushes and trees,
+furniture for flowers. When omitted, the class follows `examine_action`: the built-in harvest actions
+keep their usual classes (`shrub_wildveggies`/`shrub_marloss`: bushes, `harvest_ter`/`tree_marloss`:
+trees, `harvest_ter_nectar`: bushes and trees, `harvest_furn`/`harvest_furn_nectar`: flowers) and
+other actions are not foraged. An entry that sets its own `examine_action` does not inherit
+`forage_class`. Lua examine actions need an explicit `forage_class` to be auto-foraged.
 
 #### `close" And "open`
 

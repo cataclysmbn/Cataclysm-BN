@@ -1174,6 +1174,31 @@ template <> auto enum_to_string<season_type>(season_type data) -> std::string {
 }
 } // namespace io
 
+namespace {
+
+/// Auto-forage classes of the examine actions that AUTO_FORAGING harvested
+/// before `forage_class` existed. Used when an entry sets no forage_class.
+auto default_forage_class(const iexamine_function examine) -> forage_class {
+    const auto combine = [](forage_class a, forage_class b) {
+        return static_cast<forage_class>(static_cast<uint8_t>(a) | static_cast<uint8_t>(b));
+    };
+    if (examine == &iexamine::shrub_marloss || examine == &iexamine::shrub_wildveggies) {
+        return forage_class::bushes;
+    }
+    if (examine == &iexamine::harvest_ter_nectar) {
+        return combine(forage_class::bushes, forage_class::trees);
+    }
+    if (examine == &iexamine::tree_marloss || examine == &iexamine::harvest_ter) {
+        return forage_class::trees;
+    }
+    if (examine == &iexamine::harvest_furn || examine == &iexamine::harvest_furn_nectar) {
+        return forage_class::flowers;
+    }
+    return forage_class::none;
+}
+
+} // namespace
+
 void map_data_common_t::load(const JsonObject& jo, const std::string& src) {
     const auto examine_action = jo.get_string("examine_action", "");
     // Keep the inherited Lua callback id unless this entry sets its own
@@ -1210,8 +1235,13 @@ void map_data_common_t::load(const JsonObject& jo, const std::string& src) {
             parse_forage_class(jo.get_string("forage_class"));
         }
         forage_classes = static_cast<forage_class>(forage_flags);
-    } else if (!was_loaded) {
-        forage_classes = forage_class::none;
+    } else if (!was_loaded || jo.has_member("examine_action")) {
+        // Without an explicit forage_class, eligibility follows the examine
+        // action: the legacy harvest actions keep their old auto-forage
+        // classes, so mods that predate forage_class keep working. An entry
+        // that replaces the inherited examine_action (copy-from or a mod
+        // override) gets the default of its own action, not the inherited one.
+        forage_classes = default_forage_class(examine);
     }
 
     if (jo.has_array("harvest_by_season")) {

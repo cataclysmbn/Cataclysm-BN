@@ -266,5 +266,17 @@
     "copy-from": "t_test_lua_examine",
     "name": "test lua examine terrain copy",
     "description": "Inherits the Lua examine action of t_test_lua_examine through copy-from."
+  },
+  {
+    "type": "terrain",
+    "id": "t_test_legacy_forage",
+    "name": "test legacy forage tree",
+    "description": "A harvestable tree without forage_class, like terrain from mods that predate it.",
+    "symbol": "7",
+    "color": "green",
+    "move_cost": 0,
+    "examine_action": "harvest_ter",
+    "transforms_into": "t_dirt",
+    "harvest_by_season": [ { "seasons": [ "autumn" ], "entries": [ { "drop": "apple", "base_num": [ 1, 2 ] } ] } ]
   }
 ]

@@ -911,7 +911,6 @@
     "crafting_pseudo_item": "boulder_anvil",
     "flags": [ "TRANSPARENT", "MINEABLE", "UNSTABLE", "MOUNTABLE", "TINY" ],
     "examine_action": "harvest_furn",
-    "forage_class": "flowers",
     "transforms_into": "f_boulder_small_harvested",
     "harvest_by_season": [
       {
@@ -943,7 +942,6 @@
     "color": "light_gray",
     "extend": { "flags": [ "HARVESTED" ] },
     "examine_action": "harvest_furn",
-    "forage_class": "flowers",
     "transforms_into": "f_boulder_small",
     "harvest_by_season": [  ]
   },
@@ -954,7 +952,6 @@
     "symbol": "o",
     "color": "dark_gray",
     "examine_action": "harvest_furn",
-    "forage_class": "flowers",
     "transforms_into": "f_boulder_small_underwater_harvested",
     "harvest_by_season": [
       {
@@ -971,7 +968,6 @@
     "color": "dark_gray",
     "extend": { "flags": [ "HARVESTED" ] },
     "examine_action": "harvest_furn",
-    "forage_class": "flowers",
     "transforms_into": "f_boulder_small_underwater",
     "harvest_by_season": [  ]
   },
