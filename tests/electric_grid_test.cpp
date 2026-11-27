@@ -9,6 +9,7 @@
 #include "cata_utility.h"
 #include "catch/catch.hpp"
 #include "distribution_grid.h"
+#include "flag.h"
 #include "game.h"
 #include "map/mapbuffer.h"
 #include "map_helpers.h"
@@ -478,4 +479,34 @@ TEST_CASE("counts_recharge_station_power_only_while_it_charges", "[grids]") {
     cell->ammo_unset();
     get_map().add_item(station_local + point_east, std::move(cell));
     CHECK(grid.get_power_stat().use_w == charger->power);
+}
+
+/// Checks that a recharge station fills the light battery in a USE_UPS tool type without ammo.
+/// The tool type accepts no ammo, so the charges must go into the battery.
+/// Puts 1000 kJ in the grid battery, then updates the 600 W station for 200 s.
+TEST_CASE("recharge_station_charges_battery_in_tool_without_ammo_type", "[grids]") {
+    clear_all_state();
+    const auto z = g->u.abs_pos().z();
+    move_player_out_of_the_way();
+    clear_grid_connections(get_map());
+
+    const auto station_local = tripoint_bub_ms(13, 10, z);
+    const auto station_abs = tripoint_abs_ms(map_local_to_abs(get_map(), station_local));
+    get_map().furn_set(station_local, f_battery);
+    get_map().furn_set(station_local + point_east, f_recharge_station);
+    const auto charger_abs = station_abs + point_east;
+    auto* charger = active_tiles::furn_at<charger_tile>(charger_abs);
+    REQUIRE(charger);
+    auto& grid = get_distribution_grid_tracker().grid_at(charger_abs);
+    grid.mod_resource(1000);
+
+    auto tool = item::spawn("test_tool_without_ammo");
+    auto& tool_ref = *tool;
+    tool->put_in(item::spawn("light_battery_cell"));
+    tool->set_flag(flag_USE_UPS);
+    get_map().add_item(station_local + point_east, std::move(tool));
+
+    charger->update(charger->get_last_updated() + 200_seconds, charger_abs, grid);
+
+    CHECK(tool_ref.ammo_remaining() == tool_ref.ammo_capacity());
 }

@@ -59,6 +59,7 @@
 #include "int_id.h"
 #include "inventory.h"
 #include "item.h"
+#include "item/item_charge.h"
 #include "item_contents.h"
 #include "item_group.h"
 #include "itype.h"
@@ -2396,11 +2397,8 @@ void activity_handlers::hand_crank_do_turn( player_activity *act, player *p )
         p->mod_fatigue( fatigue_amount );
         p->mod_stamina( -fatigue_amount * 36 );
         if( hand_crank_item.ammo_capacity() > hand_crank_item.ammo_remaining() ) {
-            const auto current = hand_crank_item.ammo_remaining();
-            const auto capacity = hand_crank_item.ammo_capacity();
-            const auto next_charges = std::min( capacity, current + charge_amount );
-            hand_crank_item.ammo_set( ammo_type, next_charges );
-            if( next_charges >= capacity ) {
+            add_charges( hand_crank_item, charge_amount, ammo_type );
+            if( hand_crank_item.ammo_remaining() >= hand_crank_item.ammo_capacity() ) {
                 act->moves_left = 0;
                 add_msg( m_info, _( fully_charged_message ) );
             }

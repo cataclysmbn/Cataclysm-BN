@@ -1,4 +1,5 @@
 #include "../src/map/map.h"
+#include "activity_handlers.h"
 #include "avatar.h"
 #include "bodypart.h"
 #include "cached_options.h"
@@ -13,6 +14,7 @@
 #include "map_helpers.h"
 #include "morale_types.h"
 #include "player_helpers.h"
+#include "relic.h"
 #include "type_id.h"
 #include "value_ptr.h"
 
@@ -620,6 +622,67 @@ TEST_CASE("bionic_scanner_inside_worn_container_marks_corpse_stack", "[iuse][bio
         CHECK(corpse_ptr->has_flag(flag_CBM_SCANNED));
     }
     CHECK(scanner_ptr->ammo_remaining() == 90);
+}
+
+TEST_CASE("recharges_battery_from_ups_in_tool_without_ammo_type", "[iuse][ups]") {
+    clear_avatar();
+    auto& you = get_avatar();
+    auto tool = item::spawn("test_tool_without_ammo", calendar::turn);
+    tool->put_in(item::spawn("light_battery_cell", calendar::turn));
+    tool->set_flag(flag_USE_UPS);
+    auto& tool_ref = you.i_add(std::move(tool));
+    you.i_add(item::spawn("UPS_off", calendar::turn, 500));
+
+    you.process_items();
+
+    CHECK(tool_ref.ammo_remaining() == 5);
+}
+
+/// Checks that a UPS adds 5 charges to the empty `test_tool_with_charges_without_ammo`, which
+/// holds 10. The tool type accepts no ammo, so the charges must go into the tool itself. Processes
+/// the items once with 500 charges in the UPS.
+TEST_CASE("recharges_own_charges_from_ups_in_tool_without_ammo_type", "[iuse][ups]") {
+    clear_avatar();
+    auto& you = get_avatar();
+    auto tool = item::spawn("test_tool_with_charges_without_ammo", calendar::turn);
+    tool->set_flag(flag_USE_UPS);
+    auto& tool_ref = you.i_add(std::move(tool));
+    you.i_add(item::spawn("UPS_off", calendar::turn, 500));
+
+    you.process_items();
+
+    CHECK(tool_ref.ammo_remaining() == 5);
+}
+
+/// Checks that a relic recharge of 2 charges goes into the empty light battery of
+/// `test_relic_tool_without_ammo`. The tool type accepts no ammo, so the charges must go into the
+/// battery. Runs the recharge once at 1 s, the recharge interval.
+TEST_CASE("relic_recharge_charges_battery_in_tool_without_ammo_type", "[iuse][relic]") {
+    calendar::turn = calendar::turn_zero + 1_seconds;
+    auto tool = item::spawn("test_relic_tool_without_ammo", calendar::turn);
+    tool->put_in(item::spawn("light_battery_cell", calendar::turn));
+
+    relic_funcs::process_recharge(*tool, nullptr);
+
+    CHECK(tool->ammo_remaining() == 2);
+}
+
+/// Checks that cranking `test_tool_without_ammo` adds 2 charges to its light battery.
+/// The tool type accepts no ammo, so the charges must go into the battery.
+/// Starts the crank activity, then runs one turn at 144 s, the charge interval.
+TEST_CASE("hand_crank_charges_battery_in_tool_without_ammo_type", "[iuse][activity]") {
+    clear_avatar();
+    auto& you = get_avatar();
+    auto tool = item::spawn("test_tool_without_ammo", calendar::turn);
+    tool->put_in(item::spawn("light_battery_cell", calendar::turn));
+    auto& tool_ref = you.i_add(std::move(tool));
+
+    tool_ref.type->invoke(you, tool_ref, you.bub_pos());
+    REQUIRE(you.activity);
+    calendar::turn = calendar::turn_zero + 144_seconds;
+    activity_handlers::hand_crank_do_turn(&*you.activity, &you);
+
+    CHECK(tool_ref.ammo_remaining() == 2);
 }
 
 TEST_CASE("eyedrops", "[iuse][eyedrops]") {

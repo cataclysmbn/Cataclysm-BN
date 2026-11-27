@@ -19,6 +19,7 @@
 #include "flag_trait.h"
 #include "game.h"
 #include "handle_liquid.h"
+#include "item/item_charge.h"
 #include "itype.h"
 #include "iuse.h"
 #include "make_static.h"
@@ -1036,20 +1037,13 @@ void Character::process_items( int turns )
         ch_UPS += std::min( units::to_kilojoule( get_power_level() ), 10 * turns );
     }
     int ch_UPS_used = 0;
-    if( weapon_active && ch_UPS_used < ch_UPS ) {
-        auto weap = &primary_weapon();
-        int used = std::min( ch_UPS, weap->ammo_capacity() - weap->ammo_remaining() );
+    const auto charge = [&]( auto & it ) {
+        const auto used = add_charges( it, ch_UPS, itype_battery );
         ch_UPS -= used;
         ch_UPS_used += used;
-        const itype_id ammo = weap->ammo_current();
-        if( !ammo.is_null() && ammo != itype_id::NULL_ID() ) {
-            weap->ammo_set( ammo, weap->ammo_remaining() + used );
-        } else if( weap->ammo_remaining() == 0 ) {
-            weap->ammo_set( itype_battery, weap->ammo_remaining() + used );
-        } else {
-            ch_UPS_used -= used;
-            ch_UPS += used;
-        }
+    };
+    if( weapon_active ) {
+        charge( primary_weapon() );
     }
     // Load all items that use the UPS to their minimal functional charge,
     // The tool is not really useful if its charges are below charges_to_use
@@ -1057,36 +1051,13 @@ void Character::process_items( int turns )
         if( ch_UPS <= 0 ) {
             break;
         }
-        item &it = inv.find_item( index );
-        int used = std::min( ch_UPS, it.ammo_capacity() - it.ammo_remaining() );
-        ch_UPS -= used;
-        ch_UPS_used += used;
-        const itype_id ammo = it.ammo_current();
-        if( !ammo.is_null() && ammo != itype_id::NULL_ID() ) {
-            it.ammo_set( ammo, it.ammo_remaining() + used );
-        } else if( it.ammo_remaining() == 0 ) {
-            it.ammo_set( itype_battery, it.ammo_remaining() + used );
-        } else {
-            ch_UPS_used -= used;
-            ch_UPS += used;
-        }
+        charge( inv.find_item( index ) );
     }
     for( item *worn_item : active_worn_items ) {
         if( ch_UPS <= 0 ) {
             break;
         }
-        int used = std::min( ch_UPS, worn_item->ammo_capacity() - worn_item->ammo_remaining() );
-        ch_UPS -= used;
-        ch_UPS_used += used;
-        const itype_id ammo = worn_item->ammo_current();
-        if( !ammo.is_null() && ammo != itype_id::NULL_ID() ) {
-            worn_item->ammo_set( ammo, worn_item->ammo_remaining() + used );
-        } else if( worn_item->ammo_remaining() == 0 ) {
-            worn_item->ammo_set( itype_battery, worn_item->ammo_remaining() + used );
-        } else {
-            ch_UPS_used -= used;
-            ch_UPS += used;
-        }
+        charge( *worn_item );
     }
     if( ch_UPS_used > 0 ) {
         use_charges( itype_UPS, ch_UPS_used );
