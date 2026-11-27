@@ -453,10 +453,101 @@ TEST_CASE("on_character_consume hook and on_consume callback", "[consume_hook][l
         REQUIRE_FALSE(dummy.eat(blood, true));
         CHECK(blood.charges == 10);
         CHECK(dummy.get_morale(MORALE_FOOD_BAD) == 0);
-        // Neither the hook nor the on_consume callback ran, so the
-        // marker globals stay unset.
-        CHECK_FALSE(lua.globals()["consume_hook_seen"].get<sol::optional<bool>>().value_or(false));
-        CHECK_FALSE(
-            lua.globals()["iconsume_on_consume_seen"].get<sol::optional<bool>>().value_or(false));
+        // Neither the hook nor the on_consume callback ran, so the marker
+        // globals stay unset. Check for nil: the callback stores a table, so
+        // reading it as a bool would pass even when the callback ran.
+        CHECK_FALSE(lua.globals()["consume_hook_seen"].get<sol::object>().valid());
+        CHECK_FALSE(lua.globals()["iconsume_on_consume_seen"].get<sol::object>().valid());
+    }
+
+    SECTION("hook reports the applied fun when the monotony penalty applies") {
+        // Cheese has positive fun and the default monotony penalty, so each
+        // repeat meal within two days is less fun. The hook runs after the
+        // meal enters the consumption history and must still report the fun
+        // that was applied, not one recomputed with the extra history entry.
+        register_hook(R"(
+            return function( params )
+                consume_hook_seen = params.fun
+            end
+        )");
+        item& cheese = *item::spawn_temporary("cheese", calendar::turn, 8);
+        REQUIRE(cheese.get_comestible_fun() > 0);
+        REQUIRE(cheese.get_comestible()->monotony_penalty > 0);
+
+        const auto first_fun = dummy.fun_for(cheese).first;
+        REQUIRE(dummy.eat(cheese, true));
+        CHECK(lua.globals()["consume_hook_seen"].get<int>() == first_fun);
+
+        const auto second_fun = dummy.fun_for(cheese).first;
+        REQUIRE(second_fun < first_fun);
+        REQUIRE(dummy.eat(cheese, true));
+        CHECK(lua.globals()["consume_hook_seen"].get<int>() == second_fun);
+    }
+}
+
+/// Tests that medication fires the same Lua consume callbacks as food:
+/// `Character::consume_med` runs the `on_character_try_consume` hook before
+/// taking the medication (it can deny it) and the `on_character_consume` hook
+/// after the charge was used. Aspirin is an oral (ingested) medication.
+TEST_CASE("consume hooks fire for medication", "[consume_hook][lua]") {
+    clear_all_state();
+    sol::state& lua = DynamicDataLoader::get_instance().lua->lua;
+    auto hooks = lua["game"]["hooks"].get<sol::table>();
+    REQUIRE(hooks.valid());
+    const auto previous_try = hooks["on_character_try_consume"].get<sol::object>();
+    const auto previous_post = hooks["on_character_consume"].get<sol::object>();
+    const auto restore = on_out_of_scope([&]() {
+        hooks["on_character_try_consume"] = previous_try;
+        hooks["on_character_consume"] = previous_post;
+        lua.globals()["med_try_seen"] = sol::lua_nil;
+        lua.globals()["med_post_seen"] = sol::lua_nil;
+        clear_all_state();
+    });
+
+    // Registers the function returned by `chunk` as the only entry of `hook`.
+    const auto register_hook = [&](const std::string& hook, const std::string& chunk) {
+        const auto result = lua.safe_script(chunk, sol::script_pass_on_error);
+        REQUIRE(result.valid());
+        auto hook_table = lua.create_table();
+        hook_table[1] = result.get<sol::function>();
+        hooks[hook] = hook_table;
+    };
+    register_hook("on_character_consume", R"(
+        return function( params )
+            med_post_seen = {
+                item_id = params.item:get_type():str(),
+                charges = params.item.charges,
+            }
+        end
+    )");
+
+    avatar dummy;
+    item& aspirin = *item::spawn_temporary("aspirin", calendar::turn, 20);
+    REQUIRE(aspirin.is_medication());
+
+    SECTION("both hooks fire when the medication is taken") {
+        register_hook("on_character_try_consume", R"(
+            return function( params )
+                med_try_seen = params.item:get_type():str()
+            end
+        )");
+        dummy.consume_med(aspirin);
+        CHECK(aspirin.charges < 20);
+        CHECK(lua.globals()["med_try_seen"].get<std::string>() == "aspirin");
+        const auto seen = lua.globals()["med_post_seen"].get<sol::table>();
+        REQUIRE(seen.valid());
+        CHECK(seen["item_id"].get<std::string>() == "aspirin");
+        CHECK(seen["charges"].get<int>() == aspirin.charges);
+    }
+
+    SECTION("the try hook can deny the medication") {
+        register_hook("on_character_try_consume", R"(
+            return function( params )
+                return false
+            end
+        )");
+        CHECK_FALSE(dummy.consume_med(aspirin));
+        CHECK(aspirin.charges == 20);
+        CHECK_FALSE(lua.globals()["med_post_seen"].get<sol::object>().valid());
     }
 }

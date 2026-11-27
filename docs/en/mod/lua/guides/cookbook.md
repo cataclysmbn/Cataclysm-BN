@@ -578,6 +578,16 @@ values the game applied (`char`, `item`, `nutrition`, `thirst`, `fun`,
 `fun_max`), and its return value is ignored. The character-wide equivalent is
 the `on_character_consume` hook with the same `params` fields.
 
+`params.item` is still the consumed item, so `params.item.charges` can be 0
+when the last charge was eaten; the game removes the item afterwards. Do not
+keep a reference to it.
+
+Food and medication both run these callbacks. That covers eating, taking
+medication, and medication that an NPC accepts in dialogue. For parenteral
+medication (`NO_INGEST`, such as injections) `nutrition` and `thirst` are 0.
+Other consumption paths (bionic fuel, furnace feeding, the fake item of
+`consume_drug` actions) do not run them.
+
 ```lua
 game.iconsume_functions["blood"] = {
     on_consume = function( params )

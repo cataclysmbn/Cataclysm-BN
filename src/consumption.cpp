@@ -8,6 +8,7 @@
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catalua_hooks.h"
+#include "catalua/consume_callbacks.h"
 #include "catalua_icallback_actor.h"
 #include "catalua_sol.h"
 #include "character.h"
@@ -139,7 +140,6 @@ static const vitamin_id vitamin_wheat_allergen( "wheat_allergen" );
 
 static const trait_flag_str_id trait_flag_CANNIBAL( "CANNIBAL" );
 
-static const enchantment_value_id ench_val_FOOD_FUN( "FOOD_FUN" );
 static const enchantment_value_id ench_val_METABOLISM( "METABOLISM" );
 
 static const enchantment_flag_id ench_flag_EAT_ROTTEN( "EAT_ROTTEN" );
@@ -836,6 +836,31 @@ ret_val<edible_rating> Character::will_eat( const item &food, bool interactive,
     return ret_val<edible_rating>::make_success();
 }
 
+namespace
+{
+
+/// Applies the effects of taking @p med (the medication branch of `Character::consume_med`).
+auto apply_med_effects( Character &who, item &med, const consume_overrides &overrides ) -> void
+{
+    // TODO: Get the target it was used on
+    // Otherwise injecting someone will give us addictions etc.
+    if( med.has_flag( flag_NO_INGEST ) ) {
+        const auto &comest = *med.get_comestible();
+        // Assume that parenteral meds don't spoil, so don't apply rot
+        who.modify_health( comest );
+        who.modify_stimulation( comest );
+        who.modify_fatigue( comest );
+        who.modify_radiation( comest );
+        who.modify_addiction( comest );
+        who.modify_morale( med, 0, overrides );
+    } else {
+        // Take by mouth
+        who.consume_effects( med, overrides );
+    }
+}
+
+} // namespace
+
 bool Character::eat( item &food, bool force )
 {
     if( !food.is_food() ) {
@@ -847,43 +872,11 @@ bool Character::eat( item &food, bool force )
     // the "eat anyway?" consequences, and the cannibalism check can be
     // skipped per item. Callback side effects therefore happen even if
     // the checks fail or the player declines.
-    consume_overrides lua_overrides;
-    if( cata::has_hooks( "on_character_try_consume" ) ) {
-        const auto &hook_results = cata::run_hooks( "on_character_try_consume",
-        [ &, this ]( sol::table & params ) {
-            params["char"] = this;
-            params["item"] = &food;
-            params["nutrition"] = compute_effective_nutrients( food ).kcal;
-            params["thirst"] = food.get_comestible()->quench;
-            const auto fun = fun_for( food );
-            params["fun"] = fun.first;
-            params["fun_max"] = fun.second;
-        }, { .exit_early = true } );
-        if( !hook_results.get_or( "allowed", true ) ) {
-            return false;
-        }
-        if( const auto kcal = hook_results.get<sol::optional<int>>( "nutrition" ) ) {
-            lua_overrides.kcal = kcal.value();
-        }
-        if( const auto quench = hook_results.get<sol::optional<int>>( "thirst" ) ) {
-            lua_overrides.thirst = quench.value();
-        }
-        if( const auto fun = hook_results.get<sol::optional<int>>( "fun" ) ) {
-            lua_overrides.fun = fun.value();
-        }
-        if( const auto fun_max = hook_results.get<sol::optional<int>>( "fun_max" ) ) {
-            lua_overrides.fun_max = fun_max.value();
-        }
-        if( const auto skip = hook_results.get<sol::optional<bool>>( "skip_cannibalism" ) ) {
-            lua_overrides.skip_cannibalism = skip.value();
-        }
+    const auto try_result = run_try_consume_callbacks( *this, food );
+    if( !try_result ) {
+        return false;
     }
-
-    if( const lua_iconsume_actor *iconsume_cb = food.type->iconsume_callbacks ) {
-        if( !iconsume_cb->call_on_try_consume( *this, food, lua_overrides ) ) {
-            return false;
-        }
-    }
+    const auto &lua_overrides = *try_result;
 
     const auto ret = force ? can_eat( food ) : will_eat( food, is_player(), lua_overrides );
     if( !ret.success() ) {
@@ -938,6 +931,9 @@ bool Character::eat( item &food, bool force )
         }
     }
 
+    // Captured before the meal enters the consumption history (monotony
+    // penalty), so it matches the fun that modify_morale applies.
+    const auto applied_fun = applied_fun_for( *this, food, lua_overrides );
     if( !consume_effects( food, lua_overrides ) ) {
         // Already consumed by using `food.type->invoke`?
         if( charges_used > 0 ) {
@@ -1045,20 +1041,12 @@ bool Character::eat( item &food, bool force )
     // Lua consume hook and per-item callback run after the comestible has
     // actually been consumed (charges deducted, effects applied). They are
     // purely informational, so their return values are ignored.
-    if( cata::has_hooks( "on_character_consume" ) ) {
-        const auto fun = fun_for( food );
-        cata::run_hooks( "on_character_consume", [ &, this ]( sol::table & params ) {
-            params["char"] = this;
-            params["item"] = &food;
-            params["nutrition"] = food_kcal;
-            params["thirst"] = quench;
-            params["fun"] = lua_overrides.fun ? *lua_overrides.fun : fun.first;
-            params["fun_max"] = lua_overrides.fun_max ? *lua_overrides.fun_max : fun.second;
-        } );
-    }
-    if( const lua_iconsume_actor *iconsume_cb = food.type->iconsume_callbacks ) {
-        iconsume_cb->call_on_consume( *this, food, lua_overrides );
-    }
+    run_consume_callbacks( *this, food, {
+        .kcal = food_kcal,
+        .thirst = quench,
+        .fun = applied_fun.fun,
+        .fun_max = applied_fun.fun_max,
+    } );
 
     return true;
 }
@@ -1172,26 +1160,17 @@ void Character::modify_morale( item &food, int nutr, const consume_overrides &ov
 
 
 
-    std::pair<int, int> fun = fun_for( food );
-    if( overrides.fun ) {
-        fun.first = *overrides.fun;
-    }
-    if( overrides.fun_max ) {
-        fun.second = *overrides.fun_max;
-    }
-
-    fun.first += bonus_from_enchantments( fun.first, ench_val_FOOD_FUN );
-
-    if( fun.first < 0 ) {
+    const auto fun = applied_fun_for( *this, food, overrides );
+    if( fun.fun < 0 ) {
         if( has_active_bionic( bio_taste_blocker ) &&
-            get_power_level() > units::from_kilojoule( -fun.first ) ) {
-            mod_power_level( units::from_kilojoule( std::min( 0, fun.first ) ) );
+            get_power_level() > units::from_kilojoule( -fun.fun ) ) {
+            mod_power_level( units::from_kilojoule( std::min( 0, fun.fun ) ) );
         } else {
-            add_morale( MORALE_FOOD_BAD, fun.first, fun.second, morale_time, morale_time / 2, false,
+            add_morale( MORALE_FOOD_BAD, fun.fun, fun.fun_max, morale_time, morale_time / 2, false,
                         food.type );
         }
-    } else if( fun.first > 0 ) {
-        add_morale( MORALE_FOOD_GOOD, fun.first, fun.second, morale_time, morale_time / 2, false,
+    } else if( fun.fun > 0 ) {
+        add_morale( MORALE_FOOD_GOOD, fun.fun, fun.fun_max, morale_time, morale_time / 2, false,
                     food.type );
     }
 
@@ -1752,6 +1731,14 @@ bool Character::consume_med( item &target )
         return false;
     }
 
+    // Same Lua consume callbacks as Character::eat, so medication can be
+    // denied, overridden and observed like food.
+    const auto try_result = run_try_consume_callbacks( *this, target );
+    if( !try_result ) {
+        return false;
+    }
+    const auto &lua_overrides = *try_result;
+
     const itype_id tool_type = target.get_comestible()->tool;
     const itype *req_tool = &*tool_type;
     bool check_tool = true;
@@ -1777,24 +1764,12 @@ bool Character::consume_med( item &target )
         }
     }
 
-    // TODO: Get the target it was used on
-    // Otherwise injecting someone will give us addictions etc.
-    if( target.has_flag( flag_NO_INGEST ) ) {
-        const auto &comest = *target.get_comestible();
-        // Assume that parenteral meds don't spoil, so don't apply rot
-        modify_health( comest );
-        modify_stimulation( comest );
-        modify_fatigue( comest );
-        modify_radiation( comest );
-        modify_addiction( comest );
-        modify_morale( target );
-    } else {
-        // Take by mouth
-        consume_effects( target );
-    }
+    const auto applied = consumed_med_values( *this, target, lua_overrides );
+    apply_med_effects( *this, target, lua_overrides );
 
     mod_moves( -250 );
     target.charges -= amount_used;
+    run_consume_callbacks( *this, target, applied );
     return target.charges <= 0;
 }
 

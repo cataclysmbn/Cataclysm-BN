@@ -1,6 +1,7 @@
 #include "catalua_icallback_actor.h"
 
 #include "bionics.h"
+#include "catalua/consume_callbacks.h"
 #include "catalua_coord.h"
 #include "catalua_impl.h"
 #include "character.h"
@@ -414,19 +415,17 @@ auto lua_iconsume_actor::call_on_try_consume(
 }
 
 auto lua_iconsume_actor::call_on_consume(
-    Character& who, item& it, const consume_overrides& overrides) const -> void {
+    Character& who, item& it, const consumed_values& applied) const -> void {
     if (on_consume_func == sol::lua_nil) { return; }
     try {
         sol::state_view lua(on_consume_func.lua_state());
         auto params = lua.create_table();
         params["char"] = &who;
         params["item"] = &it;
-        params["nutrition"] =
-            overrides.kcal ? *overrides.kcal : who.compute_effective_nutrients(it).kcal;
-        params["thirst"] = overrides.thirst ? *overrides.thirst : it.get_comestible()->quench;
-        const auto fun = who.fun_for(it);
-        params["fun"] = overrides.fun ? *overrides.fun : fun.first;
-        params["fun_max"] = overrides.fun_max ? *overrides.fun_max : fun.second;
+        params["nutrition"] = applied.kcal;
+        params["thirst"] = applied.thirst;
+        params["fun"] = applied.fun;
+        params["fun_max"] = applied.fun_max;
         sol::protected_function_result res = on_consume_func(params);
         check_func_result(res);
     } catch (std::runtime_error& e) {
