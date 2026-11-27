@@ -14630,7 +14630,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
 
         const auto dest = u.bub_pos() + tripoint_above;
         const ter_id dest_terrain = m.ter( dest );
-        const bool dest_is_air = dest_terrain == t_open_air;
+        const bool dest_is_air = dest_terrain == t_open_air && !m.floor_between( u.bub_pos(), dest, true );
 
         const auto &mutations = get_avatar().get_mutations();
 
@@ -14683,7 +14683,8 @@ void game::vertical_move( int movez, bool force, bool peeking )
 
         // Check if player is standing on open air
         const ter_id here_terrain = m.ter( u.bub_pos() );
-        const bool standing_on_air = here_terrain == t_open_air;
+        const bool standing_on_air = here_terrain == t_open_air &&
+                                     !m.floor_between( u.bub_pos(), dest, true );
 
         if( !can_fly ) {
             if( suggest_auto_walk_to_stairs( u, m, "down" ) ) {
@@ -14736,7 +14737,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
     bool surfacing = false;
     bool submerging = false;
     // > and < are used for diving underwater.
-    if( m.has_flag( TFLAG_SWIMMABLE, u.bub_pos() ) ) {
+    if( m.has_flag( TFLAG_SWIMMABLE, u.bub_pos() ) && !u.in_vehicle ) {
         swimming = true;
         const ter_id &target_ter = m.ter( u.bub_pos() + tripoint_rel_ms( 0, 0, movez ) );
 
@@ -14903,6 +14904,9 @@ void game::vertical_move( int movez, bool force, bool peeking )
 
     const auto old_pos = g->u.bub_pos();
     const auto origin_before_setpos = m.get_abs_sub();
+    const auto vehicle_stairs = !force && vehicle_stair_at( m.get_mapbuffer(), u.abs_pos(),
+                                movez ).value_or( std::nullopt ).has_value();
+    if( vehicle_stairs && u.in_vehicle ) { m.unboard_vehicle( u.bub_pos() ); }
     u.setpos( map_local_to_abs( m, stairs ) );
     const auto submap_shift = ( m.get_abs_sub() - origin_before_setpos );
 
@@ -15019,6 +15023,9 @@ void game::vertical_move( int movez, bool force, bool peeking )
     m.creature_on_trap( u, !force );
 
     cata_event_dispatch::avatar_moves( u, m, u.abs_pos() );
+    if( vehicle_stairs && m.veh_at( u.bub_pos() ).part_with_feature( "BOARDABLE", true ) ) {
+        m.board_vehicle( u.bub_pos(), u.as_character() );
+    }
 }
 
 const dimension_info *game::get_current_dimension_info() const
@@ -15424,15 +15431,18 @@ std::optional<tripoint_bub_ms> game::find_stairs( map &mp, const int z_after, bo
 {
     const auto bub_pos = abs_to_map_local( mp, u.abs_pos() );
     const auto movez = tripoint_rel_ms( 0, 0, z_after - get_levz() );
+    const auto passage = vehicle_stair_at( mp.get_mapbuffer(), u.abs_pos(), movez.z() );
+    if( !passage ) { return std::nullopt; }
+    if( *passage ) { return abs_to_map_local( mp, **passage ); }
     // If there are stairs on the same x and y as we currently are, use those
-    if( movez.z() == -1 && mp.has_flag( TFLAG_GOES_UP, bub_pos + movez ) ) {
+    if( movez.z() == -1 && mp.has_flag_ter_or_furn( TFLAG_GOES_UP, bub_pos + movez ) ) {
         return bub_pos + movez;
     }
     if( movez.z() == -1 && mp.has_flag( TFLAG_RAMP_DOWN, bub_pos ) &&
         mp.valid_move( bub_pos, bub_pos + movez, false, true, true ) ) {
         return bub_pos + movez;
     }
-    if( movez.z() == 1 && mp.has_flag( TFLAG_GOES_DOWN, bub_pos + movez ) &&
+    if( movez.z() == 1 && mp.has_flag_ter_or_furn( TFLAG_GOES_DOWN, bub_pos + movez ) &&
         !mp.has_flag( TFLAG_DEEP_WATER, bub_pos + movez ) ) {
         return bub_pos + movez;
     }
@@ -15452,8 +15462,8 @@ std::optional<tripoint_bub_ms> game::find_stairs( map &mp, const int z_after, bo
         for( const auto &rel : overmap_terrain_tiles() ) {
             const auto dest = abs_to_map_local( mp, project_combine( omt_start, rel ) ) + movez;
             if( rl_dist( bub_pos, dest ) <= best &&
-                ( ( movez.z() == -1 && mp.has_flag( TFLAG_GOES_UP, dest ) ) ||
-                  ( ( movez.z() == 1 && ( mp.has_flag( TFLAG_GOES_DOWN, dest ) &&
+                ( ( movez.z() == -1 && mp.has_flag_ter_or_furn( TFLAG_GOES_UP, dest ) ) ||
+                  ( ( movez.z() == 1 && ( mp.has_flag_ter_or_furn( TFLAG_GOES_DOWN, dest ) &&
                                           !mp.has_flag( TFLAG_DEEP_WATER, dest ) ) ) ||
                     mp.ter( dest ) == t_manhole_cover )   ||
                   ( ( movez.z() == 2 || movez.z() == -2 ) && mp.ter( dest ) == t_elevator ) ) ) {
@@ -15504,6 +15514,7 @@ std::optional<tripoint_bub_ms> game::find_or_make_stairs( map &mp, const int z_a
         // Defensive: should never happen, but bail out safely
         return stairs;
     }
+    if( !vehicle_stair_at( mp.get_mapbuffer(), u.abs_pos(), movez ) ) { return stairs; }
 
     // No stairs found! Try to make some
     rope_ladder = false;

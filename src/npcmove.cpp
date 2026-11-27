@@ -1620,6 +1620,7 @@ void npc::act_follow_embarked()
     // Don't change spots if ours is nice
     int my_spot = -1;
     std::vector<std::pair<int, int> > seats;
+    const auto last_dest_z = vp->mount().z();
     for( const vpart_reference &vp : veh->get_avail_parts( VPFLAG_BOARDABLE ) ) {
         const player *passenger = veh->get_passenger( vp.part_index() );
         if( passenger != this && passenger != nullptr ) {
@@ -1639,7 +1640,7 @@ void npc::act_follow_embarked()
 
         int priority = 0;
 
-        if( vp.mount().xy().raw() == last_dest ) {
+        if( vp.mount() == tripoint_mnt_veh( tripoint( last_dest, last_dest_z ) ) ) {
             // Shares mount point with last known path
             // We probably wanted to go there in the last turn
             priority = 4;

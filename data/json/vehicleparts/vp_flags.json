@@ -344,5 +344,17 @@
     "type": "json_flag",
     "context": [ "vehicle_part" ],
     "info": "Cannot be uninstalled from outside the vehicle."
+  },
+  {
+    "id": "VEHICLE_STAIRS_UP",
+    "type": "json_flag",
+    "context": [ "vehicle_part" ],
+    "info": "Connects upward to a compatible vehicle stair landing or ladder in the same column on the adjacent deck.  Both endpoints and their frames must be intact, with no roof at the lower endpoint.  The passage can be used while the vehicle is moving."
+  },
+  {
+    "id": "VEHICLE_STAIRS_DOWN",
+    "type": "json_flag",
+    "context": [ "vehicle_part" ],
+    "info": "Connects downward to compatible vehicle stairs or a ladder in the same column on the adjacent deck.  An ordinary aisle does not complete the connection.  The passage can be used while the vehicle is moving."
   }
 ]
