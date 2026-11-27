@@ -1305,7 +1305,11 @@ void search_surroundings( Character &who )
     // Search for traps in a larger area than before because this is the only
     // way we can "find" traps that aren't marked as visible.
     // Detection formula takes care of likelihood of seeing within this range.
-    for( const auto &tp : here.points_in_radius( who.bub_pos(), 5 ) ) {
+    const auto search_area = here.points_in_radius( who.bub_pos(), 5 );
+    if( !here.any_submap_in( search_area, []( const submap & sm ) { return !sm.trap_cache.empty(); } ) ) {
+        return;
+    }
+    for( const auto &tp : search_area ) {
         const trap &tr = here.tr_at( tp );
         if( tr.is_null() || tp == who.bub_pos() ) {
             continue;

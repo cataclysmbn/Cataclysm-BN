@@ -6,6 +6,7 @@
 #include "cata_utility.h"
 #include "catch/catch.hpp"
 #include "character.h"
+#include "character_turn.h"
 #include "coordinates.h"
 #include "enums.h"
 #include "game.h"
@@ -956,4 +957,12 @@ TEST_CASE("try_fuel_fire_feeds_a_fire_on_the_next_submap", "[activity][fire]") {
     try_fuel_fire(act, g->u);
     CHECK(g->m.i_at(pos + point_east).size() == 2);
     CHECK(g->m.i_at(pos + point_west).size() == 1);
+}
+
+TEST_CASE("search_surroundings_spots_a_trap_on_the_next_submap", "[activity][trap]") {
+    // tr_pit has visibility 0, so the 8 perception of the avatar spots it on every roll.
+    const auto trap_pos = put_avatar_on_submap_corner() + point(-2, 0);
+    g->m.trap_set(trap_pos, tr_pit);
+    character_funcs::search_surroundings(g->u);
+    CHECK(g->u.knows_trap(trap_pos));
 }
