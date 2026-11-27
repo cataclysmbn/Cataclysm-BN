@@ -41,6 +41,10 @@ units::angle random_direction()
 
 double normal_roll( double mean, double stddev )
 {
+    // std::normal_distribution requires stddev > 0
+    if( stddev <= 0.0 ) {
+        return mean;
+    }
     static std::normal_distribution<double> rng_normal_dist;
     return rng_normal_dist( rng_get_engine(), std::normal_distribution<>::param_type( mean, stddev ) );
 }
@@ -126,9 +130,6 @@ double rng_normal( double lo, double hi )
     }
 
     const double stddev = ( hi - lo ) / 4;
-    if( stddev == 0.0 ) {
-        return hi;
-    }
     double val = normal_roll( ( hi + lo ) / 2, stddev );
     return clamp( val, lo, hi );
 }

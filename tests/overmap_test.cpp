@@ -10,6 +10,7 @@
 #include "game.h"
 #include "game_constants.h"
 #include "item.h"
+#include "json.h"
 #include "map/map.h"
 #include "map_helpers.h"
 #include "numeric_interval.h"
@@ -56,6 +57,19 @@ TEST_CASE("city building selection preserves empty bins", "[overmap][city]") {
         CHECK(settings.pick_finale() == expected);
     });
     CHECK(messages.empty());
+}
+
+TEST_CASE("apply_region_overlay reads apartment radius and sigma", "[overmap][city]") {
+    auto region = regional_settings();
+    region.city_spec.shop_radius = 30;
+    region.city_spec.shop_sigma = 50;
+    auto input = std::istringstream(R"({"city":{"apartment_radius":70,"apartment_sigma":10}})");
+    auto reader = JsonIn(input);
+    apply_region_overlay(reader.get_object(), region);
+    CHECK(region.city_spec.apartment_radius == 70);
+    CHECK(region.city_spec.apartment_sigma == 10);
+    CHECK(region.city_spec.shop_radius == 30);
+    CHECK(region.city_spec.shop_sigma == 50);
 }
 
 TEST_CASE("set_and_get_overmap_scents", "[overmap]") {
