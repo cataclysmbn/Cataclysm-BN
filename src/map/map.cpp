@@ -49,6 +49,7 @@
 #include "input.h"
 #include "int_id.h"
 #include "item.h"
+#include "item/item_charge.h"
 #include "item_category.h"
 #include "item_contents.h"
 #include "item_factory.h"
@@ -5476,9 +5477,7 @@ static auto process_vehicle_items(vehicle& cur_veh, int turns) -> void {
             if (target.is_battery()) {
                 charged_by = units::to_joule(target.mod_energy(1_kJ * power)) / 1000;
             } else {
-                int previous_ammo = target.ammo_remaining();
-                target.ammo_set(itype_battery, previous_ammo + power);
-                charged_by = target.ammo_remaining() - previous_ammo;
+                charged_by = add_charges(target, power, itype_battery);
             }
 
             // deplete battery properly, rescind any charge it didn't have enough juice to provide
@@ -5487,7 +5486,7 @@ static auto process_vehicle_items(vehicle& cur_veh, int turns) -> void {
                 if (target.is_battery()) {
                     target.mod_energy(1_kJ * -1 * missing);
                 } else {
-                    target.ammo_set(itype_battery, target.ammo_remaining() - missing);
+                    target.ammo_consume(missing, cur_veh.bub_part_location(entry.cargo_part));
                 }
             }
         }

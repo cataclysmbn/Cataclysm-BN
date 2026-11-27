@@ -6,6 +6,7 @@
 #include "distribution_grid.h"
 #include "flag.h"
 #include "item.h"
+#include "item/item_charge.h"
 #include "itype.h"
 #include "json.h"
 #include "map/map.h"
@@ -345,7 +346,7 @@ void charger_tile::update_internal( time_point to, const tripoint_abs_ms &p,
                         if( n.is_battery() ) {
                             n.mod_energy( 1_kJ );
                         } else {
-                            n.ammo_set( itype_battery, n.ammo_remaining() + 1 );
+                            add_charges( n, 1, itype_battery );
                         }
                     }
                     power -= 1000;

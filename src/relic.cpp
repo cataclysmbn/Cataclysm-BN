@@ -6,6 +6,7 @@
 #include "creature.h"
 #include "enchantments/enchantment.h"
 #include "game.h"
+#include "item/item_charge.h"
 #include "json.h"
 #include "magic/magic.h"
 #include "map/field.h"
@@ -492,18 +493,20 @@ bool process_recharge_entry( item &itm, const relic_recharge &rech, Character *c
         }
         itm.set_var( "last_relic_process", to_turn<int>( calendar::turn ) );
     }
+    auto &target = charge_target( itm );
     // If it already has ammo, increment charges of ammo inside.
-    if( itm.ammo_data() ) {
-        int ammo_charge = clamp( itm.ammo_remaining() + rech.rate * rate_multiplier, 0,
-                                 itm.ammo_capacity() );
-        itm.ammo_set( itm.ammo_current(), ammo_charge );
+    if( target.ammo_data() ) {
+        const auto ammo_charge = clamp( target.ammo_remaining() + rech.rate * rate_multiplier, 0,
+                                        target.ammo_capacity() );
+        target.ammo_set( target.ammo_current(), ammo_charge );
     } else {
         // If not, either give it default ammo, or increment charges directly.
-        if( !itm.ammo_types().empty() ) {
-            itm.ammo_set( itm.ammo_default(), clamp( itm.ammo_remaining() + rech.rate * rate_multiplier, 0,
-                          itm.ammo_capacity() ) );
+        if( !target.ammo_types().empty() ) {
+            target.ammo_set( target.ammo_default(), clamp( target.ammo_remaining() + rech.rate *
+                             rate_multiplier, 0, target.ammo_capacity() ) );
         } else {
-            itm.charges = clamp( itm.charges + rech.rate * rate_multiplier, 0, itm.ammo_capacity() );
+            target.charges = clamp( target.charges + rech.rate * rate_multiplier, 0,
+                                    target.ammo_capacity() );
         }
     }
     if( rech.message ) {
