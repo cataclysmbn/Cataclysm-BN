@@ -3568,6 +3568,13 @@
   },
   {
     "type": "keybinding",
+    "id": "CHANGE_DESCRIPTION",
+    "category": "PLAYER_INFO",
+    "name": "Edit character description",
+    "bindings": [ { "input_method": "keyboard", "key": "d" } ]
+  },
+  {
+    "type": "keybinding",
     "id": "CHANGE_NAME",
     "name": "Change name",
     "bindings": [ { "input_method": "keyboard", "key": "&" } ]
