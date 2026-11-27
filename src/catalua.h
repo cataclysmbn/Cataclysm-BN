@@ -50,8 +50,20 @@ void run_on_game_save_hooks( lua_state &state );
 void run_on_every_x_hooks( lua_state &state );
 auto run_lua_examine( const std::string &callback_id, player &who,
                       const tripoint_bub_ms &pos ) -> void;
-auto run_lua_harvest( const std::string &callback_id, player &who,
-                      const tripoint_bub_ms &pos, item &seed, bool from_activity ) -> void;
+/// Arguments of `run_lua_harvest`.
+struct lua_harvest_options {
+    /// Name in `game.harvest_functions` (without the "lua:" prefix).
+    std::string callback_id;
+    player &who;
+    const tripoint_bub_ms &pos;
+    /// The planted seed item on the tile.
+    item &seed;
+    /// True when a farm-zone activity harvests the plant.
+    bool from_activity = false;
+};
+/// Runs the seed harvest callback in `game.harvest_functions`. The callback
+/// replaces the hardcoded harvest and must replace the grown plant furniture.
+auto run_lua_harvest( const lua_harvest_options &opts ) -> void;
 auto get_lua_activity_on_finish( const player_activity &act ) -> std::string;
 auto get_lua_activity_on_turn( const player_activity &act ) -> std::string;
 auto run_lua_activity_callback( const std::string &callback_id, player &who,

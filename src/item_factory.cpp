@@ -1453,6 +1453,10 @@ void Item_factory::check_definitions() const
                     msg += string_format( "invalid byproduct id %s\n", b.c_str() );
                 }
             }
+            const auto &harvest_action = type->seed->harvest_action;
+            if( !harvest_action.empty() && harvest_action.rfind( "lua:", 0 ) != 0 ) {
+                msg += string_format( "harvest_action \"%s\" must start with \"lua:\"\n", harvest_action );
+            }
             for( const auto &flag : type->seed->harvest_inherit_flags ) {
                 if( !flag.is_valid() ) {
                     msg += string_format( "invalid harvest inheritance flag %s\n", flag.c_str() );

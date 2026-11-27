@@ -2791,7 +2791,22 @@ void iexamine::harvest_plant( player &p, const tripoint_bub_ms &examp, bool from
     if( harvest_action.rfind( "lua:", 0 ) == 0 ) {
         // A seed with a Lua harvest action fully replaces the hardcoded harvest
         // behavior, including the fungal seed special cases below.
-        cata::run_lua_harvest( harvest_action.substr( 4 ), p, examp, *seed, from_activity );
+        cata::run_lua_harvest( {
+            .callback_id = harvest_action.substr( 4 ),
+            .who = p,
+            .pos = examp,
+            .seed = *seed,
+            .from_activity = from_activity,
+        } );
+        // The callback must replace the grown plant. If it is still there,
+        // apply its default transform: otherwise farm zones would harvest the
+        // same tile forever.
+        if( here.has_flag_furn( flag_GROWTH_HARVEST, examp ) ) {
+            debugmsg( "Lua harvest action \"%s\" left a harvestable plant at %s; applying its default transform",
+                      harvest_action, examp.to_string() );
+            const auto &plant = here.furn( examp )->plant;
+            here.furn_set( examp, plant ? furn_str_id( plant->transform ) : f_null );
+        }
         return;
     }
     if( seedType == itype_fungal_seeds ) {

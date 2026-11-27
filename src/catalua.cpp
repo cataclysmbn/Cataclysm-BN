@@ -1241,7 +1241,7 @@ auto run_lua_examine( const std::string &callback_id, player &who,
         params["user"] = who.as_character();
         params["pos"] = pos;
         map &here = get_map();
-        const furn_id furn_at = here.furn( pos );
+        const auto furn_at = here.furn( pos );
         if( furn_at != f_null ) {
             params["furniture"] = furn_at.id().str();
         }
@@ -1249,14 +1249,13 @@ auto run_lua_examine( const std::string &callback_id, player &who,
     } );
 }
 
-auto run_lua_harvest( const std::string &callback_id, player &who,
-                      const tripoint_bub_ms &pos, item &seed, bool from_activity ) -> void
+auto run_lua_harvest( const lua_harvest_options &opts ) -> void
 {
-    run_lua_callback( "harvest_functions", callback_id, [&]( sol::table & params ) {
-        params["user"] = who.as_character();
-        params["pos"] = pos;
-        params["seed"] = &seed;
-        params["from_activity"] = from_activity;
+    run_lua_callback( "harvest_functions", opts.callback_id, [&]( sol::table & params ) {
+        params["user"] = opts.who.as_character();
+        params["pos"] = opts.pos;
+        params["seed"] = &opts.seed;
+        params["from_activity"] = opts.from_activity;
     } );
 }
 

@@ -92,6 +92,7 @@
 #include "magic/magic.h"
 #include "map/field.h"
 #include "map/field_type.h"
+#include "map/auto_forage.h"
 #include "map/lightmap.h"
 #include "map/map.h"
 #include "map/map_selector.h"
@@ -13437,24 +13438,15 @@ auto game::place_player( const tripoint_bub_ms &dest_loc ) -> point_rel_sm
             const auto forage = [&]( const tripoint_bub_ms & pos ) {
                 const auto &xter = m.ter( pos ).obj();
                 const auto &xfurn = m.furn( pos ).obj();
-                const bool forage_everything = forage_type == "both";
-                const bool forage_bushes = forage_everything || forage_type == "bushes";
-                const bool forage_trees = forage_everything || forage_type == "trees";
-                const bool forage_flowers = forage_everything || forage_type == "flowers";
-                const auto has_forage_class = []( forage_class present, forage_class wanted ) {
-                    return ( static_cast<uint8_t>( present ) & static_cast<uint8_t>( wanted ) ) != 0;
-                };
-                if( xter.forage_classes == forage_class::none &&
-                    xfurn.forage_classes == forage_class::none ) {
-                    return;
-                } else if( ( forage_bushes && has_forage_class( xter.forage_classes,
-                             forage_class::bushes ) ) ||
-                           ( forage_trees && has_forage_class( xter.forage_classes,
-                                   forage_class::trees ) ) ) {
-                    xter.examine( u, pos );
-                } else if( forage_flowers &&
-                           has_forage_class( xfurn.forage_classes, forage_class::flowers ) ) {
-                    xfurn.examine( u, pos );
+                switch( pick_auto_forage_target( xter.forage_classes, xfurn.forage_classes, forage_type ) ) {
+                    case auto_forage_target::terrain:
+                        xter.examine( u, pos );
+                        break;
+                    case auto_forage_target::furniture:
+                        xfurn.examine( u, pos );
+                        break;
+                    case auto_forage_target::none:
+                        break;
                 }
             };
 

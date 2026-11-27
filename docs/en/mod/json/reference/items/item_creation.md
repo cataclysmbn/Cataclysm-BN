@@ -708,6 +708,7 @@ can be planted:
     "fruit_div": 2, // (optional, default is 1). Final amount of fruit charges produced is divided by this number. Works only if fruit item is counted by charges.
     "byproducts": ["withered", "straw_pile"], // A list of further items that should spawn upon harvest.
     "harvest_inherit_flags": ["HIDDEN_POISON", "HIDDEN_HALLU"], // Optional, default: []. Flags present on the planted item to copy to harvested fruits and seeds, excluding byproducts. Works with any required_terrain_flag.
+    "harvest_action": "lua:my_harvest", // Optional. Calls game.harvest_functions["my_harvest"] instead of the built-in harvest; the callback must replace the grown plant furniture. Must start with "lua:".
     "harvest_inherit_poison": true, // Optional, default: false. Copy the planted item's poison value to harvested fruits and seeds, excluding byproducts. Independent of flag inheritance.
     "plant_name": "sunflower", // The name of the plant that grows from this seed. This is only used as information displayed to the user.
     "grow" : 91 // A time duration: how long it takes for a plant to fully mature. Based around a 91 day season length (roughly a real world season) to give better accuracy for longer season lengths
