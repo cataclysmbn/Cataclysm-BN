@@ -544,8 +544,9 @@ Several additional callback tables let you react to item events.
 
 ### game.iconsume_functions
 
-Keyed by item id. `on_try_consume` runs before the edibility checks and the
-eat-confirmation prompt: modify the `params` fields to override the values the
+Keyed by item id. `on_try_consume` runs before the food's edibility checks and
+eat-confirmation prompt, or before medication is applied (even before the
+required-tool check): modify the `params` fields to override the values the
 game applies, return `false` to interrupt the consume. Callback side effects
 persist even if the checks then fail or the player declines, and the item is
 left alone unless the callback changed it — so the callback can implement its

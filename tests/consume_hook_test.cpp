@@ -483,6 +483,27 @@ TEST_CASE("on_character_consume hook and on_consume callback", "[consume_hook][l
         REQUIRE(dummy.eat(cheese, true));
         CHECK(lua.globals()["consume_hook_seen"].get<int>() == second_fun);
     }
+
+    SECTION("hook reports the applied fun including the enchantment bonus") {
+        // The faulty bio_grossfood bionic carries a FOOD_FUN enchantment that
+        // lowers the fun of everything consumed. The hook must report the
+        // enchanted value (a round-one regression recomputed fun without
+        // the bonus), and the applied morale must match the report.
+        dummy.add_bionic(bionic_id("bio_grossfood"));
+        register_hook(R"(
+            return function( params )
+                consume_hook_seen = params.fun
+            end
+        )");
+        item& cheese = *item::spawn_temporary("cheese", calendar::turn, 8);
+        const auto base_fun = dummy.fun_for(cheese).first;
+        REQUIRE(base_fun > 0);
+
+        REQUIRE(dummy.eat(cheese, true));
+        // fun_for() ignores enchantments; the bionic's bonus is -4.
+        CHECK(lua.globals()["consume_hook_seen"].get<int>() == base_fun - 4);
+        CHECK(dummy.get_morale(MORALE_FOOD_GOOD) == base_fun - 4);
+    }
 }
 
 /// Tests that medication fires the same Lua consume callbacks as food:

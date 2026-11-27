@@ -613,7 +613,7 @@ doc_gen_func.impl = function()
 ---@field on_drop? fun(params: ItemStateParams): boolean
 
 ---@class IconsumeFunctionTable
----@field on_try_consume? fun(params: ItemTryConsumeParams): boolean @runs before the eat-confirmation prompt; return false to interrupt the consume, modify params.nutrition/params.thirst/params.fun/params.fun_max to override them, set params.skip_cannibalism to true to skip the human-flesh consequence (overrides also affect the "eat anyway?" warnings); callback side effects persist even if the checks fail or the player declines
+---@field on_try_consume? fun(params: ItemTryConsumeParams): boolean @runs before the food's edibility checks and eat-confirmation prompt, or before medication is applied (even before the required-tool check); return false to interrupt the consume, modify params.nutrition/params.thirst/params.fun/params.fun_max to override them, set params.skip_cannibalism to true to skip the human-flesh consequence (overrides also affect the "eat anyway?" warnings); callback side effects persist even if the checks fail or the player declines
 ---@field on_consume? fun(params: ItemConsumeParams) @runs after the food or medication has actually been consumed (charges deducted, effects applied); params carries the values the game applied (overrides and enchantments included), the return value is ignored
 
 ---@class BionicFunctionTable
@@ -689,11 +689,12 @@ on_monster_try_move = {}
 ---@field mount Creature?
 on_character_try_move = {}
 
---- Runs before the edibility checks and the eat-confirmation prompt: hook side
---- effects persist even if the checks fail or the player declines, and the
---- hook also fires (and may veto) forced consumption.
+--- Runs before the food's edibility checks and eat-confirmation prompt, or
+--- before medication is applied (even before the required-tool check): hook
+--- side effects persist even if the checks fail or the player declines, and
+--- the hook also fires (and may veto) forced consumption.
 ---@class OnCharacterTryConsumeParams
----@field char Character @the character eating or drinking the item
+---@field char Character @the character consuming the item (food or medication)
 ---@field item Item @the comestible being consumed
 ---@field nutrition integer @effective calories (kcal) the character would gain
 ---@field thirst integer @thirst quenched by the item
@@ -701,10 +702,10 @@ on_character_try_move = {}
 ---@field fun_max integer @maximum fun the joy would be capped at
 on_character_try_consume = {}
 
---- The hook runs before the eat-confirmation prompt; a returned table with
---- override values also affects the "eat anyway?" warnings. Hook side effects
---- persist even if the consume is then refused, and the hook also fires for
---- forced consumption.
+--- The hook runs before the checks and prompts described above; a returned
+--- table with override values also affects the "eat anyway?" warnings. Hook
+--- side effects persist even if the consume is then refused, and the hook
+--- also fires for forced consumption.
 ---@class OnCharacterTryConsumeResult
 ---@field allowed? boolean @defaults to true; false interrupts the consume
 ---@field nutrition? integer @overrides the calories (kcal) applied by the game
@@ -715,7 +716,7 @@ on_character_try_consume = {}
 on_character_try_consume_result = {}
 
 ---@class ItemTryConsumeParams
----@field char Character @the character eating or drinking the item
+---@field char Character @the character consuming the item (food or medication)
 ---@field item Item @the comestible being consumed
 ---@field nutrition integer @effective calories (kcal) the character would gain; may be modified to override the value applied by the game
 ---@field thirst integer @thirst quenched by the item; may be modified to override the value applied by the game
