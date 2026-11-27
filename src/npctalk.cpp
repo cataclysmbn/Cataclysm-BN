@@ -2003,6 +2003,10 @@ void parse_tags( std::string &phrase, const Character &u, const Character &me,
         // Special, dynamic tags go here
         else if( tag == "<yrwp>" ) {
             phrase.replace( fa, l, remove_color_tags( u.primary_weapon().tname() ) );
+        } else if( tag == "<u_name>" ) {
+            phrase.replace( fa, l, u.get_name() );
+        } else if( tag == "<npc_name>" ) {
+            phrase.replace( fa, l, me.get_name() );
         } else if( tag == "<mywp>" ) {
             if( !me.is_armed() ) {
                 phrase.replace( fa, l, _( "fists" ) );
