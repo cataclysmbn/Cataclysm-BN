@@ -2,11 +2,14 @@
 
 #include <optional>
 #include <string>
+#include <vector>
 
 #include "coordinates.h"
+#include "type_id.h"
 
 class Character;
 class Creature;
+class itype;
 class player;
 
 namespace debug_menu
@@ -25,6 +28,15 @@ void character_edit_menu( Character &c );
 void effect_edit_menu( Creature &c );
 void wishitem( Character *who = nullptr );
 void wishitem( Character *, const tripoint_bub_ms & );
+/// Item categories of the given item types, in display order. The spawn item
+/// menu uses them for its category pages.
+auto wish_item_categories( const std::vector<const itype *> &items )
+-> std::vector<item_category_id>;
+/// Page of the spawn item menu each of the given item types belongs to, using
+/// the category list of wish_item_categories(). The first page holds every item,
+/// item types without a category only show up there.
+auto wish_item_pages( const std::vector<const itype *> &items,
+                      const std::vector<item_category_id> &categories ) -> std::vector<std::size_t>;
 void wishmonster( const std::optional<tripoint_bub_ms> &p );
 void wishmutate( Character * );
 void wishbionics( Character &c );
