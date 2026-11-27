@@ -1013,11 +1013,6 @@
     "charges": 4,
     "material": [ "veggy" ],
     "primary_material": "dried_vegetable",
-    "seed_data": {
-      "fruit": "null",
-      "plant_name": "test lua plant",
-      "grow": "14 days",
-      "harvest_action": "lua:test_lua_harvest"
-    }
+    "seed_data": { "fruit": "null", "plant_name": "test lua plant", "grow": "14 days", "harvest_action": "lua:test_lua_harvest" }
   }
 ]

@@ -836,9 +836,9 @@ Terrain and furniture can dispatch their `examine` interaction to Lua. In the
 terrain or furniture JSON, set `"examine_action": "lua:NAME"` and register a
 callback in `game.examine_functions`:
 
-| Callback | params fields                                        |
-| -------- | ---------------------------------------------------- |
-| (single) | `user`, `pos`, `terrain`, `furniture`               |
+| Callback | params fields                         |
+| -------- | ------------------------------------- |
+| (single) | `user`, `pos`, `terrain`, `furniture` |
 
 `terrain` is the terrain id at `pos`; `furniture` is the furniture id, or `nil`
 when the tile has no furniture.
