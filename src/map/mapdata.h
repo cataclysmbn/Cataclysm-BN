@@ -515,7 +515,6 @@ public:
 
     iexamine_function examine; // What happens when the terrain/furniture is examined
     std::string examine_action_id;
-    // Which AUTO_FORAGING options may harvest this terrain/furniture automatically.
     forage_class forage_classes = forage_class::none;
 
     data_vars::data_set default_vars;

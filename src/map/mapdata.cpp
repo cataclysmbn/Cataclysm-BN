@@ -1177,7 +1177,7 @@ template <> auto enum_to_string<season_type>(season_type data) -> std::string {
 namespace {
 
 /// Auto-forage classes of the examine actions that AUTO_FORAGING harvested
-/// before `forage_class` existed. Used when an entry sets no forage_class.
+/// before `forage_class` existed.
 auto default_forage_class(const iexamine_function examine) -> forage_class {
     const auto combine = [](forage_class a, forage_class b) {
         return static_cast<forage_class>(static_cast<uint8_t>(a) | static_cast<uint8_t>(b));

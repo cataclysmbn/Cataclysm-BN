@@ -18,13 +18,8 @@
 #include <cstdint>
 #include <string>
 
-/// Tests the Lua side of terrain/furniture examine and seed harvest: a
-/// `"lua:NAME"` examine_action dispatches to `game.examine_functions` with the
-/// terrain and furniture ids, a seed `harvest_action` dispatches to
-/// `game.harvest_functions` instead of the hardcoded harvest, and a harvest
-/// callback that leaves the grown plant gets the default transform. The
-/// callbacks are added to the live `game` tables and removed afterwards, so the
-/// test doesn't reset Lua state that other tests rely on.
+/// The callbacks are added to the live `game` tables and removed afterwards,
+/// so the test doesn't reset Lua state that other tests rely on.
 TEST_CASE("lua_examine_and_harvest_callbacks", "[lua][examine]") {
     clear_all_state();
     sol::state& lua = DynamicDataLoader::get_instance().lua->lua;
@@ -83,8 +78,6 @@ TEST_CASE("lua_examine_and_harvest_callbacks", "[lua][examine]") {
     }
 
     SECTION("copy-from keeps an inherited lua examine_action") {
-        // The copy sets no examine_action of its own, so it must keep both the
-        // lua_examine function and the callback id of its parent.
         here.ter_set(pos, ter_str_id("t_test_lua_examine_copy").id());
         here.examine(who, pos);
 
@@ -113,15 +106,11 @@ TEST_CASE("lua_examine_and_harvest_callbacks", "[lua][examine]") {
         CHECK(test_data.get<bool>("harvest_pos"));
         CHECK(test_data.get<bool>("harvest_seed"));
         CHECK_FALSE(test_data.get<bool>("harvest_from_activity"));
-        // The Lua callback owns the harvest entirely: the C++ generic harvest
-        // must not have consumed or transformed the seed.
         REQUIRE(here.i_at(pos).size() == 1);
         CHECK(here.i_at(pos).only_item().typeId() == itype_id("test_lua_harvest_seed"));
     }
 
     SECTION("a harvest callback that leaves the plant gets the default transform") {
-        // The test callback doesn't touch the tile. Left alone, the grown
-        // plant would stay harvestable and farm zones would harvest it forever.
         here.furn_set(pos, furn_str_id("f_plant_harvest").id());
         REQUIRE(here.has_flag_furn("GROWTH_HARVEST", pos));
         here.add_item(pos, item::spawn(itype_id("test_lua_harvest_seed"), calendar::turn));
@@ -134,8 +123,6 @@ TEST_CASE("lua_examine_and_harvest_callbacks", "[lua][examine]") {
         CHECK(test_data.get<bool>("harvest_from_activity"));
         CHECK(message.find("left a harvestable plant") != std::string::npos);
         CHECK_FALSE(here.has_flag_furn("GROWTH_HARVEST", pos));
-        // The fallback clears the tile like the hardcoded harvest, so the
-        // seed item the callback forgot does not stay behind.
         CHECK(here.i_at(pos).empty());
     }
 
@@ -168,7 +155,6 @@ TEST_CASE("lua_examine_and_harvest_callbacks", "[lua][examine]") {
             ter_str_id("t_test_forage_none").id().obj().check();
         });
         CHECK(message.find("can never be foraged") != std::string::npos);
-        // Sanity: the check stays silent for a properly forageable terrain.
         const auto quiet = capture_debugmsg_during([&]() {
             ter_str_id("t_test_lua_examine").id().obj().check();
         });
@@ -177,9 +163,7 @@ TEST_CASE("lua_examine_and_harvest_callbacks", "[lua][examine]") {
 }
 
 
-/// Tests the AUTO_FORAGING decision used by `game::place_player`: which
-/// option harvests which forage class, that terrain is checked for bushes and
-/// trees while furniture is checked for flowers, and that terrain wins.
+/// The AUTO_FORAGING decision used by `game::place_player`.
 TEST_CASE("auto_forage_target_follows_option_and_forage_class", "[examine]") {
     const auto none = forage_class::none;
     const auto bushes = forage_class::bushes;
@@ -194,9 +178,7 @@ TEST_CASE("auto_forage_target_follows_option_and_forage_class", "[examine]") {
     CHECK(pick_auto_forage_target(none, flowers, "flowers") == auto_forage_target::furniture);
     CHECK(pick_auto_forage_target(none, flowers, "bushes") == auto_forage_target::none);
     CHECK(pick_auto_forage_target(none, flowers, "both") == auto_forage_target::furniture);
-    // Flowers count only on furniture, bushes and trees only on terrain.
     CHECK(pick_auto_forage_target(flowers, none, "both") == auto_forage_target::none);
     CHECK(pick_auto_forage_target(none, trees, "both") == auto_forage_target::none);
-    // Terrain wins when both match.
     CHECK(pick_auto_forage_target(bushes, flowers, "both") == auto_forage_target::terrain);
 }
