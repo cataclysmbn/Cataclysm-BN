@@ -115,6 +115,7 @@
 #include "monfaction.h"
 #include "monster.h"
 #include "monster_action.h"
+#include "monster_food_lure.h"
 #include "monster_hallucination.h"
 #include "monster_plan.h"
 #include "monstergenerator.h"
@@ -6447,8 +6448,15 @@ void game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
             hostile_fac_map_for_plan = &hostile_fac_map;
         }
     }
+    // Filled once the plannable set is known, before the parallel planning pass.
+    auto lure_tiles = food_lure::lure_snapshot{};
     const monster::compute_plan_context plan_ctx{ mon_snap, npc_snap, faction_snap_for_plan,
-            hostile_fac_map_for_plan };
+            hostile_fac_map_for_plan, &lure_tiles };
+    // A monster that plans again within the turn keeps its goal instead of searching for food
+    // once more; the snapshot above may also hold items that were eaten in the meantime.
+    const auto no_lure_tiles = food_lure::lure_snapshot{};
+    const monster::compute_plan_context replan_ctx{ nullptr, nullptr, nullptr, nullptr,
+            &no_lure_tiles };
 
     // -----------------------------------------------------------------------
 
@@ -6643,6 +6651,10 @@ void game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
     // parallel_for_chunked with a small chunk size gives the pool a queue of
     // fine-grained tasks.  Workers that finish a cheap monster immediately pull
     // the next chunk rather than sitting idle behind a costly monster.
+    {
+        ZoneScopedN( "monmove_collect_lure_tiles" );
+        lure_tiles = food_lure::collect_lure_tiles( m, plannable );
+    }
     std::vector<monster_plan_t> precomputed( plannable.size() );
     {
         ZoneScopedN( "monmove_compute_plans" );
@@ -6837,7 +6849,7 @@ void game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
                         ++monmove_serial_replans;
                         {
                             ZoneScopedN( "monmove_serial_replan" );
-                            critter.plan();
+                            critter.apply_plan( critter.compute_plan( replan_ctx ) );
                         }
                     }
                     const monster_action_t action = [&critter]() {

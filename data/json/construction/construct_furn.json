@@ -27,6 +27,18 @@
   },
   {
     "type": "construction",
+    "id": "constr_trough",
+    "group": "build_trough",
+    "category": "FURN",
+    "required_skills": [ [ "fabrication", 1 ] ],
+    "time": "40 m",
+    "qualities": [ [ { "id": "HAMMER", "level": 2 } ], [ { "id": "SAW_W", "level": 2 } ] ],
+    "components": [ [ [ "wood_panel", 2 ], [ "wood_sheet", 1 ] ], [ [ "2x4", 4 ] ], [ [ "nail", 16 ] ] ],
+    "pre_special": "check_empty",
+    "post_furniture": "f_trough"
+  },
+  {
+    "type": "construction",
     "id": "constr_coffin_o",
     "group": "build_coffin",
     "category": "FURN",

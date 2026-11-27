@@ -131,6 +131,15 @@ The materials the monster is primarily composed of. Must contain valid material 
 (which is the default) is also allowed, the monster is made of no specific material. One can add or
 remove entries in mods via "add:material" and "remove:material".
 
+## "diet"
+
+(array of strings, optional)
+
+Material ids of the comestibles this monster eats. A comestible matches when any of its materials is
+in this list, e.g. `[ "flesh", "bone" ]` lets a canine be lured by meat or bones. Monsters walk to
+matching food they can see, eat it while standing on its tile, and become well fed afterwards. Eating
+from the ground never tames a monster. Mods can add or remove entries via `"extend"` and `"delete"`.
+
 ## "phase"
 
 (string, optional)
