@@ -9002,6 +9002,17 @@ auto map::get_submap_at(const tripoint_bub_ms& p) const -> submap* {
     return get_mapbuffer().lookup_submap_in_memory(abs_sm_pos);
 }
 
+auto map::any_submap_in(
+    const tripoint_range<tripoint_bub_ms>& area,
+    const std::function<auto(const submap&)->bool>& pred) const -> bool {
+    for (const auto& sm_pos : tripoint_range<tripoint_bub_sm>(
+             project_to<coords::sm>(area.min()), project_to<coords::sm>(area.max()))) {
+        const auto* sm = get_submap_at(project_to<coords::ms>(sm_pos));
+        if (sm != nullptr && pred(*sm)) { return true; }
+    }
+    return false;
+}
+
 auto map::get_submap_at(const tripoint_bub_ms& p, point_sm_ms& offset_p) const -> submap* {
     ZoneScopedN("get_submap_at_2param");
     // Use floor-division so that negative local coords (out-of-bubble) give the

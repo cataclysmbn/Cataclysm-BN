@@ -31,6 +31,7 @@
 #include "map/map.h"
 #include "map/map_selector.h"
 #include "map/mapdata.h"
+#include "map/submap.h"
 #include "map/utils/map_utils.h"
 #include "map_iterator.h"
 #include "messages.h"
@@ -3805,9 +3806,19 @@ bool find_auto_consume( player &p, const consume_type type )
 void try_fuel_fire( player_activity &act, player &p, const bool starting_fire )
 {
     const auto pos = p.bub_pos();
+    auto &here = get_map();
+    const auto lists_fire = []( const submap & sm ) {
+        return std::ranges::any_of( sm.field_cache, [&sm]( const point_sm_ms & tile ) {
+            return sm.get_field( tile ).find_field( fd_fire ) != nullptr;
+        } );
+    };
+    // Skip the search of every tile in range while no submap there lists a fire.
+    if( !starting_fire &&
+        !here.any_submap_in( here.points_in_radius( pos, PICKUP_RANGE ), lists_fire ) ) {
+        return;
+    }
     auto adjacent = closest_points_first( pos, PICKUP_RANGE );
     adjacent.erase( adjacent.begin() );
-    map &here = get_map();
 
     auto best_fire = starting_fire ? abs_to_bub( act.placement ) : find_best_fire( adjacent,
                      pos );

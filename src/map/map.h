@@ -2279,6 +2279,10 @@ public:
      * Compatibility map-local lookup with submap-local offset.
      */
     auto get_submap_at(const tripoint_bub_ms& p, point_sm_ms& offset_p) const -> submap*;
+    /// Returns true when @p pred is true for a loaded submap that holds a tile of @p area.
+    auto any_submap_in(
+        const tripoint_range<tripoint_bub_ms>& area,
+        const std::function<auto(const submap&)->bool>& pred) const -> bool;
     /**
      * Modern map-local lookup with submap-local offset.
      */

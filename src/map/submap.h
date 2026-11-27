@@ -123,7 +123,7 @@ public:
 
     void set_all_traps(const trap_id& trap) {
         std::fill_n(&trp[0][0], elements, trap);
-        trap_cache.clear();
+        rebuild_trap_cache();
     }
 
     auto get_furn(const point_sm_ms& p) const -> furn_id { return frn[p.x()][p.y()]; }
@@ -158,6 +158,7 @@ public:
     void set_all_ter(const ter_id& terr) {
         std::fill_n(&ter[0][0], elements, terr);
         emitter_cache = std::nullopt;
+        rebuild_trap_cache();
     }
 
     auto get_radiation(const point_sm_ms& p) const -> int { return rad[p.x()][p.y()]; }
@@ -268,8 +269,9 @@ public:
     // A stale entry is benign — it just costs a cheap branch on iteration.
     // trap_cache: positions of any non-null trap — standalone (trp) or
     // terrain-attached (ter_t::trap). Maintained by set_trap/set_ter, the
-    // rotate() rebuild, and load(); entries may be stale, so callers re-validate.
+    // rebuild_trap_cache() calls, and load(); entries may be stale, so callers re-validate.
     std::vector<point_sm_ms> trap_cache;
+    auto rebuild_trap_cache() -> void;
     // field_cache: positions of tiles with active fields; compacted after each
     // processing pass to remove positions whose fields have fully decayed.
     std::vector<point_sm_ms> field_cache;
