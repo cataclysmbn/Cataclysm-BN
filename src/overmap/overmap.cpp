@@ -33,7 +33,7 @@
 #include "monster.h"
 #include "mtype.h"
 #include "name.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "om_direction.h" // IWYU pragma: associated
 #include "omdata.h"       // IWYU pragma: associated
 #include "options.h"

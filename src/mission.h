@@ -5,7 +5,7 @@
 #include "coordinates.h"
 #include "enums.h"
 #include "game_constants.h"
-#include "npc_favor.h"
+#include "npc/npc_favor.h"
 #include "overmap/overmap.h"
 #include "point.h"
 #include "translations.h"

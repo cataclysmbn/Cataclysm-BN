@@ -15,7 +15,7 @@
 #include "map/map.h"
 #include "map/mapdata.h"
 #include "mission.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "overmap/overmap.h"
 #include "overmap/overmapbuffer.h"
 #include "pimpl.h"

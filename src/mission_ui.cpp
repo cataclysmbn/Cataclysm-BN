@@ -11,7 +11,7 @@
 #include "debug.h"
 #include "input.h"
 #include "mission.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "output.h"
 #include "string_formatter.h"
 #include "string_utils.h"

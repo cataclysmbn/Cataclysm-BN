@@ -48,7 +48,7 @@
 #include "morale_types.h"
 #include "mtype.h"
 #include "name.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "output.h"
 #include "player.h"
 #include "point.h"

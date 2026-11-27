@@ -1,7 +1,7 @@
 #include "catch/catch.hpp"
 #include "flag.h"
 #include "item.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "ranged.h"
 #include "state_helpers.h"
 

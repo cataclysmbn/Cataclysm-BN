@@ -31,7 +31,7 @@
 #include "mongroup.h"
 #include "monster.h"
 #include "mtype.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "options.h"
 #include "output.h"
 #include "popup.h"

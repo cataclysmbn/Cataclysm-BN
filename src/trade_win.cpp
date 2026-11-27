@@ -21,7 +21,7 @@
 #include "item_contents.h"
 #include "item_search.h"
 #include "itype.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "output.h"
 #include "player.h"
 #include "point.h"

@@ -22,7 +22,7 @@
 #include "itype.h"
 #include "map/map.h"
 #include "memory_fast.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "options.h"
 #include "player.h"
 #include "player_activity_ptr.h"

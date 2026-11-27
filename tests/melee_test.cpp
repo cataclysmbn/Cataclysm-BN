@@ -14,7 +14,7 @@
 #include "melee.h"
 #include "monattack.h"
 #include "monster.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "player.h"
 #include "point.h"
 #include "state_helpers.h"

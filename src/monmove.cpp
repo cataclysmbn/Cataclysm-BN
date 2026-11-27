@@ -33,7 +33,7 @@
 #include "monster_hallucination.h"
 #include "monster_oracle.h"
 #include "mtype.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "options.h"
 #include "pathfinding.h"
 #include "pimpl.h"

@@ -12,7 +12,7 @@
 #include "item.h"
 #include "json.h"
 #include "map_helpers.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "player.h"
 #include "player_helpers.h"
 #include "ranged.h"

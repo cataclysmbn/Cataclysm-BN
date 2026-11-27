@@ -13,7 +13,7 @@
 #include "map/field_type.h"
 #include "map/map.h"
 #include "messages.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "player.h"
 #include "projectile.h"
 #include "ranged.h"

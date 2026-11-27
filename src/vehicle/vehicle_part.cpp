@@ -13,7 +13,7 @@
 #include "locations.h"
 #include "map/map.h"
 #include "messages.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "string_formatter.h"
 #include "translations.h"
 #include "value_ptr.h"

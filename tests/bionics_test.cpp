@@ -6,7 +6,7 @@
 #include "item.h"
 #include "itype.h"
 #include "json.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "pimpl.h"
 #include "player.h"
 #include "player_helpers.h"

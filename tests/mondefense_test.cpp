@@ -4,7 +4,7 @@
 #include "item.h"
 #include "mondefense.h"
 #include "monster.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "projectile.h"
 #include "type_id.h"
 #include "units.h"

@@ -12,8 +12,8 @@
 #include "messages.h"
 #include "mission.h" // IWYU pragma: associated
 #include "name.h"
-#include "npc.h"
-#include "npc_class.h"
+#include "npc/npc.h"
+#include "npc/npc_class.h"
 #include "overmap/omdata.h"
 #include "overmap/overmap.h"
 #include "overmap/overmapbuffer.h"

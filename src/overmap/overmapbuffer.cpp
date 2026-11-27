@@ -22,7 +22,7 @@
 #include "memory_fast.h"
 #include "mongroup.h"
 #include "monster.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "numeric_interval.h"
 #include "overmap.h"
 #include "overmap_connection.h"

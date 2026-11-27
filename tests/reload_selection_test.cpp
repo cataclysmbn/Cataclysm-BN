@@ -5,7 +5,7 @@
 #include "item.h"
 #include "map/map.h"
 #include "map_helpers.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "player_helpers.h"
 #include "reload/reload.h"
 #include "reload/reload_selection.h"

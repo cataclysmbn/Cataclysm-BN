@@ -17,7 +17,7 @@
 #    include "map/submap.h"
 #    include "math_defines.h"
 #    include "monster.h"
-#    include "npc.h"
+#    include "npc/npc.h"
 #    include "path_info.h"
 #    include "profile.h"
 #    include "shadowcasting.h"

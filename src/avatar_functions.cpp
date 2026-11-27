@@ -15,7 +15,7 @@
 #include "map/map.h"
 #include "map/mapdata.h"
 #include "messages.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "options.h"
 #include "output.h"
 #include "player_activity.h"

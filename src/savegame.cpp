@@ -21,7 +21,7 @@
 #include "mission.h"
 #include "mongroup.h"
 #include "monster.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "options.h"
 #include "output.h"
 #include "overmap/omdata.h"

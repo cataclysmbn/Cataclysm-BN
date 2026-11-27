@@ -6,7 +6,7 @@
 #include "item_factory.h"
 #include "monattack.h"
 #include "monster.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "player.h"
 #include "string_formatter.h"
 #include "type_id.h"

@@ -19,7 +19,7 @@
 #include "map_iterator.h"
 #include "messages.h"
 #include "monster.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "output.h"
 #include "player.h"
 #include "rng.h"

@@ -10,7 +10,7 @@
 #include "creature_tracker.h"
 #include "game.h"
 #include "monster.h"
-#include "npc.h"
+#include "npc/npc.h"
 
 namespace cata::detail
 {

@@ -49,7 +49,7 @@
 #include "morale.h"
 #include "morale_types.h"
 #include "mtype.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "options.h"
 #include "output.h"
 #include "overmap/overmap.h"

@@ -21,7 +21,7 @@
 #include "map/map.h"
 #include "messages.h"
 #include "monster.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "options.h"
 #include "overmap/overmapbuffer.h"
 #include "scenario.h"

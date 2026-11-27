@@ -28,7 +28,7 @@
 #include "monster.h"
 #include "mtype.h"
 #include "name.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "player.h"
 #include "rng.h"
 #include "skill.h"

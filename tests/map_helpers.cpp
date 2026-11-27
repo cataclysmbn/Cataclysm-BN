@@ -14,7 +14,7 @@
 #include "map/field.h"
 #include "map/mapbuffer.h"
 #include "map_iterator.h"
-#include "npc.h"
+#include "npc/npc.h"
 #include "type_id.h"
 
 #include <algorithm>
