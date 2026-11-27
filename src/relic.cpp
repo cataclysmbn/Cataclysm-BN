@@ -240,7 +240,7 @@ void relic::serialize( JsonOut &jsout ) const
 
 int relic::activate( Creature &caster, const tripoint_bub_ms &target ) const
 {
-    caster.moves -= moves;
+    caster.moves -= 100;
     for( const fake_spell &sp : active_effects ) {
         sp.get_spell( sp.level ).cast_all_effects( caster, target );
     }

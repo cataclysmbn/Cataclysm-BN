@@ -452,5 +452,11 @@
     "type": "morale_type",
     "text": "Debug Morale",
     "permanent": true
+  },
+  {
+    "id": "morale_artifact",
+    "type": "morale_type",
+    "text": "Good feeling",
+    "permanent": true
   }
 ]

@@ -181,8 +181,7 @@ public:
     auto detach_vehicle(vehicle* veh) -> std::unique_ptr<vehicle>;
     auto destroy_vehicle(vehicle* veh) -> void;
     auto add_corpse(const point_omt_ms& p) -> void;
-    auto spawn_artifact(const point_omt_ms& p) -> void;
-    auto spawn_natural_artifact(const point_omt_ms& p, artifact_natural_property prop) -> void;
+    auto spawn_artifact(const point_omt_ms& p, const relicgen_id& relic) -> void;
     auto make_rubble(
         const point_omt_ms& p, const furn_id& rubble_type, const ter_id& floor_type,
         bool overwrite = false) -> void;

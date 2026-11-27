@@ -398,7 +398,7 @@ hint_rating rate_action_use( const avatar &you, const item &it )
     } else if( it.is_food() || it.is_medication() || it.is_book() || it.is_armor() ) {
         // The rating is subjective, could be argued as hint_rating::cant or hint_rating::good as well
         return hint_rating::iffy;
-    } else if( it.type->has_use() ) {
+    } else if( it.has_use() ) {
         return hint_rating::good;
     } else if( !it.is_container_empty() ) {
         return rate_action_use( you, it.get_contained() );
