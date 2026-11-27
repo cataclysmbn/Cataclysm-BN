@@ -1,9 +1,9 @@
 #pragma once
 
-#include <string>
-
+#include "addiction_type.h"
 #include "pldata.h"
-#include "type_id.h"
+
+#include <string>
 
 class Character;
 
@@ -15,13 +15,18 @@ constexpr int MAX_ADDICTION_LEVEL = 20;
 // with an optional pre-translated message.
 void addict_effect( Character &u, addiction &add );
 
-std::string addiction_type_name( add_type cur );
+std::string addiction_type_name( const addiction_type_id &cur );
 
 std::string addiction_name( const addiction &cur );
 
-morale_type addiction_craving( add_type cur );
+morale_type addiction_craving( const addiction_type_id &cur );
 
-add_type addiction_type( const std::string &name );
+// The JSON id of a legacy hardcoded addiction type (e.g. add_type::MARLOSS_R ->
+// "marloss_r"). Returns a null id for add_type::NONE.
+addiction_type_id addiction_id_from_legacy( add_type legacy );
+
+// The legacy enum a JSON-defined addiction type aliases, add_type::NONE for
+// types without one.
+add_type legacy_add_type( const addiction_type_id &type );
 
 std::string addiction_text( const addiction &cur );
-

@@ -875,6 +875,16 @@ static effect_data load_effect_data( const JsonObject &e )
     }
 }
 
+void consume_drug_iuse::finalize( const itype_id &my_item_type )
+{
+    for( const auto &[effect, addiction] : addiction_type_too_much ) {
+        if( !addiction_type_id( addiction ).is_valid() ) {
+            debugmsg( "Item %s has unknown addiction type \"%s\" in addiction_type_too_much",
+                      my_item_type.str(), addiction );
+        }
+    }
+}
+
 void consume_drug_iuse::load( const JsonObject &obj )
 {
     obj.read( "activation_message", activation_message );
@@ -1039,7 +1049,7 @@ int consume_drug_iuse::use( player &p, item &it, bool, const tripoint_bub_ms & )
                 if( id.obj() == eff.id.obj() ) {
                     if( p.get_effect_dur( id ) > time_duration::from_minutes( too_much_threshold ) *
                         ( p.addiction_level(
-                              addiction_type( attm_addiction_type ) ) + 1 ) ) {
+                              addiction_type_id( attm_addiction_type ) ) + 1 ) ) {
                         p.add_msg_if_player( m_bad, _( "Ugh, too much %s… you feel nasty." ), attm_addiction_type );
                         break;
                     }

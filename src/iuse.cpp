@@ -2,6 +2,7 @@
 #include "book_scanning.h"
 
 #include "action.h"
+#include "addiction.h"
 #include "action_time_scale.h"
 #include "active_tile_data_def.h"
 #include "activity_actor.h"
@@ -1178,8 +1179,8 @@ static void spawn_spores( const player &p )
 
 static void marloss_common( player &p, item &it, const trait_id &current_color )
 {
-    static const std::map<trait_id, add_type> mycus_colors = {{
-            { trait_MARLOSS_BLUE, add_type::MARLOSS_B }, { trait_MARLOSS_YELLOW, add_type::MARLOSS_Y }, { trait_MARLOSS, add_type::MARLOSS_R }
+    static const std::map<trait_id, addiction_type_id> mycus_colors = {{
+            { trait_MARLOSS_BLUE, addiction_id_from_legacy( add_type::MARLOSS_B ) }, { trait_MARLOSS_YELLOW, addiction_id_from_legacy( add_type::MARLOSS_Y ) }, { trait_MARLOSS, addiction_id_from_legacy( add_type::MARLOSS_R ) }
         }
     };
 
@@ -1188,7 +1189,7 @@ static void marloss_common( player &p, item &it, const trait_id &current_color )
                              _( "As you eat the %s, you have a near-religious experience, feeling at one with your surroundings…" ),
                              it.tname() );
         p.add_morale( MORALE_MARLOSS, 100, 1000 );
-        for( const std::pair<const trait_id, add_type> &pr : mycus_colors ) {
+        for( const std::pair<const trait_id, addiction_type_id> &pr : mycus_colors ) {
             if( pr.first != current_color ) {
                 p.add_addiction( pr.second, 50 );
             }
@@ -1200,7 +1201,7 @@ static void marloss_common( player &p, item &it, const trait_id &current_color )
     }
 
     int marloss_count = std::count_if( mycus_colors.begin(), mycus_colors.end(),
-    [&p]( const std::pair<trait_id, add_type> &pr ) {
+    [&p]( const std::pair<trait_id, addiction_type_id> &pr ) {
         return p.has_trait( pr.first );
     } );
 
@@ -1252,7 +1253,7 @@ static void marloss_common( player &p, item &it, const trait_id &current_color )
         /** @EFFECT_INT slightly reduces sleep duration when eating mycus+goo */
         p.fall_asleep( 10_hours - p.int_cur *
                        1_minutes ); // Hope you were eating someplace safe.  Mycus v. Goo in your guts is no joke.
-        for( const std::pair<const trait_id, add_type> &pr : mycus_colors ) {
+        for( const std::pair<const trait_id, addiction_type_id> &pr : mycus_colors ) {
             p.unset_mutation( pr.first );
             p.rem_addiction( pr.second );
         }
@@ -1263,7 +1264,7 @@ static void marloss_common( player &p, item &it, const trait_id &current_color )
                              _( "You feel a familiar warmth, but suddenly it surges into painful burning as you convulse and collapse to the ground…" ) );
         /** @EFFECT_INT reduces sleep duration when eating wrong color marloss */
         p.fall_asleep( 40_minutes - 1_minutes * p.int_cur / 2 );
-        for( const std::pair<const trait_id, add_type> &pr : mycus_colors ) {
+        for( const std::pair<const trait_id, addiction_type_id> &pr : mycus_colors ) {
             p.unset_mutation( pr.first );
             p.rem_addiction( pr.second );
         }
@@ -1280,7 +1281,7 @@ static void marloss_common( player &p, item &it, const trait_id &current_color )
         p.add_msg_if_player( _( "You feel a strange warmth spreading throughout your body…" ) );
         p.set_mutation( current_color );
         // Give us addictions to the other two colors, but cure one for current color
-        for( const std::pair<const trait_id, add_type> &pr : mycus_colors ) {
+        for( const std::pair<const trait_id, addiction_type_id> &pr : mycus_colors ) {
             if( pr.first == current_color ) {
                 p.rem_addiction( pr.second );
             } else {
@@ -1416,9 +1417,9 @@ int iuse::mycus( player *p, item *it, bool t, const tripoint_bub_ms &pos )
         for( const tripoint_bub_ms &nearby_pos : g->m.points_in_radius( p->bub_pos(), 3 ) ) {
             fe.marlossify( nearby_pos );
         }
-        p->rem_addiction( add_type::MARLOSS_R );
-        p->rem_addiction( add_type::MARLOSS_B );
-        p->rem_addiction( add_type::MARLOSS_Y );
+        p->rem_addiction( addiction_id_from_legacy( add_type::MARLOSS_R ) );
+        p->rem_addiction( addiction_id_from_legacy( add_type::MARLOSS_B ) );
+        p->rem_addiction( addiction_id_from_legacy( add_type::MARLOSS_Y ) );
     } else if( p->has_trait( trait_THRESH_MYCUS ) &&
                !p->has_trait( trait_M_DEPENDENT ) ) { // OK, now set the hook.
         if( !one_in( 3 ) ) {

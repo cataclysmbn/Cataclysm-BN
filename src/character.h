@@ -1805,13 +1805,13 @@ class Character : public Creature, public location_visitable<Character>
 
         std::vector <addiction> addictions;
         /** Adds an addiction to the player */
-        void add_addiction( add_type type, int strength );
+        void add_addiction( const addiction_type_id &type, int strength );
         /** Removes an addition from the player */
-        void rem_addiction( add_type type );
+        void rem_addiction( const addiction_type_id &type );
         /** Returns true if the player has an addiction of the specified type */
-        bool has_addiction( add_type type ) const;
+        bool has_addiction( const addiction_type_id &type ) const;
         /** Returns the intensity of the specified addiction */
-        int  addiction_level( add_type type ) const;
+        int  addiction_level( const addiction_type_id &type ) const;
 
     private:
         std::unordered_set<perk_id> perks;

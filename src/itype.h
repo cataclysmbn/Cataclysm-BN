@@ -13,7 +13,7 @@
 #include "hsv_color.h"
 #include "iuse.h" // use_function
 #include "map/mapdata.h"
-#include "pldata.h" // add_type
+#include "pldata.h" // addiction
 #include "shape.h"
 #include "stomach.h"
 #include "translations.h"
@@ -153,7 +153,7 @@ struct islot_comestible {
         int addict = 0;
 
         /** effects of addiction */
-        add_type add = add_type::NONE;
+        addiction_type_id add;
 
         /** stimulant effect */
         int stim = 0;

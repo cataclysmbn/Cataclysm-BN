@@ -2,6 +2,7 @@
 
 #include "achievement.h"
 #include "activity_type.h"
+#include "addiction.h"
 #include "ammo.h"
 #include "ammo_effect.h"
 #include "anatomy.h"
@@ -514,6 +515,7 @@ void DynamicDataLoader::initialize()
     add( "rotatable_symbol", &rotatable_symbols::load );
     add( "body_part", &body_part_type::load_bp );
     add( "anatomy", &anatomy::load_anatomy );
+    add( "addiction_type", &addiction_type_data::load_type );
     add( "morale_type", &morale_type_data::load_type );
     add( "SPELL", &spell_type::load_spell );
     add( "clothing_mod", &clothing_mods::load );
@@ -671,6 +673,7 @@ void DynamicDataLoader::unload_data()
     monfactions::reset();
     MonsterGenerator::generator().reset();
     MonsterGroup::reset();
+    addiction_type_data::reset();
     morale_type_data::reset();
     mutation_branch::reset_all();
     mutation_category_trait::reset();
@@ -855,6 +858,7 @@ void DynamicDataLoader::check_consistency( loading_ui &ui )
                     requirement_data::check_consistency();
                 }
             },
+            { _( "Addiction types" ), &addiction_type_data::check_all },
             { _( "Vitamins" ), &vitamin::check_consistency },
             { _( "Weather types" ), &weather_types::check_consistency },
             { _( "Weather patterns" ), &weather_patterns::check_consistency },

@@ -643,6 +643,7 @@ doc_gen_func.impl = function()
 ---@field monster_attitude_functions table<string, function>
 ---@field mapgen_functions table<string, MapgenFunction>
 ---@field examine_functions table<string, fun(params: { user: Character, pos: TripointBubMs })>
+---@field addiction_functions table<string, fun(params: { char: Character, addiction: string, intensity: integer, sated: integer })>
 ---@field activity_functions table<string, LuaActivityFinishFunction>
 ---@field hooks hooks
 ---@field current_mod string

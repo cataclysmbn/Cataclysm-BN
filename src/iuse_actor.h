@@ -273,7 +273,7 @@ class consume_drug_iuse : public iuse_actor
         float tolerance_mod = 1.2;
         /** The modification applied when the user uis a lightweight. **/
         float lightweight_mod = .8;
-        /** Number of minutes to use for the too much calculation. p.get_effect_dur(id) > time_duration::to_minutes(too_much_threshold) * ( p.addiction_level( addiction_type(attm_addiction_type) ) + 1 ) **/
+        /** Number of minutes to use for the too much calculation. p.get_effect_dur(id) > time_duration::to_minutes(too_much_threshold) * ( p.addiction_level( addiction_type_id( attm_addiction_type ) ) + 1 ) **/
         float too_much_threshold = 10;
         /** A [string, string] that defines what effect type is linked to an addiction. Example: ["cig", "nicotine"]**/
         std::vector<std::pair<std::string, std::string>> addiction_type_too_much;
@@ -299,6 +299,8 @@ class consume_drug_iuse : public iuse_actor
         ~consume_drug_iuse() override = default;
         void load( const JsonObject &obj ) override;
         int use( player &, item &, bool, const tripoint_bub_ms & ) const override;
+        /// Reports unknown addiction types in `addiction_type_too_much`.
+        void finalize( const itype_id &my_item_type ) override;
         std::unique_ptr<iuse_actor> clone() const override;
         void info( const item &, std::vector<iteminfo> & ) const override;
 

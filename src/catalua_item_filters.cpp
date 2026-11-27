@@ -49,21 +49,21 @@ auto lua_value_to_set( const LuaValue &val ) -> std::unordered_set<T>
     return { lua_value_to_id<T>( obj ) };
 }
 
-// Accepts an AddictionType enum value or a JSON-style string name (e.g. "alcohol")
-auto lua_value_to_add_type( const LuaValue &val ) -> add_type
+// Accepts an AddictionType enum value or an addiction type id string (e.g. "alcohol")
+auto lua_value_to_add_type( const LuaValue &val ) -> addiction_type_id
 {
     const sol::object obj = val;
     if( obj.get_type() == sol::type::string ) {
-        return addiction_type( obj.as<std::string>() );
+        return addiction_type_id( obj.as<std::string>() );
     }
-    return obj.as<add_type>();
+    return addiction_id_from_legacy( obj.as<add_type>() );
 }
 
-auto lua_value_to_addiction_set( const LuaValue &val ) -> std::unordered_set<add_type>
+auto lua_value_to_addiction_set( const LuaValue &val ) -> std::unordered_set<addiction_type_id>
 {
     const sol::object obj = val;
     if( obj.get_type() == sol::type::table ) {
-        std::unordered_set<add_type> out;
+        std::unordered_set<addiction_type_id> out;
         for( auto &&[key, value] : obj.as<sol::table>() ) {
             out.insert( lua_value_to_add_type( value ) );
         }

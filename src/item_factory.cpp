@@ -1419,6 +1419,10 @@ void Item_factory::check_definitions() const
         }
 
         if( type->comestible ) {
+            const auto &addiction = type->comestible->add;
+            if( !addiction.is_empty() && !addiction.is_valid() ) {
+                msg += string_format( "invalid addiction_type %s\n", addiction.str() );
+            }
             if( !type->comestible->tool.is_null() ) {
                 auto req_tool = find_template( type->comestible->tool );
                 if( !req_tool->tool ) {
@@ -2489,7 +2493,7 @@ void Item_factory::load( islot_comestible &slot, const JsonObject &jo, const std
     assign( jo, "monotony_penalty", slot.monotony_penalty, strict );
 
     if( jo.has_string( "addiction_type" ) ) {
-        slot.add = addiction_type( jo.get_string( "addiction_type" ) );
+        slot.add = addiction_type_id( jo.get_string( "addiction_type" ) );
     }
 
     assign( jo, "addiction_potential", slot.addict, strict );

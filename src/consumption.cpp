@@ -1065,9 +1065,12 @@ void Character::modify_stimulation( const islot_comestible &comest )
             set_stim( std::min( comest.stim * 3, current_stim + comest.stim ) );
         }
     }
+    const add_type comest_add_legacy = legacy_add_type( comest.add );
     if( has_trait( trait_STIMBOOST ) && ( current_stim > 30 ) &&
-        ( ( comest.add == add_type::CAFFEINE ) || ( comest.add == add_type::SPEED ) ||
-          ( comest.add == add_type::COKE ) || ( comest.add == add_type::CRACK ) ) ) {
+        ( ( comest_add_legacy == add_type::CAFFEINE ) ||
+          ( comest_add_legacy == add_type::SPEED ) ||
+          ( comest_add_legacy == add_type::COKE ) ||
+          ( comest_add_legacy == add_type::CRACK ) ) ) {
         int hallu_duration = ( current_stim - comest.stim < 30 ) ? current_stim - 30 : comest.stim;
         add_effect( effect_visuals, hallu_duration * 30_minutes );
         std::vector<std::string> stimboost_msg{ _( "The shadows are getting ever closer." ),
