@@ -112,6 +112,7 @@
     "color": "yellow",
     "transforms_into": "f_hive_recovering",
     "examine_action": "harvest_furn",
+    "forage_class": "flowers",
     "harvest_by_season": [ { "seasons": [ "spring", "summer", "autumn" ], "entries": [ { "drop": "honeycomb", "base_num": [ 2, 4 ] } ] } ],
     "deconstruct": { "items": [ { "item": "beehive_empty", "count": 1 }, { "item": "honeycomb", "count": [ 3, 6 ] } ] },
     "delete": { "flags": [ "HARVESTED" ] },

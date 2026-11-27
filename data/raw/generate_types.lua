@@ -642,7 +642,8 @@ doc_gen_func.impl = function()
 ---@field monster_ai_functions table<string, function>
 ---@field monster_attitude_functions table<string, function>
 ---@field mapgen_functions table<string, MapgenFunction>
----@field examine_functions table<string, fun(params: { user: Character, pos: TripointBubMs })>
+---@field examine_functions table<string, fun(params: { user: Character, pos: TripointBubMs, terrain: string, furniture: string|nil })>
+---@field harvest_functions table<string, fun(params: { user: Character, pos: TripointBubMs, seed: Item, from_activity: boolean })>
 ---@field activity_functions table<string, LuaActivityFinishFunction>
 ---@field hooks hooks
 ---@field current_mod string

@@ -10,6 +10,7 @@
     "coverage": 40,
     "flags": [ "TRANSPARENT", "FLAMMABLE_ASH", "FUNGUS", "SHRUB", "SHORT" ],
     "examine_action": "shrub_marloss",
+    "forage_class": "bushes",
     "bash": { "str_min": 4, "str_max": 60, "sound": "crunch.", "sound_fail": "poof!", "ter_set": "t_fungus" }
   },
   {
@@ -170,6 +171,7 @@
     "coverage": 80,
     "flags": [ "FLAMMABLE_ASH", "NOITEM", "FUNGUS", "TREE", "REDUCE_SCENT" ],
     "examine_action": "tree_marloss",
+    "forage_class": "trees",
     "bash": {
       "str_min": 40,
       "str_max": 180,

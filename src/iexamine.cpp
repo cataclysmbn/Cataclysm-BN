@@ -2787,6 +2787,13 @@ void iexamine::harvest_plant( player &p, const tripoint_bub_ms &examp, bool from
     item *&seed = *seed_it;
     seed_it = map_stack::iterator();
     const itype_id &seedType = seed->typeId();
+    const std::string &harvest_action = seed->type->seed->harvest_action;
+    if( harvest_action.rfind( "lua:", 0 ) == 0 ) {
+        // A seed with a Lua harvest action fully replaces the hardcoded harvest
+        // behavior, including the fungal seed special cases below.
+        cata::run_lua_harvest( harvest_action.substr( 4 ), p, examp, *seed, from_activity );
+        return;
+    }
     if( seedType == itype_fungal_seeds ) {
         fungus( p, examp );
         here.i_clear( examp );

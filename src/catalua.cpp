@@ -347,6 +347,7 @@ void init_global_state_tables( lua_state &state, const std::vector<mod_id> &modl
     gt["iranged_functions"] = lua.create_table();
     gt["itrap_functions"] = lua.create_table();
     gt["examine_functions"] = lua.create_table();
+    gt["harvest_functions"] = lua.create_table();
     gt["activity_functions"] = lua.create_table();
 
     gt["recipe_functions"] = lua.create_table();
@@ -1239,6 +1240,23 @@ auto run_lua_examine( const std::string &callback_id, player &who,
     run_lua_callback( "examine_functions", callback_id, [&]( sol::table & params ) {
         params["user"] = who.as_character();
         params["pos"] = pos;
+        map &here = get_map();
+        const furn_id furn_at = here.furn( pos );
+        if( furn_at != f_null ) {
+            params["furniture"] = furn_at.id().str();
+        }
+        params["terrain"] = here.ter( pos ).id().str();
+    } );
+}
+
+auto run_lua_harvest( const std::string &callback_id, player &who,
+                      const tripoint_bub_ms &pos, item &seed, bool from_activity ) -> void
+{
+    run_lua_callback( "harvest_functions", callback_id, [&]( sol::table & params ) {
+        params["user"] = who.as_character();
+        params["pos"] = pos;
+        params["seed"] = &seed;
+        params["from_activity"] = from_activity;
     } );
 }
 

@@ -13435,28 +13435,26 @@ auto game::place_player( const tripoint_bub_ms &dest_loc ) -> point_rel_sm
         const std::string forage_type = get_option<std::string>( "AUTO_FORAGING" );
         if( forage_type != "off" ) {
             const auto forage = [&]( const tripoint_bub_ms & pos ) {
-                const auto &xter_t = m.ter( pos ).obj().examine;
-                const auto &xfurn_t = m.furn( pos ).obj().examine;
+                const auto &xter = m.ter( pos ).obj();
+                const auto &xfurn = m.furn( pos ).obj();
                 const bool forage_everything = forage_type == "both";
                 const bool forage_bushes = forage_everything || forage_type == "bushes";
                 const bool forage_trees = forage_everything || forage_type == "trees";
                 const bool forage_flowers = forage_everything || forage_type == "flowers";
-                if( xter_t == &iexamine::none && xfurn_t == &iexamine::none ) {
+                const auto has_forage_class = []( forage_class present, forage_class wanted ) {
+                    return ( static_cast<uint8_t>( present ) & static_cast<uint8_t>( wanted ) ) != 0;
+                };
+                if( xter.forage_classes == forage_class::none &&
+                    xfurn.forage_classes == forage_class::none ) {
                     return;
-                } else if( ( forage_bushes && xter_t == &iexamine::shrub_marloss ) ||
-                           ( forage_bushes && xter_t == &iexamine::shrub_wildveggies ) ||
-                           ( forage_bushes && xter_t == &iexamine::harvest_ter_nectar ) ||
-                           ( forage_trees && xter_t == &iexamine::tree_marloss ) ||
-                           ( forage_trees && xter_t == &iexamine::harvest_ter ) ||
-                           ( forage_trees && xter_t == &iexamine::harvest_ter_nectar )
-                         ) {
-                    xter_t( u, pos );
-                } else if( ( ( forage_flowers && xfurn_t == &iexamine::harvest_furn ) ||
-                             ( forage_flowers && xfurn_t == &iexamine::harvest_furn_nectar ) ||
-                             ( forage_everything && xfurn_t == &iexamine::harvest_furn ) ||
-                             ( forage_everything && xfurn_t == &iexamine::harvest_furn_nectar )
-                           ) ) {
-                    xfurn_t( u, pos );
+                } else if( ( forage_bushes && has_forage_class( xter.forage_classes,
+                             forage_class::bushes ) ) ||
+                           ( forage_trees && has_forage_class( xter.forage_classes,
+                                   forage_class::trees ) ) ) {
+                    xter.examine( u, pos );
+                } else if( forage_flowers &&
+                           has_forage_class( xfurn.forage_classes, forage_class::flowers ) ) {
+                    xfurn.examine( u, pos );
                 }
             };
 

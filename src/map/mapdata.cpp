@@ -1187,6 +1187,31 @@ void map_data_common_t::load(const JsonObject& jo, const std::string& src) {
         examine = iexamine_function_from_string("none");
     }
 
+    if (jo.has_member("forage_class")) {
+        uint8_t forage_flags = 0;
+        const auto parse_forage_class = [&](const std::string& class_name) {
+            if (class_name == "bushes") {
+                forage_flags |= static_cast<uint8_t>(forage_class::bushes);
+            } else if (class_name == "trees") {
+                forage_flags |= static_cast<uint8_t>(forage_class::trees);
+            } else if (class_name == "flowers") {
+                forage_flags |= static_cast<uint8_t>(forage_class::flowers);
+            } else {
+                debugmsg("Invalid forage_class \"%s\"", class_name);
+            }
+        };
+        if (jo.has_array("forage_class")) {
+            for (const std::string& class_name : jo.get_tags("forage_class")) {
+                parse_forage_class(class_name);
+            }
+        } else {
+            parse_forage_class(jo.get_string("forage_class"));
+        }
+        forage_classes = static_cast<forage_class>(forage_flags);
+    } else if (!was_loaded) {
+        forage_classes = forage_class::none;
+    }
+
     if (jo.has_array("harvest_by_season")) {
         for (JsonObject harvest_jo : jo.get_array("harvest_by_season")) {
             auto season_strings = harvest_jo.get_tags("seasons");

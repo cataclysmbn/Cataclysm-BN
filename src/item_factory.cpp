@@ -2578,6 +2578,7 @@ void Item_factory::load( islot_seed &slot, const JsonObject &jo, const std::stri
     assign( jo, "seeds", slot.spawn_seeds );
     assign( jo, "byproducts", slot.byproducts );
     assign( jo, "required_terrain_flag", slot.required_terrain_flag );
+    assign( jo, "harvest_action", slot.harvest_action );
     assign( jo, "harvest_inherit_flags", slot.harvest_inherit_flags );
     assign( jo, "harvest_inherit_poison", slot.harvest_inherit_poison );
 }

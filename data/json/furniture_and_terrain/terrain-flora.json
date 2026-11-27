@@ -12,6 +12,7 @@
     "flags": [ "FLAMMABLE_ASH", "NOITEM", "SUPPORTS_ROOF", "TREE", "REDUCE_SCENT", "CLIMBABLE" ],
     "transforms_into": "t_tree_walnut_harvested",
     "examine_action": "harvest_ter",
+    "forage_class": "trees",
     "looks_like": "t_tree_hickory",
     "harvest_by_season": [
       {
@@ -74,6 +75,7 @@
     "flags": [ "FLAMMABLE_ASH", "NOITEM", "SUPPORTS_ROOF", "TREE", "REDUCE_SCENT", "CLIMBABLE" ],
     "transforms_into": "t_tree_blackjack_harvested",
     "examine_action": "harvest_ter",
+    "forage_class": "trees",
     "harvest_by_season": [
       {
         "seasons": [ "spring", "summer", "autumn", "winter" ],
@@ -129,6 +131,7 @@
     "flags": [ "FLAMMABLE_ASH", "NOITEM", "SUPPORTS_ROOF", "TREE", "REDUCE_SCENT", "CLIMBABLE" ],
     "transforms_into": "t_tree_chestnut_harvested",
     "examine_action": "harvest_ter",
+    "forage_class": "trees",
     "looks_like": "t_tree_hickory",
     "harvest_by_season": [
       {
@@ -189,6 +192,7 @@
     "flags": [ "FLAMMABLE_ASH", "NOITEM", "SUPPORTS_ROOF", "TREE", "REDUCE_SCENT", "CLIMBABLE" ],
     "transforms_into": "t_tree_beech_harvested",
     "examine_action": "harvest_ter",
+    "forage_class": "trees",
     "looks_like": "t_tree_hickory",
     "harvest_by_season": [
       {
@@ -250,6 +254,7 @@
     "flags": [ "FLAMMABLE_ASH", "NOITEM", "SUPPORTS_ROOF", "TREE", "REDUCE_SCENT", "CLIMBABLE" ],
     "transforms_into": "t_tree_hazelnut_harvested",
     "examine_action": "harvest_ter",
+    "forage_class": "trees",
     "looks_like": "t_tree_hickory",
     "harvest_by_season": [
       {
@@ -311,6 +316,7 @@
     "flags": [ "FLAMMABLE_ASH", "NOITEM", "SUPPORTS_ROOF", "TREE", "REDUCE_SCENT", "CLIMBABLE" ],
     "transforms_into": "t_tree_harvested",
     "examine_action": "harvest_ter",
+    "forage_class": "trees",
     "harvest_by_season": [
       {
         "seasons": [ "autumn" ],
@@ -460,6 +466,7 @@
     "flags": [ "FLAMMABLE_ASH", "NOITEM", "SUPPORTS_ROOF", "TREE", "REDUCE_SCENT", "CLIMBABLE" ],
     "transforms_into": "t_tree_apple_harvested",
     "examine_action": "harvest_ter_nectar",
+    "forage_class": [ "bushes", "trees" ],
     "harvest_by_season": [
       {
         "seasons": [ "autumn" ],
@@ -523,6 +530,7 @@
     "flags": [ "FLAMMABLE_ASH", "NOITEM", "SUPPORTS_ROOF", "TREE", "REDUCE_SCENT", "CLIMBABLE" ],
     "transforms_into": "t_tree_pear_harvested",
     "examine_action": "harvest_ter_nectar",
+    "forage_class": [ "bushes", "trees" ],
     "harvest_by_season": [
       {
         "seasons": [ "autumn" ],
@@ -586,6 +594,7 @@
     "transforms_into": "t_tree_coffee_harvested",
     "looks_like": "t_tree_plum",
     "examine_action": "harvest_ter_nectar",
+    "forage_class": [ "bushes", "trees" ],
     "harvest_by_season": [
       {
         "seasons": [ "autumn" ],
@@ -650,6 +659,7 @@
     "flags": [ "FLAMMABLE_ASH", "NOITEM", "SUPPORTS_ROOF", "TREE", "REDUCE_SCENT", "CLIMBABLE" ],
     "transforms_into": "t_tree_cherry_harvested",
     "examine_action": "harvest_ter_nectar",
+    "forage_class": [ "bushes", "trees" ],
     "harvest_by_season": [
       {
         "seasons": [ "spring" ],
@@ -713,6 +723,7 @@
     "flags": [ "FLAMMABLE_ASH", "NOITEM", "SUPPORTS_ROOF", "TREE", "REDUCE_SCENT", "CLIMBABLE" ],
     "transforms_into": "t_tree_juniper_harvested",
     "examine_action": "harvest_ter_nectar",
+    "forage_class": [ "bushes", "trees" ],
     "harvest_by_season": [
       {
         "seasons": [ "autumn", "winter" ],
@@ -776,6 +787,7 @@
     "flags": [ "FLAMMABLE_ASH", "NOITEM", "SUPPORTS_ROOF", "TREE", "REDUCE_SCENT", "CLIMBABLE" ],
     "transforms_into": "t_tree_peach_harvested",
     "examine_action": "harvest_ter_nectar",
+    "forage_class": [ "bushes", "trees" ],
     "harvest_by_season": [
       {
         "seasons": [ "summer" ],
@@ -839,6 +851,7 @@
     "flags": [ "FLAMMABLE_ASH", "NOITEM", "SUPPORTS_ROOF", "TREE", "REDUCE_SCENT", "CLIMBABLE" ],
     "transforms_into": "t_tree_apricot_harvested",
     "examine_action": "harvest_ter_nectar",
+    "forage_class": [ "bushes", "trees" ],
     "harvest_by_season": [
       {
         "seasons": [ "summer" ],
@@ -902,6 +915,7 @@
     "flags": [ "FLAMMABLE_ASH", "NOITEM", "SUPPORTS_ROOF", "TREE", "REDUCE_SCENT", "CLIMBABLE" ],
     "transforms_into": "t_tree_plum_harvested",
     "examine_action": "harvest_ter_nectar",
+    "forage_class": [ "bushes", "trees" ],
     "harvest_by_season": [
       {
         "seasons": [ "summer" ],
@@ -964,6 +978,7 @@
     "flags": [ "FLAMMABLE_ASH", "NOITEM", "SUPPORTS_ROOF", "TREE", "REDUCE_SCENT", "CLIMBABLE" ],
     "transforms_into": "t_tree_mulberry_harvested",
     "examine_action": "harvest_ter_nectar",
+    "forage_class": [ "bushes", "trees" ],
     "looks_like": "t_tree_apple",
     "harvest_by_season": [
       {
@@ -1028,6 +1043,7 @@
     "flags": [ "FLAMMABLE_ASH", "NOITEM", "SUPPORTS_ROOF", "TREE", "REDUCE_SCENT", "CLIMBABLE" ],
     "transforms_into": "t_tree_elderberry_harvested",
     "examine_action": "harvest_ter_nectar",
+    "forage_class": [ "bushes", "trees" ],
     "looks_like": "t_tree_plum",
     "harvest_by_season": [
       {
@@ -1092,6 +1108,7 @@
     "flags": [ "FLAMMABLE_ASH", "NOITEM", "SUPPORTS_ROOF", "TREE", "REDUCE_SCENT", "CLIMBABLE" ],
     "transforms_into": "t_tree_pine_harvested",
     "examine_action": "harvest_ter",
+    "forage_class": "trees",
     "harvest_by_season": [
       {
         "seasons": [ "spring", "summer", "autumn", "winter" ],
@@ -1161,6 +1178,7 @@
     "roof": "t_treetop",
     "flags": [ "FLAMMABLE_ASH", "NOITEM", "SUPPORTS_ROOF", "TREE", "REDUCE_SCENT", "CLIMBABLE" ],
     "examine_action": "harvest_ter",
+    "forage_class": "trees",
     "transforms_into": "t_tree_birch_harvested",
     "harvest_by_season": [
       {
@@ -1217,6 +1235,7 @@
     "roof": "t_treetop",
     "flags": [ "FLAMMABLE_ASH", "NOITEM", "SUPPORTS_ROOF", "TREE", "REDUCE_SCENT", "CLIMBABLE" ],
     "examine_action": "harvest_ter",
+    "forage_class": "trees",
     "transforms_into": "t_tree_willow_harvested",
     "harvest_by_season": [
       {
@@ -1382,6 +1401,7 @@
     "roof": "t_treetop",
     "flags": [ "FLAMMABLE_ASH", "NOITEM", "SUPPORTS_ROOF", "TREE", "REDUCE_SCENT", "CLIMBABLE" ],
     "examine_action": "harvest_ter",
+    "forage_class": "trees",
     "harvest_by_season": [
       {
         "seasons": [ "autumn" ],
@@ -1444,6 +1464,7 @@
     "roof": "t_treetop",
     "flags": [ "FLAMMABLE_ASH", "NOITEM", "SUPPORTS_ROOF", "TREE", "REDUCE_SCENT", "CLIMBABLE" ],
     "examine_action": "harvest_ter",
+    "forage_class": "trees",
     "harvest_by_season": [
       {
         "seasons": [ "autumn" ],
@@ -1506,6 +1527,7 @@
     "roof": "t_treetop",
     "flags": [ "FLAMMABLE_ASH", "NOITEM", "SUPPORTS_ROOF", "TREE", "REDUCE_SCENT", "CLIMBABLE" ],
     "examine_action": "harvest_ter",
+    "forage_class": "trees",
     "harvest_by_season": [
       {
         "seasons": [ "autumn" ],
@@ -1590,6 +1612,7 @@
     "flags": [ "TRANSPARENT", "CONTAINER", "FLAMMABLE_ASH", "THIN_OBSTACLE", "PLACE_ITEM", "SHRUB", "SHORT" ],
     "digging_results": { "digging_min": 1, "result_ter": "t_pit_shallow", "num_minutes": 60 },
     "examine_action": "shrub_wildveggies",
+    "forage_class": "bushes",
     "bash": {
       "str_min": 4,
       "str_max": 30,
@@ -1720,6 +1743,7 @@
     "flags": [ "TRANSPARENT", "CONTAINER", "FLAMMABLE_ASH", "THIN_OBSTACLE", "SHRUB", "SHORT" ],
     "transforms_into": "t_shrub_peanut_harvested",
     "examine_action": "harvest_ter_nectar",
+    "forage_class": [ "bushes", "trees" ],
     "harvest_by_season": [ { "seasons": [ "autumn" ], "entries": [ { "drop": "peanut", "base_num": [ 5, 10 ], "scale_num": [ 0, 0.5 ] } ] } ],
     "bash": {
       "str_min": 4,
@@ -1765,6 +1789,7 @@
     "flags": [ "TRANSPARENT", "CONTAINER", "FLAMMABLE_ASH", "THIN_OBSTACLE", "SHRUB", "SHORT" ],
     "transforms_into": "t_shrub_blueberry_harvested",
     "examine_action": "harvest_ter_nectar",
+    "forage_class": [ "bushes", "trees" ],
     "harvest_by_season": [
       {
         "seasons": [ "spring" ],
@@ -1818,6 +1843,7 @@
     "flags": [ "TRANSPARENT", "CONTAINER", "FLAMMABLE_ASH", "THIN_OBSTACLE", "SHRUB", "SHORT" ],
     "transforms_into": "t_shrub_strawberry_harvested",
     "examine_action": "harvest_ter_nectar",
+    "forage_class": [ "bushes", "trees" ],
     "harvest_by_season": [
       {
         "seasons": [ "spring" ],
@@ -1870,6 +1896,7 @@
     "flags": [ "TRANSPARENT", "CONTAINER", "FLAMMABLE_ASH", "THIN_OBSTACLE", "SHRUB", "SHORT", "SHARP" ],
     "transforms_into": "t_shrub_blackberry_harvested",
     "examine_action": "harvest_ter_nectar",
+    "forage_class": [ "bushes", "trees" ],
     "looks_like": "t_shrub_blueberry",
     "harvest_by_season": [
       {
@@ -1923,6 +1950,7 @@
     "flags": [ "TRANSPARENT", "CONTAINER", "FLAMMABLE_ASH", "THIN_OBSTACLE", "SHRUB", "SHORT" ],
     "transforms_into": "t_shrub_huckleberry_harvested",
     "examine_action": "harvest_ter_nectar",
+    "forage_class": [ "bushes", "trees" ],
     "looks_like": "t_shrub_blueberry",
     "harvest_by_season": [
       {
@@ -1976,6 +2004,7 @@
     "flags": [ "TRANSPARENT", "CONTAINER", "FLAMMABLE_ASH", "THIN_OBSTACLE", "SHRUB", "SHORT", "SHARP" ],
     "transforms_into": "t_shrub_raspberry_harvested",
     "examine_action": "harvest_ter_nectar",
+    "forage_class": [ "bushes", "trees" ],
     "looks_like": "t_shrub_strawberry",
     "harvest_by_season": [
       {
@@ -2029,6 +2058,7 @@
     "flags": [ "TRANSPARENT", "CONTAINER", "FLAMMABLE_ASH", "THIN_OBSTACLE", "SHRUB", "SHORT" ],
     "transforms_into": "t_shrub_grape_harvested",
     "examine_action": "harvest_ter_nectar",
+    "forage_class": [ "bushes", "trees" ],
     "looks_like": "t_shrub_blueberry",
     "harvest_by_season": [
       { "seasons": [ "spring", "autumn", "winter" ], "entries": [ { "drop": "grape_leaves", "base_num": [ 1, 4 ] } ] },
@@ -2084,6 +2114,7 @@
     "flags": [ "TRANSPARENT", "CONTAINER", "FLAMMABLE_ASH", "THIN_OBSTACLE", "SHRUB", "SHORT", "SHARP" ],
     "transforms_into": "t_shrub_rose_harvested",
     "examine_action": "harvest_ter_nectar",
+    "forage_class": [ "bushes", "trees" ],
     "looks_like": "t_shrub_strawberry",
     "harvest_by_season": [
       {
@@ -2135,6 +2166,7 @@
     "flags": [ "TRANSPARENT", "CONTAINER", "FLAMMABLE_ASH", "THIN_OBSTACLE", "SHRUB", "SHORT" ],
     "transforms_into": "t_shrub_hydrangea_harvested",
     "examine_action": "harvest_ter_nectar",
+    "forage_class": [ "bushes", "trees" ],
     "looks_like": "t_shrub",
     "//": "Insert hydrangea harvest in autumn once flowers have a use (same for other generic flowers).",
     "bash": {
@@ -2180,6 +2212,7 @@
     "flags": [ "TRANSPARENT", "CONTAINER", "FLAMMABLE_ASH", "THIN_OBSTACLE", "SHRUB", "SHORT" ],
     "transforms_into": "t_shrub_lilac_harvested",
     "examine_action": "harvest_ter_nectar",
+    "forage_class": [ "bushes", "trees" ],
     "looks_like": "t_shrub",
     "//": "Insert lilac harvest once flowers have a use (same for other generic flowers).",
     "bash": {
@@ -2419,6 +2452,7 @@
     "flags": [ "TRANSPARENT", "FLAMMABLE_ASH", "FLAT", "THIN_OBSTACLE", "SHRUB", "VEH_TREAT_AS_BASH_BELOW" ],
     "digging_results": { "digging_min": 1, "result_ter": "t_pit_shallow", "num_minutes": 60 },
     "examine_action": "harvest_ter_nectar",
+    "forage_class": [ "bushes", "trees" ],
     "harvest_by_season": [ { "seasons": [ "spring" ], "entries": [ { "drop": "fiddlehead_raw", "base_num": [ 1, 4 ] } ] } ],
     "transforms_into": "t_fern_harvested",
     "bash": {
@@ -2465,6 +2499,7 @@
     "flags": [ "FLAMMABLE_ASH", "NOITEM", "SUPPORTS_ROOF", "TREE", "REDUCE_SCENT" ],
     "transforms_into": "t_tree_cacao_harvested",
     "examine_action": "harvest_ter",
+    "forage_class": "trees",
     "looks_like": "t_tree_hickory",
     "harvest_by_season": [
       {
@@ -2523,6 +2558,7 @@
     "flags": [ "TRANSPARENT", "FLAMMABLE_ASH", "NOITEM", "REDUCE_SCENT" ],
     "transforms_into": "t_tree_coca_harvested",
     "examine_action": "harvest_ter",
+    "forage_class": "trees",
     "looks_like": "t_tree_young",
     "harvest_by_season": [
       {

@@ -24,6 +24,7 @@
     "required_str": -1,
     "flags": [ "TRANSPARENT", "TINY", "FLAMMABLE_ASH", "NOCOLLIDE", "FLOWER" ],
     "examine_action": "harvest_furn_nectar",
+    "forage_class": "flowers",
     "harvest_by_season": [ { "seasons": [ "spring", "summer", "autumn" ], "entries": [ { "drop": "raw_dandelion", "base_num": [ 1, 4 ] } ] } ],
     "bash": { "str_min": 2, "str_max": 6, "sound": "crunch.", "sound_fail": "whish." }
   },
@@ -39,6 +40,7 @@
     "required_str": -1,
     "flags": [ "TRANSPARENT", "TINY", "FLAMMABLE_ASH", "NOCOLLIDE", "FLOWER" ],
     "examine_action": "harvest_furn_nectar",
+    "forage_class": "flowers",
     "harvest_by_season": [ { "seasons": [ "spring", "summer", "autumn" ], "entries": [ { "drop": "raw_burdock", "base_num": [ 1, 4 ] } ] } ],
     "bash": { "str_min": 2, "str_max": 6, "sound": "crunch.", "sound_fail": "whish." }
   },
@@ -54,6 +56,7 @@
     "required_str": -1,
     "flags": [ "TRANSPARENT", "TINY", "FLAMMABLE_ASH", "NOCOLLIDE", "FLOWER" ],
     "examine_action": "harvest_furn",
+    "forage_class": "flowers",
     "harvest_by_season": [ { "seasons": [ "summer", "autumn" ], "entries": [ { "drop": "chamomile", "base_num": [ 1, 2 ] } ] } ],
     "bash": { "str_min": 2, "str_max": 6, "sound": "crunch.", "sound_fail": "whish." }
   },
@@ -69,6 +72,7 @@
     "required_str": -1,
     "flags": [ "TRANSPARENT", "TINY", "FLAMMABLE_ASH", "NOCOLLIDE", "FLOWER" ],
     "examine_action": "harvest_furn_nectar",
+    "forage_class": "flowers",
     "harvest_by_season": [
       {
         "seasons": [ "spring", "summer", "autumn" ],
@@ -92,6 +96,7 @@
     "required_str": -1,
     "flags": [ "TRANSPARENT", "TINY", "FLAMMABLE_ASH", "NOCOLLIDE", "FLOWER" ],
     "examine_action": "harvest_furn_nectar",
+    "forage_class": "flowers",
     "harvest_by_season": [
       {
         "seasons": [ "spring", "summer", "autumn" ],
@@ -115,6 +120,7 @@
     "required_str": -1,
     "flags": [ "TRANSPARENT", "TINY", "FLAMMABLE_ASH", "NOCOLLIDE", "ORGANIC" ],
     "examine_action": "harvest_furn",
+    "forage_class": "flowers",
     "transforms_into": "f_cattails_harvested",
     "harvest_by_season": [
       { "seasons": [ "winter" ], "entries": [ { "drop": "cattail_rhizome" } ] },
@@ -135,6 +141,7 @@
     "color": "brown",
     "extend": { "flags": [ "HARVESTED" ] },
     "examine_action": "harvest_furn",
+    "forage_class": "flowers",
     "transforms_into": "f_cattails",
     "harvest_by_season": [  ]
   },
@@ -150,6 +157,7 @@
     "required_str": -1,
     "flags": [ "TRANSPARENT", "TINY", "FLAMMABLE_ASH", "NOCOLLIDE", "FLOWER" ],
     "examine_action": "harvest_furn_nectar",
+    "forage_class": "flowers",
     "harvest_by_season": [
       {
         "seasons": [ "spring", "summer", "autumn" ],
@@ -174,6 +182,7 @@
     "required_str": -1,
     "flags": [ "TRANSPARENT", "TINY", "FLAMMABLE_ASH", "NOCOLLIDE", "ORGANIC" ],
     "examine_action": "harvest_furn_nectar",
+    "forage_class": "flowers",
     "harvest_by_season": [
       {
         "seasons": [ "spring", "summer", "autumn" ],
@@ -198,6 +207,7 @@
     "required_str": -1,
     "flags": [ "TRANSPARENT", "TINY", "FLAMMABLE_ASH", "ORGANIC" ],
     "examine_action": "harvest_furn_nectar",
+    "forage_class": "flowers",
     "harvest_by_season": [
       {
         "seasons": [ "spring", "summer", "autumn" ],
@@ -223,6 +233,7 @@
     "required_str": -1,
     "flags": [ "TRANSPARENT", "TINY", "FLAMMABLE_ASH", "NOCOLLIDE", "FLOWER" ],
     "examine_action": "harvest_furn_nectar",
+    "forage_class": "flowers",
     "harvest_by_season": [ { "seasons": [ "summer" ], "entries": [ { "drop": "sunflower" } ] } ],
     "bash": { "str_min": 2, "str_max": 6, "sound": "crunch.", "sound_fail": "whish." }
   },
@@ -237,6 +248,7 @@
     "required_str": -1,
     "flags": [ "TRANSPARENT", "TINY", "FLAMMABLE_ASH", "NOCOLLIDE", "FLOWER" ],
     "examine_action": "harvest_furn",
+    "forage_class": "flowers",
     "harvest_by_season": [
       {
         "seasons": [ "spring", "summer", "autumn" ],
@@ -257,6 +269,7 @@
     "required_str": -1,
     "flags": [ "TRANSPARENT", "TINY", "FLAMMABLE_ASH", "NOCOLLIDE", "FLOWER" ],
     "examine_action": "harvest_furn_nectar",
+    "forage_class": "flowers",
     "harvest_by_season": [
       {
         "seasons": [ "spring", "summer", "autumn" ],
@@ -294,6 +307,7 @@
     "required_str": -1,
     "flags": [ "TRANSPARENT", "TINY", "FLAMMABLE_ASH", "NOCOLLIDE", "FLOWER" ],
     "examine_action": "harvest_furn_nectar",
+    "forage_class": "flowers",
     "harvest_by_season": [ { "seasons": [ "spring", "summer", "autumn" ], "entries": [ { "drop": "chicory_raw", "base_num": [ 1, 2 ] } ] } ],
     "bash": { "str_min": 2, "str_max": 6, "sound": "crunch.", "sound_fail": "whish." }
   },
@@ -309,6 +323,7 @@
     "required_str": -1,
     "flags": [ "TRANSPARENT", "TINY", "FLAMMABLE_ASH", "NOCOLLIDE", "ORGANIC" ],
     "examine_action": "harvest_furn_nectar",
+    "forage_class": "flowers",
     "harvest_by_season": [
       {
         "seasons": [ "spring", "summer", "autumn" ],
@@ -355,6 +370,7 @@
     "required_str": -1,
     "flags": [ "TRANSPARENT", "TINY", "FLAMMABLE_ASH", "NOCOLLIDE", "FLOWER" ],
     "examine_action": "harvest_furn",
+    "forage_class": "flowers",
     "harvest_by_season": [ { "seasons": [ "summer", "autumn" ], "entries": [ { "drop": "seed_mustard", "base_num": [ 2, 6 ] } ] } ],
     "bash": { "str_min": 2, "str_max": 6, "sound": "crunch.", "sound_fail": "whish." }
   },
@@ -413,6 +429,7 @@
     "required_str": -1,
     "flags": [ "CONTAINER", "HIDE_PLACE" ],
     "examine_action": "harvest_furn",
+    "forage_class": "flowers",
     "harvest_by_season": [
       {
         "seasons": [ "spring" ],
@@ -461,6 +478,7 @@
     "required_str": -1,
     "flags": [ "TRANSPARENT", "TINY", "NOCOLLIDE" ],
     "examine_action": "harvest_furn",
+    "forage_class": "flowers",
     "harvest_by_season": [
       {
         "seasons": [ "spring", "summer", "autumn" ],
@@ -509,6 +527,7 @@
     "required_str": -1,
     "flags": [ "TRANSPARENT", "TINY", "FLAMMABLE_ASH", "NOCOLLIDE" ],
     "examine_action": "harvest_furn",
+    "forage_class": "flowers",
     "harvest_by_season": [ { "seasons": [ "spring", "summer", "autumn", "winter" ], "entries": [ { "drop": "mushroom", "base_num": 1 } ] } ],
     "bash": { "str_min": 2, "str_max": 6, "sound": "crunch.", "sound_fail": "whish." }
   }
