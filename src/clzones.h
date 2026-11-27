@@ -52,6 +52,9 @@ class zone_type
         std::string desc() const;
         auto color() const -> nc_color;
 
+        /// Loot zones that may be stored relative to the avatar.
+        bool can_be_personal = false;
+
         static void reset_zones();
         static void load_zones( const JsonObject &jo, const std::string &src );
         void load( const JsonObject &jo, const std::string & );
@@ -252,6 +255,13 @@ class loot_options : public zone_options, public mark_option
         void deserialize( const JsonObject &jo_zone ) override;
 };
 
+/// Which zones "Sort out my loot" is allowed to use for one run.
+enum class loot_sort_selection : int {
+    unrestricted = 0,
+    regular_only = 1,
+    personal_only = 2,
+};
+
 /**
  * These are zones the player can designate.
  */
@@ -264,10 +274,20 @@ class zone_data
         bool invert;
         bool enabled;
         bool is_vehicle;
+        /// Rectangle is stored as an offset from the avatar and moves with them.
+        bool is_personal;
+        /// Disabled only for the current loot sort. Not saved.
+        bool temporarily_disabled;
         dimension_id dim_id;
         tripoint_abs_ms start;
         tripoint_abs_ms end;
+        tripoint_rel_ms personal_start;
+        tripoint_rel_ms personal_end;
+        /// Avatar absolute position captured when a personal sort is pinned.
+        tripoint_abs_ms cached_shift;
         shared_ptr_fast<zone_options> options;
+
+        auto personal_origin() const -> tripoint_abs_ms;
 
     public:
         zone_data() {
@@ -275,9 +295,14 @@ class zone_data
             invert = false;
             enabled = false;
             is_vehicle = false;
+            is_personal = false;
+            temporarily_disabled = false;
             dim_id = dimension_id();
             start = tripoint_abs_ms::zero();
             end = tripoint_abs_ms::zero();
+            personal_start = tripoint_rel_ms::zero();
+            personal_end = tripoint_rel_ms::zero();
+            cached_shift = tripoint_abs_ms::zero();
             options = nullptr;
         }
 
@@ -291,9 +316,14 @@ class zone_data
             invert = _invert;
             enabled = _enabled;
             is_vehicle = false;
+            is_personal = false;
+            temporarily_disabled = false;
             dim_id = dimension_id();
             start = _start;
             end = _end;
+            personal_start = tripoint_rel_ms::zero();
+            personal_end = tripoint_rel_ms::zero();
+            cached_shift = tripoint_abs_ms::zero();
 
             // ensure that suplied options is of correct class
             if( _options == nullptr || !zone_options::is_valid( type, *_options ) ) {
@@ -309,8 +339,13 @@ class zone_data
         bool set_type();
         void set_position( const std::pair<tripoint_abs_ms, tripoint_abs_ms> &position,
                            bool manual = true );
+        void set_position( const std::pair<tripoint_rel_ms, tripoint_rel_ms> &position,
+                           bool manual = true );
+        void set_personal_bounds( const tripoint_rel_ms &start_arg, const tripoint_rel_ms &end_arg );
         void set_enabled( bool enabled_arg );
+        void set_temporary_disabled( bool disabled_arg );
         void set_is_vehicle( bool is_vehicle_arg );
+        void update_cached_shift( const tripoint_abs_ms &shift );
         void set_dimension( const dimension_id &dim_id_arg ) {
             dim_id = dim_id_arg;
         }
@@ -350,15 +385,17 @@ class zone_data
         bool get_enabled() const {
             return enabled;
         }
+        bool get_temporarily_disabled() const {
+            return temporarily_disabled;
+        }
         bool get_is_vehicle() const {
             return is_vehicle;
         }
-        tripoint_abs_ms get_start_point() const {
-            return start;
+        bool get_is_personal() const {
+            return is_personal;
         }
-        tripoint_abs_ms get_end_point() const {
-            return end;
-        }
+        auto get_start_point() const -> tripoint_abs_ms;
+        auto get_end_point() const -> tripoint_abs_ms;
         tripoint_abs_ms get_center_point() const;
         bool has_options() const {
             return options->has_options();
@@ -397,6 +434,13 @@ class zone_manager
         std::map<zone_type_id, zone_type> types;
         std::unordered_map<std::string, std::unordered_set<tripoint_abs_ms>> area_cache;
         std::unordered_map<std::string, std::unordered_set<tripoint_abs_ms>> vzone_cache;
+        loot_sort_selection applied_sort_mode = loot_sort_selection::unrestricted;
+        bool sort_filter_active = false;
+        bool personal_zones_pinned = false;
+        tripoint_abs_ms pinned_shift = tripoint_abs_ms::zero();
+        auto has_nonpersonal( const zone_type_id &type, const tripoint_abs_ms &where,
+                              const faction_id &fac ) const -> bool;
+        auto use_vehicle_zones() const -> bool;
         std::unordered_set<tripoint_abs_ms> get_point_set( const zone_type_id &type,
                 const faction_id &fac = your_fac ) const;
         std::unordered_set<tripoint_abs_ms> get_vzone_set( const zone_type_id &type,
@@ -420,7 +464,13 @@ class zone_manager
                   bool invert, bool enabled,
                   const tripoint_abs_ms &start, const tripoint_abs_ms &end,
                   shared_ptr_fast<zone_options> options = nullptr );
-        const zone_data *get_zone_at( const tripoint_abs_ms &where, const zone_type_id &type ) const;
+        /// Personal loot zone. `start` and `end` are offsets from the avatar.
+        void add( const std::string &name, const zone_type_id &type, const faction_id &faction,
+                  bool invert, bool enabled,
+                  const tripoint_rel_ms &start, const tripoint_rel_ms &end,
+                  shared_ptr_fast<zone_options> options = nullptr );
+        const zone_data *get_zone_at( const tripoint_abs_ms &where, const zone_type_id &type,
+                                      bool skip_personal = false ) const;
         void create_vehicle_loot_zone( class vehicle &vehicle, tripoint_mnt_veh mount_point,
                                        zone_data &new_zone );
 
@@ -437,28 +487,36 @@ class zone_manager
         std::string get_name_from_type( const zone_type_id &type ) const;
         bool has_type( const zone_type_id &type ) const;
         bool has_defined( const zone_type_id &type, const faction_id &fac = your_fac ) const;
-        void cache_data();
+        void cache_data( bool update_avatar = true );
         void cache_vzones();
         bool has( const zone_type_id &type, const tripoint_abs_ms &where,
-                  const faction_id &fac = your_fac ) const;
+                  const faction_id &fac = your_fac, bool skip_personal = false ) const;
         bool has_near( const zone_type_id &type, const tripoint_abs_ms &where, int range = MAX_DISTANCE,
-                       const faction_id &fac = your_fac ) const;
+                       const faction_id &fac = your_fac, bool skip_personal = false ) const;
         bool has_loot_dest_near( const tripoint_abs_ms &where ) const;
-        bool custom_loot_has( const tripoint_abs_ms &where, const item *it ) const;
+        bool custom_loot_has( const tripoint_abs_ms &where, const item *it,
+                              bool skip_personal = false ) const;
         std::unordered_set<tripoint_abs_ms> get_near( const zone_type_id &type,
                 const tripoint_abs_ms &where,
-                int range = MAX_DISTANCE, const item *it = nullptr, const faction_id &fac = your_fac ) const;
+                int range = MAX_DISTANCE, const item *it = nullptr, const faction_id &fac = your_fac,
+                bool skip_personal = false ) const;
         std::optional<tripoint_abs_ms> get_nearest( const zone_type_id &type, const tripoint_abs_ms &where,
                 int range = MAX_DISTANCE, const faction_id &fac = your_fac ) const;
         zone_type_id get_near_zone_type_for_item( const item &it, const tripoint_abs_ms &where,
-                int range = MAX_DISTANCE ) const;
+                int range = MAX_DISTANCE, bool skip_personal = false ) const;
         std::vector<zone_data> get_zones( const zone_type_id &type, const tripoint_abs_ms &where,
                                           const faction_id &fac = your_fac ) const;
         const zone_data *get_zone_at( const tripoint_abs_ms &where ) const;
         const zone_data *get_bottom_zone( const tripoint_abs_ms &where,
                                           const faction_id &fac = your_fac ) const;
         std::optional<std::string> query_name( const std::string &default_name = "" ) const;
-        std::optional<zone_type_id> query_type() const;
+        std::optional<zone_type_id> query_type( bool personal = false ) const;
+        auto has_personal_zones() const -> bool;
+        auto personal_zones_are_pinned() const -> bool;
+        /// Limit one loot-sort run to regular or personal zones. Personal runs keep `pin`.
+        void apply_sort_filter( loot_sort_selection mode, const tripoint_abs_ms &pin );
+        /// Put zones back the way they were before a loot sort.
+        void clear_sort_filter();
         void swap( zone_data &a, zone_data &b );
         void rotate_zones( map &target_map, int turns );
         // list of tripoints of zones that are loot zones only

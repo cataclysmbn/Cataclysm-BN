@@ -177,6 +177,7 @@ void zone_type::load( const JsonObject &jo, const std::string & )
     mandatory( jo, was_loaded, "id", id );
     optional( jo, was_loaded, "description", desc_, "" );
     optional( jo, was_loaded, "color", color_, c_white );
+    optional( jo, was_loaded, "can_be_personal", can_be_personal, false );
 }
 
 shared_ptr_fast<zone_options> zone_options::create( const zone_type_id &type )
@@ -747,7 +748,7 @@ std::optional<std::string> zone_manager::query_name( const std::string &default_
     }
 }
 
-std::optional<zone_type_id> zone_manager::query_type() const
+std::optional<zone_type_id> zone_manager::query_type( const bool personal ) const
 {
     const auto &types = get_manager().get_types();
     std::vector<std::pair<zone_type_id, zone_type>> types_vec;
@@ -757,6 +758,11 @@ std::optional<zone_type_id> zone_manager::query_type() const
     []( const std::pair<zone_type_id, zone_type> &lhs, const std::pair<zone_type_id, zone_type> &rhs ) {
         return localized_compare( lhs.second.name(), rhs.second.name() );
     } );
+    if( personal ) {
+        std::erase_if( types_vec, []( const auto & entry ) {
+            return !entry.second.can_be_personal;
+        } );
+    }
 
     uilist as_m;
     as_m.desc_enabled = true;
@@ -800,7 +806,7 @@ bool zone_data::set_name()
 
 bool zone_data::set_type()
 {
-    const auto maybe_type = zone_manager::get_manager().query_type();
+    const auto maybe_type = zone_manager::get_manager().query_type( is_personal );
     if( maybe_type.has_value() && maybe_type.value() != type ) {
         auto new_options = zone_options::create( maybe_type.value() );
         if( new_options->query_at_creation() ) {
@@ -821,16 +827,80 @@ void zone_data::set_position( const std::pair<tripoint_abs_ms, tripoint_abs_ms> 
         debugmsg( "Tried moving a lootzone bound to a vehicle part" );
         return;
     }
+    if( is_personal ) {
+        const auto origin = personal_origin();
+        personal_start = position.first - origin;
+        personal_end = position.second - origin;
+        zone_manager::get_manager().cache_data( manual );
+        return;
+    }
     start = position.first;
     end = position.second;
 
-    zone_manager::get_manager().cache_data();
+    // Vehicle refresh passes manual=false so a pinned personal sort does not slide.
+    zone_manager::get_manager().cache_data( manual );
+}
+
+void zone_data::set_position( const std::pair<tripoint_rel_ms, tripoint_rel_ms> &position,
+                              const bool manual )
+{
+    if( !is_personal ) {
+        debugmsg( "Tried to set a relative position on a zone that is not personal" );
+        return;
+    }
+    personal_start = position.first;
+    personal_end = position.second;
+    zone_manager::get_manager().cache_data( manual );
+}
+
+void zone_data::set_personal_bounds( const tripoint_rel_ms &start_arg,
+                                     const tripoint_rel_ms &end_arg )
+{
+    is_personal = true;
+    personal_start = start_arg;
+    personal_end = end_arg;
+    cached_shift = g->u.abs_pos();
+}
+
+auto zone_data::personal_origin() const -> tripoint_abs_ms
+{
+    const auto &mgr = zone_manager::get_manager();
+    if( mgr.personal_zones_are_pinned() ) {
+        return cached_shift;
+    }
+    return g->u.abs_pos();
+}
+
+auto zone_data::get_start_point() const -> tripoint_abs_ms
+{
+    if( is_personal ) {
+        return personal_origin() + personal_start;
+    }
+    return start;
+}
+
+auto zone_data::get_end_point() const -> tripoint_abs_ms
+{
+    if( is_personal ) {
+        return personal_origin() + personal_end;
+    }
+    return end;
 }
 
 void zone_data::set_enabled( const bool enabled_arg )
 {
     zone_manager::get_manager().zone_edited( *this );
     enabled = enabled_arg;
+}
+
+void zone_data::set_temporary_disabled( const bool disabled_arg )
+{
+    temporarily_disabled = disabled_arg;
+}
+
+void zone_data::update_cached_shift( const tripoint_abs_ms &shift )
+{
+    cached_shift = shift;
 }
 
 void zone_data::set_is_vehicle( const bool is_vehicle_arg )
@@ -840,13 +910,16 @@ void zone_data::set_is_vehicle( const bool is_vehicle_arg )
 
 tripoint_abs_ms zone_data::get_center_point() const
 {
-    return tripoint_abs_ms( ( start.x() + end.x() ) / 2, ( start.y() + end.y() ) / 2,
-                            ( start.z() + end.z() ) / 2 );
+    const auto zone_start = get_start_point();
+    const auto zone_end = get_end_point();
+    return tripoint_abs_ms( ( zone_start.x() + zone_end.x() ) / 2,
+                            ( zone_start.y() + zone_end.y() ) / 2,
+                            ( zone_start.z() + zone_end.z() ) / 2 );
 }
 
 auto zone_data::has_inside( const tripoint_abs_ms &p ) const -> bool
 {
-    const zone_bounds bounds = make_zone_bounds( start, end );
+    const zone_bounds bounds = make_zone_bounds( get_start_point(), get_end_point() );
     if( p.x() < bounds.min.x() || p.x() > bounds.max.x() ||
         p.y() < bounds.min.y() || p.y() > bounds.max.y() ||
         p.z() < bounds.min.z() || p.z() > bounds.max.z() ) {
@@ -884,8 +957,17 @@ bool zone_manager::has_defined( const zone_type_id &type, const faction_id &fac 
     return type_iter != area_cache.end();
 }
 
-void zone_manager::cache_data()
+void zone_manager::cache_data( const bool update_avatar )
 {
+    if( update_avatar && !personal_zones_pinned ) {
+        const auto shift = g->u.abs_pos();
+        std::ranges::for_each( zones, [&]( zone_data & zone ) {
+            if( zone.get_is_personal() ) {
+                zone.update_cached_shift( shift );
+            }
+        } );
+    }
+
     area_cache.clear();
 
     std::ranges::for_each( zones, [&]( zone_data & elem ) {
@@ -899,6 +981,100 @@ void zone_manager::cache_data()
             cache.insert( point );
         } );
     } );
+}
+
+auto zone_manager::has_nonpersonal( const zone_type_id &type, const tripoint_abs_ms &where,
+                                    const faction_id &fac ) const -> bool
+{
+    for( const auto &zone : zones ) {
+        if( zone.get_is_personal() || !zone.get_enabled() || zone.get_type() != type ||
+            zone.get_faction() != fac || !is_in_current_dimension( zone ) ) {
+            continue;
+        }
+        if( zone.has_inside( where ) ) {
+            return true;
+        }
+    }
+    return false;
+}
+
+auto zone_manager::use_vehicle_zones() const -> bool
+{
+    return applied_sort_mode != loot_sort_selection::personal_only;
+}
+
+auto zone_manager::has_personal_zones() const -> bool
+{
+    return std::ranges::any_of( zones, &zone_data::get_is_personal );
+}
+
+auto zone_manager::personal_zones_are_pinned() const -> bool
+{
+    return personal_zones_pinned;
+}
+
+void zone_manager::apply_sort_filter( const loot_sort_selection mode, const tripoint_abs_ms &pin )
+{
+    if( sort_filter_active && applied_sort_mode == mode &&
+        ( mode != loot_sort_selection::personal_only || pinned_shift == pin ) ) {
+        return;
+    }
+
+    for( auto &zone : zones ) {
+        if( zone.get_temporarily_disabled() ) {
+            zone.set_enabled( true );
+            zone.set_temporary_disabled( false );
+        }
+    }
+
+    if( mode == loot_sort_selection::regular_only ) {
+        for( auto &zone : zones ) {
+            if( zone.get_is_personal() && zone.get_enabled() ) {
+                zone.set_enabled( false );
+                zone.set_temporary_disabled( true );
+            }
+        }
+        personal_zones_pinned = false;
+    } else if( mode == loot_sort_selection::personal_only ) {
+        for( auto &zone : zones ) {
+            if( !zone.get_is_personal() && zone.get_enabled() ) {
+                zone.set_enabled( false );
+                zone.set_temporary_disabled( true );
+            }
+        }
+        personal_zones_pinned = true;
+        pinned_shift = pin;
+        for( auto &zone : zones ) {
+            if( zone.get_is_personal() ) {
+                zone.update_cached_shift( pin );
+            }
+        }
+    } else {
+        personal_zones_pinned = false;
+    }
+
+    applied_sort_mode = mode;
+    sort_filter_active = mode != loot_sort_selection::unrestricted;
+    cache_data( false );
+}
+
+void zone_manager::clear_sort_filter()
+{
+    if( !sort_filter_active && !personal_zones_pinned ) {
+        return;
+    }
+
+    for( auto &zone : zones ) {
+        if( zone.get_temporarily_disabled() ) {
+            zone.set_enabled( true );
+            zone.set_temporary_disabled( false );
+        }
+    }
+    personal_zones_pinned = false;
+    applied_sort_mode = loot_sort_selection::unrestricted;
+    sort_filter_active = false;
+    pinned_shift = tripoint_abs_ms::zero();
+    cache_data( true );
 }
 
 void zone_manager::cache_vzones()
@@ -947,7 +1123,23 @@ std::unordered_set<tripoint_abs_ms> zone_manager::get_point_set_loot( const trip
         if( ( !zone ) || ( zone->get_type().str().substr( 0, 4 ) != "LOOT" ) ) {
             continue;
         }
-        if( npc_search && ( has( zone_NO_NPC_PICKUP, abs_pos ) ) ) {
+        // Friendly NPCs keep using static camp zones.
+        if( npc_search && zone->get_is_personal() ) {
+            bool static_loot = false;
+            for( const auto &candidate : zones ) {
+                if( candidate.get_is_personal() || !candidate.get_enabled() ||
+                    !candidate.has_inside( abs_pos ) ||
+                    candidate.get_type().str().substr( 0, 4 ) != "LOOT" ) {
+                    continue;
+                }
+                static_loot = true;
+                break;
+            }
+            if( !static_loot ) {
+                continue;
+            }
+        }
+        if( npc_search && ( has( zone_NO_NPC_PICKUP, abs_pos, your_fac, true ) ) ) {
             continue;
         }
         res.insert( abs_pos );
@@ -968,31 +1160,54 @@ std::unordered_set<tripoint_abs_ms> zone_manager::get_vzone_set( const zone_type
 }
 
 bool zone_manager::has( const zone_type_id &type, const tripoint_abs_ms &where,
-                        const faction_id &fac ) const
+                        const faction_id &fac, const bool skip_personal ) const
 {
     const auto &point_set = get_point_set( type, fac );
+    const auto in_area = point_set.contains( where );
+    if( !use_vehicle_zones() ) {
+        return in_area;
+    }
     const auto &vzone_set = get_vzone_set( type, fac );
-    return point_set.contains( where ) || vzone_set.contains( where );
+    const auto in_vzone = vzone_set.contains( where );
+    if( !skip_personal ) {
+        return in_area || in_vzone;
+    }
+    if( in_vzone ) {
+        return true;
+    }
+    return in_area && has_nonpersonal( type, where, fac );
 }
 
 bool zone_manager::has_near( const zone_type_id &type, const tripoint_abs_ms &where, int range,
-                             const faction_id &fac ) const
+                             const faction_id &fac, const bool skip_personal ) const
 {
+    const auto accepts = [&]( const tripoint_abs_ms & point, const bool from_vehicle ) {
+        if( point.z() != where.z() || square_dist( point, where ) > range ) {
+            return false;
+        }
+        if( from_vehicle ) {
+            return use_vehicle_zones();
+        }
+        if( !skip_personal || !use_vehicle_zones() ) {
+            return true;
+        }
+        return has_nonpersonal( type, point, fac );
+    };
+
     const auto &point_set = get_point_set( type, fac );
-    for( auto &point : point_set ) {
-        if( point.z() == where.z() ) {
-            if( square_dist( point, where ) <= range ) {
-                return true;
-            }
+    for( const auto &point : point_set ) {
+        if( accepts( point, false ) ) {
+            return true;
         }
     }
 
+    if( !use_vehicle_zones() ) {
+        return false;
+    }
     const auto &vzone_set = get_vzone_set( type, fac );
-    for( auto &point : vzone_set ) {
-        if( point.z() == where.z() ) {
-            if( square_dist( point, where ) <= range ) {
-                return true;
-            }
+    for( const auto &point : vzone_set ) {
+        if( accepts( point, true ) ) {
+            return true;
         }
     }
 
@@ -1017,12 +1232,18 @@ bool zone_manager::has_loot_dest_near( const tripoint_abs_ms &where ) const
 }
 
 const zone_data *zone_manager::get_zone_at( const tripoint_abs_ms &where,
-        const zone_type_id &type ) const
+        const zone_type_id &type, const bool skip_personal ) const
 {
     for( const zone_data &zone : zones ) {
+        if( skip_personal && zone.get_is_personal() ) {
+            continue;
+        }
         if( is_in_current_dimension( zone ) && zone.has_inside( where ) && zone.get_type() == type ) {
             return &zone;
         }
+    }
+    if( !use_vehicle_zones() ) {
+        return nullptr;
     }
     auto vzones = get_map().get_vehicle_zones( g->get_levz() );
     for( const zone_data *zone : vzones ) {
@@ -1033,9 +1254,10 @@ const zone_data *zone_manager::get_zone_at( const tripoint_abs_ms &where,
     return nullptr;
 }
 
-bool zone_manager::custom_loot_has( const tripoint_abs_ms &where, const item *it ) const
+bool zone_manager::custom_loot_has( const tripoint_abs_ms &where, const item *it,
+                                    const bool skip_personal ) const
 {
-    auto zone = get_zone_at( where, zone_LOOT_CUSTOM );
+    auto zone = get_zone_at( where, zone_LOOT_CUSTOM, skip_personal );
     if( !zone || !it ) {
         return false;
     }
@@ -1047,36 +1269,40 @@ bool zone_manager::custom_loot_has( const tripoint_abs_ms &where, const item *it
 }
 
 std::unordered_set<tripoint_abs_ms> zone_manager::get_near( const zone_type_id &type,
-        const tripoint_abs_ms &where, int range, const item *it, const faction_id &fac ) const
+        const tripoint_abs_ms &where, int range, const item *it, const faction_id &fac,
+        const bool skip_personal ) const
 {
     const auto &point_set = get_point_set( type, fac );
     auto near_point_set = std::unordered_set<tripoint_abs_ms>();
 
-    for( auto &point : point_set ) {
-        if( point.z() == where.z() ) {
-            if( square_dist( point, where ) <= range ) {
-                if( it && has( zone_LOOT_CUSTOM, point ) ) {
-                    if( custom_loot_has( point, it ) ) {
-                        near_point_set.insert( point );
-                    }
-                } else {
-                    near_point_set.insert( point );
-                }
+    for( const auto &point : point_set ) {
+        if( point.z() != where.z() || square_dist( point, where ) > range ) {
+            continue;
+        }
+        if( skip_personal && !has_nonpersonal( type, point, fac ) ) {
+            continue;
+        }
+        if( it && has( zone_LOOT_CUSTOM, point, fac, skip_personal ) ) {
+            if( custom_loot_has( point, it, skip_personal ) ) {
+                near_point_set.insert( point );
             }
+        } else {
+            near_point_set.insert( point );
         }
     }
 
-    const auto &vzone_set = get_vzone_set( type, fac );
-    for( auto &point : vzone_set ) {
-        if( point.z() == where.z() ) {
-            if( square_dist( point, where ) <= range ) {
-                if( it && has( zone_LOOT_CUSTOM, point ) ) {
-                    if( custom_loot_has( point, it ) ) {
-                        near_point_set.insert( point );
-                    }
-                } else {
+    if( use_vehicle_zones() ) {
+        const auto &vzone_set = get_vzone_set( type, fac );
+        for( const auto &point : vzone_set ) {
+            if( point.z() != where.z() || square_dist( point, where ) > range ) {
+                continue;
+            }
+            if( it && has( zone_LOOT_CUSTOM, point, fac, skip_personal ) ) {
+                if( custom_loot_has( point, it, skip_personal ) ) {
                     near_point_set.insert( point );
                 }
+            } else {
+                near_point_set.insert( point );
             }
         }
     }
@@ -1124,32 +1350,32 @@ std::optional<tripoint_abs_ms> zone_manager::get_nearest( const zone_type_id &ty
 }
 
 zone_type_id zone_manager::get_near_zone_type_for_item( const item &it,
-        const tripoint_abs_ms &where, int range ) const
+        const tripoint_abs_ms &where, int range, const bool skip_personal ) const
 {
     const item_category &cat = it.get_category();
 
-    if( has_near( zone_LOOT_CUSTOM, where, range ) ) {
-        if( !get_near( zone_LOOT_CUSTOM, where, range, &it ).empty() ) {
+    if( has_near( zone_LOOT_CUSTOM, where, range, your_fac, skip_personal ) ) {
+        if( !get_near( zone_LOOT_CUSTOM, where, range, &it, your_fac, skip_personal ).empty() ) {
             return zone_LOOT_CUSTOM;
         }
     }
     if( it.has_flag( STATIC( flag_id( "FIREWOOD" ) ) ) ) {
-        if( has_near( zone_LOOT_WOOD, where, range ) ) {
+        if( has_near( zone_LOOT_WOOD, where, range, your_fac, skip_personal ) ) {
             return zone_LOOT_WOOD;
         }
     }
     if( it.is_corpse() ) {
-        if( has_near( zone_LOOT_CORPSE, where, range ) ) {
+        if( has_near( zone_LOOT_CORPSE, where, range, your_fac, skip_personal ) ) {
             return zone_LOOT_CORPSE;
         }
     }
 
     std::optional<zone_type_id> zone_check_first = cat.priority_zone( it );
-    if( zone_check_first && has_near( *zone_check_first, where, range ) ) {
+    if( zone_check_first && has_near( *zone_check_first, where, range, your_fac, skip_personal ) ) {
         return *zone_check_first;
     }
 
-    if( cat.zone() && has_near( *cat.zone(), where, range ) ) {
+    if( cat.zone() && has_near( *cat.zone(), where, range, your_fac, skip_personal ) ) {
         return *cat.zone();
     }
 
@@ -1159,23 +1385,25 @@ zone_type_id zone_manager::get_near_zone_type_for_item( const item &it,
         // skip food without comestible, like MREs
         if( const item *it_food = it.get_food() ) {
             if( it_food->get_comestible()->comesttype == "DRINK" ) {
-                if( !preserves && it_food->goes_bad() && has_near( zone_LOOT_PDRINK, where, range ) ) {
+                if( !preserves && it_food->goes_bad() &&
+                    has_near( zone_LOOT_PDRINK, where, range, your_fac, skip_personal ) ) {
                     return zone_LOOT_PDRINK;
-                } else if( has_near( zone_LOOT_DRINK, where, range ) ) {
+                } else if( has_near( zone_LOOT_DRINK, where, range, your_fac, skip_personal ) ) {
                     return zone_LOOT_DRINK;
                 }
             }
 
-            if( !preserves && it_food->goes_bad() && has_near( zone_LOOT_PFOOD, where, range ) ) {
+            if( !preserves && it_food->goes_bad() &&
+                has_near( zone_LOOT_PFOOD, where, range, your_fac, skip_personal ) ) {
                 return zone_LOOT_PFOOD;
             }
         }
-        if( has_near( zone_LOOT_FOOD, where, range ) ) {
+        if( has_near( zone_LOOT_FOOD, where, range, your_fac, skip_personal ) ) {
             return zone_LOOT_FOOD;
         }
     }
 
-    if( has_near( zone_LOOT_DUMP, where, range ) ) {
+    if( has_near( zone_LOOT_DUMP, where, range, your_fac, skip_personal ) ) {
         return zone_LOOT_DUMP;
     }
 
@@ -1320,6 +1548,24 @@ void zone_manager::add( const std::string &name, const zone_type_id &type, const
     cache_data();
 }
 
+void zone_manager::add( const std::string &name, const zone_type_id &type, const faction_id &fac,
+                        const bool invert, const bool enabled, const tripoint_rel_ms &start,
+                        const tripoint_rel_ms &end, shared_ptr_fast<zone_options> options )
+{
+    const auto type_it = types.find( type );
+    if( type_it == types.end() || !type_it->second.can_be_personal ) {
+        debugmsg( "Zone type %s cannot be a personal zone", type.c_str() );
+        return;
+    }
+
+    auto new_zone = zone_data( name, type, fac, invert, enabled, tripoint_abs_ms::zero(),
+                               tripoint_abs_ms::zero(), std::move( options ) );
+    new_zone.set_dimension( get_map().get_bound_dimension() );
+    new_zone.set_personal_bounds( start, end );
+    zones.push_back( new_zone );
+    cache_data( false );
+}
+
 bool zone_manager::remove( zone_data &zone )
 {
     for( auto it = zones.begin(); it != zones.end(); ++it ) {
@@ -1406,7 +1652,7 @@ void zone_manager::rotate_zones( map &target_map, const int turns )
     const auto a_end = map_local_to_abs( target_map, tripoint_bub_ms( 23, 23, 0 ) );
     const point dim( 24, 24 );
     for( zone_data &zone : zones ) {
-        if( zone.get_dimension() != target_map.get_bound_dimension() ) {
+        if( zone.get_is_personal() || zone.get_dimension() != target_map.get_bound_dimension() ) {
             continue;
         }
         const auto z_start = zone.get_start_point();
@@ -1509,9 +1755,16 @@ void zone_data::serialize( JsonOut &json ) const
     json.member( "invert", invert );
     json.member( "enabled", enabled );
     json.member( "is_vehicle", is_vehicle );
+    json.member( "is_personal", is_personal );
     json.member( "dimension", dim_id.str() );
-    json.member( "start", start );
-    json.member( "end", end );
+    if( is_personal ) {
+        json.member( "start", personal_start );
+        json.member( "end", personal_end );
+        json.member( "cached_shift", cached_shift );
+    } else {
+        json.member( "start", start );
+        json.member( "end", end );
+    }
     get_options().serialize( json );
     json.end_object();
 }
@@ -1538,6 +1791,11 @@ void zone_data::deserialize( JsonIn &jsin )
     } else {
         is_vehicle = false;
     }
+    is_personal = false;
+    temporarily_disabled = false;
+    if( data.has_member( "is_personal" ) ) {
+        data.read( "is_personal", is_personal );
+    }
     //Legacy support
     if( data.has_member( "start_x" ) ) {
         tripoint_abs_ms s;
@@ -1550,6 +1808,12 @@ void zone_data::deserialize( JsonIn &jsin )
         data.read( "end_z", e.z() );
         start = s;
         end = e;
+    } else if( is_personal ) {
+        data.read( "start", personal_start );
+        data.read( "end", personal_end );
+        if( data.has_member( "cached_shift" ) ) {
+            data.read( "cached_shift", cached_shift );
+        }
     } else {
         data.read( "start", start );
         data.read( "end", end );
