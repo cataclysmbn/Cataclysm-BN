@@ -69,6 +69,16 @@ TEST_CASE("lua_examine_and_harvest_callbacks", "[lua][examine]") {
         CHECK(test_data.get<bool>("examine_ter_pos"));
     }
 
+    SECTION("copy-from keeps an inherited lua examine_action") {
+        // The copy sets no examine_action of its own, so it must keep both the
+        // lua_examine function and the callback id of its parent.
+        here.ter_set(pos, ter_str_id("t_test_lua_examine_copy").id());
+        here.examine(who, pos);
+
+        CHECK(test_data.get<bool>("examine_ter_called"));
+        CHECK(test_data.get<std::string>("examine_ter_terrain") == "t_test_lua_examine_copy");
+    }
+
     SECTION("furniture examine_action lua reports furniture and terrain ids") {
         here.ter_set(pos, ter_str_id("t_dirt").id());
         here.furn_set(pos, furn_str_id("f_test_lua_examine").id());

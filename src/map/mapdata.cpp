@@ -1176,14 +1176,16 @@ template <> auto enum_to_string<season_type>(season_type data) -> std::string {
 
 void map_data_common_t::load(const JsonObject& jo, const std::string& src) {
     const auto examine_action = jo.get_string("examine_action", "");
-    examine_action_id.clear();
-
+    // Keep the inherited Lua callback id unless this entry sets its own
+    // examine_action (copy-from keeps `examine`, so it must keep the id too).
     if (examine_action.rfind("lua:", 0) == 0) {
         examine_action_id = examine_action.substr(4);
         examine = iexamine_function_from_string("lua_examine");
     } else if (!examine_action.empty()) {
+        examine_action_id.clear();
         examine = iexamine_function_from_string(examine_action);
     } else if (!was_loaded) {
+        examine_action_id.clear();
         examine = iexamine_function_from_string("none");
     }
 

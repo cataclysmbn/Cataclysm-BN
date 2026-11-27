@@ -259,5 +259,12 @@
     "move_cost": 2,
     "examine_action": "lua:test_lua_examine",
     "forage_class": "bushes"
+  },
+  {
+    "type": "terrain",
+    "id": "t_test_lua_examine_copy",
+    "copy-from": "t_test_lua_examine",
+    "name": "test lua examine terrain copy",
+    "description": "Inherits the Lua examine action of t_test_lua_examine through copy-from."
   }
 ]
