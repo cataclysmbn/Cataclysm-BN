@@ -278,5 +278,15 @@
     "examine_action": "harvest_ter",
     "transforms_into": "t_dirt",
     "harvest_by_season": [ { "seasons": [ "autumn" ], "entries": [ { "drop": "apple", "base_num": [ 1, 2 ] } ] } ]
+  },
+  {
+    "type": "terrain",
+    "id": "t_test_forage_none",
+    "name": "test forage class without examine action",
+    "description": "Has a forage class but no examine action, so it can never be foraged.",
+    "symbol": ".",
+    "color": "green",
+    "move_cost": 2,
+    "forage_class": "bushes"
   }
 ]

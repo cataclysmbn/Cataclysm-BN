@@ -1648,6 +1648,11 @@ void map_data_common_t::check() const {
             debugmsg("Harvest data defined without examine function for %s", name_.c_str());
         }
     }
+    if (forage_classes != forage_class::none && examine == iexamine::none) {
+        debugmsg(
+            "Forage class defined for %s, but its examine action is \"none\", so it can never be foraged",
+            name_.c_str());
+    }
 }
 
 void furn_t::check() const {

@@ -2805,6 +2805,10 @@ void iexamine::harvest_plant( player &p, const tripoint_bub_ms &examp, bool from
             debugmsg( "Lua harvest action \"%s\" left a harvestable plant at %s; applying its default transform",
                       harvest_action, examp.to_string() );
             const auto &plant = here.furn( examp )->plant;
+            // Clear the tile like the hardcoded harvest would, so a callback
+            // that transformed the furniture but forgot the seed does not
+            // leave it lying on the transformed tile.
+            here.i_clear( examp );
             here.furn_set( examp, plant ? furn_str_id( plant->transform ) : f_null );
         }
         return;

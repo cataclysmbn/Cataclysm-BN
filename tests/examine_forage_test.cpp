@@ -134,6 +134,9 @@ TEST_CASE("lua_examine_and_harvest_callbacks", "[lua][examine]") {
         CHECK(test_data.get<bool>("harvest_from_activity"));
         CHECK(message.find("left a harvestable plant") != std::string::npos);
         CHECK_FALSE(here.has_flag_furn("GROWTH_HARVEST", pos));
+        // The fallback clears the tile like the hardcoded harvest, so the
+        // seed item the callback forgot does not stay behind.
+        CHECK(here.i_at(pos).empty());
     }
 
     SECTION("forage_class is loaded from json") {
@@ -155,6 +158,21 @@ TEST_CASE("lua_examine_and_harvest_callbacks", "[lua][examine]") {
         // class: a harvested pine has nothing to forage.
         CHECK(ter_str_id("t_tree_pine").id().obj().forage_classes == forage_class::trees);
         CHECK(ter_str_id("t_tree_pine_harvested").id().obj().forage_classes == forage_class::none);
+    }
+
+    SECTION("a forage class without an examine action warns at load") {
+        // t_test_forage_none sets a forage class but no examine action, so
+        // the "none" examine would print "That is a X." on every auto-forage
+        // step. The data check must flag it.
+        const auto message = capture_debugmsg_during([&]() {
+            ter_str_id("t_test_forage_none").id().obj().check();
+        });
+        CHECK(message.find("can never be foraged") != std::string::npos);
+        // Sanity: the check stays silent for a properly forageable terrain.
+        const auto quiet = capture_debugmsg_during([&]() {
+            ter_str_id("t_test_lua_examine").id().obj().check();
+        });
+        CHECK(quiet.empty());
     }
 }
 

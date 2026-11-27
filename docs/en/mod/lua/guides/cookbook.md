@@ -935,5 +935,9 @@ The C++ harvest does not run, so the callback is responsible for the whole
 harvest: it must replace the grown plant furniture (the furniture with the
 `GROWTH_HARVEST` flag) and clear or transform the planted seed item, and it
 should charge the time it takes. If the grown plant is still there after the
-callback, the game reports an error and applies the plant's default transform,
-because farm zones would otherwise harvest the same tile forever.
+callback, the game reports an error and applies the plant's default transform
+(clearing the tile's items), because farm zones would otherwise harvest the
+same tile forever. That fallback is triggered by the `GROWTH_HARVEST` flag
+itself, so multi-stage crops cannot skip the transform: a callback that turns
+the plant into a *different* harvestable stage has that stage immediately
+replaced by the new furniture's own default transform.
