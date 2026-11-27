@@ -3074,8 +3074,6 @@ void vehicle_part::deserialize( JsonIn &jsin )
         }
     }
     id = pid;
-    info_cache = nullptr;
-    set_variant( data.get_string( "variant", info().variant_default ) );
 
     if( data.has_object( "base" ) ) {
         data.read( "base", base );
@@ -3168,9 +3166,6 @@ void vehicle_part::serialize( JsonOut &json ) const
 {
     json.start_object();
     json.member( "id", id.str() );
-    if( !variant.empty() || !info().variant_default.empty() ) {
-        json.member( "variant", variant );
-    }
     json.member( "base", base );
     json.member( "mount_dx", mount.x() );
     json.member( "mount_dy", mount.y() );

@@ -11,7 +11,6 @@
 #    include "units_utility.h"
 #    include "veh_type.h"
 #    include "vehicle.h"
-#    include "vehicle_display.h"
 #    include "vehicle_part.h"
 #    include "vpart_position.h"
 
@@ -40,19 +39,24 @@ public:
         return static_cast<veh_preview_adapter*>(ct);
     }
 
-    /// Draw the resolved part appearance at a preview pixel position.
+    /**
+     * Draw a vehicle part tile at the given pixel position.
+     * @param bg_color Background color tint (for painting)
+     * @param fg_color Foreground color tint (for painting)
+     */
     void draw_vpart_tile(
-        const vpart_display& display, const point& pixel_pos, const color_tint_pair& colors) {
-        if (!display.id.is_valid()) { return; }
+        const vpart_id& vp_id, const point& pixel_pos, int part_mod, int rotation_degrees,
+        const tint_config& bg_color, const tint_config& fg_color) {
+        if (!vp_id.is_valid()) { return; }
 
-        const auto vpname = display.get_tileset_id();
-        const auto rotation_degrees = static_cast<int>(std::round(to_degrees(display.direction)));
+        const std::string vpname = "vp_" + vp_id.str();
 
+        // part_mod: 0=normal, 1=open, 2=broken
         // Maps to subtile values used by cata_tiles
         int subtile = 0;
-        if (display.is_open) {
+        if (part_mod == 1) {
             subtile = open_;
-        } else if (display.is_broken) {
+        } else if (part_mod == 2) {
             subtile = broken;
         }
 
@@ -64,7 +68,7 @@ public:
         // Using tripoint with pixel coordinates - the as_independent_entity flag
         // tells the renderer to treat these as absolute pixel positions
         draw_from_id_string(
-            tile, tripoint_bub_ms(pixel_pos.x, pixel_pos.y, 0), colors.first, colors.second,
+            tile, tripoint_bub_ms(pixel_pos.x, pixel_pos.y, 0), bg_color, fg_color,
             lit_level::BRIGHT,
             false, // apply_visual_effects
             0,     // overlay_count
@@ -154,9 +158,12 @@ void vehicle_preview_window::zoom_out() {
 }
 
 void vehicle_preview_window::draw_vpart_at_pixel(
-    const vpart_display& display, point pixel_pos, const color_tint_pair& colors) {
-    auto* adapter = veh_preview_adapter::convert(&*tilecontext);
-    adapter->draw_vpart_tile(display, pixel_pos, colors);
+    const vpart_id& vp_id, point pixel_pos, int part_mod, units::angle veh_facing,
+    const tint_config& bg_color, const tint_config& fg_color) {
+    const int rotation_degrees = static_cast<int>(std::round(to_degrees(veh_facing)));
+
+    veh_preview_adapter* adapter = veh_preview_adapter::convert(&*tilecontext);
+    adapter->draw_vpart_tile(vp_id, pixel_pos, part_mod, rotation_degrees, bg_color, fg_color);
 }
 
 void vehicle_preview_window::draw_highlight_at_pixel(point pixel_pos) {
@@ -203,14 +210,16 @@ void vehicle_preview_window::display(
         const auto q = (part.mount - cursor).xy().rotate(3);
         const point pixel_pos = center_px + point(q.x() * tile_w, q.y() * tile_h);
 
-        // Resolve the same appearance used by world drawing.
-        auto display = veh.get_display_of_tile(part.mount);
+        // Get part rendering info
+        char part_mod = 0;
+        const vpart_id& vp_id = veh.part_id_string(part_idx, false, part_mod);
 
-        // Preserve the installed part's paint.
-        const auto colors = adapter->get_part_colors(veh, part_idx);
+        // Get paint colors for this part (will return actual colors when painting is implemented)
+        const auto [bg_color, fg_color] = adapter->get_part_colors(veh, part_idx);
 
-        display.direction = normalize(270_degrees + display.direction - veh.face.dir());
-        draw_vpart_at_pixel(display, pixel_pos, colors);
+        const auto part_direction = normalize(
+            270_degrees + veh.part_display_direction(part_idx) - veh.face.dir());
+        draw_vpart_at_pixel(vp_id, pixel_pos, part_mod, part_direction, bg_color, fg_color);
 
         const bool is_highlighted = (part_idx == highlight_part) || (q == point_rel_veh::zero());
         if (is_highlighted) { highlight_positions.push_back(pixel_pos); }

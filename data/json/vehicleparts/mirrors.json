@@ -26,12 +26,7 @@
     "id": "wing_mirror",
     "symbol": "o",
     "type": "vehicle_part",
-    "shapes": [ { "direction": "left", "symbol": "l" }, { "direction": "right", "symbol": "r" } ],
-    "variants": [
-      { "id": "left", "label": "Left", "symbols": "o", "symbols_broken": "*" },
-      { "id": "right", "label": "Right", "symbols": "o", "symbols_broken": "*" }
-    ],
-    "variant_default": ""
+    "shapes": [ { "direction": "left", "symbol": "l" }, { "direction": "right", "symbol": "r" } ]
   },
   {
     "type": "vehicle_part",

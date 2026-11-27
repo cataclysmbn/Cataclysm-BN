@@ -71,7 +71,6 @@ vehicle_part::vehicle_part(
       base(new vehicle_base_item_location(veh, hack_id)),
       items(new vehicle_item_location(veh, hack_id)) {
     base = std::move(obj);
-    variant = vp->variant_default;
 
     // Mark base item as being installed as a vehicle part
     base->set_flag(flag_VEHICLE);
@@ -103,7 +102,6 @@ void vehicle_part::copy_static_from(const vehicle_part& source) {
     flags = source.flags;
     passenger_id = source.passenger_id;
     open = source.open;
-    variant = source.variant;
     direction = source.direction;
     proxy_part_id = source.proxy_part_id;
     proxy_sym = source.proxy_sym;
@@ -613,11 +611,4 @@ void vehicle_part::set_color(const RGBColor& bg, const RGBColor& fg) {
         vars.set<RGBColor>(TINT_COLOR_FG_VAR_NAME, fg);
         vars.set<RGBColor>(TINT_COLOR_BG_VAR_NAME, bg);
     }
-}
-
-auto vehicle_part::set_variant(const std::string& value) -> bool {
-    const auto& definition = info();
-    const auto valid = definition.variants.contains(value);
-    variant = valid ? value : definition.variant_default;
-    return valid || value.empty();
 }

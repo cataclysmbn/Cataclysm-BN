@@ -139,50 +139,21 @@ Note: this field does not support copy from, it must be defined on each object
   {
     "direction": "left",     // What is appended to the id, so wing_metal would become wing_metal_left. Additionally is appended to the looks_like field
     "symbol": "y",           // Same as the symbol definition above
-    "broken_symbol": "y",    // Same as the broken symbol definition above
     "looks_like": "board_nw" // Same as the looks_like definition above, overwrites changes from direction
   },
 ]
 ```
 
-### Appearance variants
+Shapes are ordinary part IDs, such as `frame_vertical`. Use those IDs in vehicle
+prototypes and `copy-from`. A shape’s `looks_like` changes graphic fallback, not
+its physical inheritance. Existing IDs remain available when new shapes are added.
 
-A variant selects the symbols and sprites of a physical part. Define the available
-appearances in `variants`:
+A tileset binds a shape with `vp_<part_id>`. Give the shape an existing part ID as
+its `looks_like` so other tilesets can use that fallback. The selected artwork does
+not change the part's collision, transparency, material or other physical properties.
 
-```jsonc
-"variants": [
-  { "id": "vertical", "label": "Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-  { "id": "cross", "label": "Cross", "symbols": "+", "symbols_broken": "x" }
-]
-```
-
-- `id`: appearance ID; must not contain `#`.
-- `label`: translated name in the shape menu.
-- `symbols` and `symbols_broken`: one single-cell Unicode character for all
-  directions, or eight characters in N, NE, E, SE, S, SW, W, NW order.
-- `variant_default`: default ID; defaults to the first entry in `variants`.
-- `variants_bases`: prefixes additional copies of the variants. For example,
-  `{ "id": "black", "label": "Black" }` adds `black_vertical` and `black_cross`.
-
-`copy-from` inherits variants. An explicit `variants` array replaces the inherited
-list; `[]` clears it. An explicit `variants_bases` array replaces inherited prefixes.
-Set `"variant_default": ""` without an empty-ID entry to retain legacy symbols and
-untagged sprites until an appearance is selected. Existing `symbol` and `shapes`
-definitions remain supported.
-
-Vehicle prototypes select an appearance with `"part_id#variant_id"` in strings,
-object-form parts or blueprint palettes. Omitting the suffix selects the default;
-`"part_id#"` selects the empty-ID variant, if defined. Saves store the choice
-separately from the physical ID. Missing or unknown saved choices use the default;
-exports retain non-default choices, including an explicit empty ID.
-
-Tilesets bind variants as `vp_part_id_variant_id`. Lookup tries the full variant,
-then shorter underscore-separated prefixes, then `vp_part_id`. If these fail,
-it follows `looks_like` with the full original variant. Furniture and terrain
-fallbacks remain supported, including `furniture_id_var_variant_id`. Open and
-broken subtiles work as usual. Variants do not change construction, add equipment
-or infer neighbouring geometry.
+In appearance-only shape names, `as_<profile>` describes the artwork and
+`from_<shape>` identifies the legacy fallback; `base` means the unsuffixed part.
 
 ### Vehicles
 

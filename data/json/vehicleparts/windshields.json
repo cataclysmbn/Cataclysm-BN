@@ -93,66 +93,48 @@
       { "direction": "vertical_right", "symbol": "H" },
       { "direction": "horizontal_front", "symbol": "T" },
       { "direction": "horizontal_front_edge", "symbol": "^" },
-      { "direction": "horizontal_rear", "symbol": "B" }
-    ],
-    "variants": [
-      { "id": "horizontal", "label": "Horizontal", "symbols": "\"", "symbols_broken": "0" },
-      { "id": "cover_left", "label": "Cover Left", "symbols": "──│───│─", "symbols_broken": "0" },
-      { "id": "cover_right", "label": "Cover Right", "symbols": "──│───│─", "symbols_broken": "0" },
-      { "id": "nw", "label": "Front Left", "symbols": "┌┌└┘┘┘┐┌", "symbols_broken": "0" },
-      { "id": "ne", "label": "Front Right", "symbols": "┐┐┌└└└┘┐", "symbols_broken": "0" },
-      { "id": "sw", "label": "Rear Left", "symbols": "└└┘┐┐┐┌└", "symbols_broken": "0" },
-      { "id": "se", "label": "Rear Right", "symbols": "┘┘┐┌┌┌└┘", "symbols_broken": "0" },
-      { "id": "nw_edge", "label": "Front Left Corner", "symbols": "┌┌└┘┘┘┐┌", "symbols_broken": "0" },
-      { "id": "ne_edge", "label": "Front Right Corner", "symbols": "┐┐┌└└└┘┐", "symbols_broken": "0" },
-      { "id": "sw_edge", "label": "Rear Left Corner", "symbols": "└└┘┐┐┐┌└", "symbols_broken": "0" },
-      { "id": "se_edge", "label": "Rear Right Corner", "symbols": "┘┘┐┌┌┌└┘", "symbols_broken": "0" },
-      { "id": "left", "label": "Left", "symbols": "│\\─/│\\─/", "symbols_broken": "0" },
-      { "id": "right", "label": "Right", "symbols": "│\\─/│\\─/", "symbols_broken": "0" },
-      { "id": "vertical", "label": "Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "0" },
-      { "id": "vertical_left", "label": "Left Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "0" },
-      { "id": "vertical_right", "label": "Right Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "0" },
-      {
-        "id": "vertical_2_left",
-        "label": "Left Thick Vertical",
-        "symbols": "│\\─/│\\─/",
-        "symbols_broken": "0"
-      },
-      {
-        "id": "vertical_2_right",
-        "label": "Right Thick Vertical",
-        "symbols": "│\\─/│\\─/",
-        "symbols_broken": "0"
-      },
-      {
-        "id": "horizontal_front",
-        "label": "Front Horizontal",
-        "symbols": "──│───│─",
-        "symbols_broken": "0"
-      },
-      {
-        "id": "horizontal_front_edge",
-        "label": "Front Edge Horizontal",
-        "symbols": "^^<vvv>^",
-        "symbols_broken": "0"
-      },
-      {
-        "id": "horizontal_rear",
-        "label": "Rear Horizontal",
-        "symbols": "──│───│─",
-        "symbols_broken": "0"
-      },
-      {
-        "id": "horizontal_rear_edge",
-        "label": "Rear Edge Horizontal",
-        "symbols": "━━┃━━━┃━",
-        "symbols_broken": "0"
-      },
-      { "id": "wheel_left", "label": "Wheel Left", "symbols": "┌┌└┘┘┘┐┌", "symbols_broken": "0" },
-      { "id": "wheel_right", "label": "Wheel Right", "symbols": "┐┐┌└└└┘┐", "symbols_broken": "0" }
-    ],
-    "variants_bases": [ { "id": "full", "label": "Full" } ],
-    "variant_default": ""
+      { "direction": "horizontal_rear", "symbol": "B" },
+      { "direction": "as_se_from_base", "symbol": "\"", "looks_like": "windshield" },
+      { "direction": "as_sw_from_base", "symbol": "\"", "looks_like": "windshield" },
+      { "direction": "wide_front_middle", "symbol": "\"", "looks_like": "windshield" },
+      { "direction": "as_wheel_left_from_base", "symbol": "\"", "looks_like": "windshield" },
+      { "direction": "as_cover_left_from_base", "symbol": "\"", "looks_like": "windshield" },
+      { "direction": "as_cover_right_from_base", "symbol": "\"", "looks_like": "windshield" },
+      { "direction": "as_wheel_right_from_base", "symbol": "\"", "looks_like": "windshield" },
+      { "direction": "as_horizontal_rear_from_base", "symbol": "\"", "looks_like": "windshield" },
+      { "direction": "as_vertical_left_from_base", "symbol": "\"", "looks_like": "windshield" },
+      { "direction": "as_nw_edge_from_base", "symbol": "\"", "looks_like": "windshield" },
+      { "direction": "as_vertical_right_from_base", "symbol": "\"", "looks_like": "windshield" },
+      { "direction": "as_ne_edge_from_base", "symbol": "\"", "looks_like": "windshield" },
+      { "direction": "as_horizontal_front_edge_from_base", "symbol": "\"", "looks_like": "windshield" },
+      { "direction": "as_cover_left_from_horizontal_front", "symbol": "T", "looks_like": "windshield_horizontal_front" },
+      { "direction": "as_cover_right_from_horizontal_front", "symbol": "T", "looks_like": "windshield_horizontal_front" },
+      { "direction": "as_vertical_right_from_horizontal_front", "symbol": "T", "looks_like": "windshield_horizontal_front" },
+      { "direction": "as_ne_edge_from_ne", "symbol": "u", "looks_like": "windshield_ne" },
+      { "direction": "as_nw_edge_from_nw", "symbol": "y", "looks_like": "windshield_nw" },
+      { "direction": "as_wheel_left_from_nw", "symbol": "y", "looks_like": "windshield_nw" },
+      { "direction": "as_wheel_right_from_ne", "symbol": "u", "looks_like": "windshield_ne" },
+      { "direction": "as_ne_from_base", "symbol": "\"", "looks_like": "windshield" },
+      { "direction": "as_nw_from_base", "symbol": "\"", "looks_like": "windshield" },
+      { "direction": "as_horizontal_rear_from_horizontal_front", "symbol": "T", "looks_like": "windshield_horizontal_front" },
+      { "direction": "as_full_left_from_vertical_left", "symbol": "j", "looks_like": "windshield_vertical_left" },
+      { "direction": "as_full_right_from_vertical_right", "symbol": "H", "looks_like": "windshield_vertical_right" },
+      { "direction": "as_full_wheel_left_from_vertical_left", "symbol": "j", "looks_like": "windshield_vertical_left" },
+      { "direction": "as_full_wheel_right_from_vertical_right", "symbol": "H", "looks_like": "windshield_vertical_right" },
+      { "direction": "as_full_vertical_right_from_base", "symbol": "\"", "looks_like": "windshield" },
+      { "direction": "as_wide_front_right_from_base", "symbol": "\"", "looks_like": "windshield" },
+      { "direction": "as_wide_front_inner_left_from_base", "symbol": "\"", "looks_like": "windshield" },
+      { "direction": "as_full_vertical_left_from_base", "symbol": "\"", "looks_like": "windshield" },
+      { "direction": "as_wide_front_inner_right_from_base", "symbol": "\"", "looks_like": "windshield" },
+      { "direction": "as_full_wheel_left_from_base", "symbol": "\"", "looks_like": "windshield" },
+      { "direction": "as_full_wheel_right_from_base", "symbol": "\"", "looks_like": "windshield" },
+      { "direction": "as_wide_front_left_from_base", "symbol": "\"", "looks_like": "windshield" },
+      { "direction": "as_horizontal_rear_edge_from_base", "symbol": "\"", "looks_like": "windshield" },
+      { "direction": "as_vertical_2_left_from_base", "symbol": "\"", "looks_like": "windshield" },
+      { "direction": "as_vertical_2_right_from_base", "symbol": "\"", "looks_like": "windshield" },
+      { "direction": "glazed_rear_left", "symbol": "\"", "looks_like": "windshield" },
+      { "direction": "glazed_rear_right", "symbol": "\"", "looks_like": "windshield" }
+    ]
   },
   {
     "copy-from": "plastic_windshield_abstract",
@@ -189,65 +171,26 @@
       { "direction": "vertical_left", "symbol": "[" },
       { "direction": "vertical_right", "symbol": "]" },
       { "direction": "horizontal_front", "symbol": "h" },
-      { "direction": "horizontal_rear_edge", "symbol": "B" }
-    ],
-    "variants": [
-      { "id": "horizontal", "label": "Horizontal", "symbols": "\"", "symbols_broken": "0" },
-      { "id": "cover_left", "label": "Cover Left", "symbols": "──│───│─", "symbols_broken": "0" },
-      { "id": "cover_right", "label": "Cover Right", "symbols": "──│───│─", "symbols_broken": "0" },
-      { "id": "nw", "label": "Front Left", "symbols": "┌┌└┘┘┘┐┌", "symbols_broken": "0" },
-      { "id": "ne", "label": "Front Right", "symbols": "┐┐┌└└└┘┐", "symbols_broken": "0" },
-      { "id": "sw", "label": "Rear Left", "symbols": "└└┘┐┐┐┌└", "symbols_broken": "0" },
-      { "id": "se", "label": "Rear Right", "symbols": "┘┘┐┌┌┌└┘", "symbols_broken": "0" },
-      { "id": "nw_edge", "label": "Front Left Corner", "symbols": "┌┌└┘┘┘┐┌", "symbols_broken": "0" },
-      { "id": "ne_edge", "label": "Front Right Corner", "symbols": "┐┐┌└└└┘┐", "symbols_broken": "0" },
-      { "id": "sw_edge", "label": "Rear Left Corner", "symbols": "└└┘┐┐┐┌└", "symbols_broken": "0" },
-      { "id": "se_edge", "label": "Rear Right Corner", "symbols": "┘┘┐┌┌┌└┘", "symbols_broken": "0" },
-      { "id": "left", "label": "Left", "symbols": "│\\─/│\\─/", "symbols_broken": "0" },
-      { "id": "right", "label": "Right", "symbols": "│\\─/│\\─/", "symbols_broken": "0" },
-      { "id": "vertical", "label": "Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "0" },
-      { "id": "vertical_left", "label": "Left Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "0" },
-      { "id": "vertical_right", "label": "Right Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "0" },
-      {
-        "id": "vertical_2_left",
-        "label": "Left Thick Vertical",
-        "symbols": "│\\─/│\\─/",
-        "symbols_broken": "0"
-      },
-      {
-        "id": "vertical_2_right",
-        "label": "Right Thick Vertical",
-        "symbols": "│\\─/│\\─/",
-        "symbols_broken": "0"
-      },
-      {
-        "id": "horizontal_front",
-        "label": "Front Horizontal",
-        "symbols": "──│───│─",
-        "symbols_broken": "0"
-      },
-      {
-        "id": "horizontal_front_edge",
-        "label": "Front Edge Horizontal",
-        "symbols": "^^<vvv>^",
-        "symbols_broken": "0"
-      },
-      {
-        "id": "horizontal_rear",
-        "label": "Rear Horizontal",
-        "symbols": "──│───│─",
-        "symbols_broken": "0"
-      },
-      {
-        "id": "horizontal_rear_edge",
-        "label": "Rear Edge Horizontal",
-        "symbols": "━━┃━━━┃━",
-        "symbols_broken": "0"
-      },
-      { "id": "wheel_left", "label": "Wheel Left", "symbols": "┌┌└┘┘┘┐┌", "symbols_broken": "0" },
-      { "id": "wheel_right", "label": "Wheel Right", "symbols": "┐┐┌└└└┘┐", "symbols_broken": "0" }
-    ],
-    "variants_bases": [ { "id": "full", "label": "Full" } ],
-    "variant_default": ""
+      { "direction": "horizontal_rear_edge", "symbol": "B" },
+      { "direction": "full_vertical_left", "symbol": "T", "looks_like": "reinforced_windshield" },
+      { "direction": "full_vertical_right", "symbol": "T", "looks_like": "reinforced_windshield" },
+      { "direction": "wide_front_inner_left", "symbol": "T", "looks_like": "reinforced_windshield" },
+      { "direction": "wide_front_middle", "symbol": "T", "looks_like": "reinforced_windshield" },
+      { "direction": "wide_front_inner_right", "symbol": "T", "looks_like": "reinforced_windshield" },
+      { "direction": "as_windshield_cover_left_from_base", "symbol": "T", "looks_like": "reinforced_windshield" },
+      { "direction": "as_windshield_horizontal_front_from_base", "symbol": "T", "looks_like": "reinforced_windshield" },
+      { "direction": "as_windshield_cover_right_from_base", "symbol": "T", "looks_like": "reinforced_windshield" },
+      { "direction": "as_vertical_left_from_base", "symbol": "T", "looks_like": "reinforced_windshield" },
+      { "direction": "as_vertical_right_from_base", "symbol": "T", "looks_like": "reinforced_windshield" },
+      { "direction": "as_nw_from_base", "symbol": "T", "looks_like": "reinforced_windshield" },
+      { "direction": "as_ne_from_base", "symbol": "T", "looks_like": "reinforced_windshield" },
+      { "direction": "as_windshield_wide_front_right_from_base", "symbol": "T", "looks_like": "reinforced_windshield" },
+      { "direction": "as_windshield_wide_front_left_from_base", "symbol": "T", "looks_like": "reinforced_windshield" },
+      { "direction": "as_windshield_wheel_right_from_base", "symbol": "T", "looks_like": "reinforced_windshield" },
+      { "direction": "as_horizontal_rear_edge_from_base", "symbol": "T", "looks_like": "reinforced_windshield" },
+      { "direction": "as_sw_edge_from_base", "symbol": "T", "looks_like": "reinforced_windshield" },
+      { "direction": "as_se_edge_from_base", "symbol": "T", "looks_like": "reinforced_windshield" },
+      { "direction": "as_windshield_wheel_left_from_base", "symbol": "T", "looks_like": "reinforced_windshield" }
+    ]
   }
 ]

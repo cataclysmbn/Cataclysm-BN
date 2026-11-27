@@ -20,59 +20,7 @@
       }
     },
     "flags": [ "INITIAL_PART", "MOUNTABLE", "FOLDABLE" ],
-    "damage_reduction": { "all": 8 },
-    "variants": [
-      { "id": "horizontal", "label": "Horizontal", "symbols": "──│───│─", "symbols_broken": "#" },
-      {
-        "id": "horizontal_front",
-        "label": "Front Horizontal",
-        "symbols": "──│───│─",
-        "symbols_broken": "#"
-      },
-      {
-        "id": "horizontal_rear",
-        "label": "Rear Horizontal",
-        "symbols": "──│───│─",
-        "symbols_broken": "#"
-      },
-      {
-        "id": "horizontal_2",
-        "label": "Thick Horizontal",
-        "symbols": "━━┃━━━┃━",
-        "symbols_broken": "#"
-      },
-      {
-        "id": "horizontal_2_front",
-        "label": "Front Thick Horizontal",
-        "symbols": "━━┃━━━┃━",
-        "symbols_broken": "#"
-      },
-      { "id": "vertical", "label": "Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_left", "label": "Left Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_right", "label": "Right Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_T_left", "label": "Left T Joint", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_T_right", "label": "Right T Joint", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_2", "label": "Thick Vertical", "symbols": "┃┃━┃┃┃━┃", "symbols_broken": "#" },
-      {
-        "id": "vertical_2_left",
-        "label": "Left Thick Vertical",
-        "symbols": "┃┃━┃┃┃━┃",
-        "symbols_broken": "#"
-      },
-      {
-        "id": "vertical_2_right",
-        "label": "Right Thick Vertical",
-        "symbols": "┃┃━┃┃┃━┃",
-        "symbols_broken": "#"
-      },
-      { "id": "cover", "label": "Cover", "symbols": "^^<vvv>^", "symbols_broken": "#" },
-      { "id": "cross", "label": "Cross", "symbols": "┼X┼X┼X┼X", "symbols_broken": "#" },
-      { "id": "ne", "label": "Front Right", "symbols": "┐┐┌└└└┘┐", "symbols_broken": "#" },
-      { "id": "nw", "label": "Front Left", "symbols": "┌┌└┘┘┘┐┌", "symbols_broken": "#" },
-      { "id": "se", "label": "Rear Right", "symbols": "┘┘┐┌┌┌└┘", "symbols_broken": "#" },
-      { "id": "sw", "label": "Rear Left", "symbols": "└└┘┐┐┐┌└", "symbols_broken": "#" }
-    ],
-    "variant_default": ""
+    "damage_reduction": { "all": 8 }
   },
   {
     "id": "folding_wooden_frame",
@@ -97,59 +45,7 @@
       }
     },
     "flags": [ "INITIAL_PART", "MOUNTABLE", "FOLDABLE" ],
-    "damage_reduction": { "all": 12 },
-    "variants": [
-      { "id": "horizontal", "label": "Horizontal", "symbols": "──│───│─", "symbols_broken": "#" },
-      {
-        "id": "horizontal_front",
-        "label": "Front Horizontal",
-        "symbols": "──│───│─",
-        "symbols_broken": "#"
-      },
-      {
-        "id": "horizontal_rear",
-        "label": "Rear Horizontal",
-        "symbols": "──│───│─",
-        "symbols_broken": "#"
-      },
-      {
-        "id": "horizontal_2",
-        "label": "Thick Horizontal",
-        "symbols": "━━┃━━━┃━",
-        "symbols_broken": "#"
-      },
-      {
-        "id": "horizontal_2_front",
-        "label": "Front Thick Horizontal",
-        "symbols": "━━┃━━━┃━",
-        "symbols_broken": "#"
-      },
-      { "id": "vertical", "label": "Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_left", "label": "Left Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_right", "label": "Right Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_T_left", "label": "Left T Joint", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_T_right", "label": "Right T Joint", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_2", "label": "Thick Vertical", "symbols": "┃┃━┃┃┃━┃", "symbols_broken": "#" },
-      {
-        "id": "vertical_2_left",
-        "label": "Left Thick Vertical",
-        "symbols": "┃┃━┃┃┃━┃",
-        "symbols_broken": "#"
-      },
-      {
-        "id": "vertical_2_right",
-        "label": "Right Thick Vertical",
-        "symbols": "┃┃━┃┃┃━┃",
-        "symbols_broken": "#"
-      },
-      { "id": "cover", "label": "Cover", "symbols": "^^<vvv>^", "symbols_broken": "#" },
-      { "id": "cross", "label": "Cross", "symbols": "┼X┼X┼X┼X", "symbols_broken": "#" },
-      { "id": "ne", "label": "Front Right", "symbols": "┐┐┌└└└┘┐", "symbols_broken": "#" },
-      { "id": "nw", "label": "Front Left", "symbols": "┌┌└┘┘┘┐┌", "symbols_broken": "#" },
-      { "id": "se", "label": "Rear Right", "symbols": "┘┘┐┌┌┌└┘", "symbols_broken": "#" },
-      { "id": "sw", "label": "Rear Left", "symbols": "└└┘┐┐┐┌└", "symbols_broken": "#" }
-    ],
-    "variant_default": ""
+    "damage_reduction": { "all": 12 }
   },
   {
     "abstract": "frame",
@@ -176,60 +72,55 @@
       { "direction": "se", "symbol": "n" },
       { "direction": "sw", "symbol": "b" },
       { "direction": "vertical", "symbol": "j" },
-      { "direction": "vertical_2", "symbol": "H" }
-    ],
-    "variants": [
-      { "id": "horizontal", "label": "Horizontal", "symbols": "──│───│─", "symbols_broken": "#" },
-      {
-        "id": "horizontal_front",
-        "label": "Front Horizontal",
-        "symbols": "──│───│─",
-        "symbols_broken": "#"
-      },
-      {
-        "id": "horizontal_rear",
-        "label": "Rear Horizontal",
-        "symbols": "──│───│─",
-        "symbols_broken": "#"
-      },
-      {
-        "id": "horizontal_2",
-        "label": "Thick Horizontal",
-        "symbols": "━━┃━━━┃━",
-        "symbols_broken": "#"
-      },
-      {
-        "id": "horizontal_2_front",
-        "label": "Front Thick Horizontal",
-        "symbols": "━━┃━━━┃━",
-        "symbols_broken": "#"
-      },
-      { "id": "vertical", "label": "Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_left", "label": "Left Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_right", "label": "Right Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_T_left", "label": "Left T Joint", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_T_right", "label": "Right T Joint", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_2", "label": "Thick Vertical", "symbols": "┃┃━┃┃┃━┃", "symbols_broken": "#" },
-      {
-        "id": "vertical_2_left",
-        "label": "Left Thick Vertical",
-        "symbols": "┃┃━┃┃┃━┃",
-        "symbols_broken": "#"
-      },
-      {
-        "id": "vertical_2_right",
-        "label": "Right Thick Vertical",
-        "symbols": "┃┃━┃┃┃━┃",
-        "symbols_broken": "#"
-      },
-      { "id": "cover", "label": "Cover", "symbols": "^^<vvv>^", "symbols_broken": "#" },
-      { "id": "cross", "label": "Cross", "symbols": "┼X┼X┼X┼X", "symbols_broken": "#" },
-      { "id": "ne", "label": "Front Right", "symbols": "┐┐┌└└└┘┐", "symbols_broken": "#" },
-      { "id": "nw", "label": "Front Left", "symbols": "┌┌└┘┘┘┐┌", "symbols_broken": "#" },
-      { "id": "se", "label": "Rear Right", "symbols": "┘┘┐┌┌┌└┘", "symbols_broken": "#" },
-      { "id": "sw", "label": "Rear Left", "symbols": "└└┘┐┐┐┌└", "symbols_broken": "#" }
-    ],
-    "variant_default": ""
+      { "direction": "vertical_2", "symbol": "H" },
+      { "direction": "as_horizontal_rear_from_horizontal", "symbol": "h", "looks_like": "frame_horizontal" },
+      { "direction": "as_horizontal_front_from_horizontal", "symbol": "h", "looks_like": "frame_horizontal" },
+      { "direction": "as_sw_from_horizontal", "symbol": "h", "looks_like": "frame_horizontal" },
+      { "direction": "as_vertical_left_from_vertical", "symbol": "j", "looks_like": "frame_vertical" },
+      { "direction": "as_nw_from_horizontal", "symbol": "h", "looks_like": "frame_horizontal" },
+      { "direction": "as_se_from_horizontal", "symbol": "h", "looks_like": "frame_horizontal" },
+      { "direction": "as_vertical_right_from_vertical", "symbol": "j", "looks_like": "frame_vertical" },
+      { "direction": "as_ne_from_horizontal", "symbol": "h", "looks_like": "frame_horizontal" },
+      { "direction": "as_horizontal_rear_from_ne", "symbol": "u", "looks_like": "frame_ne" },
+      { "direction": "as_horizontal_rear_from_nw", "symbol": "y", "looks_like": "frame_nw" },
+      { "direction": "as_horizontal_front_from_vertical_2", "symbol": "H", "looks_like": "frame_vertical_2" },
+      { "direction": "as_horizontal_left_from_vertical", "symbol": "j", "looks_like": "frame_vertical" },
+      { "direction": "as_horizontal_right_from_vertical", "symbol": "j", "looks_like": "frame_vertical" },
+      { "direction": "as_vertical_2_left_from_vertical", "symbol": "j", "looks_like": "frame_vertical" },
+      { "direction": "as_vertical_2_right_from_vertical", "symbol": "j", "looks_like": "frame_vertical" },
+      { "direction": "as_horizontal_2_from_horizontal", "symbol": "h", "looks_like": "frame_horizontal" },
+      { "direction": "as_cross_from_vertical", "symbol": "j", "looks_like": "frame_vertical" },
+      { "direction": "as_horizontal_left_from_horizontal", "symbol": "h", "looks_like": "frame_horizontal" },
+      { "direction": "as_horizontal_right_from_horizontal", "symbol": "h", "looks_like": "frame_horizontal" },
+      { "direction": "as_nw_from_sw", "symbol": "b", "looks_like": "frame_sw" },
+      { "direction": "as_ne_from_se", "symbol": "n", "looks_like": "frame_se" },
+      { "direction": "as_vertical_left_from_horizontal", "symbol": "h", "looks_like": "frame_horizontal" },
+      { "direction": "as_cross_from_horizontal", "symbol": "h", "looks_like": "frame_horizontal" },
+      { "direction": "as_vertical_right_from_horizontal", "symbol": "h", "looks_like": "frame_horizontal" },
+      { "direction": "as_cover_from_horizontal", "symbol": "h", "looks_like": "frame_horizontal" },
+      { "direction": "as_sw_from_cover", "symbol": "^", "looks_like": "frame_cover" },
+      { "direction": "as_cover_from_sw", "symbol": "b", "looks_like": "frame_sw" },
+      { "direction": "as_se_from_cover", "symbol": "^", "looks_like": "frame_cover" },
+      { "direction": "as_cover_from_se", "symbol": "n", "looks_like": "frame_se" },
+      { "direction": "as_cover_from_vertical", "symbol": "j", "looks_like": "frame_vertical" },
+      { "direction": "as_sw_from_vertical", "symbol": "j", "looks_like": "frame_vertical" },
+      { "direction": "as_vertical_left_from_sw", "symbol": "b", "looks_like": "frame_sw" },
+      { "direction": "as_vertical_right_from_se", "symbol": "n", "looks_like": "frame_se" },
+      { "direction": "as_se_from_vertical", "symbol": "j", "looks_like": "frame_vertical" },
+      { "direction": "as_horizontal_front_from_horizontal_2", "symbol": "=", "looks_like": "frame_horizontal_2" },
+      { "direction": "as_nw_from_horizontal_2", "symbol": "=", "looks_like": "frame_horizontal_2" },
+      { "direction": "as_ne_from_horizontal_2", "symbol": "=", "looks_like": "frame_horizontal_2" },
+      { "direction": "as_vertical_from_horizontal", "symbol": "h", "looks_like": "frame_horizontal" },
+      { "direction": "as_horizontal_2_from_vertical_2", "symbol": "H", "looks_like": "frame_vertical_2" },
+      { "direction": "as_horizontal_from_horizontal_2", "symbol": "=", "looks_like": "frame_horizontal_2" },
+      { "direction": "as_vertical_right_from_vertical_2", "symbol": "H", "looks_like": "frame_vertical_2" },
+      { "direction": "as_cover_from_vertical_2", "symbol": "H", "looks_like": "frame_vertical_2" },
+      { "direction": "as_ne_from_vertical", "symbol": "j", "looks_like": "frame_vertical" },
+      { "direction": "as_nw_from_vertical", "symbol": "j", "looks_like": "frame_vertical" },
+      { "direction": "as_cross_from_horizontal_2", "symbol": "=", "looks_like": "frame_horizontal_2" },
+      { "direction": "as_horizontal_rear_from_vertical", "symbol": "j", "looks_like": "frame_vertical" },
+      { "direction": "control_support", "symbol": "j", "looks_like": "frame_vertical" }
+    ]
   },
   {
     "abstract": "frame_wood",
@@ -261,60 +152,12 @@
       { "direction": "se", "symbol": "n" },
       { "direction": "sw", "symbol": "b" },
       { "direction": "vertical", "symbol": "j" },
-      { "direction": "vertical_2", "symbol": "H" }
-    ],
-    "variants": [
-      { "id": "horizontal", "label": "Horizontal", "symbols": "──│───│─", "symbols_broken": "#" },
-      {
-        "id": "horizontal_front",
-        "label": "Front Horizontal",
-        "symbols": "──│───│─",
-        "symbols_broken": "#"
-      },
-      {
-        "id": "horizontal_rear",
-        "label": "Rear Horizontal",
-        "symbols": "──│───│─",
-        "symbols_broken": "#"
-      },
-      {
-        "id": "horizontal_2",
-        "label": "Thick Horizontal",
-        "symbols": "━━┃━━━┃━",
-        "symbols_broken": "#"
-      },
-      {
-        "id": "horizontal_2_front",
-        "label": "Front Thick Horizontal",
-        "symbols": "━━┃━━━┃━",
-        "symbols_broken": "#"
-      },
-      { "id": "vertical", "label": "Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_left", "label": "Left Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_right", "label": "Right Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_T_left", "label": "Left T Joint", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_T_right", "label": "Right T Joint", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_2", "label": "Thick Vertical", "symbols": "┃┃━┃┃┃━┃", "symbols_broken": "#" },
-      {
-        "id": "vertical_2_left",
-        "label": "Left Thick Vertical",
-        "symbols": "┃┃━┃┃┃━┃",
-        "symbols_broken": "#"
-      },
-      {
-        "id": "vertical_2_right",
-        "label": "Right Thick Vertical",
-        "symbols": "┃┃━┃┃┃━┃",
-        "symbols_broken": "#"
-      },
-      { "id": "cover", "label": "Cover", "symbols": "^^<vvv>^", "symbols_broken": "#" },
-      { "id": "cross", "label": "Cross", "symbols": "┼X┼X┼X┼X", "symbols_broken": "#" },
-      { "id": "ne", "label": "Front Right", "symbols": "┐┐┌└└└┘┐", "symbols_broken": "#" },
-      { "id": "nw", "label": "Front Left", "symbols": "┌┌└┘┘┘┐┌", "symbols_broken": "#" },
-      { "id": "se", "label": "Rear Right", "symbols": "┘┘┐┌┌┌└┘", "symbols_broken": "#" },
-      { "id": "sw", "label": "Rear Left", "symbols": "└└┘┐┐┐┌└", "symbols_broken": "#" }
-    ],
-    "variant_default": ""
+      { "direction": "vertical_2", "symbol": "H" },
+      { "direction": "as_vertical_from_horizontal", "symbol": "h", "looks_like": "frame_wood_horizontal" },
+      { "direction": "as_horizontal_front_from_horizontal", "symbol": "h", "looks_like": "frame_wood_horizontal" },
+      { "direction": "as_horizontal_rear_from_horizontal", "symbol": "h", "looks_like": "frame_wood_horizontal" },
+      { "direction": "as_cover_from_horizontal", "symbol": "h", "looks_like": "frame_wood_horizontal" }
+    ]
   },
   {
     "abstract": "frame_wood_light",
@@ -346,59 +189,7 @@
       { "direction": "sw", "symbol": "b" },
       { "direction": "vertical", "symbol": "j" },
       { "direction": "vertical_2", "symbol": "H" }
-    ],
-    "variants": [
-      { "id": "horizontal", "label": "Horizontal", "symbols": "──│───│─", "symbols_broken": "#" },
-      {
-        "id": "horizontal_front",
-        "label": "Front Horizontal",
-        "symbols": "──│───│─",
-        "symbols_broken": "#"
-      },
-      {
-        "id": "horizontal_rear",
-        "label": "Rear Horizontal",
-        "symbols": "──│───│─",
-        "symbols_broken": "#"
-      },
-      {
-        "id": "horizontal_2",
-        "label": "Thick Horizontal",
-        "symbols": "━━┃━━━┃━",
-        "symbols_broken": "#"
-      },
-      {
-        "id": "horizontal_2_front",
-        "label": "Front Thick Horizontal",
-        "symbols": "━━┃━━━┃━",
-        "symbols_broken": "#"
-      },
-      { "id": "vertical", "label": "Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_left", "label": "Left Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_right", "label": "Right Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_T_left", "label": "Left T Joint", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_T_right", "label": "Right T Joint", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_2", "label": "Thick Vertical", "symbols": "┃┃━┃┃┃━┃", "symbols_broken": "#" },
-      {
-        "id": "vertical_2_left",
-        "label": "Left Thick Vertical",
-        "symbols": "┃┃━┃┃┃━┃",
-        "symbols_broken": "#"
-      },
-      {
-        "id": "vertical_2_right",
-        "label": "Right Thick Vertical",
-        "symbols": "┃┃━┃┃┃━┃",
-        "symbols_broken": "#"
-      },
-      { "id": "cover", "label": "Cover", "symbols": "^^<vvv>^", "symbols_broken": "#" },
-      { "id": "cross", "label": "Cross", "symbols": "┼X┼X┼X┼X", "symbols_broken": "#" },
-      { "id": "ne", "label": "Front Right", "symbols": "┐┐┌└└└┘┐", "symbols_broken": "#" },
-      { "id": "nw", "label": "Front Left", "symbols": "┌┌└┘┘┘┐┌", "symbols_broken": "#" },
-      { "id": "se", "label": "Rear Right", "symbols": "┘┘┐┌┌┌└┘", "symbols_broken": "#" },
-      { "id": "sw", "label": "Rear Left", "symbols": "└└┘┐┐┐┌└", "symbols_broken": "#" }
-    ],
-    "variant_default": ""
+    ]
   },
   {
     "abstract": "hdframe",
@@ -426,60 +217,36 @@
       { "direction": "se", "symbol": "n" },
       { "direction": "sw", "symbol": "b" },
       { "direction": "vertical", "symbol": "j" },
-      { "direction": "vertical_2", "symbol": "H" }
-    ],
-    "variants": [
-      { "id": "horizontal", "label": "Horizontal", "symbols": "──│───│─", "symbols_broken": "#" },
-      {
-        "id": "horizontal_front",
-        "label": "Front Horizontal",
-        "symbols": "──│───│─",
-        "symbols_broken": "#"
-      },
-      {
-        "id": "horizontal_rear",
-        "label": "Rear Horizontal",
-        "symbols": "──│───│─",
-        "symbols_broken": "#"
-      },
-      {
-        "id": "horizontal_2",
-        "label": "Thick Horizontal",
-        "symbols": "━━┃━━━┃━",
-        "symbols_broken": "#"
-      },
-      {
-        "id": "horizontal_2_front",
-        "label": "Front Thick Horizontal",
-        "symbols": "━━┃━━━┃━",
-        "symbols_broken": "#"
-      },
-      { "id": "vertical", "label": "Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_left", "label": "Left Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_right", "label": "Right Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_T_left", "label": "Left T Joint", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_T_right", "label": "Right T Joint", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_2", "label": "Thick Vertical", "symbols": "┃┃━┃┃┃━┃", "symbols_broken": "#" },
-      {
-        "id": "vertical_2_left",
-        "label": "Left Thick Vertical",
-        "symbols": "┃┃━┃┃┃━┃",
-        "symbols_broken": "#"
-      },
-      {
-        "id": "vertical_2_right",
-        "label": "Right Thick Vertical",
-        "symbols": "┃┃━┃┃┃━┃",
-        "symbols_broken": "#"
-      },
-      { "id": "cover", "label": "Cover", "symbols": "^^<vvv>^", "symbols_broken": "#" },
-      { "id": "cross", "label": "Cross", "symbols": "┼X┼X┼X┼X", "symbols_broken": "#" },
-      { "id": "ne", "label": "Front Right", "symbols": "┐┐┌└└└┘┐", "symbols_broken": "#" },
-      { "id": "nw", "label": "Front Left", "symbols": "┌┌└┘┘┘┐┌", "symbols_broken": "#" },
-      { "id": "se", "label": "Rear Right", "symbols": "┘┘┐┌┌┌└┘", "symbols_broken": "#" },
-      { "id": "sw", "label": "Rear Left", "symbols": "└└┘┐┐┐┌└", "symbols_broken": "#" }
-    ],
-    "variant_default": ""
+      { "direction": "vertical_2", "symbol": "H" },
+      { "direction": "vertical_T_left", "symbol": "j", "looks_like": "hdframe_vertical" },
+      { "direction": "vertical_T_right", "symbol": "j", "looks_like": "hdframe_vertical" },
+      { "direction": "as_horizontal_front_from_horizontal", "symbol": "h", "looks_like": "hdframe_horizontal" },
+      { "direction": "as_vertical_left_from_vertical", "symbol": "j", "looks_like": "hdframe_vertical" },
+      { "direction": "as_cross_from_horizontal", "symbol": "h", "looks_like": "hdframe_horizontal" },
+      { "direction": "as_vertical_right_from_vertical", "symbol": "j", "looks_like": "hdframe_vertical" },
+      { "direction": "as_horizontal_rear_from_horizontal", "symbol": "h", "looks_like": "hdframe_horizontal" },
+      { "direction": "as_cross_from_vertical", "symbol": "j", "looks_like": "hdframe_vertical" },
+      { "direction": "as_horizontal_front_from_cover", "symbol": "^", "looks_like": "hdframe_cover" },
+      { "direction": "as_horizontal_right_from_ne", "symbol": "u", "looks_like": "hdframe_ne" },
+      { "direction": "as_horizontal_2_from_horizontal", "symbol": "h", "looks_like": "hdframe_horizontal" },
+      { "direction": "as_horizontal_left_from_nw", "symbol": "y", "looks_like": "hdframe_nw" },
+      { "direction": "as_ne_from_horizontal", "symbol": "h", "looks_like": "hdframe_horizontal" },
+      { "direction": "as_horizontal_front_from_horizontal_2", "symbol": "=", "looks_like": "hdframe_horizontal_2" },
+      { "direction": "as_nw_from_horizontal", "symbol": "h", "looks_like": "hdframe_horizontal" },
+      { "direction": "as_cross_from_horizontal_2", "symbol": "=", "looks_like": "hdframe_horizontal_2" },
+      { "direction": "as_horizontal_right_from_horizontal", "symbol": "h", "looks_like": "hdframe_horizontal" },
+      { "direction": "as_horizontal_left_from_horizontal", "symbol": "h", "looks_like": "hdframe_horizontal" },
+      { "direction": "as_vertical_right_from_horizontal", "symbol": "h", "looks_like": "hdframe_horizontal" },
+      { "direction": "as_vertical_left_from_horizontal", "symbol": "h", "looks_like": "hdframe_horizontal" },
+      { "direction": "as_vertical_left_from_nw", "symbol": "y", "looks_like": "hdframe_nw" },
+      { "direction": "as_vertical_right_from_ne", "symbol": "u", "looks_like": "hdframe_ne" },
+      { "direction": "as_nw_from_cover", "symbol": "^", "looks_like": "hdframe_cover" },
+      { "direction": "as_ne_from_cover", "symbol": "^", "looks_like": "hdframe_cover" },
+      { "direction": "as_ne_from_vertical", "symbol": "j", "looks_like": "hdframe_vertical" },
+      { "direction": "as_vertical_left_from_sw", "symbol": "b", "looks_like": "hdframe_sw" },
+      { "direction": "as_vertical_right_from_se", "symbol": "n", "looks_like": "hdframe_se" },
+      { "direction": "as_nw_from_vertical", "symbol": "j", "looks_like": "hdframe_vertical" }
+    ]
   },
   {
     "abstract": "xlframe",
@@ -511,60 +278,32 @@
       { "direction": "se", "symbol": "n" },
       { "direction": "sw", "symbol": "b" },
       { "direction": "vertical", "symbol": "j" },
-      { "direction": "vertical_2", "symbol": "H" }
-    ],
-    "variants": [
-      { "id": "horizontal", "label": "Horizontal", "symbols": "──│───│─", "symbols_broken": "#" },
-      {
-        "id": "horizontal_front",
-        "label": "Front Horizontal",
-        "symbols": "──│───│─",
-        "symbols_broken": "#"
-      },
-      {
-        "id": "horizontal_rear",
-        "label": "Rear Horizontal",
-        "symbols": "──│───│─",
-        "symbols_broken": "#"
-      },
-      {
-        "id": "horizontal_2",
-        "label": "Thick Horizontal",
-        "symbols": "━━┃━━━┃━",
-        "symbols_broken": "#"
-      },
-      {
-        "id": "horizontal_2_front",
-        "label": "Front Thick Horizontal",
-        "symbols": "━━┃━━━┃━",
-        "symbols_broken": "#"
-      },
-      { "id": "vertical", "label": "Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_left", "label": "Left Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_right", "label": "Right Vertical", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_T_left", "label": "Left T Joint", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_T_right", "label": "Right T Joint", "symbols": "│\\─/│\\─/", "symbols_broken": "#" },
-      { "id": "vertical_2", "label": "Thick Vertical", "symbols": "┃┃━┃┃┃━┃", "symbols_broken": "#" },
-      {
-        "id": "vertical_2_left",
-        "label": "Left Thick Vertical",
-        "symbols": "┃┃━┃┃┃━┃",
-        "symbols_broken": "#"
-      },
-      {
-        "id": "vertical_2_right",
-        "label": "Right Thick Vertical",
-        "symbols": "┃┃━┃┃┃━┃",
-        "symbols_broken": "#"
-      },
-      { "id": "cover", "label": "Cover", "symbols": "^^<vvv>^", "symbols_broken": "#" },
-      { "id": "cross", "label": "Cross", "symbols": "┼X┼X┼X┼X", "symbols_broken": "#" },
-      { "id": "ne", "label": "Front Right", "symbols": "┐┐┌└└└┘┐", "symbols_broken": "#" },
-      { "id": "nw", "label": "Front Left", "symbols": "┌┌└┘┘┘┐┌", "symbols_broken": "#" },
-      { "id": "se", "label": "Rear Right", "symbols": "┘┘┐┌┌┌└┘", "symbols_broken": "#" },
-      { "id": "sw", "label": "Rear Left", "symbols": "└└┘┐┐┐┌└", "symbols_broken": "#" }
-    ],
-    "variant_default": ""
+      { "direction": "vertical_2", "symbol": "H" },
+      { "direction": "vertical_T_left", "symbol": "j", "looks_like": "xlframe_vertical" },
+      { "direction": "vertical_T_right", "symbol": "j", "looks_like": "xlframe_vertical" },
+      { "direction": "as_vertical_left_from_vertical", "symbol": "j", "looks_like": "xlframe_vertical" },
+      { "direction": "as_vertical_right_from_vertical", "symbol": "j", "looks_like": "xlframe_vertical" },
+      { "direction": "as_horizontal_2_from_horizontal", "symbol": "h", "looks_like": "xlframe_horizontal" },
+      { "direction": "as_horizontal_front_from_horizontal", "symbol": "h", "looks_like": "xlframe_horizontal" },
+      { "direction": "as_sw_from_horizontal", "symbol": "h", "looks_like": "xlframe_horizontal" },
+      { "direction": "as_horizontal_rear_from_horizontal", "symbol": "h", "looks_like": "xlframe_horizontal" },
+      { "direction": "as_se_from_horizontal", "symbol": "h", "looks_like": "xlframe_horizontal" },
+      { "direction": "as_cross_from_vertical", "symbol": "j", "looks_like": "xlframe_vertical" },
+      { "direction": "as_horizontal_right_from_sw", "symbol": "b", "looks_like": "xlframe_sw" },
+      { "direction": "as_horizontal_left_from_se", "symbol": "n", "looks_like": "xlframe_se" },
+      { "direction": "as_se_from_sw", "symbol": "b", "looks_like": "xlframe_sw" },
+      { "direction": "as_sw_from_se", "symbol": "n", "looks_like": "xlframe_se" },
+      { "direction": "as_vertical_2_from_horizontal", "symbol": "h", "looks_like": "xlframe_horizontal" },
+      { "direction": "as_vertical_2_from_se", "symbol": "n", "looks_like": "xlframe_se" },
+      { "direction": "as_vertical_2_from_sw", "symbol": "b", "looks_like": "xlframe_sw" },
+      { "direction": "as_vertical_right_from_se", "symbol": "n", "looks_like": "xlframe_se" },
+      { "direction": "as_vertical_left_from_sw", "symbol": "b", "looks_like": "xlframe_sw" },
+      { "direction": "as_horizontal_left_from_horizontal", "symbol": "h", "looks_like": "xlframe_horizontal" },
+      { "direction": "as_horizontal_right_from_horizontal", "symbol": "h", "looks_like": "xlframe_horizontal" },
+      { "direction": "as_horizontal_rear_from_sw", "symbol": "b", "looks_like": "xlframe_sw" },
+      { "direction": "as_horizontal_rear_from_se", "symbol": "n", "looks_like": "xlframe_se" },
+      { "direction": "as_cover_from_horizontal", "symbol": "h", "looks_like": "xlframe_horizontal" }
+    ]
   },
   {
     "abstract": "frame_plastic",
@@ -664,8 +403,7 @@
       "CONTROL_WITHOUT_HANDS",
       "FOLDABLE"
     ],
-    "damage_reduction": { "all": 2 },
-    "variant_default": ""
+    "damage_reduction": { "all": 2 }
   },
   {
     "type": "vehicle_part",
@@ -781,45 +519,35 @@
     "copy-from": "frame",
     "type": "vehicle_part",
     "symbol": "c",
-    "extend": { "flags": [ "INITIAL_PART" ] },
-    "variants": [  ],
-    "variants_bases": [  ]
+    "extend": { "flags": [ "INITIAL_PART" ] }
   },
   {
     "id": "frame_wood_cross",
     "copy-from": "frame_wood",
     "type": "vehicle_part",
     "symbol": "c",
-    "extend": { "flags": [ "INITIAL_PART" ] },
-    "variants": [  ],
-    "variants_bases": [  ]
+    "extend": { "flags": [ "INITIAL_PART" ] }
   },
   {
     "id": "frame_wood_light_cross",
     "copy-from": "frame_wood_light",
     "type": "vehicle_part",
     "symbol": "c",
-    "extend": { "flags": [ "INITIAL_PART" ] },
-    "variants": [  ],
-    "variants_bases": [  ]
+    "extend": { "flags": [ "INITIAL_PART" ] }
   },
   {
     "id": "hdframe_cross",
     "copy-from": "hdframe",
     "type": "vehicle_part",
     "symbol": "c",
-    "extend": { "flags": [ "INITIAL_PART" ] },
-    "variants": [  ],
-    "variants_bases": [  ]
+    "extend": { "flags": [ "INITIAL_PART" ] }
   },
   {
     "id": "xlframe_cross",
     "copy-from": "xlframe",
     "type": "vehicle_part",
     "symbol": "c",
-    "extend": { "flags": [ "INITIAL_PART" ] },
-    "variants": [  ],
-    "variants_bases": [  ]
+    "extend": { "flags": [ "INITIAL_PART" ] }
   },
   {
     "id": "frame_plastic_cross",

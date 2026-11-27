@@ -530,34 +530,9 @@ void vpart_info::load(const JsonObject& jo, const std::string& /*src*/) {
 
     if (has_flag("CRAFTER")) { load_crafter(crafter_info, jo); }
 
-    if (jo.has_array("variants")) {
-        variants.clear();
-        variant_default.clear();
-        for (const JsonObject row : jo.get_array("variants")) {
-            auto entry = vpart_variant{};
-            entry.load(row);
-            if (variants.empty()) { variant_default = entry.id; }
-            if (!variants.emplace(entry.id, entry).second) {
-                row.throw_error("duplicate vehicle variant", "id");
-            }
-        }
-    }
-    variant_default = jo.get_string("variant_default", variant_default);
-    if (jo.has_array("variants_bases")) {
-        variants_bases.clear();
-        for (const JsonObject row : jo.get_array("variants_bases")) {
-            const auto prefix = row.get_string("id");
-            if (prefix.contains('#')) { row.throw_error("reserved '#' in variant base id", "id"); }
-            variants_bases.emplace_back(prefix, row.get_string("label", ""));
-        }
-    }
-
     if (jo.has_array("shapes")) {
         for (JsonObject obj : jo.get_array("shapes")) {
             vpart_info shape = vpart_info(*this);
-            shape.variants.clear();
-            shape.variant_default.clear();
-            shape.variants_bases.clear();
             if (jo.has_string("abstract")) {
                 shape.id = vpart_id(jo.get_string("abstract") + "_" + obj.get_string("direction"));
             } else {
@@ -592,19 +567,6 @@ void vpart_info::finalize_all() {
 }
 
 void vpart_info::finalize() {
-    if (!variants_bases.empty()) {
-        const auto original = variants;
-        for (const auto& [prefix, label] : variants_bases) {
-            for (const auto& [id, value] : original) {
-                auto copy = value;
-                copy.id = id.empty() ? prefix : prefix + "_" + id;
-                copy.base_label = label;
-                variants[copy.id] = std::move(copy);
-            }
-        }
-        variants_bases.clear();
-    }
-
     if (folded_volume > 0_ml) { set_flag("FOLDABLE"); }
 
     for (const auto& f : flags) {
@@ -719,13 +681,8 @@ void vpart_info::check() const {
         debugmsg("Vehicle part %s breaks into non-existent item group %s.", id.c_str(),
                  breaks_into_group.c_str());
     }
-    if (!variant_default.empty() && !variants.contains(variant_default)) {
-        debugmsg("vehicle part %s defines unknown default variant %s", id.str(), variant_default);
-    }
-    if (sym == 0 && variants.empty()) {
-        debugmsg("vehicle part %s does not define a symbol", id.c_str());
-    }
-    if (sym_broken == 0 && variants.empty()) {
+    if (sym == 0) { debugmsg("vehicle part %s does not define a symbol", id.c_str()); }
+    if (sym_broken == 0) {
         debugmsg("vehicle part %s does not define a broken symbol", id.c_str());
     }
     if (durability <= 0) {
@@ -1099,14 +1056,6 @@ auto vehicle_prototype::operator=(vehicle_prototype&&) noexcept -> vehicle_proto
 /**
  *Caches a vehicle definition from a JsonObject to be loaded after itypes is initialized.
  */
-namespace {
-auto set_part_variant(vehicle_prototype::part_def& target, const std::string& value) -> void {
-    const auto separator = value.rfind('#');
-    target.part = vpart_id(value.substr(0, separator));
-    if (separator != std::string::npos) { target.variant = value.substr(separator + 1); }
-}
-} // namespace
-
 void vehicle_prototype::load(const JsonObject& jo) {
     vehicle_prototype& vproto = vtypes[vproto_id(jo.get_string("id"))];
     // If there are already parts defined, this vehicle prototype overrides an existing one.
@@ -1122,7 +1071,7 @@ void vehicle_prototype::load(const JsonObject& jo) {
     const auto add_part_obj = [&](const JsonObject& part, tripoint_mnt_veh pos) {
         part_def pt;
         pt.pos = pos;
-        set_part_variant(pt, part.get_string("part"));
+        pt.part = vpart_id(part.get_string("part"));
 
         assign(part, "ammo", pt.with_ammo, true, 0, 100);
         assign(part, "ammo_types", pt.ammo_types, true);
@@ -1135,7 +1084,7 @@ void vehicle_prototype::load(const JsonObject& jo) {
     const auto add_part_string = [&](const std::string& part, tripoint_mnt_veh pos) {
         part_def pt;
         pt.pos = pos;
-        set_part_variant(pt, part);
+        pt.part = vpart_id(part);
         vproto.parts.push_back(pt);
     };
 
@@ -1156,10 +1105,10 @@ void vehicle_prototype::load(const JsonObject& jo) {
                 for (JsonValue part : character.second) {
                     part_def pt;
                     if (part.test_string()) {
-                        set_part_variant(pt, part.get_string());
+                        pt.part = vpart_id(part.get_string());
                     } else {
                         JsonObject realpart = part.get_object();
-                        set_part_variant(pt, realpart.get_string("part"));
+                        pt.part = vpart_id(realpart.get_string("part"));
                         assign(realpart, "ammo", pt.with_ammo, true, 0, 100);
                         assign(realpart, "ammo_types", pt.ammo_types, true);
                         assign(realpart, "ammo_qty", pt.ammo_qty, true, 0);
@@ -1289,17 +1238,10 @@ void vehicle_prototype::finalize() {
                 continue;
             }
 
-            const auto installed = blueprint.install_part(pt.pos, pt.part, true);
-            if (installed < 0) {
+            if (blueprint.install_part(pt.pos, pt.part, true) < 0) {
                 debugmsg("init_vehicles: '%s' part '%s'(%d) can't be installed to %d,%d",
                          blueprint.name, pt.part.c_str(), blueprint.part_count(), pt.pos.x(),
                          pt.pos.y());
-            }
-
-            if (installed >= 0 && pt.variant
-                && !blueprint.part(installed).set_variant(*pt.variant)) {
-                debugmsg("vehicle prototype %s uses unknown variant %s for %s", id.str(),
-                         *pt.variant, pt.part.str());
             }
 
             if (!base->gun) {

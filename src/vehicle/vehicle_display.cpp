@@ -1,5 +1,3 @@
-#include "vehicle_display.h"
-
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catacharset.h"
@@ -30,54 +28,75 @@ static const itype_id fuel_type_muscle("muscle");
 
 auto vehicle::disp_name() const -> std::string { return string_format(_("the %s"), name); }
 
-auto vehicle::part_sym(
-    const int p, const bool exact, const std::optional<units::angle> facing) const -> int {
-    if (p < 0 || p >= part_count() || parts[p].removed) { return ' '; }
-    const auto displayed = exact ? p : part_displayed_at(parts[p].mount);
-    if (displayed < 0) { return ' '; }
-    const auto& part = parts[displayed];
-    if (part.info().has_flag(VPFLAG_OPENABLE) && part.open) { return '\''; }
-    if (part.proxy_part_id.is_null()) {
-        const auto variant = part.info().variants.find(part.variant);
-        if (variant != part.info().variants.end()) {
-            return variant->second
-                .get_symbol(facing ? 270_degrees - *facing : 0_degrees, part.is_broken());
-        }
+auto vehicle::part_sym(const int p, const bool exact) const -> char {
+    if (p < 0 || p >= static_cast<int>(parts.size()) || parts[p].removed) { return ' '; }
+
+    const int displayed_part = exact ? p : part_displayed_at(parts[p].mount);
+
+    if (part_flag(displayed_part, VPFLAG_OPENABLE) && parts[displayed_part].open) {
+        // open door
+        return '\'';
+    } else {
+        return parts[displayed_part].is_broken()
+                 ? part_info(displayed_part).sym_broken
+                 : (parts[displayed_part].proxy_sym == '\0'
+                        ? part_info(displayed_part).sym
+                        : parts[displayed_part].proxy_sym);
     }
-    const auto symbol =
-        part.is_broken() ? part.info().sym_broken
-        : part.proxy_sym
-            ? part.proxy_sym
-            : part.info().sym;
-    return special_symbol(facing ? tileray(*facing).dir_symbol(symbol) : symbol);
 }
 
 auto vehicle::part_display_direction(const int p, const bool roof) const -> units::angle {
-    if (p < 0 || p >= part_count() || parts[p].removed) { return face.dir(); }
-    return get_display_of_tile(parts[p].mount, roof).direction;
-}
+    if (p < 0 || p >= static_cast<int>(parts.size()) || parts[p].removed) { return face.dir(); }
 
-auto vpart_display::get_tileset_id() const -> std::string {
-    auto result = "vp_" + id.str();
-    if (!variant.empty()) { result += '#' + variant; }
-    return result;
-}
-
-auto vehicle::get_display_of_tile(const tripoint_mnt_veh& mount, const bool roof) const
-    -> vpart_display {
-    auto displayed = part_displayed_at(mount);
-    if (displayed < 0) { return {.direction = face.dir()}; }
-    if (roof) {
-        const auto above = roof_at_part(displayed);
-        if (above >= 0 && !parts[above].removed) { displayed = above; }
+    int displayed_part = -1;
+    if (roof) { displayed_part = roof_at_part(p); }
+    if (displayed_part < 0 || displayed_part >= static_cast<int>(parts.size())
+        || parts[displayed_part].removed) {
+        displayed_part = part_displayed_at(parts[p].mount);
     }
-    const auto& part = parts[displayed];
-    return {
-        .id = part.proxy_part_id.is_null() ? part.info().get_id() : part.proxy_part_id,
-        .variant = part.proxy_part_id.is_null() ? part.variant : "",
-        .direction = normalize(face.dir() + part.direction),
-        .is_open = part.open && part.info().has_flag(VPFLAG_OPENABLE),
-        .is_broken = part.is_broken()};
+    if (displayed_part < 0 || displayed_part >= static_cast<int>(parts.size())
+        || parts[displayed_part].removed) {
+        return face.dir();
+    }
+
+    return normalize(face.dir() + parts[displayed_part].direction);
+}
+
+// similar to part_sym(int p) but for use when drawing SDL tiles. Called only by cata_tiles
+// during draw_vpart vector returns at least 1 element, max of 2 elements. If 2 elements the
+// second denotes if it is open or damaged
+auto vehicle::part_id_string(const int p, bool roof, char& part_mod) const -> vpart_id {
+    part_mod = 0;
+    if (p < 0 || p >= static_cast<int>(parts.size()) || parts[p].removed) {
+        return vpart_id::NULL_ID();
+    }
+
+    int displayed_part = -1;
+
+    if (roof) { displayed_part = roof_at_part(p); }
+    if (displayed_part < 0 || displayed_part >= static_cast<int>(parts.size())
+        || parts[displayed_part].removed) {
+        displayed_part = part_displayed_at(parts[p].mount);
+    }
+    if (displayed_part < 0 || displayed_part >= static_cast<int>(parts.size())
+        || parts[displayed_part].removed) {
+        return vpart_id::NULL_ID();
+    }
+
+    const vpart_id idinfo =
+        parts[displayed_part].proxy_part_id == vpart_id::NULL_ID()
+            ? parts[displayed_part].id
+            : parts[displayed_part].proxy_part_id;
+
+    if (part_flag(displayed_part, VPFLAG_OPENABLE) && parts[displayed_part].open) {
+        // open
+        part_mod = 1;
+    } else if (parts[displayed_part].is_broken()) {
+        // broken
+        part_mod = 2;
+    }
+
+    return idinfo;
 }
 
 auto vehicle::part_color(const int p, const bool exact) const -> nc_color {

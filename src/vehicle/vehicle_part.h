@@ -272,10 +272,6 @@ public:
     /** door is open */
     bool open = false;
 
-    /// Saved independently of physical part ID and mount coordinates.
-    std::string variant;
-    auto set_variant(const std::string& value) -> bool;
-
     /** direction the part is facing */
     units::angle direction = 0_degrees;
 

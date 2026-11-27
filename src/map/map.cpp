@@ -6772,7 +6772,8 @@ auto map::draw_maptile(
     int veh_part = 0;
     const vehicle* veh = veh_at_internal(tripoint_bub_ms(p), veh_part);
     if (veh != nullptr) {
-        sym = veh->part_sym(veh_part, false, veh->part_display_direction(veh_part));
+        const auto part_face = tileray(veh->part_display_direction(veh_part));
+        sym = special_symbol(part_face.dir_symbol(veh->part_sym(veh_part)));
         tercol = veh->part_color(veh_part);
         item_sym.clear(); // clear the item symbol so `sym` is used instead.
 
@@ -6852,8 +6853,8 @@ void map::draw_from_above(
     } else if ((veh = veh_at_internal(tripoint_bub_ms(p), part_below)) != nullptr) {
         const int roof = veh->roof_at_part(part_below);
         const int displayed_part = roof >= 0 ? roof : part_below;
-        sym =
-            veh->part_sym(displayed_part, true, veh->part_display_direction(part_below, roof >= 0));
+        const auto part_face = tileray(veh->part_display_direction(part_below, roof >= 0));
+        sym = special_symbol(part_face.dir_symbol(veh->part_sym(displayed_part, true)));
         tercol =
             (roof >= 0 || vpart_position(const_cast<vehicle&>(*veh), part_below).obstacle_at_part())
                 ? c_light_gray

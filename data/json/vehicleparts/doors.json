@@ -373,28 +373,7 @@
     },
     "flags": [ "OBSTACLE", "OPENABLE", "BOARDABLE", "WINDOW" ],
     "breaks_into": [ { "item": "splinter", "count": [ 7, 9 ] } ],
-    "damage_reduction": { "all": 8 },
-    "variants": [
-      { "id": "front", "label": "Front", "symbols": "+", "symbols_broken": "&" },
-      { "id": "front_left", "label": "Front Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "front_right", "label": "Front Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "left", "label": "Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "right", "label": "Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "rear", "label": "Rear", "symbols": "+", "symbols_broken": "&" },
-      { "id": "vertical_left", "label": "Left Vertical", "symbols": "+", "symbols_broken": "&" },
-      { "id": "vertical_right", "label": "Right Vertical", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_front", "label": "Front Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_2", "label": "Thick Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_rear", "label": "Rear Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "ne", "label": "Front Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "nw", "label": "Front Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "se", "label": "Rear Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "sw", "label": "Rear Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "wheel_left", "label": "Wheel Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "wheel_right", "label": "Wheel Right", "symbols": "+", "symbols_broken": "&" }
-    ],
-    "variants_bases": [ { "id": "full", "label": "Full" } ],
-    "variant_default": ""
+    "damage_reduction": { "all": 8 }
   },
   {
     "type": "vehicle_part",
@@ -421,28 +400,7 @@
     },
     "flags": [ "OBSTACLE", "OPENABLE", "BOARDABLE", "OPAQUE" ],
     "breaks_into": [ { "item": "splinter", "count": [ 7, 9 ] } ],
-    "damage_reduction": { "all": 12 },
-    "variants": [
-      { "id": "front", "label": "Front", "symbols": "+", "symbols_broken": "&" },
-      { "id": "front_left", "label": "Front Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "front_right", "label": "Front Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "left", "label": "Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "right", "label": "Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "rear", "label": "Rear", "symbols": "+", "symbols_broken": "&" },
-      { "id": "vertical_left", "label": "Left Vertical", "symbols": "+", "symbols_broken": "&" },
-      { "id": "vertical_right", "label": "Right Vertical", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_front", "label": "Front Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_2", "label": "Thick Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_rear", "label": "Rear Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "ne", "label": "Front Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "nw", "label": "Front Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "se", "label": "Rear Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "sw", "label": "Rear Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "wheel_left", "label": "Wheel Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "wheel_right", "label": "Wheel Right", "symbols": "+", "symbols_broken": "&" }
-    ],
-    "variants_bases": [ { "id": "full", "label": "Full" } ],
-    "variant_default": ""
+    "damage_reduction": { "all": 12 }
   },
   {
     "type": "vehicle_part",
@@ -471,27 +429,9 @@
     "breaks_into": "ig_vp_sheet_metal",
     "damage_reduction": { "all": 24 },
     "default_color": "#622625",
-    "variants": [
-      { "id": "front", "label": "Front", "symbols": "+", "symbols_broken": "&" },
-      { "id": "front_left", "label": "Front Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "front_right", "label": "Front Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "left", "label": "Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "right", "label": "Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "rear", "label": "Rear", "symbols": "+", "symbols_broken": "&" },
-      { "id": "vertical_left", "label": "Left Vertical", "symbols": "+", "symbols_broken": "&" },
-      { "id": "vertical_right", "label": "Right Vertical", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_front", "label": "Front Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_2", "label": "Thick Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_rear", "label": "Rear Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "ne", "label": "Front Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "nw", "label": "Front Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "se", "label": "Rear Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "sw", "label": "Rear Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "wheel_left", "label": "Wheel Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "wheel_right", "label": "Wheel Right", "symbols": "+", "symbols_broken": "&" }
-    ],
-    "variants_bases": [ { "id": "full", "label": "Full" } ],
-    "variant_default": ""
+    "shapes": [
+      { "direction": "front", "symbol": "+", "looks_like": "door_shutter" }
+    ]
   },
   {
     "type": "vehicle_part",
@@ -516,27 +456,18 @@
     "breaks_into": "ig_vp_frame",
     "damage_reduction": { "all": 26 },
     "default_color": "#622625",
-    "variants": [
-      { "id": "front", "label": "Front", "symbols": "+", "symbols_broken": "&" },
-      { "id": "front_left", "label": "Front Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "front_right", "label": "Front Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "left", "label": "Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "right", "label": "Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "rear", "label": "Rear", "symbols": "+", "symbols_broken": "&" },
-      { "id": "vertical_left", "label": "Left Vertical", "symbols": "+", "symbols_broken": "&" },
-      { "id": "vertical_right", "label": "Right Vertical", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_front", "label": "Front Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_2", "label": "Thick Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_rear", "label": "Rear Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "ne", "label": "Front Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "nw", "label": "Front Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "se", "label": "Rear Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "sw", "label": "Rear Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "wheel_left", "label": "Wheel Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "wheel_right", "label": "Wheel Right", "symbols": "+", "symbols_broken": "&" }
-    ],
-    "variants_bases": [ { "id": "full", "label": "Full" } ],
-    "variant_default": ""
+    "shapes": [
+      { "direction": "as_door_nw_from_base", "symbol": "+", "looks_like": "door_sliding" },
+      { "direction": "as_door_se_from_base", "symbol": "+", "looks_like": "door_sliding" },
+      { "direction": "as_door_sw_from_base", "symbol": "+", "looks_like": "door_sliding" },
+      { "direction": "as_door_right_from_base", "symbol": "+", "looks_like": "door_sliding" },
+      { "direction": "as_door_left_from_base", "symbol": "+", "looks_like": "door_sliding" },
+      { "direction": "as_door_front_right_from_base", "symbol": "+", "looks_like": "door_sliding" },
+      { "direction": "horizontal_front", "symbol": "+", "looks_like": "door_sliding" },
+      { "direction": "horizontal_rear", "symbol": "+", "looks_like": "door_sliding" },
+      { "direction": "full_left", "symbol": "+", "looks_like": "door_sliding" },
+      { "direction": "full_right", "symbol": "+", "looks_like": "door_sliding" }
+    ]
   },
   {
     "copy-from": "door_sliding",
@@ -555,9 +486,7 @@
     "durability": 180,
     "damage_reduction": { "all": 31 },
     "folded_volume": "2500 ml",
-    "extend": { "flags": [ "FOLDABLE", "SHOCK_RESISTANT" ] },
-    "variants": [  ],
-    "variants_bases": [  ]
+    "extend": { "flags": [ "FOLDABLE", "SHOCK_RESISTANT" ] }
   },
   {
     "type": "vehicle_part",
@@ -582,27 +511,10 @@
     "breaks_into": "ig_vp_frame",
     "damage_reduction": { "all": 25 },
     "default_color": "#622625",
-    "variants": [
-      { "id": "front", "label": "Front", "symbols": "+", "symbols_broken": "&" },
-      { "id": "front_left", "label": "Front Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "front_right", "label": "Front Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "left", "label": "Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "right", "label": "Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "rear", "label": "Rear", "symbols": "+", "symbols_broken": "&" },
-      { "id": "vertical_left", "label": "Left Vertical", "symbols": "+", "symbols_broken": "&" },
-      { "id": "vertical_right", "label": "Right Vertical", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_front", "label": "Front Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_2", "label": "Thick Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_rear", "label": "Rear Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "ne", "label": "Front Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "nw", "label": "Front Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "se", "label": "Rear Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "sw", "label": "Rear Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "wheel_left", "label": "Wheel Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "wheel_right", "label": "Wheel Right", "symbols": "+", "symbols_broken": "&" }
-    ],
-    "variants_bases": [ { "id": "full", "label": "Full" } ],
-    "variant_default": ""
+    "shapes": [
+      { "direction": "front", "symbol": "+", "looks_like": "door_trunk" },
+      { "direction": "horizontal_2", "symbol": "+", "looks_like": "door_trunk" }
+    ]
   },
   {
     "copy-from": "door_trunk",
@@ -621,9 +533,7 @@
     "durability": 180,
     "damage_reduction": { "all": 30 },
     "folded_volume": "2500 ml",
-    "extend": { "flags": [ "FOLDABLE", "SHOCK_RESISTANT" ] },
-    "variants": [  ],
-    "variants_bases": [  ]
+    "extend": { "flags": [ "FOLDABLE", "SHOCK_RESISTANT" ] }
   },
   {
     "type": "vehicle_part",
@@ -647,28 +557,7 @@
     "flags": [ "OBSTACLE", "OPENABLE", "MULTISQUARE", "BOARDABLE", "LOW_FINAL_AIR_DRAG", "WINDOW" ],
     "breaks_into": "ig_vp_hdframe",
     "damage_reduction": { "all": 78 },
-    "default_color": "#3f4535",
-    "variants": [
-      { "id": "front", "label": "Front", "symbols": "+", "symbols_broken": "&" },
-      { "id": "front_left", "label": "Front Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "front_right", "label": "Front Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "left", "label": "Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "right", "label": "Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "rear", "label": "Rear", "symbols": "+", "symbols_broken": "&" },
-      { "id": "vertical_left", "label": "Left Vertical", "symbols": "+", "symbols_broken": "&" },
-      { "id": "vertical_right", "label": "Right Vertical", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_front", "label": "Front Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_2", "label": "Thick Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_rear", "label": "Rear Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "ne", "label": "Front Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "nw", "label": "Front Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "se", "label": "Rear Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "sw", "label": "Rear Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "wheel_left", "label": "Wheel Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "wheel_right", "label": "Wheel Right", "symbols": "+", "symbols_broken": "&" }
-    ],
-    "variants_bases": [ { "id": "full", "label": "Full" } ],
-    "variant_default": ""
+    "default_color": "#3f4535"
   },
   {
     "type": "vehicle_part",
@@ -709,56 +598,37 @@
       { "direction": "rear_left", "symbol": "b" },
       { "direction": "rear_right", "symbol": "n" },
       { "direction": "door_front", "symbol": "T" },
-      { "direction": "door_rear", "symbol": "B" }
-    ],
-    "variants": [
-      { "id": "front", "label": "Front", "symbols": "+", "symbols_broken": "&" },
-      { "id": "front_left", "label": "Front Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "front_right", "label": "Front Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "left", "label": "Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "right", "label": "Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "rear", "label": "Rear", "symbols": "+", "symbols_broken": "&" },
-      { "id": "vertical_left", "label": "Left Vertical", "symbols": "+", "symbols_broken": "&" },
-      { "id": "vertical_right", "label": "Right Vertical", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_front", "label": "Front Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_2", "label": "Thick Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_rear", "label": "Rear Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "ne", "label": "Front Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "nw", "label": "Front Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "se", "label": "Rear Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "sw", "label": "Rear Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "wheel_left", "label": "Wheel Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "wheel_right", "label": "Wheel Right", "symbols": "+", "symbols_broken": "&" }
-    ],
-    "variants_bases": [ { "id": "full", "label": "Full" } ],
-    "variant_default": ""
+      { "direction": "door_rear", "symbol": "B" },
+      { "direction": "full_left", "symbol": "+", "looks_like": "door" },
+      { "direction": "full_right", "symbol": "+", "looks_like": "door" },
+      { "direction": "as_front_left_from_base", "symbol": "+", "looks_like": "door" },
+      { "direction": "as_front_right_from_base", "symbol": "+", "looks_like": "door" },
+      { "direction": "as_rear_left_from_base", "symbol": "+", "looks_like": "door" },
+      { "direction": "as_rear_right_from_base", "symbol": "+", "looks_like": "door" },
+      { "direction": "as_right_from_base", "symbol": "+", "looks_like": "door" },
+      { "direction": "as_left_from_base", "symbol": "+", "looks_like": "door" },
+      { "direction": "as_nw_from_front_left", "symbol": "y", "looks_like": "door_front_left" },
+      { "direction": "as_ne_from_front_right", "symbol": "u", "looks_like": "door_front_right" },
+      { "direction": "as_nw_from_rear_left", "symbol": "b", "looks_like": "door_rear_left" },
+      { "direction": "as_ne_from_rear_right", "symbol": "n", "looks_like": "door_rear_right" },
+      { "direction": "as_nw_from_front_right", "symbol": "u", "looks_like": "door_front_right" },
+      { "direction": "as_ne_from_front_left", "symbol": "y", "looks_like": "door_front_left" },
+      { "direction": "as_nw_from_base", "symbol": "+", "looks_like": "door" },
+      { "direction": "as_ne_from_base", "symbol": "+", "looks_like": "door" },
+      { "direction": "as_full_right_from_front_right", "symbol": "u", "looks_like": "door_front_right" },
+      { "direction": "as_front_from_base", "symbol": "+", "looks_like": "door" },
+      { "direction": "glazed_rear", "symbol": "+", "looks_like": "door" }
+    ]
   },
   {
     "copy-from": "door_opaque_abstract",
     "id": "door_opaque",
     "symbol": "+",
     "type": "vehicle_part",
-    "variants": [
-      { "id": "front", "label": "Front", "symbols": "+", "symbols_broken": "&" },
-      { "id": "front_left", "label": "Front Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "front_right", "label": "Front Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "left", "label": "Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "right", "label": "Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "rear", "label": "Rear", "symbols": "+", "symbols_broken": "&" },
-      { "id": "vertical_left", "label": "Left Vertical", "symbols": "+", "symbols_broken": "&" },
-      { "id": "vertical_right", "label": "Right Vertical", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_front", "label": "Front Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_2", "label": "Thick Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_rear", "label": "Rear Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "ne", "label": "Front Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "nw", "label": "Front Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "se", "label": "Rear Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "sw", "label": "Rear Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "wheel_left", "label": "Wheel Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "wheel_right", "label": "Wheel Right", "symbols": "+", "symbols_broken": "&" }
-    ],
-    "variants_bases": [ { "id": "full", "label": "Full" } ],
-    "variant_default": ""
+    "shapes": [
+      { "direction": "full_right", "symbol": "+", "looks_like": "door_opaque" },
+      { "direction": "rear", "symbol": "+", "looks_like": "door_opaque" }
+    ]
   },
   {
     "copy-from": "door_carbon_abstract",
@@ -774,7 +644,9 @@
       { "direction": "rear_left", "symbol": "b" },
       { "direction": "rear_right", "symbol": "n" },
       { "direction": "door_front", "symbol": "T" },
-      { "direction": "door_rear", "symbol": "B" }
+      { "direction": "door_rear", "symbol": "B" },
+      { "direction": "as_door_left_from_base", "symbol": "+", "looks_like": "door_carbon" },
+      { "direction": "as_door_right_from_base", "symbol": "+", "looks_like": "door_carbon" }
     ]
   },
   {
@@ -789,138 +661,51 @@
     "id": "hddoor",
     "symbol": "+",
     "type": "vehicle_part",
-    "shapes": [ { "direction": "left", "symbol": "L" }, { "direction": "right", "symbol": "R" } ],
-    "variants": [
-      { "id": "front", "label": "Front", "symbols": "+", "symbols_broken": "&" },
-      { "id": "front_left", "label": "Front Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "front_right", "label": "Front Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "left", "label": "Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "right", "label": "Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "rear", "label": "Rear", "symbols": "+", "symbols_broken": "&" },
-      { "id": "vertical_left", "label": "Left Vertical", "symbols": "+", "symbols_broken": "&" },
-      { "id": "vertical_right", "label": "Right Vertical", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_front", "label": "Front Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_2", "label": "Thick Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_rear", "label": "Rear Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "ne", "label": "Front Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "nw", "label": "Front Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "se", "label": "Rear Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "sw", "label": "Rear Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "wheel_left", "label": "Wheel Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "wheel_right", "label": "Wheel Right", "symbols": "+", "symbols_broken": "&" }
-    ],
-    "variants_bases": [ { "id": "full", "label": "Full" } ],
-    "variant_default": ""
+    "shapes": [ { "direction": "left", "symbol": "L" }, { "direction": "right", "symbol": "R" },
+    { "direction": "full_right", "symbol": "+", "looks_like": "hddoor" },
+    { "direction": "as_right_from_left", "symbol": "L", "looks_like": "hddoor_left" },
+    { "direction": "as_left_from_right", "symbol": "R", "looks_like": "hddoor_right" },
+    { "direction": "as_right_from_base", "symbol": "+", "looks_like": "hddoor" } ]
   },
   {
     "copy-from": "hddoor_opaque_abstract",
     "id": "hddoor_opaque",
     "symbol": "+",
     "type": "vehicle_part",
-    "shapes": [ { "direction": "left", "symbol": "L" }, { "direction": "right", "symbol": "R" } ],
-    "variants": [
-      { "id": "front", "label": "Front", "symbols": "+", "symbols_broken": "&" },
-      { "id": "front_left", "label": "Front Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "front_right", "label": "Front Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "left", "label": "Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "right", "label": "Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "rear", "label": "Rear", "symbols": "+", "symbols_broken": "&" },
-      { "id": "vertical_left", "label": "Left Vertical", "symbols": "+", "symbols_broken": "&" },
-      { "id": "vertical_right", "label": "Right Vertical", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_front", "label": "Front Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_2", "label": "Thick Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_rear", "label": "Rear Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "ne", "label": "Front Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "nw", "label": "Front Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "se", "label": "Rear Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "sw", "label": "Rear Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "wheel_left", "label": "Wheel Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "wheel_right", "label": "Wheel Right", "symbols": "+", "symbols_broken": "&" }
-    ],
-    "variants_bases": [ { "id": "full", "label": "Full" } ],
-    "variant_default": ""
+    "shapes": [ { "direction": "left", "symbol": "L" }, { "direction": "right", "symbol": "R" },
+    { "direction": "rear", "symbol": "+", "looks_like": "hddoor_opaque" },
+    { "direction": "side_right", "symbol": "+", "looks_like": "hddoor_opaque" } ]
   },
   {
     "copy-from": "door_internal_abstract",
     "id": "door_internal",
     "symbol": "+",
     "type": "vehicle_part",
-    "shapes": [ { "direction": "left", "symbol": "L" }, { "direction": "right", "symbol": "R" } ],
-    "variants": [
-      { "id": "front", "label": "Front", "symbols": "+", "symbols_broken": "&" },
-      { "id": "front_left", "label": "Front Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "front_right", "label": "Front Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "left", "label": "Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "right", "label": "Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "rear", "label": "Rear", "symbols": "+", "symbols_broken": "&" },
-      { "id": "vertical_left", "label": "Left Vertical", "symbols": "+", "symbols_broken": "&" },
-      { "id": "vertical_right", "label": "Right Vertical", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_front", "label": "Front Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_2", "label": "Thick Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_rear", "label": "Rear Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "ne", "label": "Front Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "nw", "label": "Front Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "se", "label": "Rear Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "sw", "label": "Rear Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "wheel_left", "label": "Wheel Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "wheel_right", "label": "Wheel Right", "symbols": "+", "symbols_broken": "&" }
-    ],
-    "variants_bases": [ { "id": "full", "label": "Full" } ],
-    "variant_default": ""
+    "shapes": [ { "direction": "left", "symbol": "L" }, { "direction": "right", "symbol": "R" },
+    { "direction": "front", "symbol": "+", "looks_like": "door_internal" },
+    { "direction": "as_door_opaque_rear_from_base", "symbol": "+", "looks_like": "door_internal" } ]
   },
   {
     "copy-from": "hatch_abstract",
     "id": "hatch",
     "symbol": "+",
     "type": "vehicle_part",
-    "variants": [
-      { "id": "front", "label": "Front", "symbols": "+", "symbols_broken": "&" },
-      { "id": "front_left", "label": "Front Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "front_right", "label": "Front Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "left", "label": "Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "right", "label": "Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "rear", "label": "Rear", "symbols": "+", "symbols_broken": "&" },
-      { "id": "vertical_left", "label": "Left Vertical", "symbols": "+", "symbols_broken": "&" },
-      { "id": "vertical_right", "label": "Right Vertical", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_front", "label": "Front Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_2", "label": "Thick Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_rear", "label": "Rear Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "ne", "label": "Front Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "nw", "label": "Front Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "se", "label": "Rear Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "sw", "label": "Rear Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "wheel_left", "label": "Wheel Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "wheel_right", "label": "Wheel Right", "symbols": "+", "symbols_broken": "&" }
-    ],
-    "variants_bases": [ { "id": "full", "label": "Full" } ],
-    "variant_default": ""
+    "shapes": [
+      { "direction": "horizontal", "symbol": "+", "looks_like": "hatch" },
+      { "direction": "front", "symbol": "+", "looks_like": "hatch" },
+      { "direction": "as_door_left_from_base", "symbol": "+", "looks_like": "hatch" },
+      { "direction": "as_door_right_from_base", "symbol": "+", "looks_like": "hatch" }
+    ]
   },
   {
     "copy-from": "hatch_opaque_abstract",
     "id": "hatch_opaque",
     "symbol": "+",
     "type": "vehicle_part",
-    "variants": [
-      { "id": "front", "label": "Front", "symbols": "+", "symbols_broken": "&" },
-      { "id": "front_left", "label": "Front Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "front_right", "label": "Front Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "left", "label": "Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "right", "label": "Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "rear", "label": "Rear", "symbols": "+", "symbols_broken": "&" },
-      { "id": "vertical_left", "label": "Left Vertical", "symbols": "+", "symbols_broken": "&" },
-      { "id": "vertical_right", "label": "Right Vertical", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_front", "label": "Front Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_2", "label": "Thick Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_rear", "label": "Rear Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "ne", "label": "Front Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "nw", "label": "Front Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "se", "label": "Rear Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "sw", "label": "Rear Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "wheel_left", "label": "Wheel Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "wheel_right", "label": "Wheel Right", "symbols": "+", "symbols_broken": "&" }
-    ],
-    "variants_bases": [ { "id": "full", "label": "Full" } ],
-    "variant_default": ""
+    "shapes": [
+      { "direction": "as_right_from_base", "symbol": "+", "looks_like": "hatch_opaque" },
+      { "direction": "as_left_from_base", "symbol": "+", "looks_like": "hatch_opaque" }
+    ]
   },
   {
     "copy-from": "door_internal_carbon_abstract",
@@ -948,55 +733,17 @@
     "id": "hdhatch",
     "symbol": "+",
     "type": "vehicle_part",
-    "shapes": [ { "direction": "left", "symbol": "L" }, { "direction": "right", "symbol": "R" } ],
-    "variants": [
-      { "id": "front", "label": "Front", "symbols": "+", "symbols_broken": "&" },
-      { "id": "front_left", "label": "Front Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "front_right", "label": "Front Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "left", "label": "Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "right", "label": "Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "rear", "label": "Rear", "symbols": "+", "symbols_broken": "&" },
-      { "id": "vertical_left", "label": "Left Vertical", "symbols": "+", "symbols_broken": "&" },
-      { "id": "vertical_right", "label": "Right Vertical", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_front", "label": "Front Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_2", "label": "Thick Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_rear", "label": "Rear Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "ne", "label": "Front Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "nw", "label": "Front Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "se", "label": "Rear Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "sw", "label": "Rear Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "wheel_left", "label": "Wheel Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "wheel_right", "label": "Wheel Right", "symbols": "+", "symbols_broken": "&" }
-    ],
-    "variants_bases": [ { "id": "full", "label": "Full" } ],
-    "variant_default": ""
+    "shapes": [ { "direction": "left", "symbol": "L" }, { "direction": "right", "symbol": "R" },
+    { "direction": "as_hddoor_left_from_base", "symbol": "+", "looks_like": "hdhatch" } ]
   },
   {
     "copy-from": "hdhatch_opaque_abstract",
     "id": "hdhatch_opaque",
     "symbol": "+",
     "type": "vehicle_part",
-    "shapes": [ { "direction": "left", "symbol": "L" }, { "direction": "right", "symbol": "R" } ],
-    "variants": [
-      { "id": "front", "label": "Front", "symbols": "+", "symbols_broken": "&" },
-      { "id": "front_left", "label": "Front Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "front_right", "label": "Front Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "left", "label": "Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "right", "label": "Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "rear", "label": "Rear", "symbols": "+", "symbols_broken": "&" },
-      { "id": "vertical_left", "label": "Left Vertical", "symbols": "+", "symbols_broken": "&" },
-      { "id": "vertical_right", "label": "Right Vertical", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_front", "label": "Front Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_2", "label": "Thick Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "horizontal_rear", "label": "Rear Horizontal", "symbols": "+", "symbols_broken": "&" },
-      { "id": "ne", "label": "Front Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "nw", "label": "Front Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "se", "label": "Rear Right", "symbols": "+", "symbols_broken": "&" },
-      { "id": "sw", "label": "Rear Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "wheel_left", "label": "Wheel Left", "symbols": "+", "symbols_broken": "&" },
-      { "id": "wheel_right", "label": "Wheel Right", "symbols": "+", "symbols_broken": "&" }
-    ],
-    "variants_bases": [ { "id": "full", "label": "Full" } ],
-    "variant_default": ""
+    "shapes": [ { "direction": "left", "symbol": "L" }, { "direction": "right", "symbol": "R" },
+    { "direction": "as_left_from_base", "symbol": "+", "looks_like": "hdhatch_opaque" },
+    { "direction": "as_hddoor_opaque_rear_from_base", "symbol": "+", "looks_like": "hdhatch_opaque" },
+    { "direction": "as_right_from_base", "symbol": "+", "looks_like": "hdhatch_opaque" } ]
   }
 ]

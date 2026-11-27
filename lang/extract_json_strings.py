@@ -1145,11 +1145,6 @@ def extract_json(state, item):
         else:
             writestr(state, name)
         wrote = True
-    if object_type == "vehicle_part":
-        for entry in item.get("variants", []) + item.get("variants_bases", []):
-            if label := entry.get("label"):
-                writestr(state, label, context="vpart_variants")
-                wrote = True
     if "name_suffix" in item:
         writestr(state, item["name_suffix"])
         wrote = True
