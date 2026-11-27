@@ -305,19 +305,20 @@ level value and then only specify it for individual entries that differ.
 
 ### Fields
 
-| Identifier      | Description                                                                                           |
-| --------------- | ----------------------------------------------------------------------------------------------------- |
-| `type`          | Must be `"overmap_special"`.                                                                          |
-| `id`            | Unique id.                                                                                            |
-| `connections`   | List of overmap connections and their relative `[ x, y, z ]` location within the special.             |
-| `place_nested`  | Array of `{ "point": [x, y, z], "special": id }` with nested specials, relative to this one.          |
-| `subtype`       | Either `"fixed"` or `"mutable"`. Defaults to `"fixed"` if not specified.                              |
-| `locations`     | List of `overmap_location` ids that the special may be placed on.                                     |
-| `city_distance` | Min/max distance from a city that the special may be placed. Use -1 for unbounded.                    |
-| `city_sizes`    | Min/max city size for a city that the special may be placed near. Use -1 for unbounded.               |
-| `occurrences`   | Min/max number of occurrences when placing the special. If UNIQUE flag is set, becomes X of Y chance. |
-| `flags`         | See `Overmap specials` in [json_flags.md](../json_flags).                                             |
-| `rotate`        | Whether the special can rotate. True if not specified.                                                |
+| Identifier       | Description                                                                                                                                                    |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `type`           | Must be `"overmap_special"`.                                                                                                                                   |
+| `id`             | Unique id.                                                                                                                                                     |
+| `connections`    | List of overmap connections and their relative `[ x, y, z ]` location within the special.                                                                      |
+| `place_nested`   | Array of `{ "point": [x, y, z], "special": id }` with nested specials, relative to this one.                                                                   |
+| `subtype`        | Either `"fixed"` or `"mutable"`. Defaults to `"fixed"` if not specified.                                                                                       |
+| `locations`      | List of `overmap_location` ids that the special may be placed on.                                                                                              |
+| `overmap_origin` | Exact origin `[ x, y, z ]` or inclusive origin range object `{ "from": [ ... ], "to": [ ... ] }` within the current overmap that the special may be placed at. |
+| `city_distance`  | Min/max distance from a city that the special may be placed. Use -1 for unbounded.                                                                             |
+| `city_sizes`     | Min/max city size for a city that the special may be placed near. Use -1 for unbounded.                                                                        |
+| `occurrences`    | Min/max number of occurrences when placing the special. If UNIQUE flag is set, becomes X of Y chance.                                                          |
+| `flags`          | See `Overmap specials` in [json_flags.md](../json_flags).                                                                                                      |
+| `rotate`         | Whether the special can rotate. True if not specified.                                                                                                         |
 
 Depending on the subtype, there are further relevant fields:
 
@@ -354,6 +355,7 @@ Depending on the subtype, there are further relevant fields:
     ],
     "connections": [{ "point": [1, -1, 0], "connection": "local_road", "from": [1, 0, 0] }],
     "locations": ["forest"],
+    "overmap_origin": { "from": [10, 20, 0], "to": [14, 24, 0] },
     "city_distance": [10, -1],
     "city_sizes": [3, 12],
     "occurrences": [0, 5],
