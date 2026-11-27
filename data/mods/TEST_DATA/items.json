@@ -996,6 +996,22 @@
     "volume": "250 ml",
     "material": [ "plastic" ],
     "symbol": ";",
-    "color": "magenta"
+    "color": "magenta",
+    "use_action": { "type": "HAND_CRANK", "charge_interval": "144 seconds", "charge_amount": 2, "ammo_type": "battery" }
+  },
+  {
+    "id": "test_relic_tool_without_ammo",
+    "copy-from": "test_tool_without_ammo",
+    "type": "TOOL",
+    "name": { "str": "TEST relic tool without ammo" },
+    "relic_data": { "recharge_scheme": [ { "type": "time", "interval": "1 s", "rate": 2 } ] }
+  },
+  {
+    "id": "test_tool_with_charges_without_ammo",
+    "copy-from": "test_tool_without_ammo",
+    "type": "TOOL",
+    "name": { "str": "TEST tool with charges without ammo" },
+    "description": "Tool that stores its own charges and accepts no ammo.",
+    "max_charges": 10
   }
 ]

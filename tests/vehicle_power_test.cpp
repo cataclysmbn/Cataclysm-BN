@@ -344,6 +344,26 @@ TEST_CASE("Vehicle charging station", "[vehicle][power]") {
                 }
             }
         }
+        /// Checks that the station fills the light battery in a USE_UPS tool type without ammo.
+        /// The tool type accepts no ammo, so the charges must go into the battery.
+        AND_GIVEN("UPS tool without ammo type with an empty battery in the station") {
+            auto det = item::spawn("test_tool_without_ammo");
+            auto& tool = *det;
+            tool.put_in(item::spawn("light_battery_cell"));
+            tool.set_flag(flag_USE_UPS);
+            REQUIRE(tool.ammo_remaining() == 0);
+            veh_ptr->add_item(cargo_part, std::move(det));
+            WHEN("An hour passes") {
+                for (const auto _ : std::views::iota(0, to_turns<int>(1_hours))) {
+                    (void)_;
+                    g->m.process_items();
+                }
+
+                THEN("The battery is fully charged") {
+                    REQUIRE(tool.ammo_remaining() == tool.ammo_capacity());
+                }
+            }
+        }
         AND_GIVEN("Rechargeable tool with a rechargeable battery in the station") {
             detached_ptr<item> battery_det = item::spawn("light_battery_cell");
             item& battery = *battery_det;
