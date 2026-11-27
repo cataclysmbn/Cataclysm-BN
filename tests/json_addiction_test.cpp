@@ -5,6 +5,7 @@
 #include "catalua_sol.h"
 #include "catch/catch.hpp"
 #include "character.h"
+#include "debug.h"
 #include "event.h"
 #include "event_bus.h"
 #include "init.h"
@@ -126,10 +127,12 @@ TEST_CASE("json_addiction_types", "[addiction]") {
 
         REQUIRE(recorder.events.size() == 2);
         CHECK(recorder.events[0].type() == event_type::gains_addiction);
-        CHECK(recorder.events[0].get<std::string>("addiction") == "test_lua_addiction");
+        CHECK(recorder.events[0].get<addiction_type_id>("addiction")
+              == addiction_type_id("test_lua_addiction"));
         CHECK(recorder.events[0].get<character_id>("character") == who.getID());
         CHECK(recorder.events[1].type() == event_type::loses_addiction);
-        CHECK(recorder.events[1].get<std::string>("addiction") == "test_lua_addiction");
+        CHECK(recorder.events[1].get<addiction_type_id>("addiction")
+              == addiction_type_id("test_lua_addiction"));
     }
 
     SECTION("loading a character drops addictions whose type no longer exists") {
@@ -217,5 +220,41 @@ TEST_CASE("json_addiction_lua_withdrawal", "[addiction][lua]") {
         CHECK(who.addiction_level(addiction_type_id("test_lua_addiction")) == 1);
         who.rem_addiction(addiction_type_id("test_lua_addiction"));
         CHECK(who.addiction_level(addiction_type_id("test_lua_addiction")) == 0);
+    }
+
+    SECTION("the character api accepts the AddictionType enum") {
+        // The legacy enum resolves through the same map as old saves:
+        // CIG is the "nicotine" JSON type. A new addiction starts at
+        // intensity 1, below MIN_ADDICTION_LEVEL, so has_addiction only
+        // reports it once it grows.
+        lua["test_avatar"] = &who;
+        const auto add_via_lua = lua.safe_script(
+            R"(
+            test_avatar:add_addiction( AddictionType.CIG, 200 )
+            assert( test_avatar:addiction_level( AddictionType.CIG ) == 1 )
+            assert( test_avatar:addiction_level( "nicotine" ) == 1 )
+            assert( test_avatar:has_addiction( "nicotine" ) == false )
+            test_avatar:rem_addiction( AddictionType.CIG )
+            assert( test_avatar:addiction_level( AddictionType.CIG ) == 0 )
+            assert( test_avatar:addiction_level( "nicotine" ) == 0 )
+        )",
+            sol::script_pass_on_error);
+        // Surface the script's own assert() text, which names the step that broke.
+        if (!add_via_lua.valid()) { FAIL(add_via_lua.get<sol::error>().what()); }
+        CHECK(who.addiction_level(addiction_type_id("nicotine")) == 0);
+    }
+
+    SECTION("an unknown id from lua is reported, not silently ignored") {
+        lua["test_avatar"] = &who;
+        const auto message = capture_debugmsg_during([&]() {
+            const auto script = lua.safe_script(
+                R"(
+                test_avatar:add_addiction( "no_such_addiction", 1 )
+            )",
+                sol::script_pass_on_error);
+            CHECK(script.valid());
+        });
+        CHECK(message.find("unknown addiction type \"no_such_addiction\"") != std::string::npos);
+        CHECK(who.addiction_level(addiction_type_id("no_such_addiction")) == 0);
     }
 }

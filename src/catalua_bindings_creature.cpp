@@ -69,6 +69,17 @@ auto addiction_id_from_lua( const std::string &type ) -> addiction_type_id
     return id;
 }
 
+/// Resolves the addiction type argument of the character api. `reg_enum`
+/// stores AddictionType values as plain numbers, so anything that is not a
+/// string is an enum value that maps to its JSON type id.
+auto addiction_type_from_lua( const sol::object &type ) -> addiction_type_id
+{
+    if( type.get_type() == sol::type::string ) {
+        return addiction_id_from_lua( type.as<std::string>() );
+    }
+    return addiction_id_from_legacy( type.as<add_type>() );
+}
+
 constexpr std::string_view lua_activity_data_prefix = "lua_activity_data:";
 constexpr std::string_view lua_activity_on_finish_prefix = "lua_activity_on_finish:";
 constexpr std::string_view lua_activity_on_turn_prefix = "lua_activity_on_turn:";
@@ -1146,48 +1157,32 @@ void cata::detail::reg_character( sol::state &lua )
 
         DOC( "Adds an addiction to the character. Accepts an AddictionType enum value"
              " or an addiction type id string, e.g. \"alcohol\"." );
-        luna::set_fx( ut, "add_addiction", sol::overload(
-                          []( UT_CLASS & c, const add_type type, int strength )
+        luna::set_fx( ut, "add_addiction",
+                      []( UT_CLASS & c, const sol::object & type, int strength )
         {
-            c.add_addiction( addiction_id_from_legacy( type ), strength );
-        },
-        []( UT_CLASS & c, const std::string & type, int strength )
-        {
-            c.add_addiction( addiction_id_from_lua( type ), strength );
-        } ) );
+            c.add_addiction( addiction_type_from_lua( type ), strength );
+        } );
         DOC( "Removes an addiction from the character. Accepts an AddictionType enum value"
              " or an addiction type id string, e.g. \"alcohol\"." );
-        luna::set_fx( ut, "rem_addiction", sol::overload(
-                          []( UT_CLASS & c, const add_type type )
+        luna::set_fx( ut, "rem_addiction",
+                      []( UT_CLASS & c, const sol::object & type )
         {
-            c.rem_addiction( addiction_id_from_legacy( type ) );
-        },
-        []( UT_CLASS & c, const std::string & type )
-        {
-            c.rem_addiction( addiction_id_from_lua( type ) );
-        } ) );
+            c.rem_addiction( addiction_type_from_lua( type ) );
+        } );
         DOC( "Returns true if the character has an addiction of the given type."
              " Accepts an AddictionType enum value or an addiction type id string." );
-        luna::set_fx( ut, "has_addiction", sol::overload(
-                          []( const UT_CLASS & c, const add_type type )
+        luna::set_fx( ut, "has_addiction",
+                      []( const UT_CLASS & c, const sol::object & type )
         {
-            return c.has_addiction( addiction_id_from_legacy( type ) );
-        },
-        []( const UT_CLASS & c, const std::string & type )
-        {
-            return c.has_addiction( addiction_id_from_lua( type ) );
-        } ) );
+            return c.has_addiction( addiction_type_from_lua( type ) );
+        } );
         DOC( "Returns the intensity of the addiction of the given type."
              " Accepts an AddictionType enum value or an addiction type id string." );
-        luna::set_fx( ut, "addiction_level", sol::overload(
-                          []( const UT_CLASS & c, const add_type type )
+        luna::set_fx( ut, "addiction_level",
+                      []( const UT_CLASS & c, const sol::object & type )
         {
-            return c.addiction_level( addiction_id_from_legacy( type ) );
-        },
-        []( const UT_CLASS & c, const std::string & type )
-        {
-            return c.addiction_level( addiction_id_from_lua( type ) );
-        } ) );
+            return c.addiction_level( addiction_type_from_lua( type ) );
+        } );
 
         SET_FX_T( is_hauling, bool() const );
 

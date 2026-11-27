@@ -32,6 +32,8 @@ template <> auto enum_to_string<cata_variant_type>(cata_variant_type type) -> st
             return "void";
         case cata_variant_type::add_type:
             return "add_type";
+        case cata_variant_type::addiction_type_id:
+            return "addiction_type_id";
         case cata_variant_type::bionic_id:
             return "bionic_id";
         case cata_variant_type::body_part:
