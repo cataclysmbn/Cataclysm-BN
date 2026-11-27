@@ -21,7 +21,6 @@
 
 namespace {
 
-/// Records every event the bus dispatches while subscribed.
 class addiction_event_recorder: public event_subscriber {
 public:
     void notify(const cata::event& e) override { events.push_back(e); }
@@ -29,7 +28,6 @@ public:
     std::vector<cata::event> events;
 };
 
-/// Reads one `addiction` from @p json, as a save file stores it.
 auto addiction_from_json(const std::string& json) -> addiction {
     auto buffer = std::istringstream(json);
     auto jsin = JsonIn(buffer);
@@ -40,11 +38,8 @@ auto addiction_from_json(const std::string& json) -> addiction {
 
 } // namespace
 
-/// Tests the JSON `addiction_type` registry that replaced the hardcoded
-/// addiction tables: the 13 core types load with the same names, withdrawal
-/// names and craving morale as before, every legacy enum maps to its id and
-/// back (old saves store the enum), and addictions save, load and fire the
-/// gains/loses events by id.
+/// Parity, save-compat and event coverage for the JSON `addiction_type`
+/// registry that replaced the hardcoded addiction tables.
 TEST_CASE("json_addiction_types", "[addiction]") {
     clear_all_state();
     const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
@@ -68,8 +63,6 @@ TEST_CASE("json_addiction_types", "[addiction]") {
     }
 
     SECTION("the status UI keeps the old withdrawal names") {
-        // Before the registry these were a separate table in addiction.cpp
-        // ("Nicotine Withdrawal" and so on), distinct from the short names.
         CHECK(addiction_name(addiction(addiction_type_id("nicotine"))) == "Nicotine Withdrawal");
         CHECK(addiction_name(addiction(addiction_type_id("sleeping pill")))
               == "Sleeping Pill Dependence");
@@ -89,7 +82,6 @@ TEST_CASE("json_addiction_types", "[addiction]") {
             const auto id = addiction_id_from_legacy(legacy);
             REQUIRE(id.is_valid());
             CHECK(legacy_add_type(id) == legacy);
-            // Old saves store the enum as an int.
             const auto loaded = addiction_from_json(
                 R"({"type_enum": )" + std::to_string(i) + R"(, "intensity": 3, "sated": 100})");
             CHECK(loaded.type == id);
@@ -153,11 +145,8 @@ TEST_CASE("json_addiction_types", "[addiction]") {
     }
 }
 
-/// Tests the `on_withdrawal = "lua:NAME"` dispatch of `addict_effect`: a JSON
-/// type with a Lua callback runs `game.addiction_functions["NAME"]` instead of
-/// the hardcoded withdrawal behavior, and the core types still run the C++
-/// behavior without calling Lua. The callback is added to the live `game`
-/// table and removed afterwards, so other tests keep their Lua state.
+/// The callback is added to the live `game` table and removed afterwards, so
+/// other tests keep their Lua state.
 TEST_CASE("json_addiction_lua_withdrawal", "[addiction][lua]") {
     clear_all_state();
     sol::state& lua = DynamicDataLoader::get_instance().lua->lua;
