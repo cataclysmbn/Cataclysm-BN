@@ -70,3 +70,19 @@ TEST_CASE("random_entry_preserves_constness") {
     i1 = 5678;
     CHECK(v1[0] == 5678);
 }
+
+TEST_CASE("normal_roll returns the mean when stddev is zero or negative", "[rng]") {
+    // The default region sets "apartment_sigma": 0. Builds with _GLIBCXX_ASSERTIONS abort
+    // when std::normal_distribution gets stddev 0 (#10582). Other builds draw from the engine,
+    // so check that the next rng_bits() matches a fresh engine with the same seed.
+    rng_set_engine_seed(1);
+    CHECK(normal_roll(90, 0) == 90);
+    CHECK(normal_roll(90, -20) == 90);
+    const auto next_bits = rng_bits();
+    rng_set_engine_seed(1);
+    CHECK(rng_bits() == next_bits);
+}
+
+TEST_CASE("rng_normal returns the bound when both bounds are equal", "[rng]") {
+    CHECK(rng_normal(5, 5) == 5);
+}
