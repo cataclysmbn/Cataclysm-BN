@@ -939,5 +939,5 @@ callback, the game reports an error and applies the plant's default transform
 (clearing the tile's items), because farm zones would otherwise harvest the
 same tile forever. That fallback is triggered by the `GROWTH_HARVEST` flag
 itself, so multi-stage crops cannot skip the transform: a callback that turns
-the plant into a *different* harvestable stage has that stage immediately
+the plant into a _different_ harvestable stage has that stage immediately
 replaced by the new furniture's own default transform.
