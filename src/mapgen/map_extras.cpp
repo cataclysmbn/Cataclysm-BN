@@ -133,8 +133,6 @@ static const mongroup_id GROUP_WASP_QUEEN("GROUP_WASP_QUEEN");
 static const mtype_id mon_dispatch("mon_dispatch");
 static const mtype_id mon_dermatik("mon_dermatik");
 static const mtype_id mon_fleshy_shambler("mon_fleshy_shambler");
-static const mtype_id mon_marloss_zealot_f("mon_marloss_zealot_f");
-static const mtype_id mon_marloss_zealot_m("mon_marloss_zealot_m");
 static const mtype_id mon_shia("mon_shia");
 static const mtype_id mon_spider_cellar_giant("mon_spider_cellar_giant");
 static const mtype_id mon_spider_web("mon_spider_web");
@@ -860,24 +858,6 @@ static auto mx_roadblock(mapgen_constructor& m, const tripoint_abs_omt& abs_offs
                     m.add_field(*p + point_rel_ms(j * 1, -j * 1), fd_blood, 1, 0_turns);
                 }
             }
-        }
-    }
-
-    return true;
-}
-
-static auto mx_marloss_pilgrimage(mapgen_constructor& m, const tripoint_abs_omt& /*abs_offset*/)
-    -> bool {
-    const point_omt_ms leader_pos(rng(4, 19), rng(4, 19));
-    const int max_followers = rng(3, 12);
-    const int rad = 3;
-    const auto spawnzone = m.points_in_radius(leader_pos, rad);
-
-    m.place_npc(leader_pos, string_id<npc_template>("marloss_voice"));
-    for (int spawned = 0; spawned <= max_followers; spawned++) {
-        if (const std::optional<point_omt_ms> where_ =
-                random_point(spawnzone, [&](const point_omt_ms& p) { return m.passable(p); })) {
-            m.add_spawn(one_in(2) ? mon_marloss_zealot_f : mon_marloss_zealot_m, 1, *where_);
         }
     }
 
@@ -2783,7 +2763,6 @@ FunctionMap builtin_functions = {
     {"mx_point_dead_vegetation", mx_point_dead_vegetation},
     {"mx_burned_ground", mx_burned_ground},
     {"mx_point_burned_ground", mx_point_burned_ground},
-    {"mx_marloss_pilgrimage", mx_marloss_pilgrimage},
     {"mx_casings", mx_casings},
     {"mx_looters", mx_looters},
     {"mx_corpses", mx_corpses},
