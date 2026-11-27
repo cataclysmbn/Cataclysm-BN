@@ -9,18 +9,22 @@
 #include "coordinates.h"
 #include "enums.h"
 #include "game.h"
+#include "item.h"
 #include "itype.h"
 #include "iuse_actor.h"
+#include "map/field_type.h"
 #include "map_helpers.h"
 #include "player_activity.h"
 #include "player_helpers.h"
 #include "state_helpers.h"
+#include "trap.h"
 #include "type_id.h"
 #include "units_angle.h"
 #include "units_volume.h"
 #include "vehicle/veh_type.h"
 #include "vehicle/vehicle.h"
 #include "vehicle/vehicle_part.h"
+#include "weather/weather.h"
 
 #include <algorithm>
 
@@ -917,4 +921,39 @@ TEST_CASE("oxytorch", "[activity][oxytorch]") {
             }
         }
     }
+}
+
+namespace {
+
+/// Puts the avatar at noon on the north-west corner tile of a submap. Tiles west of it are on the
+/// next submap.
+auto put_avatar_on_submap_corner() -> tripoint_bub_ms {
+    clear_all_state();
+    calendar::turn = calendar::turn_zero + 12_hours;
+    get_weather().weather_id = weather_type_id("clear");
+    get_weather().clear_temp_cache();
+    const auto pos = tripoint_bub_ms(SEEX * 5, SEEY * 5, 0);
+    g->u.setpos(pos);
+    g->reset_light_level();
+    // Without this the avatar keeps the seen_cache of an earlier test and does not see these tiles.
+    g->m.invalidate_map_cache(pos.z());
+    g->m.build_map_cache(pos.z());
+    g->m.update_visibility_cache(pos.z());
+    return pos;
+}
+
+} // namespace
+
+TEST_CASE("try_fuel_fire_feeds_a_fire_on_the_next_submap", "[activity][fire]") {
+    // A firewood source with 3 planks 1 tile east feeds 1 plank to a 20 minute old fire 1 tile
+    // west.
+    const auto pos = put_avatar_on_submap_corner();
+    const auto plank = itype_id("2x4");
+    g->m.trap_set(pos + point_east, trap_str_id("tr_firewood_source").id());
+    for (auto i = 0; i < 3; ++i) { g->m.add_item(pos + point_east, item::spawn(plank)); }
+    REQUIRE(g->m.add_field(pos + point_west, fd_fire, 1, 20_minutes));
+    auto act = player_activity(activity_id("ACT_WAIT"));
+    try_fuel_fire(act, g->u);
+    CHECK(g->m.i_at(pos + point_east).size() == 2);
+    CHECK(g->m.i_at(pos + point_west).size() == 1);
 }
