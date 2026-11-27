@@ -87,6 +87,7 @@ void addiction_type_data::load( const JsonObject &jo, const std::string & )
 {
     mandatory( jo, was_loaded, "name", name );
     mandatory( jo, was_loaded, "description", description );
+    optional( jo, was_loaded, "withdrawal_name", withdrawal_name );
 
     optional( jo, was_loaded, "craving_morale", craving_morale, morale_type() );
     optional( jo, was_loaded, "legacy_enum", legacy_enum, add_type::NONE );
@@ -98,6 +99,10 @@ void addiction_type_data::check() const
     if( !craving_morale.is_empty() && !craving_morale.is_valid() ) {
         debugmsg( "Addiction type \"%s\" has unknown craving_morale \"%s\"",
                   id.str(), craving_morale.str() );
+    }
+    if( !on_withdrawal.empty() && on_withdrawal.rfind( "lua:", 0 ) != 0 ) {
+        debugmsg( "Addiction type \"%s\" has on_withdrawal \"%s\", which must start with \"lua:\"",
+                  id.str(), on_withdrawal );
     }
     if( legacy_enum != add_type::NONE && addiction_id_from_legacy( legacy_enum ) != id ) {
         debugmsg( "Addiction type \"%s\" uses legacy_enum %s which maps to a different id",
@@ -268,7 +273,7 @@ void addict_effect( Character &u, addiction &add )
                 u.add_morale( MORALE_CRAVING_OPIATE, -40, -10 * in );
                 u.add_effect( effect_shakes, 2_minutes + in * 30_seconds );
             } else if( one_in( 20 ) && dice( 2, 30 ) < in ) {
-                u.add_msg_if_player( m_bad, _( "You feel anxious. You need your painkillers!" ) );
+                u.add_msg_if_player( m_bad, _( "You feel anxious.  You need your painkillers!" ) );
                 u.add_morale( MORALE_CRAVING_OPIATE, -30, -10 * in );
             } else if( one_in( 50 ) && dice( 3, 50 ) < in ) {
                 u.vomit();
@@ -374,7 +379,10 @@ std::string addiction_type_name( const addiction_type_id &cur )
 
 std::string addiction_name( const addiction &cur )
 {
-    return addiction_type_name( cur.type );
+    if( cur.type.is_empty() || !cur.type.is_valid() || cur.type->withdrawal_name.empty() ) {
+        return addiction_type_name( cur.type );
+    }
+    return cur.type->withdrawal_name.translated();
 }
 
 morale_type addiction_craving( const addiction_type_id &cur )

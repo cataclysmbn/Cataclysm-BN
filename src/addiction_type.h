@@ -32,11 +32,15 @@ class addiction_type_data
 
         // Display name; finishes the sentence "Became addicted to ____".
         translation name;
+        // Name of the withdrawal effect in the status UI (e.g. "Nicotine
+        // Withdrawal"); falls back to `name` when omitted.
+        translation withdrawal_name;
         // Long description shown in the character status UI.
         translation description;
         // Morale type applied for cravings; null when the type causes none.
         morale_type craving_morale;
-        // Legacy enum alias used for old save files and game events.
+        // Legacy enum alias used for old save files and the hardcoded
+        // withdrawal behavior.
         add_type legacy_enum = add_type::NONE;
         // Optional Lua callback ("lua:NAME") that replaces the hardcoded
         // withdrawal behavior while suffering from this addiction.

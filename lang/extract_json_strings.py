@@ -173,6 +173,7 @@ automatically_convertible = {
     "MOD_INFO",
     "MONSTER",
     "morale_type",
+    "addiction_type",
     "npc",
     "npc_class",
     "overmap_land_use_code",
@@ -1174,6 +1175,9 @@ def extract_json(state, item):
             c = f"Conditional name for {name} when {cname['type']} matches {cname['condition']}"
             writestr(state, cname["name"], comment=c, format_strings=True, pl_fmt=True)
             wrote = True
+    if "withdrawal_name" in item:
+        writestr(state, item["withdrawal_name"], comment=f"Withdrawal name for addiction '{name}'")
+
     if "description" in item:
         if name:
             c = f"Description for {name}"
