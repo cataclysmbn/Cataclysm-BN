@@ -498,7 +498,6 @@ auto place_player_dimension_at( const dimension_travel_options &opts ) -> bool
     return true;
 }
 
-// Maps the event name used by Lua to the event_type enum.
 auto event_type_from_string( const std::string &name ) -> event_type
 {
     if( !io::enum_is_valid<event_type>( name ) ) {
@@ -515,7 +514,6 @@ auto is_reserved_event( const event_type type ) -> bool
     return type == event_type::game_start || type == event_type::game_over;
 }
 
-/// Returns @p value as an integer when it is a Lua number without a fractional part.
 auto lua_integer( const sol::object &value ) -> std::optional<int>
 {
     if( value.get_type() != sol::type::number ) {
@@ -534,8 +532,6 @@ auto lua_integer( const sol::object &value ) -> std::optional<int>
     return static_cast<int>( number );
 }
 
-/// Converts a Lua `character` value: a Character-like object, a character_id,
-/// an integer id, or the integer id as a string.
 auto character_id_from_lua( const sol::object &value ) -> std::optional<int>
 {
     if( value.is<avatar *>() ) {
@@ -563,11 +559,6 @@ auto character_id_from_lua( const sol::object &value ) -> std::optional<int>
     return lua_integer( value );
 }
 
-// Converts a Lua payload value into the string form cata_variant expects for
-// @p type, and checks it before the event is sent. `character` fields accept
-// a Character-like object, a character_id or an integer id (also as a string);
-// `bool` fields take a Lua boolean; `int` fields take an integer; every other
-// field takes a string (an integer is converted to its string form).
 auto event_field_to_string( cata_variant_type type, const std::string &field_name,
                             const sol::object &value ) -> std::string
 {
@@ -615,11 +606,8 @@ auto event_field_to_string( cata_variant_type type, const std::string &field_nam
     throw wrong_type();
 }
 
-// Builds and dispatches a game event named @p name with the given payload.
-// Table payloads are keyed by the event's field names; a bare Character-like
-// value is shorthand for events whose only field is `character`; nil (or no
-// payload) suits events without fields. Every value is converted and checked
-// before the event is sent, so an error leaves no partial statistics behind.
+// Every value is converted and checked before the event is sent, so an error
+// leaves no partial statistics behind.
 auto send_event_impl( const std::string &name, const sol::object &payload ) -> void
 {
     if( !g ) {
