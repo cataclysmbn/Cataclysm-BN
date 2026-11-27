@@ -17,7 +17,8 @@
       "ter_set": "t_pit",
       "items": [ { "item": "splinter", "count": [ 10, 20 ] } ],
       "ranged": { "reduction": [ 24, 24 ], "destroy_threshold": 150 }
-    }
+    },
+    "connects_to": [ "WALL" ]
   },
   {
     "type": "terrain",
@@ -35,7 +36,8 @@
       "sound_fail": "whump!",
       "ter_set": "t_pit",
       "items": [ { "item": "splinter", "count": [ 10, 20 ] } ]
-    }
+    },
+    "connects_to": [ "WALL" ]
   },
   {
     "type": "terrain",
@@ -55,7 +57,8 @@
       "sound_fail": "clang!",
       "ter_set": "t_null",
       "items": [ { "item": "steel_chunk", "count": [ 1, 4 ] }, { "item": "scrap", "count": [ 3, 12 ] } ]
-    }
+    },
+    "connects_to": [ "WALL" ]
   },
   {
     "type": "terrain",

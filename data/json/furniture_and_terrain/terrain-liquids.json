@@ -366,7 +366,8 @@
         { "item": "steel_chunk", "count": [ 3, 12 ] },
         { "item": "scrap", "count": [ 9, 36 ] }
       ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",

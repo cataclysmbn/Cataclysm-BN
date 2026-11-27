@@ -84,7 +84,8 @@
       ],
       "//": "ceramic obstacles have destroy_threshold equal to str_min since more fragile",
       "ranged": { "reduction": [ 8, 8 ], "destroy_threshold": 8, "block_unaimed_chance": "25%" }
-    }
+    },
+    "rotates_to": "INDOORFLOOR"
   },
   {
     "type": "furniture",

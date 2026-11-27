@@ -265,7 +265,8 @@
     "looks_like": "t_rock_floor",
     "move_cost": 2,
     "flags": [ "TRANSPARENT", "FLAT", "ROAD" ],
-    "bash": { "ter_set": "t_null", "str_min": 75, "str_max": 400, "str_min_supported": 100, "bash_below": true }
+    "bash": { "ter_set": "t_null", "str_min": 75, "str_max": 400, "str_min_supported": 100, "bash_below": true },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -342,7 +343,8 @@
         { "item": "scrap", "count": [ 10, 12 ] },
         { "item": "rebar", "count": [ 0, 4 ] }
       ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -397,7 +399,8 @@
       "str_max": 400,
       "str_min_supported": 100,
       "items": [ { "item": "splinter", "count": [ 2, 8 ] }, { "item": "nail", "charges": [ 5, 10 ] } ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -407,7 +410,7 @@
     "description": "Rotting old floorboards long since repurposed as Davy Jones's patio.",
     "symbol": ".",
     "color": "brown",
-    "extend": { "flags": [ "LIQUID", "SWIMMABLE", "WATER_CUBE", "DEEP_WATER", "GOES_UP" ] },
+    "extend": { "flags": [ "LIQUID", "SWIMMABLE", "WATER_CUBE", "DEEP_WATER", "GOES_UP" ], "connect_groups": [ "INDOORFLOOR" ] },
     "delete": { "flags": [ "FLAMMABLE_HARD" ] },
     "bash": {
       "ter_set": "t_lake_bed",
@@ -441,7 +444,8 @@
         { "item": "scrap", "count": [ 9, 36 ] }
       ],
       "bash_below": true
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -462,7 +466,8 @@
       "str_min_supported": 60,
       "bash_below": true,
       "items": [ { "item": "steel_chunk", "count": [ 1, 2 ] }, { "item": "scrap", "count": [ 1, 40 ] } ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -481,7 +486,8 @@
       "str_max": 400,
       "str_min_supported": 100,
       "items": [ { "item": "splinter", "count": [ 2, 8 ] }, { "item": "nail", "charges": [ 5, 10 ] } ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -500,7 +506,8 @@
       "str_max": 400,
       "str_min_supported": 100,
       "items": [ { "item": "splinter", "count": [ 2, 8 ] }, { "item": "nail", "charges": [ 5, 10 ] } ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -513,7 +520,8 @@
     "looks_like": "t_dirtfloor",
     "flags": [ "TRANSPARENT", "FLAT" ],
     "digging_results": { "digging_min": 1, "result_ter": "t_pit_shallow", "num_minutes": 60 },
-    "bash": { "sound": "SMASH!", "ter_set": "t_pit_shallow", "str_min": 50, "str_max": 400, "str_min_supported": 100 }
+    "bash": { "sound": "SMASH!", "ter_set": "t_pit_shallow", "str_min": 50, "str_max": 400, "str_min_supported": 100 },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -536,7 +544,8 @@
     "color": "dark_gray",
     "looks_like": "t_elevator",
     "move_cost": 2,
-    "flags": [ "TRANSPARENT", "FLAT", "ELEVATOR", "ROAD" ]
+    "flags": [ "TRANSPARENT", "FLAT", "ELEVATOR", "ROAD" ],
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -593,7 +602,8 @@
     "looks_like": "t_linoleum_white_no_roof",
     "flags": [ "FLAT", "ROAD", "TRANSPARENT" ],
     "symbol": ".",
-    "color": "white"
+    "color": "white",
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -616,7 +626,8 @@
         { "item": "scrap", "count": [ 5, 8 ] },
         { "item": "rebar", "count": [ 0, 2 ] }
       ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -640,7 +651,8 @@
         { "item": "scrap", "count": [ 5, 8 ] },
         { "item": "rebar", "count": [ 0, 2 ] }
       ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -659,7 +671,8 @@
       "str_max": 400,
       "str_min_supported": 100,
       "items": [ { "item": "material_soil", "count": [ 4, 10 ] }, { "item": "adobe_brick", "count": [ 2, 6 ] } ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "id": "t_floating_plastic",
@@ -712,6 +725,7 @@
     "color": "light_cyan",
     "move_cost": 2,
     "flags": [ "TRANSPARENT", "FLAT", "ROAD" ],
-    "bash": { "sound": "thump", "ter_set": "t_null", "str_min": 100, "str_max": 500, "str_min_supported": 200 }
+    "bash": { "sound": "thump", "ter_set": "t_null", "str_min": 100, "str_max": 500, "str_min_supported": 200 },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   }
 ]

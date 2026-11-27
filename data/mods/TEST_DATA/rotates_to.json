@@ -1,0 +1,53 @@
+[
+  {
+    "type": "connect_group",
+    "id": "test_rotation_target"
+  },
+  {
+    "type": "connect_group",
+    "id": "test_rotation_row"
+  },
+  {
+    "type": "connect_group",
+    "id": "test_rotation_extra"
+  },
+  {
+    "type": "terrain",
+    "id": "t_test_rotation_target",
+    "copy-from": "t_wall",
+    "connect_groups": [ "test_rotation_target" ]
+  },
+  {
+    "type": "furniture",
+    "id": "f_test_rotation_target",
+    "copy-from": "f_counter",
+    "connect_groups": [ "test_rotation_target" ]
+  },
+  {
+    "type": "furniture",
+    "id": "f_test_rotates_to",
+    "copy-from": "f_counter",
+    "connect_groups": [ "test_rotation_row" ],
+    "connects_to": "test_rotation_row",
+    "rotates_to": "test_rotation_target"
+  },
+  {
+    "type": "furniture",
+    "id": "f_test_rotates_to_empty",
+    "copy-from": "f_test_rotates_to",
+    "rotates_to": [  ]
+  },
+  {
+    "type": "furniture",
+    "id": "f_test_rotates_to_extended",
+    "copy-from": "f_test_rotates_to",
+    "extend": { "connect_groups": [ "test_rotation_extra" ] },
+    "delete": { "connects_to": [ "test_rotation_row" ] }
+  },
+  {
+    "type": "furniture",
+    "id": "f_test_legacy_rotation_member",
+    "copy-from": "f_counter",
+    "connect_groups": "COUNTER"
+  }
+]

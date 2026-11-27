@@ -28,7 +28,8 @@
       "sound_fail": "whump!",
       "ter_set": "t_water_moving_sh",
       "items": [ { "item": "2x4", "count": 2, "prob": 25 }, { "item": "splinter", "count": [ 2, 4 ] } ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -109,7 +110,8 @@
       "sound_fail": "whump!",
       "ter_set": "t_water_sh",
       "items": [ { "item": "2x4", "count": 2, "prob": 25 }, { "item": "splinter", "count": [ 2, 4 ] } ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -229,7 +231,8 @@
       "sound_fail": "whump!",
       "ter_set": "t_water_moving_sh",
       "items": [ { "item": "sheet_metal", "count": 2, "prob": 35 }, { "item": "scrap", "count": [ 2, 4 ] } ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",

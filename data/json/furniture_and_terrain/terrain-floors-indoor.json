@@ -20,7 +20,8 @@
         { "item": "scrap", "count": [ 5, 8 ] },
         { "item": "rebar", "count": [ 0, 2 ] }
       ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -44,7 +45,8 @@
         { "item": "scrap", "count": [ 5, 8 ] },
         { "item": "rebar", "count": [ 0, 2 ] }
       ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -66,7 +68,8 @@
       "sound_fail_vol": "75 dB",
       "ter_set": "t_thconc_floor",
       "items": [ { "item": "glass_shard", "count": [ 0, 2 ] } ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -91,7 +94,8 @@
         { "item": "nail", "charges": [ 5, 10 ] },
         { "item": "glass_shard", "count": [ 8, 16 ] }
       ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -116,7 +120,8 @@
         { "item": "scrap", "count": [ 9, 36 ] },
         { "item": "glass_shard", "count": [ 8, 16 ] }
       ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -158,7 +163,8 @@
         { "item": "scrap", "count": [ 10, 12 ] },
         { "item": "rebar", "count": [ 0, 4 ] }
       ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -198,7 +204,8 @@
         { "item": "scrap", "count": [ 10, 12 ] },
         { "item": "rebar", "count": [ 0, 4 ] }
       ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -210,7 +217,8 @@
     "move_cost": 2,
     "roof": "t_flat_roof",
     "flags": [ "TRANSPARENT", "COLLAPSES", "SUPPORTS_ROOF", "FLAT", "ROAD" ],
-    "bash": { "ter_set": "t_null", "str_min": 75, "str_max": 400, "str_min_supported": 100, "bash_below": true }
+    "bash": { "ter_set": "t_null", "str_min": 75, "str_max": 400, "str_min_supported": 100, "bash_below": true },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -233,7 +241,8 @@
         { "item": "steel_chunk", "count": [ 3, 12 ] },
         { "item": "scrap", "count": [ 9, 36 ] }
       ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -276,7 +285,8 @@
       "str_max": 400,
       "str_min_supported": 100,
       "items": [ { "item": "splinter", "count": [ 2, 8 ] }, { "item": "nail", "charges": [ 5, 10 ] } ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -299,7 +309,8 @@
         { "item": "stick", "count": [ 1, 4 ] },
         { "item": "splinter", "charges": [ 1, 4 ] }
       ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -318,7 +329,8 @@
       "ter_set": "t_null",
       "str_min_supported": 100,
       "items": [ { "item": "steel_chunk", "count": [ 5, 11 ] } ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -337,7 +349,8 @@
       "str_max": 400,
       "str_min_supported": 100,
       "items": [ { "item": "wax", "count": [ 1, 3 ] } ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -357,7 +370,8 @@
       "str_max": 400,
       "str_min_supported": 100,
       "items": [ { "item": "splinter", "count": [ 2, 8 ] }, { "item": "nail", "charges": [ 5, 10 ] } ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -377,7 +391,8 @@
       "str_max": 400,
       "str_min_supported": 100,
       "items": [ { "item": "splinter", "count": [ 2, 8 ] }, { "item": "straw_pile", "charges": [ 5, 10 ] } ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -434,7 +449,8 @@
     "examine_action": "transform",
     "transforms_into": "t_utility_light_off",
     "prompt": "Switch off the utility light",
-    "message": "You flick the utility light off."
+    "message": "You flick the utility light off.",
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -450,7 +466,8 @@
     "examine_action": "transform",
     "transforms_into": "t_utility_light",
     "prompt": "Switch on the utility light",
-    "message": "You flick the utility light on."
+    "message": "You flick the utility light on.",
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -468,7 +485,8 @@
       "sound_fail": "whump!",
       "items": [ { "item": "wax", "count": [ 3, 5 ] } ],
       "bash_below": true
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -479,7 +497,8 @@
     "color": "magenta",
     "move_cost": 2,
     "roof": "t_flat_roof",
-    "flags": [ "TRANSPARENT", "FLAT", "ELEVATOR", "ROAD" ]
+    "flags": [ "TRANSPARENT", "FLAT", "ELEVATOR", "ROAD" ],
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -529,7 +548,8 @@
       "str_max": 15,
       "str_min_supported": 100,
       "items": [ { "item": "rag", "count": [ 0, 1 ] }, { "item": "nail", "charges": [ 1, 4 ] } ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -539,7 +559,8 @@
     "description": "Soft yellow carpet.",
     "symbol": ".",
     "color": "yellow",
-    "deconstruct": { "ter_set": "t_floor", "items": [ { "item": "y_carpet", "charges": 1 }, { "item": "nail", "charges": 4 } ] }
+    "deconstruct": { "ter_set": "t_floor", "items": [ { "item": "y_carpet", "charges": 1 }, { "item": "nail", "charges": 4 } ] },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -549,7 +570,8 @@
     "description": "Soft green carpet.",
     "symbol": ".",
     "color": "green",
-    "deconstruct": { "ter_set": "t_floor", "items": [ { "item": "g_carpet", "charges": 1 }, { "item": "nail", "charges": 4 } ] }
+    "deconstruct": { "ter_set": "t_floor", "items": [ { "item": "g_carpet", "charges": 1 }, { "item": "nail", "charges": 4 } ] },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -559,7 +581,8 @@
     "description": "Soft purple carpet.",
     "symbol": ".",
     "color": "magenta",
-    "deconstruct": { "ter_set": "t_floor", "items": [ { "item": "p_carpet", "charges": 1 }, { "item": "nail", "charges": 4 } ] }
+    "deconstruct": { "ter_set": "t_floor", "items": [ { "item": "p_carpet", "charges": 1 }, { "item": "nail", "charges": 4 } ] },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -579,7 +602,8 @@
       "str_min_supported": 150,
       "items": [ { "item": "rag", "count": [ 0, 1 ] }, { "item": "plastic_chunk", "count": [ 0, 1 ] } ]
     },
-    "delete": { "flags": [ "FLAMMABLE_HARD" ] }
+    "delete": { "flags": [ "FLAMMABLE_HARD" ] },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -596,7 +620,8 @@
       "str_min_supported": 200,
       "items": [ { "item": "rag", "count": [ 0, 1 ] }, { "item": "felt_patch", "count": [ 0, 1 ] } ]
     },
-    "delete": { "flags": [ "FLAMMABLE_HARD" ] }
+    "delete": { "flags": [ "FLAMMABLE_HARD" ] },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -615,7 +640,8 @@
       "str_max": 400,
       "str_min_supported": 100,
       "items": [ { "item": "splinter", "count": [ 2, 8 ] }, { "item": "nail", "charges": [ 5, 10 ] } ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -634,7 +660,8 @@
       "str_max": 400,
       "str_min_supported": 100,
       "items": [ { "item": "splinter", "count": [ 2, 8 ] }, { "item": "nail", "charges": [ 5, 10 ] } ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "id": "t_floor_waxed_y",
@@ -653,7 +680,8 @@
       "sound": "SMASH!",
       "items": [ { "item": "wax", "count": [ 1, 3 ] } ]
     },
-    "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "SUPPORTS_ROOF", "COLLAPSES", "FLAT" ]
+    "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "SUPPORTS_ROOF", "COLLAPSES", "FLAT" ],
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -708,7 +736,8 @@
       "ter_set": "t_null",
       "str_min_supported": 60,
       "items": [ { "item": "steel_chunk", "count": [ 1, 2 ] }, { "item": "scrap", "count": [ 1, 40 ] } ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -723,7 +752,8 @@
     "roof": "t_rock_roof",
     "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "COLLAPSES", "FLAT", "ROAD", "PLOWABLE" ],
     "digging_results": { "digging_min": 1, "result_ter": "t_pit_shallow", "num_minutes": 60 },
-    "bash": { "sound": "thump", "ter_set": "t_null", "str_min": 50, "str_max": 100, "str_min_supported": 100, "bash_below": true }
+    "bash": { "sound": "thump", "ter_set": "t_null", "str_min": 50, "str_max": 100, "str_min_supported": 100, "bash_below": true },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -745,7 +775,8 @@
       "str_max": 100,
       "str_min_supported": 100,
       "items": [ { "item": "material_sand", "charges": [ 250, 500 ] } ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -760,7 +791,8 @@
     "roof": "t_rock_roof",
     "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "FLAT" ],
     "digging_results": { "digging_min": 1, "result_ter": "t_pit_shallow", "num_minutes": 60 },
-    "bash": { "sound": "thump", "ter_set": "t_null", "str_min": 50, "str_max": 100, "str_min_supported": 100, "bash_below": true }
+    "bash": { "sound": "thump", "ter_set": "t_null", "str_min": 50, "str_max": 100, "str_min_supported": 100, "bash_below": true },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -775,7 +807,8 @@
     "move_cost": 2,
     "flags": [ "TRANSPARENT", "FLAT", "SUPPORTS_ROOF" ],
     "digging_results": { "digging_min": 1, "result_ter": "t_pit_shallow", "num_minutes": 60 },
-    "bash": { "sound": "thump", "ter_set": "t_null", "str_min": 40, "str_max": 100, "str_min_supported": 100, "bash_below": true }
+    "bash": { "sound": "thump", "ter_set": "t_null", "str_min": 40, "str_max": 100, "str_min_supported": 100, "bash_below": true },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -796,7 +829,8 @@
       "str_max": 100,
       "str_min_supported": 100,
       "items": [ { "item": "clay_lump", "count": [ 5, 10 ] } ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -838,7 +872,8 @@
       "sound_vol": "60 dB",
       "sound_fail_vol": "50 dB",
       "ter_set": "t_null"
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -858,7 +893,8 @@
       "sound_vol": "60 dB",
       "sound_fail_vol": "50 dB",
       "ter_set": "t_null"
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -879,7 +915,8 @@
       "sound_vol": "75 dB",
       "sound_fail_vol": "60 dB",
       "ter_set": "t_null"
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -1003,6 +1040,7 @@
       "str_max": 400,
       "str_min_supported": 100,
       "items": [ { "item": "material_soil", "count": [ 8, 20 ] }, { "item": "adobe_brick", "count": [ 2, 6 ] } ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   }
 ]

@@ -58,7 +58,8 @@
       "sound_fail": "whack!",
       "ter_set": "t_null",
       "items": [ { "item": "resin_chunk", "count": [ 10, 40 ] } ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -77,7 +78,8 @@
       "sound_fail": "whack!",
       "ter_set": "t_null",
       "items": [ { "item": "resin_chunk", "count": [ 10, 40 ] } ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",
@@ -89,7 +91,8 @@
     "looks_like": "t_floor_resin",
     "move_cost": 2,
     "flags": [ "TRANSPARENT", "FLAT", "NONFLAMMABLE" ],
-    "bash": { "str_min": 250, "str_max": 700, "sound": "boom!", "sound_fail": "whack!", "bash_below": true }
+    "bash": { "str_min": 250, "str_max": 700, "sound": "boom!", "sound_fail": "whack!", "bash_below": true },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",

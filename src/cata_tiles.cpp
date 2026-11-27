@@ -5139,6 +5139,8 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point_bub_ms p,
 
     int ret = 0;
     if( rotate_sprite ) {
+        // Extended connection banks fall back to cardinal rotation for a single sprite.
+        if( tile.is_multitile_subtile && rota >= 0 ) { rota %= 4; }
         switch( rota ) {
             default:
             case 0:
@@ -5613,14 +5615,16 @@ bool cata_tiles::draw_furniture( const tripoint_bub_ms &p, const lit_level ll, i
             int subtile = 0;
             int rotation = 0;
 
-            int connect_group = 0;
-            if( f.obj().connects( connect_group ) ) {
-                get_furn_connect_values( p, subtile, rotation, connect_group, {} );
+            if( f2.obj().connect_to_groups || f2.obj().rotate_to_groups ) {
+                auto connect_group = 0;
+                if( f2.obj().connects( connect_group ) ) {
+                    get_furn_connect_values( p, subtile, rotation, connect_group, furniture_override );
+                } else {
+                    get_tile_values_with_ter( p, f2.to_i(), neighborhood, subtile, rotation );
+                }
             } else {
-                get_tile_values_with_ter( p, f.to_i(), neighborhood, subtile, rotation );
+                get_tile_values( f2.to_i(), neighborhood, subtile, rotation );
             }
-
-            get_tile_values( f2.to_i(), neighborhood, subtile, rotation );
             const std::string &fname = f2.id().str();
             // tile overrides are never memorized
             // tile overrides are always shown with full visibility
@@ -7463,100 +7467,72 @@ void cata_tiles::get_terrain_orientation( const tripoint_bub_ms &p, int &rota, i
         }
     }
 
-    get_rotation_and_subtile( val, rota, subtile );
+    const auto &info = tid.obj();
+    if( info.connect_to_groups ) {
+        val = here.get_known_connections( p, *info.connect_to_groups, ter_override );
+    }
+    const auto targets = here.get_known_rotates_to( p,
+                         info.rotate_to_groups.value_or( ter_connection_groups{} ), ter_override );
+    get_rotation_and_subtile( val, rota, subtile, targets );
 }
 
-void cata_tiles::get_rotation_and_subtile( const char val, int &rotation, int &subtile )
+void cata_tiles::get_rotation_and_subtile( const char val, int &rotation, int &subtile,
+        const int rotation_targets )
 {
-    switch( val ) {
-        // no connections
-        case 0:
-            subtile = unconnected;
-            rotation = 0;
-            break;
-        // all connections
-        case 15:
-            subtile = center;
-            rotation = 0;
-            break;
-        // end pieces
-        case 8:
-            subtile = end_piece;
-            rotation = 2;
-            break;
-        case 4:
-            subtile = end_piece;
-            rotation = 3;
-            break;
-        case 2:
-            subtile = end_piece;
-            rotation = 1;
-            break;
-        case 1:
-            subtile = end_piece;
-            rotation = 0;
-            break;
-        // edges
-        case 9:
-            subtile = edge;
-            rotation = 0;
-            break;
-        case 6:
-            subtile = edge;
-            rotation = 1;
-            break;
-        // corners
-        case 12:
-            subtile = corner;
-            rotation = 2;
-            break;
-        case 10:
-            subtile = corner;
-            rotation = 1;
-            break;
-        case 3:
-            subtile = corner;
-            rotation = 0;
-            break;
-        case 5:
-            subtile = corner;
-            rotation = 3;
-            break;
-        // all t_connections
-        case 14:
-            subtile = t_connection;
-            rotation = 2;
-            break;
-        case 11:
-            subtile = t_connection;
-            rotation = 1;
-            break;
-        case 7:
-            subtile = t_connection;
-            rotation = 0;
-            break;
-        case 13:
-            subtile = t_connection;
-            rotation = 3;
-            break;
+    // Keep BN's legacy S/E/W/N connection masks and frame order.
+    static constexpr int shapes[16] = { unconnected, end_piece, end_piece, corner,
+                                        end_piece, corner, edge, t_connection, end_piece, edge, corner,
+                                        t_connection, corner, t_connection, t_connection, center
+                                      };
+    static constexpr int rotations[16] = { 0, 0, 1, 0, 3, 3, 1, 0, 2, 0, 1, 1, 2, 3, 2, 0 };
+    const auto mask = static_cast<unsigned char>( val );
+    if( mask >= 16 ) { return; }
+    subtile = shapes[mask];
+    rotation = rotations[mask];
+    if( rotation_targets < 0 || rotation_targets >= 16 ) {
+        return;
+    }
+    if( subtile == unconnected ) {
+        // CDDA's 16-neighbour layout, with E/W indices adapted to existing BN packs.
+        static constexpr int facing[16] = { 13, 0, 3, 7, 1, 4, 15, 8, 2, 14, 6, 11, 5, 9, 10, 12 };
+        rotation = facing[rotation_targets];
+    } else if( subtile == edge || subtile == end_piece ) {
+        const bool vertical = val == 1 || val == 8 || val == 9;
+        const auto first = vertical ? 2 : 8;
+        const auto second = vertical ? 4 : 1;
+        static constexpr int facing[4] = { 3, 1, 0, 2 };
+        const auto side = facing[( ( rotation_targets & first ) ? 1 : 0 ) |
+                                                                ( ( rotation_targets & second ) ? 2 : 0 )];
+        rotation += ( subtile == edge ? 2 : 4 ) * side;
     }
 }
 
 void cata_tiles::get_connect_values( const tripoint_bub_ms &p, int &subtile, int &rotation,
-                                     const int connect_group, const std::map<tripoint_bub_ms, ter_id> &ter_override )
+                                     const int connect_group, const std::map<tripoint_bub_ms, ter_id> &overrides )
 {
-    uint8_t connections = get_map().get_known_connections( p, connect_group,
-                          ter_override );
-    get_rotation_and_subtile( connections, rotation, subtile );
+    auto &here = get_map();
+    const auto found = overrides.find( p );
+    const auto &info = ( found == overrides.end() ? here.ter( p ) : found->second ).obj();
+    const auto connections = info.connect_to_groups ?
+                             here.get_known_connections( p, *info.connect_to_groups, overrides ) :
+                             here.get_known_connections( p, connect_group, overrides );
+    const auto targets = here.get_known_rotates_to( p,
+                         info.rotate_to_groups.value_or( ter_connection_groups{} ), overrides );
+    get_rotation_and_subtile( connections, rotation, subtile, targets );
 }
 
 void cata_tiles::get_furn_connect_values( const tripoint_bub_ms &p, int &subtile, int &rotation,
-        const int connect_group, const std::map<tripoint_bub_ms,
-        furn_id> &furn_override )
+        const int connect_group, const std::map<tripoint_bub_ms, furn_id> &overrides )
 {
-    uint8_t connections = get_map().get_known_connections_f( p, connect_group,
-                          furn_override );
-    get_rotation_and_subtile( connections, rotation, subtile );
+    auto &here = get_map();
+    const auto found = overrides.find( p );
+    const auto &info = ( found == overrides.end() ? here.furn( p ) : found->second ).obj();
+    const auto connections = info.connect_to_groups ?
+                             here.get_known_connections_f( p, *info.connect_to_groups, overrides ) :
+                             here.get_known_connections_f( p, connect_group, overrides );
+    const auto targets = here.get_known_rotates_to_f( p,
+                         info.rotate_to_groups.value_or( ter_connection_groups{} ), {}, overrides );
+    get_rotation_and_subtile( connections, rotation, subtile, targets );
 }
 
 void cata_tiles::get_tile_values( const int t, const int *tn, int &subtile, int &rotation )
@@ -7575,12 +7551,28 @@ void cata_tiles::get_tile_values( const int t, const int *tn, int &subtile, int 
 void cata_tiles::get_tile_values_with_ter( const tripoint_bub_ms &p, const int t, const int *tn,
         int &subtile, int &rotation )
 {
-    get_tile_values( t, tn, subtile, rotation );
-    // calculate rotation for unconnected tiles based on surrounding walls
-    if( subtile == unconnected ) {
+    auto &here = get_map();
+    const auto &info = furn_id( t ).obj();
+    const auto targets = here.get_known_rotates_to_f( p,
+                         info.rotate_to_groups.value_or( ter_connection_groups{} ), terrain_override, furniture_override );
+    if( info.connect_to_groups ) {
+        const auto connections = here.get_known_connections_f( p, *info.connect_to_groups,
+                                 furniture_override );
+        get_rotation_and_subtile( connections, rotation, subtile, targets );
+    } else {
+        auto connections = 0;
+        for( auto i = 0; i < 4; ++i ) {
+            if( tn[i] == t && ( targets == CHAR_MAX ||
+                                ( !info.has_flag( "NO_SELF_CONNECT" ) && !info.has_flag( "ALIGN_WORKBENCH" ) ) ) ) {
+                connections |= 1 << i;
+            }
+        }
+        get_rotation_and_subtile( connections, rotation, subtile, targets );
+    }
+    // Retain the wall/workbench fallback when no rotation target is available.
+    if( subtile == unconnected && ( targets == 0 || targets == CHAR_MAX ) ) {
         int val = 0;
         bool use_furniture = false;
-        map &here = get_map();
 
         if( here.has_flag( "ALIGN_WORKBENCH", p ) ) {
             for( int i = 0; i < 4; ++i ) {
@@ -7627,7 +7619,7 @@ void cata_tiles::get_tile_values_with_ter( const tripoint_bub_ms &p, const int t
             case 11:   // south opening T
             case 15:   // surrounded
             default:   // just in case
-                rotation = 0;
+                rotation = targets == CHAR_MAX ? 0 : 13;
                 break;
         };
 

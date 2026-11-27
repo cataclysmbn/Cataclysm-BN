@@ -378,6 +378,12 @@ enum ter_connects : int {
     TERCONN_COUNTER,
 };
 
+// CDDA connection groups are graphics metadata; the legacy integer group is retained.
+using ter_connection_groups = std::bitset<256>;
+struct connect_group {
+    static void load(const JsonObject& jo);
+};
+
 struct activity_byproduct {
     itype_id item;
     int count = 0;
@@ -526,6 +532,17 @@ public:
     void set_flag(const std::string& flag);
 
     int connect_group = 0;
+    std::optional<ter_connection_groups> connect_groups;
+    std::optional<ter_connection_groups> connect_to_groups;
+    std::optional<ter_connection_groups> rotate_to_groups;
+
+    void load_connections(const JsonObject& jo);
+    auto in_connect_groups(const ter_connection_groups& groups) const -> bool {
+        return connect_groups
+                 ? (*connect_groups & groups).any()
+                 : connect_group > TERCONN_NONE && groups.test(connect_group);
+    }
+
 
     void set_connects(const std::string& connect_group_string);
 

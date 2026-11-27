@@ -28,6 +28,7 @@
 #include <iterator>
 #include <map>
 #include <memory>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 
@@ -195,6 +196,75 @@ static const std::unordered_map<std::string, ter_connects> ter_connects_map = {{
     {"GUTTER", TERCONN_GUTTER},
     {"COUNTER", TERCONN_COUNTER},
 }};
+
+namespace {
+auto connection_group_indices() -> std::unordered_map<std::string, std::size_t>& {
+    static std::unordered_map<std::string, std::size_t> indices;
+    if (indices.empty()) {
+        for (const auto& [name, index] : ter_connects_map) { indices.emplace(name, index); }
+    }
+    return indices;
+}
+} // namespace
+
+void connect_group::load(const JsonObject& jo) {
+    const auto id = jo.get_string("id");
+    if (id.empty() || id.front() == '~') { jo.throw_error("invalid connection group ID", "id"); }
+    auto& indices = connection_group_indices();
+    if (!indices.contains(id)) {
+        if (indices.size() + 1 >= ter_connection_groups{}.size()) {
+            jo.throw_error("too many connection groups", "id");
+        }
+        indices.emplace(id, indices.size() + 1);
+    }
+}
+
+void map_data_common_t::load_connections(const JsonObject& jo) {
+    const auto update =
+        [&](const JsonObject& obj, const char* name, ter_connection_groups& target, bool remove) {
+            std::vector<std::string> values;
+            if (obj.has_string(name)) {
+                values.push_back(obj.get_string(name));
+            } else {
+                obj.read(name, values);
+            }
+            for (auto value : values) {
+                const bool subtract = !value.empty() && value.front() == '~';
+                if (subtract) { value.erase(0, 1); }
+                const auto found = connection_group_indices().find(value);
+                if (found == connection_group_indices().end()) {
+                    obj.throw_error("unknown connection group: " + value, name);
+                }
+                target.set(found->second, remove == subtract);
+            }
+        };
+    const auto load =
+        [&](const char* name, std::optional<ter_connection_groups>& groups, bool legacy) {
+            if (jo.has_member(name)) {
+                if (std::string_view(name) == "connects_to" && jo.has_string(name)
+                    && ter_connects_map.contains(jo.get_string(name))) {
+                    groups.reset();
+                } else {
+                    groups.emplace();
+                    update(jo, name, *groups, false);
+                }
+            }
+            for (const auto* operation : {"extend", "delete"}) {
+                if (!jo.has_object(operation)) { continue; }
+                const auto obj = jo.get_object(operation);
+                obj.allow_omitted_members();
+                if (!obj.has_member(name)) { continue; }
+                if (!groups) {
+                    groups.emplace();
+                    if (legacy && connect_group > TERCONN_NONE) { groups->set(connect_group); }
+                }
+                update(obj, name, *groups, std::string_view(operation) == "delete");
+            }
+        };
+    load("connect_groups", connect_groups, true);
+    load("connects_to", connect_to_groups, true);
+    load("rotates_to", rotate_to_groups, false);
+}
 
 void ranged_bash_info::deserialize(JsonIn& jsin) {
     JsonObject jo = jsin.get_object();
@@ -1003,6 +1073,7 @@ void set_ter_ids() {
 void reset_furn_ter() {
     terrain_data.reset();
     furniture_data.reset();
+    connection_group_indices().clear();
 }
 
 furn_id f_null, f_hay, f_rubble, f_rubble_rock, f_wreckage, f_ash, f_barricade_road, f_sandbag_half,
@@ -1259,7 +1330,10 @@ void ter_t::load(const JsonObject& jo, const std::string& src) {
     // connect_group is initialized to none, then terrain flags are set, then finally
     // connections from JSON are set. This is so that wall flags can set wall connections
     // but can be overridden by explicit connections in JSON.
-    if (jo.has_member("connects_to")) { set_connects(jo.get_string("connects_to")); }
+    if (jo.has_string("connects_to") && ter_connects_map.contains(jo.get_string("connects_to"))) {
+        set_connects(jo.get_string("connects_to"));
+    }
+    load_connections(jo);
 
     assign(jo, "open", open, is_json_check_strict(src));
     assign(jo, "close", close, is_json_check_strict(src));
@@ -1548,7 +1622,10 @@ void furn_t::load(const JsonObject& jo, const std::string& src) {
 
     // see the comment in ter_id::load for connect_group handling
     connect_group = TERCONN_NONE;
-    if (jo.has_member("connects_to")) { set_connects(jo.get_string("connects_to")); }
+    if (jo.has_string("connects_to") && ter_connects_map.contains(jo.get_string("connects_to"))) {
+        set_connects(jo.get_string("connects_to"));
+    }
+    load_connections(jo);
 
     optional(jo, was_loaded, "open", open, furn_str_id::NULL_ID());
     optional(jo, was_loaded, "close", close, furn_str_id::NULL_ID());

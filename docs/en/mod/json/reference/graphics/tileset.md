@@ -141,6 +141,59 @@ Each `tile_entry.json` file can have a single object in it, or a list of 1 or mo
 Having a list of tile entries in a file may be useful for organization, but completely unrelated
 entries may all exist in the same file without any complications.
 
+#### BN fork packages
+
+Official builds replace UltiCa, Chibi_Ultica and AltiCa with a pinned release from
+[UltiCa-BN](https://github.com/midgardormr/UltiCa-BN). Artwork and BN-specific bindings
+are maintained in that fork. The build workflow verifies archive checksums, safe paths,
+file receipts, the reviewed contract hash and a common source revision before bundling.
+To update the pin, publish all three checked archives and `SHA256SUMS`, then update the
+release tag and contract hash in `.github/workflows/build.yml` together.
+
+#### Connection groups and facing
+
+Terrain and furniture definitions can select connections and facing independently. These fields
+are game data, not tile-entry fields, and work with any tileset:
+
+| Field            | Meaning                                                                                                |
+| ---------------- | ------------------------------------------------------------------------------------------------------ |
+| `connect_groups` | Groups this object belongs to.                                                                         |
+| `connects_to`    | Groups that determine its connection shape.                                                            |
+| `rotates_to`     | Groups that determine its facing. Terrain checks terrain; furniture checks both terrain and furniture. |
+
+Declare custom groups before using them:
+
+```json
+{ "type": "connect_group", "id": "MY_FLOOR" }
+```
+
+Each field accepts a group name or an array of names. `[]` clears an inherited field;
+`extend` and `delete` add or remove names. A name prefixed with `~` removes that group.
+The legacy groups (`WALL`, `COUNTER`, etc.) are already declared. Existing scalar `connects_to`
+and definitions without these fields keep their legacy behavior. Explicit `connect_groups`
+replaces implicit legacy membership; use `extend` to retain it.
+
+For example, add `"extend": { "connect_groups": ["MY_FLOOR"] }` to floor terrain and
+`"rotates_to": "MY_FLOOR"` to a connected furniture definition. This changes graphics selection,
+not movement costs or physical flags. Visibility, map memory and construction overrides apply.
+
+With `rotates_to`, `edge`, `end_piece` and `unconnected` additional tiles use the following
+frame banks. Directions describe connections for `edge`/`end_piece` and facing targets for
+`unconnected`. Corners, T junctions and centers keep their existing frames.
+
+- `edge` (8 frames): NS facing W, EW facing S, NS facing E, EW facing N,
+  NS facing both sides, EW facing both sides, NS with no target, EW with no target.
+- `end_piece` (16 frames): four S/E/N/W connection frames for each side choice:
+  first side, opposite side, both sides, no target. For NS connections the first side is W;
+  for EW connections it is S.
+- `unconnected` (16 frames): S, W, N, E, SW, NW, NE, SE, all except N, all except E,
+  all except S, all except W, all, none, NS, EW.
+
+These indices preserve BN's existing direction convention. When importing CDDA frame banks,
+swap indices 1 and 3 in each four-frame `end_piece`/`unconnected` block; `edge` banks need no swap.
+Shorter banks use the existing modulo sprite selection; a single multitile sprite uses
+cardinal rotation modulo four. Character-preview flips keep their existing behavior.
+
 #### expansion `tile_entry` JSON
 
 Tilesheets can have expansion tilesheets, which are tilesheets from mods. Each expansion tilesheet

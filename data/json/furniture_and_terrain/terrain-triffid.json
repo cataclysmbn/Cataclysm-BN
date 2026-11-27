@@ -97,7 +97,8 @@
       "str_max": 400,
       "str_min_supported": 100,
       "items": [ { "item": "splinter", "count": [ 2, 8 ] } ]
-    }
+    },
+    "extend": { "connect_groups": [ "INDOORFLOOR" ] }
   },
   {
     "type": "terrain",

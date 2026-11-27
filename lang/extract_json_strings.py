@@ -90,6 +90,7 @@ ignorable = {
     "city_building",
     "colordef",
     "construction_sequence",
+    "connect_group",
     "disease_type",
     "emit",
     "enchantment",

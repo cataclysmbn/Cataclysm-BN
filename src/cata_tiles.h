@@ -19,6 +19,7 @@
 #include "weighted_list.h"
 #include "zone_draw_options.h"
 
+#include <climits>
 #include <cstddef>
 #include <cstdint>
 #include <map>
@@ -885,7 +886,8 @@ class cata_tiles
                                       const std::map<tripoint_bub_ms, ter_id> &ter_override,
                                       const bool ( &invisible )[5] );
 
-        void get_rotation_and_subtile( char val, int &rota, int &subtile );
+        void get_rotation_and_subtile( char val, int &rota, int &subtile,
+                                       int rotation_targets = CHAR_MAX );
 
     protected:
         /** Map memory */
