@@ -166,9 +166,8 @@ class lua_iconsume_actor : public lua_icallback_actor_base
 
         /**
          * Runs the on_consume callback after the item has actually been
-         * consumed (charges deducted, effects applied). The params table is
-         * informational (it carries the values in @p applied); the return
-         * value is ignored.
+         * consumed. The params table is informational; the return value is
+         * ignored.
          */
         auto call_on_consume( Character &who, item &it,
                               const consumed_values &applied ) const -> void;

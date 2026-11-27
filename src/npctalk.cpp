@@ -3761,7 +3761,6 @@ static consumption_result try_consume( npc &p, item &it, std::string &reason )
             reason = _( "Thanks, that hit the spot." );
         }
     } else if( to_eat.is_medication() || to_eat.get_contained().is_medication() ) {
-        // Same Lua consume callbacks as Character::consume_med.
         const auto try_result = run_try_consume_callbacks( p, to_eat );
         if( !try_result ) {
             reason = _( "It doesn't look like a good idea to consume this…" );

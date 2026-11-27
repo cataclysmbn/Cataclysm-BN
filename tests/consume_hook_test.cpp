@@ -306,12 +306,9 @@ TEST_CASE("iconsume per-item callback", "[consume_hook][lua]") {
     }
 }
 
-/// Tests for the post-consume `on_character_consume` hook and the per-item
-/// `on_consume` callback (`lua_iconsume_actor`). Both are fired from
-/// `Character::eat` (`src/consumption.cpp`) after the comestible has actually
-/// been consumed, so the test checks that they see the applied (override-aware)
-/// values and the already-deducted charges, and that neither runs when the
-/// consume is denied beforehand.
+/// The post-consume hook and per-item callback see the applied values
+/// (overrides and enchantments included) after the charge was deducted, and
+/// do not run when the try phase denies the consume.
 TEST_CASE("on_character_consume hook and on_consume callback", "[consume_hook][lua]") {
     clear_all_state();
     sol::state& lua = DynamicDataLoader::get_instance().lua->lua;
@@ -336,9 +333,6 @@ TEST_CASE("on_character_consume hook and on_consume callback", "[consume_hook][l
         hooks["on_character_consume"] = hook_table;
     };
 
-    // Replaces the global per-item actor for "blood": the try callback is
-    // gated by the `iconsume_gate` global (an unset gate allows consumption),
-    // the on_consume callback records its params into a global.
     const auto try_cb = lua.safe_script(
         R"(
         iconsume_gate = nil
@@ -386,8 +380,6 @@ TEST_CASE("on_character_consume hook and on_consume callback", "[consume_hook][l
     REQUIRE(blood.is_comestible());
 
     SECTION("hook and callback fire after consumption with the applied values") {
-        // The try callback overrides nutrition and thirst; the post-consume
-        // hook and callback must report the overridden (applied) values.
         set_gate(R"(
             return function( params )
                 params.nutrition = 500
@@ -416,7 +408,6 @@ TEST_CASE("on_character_consume hook and on_consume callback", "[consume_hook][l
         // No fun override, so the base fun of -50 applies.
         CHECK(dummy.get_morale(MORALE_FOOD_BAD) == -50);
 
-        // The hook runs after the charge was deducted and the effects applied.
         const auto seen = lua.globals()["consume_hook_seen"].get<sol::table>();
         REQUIRE(seen.valid());
         CHECK(seen["nutrition"].get<int>() == 500);
@@ -427,7 +418,6 @@ TEST_CASE("on_character_consume hook and on_consume callback", "[consume_hook][l
         CHECK(seen["charges"].get<int>() == 9);
         CHECK(seen["is_avatar"].get<bool>());
 
-        // The per-item callback sees the same applied values.
         const auto cb_seen = lua.globals()["iconsume_on_consume_seen"].get<sol::table>();
         REQUIRE(cb_seen.valid());
         CHECK(cb_seen["nutrition"].get<int>() == 500);
@@ -486,9 +476,8 @@ TEST_CASE("on_character_consume hook and on_consume callback", "[consume_hook][l
 
     SECTION("hook reports the applied fun including the enchantment bonus") {
         // The faulty bio_grossfood bionic carries a FOOD_FUN enchantment that
-        // lowers the fun of everything consumed. The hook must report the
-        // enchanted value (a round-one regression recomputed fun without
-        // the bonus), and the applied morale must match the report.
+        // lowers the fun of everything consumed; the hook must report the
+        // enchanted value, and the applied morale must match the report.
         dummy.add_bionic(bionic_id("bio_grossfood"));
         register_hook(R"(
             return function( params )
@@ -506,10 +495,8 @@ TEST_CASE("on_character_consume hook and on_consume callback", "[consume_hook][l
     }
 }
 
-/// Tests that medication fires the same Lua consume callbacks as food:
-/// `Character::consume_med` runs the `on_character_try_consume` hook before
-/// taking the medication (it can deny it) and the `on_character_consume` hook
-/// after the charge was used. Aspirin is an oral (ingested) medication.
+/// `Character::consume_med` fires the same consume hooks as food; aspirin is
+/// an oral (ingested) medication.
 TEST_CASE("consume hooks fire for medication", "[consume_hook][lua]") {
     clear_all_state();
     sol::state& lua = DynamicDataLoader::get_instance().lua->lua;

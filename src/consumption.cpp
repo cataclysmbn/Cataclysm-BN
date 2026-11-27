@@ -839,7 +839,6 @@ ret_val<edible_rating> Character::will_eat( const item &food, bool interactive,
 namespace
 {
 
-/// Applies the effects of taking @p med (the medication branch of `Character::consume_med`).
 auto apply_med_effects( Character &who, item &med, const consume_overrides &overrides ) -> void
 {
     // TODO: Get the target it was used on
@@ -1038,9 +1037,6 @@ bool Character::eat( item &food, bool force )
         consumption_history->elems.pop_front();
     }
 
-    // Lua consume hook and per-item callback run after the comestible has
-    // actually been consumed (charges deducted, effects applied). They are
-    // purely informational, so their return values are ignored.
     run_consume_callbacks( *this, food, {
         .kcal = food_kcal,
         .thirst = quench,
@@ -1731,8 +1727,6 @@ bool Character::consume_med( item &target )
         return false;
     }
 
-    // Same Lua consume callbacks as Character::eat, so medication can be
-    // denied, overridden and observed like food.
     const auto try_result = run_try_consume_callbacks( *this, target );
     if( !try_result ) {
         return false;
