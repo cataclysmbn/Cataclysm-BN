@@ -415,8 +415,16 @@
       { "x": 1, "y": 0, "parts": [ "xlframe_vertical_2", "windshield_as_cover_left_from_horizontal_front" ] },
       { "x": 1, "y": 1, "parts": [ "xlframe_vertical_2", "windshield_horizontal_front" ] },
       { "x": 1, "y": 2, "parts": [ "xlframe_vertical_2", "windshield_as_cover_right_from_horizontal_front" ] },
-      { "x": 1, "y": 3, "parts": [ "xlframe_vertical_2", "halfboard_as_glazing_ne_edge_from_ne", "rail_wheel_steerable", "headlight" ] },
-      { "x": 1, "y": -1, "parts": [ "xlframe_vertical_2", "halfboard_as_glazing_nw_edge_from_nw", "rail_wheel_steerable", "headlight" ] },
+      {
+        "x": 1,
+        "y": 3,
+        "parts": [ "xlframe_vertical_2", "halfboard_as_glazing_ne_edge_from_ne", "rail_wheel_steerable", "headlight" ]
+      },
+      {
+        "x": 1,
+        "y": -1,
+        "parts": [ "xlframe_vertical_2", "halfboard_as_glazing_nw_edge_from_nw", "rail_wheel_steerable", "headlight" ]
+      },
       { "x": -1, "y": 0, "parts": [ "xlframe_vertical_2", "halfboard_horizontal_2" ] },
       { "x": -1, "y": 1, "parts": [ "xlframe_vertical_2", "aisle_vertical", "storage_battery", "roof" ] },
       { "x": -1, "y": 2, "parts": [ "xlframe_vertical_2", "aisle_vertical", "roof" ] },

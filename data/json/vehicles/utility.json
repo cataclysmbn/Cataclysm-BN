@@ -10,9 +10,21 @@
     ],
     "parts": [
       { "x": -1, "y": 1, "parts": [ "frame_as_vertical_right_from_vertical", "board_as_vertical_right_from_vertical" ] },
-      { "x": -1, "y": -1, "parts": [ "frame_as_vertical_left_from_vertical", "board_as_vertical_left_from_vertical" ] },
-      { "x": 1, "y": 0, "parts": [ "frame_as_horizontal_front_from_horizontal", "board_as_horizontal_front_from_horizontal", "headlight", "omnicam" ] },
-      { "x": 1, "y": 1, "parts": [ "frame_as_ne_from_horizontal", "wheel_mount_medium_steerable", "wheel", "board_ne" ] },
+      {
+        "x": -1,
+        "y": -1,
+        "parts": [ "frame_as_vertical_left_from_vertical", "board_as_vertical_left_from_vertical" ]
+      },
+      {
+        "x": 1,
+        "y": 0,
+        "parts": [ "frame_as_horizontal_front_from_horizontal", "board_as_horizontal_front_from_horizontal", "headlight", "omnicam" ]
+      },
+      {
+        "x": 1,
+        "y": 1,
+        "parts": [ "frame_as_ne_from_horizontal", "wheel_mount_medium_steerable", "wheel", "board_ne" ]
+      },
       { "x": -2, "y": 0, "parts": [ "frame_as_horizontal_rear_from_horizontal", "hatch_horizontal" ] },
       {
         "x": 0,
@@ -32,9 +44,17 @@
           "board_se"
         ]
       },
-      { "x": 0, "y": 1, "parts": [ "frame_as_vertical_right_from_vertical", "board_as_vertical_right_from_vertical" ] },
+      {
+        "x": 0,
+        "y": 1,
+        "parts": [ "frame_as_vertical_right_from_vertical", "board_as_vertical_right_from_vertical" ]
+      },
       { "x": 0, "y": -1, "parts": [ "frame_as_vertical_left_from_vertical", "board_as_vertical_left_from_vertical" ] },
-      { "x": 1, "y": -1, "parts": [ "frame_as_nw_from_horizontal", "wheel_mount_medium_steerable", "wheel", "board_nw" ] },
+      {
+        "x": 1,
+        "y": -1,
+        "parts": [ "frame_as_nw_from_horizontal", "wheel_mount_medium_steerable", "wheel", "board_nw" ]
+      },
       {
         "x": -2,
         "y": -1,
@@ -146,11 +166,23 @@
     "color_palette": "construction_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_as_horizontal_rear_from_horizontal", "roller_drum" ] },
-      { "x": -1, "y": 1, "parts": [ "frame_as_cross_from_horizontal", "windshield_as_horizontal_rear_from_base", "roof" ] },
+      {
+        "x": -1,
+        "y": 1,
+        "parts": [ "frame_as_cross_from_horizontal", "windshield_as_horizontal_rear_from_base", "roof" ]
+      },
       { "x": 2, "y": 2, "parts": [ "frame_as_ne_from_horizontal", "roller_drum" ] },
-      { "x": 0, "y": 2, "parts": [ "frame_as_horizontal_right_from_horizontal", "door_as_front_right_from_base", "roof" ] },
+      {
+        "x": 0,
+        "y": 2,
+        "parts": [ "frame_as_horizontal_right_from_horizontal", "door_as_front_right_from_base", "roof" ]
+      },
       { "x": 2, "y": -1, "parts": [ "frame_as_horizontal_front_from_horizontal", "roller_drum" ] },
-      { "x": -1, "y": -1, "parts": [ "frame_as_cross_from_horizontal", "windshield_as_horizontal_rear_from_base", "roof" ] },
+      {
+        "x": -1,
+        "y": -1,
+        "parts": [ "frame_as_cross_from_horizontal", "windshield_as_horizontal_rear_from_base", "roof" ]
+      },
       { "x": -2, "y": 2, "parts": [ "frame_as_horizontal_right_from_horizontal", "halfboard_as_se_from_horizontal" ] },
       {
         "x": 1,
@@ -163,7 +195,12 @@
       {
         "x": -1,
         "y": -2,
-        "parts": [ "frame_as_vertical_left_from_horizontal", "roof", "halfboard_as_vertical_left_from_horizontal", { "part": "tank", "fuel": "diesel" } ]
+        "parts": [
+          "frame_as_vertical_left_from_horizontal",
+          "roof",
+          "halfboard_as_vertical_left_from_horizontal",
+          { "part": "tank", "fuel": "diesel" }
+        ]
       },
       { "x": 1, "y": 1, "parts": [ "frame_as_vertical_from_horizontal", "windshield", "roof", "headlight" ] },
       { "x": -3, "y": 0, "parts": [ "frame_as_horizontal_rear_from_horizontal", "roller_drum" ] },
@@ -184,7 +221,12 @@
       {
         "x": -1,
         "y": 2,
-        "parts": [ "frame_as_vertical_right_from_horizontal", "roof", "halfboard_as_vertical_right_from_horizontal", { "part": "tank", "fuel": "diesel" } ]
+        "parts": [
+          "frame_as_vertical_right_from_horizontal",
+          "roof",
+          "halfboard_as_vertical_right_from_horizontal",
+          { "part": "tank", "fuel": "diesel" }
+        ]
       },
       { "x": 1, "y": 2, "parts": [ "frame_as_vertical_right_from_horizontal", "windshield_as_ne_from_base", "roof" ] },
       { "x": 2, "y": 1, "parts": [ "frame_as_horizontal_front_from_horizontal", "roller_drum" ] },

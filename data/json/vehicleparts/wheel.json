@@ -316,9 +316,7 @@
     "item": "wheel_bicycle_or",
     "contact_area": 36,
     "wheel_type": "off-road",
-    "shapes": [
-      { "direction": "front", "symbol": "|", "looks_like": "wheel_bicycle_or" }
-    ]
+    "shapes": [ { "direction": "front", "symbol": "|", "looks_like": "wheel_bicycle_or" } ]
   },
   {
     "id": "wheel_bicycle_or_rear",
@@ -471,9 +469,7 @@
     "looks_like": "wheel",
     "symbol": "o",
     "type": "vehicle_part",
-    "shapes": [
-      { "direction": "front", "symbol": "o", "looks_like": "wheel_motorbike" }
-    ]
+    "shapes": [ { "direction": "front", "symbol": "o", "looks_like": "wheel_motorbike" } ]
   },
   {
     "copy-from": "wheel_motorbike_abstract",
@@ -491,9 +487,7 @@
     "contact_area": 60,
     "wheel_type": "off-road",
     "damage_reduction": { "bash": 10, "cut": 8, "stab": 4 },
-    "shapes": [
-      { "direction": "front", "symbol": "o", "looks_like": "wheel_motorbike_or" }
-    ]
+    "shapes": [ { "direction": "front", "symbol": "o", "looks_like": "wheel_motorbike_or" } ]
   },
   {
     "id": "wheel_motorbike_or_rear",

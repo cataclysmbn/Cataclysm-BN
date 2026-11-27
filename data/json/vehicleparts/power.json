@@ -189,9 +189,7 @@
       { "item": "scrap", "count": [ 2, 4 ] },
       { "item": "solar_cell", "count": [ 1, 4 ] }
     ],
-    "shapes": [
-      { "direction": "top", "symbol": "#", "looks_like": "solar_panel" }
-    ]
+    "shapes": [ { "direction": "top", "symbol": "#", "looks_like": "solar_panel" } ]
   },
   {
     "type": "vehicle_part",
@@ -220,9 +218,7 @@
       { "item": "solar_cell", "count": [ 1, 4 ] }
     ],
     "damage_reduction": { "all": 12 },
-    "shapes": [
-      { "direction": "top", "symbol": "#", "looks_like": "reinforced_solar_panel" }
-    ]
+    "shapes": [ { "direction": "top", "symbol": "#", "looks_like": "reinforced_solar_panel" } ]
   },
   {
     "type": "vehicle_part",

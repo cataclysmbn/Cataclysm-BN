@@ -37,7 +37,11 @@
       { "direction": "cutaway_sw", "symbol": "b", "looks_like": "board_sw" },
       { "direction": "cutaway_se", "symbol": "n", "looks_like": "board_se" },
       { "direction": "as_vertical_right_from_vertical", "symbol": "j", "looks_like": "board_vertical" },
-      { "direction": "as_halfboard_horizontal_front_from_horizontal", "symbol": "h", "looks_like": "board_horizontal" },
+      {
+        "direction": "as_halfboard_horizontal_front_from_horizontal",
+        "symbol": "h",
+        "looks_like": "board_horizontal"
+      },
       { "direction": "as_halfboard_horizontal_rear_from_horizontal", "symbol": "h", "looks_like": "board_horizontal" },
       { "direction": "as_horizontal_front_from_horizontal", "symbol": "h", "looks_like": "board_horizontal" },
       { "direction": "as_vertical_left_from_vertical", "symbol": "j", "looks_like": "board_vertical" },
@@ -172,8 +176,16 @@
       { "direction": "as_cover_from_vertical_2", "symbol": "H", "looks_like": "halfboard_vertical_2" },
       { "direction": "as_vertical_left_from_vertical", "symbol": "j", "looks_like": "halfboard_vertical" },
       { "direction": "as_vertical_right_from_vertical", "symbol": "j", "looks_like": "halfboard_vertical" },
-      { "direction": "as_cover_left_from_horizontal_front", "symbol": "T", "looks_like": "halfboard_horizontal_front" },
-      { "direction": "as_cover_right_from_horizontal_front", "symbol": "T", "looks_like": "halfboard_horizontal_front" },
+      {
+        "direction": "as_cover_left_from_horizontal_front",
+        "symbol": "T",
+        "looks_like": "halfboard_horizontal_front"
+      },
+      {
+        "direction": "as_cover_right_from_horizontal_front",
+        "symbol": "T",
+        "looks_like": "halfboard_horizontal_front"
+      },
       { "direction": "as_wheel_left_from_vertical_left", "symbol": "j", "looks_like": "halfboard_vertical_left" },
       { "direction": "as_wheel_right_from_vertical_right", "symbol": "j", "looks_like": "halfboard_vertical_right" },
       { "direction": "as_horizontal_2_rear_from_horizontal", "symbol": "h", "looks_like": "halfboard_horizontal" },
@@ -182,8 +194,16 @@
       { "direction": "as_cover_left_from_cover", "symbol": "^", "looks_like": "halfboard_cover" },
       { "direction": "as_cover_right_from_cover", "symbol": "^", "looks_like": "halfboard_cover" },
       { "direction": "as_horizontal_front_from_horizontal", "symbol": "h", "looks_like": "halfboard_horizontal" },
-      { "direction": "as_hdhalfboard_horizontal_front_from_horizontal_2", "symbol": "=", "looks_like": "halfboard_horizontal_2" },
-      { "direction": "as_xlhalfboard_vertical_right_from_vertical", "symbol": "j", "looks_like": "halfboard_vertical" },
+      {
+        "direction": "as_hdhalfboard_horizontal_front_from_horizontal_2",
+        "symbol": "=",
+        "looks_like": "halfboard_horizontal_2"
+      },
+      {
+        "direction": "as_xlhalfboard_vertical_right_from_vertical",
+        "symbol": "j",
+        "looks_like": "halfboard_vertical"
+      },
       { "direction": "as_xlhalfboard_vertical_from_vertical", "symbol": "j", "looks_like": "halfboard_vertical" },
       { "direction": "as_xlhalfboard_vertical_left_from_vertical", "symbol": "j", "looks_like": "halfboard_vertical" },
       { "direction": "as_ne_from_cover", "symbol": "^", "looks_like": "halfboard_cover" },
@@ -259,9 +279,21 @@
       { "direction": "as_halfboard_hatch_wheel_right_from_se", "symbol": "n", "looks_like": "aluminum_halfboard_se" },
       { "direction": "as_xlhalfboard_nw_from_cover", "symbol": "^", "looks_like": "aluminum_halfboard_cover" },
       { "direction": "as_xlhalfboard_ne_from_cover", "symbol": "^", "looks_like": "aluminum_halfboard_cover" },
-      { "direction": "as_halfboard_vertical_right_from_vertical", "symbol": "j", "looks_like": "aluminum_halfboard_vertical" },
-      { "direction": "as_halfboard_vertical_left_from_vertical", "symbol": "j", "looks_like": "aluminum_halfboard_vertical" },
-      { "direction": "as_xlhalfboard_vertical_from_vertical", "symbol": "j", "looks_like": "aluminum_halfboard_vertical" }
+      {
+        "direction": "as_halfboard_vertical_right_from_vertical",
+        "symbol": "j",
+        "looks_like": "aluminum_halfboard_vertical"
+      },
+      {
+        "direction": "as_halfboard_vertical_left_from_vertical",
+        "symbol": "j",
+        "looks_like": "aluminum_halfboard_vertical"
+      },
+      {
+        "direction": "as_xlhalfboard_vertical_from_vertical",
+        "symbol": "j",
+        "looks_like": "aluminum_halfboard_vertical"
+      }
     ]
   },
   {
@@ -353,8 +385,16 @@
       { "direction": "vertical_2_right", "symbol": "H" },
       { "direction": "vertical_T_right", "symbol": "[" },
       { "direction": "vertical_T_left", "symbol": "]" },
-      { "direction": "as_halfboard_cover_left_from_horizontal_front", "symbol": "T", "looks_like": "carbon_halfboard_horizontal_front" },
-      { "direction": "as_halfboard_cover_right_from_horizontal_front", "symbol": "T", "looks_like": "carbon_halfboard_horizontal_front" }
+      {
+        "direction": "as_halfboard_cover_left_from_horizontal_front",
+        "symbol": "T",
+        "looks_like": "carbon_halfboard_horizontal_front"
+      },
+      {
+        "direction": "as_halfboard_cover_right_from_horizontal_front",
+        "symbol": "T",
+        "looks_like": "carbon_halfboard_horizontal_front"
+      }
     ]
   },
   {
@@ -506,9 +546,21 @@
       { "direction": "sw", "symbol": "b" },
       { "direction": "vertical", "symbol": "j" },
       { "direction": "vertical_2", "symbol": "H" },
-      { "direction": "as_hdboard_vertical_left_from_horizontal_2", "symbol": "=", "looks_like": "hdhalfboard_horizontal_2" },
-      { "direction": "as_horizontal_front_from_horizontal_2", "symbol": "=", "looks_like": "hdhalfboard_horizontal_2" },
-      { "direction": "as_hdboard_vertical_right_from_horizontal_2", "symbol": "=", "looks_like": "hdhalfboard_horizontal_2" },
+      {
+        "direction": "as_hdboard_vertical_left_from_horizontal_2",
+        "symbol": "=",
+        "looks_like": "hdhalfboard_horizontal_2"
+      },
+      {
+        "direction": "as_horizontal_front_from_horizontal_2",
+        "symbol": "=",
+        "looks_like": "hdhalfboard_horizontal_2"
+      },
+      {
+        "direction": "as_hdboard_vertical_right_from_horizontal_2",
+        "symbol": "=",
+        "looks_like": "hdhalfboard_horizontal_2"
+      },
       { "direction": "as_vertical_left_from_vertical", "symbol": "j", "looks_like": "hdhalfboard_vertical" },
       { "direction": "as_vertical_right_from_vertical", "symbol": "j", "looks_like": "hdhalfboard_vertical" },
       { "direction": "as_se_from_vertical", "symbol": "j", "looks_like": "hdhalfboard_vertical" },
@@ -682,15 +734,35 @@
       { "direction": "vertical_right", "symbol": "j" },
       { "direction": "vertical_2", "symbol": "H" },
       { "direction": "cover", "symbol": "h", "looks_like": "xlhalfboard_horizontal" },
-      { "direction": "as_halfboard_horizontal_front_from_horizontal", "symbol": "h", "looks_like": "xlhalfboard_horizontal" },
+      {
+        "direction": "as_halfboard_horizontal_front_from_horizontal",
+        "symbol": "h",
+        "looks_like": "xlhalfboard_horizontal"
+      },
       { "direction": "as_halfboard_nw_from_nw", "symbol": "y", "looks_like": "xlhalfboard_nw" },
       { "direction": "as_halfboard_hatch_wheel_left_from_sw", "symbol": "b", "looks_like": "xlhalfboard_sw" },
       { "direction": "as_halfboard_ne_from_ne", "symbol": "u", "looks_like": "xlhalfboard_ne" },
       { "direction": "as_halfboard_hatch_wheel_right_from_se", "symbol": "n", "looks_like": "xlhalfboard_se" },
-      { "direction": "as_halfboard_cover_left_from_horizontal_front", "symbol": "T", "looks_like": "xlhalfboard_horizontal_front" },
-      { "direction": "as_halfboard_cover_right_from_horizontal_front", "symbol": "T", "looks_like": "xlhalfboard_horizontal_front" },
-      { "direction": "as_halfboard_vertical_left_from_vertical_left", "symbol": "j", "looks_like": "xlhalfboard_vertical_left" },
-      { "direction": "as_halfboard_vertical_right_from_vertical_right", "symbol": "j", "looks_like": "xlhalfboard_vertical_right" }
+      {
+        "direction": "as_halfboard_cover_left_from_horizontal_front",
+        "symbol": "T",
+        "looks_like": "xlhalfboard_horizontal_front"
+      },
+      {
+        "direction": "as_halfboard_cover_right_from_horizontal_front",
+        "symbol": "T",
+        "looks_like": "xlhalfboard_horizontal_front"
+      },
+      {
+        "direction": "as_halfboard_vertical_left_from_vertical_left",
+        "symbol": "j",
+        "looks_like": "xlhalfboard_vertical_left"
+      },
+      {
+        "direction": "as_halfboard_vertical_right_from_vertical_right",
+        "symbol": "j",
+        "looks_like": "xlhalfboard_vertical_right"
+      }
     ]
   }
 ]

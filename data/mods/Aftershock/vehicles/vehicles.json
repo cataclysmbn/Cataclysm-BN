@@ -11,7 +11,11 @@
         "y": 0,
         "parts": [ "afs_lightweight_frame_vertical", "wheel_mount_light_steerable", "wheel_bicycle_front" ]
       },
-      { "x": -1, "y": 0, "parts": [ "afs_lightweight_frame_vertical", "wheel_mount_light", "wheel_bicycle_as_rear_from_base" ] }
+      {
+        "x": -1,
+        "y": 0,
+        "parts": [ "afs_lightweight_frame_vertical", "wheel_mount_light", "wheel_bicycle_as_rear_from_base" ]
+      }
     ]
   },
   {

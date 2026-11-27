@@ -363,8 +363,16 @@
       { "x": 0, "y": 1, "parts": [ "xlframe_cross", "aisle_vertical", "roof", "airship_balloon" ] },
       { "x": 0, "y": 2, "parts": [ "xlframe_vertical", "windshield_vertical_right", "airship_balloon" ] },
       { "x": 0, "y": -1, "parts": [ "xlframe_vertical", "windshield_vertical_left", "airship_balloon" ] },
-      { "x": 1, "y": 0, "parts": [ "xlframe_horizontal", "windshield_as_cover_left_from_horizontal_front", "airship_balloon" ] },
-      { "x": 1, "y": 1, "parts": [ "xlframe_horizontal", "windshield_as_cover_right_from_horizontal_front", "airship_balloon" ] },
+      {
+        "x": 1,
+        "y": 0,
+        "parts": [ "xlframe_horizontal", "windshield_as_cover_left_from_horizontal_front", "airship_balloon" ]
+      },
+      {
+        "x": 1,
+        "y": 1,
+        "parts": [ "xlframe_horizontal", "windshield_as_cover_right_from_horizontal_front", "airship_balloon" ]
+      },
       { "x": 1, "y": 2, "parts": [ "xlframe_ne", "windshield_as_ne_edge_from_ne", "airship_balloon" ] },
       { "x": 1, "y": -1, "parts": [ "xlframe_nw", "windshield_as_nw_edge_from_nw", "airship_balloon" ] },
       { "x": -1, "y": 0, "parts": [ "xlframe_cross", "aisle_vertical", "roof", "airship_balloon" ] },
@@ -413,13 +421,27 @@
       {
         "x": -6,
         "y": 3,
-        "parts": [ "xlframe_vertical", "aluminum_halfboard_as_halfboard_vertical_right_from_vertical", "engine_v6", "battery_car", "alternator_car", "airship_balloon" ]
+        "parts": [
+          "xlframe_vertical",
+          "aluminum_halfboard_as_halfboard_vertical_right_from_vertical",
+          "engine_v6",
+          "battery_car",
+          "alternator_car",
+          "airship_balloon"
+        ]
       },
       { "x": -6, "y": -1, "parts": [ "xlframe_vertical", "aluminum_board_sw", "airship_balloon" ] },
       {
         "x": -6,
         "y": -2,
-        "parts": [ "xlframe_vertical", "aluminum_halfboard_as_halfboard_vertical_left_from_vertical", "engine_v6", "battery_car", "alternator_car", "airship_balloon" ]
+        "parts": [
+          "xlframe_vertical",
+          "aluminum_halfboard_as_halfboard_vertical_left_from_vertical",
+          "engine_v6",
+          "battery_car",
+          "alternator_car",
+          "airship_balloon"
+        ]
       }
     ],
     "items": [
@@ -802,7 +824,11 @@
       { "x": 9, "y": 1, "parts": [ "frame_horizontal_2", "headlight", "halfboard_ne" ] },
       { "x": 6, "y": 0, "parts": [ "frame_vertical_2", "roof", "door_internal" ] },
       { "x": 8, "y": 2, "parts": [ "frame_horizontal", "windshield_ne_edge" ] },
-      { "x": 1, "y": 2, "parts": [ "frame_horizontal", "wheel_mount_medium", "wheel", "door_sliding_as_door_right_from_base" ] },
+      {
+        "x": 1,
+        "y": 2,
+        "parts": [ "frame_horizontal", "wheel_mount_medium", "wheel", "door_sliding_as_door_right_from_base" ]
+      },
       { "x": 8, "y": -1, "parts": [ "frame_horizontal", "windshield_as_cover_left_from_base" ] },
       { "x": -1, "y": 1, "parts": [ "frame_horizontal_2", "roof", "cargo_space" ] },
       { "x": 4, "y": 1, "parts": [ "frame_horizontal_2", "roof", "cargo_space" ] },
@@ -838,7 +864,11 @@
       { "x": -1, "y": -2, "parts": [ "frame_vertical", "board_as_halfboard_vertical_left_from_vertical" ] },
       { "x": -2, "y": 0, "parts": [ "frame_vertical_2", "roof", "cargo_space" ] },
       { "x": 0, "y": -1, "parts": [ "frame_horizontal_2", "roof", "cargo_space" ] },
-      { "x": 1, "y": -2, "parts": [ "frame_horizontal", "wheel_mount_medium", "wheel", "door_sliding_as_door_left_from_base" ] },
+      {
+        "x": 1,
+        "y": -2,
+        "parts": [ "frame_horizontal", "wheel_mount_medium", "wheel", "door_sliding_as_door_left_from_base" ]
+      },
       { "x": 2, "y": -1, "parts": [ "frame_horizontal_2", "roof", "cargo_space" ] },
       { "x": -2, "y": -2, "parts": [ "frame_vertical", "board_as_halfboard_vertical_left_from_vertical" ] },
       { "x": 7, "y": 1, "parts": [ "frame_vertical_2", "roof", "seat", "drive_by_wire_controls" ] },

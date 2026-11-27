@@ -429,9 +429,7 @@
     "breaks_into": "ig_vp_sheet_metal",
     "damage_reduction": { "all": 24 },
     "default_color": "#622625",
-    "shapes": [
-      { "direction": "front", "symbol": "+", "looks_like": "door_shutter" }
-    ]
+    "shapes": [ { "direction": "front", "symbol": "+", "looks_like": "door_shutter" } ]
   },
   {
     "type": "vehicle_part",
@@ -661,29 +659,38 @@
     "id": "hddoor",
     "symbol": "+",
     "type": "vehicle_part",
-    "shapes": [ { "direction": "left", "symbol": "L" }, { "direction": "right", "symbol": "R" },
-    { "direction": "full_right", "symbol": "+", "looks_like": "hddoor" },
-    { "direction": "as_right_from_left", "symbol": "L", "looks_like": "hddoor_left" },
-    { "direction": "as_left_from_right", "symbol": "R", "looks_like": "hddoor_right" },
-    { "direction": "as_right_from_base", "symbol": "+", "looks_like": "hddoor" } ]
+    "shapes": [
+      { "direction": "left", "symbol": "L" },
+      { "direction": "right", "symbol": "R" },
+      { "direction": "full_right", "symbol": "+", "looks_like": "hddoor" },
+      { "direction": "as_right_from_left", "symbol": "L", "looks_like": "hddoor_left" },
+      { "direction": "as_left_from_right", "symbol": "R", "looks_like": "hddoor_right" },
+      { "direction": "as_right_from_base", "symbol": "+", "looks_like": "hddoor" }
+    ]
   },
   {
     "copy-from": "hddoor_opaque_abstract",
     "id": "hddoor_opaque",
     "symbol": "+",
     "type": "vehicle_part",
-    "shapes": [ { "direction": "left", "symbol": "L" }, { "direction": "right", "symbol": "R" },
-    { "direction": "rear", "symbol": "+", "looks_like": "hddoor_opaque" },
-    { "direction": "side_right", "symbol": "+", "looks_like": "hddoor_opaque" } ]
+    "shapes": [
+      { "direction": "left", "symbol": "L" },
+      { "direction": "right", "symbol": "R" },
+      { "direction": "rear", "symbol": "+", "looks_like": "hddoor_opaque" },
+      { "direction": "side_right", "symbol": "+", "looks_like": "hddoor_opaque" }
+    ]
   },
   {
     "copy-from": "door_internal_abstract",
     "id": "door_internal",
     "symbol": "+",
     "type": "vehicle_part",
-    "shapes": [ { "direction": "left", "symbol": "L" }, { "direction": "right", "symbol": "R" },
-    { "direction": "front", "symbol": "+", "looks_like": "door_internal" },
-    { "direction": "as_door_opaque_rear_from_base", "symbol": "+", "looks_like": "door_internal" } ]
+    "shapes": [
+      { "direction": "left", "symbol": "L" },
+      { "direction": "right", "symbol": "R" },
+      { "direction": "front", "symbol": "+", "looks_like": "door_internal" },
+      { "direction": "as_door_opaque_rear_from_base", "symbol": "+", "looks_like": "door_internal" }
+    ]
   },
   {
     "copy-from": "hatch_abstract",
@@ -733,17 +740,23 @@
     "id": "hdhatch",
     "symbol": "+",
     "type": "vehicle_part",
-    "shapes": [ { "direction": "left", "symbol": "L" }, { "direction": "right", "symbol": "R" },
-    { "direction": "as_hddoor_left_from_base", "symbol": "+", "looks_like": "hdhatch" } ]
+    "shapes": [
+      { "direction": "left", "symbol": "L" },
+      { "direction": "right", "symbol": "R" },
+      { "direction": "as_hddoor_left_from_base", "symbol": "+", "looks_like": "hdhatch" }
+    ]
   },
   {
     "copy-from": "hdhatch_opaque_abstract",
     "id": "hdhatch_opaque",
     "symbol": "+",
     "type": "vehicle_part",
-    "shapes": [ { "direction": "left", "symbol": "L" }, { "direction": "right", "symbol": "R" },
-    { "direction": "as_left_from_base", "symbol": "+", "looks_like": "hdhatch_opaque" },
-    { "direction": "as_hddoor_opaque_rear_from_base", "symbol": "+", "looks_like": "hdhatch_opaque" },
-    { "direction": "as_right_from_base", "symbol": "+", "looks_like": "hdhatch_opaque" } ]
+    "shapes": [
+      { "direction": "left", "symbol": "L" },
+      { "direction": "right", "symbol": "R" },
+      { "direction": "as_left_from_base", "symbol": "+", "looks_like": "hdhatch_opaque" },
+      { "direction": "as_hddoor_opaque_rear_from_base", "symbol": "+", "looks_like": "hdhatch_opaque" },
+      { "direction": "as_right_from_base", "symbol": "+", "looks_like": "hdhatch_opaque" }
+    ]
   }
 ]
