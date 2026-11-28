@@ -14,6 +14,11 @@ Use [`just playtest [--os OS] <PR URL>`](../reference/tooling.md#playtesting-pul
 an existing PR build without compiling locally. The tooling guide covers prerequisites, supported
 platforms, artifact selection, and save locations.
 
+## Showing a fix in a pull request
+
+To show a bug or a fix in the curses build as an animated WebP, see
+[Recording terminal captures](./terminal_capture.md).
+
 ## Guidelines
 
 When creating tests, ensure that all objects used (directly or indirectly) are fully reset before

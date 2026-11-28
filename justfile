@@ -45,6 +45,11 @@ loading-screens:
 playtest *args:
     deno run --allow-read --allow-write --allow-run --allow-env scripts/playtest.ts "$@"
 
+# Turn an asciinema recording into a PR capture: just term-capture render|frames|encode ...
+[positional-arguments, no-cd]
+term-capture *args:
+    uv run {{ justfile_directory() }}/scripts/term_capture.py "$@"
+
 # Download the latest .po files from Transifex (needs `tx` and TX_TOKEN): just pull-po [LANG,...].
 pull-po *LANGS:
     tx pull --force {{ if LANGS == '' { '--all' } else { '--languages ' + replace(LANGS, ' ', ',') } }}
