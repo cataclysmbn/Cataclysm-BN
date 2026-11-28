@@ -428,7 +428,8 @@
     "flags": [ "OPAQUE", "OBSTACLE", "OPENABLE", "MULTISQUARE", "BOARDABLE" ],
     "breaks_into": "ig_vp_sheet_metal",
     "damage_reduction": { "all": 24 },
-    "default_color": "#622625"
+    "default_color": "#622625",
+    "shapes": [ { "direction": "front", "symbol": "+", "looks_like": "door_shutter" } ]
   },
   {
     "type": "vehicle_part",
@@ -452,7 +453,19 @@
     "flags": [ "OBSTACLE", "OPENABLE", "MULTISQUARE", "BOARDABLE", "WINDOW" ],
     "breaks_into": "ig_vp_frame",
     "damage_reduction": { "all": 26 },
-    "default_color": "#622625"
+    "default_color": "#622625",
+    "shapes": [
+      { "direction": "nw", "symbol": "+", "looks_like": "door_sliding" },
+      { "direction": "se", "symbol": "+", "looks_like": "door_sliding" },
+      { "direction": "sw", "symbol": "+", "looks_like": "door_sliding" },
+      { "direction": "r", "symbol": "+", "looks_like": "door_sliding" },
+      { "direction": "l", "symbol": "+", "looks_like": "door_sliding" },
+      { "direction": "front_r", "symbol": "+", "looks_like": "door_sliding" },
+      { "direction": "horizontal_front", "symbol": "+", "looks_like": "door_sliding" },
+      { "direction": "horizontal_rear", "symbol": "+", "looks_like": "door_sliding" },
+      { "direction": "full_left", "symbol": "+", "looks_like": "door_sliding" },
+      { "direction": "full_right", "symbol": "+", "looks_like": "door_sliding" }
+    ]
   },
   {
     "copy-from": "door_sliding",
@@ -495,7 +508,11 @@
     "flags": [ "OBSTACLE", "OPENABLE", "MULTISQUARE", "BOARDABLE", "LOW_FINAL_AIR_DRAG", "NO_ROOF_NEEDED", "WINDOW" ],
     "breaks_into": "ig_vp_frame",
     "damage_reduction": { "all": 25 },
-    "default_color": "#622625"
+    "default_color": "#622625",
+    "shapes": [
+      { "direction": "front", "symbol": "+", "looks_like": "door_trunk" },
+      { "direction": "horizontal_2", "symbol": "+", "looks_like": "door_trunk" }
+    ]
   },
   {
     "copy-from": "door_trunk",
@@ -579,14 +596,37 @@
       { "direction": "rear_left", "symbol": "b" },
       { "direction": "rear_right", "symbol": "n" },
       { "direction": "door_front", "symbol": "T" },
-      { "direction": "door_rear", "symbol": "B" }
+      { "direction": "door_rear", "symbol": "B" },
+      { "direction": "full_left", "symbol": "+", "looks_like": "door" },
+      { "direction": "full_right", "symbol": "+", "looks_like": "door" },
+      { "direction": "front_l", "symbol": "+", "looks_like": "door" },
+      { "direction": "front_r", "symbol": "+", "looks_like": "door" },
+      { "direction": "rear_l", "symbol": "+", "looks_like": "door" },
+      { "direction": "rear_r", "symbol": "+", "looks_like": "door" },
+      { "direction": "r", "symbol": "+", "looks_like": "door" },
+      { "direction": "l", "symbol": "+", "looks_like": "door" },
+      { "direction": "nw_via_front_l", "symbol": "y", "looks_like": "door_front_left" },
+      { "direction": "ne_alt", "symbol": "u", "looks_like": "door_front_right" },
+      { "direction": "nw_via_rear_l", "symbol": "b", "looks_like": "door_rear_left" },
+      { "direction": "ne_via_rear_r", "symbol": "n", "looks_like": "door_rear_right" },
+      { "direction": "nw_via_front_r", "symbol": "u", "looks_like": "door_front_right" },
+      { "direction": "ne_via_front_l", "symbol": "y", "looks_like": "door_front_left" },
+      { "direction": "nw_alt", "symbol": "+", "looks_like": "door" },
+      { "direction": "ne_via_base", "symbol": "+", "looks_like": "door" },
+      { "direction": "full_r", "symbol": "u", "looks_like": "door_front_right" },
+      { "direction": "front_alt", "symbol": "+", "looks_like": "door" },
+      { "direction": "glazed_rear", "symbol": "+", "looks_like": "door" }
     ]
   },
   {
     "copy-from": "door_opaque_abstract",
     "id": "door_opaque",
     "symbol": "+",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "shapes": [
+      { "direction": "full_right", "symbol": "+", "looks_like": "door_opaque" },
+      { "direction": "rear", "symbol": "+", "looks_like": "door_opaque" }
+    ]
   },
   {
     "copy-from": "door_carbon_abstract",
@@ -602,7 +642,9 @@
       { "direction": "rear_left", "symbol": "b" },
       { "direction": "rear_right", "symbol": "n" },
       { "direction": "door_front", "symbol": "T" },
-      { "direction": "door_rear", "symbol": "B" }
+      { "direction": "door_rear", "symbol": "B" },
+      { "direction": "l", "symbol": "+", "looks_like": "door_carbon" },
+      { "direction": "r", "symbol": "+", "looks_like": "door_carbon" }
     ]
   },
   {
@@ -617,33 +659,60 @@
     "id": "hddoor",
     "symbol": "+",
     "type": "vehicle_part",
-    "shapes": [ { "direction": "left", "symbol": "L" }, { "direction": "right", "symbol": "R" } ]
+    "shapes": [
+      { "direction": "left", "symbol": "L" },
+      { "direction": "right", "symbol": "R" },
+      { "direction": "full_right", "symbol": "+", "looks_like": "hddoor" },
+      { "direction": "r_via_l", "symbol": "L", "looks_like": "hddoor_left" },
+      { "direction": "l", "symbol": "R", "looks_like": "hddoor_right" },
+      { "direction": "r", "symbol": "+", "looks_like": "hddoor" }
+    ]
   },
   {
     "copy-from": "hddoor_opaque_abstract",
     "id": "hddoor_opaque",
     "symbol": "+",
     "type": "vehicle_part",
-    "shapes": [ { "direction": "left", "symbol": "L" }, { "direction": "right", "symbol": "R" } ]
+    "shapes": [
+      { "direction": "left", "symbol": "L" },
+      { "direction": "right", "symbol": "R" },
+      { "direction": "rear", "symbol": "+", "looks_like": "hddoor_opaque" },
+      { "direction": "side_right", "symbol": "+", "looks_like": "hddoor_opaque" }
+    ]
   },
   {
     "copy-from": "door_internal_abstract",
     "id": "door_internal",
     "symbol": "+",
     "type": "vehicle_part",
-    "shapes": [ { "direction": "left", "symbol": "L" }, { "direction": "right", "symbol": "R" } ]
+    "shapes": [
+      { "direction": "left", "symbol": "L" },
+      { "direction": "right", "symbol": "R" },
+      { "direction": "front", "symbol": "+", "looks_like": "door_internal" },
+      { "direction": "opaque_rear", "symbol": "+", "looks_like": "door_internal" }
+    ]
   },
   {
     "copy-from": "hatch_abstract",
     "id": "hatch",
     "symbol": "+",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "shapes": [
+      { "direction": "horizontal", "symbol": "+", "looks_like": "hatch" },
+      { "direction": "front", "symbol": "+", "looks_like": "hatch" },
+      { "direction": "door_l", "symbol": "+", "looks_like": "hatch" },
+      { "direction": "door_r", "symbol": "+", "looks_like": "hatch" }
+    ]
   },
   {
     "copy-from": "hatch_opaque_abstract",
     "id": "hatch_opaque",
     "symbol": "+",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "shapes": [
+      { "direction": "r", "symbol": "+", "looks_like": "hatch_opaque" },
+      { "direction": "l", "symbol": "+", "looks_like": "hatch_opaque" }
+    ]
   },
   {
     "copy-from": "door_internal_carbon_abstract",
@@ -671,13 +740,23 @@
     "id": "hdhatch",
     "symbol": "+",
     "type": "vehicle_part",
-    "shapes": [ { "direction": "left", "symbol": "L" }, { "direction": "right", "symbol": "R" } ]
+    "shapes": [
+      { "direction": "left", "symbol": "L" },
+      { "direction": "right", "symbol": "R" },
+      { "direction": "hddoor_l", "symbol": "+", "looks_like": "hdhatch" }
+    ]
   },
   {
     "copy-from": "hdhatch_opaque_abstract",
     "id": "hdhatch_opaque",
     "symbol": "+",
     "type": "vehicle_part",
-    "shapes": [ { "direction": "left", "symbol": "L" }, { "direction": "right", "symbol": "R" } ]
+    "shapes": [
+      { "direction": "left", "symbol": "L" },
+      { "direction": "right", "symbol": "R" },
+      { "direction": "l", "symbol": "+", "looks_like": "hdhatch_opaque" },
+      { "direction": "hddoor_opaque_rear", "symbol": "+", "looks_like": "hdhatch_opaque" },
+      { "direction": "r", "symbol": "+", "looks_like": "hdhatch_opaque" }
+    ]
   }
 ]

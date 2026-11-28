@@ -6,10 +6,10 @@
     "blueprint": [ [ "<OO>" ] ],
     "color_palette": "wooden_standard",
     "parts": [
-      { "x": 0, "y": 0, "parts": [ "frame_wood_horizontal", "seat_wood_light", "hand_paddles", "boat_board" ] },
-      { "x": 1, "y": 0, "parts": [ "frame_wood_horizontal", "seat_wood_light", "hand_paddles", "boat_board" ] },
-      { "x": 2, "y": 0, "parts": [ "frame_wood_horizontal", "boat_board" ] },
-      { "x": -1, "y": 0, "parts": [ "frame_wood_horizontal", "boat_board" ] }
+      { "x": 0, "y": 0, "parts": [ "frame_wood_v", "seat_wood_light", "hand_paddles", "boat_board" ] },
+      { "x": 1, "y": 0, "parts": [ "frame_wood_v", "seat_wood_light", "hand_paddles", "boat_board" ] },
+      { "x": 2, "y": 0, "parts": [ "frame_wood_h_front", "boat_board" ] },
+      { "x": -1, "y": 0, "parts": [ "frame_wood_h_rear", "boat_board" ] }
     ],
     "items": [  ]
   },
@@ -22,50 +22,58 @@
       { "x": 0, "y": 0, "parts": [ "frame_cross", "seat", "seatbelt", "controls", "dashboard", "roof", "metal_boat_hull" ] },
       { "x": 0, "y": 1, "parts": [ "frame_cross", "seat", "seatbelt", "roof", "metal_boat_hull" ] },
       { "x": 0, "y": 2, "parts": [ "frame_cross", "seat", "seatbelt", "roof", "metal_boat_hull" ] },
-      { "x": 0, "y": 3, "parts": [ "frame_vertical", "door", "metal_boat_hull" ] },
-      { "x": 0, "y": -1, "parts": [ "frame_vertical", "door", "metal_boat_hull" ] },
-      { "x": 1, "y": -1, "parts": [ "frame_vertical", "windshield", "wheel_mount_medium_steerable", "wheel_wide" ] },
-      { "x": 1, "y": 0, "parts": [ "frame_cross", "windshield", "metal_boat_hull" ] },
+      { "x": 0, "y": 3, "parts": [ "frame_vertical", "door_r", "metal_boat_hull" ] },
+      { "x": 0, "y": -1, "parts": [ "frame_vertical", "door_l", "metal_boat_hull" ] },
+      {
+        "x": 1,
+        "y": -1,
+        "parts": [ "frame_vertical", "windshield_wheel_l", "wheel_mount_medium_steerable", "wheel_wide" ]
+      },
+      { "x": 1, "y": 0, "parts": [ "frame_cross", "windshield_cover_l", "metal_boat_hull" ] },
       { "x": 1, "y": 1, "parts": [ "frame_cross", "windshield", "metal_boat_hull" ] },
-      { "x": 1, "y": 2, "parts": [ "frame_cross", "windshield", "metal_boat_hull" ] },
-      { "x": 1, "y": 3, "parts": [ "frame_vertical", "windshield", "wheel_mount_medium_steerable", "wheel_wide" ] },
+      { "x": 1, "y": 2, "parts": [ "frame_cross", "windshield_cover_r", "metal_boat_hull" ] },
+      {
+        "x": 1,
+        "y": 3,
+        "parts": [ "frame_vertical", "windshield_wheel_r", "wheel_mount_medium_steerable", "wheel_wide" ]
+      },
       { "x": 2, "y": -1, "parts": [ "frame_nw", "halfboard_nw", "metal_boat_hull" ] },
-      { "x": 2, "y": 0, "parts": [ "frame_horizontal", "halfboard_horizontal", "headlight", "metal_boat_hull" ] },
+      { "x": 2, "y": 0, "parts": [ "frame_horizontal", "halfboard_cover_l", "headlight", "metal_boat_hull" ] },
       {
         "x": 2,
         "y": 1,
         "parts": [ "frame_horizontal", "halfboard_horizontal", "metal_boat_hull", "engine_v6", "alternator_truck", "battery_car" ]
       },
-      { "x": 2, "y": 2, "parts": [ "frame_horizontal", "halfboard_horizontal", "headlight", "metal_boat_hull" ] },
+      { "x": 2, "y": 2, "parts": [ "frame_horizontal", "halfboard_cover_r", "headlight", "metal_boat_hull" ] },
       { "x": 2, "y": 3, "parts": [ "frame_ne", "halfboard_ne", "metal_boat_hull" ] },
       {
         "x": -1,
         "y": -1,
-        "parts": [ "frame_vertical", "windshield", "metal_boat_hull", { "part": "tank", "fuel": "gasoline" } ]
+        "parts": [ "frame_vertical", "windshield_v_l", "metal_boat_hull", { "part": "tank", "fuel": "gasoline" } ]
       },
-      { "x": -1, "y": 0, "parts": [ "frame_cross", "windshield", "metal_boat_hull" ] },
-      { "x": -1, "y": 1, "parts": [ "frame_cross", "windshield", "metal_boat_hull" ] },
-      { "x": -1, "y": 2, "parts": [ "frame_cross", "windshield", "metal_boat_hull" ] },
+      { "x": -1, "y": 0, "parts": [ "frame_cross", "windshield_h_rear", "metal_boat_hull" ] },
+      { "x": -1, "y": 1, "parts": [ "frame_cross", "windshield_h_rear", "metal_boat_hull" ] },
+      { "x": -1, "y": 2, "parts": [ "frame_cross", "windshield_h_rear", "metal_boat_hull" ] },
       {
         "x": -1,
         "y": 3,
-        "parts": [ "frame_vertical", "windshield", "metal_boat_hull", { "part": "tank", "fuel": "gasoline" } ]
+        "parts": [ "frame_vertical", "windshield_v_r", "metal_boat_hull", { "part": "tank", "fuel": "gasoline" } ]
       },
-      { "x": -2, "y": -1, "parts": [ "frame_vertical", "halfboard_vertical", "metal_boat_hull" ] },
+      { "x": -2, "y": -1, "parts": [ "frame_vertical", "halfboard_v_l", "metal_boat_hull" ] },
       { "x": -2, "y": 0, "parts": [ "frame_cross", "cargo_space", "metal_boat_hull" ] },
       { "x": -2, "y": 1, "parts": [ "frame_cross", "cargo_space", "metal_boat_hull" ] },
       { "x": -2, "y": 2, "parts": [ "frame_cross", "cargo_space", "metal_boat_hull" ] },
-      { "x": -2, "y": 3, "parts": [ "frame_vertical", "halfboard_vertical", "metal_boat_hull" ] },
-      { "x": -3, "y": -1, "parts": [ "frame_vertical", "halfboard_vertical", "wheel_mount_medium", "wheel_wide" ] },
+      { "x": -2, "y": 3, "parts": [ "frame_vertical", "halfboard_v_r", "metal_boat_hull" ] },
+      { "x": -3, "y": -1, "parts": [ "frame_vertical", "halfboard_v_l", "wheel_mount_medium", "wheel_wide" ] },
       { "x": -3, "y": 0, "parts": [ "frame_cross", "cargo_space", "metal_boat_hull" ] },
       { "x": -3, "y": 1, "parts": [ "frame_cross", "cargo_space", "metal_boat_hull" ] },
       { "x": -3, "y": 2, "parts": [ "frame_cross", "cargo_space", "metal_boat_hull" ] },
-      { "x": -3, "y": 3, "parts": [ "frame_vertical", "halfboard_vertical", "wheel_mount_medium", "wheel_wide" ] },
-      { "x": -4, "y": -1, "parts": [ "frame_vertical", "halfboard_vertical", "wheel_mount_medium", "wheel_wide" ] },
+      { "x": -3, "y": 3, "parts": [ "frame_vertical", "halfboard_v_r", "wheel_mount_medium", "wheel_wide" ] },
+      { "x": -4, "y": -1, "parts": [ "frame_vertical", "halfboard_v_l", "wheel_mount_medium", "wheel_wide" ] },
       { "x": -4, "y": 0, "parts": [ "frame_cross", "cargo_space", "metal_boat_hull" ] },
       { "x": -4, "y": 1, "parts": [ "frame_cross", "cargo_space", "metal_boat_hull" ] },
       { "x": -4, "y": 2, "parts": [ "frame_cross", "cargo_space", "metal_boat_hull" ] },
-      { "x": -4, "y": 3, "parts": [ "frame_vertical", "halfboard_vertical", "wheel_mount_medium", "wheel_wide" ] },
+      { "x": -4, "y": 3, "parts": [ "frame_vertical", "halfboard_v_r", "wheel_mount_medium", "wheel_wide" ] },
       { "x": -5, "y": -1, "parts": [ "frame_sw", "halfboard_sw", "metal_boat_hull" ] },
       { "x": -5, "y": 0, "parts": [ "frame_cross", "cargo_space", "metal_boat_hull" ] },
       { "x": -5, "y": 1, "parts": [ "frame_cross", "cargo_space", "metal_boat_hull" ] },
@@ -1928,28 +1936,24 @@
         "parts": [ "frame_vertical_2", "robot_controls", "vehicle_alarm", "engine_electric", "roof", "metal_boat_hull" ]
       },
       { "x": -1, "y": 0, "parts": [ "frame_vertical_2", "roof", "vehicle_scoop" ] },
-      { "x": -2, "y": 0, "parts": [ "frame_horizontal", "hatch", "metal_boat_hull" ] },
-      {
-        "x": 1,
-        "y": 0,
-        "parts": [ "frame_horizontal", "board_horizontal", "headlight", "omnicam", "metal_boat_hull" ]
-      },
+      { "x": -2, "y": 0, "parts": [ "frame_h_rear", "hatch_horizontal", "metal_boat_hull" ] },
+      { "x": 1, "y": 0, "parts": [ "frame_h_front", "board_h_front", "headlight", "omnicam", "metal_boat_hull" ] },
       {
         "x": -2,
         "y": -1,
-        "parts": [ "frame_horizontal", "storage_battery_mount", "storage_battery_removable", "board_sw", "metal_boat_hull" ]
+        "parts": [ "frame_sw_alt", "storage_battery_mount", "storage_battery_removable", "board_sw", "metal_boat_hull" ]
       },
-      { "x": -1, "y": -1, "parts": [ "frame_vertical", "board_vertical", "metal_boat_hull" ] },
-      { "x": 0, "y": -1, "parts": [ "frame_vertical", "board_vertical", "metal_boat_hull" ] },
-      { "x": 1, "y": -1, "parts": [ "frame_horizontal", "board_nw", "metal_boat_hull" ] },
+      { "x": -1, "y": -1, "parts": [ "frame_v_l", "board_v_l", "metal_boat_hull" ] },
+      { "x": 0, "y": -1, "parts": [ "frame_v_l", "board_v_l", "metal_boat_hull" ] },
+      { "x": 1, "y": -1, "parts": [ "frame_nw_alt", "board_nw", "metal_boat_hull" ] },
       {
         "x": -2,
         "y": 1,
-        "parts": [ "frame_horizontal", "storage_battery_mount", "storage_battery_removable", "board_se", "metal_boat_hull" ]
+        "parts": [ "frame_se_alt", "storage_battery_mount", "storage_battery_removable", "board_se", "metal_boat_hull" ]
       },
-      { "x": -1, "y": 1, "parts": [ "frame_vertical", "board_vertical", "metal_boat_hull" ] },
-      { "x": 0, "y": 1, "parts": [ "frame_vertical", "board_vertical", "metal_boat_hull" ] },
-      { "x": 1, "y": 1, "parts": [ "frame_horizontal", "board_ne", "metal_boat_hull" ] }
+      { "x": -1, "y": 1, "parts": [ "frame_v_r", "board_v_r", "metal_boat_hull" ] },
+      { "x": 0, "y": 1, "parts": [ "frame_v_r", "board_v_r", "metal_boat_hull" ] },
+      { "x": 1, "y": 1, "parts": [ "frame_ne_alt", "board_ne", "metal_boat_hull" ] }
     ],
     "items": [  ]
   },
@@ -1958,13 +1962,13 @@
     "id": "carbon_catamaran",
     "name": "Carbon Catamaran",
     "blueprint": [
-      "y======-++---u",
+      "y000000-55---u",
       "/.CeeC#......$",
       "<I_cc_>___I__!",
       "'_____[___S__!",
       "<I____>___I__!",
       "/.ssss#......$",
-      "b======-++---n"
+      "b666666-77---n"
     ],
     "blueprint_origin": { "x": 10, "y": 3 },
     "palette": {
@@ -1994,7 +1998,11 @@
       "u": [ "frame_carbon_horizontal", "carbon_board_nw", "carbonfiber_boat_hull" ],
       "n": [ "frame_carbon_horizontal", "carbon_board_ne", "carbonfiber_boat_hull" ],
       "'": [ "frame_carbon_horizontal", "windshield", "v_curtain" ],
-      "S": [ "frame_carbon_vertical", "seat", "sail_large" ]
+      "S": [ "frame_carbon_vertical", "seat", "sail_large" ],
+      "0": [ "frame_carbon_horizontal", "carbon_board_v_l", "carbonfiber_boat_hull" ],
+      "5": [ "frame_carbon_horizontal", "door_carbon_l", "carbonfiber_boat_hull" ],
+      "6": [ "frame_carbon_horizontal", "carbon_board_v_r", "carbonfiber_boat_hull" ],
+      "7": [ "frame_carbon_horizontal", "door_carbon_r", "carbonfiber_boat_hull" ]
     }
   }
 ]

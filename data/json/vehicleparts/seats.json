@@ -253,19 +253,29 @@
     "copy-from": "seat_abstract",
     "id": "seat",
     "symbol": "#",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "shapes": [
+      { "direction": "front_glazing", "symbol": "#", "looks_like": "seat" },
+      { "direction": "back_front", "symbol": "#", "looks_like": "seat" },
+      { "direction": "back_l", "symbol": "#", "looks_like": "seat" },
+      { "direction": "back_r", "symbol": "#", "looks_like": "seat" },
+      { "direction": "back_v_r", "symbol": "#", "looks_like": "seat" },
+      { "direction": "back_v_l", "symbol": "#", "looks_like": "seat" }
+    ]
   },
   {
     "copy-from": "seat_leather_abstract",
     "id": "seat_leather",
     "symbol": "#",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "shapes": [ { "direction": "rear_alt", "symbol": "#", "looks_like": "seat_leather" } ]
   },
   {
     "copy-from": "reclining_seat_abstract",
     "id": "reclining_seat",
     "symbol": "#",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "shapes": [ { "direction": "front_glazing", "symbol": "#", "looks_like": "reclining_seat" } ]
   },
   {
     "copy-from": "reclining_seat_leather_abstract",
@@ -277,7 +287,8 @@
     "copy-from": "saddle_abstract",
     "id": "saddle",
     "symbol": "#",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "shapes": [ { "direction": "motor_alt", "symbol": "#", "looks_like": "saddle" } ]
   },
   {
     "copy-from": "saddle_abstract",
@@ -289,7 +300,8 @@
     "copy-from": "saddle_abstract",
     "id": "saddle_motor",
     "symbol": "#",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "shapes": [ { "direction": "scooter", "symbol": "#", "looks_like": "saddle_motor" } ]
   },
   {
     "copy-from": "folding_seat_abstract",
