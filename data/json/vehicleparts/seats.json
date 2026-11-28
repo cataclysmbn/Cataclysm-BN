@@ -255,15 +255,12 @@
     "symbol": "#",
     "type": "vehicle_part",
     "shapes": [
-      { "direction": "windshield", "symbol": "#", "looks_like": "seat" },
-      { "direction": "windshield_front", "symbol": "#", "looks_like": "seat_windshield" },
-      { "direction": "back_left", "symbol": "#", "looks_like": "seat" },
-      { "direction": "back_right", "symbol": "#", "looks_like": "seat" },
-      { "direction": "swivel_chair_front", "symbol": "#", "looks_like": "seat" },
+      { "direction": "front_glazing", "symbol": "#", "looks_like": "seat" },
       { "direction": "back_front", "symbol": "#", "looks_like": "seat" },
-      { "direction": "back_vertical", "symbol": "#", "looks_like": "seat" },
-      { "direction": "back_vertical_right", "symbol": "#", "looks_like": "seat_back_vertical" },
-      { "direction": "back_vertical_left", "symbol": "#", "looks_like": "seat_back_vertical" }
+      { "direction": "back_l", "symbol": "#", "looks_like": "seat" },
+      { "direction": "back_r", "symbol": "#", "looks_like": "seat" },
+      { "direction": "back_v_r", "symbol": "#", "looks_like": "seat" },
+      { "direction": "back_v_l", "symbol": "#", "looks_like": "seat" }
     ]
   },
   {
@@ -271,37 +268,27 @@
     "id": "seat_leather",
     "symbol": "#",
     "type": "vehicle_part",
-    "shapes": [
-      { "direction": "windshield_front", "symbol": "#", "looks_like": "seat_leather" },
-      { "direction": "rear", "symbol": "#", "looks_like": "seat_leather" }
-    ]
+    "shapes": [ { "direction": "rear_alt", "symbol": "#", "looks_like": "seat_leather" } ]
   },
   {
     "copy-from": "reclining_seat_abstract",
     "id": "reclining_seat",
     "symbol": "#",
     "type": "vehicle_part",
-    "shapes": [
-      { "direction": "windshield", "symbol": "#", "looks_like": "reclining_seat" },
-      { "direction": "windshield_front", "symbol": "#", "looks_like": "reclining_seat_windshield" }
-    ]
+    "shapes": [ { "direction": "front_glazing", "symbol": "#", "looks_like": "reclining_seat" } ]
   },
   {
     "copy-from": "reclining_seat_leather_abstract",
     "id": "reclining_seat_leather",
     "symbol": "#",
-    "type": "vehicle_part",
-    "shapes": [ { "direction": "windshield_front", "symbol": "#", "looks_like": "reclining_seat_leather" } ]
+    "type": "vehicle_part"
   },
   {
     "copy-from": "saddle_abstract",
     "id": "saddle",
     "symbol": "#",
     "type": "vehicle_part",
-    "shapes": [
-      { "direction": "scooter", "symbol": "#", "looks_like": "saddle" },
-      { "direction": "appearance_saddle_motor", "symbol": "#", "looks_like": "saddle_motor" }
-    ]
+    "shapes": [ { "direction": "motor_alt", "symbol": "#", "looks_like": "saddle" } ]
   },
   {
     "copy-from": "saddle_abstract",
@@ -314,7 +301,7 @@
     "id": "saddle_motor",
     "symbol": "#",
     "type": "vehicle_part",
-    "shapes": [ { "direction": "appearance_saddle_scooter", "symbol": "#", "looks_like": "saddle_scooter" } ]
+    "shapes": [ { "direction": "scooter", "symbol": "#", "looks_like": "saddle_motor" } ]
   },
   {
     "copy-from": "folding_seat_abstract",

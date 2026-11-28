@@ -456,19 +456,15 @@
     "default_color": "#622625",
     "shapes": [
       { "direction": "nw", "symbol": "+", "looks_like": "door_sliding" },
-      { "direction": "front", "symbol": "+", "looks_like": "door_sliding" },
-      { "direction": "front_right", "symbol": "+", "looks_like": "door_sliding_front" },
-      { "direction": "sw", "symbol": "+", "looks_like": "door_sliding" },
       { "direction": "se", "symbol": "+", "looks_like": "door_sliding" },
-      { "direction": "appearance_door_nw", "symbol": "&", "looks_like": "door_sliding_nw" },
-      { "direction": "appearance_door_front_right", "symbol": "&", "looks_like": "door_sliding_front_right" },
-      { "direction": "appearance_door_sw", "symbol": "&", "looks_like": "door_sliding_sw" },
-      { "direction": "appearance_door_nw_from_door_sliding", "symbol": "+", "looks_like": "door_sliding" },
-      { "direction": "appearance_door_opaque_rear", "symbol": "+", "looks_like": "door_sliding" },
-      { "direction": "appearance_door_se", "symbol": "&", "looks_like": "door_sliding_se" },
-      { "direction": "appearance_door_opaque_full_right", "symbol": "+", "looks_like": "door_sliding" },
-      { "direction": "appearance_door_se_from_door_sliding", "symbol": "+", "looks_like": "door_sliding" },
-      { "direction": "appearance_door_sw_from_door_sliding", "symbol": "+", "looks_like": "door_sliding" }
+      { "direction": "sw", "symbol": "+", "looks_like": "door_sliding" },
+      { "direction": "r", "symbol": "+", "looks_like": "door_sliding" },
+      { "direction": "l", "symbol": "+", "looks_like": "door_sliding" },
+      { "direction": "front_r", "symbol": "+", "looks_like": "door_sliding" },
+      { "direction": "horizontal_front", "symbol": "+", "looks_like": "door_sliding" },
+      { "direction": "horizontal_rear", "symbol": "+", "looks_like": "door_sliding" },
+      { "direction": "full_left", "symbol": "+", "looks_like": "door_sliding" },
+      { "direction": "full_right", "symbol": "+", "looks_like": "door_sliding" }
     ]
   },
   {
@@ -515,10 +511,7 @@
     "default_color": "#622625",
     "shapes": [
       { "direction": "front", "symbol": "+", "looks_like": "door_trunk" },
-      { "direction": "wheel_left", "symbol": "+", "looks_like": "door_trunk" },
-      { "direction": "wheel_right", "symbol": "+", "looks_like": "door_trunk" },
-      { "direction": "horizontal_2", "symbol": "+", "looks_like": "door_trunk" },
-      { "direction": "appearance_door_opaque_rear", "symbol": "+", "looks_like": "door_trunk" }
+      { "direction": "horizontal_2", "symbol": "+", "looks_like": "door_trunk" }
     ]
   },
   {
@@ -596,33 +589,33 @@
     "symbol": "+",
     "type": "vehicle_part",
     "shapes": [
-      { "direction": "front_left", "symbol": "y", "looks_like": "door" },
-      { "direction": "front_right", "symbol": "u", "looks_like": "door" },
+      { "direction": "front_left", "symbol": "y" },
+      { "direction": "front_right", "symbol": "u" },
       { "direction": "vertical_left", "symbol": "L" },
-      { "direction": "vertical_right", "symbol": "R", "looks_like": "door" },
+      { "direction": "vertical_right", "symbol": "R" },
       { "direction": "rear_left", "symbol": "b" },
       { "direction": "rear_right", "symbol": "n" },
       { "direction": "door_front", "symbol": "T" },
       { "direction": "door_rear", "symbol": "B" },
-      { "direction": "right", "symbol": "+", "looks_like": "door" },
-      { "direction": "left", "symbol": "+", "looks_like": "door" },
-      { "direction": "nw", "symbol": "+", "looks_like": "door" },
-      { "direction": "ne", "symbol": "u", "looks_like": "door" },
-      { "direction": "rear", "symbol": "+", "looks_like": "door" },
-      { "direction": "sw", "symbol": "+", "looks_like": "door" },
-      { "direction": "se", "symbol": "+", "looks_like": "door" },
       { "direction": "full_left", "symbol": "+", "looks_like": "door" },
       { "direction": "full_right", "symbol": "+", "looks_like": "door" },
-      { "direction": "front", "symbol": "+", "looks_like": "door" },
-      { "direction": "appearance_door_opaque_rear", "symbol": "+", "looks_like": "door" },
-      { "direction": "appearance_door_opaque_full_right", "symbol": "+", "looks_like": "door" },
-      {
-        "direction": "appearance_door_opaque_full_right_from_front_right",
-        "symbol": "u",
-        "looks_like": "door_front_right"
-      },
-      { "direction": "appearance_door_full_right", "symbol": "u", "looks_like": "door_front_right" },
-      { "direction": "ascii_right", "symbol": "+", "looks_like": "door_vertical_right" }
+      { "direction": "front_l", "symbol": "+", "looks_like": "door" },
+      { "direction": "front_r", "symbol": "+", "looks_like": "door" },
+      { "direction": "rear_l", "symbol": "+", "looks_like": "door" },
+      { "direction": "rear_r", "symbol": "+", "looks_like": "door" },
+      { "direction": "r", "symbol": "+", "looks_like": "door" },
+      { "direction": "l", "symbol": "+", "looks_like": "door" },
+      { "direction": "nw_via_front_l", "symbol": "y", "looks_like": "door_front_left" },
+      { "direction": "ne_alt", "symbol": "u", "looks_like": "door_front_right" },
+      { "direction": "nw_via_rear_l", "symbol": "b", "looks_like": "door_rear_left" },
+      { "direction": "ne_via_rear_r", "symbol": "n", "looks_like": "door_rear_right" },
+      { "direction": "nw_via_front_r", "symbol": "u", "looks_like": "door_front_right" },
+      { "direction": "ne_via_front_l", "symbol": "y", "looks_like": "door_front_left" },
+      { "direction": "nw_alt", "symbol": "+", "looks_like": "door" },
+      { "direction": "ne_via_base", "symbol": "+", "looks_like": "door" },
+      { "direction": "full_r", "symbol": "u", "looks_like": "door_front_right" },
+      { "direction": "front_alt", "symbol": "+", "looks_like": "door" },
+      { "direction": "glazed_rear", "symbol": "+", "looks_like": "door" }
     ]
   },
   {
@@ -649,7 +642,9 @@
       { "direction": "rear_left", "symbol": "b" },
       { "direction": "rear_right", "symbol": "n" },
       { "direction": "door_front", "symbol": "T" },
-      { "direction": "door_rear", "symbol": "B" }
+      { "direction": "door_rear", "symbol": "B" },
+      { "direction": "l", "symbol": "+", "looks_like": "door_carbon" },
+      { "direction": "r", "symbol": "+", "looks_like": "door_carbon" }
     ]
   },
   {
@@ -668,7 +663,9 @@
       { "direction": "left", "symbol": "L" },
       { "direction": "right", "symbol": "R" },
       { "direction": "full_right", "symbol": "+", "looks_like": "hddoor" },
-      { "direction": "ascii_right", "symbol": "+", "looks_like": "hddoor_right" }
+      { "direction": "r_via_l", "symbol": "L", "looks_like": "hddoor_left" },
+      { "direction": "l", "symbol": "R", "looks_like": "hddoor_right" },
+      { "direction": "r", "symbol": "+", "looks_like": "hddoor" }
     ]
   },
   {
@@ -680,7 +677,7 @@
       { "direction": "left", "symbol": "L" },
       { "direction": "right", "symbol": "R" },
       { "direction": "rear", "symbol": "+", "looks_like": "hddoor_opaque" },
-      { "direction": "appearance_hddoor_right", "symbol": "R", "looks_like": "hddoor_opaque_right" }
+      { "direction": "side_right", "symbol": "+", "looks_like": "hddoor_opaque" }
     ]
   },
   {
@@ -692,8 +689,7 @@
       { "direction": "left", "symbol": "L" },
       { "direction": "right", "symbol": "R" },
       { "direction": "front", "symbol": "+", "looks_like": "door_internal" },
-      { "direction": "rear", "symbol": "+", "looks_like": "door_internal" },
-      { "direction": "appearance_door_opaque_rear", "symbol": "&", "looks_like": "door_internal_rear" }
+      { "direction": "opaque_rear", "symbol": "+", "looks_like": "door_internal" }
     ]
   },
   {
@@ -703,10 +699,9 @@
     "type": "vehicle_part",
     "shapes": [
       { "direction": "horizontal", "symbol": "+", "looks_like": "hatch" },
-      { "direction": "horizontal_rear", "symbol": "+", "looks_like": "hatch_horizontal" },
       { "direction": "front", "symbol": "+", "looks_like": "hatch" },
-      { "direction": "appearance_hatch_opaque_right", "symbol": "+", "looks_like": "hatch" },
-      { "direction": "appearance_hatch_opaque_left", "symbol": "+", "looks_like": "hatch" }
+      { "direction": "door_l", "symbol": "+", "looks_like": "hatch" },
+      { "direction": "door_r", "symbol": "+", "looks_like": "hatch" }
     ]
   },
   {
@@ -715,9 +710,8 @@
     "symbol": "+",
     "type": "vehicle_part",
     "shapes": [
-      { "direction": "rear", "symbol": "+", "looks_like": "hatch_opaque" },
-      { "direction": "right", "symbol": "+", "looks_like": "hatch_opaque" },
-      { "direction": "left", "symbol": "+", "looks_like": "hatch_opaque" }
+      { "direction": "r", "symbol": "+", "looks_like": "hatch_opaque" },
+      { "direction": "l", "symbol": "+", "looks_like": "hatch_opaque" }
     ]
   },
   {
@@ -746,13 +740,23 @@
     "id": "hdhatch",
     "symbol": "+",
     "type": "vehicle_part",
-    "shapes": [ { "direction": "left", "symbol": "L" }, { "direction": "right", "symbol": "R" } ]
+    "shapes": [
+      { "direction": "left", "symbol": "L" },
+      { "direction": "right", "symbol": "R" },
+      { "direction": "hddoor_l", "symbol": "+", "looks_like": "hdhatch" }
+    ]
   },
   {
     "copy-from": "hdhatch_opaque_abstract",
     "id": "hdhatch_opaque",
     "symbol": "+",
     "type": "vehicle_part",
-    "shapes": [ { "direction": "left", "symbol": "L" }, { "direction": "right", "symbol": "R" } ]
+    "shapes": [
+      { "direction": "left", "symbol": "L" },
+      { "direction": "right", "symbol": "R" },
+      { "direction": "l", "symbol": "+", "looks_like": "hdhatch_opaque" },
+      { "direction": "hddoor_opaque_rear", "symbol": "+", "looks_like": "hdhatch_opaque" },
+      { "direction": "r", "symbol": "+", "looks_like": "hdhatch_opaque" }
+    ]
   }
 ]

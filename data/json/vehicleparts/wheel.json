@@ -296,7 +296,10 @@
     "looks_like": "wheel",
     "symbol": "|",
     "type": "vehicle_part",
-    "shapes": [ { "direction": "front", "symbol": "|", "looks_like": "wheel_bicycle" } ]
+    "shapes": [
+      { "direction": "front", "symbol": "|", "looks_like": "wheel_bicycle" },
+      { "direction": "rear_alt", "symbol": "|", "looks_like": "wheel_bicycle" }
+    ]
   },
   {
     "copy-from": "wheel_bicycle_abstract",
@@ -525,10 +528,8 @@
     },
     "flags": [ "WHEEL", "FOLDABLE", "NEEDS_WHEEL_MOUNT_LIGHT", "SHOCK_RESISTANT" ],
     "shapes": [
-      { "direction": "scooter", "symbol": "o", "looks_like": "wheel_small" },
-      { "direction": "scooter_front", "symbol": "o", "looks_like": "wheel_small_scooter" },
-      { "direction": "scooter_rear", "symbol": "o", "looks_like": "wheel_small_scooter" },
-      { "direction": "front", "symbol": "o", "looks_like": "wheel_small" }
+      { "direction": "scooter_alt", "symbol": "o", "looks_like": "wheel_small" },
+      { "direction": "scooter_rear_alt", "symbol": "o", "looks_like": "wheel_small" }
     ]
   },
   {

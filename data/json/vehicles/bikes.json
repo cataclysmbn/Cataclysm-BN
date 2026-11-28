@@ -123,7 +123,7 @@
       { "x": 0, "y": 0, "parts": [ "frame_vertical_2", "saddle_motor" ] },
       { "x": 1, "y": 0, "parts": [ "frame_handle", { "part": "tank_small", "fuel": "gasoline" } ] },
       { "x": -1, "y": 0, "parts": [ "frame_vertical", "wheel_mount_light", "wheel_motorbike_rear" ] },
-      { "x": 2, "y": 0, "parts": [ "frame_vertical", "wheel_mount_light_steerable", "wheel_motorbike" ] }
+      { "x": 2, "y": 0, "parts": [ "frame_vertical", "wheel_mount_light_steerable", "wheel_motorbike_front" ] }
     ]
   },
   {
@@ -198,15 +198,11 @@
     "name": "Scooter",
     "blueprint": [ "o>o" ],
     "parts": [
-      {
-        "x": 0,
-        "y": 0,
-        "parts": [ "frame_handle", "headlight", "saddle_motor_appearance_saddle_scooter", "controls", "controls_electronic" ]
-      },
+      { "x": 0, "y": 0, "parts": [ "frame_handle", "headlight", "saddle_motor_scooter", "controls", "controls_electronic" ] },
       { "x": 0, "y": 0, "parts": [ "horn_car", "motorcycle_kickstand", "engine_1cyl", "alternator_motorbike" ] },
       { "x": 0, "y": 0, "parts": [ "battery_motorbike", { "part": "tank_small", "fuel": "gasoline" } ] },
-      { "x": 1, "y": 0, "parts": [ "xlframe_vertical", "wheel_mount_light_steerable", "wheel_small_scooter_front" ] },
-      { "x": -1, "y": 0, "parts": [ "xlframe_vertical", "wheel_mount_light", "wheel_small_scooter_rear" ] },
+      { "x": 1, "y": 0, "parts": [ "xlframe_vertical", "wheel_mount_light_steerable", "wheel_small_scooter_alt" ] },
+      { "x": -1, "y": 0, "parts": [ "xlframe_vertical", "wheel_mount_light", "wheel_small_scooter_rear_alt" ] },
       { "x": -1, "y": 0, "part": "muffler" }
     ]
   },
@@ -222,7 +218,7 @@
         "parts": [
           "frame_handle",
           "headlight",
-          "saddle_motor_appearance_saddle_scooter",
+          "saddle_motor_scooter",
           "controls",
           "controls_electronic",
           "horn_car",
@@ -231,11 +227,11 @@
           "engine_electric_small"
         ]
       },
-      { "x": 1, "y": 0, "parts": [ "xlframe_vertical", "wheel_mount_light_steerable", "wheel_small_scooter_front" ] },
+      { "x": 1, "y": 0, "parts": [ "xlframe_vertical", "wheel_mount_light_steerable", "wheel_small_scooter_alt" ] },
       {
         "x": -1,
         "y": 0,
-        "parts": [ "xlframe_vertical", "wheel_mount_light", "wheel_small_scooter_rear", "foldable_solar_panel" ]
+        "parts": [ "xlframe_vertical", "wheel_mount_light", "wheel_small_scooter_rear_alt", "foldable_solar_panel" ]
       }
     ]
   },
@@ -320,6 +316,6 @@
     "type": "vehicle",
     "name": "Skateboard",
     "blueprint": [ "$" ],
-    "parts": [ { "x": 0, "y": 0, "parts": [ "frame_wood_deck_cover", "wheel_mount_skateboard", "wheel_skateboard" ] } ]
+    "parts": [ { "x": 0, "y": 0, "parts": [ "frame_wood_deck", "wheel_mount_skateboard", "wheel_skateboard" ] } ]
   }
 ]

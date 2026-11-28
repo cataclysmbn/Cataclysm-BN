@@ -16,16 +16,8 @@
       [ "H" ]
     ],
     "parts": [
-      {
-        "x": -1,
-        "y": 0,
-        "parts": [ "xlframe_appearance_xlframe_cross", "wheel_10", "small_storage_battery", "kitchen_unit" ]
-      },
-      {
-        "x": 0,
-        "y": 0,
-        "parts": [ "xlframe_appearance_xlframe_cross", "wheel_10", "minifridge", "controls_electronic" ]
-      }
+      { "x": -1, "y": 0, "parts": [ "xlframe_vertical_2", "wheel_10", "small_storage_battery", "kitchen_unit" ] },
+      { "x": 0, "y": 0, "parts": [ "xlframe_vertical_2", "wheel_10", "minifridge", "controls_electronic" ] }
     ],
     "items": [
       { "x": -1, "y": 0, "chance": 30, "items": [ "cheeseburger" ] },
@@ -72,12 +64,12 @@
       [ "o|o" ]
     ],
     "parts": [
-      { "x": 0, "y": 0, "parts": [ "frame_vertical_T_left", "seat_back_left", "roof", "engine_electric", "controls" ] },
-      { "x": 0, "y": 1, "parts": [ "frame_vertical_T_right", "seat_back_right", "roof", "storage_battery" ] },
-      { "x": 1, "y": 0, "parts": [ "frame_nw", "halfboard_nw", "wheel_mount_light_steerable", "wheel_small_front" ] },
-      { "x": 1, "y": 1, "parts": [ "frame_ne", "halfboard_ne", "wheel_mount_light_steerable", "wheel_small_front" ] },
-      { "x": -1, "y": 0, "parts": [ "frame_sw", "box", "wheel_mount_light", "wheel_small_front" ] },
-      { "x": -1, "y": 1, "parts": [ "frame_se", "box", "wheel_mount_light", "wheel_small_front" ] }
+      { "x": 0, "y": 0, "parts": [ "frame_h_l_via_h", "seat_back_l", "roof", "engine_electric", "controls" ] },
+      { "x": 0, "y": 1, "parts": [ "frame_h_r_via_h", "seat_back_r", "roof", "storage_battery" ] },
+      { "x": 1, "y": 0, "parts": [ "frame_nw", "halfboard_nw", "wheel_mount_light_steerable", "wheel_small" ] },
+      { "x": 1, "y": 1, "parts": [ "frame_ne", "halfboard_ne", "wheel_mount_light_steerable", "wheel_small" ] },
+      { "x": -1, "y": 0, "parts": [ "frame_sw", "box", "wheel_mount_light", "wheel_small" ] },
+      { "x": -1, "y": 1, "parts": [ "frame_se", "box", "wheel_mount_light", "wheel_small" ] }
     ],
     "items": [
       { "x": -1, "y": 0, "chance": 25, "//repeat": 2, "item_groups": [ "golf_cart" ] },
@@ -93,16 +85,12 @@
       [ "o|o" ]
     ],
     "parts": [
-      { "x": 0, "y": 0, "parts": [ "frame_vertical_T_left", "seat_back_left", "roof", "engine_electric", "controls" ] },
-      { "x": 0, "y": 1, "parts": [ "frame_vertical_T_right", "seat_back_right", "roof", "storage_battery" ] },
-      { "x": 1, "y": 0, "parts": [ "frame_nw", "halfboard_nw", "wheel_mount_light_steerable", "wheel_small_front" ] },
-      { "x": 1, "y": 1, "parts": [ "frame_ne", "halfboard_ne", "wheel_mount_light_steerable", "wheel_small_front" ] },
-      { "x": -1, "y": 0, "parts": [ "frame_sw", "roof", "seat_back_left", "wheel_mount_light", "wheel_small_front" ] },
-      {
-        "x": -1,
-        "y": 1,
-        "parts": [ "frame_se", "roof", "seat_back_right", "wheel_mount_light", "wheel_small_front" ]
-      }
+      { "x": 0, "y": 0, "parts": [ "frame_h_l_via_h", "seat_back_l", "roof", "engine_electric", "controls" ] },
+      { "x": 0, "y": 1, "parts": [ "frame_h_r_via_h", "seat_back_r", "roof", "storage_battery" ] },
+      { "x": 1, "y": 0, "parts": [ "frame_nw", "halfboard_nw", "wheel_mount_light_steerable", "wheel_small" ] },
+      { "x": 1, "y": 1, "parts": [ "frame_ne", "halfboard_ne", "wheel_mount_light_steerable", "wheel_small" ] },
+      { "x": -1, "y": 0, "parts": [ "frame_sw", "roof", "seat_back_l", "wheel_mount_light", "wheel_small" ] },
+      { "x": -1, "y": 1, "parts": [ "frame_se", "roof", "seat_back_r", "wheel_mount_light", "wheel_small" ] }
     ],
     "items": [
       { "x": -1, "y": 0, "chance": 20, "//repeat": 2, "item_groups": [ "golf_cart" ] },
@@ -196,7 +184,7 @@
     "type": "vehicle",
     "name": "Swivel Chair",
     "blueprint": [ "#" ],
-    "parts": [ { "x": 0, "y": 0, "parts": [ "xlframe_vertical_2", "wheel_caster", "seat_swivel_chair_front" ] } ],
+    "parts": [ { "x": 0, "y": 0, "parts": [ "xlframe_vertical_2", "wheel_caster", "seat" ] } ],
     "items": [  ]
   },
   {

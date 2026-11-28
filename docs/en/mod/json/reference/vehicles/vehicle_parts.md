@@ -139,7 +139,6 @@ Note: this field does not support copy from, it must be defined on each object
   {
     "direction": "left",     // What is appended to the id, so wing_metal would become wing_metal_left. Additionally is appended to the looks_like field
     "symbol": "y",           // Same as the symbol definition above
-    "symbol_broken": "y",    // Broken symbol for this shape
     "looks_like": "board_nw" // Same as the looks_like definition above, overwrites changes from direction
   },
 ]
@@ -152,6 +151,13 @@ its physical inheritance. Existing IDs remain available when new shapes are adde
 A tileset binds a shape with `vp_<part_id>`. Give the shape an existing part ID as
 its `looks_like` so other tilesets can use that fallback. The selected artwork does
 not change the part's collision, transparency, material or other physical properties.
+
+In appearance-only shape names, `h`/`v` mean horizontal/vertical and `l`/`r` mean
+left/right. `half`, `xlhalf`, `hdhalf` and `stow` abbreviate the corresponding
+board profiles; on halfboards, `xl`/`hd` identify the extra light/heavy duty profiles.
+The primary profile omits `via_<shape>`; other fallbacks keep it. `base` means
+the unsuffixed part; `_alt` avoids an existing part or sprite ID. The actual
+fallback is always specified in `looks_like`.
 
 ### Vehicles
 

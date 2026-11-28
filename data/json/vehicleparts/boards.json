@@ -22,40 +22,50 @@
     "default_color": "#622625",
     "shapes": [
       { "direction": "horizontal", "symbol": "h" },
-      { "direction": "horizontal_front", "symbol": "T", "looks_like": "board_horizontal" },
-      { "direction": "horizontal_rear", "symbol": "B", "looks_like": "board_horizontal" },
-      { "direction": "ne", "symbol": "u", "looks_like": "board_horizontal" },
-      { "direction": "nw", "symbol": "y", "looks_like": "board_horizontal" },
-      { "direction": "se", "symbol": "n", "looks_like": "board_horizontal" },
-      { "direction": "sw", "symbol": "b", "looks_like": "board_horizontal" },
-      { "direction": "vertical", "symbol": "j", "looks_like": "board_horizontal" },
-      { "direction": "vertical_left", "symbol": "j", "looks_like": "board_vertical" },
-      { "direction": "vertical_right", "symbol": "j", "looks_like": "board_vertical" },
-      { "direction": "nw_edge", "symbol": "j", "looks_like": "board_nw" },
-      { "direction": "ne_edge", "symbol": "j", "looks_like": "board_ne" },
-      { "direction": "wheel_left", "symbol": "j", "looks_like": "board_vertical" },
-      { "direction": "wheel_right", "symbol": "j", "looks_like": "board_vertical" },
-      { "direction": "appearance_windshield_full_left", "symbol": "b", "looks_like": "board_sw" },
-      { "direction": "appearance_windshield_horizontal_rear", "symbol": "h", "looks_like": "board_horizontal" },
-      { "direction": "appearance_windshield_full_right", "symbol": "n", "looks_like": "board_se" },
-      { "direction": "appearance_halfboard_vertical_left", "symbol": "j", "looks_like": "board_vertical_left" },
-      { "direction": "appearance_halfboard_vertical_right", "symbol": "j", "looks_like": "board_vertical_right" },
-      { "direction": "appearance_halfboard_vertical_left_from_sw", "symbol": "b", "looks_like": "board_sw" },
-      { "direction": "appearance_halfboard_vertical_right_from_se", "symbol": "n", "looks_like": "board_se" },
-      { "direction": "appearance_stowboard_wheel_left", "symbol": "#", "looks_like": "board_wheel_left" },
-      { "direction": "appearance_stowboard_wheel_right", "symbol": "#", "looks_like": "board_wheel_right" },
-      { "direction": "appearance_windshield_sw_edge", "symbol": "b", "looks_like": "board_sw" },
-      { "direction": "appearance_windshield_se_edge", "symbol": "n", "looks_like": "board_se" },
-      {
-        "direction": "appearance_halfboard_vertical_left_from_vertical",
-        "symbol": "j",
-        "looks_like": "board_vertical"
-      },
-      { "direction": "appearance_board_vertical_left", "symbol": "b", "looks_like": "board_sw" },
-      { "direction": "appearance_board_vertical_right", "symbol": "n", "looks_like": "board_se" },
-      { "direction": "appearance_board_vertical_left_from_vertical", "symbol": "j", "looks_like": "board_vertical" },
-      { "direction": "ascii_rear", "symbol": "h", "looks_like": "board_horizontal_rear" },
-      { "direction": "ascii_front", "symbol": "h", "looks_like": "board_horizontal_front" }
+      { "direction": "horizontal_front", "symbol": "T" },
+      { "direction": "horizontal_rear", "symbol": "B" },
+      { "direction": "ne", "symbol": "u" },
+      { "direction": "nw", "symbol": "y" },
+      { "direction": "se", "symbol": "n" },
+      { "direction": "sw", "symbol": "b" },
+      { "direction": "vertical", "symbol": "j" },
+      { "direction": "vertical_left", "symbol": "j" },
+      { "direction": "vertical_right", "symbol": "j" },
+      { "direction": "half_v_l_via_sw", "symbol": "b", "looks_like": "board_sw" },
+      { "direction": "half_v_r_via_se", "symbol": "n", "looks_like": "board_se" },
+      { "direction": "half_v_l", "symbol": "j", "looks_like": "board_vertical" },
+      { "direction": "cutaway_sw", "symbol": "b", "looks_like": "board_sw" },
+      { "direction": "cutaway_se", "symbol": "n", "looks_like": "board_se" },
+      { "direction": "v_r", "symbol": "j", "looks_like": "board_vertical" },
+      { "direction": "half_h_front", "symbol": "h", "looks_like": "board_horizontal" },
+      { "direction": "half_h_rear", "symbol": "h", "looks_like": "board_horizontal" },
+      { "direction": "h_front", "symbol": "h", "looks_like": "board_horizontal" },
+      { "direction": "v_l", "symbol": "j", "looks_like": "board_vertical" },
+      { "direction": "nw_edge_via_v_l", "symbol": "j", "looks_like": "board_vertical_left" },
+      { "direction": "ne_edge_via_v_r", "symbol": "j", "looks_like": "board_vertical_right" },
+      { "direction": "nw_via_sw", "symbol": "b", "looks_like": "board_sw" },
+      { "direction": "ne_via_se", "symbol": "n", "looks_like": "board_se" },
+      { "direction": "wheel_l", "symbol": "j", "looks_like": "board_vertical" },
+      { "direction": "wheel_r", "symbol": "j", "looks_like": "board_vertical" },
+      { "direction": "h_rear", "symbol": "h", "looks_like": "board_horizontal" },
+      { "direction": "sw_alt", "symbol": "j", "looks_like": "board_vertical" },
+      { "direction": "nw_edge_alt", "symbol": "j", "looks_like": "board_vertical" },
+      { "direction": "se_alt", "symbol": "j", "looks_like": "board_vertical" },
+      { "direction": "ne_edge_alt", "symbol": "j", "looks_like": "board_vertical" },
+      { "direction": "h_rear_via_v", "symbol": "j", "looks_like": "board_vertical" },
+      { "direction": "v_l_via_h", "symbol": "h", "looks_like": "board_horizontal" },
+      { "direction": "ne_alt", "symbol": "j", "looks_like": "board_vertical" },
+      { "direction": "nw_alt", "symbol": "j", "looks_like": "board_vertical" },
+      { "direction": "wheel_l_via_v_l", "symbol": "j", "looks_like": "board_vertical_left" },
+      { "direction": "wheel_r_via_v_r", "symbol": "j", "looks_like": "board_vertical_right" },
+      { "direction": "half_v_r", "symbol": "j", "looks_like": "board_vertical" },
+      { "direction": "half_wheel_l", "symbol": "j", "looks_like": "board_vertical" },
+      { "direction": "half_wheel_r", "symbol": "j", "looks_like": "board_vertical" },
+      { "direction": "half_h", "symbol": "h", "looks_like": "board_horizontal" },
+      { "direction": "stow_wheel_l", "symbol": "j", "looks_like": "board_vertical" },
+      { "direction": "stow_wheel_r", "symbol": "j", "looks_like": "board_vertical" },
+      { "direction": "wheel_l_via_sw", "symbol": "b", "looks_like": "board_sw" },
+      { "direction": "wheel_r_via_se", "symbol": "n", "looks_like": "board_se" }
     ]
   },
   {
@@ -81,15 +91,15 @@
     "flags": [ "OPAQUE", "OBSTACLE", "FOLDABLE", "FULL_BOARD", "NO_ROOF_NEEDED", "SHOCK_IMMUNE" ],
     "shapes": [
       { "direction": "horizontal", "symbol": "h" },
-      { "direction": "ne", "symbol": "u", "looks_like": "clothboard_horizontal" },
-      { "direction": "nw", "symbol": "y", "looks_like": "clothboard_horizontal" },
+      { "direction": "ne", "symbol": "u" },
+      { "direction": "nw", "symbol": "y" },
       { "direction": "se", "symbol": "n" },
       { "direction": "sw", "symbol": "b" },
-      { "direction": "vertical", "symbol": "j", "looks_like": "clothboard_horizontal" },
-      { "direction": "wheel_right", "symbol": "j", "looks_like": "clothboard_vertical" },
-      { "direction": "ne_edge", "symbol": "j", "looks_like": "clothboard_ne" },
-      { "direction": "wheel_left", "symbol": "j", "looks_like": "clothboard_vertical" },
-      { "direction": "nw_edge", "symbol": "j", "looks_like": "clothboard_nw" }
+      { "direction": "vertical", "symbol": "j" },
+      { "direction": "wheel_r", "symbol": "j", "looks_like": "clothboard_vertical" },
+      { "direction": "ne_edge_alt", "symbol": "j", "looks_like": "clothboard_vertical" },
+      { "direction": "wheel_l", "symbol": "j", "looks_like": "clothboard_vertical" },
+      { "direction": "nw_edge_alt", "symbol": "j", "looks_like": "clothboard_vertical" }
     ]
   },
   {
@@ -123,13 +133,13 @@
     "delete": { "flags": [ "OPAQUE", "FULL_BOARD" ] },
     "damage_reduction": { "all": 28 },
     "shapes": [
-      { "direction": "cover", "symbol": "^", "looks_like": "halfboard_horizontal" },
+      { "direction": "cover", "symbol": "^" },
       { "direction": "horizontal", "symbol": "h" },
       { "direction": "horizontal_front", "symbol": "T" },
       { "direction": "horizontal_rear", "symbol": "B" },
       { "direction": "horizontal_2", "symbol": "=" },
       { "direction": "horizontal_2_front", "symbol": "=" },
-      { "direction": "horizontal_2_rear", "symbol": "=", "looks_like": "halfboard_horizontal" },
+      { "direction": "horizontal_2_rear", "symbol": "=" },
       { "direction": "ne", "symbol": "u" },
       { "direction": "nw", "symbol": "y" },
       { "direction": "se", "symbol": "n" },
@@ -142,61 +152,52 @@
       { "direction": "vertical_2_right", "symbol": "H" },
       { "direction": "vertical_T_right", "symbol": "[" },
       { "direction": "vertical_T_left", "symbol": "]" },
-      { "direction": "wheel_left", "symbol": "j", "looks_like": "halfboard_vertical" },
-      { "direction": "wheel_right", "symbol": "j", "looks_like": "halfboard_vertical" },
-      { "direction": "hatch_wheel_left", "symbol": "b", "looks_like": "halfboard_sw" },
-      { "direction": "hatch_wheel_right", "symbol": "n", "looks_like": "halfboard_se" },
-      { "direction": "cover_left", "symbol": "h", "looks_like": "halfboard_cover" },
-      { "direction": "cover_right", "symbol": "h", "looks_like": "halfboard_cover" },
-      { "direction": "appearance_windshield_wheel_left", "symbol": "j", "looks_like": "halfboard_vertical_left" },
-      { "direction": "appearance_windshield_wheel_right", "symbol": "j", "looks_like": "halfboard_vertical_right" },
-      {
-        "direction": "appearance_hdhalfboard_horizontal_front",
-        "symbol": "=",
-        "looks_like": "halfboard_horizontal_front"
-      },
-      { "direction": "appearance_hdhalfboard_nw", "symbol": "y", "looks_like": "halfboard_nw" },
-      { "direction": "appearance_hdhalfboard_ne", "symbol": "u", "looks_like": "halfboard_ne" },
-      {
-        "direction": "appearance_xlhalfboard_vertical_right",
-        "symbol": "j",
-        "looks_like": "halfboard_vertical_right"
-      },
-      { "direction": "appearance_xlhalfboard_nw", "symbol": "y", "looks_like": "halfboard_nw" },
-      { "direction": "appearance_xlhalfboard_se", "symbol": "n", "looks_like": "halfboard_se" },
-      { "direction": "appearance_xlhalfboard_vertical", "symbol": "j", "looks_like": "halfboard_vertical" },
-      { "direction": "appearance_xlhalfboard_vertical_left", "symbol": "j", "looks_like": "halfboard_vertical_left" },
-      { "direction": "appearance_windshield_ne_edge", "symbol": "u", "looks_like": "halfboard_ne" },
-      { "direction": "appearance_xlhalfboard_sw", "symbol": "b", "looks_like": "halfboard_sw" },
-      { "direction": "appearance_windshield_nw_edge", "symbol": "y", "looks_like": "halfboard_nw" },
-      { "direction": "appearance_xlhalfboard_ne", "symbol": "u", "looks_like": "halfboard_ne" },
-      { "direction": "appearance_windshield_sw", "symbol": "j", "looks_like": "halfboard_vertical_left" },
-      { "direction": "appearance_windshield_se", "symbol": "j", "looks_like": "halfboard_vertical_right" },
-      { "direction": "appearance_windshield_sw_from_vertical", "symbol": "j", "looks_like": "halfboard_vertical" },
-      { "direction": "appearance_windshield_se_from_vertical", "symbol": "j", "looks_like": "halfboard_vertical" },
-      { "direction": "appearance_board_nw", "symbol": "j", "looks_like": "halfboard_vertical" },
-      { "direction": "appearance_board_se", "symbol": "n", "looks_like": "halfboard_se" },
-      { "direction": "appearance_board_sw", "symbol": "b", "looks_like": "halfboard_sw" },
-      { "direction": "appearance_board_ne", "symbol": "j", "looks_like": "halfboard_vertical" },
-      { "direction": "appearance_halfboard_wheel_left", "symbol": "j", "looks_like": "halfboard_vertical_left" },
-      { "direction": "appearance_halfboard_wheel_right", "symbol": "j", "looks_like": "halfboard_vertical_right" },
-      { "direction": "appearance_xlhalfboard_nw_from_cover", "symbol": "^", "looks_like": "halfboard_cover" },
-      { "direction": "appearance_xlhalfboard_ne_from_cover", "symbol": "^", "looks_like": "halfboard_cover" },
-      { "direction": "appearance_halfboard_sw", "symbol": "j", "looks_like": "halfboard_vertical" },
-      { "direction": "appearance_halfboard_se", "symbol": "j", "looks_like": "halfboard_vertical" },
-      { "direction": "appearance_halfboard_nw", "symbol": "j", "looks_like": "halfboard_vertical" },
-      { "direction": "appearance_halfboard_ne", "symbol": "j", "looks_like": "halfboard_vertical" },
-      {
-        "direction": "appearance_halfboard_nw_from_vertical_left",
-        "symbol": "j",
-        "looks_like": "halfboard_vertical_left"
-      },
-      {
-        "direction": "appearance_halfboard_ne_from_vertical_right",
-        "symbol": "j",
-        "looks_like": "halfboard_vertical_right"
-      },
-      { "direction": "ascii_front", "symbol": "h", "looks_like": "halfboard_horizontal_front" }
+      { "direction": "hd_nw", "symbol": "y", "looks_like": "halfboard_nw" },
+      { "direction": "hd_ne", "symbol": "u", "looks_like": "halfboard_ne" },
+      { "direction": "xl_nw_via_nw", "symbol": "y", "looks_like": "halfboard_nw" },
+      { "direction": "xl_se", "symbol": "n", "looks_like": "halfboard_se" },
+      { "direction": "glazing_ne_edge", "symbol": "u", "looks_like": "halfboard_ne" },
+      { "direction": "xl_sw", "symbol": "b", "looks_like": "halfboard_sw" },
+      { "direction": "glazing_nw_edge", "symbol": "y", "looks_like": "halfboard_nw" },
+      { "direction": "xl_nw", "symbol": "^", "looks_like": "halfboard_cover" },
+      { "direction": "xl_ne", "symbol": "^", "looks_like": "halfboard_cover" },
+      { "direction": "cover_l", "symbol": "h", "looks_like": "halfboard_horizontal" },
+      { "direction": "cover_r", "symbol": "h", "looks_like": "halfboard_horizontal" },
+      { "direction": "hatch_wheel_l", "symbol": "b", "looks_like": "halfboard_sw" },
+      { "direction": "hatch_wheel_r", "symbol": "n", "looks_like": "halfboard_se" },
+      { "direction": "cover_l_via_nw", "symbol": "y", "looks_like": "halfboard_nw" },
+      { "direction": "cover_r_via_ne", "symbol": "u", "looks_like": "halfboard_ne" },
+      { "direction": "cover_l_via_h_2", "symbol": "=", "looks_like": "halfboard_horizontal_2" },
+      { "direction": "cover_r_via_h_2", "symbol": "=", "looks_like": "halfboard_horizontal_2" },
+      { "direction": "cover_alt", "symbol": "H", "looks_like": "halfboard_vertical_2" },
+      { "direction": "v_l", "symbol": "j", "looks_like": "halfboard_vertical" },
+      { "direction": "v_r", "symbol": "j", "looks_like": "halfboard_vertical" },
+      { "direction": "cover_l_via_h_front", "symbol": "T", "looks_like": "halfboard_horizontal_front" },
+      { "direction": "cover_r_via_h_front", "symbol": "T", "looks_like": "halfboard_horizontal_front" },
+      { "direction": "wheel_l_via_v_l", "symbol": "j", "looks_like": "halfboard_vertical_left" },
+      { "direction": "wheel_r_via_v_r", "symbol": "j", "looks_like": "halfboard_vertical_right" },
+      { "direction": "h_2_rear", "symbol": "h", "looks_like": "halfboard_horizontal" },
+      { "direction": "wheel_l", "symbol": "j", "looks_like": "halfboard_vertical" },
+      { "direction": "wheel_r", "symbol": "j", "looks_like": "halfboard_vertical" },
+      { "direction": "cover_l_via_cover", "symbol": "^", "looks_like": "halfboard_cover" },
+      { "direction": "cover_r_via_cover", "symbol": "^", "looks_like": "halfboard_cover" },
+      { "direction": "h_front", "symbol": "h", "looks_like": "halfboard_horizontal" },
+      { "direction": "hd_h_front", "symbol": "=", "looks_like": "halfboard_horizontal_2" },
+      { "direction": "xl_v_r", "symbol": "j", "looks_like": "halfboard_vertical" },
+      { "direction": "xl_v", "symbol": "j", "looks_like": "halfboard_vertical" },
+      { "direction": "xl_v_l", "symbol": "j", "looks_like": "halfboard_vertical" },
+      { "direction": "ne_alt", "symbol": "^", "looks_like": "halfboard_cover" },
+      { "direction": "nw_alt", "symbol": "^", "looks_like": "halfboard_cover" },
+      { "direction": "sw_alt", "symbol": "j", "looks_like": "halfboard_vertical" },
+      { "direction": "se_alt", "symbol": "j", "looks_like": "halfboard_vertical" },
+      { "direction": "nw_via_v", "symbol": "j", "looks_like": "halfboard_vertical" },
+      { "direction": "ne_via_v", "symbol": "j", "looks_like": "halfboard_vertical" },
+      { "direction": "se_via_h", "symbol": "h", "looks_like": "halfboard_horizontal" },
+      { "direction": "v_l_via_h", "symbol": "h", "looks_like": "halfboard_horizontal" },
+      { "direction": "sw_via_h", "symbol": "h", "looks_like": "halfboard_horizontal" },
+      { "direction": "v_r_via_h", "symbol": "h", "looks_like": "halfboard_horizontal" },
+      { "direction": "nw_via_v_l", "symbol": "j", "looks_like": "halfboard_vertical_left" },
+      { "direction": "ne_via_v_r", "symbol": "j", "looks_like": "halfboard_vertical_right" }
     ]
   },
   {
@@ -220,10 +221,7 @@
       { "direction": "sw", "symbol": "b" },
       { "direction": "vertical", "symbol": "j" },
       { "direction": "vertical_left", "symbol": "j" },
-      { "direction": "vertical_right", "symbol": "j" },
-      { "direction": "appearance_board_sw", "symbol": "b", "looks_like": "aluminum_board_sw" },
-      { "direction": "appearance_xlhalfboard_se", "symbol": "n", "looks_like": "aluminum_board_se" },
-      { "direction": "appearance_xlhalfboard_sw", "symbol": "b", "looks_like": "aluminum_board_sw" }
+      { "direction": "vertical_right", "symbol": "j" }
     ]
   },
   {
@@ -257,38 +255,13 @@
       { "direction": "vertical_2_right", "symbol": "H" },
       { "direction": "vertical_T_right", "symbol": "[" },
       { "direction": "vertical_T_left", "symbol": "]" },
-      { "direction": "appearance_halfboard_nw", "symbol": "t", "looks_like": "aluminum_halfboard_nw" },
-      { "direction": "appearance_halfboard_ne", "symbol": "u", "looks_like": "aluminum_halfboard_ne" },
-      {
-        "direction": "appearance_halfboard_vertical_left",
-        "symbol": "j",
-        "looks_like": "aluminum_halfboard_vertical_left"
-      },
-      {
-        "direction": "appearance_halfboard_vertical_right",
-        "symbol": "j",
-        "looks_like": "aluminum_halfboard_vertical_right"
-      },
-      { "direction": "appearance_halfboard_hatch_wheel_left", "symbol": "b", "looks_like": "aluminum_halfboard_sw" },
-      { "direction": "appearance_halfboard_hatch_wheel_right", "symbol": "n", "looks_like": "aluminum_halfboard_se" },
-      { "direction": "appearance_xlhalfboard_nw", "symbol": "t", "looks_like": "aluminum_halfboard_nw" },
-      { "direction": "appearance_xlhalfboard_ne", "symbol": "u", "looks_like": "aluminum_halfboard_ne" },
-      {
-        "direction": "appearance_xlhalfboard_vertical_left",
-        "symbol": "j",
-        "looks_like": "aluminum_halfboard_vertical_left"
-      },
-      {
-        "direction": "appearance_xlhalfboard_vertical_right",
-        "symbol": "j",
-        "looks_like": "aluminum_halfboard_vertical_right"
-      },
-      { "direction": "appearance_xlhalfboard_sw", "symbol": "b", "looks_like": "aluminum_halfboard_sw" },
-      { "direction": "appearance_xlhalfboard_se", "symbol": "n", "looks_like": "aluminum_halfboard_se" },
-      { "direction": "appearance_xlhalfboard_vertical", "symbol": "j", "looks_like": "aluminum_halfboard_vertical" },
-      { "direction": "appearance_xlhalfboard_nw_from_cover", "symbol": "^", "looks_like": "aluminum_halfboard_cover" },
-      { "direction": "appearance_xlhalfboard_ne_from_cover", "symbol": "^", "looks_like": "aluminum_halfboard_cover" },
-      { "direction": "appearance_halfboard_cover", "symbol": "^", "looks_like": "aluminum_halfboard_cover" }
+      { "direction": "hatch_wheel_l", "symbol": "b", "looks_like": "aluminum_halfboard_sw" },
+      { "direction": "hatch_wheel_r", "symbol": "n", "looks_like": "aluminum_halfboard_se" },
+      { "direction": "xl_nw", "symbol": "^", "looks_like": "aluminum_halfboard_cover" },
+      { "direction": "xl_ne", "symbol": "^", "looks_like": "aluminum_halfboard_cover" },
+      { "direction": "v_r", "symbol": "j", "looks_like": "aluminum_halfboard_vertical" },
+      { "direction": "v_l", "symbol": "j", "looks_like": "aluminum_halfboard_vertical" },
+      { "direction": "xl_v", "symbol": "j", "looks_like": "aluminum_halfboard_vertical" }
     ]
   },
   {
@@ -343,7 +316,9 @@
       { "direction": "sw", "symbol": "b" },
       { "direction": "vertical", "symbol": "j" },
       { "direction": "vertical_left", "symbol": "j" },
-      { "direction": "vertical_right", "symbol": "j" }
+      { "direction": "vertical_right", "symbol": "j" },
+      { "direction": "v_l", "symbol": "j", "looks_like": "carbon_board_vertical" },
+      { "direction": "v_r", "symbol": "j", "looks_like": "carbon_board_vertical" }
     ]
   },
   {
@@ -378,21 +353,8 @@
       { "direction": "vertical_2_right", "symbol": "H" },
       { "direction": "vertical_T_right", "symbol": "[" },
       { "direction": "vertical_T_left", "symbol": "]" },
-      {
-        "direction": "appearance_halfboard_cover_left",
-        "symbol": "T",
-        "looks_like": "carbon_halfboard_horizontal_front"
-      },
-      {
-        "direction": "appearance_halfboard_cover_right",
-        "symbol": "T",
-        "looks_like": "carbon_halfboard_horizontal_front"
-      },
-      {
-        "direction": "appearance_xlhalfboard_horizontal_front",
-        "symbol": "T",
-        "looks_like": "carbon_halfboard_horizontal_front"
-      }
+      { "direction": "cover_l", "symbol": "T", "looks_like": "carbon_halfboard_horizontal_front" },
+      { "direction": "cover_r", "symbol": "T", "looks_like": "carbon_halfboard_horizontal_front" }
     ]
   },
   {
@@ -451,15 +413,16 @@
       { "direction": "nw", "symbol": "y" },
       { "direction": "se", "symbol": "n" },
       { "direction": "sw", "symbol": "b" },
-      { "direction": "vertical", "symbol": "j", "looks_like": "stowboard_horizontal" },
-      { "direction": "vertical_left", "symbol": "j", "looks_like": "stowboard_vertical" },
-      { "direction": "vertical_right", "symbol": "j", "looks_like": "stowboard_vertical" },
-      { "direction": "wheel_left", "symbol": "j", "looks_like": "stowboard_vertical" },
-      { "direction": "wheel_right", "symbol": "j", "looks_like": "stowboard_vertical" },
-      { "direction": "horizontal_rear", "symbol": "h", "looks_like": "stowboard_horizontal" },
-      { "direction": "horizontal_front", "symbol": "h", "looks_like": "stowboard_horizontal" },
-      { "direction": "appearance_board_vertical_right", "symbol": "#", "looks_like": "stowboard_vertical_right" },
-      { "direction": "appearance_board_horizontal_rear", "symbol": "h", "looks_like": "stowboard_horizontal" }
+      { "direction": "vertical", "symbol": "j" },
+      { "direction": "board_h_rear", "symbol": "h", "looks_like": "stowboard_horizontal" },
+      { "direction": "v_l", "symbol": "j", "looks_like": "stowboard_vertical" },
+      { "direction": "v_r", "symbol": "j", "looks_like": "stowboard_vertical" },
+      { "direction": "wheel_l", "symbol": "j", "looks_like": "stowboard_vertical" },
+      { "direction": "wheel_r", "symbol": "j", "looks_like": "stowboard_vertical" },
+      { "direction": "h_rear", "symbol": "h", "looks_like": "stowboard_horizontal" },
+      { "direction": "h_rear_via_v", "symbol": "j", "looks_like": "stowboard_vertical" },
+      { "direction": "h_front", "symbol": "h", "looks_like": "stowboard_horizontal" },
+      { "direction": "board_v_r", "symbol": "j", "looks_like": "stowboard_vertical" }
     ]
   },
   {
@@ -481,7 +444,8 @@
       { "direction": "nw", "symbol": "y" },
       { "direction": "se", "symbol": "n" },
       { "direction": "sw", "symbol": "b" },
-      { "direction": "vertical", "symbol": "j" }
+      { "direction": "vertical", "symbol": "j" },
+      { "direction": "h_rear", "symbol": "h", "looks_like": "hdstowboard_horizontal" }
     ]
   },
   {
@@ -504,15 +468,23 @@
     "default_color": "#3f4535",
     "shapes": [
       { "direction": "horizontal", "symbol": "h" },
-      { "direction": "ne", "symbol": "u", "looks_like": "hdboard_horizontal" },
-      { "direction": "nw", "symbol": "y", "looks_like": "hdboard_horizontal" },
+      { "direction": "ne", "symbol": "u" },
+      { "direction": "nw", "symbol": "y" },
       { "direction": "se", "symbol": "n" },
       { "direction": "sw", "symbol": "b" },
-      { "direction": "vertical", "symbol": "j", "looks_like": "hdboard_horizontal" },
-      { "direction": "vertical_left", "symbol": "j", "looks_like": "hdboard_vertical" },
-      { "direction": "vertical_right", "symbol": "j", "looks_like": "hdboard_vertical" },
-      { "direction": "horizontal_rear", "symbol": "h", "looks_like": "hdboard_horizontal" },
-      { "direction": "horizontal_front", "symbol": "h", "looks_like": "hdboard_horizontal" }
+      { "direction": "vertical", "symbol": "j" },
+      { "direction": "v_r", "symbol": "j", "looks_like": "hdboard_vertical" },
+      { "direction": "v_l", "symbol": "j", "looks_like": "hdboard_vertical" },
+      { "direction": "v_l_via_sw", "symbol": "b", "looks_like": "hdboard_sw" },
+      { "direction": "v_l_via_nw", "symbol": "y", "looks_like": "hdboard_nw" },
+      { "direction": "se_alt", "symbol": "b", "looks_like": "hdboard_sw" },
+      { "direction": "v_r_via_se", "symbol": "n", "looks_like": "hdboard_se" },
+      { "direction": "v_r_via_ne", "symbol": "u", "looks_like": "hdboard_ne" },
+      { "direction": "h_rear", "symbol": "h", "looks_like": "hdboard_horizontal" },
+      { "direction": "h_front", "symbol": "h", "looks_like": "hdboard_horizontal" },
+      { "direction": "h_front_via_ne", "symbol": "u", "looks_like": "hdboard_ne" },
+      { "direction": "nw_alt", "symbol": "b", "looks_like": "hdboard_sw" },
+      { "direction": "ne_alt", "symbol": "n", "looks_like": "hdboard_se" }
     ]
   },
   {
@@ -534,11 +506,14 @@
       { "direction": "sw", "symbol": "b" },
       { "direction": "vertical", "symbol": "j" },
       { "direction": "vertical_2", "symbol": "H" },
-      { "direction": "horizontal_front", "symbol": "=", "looks_like": "hdhalfboard_horizontal" },
-      { "direction": "vertical_right", "symbol": "j", "looks_like": "hdhalfboard_vertical" },
-      { "direction": "vertical_left", "symbol": "j", "looks_like": "hdhalfboard_vertical" },
-      { "direction": "appearance_windshield_sw", "symbol": "b", "looks_like": "hdhalfboard_sw" },
-      { "direction": "appearance_windshield_se", "symbol": "n", "looks_like": "hdhalfboard_se" }
+      { "direction": "hdboard_v_l", "symbol": "=", "looks_like": "hdhalfboard_horizontal_2" },
+      { "direction": "h_front", "symbol": "=", "looks_like": "hdhalfboard_horizontal_2" },
+      { "direction": "hdboard_v_r", "symbol": "=", "looks_like": "hdhalfboard_horizontal_2" },
+      { "direction": "v_l", "symbol": "j", "looks_like": "hdhalfboard_vertical" },
+      { "direction": "v_r", "symbol": "j", "looks_like": "hdhalfboard_vertical" },
+      { "direction": "se_alt", "symbol": "j", "looks_like": "hdhalfboard_vertical" },
+      { "direction": "sw_alt", "symbol": "j", "looks_like": "hdhalfboard_vertical" },
+      { "direction": "h_front_via_v_2", "symbol": "H", "looks_like": "hdhalfboard_vertical_2" }
     ]
   },
   {
@@ -707,9 +682,15 @@
       { "direction": "vertical_right", "symbol": "j" },
       { "direction": "vertical_2", "symbol": "H" },
       { "direction": "cover", "symbol": "h", "looks_like": "xlhalfboard_horizontal" },
-      { "direction": "appearance_windshield_ne_edge", "symbol": "u", "looks_like": "xlhalfboard_ne" },
-      { "direction": "appearance_windshield_nw_edge", "symbol": "y", "looks_like": "xlhalfboard_nw" },
-      { "direction": "appearance_halfboard_horizontal_front", "symbol": "h", "looks_like": "xlhalfboard_horizontal" }
+      { "direction": "h_front", "symbol": "h", "looks_like": "xlhalfboard_horizontal" },
+      { "direction": "nw_alt", "symbol": "y", "looks_like": "xlhalfboard_nw" },
+      { "direction": "hatch_wheel_l", "symbol": "b", "looks_like": "xlhalfboard_sw" },
+      { "direction": "ne_alt", "symbol": "u", "looks_like": "xlhalfboard_ne" },
+      { "direction": "hatch_wheel_r", "symbol": "n", "looks_like": "xlhalfboard_se" },
+      { "direction": "cover_l", "symbol": "T", "looks_like": "xlhalfboard_horizontal_front" },
+      { "direction": "cover_r", "symbol": "T", "looks_like": "xlhalfboard_horizontal_front" },
+      { "direction": "v_l", "symbol": "j", "looks_like": "xlhalfboard_vertical_left" },
+      { "direction": "v_r", "symbol": "j", "looks_like": "xlhalfboard_vertical_right" }
     ]
   }
 ]
